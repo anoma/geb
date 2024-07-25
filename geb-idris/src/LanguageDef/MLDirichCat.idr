@@ -261,455 +261,6 @@ DirichVertCartFactIsCorrect fext
   {p=(ppos ** pdir)} {q=(qpos ** qdir)} (onpos ** ondir) =
     dpEq12 Refl $ funExt $ \i => Refl
 
------------------------------------------------
------------------------------------------------
----- Factored slices of Dirichlet functors ----
------------------------------------------------
------------------------------------------------
-
--- The terminal object of the base category of Dirichlet functors.
-public export
-MLDirichCatObjTerminal : MLDirichCatObj
-MLDirichCatObjTerminal = (Unit ** \_ => Unit)
-
----------------------------------
----- Cartesian-slice objects ----
----------------------------------
-
-public export
-DirichCartSlObj : MLDirichCatObj -> Type
-DirichCartSlObj = SliceObj . dfPos
-
-public export
-DirichCartSlTotPos : {b : MLDirichCatObj} -> DirichCartSlObj b -> Type
-DirichCartSlTotPos {b} = Sigma {a=(dfPos b)}
-
-public export
-DirichCartSlOnPos : {b : MLDirichCatObj} -> (p : DirichCartSlObj b) ->
-  DirichCartSlTotPos {b} p -> dfPos b
-DirichCartSlOnPos {b} p = DPair.fst
-
-public export
-DirichCartSlDir : {b : MLDirichCatObj} ->
-  (p : DirichCartSlObj b) -> DirichCartSlTotPos {b} p -> Type
-DirichCartSlDir {b} p = dfDir b . DirichCartSlOnPos {b} p
-
-public export
-DirichCartSlOnDir : {b : MLDirichCatObj} ->
-  (p : DirichCartSlObj b) ->
-  SliceMorphism {a=(DirichCartSlTotPos {b} p)}
-    (DirichCartSlDir {b} p)
-    (dfDir b . DirichCartSlOnPos {b} p)
-DirichCartSlOnDir {b} p i = id {a=(DirichCartSlDir {b} p i)}
-
--- We can embed a Cartesian-slice Dirichlet functor into the base
--- category of Dirichlet functors on `Type`.
-public export
-DirichCartSlEmbed : {b : MLDirichCatObj} -> DirichCartSlObj b -> MLDirichCatObj
-DirichCartSlEmbed {b} p = (DirichCartSlTotPos {b} p ** DirichCartSlDir {b} p)
-
-public export
-DirichCartSlTot : {b : MLDirichCatObj} -> DirichCartSlObj b -> Type
-DirichCartSlTot {b} p = dfTot (DirichCartSlEmbed {b} p)
-
-public export
-DirichCartSlProj : {b : MLDirichCatObj} -> (p : DirichCartSlObj b) ->
-  DirichNatTrans (DirichCartSlEmbed {b} p) b
-DirichCartSlProj {b} p = (DirichCartSlOnPos {b} p ** DirichCartSlOnDir {b} p)
-
--- We can promote a Dirichlet functor in the base category of Dirichlet
--- functors on `Type` into any Cartesian-slice Dirichlet-functor category.
--- This is the logical functor called "pullback" and denoted `U*` at
--- https://ncatlab.org/nlab/show/generalized+element#in_toposes .
-public export
-DirichCartSlPullback : {b : MLDirichCatObj} ->
-  MLDirichCatObj -> DirichCartSlObj b
-DirichCartSlPullback {b} p bi =
-  (pi : DPair.fst p ** DPair.snd b bi -> DPair.snd p pi)
-
------------------------------------
----- Cartesian-slice morphisms ----
------------------------------------
-
-public export
-DirichCartSlMor : {b : MLDirichCatObj} ->
-  DirichCartSlObj b -> DirichCartSlObj b -> Type
-DirichCartSlMor {b} = SliceMorphism {a=(dfPos b)}
-
-public export
-DirichCartSlId : {b : MLDirichCatObj} ->
-  (p : DirichCartSlObj b) -> DirichCartSlMor {b} p p
-DirichCartSlId = sliceId
-
-public export
-DirichCartSlComp : {b : MLDirichCatObj} ->
-  {p, q, r : DirichCartSlObj b} ->
-  DirichCartSlMor {b} q r -> DirichCartSlMor {b} p q -> DirichCartSlMor {b} p r
-DirichCartSlComp = sliceComp
-
--- Now we show that the "embed" and "pullback" functors are adjoint --
--- in fact, they are special cases of `sigma` and `base-change`, between
--- `MLDirichCatObj` and `DirichCartSlObj b` for any `b`.  (The more general
--- cases are between `DirichCartSlObj b` and `DirichCartSlObj b'` for
--- any `b` and `b'`).
-public export
-DirichCartSlEmbedPullbackLeftAdjoint : {b : MLDirichCatObj} ->
-  DirichCartSlObj b -> MLDirichCatObj
-DirichCartSlEmbedPullbackLeftAdjoint = DirichCartSlEmbed
-
-public export
-DirichCartSlEmbedPullbackRightAdjoint : {b : MLDirichCatObj} ->
-  MLDirichCatObj -> DirichCartSlObj b
-DirichCartSlEmbedPullbackRightAdjoint = DirichCartSlPullback
-
-public export
-DirichCartSlEmbedPullbackLeftAdjunct : {b : MLDirichCatObj} ->
-  (p : DirichCartSlObj b) -> (q : MLDirichCatObj) ->
-  DirichNatTrans (DirichCartSlEmbedPullbackLeftAdjoint {b} p) q ->
-  DirichCartSlMor {b} p (DirichCartSlEmbedPullbackRightAdjoint {b} q)
-DirichCartSlEmbedPullbackLeftAdjunct p q alpha bi pi =
-  (fst alpha (bi ** pi) ** snd alpha (bi ** pi))
-
-public export
-DirichCartSlEmbedPullbackRightAdjunct : {b : MLDirichCatObj} ->
-  (p : DirichCartSlObj b) -> (q : MLDirichCatObj) ->
-  DirichCartSlMor {b} p (DirichCartSlEmbedPullbackRightAdjoint {b} q) ->
-  DirichNatTrans (DirichCartSlEmbedPullbackLeftAdjoint {b} p) q
-DirichCartSlEmbedPullbackRightAdjunct p q m =
-  (\pi => fst (m (fst pi) (snd pi)) ** \pi => snd (m (fst pi) (snd pi)))
-
--- We now show the correspondence between global elements (sections) in
--- Dirichlet-Cartesian slice categories and Cartesian morphisms (generalized
--- elements) in the base category, as described at
--- https://ncatlab.org/nlab/show/generalized+element#in_toposes .
-public export
-DirichCartSlTerminal : (b : MLDirichCatObj) -> DirichCartSlObj b
-DirichCartSlTerminal b = DirichCartSlPullback {b} $ MLDirichCatObjTerminal
-
-public export
-DirichCartSlSection : (b, p : MLDirichCatObj) -> Type
-DirichCartSlSection b p =
-  DirichCartSlMor {b} (DirichCartSlTerminal b) (DirichCartSlPullback {b} p)
-
-public export
-DirichCartSlSectionToGenEl : {b, p : MLDirichCatObj} ->
-  DirichCartSlSection b p -> MLDirichCatMor b p
-DirichCartSlSectionToGenEl {b} {p} m =
-  (\bi => fst (m bi (() ** \_ => ())) ** \bi => snd (m bi (() ** \_ => ())))
-
-public export
-DirichCartGenElToSlSection : {b, p : MLDirichCatObj} ->
-  MLDirichCatMor b p -> DirichCartSlSection b p
-DirichCartGenElToSlSection {b} {p} alpha bi termobj =
-  (fst alpha bi ** snd alpha bi)
-
-------------------------------------------
----- Dirichlet vertical-slice objects ----
-------------------------------------------
-
-public export
-DirichBaseEmbed : MLDirichCatObj -> MLDirichCatObj
-DirichBaseEmbed b = (dfTot b ** SliceObjTerminal $ dfTot b)
-
-public export
-DirichVertSlObj : MLDirichCatObj -> Type
-DirichVertSlObj = DirichCartSlObj . DirichBaseEmbed
-
-public export
-DirichVertSlTotPos : {b : MLDirichCatObj} -> DirichVertSlObj b -> Type
-DirichVertSlTotPos {b} p = dfPos b
-
-public export
-DirichVertSlOnPos : {b : MLDirichCatObj} -> (p : DirichVertSlObj b) ->
-  DirichVertSlTotPos {b} p -> dfPos b
-DirichVertSlOnPos {b} p = id
-
-public export
-DirichVertSlDir : {b : MLDirichCatObj} ->
-  (p : DirichVertSlObj b) -> DirichVertSlTotPos {b} p -> Type
-DirichVertSlDir {b} p i = Sigma {a=(dfDir b i)} $ DPair.curry p i
-
-public export
-DirichVertSlOnDir : {b : MLDirichCatObj} ->
-  (p : DirichVertSlObj b) ->
-  SliceMorphism {a=(DirichVertSlTotPos {b} p)}
-    (DirichVertSlDir {b} p)
-    (dfDir b . DirichVertSlOnPos {b} p)
-DirichVertSlOnDir {b} p i = DPair.fst
-
-public export
-DirichVertSlEmbed : {b : MLDirichCatObj} -> DirichVertSlObj b -> MLDirichCatObj
-DirichVertSlEmbed {b} p = (DirichVertSlTotPos {b} p ** DirichVertSlDir {b} p)
-
-public export
-DirichVertSlTot : {b : MLDirichCatObj} -> DirichVertSlObj b -> Type
-DirichVertSlTot {b} p = dfTot (DirichVertSlEmbed {b} p)
-
-public export
-DirichVertSlProj : {b : MLDirichCatObj} -> (p : DirichVertSlObj b) ->
-  DirichNatTrans (DirichVertSlEmbed {b} p) b
-DirichVertSlProj {b} p = (DirichVertSlOnPos {b} p ** DirichVertSlOnDir {b} p)
-
---------------------------------------------
----- Dirichlet vertical-slice morphisms ----
---------------------------------------------
-
-public export
-DirichVertSlMor : {b : MLDirichCatObj} ->
-  DirichVertSlObj b -> DirichVertSlObj b -> Type
-DirichVertSlMor {b} = DirichCartSlMor {b=(DirichBaseEmbed b)}
-
-public export
-DirichVertSlId : {b : MLDirichCatObj} ->
-  (p : DirichVertSlObj b) -> DirichVertSlMor {b} p p
-DirichVertSlId = sliceId
-
-public export
-DirichVertSlComp : {b : MLDirichCatObj} ->
-  {p, q, r : DirichVertSlObj b} ->
-  DirichVertSlMor {b} q r -> DirichVertSlMor {b} p q -> DirichVertSlMor {b} p r
-DirichVertSlComp = sliceComp
-
-------------------------------------------
----- Factored-Dirichlet-slice objects ----
-------------------------------------------
-
--- These are the objects of the slice categories of Dirichlet functors
--- (which are equivalent to Dirichlet presheaves on categories of elements
--- of Dirichlet functors), expressed in terms of vertical-Cartesian factoring.
-
--- The intermediate object of a factored slice of a Dirichlet functor.
-public export
-DirichFactSlIntObj : (b : MLDirichCatObj) -> DirichCartSlObj b -> Type
-DirichFactSlIntObj b = DirichVertSlObj . DirichCartSlEmbed {b}
-
-public export
-DirichFactSlObj : MLDirichCatObj -> Type
-DirichFactSlObj b = Sigma {a=(DirichCartSlObj b)} (DirichFactSlIntObj b)
-
-public export
-DirichFactSlCartObj : {b : MLDirichCatObj} ->
-  DirichFactSlObj b -> DirichCartSlObj b
-DirichFactSlCartObj = DPair.fst
-
-public export
-DirichFactSlIntEmbed : {b : MLDirichCatObj} ->
-  DirichFactSlObj b -> MLDirichCatObj
-DirichFactSlIntEmbed {b} = DirichCartSlEmbed {b} . DirichFactSlCartObj {b}
-
-public export
-DirichFactSlIntProjL : {b : MLDirichCatObj} ->
-  (p : DirichFactSlObj b) ->
-  DirichNatTrans (DirichFactSlIntEmbed {b} p) b
-DirichFactSlIntProjL {b} p = DirichCartSlProj {b} (DirichFactSlCartObj {b} p)
-
-public export
-DirichFactSlVertObj : {b : MLDirichCatObj} ->
-  (p : DirichFactSlObj b) -> DirichFactSlIntObj b (DirichFactSlCartObj {b} p)
-DirichFactSlVertObj = DPair.snd
-
-public export
-DirichFactSlEmbed : {b : MLDirichCatObj} -> DirichFactSlObj b -> MLDirichCatObj
-DirichFactSlEmbed {b} p =
-  DirichVertSlEmbed {b=(DirichFactSlIntEmbed {b} p)} $ DirichFactSlVertObj {b} p
-
-public export
-DirichFactSlIntProjR : {b : MLDirichCatObj} ->
-  (p : DirichFactSlObj b) ->
-  DirichNatTrans (DirichFactSlEmbed {b} p) (DirichFactSlIntEmbed {b} p)
-DirichFactSlIntProjR {b} p =
-  DirichVertSlProj {b=(DirichFactSlIntEmbed {b} p)} $ DirichFactSlVertObj {b} p
-
-public export
-DirichFactSlTotPos : {b : MLDirichCatObj} -> DirichFactSlObj b -> Type
-DirichFactSlTotPos {b} = dfPos . DirichFactSlEmbed {b}
-
-public export
-DirichFactSlTotDir : {b : MLDirichCatObj} -> (p : DirichFactSlObj b) ->
-  SliceObj (DirichFactSlTotPos {b} p)
-DirichFactSlTotDir {b} p = dfDir (DirichFactSlEmbed {b} p)
-
-public export
-DirichFactSlProj : {b : MLDirichCatObj} -> (p : DirichFactSlObj b) ->
-  DirichNatTrans (DirichFactSlEmbed {b} p) b
-DirichFactSlProj {b} p =
-  dntVCatComp
-    {p=(DirichFactSlEmbed {b} p)}
-    {q=(DirichFactSlIntEmbed {b} p)}
-    {r=b}
-    (DirichFactSlIntProjL {b} p)
-    (DirichFactSlIntProjR {b} p)
-
-public export
-DirichFactSlOnPos : {b : MLDirichCatObj} -> (p : DirichFactSlObj b) ->
-  DirichFactSlTotPos {b} p -> dfPos b
-DirichFactSlOnPos {b} p =
-  dntOnPos {p=(DirichFactSlEmbed {b} p)} {q=b} (DirichFactSlProj {b} p)
-
-public export
-DirichFactSlDir : {b : MLDirichCatObj} ->
-  (p : DirichFactSlObj b) -> DirichFactSlTotPos {b} p -> Type
-DirichFactSlDir {b} p = dfDir (DirichFactSlEmbed {b} p)
-
-public export
-DirichFactSlOnDir : {b : MLDirichCatObj} ->
-  (p : DirichFactSlObj b) ->
-  SliceMorphism {a=(DirichFactSlTotPos {b} p)}
-    (DirichFactSlDir {b} p)
-    (dfDir b . DirichFactSlOnPos {b} p)
-DirichFactSlOnDir {b} p =
-  dntOnDir {p=(DirichFactSlEmbed {b} p)} {q=b} (DirichFactSlProj {b} p)
-
-public export
-DirichFactSlTot : {b : MLDirichCatObj} -> DirichFactSlObj b -> Type
-DirichFactSlTot {b} p = dfTot (DirichFactSlEmbed {b} p)
-
---------------------------------------------
----- Factored-Dirichlet-slice morphisms ----
---------------------------------------------
-
--- The slice analogue of `arBaseChangeArena`.
-public export
-DirichSlBaseChangePos : {b : MLDirichCatObj} ->
-  (p : DirichFactSlObj b) -> {x : SliceObj (dfPos b)} ->
-  SliceMorphism {a=(dfPos b)} x (DirichFactSlCartObj {b} p) ->
-  SliceObj (dfPos b)
-DirichSlBaseChangePos {b} p {x} f = x
-
-public export
-DirichSlBaseChangeDir : {b : MLDirichCatObj} ->
-  (p : DirichFactSlObj b) -> {x : SliceObj (dfPos b)} ->
-  (f : SliceMorphism {a=(dfPos b)} x (DirichFactSlCartObj {b} p)) ->
-  SliceObj (DirichCartSlTot {b} $ DirichSlBaseChangePos {b} p {x} f)
-DirichSlBaseChangeDir {b} p {x} f = snd p . dpBimap (dpMapSnd f) (\_ => id)
-
-public export
-DirichSlBaseChange : {b : MLDirichCatObj} ->
-  (p : DirichFactSlObj b) -> {x : SliceObj (dfPos b)} ->
-  SliceMorphism {a=(dfPos b)} x (DirichFactSlCartObj {b} p) ->
-  DirichFactSlObj b
-DirichSlBaseChange {b} p {x} f =
-  (DirichSlBaseChangePos {b} p {x} f ** DirichSlBaseChangeDir {b} p {x} f)
-
--- Because vertical morphisms do not change position, the only
--- position change between the positions of the domain and the
--- positions of the intermediate object of the codomain comes
--- from a single natural transformation -- the Cartesian component
--- of the total-space morphism of the slice category.  So the
--- first thing we choose in defining a slice morphism is an
--- on-positions function from the domain to the codomain (whose
--- codomain is also equal to the positions of the intermediate
--- object of the codomain projection, because the on-positions
--- component of the vertical component of that projection is
--- the identity).
-
--- The type of the on-positions function of a slice morphism.
-public export
-DirichFactSlCartMor : {b : MLDirichCatObj} ->
-  DirichFactSlObj b -> DirichFactSlObj b -> Type
-DirichFactSlCartMor {b} p q =
-  DirichCartSlMor {b} (DirichFactSlCartObj {b} p) (DirichFactSlCartObj {b} q)
-
--- Because the positions of the domain and codomain are equal to those
--- of the intermediate objects of their respective projections, the
--- on-positions function which determines a Cartesian slice morphism
--- of their intermediate objects also determines an (identical) slice
--- morphism between the positions of the domain and codomain themselves.
--- That in turn induces a base change on the codomain.
-public export
-DirichFactSlMorIntObj : {b : MLDirichCatObj} -> (p, q : DirichFactSlObj b) ->
-  DirichFactSlCartMor {b} p q -> DirichFactSlObj b
-DirichFactSlMorIntObj {b} p q = DirichSlBaseChange {b} q {x=(fst p)}
-
--- The intermediate object has the same positions as the domain,
--- and the on-positions function constitutes a Cartesian morphism
--- from it to the codomain.  Thus, a vertical-slice morphism from
--- the domain to it will form a general-slice morphism from the
--- domain to the codomain.
-public export
-DirichFactSlVertMorSl : {b : MLDirichCatObj} -> (dom : DirichFactSlObj b) -> Type
-DirichFactSlVertMorSl {b} dom =
-  DPair (DirichFactSlTotPos {b} dom) (dfDir b . fst)
-
-public export
-DirichFactSlVertMorDom : {b : MLDirichCatObj} -> (p : DirichFactSlObj b) ->
-  SliceObj (DirichFactSlVertMorSl {b} p)
-DirichFactSlVertMorDom {b} = snd
-
-public export
-DirichFactSlVertMorCod : {b : MLDirichCatObj} -> (p, q : DirichFactSlObj b) ->
-  DirichFactSlCartMor {b} p q ->
-  SliceObj (DirichFactSlVertMorSl {b} p)
-DirichFactSlVertMorCod {b} p q m = DirichSlBaseChangeDir {b} q {x=(fst p)} m
-
-public export
-DirichFactSlVertMor : {b : MLDirichCatObj} -> (p, q : DirichFactSlObj b) ->
-  DirichFactSlCartMor {b} p q -> Type
-DirichFactSlVertMor {b} p q m =
-  SliceMorphism {a=(DirichFactSlVertMorSl {b} p)}
-    (DirichFactSlVertMorDom {b} p)
-    (DirichFactSlVertMorCod {b} p q m)
-
-public export
-DirichFactSlMor : {b : MLDirichCatObj} ->
-  DirichFactSlObj b -> DirichFactSlObj b -> Type
-DirichFactSlMor {b} p q =
-  DPair (DirichFactSlCartMor {b} p q) (DirichFactSlVertMor {b} p q)
-
-public export
-DirichFactSlIdOnPos : {b : MLDirichCatObj} ->
-  (p : DirichFactSlObj b) -> SliceMorphism {a=(dfPos b)} (fst p) (fst p)
-DirichFactSlIdOnPos {b} p = sliceId {a=(dfPos b)} (fst p)
-
-public export
-DirichFactSlIdOnDir : {b : MLDirichCatObj} ->
-  (p : DirichFactSlObj b) ->
-  SliceMorphism {a=(DirichFactSlVertMorSl {b} p)}
-    (DirichFactSlVertMorDom {b} p)
-    (DirichFactSlVertMorCod {b} p p (DirichFactSlIdOnPos {b} p))
-DirichFactSlIdOnDir {b} p itot = case itot of ((bi ** pi) ** bd) => id
-
-public export
-DirichFactSlId : {b : MLDirichCatObj} ->
-  (p : DirichFactSlObj b) -> DirichFactSlMor {b} p p
-DirichFactSlId {b} p =
-  (DirichFactSlIdOnPos {b} p ** DirichFactSlIdOnDir {b} p)
-
-public export
-DirichFactSlCompOnPos : {b : MLDirichCatObj} ->
-  {p, q, r : DirichFactSlObj b} ->
-  DirichFactSlMor {b} q r -> DirichFactSlMor {b} p q ->
-  SliceMorphism {a=(dfPos b)} (fst p) (fst r)
-DirichFactSlCompOnPos {b} {p} {q} {r} g f = sliceComp (fst g) (fst f)
-
-public export
-DirichFactSlCompOnDirInt : {b : MLDirichCatObj} ->
-  {p, q, r : DirichFactSlObj b} ->
-  (g : DirichFactSlMor {b} q r) -> (f : DirichFactSlMor {b} p q) ->
-  SliceMorphism {a=(DirichFactSlVertMorSl {b} p)}
-    (DirichFactSlVertMorCod {b} p q (fst f))
-    (DirichFactSlVertMorCod {b} p r (DirichFactSlCompOnPos {b} {p} {q} {r} g f))
-DirichFactSlCompOnDirInt {b} {p} {q} {r} g f i =
-  snd g ((fst (fst i) ** fst f (fst $ fst i) (snd $ fst i)) ** snd i)
-
-public export
-DirichFactSlCompOnDir : {b : MLDirichCatObj} ->
-  {p, q, r : DirichFactSlObj b} ->
-  (g : DirichFactSlMor {b} q r) -> (f : DirichFactSlMor {b} p q) ->
-  SliceMorphism {a=(DirichFactSlVertMorSl {b} p)}
-    (DirichFactSlVertMorDom {b} p)
-    (DirichFactSlVertMorCod {b} p r (DirichFactSlCompOnPos {b} {p} {q} {r} g f))
-DirichFactSlCompOnDir {b} {p} {q} {r} g f =
-  sliceComp (DirichFactSlCompOnDirInt {b} {p} {q} {r} g f) (snd f)
-
-public export
-DirichFactSlComp : {b : MLDirichCatObj} ->
-  {p, q, r : DirichFactSlObj b} ->
-  DirichFactSlMor {b} q r -> DirichFactSlMor {b} p q -> DirichFactSlMor {b} p r
-DirichFactSlComp {b} {p} {q} {r} g f =
-  (DirichFactSlCompOnPos {b} {p} {q} {r} g f **
-   DirichFactSlCompOnDir {b} {p} {q} {r} g f)
-
 ------------------------------------------------------
 ------------------------------------------------------
 ---- Categories of elements of Dirichlet functors ----
@@ -1326,16 +877,6 @@ record MlDirichSlMor {ar : MLArena} (dom, cod : MlDirichSlObj ar) where
   mdsmOnDir : MlDirichSlMorOnDir {ar} dom cod mdsmOnPos
 
 public export
-MlDirichSlObjToFact : {ar : MLArena} -> MlDirichSlObj ar -> DirichFactSlObj ar
-MlDirichSlObjToFact {ar} p =
-  (mdsOnPos p ** \bd => mdsDir p (fst $ fst bd) (snd $ fst bd) (snd bd))
-
-public export
-MlDirichFactToSlObj : {ar : MLArena} -> DirichFactSlObj ar -> MlDirichSlObj ar
-MlDirichFactToSlObj {ar} p =
-  MDSobj (fst p) (\bi, pi, bd => snd p ((bi ** pi) ** bd))
-
-public export
 MlDirichSlObjToDirichCatElAr : {ar : MLArena} ->
   MlDirichSlObj ar -> DirichDirichCatElAr ar
 MlDirichSlObjToDirichCatElAr {ar} sl bi = (mdsOnPos sl bi ** mdsDir sl bi)
@@ -1345,39 +886,6 @@ MlDirichCatElArToSlObj : {ar : MLArena} ->
   DirichDirichCatElAr ar -> MlDirichSlObj ar
 MlDirichCatElArToSlObj {ar} sl =
   MDSobj (\bi => fst $ sl bi) (\bi => snd $ sl bi)
-
-public export
-MlDirichSlMorToFact : {ar : MLArena} -> {p, q : MlDirichSlObj ar} ->
-  MlDirichSlMor {ar} p q ->
-  DirichFactSlMor {b=ar}
-    (MlDirichSlObjToFact {ar} p)
-    (MlDirichSlObjToFact {ar} q)
-MlDirichSlMorToFact {ar} {p} {q} m =
-  (mdsmOnPos m ** \i => mdsmOnDir m (fst $ fst i) (snd $ fst i) (snd i))
-
-public export
-MlDirichSlMorFromFact : {ar : MLArena} -> {p, q : MlDirichSlObj ar} ->
-  DirichFactSlMor {b=ar}
-    (MlDirichSlObjToFact {ar} p)
-    (MlDirichSlObjToFact {ar} q) ->
-  MlDirichSlMor {ar} p q
-MlDirichSlMorFromFact {ar} {p} {q} m =
-  MDSM (fst m) (\i, j, d => snd m ((i ** j) ** d))
-
-public export
-MlDirichFactToSlMor : {ar : MLArena} -> {p, q : DirichFactSlObj ar} ->
-  DirichFactSlMor {b=ar} p q ->
-  MlDirichSlMor {ar} (MlDirichFactToSlObj {ar} p) (MlDirichFactToSlObj {ar} q)
-MlDirichFactToSlMor {ar} {p} {q} m =
-  MDSM (fst m) (\i, j, d => snd m ((i ** j) ** d))
-
-public export
-MlDirichFactFromSlMor : {ar : MLArena} -> {p, q : DirichFactSlObj ar} ->
-  MlDirichSlMor {ar}
-    (MlDirichFactToSlObj {ar} p) (MlDirichFactToSlObj {ar} q) ->
-  DirichFactSlMor {b=ar} p q
-MlDirichFactFromSlMor {ar} {p} {q} m =
-  (mdsmOnPos m ** \((bi ** pi) ** bd), pd => mdsmOnDir m bi pi bd pd)
 
 -------------------------------------------------------------
 ---- Categorial operations in Dirichlet slice categories ----
@@ -1535,6 +1043,498 @@ mlDirichSlOfSlFromP : {ar : MLArena} -> {cod : MlDirichSlObj ar} ->
   DFSliceMorph {p=ar} (mlDirichSlObjToC {ar} cod) -> MlDirichSlOfSl {ar} cod
 mlDirichSlOfSlFromP {ar} {cod=cod@(MDSobj _ _)} =
   mlDirichSlObjFromC {ar=(mlDirichSlObjTot {ar} cod)}
+
+-----------------------------------------------
+-----------------------------------------------
+---- Factored slices of Dirichlet functors ----
+-----------------------------------------------
+-----------------------------------------------
+
+-- The terminal object of the base category of Dirichlet functors.
+public export
+MLDirichCatObjTerminal : MLDirichCatObj
+MLDirichCatObjTerminal = (Unit ** \_ => Unit)
+
+---------------------------------
+---- Cartesian-slice objects ----
+---------------------------------
+
+public export
+DirichCartSlObj : MLDirichCatObj -> Type
+DirichCartSlObj = SliceObj . dfPos
+
+public export
+DirichCartSlTotPos : {b : MLDirichCatObj} -> DirichCartSlObj b -> Type
+DirichCartSlTotPos {b} = Sigma {a=(dfPos b)}
+
+public export
+DirichCartSlOnPos : {b : MLDirichCatObj} -> (p : DirichCartSlObj b) ->
+  DirichCartSlTotPos {b} p -> dfPos b
+DirichCartSlOnPos {b} p = DPair.fst
+
+public export
+DirichCartSlDir : {b : MLDirichCatObj} ->
+  (p : DirichCartSlObj b) -> DirichCartSlTotPos {b} p -> Type
+DirichCartSlDir {b} p = dfDir b . DirichCartSlOnPos {b} p
+
+public export
+DirichCartSlOnDir : {b : MLDirichCatObj} ->
+  (p : DirichCartSlObj b) ->
+  SliceMorphism {a=(DirichCartSlTotPos {b} p)}
+    (DirichCartSlDir {b} p)
+    (dfDir b . DirichCartSlOnPos {b} p)
+DirichCartSlOnDir {b} p i = id {a=(DirichCartSlDir {b} p i)}
+
+-- We can embed a Cartesian-slice Dirichlet functor into the base
+-- category of Dirichlet functors on `Type`.
+public export
+DirichCartSlEmbed : {b : MLDirichCatObj} -> DirichCartSlObj b -> MLDirichCatObj
+DirichCartSlEmbed {b} p = (DirichCartSlTotPos {b} p ** DirichCartSlDir {b} p)
+
+public export
+DirichCartSlTot : {b : MLDirichCatObj} -> DirichCartSlObj b -> Type
+DirichCartSlTot {b} p = dfTot (DirichCartSlEmbed {b} p)
+
+public export
+DirichCartSlProj : {b : MLDirichCatObj} -> (p : DirichCartSlObj b) ->
+  DirichNatTrans (DirichCartSlEmbed {b} p) b
+DirichCartSlProj {b} p = (DirichCartSlOnPos {b} p ** DirichCartSlOnDir {b} p)
+
+-- We can promote a Dirichlet functor in the base category of Dirichlet
+-- functors on `Type` into any Cartesian-slice Dirichlet-functor category.
+-- This is the logical functor called "pullback" and denoted `U*` at
+-- https://ncatlab.org/nlab/show/generalized+element#in_toposes .
+public export
+DirichCartSlPullback : {b : MLDirichCatObj} ->
+  MLDirichCatObj -> DirichCartSlObj b
+DirichCartSlPullback {b} p bi =
+  (pi : DPair.fst p ** DPair.snd b bi -> DPair.snd p pi)
+
+-----------------------------------
+---- Cartesian-slice morphisms ----
+-----------------------------------
+
+public export
+DirichCartSlMor : {b : MLDirichCatObj} ->
+  DirichCartSlObj b -> DirichCartSlObj b -> Type
+DirichCartSlMor {b} = SliceMorphism {a=(dfPos b)}
+
+public export
+DirichCartSlId : {b : MLDirichCatObj} ->
+  (p : DirichCartSlObj b) -> DirichCartSlMor {b} p p
+DirichCartSlId = sliceId
+
+public export
+DirichCartSlComp : {b : MLDirichCatObj} ->
+  {p, q, r : DirichCartSlObj b} ->
+  DirichCartSlMor {b} q r -> DirichCartSlMor {b} p q -> DirichCartSlMor {b} p r
+DirichCartSlComp = sliceComp
+
+-- Now we show that the "embed" and "pullback" functors are adjoint --
+-- in fact, they are special cases of `sigma` and `base-change`, between
+-- `MLDirichCatObj` and `DirichCartSlObj b` for any `b`.  (The more general
+-- cases are between `DirichCartSlObj b` and `DirichCartSlObj b'` for
+-- any `b` and `b'`).
+public export
+DirichCartSlEmbedPullbackLeftAdjoint : {b : MLDirichCatObj} ->
+  DirichCartSlObj b -> MLDirichCatObj
+DirichCartSlEmbedPullbackLeftAdjoint = DirichCartSlEmbed
+
+public export
+DirichCartSlEmbedPullbackRightAdjoint : {b : MLDirichCatObj} ->
+  MLDirichCatObj -> DirichCartSlObj b
+DirichCartSlEmbedPullbackRightAdjoint = DirichCartSlPullback
+
+public export
+DirichCartSlEmbedPullbackLeftAdjunct : {b : MLDirichCatObj} ->
+  (p : DirichCartSlObj b) -> (q : MLDirichCatObj) ->
+  DirichNatTrans (DirichCartSlEmbedPullbackLeftAdjoint {b} p) q ->
+  DirichCartSlMor {b} p (DirichCartSlEmbedPullbackRightAdjoint {b} q)
+DirichCartSlEmbedPullbackLeftAdjunct p q alpha bi pi =
+  (fst alpha (bi ** pi) ** snd alpha (bi ** pi))
+
+public export
+DirichCartSlEmbedPullbackRightAdjunct : {b : MLDirichCatObj} ->
+  (p : DirichCartSlObj b) -> (q : MLDirichCatObj) ->
+  DirichCartSlMor {b} p (DirichCartSlEmbedPullbackRightAdjoint {b} q) ->
+  DirichNatTrans (DirichCartSlEmbedPullbackLeftAdjoint {b} p) q
+DirichCartSlEmbedPullbackRightAdjunct p q m =
+  (\pi => fst (m (fst pi) (snd pi)) ** \pi => snd (m (fst pi) (snd pi)))
+
+-- We now show the correspondence between global elements (sections) in
+-- Dirichlet-Cartesian slice categories and Cartesian morphisms (generalized
+-- elements) in the base category, as described at
+-- https://ncatlab.org/nlab/show/generalized+element#in_toposes .
+public export
+DirichCartSlTerminal : (b : MLDirichCatObj) -> DirichCartSlObj b
+DirichCartSlTerminal b = DirichCartSlPullback {b} $ MLDirichCatObjTerminal
+
+public export
+DirichCartSlSection : (b, p : MLDirichCatObj) -> Type
+DirichCartSlSection b p =
+  DirichCartSlMor {b} (DirichCartSlTerminal b) (DirichCartSlPullback {b} p)
+
+public export
+DirichCartSlSectionToGenEl : {b, p : MLDirichCatObj} ->
+  DirichCartSlSection b p -> MLDirichCatMor b p
+DirichCartSlSectionToGenEl {b} {p} m =
+  (\bi => fst (m bi (() ** \_ => ())) ** \bi => snd (m bi (() ** \_ => ())))
+
+public export
+DirichCartGenElToSlSection : {b, p : MLDirichCatObj} ->
+  MLDirichCatMor b p -> DirichCartSlSection b p
+DirichCartGenElToSlSection {b} {p} alpha bi termobj =
+  (fst alpha bi ** snd alpha bi)
+
+------------------------------------------
+---- Dirichlet vertical-slice objects ----
+------------------------------------------
+
+public export
+DirichBaseEmbed : MLDirichCatObj -> MLDirichCatObj
+DirichBaseEmbed b = (dfTot b ** SliceObjTerminal $ dfTot b)
+
+public export
+DirichVertSlObj : MLDirichCatObj -> Type
+DirichVertSlObj = DirichCartSlObj . DirichBaseEmbed
+
+public export
+DirichVertSlTotPos : {b : MLDirichCatObj} -> DirichVertSlObj b -> Type
+DirichVertSlTotPos {b} p = dfPos b
+
+public export
+DirichVertSlOnPos : {b : MLDirichCatObj} -> (p : DirichVertSlObj b) ->
+  DirichVertSlTotPos {b} p -> dfPos b
+DirichVertSlOnPos {b} p = id
+
+public export
+DirichVertSlDir : {b : MLDirichCatObj} ->
+  (p : DirichVertSlObj b) -> DirichVertSlTotPos {b} p -> Type
+DirichVertSlDir {b} p i = Sigma {a=(dfDir b i)} $ DPair.curry p i
+
+public export
+DirichVertSlOnDir : {b : MLDirichCatObj} ->
+  (p : DirichVertSlObj b) ->
+  SliceMorphism {a=(DirichVertSlTotPos {b} p)}
+    (DirichVertSlDir {b} p)
+    (dfDir b . DirichVertSlOnPos {b} p)
+DirichVertSlOnDir {b} p i = DPair.fst
+
+public export
+DirichVertSlEmbed : {b : MLDirichCatObj} -> DirichVertSlObj b -> MLDirichCatObj
+DirichVertSlEmbed {b} p = (DirichVertSlTotPos {b} p ** DirichVertSlDir {b} p)
+
+public export
+DirichVertSlTot : {b : MLDirichCatObj} -> DirichVertSlObj b -> Type
+DirichVertSlTot {b} p = dfTot (DirichVertSlEmbed {b} p)
+
+public export
+DirichVertSlProj : {b : MLDirichCatObj} -> (p : DirichVertSlObj b) ->
+  DirichNatTrans (DirichVertSlEmbed {b} p) b
+DirichVertSlProj {b} p = (DirichVertSlOnPos {b} p ** DirichVertSlOnDir {b} p)
+
+--------------------------------------------
+---- Dirichlet vertical-slice morphisms ----
+--------------------------------------------
+
+public export
+DirichVertSlMor : {b : MLDirichCatObj} ->
+  DirichVertSlObj b -> DirichVertSlObj b -> Type
+DirichVertSlMor {b} = DirichCartSlMor {b=(DirichBaseEmbed b)}
+
+public export
+DirichVertSlId : {b : MLDirichCatObj} ->
+  (p : DirichVertSlObj b) -> DirichVertSlMor {b} p p
+DirichVertSlId = sliceId
+
+public export
+DirichVertSlComp : {b : MLDirichCatObj} ->
+  {p, q, r : DirichVertSlObj b} ->
+  DirichVertSlMor {b} q r -> DirichVertSlMor {b} p q -> DirichVertSlMor {b} p r
+DirichVertSlComp = sliceComp
+
+------------------------------------------
+---- Factored-Dirichlet-slice objects ----
+------------------------------------------
+
+-- These are the objects of the slice categories of Dirichlet functors
+-- (which are equivalent to Dirichlet presheaves on categories of elements
+-- of Dirichlet functors), expressed in terms of vertical-Cartesian factoring.
+
+-- The intermediate object of a factored slice of a Dirichlet functor.
+public export
+DirichFactSlIntObj : (b : MLDirichCatObj) -> DirichCartSlObj b -> Type
+DirichFactSlIntObj b = DirichVertSlObj . DirichCartSlEmbed {b}
+
+public export
+DirichFactSlObj : MLDirichCatObj -> Type
+DirichFactSlObj b = Sigma {a=(DirichCartSlObj b)} (DirichFactSlIntObj b)
+
+public export
+DirichFactSlCartObj : {b : MLDirichCatObj} ->
+  DirichFactSlObj b -> DirichCartSlObj b
+DirichFactSlCartObj = DPair.fst
+
+public export
+DirichFactSlIntEmbed : {b : MLDirichCatObj} ->
+  DirichFactSlObj b -> MLDirichCatObj
+DirichFactSlIntEmbed {b} = DirichCartSlEmbed {b} . DirichFactSlCartObj {b}
+
+public export
+DirichFactSlIntProjL : {b : MLDirichCatObj} ->
+  (p : DirichFactSlObj b) ->
+  DirichNatTrans (DirichFactSlIntEmbed {b} p) b
+DirichFactSlIntProjL {b} p = DirichCartSlProj {b} (DirichFactSlCartObj {b} p)
+
+public export
+DirichFactSlVertObj : {b : MLDirichCatObj} ->
+  (p : DirichFactSlObj b) -> DirichFactSlIntObj b (DirichFactSlCartObj {b} p)
+DirichFactSlVertObj = DPair.snd
+
+public export
+DirichFactSlEmbed : {b : MLDirichCatObj} -> DirichFactSlObj b -> MLDirichCatObj
+DirichFactSlEmbed {b} p =
+  DirichVertSlEmbed {b=(DirichFactSlIntEmbed {b} p)} $ DirichFactSlVertObj {b} p
+
+public export
+DirichFactSlIntProjR : {b : MLDirichCatObj} ->
+  (p : DirichFactSlObj b) ->
+  DirichNatTrans (DirichFactSlEmbed {b} p) (DirichFactSlIntEmbed {b} p)
+DirichFactSlIntProjR {b} p =
+  DirichVertSlProj {b=(DirichFactSlIntEmbed {b} p)} $ DirichFactSlVertObj {b} p
+
+public export
+DirichFactSlTotPos : {b : MLDirichCatObj} -> DirichFactSlObj b -> Type
+DirichFactSlTotPos {b} = dfPos . DirichFactSlEmbed {b}
+
+public export
+DirichFactSlTotDir : {b : MLDirichCatObj} -> (p : DirichFactSlObj b) ->
+  SliceObj (DirichFactSlTotPos {b} p)
+DirichFactSlTotDir {b} p = dfDir (DirichFactSlEmbed {b} p)
+
+public export
+DirichFactSlProj : {b : MLDirichCatObj} -> (p : DirichFactSlObj b) ->
+  DirichNatTrans (DirichFactSlEmbed {b} p) b
+DirichFactSlProj {b} p =
+  dntVCatComp
+    {p=(DirichFactSlEmbed {b} p)}
+    {q=(DirichFactSlIntEmbed {b} p)}
+    {r=b}
+    (DirichFactSlIntProjL {b} p)
+    (DirichFactSlIntProjR {b} p)
+
+public export
+DirichFactSlOnPos : {b : MLDirichCatObj} -> (p : DirichFactSlObj b) ->
+  DirichFactSlTotPos {b} p -> dfPos b
+DirichFactSlOnPos {b} p =
+  dntOnPos {p=(DirichFactSlEmbed {b} p)} {q=b} (DirichFactSlProj {b} p)
+
+public export
+DirichFactSlDir : {b : MLDirichCatObj} ->
+  (p : DirichFactSlObj b) -> DirichFactSlTotPos {b} p -> Type
+DirichFactSlDir {b} p = dfDir (DirichFactSlEmbed {b} p)
+
+public export
+DirichFactSlOnDir : {b : MLDirichCatObj} ->
+  (p : DirichFactSlObj b) ->
+  SliceMorphism {a=(DirichFactSlTotPos {b} p)}
+    (DirichFactSlDir {b} p)
+    (dfDir b . DirichFactSlOnPos {b} p)
+DirichFactSlOnDir {b} p =
+  dntOnDir {p=(DirichFactSlEmbed {b} p)} {q=b} (DirichFactSlProj {b} p)
+
+public export
+DirichFactSlTot : {b : MLDirichCatObj} -> DirichFactSlObj b -> Type
+DirichFactSlTot {b} p = dfTot (DirichFactSlEmbed {b} p)
+
+--------------------------------------------
+---- Factored-Dirichlet-slice morphisms ----
+--------------------------------------------
+
+-- The slice analogue of `arBaseChangeArena`.
+public export
+DirichSlBaseChangePos : {b : MLDirichCatObj} ->
+  (p : DirichFactSlObj b) -> {x : SliceObj (dfPos b)} ->
+  SliceMorphism {a=(dfPos b)} x (DirichFactSlCartObj {b} p) ->
+  SliceObj (dfPos b)
+DirichSlBaseChangePos {b} p {x} f = x
+
+public export
+DirichSlBaseChangeDir : {b : MLDirichCatObj} ->
+  (p : DirichFactSlObj b) -> {x : SliceObj (dfPos b)} ->
+  (f : SliceMorphism {a=(dfPos b)} x (DirichFactSlCartObj {b} p)) ->
+  SliceObj (DirichCartSlTot {b} $ DirichSlBaseChangePos {b} p {x} f)
+DirichSlBaseChangeDir {b} p {x} f = snd p . dpBimap (dpMapSnd f) (\_ => id)
+
+public export
+DirichSlBaseChange : {b : MLDirichCatObj} ->
+  (p : DirichFactSlObj b) -> {x : SliceObj (dfPos b)} ->
+  SliceMorphism {a=(dfPos b)} x (DirichFactSlCartObj {b} p) ->
+  DirichFactSlObj b
+DirichSlBaseChange {b} p {x} f =
+  (DirichSlBaseChangePos {b} p {x} f ** DirichSlBaseChangeDir {b} p {x} f)
+
+-- Because vertical morphisms do not change position, the only
+-- position change between the positions of the domain and the
+-- positions of the intermediate object of the codomain comes
+-- from a single natural transformation -- the Cartesian component
+-- of the total-space morphism of the slice category.  So the
+-- first thing we choose in defining a slice morphism is an
+-- on-positions function from the domain to the codomain (whose
+-- codomain is also equal to the positions of the intermediate
+-- object of the codomain projection, because the on-positions
+-- component of the vertical component of that projection is
+-- the identity).
+
+-- The type of the on-positions function of a slice morphism.
+public export
+DirichFactSlCartMor : {b : MLDirichCatObj} ->
+  DirichFactSlObj b -> DirichFactSlObj b -> Type
+DirichFactSlCartMor {b} p q =
+  DirichCartSlMor {b} (DirichFactSlCartObj {b} p) (DirichFactSlCartObj {b} q)
+
+-- Because the positions of the domain and codomain are equal to those
+-- of the intermediate objects of their respective projections, the
+-- on-positions function which determines a Cartesian slice morphism
+-- of their intermediate objects also determines an (identical) slice
+-- morphism between the positions of the domain and codomain themselves.
+-- That in turn induces a base change on the codomain.
+public export
+DirichFactSlMorIntObj : {b : MLDirichCatObj} -> (p, q : DirichFactSlObj b) ->
+  DirichFactSlCartMor {b} p q -> DirichFactSlObj b
+DirichFactSlMorIntObj {b} p q = DirichSlBaseChange {b} q {x=(fst p)}
+
+-- The intermediate object has the same positions as the domain,
+-- and the on-positions function constitutes a Cartesian morphism
+-- from it to the codomain.  Thus, a vertical-slice morphism from
+-- the domain to it will form a general-slice morphism from the
+-- domain to the codomain.
+public export
+DirichFactSlVertMorSl : {b : MLDirichCatObj} -> (dom : DirichFactSlObj b) -> Type
+DirichFactSlVertMorSl {b} dom =
+  DPair (DirichFactSlTotPos {b} dom) (dfDir b . fst)
+
+public export
+DirichFactSlVertMorDom : {b : MLDirichCatObj} -> (p : DirichFactSlObj b) ->
+  SliceObj (DirichFactSlVertMorSl {b} p)
+DirichFactSlVertMorDom {b} = snd
+
+public export
+DirichFactSlVertMorCod : {b : MLDirichCatObj} -> (p, q : DirichFactSlObj b) ->
+  DirichFactSlCartMor {b} p q ->
+  SliceObj (DirichFactSlVertMorSl {b} p)
+DirichFactSlVertMorCod {b} p q m = DirichSlBaseChangeDir {b} q {x=(fst p)} m
+
+public export
+DirichFactSlVertMor : {b : MLDirichCatObj} -> (p, q : DirichFactSlObj b) ->
+  DirichFactSlCartMor {b} p q -> Type
+DirichFactSlVertMor {b} p q m =
+  SliceMorphism {a=(DirichFactSlVertMorSl {b} p)}
+    (DirichFactSlVertMorDom {b} p)
+    (DirichFactSlVertMorCod {b} p q m)
+
+public export
+DirichFactSlMor : {b : MLDirichCatObj} ->
+  DirichFactSlObj b -> DirichFactSlObj b -> Type
+DirichFactSlMor {b} p q =
+  DPair (DirichFactSlCartMor {b} p q) (DirichFactSlVertMor {b} p q)
+
+public export
+DirichFactSlIdOnPos : {b : MLDirichCatObj} ->
+  (p : DirichFactSlObj b) -> SliceMorphism {a=(dfPos b)} (fst p) (fst p)
+DirichFactSlIdOnPos {b} p = sliceId {a=(dfPos b)} (fst p)
+
+public export
+DirichFactSlIdOnDir : {b : MLDirichCatObj} ->
+  (p : DirichFactSlObj b) ->
+  SliceMorphism {a=(DirichFactSlVertMorSl {b} p)}
+    (DirichFactSlVertMorDom {b} p)
+    (DirichFactSlVertMorCod {b} p p (DirichFactSlIdOnPos {b} p))
+DirichFactSlIdOnDir {b} p itot = case itot of ((bi ** pi) ** bd) => id
+
+public export
+DirichFactSlId : {b : MLDirichCatObj} ->
+  (p : DirichFactSlObj b) -> DirichFactSlMor {b} p p
+DirichFactSlId {b} p =
+  (DirichFactSlIdOnPos {b} p ** DirichFactSlIdOnDir {b} p)
+
+public export
+DirichFactSlCompOnPos : {b : MLDirichCatObj} ->
+  {p, q, r : DirichFactSlObj b} ->
+  DirichFactSlMor {b} q r -> DirichFactSlMor {b} p q ->
+  SliceMorphism {a=(dfPos b)} (fst p) (fst r)
+DirichFactSlCompOnPos {b} {p} {q} {r} g f = sliceComp (fst g) (fst f)
+
+public export
+DirichFactSlCompOnDirInt : {b : MLDirichCatObj} ->
+  {p, q, r : DirichFactSlObj b} ->
+  (g : DirichFactSlMor {b} q r) -> (f : DirichFactSlMor {b} p q) ->
+  SliceMorphism {a=(DirichFactSlVertMorSl {b} p)}
+    (DirichFactSlVertMorCod {b} p q (fst f))
+    (DirichFactSlVertMorCod {b} p r (DirichFactSlCompOnPos {b} {p} {q} {r} g f))
+DirichFactSlCompOnDirInt {b} {p} {q} {r} g f i =
+  snd g ((fst (fst i) ** fst f (fst $ fst i) (snd $ fst i)) ** snd i)
+
+public export
+DirichFactSlCompOnDir : {b : MLDirichCatObj} ->
+  {p, q, r : DirichFactSlObj b} ->
+  (g : DirichFactSlMor {b} q r) -> (f : DirichFactSlMor {b} p q) ->
+  SliceMorphism {a=(DirichFactSlVertMorSl {b} p)}
+    (DirichFactSlVertMorDom {b} p)
+    (DirichFactSlVertMorCod {b} p r (DirichFactSlCompOnPos {b} {p} {q} {r} g f))
+DirichFactSlCompOnDir {b} {p} {q} {r} g f =
+  sliceComp (DirichFactSlCompOnDirInt {b} {p} {q} {r} g f) (snd f)
+
+public export
+DirichFactSlComp : {b : MLDirichCatObj} ->
+  {p, q, r : DirichFactSlObj b} ->
+  DirichFactSlMor {b} q r -> DirichFactSlMor {b} p q -> DirichFactSlMor {b} p r
+DirichFactSlComp {b} {p} {q} {r} g f =
+  (DirichFactSlCompOnPos {b} {p} {q} {r} g f **
+   DirichFactSlCompOnDir {b} {p} {q} {r} g f)
+
+public export
+MlDirichSlObjToFact : {ar : MLArena} -> MlDirichSlObj ar -> DirichFactSlObj ar
+MlDirichSlObjToFact {ar} p =
+  (mdsOnPos p ** \bd => mdsDir p (fst $ fst bd) (snd $ fst bd) (snd bd))
+
+public export
+MlDirichFactToSlObj : {ar : MLArena} -> DirichFactSlObj ar -> MlDirichSlObj ar
+MlDirichFactToSlObj {ar} p =
+  MDSobj (fst p) (\bi, pi, bd => snd p ((bi ** pi) ** bd))
+
+public export
+MlDirichSlMorToFact : {ar : MLArena} -> {p, q : MlDirichSlObj ar} ->
+  MlDirichSlMor {ar} p q ->
+  DirichFactSlMor {b=ar}
+    (MlDirichSlObjToFact {ar} p)
+    (MlDirichSlObjToFact {ar} q)
+MlDirichSlMorToFact {ar} {p} {q} m =
+  (mdsmOnPos m ** \i => mdsmOnDir m (fst $ fst i) (snd $ fst i) (snd i))
+
+public export
+MlDirichSlMorFromFact : {ar : MLArena} -> {p, q : MlDirichSlObj ar} ->
+  DirichFactSlMor {b=ar}
+    (MlDirichSlObjToFact {ar} p)
+    (MlDirichSlObjToFact {ar} q) ->
+  MlDirichSlMor {ar} p q
+MlDirichSlMorFromFact {ar} {p} {q} m =
+  MDSM (fst m) (\i, j, d => snd m ((i ** j) ** d))
+
+public export
+MlDirichFactToSlMor : {ar : MLArena} -> {p, q : DirichFactSlObj ar} ->
+  DirichFactSlMor {b=ar} p q ->
+  MlDirichSlMor {ar} (MlDirichFactToSlObj {ar} p) (MlDirichFactToSlObj {ar} q)
+MlDirichFactToSlMor {ar} {p} {q} m =
+  MDSM (fst m) (\i, j, d => snd m ((i ** j) ** d))
+
+public export
+MlDirichFactFromSlMor : {ar : MLArena} -> {p, q : DirichFactSlObj ar} ->
+  MlDirichSlMor {ar}
+    (MlDirichFactToSlObj {ar} p) (MlDirichFactToSlObj {ar} q) ->
+  DirichFactSlMor {b=ar} p q
+MlDirichFactFromSlMor {ar} {p} {q} m =
+  (mdsmOnPos m ** \((bi ** pi) ** bd), pd => mdsmOnDir m bi pi bd pd)
 
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
