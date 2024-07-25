@@ -296,6 +296,38 @@ MlPolySlOfSl : {ar : MLArena} -> MlPolySlObj ar -> Type
 MlPolySlOfSl {ar} sl = MlPolySlObj $ mlPolySlObjTot {ar} sl
 
 public export
+MlPolySlPosFromSlOfSl : {ar : MLArena} -> (sl : MlPolySlObj ar) ->
+  MlPolySlOfSl {ar} sl -> MlSlArProjOnPos ar
+MlPolySlPosFromSlOfSl {ar} sl slsl i =
+  DPair (mpsOnPos sl i) $ DPair.curry (mpsOnPos slsl) i
+
+public export
+MlPolySlDirFromSlOfSl : {ar : MLArena} -> (sl : MlPolySlObj ar) ->
+  (slsl : MlPolySlOfSl {ar} sl) ->
+  MlPolySlDir ar (MlPolySlPosFromSlOfSl {ar} sl slsl)
+MlPolySlDirFromSlOfSl {ar} sl slsl i jk =
+  (mpsDir sl i (fst jk), mpsDir slsl (i ** fst jk) (snd jk))
+
+public export
+MlPolySlOnDirFromSlOfSl : {ar : MLArena} -> (sl : MlPolySlObj ar) ->
+  (slsl : MlPolySlOfSl {ar} sl) ->
+  MlPolySlOnDir {ar}
+    (MlPolySlPosFromSlOfSl {ar} sl slsl)
+    (MlPolySlDirFromSlOfSl {ar} sl slsl)
+MlPolySlOnDirFromSlOfSl {ar} sl slsl i jk bd =
+  let sldir = mpsOnDir sl i (fst jk) bd in
+  (sldir, mpsOnDir slsl (i ** fst jk) (snd jk) sldir)
+
+public export
+MlPolySlFromSlOfSl : {ar : MLArena} -> (sl : MlPolySlObj ar) ->
+  MlPolySlOfSl {ar} sl -> MlPolySlObj ar
+MlPolySlFromSlOfSl {ar} sl slsl =
+  MPSobj
+    (MlPolySlPosFromSlOfSl {ar} sl slsl)
+    (MlPolySlDirFromSlOfSl {ar} sl slsl)
+    (MlPolySlOnDirFromSlOfSl {ar} sl slsl)
+
+public export
 mlPolySlOfSlFromP : {ar : MLArena} -> {cod : MlPolySlObj ar} ->
   PFSliceMorph {p=ar} (mlPolySlObjToC ar cod) -> MlPolySlOfSl {ar} cod
 mlPolySlOfSlFromP {ar} {cod=cod@(MPSobj _ _ _)} m =
