@@ -1493,6 +1493,10 @@ DirichFactSlComp {b} {p} {q} {r} g f =
   (DirichFactSlCompOnPos {b} {p} {q} {r} g f **
    DirichFactSlCompOnDir {b} {p} {q} {r} g f)
 
+-------------------------------------------------------------------------
+---- Translation between factored and standard Dirichlet slice forms ----
+-------------------------------------------------------------------------
+
 public export
 MlDirichSlObjToFact : {ar : MLArena} -> MlDirichSlObj ar -> DirichFactSlObj ar
 MlDirichSlObjToFact {ar} p =
