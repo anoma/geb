@@ -1509,6 +1509,17 @@ MlDirichSlOfSl : {ar : MLArena} -> MlDirichSlObj ar -> Type
 MlDirichSlOfSl {ar} sl = MlDirichSlObj $ mlDirichSlObjTot {ar} sl
 
 public export
+MlDirichSlFromSlOfSl : {ar : MLArena} -> (sl : MlDirichSlObj ar) ->
+  MlDirichSlOfSl {ar} sl -> MlDirichSlObj ar
+MlDirichSlFromSlOfSl {ar} sl slsl =
+  MDSobj
+    (\bi =>
+      Sigma {a=(mdsOnPos sl bi)} $ \sli => mdsOnPos slsl (bi ** sli))
+    (\bi, sli, bd =>
+      Sigma {a=(mdsDir sl bi (fst sli) bd)} $
+        \sld => mdsDir slsl (bi ** fst sli) (snd sli) (bd ** sld))
+
+public export
 mlDirichSlOfSlFromP : {ar : MLArena} -> {cod : MlDirichSlObj ar} ->
   DFSliceMorph {p=ar} (mlDirichSlObjToC {ar} cod) -> MlDirichSlOfSl {ar} cod
 mlDirichSlOfSlFromP {ar} {cod=cod@(MDSobj _ _)} =
