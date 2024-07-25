@@ -44,6 +44,9 @@ IntGenQuantF cat x y = IntGenQuant cat x -> IntGenQuant cat y
 
 -- A codomain change is a function on generalized elements which leaves
 -- the domain unchanged.
+--
+-- Note that this is simply the signature of a natural transformation between
+-- the internal contravariant hom-functors of `x` and `y`.
 public export
 IntCodChangeF : (cat : IntCatSig) -> IntMorSig (icObj cat)
 IntCodChangeF cat x y =
@@ -56,6 +59,9 @@ IntCodChangeFAsGenElF {cat} {x} {y} = dpMapSnd
 
 -- A domain change is a function on generalized quantities which leaves
 -- the codomain unchanged.
+--
+-- Note that this is simply the signature of a natural transformation between
+-- the internal covariant hom-functors of `x` and `y`.
 public export
 IntDomChangeF : (cat : IntCatSig) -> IntMorSig (icObj cat)
 IntDomChangeF cat x y =
