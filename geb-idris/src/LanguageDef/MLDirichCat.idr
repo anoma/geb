@@ -1509,15 +1509,26 @@ MlDirichSlOfSl : {ar : MLArena} -> MlDirichSlObj ar -> Type
 MlDirichSlOfSl {ar} sl = MlDirichSlObj $ mlDirichSlObjTot {ar} sl
 
 public export
+MlDirichSlPosFromSlOfSl : {ar : MLArena} -> (sl : MlDirichSlObj ar) ->
+  MlDirichSlOfSl {ar} sl -> MlSlArProjOnPos ar
+MlDirichSlPosFromSlOfSl {ar} sl slsl i =
+  DPair (mdsOnPos sl i) $ DPair.curry (mdsOnPos slsl) i
+
+public export
+MlDirichSlDirFromSlOfSl : {ar : MLArena} -> (sl : MlDirichSlObj ar) ->
+  (slsl : MlDirichSlOfSl {ar} sl) ->
+  MlDirichSlDir ar (MlDirichSlPosFromSlOfSl {ar} sl slsl)
+MlDirichSlDirFromSlOfSl {ar} sl slsl i jk d =
+  (sld : mdsDir sl i (fst jk) d **
+   mdsDir slsl (i ** fst jk) (snd jk) (d ** sld))
+
+public export
 MlDirichSlFromSlOfSl : {ar : MLArena} -> (sl : MlDirichSlObj ar) ->
   MlDirichSlOfSl {ar} sl -> MlDirichSlObj ar
 MlDirichSlFromSlOfSl {ar} sl slsl =
   MDSobj
-    (\bi =>
-      Sigma {a=(mdsOnPos sl bi)} $ \sli => mdsOnPos slsl (bi ** sli))
-    (\bi, sli, bd =>
-      Sigma {a=(mdsDir sl bi (fst sli) bd)} $
-        \sld => mdsDir slsl (bi ** fst sli) (snd sli) (bd ** sld))
+    (MlDirichSlPosFromSlOfSl {ar} sl slsl)
+    (MlDirichSlDirFromSlOfSl {ar} sl slsl)
 
 public export
 mlDirichSlOfSlFromP : {ar : MLArena} -> {cod : MlDirichSlObj ar} ->
