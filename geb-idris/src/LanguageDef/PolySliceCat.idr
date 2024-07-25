@@ -296,38 +296,6 @@ MlPolySlOfSl : {ar : MLArena} -> MlPolySlObj ar -> Type
 MlPolySlOfSl {ar} sl = MlPolySlObj $ mlPolySlObjTot {ar} sl
 
 public export
-MlPolySlPosFromSlOfSl : {ar : MLArena} -> (sl : MlPolySlObj ar) ->
-  MlPolySlOfSl {ar} sl -> MlSlArProjOnPos ar
-MlPolySlPosFromSlOfSl {ar} sl slsl i =
-  DPair (mpsOnPos sl i) $ DPair.curry (mpsOnPos slsl) i
-
-public export
-MlPolySlDirFromSlOfSl : {ar : MLArena} -> (sl : MlPolySlObj ar) ->
-  (slsl : MlPolySlOfSl {ar} sl) ->
-  MlPolySlDir ar (MlPolySlPosFromSlOfSl {ar} sl slsl)
-MlPolySlDirFromSlOfSl {ar} sl slsl i jk =
-  (mpsDir sl i (fst jk), mpsDir slsl (i ** fst jk) (snd jk))
-
-public export
-MlPolySlOnDirFromSlOfSl : {ar : MLArena} -> (sl : MlPolySlObj ar) ->
-  (slsl : MlPolySlOfSl {ar} sl) ->
-  MlPolySlOnDir {ar}
-    (MlPolySlPosFromSlOfSl {ar} sl slsl)
-    (MlPolySlDirFromSlOfSl {ar} sl slsl)
-MlPolySlOnDirFromSlOfSl {ar} sl slsl i jk bd =
-  let sldir = mpsOnDir sl i (fst jk) bd in
-  (sldir, mpsOnDir slsl (i ** fst jk) (snd jk) sldir)
-
-public export
-MlPolySlFromSlOfSl : {ar : MLArena} -> (sl : MlPolySlObj ar) ->
-  MlPolySlOfSl {ar} sl -> MlPolySlObj ar
-MlPolySlFromSlOfSl {ar} sl slsl =
-  MPSobj
-    (MlPolySlPosFromSlOfSl {ar} sl slsl)
-    (MlPolySlDirFromSlOfSl {ar} sl slsl)
-    (MlPolySlOnDirFromSlOfSl {ar} sl slsl)
-
-public export
 mlPolySlOfSlFromP : {ar : MLArena} -> {cod : MlPolySlObj ar} ->
   PFSliceMorph {p=ar} (mlPolySlObjToC ar cod) -> MlPolySlOfSl {ar} cod
 mlPolySlOfSlFromP {ar} {cod=cod@(MPSobj _ _ _)} m =
@@ -464,38 +432,6 @@ mlPolySlMorFromP {ar} {cod} m =
 ------------------------------------------------------------------
 ---- Translation between slice morphisms and slices-of-slices ----
 ------------------------------------------------------------------
-
-public export
-MlPolySlMorFromSlOfSl : {ar : MLArena} ->
-  (cod : MlPolySlObj ar) -> (slsl : MlPolySlOfSl {ar} cod) ->
-  MlPolySlMor {ar} (MlPolySlFromSlOfSl {ar} cod slsl) cod
-MlPolySlMorFromSlOfSl {ar=(_ ** _)} (MPSobj _ _ _) slsl =
-  MPSM
-    (\i, jk => fst jk)
-    (\i, jk, cd => (cd, mpsOnDir slsl (i ** fst jk) (snd jk) cd))
-    (\i, jk, cd => Refl)
-
-public export
-MlPolySlMorToSlOfSl : {ar : MLArena} ->
-  {dom, cod : MlPolySlObj ar} -> MlPolySlMor {ar} dom cod ->
-  MlPolySlOfSl {ar} cod
-MlPolySlMorToSlOfSl {ar} {dom} {cod} m =
-  mlPolySlObjFromC
-    (mlPolySlObjTot {ar} cod)
-    (mlPolySlObjTot {ar} dom ** mlPolySlMorNT m)
-
-public export
-mlPolySlMorToObj : {ar : MLArena} -> {dom, cod : MlPolySlObj ar} ->
-  MlPolySlMor {ar} dom cod -> MlPolySlObj ar
-mlPolySlMorToObj {ar} {dom} {cod} =
-  MlPolySlFromSlOfSl {ar} cod . MlPolySlMorToSlOfSl {ar}
-
-public export
-mlPolySlMorTot : {ar : MLArena} -> {dom, cod : MlPolySlObj ar} ->
-  MlPolySlMor {ar} dom cod -> PolyFunc
-mlPolySlMorTot {ar} {dom} {cod} =
-  mlPolySlObjTot {ar=(mlPolySlObjTot {ar} cod)}
-  . MlPolySlMorToSlOfSl {dom} {ar}
 
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
