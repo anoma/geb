@@ -290,7 +290,7 @@ InterpPRAdataFmap {dom} {cod} prad x y =
 public export
 PRAdepBase : {b : MLDirichCatObj} -> (codsl : MlDirichSlObj b) ->
   (pos : MlDirichSlOfSl {ar=b} codsl) -> MlDirichSlObj b
-PRAdepBase {b} codsl pos = MlDirichSlFromSlOfSl {ar=b} codsl pos
+PRAdepBase {b} codsl pos = MlDirichBaseSlFromSlOfSl {ar=b} codsl pos
 
 public export
 PRAdepDirDom : {b : MLDirichCatObj} -> (domsl, codsl : MlDirichSlObj b) ->

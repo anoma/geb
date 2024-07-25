@@ -296,36 +296,36 @@ MlPolySlOfSl : {ar : MLArena} -> MlPolySlObj ar -> Type
 MlPolySlOfSl {ar} sl = MlPolySlObj $ mlPolySlObjTot {ar} sl
 
 public export
-MlPolySlPosFromSlOfSl : {ar : MLArena} -> (sl : MlPolySlObj ar) ->
+MlPolyBaseSlPosFromSlOfSl : {ar : MLArena} -> (sl : MlPolySlObj ar) ->
   MlPolySlOfSl {ar} sl -> MlSlArProjOnPos ar
-MlPolySlPosFromSlOfSl {ar} sl slsl i =
+MlPolyBaseSlPosFromSlOfSl {ar} sl slsl i =
   DPair (mpsOnPos sl i) $ DPair.curry (mpsOnPos slsl) i
 
 public export
-MlPolySlDirFromSlOfSl : {ar : MLArena} -> (sl : MlPolySlObj ar) ->
+MlPolyBaseSlDirFromSlOfSl : {ar : MLArena} -> (sl : MlPolySlObj ar) ->
   (slsl : MlPolySlOfSl {ar} sl) ->
-  MlPolySlDir ar (MlPolySlPosFromSlOfSl {ar} sl slsl)
-MlPolySlDirFromSlOfSl {ar} sl slsl i jk =
+  MlPolySlDir ar (MlPolyBaseSlPosFromSlOfSl {ar} sl slsl)
+MlPolyBaseSlDirFromSlOfSl {ar} sl slsl i jk =
   (mpsDir sl i (fst jk), mpsDir slsl (i ** fst jk) (snd jk))
 
 public export
-MlPolySlOnDirFromSlOfSl : {ar : MLArena} -> (sl : MlPolySlObj ar) ->
+MlPolyBaseSlOnDirFromSlOfSl : {ar : MLArena} -> (sl : MlPolySlObj ar) ->
   (slsl : MlPolySlOfSl {ar} sl) ->
   MlPolySlOnDir {ar}
-    (MlPolySlPosFromSlOfSl {ar} sl slsl)
-    (MlPolySlDirFromSlOfSl {ar} sl slsl)
-MlPolySlOnDirFromSlOfSl {ar} sl slsl i jk bd =
+    (MlPolyBaseSlPosFromSlOfSl {ar} sl slsl)
+    (MlPolyBaseSlDirFromSlOfSl {ar} sl slsl)
+MlPolyBaseSlOnDirFromSlOfSl {ar} sl slsl i jk bd =
   let sldir = mpsOnDir sl i (fst jk) bd in
   (sldir, mpsOnDir slsl (i ** fst jk) (snd jk) sldir)
 
 public export
-MlPolySlFromSlOfSl : {ar : MLArena} -> (sl : MlPolySlObj ar) ->
+MlPolyBaseSlFromSlOfSl : {ar : MLArena} -> (sl : MlPolySlObj ar) ->
   MlPolySlOfSl {ar} sl -> MlPolySlObj ar
-MlPolySlFromSlOfSl {ar} sl slsl =
+MlPolyBaseSlFromSlOfSl {ar} sl slsl =
   MPSobj
-    (MlPolySlPosFromSlOfSl {ar} sl slsl)
-    (MlPolySlDirFromSlOfSl {ar} sl slsl)
-    (MlPolySlOnDirFromSlOfSl {ar} sl slsl)
+    (MlPolyBaseSlPosFromSlOfSl {ar} sl slsl)
+    (MlPolyBaseSlDirFromSlOfSl {ar} sl slsl)
+    (MlPolyBaseSlOnDirFromSlOfSl {ar} sl slsl)
 
 public export
 mlPolySlOfSlFromP : {ar : MLArena} -> {cod : MlPolySlObj ar} ->
