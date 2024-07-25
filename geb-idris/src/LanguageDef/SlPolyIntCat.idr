@@ -75,6 +75,10 @@ IntDomChangeFAsGenQuantF {cat} {x} {y} = dpMapSnd
 -- We can define a notion of "commutation with reparameterization" on
 -- a codomain-change function.  See for example
 -- https://arbital.com/p/gen_elt/ .
+--
+-- Note that this is simply the naturality condition (with the parameters
+-- in a different order from usual) of a transformation between
+-- the internal contravariant hom-functors of `x` and `y`.
 public export
 IntCodChangeFCommutes : {cat : IntCatSig} -> {x, y : icObj cat} ->
   IntCodChangeF cat x y -> Type
@@ -89,6 +93,9 @@ CommutingCodChangeF : (cat : IntCatSig) -> IntMorSig (icObj cat)
 CommutingCodChangeF cat x y =
   Sigma {a=(IntCodChangeF cat x y)} (IntCodChangeFCommutes {cat} {x} {y})
 
+-- Note that this is simply the naturality condition (with the parameters
+-- in a different order from usual) of a transformation between
+-- the internal covariant hom-functors of `x` and `y`.
 public export
 IntDomChangeFCommutes : {cat : IntCatSig} -> {x, y : icObj cat} ->
   IntDomChangeF cat x y -> Type
