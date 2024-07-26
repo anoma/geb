@@ -2421,20 +2421,6 @@ SPFDepFromDataFam : {0 b : Type} -> {0 dom, cod : SliceObj b} ->
 SPFDepFromDataFam {b} {dom} {cod} fam =
   SPFDD (\eb => spfdPos (fam eb)) (\eb => spfdDir (fam eb))
 
-public export
-InterpSPFdepDataEl : {b : Type} -> {dom, cod : SliceObj b} ->
-  SPFdepData {b} dom cod ->
-  (eb : b) -> SliceFunctor (dom eb) (cod eb)
-InterpSPFdepDataEl {b} {dom} {cod} spfdd eb =
-  InterpSPFData {dom=(dom eb)} {cod=(cod eb)} (SPFDataFamFromDep spfdd eb)
-
-public export
-InterpSPFdepDataMapEl : {b : Type} -> {dom, cod : SliceObj b} ->
-  (spfdd : SPFdepData {b} dom cod) ->
-  (eb : b) -> SliceFMap (InterpSPFdepDataEl {b} {dom} {cod} spfdd eb)
-InterpSPFdepDataMapEl {b} {dom} {cod} spfdd eb =
-  InterpSPFDataMap {dom=(dom eb)} {cod=(cod eb)} (SPFDataFamFromDep spfdd eb)
-
 -- An `SPFdepData` can be compressed to an `SPFData`, although this loses
 -- information compared to the `SPFdepData`/`SPFData`-family formulation
 -- in that it erases the `b`-dependent connection between `dom` and `cod`.
@@ -2464,6 +2450,13 @@ InterpSPFdepData {b} {dom} {cod} spfdd =
   InterpSPFData {dom=(Sigma {a=b} dom)} {cod=(Sigma {a=b} cod)}
     (SPFDataFromDep spfdd)
 
+public export
+InterpSPFdepDataEl : {b : Type} -> {dom, cod : SliceObj b} ->
+  SPFdepData {b} dom cod ->
+  (eb : b) -> SliceFunctor (dom eb) (cod eb)
+InterpSPFdepDataEl {b} {dom} {cod} spfdd eb =
+  InterpSPFData {dom=(dom eb)} {cod=(cod eb)} (SPFDataFamFromDep spfdd eb)
+
 -- This is forgetful, compared to `InterpSPFdepDataMapEl`.
 public export
 InterpSPFdepDataMap : {b : Type} -> {dom, cod : SliceObj b} ->
@@ -2472,6 +2465,13 @@ InterpSPFdepDataMap : {b : Type} -> {dom, cod : SliceObj b} ->
 InterpSPFdepDataMap {b} {dom} {cod} spfdd =
   InterpSPFDataMap {dom=(Sigma {a=b} dom)} {cod=(Sigma {a=b} cod)}
     (SPFDataFromDep spfdd)
+
+public export
+InterpSPFdepDataMapEl : {b : Type} -> {dom, cod : SliceObj b} ->
+  (spfdd : SPFdepData {b} dom cod) ->
+  (eb : b) -> SliceFMap (InterpSPFdepDataEl {b} {dom} {cod} spfdd eb)
+InterpSPFdepDataMapEl {b} {dom} {cod} spfdd eb =
+  InterpSPFDataMap {dom=(dom eb)} {cod=(cod eb)} (SPFDataFamFromDep spfdd eb)
 
 public export
 record SPFdepNT {0 b : Type} {dom, cod : SliceObj b}
@@ -2483,6 +2483,28 @@ record SPFdepNT {0 b : Type} {dom, cod : SliceObj b}
     (ep : spfddPos f eb ec) -> (ed : dom eb) ->
     spfddDir g eb ec (spdOnPos eb ec ep) ed ->
     spfddDir f eb ec ep ed
+
+-- This is forgetful, using the forgetful `SPFdataFromDep`.
+public export
+SPFntFromDep : {0 b : Type} -> {0 dom, cod : SliceObj b} ->
+  {0 f, g : SPFdepData {b} dom cod} ->
+  SPFdepNT {b} f g -> SPFnt (SPFDataFromDep f) (SPFDataFromDep g)
+SPFntFromDep {b} {dom} {cod} {f} {g} alpha =
+  SPFDm
+    (\ebc, efp => spdOnPos alpha (fst ebc) (snd ebc) efp)
+    (\(eb ** ec), efp, (_ ** ed), (SPFdd _ _ _ _ dd) =>
+      SPFdd eb ec efp ed $ spdOnDir alpha eb ec efp ed dd)
+
+-- This is forgetful, compared to `InterpSPFdepNTel`.
+public export
+InterpSPFdepNT : {b : Type} -> {dom, cod : SliceObj b} ->
+  (f, g : SPFdepData {b} dom cod) ->
+  SPFdepNT f g ->
+  SliceNatTrans {x=(Sigma {a=b} dom)} {y=(Sigma {a=b} cod)}
+    (InterpSPFdepData f)
+    (InterpSPFdepData g)
+InterpSPFdepNT {b} {dom} {cod} f g alpha =
+  InterpSPFnt (SPFDataFromDep f) (SPFDataFromDep g) (SPFntFromDep alpha)
 
 -- Now we show that a `b`-dependent slice polynomial natural transformation
 -- is just a `b`-indexed dependent family of slice polynomial natural
@@ -2523,28 +2545,6 @@ InterpSPFdepNTel {b} {dom} {cod} f g alpha eb =
     (SPFDataFamFromDep f eb) (SPFDataFamFromDep g eb)
     (SPFntFamFromDep alpha eb)
 
--- This is forgetful, using the forgetful `SPFdataFromDep`.
-public export
-SPFntFromDep : {0 b : Type} -> {0 dom, cod : SliceObj b} ->
-  {0 f, g : SPFdepData {b} dom cod} ->
-  SPFdepNT {b} f g -> SPFnt (SPFDataFromDep f) (SPFDataFromDep g)
-SPFntFromDep {b} {dom} {cod} {f} {g} alpha =
-  SPFDm
-    (\ebc, efp => spdOnPos alpha (fst ebc) (snd ebc) efp)
-    (\(eb ** ec), efp, (_ ** ed), (SPFdd _ _ _ _ dd) =>
-      SPFdd eb ec efp ed $ spdOnDir alpha eb ec efp ed dd)
-
--- This is forgetful, compared to `InterpSPFdepNTel`.
-public export
-InterpSPFdepNT : {b : Type} -> {dom, cod : SliceObj b} ->
-  (f, g : SPFdepData {b} dom cod) ->
-  SPFdepNT f g ->
-  SliceNatTrans {x=(Sigma {a=b} dom)} {y=(Sigma {a=b} cod)}
-    (InterpSPFdepData f)
-    (InterpSPFdepData g)
-InterpSPFdepNT {b} {dom} {cod} f g alpha =
-  InterpSPFnt (SPFDataFromDep f) (SPFDataFromDep g) (SPFntFromDep alpha)
-
 public export
 spfDepPushoutPos : {b : Type} -> {x, y, z : SliceObj b} ->
   (SliceMorphism {a=b} z y) -> SPFdepData x z -> SPFdepData x y
@@ -2576,6 +2576,29 @@ SPFdepPoCell : {b : Type} -> {w, w', z, z' : SliceObj b} ->
   Type
 SPFdepPoCell {w} {w'} {z} {z'} bcl bcr f g =
   SPFdepNT {dom=w'} {cod=z'} (spfDepPushout bcl bcr f) g
+
+-- This is forgetful, like `SPFDataFromDep`, which it uses,
+-- compared to `SPFpoCellDepFromFam`.
+public export
+SPFpoCellFromDep : {b : Type} -> {w, w', z, z' : SliceObj b} ->
+  (bcl : SliceMorphism {a=b} w w') -> (bcr : SliceMorphism {a=b} z z') ->
+  (f : SPFdepData w z) -> (g : SPFdepData w' z') ->
+  SPFdepPoCell {w} {w'} {z} {z'} bcl bcr f g ->
+  SPFpoCell
+    {w=(Sigma {a=b} w)}
+    {w'=(Sigma {a=b} w')}
+    {z=(Sigma {a=b} z)}
+    {z'=(Sigma {a=b} z')}
+    (dpMapSnd bcl)
+    (dpMapSnd bcr)
+    (SPFDataFromDep f)
+    (SPFDataFromDep g)
+SPFpoCellFromDep {w} {w'} {z} {z'} bcl bcr f g spfc =
+  SPFDm
+    (\(eb ** ez'), (SFS (eb ** ez) efp) => spdOnPos spfc eb ez' $ SFS ez efp)
+    (\(eb ** ez'), (SFS (eb' ** ez) efp), (eb'' ** ew'), (SPFdd _ _ _ _ egd) =>
+      let (SFS ew efd) = spdOnDir spfc eb' (bcr eb' ez) (SFS ez efp) ew' egd in
+      SFS (eb' ** ew) $ SPFdd eb' ez efp ew efd)
 
 -- As with functors and natural transformations, the dependent cells are
 -- simply `b`-indexed dependent families of cells.
@@ -2609,26 +2632,3 @@ SPFpoCellFamFromDep : {b : Type} -> {w, w', z, z' : SliceObj b} ->
     (SPFDataFamFromDep f) (SPFDataFamFromDep g) ->
   SPFdepPoCell bcl bcr f g
 SPFpoCellFamFromDep {b} {w} {w'} {z} {z'} bcl bcr f g = SPFntDepFromFam
-
--- This is forgetful, like `SPFDataFromDep`, which it uses,
--- compared to `SPFpoCellDepFromFam`.
-public export
-SPFpoCellFromDep : {b : Type} -> {w, w', z, z' : SliceObj b} ->
-  (bcl : SliceMorphism {a=b} w w') -> (bcr : SliceMorphism {a=b} z z') ->
-  (f : SPFdepData w z) -> (g : SPFdepData w' z') ->
-  SPFdepPoCell {w} {w'} {z} {z'} bcl bcr f g ->
-  SPFpoCell
-    {w=(Sigma {a=b} w)}
-    {w'=(Sigma {a=b} w')}
-    {z=(Sigma {a=b} z)}
-    {z'=(Sigma {a=b} z')}
-    (dpMapSnd bcl)
-    (dpMapSnd bcr)
-    (SPFDataFromDep f)
-    (SPFDataFromDep g)
-SPFpoCellFromDep {w} {w'} {z} {z'} bcl bcr f g spfc =
-  SPFDm
-    (\(eb ** ez'), (SFS (eb ** ez) efp) => spdOnPos spfc eb ez' $ SFS ez efp)
-    (\(eb ** ez'), (SFS (eb' ** ez) efp), (eb'' ** ew'), (SPFdd _ _ _ _ egd) =>
-      let (SFS ew efd) = spdOnDir spfc eb' (bcr eb' ez) (SFS ez efp) ew' egd in
-      SFS (eb' ** ew) $ SPFdd eb' ez efp ew efd)
