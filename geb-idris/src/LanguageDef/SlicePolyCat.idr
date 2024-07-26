@@ -2454,8 +2454,10 @@ public export
 InterpSPFdepDataEl : {b : Type} -> {dom, cod : SliceObj b} ->
   SPFdepData {b} dom cod ->
   (eb : b) -> SliceFunctor (dom eb) (cod eb)
-InterpSPFdepDataEl {b} {dom} {cod} spfdd eb =
-  InterpSPFData {dom=(dom eb)} {cod=(cod eb)} (SPFDataFamFromDep spfdd eb)
+InterpSPFdepDataEl {b} {dom} {cod} spfdd =
+  piMap
+    (\eb => InterpSPFData {dom=(dom eb)} {cod=(cod eb)})
+    (SPFDataFamFromDep spfdd)
 
 -- This is forgetful, compared to `InterpSPFdepDataMapEl`.
 public export
