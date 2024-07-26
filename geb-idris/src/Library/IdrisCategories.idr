@@ -829,6 +829,11 @@ piMap : {0 c : Type} -> {0 x, y : SliceObj c} ->
 piMap {c} {x} {y} g f ec = g ec $ f ec
 
 public export
+sigmaMap : {0 c : Type} -> {0 x, y : SliceObj c} ->
+  SliceMorphism x y -> Sigma x -> Sigma y
+sigmaMap {c} {x} {y} m sigx = (fst sigx ** m (fst sigx) (snd sigx))
+
+public export
 sliceApp : {0 c : Type} -> {0 x, y, z : SliceObj c} ->
   SliceMorphism x (SliceHom y z) -> SliceMorphism x y ->
   SliceMorphism x z
