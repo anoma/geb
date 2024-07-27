@@ -2321,6 +2321,31 @@ SPFpoDoubleCat =
     SPFpoDblCatHcomp
     SPFpoDblCatCellTo2Mor
 
+-----------------------------------------------
+-----------------------------------------------
+---- Families of slice polynomial functors ----
+-----------------------------------------------
+-----------------------------------------------
+
+-- A `b`-way family of `SPFData dom cod`s is equivalent to a single
+-- `SPFData dom (b, cod)`.
+
+public export
+SPFDataFamToProd : {b, dom, cod : Type} ->
+  (b -> SPFData dom cod) -> SPFData dom (b, cod)
+SPFDataFamToProd {b} {dom} {cod} sf =
+  SPFD
+    (uncurry (spfdPos . sf))
+    (\ebc => case ebc of (eb, ec) => spfdDir (sf eb) ec)
+
+public export
+SPFDataProdToFam : {b, dom, cod : Type} ->
+  SPFData dom (b, cod) -> (b -> SPFData dom cod)
+SPFDataProdToFam {b} {dom} {cod} spfd eb =
+  SPFD
+    (curry (spfdPos spfd) eb)
+    (\ec => spfdDir spfd (eb, ec))
+
 -------------------------------------------------
 -------------------------------------------------
 ---- Slice-polynomial categories of elements ----
