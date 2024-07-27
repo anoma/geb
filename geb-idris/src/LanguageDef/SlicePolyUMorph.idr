@@ -196,6 +196,56 @@ SPFDLimitTripleAdjunctionSig a b =
     (SPFDLimitColimitTripleAdjoints a b)
     (SPFDLimitTripleUnitsSig a b)
 
+------------------------
+------------------------
+---- Representables ----
+------------------------
+------------------------
+
+-- An `SPFData dom cod` whose position is `const Unit` and whose direction
+-- is `const x` for some `x : SliceObj dom` is the `cod`-way product of the
+-- covariant representable hom-functor of `x`.
+public export
+SPFDataRep : {dom : Type} -> SliceObj dom -> (cod : Type) -> SPFData dom cod
+SPFDataRep {dom} x cod = SPFD (\_ => Unit) (\_, _ => x)
+
+public export
+sliceCovarHom : {dom : Type} ->
+  SliceObj dom -> (cod : Type) -> SliceFunctor dom cod
+sliceCovarHom {dom} x cod y ec = SliceMorphism {a=dom} x y
+
+public export
+spfdRepToHom : {dom, cod : Type} -> {x : SliceObj dom} ->
+  SliceNatTrans {x=dom} {y=cod}
+    (InterpSPFData {dom} {cod} $ SPFDataRep {dom} x cod)
+    (sliceCovarHom {dom} x cod)
+spfdRepToHom {dom} {cod} {x} y ec = snd
+
+public export
+spfdRepFromHom : {dom, cod : Type} -> {x : SliceObj dom} ->
+  SliceNatTrans {x=dom} {y=cod}
+    (sliceCovarHom {dom} x cod)
+    (InterpSPFData {dom} {cod} $ SPFDataRep {dom} x cod)
+spfdRepFromHom {dom} {cod} {x} y ec = MkDPair ()
+
+-- The slice polynomial functor represented by the terminal object is
+-- a generalization of the (non-dependent) identity in the sense that it
+-- coincides with the identity when `dom` and `cod` are `Unit`.
+
+public export
+SPFDRepTerminal : (dom, cod : Type) -> SPFData dom cod
+SPFDRepTerminal dom cod = SPFDataRep {dom} (SliceObjTerminal dom) cod
+
+public export
+SPFDRepTerminalToId :
+  SPFnt {dom=Unit} {cod=Unit} (SPFDRepTerminal Unit Unit) (SPFDid Unit)
+SPFDRepTerminalToId = SPFDm (\_ => id) (\_, _, _, _ => ())
+
+public export
+SPFDRepTerminalFromId :
+  SPFnt {dom=Unit} {cod=Unit} (SPFDid Unit) (SPFDRepTerminal Unit Unit)
+SPFDRepTerminalFromId = SPFDm (\_ => id) (\(), (), (), () => Refl)
+
 ---------------------
 ---------------------
 ---- Set product ----
