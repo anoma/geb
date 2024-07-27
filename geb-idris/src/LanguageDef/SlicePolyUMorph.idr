@@ -253,6 +253,45 @@ spfdSetProductProj {b} {dom} {cod} sf eb =
     (\ec, ebc => snd ebc (eb, ec) Refl)
     (\ec, dm, ed, efd => (((eb, ec) ** Refl) ** efd))
 
+-----------------------
+-----------------------
+---- Set coproduct ----
+-----------------------
+-----------------------
+
+-- We can take a set coproduct _within_ a single polynomial-functor category
+-- by summing the output of the cross-category (family) product.
+public export
+spfdSetCoproduct : {b, dom, cod : Type} ->
+  (b -> SPFData dom cod) -> SPFData dom cod
+spfdSetCoproduct {b} {dom} {cod} =
+  spfdPostcompSigma snd . SPFDataFamToProd {b} {dom} {cod}
+
+public export
+spfdSetCoproductInj : {b, dom, cod : Type} ->
+  (sf : b -> SPFData dom cod) -> (eb : b) ->
+  SPFnt {dom} {cod} (sf eb) (spfdSetCoproduct {b} {dom} {cod} sf)
+spfdSetCoproductInj {b} {dom} {cod} sf eb =
+  SPFDm
+    (\ec, ep =>
+      (SFS (eb, ec) () **
+       \ebc, eceq => case ebc of (eb, ec') => case eceq of Refl => ep))
+    (\ec, ep, ed, ebcd => case ebcd of
+      (((eb, ec) ** Refl) ** efd) => efd)
+
+public export
+spfdSetCoproductElim : {b, dom, cod : Type} ->
+  {x : b -> SPFData dom cod} -> {y : SPFData dom cod} ->
+  ((eb : b) -> SPFnt {dom} {cod} (x eb) y) ->
+  SPFnt {dom} {cod} (spfdSetCoproduct {b} {dom} {cod} x) y
+spfdSetCoproductElim {b} {dom} {cod} {x} {y} ntf =
+  SPFDm
+    (\ec, ep => case ep of
+      (SFS (eb, ec) () ** epm) => spOnPos (ntf eb) ec $ epm (eb, ec) Refl)
+    (\ec, ep, ed, efd => case ep of
+      (SFS (eb, ec) () ** epm) =>
+        (((eb, ec) ** Refl) ** spOnDir (ntf eb) ec (epm (eb, ec) Refl) ed efd))
+
 ------------------------------------------------
 ------------------------------------------------
 ---- Universal slice polynomial 2-morphisms ----
