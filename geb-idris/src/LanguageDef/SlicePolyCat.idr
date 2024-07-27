@@ -357,6 +357,43 @@ InterpSPFDataMap : {dom, cod : Type} ->
   (spfd : SPFData dom cod) -> SliceFMap (InterpSPFData {dom} {cod} spfd)
 InterpSPFDataMap = SPFDmultiRmap
 
+-- Utility functions for composing the equivalence between `Type` and
+-- `SliceObj Unit` with interpretations of `SPFData`.
+
+public export
+InterpSPFDataUdom : {cod : Type} -> SPFData Unit cod -> Type -> SliceObj cod
+InterpSPFDataUdom {cod} spfd x = InterpSPFData {dom=Unit} {cod} spfd (\_ => x)
+
+public export
+InterpSPFDataUdomMap : {cod : Type} -> (spfd : SPFData Unit cod) ->
+  (x, y : Type) -> (x -> y) ->
+  SliceMorphism {a=cod}
+    (InterpSPFDataUdom {cod} spfd x)
+    (InterpSPFDataUdom {cod} spfd y)
+InterpSPFDataUdomMap {cod} spfd x y f =
+  InterpSPFDataMap {dom=Unit} {cod} spfd (\_ => x) (\_ => y) (\_ => f)
+
+public export
+InterpSPFDataUcod : {dom : Type} -> SPFData dom Unit -> SliceObj dom -> Type
+InterpSPFDataUcod {dom} spfd x = InterpSPFData {dom} {cod=Unit} spfd x ()
+
+public export
+InterpSPFDataUcodMap : {dom : Type} -> (spfd : SPFData dom Unit) ->
+  (x, y : SliceObj dom) -> SliceMorphism {a=dom} x y ->
+  InterpSPFDataUcod {dom} spfd x -> InterpSPFDataUcod {dom} spfd y
+InterpSPFDataUcodMap {dom} spfd x y f =
+  InterpSPFDataMap {dom} {cod=Unit} spfd x y f ()
+
+public export
+InterpSPFDataU : SPFData Unit Unit -> Type -> Type
+InterpSPFDataU spfd x = InterpSPFData {dom=Unit} {cod=Unit} spfd (\_ => x) ()
+
+public export
+InterpSPFDataUMap : (spfd : SPFData Unit Unit) ->
+  (x, y : Type) -> (x -> y) -> InterpSPFDataU spfd x -> InterpSPFDataU spfd y
+InterpSPFDataUMap spfd x y f =
+  InterpSPFDataMap {dom=Unit} {cod=Unit} spfd (\_ => x) (\_ => y) (\_ => f) ()
+
 public export
 InterpSPFDataMapId : FunExt -> {dom, cod : Type} ->
   (spfd : SPFData dom cod) -> (x : SliceObj dom) ->
