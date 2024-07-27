@@ -273,6 +273,42 @@ spfdSetCoproductElim {b} {dom} {cod} {x} {y} ntf =
       (SFS (eb, ec) () ** epm) =>
         (((eb, ec) ** Refl) ** spOnDir (ntf eb) ec (epm (eb, ec) Refl) ed efd))
 
+-------------------------
+-------------------------
+---- Terminal object ----
+-------------------------
+-------------------------
+
+-- A zero-way product is a terminal object.
+public export
+spfdTerminal : (dom, cod : Type) -> SPFData dom cod
+spfdTerminal dom cod = spfdSetProduct {b=Void} {dom} {cod} $ \v => void v
+
+public export
+spfdToTerminal : {dom, cod : Type} ->
+  (spfd : SPFData dom cod) -> SPFnt {dom} {cod} spfd (spfdTerminal dom cod)
+spfdToTerminal {dom} {cod} spfd =
+  spfdSetProductIntro {b=Void} {dom} {cod} {x=spfd} {y=(\v => void v)} $
+    \v => void v
+
+------------------------
+------------------------
+---- Initial object ----
+------------------------
+------------------------
+
+-- A zero-way coproduct is an initial object.
+public export
+spfdInitial : (dom, cod : Type) -> SPFData dom cod
+spfdInitial dom cod = spfdSetCoproduct {b=Void} {dom} {cod} $ \v => void v
+
+public export
+spfdFromInitial : {dom, cod : Type} ->
+  (spfd : SPFData dom cod) -> SPFnt {dom} {cod} (spfdInitial dom cod) spfd
+spfdFromInitial {dom} {cod} spfd =
+  spfdSetCoproductElim {b=Void} {dom} {cod} {x=(\v => void v)} {y=spfd} $
+    \v => void v
+
 ------------------------------------------------
 ------------------------------------------------
 ---- Universal slice polynomial 2-morphisms ----
