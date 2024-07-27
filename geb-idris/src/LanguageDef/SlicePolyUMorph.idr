@@ -196,6 +196,63 @@ SPFDLimitTripleAdjunctionSig a b =
     (SPFDLimitColimitTripleAdjoints a b)
     (SPFDLimitTripleUnitsSig a b)
 
+---------------------
+---------------------
+---- Set product ----
+---------------------
+---------------------
+
+-- A `b`-way family of `SPFData dom cod`s is equivalent to a single
+-- `SPFData dom (b, cod)`.
+
+public export
+SPFDataFamToProd : {b, dom, cod : Type} ->
+  (b -> SPFData dom cod) -> SPFData dom (b, cod)
+SPFDataFamToProd {b} {dom} {cod} sf =
+  SPFD
+    (uncurry (spfdPos . sf))
+    (\ebc => case ebc of (eb, ec) => spfdDir (sf eb) ec)
+
+public export
+SPFDataProdToFam : {b, dom, cod : Type} ->
+  SPFData dom (b, cod) -> (b -> SPFData dom cod)
+SPFDataProdToFam {b} {dom} {cod} spfd eb =
+  SPFD
+    (curry (spfdPos spfd) eb)
+    (\ec => spfdDir spfd (eb, ec))
+
+-- We can take a set product _within_ a single polynomial-functor category
+-- by multiplying the output of the cross-category (family) product.
+public export
+spfdSetProduct : {b, dom, cod : Type} ->
+  (b -> SPFData dom cod) -> SPFData dom cod
+spfdSetProduct {b} {dom} {cod} =
+  spfdPostcompPi snd . SPFDataFamToProd {b} {dom} {cod}
+
+public export
+spfdSetProductIntro : {b, dom, cod : Type} ->
+  {x : SPFData dom cod} -> {y : b -> SPFData dom cod} ->
+  ((eb : b) -> SPFnt {dom} {cod} x (y eb)) ->
+  SPFnt {dom} {cod} x (spfdSetProduct {b} {dom} {cod} y)
+spfdSetProductIntro {b} {dom} {cod} {x} {y} ntf =
+  SPFDm
+    (\ec, ep =>
+      (() **
+       \ebc, eceq => case ebc of
+        (eb, ec') => case eceq of Refl => spOnPos (ntf eb) ec ep))
+    (\ec, ep, ed, ebdm => case ebdm of
+      (((eb, ec') ** eceq) ** dm) =>
+        case eceq of Refl => spOnDir (ntf eb) ec ep ed dm)
+
+public export
+spfdSetProductProj : {b, dom, cod : Type} ->
+  (sf : b -> SPFData dom cod) -> (eb : b) ->
+  SPFnt {dom} {cod} (spfdSetProduct {b} {dom} {cod} sf) (sf eb)
+spfdSetProductProj {b} {dom} {cod} sf eb =
+  SPFDm
+    (\ec, ebc => snd ebc (eb, ec) Refl)
+    (\ec, dm, ed, efd => (((eb, ec) ** Refl) ** efd))
+
 ------------------------------------------------
 ------------------------------------------------
 ---- Universal slice polynomial 2-morphisms ----
