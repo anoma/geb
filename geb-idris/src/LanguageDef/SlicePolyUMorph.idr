@@ -309,6 +309,78 @@ spfdFromInitial {dom} {cod} spfd =
   spfdSetCoproductElim {b=Void} {dom} {cod} {x=(\v => void v)} {y=spfd} $
     \v => void v
 
+-------------------------
+-------------------------
+---- Binary products ----
+-------------------------
+-------------------------
+
+-- A binary product is a set product indexed by a type of cardinality two.
+
+public export
+spfdProduct : {dom, cod : Type} ->
+  SPFData dom cod -> SPFData dom cod -> SPFData dom cod
+spfdProduct {dom} {cod} x y =
+  spfdSetProduct {b=(Fin 2)} {dom} {cod} $ flip index [x, y]
+
+public export
+spfdProductIntro : {dom, cod : Type} ->
+  {x, y, z : SPFData dom cod} ->
+  SPFnt {dom} {cod} x y ->
+  SPFnt {dom} {cod} x z ->
+  SPFnt {dom} {cod} x (spfdProduct {dom} {cod} y z)
+spfdProductIntro {dom} {cod} {x} {y} f g =
+  spfdSetProductIntro {b=(Fin 2)} {dom} {cod} {x} {y=(flip index [y, z])} $
+    \i => case i of FZ => f ; FS FZ => g
+
+public export
+spfdProductProj1 : {dom, cod : Type} -> (x, y : SPFData dom cod) ->
+  SPFnt {dom} {cod} (spfdProduct {dom} {cod} x y) x
+spfdProductProj1 {dom} {cod} x y =
+  spfdSetProductProj {b=(Fin 2)} {dom} {cod} (flip index [x, y]) FZ
+
+public export
+spfdProductProj2 : {dom, cod : Type} -> (x, y : SPFData dom cod) ->
+  SPFnt {dom} {cod} (spfdProduct {dom} {cod} x y) y
+spfdProductProj2 {dom} {cod} x y =
+  spfdSetProductProj {b=(Fin 2)} {dom} {cod} (flip index [x, y]) (FS FZ)
+
+---------------------------
+---------------------------
+---- Binary coproducts ----
+---------------------------
+---------------------------
+
+-- A binary coproduct is a set coproduct indexed by a type of cardinality two.
+
+public export
+spfdCoproduct : {dom, cod : Type} ->
+  SPFData dom cod -> SPFData dom cod -> SPFData dom cod
+spfdCoproduct {dom} {cod} x y =
+  spfdSetCoproduct {b=(Fin 2)} {dom} {cod} $ flip index [x, y]
+
+public export
+spfdCoproductInjL : {dom, cod : Type} -> (x, y : SPFData dom cod) ->
+  SPFnt {dom} {cod} x (spfdCoproduct {dom} {cod} x y)
+spfdCoproductInjL {dom} {cod} x y =
+  spfdSetCoproductInj {b=(Fin 2)} {dom} {cod} (flip index [x, y]) FZ
+
+public export
+spfdCoproductInjR : {dom, cod : Type} -> (x, y : SPFData dom cod) ->
+  SPFnt {dom} {cod} y (spfdCoproduct {dom} {cod} x y)
+spfdCoproductInjR {dom} {cod} x y =
+  spfdSetCoproductInj {b=(Fin 2)} {dom} {cod} (flip index [x, y]) (FS FZ)
+
+public export
+spfdCoproductElim : {dom, cod : Type} ->
+  {x, y, z : SPFData dom cod} ->
+  SPFnt {dom} {cod} x z ->
+  SPFnt {dom} {cod} y z ->
+  SPFnt {dom} {cod} (spfdCoproduct {dom} {cod} x y) z
+spfdCoproductElim {dom} {cod} {x} {y} f g =
+  spfdSetCoproductElim {b=(Fin 2)} {dom} {cod} {x=(flip index [x, y])} {y=z} $
+    \i => case i of FZ => f ; FS FZ => g
+
 ------------------------------------------------
 ------------------------------------------------
 ---- Universal slice polynomial 2-morphisms ----
