@@ -268,6 +268,17 @@ SPFDuPosFromPiFR : {x, y : Type} -> (sl : SliceObj (x, y)) ->
     (SliceSigmaPiFR {c=x} {e=y} sl)
 SPFDuPosFromPiFR {x} {y} sl sd ec m ex = snd m (fst ex) (snd ex)
 
+-- `SliceSigmaPiFR` of `WDiagElem` is the identity.
+public export
+SPFDPiFRtoId : (x : Type) ->
+  SPFnt {dom=x} {cod=x} (spfdPiFR {x} {y=x} $ WDiagElem {a=x}) (SPFDid x)
+SPFDPiFRtoId x = SPFDm (\_, _ => ()) (\ex, u, ex', Refl => SFS ex ())
+
+public export
+SPFDPiFRfromId : (x : Type) ->
+  SPFnt {dom=x} {cod=x} (SPFDid x) (spfdPiFR {x} {y=x} $ WDiagElem {a=x})
+SPFDPiFRfromId x = SPFDm (\_, _ => ()) (\ex, (), ex', (SFS ex ()) => Refl)
+
 ---------------------
 ---------------------
 ---- Set product ----
