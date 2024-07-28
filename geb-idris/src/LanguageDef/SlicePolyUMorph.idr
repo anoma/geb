@@ -583,6 +583,49 @@ spfdParProductNT {dom} {cod} {p} {p'} {q} {q'} f g =
     {sf=(flip index [p, q])} {sf'=(flip index [p', q'])} $
     \i => case i of FZ => f ; FS FZ => g
 
+-- `SPFDRepTerminal` (the zero-way parallel product) is a unit for
+-- the parallel product.
+
+public export
+spfdParProductToUnitL : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  SPFnt {dom} {cod}
+    spfd
+    (spfdParProduct {dom} {cod} (SPFDRepTerminal dom cod) spfd)
+spfdParProductToUnitL {dom} {cod} spfd =
+  SPFDm
+    (\ec, ep, i => case i of FZ => () ; FS FZ => ep)
+    (\ec, ep, d, efd => efd (FS FZ))
+
+public export
+spfdParProductToUnitR : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  SPFnt {dom} {cod}
+    spfd
+    (spfdParProduct {dom} {cod} spfd (SPFDRepTerminal dom cod))
+spfdParProductToUnitR {dom} {cod} spfd =
+  SPFDm
+    (\ec, ep, i => case i of FZ => ep ; FS FZ => ())
+    (\ec, ep, d, efd => efd FZ)
+
+public export
+spfdParProductFromUnitL : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  SPFnt {dom} {cod}
+    (spfdParProduct {dom} {cod} (SPFDRepTerminal dom cod) spfd)
+    spfd
+spfdParProductFromUnitL {dom} {cod} spfd =
+  SPFDm
+    (\ec, ep => ep (FS FZ))
+    (\ec, ep, ed, efd, i => case i of FZ => () ; FS FZ => efd)
+
+public export
+spfdParProductFromUnitR : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  SPFnt {dom} {cod}
+    (spfdParProduct {dom} {cod} spfd (SPFDRepTerminal dom cod))
+    spfd
+spfdParProductFromUnitR {dom} {cod} spfd =
+  SPFDm
+    (\ec, ep => ep FZ)
+    (\ec, ep, ed, efd, i => case i of FZ => efd ; FS FZ => ())
+
 ------------------------------------------------
 ------------------------------------------------
 ---- Universal slice polynomial 2-morphisms ----
