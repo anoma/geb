@@ -357,6 +357,33 @@ spfdSetCoproductElim {b} {dom} {cod} {x} {y} ntf =
       (SFS (eb, ec) () ** epm) =>
         (((eb, ec) ** Refl) ** spOnDir (ntf eb) ec (epm (eb, ec) Refl) ed efd))
 
+------------------------------
+------------------------------
+---- Set parallel product ----
+------------------------------
+------------------------------
+
+public export
+spfdSetParProductPos : {b, dom, cod : Type} ->
+  (b -> SPFData dom cod) -> SliceObj cod
+spfdSetParProductPos {b} {dom} {cod} sf ec =
+  Pi {a=b} $ \eb => spfdPos (sf eb) ec
+
+public export
+spfdSetParProductDir : {b, dom, cod : Type} ->
+  (sf : b -> SPFData dom cod) ->
+  SPFdirType dom cod (spfdSetParProductPos {b} {dom} {cod} sf)
+spfdSetParProductDir {b} {dom} {cod} sf ec ep ed =
+  Pi {a=b} $ \eb => spfdDir (sf eb) ec (ep eb) ed
+
+public export
+spfdSetParProduct : {b, dom, cod : Type} ->
+  (b -> SPFData dom cod) -> SPFData dom cod
+spfdSetParProduct {b} {dom} {cod} sf =
+  SPFD
+    (spfdSetParProductPos {b} {dom} {cod} sf)
+    (spfdSetParProductDir {b} {dom} {cod} sf)
+
 -------------------------
 -------------------------
 ---- Terminal object ----
