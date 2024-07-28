@@ -411,6 +411,18 @@ spfdSetParProduct {b} {dom} {cod} sf =
     (spfdSetParProductPos {b} {dom} {cod} sf)
     (spfdSetParProductDir {b} {dom} {cod} sf)
 
+public export
+spfdSetParProductNT : {b, dom, cod : Type} ->
+  {sf, sf' : b -> SPFData dom cod} ->
+  ((eb : b) -> SPFnt {dom} {cod} (sf eb) (sf' eb)) ->
+  SPFnt {dom} {cod}
+    (spfdSetParProduct {b} {dom} {cod} sf)
+    (spfdSetParProduct {b} {dom} {cod} sf')
+spfdSetParProductNT {b} {dom} {cod} {sf} {sf'} ntf =
+  SPFDm
+    (\ec, ep, eb => spOnPos (ntf eb) ec (ep eb))
+    (\ec, ep, ed, efd', eb => spOnDir (ntf eb) ec (ep eb) ed (efd' eb))
+
 -------------------------
 -------------------------
 ---- Terminal object ----
