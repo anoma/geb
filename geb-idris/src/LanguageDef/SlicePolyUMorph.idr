@@ -308,6 +308,32 @@ SPFDuPosFromPiFL : {x, y : Type} -> (sl : SliceObj (x, y)) ->
 SPFDuPosFromPiFL {x} {y} sl sd ec =
   dpMapSnd $ \esl, esd, ey, eqy => rewrite sym eqy in esd
 
+-------------------
+-------------------
+---- Constants ----
+-------------------
+-------------------
+
+-- An `SPFData` with no directions is a constant.
+
+public export
+SPFDataConst : (dom : Type) -> {cod : Type} -> SliceObj cod -> SPFData dom cod
+SPFDataConst dom {cod} x = SPFD x (\_, _, _ => Void)
+
+public export
+spfdConstToConst : (dom : Type) -> {cod : Type} -> (x : SliceObj cod) ->
+  SliceNatTrans {x=dom} {y=cod}
+    (InterpSPFData {dom} {cod} $ SPFDataConst dom {cod} x)
+    (const x)
+spfdConstToConst dom {cod} x sd ec = fst
+
+public export
+spfdConstFromConst : (dom : Type) -> {cod : Type} -> (x : SliceObj cod) ->
+  SliceNatTrans {x=dom} {y=cod}
+    (const x)
+    (InterpSPFData {dom} {cod} $ SPFDataConst dom {cod} x)
+spfdConstFromConst dom {cod} x sd ec ex = (ex ** \_, v => void v)
+
 ---------------------
 ---------------------
 ---- Set product ----
