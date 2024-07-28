@@ -280,6 +280,33 @@ SPFDPiFRfromId : (x : Type) ->
   SPFnt {dom=x} {cod=x} (SPFDid x) (spfdPiFR {x} {y=x} $ WDiagElem {a=x})
 SPFDPiFRfromId x = SPFDm (\_, _ => ()) (\ex, (), ex', (SFS ex ()) => Refl)
 
+-- Dually, a slice polynomial functor whose direction is just a diagonalization
+-- (an identity type) is equivalent to a `SliceSigmaPiFL` -- that is, a base
+-- change followed by a sigma, with no pi involved.  In that sense, it is a
+-- generalization of pullbacks.  It is left adjoint to `spfdPiFR`.
+public export
+spfdPiFL : {x, y : Type} -> SliceObj (x, y) -> SPFData y x
+spfdPiFL {x} {y} sl =
+  SPFD
+    (\ex => (ey : y ** sl (ex, ey)))
+    (\ex, ep, ey => fst ep = ey)
+
+public export
+SPFDuPosToPiFL : {x, y : Type} -> (sl : SliceObj (x, y)) ->
+  SliceNatTrans {x=y} {y=x}
+    (InterpSPFData {dom=y} {cod=x} $ spfdPiFL {x} {y} sl)
+    (SliceSigmaPiFL {c=x} {e=y} sl)
+SPFDuPosToPiFL {x} {y} sl sd ec =
+  dpMapSnd $ \esl, m => m (fst esl) Refl
+
+public export
+SPFDuPosFromPiFL : {x, y : Type} -> (sl : SliceObj (x, y)) ->
+  SliceNatTrans {x=y} {y=x}
+    (SliceSigmaPiFL {c=x} {e=y} sl)
+    (InterpSPFData {dom=y} {cod=x} $ spfdPiFL {x} {y} sl)
+SPFDuPosFromPiFL {x} {y} sl sd ec =
+  dpMapSnd $ \esl, esd, ey, eqy => rewrite sym eqy in esd
+
 ---------------------
 ---------------------
 ---- Set product ----
