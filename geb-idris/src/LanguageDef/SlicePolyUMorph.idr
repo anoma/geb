@@ -555,6 +555,34 @@ spfdCoproductElim {dom} {cod} {x} {y} f g =
   spfdSetCoproductElim {b=(Fin 2)} {dom} {cod} {x=(flip index [x, y])} {y=z} $
     \i => case i of FZ => f ; FS FZ => g
 
+----------------------------------
+----------------------------------
+---- Binary parallel products ----
+----------------------------------
+----------------------------------
+
+-- A binary parallel product is a set parallel product indexed by a type of
+-- cardinality two.
+
+public export
+spfdParProduct : {dom, cod : Type} ->
+  SPFData dom cod -> SPFData dom cod -> SPFData dom cod
+spfdParProduct {dom} {cod} x y =
+  spfdSetParProduct {b=(Fin 2)} {dom} {cod} $ flip index [x, y]
+
+public export
+spfdParProductNT : {dom, cod : Type} ->
+  {p, p', q, q' : SPFData dom cod} ->
+  SPFnt {dom} {cod} p p' ->
+  SPFnt {dom} {cod} q q' ->
+  SPFnt {dom} {cod}
+    (spfdParProduct {dom} {cod} p q)
+    (spfdParProduct {dom} {cod} p' q')
+spfdParProductNT {dom} {cod} {p} {p'} {q} {q'} f g =
+  spfdSetParProductNT {b=(Fin 2)} {dom} {cod}
+    {sf=(flip index [p, q])} {sf'=(flip index [p', q'])} $
+    \i => case i of FZ => f ; FS FZ => g
+
 ------------------------------------------------
 ------------------------------------------------
 ---- Universal slice polynomial 2-morphisms ----
