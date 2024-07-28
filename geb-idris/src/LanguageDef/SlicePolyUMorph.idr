@@ -766,6 +766,33 @@ spfdParProductFromUnitR {dom} {cod} spfd =
     (\ec, ep => ep FZ)
     (\ec, ep, ed, efd, i => case i of FZ => efd ; FS FZ => ())
 
+---------------------
+---------------------
+---- Hom-objects ----
+---------------------
+---------------------
+
+public export
+spfdHomObj : {dom, cod : Type} ->
+  SPFData dom cod -> SPFData dom cod -> SPFData dom cod
+spfdHomObj {dom} {cod} q r =
+  spfdSetProduct {b=(Sigma {a=cod} $ spfdPos q)} {dom} {cod} $
+    \ep => SPFDcomp dom dom cod r $
+      spfdCoproduct {dom} {cod=dom}
+        (SPFDid dom)
+        (SPFDataConst dom {cod=dom} $ uncurry (spfdDir q) ep)
+
+public export
+spfdHomObjPos : {dom, cod : Type} ->
+  SPFData dom cod -> SPFData dom cod -> SliceObj cod
+spfdHomObjPos {dom} {cod} p q = spfdPos (spfdHomObj {dom} {cod} p q)
+
+public export
+spfdHomObjDir : {dom, cod : Type} ->
+  (p, q : SPFData dom cod) ->
+  SPFdirType dom cod (spfdHomObjPos {dom} {cod} p q)
+spfdHomObjDir {dom} {cod} p q = spfdDir (spfdHomObj {dom} {cod} p q)
+
 ------------------------------------------------
 ------------------------------------------------
 ---- Universal slice polynomial 2-morphisms ----
