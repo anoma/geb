@@ -246,6 +246,28 @@ SPFDRepTerminalFromId :
   SPFnt {dom=Unit} {cod=Unit} (SPFDid Unit) (SPFDRepTerminal Unit Unit)
 SPFDRepTerminalFromId = SPFDm (\_ => id) (\(), (), (), () => Refl)
 
+-- More generally, a slice polynomial functor whose position is `const Unit`
+-- is equivalent to a `SliceSigmaPiFR` -- that is, a base change followed
+-- by a pi, with no sigma involved.  In that sense, it is a generalization
+-- of representables.
+public export
+spfdPiFR : {x, y : Type} -> SliceObj (x, y) -> SPFData x y
+spfdPiFR {x} {y} sl = SPFD (\_ => Unit) (\ec, u, ed => sl (ed, ec))
+
+public export
+SPFDuPosToPiFR : {x, y : Type} -> (sl : SliceObj (x, y)) ->
+  SliceNatTrans {x} {y}
+    (InterpSPFData {dom=x} {cod=y} $ spfdPiFR {x} {y} sl)
+    (SliceSigmaPiFR {c=x} {e=y} sl)
+SPFDuPosToPiFR {x} {y} sl sd ec m ex = snd m (fst ex) (snd ex)
+
+public export
+SPFDuPosFromPiFR : {x, y : Type} -> (sl : SliceObj (x, y)) ->
+  SliceNatTrans {x} {y}
+    (InterpSPFData {dom=x} {cod=y} $ spfdPiFR {x} {y} sl)
+    (SliceSigmaPiFR {c=x} {e=y} sl)
+SPFDuPosFromPiFR {x} {y} sl sd ec m ex = snd m (fst ex) (snd ex)
+
 ---------------------
 ---------------------
 ---- Set product ----
