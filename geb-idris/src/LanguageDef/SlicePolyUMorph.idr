@@ -555,6 +555,68 @@ spfdCoproductElim {dom} {cod} {x} {y} f g =
   spfdSetCoproductElim {b=(Fin 2)} {dom} {cod} {x=(flip index [x, y])} {y=z} $
     \i => case i of FZ => f ; FS FZ => g
 
+-- `spfdInitial` (the zero-way coproduct) is a unit for the coproduct.
+
+public export
+spfdCoproductToUnitL : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  SPFnt {dom} {cod}
+    spfd
+    (spfdCoproduct {dom} {cod} (spfdInitial dom cod) spfd)
+spfdCoproductToUnitL {dom} {cod} spfd =
+  SPFDm
+    (\ec, ep =>
+      (SFS (FS FZ, ec) () **
+       \iec', eqc => case iec' of (i, ec') => case eqc of Refl => ep))
+    (\ec, ep, ed, (((FS FZ, ec) ** Refl) ** efd) => efd)
+
+public export
+spfdCoproductToUnitR : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  SPFnt {dom} {cod}
+    spfd
+    (spfdCoproduct {dom} {cod} spfd (spfdInitial dom cod))
+spfdCoproductToUnitR {dom} {cod} spfd =
+  SPFDm
+    (\ec, ep =>
+      (SFS (FZ, ec) () **
+       \iec', eqc => case iec' of (i, ec') => case eqc of Refl => ep))
+    (\ec, ep, ed, (((FZ, ec) ** Refl) ** efd) => efd)
+
+public export
+spfdCoproductFromUnitL : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  SPFnt {dom} {cod}
+    (spfdCoproduct {dom} {cod} (spfdInitial dom cod) spfd)
+    spfd
+spfdCoproductFromUnitL {dom} {cod} spfd =
+  SPFDm
+    (\ec, (SFS (i, ec) () ** dm) =>
+      let efd = dm (i, ec) Refl in
+      case i of
+        FZ => case efd of (SFS (v, ec') () ** ep) => void v
+        FS FZ => efd)
+    (\ec, (SFS (i, ec) () ** dm), ed, efd =>
+      (((i, ec) ** Refl) **
+       case i of
+        FZ => case (dm (i, ec) Refl) of (SFS (v, ec') () ** ep) => void v
+        FS FZ => efd))
+
+public export
+spfdCoproductFromUnitR : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  SPFnt {dom} {cod}
+    (spfdCoproduct {dom} {cod} spfd (spfdInitial dom cod))
+    spfd
+spfdCoproductFromUnitR {dom} {cod} spfd =
+  SPFDm
+    (\ec, (SFS (i, ec) () ** dm) =>
+      let efd = dm (i, ec) Refl in
+      case i of
+        FZ => efd
+        FS FZ => case efd of (SFS (v, ec') () ** ep) => void v)
+    (\ec, (SFS (i, ec) () ** dm), ed, efd =>
+      (((i, ec) ** Refl) **
+       case i of
+        FZ => efd
+        FS FZ => case (dm (i, ec) Refl) of (SFS (v, ec') () ** ep) => void v))
+
 ----------------------------------
 ----------------------------------
 ---- Binary parallel products ----
