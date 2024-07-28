@@ -519,6 +519,58 @@ spfdProductProj2 : {dom, cod : Type} -> (x, y : SPFData dom cod) ->
 spfdProductProj2 {dom} {cod} x y =
   spfdSetProductProj {b=(Fin 2)} {dom} {cod} (flip index [x, y]) (FS FZ)
 
+-- `spfdTerminal` (the zero-way product) is a unit for the product.
+
+public export
+spfdProductToUnitL : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  SPFnt {dom} {cod}
+    spfd
+    (spfdProduct {dom} {cod} (spfdTerminal dom cod) spfd)
+spfdProductToUnitL {dom} {cod} spfd =
+  SPFDm
+    (\ec, ep =>
+      (() ** \(i, ec), Refl => case i of
+        FZ => (() ** \(v, _) => void v)
+        FS FZ => ep))
+    (\ec, ep, ed, (((i, ec) ** Refl) ** efd) => case i of
+      FZ => void $ fst $ fst $ fst efd
+      FS FZ => efd)
+
+public export
+spfdProductToUnitR : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  SPFnt {dom} {cod}
+    spfd
+    (spfdProduct {dom} {cod} spfd (spfdTerminal dom cod))
+spfdProductToUnitR {dom} {cod} spfd =
+  SPFDm
+    (\ec, ep =>
+      (() ** \(i, ec), Refl => case i of
+        FZ => ep
+        FS FZ => (() ** \(v, _) => void v)))
+    (\ec, ep, ed, (((i, ec) ** Refl) ** efd) => case i of
+      FZ => efd
+      FS FZ => void $ fst $ fst $ fst efd)
+
+public export
+spfdProductFromUnitL : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  SPFnt {dom} {cod}
+    (spfdProduct {dom} {cod} (spfdTerminal dom cod) spfd)
+    spfd
+spfdProductFromUnitL {dom} {cod} spfd =
+  SPFDm
+    (\ec, (() ** m) => m (FS FZ, ec) Refl)
+    (\ec, (() ** m), ed, efd => (((FS FZ, ec) ** Refl) ** efd))
+
+public export
+spfdProductFromUnitR : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  SPFnt {dom} {cod}
+    (spfdProduct {dom} {cod} spfd (spfdTerminal dom cod))
+    spfd
+spfdProductFromUnitR {dom} {cod} spfd =
+  SPFDm
+    (\ec, (() ** m) => m (FZ, ec) Refl)
+    (\ec, (() ** m), ed, efd => (((FZ, ec) ** Refl) ** efd))
+
 ---------------------------
 ---------------------------
 ---- Binary coproducts ----
