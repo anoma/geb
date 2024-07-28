@@ -265,9 +265,9 @@ SPFDuPosToPiFR {x} {y} sl sd ec m ex = snd m (fst ex) (snd ex)
 public export
 SPFDuPosFromPiFR : {x, y : Type} -> (sl : SliceObj (x, y)) ->
   SliceNatTrans {x} {y}
-    (InterpSPFData {dom=x} {cod=y} $ spfdPiFR {x} {y} sl)
     (SliceSigmaPiFR {c=x} {e=y} sl)
-SPFDuPosFromPiFR {x} {y} sl sd ec m ex = snd m (fst ex) (snd ex)
+    (InterpSPFData {dom=x} {cod=y} $ spfdPiFR {x} {y} sl)
+SPFDuPosFromPiFR {x} {y} sl sd ey m = (() ** \ex, esl => m (ex ** esl))
 
 -- `SliceSigmaPiFR` of `WDiagElem` is the identity.
 public export
