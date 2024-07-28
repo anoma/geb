@@ -283,7 +283,7 @@ SPFDPiFRfromId x = SPFDm (\_, _ => ()) (\ex, (), ex', (SFS ex ()) => Refl)
 -- Dually, a slice polynomial functor whose direction is just a diagonalization
 -- (an identity type) is equivalent to a `SliceSigmaPiFL` -- that is, a base
 -- change followed by a sigma, with no pi involved.  In that sense, it is a
--- generalization of pullbacks.  It is left adjoint to `spfdPiFR`.
+-- sum of products, with no function types.  It is left adjoint to `spfdPiFR`.
 public export
 spfdPiFL : {x, y : Type} -> SliceObj (x, y) -> SPFData y x
 spfdPiFL {x} {y} sl =
