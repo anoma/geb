@@ -231,7 +231,8 @@ spfdRepFromHom {dom} {cod} {x} y ec = MkDPair ()
 -- The slice polynomial functor represented by the terminal object is
 -- a generalization of the (non-dependent) identity in the sense that it
 -- coincides with the identity when `dom` and `cod` are `Unit`.
--- (See `SPFDPiFRtoId` below for the general, dependent case.)
+-- (See `SPFDPiFRtoId` below for the full dependent generalization of the
+-- identity.)
 
 public export
 SPFDRepTerminal : (dom, cod : Type) -> SPFData dom cod
