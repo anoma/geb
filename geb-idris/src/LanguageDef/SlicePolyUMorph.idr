@@ -423,6 +423,23 @@ spfdSetParProductNT {b} {dom} {cod} {sf} {sf'} ntf =
     (\ec, ep, eb => spOnPos (ntf eb) ec (ep eb))
     (\ec, ep, ed, efd', eb => spOnDir (ntf eb) ec (ep eb) ed (efd' eb))
 
+-- A zero-way parallel product is an `SPFDRepTerminal`.
+public export
+spfdEmptyParProductToRepTerminal : (dom, cod : Type) ->
+  SPFnt {dom} {cod}
+    (spfdSetParProduct {b=Void} {dom} {cod} $ \v => void v)
+    (SPFDRepTerminal dom cod)
+spfdEmptyParProductToRepTerminal dom cod =
+  SPFDm (\_, _ => ()) (\ec, ep, ed, esl, v => void v)
+
+public export
+spfdEmptyParProductFromRepTerminal : (dom, cod : Type) ->
+  SPFnt {dom} {cod}
+    (SPFDRepTerminal dom cod)
+    (spfdSetParProduct {b=Void} {dom} {cod} $ \v => void v)
+spfdEmptyParProductFromRepTerminal dom cod =
+  SPFDm (\_, _, v => void v) (\ec, u, ed, efd => ())
+
 -------------------------
 -------------------------
 ---- Terminal object ----
