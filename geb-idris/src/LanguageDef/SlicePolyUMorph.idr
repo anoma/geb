@@ -334,6 +334,103 @@ spfdConstFromConst : (dom : Type) -> {cod : Type} -> (x : SliceObj cod) ->
     (InterpSPFData {dom} {cod} $ SPFDataConst dom {cod} x)
 spfdConstFromConst dom {cod} x sd ec ex = (ex ** \_, v => void v)
 
+----------------------------
+----------------------------
+---- Left Kan extension ----
+----------------------------
+----------------------------
+
+-- Left Kan extension is left adjoint to precomposition.  As such
+-- we may also call it a "left coclosure" operation for the composition
+-- product.
+
+public export
+spfdLKanExtPos : {a, b, c : Type} ->
+  SPFData a c -> SPFData a b -> SliceObj b
+spfdLKanExtPos {a} {b} {c} q p = spfdPos p
+
+public export
+spfdLKanExtDir : {a, b, c : Type} ->
+  (q : SPFData a c) -> (p : SPFData a b) ->
+  SPFdirType c b (spfdLKanExtPos {a} {b} {c} q p)
+spfdLKanExtDir {a} {b} {c} q p eb ep =
+  InterpSPFData {dom=a} {cod=c} q $ spfdDir {dom=a} {cod=b} p eb ep
+
+public export
+spfdLKanExt : {a, b, c : Type} ->
+  SPFData a c -> SPFData a b -> SPFData c b
+spfdLKanExt {a} {b} {c} q p =
+  SPFD (spfdLKanExtPos {a} {b} {c} q p) (spfdLKanExtDir {a} {b} {c} q p)
+
+public export
+spfdLKanExtL : {a, b, c : Type} -> (q : SPFData a c) ->
+  SPFData a b -> SPFData c b
+spfdLKanExtL = spfdLKanExt
+
+public export
+spfdLKanExtR : {a, b, c : Type} -> (q : SPFData a c) ->
+  SPFData c b -> SPFData a b
+spfdLKanExtR {a} {b} {c} = flip $ SPFDcomp a c b
+
+public export
+spfdLKanExtLAdjPos : {a, b, c : Type} ->
+  (p : SPFData a b) -> (q : SPFData a c) -> (r : SPFData c b) ->
+  SPFnt {dom=c} {cod=b} (spfdLKanExtL q p) r ->
+  SPFntPos {dom=a} {cod=b} p (spfdLKanExtR q r)
+spfdLKanExtLAdjPos {a} {b} {c} p q r alpha eb ep =
+  (spOnPos alpha eb ep ** \ec => DPair.fst . spOnDir alpha eb ep ec)
+
+public export
+spfdLKanExtLAdjDir : {a, b, c : Type} ->
+  (p : SPFData a b) -> (q : SPFData a c) -> (r : SPFData c b) ->
+  (alpha : SPFnt {dom=c} {cod=b} (spfdLKanExtL q p) r) ->
+  SPFntDir {dom=a} {cod=b}
+    p
+    (spfdLKanExtR q r)
+    (spfdLKanExtLAdjPos p q r alpha)
+spfdLKanExtLAdjDir {a} {b} {c} p q r alpha eb ep ea rqd =
+  snd (spOnDir alpha eb ep (fst $ fst rqd) (snd $ fst rqd)) ea (snd rqd)
+
+public export
+spfdLKanExtLAdj : {a, b, c : Type} ->
+  (p : SPFData a b) -> (q : SPFData a c) -> (r : SPFData c b) ->
+  SPFnt {dom=c} {cod=b} (spfdLKanExtL q p) r ->
+  SPFnt {dom=a} {cod=b} p (spfdLKanExtR q r)
+spfdLKanExtLAdj {a} {b} {c} p q r alpha =
+  SPFDm
+    (spfdLKanExtLAdjPos {a} {b} {c} p q r alpha)
+    (spfdLKanExtLAdjDir {a} {b} {c} p q r alpha)
+
+public export
+spfdLKanExtRAdjPos : {a, b, c : Type} ->
+  (p : SPFData a b) -> (q : SPFData a c) -> (r : SPFData c b) ->
+  SPFnt {dom=a} {cod=b} p (spfdLKanExtR q r) ->
+  SPFntPos {dom=c} {cod=b} (spfdLKanExtL q p) r
+spfdLKanExtRAdjPos {a} {b} {c} p q r alpha eb ep = fst $ spOnPos alpha eb ep
+
+public export
+spfdLKanExtRAdjDir : {a, b, c : Type} ->
+  (p : SPFData a b) -> (q : SPFData a c) -> (r : SPFData c b) ->
+  (alpha : SPFnt {dom=a} {cod=b} p (spfdLKanExtR q r)) ->
+  SPFntDir {dom=c} {cod=b}
+    (spfdLKanExtL q p)
+    r
+    (spfdLKanExtRAdjPos p q r alpha)
+spfdLKanExtRAdjDir {a} {b} {c} p q r alpha eb ep ec rd =
+  (snd (spOnPos alpha eb ep) ec rd **
+   \ea, qd =>
+    spOnDir alpha eb ep ea ((ec ** rd) ** qd))
+
+public export
+spfdLKanExtRAdj : {a, b, c : Type} ->
+  (p : SPFData a b) -> (q : SPFData a c) -> (r : SPFData c b) ->
+  SPFnt {dom=a} {cod=b} p (spfdLKanExtR q r) ->
+  SPFnt {dom=c} {cod=b} (spfdLKanExtL q p) r
+spfdLKanExtRAdj {a} {b} {c} p q r alpha =
+  SPFDm
+    (spfdLKanExtRAdjPos {a} {b} {c} p q r alpha)
+    (spfdLKanExtRAdjDir {a} {b} {c} p q r alpha)
+
 -----------------------------------------
 -----------------------------------------
 ---- Symmetric n-way Day convolution ----
@@ -821,103 +918,6 @@ spfdPair {w} a = spfdProduct {dom=w} {cod=w} (SPFDataConst w a) (SPFDid w)
 public export
 spfdMaybe : (w : Type) -> SPFData w w
 spfdMaybe w = spfdEither {w} (SliceObjTerminal w)
-
-----------------------------
-----------------------------
----- Left Kan extension ----
-----------------------------
-----------------------------
-
--- Left Kan extension is left adjoint to precomposition.  As such
--- we may also call it a "left coclosure" operation for the composition
--- product.
-
-public export
-spfdLKanExtPos : {a, b, c : Type} ->
-  SPFData a c -> SPFData a b -> SliceObj b
-spfdLKanExtPos {a} {b} {c} q p = spfdPos p
-
-public export
-spfdLKanExtDir : {a, b, c : Type} ->
-  (q : SPFData a c) -> (p : SPFData a b) ->
-  SPFdirType c b (spfdLKanExtPos {a} {b} {c} q p)
-spfdLKanExtDir {a} {b} {c} q p eb ep =
-  InterpSPFData {dom=a} {cod=c} q $ spfdDir {dom=a} {cod=b} p eb ep
-
-public export
-spfdLKanExt : {a, b, c : Type} ->
-  SPFData a c -> SPFData a b -> SPFData c b
-spfdLKanExt {a} {b} {c} q p =
-  SPFD (spfdLKanExtPos {a} {b} {c} q p) (spfdLKanExtDir {a} {b} {c} q p)
-
-public export
-spfdLKanExtL : {a, b, c : Type} -> (q : SPFData a c) ->
-  SPFData a b -> SPFData c b
-spfdLKanExtL = spfdLKanExt
-
-public export
-spfdLKanExtR : {a, b, c : Type} -> (q : SPFData a c) ->
-  SPFData c b -> SPFData a b
-spfdLKanExtR {a} {b} {c} = flip $ SPFDcomp a c b
-
-public export
-spfdLKanExtLAdjPos : {a, b, c : Type} ->
-  (p : SPFData a b) -> (q : SPFData a c) -> (r : SPFData c b) ->
-  SPFnt {dom=c} {cod=b} (spfdLKanExtL q p) r ->
-  SPFntPos {dom=a} {cod=b} p (spfdLKanExtR q r)
-spfdLKanExtLAdjPos {a} {b} {c} p q r alpha eb ep =
-  (spOnPos alpha eb ep ** \ec => DPair.fst . spOnDir alpha eb ep ec)
-
-public export
-spfdLKanExtLAdjDir : {a, b, c : Type} ->
-  (p : SPFData a b) -> (q : SPFData a c) -> (r : SPFData c b) ->
-  (alpha : SPFnt {dom=c} {cod=b} (spfdLKanExtL q p) r) ->
-  SPFntDir {dom=a} {cod=b}
-    p
-    (spfdLKanExtR q r)
-    (spfdLKanExtLAdjPos p q r alpha)
-spfdLKanExtLAdjDir {a} {b} {c} p q r alpha eb ep ea rqd =
-  snd (spOnDir alpha eb ep (fst $ fst rqd) (snd $ fst rqd)) ea (snd rqd)
-
-public export
-spfdLKanExtLAdj : {a, b, c : Type} ->
-  (p : SPFData a b) -> (q : SPFData a c) -> (r : SPFData c b) ->
-  SPFnt {dom=c} {cod=b} (spfdLKanExtL q p) r ->
-  SPFnt {dom=a} {cod=b} p (spfdLKanExtR q r)
-spfdLKanExtLAdj {a} {b} {c} p q r alpha =
-  SPFDm
-    (spfdLKanExtLAdjPos {a} {b} {c} p q r alpha)
-    (spfdLKanExtLAdjDir {a} {b} {c} p q r alpha)
-
-public export
-spfdLKanExtRAdjPos : {a, b, c : Type} ->
-  (p : SPFData a b) -> (q : SPFData a c) -> (r : SPFData c b) ->
-  SPFnt {dom=a} {cod=b} p (spfdLKanExtR q r) ->
-  SPFntPos {dom=c} {cod=b} (spfdLKanExtL q p) r
-spfdLKanExtRAdjPos {a} {b} {c} p q r alpha eb ep = fst $ spOnPos alpha eb ep
-
-public export
-spfdLKanExtRAdjDir : {a, b, c : Type} ->
-  (p : SPFData a b) -> (q : SPFData a c) -> (r : SPFData c b) ->
-  (alpha : SPFnt {dom=a} {cod=b} p (spfdLKanExtR q r)) ->
-  SPFntDir {dom=c} {cod=b}
-    (spfdLKanExtL q p)
-    r
-    (spfdLKanExtRAdjPos p q r alpha)
-spfdLKanExtRAdjDir {a} {b} {c} p q r alpha eb ep ec rd =
-  (snd (spOnPos alpha eb ep) ec rd **
-   \ea, qd =>
-    spOnDir alpha eb ep ea ((ec ** rd) ** qd))
-
-public export
-spfdLKanExtRAdj : {a, b, c : Type} ->
-  (p : SPFData a b) -> (q : SPFData a c) -> (r : SPFData c b) ->
-  SPFnt {dom=a} {cod=b} p (spfdLKanExtR q r) ->
-  SPFnt {dom=c} {cod=b} (spfdLKanExtL q p) r
-spfdLKanExtRAdj {a} {b} {c} p q r alpha =
-  SPFDm
-    (spfdLKanExtRAdjPos {a} {b} {c} p q r alpha)
-    (spfdLKanExtRAdjDir {a} {b} {c} p q r alpha)
 
 ---------------------
 ---------------------
