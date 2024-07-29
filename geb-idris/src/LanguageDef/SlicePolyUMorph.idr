@@ -789,6 +789,100 @@ public export
 spfdMaybe : (w : Type) -> SPFData w w
 spfdMaybe w = spfdEither {w} (SliceObjTerminal w)
 
+-----------------------------------------
+-----------------------------------------
+---- Left coclosure (of composition) ----
+-----------------------------------------
+-----------------------------------------
+
+public export
+spfdLeftCoclosurePos : {x : Type} ->
+  SPFData x x -> SPFData x x -> SliceObj x
+spfdLeftCoclosurePos {x} q p = spfdPos p
+
+public export
+spfdLeftCoclosureDir : {x : Type} ->
+  (q, p : SPFData x x) ->
+  SPFdirType x x (spfdLeftCoclosurePos {x} q p)
+spfdLeftCoclosureDir {x} q p ec = InterpSPFData {dom=x} {cod=x} q . spfdDir p ec
+
+public export
+spfdLeftCoclosure : {x : Type} ->
+  SPFData x x -> SPFData x x -> SPFData x x
+spfdLeftCoclosure {x} q p =
+  SPFD (spfdLeftCoclosurePos {x} q p) (spfdLeftCoclosureDir {x} q p)
+
+-- The left coclosure is left adjoint to precomposition.
+
+public export
+spfdLeftCoclosureL : {x : Type} -> (q : SPFData x x) ->
+  SPFData x x -> SPFData x x
+spfdLeftCoclosureL = spfdLeftCoclosure
+
+public export
+spfdLeftCoclosureR : {x : Type} -> (q : SPFData x x) ->
+  SPFData x x -> SPFData x x
+spfdLeftCoclosureR {x} = flip $ SPFDcomp x x x
+
+public export
+spfdLeftCoclosureLAdjPos : {x : Type} ->
+  (p, q, r : SPFData x x) ->
+  SPFnt {dom=x} {cod=x} (spfdLeftCoclosureL q p) r ->
+  SPFntPos {dom=x} {cod=x} p (spfdLeftCoclosureR q r)
+spfdLeftCoclosureLAdjPos {x} p q r alpha ex ep =
+  (spOnPos alpha ex ep ** \ex' => DPair.fst . spOnDir alpha ex ep ex')
+
+public export
+spfdLeftCoclosureLAdjDir : {x : Type} ->
+  (p, q, r : SPFData x x) ->
+  (alpha : SPFnt {dom=x} {cod=x} (spfdLeftCoclosureL q p) r) ->
+  SPFntDir {dom=x} {cod=x}
+    p
+    (spfdLeftCoclosureR q r)
+    (spfdLeftCoclosureLAdjPos p q r alpha)
+spfdLeftCoclosureLAdjDir {x} p q r alpha ex ep ex' rqd =
+  snd (spOnDir alpha ex ep (fst $ fst rqd) (snd $ fst rqd)) ex' (snd rqd)
+
+public export
+spfdLeftCoclosureLAdj : {x : Type} ->
+  (p, q, r : SPFData x x) ->
+  SPFnt {dom=x} {cod=x} (spfdLeftCoclosureL q p) r ->
+  SPFnt {dom=x} {cod=x} p (spfdLeftCoclosureR q r)
+spfdLeftCoclosureLAdj {x} p q r alpha =
+  SPFDm
+    (spfdLeftCoclosureLAdjPos {x} p q r alpha)
+    (spfdLeftCoclosureLAdjDir {x} p q r alpha)
+
+public export
+spfdLeftCoclosureRAdjPos : {x : Type} ->
+  (p, q, r : SPFData x x) ->
+  SPFnt {dom=x} {cod=x} p (spfdLeftCoclosureR q r) ->
+  SPFntPos {dom=x} {cod=x} (spfdLeftCoclosureL q p) r
+spfdLeftCoclosureRAdjPos {x} p q r alpha ex ep = fst $ spOnPos alpha ex ep
+
+public export
+spfdLeftCoclosureRAdjDir : {x : Type} ->
+  (p, q, r : SPFData x x) ->
+  (alpha : SPFnt {dom=x} {cod=x} p (spfdLeftCoclosureR q r)) ->
+  SPFntDir {dom=x} {cod=x}
+    (spfdLeftCoclosureL q p)
+    r
+    (spfdLeftCoclosureRAdjPos p q r alpha)
+spfdLeftCoclosureRAdjDir {x} p q r alpha ex ep ex' rd =
+  (snd (spOnPos alpha ex ep) ex' rd **
+   \ex'', qd =>
+    spOnDir alpha ex ep ex'' ((ex' ** rd) ** qd))
+
+public export
+spfdLeftCoclosureRAdj : {x : Type} ->
+  (p, q, r : SPFData x x) ->
+  SPFnt {dom=x} {cod=x} p (spfdLeftCoclosureR q r) ->
+  SPFnt {dom=x} {cod=x} (spfdLeftCoclosureL q p) r
+spfdLeftCoclosureRAdj {x} p q r alpha =
+  SPFDm
+    (spfdLeftCoclosureRAdjPos {x} p q r alpha)
+    (spfdLeftCoclosureRAdjDir {x} p q r alpha)
+
 ---------------------
 ---------------------
 ---- Hom-objects ----
