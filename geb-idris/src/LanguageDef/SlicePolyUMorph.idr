@@ -431,6 +431,32 @@ spfdLKanExtRAdj {a} {b} {c} p q r alpha =
     (spfdLKanExtRAdjPos {a} {b} {c} p q r alpha)
     (spfdLKanExtRAdjDir {a} {b} {c} p q r alpha)
 
+public export
+spfdLKanFromPoly : {a, b, c : Type} ->
+  (q : SPFData a c) -> (p : SPFData a b) ->
+  SliceNatTrans {x=c} {y=b}
+    (InterpSPFData {dom=c} {cod=b} $ spfdLKanExt q p)
+    (SliceLKanExt {a} {b} {c}
+      (InterpSPFData {dom=a} {cod=c} q)
+      (InterpSPFData {dom=a} {cod=b} p))
+spfdLKanFromPoly {a} {b} {c} q p sc eb ppdm =
+  (spfdDir p eb (fst ppdm) **
+   (\ec, qpdm => snd ppdm ec qpdm, (fst ppdm ** \_ => id)))
+
+public export
+spfdLKanToPoly : {a, b, c : Type} ->
+  (q : SPFData a c) -> (p : SPFData a b) ->
+  SliceNatTrans {x=c} {y=b}
+    (SliceLKanExt {a} {b} {c}
+      (InterpSPFData {dom=a} {cod=c} q)
+      (InterpSPFData {dom=a} {cod=b} p))
+    (InterpSPFData {dom=c} {cod=b} $ spfdLKanExt q p)
+spfdLKanToPoly {a} {b} {c} q p sc eb ppdm =
+  (fst (snd $ snd $ ppdm) **
+   \ec =>
+    fst (snd ppdm) ec
+    . dpMapSnd (\qp, dm => sliceComp (snd $ snd $ snd ppdm) dm))
+
 -----------------------------------------
 -----------------------------------------
 ---- Symmetric n-way Day convolution ----
