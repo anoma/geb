@@ -766,6 +766,29 @@ spfdParProductFromUnitR {dom} {cod} spfd =
     (\ec, ep => ep FZ)
     (\ec, ep, ed, efd, i => case i of FZ => efd ; FS FZ => ())
 
+---------------------------------------
+---------------------------------------
+---- Utility (composite) morphisms ----
+---------------------------------------
+---------------------------------------
+
+-- This section consists not of universal morphisms but of composites of
+-- them which may be frequently useful.
+
+-- Given an object `A`, this functor takes `Y -> Either A Y`.
+public export
+spfdEither : {w : Type} -> SliceObj w -> SPFData w w
+spfdEither {w} a = spfdCoproduct {dom=w} {cod=w} (SPFDataConst w a) (SPFDid w)
+
+-- Given an object `A`, this functor takes `Y -> Pair A Y`.
+public export
+spfdPair : {w : Type} -> SliceObj w -> SPFData w w
+spfdPair {w} a = spfdProduct {dom=w} {cod=w} (SPFDataConst w a) (SPFDid w)
+
+public export
+spfdMaybe : (w : Type) -> SPFData w w
+spfdMaybe w = spfdEither {w} (SliceObjTerminal w)
+
 ---------------------
 ---------------------
 ---- Hom-objects ----
