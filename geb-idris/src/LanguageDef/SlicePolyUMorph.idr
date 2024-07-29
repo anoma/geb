@@ -334,6 +334,39 @@ spfdConstFromConst : (dom : Type) -> {cod : Type} -> (x : SliceObj cod) ->
     (InterpSPFData {dom} {cod} $ SPFDataConst dom {cod} x)
 spfdConstFromConst dom {cod} x sd ec ex = (ex ** \_, v => void v)
 
+-----------------------------------------
+-----------------------------------------
+---- Symmetric n-way Day convolution ----
+-----------------------------------------
+-----------------------------------------
+
+-- An n-way symmetric monoidal structure on `Type` induces an n-way
+-- symmetric monoidal structure on slice polynomial functors via the Day
+-- convolution.
+
+public export
+spfdSetDayConvPos : {n, dom, cod : Type} ->
+  (n -> SPFData dom cod) -> SliceObj cod
+spfdSetDayConvPos {n} {dom} {cod} sf =
+  Pi {a=n} . flip (spfdPos . sf)
+
+public export
+spfdSetDayConvDir : {n, dom, cod : Type} ->
+  (m : (n -> Type) -> Type) ->
+  (sf : n -> SPFData dom cod) ->
+  SPFdirType dom cod (spfdSetDayConvPos {n} {dom} {cod} sf)
+spfdSetDayConvDir {n} {dom} {cod} m sf ec ep ed =
+  m $ \i => spfdDir (sf i) ec (ep i) ed
+
+public export
+spfdSetDayConv : {n, dom, cod : Type} ->
+  ((n -> Type) -> Type) ->
+  (n -> SPFData dom cod) -> SPFData dom cod
+spfdSetDayConv {n} {dom} {cod} m sf =
+  SPFD
+    (spfdSetDayConvPos {n} {dom} {cod} sf)
+    (spfdSetDayConvDir {n} {dom} {cod} m sf)
+
 ---------------------
 ---------------------
 ---- Set product ----

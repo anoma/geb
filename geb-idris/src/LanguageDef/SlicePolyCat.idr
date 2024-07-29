@@ -2472,6 +2472,17 @@ SPFDataFam : {b : Type} -> (dom, cod : SliceObj b) -> Type
 SPFDataFam {b} dom cod = Pi {a=b} (\eb => SPFData (dom eb) (cod eb))
 
 public export
+SPFDataFamPos : {b : Type} -> {dom, cod : SliceObj b} ->
+  SPFDataFam {b} dom cod -> (eb : b) -> SliceObj (cod eb)
+SPFDataFamPos {b} {dom} {cod} sf i = spfdPos (sf i)
+
+public export
+SPFDataFamDir : {b : Type} -> {dom, cod : SliceObj b} ->
+  (sf : SPFDataFam {b} dom cod) -> (eb : b) ->
+  SPFdirType (dom eb) (cod eb) (SPFDataFamPos sf eb)
+SPFDataFamDir {b} {dom} {cod} sf i = spfdDir (sf i)
+
+public export
 SPFDataFamFromDep : {0 b : Type} -> {0 dom, cod : SliceObj b} ->
   SPFdepData {b} dom cod -> SPFDataFam {b} dom cod
 SPFDataFamFromDep {b} {dom} {cod} spfdd eb =
