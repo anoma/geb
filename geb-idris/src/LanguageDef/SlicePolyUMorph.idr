@@ -1059,7 +1059,9 @@ spfdRepCurryPos : {dom : Type} ->
   {q : SliceObj dom} -> {p, r : SPFData dom Unit} ->
   SPFnt {dom} {cod=Unit} (spfdProduct {dom} {cod=Unit} p (spfdCoprPiFR q)) r ->
   SPFntPos {dom} {cod=Unit} p (spfdRepHomObj {dom} q r)
-spfdRepCurryPos {dom} {p} {q} {r} m = ?spfdRepCurryPos_hole
+spfdRepCurryPos {dom} {p=(SPFD ppos pdir)} {q} {r=(SPFD rpos rdir)}
+  (SPFDm onpos ondir) () pp =
+    ?spfdRepCurryPos_hole
 
 public export
 spfdRepCurryDir : {dom : Type} ->
@@ -1071,7 +1073,9 @@ spfdRepCurryDir : {dom : Type} ->
     p
     (spfdRepHomObj {dom} q r)
     (spfdRepCurryPos {dom} {p} {q} {r} f)
-spfdRepCurryDir {dom} {p} {q} {r} m = ?spfdRepCurryDir_hole
+spfdRepCurryDir {dom} {p=(SPFD ppos pdir)} {q} {r=(SPFD rpos rdir)}
+  (SPFDm onpos ondir) () pp ed =
+    ?spfdRepCurryDir_hole
 
 public export
 spfdRepCurry : {dom : Type} ->
