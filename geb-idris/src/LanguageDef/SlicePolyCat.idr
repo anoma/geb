@@ -29,6 +29,12 @@ public export
 TyElObj : Type
 TyElObj = Sigma {a=Type} Prelude.id
 
+public export
+TyElMor : IntMorSig TyElObj
+TyElMor e e' =
+  Sigma {a=(fst e -> fst e')} $
+    flip (WEqualizes {a=(fst e)} {b=(fst e')} (\_ => snd e')) (snd e)
+
 ------------------------------------------------------
 ------------------------------------------------------
 ---- Polynomial functors between slice categories ----
