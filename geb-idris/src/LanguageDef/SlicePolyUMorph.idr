@@ -620,17 +620,33 @@ spfdSetParProductNT {b} {dom} {cod} {sf} {sf'} ntf =
 -------------------------
 -------------------------
 
--- A zero-way product is a terminal object.
 public export
 spfdTerminal : (dom, cod : Type) -> SPFData dom cod
-spfdTerminal dom cod = spfdSetProduct {b=Void} {dom} {cod} $ \v => void v
+spfdTerminal dom cod = SPFD (\_ => Unit) (\_, _, _ => Void)
+
+-- A zero-way product is a terminal object.
+public export
+spfdTerminalFromSet : (dom, cod : Type) ->
+  SPFnt {dom} {cod}
+    (spfdSetProduct {b=Void} {dom} {cod} $ \v => void v)
+    (spfdTerminal dom cod)
+spfdTerminalFromSet dom cod = SPFDm (\_, _ => ()) (\_, _, _, v => void v)
+
+public export
+spfdTerminalToSet : (dom, cod : Type) ->
+  SPFnt {dom} {cod}
+    (spfdTerminal dom cod)
+    (spfdSetProduct {b=Void} {dom} {cod} $ \v => void v)
+spfdTerminalToSet dom cod =
+  SPFDm
+    (\_, _ => (() ** \vc => void $ fst vc))
+    (\_, _, _, vd => fst $ fst $ fst vd)
 
 public export
 spfdToTerminal : {dom, cod : Type} ->
   (spfd : SPFData dom cod) -> SPFnt {dom} {cod} spfd (spfdTerminal dom cod)
 spfdToTerminal {dom} {cod} spfd =
-  spfdSetProductIntro {b=Void} {dom} {cod} {x=spfd} {y=(\v => void v)} $
-    \v => void v
+  SPFDm (\_, _ => ()) (\_, _, _, v => void v)
 
 ------------------------
 ------------------------
@@ -720,10 +736,10 @@ spfdProductToUnitL {dom} {cod} spfd =
   SPFDm
     (\ec, ep =>
       (() ** \(i, ec), Refl => case i of
-        FZ => (() ** \(v, _) => void v)
+        FZ => ()
         FS FZ => ep))
     (\ec, ep, ed, (((i, ec) ** Refl) ** efd) => case i of
-      FZ => void $ fst $ fst $ fst efd
+      FZ => void efd
       FS FZ => efd)
 
 public export
@@ -736,10 +752,10 @@ spfdProductToUnitR {dom} {cod} spfd =
     (\ec, ep =>
       (() ** \(i, ec), Refl => case i of
         FZ => ep
-        FS FZ => (() ** \(v, _) => void v)))
+        FS FZ => ()))
     (\ec, ep, ed, (((i, ec) ** Refl) ** efd) => case i of
       FZ => efd
-      FS FZ => void $ fst $ fst $ fst efd)
+      FS FZ => void efd)
 
 public export
 spfdProductFromUnitL : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
