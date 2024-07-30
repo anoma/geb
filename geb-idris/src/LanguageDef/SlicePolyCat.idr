@@ -2468,8 +2468,12 @@ record SPFdepData {0 b : Type} (dom, cod : SliceObj b) where
 -- Now we see that an `SPFdepData` is simply a `b`-indexed dependent family
 -- of `SPFData`s.
 public export
+SPFParamData : {b : Type} -> SliceObj b -> SliceObj b -> SliceObj b
+SPFParamData {b} dom cod eb = SPFData (dom eb) (cod eb)
+
+public export
 SPFDataFam : {b : Type} -> (dom, cod : SliceObj b) -> Type
-SPFDataFam {b} dom cod = Pi {a=b} (\eb => SPFData (dom eb) (cod eb))
+SPFDataFam {b} dom cod = Pi {a=b} $ SPFParamData {b} dom cod
 
 public export
 SPFDataFamPos : {b : Type} -> {dom, cod : SliceObj b} ->
