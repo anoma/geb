@@ -2370,6 +2370,21 @@ SPFDataProdToFam {b} {dom} {cod} spfd eb =
     (curry (spfdPos spfd) eb)
     (\ec => spfdDir spfd (eb, ec))
 
+public export
+SPFDataFamToProdUnit : {dom, cod : Type} ->
+  (cod -> SPFData dom Unit) -> SPFData dom cod
+SPFDataFamToProdUnit {dom} {cod} sf with
+    (SPFDataFamToProd {b=cod} {dom} {cod=Unit} sf)
+  SPFDataFamToProdUnit {dom} {cod} sf | (SPFD pos dir) =
+    SPFD (pos . flip MkPair ()) (\ec => dir (ec, ()))
+
+public export
+SPFDataProdToFamUnit : {dom, cod : Type} ->
+  SPFData dom cod -> (cod -> SPFData dom Unit)
+SPFDataProdToFamUnit {dom} {cod} sf =
+  SPFDataProdToFam {b=cod} {dom} {cod=Unit} $
+    SPFD (spfdPos sf . fst) (\ec => spfdDir sf (fst ec))
+
 -------------------------------------------------
 -------------------------------------------------
 ---- Slice-polynomial categories of elements ----
