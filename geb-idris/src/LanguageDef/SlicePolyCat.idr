@@ -16,6 +16,19 @@ import public LanguageDef.IntECofamCat
 -- In favor of the (identical) one from `SliceFuncCat`.
 %hide Library.IdrisCategories.BaseChangeF
 
+--------------------------------------------------
+--------------------------------------------------
+--- Identity endofunctor category of elements ----
+--------------------------------------------------
+--------------------------------------------------
+
+-- A type together with an element of that type.
+-- This is an object of the category of elements of the identity
+-- endofunctor on `Type`.
+public export
+TyElObj : Type
+TyElObj = Sigma {a=Type} Prelude.id
+
 ------------------------------------------------------
 ------------------------------------------------------
 ---- Polynomial functors between slice categories ----
@@ -1421,13 +1434,6 @@ spfPi {w} {x} {y} {z} mwx mzy =
 ----------------------------------------------
 ---- Natural transformations as morphisms ----
 ----------------------------------------------
-
--- A type together with an element of that type.
--- This is an object of the category of elements of the identity
--- endofunctor on `Type`.
-public export
-TyElObj : Type
-TyElObj = Sigma {a=Type} Prelude.id
 
 public export
 SPFntCodPos : (tyel : TyElObj) ->
