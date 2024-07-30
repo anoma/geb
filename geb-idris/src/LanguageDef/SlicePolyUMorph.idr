@@ -654,17 +654,34 @@ spfdToTerminal {dom} {cod} spfd =
 ------------------------
 ------------------------
 
--- A zero-way coproduct is an initial object.
 public export
 spfdInitial : (dom, cod : Type) -> SPFData dom cod
-spfdInitial dom cod = spfdSetCoproduct {b=Void} {dom} {cod} $ \v => void v
+spfdInitial dom cod = SPFD (\_ => Void) (\_, v, _ => void v)
+
+-- A zero-way coproduct is an initial object.
+public export
+spfdInitialFromSet : (dom, cod : Type) ->
+  SPFnt {dom} {cod}
+    (spfdSetCoproduct {b=Void} {dom} {cod} $ \v => void v)
+    (spfdInitial dom cod)
+spfdInitialFromSet dom cod =
+  SPFDm
+    (\ec, sfs => void $ fst $ sfsFst $ fst sfs)
+    (\ec, sfs, ed => void $ fst $ sfsFst $ fst sfs)
+
+public export
+spfdInitialToSet : (dom, cod : Type) ->
+  SPFnt {dom} {cod}
+    (spfdInitial dom cod)
+    (spfdSetCoproduct {b=Void} {dom} {cod} $ \v => void v)
+spfdInitialToSet dom cod =
+  SPFDm (\ec, v => void v) (\ec, v => void v)
 
 public export
 spfdFromInitial : {dom, cod : Type} ->
   (spfd : SPFData dom cod) -> SPFnt {dom} {cod} (spfdInitial dom cod) spfd
 spfdFromInitial {dom} {cod} spfd =
-  spfdSetCoproductElim {b=Void} {dom} {cod} {x=(\v => void v)} {y=spfd} $
-    \v => void v
+  SPFDm (\ec, v => void v) (\ec, v => void v)
 
 -----------------------------------------------
 -----------------------------------------------
@@ -849,12 +866,12 @@ spfdCoproductFromUnitL {dom} {cod} spfd =
     (\ec, (SFS (i, ec) () ** dm) =>
       let efd = dm (i, ec) Refl in
       case i of
-        FZ => case efd of (SFS (v, ec') () ** ep) => void v
+        FZ => void efd
         FS FZ => efd)
     (\ec, (SFS (i, ec) () ** dm), ed, efd =>
       (((i, ec) ** Refl) **
        case i of
-        FZ => case (dm (i, ec) Refl) of (SFS (v, ec') () ** ep) => void v
+        FZ => void $ dm (i, ec) Refl
         FS FZ => efd))
 
 public export
@@ -868,12 +885,12 @@ spfdCoproductFromUnitR {dom} {cod} spfd =
       let efd = dm (i, ec) Refl in
       case i of
         FZ => efd
-        FS FZ => case efd of (SFS (v, ec') () ** ep) => void v)
+        FS FZ => void efd)
     (\ec, (SFS (i, ec) () ** dm), ed, efd =>
       (((i, ec) ** Refl) **
        case i of
         FZ => efd
-        FS FZ => case (dm (i, ec) Refl) of (SFS (v, ec') () ** ep) => void v))
+        FS FZ => void $ dm (i, ec) Refl))
 
 ----------------------------------
 ----------------------------------
