@@ -257,6 +257,10 @@ spfdPiFR : {x, y : Type} -> SliceObj (x, y) -> SPFData x y
 spfdPiFR {x} {y} sl = SPFD (\_ => Unit) (\ec, u, ed => sl (ed, ec))
 
 public export
+spfdCoprPiFR : {x : Type} -> SliceObj x -> SPFData x Unit
+spfdCoprPiFR {x} sl = spfdPiFR {x} {y=Unit} (sl . fst)
+
+public export
 SPFDuPosToPiFR : {x, y : Type} -> (sl : SliceObj (x, y)) ->
   SliceNatTrans {x} {y}
     (InterpSPFData {dom=x} {cod=y} $ spfdPiFR {x} {y} sl)
@@ -291,6 +295,10 @@ spfdPiFL {x} {y} sl =
   SPFD
     (\ex => (ey : y ** sl (ex, ey)))
     (\ex, ep, ey => fst ep = ey)
+
+public export
+spfdCoprPiFL : {x : Type} -> SliceObj x -> SPFData x Unit
+spfdCoprPiFL {x} sl = spfdPiFL {x=Unit} {y=x} (sl . snd)
 
 public export
 SPFDuPosToPiFL : {x, y : Type} -> (sl : SliceObj (x, y)) ->
