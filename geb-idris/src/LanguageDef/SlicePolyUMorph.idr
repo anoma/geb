@@ -800,7 +800,48 @@ spfdProductFromUnitR {dom} {cod} spfd =
 ---------------------------
 ---------------------------
 
+public export
+spfdCoproduct' : {dom, cod : Type} ->
+  SPFData dom cod -> SPFData dom cod -> SPFData dom cod
+spfdCoproduct' {dom} {cod} f g =
+  SPFD
+    (\ec =>
+      Either (spfdPos f ec) (spfdPos g ec))
+    (\ec, ep, ed =>
+      eitherElim (flip (spfdDir f ec) ed) (flip (spfdDir g ec) ed) ep)
+
 -- A binary coproduct is a set coproduct indexed by a type of cardinality two.
+
+public export
+spfdCoproductToSet : {dom, cod : Type} ->
+  (f, g : SPFData dom cod) ->
+  SPFnt
+    (spfdCoproduct' {dom} {cod} f g)
+    (spfdSetCoproduct {b=(Fin 2)} {dom} {cod} $ flip Vect.index [f, g])
+spfdCoproductToSet {dom} {cod} f g =
+  SPFDm
+    (\ec, ep => case ep of
+      Left efp => (SFS (FZ, ec) () ** \(i, ec), Refl => efp)
+      Right egp => (SFS (FS FZ, ec) () ** \(i, ec), Refl => egp))
+    (\ec, ep, ed =>
+      case ep of
+        Left efp => \(((FZ, ec) ** Refl) ** efd) => efd
+        Right egp => \(((FS FZ, ec) ** Refl) ** egd) => egd)
+
+public export
+spfdCoproductFromSet : {dom, cod : Type} ->
+  (f, g : SPFData dom cod) ->
+  SPFnt
+    (spfdSetCoproduct {b=(Fin 2)} {dom} {cod} $ flip Vect.index [f, g])
+    (spfdCoproduct' {dom} {cod} f g)
+spfdCoproductFromSet {dom} {cod} f g =
+  SPFDm
+    (\ec, (SFS (i, ec) () ** dm) => case i of
+      FZ => Left $ dm (FZ, ec) Refl
+      FS FZ => Right $ dm (FS FZ, ec) Refl)
+    (\ec, (SFS (i, ec) () ** dm), ed, dd => case i of
+      FZ => (((FZ, ec) ** Refl) ** dd)
+      FS FZ => (((FS FZ, ec) ** Refl) ** dd))
 
 public export
 spfdCoproduct : {dom, cod : Type} ->
