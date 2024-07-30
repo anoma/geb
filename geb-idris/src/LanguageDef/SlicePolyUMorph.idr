@@ -959,15 +959,261 @@ spfdMaybe w = spfdEither {w} (SliceObjTerminal w)
 ---------------------
 ---------------------
 
+-- We compute slice polynomial hom-objects in three steps:
+--  1) Hom-objects on copresheaves on slices (i.e. slice polynomials where
+--     the codomain is `SliceObj Unit`, i.e. `Type`) where the
+--     domain `SPFData` is representable
+--  2) Hom-objects on copresheaves with any domain (and codomain) `SPFData`
+--  3) Hom-objects between any slice categories with any domain (and codomain)
+--     `SPFData` -- i.e. the general case
+
+-------------------------------------------------------
+---- Representable copresheaves on `SliceObj dom`) ----
+-------------------------------------------------------
+
+-- See formula 5.27 in "Polynomial Functors: A Mathematical Theory
+-- of Interaction".
+public export
+spfdRepHomObj : {dom : Type} ->
+  SliceObj dom -> SPFData dom Unit -> SPFData dom Unit
+spfdRepHomObj {dom} q r =
+  SPFDcomp dom dom Unit
+    r
+    (spfdCoproduct
+      (SPFDid dom)
+      (SPFDataConst dom {cod=dom} q)
+      )
+
+public export
+spfdRepHomToPoly : {dom : Type} ->
+  (p : SliceObj dom) -> (q : SPFData dom Unit) ->
+  (x : SliceObj dom) ->
+  InterpSPFData {dom} {cod=Unit} (spfdRepHomObj {dom} p q) x () ->
+  (InterpSPFData {dom} {cod=Unit} (spfdCoprPiFR p) x () ->
+   InterpSPFData {dom} {cod=Unit} q x ())
+spfdRepHomToPoly {dom} p (SPFD qpos qdir) x ((qp ** mqp) ** qdm) (() ** mpx) =
+  (qp ** xed) where
+    xed : (ed : dom) -> qdir () qp ed -> x ed
+    xed ed qd with (mqp ed qd) proof eq
+      xed _ qd | (SFS (i, ed) () ** mco) = case i of
+        FZ =>
+          qdm ed
+            ((ed ** qd) **
+             rewrite eq in
+             ((FZ, ed) ** Refl) **
+              rewrite eq in rewrite unitUnique (mco (FZ, ed) Refl) () in Refl)
+        FS FZ => mpx ed $ mco (FS FZ, ed) Refl
+
+public export
+spfdRepHomFromPoly : {dom : Type} ->
+  (p : SliceObj dom) -> (q : SPFData dom Unit) ->
+  (x : SliceObj dom) ->
+  (InterpSPFData {dom} {cod=Unit} (spfdCoprPiFR p) x () ->
+   InterpSPFData {dom} {cod=Unit} q x ()) ->
+  InterpSPFData {dom} {cod=Unit} (spfdRepHomObj {dom} p q) x ()
+spfdRepHomFromPoly {dom} p (SPFD qpos qdir) x =
+  ?spfdRepHomFromPoly_hole
+
+public export
+spfdRepHomObjPos : {dom : Type} ->
+  SliceObj dom -> SPFData dom Unit -> SliceObj Unit
+spfdRepHomObjPos {dom} p q = spfdPos (spfdRepHomObj {dom} p q)
+
+public export
+spfdRepHomObjDir : {dom : Type} ->
+  (p : SliceObj dom) -> (q : SPFData dom Unit) ->
+  SPFdirType dom Unit (spfdRepHomObjPos {dom} p q)
+spfdRepHomObjDir {dom} p q = spfdDir (spfdRepHomObj {dom} p q)
+
+public export
+spfdRepEvalPos : {dom : Type} ->
+  (p : SliceObj dom) -> (q : SPFData dom Unit) ->
+  SPFntPos {dom} {cod=Unit}
+    (spfdProduct {dom} {cod=Unit} (spfdRepHomObj {dom} p q) (spfdCoprPiFR p))
+    q
+spfdRepEvalPos {dom} p q () ep =
+  ?spfdRepEvalPos_hole
+
+public export
+spfdRepEvalDir : {dom : Type} ->
+  (p : SliceObj dom) -> (q : SPFData dom Unit) ->
+  SPFntDir {dom}
+    (spfdProduct {dom} {cod=Unit} (spfdRepHomObj {dom} p q) (spfdCoprPiFR p))
+    q
+    (spfdRepEvalPos {dom} p q)
+spfdRepEvalDir {dom} p (SPFD qpos qdir) =
+  ?spfdRepEvalDir_hole
+
+public export
+spfdRepEval : {dom : Type} ->
+  (p : SliceObj dom) -> (q : SPFData dom Unit) ->
+  SPFnt {dom} {cod=Unit}
+    (spfdProduct {dom} {cod=Unit} (spfdRepHomObj {dom} p q) (spfdCoprPiFR p))
+    q
+spfdRepEval {dom} p q =
+  SPFDm (spfdRepEvalPos {dom} p q) (spfdRepEvalDir {dom} p q)
+
+public export
+spfdRepCurryPos : {dom : Type} ->
+  {q : SliceObj dom} -> {p, r : SPFData dom Unit} ->
+  SPFnt {dom} {cod=Unit} (spfdProduct {dom} {cod=Unit} p (spfdCoprPiFR q)) r ->
+  SPFntPos {dom} {cod=Unit} p (spfdRepHomObj {dom} q r)
+spfdRepCurryPos {dom} {p} {q} {r} m = ?spfdRepCurryPos_hole
+
+public export
+spfdRepCurryDir : {dom : Type} ->
+  {q : SliceObj dom} -> {p, r : SPFData dom Unit} ->
+  (f : SPFnt {dom} {cod=Unit}
+    (spfdProduct {dom} {cod=Unit} p (spfdCoprPiFR q))
+    r) ->
+  SPFntDir {dom} {cod=Unit}
+    p
+    (spfdRepHomObj {dom} q r)
+    (spfdRepCurryPos {dom} {p} {q} {r} f)
+spfdRepCurryDir {dom} {p} {q} {r} m = ?spfdRepCurryDir_hole
+
+public export
+spfdRepCurry : {dom : Type} ->
+  {q : SliceObj dom} -> {p, r : SPFData dom Unit} ->
+  SPFnt {dom} {cod=Unit} (spfdProduct {dom} {cod=Unit} p (spfdCoprPiFR q)) r ->
+  SPFnt {dom} {cod=Unit} p (spfdRepHomObj {dom} q r)
+spfdRepCurry {dom} {p} {q} {r} m =
+  SPFDm
+    (spfdRepCurryPos {dom} {p} {q} {r} m)
+    (spfdRepCurryDir {dom} {p} {q} {r} m)
+
+-----------------------------------------
+---- Copresheaves on `SliceObj dom`) ----
+-----------------------------------------
+
+public export
+spfdCoprHomObj : {dom : Type} ->
+  SPFData dom Unit -> SPFData dom Unit -> SPFData dom Unit
+spfdCoprHomObj {dom} q r = ?sfpdCoprHomObj_hole
+
+public export
+spfdCoprHomToPoly : {dom : Type} ->
+  (p, q : SPFData dom Unit) ->
+  (x : SliceObj dom) ->
+  InterpSPFData {dom} {cod=Unit} (spfdCoprHomObj {dom} p q) x () ->
+  (InterpSPFData {dom} {cod=Unit} p x () ->
+   InterpSPFData {dom} {cod=Unit} q x ())
+spfdCoprHomToPoly {dom} (SPFD ppos pdir) (SPFD qpos qdir) x =
+  ?spfdCoprHomToPoly_hole
+
+public export
+spfdCoprHomFromPoly : {dom : Type} ->
+  (p, q : SPFData dom Unit) ->
+  (x : SliceObj dom) ->
+  (InterpSPFData {dom} {cod=Unit} p x () ->
+   InterpSPFData {dom} {cod=Unit} q x ()) ->
+  InterpSPFData {dom} {cod=Unit} (spfdCoprHomObj {dom} p q) x ()
+spfdCoprHomFromPoly {dom} (SPFD ppos pdir) (SPFD qpos qdir) x =
+  ?spfdCoprHomFromPoly_hole
+
+public export
+spfdCoprHomObjPos : {dom : Type} ->
+  SPFData dom Unit -> SPFData dom Unit -> SliceObj Unit
+spfdCoprHomObjPos {dom} p q = spfdPos (spfdCoprHomObj {dom} p q)
+
+public export
+spfdCoprHomObjDir : {dom : Type} ->
+  (p, q : SPFData dom Unit) ->
+  SPFdirType dom Unit (spfdCoprHomObjPos {dom} p q)
+spfdCoprHomObjDir {dom} p q = spfdDir (spfdCoprHomObj {dom} p q)
+
+public export
+spfdCoprEvalPos : {dom : Type} ->
+  (p, q : SPFData dom Unit) ->
+  SPFntPos {dom} {cod=Unit}
+    (spfdProduct {dom} {cod=Unit} (spfdCoprHomObj {dom} p q) p)
+    q
+spfdCoprEvalPos {dom} p q () ep =
+  ?spfdCoprEvalPos_hole
+
+public export
+spfdCoprEvalDir : {dom : Type} ->
+  (p, q : SPFData dom Unit) ->
+  SPFntDir {dom}
+    (spfdProduct {dom} {cod=Unit} (spfdCoprHomObj {dom} p q) p)
+    q
+    (spfdCoprEvalPos {dom} p q)
+spfdCoprEvalDir {dom} (SPFD ppos pdir) (SPFD qpos qdir) =
+  ?spfdCoprEvalDir_hole
+
+public export
+spfdCoprEval : {dom : Type} ->
+  (p, q : SPFData dom Unit) ->
+  SPFnt {dom} {cod=Unit}
+    (spfdProduct {dom} {cod=Unit} (spfdCoprHomObj {dom} p q) p)
+    q
+spfdCoprEval {dom} p q =
+  SPFDm (spfdCoprEvalPos {dom} p q) (spfdCoprEvalDir {dom} p q)
+
+public export
+spfdCoprCurryPos : {dom : Type} ->
+  {p, q, r : SPFData dom Unit} ->
+  SPFnt {dom} {cod=Unit} (spfdProduct {dom} {cod=Unit} p q) r ->
+  SPFntPos {dom} {cod=Unit} p (spfdCoprHomObj {dom} q r)
+spfdCoprCurryPos {dom} {p} {q} {r} m = ?spfdCoprCurryPos_hole
+
+public export
+spfdCoprCurryDir : {dom : Type} ->
+  {p, q, r : SPFData dom Unit} ->
+  (f : SPFnt {dom} {cod=Unit} (spfdProduct {dom} {cod=Unit} p q) r) ->
+  SPFntDir {dom} {cod=Unit}
+    p
+    (spfdCoprHomObj {dom} q r)
+    (spfdCoprCurryPos {dom} {p} {q} {r} f)
+spfdCoprCurryDir {dom} {p} {q} {r} m = ?spfdCoprCurryDir_hole
+
+public export
+spfdCoprCurry : {dom : Type} ->
+  {p, q, r : SPFData dom Unit} ->
+  SPFnt {dom} {cod=Unit} (spfdProduct {dom} {cod=Unit} p q) r ->
+  SPFnt {dom} {cod=Unit} p (spfdCoprHomObj {dom} q r)
+spfdCoprCurry {dom} {p} {q} {r} m =
+  SPFDm
+    (spfdCoprCurryPos {dom} {p} {q} {r} m)
+    (spfdCoprCurryDir {dom} {p} {q} {r} m)
+
+----------------------------
+---- General `SPFData`s ----
+----------------------------
+
 public export
 spfdHomObj : {dom, cod : Type} ->
   SPFData dom cod -> SPFData dom cod -> SPFData dom cod
 spfdHomObj {dom} {cod} q r =
-  spfdSetProduct {b=(Sigma {a=cod} $ spfdPos q)} {dom} {cod} $
-    \ep => SPFDcomp dom dom cod r $
-      spfdCoproduct {dom} {cod=dom}
-        (SPFDid dom)
-        (SPFDataConst dom {cod=dom} $ uncurry (spfdDir q) ep)
+  SPFDataFamToProdUnit $ \ec =>
+    spfdCoprHomObj (SPFDataProdToFamUnit q ec) (SPFDataProdToFamUnit r ec)
+
+public export
+spfdHomToPoly : {dom, cod : Type} ->
+  (p, q : SPFData dom cod) ->
+  (x : SliceObj dom) -> (ec : cod) ->
+  InterpSPFData {dom} {cod} (spfdHomObj {dom} {cod} p q) x ec ->
+  (InterpSPFData {dom} {cod} p x ec -> InterpSPFData {dom} {cod} q x ec)
+spfdHomToPoly {dom} {cod} p q x ec =
+  ?spfdHomToPoly_hole
+  {-
+  spfdHomToPoly {dom}
+    (SPFDataProdToFamUnit p ec)
+    (SPFDataProdToFamUnit q ec) x
+    ()
+    -}
+
+public export
+spfdHomFromPoly : {dom, cod : Type} ->
+  (p, q : SPFData dom cod) ->
+  (x : SliceObj dom) -> (ec : cod) ->
+  (InterpSPFData {dom} {cod} p x ec -> InterpSPFData {dom} {cod} q x ec) ->
+  InterpSPFData {dom} {cod} (spfdHomObj {dom} {cod} p q) x ec
+spfdHomFromPoly {dom} {cod} p q x ec =
+  spfdCoprHomFromPoly {dom}
+    (SPFDataProdToFamUnit p ec)
+    (SPFDataProdToFamUnit q ec)
+    x
 
 public export
 spfdHomObjPos : {dom, cod : Type} ->
@@ -979,6 +1225,79 @@ spfdHomObjDir : {dom, cod : Type} ->
   (p, q : SPFData dom cod) ->
   SPFdirType dom cod (spfdHomObjPos {dom} {cod} p q)
 spfdHomObjDir {dom} {cod} p q = spfdDir (spfdHomObj {dom} {cod} p q)
+
+public export
+spfdEvalPos : {dom, cod : Type} ->
+  (p, q : SPFData dom cod) ->
+  SPFntPos {dom} {cod}
+    (spfdProduct {dom} {cod} (spfdHomObj {dom} {cod} p q) p)
+    q
+spfdEvalPos {dom} {cod} p q ec ep =
+  ?spfdEvalPos_hole
+  -- fst $ snd (snd ep (FZ, ec) Refl) ((ec ** snd ep (FS FZ, ec) Refl), ec) Refl
+
+public export
+spfdEvalDir : {dom, cod : Type} ->
+  (p, q : SPFData dom cod) ->
+  SPFntDir {dom} {cod}
+    (spfdProduct {dom} {cod} (spfdHomObj {dom} {cod} p q) p)
+    q
+    (spfdEvalPos {dom} {cod} p q)
+spfdEvalDir {dom} {cod} (SPFD ppos pdir) (SPFD qpos qdir) =
+  ?spfdEvalDir_hole
+  {- ec (() ** ep) ed qd
+  with (fst $
+    snd (snd (ep (FZ, ec) Refl) ((ec ** ep (FS FZ, ec) Refl), ec) Refl) ed qd)
+    proof eq
+  spfdEvalDir {dom} {cod} (SPFD ppos pdir) (SPFD qpos qdir) ec (() ** ep) ed qd
+    | sfs@(SFS (FZ, ed) ()) =
+      (((FZ, ec) ** Refl) **
+       ((((ec ** ep (FS FZ, ec) Refl), ec) ** Refl) **
+        ((ed ** qd) **
+         (((FZ, ed) ** rewrite eq in Refl) ** rewrite unitUnique () _ in ?spfdEvalDir_hole))))
+  spfdEvalDir {dom} {cod} (SPFD ppos pdir) (SPFD qpos qdir) ec (() ** ep) ed qd
+    | sfs@(SFS (FS FZ, ed) ()) =
+      let stork = ep (FS FZ, ec) Refl in
+      let yerk = snd (ep (FZ, ec) Refl) ((ec ** stork), ec) Refl in
+      (((FZ, ec) ** Refl) **
+       ((((ec ** ep (FS FZ, ec) Refl), ec) ** Refl) **
+        ((ed ** qd) **
+         (((FS FZ, ed) ** rewrite eq in Refl) ** let sneak = sfsFst sfs in ?spfdEvalDir_hole2))))
+         -}
+
+public export
+spfdEval : {dom, cod : Type} ->
+  (p, q : SPFData dom cod) ->
+  SPFnt {dom} {cod} (spfdProduct {dom} {cod} (spfdHomObj {dom} {cod} p q) p) q
+spfdEval {dom} {cod} p q =
+  SPFDm (spfdEvalPos {dom} {cod} p q) (spfdEvalDir {dom} {cod} p q)
+
+public export
+spfdCurryPos : {dom, cod : Type} ->
+  {p, q, r : SPFData dom cod} ->
+  SPFnt {dom} {cod} (spfdProduct {dom} {cod} p q) r ->
+  SPFntPos {dom} {cod} p (spfdHomObj {dom} {cod} q r)
+spfdCurryPos {dom} {cod} {p} {q} {r} m = ?spfdCurryPos_hole
+
+public export
+spfdCurryDir : {dom, cod : Type} ->
+  {p, q, r : SPFData dom cod} ->
+  (f : SPFnt {dom} {cod} (spfdProduct {dom} {cod} p q) r) ->
+  SPFntDir {dom} {cod}
+    p
+    (spfdHomObj {dom} {cod} q r)
+    (spfdCurryPos {dom} {cod} {p} {q} {r} f)
+spfdCurryDir {dom} {cod} {p} {q} {r} m = ?spfdCurryDir_hole
+
+public export
+spfdCurry : {dom, cod : Type} ->
+  {p, q, r : SPFData dom cod} ->
+  SPFnt {dom} {cod} (spfdProduct {dom} {cod} p q) r ->
+  SPFnt {dom} {cod} p (spfdHomObj {dom} {cod} q r)
+spfdCurry {dom} {cod} {p} {q} {r} m =
+  SPFDm
+    (spfdCurryPos {dom} {cod} {p} {q} {r} m)
+    (spfdCurryDir {dom} {cod} {p} {q} {r} m)
 
 ----------------------------------
 ----------------------------------
