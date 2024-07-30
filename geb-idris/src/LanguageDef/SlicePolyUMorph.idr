@@ -1005,16 +1005,6 @@ spfdRepHomToPoly {dom} p (SPFD qpos qdir) x ((qp ** mqp) ** qdm) (() ** mpx) =
         FS FZ => mpx ed $ mco (FS FZ, ed) Refl
 
 public export
-spfdRepHomFromPoly : {dom : Type} ->
-  (p : SliceObj dom) -> (q : SPFData dom Unit) ->
-  (x : SliceObj dom) ->
-  (InterpSPFData {dom} {cod=Unit} (spfdCoprPiFR p) x () ->
-   InterpSPFData {dom} {cod=Unit} q x ()) ->
-  InterpSPFData {dom} {cod=Unit} (spfdRepHomObj {dom} p q) x ()
-spfdRepHomFromPoly {dom} p (SPFD qpos qdir) x =
-  ?spfdRepHomFromPoly_hole
-
-public export
 spfdRepHomObjPos : {dom : Type} ->
   SliceObj dom -> SPFData dom Unit -> SliceObj Unit
 spfdRepHomObjPos {dom} p q = spfdPos (spfdRepHomObj {dom} p q)
@@ -1031,8 +1021,7 @@ spfdRepEvalPos : {dom : Type} ->
   SPFntPos {dom} {cod=Unit}
     (spfdProduct {dom} {cod=Unit} (spfdRepHomObj {dom} p q) (spfdCoprPiFR p))
     q
-spfdRepEvalPos {dom} p q () ep =
-  ?spfdRepEvalPos_hole
+spfdRepEvalPos {dom} p q () (() ** epm) = fst $ epm (FZ, ()) Refl
 
 public export
 spfdRepEvalDir : {dom : Type} ->
@@ -1041,8 +1030,20 @@ spfdRepEvalDir : {dom : Type} ->
     (spfdProduct {dom} {cod=Unit} (spfdRepHomObj {dom} p q) (spfdCoprPiFR p))
     q
     (spfdRepEvalPos {dom} p q)
-spfdRepEvalDir {dom} p (SPFD qpos qdir) =
-  ?spfdRepEvalDir_hole
+spfdRepEvalDir {dom} p (SPFD qpos qdir) () (() ** epm) ed qd with
+    (epm (FZ, ()) Refl) proof epeq
+  spfdRepEvalDir {dom} p (SPFD qpos qdir) () (() ** epm) ed qd | qpdm with
+      (snd qpdm ed qd) proof dmeq
+    spfdRepEvalDir {dom} p (SPFD qpos qdir) () (() ** epm) ed qd | qpdm |
+      (SFS (FZ, ed) () ** u_) =
+        (((FZ, ()) ** Refl) **
+         (ed ** rewrite epeq in qd) **
+          ((FZ, ed) ** rewrite epeq in rewrite dmeq in Refl) **
+           rewrite epeq in rewrite dmeq in
+           rewrite unitUnique (u_ (FZ, ed) Refl) () in Refl)
+    spfdRepEvalDir {dom} p (SPFD qpos qdir) () (() ** epm) ed qd | qpdm |
+      (SFS (FS FZ, ed) () ** ep) =
+        (((FS FZ, ()) ** Refl) ** ep (FS FZ, ed) Refl)
 
 public export
 spfdRepEval : {dom : Type} ->
