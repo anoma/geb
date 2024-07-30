@@ -1451,6 +1451,18 @@ SPFntCodDir tyel dom f g =
   Pi {a=(spfdPos f $ snd tyel)} . SPFntCodDirPos tyel dom f g
 
 public export
+record SPFntEl
+    (tyel : TyElObj) {dom : Type} (f, g : SPFData dom $ fst tyel) where
+  constructor SPFntc
+  speOnPos : SPFntCodPos tyel dom f g
+  speOnDir : SPFntCodDir tyel dom f g speOnPos
+
+-- An indexed family of natural transformations.
+public export
+SPFntef : {dom, cod : Type} -> IntMorSig (SPFData dom cod)
+SPFntef {dom} {cod} f g = Pi {a=cod} $ \ec => SPFntEl (cod ** ec) {dom} f g
+
+public export
 SPFntPos : {dom, cod : Type} -> IntMorSig (SPFData dom cod)
 SPFntPos {dom} {cod} f g = Pi {a=cod} $ \ec => SPFntCodPos (cod ** ec) dom f g
 
