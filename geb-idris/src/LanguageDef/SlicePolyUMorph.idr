@@ -1137,7 +1137,10 @@ spfdRepCurryPos : {dom : Type} ->
   SPFntPos {dom} {cod=Unit} p (spfdRepHomObj {dom} q r)
 spfdRepCurryPos {dom} {p=(SPFD ppos pdir)} {q} {r=(SPFD rpos rdir)}
   (SPFDm onpos ondir) () pp =
-    ?spfdRepCurryPos_hole
+    (onpos () (pp, ()) **
+     \ed, rd => case ondir () (pp, ()) ed rd of
+      Left pd => Left ()
+      Right qd => Right qd)
 
 public export
 spfdRepCurryDir : {dom : Type} ->
@@ -1150,8 +1153,14 @@ spfdRepCurryDir : {dom : Type} ->
     (spfdRepHomObj {dom} q r)
     (spfdRepCurryPos {dom} {p} {q} {r} f)
 spfdRepCurryDir {dom} {p=(SPFD ppos pdir)} {q} {r=(SPFD rpos rdir)}
-  (SPFDm onpos ondir) () pp ed =
-    ?spfdRepCurryDir_hole
+  (SPFDm onpos ondir) () pp ed ((ed' ** rd) ** dd) with
+      (ondir () (pp, ()) ed' rd) proof eq
+  spfdRepCurryDir {dom} {p=(SPFD ppos pdir)} {q} {r=(SPFD rpos rdir)}
+    (SPFDm onpos ondir) () pp ed ((ed ** rd) ** Refl) | Left pd =
+      pd
+  spfdRepCurryDir {dom} {p=(SPFD ppos pdir)} {q} {r=(SPFD rpos rdir)}
+    (SPFDm onpos ondir) () pp ed ((ed' ** rd) ** v) | Right qd =
+      void v
 
 public export
 spfdRepCurry : {dom : Type} ->
