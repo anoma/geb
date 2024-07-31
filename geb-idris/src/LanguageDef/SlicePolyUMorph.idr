@@ -1179,7 +1179,9 @@ spfdRepCurry {dom} {p} {q} {r} m =
 public export
 spfdCoprHomObj : {dom : Type} ->
   SPFData dom Unit -> SPFData dom Unit -> SPFData dom Unit
-spfdCoprHomObj {dom} q r = ?sfpdCoprHomObj_hole
+spfdCoprHomObj {dom} q r =
+  spfdSetProduct {b=(spfdPos q ())} {dom} {cod=Unit} $
+    \ep => spfdRepHomObj {dom} (spfdDir q () ep) r
 
 public export
 spfdCoprHomToPoly : {dom : Type} ->
@@ -1190,16 +1192,6 @@ spfdCoprHomToPoly : {dom : Type} ->
    InterpSPFData {dom} {cod=Unit} q x ())
 spfdCoprHomToPoly {dom} (SPFD ppos pdir) (SPFD qpos qdir) x =
   ?spfdCoprHomToPoly_hole
-
-public export
-spfdCoprHomFromPoly : {dom : Type} ->
-  (p, q : SPFData dom Unit) ->
-  (x : SliceObj dom) ->
-  (InterpSPFData {dom} {cod=Unit} p x () ->
-   InterpSPFData {dom} {cod=Unit} q x ()) ->
-  InterpSPFData {dom} {cod=Unit} (spfdCoprHomObj {dom} p q) x ()
-spfdCoprHomFromPoly {dom} (SPFD ppos pdir) (SPFD qpos qdir) x =
-  ?spfdCoprHomFromPoly_hole
 
 public export
 spfdCoprHomObjPos : {dom : Type} ->
@@ -1292,18 +1284,6 @@ spfdHomToPoly {dom} {cod} p q x ec =
     (SPFDataProdToFamUnit q ec) x
     ()
     -}
-
-public export
-spfdHomFromPoly : {dom, cod : Type} ->
-  (p, q : SPFData dom cod) ->
-  (x : SliceObj dom) -> (ec : cod) ->
-  (InterpSPFData {dom} {cod} p x ec -> InterpSPFData {dom} {cod} q x ec) ->
-  InterpSPFData {dom} {cod} (spfdHomObj {dom} {cod} p q) x ec
-spfdHomFromPoly {dom} {cod} p q x ec =
-  spfdCoprHomFromPoly {dom}
-    (SPFDataProdToFamUnit p ec)
-    (SPFDataProdToFamUnit q ec)
-    x
 
 public export
 spfdHomObjPos : {dom, cod : Type} ->
