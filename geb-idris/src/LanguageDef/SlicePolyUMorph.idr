@@ -1393,6 +1393,118 @@ spfdCurry {dom} {cod} {p} {q} {r} m =
 ----------------------------------
 ----------------------------------
 
+-- As with hom-objects, we compute the parallel-product closure
+-- in three steps.
+
+-------------------------------------------------------
+---- Representable copresheaves on `SliceObj dom`) ----
+-------------------------------------------------------
+
+-- See formula 4.75 in "Polynomial Functors: A Mathematical Theory
+-- of Interaction".
+public export
+spfdParRepHomObj : {dom : Type} ->
+  SliceObj dom -> SPFData dom Unit -> SPFData dom Unit
+spfdParRepHomObj {dom} q r =
+  SPFDcomp dom dom Unit
+    r
+    (spfdProduct
+      (SPFDid dom)
+      (SPFDataConst dom {cod=dom} q)
+      )
+
+public export
+spfdParRepHomObjPos : {dom : Type} ->
+  SliceObj dom -> SPFData dom Unit -> SliceObj Unit
+spfdParRepHomObjPos {dom} p q = spfdPos (spfdParRepHomObj {dom} p q)
+
+public export
+spfdParRepHomObjDir : {dom : Type} ->
+  (p : SliceObj dom) -> (q : SPFData dom Unit) ->
+  SPFdirType dom Unit (spfdParRepHomObjPos {dom} p q)
+spfdParRepHomObjDir {dom} p q = spfdDir (spfdParRepHomObj {dom} p q)
+
+public export
+spfdParRepEvalPos : {dom : Type} ->
+  (p : SliceObj dom) -> (q : SPFData dom Unit) ->
+  SPFntPos {dom} {cod=Unit}
+    (spfdParProduct {dom} {cod=Unit}
+      (spfdParRepHomObj {dom} p q)
+      (spfdCoprPiFR p))
+    q
+spfdParRepEvalPos {dom} p q u = fst . fst
+
+public export
+spfdParRepEvalDir : {dom : Type} ->
+  (p : SliceObj dom) -> (q : SPFData dom Unit) ->
+  SPFntDir {dom}
+    (spfdParProduct {dom} {cod=Unit}
+      (spfdParRepHomObj {dom} p q)
+      (spfdCoprPiFR p))
+    q
+    (spfdParRepEvalPos {dom} p q)
+spfdParRepEvalDir {dom} p q () (qpdm, ()) ed qd
+    with (snd qpdm ed qd) proof eq
+  spfdParRepEvalDir {dom} p q () ((qp ** dm), ()) ed qd | ((), pd) =
+    (((ed ** qd) ** Left $ rewrite fstEq eq in Refl), pd)
+
+public export
+spfdParRepEval : {dom : Type} ->
+  (p : SliceObj dom) -> (q : SPFData dom Unit) ->
+  SPFnt {dom} {cod=Unit}
+    (spfdParProduct {dom} {cod=Unit}
+      (spfdParRepHomObj {dom} p q)
+      (spfdCoprPiFR p))
+    q
+spfdParRepEval {dom} p q =
+  SPFDm (spfdParRepEvalPos {dom} p q) (spfdParRepEvalDir {dom} p q)
+
+public export
+spfdParRepCurryPos : {dom : Type} ->
+  {q : SliceObj dom} -> {p, r : SPFData dom Unit} ->
+  SPFnt {dom} {cod=Unit}
+    (spfdParProduct {dom} {cod=Unit} p (spfdCoprPiFR q))
+    r ->
+  SPFntPos {dom} {cod=Unit} p (spfdParRepHomObj {dom} q r)
+spfdParRepCurryPos {dom} {p=(SPFD ppos pdir)} {q} {r=(SPFD rpos rdir)}
+  (SPFDm onpos ondir) () pp =
+    (onpos () (pp, ()) ** \ed, rd => ((), snd $ ondir () (pp, ()) ed rd))
+
+public export
+spfdParRepCurryDir : {dom : Type} ->
+  {q : SliceObj dom} -> {p, r : SPFData dom Unit} ->
+  (f : SPFnt {dom} {cod=Unit}
+    (spfdParProduct {dom} {cod=Unit} p (spfdCoprPiFR q))
+    r) ->
+  SPFntDir {dom} {cod=Unit}
+    p
+    (spfdParRepHomObj {dom} q r)
+    (spfdParRepCurryPos {dom} {p} {q} {r} f)
+spfdParRepCurryDir {dom} {p=(SPFD ppos pdir)} {q} {r=(SPFD rpos rdir)}
+  (SPFDm onpos ondir) () pp ed ((ed' ** rd) ** dd) with
+      (ondir () (pp, ()) ed' rd) proof eq
+  spfdParRepCurryDir {dom} {p=(SPFD ppos pdir)} {q} {r=(SPFD rpos rdir)}
+    (SPFDm onpos ondir) () pp ed ((ed' ** rd) ** dd) | pd =
+      case dd of
+        Left Refl => fst pd
+        Right v => void v
+
+public export
+spfdParRepCurry : {dom : Type} ->
+  {q : SliceObj dom} -> {p, r : SPFData dom Unit} ->
+  SPFnt {dom} {cod=Unit}
+    (spfdParProduct {dom} {cod=Unit} p (spfdCoprPiFR q))
+    r ->
+  SPFnt {dom} {cod=Unit} p (spfdParRepHomObj {dom} q r)
+spfdParRepCurry {dom} {p} {q} {r} m =
+  SPFDm
+    (spfdParRepCurryPos {dom} {p} {q} {r} m)
+    (spfdParRepCurryDir {dom} {p} {q} {r} m)
+
+----------------------------
+---- General `SPFData`s ----
+----------------------------
+
 -- We call this the "parallel closure" since it is a closure of the
 -- parallel product in the same way (i.e. with the same universal-morphism
 -- signatures) that the exponential object is a closure of the product.
