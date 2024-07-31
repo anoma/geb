@@ -1613,11 +1613,8 @@ public export
 spfdParClosureObj : {dom, cod : Type} ->
   SPFData dom cod -> SPFData dom cod -> SPFData dom cod
 spfdParClosureObj {dom} {cod} q r =
-  spfdSetProduct {b=(Sigma {a=cod} $ spfdPos q)} {dom} {cod} $
-    \ep => SPFDcomp dom dom cod r $
-      spfdProduct {dom} {cod=dom}
-        (SPFDid dom)
-        (SPFDataConst dom {cod=dom} $ uncurry (spfdDir q) ep)
+  SPFDataFamToProdUnit $ \ec =>
+    spfdParCoprHomObj (SPFDataProdToFamUnit q ec) (SPFDataProdToFamUnit r ec)
 
 public export
 spfdParClosureObjPos : {dom, cod : Type} ->
@@ -1631,6 +1628,79 @@ spfdParClosureObjDir : {dom, cod : Type} ->
   SPFdirType dom cod (spfdParClosureObjPos {dom} {cod} p q)
 spfdParClosureObjDir {dom} {cod} p q =
   spfdDir (spfdParClosureObj {dom} {cod} p q)
+
+public export
+spfdParEvalPos : {dom, cod : Type} ->
+  (p, q : SPFData dom cod) ->
+  SPFntPos {dom} {cod}
+    (spfdParProduct {dom} {cod} (spfdParClosureObj {dom} {cod} p q) p)
+    q
+spfdParEvalPos {dom} {cod} p q ec =
+  spfdParCoprEvalPos {dom}
+    (SPFDataProdToFamUnit p ec)
+    (SPFDataProdToFamUnit q ec)
+    ()
+
+public export
+spfdParEvalDir : {dom, cod : Type} ->
+  (p, q : SPFData dom cod) ->
+  SPFntDir {dom} {cod}
+    (spfdParProduct {dom} {cod} (spfdParClosureObj {dom} {cod} p q) p)
+    q
+    (spfdParEvalPos {dom} {cod} p q)
+spfdParEvalDir {dom} {cod} p q ec =
+  spfdParCoprEvalDir {dom}
+    (SPFDataProdToFamUnit p ec)
+    (SPFDataProdToFamUnit q ec)
+    ()
+
+public export
+spfdParEval : {dom, cod : Type} ->
+  (p, q : SPFData dom cod) ->
+  SPFnt {dom} {cod}
+    (spfdParProduct {dom} {cod} (spfdParClosureObj {dom} {cod} p q) p)
+    q
+spfdParEval {dom} {cod} p q =
+  SPFDm (spfdParEvalPos {dom} {cod} p q) (spfdParEvalDir {dom} {cod} p q)
+
+public export
+spfdParCurryPos : {dom, cod : Type} ->
+  {p, q, r : SPFData dom cod} ->
+  SPFnt {dom} {cod} (spfdParProduct {dom} {cod} p q) r ->
+  SPFntPos {dom} {cod} p (spfdParClosureObj {dom} {cod} q r)
+spfdParCurryPos {dom} {cod} {p} {q} {r} m ec =
+  spfdParCoprCurryPos {dom}
+    {p=(SPFDataProdToFamUnit p ec)}
+    {q=(SPFDataProdToFamUnit q ec)}
+    {r=(SPFDataProdToFamUnit r ec)}
+    (SPFDataProdToFamUnitNT (spfdParProduct p q) r m ec)
+    ()
+
+public export
+spfdParCurryDir : {dom, cod : Type} ->
+  {p, q, r : SPFData dom cod} ->
+  (f : SPFnt {dom} {cod} (spfdParProduct {dom} {cod} p q) r) ->
+  SPFntDir {dom} {cod}
+    p
+    (spfdParClosureObj {dom} {cod} q r)
+    (spfdParCurryPos {dom} {cod} {p} {q} {r} f)
+spfdParCurryDir {dom} {cod} {p} {q} {r} m ec =
+  spfdParCoprCurryDir {dom}
+    {p=(SPFDataProdToFamUnit p ec)}
+    {q=(SPFDataProdToFamUnit q ec)}
+    {r=(SPFDataProdToFamUnit r ec)}
+    (SPFDataProdToFamUnitNT (spfdParProduct p q) r m ec)
+    ()
+
+public export
+spfdParCurry : {dom, cod : Type} ->
+  {p, q, r : SPFData dom cod} ->
+  SPFnt {dom} {cod} (spfdParProduct {dom} {cod} p q) r ->
+  SPFnt {dom} {cod} p (spfdParClosureObj {dom} {cod} q r)
+spfdParCurry {dom} {cod} {p} {q} {r} m =
+  SPFDm
+    (spfdParCurryPos {dom} {cod} {p} {q} {r} m)
+    (spfdParCurryDir {dom} {cod} {p} {q} {r} m)
 
 ------------------------------------------------
 ------------------------------------------------
