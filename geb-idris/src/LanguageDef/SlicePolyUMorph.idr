@@ -1501,6 +1501,107 @@ spfdParRepCurry {dom} {p} {q} {r} m =
     (spfdParRepCurryPos {dom} {p} {q} {r} m)
     (spfdParRepCurryDir {dom} {p} {q} {r} m)
 
+-----------------------------------------
+---- Copresheaves on `SliceObj dom`) ----
+-----------------------------------------
+
+public export
+spfdParCoprHomObj : {dom : Type} ->
+  SPFData dom Unit -> SPFData dom Unit -> SPFData dom Unit
+spfdParCoprHomObj {dom} q r =
+  spfdSetProduct {b=(spfdPos q ())} {dom} {cod=Unit} $
+    \ep => spfdParRepHomObj {dom} (spfdDir q () ep) r
+
+public export
+spfdParCoprHomObjPos : {dom : Type} ->
+  SPFData dom Unit -> SPFData dom Unit -> SliceObj Unit
+spfdParCoprHomObjPos {dom} p q = spfdPos (spfdParCoprHomObj {dom} p q)
+
+public export
+spfdParCoprHomObjDir : {dom : Type} ->
+  (p, q : SPFData dom Unit) ->
+  SPFdirType dom Unit (spfdParCoprHomObjPos {dom} p q)
+spfdParCoprHomObjDir {dom} p q = spfdDir (spfdParCoprHomObj {dom} p q)
+
+public export
+spfdParCoprEvalPos : {dom : Type} ->
+  (p, q : SPFData dom Unit) ->
+  SPFntPos {dom} {cod=Unit}
+    (spfdParProduct {dom} {cod=Unit} (spfdParCoprHomObj {dom} p q) p)
+    q
+spfdParCoprEvalPos {dom} p q () ((() ** ep), pp) with (ep (pp, ()) Refl)
+  spfdParCoprEvalPos {dom} p q () ((() ** ep), pp) | (qp ** dm) =
+    spfdRepEvalPos {dom}
+      (spfdDir p () pp) q () ((qp ** \ed => Right . snd . dm ed), ())
+
+public export
+spfdParCoprEvalDir : {dom : Type} ->
+  (p, q : SPFData dom Unit) ->
+  SPFntDir {dom}
+    (spfdParProduct {dom} {cod=Unit} (spfdParCoprHomObj {dom} p q) p)
+    q
+    (spfdParCoprEvalPos {dom} p q)
+spfdParCoprEvalDir {dom} p q () ((() ** ep), pp) ed qd
+    with (ep (pp, ()) Refl) proof epeq
+  spfdParCoprEvalDir {dom} p q () ((() ** ep), pp) ed qd | (qp ** dm)
+      with (dm ed qd) proof dmeq
+    spfdParCoprEvalDir {dom} p q () ((() ** ep), pp) ed qd | (qp ** dm) |
+        ((), pd) =
+      ((((pp, ()) ** Refl) **
+        rewrite epeq in ((ed ** qd) ** Left $ rewrite dmeq in Refl)),
+       pd)
+
+public export
+spfdParCoprEval : {dom : Type} ->
+  (p, q : SPFData dom Unit) ->
+  SPFnt {dom} {cod=Unit}
+    (spfdParProduct {dom} {cod=Unit} (spfdParCoprHomObj {dom} p q) p)
+    q
+spfdParCoprEval {dom} p q =
+  SPFDm (spfdParCoprEvalPos {dom} p q) (spfdParCoprEvalDir {dom} p q)
+
+public export
+spfdParCoprCurryPos : {dom : Type} ->
+  {p, q, r : SPFData dom Unit} ->
+  SPFnt {dom} {cod=Unit} (spfdParProduct {dom} {cod=Unit} p q) r ->
+  SPFntPos {dom} {cod=Unit} p (spfdParCoprHomObj {dom} q r)
+spfdParCoprCurryPos {dom} {p} {q} {r} nt () pp =
+  (() **
+   \(qp, ()), Refl =>
+    spfdParRepCurryPos {p} {q=(spfdDir q () qp)} {r}
+      (SPFDm
+        (\(), (pp', ()) => spOnPos nt () (pp', qp))
+        (\(), (pp', ()), ed => spOnDir nt () (pp', qp) ed))
+        ()
+        pp)
+
+public export
+spfdParCoprCurryDir : {dom : Type} ->
+  {p, q, r : SPFData dom Unit} ->
+  (f : SPFnt {dom} {cod=Unit} (spfdParProduct {dom} {cod=Unit} p q) r) ->
+  SPFntDir {dom} {cod=Unit}
+    p
+    (spfdParCoprHomObj {dom} q r)
+    (spfdParCoprCurryPos {dom} {p} {q} {r} f)
+spfdParCoprCurryDir {dom} {p} {q} {r} nt () pp ed
+  (((qp, ()) ** Refl) ** ((ed' ** rd) ** qd)) =
+    spfdParRepCurryDir {p} {q=(spfdDir q () qp)} {r}
+      _
+      ()
+      pp
+      ed
+      ((ed' ** rd) ** qd)
+
+public export
+spfdParCoprCurry : {dom : Type} ->
+  {p, q, r : SPFData dom Unit} ->
+  SPFnt {dom} {cod=Unit} (spfdParProduct {dom} {cod=Unit} p q) r ->
+  SPFnt {dom} {cod=Unit} p (spfdParCoprHomObj {dom} q r)
+spfdParCoprCurry {dom} {p} {q} {r} m =
+  SPFDm
+    (spfdParCoprCurryPos {dom} {p} {q} {r} m)
+    (spfdParCoprCurryDir {dom} {p} {q} {r} m)
+
 ----------------------------
 ---- General `SPFData`s ----
 ----------------------------
