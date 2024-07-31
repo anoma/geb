@@ -1543,13 +1543,21 @@ spfdParCoprEvalDir : {dom : Type} ->
     (spfdParCoprEvalPos {dom} p q)
 spfdParCoprEvalDir {dom} p q () ((() ** ep), pp) ed qd
     with (ep (pp, ()) Refl) proof epeq
-  spfdParCoprEvalDir {dom} p q () ((() ** ep), pp) ed qd | (qp ** dm)
-      with (dm ed qd) proof dmeq
-    spfdParCoprEvalDir {dom} p q () ((() ** ep), pp) ed qd | (qp ** dm) |
-        ((), pd) =
-      ((((pp, ()) ** Refl) **
-        rewrite epeq in ((ed ** qd) ** Left $ rewrite dmeq in Refl)),
-       pd)
+  spfdParCoprEvalDir {dom} p q () ((() ** ep), pp) ed qd | (qp ** dm) =
+    case
+      spfdRepEvalDir {dom}
+        (spfdDir p () pp)
+        q
+        ()
+        ((qp ** \ed => Right . snd . dm ed), ())
+        ed
+        qd of
+      Left v => void $ snd v
+      Right pd =>
+        ((((pp, ()) ** Refl) **
+           rewrite epeq in
+           ((ed ** qd) **
+            Left $ rewrite unitUnique (fst $ dm ed qd) () in Refl)), pd)
 
 public export
 spfdParCoprEval : {dom : Type} ->
