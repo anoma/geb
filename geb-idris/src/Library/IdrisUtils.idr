@@ -209,6 +209,11 @@ eitherElim f g (Left e) = f e
 eitherElim f g (Right e) = g e
 
 public export
+eitherSym : {0 a, b : Type} -> Either a b -> Either b a
+eitherSym {a} {b} (Left x) = Right x
+eitherSym {a} {b} (Right x) = Left x
+
+public export
 codiag : {0 a : Type} -> Either a a -> a
 codiag {a} = eitherElim {a} {b=a} {c=a} id id
 
