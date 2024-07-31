@@ -713,9 +713,9 @@ spfdEmptyParProductFromRepTerminal dom cod =
 -------------------------
 
 public export
-spfdProduct' : {dom, cod : Type} ->
+spfdProduct : {dom, cod : Type} ->
   SPFData dom cod -> SPFData dom cod -> SPFData dom cod
-spfdProduct' {dom} {cod} f g =
+spfdProduct {dom} {cod} f g =
   SPFD
     (\ec =>
       Pair (spfdPos f ec) (spfdPos g ec))
@@ -730,7 +730,7 @@ public export
 spfdProductToSet : {dom, cod : Type} ->
   (f, g : SPFData dom cod) ->
   SPFnt
-    (spfdProduct' {dom} {cod} f g)
+    (spfdProduct {dom} {cod} f g)
     (spfdSetProduct {b=(Fin 2)} {dom} {cod} $ flip Vect.index [f, g])
 spfdProductToSet {dom} {cod} f g =
   SPFDm
@@ -744,7 +744,7 @@ spfdProductFromSet : {dom, cod : Type} ->
   (f, g : SPFData dom cod) ->
   SPFnt
     (spfdSetProduct {b=(Fin 2)} {dom} {cod} $ flip Vect.index [f, g])
-    (spfdProduct' {dom} {cod} f g)
+    (spfdProduct {dom} {cod} f g)
 spfdProductFromSet {dom} {cod} f g =
   SPFDm
     (\ec, (() ** dm) => (dm (FZ, ec) Refl, dm (FS FZ, ec) Refl))
@@ -753,32 +753,29 @@ spfdProductFromSet {dom} {cod} f g =
       Right gd => (((FS FZ, ec) ** Refl) ** gd))
 
 public export
-spfdProduct : {dom, cod : Type} ->
-  SPFData dom cod -> SPFData dom cod -> SPFData dom cod
-spfdProduct {dom} {cod} x y =
-  spfdSetProduct {b=(Fin 2)} {dom} {cod} $ flip index [x, y]
-
-public export
 spfdProductIntro : {dom, cod : Type} ->
   {x, y, z : SPFData dom cod} ->
   SPFnt {dom} {cod} x y ->
   SPFnt {dom} {cod} x z ->
   SPFnt {dom} {cod} x (spfdProduct {dom} {cod} y z)
 spfdProductIntro {dom} {cod} {x} {y} f g =
-  spfdSetProductIntro {b=(Fin 2)} {dom} {cod} {x} {y=(flip index [y, z])} $
-    \i => case i of FZ => f ; FS FZ => g
+  SPFDm
+    (\ec, ep => (spOnPos f ec ep, spOnPos g ec ep))
+    (\ec, ep, ed, dd => case dd of
+      Left fd => spOnDir f ec ep ed fd
+      Right gd => spOnDir g ec ep ed gd)
 
 public export
 spfdProductProj1 : {dom, cod : Type} -> (x, y : SPFData dom cod) ->
   SPFnt {dom} {cod} (spfdProduct {dom} {cod} x y) x
 spfdProductProj1 {dom} {cod} x y =
-  spfdSetProductProj {b=(Fin 2)} {dom} {cod} (flip index [x, y]) FZ
+  SPFDm (\_ => fst) (\ec, ep, ed => Left)
 
 public export
 spfdProductProj2 : {dom, cod : Type} -> (x, y : SPFData dom cod) ->
   SPFnt {dom} {cod} (spfdProduct {dom} {cod} x y) y
 spfdProductProj2 {dom} {cod} x y =
-  spfdSetProductProj {b=(Fin 2)} {dom} {cod} (flip index [x, y]) (FS FZ)
+  SPFDm (\_ => snd) (\ec, ep, ed => Right)
 
 -- `spfdTerminal` (the zero-way product) is a unit for the product.
 
@@ -788,14 +785,7 @@ spfdProductToUnitL : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
     spfd
     (spfdProduct {dom} {cod} (spfdTerminal dom cod) spfd)
 spfdProductToUnitL {dom} {cod} spfd =
-  SPFDm
-    (\ec, ep =>
-      (() ** \(i, ec), Refl => case i of
-        FZ => ()
-        FS FZ => ep))
-    (\ec, ep, ed, (((i, ec) ** Refl) ** efd) => case i of
-      FZ => void efd
-      FS FZ => efd)
+  SPFDm (\ec => MkPair ()) (\ec, ep, ed => eitherElim (\v => void v) id)
 
 public export
 spfdProductToUnitR : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
@@ -803,14 +793,7 @@ spfdProductToUnitR : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
     spfd
     (spfdProduct {dom} {cod} spfd (spfdTerminal dom cod))
 spfdProductToUnitR {dom} {cod} spfd =
-  SPFDm
-    (\ec, ep =>
-      (() ** \(i, ec), Refl => case i of
-        FZ => ep
-        FS FZ => ()))
-    (\ec, ep, ed, (((i, ec) ** Refl) ** efd) => case i of
-      FZ => efd
-      FS FZ => void efd)
+  SPFDm (\ec => flip MkPair ()) (\ec, ep, ed => eitherElim id (\v => void v))
 
 public export
 spfdProductFromUnitL : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
@@ -818,9 +801,7 @@ spfdProductFromUnitL : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
     (spfdProduct {dom} {cod} (spfdTerminal dom cod) spfd)
     spfd
 spfdProductFromUnitL {dom} {cod} spfd =
-  SPFDm
-    (\ec, (() ** m) => m (FS FZ, ec) Refl)
-    (\ec, (() ** m), ed, efd => (((FS FZ, ec) ** Refl) ** efd))
+  SPFDm (\_ => snd) (\_, _, _ => Right)
 
 public export
 spfdProductFromUnitR : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
@@ -828,9 +809,7 @@ spfdProductFromUnitR : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
     (spfdProduct {dom} {cod} spfd (spfdTerminal dom cod))
     spfd
 spfdProductFromUnitR {dom} {cod} spfd =
-  SPFDm
-    (\ec, (() ** m) => m (FZ, ec) Refl)
-    (\ec, (() ** m), ed, efd => (((FZ, ec) ** Refl) ** efd))
+  SPFDm (\_ => fst) (\_, _, _ => Left)
 
 ---------------------------
 ---------------------------
@@ -839,9 +818,9 @@ spfdProductFromUnitR {dom} {cod} spfd =
 ---------------------------
 
 public export
-spfdCoproduct' : {dom, cod : Type} ->
+spfdCoproduct : {dom, cod : Type} ->
   SPFData dom cod -> SPFData dom cod -> SPFData dom cod
-spfdCoproduct' {dom} {cod} f g =
+spfdCoproduct {dom} {cod} f g =
   SPFD
     (\ec =>
       Either (spfdPos f ec) (spfdPos g ec))
@@ -854,7 +833,7 @@ public export
 spfdCoproductToSet : {dom, cod : Type} ->
   (f, g : SPFData dom cod) ->
   SPFnt
-    (spfdCoproduct' {dom} {cod} f g)
+    (spfdCoproduct {dom} {cod} f g)
     (spfdSetCoproduct {b=(Fin 2)} {dom} {cod} $ flip Vect.index [f, g])
 spfdCoproductToSet {dom} {cod} f g =
   SPFDm
@@ -871,7 +850,7 @@ spfdCoproductFromSet : {dom, cod : Type} ->
   (f, g : SPFData dom cod) ->
   SPFnt
     (spfdSetCoproduct {b=(Fin 2)} {dom} {cod} $ flip Vect.index [f, g])
-    (spfdCoproduct' {dom} {cod} f g)
+    (spfdCoproduct {dom} {cod} f g)
 spfdCoproductFromSet {dom} {cod} f g =
   SPFDm
     (\ec, (SFS (i, ec) () ** dm) => case i of
@@ -882,22 +861,16 @@ spfdCoproductFromSet {dom} {cod} f g =
       FS FZ => (((FS FZ, ec) ** Refl) ** dd))
 
 public export
-spfdCoproduct : {dom, cod : Type} ->
-  SPFData dom cod -> SPFData dom cod -> SPFData dom cod
-spfdCoproduct {dom} {cod} x y =
-  spfdSetCoproduct {b=(Fin 2)} {dom} {cod} $ flip index [x, y]
-
-public export
 spfdCoproductInjL : {dom, cod : Type} -> (x, y : SPFData dom cod) ->
   SPFnt {dom} {cod} x (spfdCoproduct {dom} {cod} x y)
 spfdCoproductInjL {dom} {cod} x y =
-  spfdSetCoproductInj {b=(Fin 2)} {dom} {cod} (flip index [x, y]) FZ
+  SPFDm (\ec => Left) (\ec, ep, ed => id)
 
 public export
 spfdCoproductInjR : {dom, cod : Type} -> (x, y : SPFData dom cod) ->
   SPFnt {dom} {cod} y (spfdCoproduct {dom} {cod} x y)
 spfdCoproductInjR {dom} {cod} x y =
-  spfdSetCoproductInj {b=(Fin 2)} {dom} {cod} (flip index [x, y]) (FS FZ)
+  SPFDm (\ec => Right) (\ec, ep, ed => id)
 
 public export
 spfdCoproductElim : {dom, cod : Type} ->
@@ -906,8 +879,11 @@ spfdCoproductElim : {dom, cod : Type} ->
   SPFnt {dom} {cod} y z ->
   SPFnt {dom} {cod} (spfdCoproduct {dom} {cod} x y) z
 spfdCoproductElim {dom} {cod} {x} {y} f g =
-  spfdSetCoproductElim {b=(Fin 2)} {dom} {cod} {x=(flip index [x, y])} {y=z} $
-    \i => case i of FZ => f ; FS FZ => g
+  SPFDm
+    (\ec => eitherElim (spOnPos f ec) (spOnPos g ec))
+    (\ec, ep, ed, dd => case ep of
+      Left xp => spOnDir f ec xp ed dd
+      Right yp => spOnDir g ec yp ed dd)
 
 -- `spfdInitial` (the zero-way coproduct) is a unit for the coproduct.
 
@@ -917,11 +893,7 @@ spfdCoproductToUnitL : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
     spfd
     (spfdCoproduct {dom} {cod} (spfdInitial dom cod) spfd)
 spfdCoproductToUnitL {dom} {cod} spfd =
-  SPFDm
-    (\ec, ep =>
-      (SFS (FS FZ, ec) () **
-       \iec', eqc => case iec' of (i, ec') => case eqc of Refl => ep))
-    (\ec, ep, ed, (((FS FZ, ec) ** Refl) ** efd) => efd)
+  SPFDm (\ec => Right) (\ec, ep, ed => id)
 
 public export
 spfdCoproductToUnitR : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
@@ -929,11 +901,7 @@ spfdCoproductToUnitR : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
     spfd
     (spfdCoproduct {dom} {cod} spfd (spfdInitial dom cod))
 spfdCoproductToUnitR {dom} {cod} spfd =
-  SPFDm
-    (\ec, ep =>
-      (SFS (FZ, ec) () **
-       \iec', eqc => case iec' of (i, ec') => case eqc of Refl => ep))
-    (\ec, ep, ed, (((FZ, ec) ** Refl) ** efd) => efd)
+  SPFDm (\ec => Left) (\ec, ep, ed => id)
 
 public export
 spfdCoproductFromUnitL : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
@@ -942,16 +910,10 @@ spfdCoproductFromUnitL : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
     spfd
 spfdCoproductFromUnitL {dom} {cod} spfd =
   SPFDm
-    (\ec, (SFS (i, ec) () ** dm) =>
-      let efd = dm (i, ec) Refl in
-      case i of
-        FZ => void efd
-        FS FZ => efd)
-    (\ec, (SFS (i, ec) () ** dm), ed, efd =>
-      (((i, ec) ** Refl) **
-       case i of
-        FZ => void $ dm (i, ec) Refl
-        FS FZ => efd))
+    (\ec => eitherElim (\v => void v) id)
+    (\ec, ep, ed, dd => case ep of
+      Left v => void v
+      Right sp => dd)
 
 public export
 spfdCoproductFromUnitR : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
@@ -960,16 +922,10 @@ spfdCoproductFromUnitR : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
     spfd
 spfdCoproductFromUnitR {dom} {cod} spfd =
   SPFDm
-    (\ec, (SFS (i, ec) () ** dm) =>
-      let efd = dm (i, ec) Refl in
-      case i of
-        FZ => efd
-        FS FZ => void efd)
-    (\ec, (SFS (i, ec) () ** dm), ed, efd =>
-      (((i, ec) ** Refl) **
-       case i of
-        FZ => efd
-        FS FZ => void $ dm (i, ec) Refl))
+    (\ec => eitherElim id (\v => void v))
+    (\ec, ep, ed, dd => case ep of
+      Left sp => dd
+      Right v => void v)
 
 ----------------------------------
 ----------------------------------
@@ -1141,14 +1097,8 @@ spfdRepHomToPoly {dom} p (SPFD qpos qdir) x ((qp ** mqp) ** qdm) (() ** mpx) =
   (qp ** xed) where
     xed : (ed : dom) -> qdir () qp ed -> x ed
     xed ed qd with (mqp ed qd) proof eq
-      xed _ qd | (SFS (i, ed) () ** mco) = case i of
-        FZ =>
-          qdm ed
-            ((ed ** qd) **
-             rewrite eq in
-             ((FZ, ed) ** Refl) **
-              rewrite eq in rewrite unitUnique (mco (FZ, ed) Refl) () in Refl)
-        FS FZ => mpx ed $ mco (FS FZ, ed) Refl
+      xed ed' qd | Left () = qdm ed' ((ed' ** qd) ** rewrite eq in Refl)
+      xed ed' qd | Right pd = mpx ed' pd
 
 public export
 spfdRepHomObjPos : {dom : Type} ->
@@ -1167,7 +1117,7 @@ spfdRepEvalPos : {dom : Type} ->
   SPFntPos {dom} {cod=Unit}
     (spfdProduct {dom} {cod=Unit} (spfdRepHomObj {dom} p q) (spfdCoprPiFR p))
     q
-spfdRepEvalPos {dom} p q () (() ** epm) = fst $ epm (FZ, ()) Refl
+spfdRepEvalPos {dom} p q u = fst . fst
 
 public export
 spfdRepEvalDir : {dom : Type} ->
@@ -1176,20 +1126,12 @@ spfdRepEvalDir : {dom : Type} ->
     (spfdProduct {dom} {cod=Unit} (spfdRepHomObj {dom} p q) (spfdCoprPiFR p))
     q
     (spfdRepEvalPos {dom} p q)
-spfdRepEvalDir {dom} p (SPFD qpos qdir) () (() ** epm) ed qd with
-    (epm (FZ, ()) Refl) proof epeq
-  spfdRepEvalDir {dom} p (SPFD qpos qdir) () (() ** epm) ed qd | qpdm with
-      (snd qpdm ed qd) proof dmeq
-    spfdRepEvalDir {dom} p (SPFD qpos qdir) () (() ** epm) ed qd | qpdm |
-      (SFS (FZ, ed) () ** u_) =
-        (((FZ, ()) ** Refl) **
-         (ed ** rewrite epeq in qd) **
-          ((FZ, ed) ** rewrite epeq in rewrite dmeq in Refl) **
-           rewrite epeq in rewrite dmeq in
-           rewrite unitUnique (u_ (FZ, ed) Refl) () in Refl)
-    spfdRepEvalDir {dom} p (SPFD qpos qdir) () (() ** epm) ed qd | qpdm |
-      (SFS (FS FZ, ed) () ** ep) =
-        (((FS FZ, ()) ** Refl) ** ep (FS FZ, ed) Refl)
+spfdRepEvalDir {dom} p (SPFD qpos qdir) () (qpdm, ()) ed qd
+    with (snd qpdm ed qd) proof eq
+  spfdRepEvalDir {dom} p (SPFD qpos qdir) () (qpdm, ()) ed qd | Left () =
+    Left ((ed ** qd) ** rewrite eq in Refl)
+  spfdRepEvalDir {dom} p (SPFD qpos qdir) () (qpdm, ()) ed qd | Right pd =
+    Right pd
 
 public export
 spfdRepEval : {dom : Type} ->
