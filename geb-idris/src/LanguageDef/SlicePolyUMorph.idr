@@ -1353,7 +1353,13 @@ spfdCurryPos : {dom, cod : Type} ->
   {p, q, r : SPFData dom cod} ->
   SPFnt {dom} {cod} (spfdProduct {dom} {cod} p q) r ->
   SPFntPos {dom} {cod} p (spfdHomObj {dom} {cod} q r)
-spfdCurryPos {dom} {cod} {p} {q} {r} m = ?spfdCurryPos_hole
+spfdCurryPos {dom} {cod} {p} {q} {r} m ec =
+  spfdCoprCurryPos {dom}
+    {p=(SPFDataProdToFamUnit p ec)}
+    {q=(SPFDataProdToFamUnit q ec)}
+    {r=(SPFDataProdToFamUnit r ec)}
+    (SPFDataProdToFamUnitNT (spfdProduct p q) r m ec)
+    ()
 
 public export
 spfdCurryDir : {dom, cod : Type} ->
@@ -1363,7 +1369,13 @@ spfdCurryDir : {dom, cod : Type} ->
     p
     (spfdHomObj {dom} {cod} q r)
     (spfdCurryPos {dom} {cod} {p} {q} {r} f)
-spfdCurryDir {dom} {cod} {p} {q} {r} m = ?spfdCurryDir_hole
+spfdCurryDir {dom} {cod} {p} {q} {r} m ec  =
+  spfdCoprCurryDir {dom}
+    {p=(SPFDataProdToFamUnit p ec)}
+    {q=(SPFDataProdToFamUnit q ec)}
+    {r=(SPFDataProdToFamUnit r ec)}
+    (SPFDataProdToFamUnitNT (spfdProduct p q) r m ec)
+    ()
 
 public export
 spfdCurry : {dom, cod : Type} ->
