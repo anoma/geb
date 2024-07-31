@@ -1259,7 +1259,14 @@ spfdCoprCurryDir : {dom : Type} ->
     p
     (spfdCoprHomObj {dom} q r)
     (spfdCoprCurryPos {dom} {p} {q} {r} f)
-spfdCoprCurryDir {dom} {p} {q} {r} m = ?spfdCoprCurryDir_hole
+spfdCoprCurryDir {dom} {p} {q} {r} nt () pp ed
+  (((qp, ()) ** Refl) ** ((ed' ** rd) ** qd)) =
+    spfdRepCurryDir {p} {q=(spfdDir q () qp)} {r}
+      _
+      ()
+      pp
+      ed
+      ((ed' ** rd) ** qd)
 
 public export
 spfdCoprCurry : {dom : Type} ->
