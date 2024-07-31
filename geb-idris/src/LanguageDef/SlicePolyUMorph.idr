@@ -1279,13 +1279,10 @@ spfdHomToPoly : {dom, cod : Type} ->
   InterpSPFData {dom} {cod} (spfdHomObj {dom} {cod} p q) x ec ->
   (InterpSPFData {dom} {cod} p x ec -> InterpSPFData {dom} {cod} q x ec)
 spfdHomToPoly {dom} {cod} p q x ec =
-  ?spfdHomToPoly_hole
-  {-
-  spfdHomToPoly {dom}
+  spfdCoprHomToPoly {dom}
     (SPFDataProdToFamUnit p ec)
-    (SPFDataProdToFamUnit q ec) x
-    ()
-    -}
+    (SPFDataProdToFamUnit q ec)
+    x
 
 public export
 spfdHomObjPos : {dom, cod : Type} ->
