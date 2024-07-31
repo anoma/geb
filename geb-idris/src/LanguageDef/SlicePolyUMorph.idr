@@ -1034,10 +1034,19 @@ public export
 spfdEither : {w : Type} -> SliceObj w -> SPFData w w
 spfdEither {w} a = spfdCoproduct {dom=w} {cod=w} (SPFDataConst w a) (SPFDid w)
 
+public export
+spfdFlipEither : {w : Type} -> SliceObj w -> SPFData w w
+spfdFlipEither {w} a =
+  spfdCoproduct {dom=w} {cod=w} (SPFDid w) (SPFDataConst w a)
+
 -- Given an object `A`, this functor takes `Y -> Pair A Y`.
 public export
 spfdPair : {w : Type} -> SliceObj w -> SPFData w w
 spfdPair {w} a = spfdProduct {dom=w} {cod=w} (SPFDataConst w a) (SPFDid w)
+
+public export
+spfdFlipPair : {w : Type} -> SliceObj w -> SPFData w w
+spfdFlipPair {w} a = spfdProduct {dom=w} {cod=w} (SPFDid w) (SPFDataConst w a)
 
 public export
 spfdMaybe : (w : Type) -> SPFData w w
@@ -1066,13 +1075,7 @@ spfdMaybe w = spfdEither {w} (SliceObjTerminal w)
 public export
 spfdRepHomObj : {dom : Type} ->
   SliceObj dom -> SPFData dom Unit -> SPFData dom Unit
-spfdRepHomObj {dom} q r =
-  SPFDcomp dom dom Unit
-    r
-    (spfdCoproduct
-      (SPFDid dom)
-      (SPFDataConst dom {cod=dom} q)
-      )
+spfdRepHomObj {dom} q r = SPFDcomp dom dom Unit r (spfdFlipEither {w=dom} q)
 
 public export
 spfdRepHomToPoly : {dom : Type} ->
@@ -1405,13 +1408,7 @@ spfdCurry {dom} {cod} {p} {q} {r} m =
 public export
 spfdParRepHomObj : {dom : Type} ->
   SliceObj dom -> SPFData dom Unit -> SPFData dom Unit
-spfdParRepHomObj {dom} q r =
-  SPFDcomp dom dom Unit
-    r
-    (spfdProduct
-      (SPFDid dom)
-      (SPFDataConst dom {cod=dom} q)
-      )
+spfdParRepHomObj {dom} q r = SPFDcomp dom dom Unit r (spfdFlipPair {w=dom} q)
 
 public export
 spfdParRepHomObjPos : {dom : Type} ->
