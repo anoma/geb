@@ -2379,11 +2379,29 @@ SPFDataFamToProdUnit {dom} {cod} sf with
     SPFD (pos . flip MkPair ()) (\ec => dir (ec, ()))
 
 public export
+SPFDataFamToProdUnitNT : {dom, cod : Type} ->
+  (sf, sf' : cod -> SPFData dom Unit) ->
+  ((ec : cod) -> SPFnt (sf ec) (sf' ec)) ->
+  SPFnt (SPFDataFamToProdUnit sf) (SPFDataFamToProdUnit sf')
+SPFDataFamToProdUnitNT {dom} {cod} sf sf' ntf =
+  SPFDm (\ec => spOnPos (ntf ec) ()) (\ec => spOnDir (ntf ec) ())
+
+public export
 SPFDataProdToFamUnit : {dom, cod : Type} ->
   SPFData dom cod -> (cod -> SPFData dom Unit)
 SPFDataProdToFamUnit {dom} {cod} sf =
   SPFDataProdToFam {b=cod} {dom} {cod=Unit} $
     SPFD (spfdPos sf . fst) (\ec => spfdDir sf (fst ec))
+
+public export
+SPFDataProdToFamUnitNT : {dom, cod : Type} ->
+  (sf, sf' : SPFData dom cod) -> SPFnt sf sf' ->
+  (ec : cod) ->
+  SPFnt {dom} {cod=Unit}
+    (SPFDataProdToFamUnit sf ec)
+    (SPFDataProdToFamUnit sf' ec)
+SPFDataProdToFamUnitNT {dom} {cod} sf sf' nt ec =
+  SPFDm (\_ => spOnPos nt ec) (\_ => spOnDir nt ec)
 
 -------------------------------------------------
 -------------------------------------------------
