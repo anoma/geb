@@ -1723,6 +1723,41 @@ spfdParCurry {dom} {cod} {p} {q} {r} m =
     (spfdParCurryPos {dom} {cod} {p} {q} {r} m)
     (spfdParCurryDir {dom} {cod} {p} {q} {r} m)
 
+----------------------------------------------
+----------------------------------------------
+---- Cartesian transformations and slices ----
+----------------------------------------------
+----------------------------------------------
+
+-- See formula 6.75 from the "General Theory of Interaction" book.
+-- An on-positions function induces an adjunction with the slice
+-- category over the positions of the codomain (meaning, over
+-- the constant functor whose value everywhere is the position-set
+-- of the codomain).
+public export
+spfdPosSlicePos : {x, y, z : Type} ->
+  (p : SPFData x z) -> (q : SPFData y z) ->
+  (f : SPFnt {dom=x} {cod=z} p (SPFDcomp x y z q (spfdTerminal x y))) ->
+  SliceObj (y, z)
+spfdPosSlicePos {x} {y} {z} p q f eyz =
+  (i : spfdPos p (snd eyz) **
+   spfdDir q (snd eyz) (fst $ spOnPos f (snd eyz) i) (fst eyz))
+
+public export
+spfdPosSliceDir : {x, y, z : Type} ->
+  (p : SPFData x z) -> (q : SPFData y z) ->
+  (f : SPFnt {dom=x} {cod=z} p (SPFDcomp x y z q (spfdTerminal x y))) ->
+  SPFdirType x (y, z) (spfdPosSlicePos {x} {y} {z} p q f)
+spfdPosSliceDir {x} {y} {z} p q f eyz ppqd = spfdDir p (snd eyz) (fst ppqd)
+
+public export
+spfdPosSlice : {x, y, z : Type} ->
+  (p : SPFData x z) -> (q : SPFData y z) ->
+  (f : SPFnt {dom=x} {cod=z} p (SPFDcomp x y z q (spfdTerminal x y))) ->
+  SPFData x (y, z)
+spfdPosSlice {x} {y} {z} p q f =
+  SPFD (spfdPosSlicePos {x} {y} {z} p q f) (spfdPosSliceDir {x} {y} {z} p q f)
+
 ------------------------------------------------
 ------------------------------------------------
 ---- Universal slice polynomial 2-morphisms ----
