@@ -1052,6 +1052,22 @@ public export
 spfdMaybe : (w : Type) -> SPFData w w
 spfdMaybe w = spfdEither {w} (SliceObjTerminal w)
 
+-- Any composite polynomial functor `q . r` has a natural transformation
+-- to `q . 1`.  This in particular means that any composite `q . r` may be
+-- viewed in a canonical way as a slice object in the slice category over
+-- `q . 1` -- i.e., over the constant functor whose value everywhere is the
+-- position-set of `q`.
+--
+-- See proposition 6.73 in _Polynomial Functors: A Mathematical Theory
+-- of Interaction_.
+public export
+spfdCompToPosNT : {x, y, z : Type} -> (q : SPFData y z) -> (r : SPFData x y) ->
+  SPFnt {dom=x} {cod=z}
+    (SPFDcomp x y z q r)
+    (SPFDcomp x y z q (spfdTerminal x y))
+spfdCompToPosNT {x} {y} {z} (SPFD qpos qdir) (SPFD rpos rdir) =
+  SPFDm (\ez, qp => (fst qp ** \_, _ => ())) (\ez, qp, ex, qd => void $ snd qd)
+
 ---------------------
 ---------------------
 ---- Hom-objects ----
