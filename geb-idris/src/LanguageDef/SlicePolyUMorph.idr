@@ -1190,8 +1190,10 @@ spfdCoprHomToPoly : {dom : Type} ->
   InterpSPFData {dom} {cod=Unit} (spfdCoprHomObj {dom} p q) x () ->
   (InterpSPFData {dom} {cod=Unit} p x () ->
    InterpSPFData {dom} {cod=Unit} q x ())
-spfdCoprHomToPoly {dom} (SPFD ppos pdir) (SPFD qpos qdir) x =
-  ?spfdCoprHomToPoly_hole
+spfdCoprHomToPoly {dom} p@(SPFD ppos pdir) q x ((() ** ep) ** dm) (pp ** pdm) =
+  spfdRepHomToPoly {dom} (pdir () pp) q x
+    (ep (pp, ()) Refl ** \ed, qd => dm ed (((pp, ()) ** Refl) ** qd))
+    (() ** pdm)
 
 public export
 spfdCoprHomObjPos : {dom : Type} ->
