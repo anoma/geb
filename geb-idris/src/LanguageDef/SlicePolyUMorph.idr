@@ -712,7 +712,45 @@ spfdEmptyParProductFromRepTerminal dom cod =
 -------------------------
 -------------------------
 
+public export
+spfdProduct' : {dom, cod : Type} ->
+  SPFData dom cod -> SPFData dom cod -> SPFData dom cod
+spfdProduct' {dom} {cod} f g =
+  SPFD
+    (\ec =>
+      Pair (spfdPos f ec) (spfdPos g ec))
+    (\ec, ep, ed =>
+      Either
+        (flip (spfdDir f ec) ed (fst ep))
+        (flip (spfdDir g ec) ed (snd ep)))
+
 -- A binary product is a set product indexed by a type of cardinality two.
+
+public export
+spfdProductToSet : {dom, cod : Type} ->
+  (f, g : SPFData dom cod) ->
+  SPFnt
+    (spfdProduct' {dom} {cod} f g)
+    (spfdSetProduct {b=(Fin 2)} {dom} {cod} $ flip Vect.index [f, g])
+spfdProductToSet {dom} {cod} f g =
+  SPFDm
+    (\ec, ep =>
+      (() ** \(i, ec), Refl => case i of FZ => fst ep ; FS FZ => snd ep))
+    (\ec, ep, ed, (((i, ed) ** Refl) ** dd) =>
+      case i of FZ => Left dd ; FS FZ => Right dd)
+
+public export
+spfdProductFromSet : {dom, cod : Type} ->
+  (f, g : SPFData dom cod) ->
+  SPFnt
+    (spfdSetProduct {b=(Fin 2)} {dom} {cod} $ flip Vect.index [f, g])
+    (spfdProduct' {dom} {cod} f g)
+spfdProductFromSet {dom} {cod} f g =
+  SPFDm
+    (\ec, (() ** dm) => (dm (FZ, ec) Refl, dm (FS FZ, ec) Refl))
+    (\ec, (() ** dm), ed, dd => case dd of
+      Left fd => (((FZ, ec) ** Refl) ** fd)
+      Right gd => (((FS FZ, ec) ** Refl) ** gd))
 
 public export
 spfdProduct : {dom, cod : Type} ->
