@@ -1212,7 +1212,10 @@ spfdCoprEvalPos : {dom : Type} ->
   SPFntPos {dom} {cod=Unit}
     (spfdProduct {dom} {cod=Unit} (spfdCoprHomObj {dom} p q) p)
     q
-spfdCoprEvalPos {dom} p q () ((() ** ep), pp) = fst $ ep (pp, ()) Refl
+spfdCoprEvalPos {dom} p q () ((() ** ep), pp) with
+    (spfdRepEvalPos {dom} (spfdDir p () pp) q)
+  spfdCoprEvalPos {dom} p q () ((() ** ep), pp) | qpm =
+    qpm () (ep (pp, ()) Refl, ())
 
 public export
 spfdCoprEvalDir : {dom : Type} ->
@@ -1221,16 +1224,13 @@ spfdCoprEvalDir : {dom : Type} ->
     (spfdProduct {dom} {cod=Unit} (spfdCoprHomObj {dom} p q) p)
     q
     (spfdCoprEvalPos {dom} p q)
-spfdCoprEvalDir {dom} p q () ((() ** ep), pp) ed qd
-    with (ep (pp, ()) Refl) proof eq
-  spfdCoprEvalDir {dom} p q () ((() ** ep), pp) ed qd | (qp ** dm)
-      with (dm ed qd) proof eq'
-    spfdCoprEvalDir {dom} p q () ((() ** ep), pp) ed qd | (qp ** dm) | Left () =
-      Left
-        (((pp, ()) ** Refl) **
-         rewrite eq in ((ed ** qd) ** rewrite eq' in Refl))
-    spfdCoprEvalDir {dom} p q () ((() ** ep), pp) ed qd | (qp ** dm) | Right pd =
-      Right pd
+spfdCoprEvalDir {dom} p q () ((() ** ep), pp) ed qd with
+    (spfdRepEvalDir {dom} (spfdDir p () pp) q () (ep (pp, ()) Refl, ()) ed qd)
+    proof eq
+  spfdCoprEvalDir {dom} p q () ((() ** ep), pp) ed qd | Left dd =
+    Left (((pp, ()) ** Refl) ** dd)
+  spfdCoprEvalDir {dom} p q () ((() ** ep), pp) ed qd | Right pd =
+    Right pd
 
 public export
 spfdCoprEval : {dom : Type} ->
