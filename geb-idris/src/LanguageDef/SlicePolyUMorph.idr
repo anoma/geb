@@ -1241,7 +1241,15 @@ spfdCoprCurryPos : {dom : Type} ->
   {p, q, r : SPFData dom Unit} ->
   SPFnt {dom} {cod=Unit} (spfdProduct {dom} {cod=Unit} p q) r ->
   SPFntPos {dom} {cod=Unit} p (spfdCoprHomObj {dom} q r)
-spfdCoprCurryPos {dom} {p} {q} {r} m = ?spfdCoprCurryPos_hole
+spfdCoprCurryPos {dom} {p} {q} {r} nt () pp =
+  (() **
+   \(qp, ()), Refl =>
+    spfdRepCurryPos {p} {q=(spfdDir q () qp)} {r}
+      (SPFDm
+        (\(), (pp', ()) => spOnPos nt () (pp', qp))
+        (\(), (pp', ()), ed => spOnDir nt () (pp', qp) ed))
+        ()
+        pp)
 
 public export
 spfdCoprCurryDir : {dom : Type} ->
