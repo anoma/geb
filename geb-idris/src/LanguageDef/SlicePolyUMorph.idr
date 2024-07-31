@@ -1303,9 +1303,10 @@ spfdEvalPos : {dom, cod : Type} ->
   SPFntPos {dom} {cod}
     (spfdProduct {dom} {cod} (spfdHomObj {dom} {cod} p q) p)
     q
-spfdEvalPos {dom} {cod} p q ec ep =
-  ?spfdEvalPos_hole
-  -- fst $ snd (snd ep (FZ, ec) Refl) ((ec ** snd ep (FS FZ, ec) Refl), ec) Refl
+spfdEvalPos {dom} {cod} p q ec =
+  spfdCoprEvalPos {dom}
+    (SPFDataProdToFamUnit p ec)
+    (SPFDataProdToFamUnit q ec) ()
 
 public export
 spfdEvalDir : {dom, cod : Type} ->
@@ -1314,27 +1315,16 @@ spfdEvalDir : {dom, cod : Type} ->
     (spfdProduct {dom} {cod} (spfdHomObj {dom} {cod} p q) p)
     q
     (spfdEvalPos {dom} {cod} p q)
-spfdEvalDir {dom} {cod} (SPFD ppos pdir) (SPFD qpos qdir) =
-  ?spfdEvalDir_hole
-  {- ec (() ** ep) ed qd
-  with (fst $
-    snd (snd (ep (FZ, ec) Refl) ((ec ** ep (FS FZ, ec) Refl), ec) Refl) ed qd)
-    proof eq
-  spfdEvalDir {dom} {cod} (SPFD ppos pdir) (SPFD qpos qdir) ec (() ** ep) ed qd
-    | sfs@(SFS (FZ, ed) ()) =
-      (((FZ, ec) ** Refl) **
-       ((((ec ** ep (FS FZ, ec) Refl), ec) ** Refl) **
-        ((ed ** qd) **
-         (((FZ, ed) ** rewrite eq in Refl) ** rewrite unitUnique () _ in ?spfdEvalDir_hole))))
-  spfdEvalDir {dom} {cod} (SPFD ppos pdir) (SPFD qpos qdir) ec (() ** ep) ed qd
-    | sfs@(SFS (FS FZ, ed) ()) =
-      let stork = ep (FS FZ, ec) Refl in
-      let yerk = snd (ep (FZ, ec) Refl) ((ec ** stork), ec) Refl in
-      (((FZ, ec) ** Refl) **
-       ((((ec ** ep (FS FZ, ec) Refl), ec) ** Refl) **
-        ((ed ** qd) **
-         (((FS FZ, ed) ** rewrite eq in Refl) ** let sneak = sfsFst sfs in ?spfdEvalDir_hole2))))
-         -}
+spfdEvalDir {dom} {cod} p q ec ((() ** epm), pp) ed qd =
+  mapFst
+    (dpMapSnd $ \((pp', ()) ** Refl) => id)
+    (spfdCoprEvalDir {dom}
+      (SPFDataProdToFamUnit p ec)
+      (SPFDataProdToFamUnit q ec)
+      ()
+      ((() ** \(pp', ()), Refl => epm (pp', ()) Refl), pp)
+      ed
+      qd)
 
 public export
 spfdEval : {dom, cod : Type} ->
