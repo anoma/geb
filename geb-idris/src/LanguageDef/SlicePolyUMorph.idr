@@ -977,8 +977,42 @@ spfdCoproductFromUnitR {dom} {cod} spfd =
 ----------------------------------
 ----------------------------------
 
+public export
+spfdParProduct' : {dom, cod : Type} ->
+  SPFData dom cod -> SPFData dom cod -> SPFData dom cod
+spfdParProduct' {dom} {cod} f g =
+  SPFD
+    (\ec =>
+      Pair (spfdPos f ec) (spfdPos g ec))
+    (\ec, ep, ed =>
+      Pair
+        (flip (spfdDir f ec) ed (fst ep))
+        (flip (spfdDir g ec) ed (snd ep)))
+
 -- A binary parallel product is a set parallel product indexed by a type of
 -- cardinality two.
+
+public export
+spfdParProductToSet : {dom, cod : Type} ->
+  (f, g : SPFData dom cod) ->
+  SPFnt
+    (spfdParProduct' {dom} {cod} f g)
+    (spfdSetParProduct {b=(Fin 2)} {dom} {cod} $ flip Vect.index [f, g])
+spfdParProductToSet {dom} {cod} f g =
+  SPFDm
+    (\ec, ep, i => case i of FZ => fst ep ; FS FZ => snd ep)
+    (\ec, ep, ed, dm => (dm FZ, dm $ FS FZ))
+
+public export
+spfdParProductFromSet : {dom, cod : Type} ->
+  (f, g : SPFData dom cod) ->
+  SPFnt
+    (spfdSetParProduct {b=(Fin 2)} {dom} {cod} $ flip Vect.index [f, g])
+    (spfdParProduct' {dom} {cod} f g)
+spfdParProductFromSet {dom} {cod} f g =
+  SPFDm
+    (\ec, dm => (dm FZ, dm $ FS FZ))
+    (\ec, dm, ed, dd, i => case i of FZ => fst dd ; FS FZ => snd dd)
 
 public export
 spfdParProduct : {dom, cod : Type} ->
