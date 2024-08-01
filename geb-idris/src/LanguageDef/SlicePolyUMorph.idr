@@ -1787,14 +1787,21 @@ spfdInducedPosCSliceTot {y} {z} q p =
      (spfdInducedPosCSliceTotPos {y} {z} q p)
      (spfdInducedPosCSliceTotDir {y} {z} q p)
 
+-- Postcompose sigma after the total space of an induced position-slice.
+public export
+spfdInducedPosCSliceTotSigma : {y, z : Type} ->
+  (q : SPFData y z) -> (p : SPFDposCSlice {y} {z} q) ->
+  SPFData y z
+spfdInducedPosCSliceTotSigma {y} {z} q p =
+  spfPushoutPos {x=y} {y=z} {z=(y, z)} snd $ spfdInducedPosCSliceTot {y} {z} q p
+
 -- This is the projection component of the slice object over
 -- `q . 1` derived from `p`.
 public export
 spfdInducedPosCSliceProj : {y, z : Type} ->
   (q : SPFData y z) -> (p : SPFDposCSlice {y} {z} q) ->
   SPFnt {dom=y} {cod=z}
-    (spfPushoutPos {x=y} {y=z} {z=(y, z)} Builtin.snd
-     $ spfdInducedPosCSliceTot {y} {z} q p)
+    (spfdInducedPosCSliceTotSigma {y} {z} q p)
     (spfdCompTerm {y} {z} q)
 spfdInducedPosCSliceProj {y} {z} q p =
   SPFDm
