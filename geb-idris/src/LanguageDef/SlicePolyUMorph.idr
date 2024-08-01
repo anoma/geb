@@ -1748,33 +1748,34 @@ SPFDposCSlice {x} {y} {z} p q =
 
 -- See formula 6.75 from the "General Theory of Interaction" book.
 -- An on-positions function induces an adjunction with the position-slice
--- category of the codomain.
+-- category of the codomain.  Here we compute the total space of the
+-- induced position-slice object.
 public export
-spfdInducedPosCSlicePos : {x, y, z : Type} ->
+spfdInducedPosCSliceTotPos : {x, y, z : Type} ->
   (p : SPFData x z) -> (q : SPFData y z) ->
   (f : SPFDposCSlice {x} {y} {z} p q) ->
   SliceObj (y, z)
-spfdInducedPosCSlicePos {x} {y} {z} p q f eyz =
+spfdInducedPosCSliceTotPos {x} {y} {z} p q f eyz =
   (i : spfdPos p (snd eyz) **
    spfdDir q (snd eyz) (fst $ spOnPos f (snd eyz) i) (fst eyz))
 
 public export
-spfdInducedPosCSliceDir : {x, y, z : Type} ->
+spfdInducedPosCSliceTotDir : {x, y, z : Type} ->
   (p : SPFData x z) -> (q : SPFData y z) ->
   (f : SPFDposCSlice {x} {y} {z} p q) ->
-  SPFdirType x (y, z) (spfdInducedPosCSlicePos {x} {y} {z} p q f)
-spfdInducedPosCSliceDir {x} {y} {z} p q f eyz ppqd =
+  SPFdirType x (y, z) (spfdInducedPosCSliceTotPos {x} {y} {z} p q f)
+spfdInducedPosCSliceTotDir {x} {y} {z} p q f eyz ppqd =
   spfdDir p (snd eyz) (fst ppqd)
 
 public export
-spfdInducedPosCSlice : {x, y, z : Type} ->
+spfdInducedPosCSliceTot : {x, y, z : Type} ->
   (p : SPFData x z) -> (q : SPFData y z) ->
   (f : SPFDposCSlice {x} {y} {z} p q) ->
   SPFData x (y, z)
-spfdInducedPosCSlice {x} {y} {z} p q f =
+spfdInducedPosCSliceTot {x} {y} {z} p q f =
   SPFD
-     (spfdInducedPosCSlicePos {x} {y} {z} p q f)
-     (spfdInducedPosCSliceDir {x} {y} {z} p q f)
+     (spfdInducedPosCSliceTotPos {x} {y} {z} p q f)
+     (spfdInducedPosCSliceTotDir {x} {y} {z} p q f)
 
 ------------------------------------------------
 ------------------------------------------------
