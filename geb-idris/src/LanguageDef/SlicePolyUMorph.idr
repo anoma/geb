@@ -1806,6 +1806,12 @@ spfdInducedPosCSliceProj {y} {z} q p =
     (\ez, ppqd, ey, pd =>
       void $ snd pd)
 
+-- The adjuncts induced by a position-slice.
+public export
+spfdPosSliceAdjL : {y, z : Type} -> {q : SPFData y z} ->
+  (p : SPFDposCSlice {y} {z} q) -> SPFData y z
+spfdPosSliceAdjL {y} {z} {q} = spcsTot {y} {z} {q}
+
 ------------------------------------------------
 ------------------------------------------------
 ---- Universal slice polynomial 2-morphisms ----
