@@ -1052,6 +1052,11 @@ public export
 spfdMaybe : (w : Type) -> SPFData w w
 spfdMaybe w = spfdEither {w} (SliceObjTerminal w)
 
+-- Compose the given functor after the terminal functor.
+public export
+spfdCompTerm : {x, y, z : Type} -> SPFData y z -> SPFData x z
+spfdCompTerm {x} {y} {z} q = SPFDcomp x y z q (spfdTerminal x y)
+
 -- Any composite polynomial functor `q . r` has a natural transformation
 -- to `q . 1`.  This in particular means that any composite `q . r` may be
 -- viewed in a canonical way as a slice object in the slice category over
@@ -1064,7 +1069,7 @@ public export
 spfdCompToPosNT : {x, y, z : Type} -> (q : SPFData y z) -> (r : SPFData x y) ->
   SPFnt {dom=x} {cod=z}
     (SPFDcomp x y z q r)
-    (SPFDcomp x y z q (spfdTerminal x y))
+    (spfdCompTerm {x} {y} {z} q)
 spfdCompToPosNT {x} {y} {z} (SPFD qpos qdir) (SPFD rpos rdir) =
   SPFDm (\ez, qp => (fst qp ** \_, _ => ())) (\ez, qp, ex, qd => void $ snd qd)
 
@@ -1733,11 +1738,6 @@ spfdParCurry {dom} {cod} {p} {q} {r} m =
 ---- Category-theoretic position-slices ----
 --------------------------------------------
 
--- Compose the given functor after the terminal functor.
-public export
-spfdCompTerm : {y, z : Type} -> SPFData y z -> SPFData y z
-spfdCompTerm {y} {z} q = SPFDcomp y y z q (spfdTerminal y y)
-
 -- A utility function for a natural transformation whose codomain
 -- is a functor composed after a terminal object.  Because an object
 -- together with a natural transformation to it is an object of
@@ -1748,7 +1748,8 @@ spfdCompTerm {y} {z} q = SPFDcomp y y z q (spfdTerminal y y)
 -- to a dependent-type-style slice).
 public export
 SPFDposCSliceProj : {y, z : Type} -> SPFData y z -> SPFData y z -> Type
-SPFDposCSliceProj {y} {z} q p = SPFnt {dom=y} {cod=z} p (spfdCompTerm {y} {z} q)
+SPFDposCSliceProj {y} {z} q p =
+  SPFnt {dom=y} {cod=z} p (spfdCompTerm {x=y} {y} {z} q)
 
 public export
 record SPFDposCSlice {y, z : Type} (q : SPFData y z) where
@@ -1797,7 +1798,7 @@ spfdInducedPosCSliceProj : {y, z : Type} ->
   SPFpoCell {w=y} {w'=y} {z=(y, z)} {z'=z}
     Prelude.id Builtin.snd
     (spfdInducedPosCSliceTot {y} {z} q p)
-    (spfdCompTerm {y} {z} q)
+    (spfdCompTerm {x=y} {y} {z} q)
 spfdInducedPosCSliceProj {y} {z} q p =
   SPFDm
     (\ez, ppqd =>
