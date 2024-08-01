@@ -1747,6 +1747,18 @@ SPFDposCSliceProj {x} {y} {z} q p =
   SPFnt {dom=x} {cod=z} p (SPFDcomp x y z q (spfdTerminal x y))
 
 public export
+SPFDposCSliceProjDomChangePi : {x, x', y, z : Type} ->
+  (q : SPFData y z) -> (p : SPFData x z) -> (ex : x) ->
+  SPFDposCSliceProj {x} {y} {z} q p ->
+  SPFDposCSliceProj {x=x'} {y} {z}
+    q
+    (spfdPrecompPi {x=x'} {y=x} {z} (\_ => ex) p)
+SPFDposCSliceProjDomChangePi {x} {x'} {y} {z} q p ex (SPFDm onpos ondir) =
+  SPFDm
+    (\ez, pp => (fst (onpos ez (fst pp)) ** \_, _ => ()))
+    (\ez, pp, ex'', qd => void $ snd qd)
+
+public export
 record SPFDposCSlice {y, z : Type} (q : SPFData y z) where
   constructor SPcs
   spcsDom : Type
