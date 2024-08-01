@@ -1742,8 +1742,8 @@ spfdParCurry {dom} {cod} {p} {q} {r} m =
 -- indicate that this is a category-theory-style slice (as opposed
 -- to a dependent-type-style slice).
 public export
-SPFDposCSlice : {x, y, z : Type} -> SPFData x z -> SPFData y z -> Type
-SPFDposCSlice {x} {y} {z} p q =
+SPFDposCSlice : {x, y, z : Type} -> SPFData y z -> SPFData x z -> Type
+SPFDposCSlice {x} {y} {z} q p =
   SPFnt {dom=x} {cod=z} p (SPFDcomp x y z q (spfdTerminal x y))
 
 -- See formula 6.75 from the "General Theory of Interaction" book.
@@ -1753,7 +1753,7 @@ SPFDposCSlice {x} {y} {z} p q =
 public export
 spfdInducedPosCSliceTotPos : {x, y, z : Type} ->
   (q : SPFData y z) -> (p : SPFData x z) ->
-  (f : SPFDposCSlice {x} {y} {z} p q) ->
+  (f : SPFDposCSlice {x} {y} {z} q p) ->
   SliceObj (y, z)
 spfdInducedPosCSliceTotPos {x} {y} {z} q p f eyz =
   (i : spfdPos p (snd eyz) **
@@ -1762,7 +1762,7 @@ spfdInducedPosCSliceTotPos {x} {y} {z} q p f eyz =
 public export
 spfdInducedPosCSliceTotDir : {x, y, z : Type} ->
   (q : SPFData y z) -> (p : SPFData x z) ->
-  (f : SPFDposCSlice {x} {y} {z} p q) ->
+  (f : SPFDposCSlice {x} {y} {z} q p) ->
   SPFdirType x (y, z) (spfdInducedPosCSliceTotPos {x} {y} {z} q p f)
 spfdInducedPosCSliceTotDir {x} {y} {z} q p f eyz ppqd =
   spfdDir p (snd eyz) (fst ppqd)
@@ -1770,7 +1770,7 @@ spfdInducedPosCSliceTotDir {x} {y} {z} q p f eyz ppqd =
 public export
 spfdInducedPosCSliceTot : {x, y, z : Type} ->
   (q : SPFData y z) -> (p : SPFData x z) ->
-  (f : SPFDposCSlice {x} {y} {z} p q) ->
+  (f : SPFDposCSlice {x} {y} {z} q p) ->
   SPFData x (y, z)
 spfdInducedPosCSliceTot {x} {y} {z} q p f =
   SPFD
