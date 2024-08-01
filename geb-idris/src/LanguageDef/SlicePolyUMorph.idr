@@ -1746,36 +1746,40 @@ SPFDposCSliceProj : {x, y, z : Type} -> SPFData y z -> SPFData x z -> Type
 SPFDposCSliceProj {x} {y} {z} q p =
   SPFnt {dom=x} {cod=z} p (SPFDcomp x y z q (spfdTerminal x y))
 
+public export
+record SPFDposCSlice {y, z : Type} (q : SPFData y z) where
+  constructor SPcs
+  spcsDom : Type
+  spcsTot : SPFData spcsDom z
+  spcsProj : SPFDposCSliceProj {x=spcsDom} {y} {z} q spcsTot
+
 -- See formula 6.75 from the "General Theory of Interaction" book.
 -- An on-positions function induces an adjunction with the position-slice
 -- category of the codomain.  Here we compute the total space of the
 -- induced position-slice object.
 public export
-spfdInducedPosCSliceTotPos : {x, y, z : Type} ->
-  (q : SPFData y z) -> (p : SPFData x z) ->
-  (f : SPFDposCSliceProj {x} {y} {z} q p) ->
+spfdInducedPosCSliceTotPos : {y, z : Type} ->
+  (q : SPFData y z) -> (p : SPFDposCSlice {y} {z} q) ->
   SliceObj (y, z)
-spfdInducedPosCSliceTotPos {x} {y} {z} q p f eyz =
-  (i : spfdPos p (snd eyz) **
-   spfdDir q (snd eyz) (fst $ spOnPos f (snd eyz) i) (fst eyz))
+spfdInducedPosCSliceTotPos {y} {z} q p eyz =
+  (i : spfdPos (spcsTot p) (snd eyz) **
+   spfdDir q (snd eyz) (fst $ spOnPos (spcsProj p) (snd eyz) i) (fst eyz))
 
 public export
-spfdInducedPosCSliceTotDir : {x, y, z : Type} ->
-  (q : SPFData y z) -> (p : SPFData x z) ->
-  (f : SPFDposCSliceProj {x} {y} {z} q p) ->
-  SPFdirType x (y, z) (spfdInducedPosCSliceTotPos {x} {y} {z} q p f)
-spfdInducedPosCSliceTotDir {x} {y} {z} q p f eyz ppqd =
-  spfdDir p (snd eyz) (fst ppqd)
+spfdInducedPosCSliceTotDir : {y, z : Type} ->
+  (q : SPFData y z) -> (p : SPFDposCSlice {y} {z} q) ->
+  SPFdirType (spcsDom p) (y, z) (spfdInducedPosCSliceTotPos {y} {z} q p)
+spfdInducedPosCSliceTotDir {y} {z} q p eyz ppqd =
+  spfdDir (spcsTot p) (snd eyz) (fst ppqd)
 
 public export
-spfdInducedPosCSliceTot : {x, y, z : Type} ->
-  (q : SPFData y z) -> (p : SPFData x z) ->
-  (f : SPFDposCSliceProj {x} {y} {z} q p) ->
-  SPFData x (y, z)
-spfdInducedPosCSliceTot {x} {y} {z} q p f =
+spfdInducedPosCSliceTot : {y, z : Type} ->
+  (q : SPFData y z) -> (p : SPFDposCSlice {y} {z} q) ->
+  SPFData (spcsDom p) (y, z)
+spfdInducedPosCSliceTot {y} {z} q p =
   SPFD
-     (spfdInducedPosCSliceTotPos {x} {y} {z} q p f)
-     (spfdInducedPosCSliceTotDir {x} {y} {z} q p f)
+     (spfdInducedPosCSliceTotPos {y} {z} q p)
+     (spfdInducedPosCSliceTotDir {y} {z} q p)
 
 ------------------------------------------------
 ------------------------------------------------
