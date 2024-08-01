@@ -1792,14 +1792,16 @@ spfdInducedPosCSliceTot {y} {z} q p =
 public export
 spfdInducedPosCSliceProj : {y, z : Type} ->
   (q : SPFData y z) -> (p : SPFDposCSlice {y} {z} q) ->
-  SPFnt {dom=y} {cod=(y,z)}
-    (spfdInducedPosCSliceTot {y} {z} q p)
-    (spfPullbackPos {x=y} {y=z} {z=(y, z)} Builtin.snd (spfdCompTerm {y} {z} q))
+  SPFnt {dom=y} {cod=z}
+    (spfPushoutPos {x=y} {y=z} {z=(y, z)} Builtin.snd
+     $ spfdInducedPosCSliceTot {y} {z} q p)
+    (spfdCompTerm {y} {z} q)
 spfdInducedPosCSliceProj {y} {z} q p =
   SPFDm
-    (\eyz, ppqd =>
-      (fst (spOnPos (spcsProj p) (snd eyz) (fst ppqd)) ** \_, _ => ()))
-    (\eyz, ppqd, ey, pd => void $ snd pd)
+    (\ez, ppqd =>
+      spOnPos (spcsProj p) ez $ rewrite sym (sfsEq ppqd) in fst $ sfsSnd ppqd)
+    (\ez, ppqd, ey, pd =>
+      void $ snd pd)
 
 ------------------------------------------------
 ------------------------------------------------
