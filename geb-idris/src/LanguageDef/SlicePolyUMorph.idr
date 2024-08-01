@@ -1746,14 +1746,55 @@ SPFDposCSliceProj : {x, y, z : Type} -> SPFData y z -> SPFData x z -> Type
 SPFDposCSliceProj {x} {y} {z} q p =
   SPFnt {dom=x} {cod=z} p (SPFDcomp x y z q (spfdTerminal x y))
 
+-- Because position slices are insensitive to domain (positions depend
+-- only on codomain), we can change the domain of a position slice
+-- under various conditions -- if we can prove that either the source
+-- or target domain is inhabited, or if we can prove that either the
+-- source or target domain is uninhabited.
 public export
-SPFDposCSliceProjDomChangePi : {x, x', y, z : Type} ->
+SPFDposCSliceProjDomChangeInhSrc : {x, x', y, z : Type} ->
   (q : SPFData y z) -> (p : SPFData x z) -> (ex : x) ->
   SPFDposCSliceProj {x} {y} {z} q p ->
   SPFDposCSliceProj {x=x'} {y} {z}
     q
     (spfdPrecompPi {x=x'} {y=x} {z} (\_ => ex) p)
-SPFDposCSliceProjDomChangePi {x} {x'} {y} {z} q p ex (SPFDm onpos ondir) =
+SPFDposCSliceProjDomChangeInhSrc {x} {x'} {y} {z} q p ex (SPFDm onpos ondir) =
+  SPFDm
+    (\ez, pp => (fst (onpos ez (fst pp)) ** \_, _ => ()))
+    (\ez, pp, ex'', qd => void $ snd qd)
+
+public export
+SPFDposCSliceProjDomChangeInhTgt : {x, x', y, z : Type} ->
+  (q : SPFData y z) -> (p : SPFData x z) -> (ex' : x') ->
+  SPFDposCSliceProj {x} {y} {z} q p ->
+  SPFDposCSliceProj {x=x'} {y} {z}
+    q
+    (spfdPrecompBC {x=x'} {y=x} {z} (\_ => ex') p)
+SPFDposCSliceProjDomChangeInhTgt {x} {x'} {y} {z} q p ex' (SPFDm onpos ondir) =
+  SPFDm
+    (\ez, pp => (fst (onpos ez (fst pp)) ** \_, _ => ()))
+    (\ez, pp, ex'', qd => void $ snd qd)
+
+public export
+SPFDposCSliceProjDomChangeVoidSrc : {x, x', y, z : Type} ->
+  (q : SPFData y z) -> (p : SPFData x z) -> (v : x -> Void) ->
+  SPFDposCSliceProj {x} {y} {z} q p ->
+  SPFDposCSliceProj {x=x'} {y} {z}
+    q
+    (spfdPrecompBC {x=x'} {y=x} {z} (\ex => void $ v ex) p)
+SPFDposCSliceProjDomChangeVoidSrc {x} {x'} {y} {z} q p v (SPFDm onpos ondir) =
+  SPFDm
+    (\ez, pp => (fst (onpos ez (fst pp)) ** \_, _ => ()))
+    (\ez, pp, ex'', qd => void $ snd qd)
+
+public export
+SPFDposCSliceProjDomChangeVoidTgt : {x, x', y, z : Type} ->
+  (q : SPFData y z) -> (p : SPFData x z) -> (v : x' -> Void) ->
+  SPFDposCSliceProj {x} {y} {z} q p ->
+  SPFDposCSliceProj {x=x'} {y} {z}
+    q
+    (spfdPrecompPi {x=x'} {y=x} {z} (\ex' => void $ v ex') p)
+SPFDposCSliceProjDomChangeVoidTgt {x} {x'} {y} {z} q p v (SPFDm onpos ondir) =
   SPFDm
     (\ez, pp => (fst (onpos ez (fst pp)) ** \_, _ => ()))
     (\ez, pp, ex'', qd => void $ snd qd)
