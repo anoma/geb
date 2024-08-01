@@ -1806,11 +1806,28 @@ spfdInducedPosCSliceProj {y} {z} q p =
     (\ez, ppqd, ey, pd =>
       void $ snd pd)
 
--- The adjuncts induced by a position-slice.
 public export
-spfdPosSliceAdjL : {y, z : Type} -> {q : SPFData y z} ->
-  (p : SPFDposCSlice {y} {z} q) -> SPFData y z
-spfdPosSliceAdjL {y} {z} {q} = spcsTot {y} {z} {q}
+spfdCompCSlice : {x : Type} -> (q : SPFData x x) ->
+  SPFData x x -> SPFDposCSlice {y=x} {z=x} q
+spfdCompCSlice {x} q r = SPcs (SPFDcomp x x x q r) $ spfdCompToPosNT q r
+
+-- The adjoints of the position-slice adjunction induced by a
+-- slice polynomial endofunctor `q : SPFData x x`.  The adjunction is between
+-- `SPFDcat x x` on the left and the slice category of
+-- `SPFDcat x x` over `spfdCompTerm q` (which we are calling the
+-- "position-slice" category) on the right.  Below, `p` is an object of the
+-- right (position-slice) category, and `r` an object of the left (base)
+-- category.
+
+public export
+spfdPosSliceAdjL : {x : Type} -> (q : SPFData x x) ->
+  (p : SPFDposCSlice {y=x} {z=x} q) -> SPFData x x
+spfdPosSliceAdjL {x} q = spcsTot {y=x} {z=x} {q}
+
+public export
+spfdPosSliceAdjR : {x : Type} -> (q : SPFData x x) ->
+  (r : SPFData x x) -> SPFDposCSlice {y=x} {z=x} q
+spfdPosSliceAdjR {x} = spfdCompCSlice {x}
 
 ------------------------------------------------
 ------------------------------------------------
