@@ -1729,45 +1729,52 @@ spfdParCurry {dom} {cod} {p} {q} {r} m =
 ----------------------------------------------
 ----------------------------------------------
 
+--------------------------------------------
+---- Category-theoretic position-slices ----
+--------------------------------------------
+
 -- A utility function for a natural transformation whose codomain
--- is a functor composed with a terminal object.  Because an object
+-- is a functor composed after a terminal object.  Because an object
 -- together with a natural transformation to it is an object of
--- the slice category over that object, we call this a slice over
--- a composition with a terminal object.  We write "CSlice" here to
+-- the slice category over that object, and because a composition
+-- after a terminal object has no directions, we call this a slice over
+-- positions, or simply a position-slice.  We write "CSlice" here to
 -- indicate that this is a category-theory-style slice (as opposed
 -- to a dependent-type-style slice).
 public export
-SPFDtermCSlice : {x, y, z : Type} -> SPFData x z -> SPFData y z -> Type
-SPFDtermCSlice {x} {y} {z} p q =
+SPFDposCSlice : {x, y, z : Type} -> SPFData x z -> SPFData y z -> Type
+SPFDposCSlice {x} {y} {z} p q =
   SPFnt {dom=x} {cod=z} p (SPFDcomp x y z q (spfdTerminal x y))
 
 -- See formula 6.75 from the "General Theory of Interaction" book.
--- An on-positions function induces an adjunction with the slice
--- category over the functor consisting of the codomain composed
--- after the terminal object.
+-- An on-positions function induces an adjunction with the position-slice
+-- category of the codomain.
 public export
-spfdPosSlicePos : {x, y, z : Type} ->
+spfdInducedPosCSlicePos : {x, y, z : Type} ->
   (p : SPFData x z) -> (q : SPFData y z) ->
-  (f : SPFDtermCSlice {x} {y} {z} p q) ->
+  (f : SPFDposCSlice {x} {y} {z} p q) ->
   SliceObj (y, z)
-spfdPosSlicePos {x} {y} {z} p q f eyz =
+spfdInducedPosCSlicePos {x} {y} {z} p q f eyz =
   (i : spfdPos p (snd eyz) **
    spfdDir q (snd eyz) (fst $ spOnPos f (snd eyz) i) (fst eyz))
 
 public export
-spfdPosSliceDir : {x, y, z : Type} ->
+spfdInducedPosCSliceDir : {x, y, z : Type} ->
   (p : SPFData x z) -> (q : SPFData y z) ->
-  (f : SPFDtermCSlice {x} {y} {z} p q) ->
-  SPFdirType x (y, z) (spfdPosSlicePos {x} {y} {z} p q f)
-spfdPosSliceDir {x} {y} {z} p q f eyz ppqd = spfdDir p (snd eyz) (fst ppqd)
+  (f : SPFDposCSlice {x} {y} {z} p q) ->
+  SPFdirType x (y, z) (spfdInducedPosCSlicePos {x} {y} {z} p q f)
+spfdInducedPosCSliceDir {x} {y} {z} p q f eyz ppqd =
+  spfdDir p (snd eyz) (fst ppqd)
 
 public export
-spfdPosSlice : {x, y, z : Type} ->
+spfdInducedPosCSlice : {x, y, z : Type} ->
   (p : SPFData x z) -> (q : SPFData y z) ->
-  (f : SPFDtermCSlice {x} {y} {z} p q) ->
+  (f : SPFDposCSlice {x} {y} {z} p q) ->
   SPFData x (y, z)
-spfdPosSlice {x} {y} {z} p q f =
-  SPFD (spfdPosSlicePos {x} {y} {z} p q f) (spfdPosSliceDir {x} {y} {z} p q f)
+spfdInducedPosCSlice {x} {y} {z} p q f =
+  SPFD
+     (spfdInducedPosCSlicePos {x} {y} {z} p q f)
+     (spfdInducedPosCSliceDir {x} {y} {z} p q f)
 
 ------------------------------------------------
 ------------------------------------------------
