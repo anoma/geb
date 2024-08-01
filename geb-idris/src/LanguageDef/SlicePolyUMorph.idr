@@ -1752,30 +1752,30 @@ SPFDposCSlice {x} {y} {z} p q =
 -- induced position-slice object.
 public export
 spfdInducedPosCSliceTotPos : {x, y, z : Type} ->
-  (p : SPFData x z) -> (q : SPFData y z) ->
+  (q : SPFData y z) -> (p : SPFData x z) ->
   (f : SPFDposCSlice {x} {y} {z} p q) ->
   SliceObj (y, z)
-spfdInducedPosCSliceTotPos {x} {y} {z} p q f eyz =
+spfdInducedPosCSliceTotPos {x} {y} {z} q p f eyz =
   (i : spfdPos p (snd eyz) **
    spfdDir q (snd eyz) (fst $ spOnPos f (snd eyz) i) (fst eyz))
 
 public export
 spfdInducedPosCSliceTotDir : {x, y, z : Type} ->
-  (p : SPFData x z) -> (q : SPFData y z) ->
+  (q : SPFData y z) -> (p : SPFData x z) ->
   (f : SPFDposCSlice {x} {y} {z} p q) ->
-  SPFdirType x (y, z) (spfdInducedPosCSliceTotPos {x} {y} {z} p q f)
-spfdInducedPosCSliceTotDir {x} {y} {z} p q f eyz ppqd =
+  SPFdirType x (y, z) (spfdInducedPosCSliceTotPos {x} {y} {z} q p f)
+spfdInducedPosCSliceTotDir {x} {y} {z} q p f eyz ppqd =
   spfdDir p (snd eyz) (fst ppqd)
 
 public export
 spfdInducedPosCSliceTot : {x, y, z : Type} ->
-  (p : SPFData x z) -> (q : SPFData y z) ->
+  (q : SPFData y z) -> (p : SPFData x z) ->
   (f : SPFDposCSlice {x} {y} {z} p q) ->
   SPFData x (y, z)
-spfdInducedPosCSliceTot {x} {y} {z} p q f =
+spfdInducedPosCSliceTot {x} {y} {z} q p f =
   SPFD
-     (spfdInducedPosCSliceTotPos {x} {y} {z} p q f)
-     (spfdInducedPosCSliceTotDir {x} {y} {z} p q f)
+     (spfdInducedPosCSliceTotPos {x} {y} {z} q p f)
+     (spfdInducedPosCSliceTotDir {x} {y} {z} q p f)
 
 ------------------------------------------------
 ------------------------------------------------
