@@ -1733,6 +1733,11 @@ spfdParCurry {dom} {cod} {p} {q} {r} m =
 ---- Category-theoretic position-slices ----
 --------------------------------------------
 
+-- Compose the given functor after the terminal functor.
+public export
+spfdCompTerm : {y, z : Type} -> SPFData y z -> SPFData y z
+spfdCompTerm {y} {z} q = SPFDcomp y y z q (spfdTerminal y y)
+
 -- A utility function for a natural transformation whose codomain
 -- is a functor composed after a terminal object.  Because an object
 -- together with a natural transformation to it is an object of
@@ -1743,8 +1748,7 @@ spfdParCurry {dom} {cod} {p} {q} {r} m =
 -- to a dependent-type-style slice).
 public export
 SPFDposCSliceProj : {y, z : Type} -> SPFData y z -> SPFData y z -> Type
-SPFDposCSliceProj {y} {z} q p =
-  SPFnt {dom=y} {cod=z} p (SPFDcomp y y z q (spfdTerminal y y))
+SPFDposCSliceProj {y} {z} q p = SPFnt {dom=y} {cod=z} p (spfdCompTerm {y} {z} q)
 
 public export
 record SPFDposCSlice {y, z : Type} (q : SPFData y z) where
@@ -1753,6 +1757,9 @@ record SPFDposCSlice {y, z : Type} (q : SPFData y z) where
   spcsProj : SPFDposCSliceProj {y} {z} q spcsTot
 
 -- See formula 6.75 from the "General Theory of Interaction" book.
+-- What is called `p` there is `spcsTot`, and what is called `f` there
+-- is `spcsProj`.
+--
 -- An on-positions function induces an adjunction with the position-slice
 -- category of the codomain.  Here we compute the total space of the
 -- induced position-slice object.
@@ -1779,6 +1786,20 @@ spfdInducedPosCSliceTot {y} {z} q p =
   SPFD
      (spfdInducedPosCSliceTotPos {y} {z} q p)
      (spfdInducedPosCSliceTotDir {y} {z} q p)
+
+-- This is the projection component of the slice object over
+-- `q . 1` derived from `p`.
+public export
+spfdInducedPosCSliceProj : {y, z : Type} ->
+  (q : SPFData y z) -> (p : SPFDposCSlice {y} {z} q) ->
+  SPFnt {dom=y} {cod=(y,z)}
+    (spfdInducedPosCSliceTot {y} {z} q p)
+    (spfPullbackPos {x=y} {y=z} {z=(y, z)} Builtin.snd (spfdCompTerm {y} {z} q))
+spfdInducedPosCSliceProj {y} {z} q p =
+  SPFDm
+    (\eyz, ppqd =>
+      (fst (spOnPos (spcsProj p) (snd eyz) (fst ppqd)) ** \_, _ => ()))
+    (\eyz, ppqd, ey, pd => void $ snd pd)
 
 ------------------------------------------------
 ------------------------------------------------
