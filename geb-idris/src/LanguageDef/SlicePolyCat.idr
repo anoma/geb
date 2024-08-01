@@ -156,11 +156,11 @@ SPFDposContraRepContramap {dom} {cod} spfd x y =
   flip $ sliceComp {x=y} {y=x} {z=(spfdPos spfd)}
 
 public export
-SPFDposCSlice : {dom, cod : Type} -> SPFData dom cod -> Type
-SPFDposCSlice {dom} {cod} spfd = CSliceOfSlice {c=cod} (spfdPos spfd)
+SPFDcsPos : {dom, cod : Type} -> SPFData dom cod -> Type
+SPFDcsPos {dom} {cod} spfd = CSliceOfSlice {c=cod} (spfdPos spfd)
 
 -- Here we define translations amongst `SPFDbaseSl` (a dependent-type-style
--- slice of `SPFDbase spfd`), `SPFDposCSlice` (a combination of dependent-type
+-- slice of `SPFDbase spfd`), `SPFDcsPos` (a combination of dependent-type
 -- style and category-theory style, comprising a slice of the codomain
 -- together with a slice morphism from that slice to `spfdPos spfd`), and
 -- `spfdCPosSl` (a category-theory-style slice object in the slice category of
@@ -172,7 +172,7 @@ SPFDposCSlice {dom} {cod} spfd = CSliceOfSlice {c=cod} (spfdPos spfd)
 -- of `SPFDbase spfd`.
 public export
 SPFDposCSlToBaseSl : {dom, cod : Type} -> {spfd : SPFData dom cod} ->
-  SPFDposCSlice {dom} {cod} spfd ->
+  SPFDcsPos {dom} {cod} spfd ->
   SPFDbaseSl {dom} {cod} spfd
 SPFDposCSlToBaseSl {dom} {cod} {spfd} =
   CSliceOfSliceToSliceOfSigma {c=cod} {sl=(spfdPos spfd)}
@@ -180,7 +180,7 @@ SPFDposCSlToBaseSl {dom} {cod} {spfd} =
 public export
 SPFDbaseSlToPosCSl : {dom, cod : Type} -> {spfd : SPFData dom cod} ->
   SPFDbaseSl {dom} {cod} spfd ->
-  SPFDposCSlice {dom} {cod} spfd
+  SPFDcsPos {dom} {cod} spfd
 SPFDbaseSlToPosCSl {spfd} =
   SliceOfSigmaToCSliceOfSlice {c=cod} {sl=(spfdPos spfd)}
 
@@ -199,12 +199,12 @@ SPFDbaseSlToCPosSl = SliceObjOverSigmaToObjOfSliceCat
 
 public export
 SPFDcPosSlToPosCSl : {dom, cod : Type} -> {spfd : SPFData dom cod} ->
-  spfdCPosSl spfd -> SPFDposCSlice {dom} {cod} spfd
+  spfdCPosSl spfd -> SPFDcsPos {dom} {cod} spfd
 SPFDcPosSlToPosCSl = CSliceOfSliceCatToCSliceOfSlice
 
 public export
 SPFDposCSlToCPosSl : {dom, cod : Type} -> {spfd : SPFData dom cod} ->
-  SPFDposCSlice {dom} {cod} spfd -> spfdCPosSl spfd
+  SPFDcsPos {dom} {cod} spfd -> spfdCPosSl spfd
 SPFDposCSlToCPosSl = CSliceOfSliceToCSliceOfSliceCat
 
 -- The right-adjoint factor of a polynomial functor expressed as
@@ -258,7 +258,7 @@ SPFDradjFactSl {dom} {cod} spfd sl = SliceBCF sl . SPFDradjFact {dom} {cod} spfd
 -- category-theory-style slice object over the position object.
 public export
 SPFDRadjFactCSl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  (sl : SPFDposCSlice spfd) ->
+  (sl : SPFDcsPos spfd) ->
   SliceFunctor
     dom
     (Sigma {a=(SPFDbase spfd)} $ SPFDposCSlToBaseSl {spfd} sl)
@@ -629,9 +629,9 @@ SPFDmultiLpair {dom} {cod} spfd =
 -- ncatlab "multi-adjoint" page.
 public export
 SPFDmultiLdom : {dom, cod : Type} -> SPFData dom cod -> Type
-SPFDmultiLdom = SPFDposCSlice
+SPFDmultiLdom = SPFDcsPos
 
--- But we may take another view of the structure (`SPFDposCSlice`) that
+-- But we may take another view of the structure (`SPFDcsPos`) that
 -- we have dubbed `SPFDmultiLdom`: as we have seen above, it is
 -- equivalent to a slice of `SPFDbase`.  In some cases, that view
 -- gives the morphisms a simpler, dependent-type-style form.
