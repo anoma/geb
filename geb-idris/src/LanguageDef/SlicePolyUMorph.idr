@@ -1742,69 +1742,15 @@ spfdParCurry {dom} {cod} {p} {q} {r} m =
 -- indicate that this is a category-theory-style slice (as opposed
 -- to a dependent-type-style slice).
 public export
-SPFDposCSliceProj : {x, y, z : Type} -> SPFData y z -> SPFData x z -> Type
-SPFDposCSliceProj {x} {y} {z} q p =
-  SPFnt {dom=x} {cod=z} p (SPFDcomp x y z q (spfdTerminal x y))
-
--- Because position slices are insensitive to domain (positions depend
--- only on codomain), we can change the domain of a position slice
--- under various conditions -- if we can prove that either the source
--- or target domain is inhabited, or if we can prove that either the
--- source or target domain is uninhabited.
-public export
-SPFDposCSliceProjDomChangeInhSrc : {x, x', y, z : Type} ->
-  (q : SPFData y z) -> (p : SPFData x z) -> (ex : x) ->
-  SPFDposCSliceProj {x} {y} {z} q p ->
-  SPFDposCSliceProj {x=x'} {y} {z}
-    q
-    (spfdPrecompPi {x=x'} {y=x} {z} (\_ => ex) p)
-SPFDposCSliceProjDomChangeInhSrc {x} {x'} {y} {z} q p ex (SPFDm onpos ondir) =
-  SPFDm
-    (\ez, pp => (fst (onpos ez (fst pp)) ** \_, _ => ()))
-    (\ez, pp, ex'', qd => void $ snd qd)
-
-public export
-SPFDposCSliceProjDomChangeInhTgt : {x, x', y, z : Type} ->
-  (q : SPFData y z) -> (p : SPFData x z) -> (ex' : x') ->
-  SPFDposCSliceProj {x} {y} {z} q p ->
-  SPFDposCSliceProj {x=x'} {y} {z}
-    q
-    (spfdPrecompBC {x=x'} {y=x} {z} (\_ => ex') p)
-SPFDposCSliceProjDomChangeInhTgt {x} {x'} {y} {z} q p ex' (SPFDm onpos ondir) =
-  SPFDm
-    (\ez, pp => (fst (onpos ez (fst pp)) ** \_, _ => ()))
-    (\ez, pp, ex'', qd => void $ snd qd)
-
-public export
-SPFDposCSliceProjDomChangeVoidSrc : {x, x', y, z : Type} ->
-  (q : SPFData y z) -> (p : SPFData x z) -> (v : x -> Void) ->
-  SPFDposCSliceProj {x} {y} {z} q p ->
-  SPFDposCSliceProj {x=x'} {y} {z}
-    q
-    (spfdPrecompBC {x=x'} {y=x} {z} (\ex => void $ v ex) p)
-SPFDposCSliceProjDomChangeVoidSrc {x} {x'} {y} {z} q p v (SPFDm onpos ondir) =
-  SPFDm
-    (\ez, pp => (fst (onpos ez (fst pp)) ** \_, _ => ()))
-    (\ez, pp, ex'', qd => void $ snd qd)
-
-public export
-SPFDposCSliceProjDomChangeVoidTgt : {x, x', y, z : Type} ->
-  (q : SPFData y z) -> (p : SPFData x z) -> (v : x' -> Void) ->
-  SPFDposCSliceProj {x} {y} {z} q p ->
-  SPFDposCSliceProj {x=x'} {y} {z}
-    q
-    (spfdPrecompPi {x=x'} {y=x} {z} (\ex' => void $ v ex') p)
-SPFDposCSliceProjDomChangeVoidTgt {x} {x'} {y} {z} q p v (SPFDm onpos ondir) =
-  SPFDm
-    (\ez, pp => (fst (onpos ez (fst pp)) ** \_, _ => ()))
-    (\ez, pp, ex'', qd => void $ snd qd)
+SPFDposCSliceProj : {y, z : Type} -> SPFData y z -> SPFData y z -> Type
+SPFDposCSliceProj {y} {z} q p =
+  SPFnt {dom=y} {cod=z} p (SPFDcomp y y z q (spfdTerminal y y))
 
 public export
 record SPFDposCSlice {y, z : Type} (q : SPFData y z) where
   constructor SPcs
-  spcsDom : Type
-  spcsTot : SPFData spcsDom z
-  spcsProj : SPFDposCSliceProj {x=spcsDom} {y} {z} q spcsTot
+  spcsTot : SPFData y z
+  spcsProj : SPFDposCSliceProj {y} {z} q spcsTot
 
 -- See formula 6.75 from the "General Theory of Interaction" book.
 -- An on-positions function induces an adjunction with the position-slice
@@ -1821,14 +1767,14 @@ spfdInducedPosCSliceTotPos {y} {z} q p eyz =
 public export
 spfdInducedPosCSliceTotDir : {y, z : Type} ->
   (q : SPFData y z) -> (p : SPFDposCSlice {y} {z} q) ->
-  SPFdirType (spcsDom p) (y, z) (spfdInducedPosCSliceTotPos {y} {z} q p)
+  SPFdirType y (y, z) (spfdInducedPosCSliceTotPos {y} {z} q p)
 spfdInducedPosCSliceTotDir {y} {z} q p eyz ppqd =
   spfdDir (spcsTot p) (snd eyz) (fst ppqd)
 
 public export
 spfdInducedPosCSliceTot : {y, z : Type} ->
   (q : SPFData y z) -> (p : SPFDposCSlice {y} {z} q) ->
-  SPFData (spcsDom p) (y, z)
+  SPFData y (y, z)
 spfdInducedPosCSliceTot {y} {z} q p =
   SPFD
      (spfdInducedPosCSliceTotPos {y} {z} q p)
