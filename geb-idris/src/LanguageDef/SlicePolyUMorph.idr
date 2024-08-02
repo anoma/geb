@@ -1769,7 +1769,7 @@ spfdCompPosCS {x} {y} {z} q r =
 -- together with a natural transformation to it is an object of
 -- the slice category over that object, and because a composition
 -- after a terminal object has no directions, we call this a slice over
--- positions, or simply a position-slice.  We write "CSlice" here to
+-- positions, or simply a position-slice.  We write "CS(lice)" here to
 -- indicate that this is a category-theory-style slice (as opposed
 -- to a dependent-type-style slice).
 public export
