@@ -1734,6 +1734,16 @@ spfdParCurry {dom} {cod} {p} {q} {r} m =
 ----------------------------------------------
 ----------------------------------------------
 
+-----------------------------------
+---- Category-theoretic slices ----
+-----------------------------------
+
+public export
+record SPFDcs {dom, cod : Type} (q : SPFData dom cod) where
+  constructor SPDcs
+  spdcsTot : SPFData dom cod
+  spdcsProj : SPFnt {dom} {cod} spdcsTot q
+
 --------------------------------------------
 ---- Category-theoretic position-slices ----
 --------------------------------------------
@@ -1806,10 +1816,14 @@ spfdInducedPosCSliceProj {y} {z} q p =
     (\ez, ppqd, ey, pd =>
       void $ snd pd)
 
+-- Any composite polynomial functor `q . r` may be viewed in a canonical
+-- way as an object of `q`'s position-slice category (i.e. the slice category
+-- over `q . 1`).
 public export
-spfdCompCSlice : {x : Type} -> (q : SPFData x x) ->
-  SPFData x x -> SPFDposCSlice {y=x} {z=x} q
-spfdCompCSlice {x} q r = SPcs (SPFDcomp x x x q r) $ spfdCompToPosNT q r
+spfdCompCSlice : {x, y, z : Type} -> (q : SPFData y z) ->
+  (r : SPFData x y) -> SPFDcs {dom=x} {cod=z} (spfdCompTerm {x} {y} {z} q)
+spfdCompCSlice {x} {y} {z} q r =
+  SPDcs {dom=x} {cod=z} (SPFDcomp x y z q r) $ spfdCompToPosNT {x} {y} {z} q r
 
 -- The adjoints of the position-slice adjunction induced by a
 -- slice polynomial endofunctor `q : SPFData x x`.  The adjunction is between
@@ -1820,14 +1834,9 @@ spfdCompCSlice {x} q r = SPcs (SPFDcomp x x x q r) $ spfdCompToPosNT q r
 -- category.
 
 public export
-spfdPosSliceAdjL : {x : Type} -> (q : SPFData x x) ->
+spfdPosSliceAdjL : {x, y, z : Type} -> (q : SPFData x x) ->
   (p : SPFDposCSlice {y=x} {z=x} q) -> SPFData x x
 spfdPosSliceAdjL {x} q = spcsTot {y=x} {z=x} {q}
-
-public export
-spfdPosSliceAdjR : {x : Type} -> (q : SPFData x x) ->
-  (r : SPFData x x) -> SPFDposCSlice {y=x} {z=x} q
-spfdPosSliceAdjR {x} = spfdCompCSlice {x}
 
 ------------------------------------------------
 ------------------------------------------------
