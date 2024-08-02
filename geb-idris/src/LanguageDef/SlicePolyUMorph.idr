@@ -1748,6 +1748,15 @@ record SPFDcs {dom, cod : Type} (q : SPFData dom cod) where
 ---- Category-theoretic position-slices ----
 --------------------------------------------
 
+-- Any composite polynomial functor `q . r` may be viewed in a canonical
+-- way as an object of `q`'s position-slice category (i.e. the slice category
+-- over `q . 1`).
+public export
+spfdCompCSlice : {x, y, z : Type} -> (q : SPFData y z) ->
+  (r : SPFData x y) -> SPFDcs {dom=x} {cod=z} (spfdCompTerm {x} {y} {z} q)
+spfdCompCSlice {x} {y} {z} q r =
+  SPDcs {dom=x} {cod=z} (SPFDcomp x y z q r) $ spfdCompToPosNT {x} {y} {z} q r
+
 -- A utility function for a natural transformation whose codomain
 -- is a functor composed after a terminal object.  Because an object
 -- together with a natural transformation to it is an object of
@@ -1815,15 +1824,6 @@ spfdInducedPosCSliceProj {y} {z} q p =
       spOnPos (spcsProj p) ez $ rewrite sym (sfsEq ppqd) in fst $ sfsSnd ppqd)
     (\ez, ppqd, ey, pd =>
       void $ snd pd)
-
--- Any composite polynomial functor `q . r` may be viewed in a canonical
--- way as an object of `q`'s position-slice category (i.e. the slice category
--- over `q . 1`).
-public export
-spfdCompCSlice : {x, y, z : Type} -> (q : SPFData y z) ->
-  (r : SPFData x y) -> SPFDcs {dom=x} {cod=z} (spfdCompTerm {x} {y} {z} q)
-spfdCompCSlice {x} {y} {z} q r =
-  SPDcs {dom=x} {cod=z} (SPFDcomp x y z q r) $ spfdCompToPosNT {x} {y} {z} q r
 
 -- The adjoints of the position-slice adjunction induced by a
 -- slice polynomial endofunctor `q : SPFData x x`.  The adjunction is between
