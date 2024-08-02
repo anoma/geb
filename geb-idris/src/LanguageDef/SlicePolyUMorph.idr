@@ -1773,9 +1773,9 @@ spfdCompPosCS {x} {y} {z} q r =
 -- indicate that this is a category-theory-style slice (as opposed
 -- to a dependent-type-style slice).
 public export
-spfdPosCSproj : {y, z : Type} -> SPFData y z -> SPFData y z -> Type
-spfdPosCSproj {y} {z} q p =
-  SPFnt {dom=y} {cod=z} p (spfdCompTerm {x=y} {y} {z} q)
+spfdPosCSproj : {x, y, z : Type} -> SPFData y z -> SPFData x z -> Type
+spfdPosCSproj {x} {y} {z} q p =
+  SPFnt {dom=x} {cod=z} p (spfdCompTerm {x} {y} {z} q)
 
 public export
 record SPFDposCSlice {y, z : Type} (q : SPFData y z) where
