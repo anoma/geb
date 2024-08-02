@@ -1748,12 +1748,19 @@ record SPFDcs {dom, cod : Type} (q : SPFData dom cod) where
 ---- Category-theoretic position-slices ----
 --------------------------------------------
 
+-- For a polynomial functor `q : SPFData y z` and object `x : Type`,
+-- we will refer to the slice category of `SPFData x z` over `q . 1(x,y)`
+-- as `q`'s "`x`-position-slice category".
+public export
+SPFDposCS : {x, y, z : Type} -> SPFData y z -> Type
+SPFDposCS {x} {y} {z} q = SPFDcs {dom=x} {cod=z} (spfdCompTerm {x} {y} {z} q)
+
 -- Any composite polynomial functor `q . r` may be viewed in a canonical
 -- way as an object of `q`'s position-slice category (i.e. the slice category
 -- over `q . 1`).
 public export
 spfdCompCSlice : {x, y, z : Type} -> (q : SPFData y z) ->
-  (r : SPFData x y) -> SPFDcs {dom=x} {cod=z} (spfdCompTerm {x} {y} {z} q)
+  (r : SPFData x y) -> SPFDposCS {x} {y} {z} q
 spfdCompCSlice {x} {y} {z} q r =
   SPDcs {dom=x} {cod=z} (SPFDcomp x y z q r) $ spfdCompToPosNT {x} {y} {z} q r
 
