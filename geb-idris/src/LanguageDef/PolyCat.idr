@@ -745,6 +745,38 @@ public export
 pfMonomialArena : Type -> Type -> PolyFunc
 pfMonomialArena a b = (pfMonomialPos a b ** pfMonomialDir a b)
 
+-- A functor whose category of elements is the two-category of slice
+-- categories of `Type` whose morphisms are the `Sigma` functors.
+public export
+PolySliceObj : PolyFunc
+PolySliceObj = (Type ** id)
+
+public export
+PolySliceObjFromInterp :
+  (a : Type) -> InterpPolyFunc PolySliceObj a -> CSliceObj a
+PolySliceObjFromInterp a = id
+
+public export
+PolySliceObjToInterp :
+  (a : Type) -> CSliceObj a -> InterpPolyFunc PolySliceObj a
+PolySliceObjToInterp a = id
+
+public export
+PolySliceObjFromInterpMap :
+  {a, b : Type} -> (m : a -> b) ->
+  CSliceNatTrans {c=a} {d=b}
+    (InterpPFMap PolySliceObj {a} {b} m)
+    (CSSigma {c=a} {d=b} m)
+PolySliceObjFromInterpMap {a} {b} m (x ** xp) = Element0 id (\_ => Refl)
+
+public export
+PolySliceObjToInterpMap :
+  {a, b : Type} -> (m : a -> b) ->
+  CSliceNatTrans {c=a} {d=b}
+    (CSSigma {c=a} {d=b} m)
+    (InterpPFMap PolySliceObj {a} {b} m)
+PolySliceObjToInterpMap {a} {b} m (x ** xp) = Element0 id (\_ => Refl)
+
 -- Applying a polynomial functor to a type `a` yields the set of natural
 -- transformations from the covariant representable represented by `a` to
 -- that functor.  Indeed, this is true of any functor -- that's just one
