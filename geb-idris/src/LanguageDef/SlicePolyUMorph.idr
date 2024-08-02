@@ -1773,15 +1773,15 @@ spfdCompPosCS {x} {y} {z} q r =
 -- indicate that this is a category-theory-style slice (as opposed
 -- to a dependent-type-style slice).
 public export
-SPFDposCSliceProj : {y, z : Type} -> SPFData y z -> SPFData y z -> Type
-SPFDposCSliceProj {y} {z} q p =
+spfdPosCSproj : {y, z : Type} -> SPFData y z -> SPFData y z -> Type
+spfdPosCSproj {y} {z} q p =
   SPFnt {dom=y} {cod=z} p (spfdCompTerm {x=y} {y} {z} q)
 
 public export
 record SPFDposCSlice {y, z : Type} (q : SPFData y z) where
   constructor SPcs
   spcsTot : SPFData y z
-  spcsProj : SPFDposCSliceProj {y} {z} q spcsTot
+  spcsProj : spfdPosCSproj {y} {z} q spcsTot
 
 -- See formula 6.75 from the "General Theory of Interaction" book.
 -- What is called `p` there is `spcsTot`, and what is called `f` there
