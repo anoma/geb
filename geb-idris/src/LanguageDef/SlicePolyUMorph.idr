@@ -1759,9 +1759,9 @@ SPFDposCS {x} {y} {z} q = SPFDcs {dom=x} {cod=z} (spfdCompTerm {x} {y} {z} q)
 -- way as an object of `q`'s position-slice category (i.e. the slice category
 -- over `q . 1`).
 public export
-spfdCompCSlice : {x, y, z : Type} -> (q : SPFData y z) ->
+spfdCompPosCS : {x, y, z : Type} -> (q : SPFData y z) ->
   (r : SPFData x y) -> SPFDposCS {x} {y} {z} q
-spfdCompCSlice {x} {y} {z} q r =
+spfdCompPosCS {x} {y} {z} q r =
   SPDcs {dom=x} {cod=z} (SPFDcomp x y z q r) $ spfdCompToPosNT {x} {y} {z} q r
 
 -- A utility function for a natural transformation whose codomain
