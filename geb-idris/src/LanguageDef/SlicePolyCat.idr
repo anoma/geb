@@ -2403,6 +2403,39 @@ SPFDataProdToFamUnitNT : {dom, cod : Type} ->
 SPFDataProdToFamUnitNT {dom} {cod} sf sf' nt ec =
   SPFDm (\_ => spOnPos nt ec) (\_ => spOnDir nt ec)
 
+public export
+SPFDataFamForall : {b, dom, cod : Type} ->
+  (b -> SPFData dom cod) -> SPFData dom cod
+SPFDataFamForall {b} {dom} {cod} =
+  spfdPostcompPi {x=dom} {y=(b, cod)} {z=cod} snd
+  . SPFDataFamToProd {b} {dom} {cod}
+
+public export
+SPFDataFamForallToInterp : {b, dom, cod : Type} ->
+  (sf : b -> SPFData dom cod) ->
+  SliceNatTrans {x=dom} {y=cod}
+    (InterpSPFData {dom} {cod} $ SPFDataFamForall {b} {dom} {cod} sf)
+    (\sd, ec => Pi {a=b} $ \eb => InterpSPFData {dom} {cod} (sf eb) sd ec)
+SPFDataFamForallToInterp {b} {dom} {cod} sf sd ec ((() ** pm) ** dm) eb =
+  (pm (eb, ec) Refl ** \ed, fd => dm ed (((eb, ec) ** Refl) ** fd))
+
+public export
+SPFDataFamForallFromInterp : {b, dom, cod : Type} ->
+  (sf : b -> SPFData dom cod) ->
+  SliceNatTrans {x=dom} {y=cod}
+    (\sd, ec => Pi {a=b} $ \eb => InterpSPFData {dom} {cod} (sf eb) sd ec)
+    (InterpSPFData {dom} {cod} $ SPFDataFamForall {b} {dom} {cod} sf)
+SPFDataFamForallFromInterp {b} {dom} {cod} sf sd ec pdm =
+  ((() ** \(eb, ec), Refl => fst $ pdm eb) **
+   \ed, (((eb, ec) ** Refl) ** fd) => snd (pdm eb) ed fd)
+
+public export
+SPFDataFamExists : {b, dom, cod : Type} ->
+  (b -> SPFData dom cod) -> SPFData dom cod
+SPFDataFamExists {b} {dom} {cod} =
+  spfdPostcompPi {x=dom} {y=(b, cod)} {z=cod} snd
+  . SPFDataFamToProd {b} {dom} {cod}
+
 -------------------------------------------------
 -------------------------------------------------
 ---- Slice-polynomial categories of elements ----
