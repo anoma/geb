@@ -2433,8 +2433,28 @@ public export
 SPFDataFamExists : {b, dom, cod : Type} ->
   (b -> SPFData dom cod) -> SPFData dom cod
 SPFDataFamExists {b} {dom} {cod} =
-  spfdPostcompPi {x=dom} {y=(b, cod)} {z=cod} snd
+  spfdPostcompSigma {x=dom} {y=(b, cod)} {z=cod} snd
   . SPFDataFamToProd {b} {dom} {cod}
+
+public export
+SPFDataFamExistsToInterp : {b, dom, cod : Type} ->
+  (sf : b -> SPFData dom cod) ->
+  SliceNatTrans {x=dom} {y=cod}
+    (InterpSPFData {dom} {cod} $ SPFDataFamExists {b} {dom} {cod} sf)
+    (\sd, ec => Sigma {a=b} $ \eb => InterpSPFData {dom} {cod} (sf eb) sd ec)
+SPFDataFamExistsToInterp {b} {dom} {cod} sf sd ec
+  ((SFS (eb, ec) () ** pm) ** dm) =
+    (eb ** (pm (eb, ec) Refl ** \ed, fd => dm ed (((eb, ec) ** Refl) ** fd)))
+
+public export
+SPFDataFamExistsFromInterp : {b, dom, cod : Type} ->
+  (sf : b -> SPFData dom cod) ->
+  SliceNatTrans {x=dom} {y=cod}
+    (\sd, ec => Sigma {a=b} $ \eb => InterpSPFData {dom} {cod} (sf eb) sd ec)
+    (InterpSPFData {dom} {cod} $ SPFDataFamExists {b} {dom} {cod} sf)
+SPFDataFamExistsFromInterp {b} {dom} {cod} sf sd ec (eb ** ep ** dm) =
+  ((SFS (eb, ec) () ** \(eb, ec), Refl => ep) **
+   (\ed, (((eb, ec) ** Refl) ** fd) => dm ed fd))
 
 -------------------------------------------------
 -------------------------------------------------
