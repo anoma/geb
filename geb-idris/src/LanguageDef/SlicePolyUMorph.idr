@@ -465,6 +465,40 @@ spfdLKanToPoly {a} {b} {c} q p sc eb ppdm =
     fst (snd ppdm) ec
     . dpMapSnd (\qp, dm => sliceComp (snd $ snd $ snd ppdm) dm))
 
+-------------------------
+-------------------------
+---- Density comonad ----
+-------------------------
+-------------------------
+
+public export
+spfdDensityComonad : {a, b : Type} -> SPFData a b -> SPFData b b
+spfdDensityComonad {a} {b} p = spfdLKanExt {a} {b} {c=b} p p
+
+public export
+spfdDensityComonadErase : {a, b : Type} -> (p : SPFData a b) ->
+  SPFnt {dom=b} {cod=b} (spfdDensityComonad {a} {b} p) (SPFDid b)
+spfdDensityComonadErase {a} {b} p =
+  SPFDm
+    (\_, _ => ())
+    (\eb, ep, eb', beq =>
+      rewrite sym beq in
+      (ep ** sliceId {a} $ spfdDir p eb ep))
+
+public export
+spfdDensityComonadDuplicate : {a, b : Type} -> (p : SPFData a b) ->
+  SPFnt {dom=b} {cod=b}
+    (spfdDensityComonad {a} {b} p)
+    (SPFDcomp b b b
+      (spfdDensityComonad {a} {b} p)
+      (spfdDensityComonad {a} {b} p))
+spfdDensityComonadDuplicate {a} {b} p =
+  SPFDm
+    (\eb, ep =>
+      (ep ** (\eb', ep'dm => fst ep'dm)))
+    (\eb, ep, eb', dm =>
+      (fst (snd dm) ** \ea, pd' => snd (snd $ fst dm) ea $ snd (snd dm) ea pd'))
+
 -----------------------------------------
 -----------------------------------------
 ---- Symmetric n-way Day convolution ----
