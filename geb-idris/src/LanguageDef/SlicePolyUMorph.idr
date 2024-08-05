@@ -1762,6 +1762,35 @@ spfdParCurry {dom} {cod} {p} {q} {r} m =
     (spfdParCurryPos {dom} {cod} {p} {q} {r} m)
     (spfdParCurryDir {dom} {cod} {p} {q} {r} m)
 
+--------------------------------------------------------------------------
+--------------------------------------------------------------------------
+---- Parallel product closure as generator of natural transformations ----
+--------------------------------------------------------------------------
+--------------------------------------------------------------------------
+
+-- For two slice polynomials `SPFData : dom Unit`, the position-set of the
+-- parallel closure object is the the set of natural transformations between
+-- the two functors.  See formula 4.79 in _Polynomial Functors:  A Mathematical
+-- Theory of Interaction_.
+
+public export
+spfdParCoprHomObjPosToNT : {dom : Type} ->
+  (q, r : SPFData dom Unit) ->
+  spfdParCoprHomObjPos {dom} q r () -> SPFnt {dom} {cod=Unit} q r
+spfdParCoprHomObjPosToNT {dom} q r (() ** pm) =
+  SPFDm
+    (\(), qi => fst $ pm (qi, ()) Refl)
+    (\(), qi, ed, rd => snd $ snd (pm (qi, ()) Refl) ed rd)
+
+public export
+spfdParCoprHomObjPosFromNT : {dom : Type} ->
+  (q, r : SPFData dom Unit) ->
+  SPFnt {dom} {cod=Unit} q r -> spfdParCoprHomObjPos {dom} q r ()
+spfdParCoprHomObjPosFromNT {dom} q r nt =
+  (() **
+   \(qi, ()), Refl =>
+    (spOnPos nt () qi ** \ed, rd => ((), spOnDir nt () qi ed rd)))
+
 ----------------------------------------------
 ----------------------------------------------
 ---- Cartesian transformations and slices ----
