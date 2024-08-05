@@ -1773,6 +1773,8 @@ spfdParCurry {dom} {cod} {p} {q} {r} m =
 -- the two functors.  See formula 4.79 in _Polynomial Functors:  A Mathematical
 -- Theory of Interaction_.
 
+-- We begin with the copresheaf case.
+
 public export
 spfdParCoprHomObjPosToNT : {dom : Type} ->
   (q, r : SPFData dom Unit) ->
@@ -1790,6 +1792,32 @@ spfdParCoprHomObjPosFromNT {dom} q r nt =
   (() **
    \(qi, ()), Refl =>
     (spOnPos nt () qi ** \ed, rd => ((), spOnDir nt () qi ed rd)))
+
+-- Now we show the general case.
+
+public export
+spfdParClosureObjPosToNT : {dom, cod : Type} ->
+  (q, r : SPFData dom cod) ->
+  (ec : cod) ->
+  spfdParClosureObjPos {dom} q r ec ->
+  SPFnt {dom} {cod=Unit}
+    (SPFDataProdToFamUnit q ec)
+    (SPFDataProdToFamUnit r ec)
+spfdParClosureObjPosToNT {dom} q r ec =
+  spfdParCoprHomObjPosToNT {dom}
+    (SPFDataProdToFamUnit q ec)
+    (SPFDataProdToFamUnit r ec)
+
+public export
+spfdParClosureObjPiPosToNT : {dom, cod : Type} ->
+  (q, r : SPFData dom cod) ->
+  Pi {a=cod} (spfdParClosureObjPos {dom} q r) ->
+  SPFnt {dom} {cod} q r
+spfdParClosureObjPiPosToNT {dom} q@(SPFD qpos qdir) r@(SPFD rpos rdir) ifam =
+  SPFDataFamToProdUnitNT
+    (SPFDataProdToFamUnit q)
+    (SPFDataProdToFamUnit r)
+    (\ec => spfdParClosureObjPosToNT {dom} {cod} q r ec (ifam ec))
 
 ----------------------------------------------
 ----------------------------------------------
