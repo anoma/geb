@@ -637,13 +637,13 @@ spfdSetParProduct {b} {dom} {cod} sf =
     (spfdSetParProductDir {b} {dom} {cod} sf)
 
 public export
-spfdSetParProductNT : {b, dom, cod : Type} ->
+spfdSetParProductIntro : {b, dom, cod : Type} ->
   {sf, sf' : b -> SPFData dom cod} ->
   ((eb : b) -> SPFnt {dom} {cod} (sf eb) (sf' eb)) ->
   SPFnt {dom} {cod}
     (spfdSetParProduct {b} {dom} {cod} sf)
     (spfdSetParProduct {b} {dom} {cod} sf')
-spfdSetParProductNT {b} {dom} {cod} {sf} {sf'} ntf =
+spfdSetParProductIntro {b} {dom} {cod} {sf} {sf'} ntf =
   SPFDm
     (\ec, ep, eb => spOnPos (ntf eb) ec (ep eb))
     (\ec, ep, ed, efd', eb => spOnDir (ntf eb) ec (ep eb) ed (efd' eb))
@@ -1005,14 +1005,14 @@ spfdParProductFromSet {dom} {cod} f g =
     (\ec, dm, ed, dd, i => case i of FZ => fst dd ; FS FZ => snd dd)
 
 public export
-spfdParProductNT : {dom, cod : Type} ->
+spfdParProductIntro : {dom, cod : Type} ->
   {p, p', q, q' : SPFData dom cod} ->
   SPFnt {dom} {cod} p p' ->
   SPFnt {dom} {cod} q q' ->
   SPFnt {dom} {cod}
     (spfdParProduct {dom} {cod} p q)
     (spfdParProduct {dom} {cod} p' q')
-spfdParProductNT {dom} {cod} {p} {p'} {q} {q'} f g =
+spfdParProductIntro {dom} {cod} {p} {p'} {q} {q'} f g =
   SPFDm
     (\ec =>
       bimap (spOnPos f ec) (spOnPos g ec))
