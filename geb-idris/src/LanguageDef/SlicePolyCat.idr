@@ -2881,6 +2881,13 @@ SPFDvcFactIntDir : {dom, cod : Type} -> {p, q : SPFData dom cod} ->
 SPFDvcFactIntDir {dom} {cod} {p} {q} nt =
   spfdDir (SPFDvcFactIntObj {dom} {cod} {p} {q} nt)
 
+-- The total directions of the intermediate object of the factorization
+-- of a natural transformation.
+public export
+SPFDvcFactIntTot : {dom, cod : Type} -> {p, q : SPFData dom cod} ->
+  SPFnt {dom} {cod} p q -> dom -> cod -> Type
+SPFDvcFactIntTot {dom} {cod} {p} {q} nt = SPFDtot (SPFDvcFactIntObj nt)
+
 -- The first (vertical) component of the factorization of a slice polynomial
 -- natural transformation.
 --
