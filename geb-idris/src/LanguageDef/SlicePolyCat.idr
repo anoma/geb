@@ -2863,14 +2863,14 @@ SPFDposChange {dom} {cod} p {pos} m = SPFD pos (SPFDposChangeDir p {pos} m)
 -- on-directions function of the vertical component of the factorization,
 -- not to compute the intermediate object itself.
 public export
-SPFDvcFact : {dom, cod : Type} -> {p, q : SPFData dom cod} ->
+SPFDvcFactIntObj : {dom, cod : Type} -> {p, q : SPFData dom cod} ->
   (nt : SPFnt {dom} {cod} p q) -> SPFData dom cod
-SPFDvcFact {dom} {cod} {p} {q} nt =
+SPFDvcFactIntObj {dom} {cod} {p} {q} nt =
   SPFDposChange {dom} {cod} q {pos=(spfdPos p)} (spOnPos nt)
 
 public export
-SPFDvcFactDir : {dom, cod : Type} -> {p, q : SPFData dom cod} ->
+SPFDvcFactIntDir : {dom, cod : Type} -> {p, q : SPFData dom cod} ->
   (nt : SPFnt {dom} {cod} p q) ->
   SPFdirType dom cod (SPFDvcFactPos {dom} {cod} {p} {q} nt)
-SPFDvcFactDir {dom} {cod} {p} {q} nt =
-  spfdDir (SPFDvcFact {dom} {cod} {p} {q} nt)
+SPFDvcFactIntDir {dom} {cod} {p} {q} nt =
+  spfdDir (SPFDvcFactIntObj {dom} {cod} {p} {q} nt)
