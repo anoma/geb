@@ -100,6 +100,12 @@ public export
 SPFDtot : {dom, cod : Type} -> SPFData dom cod -> dom -> cod -> Type
 SPFDtot {dom} {cod} spfd ed ec = (i : spfdPos spfd ec ** spfdDir spfd ec i ed)
 
+-- The total directions of a slice polynomial functor at a given
+-- point in the codomain.
+public export
+SPFDtotCod : {dom, cod : Type} -> SPFData dom cod -> cod -> Type
+SPFDtotCod {dom} {cod} spfd ec = (ed : dom ** SPFDtot {dom} {cod} spfd ed ec)
+
 -- The internal (that is, as a slice endofunctor, i.e. an endofunctor
 -- in the "object language") covariant representable functor on the domain of
 -- a slice polynomial functor represented by its object of directions
@@ -2887,6 +2893,11 @@ public export
 SPFDvcFactIntTot : {dom, cod : Type} -> {p, q : SPFData dom cod} ->
   SPFnt {dom} {cod} p q -> dom -> cod -> Type
 SPFDvcFactIntTot {dom} {cod} {p} {q} nt = SPFDtot (SPFDvcFactIntObj nt)
+
+public export
+SPFDvcFactIntTotCod : {dom, cod : Type} -> {p, q : SPFData dom cod} ->
+  SPFnt {dom} {cod} p q -> cod -> Type
+SPFDvcFactIntTotCod {dom} {cod} {p} {q} nt = SPFDtotCod (SPFDvcFactIntObj nt)
 
 -- The first (vertical) component of the factorization of a slice polynomial
 -- natural transformation.
