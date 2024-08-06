@@ -236,8 +236,7 @@ InterpPDiDiag pdid x = InterpPDi pdid x (SliceObjTerminal x)
 public export
 PDiDiagMap : (pdid : PDiData) ->
   (x : Type) -> (x' : SliceObj x) -> Pi {a=x} x' ->
-  InterpPDi pdid x (SliceObjTerminal x) ->
-  InterpPDi pdid (Sigma {a=x} x') (SliceObjTerminal $ Sigma {a=x} x')
+  InterpPDiDiag pdid x -> InterpPDiDiag pdid (Sigma {a=x} x')
 PDiDiagMap pdid x x' m =
   PDiDimapDP pdid
     x (SliceObjTerminal x) x' (SliceObjTerminal $ Sigma {a=x} x')
