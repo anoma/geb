@@ -1819,6 +1819,27 @@ spfdParClosureObjPiPosToNT {dom} q@(SPFD qpos qdir) r@(SPFD rpos rdir) ifam =
     (SPFDataProdToFamUnit r)
     (\ec => spfdParClosureObjPosToNT {dom} {cod} q r ec (ifam ec))
 
+public export
+spfdParClosureObjPosFromNT : {dom, cod : Type} ->
+  (q, r : SPFData dom cod) ->
+  (ec : cod) ->
+  SPFnt {dom} {cod=Unit}
+    (SPFDataProdToFamUnit q ec)
+    (SPFDataProdToFamUnit r ec) ->
+  spfdParClosureObjPos {dom} q r ec
+spfdParClosureObjPosFromNT {dom} q r ec =
+  spfdParCoprHomObjPosFromNT {dom}
+    (SPFDataProdToFamUnit q ec)
+    (SPFDataProdToFamUnit r ec)
+
+public export
+spfdParClosureObjPiPosFromNT : {dom, cod : Type} ->
+  (q, r : SPFData dom cod) ->
+  SPFnt {dom} {cod} q r ->
+  Pi {a=cod} (spfdParClosureObjPos {dom} q r)
+spfdParClosureObjPiPosFromNT {dom} q r nt ec =
+  spfdParClosureObjPosFromNT q r ec $ SPFDataProdToFamUnitNT q r nt ec
+
 ----------------------------------------------
 ----------------------------------------------
 ---- Cartesian transformations and slices ----
