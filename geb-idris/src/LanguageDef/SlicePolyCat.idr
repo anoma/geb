@@ -94,6 +94,12 @@ public export
 spfdCPosSl : {dom, cod : Type} -> SPFData dom cod -> Type
 spfdCPosSl {dom} {cod} spfd = CSliceObjOfSliceCat {c=cod} (spfdCPos spfd)
 
+-- The total directions of a slice polynomial functor at a given
+-- point in the domain and codomain.
+public export
+SPFDtot : {dom, cod : Type} -> SPFData dom cod -> dom -> cod -> Type
+SPFDtot {dom} {cod} spfd ed ec = (i : spfdPos spfd ec ** spfdDir spfd ec i ed)
+
 -- The internal (that is, as a slice endofunctor, i.e. an endofunctor
 -- in the "object language") covariant representable functor on the domain of
 -- a slice polynomial functor represented by its object of directions
@@ -2874,3 +2880,29 @@ SPFDvcFactIntDir : {dom, cod : Type} -> {p, q : SPFData dom cod} ->
   SPFdirType dom cod (SPFDvcFactPos {dom} {cod} {p} {q} nt)
 SPFDvcFactIntDir {dom} {cod} {p} {q} nt =
   spfdDir (SPFDvcFactIntObj {dom} {cod} {p} {q} nt)
+
+-- The first (vertical) component of the factorization of a slice polynomial
+-- natural transformation.
+--
+-- A vertical transformation is characterized by its on-positions function
+-- being an isomorphism.
+public export
+SPFDvertFact : {dom, cod : Type} -> {p, q : SPFData dom cod} ->
+  (nt : SPFnt {dom} {cod} p q) ->
+  SPFnt {dom} {cod} p (SPFDvcFactIntObj {dom} {cod} {p} {q} nt)
+SPFDvertFact {dom} {cod} {p} {q} nt =
+  SPFDm (sliceId {a=cod} $ spfdPos p) (spOnDir nt)
+
+-- The second (Cartesian) component of the factorization of a slice polynomial
+-- natural transformation.
+--
+-- A Cartesian transformation is characterized by its on-directions functions
+-- all being isomorphisms.
+public export
+SPFDcartFact : {dom, cod : Type} -> {p, q : SPFData dom cod} ->
+  (nt : SPFnt {dom} {cod} p q) ->
+  SPFnt {dom} {cod} (SPFDvcFactIntObj {dom} {cod} {p} {q} nt) q
+SPFDcartFact {dom} {cod} {p} {q} nt =
+  SPFDm
+    (spOnPos nt)
+    (\ec, ep => sliceId {a=dom} $ spfdDir q ec $ spOnPos nt ec ep)
