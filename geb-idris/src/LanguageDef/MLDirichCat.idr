@@ -1858,6 +1858,11 @@ dfHomObjDirIsHom : (p, q : MLDirichCatObj) -> (i : dfHomObjPos p q) ->
 dfHomObjDirIsHom p q i = Refl
 
 public export
+dfHomObjIsTot : (p, q : MLDirichCatObj) ->
+  dfTot (dfHomObj p q) = DirichNatTrans p q
+dfHomObjIsTot p q = Refl
+
+public export
 dfEvalPos : (p, q : MLDirichCatObj) ->
   dfPos (dfParProductArena (dfHomObj p q) p) ->
   dfPos q
