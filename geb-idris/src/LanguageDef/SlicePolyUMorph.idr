@@ -1840,6 +1840,29 @@ spfdParClosureObjPiPosFromNT : {dom, cod : Type} ->
 spfdParClosureObjPiPosFromNT {dom} q r nt ec =
   spfdParClosureObjPosFromNT q r ec $ SPFDataProdToFamUnitNT q r nt ec
 
+-- Now we show that the direction-set of the parallel closure at a given
+-- position is the direction-set of the intermediate object of the
+-- vertical-Cartesian factorization of the corresponding natural transformation.
+
+public export
+spfdParClosureObjDirToIntDir : {dom, cod : Type} ->
+  (q, r : SPFData dom cod) ->
+  (ed : dom) -> (ec : cod) ->
+  (i : spfdParClosureObjPos {dom} q r ec) ->
+  spfdParClosureObjDir {dom} q r ec i ed ->
+  SPFDvcFactIntTot {dom} {cod=Unit}
+    {p=(SPFDataProdToFamUnit q ec)}
+    {q=(SPFDataProdToFamUnit r ec)}
+    (spfdParClosureObjPosToNT {dom} {cod} q r ec i) ed ()
+spfdParClosureObjDirToIntDir {dom} {cod} q r ed ec
+    (() ** dm) (((qp, ()) ** Refl) ** ((ed' ** rd) ** dd))
+    with (fst (snd (dm (qp, ()) Refl) ed' rd))
+  spfdParClosureObjDirToIntDir {dom} {cod} q r ed ec
+    (() ** dm) (((qp, ()) ** Refl) ** ((ed' ** rd) ** dd)) | () =
+      case dd of
+        Left Refl => (qp ** rd)
+        Right v => void v
+
 ----------------------------------------------
 ----------------------------------------------
 ---- Cartesian transformations and slices ----

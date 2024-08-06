@@ -101,6 +101,12 @@ SPFDtot : {dom, cod : Type} -> SPFData dom cod -> dom -> cod -> Type
 SPFDtot {dom} {cod} spfd ed ec = (i : spfdPos spfd ec ** spfdDir spfd ec i ed)
 
 -- The total directions of a slice polynomial functor at a given
+-- point in the domain.
+public export
+SPFDtotDom : {dom, cod : Type} -> SPFData dom cod -> dom -> Type
+SPFDtotDom {dom} {cod} spfd ed = (ec : cod ** SPFDtot {dom} {cod} spfd ed ec)
+
+-- The total directions of a slice polynomial functor at a given
 -- point in the codomain.
 public export
 SPFDtotCod : {dom, cod : Type} -> SPFData dom cod -> cod -> Type
@@ -2893,6 +2899,11 @@ public export
 SPFDvcFactIntTot : {dom, cod : Type} -> {p, q : SPFData dom cod} ->
   SPFnt {dom} {cod} p q -> dom -> cod -> Type
 SPFDvcFactIntTot {dom} {cod} {p} {q} nt = SPFDtot (SPFDvcFactIntObj nt)
+
+public export
+SPFDvcFactIntTotDom : {dom, cod : Type} -> {p, q : SPFData dom cod} ->
+  SPFnt {dom} {cod} p q -> dom -> Type
+SPFDvcFactIntTotDom {dom} {cod} {p} {q} nt = SPFDtotDom (SPFDvcFactIntObj nt)
 
 public export
 SPFDvcFactIntTotCod : {dom, cod : Type} -> {p, q : SPFData dom cod} ->
