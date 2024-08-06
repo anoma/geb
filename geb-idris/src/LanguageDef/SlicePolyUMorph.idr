@@ -1863,6 +1863,24 @@ spfdParClosureObjDirToIntDir {dom} {cod} q r ed ec
         Left Refl => (qp ** rd)
         Right v => void v
 
+public export
+spfdParClosureObjDirFromIntDir : {dom, cod : Type} ->
+  (q, r : SPFData dom cod) ->
+  (ed : dom) -> (ec : cod) ->
+  (i : spfdParClosureObjPos {dom} q r ec) ->
+  SPFDvcFactIntTot {dom} {cod=Unit}
+    {p=(SPFDataProdToFamUnit q ec)}
+    {q=(SPFDataProdToFamUnit r ec)}
+    (spfdParClosureObjPosToNT {dom} {cod} q r ec i) ed () ->
+  spfdParClosureObjDir {dom} q r ec i ed
+spfdParClosureObjDirFromIntDir {dom} {cod} q r ed ec (() ** dm) (qp ** rd)
+    with (dm (qp, ()) Refl) proof eq
+  spfdParClosureObjDirFromIntDir {dom} {cod} q r ed ec (() ** dm) (qp ** rd)
+    | (rp ** rqd) =
+      (((qp, ()) ** Refl) **
+       rewrite eq in
+       ((ed ** rd) ** Left $ rewrite unitUnique (fst (rqd ed rd)) () in Refl))
+
 ----------------------------------------------
 ----------------------------------------------
 ---- Cartesian transformations and slices ----
