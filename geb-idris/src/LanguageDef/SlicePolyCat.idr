@@ -2821,3 +2821,56 @@ SPFpoCellFamFromDep : {b : Type} -> {w, w', z, z' : SliceObj b} ->
     (SPFDataFamFromDep f) (SPFDataFamFromDep g) ->
   SPFdepPoCell bcl bcr f g
 SPFpoCellFamFromDep {b} {w} {w'} {z} {z'} bcl bcr f g = SPFntDepFromFam
+
+--------------------------------------
+--------------------------------------
+---- Vertical-Cartesian factoring ----
+--------------------------------------
+--------------------------------------
+
+-- The positions of the intermediate object of the vertical-Cartesian
+-- factoring of a natural transformation between slice polynomial functors.
+-- Note that this is independent of the specific natural transformation,
+-- because the first part of the factorization is a vertical transformation,
+-- whose on-positions function is an isomorphism, so the positions of the
+-- intermediate functor must be the same as the positions of the first
+-- functor.
+public export
+SPFDvcFactPos : {dom, cod : Type} -> {p, q : SPFData dom cod} ->
+  SPFnt {dom} {cod} p q -> SliceObj cod
+SPFDvcFactPos {dom} {cod} {p} {q} nt = spfdPos p
+
+-- Given a polynomial functor, a slice of a codomain, and a morphism
+-- from that slice to the functor's positions, we can produce a new
+-- functor whose positions are the given slice and whose directions
+-- are inherited from the given functor via the given morphism.
+public export
+SPFDposChangeDir : {dom, cod : Type} ->
+  (p : SPFData dom cod) -> {pos : SliceObj cod} ->
+  SliceMorphism {a=cod} pos (spfdPos p) -> SPFdirType dom cod pos
+SPFDposChangeDir {dom} {cod} p {pos} m ec = spfdDir p ec . m ec
+
+public export
+SPFDposChange : {dom, cod : Type} ->
+  (p : SPFData dom cod) -> {pos : SliceObj cod} ->
+  SliceMorphism {a=cod} pos (spfdPos p) -> SPFData dom cod
+SPFDposChange {dom} {cod} p {pos} m = SPFD pos (SPFDposChangeDir p {pos} m)
+
+-- Given a natural transformation between slice polynomial functors,
+-- this is the intermediate object of its vertical-Cartesian factoring.
+-- Note that this is independent of the on-directions function of the
+-- natural transformation -- that comes into play only to compute the
+-- on-directions function of the vertical component of the factorization,
+-- not to compute the intermediate object itself.
+public export
+SPFDvcFact : {dom, cod : Type} -> {p, q : SPFData dom cod} ->
+  (nt : SPFnt {dom} {cod} p q) -> SPFData dom cod
+SPFDvcFact {dom} {cod} {p} {q} nt =
+  SPFDposChange {dom} {cod} q {pos=(spfdPos p)} (spOnPos nt)
+
+public export
+SPFDvcFactDir : {dom, cod : Type} -> {p, q : SPFData dom cod} ->
+  (nt : SPFnt {dom} {cod} p q) ->
+  SPFdirType dom cod (SPFDvcFactPos {dom} {cod} {p} {q} nt)
+SPFDvcFactDir {dom} {cod} {p} {q} nt =
+  spfdDir (SPFDvcFact {dom} {cod} {p} {q} nt)
