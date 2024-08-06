@@ -794,6 +794,10 @@ mlDirichSlObjTot {ar} sl =
   (mlDirichSlObjTotPos {ar} sl ** mlDirichSlObjTotDir {ar} sl)
 
 public export
+mlDirichSlObjTotTot : {ar : MLArena} -> MlDirichSlObj ar -> Type
+mlDirichSlObjTotTot {ar} sl = dfTot (mlDirichSlObjTot {ar} sl)
+
+public export
 mlDirichSlObjProjOnPos : {ar : MLArena} -> (sl : MlDirichSlObj ar) ->
   mlDirichSlObjTotPos sl -> dfPos ar
 mlDirichSlObjProjOnPos {ar} sl = DPair.fst
@@ -2175,6 +2179,71 @@ dfSlHomObj : {b : MLDirichCatObj} ->
   MlDirichSlObj b -> MlDirichSlObj b -> MlDirichSlObj b
 dfSlHomObj {b} p sl =
   MDSobj (dfSlHomObjPos {b} p sl) (dfSlHomObjDir {b} p sl)
+
+-- Each base direction of the total object of a Dirichlet slice object
+-- induces a Dirichlet functor on `Type`.
+public export
+dfSlObjDirF : {b : MLDirichCatObj} ->
+  (p : MlDirichSlObj b) -> dfTot b -> MLDirichCatObj
+dfSlObjDirF {b=(bpos ** bdir)} (MDSobj ppos pdir) (bi ** bd) =
+  (ppos bi ** \pi => pdir bi pi bd)
+
+-- Each direction of the total object of a Dirichlet slice object
+-- includes a direction of the base object.
+public export
+dfSlObjBaseTot : {b : MLDirichCatObj} -> (p : MlDirichSlObj b) ->
+  mlDirichSlObjTotTot {ar=b} p -> dfTot b
+dfSlObjBaseTot {b} p sldt = (fst (fst sldt) ** fst (snd sldt))
+
+-- Thus, each direction of the total object of a Dirichlet slice
+-- object induces a Dirichlet functor on `Type`.
+public export
+dfSlObjTotF : {b : MLDirichCatObj} -> (p : MlDirichSlObj b) ->
+  mlDirichSlObjTotTot {ar=b} p -> MLDirichCatObj
+dfSlObjTotF {b} p sldt = dfSlObjDirF {b} p (dfSlObjBaseTot {b} p sldt)
+
+-- Each base direction of a Dirichlet slice hom-object
+-- induces two Dirichlet functors, one corresponding to the domain and
+-- one corresponding to the codomain.
+public export
+dfSlHomObjDomF : {b : MLDirichCatObj} -> (p, q : MlDirichSlObj b) ->
+  dfTot b -> MLDirichCatObj
+dfSlHomObjDomF {b=(bpos ** bdir)} (MDSobj ppos pdir) (MDSobj qpos qdir)
+  (bi ** bd) =
+    (ppos bi ** \pi => pdir bi pi bd)
+
+public export
+dfSlHomObjCodF : {b : MLDirichCatObj} -> (p, q : MlDirichSlObj b) ->
+  dfTot b -> MLDirichCatObj
+dfSlHomObjCodF {b=(bpos ** bdir)} (MDSobj ppos pdir) (MDSobj qpos qdir)
+  (bi ** bd) =
+    (qpos bi ** \qi => qdir bi qi bd)
+
+-- Thus, each direction of the total object of a Dirichlet slice hom-object
+-- induces two Dirichlet functors, one corresponding to the domain and
+-- one corresponding to the codomain.
+
+public export
+dfSlHomObjTotDomF : {b : MLDirichCatObj} -> (p, q : MlDirichSlObj b) ->
+  mlDirichSlObjTotTot (dfSlHomObj p q) -> MLDirichCatObj
+dfSlHomObjTotDomF {b} p q dt =
+  dfSlHomObjDomF {b} p q (dfSlObjBaseTot (dfSlHomObj p q) dt)
+
+public export
+dfSlHomObjTotCodF : {b : MLDirichCatObj} -> (p, q : MlDirichSlObj b) ->
+  mlDirichSlObjTotTot (dfSlHomObj p q) -> MLDirichCatObj
+dfSlHomObjTotCodF {b} p q dt =
+  dfSlHomObjCodF {b} p q (dfSlObjBaseTot (dfSlHomObj p q) dt)
+
+-- Each direction of the total object of a Dirichlet slice hom-object
+-- induces a natural transformation between the induced Dirichlet functors
+-- on `Type`.
+public export
+dfSlHomObjTotNT : {b : MLDirichCatObj} -> (p, q : MlDirichSlObj b) ->
+  (hdt : mlDirichSlObjTotTot {ar=b} $ dfSlHomObj {b} p q) ->
+  DirichNatTrans (dfSlHomObjTotDomF {b} p q hdt) (dfSlHomObjTotCodF {b} p q hdt)
+dfSlHomObjTotNT {b=(bpos ** bdir)} (MDSobj ppos pdir) (MDSobj qpos qdir) hdt =
+  (snd (fst hdt) ** snd (snd hdt))
 
 public export
 dfSlEvalOnPos : {b : MLDirichCatObj} ->
