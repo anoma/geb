@@ -69,6 +69,10 @@ public export
 PDiTot1 : (pdid : PDiData) -> Type
 PDiTot1 = dfTot . pdiT1
 
+public export
+PDiTot2 : (pdid : PDiData) -> Type
+PDiTot2 pdid = mlDirichSlObjTotTot {ar=(pdiT1 pdid)} $ pdiF pdid
+
 -----------------------------------------------------------------
 ---- Polydifunctors as families of slice polynomial functors ----
 -----------------------------------------------------------------
