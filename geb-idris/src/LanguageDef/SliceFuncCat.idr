@@ -1649,6 +1649,16 @@ SliceLKanExtAdjunctionSig a b c g gm =
     {c=(SliceFuncCat a b)}
     (SliceLKanExtAdjUnitInputs a b c g gm)
 
+public export
+SliceRKanExtProd : {a, b, c : Type} ->
+  SliceFunctor a c -> SliceFunctor a b -> SliceFunctor (Either a c) b
+SliceRKanExtProd {a} {b} {c} g f sac eb =
+  -- Conceptually the definition below is equivalent to:
+  --  SliceNatTrans {x=a} {y=Unit}
+  --    (flip $ \_ => SliceMorphism sc . g)
+  --    (flip $ \_ => flip f eb)
+  Pi {a=c} (SliceHom (sac . Right) (g (sac . Left))) -> f (sac . Left) eb
+
 -- The right Kan extension of `f` (the second parameter) along
 -- `g` (the first parameter).
 public export
@@ -1659,7 +1669,7 @@ SliceRKanExt {a} {b} {c} g f sc eb =
   --  SliceNatTrans {x=a} {y=Unit}
   --    (flip $ \_ => SliceMorphism sc . g)
   --    (flip $ \_ => flip f eb)
-  (sa : SliceObj a) -> Pi {a=c} (SliceHom sc (g sa)) -> f sa eb
+  (sa : SliceObj a) -> SliceRKanExtProd {a} {b} {c} g f (eitherElim sa sc) eb
 
 public export
 SliceRKanExtMor : {a, b, c : Type} ->
