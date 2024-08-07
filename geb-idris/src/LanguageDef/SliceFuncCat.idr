@@ -1652,12 +1652,8 @@ SliceLKanExtAdjunctionSig a b c g gm =
 public export
 SliceRKanExtProd : {a, b, c : Type} ->
   SliceFunctor a c -> SliceFunctor a b -> SliceFunctor (Either a c) b
-SliceRKanExtProd {a} {b} {c} g f sac eb =
-  -- Conceptually the definition below is equivalent to:
-  --  SliceNatTrans {x=a} {y=Unit}
-  --    (flip $ \_ => SliceMorphism sc . g)
-  --    (flip $ \_ => flip f eb)
-  SliceMorphism {a=c} (sac . Right) (g (sac . Left)) -> f (sac . Left) eb
+SliceRKanExtProd {a} {b} {c} g f sac =
+  HomProf (SliceMorphism {a=c} (sac . Right) (g (sac . Left))) . f (sac . Left)
 
 -- The right Kan extension of `f` (the second parameter) along
 -- `g` (the first parameter).
