@@ -353,6 +353,11 @@ spfdConstFromConst dom {cod} x sd ec ex = (ex ** \_, v => void v)
 -- product.
 
 public export
+spfdPrecomp : {a, b, c : Type} -> (q : SPFData a c) ->
+  SPFData c b -> SPFData a b
+spfdPrecomp {a} {b} {c} = flip $ SPFDcomp a c b
+
+public export
 spfdLKanExtPos : {a, b, c : Type} ->
   SPFData a c -> SPFData a b -> SliceObj b
 spfdLKanExtPos {a} {b} {c} q p = spfdPos p
@@ -378,7 +383,7 @@ spfdLKanExtL = spfdLKanExt
 public export
 spfdLKanExtR : {a, b, c : Type} -> (q : SPFData a c) ->
   SPFData c b -> SPFData a b
-spfdLKanExtR {a} {b} {c} = flip $ SPFDcomp a c b
+spfdLKanExtR = spfdPrecomp
 
 public export
 spfdLKanExtLAdjPos : {a, b, c : Type} ->
