@@ -1881,6 +1881,22 @@ spfdParClosureObjDirFromIntDir {dom} {cod} q r ed ec (() ** dm) (qp ** rd)
        rewrite eq in
        ((ed ** rd) ** Left $ rewrite unitUnique (fst (rqd ed rd)) () in Refl))
 
+------------------------------------------------
+------------------------------------------------
+---- Universal slice polynomial 2-morphisms ----
+------------------------------------------------
+------------------------------------------------
+
+-- Here we define universal objects in the category of all slice
+-- polynomial functors, where the universal morphisms are
+-- 2-morphisms, also known as cells.
+--
+-- Note that a universal object in the category of slice polynomial
+-- functors between some fixed domain and codomain slice categories
+-- is a special case of a universal object in the category of all
+-- slice polynomial functors, where the vertical sides of the cell
+-- are both identities.
+
 ----------------------------------------------
 ----------------------------------------------
 ---- Cartesian transformations and slices ----
@@ -1997,19 +2013,3 @@ public export
 spfdPosSliceAdjL : {x, y, z : Type} -> (q : SPFData x x) ->
   (p : SPFDposCSlice {y=x} {z=x} q) -> SPFData x x
 spfdPosSliceAdjL {x} q = spcsTot {y=x} {z=x} {q}
-
-------------------------------------------------
-------------------------------------------------
----- Universal slice polynomial 2-morphisms ----
-------------------------------------------------
-------------------------------------------------
-
--- Here we define universal objects in the category of all slice
--- polynomial functors, where the universal morphisms are
--- 2-morphisms, also known as cells.
---
--- Note that a universal object in the category of slice polynomial
--- functors between some fixed domain and codomain slice categories
--- is a special case of a universal object in the category of all
--- slice polynomial functors, where the vertical sides of the cell
--- are both identities.
