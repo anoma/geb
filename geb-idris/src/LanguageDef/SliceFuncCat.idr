@@ -1657,7 +1657,7 @@ SliceRKanExtProd {a} {b} {c} g f sac eb =
   --  SliceNatTrans {x=a} {y=Unit}
   --    (flip $ \_ => SliceMorphism sc . g)
   --    (flip $ \_ => flip f eb)
-  Pi {a=c} (SliceHom (sac . Right) (g (sac . Left))) -> f (sac . Left) eb
+  SliceMorphism {a=c} (sac . Right) (g (sac . Left)) -> f (sac . Left) eb
 
 -- The right Kan extension of `f` (the second parameter) along
 -- `g` (the first parameter).
