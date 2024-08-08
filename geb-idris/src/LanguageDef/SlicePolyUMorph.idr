@@ -527,6 +527,16 @@ spfdDensityComonadDuplicate {a} {b} p =
     (\eb, ep, eb', dm =>
       (fst (snd dm) ** \ea, pd' => snd (snd $ fst dm) ea $ snd (snd dm) ea pd'))
 
+public export
+spfdDensityComonadDuplicateAdj : {a, b : Type} -> (p : SPFData a b) ->
+  SPFnt {dom=b} {cod=b}
+    (spfdDensityComonad {a=b} {b} $ spfdDensityComonad {a} {b} p)
+    (spfdDensityComonad {a} {b} p)
+spfdDensityComonadDuplicateAdj {a} {b} p =
+  spfdDensityComonadRAdj {a=b} {b}
+    {p=(spfdDensityComonad {a} {b} p)} {r=(spfdDensityComonad {a} {b} p)}
+    (spfdDensityComonadDuplicate {a} {b} p)
+
 -----------------------------------------
 -----------------------------------------
 ---- Symmetric n-way Day convolution ----
