@@ -481,6 +481,20 @@ spfdDensityComonad : {a, b : Type} -> SPFData a b -> SPFData b b
 spfdDensityComonad {a} {b} p = spfdLKanExt {a} {b} {c=b} p p
 
 public export
+spfdDensityComonadLAdj : {a, b : Type} ->
+  {p : SPFData a b} -> {r : SPFData b b} ->
+  SPFnt {dom=b} {cod=b} (spfdDensityComonad {a} {b} p) r ->
+  SPFnt {dom=a} {cod=b} p (SPFDcomp a b b r p)
+spfdDensityComonadLAdj {a} {b} {p} {r} = spfdLKanExtLAdj {a} {b} {c=b} p p r
+
+public export
+spfdDensityComonadRAdj : {a, b : Type} ->
+  {p : SPFData a b} -> {r : SPFData b b} ->
+  SPFnt {dom=a} {cod=b} p (SPFDcomp a b b r p) ->
+  SPFnt {dom=b} {cod=b} (spfdDensityComonad {a} {b} p) r
+spfdDensityComonadRAdj {a} {b} {p} {r} = spfdLKanExtRAdj {a} {b} {c=b} p p r
+
+public export
 spfdDensityComonadErase : {a, b : Type} -> (p : SPFData a b) ->
   SPFnt {dom=b} {cod=b} (spfdDensityComonad {a} {b} p) (SPFDid b)
 spfdDensityComonadErase {a} {b} p =
@@ -489,6 +503,15 @@ spfdDensityComonadErase {a} {b} p =
     (\eb, ep, eb', beq =>
       rewrite sym beq in
       (ep ** sliceId {a} $ spfdDir p eb ep))
+
+public export
+spfdDensityComonadEraseAdj : {a, b : Type} -> (p : SPFData a b) ->
+  SPFnt {dom=a} {cod=b} p p
+spfdDensityComonadEraseAdj {a} {b} p =
+  SPNTvcomp p (SPFDcomp a b b (SPFDid b) p) p
+    (SPFfromIdL p)
+    (spfdDensityComonadLAdj {a} {b} {p} {r=(SPFDid b)}
+      (spfdDensityComonadErase {a} {b} p))
 
 public export
 spfdDensityComonadDuplicate : {a, b : Type} -> (p : SPFData a b) ->
