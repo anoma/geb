@@ -505,15 +505,6 @@ spfdDensityComonadErase {a} {b} p =
       (ep ** sliceId {a} $ spfdDir p eb ep))
 
 public export
-spfdDensityComonadEraseAdj : {a, b : Type} -> (p : SPFData a b) ->
-  SPFnt {dom=a} {cod=b} p p
-spfdDensityComonadEraseAdj {a} {b} p =
-  SPNTvcomp p (SPFDcomp a b b (SPFDid b) p) p
-    (SPFfromIdL p)
-    (spfdDensityComonadLAdj {a} {b} {p} {r=(SPFDid b)}
-      (spfdDensityComonadErase {a} {b} p))
-
-public export
 spfdDensityComonadDuplicate : {a, b : Type} -> (p : SPFData a b) ->
   SPFnt {dom=b} {cod=b}
     (spfdDensityComonad {a} {b} p)
@@ -526,6 +517,15 @@ spfdDensityComonadDuplicate {a} {b} p =
       (ep ** (\eb', ep'dm => fst ep'dm)))
     (\eb, ep, eb', dm =>
       (fst (snd dm) ** \ea, pd' => snd (snd $ fst dm) ea $ snd (snd dm) ea pd'))
+
+public export
+spfdDensityComonadEraseAdj : {a, b : Type} -> (p : SPFData a b) ->
+  SPFnt {dom=a} {cod=b} p p
+spfdDensityComonadEraseAdj {a} {b} p =
+  SPNTvcomp p (SPFDcomp a b b (SPFDid b) p) p
+    (SPFfromIdL p)
+    (spfdDensityComonadLAdj {a} {b} {p} {r=(SPFDid b)}
+      (spfdDensityComonadErase {a} {b} p))
 
 public export
 spfdDensityComonadDuplicateAdj : {a, b : Type} -> (p : SPFData a b) ->
