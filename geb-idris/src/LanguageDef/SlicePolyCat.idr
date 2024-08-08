@@ -2935,3 +2935,55 @@ SPFDcartFact {dom} {cod} {p} {q} nt =
   SPFDm
     (spOnPos nt)
     (\ec, ep => sliceId {a=dom} $ spfdDir q ec $ spOnPos nt ec ep)
+
+-- We can also factorize a _cell_, changing the domain together with
+-- the directions and the codomain together with the positions.
+public export
+SPFpoCellIntObj : {w, w', z, z' : Type} ->
+  {bcl : w -> w'} -> {bcr : z -> z'} ->
+  {f : SPFData w z} -> {g : SPFData w' z'} ->
+  SPFpoCell {w} {w'} {z} {z'} bcl bcr f g ->
+  SPFData w' z
+SPFpoCellIntObj {w} {w'} {z} {z'} {bcl} {bcr} {f} {g} nt =
+  SPFD
+    (spfdPos f)
+    (\ez, efp, ew' => spfdDir g (bcr ez) (spOnPos nt (bcr ez) (SFS ez efp)) ew')
+
+public export
+SPFpoCellVertFact : {w, w', z, z' : Type} ->
+  {bcl : w -> w'} -> {bcr : z -> z'} ->
+  {f : SPFData w z} -> {g : SPFData w' z'} ->
+  (spfc : SPFpoCell {w} {w'} {z} {z'} bcl bcr f g) ->
+  SPFpoCell {w} {w'} {z} {z'=z} bcl Prelude.id f (SPFpoCellIntObj {f} {g} spfc)
+SPFpoCellVertFact {w} {w'} {z} {z'} {bcl} {bcr} {f} {g} spfc =
+  SPFDm
+    (\ez, (SFS ez efp) => efp)
+    (\ez, (SFS ez efp), ew', egd => spOnDir spfc (bcr ez) (SFS ez efp) ew' egd)
+
+public export
+SPFpoCellCartFact : {w, w', z, z' : Type} ->
+  {bcl : w -> w'} -> {bcr : z -> z'} ->
+  {f : SPFData w z} -> {g : SPFData w' z'} ->
+  (spfc : SPFpoCell {w} {w'} {z} {z'} bcl bcr f g) ->
+  SPFpoCell {w=w'} {w'} {z} {z'} Prelude.id bcr (SPFpoCellIntObj {f} {g} spfc) g
+SPFpoCellCartFact {w} {w'} {z} {z'} {bcl} {bcr} {f} {g} spfc =
+  SPFDm
+    (\ez', (SFS ez efp) => spOnPos spfc ez' (SFS ez efp))
+    (\ez', (SFS ez efp), ew', egd => SFS ew' egd)
+
+public export
+SPFpoCellFactCorrectPos : FunExt -> {w, w', z, z' : Type} ->
+  {bcl : w -> w'} -> {bcr : z -> z'} ->
+  {f : SPFData w z} -> {g : SPFData w' z'} ->
+  (spfc : SPFpoCell {w} {w'} {z} {z'} bcl bcr f g) ->
+  (ez' : z') -> (efp : spfdPos (spfPushout bcl bcr f) ez') ->
+  spOnPos
+    (spocVcomp {f} {g=(SPFpoCellIntObj {f} {g} spfc)} {h=g}
+      (SPFpoCellCartFact {f} {g} spfc)
+      (SPFpoCellVertFact {f} {g} spfc))
+    ez' efp
+  = spOnPos spfc ez' efp
+SPFpoCellFactCorrectPos fext {w} {w'} {z} {z'} {bcl} {bcr}
+  {f=(SPFD fpos fdir)} {g=(SPFD gpos gdir)}
+  (SPFDm onpos ondir) _ (SFS ez efp) =
+    Refl
