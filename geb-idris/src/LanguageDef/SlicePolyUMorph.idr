@@ -539,6 +539,30 @@ spfdDensityComonadDuplicateAdj {a} {b} p =
     {p=(spfdDensityComonad {a} {b} p)} {r=(spfdDensityComonad {a} {b} p)}
     (spfdDensityComonadDuplicate {a} {b} p)
 
+-- Here we show that the `erase` of the codensity monad is simply
+-- the adjunct of the identity.
+
+public export
+0 spfdDensityComonadEraseAdjIdPos : {a, b : Type} ->
+  (p : SPFData a b) ->
+  spOnPos (spfdDensityComonadEraseAdj {a} {b} p) = spOnPos (SPNTid p)
+spfdDensityComonadEraseAdjIdPos {a} {b} p = Refl
+
+public export
+0 spfdDensityComonadEraseAdjIdDir : FunExt -> {a, b : Type} ->
+  (p : SPFData a b) ->
+  spOnDir (spfdDensityComonadEraseAdj {a} {b} p) = spOnDir (SPNTid p)
+spfdDensityComonadEraseAdjIdDir fext {a} {b} (SPFD ppos pdir) =
+  funExt $ \eb => funExt $ \ep => Refl
+
+public export
+0 spfdDensityComonadEraseAdjInterpId : {a, b : Type} ->
+  (p : SPFData a b) -> (x : SliceObj a) ->
+  (eb : b) -> (i : InterpSPFData p x eb) ->
+  InterpSPFnt {dom=a} {cod=b} p p (spfdDensityComonadEraseAdj {a} {b} p) x eb i
+  = i
+spfdDensityComonadEraseAdjInterpId {a} {b} p x eb (ep ** mpdx) = Refl
+
 -----------------------------------------
 -----------------------------------------
 ---- Symmetric n-way Day convolution ----
