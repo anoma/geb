@@ -1559,6 +1559,46 @@ public export
 SPFDcat : Type -> Type -> IntCatSig
 SPFDcat dom cod = ICat (SPFData dom cod) (SPFDhs dom cod)
 
+public export
+SPFfromIdL : {dom, cod : Type} ->
+  (f : SPFData dom cod) ->
+  SPFnt {dom} {cod} (SPFDcomp dom cod cod (SPFDid cod) f) f
+SPFfromIdL {dom} {cod} spfd =
+  SPFDm
+    (\ec, uep => case uep of (() ** ep) => ep ec Refl)
+    (\ec, uep, ed, efd => case uep of (() ** ep) => ((ec ** Refl) ** efd))
+
+public export
+SPFtoIdL : {dom, cod : Type} ->
+  (f : SPFData dom cod) ->
+  SPFnt {dom} {cod} f (SPFDcomp dom cod cod (SPFDid cod) f)
+SPFtoIdL {dom} {cod} spfd =
+  SPFDm
+    (\ec, ep =>
+      (() ** \ec', eq => case eq of Refl => ep))
+    (\ec, ep, ed, ecfd =>
+      case ecfd of ((ec' ** eq) ** efd) => case eq of Refl => efd)
+
+public export
+SPFfromIdR : {dom, cod : Type} ->
+  (f : SPFData dom cod) ->
+  SPFnt {dom} {cod} (SPFDcomp dom dom cod f (SPFDid dom)) f
+SPFfromIdR {dom} {cod} spfd =
+  SPFDm
+    (\ec, epu =>
+      fst epu)
+    (\ec, epu, ed, efd =>
+      ((ed ** efd) ** rewrite unitUnique (snd epu ed efd) () in Refl))
+
+public export
+SPFtoIdR : {dom, cod : Type} ->
+  (f : SPFData dom cod) ->
+  SPFnt {dom} {cod} f (SPFDcomp dom dom cod f (SPFDid dom))
+SPFtoIdR {dom} {cod} spfd =
+  SPFDm
+    (\ec, efp => (efp ** \_, _ => ()))
+    (\ec, efp, ed, efd => rewrite sym (snd efd) in snd $ fst efd)
+
 --------------------------------------------------------------------
 ---- Interpretation of slice polynomial natural transformations ----
 --------------------------------------------------------------------
