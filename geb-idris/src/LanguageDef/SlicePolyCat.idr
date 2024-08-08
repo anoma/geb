@@ -2936,8 +2936,9 @@ SPFDcartFact {dom} {cod} {p} {q} nt =
     (spOnPos nt)
     (\ec, ep => sliceId {a=dom} $ spfdDir q ec $ spOnPos nt ec ep)
 
--- We can also factorize a _cell_, changing the domain together with
--- the directions and the codomain together with the positions.
+-- We can also factorize a _cell_, first changing the domain together with
+-- the directions (a vertical transformation) and then the codomain together
+-- with the positions (a Cartesian transformation).
 public export
 SPFpoCellIntObj : {w, w', z, z' : Type} ->
   {bcl : w -> w'} -> {bcr : z -> z'} ->
