@@ -519,7 +519,8 @@ spfdDensityComonadDuplicate {a} {b} p =
       (fst (snd dm) ** \ea, pd' => snd (snd $ fst dm) ea $ snd (snd dm) ea pd'))
 
 public export
-spfdDensityComonadEraseAdj : {a, b : Type} -> (p : SPFData a b) ->
+spfdDensityComonadEraseAdj : {a, b : Type} ->
+  (p : SPFData a b) ->
   SPFnt {dom=a} {cod=b} p p
 spfdDensityComonadEraseAdj {a} {b} p =
   SPNTvcomp p (SPFDcomp a b b (SPFDid b) p) p
@@ -528,7 +529,8 @@ spfdDensityComonadEraseAdj {a} {b} p =
       (spfdDensityComonadErase {a} {b} p))
 
 public export
-spfdDensityComonadDuplicateAdj : {a, b : Type} -> (p : SPFData a b) ->
+spfdDensityComonadDuplicateAdj : {a, b : Type} ->
+  (p : SPFData a b) ->
   SPFnt {dom=b} {cod=b}
     (spfdDensityComonad {a=b} {b} $ spfdDensityComonad {a} {b} p)
     (spfdDensityComonad {a} {b} p)
