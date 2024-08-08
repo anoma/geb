@@ -2989,6 +2989,18 @@ SPFpoCellFactCorrectPos fext {w} {w'} {z} {z'} {bcl} {bcr}
   (SPFDm onpos ondir) _ (SFS ez efp) =
     Refl
 
+-----------------------------------------------------
+-----------------------------------------------------
+---- Two-slices of dependent polynomial functors ----
+-----------------------------------------------------
+-----------------------------------------------------
+
+-- A cell is a two-morphism, so we can define a slice category over
+-- a dependent polynomial functor as any other dependent polynomial
+-- functor (the total space), which need not have the same domain or
+-- codomain as the base functor, with a cell (the projection) to the
+-- base functor.
+
 -- A dependent-type-style cell, where we treat the natural transformation
 -- as the projection of a slice object.
 public export
