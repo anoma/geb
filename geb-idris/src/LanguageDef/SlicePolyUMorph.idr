@@ -556,12 +556,12 @@ spfdDensityComonadEraseAdjIdDir fext {a} {b} (SPFD ppos pdir) =
   funExt $ \eb => funExt $ \ep => Refl
 
 public export
-0 spfdDensityComonadEraseAdjInterpId : {a, b : Type} ->
+0 spfdDensityComonadEraseAdjInterpId : FunExt -> {a, b : Type} ->
   (p : SPFData a b) -> (x : SliceObj a) ->
-  (eb : b) -> (i : InterpSPFData p x eb) ->
-  InterpSPFnt {dom=a} {cod=b} p p (spfdDensityComonadEraseAdj {a} {b} p) x eb i
-  = i
-spfdDensityComonadEraseAdjInterpId {a} {b} p x eb (ep ** mpdx) = Refl
+  InterpSPFnt {dom=a} {cod=b} p p (spfdDensityComonadEraseAdj {a} {b} p) x =
+  sliceId {a=b} (InterpSPFData {dom=a} {cod=b} p x)
+spfdDensityComonadEraseAdjInterpId fext {a} {b} (SPFD ppos pdir) x =
+  funExt $ \eb => funExt $ \(ep ** dm) => Refl
 
 -----------------------------------------
 -----------------------------------------
