@@ -635,6 +635,23 @@ public export
 spfdDensityComonadSelfComposedDensityComonadPosIsFPos {a} {b} p eb =
   Refl
 
+public export
+0 spfdDensityComonadSelfComposedDir : {a, b : Type} ->
+  (p : SPFData a b) ->
+  (eb : b) -> (ep : spfdPos (spfdDensityComonadSelfComposed {a} {b} p) eb) ->
+  (eb' : b) ->
+  spfdDir (spfdDensityComonadSelfComposed {a} {b} p) eb ep eb' =
+    (x : SPFDcompDirFst
+      (spfdDensityComonad p)
+      (spfdDensityComonad p)
+      eb ep eb' **
+     SPFDcompDirSnd
+      (spfdDensityComonad p)
+      (spfdDensityComonad p)
+      eb ep eb' x)
+spfdDensityComonadSelfComposedDir {a} {b} (SPFD ppos pdir) eb ep eb' =
+  Refl
+
 -- The positions of the density comonad of a codensity monad of
 -- a functor are those of the original functor.
 public export
