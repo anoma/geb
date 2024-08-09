@@ -620,6 +620,15 @@ public export
    SliceMorphism {a} (spfdDir p eb' ep') (spfdDir p eb ep))
 spfdDensityComonadDirIsFDirMorph {a} {b} p eb ep eb' = Refl
 
+-- The positions of the composition of the density comonad of a functor
+-- with itself (i.e. the multiplication in the composition monoid) are
+-- those of the original functor.
+public export
+0 spfdDensityComonadCompDensityComonadPosIsFPos : {a, b : Type} ->
+  (p : SPFData a b) ->
+  spfdPos (spfdDensityComonadOfDensityComonad {a} {b} p) = spfdPos p
+spfdDensityComonadCompDensityComonadPosIsFPos {a} {b} p = Refl
+
 -- The positions of the density comonad of a codensity monad of
 -- a functor are those of the original functor.
 public export
@@ -638,15 +647,6 @@ public export
     (spfdDir (spfdDensityComonad {a} {b} p) eb' ep')
     (spfdDir (spfdDensityComonad {a} {b} p) eb ep))
 spfdDensityComonadOfDensityComonadDir {a} {b} (SPFD ppos pdir) eb ep eb' = Refl
-
--- The positions of the composition of the density comonad of a functor
--- with itself (i.e. the multiplication in the composition monoid) are
--- those of the original functor.
-public export
-0 spfdDensityComonadCompDensityComonadPosIsFPos : {a, b : Type} ->
-  (p : SPFData a b) ->
-  spfdPos (spfdDensityComonadOfDensityComonad {a} {b} p) = spfdPos p
-spfdDensityComonadCompDensityComonadPosIsFPos {a} {b} p = Refl
 
 -- Now we characterize the adjunct of "duplicate" (which has the same
 -- signature as a "join"):  its on-positions function is the identity,
