@@ -641,7 +641,10 @@ public export
   (eb : b) -> (ep : spfdPos (spfdDensityComonadSelfComposed {a} {b} p) eb) ->
   (eb' : b) ->
   spfdDir (spfdDensityComonadSelfComposed {a} {b} p) eb ep eb' =
-    (d1 : (eb'' : b ** spfdDir (spfdDensityComonad p) eb (fst ep) eb'') **
+    (d1 :
+      (eb'' : b **
+       ep'' : spfdPos p eb'' **
+       SliceMorphism {a} (spfdDir p eb'' ep'') (spfdDir p eb (fst ep))) **
      ep' : spfdPos p eb' **
      SliceMorphism {a}
       (spfdDir p eb' ep')
