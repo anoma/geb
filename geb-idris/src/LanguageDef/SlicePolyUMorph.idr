@@ -641,14 +641,11 @@ public export
   (eb : b) -> (ep : spfdPos (spfdDensityComonadSelfComposed {a} {b} p) eb) ->
   (eb' : b) ->
   spfdDir (spfdDensityComonadSelfComposed {a} {b} p) eb ep eb' =
-    (x : SPFDcompDirFst
+    (d1 : SPFDcompDirFst
       (spfdDensityComonad p)
       (spfdDensityComonad p)
       eb ep eb' **
-     SPFDcompDirSnd
-      (spfdDensityComonad p)
-      (spfdDensityComonad p)
-      eb ep eb' x)
+     spfdDir (spfdDensityComonad p) (fst d1) (snd ep (fst d1) (snd d1)) eb')
 spfdDensityComonadSelfComposedDir {a} {b} (SPFD ppos pdir) eb ep eb' =
   Refl
 
