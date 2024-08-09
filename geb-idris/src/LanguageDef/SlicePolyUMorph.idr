@@ -476,6 +476,8 @@ spfdLKanToPoly {a} {b} {c} q p sc eb ppdm =
 -------------------------
 -------------------------
 
+-- The density comonad of a functor is its left Kan extension along itself.
+
 public export
 spfdDensityComonad : {a, b : Type} -> SPFData a b -> SPFData b b
 spfdDensityComonad {a} {b} p = spfdLKanExt {a} {b} {c=b} p p
@@ -493,6 +495,8 @@ spfdDensityComonadRAdj : {a, b : Type} ->
   SPFnt {dom=a} {cod=b} p (SPFDcomp a b b r p) ->
   SPFnt {dom=b} {cod=b} (spfdDensityComonad {a} {b} p) r
 spfdDensityComonadRAdj {a} {b} {p} {r} = spfdLKanExtRAdj {a} {b} {c=b} p p r
+
+-- Here we define the comonad operations ("erase" and "duplicate").
 
 public export
 spfdDensityComonadErase : {a, b : Type} -> (p : SPFData a b) ->
@@ -517,6 +521,12 @@ spfdDensityComonadDuplicate {a} {b} p =
       (ep ** (\eb', ep'dm => fst ep'dm)))
     (\eb, ep, eb', dm =>
       (fst (snd dm) ** \ea, pd' => snd (snd $ fst dm) ea $ snd (snd dm) ea pd'))
+
+-- Applying the adjuncts of the left-Kan-extension adjunction to the
+-- comonad operations of the density comonad yields two more natural
+-- transformations, one an endo-natural-transformation on `p`, which we
+-- shall see below is the identity, and one from the density comonad of
+-- the density comonad of `p` back to the density comonad of `p`.
 
 public export
 spfdDensityComonadEraseAdj : {a, b : Type} ->
@@ -562,6 +572,27 @@ public export
   sliceId {a=b} (InterpSPFData {dom=a} {cod=b} p x)
 spfdDensityComonadEraseAdjInterpId fext {a} {b} (SPFD ppos pdir) x =
   funExt $ \eb => funExt $ \(ep ** dm) => Refl
+
+-- To clarify how we will use the density comonad, we exhibit explicit
+-- formulas for some forms in which it will appear.
+
+-- The positions of a density comonad are those of the original functor.
+public export
+0 spfdDensityComonadPosIsFPos : {a, b : Type} -> (p : SPFData a b) ->
+  spfdPos (spfdDensityComonad {a} {b} p) = spfdPos p
+spfdDensityComonadPosIsFPos {a} {b} p = Refl
+
+-- The directions of a density comonad at a given position comprise a choice
+-- of another position together with a morphism from the directions of the
+-- the original functor at chosen position back to the directions of the
+-- functor at the given position.
+public export
+0 spfdDensityComonadDirIsFDirMorph : {a, b : Type} -> (p : SPFData a b) ->
+  (eb : b) -> (ep : spfdPos p eb) -> (eb' : b) ->
+  spfdDir (spfdDensityComonad {a} {b} p) eb ep eb' =
+  (ep' : spfdPos p eb' **
+   SliceMorphism {a} (spfdDir p eb' ep') (spfdDir p eb ep))
+spfdDensityComonadDirIsFDirMorph {a} {b} p eb ep eb' = Refl
 
 -- Now we characterize the adjunct of "duplicate" (which has the same
 -- signature as a "join"):  its on-positions function is the identity,
