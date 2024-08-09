@@ -476,7 +476,9 @@ spfdLKanToPoly {a} {b} {c} q p sc eb ppdm =
 -------------------------
 -------------------------
 
--- The density comonad of a functor is its left Kan extension along itself.
+------------------------------------------
+---- Definition as left Kan extension ----
+------------------------------------------
 
 public export
 spfdDensityComonad : {a, b : Type} -> SPFData a b -> SPFData b b
@@ -505,6 +507,10 @@ spfdDensityComonadRAdj : {a, b : Type} ->
   SPFnt {dom=b} {cod=b} (spfdDensityComonad {a} {b} p) r
 spfdDensityComonadRAdj {a} {b} {p} {r} = spfdLKanExtRAdj {a} {b} {c=b} p p r
 
+------------------------------------------
+---- Compositions of density comonads ----
+------------------------------------------
+
 -- Convenience routines for two ways of iterating the density comonad:
 -- composing it with itself, and taking the density comonad _of_ the
 -- density comonad.  The former is a composition within the category
@@ -524,7 +530,9 @@ spfdDensityComonadOfDensityComonad : {a, b : Type} -> (p : SPFData a b) ->
 spfdDensityComonadOfDensityComonad {a} {b} =
   spfdDensityComonad {a=b} {b} . spfdDensityComonad {a} {b}
 
--- Here we define the comonad operations ("erase" and "duplicate").
+----------------------------
+---- Comonad operations ----
+----------------------------
 
 public export
 spfdDensityComonadErase : {a, b : Type} -> (p : SPFData a b) ->
@@ -547,6 +555,10 @@ spfdDensityComonadDuplicate {a} {b} p =
       (ep ** (\eb', ep'dm => fst ep'dm)))
     (\eb, ep, eb', dm =>
       (fst (snd dm) ** \ea, pd' => snd (snd $ fst dm) ea $ snd (snd dm) ea pd'))
+
+----------------------------------------
+---- Adjuncts of comonad operations ----
+----------------------------------------
 
 -- Applying the adjuncts of the left-Kan-extension adjunction to the
 -- comonad operations of the density comonad yields two more natural
@@ -574,6 +586,10 @@ spfdDensityComonadDuplicateAdj {a} {b} p =
   spfdDensityComonadRAdj {a=b} {b}
     {p=(spfdDensityComonad {a} {b} p)} {r=(spfdDensityComonad {a} {b} p)}
     (spfdDensityComonadDuplicate {a} {b} p)
+
+----------------------------------------------------------
+---- Explicit formulas for density comonad operations ----
+----------------------------------------------------------
 
 -- Here we show that the adjunct of the `erase` of the codensity monad is
 -- simply the identity.
@@ -659,7 +675,6 @@ public export
   (p : SPFData a b) ->
   spfdPos (spfdDensityComonadOfDensityComonad {a} {b} p) = spfdPos p
 spfdDensityComonadOfDensityComonadPosIsFPos {a} {b} p = Refl
-
 
 -- The directions of the density comonad of a codensity monad.
 public export
