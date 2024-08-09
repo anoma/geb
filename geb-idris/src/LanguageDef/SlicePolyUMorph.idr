@@ -584,7 +584,7 @@ spfdDensityComonadPosIsFPos {a} {b} p = Refl
 
 -- The directions of a density comonad at a given position comprise a choice
 -- of another position together with a morphism from the directions of the
--- the original functor at chosen position back to the directions of the
+-- the original functor at the chosen position back to the directions of the
 -- functor at the given position.
 public export
 0 spfdDensityComonadDirIsFDirMorph : {a, b : Type} -> (p : SPFData a b) ->
