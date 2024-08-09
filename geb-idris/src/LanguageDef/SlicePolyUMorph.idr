@@ -641,12 +641,13 @@ public export
   (eb : b) -> (ep : spfdPos (spfdDensityComonadSelfComposed {a} {b} p) eb) ->
   (eb' : b) ->
   spfdDir (spfdDensityComonadSelfComposed {a} {b} p) eb ep eb' =
-    (dd : Sigma {a=b} (spfdDir (spfdDensityComonad p) eb (fst ep)) **
+    (d1 : (eb'' : b ** spfdDir (spfdDensityComonad p) eb (fst ep) eb'') **
      ep' : spfdPos p eb' **
      SliceMorphism {a}
       (spfdDir p eb' ep')
-      (spfdDir p (fst dd) (snd ep (fst dd) (snd dd))))
-spfdDensityComonadSelfComposedDir {a} {b} (SPFD ppos pdir) eb ep eb' = Refl
+      (spfdDir p (fst d1) (snd ep (fst d1) (snd d1))))
+spfdDensityComonadSelfComposedDir {a} {b} (SPFD ppos pdir) eb ep eb' =
+  Refl
 
 -- The positions of the density comonad of a codensity monad of
 -- a functor are those of the original functor.
