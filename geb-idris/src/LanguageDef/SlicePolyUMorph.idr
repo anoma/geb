@@ -563,6 +563,27 @@ public export
 spfdDensityComonadEraseAdjInterpId fext {a} {b} (SPFD ppos pdir) x =
   funExt $ \eb => funExt $ \(ep ** dm) => Refl
 
+public export
+0 spfdDensityComonadDuplicateAdjIdPos : {a, b : Type} -> (p : SPFData a b) ->
+  (eb : b) ->
+  (ep :
+    spfdPos (spfdDensityComonad {a=b} {b} $ spfdDensityComonad {a} {b} p) eb) ->
+  spOnPos (spfdDensityComonadDuplicateAdj {a} {b} p) eb ep = ep
+spfdDensityComonadDuplicateAdjIdPos {a} {b} (SPFD ppos pdir) eb ep = Refl
+
+public export
+0 spfdDensityComonadDuplicateAdjDir : FunExt ->
+  {a, b : Type} -> (p : SPFData a b) ->
+  (eb : b) ->
+  (ep :
+    spfdPos (spfdDensityComonad {a=b} {b} $ spfdDensityComonad {a} {b} p) eb) ->
+  (eb' : b) ->
+  (efd : spfdDir (spfdDensityComonad {a} {b} p) eb ep eb') ->
+  spOnDir (spfdDensityComonadDuplicateAdj {a} {b} p) eb ep eb' efd
+  = (fst efd ** \eb'', epdm => (fst epdm ** sliceComp {a} (snd efd) (snd epdm)))
+spfdDensityComonadDuplicateAdjDir fext {a} {b} (SPFD ppos pdir) eb ep eb' efd =
+  dpEq12 Refl (funExt $ \eb'' => funExt $ \dm => dpEq12 Refl Refl)
+
 -----------------------------------------
 -----------------------------------------
 ---- Symmetric n-way Day convolution ----
