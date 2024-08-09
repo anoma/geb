@@ -571,17 +571,14 @@ public export
 spfdDensityComonadDuplicateAdjIdPos {a} {b} (SPFD ppos pdir) eb ep = Refl
 
 public export
-0 spfdDensityComonadDuplicateAdjDir : FunExt ->
+0 spfdDensityComonadDuplicateAdjDir :
   {a, b : Type} -> (p : SPFData a b) ->
-  (eb : b) ->
-  (ep :
-    spfdPos (spfdDensityComonad {a=b} {b} $ spfdDensityComonad {a} {b} p) eb) ->
-  (eb' : b) ->
-  (efd : spfdDir (spfdDensityComonad {a} {b} p) eb ep eb') ->
-  spOnDir (spfdDensityComonadDuplicateAdj {a} {b} p) eb ep eb' efd
-  = (fst efd ** \eb'', epdm => (fst epdm ** sliceComp {a} (snd efd) (snd epdm)))
-spfdDensityComonadDuplicateAdjDir fext {a} {b} (SPFD ppos pdir) eb ep eb' efd =
-  dpEq12 Refl (funExt $ \eb'' => funExt $ \dm => dpEq12 Refl Refl)
+  (eb : b) -> (ep : spfdPos p eb) ->
+  (eb' : b) -> (ep' : spfdPos p eb') ->
+  (dm : SliceMorphism {a} (spfdDir p eb' ep') (spfdDir p eb ep)) ->
+  spOnDir (spfdDensityComonadDuplicateAdj {a} {b} p) eb ep eb' (ep' ** dm) =
+    (ep' ** \eb'', epdm => (fst epdm ** sliceComp {a} dm (snd epdm)))
+spfdDensityComonadDuplicateAdjDir {a} {b} p eb ep eb' ep' dm = Refl
 
 -----------------------------------------
 -----------------------------------------
