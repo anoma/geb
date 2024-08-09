@@ -565,10 +565,9 @@ spfdDensityComonadEraseAdjInterpId fext {a} {b} (SPFD ppos pdir) x =
 
 public export
 0 spfdDensityComonadDuplicateAdjIdPos : {a, b : Type} -> (p : SPFData a b) ->
-  (eb : b) ->
-  (ep :
-    spfdPos (spfdDensityComonad {a=b} {b} $ spfdDensityComonad {a} {b} p) eb) ->
-  spOnPos (spfdDensityComonadDuplicateAdj {a} {b} p) eb ep = ep
+  SliceExtEq {a=b}
+    (spOnPos $ spfdDensityComonadDuplicateAdj {a} {b} p)
+    (sliceId $ spfdPos p)
 spfdDensityComonadDuplicateAdjIdPos {a} {b} (SPFD ppos pdir) eb ep = Refl
 
 public export
