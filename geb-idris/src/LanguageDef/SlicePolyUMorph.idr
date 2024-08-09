@@ -610,8 +610,9 @@ public export
   spfdDir
     (spfdDensityComonad {a=b} {b} $ spfdDensityComonad {a} {b} p) eb ep eb' =
   (ep' : spfdPos p eb' **
-   (eb'' : b) -> spfdDir (spfdDensityComonad {a} {b} p) eb' ep' eb'' ->
-   spfdDir (spfdDensityComonad {a} {b} p) eb ep eb'')
+   SliceMorphism {a=b}
+    (spfdDir (spfdDensityComonad {a} {b} p) eb' ep')
+    (spfdDir (spfdDensityComonad {a} {b} p) eb ep))
 spfdDensityComonadOfDensityComonadDir {a} {b} (SPFD ppos pdir) eb ep eb' = Refl
 
 -- Now we characterize the adjunct of "duplicate" (which has the same
