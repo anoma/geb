@@ -594,7 +594,7 @@ public export
    SliceMorphism {a} (spfdDir p eb' ep') (spfdDir p eb ep))
 spfdDensityComonadDirIsFDirMorph {a} {b} p eb ep eb' = Refl
 
--- The positions of the density comonad of a the codensity monad of
+-- The positions of the density comonad of a codensity monad of
 -- a functor are those of the original functor.
 public export
 0 spfdDensityComonadOfDensityComonadPosIsFPos : {a, b : Type} ->
