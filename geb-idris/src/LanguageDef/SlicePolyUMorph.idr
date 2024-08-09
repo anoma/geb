@@ -563,6 +563,11 @@ public export
 spfdDensityComonadEraseAdjInterpId fext {a} {b} (SPFD ppos pdir) x =
   funExt $ \eb => funExt $ \(ep ** dm) => Refl
 
+-- Now we characterize the adjunct of "duplicate" (which has the same
+-- signature as a "join"):  its on-positions function is the identity,
+-- and its on-directions function composes the functions embedded within
+-- the directions (where those functions are direction-maps of the
+-- interpretation of `p`).
 public export
 0 spfdDensityComonadDuplicateAdjIdPos : {a, b : Type} -> (p : SPFData a b) ->
   SliceExtEq {a=b}
