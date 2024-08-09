@@ -539,8 +539,8 @@ spfdDensityComonadDuplicateAdj {a} {b} p =
     {p=(spfdDensityComonad {a} {b} p)} {r=(spfdDensityComonad {a} {b} p)}
     (spfdDensityComonadDuplicate {a} {b} p)
 
--- Here we show that the `erase` of the codensity monad is simply
--- the adjunct of the identity.
+-- Here we show that the adjunct of the `erase` of the codensity monad is
+-- simply the identity.
 
 public export
 0 spfdDensityComonadEraseAdjIdPos : {a, b : Type} ->
