@@ -594,6 +594,27 @@ public export
    SliceMorphism {a} (spfdDir p eb' ep') (spfdDir p eb ep))
 spfdDensityComonadDirIsFDirMorph {a} {b} p eb ep eb' = Refl
 
+-- The positions of the density comonad of a the codensity monad of
+-- a functor are those of the original functor.
+public export
+0 spfdDensityComonadOfDensityComonadPosIsFPos : {a, b : Type} ->
+  (p : SPFData a b) ->
+  spfdPos (spfdDensityComonad {a=b} {b} $ spfdDensityComonad {a} {b} p) =
+    spfdPos p
+spfdDensityComonadOfDensityComonadPosIsFPos {a} {b} p = Refl
+
+public export
+0 spfdDensityComonadOfDensityComonadDir : {a, b : Type} ->
+  (p : SPFData a b) ->
+  (eb : b) -> (ep : spfdPos p eb) -> (eb' : b) ->
+  spfdDir
+    (spfdDensityComonad {a=b} {b} $ spfdDensityComonad {a} {b} p) eb ep eb' =
+  (ep' : spfdPos p eb' **
+   (eb'' : b) -> spfdDir (spfdDensityComonad {a} {b} p) eb' ep' eb'' ->
+   (ep'' : spfdPos p eb'' **
+    SliceMorphism {a} (spfdDir p eb'' ep'') (spfdDir p eb ep)))
+spfdDensityComonadOfDensityComonadDir {a} {b} (SPFD ppos pdir) eb ep eb' = Refl
+
 -- Now we characterize the adjunct of "duplicate" (which has the same
 -- signature as a "join"):  its on-positions function is the identity,
 -- and its on-directions function composes the functions embedded within
