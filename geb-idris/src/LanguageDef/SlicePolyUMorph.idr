@@ -483,6 +483,15 @@ spfdDensityComonad : {a, b : Type} -> SPFData a b -> SPFData b b
 spfdDensityComonad {a} {b} p = spfdLKanExt {a} {b} {c=b} p p
 
 public export
+spfdDensityComonadPos : {a, b : Type} -> SPFData a b -> SliceObj b
+spfdDensityComonadPos {a} {b} p = spfdPos (spfdDensityComonad {a} {b} p)
+
+public export
+spfdDensityComonadDir : {a, b : Type} -> (p : SPFData a b) ->
+  (eb : b) -> (i : spfdDensityComonadPos {a} {b} p eb) -> SliceObj b
+spfdDensityComonadDir {a} {b} p = spfdDir (spfdDensityComonad {a} {b} p)
+
+public export
 spfdDensityComonadLAdj : {a, b : Type} ->
   {p : SPFData a b} -> {r : SPFData b b} ->
   SPFnt {dom=b} {cod=b} (spfdDensityComonad {a} {b} p) r ->
@@ -495,6 +504,25 @@ spfdDensityComonadRAdj : {a, b : Type} ->
   SPFnt {dom=a} {cod=b} p (SPFDcomp a b b r p) ->
   SPFnt {dom=b} {cod=b} (spfdDensityComonad {a} {b} p) r
 spfdDensityComonadRAdj {a} {b} {p} {r} = spfdLKanExtRAdj {a} {b} {c=b} p p r
+
+-- Convenience routines for two ways of iterating the density comonad:
+-- composing it with itself, and taking the density comonad _of_ the
+-- density comonad.  The former is a composition within the category
+-- of slice polynomial functors, while the second is a composition in
+-- the metalanguage (`Type`).
+public export
+spfdDensityComonadSelfComposed : {a, b : Type} -> (p : SPFData a b) ->
+  SPFData b b
+spfdDensityComonadSelfComposed {a} {b} p =
+  (SPFDcomp b b b
+    (spfdDensityComonad {a} {b} p)
+    (spfdDensityComonad {a} {b} p))
+
+public export
+spfdDensityComonadOfDensityComonad : {a, b : Type} -> (p : SPFData a b) ->
+  SPFData b b
+spfdDensityComonadOfDensityComonad {a} {b} =
+  spfdDensityComonad {a=b} {b} . spfdDensityComonad {a} {b}
 
 -- Here we define the comonad operations ("erase" and "duplicate").
 
@@ -512,9 +540,7 @@ public export
 spfdDensityComonadDuplicate : {a, b : Type} -> (p : SPFData a b) ->
   SPFnt {dom=b} {cod=b}
     (spfdDensityComonad {a} {b} p)
-    (SPFDcomp b b b
-      (spfdDensityComonad {a} {b} p)
-      (spfdDensityComonad {a} {b} p))
+    (spfdDensityComonadSelfComposed {a} {b} p)
 spfdDensityComonadDuplicate {a} {b} p =
   SPFDm
     (\eb, ep =>
@@ -542,7 +568,7 @@ public export
 spfdDensityComonadDuplicateAdj : {a, b : Type} ->
   (p : SPFData a b) ->
   SPFnt {dom=b} {cod=b}
-    (spfdDensityComonad {a=b} {b} $ spfdDensityComonad {a} {b} p)
+    (spfdDensityComonadOfDensityComonad {a} {b} p)
     (spfdDensityComonad {a} {b} p)
 spfdDensityComonadDuplicateAdj {a} {b} p =
   spfdDensityComonadRAdj {a=b} {b}
@@ -579,7 +605,7 @@ spfdDensityComonadEraseAdjInterpId fext {a} {b} (SPFD ppos pdir) x =
 -- The positions of a density comonad are those of the original functor.
 public export
 0 spfdDensityComonadPosIsFPos : {a, b : Type} -> (p : SPFData a b) ->
-  spfdPos (spfdDensityComonad {a} {b} p) = spfdPos p
+  spfdDensityComonadPos {a} {b} p = spfdPos p
 spfdDensityComonadPosIsFPos {a} {b} p = Refl
 
 -- The directions of a density comonad at a given position comprise a choice
@@ -589,7 +615,7 @@ spfdDensityComonadPosIsFPos {a} {b} p = Refl
 public export
 0 spfdDensityComonadDirIsFDirMorph : {a, b : Type} -> (p : SPFData a b) ->
   (eb : b) -> (ep : spfdPos p eb) -> (eb' : b) ->
-  spfdDir (spfdDensityComonad {a} {b} p) eb ep eb' =
+  spfdDensityComonadDir {a} {b} p eb ep eb' =
   (ep' : spfdPos p eb' **
    SliceMorphism {a} (spfdDir p eb' ep') (spfdDir p eb ep))
 spfdDensityComonadDirIsFDirMorph {a} {b} p eb ep eb' = Refl
@@ -599,21 +625,28 @@ spfdDensityComonadDirIsFDirMorph {a} {b} p eb ep eb' = Refl
 public export
 0 spfdDensityComonadOfDensityComonadPosIsFPos : {a, b : Type} ->
   (p : SPFData a b) ->
-  spfdPos (spfdDensityComonad {a=b} {b} $ spfdDensityComonad {a} {b} p) =
-    spfdPos p
+  spfdPos (spfdDensityComonadOfDensityComonad {a} {b} p) = spfdPos p
 spfdDensityComonadOfDensityComonadPosIsFPos {a} {b} p = Refl
 
 public export
 0 spfdDensityComonadOfDensityComonadDir : {a, b : Type} ->
   (p : SPFData a b) ->
   (eb : b) -> (ep : spfdPos p eb) -> (eb' : b) ->
-  spfdDir
-    (spfdDensityComonad {a=b} {b} $ spfdDensityComonad {a} {b} p) eb ep eb' =
+  spfdDir (spfdDensityComonadOfDensityComonad {a} {b} p) eb ep eb' =
   (ep' : spfdPos p eb' **
    SliceMorphism {a=b}
     (spfdDir (spfdDensityComonad {a} {b} p) eb' ep')
     (spfdDir (spfdDensityComonad {a} {b} p) eb ep))
 spfdDensityComonadOfDensityComonadDir {a} {b} (SPFD ppos pdir) eb ep eb' = Refl
+
+-- The positions of the composition of the density comonad of a functor
+-- with itself (i.e. the multiplication in the composition monoid) are
+-- those of the original functor.
+public export
+0 spfdDensityComonadCompDensityComonadPosIsFPos : {a, b : Type} ->
+  (p : SPFData a b) ->
+  spfdPos (spfdDensityComonadOfDensityComonad {a} {b} p) = spfdPos p
+spfdDensityComonadCompDensityComonadPosIsFPos {a} {b} p = Refl
 
 -- Now we characterize the adjunct of "duplicate" (which has the same
 -- signature as a "join"):  its on-positions function is the identity,
