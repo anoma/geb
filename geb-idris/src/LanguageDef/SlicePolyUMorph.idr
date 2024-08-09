@@ -621,13 +621,19 @@ public export
 spfdDensityComonadDirIsFDirMorph {a} {b} p eb ep eb' = Refl
 
 -- The positions of the composition of the density comonad of a functor
--- with itself (i.e. the multiplication in the composition monoid) are
--- those of the original functor.
+-- with itself (i.e. the multiplication in the composition monoid on
+-- `SPFData b b`).
 public export
-0 spfdDensityComonadCompDensityComonadPosIsFPos : {a, b : Type} ->
-  (p : SPFData a b) ->
-  spfdPos (spfdDensityComonadOfDensityComonad {a} {b} p) = spfdPos p
-spfdDensityComonadCompDensityComonadPosIsFPos {a} {b} p = Refl
+0 spfdDensityComonadSelfComposedDensityComonadPosIsFPos : {a, b : Type} ->
+  (p : SPFData a b) -> (eb : b) ->
+  spfdPos (spfdDensityComonadSelfComposed {a} {b} p) eb =
+    (ep : spfdPos p eb **
+     (eb' : b) ->
+      (ep' : spfdPos p eb' **
+       SliceMorphism {a} (spfdDir p eb' ep') (spfdDir p eb ep)) ->
+      spfdPos p eb')
+spfdDensityComonadSelfComposedDensityComonadPosIsFPos {a} {b} p eb =
+  Refl
 
 -- The positions of the density comonad of a codensity monad of
 -- a functor are those of the original functor.
@@ -637,6 +643,8 @@ public export
   spfdPos (spfdDensityComonadOfDensityComonad {a} {b} p) = spfdPos p
 spfdDensityComonadOfDensityComonadPosIsFPos {a} {b} p = Refl
 
+
+-- The directions of the density comonad of a codensity monad.
 public export
 0 spfdDensityComonadOfDensityComonadDir : {a, b : Type} ->
   (p : SPFData a b) ->
