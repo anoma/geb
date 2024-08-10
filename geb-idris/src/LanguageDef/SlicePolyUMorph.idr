@@ -700,7 +700,7 @@ public export
   {a, b : Type} -> (p : SPFData a b) ->
   (eb : b) -> (ep : spfdPos p eb) ->
   (eb' : b) -> (ep' : spfdPos p eb') ->
-  (dm : SliceMorphism {a} (spfdDir p eb' ep') (spfdDir p eb ep)) ->
+  (dm : spfdDirMor {dom=a} {cod=b} p (eb' ** ep') (eb ** ep)) ->
   spOnDir (spfdDensityComonadDuplicateAdj {a} {b} p) eb ep eb' (ep' ** dm) =
     (ep' ** \eb'', epdm => (fst epdm ** sliceComp {a} dm (snd epdm)))
 spfdDensityComonadDuplicateAdjDir {a} {b} p eb ep eb' ep' dm = Refl
