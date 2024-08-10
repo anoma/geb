@@ -3080,20 +3080,61 @@ SPFpoCellFromDP {w'} {z'} {w} {z} {f} {g} spfc =
 -- Ahman and Uustalu's equivalence of polynomial comonads (on `Set`/`Type`)
 -- and categories.  Thus we introduce some definitions which encode this notion.
 
+-- A morphism between the direction-sets of the two given positions
+-- of a polynomial functor.  This may be viewed as either a generalized
+-- quantity of the domain or a generalized element of the codomain.
 public export
 spfdDirMor : {dom, cod : Type} ->
-  (spfd : SPFData dom cod) -> (ec : cod) -> IntMorSig (spfdPos spfd ec)
-spfdDirMor {dom} {cod} spfd ec domp codp =
-  SliceMorphism {a=dom} (spfdDir spfd ec domp) (spfdDir spfd ec codp)
+  (spfd : SPFData dom cod) -> IntMorSig (SPFDbase spfd)
+spfdDirMor {dom} {cod} spfd domp codp =
+  SliceMorphism {a=dom}
+    (spfdDir spfd (fst domp) (snd domp))
+    (spfdDir spfd (fst codp) (snd codp))
 
+-- A generalized element of the given position, where the source
+-- position has the given codomain.
+public export
+spfdDirGenElCod : {dom, cod : Type} ->
+  (spfd : SPFData dom cod) -> SPFDbase spfd -> SliceObj cod
+spfdDirGenElCod {dom} {cod} spfd ep ec' =
+  (ep' : spfdPos spfd ec' ** spfdDirMor {dom} {cod} spfd (ec' ** ep') ep)
+
+-- A generalized element of the given position, where the source
+-- position's codomain matches that of the given position.
+public export
+spfdDirGenEndoEl : {dom, cod : Type} ->
+  (spfd : SPFData dom cod) -> SliceObj (SPFDbase spfd)
+spfdDirGenEndoEl {dom} {cod} spfd ep =
+  spfdDirGenElCod {dom} {cod} spfd ep (fst ep)
+
+-- A generalized element of the given position, where the source
+-- position has any codomain.
 public export
 spfdDirGenEl : {dom, cod : Type} ->
-  (spfd : SPFData dom cod) -> (ec : cod) -> SliceObj (spfdPos spfd ec)
-spfdDirGenEl {dom} {cod} spfd ec =
-  Sigma {a=(spfdPos spfd ec)} . flip (spfdDirMor {dom} {cod} spfd ec)
+  (spfd : SPFData dom cod) -> SliceObj (SPFDbase spfd)
+spfdDirGenEl {dom} {cod} spfd ep =
+  (ec' : cod ** spfdDirGenElCod {dom} {cod} spfd ep ec')
 
+-- A generalized quantity of the given position, where the target
+-- position has the given codomain.
+public export
+spfdDirGenQuantCod : {dom, cod : Type} ->
+  (spfd : SPFData dom cod) -> SPFDbase spfd -> SliceObj cod
+spfdDirGenQuantCod {dom} {cod} spfd ep ec' =
+  (ep' : spfdPos spfd ec' ** spfdDirMor {dom} {cod} spfd ep (ec' ** ep'))
+
+-- A generalized quantity of the given position, where the target
+-- position's codomain matches that of the given position.
+public export
+spfdDirGenEndoQuant : {dom, cod : Type} ->
+  (spfd : SPFData dom cod) -> SliceObj (SPFDbase spfd)
+spfdDirGenEndoQuant {dom} {cod} spfd ep =
+  spfdDirGenQuantCod {dom} {cod} spfd ep (fst ep)
+
+-- A generalized quantity of the given position, where the target
+-- position has any codomain.
 public export
 spfdDirGenQuant : {dom, cod : Type} ->
-  (spfd : SPFData dom cod) -> (ec : cod) -> SliceObj (spfdPos spfd ec)
-spfdDirGenQuant {dom} {cod} spfd ec =
-  Sigma {a=(spfdPos spfd ec)} . spfdDirMor {dom} {cod} spfd ec
+  (spfd : SPFData dom cod) -> SliceObj (SPFDbase spfd)
+spfdDirGenQuant {dom} {cod} spfd ep =
+  (ec' : cod ** spfdDirGenQuantCod {dom} {cod} spfd ep ec')
