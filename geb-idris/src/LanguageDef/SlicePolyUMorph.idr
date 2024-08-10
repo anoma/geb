@@ -707,6 +707,10 @@ spfdDensityComonadOfDensityComonadDirAsGenEl {a} {b} p eb ep eb' = Refl
 -- Now we characterize the adjunct of "duplicate" (which has the same
 -- signature as a "join").  First, we show that it is vertical:  its
 -- on-positions function is the identity (on positions of the original functor).
+-- This means that for each position of the original functor, the
+-- on-directions function maps a generalized element of that position
+-- to a function on generalized elements whose codomain is the set of
+-- all generalized elements of that position.
 public export
 0 spfdDensityComonadDuplicateAdjIdPos : {a, b : Type} -> (p : SPFData a b) ->
   SliceExtEq {a=b}
@@ -716,19 +720,70 @@ spfdDensityComonadDuplicateAdjIdPos {a} {b} (SPFD ppos pdir) eb ep = Refl
 
 -- Now, we see that the input parameters to the on-directions function of
 -- the adjunct of "duplicate" at a given position comprise precisely what we
--- have called a generalized element of that position.
+-- have called a generalized element of that position.  (This is because the
+-- input comes from a direction-set of the codensity monad of the original
+-- functor.)
 --
--- The _output_ of the adjunct of "duplicate", which is in (the category of
--- elements of) the codensity monad of the codensity monad, is a function
--- _on_ generalized elements.
+-- The _output_ of the adjunct of "duplicate", which is in a direction-set of
+-- the codensity monad of the codensity monad, is a function _on_ generalized
+-- elements.  Thus, it takes generalized elements to functions on generalized
+-- elements -- and hence we could view it as the curried form of a function
+-- which takes pairs of generalized elements to single generalized elements.
+-- We now attempt to characterize the behavior of this function.
+--
+-- First, we observe that the source position chosen by the adjunct is
+-- always simply the same as the source position of the input generalized
+-- element.
 public export
-0 spfdDensityComonadDuplicateAdjDir :
+0 spfdDensityComonadDuplicateAdjDirFstId :
   {a, b : Type} -> (p : SPFData a b) ->
   (eb : b) -> (ep : spfdPos p eb) ->
   (eb' : b) -> (el : spfdDirGenElCod {dom=a} {cod=b} p (eb ** ep) eb') ->
-  spOnDir (spfdDensityComonadDuplicateAdj {a} {b} p) eb ep eb' el =
-    (fst el ** \eb'', epdm => (fst epdm ** sliceComp {a} (snd el) (snd epdm)))
-spfdDensityComonadDuplicateAdjDir {a} {b} p eb ep eb' el = Refl
+  fst (spOnDir (spfdDensityComonadDuplicateAdj {a} {b} p) eb ep eb' el) =
+    fst el
+spfdDensityComonadDuplicateAdjDirFstId {a} {b} p eb ep eb' el = Refl
+
+-- Next, we observe that the source position of the output of the function
+-- on generalized elements chosen by the adjunct is always the same as the
+-- source position of _its_ input generalized element (which is not necessarily
+-- the same as that of the generalized element which was input to the
+-- on-directions itself, which returned the function on generalized elements).
+public export
+0 spfdDensityComonadDuplicateAdjDirSndId :
+  {a, b : Type} -> (p : SPFData a b) ->
+  (eb : b) -> (ep : spfdPos p eb) ->
+  (eb' : b) ->
+  (el : spfdDirGenElCod {dom=a} {cod=b} p (eb ** ep) eb') ->
+  (eb'' : b) ->
+  (el' : spfdDirGenElCod {dom=a} {cod=b} p (eb' ** fst el) eb'') ->
+  fst
+    (snd (spOnDir (spfdDensityComonadDuplicateAdj {a} {b} p) eb ep eb' el)
+      eb'' el') =
+  fst el'
+spfdDensityComonadDuplicateAdjDirSndId {a} {b} p eb ep eb' el eb'' el' = Refl
+
+-- Finally, we observe that the action of the function on generalized
+-- elements chosen by the adjunct is to compose the two functions contained
+-- within the two generalized elements that comprise the parameters of
+-- its uncurried form.
+public export
+0 spfdDensityComonadDuplicateAdjDirIsComp :
+  {a, b : Type} -> (p : SPFData a b) ->
+  (eb : b) -> (ep : spfdPos p eb) ->
+  (eb' : b) ->
+  (el : spfdDirGenElCod {dom=a} {cod=b} p (eb ** ep) eb') ->
+  (eb'' : b) ->
+  (el' : spfdDirGenElCod {dom=a} {cod=b} p (eb' ** fst el) eb'') ->
+  snd
+    (snd (spOnDir (spfdDensityComonadDuplicateAdj {a} {b} p) eb ep eb' el)
+      eb'' el') =
+  sliceComp {a}
+    {x=(spfdDir p eb'' (fst el'))}
+    {y=(spfdDir p eb' (fst el))}
+    {z=(spfdDir p eb ep)}
+    (snd el)
+    (snd el')
+spfdDensityComonadDuplicateAdjDirIsComp {a} {b} p eb ep eb' el eb'' el' = Refl
 
 -----------------------------------------
 -----------------------------------------
