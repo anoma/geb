@@ -652,12 +652,16 @@ spfdDensityComonadSelfComposedDensityComonadPosIsFPos {a} {b} p eb =
 public export
 0 spfdDensityComonadSelfComposedDir : {a, b : Type} ->
   (p : SPFData a b) ->
-  (eb : b) -> (ep : spfdPos (spfdDensityComonadSelfComposed {a} {b} p) eb) ->
+  (eb : b) -> (ep : spfdPos p eb) ->
+  (mep :
+    SliceMorphism {a=b}
+      (spfdDirGenElCod {dom=a} {cod=b} p (eb ** ep))
+      (spfdPos p)) ->
   (eb' : b) ->
-  spfdDir (spfdDensityComonadSelfComposed {a} {b} p) eb ep eb' =
-    (d1 : spfdDirGenEl {dom=a} {cod=b} p (eb ** fst ep) **
-     spfdDirGenElCod {dom=a} {cod=b} p (fst d1 ** snd ep (fst d1) (snd d1)) eb')
-spfdDensityComonadSelfComposedDir {a} {b} (SPFD ppos pdir) eb ep eb' =
+  spfdDir (spfdDensityComonadSelfComposed {a} {b} p) eb (ep ** mep) eb' =
+    (d1 : spfdDirGenEl {dom=a} {cod=b} p (eb ** ep) **
+     spfdDirGenElCod {dom=a} {cod=b} p (fst d1 ** mep (fst d1) (snd d1)) eb')
+spfdDensityComonadSelfComposedDir {a} {b} (SPFD ppos pdir) eb ep mep eb' =
   Refl
 
 -- The positions of the density comonad of a codensity monad of
