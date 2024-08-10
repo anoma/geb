@@ -624,10 +624,11 @@ public export
   spfdDensityComonadPos {a} {b} p = spfdPos p
 spfdDensityComonadPosIsFPos {a} {b} p = Refl
 
--- The directions of a density comonad at a given position comprise a choice
--- of another position together with a morphism from the directions of the
--- the original functor at the chosen position back to the directions of the
--- functor at the given position.
+-- A direction of a density comonad at a given position comprises a choice
+-- of another position together with a morphism from the direction-set of the
+-- the original functor at the chosen position back to the direction-set of the
+-- original functor at the given position.  That is precisely what we have
+-- called a generalized element of the given position.
 public export
 0 spfdDensityComonadDirIsFDirMorph : {a, b : Type} -> (p : SPFData a b) ->
   (eb : b) -> (ep : spfdPos p eb) -> (eb' : b) ->
@@ -649,6 +650,8 @@ public export
 spfdDensityComonadSelfComposedDensityComonadPosIsFPos {a} {b} p eb =
   Refl
 
+-- The directions of the composition of the density comonad of a functor
+-- with itself.
 public export
 0 spfdDensityComonadSelfComposedDir : {a, b : Type} ->
   (p : SPFData a b) ->
@@ -672,6 +675,13 @@ public export
 spfdDensityComonadOfDensityComonadPosIsFPos {a} {b} p = Refl
 
 -- The directions of the density comonad of a codensity monad.
+-- A position is simply a position of the original functor,
+-- and the direction-set at that position is a choice of another
+-- position together with a morphism (in the codomain slice category)
+-- from the set of all generalized elements of the chosen position
+-- back to the set of all generalized elements of the given position.
+-- In other words, it is a function on generalized elements (where
+-- generalized elements are themselves functions, between direction-sets).
 public export
 0 spfdDensityComonadOfDensityComonadDir : {a, b : Type} ->
   (p : SPFData a b) ->
@@ -681,13 +691,22 @@ public export
    SliceMorphism {a=b}
     (spfdDirGenElCod {dom=a} {cod=b} p (eb' ** ep'))
     (spfdDirGenElCod {dom=a} {cod=b} p (eb ** ep)))
-spfdDensityComonadOfDensityComonadDir {a} {b} (SPFD ppos pdir) eb ep eb' = Refl
+spfdDensityComonadOfDensityComonadDir {a} {b} p eb ep eb' = Refl
+
+-- Another way of expressing the directions of the codensity monad of a
+-- codensity monad is that a direction-set comprises a generalized element
+-- of the codensity monad of the original functor.
+public export
+0 spfdDensityComonadOfDensityComonadDirAsGenEl : {a, b : Type} ->
+  (p : SPFData a b) ->
+  (eb : b) -> (ep : spfdPos p eb) -> (eb' : b) ->
+  spfdDir (spfdDensityComonadOfDensityComonad {a} {b} p) eb ep eb' =
+  spfdDirGenElCod {dom=b} {cod=b} (spfdDensityComonad {a} {b} p) (eb ** ep) eb'
+spfdDensityComonadOfDensityComonadDirAsGenEl {a} {b} p eb ep eb' = Refl
 
 -- Now we characterize the adjunct of "duplicate" (which has the same
--- signature as a "join"):  its on-positions function is the identity,
--- and its on-directions function composes the functions embedded within
--- the directions (where those functions are direction-maps of the
--- interpretation of `p`).
+-- signature as a "join").  First, we show that it is vertical:  its
+-- on-positions function is the identity (on positions of the original functor).
 public export
 0 spfdDensityComonadDuplicateAdjIdPos : {a, b : Type} -> (p : SPFData a b) ->
   SliceExtEq {a=b}
@@ -695,6 +714,10 @@ public export
     (sliceId $ spfdPos p)
 spfdDensityComonadDuplicateAdjIdPos {a} {b} (SPFD ppos pdir) eb ep = Refl
 
+-- Now, we see that the parameters to the on-directions function of
+-- the adjunct of "duplicate" comprise precisely what we have called
+-- a morphism of directions -- a pair of codomain/position pairs, and
+-- a morphism (in the domain slice category) between their direction-sets.
 public export
 0 spfdDensityComonadDuplicateAdjDir :
   {a, b : Type} -> (p : SPFData a b) ->
