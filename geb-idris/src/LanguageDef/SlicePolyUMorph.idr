@@ -656,10 +656,7 @@ public export
   (eb' : b) ->
   spfdDir (spfdDensityComonadSelfComposed {a} {b} p) eb ep eb' =
     (d1 : spfdDirGenEl {dom=a} {cod=b} p (eb ** fst ep) **
-     ep' : spfdPos p eb' **
-     SliceMorphism {a}
-      (spfdDir p eb' ep')
-      (spfdDir p (fst d1) (snd ep (fst d1) (snd d1))))
+     spfdDirGenElCod {dom=a} {cod=b} p (fst d1 ** snd ep (fst d1) (snd d1)) eb')
 spfdDensityComonadSelfComposedDir {a} {b} (SPFD ppos pdir) eb ep eb' =
   Refl
 
