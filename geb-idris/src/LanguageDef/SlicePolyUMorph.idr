@@ -632,8 +632,7 @@ public export
 0 spfdDensityComonadDirIsFDirMorph : {a, b : Type} -> (p : SPFData a b) ->
   (eb : b) -> (ep : spfdPos p eb) -> (eb' : b) ->
   spfdDensityComonadDir {a} {b} p eb ep eb' =
-  (ep' : spfdPos p eb' **
-   SliceMorphism {a} (spfdDir p eb' ep') (spfdDir p eb ep))
+    spfdDirGenElCod {dom=a} {cod=b} p (eb ** ep) eb'
 spfdDensityComonadDirIsFDirMorph {a} {b} p eb ep eb' = Refl
 
 -- The positions of the composition of the density comonad of a functor
