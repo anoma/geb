@@ -643,10 +643,9 @@ public export
   (p : SPFData a b) -> (eb : b) ->
   spfdPos (spfdDensityComonadSelfComposed {a} {b} p) eb =
     (ep : spfdPos p eb **
-     (eb' : b) ->
-      (ep' : spfdPos p eb' **
-       SliceMorphism {a} (spfdDir p eb' ep') (spfdDir p eb ep)) ->
-      spfdPos p eb')
+     SliceMorphism {a=b}
+      (spfdDirGenElCod {dom=a} {cod=b} p (eb ** ep))
+      (spfdPos p))
 spfdDensityComonadSelfComposedDensityComonadPosIsFPos {a} {b} p eb =
   Refl
 
