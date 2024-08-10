@@ -714,19 +714,21 @@ public export
     (sliceId $ spfdPos p)
 spfdDensityComonadDuplicateAdjIdPos {a} {b} (SPFD ppos pdir) eb ep = Refl
 
--- Now, we see that the parameters to the on-directions function of
--- the adjunct of "duplicate" comprise precisely what we have called
--- a morphism of directions -- a pair of codomain/position pairs, and
--- a morphism (in the domain slice category) between their direction-sets.
+-- Now, we see that the input parameters to the on-directions function of
+-- the adjunct of "duplicate" at a given position comprise precisely what we
+-- have called a generalized element of that position.
+--
+-- The _output_ of the adjunct of "duplicate", which is in (the category of
+-- elements of) the codensity monad of the codensity monad, is a function
+-- _on_ generalized elements.
 public export
 0 spfdDensityComonadDuplicateAdjDir :
   {a, b : Type} -> (p : SPFData a b) ->
   (eb : b) -> (ep : spfdPos p eb) ->
-  (eb' : b) -> (ep' : spfdPos p eb') ->
-  (dm : spfdDirMor {dom=a} {cod=b} p (eb' ** ep') (eb ** ep)) ->
-  spOnDir (spfdDensityComonadDuplicateAdj {a} {b} p) eb ep eb' (ep' ** dm) =
-    (ep' ** \eb'', epdm => (fst epdm ** sliceComp {a} dm (snd epdm)))
-spfdDensityComonadDuplicateAdjDir {a} {b} p eb ep eb' ep' dm = Refl
+  (eb' : b) -> (el : spfdDirGenElCod {dom=a} {cod=b} p (eb ** ep) eb') ->
+  spOnDir (spfdDensityComonadDuplicateAdj {a} {b} p) eb ep eb' el =
+    (fst el ** \eb'', epdm => (fst epdm ** sliceComp {a} (snd el) (snd epdm)))
+spfdDensityComonadDuplicateAdjDir {a} {b} p eb ep eb' el = Refl
 
 -----------------------------------------
 -----------------------------------------
