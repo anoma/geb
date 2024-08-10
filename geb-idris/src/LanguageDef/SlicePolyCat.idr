@@ -3067,3 +3067,33 @@ SPFpoCellFromDP {w'} {z'} {w} {z} {f} {g} spfc =
     (\ez', (SFS (ez' ** ez) efp), ew', egd =>
       case spdcDir spfc ez' ez efp ew' egd of
         (ew ** efd) => SFS (ew' ** ew) efd)
+
+------------------------------------------
+------------------------------------------
+---- Morphisms between direction-sets ----
+------------------------------------------
+------------------------------------------
+
+-- In some cases (see for example the density comonad), we will treat
+-- positions of a polynomial functor as if they were objects of a category,
+-- and directions as if they were incoming or outgoing hom-sets, as in
+-- Ahman and Uustalu's equivalence of polynomial comonads (on `Set`/`Type`)
+-- and categories.  Thus we introduce some definitions which encode this notion.
+
+public export
+spfdDirMor : {dom, cod : Type} ->
+  (spfd : SPFData dom cod) -> (ec : cod) -> IntMorSig (spfdPos spfd ec)
+spfdDirMor {dom} {cod} spfd ec domp codp =
+  SliceMorphism {a=dom} (spfdDir spfd ec domp) (spfdDir spfd ec codp)
+
+public export
+spfdDirGenEl : {dom, cod : Type} ->
+  (spfd : SPFData dom cod) -> (ec : cod) -> SliceObj (spfdPos spfd ec)
+spfdDirGenEl {dom} {cod} spfd ec =
+  Sigma {a=(spfdPos spfd ec)} . flip (spfdDirMor {dom} {cod} spfd ec)
+
+public export
+spfdDirGenQuant : {dom, cod : Type} ->
+  (spfd : SPFData dom cod) -> (ec : cod) -> SliceObj (spfdPos spfd ec)
+spfdDirGenQuant {dom} {cod} spfd ec =
+  Sigma {a=(spfdPos spfd ec)} . spfdDirMor {dom} {cod} spfd ec
