@@ -2185,8 +2185,8 @@ dfSlHomObj {b} p sl =
 public export
 dfSlObjDirF : {b : MLDirichCatObj} ->
   (p : MlDirichSlObj b) -> dfTot b -> MLDirichCatObj
-dfSlObjDirF {b=(bpos ** bdir)} (MDSobj ppos pdir) (bi ** bd) =
-  (ppos bi ** \pi => pdir bi pi bd)
+dfSlObjDirF {b} p bt =
+  (mdsOnPos p (fst bt) ** \pi => mdsDir p (fst bt) pi (snd bt))
 
 -- That goes the other direction too -- any collection of Dirichlet
 -- functors on `Type` which is indexed by the directions of another
@@ -2195,14 +2195,14 @@ dfSlObjDirF {b=(bpos ** bdir)} (MDSobj ppos pdir) (bi ** bd) =
 public export
 dfIdxSlObjFpos : {b : MLDirichCatObj} ->
   (dfTot b -> MLDirichCatObj) -> dfPos b -> Type
-dfIdxSlObjFpos {b=(bpos ** bdir)} dfam bi =
-  (bd : bdir bi) -> fst $ dfam (bi ** bd)
+dfIdxSlObjFpos {b} dfam bi =
+  (bd : dfDir b bi) -> fst $ dfam (bi ** bd)
 
 public export
 dfIdxSlObjFdir : {b : MLDirichCatObj} ->
   (dfam : dfTot b -> MLDirichCatObj) ->
   (bi : dfPos b) -> dfIdxSlObjFpos {b} dfam bi -> dfDir b bi -> Type
-dfIdxSlObjFdir {b=(bpos ** bdir)} dfam bi dpi bd =
+dfIdxSlObjFdir {b} dfam bi dpi bd =
   snd (dfam (bi ** bd)) $ dpi bd
 
 public export
@@ -2261,7 +2261,7 @@ public export
 dfSlHomObjTotNT : {b : MLDirichCatObj} -> (p, q : MlDirichSlObj b) ->
   (hdt : mlDirichSlObjTotTot {ar=b} $ dfSlHomObj {b} p q) ->
   DirichNatTrans (dfSlHomObjTotDomF {b} p q hdt) (dfSlHomObjTotCodF {b} p q hdt)
-dfSlHomObjTotNT {b=(bpos ** bdir)} (MDSobj ppos pdir) (MDSobj qpos qdir) hdt =
+dfSlHomObjTotNT {b} p q hdt =
   (snd (fst hdt) ** snd (snd hdt))
 
 public export
