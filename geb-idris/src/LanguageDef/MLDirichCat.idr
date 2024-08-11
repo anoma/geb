@@ -2180,13 +2180,36 @@ dfSlHomObj : {b : MLDirichCatObj} ->
 dfSlHomObj {b} p sl =
   MDSobj (dfSlHomObjPos {b} p sl) (dfSlHomObjDir {b} p sl)
 
--- Each base direction of the total object of a Dirichlet slice object
--- induces a Dirichlet functor on `Type`.
+-- Each direction of the base object of a Dirichlet slice object
+-- induces a Dirichlet functor, derived from the slice object, on `Type`.
 public export
 dfSlObjDirF : {b : MLDirichCatObj} ->
   (p : MlDirichSlObj b) -> dfTot b -> MLDirichCatObj
 dfSlObjDirF {b=(bpos ** bdir)} (MDSobj ppos pdir) (bi ** bd) =
   (ppos bi ** \pi => pdir bi pi bd)
+
+-- That goes the other direction too -- any collection of Dirichlet
+-- functors on `Type` which is indexed by the directions of another
+-- Dirichlet functors on `Type` induces a Dirichlet slice object over
+-- the indexing functor.
+public export
+dfIdxSlObjFpos : {b : MLDirichCatObj} ->
+  (dfTot b -> MLDirichCatObj) -> dfPos b -> Type
+dfIdxSlObjFpos {b=(bpos ** bdir)} dfam bi =
+  (bd : bdir bi) -> fst $ dfam (bi ** bd)
+
+public export
+dfIdxSlObjFdir : {b : MLDirichCatObj} ->
+  (dfam : dfTot b -> MLDirichCatObj) ->
+  (bi : dfPos b) -> dfIdxSlObjFpos {b} dfam bi -> dfDir b bi -> Type
+dfIdxSlObjFdir {b=(bpos ** bdir)} dfam bi dpi bd =
+  snd (dfam (bi ** bd)) $ dpi bd
+
+public export
+dfIdxSlObjF : {b : MLDirichCatObj} ->
+  (dfTot b -> MLDirichCatObj) -> MlDirichSlObj b
+dfIdxSlObjF {b} dfam =
+  MDSobj (dfIdxSlObjFpos {b} dfam) (dfIdxSlObjFdir {b} dfam)
 
 -- Each direction of the total object of a Dirichlet slice object
 -- includes a direction of the base object.
