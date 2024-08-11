@@ -2190,7 +2190,7 @@ dfSlObjDirF {b=(bpos ** bdir)} (MDSobj ppos pdir) (bi ** bd) =
 
 -- That goes the other direction too -- any collection of Dirichlet
 -- functors on `Type` which is indexed by the directions of another
--- Dirichlet functors on `Type` induces a Dirichlet slice object over
+-- Dirichlet functor on `Type` induces a Dirichlet slice object over
 -- the indexing functor.
 public export
 dfIdxSlObjFpos : {b : MLDirichCatObj} ->
