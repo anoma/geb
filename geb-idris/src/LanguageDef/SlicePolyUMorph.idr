@@ -785,6 +785,24 @@ public export
     (snd el')
 spfdDensityComonadDuplicateAdjDirIsComp {a} {b} p eb ep eb' el eb'' el' = Refl
 
+-- Thus, we can summarize the action of the adjunct of the "duplicate" of
+-- the polynomial density comonad as follows:
+
+-- 1) The on-positions function is simply the identity on the position-set
+--    of the original functor, so for each position, we have one on-directions
+--    function, from the direction-set of the density comonad at that
+--    position to the direction-set of the density comonad of the density
+--    comonad at that position.
+-- 2) For a given position `i`, the on-directions function is effectively
+--    the curried form of an argument which takes a generalized element `el`
+--    of `i` -- that is, another position `j` and a function from the
+--    direction-set of `j` to the direction-set of `i` -- and a generalized
+--    element `el'` of `j` -- that is, another position `k` and a function
+--    from the direction-set of `k` to the direction-set of `j` -- and
+--    returns the composed function from the direction-set of `k` to the
+--    direction-set of `i` (which we therefore also call a generalized
+--    element of `i`).
+
 -----------------------------------------
 -----------------------------------------
 ---- Symmetric n-way Day convolution ----
