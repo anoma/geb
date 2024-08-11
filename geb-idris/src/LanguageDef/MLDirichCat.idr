@@ -2231,16 +2231,12 @@ dfSlObjTotF {b} p sldt = dfSlObjDirF {b} p (dfSlObjBaseTot {b} p sldt)
 public export
 dfSlHomObjDomF : {b : MLDirichCatObj} -> (p, q : MlDirichSlObj b) ->
   dfTot b -> MLDirichCatObj
-dfSlHomObjDomF {b=(bpos ** bdir)} (MDSobj ppos pdir) (MDSobj qpos qdir)
-  (bi ** bd) =
-    (ppos bi ** \pi => pdir bi pi bd)
+dfSlHomObjDomF {b} p q = dfSlObjDirF {b} p
 
 public export
 dfSlHomObjCodF : {b : MLDirichCatObj} -> (p, q : MlDirichSlObj b) ->
   dfTot b -> MLDirichCatObj
-dfSlHomObjCodF {b=(bpos ** bdir)} (MDSobj ppos pdir) (MDSobj qpos qdir)
-  (bi ** bd) =
-    (qpos bi ** \qi => qdir bi qi bd)
+dfSlHomObjCodF {b} p q = dfSlObjDirF {b} q
 
 -- Thus, each direction of the total object of a Dirichlet slice hom-object
 -- induces two Dirichlet functors, one corresponding to the domain and
