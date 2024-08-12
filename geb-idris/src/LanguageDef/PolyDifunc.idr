@@ -13,6 +13,25 @@ import public LanguageDef.IntDisheafCat
 %hide Library.IdrisCategories.BaseChangeF
 %hide Prelude.Ops.infixl.(|>)
 
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+---- Category of pi types, viewed as a subcategory of the category of monos ----
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+public export
+PiMonCatObj : Type
+PiMonCatObj = (dom : Type ** cod : SliceObj dom ** Pi {a=dom} cod)
+
+public export
+PiMonCatMor : IntMorSig PiMonCatObj
+PiMonCatMor (d ** c ** m) (d' ** c' ** m') =
+  (l : d' -> d **
+   r1 : (ed' : d') -> c' ed' -> d **
+   comm1 : (ed' : d') -> r1 ed' (m' ed') = l ed' **
+   r2 : (ed' : d') -> (ec' : c' ed') -> c (r1 ed' ec') **
+   (ed' : d') -> m (l ed') = replace {p=c} (comm1 ed') (r2 ed' (m' ed')))
+
 -------------------------------------------
 -------------------------------------------
 ---- Polydifunctors as enriched arenas ----
