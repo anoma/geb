@@ -4,6 +4,7 @@ import Library.IdrisUtils
 import Library.IdrisCategories
 import public LanguageDef.SlicePolyCat
 import public LanguageDef.SlicePolyUMorph
+import public LanguageDef.MLDirichCat
 
 -- Comma categories, algebras, coalgebras, and dialgebras of slice polynomial
 -- functors.
