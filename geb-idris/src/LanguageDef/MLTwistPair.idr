@@ -9,6 +9,7 @@ import public LanguageDef.SliceFuncCat
 import public LanguageDef.MLDirichCat
 import public LanguageDef.PolyCat
 import public LanguageDef.IntArena
+import public LanguageDef.MLBundleCat
 
 %default total
 
@@ -20,6 +21,30 @@ import public LanguageDef.IntArena
 ---- Objects and morphisms of `MLTwistPair` category ----
 ---------------------------------------------------------
 ---------------------------------------------------------
+
+-- We refer to the twisted-arrow category formulated "backwards" as
+-- a dependent pair as the "twisted-pair" category.
+
+public export
+TwistPairObj : Type
+TwistPairObj = IntArena TypeObj
+
+public export
+TwistPairMor : IntMorSig TwistPairObj
+TwistPairMor x y =
+  (bmor : fst x -> fst y **
+   SliceMorphism {a=(fst y)} (snd y) (SliceFibSigmaF bmor (snd x)))
+
+-- First, we show that this representation is equivalent to the usual
+-- representation with commutativity.
+public export
+TwistPairToArr : TwistPairObj -> TwistArrObj
+TwistPairToArr tp = ((Sigma {a=(fst tp)} (snd tp), fst tp) ** DPair.fst)
+
+public export
+TwistArrToPair : TwistArrObj -> TwistPairObj
+TwistArrToPair ((dom, cod) ** proj) =
+  (cod ** \ec => PreImage {a=dom} {b=cod} proj ec)
 
 -----------------
 ---- Objects ----
