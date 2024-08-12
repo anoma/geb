@@ -442,7 +442,7 @@ pdfCompositionDir : (q : PolyFunc) -> (p : MLDirichCatObj) ->
 pdfCompositionDir q p i = (qd : pfDir {p=q} $ fst i) -> pfDir {p} $ snd i qd
 
 public export
-pdfCompositionArena : PolyFunc -> MLDirichCatObj -> PolyFunc
+pdfCompositionArena : PolyFunc -> MLDirichCatObj -> MLDirichCatObj
 pdfCompositionArena q p = (pdfCompositionPos q p ** pdfCompositionDir q p)
 
 public export
