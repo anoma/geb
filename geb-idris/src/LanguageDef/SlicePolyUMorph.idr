@@ -2124,6 +2124,19 @@ spfdParClosureObjPiPosToNT {dom} q@(SPFD qpos qdir) r@(SPFD rpos rdir) ifam =
     (\ec => spfdParClosureObjPosToNT {dom} {cod} q r ec (ifam ec))
 
 public export
+spfdParClosureObjSpfPiPosToNT : {dom, cod : Type} ->
+  (q, r : SPFData dom cod) ->
+  spfdPos
+    (spfPiPos {x=dom} {y=Unit} {z=cod}
+      (\_ => ())
+      (spfdParClosureObj {dom} {cod} q r))
+    () ->
+  SPFnt {dom} {cod} q r
+spfdParClosureObjSpfPiPosToNT {dom} {cod} q r pip =
+  spfdParClosureObjPiPosToNT {dom} {cod} q r $
+    \ec => (() ** \(qp, ()), Refl => snd (pip $ SFS ec ()) (qp, ()) Refl)
+
+public export
 spfdParClosureObjPosFromNT : {dom, cod : Type} ->
   (q, r : SPFData dom cod) ->
   (ec : cod) ->
@@ -2143,6 +2156,18 @@ spfdParClosureObjPiPosFromNT : {dom, cod : Type} ->
   Pi {a=cod} (spfdParClosureObjPos {dom} q r)
 spfdParClosureObjPiPosFromNT {dom} q r nt ec =
   spfdParClosureObjPosFromNT q r ec $ SPFDataProdToFamUnitNT q r nt ec
+
+public export
+spfdParClosureObjSpfPiPosFromNT : {dom, cod : Type} ->
+  (q, r : SPFData dom cod) ->
+  SPFnt {dom} {cod} q r ->
+  spfdPos
+    (spfPiPos {x=dom} {y=Unit} {z=cod}
+      (\_ => ())
+      (spfdParClosureObj {dom} {cod} q r))
+    ()
+spfdParClosureObjSpfPiPosFromNT {dom} {cod} q r nt (SFS ec ()) =
+  spfdParClosureObjPiPosFromNT {dom} {cod} q r nt ec
 
 -- Now we show that the direction-set of the parallel closure at a given
 -- position is the direction-set of the intermediate object of the
