@@ -27,6 +27,10 @@ import public LanguageDef.IntDisheafCat
 -------------------------------------------
 -------------------------------------------
 
+-----------------------------
+---- Left Kan extensions ----
+-----------------------------
+
 public export
 pdfPrecomp : (q : MLDirichCatObj) -> MLPolyCatObj -> MLDirichCatObj
 pdfPrecomp = flip pdfCompositionArena
