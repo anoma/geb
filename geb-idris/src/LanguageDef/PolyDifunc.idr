@@ -675,42 +675,6 @@ PDFinterpComposeToComposeInterp (PDF qp qd qc qm) (PDF pp pd pc pm) x z mxz
       IPDF qi mxqd mqcpd (\fext => Refl),
       IPDF pi Prelude.id mpcz (\fext => Refl)))
 
----------------------------------------
----- Polynomial/Dirichlet functors ----
----------------------------------------
-
--- Twisted polynomials subsume both polynomial and Dirichlet functors.
-
-export
-PdfFromPoly : PolyFunc -> PolyDifunc
-PdfFromPoly p = PDF (pfPos p) (\_ => Void) (pfDir {p}) (\i, v => void v)
-
-export
-InterpPdfFromPoly : (p : PolyFunc) -> (y : Type) ->
-  InterpPolyFunc p y -> InterpPDF (PdfFromPoly p) Void y (\v => void v)
-InterpPdfFromPoly (pos ** dir) y (i ** dm) =
-  IPDF i (\v => void v) dm $ \fext => funExt $ \v => void v
-
-export
-InterpPdfToPoly : (p : PolyFunc) -> (y : Type) ->
-  InterpPDF (PdfFromPoly p) Void y (\v => void v) -> InterpPolyFunc p y
-InterpPdfToPoly (pos ** dir) y (IPDF i mx my comm) = (i ** my)
-
-export
-PdfFromDirich : PolyFunc -> PolyDifunc
-PdfFromDirich p = PDF (pfPos p) (pfDir {p}) (\_ => Unit) (\_, _ => ())
-
-export
-InterpPdfFromDirich : (p : PolyFunc) -> (x : Type) ->
-  InterpDirichFunc p x -> InterpPDF (PdfFromDirich p) x Unit (\_ => ())
-InterpPdfFromDirich (pos ** dir) x (i ** dm) =
-  IPDF i dm (\_ => ()) $ \fext => funExt $ \_ => Refl
-
-export
-InterpPdfToDirich : (p : PolyFunc) -> (x : Type) ->
-  InterpPDF (PdfFromDirich p) x Unit (\_ => ()) -> InterpDirichFunc p x
-InterpPdfToDirich (pos ** dir) x (IPDF i mx my comm) = (i ** mx)
-
 -----------------------------------------------------------------------
 ---- Polydinatural transformations between metalanguage difunctors ----
 -----------------------------------------------------------------------
@@ -831,3 +795,39 @@ pdNThcomp : {0 p, q' : PolyDifunc} -> {p', q : PolyDifunc} ->
   PolyDiNT q q' -> PolyDiNT p p' -> PolyDiNT (pdfComp q p) (pdfComp q' p')
 pdNThcomp {p} {p'} {q} {q'} beta alpha =
   pdNTvcomp (pdNTwhiskerL {q} {r=q'} beta p') (pdNTwhiskerR {p} {q=p'} alpha q)
+
+---------------------------------------
+---- Polynomial/Dirichlet functors ----
+---------------------------------------
+
+-- Twisted polynomials subsume both polynomial and Dirichlet functors.
+
+export
+PdfFromPoly : PolyFunc -> PolyDifunc
+PdfFromPoly p = PDF (pfPos p) (\_ => Void) (pfDir {p}) (\i, v => void v)
+
+export
+InterpPdfFromPoly : (p : PolyFunc) -> (y : Type) ->
+  InterpPolyFunc p y -> InterpPDF (PdfFromPoly p) Void y (\v => void v)
+InterpPdfFromPoly (pos ** dir) y (i ** dm) =
+  IPDF i (\v => void v) dm $ \fext => funExt $ \v => void v
+
+export
+InterpPdfToPoly : (p : PolyFunc) -> (y : Type) ->
+  InterpPDF (PdfFromPoly p) Void y (\v => void v) -> InterpPolyFunc p y
+InterpPdfToPoly (pos ** dir) y (IPDF i mx my comm) = (i ** my)
+
+export
+PdfFromDirich : PolyFunc -> PolyDifunc
+PdfFromDirich p = PDF (pfPos p) (pfDir {p}) (\_ => Unit) (\_, _ => ())
+
+export
+InterpPdfFromDirich : (p : PolyFunc) -> (x : Type) ->
+  InterpDirichFunc p x -> InterpPDF (PdfFromDirich p) x Unit (\_ => ())
+InterpPdfFromDirich (pos ** dir) x (i ** dm) =
+  IPDF i dm (\_ => ()) $ \fext => funExt $ \_ => Refl
+
+export
+InterpPdfToDirich : (p : PolyFunc) -> (x : Type) ->
+  InterpPDF (PdfFromDirich p) x Unit (\_ => ()) -> InterpDirichFunc p x
+InterpPdfToDirich (pos ** dir) x (IPDF i mx my comm) = (i ** mx)
