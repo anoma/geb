@@ -929,3 +929,26 @@ PDiToPolyNT : (p, q : PolyDifunc) ->
 PDiToPolyNT (PDF ppos pcobase pbase pproj) (PDF qpos qcobase qbase qproj)
   (PDNT onpos onbase oncobase ntcomm) =
     (dpBimap onpos oncobase ** \(pi ** pcb), qb => onbase pi qb)
+
+---------------------------------------------
+---------------------------------------------
+---- Universal morphisms in `PolyDifunc` ----
+---------------------------------------------
+---------------------------------------------
+
+------------------------
+---- Initial object ----
+------------------------
+
+public export
+PDIinitial : PolyDifunc
+PDIinitial = PDF Void (\v => void v) (\v => void v) (\v => void v)
+
+public export
+pdiFromInitial : (p : PolyDifunc) -> PolyDiNT PDIinitial p
+pdiFromInitial p =
+  PDNT
+    (\v => void v)
+    (\v => void v)
+    (\v => void v)
+    (\v => void v)
