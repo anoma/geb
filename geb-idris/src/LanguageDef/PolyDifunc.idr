@@ -675,6 +675,17 @@ PDFinterpComposeToComposeInterp (PDF qp qd qc qm) (PDF pp pd pc pm) x z mxz
       IPDF qi mxqd mqcpd (\fext => Refl),
       IPDF pi Prelude.id mpcz (\fext => Refl)))
 
+public export
+PDiMonoidCat : IntCatSig
+PDiMonoidCat =
+  ICat
+    Unit
+  $ MICS
+    (\_, _ => PolyDifunc)
+  $ ICS
+    (\_ => PdfHomProfId)
+    (\_, _, _ => pdfComp)
+
 -----------------------------------------------------------------------
 ---- Polydinatural transformations between metalanguage difunctors ----
 -----------------------------------------------------------------------
@@ -758,6 +769,17 @@ pdNTvcomp {r=(PDF rp rd rc rm)} {q=(PDF qp qd qc qm)} {p=(PDF pp pd pc pm)}
         trans
           (rewrite (fcong {x=(oncpq pi pd)} $ qrcomm (onipq pi) fext) in Refl)
           (fcong {x=pd} $ pqcomm pi fext)
+
+public export
+PolyDiCat : IntCatSig
+PolyDiCat =
+  ICat
+    PolyDifunc
+  $ MICS
+    PolyDiNT
+  $ ICS
+    pdNTid
+    (\p, q, r => pdNTvcomp {r} {q} {p})
 
 --------------------------------------------------------------------
 ---- Two-categorical structure of polydinatural transformations ----
