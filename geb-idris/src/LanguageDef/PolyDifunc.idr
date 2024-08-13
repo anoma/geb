@@ -838,6 +838,22 @@ PdfFromDirich : PolyFunc -> PolyDifunc
 PdfFromDirich p = PDF (pfPos p) (pfDir {p}) (\_ => Unit) (\_, _ => ())
 
 export
+PdfFromDirichNT : (p, q : MLDirichCatObj) ->
+  DirichNatTrans p q -> PolyDiNT (PdfFromDirich p) (PdfFromDirich q)
+PdfFromDirichNT (ppos ** pdir) (qpos ** qdir) (onpos ** ondir) =
+  PDNT
+    onpos
+    (\_ => Prelude.id {a=Unit})
+    ondir
+    (\_, _ => Refl)
+
+export
+PdfToDirichNT : (p, q : MLDirichCatObj) ->
+  PolyDiNT (PdfFromDirich p) (PdfFromDirich q) -> DirichNatTrans p q
+PdfToDirichNT (ppos ** pdir) (qpos ** qdir) (PDNT onpos onbase oncobase comm) =
+  (onpos ** oncobase)
+
+export
 InterpPdfFromDirich : (p : PolyFunc) -> (x : Type) ->
   InterpDirichFunc p x -> InterpPDF (PdfFromDirich p) x Unit (\_ => ())
 InterpPdfFromDirich (pos ** dir) x (i ** dm) =
