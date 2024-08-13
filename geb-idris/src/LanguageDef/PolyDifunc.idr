@@ -771,15 +771,17 @@ pdNTvcomp {r=(PDF rp rd rc rm)} {q=(PDF qp qd qc qm)} {p=(PDF pp pd pc pm)}
           (fcong {x=pd} $ pqcomm pi fext)
 
 public export
-PolyDiCat : IntCatSig
-PolyDiCat =
-  ICat
-    PolyDifunc
-  $ MICS
+PolyDiMICS : MorIdCompSig PolyDifunc
+PolyDiMICS =
+  MICS
     PolyDiNT
   $ ICS
     pdNTid
     (\p, q, r => pdNTvcomp {r} {q} {p})
+
+public export
+PolyDiCat : IntCatSig
+PolyDiCat = ICat PolyDifunc PolyDiMICS
 
 --------------------------------------------------------------------
 ---- Two-categorical structure of polydinatural transformations ----
@@ -817,6 +819,30 @@ pdNThcomp : {0 p, q' : PolyDifunc} -> {p', q : PolyDifunc} ->
   PolyDiNT q q' -> PolyDiNT p p' -> PolyDiNT (pdfComp q p) (pdfComp q' p')
 pdNThcomp {p} {p'} {q} {q'} beta alpha =
   pdNTvcomp (pdNTwhiskerL {q} {r=q'} beta p') (pdNTwhiskerR {p} {q=p'} alpha q)
+
+public export
+PolyDiGHS : GlobalHomStruct PDiMonoidCat
+PolyDiGHS () () = PolyDiMICS
+
+public export
+PolyDiLWS : GlobalLeftWhiskerHomStruct PDiMonoidCat PolyDiGHS
+PolyDiLWS () () () f g g' alpha = pdNTwhiskerL {q=g} {r=g'} alpha f
+
+public export
+PolyDiRWS : GlobalRightWhiskerHomStruct PDiMonoidCat PolyDiGHS
+PolyDiRWS () () () g f f' alpha = pdNTwhiskerR {p=f} {q=f'} alpha g
+
+public export
+PolyDi2CatS : Int2CatStruct PDiMonoidCat
+PolyDi2CatS =
+  I2CS
+    PolyDiGHS
+    PolyDiLWS
+    PolyDiRWS
+
+public export
+PolyDi2Cat : Int2CatSig
+PolyDi2Cat = I2Cat PDiMonoidCat PolyDi2CatS
 
 ---------------------------------------
 ---- Polynomial/Dirichlet functors ----
