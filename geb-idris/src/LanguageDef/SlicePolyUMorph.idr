@@ -747,7 +747,8 @@ spfdDensityComonadDuplicateAdjDirFstId {a} {b} p eb ep eb' el = Refl
 -- on generalized elements chosen by the adjunct is always the same as the
 -- source position of _its_ input generalized element (which is not necessarily
 -- the same as that of the generalized element which was input to the
--- on-directions itself, which returned the function on generalized elements).
+-- on-directions function itself, which returned the function on generalized
+-- elements).
 public export
 0 spfdDensityComonadDuplicateAdjDirSndId :
   {a, b : Type} -> (p : SPFData a b) ->
