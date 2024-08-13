@@ -16,6 +16,20 @@ import public LanguageDef.MLBundleCat
 -- In favor of the (identical) one from `SliceFuncCat`.
 %hide Library.IdrisCategories.BaseChangeF
 
+----------------------------------
+----------------------------------
+---- Category-theoretic style ----
+----------------------------------
+----------------------------------
+
+public export
+TwistArrTerminal : TwistArrObj
+TwistArrTerminal = ((Void, Unit) ** \v => void v)
+
+public export
+twaToTerminal : (tw : TwistArrObj) -> TwistArrMorph tw TwistArrTerminal
+twaToTerminal ((i, j) ** m) = Element0 (\v => void v, \_ => ()) (\v => void v)
+
 ---------------------------------------------------------
 ---------------------------------------------------------
 ---- Objects and morphisms of `MLTwistPair` category ----
