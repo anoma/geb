@@ -911,3 +911,21 @@ export
 InterpPdfToDirich : (p : PolyFunc) -> (x : Type) ->
   InterpPDF (PdfFromDirich p) x Unit (\_ => ()) -> InterpDirichFunc p x
 InterpPdfToDirich (pos ** dir) x (IPDF i mx my comm) = (i ** mx)
+
+----------------------------------------------
+----------------------------------------------
+---- Embedding of PolyDifunc into PolyFunc ---
+----------------------------------------------
+----------------------------------------------
+
+public export
+PDiToPoly : PolyDifunc -> PolyFunc
+PDiToPoly (PDF pos cobase base proj) =
+  (Sigma {a=pos} cobase ** base . DPair.fst)
+
+public export
+PDiToPolyNT : (p, q : PolyDifunc) ->
+  PolyDiNT p q -> PolyNatTrans (PDiToPoly p) (PDiToPoly q)
+PDiToPolyNT (PDF ppos pcobase pbase pproj) (PDF qpos qcobase qbase qproj)
+  (PDNT onpos onbase oncobase ntcomm) =
+    (dpBimap onpos oncobase ** \(pi ** pcb), qb => onbase pi qb)
