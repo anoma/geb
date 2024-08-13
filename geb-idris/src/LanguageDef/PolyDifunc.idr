@@ -807,6 +807,22 @@ PdfFromPoly : PolyFunc -> PolyDifunc
 PdfFromPoly p = PDF (pfPos p) (\_ => Void) (pfDir {p}) (\i, v => void v)
 
 export
+PdfFromPolyNT : (p, q : PolyFunc) ->
+  PolyNatTrans p q -> PolyDiNT (PdfFromPoly p) (PdfFromPoly q)
+PdfFromPolyNT (ppos ** pdir) (qpos ** qdir) (onpos ** ondir) =
+  PDNT
+    onpos
+    ondir
+    (\_ => Prelude.id {a=Void})
+    (\pi, fext => funExt $ \v => void v)
+
+export
+PdfToPolyNT : (p, q : PolyFunc) ->
+  PolyDiNT (PdfFromPoly p) (PdfFromPoly q) -> PolyNatTrans p q
+PdfToPolyNT (ppos ** pdir) (qpos ** qdir) (PDNT onpos onbase oncobase comm) =
+  (onpos ** onbase)
+
+export
 InterpPdfFromPoly : (p : PolyFunc) -> (y : Type) ->
   InterpPolyFunc p y -> InterpPDF (PdfFromPoly p) Void y (\v => void v)
 InterpPdfFromPoly (pos ** dir) y (i ** dm) =
