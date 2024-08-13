@@ -22,6 +22,10 @@ import public LanguageDef.MLBundleCat
 ----------------------------------
 ----------------------------------
 
+-------------------------
+---- Terminal object ----
+-------------------------
+
 public export
 TwistArrTerminal : TwistArrObj
 TwistArrTerminal = ((Void, Unit) ** \v => void v)
