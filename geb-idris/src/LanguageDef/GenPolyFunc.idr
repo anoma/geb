@@ -21,6 +21,38 @@ import public LanguageDef.IntDisheafCat
 -- In favor of the (identical) one from `SliceFuncCat`.
 %hide Library.IdrisCategories.BaseChangeF
 
+-------------------------------------------
+-------------------------------------------
+---- Dirichlet/polynomial interactions ----
+-------------------------------------------
+-------------------------------------------
+
+public export
+pdfPrecomp : (q : MLDirichCatObj) -> MLPolyCatObj -> MLDirichCatObj
+pdfPrecomp = flip pdfCompositionArena
+
+public export
+pdfLKanExtPos : (q : MLDirichCatObj) -> MLDirichCatObj -> Type
+pdfLKanExtPos q p = dfPos p
+
+public export
+pdfLKanExtDir : (q, p : MLDirichCatObj) -> SliceObj (pdfLKanExtPos q p)
+pdfLKanExtDir q p pi = InterpDirichFunc q (pfDir {p} pi)
+
+public export
+pdfLKanExt : (q : MLDirichCatObj) -> MLDirichCatObj -> MLPolyCatObj
+pdfLKanExt q p = (pdfLKanExtPos q p ** pdfLKanExtDir q p)
+
+public export
+pdfLKanUnit : (q : MLDirichCatObj) ->
+  (p : MLDirichCatObj) -> DirichNatTrans p (pdfPrecomp q $ pdfLKanExt q p)
+pdfLKanUnit q p = (\pi => (pi ** fst) ** \pi, pd, pdqd => snd pdqd pd)
+
+public export
+pdfLKanCounit : (q : MLDirichCatObj) ->
+  (p : MLPolyCatObj) -> PolyNatTrans (pdfLKanExt q $ pdfPrecomp q p) p
+pdfLKanCounit q p = (fst ** \pdqp, qd => (snd pdqp qd ** \pdqd => pdqd qd))
+
 -------------------------------------------------
 -------------------------------------------------
 ---- Dirichlet slices as polynomial functors ----
