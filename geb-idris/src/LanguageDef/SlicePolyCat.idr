@@ -3104,17 +3104,6 @@ SPFCslice {b} {dom} {cod} sf eb =
     (\ec => spfdPos sf (eb ** ec))
     (\ec, ep, ed => spfdDir sf (eb ** ec) ep (eb ** ed))
 
-public export
-SPFCpi : {b : Type} -> {dom, cod : SliceObj b} ->
-  SPFDataFam {b} dom cod -> SPFamData {b} dom cod
-SPFCpi {b} {dom} {cod} sf =
-  SPFD
-    (\ebc =>
-      (spfdPos (sf $ fst ebc) (snd ebc)))
-    (\ebc, ebp, ebd =>
-      (eqb : fst ebc = fst ebd) ->
-       spfdDir (sf $ fst ebc) (snd ebc) ebp (rewrite eqb in snd ebd))
-
 -- This adjunction exhibits `SPFDataFam` as a full subcategory of `SPFamData`.
 
 public export
