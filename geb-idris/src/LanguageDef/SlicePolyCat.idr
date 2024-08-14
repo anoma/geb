@@ -1449,6 +1449,12 @@ spfPi : {w, x, y, z : Type} ->
 spfPi {w} {x} {y} {z} mwx mzy =
   spfPiPos {x} {y} {z} mzy . spfPiDir {w} {x} {z} mwx
 
+public export
+spfBaseChange : {w, x, y, z : Type} ->
+  (w -> x) -> (z -> y) -> SPFData x z -> SPFData w y
+spfBaseChange {w} {x} {y} {z} mwx mzy =
+  spfPullbackDir {w} {x} {z=y} mwx . spfPushoutPos {x} {y} {z} mzy
+
 --------------------------------------------------
 -------------------------------------------------
 ---- Categories of slice polynomial functors ----
