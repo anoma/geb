@@ -3093,6 +3093,12 @@ SPFCsigma {b} {dom} {cod} sf =
        spfdDir (sf $ fst ebd) ec (rewrite eqb in snd ebp) (snd ebd)))
 
 public export
+SPFCbc : {b, dom, cod : Type} ->
+  SPFData (b, dom) cod -> (b -> SPFData dom cod)
+SPFCbc {b} {dom} {cod} sf eb =
+  SPFD (spfdPos sf) (\ec, ep, ed => spfdDir sf ec ep (eb, ed))
+
+public export
 SPFCpi : {b, dom, cod : Type} ->
   (b -> SPFData dom cod) -> SPFData (b, dom) cod
 SPFCpi {b} {dom} {cod} sf =
