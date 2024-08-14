@@ -3115,6 +3115,8 @@ SPFCpi {b} {dom} {cod} sf =
       (eqb : fst ebc = fst ebd) ->
        spfdDir (sf $ fst ebc) (snd ebc) ebp (rewrite eqb in snd ebd))
 
+-- This adjunction exhibits `SPFDataFam` as a full subcategory of `SPFamData`.
+
 public export
 SPFCsliceTotCounit : {b : Type} -> {dom, cod : SliceObj b} ->
   (sf : SPFDataFam {b} dom cod) ->
