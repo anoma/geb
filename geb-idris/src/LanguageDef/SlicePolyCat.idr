@@ -3109,10 +3109,26 @@ SPFCpiL {b} {dom} {cod} sf =
       case ebd of (eb ** ed) => spfdDir (sf eb) ec (pibp eb) ed)
 
 public export
+SPFCsigmaR : {b, dom : Type} -> {cod : SliceObj b} ->
+  ((eb : b) -> SPFData dom (cod eb)) -> SPFData dom (Sigma {a=b} cod)
+SPFCsigmaR {b} {dom} {cod} sf =
+  SPFD
+    (\ebc => spfdPos (sf $ fst ebc) (snd ebc))
+    (\ebc => spfdDir (sf $ fst ebc) (snd ebc))
+
+public export
 SPFCdiagR : {b, dom : Type} -> {cod : SliceObj b} ->
   SPFData dom (Sigma {a=b} cod) -> (eb : b) -> SPFData dom (cod eb)
 SPFCdiagR {b} {dom} {cod} sf eb =
   SPFD (\ec => spfdPos sf (eb ** ec)) (\ec => spfdDir sf (eb ** ec))
+
+public export
+SPFCpiR : {b, dom : Type} -> {cod : SliceObj b} ->
+  ((eb : b) -> SPFData dom (cod eb)) -> SPFData dom (Pi {a=b} cod)
+SPFCpiR {b} {dom} {cod} sf =
+  SPFD
+    (\pic => (eb : b ** spfdPos (sf eb) (pic eb)))
+    (\pic, ebp => spfdDir (sf $ fst ebp) (pic $ fst ebp) (snd ebp))
 
 ------------------------------------------
 ------------------------------------------
