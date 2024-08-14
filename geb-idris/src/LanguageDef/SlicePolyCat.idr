@@ -3108,6 +3108,12 @@ SPFCpi {b} {dom} {cod} sf =
     (\ec, pibp, ebd =>
       case ebd of (eb ** ed) => spfdDir (sf eb) ec (pibp eb) ed)
 
+public export
+SPFCdiagR : {b, dom : Type} -> {cod : SliceObj b} ->
+  SPFData dom (Sigma {a=b} cod) -> (eb : b) -> SPFData dom (cod eb)
+SPFCdiagR {b} {dom} {cod} sf eb =
+  SPFD (\ec => spfdPos sf (eb ** ec)) (\ec => spfdDir sf (eb ** ec))
+
 ------------------------------------------
 ------------------------------------------
 ---- Morphisms between direction-sets ----
