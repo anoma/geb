@@ -3104,7 +3104,7 @@ SPFCslice {b} {dom} {cod} sf eb =
     (\ec => spfdPos sf (eb ** ec))
     (\ec, ep, ed => spfdDir sf (eb ** ec) ep (eb ** ed))
 
--- This adjunction exhibits `SPFDataFam {b} dom cod` as a full subcategory of
+-- This adjunction exhibits `SPFDataFam {b} dom cod` as a subcategory of
 -- `SPFamData {b} dom cod`, which is simply a name for the category
 -- `SPFData (Sigma {a=b} dom) (Sigma {a=b} cod)`.
 
