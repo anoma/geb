@@ -2651,6 +2651,10 @@ SPFDataFam : {b : Type} -> (dom, cod : SliceObj b) -> Type
 SPFDataFam {b} dom cod = Pi {a=b} $ SPFParamData {b} dom cod
 
 public export
+SPFamData : {b : Type} -> (dom, cod : SliceObj b) -> Type
+SPFamData {b} dom cod = SPFData (Sigma {a=b} dom) (Sigma {a=b} cod)
+
+public export
 SPFDataFamPos : {b : Type} -> {dom, cod : SliceObj b} ->
   SPFDataFam {b} dom cod -> (eb : b) -> SliceObj (cod eb)
 SPFDataFamPos {b} {dom} {cod} sf i = spfdPos (sf i)
@@ -2678,7 +2682,7 @@ SPFDepFromDataFam {b} {dom} {cod} fam =
 -- in that it erases the `b`-dependent connection between `dom` and `cod`.
 public export
 SPFDataFromDep : {0 b : Type} -> {0 dom, cod : SliceObj b} ->
-  SPFdepData {b} dom cod -> SPFData (Sigma {a=b} dom) (Sigma {a=b} cod)
+  SPFdepData {b} dom cod -> SPFamData {b} dom cod
 SPFDataFromDep {b} {dom} {cod} spfdd =
   SPFD (uncurry $ spfddPos spfdd) (SPFdirFromDep $ spfddDir spfdd)
 
@@ -3083,8 +3087,7 @@ SPFpoCellFromDP {w'} {z'} {w} {z} {f} {g} spfc =
 
 public export
 SPFCsigma : {b : Type} -> {dom, cod : SliceObj b} ->
-  SPFDataFam {b} dom cod ->
-  SPFData (Sigma {a=b} dom) (Sigma {a=b} cod)
+  SPFDataFam {b} dom cod -> SPFamData {b} dom cod
 SPFCsigma {b} {dom} {cod} sf =
   SPFD
     (\ebc =>
@@ -3095,8 +3098,7 @@ SPFCsigma {b} {dom} {cod} sf =
 
 public export
 SPFCdiag : {b : Type} -> {dom, cod : SliceObj b} ->
-  SPFData (Sigma {a=b} dom) (Sigma {a=b} cod) ->
-  SPFDataFam {b} dom cod
+  SPFamData {b} dom cod -> SPFDataFam {b} dom cod
 SPFCdiag {b} {dom} {cod} sf eb =
   SPFD
     (\ec => spfdPos sf (eb ** ec))
@@ -3104,8 +3106,7 @@ SPFCdiag {b} {dom} {cod} sf eb =
 
 public export
 SPFCpi : {b : Type} -> {dom, cod : SliceObj b} ->
-  SPFDataFam {b} dom cod ->
-  SPFData (Sigma {a=b} dom) (Sigma {a=b} cod)
+  SPFDataFam {b} dom cod -> SPFamData {b} dom cod
 SPFCpi {b} {dom} {cod} sf =
   SPFD
     (\ebc =>
@@ -3113,6 +3114,22 @@ SPFCpi {b} {dom} {cod} sf =
     (\ebc, ebp, ebd =>
       (eqb : fst ebc = fst ebd) ->
        spfdDir (sf $ fst ebc) (snd ebc) ebp (rewrite eqb in snd ebd))
+
+public export
+SPFCsigmaDiagCounit : {b : Type} -> {dom, cod : SliceObj b} ->
+  (sf : SPFDataFam {b} dom cod) ->
+  SPFdepNTfam {b} {dom} {cod} (SPFCdiag $ SPFCsigma sf) sf
+SPFCsigmaDiagCounit {b} {dom} {cod} sf eb =
+  SPFDm (\_ => id) (\ec, ep, ed, dd => (Refl ** dd))
+
+public export
+SPFCsigmaDiagUnit : {b : Type} -> {dom, cod : SliceObj b} ->
+  (spfd : SPFamData {b} dom cod) ->
+  SPFnt spfd (SPFCsigma $ SPFCdiag spfd)
+SPFCsigmaDiagUnit {b} {dom} {cod} spfd =
+  SPFDm
+    (\(eb ** ec), ep => ep)
+    (\(eb ** ec), ep, (eb' ** ed), (Refl ** dd) => dd)
 
 ------------------------------------------
 ------------------------------------------
