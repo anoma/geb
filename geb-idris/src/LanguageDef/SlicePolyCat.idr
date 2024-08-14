@@ -1998,9 +1998,10 @@ spfdPrecompPiFromPullbackDir {x} {y} {z} mxy f =
 ---------------------------
 
 -- `spfPullback bcl bcr g` is `BaseChange bcr . g . Pi bcl`, so this
--- could be seen as a "relaxed" twisted-arrow morphism from `g` to `f`, with
--- `Pi bcl` and `BaseChange bcr` as the arrows, and the natural transformation
--- taking the place of strict equality.
+-- could be seen as a "relaxed" twisted-arrow morphism from `g` to `f`
+-- (equivalently, a relaxed morphism of the opposite of the twisted-arrow
+-- category from `f` to `g`), with `Pi bcl` and `BaseChange bcr` as the
+-- arrows, and the natural transformation taking the place of strict equality.
 public export
 SPFpbCell : {w, w', z, z' : Type} ->
   (bcl : w -> w') -> (bcr : z -> z') ->
