@@ -3075,6 +3075,33 @@ SPFpoCellFromDP {w'} {z'} {w} {z} {f} {g} spfc =
       case spdcDir spfc ez' ez efp ew' egd of
         (ew ** efd) => SFS (ew' ** ew) efd)
 
+-------------------------------------------------
+-------------------------------------------------
+---- Internal language of cells of `SPFData` ----
+-------------------------------------------------
+-------------------------------------------------
+
+public export
+SPFCsigma : {b, dom, cod : Type} ->
+  (b -> SPFData dom cod) -> SPFData (b, dom) cod
+SPFCsigma {b} {dom} {cod} sf =
+  SPFD
+    (\ec =>
+      (eb : b ** spfdPos (sf eb) ec))
+    (\ec, ebp, ebd =>
+      (eqb : fst ebd = fst ebp **
+       spfdDir (sf $ fst ebd) ec (rewrite eqb in snd ebp) (snd ebd)))
+
+public export
+SPFCpi : {b, dom, cod : Type} ->
+  (b -> SPFData dom cod) -> SPFData (b, dom) cod
+SPFCpi {b} {dom} {cod} sf =
+  SPFD
+    (\ec =>
+      (eb : b) -> spfdPos (sf eb) ec)
+    (\ec, pibp, ebd =>
+      case ebd of (eb, ed) => spfdDir (sf eb) ec (pibp eb) ed)
+
 ------------------------------------------
 ------------------------------------------
 ---- Morphisms between direction-sets ----
