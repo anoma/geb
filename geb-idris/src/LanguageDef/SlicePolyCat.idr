@@ -3129,7 +3129,7 @@ SPFCsliceTotUnit : {b : Type} -> {dom, cod : SliceObj b} ->
 SPFCsliceTotUnit {b} {dom} {cod} spfd =
   SPFDm
     (\(eb ** ec), ep => ep)
-    (\(eb ** ec), ep, (eb' ** ed), (Refl ** dd) => dd)
+    (\(eb ** ec), ep, (eb ** ed), (Refl ** dd) => dd)
 
 ------------------------------------------
 ------------------------------------------
