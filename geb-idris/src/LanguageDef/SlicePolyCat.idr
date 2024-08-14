@@ -3086,10 +3086,10 @@ SPFDUfam : {b : Type} -> (dom, cod : SliceObj b) -> Type
 SPFDUfam {b} dom cod = (eb : b) -> SPFData (dom eb) (cod eb)
 
 public export
-SPFCsigmaU : {b : Type} -> {dom, cod : SliceObj b} ->
+SPFCsigma : {b : Type} -> {dom, cod : SliceObj b} ->
   SPFDUfam {b} dom cod ->
   SPFData (Sigma {a=b} dom) (Sigma {a=b} cod)
-SPFCsigmaU {b} {dom} {cod} sf =
+SPFCsigma {b} {dom} {cod} sf =
   SPFD
     (\ebc =>
       (spfdPos (sf $ fst ebc) (snd ebc)))
@@ -3098,19 +3098,19 @@ SPFCsigmaU {b} {dom} {cod} sf =
        spfdDir (sf $ fst ebc) (snd ebc) ep (rewrite eqb in snd ebd)))
 
 public export
-SPFCdiagU : {b : Type} -> {dom, cod : SliceObj b} ->
+SPFCdiag : {b : Type} -> {dom, cod : SliceObj b} ->
   SPFData (Sigma {a=b} dom) (Sigma {a=b} cod) ->
   SPFDUfam {b} dom cod
-SPFCdiagU {b} {dom} {cod} sf eb =
+SPFCdiag {b} {dom} {cod} sf eb =
   SPFD
     (\ec => spfdPos sf (eb ** ec))
     (\ec, ep, ed => spfdDir sf (eb ** ec) ep (eb ** ed))
 
 public export
-SPFCpiU : {b : Type} -> {dom, cod : SliceObj b} ->
+SPFCpi : {b : Type} -> {dom, cod : SliceObj b} ->
   SPFDUfam {b} dom cod ->
   SPFData (Sigma {a=b} dom) (Sigma {a=b} cod)
-SPFCpiU {b} {dom} {cod} sf =
+SPFCpi {b} {dom} {cod} sf =
   SPFD
     (\ebc =>
       (spfdPos (sf $ fst ebc) (snd ebc)))
