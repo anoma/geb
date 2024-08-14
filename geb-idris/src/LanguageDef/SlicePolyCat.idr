@@ -3082,8 +3082,8 @@ SPFpoCellFromDP {w'} {z'} {w} {z} {f} {g} spfc =
 -------------------------------------------------
 
 public export
-SPFCsigma : {b, dom, cod : Type} ->
-  (b -> SPFData dom cod) -> SPFData (b, dom) cod
+SPFCsigma : {b : Type} -> {dom : SliceObj b} -> {cod : Type} ->
+  ((eb : b) -> SPFData (dom eb) cod) -> SPFData (Sigma {a=b} dom) cod
 SPFCsigma {b} {dom} {cod} sf =
   SPFD
     (\ec =>
@@ -3093,20 +3093,20 @@ SPFCsigma {b} {dom} {cod} sf =
        spfdDir (sf $ fst ebd) ec (rewrite eqb in snd ebp) (snd ebd)))
 
 public export
-SPFCbc : {b, dom, cod : Type} ->
-  SPFData (b, dom) cod -> (b -> SPFData dom cod)
+SPFCbc : {b : Type} -> {dom : SliceObj b} -> {cod : Type} ->
+  SPFData (Sigma {a=b} dom) cod -> (eb : b) -> SPFData (dom eb) cod
 SPFCbc {b} {dom} {cod} sf eb =
-  SPFD (spfdPos sf) (\ec, ep, ed => spfdDir sf ec ep (eb, ed))
+  SPFD (spfdPos sf) (\ec, ep, ed => spfdDir sf ec ep (eb ** ed))
 
 public export
-SPFCpi : {b, dom, cod : Type} ->
-  (b -> SPFData dom cod) -> SPFData (b, dom) cod
+SPFCpi : {b : Type} -> {dom : SliceObj b} -> {cod : Type} ->
+  ((eb : b) -> SPFData (dom eb) cod) -> SPFData (Sigma {a=b} dom) cod
 SPFCpi {b} {dom} {cod} sf =
   SPFD
     (\ec =>
       (eb : b) -> spfdPos (sf eb) ec)
     (\ec, pibp, ebd =>
-      case ebd of (eb, ed) => spfdDir (sf eb) ec (pibp eb) ed)
+      case ebd of (eb ** ed) => spfdDir (sf eb) ec (pibp eb) ed)
 
 ------------------------------------------
 ------------------------------------------
