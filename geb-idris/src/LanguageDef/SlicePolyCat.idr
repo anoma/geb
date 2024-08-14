@@ -3086,9 +3086,9 @@ SPFpoCellFromDP {w'} {z'} {w} {z} {f} {g} spfc =
 -------------------------------------------------
 
 public export
-SPFCdiag : {b : Type} -> {dom, cod : SliceObj b} ->
+SPFCtot : {b : Type} -> {dom, cod : SliceObj b} ->
   SPFDataFam {b} dom cod -> SPFamData {b} dom cod
-SPFCdiag {b} {dom} {cod} sf =
+SPFCtot {b} {dom} {cod} sf =
   SPFD
     (\ebc =>
       (spfdPos (sf $ fst ebc) (snd ebc)))
@@ -3097,9 +3097,9 @@ SPFCdiag {b} {dom} {cod} sf =
        spfdDir (sf $ fst ebc) (snd ebc) ep (rewrite eqb in snd ebd)))
 
 public export
-SPFCtot : {b : Type} -> {dom, cod : SliceObj b} ->
+SPFCslice : {b : Type} -> {dom, cod : SliceObj b} ->
   SPFamData {b} dom cod -> SPFDataFam {b} dom cod
-SPFCtot {b} {dom} {cod} sf eb =
+SPFCslice {b} {dom} {cod} sf eb =
   SPFD
     (\ec => spfdPos sf (eb ** ec))
     (\ec, ep, ed => spfdDir sf (eb ** ec) ep (eb ** ed))
@@ -3116,17 +3116,17 @@ SPFCpi {b} {dom} {cod} sf =
        spfdDir (sf $ fst ebc) (snd ebc) ebp (rewrite eqb in snd ebd))
 
 public export
-SPFCtotDiagCounit : {b : Type} -> {dom, cod : SliceObj b} ->
+SPFCsliceTotCounit : {b : Type} -> {dom, cod : SliceObj b} ->
   (sf : SPFDataFam {b} dom cod) ->
-  SPFdepNTfam {b} {dom} {cod} (SPFCtot $ SPFCdiag sf) sf
-SPFCtotDiagCounit {b} {dom} {cod} sf eb =
+  SPFdepNTfam {b} {dom} {cod} (SPFCslice $ SPFCtot sf) sf
+SPFCsliceTotCounit {b} {dom} {cod} sf eb =
   SPFDm (\_ => id) (\ec, ep, ed, dd => (Refl ** dd))
 
 public export
-SPFCtotDiagUnit : {b : Type} -> {dom, cod : SliceObj b} ->
+SPFCsliceTotUnit : {b : Type} -> {dom, cod : SliceObj b} ->
   (spfd : SPFamData {b} dom cod) ->
-  SPFnt spfd (SPFCdiag $ SPFCtot spfd)
-SPFCtotDiagUnit {b} {dom} {cod} spfd =
+  SPFnt spfd (SPFCtot $ SPFCslice spfd)
+SPFCsliceTotUnit {b} {dom} {cod} spfd =
   SPFDm
     (\(eb ** ec), ep => ep)
     (\(eb ** ec), ep, (eb' ** ed), (Refl ** dd) => dd)
