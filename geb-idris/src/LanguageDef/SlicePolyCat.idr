@@ -3104,7 +3104,8 @@ SPFCslice {b} {dom} {cod} sf eb =
     (\ec => spfdPos sf (eb ** ec))
     (\ec, ep, ed => spfdDir sf (eb ** ec) ep (eb ** ed))
 
--- This adjunction exhibits `SPFDataFam` as a full subcategory of `SPFamData`.
+-- This adjunction exhibits `SPFDataFam` as a full subcategory of `SPFamData`,
+-- which in turn is a subcategory of `SPFData`.
 
 public export
 SPFCsliceTotCounit : {b : Type} -> {dom, cod : SliceObj b} ->
