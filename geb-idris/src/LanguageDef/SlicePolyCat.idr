@@ -3082,9 +3082,9 @@ SPFpoCellFromDP {w'} {z'} {w} {z} {f} {g} spfc =
 -------------------------------------------------
 
 public export
-SPFCsigmaL : {b : Type} -> {dom : SliceObj b} -> {cod : Type} ->
+SPFCsigmaExL : {b : Type} -> {dom : SliceObj b} -> {cod : Type} ->
   ((eb : b) -> SPFData (dom eb) cod) -> SPFData (Sigma {a=b} dom) cod
-SPFCsigmaL {b} {dom} {cod} sf =
+SPFCsigmaExL {b} {dom} {cod} sf =
   SPFD
     (\ec =>
       (eb : b ** spfdPos (sf eb) ec))
@@ -3093,15 +3093,15 @@ SPFCsigmaL {b} {dom} {cod} sf =
        spfdDir (sf $ fst ebd) ec (rewrite eqb in snd ebp) (snd ebd)))
 
 public export
-SPFCdiagL : {b : Type} -> {dom : SliceObj b} -> {cod : Type} ->
+SPFCdiagExL : {b : Type} -> {dom : SliceObj b} -> {cod : Type} ->
   SPFData (Sigma {a=b} dom) cod -> (eb : b) -> SPFData (dom eb) cod
-SPFCdiagL {b} {dom} {cod} sf eb =
+SPFCdiagExL {b} {dom} {cod} sf eb =
   SPFD (spfdPos sf) (\ec, ep, ed => spfdDir sf ec ep (eb ** ed))
 
 public export
-SPFCpiL : {b : Type} -> {dom : SliceObj b} -> {cod : Type} ->
+SPFCpiExL : {b : Type} -> {dom : SliceObj b} -> {cod : Type} ->
   ((eb : b) -> SPFData (dom eb) cod) -> SPFData (Sigma {a=b} dom) cod
-SPFCpiL {b} {dom} {cod} sf =
+SPFCpiExL {b} {dom} {cod} sf =
   SPFD
     (\ec =>
       (eb : b) -> spfdPos (sf eb) ec)
@@ -3109,23 +3109,23 @@ SPFCpiL {b} {dom} {cod} sf =
       case ebd of (eb ** ed) => spfdDir (sf eb) ec (pibp eb) ed)
 
 public export
-SPFCsigmaR : {b, dom : Type} -> {cod : SliceObj b} ->
+SPFCsigmaExR : {b, dom : Type} -> {cod : SliceObj b} ->
   ((eb : b) -> SPFData dom (cod eb)) -> SPFData dom (Sigma {a=b} cod)
-SPFCsigmaR {b} {dom} {cod} sf =
+SPFCsigmaExR {b} {dom} {cod} sf =
   SPFD
     (\ebc => spfdPos (sf $ fst ebc) (snd ebc))
     (\ebc => spfdDir (sf $ fst ebc) (snd ebc))
 
 public export
-SPFCdiagR : {b, dom : Type} -> {cod : SliceObj b} ->
+SPFCdiagExR : {b, dom : Type} -> {cod : SliceObj b} ->
   SPFData dom (Sigma {a=b} cod) -> (eb : b) -> SPFData dom (cod eb)
-SPFCdiagR {b} {dom} {cod} sf eb =
+SPFCdiagExR {b} {dom} {cod} sf eb =
   SPFD (\ec => spfdPos sf (eb ** ec)) (\ec => spfdDir sf (eb ** ec))
 
 public export
-SPFCpiR : {b, dom : Type} -> {cod : SliceObj b} ->
+SPFCpiAllR : {b, dom : Type} -> {cod : SliceObj b} ->
   ((eb : b) -> SPFData dom (cod eb)) -> SPFData dom (Pi {a=b} cod)
-SPFCpiR {b} {dom} {cod} sf =
+SPFCpiAllR {b} {dom} {cod} sf =
   SPFD
     (\pic => (eb : b ** spfdPos (sf eb) (pic eb)))
     (\pic, ebp => spfdDir (sf $ fst ebp) (pic $ fst ebp) (snd ebp))
