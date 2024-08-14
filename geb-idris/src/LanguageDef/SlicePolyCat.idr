@@ -3093,9 +3093,9 @@ SPFCsigma {b} {dom} {cod} sf =
        spfdDir (sf $ fst ebd) ec (rewrite eqb in snd ebp) (snd ebd)))
 
 public export
-SPFCbc : {b : Type} -> {dom : SliceObj b} -> {cod : Type} ->
+SPFCdiag : {b : Type} -> {dom : SliceObj b} -> {cod : Type} ->
   SPFData (Sigma {a=b} dom) cod -> (eb : b) -> SPFData (dom eb) cod
-SPFCbc {b} {dom} {cod} sf eb =
+SPFCdiag {b} {dom} {cod} sf eb =
   SPFD (spfdPos sf) (\ec, ep, ed => spfdDir sf ec ep (eb ** ed))
 
 public export
