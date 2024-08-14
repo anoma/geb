@@ -3086,9 +3086,9 @@ SPFpoCellFromDP {w'} {z'} {w} {z} {f} {g} spfc =
 -------------------------------------------------
 
 public export
-SPFCsigma : {b : Type} -> {dom, cod : SliceObj b} ->
+SPFCdiag : {b : Type} -> {dom, cod : SliceObj b} ->
   SPFDataFam {b} dom cod -> SPFamData {b} dom cod
-SPFCsigma {b} {dom} {cod} sf =
+SPFCdiag {b} {dom} {cod} sf =
   SPFD
     (\ebc =>
       (spfdPos (sf $ fst ebc) (snd ebc)))
@@ -3097,9 +3097,9 @@ SPFCsigma {b} {dom} {cod} sf =
        spfdDir (sf $ fst ebc) (snd ebc) ep (rewrite eqb in snd ebd)))
 
 public export
-SPFCdiag : {b : Type} -> {dom, cod : SliceObj b} ->
+SPFCsigma : {b : Type} -> {dom, cod : SliceObj b} ->
   SPFamData {b} dom cod -> SPFDataFam {b} dom cod
-SPFCdiag {b} {dom} {cod} sf eb =
+SPFCsigma {b} {dom} {cod} sf eb =
   SPFD
     (\ec => spfdPos sf (eb ** ec))
     (\ec, ep, ed => spfdDir sf (eb ** ec) ep (eb ** ed))
@@ -3118,14 +3118,14 @@ SPFCpi {b} {dom} {cod} sf =
 public export
 SPFCsigmaDiagCounit : {b : Type} -> {dom, cod : SliceObj b} ->
   (sf : SPFDataFam {b} dom cod) ->
-  SPFdepNTfam {b} {dom} {cod} (SPFCdiag $ SPFCsigma sf) sf
+  SPFdepNTfam {b} {dom} {cod} (SPFCsigma $ SPFCdiag sf) sf
 SPFCsigmaDiagCounit {b} {dom} {cod} sf eb =
   SPFDm (\_ => id) (\ec, ep, ed, dd => (Refl ** dd))
 
 public export
 SPFCsigmaDiagUnit : {b : Type} -> {dom, cod : SliceObj b} ->
   (spfd : SPFamData {b} dom cod) ->
-  SPFnt spfd (SPFCsigma $ SPFCdiag spfd)
+  SPFnt spfd (SPFCdiag $ SPFCsigma spfd)
 SPFCsigmaDiagUnit {b} {dom} {cod} spfd =
   SPFDm
     (\(eb ** ec), ep => ep)
