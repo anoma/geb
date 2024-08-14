@@ -3082,8 +3082,12 @@ SPFpoCellFromDP {w'} {z'} {w} {z} {f} {g} spfc =
 -------------------------------------------------
 
 public export
+SPFDUfam : {b : Type} -> (dom, cod : SliceObj b) -> Type
+SPFDUfam {b} dom cod = (eb : b) -> SPFData (dom eb) (cod eb)
+
+public export
 SPFCsigmaU : {b : Type} -> {dom, cod : SliceObj b} ->
-  ((eb : b) -> SPFData (dom eb) (cod eb)) ->
+  SPFDUfam {b} dom cod ->
   SPFData (Sigma {a=b} dom) (Sigma {a=b} cod)
 SPFCsigmaU {b} {dom} {cod} sf =
   SPFD
@@ -3096,7 +3100,7 @@ SPFCsigmaU {b} {dom} {cod} sf =
 public export
 SPFCdiagU : {b : Type} -> {dom, cod : SliceObj b} ->
   SPFData (Sigma {a=b} dom) (Sigma {a=b} cod) ->
-  (eb : b) -> SPFData (dom eb) (cod eb)
+  SPFDUfam {b} dom cod
 SPFCdiagU {b} {dom} {cod} sf eb =
   SPFD
     (\ec => spfdPos sf (eb ** ec))
@@ -3104,7 +3108,7 @@ SPFCdiagU {b} {dom} {cod} sf eb =
 
 public export
 SPFCpiU : {b : Type} -> {dom, cod : SliceObj b} ->
-  ((eb : b) -> SPFData (dom eb) (cod eb)) ->
+  SPFDUfam {b} dom cod ->
   SPFData (Sigma {a=b} dom) (Sigma {a=b} cod)
 SPFCpiU {b} {dom} {cod} sf =
   SPFD
