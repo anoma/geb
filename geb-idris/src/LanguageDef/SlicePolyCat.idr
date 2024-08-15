@@ -993,6 +993,54 @@ SPFDmorphFromBaseSlSig {dom} {cod} {spfd} {i} {a} m =
     (SPFDgenFactSndFromBaseSl {dom} {cod} {spfd} {i} {a} m)
     (SPFDgenFactFstFromBaseSl {dom} {cod} spfd i)
 
+-- If we want to write a morphism `b -> T(a)` which is not explicitly
+-- a sigma type, but do want to use the base-slice form of factorization,
+-- then we can do that with a further factorization -- the choice of
+-- a base slice and a corresponding domain-category morphism plus a
+-- morphism from `b` to the chosen sigma type, which in turn factors
+-- into two (a morphism to the first component and a dependent morphism
+-- to the second component).
+--
+-- That yields the following full structure as a way of specifying
+-- any morphism `b -> T(a)`:
+public export
+record MorphToSPFD {dom, cod : Type}
+    (spfd : SPFData dom cod) (b : SliceObj cod) (a : SliceObj dom)
+    where
+  constructor MtoSPFD
+  m2sBaseSl : SPFDbaseSl spfd
+  m2sInj1 : SliceMorphism {a=cod} b (spfdPos spfd)
+  m2sInj2 : (ec : cod) -> (eb : b ec) -> m2sBaseSl (ec ** m2sInj1 ec eb)
+  m2sSndFact : SPFDgenFactSndSigFromBaseSl spfd m2sBaseSl a
+
+public export
+MorphToSPFDdom : {dom, cod : Type} ->
+  {spfd : SPFData dom cod} -> {b : SliceObj cod} -> {a : SliceObj dom} ->
+  (m : MorphToSPFD {dom} {cod} spfd b a) ->
+  SliceMorphism {a=cod} b (SPFDmorphDomFromBaseSl spfd $ m2sBaseSl m)
+MorphToSPFDdom {dom} {cod} {spfd} {b} {a} m ec eb =
+  (m2sInj1 m ec eb ** m2sInj2 m ec eb)
+
+public export
+MorphToSPFDsigma : {dom, cod : Type} ->
+  {spfd : SPFData dom cod} -> {b : SliceObj cod} -> {a : SliceObj dom} ->
+  (m : MorphToSPFD {dom} {cod} spfd b a) ->
+  SliceMorphism {a=cod}
+    (SPFDmorphDomFromBaseSl spfd $ m2sBaseSl m)
+    (SPFDmultiR spfd a)
+MorphToSPFDsigma {dom} {cod} {spfd} {b} {a} m =
+  SPFDmorphFromBaseSlSig {dom} {cod} {spfd} {i=(m2sBaseSl m)} {a} (m2sSndFact m)
+
+public export
+morphToSPFD : {dom, cod : Type} ->
+  {spfd : SPFData dom cod} -> {b : SliceObj cod} -> {a : SliceObj dom} ->
+  MorphToSPFD {dom} {cod} spfd b a ->
+  SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)
+morphToSPFD {dom} {cod} {spfd} {b} {a} m =
+  sliceComp {a=cod}
+    (MorphToSPFDsigma {dom} {cod} {spfd} {b} {a} m)
+    (MorphToSPFDdom m)
+
 -- As a parametric right adjoint, a polynomial functor has a left multi-adjoint
 -- (so it is itself a right multi-adjoint).  This is the unit of the
 -- slice-polynomial-functor multi-adjunction; its existence is listed as the
