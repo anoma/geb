@@ -934,6 +934,13 @@ SPFDgenFactIntCodObjFromBaseSl : {dom, cod : Type} ->
 SPFDgenFactIntCodObjFromBaseSl {dom} {cod} spfd =
   SPFDmultiR {dom} {cod} spfd . SPFDgenFactIntDomObjFromBaseSl spfd
 
+-- The first component of the generic factorization when specified by
+-- a slice of `SPFDbase`.
+--
+-- Note that when we specify a morphism this way, we do not need to have
+-- chosen a `SliceObj dom` yet -- our choice can be made independently of
+-- the `a` in `b -> T(a)`, and therefore one such choice can be reused by
+-- morphisms with different codomains.
 public export
 SPFDgenFactFstFromBaseSl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (i : SliceObj $ SPFDbase spfd) ->
