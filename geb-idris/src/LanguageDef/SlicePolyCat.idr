@@ -2410,117 +2410,6 @@ SPFpoDoubleCat =
     SPFpoDblCatHcomp
     SPFpoDblCatCellTo2Mor
 
------------------------------------------------
------------------------------------------------
----- Families of slice polynomial functors ----
------------------------------------------------
------------------------------------------------
-
--- A `b`-way family of `SPFData dom cod`s is equivalent to a single
--- `SPFData dom (b, cod)`.
-
-public export
-SPFDataFamToProd : {b, dom, cod : Type} ->
-  (b -> SPFData dom cod) -> SPFData dom (b, cod)
-SPFDataFamToProd {b} {dom} {cod} sf =
-  SPFD
-    (uncurry (spfdPos . sf))
-    (\ebc => case ebc of (eb, ec) => spfdDir (sf eb) ec)
-
-public export
-SPFDataProdToFam : {b, dom, cod : Type} ->
-  SPFData dom (b, cod) -> (b -> SPFData dom cod)
-SPFDataProdToFam {b} {dom} {cod} spfd eb =
-  SPFD
-    (curry (spfdPos spfd) eb)
-    (\ec => spfdDir spfd (eb, ec))
-
-public export
-SPFDataFamToProdUnit : {dom, cod : Type} ->
-  (cod -> SPFData dom Unit) -> SPFData dom cod
-SPFDataFamToProdUnit {dom} {cod} sf with
-    (SPFDataFamToProd {b=cod} {dom} {cod=Unit} sf)
-  SPFDataFamToProdUnit {dom} {cod} sf | (SPFD pos dir) =
-    SPFD (pos . flip MkPair ()) (\ec => dir (ec, ()))
-
-public export
-SPFDataFamToProdUnitNT : {dom, cod : Type} ->
-  (sf, sf' : cod -> SPFData dom Unit) ->
-  ((ec : cod) -> SPFnt (sf ec) (sf' ec)) ->
-  SPFnt (SPFDataFamToProdUnit sf) (SPFDataFamToProdUnit sf')
-SPFDataFamToProdUnitNT {dom} {cod} sf sf' ntf =
-  SPFDm (\ec => spOnPos (ntf ec) ()) (\ec => spOnDir (ntf ec) ())
-
-public export
-SPFDataProdToFamUnit : {dom, cod : Type} ->
-  SPFData dom cod -> (cod -> SPFData dom Unit)
-SPFDataProdToFamUnit {dom} {cod} sf =
-  SPFDataProdToFam {b=cod} {dom} {cod=Unit} $
-    SPFD (spfdPos sf . fst) (\ec => spfdDir sf (fst ec))
-
-public export
-SPFDataProdToFamUnitNT : {dom, cod : Type} ->
-  (sf, sf' : SPFData dom cod) -> SPFnt sf sf' ->
-  (ec : cod) ->
-  SPFnt {dom} {cod=Unit}
-    (SPFDataProdToFamUnit sf ec)
-    (SPFDataProdToFamUnit sf' ec)
-SPFDataProdToFamUnitNT {dom} {cod} sf sf' nt ec =
-  SPFDm (\_ => spOnPos nt ec) (\_ => spOnDir nt ec)
-
-public export
-SPFDataFamForall : {b, dom, cod : Type} ->
-  (b -> SPFData dom cod) -> SPFData dom cod
-SPFDataFamForall {b} {dom} {cod} =
-  spfdPostcompPi {x=dom} {y=(b, cod)} {z=cod} snd
-  . SPFDataFamToProd {b} {dom} {cod}
-
-public export
-SPFDataFamForallToInterp : {b, dom, cod : Type} ->
-  (sf : b -> SPFData dom cod) ->
-  SliceNatTrans {x=dom} {y=cod}
-    (InterpSPFData {dom} {cod} $ SPFDataFamForall {b} {dom} {cod} sf)
-    (\sd, ec => Pi {a=b} $ \eb => InterpSPFData {dom} {cod} (sf eb) sd ec)
-SPFDataFamForallToInterp {b} {dom} {cod} sf sd ec ((() ** pm) ** dm) eb =
-  (pm (eb, ec) Refl ** \ed, fd => dm ed (((eb, ec) ** Refl) ** fd))
-
-public export
-SPFDataFamForallFromInterp : {b, dom, cod : Type} ->
-  (sf : b -> SPFData dom cod) ->
-  SliceNatTrans {x=dom} {y=cod}
-    (\sd, ec => Pi {a=b} $ \eb => InterpSPFData {dom} {cod} (sf eb) sd ec)
-    (InterpSPFData {dom} {cod} $ SPFDataFamForall {b} {dom} {cod} sf)
-SPFDataFamForallFromInterp {b} {dom} {cod} sf sd ec pdm =
-  ((() ** \(eb, ec), Refl => fst $ pdm eb) **
-   \ed, (((eb, ec) ** Refl) ** fd) => snd (pdm eb) ed fd)
-
-public export
-SPFDataFamExists : {b, dom, cod : Type} ->
-  (b -> SPFData dom cod) -> SPFData dom cod
-SPFDataFamExists {b} {dom} {cod} =
-  spfdPostcompSigma {x=dom} {y=(b, cod)} {z=cod} snd
-  . SPFDataFamToProd {b} {dom} {cod}
-
-public export
-SPFDataFamExistsToInterp : {b, dom, cod : Type} ->
-  (sf : b -> SPFData dom cod) ->
-  SliceNatTrans {x=dom} {y=cod}
-    (InterpSPFData {dom} {cod} $ SPFDataFamExists {b} {dom} {cod} sf)
-    (\sd, ec => Sigma {a=b} $ \eb => InterpSPFData {dom} {cod} (sf eb) sd ec)
-SPFDataFamExistsToInterp {b} {dom} {cod} sf sd ec
-  ((SFS (eb, ec) () ** pm) ** dm) =
-    (eb ** (pm (eb, ec) Refl ** \ed, fd => dm ed (((eb, ec) ** Refl) ** fd)))
-
-public export
-SPFDataFamExistsFromInterp : {b, dom, cod : Type} ->
-  (sf : b -> SPFData dom cod) ->
-  SliceNatTrans {x=dom} {y=cod}
-    (\sd, ec => Sigma {a=b} $ \eb => InterpSPFData {dom} {cod} (sf eb) sd ec)
-    (InterpSPFData {dom} {cod} $ SPFDataFamExists {b} {dom} {cod} sf)
-SPFDataFamExistsFromInterp {b} {dom} {cod} sf sd ec (eb ** ep ** dm) =
-  ((SFS (eb, ec) () ** \(eb, ec), Refl => ep) **
-   (\ed, (((eb, ec) ** Refl) ** fd) => dm ed fd))
-
 -------------------------------------------------
 -------------------------------------------------
 ---- Slice-polynomial categories of elements ----
@@ -3084,6 +2973,111 @@ SPFpoCellFromDP {w'} {z'} {w} {z} {f} {g} spfc =
 ---- Internal language of cells of `SPFData` ----
 -------------------------------------------------
 -------------------------------------------------
+
+-- A `b`-way family of `SPFData dom cod`s is equivalent to a single
+-- `SPFData dom (b, cod)`.
+
+public export
+SPFDataFamToProd : {b, dom, cod : Type} ->
+  (b -> SPFData dom cod) -> SPFData dom (b, cod)
+SPFDataFamToProd {b} {dom} {cod} sf =
+  SPFD
+    (uncurry (spfdPos . sf))
+    (\ebc => case ebc of (eb, ec) => spfdDir (sf eb) ec)
+
+public export
+SPFDataProdToFam : {b, dom, cod : Type} ->
+  SPFData dom (b, cod) -> (b -> SPFData dom cod)
+SPFDataProdToFam {b} {dom} {cod} spfd eb =
+  SPFD
+    (curry (spfdPos spfd) eb)
+    (\ec => spfdDir spfd (eb, ec))
+
+public export
+SPFDataFamToProdUnit : {dom, cod : Type} ->
+  (cod -> SPFData dom Unit) -> SPFData dom cod
+SPFDataFamToProdUnit {dom} {cod} sf with
+    (SPFDataFamToProd {b=cod} {dom} {cod=Unit} sf)
+  SPFDataFamToProdUnit {dom} {cod} sf | (SPFD pos dir) =
+    SPFD (pos . flip MkPair ()) (\ec => dir (ec, ()))
+
+public export
+SPFDataFamToProdUnitNT : {dom, cod : Type} ->
+  (sf, sf' : cod -> SPFData dom Unit) ->
+  ((ec : cod) -> SPFnt (sf ec) (sf' ec)) ->
+  SPFnt (SPFDataFamToProdUnit sf) (SPFDataFamToProdUnit sf')
+SPFDataFamToProdUnitNT {dom} {cod} sf sf' ntf =
+  SPFDm (\ec => spOnPos (ntf ec) ()) (\ec => spOnDir (ntf ec) ())
+
+public export
+SPFDataProdToFamUnit : {dom, cod : Type} ->
+  SPFData dom cod -> (cod -> SPFData dom Unit)
+SPFDataProdToFamUnit {dom} {cod} sf =
+  SPFDataProdToFam {b=cod} {dom} {cod=Unit} $
+    SPFD (spfdPos sf . fst) (\ec => spfdDir sf (fst ec))
+
+public export
+SPFDataProdToFamUnitNT : {dom, cod : Type} ->
+  (sf, sf' : SPFData dom cod) -> SPFnt sf sf' ->
+  (ec : cod) ->
+  SPFnt {dom} {cod=Unit}
+    (SPFDataProdToFamUnit sf ec)
+    (SPFDataProdToFamUnit sf' ec)
+SPFDataProdToFamUnitNT {dom} {cod} sf sf' nt ec =
+  SPFDm (\_ => spOnPos nt ec) (\_ => spOnDir nt ec)
+
+public export
+SPFDataFamForall : {b, dom, cod : Type} ->
+  (b -> SPFData dom cod) -> SPFData dom cod
+SPFDataFamForall {b} {dom} {cod} =
+  spfdPostcompPi {x=dom} {y=(b, cod)} {z=cod} snd
+  . SPFDataFamToProd {b} {dom} {cod}
+
+public export
+SPFDataFamForallToInterp : {b, dom, cod : Type} ->
+  (sf : b -> SPFData dom cod) ->
+  SliceNatTrans {x=dom} {y=cod}
+    (InterpSPFData {dom} {cod} $ SPFDataFamForall {b} {dom} {cod} sf)
+    (\sd, ec => Pi {a=b} $ \eb => InterpSPFData {dom} {cod} (sf eb) sd ec)
+SPFDataFamForallToInterp {b} {dom} {cod} sf sd ec ((() ** pm) ** dm) eb =
+  (pm (eb, ec) Refl ** \ed, fd => dm ed (((eb, ec) ** Refl) ** fd))
+
+public export
+SPFDataFamForallFromInterp : {b, dom, cod : Type} ->
+  (sf : b -> SPFData dom cod) ->
+  SliceNatTrans {x=dom} {y=cod}
+    (\sd, ec => Pi {a=b} $ \eb => InterpSPFData {dom} {cod} (sf eb) sd ec)
+    (InterpSPFData {dom} {cod} $ SPFDataFamForall {b} {dom} {cod} sf)
+SPFDataFamForallFromInterp {b} {dom} {cod} sf sd ec pdm =
+  ((() ** \(eb, ec), Refl => fst $ pdm eb) **
+   \ed, (((eb, ec) ** Refl) ** fd) => snd (pdm eb) ed fd)
+
+public export
+SPFDataFamExists : {b, dom, cod : Type} ->
+  (b -> SPFData dom cod) -> SPFData dom cod
+SPFDataFamExists {b} {dom} {cod} =
+  spfdPostcompSigma {x=dom} {y=(b, cod)} {z=cod} snd
+  . SPFDataFamToProd {b} {dom} {cod}
+
+public export
+SPFDataFamExistsToInterp : {b, dom, cod : Type} ->
+  (sf : b -> SPFData dom cod) ->
+  SliceNatTrans {x=dom} {y=cod}
+    (InterpSPFData {dom} {cod} $ SPFDataFamExists {b} {dom} {cod} sf)
+    (\sd, ec => Sigma {a=b} $ \eb => InterpSPFData {dom} {cod} (sf eb) sd ec)
+SPFDataFamExistsToInterp {b} {dom} {cod} sf sd ec
+  ((SFS (eb, ec) () ** pm) ** dm) =
+    (eb ** (pm (eb, ec) Refl ** \ed, fd => dm ed (((eb, ec) ** Refl) ** fd)))
+
+public export
+SPFDataFamExistsFromInterp : {b, dom, cod : Type} ->
+  (sf : b -> SPFData dom cod) ->
+  SliceNatTrans {x=dom} {y=cod}
+    (\sd, ec => Sigma {a=b} $ \eb => InterpSPFData {dom} {cod} (sf eb) sd ec)
+    (InterpSPFData {dom} {cod} $ SPFDataFamExists {b} {dom} {cod} sf)
+SPFDataFamExistsFromInterp {b} {dom} {cod} sf sd ec (eb ** ep ** dm) =
+  ((SFS (eb, ec) () ** \(eb, ec), Refl => ep) **
+   (\ed, (((eb, ec) ** Refl) ** fd) => dm ed fd))
 
 ----------------------------------
 ---- Embedding into `SPFData` ----
