@@ -910,19 +910,19 @@ SPFDfactCorrect {dom} {cod} spfd a b i fext =
 -- first morphism component of the factorization:
 public export
 SPFDmorphDomFromBaseSl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  SliceObj (SPFDbase spfd) -> SliceObj cod
+  SPFDbaseSl spfd -> SliceObj cod
 SPFDmorphDomFromBaseSl {dom} {cod} spfd i ec =
   Sigma {a=(spfdPos spfd ec)} $ curry i ec
 
 public export
 SPFDunitIdxFromBaseSl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  (i : SliceObj $ SPFDbase spfd) ->
+  (i : SPFDbaseSl spfd) ->
   SPFDmultiIdx spfd (SPFDmorphDomFromBaseSl spfd i)
 SPFDunitIdxFromBaseSl {dom} {cod} spfd i ec = DPair.fst
 
 public export
 SPFDgenFactIntDomObjFromBaseSl : {dom, cod : Type} ->
-  (spfd : SPFData dom cod) -> (i : SliceObj $ SPFDbase spfd) -> SliceObj dom
+  (spfd : SPFData dom cod) -> (i : SPFDbaseSl spfd) -> SliceObj dom
 SPFDgenFactIntDomObjFromBaseSl {dom} {cod} spfd i =
   SPFDmultiL spfd
     (SPFDmorphDomFromBaseSl spfd i)
@@ -930,7 +930,7 @@ SPFDgenFactIntDomObjFromBaseSl {dom} {cod} spfd i =
 
 public export
 SPFDgenFactIntCodObjFromBaseSl : {dom, cod : Type} ->
-  (spfd : SPFData dom cod) -> (i : SliceObj $ SPFDbase spfd) -> SliceObj cod
+  (spfd : SPFData dom cod) -> (i : SPFDbaseSl spfd) -> SliceObj cod
 SPFDgenFactIntCodObjFromBaseSl {dom} {cod} spfd =
   SPFDmultiR {dom} {cod} spfd . SPFDgenFactIntDomObjFromBaseSl spfd
 
@@ -943,7 +943,7 @@ SPFDgenFactIntCodObjFromBaseSl {dom} {cod} spfd =
 -- morphisms with different codomains.
 public export
 SPFDgenFactFstFromBaseSl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  (i : SliceObj $ SPFDbase spfd) ->
+  (i : SPFDbaseSl spfd) ->
   SliceMorphism {a=cod}
     (SPFDmorphDomFromBaseSl spfd i)
     (SPFDgenFactIntCodObjFromBaseSl spfd i)
@@ -951,6 +951,47 @@ SPFDgenFactFstFromBaseSl {dom} {cod} spfd i =
   SPFDpraUnit spfd
     (SPFDmorphDomFromBaseSl spfd i)
     (SPFDunitIdxFromBaseSl spfd i)
+
+-- If we have specified an intermediate object and first component of a
+-- generic factorization via a slice of the base, we can then specify
+-- the second component (again, without loss of generality) by a morphism
+-- of `SliceObj dom`.  When doing it this way, because we have not yet
+-- at this point specified the entire morphism, we are, instead of
+-- factorizing an existing morphism, _building_ one out of what will
+-- become its factorization.  So here we are specifying only the type
+-- signature that is required to specify a second component.
+public export
+SPFDgenFactSndSigFromBaseSl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (i : SPFDbaseSl spfd) -> (a : SliceObj dom) -> Type
+SPFDgenFactSndSigFromBaseSl {dom} {cod} spfd i a =
+  SliceMorphism {a=dom} (SPFDgenFactIntDomObjFromBaseSl {dom} {cod} spfd i) a
+
+-- Given a domain-category morphism of the above signature, we can lift
+-- it via the polynomial functor to the codomain category:
+public export
+SPFDgenFactSndFromBaseSl : {dom, cod : Type} -> {spfd : SPFData dom cod} ->
+  {i : SPFDbaseSl spfd} -> {a : SliceObj dom} ->
+  SPFDgenFactSndSigFromBaseSl {dom} {cod} spfd i a ->
+  SliceMorphism {a=cod}
+    (SPFDgenFactIntCodObjFromBaseSl spfd i)
+    (SPFDmultiR {dom} {cod} spfd a)
+SPFDgenFactSndFromBaseSl {dom} {cod} {spfd} {i} {a} =
+  SPFDmultiRmap spfd (SPFDgenFactIntDomObjFromBaseSl {dom} {cod} spfd i) a
+
+-- If we are given a slice of the base (i.e. of the positions) and a
+-- (domain-category) morphism of the above signature, we can compute a
+-- (codomain-category) morphism:
+public export
+SPFDmorphFromBaseSlSig : {dom, cod : Type} -> {spfd : SPFData dom cod} ->
+  {i : SPFDbaseSl spfd} -> {a : SliceObj dom} ->
+  SPFDgenFactSndSigFromBaseSl {dom} {cod} spfd i a ->
+  SliceMorphism {a=cod}
+    (SPFDmorphDomFromBaseSl spfd i)
+    (SPFDmultiR {dom} {cod} spfd a)
+SPFDmorphFromBaseSlSig {dom} {cod} {spfd} {i} {a} m =
+  sliceComp {a=cod}
+    (SPFDgenFactSndFromBaseSl {dom} {cod} {spfd} {i} {a} m)
+    (SPFDgenFactFstFromBaseSl {dom} {cod} spfd i)
 
 -- As a parametric right adjoint, a polynomial functor has a left multi-adjoint
 -- (so it is itself a right multi-adjoint).  This is the unit of the
