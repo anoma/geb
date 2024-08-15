@@ -897,6 +897,56 @@ SPFDfactCorrect {dom} {cod} spfd a b i fext =
   funExt $ \ec => funExt $ \eb =>
     trans (dpEq12 Refl $ funExt $ \ed => funExt $ \dd => Refl) $ sym dpEqPat
 
+-- Because any morphism `b -> T(a)` induces a unique `b -> spfdPos spfd`,
+-- we can use the demonstration of the generic factorization to allow a
+-- new way of defining morphisms `b -> T(a)` without loss of generality.
+-- We consider the first part to be defining the unique `b -> spfdPos spfd`,
+-- and in light of this we can say that we can treat any domain of any
+-- morphism `b -> T(a)` as sliced over `spfdPos spfd`.  Thus we may without
+-- loss of generality define morphisms into `T(a)` as coming from domain
+-- `SPFDbase`.
+--
+-- The choice of the slice object -determines the intermediate object and the
+-- first morphism component of the factorization:
+public export
+SPFDmorphDomFromBaseSl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (a : SliceObj dom) -> SliceObj (SPFDbase spfd) -> SliceObj cod
+SPFDmorphDomFromBaseSl {dom} {cod} spfd a i ec =
+  Sigma {a=(spfdPos spfd ec)} $ curry i ec
+
+public export
+SPFDunitIdxFromBaseSl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (a : SliceObj dom) -> (i : SliceObj $ SPFDbase spfd) ->
+  SPFDmultiIdx spfd (SPFDmorphDomFromBaseSl spfd a i)
+SPFDunitIdxFromBaseSl {dom} {cod} spfd a i ec = DPair.fst
+
+public export
+SPFDgenFactIntDomObjFromBaseSl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (a : SliceObj dom) -> (i : SliceObj $ SPFDbase spfd) ->
+  SliceObj dom
+SPFDgenFactIntDomObjFromBaseSl {dom} {cod} spfd a i =
+  SPFDmultiL spfd
+    (SPFDmorphDomFromBaseSl spfd a i)
+    (SPFDunitIdxFromBaseSl spfd a i)
+
+public export
+SPFDgenFactIntCodObjFromBaseSl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (a : SliceObj dom) -> (i : SliceObj $ SPFDbase spfd) ->
+  SliceObj cod
+SPFDgenFactIntCodObjFromBaseSl {dom} {cod} spfd a i =
+  SPFDmultiR {dom} {cod} spfd $ SPFDgenFactIntDomObjFromBaseSl spfd a i
+
+public export
+SPFDgenFactFstFromBaseSl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (a : SliceObj dom) -> (i : SliceObj $ SPFDbase spfd) ->
+  SliceMorphism {a=cod}
+    (SPFDmorphDomFromBaseSl spfd a i)
+    (SPFDgenFactIntCodObjFromBaseSl spfd a i)
+SPFDgenFactFstFromBaseSl {dom} {cod} spfd a i =
+  SPFDpraUnit spfd
+    (SPFDmorphDomFromBaseSl spfd a i)
+    (SPFDunitIdxFromBaseSl spfd a i)
+
 -- As a parametric right adjoint, a polynomial functor has a left multi-adjoint
 -- (so it is itself a right multi-adjoint).  This is the unit of the
 -- slice-polynomial-functor multi-adjunction; its existence is listed as the
