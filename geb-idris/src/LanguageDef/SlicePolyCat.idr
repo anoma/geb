@@ -2686,6 +2686,11 @@ public export
 SPFDataFam : {b : Type} -> (dom, cod : SliceObj b) -> Type
 SPFDataFam {b} dom cod = Pi {a=b} $ SPFParamData {b} dom cod
 
+-- Alias for non-dependent version of `SPFDataFam`.
+public export
+SPFndDataFam : Type -> Type -> Type -> Type
+SPFndDataFam b dom cod = SPFDataFam {b} (\_ => dom) (\_ => cod)
+
 public export
 SPFamData : {b : Type} -> (dom, cod : SliceObj b) -> Type
 SPFamData {b} dom cod = SPFData (Sigma {a=b} dom) (Sigma {a=b} cod)
@@ -2766,12 +2771,16 @@ SPFCsliceTotUnit {b} {dom} {cod} spfd =
 ---- Quantifiers ----
 ---------------------
 
+-------------------------------------
+---- Non-dependent special cases ----
+-------------------------------------
+
 -- A `b`-way family of `SPFData dom cod`s is equivalent to a single
 -- `SPFData dom (b, cod)`.
 
 public export
 SPFDataFamToProd : {b, dom, cod : Type} ->
-  (b -> SPFData dom cod) -> SPFData dom (b, cod)
+  (SPFndDataFam b dom cod) -> SPFData dom (b, cod)
 SPFDataFamToProd {b} {dom} {cod} sf =
   SPFD
     (uncurry (spfdPos . sf))
@@ -2779,7 +2788,7 @@ SPFDataFamToProd {b} {dom} {cod} sf =
 
 public export
 SPFDataProdToFam : {b, dom, cod : Type} ->
-  SPFData dom (b, cod) -> (b -> SPFData dom cod)
+  SPFData dom (b, cod) -> (SPFndDataFam b dom cod)
 SPFDataProdToFam {b} {dom} {cod} spfd eb =
   SPFD
     (curry (spfdPos spfd) eb)
@@ -2820,14 +2829,14 @@ SPFDataProdToFamUnitNT {dom} {cod} sf sf' nt ec =
 
 public export
 SPFDataFamForall : {b, dom, cod : Type} ->
-  (b -> SPFData dom cod) -> SPFData dom cod
+  (SPFndDataFam b dom cod) -> SPFData dom cod
 SPFDataFamForall {b} {dom} {cod} =
   spfdPostcompPi {x=dom} {y=(b, cod)} {z=cod} snd
   . SPFDataFamToProd {b} {dom} {cod}
 
 public export
 SPFDataFamForallToInterp : {b, dom, cod : Type} ->
-  (sf : b -> SPFData dom cod) ->
+  (sf : SPFndDataFam b dom cod) ->
   SliceNatTrans {x=dom} {y=cod}
     (InterpSPFData {dom} {cod} $ SPFDataFamForall {b} {dom} {cod} sf)
     (\sd, ec => Pi {a=b} $ \eb => InterpSPFData {dom} {cod} (sf eb) sd ec)
@@ -2836,7 +2845,7 @@ SPFDataFamForallToInterp {b} {dom} {cod} sf sd ec ((() ** pm) ** dm) eb =
 
 public export
 SPFDataFamForallFromInterp : {b, dom, cod : Type} ->
-  (sf : b -> SPFData dom cod) ->
+  (sf : SPFndDataFam b dom cod) ->
   SliceNatTrans {x=dom} {y=cod}
     (\sd, ec => Pi {a=b} $ \eb => InterpSPFData {dom} {cod} (sf eb) sd ec)
     (InterpSPFData {dom} {cod} $ SPFDataFamForall {b} {dom} {cod} sf)
@@ -2846,14 +2855,14 @@ SPFDataFamForallFromInterp {b} {dom} {cod} sf sd ec pdm =
 
 public export
 SPFDataFamExists : {b, dom, cod : Type} ->
-  (b -> SPFData dom cod) -> SPFData dom cod
+  (SPFndDataFam b dom cod) -> SPFData dom cod
 SPFDataFamExists {b} {dom} {cod} =
   spfdPostcompSigma {x=dom} {y=(b, cod)} {z=cod} snd
   . SPFDataFamToProd {b} {dom} {cod}
 
 public export
 SPFDataFamExistsToInterp : {b, dom, cod : Type} ->
-  (sf : b -> SPFData dom cod) ->
+  (sf : SPFndDataFam b dom cod) ->
   SliceNatTrans {x=dom} {y=cod}
     (InterpSPFData {dom} {cod} $ SPFDataFamExists {b} {dom} {cod} sf)
     (\sd, ec => Sigma {a=b} $ \eb => InterpSPFData {dom} {cod} (sf eb) sd ec)
@@ -2863,7 +2872,7 @@ SPFDataFamExistsToInterp {b} {dom} {cod} sf sd ec
 
 public export
 SPFDataFamExistsFromInterp : {b, dom, cod : Type} ->
-  (sf : b -> SPFData dom cod) ->
+  (sf : SPFndDataFam b dom cod) ->
   SliceNatTrans {x=dom} {y=cod}
     (\sd, ec => Sigma {a=b} $ \eb => InterpSPFData {dom} {cod} (sf eb) sd ec)
     (InterpSPFData {dom} {cod} $ SPFDataFamExists {b} {dom} {cod} sf)
