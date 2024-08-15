@@ -2480,306 +2480,6 @@ public export
 SPFelemCat : {dom, cod : Type} -> (f : SPFData dom cod) -> IntCatSig
 SPFelemCat f = ICat (SPFelemCatObj f) (SPFelemCatMICS f)
 
-------------------------------------------------
-------------------------------------------------
----- Slice-of-slice version of `SPFdirType` ----
-------------------------------------------------
-------------------------------------------------
-
--- Suppose the following:
---
---   - `b : Type`
---   - `domsl : SliceObj b` where `dom ~=~ Sigma {a=b} domsl`
---   - `codr : SliceObj b` where `cod ~=~ Sigma {a=b} codr`
---   - `pos : SliceObj cod`
---     (~=~ `SliceObj (Sigma {a=b} codr)` ~=~ `(eb : b) -> codr eb -> Type`)
---
--- (Note that all `(dom, cod)` pairs can be put in this form:  we can take
--- `b := Unit`, `domsl := \() => dom`; codr := \() => cod.)
---
--- Then we can provide the following interface to `SPFdirType`:
-public export
-0 SPFdepDirType : {0 b : Type} ->
-  (0 domsl, codr : SliceObj b) -> (0 pos : (eb : b) -> codr eb -> Type) -> Type
-SPFdepDirType {b} domsl codr pos =
-  (eb : b) -> (ec : codr eb) -> pos eb ec -> SliceObj (domsl eb)
-
--- We can convert an `SPFdepDirType` to an `SPFdirType`:
-public export
-data SPFdirFromDep : {0 b : Type} ->
-    {0 domsl, codr : SliceObj b} -> {0 pos : (eb : b) -> codr eb -> Type} ->
-    SPFdepDirType {b} domsl codr pos ->
-    SPFdirType (Sigma {a=b} domsl) (Sigma {a=b} codr) (uncurry pos) where
-  SPFdd : {0 b : Type} ->
-    {0 domsl, codr : SliceObj b} -> {0 pos : (eb : b) -> codr eb -> Type} ->
-    {0 dir : SPFdepDirType {b} domsl codr pos} ->
-    (eb : b) -> (ec : codr eb) -> (ep : pos eb ec) -> (ed : domsl eb) ->
-    dir eb ec ep ed ->
-    SPFdirFromDep {b} {domsl} {codr} {pos} dir (eb ** ec) ep (eb ** ed)
-
--- The signature of `SPFdepDirType` allows us to define for each type `b`
--- a double category of slice polynomial functors whose objects are slice
--- objects of `Type` over `b`, whose vertical morphisms are slice morphisms
--- in `Type` over `b`, and whose horizontal morphisms are slice polynomial
--- functors using the dependent signature.  The cells are defined below as
--- `SPFdepPoCell`.
-public export
-record SPFdepData {0 b : Type} (dom, cod : SliceObj b) where
-  constructor SPFDD
-  spfddPos : (eb : b) -> cod eb -> Type
-  spfddDir : SPFdepDirType {b} dom cod spfddPos
-
--- Now we see that an `SPFdepData` is simply a `b`-indexed dependent family
--- of `SPFData`s.
-public export
-SPFParamData : {b : Type} -> SliceObj b -> SliceObj b -> SliceObj b
-SPFParamData {b} dom cod eb = SPFData (dom eb) (cod eb)
-
-public export
-SPFDataFam : {b : Type} -> (dom, cod : SliceObj b) -> Type
-SPFDataFam {b} dom cod = Pi {a=b} $ SPFParamData {b} dom cod
-
-public export
-SPFamData : {b : Type} -> (dom, cod : SliceObj b) -> Type
-SPFamData {b} dom cod = SPFData (Sigma {a=b} dom) (Sigma {a=b} cod)
-
-public export
-SPFDataFamPos : {b : Type} -> {dom, cod : SliceObj b} ->
-  SPFDataFam {b} dom cod -> (eb : b) -> SliceObj (cod eb)
-SPFDataFamPos {b} {dom} {cod} sf i = spfdPos (sf i)
-
-public export
-SPFDataFamDir : {b : Type} -> {dom, cod : SliceObj b} ->
-  (sf : SPFDataFam {b} dom cod) -> (eb : b) ->
-  SPFdirType (dom eb) (cod eb) (SPFDataFamPos sf eb)
-SPFDataFamDir {b} {dom} {cod} sf i = spfdDir (sf i)
-
-public export
-SPFDataFamFromDep : {0 b : Type} -> {0 dom, cod : SliceObj b} ->
-  SPFdepData {b} dom cod -> SPFDataFam {b} dom cod
-SPFDataFamFromDep {b} {dom} {cod} spfdd eb =
-  SPFD (spfddPos spfdd eb) (spfddDir spfdd eb)
-
-public export
-SPFDepFromDataFam : {0 b : Type} -> {0 dom, cod : SliceObj b} ->
-  SPFDataFam {b} dom cod -> SPFdepData {b} dom cod
-SPFDepFromDataFam {b} {dom} {cod} fam =
-  SPFDD (\eb => spfdPos (fam eb)) (\eb => spfdDir (fam eb))
-
--- An `SPFdepData` can be compressed to an `SPFData`, although this loses
--- information compared to the `SPFdepData`/`SPFData`-family formulation
--- in that it erases the `b`-dependent connection between `dom` and `cod`.
-public export
-SPFDataFromDep : {0 b : Type} -> {0 dom, cod : SliceObj b} ->
-  SPFdepData {b} dom cod -> SPFamData {b} dom cod
-SPFDataFromDep {b} {dom} {cod} spfdd =
-  SPFD (uncurry $ spfddPos spfdd) (SPFdirFromDep $ spfddDir spfdd)
-
--- The signature that this form of SPFD allows us to write makes the domain
--- and codomain themselves both dependent on a common type (`b`), thus allowing
--- us to express a _relationship_ between the dependent types of the domain
--- and codomain.
---
--- `InterpSPFdepData` and `InterpSPFdepDataMap` together may be viewed as
--- the object-map and morphism-map components of a functor from the discrete
--- category whose objects are the terms of `b` to the category of slice
--- polynomial functors whose domain and codomain are slices of `dom eb`
--- and `cod eb` respectively for each `eb : b`.
---
--- This is forgetful, compared to `InterpSPFdepDataEl`.
-public export
-InterpSPFdepData : {b : Type} -> {dom, cod : SliceObj b} ->
-  SPFdepData {b} dom cod ->
-  SliceFunctor (Sigma {a=b} dom) (Sigma {a=b} cod)
-InterpSPFdepData {b} {dom} {cod} spfdd =
-  InterpSPFData {dom=(Sigma {a=b} dom)} {cod=(Sigma {a=b} cod)}
-    (SPFDataFromDep spfdd)
-
-public export
-InterpSPFdepDataEl : {b : Type} -> {dom, cod : SliceObj b} ->
-  SPFdepData {b} dom cod ->
-  (eb : b) -> SliceFunctor (dom eb) (cod eb)
-InterpSPFdepDataEl {b} {dom} {cod} spfdd =
-  piMap
-    (\eb => InterpSPFData {dom=(dom eb)} {cod=(cod eb)})
-    (SPFDataFamFromDep spfdd)
-
--- This is forgetful, compared to `InterpSPFdepDataMapEl`.
-public export
-InterpSPFdepDataMap : {b : Type} -> {dom, cod : SliceObj b} ->
-  (spfdd : SPFdepData {b} dom cod) ->
-  SliceFMap (InterpSPFdepData {b} {dom} {cod} spfdd)
-InterpSPFdepDataMap {b} {dom} {cod} spfdd =
-  InterpSPFDataMap {dom=(Sigma {a=b} dom)} {cod=(Sigma {a=b} cod)}
-    (SPFDataFromDep spfdd)
-
-public export
-InterpSPFdepDataMapEl : {b : Type} -> {dom, cod : SliceObj b} ->
-  (spfdd : SPFdepData {b} dom cod) ->
-  (eb : b) -> SliceFMap (InterpSPFdepDataEl {b} {dom} {cod} spfdd eb)
-InterpSPFdepDataMapEl {b} {dom} {cod} spfdd eb =
-  InterpSPFDataMap {dom=(dom eb)} {cod=(cod eb)} (SPFDataFamFromDep spfdd eb)
-
-public export
-record SPFdepNT {0 b : Type} {dom, cod : SliceObj b}
-    (f, g : SPFdepData {b} dom cod) where
-  constructor SPFdnt
-  spdOnPos :
-    (eb : b) -> SliceMorphism {a=(cod eb)} (spfddPos f eb) (spfddPos g eb)
-  spdOnDir : (eb : b) -> (ec : cod eb) ->
-    (ep : spfddPos f eb ec) -> (ed : dom eb) ->
-    spfddDir g eb ec (spdOnPos eb ec ep) ed ->
-    spfddDir f eb ec ep ed
-
--- This is forgetful, using the forgetful `SPFdataFromDep`.
-public export
-SPFntFromDep : {0 b : Type} -> {0 dom, cod : SliceObj b} ->
-  {0 f, g : SPFdepData {b} dom cod} ->
-  SPFdepNT {b} f g -> SPFnt (SPFDataFromDep f) (SPFDataFromDep g)
-SPFntFromDep {b} {dom} {cod} {f} {g} alpha =
-  SPFDm
-    (\ebc, efp => spdOnPos alpha (fst ebc) (snd ebc) efp)
-    (\(eb ** ec), efp, (_ ** ed), (SPFdd _ _ _ _ dd) =>
-      SPFdd eb ec efp ed $ spdOnDir alpha eb ec efp ed dd)
-
--- This is forgetful, compared to `InterpSPFdepNTel`.
-public export
-InterpSPFdepNT : {b : Type} -> {dom, cod : SliceObj b} ->
-  (f, g : SPFdepData {b} dom cod) ->
-  SPFdepNT f g ->
-  SliceNatTrans {x=(Sigma {a=b} dom)} {y=(Sigma {a=b} cod)}
-    (InterpSPFdepData f)
-    (InterpSPFdepData g)
-InterpSPFdepNT {b} {dom} {cod} f g alpha =
-  InterpSPFnt (SPFDataFromDep f) (SPFDataFromDep g) (SPFntFromDep alpha)
-
--- Now we show that a `b`-dependent slice polynomial natural transformation
--- is just a `b`-indexed dependent family of slice polynomial natural
--- transformations.
-
-public export
-SPFdepNTfam : {b : Type} -> {dom, cod : SliceObj b} ->
-  (f, g : SPFDataFam {b} dom cod) -> Type
-SPFdepNTfam {b} {dom} {cod} f g =
-  Pi {a=b} (\eb => SPFnt {dom=(dom eb)} {cod=(cod eb)} (f eb) (g eb))
-
-public export
-SPFntFamFromDep : {0 b : Type} -> {0 dom, cod : SliceObj b} ->
-  {f, g : SPFdepData {b} dom cod} ->
-  SPFdepNT {b} {dom} {cod} f g ->
-  SPFdepNTfam {b} {dom} {cod} (SPFDataFamFromDep f) (SPFDataFamFromDep g)
-SPFntFamFromDep {b} {dom} {cod} {f} {g} alpha eb =
-  SPFDm (spdOnPos alpha eb) (spdOnDir alpha eb)
-
-public export
-SPFntDepFromFam : {0 b : Type} -> {0 dom, cod : SliceObj b} ->
-  {f, g : SPFdepData {b} dom cod} ->
-  SPFdepNTfam {b} {dom} {cod} (SPFDataFamFromDep f) (SPFDataFamFromDep g) ->
-  SPFdepNT {b} {dom} {cod} f g
-SPFntDepFromFam {b} {dom} {cod} {f} {g} fam =
-  SPFdnt (\eb => spOnPos (fam eb)) (\eb => spOnDir (fam eb))
-
-public export
-InterpSPFdepNTel : {b : Type} -> {dom, cod : SliceObj b} ->
-  (f, g : SPFdepData {b} dom cod) ->
-  SPFdepNT f g ->
-  (eb : b) ->
-  SliceNatTrans {x=(dom eb)} {y=(cod eb)}
-    (InterpSPFdepDataEl f eb)
-    (InterpSPFdepDataEl g eb)
-InterpSPFdepNTel {b} {dom} {cod} f g alpha eb =
-  InterpSPFnt {dom=(dom eb)} {cod=(cod eb)}
-    (SPFDataFamFromDep f eb) (SPFDataFamFromDep g eb)
-    (SPFntFamFromDep alpha eb)
-
-public export
-spfDepPushoutPos : {b : Type} -> {x, y, z : SliceObj b} ->
-  (SliceMorphism {a=b} z y) -> SPFdepData x z -> SPFdepData x y
-spfDepPushoutPos {b} {x} {y} {z} mzy f =
-  SPFDD
-    (\eb => SliceFibSigmaF (mzy eb) $ spfddPos f eb)
-    (\eb, ey, ep => spfddDir f eb (sfsFst ep) (sfsSnd ep))
-
-public export
-spfDepPushoutDir : {b : Type} -> {w, x, z : SliceObj b} ->
-  (SliceMorphism {a=b} w x) -> SPFdepData w z -> SPFdepData x z
-spfDepPushoutDir {b} {w} {x} {z} mwx f =
-  SPFDD (spfddPos f) (\eb, ez => SliceFibSigmaF (mwx eb) . spfddDir f eb ez)
-
-public export
-spfDepPushout : {b : Type} -> {w, x, y, z : SliceObj b} ->
-  (SliceMorphism {a=b} w x) -> (SliceMorphism {a=b} z y) ->
-  SPFdepData w z -> SPFdepData x y
-spfDepPushout {b} {w} {x} {y} {z} mwx mzy =
-  spfDepPushoutPos {x} {y} {z} mzy . spfDepPushoutDir {w} {x} {z} mwx
-
--- The cells of the double category of slice polynomial functors whose domain
--- and codomain are slices of `dom eb` and `cod eb` respectively for each
--- `eb : b`.
-public export
-SPFdepPoCell : {b : Type} -> {w, w', z, z' : SliceObj b} ->
-  (bcl : SliceMorphism {a=b} w w') -> (bcr : SliceMorphism {a=b} z z') ->
-  (f : SPFdepData w z) -> (g : SPFdepData w' z') ->
-  Type
-SPFdepPoCell {w} {w'} {z} {z'} bcl bcr f g =
-  SPFdepNT {dom=w'} {cod=z'} (spfDepPushout bcl bcr f) g
-
--- This is forgetful, like `SPFDataFromDep`, which it uses,
--- compared to `SPFpoCellDepFromFam`.
-public export
-SPFpoCellFromDep : {b : Type} -> {w, w', z, z' : SliceObj b} ->
-  (bcl : SliceMorphism {a=b} w w') -> (bcr : SliceMorphism {a=b} z z') ->
-  (f : SPFdepData w z) -> (g : SPFdepData w' z') ->
-  SPFdepPoCell {w} {w'} {z} {z'} bcl bcr f g ->
-  SPFpoCell
-    {w=(Sigma {a=b} w)}
-    {w'=(Sigma {a=b} w')}
-    {z=(Sigma {a=b} z)}
-    {z'=(Sigma {a=b} z')}
-    (dpMapSnd bcl)
-    (dpMapSnd bcr)
-    (SPFDataFromDep f)
-    (SPFDataFromDep g)
-SPFpoCellFromDep {w} {w'} {z} {z'} bcl bcr f g spfc =
-  SPFDm
-    (\(eb ** ez'), (SFS (eb ** ez) efp) => spdOnPos spfc eb ez' $ SFS ez efp)
-    (\(eb ** ez'), (SFS (eb' ** ez) efp), (eb'' ** ew'), (SPFdd _ _ _ _ egd) =>
-      let (SFS ew efd) = spdOnDir spfc eb' (bcr eb' ez) (SFS ez efp) ew' egd in
-      SFS (eb' ** ew) $ SPFdd eb' ez efp ew efd)
-
--- As with functors and natural transformations, the dependent cells are
--- simply `b`-indexed dependent families of cells.
-
-public export
-SPFpoCellFam : {b : Type} -> {w, w', z, z' : SliceObj b} ->
-  (bcl : SliceMorphism {a=b} w w') -> (bcr : SliceMorphism {a=b} z z') ->
-  (f : SPFDataFam w z) -> (g : SPFDataFam w' z') ->
-  Type
-SPFpoCellFam {b} {w} {w'} {z} {z'} bcl bcr f g =
-  Pi {a=b} $
-    \eb =>
-      SPFpoCell
-        {w=(w eb)} {w'=(w' eb)} {z=(z eb)} {z'=(z' eb)}
-        (bcl eb) (bcr eb) (f eb) (g eb)
-
-public export
-SPFpoCellDepFromFam : {b : Type} -> {w, w', z, z' : SliceObj b} ->
-  (bcl : SliceMorphism {a=b} w w') -> (bcr : SliceMorphism {a=b} z z') ->
-  (f : SPFdepData w z) -> (g : SPFdepData w' z') ->
-  SPFdepPoCell bcl bcr f g ->
-  SPFpoCellFam {b} {w} {w'} {z} {z'} bcl bcr
-    (SPFDataFamFromDep f) (SPFDataFamFromDep g)
-SPFpoCellDepFromFam {b} {w} {w'} {z} {z'} bcl bcr f g = SPFntFamFromDep
-
-public export
-SPFpoCellFamFromDep : {b : Type} -> {w, w', z, z' : SliceObj b} ->
-  (bcl : SliceMorphism {a=b} w w') -> (bcr : SliceMorphism {a=b} z z') ->
-  (f : SPFdepData w z) -> (g : SPFdepData w' z') ->
-  SPFpoCellFam {b} {w} {w'} {z} {z'} bcl bcr
-    (SPFDataFamFromDep f) (SPFDataFamFromDep g) ->
-  SPFdepPoCell bcl bcr f g
-SPFpoCellFamFromDep {b} {w} {w'} {z} {z'} bcl bcr f g = SPFntDepFromFam
-
 --------------------------------------
 --------------------------------------
 ---- Vertical-Cartesian factoring ----
@@ -2974,6 +2674,98 @@ SPFpoCellFromDP {w'} {z'} {w} {z} {f} {g} spfc =
 -------------------------------------------------
 -------------------------------------------------
 
+-------------------------------------------------------------------
+---- Definition of parameterized families of `SPFData` objects ----
+-------------------------------------------------------------------
+
+public export
+SPFParamData : {b : Type} -> SliceObj b -> SliceObj b -> SliceObj b
+SPFParamData {b} dom cod eb = SPFData (dom eb) (cod eb)
+
+public export
+SPFDataFam : {b : Type} -> (dom, cod : SliceObj b) -> Type
+SPFDataFam {b} dom cod = Pi {a=b} $ SPFParamData {b} dom cod
+
+public export
+SPFamData : {b : Type} -> (dom, cod : SliceObj b) -> Type
+SPFamData {b} dom cod = SPFData (Sigma {a=b} dom) (Sigma {a=b} cod)
+
+public export
+SPFDataFamPos : {b : Type} -> {dom, cod : SliceObj b} ->
+  SPFDataFam {b} dom cod -> (eb : b) -> SliceObj (cod eb)
+SPFDataFamPos {b} {dom} {cod} sf i = spfdPos (sf i)
+
+public export
+SPFDataFamDir : {b : Type} -> {dom, cod : SliceObj b} ->
+  (sf : SPFDataFam {b} dom cod) -> (eb : b) ->
+  SPFdirType (dom eb) (cod eb) (SPFDataFamPos sf eb)
+SPFDataFamDir {b} {dom} {cod} sf i = spfdDir (sf i)
+
+public export
+SPFdepNTfam : {b : Type} -> {dom, cod : SliceObj b} ->
+  (f, g : SPFDataFam {b} dom cod) -> Type
+SPFdepNTfam {b} {dom} {cod} f g =
+  Pi {a=b} (\eb => SPFnt {dom=(dom eb)} {cod=(cod eb)} (f eb) (g eb))
+
+public export
+SPFpoCellFam : {b : Type} -> {w, w', z, z' : SliceObj b} ->
+  (bcl : SliceMorphism {a=b} w w') -> (bcr : SliceMorphism {a=b} z z') ->
+  (f : SPFDataFam w z) -> (g : SPFDataFam w' z') ->
+  Type
+SPFpoCellFam {b} {w} {w'} {z} {z'} bcl bcr f g =
+  Pi {a=b} $
+    \eb =>
+      SPFpoCell
+        {w=(w eb)} {w'=(w' eb)} {z=(z eb)} {z'=(z' eb)}
+        (bcl eb) (bcr eb) (f eb) (g eb)
+
+----------------------------------
+---- Embedding into `SPFData` ----
+----------------------------------
+
+public export
+SPFCtot : {b : Type} -> {dom, cod : SliceObj b} ->
+  SPFDataFam {b} dom cod -> SPFamData {b} dom cod
+SPFCtot {b} {dom} {cod} sf =
+  SPFD
+    (\ebc =>
+      (spfdPos (sf $ fst ebc) (snd ebc)))
+    (\ebc, ep, ebd =>
+      (eqb : fst ebc = fst ebd **
+       spfdDir (sf $ fst ebc) (snd ebc) ep (rewrite eqb in snd ebd)))
+
+public export
+SPFCslice : {b : Type} -> {dom, cod : SliceObj b} ->
+  SPFamData {b} dom cod -> SPFDataFam {b} dom cod
+SPFCslice {b} {dom} {cod} sf eb =
+  SPFD
+    (\ec => spfdPos sf (eb ** ec))
+    (\ec, ep, ed => spfdDir sf (eb ** ec) ep (eb ** ed))
+
+-- This adjunction exhibits `SPFDataFam {b} dom cod` as a subcategory of
+-- `SPFamData {b} dom cod`, which is simply a name for the category
+-- `SPFData (Sigma {a=b} dom) (Sigma {a=b} cod)`.
+
+public export
+SPFCsliceTotCounit : {b : Type} -> {dom, cod : SliceObj b} ->
+  (sf : SPFDataFam {b} dom cod) ->
+  SPFdepNTfam {b} {dom} {cod} (SPFCslice $ SPFCtot sf) sf
+SPFCsliceTotCounit {b} {dom} {cod} sf eb =
+  SPFDm (\_ => id) (\ec, ep, ed, dd => (Refl ** dd))
+
+public export
+SPFCsliceTotUnit : {b : Type} -> {dom, cod : SliceObj b} ->
+  (spfd : SPFamData {b} dom cod) ->
+  SPFnt spfd (SPFCtot $ SPFCslice spfd)
+SPFCsliceTotUnit {b} {dom} {cod} spfd =
+  SPFDm
+    (\(eb ** ec), ep => ep)
+    (\(eb ** ec), ep, (eb ** ed), (Refl ** dd) => dd)
+
+---------------------
+---- Quantifiers ----
+---------------------
+
 -- A `b`-way family of `SPFData dom cod`s is equivalent to a single
 -- `SPFData dom (b, cod)`.
 
@@ -3079,48 +2871,263 @@ SPFDataFamExistsFromInterp {b} {dom} {cod} sf sd ec (eb ** ep ** dm) =
   ((SFS (eb, ec) () ** \(eb, ec), Refl => ep) **
    (\ed, (((eb, ec) ** Refl) ** fd) => dm ed fd))
 
-----------------------------------
----- Embedding into `SPFData` ----
-----------------------------------
+------------------------------------------------
+---- Slice-of-slice version of `SPFdirType` ----
+------------------------------------------------
+
+-- Suppose the following:
+--
+--   - `b : Type`
+--   - `domsl : SliceObj b` where `dom ~=~ Sigma {a=b} domsl`
+--   - `codr : SliceObj b` where `cod ~=~ Sigma {a=b} codr`
+--   - `pos : SliceObj cod`
+--     (~=~ `SliceObj (Sigma {a=b} codr)` ~=~ `(eb : b) -> codr eb -> Type`)
+--
+-- (Note that all `(dom, cod)` pairs can be put in this form:  we can take
+-- `b := Unit`, `domsl := \() => dom`; codr := \() => cod.)
+--
+-- Then we can provide the following interface to `SPFdirType`:
+public export
+0 SPFdepDirType : {0 b : Type} ->
+  (0 domsl, codr : SliceObj b) -> (0 pos : (eb : b) -> codr eb -> Type) -> Type
+SPFdepDirType {b} domsl codr pos =
+  (eb : b) -> (ec : codr eb) -> pos eb ec -> SliceObj (domsl eb)
+
+-- We can convert an `SPFdepDirType` to an `SPFdirType`:
+public export
+data SPFdirFromDep : {0 b : Type} ->
+    {0 domsl, codr : SliceObj b} -> {0 pos : (eb : b) -> codr eb -> Type} ->
+    SPFdepDirType {b} domsl codr pos ->
+    SPFdirType (Sigma {a=b} domsl) (Sigma {a=b} codr) (uncurry pos) where
+  SPFdd : {0 b : Type} ->
+    {0 domsl, codr : SliceObj b} -> {0 pos : (eb : b) -> codr eb -> Type} ->
+    {0 dir : SPFdepDirType {b} domsl codr pos} ->
+    (eb : b) -> (ec : codr eb) -> (ep : pos eb ec) -> (ed : domsl eb) ->
+    dir eb ec ep ed ->
+    SPFdirFromDep {b} {domsl} {codr} {pos} dir (eb ** ec) ep (eb ** ed)
+
+-- The signature of `SPFdepDirType` allows us to define for each type `b`
+-- a double category of slice polynomial functors whose objects are slice
+-- objects of `Type` over `b`, whose vertical morphisms are slice morphisms
+-- in `Type` over `b`, and whose horizontal morphisms are slice polynomial
+-- functors using the dependent signature.  The cells are defined below as
+-- `SPFdepPoCell`.
+public export
+record SPFdepData {0 b : Type} (dom, cod : SliceObj b) where
+  constructor SPFDD
+  spfddPos : (eb : b) -> cod eb -> Type
+  spfddDir : SPFdepDirType {b} dom cod spfddPos
+
+-- Now we see that an `SPFdepData` is simply a `b`-indexed dependent family
+-- of `SPFData`s.
 
 public export
-SPFCtot : {b : Type} -> {dom, cod : SliceObj b} ->
-  SPFDataFam {b} dom cod -> SPFamData {b} dom cod
-SPFCtot {b} {dom} {cod} sf =
-  SPFD
-    (\ebc =>
-      (spfdPos (sf $ fst ebc) (snd ebc)))
-    (\ebc, ep, ebd =>
-      (eqb : fst ebc = fst ebd **
-       spfdDir (sf $ fst ebc) (snd ebc) ep (rewrite eqb in snd ebd)))
+SPFDataFamFromDep : {0 b : Type} -> {0 dom, cod : SliceObj b} ->
+  SPFdepData {b} dom cod -> SPFDataFam {b} dom cod
+SPFDataFamFromDep {b} {dom} {cod} spfdd eb =
+  SPFD (spfddPos spfdd eb) (spfddDir spfdd eb)
 
 public export
-SPFCslice : {b : Type} -> {dom, cod : SliceObj b} ->
-  SPFamData {b} dom cod -> SPFDataFam {b} dom cod
-SPFCslice {b} {dom} {cod} sf eb =
-  SPFD
-    (\ec => spfdPos sf (eb ** ec))
-    (\ec, ep, ed => spfdDir sf (eb ** ec) ep (eb ** ed))
+SPFDepFromDataFam : {0 b : Type} -> {0 dom, cod : SliceObj b} ->
+  SPFDataFam {b} dom cod -> SPFdepData {b} dom cod
+SPFDepFromDataFam {b} {dom} {cod} fam =
+  SPFDD (\eb => spfdPos (fam eb)) (\eb => spfdDir (fam eb))
 
--- This adjunction exhibits `SPFDataFam {b} dom cod` as a subcategory of
--- `SPFamData {b} dom cod`, which is simply a name for the category
--- `SPFData (Sigma {a=b} dom) (Sigma {a=b} cod)`.
+-- An `SPFdepData` can be compressed to an `SPFData`, although this loses
+-- information compared to the `SPFdepData`/`SPFData`-family formulation
+-- in that it erases the `b`-dependent connection between `dom` and `cod`.
+public export
+SPFDataFromDep : {0 b : Type} -> {0 dom, cod : SliceObj b} ->
+  SPFdepData {b} dom cod -> SPFamData {b} dom cod
+SPFDataFromDep {b} {dom} {cod} spfdd =
+  SPFD (uncurry $ spfddPos spfdd) (SPFdirFromDep $ spfddDir spfdd)
+
+-- The signature that this form of SPFD allows us to write makes the domain
+-- and codomain themselves both dependent on a common type (`b`), thus allowing
+-- us to express a _relationship_ between the dependent types of the domain
+-- and codomain.
+--
+-- `InterpSPFdepData` and `InterpSPFdepDataMap` together may be viewed as
+-- the object-map and morphism-map components of a functor from the discrete
+-- category whose objects are the terms of `b` to the category of slice
+-- polynomial functors whose domain and codomain are slices of `dom eb`
+-- and `cod eb` respectively for each `eb : b`.
+--
+-- This is forgetful, compared to `InterpSPFdepDataEl`.
+public export
+InterpSPFdepData : {b : Type} -> {dom, cod : SliceObj b} ->
+  SPFdepData {b} dom cod ->
+  SliceFunctor (Sigma {a=b} dom) (Sigma {a=b} cod)
+InterpSPFdepData {b} {dom} {cod} spfdd =
+  InterpSPFData {dom=(Sigma {a=b} dom)} {cod=(Sigma {a=b} cod)}
+    (SPFDataFromDep spfdd)
 
 public export
-SPFCsliceTotCounit : {b : Type} -> {dom, cod : SliceObj b} ->
-  (sf : SPFDataFam {b} dom cod) ->
-  SPFdepNTfam {b} {dom} {cod} (SPFCslice $ SPFCtot sf) sf
-SPFCsliceTotCounit {b} {dom} {cod} sf eb =
-  SPFDm (\_ => id) (\ec, ep, ed, dd => (Refl ** dd))
+InterpSPFdepDataEl : {b : Type} -> {dom, cod : SliceObj b} ->
+  SPFdepData {b} dom cod ->
+  (eb : b) -> SliceFunctor (dom eb) (cod eb)
+InterpSPFdepDataEl {b} {dom} {cod} spfdd =
+  piMap
+    (\eb => InterpSPFData {dom=(dom eb)} {cod=(cod eb)})
+    (SPFDataFamFromDep spfdd)
+
+-- This is forgetful, compared to `InterpSPFdepDataMapEl`.
+public export
+InterpSPFdepDataMap : {b : Type} -> {dom, cod : SliceObj b} ->
+  (spfdd : SPFdepData {b} dom cod) ->
+  SliceFMap (InterpSPFdepData {b} {dom} {cod} spfdd)
+InterpSPFdepDataMap {b} {dom} {cod} spfdd =
+  InterpSPFDataMap {dom=(Sigma {a=b} dom)} {cod=(Sigma {a=b} cod)}
+    (SPFDataFromDep spfdd)
 
 public export
-SPFCsliceTotUnit : {b : Type} -> {dom, cod : SliceObj b} ->
-  (spfd : SPFamData {b} dom cod) ->
-  SPFnt spfd (SPFCtot $ SPFCslice spfd)
-SPFCsliceTotUnit {b} {dom} {cod} spfd =
+InterpSPFdepDataMapEl : {b : Type} -> {dom, cod : SliceObj b} ->
+  (spfdd : SPFdepData {b} dom cod) ->
+  (eb : b) -> SliceFMap (InterpSPFdepDataEl {b} {dom} {cod} spfdd eb)
+InterpSPFdepDataMapEl {b} {dom} {cod} spfdd eb =
+  InterpSPFDataMap {dom=(dom eb)} {cod=(cod eb)} (SPFDataFamFromDep spfdd eb)
+
+public export
+record SPFdepNT {0 b : Type} {dom, cod : SliceObj b}
+    (f, g : SPFdepData {b} dom cod) where
+  constructor SPFdnt
+  spdOnPos :
+    (eb : b) -> SliceMorphism {a=(cod eb)} (spfddPos f eb) (spfddPos g eb)
+  spdOnDir : (eb : b) -> (ec : cod eb) ->
+    (ep : spfddPos f eb ec) -> (ed : dom eb) ->
+    spfddDir g eb ec (spdOnPos eb ec ep) ed ->
+    spfddDir f eb ec ep ed
+
+-- This is forgetful, using the forgetful `SPFdataFromDep`.
+public export
+SPFntFromDep : {0 b : Type} -> {0 dom, cod : SliceObj b} ->
+  {0 f, g : SPFdepData {b} dom cod} ->
+  SPFdepNT {b} f g -> SPFnt (SPFDataFromDep f) (SPFDataFromDep g)
+SPFntFromDep {b} {dom} {cod} {f} {g} alpha =
   SPFDm
-    (\(eb ** ec), ep => ep)
-    (\(eb ** ec), ep, (eb ** ed), (Refl ** dd) => dd)
+    (\ebc, efp => spdOnPos alpha (fst ebc) (snd ebc) efp)
+    (\(eb ** ec), efp, (_ ** ed), (SPFdd _ _ _ _ dd) =>
+      SPFdd eb ec efp ed $ spdOnDir alpha eb ec efp ed dd)
+
+-- This is forgetful, compared to `InterpSPFdepNTel`.
+public export
+InterpSPFdepNT : {b : Type} -> {dom, cod : SliceObj b} ->
+  (f, g : SPFdepData {b} dom cod) ->
+  SPFdepNT f g ->
+  SliceNatTrans {x=(Sigma {a=b} dom)} {y=(Sigma {a=b} cod)}
+    (InterpSPFdepData f)
+    (InterpSPFdepData g)
+InterpSPFdepNT {b} {dom} {cod} f g alpha =
+  InterpSPFnt (SPFDataFromDep f) (SPFDataFromDep g) (SPFntFromDep alpha)
+
+-- Now we show that a `b`-dependent slice polynomial natural transformation
+-- is just a `b`-indexed dependent family of slice polynomial natural
+-- transformations.
+
+public export
+SPFntFamFromDep : {0 b : Type} -> {0 dom, cod : SliceObj b} ->
+  {f, g : SPFdepData {b} dom cod} ->
+  SPFdepNT {b} {dom} {cod} f g ->
+  SPFdepNTfam {b} {dom} {cod} (SPFDataFamFromDep f) (SPFDataFamFromDep g)
+SPFntFamFromDep {b} {dom} {cod} {f} {g} alpha eb =
+  SPFDm (spdOnPos alpha eb) (spdOnDir alpha eb)
+
+public export
+SPFntDepFromFam : {0 b : Type} -> {0 dom, cod : SliceObj b} ->
+  {f, g : SPFdepData {b} dom cod} ->
+  SPFdepNTfam {b} {dom} {cod} (SPFDataFamFromDep f) (SPFDataFamFromDep g) ->
+  SPFdepNT {b} {dom} {cod} f g
+SPFntDepFromFam {b} {dom} {cod} {f} {g} fam =
+  SPFdnt (\eb => spOnPos (fam eb)) (\eb => spOnDir (fam eb))
+
+public export
+InterpSPFdepNTel : {b : Type} -> {dom, cod : SliceObj b} ->
+  (f, g : SPFdepData {b} dom cod) ->
+  SPFdepNT f g ->
+  (eb : b) ->
+  SliceNatTrans {x=(dom eb)} {y=(cod eb)}
+    (InterpSPFdepDataEl f eb)
+    (InterpSPFdepDataEl g eb)
+InterpSPFdepNTel {b} {dom} {cod} f g alpha eb =
+  InterpSPFnt {dom=(dom eb)} {cod=(cod eb)}
+    (SPFDataFamFromDep f eb) (SPFDataFamFromDep g eb)
+    (SPFntFamFromDep alpha eb)
+
+public export
+spfDepPushoutPos : {b : Type} -> {x, y, z : SliceObj b} ->
+  (SliceMorphism {a=b} z y) -> SPFdepData x z -> SPFdepData x y
+spfDepPushoutPos {b} {x} {y} {z} mzy f =
+  SPFDD
+    (\eb => SliceFibSigmaF (mzy eb) $ spfddPos f eb)
+    (\eb, ey, ep => spfddDir f eb (sfsFst ep) (sfsSnd ep))
+
+public export
+spfDepPushoutDir : {b : Type} -> {w, x, z : SliceObj b} ->
+  (SliceMorphism {a=b} w x) -> SPFdepData w z -> SPFdepData x z
+spfDepPushoutDir {b} {w} {x} {z} mwx f =
+  SPFDD (spfddPos f) (\eb, ez => SliceFibSigmaF (mwx eb) . spfddDir f eb ez)
+
+public export
+spfDepPushout : {b : Type} -> {w, x, y, z : SliceObj b} ->
+  (SliceMorphism {a=b} w x) -> (SliceMorphism {a=b} z y) ->
+  SPFdepData w z -> SPFdepData x y
+spfDepPushout {b} {w} {x} {y} {z} mwx mzy =
+  spfDepPushoutPos {x} {y} {z} mzy . spfDepPushoutDir {w} {x} {z} mwx
+
+-- The cells of the double category of slice polynomial functors whose domain
+-- and codomain are slices of `dom eb` and `cod eb` respectively for each
+-- `eb : b`.
+public export
+SPFdepPoCell : {b : Type} -> {w, w', z, z' : SliceObj b} ->
+  (bcl : SliceMorphism {a=b} w w') -> (bcr : SliceMorphism {a=b} z z') ->
+  (f : SPFdepData w z) -> (g : SPFdepData w' z') ->
+  Type
+SPFdepPoCell {w} {w'} {z} {z'} bcl bcr f g =
+  SPFdepNT {dom=w'} {cod=z'} (spfDepPushout bcl bcr f) g
+
+-- This is forgetful, like `SPFDataFromDep`, which it uses,
+-- compared to `SPFpoCellDepFromFam`.
+public export
+SPFpoCellFromDep : {b : Type} -> {w, w', z, z' : SliceObj b} ->
+  (bcl : SliceMorphism {a=b} w w') -> (bcr : SliceMorphism {a=b} z z') ->
+  (f : SPFdepData w z) -> (g : SPFdepData w' z') ->
+  SPFdepPoCell {w} {w'} {z} {z'} bcl bcr f g ->
+  SPFpoCell
+    {w=(Sigma {a=b} w)}
+    {w'=(Sigma {a=b} w')}
+    {z=(Sigma {a=b} z)}
+    {z'=(Sigma {a=b} z')}
+    (dpMapSnd bcl)
+    (dpMapSnd bcr)
+    (SPFDataFromDep f)
+    (SPFDataFromDep g)
+SPFpoCellFromDep {w} {w'} {z} {z'} bcl bcr f g spfc =
+  SPFDm
+    (\(eb ** ez'), (SFS (eb ** ez) efp) => spdOnPos spfc eb ez' $ SFS ez efp)
+    (\(eb ** ez'), (SFS (eb' ** ez) efp), (eb'' ** ew'), (SPFdd _ _ _ _ egd) =>
+      let (SFS ew efd) = spdOnDir spfc eb' (bcr eb' ez) (SFS ez efp) ew' egd in
+      SFS (eb' ** ew) $ SPFdd eb' ez efp ew efd)
+
+-- As with functors and natural transformations, the dependent cells are
+-- simply `b`-indexed dependent families of cells.
+
+public export
+SPFpoCellDepFromFam : {b : Type} -> {w, w', z, z' : SliceObj b} ->
+  (bcl : SliceMorphism {a=b} w w') -> (bcr : SliceMorphism {a=b} z z') ->
+  (f : SPFdepData w z) -> (g : SPFdepData w' z') ->
+  SPFdepPoCell bcl bcr f g ->
+  SPFpoCellFam {b} {w} {w'} {z} {z'} bcl bcr
+    (SPFDataFamFromDep f) (SPFDataFamFromDep g)
+SPFpoCellDepFromFam {b} {w} {w'} {z} {z'} bcl bcr f g = SPFntFamFromDep
+
+public export
+SPFpoCellFamFromDep : {b : Type} -> {w, w', z, z' : SliceObj b} ->
+  (bcl : SliceMorphism {a=b} w w') -> (bcr : SliceMorphism {a=b} z z') ->
+  (f : SPFdepData w z) -> (g : SPFdepData w' z') ->
+  SPFpoCellFam {b} {w} {w'} {z} {z'} bcl bcr
+    (SPFDataFamFromDep f) (SPFDataFamFromDep g) ->
+  SPFdepPoCell bcl bcr f g
+SPFpoCellFamFromDep {b} {w} {w'} {z} {z'} bcl bcr f g = SPFntDepFromFam
 
 ------------------------------------------
 ------------------------------------------
