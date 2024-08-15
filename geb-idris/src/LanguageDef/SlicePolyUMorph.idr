@@ -847,13 +847,13 @@ spfdSetDayConv {n} {dom} {cod} m sf =
 -- by multiplying the output of the cross-category (family) product.
 public export
 spfdSetProduct : {b, dom, cod : Type} ->
-  (b -> SPFData dom cod) -> SPFData dom cod
+  (SPFndDataFam b dom cod) -> SPFData dom cod
 spfdSetProduct {b} {dom} {cod} =
   spfdPostcompPi snd . SPFDataFamToProd {b} {dom} {cod}
 
 public export
 spfdSetProductIntro : {b, dom, cod : Type} ->
-  {x : SPFData dom cod} -> {y : b -> SPFData dom cod} ->
+  {x : SPFData dom cod} -> {y : SPFndDataFam b dom cod} ->
   ((eb : b) -> SPFnt {dom} {cod} x (y eb)) ->
   SPFnt {dom} {cod} x (spfdSetProduct {b} {dom} {cod} y)
 spfdSetProductIntro {b} {dom} {cod} {x} {y} ntf =
@@ -868,7 +868,7 @@ spfdSetProductIntro {b} {dom} {cod} {x} {y} ntf =
 
 public export
 spfdSetProductProj : {b, dom, cod : Type} ->
-  (sf : b -> SPFData dom cod) -> (eb : b) ->
+  (sf : SPFndDataFam b dom cod) -> (eb : b) ->
   SPFnt {dom} {cod} (spfdSetProduct {b} {dom} {cod} sf) (sf eb)
 spfdSetProductProj {b} {dom} {cod} sf eb =
   SPFDm
@@ -885,13 +885,13 @@ spfdSetProductProj {b} {dom} {cod} sf eb =
 -- by summing the output of the cross-category (family) product.
 public export
 spfdSetCoproduct : {b, dom, cod : Type} ->
-  (b -> SPFData dom cod) -> SPFData dom cod
+  (SPFndDataFam b dom cod) -> SPFData dom cod
 spfdSetCoproduct {b} {dom} {cod} =
   spfdPostcompSigma snd . SPFDataFamToProd {b} {dom} {cod}
 
 public export
 spfdSetCoproductInj : {b, dom, cod : Type} ->
-  (sf : b -> SPFData dom cod) -> (eb : b) ->
+  (sf : SPFndDataFam b dom cod) -> (eb : b) ->
   SPFnt {dom} {cod} (sf eb) (spfdSetCoproduct {b} {dom} {cod} sf)
 spfdSetCoproductInj {b} {dom} {cod} sf eb =
   SPFDm
@@ -903,7 +903,7 @@ spfdSetCoproductInj {b} {dom} {cod} sf eb =
 
 public export
 spfdSetCoproductElim : {b, dom, cod : Type} ->
-  {x : b -> SPFData dom cod} -> {y : SPFData dom cod} ->
+  {x : SPFndDataFam b dom cod} -> {y : SPFData dom cod} ->
   ((eb : b) -> SPFnt {dom} {cod} (x eb) y) ->
   SPFnt {dom} {cod} (spfdSetCoproduct {b} {dom} {cod} x) y
 spfdSetCoproductElim {b} {dom} {cod} {x} {y} ntf =
@@ -922,20 +922,20 @@ spfdSetCoproductElim {b} {dom} {cod} {x} {y} ntf =
 
 public export
 spfdSetParProductPos : {b, dom, cod : Type} ->
-  (b -> SPFData dom cod) -> SliceObj cod
+  (SPFndDataFam b dom cod) -> SliceObj cod
 spfdSetParProductPos {b} {dom} {cod} sf ec =
   Pi {a=b} $ \eb => spfdPos (sf eb) ec
 
 public export
 spfdSetParProductDir : {b, dom, cod : Type} ->
-  (sf : b -> SPFData dom cod) ->
+  (sf : SPFndDataFam b dom cod) ->
   SPFdirType dom cod (spfdSetParProductPos {b} {dom} {cod} sf)
 spfdSetParProductDir {b} {dom} {cod} sf ec ep ed =
   Pi {a=b} $ \eb => spfdDir (sf eb) ec (ep eb) ed
 
 public export
 spfdSetParProduct : {b, dom, cod : Type} ->
-  (b -> SPFData dom cod) -> SPFData dom cod
+  (SPFndDataFam b dom cod) -> SPFData dom cod
 spfdSetParProduct {b} {dom} {cod} sf =
   SPFD
     (spfdSetParProductPos {b} {dom} {cod} sf)
@@ -943,7 +943,7 @@ spfdSetParProduct {b} {dom} {cod} sf =
 
 public export
 spfdSetParProductIntro : {b, dom, cod : Type} ->
-  {sf, sf' : b -> SPFData dom cod} ->
+  {sf, sf' : SPFndDataFam b dom cod} ->
   ((eb : b) -> SPFnt {dom} {cod} (sf eb) (sf' eb)) ->
   SPFnt {dom} {cod}
     (spfdSetParProduct {b} {dom} {cod} sf)
