@@ -921,7 +921,8 @@ SPFDunitIdxFromBaseSl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
 SPFDunitIdxFromBaseSl {dom} {cod} spfd a i ec = DPair.fst
 
 public export
-SPFDgenFactIntDomObjFromBaseSl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+SPFDgenFactIntDomObjFromBaseSl : {dom, cod : Type} ->
+  (spfd : SPFData dom cod) ->
   (a : SliceObj dom) -> (i : SliceObj $ SPFDbase spfd) ->
   SliceObj dom
 SPFDgenFactIntDomObjFromBaseSl {dom} {cod} spfd a i =
@@ -930,7 +931,8 @@ SPFDgenFactIntDomObjFromBaseSl {dom} {cod} spfd a i =
     (SPFDunitIdxFromBaseSl spfd a i)
 
 public export
-SPFDgenFactIntCodObjFromBaseSl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+SPFDgenFactIntCodObjFromBaseSl : {dom, cod : Type} ->
+  (spfd : SPFData dom cod) ->
   (a : SliceObj dom) -> (i : SliceObj $ SPFDbase spfd) ->
   SliceObj cod
 SPFDgenFactIntCodObjFromBaseSl {dom} {cod} spfd a i =
