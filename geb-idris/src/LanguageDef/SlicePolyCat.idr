@@ -1008,8 +1008,8 @@ record MorphToSPFD {dom, cod : Type}
     (spfd : SPFData dom cod) (b : SliceObj cod) (a : SliceObj dom)
     where
   constructor MtoSPFD
-  m2sBaseSl : SPFDbaseSl spfd
   m2sInj1 : SliceMorphism {a=cod} b (spfdPos spfd)
+  m2sBaseSl : SPFDbaseSl spfd
   m2sInj2 : (ec : cod) -> (eb : b ec) -> m2sBaseSl (ec ** m2sInj1 ec eb)
   m2sSndFact : SPFDgenFactSndSigFromBaseSl spfd m2sBaseSl a
 
