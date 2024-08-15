@@ -37,6 +37,20 @@ spfdMonomial : {dom, cod : Type} -> SliceObj cod -> SliceObj dom ->
   SPFData dom cod
 spfdMonomial {dom} {cod} coeff degree = SPFD coeff (\_, _ => degree)
 
+-- A linear polynomial is a monomial of degree one (that is, the
+-- degree is the terminal object).
+public export
+spfdLinear : {dom, cod : Type} -> SliceObj cod -> SPFData dom cod
+spfdLinear {dom} {cod} coeff =
+  spfdMonomial {dom} {cod} coeff (SliceObjTerminal dom)
+
+-- A monomial with coefficient one (that is, terminal) is representable.
+public export
+spfdMonRep : {dom, cod : Type} -> (degree : SliceObj dom) ->
+  spfdMonomial {dom} {cod} (SliceObjTerminal cod) degree =
+  SPFDataRep degree cod
+spfdMonRep {dom} {cod} degree = Refl
+
 -- A "dynamical system" is a monomial whose coefficient and degree
 -- are the same.
 public export
@@ -73,6 +87,25 @@ spfdCoalgToDynSysNT : {x : Type} ->
   (coeff : SliceObj x) -> (p : SPFData x x) ->
   spfdCoalgAction {x} p coeff -> SPFnt (spfdDynSys {x} coeff) p
 spfdCoalgToDynSysNT {x} coeff = spfdInjToMonNT {dom=x} {cod=x} coeff coeff
+
+-- Formula 6.66 from _Polynomial Functors: A Mathematical Theory of
+-- Interaction_.
+
+public export
+spfdLinRepCompL : {w, x, y, z : Type} ->
+  (a : SliceObj w) -> (b : SliceObj x) -> (p : SPFData y z) -> SPFData x w
+spfdLinRepCompL {w} {x} {y} {z} a b p =
+  SPFDcomp x z w
+  (spfdLinear {dom=z} {cod=w} a)
+  $ SPFDcomp x y z p (SPFDataRep {dom=x} b y)
+
+public export
+spfdLinRepCompR : {w, x, y, z : Type} ->
+  (a : SliceObj w) -> (b : SliceObj x) -> (q : SPFData x w) -> SPFData y z
+spfdLinRepCompR {w} {x} {y} {z} a b q =
+  SPFDcomp y w z
+  (SPFDataRep {dom=w} a z)
+  $ SPFDcomp y x w q (spfdLinear {dom=y} {cod=x} b)
 
 -------------------------------------------
 -------------------------------------------
