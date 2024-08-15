@@ -9,6 +9,71 @@ import public LanguageDef.MLDirichCat
 -- Comma categories, algebras, coalgebras, and dialgebras of slice polynomial
 -- functors.
 
+---------------------------------
+---------------------------------
+---- Algebras and coalgebras ----
+---------------------------------
+---------------------------------
+
+public export
+spfdAlgAction : {x : Type} -> SPFData x x -> SliceObj x -> Type
+spfdAlgAction {x} p a =
+  SliceMorphism {a=x} (InterpSPFData {dom=x} {cod=x} p a) a
+
+public export
+spfdCoalgAction : {x : Type} -> SPFData x x -> SliceObj x -> Type
+spfdCoalgAction {x} p a =
+  SliceMorphism {a=x} a (InterpSPFData {dom=x} {cod=x} p a)
+
+-------------------
+---- Monomials ----
+-------------------
+-------------------
+
+-- A monomial is a polynomial all of whose positions have the same
+-- direction type.
+public export
+spfdMonomial : {dom, cod : Type} -> SliceObj cod -> SliceObj dom ->
+  SPFData dom cod
+spfdMonomial {dom} {cod} coeff degree = SPFD coeff (\_, _ => degree)
+
+-- A "dynamical system" is a monomial whose coefficient and degree
+-- are the same.
+public export
+spfdDynSys : {x : Type} -> SliceObj x -> SPFData x x
+spfdDynSys {x} coeff = spfdMonomial {dom=x} {cod=x} coeff coeff
+
+-- Formula 6.65 from _Polynomial Functors: A Mathematical Theory of
+-- Interaction_.
+
+public export
+spfdMonNTtoInj : {dom, cod : Type} ->
+  (coeff : SliceObj cod) -> (degree : SliceObj dom) -> (p : SPFData dom cod) ->
+  SPFnt (spfdMonomial coeff degree) p ->
+  SliceMorphism {a=cod} coeff (InterpSPFData p degree)
+spfdMonNTtoInj {dom} {cod} coeff degree p alpha ec n =
+  (spOnPos alpha ec n ** \ed, pd => spOnDir alpha ec n ed pd)
+
+public export
+spfdInjToMonNT : {dom, cod : Type} ->
+  (coeff : SliceObj cod) -> (degree : SliceObj dom) -> (p : SPFData dom cod) ->
+  SliceMorphism {a=cod} coeff (InterpSPFData p degree) ->
+  SPFnt (spfdMonomial coeff degree) p
+spfdInjToMonNT {dom} {cod} coeff degree p m =
+  SPFDm (\ec, n => fst $ m ec n) (\ec, n => snd $ m ec n)
+
+public export
+spfdDynSysNTtoCoalg : {x : Type} ->
+  (coeff : SliceObj x) -> (p : SPFData x x) ->
+  SPFnt (spfdDynSys {x} coeff) p -> spfdCoalgAction {x} p coeff
+spfdDynSysNTtoCoalg {x} coeff = spfdMonNTtoInj {dom=x} {cod=x} coeff coeff
+
+public export
+spfdCoalgToDynSysNT : {x : Type} ->
+  (coeff : SliceObj x) -> (p : SPFData x x) ->
+  spfdCoalgAction {x} p coeff -> SPFnt (spfdDynSys {x} coeff) p
+spfdCoalgToDynSysNT {x} coeff = spfdInjToMonNT {dom=x} {cod=x} coeff coeff
+
 -------------------------------------------
 -------------------------------------------
 ---- Polynomial slice comma categories ----
