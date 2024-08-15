@@ -3085,6 +3085,10 @@ SPFpoCellFromDP {w'} {z'} {w} {z} {f} {g} spfc =
 -------------------------------------------------
 -------------------------------------------------
 
+----------------------------------
+---- Embedding into `SPFData` ----
+----------------------------------
+
 public export
 SPFCtot : {b : Type} -> {dom, cod : SliceObj b} ->
   SPFDataFam {b} dom cod -> SPFamData {b} dom cod
