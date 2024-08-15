@@ -906,7 +906,7 @@ SPFDfactCorrect {dom} {cod} spfd a b i fext =
 -- loss of generality define morphisms into `T(a)` as coming from domain
 -- `SPFDbase`.
 --
--- The choice of the slice object -determines the intermediate object and the
+-- The choice of the slice object determines the intermediate object and the
 -- first morphism component of the factorization:
 public export
 SPFDmorphDomFromBaseSl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
