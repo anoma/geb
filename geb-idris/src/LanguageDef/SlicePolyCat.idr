@@ -964,7 +964,28 @@ public export
 SPFDgenFactSndSigFromBaseSl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (i : SPFDbaseSl spfd) -> (a : SliceObj dom) -> Type
 SPFDgenFactSndSigFromBaseSl {dom} {cod} spfd i a =
+  (ec : cod) -> (ep : spfdPos spfd ec) -> i (ec ** ep) ->
+  SliceMorphism {a=dom} (spfdDir spfd ec ep) a
+
+-- This is the form to which we can convert an `SPFDgenFactSndSigFromBaseSl`
+-- from which it can be passed to `SPFDmultiRmap`.
+public export
+SPFDgenFactSndSigFromBaseSlrmap : {dom, cod : Type} ->
+  (spfd : SPFData dom cod) ->
+  (i : SPFDbaseSl spfd) -> (a : SliceObj dom) -> Type
+SPFDgenFactSndSigFromBaseSlrmap {dom} {cod} spfd i a =
   SliceMorphism {a=dom} (SPFDgenFactIntDomObjFromBaseSl {dom} {cod} spfd i) a
+
+-- This is the form to which we can convert an `SPFDgenFactSndSigFromBaseSl`
+-- from which it can be passed to `SPFDmultiRmap`.
+public export
+SPFDgenFactSndSigFromBaseSlToRmap : {dom, cod : Type} ->
+  {spfd : SPFData dom cod} -> {i : SPFDbaseSl spfd} -> {a : SliceObj dom} ->
+  SPFDgenFactSndSigFromBaseSl {dom} {cod} spfd i a ->
+  SPFDgenFactSndSigFromBaseSlrmap {dom} {cod} spfd i a
+SPFDgenFactSndSigFromBaseSlToRmap {dom} {cod} {spfd=(SPFD pos dir)} {i} {a} m
+  ed (((ec ** ep) ** dd) ** Element0 (ep' ** esl) epeq) =
+    m ec ep (rewrite sym epeq in esl) ed dd
 
 -- Given a domain-category morphism of the above signature, we can lift
 -- it via the polynomial functor to the codomain category:
@@ -977,6 +998,7 @@ SPFDgenFactSndFromBaseSl : {dom, cod : Type} -> {spfd : SPFData dom cod} ->
     (SPFDmultiR {dom} {cod} spfd a)
 SPFDgenFactSndFromBaseSl {dom} {cod} {spfd} {i} {a} =
   SPFDmultiRmap spfd (SPFDgenFactIntDomObjFromBaseSl {dom} {cod} spfd i) a
+  .  SPFDgenFactSndSigFromBaseSlToRmap {dom} {cod} {spfd} {i} {a}
 
 -- If we are given a slice of the base (i.e. of the positions) and a
 -- (domain-category) morphism of the above signature, we can compute a
@@ -1011,9 +1033,7 @@ record MorphToSPFD {dom, cod : Type}
   m2sInj1 : SliceMorphism {a=cod} b (spfdPos spfd)
   m2sBaseSl : SPFDbaseSl spfd
   m2sInj2 : (ec : cod) -> (eb : b ec) -> m2sBaseSl (ec ** m2sInj1 ec eb)
-  m2sSndFact :
-    (ec : cod) -> (ep : spfdPos spfd ec) -> m2sBaseSl (ec ** ep) ->
-    SliceMorphism {a=dom} (spfdDir spfd ec ep) a
+  m2sSndFact : SPFDgenFactSndSigFromBaseSl {dom} {cod} spfd m2sBaseSl a
 
 public export
 MorphToSPFDdom : {dom, cod : Type} ->
@@ -1024,16 +1044,6 @@ MorphToSPFDdom {dom} {cod} {spfd} {b} {a} m ec eb =
   (m2sInj1 m ec eb ** m2sInj2 m ec eb)
 
 public export
-MorphToBaseSlSig : {dom, cod : Type} ->
-  {spfd : SPFData dom cod} -> {b : SliceObj cod} -> {a : SliceObj dom} ->
-  (m : MorphToSPFD {dom} {cod} spfd b a) ->
-  SPFDgenFactSndSigFromBaseSl spfd (m2sBaseSl m) a
-MorphToBaseSlSig {dom} {cod} {spfd=(SPFD pos dir)} {b} {a}
-  (MtoSPFD inj1 basesl inj2 fact2) ed
-  (((ec ** ep) ** dd) ** Element0 (ep' ** esl) epeq) =
-    fact2 ec ep (rewrite sym epeq in esl) ed dd
-
-public export
 MorphToSPFDsigma : {dom, cod : Type} ->
   {spfd : SPFData dom cod} -> {b : SliceObj cod} -> {a : SliceObj dom} ->
   (m : MorphToSPFD {dom} {cod} spfd b a) ->
@@ -1041,8 +1051,7 @@ MorphToSPFDsigma : {dom, cod : Type} ->
     (SPFDmorphDomFromBaseSl spfd $ m2sBaseSl m)
     (SPFDmultiR spfd a)
 MorphToSPFDsigma {dom} {cod} {spfd} {b} {a} m =
-  SPFDmorphFromBaseSlSig {dom} {cod} {spfd} {i=(m2sBaseSl m)} {a}
-    (MorphToBaseSlSig m)
+  SPFDmorphFromBaseSlSig {dom} {cod} {spfd} {i=(m2sBaseSl m)} {a} (m2sSndFact m)
 
 public export
 morphToSPFD : {dom, cod : Type} ->
