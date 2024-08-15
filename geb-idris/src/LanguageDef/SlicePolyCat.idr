@@ -910,44 +910,40 @@ SPFDfactCorrect {dom} {cod} spfd a b i fext =
 -- first morphism component of the factorization:
 public export
 SPFDmorphDomFromBaseSl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  (a : SliceObj dom) -> SliceObj (SPFDbase spfd) -> SliceObj cod
-SPFDmorphDomFromBaseSl {dom} {cod} spfd a i ec =
+  SliceObj (SPFDbase spfd) -> SliceObj cod
+SPFDmorphDomFromBaseSl {dom} {cod} spfd i ec =
   Sigma {a=(spfdPos spfd ec)} $ curry i ec
 
 public export
 SPFDunitIdxFromBaseSl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  (a : SliceObj dom) -> (i : SliceObj $ SPFDbase spfd) ->
-  SPFDmultiIdx spfd (SPFDmorphDomFromBaseSl spfd a i)
-SPFDunitIdxFromBaseSl {dom} {cod} spfd a i ec = DPair.fst
+  (i : SliceObj $ SPFDbase spfd) ->
+  SPFDmultiIdx spfd (SPFDmorphDomFromBaseSl spfd i)
+SPFDunitIdxFromBaseSl {dom} {cod} spfd i ec = DPair.fst
 
 public export
 SPFDgenFactIntDomObjFromBaseSl : {dom, cod : Type} ->
-  (spfd : SPFData dom cod) ->
-  (a : SliceObj dom) -> (i : SliceObj $ SPFDbase spfd) ->
-  SliceObj dom
-SPFDgenFactIntDomObjFromBaseSl {dom} {cod} spfd a i =
+  (spfd : SPFData dom cod) -> (i : SliceObj $ SPFDbase spfd) -> SliceObj dom
+SPFDgenFactIntDomObjFromBaseSl {dom} {cod} spfd i =
   SPFDmultiL spfd
-    (SPFDmorphDomFromBaseSl spfd a i)
-    (SPFDunitIdxFromBaseSl spfd a i)
+    (SPFDmorphDomFromBaseSl spfd i)
+    (SPFDunitIdxFromBaseSl spfd i)
 
 public export
 SPFDgenFactIntCodObjFromBaseSl : {dom, cod : Type} ->
-  (spfd : SPFData dom cod) ->
-  (a : SliceObj dom) -> (i : SliceObj $ SPFDbase spfd) ->
-  SliceObj cod
-SPFDgenFactIntCodObjFromBaseSl {dom} {cod} spfd a i =
-  SPFDmultiR {dom} {cod} spfd $ SPFDgenFactIntDomObjFromBaseSl spfd a i
+  (spfd : SPFData dom cod) -> (i : SliceObj $ SPFDbase spfd) -> SliceObj cod
+SPFDgenFactIntCodObjFromBaseSl {dom} {cod} spfd =
+  SPFDmultiR {dom} {cod} spfd . SPFDgenFactIntDomObjFromBaseSl spfd
 
 public export
 SPFDgenFactFstFromBaseSl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  (a : SliceObj dom) -> (i : SliceObj $ SPFDbase spfd) ->
+  (i : SliceObj $ SPFDbase spfd) ->
   SliceMorphism {a=cod}
-    (SPFDmorphDomFromBaseSl spfd a i)
-    (SPFDgenFactIntCodObjFromBaseSl spfd a i)
-SPFDgenFactFstFromBaseSl {dom} {cod} spfd a i =
+    (SPFDmorphDomFromBaseSl spfd i)
+    (SPFDgenFactIntCodObjFromBaseSl spfd i)
+SPFDgenFactFstFromBaseSl {dom} {cod} spfd i =
   SPFDpraUnit spfd
-    (SPFDmorphDomFromBaseSl spfd a i)
-    (SPFDunitIdxFromBaseSl spfd a i)
+    (SPFDmorphDomFromBaseSl spfd i)
+    (SPFDunitIdxFromBaseSl spfd i)
 
 -- As a parametric right adjoint, a polynomial functor has a left multi-adjoint
 -- (so it is itself a right multi-adjoint).  This is the unit of the
