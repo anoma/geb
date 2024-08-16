@@ -816,6 +816,21 @@ SPFDgenFactIdx : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
 SPFDgenFactIdx {dom} {cod} spfd a b =
   sliceComp {a=cod} (SPFDgenFactIdxSndFact {dom} {cod} spfd a b)
 
+-- Simply for documentation, we spell out what `SPFDgenFactIdx` is:
+-- a term of an `SPFDmultiR spfd a ec eb` is a dependent pair of a
+-- position and a direction-map, so any morphism into an `SPFDmultiR`
+-- must be a constructor of a dependent pair -- a position-valued
+-- morphism into the `SPFDmultiR`, and a direction-valued morphism
+-- which depends on the position-valued one.  `SPGenFactIdx` is simply
+-- the first projection, which constitutes the position-valued part.
+public export
+SPFDgenFactIdxEq : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (a : SliceObj dom) -> (b : SliceObj cod) ->
+  (i : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
+  (ec : cod) -> (eb : b ec) ->
+  SPFDgenFactIdx {dom} {cod} spfd a b i ec eb = DPair.fst (i ec eb)
+SPFDgenFactIdxEq {dom} {cod} spfd a b i ec eb = Refl
+
 -- This is the object of `SliceObj dom` which underlies the intermediate
 -- object of the generic factorization of a morphism with the signature
 -- `b -> SPFDmultiR spfd a`.  It is called `D` at
@@ -831,6 +846,37 @@ SPFDgenFactDomObj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceObj dom
 SPFDgenFactDomObj {dom} {cod} spfd a b =
   SPFDmultiL {dom} {cod} spfd b . SPFDgenFactIdx {dom} {cod} spfd a b
+
+-- For documentation and convenience, we also define an explicit formula
+-- equivalent to `SPFDgenFactDomObj`.
+public export
+SPFDgenFactDomObjForm : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (a : SliceObj dom) -> (b : SliceObj cod) ->
+  (i : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
+  SliceObj dom
+SPFDgenFactDomObjForm {dom} {cod} spfd a b i ed =
+  (ec : cod ** eb : b ec ** spfdDir spfd ec (fst $ i ec eb) ed)
+
+public export
+SPFDgenFactDomObjFromForm : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (a : SliceObj dom) -> (b : SliceObj cod) ->
+  (i : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
+  SliceMorphism {a=dom}
+    (SPFDgenFactDomObjForm {dom} {cod} spfd a b i)
+    (SPFDgenFactDomObj {dom} {cod} spfd a b i)
+SPFDgenFactDomObjFromForm {dom} {cod} spfd a b i ed (ec ** eb ** dd) =
+  (((ec ** fst $ i ec eb) ** dd) ** Element0 eb Refl)
+
+public export
+SPFDgenFactDomObjToForm : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (a : SliceObj dom) -> (b : SliceObj cod) ->
+  (i : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
+  SliceMorphism {a=dom}
+    (SPFDgenFactDomObj {dom} {cod} spfd a b i)
+    (SPFDgenFactDomObjForm {dom} {cod} spfd a b i)
+SPFDgenFactDomObjToForm {dom} {cod} spfd a b i ed
+  (((ec ** ep) ** dd) ** Element0 eb epeq) =
+    (ec ** eb ** rewrite epeq in dd)
 
 -- This is the intermediate object of the generic factorization of the
 -- given morphism `i` (see the comment to `SPFDgenFactDomObj` above).
