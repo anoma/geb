@@ -848,7 +848,10 @@ SPFDgenFactDomObj {dom} {cod} spfd a b =
   SPFDmultiL {dom} {cod} spfd b . SPFDgenFactIdx {dom} {cod} spfd a b
 
 -- For documentation and convenience, we also define an explicit formula
--- equivalent to `SPFDgenFactDomObj`.
+-- equivalent to `SPFDgenFactDomObj`.  We see that for each pair of terms
+-- of the domain and codomain, it is the object of directions of the
+-- functor at the position selected by the given morphism (the index
+-- component of it, which selects one of the units of the multi-adjunction).
 public export
 SPFDgenFactDomObjForm : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (a : SliceObj dom) -> (b : SliceObj cod) ->
@@ -887,6 +890,44 @@ SPFDgenFactCodObj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceObj cod
 SPFDgenFactCodObj {dom} {cod} spfd a b i =
   SPFDmultiR {dom} {cod} spfd $ SPFDgenFactDomObj {dom} {cod} spfd a b i
+
+-- For documentation and convenience, we also define an explicit formula
+-- equivalent to `SPFDgenFactCodObj`.
+public export
+SPFDgenFactCodObjForm : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (a : SliceObj dom) -> (b : SliceObj cod) ->
+  (i : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
+  SliceObj cod
+SPFDgenFactCodObjForm {dom} {cod} spfd a b i ec =
+  (ep : spfd .spfdPos ec **
+   (ed : dom) -> spfd .spfdDir ec ep ed ->
+    (ec' : cod ** eb : b ec' ** spfd .spfdDir ec' (fst $ i ec' eb) ed))
+
+public export
+SPFDgenFactCodObjFromForm : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (a : SliceObj dom) -> (b : SliceObj cod) ->
+  (i : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
+  SliceMorphism {a=cod}
+    (SPFDgenFactCodObjForm {dom} {cod} spfd a b i)
+    (SPFDgenFactCodObj {dom} {cod} spfd a b i)
+SPFDgenFactCodObjFromForm {dom} {cod} spfd a b i ec (ep ** dm) =
+  (ep ** \ed, dd => case dm ed dd of
+    (ec' ** eb' ** dd') =>
+      (((ec' ** fst $ i ec' eb') ** dd') ** Element0 eb' Refl))
+
+public export
+SPFDgenFactCodObjToForm : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (a : SliceObj dom) -> (b : SliceObj cod) ->
+  (i : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
+  SliceMorphism {a=cod}
+    (SPFDgenFactCodObj {dom} {cod} spfd a b i)
+    (SPFDgenFactCodObjForm {dom} {cod} spfd a b i)
+SPFDgenFactCodObjToForm {dom} {cod} spfd a b i ec (ep ** dm) =
+  (ep **
+   \ed, dd =>
+    case dm ed dd of
+      (((ec' ** ep') ** dd') ** Element0 eb beq) =>
+        (ec' ** eb ** rewrite beq in dd'))
 
 -- The first component of the generic factorization of a morphism through
 -- a slice polynomial functor (which always exists for any parametric right
