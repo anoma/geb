@@ -1117,6 +1117,7 @@ SPFDgenFactFstSig {dom} {cod} = Pi {a=cod} . spfdPos
 
 -- Here we show that a `SPFDgenFactFstSig` suffices to determine
 -- `SPFDgenFactDomObjForm` for _any_ `a : SliceObj dom` and `b : SliceObj cod`.
+public export
 SPFDgenFactDomObjFromFstSig : {dom, cod : Type} -> {spfd : SPFData dom cod} ->
   SPFDgenFactFstSig {dom} {cod} spfd ->
   (a : SliceObj dom) -> (b : SliceObj cod) ->
