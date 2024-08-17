@@ -893,6 +893,10 @@ SPFDgenFactCodObj {dom} {cod} spfd a b i =
 
 -- For documentation and convenience, we also define an explicit formula
 -- equivalent to `SPFDgenFactCodObj`.
+--
+-- A term of this type is a pair of a position of the functor and an
+-- assignment of the directions at that position to directions in
+-- the range of `i`.
 public export
 SPFDgenFactCodObjForm : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (a : SliceObj dom) -> (b : SliceObj cod) ->
@@ -939,6 +943,27 @@ SPFDgenFactFst : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceMorphism {a=cod} b (SPFDgenFactCodObj {dom} {cod} spfd a b m)
 SPFDgenFactFst {dom} {cod} spfd a b m =
   SPFDpraUnit spfd b $ SPFDgenFactIdx {dom} {cod} spfd a b m
+
+-- Again, for convenience and documentation, we define an explicit formula
+-- equivalent to `SPFDgenFactFst`.
+public export
+SPFDgenFactFstForm : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (a : SliceObj dom) -> (b : SliceObj cod) ->
+  (m : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
+  SliceMorphism {a=cod} b (SPFDgenFactCodObjForm {dom} {cod} spfd a b m)
+SPFDgenFactFstForm {dom} {cod} spfd a b m ec eb =
+  (fst (m ec eb) ** \ed, dd => (ec ** eb ** dd))
+
+public export
+SPFDgenFactFstFormEq :
+  {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (a : SliceObj dom) -> (b : SliceObj cod) ->
+  (m : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
+  (ec : cod) -> (eb : b ec) ->
+  SPFDgenFactFstForm {dom} {cod} spfd a b m ec eb =
+  SPFDgenFactCodObjToForm spfd a b m ec
+    (SPFDgenFactFst {dom} {cod} spfd a b m ec eb)
+SPFDgenFactFstFormEq {dom} {cod} spfd a b m ec eb = Refl
 
 -- The morphism underlying the second component of the generic factorization of
 -- a morphism through a slice polynomial functor.  By "underlying the second
