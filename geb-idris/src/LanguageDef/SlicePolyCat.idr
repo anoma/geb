@@ -1053,15 +1053,21 @@ SPFDgenFactSndDomCat {dom} {cod} spfd a b i ed ecdb =
     (((ec ** ep) ** dd) ** Element0 eb eqp) =>
       snd (i ec eb) ed $ rewrite eqp in dd
 
+public export
+SPFDgenFactSndDomCatFormDom : {dom, cod : Type} ->
+  (spfd : SPFData dom cod) -> {b : SliceObj cod} ->
+  SPFDmultiR1 {cod} (spfdPos spfd) b -> (a : SliceObj dom) -> Type
+SPFDgenFactSndDomCatFormDom {dom} {cod} spfd {b} i a =
+  SliceMorphism {a=dom} (SPFDgenFactDomObjForm {dom} {cod} spfd a b i) a
+
 -- A version of `SPFDgenFactSndDomCat` which operates on the "explicit
 -- formula" version of the domain object.
 public export
 SPFDgenFactSndDomCatForm : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (a : SliceObj dom) -> (b : SliceObj cod) ->
   (i : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
-  SliceMorphism {a=dom}
-    (SPFDgenFactDomObjForm {dom} {cod} spfd a b $
-      SPFDmultiRto1 {spfd} {b} {a} i)
+  SPFDgenFactSndDomCatFormDom {dom} {cod} spfd {b}
+    (SPFDmultiRto1 {spfd} {b} {a} i)
     a
 SPFDgenFactSndDomCatForm {dom} {cod} spfd a b i ed (ec ** eb ** dd) =
   snd (i ec eb) ed dd
