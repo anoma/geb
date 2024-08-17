@@ -981,6 +981,26 @@ SPFDgenFactSndDomCat {dom} {cod} spfd a b i ed ecdb =
     (((ec ** ep) ** dd) ** Element0 eb eqp) =>
       snd (i ec eb) ed $ rewrite eqp in dd
 
+-- A version of `SPFDgenFactSndDomCat` which operates on the "explicit
+-- formula" version of the domain object.
+public export
+SPFDgenFactSndDomCatForm : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (a : SliceObj dom) -> (b : SliceObj cod) ->
+  (i : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
+  SliceMorphism {a=dom} (SPFDgenFactDomObjForm {dom} {cod} spfd a b i) a
+SPFDgenFactSndDomCatForm {dom} {cod} spfd a b i ed (ec ** eb ** dd) =
+  snd (i ec eb) ed dd
+
+public export
+SPFDgenFactSndDomCatFormEq : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (a : SliceObj dom) -> (b : SliceObj cod) ->
+  (i : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
+  (ed : dom) -> (ef : SPFDgenFactDomObjForm {dom} {cod} spfd a b i ed) ->
+  SPFDgenFactSndDomCatForm {dom} {cod} spfd a b i ed ef =
+  SPFDgenFactSndDomCat {dom} {cod} spfd a b i ed
+    (SPFDgenFactDomObjFromForm spfd a b i ed ef)
+SPFDgenFactSndDomCatFormEq {dom} {cod} spfd a b i ed (ec ** eb ** dd) = Refl
+
 -- The second component of the generic factorization of a morphism through
 -- a slice polynomial functor.
 public export
