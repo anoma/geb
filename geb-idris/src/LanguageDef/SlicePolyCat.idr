@@ -1016,6 +1016,77 @@ SPFDgenFactSnd {dom} {cod} spfd a b i =
     a
     (SPFDgenFactSndDomCat {dom} {cod} spfd a b i)
 
+-- Again, for convenience and documentation, we define an explicit formula
+-- equivalent to `SPFDgenFactSnd`.
+public export
+SPFDgenFactSndForm : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (a : SliceObj dom) -> (b : SliceObj cod) ->
+  (m : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
+  SliceMorphism {a=cod}
+    (SPFDgenFactCodObjForm {dom} {cod} spfd a b m)
+    (SPFDmultiR {dom} {cod} spfd a)
+SPFDgenFactSndForm {dom} {cod} spfd a b m ec (ep ** dm) =
+  (ep ** \ed, dd =>
+    case dm ed dd of (ec' ** eb' ** dd') => snd (m ec' eb') ed dd')
+
+public export
+SPFDgenFactSndFormSndFromForm :
+  {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (a : SliceObj dom) -> (b : SliceObj cod) ->
+  (m : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
+  (ec : cod) -> (eb : b ec) ->
+  (ef : SPFDgenFactCodObjForm spfd a b m ec) ->
+  (ed : dom) ->
+  spfdDir spfd ec (fst $ SPFDgenFactSndForm spfd a b m ec ef) ed ->
+  spfdDir spfd ec (fst $ SPFDgenFactCodObjFromForm spfd a b m ec ef) ed
+SPFDgenFactSndFormSndFromForm {dom} {cod} spfd a b m ec eb (ep ** dm) ed = id
+
+public export
+SPFDgenFactSndFormEqSndExt :
+  {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (a : SliceObj dom) -> (b : SliceObj cod) ->
+  (m : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
+  (ec : cod) -> (eb : b ec) ->
+  (ef : SPFDgenFactCodObjForm spfd a b m ec) ->
+  (ed : dom) ->
+  (dd : spfdDir spfd ec (fst (SPFDgenFactSndForm spfd a b m ec ef)) ed) ->
+  snd (SPFDgenFactSndForm {dom} {cod} spfd a b m ec ef) ed dd =
+    snd
+      (SPFDgenFactSnd {dom} {cod} spfd a b m ec
+        (SPFDgenFactCodObjFromForm {dom} {cod} spfd a b m ec ef))
+      ed (SPFDgenFactSndFormSndFromForm spfd a b m ec eb ef ed dd)
+SPFDgenFactSndFormEqSndExt {dom} {cod} spfd a b m ec eb (ep ** dm) ed dd
+    with (dm ed dd)
+  SPFDgenFactSndFormEqSndExt {dom} {cod} spfd a b m ec eb (ep ** dm) ed dd
+    | (ec' ** eb' ** dd') = Refl
+
+public export
+SPFDgenFactSndFormEqSnd : FunExt ->
+  {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (a : SliceObj dom) -> (b : SliceObj cod) ->
+  (m : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
+  (ec : cod) -> (eb : b ec) -> (ef : SPFDgenFactCodObjForm spfd a b m ec) ->
+  snd (SPFDgenFactSndForm {dom} {cod} spfd a b m ec ef) ~=~
+    snd (SPFDgenFactSnd {dom} {cod} spfd a b m ec
+      (SPFDgenFactCodObjFromForm {dom} {cod} spfd a b m ec ef))
+SPFDgenFactSndFormEqSnd fext {dom} {cod} spfd a b m ec eb (ep ** dm) =
+  funExt $ \ed => funExt $ \dd =>
+    SPFDgenFactSndFormEqSndExt spfd a b m ec eb (ep ** dm) ed dd
+
+public export
+SPFDgenFactSndFormEq : FunExt ->
+  {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (a : SliceObj dom) -> (b : SliceObj cod) ->
+  (m : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
+  (ec : cod) -> (eb : b ec) -> (ef : SPFDgenFactCodObjForm spfd a b m ec) ->
+  SPFDgenFactSndForm {dom} {cod} spfd a b m ec ef =
+    SPFDgenFactSnd {dom} {cod} spfd a b m ec
+      (SPFDgenFactCodObjFromForm {dom} {cod} spfd a b m ec ef)
+SPFDgenFactSndFormEq fext {dom} {cod} spfd a b m ec eb (ep ** dm) =
+  dpEq12
+    Refl
+    (SPFDgenFactSndFormEqSnd fext {dom} {cod} spfd a b m ec eb (ep ** dm))
+
 public export
 SPFDfactCorrect : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (a : SliceObj dom) -> (b : SliceObj cod) ->
