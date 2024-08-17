@@ -394,6 +394,55 @@ public export
 SPFDmultiR1 : {cod : Type} -> (pos : SliceObj cod) -> (b : SliceObj cod) -> Type
 SPFDmultiR1 {cod} pos b = SliceMorphism {a=cod} b pos
 
+-- Given a first component of a morphism into an `SPFDmultiR spfd`, this
+-- is the signature required to specify the second component.
+public export
+SPFDmultiR2 :
+  {dom, cod : Type} -> (spfd : SPFData dom cod) -> {b : SliceObj cod} ->
+  (m1 : SPFDmultiR1 {cod} (spfdPos spfd) b) -> (a : SliceObj dom) -> Type
+SPFDmultiR2 {dom} {cod} spfd {b} m1 a =
+  (ec : cod) -> (eb : b ec) ->
+  SliceMorphism {a=dom} (spfdDir spfd ec $ m1 ec eb) a
+
+-- The two components above together constitute a way of specifying a
+-- morphism `b -> SPFDmultiR a` into an `SPFDmultiR`.
+public export
+SPFDmultiR12 :
+  {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (b : SliceObj cod) -> (a : SliceObj dom) -> Type
+SPFDmultiR12 {dom} {cod} spfd b =
+  Sigma {a=(SPFDmultiR1 {cod} (spfdPos spfd) b)}
+  . flip (SPFDmultiR2 {dom} {cod} {b} spfd)
+
+-- We show that separate definitions of `SPFDmultiR1` and `SPFDmultiR2`
+-- are equivalent to the definition of a morphism `b -> SPFDmultiR a`.
+public export
+SPFDmultiR1from12 :
+  {dom, cod : Type} -> {spfd : SPFData dom cod} ->
+  {b : SliceObj cod} -> {a : SliceObj dom} ->
+  SPFDmultiR12 {dom} {cod} spfd b a ->
+  (ec : cod) -> (eb : b ec) -> spfdPos spfd ec
+SPFDmultiR1from12 {dom} {cod} {spfd} {b} {a} = DPair.fst
+
+public export
+SPFDmultiR2from12 :
+  {dom, cod : Type} -> {spfd : SPFData dom cod} ->
+  {b : SliceObj cod} -> {a : SliceObj dom} ->
+  (m12 : SPFDmultiR12 {dom} {cod} spfd b a) ->
+  (ec : cod) -> (eb : b ec) -> (ed : dom) ->
+  spfdDir spfd ec (SPFDmultiR1from12 {spfd} m12 ec eb) ed -> a ed
+SPFDmultiR2from12 {dom} {cod} {spfd} {b} {a} = DPair.snd
+
+public export
+SPFDmultiRfrom12 :
+  {dom, cod : Type} -> {spfd : SPFData dom cod} ->
+  {b : SliceObj cod} -> {a : SliceObj dom} ->
+  SPFDmultiR12 {dom} {cod} spfd b a ->
+  SliceMorphism {a=cod} b (SPFDmultiR spfd a)
+SPFDmultiRfrom12 {dom} {cod} {spfd} {b} {a} m12 ec eb =
+  (SPFDmultiR1from12 {dom} {cod} {spfd} {b} {a} m12 ec eb **
+   SPFDmultiR2from12 {dom} {cod} {spfd} {b} {a} m12 ec eb)
+
 public export
 SPFDmultiRto1 :
   {dom, cod : Type} -> {spfd : SPFData dom cod} ->
@@ -401,6 +450,45 @@ SPFDmultiRto1 :
   SliceMorphism {a=cod} b (SPFDmultiR spfd a) ->
   SPFDmultiR1 {cod} (spfdPos spfd) b
 SPFDmultiRto1 {dom} {cod} {spfd} {b} {a} m ec eb = fst (m ec eb)
+
+public export
+SPFDmultiRto2 :
+  {dom, cod : Type} -> {spfd : SPFData dom cod} ->
+  {b : SliceObj cod} -> {a : SliceObj dom} ->
+  (m : SliceMorphism {a=cod} b (SPFDmultiR spfd a)) ->
+  SPFDmultiR2 {dom} {cod} spfd {b}
+    (SPFDmultiRto1 {dom} {cod} {spfd} {b} {a} m) a
+SPFDmultiRto2 {dom} {cod} {spfd} {b} {a} m ec eb = snd (m ec eb)
+
+public export
+SPFDmultiRto12 :
+  {dom, cod : Type} -> {spfd : SPFData dom cod} ->
+  {b : SliceObj cod} -> {a : SliceObj dom} ->
+  SliceMorphism {a=cod} b (SPFDmultiR spfd a) ->
+  SPFDmultiR12 {dom} {cod} spfd b a
+SPFDmultiRto12 {dom} {cod} {spfd} {b} {a} m =
+  (SPFDmultiRto1 {dom} {cod} {spfd} {b} {a} m **
+   SPFDmultiRto2 {dom} {cod} {spfd} {b} {a} m)
+
+public export
+SPFDmultiRfrom12idL : FunExt ->
+  {dom, cod : Type} -> {spfd : SPFData dom cod} ->
+  {b : SliceObj cod} -> {a : SliceObj dom} ->
+  (m : SliceMorphism {a=cod} b (SPFDmultiR spfd a)) ->
+  SPFDmultiRfrom12 {dom} {cod} {spfd} (SPFDmultiRto12 {dom} {cod} {spfd} m) = m
+SPFDmultiRfrom12idL fext {dom} {cod} {spfd} {b} {a} m =
+  funExt $ \ec => funExt $ \eb => sym dpEqPat
+
+public export
+SPFDmultiRfrom12idR : FunExt ->
+  {dom, cod : Type} -> {spfd : SPFData dom cod} ->
+  {b : SliceObj cod} -> {a : SliceObj dom} ->
+  (m : SPFDmultiR12 spfd b a) ->
+  SPFDmultiRto12 {dom} {cod} {spfd} (SPFDmultiRfrom12 {dom} {cod} {spfd} m) = m
+SPFDmultiRfrom12idR fext {dom} {cod} {spfd} {b} {a} (m1 ** m2) =
+  dpEq12
+    (funExt $ \ec => funExt $ \eb => Refl)
+    (funExt $ \ec => funExt $ \ep => funExt $ \ed => funExt $ \dd => Refl)
 
 public export
 SPFDmultiRmap : {dom, cod : Type} ->
