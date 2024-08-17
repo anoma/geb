@@ -382,6 +382,58 @@ public export
 InterpSPFData : {dom, cod : Type} -> SPFData dom cod -> SliceFunctor dom cod
 InterpSPFData = SPFDmultiR
 
+-- The signature of the first component of a (slice) morphism into an
+-- `SPFDmultiR {dom} {cod} spfd a` (for some `dom, cod : Type` and
+-- `a : SliceObj dom`) is independent of the codomain of the morphism as
+-- a whole; it depends only on morphism's domain -- and only on the _positions_
+-- of the functor, not its directions, meaning the it is even independent of
+-- the domain of the _functor_ (which is a (slice) category), not only of the
+-- codomain of the morphism (which, like the domain of the morphism, is an
+-- object in the category which comprises the codomain of the functor).
+public export
+SPFDmultiR1 : {cod : Type} -> (pos : SliceObj cod) -> (b : SliceObj cod) -> Type
+SPFDmultiR1 {cod} pos b = SliceMorphism {a=cod} b pos
+
+-- Given a first component of a morphism into an `SPFDmultiR spfd`, this
+-- is the signature required to specify the second component.
+public export
+SPFDmultiR2 :
+  {dom, cod : Type} -> (spfd : SPFData dom cod) -> {b : SliceObj cod} ->
+  (m1 : SPFDmultiR1 {cod} (spfdPos spfd) b) -> (a : SliceObj dom) -> Type
+SPFDmultiR2 {dom} {cod} spfd {b} m1 a =
+  (ec : cod) -> spfdPos spfd ec -> (eb : b ec) ->
+  SliceMorphism {a=dom} (spfdDir spfd ec $ m1 ec eb) a
+
+-- The two components above together constitute a way of specifying a
+-- morphism `b -> SPFDmultiR a` into an `SPFDmultiR`.
+public export
+SPFDmultiR12 :
+  {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (b : SliceObj cod) -> (a : SliceObj dom) -> Type
+SPFDmultiR12 {dom} {cod} spfd b =
+  Sigma {a=(SPFDmultiR1 {cod} (spfdPos spfd) b)}
+  . flip (SPFDmultiR2 {dom} {cod} {b} spfd)
+
+-- We show that separate definitions of `SPFDmultiR1` and `SPFDmultiR2`
+-- are equivalent to the definition of a morphism `b -> SPFDmultiR a`.
+public export
+SPFDmultiRfrom12 :
+  {dom, cod : Type} -> {spfd : SPFData dom cod} ->
+  {b : SliceObj cod} -> {a : SliceObj dom} ->
+  SPFDmultiR12 {dom} {cod} spfd b a ->
+  SliceMorphism {a=cod} b (SPFDmultiR spfd a)
+SPFDmultiRfrom12 {dom} {cod} {spfd} {b} {a} m12 ec eb =
+  (fst m12 ec eb ** \ed, dd => snd m12 ec (fst m12 ec eb) eb ed dd)
+
+public export
+SPFDmultiRto12 :
+  {dom, cod : Type} -> {spfd : SPFData dom cod} ->
+  {b : SliceObj cod} -> {a : SliceObj dom} ->
+  SliceMorphism {a=cod} b (SPFDmultiR spfd a) ->
+  SPFDmultiR12 {dom} {cod} spfd b a
+SPFDmultiRto12 {dom} {cod} {spfd} {b} {a} m =
+  (\ec, eb => fst (m ec eb) ** \ec, ep, eb, ed, dd => snd (m ec eb) ed dd)
+
 public export
 SPFDmultiRmap : {dom, cod : Type} ->
   (spfd : SPFData dom cod) -> SliceFMap (SPFDmultiR {dom} {cod} spfd)
