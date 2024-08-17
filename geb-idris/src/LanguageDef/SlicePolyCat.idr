@@ -1100,6 +1100,30 @@ SPFDfactCorrect {dom} {cod} spfd a b i fext =
   funExt $ \ec => funExt $ \eb =>
     trans (dpEq12 Refl $ funExt $ \ed => funExt $ \dd => Refl) $ sym dpEqPat
 
+-- Establishing the existence of the generic factorization allows us to invert
+-- the factorization by using a specification of the factors _themselves_ as
+-- the definition of a morphism of the form `b -> T(a)`, without any loss of
+-- generality because we have established that all such morphisms can be
+-- expressed (uniquely) in that factorized form.
+--
+-- Thus we define APIs for the definition of such a morphism via factors.
+-- The first definition required is that of the signature of the first
+-- component of the factorization, which is simply a `b -> spfdPos spfd`.
+-- But note that the signature below requires only `dom` and `cod`, not
+-- `a : SliceObj dom` or `b : SliceObj cod`.
+public export
+SPFDgenFactFstSig : {dom, cod : Type} -> (spfd : SPFData dom cod) -> Type
+SPFDgenFactFstSig {dom} {cod} = Pi {a=cod} . spfdPos
+
+-- Here we show that a `SPFDgenFactFstSig` suffices to determine
+-- `SPFDgenFactDomObjForm` for _any_ `a : SliceObj dom` and `b : SliceObj cod`.
+SPFDgenFactDomObjFromFstSig : {dom, cod : Type} -> {spfd : SPFData dom cod} ->
+  SPFDgenFactFstSig {dom} {cod} spfd ->
+  (a : SliceObj dom) -> (b : SliceObj cod) ->
+  SliceObj dom
+SPFDgenFactDomObjFromFstSig {dom} {cod} {spfd} fact1 a b ed =
+  (ec : cod ** eb : b ec ** spfdDir spfd ec (fact1 ec) ed)
+
 -- Because any morphism `b -> T(a)` induces a unique `b -> spfdPos spfd`,
 -- we can use the demonstration of the generic factorization to allow a
 -- new way of defining morphisms `b -> T(a)` without loss of generality.
