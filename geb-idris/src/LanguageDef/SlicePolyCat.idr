@@ -1116,13 +1116,12 @@ SPFDgenFactFstSig : {dom, cod : Type} -> (spfd : SPFData dom cod) -> Type
 SPFDgenFactFstSig {dom} {cod} = Pi {a=cod} . spfdPos
 
 -- Here we show that a `SPFDgenFactFstSig` suffices to determine
--- `SPFDgenFactDomObjForm` for _any_ `a : SliceObj dom` and `b : SliceObj cod`.
+-- `SPFDgenFactDomObjForm` for _any_ `b : SliceObj cod`.  Note that
+-- this is still independent of `a : SliceObj dom`.
 public export
 SPFDgenFactDomObjFromFstSig : {dom, cod : Type} -> {spfd : SPFData dom cod} ->
-  SPFDgenFactFstSig {dom} {cod} spfd ->
-  (a : SliceObj dom) -> (b : SliceObj cod) ->
-  SliceObj dom
-SPFDgenFactDomObjFromFstSig {dom} {cod} {spfd} fact1 a b ed =
+  SPFDgenFactFstSig {dom} {cod} spfd -> SliceObj cod -> SliceObj dom
+SPFDgenFactDomObjFromFstSig {dom} {cod} {spfd} fact1 b ed =
   (ec : cod ** eb : b ec ** spfdDir spfd ec (fact1 ec) ed)
 
 -- Because any morphism `b -> T(a)` induces a unique `b -> spfdPos spfd`,
