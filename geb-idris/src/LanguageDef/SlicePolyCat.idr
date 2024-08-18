@@ -967,10 +967,8 @@ SPFDgenFactDomObj {dom} {cod} spfd a b =
 -- multi-adjunction.
 public export
 SPFDgenFactDomObjForm : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  (a : SliceObj dom) -> (b : SliceObj cod) ->
-  (i : SPFDmultiR1 {cod} (spfdPos spfd) b) ->
-  SliceObj dom
-SPFDgenFactDomObjForm {dom} {cod} spfd a b i ed =
+  (b : SliceObj cod) -> (i : SPFDmultiR1 {cod} (spfdPos spfd) b) -> SliceObj dom
+SPFDgenFactDomObjForm {dom} {cod} spfd b i ed =
   (ec : cod ** eb : b ec ** spfdDir spfd ec (i ec eb) ed)
 
 public export
@@ -978,8 +976,7 @@ SPFDgenFactDomObjFromForm : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (a : SliceObj dom) -> (b : SliceObj cod) ->
   (i : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
   SliceMorphism {a=dom}
-    (SPFDgenFactDomObjForm {dom} {cod} spfd a b $
-      SPFDmultiRto1 {spfd} {b} {a} i)
+    (SPFDgenFactDomObjForm {dom} {cod} spfd b $ SPFDmultiRto1 {spfd} {b} {a} i)
     (SPFDgenFactDomObj {dom} {cod} spfd a b i)
 SPFDgenFactDomObjFromForm {dom} {cod} spfd a b i ed (ec ** eb ** dd) =
   (((ec ** fst $ i ec eb) ** dd) ** Element0 eb Refl)
@@ -990,8 +987,7 @@ SPFDgenFactDomObjToForm : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (i : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
   SliceMorphism {a=dom}
     (SPFDgenFactDomObj {dom} {cod} spfd a b i)
-    (SPFDgenFactDomObjForm {dom} {cod} spfd a b $
-      SPFDmultiRto1 {spfd} {b} {a} i)
+    (SPFDgenFactDomObjForm {dom} {cod} spfd b $ SPFDmultiRto1 {spfd} {b} {a} i)
 SPFDgenFactDomObjToForm {dom} {cod} spfd a b i ed
   (((ec ** ep) ** dd) ** Element0 eb epeq) =
     (ec ** eb ** rewrite epeq in dd)
@@ -1024,7 +1020,7 @@ SPFDgenFactCodObjForm {dom} {cod} spfd a b i ec =
   (ep : spfd .spfdPos ec **
    SliceMorphism {a=dom}
     (spfdDir spfd ec ep)
-    (SPFDgenFactDomObjForm {dom} {cod} spfd a b i))
+    (SPFDgenFactDomObjForm {dom} {cod} spfd b i))
 
 public export
 SPFDgenFactCodObjFromForm : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
@@ -1110,7 +1106,7 @@ SPFDgenFactSndDomCatFormDom : {dom, cod : Type} ->
   (spfd : SPFData dom cod) -> {b : SliceObj cod} ->
   SPFDmultiR1 {cod} (spfdPos spfd) b -> (a : SliceObj dom) -> Type
 SPFDgenFactSndDomCatFormDom {dom} {cod} spfd {b} i a =
-  SliceMorphism {a=dom} (SPFDgenFactDomObjForm {dom} {cod} spfd a b i) a
+  SliceMorphism {a=dom} (SPFDgenFactDomObjForm {dom} {cod} spfd b i) a
 
 -- A version of `SPFDgenFactSndDomCat` which operates on the "explicit
 -- formula" version of the domain object.
@@ -1130,7 +1126,7 @@ SPFDgenFactSndDomCatFormEq : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (i : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
   (ed : dom) ->
   (ef :
-    SPFDgenFactDomObjForm {dom} {cod} spfd a b
+    SPFDgenFactDomObjForm {dom} {cod} spfd b
       (SPFDmultiRto1 {spfd} {b} {a} i)
       ed) ->
   SPFDgenFactSndDomCatForm {dom} {cod} spfd a b i ed ef =
