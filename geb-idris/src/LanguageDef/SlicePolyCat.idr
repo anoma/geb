@@ -396,6 +396,7 @@ SPFDmultiR1 {cod} pos b = SliceMorphism {a=cod} b pos
 
 -- Given a first component of a morphism into an `SPFDmultiR spfd`, this
 -- is the signature required to specify the second component.
+-- Note that for a fixed `SPFDmultiR1`, this is a presheaf on `SliceObj dom`.
 public export
 SPFDmultiR2 :
   {dom, cod : Type} -> (spfd : SPFData dom cod) -> {b : SliceObj cod} ->
@@ -964,7 +965,11 @@ SPFDgenFactDomObj {dom} {cod} spfd a b =
 -- Note that we do not require a full morphism `b -> SPFDmultiR a` to
 -- determine this object -- we only require the first component, which
 -- returns a position, and thereby selects one of the units of the
--- multi-adjunction.
+-- multi-adjunction.  In other words, the intermediate object of the
+-- generic factorization of a morphism is independent of the codomain
+-- of the morphism; it depends only on the first projection, to the
+-- position-set of the functor, without reference to the codomain of
+-- the full morphism.
 public export
 SPFDgenFactDomObjForm : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (b : SliceObj cod) -> (i : SPFDmultiR1 {cod} (spfdPos spfd) b) -> SliceObj dom
@@ -1106,14 +1111,47 @@ SPFDgenFactSndDomCatFormDom {dom} {cod} spfd {b} i a =
 -- A version of `SPFDgenFactSndDomCat` which operates on the "explicit
 -- formula" version of the domain object.
 public export
-SPFDgenFactSndDomCatForm : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+SPFDgenFactSndDomCatFormSig : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (a : SliceObj dom) -> (b : SliceObj cod) ->
   (i : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
+  Type
+SPFDgenFactSndDomCatFormSig {dom} {cod} spfd a b i =
   SPFDgenFactSndDomCatFormDom {dom} {cod} spfd {b}
     (SPFDmultiRto1 {spfd} {b} {a} i)
     a
+
+public export
+SPFDgenFactSndDomCatForm : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (a : SliceObj dom) -> (b : SliceObj cod) ->
+  (i : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
+  SPFDgenFactSndDomCatFormSig {dom} {cod} spfd a b i
 SPFDgenFactSndDomCatForm {dom} {cod} spfd a b i ed (ec ** eb ** dd) =
   snd (i ec eb) ed dd
+
+-- We now note that any morphism with the same signature as an
+-- `SPFDgenFactSndDomCatForm` is simply a rearrangement of parameters
+-- of a signature we have already defined:  `SPFDmultiR2`.
+public export
+SPFDgenFactSndDomCatFormSigToR2 : {dom, cod : Type} ->
+  {spfd : SPFData dom cod} ->
+  {a : SliceObj dom} -> {b : SliceObj cod} ->
+  {i : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)} ->
+  (m : SPFDgenFactSndDomCatFormSig {dom} {cod} spfd a b i) ->
+  SPFDmultiR2 {dom} {cod} spfd {b} (SPFDmultiRto1 {spfd} {b} {a} i) a
+SPFDgenFactSndDomCatFormSigToR2 {dom} {cod} {spfd} {a} {b} {i} m ec eb ed dd =
+  m ed (ec ** eb ** dd)
+
+public export
+SPFDgenFactSndDomCatFormSigFromR2 : {dom, cod : Type} ->
+  {spfd : SPFData dom cod} ->
+  {a : SliceObj dom} -> {b : SliceObj cod} ->
+  {i1 : SPFDmultiR1 {cod} (spfdPos spfd) b} ->
+  (i2 : SPFDmultiR2 {dom} {cod} spfd {b} i1 a) ->
+  SPFDgenFactSndDomCatFormSig {dom} {cod} spfd a b
+    (SPFDmultiRfrom12 {spfd} {b} {a} (i1 ** i2))
+SPFDgenFactSndDomCatFormSigFromR2 {dom} {cod} {spfd} {a} {b} {i1} i2
+  ed (ec ** eb ** dd) =
+    i2 ec eb ed dd
 
 public export
 SPFDgenFactSndDomCatFormEq : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
