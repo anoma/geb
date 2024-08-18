@@ -1019,8 +1019,10 @@ SPFDgenFactCodObjForm : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceObj cod
 SPFDgenFactCodObjForm {dom} {cod} spfd a b i ec =
   (ep : spfd .spfdPos ec **
-   (ed : dom) -> spfd .spfdDir ec ep ed ->
-    (ec' : cod ** eb : b ec' ** spfd .spfdDir ec' (fst $ i ec' eb) ed))
+   SliceMorphism {a=dom}
+    (spfdDir spfd ec ep)
+    (SPFDgenFactDomObjForm {dom} {cod} spfd a b
+      (SPFDmultiRto1 {spfd} {b} {a} i)))
 
 public export
 SPFDgenFactCodObjFromForm : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
