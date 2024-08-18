@@ -931,12 +931,14 @@ SPFDgenFactIdx {dom} {cod} spfd a b =
 -- morphism into the `SPFDmultiR`, and a direction-valued morphism
 -- which depends on the position-valued one.  `SPGenFactIdx` is simply
 -- the first projection, which constitutes the position-valued part.
+-- This is the type that we have already called `SPFDmultiR1`.
 public export
 SPFDgenFactIdxEq : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (a : SliceObj dom) -> (b : SliceObj cod) ->
   (i : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
   (ec : cod) -> (eb : b ec) ->
-  SPFDgenFactIdx {dom} {cod} spfd a b i ec eb = DPair.fst (i ec eb)
+  SPFDgenFactIdx {dom} {cod} spfd a b i ec eb =
+    SPFDmultiRto1 {spfd} {b} {a} i ec eb
 SPFDgenFactIdxEq {dom} {cod} spfd a b i ec eb = Refl
 
 -- This is the object of `SliceObj dom` which underlies the intermediate
