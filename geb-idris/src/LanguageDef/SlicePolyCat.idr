@@ -3191,6 +3191,35 @@ SPFDcartFact {dom} {cod} {p} {q} nt =
     (spOnPos nt)
     (\ec, ep => sliceId {a=dom} $ spfdDir q ec $ spOnPos nt ec ep)
 
+--------------------------
+---- Cartesian slices ----
+--------------------------
+
+-- For a given functor `p`, an object of its Cartesian-slice category is a
+-- functor with a Cartesian transformation to it.
+--
+-- The constraint that the transformation must be Cartesian means
+-- that the on-directions function is determined completely by an
+-- on-positions function.  Furthermore, in this formulation, we
+-- specify the on-positions function as a projection of a slice
+-- object of the positions.  Hence, a Cartesian slice is determined
+-- simply by a slice object of the positions.
+
+public export
+SPFDcartSlTot : {dom, cod : Type} ->
+  (p : SPFData dom cod) -> SPFDbaseSl p ->
+  SPFData dom cod
+SPFDcartSlTot {dom} {cod} p csl =
+  SPFD
+    (\ec => Sigma {a=(spfdPos p ec)} (curry csl ec))
+    (\ec, ep, ed => spfdDir p ec (fst ep) ed)
+
+public export
+SPFDcartSlProjOnPos : {dom, cod : Type} ->
+  (p : SPFData dom cod) -> (csl : SPFDbaseSl p) ->
+  SPFntPos (SPFDcartSlTot p csl) p
+SPFDcartSlProjOnPos {dom} {cod} p csl ec = DPair.fst
+
 -- We can also factorize a _cell_, first changing the domain together with
 -- the directions (a vertical transformation) and then the codomain together
 -- with the positions (a Cartesian transformation).
