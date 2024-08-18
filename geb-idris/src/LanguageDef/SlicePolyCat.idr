@@ -3206,8 +3206,12 @@ SPFDcartFact {dom} {cod} {p} {q} nt =
 -- simply by a slice object of the positions.
 
 public export
+SPFDcartSl : {dom, cod : Type} -> SPFData dom cod -> Type
+SPFDcartSl = SPFDbaseSl
+
+public export
 SPFDcartSlTot : {dom, cod : Type} ->
-  (p : SPFData dom cod) -> SPFDbaseSl p ->
+  (p : SPFData dom cod) -> SPFDcartSl p ->
   SPFData dom cod
 SPFDcartSlTot {dom} {cod} p csl =
   SPFD
@@ -3216,9 +3220,60 @@ SPFDcartSlTot {dom} {cod} p csl =
 
 public export
 SPFDcartSlProjOnPos : {dom, cod : Type} ->
-  (p : SPFData dom cod) -> (csl : SPFDbaseSl p) ->
+  (p : SPFData dom cod) -> (csl : SPFDcartSl p) ->
   SPFntPos (SPFDcartSlTot p csl) p
 SPFDcartSlProjOnPos {dom} {cod} p csl ec = DPair.fst
+
+public export
+SPFDcartSlProj : {dom, cod : Type} ->
+  (p : SPFData dom cod) -> (csl : SPFDcartSl p) ->
+  SPFnt (SPFDcartSlTot p csl) p
+SPFDcartSlProj {dom} {cod} p csl =
+  SPFDm
+    (SPFDcartSlProjOnPos p csl)
+    (\ec, ep => sliceId {a=dom} $ spfdDir p ec (fst ep))
+
+-------------------------
+---- Vertical slices ----
+-------------------------
+
+-- For a given functor `p`, an object of its verical-slice category is a
+-- functor with a verical transformation to it.
+--
+-- The constraint that the transformation must be vertical means
+-- that it can be determined purely by an on-directions function
+-- for the identity on-positions function.
+
+public export
+SPFDvertSlDir : {dom, cod : Type} -> SPFData dom cod -> Type
+SPFDvertSlDir {dom} {cod} p = (ec : cod) -> spfdPos p ec -> SliceObj dom
+
+public export
+SPFDvertSlTot : {dom, cod : Type} ->
+  (p : SPFData dom cod) -> SPFDvertSlDir {dom} {cod} p -> SPFData dom cod
+SPFDvertSlTot {dom} {cod} p dir = SPFD (spfdPos p) dir
+
+public export
+SPFDvertSlOnDir : {dom, cod : Type} ->
+  (p : SPFData dom cod) -> SPFDvertSlDir {dom} {cod} p -> Type
+SPFDvertSlOnDir {dom} {cod} p dir =
+  SPFntDir (SPFDvertSlTot p dir) p (sliceId {a=cod} $ spfdPos p)
+
+public export
+SPFDvertSl : {dom, cod : Type} -> SPFData dom cod -> Type
+SPFDvertSl {dom} {cod} p =
+  Sigma {a=(SPFDvertSlDir {dom} {cod} p)} (SPFDvertSlOnDir {dom} {cod} p)
+
+public export
+SPFDvertSlProj : {dom, cod : Type} ->
+  (p : SPFData dom cod) -> (sl : SPFDvertSl {dom} {cod} p) ->
+  SPFnt (SPFDvertSlTot p (fst sl)) p
+SPFDvertSlProj {dom} {cod} p sl =
+  SPFDm (sliceId {a=cod} $ spfdPos p) (snd sl)
+
+---------------------------------------------------
+---- Vertical-Cartesian factorization of cells ----
+---------------------------------------------------
 
 -- We can also factorize a _cell_, first changing the domain together with
 -- the directions (a vertical transformation) and then the codomain together
