@@ -1012,24 +1012,27 @@ SPFDgenFactCodObj {dom} {cod} spfd a b i =
 -- A term of this type is a pair of a position of the functor and an
 -- assignment of the directions at that position to directions in
 -- the range of `i`.
+--
+-- Note that this object does not depend on a full morphism `b -> SPFDmultiR a`,
+-- but only on the first projection of one (an `SPFDmultiR1`).
 public export
 SPFDgenFactCodObjForm : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (a : SliceObj dom) -> (b : SliceObj cod) ->
-  (i : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
+  (i : SPFDmultiR1 {cod} (spfdPos spfd) b) ->
   SliceObj cod
 SPFDgenFactCodObjForm {dom} {cod} spfd a b i ec =
   (ep : spfd .spfdPos ec **
    SliceMorphism {a=dom}
     (spfdDir spfd ec ep)
-    (SPFDgenFactDomObjForm {dom} {cod} spfd a b
-      (SPFDmultiRto1 {spfd} {b} {a} i)))
+    (SPFDgenFactDomObjForm {dom} {cod} spfd a b i))
 
 public export
 SPFDgenFactCodObjFromForm : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (a : SliceObj dom) -> (b : SliceObj cod) ->
   (i : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
   SliceMorphism {a=cod}
-    (SPFDgenFactCodObjForm {dom} {cod} spfd a b i)
+    (SPFDgenFactCodObjForm {dom} {cod} spfd a b $
+      SPFDmultiRto1 {spfd} {b} {a} i)
     (SPFDgenFactCodObj {dom} {cod} spfd a b i)
 SPFDgenFactCodObjFromForm {dom} {cod} spfd a b i ec (ep ** dm) =
   (ep ** \ed, dd => case dm ed dd of
@@ -1042,7 +1045,8 @@ SPFDgenFactCodObjToForm : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (i : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
   SliceMorphism {a=cod}
     (SPFDgenFactCodObj {dom} {cod} spfd a b i)
-    (SPFDgenFactCodObjForm {dom} {cod} spfd a b i)
+    (SPFDgenFactCodObjForm {dom} {cod} spfd a b $
+      SPFDmultiRto1 {spfd} {b} {a} i)
 SPFDgenFactCodObjToForm {dom} {cod} spfd a b i ec (ep ** dm) =
   (ep **
    \ed, dd =>
@@ -1067,7 +1071,10 @@ public export
 SPFDgenFactFstForm : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (a : SliceObj dom) -> (b : SliceObj cod) ->
   (m : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
-  SliceMorphism {a=cod} b (SPFDgenFactCodObjForm {dom} {cod} spfd a b m)
+  SliceMorphism {a=cod}
+    b
+    (SPFDgenFactCodObjForm {dom} {cod} spfd a b $
+      SPFDmultiRto1 {spfd} {b} {a} m)
 SPFDgenFactFstForm {dom} {cod} spfd a b m ec eb =
   (fst (m ec eb) ** \ed, dd => (ec ** eb ** dd))
 
@@ -1153,7 +1160,8 @@ SPFDgenFactSndForm : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (a : SliceObj dom) -> (b : SliceObj cod) ->
   (m : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
   SliceMorphism {a=cod}
-    (SPFDgenFactCodObjForm {dom} {cod} spfd a b m)
+    (SPFDgenFactCodObjForm {dom} {cod} spfd a b $
+      SPFDmultiRto1 {spfd} {b} {a} m)
     (SPFDmultiR {dom} {cod} spfd a)
 SPFDgenFactSndForm {dom} {cod} spfd a b m ec (ep ** dm) =
   (ep ** \ed, dd =>
@@ -1165,7 +1173,7 @@ SPFDgenFactSndFormSndFromForm :
   (a : SliceObj dom) -> (b : SliceObj cod) ->
   (m : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
   (ec : cod) -> (eb : b ec) ->
-  (ef : SPFDgenFactCodObjForm spfd a b m ec) ->
+  (ef : SPFDgenFactCodObjForm spfd a b (SPFDmultiRto1 {spfd} {b} {a} m) ec) ->
   (ed : dom) ->
   spfdDir spfd ec (fst $ SPFDgenFactSndForm spfd a b m ec ef) ed ->
   spfdDir spfd ec (fst $ SPFDgenFactCodObjFromForm spfd a b m ec ef) ed
@@ -1177,7 +1185,7 @@ SPFDgenFactSndFormEqSndExt :
   (a : SliceObj dom) -> (b : SliceObj cod) ->
   (m : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
   (ec : cod) -> (eb : b ec) ->
-  (ef : SPFDgenFactCodObjForm spfd a b m ec) ->
+  (ef : SPFDgenFactCodObjForm spfd a b (SPFDmultiRto1 {spfd} {b} {a} m) ec) ->
   (ed : dom) ->
   (dd : spfdDir spfd ec (fst (SPFDgenFactSndForm spfd a b m ec ef)) ed) ->
   snd (SPFDgenFactSndForm {dom} {cod} spfd a b m ec ef) ed dd =
@@ -1195,7 +1203,8 @@ SPFDgenFactSndFormEqSnd : FunExt ->
   {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (a : SliceObj dom) -> (b : SliceObj cod) ->
   (m : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
-  (ec : cod) -> (eb : b ec) -> (ef : SPFDgenFactCodObjForm spfd a b m ec) ->
+  (ec : cod) -> (eb : b ec) ->
+  (ef : SPFDgenFactCodObjForm spfd a b (SPFDmultiRto1 {spfd} {b} {a} m) ec) ->
   snd (SPFDgenFactSndForm {dom} {cod} spfd a b m ec ef) ~=~
     snd (SPFDgenFactSnd {dom} {cod} spfd a b m ec
       (SPFDgenFactCodObjFromForm {dom} {cod} spfd a b m ec ef))
@@ -1208,7 +1217,8 @@ SPFDgenFactSndFormEq : FunExt ->
   {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (a : SliceObj dom) -> (b : SliceObj cod) ->
   (m : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
-  (ec : cod) -> (eb : b ec) -> (ef : SPFDgenFactCodObjForm spfd a b m ec) ->
+  (ec : cod) -> (eb : b ec) ->
+  (ef : SPFDgenFactCodObjForm spfd a b (SPFDmultiRto1 {spfd} {b} {a} m) ec) ->
   SPFDgenFactSndForm {dom} {cod} spfd a b m ec ef =
     SPFDgenFactSnd {dom} {cod} spfd a b m ec
       (SPFDgenFactCodObjFromForm {dom} {cod} spfd a b m ec ef)
