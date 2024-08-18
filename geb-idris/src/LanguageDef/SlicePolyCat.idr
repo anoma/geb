@@ -1059,15 +1059,15 @@ SPFDgenFactFst {dom} {cod} spfd a b m =
 
 -- Again, for convenience and documentation, we define an explicit formula
 -- equivalent to `SPFDgenFactFst`.
+--
+-- Note that this depends only on the first projection of a morphism
+-- `b -> SPFDmultiR a`, not on the second projection.
 public export
 SPFDgenFactFstForm : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  (a : SliceObj dom) -> (b : SliceObj cod) ->
-  (m : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
-  SliceMorphism {a=cod}
-    b
-    (SPFDgenFactCodObjForm {dom} {cod} spfd b $ SPFDmultiRto1 {spfd} {b} {a} m)
-SPFDgenFactFstForm {dom} {cod} spfd a b m ec eb =
-  (fst (m ec eb) ** \ed, dd => (ec ** eb ** dd))
+  (b : SliceObj cod) -> (m : SPFDmultiR1 {cod} (spfdPos spfd) b) ->
+  SliceMorphism {a=cod} b (SPFDgenFactCodObjForm {dom} {cod} spfd b m)
+SPFDgenFactFstForm {dom} {cod} spfd b m ec eb =
+  (m ec eb ** \ed, dd => (ec ** eb ** dd))
 
 public export
 SPFDgenFactFstFormEq :
@@ -1075,7 +1075,7 @@ SPFDgenFactFstFormEq :
   (a : SliceObj dom) -> (b : SliceObj cod) ->
   (m : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
   (ec : cod) -> (eb : b ec) ->
-  SPFDgenFactFstForm {dom} {cod} spfd a b m ec eb =
+  SPFDgenFactFstForm {dom} {cod} spfd b (SPFDmultiRto1 {spfd} {b} {a} m) ec eb =
   SPFDgenFactCodObjToForm spfd a b m ec
     (SPFDgenFactFst {dom} {cod} spfd a b m ec eb)
 SPFDgenFactFstFormEq {dom} {cod} spfd a b m ec eb = Refl
