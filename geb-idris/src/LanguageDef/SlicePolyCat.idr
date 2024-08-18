@@ -958,10 +958,13 @@ SPFDgenFactDomObj {dom} {cod} spfd a b =
   SPFDmultiL {dom} {cod} spfd b . SPFDgenFactIdx {dom} {cod} spfd a b
 
 -- For documentation and convenience, we also define an explicit formula
--- equivalent to `SPFDgenFactDomObj`.  We see that for each pair of terms
--- of the domain and codomain, it is the object of directions of the
--- functor at the position selected by the given morphism (the index
--- component of it, which selects one of the units of the multi-adjunction).
+-- equivalent to `SPFDgenFactDomObj`.  We see that for each term of the
+-- domain, it is the object of all directions of the functor, for all
+-- terms of the codomain, at positions selected by the given morphism.
+-- Note that we do not require a full morphism `b -> SPFDmultiR a` to
+-- determine this object -- we only require the first component, which
+-- returns a position, and thereby selects one of the units of the
+-- multi-adjunction.
 public export
 SPFDgenFactDomObjForm : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (a : SliceObj dom) -> (b : SliceObj cod) ->
