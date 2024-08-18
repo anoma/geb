@@ -1268,6 +1268,50 @@ SPFDfactCorrect {dom} {cod} spfd a b i fext =
   funExt $ \ec => funExt $ \eb =>
     trans (dpEq12 Refl $ funExt $ \ed => funExt $ \dd => Refl) $ sym dpEqPat
 
+-- Correctness of factorization using the simpler `SPFDmultiR12` form
+-- which we have shown is equivalent to the standard one defined in
+-- terms of applications of adjuncts.
+public export
+SPFDfactCorrectFormExt : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (a : SliceObj dom) -> (b : SliceObj cod) ->
+  (i : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
+  (ec : cod) -> (eb : b ec) ->
+  (SPFDgenFactSndForm {dom} {cod} spfd a b i ec $
+    SPFDgenFactFstForm {dom} {cod} spfd b
+      (SPFDmultiRto1 {spfd} {b} {a} i) ec eb) =
+  i ec eb
+SPFDfactCorrectFormExt {dom} {cod} spfd a b i ec eb with (i ec eb)
+  SPFDfactCorrectFormExt {dom} {cod} spfd a b i ec eb | (ep ** dm) =
+    Refl
+
+public export
+SPFDfactCorrectForm : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (a : SliceObj dom) -> (b : SliceObj cod) ->
+  (i : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
+  FunExt ->
+  (sliceComp
+    (SPFDgenFactSndForm {dom} {cod} spfd a b i)
+    (SPFDgenFactFstForm {dom} {cod} spfd b $ SPFDmultiRto1 {spfd} {b} {a} i)) =
+  i
+SPFDfactCorrectForm {dom} {cod} spfd a b i fext =
+  funExt $ \ec => funExt $ \eb =>
+    SPFDfactCorrectFormExt {dom} {cod} spfd a b i ec eb
+
+-- Having shown that a factorization exists and is correct, and is
+-- equivalent to specifying an `SPFDmultiR12`, we can conclude, in light
+-- of the uniqueness of the factorization noted at
+-- https://ncatlab.org/nlab/show/parametric+right+adjoint#generic_morphisms ,
+-- that the specification of a morphism `b -> SPFDmultiR a` is equivalent to
+-- a specification of an `SPFDmultiR12`.
+--
+-- With `SPFDmultiR1` being the generic component of that factorization
+-- (the left class) and `SPFDmultiR2` being expressible as a lift by
+-- `SPFDmultiR` of a morphism in `a : SliceObj dom` (the right class),
+-- which as nlab also notes induces a factorization into generic and free
+-- maps when `SPFDmultiR` is a monad, we now show that any `SPFDmultiR1`
+-- _is_ generic in the sense of having fillers for diagrams of the shape
+-- shown in that section of the nlab page.
+
 -- Because any morphism `b -> T(a)` induces a unique `b -> spfdPos spfd`,
 -- we can use the demonstration of the generic factorization to allow a
 -- new way of defining morphisms `b -> T(a)` without loss of generality.
