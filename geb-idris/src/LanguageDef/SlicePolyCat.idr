@@ -1308,9 +1308,43 @@ SPFDfactCorrectForm {dom} {cod} spfd a b i fext =
 -- (the left class) and `SPFDmultiR2` being expressible as a lift by
 -- `SPFDmultiR` of a morphism in `a : SliceObj dom` (the right class),
 -- which as nlab also notes induces a factorization into generic and free
--- maps when `SPFDmultiR` is a monad, we now show that any `SPFDmultiR1`
--- _is_ generic in the sense of having fillers for diagrams of the shape
--- shown in that section of the nlab page.
+-- maps when `SPFDmultiR` is a monad, we now show that the first component
+-- of the factorization which is induced by any `SPFDmultiR1` _is_ generic
+-- in the sense of having fillers for diagrams of the shape shown in that
+-- section of the nlab page.  With respect to that page, what they call
+-- `a` and `f` we call `a'` and `f'`, while our `a` and `f` are the
+-- intermediate object and first component of the generic factorization of
+-- `f'`, because it is that component's genericity which we are demonstrating.
+-- `f'` itself is not necessarily generic, of course, because it is simply
+-- an arbitrary morphism into `SPFDmultiR a'`.
+public export
+SFPDfiller : {dom, cod : Type} -> {spfd : SPFData dom cod} ->
+  {a' : SliceObj dom} -> {b : SliceObj cod} ->
+  (f' : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a')) ->
+  {x, z : SliceObj dom} ->
+  (alpha : SliceMorphism {a=cod} b (SPFDmultiR spfd x)) ->
+  (beta :
+    SliceMorphism {a=dom}
+      (SPFDgenFactDomObjForm spfd b $ SPFDmultiRto1 {spfd} {b} {a=a'} f')
+      z) ->
+  (gamma : SliceMorphism {a=dom} x z) ->
+  (comm : (ec : cod) -> (eb : b ec) ->
+    SPFDmultiRmap spfd x z
+      gamma
+      ec
+      (alpha ec eb) =
+    SPFDmultiRmap spfd
+      (SPFDgenFactDomObjForm spfd b $ SPFDmultiRto1 {spfd} {b} {a=a'} f')
+      z
+      beta
+      ec
+      (SPFDgenFactFstForm spfd b (SPFDmultiRto1 {spfd} {b} {a=a'} f') ec eb)) ->
+  SliceMorphism {a=dom}
+    (SPFDgenFactDomObjForm spfd b $ SPFDmultiRto1 {spfd} {b} {a=a'} f')
+    x
+SFPDfiller {dom} {cod} {spfd} {a'} {b} f' {x} {z} alpha beta gamma comm
+  ed (ec ** eb ** dd) =
+    snd (alpha ec eb) ed (rewrite dpeq1 (comm ec eb) in dd)
 
 -- Because any morphism `b -> T(a)` induces a unique `b -> spfdPos spfd`,
 -- we can use the demonstration of the generic factorization to allow a
