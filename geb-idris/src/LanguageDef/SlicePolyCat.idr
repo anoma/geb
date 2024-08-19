@@ -2453,11 +2453,11 @@ InterpSPFDfromPi : {x, y : Type} -> (f : x -> y) ->
 InterpSPFDfromPi {x} {y} f sx ey pix =
   (() ** \ex, eq => pix $ rewrite sym eq in SFS ex ())
 
-----------------------------------------
-----------------------------------------
----- Compositions with base changes ----
-----------------------------------------
-----------------------------------------
+------------------------------
+------------------------------
+---- Pre/post-composition ----
+------------------------------
+------------------------------
 
 -- Precompose a base change before a slice polynomial.
 public export
