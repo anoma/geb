@@ -3196,13 +3196,23 @@ SPFDvertFact {dom} {cod} {p} {q} nt =
 -- A Cartesian transformation is characterized by its on-directions functions
 -- all being isomorphisms.
 public export
+SPFDcartNT : {dom, cod : Type} -> SliceObj cod -> SPFData dom cod -> Type
+SPFDcartNT {dom} {cod} pos q = SliceMorphism {a=cod} pos (spfdPos q)
+
+public export
+SPFntFromCart : {dom, cod : Type} ->
+  {p : SliceObj cod} -> {q : SPFData dom cod} ->
+  (cnt : SPFDcartNT {dom} {cod} p q) ->
+  SPFnt {dom} {cod} (SPFDposChange {dom} {cod} {pos=p} q cnt) q
+SPFntFromCart {dom} {cod} {p} {q} cnt =
+  SPFDm cnt (\ec, ep => sliceId {a=dom} $ spfdDir q ec (cnt ec ep))
+
+public export
 SPFDcartFact : {dom, cod : Type} -> {p, q : SPFData dom cod} ->
   (nt : SPFnt {dom} {cod} p q) ->
   SPFnt {dom} {cod} (SPFDvcFactIntObj {dom} {cod} {p} {q} nt) q
 SPFDcartFact {dom} {cod} {p} {q} nt =
-  SPFDm
-    (spOnPos nt)
-    (\ec, ep => sliceId {a=dom} $ spfdDir q ec $ spOnPos nt ec ep)
+  SPFntFromCart {dom} {cod} {p=(spfdPos p)} {q} (spOnPos nt)
 
 --------------------------
 ---- Cartesian slices ----
