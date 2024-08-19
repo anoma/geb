@@ -3275,7 +3275,7 @@ SPFDcartSlProj {dom} {cod} p csl =
 ---- Vertical slices ----
 -------------------------
 
--- For a given functor `p`, an object of its verical-slice category is a
+-- For a given functor `p`, an object of its vertical-slice category is a
 -- functor with a verical transformation to it.
 --
 -- The constraint that the transformation must be vertical means
