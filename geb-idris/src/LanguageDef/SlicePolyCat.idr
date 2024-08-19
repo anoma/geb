@@ -3367,6 +3367,28 @@ SPFpoCellFromDP {w'} {z'} {w} {z} {f} {g} spfc =
       case spdcDir spfc ez' ez efp ew' egd of
         (ew ** efd) => SFS (ew' ** ew) efd)
 
+public export
+SPFcartSliceDP : {w, z : Type} -> SPFData w z -> Type
+SPFcartSliceDP {w} {z} f = Pi {a=z} (SliceObj . spfdPos f)
+
+public export
+SPFcartSliceTot : {w, z : Type} ->
+  (spfd : SPFData w z) -> (sl : SPFcartSliceDP {w} {z} spfd) ->
+  SPFData w z
+SPFcartSliceTot {w} {z} f sl =
+  SPFD
+    (\ez => Sigma {a=(spfdPos f ez)} (sl ez))
+    (\ez, ep => spfdDir f ez (fst ep))
+
+public export
+SPFcartSliceProj : {w, z : Type} ->
+  (spfd : SPFData w z) -> (sl : SPFcartSliceDP {w} {z} spfd) ->
+  SPFnt {dom=w} {cod=z} (SPFcartSliceTot {w} {z} spfd sl) spfd
+SPFcartSliceProj {w} {z} spfd sl =
+  SPFDm
+    (\ez => DPair.fst)
+    (\ez, ep, ew => id)
+
 ---------------------------------------------------------------------------
 ---------------------------------------------------------------------------
 ---- Internal language of double-category of slice polynomial functors ----
