@@ -3275,43 +3275,45 @@ SPFDcartSlProj {dom} {cod} p csl =
     (SPFDcartSlProjOnPos p csl)
     (\ec, ep => sliceId {a=dom} $ spfdDir p ec (fst ep))
 
--------------------------
----- Vertical slices ----
--------------------------
+---------------------------
+---- Vertical coslices ----
+---------------------------
 
--- For a given functor `p`, an object of its vertical-slice category is a
--- functor with a verical transformation to it.
+-- For a given functor `p`, an object of its vertical-coslice category is a
+-- functor with a vertical transformation from it.
 --
 -- The constraint that the transformation must be vertical means
--- that it can be determined purely by an on-directions function
--- for the identity on-positions function.
+-- that it can be determined purely by a slice of the directions
+-- of the domain functor.
 
 public export
-SPFDvertSlDir : {dom, cod : Type} -> SPFData dom cod -> Type
-SPFDvertSlDir {dom} {cod} p = (ec : cod) -> spfdPos p ec -> SliceObj dom
+SPFDvertCosl : {dom, cod : Type} -> SPFData dom cod -> Type
+SPFDvertCosl {dom} {cod} p = SliceObj (SPFDdirTot p)
 
 public export
-SPFDvertSlTot : {dom, cod : Type} ->
-  (p : SPFData dom cod) -> SPFDvertSlDir {dom} {cod} p -> SPFData dom cod
-SPFDvertSlTot {dom} {cod} p dir = SPFD (spfdPos p) dir
+SPFDvertCoslDir : {dom, cod : Type} ->
+  (p : SPFData dom cod) -> SPFDvertCosl p -> SPFDvertNTcod {dom} {cod} p
+SPFDvertCoslDir {dom} {cod} p csl ec ep ed =
+  (dd : spfdDir p ec ep ed ** csl ((ed, (ec ** ep)) ** dd))
 
 public export
-SPFDvertSlOnDir : {dom, cod : Type} ->
-  (p : SPFData dom cod) -> SPFDvertSlDir {dom} {cod} p -> Type
-SPFDvertSlOnDir {dom} {cod} p dir =
-  SPFntDir (SPFDvertSlTot p dir) p (sliceId {a=cod} $ spfdPos p)
+SPFDvertCoslToNT : {dom, cod : Type} ->
+  (p : SPFData dom cod) -> (csl : SPFDvertCosl {dom} {cod} p) ->
+  SPFDvertNT {dom} {cod} p (SPFDvertCoslDir {dom} {cod} p csl)
+SPFDvertCoslToNT p csl ec ep ed = DPair.fst
 
 public export
-SPFDvertSl : {dom, cod : Type} -> SPFData dom cod -> Type
-SPFDvertSl {dom} {cod} p =
-  Sigma {a=(SPFDvertSlDir {dom} {cod} p)} (SPFDvertSlOnDir {dom} {cod} p)
+SPFDvertCoslCod : {dom, cod : Type} ->
+  (p : SPFData dom cod) -> SPFDvertCosl {dom} {cod} p -> SPFData dom cod
+SPFDvertCoslCod {dom} {cod} p csl =
+  SPFD (spfdPos p) (SPFDvertCoslDir {dom} {cod} p csl)
 
 public export
-SPFDvertSlProj : {dom, cod : Type} ->
-  (p : SPFData dom cod) -> (sl : SPFDvertSl {dom} {cod} p) ->
-  SPFnt (SPFDvertSlTot p (fst sl)) p
-SPFDvertSlProj {dom} {cod} p sl =
-  SPFDm (sliceId {a=cod} $ spfdPos p) (snd sl)
+SPFDvertCoslInj : {dom, cod : Type} ->
+  (p : SPFData dom cod) -> (dir : SPFDvertCosl {dom} {cod} p) ->
+  SPFnt p (SPFDvertCoslCod {dom} {cod} p dir)
+SPFDvertCoslInj {dom} {cod} p dir =
+  SPFDm (sliceId {a=cod} $ spfdPos p) (SPFDvertCoslToNT {dom} {cod} p dir)
 
 ---------------------------------------------------
 ---- Vertical-Cartesian factorization of cells ----
