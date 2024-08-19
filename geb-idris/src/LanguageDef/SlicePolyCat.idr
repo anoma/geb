@@ -3367,27 +3367,39 @@ SPFpoCellFromDP {w'} {z'} {w} {z} {f} {g} spfc =
       case spdcDir spfc ez' ez efp ew' egd of
         (ew ** efd) => SFS (ew' ** ew) efd)
 
-public export
-SPFcartSliceDP : {w, z : Type} -> SPFData w z -> Type
-SPFcartSliceDP {w} {z} f = Pi {a=z} (SliceObj . spfdPos f)
+----------------------------
+---- Cartesian 2-slices ----
+----------------------------
 
 public export
-SPFcartSliceTot : {w, z : Type} ->
-  (spfd : SPFData w z) -> (sl : SPFcartSliceDP {w} {z} spfd) ->
-  SPFData w z
-SPFcartSliceTot {w} {z} f sl =
+SPFDcart2Sl : {w, z' : Type} -> SPFData w z' -> Type
+SPFDcart2Sl {w} {z'} spfd =
+  (csl : SliceObj z' ** (ez' : z') -> spfdPos spfd ez' -> SliceObj (csl ez'))
+
+public export
+SPFDcart2SlCod : {w, z' : Type} ->
+  (spfd : SPFData w z') -> SPFDcart2Sl spfd -> Type
+SPFDcart2SlCod {w} {z'} spfd sl = Sigma {a=z'} (fst sl)
+
+public export
+SPFDcart2SlTot : {w, z' : Type} ->
+  (spfd : SPFData w z') -> (sl : SPFDcart2Sl {w} {z'} spfd) ->
+  SPFData w (SPFDcart2SlCod {w} {z'} spfd sl)
+SPFDcart2SlTot {w} {z'} spfd sl =
   SPFD
-    (\ez => Sigma {a=(spfdPos f ez)} (sl ez))
-    (\ez, ep => spfdDir f ez (fst ep))
+    (\ez => (ep : spfdPos spfd (fst ez) ** snd sl (fst ez) ep (snd ez)))
+    (\ez, ep => spfdDir spfd (fst ez) (fst ep))
 
 public export
-SPFcartSliceProj : {w, z : Type} ->
-  (spfd : SPFData w z) -> (sl : SPFcartSliceDP {w} {z} spfd) ->
-  SPFnt {dom=w} {cod=z} (SPFcartSliceTot {w} {z} spfd sl) spfd
-SPFcartSliceProj {w} {z} spfd sl =
+SPFDcart2SlProj : {w, z' : Type} ->
+  (spfd : SPFData w z') -> (sl : SPFDcart2Sl {w} {z'} spfd) ->
+  SPFpoCell {w} {z=(SPFDcart2SlCod {w} {z'} spfd sl)} {w'=w} {z'}
+    Prelude.id DPair.fst
+    (SPFDcart2SlTot {w} {z'} spfd sl) spfd
+SPFDcart2SlProj {w} {z'} spfd sl =
   SPFDm
-    (\ez => DPair.fst)
-    (\ez, ep, ew => id)
+    (\ez', ec => rewrite sym (sfsEq ec) in fst $ sfsSnd ec)
+    (\ez', ep, ew, dd => rewrite sfsEq ep in SFS ew dd)
 
 ---------------------------------------------------------------------------
 ---------------------------------------------------------------------------
