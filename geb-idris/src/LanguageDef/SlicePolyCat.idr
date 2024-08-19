@@ -3226,11 +3226,26 @@ SPFDcartFact {dom} {cod} {p} {q} nt =
 -- on-positions function.  Furthermore, in this formulation, we
 -- specify the on-positions function as a projection of a slice
 -- object of the positions.  Hence, a Cartesian slice is determined
--- simply by a slice object of the positions.
-
+-- simply by a slice object of the positions.  This can be seen from
+-- the type signature of `SPFDcartNT` -- a Cartesian transformation
+-- _into_ an `SPFData` is determined by a slice of the codomain and a
+-- morphism from that to the positions of the `SPFData`, which is
+-- the definition of a slice object of the positions.
 public export
 SPFDcartSl : {dom, cod : Type} -> SPFData dom cod -> Type
 SPFDcartSl = SPFDbaseSl
+
+public export
+SPFDcartSlPos : {dom, cod : Type} ->
+  (p : SPFData dom cod) -> SPFDcartSl p ->
+  SliceObj cod
+SPFDcartSlPos {dom} {cod} p csl ec = Sigma {a=(spfdPos p ec)} (curry csl ec)
+
+public export
+SPFDcartSltoNT : {dom, cod : Type} ->
+  (p : SPFData dom cod) -> (sl : SPFDcartSl {dom} {cod} p) ->
+  SPFDcartNT {dom} {cod} (SPFDcartSlPos {dom} {cod} p sl) p
+SPFDcartSltoNT p sl ec = DPair.fst
 
 public export
 SPFDcartSlTot : {dom, cod : Type} ->
@@ -3238,7 +3253,7 @@ SPFDcartSlTot : {dom, cod : Type} ->
   SPFData dom cod
 SPFDcartSlTot {dom} {cod} p csl =
   SPFD
-    (\ec => Sigma {a=(spfdPos p ec)} (curry csl ec))
+    (SPFDcartSlPos {dom} {cod} p csl)
     (\ec, ep, ed => spfdDir p ec (fst ep) ed)
 
 public export
