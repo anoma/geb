@@ -3171,11 +3171,24 @@ SPFDvcFactIntTotCod {dom} {cod} {p} {q} nt = SPFDtotCod (SPFDvcFactIntObj nt)
 -- A vertical transformation is characterized by its on-positions function
 -- being an isomorphism.
 public export
+SPFDvertNT : {dom, cod : Type} ->
+  (p : SPFData dom cod) -> SPFdirType dom cod (spfdPos p) -> Type
+SPFDvertNT {dom} {cod} p dir =
+  SPFntDir p (SPFD (spfdPos p) dir) (sliceId {a=cod} $ spfdPos p)
+
+public export
+SPFntFromVert : {dom, cod : Type} ->
+  {p : SPFData dom cod} -> {dir : SPFdirType dom cod (spfdPos p)} ->
+  SPFDvertNT {dom} {cod} p dir -> SPFnt {dom} {cod} p (SPFD (spfdPos p) dir)
+SPFntFromVert {dom} {cod} {p} {dir} vnt =
+  SPFDm (sliceId {a=cod} $ spfdPos p) vnt
+
+public export
 SPFDvertFact : {dom, cod : Type} -> {p, q : SPFData dom cod} ->
   (nt : SPFnt {dom} {cod} p q) ->
   SPFnt {dom} {cod} p (SPFDvcFactIntObj {dom} {cod} {p} {q} nt)
 SPFDvertFact {dom} {cod} {p} {q} nt =
-  SPFDm (sliceId {a=cod} $ spfdPos p) (spOnDir nt)
+  SPFntFromVert {dom} {cod} {p} {dir=(SPFDvcFactIntDir nt)} (spOnDir nt)
 
 -- The second (Cartesian) component of the factorization of a slice polynomial
 -- natural transformation.
