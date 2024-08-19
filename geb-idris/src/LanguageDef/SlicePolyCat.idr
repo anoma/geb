@@ -3171,8 +3171,12 @@ SPFDvcFactIntTotCod {dom} {cod} {p} {q} nt = SPFDtotCod (SPFDvcFactIntObj nt)
 -- A vertical transformation is characterized by its on-positions function
 -- being an isomorphism.
 public export
+0 SPFDvertNTcod : {dom, cod : Type} -> SPFData dom cod -> Type
+SPFDvertNTcod {dom} {cod} p = SPFdirType dom cod (spfdPos p)
+
+public export
 SPFDvertNT : {dom, cod : Type} ->
-  (p : SPFData dom cod) -> SPFdirType dom cod (spfdPos p) -> Type
+  (p : SPFData dom cod) -> SPFDvertNTcod {dom} {cod} p -> Type
 SPFDvertNT {dom} {cod} p dir =
   SPFntDir p (SPFD (spfdPos p) dir) (sliceId {a=cod} $ spfdPos p)
 
