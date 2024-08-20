@@ -3384,8 +3384,8 @@ SPFpoCellVertFactDir : {w, w', z, z' : Type} ->
     (spfPushout bcl Prelude.id f)
     (SPFpoCellIntObj {w} {w'} {z} {z'} {bcl} {bcr} {f} {g} spfc)
     (SPFpoCellVertFactPos {w} {w'} {z} {z'} {bcl} {f} {g} spfc)
-SPFpoCellVertFactDir {w} {w'} {z} {z'} {bcl} {f} {g} spfc ez ep ew' egd =
-  case ep of SFS ez efp => spOnDir spfc (bcr ez) (SFS ez efp) ew' egd
+SPFpoCellVertFactDir {w} {w'} {z} {z'} {bcl} {f} {g} spfc ez ep =
+  case ep of SFS ez efp => spOnDir spfc (bcr ez) (SFS ez efp)
 
 public export
 SPFpoCellVertFact : {w, w', z, z' : Type} ->
@@ -3399,6 +3399,30 @@ SPFpoCellVertFact {w} {w'} {z} {z'} {bcl} {bcr} {f} {g} spfc =
     (SPFpoCellVertFactDir {w} {w'} {z} {z'} {bcl} {bcr} {f} {g} spfc)
 
 public export
+SPFpoCellCartFactPos : {w, w', z, z' : Type} ->
+  {bcl : w -> w'} -> {bcr : z -> z'} ->
+  {f : SPFData w z} -> {g : SPFData w' z'} ->
+  (spfc : SPFpoCell {w} {w'} {z} {z'} bcl bcr f g) ->
+  SPFntPos {dom=w'} {cod=z'}
+    (spfPushout Prelude.id bcr $
+      SPFpoCellIntObj {w} {w'} {z} {z'} {bcl} {bcr} {f} {g} spfc)
+    g
+SPFpoCellCartFactPos {w} {w'} {z} {z'} {bcl} {f} {g} spfc = spOnPos spfc
+
+public export
+SPFpoCellCartFactDir : {w, w', z, z' : Type} ->
+  {bcl : w -> w'} -> {bcr : z -> z'} ->
+  {f : SPFData w z} -> {g : SPFData w' z'} ->
+  (spfc : SPFpoCell {w} {w'} {z} {z'} bcl bcr f g) ->
+  SPFntDir {dom=w'} {cod=z'}
+    (spfPushout Prelude.id bcr $
+      SPFpoCellIntObj {w} {w'} {z} {z'} {bcl} {bcr} {f} {g} spfc)
+    g
+    (SPFpoCellCartFactPos {w} {w'} {z} {z'} {bcl} {f} {g} spfc)
+SPFpoCellCartFactDir {w} {w'} {z} {z'} {bcl} {f} {g} spfc ez' ep ew' egd =
+  case ep of SFS ez efp => SFS ew' egd
+
+public export
 SPFpoCellCartFact : {w, w', z, z' : Type} ->
   {bcl : w -> w'} -> {bcr : z -> z'} ->
   {f : SPFData w z} -> {g : SPFData w' z'} ->
@@ -3406,8 +3430,8 @@ SPFpoCellCartFact : {w, w', z, z' : Type} ->
   SPFpoCell {w=w'} {w'} {z} {z'} Prelude.id bcr (SPFpoCellIntObj {f} {g} spfc) g
 SPFpoCellCartFact {w} {w'} {z} {z'} {bcl} {bcr} {f} {g} spfc =
   SPFDm
-    (\ez', (SFS ez efp) => spOnPos spfc ez' (SFS ez efp))
-    (\ez', (SFS ez efp), ew', egd => SFS ew' egd)
+    (SPFpoCellCartFactPos {w} {w'} {z} {z'} {bcl} {bcr} {f} {g} spfc)
+    (SPFpoCellCartFactDir {w} {w'} {z} {z'} {bcl} {bcr} {f} {g} spfc)
 
 public export
 SPFpoCellFactCorrectPos : FunExt -> {w, w', z, z' : Type} ->
