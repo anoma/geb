@@ -3319,10 +3319,6 @@ SPFDvertCoslInj {dom} {cod} p dir =
 ---- Vertical-Cartesian factorization of cells ----
 ---------------------------------------------------
 
--- Given a polynomial functor, a slice of a codomain, and a morphism
--- from that slice to the functor's positions, we can produce a new
--- functor whose positions are the given slice and whose directions
--- are inherited from the given functor via the given morphism.
 public export
 SPFCposChangeDir : {w, z, z' : Type} ->
   (bcr : z -> z') -> (g : SPFData w z') -> (f : SliceObj z) ->
