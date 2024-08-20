@@ -3319,6 +3319,28 @@ SPFDvertCoslInj {dom} {cod} p dir =
 ---- Vertical-Cartesian factorization of cells ----
 ---------------------------------------------------
 
+-- Given a polynomial functor, a slice of a codomain, and a morphism
+-- from that slice to the functor's positions, we can produce a new
+-- functor whose positions are the given slice and whose directions
+-- are inherited from the given functor via the given morphism.
+public export
+SPFCposChangeDir : {w, w', z, z' : Type} ->
+  (bcl : w -> w') -> (bcr : z -> z') ->
+  (g : SPFData w' z') -> (f : SliceObj z) ->
+  (onpos : SliceMorphism {a=z'} (SliceFibSigmaF bcr f) (spfdPos g)) ->
+  SPFdirType w' z f
+SPFCposChangeDir {w} {w'} {z} {z'} bcl bcr g f onpos ez efz ew' =
+  spfdDir g (bcr ez) (onpos (bcr ez) (SFS ez efz)) ew'
+
+public export
+SPFCposChange : {w, w', z, z' : Type} ->
+  (bcl : w -> w') -> (bcr : z -> z') ->
+  (g : SPFData w' z') -> (f : SliceObj z) ->
+  (onpos : SliceMorphism {a=z'} (SliceFibSigmaF bcr f) (spfdPos g)) ->
+  SPFData w' z
+SPFCposChange {w} {w'} {z} {z'} bcl bcr g f onpos =
+  SPFD f (SPFCposChangeDir {w} {w'} {z} {z'} bcl bcr g f onpos)
+
 -- We can also factorize a _cell_, first changing the domain together with
 -- the directions (a vertical transformation) and then the codomain together
 -- with the positions (a Cartesian transformation).
@@ -3329,9 +3351,7 @@ SPFpoCellIntObj : {w, w', z, z' : Type} ->
   SPFpoCell {w} {w'} {z} {z'} bcl bcr f g ->
   SPFData w' z
 SPFpoCellIntObj {w} {w'} {z} {z'} {bcl} {bcr} {f} {g} nt =
-  SPFD
-    (spfdPos f)
-    (\ez, efp, ew' => spfdDir g (bcr ez) (spOnPos nt (bcr ez) (SFS ez efp)) ew')
+  SPFCposChange {w} {w'} {z} {z'} bcl bcr g (spfdPos f) (spOnPos nt)
 
 public export
 SPFpoCellVertFact : {w, w', z, z' : Type} ->
