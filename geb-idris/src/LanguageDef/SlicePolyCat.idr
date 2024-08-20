@@ -3324,16 +3324,17 @@ SPFCposChangeDirPB : {w, z, z' : Type} ->
   (bcr : z -> z') -> (g : SPFData w z') -> (f : SliceObj z) ->
   (onpos : SliceMorphism {a=z} f (BaseChangeF bcr (spfdPos g))) ->
   SPFdirType w z f
-SPFCposChangeDirPB {w} {z} {z'} bcr g f onpos ez efz ew =
-  spfdDir g (bcr ez) (onpos ez efz) ew
+SPFCposChangeDirPB {w} {z} {z'} bcr g f onpos ez efz =
+  spfdDir g (bcr ez) (onpos ez efz)
 
 public export
 SPFCposChangeDir : {w, z, z' : Type} ->
   (bcr : z -> z') -> (g : SPFData w z') -> (f : SliceObj z) ->
   (onpos : SliceMorphism {a=z'} (SliceFibSigmaF bcr f) (spfdPos g)) ->
   SPFdirType w z f
-SPFCposChangeDir {w} {z} {z'} bcr g f onpos ez efz ew =
-  spfdDir g (bcr ez) (onpos (bcr ez) (SFS ez efz)) ew
+SPFCposChangeDir {w} {z} {z'} bcr g f onpos =
+  SPFCposChangeDirPB {w} {z} {z'} bcr g f $
+    \ez, efz => onpos (bcr ez) (SFS ez efz)
 
 public export
 SPFCposChange : {w, z, z' : Type} ->
