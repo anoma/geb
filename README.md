@@ -770,7 +770,7 @@ contained in various data structures
 
 <a id="x-28GEB-2EGENERICS-3A-40GENERICS-20MGL-PAX-3ASECTION-29"></a>
 
-### 7.2 Geneircs
+### 7.2 Generics
 
 ###### \[in package GEB.GENERICS\]
 These functions represent the generic functions that can be run on
