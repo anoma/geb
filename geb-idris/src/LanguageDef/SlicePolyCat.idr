@@ -3357,6 +3357,17 @@ SPFpoCellIntObj {w} {w'} {z} {z'} {bcl} {bcr} {f} {g} nt =
   SPFCposChange {w=w'} {z} {z'} bcr g (spfdPos f) (spOnPos nt)
 
 public export
+SPFpoCellVertFactPos : {w, w', z, z' : Type} ->
+  {bcl : w -> w'} -> {bcr : z -> z'} ->
+  {f : SPFData w z} -> {g : SPFData w' z'} ->
+  (spfc : SPFpoCell {w} {w'} {z} {z'} bcl bcr f g) ->
+  SPFntPos {dom=w'} {cod=z}
+    (spfPushout bcl Prelude.id f)
+    (SPFpoCellIntObj {w} {w'} {z} {z'} {bcl} {bcr} {f} {g} spfc)
+SPFpoCellVertFactPos {w} {w'} {z} {z'} {bcl} {f} {g} spfc ez sfs =
+  case sfs of SFS ez efp => efp
+
+public export
 SPFpoCellVertFact : {w, w', z, z' : Type} ->
   {bcl : w -> w'} -> {bcr : z -> z'} ->
   {f : SPFData w z} -> {g : SPFData w' z'} ->
@@ -3364,7 +3375,7 @@ SPFpoCellVertFact : {w, w', z, z' : Type} ->
   SPFpoCell {w} {w'} {z} {z'=z} bcl Prelude.id f (SPFpoCellIntObj {f} {g} spfc)
 SPFpoCellVertFact {w} {w'} {z} {z'} {bcl} {bcr} {f} {g} spfc =
   SPFDm
-    (\ez, (SFS ez efp) => efp)
+    (SPFpoCellVertFactPos {w} {w'} {z} {z'} {bcl} {bcr} {f} {g} spfc)
     (\ez, (SFS ez efp), ew', egd => spOnDir spfc (bcr ez) (SFS ez efp) ew' egd)
 
 public export
