@@ -3324,22 +3324,20 @@ SPFDvertCoslInj {dom} {cod} p dir =
 -- functor whose positions are the given slice and whose directions
 -- are inherited from the given functor via the given morphism.
 public export
-SPFCposChangeDir : {w, w', z, z' : Type} ->
-  (bcl : w -> w') -> (bcr : z -> z') ->
-  (g : SPFData w' z') -> (f : SliceObj z) ->
+SPFCposChangeDir : {w, z, z' : Type} ->
+  (bcr : z -> z') -> (g : SPFData w z') -> (f : SliceObj z) ->
   (onpos : SliceMorphism {a=z'} (SliceFibSigmaF bcr f) (spfdPos g)) ->
-  SPFdirType w' z f
-SPFCposChangeDir {w} {w'} {z} {z'} bcl bcr g f onpos ez efz ew' =
-  spfdDir g (bcr ez) (onpos (bcr ez) (SFS ez efz)) ew'
+  SPFdirType w z f
+SPFCposChangeDir {w} {z} {z'} bcr g f onpos ez efz ew =
+  spfdDir g (bcr ez) (onpos (bcr ez) (SFS ez efz)) ew
 
 public export
-SPFCposChange : {w, w', z, z' : Type} ->
-  (bcl : w -> w') -> (bcr : z -> z') ->
-  (g : SPFData w' z') -> (f : SliceObj z) ->
+SPFCposChange : {w, z, z' : Type} ->
+  (bcr : z -> z') -> (g : SPFData w z') -> (f : SliceObj z) ->
   (onpos : SliceMorphism {a=z'} (SliceFibSigmaF bcr f) (spfdPos g)) ->
-  SPFData w' z
-SPFCposChange {w} {w'} {z} {z'} bcl bcr g f onpos =
-  SPFD f (SPFCposChangeDir {w} {w'} {z} {z'} bcl bcr g f onpos)
+  SPFData w z
+SPFCposChange {w} {z} {z'} bcr g f onpos =
+  SPFD f (SPFCposChangeDir {w} {z} {z'} bcr g f onpos)
 
 -- We can also factorize a _cell_, first changing the domain together with
 -- the directions (a vertical transformation) and then the codomain together
@@ -3351,7 +3349,7 @@ SPFpoCellIntObj : {w, w', z, z' : Type} ->
   SPFpoCell {w} {w'} {z} {z'} bcl bcr f g ->
   SPFData w' z
 SPFpoCellIntObj {w} {w'} {z} {z'} {bcl} {bcr} {f} {g} nt =
-  SPFCposChange {w} {w'} {z} {z'} bcl bcr g (spfdPos f) (spOnPos nt)
+  SPFCposChange {w=w'} {z} {z'} bcr g (spfdPos f) (spOnPos nt)
 
 public export
 SPFpoCellVertFact : {w, w', z, z' : Type} ->
