@@ -3337,6 +3337,14 @@ SPFCposChangeDir {w} {z} {z'} bcr g f onpos =
     \ez, efz => onpos (bcr ez) (SFS ez efz)
 
 public export
+SPFCposChangePB : {w, z, z' : Type} ->
+  (bcr : z -> z') -> (g : SPFData w z') -> (f : SliceObj z) ->
+  (onpos : SliceMorphism {a=z} f (BaseChangeF bcr (spfdPos g))) ->
+  SPFData w z
+SPFCposChangePB {w} {z} {z'} bcr g f onpos =
+  SPFD f (SPFCposChangeDirPB {w} {z} {z'} bcr g f onpos)
+
+public export
 SPFCposChange : {w, z, z' : Type} ->
   (bcr : z -> z') -> (g : SPFData w z') -> (f : SliceObj z) ->
   (onpos : SliceMorphism {a=z'} (SliceFibSigmaF bcr f) (spfdPos g)) ->
