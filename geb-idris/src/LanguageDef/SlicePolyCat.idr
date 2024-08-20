@@ -3320,6 +3320,14 @@ SPFDvertCoslInj {dom} {cod} p dir =
 ---------------------------------------------------
 
 public export
+SPFCposChangeDirPB : {w, z, z' : Type} ->
+  (bcr : z -> z') -> (g : SPFData w z') -> (f : SliceObj z) ->
+  (onpos : SliceMorphism {a=z} f (BaseChangeF bcr (spfdPos g))) ->
+  SPFdirType w z f
+SPFCposChangeDirPB {w} {z} {z'} bcr g f onpos ez efz ew =
+  spfdDir g (bcr ez) (onpos ez efz) ew
+
+public export
 SPFCposChangeDir : {w, z, z' : Type} ->
   (bcr : z -> z') -> (g : SPFData w z') -> (f : SliceObj z) ->
   (onpos : SliceMorphism {a=z'} (SliceFibSigmaF bcr f) (spfdPos g)) ->
