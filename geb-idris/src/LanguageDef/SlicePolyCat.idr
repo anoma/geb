@@ -3320,37 +3320,45 @@ SPFDvertCoslInj {dom} {cod} p dir =
 ---------------------------------------------------
 
 public export
+SPFDcartPbCell : {w, z, z' : Type} ->
+  (bcr : z -> z') -> (g : SPFData w z') -> (f : SliceObj z) -> Type
+SPFDcartPbCell {w} {z} {z'} bcr g f =
+  SliceMorphism {a=z} f (BaseChangeF bcr (spfdPos g))
+
+public export
+SPFDcartPoCell : {w, z, z' : Type} ->
+  (bcr : z -> z') -> (g : SPFData w z') -> (f : SliceObj z) -> Type
+SPFDcartPoCell {w} {z} {z'} bcr g f =
+  SliceMorphism {a=z'} (SliceFibSigmaF bcr f) (spfdPos g)
+
+public export
 SPFCposChangeDirPB : {w, z, z' : Type} ->
-  (bcr : z -> z') -> (g : SPFData w z') -> (f : SliceObj z) ->
-  (onpos : SliceMorphism {a=z} f (BaseChangeF bcr (spfdPos g))) ->
-  SPFdirType w z f
-SPFCposChangeDirPB {w} {z} {z'} bcr g f onpos ez efz =
+  {bcr : z -> z'} -> {g : SPFData w z'} -> {f : SliceObj z} ->
+  SPFDcartPbCell {w} {z} {z'} bcr g f -> SPFdirType w z f
+SPFCposChangeDirPB {w} {z} {z'} {bcr} {g} {f} onpos ez efz =
   spfdDir g (bcr ez) (onpos ez efz)
 
 public export
 SPFCposChangeDir : {w, z, z' : Type} ->
-  (bcr : z -> z') -> (g : SPFData w z') -> (f : SliceObj z) ->
-  (onpos : SliceMorphism {a=z'} (SliceFibSigmaF bcr f) (spfdPos g)) ->
-  SPFdirType w z f
-SPFCposChangeDir {w} {z} {z'} bcr g f onpos =
-  SPFCposChangeDirPB {w} {z} {z'} bcr g f $
+  {bcr : z -> z'} -> {g : SPFData w z'} -> {f : SliceObj z} ->
+  SPFDcartPoCell {w} {z} {z'} bcr g f -> SPFdirType w z f
+SPFCposChangeDir {w} {z} {z'} {bcr} {g} {f} onpos =
+  SPFCposChangeDirPB {w} {z} {z'} {bcr} {g} {f} $
     \ez, efz => onpos (bcr ez) (SFS ez efz)
 
 public export
 SPFCposChangePB : {w, z, z' : Type} ->
   (bcr : z -> z') -> (g : SPFData w z') -> (f : SliceObj z) ->
-  (onpos : SliceMorphism {a=z} f (BaseChangeF bcr (spfdPos g))) ->
-  SPFData w z
+  SPFDcartPbCell {w} {z} {z'} bcr g f -> SPFData w z
 SPFCposChangePB {w} {z} {z'} bcr g f onpos =
-  SPFD f (SPFCposChangeDirPB {w} {z} {z'} bcr g f onpos)
+  SPFD f (SPFCposChangeDirPB {w} {z} {z'} {bcr} {g} {f} onpos)
 
 public export
 SPFCposChange : {w, z, z' : Type} ->
   (bcr : z -> z') -> (g : SPFData w z') -> (f : SliceObj z) ->
-  (onpos : SliceMorphism {a=z'} (SliceFibSigmaF bcr f) (spfdPos g)) ->
-  SPFData w z
+  SPFDcartPoCell {w} {z} {z'} bcr g f -> SPFData w z
 SPFCposChange {w} {z} {z'} bcr g f onpos =
-  SPFD f (SPFCposChangeDir {w} {z} {z'} bcr g f onpos)
+  SPFD f (SPFCposChangeDir {w} {z} {z'} {bcr} {g} {f} onpos)
 
 -- We can also factorize a _cell_, first changing the domain together with
 -- the directions (a vertical transformation) and then the codomain together
