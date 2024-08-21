@@ -3329,7 +3329,7 @@ public export
 SPFDcartPoCell : {w, z, z' : Type} ->
   (bcr : z -> z') -> (g : SPFData w z') -> (f : SliceObj z) -> Type
 SPFDcartPoCell {w} {z} {z'} bcr g f =
-  SliceMorphism {a=z'} (SliceFibSigmaF bcr f) (spfdPos g)
+  SPFDcartNT {dom=w} {cod=z'} (SliceFibSigmaF bcr f) g
 
 public export
 SPFCposChangeDirPB : {w, z, z' : Type} ->
