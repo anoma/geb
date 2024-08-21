@@ -3320,6 +3320,20 @@ SPFDvertCoslInj {dom} {cod} p dir =
 ---------------------------------------------------
 
 public export
+SPFDvertPoCellCod : {w, w', z : Type} ->
+  (bcl : w -> w') -> (f : SPFData w z) ->
+  SPFDvertNTcod {dom=w'} {cod=z} (spfPushoutDir bcl f) ->
+  SPFDvertNTcod {dom=w} {cod=z} f
+SPFDvertPoCellCod {w} {w'} {z} bcl f g ez = BaseChangeF bcl . g ez
+
+public export
+SPFDvertPoCell : {w, w', z : Type} ->
+  (bcl : w -> w') -> (f : SPFData w z) ->
+  SPFDvertNTcod {dom=w'} {cod=z} (spfPushoutDir bcl f) -> Type
+SPFDvertPoCell {w} {w'} {z} bcl f g =
+  SPFDvertNT {dom=w} {cod=z} f (SPFDvertPoCellCod {w} {w'} {z} bcl f g)
+
+public export
 SPFDcartPbCell : {w, z, z' : Type} ->
   (bcr : z -> z') -> (g : SPFData w z') -> (f : SliceObj z) -> Type
 SPFDcartPbCell {w} {z} {z'} bcr g f =
