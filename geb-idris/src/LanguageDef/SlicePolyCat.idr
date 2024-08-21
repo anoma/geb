@@ -3539,11 +3539,15 @@ record SPFpoCellDP {w', z' : Type} {w : SliceObj w'} {z : SliceObj z'}
     (f : SPFData (Sigma {a=w'} w) (Sigma {a=z'} z)) (g : SPFData w' z')
     where
   constructor SPDC
-  spdcPos :
-    (ez' : z') -> (ez : z ez') -> spfdPos f (ez' ** ez) -> spfdPos g ez'
+  spdcCart :
+    SPFDcartPoCell {w=w'} {z=(Sigma {a=z'} z)} {z'}
+      DPair.fst
+      g
+      (spfdPos f)
   spdcDir :
     (ez' : z') -> (ez : z ez') -> (efp : spfdPos f (ez' ** ez)) ->
-    (ew' : w') -> (egd : spfdDir g ez' (spdcPos ez' ez efp) ew') ->
+    (ew' : w') ->
+    (egd : spfdDir g ez' (spdcCart ez' (SFS (ez' ** ez) efp)) ew') ->
     (ew : w ew' ** spfdDir f (ez' ** ez) efp (ew' ** ew))
 
 public export
@@ -3554,7 +3558,7 @@ SPFpoCellFromDP : {w', z' : Type} -> {w : SliceObj w'} -> {z : SliceObj z'} ->
     DPair.fst DPair.fst f g
 SPFpoCellFromDP {w'} {z'} {w} {z} {f} {g} spfc =
   SPFDm
-    (\ez', (SFS (ez' ** ez) efp) => spdcPos spfc ez' ez efp)
+    (\ez', (SFS (ez' ** ez) efp) => spdcCart spfc ez' (SFS (ez' ** ez) efp))
     (\ez', (SFS (ez' ** ez) efp), ew', egd =>
       case spdcDir spfc ez' ez efp ew' egd of
         (ew ** efd) => SFS (ew' ** ew) efd)
