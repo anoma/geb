@@ -3209,12 +3209,20 @@ SPFDcartNT : {dom, cod : Type} -> SliceObj cod -> SPFData dom cod -> Type
 SPFDcartNT {dom} {cod} pos q = SliceMorphism {a=cod} pos (spfdPos q)
 
 public export
+SPFntCartFactDir : {dom, cod : Type} ->
+  {p : SliceObj cod} -> {q : SPFData dom cod} ->
+  (cnt : SPFDcartNT {dom} {cod} p q) ->
+  SPFntDir {dom} {cod} (SPFDposChange {dom} {cod} {pos=p} q cnt) q cnt
+SPFntCartFactDir {dom} {cod} {p} {q} cnt ec ep =
+  sliceId {a=dom} $ spfdDir q ec (cnt ec ep)
+
+public export
 SPFntFromCart : {dom, cod : Type} ->
   {p : SliceObj cod} -> {q : SPFData dom cod} ->
   (cnt : SPFDcartNT {dom} {cod} p q) ->
   SPFnt {dom} {cod} (SPFDposChange {dom} {cod} {pos=p} q cnt) q
 SPFntFromCart {dom} {cod} {p} {q} cnt =
-  SPFDm cnt (\ec, ep => sliceId {a=dom} $ spfdDir q ec (cnt ec ep))
+  SPFDm cnt (SPFntCartFactDir {dom} {cod} {p} {q} cnt)
 
 public export
 SPFDcartFact : {dom, cod : Type} -> {p, q : SPFData dom cod} ->
@@ -3222,6 +3230,25 @@ SPFDcartFact : {dom, cod : Type} -> {p, q : SPFData dom cod} ->
   SPFnt {dom} {cod} (SPFDvcFactIntObj {dom} {cod} {p} {q} nt) q
 SPFDcartFact {dom} {cod} {p} {q} nt =
   SPFntFromCart {dom} {cod} {p=(spfdPos p)} {q} (spOnPos nt)
+
+----------------------------------------------
+---- Natural transformations from factors ----
+----------------------------------------------
+
+-- Because any natural transformation can be factored into a vertical
+-- followed by a Cartesian transformation, we can also _define_ any
+-- natural transformation as a composite of a vertical one followed
+-- by a Cartesian one.  Indeed, as shown here, that is effectively
+-- what `SPFnt` does.
+public export
+SPFDfact : {dom, cod : Type} -> IntMorSig (SPFData dom cod)
+SPFDfact {dom} {cod} f g =
+  DPair (SPFDcartNT (spfdPos f) g) (SPFDvertNT f . SPFDposChangeDir g)
+
+public export
+SPntFromFact : {dom, cod : Type} -> {p, q : SPFData dom cod} ->
+  SPFDfact {dom} {cod} p q -> SPFnt {dom} {cod} p q
+SPntFromFact {dom} {cod} {p} {q} (cart ** vert) = SPFDm cart vert
 
 --------------------------
 ---- Cartesian slices ----
