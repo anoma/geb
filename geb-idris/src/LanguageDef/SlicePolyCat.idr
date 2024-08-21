@@ -3332,6 +3332,22 @@ SPFDcartPoCell {w} {z} {z'} bcr g f =
   SPFDcartNT {dom=w} {cod=z'} (SliceFibSigmaF bcr f) g
 
 public export
+SPFDcartCellPbToPo : {w, z, z' : Type} ->
+  {bcr : z -> z'} -> {g : SPFData w z'} -> {f : SliceObj z} ->
+  SPFDcartPbCell {w} {z} {z'} bcr g f ->
+  SPFDcartPoCell {w} {z} {z'} bcr g f
+SPFDcartCellPbToPo {w} {z} {z'} {bcr} {g} {f} pbc _ (SFS ez efz) =
+  pbc ez efz
+
+public export
+SPFDcartCellPoToPb : {w, z, z' : Type} ->
+  {bcr : z -> z'} -> {g : SPFData w z'} -> {f : SliceObj z} ->
+  SPFDcartPoCell {w} {z} {z'} bcr g f ->
+  SPFDcartPbCell {w} {z} {z'} bcr g f
+SPFDcartCellPoToPb {w} {z} {z'} {bcr} {g} {f} poc ez efz =
+  poc (bcr ez) $ SFS ez efz
+
+public export
 SPFCposChangeDirPB : {w, z, z' : Type} ->
   {bcr : z -> z'} -> {g : SPFData w z'} -> {f : SliceObj z} ->
   SPFDcartPbCell {w} {z} {z'} bcr g f -> SPFdirType w z f
