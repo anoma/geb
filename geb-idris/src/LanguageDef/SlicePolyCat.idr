@@ -3323,7 +3323,7 @@ public export
 SPFDcartPbCell : {w, z, z' : Type} ->
   (bcr : z -> z') -> (g : SPFData w z') -> (f : SliceObj z) -> Type
 SPFDcartPbCell {w} {z} {z'} bcr g f =
-  SliceMorphism {a=z} f (BaseChangeF bcr (spfdPos g))
+  SPFDcartNT {dom=w} {cod=z} f (spfPullbackPos bcr g)
 
 public export
 SPFDcartPoCell : {w, z, z' : Type} ->
@@ -3348,16 +3348,16 @@ SPFCposChangeDir {w} {z} {z'} {bcr} {g} {f} onpos =
 
 public export
 SPFCposChangePB : {w, z, z' : Type} ->
-  (bcr : z -> z') -> (g : SPFData w z') -> (f : SliceObj z) ->
+  {bcr : z -> z'} -> {g : SPFData w z'} -> {f : SliceObj z} ->
   SPFDcartPbCell {w} {z} {z'} bcr g f -> SPFData w z
-SPFCposChangePB {w} {z} {z'} bcr g f onpos =
+SPFCposChangePB {w} {z} {z'} {bcr} {g} {f} onpos =
   SPFD f (SPFCposChangeDirPB {w} {z} {z'} {bcr} {g} {f} onpos)
 
 public export
 SPFCposChange : {w, z, z' : Type} ->
-  (bcr : z -> z') -> (g : SPFData w z') -> (f : SliceObj z) ->
+  {bcr : z -> z'} -> {g : SPFData w z'} -> {f : SliceObj z} ->
   SPFDcartPoCell {w} {z} {z'} bcr g f -> SPFData w z
-SPFCposChange {w} {z} {z'} bcr g f onpos =
+SPFCposChange {w} {z} {z'} {bcr} {g} {f} onpos =
   SPFD f (SPFCposChangeDir {w} {z} {z'} {bcr} {g} {f} onpos)
 
 -- We can also factorize a _cell_, first changing the domain together with
@@ -3370,7 +3370,7 @@ SPFpoCellIntObj : {w, w', z, z' : Type} ->
   SPFpoCell {w} {w'} {z} {z'} bcl bcr f g ->
   SPFData w' z
 SPFpoCellIntObj {w} {w'} {z} {z'} {bcl} {bcr} {f} {g} nt =
-  SPFCposChange {w=w'} {z} {z'} bcr g (spfdPos f) (spOnPos nt)
+  SPFCposChange {w=w'} {z} {z'} {bcr} {g} {f=(spfdPos f)} (spOnPos nt)
 
 public export
 SPFpoCellVertFactPos : {w, w', z, z' : Type} ->
