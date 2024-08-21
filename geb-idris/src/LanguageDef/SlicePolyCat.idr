@@ -3175,15 +3175,20 @@ public export
 SPFDvertNTcod {dom} {cod} p = SPFdirType dom cod (spfdPos p)
 
 public export
+SPFDfromVertNTcod : {dom, cod : Type} -> (p : SPFData dom cod) ->
+  SPFDvertNTcod p -> SPFData dom cod
+SPFDfromVertNTcod {dom} {cod} p = SPFD (spfdPos p)
+
+public export
 SPFDvertNT : {dom, cod : Type} ->
   (p : SPFData dom cod) -> SPFDvertNTcod {dom} {cod} p -> Type
 SPFDvertNT {dom} {cod} p dir =
-  SPFntDir p (SPFD (spfdPos p) dir) (sliceId {a=cod} $ spfdPos p)
+  SPFntDir p (SPFDfromVertNTcod p dir) (sliceId {a=cod} $ spfdPos p)
 
 public export
 SPFntFromVert : {dom, cod : Type} ->
   {p : SPFData dom cod} -> {dir : SPFdirType dom cod (spfdPos p)} ->
-  SPFDvertNT {dom} {cod} p dir -> SPFnt {dom} {cod} p (SPFD (spfdPos p) dir)
+  SPFDvertNT {dom} {cod} p dir -> SPFnt {dom} {cod} p (SPFDfromVertNTcod p dir)
 SPFntFromVert {dom} {cod} {p} {dir} vnt =
   SPFDm (sliceId {a=cod} $ spfdPos p) vnt
 
