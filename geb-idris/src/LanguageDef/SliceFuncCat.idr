@@ -158,6 +158,13 @@ sfsElim {c} {d} f {sa} {sb} m ed sfs =
   rewrite sym (sfsEq sfs) in
   m (sfsFst sfs) (sfsSnd sfs)
 
+public export
+sfsLAdj : {c, d : Type} -> (f : c -> d) ->
+  {0 sa : SliceObj c} -> {0 sb : SliceObj d} ->
+  SliceMorphism {a=d} (SliceFibSigmaF {c} f sa) sb ->
+  SliceMorphism {a=c} sa (BaseChangeF f sb)
+sfsLAdj {c} {d} f {sa} {sb} m ec esa = m (f ec) $ SFS ec esa
+
 --------------------------
 ----- Sigma as W-type ----
 --------------------------

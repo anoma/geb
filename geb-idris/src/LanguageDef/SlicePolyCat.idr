@@ -3397,9 +3397,8 @@ public export
 SPFCposChangeDir : {w, z, z' : Type} ->
   {bcr : z -> z'} -> {g : SPFData w z'} -> {f : SliceObj z} ->
   SPFDcartPoCell {w} {z} {z'} bcr g f -> SPFdirType w z f
-SPFCposChangeDir {w} {z} {z'} {bcr} {g} {f} onpos =
-  SPFCposChangeDirPB {w} {z} {z'} {bcr} {g} {f} $
-    \ez, efz => onpos (bcr ez) (SFS ez efz)
+SPFCposChangeDir {w} {z} {z'} {bcr} {g} {f} =
+  SPFCposChangeDirPB {w} {z} {z'} {bcr} {g} {f} .  sfsLAdj bcr
 
 public export
 SPFCposChangePB : {w, z, z' : Type} ->
