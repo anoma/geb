@@ -3390,8 +3390,8 @@ public export
 SPFCposChangeDirPB : {w, z, z' : Type} ->
   {bcr : z -> z'} -> {g : SPFData w z'} -> {f : SliceObj z} ->
   SPFDcartPbCell {w} {z} {z'} bcr g f -> SPFdirType w z f
-SPFCposChangeDirPB {w} {z} {z'} {bcr} {g} {f} onpos ez efz =
-  spfdDir g (bcr ez) (onpos ez efz)
+SPFCposChangeDirPB {w} {z} {z'} {bcr} {g} {f} =
+  SPFDposChangeDir {dom=w} {cod=z} (spfPullbackPos bcr g) {pos=f}
 
 public export
 SPFCposChangeDir : {w, z, z' : Type} ->
