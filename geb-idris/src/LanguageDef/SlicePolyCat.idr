@@ -3329,10 +3329,10 @@ SPFDvertCoslDir {dom} {cod} p csl ec ep ed =
   (dd : spfdDir p ec ep ed ** csl ((ed, (ec ** ep)) ** dd))
 
 public export
-SPFDvertCoslToNT : {dom, cod : Type} ->
+SPFDvertCoslToVertNT : {dom, cod : Type} ->
   (p : SPFData dom cod) -> (csl : SPFDvertCosl {dom} {cod} p) ->
   SPFDvertNT {dom} {cod} p (SPFDvertCoslDir {dom} {cod} p csl)
-SPFDvertCoslToNT p csl ec ep ed = DPair.fst
+SPFDvertCoslToVertNT p csl ec ep ed = DPair.fst
 
 public export
 SPFDvertCoslBase : {dom, cod : Type} ->
@@ -3345,7 +3345,7 @@ SPFDvertCoslInj : {dom, cod : Type} ->
   (p : SPFData dom cod) -> (dir : SPFDvertCosl {dom} {cod} p) ->
   SPFnt p (SPFDvertCoslBase {dom} {cod} p dir)
 SPFDvertCoslInj {dom} {cod} p dir =
-  SPFDm (sliceId {a=cod} $ spfdPos p) (SPFDvertCoslToNT {dom} {cod} p dir)
+  SPFDm (sliceId {a=cod} $ spfdPos p) (SPFDvertCoslToVertNT {dom} {cod} p dir)
 
 ---------------------------------------------------
 ---- Vertical-Cartesian factorization of cells ----
