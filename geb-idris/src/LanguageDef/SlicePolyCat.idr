@@ -3547,8 +3547,10 @@ record SPFpoCellDP {w', z' : Type} {w : SliceObj w'} {z : SliceObj z'}
   spdcDir :
     (ez' : z') -> (ez : z ez') -> (efp : spfdPos f (ez' ** ez)) ->
     (ew' : w') ->
-    (egd : SPFCposChangeDir {w=w'} {z=(Sigma {a=z'} z)} {z'}
-      {bcr=(DPair.fst)} {g} {f=(spfdPos f)} spdcCart (ez' ** ez) efp ew') ->
+    SPFCposChangeDir
+      {w=w'} {z=(Sigma {a=z'} z)} {z'}
+      {bcr=(DPair.fst)} {g} {f=(spfdPos f)}
+      spdcCart (ez' ** ez) efp ew' ->
     (ew : w ew' ** spfdDir f (ez' ** ez) efp (ew' ** ew))
 
 public export
