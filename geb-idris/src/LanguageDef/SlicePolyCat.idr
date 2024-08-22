@@ -3544,7 +3544,7 @@ record SPFpoCellDP {w', z' : Type} {w : SliceObj w'} {z : SliceObj z'}
       DPair.fst
       g
       (spfdPos f)
-  spdcDir :
+  spdcVert :
     (ez' : z') -> (ez : z ez') -> (efp : spfdPos f (ez' ** ez)) ->
     (ew' : w') ->
     SPFCposChangeDir
@@ -3566,7 +3566,7 @@ SPFpoCellFromDP : {w', z' : Type} -> {w : SliceObj w'} -> {z : SliceObj z'} ->
 SPFpoCellFromDP {w'} {z'} {w} {z} {f} {g} spfc =
   SPFDm
     (\ez', (SFS (ez' ** ez) efp) => spdcCart spfc ez' (SFS (ez' ** ez) efp))
-    (\ez', (SFS (ez' ** ez) efp), ew', egd => spdcDir spfc ez' ez efp ew' egd)
+    (\ez', (SFS (ez' ** ez) efp), ew', egd => spdcVert spfc ez' ez efp ew' egd)
 
 ----------------------------
 ---- Cartesian 2-slices ----
