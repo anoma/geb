@@ -3545,26 +3545,13 @@ SPFDpoCellFromFact {w} {w'} {z} {z'} {bcl} {bcr} {f} {g} spfc =
 -----------------------------------------------------
 -----------------------------------------------------
 
--- A dependent-type-style cell, where we treat the natural transformation
--- as the projection of a slice object.
+-- A dependent-type-style cell built from its vertical and Cartesian factors.
 public export
-record SPFpoCellDP {w', z' : Type} {w : SliceObj w'} {z : SliceObj z'}
-    (f : SPFData (Sigma {a=w'} w) (Sigma {a=z'} z)) (g : SPFData w' z')
-    where
-  constructor SPDC
-  spdcCart :
-    SPFDcartPoCell {w=w'} {z=(Sigma {a=z'} z)} {z'}
-      DPair.fst
-      g
-      (spfdPos f)
-  spdcVert :
-    SPFDvertPoCell {w=(Sigma {a=w'} w)} {w'} {z=(Sigma {a=z'} z)}
-      DPair.fst
-      f
-      (SPFCposChangeDir
-        {w=w'} {z=(Sigma {a=z'} z)} {z'}
-        {bcr=(DPair.fst)} {g} {f=(spfdPos f)}
-        spdcCart)
+SPFpoCellDP : {w', z' : Type} -> {w : SliceObj w'} -> {z : SliceObj z'} ->
+  SPFData (Sigma {a=w'} w) (Sigma {a=z'} z) -> SPFData w' z' -> Type
+SPFpoCellDP {w'} {z'} {w} {z} f g =
+  SPFCfact {w=(Sigma {a=w'} w)} {w'} {z=(Sigma {a=z'} z)} {z'}
+    DPair.fst DPair.fst f g
 
 public export
 SPFpoCellFromDP : {w', z' : Type} -> {w : SliceObj w'} -> {z : SliceObj z'} ->
@@ -3572,10 +3559,7 @@ SPFpoCellFromDP : {w', z' : Type} -> {w : SliceObj w'} -> {z : SliceObj z'} ->
   SPFpoCellDP {w'} {z'} {w} {z} f g ->
   SPFpoCell {w=(Sigma {a=w'} w)} {w'} {z=(Sigma {a=z'} z)} {z'}
     DPair.fst DPair.fst f g
-SPFpoCellFromDP {w'} {z'} {w} {z} {f} {g} spfc =
-  SPFDm
-    (\ez', (SFS (ez' ** ez) efp) => spdcCart spfc ez' (SFS (ez' ** ez) efp))
-    (\ez', (SFS (ez' ** ez) efp) => spdcVert spfc (ez' ** ez) efp)
+SPFpoCellFromDP = SPFDpoCellFromFact
 
 -- A cell is a two-morphism, so we can define a slice category over
 -- a dependent polynomial functor as any other dependent polynomial
