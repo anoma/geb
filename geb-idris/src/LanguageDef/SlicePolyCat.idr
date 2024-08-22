@@ -3352,18 +3352,11 @@ SPFDvertCoslInj {dom} {cod} p dir =
 ---------------------------------------------------
 
 public export
-SPFDvertPoCellCod : {w, w', z : Type} ->
-  (bcl : w -> w') -> (f : SPFData w z) ->
-  SPFDvertNTcod {dom=w'} {cod=z} (spfPushoutDir bcl f) ->
-  SPFDvertNTcod {dom=w} {cod=z} f
-SPFDvertPoCellCod {w} {w'} {z} bcl f g ez = BaseChangeF bcl . g ez
-
-public export
 SPFDvertPoCell : {w, w', z : Type} ->
   (bcl : w -> w') -> (f : SPFData w z) ->
-  SPFDvertNTcod {dom=w'} {cod=z} (spfPushoutDir bcl f) -> Type
-SPFDvertPoCell {w} {w'} {z} bcl f g =
-  SPFDvertNT {dom=w} {cod=z} f (SPFDvertPoCellCod {w} {w'} {z} bcl f g)
+  SPFdirType w' z (spfdPos f) -> Type
+SPFDvertPoCell {w} {w'} {z} bcl f =
+  SPFDvertNT (spfPushoutDir {w} {x=w'} {z} bcl f)
 
 public export
 SPFDcartPbCell : {w, z, z' : Type} ->
@@ -3545,10 +3538,9 @@ record SPFpoCellDP {w', z' : Type} {w : SliceObj w'} {z : SliceObj z'}
       g
       (spfdPos f)
   spdcVert :
-    SPFDvertNT
-      (spfPushoutDir {w=(Sigma {a=w'} w)} {x=w'} {z=(Sigma {a=z'} z)}
-        DPair.fst
-        f)
+    SPFDvertPoCell {w=(Sigma {a=w'} w)} {w'} {z=(Sigma {a=z'} z)}
+      DPair.fst
+      f
       (SPFCposChangeDir
         {w=w'} {z=(Sigma {a=z'} z)} {z'}
         {bcr=(DPair.fst)} {g} {f=(spfdPos f)}
