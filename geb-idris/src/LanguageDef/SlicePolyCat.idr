@@ -3551,7 +3551,11 @@ record SPFpoCellDP {w', z' : Type} {w : SliceObj w'} {z : SliceObj z'}
       {w=w'} {z=(Sigma {a=z'} z)} {z'}
       {bcr=(DPair.fst)} {g} {f=(spfdPos f)}
       spdcCart (ez' ** ez) efp ew' ->
-    (ew : w ew' ** spfdDir f (ez' ** ez) efp (ew' ** ew))
+    spfdDir
+      (spfPushoutDir {w=(Sigma {a=w'} w)} {x=w'} {z=(Sigma {a=z'} z)}
+        DPair.fst
+        f)
+      (ez' ** ez) efp ew'
 
 public export
 SPFpoCellFromDP : {w', z' : Type} -> {w : SliceObj w'} -> {z : SliceObj z'} ->
@@ -3562,9 +3566,7 @@ SPFpoCellFromDP : {w', z' : Type} -> {w : SliceObj w'} -> {z : SliceObj z'} ->
 SPFpoCellFromDP {w'} {z'} {w} {z} {f} {g} spfc =
   SPFDm
     (\ez', (SFS (ez' ** ez) efp) => spdcCart spfc ez' (SFS (ez' ** ez) efp))
-    (\ez', (SFS (ez' ** ez) efp), ew', egd =>
-      case spdcDir spfc ez' ez efp ew' egd of
-        (ew ** efd) => SFS (ew' ** ew) efd)
+    (\ez', (SFS (ez' ** ez) efp), ew', egd => spdcDir spfc ez' ez efp ew' egd)
 
 ----------------------------
 ---- Cartesian 2-slices ----
