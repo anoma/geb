@@ -3512,6 +3512,33 @@ SPFpoCellFactCorrectPos fext {w} {w'} {z} {z'} {bcl} {bcr}
   (SPFDm onpos ondir) _ (SFS ez efp) =
     Refl
 
+----------------------------
+---- Cells from factors ----
+----------------------------
+
+-- Because any cell can be factored into a vertical cell followed by a
+-- Cartesian cell, we can also _define_ any cell as a composite of a
+-- vertical one followed by a Cartesian one.
+public export
+SPFCfact : {w, w', z, z' : Type} ->
+  (bcl : w -> w') -> (bcr : z -> z') ->
+  (f : SPFData w z) -> (g : SPFData w' z') ->
+  Type
+SPFCfact {w} {w'} {z} {z'} bcl bcr f g =
+  DPair
+    (SPFDcartPoCell {w=w'} {z} {z'} bcr g (spfdPos f))
+     (SPFDvertPoCell {w} {w'} {z} bcl f
+      . SPFCposChangeDir {w=w'} {z} {z'} {bcr} {g} {f=(spfdPos f)})
+
+public export
+SPFDpoCellFromFact : {w, w', z, z' : Type} ->
+  (bcl : w -> w') -> (bcr : z -> z') ->
+  (f : SPFData w z) -> (g : SPFData w' z') ->
+  SPFCfact {w} {w'} {z} {z'} bcl bcr f g ->
+  SPFpoCell {w} {w'} {z} {z'} bcl bcr f g
+SPFDpoCellFromFact {w} {w'} {z} {z'} bcl bcr f g spfc =
+  SPFDm (fst spfc) (\ez', ep => case ep of SFS ez efz => snd spfc ez efz)
+
 -----------------------------------------------------
 -----------------------------------------------------
 ---- Two-slices of dependent polynomial functors ----
