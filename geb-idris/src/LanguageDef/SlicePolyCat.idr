@@ -3574,7 +3574,7 @@ SPFpoCellFromDP = SPFDpoCellFromFact
 public export
 SPFDcart2Sl : {w, z' : Type} -> SPFData w z' -> Type
 SPFDcart2Sl {w} {z'} spfd =
-  (csl : SliceObj z' ** (ez' : z') -> spfdPos spfd ez' -> SliceObj (csl ez'))
+  (csl : SliceObj z' ** (ep : SPFDbase spfd) -> SliceObj (csl $ fst ep))
 
 public export
 SPFDcart2SlCod : {w, z' : Type} ->
@@ -3587,8 +3587,10 @@ SPFDcart2SlTot : {w, z' : Type} ->
   SPFData w (SPFDcart2SlCod {w} {z'} spfd sl)
 SPFDcart2SlTot {w} {z'} spfd sl =
   SPFD
-    (\ez => (ep : spfdPos spfd (fst ez) ** snd sl (fst ez) ep (snd ez)))
-    (\ez, ep => spfdDir spfd (fst ez) (fst ep))
+    (\ecsl =>
+      (ep : spfdPos spfd (fst ecsl) ** snd sl (fst ecsl ** ep) (snd ecsl)))
+    (\ecsl, epsl =>
+      spfdDir spfd (fst ecsl) (fst epsl))
 
 public export
 SPFDcart2SlProj : {w, z' : Type} ->
