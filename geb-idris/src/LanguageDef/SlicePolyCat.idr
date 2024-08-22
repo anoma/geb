@@ -3255,7 +3255,7 @@ SPntFromFact {dom} {cod} {p} {q} (cart ** vert) = SPFDm cart vert
 --------------------------
 
 -- For a given functor `p`, an object of its Cartesian-slice category is a
--- functor with a Cartesian transformation to it.
+-- functor with a Cartesian transformation from it to `p`.
 --
 -- The constraint that the transformation must be Cartesian means
 -- that the on-directions function is determined completely by an
@@ -3290,7 +3290,7 @@ SPFDcartSlTot : {dom, cod : Type} ->
 SPFDcartSlTot {dom} {cod} p csl =
   SPFD
     (SPFDcartSlPos {dom} {cod} p csl)
-    (\ec, ep, ed => spfdDir p ec (fst ep) ed)
+    (\ec, ep => spfdDir p ec (fst ep))
 
 public export
 SPFDcartSlProjOnPos : {dom, cod : Type} ->
@@ -3312,7 +3312,7 @@ SPFDcartSlProj {dom} {cod} p csl =
 ---------------------------
 
 -- For a given functor `p`, an object of its vertical-coslice category is a
--- functor with a vertical transformation from it.
+-- functor with a vertical transformation from `p` to it.
 --
 -- The constraint that the transformation must be vertical means
 -- that it can be determined purely by a slice of the directions
@@ -3335,15 +3335,15 @@ SPFDvertCoslToNT : {dom, cod : Type} ->
 SPFDvertCoslToNT p csl ec ep ed = DPair.fst
 
 public export
-SPFDvertCoslCod : {dom, cod : Type} ->
+SPFDvertCoslBase : {dom, cod : Type} ->
   (p : SPFData dom cod) -> SPFDvertCosl {dom} {cod} p -> SPFData dom cod
-SPFDvertCoslCod {dom} {cod} p csl =
+SPFDvertCoslBase {dom} {cod} p csl =
   SPFD (spfdPos p) (SPFDvertCoslDir {dom} {cod} p csl)
 
 public export
 SPFDvertCoslInj : {dom, cod : Type} ->
   (p : SPFData dom cod) -> (dir : SPFDvertCosl {dom} {cod} p) ->
-  SPFnt p (SPFDvertCoslCod {dom} {cod} p dir)
+  SPFnt p (SPFDvertCoslBase {dom} {cod} p dir)
 SPFDvertCoslInj {dom} {cod} p dir =
   SPFDm (sliceId {a=cod} $ spfdPos p) (SPFDvertCoslToNT {dom} {cod} p dir)
 
