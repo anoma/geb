@@ -3545,17 +3545,14 @@ record SPFpoCellDP {w', z' : Type} {w : SliceObj w'} {z : SliceObj z'}
       g
       (spfdPos f)
   spdcVert :
-    (ez' : z') -> (ez : z ez') -> (efp : spfdPos f (ez' ** ez)) ->
-    (ew' : w') ->
-    SPFCposChangeDir
-      {w=w'} {z=(Sigma {a=z'} z)} {z'}
-      {bcr=(DPair.fst)} {g} {f=(spfdPos f)}
-      spdcCart (ez' ** ez) efp ew' ->
-    spfdDir
+    SPFDvertNT
       (spfPushoutDir {w=(Sigma {a=w'} w)} {x=w'} {z=(Sigma {a=z'} z)}
         DPair.fst
         f)
-      (ez' ** ez) efp ew'
+      (SPFCposChangeDir
+        {w=w'} {z=(Sigma {a=z'} z)} {z'}
+        {bcr=(DPair.fst)} {g} {f=(spfdPos f)}
+        spdcCart)
 
 public export
 SPFpoCellFromDP : {w', z' : Type} -> {w : SliceObj w'} -> {z : SliceObj z'} ->
@@ -3566,7 +3563,7 @@ SPFpoCellFromDP : {w', z' : Type} -> {w : SliceObj w'} -> {z : SliceObj z'} ->
 SPFpoCellFromDP {w'} {z'} {w} {z} {f} {g} spfc =
   SPFDm
     (\ez', (SFS (ez' ** ez) efp) => spdcCart spfc ez' (SFS (ez' ** ez) efp))
-    (\ez', (SFS (ez' ** ez) efp), ew', egd => spdcVert spfc ez' ez efp ew' egd)
+    (\ez', (SFS (ez' ** ez) efp) => spdcVert spfc (ez' ** ez) efp)
 
 ----------------------------
 ---- Cartesian 2-slices ----
