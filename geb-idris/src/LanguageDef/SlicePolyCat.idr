@@ -3532,11 +3532,11 @@ SPFCfact {w} {w'} {z} {z'} bcl bcr f g =
 
 public export
 SPFDpoCellFromFact : {w, w', z, z' : Type} ->
-  (bcl : w -> w') -> (bcr : z -> z') ->
-  (f : SPFData w z) -> (g : SPFData w' z') ->
+  {bcl : w -> w'} -> {bcr : z -> z'} ->
+  {f : SPFData w z} -> {g : SPFData w' z'} ->
   SPFCfact {w} {w'} {z} {z'} bcl bcr f g ->
   SPFpoCell {w} {w'} {z} {z'} bcl bcr f g
-SPFDpoCellFromFact {w} {w'} {z} {z'} bcl bcr f g spfc =
+SPFDpoCellFromFact {w} {w'} {z} {z'} {bcl} {bcr} {f} {g} spfc =
   SPFDm (fst spfc) (\ez', ep => case ep of SFS ez efz => snd spfc ez efz)
 
 -----------------------------------------------------
