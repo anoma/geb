@@ -3576,6 +3576,21 @@ SPFDcart2Sl : {w, z' : Type} -> SPFData w z' -> Type
 SPFDcart2Sl {w} {z'} spfd =
   (csl : SliceObj z' ** (ep : SPFDbase spfd) -> SliceObj (csl $ fst ep))
 
+-- A Cartesian slice may be viewed as a special case of a Cartesian
+-- 2-slice.
+public export
+SPFDcartSlAs2Sl : {dom, cod : Type} -> {p : SPFData dom cod} ->
+  SPFDcartSl {dom} {cod} p -> SPFDcart2Sl {w=dom} {z'=cod} p
+SPFDcartSlAs2Sl {dom} {cod} {p} sl = (\_ => Unit ** \ep, () => sl ep)
+
+public export
+SPFDconstCart2SlAsSl : {w, z' : Type} -> {p : SPFData w z'} ->
+  (sl : SPFDcart2Sl {w} {z'} p) ->
+  ((ez' : z') -> fst sl ez' = Unit) ->
+  SPFDcartSl {dom=w} {cod=z'} p
+SPFDconstCart2SlAsSl {w} {z'} {p} (csl ** bsl) isu (ez' ** ep) =
+  bsl (ez' ** ep) (rewrite isu ez' in ())
+
 public export
 SPFDcart2SlCod : {w, z' : Type} ->
   (spfd : SPFData w z') -> SPFDcart2Sl spfd -> Type
