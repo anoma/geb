@@ -3545,12 +3545,6 @@ SPFDpoCellFromFact {w} {w'} {z} {z'} bcl bcr f g spfc =
 -----------------------------------------------------
 -----------------------------------------------------
 
--- A cell is a two-morphism, so we can define a slice category over
--- a dependent polynomial functor as any other dependent polynomial
--- functor (the total space), which need not have the same domain or
--- codomain as the base functor, with a cell (the projection) to the
--- base functor.
-
 -- A dependent-type-style cell, where we treat the natural transformation
 -- as the projection of a slice object.
 public export
@@ -3582,6 +3576,12 @@ SPFpoCellFromDP {w'} {z'} {w} {z} {f} {g} spfc =
   SPFDm
     (\ez', (SFS (ez' ** ez) efp) => spdcCart spfc ez' (SFS (ez' ** ez) efp))
     (\ez', (SFS (ez' ** ez) efp) => spdcVert spfc (ez' ** ez) efp)
+
+-- A cell is a two-morphism, so we can define a slice category over
+-- a dependent polynomial functor as any other dependent polynomial
+-- functor (the total space), which need not have the same domain or
+-- codomain as the base functor, with a cell (the projection) to the
+-- base functor.
 
 ----------------------------
 ---- Cartesian 2-slices ----
