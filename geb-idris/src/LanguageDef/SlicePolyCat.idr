@@ -3351,19 +3351,28 @@ SPFDvertCoslInj {dom} {cod} p dir =
 ---- Vertical-Cartesian factorization of cells ----
 ---------------------------------------------------
 
+-- Recall that `spfPushoutDir` is equivalent to precomposition with
+-- base change.
 public export
 SPFDvertPoCell : {w, w', z : Type} ->
   (bcl : w -> w') -> (f : SPFData w z) ->
   SPFdirType w' z (spfdPos f) -> Type
-SPFDvertPoCell {w} {w'} {z} bcl f =
-  SPFDvertNT (spfPushoutDir {w} {x=w'} {z} bcl f)
+SPFDvertPoCell {w} {w'} {z} bcl f g =
+  SPFDvertNT (spfPushoutDir {w} {x=w'} {z} bcl f) g
 
+-- Recall that `spfPullbackPos` is equivalent to postcomposition with
+-- base change.
 public export
 SPFDcartPbCell : {w, z, z' : Type} ->
   (bcr : z -> z') -> (g : SPFData w z') -> (f : SliceObj z) -> Type
 SPFDcartPbCell {w} {z} {z'} bcr g f =
   SPFDcartNT {dom=w} {cod=z} f (spfPullbackPos bcr g)
 
+-- The analogue of `spfPushoutPos` if `f` were a full `SPFData`
+-- (rather than an implicit specification of one through the
+-- combination of itself as a slice object with `g`, and the
+-- requirement that the cell be Cartesian).  Recall that `spfPushoutPos`
+-- is equivalent to postcomposition with `Sigma`.
 public export
 SPFDcartPoCell : {w, z, z' : Type} ->
   (bcr : z -> z') -> (g : SPFData w z') -> (f : SliceObj z) -> Type
