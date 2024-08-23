@@ -3617,6 +3617,29 @@ SPFDcart2SlTot {w} {z'} spfd sl =
     (snd sl)
 
 public export
+SPFDcart2SlProjFactPb : {w, z' : Type} ->
+  (spfd : SPFData w z') -> (sl : SPFDcart2Sl {w} {z'} spfd) ->
+  SPFDcartPbCell {w} {z=(SPFDcart2SlCod {w} {z'} spfd sl)} {z'}
+    DPair.fst
+    spfd
+    (SPFDcartSlPos {dom=w} {cod=(SPFDcart2SlCod {w} {z'} spfd sl)}
+      (spfPullbackPos DPair.fst spfd)
+      (snd sl))
+SPFDcart2SlProjFactPb {w} {z'} spfd sl ecsl = DPair.fst
+
+public export
+SPFDcart2SlProjFactPo : {w, z' : Type} ->
+  (spfd : SPFData w z') -> (sl : SPFDcart2Sl {w} {z'} spfd) ->
+  SPFDcartPoCell {w} {z=(SPFDcart2SlCod {w} {z'} spfd sl)} {z'}
+    DPair.fst
+    spfd
+    (SPFDcartSlPos {dom=w} {cod=(SPFDcart2SlCod {w} {z'} spfd sl)}
+      (spfPullbackPos DPair.fst spfd)
+      (snd sl))
+SPFDcart2SlProjFactPo {w} {z'} spfd sl =
+  SPFDcartCellPbToPo (SPFDcart2SlProjFactPb spfd sl)
+
+public export
 SPFDcart2SlProj : {w, z' : Type} ->
   (spfd : SPFData w z') -> (sl : SPFDcart2Sl {w} {z'} spfd) ->
   SPFpoCell {w} {z=(SPFDcart2SlCod {w} {z'} spfd sl)} {w'=w} {z'}
