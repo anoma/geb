@@ -3548,12 +3548,6 @@ SPFDpoCellFromFact : {w, w', z, z' : Type} ->
 SPFDpoCellFromFact {w} {w'} {z} {z'} {bcl} {bcr} {f} {g} spfc =
   SPFDm (fst spfc) (\ez', ep => case ep of SFS ez efz => snd spfc ez efz)
 
------------------------------------------------------
------------------------------------------------------
----- Two-slices of dependent polynomial functors ----
------------------------------------------------------
------------------------------------------------------
-
 -- A dependent-type-style cell built from its vertical and Cartesian factors.
 public export
 SPFpoCellDP : {w', z' : Type} -> {w : SliceObj w'} -> {z : SliceObj z'} ->
@@ -3569,6 +3563,12 @@ SPFpoCellFromDP : {w', z' : Type} -> {w : SliceObj w'} -> {z : SliceObj z'} ->
   SPFpoCell {w=(Sigma {a=w'} w)} {w'} {z=(Sigma {a=z'} z)} {z'}
     DPair.fst DPair.fst f g
 SPFpoCellFromDP = SPFDpoCellFromFact
+
+-----------------------------------------------------
+-----------------------------------------------------
+---- Two-slices of dependent polynomial functors ----
+-----------------------------------------------------
+-----------------------------------------------------
 
 -- A cell is a two-morphism, so we can define a slice category over
 -- a dependent polynomial functor as any other dependent polynomial
