@@ -3608,15 +3608,6 @@ SPFDcart2SlCod : {w, z' : Type} ->
 SPFDcart2SlCod {w} {z'} spfd sl = Sigma {a=z'} (fst sl)
 
 public export
-SPFDcart2SlTot : {w, z' : Type} ->
-  (spfd : SPFData w z') -> (sl : SPFDcart2Sl {w} {z'} spfd) ->
-  SPFData w (SPFDcart2SlCod {w} {z'} spfd sl)
-SPFDcart2SlTot {w} {z'} spfd sl =
-  SPFDcartSlTot {dom=w} {cod=(SPFDcart2SlCod {w} {z'} spfd sl)}
-    (spfPullbackPos DPair.fst spfd)
-    (snd sl)
-
-public export
 SPFDcart2SlProjFactPb : {w, z' : Type} ->
   (spfd : SPFData w z') -> (sl : SPFDcart2Sl {w} {z'} spfd) ->
   SPFDcartPbCell {w} {z=(SPFDcart2SlCod {w} {z'} spfd sl)} {z'}
@@ -3638,6 +3629,15 @@ SPFDcart2SlProjFactPo : {w, z' : Type} ->
       (snd sl))
 SPFDcart2SlProjFactPo {w} {z'} spfd sl =
   SPFDcartCellPbToPo (SPFDcart2SlProjFactPb spfd sl)
+
+public export
+SPFDcart2SlTot : {w, z' : Type} ->
+  (spfd : SPFData w z') -> (sl : SPFDcart2Sl {w} {z'} spfd) ->
+  SPFData w (SPFDcart2SlCod {w} {z'} spfd sl)
+SPFDcart2SlTot {w} {z'} spfd sl =
+  SPFDcartSlTot {dom=w} {cod=(SPFDcart2SlCod {w} {z'} spfd sl)}
+    (spfPullbackPos DPair.fst spfd)
+    (snd sl)
 
 public export
 SPFDcart2SlProj : {w, z' : Type} ->
