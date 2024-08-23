@@ -3678,6 +3678,22 @@ SPFDvert2CoslBaseCosl : {w, z : Type} -> {spfd : SPFData w z} ->
     (spfPushoutDir (SPFDvert2CoslBaseInj {w} {z} {spfd} cosl) spfd)
 SPFDvert2CoslBaseCosl cosl = DPair.snd (DPair.snd cosl)
 
+-- A vertical coslice may be viewed as a special case of a vertical
+-- 2-coslice.
+public export
+SPFDvertCoslAs2Cosl : {dom, cod : Type} -> {p : SPFData dom cod} ->
+  SPFDvertCosl {dom} {cod} p -> SPFDvert2Cosl {w=dom} {z=cod} p
+SPFDvertCoslAs2Cosl {dom} {cod} {p} cosl =
+  (dom ** Prelude.id **
+   \((ed, (ec ** ep)) ** SFS _ pd) => cosl (((ed, (ec ** ep))) ** pd))
+
+public export
+SPFDconstvert2CoslAsCosl : {w, z : Type} -> {p : SPFData w z} ->
+  SPFDvertCosl {dom=w} {cod=z} (spfPushoutDir Prelude.id p) ->
+  SPFDvertCosl {dom=w} {cod=z} p
+SPFDconstvert2CoslAsCosl {w} {z} {p} cosl ((ew, (ez ** ep)) ** pd) =
+  cosl ((ew, (ez ** ep)) ** SFS ew pd)
+
 ---------------------------------------------------------------------------
 ---------------------------------------------------------------------------
 ---- Internal language of double-category of slice polynomial functors ----
