@@ -3650,6 +3650,34 @@ SPFDcart2SlProj {w} {z'} spfd sl =
     (\ez', ec => rewrite sym (sfsEq ec) in fst $ sfsSnd ec)
     (\ez', ep, ew, dd => rewrite sfsEq ep in SFS ew dd)
 
+-----------------------------
+---- Vertical 2-coslices ----
+-----------------------------
+
+public export
+SPFDvert2Cosl : {w, z : Type} -> SPFData w z -> Type
+SPFDvert2Cosl {w} {z} spfd =
+  (w' : Type ** bcl : w -> w' **
+   SPFDvertCosl {dom=w'} {cod=z} (spfPushoutDir bcl spfd))
+
+public export
+SPFDvert2CoslBaseDom : {w, z : Type} -> {spfd : SPFData w z} ->
+  SPFDvert2Cosl {w} {z} spfd -> Type
+SPFDvert2CoslBaseDom = DPair.fst
+
+public export
+SPFDvert2CoslBaseInj : {w, z : Type} -> {spfd : SPFData w z} ->
+  (cosl : SPFDvert2Cosl {w} {z} spfd) ->
+  w -> SPFDvert2CoslBaseDom {w} {z} {spfd} cosl
+SPFDvert2CoslBaseInj cosl = DPair.fst (DPair.snd cosl)
+
+public export
+SPFDvert2CoslBaseCosl : {w, z : Type} -> {spfd : SPFData w z} ->
+  (cosl : SPFDvert2Cosl {w} {z} spfd) ->
+  SPFDvertCosl {dom=(SPFDvert2CoslBaseDom {spfd} cosl)} {cod=z}
+    (spfPushoutDir (SPFDvert2CoslBaseInj {w} {z} {spfd} cosl) spfd)
+SPFDvert2CoslBaseCosl cosl = DPair.snd (DPair.snd cosl)
+
 ---------------------------------------------------------------------------
 ---------------------------------------------------------------------------
 ---- Internal language of double-category of slice polynomial functors ----
