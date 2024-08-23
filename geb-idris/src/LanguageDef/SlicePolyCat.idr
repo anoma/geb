@@ -3583,14 +3583,16 @@ SPFpoCellFromDP = SPFDpoCellFromFact
 public export
 SPFDcart2Sl : {w, z' : Type} -> SPFData w z' -> Type
 SPFDcart2Sl {w} {z'} spfd =
-  (csl : SliceObj z' ** (ep : SPFDbase spfd) -> SliceObj (csl $ fst ep))
+  (csl : SliceObj z' **
+   SPFDcartSl {dom=w} {cod=(Sigma {a=z'} csl)} (spfPullbackPos DPair.fst spfd))
 
 -- A Cartesian slice may be viewed as a special case of a Cartesian
 -- 2-slice.
 public export
 SPFDcartSlAs2Sl : {dom, cod : Type} -> {p : SPFData dom cod} ->
   SPFDcartSl {dom} {cod} p -> SPFDcart2Sl {w=dom} {z'=cod} p
-SPFDcartSlAs2Sl {dom} {cod} {p} sl = (\_ => Unit ** \ep, () => sl ep)
+SPFDcartSlAs2Sl {dom} {cod} {p} sl =
+  (\_ => Unit ** \((ec ** ()) ** ep) => sl (ec ** ep))
 
 public export
 SPFDconstCart2SlAsSl : {w, z' : Type} -> {p : SPFData w z'} ->
@@ -3598,7 +3600,7 @@ SPFDconstCart2SlAsSl : {w, z' : Type} -> {p : SPFData w z'} ->
   ((ez' : z') -> fst sl ez' = Unit) ->
   SPFDcartSl {dom=w} {cod=z'} p
 SPFDconstCart2SlAsSl {w} {z'} {p} (csl ** bsl) isu (ez' ** ep) =
-  bsl (ez' ** ep) (rewrite isu ez' in ())
+  bsl ((ez' ** rewrite isu ez' in ()) ** ep)
 
 public export
 SPFDcart2SlCod : {w, z' : Type} ->
@@ -3610,11 +3612,9 @@ SPFDcart2SlTot : {w, z' : Type} ->
   (spfd : SPFData w z') -> (sl : SPFDcart2Sl {w} {z'} spfd) ->
   SPFData w (SPFDcart2SlCod {w} {z'} spfd sl)
 SPFDcart2SlTot {w} {z'} spfd sl =
-  SPFD
-    (\ecsl =>
-      (ep : spfdPos spfd (fst ecsl) ** snd sl (fst ecsl ** ep) (snd ecsl)))
-    (\ecsl, epsl =>
-      spfdDir spfd (fst ecsl) (fst epsl))
+  SPFDcartSlTot {dom=w} {cod=(SPFDcart2SlCod {w} {z'} spfd sl)}
+    (spfPullbackPos DPair.fst spfd)
+    (snd sl)
 
 public export
 SPFDcart2SlProj : {w, z' : Type} ->
