@@ -3717,3 +3717,23 @@ CongNTCat d c =
   $ ICS
     (congNTid {d} {c})
     (congNTcomp {d} {c})
+
+public export
+congNThcomp : {e, d, c : IntCatSig} ->
+  {f, f' : IntAdjunctionSig e d} -> {g, g' : IntAdjunctionSig d c} ->
+  CongNTSig g g' -> CongNTSig f f' ->
+  CongNTSig {d=e} {c}
+    (intAdjunctionSigCompose g f)
+    (intAdjunctionSigCompose g' f')
+congNThcomp {e} {d} {c} {f} {f'} {g} {g'} beta alpha =
+  CongNT
+    (intNThcomp {emor=(icMor e)} {dmor=(icMor d)}
+      (icComp e)
+      (iasLFmap f)
+      (cntL alpha)
+      (cntL beta))
+    (intNThcomp {emor=(icMor c)} {dmor=(icMor d)}
+      (icComp c)
+      (iasRFmap g')
+      (cntR beta)
+      (cntR alpha))
