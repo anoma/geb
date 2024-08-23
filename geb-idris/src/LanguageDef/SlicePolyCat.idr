@@ -3278,10 +3278,10 @@ SPFDcartSlPos : {dom, cod : Type} ->
 SPFDcartSlPos {dom} {cod} p csl ec = Sigma {a=(spfdPos p ec)} (curry csl ec)
 
 public export
-SPFDcartSltoNT : {dom, cod : Type} ->
+SPFDcartSltoCartNT : {dom, cod : Type} ->
   (p : SPFData dom cod) -> (sl : SPFDcartSl {dom} {cod} p) ->
   SPFDcartNT {dom} {cod} (SPFDcartSlPos {dom} {cod} p sl) p
-SPFDcartSltoNT p sl ec = DPair.fst
+SPFDcartSltoCartNT p sl ec = DPair.fst
 
 public export
 SPFDcartSlTot : {dom, cod : Type} ->
