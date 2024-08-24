@@ -52,11 +52,17 @@ spfdMonRep : {dom, cod : Type} -> (degree : SliceObj dom) ->
   SPFDataRep degree cod
 spfdMonRep {dom} {cod} degree = Refl
 
--- A "dynamical system" is a monomial whose coefficient and degree
--- are the same.
+-- A symmetric monomial, whoes coefficient and degree are the same.
 public export
-spfdDynSys : {x : Type} -> SliceObj x -> SPFData x x
-spfdDynSys {x} coeff = spfdMonomial {dom=x} {cod=x} coeff coeff
+spfdSymMon : {x : Type} -> SliceObj x -> SPFData x x
+spfdSymMon {x} coeff = spfdMonomial {dom=x} {cod=x} coeff coeff
+
+-- Definition 4.18 from _Polynomial Functors:  A Mathematical Theory
+-- of Interaction_:  a "dynamical system" is a lens (natural transformation)
+-- whose domain is a symmetric monomial.
+public export
+spfdDynSys : {x : Type} -> (sl : SliceObj x) -> SPFData x x -> Type
+spfdDynSys {x} sl p = SPFnt {dom=x} {cod=x} (spfdSymMon sl) p
 
 -- Formula 6.65 from _Polynomial Functors: A Mathematical Theory of
 -- Interaction_.
@@ -78,16 +84,16 @@ spfdInjToMonNT {dom} {cod} coeff degree p m =
   SPFDm (\ec, n => fst $ m ec n) (\ec, n => snd $ m ec n)
 
 public export
-spfdDynSysNTtoCoalg : {x : Type} ->
+spfdDynSysToCoalg : {x : Type} ->
   (coeff : SliceObj x) -> (p : SPFData x x) ->
-  SPFnt (spfdDynSys {x} coeff) p -> spfdCoalgAction {x} p coeff
-spfdDynSysNTtoCoalg {x} coeff = spfdMonNTtoInj {dom=x} {cod=x} coeff coeff
+  spfdDynSys {x} coeff p -> spfdCoalgAction {x} p coeff
+spfdDynSysToCoalg {x} coeff = spfdMonNTtoInj {dom=x} {cod=x} coeff coeff
 
 public export
-spfdCoalgToDynSysNT : {x : Type} ->
+spfdCoalgToDynSys : {x : Type} ->
   (coeff : SliceObj x) -> (p : SPFData x x) ->
-  spfdCoalgAction {x} p coeff -> SPFnt (spfdDynSys {x} coeff) p
-spfdCoalgToDynSysNT {x} coeff = spfdInjToMonNT {dom=x} {cod=x} coeff coeff
+  spfdCoalgAction {x} p coeff -> spfdDynSys {x} coeff p
+spfdCoalgToDynSys {x} coeff = spfdInjToMonNT {dom=x} {cod=x} coeff coeff
 
 -- Formula 6.66 from _Polynomial Functors: A Mathematical Theory of
 -- Interaction_.
