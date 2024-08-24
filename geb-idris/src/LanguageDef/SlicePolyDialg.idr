@@ -26,6 +26,7 @@ spfdCoalgAction {x} p a =
   SliceMorphism {a=x} a (InterpSPFData {dom=x} {cod=x} p a)
 
 -------------------
+-------------------
 ---- Monomials ----
 -------------------
 -------------------
