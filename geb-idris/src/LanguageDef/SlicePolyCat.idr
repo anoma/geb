@@ -3694,6 +3694,54 @@ SPFDconstvert2CoslAsCosl : {w, z : Type} -> {p : SPFData w z} ->
 SPFDconstvert2CoslAsCosl {w} {z} {p} cosl ((ew, (ez ** ep)) ** pd) =
   cosl ((ew, (ez ** ep)) ** SFS ew pd)
 
+public export
+SPFDvert2CoslDom : {w, z : Type} ->
+  (spfd : SPFData w z) -> (cosl : SPFDvert2Cosl spfd) ->
+  SPFData (SPFDvert2CoslBaseDom {w} {z} {spfd} cosl) z
+SPFDvert2CoslDom {w} {z} spfd cosl =
+  spfPushoutDir (SPFDvert2CoslBaseInj {w} {z} {spfd} cosl) spfd
+
+public export
+SPFDvert2CoslDir : {w, z : Type} ->
+  (spfd : SPFData w z) -> (cosl : SPFDvert2Cosl spfd) ->
+  SPFDvertNTcod {dom=(SPFDvert2CoslBaseDom {w} {z} {spfd} cosl)} {cod=z}
+    (SPFDvert2CoslDom {w} {z} spfd cosl)
+SPFDvert2CoslDir {w} {z} spfd cosl =
+  SPFDvertCoslDir {dom=(SPFDvert2CoslBaseDom {w} {z} {spfd} cosl)} {cod=z}
+    (SPFDvert2CoslDom spfd cosl)
+    (SPFDvert2CoslBaseCosl {spfd} cosl)
+
+public export
+SPFDvert2CoslToVertPo : {w, z : Type} ->
+  (spfd : SPFData w z) -> (cosl : SPFDvert2Cosl spfd) ->
+  SPFDvertPoCell {w} {w'=(SPFDvert2CoslBaseDom {spfd} cosl)} {z}
+    (SPFDvert2CoslBaseInj {spfd} cosl)
+    spfd
+    (SPFDvert2CoslDir {w} {z} spfd cosl)
+SPFDvert2CoslToVertPo {w} {z} spfd cosl ez ep ew' = DPair.fst
+
+public export
+SPFDvert2CoslBase : {w, z : Type} ->
+  (spfd : SPFData w z) -> (cosl : SPFDvert2Cosl {w} {z} spfd) ->
+  SPFData (SPFDvert2CoslBaseDom {spfd} cosl) z
+SPFDvert2CoslBase {w} {z} spfd cosl =
+  SPFDvertCoslBase {dom=(SPFDvert2CoslBaseDom {spfd} cosl)} {cod=z}
+    (SPFDvert2CoslDom spfd cosl)
+    (SPFDvert2CoslBaseCosl {spfd} cosl)
+
+public export
+SPFDvert2CoslInj : {w, z : Type} ->
+  (spfd : SPFData w z) -> (cosl : SPFDvert2Cosl {w} {z} spfd) ->
+  SPFpoCell {w} {z} {w'=(SPFDvert2CoslBaseDom {spfd} cosl)} {z'=z}
+    (SPFDvert2CoslBaseInj {spfd} cosl)
+    Prelude.id
+    spfd
+    (SPFDvert2CoslBase {w} {z} spfd cosl)
+SPFDvert2CoslInj {w} {z} spfd (w' ** bcl ** dir) =
+  SPFDm
+    (\ez, (SFS ez ep) => ep)
+    (\ez, (SFS ez ep), ew', (SFS ew dd ** dd') => SFS ew dd)
+
 ---------------------------------------------------------------------------
 ---------------------------------------------------------------------------
 ---- Internal language of double-category of slice polynomial functors ----
