@@ -102,7 +102,6 @@ public export
   SPFdirType dom cod pos -> SPFdirSlF dom cod pos
 SPFdirToSlF {dom} {cod} {pos} = SPFdirSlFfromSl . SPFdirToSl
 
-
 -- A polynomial functor on slice categories may be described as a parametric
 -- right adjoint whose right-adjoint component is a form of `SliceSigmaPiFR`
 -- (which has the left adjoint `SliceSigmaPiFL`) and whose following
