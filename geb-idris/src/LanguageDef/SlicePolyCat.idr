@@ -62,6 +62,47 @@ public export
 0 SPFdirType : (0 dom, cod : Type) -> (0 _ : SliceObj cod) -> Type
 SPFdirType dom cod pos = (ec : cod) -> pos ec -> SliceObj dom
 
+-- The slice-object form of `SPFdirType`.
+public export
+SPFdirSl : (dom, cod : Type) -> (pos : SliceObj cod) -> Type
+SPFdirSl dom cod pos = SliceObj (Sigma {a=cod} pos, dom)
+
+public export
+0 SPFdirToSl : {dom, cod : Type} -> {pos : SliceObj cod} ->
+  SPFdirType dom cod pos -> SPFdirSl dom cod pos
+SPFdirToSl {dom} {cod} {pos} dir ((ec ** ep), ed) = dir ec ep ed
+
+public export
+0 SPFdirFromSl : {dom, cod : Type} -> {pos : SliceObj cod} ->
+  SPFdirSl dom cod pos -> SPFdirType dom cod pos
+SPFdirFromSl {dom} {cod} {pos} dir ec ep ed = dir ((ec ** ep), ed)
+
+-- The slice-functor form of `SPFdirType`.
+public export
+SPFdirSlF : (dom, cod : Type) -> (pos : SliceObj cod) -> Type
+SPFdirSlF dom cod pos = Sigma {a=cod} pos -> SliceObj dom
+
+public export
+0 SPFdirSlFfromSl : {dom, cod : Type} -> {pos : SliceObj cod} ->
+  SPFdirSl dom cod pos -> SPFdirSlF dom cod pos
+SPFdirSlFfromSl {dom} {cod} {pos} = curry
+
+public export
+0 SPFdirSlFToSl : {dom, cod : Type} -> {pos : SliceObj cod} ->
+  SPFdirSlF dom cod pos -> SPFdirSl dom cod pos
+SPFdirSlFToSl {dom} {cod} {pos} = uncurry
+
+public export
+0 SPFdirFromSlF : {dom, cod : Type} -> {pos : SliceObj cod} ->
+  SPFdirSlF dom cod pos -> SPFdirType dom cod pos
+SPFdirFromSlF {dom} {cod} {pos} = SPFdirFromSl . SPFdirSlFToSl
+
+public export
+0 SPFdirToSlF : {dom, cod : Type} -> {pos : SliceObj cod} ->
+  SPFdirType dom cod pos -> SPFdirSlF dom cod pos
+SPFdirToSlF {dom} {cod} {pos} = SPFdirSlFfromSl . SPFdirToSl
+
+
 -- A polynomial functor on slice categories may be described as a parametric
 -- right adjoint whose right-adjoint component is a form of `SliceSigmaPiFR`
 -- (which has the left adjoint `SliceSigmaPiFL`) and whose following
