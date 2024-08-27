@@ -15,6 +15,10 @@ import public LanguageDef.MLDirichCat
 -----------------------------------------------
 -----------------------------------------------
 
+-----------------
+---- Objects ----
+-----------------
+
 public export
 spfdAlgAction : {x : Type} -> SPFData x x -> SliceObj x -> Type
 spfdAlgAction {x} p a =
@@ -25,6 +29,15 @@ SPAlg : {x : Type} -> SliceObj (SPFData x x)
 SPAlg {x} p = Sigma {a=(SliceObj x)} $ spfdAlgAction {x} p
 
 public export
+SPAlgCarrier : {x : Type} -> {f : SPFData x x} -> SPAlg {x} f -> SliceObj x
+SPAlgCarrier {x} {f} = fst
+
+public export
+SPAlgAction : {x : Type} -> {f : SPFData x x} -> (alg : SPAlg {x} f) ->
+  spfdAlgAction {x} f (SPAlgCarrier {x} {f} alg)
+SPAlgAction {x} {f} = snd
+
+public export
 spfdCoalgAction : {x : Type} -> SPFData x x -> SliceObj x -> Type
 spfdCoalgAction {x} p a =
   SliceMorphism {a=x} a (InterpSPFData {dom=x} {cod=x} p a)
@@ -33,18 +46,38 @@ public export
 SPCoalg : {x : Type} -> SliceObj (SPFData x x)
 SPCoalg {x} p = Sigma {a=(SliceObj x)} $ spfdCoalgAction {x} p
 
+public export
+SPCoalgCarrier : {x : Type} -> {f : SPFData x x} -> SPCoalg {x} f -> SliceObj x
+SPCoalgCarrier {x} {f} = fst
+
+public export
+SPCoalgAction : {x : Type} -> {f : SPFData x x} -> (coalg : SPCoalg {x} f) ->
+  spfdCoalgAction {x} f (SPCoalgCarrier {x} {f} coalg)
+SPCoalgAction {x} {f} = snd
+
 -- The evaluator for a dialgebra between two slice polynomial functors,
 -- whose carrier is the given slice object.
 public export
-SPDialgAction : {c, d : Type} -> (f, g : SPFData c d) -> SliceObj c -> Type
-SPDialgAction {c} {d} f g x =
+spfdDialgAction : {c, d : Type} -> (f, g : SPFData c d) -> SliceObj c -> Type
+spfdDialgAction {c} {d} f g x =
    SliceMorphism {a=d}
     (InterpSPFData {dom=c} {cod=d} f x)
     (InterpSPFData {dom=c} {cod=d} g x)
 
 public export
 SPDialg : {c, d : Type} -> IntMorSig (SPFData c d)
-SPDialg {c} {d} f g = Sigma {a=(SliceObj c)} $ SPDialgAction {c} f g
+SPDialg {c} {d} f g = Sigma {a=(SliceObj c)} $ spfdDialgAction {c} f g
+
+public export
+SPDialgCarrier : {c, d : Type} -> {f, g : SPFData c d} -> SPDialg {c} {d} f g ->
+  SliceObj c
+SPDialgCarrier {c} {d} {f} {g} = fst
+
+public export
+SPDialgAction : {c, d : Type} -> {f, g : SPFData c d} ->
+  (dialg : SPDialg {c} {d} f g) ->
+  spfdDialgAction {c} {d} f g (SPDialgCarrier {c} {d} {f} {g} dialg)
+SPDialgAction {c} {d} {f} {g} = snd
 
 -------------------
 -------------------
