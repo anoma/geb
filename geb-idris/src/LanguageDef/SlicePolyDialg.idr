@@ -159,9 +159,3 @@ public export
 SPCommaObj: {a, b, c : Type} -> (s : SPFData a c) -> (t : SPFData b c) -> Type
 SPCommaObj {a} {b} {c} s t =
   (sab : (SliceObj a, SliceObj b) ** SPCommaObjMor s t (fst sab) (snd sab))
-
--------------------------------------------------------
--------------------------------------------------------
----- Objects and morphisms of algebraic categories ----
--------------------------------------------------------
--------------------------------------------------------
