@@ -33,6 +33,19 @@ public export
 SPCoalg : {x : Type} -> SliceObj (SPFData x x)
 SPCoalg {x} p = Sigma {a=(SliceObj x)} $ spfdCoalgAction {x} p
 
+-- The evaluator for a dialgebra between two slice polynomial functors,
+-- whose carrier is the given slice object.
+public export
+SPDialgAction : {c, d : Type} -> (f, g : SPFData c d) -> SliceObj c -> Type
+SPDialgAction {c} {d} f g x =
+   SliceMorphism {a=d}
+    (InterpSPFData {dom=c} {cod=d} f x)
+    (InterpSPFData {dom=c} {cod=d} g x)
+
+public export
+SPDialg : {c, d : Type} -> IntMorSig (SPFData c d)
+SPDialg {c} {d} f g = Sigma {a=(SliceObj c)} $ SPDialgAction {c} f g
+
 -------------------
 -------------------
 ---- Monomials ----
@@ -152,16 +165,3 @@ SPCommaObj {a} {b} {c} s t =
 ---- Objects and morphisms of algebraic categories ----
 -------------------------------------------------------
 -------------------------------------------------------
-
--- The evaluator for a dialgebra between two slice polynomial functors,
--- whose carrier is the given slice object.
-public export
-SPDialgAction : {c, d : Type} -> (f, g : SPFData c d) -> SliceObj c -> Type
-SPDialgAction {c} {d} f g x =
-   SliceMorphism {a=d}
-    (InterpSPFData {dom=c} {cod=d} f x)
-    (InterpSPFData {dom=c} {cod=d} g x)
-
-public export
-SPDialg : {c, d : Type} -> IntMorSig (SPFData c d)
-SPDialg {c} {d} f g = Sigma {a=(SliceObj c)} $ SPDialgAction {c} f g
