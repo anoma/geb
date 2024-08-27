@@ -213,7 +213,7 @@ spfdMonRep : {dom, cod : Type} -> (degree : SliceObj dom) ->
   SPFDataRep degree cod
 spfdMonRep {dom} {cod} degree = Refl
 
--- A symmetric monomial, whoes coefficient and degree are the same.
+-- A symmetric monomial, whose coefficient and degree are the same.
 public export
 spfdSymMon : {x : Type} -> SliceObj x -> SPFData x x
 spfdSymMon {x} coeff = spfdMonomial {dom=x} {cod=x} coeff coeff
