@@ -80,6 +80,36 @@ SPDialgAction : {c, d : Type} -> {f, g : SPFData c d} ->
 SPDialgAction {c} {d} {f} {g} = snd
 
 -------------------
+---- Morphisms ----
+-------------------
+
+public export
+SPAlgMap : {x : Type} -> {f : SPFData x x} -> IntMorSig (SPAlg {x} f)
+SPAlgMap {x} {f} a b = SliceMorphism {a=x} (SPAlgCarrier a) (SPAlgCarrier b)
+
+public export
+SPAlgComm : {x : Type} -> {f : SPFData x x} -> {a, b : SPAlg {x} f} ->
+  SliceObj (SPAlgMap {x} {f} a b)
+SPAlgComm {x} {f} {a} {b} m =
+  SliceExtEq {a=x}
+    (sliceComp
+      {x=(InterpSPFData f $ SPAlgCarrier a)}
+      {y=(SPAlgCarrier a)}
+      {z=(SPAlgCarrier b)}
+      m
+      (SPAlgAction a))
+    (sliceComp
+      {x=(InterpSPFData f $ SPAlgCarrier a)}
+      {y=(InterpSPFData f $ SPAlgCarrier b)}
+      {z=(SPAlgCarrier b)}
+      (SPAlgAction b)
+      (InterpSPFDataMap {dom=x} {cod=x} f (SPAlgCarrier a) (SPAlgCarrier b) m))
+
+public export
+SPAlgMor : {x : Type} -> {f : SPFData x x} -> IntMorSig (SPAlg {x} f)
+SPAlgMor {x} {f} a b = DPair (SPAlgMap {x} {f} a b) (SPAlgComm {x} {f} {a} {b})
+
+-------------------
 -------------------
 ---- Monomials ----
 -------------------
