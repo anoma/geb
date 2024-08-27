@@ -147,6 +147,45 @@ SPCoalgMor : {x : Type} -> {f : SPFData x x} -> IntMorSig (SPCoalg {x} f)
 SPCoalgMor {x} {f} a b =
   DPair (SPCoalgMap {x} {f} a b) (SPCoalgComm {x} {f} {a} {b})
 
+public export
+SPDialgMap : {c, d : Type} -> {f, g : SPFData c d} ->
+  IntMorSig (SPDialg {c} {d} f g)
+SPDialgMap {c} {d} {f} a b =
+  SliceMorphism {a=c} (SPDialgCarrier a) (SPDialgCarrier b)
+
+public export
+SPDialgComm : {c, d : Type} -> {f, g : SPFData c d} ->
+  {a, b : SPDialg {c} {d} f g} ->
+  SliceObj (SPDialgMap {c} {d} {f} {g} a b)
+SPDialgComm {c} {d} {f} {g} {a} {b} m =
+  SliceExtEq {a=d}
+    (sliceComp
+      {x=(InterpSPFData f $ SPDialgCarrier a)}
+      {y=(InterpSPFData f $ SPDialgCarrier b)}
+      {z=(InterpSPFData g $ SPDialgCarrier b)}
+      (SPDialgAction b)
+      (InterpSPFDataMap {dom=c} {cod=d}
+        f
+        (SPDialgCarrier a)
+        (SPDialgCarrier b)
+        m))
+    (sliceComp
+      {x=(InterpSPFData f $ SPDialgCarrier a)}
+      {y=(InterpSPFData g $ SPDialgCarrier a)}
+      {z=(InterpSPFData g $ SPDialgCarrier b)}
+      (InterpSPFDataMap {dom=c} {cod=d}
+        g
+        (SPDialgCarrier a)
+        (SPDialgCarrier b)
+        m)
+      (SPDialgAction a))
+
+public export
+SPDialgMor : {c, d : Type} -> {f, g : SPFData c d} ->
+  IntMorSig (SPDialg {c} {d} f g)
+SPDialgMor {c} {d} {f} a b =
+  DPair (SPDialgMap {c} {d} {f} {g} a b) (SPDialgComm {c} {d} {f} {g} {a} {b})
+
 -------------------
 -------------------
 ---- Monomials ----
