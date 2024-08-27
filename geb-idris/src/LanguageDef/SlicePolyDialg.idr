@@ -21,9 +21,17 @@ spfdAlgAction {x} p a =
   SliceMorphism {a=x} (InterpSPFData {dom=x} {cod=x} p a) a
 
 public export
+SPAlg : {x : Type} -> SliceObj (SPFData x x)
+SPAlg {x} p = Sigma {a=(SliceObj x)} $ spfdAlgAction {x} p
+
+public export
 spfdCoalgAction : {x : Type} -> SPFData x x -> SliceObj x -> Type
 spfdCoalgAction {x} p a =
   SliceMorphism {a=x} a (InterpSPFData {dom=x} {cod=x} p a)
+
+public export
+SPCoalg : {x : Type} -> SliceObj (SPFData x x)
+SPCoalg {x} p = Sigma {a=(SliceObj x)} $ spfdCoalgAction {x} p
 
 -------------------
 -------------------
