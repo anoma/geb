@@ -154,11 +154,3 @@ SPDialgAction {c} f g x = SPCommaObjMor {a=c} {b=c} {c} f g x x
 public export
 SPDialg : {c : Type} -> IntMorSig (SPFData c c)
 SPDialg {c} f g = Sigma {a=(SliceObj c)} $ SPDialgAction {c} f g
-
-public export
-SPAlgEval : {c : Type} -> SPFData c c -> SliceObj c -> Type
-SPAlgEval {c} = flip (SPDialgAction {c}) (SPFDid c)
-
-public export
-SPCoalgEval : {c : Type} -> SPFData c c -> SliceObj c -> Type
-SPCoalgEval {c} = SPDialgAction {c} (SPFDid c)
