@@ -9,11 +9,11 @@ import public LanguageDef.MLDirichCat
 -- Comma categories, algebras, coalgebras, and dialgebras of slice polynomial
 -- functors.
 
----------------------------------
----------------------------------
----- Algebras and coalgebras ----
----------------------------------
----------------------------------
+-----------------------------------------------
+-----------------------------------------------
+---- Algebras, coalgebras, and dialgebras  ----
+-----------------------------------------------
+-----------------------------------------------
 
 public export
 spfdAlgAction : {x : Type} -> SPFData x x -> SliceObj x -> Type
