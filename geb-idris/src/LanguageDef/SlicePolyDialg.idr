@@ -85,7 +85,8 @@ SPDialgAction {c} {d} {f} {g} = snd
 
 public export
 SPAlgMap : {x : Type} -> {f : SPFData x x} -> IntMorSig (SPAlg {x} f)
-SPAlgMap {x} {f} a b = SliceMorphism {a=x} (SPAlgCarrier a) (SPAlgCarrier b)
+SPAlgMap {x} {f} a b =
+  SliceMorphism {a=x} (SPAlgCarrier a) (SPAlgCarrier b)
 
 public export
 SPAlgComm : {x : Type} -> {f : SPFData x x} -> {a, b : SPAlg {x} f} ->
@@ -103,11 +104,48 @@ SPAlgComm {x} {f} {a} {b} m =
       {y=(InterpSPFData f $ SPAlgCarrier b)}
       {z=(SPAlgCarrier b)}
       (SPAlgAction b)
-      (InterpSPFDataMap {dom=x} {cod=x} f (SPAlgCarrier a) (SPAlgCarrier b) m))
+      (InterpSPFDataMap {dom=x} {cod=x}
+        f
+        (SPAlgCarrier a)
+        (SPAlgCarrier b)
+        m))
 
 public export
 SPAlgMor : {x : Type} -> {f : SPFData x x} -> IntMorSig (SPAlg {x} f)
-SPAlgMor {x} {f} a b = DPair (SPAlgMap {x} {f} a b) (SPAlgComm {x} {f} {a} {b})
+SPAlgMor {x} {f} a b =
+  DPair (SPAlgMap {x} {f} a b) (SPAlgComm {x} {f} {a} {b})
+
+public export
+SPCoalgMap : {x : Type} -> {f : SPFData x x} -> IntMorSig (SPCoalg {x} f)
+SPCoalgMap {x} {f} a b =
+  SliceMorphism {a=x} (SPCoalgCarrier a) (SPCoalgCarrier b)
+
+public export
+SPCoalgComm : {x : Type} -> {f : SPFData x x} -> {a, b : SPCoalg {x} f} ->
+  SliceObj (SPCoalgMap {x} {f} a b)
+SPCoalgComm {x} {f} {a} {b} m =
+  SliceExtEq {a=x}
+    (sliceComp
+      {x=(SPCoalgCarrier a)}
+      {y=(SPCoalgCarrier b)}
+      {z=(InterpSPFData f $ SPCoalgCarrier b)}
+      (SPCoalgAction b)
+      m)
+    (sliceComp
+      {x=(SPCoalgCarrier a)}
+      {y=(InterpSPFData f $ SPCoalgCarrier a)}
+      {z=(InterpSPFData f $ SPCoalgCarrier b)}
+      (InterpSPFDataMap {dom=x} {cod=x}
+        f
+        (SPCoalgCarrier a)
+        (SPCoalgCarrier b)
+        m)
+      (SPCoalgAction a))
+
+public export
+SPCoalgMor : {x : Type} -> {f : SPFData x x} -> IntMorSig (SPCoalg {x} f)
+SPCoalgMor {x} {f} a b =
+  DPair (SPCoalgMap {x} {f} a b) (SPCoalgComm {x} {f} {a} {b})
 
 -------------------
 -------------------
