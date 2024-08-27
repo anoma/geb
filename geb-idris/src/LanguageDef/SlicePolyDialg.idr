@@ -156,9 +156,12 @@ SPCommaObj {a} {b} {c} s t =
 -- The evaluator for a dialgebra between two slice polynomial functors,
 -- whose carrier is the given slice object.
 public export
-SPDialgAction : {c : Type} -> (dom, cod : SPFData c c) -> SliceObj c -> Type
-SPDialgAction {c} f g x = SPCommaObjMor {a=c} {b=c} {c} f g x x
+SPDialgAction : {c, d : Type} -> (f, g : SPFData c d) -> SliceObj c -> Type
+SPDialgAction {c} {d} f g x =
+   SliceMorphism {a=d}
+    (InterpSPFData {dom=c} {cod=d} f x)
+    (InterpSPFData {dom=c} {cod=d} g x)
 
 public export
-SPDialg : {c : Type} -> IntMorSig (SPFData c c)
-SPDialg {c} f g = Sigma {a=(SliceObj c)} $ SPDialgAction {c} f g
+SPDialg : {c, d : Type} -> IntMorSig (SPFData c d)
+SPDialg {c} {d} f g = Sigma {a=(SliceObj c)} $ SPDialgAction {c} f g
