@@ -345,6 +345,12 @@ spCoalgSlComm {x} (SPFD pos dir) (a ** aact) (b ** bact)
                       (case dpeq1 aeq of
                         Refl => fcongdep $ fcongdep $ dpeq2 aeq)))
 
+public export
+spCoalgSlToMor : {x : Type} -> (f : SPFData x x) -> (aalg, balg : SPCoalg f) ->
+  SPCoalgSl {x} f aalg balg -> SPCoalgMor {f} aalg balg
+spCoalgSlToMor {x} f aalg balg sl =
+  (spCoalgSlAct {x} f aalg balg sl ** spCoalgSlComm {x} f aalg balg sl)
+
 -------------------------------------------
 -------------------------------------------
 ---- Polynomial slice comma categories ----
