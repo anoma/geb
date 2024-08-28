@@ -92,6 +92,7 @@ public export
 SPAlgComm : {x : Type} -> {f : SPFData x x} -> {a, b : SPAlg {x} f} ->
   SliceObj (SPAlgMap {x} {f} a b)
 SPAlgComm {x} {f} {a} {b} m =
+  FunExt ->
   SliceExtEq {a=x}
     (sliceComp
       {x=(InterpSPFData f $ SPAlgCarrier a)}
@@ -124,6 +125,7 @@ public export
 SPCoalgComm : {x : Type} -> {f : SPFData x x} -> {a, b : SPCoalg {x} f} ->
   SliceObj (SPCoalgMap {x} {f} a b)
 SPCoalgComm {x} {f} {a} {b} m =
+  FunExt ->
   SliceExtEq {a=x}
     (sliceComp
       {x=(SPCoalgCarrier a)}
@@ -158,6 +160,7 @@ SPDialgComm : {c, d : Type} -> {f, g : SPFData c d} ->
   {a, b : SPDialg {c} {d} f g} ->
   SliceObj (SPDialgMap {c} {d} {f} {g} a b)
 SPDialgComm {c} {d} {f} {g} {a} {b} m =
+  FunExt ->
   SliceExtEq {a=d}
     (sliceComp
       {x=(InterpSPFData f $ SPDialgCarrier a)}
@@ -274,6 +277,54 @@ spfdLinRepCompR {w} {x} {y} {z} a b q =
   SPFDcomp y w z
   (SPFDataRep {dom=w} a z)
   $ SPFDcomp y x w q (spfdLinear {dom=y} {cod=x} b)
+
+-------------------------------------------------------------
+---- Polynomial coalgebra morphisms from slice morphisms ----
+-------------------------------------------------------------
+
+public export
+SPCoalgSl : {x : Type} -> (f : SPFData x x) -> (aalg, balg : SPCoalg f) -> Type
+SPCoalgSl {x} (SPFD pos dir) (a ** aact) (b ** bact) =
+  (m : SliceMorphism {a=x} a b **
+   pcomm :
+    (ex : x) -> (ea : a ex) -> fst (aact ex ea) = fst (bact ex $ m ex ea) **
+   (ex, ex' : x) -> (ea : a ex) ->
+    (dd : dir ex (fst $ bact ex $ m ex ea) ex') ->
+    m ex' (snd (aact ex ea) ex' $ rewrite pcomm ex ea in dd) =
+    snd (bact ex $ m ex ea) ex' dd)
+
+public export
+spCoalgSlAct : {x : Type} -> (f : SPFData x x) -> (aalg, balg : SPCoalg f) ->
+  SPCoalgSl {x} f aalg balg -> SPCoalgMap {f} aalg balg
+spCoalgSlAct {x} (SPFD pos dir) (a ** aact) (b ** bact) sl =
+  fst sl
+
+public export
+spCoalgSlComm : {x : Type} -> (f : SPFData x x) ->
+  (aalg, balg : SPCoalg {x} f) -> (sl : SPCoalgSl {x} f aalg balg) ->
+  SPCoalgComm {a=aalg} {b=balg} {f} (spCoalgSlAct {x} f aalg balg sl)
+spCoalgSlComm {x} (SPFD pos dir) (a ** aact) (b ** bact)
+    (m ** pcomm ** dcomm) fext ex ea
+    with (aact ex ea) proof aeq
+  spCoalgSlComm {x} (SPFD pos dir) (a ** aact) (b ** bact)
+      (m ** pcomm ** dcomm) fext ex ea | (ai ** adm)
+      with (bact ex $ m ex ea) proof beq
+    spCoalgSlComm {x} (SPFD pos dir) (a ** aact) (b ** bact)
+      (m ** pcomm ** dcomm) fext ex ea | (ai ** adm) | (bi ** bdm) =
+        case trans (sym $ dpeq1 beq) (trans (sym $ pcomm ex ea) (dpeq1 aeq)) of
+          Refl =>
+            dpEq12
+              Refl
+              $ funExt $ \ex' => funExt $ \dd =>
+                trans
+                  (case dpeq1 beq of
+                    Refl => fcongdep $ fcongdep (sym $ dpeq2 beq))
+                (trans
+                    (sym $ dcomm ex ex' ea (rewrite dpeq1 beq in dd))
+                    (cong
+                      (m ex')
+                      (case dpeq1 aeq of
+                        Refl => fcongdep $ fcongdep $ dpeq2 aeq)))
 
 -------------------------------------------
 -------------------------------------------
