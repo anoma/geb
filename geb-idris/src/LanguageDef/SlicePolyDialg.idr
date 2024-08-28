@@ -283,6 +283,18 @@ spfdLinRepCompR {w} {x} {y} {z} a b q =
 -------------------------------------------------------------
 
 public export
+data SPCoalgF : {x : Type} -> (f : SPFData x x) -> (aalg, balg : SPCoalg f) ->
+    Type where
+  SPcoalg : {x : Type} -> {f : SPFData x x} -> {a, b : SliceObj x} ->
+    (m : SliceMorphism {a=x} a b) ->
+    (bp : SliceMorphism {a=x} b (spfdPos f)) ->
+    (bd : (ex : x) -> (ep : spfdPos f ex) ->
+      SliceMorphism {a=x} (spfdDir f ex ep) a) ->
+    SPCoalgF {x} f
+      (a ** \ex, ea => (bp ex (m ex ea) ** \ex' => bd ex (bp ex $ m ex ea) ex'))
+      (b ** \ex, eb => (bp ex eb ** \ex' => m ex' . bd ex (bp ex eb) ex'))
+
+public export
 SPCoalgSl : {x : Type} -> (f : SPFData x x) -> (aalg, balg : SPCoalg f) -> Type
 SPCoalgSl {x} (SPFD pos dir) (a ** aact) (b ** bact) =
   (m : SliceMorphism {a=x} a b **
@@ -292,6 +304,13 @@ SPCoalgSl {x} (SPFD pos dir) (a ** aact) (b ** bact) =
     (dd : dir ex (fst $ bact ex $ m ex ea) ex') ->
     m ex' (snd (aact ex ea) ex' $ rewrite pcomm ex ea in dd) =
     snd (bact ex $ m ex ea) ex' dd)
+
+public export
+SPCoalgFtoSl : {x : Type} -> (f : SPFData x x) -> (aalg, balg : SPCoalg f) ->
+  SPCoalgF {x} f aalg balg -> SPCoalgSl {x} f aalg balg
+SPCoalgFtoSl {x} _ (a ** _) (b ** _)
+  (SPcoalg {x} {f=(SPFD pos dir)} {a} {b} m bp bd) =
+    (m ** \_, _ => Refl ** \ex, ex', ea, dd => Refl)
 
 public export
 spCoalgSlAct : {x : Type} -> (f : SPFData x x) -> (aalg, balg : SPCoalg f) ->
