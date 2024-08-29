@@ -335,14 +335,23 @@ spDynSysPosChange : {x : Type} ->
 spDynSysPosChange {x} f sys a = SliceMorphism {a=x} a (SPDynSysCoeff f sys)
 
 public export
+spDynSysPosChangeDirRetract : {x : Type} ->
+  (f : SPFData x x) -> (sys : spfdDynSys {x} f) ->
+  (a : SliceObj x) -> spDynSysPosChange {x} f sys a ->
+  (ex : x) -> Type
+spDynSysPosChangeDirRetract {x} f sys a m ex =
+  SliceMorphism {a=x} (SPDynSysCoeff f sys) a
+
+public export
 spDynSysPosChangeDir : {x : Type} ->
   (f : SPFData x x) -> (sys : spfdDynSys {x} f) ->
   (a : SliceObj x) -> spDynSysPosChange {x} f sys a ->
   Type
 spDynSysPosChangeDir {x} f sys a m =
-  (ex : x) -> (ea : a ex) -> (ex' : x) ->
-  spfdDir f ex (SPDynSysOnPos f sys ex (m ex ea)) ex' ->
-  SliceMorphism {a=x} (SPDynSysCoeff f sys) a
+  (ex : x) -> (ea : a ex) ->
+  SliceMorphism {a=x}
+    (spfdDir f ex $ SPDynSysOnPos f sys ex $ m ex ea)
+    (spDynSysPosChangeDirRetract {x} f sys a m)
 
 -- Given a dynamical system, the following data determine a slice
 -- object of it -- that is, another dynamical system with the same
