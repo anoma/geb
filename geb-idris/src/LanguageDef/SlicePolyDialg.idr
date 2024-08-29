@@ -348,9 +348,9 @@ spDynSysPosChangeDir : {x : Type} ->
   (a : SliceObj x) -> spDynSysPosChange {x} f sys a ->
   Type
 spDynSysPosChangeDir {x} f sys a m =
-  (ex : x) -> (ea : a ex) ->
+  (ea : Sigma {a=x} a) ->
   SliceMorphism {a=x}
-    (spfdDir f ex $ SPDynSysOnPos f sys ex $ m ex ea)
+    (spfdDir f (fst ea) $ SPDynSysOnPos f sys (fst ea) $ m (fst ea) (snd ea))
     (spDynSysPosChangeDirRetract {x} f sys a m)
 
 -- Given a dynamical system, the following data determine a slice
