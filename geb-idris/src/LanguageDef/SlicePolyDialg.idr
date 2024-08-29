@@ -329,6 +329,21 @@ spfdLinRepCompR {w} {x} {y} {z} a b q =
 ---- Polynomial coalgebra morphisms from slice morphisms ----
 -------------------------------------------------------------
 
+public export
+spDynSysPosChange : {x : Type} ->
+  (f : SPFData x x) -> spfdDynSys {x} f -> SliceObj x -> Type
+spDynSysPosChange {x} f sys a = SliceMorphism {a=x} a (SPDynSysCoeff f sys)
+
+public export
+spDynSysPosChangeDir : {x : Type} ->
+  (f : SPFData x x) -> (sys : spfdDynSys {x} f) ->
+  (a : SliceObj x) -> spDynSysPosChange {x} f sys a ->
+  Type
+spDynSysPosChangeDir {x} f sys a m =
+  (ex : x) -> (ea : a ex) -> (ex' : x) ->
+  spfdDir f ex (SPDynSysOnPos f sys ex (m ex ea)) ex' ->
+  SliceMorphism {a=x} (SPDynSysCoeff f sys) a
+
 -- Given a dynamical system, the following data determine a slice
 -- object of it -- that is, another dynamical system with the same
 -- polynomial functor, together with a morphism from that system to
@@ -341,10 +356,8 @@ public export
 spDynSysSl : {x : Type} -> (f : SPFData x x) -> spfdDynSys {x} f -> Type
 spDynSysSl {x} f sys =
   (a : SliceObj x **
-   m : SliceMorphism {a=x} a (SPDynSysCoeff f sys) **
-   (ex : x) -> (ea : a ex) -> (ex' : x) ->
-    spfdDir f ex (SPDynSysOnPos f sys ex (m ex ea)) ex' ->
-    SliceMorphism {a=x} (SPDynSysCoeff f sys) a)
+   m : spDynSysPosChange {x} f sys a **
+   spDynSysPosChangeDir {x} f sys a m)
 
 public export
 data SPDynSysMorF : {x : Type} -> (f : SPFData x x) ->
