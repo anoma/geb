@@ -242,6 +242,11 @@ SPDynSysAct : {x : Type} -> (f : SPFData x x) -> (sys : spfdDynSys {x} f) ->
   spfdDynSysAct {x} (SPDynSysCoeff f sys) f
 SPDynSysAct {x} f = DPair.snd
 
+public export
+SPDynSysOnPos : {x : Type} -> (f : SPFData x x) -> (sys : spfdDynSys {x} f) ->
+  SPFDmultiIdx f (SPDynSysCoeff f sys)
+SPDynSysOnPos {x} f sys = spOnPos (SPDynSysAct f sys)
+
 -- Formula 6.65 from _Polynomial Functors: A Mathematical Theory of
 -- Interaction_.
 
@@ -323,6 +328,78 @@ spfdLinRepCompR {w} {x} {y} {z} a b q =
 -------------------------------------------------------------
 ---- Polynomial coalgebra morphisms from slice morphisms ----
 -------------------------------------------------------------
+
+-- Given a dynamical system, the following data determine a slice
+-- object of it -- that is, another dynamical system with the same
+-- polynomial functor, together with a morphism from that system to
+-- the given system.  What it means to be a morphism of dynamical
+-- systems is determined by the equivalence of dynamical systems with
+-- coalgebras -- there is a standard definition of coalgebra morphism
+-- which must, and can, simply be translated directly into the notion
+-- of a morphism between the corresponding dynamical systems.
+public export
+spDynSysSl : {x : Type} -> (f : SPFData x x) -> spfdDynSys {x} f -> Type
+spDynSysSl {x} f sys =
+  (a : SliceObj x **
+   m : SliceMorphism {a=x} a (SPDynSysCoeff f sys) **
+   (ex : x) -> (ea : a ex) -> (ex' : x) ->
+    spfdDir f ex (SPDynSysOnPos f sys ex (m ex ea)) ex' ->
+    SliceMorphism {a=x} (SPDynSysCoeff f sys) a)
+
+public export
+data SPDynSysMorF : {x : Type} -> (f : SPFData x x) ->
+    IntMorSig (spfdDynSys {x} f) where
+  SDSm : {x : Type} -> {pos : SliceObj x} -> {dir : SPFdirType x x pos} ->
+    {a, b : SliceObj x} ->
+    (m : SliceMorphism {a=x} a b) ->
+    (bp : SPFDmultiIdx {dom=x} {cod=x} (SPFD pos dir) b) ->
+    (bd : (ex : x) -> (eb : b ex) ->
+      SliceMorphism {a=x} (dir ex $ bp ex eb) b) ->
+    (ba : (ex : x) -> (ea : a ex) -> (ex' : x) ->
+      dir ex (bp ex (m ex ea)) ex' ->
+      SliceMorphism {a=x} b a) ->
+    SPDynSysMorF {x} (SPFD pos dir)
+      (a **
+       SPFDm
+        (sliceComp {a=x} bp m)
+        (\ex, ea, ex', dd => ba ex ea ex' dd ex' $ bd ex (m ex ea) ex' dd))
+      (b ** SPFDm bp bd)
+
+public export
+spDynSysMorFAct :
+  {x : Type} -> {f : SPFData x x} -> {sysa, sysb : spfdDynSys {x} f} ->
+  SPDynSysMorF {x} f sysa sysb ->
+  SliceMorphism {a=x} (SPDynSysCoeff f sysa) (SPDynSysCoeff f sysb)
+spDynSysMorFAct {x} (SDSm m bp bd ba) = m
+
+public export
+spDynSysMorFCodFactFst :
+  {x : Type} -> {f : SPFData x x} -> {sysa, sysb : spfdDynSys {x} f} ->
+  SPDynSysMorF {x} f sysa sysb ->
+  SliceMorphism {a=x} (SPDynSysCoeff f sysb) (spfdPos f)
+spDynSysMorFCodFactFst {x} (SDSm m bp bd ba) = bp
+
+public export
+spDynSysMorFDomFactFst :
+  {x : Type} -> {f : SPFData x x} -> {sysa, sysb : spfdDynSys {x} f} ->
+  SPDynSysMorF {x} f sysa sysb ->
+  SliceMorphism {a=x} (SPDynSysCoeff f sysa) (spfdPos f)
+spDynSysMorFDomFactFst {x} sysm =
+  sliceComp {a=x} (spDynSysMorFCodFactFst sysm) (spDynSysMorFAct sysm)
+
+public export
+SPCoalgMorF : {x : Type} -> (f : SPFData x x) -> IntMorSig (SPCoalg {x} f)
+SPCoalgMorF {x} f a b =
+  SPDynSysMorF {x} f (spfdCoalgToDynSys {x} f a) (spfdCoalgToDynSys {x} f b)
+
+public export
+spCoalgFToMorMap : FunExt ->
+  {x : Type} -> (f : SPFData x x) -> (aalg, balg : SPCoalg f) ->
+  SPCoalgMorF {x} f aalg balg -> SPCoalgMap {f} aalg balg
+spCoalgFToMorMap fext {x} f a b =
+  spDynSysMorFAct {x} {f}
+    {sysa=(spfdCoalgToDynSys f a)}
+    {sysb=(spfdCoalgToDynSys f b)}
 
 public export
 data SPCoalgF : {x : Type} -> (f : SPFData x x) -> (aalg, balg : SPCoalg f) ->
