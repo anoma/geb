@@ -439,6 +439,85 @@ SPCoalgMorF {x} f a b =
   SPDynSysMorF {x} f (spfdCoalgToDynSys {x} f a) (spfdCoalgToDynSys {x} f b)
 
 public export
+spDynSysMorFAct :
+  {x : Type} -> {f : SPFData x x} -> {sysa, sysb : spfdDynSys {x} f} ->
+  SPDynSysMorF {x} f sysa sysb ->
+  SliceMorphism {a=x} (SPDynSysCoeff f sysa) (SPDynSysCoeff f sysb)
+spDynSysMorFAct {x} (SDSm m bp bd ba) = m
+
+public export
+spDynSysMorFCodFactFst :
+  {x : Type} -> {f : SPFData x x} -> {sysa, sysb : spfdDynSys {x} f} ->
+  SPDynSysMorF {x} f sysa sysb ->
+  SliceMorphism {a=x} (SPDynSysCoeff f sysb) (spfdPos f)
+spDynSysMorFCodFactFst {x} (SDSm m bp bd ba) = bp
+
+public export
+spDynSysMorFDomFactFst :
+  {x : Type} -> {f : SPFData x x} -> {sysa, sysb : spfdDynSys {x} f} ->
+  SPDynSysMorF {x} f sysa sysb ->
+  SliceMorphism {a=x} (SPDynSysCoeff f sysa) (spfdPos f)
+spDynSysMorFDomFactFst {x} sysm =
+  sliceComp {a=x} (spDynSysMorFCodFactFst sysm) (spDynSysMorFAct sysm)
+
+public export
+spCoalgFToMorMap : FunExt ->
+  {x : Type} -> (f : SPFData x x) -> (aalg, balg : SPCoalg f) ->
+  SPCoalgMorF {x} f aalg balg -> SPCoalgMap {f} aalg balg
+spCoalgFToMorMap fext {x} f a b =
+  spDynSysMorFAct {x} {f}
+    {sysa=(spfdCoalgToDynSys f a)}
+    {sysb=(spfdCoalgToDynSys f b)}
+
+public export
+spCoalgFToMorComm : FunExt ->
+  {x : Type} -> (f : SPFData x x) -> (a, b : SPCoalg f) ->
+  (sysm : SPCoalgMorF {x} f a b) ->
+  (ex : x) -> (ea : SPCoalgCarrier {f} a ex) ->
+  snd b ex
+    (spDynSysMorFAct
+      {sysa=(spfdCoalgToDynSys f a)}
+      {sysb=(spfdCoalgToDynSys f b)}
+      sysm ex ea) =
+  (fst (snd a ex ea) **
+   SPFDextCovarDirRepMap f ex (fst (snd a ex ea)) (fst a) (fst b)
+    (spDynSysMorFAct
+      {sysa=(spfdCoalgToDynSys f a)}
+      {sysb=(spfdCoalgToDynSys f b)}
+      sysm)
+    (snd (snd a ex ea)))
+spCoalgFToMorComm fext {x} (SPFD pos dir) (a ** aact) (b ** bact) sysm ex ea
+    with (bact ex (spDynSysMorFAct sysm ex ea)) proof beq
+  spCoalgFToMorComm fext {x} (SPFD pos dir) (a ** aact) (b ** bact) sysm ex ea
+    | (bi ** bdm) =
+      dpEq12
+        ?spCoalgFToMorComm_hole_1
+        ?spCoalgFToMorComm_hole_2
+
+public export
+spCoalgFToMor : FunExt ->
+  {x : Type} -> (f : SPFData x x) -> (a, b : SPCoalg f) ->
+  SPCoalgMorF {x} f a b -> SPCoalgMor {f} a b
+spCoalgFToMor fext {x} f a b sysm =
+  (spCoalgFToMorMap fext {x} f a b sysm **
+   \fext => spCoalgFToMorComm fext {x} f a b sysm)
+
+public export
+spCoalgToMorF : FunExt ->
+  {x : Type} -> (f : SPFData x x) -> (a, b : SPCoalg f) ->
+  SPCoalgMor {f} a b -> SPCoalgMorF {x} f a b
+spCoalgToMorF fext {x} (SPFD pos dir) (a ** aact) (b ** bact) (m ** comm) =
+  let
+    sysm =
+      SDSm {x} {pos} {dir} {a} {b}
+        m
+        (\ex => fst . bact ex)
+        ?spCoalgToMorF_hole_3
+        ?spCoalgToMorF_hole_4
+  in
+  ?spCoalgToMorF_hole
+
+public export
 data SPCoalgF : {x : Type} -> (f : SPFData x x) -> (aalg, balg : SPCoalg f) ->
     Type where
   SPcoalg : {x : Type} -> {f : SPFData x x} -> {a, b : SliceObj x} ->
