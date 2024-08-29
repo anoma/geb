@@ -287,6 +287,20 @@ spfdCoalgToDynSysAct : {x : Type} ->
 spfdCoalgToDynSysAct {x} p coalg =
   spfdCoalgActToDynSysAct {x} (SPCoalgCarrier coalg) p (SPCoalgAction coalg)
 
+public export
+spfdDynSysToCoalg : {x : Type} ->
+  (p : SPFData x x) -> spfdDynSys {x} p -> SPCoalg {x} p
+spfdDynSysToCoalg {x} p sys =
+  (SPDynSysCoeff p sys **
+   snd $ spfdDynSysActToCoalg (SPDynSysCoeff p sys) p (SPDynSysAct p sys))
+
+public export
+spfdCoalgToDynSys : {x : Type} ->
+  (p : SPFData x x) -> (coalg : SPCoalg {x} p) -> spfdDynSys {x} p
+spfdCoalgToDynSys {x} p coalg =
+  (SPCoalgCarrier coalg **
+   spfdCoalgActToDynSysAct {x} (SPCoalgCarrier coalg) p (SPCoalgAction coalg))
+
 -- Formula 6.66 from _Polynomial Functors: A Mathematical Theory of
 -- Interaction_.
 
