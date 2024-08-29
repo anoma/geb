@@ -225,8 +225,22 @@ spfdSymMon {x} coeff = spfdMonomial {dom=x} {cod=x} coeff coeff
 -- of Interaction_:  a "dynamical system" is a lens (natural transformation)
 -- whose domain is a symmetric monomial.
 public export
-spfdDynSys : {x : Type} -> (sl : SliceObj x) -> SPFData x x -> Type
-spfdDynSys {x} sl p = SPFnt {dom=x} {cod=x} (spfdSymMon sl) p
+spfdDynSysAct : {x : Type} -> (sl : SliceObj x) -> SPFData x x -> Type
+spfdDynSysAct {x} sl p = SPFnt {dom=x} {cod=x} (spfdSymMon sl) p
+
+public export
+spfdDynSys : {x : Type} -> SPFData x x -> Type
+spfdDynSys {x} p = (sl : SliceObj x ** spfdDynSysAct {x} sl p)
+
+public export
+SPDynSysCoeff : {x : Type} -> (f : SPFData x x) ->
+  spfdDynSys {x} f -> SliceObj x
+SPDynSysCoeff {x} f = DPair.fst
+
+public export
+SPDynSysAct : {x : Type} -> (f : SPFData x x) -> (sys : spfdDynSys {x} f) ->
+  spfdDynSysAct {x} (SPDynSysCoeff f sys) f
+SPDynSysAct {x} f = DPair.snd
 
 -- Formula 6.65 from _Polynomial Functors: A Mathematical Theory of
 -- Interaction_.
@@ -250,26 +264,26 @@ spfdInjToMonNT {dom} {cod} coeff degree p m =
 public export
 spfdDynSysToCoalgAct : {x : Type} ->
   (coeff : SliceObj x) -> (p : SPFData x x) ->
-  spfdDynSys {x} coeff p -> spfdCoalgAction {x} p coeff
+  spfdDynSysAct {x} coeff p -> spfdCoalgAction {x} p coeff
 spfdDynSysToCoalgAct {x} coeff = spfdMonNTtoInj {dom=x} {cod=x} coeff coeff
 
 public export
 spfdDynSysToCoalg : {x : Type} ->
   (coeff : SliceObj x) -> (p : SPFData x x) ->
-  spfdDynSys {x} coeff p -> SPCoalg {x} p
+  spfdDynSysAct {x} coeff p -> SPCoalg {x} p
 spfdDynSysToCoalg {x} coeff p sys =
   (coeff ** spfdDynSysToCoalgAct {x} coeff p sys)
 
 public export
 spfdCoalgActToDynSys : {x : Type} ->
   (coeff : SliceObj x) -> (p : SPFData x x) ->
-  spfdCoalgAction {x} p coeff -> spfdDynSys {x} coeff p
+  spfdCoalgAction {x} p coeff -> spfdDynSysAct {x} coeff p
 spfdCoalgActToDynSys {x} coeff = spfdInjToMonNT {dom=x} {cod=x} coeff coeff
 
 public export
 spfdCoalgToDynSys : {x : Type} ->
   (p : SPFData x x) -> (coalg : SPCoalg {x} p) ->
-  spfdDynSys {x} (SPCoalgCarrier {f=p} coalg) p
+  spfdDynSysAct {x} (SPCoalgCarrier {f=p} coalg) p
 spfdCoalgToDynSys {x} p coalg =
   spfdCoalgActToDynSys {x} (SPCoalgCarrier coalg) p (SPCoalgAction coalg)
 
