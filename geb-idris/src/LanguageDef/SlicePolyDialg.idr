@@ -335,23 +335,29 @@ spDynSysPosChange : {x : Type} ->
 spDynSysPosChange {x} f sys a = SliceMorphism {a=x} a (SPDynSysCoeff f sys)
 
 public export
-spDynSysPosChangeDirRetract : {x : Type} ->
+spDynSysDirChangeRetract : {x : Type} ->
   (f : SPFData x x) -> (sys : spfdDynSys {x} f) ->
   (a : SliceObj x) -> spDynSysPosChange {x} f sys a ->
   (ex : x) -> Type
-spDynSysPosChangeDirRetract {x} f sys a m ex =
+spDynSysDirChangeRetract {x} f sys a m ex =
   SliceMorphism {a=x} (SPDynSysCoeff f sys) a
 
 public export
-spDynSysPosChangeDir : {x : Type} ->
+spDynSysDirChange : {x : Type} ->
   (f : SPFData x x) -> (sys : spfdDynSys {x} f) ->
   (a : SliceObj x) -> spDynSysPosChange {x} f sys a ->
   Type
-spDynSysPosChangeDir {x} f sys a m =
+spDynSysDirChange {x} f sys a m =
   (ea : Sigma {a=x} a) ->
   SliceMorphism {a=x}
     (spfdDir f (fst ea) $ SPDynSysOnPos f sys (fst ea) $ m (fst ea) (snd ea))
-    (spDynSysPosChangeDirRetract {x} f sys a m)
+    (spDynSysDirChangeRetract {x} f sys a m)
+
+public export
+spDynSysSlMor : {x : Type} ->
+  (f : SPFData x x) -> spfdDynSys {x} f -> SliceObj x -> Type
+spDynSysSlMor {x} f sys a =
+   DPair (spDynSysPosChange {x} f sys a) (spDynSysDirChange {x} f sys a)
 
 -- Given a dynamical system, the following data determine a slice
 -- object of it -- that is, another dynamical system with the same
@@ -363,65 +369,74 @@ spDynSysPosChangeDir {x} f sys a m =
 -- of a morphism between the corresponding dynamical systems.
 public export
 spDynSysSl : {x : Type} -> (f : SPFData x x) -> spfdDynSys {x} f -> Type
-spDynSysSl {x} f sys =
-  (a : SliceObj x **
-   m : spDynSysPosChange {x} f sys a **
-   spDynSysPosChangeDir {x} f sys a m)
+spDynSysSl {x} f sys = DPair (SliceObj x) (spDynSysSlMor {x} f sys)
+
+public export
+spDynSysSlCarrier :
+  {x : Type} -> {f : SPFData x x} -> {sys : spfdDynSys {x} f} ->
+  spDynSysSl {x} f sys -> SliceObj x
+spDynSysSlCarrier {x} {f} {sys} = DPair.fst
+
+public export
+spDynSysSlPosChange :
+  {x : Type} -> {f : SPFData x x} -> {sys : spfdDynSys {x} f} ->
+  (sl : spDynSysSl {x} f sys) ->
+  spDynSysPosChange {x} f sys (spDynSysSlCarrier {x} {f} {sys} sl)
+spDynSysSlPosChange {x} {f} {sys} sl = DPair.fst $ DPair.snd sl
+
+public export
+spDynSysSlDirChange :
+  {x : Type} -> {f : SPFData x x} -> {sys : spfdDynSys {x} f} ->
+  (sl : spDynSysSl {x} f sys) ->
+  spDynSysDirChange {x} f sys
+    (spDynSysSlCarrier {x} {f} {sys} sl)
+    (spDynSysSlPosChange {x} {f} {sys} sl)
+spDynSysSlDirChange {x} {f} {sys} sl = DPair.snd $ DPair.snd sl
+
+public export
+spDynSysSlOnPos :
+  {x : Type} -> {f : SPFData x x} -> {sys : spfdDynSys {x} f} ->
+  (sl : spDynSysSl {x} f sys) ->
+  SliceMorphism {a=x} (spDynSysSlCarrier {x} {f} {sys} sl) (spfdPos f)
+spDynSysSlOnPos {x} {f} {sys} sl =
+  sliceComp {a=x} (SPDynSysOnPos f sys) (spDynSysSlPosChange {x} {f} {sys} sl)
+
+public export
+spDynSysSlOnDir :
+  {x : Type} -> {f : SPFData x x} -> {sys : spfdDynSys {x} f} ->
+  (sl : spDynSysSl {x} f sys) ->
+  (ex : x) -> (esl : fst sl ex) -> (ex' : x) ->
+  spfdDir f ex (spOnPos (snd sys) ex (fst (snd sl) ex esl)) ex' -> fst sl ex'
+spDynSysSlOnDir {x} {f} {sys=(b ** SPFDm bpos bdir)} (a ** mab ** dc)
+  ex esl ex' dd =
+    dc (ex ** esl) ex' dd ex' $ bdir ex (mab ex esl) ex' dd
+
+public export
+spDynSysSlAct :
+  {x : Type} -> {f : SPFData x x} -> {sys : spfdDynSys {x} f} ->
+  (sl : spDynSysSl {x} f sys) ->
+  spfdDynSysAct {x} (spDynSysSlCarrier {x} {f} {sys} sl) f
+spDynSysSlAct {x} {f} {sys} sl =
+  SPFDm (spDynSysSlOnPos {x} {f} {sys} sl) (spDynSysSlOnDir {x} {f} {sys} sl)
+
+public export
+spDynSysSlTot :
+  {x : Type} -> {f : SPFData x x} -> {sys : spfdDynSys {x} f} ->
+  (sl : spDynSysSl {x} f sys) -> spfdDynSys {x} f
+spDynSysSlTot {x} {f} {sys} sl = (spDynSysSlCarrier sl ** spDynSysSlAct sl)
 
 public export
 data SPDynSysMorF : {x : Type} -> (f : SPFData x x) ->
     IntMorSig (spfdDynSys {x} f) where
-  SDSm : {x : Type} -> {pos : SliceObj x} -> {dir : SPFdirType x x pos} ->
-    {a, b : SliceObj x} ->
-    (m : SliceMorphism {a=x} a b) ->
-    (bp : SPFDmultiIdx {dom=x} {cod=x} (SPFD pos dir) b) ->
-    (bd : (ex : x) -> (eb : b ex) ->
-      SliceMorphism {a=x} (dir ex $ bp ex eb) b) ->
-    (ba : (ex : x) -> (ea : a ex) -> (ex' : x) ->
-      dir ex (bp ex (m ex ea)) ex' ->
-      SliceMorphism {a=x} b a) ->
-    SPDynSysMorF {x} (SPFD pos dir)
-      (a **
-       SPFDm
-        (sliceComp {a=x} bp m)
-        (\ex, ea, ex', dd => ba ex ea ex' dd ex' $ bd ex (m ex ea) ex' dd))
-      (b ** SPFDm bp bd)
-
-public export
-spDynSysMorFAct :
-  {x : Type} -> {f : SPFData x x} -> {sysa, sysb : spfdDynSys {x} f} ->
-  SPDynSysMorF {x} f sysa sysb ->
-  SliceMorphism {a=x} (SPDynSysCoeff f sysa) (SPDynSysCoeff f sysb)
-spDynSysMorFAct {x} (SDSm m bp bd ba) = m
-
-public export
-spDynSysMorFCodFactFst :
-  {x : Type} -> {f : SPFData x x} -> {sysa, sysb : spfdDynSys {x} f} ->
-  SPDynSysMorF {x} f sysa sysb ->
-  SliceMorphism {a=x} (SPDynSysCoeff f sysb) (spfdPos f)
-spDynSysMorFCodFactFst {x} (SDSm m bp bd ba) = bp
-
-public export
-spDynSysMorFDomFactFst :
-  {x : Type} -> {f : SPFData x x} -> {sysa, sysb : spfdDynSys {x} f} ->
-  SPDynSysMorF {x} f sysa sysb ->
-  SliceMorphism {a=x} (SPDynSysCoeff f sysa) (spfdPos f)
-spDynSysMorFDomFactFst {x} sysm =
-  sliceComp {a=x} (spDynSysMorFCodFactFst sysm) (spDynSysMorFAct sysm)
+  SDSm : {x : Type} -> {f : SPFData x x} ->
+    (b : spfdDynSys {x} f) ->
+    (a : spDynSysSl {x} f b) ->
+    SPDynSysMorF {x} f (spDynSysSlTot {x} {f} {sys=b} a) b
 
 public export
 SPCoalgMorF : {x : Type} -> (f : SPFData x x) -> IntMorSig (SPCoalg {x} f)
 SPCoalgMorF {x} f a b =
   SPDynSysMorF {x} f (spfdCoalgToDynSys {x} f a) (spfdCoalgToDynSys {x} f b)
-
-public export
-spCoalgFToMorMap : FunExt ->
-  {x : Type} -> (f : SPFData x x) -> (aalg, balg : SPCoalg f) ->
-  SPCoalgMorF {x} f aalg balg -> SPCoalgMap {f} aalg balg
-spCoalgFToMorMap fext {x} f a b =
-  spDynSysMorFAct {x} {f}
-    {sysa=(spfdCoalgToDynSys f a)}
-    {sysb=(spfdCoalgToDynSys f b)}
 
 public export
 data SPCoalgF : {x : Type} -> (f : SPFData x x) -> (aalg, balg : SPCoalg f) ->
