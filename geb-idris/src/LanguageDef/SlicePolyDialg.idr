@@ -248,16 +248,30 @@ spfdInjToMonNT {dom} {cod} coeff degree p m =
   SPFDm (\ec, n => fst $ m ec n) (\ec, n => snd $ m ec n)
 
 public export
-spfdDynSysToCoalg : {x : Type} ->
+spfdDynSysToCoalgAct : {x : Type} ->
   (coeff : SliceObj x) -> (p : SPFData x x) ->
   spfdDynSys {x} coeff p -> spfdCoalgAction {x} p coeff
-spfdDynSysToCoalg {x} coeff = spfdMonNTtoInj {dom=x} {cod=x} coeff coeff
+spfdDynSysToCoalgAct {x} coeff = spfdMonNTtoInj {dom=x} {cod=x} coeff coeff
+
+public export
+spfdDynSysToCoalg : {x : Type} ->
+  (coeff : SliceObj x) -> (p : SPFData x x) ->
+  spfdDynSys {x} coeff p -> SPCoalg {x} p
+spfdDynSysToCoalg {x} coeff p sys =
+  (coeff ** spfdDynSysToCoalgAct {x} coeff p sys)
+
+public export
+spfdCoalgActToDynSys : {x : Type} ->
+  (coeff : SliceObj x) -> (p : SPFData x x) ->
+  spfdCoalgAction {x} p coeff -> spfdDynSys {x} coeff p
+spfdCoalgActToDynSys {x} coeff = spfdInjToMonNT {dom=x} {cod=x} coeff coeff
 
 public export
 spfdCoalgToDynSys : {x : Type} ->
-  (coeff : SliceObj x) -> (p : SPFData x x) ->
-  spfdCoalgAction {x} p coeff -> spfdDynSys {x} coeff p
-spfdCoalgToDynSys {x} coeff = spfdInjToMonNT {dom=x} {cod=x} coeff coeff
+  (p : SPFData x x) -> (coalg : SPCoalg {x} p) ->
+  spfdDynSys {x} (SPCoalgCarrier {f=p} coalg) p
+spfdCoalgToDynSys {x} p coalg =
+  spfdCoalgActToDynSys {x} (SPCoalgCarrier coalg) p (SPCoalgAction coalg)
 
 -- Formula 6.66 from _Polynomial Functors: A Mathematical Theory of
 -- Interaction_.
