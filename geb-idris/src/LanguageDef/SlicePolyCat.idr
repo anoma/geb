@@ -3166,13 +3166,13 @@ SPFDvcFactPos {dom} {cod} {p} {q} nt = spfdPos p
 public export
 SPFDposChangeDir : {dom, cod : Type} ->
   (p : SPFData dom cod) -> {pos : SliceObj cod} ->
-  SliceMorphism {a=cod} pos (spfdPos p) -> SPFdirType dom cod pos
+  SPFDmultiIdx {dom} {cod} p pos -> SPFdirType dom cod pos
 SPFDposChangeDir {dom} {cod} p {pos} m ec = spfdDir p ec . m ec
 
 public export
 SPFDposChange : {dom, cod : Type} ->
   (p : SPFData dom cod) -> {pos : SliceObj cod} ->
-  SliceMorphism {a=cod} pos (spfdPos p) -> SPFData dom cod
+  SPFDmultiIdx {dom} {cod} p pos -> SPFData dom cod
 SPFDposChange {dom} {cod} p {pos} m = SPFD pos (SPFDposChangeDir p {pos} m)
 
 -- Given a natural transformation between slice polynomial functors,
