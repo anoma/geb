@@ -405,8 +405,10 @@ public export
 spDynSysSlOnDir :
   {x : Type} -> {f : SPFData x x} -> {sys : spfdDynSys {x} f} ->
   (sl : spDynSysSl {x} f sys) ->
-  (ex : x) -> (esl : fst sl ex) -> (ex' : x) ->
-  spfdDir f ex (spOnPos (snd sys) ex (fst (snd sl) ex esl)) ex' -> fst sl ex'
+  (ex : x) -> (esl : fst sl ex) ->
+  SliceMorphism {a=x}
+    (spfdDir f ex (spOnPos (snd sys) ex (fst (snd sl) ex esl)))
+    (fst sl)
 spDynSysSlOnDir {x} {f} {sys=(b ** SPFDm bpos bdir)} (a ** mab ** dc)
   ex esl ex' dd =
     dc (ex ** esl) ex' dd ex' $ bdir ex (mab ex esl) ex' dd
