@@ -346,9 +346,8 @@ spDynSysDirChange : {x : Type} ->
   (a : SliceObj x) -> spDynSysPosChange {x} f sys a ->
   Type
 spDynSysDirChange {x} f sys a m =
-  (ea : Sigma {a=x} a) ->
-  Sigma {a=x}
-    (spfdDir f (fst ea) $ SPDynSysOnPos f sys (fst ea) $ m (fst ea) (snd ea)) ->
+  (ex : x ** ea : a ex ** ex' : x **
+   spfdDir f ex (SPDynSysOnPos f sys ex $ m ex ea) ex') ->
   spDynSysDirChangeRetract {x} f sys a
 
 public export
@@ -409,7 +408,7 @@ spDynSysSlOnDir :
     (fst sl)
 spDynSysSlOnDir {x} {f} {sys=(b ** SPFDm bpos bdir)} (a ** mab ** dc)
   ex esl ex' dd =
-    dc (ex ** esl) (ex' ** dd) ex' $ bdir ex (mab ex esl) ex' dd
+    dc (ex ** esl ** ex' ** dd) ex' $ bdir ex (mab ex esl) ex' dd
 
 public export
 spDynSysSlAct :
