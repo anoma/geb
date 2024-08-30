@@ -426,12 +426,33 @@ spDynSysSlTot :
 spDynSysSlTot {x} {f} {sys} sl = (spDynSysSlCarrier sl ** spDynSysSlAct sl)
 
 public export
+SPDynSysBun : {x : Type} -> SPFData x x -> Type
+SPDynSysBun {x} f = DPair (spfdDynSys {x} f) (spDynSysSl {x} f)
+
+public export
+SPDynSysBunCod : {x : Type} -> {f : SPFData x x} ->
+  SPDynSysBun {x} f -> spfdDynSys {x} f
+SPDynSysBunCod {x} {f} = DPair.fst
+
+public export
+SPDynSysBunSl : {x : Type} -> {f : SPFData x x} ->
+  (bun : SPDynSysBun {x} f) -> spDynSysSl {x} f (SPDynSysBunCod {x} {f} bun)
+SPDynSysBunSl {x} {f} = DPair.snd
+
+public export
+SPDynSysBunDom : {x : Type} -> {f : SPFData x x} ->
+  SPDynSysBun {x} f -> spfdDynSys {x} f
+SPDynSysBunDom {x} {f} bun =
+  spDynSysSlTot {x} {f}
+    {sys=(SPDynSysBunCod {x} {f} bun)}
+    (SPDynSysBunSl {x} {f} bun)
+
+public export
 data SPDynSysMorF : {x : Type} -> (f : SPFData x x) ->
     IntMorSig (spfdDynSys {x} f) where
   SDSm : {x : Type} -> {f : SPFData x x} ->
-    (b : spfdDynSys {x} f) ->
-    (a : spDynSysSl {x} f b) ->
-    SPDynSysMorF {x} f (spDynSysSlTot {x} {f} {sys=b} a) b
+    (bun : SPDynSysBun {x} f) ->
+    SPDynSysMorF {x} f (SPDynSysBunDom {x} {f} bun) (SPDynSysBunCod {x} {f} bun)
 
 public export
 SPCoalgMorF : {x : Type} -> (f : SPFData x x) -> IntMorSig (SPCoalg {x} f)
