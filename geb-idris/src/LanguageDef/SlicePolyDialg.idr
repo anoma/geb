@@ -221,12 +221,48 @@ public export
 spfdSymMon : {x : Type} -> SliceObj x -> SPFData x x
 spfdSymMon {x} coeff = spfdMonomial {dom=x} {cod=x} coeff coeff
 
--- The covariant functor on `SPFData x y` represented by a monomial .
+-- The covariant functor on `SPFData x y` represented by a monomial.
 public export
 spfdMonCovarRep : {dom, cod : Type} ->
   (coeff : SliceObj cod) -> (degree : SliceObj dom) -> SPFData dom cod -> Type
 spfdMonCovarRep {dom} {cod} coeff degree =
   SPFnt {dom} {cod} (spfdMonomial {dom} {cod} coeff degree)
+
+-- The contravariant functor on `SPFData x y` represented by a monomial.
+public export
+spfdMonContraRep : {dom, cod : Type} ->
+  (coeff : SliceObj cod) -> (degree : SliceObj dom) -> SPFData dom cod -> Type
+spfdMonContraRep {dom} {cod} coeff degree =
+  flip (SPFnt {dom} {cod}) (spfdMonomial {dom} {cod} coeff degree)
+
+-- A lens whose domain is a monomial -- put another way, a slice object
+-- of the given polynomial functor whose total space is a monomial.
+public export
+spfdMonSl : {dom, cod : Type} -> SPFData dom cod -> Type
+spfdMonSl {dom} {cod} p =
+  (coeff : SliceObj cod ** degree : SliceObj dom **
+   spfdMonCovarRep {dom} {cod} coeff degree p)
+
+public export
+spfdMonSlCoeff : {dom, cod : Type} -> {p : SPFData dom cod} ->
+  spfdMonSl {dom} {cod} p -> SliceObj cod
+spfdMonSlCoeff {dom} {cod} {p} = DPair.fst
+
+public export
+spfdMonSlDegree : {dom, cod : Type} -> {p : SPFData dom cod} ->
+  spfdMonSl {dom} {cod} p -> SliceObj dom
+spfdMonSlDegree {dom} {cod} {p} sl = DPair.fst $ DPair.snd sl
+
+public export
+spfdMonSlTot : {dom, cod : Type} -> {p : SPFData dom cod} ->
+  spfdMonSl {dom} {cod} p -> SPFData dom cod
+spfdMonSlTot {dom} {cod} {p} sl =
+  spfdMonomial {dom} {cod} (spfdMonSlCoeff sl) (spfdMonSlDegree sl)
+
+public export
+spfdMonSlProj : {dom, cod : Type} -> {p : SPFData dom cod} ->
+  (sl : spfdMonSl {dom} {cod} p) -> SPFnt {dom} {cod} (spfdMonSlTot {p} sl) p
+spfdMonSlProj {dom} {cod} {p} sl = DPair.snd $ DPair.snd sl
 
 -- Definition 4.18 from _Polynomial Functors:  A Mathematical Theory
 -- of Interaction_:  a "dynamical system" is a lens (natural transformation)
