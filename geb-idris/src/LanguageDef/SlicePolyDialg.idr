@@ -337,8 +337,8 @@ spDynSysPosChange {x} f sys a = SliceMorphism {a=x} a (SPDynSysCoeff f sys)
 public export
 spDynSysDirChangeRetract : {x : Type} ->
   (f : SPFData x x) -> (sys : spfdDynSys {x} f) ->
-  (a : SliceObj x) -> (ex : x) -> Type
-spDynSysDirChangeRetract {x} f sys a ex =
+  (a : SliceObj x) -> Type
+spDynSysDirChangeRetract {x} f sys a =
   SliceMorphism {a=x} (SPDynSysCoeff f sys) a
 
 public export
@@ -348,9 +348,9 @@ spDynSysDirChange : {x : Type} ->
   Type
 spDynSysDirChange {x} f sys a m =
   (ea : Sigma {a=x} a) ->
-  SliceMorphism {a=x}
-    (spfdDir f (fst ea) $ SPDynSysOnPos f sys (fst ea) $ m (fst ea) (snd ea))
-    (spDynSysDirChangeRetract {x} f sys a)
+  Sigma {a=x}
+    (spfdDir f (fst ea) $ SPDynSysOnPos f sys (fst ea) $ m (fst ea) (snd ea)) ->
+  spDynSysDirChangeRetract {x} f sys a
 
 public export
 spDynSysSlMor : {x : Type} ->
@@ -410,7 +410,7 @@ spDynSysSlOnDir :
     (fst sl)
 spDynSysSlOnDir {x} {f} {sys=(b ** SPFDm bpos bdir)} (a ** mab ** dc)
   ex esl ex' dd =
-    dc (ex ** esl) ex' dd ex' $ bdir ex (mab ex esl) ex' dd
+    dc (ex ** esl) (ex' ** dd) ex' $ bdir ex (mab ex esl) ex' dd
 
 public export
 spDynSysSlAct :
