@@ -332,14 +332,13 @@ spfdLinRepCompR {w} {x} {y} {z} a b q =
 public export
 spDynSysPosChange : {x : Type} ->
   (f : SPFData x x) -> spfdDynSys {x} f -> SliceObj x -> Type
-spDynSysPosChange {x} f sys a = SliceMorphism {a=x} a (SPDynSysCoeff f sys)
+spDynSysPosChange {x} f sys = flip (SliceMorphism {a=x}) (SPDynSysCoeff f sys)
 
 public export
 spDynSysDirChangeRetract : {x : Type} ->
   (f : SPFData x x) -> (sys : spfdDynSys {x} f) ->
   (a : SliceObj x) -> Type
-spDynSysDirChangeRetract {x} f sys a =
-  SliceMorphism {a=x} (SPDynSysCoeff f sys) a
+spDynSysDirChangeRetract {x} f sys = SliceMorphism {a=x} (SPDynSysCoeff f sys)
 
 public export
 spDynSysDirChange : {x : Type} ->
