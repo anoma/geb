@@ -221,12 +221,19 @@ public export
 spfdSymMon : {x : Type} -> SliceObj x -> SPFData x x
 spfdSymMon {x} coeff = spfdMonomial {dom=x} {cod=x} coeff coeff
 
+-- The covariant functor on `SPFData x y` represented by a monomial .
+public export
+spfdMonCovarRep : {dom, cod : Type} ->
+  (coeff : SliceObj cod) -> (degree : SliceObj dom) -> SPFData dom cod -> Type
+spfdMonCovarRep {dom} {cod} coeff degree =
+  SPFnt {dom} {cod} (spfdMonomial {dom} {cod} coeff degree)
+
 -- Definition 4.18 from _Polynomial Functors:  A Mathematical Theory
 -- of Interaction_:  a "dynamical system" is a lens (natural transformation)
 -- whose domain is a symmetric monomial.
 public export
 spfdDynSysAct : {x : Type} -> (sl : SliceObj x) -> SPFData x x -> Type
-spfdDynSysAct {x} sl p = SPFnt {dom=x} {cod=x} (spfdSymMon sl) p
+spfdDynSysAct {x} sl = spfdMonCovarRep {dom=x} {cod=x} sl sl
 
 public export
 spfdDynSys : {x : Type} -> SPFData x x -> Type
