@@ -264,6 +264,21 @@ spfdMonSlProj : {dom, cod : Type} -> {p : SPFData dom cod} ->
   (sl : spfdMonSl {dom} {cod} p) -> SPFnt {dom} {cod} (spfdMonSlTot {p} sl) p
 spfdMonSlProj {dom} {cod} {p} sl = DPair.snd $ DPair.snd sl
 
+public export
+spfdMonSlOnPos : {dom, cod : Type} -> {p : SPFData dom cod} ->
+  (sl : spfdMonSl {dom} {cod} p) ->
+  SPFDmultiIdx p (spfdMonSlCoeff {dom} {cod} {p} sl)
+spfdMonSlOnPos {dom} {cod} {p} sl = spOnPos $ spfdMonSlProj {dom} {cod} {p} sl
+
+public export
+spfdMonSlOnDir : {dom, cod : Type} -> {p : SPFData dom cod} ->
+  (sl : spfdMonSl {dom} {cod} p) ->
+  (ec : cod) -> (ep : spfdMonSlCoeff {dom} {cod} {p} sl ec) ->
+  SliceMorphism {a=dom}
+    (spfdDir p ec (spfdMonSlOnPos {dom} {cod} {p} sl ec ep))
+    (spfdMonSlDegree {dom} {cod} {p} sl)
+spfdMonSlOnDir {dom} {cod} {p} sl = spOnDir $ spfdMonSlProj {dom} {cod} {p} sl
+
 -- Definition 4.18 from _Polynomial Functors:  A Mathematical Theory
 -- of Interaction_:  a "dynamical system" is a lens (natural transformation)
 -- whose domain is a symmetric monomial.
