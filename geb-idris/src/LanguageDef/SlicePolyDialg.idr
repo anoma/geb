@@ -330,6 +330,12 @@ SPDynSysAct : {x : Type} -> (f : SPFData x x) -> (sys : spfdDynSys {x} f) ->
 SPDynSysAct {x} f = DPair.snd
 
 public export
+spfdDynSysToMonSl : {x : Type} -> {p : SPFData x x} ->
+  spfdDynSys {x} p -> spfdMonSl {dom=x} {cod=x} p
+spfdDynSysToMonSl {x} {p} sys =
+  (SPDynSysCoeff {x} p sys ** SPDynSysCoeff {x} p sys ** SPDynSysAct {x} p sys)
+
+public export
 SPDynSysOnPos : {x : Type} -> (f : SPFData x x) -> (sys : spfdDynSys {x} f) ->
   SPFDmultiIdx f (SPDynSysCoeff f sys)
 SPDynSysOnPos {x} f sys = spOnPos (SPDynSysAct f sys)
@@ -396,6 +402,12 @@ spfdLinRepCompR {w} {x} {y} {z} a b q =
 -------------------------------------------------------------
 ---- Polynomial coalgebra morphisms from slice morphisms ----
 -------------------------------------------------------------
+
+public export
+spMonSlPosChange : {dom, cod : Type} ->
+  (p : SPFData dom cod) -> spfdMonSl {dom} {cod} p -> SliceObj cod -> Type
+spMonSlPosChange {dom} {cod} p sl =
+  flip (SliceMorphism {a=cod}) (spfdMonSlCoeff {dom} {cod} {p} sl)
 
 public export
 spDynSysPosChange : {x : Type} ->
