@@ -264,18 +264,28 @@ spfdMonSlProj : {dom, cod : Type} -> {p : SPFData dom cod} ->
   (sl : spfdMonSl {dom} {cod} p) -> SPFnt {dom} {cod} (spfdMonSlTot {p} sl) p
 spfdMonSlProj {dom} {cod} {p} sl = DPair.snd $ DPair.snd sl
 
+-- We now see that a monomial slice object of a polynomial functor --
+-- that is to say, a slice object over a polynomial functor whose domain
+-- (total space) is a monomial -- has a projection component (which
+-- is a natural transformation from the monomial to the functor being
+-- sliced over) whose on-positions and on-directions functions are the
+-- same (and in particular have the same type signature) as the components
+-- of the generic factorization of the morphism which corresponds to
+-- it under the equivalence of formula 6.65 above (which is witnessed by
+-- `spfdMonNTtoInj` and `spfdInjToMonNT`).
+
 public export
 spfdMonSlOnPos : {dom, cod : Type} -> {p : SPFData dom cod} ->
   (sl : spfdMonSl {dom} {cod} p) ->
-  SPFDmultiIdx p (spfdMonSlCoeff {dom} {cod} {p} sl)
+  SPFDmultiR1 {cod} (spfdPos p) (spfdMonSlCoeff {dom} {cod} {p} sl)
 spfdMonSlOnPos {dom} {cod} {p} sl = spOnPos $ spfdMonSlProj {dom} {cod} {p} sl
 
 public export
 spfdMonSlOnDir : {dom, cod : Type} -> {p : SPFData dom cod} ->
   (sl : spfdMonSl {dom} {cod} p) ->
-  (ec : cod) -> (ep : spfdMonSlCoeff {dom} {cod} {p} sl ec) ->
-  SliceMorphism {a=dom}
-    (spfdDir p ec (spfdMonSlOnPos {dom} {cod} {p} sl ec ep))
+  SPFDmultiR2 {dom} {cod} p
+    {b=(spfdMonSlCoeff {dom} {cod} {p} sl)}
+    (spfdMonSlOnPos {dom} {cod} {p} sl)
     (spfdMonSlDegree {dom} {cod} {p} sl)
 spfdMonSlOnDir {dom} {cod} {p} sl = spOnDir $ spfdMonSlProj {dom} {cod} {p} sl
 
