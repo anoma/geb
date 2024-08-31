@@ -221,6 +221,25 @@ public export
 spfdSymMon : {x : Type} -> SliceObj x -> SPFData x x
 spfdSymMon {x} coeff = spfdMonomial {dom=x} {cod=x} coeff coeff
 
+-- Formula 6.65 from _Polynomial Functors: A Mathematical Theory of
+-- Interaction_.
+
+public export
+spfdMonNTtoInj : {dom, cod : Type} ->
+  (coeff : SliceObj cod) -> (degree : SliceObj dom) -> (p : SPFData dom cod) ->
+  SPFnt (spfdMonomial coeff degree) p ->
+  SliceMorphism {a=cod} coeff (InterpSPFData p degree)
+spfdMonNTtoInj {dom} {cod} coeff degree p alpha ec n =
+  (spOnPos alpha ec n ** \ed, pd => spOnDir alpha ec n ed pd)
+
+public export
+spfdInjToMonNT : {dom, cod : Type} ->
+  (coeff : SliceObj cod) -> (degree : SliceObj dom) -> (p : SPFData dom cod) ->
+  SliceMorphism {a=cod} coeff (InterpSPFData p degree) ->
+  SPFnt (spfdMonomial coeff degree) p
+spfdInjToMonNT {dom} {cod} coeff degree p m =
+  SPFDm (\ec, n => fst $ m ec n) (\ec, n => snd $ m ec n)
+
 -- The covariant functor on `SPFData x y` represented by a monomial.
 public export
 spfdMonCovarRep : {dom, cod : Type} ->
@@ -314,25 +333,6 @@ public export
 SPDynSysOnPos : {x : Type} -> (f : SPFData x x) -> (sys : spfdDynSys {x} f) ->
   SPFDmultiIdx f (SPDynSysCoeff f sys)
 SPDynSysOnPos {x} f sys = spOnPos (SPDynSysAct f sys)
-
--- Formula 6.65 from _Polynomial Functors: A Mathematical Theory of
--- Interaction_.
-
-public export
-spfdMonNTtoInj : {dom, cod : Type} ->
-  (coeff : SliceObj cod) -> (degree : SliceObj dom) -> (p : SPFData dom cod) ->
-  SPFnt (spfdMonomial coeff degree) p ->
-  SliceMorphism {a=cod} coeff (InterpSPFData p degree)
-spfdMonNTtoInj {dom} {cod} coeff degree p alpha ec n =
-  (spOnPos alpha ec n ** \ed, pd => spOnDir alpha ec n ed pd)
-
-public export
-spfdInjToMonNT : {dom, cod : Type} ->
-  (coeff : SliceObj cod) -> (degree : SliceObj dom) -> (p : SPFData dom cod) ->
-  SliceMorphism {a=cod} coeff (InterpSPFData p degree) ->
-  SPFnt (spfdMonomial coeff degree) p
-spfdInjToMonNT {dom} {cod} coeff degree p m =
-  SPFDm (\ec, n => fst $ m ec n) (\ec, n => snd $ m ec n)
 
 public export
 spfdDynSysActToCoalgAct : {x : Type} ->
