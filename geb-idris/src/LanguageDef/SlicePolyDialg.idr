@@ -415,6 +415,12 @@ spDynSysPosChange : {x : Type} ->
 spDynSysPosChange {x} f sys = flip (SliceMorphism {a=x}) (SPDynSysCoeff f sys)
 
 public export
+spMonSlPosChangeRetract : {dom, cod : Type} ->
+  (p : SPFData dom cod) -> spfdMonSl {dom} {cod} p -> SliceObj cod -> Type
+spMonSlPosChangeRetract {dom} {cod} p sl =
+  SliceMorphism {a=cod} (spfdMonSlCoeff {dom} {cod} {p} sl)
+
+public export
 spDynSysPosChangeRetract : {x : Type} ->
   (f : SPFData x x) -> (sys : spfdDynSys {x} f) ->
   (a : SliceObj x) -> Type
