@@ -427,14 +427,23 @@ spDynSysPosChangeRetract : {x : Type} ->
 spDynSysPosChangeRetract {x} f sys = SliceMorphism {a=x} (SPDynSysCoeff f sys)
 
 public export
+spMonSlDirChange : {dom, cod : Type} ->
+  {p : SPFData dom cod} -> (sl : spfdMonSl {dom} {cod} p) ->
+  (pos : SliceObj cod) -> spMonSlPosChange {dom} {cod} p sl pos ->
+  Type
+spMonSlDirChange {dom} {cod} {p} sl pos m =
+  (ec : cod ** ep : pos ec ** ed : dom **
+   spfdDir p ec (spfdMonSlOnPos {p} sl ec $ m ec ep) ed) ->
+  spMonSlPosChangeRetract {dom} {cod} p sl pos
+
+public export
 spDynSysDirChange : {x : Type} ->
   (f : SPFData x x) -> (sys : spfdDynSys {x} f) ->
   (a : SliceObj x) -> spDynSysPosChange {x} f sys a ->
   Type
 spDynSysDirChange {x} f sys a m =
-  (ex : x ** ea : a ex ** ex' : x **
-   spfdDir f ex (SPDynSysOnPos f sys ex $ m ex ea) ex') ->
-  spDynSysPosChangeRetract {x} f sys a
+  spMonSlDirChange {dom=x} {cod=x} {p=f}
+    (spfdDynSysToMonSl {x} {p=f} sys) a m
 
 public export
 spDynSysSlMor : {x : Type} ->
