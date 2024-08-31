@@ -979,7 +979,7 @@ SPFDgenFactIdxEq : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (i : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
   (ec : cod) -> (eb : b ec) ->
   SPFDgenFactIdx {dom} {cod} spfd a b i ec eb =
-    SPFDmultiRto1 {spfd} {b} {a} i ec eb
+  SPFDmultiRto1 {dom} {cod} {spfd} {b} {a} i ec eb
 SPFDgenFactIdxEq {dom} {cod} spfd a b i ec eb = Refl
 
 -- This is the object of `SliceObj dom` which underlies the intermediate
@@ -1176,8 +1176,10 @@ SPFDgenFactSndDomCatFormSigToR2 : {dom, cod : Type} ->
   {spfd : SPFData dom cod} ->
   {a : SliceObj dom} -> {b : SliceObj cod} ->
   {i : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)} ->
-  (m : SPFDgenFactSndDomCatFormSig {dom} {cod} spfd a b i) ->
-  SPFDmultiR2 {dom} {cod} spfd {b} (SPFDmultiRto1 {spfd} {b} {a} i) a
+  SPFDgenFactSndDomCatFormSig {dom} {cod} spfd
+    a b i ->
+  SPFDmultiR2 {dom} {cod} spfd {b}
+    (SPFDmultiRto1 {dom} {cod} {spfd} {b} {a} i) a
 SPFDgenFactSndDomCatFormSigToR2 {dom} {cod} {spfd} {a} {b} {i} m ec eb ed dd =
   m ed (ec ** eb ** dd)
 
