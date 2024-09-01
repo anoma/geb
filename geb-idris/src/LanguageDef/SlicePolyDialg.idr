@@ -404,42 +404,42 @@ spfdLinRepCompR {w} {x} {y} {z} a b q =
 -------------------------------------------------------------
 
 public export
-spMonSlPosChange : {dom, cod : Type} ->
+spMonSlMultiIdx : {dom, cod : Type} ->
   (p : SPFData dom cod) -> spfdMonSl {dom} {cod} p -> SliceObj cod -> Type
-spMonSlPosChange {dom} {cod} p sl =
+spMonSlMultiIdx {dom} {cod} p sl =
   flip (SliceMorphism {a=cod}) (spfdMonSlCoeff {dom} {cod} {p} sl)
 
 public export
-spDynSysPosChange : {x : Type} ->
+spDynSysMultiIdx : {x : Type} ->
   (f : SPFData x x) -> spfdDynSys {x} f -> SliceObj x -> Type
-spDynSysPosChange {x} f sys = flip (SliceMorphism {a=x}) (SPDynSysCoeff f sys)
+spDynSysMultiIdx {x} f sys = flip (SliceMorphism {a=x}) (SPDynSysCoeff f sys)
 
 public export
-spMonSlPosChangeRetract : {dom, cod : Type} ->
+spMonSlMultiIdxRetract : {dom, cod : Type} ->
   (p : SPFData dom cod) -> spfdMonSl {dom} {cod} p -> SliceObj cod -> Type
-spMonSlPosChangeRetract {dom} {cod} p sl =
+spMonSlMultiIdxRetract {dom} {cod} p sl =
   SliceMorphism {a=cod} (spfdMonSlCoeff {dom} {cod} {p} sl)
 
 public export
-spDynSysPosChangeRetract : {x : Type} ->
+spDynSysMultiIdxRetract : {x : Type} ->
   (f : SPFData x x) -> (sys : spfdDynSys {x} f) ->
   (a : SliceObj x) -> Type
-spDynSysPosChangeRetract {x} f sys = SliceMorphism {a=x} (SPDynSysCoeff f sys)
+spDynSysMultiIdxRetract {x} f sys = SliceMorphism {a=x} (SPDynSysCoeff f sys)
 
 public export
 spMonSlDirChange : {dom, cod : Type} ->
   {p : SPFData dom cod} -> (sl : spfdMonSl {dom} {cod} p) ->
-  (pos : SliceObj cod) -> spMonSlPosChange {dom} {cod} p sl pos ->
+  (pos : SliceObj cod) -> spMonSlMultiIdx {dom} {cod} p sl pos ->
   Type
 spMonSlDirChange {dom} {cod} {p} sl pos m =
   (ec : cod ** ep : pos ec ** ed : dom **
    spfdDir p ec (spfdMonSlOnPos {p} sl ec $ m ec ep) ed) ->
-  spMonSlPosChangeRetract {dom} {cod} p sl pos
+  spMonSlMultiIdxRetract {dom} {cod} p sl pos
 
 public export
 spDynSysDirChange : {x : Type} ->
   (f : SPFData x x) -> (sys : spfdDynSys {x} f) ->
-  (a : SliceObj x) -> spDynSysPosChange {x} f sys a ->
+  (a : SliceObj x) -> spDynSysMultiIdx {x} f sys a ->
   Type
 spDynSysDirChange {x} f sys a m =
   spMonSlDirChange {dom=x} {cod=x} {p=f}
@@ -449,7 +449,7 @@ public export
 spDynSysSlMor : {x : Type} ->
   (f : SPFData x x) -> spfdDynSys {x} f -> SliceObj x -> Type
 spDynSysSlMor {x} f sys a =
-   DPair (spDynSysPosChange {x} f sys a) (spDynSysDirChange {x} f sys a)
+   DPair (spDynSysMultiIdx {x} f sys a) (spDynSysDirChange {x} f sys a)
 
 -- Given a dynamical system, the following data determine a slice
 -- object of it -- that is, another dynamical system with the same
@@ -473,7 +473,7 @@ public export
 spDynSysSlPosChange :
   {x : Type} -> {f : SPFData x x} -> {sys : spfdDynSys {x} f} ->
   (sl : spDynSysSl {x} f sys) ->
-  spDynSysPosChange {x} f sys (spDynSysSlCarrier {x} {f} {sys} sl)
+  spDynSysMultiIdx {x} f sys (spDynSysSlCarrier {x} {f} {sys} sl)
 spDynSysSlPosChange {x} {f} {sys} sl = DPair.fst $ DPair.snd sl
 
 public export
