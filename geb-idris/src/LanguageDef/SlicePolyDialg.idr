@@ -415,16 +415,16 @@ spDynSysMultiIdx : {x : Type} ->
 spDynSysMultiIdx {x} f sys = flip (SliceMorphism {a=x}) (SPDynSysCoeff f sys)
 
 public export
-spMonSlMultiIdxRetract : {dom, cod : Type} ->
+spMonSlRetractIdx : {dom, cod : Type} ->
   (p : SPFData dom cod) -> spfdMonSl {dom} {cod} p -> SliceObj cod -> Type
-spMonSlMultiIdxRetract {dom} {cod} p sl =
+spMonSlRetractIdx {dom} {cod} p sl =
   SliceMorphism {a=cod} (spfdMonSlCoeff {dom} {cod} {p} sl)
 
 public export
-spDynSysMultiIdxRetract : {x : Type} ->
+spDynSysRetractIdx : {x : Type} ->
   (f : SPFData x x) -> (sys : spfdDynSys {x} f) ->
   (a : SliceObj x) -> Type
-spDynSysMultiIdxRetract {x} f sys = SliceMorphism {a=x} (SPDynSysCoeff f sys)
+spDynSysRetractIdx {x} f sys = SliceMorphism {a=x} (SPDynSysCoeff f sys)
 
 public export
 spMonSlDirChange : {dom, cod : Type} ->
@@ -434,7 +434,7 @@ spMonSlDirChange : {dom, cod : Type} ->
 spMonSlDirChange {dom} {cod} {p} sl pos m =
   (ec : cod ** ep : pos ec ** ed : dom **
    spfdDir p ec (spfdMonSlOnPos {p} sl ec $ m ec ep) ed) ->
-  spMonSlMultiIdxRetract {dom} {cod} p sl pos
+  spMonSlRetractIdx {dom} {cod} p sl pos
 
 public export
 spDynSysDirChange : {x : Type} ->
