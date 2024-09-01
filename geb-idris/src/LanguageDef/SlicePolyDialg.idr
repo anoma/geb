@@ -435,12 +435,28 @@ spfdMonSlPullbackPos {dom} {cod} {p} sl {pos} m ec ep =
   spfdMonSlOnPos {p} sl ec $ m ec ep
 
 public export
+spfdDynSysPullbackPos : {x : Type} ->
+  {f : SPFData x x} -> (sys : spfdDynSys {x} f) ->
+  {pos : SliceObj x} -> spDynSysMultiIdx {x} f sys pos ->
+  SPFDmultiR1 {cod=x} (spfdPos f) pos
+spfdDynSysPullbackPos {x} {f} sys {pos} m ec ep =
+  spfdMonSlPullbackPos {dom=x} {cod=x} (spfdDynSysToMonSl {x} {p=f} sys) m ec ep
+
+public export
 spfdMonSlPosChangeDir : {dom, cod : Type} ->
   {p : SPFData dom cod} -> (sl : spfdMonSl {dom} {cod} p) ->
   {pos : SliceObj cod} -> spMonSlMultiIdx {dom} {cod} p sl pos ->
   SPFdirType dom cod pos
 spfdMonSlPosChangeDir {dom} {cod} {p} sl {pos} m ec ep =
   spfdDir p ec (spfdMonSlPullbackPos {dom} {cod} {p} sl {pos} m ec ep)
+
+public export
+spfdDynSysPosChangeDir : {x : Type} ->
+  {f : SPFData x x} -> (sys : spfdDynSys {x} f) ->
+  {pos : SliceObj x} -> spDynSysMultiIdx {x} f sys pos ->
+  SPFdirType x x pos
+spfdDynSysPosChangeDir {x} {f} sys {pos} =
+  spfdMonSlPosChangeDir {dom=x} {cod=x} $ spfdDynSysToMonSl {x} {p=f} sys
 
 public export
 spMonSlDirChange : {dom, cod : Type} ->
@@ -457,9 +473,8 @@ spDynSysDirChange : {x : Type} ->
   (f : SPFData x x) -> (sys : spfdDynSys {x} f) ->
   (a : SliceObj x) -> spDynSysMultiIdx {x} f sys a ->
   Type
-spDynSysDirChange {x} f sys a m =
-  spMonSlDirChange {dom=x} {cod=x} {p=f}
-    (spfdDynSysToMonSl {x} {p=f} sys) a m
+spDynSysDirChange {x} f sys =
+  spMonSlDirChange {dom=x} {cod=x} {p=f} $ spfdDynSysToMonSl {x} {p=f} sys
 
 public export
 spDynSysSlMor : {x : Type} ->
