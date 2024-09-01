@@ -447,8 +447,9 @@ spfdMonSlPosChangeDir : {dom, cod : Type} ->
   {p : SPFData dom cod} -> (sl : spfdMonSl {dom} {cod} p) ->
   {pos : SliceObj cod} -> spMonSlMultiIdx {dom} {cod} p sl pos ->
   SPFdirType dom cod pos
-spfdMonSlPosChangeDir {dom} {cod} {p} sl {pos} m ec ep =
-  spfdDir p ec (spfdMonSlPullbackPos {dom} {cod} {p} sl {pos} m ec ep)
+spfdMonSlPosChangeDir {dom} {cod} {p} sl {pos} m =
+  SPFDposChangeDir {dom} {cod} p {pos} $
+    spfdMonSlPullbackPos {dom} {cod} {p} sl {pos} m
 
 public export
 spfdDynSysPosChangeDir : {x : Type} ->
