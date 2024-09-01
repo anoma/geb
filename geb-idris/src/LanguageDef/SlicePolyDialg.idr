@@ -427,13 +427,29 @@ spDynSysCoeffCovarHom : {x : Type} ->
 spDynSysCoeffCovarHom {x} f sys = SliceMorphism {a=x} (SPDynSysCoeff f sys)
 
 public export
+spfdMonSlPullbackPos : {dom, cod : Type} ->
+  {p : SPFData dom cod} -> (sl : spfdMonSl {dom} {cod} p) ->
+  {pos : SliceObj cod} -> spMonSlMultiIdx {dom} {cod} p sl pos ->
+  SPFDmultiR1 {cod} (spfdPos p) pos
+spfdMonSlPullbackPos {dom} {cod} {p} sl {pos} m ec ep =
+  spfdMonSlOnPos {p} sl ec $ m ec ep
+
+public export
+spfdMonSlPosChangeDir : {dom, cod : Type} ->
+  {p : SPFData dom cod} -> (sl : spfdMonSl {dom} {cod} p) ->
+  {pos : SliceObj cod} -> spMonSlMultiIdx {dom} {cod} p sl pos ->
+  SPFdirType dom cod pos
+spfdMonSlPosChangeDir {dom} {cod} {p} sl {pos} m ec ep =
+  spfdDir p ec (spfdMonSlPullbackPos {dom} {cod} {p} sl {pos} m ec ep)
+
+public export
 spMonSlDirChange : {dom, cod : Type} ->
   {p : SPFData dom cod} -> (sl : spfdMonSl {dom} {cod} p) ->
   (pos : SliceObj cod) -> spMonSlMultiIdx {dom} {cod} p sl pos ->
   Type
 spMonSlDirChange {dom} {cod} {p} sl pos m =
   (ec : cod ** ep : pos ec ** ed : dom **
-   spfdDir p ec (spfdMonSlOnPos {p} sl ec $ m ec ep) ed) ->
+   spfdMonSlPosChangeDir {dom} {cod} {p} sl {pos} m ec ep ed) ->
   spMonSlCoeffCovarHom {dom} {cod} p sl pos
 
 public export
