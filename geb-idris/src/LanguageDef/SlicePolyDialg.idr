@@ -468,13 +468,21 @@ spMonSlSPFchange {dom} {cod} {p} sl {pos} m =
   SPFD pos (spfdMonSlPosChangeDir {dom} {cod} {p} sl {pos} m)
 
 public export
+spMonSlDirChangeDom : {dom, cod : Type} ->
+  {p : SPFData dom cod} -> (sl : spfdMonSl {dom} {cod} p) ->
+  (pos : SliceObj cod) -> spMonSlMultiIdx {dom} {cod} p sl pos ->
+  SliceObj dom
+spMonSlDirChangeDom {dom} {cod} {p} sl pos m ed =
+  (ec : cod ** ep : pos ec **
+   spfdDir (spMonSlSPFchange {dom} {cod} {p} sl {pos} m) ec ep ed)
+
+public export
 spMonSlDirChange : {dom, cod : Type} ->
   {p : SPFData dom cod} -> (sl : spfdMonSl {dom} {cod} p) ->
   (pos : SliceObj cod) -> spMonSlMultiIdx {dom} {cod} p sl pos ->
   Type
 spMonSlDirChange {dom} {cod} {p} sl pos m =
-  (ec : cod ** ep : pos ec ** ed : dom **
-   spfdDir (spMonSlSPFchange {dom} {cod} {p} sl {pos} m) ec ep ed) ->
+  Sigma {a=dom} (spMonSlDirChangeDom {dom} {cod} {p} sl pos m) ->
   spMonSlCoeffCovarHom {dom} {cod} p sl pos
 
 public export
@@ -543,7 +551,7 @@ spDynSysSlOnDir :
     (fst sl)
 spDynSysSlOnDir {x} {f} {sys=(b ** SPFDm bpos bdir)} (a ** mab ** dc)
   ex esl ex' dd =
-    dc (ex ** esl ** ex' ** dd) ex' $ bdir ex (mab ex esl) ex' dd
+    dc (ex' ** ex ** esl ** dd) ex' $ bdir ex (mab ex esl) ex' dd
 
 public export
 spDynSysSlAct :
