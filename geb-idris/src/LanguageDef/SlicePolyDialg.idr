@@ -431,8 +431,8 @@ spfdMonSlPullbackPos : {dom, cod : Type} ->
   {p : SPFData dom cod} -> (sl : spfdMonSl {dom} {cod} p) ->
   {pos : SliceObj cod} -> spMonSlMultiIdx {dom} {cod} p sl pos ->
   SPFDmultiR1 {cod} (spfdPos p) pos
-spfdMonSlPullbackPos {dom} {cod} {p} sl {pos} m ec ep =
-  spfdMonSlOnPos {p} sl ec $ m ec ep
+spfdMonSlPullbackPos {dom} {cod} {p} sl {pos} =
+  sliceComp {a=cod} (spfdMonSlOnPos {p} sl)
 
 public export
 spfdDynSysPullbackPos : {x : Type} ->
