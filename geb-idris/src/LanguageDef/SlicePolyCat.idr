@@ -3169,7 +3169,7 @@ public export
 SPFDposChangeDir : {dom, cod : Type} ->
   (p : SPFData dom cod) -> {pos : SliceObj cod} ->
   SPFDmultiIdx {dom} {cod} p pos -> SPFdirType dom cod pos
-SPFDposChangeDir {dom} {cod} p {pos} m ec = spfdDir p ec . m ec
+SPFDposChangeDir {dom} {cod} p {pos} = sliceComp {a=cod} (spfdDir p)
 
 public export
 SPFDposChange : {dom, cod : Type} ->
