@@ -481,7 +481,7 @@ public export
 spDynSysSlMor : {x : Type} ->
   (f : SPFData x x) -> spfdDynSys {x} f -> SliceObj x -> Type
 spDynSysSlMor {x} f sys a =
-   DPair (spDynSysMultiIdx {x} f sys a) (spDynSysDirChange {x} f sys a)
+  DPair (spDynSysMultiIdx {x} f sys a) (spDynSysDirChange {x} f sys a)
 
 -- Given a dynamical system, the following data determine a slice
 -- object of it -- that is, another dynamical system with the same
