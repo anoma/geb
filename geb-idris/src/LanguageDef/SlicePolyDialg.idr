@@ -460,13 +460,21 @@ spfdDynSysPosChangeDir {x} {f} sys {pos} =
   spfdMonSlPosChangeDir {dom=x} {cod=x} $ spfdDynSysToMonSl {x} {p=f} sys
 
 public export
+spMonSlSPFchange : {dom, cod : Type} ->
+  {p : SPFData dom cod} -> (sl : spfdMonSl {dom} {cod} p) ->
+  {pos : SliceObj cod} -> spMonSlMultiIdx {dom} {cod} p sl pos ->
+  SPFData dom cod
+spMonSlSPFchange {dom} {cod} {p} sl {pos} m =
+  SPFD pos (spfdMonSlPosChangeDir {dom} {cod} {p} sl {pos} m)
+
+public export
 spMonSlDirChange : {dom, cod : Type} ->
   {p : SPFData dom cod} -> (sl : spfdMonSl {dom} {cod} p) ->
   (pos : SliceObj cod) -> spMonSlMultiIdx {dom} {cod} p sl pos ->
   Type
 spMonSlDirChange {dom} {cod} {p} sl pos m =
   (ec : cod ** ep : pos ec ** ed : dom **
-   spfdMonSlPosChangeDir {dom} {cod} {p} sl {pos} m ec ep ed) ->
+   spfdDir (spMonSlSPFchange {dom} {cod} {p} sl {pos} m) ec ep ed) ->
   spMonSlCoeffCovarHom {dom} {cod} p sl pos
 
 public export
