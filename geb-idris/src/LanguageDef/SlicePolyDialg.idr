@@ -482,8 +482,9 @@ spMonSlDirChange : {dom, cod : Type} ->
   (pos : SliceObj cod) -> spMonSlMultiIdx {dom} {cod} p sl pos ->
   Type
 spMonSlDirChange {dom} {cod} {p} sl pos m =
-  Sigma {a=dom} (spMonSlDirChangeDom {dom} {cod} {p} sl pos m) ->
-  spMonSlCoeffCovarHom {dom} {cod} p sl pos
+  SliceMorphism {a=dom}
+    (spMonSlDirChangeDom {dom} {cod} {p} sl pos m)
+    (\_ : dom => spMonSlCoeffCovarHom {dom} {cod} p sl pos)
 
 public export
 spDynSysDirChange : {x : Type} ->
@@ -551,7 +552,7 @@ spDynSysSlOnDir :
     (fst sl)
 spDynSysSlOnDir {x} {f} {sys=(b ** SPFDm bpos bdir)} (a ** mab ** dc)
   ex esl ex' dd =
-    dc (ex' ** ex ** esl ** dd) ex' $ bdir ex (mab ex esl) ex' dd
+    dc ex' (ex ** esl ** dd) ex' $ bdir ex (mab ex esl) ex' dd
 
 public export
 spDynSysSlAct :
