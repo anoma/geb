@@ -422,6 +422,22 @@ public export
 InterpSPFData : {dom, cod : Type} -> SPFData dom cod -> SliceFunctor dom cod
 InterpSPFData = SPFDmultiR
 
+-- Given a polynomial functor, a slice of a codomain, and a morphism
+-- from that slice to the functor's positions, we can produce a new
+-- functor whose positions are the given slice and whose directions
+-- are inherited from the given functor via the given morphism.
+public export
+SPFDposChangeDir : {dom, cod : Type} ->
+  (p : SPFData dom cod) -> {pos : SliceObj cod} ->
+  SPFDmultiIdx {dom} {cod} p pos -> SPFdirType dom cod pos
+SPFDposChangeDir {dom} {cod} p {pos} = sliceComp {a=cod} (spfdDir p)
+
+public export
+SPFDposChange : {dom, cod : Type} ->
+  (p : SPFData dom cod) -> {pos : SliceObj cod} ->
+  SPFDmultiIdx {dom} {cod} p pos -> SPFData dom cod
+SPFDposChange {dom} {cod} p {pos} m = SPFD pos (SPFDposChangeDir p {pos} m)
+
 -- The signature of the first component of a (slice) morphism into an
 -- `SPFDmultiR {dom} {cod} spfd a` (for some `dom, cod : Type` and
 -- `a : SliceObj dom`) is independent of the codomain of the morphism as
@@ -3160,22 +3176,6 @@ public export
 SPFDvcFactPos : {dom, cod : Type} -> {p, q : SPFData dom cod} ->
   SPFnt {dom} {cod} p q -> SliceObj cod
 SPFDvcFactPos {dom} {cod} {p} {q} nt = spfdPos p
-
--- Given a polynomial functor, a slice of a codomain, and a morphism
--- from that slice to the functor's positions, we can produce a new
--- functor whose positions are the given slice and whose directions
--- are inherited from the given functor via the given morphism.
-public export
-SPFDposChangeDir : {dom, cod : Type} ->
-  (p : SPFData dom cod) -> {pos : SliceObj cod} ->
-  SPFDmultiIdx {dom} {cod} p pos -> SPFdirType dom cod pos
-SPFDposChangeDir {dom} {cod} p {pos} = sliceComp {a=cod} (spfdDir p)
-
-public export
-SPFDposChange : {dom, cod : Type} ->
-  (p : SPFData dom cod) -> {pos : SliceObj cod} ->
-  SPFDmultiIdx {dom} {cod} p pos -> SPFData dom cod
-SPFDposChange {dom} {cod} p {pos} m = SPFD pos (SPFDposChangeDir p {pos} m)
 
 -- Given a natural transformation between slice polynomial functors,
 -- this is the intermediate object of its vertical-Cartesian factoring.
