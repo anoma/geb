@@ -221,6 +221,20 @@ public export
 spfdSymMon : {x : Type} -> SliceObj x -> SPFData x x
 spfdSymMon {x} coeff = spfdMonomial {dom=x} {cod=x} coeff coeff
 
+-- The covariant functor on `SPFData x y` represented by a monomial.
+public export
+spfdMonCovarRep : {dom, cod : Type} ->
+  (coeff : SliceObj cod) -> (degree : SliceObj dom) -> SPFData dom cod -> Type
+spfdMonCovarRep {dom} {cod} coeff degree =
+  SPFnt {dom} {cod} (spfdMonomial {dom} {cod} coeff degree)
+
+-- The contravariant functor on `SPFData x y` represented by a monomial.
+public export
+spfdMonContraRep : {dom, cod : Type} ->
+  (coeff : SliceObj cod) -> (degree : SliceObj dom) -> SPFData dom cod -> Type
+spfdMonContraRep {dom} {cod} coeff degree =
+  flip (SPFnt {dom} {cod}) (spfdMonomial {dom} {cod} coeff degree)
+
 -- Formula 6.65 from _Polynomial Functors: A Mathematical Theory of
 -- Interaction_.
 
@@ -239,20 +253,6 @@ spfdInjToMonNT : {dom, cod : Type} ->
   SPFnt (spfdMonomial coeff degree) p
 spfdInjToMonNT {dom} {cod} coeff degree p m =
   SPFDm (\ec, n => fst $ m ec n) (\ec, n => snd $ m ec n)
-
--- The covariant functor on `SPFData x y` represented by a monomial.
-public export
-spfdMonCovarRep : {dom, cod : Type} ->
-  (coeff : SliceObj cod) -> (degree : SliceObj dom) -> SPFData dom cod -> Type
-spfdMonCovarRep {dom} {cod} coeff degree =
-  SPFnt {dom} {cod} (spfdMonomial {dom} {cod} coeff degree)
-
--- The contravariant functor on `SPFData x y` represented by a monomial.
-public export
-spfdMonContraRep : {dom, cod : Type} ->
-  (coeff : SliceObj cod) -> (degree : SliceObj dom) -> SPFData dom cod -> Type
-spfdMonContraRep {dom} {cod} coeff degree =
-  flip (SPFnt {dom} {cod}) (spfdMonomial {dom} {cod} coeff degree)
 
 -- A lens whose domain is a monomial -- put another way, a slice object
 -- of the given polynomial functor whose total space is a monomial.
