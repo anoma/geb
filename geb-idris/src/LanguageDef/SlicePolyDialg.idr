@@ -341,6 +341,15 @@ SPDynSysOnPos : {x : Type} -> (f : SPFData x x) -> (sys : spfdDynSys {x} f) ->
 SPDynSysOnPos {x} f sys = spOnPos (SPDynSysAct f sys)
 
 public export
+SPDynSysOnDir : {x : Type} -> {f : SPFData x x} ->
+  (sys : spfdDynSys {x} f) ->
+  SPFDmultiR2 {dom=x} {cod=x} f
+    {b=(SPDynSysCoeff {x} f sys)}
+    (SPDynSysOnPos {x} f sys)
+    (SPDynSysCoeff {x} f sys)
+SPDynSysOnDir {x} {f} sys = spOnDir (SPDynSysAct f sys)
+
+public export
 spfdDynSysActToCoalgAct : {x : Type} ->
   (coeff : SliceObj x) -> (p : SPFData x x) ->
   spfdDynSysAct {x} coeff p -> spfdCoalgAction {x} p coeff
