@@ -241,7 +241,7 @@ spfdMonContraRep {dom} {cod} coeff degree =
 public export
 spfdMonNTtoInj : {dom, cod : Type} ->
   (coeff : SliceObj cod) -> (degree : SliceObj dom) -> (p : SPFData dom cod) ->
-  SPFnt (spfdMonomial coeff degree) p ->
+  spfdMonCovarRep {dom} {cod} coeff degree p ->
   SliceMorphism {a=cod} coeff (InterpSPFData p degree)
 spfdMonNTtoInj {dom} {cod} coeff degree p alpha ec n =
   (spOnPos alpha ec n ** \ed, pd => spOnDir alpha ec n ed pd)
@@ -250,7 +250,7 @@ public export
 spfdInjToMonNT : {dom, cod : Type} ->
   (coeff : SliceObj cod) -> (degree : SliceObj dom) -> (p : SPFData dom cod) ->
   SliceMorphism {a=cod} coeff (InterpSPFData p degree) ->
-  SPFnt (spfdMonomial coeff degree) p
+  spfdMonCovarRep {dom} {cod} coeff degree p
 spfdInjToMonNT {dom} {cod} coeff degree p m =
   SPFDm (\ec, n => fst $ m ec n) (\ec, n => snd $ m ec n)
 
