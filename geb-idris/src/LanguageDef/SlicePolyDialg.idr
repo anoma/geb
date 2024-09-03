@@ -421,7 +421,8 @@ spMonSlMultiIdx {dom} {cod} p sl =
 public export
 spDynSysMultiIdx : {x : Type} ->
   (f : SPFData x x) -> spfdDynSys {x} f -> SliceObj x -> Type
-spDynSysMultiIdx {x} f sys = flip (SliceMorphism {a=x}) (SPDynSysCoeff f sys)
+spDynSysMultiIdx {x} f sys =
+  flip (SliceMorphism {a=x}) (SPDynSysCoeff f sys)
 
 public export
 spMonSlCoeffCovarHom : {dom, cod : Type} ->
@@ -433,7 +434,8 @@ public export
 spDynSysCoeffCovarHom : {x : Type} ->
   (f : SPFData x x) -> (sys : spfdDynSys {x} f) ->
   (a : SliceObj x) -> Type
-spDynSysCoeffCovarHom {x} f sys = SliceMorphism {a=x} (SPDynSysCoeff f sys)
+spDynSysCoeffCovarHom {x} f sys =
+  SliceMorphism {a=x} (SPDynSysCoeff f sys)
 
 public export
 spfdMonSlPullbackPos : {dom, cod : Type} ->
