@@ -337,7 +337,7 @@ spfdDynSysToMonSl {x} {p} sys =
 
 public export
 SPDynSysOnPos : {x : Type} -> (f : SPFData x x) -> (sys : spfdDynSys {x} f) ->
-  SPFDmultiIdx f (SPDynSysCoeff f sys)
+  SPFDmultiR1 {cod=x} (spfdPos f) (SPDynSysCoeff {x} f sys)
 SPDynSysOnPos {x} f sys = spOnPos (SPDynSysAct f sys)
 
 public export
