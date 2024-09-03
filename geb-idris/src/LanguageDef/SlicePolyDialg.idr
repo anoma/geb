@@ -437,6 +437,10 @@ spDynSysCoeffCovarHom : {x : Type} ->
 spDynSysCoeffCovarHom {x} f sys =
   SliceMorphism {a=x} (SPDynSysCoeff f sys)
 
+-- Given an on-positions function into the total space of a monomial
+-- slice object, this composes the projection after it to produce
+-- an on-positions function into the base functor (the one being
+-- sliced over).
 public export
 spfdMonSlPullbackPos : {dom, cod : Type} ->
   {p : SPFData dom cod} -> (sl : spfdMonSl {dom} {cod} p) ->
@@ -450,9 +454,13 @@ spfdDynSysPullbackPos : {x : Type} ->
   {f : SPFData x x} -> (sys : spfdDynSys {x} f) ->
   {pos : SliceObj x} -> spDynSysMultiIdx {x} f sys pos ->
   SPFDmultiR1 {cod=x} (spfdPos f) pos
-spfdDynSysPullbackPos {x} {f} sys {pos} m ec ep =
-  spfdMonSlPullbackPos {dom=x} {cod=x} (spfdDynSysToMonSl {x} {p=f} sys) m ec ep
+spfdDynSysPullbackPos {x} {f} sys {pos} =
+  spfdMonSlPullbackPos {dom=x} {cod=x} (spfdDynSysToMonSl {x} {p=f} sys)
 
+-- Given an on-positions function into the total space of a monomial
+-- slice object, this pulls back the directions of the base functor
+-- via the composition of the projection after the given on-positions
+-- function given by `spfdMonSlPullbackPos`.
 public export
 spfdMonSlPosChangeDir : {dom, cod : Type} ->
   {p : SPFData dom cod} -> (sl : spfdMonSl {dom} {cod} p) ->
@@ -470,6 +478,10 @@ spfdDynSysPosChangeDir : {x : Type} ->
 spfdDynSysPosChangeDir {x} {f} sys {pos} =
   spfdMonSlPosChangeDir {dom=x} {cod=x} $ spfdDynSysToMonSl {x} {p=f} sys
 
+-- This is the functor resulting from pulling back the directions of the
+-- base functor of a slice object along an on-positions function which is
+-- a composition with the on-positions component of the slice object's
+-- projection.
 public export
 spMonSlSPFchange : {dom, cod : Type} ->
   {p : SPFData dom cod} -> (sl : spfdMonSl {dom} {cod} p) ->
@@ -478,6 +490,8 @@ spMonSlSPFchange : {dom, cod : Type} ->
 spMonSlSPFchange {dom} {cod} {p} sl {pos} m =
   SPFD pos (spfdMonSlPosChangeDir {dom} {cod} {p} sl {pos} m)
 
+-- The total space of all directions of `spMonSlSPFchange` at the given
+-- point in `dom`.
 public export
 spMonSlDirChangeDom : {dom, cod : Type} ->
   {p : SPFData dom cod} -> (sl : spfdMonSl {dom} {cod} p) ->
@@ -487,6 +501,9 @@ spMonSlDirChangeDom {dom} {cod} {p} sl pos m ed =
   (ec : cod ** ep : pos ec **
    spfdDir (spMonSlSPFchange {dom} {cod} {p} sl {pos} m) ec ep ed)
 
+-- The type of a morphism from the total directions of `spMonSlSPFchange`
+-- to the type of the coefficient of the slice object -- which may be
+-- viewed as a choice of a term of the coefficient for each such direction.
 public export
 spMonSlDirChange : {dom, cod : Type} ->
   {p : SPFData dom cod} -> (sl : spfdMonSl {dom} {cod} p) ->
@@ -506,10 +523,18 @@ spDynSysDirChange {x} f sys =
   spMonSlDirChange {dom=x} {cod=x} {p=f} $ spfdDynSysToMonSl {x} {p=f} sys
 
 public export
+spMonSlMor : {dom, cod : Type} ->
+  (p : SPFData dom cod) -> spfdMonSl {dom} {cod} p -> SliceObj cod -> Type
+spMonSlMor {dom} {cod} p sl a =
+  DPair
+    (spMonSlMultiIdx {dom} {cod} p sl a)
+    (spMonSlDirChange {dom} {cod} {p} sl a)
+
+public export
 spDynSysSlMor : {x : Type} ->
   (f : SPFData x x) -> spfdDynSys {x} f -> SliceObj x -> Type
 spDynSysSlMor {x} f sys a =
-  DPair (spDynSysMultiIdx {x} f sys a) (spDynSysDirChange {x} f sys a)
+  spMonSlMor {dom=x} {cod=x} f (spfdDynSysToMonSl {x} {p=f} sys) a
 
 -- Given a dynamical system, the following data determine a slice
 -- object of it -- that is, another dynamical system with the same
