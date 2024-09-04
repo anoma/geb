@@ -2262,6 +2262,31 @@ SPFtoIdR {dom} {cod} spfd =
     (\ec, efp => (efp ** \_, _ => ()))
     (\ec, efp, ed, efd => rewrite sym (snd efd) in snd $ fst efd)
 
+public export
+SPntEqPos : {dom, cod : Type} -> {f, g : SPFData dom cod} ->
+  SPFnt {dom} {cod} f g -> SPFnt {dom} {cod} f g -> Type
+SPntEqPos {dom} {cod} {f} {g} alpha beta =
+  SliceExtEq (spOnPos alpha) (spOnPos beta)
+
+public export
+SPntEqDir : {dom, cod : Type} -> {f, g : SPFData dom cod} ->
+  (alpha, beta : SPFnt {dom} {cod} f g) ->
+  SPntEqPos {dom} {cod} {f} {g} alpha beta ->
+  Type
+SPntEqDir {dom} {cod} {f} {g} alpha beta eqpos =
+  (ec : cod) -> (ep : spfdPos f ec) -> (ed : dom) ->
+  (dd : spfdDir g ec (spOnPos alpha ec ep) ed) ->
+  spOnDir alpha ec ep ed dd =
+    spOnDir beta ec ep ed (rewrite sym (eqpos ec ep) in dd)
+
+public export
+SPntEq : {dom, cod : Type} -> {f, g : SPFData dom cod} ->
+  SPFnt {dom} {cod} f g -> SPFnt {dom} {cod} f g -> Type
+SPntEq {dom} {cod} {f} {g} alpha beta =
+  DPair
+    (SPntEqPos {dom} {cod} {f} {g} alpha beta)
+    (SPntEqDir {dom} {cod} {f} {g} alpha beta)
+
 --------------------------------------------------------------------
 ---- Interpretation of slice polynomial natural transformations ----
 --------------------------------------------------------------------
@@ -3394,6 +3419,43 @@ SPFDvertCoslInj : {dom, cod : Type} ->
   SPFnt p (SPFDvertCoslBase {dom} {cod} p dir)
 SPFDvertCoslInj {dom} {cod} p dir =
   SPFDm (sliceId {a=cod} $ spfdPos p) (SPFDvertCoslToVertNT {dom} {cod} p dir)
+
+-------------------------------
+---- General slice objects ----
+-------------------------------
+
+public export
+SPFDslObj : {dom, cod : Type} -> SPFData dom cod -> Type
+SPFDslObj {dom} {cod} = Sigma {a=(SPFData dom cod)} . flip (SPFnt {dom} {cod})
+
+public export
+SPFDslTot : {dom, cod : Type} -> {b : SPFData dom cod} ->
+  SPFDslObj {dom} {cod} b -> SPFData dom cod
+SPFDslTot {dom} {cod} {b} = DPair.fst
+
+public export
+SPFDslProj : {dom, cod : Type} -> {b : SPFData dom cod} ->
+  (sl : SPFDslObj {dom} {cod} b) -> SPFnt {dom} {cod} (SPFDslTot sl) b
+SPFDslProj {dom} {cod} {b} = DPair.snd
+
+public export
+SPFDslMorBase : {dom, cod : Type} -> {b : SPFData dom cod} ->
+  IntMorSig (SPFDslObj {dom} {cod} b)
+SPFDslMorBase {dom} {cod} {b} sx sy =
+  SPFnt {dom} {cod}
+    (SPFDslTot {dom} {cod} {b} sx)
+    (SPFDslTot {dom} {cod} {b} sy)
+
+public export
+SPFDslMorComm : {dom, cod : Type} -> {b : SPFData dom cod} ->
+  {sx, sy : SPFDslObj {dom} {cod} b} ->
+  SPFDslMorBase {dom} {cod} {b} sx sy -> Type
+SPFDslMorComm {dom} {cod} {b} {sx} {sy} m =
+  SPntEq {dom} {cod} {f=(SPFDslTot sx)} {g=b}
+    (SPFDslProj {dom} {cod} {b} sx)
+    (SPNTvcomp {dom} {cod} (SPFDslTot sx) (SPFDslTot sy) b
+      (SPFDslProj {dom} {cod} {b} sy)
+      m)
 
 ---------------------------------------------------
 ---- Vertical-Cartesian factorization of cells ----
