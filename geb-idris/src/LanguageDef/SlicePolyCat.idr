@@ -3597,6 +3597,17 @@ spfdSlComp {dom} {cod} {b} {sx} {sy} {sz} beta alpha =
     (spfdSlMorBase beta) (spfdSlMorBase alpha) **
    spfdSlCompComm {dom} {cod} {b} {sx} {sy} {sz} beta alpha)
 
+public export
+SPFDsliceCat : {dom, cod : Type} -> (b : SPFData dom cod) -> IntCatSig
+SPFDsliceCat {dom} {cod} b =
+  ICat
+    (SPFDslObj {dom} {cod} b)
+  $ MICS
+    (SPFDslMor {dom} {cod} {b})
+  $ ICS
+    (spfdSlId {dom} {cod} {b})
+    (\sx, sy, sz => spfdSlComp {dom} {cod} {b} {sx} {sy} {sz})
+
 ---------------------------------------------------
 ---- Vertical-Cartesian factorization of cells ----
 ---------------------------------------------------
