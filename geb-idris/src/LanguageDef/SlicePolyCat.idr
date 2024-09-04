@@ -3434,9 +3434,30 @@ SPFDslTot : {dom, cod : Type} -> {b : SPFData dom cod} ->
 SPFDslTot {dom} {cod} {b} = DPair.fst
 
 public export
+SPFDslPos : {dom, cod : Type} -> {b : SPFData dom cod} ->
+  SPFDslObj {dom} {cod} b -> SliceObj cod
+SPFDslPos {dom} {cod} {b} sl = spfdPos (SPFDslTot sl)
+
+public export
+SPFDslDir : {dom, cod : Type} -> {b : SPFData dom cod} ->
+  (sl : SPFDslObj {dom} {cod} b) -> SPFdirType dom cod (SPFDslPos sl)
+SPFDslDir {dom} {cod} {b} sl = spfdDir (SPFDslTot sl)
+
+public export
 SPFDslProj : {dom, cod : Type} -> {b : SPFData dom cod} ->
   (sl : SPFDslObj {dom} {cod} b) -> SPFnt {dom} {cod} (SPFDslTot sl) b
 SPFDslProj {dom} {cod} {b} = DPair.snd
+
+public export
+SPFDslOnPos : {dom, cod : Type} -> {b : SPFData dom cod} ->
+  (sl : SPFDslObj {dom} {cod} b) -> SPFntPos {dom} {cod} (SPFDslTot sl) b
+SPFDslOnPos {dom} {cod} {b} sl = spOnPos (SPFDslProj sl)
+
+public export
+SPFDslOnDir : {dom, cod : Type} -> {b : SPFData dom cod} ->
+  (sl : SPFDslObj {dom} {cod} b) ->
+  SPFntDir {dom} {cod} (SPFDslTot sl) b (SPFDslOnPos sl)
+SPFDslOnDir {dom} {cod} {b} sl = spOnDir (SPFDslProj sl)
 
 public export
 SPFDslMorBase : {dom, cod : Type} -> {b : SPFData dom cod} ->
@@ -3456,6 +3477,31 @@ SPFDslMorComm {dom} {cod} {b} {sx} {sy} m =
     (SPNTvcomp {dom} {cod} (SPFDslTot sx) (SPFDslTot sy) b
       (SPFDslProj {dom} {cod} {b} sy)
       m)
+
+public export
+SPFDslMor : {dom, cod : Type} -> {b : SPFData dom cod} ->
+  IntMorSig (SPFDslObj {dom} {cod} b)
+SPFDslMor {dom} {cod} {b} sx sy =
+  DPair
+    (SPFDslMorBase {dom} {cod} {b} sx sy)
+    (SPFDslMorComm {dom} {cod} {b} {sx} {sy})
+
+public export
+spfdSlIdBase : {dom, cod : Type} -> {b : SPFData dom cod} ->
+  (sl : SPFDslObj {dom} {cod} b) -> SPFDslMorBase {dom} {cod} {b} sl sl
+spfdSlIdBase {dom} {cod} {b} sl =
+  SPFDm (sliceId $ SPFDslPos sl) (\ec, ep => sliceId $ SPFDslDir sl ec ep)
+
+public export
+spfdSlIdComm : {dom, cod : Type} -> {b : SPFData dom cod} ->
+  (sl : SPFDslObj {dom} {cod} b) ->
+  SPFDslMorComm {dom} {cod} {b} {sx=sl} {sy=sl} (spfdSlIdBase sl)
+spfdSlIdComm {dom} {cod} {b} sl = (\_, _ => Refl ** \_, _, _, _ => Refl)
+
+public export
+spfdSlId : {dom, cod : Type} -> {b : SPFData dom cod} ->
+  (sl : SPFDslObj {dom} {cod} b) -> SPFDslMor {dom} {cod} {b} sl sl
+spfdSlId {dom} {cod} {b} sl = (spfdSlIdBase sl ** spfdSlIdComm sl)
 
 ---------------------------------------------------
 ---- Vertical-Cartesian factorization of cells ----
