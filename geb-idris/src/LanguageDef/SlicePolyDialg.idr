@@ -681,6 +681,12 @@ data SPDynSysMorF : {x : Type} -> (f : SPFData x x) ->
     SPDynSysMorF {x} f (SPDynSysBunDom {x} {f} bun) (SPDynSysBunCod {x} {f} bun)
 
 public export
+SPDynSysMorFBun : {x : Type} -> {f : SPFData x x} ->
+    {sysd, sysc : spfdDynSys {x} f} ->
+    SPDynSysMorF {x} f sysd sysc -> SPDynSysBun {x} f
+SPDynSysMorFBun {x} {f} (SDSm bun) = bun
+
+public export
 SPCoalgMorF : {x : Type} -> (f : SPFData x x) -> IntMorSig (SPCoalg {x} f)
 SPCoalgMorF {x} f a b =
   SPDynSysMorF {x} f (spfdCoalgToDynSys {x} f a) (spfdCoalgToDynSys {x} f b)
