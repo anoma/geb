@@ -548,6 +548,35 @@ spMonSlGenEl : {dom, cod : Type} ->
 spMonSlGenEl {dom} {cod} p sl =
   DPair (SliceObj cod) (spMonSlMor {dom} {cod} p sl)
 
+public export
+spMonSlGenElDom : {dom, cod : Type} ->
+  {p : SPFData dom cod} -> {sl : spfdMonSl {dom} {cod} p} ->
+  spMonSlGenEl {dom} {cod} p sl -> SliceObj cod
+spMonSlGenElDom {dom} {cod} {p} {sl} = DPair.fst
+
+public export
+spMonSlGenElMor : {dom, cod : Type} ->
+  {p : SPFData dom cod} -> {sl : spfdMonSl {dom} {cod} p} ->
+  (el : spMonSlGenEl {dom} {cod} p sl) ->
+  spMonSlMor {dom} {cod} p sl (spMonSlGenElDom {dom} {cod} {p} {sl} el)
+spMonSlGenElMor {dom} {cod} {p} {sl} = DPair.snd
+
+public export
+spMonSlGenElPosChange : {dom, cod : Type} ->
+  {p : SPFData dom cod} -> {sl : spfdMonSl {dom} {cod} p} ->
+  (el : spMonSlGenEl {dom} {cod} p sl) ->
+  spMonSlMultiIdx {dom} {cod} p sl (spMonSlGenElDom {dom} {cod} {p} {sl} el)
+spMonSlGenElPosChange {dom} {cod} {p} {sl} el = DPair.fst $ DPair.snd el
+
+public export
+spMonSlGenElDirChange : {dom, cod : Type} -> {p : SPFData dom cod} ->
+  {sl : spfdMonSl {dom} {cod} p} ->
+  (el : spMonSlGenEl {dom} {cod} p sl) ->
+  spMonSlDirChange {dom} {cod} {p} sl
+    (spMonSlGenElDom {dom} {cod} {p} {sl} el)
+    (spMonSlGenElPosChange {dom} {cod} {p} {sl} el)
+spMonSlGenElDirChange {dom} {cod} {p} {sl} el = DPair.snd $ DPair.snd el
+
 -- Given a dynamical system, the following data determine a slice
 -- object of it -- that is, another dynamical system with the same
 -- polynomial functor, together with a morphism from that system to
