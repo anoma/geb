@@ -3487,6 +3487,60 @@ SPFDslMor {dom} {cod} {b} sx sy =
     (SPFDslMorComm {dom} {cod} {b} {sx} {sy})
 
 public export
+spfdSlMorBase : {dom, cod : Type} -> {b : SPFData dom cod} ->
+  {sx, sy : SPFDslObj {dom} {cod} b} ->
+  SPFDslMor {dom} {cod} {b} sx sy ->
+  SPFDslMorBase {dom} {cod} {b} sx sy
+spfdSlMorBase {dom} {cod} {b} {sx} {sy} = DPair.fst
+
+public export
+spfdSlMorOnPos : {dom, cod : Type} -> {b : SPFData dom cod} ->
+  {sx, sy : SPFDslObj {dom} {cod} b} ->
+  SPFDslMor {dom} {cod} {b} sx sy ->
+  SPFntPos {dom} {cod} (SPFDslTot sx) (SPFDslTot sy)
+spfdSlMorOnPos {dom} {cod} {b} {sx} {sy} m = spOnPos (spfdSlMorBase m)
+
+public export
+spfdSlMorOnDir : {dom, cod : Type} -> {b : SPFData dom cod} ->
+  {sx, sy : SPFDslObj {dom} {cod} b} ->
+  (m : SPFDslMor {dom} {cod} {b} sx sy) ->
+  SPFntDir {dom} {cod} (SPFDslTot sx) (SPFDslTot sy)
+    (spfdSlMorOnPos {dom} {cod} {b} {sx} {sy} m)
+spfdSlMorOnDir {dom} {cod} {b} {sx} {sy} m = spOnDir (spfdSlMorBase m)
+
+public export
+spfdSlMorComm : {dom, cod : Type} -> {b : SPFData dom cod} ->
+  {sx, sy : SPFDslObj {dom} {cod} b} ->
+  (m : SPFDslMor {dom} {cod} {b} sx sy) ->
+  SPFDslMorComm {dom} {cod} {b} {sx} {sy} (spfdSlMorBase {sx} {sy} m)
+spfdSlMorComm {dom} {cod} {b} {sx} {sy} = DPair.snd
+
+public export
+spfdSlPosComm : {dom, cod : Type} -> {b : SPFData dom cod} ->
+  {sx, sy : SPFDslObj {dom} {cod} b} ->
+  (m : SPFDslMor {dom} {cod} {b} sx sy) ->
+  SPntEqPos {dom} {cod} {f=(SPFDslTot sx)} {g=b}
+    (SPFDslProj {dom} {cod} {b} sx)
+    (SPNTvcomp {dom} {cod} (SPFDslTot sx) (SPFDslTot sy) b
+      (SPFDslProj {dom} {cod} {b} sy)
+      (spfdSlMorBase {dom} {cod} {b} {sx} {sy} m))
+spfdSlPosComm {dom} {cod} {b} {sx} {sy} m =
+  DPair.fst $ spfdSlMorComm {dom} {cod} {b} {sx} {sy} m
+
+public export
+spfdSlDirComm : {dom, cod : Type} -> {b : SPFData dom cod} ->
+  {sx, sy : SPFDslObj {dom} {cod} b} ->
+  (m : SPFDslMor {dom} {cod} {b} sx sy) ->
+  SPntEqDir {dom} {cod} {f=(SPFDslTot sx)} {g=b}
+    (SPFDslProj {dom} {cod} {b} sx)
+    (SPNTvcomp {dom} {cod} (SPFDslTot sx) (SPFDslTot sy) b
+      (SPFDslProj {dom} {cod} {b} sy)
+      (spfdSlMorBase {dom} {cod} {b} {sx} {sy} m))
+    (spfdSlPosComm {dom} {cod} {b} {sx} {sy} m)
+spfdSlDirComm {dom} {cod} {b} {sx} {sy} m =
+  DPair.snd $ spfdSlMorComm {dom} {cod} {b} {sx} {sy} m
+
+public export
 spfdSlIdBase : {dom, cod : Type} -> {b : SPFData dom cod} ->
   (sl : SPFDslObj {dom} {cod} b) -> SPFDslMorBase {dom} {cod} {b} sl sl
 spfdSlIdBase {dom} {cod} {b} sl =
@@ -3502,6 +3556,46 @@ public export
 spfdSlId : {dom, cod : Type} -> {b : SPFData dom cod} ->
   (sl : SPFDslObj {dom} {cod} b) -> SPFDslMor {dom} {cod} {b} sl sl
 spfdSlId {dom} {cod} {b} sl = (spfdSlIdBase sl ** spfdSlIdComm sl)
+
+public export
+spfdSlCompBase : {dom, cod : Type} -> {b : SPFData dom cod} ->
+  {sx, sy, sz : SPFDslObj {dom} {cod} b} ->
+  SPFDslMorBase {dom} {cod} {b} sy sz ->
+  SPFDslMorBase {dom} {cod} {b} sx sy ->
+  SPFDslMorBase {dom} {cod} {b} sx sz
+spfdSlCompBase {dom} {cod} {b} {sx} {sy} {sz} =
+  SPNTvcomp (SPFDslTot sx) (SPFDslTot sy) (SPFDslTot sz)
+
+public export
+spfdSlCompComm : {dom, cod : Type} -> {b : SPFData dom cod} ->
+  {sx, sy, sz : SPFDslObj {dom} {cod} b} ->
+  (beta : SPFDslMor {dom} {cod} {b} sy sz) ->
+  (alpha : SPFDslMor {dom} {cod} {b} sx sy) ->
+  SPFDslMorComm {dom} {cod} {b} {sx} {sy=sz}
+    (spfdSlCompBase {sx} {sy} {sz}
+      (spfdSlMorBase {sx=sy} {sy=sz} beta) (spfdSlMorBase {sx} {sy} alpha))
+spfdSlCompComm {dom} {cod} {b} {sx} {sy} {sz} beta alpha =
+  (\ec, ep =>
+    trans
+      (spfdSlPosComm alpha ec ep)
+      (spfdSlPosComm beta ec $ (spfdSlMorOnPos alpha ec ep)) **
+   \ec, ep, ed, dd =>
+    trans
+      (spfdSlDirComm alpha ec ep ed dd)
+      (cong (spfdSlMorOnDir alpha ec ep ed) $
+       spfdSlDirComm beta ec (spfdSlMorOnPos alpha ec ep) ed
+        (replace {p=(flip (spfdDir b ec) ed)} (spfdSlPosComm alpha ec ep) dd)))
+
+public export
+spfdSlComp : {dom, cod : Type} -> {b : SPFData dom cod} ->
+  {sx, sy, sz : SPFDslObj {dom} {cod} b} ->
+  SPFDslMor {dom} {cod} {b} sy sz ->
+  SPFDslMor {dom} {cod} {b} sx sy ->
+  SPFDslMor {dom} {cod} {b} sx sz
+spfdSlComp {dom} {cod} {b} {sx} {sy} {sz} beta alpha =
+  (spfdSlCompBase {dom} {cod} {b} {sx} {sy} {sz}
+    (spfdSlMorBase beta) (spfdSlMorBase alpha) **
+   spfdSlCompComm {dom} {cod} {b} {sx} {sy} {sz} beta alpha)
 
 ---------------------------------------------------
 ---- Vertical-Cartesian factorization of cells ----
