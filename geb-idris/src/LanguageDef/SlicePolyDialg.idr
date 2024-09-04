@@ -626,8 +626,13 @@ spDynSysSlOnDir :
   (sl : spDynSysSl {x} f sys) ->
   (ex : x) -> (esl : fst sl ex) ->
   SliceMorphism {a=x}
-    (spfdDir f ex (spOnPos (snd sys) ex (fst (snd sl) ex esl)))
-    (fst sl)
+    (spfdDir f
+      ex
+      (spOnPos
+        (SPDynSysAct {x} f sys)
+        ex
+        (spDynSysSlPosChange {x} {f} {sys} sl ex esl)))
+    (spDynSysSlCarrier {x} {f} {sys} sl)
 spDynSysSlOnDir {x} {f} {sys=(b ** SPFDm bpos bdir)} (a ** mab ** dc)
   ex esl ex' dd =
     dc ex' (ex ** esl ** dd) ex' $ bdir ex (mab ex esl) ex' dd
