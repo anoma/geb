@@ -482,6 +482,12 @@ spfdDynSysPosChangeDir {x} {f} sys {pos} =
 -- base functor of a slice object along an on-positions function which is
 -- a composition with the on-positions component of the slice object's
 -- projection.
+--
+-- That makes it the intermediate object of a natural transformation
+-- from a functor whose positions are specified by `pos` but whose
+-- directions have not yet been specified, where that natural transformation
+-- is a precomposition of a natural transformation to the total space
+-- of the slice object, before the projection morphism of the slice object.
 public export
 spMonSlSPFchange : {dom, cod : Type} ->
   {p : SPFData dom cod} -> (sl : spfdMonSl {dom} {cod} p) ->
@@ -536,6 +542,12 @@ spDynSysSlMor : {x : Type} ->
 spDynSysSlMor {x} f sys a =
   spMonSlMor {dom=x} {cod=x} f (spfdDynSysToMonSl {x} {p=f} sys) a
 
+public export
+spMonSlGenEl : {dom, cod : Type} ->
+  (p : SPFData dom cod) -> spfdMonSl {dom} {cod} p -> Type
+spMonSlGenEl {dom} {cod} p sl =
+  DPair (SliceObj cod) (spMonSlMor {dom} {cod} p sl)
+
 -- Given a dynamical system, the following data determine a slice
 -- object of it -- that is, another dynamical system with the same
 -- polynomial functor, together with a morphism from that system to
@@ -546,7 +558,8 @@ spDynSysSlMor {x} f sys a =
 -- of a morphism between the corresponding dynamical systems.
 public export
 spDynSysSl : {x : Type} -> (f : SPFData x x) -> spfdDynSys {x} f -> Type
-spDynSysSl {x} f sys = DPair (SliceObj x) (spDynSysSlMor {x} f sys)
+spDynSysSl {x} f sys =
+  spMonSlGenEl {dom=x} {cod=x} f $ spfdDynSysToMonSl {x} {p=f} sys
 
 public export
 spDynSysSlCarrier :
