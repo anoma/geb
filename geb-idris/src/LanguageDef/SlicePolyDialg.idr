@@ -358,82 +358,82 @@ spfdMonSlEquivMonNTproj fext {dom} {cod} {p}
 -- of Interaction_:  a "dynamical system" is a lens (natural transformation)
 -- whose domain is a symmetric monomial.
 public export
-spfdDynSysAct : {x : Type} -> (sl : SliceObj x) -> SPFData x x -> Type
-spfdDynSysAct {x} sl = spfdMonCovarRep {dom=x} {cod=x} sl sl
+spfdDynSysIF : {x : Type} -> (sl : SliceObj x) -> SPFData x x -> Type
+spfdDynSysIF {x} sl = spfdMonCovarRep {dom=x} {cod=x} sl sl
 
 public export
 spfdDynSys : {x : Type} -> SPFData x x -> Type
-spfdDynSys {x} p = (sl : SliceObj x ** spfdDynSysAct {x} sl p)
+spfdDynSys {x} p = (sl : SliceObj x ** spfdDynSysIF {x} sl p)
 
 public export
-SPDynSysCoeff : {x : Type} -> (f : SPFData x x) ->
+SPDynSysState : {x : Type} -> (f : SPFData x x) ->
   spfdDynSys {x} f -> SliceObj x
-SPDynSysCoeff {x} f = DPair.fst
+SPDynSysState {x} f = DPair.fst
 
 public export
-SPDynSysAct : {x : Type} -> (f : SPFData x x) -> (sys : spfdDynSys {x} f) ->
-  spfdDynSysAct {x} (SPDynSysCoeff f sys) f
-SPDynSysAct {x} f = DPair.snd
+SPDynSysIF : {x : Type} -> (f : SPFData x x) -> (sys : spfdDynSys {x} f) ->
+  spfdDynSysIF {x} (SPDynSysState f sys) f
+SPDynSysIF {x} f = DPair.snd
 
 public export
 spfdDynSysToMonSl : {x : Type} -> {p : SPFData x x} ->
   spfdDynSys {x} p -> spfdMonSl {dom=x} {cod=x} p
 spfdDynSysToMonSl {x} {p} sys =
-  (SPDynSysCoeff {x} p sys ** SPDynSysCoeff {x} p sys ** SPDynSysAct {x} p sys)
+  (SPDynSysState {x} p sys ** SPDynSysState {x} p sys ** SPDynSysIF {x} p sys)
 
 public export
 SPDynSysOnPos : {x : Type} -> (f : SPFData x x) -> (sys : spfdDynSys {x} f) ->
-  SPFDmultiR1 {cod=x} (spfdPos f) (SPDynSysCoeff {x} f sys)
-SPDynSysOnPos {x} f sys = spOnPos (SPDynSysAct f sys)
+  SPFDmultiR1 {cod=x} (spfdPos f) (SPDynSysState {x} f sys)
+SPDynSysOnPos {x} f sys = spOnPos (SPDynSysIF f sys)
 
 public export
 SPDynSysOnDir : {x : Type} -> {f : SPFData x x} ->
   (sys : spfdDynSys {x} f) ->
   SPFDmultiR2 {dom=x} {cod=x} f
-    {b=(SPDynSysCoeff {x} f sys)}
+    {b=(SPDynSysState {x} f sys)}
     (SPDynSysOnPos {x} f sys)
-    (SPDynSysCoeff {x} f sys)
-SPDynSysOnDir {x} {f} sys = spOnDir (SPDynSysAct f sys)
+    (SPDynSysState {x} f sys)
+SPDynSysOnDir {x} {f} sys = spOnDir (SPDynSysIF f sys)
 
 public export
-spfdDynSysActToCoalgAct : {x : Type} ->
+spfdDynSysIFToCoalgAct : {x : Type} ->
   (coeff : SliceObj x) -> (p : SPFData x x) ->
-  spfdDynSysAct {x} coeff p -> spfdCoalgAction {x} p coeff
-spfdDynSysActToCoalgAct {x} coeff = spfdMonNTtoInj {dom=x} {cod=x} coeff coeff
+  spfdDynSysIF {x} coeff p -> spfdCoalgAction {x} p coeff
+spfdDynSysIFToCoalgAct {x} coeff = spfdMonNTtoInj {dom=x} {cod=x} coeff coeff
 
 public export
-spfdDynSysActToCoalg : {x : Type} ->
+spfdDynSysIFToCoalg : {x : Type} ->
   (coeff : SliceObj x) -> (p : SPFData x x) ->
-  spfdDynSysAct {x} coeff p -> SPCoalg {x} p
-spfdDynSysActToCoalg {x} coeff p sys =
-  (coeff ** spfdDynSysActToCoalgAct {x} coeff p sys)
+  spfdDynSysIF {x} coeff p -> SPCoalg {x} p
+spfdDynSysIFToCoalg {x} coeff p sys =
+  (coeff ** spfdDynSysIFToCoalgAct {x} coeff p sys)
 
 public export
-spfdCoalgActToDynSysAct : {x : Type} ->
+spfdCoalgActToDynSysIF : {x : Type} ->
   (coeff : SliceObj x) -> (p : SPFData x x) ->
-  spfdCoalgAction {x} p coeff -> spfdDynSysAct {x} coeff p
-spfdCoalgActToDynSysAct {x} coeff = spfdInjToMonNT {dom=x} {cod=x} coeff coeff
+  spfdCoalgAction {x} p coeff -> spfdDynSysIF {x} coeff p
+spfdCoalgActToDynSysIF {x} coeff = spfdInjToMonNT {dom=x} {cod=x} coeff coeff
 
 public export
-spfdCoalgToDynSysAct : {x : Type} ->
+spfdCoalgToDynSysIF : {x : Type} ->
   (p : SPFData x x) -> (coalg : SPCoalg {x} p) ->
-  spfdDynSysAct {x} (SPCoalgCarrier {f=p} coalg) p
-spfdCoalgToDynSysAct {x} p coalg =
-  spfdCoalgActToDynSysAct {x} (SPCoalgCarrier coalg) p (SPCoalgAction coalg)
+  spfdDynSysIF {x} (SPCoalgCarrier {f=p} coalg) p
+spfdCoalgToDynSysIF {x} p coalg =
+  spfdCoalgActToDynSysIF {x} (SPCoalgCarrier coalg) p (SPCoalgAction coalg)
 
 public export
 spfdDynSysToCoalg : {x : Type} ->
   (p : SPFData x x) -> spfdDynSys {x} p -> SPCoalg {x} p
 spfdDynSysToCoalg {x} p sys =
-  (SPDynSysCoeff p sys **
-   snd $ spfdDynSysActToCoalg (SPDynSysCoeff p sys) p (SPDynSysAct p sys))
+  (SPDynSysState p sys **
+   snd $ spfdDynSysIFToCoalg (SPDynSysState p sys) p (SPDynSysIF p sys))
 
 public export
 spfdCoalgToDynSys : {x : Type} ->
   (p : SPFData x x) -> (coalg : SPCoalg {x} p) -> spfdDynSys {x} p
 spfdCoalgToDynSys {x} p coalg =
   (SPCoalgCarrier coalg **
-   spfdCoalgActToDynSysAct {x} (SPCoalgCarrier coalg) p (SPCoalgAction coalg))
+   spfdCoalgActToDynSysIF {x} (SPCoalgCarrier coalg) p (SPCoalgAction coalg))
 
 -- Formula 6.66 from _Polynomial Functors: A Mathematical Theory of
 -- Interaction_.
@@ -477,11 +477,11 @@ spMonSlCoeffCovarHom {dom} {cod} p sl =
   SliceMorphism {a=cod} (spfdMonSlCoeff {dom} {cod} {p} sl)
 
 public export
-spDynSysCoeffCovarHom : {x : Type} ->
+spDynSysStateCovarHom : {x : Type} ->
   (f : SPFData x x) -> (sys : spfdDynSys {x} f) ->
   (a : SliceObj x) -> Type
-spDynSysCoeffCovarHom {x} f sys =
-  SliceMorphism {a=x} (SPDynSysCoeff f sys)
+spDynSysStateCovarHom {x} f sys =
+  SliceMorphism {a=x} (SPDynSysState f sys)
 
 -- Given an on-positions function into the total space of a monomial
 -- slice object, this composes the projection after it to produce
@@ -675,7 +675,7 @@ spDynSysSlOnDir :
     (spfdDir f
       ex
       (spOnPos
-        (SPDynSysAct {x} f sys)
+        (SPDynSysIF {x} f sys)
         ex
         (spDynSysSlPosChange {x} {f} {sys} sl ex esl)))
     (spDynSysSlCarrier {x} {f} {sys} sl)
@@ -687,7 +687,7 @@ public export
 spDynSysSlAct :
   {x : Type} -> {f : SPFData x x} -> {sys : spfdDynSys {x} f} ->
   (sl : spDynSysSl {x} f sys) ->
-  spfdDynSysAct {x} (spDynSysSlCarrier {x} {f} {sys} sl) f
+  spfdDynSysIF {x} (spDynSysSlCarrier {x} {f} {sys} sl) f
 spDynSysSlAct {x} {f} {sys} sl =
   SPFDm (spDynSysSlOnPos {x} {f} {sys} sl) (spDynSysSlOnDir {x} {f} {sys} sl)
 
