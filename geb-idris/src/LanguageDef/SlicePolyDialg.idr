@@ -358,12 +358,12 @@ spfdMonSlEquivMonNTproj fext {dom} {cod} {p}
 -- of Interaction_:  a "dynamical system" is a lens (natural transformation)
 -- whose domain is a symmetric monomial.
 public export
-spfdDynSysIF : {x : Type} -> (sl : SliceObj x) -> SPFData x x -> Type
-spfdDynSysIF {x} sl = spfdMonCovarRep {dom=x} {cod=x} sl sl
+spfdDynSysLens : {x : Type} -> (sl : SliceObj x) -> SPFData x x -> Type
+spfdDynSysLens {x} sl = spfdMonCovarRep {dom=x} {cod=x} sl sl
 
 public export
 spfdDynSys : {x : Type} -> SPFData x x -> Type
-spfdDynSys {x} p = (sl : SliceObj x ** spfdDynSysIF {x} sl p)
+spfdDynSys {x} p = (sl : SliceObj x ** spfdDynSysLens {x} sl p)
 
 -- When we interpret a lens whose domain is a symmetric monomial as
 -- a dynamical system, the coefficient (which is the same as the degree,
@@ -377,7 +377,7 @@ SPDynSysState {x} f = DPair.fst
 -- a dynamical system, the codomain monomial is the interface.
 public export
 SPDynSysIF : {x : Type} -> (f : SPFData x x) -> (sys : spfdDynSys {x} f) ->
-  spfdDynSysIF {x} (SPDynSysState f sys) f
+  spfdDynSysLens {x} (SPDynSysState f sys) f
 SPDynSysIF {x} f = DPair.snd
 
 public export
@@ -407,26 +407,26 @@ SPDynSysUpdate {x} {f} sys = spOnDir (SPDynSysIF f sys)
 public export
 spfdDynSysIFToCoalgAct : {x : Type} ->
   (coeff : SliceObj x) -> (p : SPFData x x) ->
-  spfdDynSysIF {x} coeff p -> spfdCoalgAction {x} p coeff
+  spfdDynSysLens {x} coeff p -> spfdCoalgAction {x} p coeff
 spfdDynSysIFToCoalgAct {x} coeff = spfdMonNTtoInj {dom=x} {cod=x} coeff coeff
 
 public export
 spfdDynSysIFToCoalg : {x : Type} ->
   (coeff : SliceObj x) -> (p : SPFData x x) ->
-  spfdDynSysIF {x} coeff p -> SPCoalg {x} p
+  spfdDynSysLens {x} coeff p -> SPCoalg {x} p
 spfdDynSysIFToCoalg {x} coeff p sys =
   (coeff ** spfdDynSysIFToCoalgAct {x} coeff p sys)
 
 public export
 spfdCoalgActToDynSysIF : {x : Type} ->
   (coeff : SliceObj x) -> (p : SPFData x x) ->
-  spfdCoalgAction {x} p coeff -> spfdDynSysIF {x} coeff p
+  spfdCoalgAction {x} p coeff -> spfdDynSysLens {x} coeff p
 spfdCoalgActToDynSysIF {x} coeff = spfdInjToMonNT {dom=x} {cod=x} coeff coeff
 
 public export
 spfdCoalgToDynSysIF : {x : Type} ->
   (p : SPFData x x) -> (coalg : SPCoalg {x} p) ->
-  spfdDynSysIF {x} (SPCoalgCarrier {f=p} coalg) p
+  spfdDynSysLens {x} (SPCoalgCarrier {f=p} coalg) p
 spfdCoalgToDynSysIF {x} p coalg =
   spfdCoalgActToDynSysIF {x} (SPCoalgCarrier coalg) p (SPCoalgAction coalg)
 
@@ -696,7 +696,7 @@ public export
 spDynSysSlAct :
   {x : Type} -> {f : SPFData x x} -> {sys : spfdDynSys {x} f} ->
   (sl : spDynSysSl {x} f sys) ->
-  spfdDynSysIF {x} (spDynSysSlCarrier {x} {f} {sys} sl) f
+  spfdDynSysLens {x} (spDynSysSlCarrier {x} {f} {sys} sl) f
 spDynSysSlAct {x} {f} {sys} sl =
   SPFDm (spDynSysSlOnPos {x} {f} {sys} sl) (spDynSysSlOnDir {x} {f} {sys} sl)
 
