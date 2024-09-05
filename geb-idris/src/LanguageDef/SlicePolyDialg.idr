@@ -365,11 +365,17 @@ public export
 spfdDynSys : {x : Type} -> SPFData x x -> Type
 spfdDynSys {x} p = (sl : SliceObj x ** spfdDynSysIF {x} sl p)
 
+-- When we interpret a lens whose domain is a symmetric monomial as
+-- a dynamical system, the coefficient (which is the same as the degree,
+-- hence the term "symmetric") of the domain monomial is the type of states.
 public export
 SPDynSysState : {x : Type} -> (f : SPFData x x) ->
   spfdDynSys {x} f -> SliceObj x
 SPDynSysState {x} f = DPair.fst
 
+
+-- When we interpret a lens whose domain is a symmetric monomial as
+-- a dynamical system, the codomain monomial is the interface.
 public export
 SPDynSysIF : {x : Type} -> (f : SPFData x x) -> (sys : spfdDynSys {x} f) ->
   spfdDynSysIF {x} (SPDynSysState f sys) f
