@@ -314,6 +314,46 @@ spfdMonSlOnDir : {dom, cod : Type} -> {p : SPFData dom cod} ->
     (spfdMonSlDegree {dom} {cod} {p} sl)
 spfdMonSlOnDir {dom} {cod} {p} sl = spOnDir $ spfdMonSlProj {dom} {cod} {p} sl
 
+public export
+spfdMonSlmultiR12 : {dom, cod : Type} -> {p : SPFData dom cod} ->
+  (sl : spfdMonSl {dom} {cod} p) ->
+  SPFDmultiR12 {dom} {cod} p (spfdMonSlCoeff {p} sl) (spfdMonSlDegree {p} sl)
+spfdMonSlmultiR12 {dom} {cod} {p} sl =
+  (spfdMonSlOnPos {p} sl ** spfdMonSlOnDir {p} sl)
+
+public export
+spfdMonSlmultiR : {dom, cod : Type} -> {p : SPFData dom cod} ->
+  (sl : spfdMonSl {dom} {cod} p) ->
+  SliceMorphism {a=cod}
+    (spfdMonSlCoeff {p} sl)
+    (SPFDmultiR p $ spfdMonSlDegree {p} sl)
+spfdMonSlmultiR {dom} {cod} {p} sl =
+  SPFDmultiRfrom12 {dom} {cod} {spfd=p}
+    {a=(spfdMonSlDegree {p} sl)}
+    {b=(spfdMonSlCoeff {p} sl)}
+    (spfdMonSlmultiR12 {dom} {cod} {p} sl)
+
+public export
+spfdMonSlEquivMultiRInj : FunExt ->
+  {dom, cod : Type} -> {p : SPFData dom cod} ->
+  (sl : spfdMonSl {dom} {cod} p) ->
+  (spfdMonSlmultiR {dom} {cod} {p} sl) =
+  (spfdMonNTtoInj {dom} {cod}
+    (spfdMonSlCoeff {p} sl) (spfdMonSlDegree {p} sl) p (spfdMonSlProj {p} sl))
+spfdMonSlEquivMultiRInj fext {dom} {cod} {p} sl =
+  funExt $ \ec => funExt $ \ep => Refl
+
+public export
+spfdMonSlEquivMonNTproj : FunExt ->
+  {dom, cod : Type} -> {p : SPFData dom cod} ->
+  (sl : spfdMonSl {dom} {cod} p) ->
+  (spfdMonSlProj {dom} {cod} {p} sl) =
+  (spfdInjToMonNT {dom} {cod}
+    (spfdMonSlCoeff {p} sl) (spfdMonSlDegree {p} sl) p (spfdMonSlmultiR {p} sl))
+spfdMonSlEquivMonNTproj fext {dom} {cod} {p}
+  (coeff ** degree ** SPFDm onpos ondir) =
+    Refl
+
 -- Definition 4.18 from _Polynomial Functors:  A Mathematical Theory
 -- of Interaction_:  a "dynamical system" is a lens (natural transformation)
 -- whose domain is a symmetric monomial.
