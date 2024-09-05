@@ -386,11 +386,15 @@ spfdDynSysToMonSl : {x : Type} -> {p : SPFData x x} ->
 spfdDynSysToMonSl {x} {p} sys =
   (SPDynSysState {x} p sys ** SPDynSysState {x} p sys ** SPDynSysIF {x} p sys)
 
+-- When we interpret a lens whose domain is a symmetric monomial as
+-- a dynamical system, the on-positions function is the "return function".
 public export
 SPDynSysReturn : {x : Type} -> (f : SPFData x x) -> (sys : spfdDynSys {x} f) ->
   SPFDmultiR1 {cod=x} (spfdPos f) (SPDynSysState {x} f sys)
 SPDynSysReturn {x} f sys = spOnPos (SPDynSysIF f sys)
 
+-- When we interpret a lens whose domain is a symmetric monomial as
+-- a dynamical system, the on-positions function is the "update map".
 public export
 SPDynSysUpdate : {x : Type} -> {f : SPFData x x} ->
   (sys : spfdDynSys {x} f) ->
