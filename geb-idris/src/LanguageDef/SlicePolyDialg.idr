@@ -375,22 +375,22 @@ SPDynSysState : {x : Type} -> (f : SPFData x x) ->
 SPDynSysState {x} f = DPair.fst
 
 public export
-SPDynSysIF : {x : Type} -> (f : SPFData x x) -> (sys : spfdDynSys {x} f) ->
+SpDynSysLens : {x : Type} -> (f : SPFData x x) -> (sys : spfdDynSys {x} f) ->
   spfdDynSysLens {x} (SPDynSysState f sys) f
-SPDynSysIF {x} f = DPair.snd
+SpDynSysLens {x} f = DPair.snd
 
 public export
 spfdDynSysToMonSl : {x : Type} -> {p : SPFData x x} ->
   spfdDynSys {x} p -> spfdMonSl {dom=x} {cod=x} p
 spfdDynSysToMonSl {x} {p} sys =
-  (SPDynSysState {x} p sys ** SPDynSysState {x} p sys ** SPDynSysIF {x} p sys)
+  (SPDynSysState {x} p sys ** SPDynSysState {x} p sys ** SpDynSysLens {x} p sys)
 
 -- When we interpret a lens whose domain is a symmetric monomial as
 -- a dynamical system, the on-positions function is the "return function".
 public export
 SPDynSysReturn : {x : Type} -> (f : SPFData x x) -> (sys : spfdDynSys {x} f) ->
   SPFDmultiR1 {cod=x} (spfdPos f) (SPDynSysState {x} f sys)
-SPDynSysReturn {x} f sys = spOnPos (SPDynSysIF f sys)
+SPDynSysReturn {x} f sys = spOnPos (SpDynSysLens f sys)
 
 -- When we interpret a lens whose domain is a symmetric monomial as
 -- a dynamical system, the on-positions function is the "update map".
@@ -401,7 +401,7 @@ SPDynSysUpdate : {x : Type} -> {f : SPFData x x} ->
     {b=(SPDynSysState {x} f sys)}
     (SPDynSysReturn {x} f sys)
     (SPDynSysState {x} f sys)
-SPDynSysUpdate {x} {f} sys = spOnDir (SPDynSysIF f sys)
+SPDynSysUpdate {x} {f} sys = spOnDir (SpDynSysLens f sys)
 
 public export
 spfdDynSysIFToCoalgAct : {x : Type} ->
@@ -434,7 +434,7 @@ spfdDynSysToCoalg : {x : Type} ->
   (p : SPFData x x) -> spfdDynSys {x} p -> SPCoalg {x} p
 spfdDynSysToCoalg {x} p sys =
   (SPDynSysState p sys **
-   snd $ spfdDynSysIFToCoalg (SPDynSysState p sys) p (SPDynSysIF p sys))
+   snd $ spfdDynSysIFToCoalg (SPDynSysState p sys) p (SpDynSysLens p sys))
 
 public export
 spfdCoalgToDynSys : {x : Type} ->
@@ -683,7 +683,7 @@ spDynSysSlOnDir :
     (spfdDir f
       ex
       (spOnPos
-        (SPDynSysIF {x} f sys)
+        (SpDynSysLens {x} f sys)
         ex
         (spDynSysSlPosChange {x} {f} {sys} sl ex esl)))
     (spDynSysSlCarrier {x} {f} {sys} sl)
