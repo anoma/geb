@@ -356,7 +356,8 @@ spfdMonSlEquivMonNTproj fext {dom} {cod} {p}
 
 -- Definition 4.18 from _Polynomial Functors:  A Mathematical Theory
 -- of Interaction_:  a "dynamical system" is a lens (natural transformation)
--- whose domain is a symmetric monomial.
+-- whose domain is a symmetric monomial.  The codomain (which may be any
+-- polynomial functor) is known as the "interface.
 public export
 spfdDynSysLens : {x : Type} -> (sl : SliceObj x) -> SPFData x x -> Type
 spfdDynSysLens {x} sl = spfdMonCovarRep {dom=x} {cod=x} sl sl
