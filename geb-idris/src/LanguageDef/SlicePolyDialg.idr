@@ -404,44 +404,44 @@ SPDynSysUpdate : {x : Type} -> {f : SPFData x x} ->
 SPDynSysUpdate {x} {f} sys = spOnDir (SpDynSysLens f sys)
 
 public export
-spfdDynSysIFToCoalgAct : {x : Type} ->
+spfdDynSysLensToCoalgAct : {x : Type} ->
   (coeff : SliceObj x) -> (p : SPFData x x) ->
   spfdDynSysLens {x} coeff p -> spfdCoalgAction {x} p coeff
-spfdDynSysIFToCoalgAct {x} coeff = spfdMonNTtoInj {dom=x} {cod=x} coeff coeff
+spfdDynSysLensToCoalgAct {x} coeff = spfdMonNTtoInj {dom=x} {cod=x} coeff coeff
 
 public export
-spfdDynSysIFToCoalg : {x : Type} ->
+spfdDynSysLensToCoalg : {x : Type} ->
   (coeff : SliceObj x) -> (p : SPFData x x) ->
   spfdDynSysLens {x} coeff p -> SPCoalg {x} p
-spfdDynSysIFToCoalg {x} coeff p sys =
-  (coeff ** spfdDynSysIFToCoalgAct {x} coeff p sys)
+spfdDynSysLensToCoalg {x} coeff p sys =
+  (coeff ** spfdDynSysLensToCoalgAct {x} coeff p sys)
 
 public export
-spfdCoalgActToDynSysIF : {x : Type} ->
+spfdCoalgActToDynSysLens : {x : Type} ->
   (coeff : SliceObj x) -> (p : SPFData x x) ->
   spfdCoalgAction {x} p coeff -> spfdDynSysLens {x} coeff p
-spfdCoalgActToDynSysIF {x} coeff = spfdInjToMonNT {dom=x} {cod=x} coeff coeff
+spfdCoalgActToDynSysLens {x} coeff = spfdInjToMonNT {dom=x} {cod=x} coeff coeff
 
 public export
-spfdCoalgToDynSysIF : {x : Type} ->
+spfdCoalgToDynSysLens : {x : Type} ->
   (p : SPFData x x) -> (coalg : SPCoalg {x} p) ->
   spfdDynSysLens {x} (SPCoalgCarrier {f=p} coalg) p
-spfdCoalgToDynSysIF {x} p coalg =
-  spfdCoalgActToDynSysIF {x} (SPCoalgCarrier coalg) p (SPCoalgAction coalg)
+spfdCoalgToDynSysLens {x} p coalg =
+  spfdCoalgActToDynSysLens {x} (SPCoalgCarrier coalg) p (SPCoalgAction coalg)
 
 public export
 spfdDynSysToCoalg : {x : Type} ->
   (p : SPFData x x) -> spfdDynSys {x} p -> SPCoalg {x} p
 spfdDynSysToCoalg {x} p sys =
   (SPDynSysState p sys **
-   snd $ spfdDynSysIFToCoalg (SPDynSysState p sys) p (SpDynSysLens p sys))
+   snd $ spfdDynSysLensToCoalg (SPDynSysState p sys) p (SpDynSysLens p sys))
 
 public export
 spfdCoalgToDynSys : {x : Type} ->
   (p : SPFData x x) -> (coalg : SPCoalg {x} p) -> spfdDynSys {x} p
 spfdCoalgToDynSys {x} p coalg =
   (SPCoalgCarrier coalg **
-   spfdCoalgActToDynSysIF {x} (SPCoalgCarrier coalg) p (SPCoalgAction coalg))
+   spfdCoalgActToDynSysLens {x} (SPCoalgCarrier coalg) p (SPCoalgAction coalg))
 
 -- Formula 6.66 from _Polynomial Functors: A Mathematical Theory of
 -- Interaction_.
