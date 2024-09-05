@@ -373,7 +373,6 @@ SPDynSysState : {x : Type} -> (f : SPFData x x) ->
   spfdDynSys {x} f -> SliceObj x
 SPDynSysState {x} f = DPair.fst
 
-
 -- When we interpret a lens whose domain is a symmetric monomial as
 -- a dynamical system, the codomain monomial is the interface.
 public export
