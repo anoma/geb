@@ -387,18 +387,18 @@ spfdDynSysToMonSl {x} {p} sys =
   (SPDynSysState {x} p sys ** SPDynSysState {x} p sys ** SPDynSysIF {x} p sys)
 
 public export
-SPDynSysOnPos : {x : Type} -> (f : SPFData x x) -> (sys : spfdDynSys {x} f) ->
+SPDynSysReturn : {x : Type} -> (f : SPFData x x) -> (sys : spfdDynSys {x} f) ->
   SPFDmultiR1 {cod=x} (spfdPos f) (SPDynSysState {x} f sys)
-SPDynSysOnPos {x} f sys = spOnPos (SPDynSysIF f sys)
+SPDynSysReturn {x} f sys = spOnPos (SPDynSysIF f sys)
 
 public export
-SPDynSysOnDir : {x : Type} -> {f : SPFData x x} ->
+SPDynSysUpdate : {x : Type} -> {f : SPFData x x} ->
   (sys : spfdDynSys {x} f) ->
   SPFDmultiR2 {dom=x} {cod=x} f
     {b=(SPDynSysState {x} f sys)}
-    (SPDynSysOnPos {x} f sys)
+    (SPDynSysReturn {x} f sys)
     (SPDynSysState {x} f sys)
-SPDynSysOnDir {x} {f} sys = spOnDir (SPDynSysIF f sys)
+SPDynSysUpdate {x} {f} sys = spOnDir (SPDynSysIF f sys)
 
 public export
 spfdDynSysIFToCoalgAct : {x : Type} ->
@@ -669,7 +669,7 @@ spDynSysSlOnPos :
   (sl : spDynSysSl {x} f sys) ->
   SliceMorphism {a=x} (spDynSysSlCarrier {x} {f} {sys} sl) (spfdPos f)
 spDynSysSlOnPos {x} {f} {sys} sl =
-  sliceComp {a=x} (SPDynSysOnPos f sys) (spDynSysSlPosChange {x} {f} {sys} sl)
+  sliceComp {a=x} (SPDynSysReturn f sys) (spDynSysSlPosChange {x} {f} {sys} sl)
 
 public export
 spDynSysSlOnDir :
