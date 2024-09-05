@@ -283,6 +283,12 @@ spfdMonSlProj : {dom, cod : Type} -> {p : SPFData dom cod} ->
   (sl : spfdMonSl {dom} {cod} p) -> SPFnt {dom} {cod} (spfdMonSlTot {p} sl) p
 spfdMonSlProj {dom} {cod} {p} sl = DPair.snd $ DPair.snd sl
 
+public export
+spfdMonSlToSl : {dom, cod : Type} -> {p : SPFData dom cod} ->
+  spfdMonSl {dom} {cod} p -> SPFDslObj {dom} {cod} p
+spfdMonSlToSl {dom} {cod} {p} sl =
+  (spfdMonSlTot {dom} {cod} {p} sl ** spfdMonSlProj {dom} {cod} {p} sl)
+
 -- We now see that a monomial slice object of a polynomial functor --
 -- that is to say, a slice object over a polynomial functor whose domain
 -- (total space) is a monomial -- has a projection component (which
