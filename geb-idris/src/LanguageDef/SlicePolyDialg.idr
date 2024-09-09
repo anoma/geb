@@ -354,6 +354,70 @@ spfdMonSlEquivMonNTproj {dom} {cod} {p}
   (coeff ** degree ** SPFDm onpos ondir) =
     Refl
 
+-- A natural transformation between monomials takes a simple,
+-- non-dependent form.
+
+public export
+spfdMonMonNTpos : {cod : Type} -> (dcoeff, ccoeff : SliceObj cod) -> Type
+spfdMonMonNTpos {cod} dcoeff ccoeff = SliceMorphism {a=cod} dcoeff ccoeff
+
+public export
+spfdMonMonNTdir : {cod : Type} ->
+  {dcoeff, ccoeff : SliceObj cod} ->
+  spfdMonMonNTpos {cod} dcoeff ccoeff ->
+  {dom : Type} ->
+  (ddegree, cdegree : SliceObj dom) ->
+  Type
+spfdMonMonNTdir {cod} {dcoeff} {ccoeff} onpos {dom} ddegree cdegree =
+  (ec : cod) -> dcoeff ec -> SliceMorphism {a=dom} cdegree ddegree
+
+public export
+spfdMonMonNT : {dom, cod : Type} ->
+  (dcoeff, ccoeff : SliceObj cod) ->
+  (ddegree, cdegree : SliceObj dom) ->
+  Type
+spfdMonMonNT {dom} {cod} dcoeff ccoeff ddegree cdegree =
+  (onpos : spfdMonMonNTpos {cod} dcoeff ccoeff **
+   spfdMonMonNTdir {cod} onpos {dom} ddegree cdegree)
+
+public export
+spfdMonMonNTonpos : {dom, cod : Type} ->
+  {dcoeff, ccoeff : SliceObj cod} ->
+  {ddegree, cdegree : SliceObj dom} ->
+  spfdMonMonNT {dom} {cod} dcoeff ccoeff ddegree cdegree ->
+  spfdMonMonNTpos {cod} dcoeff ccoeff
+spfdMonMonNTonpos {dom} {cod} {dcoeff} {ccoeff} {ddegree} {cdegree} = DPair.fst
+
+public export
+spfdMonMonNTondir : {dom, cod : Type} ->
+  {dcoeff, ccoeff : SliceObj cod} ->
+  {ddegree, cdegree : SliceObj dom} ->
+  (nt : spfdMonMonNT {dom} {cod} dcoeff ccoeff ddegree cdegree) ->
+  spfdMonMonNTdir {cod} (spfdMonMonNTonpos nt) {dom} ddegree cdegree
+spfdMonMonNTondir {dom} {cod} {dcoeff} {ccoeff} {ddegree} {cdegree} = DPair.snd
+
+public export
+spfdMonMonNTtoSPFnt : {dom, cod : Type} ->
+  {dcoeff, ccoeff : SliceObj cod} ->
+  {ddegree, cdegree : SliceObj dom} ->
+  spfdMonMonNT {dom} {cod} dcoeff ccoeff ddegree cdegree ->
+  SPFnt {dom} {cod}
+    (spfdMonomial {dom} {cod} dcoeff ddegree)
+    (spfdMonomial {dom} {cod} ccoeff cdegree)
+spfdMonMonNTtoSPFnt {dom} {cod} {dcoeff} {ccoeff} {ddegree} {cdegree} nt =
+  SPFDm (spfdMonMonNTonpos nt) (spfdMonMonNTondir nt)
+
+public export
+spfdMonMonNTfromSPFnt : {dom, cod : Type} ->
+  {dcoeff, ccoeff : SliceObj cod} ->
+  {ddegree, cdegree : SliceObj dom} ->
+  SPFnt {dom} {cod}
+    (spfdMonomial {dom} {cod} dcoeff ddegree)
+    (spfdMonomial {dom} {cod} ccoeff cdegree) ->
+  spfdMonMonNT {dom} {cod} dcoeff ccoeff ddegree cdegree
+spfdMonMonNTfromSPFnt {dom} {cod} {dcoeff} {ccoeff} {ddegree} {cdegree} nt =
+  (spOnPos nt ** spOnDir nt)
+
 -- Definition 4.18 from _Polynomial Functors:  A Mathematical Theory
 -- of Interaction_:  a "dynamical system" is a lens (natural transformation)
 -- whose domain is a symmetric monomial.  The codomain (which may be any
