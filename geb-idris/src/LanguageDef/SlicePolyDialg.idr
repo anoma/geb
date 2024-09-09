@@ -344,13 +344,13 @@ spfdMonSlEquivMultiRInj fext {dom} {cod} {p} sl =
   funExt $ \ec => funExt $ \ep => Refl
 
 public export
-spfdMonSlEquivMonNTproj : FunExt ->
+spfdMonSlEquivMonNTproj :
   {dom, cod : Type} -> {p : SPFData dom cod} ->
   (sl : spfdMonSl {dom} {cod} p) ->
   (spfdMonSlProj {dom} {cod} {p} sl) =
   (spfdInjToMonNT {dom} {cod}
     (spfdMonSlCoeff {p} sl) (spfdMonSlDegree {p} sl) p (spfdMonSlmultiR {p} sl))
-spfdMonSlEquivMonNTproj fext {dom} {cod} {p}
+spfdMonSlEquivMonNTproj {dom} {cod} {p}
   (coeff ** degree ** SPFDm onpos ondir) =
     Refl
 
