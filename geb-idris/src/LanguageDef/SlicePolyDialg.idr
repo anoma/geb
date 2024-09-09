@@ -369,7 +369,7 @@ spfdMonMonNTdir : {cod : Type} ->
   (ddegree, cdegree : SliceObj dom) ->
   Type
 spfdMonMonNTdir {cod} {dcoeff} {ccoeff} onpos {dom} ddegree cdegree =
-  (ec : cod) -> dcoeff ec -> SliceMorphism {a=dom} cdegree ddegree
+  Sigma {a=cod} dcoeff -> SliceMorphism {a=dom} cdegree ddegree
 
 public export
 spfdMonMonNT : {dom, cod : Type} ->
@@ -405,7 +405,7 @@ spfdMonMonNTtoSPFnt : {dom, cod : Type} ->
     (spfdMonomial {dom} {cod} dcoeff ddegree)
     (spfdMonomial {dom} {cod} ccoeff cdegree)
 spfdMonMonNTtoSPFnt {dom} {cod} {dcoeff} {ccoeff} {ddegree} {cdegree} nt =
-  SPFDm (spfdMonMonNTonpos nt) (spfdMonMonNTondir nt)
+  SPFDm (spfdMonMonNTonpos nt) (\ec, edc => spfdMonMonNTondir nt (ec ** edc))
 
 public export
 spfdMonMonNTfromSPFnt : {dom, cod : Type} ->
@@ -416,7 +416,7 @@ spfdMonMonNTfromSPFnt : {dom, cod : Type} ->
     (spfdMonomial {dom} {cod} ccoeff cdegree) ->
   spfdMonMonNT {dom} {cod} dcoeff ccoeff ddegree cdegree
 spfdMonMonNTfromSPFnt {dom} {cod} {dcoeff} {ccoeff} {ddegree} {cdegree} nt =
-  (spOnPos nt ** spOnDir nt)
+  (spOnPos nt ** \ecdc => spOnDir nt (fst ecdc) (snd ecdc))
 
 -- Definition 4.18 from _Polynomial Functors:  A Mathematical Theory
 -- of Interaction_:  a "dynamical system" is a lens (natural transformation)
