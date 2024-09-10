@@ -316,6 +316,31 @@ SPFDdiagDirFromPiFL : {x, y : Type} -> (sl : SliceObj (x, y)) ->
 SPFDdiagDirFromPiFL {x} {y} sl sd ec =
   dpMapSnd $ \esl, esd, ey, eqy => rewrite sym eqy in esd
 
+public export
+SPFDdiagDirToPiFLidL : {x, y : Type} -> (sl : SliceObj (x, y)) ->
+  (sy : SliceObj y) ->
+  SliceExtEq {a=x}
+    {s=(SliceSigmaPiFL {c=x} {e=y} sl sy)}
+    {s'=(SliceSigmaPiFL {c=x} {e=y} sl sy)}
+    (sliceComp
+      (SPFDdiagDirToPiFL {x}{y} sl sy)
+      (SPFDdiagDirFromPiFL {x}{y} sl sy))
+    (sliceId {a=x} (SliceSigmaPiFL {c=x} {e=y} sl sy))
+SPFDdiagDirToPiFLidL {x} {y} sl sy ex (esl ** esy) = Refl
+
+public export
+SPFDdiagDirToPiFLidR : FunExt -> {x, y : Type} -> (sl : SliceObj (x, y)) ->
+  (sy : SliceObj y) ->
+  SliceExtEq {a=x}
+    {s=(InterpSPFData {dom=y} {cod=x} (spfdPiFL {x} {y} sl) sy)}
+    {s'=(InterpSPFData {dom=y} {cod=x} (spfdPiFL {x} {y} sl) sy)}
+    (sliceComp
+      (SPFDdiagDirFromPiFL {x}{y} sl sy)
+      (SPFDdiagDirToPiFL {x}{y} sl sy))
+    (sliceId {a=x} (InterpSPFData {dom=y} {cod=x} (spfdPiFL {x} {y} sl) sy))
+SPFDdiagDirToPiFLidR fext {x} {y} sl sy ex ((ey ** esl) ** esy) =
+  dpEq12 Refl $ funExt $ \ey' => funExt $ \Refl => Refl
+
 -------------------
 -------------------
 ---- Constants ----
