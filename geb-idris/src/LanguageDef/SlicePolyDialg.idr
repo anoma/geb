@@ -810,25 +810,94 @@ SPCoalgMorF {x} f a b =
   SPDynSysMorF {x} f (spfdCoalgToDynSys {x} f a) (spfdCoalgToDynSys {x} f b)
 
 public export
-spfdCoalgDom2 :
+spfdCoalgR2 :
   {x : Type} -> (f : SPFData x x) -> {a, b : SliceObj x} ->
   (m : SliceMorphism {a=x} a b) ->
   (b1 : SliceMorphism {a=x} b (spfdPos f)) ->
   Type
-spfdCoalgDom2 {x} f {a} {b} m b1 =
+spfdCoalgR2 {x} f {a} {b} m b1 =
   (ec : x) -> (ep : spfdPos f ec) ->
   SliceMorphism {a=x} (spfdDir f ec ep) a
+
+public export
+spfdCoalgDepMor : {x : Type} -> (f : SPFData x x) -> (a, b : SliceObj x) -> Type
+spfdCoalgDepMor {x} f a b =
+  (m : SliceMorphism {a=x} a b **
+   b1 : SliceMorphism {a=x} b (spfdPos f) **
+   spfdCoalgR2 {x} f {a} {b} m b1)
+
+public export
+spfdCoalgDepMorBase : {x : Type} -> {f : SPFData x x} -> {a, b : SliceObj x} ->
+  spfdCoalgDepMor {x} f a b -> SliceMorphism {a=x} a b
+spfdCoalgDepMorBase {x} {f} {a} {b} = DPair.fst
+
+public export
+spfdCoalgDepMorR1 : {x : Type} -> {f : SPFData x x} -> {a, b : SliceObj x} ->
+  spfdCoalgDepMor {x} f a b -> SliceMorphism {a=x} b (spfdPos f)
+spfdCoalgDepMorR1 {x} {f} {a} {b} dm = DPair.fst $ DPair.snd dm
+
+public export
+spfdCoalgDepMorCod1 : {x : Type} -> {f : SPFData x x} -> {a, b : SliceObj x} ->
+  spfdCoalgDepMor {x} f a b -> SPFDmultiR1 {cod=x} (spfdPos f) b
+spfdCoalgDepMorCod1 = spfdCoalgDepMorR1
+
+public export
+spfdCoalgDepMorDom1 : {x : Type} -> {f : SPFData x x} -> {a, b : SliceObj x} ->
+  spfdCoalgDepMor {x} f a b -> SPFDmultiR1 {cod=x} (spfdPos f) a
+spfdCoalgDepMorDom1 {x} {f} {a} {b} dm =
+  sliceComp {a=x}
+    (spfdCoalgDepMorR1 {x} {f} {a} {b} dm)
+    (spfdCoalgDepMorBase {x} {f} {a} {b} dm)
+
+public export
+spfdCoalgDepMorR2 : {x : Type} -> {f : SPFData x x} -> {a, b : SliceObj x} ->
+  (dm : spfdCoalgDepMor {x} f a b) ->
+  spfdCoalgR2 {x} f {a} {b}
+    (spfdCoalgDepMorBase {x} {f} {a} {b} dm)
+    (spfdCoalgDepMorCod1 {x} {f} {a} {b} dm)
+spfdCoalgDepMorR2 {x} {f} {a} {b} dm = DPair.snd $ DPair.snd dm
+
+public export
+spfdCoalgDepMorDom2 : {x : Type} -> {f : SPFData x x} -> {a, b : SliceObj x} ->
+  (dm : spfdCoalgDepMor {x} f a b) ->
+  SPFDmultiR2 {dom=x} {cod=x} f (spfdCoalgDepMorDom1 {x} {f} {a} {b} dm) a
+spfdCoalgDepMorDom2 {x} {f} {a} {b} dm ec ea =
+  spfdCoalgDepMorR2 dm ec
+  $ spfdCoalgDepMorR1 dm ec
+  $ spfdCoalgDepMorBase dm ec ea
+
+public export
+spfdCoalgDepMorCod2 : {x : Type} -> {f : SPFData x x} -> {a, b : SliceObj x} ->
+  (dm : spfdCoalgDepMor {x} f a b) ->
+  SPFDmultiR2 {dom=x} {cod=x} f (spfdCoalgDepMorCod1 {x} {f} {a} {b} dm) b
+spfdCoalgDepMorCod2 {x} {f} {a} {b} dm ec eb ed dd =
+  spfdCoalgDepMorBase dm ed
+  $ spfdCoalgDepMorR2 dm ec (spfdCoalgDepMorR1 dm ec eb) ed dd
+
+public export
+spfdCoalgDepMorDomAct :
+  {x : Type} -> {f : SPFData x x} -> {a, b : SliceObj x} ->
+  (dm : spfdCoalgDepMor {x} f a b) ->
+  SliceMorphism {a=x} a (SPFDmultiR {dom=x} {cod=x} f a)
+spfdCoalgDepMorDomAct {x} {f} {a} {b} dm =
+  SPFDmultiRfrom12 (spfdCoalgDepMorDom1 dm ** spfdCoalgDepMorDom2 dm)
+
+public export
+spfdCoalgDepMorCodAct :
+  {x : Type} -> {f : SPFData x x} -> {a, b : SliceObj x} ->
+  (dm : spfdCoalgDepMor {x} f a b) ->
+  SliceMorphism {a=x} b (SPFDmultiR {dom=x} {cod=x} f b)
+spfdCoalgDepMorCodAct {x} {f} {a} {b} dm =
+  SPFDmultiRfrom12 (spfdCoalgDepMorCod1 dm ** spfdCoalgDepMorCod2 dm)
 
 public export
 data SPCoalgF : {x : Type} -> (f : SPFData x x) -> (aalg, balg : SPCoalg f) ->
     Type where
   SPcoalg : {x : Type} -> {f : SPFData x x} -> {a, b : SliceObj x} ->
-    (m : SliceMorphism {a=x} a b) ->
-    (b1 : SliceMorphism {a=x} b (spfdPos f)) ->
-    (a2 : spfdCoalgDom2 {x} f {a} {b} m b1) ->
+    (dm : spfdCoalgDepMor {x} f a b) ->
     SPCoalgF {x} f
-      (a ** \ec, ea => (b1 ec (m ec ea) ** a2 ec (b1 ec (m ec ea))))
-      (b ** \ec, eb => (b1 ec eb ** \ed, dd => m ed $ a2 ec (b1 ec eb) ed dd))
+      (a ** spfdCoalgDepMorDomAct {f} dm)
+      (b ** spfdCoalgDepMorCodAct {f} dm)
 
 public export
 SPCoalgSl : {x : Type} -> (f : SPFData x x) -> (aalg, balg : SPCoalg f) -> Type
@@ -845,7 +914,7 @@ public export
 SPCoalgFtoSl : {x : Type} -> (f : SPFData x x) -> (aalg, balg : SPCoalg f) ->
   SPCoalgF {x} f aalg balg -> SPCoalgSl {x} f aalg balg
 SPCoalgFtoSl {x} _ (a ** _) (b ** _)
-  (SPcoalg {x} {f=(SPFD pos dir)} {a} {b} m bp bd) =
+  (SPcoalg {x} {f=(SPFD pos dir)} {a} {b} (m ** bp ** bd)) =
     (m ** \_, _ => Refl ** \ex, ex', ea, dd => Refl)
 
 public export
