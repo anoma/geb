@@ -891,13 +891,23 @@ spfdCoalgDepMorCodAct {x} {f} {a} {b} dm =
   SPFDmultiRfrom12 (spfdCoalgDepMorCod1 dm ** spfdCoalgDepMorCod2 dm)
 
 public export
+spfdCoalgDepMorDomAlg :
+  {x : Type} -> {f : SPFData x x} -> {a, b : SliceObj x} ->
+  spfdCoalgDepMor {x} f a b -> SPCoalg f
+spfdCoalgDepMorDomAlg {x} {f} {a} {b} dm = (a ** spfdCoalgDepMorDomAct {f} dm)
+
+public export
+spfdCoalgDepMorCodAlg :
+  {x : Type} -> {f : SPFData x x} -> {a, b : SliceObj x} ->
+  spfdCoalgDepMor {x} f a b -> SPCoalg f
+spfdCoalgDepMorCodAlg {x} {f} {a} {b} dm = (b ** spfdCoalgDepMorCodAct {f} dm)
+
+public export
 data SPCoalgF : {x : Type} -> (f : SPFData x x) -> (aalg, balg : SPCoalg f) ->
     Type where
   SPcoalg : {x : Type} -> {f : SPFData x x} -> {a, b : SliceObj x} ->
     (dm : spfdCoalgDepMor {x} f a b) ->
-    SPCoalgF {x} f
-      (a ** spfdCoalgDepMorDomAct {f} dm)
-      (b ** spfdCoalgDepMorCodAct {f} dm)
+    SPCoalgF {x} f (spfdCoalgDepMorDomAlg {f} dm) (spfdCoalgDepMorCodAlg {f} dm)
 
 public export
 SPCoalgSl : {x : Type} -> (f : SPFData x x) -> (aalg, balg : SPCoalg f) -> Type
