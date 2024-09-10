@@ -301,19 +301,19 @@ spfdCoprPiFL : {x : Type} -> SliceObj x -> SPFData x Unit
 spfdCoprPiFL {x} sl = spfdPiFL {x=Unit} {y=x} (sl . snd)
 
 public export
-SPFDuPosToPiFL : {x, y : Type} -> (sl : SliceObj (x, y)) ->
+SPFDdiagDirToPiFL : {x, y : Type} -> (sl : SliceObj (x, y)) ->
   SliceNatTrans {x=y} {y=x}
     (InterpSPFData {dom=y} {cod=x} $ spfdPiFL {x} {y} sl)
     (SliceSigmaPiFL {c=x} {e=y} sl)
-SPFDuPosToPiFL {x} {y} sl sd ec =
+SPFDdiagDirToPiFL {x} {y} sl sd ec =
   dpMapSnd $ \esl, m => m (fst esl) Refl
 
 public export
-SPFDuPosFromPiFL : {x, y : Type} -> (sl : SliceObj (x, y)) ->
+SPFDdiagDirFromPiFL : {x, y : Type} -> (sl : SliceObj (x, y)) ->
   SliceNatTrans {x=y} {y=x}
     (SliceSigmaPiFL {c=x} {e=y} sl)
     (InterpSPFData {dom=y} {cod=x} $ spfdPiFL {x} {y} sl)
-SPFDuPosFromPiFL {x} {y} sl sd ec =
+SPFDdiagDirFromPiFL {x} {y} sl sd ec =
   dpMapSnd $ \esl, esd, ey, eqy => rewrite sym eqy in esd
 
 -------------------
