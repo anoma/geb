@@ -827,14 +827,8 @@ data SPCoalgF : {x : Type} -> (f : SPFData x x) -> (aalg, balg : SPCoalg f) ->
     (b1 : SliceMorphism {a=x} b (spfdPos f)) ->
     (a2 : spfdCoalgDom2 {x} f {a} {b} m b1) ->
     SPCoalgF {x} f
-      (a **
-       \ec, ea =>
-        (b1 ec (m ec ea) **
-         \ed, dd => a2 ec (b1 ec (m ec ea)) ed dd))
-      (b **
-       \ec, eb =>
-        (b1 ec eb **
-         \ed, dd => m ed $ a2 ec (b1 ec eb) ed dd))
+      (a ** \ec, ea => (b1 ec (m ec ea) ** a2 ec (b1 ec (m ec ea))))
+      (b ** \ec, eb => (b1 ec eb ** \ed, dd => m ed $ a2 ec (b1 ec eb) ed dd))
 
 public export
 SPCoalgSl : {x : Type} -> (f : SPFData x x) -> (aalg, balg : SPCoalg f) -> Type
