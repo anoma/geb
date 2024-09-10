@@ -910,6 +910,13 @@ data SPCoalgF : {x : Type} -> (f : SPFData x x) -> (aalg, balg : SPCoalg f) ->
     SPCoalgF {x} f (spfdCoalgDepMorDomAlg {f} dm) (spfdCoalgDepMorCodAlg {f} dm)
 
 public export
+SPCoalgMorFromF : {x : Type} -> {f : SPFData x x} -> {aalg, balg : SPCoalg f} ->
+  SPCoalgF {x} f aalg balg -> SPCoalgMor {f} aalg balg
+SPCoalgMorFromF {x} {f} (SPcoalg dm) =
+  (spfdCoalgDepMorBase dm **
+   \fext, ec, ea => dpEq12 Refl $ funExt $ \ed => funExt $ \dd => Refl)
+
+public export
 SPCoalgSl : {x : Type} -> (f : SPFData x x) -> (aalg, balg : SPCoalg f) -> Type
 SPCoalgSl {x} (SPFD pos dir) (a ** aact) (b ** bact) =
   (m : SliceMorphism {a=x} a b **
