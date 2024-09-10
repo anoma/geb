@@ -810,16 +810,31 @@ SPCoalgMorF {x} f a b =
   SPDynSysMorF {x} f (spfdCoalgToDynSys {x} f a) (spfdCoalgToDynSys {x} f b)
 
 public export
+spfdCoalgDom2 :
+  {x : Type} -> (f : SPFData x x) -> {a, b : SliceObj x} ->
+  (m : SliceMorphism {a=x} a b) ->
+  (b1 : SliceMorphism {a=x} b (spfdPos f)) ->
+  Type
+spfdCoalgDom2 {x} f {a} {b} m b1 =
+  (ec : x) -> (ep : spfdPos f ec) ->
+  SliceMorphism {a=x} (spfdDir f ec ep) a
+
+public export
 data SPCoalgF : {x : Type} -> (f : SPFData x x) -> (aalg, balg : SPCoalg f) ->
     Type where
   SPcoalg : {x : Type} -> {f : SPFData x x} -> {a, b : SliceObj x} ->
     (m : SliceMorphism {a=x} a b) ->
-    (bp : SliceMorphism {a=x} b (spfdPos f)) ->
-    (bd : (ex : x) -> (eb : b ex) ->
-      SliceMorphism {a=x} (spfdDir f ex $ bp ex eb) a) ->
+    (b1 : SliceMorphism {a=x} b (spfdPos f)) ->
+    (a2 : spfdCoalgDom2 {x} f {a} {b} m b1) ->
     SPCoalgF {x} f
-      (a ** \ex, ea => (bp ex (m ex ea) ** bd ex (m ex ea)))
-      (b ** \ex, eb => (bp ex eb ** \ex' => m ex' . bd ex eb ex'))
+      (a **
+       \ec, ea =>
+        (b1 ec (m ec ea) **
+         \ed, dd => a2 ec (b1 ec (m ec ea)) ed dd))
+      (b **
+       \ec, eb =>
+        (b1 ec eb **
+         \ed, dd => m ed $ a2 ec (b1 ec eb) ed dd))
 
 public export
 SPCoalgSl : {x : Type} -> (f : SPFData x x) -> (aalg, balg : SPCoalg f) -> Type
