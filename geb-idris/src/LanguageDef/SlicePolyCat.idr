@@ -1106,7 +1106,7 @@ SPFDgenFactFst {dom} {cod} spfd a b m =
 -- equivalent to `SPFDgenFactFst`.
 --
 -- Note that this depends only on the first projection of a morphism
--- `b -> SPFDmultiR a`, not on the second projection.
+-- `b -> SPFDmultiR a`, i.e. on an `SPFDmultiR1`, not on the second projection.
 public export
 SPFDgenFactFstForm : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (b : SliceObj cod) -> (m : SPFDmultiR1 {cod} (spfdPos spfd) b) ->
