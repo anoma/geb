@@ -274,6 +274,30 @@ SPFDuPosFromPiFR : {x, y : Type} -> (sl : SliceObj (x, y)) ->
     (InterpSPFData {dom=x} {cod=y} $ spfdPiFR {x} {y} sl)
 SPFDuPosFromPiFR {x} {y} sl sd ey m = (() ** \ex, esl => m (ex ** esl))
 
+public export
+SPFDuPosToPiFRidL : FunExt -> {x, y : Type} -> (sl : SliceObj (x, y)) ->
+  (sx : SliceObj x) ->
+  SliceExtEq {a=y}
+    {s=(SliceSigmaPiFR {c=x} {e=y} sl sx)}
+    {s'=(SliceSigmaPiFR {c=x} {e=y} sl sx)}
+    (sliceComp
+      (SPFDuPosToPiFR {x}{y} sl sx)
+      (SPFDuPosFromPiFR {x}{y} sl sx))
+    (sliceId {a=y} (SliceSigmaPiFR {c=x} {e=y} sl sx))
+SPFDuPosToPiFRidL fext {x} {y} sl sx ey eslx = funExt $ \(ex ** esl) => Refl
+
+public export
+SPFDuPosToPiFRidR : {x, y : Type} -> (sl : SliceObj (x, y)) ->
+  (sx : SliceObj x) ->
+  SliceExtEq {a=y}
+    {s=(InterpSPFData {dom=x} {cod=y} (spfdPiFR {x} {y} sl) sx)}
+    {s'=(InterpSPFData {dom=x} {cod=y} (spfdPiFR {x} {y} sl) sx)}
+    (sliceComp
+      (SPFDuPosFromPiFR {x}{y} sl sx)
+      (SPFDuPosToPiFR {x}{y} sl sx))
+    (sliceId {a=y} (InterpSPFData {dom=x} {cod=y} (spfdPiFR {x} {y} sl) sx))
+SPFDuPosToPiFRidR {x} {y} sl sx ey (() ** esx) = Refl
+
 -- `SliceSigmaPiFR` of `WDiagElem` is the identity.
 public export
 SPFDPiFRtoId : (x : Type) ->
