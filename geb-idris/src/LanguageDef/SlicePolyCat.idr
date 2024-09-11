@@ -4103,14 +4103,15 @@ SPFCsliceTotUnit {b} {dom} {cod} spfd =
     (\(eb ** ec), ep, (eb ** ed), (Refl ** dd) => dd)
 
 -- Here we show that the counit of the SPFDataFam/SPFamData adjunction
--- is the identity natural transformation.  This means that if we embed
+-- is a natural isomorphism.  This means that if we embed
 -- an `SPFDataFam` into `SPFData` (in particular an `SPFData` with the
 -- specific form of signature prescribed by `SPFamData`) via `SPFCtot`,
 -- and then re-slice the resulting `SPFData` into an `SPFDataFam` via
--- `SPFCslice`, we get back the same `SPFDataFam` that we started with.
+-- `SPFCslice`, we get back effectively the same `SPFDataFam` that we
+-- started with (one which is naturally isomorphic to it).
 --
--- Note that the unit of the adjunction is _not_ the identity natural
--- transformation.  This is because an arbitrary `SPFamData` might not
+-- Note that the unit of the adjunction is _not_ a natural
+-- isomorphism.  This is because an arbitrary `SPFamData` might not
 -- be of a form which would result from embedding _any_ `SPFDataFam`
 -- into `SPFamData`/`SPFData` -- namely, a form whose only non-empty
 -- direction-sets' domain and codomain parameters have the same
@@ -4128,6 +4129,37 @@ SPFCsliceTotCounitInv : {b : Type} -> {dom, cod : SliceObj b} ->
   SPFdepNTfam {b} {dom} {cod} sf (SPFCslice $ SPFCtot sf)
 SPFCsliceTotCounitInv {b} {dom} {cod} sf eb =
   SPFDm (sliceId {a=(cod eb)} (spfdPos (sf eb))) (\_, _, _ => DPair.snd)
+
+public export
+SPFCsliceCounitIdL : {b : Type} -> {dom, cod : SliceObj b} ->
+  (sf : SPFDataFam {b} dom cod) -> (eb : b) ->
+  (sd : SliceObj (dom eb)) ->
+  SliceExtEq {a=(cod eb)}
+    {s=(InterpSPFData (sf eb) sd)}
+    {s'=(InterpSPFData (sf eb) sd)}
+    (InterpSPFnt (sf eb) (sf eb)
+      (SPNTvcomp (sf eb) (SPFCslice (SPFCtot sf) eb) (sf eb)
+        (SPFCsliceTotCounit sf eb)
+        (SPFCsliceTotCounitInv sf eb))
+      sd)
+    (sliceId {a=(cod eb)} (InterpSPFData (sf eb) sd))
+SPFCsliceCounitIdL {b} {dom} {cod} sf eb ed ec (ep ** dm) = Refl
+
+public export
+SPFCsliceCounitIdR : FunExt -> {b : Type} -> {dom, cod : SliceObj b} ->
+  (sf : SPFDataFam {b} dom cod) -> (eb : b) ->
+  (sd : SliceObj (dom eb)) ->
+  SliceExtEq {a=(cod eb)}
+    {s=(InterpSPFData (SPFCslice (SPFCtot sf) eb) sd)}
+    {s'=(InterpSPFData (SPFCslice (SPFCtot sf) eb) sd)}
+    (InterpSPFnt (SPFCslice (SPFCtot sf) eb) (SPFCslice (SPFCtot sf) eb)
+      (SPNTvcomp (SPFCslice (SPFCtot sf) eb) (sf eb) (SPFCslice (SPFCtot sf) eb)
+        (SPFCsliceTotCounitInv sf eb)
+        (SPFCsliceTotCounit sf eb))
+      sd)
+    (sliceId {a=(cod eb)} (InterpSPFData (SPFCslice (SPFCtot sf) eb) sd))
+SPFCsliceCounitIdR fext {b} {dom} {cod} sf eb ed ec (ep ** dm) =
+  dpEq12 Refl $ funExt $ \ed => funExt $ \(Refl ** dd) => Refl
 
 ---------------------
 ---- Quantifiers ----
