@@ -4102,6 +4102,33 @@ SPFCsliceTotUnit {b} {dom} {cod} spfd =
     (\(eb ** ec), ep => ep)
     (\(eb ** ec), ep, (eb ** ed), (Refl ** dd) => dd)
 
+-- Here we show that the counit of the SPFDataFam/SPFamData adjunction
+-- is the identity natural transformation.  This means that if we embed
+-- an `SPFDataFam` into `SPFData` (in particular an `SPFData` with the
+-- specific form of signature prescribed by `SPFamData`) via `SPFCtot`,
+-- and then re-slice the resulting `SPFData` into an `SPFDataFam` via
+-- `SPFCslice`, we get back the same `SPFDataFam` that we started with.
+--
+-- Note that the unit of the adjunction is _not_ the identity natural
+-- transformation.  This is because an arbitrary `SPFamData` might not
+-- be of a form which would result from embedding _any_ `SPFDataFam`
+-- into `SPFamData`/`SPFData` -- namely, a form whose only non-empty
+-- direction-sets' domain and codomain parameters have the same
+-- first component (whose type is the index type `b`).  Slicing a
+-- functor that does not have the form of an embedded `SPFDataFam`
+-- throws away direction-sets whose domain and codomain parameters'
+-- first components do not match, and those can not be recovered from
+-- the `SPFDataFam` resulting from the slicing.  (Taking the total
+-- of the sliced `SPFDataFam` to obtain an `SPFamData` will result
+-- in a functor which has some direction-sets zeroed relative to the
+-- `SPFamData` that we started with.)
+public export
+SPFCsliceTotCounitInv : {b : Type} -> {dom, cod : SliceObj b} ->
+  (sf : SPFDataFam {b} dom cod) ->
+  SPFdepNTfam {b} {dom} {cod} sf (SPFCslice $ SPFCtot sf)
+SPFCsliceTotCounitInv {b} {dom} {cod} sf eb =
+  SPFDm (sliceId {a=(cod eb)} (spfdPos (sf eb))) (\_, _, _ => DPair.snd)
+
 ---------------------
 ---- Quantifiers ----
 ---------------------
