@@ -7379,36 +7379,32 @@ adjointUnfold unit = adjointUnfoldFree unit . unitcoalg
 -- `d` into a "control functor" which specifies the recursion scheme.
 export
 partial
-hyloFree : {v, c, a : Type} ->
-  {d, l, r : Type -> Type} -> (Functor d, Functor l, Functor r) =>
-  (unit : (ty : Type) -> ty -> r (l ty)) ->
-  (coalg : c -> (ScaleFunctor d v) c) ->
-  (alg : (l c, (l . (ScaleFunctor d v) . r) a) -> a) ->
-  l c -> a
-hyloFree unit coalg alg x =
-  let
-    transport =
-      map {f=l} . map @{BifunctorToFunctor} {f=(ScaleFunctor d v)} . map {f=r}
-    hylo_trans = transport $ hyloFree unit coalg alg
-    unfolded = map {f=l} coalg x
-    unfolded_trans =
-      map (map @{BifunctorToFunctor} {f=(ScaleFunctor d v)} (unit c)) unfolded
-  in
-  alg (x, hylo_trans unfolded_trans)
-
-export
-partial
 hylomorphism : {c, a : Type} ->
   {d, l, r : Type -> Type} -> (Functor d, Functor l, Functor r) =>
   (unit : (ty : Type) -> ty -> r (l ty)) ->
   (coalg : c -> d c) ->
   (alg : (l c, (l . d . r) a) -> a) ->
   l c -> a
-hylomorphism {d} {l} {r} unit coalg alg =
-  hyloFree {v=()} {d} {l} {r} unit (unitcoalg coalg) unitalg
-    where
-    unitalg : (l c, (l . ScaleFunctor d () . r) a) -> a
-    unitalg (x, x') = alg (x, map treeSubtree x')
+hylomorphism {c} {a} {d} {l} {r} unit coalg alg x =
+  let
+    transport = map {f=l} . map {f=d} . map {f=r}
+    hylo_trans = transport $ hylomorphism unit coalg alg
+    unfolded = map {f=l} coalg x
+    unfolded_trans = map (map {f=d} (unit c)) unfolded
+  in
+  alg (x, hylo_trans unfolded_trans)
+
+export
+partial
+hyloFree : {v, c, a : Type} ->
+  {d, l, r : Type -> Type} -> (Functor d, Functor l, Functor r) =>
+  (unit : (ty : Type) -> ty -> r (l ty)) ->
+  (coalg : c -> (ScaleFunctor d v) c) ->
+  (alg : (l c, (l . (ScaleFunctor d v) . r) a) -> a) ->
+  l c -> a
+hyloFree {v} {c} {a} {d} {l} {r} unit coalg alg =
+  let dm = BifunctorToFunctor {f=(ScaleFunctor d)} in
+  hylomorphism {c} {a} {d=(ScaleFunctor d v)} {l} {r} unit coalg alg
 
 ----------------------------------------
 ----------------------------------------
