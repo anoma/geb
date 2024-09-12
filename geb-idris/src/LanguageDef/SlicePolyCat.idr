@@ -4042,6 +4042,23 @@ SPFDataFamDir : {b : Type} -> {dom, cod : SliceObj b} ->
 SPFDataFamDir {b} {dom} {cod} sf i = spfdDir (sf i)
 
 public export
+SPFdepId : {b : Type} -> (x : SliceObj b) -> SPFDataFam {b} x x
+SPFdepId {b} x eb = SPFDid (x eb)
+
+public export
+SPFdepComp : {b : Type} -> (x, y, z : SliceObj b) ->
+  SPFDataFam {b} y z -> SPFDataFam {b} x y -> SPFDataFam {b} x z
+SPFdepComp {b} x y z g f eb = SPFDcomp (x eb) (y eb) (z eb) (g eb) (f eb)
+
+public export
+SPFdepFmics : (b : Type) -> MorIdCompSig (SliceObj b)
+SPFdepFmics b = MICS (SPFDataFam {b}) $ ICS (SPFdepId {b}) (SPFdepComp {b})
+
+public export
+SPFdepFcat : Type -> IntCatSig
+SPFdepFcat b = ICat (SliceObj b) (SPFdepFmics b)
+
+public export
 SPFdepNTfam : {b : Type} -> {dom, cod : SliceObj b} ->
   (f, g : SPFDataFam {b} dom cod) -> Type
 SPFdepNTfam {b} {dom} {cod} f g =
@@ -4058,6 +4075,32 @@ SPFpoCellFam {b} {w} {w'} {z} {z'} bcl bcr f g =
       SPFpoCell
         {w=(w eb)} {w'=(w' eb)} {z=(z eb)} {z'=(z' eb)}
         (bcl eb) (bcr eb) (f eb) (g eb)
+
+public export
+SPDNTid : {b : Type} -> {dom, cod : SliceObj b} ->
+  (f : SPFDataFam {b} dom cod) -> SPFdepNTfam {b} {dom} {cod} f f
+SPDNTid {b} {dom} {cod} f eb = SPNTid {dom=(dom eb)} {cod=(cod eb)} (f eb)
+
+public export
+SPDNTvcomp : {b : Type} -> {dom, cod : SliceObj b} ->
+  (f, g, h : SPFDataFam {b} dom cod) ->
+  SPFdepNTfam {b} {dom} {cod} g h ->
+  SPFdepNTfam {b} {dom} {cod} f g ->
+  SPFdepNTfam {b} {dom} {cod} f h
+SPDNTvcomp {b} {dom} {cod} f g h beta alpha eb =
+  SPNTvcomp {dom=(dom eb)} {cod=(cod eb)} (f eb) (g eb) (h eb)
+    (beta eb)
+    (alpha eb)
+
+public export
+SPFdepHs : (b : Type) -> GlobalHomStruct (SPFdepFcat b)
+SPFdepHs b dom cod =
+  MICS (SPFdepNTfam {b} {dom} {cod})
+  $ ICS (SPDNTid {b} {dom} {cod}) (SPDNTvcomp {b} {dom} {cod})
+
+public export
+SPFdepCat : {b : Type} -> SliceObj b -> SliceObj b -> IntCatSig
+SPFdepCat {b} dom cod = ICat (SPFDataFam {b} dom cod) (SPFdepHs b dom cod)
 
 ----------------------------------
 ---- Embedding into `SPFData` ----
