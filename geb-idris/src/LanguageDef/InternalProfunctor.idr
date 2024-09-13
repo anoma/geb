@@ -772,6 +772,72 @@ IntDiCoYonedaLemmaR : (0 c : Type) ->
 IntDiCoYonedaLemmaR c mor p pdm x (ij ** ((mix, mxj), pji)) =
   pdm (snd ij) (fst ij) x x mxj mix pji
 
+------------------------------------------------------------------------
+------------------------------------------------------------------------
+---- Internal polynomial difunctors and paranatural transformations ----
+------------------------------------------------------------------------
+------------------------------------------------------------------------
+
+public export
+PolyDiSig : (c : Type) -> Type
+PolyDiSig c = (pos : Type ** (pos -> c, pos -> c))
+
+public export
+InterpPolyDi : {c : Type} -> (mor : IntDifunctorSig c) -> PolyDiSig c ->
+  IntDifunctorSig c
+InterpPolyDi {c} mor (pos ** (contra, covar)) a b =
+  (i : pos ** IntDiYonedaEmbedObj c mor (contra i) (covar i) a b)
+
+-- The set of paranatural transformations from a direpresentable,
+-- (IntDiYonedaEmbedObj i j), to an arbitrary difunctor `p`.
+public export
+ParaNTfromDirep : (0 c : Type) -> (0 mor : IntDifunctorSig c) ->
+  (s, t : c) -> (p : IntDifunctorSig c) -> Type
+ParaNTfromDirep c mor s t p = p t s
+
+-- The set of paranatural transformations from a direpresentable,
+-- (IntDiYonedaEmbedObj i j), to an arbitrary polynomial difunctor `p`.
+public export
+PolyParaNTfromDirep : (c : Type) -> (mor : IntDifunctorSig c) ->
+  (s, t : c) -> (p : PolyDiSig c) -> Type
+PolyParaNTfromDirep c mor s t p = ParaNTfromDirep c mor s t (InterpPolyDi mor p)
+
+-- The set of paranatural transformations between arbitrary
+-- polynomial difunctors.
+public export
+PolyParaNT : (c : Type) -> (mor : IntDifunctorSig c) -> IntMorSig (PolyDiSig c)
+PolyParaNT c mor (ppos ** (pcontra, pcovar)) q =
+  (pi : ppos) -> PolyParaNTfromDirep c mor (pcontra pi) (pcovar pi) q
+
+-- Having defined the set of paranatural transformations between polynomial
+-- difunctors via the Yoneda lemma, we now write it in a more explicit form
+-- and show they are the same.
+public export
+PolyParaNT' : (c : Type) -> (mor : IntDifunctorSig c) -> IntMorSig (PolyDiSig c)
+PolyParaNT' c mor (ppos ** (pcontra, pcovar)) (qpos ** (qcontra, qcovar)) =
+  (onpos : ppos -> qpos **
+   ((pi : ppos) -> mor (pcovar pi) (qcovar (onpos pi)),
+    (pi : ppos) -> mor (qcontra (onpos pi)) (pcontra pi)))
+
+public export
+PolyParaNTisoL : {c : Type} -> {mor : IntDifunctorSig c} ->
+  {p, q : PolyDiSig c} ->
+  PolyParaNT c mor p q -> PolyParaNT' c mor p q
+PolyParaNTisoL {c} {mor}
+  {p=(ppos ** (pcontra, pcovar))} {q=(qpos ** (qcontra, qcovar))} gamma =
+    (\pi => fst (gamma pi) **
+     (\pi => fst (snd $ gamma pi),
+      \pi => snd (snd $ gamma pi)))
+
+public export
+PolyParaNTisoR : {c : Type} -> {mor : IntDifunctorSig c} ->
+  {p, q : PolyDiSig c} ->
+  PolyParaNT' c mor p q -> PolyParaNT c mor p q
+PolyParaNTisoR {c} {mor}
+  {p=(ppos ** (pcontra, pcovar))} {q=(qpos ** (qcontra, qcovar))}
+  (onpos ** (oncovar, oncontra)) =
+    \pi : ppos => (onpos pi ** (oncovar pi, oncontra pi))
+
 --------------------------------------------
 --------------------------------------------
 ---- Metalanguage profunctor signatures ----
