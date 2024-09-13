@@ -4102,6 +4102,29 @@ public export
 SPFdepCat : {b : Type} -> SliceObj b -> SliceObj b -> IntCatSig
 SPFdepCat {b} dom cod = ICat (SPFDataFam {b} dom cod) (SPFdepHs b dom cod)
 
+public export
+SPDNTwhiskerL : {b : Type} -> {c, d, e : SliceObj b} ->
+  {g, h : SPFDataFam {b} d e} ->
+  SPFdepNTfam {b} {dom=d} {cod=e} g h -> (f : SPFDataFam {b} c d) ->
+  SPFdepNTfam {b} {dom=c} {cod=e}
+    (SPFdepComp {b} c d e g f)
+    (SPFdepComp {b} c d e h f)
+SPDNTwhiskerL {b} {c} {d} {e} {g} {h} ntf f eb =
+  SPNTwhiskerL {c=(c eb)} {d=(d eb)} {e=(e eb)} {g=(g eb)} {h=(h eb)}
+    (ntf eb) (f eb)
+
+public export
+SPDNTwhiskerR : {b : Type} -> {c, d, e : SliceObj b} ->
+  {f, g : SPFDataFam {b} c d} ->
+  (h : SPFDataFam {b} d e) ->
+  SPFdepNTfam {b} {dom=c} {cod=d} f g ->
+  SPFdepNTfam {b} {dom=c} {cod=e}
+    (SPFdepComp {b} c d e h f)
+    (SPFdepComp {b} c d e h g)
+SPDNTwhiskerR {b} {c} {d} {e} {f} {g} h ntf eb =
+  SPNTwhiskerR {c=(c eb)} {d=(d eb)} {e=(e eb)} {f=(f eb)} {g=(g eb)}
+    (h eb) (ntf eb)
+
 ----------------------------------
 ---- Embedding into `SPFData` ----
 ----------------------------------
