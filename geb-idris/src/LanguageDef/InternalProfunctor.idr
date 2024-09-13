@@ -773,7 +773,9 @@ IntDiCoYonedaLemmaR c mor p pdm x (ij ** ((mix, mxj), pji)) =
   pdm (snd ij) (fst ij) x x mxj mix pji
 
 --------------------------------------------
+--------------------------------------------
 ---- Metalanguage profunctor signatures ----
+--------------------------------------------
 --------------------------------------------
 
 public export
