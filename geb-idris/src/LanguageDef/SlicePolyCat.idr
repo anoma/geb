@@ -4125,6 +4125,48 @@ SPDNTwhiskerR {b} {c} {d} {e} {f} {g} h ntf eb =
   SPNTwhiskerR {c=(c eb)} {d=(d eb)} {e=(e eb)} {f=(f eb)} {g=(g eb)}
     (h eb) (ntf eb)
 
+public export
+SPDNThcomp : {b : Type} -> {c, d, e : SliceObj b} ->
+  {f, f' : SPFDataFam {b} c d} ->
+  {g, g' : SPFDataFam {b} d e} ->
+  SPFdepNTfam {b} {dom=d} {cod=e} g g' ->
+  SPFdepNTfam {b} {dom=c} {cod=d} f f' ->
+  SPFdepNTfam {b} {dom=c} {cod=e}
+    (SPFdepComp {b} c d e g f)
+    (SPFdepComp {b} c d e g' f')
+SPDNThcomp {b} {c} {d} {e} {f} {f'} {g} {g'} beta alpha =
+  SPDNTvcomp {b}
+    (SPFdepComp {b} c d e g f)
+    (SPFdepComp {b} c d e g f')
+    (SPFdepComp {b} c d e g' f')
+    (SPDNTwhiskerL {b} {g} {h=g'} beta f')
+    (SPDNTwhiskerR {b} {f} {g=f'} g alpha)
+
+public export
+SPFdepWls :
+  (b : Type) -> GlobalLeftWhiskerHomStruct (SPFdepFcat b) (SPFdepHs b)
+SPFdepWls b c d e f g h nu = SPDNTwhiskerL {b} {g} {h} nu f
+
+public export
+SPFdepWrs :
+  (b : Type) -> GlobalRightWhiskerHomStruct (SPFdepFcat b) (SPFdepHs b)
+SPFdepWrs b c d e h f g nu = SPDNTwhiskerR {b} {f} {g} h nu
+
+public export
+SPFdepWps : (b : Type) -> GlobalWhiskerPairHomStruct (SPFdepFcat b) (SPFdepHs b)
+SPFdepWps b =
+  MkGlobalWhiskerPairHomStruct
+    (SPFdepFcat b) (SPFdepHs b) (SPFdepWls b) (SPFdepWrs b)
+
+public export
+SPFdepHcs : (b : Type) -> GlobalHcompHomStruct (SPFdepFcat b) (SPFdepHs b)
+SPFdepHcs b = GlobalHcompFromWhiskers (SPFdepFcat b) (SPFdepHs b) (SPFdepWps b)
+
+public export
+SPFdep2cat : Type -> Int2CatSig
+SPFdep2cat b =
+  I2Cat (SPFdepFcat b) $ I2CS (SPFdepHs b) (SPFdepWls b) (SPFdepWrs b)
+
 ----------------------------------
 ---- Embedding into `SPFData` ----
 ----------------------------------
