@@ -788,6 +788,14 @@ InterpPolyDi : {c : Type} -> (mor : IntDifunctorSig c) -> PolyDiSig c ->
 InterpPolyDi {c} mor (pos ** (contra, covar)) a b =
   (i : pos ** IntDiYonedaEmbedObj c mor (contra i) (covar i) a b)
 
+public export
+InterpPolyDimap : {c : Type} -> {mor : IntDifunctorSig c} ->
+  IntCompSig c mor ->
+  (p : PolyDiSig c) -> IntEndoDimapSig c mor (InterpPolyDi {c} mor p)
+InterpPolyDimap {c} {mor} comp (pos ** (contra, covar)) s t a b mas mtb =
+  dpMapSnd $
+    \pi => bimap (flip (comp a s (covar pi)) mas) (comp (contra pi) t b mtb)
+
 -- The set of paranatural transformations from a direpresentable,
 -- (IntDiYonedaEmbedObj i j), to an arbitrary difunctor `p`.
 public export
@@ -837,6 +845,19 @@ PolyParaNTisoR {c} {mor}
   {p=(ppos ** (pcontra, pcovar))} {q=(qpos ** (qcontra, qcovar))}
   (onpos ** (oncovar, oncontra)) =
     \pi : ppos => (onpos pi ** (oncovar pi, oncontra pi))
+
+public export
+InterpPolyParaNT :
+  {c : Type} -> {mor : IntDifunctorSig c} -> (comp : IntCompSig c mor) ->
+  {p, q : PolyDiSig c} ->
+  PolyParaNT' c mor p q ->
+  IntDiNTSig c (InterpPolyDi {c} mor p) (InterpPolyDi {c} mor q)
+InterpPolyParaNT {c} {mor} comp
+  {p=(ppos ** (pcontra, pcovar))} {q=(qpos ** (qcontra, qcovar))}
+  (onpos ** (oncovar, oncontra)) x (pi ** (mxcov, mcontx)) =
+    (onpos pi **
+     (comp x (pcovar pi) (qcovar (onpos pi)) (oncovar pi) mxcov,
+      comp (qcontra (onpos pi)) (pcontra pi) x mcontx (oncontra pi)))
 
 --------------------------------------------
 --------------------------------------------
