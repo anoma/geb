@@ -1913,6 +1913,9 @@ SliceRKanLiftSig a b c g =
 --------------------------------
 
 -- The impredicative initial algebra of an endofunctor on `SliceObj c`.
+-- This may be viewed as the set of paranatural transformations from
+-- `SliceAlg f` to the covariant functor represented by the terminal
+-- object of `SliceObj c`.
 public export
 ImSliceMu : {c : Type} -> SliceEndofunctor c -> SliceObj c
 ImSliceMu {c} f ec =
