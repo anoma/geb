@@ -690,26 +690,20 @@ public export
 IntDiYonedaLemmaNT : (c : Type) -> (mor, p : IntDifunctorSig c) ->
   IntDifunctorSig c
 IntDiYonedaLemmaNT c mor p i j =
-  IntDiNTSig c (IntDiYonedaEmbedObj c mor i j) (flip p)
+  IntDiNTSig c (IntDiYonedaEmbedObj c mor j i) p
 
 -- This shows that for a given difunctor `p` on `c`,
--- `IntDiYonedaLemmaNT c mor p` is itself an argument-flipped difunctor
+-- `IntDiYonedaLemmaNT c mor p` is itself a difunctor
 -- (whose value for any `(s, t)` in `opProd(c)` is an object (in `Type`) of
 -- paranatural transformations).  That makes it sensible to speak of paranatural
 -- transformations between `IntDiYonedaLemmaNT c mor p` and `p`, and
 -- the diYoneda lemma exhibits a specific pair of such paranatural
 -- transformations, one in each direction, which are inverses to each other.
---
--- That the arguments to `IntDiYonedaLemmaNT` need to be flipped to make it
--- into a difunctor -- that is, that it's covariant in the _first_ argument
--- and contravariant in the _second_ -- makes it a _presheaf_ on `op(c) x c`,
--- as opposed to the usual ordering of profunctor arguments which would be a
--- _copresheaf_ on `op(c) x c`.
 public export
 IntDiYonedaLemmaNTDimap : (0 c : Type) ->
   (0 mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
   (0 p : IntDifunctorSig c) ->
-  IntEndoDimapSig c mor (flip (IntDiYonedaLemmaNT c mor p))
+  IntEndoDimapSig c mor (IntDiYonedaLemmaNT c mor p)
 IntDiYonedaLemmaNTDimap c mor comp p s t a b mas mtb embed i (mia, mbi) =
   embed i (comp i a s mas mia, comp t b i mbi mtb)
 
