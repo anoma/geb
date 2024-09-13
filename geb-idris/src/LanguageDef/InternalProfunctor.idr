@@ -778,6 +778,10 @@ IntDiCoYonedaLemmaR c mor p pdm x (ij ** ((mix, mxj), pji)) =
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
 
+-------------------------------
+---- Polynomial difunctors ----
+-------------------------------
+
 public export
 PolyDiSig : (c : Type) -> Type
 PolyDiSig c = (pos : Type ** (pos -> c, pos -> c))
@@ -795,6 +799,10 @@ InterpPolyDimap : {c : Type} -> {mor : IntDifunctorSig c} ->
 InterpPolyDimap {c} {mor} comp (pos ** (contra, covar)) s t a b mas mtb =
   dpMapSnd $
     \pi => bimap (flip (comp a s (covar pi)) mas) (comp (contra pi) t b mtb)
+
+------------------------------------------------
+---- Polynomial paranatural transformations ----
+------------------------------------------------
 
 -- The set of paranatural transformations from a direpresentable,
 -- (IntDiYonedaEmbedObj i j), to an arbitrary difunctor `p`.
