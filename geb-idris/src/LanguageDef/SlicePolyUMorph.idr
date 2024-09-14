@@ -2272,6 +2272,11 @@ data SPFDmu : {0 x : Type} -> SPFData x x -> SliceObj x where
     SliceAlg {a=x} (InterpSPFData {dom=x} {cod=x} spfd) (SPFDmu {x} spfd)
 
 public export
+OutSPFm: {0 x : Type} -> {0 spfd : SPFData x x} ->
+  SliceCoalg {a=x} (InterpSPFData {dom=x} {cod=x} spfd) (SPFDmu {x} spfd)
+OutSPFm {x} {spfd} ex em = case em of InSPFm ex emx => emx
+
+public export
 spfdCata : {0 x : Type} -> {0 spfd : SPFData x x} -> {0 a : SliceObj x} ->
   SliceAlg {a=x} (InterpSPFData {dom=x} {cod=x} spfd) a ->
   SliceMorphism {a=x} (SPFDmu {x} spfd) a
