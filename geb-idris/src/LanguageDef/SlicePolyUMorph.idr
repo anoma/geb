@@ -2267,19 +2267,25 @@ spfdParClosureObjDirFromIntDir {dom} {cod} q r ed ec (() ** dm) (qp ** rd)
 -----------------------------------------------------------
 
 public export
+SliceAlgSPFD : {x : Type} -> SPFData x x -> SliceObj x -> Type
+SliceAlgSPFD {x} f = SliceAlg {a=x} (InterpSPFData {dom=x} {cod=x} f)
+
+public export
+SliceCoalgSPFD : {x : Type} -> SPFData x x -> SliceObj x -> Type
+SliceCoalgSPFD {x} f = SliceCoalg {a=x} (InterpSPFData {dom=x} {cod=x} f)
+
+public export
 data SPFDmu : {0 x : Type} -> SPFData x x -> SliceObj x where
-  InSPFm : {0 spfd : SPFData x x} ->
-    SliceAlg {a=x} (InterpSPFData {dom=x} {cod=x} spfd) (SPFDmu {x} spfd)
+  InSPFm : {0 spfd : SPFData x x} -> SliceAlgSPFD {x} spfd (SPFDmu {x} spfd)
 
 public export
 OutSPFm: {0 x : Type} -> {0 spfd : SPFData x x} ->
-  SliceCoalg {a=x} (InterpSPFData {dom=x} {cod=x} spfd) (SPFDmu {x} spfd)
+  SliceCoalgSPFD {x} spfd (SPFDmu {x} spfd)
 OutSPFm {x} {spfd} ex em = case em of InSPFm ex emx => emx
 
 public export
 spfdCata : {0 x : Type} -> {0 spfd : SPFData x x} -> {0 a : SliceObj x} ->
-  SliceAlg {a=x} (InterpSPFData {dom=x} {cod=x} spfd) a ->
-  SliceMorphism {a=x} (SPFDmu {x} spfd) a
+  SliceAlgSPFD {x} spfd a -> SliceMorphism {a=x} (SPFDmu {x} spfd) a
 spfdCata {x} {spfd} {a} alg ex em =
   case em of
     InSPFm ex (emp ** emdm) =>
@@ -2337,6 +2343,25 @@ MBbaseF {x} f = SPFD (MBbasePos {x} f) (MBbaseDir {x} f)
 public export
 MB : {0 x : Type} -> SPFData x x -> SliceObj x
 MB {x} f = SPFDmu {x} (MBbaseF {x} f)
+
+public export
+mbTruncAlg : {x : Type} -> {f : SPFData x x} ->
+  Nat -> SliceAlgSPFD {x} (MBbaseF {x} f) (MB {x} f)
+mbTruncAlg {x} {f} Z ex epdm = InSPFm ex (mbpCut {x} f ex ** \_, v => void v)
+mbTruncAlg {x} {f} (S n) ex epdm = case epdm of
+  (Left (Left ()) ** _) => InSPFm ex (mbpStar {x} f ex ** \_, v => void v)
+  (Left (Right efp) ** dm) =>
+    spfdCata {spfd=(MBbaseF {x} f)} {a=(MB {x} f)}
+      (mbTruncAlg {x} {f} n)
+      ex
+      (InSPFm ex epdm)
+  (Right () ** _) => InSPFm ex (mbpStar {x} f ex ** \_, v => void v)
+
+public export
+mbTrunc : {x : Type} -> {f : SPFData x x} ->
+  Nat -> SliceMorphism {a=x} (MB {x} f) (MB {x} f)
+mbTrunc {x} {f} =
+  spfdCata {a=(MB {x} f)} {spfd=(MBbaseF {x} f)} . mbTruncAlg {x} {f}
 
 ------------------------------------------------
 ------------------------------------------------
