@@ -2399,6 +2399,26 @@ mbTrunc : {x : Type} -> {f : SPFData x x} ->
 mbTrunc {x} {f} =
   spfdCata {a=(MB {x} f)} {spfd=(MBbaseF {x} f)} . mbTruncAlg {x} {f}
 
+public export
+mbIncl : {x : Type} -> (f : SPFData x x) ->
+  SliceMorphism {a=x} (MH {x} f) (MB {x} f)
+mbIncl {x} f =
+  spfdCata {a=(MB {x} f)} {spfd=(MHbaseF {x} f)} $
+    \ex, (ep ** dm) => InSPFm ex (Left ep ** dm)
+
+public export
+mhTrunc : {x : Type} -> {f : SPFData x x} ->
+  Nat -> SliceMorphism {a=x} (MH {x} f) (MB {x} f)
+mhTrunc {x} {f} n = sliceComp {a=x} (mbTrunc {x} {f} n) (mbIncl {x} f)
+
+-- Called simply `M` in the paper, this is the terminal (or "final")
+-- coalgebra of the given polynomial functor.
+public export
+SPFDnu : {x : Type} -> SPFData x x -> SliceObj x
+SPFDnu {x} f ex =
+  (m : Nat -> MH {x} f ex **
+   (n : Nat) -> mbIncl {x} f ex (m n) = mhTrunc {x} {f} n ex (m $ S n))
+
 ------------------------------------------------
 ------------------------------------------------
 ---- Universal slice polynomial 2-morphisms ----
