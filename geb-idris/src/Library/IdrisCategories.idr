@@ -2511,9 +2511,9 @@ inSlCP {c} {f} {sl} {sa} {sb} label coalg ec esa = (label ec esa, coalg ec esa)
 
 export
 mapSlCP : {0 c, d : Type} -> {0 f : SliceFunctor c d} ->
-  ((0 x, y : SliceObj c) -> SliceMorphism x y -> SliceMorphism (f x) (f y)) ->
+  ((x, y : SliceObj c) -> SliceMorphism x y -> SliceMorphism (f x) (f y)) ->
   (sl : SliceObj d) ->
-  (0 sa, sb : SliceObj c) -> SliceMorphism {a=c} sa sb ->
+  (sa, sb : SliceObj c) -> SliceMorphism {a=c} sa sb ->
   SliceMorphism {a=d} (SlCopointedF f sl sa) (SlCopointedF f sl sb)
 mapSlCP {c} {d} {f} fm sl sa sb m ec (el, efa) = (el, fm sa sb m ec efa)
 

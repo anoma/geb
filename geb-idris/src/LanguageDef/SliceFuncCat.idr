@@ -2147,8 +2147,8 @@ imSlAna : {0 c : Type} -> {0 f : SliceEndofunctor c} ->
 imSlAna {c} {f} {sa} coalg ec esa = (sa ** (coalg, esa))
 
 public export
-imSlTermCoalg : {0 c : Type} -> {f : SliceEndofunctor c} ->
-  ((0 x, y : SliceObj c) -> SliceMorphism x y -> SliceMorphism (f x) (f y)) ->
+imSlTermCoalg : {c : Type} -> {f : SliceEndofunctor c} ->
+  ((x, y : SliceObj c) -> SliceMorphism x y -> SliceMorphism (f x) (f y)) ->
   SliceCoalg f (ImSliceNu f)
 imSlTermCoalg {f} fm ec (sa ** (coalg, esa)) =
   fm sa (ImSliceNu {c} f) (imSlAna {c} {f} {sa} coalg) ec (coalg ec esa)
@@ -2157,7 +2157,7 @@ imSlTermCoalg {f} fm ec (sa ** (coalg, esa)) =
 -- exist.
 public export
 imSlTermCoalgInv : {c : Type} -> {f : SliceEndofunctor c} ->
-  ((0 x, y : SliceObj c) -> SliceMorphism x y -> SliceMorphism (f x) (f y)) ->
+  ((x, y : SliceObj c) -> SliceMorphism x y -> SliceMorphism (f x) (f y)) ->
   SliceAlg f (ImSliceNu f)
 imSlTermCoalgInv {c} {f} fm ec efn =
   (f (ImSliceNu f) **
@@ -2227,15 +2227,15 @@ inSlCF {c} {f} {sl} {sa} label coalg ec esa =
   (sa ** (inSlCP {f} {sl} {sa} {sb=sa} label coalg, esa))
 
 public export
-imSlCofreeTermCoalg : {0 c : Type} -> {f : SliceEndofunctor c} ->
-  ((0 x, y : SliceObj c) -> SliceMorphism x y -> SliceMorphism (f x) (f y)) ->
+imSlCofreeTermCoalg : {c : Type} -> {f : SliceEndofunctor c} ->
+  ((x, y : SliceObj c) -> SliceMorphism x y -> SliceMorphism (f x) (f y)) ->
   {sl : SliceObj c} -> SlCopointedCoalg {c} f sl (ImSliceCofree {c} f sl)
 imSlCofreeTermCoalg fm {sl} =
   imSlTermCoalg {f=(SlCopointedF f sl)} (mapSlCP {f} fm sl)
 
 public export
 imSlCofreeTermCoalgInv : {c : Type} -> {f : SliceEndofunctor c} ->
-  ((0 x, y : SliceObj c) -> SliceMorphism x y -> SliceMorphism (f x) (f y)) ->
+  ((x, y : SliceObj c) -> SliceMorphism x y -> SliceMorphism (f x) (f y)) ->
   {sl : SliceObj c} -> SlCopointedAlg {c} f sl (ImSliceCofree {c} f sl)
 imSlCofreeTermCoalgInv fm {sl} =
   imSlTermCoalgInv {f=(SlCopointedF f sl)} (mapSlCP {f} fm sl)
@@ -2245,7 +2245,7 @@ imSlCofreeTermCoalgInv fm {sl} =
 -- the adjunction; as such it is also sometimes called "erase" or "extract".
 public export
 imSlLabel : {c : Type} -> {f : SliceEndofunctor c} ->
-  ((0 x, y : SliceObj c) -> SliceMorphism x y -> SliceMorphism (f x) (f y)) ->
+  ((x, y : SliceObj c) -> SliceMorphism x y -> SliceMorphism (f x) (f y)) ->
   SliceNatTrans {x=c} {y=c} (ImSliceCofree f) (SliceIdF c)
 imSlLabel {c} {f} fm sl =
   sliceComp
@@ -2256,7 +2256,7 @@ imSlLabel {c} {f} fm sl =
 -- the slice cofree-comonad adjunction.
 public export
 imSlSubtrees : {c : Type} -> {f : SliceEndofunctor c} ->
-  ((0 x, y : SliceObj c) -> SliceMorphism x y -> SliceMorphism (f x) (f y)) ->
+  ((x, y : SliceObj c) -> SliceMorphism x y -> SliceMorphism (f x) (f y)) ->
   {sl : SliceObj c} -> SliceCoalg {a=c} f (ImSliceCofree {c} f sl)
 imSlSubtrees {c} {f} fm {sl} =
   sliceComp
@@ -2296,7 +2296,7 @@ imSlUnit {c} {f} {sa} coalg = imSlTrace {f} {sa} {sl=sa} coalg (sliceId sa)
 -- to it, and the left adjoint just forgets the morphism component.
 public export
 imSlRAdj : {c : Type} -> {f : SliceEndofunctor c} ->
-  ((0 x, y : SliceObj c) -> SliceMorphism x y -> SliceMorphism (f x) (f y)) ->
+  ((x, y : SliceObj c) -> SliceMorphism x y -> SliceMorphism (f x) (f y)) ->
   {sa, sl : SliceObj c} ->
   SliceMorphism sa (ImSliceCofree f sl) -> SliceMorphism sa sl
 imSlRAdj {c} {f} fm {sa} {sl} = sliceComp $ imSlLabel fm sl
@@ -2307,7 +2307,7 @@ imSlRAdj {c} {f} fm {sa} {sl} = sliceComp $ imSlLabel fm sl
 --
 -- The multiplication comes from whiskering the counit between the adjuncts.
 imSlJoin : {c : Type} -> {f : SliceEndofunctor c} ->
-  ((0 x, y : SliceObj c) -> SliceMorphism x y -> SliceMorphism (f x) (f y)) ->
+  ((x, y : SliceObj c) -> SliceMorphism x y -> SliceMorphism (f x) (f y)) ->
   SliceNatTrans (ImSliceCofree f . ImSliceCofree f) (ImSliceCofree f)
 imSlJoin {f} fm sa = imSlLabel {f} fm (ImSliceCofree f sa)
 
@@ -2318,7 +2318,7 @@ imSlJoin {f} fm sa = imSlLabel {f} fm (ImSliceCofree f sa)
 -- The comultiplication comes from whiskering the unit between the adjuncts.
 public export
 imSlDup : {c : Type} -> {f : SliceEndofunctor c} ->
-  ((0 x, y : SliceObj c) -> SliceMorphism x y -> SliceMorphism (f x) (f y)) ->
+  ((x, y : SliceObj c) -> SliceMorphism x y -> SliceMorphism (f x) (f y)) ->
   SliceNatTrans (ImSliceCofree f) (ImSliceCofree f . ImSliceCofree f)
 imSlDup {f} fm sa =
   imSlUnit {f} {sa=(ImSliceCofree f sa)} (imSlSubtrees {f} {sl=sa} fm)
