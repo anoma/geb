@@ -2291,6 +2291,30 @@ spfdCata {x} {spfd} {a} alg ex em =
     InSPFm ex (emp ** emdm) =>
       alg ex (emp ** \ex' => spfdCata {x} {spfd} {a} alg ex' . emdm ex')
 
+-- A paranatural (also called "strong dinatural") Yoneda lemma for
+-- initial algebras -- this is "Proposition 1" of Uustalu's "A note on
+-- strong dinaturality, initial algebras and uniform parameterized
+-- fixpoint operators".
+--
+-- The lemma asserts an isomorphism between, on one side, the set of paranatural
+-- transformations from the algebras of a polynomial functor to a particular
+-- copresheaf (treated as a difunctor) and, on the other side, the application
+-- of the copresheaf to the initial algebra of the polynomial functor.
+
+public export
+spfdParaAlgToMu : {x : Type} -> (f : SPFData x x) -> (k : SliceObj x -> Type) ->
+  ((a : SliceObj x) -> SliceAlgSPFD {x} f a -> k a) -> k (SPFDmu {x} f)
+spfdParaAlgToMu {x} f k pnt =
+  pnt (SPFDmu {x} f) $ InSPFm {x} {spfd=f}
+
+public export
+spfdMuToParaAlg : {x : Type} ->
+  (f : SPFData x x) -> (k : SliceObj x -> Type) ->
+  (kmap : (y, z : SliceObj x) -> SliceMorphism {a=x} y z -> k y -> k z) ->
+  k (SPFDmu {x} f) -> ((a : SliceObj x) -> SliceAlgSPFD {x} f a -> k a)
+spfdMuToParaAlg {x} f k kmap kmu a alg =
+  kmap (SPFDmu {x} f) a (spfdCata {x} {spfd=f} {a} alg) kmu
+
 --------------------------------------------------------------
 --------------------------------------------------------------
 ---- Terminal coalgebras of slice polynomial endofunctors ----
