@@ -2301,6 +2301,43 @@ spfdCata {x} {spfd} {a} alg ex em =
 -- of Abbott, Altenkirch, and Ghani's "Containers: Constructing
 -- strictly positive types".
 
+-- The base functor of the object which the paper calls `M-hat`.
+public export
+MHbasePos : {0 x : Type} -> (f : SPFData x x) -> SliceObj x
+MHbasePos {x} f ex = Either Unit (spfdPos f ex)
+
+-- What the paper writes as "bottom" -- "points where the tree has been
+-- cut off".
+public export
+mhpCut : {0 x : Type} -> (f : SPFData x x) -> (ex : x) -> MHbasePos {x} f ex
+mhpCut {x} f ex = Left ()
+
+public export
+mhpSup : {0 x : Type} -> (f : SPFData x x) ->
+  {ex : x} -> spfdPos f ex -> MHbasePos {x} f ex
+mhpSup {x} f {ex} = Right
+
+public export
+MHbaseDir : {0 x : Type} ->
+  (f : SPFData x x) -> SPFdirType x x (MHbasePos {x} f)
+MHbaseDir {x} f exc ep exd = case ep of
+  Left () => Void
+  Right efp => spfdDir f exc efp exd
+
+public export
+mhdSup : {0 x : Type} -> {f : SPFData x x} ->
+  {exc : x} -> {efp : spfdPos f exc} -> {exd : x} ->
+  spfdDir f exc efp exd -> MHbaseDir {x} f exc (mhpSup {x} f {ex=exc} efp) exd
+mhdSup {x} {f} {exc} {efp} {exd} = id
+
+public export
+MHbaseF : {0 x : Type} -> SPFData x x -> SPFData x x
+MHbaseF {x} f = SPFD (MHbasePos {x} f) (MHbaseDir {x} f)
+
+public export
+MH : {0 x : Type} -> SPFData x x -> SliceObj x
+MH {x} f = SPFDmu {x} (MHbaseF {x} f)
+
 -- The base functor of the object which the paper calls `M-bar`.
 public export
 MBbasePos : {0 x : Type} -> (f : SPFData x x) -> SliceObj x
