@@ -2260,6 +2260,26 @@ spfdParClosureObjDirFromIntDir {dom} {cod} q r ed ec (() ** dm) (qp ** rd)
        rewrite eq in
        ((ed ** rd) ** Left $ rewrite unitUnique (fst (rqd ed rd)) () in Refl))
 
+-----------------------------------------------------------
+-----------------------------------------------------------
+---- Initial algebras of slice polynomial endofunctors ----
+-----------------------------------------------------------
+-----------------------------------------------------------
+
+public export
+data SPFDmu : {0 x : Type} -> SPFData x x -> SliceObj x where
+  InSPFm : {0 spfd : SPFData x x} ->
+    SliceAlg {a=x} (InterpSPFData {dom=x} {cod=x} spfd) (SPFDmu {x} spfd)
+
+public export
+spfdCata : {0 x : Type} -> {0 spfd : SPFData x x} -> {0 a : SliceObj x} ->
+  SliceAlg {a=x} (InterpSPFData {dom=x} {cod=x} spfd) a ->
+  SliceMorphism {a=x} (SPFDmu {x} spfd) a
+spfdCata {x} {spfd} {a} alg ex em =
+  case em of
+    InSPFm ex (emp ** emdm) =>
+      alg ex (emp ** \ex' => spfdCata {x} {spfd} {a} alg ex' . emdm ex')
+
 ------------------------------------------------
 ------------------------------------------------
 ---- Universal slice polynomial 2-morphisms ----
