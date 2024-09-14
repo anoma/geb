@@ -2137,33 +2137,31 @@ ssfDup {c} {f} sc falg = ssfJoin {c} {f} sc
 -- The dependent version of `ImNu`, the impredicative terminal coalgebra
 -- of an endofunctor on `SliceObj c`.
 public export
-data ImSliceNu : {0 c : Type} -> SliceEndofunctor c -> SliceObj c where
-  ImSlN : {0 c : Type} -> {0 f : SliceEndofunctor c} ->
-    {0 sa : SliceObj c} -> SliceCoalg f sa -> (ec : c) -> sa ec ->
-    ImSliceNu {c} f ec
+ImSliceNu : {c : Type} -> SliceEndofunctor c -> SliceObj c
+ImSliceNu {c} f ec = (sa : SliceObj c ** (SliceCoalg f sa, sa ec))
 
 public export
 imSlAna : {0 c : Type} -> {0 f : SliceEndofunctor c} ->
-  {0 sa : SliceObj c} ->
+  {sa : SliceObj c} ->
   SliceCoalg f sa -> SliceMorphism {a=c} sa (ImSliceNu {c} f)
-imSlAna = ImSlN
+imSlAna {c} {f} {sa} coalg ec esa = (sa ** (coalg, esa))
 
 public export
 imSlTermCoalg : {0 c : Type} -> {f : SliceEndofunctor c} ->
   ((0 x, y : SliceObj c) -> SliceMorphism x y -> SliceMorphism (f x) (f y)) ->
   SliceCoalg f (ImSliceNu f)
-imSlTermCoalg {f} fm ec (ImSlN {c} {f} {sa} coalg ec esa) =
+imSlTermCoalg {f} fm ec (sa ** (coalg, esa)) =
   fm sa (ImSliceNu {c} f) (imSlAna {c} {f} {sa} coalg) ec (coalg ec esa)
 
 -- The inverse of `imSlTermCoalg`, which we know by Lambek's theorem should
 -- exist.
 public export
-imSlTermCoalgInv : {0 c : Type} -> {f : SliceEndofunctor c} ->
+imSlTermCoalgInv : {c : Type} -> {f : SliceEndofunctor c} ->
   ((0 x, y : SliceObj c) -> SliceMorphism x y -> SliceMorphism (f x) (f y)) ->
   SliceAlg f (ImSliceNu f)
-imSlTermCoalgInv {c} {f} fm =
-  ImSlN {c} {f} {sa=(f $ ImSliceNu f)}
-  $ fm (ImSliceNu f) (f $ ImSliceNu f) $ imSlTermCoalg {c} {f} fm
+imSlTermCoalgInv {c} {f} fm ec efn =
+  (f (ImSliceNu f) **
+   (fm (ImSliceNu f) (f $ ImSliceNu f) (imSlTermCoalg {c} {f} fm), efn))
 
 ------------------------
 ------------------------
@@ -2210,7 +2208,7 @@ SCPICoalg {c} f = SlCopointedCoalg {c} (SliceFibSigmaF {c} {d=c} f)
 -- can be implemented in terms of inductive types (W-types) and higher-order
 -- functions.
 public export
-ImSliceCofree : {0 c : Type} -> SliceEndofunctor c -> SliceEndofunctor c
+ImSliceCofree : {c : Type} -> SliceEndofunctor c -> SliceEndofunctor c
 ImSliceCofree {c} f sa = ImSliceNu (SlCopointedF f sa)
 
 public export
@@ -2222,10 +2220,11 @@ ImSlCMCoalg : {c : Type} -> (f : SliceEndofunctor c) -> SliceObj c -> Type
 ImSlCMCoalg {c} f = SliceCoalg {a=c} (ImSliceCofree {c} f)
 
 public export
-inSlCF : {0 c : Type} -> {f : SliceEndofunctor c} -> {0 sl, sa : SliceObj c} ->
+inSlCF : {0 c : Type} -> {f : SliceEndofunctor c} -> {sl, sa : SliceObj c} ->
   SliceMorphism {a=c} sa sl -> SliceCoalg f sa ->
   SliceMorphism {a=c} sa (ImSliceCofree f sl)
-inSlCF label coalg = ImSlN {f=(SlCopointedF f sl)} $ inSlCP {f} label coalg
+inSlCF {c} {f} {sl} {sa} label coalg ec esa =
+  (sa ** (inSlCP {f} {sl} {sa} {sb=sa} label coalg, esa))
 
 public export
 imSlCofreeTermCoalg : {0 c : Type} -> {f : SliceEndofunctor c} ->
@@ -2235,7 +2234,7 @@ imSlCofreeTermCoalg fm {sl} =
   imSlTermCoalg {f=(SlCopointedF f sl)} (mapSlCP {f} fm sl)
 
 public export
-imSlCofreeTermCoalgInv : {0 c : Type} -> {f : SliceEndofunctor c} ->
+imSlCofreeTermCoalgInv : {c : Type} -> {f : SliceEndofunctor c} ->
   ((0 x, y : SliceObj c) -> SliceMorphism x y -> SliceMorphism (f x) (f y)) ->
   {sl : SliceObj c} -> SlCopointedAlg {c} f sl (ImSliceCofree {c} f sl)
 imSlCofreeTermCoalgInv fm {sl} =
@@ -2271,7 +2270,7 @@ imSlSubtrees {c} {f} fm {sl} =
 -- coalgebra morphism `SliceSigmaTrace coalg label :
 -- SliceMorphism {a=c} sa (SliceSigmaCM f sl)`.
 imSlTrace : {0 c : Type} -> {f : SliceEndofunctor c} ->
-  {0 sa, sl : SliceObj c} ->
+  {sa, sl : SliceObj c} ->
   SliceCoalg f sa -> SliceMorphism sa sl ->
   SliceMorphism sa (ImSliceCofree f sl)
 imSlTrace {c} {f} {sa} {sl} = flip $ inSlCF {f} {sl} {sa}
