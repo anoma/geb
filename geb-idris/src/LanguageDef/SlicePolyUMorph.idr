@@ -2347,6 +2347,31 @@ OutSPFn {x} {spfd} =
   imSlTermCoalgInv {c=x} {f=(InterpSPFData {dom=x} {cod=x} spfd)}
   $ InterpSPFDataMap {dom=x} {cod=x} spfd
 
+-- A paranatural (also called "strong dinatural") Yoneda lemma for
+-- terminal coalgebras -- this is alluded to after "Proposition 1" of Uustalu's
+-- "A note on strong dinaturality, initial algebras and uniform parameterized
+-- fixpoint operators", but not explicitly formulated there (let alone proven).
+
+public export
+spfdParaCoalgToNu :
+  {x : Type} -> (f : SPFData x x) -> (k : SliceObj x -> Type) ->
+  (kmap : (y, z : SliceObj x) -> SliceMorphism {a=x} y z -> k y -> k z) ->
+  (a : SliceObj x **
+   (SliceCoalgSPFD {x} f a, SliceMorphism (SliceObjTerminal x) a)) ->
+  SliceMorphism (SliceObjTerminal x) (SPFDnu {x} f)
+spfdParaCoalgToNu {x} f k kmap (a ** (coalg, ea)) ex () =
+  (a ** (coalg, ea ex ()))
+
+public export
+spfdNuToParaCoalg : {x : Type} ->
+  (f : SPFData x x) -> (k : SliceObj x -> Type) ->
+  (kmap : (y, z : SliceObj x) -> SliceMorphism {a=x} y z -> k y -> k z) ->
+  SliceMorphism (SliceObjTerminal x) (SPFDnu {x} f) ->
+  (a : SliceObj x **
+   (SliceCoalgSPFD {x} f a, SliceMorphism (SliceObjTerminal x) a))
+spfdNuToParaCoalg {x} f k kmap m =
+  (SPFDnu {x} f ** (InSPFn {x} {spfd=f}, m))
+
 ------------------------------------------------
 ------------------------------------------------
 ---- Universal slice polynomial 2-morphisms ----
