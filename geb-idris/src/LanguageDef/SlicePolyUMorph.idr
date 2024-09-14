@@ -2356,21 +2356,16 @@ public export
 spfdParaCoalgToNu :
   {x : Type} -> (f : SPFData x x) -> (k : SliceObj x -> Type) ->
   (kmap : (y, z : SliceObj x) -> SliceMorphism {a=x} y z -> k y -> k z) ->
-  (a : SliceObj x **
-   (SliceCoalgSPFD {x} f a, SliceMorphism (SliceObjTerminal x) a)) ->
-  SliceMorphism (SliceObjTerminal x) (SPFDnu {x} f)
-spfdParaCoalgToNu {x} f k kmap (a ** (coalg, ea)) ex () =
-  (a ** (coalg, ea ex ()))
+  (a : SliceObj x ** (SliceCoalgSPFD {x} f a, k a)) -> k (SPFDnu {x} f)
+spfdParaCoalgToNu {x} f k kmap (a ** (coalg, eka)) =
+  kmap a (SPFDnu {x} f) (spfdAna {x} {spfd=f} {a} coalg) eka
 
 public export
 spfdNuToParaCoalg : {x : Type} ->
   (f : SPFData x x) -> (k : SliceObj x -> Type) ->
-  (kmap : (y, z : SliceObj x) -> SliceMorphism {a=x} y z -> k y -> k z) ->
-  SliceMorphism (SliceObjTerminal x) (SPFDnu {x} f) ->
-  (a : SliceObj x **
-   (SliceCoalgSPFD {x} f a, SliceMorphism (SliceObjTerminal x) a))
-spfdNuToParaCoalg {x} f k kmap m =
-  (SPFDnu {x} f ** (InSPFn {x} {spfd=f}, m))
+  k (SPFDnu {x} f) -> (a : SliceObj x ** (SliceCoalgSPFD {x} f a, k a))
+spfdNuToParaCoalg {x} f k knu =
+  (SPFDnu {x} f ** (InSPFn {x} {spfd=f}, knu))
 
 ------------------------------------------------
 ------------------------------------------------
