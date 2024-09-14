@@ -2285,6 +2285,59 @@ spfdCata {x} {spfd} {a} alg ex em =
     InSPFm ex (emp ** emdm) =>
       alg ex (emp ** \ex' => spfdCata {x} {spfd} {a} alg ex' . emdm ex')
 
+--------------------------------------------------------------
+--------------------------------------------------------------
+---- Terminal coalgebras of slice polynomial endofunctors ----
+--------------------------------------------------------------
+--------------------------------------------------------------
+
+-- We follow the construction (of M-types from W-types) in section 4
+-- of Abbott, Altenkirch, and Ghani's "Containers: Constructing
+-- strictly positive types".
+
+-- The base functor of the object which the paper calls `M-bar`.
+public export
+MBbasePos : {0 x : Type} -> (f : SPFData x x) -> SliceObj x
+MBbasePos {x} f ex = Either (Either Unit (spfdPos f ex)) Unit
+
+-- What the paper writes as "bottom" -- "points where the tree has been
+-- cut off".
+public export
+mbpCut : {0 x : Type} -> (f : SPFData x x) -> (ex : x) -> MBbasePos {x} f ex
+mbpCut {x} f ex = Left $ Left ()
+
+public export
+mbpSup : {0 x : Type} -> (f : SPFData x x) ->
+  {ex : x} -> spfdPos f ex -> MBbasePos {x} f ex
+mbpSup {x} f {ex} ep = Left $ Right ep
+
+-- What the paper writes as "star".
+public export
+mbpStar : {0 x : Type} -> (f : SPFData x x) -> (ex : x) -> MBbasePos {x} f ex
+mbpStar {x} f ex = Right ()
+
+public export
+MBbaseDir : {0 x : Type} ->
+  (f : SPFData x x) -> SPFdirType x x (MBbasePos {x} f)
+MBbaseDir {x} f exc ep exd = case ep of
+  Left (Left ()) => Void
+  Left (Right efp) => spfdDir f exc efp exd
+  Right () => Void
+
+public export
+mbdSup : {0 x : Type} -> {f : SPFData x x} ->
+  {exc : x} -> {efp : spfdPos f exc} -> {exd : x} ->
+  spfdDir f exc efp exd -> MBbaseDir {x} f exc (mbpSup {x} f {ex=exc} efp) exd
+mbdSup {x} {f} {exc} {efp} {exd} = id
+
+public export
+MBbaseF : {0 x : Type} -> SPFData x x -> SPFData x x
+MBbaseF {x} f = SPFD (MBbasePos {x} f) (MBbaseDir {x} f)
+
+public export
+MB : {0 x : Type} -> SPFData x x -> SliceObj x
+MB {x} f = SPFDmu {x} (MBbaseF {x} f)
+
 ------------------------------------------------
 ------------------------------------------------
 ---- Universal slice polynomial 2-morphisms ----
