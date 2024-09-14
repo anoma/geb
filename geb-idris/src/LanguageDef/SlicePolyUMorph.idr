@@ -2341,18 +2341,18 @@ MH {x} f = SPFDmu {x} (MHbaseF {x} f)
 -- The base functor of the object which the paper calls `M-bar`.
 public export
 MBbasePos : {0 x : Type} -> (f : SPFData x x) -> SliceObj x
-MBbasePos {x} f ex = Either (Either Unit (spfdPos f ex)) Unit
+MBbasePos {x} f ex = Either (MHbasePos {x} f ex) Unit
 
 -- What the paper writes as "bottom" -- "points where the tree has been
 -- cut off".
 public export
 mbpCut : {0 x : Type} -> (f : SPFData x x) -> (ex : x) -> MBbasePos {x} f ex
-mbpCut {x} f ex = Left $ Left ()
+mbpCut {x} f ex = Left $ mhpCut {x} f ex
 
 public export
 mbpSup : {0 x : Type} -> (f : SPFData x x) ->
   {ex : x} -> spfdPos f ex -> MBbasePos {x} f ex
-mbpSup {x} f {ex} ep = Left $ Right ep
+mbpSup {x} f {ex} ep = Left $ mhpSup {x} f {ex} ep
 
 -- What the paper writes as "star".
 public export
@@ -2363,8 +2363,7 @@ public export
 MBbaseDir : {0 x : Type} ->
   (f : SPFData x x) -> SPFdirType x x (MBbasePos {x} f)
 MBbaseDir {x} f exc ep exd = case ep of
-  Left (Left ()) => Void
-  Left (Right efp) => spfdDir f exc efp exd
+  Left epl => MHbaseDir {x} f exc epl exd
   Right () => Void
 
 public export
