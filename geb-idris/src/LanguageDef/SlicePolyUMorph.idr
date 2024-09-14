@@ -2297,6 +2297,32 @@ spfdCata {x} {spfd} {a} alg ex em =
 --------------------------------------------------------------
 --------------------------------------------------------------
 
+public export
+SPFDnu : {x : Type} -> SPFData x x -> SliceObj x
+SPFDnu {x} f = ImSliceNu {c=x} (InterpSPFData {dom=x} {cod=x} f)
+
+public export
+spfdAna : {0 x : Type} -> {0 spfd : SPFData x x} -> {a : SliceObj x} ->
+  SliceCoalgSPFD spfd a -> SliceMorphism {a=x} a (SPFDnu {x} spfd)
+spfdAna {x} {spfd} {a} =
+  imSlAna {c=x} {f=(InterpSPFData {dom=x} {cod=x} spfd)} {sa=a}
+
+public export
+InSPFn : {x : Type} -> {spfd : SPFData x x} ->
+  SliceCoalgSPFD {x} spfd (SPFDnu {x} spfd)
+InSPFn {x} {spfd} =
+  imSlTermCoalg {c=x} {f=(InterpSPFData {dom=x} {cod=x} spfd)}
+  $ InterpSPFDataMap {dom=x} {cod=x} spfd
+
+-- The inverse of `InSPFn`, which we know by Lambek's theorem should
+-- exist.
+public export
+OutSPFn : {x : Type} -> {spfd : SPFData x x} ->
+  SliceAlgSPFD {x} spfd (SPFDnu {x} spfd)
+OutSPFn {x} {spfd} =
+  imSlTermCoalgInv {c=x} {f=(InterpSPFData {dom=x} {cod=x} spfd)}
+  $ InterpSPFDataMap {dom=x} {cod=x} spfd
+
 ------------------------------------------------
 ------------------------------------------------
 ---- Universal slice polynomial 2-morphisms ----
