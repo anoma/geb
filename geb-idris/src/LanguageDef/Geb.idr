@@ -676,15 +676,9 @@ IntProArId : (c : Type) -> IntEndoProAr c
 IntProArId c = (c ** (id, id))
 
 public export
-IntProArComp : (e, d, c : Type) ->
-  (emor : IntDifunctorSig e) ->
-  (dmor : IntDifunctorSig d) ->
-  (cmor : IntDifunctorSig c) ->
-  (ecomp : IntCompSig e emor) ->
-  (dcomp : IntCompSig d dmor) ->
-  (ccomp : IntCompSig c cmor) ->
+IntProArComp : (e, d, c : Type) -> (dmor : IntDifunctorSig d) ->
   IntProAr e d -> IntProAr d c -> IntProAr e c
-IntProArComp e d c emor dmor cmor ecomp dcomp ccomp
+IntProArComp e d c dmor
   (qpos ** (qcont, qcovar)) (ppos ** (pcont, pcovar)) =
     ((pi : ppos ** qi : qpos ** dmor (qcovar qi) (pcont pi)) **
      (\(pi ** qi ** m) => qcont qi,
@@ -789,8 +783,8 @@ intPPNThcomp :
   IntPPNTar e d emor dmor q q' ->
   IntPPNTar d c dmor cmor p p' ->
   IntPPNTar e c emor cmor
-    (IntProArComp e d c emor dmor cmor ecomp dcomp ccomp q p)
-    (IntProArComp e d c emor dmor cmor ecomp dcomp ccomp q' p')
+    (IntProArComp e d c dmor q p)
+    (IntProArComp e d c dmor q' p')
 intPPNThcomp e d c emor dmor cmor ecomp dcomp ccomp
   (ppos ** (pcont, pcovar))
   (p'pos ** (p'cont, p'covar))
