@@ -783,9 +783,7 @@ intPPNThcomp :
   (emor : IntDifunctorSig e) ->
   (dmor : IntDifunctorSig d) ->
   (cmor : IntDifunctorSig c) ->
-  (ecomp : IntCompSig e emor) ->
   (dcomp : IntCompSig d dmor) ->
-  (ccomp : IntCompSig c cmor) ->
   (p, p' : IntProAr d c) ->
   (q, q' : IntProAr e d) ->
   IntPPNTar e d emor dmor q q' ->
@@ -793,7 +791,7 @@ intPPNThcomp :
   IntPPNTar e c emor cmor
     (IntProArComp e d c dmor q p)
     (IntProArComp e d c dmor q' p')
-intPPNThcomp e d c emor dmor cmor ecomp dcomp ccomp
+intPPNThcomp e d c emor dmor cmor dcomp
   (ppos ** (pcont, pcovar))
   (p'pos ** (p'cont, p'covar))
   (qpos ** (qcont, qcovar))
