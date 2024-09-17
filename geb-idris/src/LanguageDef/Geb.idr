@@ -813,52 +813,6 @@ intPPNThcomp e d c emor dmor cmor ecomp dcomp ccomp
 ----------------------------------------------------
 
 public export
-record CatFromPrshf where
-  constructor CFP
-  cfpObj : Type
-  cfpMor : cfpObj -> cfpObj -> Type
-  cfpRepObj : cfpObj -> cfpObj -> Type
-  cfpRepMor : (a : cfpObj) -> (x, y : cfpObj) ->
-    cfpMor y x -> cfpRepObj a x -> cfpRepObj a y
-
-public export
-record PolyDiAr where
-  constructor PDA
-  pdaContra : PolyFunc
-  pdaCovar : PolyFunc
-
-public export
-InterpPDA : PolyDiAr -> Type -> Type -> Type
-InterpPDA (PDA contra covar) x y =
-  InterpPolyFunc contra x -> InterpPolyFunc covar y
-
-public export
-interpPDAlmap : (pda : PolyDiAr) -> (0 s, t, a : Type) ->
-  (a -> s) -> InterpPDA pda s t -> InterpPDA pda a t
-interpPDAlmap (PDA contra covar) s t a mas = (|>) $ InterpPFMap contra mas
-
-public export
-interpPDArmap : (pda : PolyDiAr) -> (0 s, t, b : Type) ->
-  (t -> b) -> InterpPDA pda s t -> InterpPDA pda s b
-interpPDArmap (PDA contra covar) s t b mtb = (.) $ InterpPFMap covar mtb
-
-public export
-interpPDAdimap : (pda : PolyDiAr) -> (0 s, t, b : Type) ->
-  (a -> s) -> (t -> b) -> InterpPDA pda s t -> InterpPDA pda a b
-interpPDAdimap pda s t b mas mtb =
-  interpPDAlmap pda s b a mas . interpPDArmap pda s t b mtb
-
-public export
-PDAend : PolyDiAr -> Type
-PDAend (PDA contra covar) = PolyNatTrans contra covar
-
-public export
-record PDAcoend (ar : PolyDiAr) where
-  constructor PDAc
-  pdacObj : Type
-  pdacElem : InterpPDA ar pdacObj pdacObj
-
-public export
 IntPDiNTar : (c : Type) -> (mor : IntDifunctorSig c) ->
   IntEndoProAr c -> IntEndoProAr c -> Type
 IntPDiNTar c mor (ppos ** (pcontra, pcovar)) (qpos ** (qcontra, qcovar)) =
@@ -977,6 +931,58 @@ intPDiNTvcomp c mor comp
         comp (rcovar (bonpos (aonpos i))) (qcovar (aonpos i)) (pcovar i)
           (acovar i pasn)
           (bcovar (aonpos i) (qasn i pasn))))
+
+------------------------------------
+------------------------------------
+---- Dialgebra-style difunctors ----
+------------------------------------
+------------------------------------
+
+public export
+record CatFromPrshf where
+  constructor CFP
+  cfpObj : Type
+  cfpMor : cfpObj -> cfpObj -> Type
+  cfpRepObj : cfpObj -> cfpObj -> Type
+  cfpRepMor : (a : cfpObj) -> (x, y : cfpObj) ->
+    cfpMor y x -> cfpRepObj a x -> cfpRepObj a y
+
+public export
+record PolyDiAr where
+  constructor PDA
+  pdaContra : PolyFunc
+  pdaCovar : PolyFunc
+
+public export
+InterpPDA : PolyDiAr -> Type -> Type -> Type
+InterpPDA (PDA contra covar) x y =
+  InterpPolyFunc contra x -> InterpPolyFunc covar y
+
+public export
+interpPDAlmap : (pda : PolyDiAr) -> (0 s, t, a : Type) ->
+  (a -> s) -> InterpPDA pda s t -> InterpPDA pda a t
+interpPDAlmap (PDA contra covar) s t a mas = (|>) $ InterpPFMap contra mas
+
+public export
+interpPDArmap : (pda : PolyDiAr) -> (0 s, t, b : Type) ->
+  (t -> b) -> InterpPDA pda s t -> InterpPDA pda s b
+interpPDArmap (PDA contra covar) s t b mtb = (.) $ InterpPFMap covar mtb
+
+public export
+interpPDAdimap : (pda : PolyDiAr) -> (0 s, t, b : Type) ->
+  (a -> s) -> (t -> b) -> InterpPDA pda s t -> InterpPDA pda a b
+interpPDAdimap pda s t b mas mtb =
+  interpPDAlmap pda s b a mas . interpPDArmap pda s t b mtb
+
+public export
+PDAend : PolyDiAr -> Type
+PDAend (PDA contra covar) = PolyNatTrans contra covar
+
+public export
+record PDAcoend (ar : PolyDiAr) where
+  constructor PDAc
+  pdacObj : Type
+  pdacElem : InterpPDA ar pdacObj pdacObj
 
 ----------------------------------------
 ----------------------------------------
