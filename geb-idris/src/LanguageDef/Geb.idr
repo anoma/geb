@@ -667,6 +667,29 @@ InterpIEPPdimap : (c : Type) -> (mor : IntDifunctorSig c) ->
   IntEndoDimapSig c mor (InterpIEPPobj c mor ar)
 InterpIEPPdimap c mor comp = InterpIPPdimap c c mor mor comp comp
 
+-----------------------------------------
+---- Profunctor arena id/composition ----
+-----------------------------------------
+
+public export
+IntProArId : (c : Type) -> IntEndoProAr c
+IntProArId c = (c ** (id, id))
+
+public export
+IntProArComp : (e, d, c : Type) ->
+  (emor : IntDifunctorSig e) ->
+  (dmor : IntDifunctorSig d) ->
+  (cmor : IntDifunctorSig c) ->
+  (ecomp : IntCompSig e emor) ->
+  (dcomp : IntCompSig d dmor) ->
+  (ccomp : IntCompSig c cmor) ->
+  IntProAr e d -> IntProAr d c -> IntProAr e c
+IntProArComp e d c emor dmor cmor ecomp dcomp ccomp
+  (qpos ** (qcont, qcovar)) (ppos ** (pcont, pcovar)) =
+    ((pi : ppos ** qi : qpos ** dmor (qcovar qi) (pcont pi)) **
+     (\(pi ** qi ** m) => qcont qi,
+      \(pi ** qi ** m) => pcovar pi))
+
 --------------------------------------------
 ---- Profunctor natural transformations ----
 --------------------------------------------
@@ -751,6 +774,37 @@ intPPNTvcomp d c dmor cmor dcomp ccomp
         ccomp (rcovar (bonpos (aonpos i))) (qcovar (aonpos i)) (pcovar i)
           (acovar i)
           (bcovar (aonpos i))))
+
+public export
+intPPNThcomp :
+  (e, d, c : Type) ->
+  (emor : IntDifunctorSig e) ->
+  (dmor : IntDifunctorSig d) ->
+  (cmor : IntDifunctorSig c) ->
+  (ecomp : IntCompSig e emor) ->
+  (dcomp : IntCompSig d dmor) ->
+  (ccomp : IntCompSig c cmor) ->
+  (p, p' : IntProAr d c) ->
+  (q, q' : IntProAr e d) ->
+  IntPPNTar e d emor dmor q q' ->
+  IntPPNTar d c dmor cmor p p' ->
+  IntPPNTar e c emor cmor
+    (IntProArComp e d c emor dmor cmor ecomp dcomp ccomp q p)
+    (IntProArComp e d c emor dmor cmor ecomp dcomp ccomp q' p')
+intPPNThcomp e d c emor dmor cmor ecomp dcomp ccomp
+  (ppos ** (pcont, pcovar))
+  (p'pos ** (p'cont, p'covar))
+  (qpos ** (qcont, qcovar))
+  (q'pos ** (q'cont, q'covar))
+  (bonpos ** (boncont, boncovar))
+  (aonpos ** (aoncont, aoncovar)) =
+    (\(pi ** qi ** m) =>
+      (aonpos pi **
+       bonpos qi **
+       dcomp (q'covar $ bonpos qi) (pcont pi) (p'cont $ aonpos pi) (aoncont pi)
+        $ dcomp (q'covar $ bonpos qi) (qcovar qi) (pcont pi) m (boncovar qi)) **
+     (\(pi ** qi ** m) => boncont qi,
+      \(pi ** qi ** m) => aoncovar pi))
 
 ----------------------------------------------------
 ---- Profunctor di/para-natural transformations ----
@@ -882,6 +936,13 @@ IntPDiNTPara c mor cid comp idl idr assoc
              (rewrite contracomp in Refl)) a2)
             (rewrite ir1 in rewrite contracomp in rewrite eq22 in
              rewrite a3 in Refl)
+
+public export
+intPDiNTid :
+  (c : Type) -> (mor : IntDifunctorSig c) -> (cid : IntIdSig c mor) ->
+  (p : IntEndoProAr c) -> IntPDiNTar c mor p p
+intPDiNTid c mor cid (ppos ** (pcontra, pcovar)) =
+  (id ** (\i, _ => cid (pcontra i), \i, _ => cid (pcovar i)))
 
 public export
 intPDiNTvcomp :
