@@ -746,6 +746,14 @@ InterpIEPPnt : (c : Type) -> (mor : IntDifunctorSig c) ->
 InterpIEPPnt c mor comp = InterpIPPnt c c mor mor comp comp
 
 public export
+intPPNTid :
+  (d, c : Type) -> (dmor : IntDifunctorSig d) -> (cmor : IntDifunctorSig c) ->
+  (did : IntIdSig d dmor) -> (cid : IntIdSig c cmor) ->
+  (p : IntProAr d c) -> IntPPNTar d c dmor cmor p p
+intPPNTid d c dmor cmor did cid (ppos ** (pcontra, pcovar)) =
+  (id ** (\i => did (pcontra i), \i => cid (pcovar i)))
+
+public export
 intPPNTvcomp : (d, c : Type) ->
   (dmor : IntDifunctorSig d) -> (cmor : IntDifunctorSig c) ->
   (dcomp : IntCompSig d dmor) -> (ccomp : IntCompSig c cmor) ->
