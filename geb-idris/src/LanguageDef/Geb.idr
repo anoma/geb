@@ -978,6 +978,12 @@ intPDiNTvcomp c mor comp
           (acovar i pasn)
           (bcovar (aonpos i) (qasn i pasn))))
 
+----------------------------------------
+----------------------------------------
+---- Heterogeneous (disheaf) arenas ----
+----------------------------------------
+----------------------------------------
+
 public export
 IntHetArena : (c : Type) -> (mor : IntDifunctorSig c) -> IntEndoProAr c -> Type
 IntHetArena c mor (pos ** (contra, covar)) =
