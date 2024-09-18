@@ -2266,6 +2266,10 @@ spfdParClosureObjDirFromIntDir {dom} {cod} q r ed ec (() ** dm) (qp ** rd)
 -----------------------------------------------------------
 -----------------------------------------------------------
 
+---------------------------
+---- Convenience types ----
+---------------------------
+
 public export
 SliceAlgSPFD : {x : Type} -> SPFData x x -> SliceObj x -> Type
 SliceAlgSPFD {x} f = SliceAlg {a=x} (InterpSPFData {dom=x} {cod=x} f)
@@ -2273,6 +2277,10 @@ SliceAlgSPFD {x} f = SliceAlg {a=x} (InterpSPFData {dom=x} {cod=x} f)
 public export
 SliceCoalgSPFD : {x : Type} -> SPFData x x -> SliceObj x -> Type
 SliceCoalgSPFD {x} f = SliceCoalg {a=x} (InterpSPFData {dom=x} {cod=x} f)
+
+-----------------------------------
+--- `SPFData` initial algebras ----
+-----------------------------------
 
 public export
 data SPFDmu : {0 x : Type} -> SPFData x x -> SliceObj x where
@@ -2290,6 +2298,10 @@ spfdCata {x} {spfd} {a} alg ex em =
   case em of
     InSPFm ex (emp ** emdm) =>
       alg ex (emp ** \ex' => spfdCata {x} {spfd} {a} alg ex' . emdm ex')
+
+--------------------------------------------------
+---- Paranatural initial-algebra Yoneda forms ----
+--------------------------------------------------
 
 -- A paranatural (also called "strong dinatural") Yoneda lemma for
 -- initial algebras -- this is "Proposition 1" of Uustalu's "A note on
@@ -2341,6 +2353,10 @@ spfdMuToAlgContra {x} f k kmu =
 --------------------------------------------------------------
 --------------------------------------------------------------
 
+--------------------------------------
+--- `SPFData` terminal coalgebras ----
+--------------------------------------
+
 public export
 SPFDnu : {x : Type} -> SPFData x x -> SliceObj x
 SPFDnu {x} f = ImSliceNu {c=x} (InterpSPFData {dom=x} {cod=x} f)
@@ -2366,6 +2382,10 @@ OutSPFn : {x : Type} -> {spfd : SPFData x x} ->
 OutSPFn {x} {spfd} =
   imSlTermCoalgInv {c=x} {f=(InterpSPFData {dom=x} {cod=x} spfd)}
   $ InterpSPFDataMap {dom=x} {cod=x} spfd
+
+-----------------------------------------------------
+---- Paranatural terminal-coalgebra Yoneda forms ----
+-----------------------------------------------------
 
 -- Paranatural (also called "strong dinatural") Yoneda lemmas for
 -- terminal coalgebras -- these (or at least one of them, I'm not sure
