@@ -291,15 +291,27 @@ FreeMonadMorphToFunctorFunctor {f} {fm} {g} {feval} {geval}
 ----------------------------------------
 ----------------------------------------
 
+-------------------------------------------
+---- Objects of categories of elements ----
+-------------------------------------------
+
 public export
 ElemCatObj : (Type -> Type) -> Type
 ElemCatObj f = Sigma {a=Type} f
+
+-------------------------------------------------------
+---- Morphisms of covariant categories of elements ----
+-------------------------------------------------------
 
 public export
 CovarElemCatMor : {f : Type -> Type} -> Functor f ->
   ElemCatObj f -> ElemCatObj f -> Type
 CovarElemCatMor {f} fm (a ** efa) (b ** efb) =
   Subset0 (a -> b) (\m => map {f} m efa = efb)
+
+-------------------------------------------------------------
+---- Initial objects of covariant categories of elements ----
+-------------------------------------------------------------
 
 public export
 HasAllOutgoing : {f : Type -> Type} -> Functor f -> ElemCatObj f -> Type
@@ -326,11 +338,19 @@ InitCovarElemCatObj : {f : Type -> Type} -> Functor f -> Type
 InitCovarElemCatObj {f} fm =
   Subset0 (ElemCatObj f) (IsInitialCovarElemCatObj {f} fm)
 
+-----------------------------------------------------------
+---- Morphisms of contravariant categories of elements ----
+-----------------------------------------------------------
+
 public export
 ContravarElemCatMor : {f : Type -> Type} -> Contravariant f ->
   ElemCatObj f -> ElemCatObj f -> Type
 ContravarElemCatMor {f} fm (a ** efa) (b ** efb) =
   Subset0 (a -> b) (\m => contramap {f} m efb = efa)
+
+------------------------------------------------------------------
+---- Terminal objects of contravariant categories of elements ----
+------------------------------------------------------------------
 
 public export
 HasAllIncoming : {f : Type -> Type} -> Contravariant f -> ElemCatObj f -> Type
