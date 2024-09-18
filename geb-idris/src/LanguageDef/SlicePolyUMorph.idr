@@ -2301,6 +2301,8 @@ spfdCata {x} {spfd} {a} alg ex em =
 -- copresheaf (treated as a difunctor) and, on the other side, the application
 -- of the copresheaf to the initial algebra of the polynomial functor.
 
+-- The following isomorphism is a universal, covariant form.
+
 public export
 spfdParaAlgToMu : {x : Type} -> (f : SPFData x x) -> (k : SliceObj x -> Type) ->
   ((a : SliceObj x) -> SliceAlgSPFD {x} f a -> k a) -> k (SPFDmu {x} f)
