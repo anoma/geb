@@ -2353,7 +2353,7 @@ OutSPFn {x} {spfd} =
 -- "A note on strong dinaturality, initial algebras and uniform parameterized
 -- fixpoint operators", but not explicitly formulated there (let alone proven).
 
--- The first isomorphism is n existential, covariant form.
+-- The following isomorphism is an existential, covariant form.
 
 public export
 spfdParaCoalgToNu :
@@ -2370,7 +2370,7 @@ spfdNuToParaCoalg : {x : Type} ->
 spfdNuToParaCoalg {x} f k knu =
   (SPFDnu {x} f ** (InSPFn {x} {spfd=f}, knu))
 
--- The first isomorphism is a universal, contravariant form.
+-- The following isomorphism is a universal, contravariant form.
 
 public export
 spfdParaCoalgToNuContra : {x : Type} ->
