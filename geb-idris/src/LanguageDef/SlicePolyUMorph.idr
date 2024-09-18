@@ -2330,6 +2330,27 @@ spfdMuToAlgParaNTcovar : {x : Type} ->
 spfdMuToAlgParaNTcovar {x} f k kmap kmu a alg =
   kmap (SPFDmu {x} f) a (spfdCata {x} {spfd=f} {a} alg) kmu
 
+-- The above in a form with the copresheaf `k : SliceObj x -> Type`
+-- generalized to a slice functor.
+
+public export
+spfdAlgParaNTtoMuCovarSl : {x, w : Type} ->
+  (f : SPFData x x) -> (k : SliceFunctor x w) ->
+  ((a : SliceObj x) -> SliceAlgSPFD {x} f a -> Pi {a=w} (k a)) ->
+  Pi {a=w} (k (SPFDmu {x} f))
+spfdAlgParaNTtoMuCovarSl {x} {w} f k pnt =
+  pnt (SPFDmu {x} f) $ InSPFm {x} {spfd=f}
+
+public export
+spfdMuToAlgParaNTcovarSl : {x, w : Type} ->
+  (f : SPFData x x) -> (k : SliceFunctor x w) ->
+  (kmap : (y, z : SliceObj x) ->
+    SliceMorphism {a=x} y z -> SliceMorphism {a=w} (k y) (k z)) ->
+  Pi {a=w} (k (SPFDmu {x} f)) ->
+  ((a : SliceObj x) -> SliceAlgSPFD {x} f a -> Pi {a=w} (k a))
+spfdMuToAlgParaNTcovarSl {x} {w} f k kmap pikmu a alg ew =
+  kmap (SPFDmu {x} f) a (spfdCata {x} {spfd=f} {a} alg) ew (pikmu ew)
+
 -- The following isomorphism is an existential, contravariant form.
 
 public export
@@ -2346,6 +2367,29 @@ spfdMuToAlgContra :
   k (SPFDmu {x} f) -> (a : SliceObj x ** (SliceAlgSPFD {x} f a, k a))
 spfdMuToAlgContra {x} f k kmu =
   (SPFDmu {x} f ** (InSPFm {x} {spfd=f}, kmu))
+
+-- The above in a form with the presheaf `k : SliceObj x -> Type`
+-- generalized to a (contravariant) slice functor.
+
+public export
+spfdAlgToMuContraSl :
+  {x : Type} -> (f : SPFData x x) -> (k : SliceFunctor x w) ->
+  (kcontramap : (y, z : SliceObj x) ->
+    SliceMorphism {a=x} z y -> SliceMorphism {a=w} (k y) (k z)) ->
+  (a : SliceObj x ** (SliceAlgSPFD {x} f a, Sigma {a=w} (k a))) ->
+  Sigma {a=w} (k (SPFDmu {x} f))
+spfdAlgToMuContraSl {x} {w} f k kcm (a ** (alg, (ew ** eka))) =
+  (ew ** kcm a (SPFDmu {x} f) (spfdCata {x} {spfd=f} {a} alg) ew eka)
+
+public export
+spfdMuToAlgContraSl :
+  {x : Type} -> (f : SPFData x x) -> (k : SliceFunctor x w) ->
+  (kcontramap : (y, z : SliceObj x) ->
+    SliceMorphism {a=x} z y -> SliceMorphism {a=w} (k y) (k z)) ->
+  Sigma {a=w} (k (SPFDmu {x} f)) ->
+  (a : SliceObj x ** (SliceAlgSPFD {x} f a, Sigma {a=w} (k a)))
+spfdMuToAlgContraSl {x} {w} f k kcm ewkmu =
+  (SPFDmu {x} f ** (InSPFm {x} {spfd=f}, ewkmu))
 
 --------------------------------------------------------------
 --------------------------------------------------------------
