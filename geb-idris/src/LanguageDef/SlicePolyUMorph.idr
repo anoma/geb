@@ -2356,23 +2356,6 @@ OutSPFn {x} {spfd} =
 -- "A note on strong dinaturality, initial algebras and uniform parameterized
 -- fixpoint operators", but not explicitly formulated there (let alone proven).
 
--- The following isomorphism is an existential, covariant form.
-
-public export
-spfdCoalgToNuCovar :
-  {x : Type} -> (f : SPFData x x) -> (k : SliceObj x -> Type) ->
-  (kmap : (y, z : SliceObj x) -> SliceMorphism {a=x} y z -> k y -> k z) ->
-  (a : SliceObj x ** (SliceCoalgSPFD {x} f a, k a)) -> k (SPFDnu {x} f)
-spfdCoalgToNuCovar {x} f k kmap (a ** (coalg, eka)) =
-  kmap a (SPFDnu {x} f) (spfdAna {x} {spfd=f} {a} coalg) eka
-
-public export
-spfdNuToCoalgCovar : {x : Type} ->
-  (f : SPFData x x) -> (k : SliceObj x -> Type) ->
-  k (SPFDnu {x} f) -> (a : SliceObj x ** (SliceCoalgSPFD {x} f a, k a))
-spfdNuToCoalgCovar {x} f k knu =
-  (SPFDnu {x} f ** (InSPFn {x} {spfd=f}, knu))
-
 -- The following isomorphism is a universal, contravariant form.
 
 public export
@@ -2389,6 +2372,23 @@ spfdNuToCoalgParaNTcontra : {x : Type} ->
   k (SPFDnu {x} f) -> ((a : SliceObj x) -> SliceCoalgSPFD {x} f a -> k a)
 spfdNuToCoalgParaNTcontra {x} f k kcm knu a coalg =
   kcm (SPFDnu {x} f) a (spfdAna {x} {spfd=f} {a} coalg) knu
+
+-- The following isomorphism is an existential, covariant form.
+
+public export
+spfdCoalgToNuCovar :
+  {x : Type} -> (f : SPFData x x) -> (k : SliceObj x -> Type) ->
+  (kmap : (y, z : SliceObj x) -> SliceMorphism {a=x} y z -> k y -> k z) ->
+  (a : SliceObj x ** (SliceCoalgSPFD {x} f a, k a)) -> k (SPFDnu {x} f)
+spfdCoalgToNuCovar {x} f k kmap (a ** (coalg, eka)) =
+  kmap a (SPFDnu {x} f) (spfdAna {x} {spfd=f} {a} coalg) eka
+
+public export
+spfdNuToCoalgCovar : {x : Type} ->
+  (f : SPFData x x) -> (k : SliceObj x -> Type) ->
+  k (SPFDnu {x} f) -> (a : SliceObj x ** (SliceCoalgSPFD {x} f a, k a))
+spfdNuToCoalgCovar {x} f k knu =
+  (SPFDnu {x} f ** (InSPFn {x} {spfd=f}, knu))
 
 ------------------------------------------------
 ------------------------------------------------
