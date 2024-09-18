@@ -2368,25 +2368,6 @@ spfdNuToParaCoalg {x} f k knu =
   (SPFDnu {x} f ** (InSPFn {x} {spfd=f}, knu))
 
 public export
-spfdParaCoalgToNuUniv :
-  {x : Type} -> (f : SPFData x x) -> (k : SliceObj x -> Type) ->
-  (kmap : (y, z : SliceObj x) -> SliceMorphism {a=x} y z -> k y -> k z) ->
-  ((z : Type) ->
-   ((a : SliceObj x) -> SliceCoalgSPFD {x} f a -> k a -> z) -> z) ->
-  k (SPFDnu {x} f)
-spfdParaCoalgToNuUniv {x} f k kmap alpha =
-  alpha (k $ SPFDnu {x} f) $
-    \a => kmap a (SPFDnu {x} f) . spfdAna {x} {spfd=f} {a}
-
-public export
-spfdNuToParaCoalgUniv :
-  {x : Type} -> (f : SPFData x x) -> (k : SliceObj x -> Type) ->
-  k (SPFDnu {x} f) ->
-  ((z : Type) -> ((a : SliceObj x) -> SliceCoalgSPFD {x} f a -> k a -> z) -> z)
-spfdNuToParaCoalgUniv {x} f k knu z alpha =
-  alpha (SPFDnu {x} f) (InSPFn {x} {spfd=f}) knu
-
-public export
 spfdParaCoalgToNuContra : {x : Type} ->
   (f : SPFData x x) -> (k : SliceObj x -> Type) ->
   ((a : SliceObj x) -> SliceCoalgSPFD {x} f a -> k a) -> k (SPFDnu {x} f)
