@@ -2386,6 +2386,21 @@ spfdNuToParaCoalgUniv :
 spfdNuToParaCoalgUniv {x} f k knu z alpha =
   alpha (SPFDnu {x} f) (InSPFn {x} {spfd=f}) knu
 
+public export
+spfdParaCoalgToNuContra : {x : Type} ->
+  (f : SPFData x x) -> (k : SliceObj x -> Type) ->
+  ((a : SliceObj x) -> SliceCoalgSPFD {x} f a -> k a) -> k (SPFDnu {x} f)
+spfdParaCoalgToNuContra {x} f k pnt =
+  pnt (SPFDnu {x} f) $ InSPFn {x} {spfd=f}
+
+public export
+spfdNuContraToParaCoalg : {x : Type} ->
+  (f : SPFData x x) -> (k : SliceObj x -> Type) ->
+  (kcontramap : (y, z : SliceObj x) -> SliceMorphism {a=x} z y -> k y -> k z) ->
+  k (SPFDnu {x} f) -> ((a : SliceObj x) -> SliceCoalgSPFD {x} f a -> k a)
+spfdNuContraToParaCoalg {x} f k kcm knu a coalg =
+  kcm (SPFDnu {x} f) a (spfdAna {x} {spfd=f} {a} coalg) knu
+
 ------------------------------------------------
 ------------------------------------------------
 ---- Universal slice polynomial 2-morphisms ----
