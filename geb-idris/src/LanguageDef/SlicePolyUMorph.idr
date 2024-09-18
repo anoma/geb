@@ -2347,10 +2347,13 @@ OutSPFn {x} {spfd} =
   imSlTermCoalgInv {c=x} {f=(InterpSPFData {dom=x} {cod=x} spfd)}
   $ InterpSPFDataMap {dom=x} {cod=x} spfd
 
--- A paranatural (also called "strong dinatural") Yoneda lemma for
--- terminal coalgebras -- this is alluded to after "Proposition 1" of Uustalu's
+-- Paranatural (also called "strong dinatural") Yoneda lemmas for
+-- terminal coalgebras -- these (or at least one of them, I'm not sure
+-- which -- maybe both) are alluded to after "Proposition 1" of Uustalu's
 -- "A note on strong dinaturality, initial algebras and uniform parameterized
 -- fixpoint operators", but not explicitly formulated there (let alone proven).
+
+-- The first isomorphism is n existential, covariant form.
 
 public export
 spfdParaCoalgToNu :
@@ -2366,6 +2369,8 @@ spfdNuToParaCoalg : {x : Type} ->
   k (SPFDnu {x} f) -> (a : SliceObj x ** (SliceCoalgSPFD {x} f a, k a))
 spfdNuToParaCoalg {x} f k knu =
   (SPFDnu {x} f ** (InSPFn {x} {spfd=f}, knu))
+
+-- The first isomorphism is a universal, contravariant form.
 
 public export
 spfdParaCoalgToNuContra : {x : Type} ->
