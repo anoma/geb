@@ -395,11 +395,11 @@ DiagElemCatMor : {f : Type -> Type -> Type} -> Profunctor f ->
 DiagElemCatMor {f} dm (a ** efa) (b ** efb) =
   Subset0 (a -> b) (\m => dimap {f} id m efa = dimap {f} m id efb)
 
---------------------------------------------
---------------------------------------------
----- Dialgebra twisted-arrow copresheaf ----
---------------------------------------------
---------------------------------------------
+------------------------------
+------------------------------
+---- Dialgebra profunctor ----
+------------------------------
+------------------------------
 
 public export
 DialgebraProf : (Type -> Type) -> (Type -> Type) -> ProfunctorSig
@@ -409,6 +409,12 @@ public export
 DialgebraDimap : (f, g : Type -> Type) -> Functor f -> Functor g ->
   DimapSig (DialgebraProf f g)
 DialgebraDimap f g fm gm mca mbd dialg = map {f=g} mbd . dialg . map {f} mca
+
+--------------------------------------------
+--------------------------------------------
+---- Dialgebra twisted-arrow copresheaf ----
+--------------------------------------------
+--------------------------------------------
 
 public export
 DialgebraTwF : (Type -> Type) -> (Type -> Type) -> TwArrCoprSig
