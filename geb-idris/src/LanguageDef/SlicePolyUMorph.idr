@@ -2304,17 +2304,18 @@ spfdCata {x} {spfd} {a} alg ex em =
 -- The following isomorphism is a universal, covariant form.
 
 public export
-spfdParaAlgToMu : {x : Type} -> (f : SPFData x x) -> (k : SliceObj x -> Type) ->
+spfdAlgParaNTtoMuCovar : {x : Type} ->
+  (f : SPFData x x) -> (k : SliceObj x -> Type) ->
   ((a : SliceObj x) -> SliceAlgSPFD {x} f a -> k a) -> k (SPFDmu {x} f)
-spfdParaAlgToMu {x} f k pnt =
+spfdAlgParaNTtoMuCovar {x} f k pnt =
   pnt (SPFDmu {x} f) $ InSPFm {x} {spfd=f}
 
 public export
-spfdMuToParaAlg : {x : Type} ->
+spfdMuToAlgParaNTcovar : {x : Type} ->
   (f : SPFData x x) -> (k : SliceObj x -> Type) ->
   (kmap : (y, z : SliceObj x) -> SliceMorphism {a=x} y z -> k y -> k z) ->
   k (SPFDmu {x} f) -> ((a : SliceObj x) -> SliceAlgSPFD {x} f a -> k a)
-spfdMuToParaAlg {x} f k kmap kmu a alg =
+spfdMuToAlgParaNTcovar {x} f k kmap kmu a alg =
   kmap (SPFDmu {x} f) a (spfdCata {x} {spfd=f} {a} alg) kmu
 
 --------------------------------------------------------------
@@ -2358,35 +2359,35 @@ OutSPFn {x} {spfd} =
 -- The following isomorphism is an existential, covariant form.
 
 public export
-spfdParaCoalgToNu :
+spfdCoalgToNuCovar :
   {x : Type} -> (f : SPFData x x) -> (k : SliceObj x -> Type) ->
   (kmap : (y, z : SliceObj x) -> SliceMorphism {a=x} y z -> k y -> k z) ->
   (a : SliceObj x ** (SliceCoalgSPFD {x} f a, k a)) -> k (SPFDnu {x} f)
-spfdParaCoalgToNu {x} f k kmap (a ** (coalg, eka)) =
+spfdCoalgToNuCovar {x} f k kmap (a ** (coalg, eka)) =
   kmap a (SPFDnu {x} f) (spfdAna {x} {spfd=f} {a} coalg) eka
 
 public export
-spfdNuToParaCoalg : {x : Type} ->
+spfdNuToCoalgCovar : {x : Type} ->
   (f : SPFData x x) -> (k : SliceObj x -> Type) ->
   k (SPFDnu {x} f) -> (a : SliceObj x ** (SliceCoalgSPFD {x} f a, k a))
-spfdNuToParaCoalg {x} f k knu =
+spfdNuToCoalgCovar {x} f k knu =
   (SPFDnu {x} f ** (InSPFn {x} {spfd=f}, knu))
 
 -- The following isomorphism is a universal, contravariant form.
 
 public export
-spfdParaCoalgToNuContra : {x : Type} ->
+spfdCoalgParaNTtoNuContra : {x : Type} ->
   (f : SPFData x x) -> (k : SliceObj x -> Type) ->
   ((a : SliceObj x) -> SliceCoalgSPFD {x} f a -> k a) -> k (SPFDnu {x} f)
-spfdParaCoalgToNuContra {x} f k pnt =
+spfdCoalgParaNTtoNuContra {x} f k pnt =
   pnt (SPFDnu {x} f) $ InSPFn {x} {spfd=f}
 
 public export
-spfdNuContraToParaCoalg : {x : Type} ->
+spfdNuToCoalgParaNTcontra : {x : Type} ->
   (f : SPFData x x) -> (k : SliceObj x -> Type) ->
   (kcontramap : (y, z : SliceObj x) -> SliceMorphism {a=x} z y -> k y -> k z) ->
   k (SPFDnu {x} f) -> ((a : SliceObj x) -> SliceCoalgSPFD {x} f a -> k a)
-spfdNuContraToParaCoalg {x} f k kcm knu a coalg =
+spfdNuToCoalgParaNTcontra {x} f k kcm knu a coalg =
   kcm (SPFDnu {x} f) a (spfdAna {x} {spfd=f} {a} coalg) knu
 
 ------------------------------------------------
