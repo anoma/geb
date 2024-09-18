@@ -2318,6 +2318,23 @@ spfdMuToAlgParaNTcovar : {x : Type} ->
 spfdMuToAlgParaNTcovar {x} f k kmap kmu a alg =
   kmap (SPFDmu {x} f) a (spfdCata {x} {spfd=f} {a} alg) kmu
 
+-- The following isomorphism is an existential, contravariant form.
+
+public export
+spfdAlgToMuContra :
+  {x : Type} -> (f : SPFData x x) -> (k : SliceObj x -> Type) ->
+  (kcontramap : (y, z : SliceObj x) -> SliceMorphism {a=x} z y -> k y -> k z) ->
+  (a : SliceObj x ** (SliceAlgSPFD {x} f a, k a)) -> k (SPFDmu {x} f)
+spfdAlgToMuContra {x} f k kcm (a ** (alg, eka)) =
+  kcm a (SPFDmu {x} f) (spfdCata {x} {spfd=f} {a} alg) eka
+
+public export
+spfdMuToAlgContra :
+  {x : Type} -> (f : SPFData x x) -> (k : SliceObj x -> Type) ->
+  k (SPFDmu {x} f) -> (a : SliceObj x ** (SliceAlgSPFD {x} f a, k a))
+spfdMuToAlgContra {x} f k kmu =
+  (SPFDmu {x} f ** (InSPFm {x} {spfd=f}, kmu))
+
 --------------------------------------------------------------
 --------------------------------------------------------------
 ---- Terminal coalgebras of slice polynomial endofunctors ----
