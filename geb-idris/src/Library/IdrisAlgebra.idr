@@ -377,6 +377,24 @@ TerminalContravarElemCatObj : {f : Type -> Type} -> Contravariant f -> Type
 TerminalContravarElemCatObj {f} fm =
   Subset0 (ElemCatObj f) (IsTerminalContravarElemCatObj {f} fm)
 
+----------------------------------------------------
+---- Objects of categories of diagonal elements ----
+----------------------------------------------------
+
+public export
+DiagElemCatObj : (Type -> Type -> Type) -> Type
+DiagElemCatObj = CoendBase
+
+------------------------------------------------------
+---- Morphisms of categories of diagonal elements ----
+------------------------------------------------------
+
+public export
+DiagElemCatMor : {f : Type -> Type -> Type} -> Profunctor f ->
+  DiagElemCatObj f -> DiagElemCatObj f -> Type
+DiagElemCatMor {f} dm (a ** efa) (b ** efb) =
+  Subset0 (a -> b) (\m => dimap {f} id m efa = dimap {f} m id efb)
+
 --------------------------------------------
 --------------------------------------------
 ---- Dialgebra twisted-arrow copresheaf ----
