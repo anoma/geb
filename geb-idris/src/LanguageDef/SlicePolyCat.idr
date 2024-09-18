@@ -3100,7 +3100,7 @@ SPFpoDoubleCat =
 
 public export
 SPFelem : {dom, cod : Type} -> SPFData dom cod -> SliceObj dom -> Type
-SPFelem {dom} {cod} spfd = Sigma {a=cod} . InterpSPFData spfd
+SPFelem {dom} {cod} spfd = Pi {a=cod} . InterpSPFData spfd
 
 public export
 SPFelemCatObj : {dom, cod : Type} -> SliceObj (SPFData dom cod)
@@ -3113,46 +3113,40 @@ record SPFelemCatMor {dom, cod : Type}
   spelM : SliceMorphism {a=dom} (fst elx) (fst ely)
   spelEq : FunExt ->
     (snd ely) =
-    (fst (snd elx) **
-     InterpSPFDataMap f (fst elx) (fst ely)
-      spelM (fst $ snd elx) (snd $ snd elx))
+    (\ec => InterpSPFDataMap f (fst elx) (fst ely) spelM ec (DPair.snd elx ec))
 
 public export
 SPelMc : {dom, cod : Type} -> {f : SPFData dom cod} -> {x, y : SliceObj dom} ->
   (el : SPFelem {dom} {cod} f x) -> (m : SliceMorphism {a=dom} x y) ->
   SPFelemCatMor {dom} {cod}
-    f
-    (x ** el)
-    (y ** fst el ** fst (snd el) **
-     snd $ InterpSPFDataMap f x y m (fst el) (snd el))
-SPelMc {dom} {cod} {f} {x} {y} el m = SPelM m $ \fext => Refl
+    f (x ** el) (y ** \ec => InterpSPFDataMap f x y m ec (el ec))
+SPelMc {dom} {cod} {f} {x} {y} el m = SPelM m $ \fext => funExt $ \ec => Refl
 
 public export
 SPFelemCatId : {dom, cod : Type} -> (f : SPFData dom cod) ->
   IntIdSig (SPFelemCatObj {dom} {cod} f) (SPFelemCatMor {dom} {cod} f)
 SPFelemCatId {dom} {cod} f el =
   case el of
-    (x ** ec ** ep ** dm) =>
+    (x ** e) =>
       SPelM (SliceId dom x) $ \fext =>
-        dpEq12
-          Refl
-        $ dpEq12
-          Refl
-          $ funExt $ \ed => Refl
+        funExt $ \ec => rewrite (dpEqPat {dp=(e ec)}) in
+          dpEq12 Refl $ funExt $ \ed => Refl
 
 public export
 SPFelemCatComp : {dom, cod : Type} -> (f : SPFData dom cod) ->
   IntCompSig (SPFelemCatObj {dom} {cod} f) (SPFelemCatMor {dom} {cod} f)
-SPFelemCatComp {dom} {cod} f
-  (sx ** elxc ** elxp ** elxdm)
-  (sy ** elyc ** elyp ** elydm)
-  (sz ** elzc ** elzp ** elzdm)
+SPFelemCatComp {dom} {cod} f (sx ** elx) (sy ** ely) (sz ** elz)
   (SPelM m' meq') (SPelM m meq) =
     SPelM
       (sliceComp {a=dom} m' m)
-      (\fext => case meq fext of
-        Refl => case meq' fext of
-          Refl => dpEq12 Refl $ dpEq12 Refl $ funExt $ \ez => Refl)
+      (\fext => funExt $ \ez => rewrite (dpEqPat {dp=(elz ez)}) in
+        dpEq12
+          (rewrite fcongdep {x=ez} (meq' fext) in
+           rewrite fcongdep {x=ez} (meq fext) in
+           Refl)
+          (rewrite fcongdep {x=ez} (meq' fext) in
+           rewrite fcongdep {x=ez} (meq fext) in
+           funExt $ \ed => Refl))
 
 public export
 SPFelemCatICS : {dom, cod : Type} -> (f : SPFData dom cod) ->
