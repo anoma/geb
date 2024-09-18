@@ -2454,6 +2454,27 @@ spfdNuToCoalgParaNTcontra : {x : Type} ->
 spfdNuToCoalgParaNTcontra {x} f k kcm knu a coalg =
   kcm (SPFDnu {x} f) a (spfdAna {x} {spfd=f} {a} coalg) knu
 
+-- The above in a form with the presheaf `k : SliceObj x -> Type`
+-- generalized to a (contravariant) slice functor.
+
+public export
+spfdCoalgParaNTtoNuContraSl : {x, w : Type} ->
+  (f : SPFData x x) -> (k : SliceFunctor x w) ->
+  ((a : SliceObj x) -> SliceCoalgSPFD {x} f a -> Pi {a=w} (k a)) ->
+  Pi {a=w} (k (SPFDnu {x} f))
+spfdCoalgParaNTtoNuContraSl {x} {w} f k pnt =
+  pnt (SPFDnu {x} f) $ InSPFn {x} {spfd=f}
+
+public export
+spfdNuToCoalgParaNTcontraSl : {x, w : Type} ->
+  (f : SPFData x x) -> (k : SliceFunctor x w) ->
+  (kcontramap : (y, z : SliceObj x) ->
+    SliceMorphism {a=x} z y -> SliceMorphism {a=w} (k y) (k z)) ->
+  Pi {a=w} (k (SPFDnu {x} f)) ->
+  ((a : SliceObj x) -> SliceCoalgSPFD {x} f a -> Pi {a=w} (k a))
+spfdNuToCoalgParaNTcontraSl {x} {w} f k kcm piknu a coalg ew =
+  kcm (SPFDnu {x} f) a (spfdAna {x} {spfd=f} {a} coalg) ew (piknu ew)
+
 -- The following isomorphism is an existential, covariant form.
 
 public export
@@ -2470,6 +2491,27 @@ spfdNuToCoalgCovar : {x : Type} ->
   k (SPFDnu {x} f) -> (a : SliceObj x ** (SliceCoalgSPFD {x} f a, k a))
 spfdNuToCoalgCovar {x} f k knu =
   (SPFDnu {x} f ** (InSPFn {x} {spfd=f}, knu))
+
+-- The above in a form with the copresheaf `k : SliceObj x -> Type`
+-- generalized to a slice functor.
+
+public export
+spfdCoalgToNuCovarSl :
+  {x, w : Type} -> (f : SPFData x x) -> (k : SliceFunctor x w) ->
+  (kmap : (y, z : SliceObj x) ->
+    SliceMorphism {a=x} y z -> SliceMorphism {a=w} (k y) (k z)) ->
+  (a : SliceObj x ** (SliceCoalgSPFD {x} f a, Sigma {a=w} (k a))) ->
+  Sigma {a=w} (k (SPFDnu {x} f))
+spfdCoalgToNuCovarSl {x} {w} f k kmap (a ** (coalg, (ew ** eka))) =
+  (ew ** kmap a (SPFDnu {x} f) (spfdAna {x} {spfd=f} {a} coalg) ew eka)
+
+public export
+spfdNuToCoalgCovarSl :
+  {x, w : Type} -> (f : SPFData x x) -> (k : SliceFunctor x w) ->
+  Sigma {a=w} (k (SPFDnu {x} f)) ->
+  (a : SliceObj x ** (SliceCoalgSPFD {x} f a, Sigma {a=w} (k a)))
+spfdNuToCoalgCovarSl {x} {w} f k ewknu =
+  (SPFDnu {x} f ** (InSPFn {x} {spfd=f}, ewknu))
 
 ------------------------------------------------
 ------------------------------------------------
