@@ -2373,7 +2373,7 @@ spfdMuToAlgContra {x} f k kmu =
 
 public export
 spfdAlgToMuContraSl :
-  {x : Type} -> (f : SPFData x x) -> (k : SliceFunctor x w) ->
+  {x, w : Type} -> (f : SPFData x x) -> (k : SliceFunctor x w) ->
   (kcontramap : (y, z : SliceObj x) ->
     SliceMorphism {a=x} z y -> SliceMorphism {a=w} (k y) (k z)) ->
   (a : SliceObj x ** (SliceAlgSPFD {x} f a, Sigma {a=w} (k a))) ->
@@ -2383,7 +2383,7 @@ spfdAlgToMuContraSl {x} {w} f k kcm (a ** (alg, (ew ** eka))) =
 
 public export
 spfdMuToAlgContraSl :
-  {x : Type} -> (f : SPFData x x) -> (k : SliceFunctor x w) ->
+  {x, w : Type} -> (f : SPFData x x) -> (k : SliceFunctor x w) ->
   (kcontramap : (y, z : SliceObj x) ->
     SliceMorphism {a=x} z y -> SliceMorphism {a=w} (k y) (k z)) ->
   Sigma {a=w} (k (SPFDmu {x} f)) ->
