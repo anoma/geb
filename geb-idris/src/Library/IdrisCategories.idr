@@ -1742,6 +1742,41 @@ public export
 ProfConstAlg : ProfunctorSig -> Type -> Type
 ProfConstAlg p x = p x x
 
+----------------------------
+----------------------------
+---- Free pro(co)monads ----
+----------------------------
+----------------------------
+
+public export
+data FreePromonad : ProfunctorSig -> ProfunctorSig where
+  InFPv : {0 p : ProfunctorSig} -> {0 a, b : Type} ->
+    p a b -> FreePromonad p a b
+  InFPM : {0 p : ProfunctorSig} -> {0 a, b : Type} ->
+    EndoProfCompose p (FreePromonad p) a b -> FreePromonad p a b
+
+public export
+Profunctor p => Profunctor (FreePromonad p) where
+  dimap {a} {b} {c} {d} mca mbd (InFPv pab) =
+    InFPv {p} {a=c} {b=d} $ dimap {f=p} mca mbd pab
+  dimap {a} {b} {c} {d} mca mbd (InFPM (i ** (pai, fpib))) =
+    InFPM {p} {a=c} {b=d}
+      (i ** (dimap {f=p} mca id pai, dimap {f=(FreePromonad p)} id mbd fpib))
+
+public export
+data CofreeProcomonad : ProfunctorSig -> ProfunctorSig where
+  InFPCM : {0 p : ProfunctorSig} -> {0 a, b : Type} ->
+    p a b -> EndoProfCompose p (CofreeProcomonad p) a b ->
+    CofreeProcomonad p a b
+
+public export
+Profunctor p => Profunctor (CofreeProcomonad p) where
+  dimap {a} {b} {c} {d} mca mbd (InFPCM pab (i ** (pai, fpib))) =
+    InFPCM {p} {a=c} {b=d}
+      (dimap mca mbd pab)
+      (i ** (dimap {f=p} mca id pai,
+       dimap {f=(CofreeProcomonad p)} id mbd fpib))
+
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 ---- (`Type`-enriched) copresheaves on the twisted-arrow category of `Type` ----
