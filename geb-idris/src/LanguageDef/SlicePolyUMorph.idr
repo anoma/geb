@@ -2379,18 +2379,16 @@ spfdAlgToMuContraSl :
     SliceMorphism {a=x} z y -> SliceMorphism {a=w} (k y) (k z)) ->
   (a : SliceObj x ** (SliceAlgSPFD {x} f a, Sigma {a=w} (k a))) ->
   Sigma {a=w} (k (SPFDmu {x} f))
-spfdAlgToMuContraSl {x} {w} f k kcm (a ** (alg, (ew ** eka))) =
-  (ew ** kcm a (SPFDmu {x} f) (spfdCata {x} {spfd=f} {a} alg) ew eka)
+spfdAlgToMuContraSl {x} {w} f k kcm =
+  spfdAlgToMuContra {x} f (Sigma {a=w} . k)
+    (sigmaContramapComp {c=x} {d=w} {k} kcm)
 
 public export
 spfdMuToAlgContraSl :
   {x, w : Type} -> (f : SPFData x x) -> (k : SliceFunctor x w) ->
-  (kcontramap : (y, z : SliceObj x) ->
-    SliceMorphism {a=x} z y -> SliceMorphism {a=w} (k y) (k z)) ->
   Sigma {a=w} (k (SPFDmu {x} f)) ->
   (a : SliceObj x ** (SliceAlgSPFD {x} f a, Sigma {a=w} (k a)))
-spfdMuToAlgContraSl {x} {w} f k kcm ewkmu =
-  (SPFDmu {x} f ** (InSPFm {x} {spfd=f}, ewkmu))
+spfdMuToAlgContraSl {x} {w} f k = spfdMuToAlgContra {x} f (Sigma {a=w} . k)
 
 --------------------------------------------------------------
 --------------------------------------------------------------
@@ -2463,8 +2461,8 @@ spfdCoalgParaNTtoNuContraSl : {x, w : Type} ->
   (f : SPFData x x) -> (k : SliceFunctor x w) ->
   ((a : SliceObj x) -> SliceCoalgSPFD {x} f a -> Pi {a=w} (k a)) ->
   Pi {a=w} (k (SPFDnu {x} f))
-spfdCoalgParaNTtoNuContraSl {x} {w} f k pnt =
-  pnt (SPFDnu {x} f) $ InSPFn {x} {spfd=f}
+spfdCoalgParaNTtoNuContraSl {x} {w} f k =
+  spfdCoalgParaNTtoNuContra {x} f (Pi {a=w} . k)
 
 public export
 spfdNuToCoalgParaNTcontraSl : {x, w : Type} ->
@@ -2473,8 +2471,9 @@ spfdNuToCoalgParaNTcontraSl : {x, w : Type} ->
     SliceMorphism {a=x} z y -> SliceMorphism {a=w} (k y) (k z)) ->
   Pi {a=w} (k (SPFDnu {x} f)) ->
   ((a : SliceObj x) -> SliceCoalgSPFD {x} f a -> Pi {a=w} (k a))
-spfdNuToCoalgParaNTcontraSl {x} {w} f k kcm piknu a coalg ew =
-  kcm (SPFDnu {x} f) a (spfdAna {x} {spfd=f} {a} coalg) ew (piknu ew)
+spfdNuToCoalgParaNTcontraSl {x} {w} f k kcm =
+  spfdNuToCoalgParaNTcontra {x} f (Pi {a=w} . k)
+    (piContramapComp {c=x} {d=w} {k} kcm)
 
 -- The following isomorphism is an existential, covariant form.
 
@@ -2503,16 +2502,16 @@ spfdCoalgToNuCovarSl :
     SliceMorphism {a=x} y z -> SliceMorphism {a=w} (k y) (k z)) ->
   (a : SliceObj x ** (SliceCoalgSPFD {x} f a, Sigma {a=w} (k a))) ->
   Sigma {a=w} (k (SPFDnu {x} f))
-spfdCoalgToNuCovarSl {x} {w} f k kmap (a ** (coalg, (ew ** eka))) =
-  (ew ** kmap a (SPFDnu {x} f) (spfdAna {x} {spfd=f} {a} coalg) ew eka)
+spfdCoalgToNuCovarSl {x} {w} f k kmap =
+  spfdCoalgToNuCovar {x} f (Sigma {a=w} . k) (sigmaMapComp {c=x} {d=w} {k} kmap)
 
 public export
 spfdNuToCoalgCovarSl :
   {x, w : Type} -> (f : SPFData x x) -> (k : SliceFunctor x w) ->
   Sigma {a=w} (k (SPFDnu {x} f)) ->
   (a : SliceObj x ** (SliceCoalgSPFD {x} f a, Sigma {a=w} (k a)))
-spfdNuToCoalgCovarSl {x} {w} f k ewknu =
-  (SPFDnu {x} f ** (InSPFn {x} {spfd=f}, ewknu))
+spfdNuToCoalgCovarSl {x} {w} f k =
+  spfdNuToCoalgCovar {x} f (Sigma {a=w} . k)
 
 ------------------------------------------------
 ------------------------------------------------
