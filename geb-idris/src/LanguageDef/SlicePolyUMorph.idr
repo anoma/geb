@@ -2338,8 +2338,8 @@ spfdAlgParaNTtoMuCovarSl : {x, w : Type} ->
   (f : SPFData x x) -> (k : SliceFunctor x w) ->
   ((a : SliceObj x) -> SliceAlgSPFD {x} f a -> Pi {a=w} (k a)) ->
   Pi {a=w} (k (SPFDmu {x} f))
-spfdAlgParaNTtoMuCovarSl {x} {w} f k pnt =
-  pnt (SPFDmu {x} f) $ InSPFm {x} {spfd=f}
+spfdAlgParaNTtoMuCovarSl {x} {w} f k =
+  spfdAlgParaNTtoMuCovar {x} f (Pi {a=w} . k)
 
 public export
 spfdMuToAlgParaNTcovarSl : {x, w : Type} ->
@@ -2348,8 +2348,9 @@ spfdMuToAlgParaNTcovarSl : {x, w : Type} ->
     SliceMorphism {a=x} y z -> SliceMorphism {a=w} (k y) (k z)) ->
   Pi {a=w} (k (SPFDmu {x} f)) ->
   ((a : SliceObj x) -> SliceAlgSPFD {x} f a -> Pi {a=w} (k a))
-spfdMuToAlgParaNTcovarSl {x} {w} f k kmap pikmu a alg ew =
-  kmap (SPFDmu {x} f) a (spfdCata {x} {spfd=f} {a} alg) ew (pikmu ew)
+spfdMuToAlgParaNTcovarSl {x} {w} f k kmap =
+  spfdMuToAlgParaNTcovar {x} f
+    (Pi {a=w} . k) (piMapComp {c=x} {d=w} {k} kmap)
 
 -- The following isomorphism is an existential, contravariant form.
 

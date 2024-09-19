@@ -829,6 +829,15 @@ piMap : {0 c : Type} -> {0 x, y : SliceObj c} ->
 piMap {c} {x} {y} g f ec = g ec $ f ec
 
 public export
+piMapComp : {0 c, d : Type} -> {k : SliceFunctor c d} ->
+  (kmap : (x, y : SliceObj c) ->
+    SliceMorphism {a=c} x y -> SliceMorphism {a=d} (k x) (k y)) ->
+  (x, y : SliceObj c) ->
+  SliceMorphism x y -> Pi {a=d} (k x) -> Pi {a=d} (k y)
+piMapComp {c} {d} {k} kmap x y =
+  piMap {c=d} {x=(k x)} {y=(k y)} . kmap x y
+
+public export
 sigmaMap : {0 c : Type} -> {0 x, y : SliceObj c} ->
   SliceMorphism x y -> Sigma x -> Sigma y
 sigmaMap {c} {x} {y} m sigx = (fst sigx ** m (fst sigx) (snd sigx))
