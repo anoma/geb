@@ -838,9 +838,36 @@ piMapComp {c} {d} {k} kmap x y =
   piMap {c=d} {x=(k x)} {y=(k y)} . kmap x y
 
 public export
+piContramapComp : {0 c, d : Type} -> {k : SliceFunctor c d} ->
+  (kcontramap : (x, y : SliceObj c) ->
+    SliceMorphism {a=c} y x -> SliceMorphism {a=d} (k x) (k y)) ->
+  (x, y : SliceObj c) ->
+  SliceMorphism y x -> Pi {a=d} (k x) -> Pi {a=d} (k y)
+piContramapComp {c} {d} {k} kcontramap x y =
+  piMap {c=d} {x=(k x)} {y=(k y)} . kcontramap x y
+
+public export
 sigmaMap : {0 c : Type} -> {0 x, y : SliceObj c} ->
   SliceMorphism x y -> Sigma x -> Sigma y
 sigmaMap {c} {x} {y} m sigx = (fst sigx ** m (fst sigx) (snd sigx))
+
+public export
+sigmaMapComp : {0 c, d : Type} -> {k : SliceFunctor c d} ->
+  (kmap : (x, y : SliceObj c) ->
+    SliceMorphism {a=c} x y -> SliceMorphism {a=d} (k x) (k y)) ->
+  (x, y : SliceObj c) ->
+  SliceMorphism x y -> Sigma {a=d} (k x) -> Sigma {a=d} (k y)
+sigmaMapComp {c} {d} {k} kmap x y =
+  sigmaMap {c=d} {x=(k x)} {y=(k y)} . kmap x y
+
+public export
+sigmaContramapComp : {0 c, d : Type} -> {k : SliceFunctor c d} ->
+  (kcontramap : (x, y : SliceObj c) ->
+    SliceMorphism {a=c} y x -> SliceMorphism {a=d} (k x) (k y)) ->
+  (x, y : SliceObj c) ->
+  SliceMorphism y x -> Sigma {a=d} (k x) -> Sigma {a=d} (k y)
+sigmaContramapComp {c} {d} {k} kcontramap x y =
+  sigmaMap {c=d} {x=(k x)} {y=(k y)} . kcontramap x y
 
 public export
 sliceApp : {0 c : Type} -> {0 x, y, z : SliceObj c} ->
