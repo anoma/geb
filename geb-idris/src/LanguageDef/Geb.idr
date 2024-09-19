@@ -5441,11 +5441,11 @@ public export
 prodHomLiftCurry : (Type -> Type -> Type) -> (Type, Type) -> Type -> Type
 prodHomLiftCurry h (x, y) z = h x (h y z)
 
-------------------------
-------------------------
----- Free promonads ----
-------------------------
-------------------------
+----------------------------
+----------------------------
+---- Free pro(co)monads ----
+----------------------------
+----------------------------
 
 public export
 data FreePromonad : ProfunctorSig -> ProfunctorSig where
