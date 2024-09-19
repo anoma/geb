@@ -410,6 +410,23 @@ DialgebraDimap : (f, g : Type -> Type) -> Functor f -> Functor g ->
   DimapSig (DialgebraProf f g)
 DialgebraDimap f g fm gm mca mbd dialg = map {f=g} mbd . dialg . map {f} mca
 
+-------------------------------------
+-------------------------------------
+---- Initial/terminal dialgebras ----
+-------------------------------------
+-------------------------------------
+
+public export
+DialgCatObj : (f, g : Type -> Type) -> Type
+DialgCatObj f g = DiagElemCatObj (DialgebraProf f g)
+
+public export
+DialgCatMor : {f, g : Type -> Type} -> Functor f -> Functor g ->
+  DialgCatObj f g -> DialgCatObj f g -> Type
+DialgCatMor {f} {g} fm gm =
+  DiagElemCatMor {f=(DialgebraProf f g)}
+    (MkProfunctor $ DialgebraDimap f g fm gm)
+
 --------------------------------------------
 --------------------------------------------
 ---- Dialgebra twisted-arrow copresheaf ----
