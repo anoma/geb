@@ -8055,6 +8055,10 @@ public export
 RKanExt : (j, g : Type -> Type) -> Type -> Type
 RKanExt j g = flip NaturalTransformation g . FunctorExp j
 
+public export
+(Functor j, Functor g) => Functor (RKanExt j g) where
+  map {j} {g} {a} {b} mab alpha x mbjx = alpha x (mbjx . mab)
+
 -- Note that `ExpFunctor j a` can be read as
 -- `ContravarHomFunc a . j`.
 public export
@@ -8069,6 +8073,10 @@ Functor f => Profunctor (flip $ ExpFunctor f) where
 public export
 LKanExt : (j, g : Type -> Type) -> Type -> Type
 LKanExt j g a = (b : Type ** (ExpFunctor j a b, g b))
+
+public export
+(Functor j, Functor g) => Functor (LKanExt j g) where
+  map {j} {g} {a} {b} mab = dpMapSnd (\x => mapFst ((.) mab))
 
 ---------------------------------------
 ---------------------------------------
