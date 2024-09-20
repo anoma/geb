@@ -4177,12 +4177,32 @@ SPFCtot {b} {dom} {cod} sf =
        spfdDir (sf $ fst ebc) (snd ebc) ep (rewrite eqb in snd ebd)))
 
 public export
+SPFCtotMap : {b : Type} -> {dom, cod : SliceObj b} ->
+  (f, g : SPFDataFam {b} dom cod) ->
+  SPFdepNTfam f g -> SPFnt (SPFCtot f) (SPFCtot g)
+SPFCtotMap {b} {dom} {cod} f g sf =
+  SPFDm
+    (\ebc => spOnPos (sf $ fst ebc) (snd ebc))
+    (\ebc, efp, ebd =>
+      dpMapSnd $
+        \beq => spOnDir (sf $ fst ebc) (snd ebc) efp (rewrite beq in snd ebd))
+
+public export
 SPFCslice : {b : Type} -> {dom, cod : SliceObj b} ->
   SPFamData {b} dom cod -> SPFDataFam {b} dom cod
 SPFCslice {b} {dom} {cod} sf eb =
   SPFD
     (\ec => spfdPos sf (eb ** ec))
     (\ec, ep, ed => spfdDir sf (eb ** ec) ep (eb ** ed))
+
+public export
+SPFCsliceMap : {b : Type} -> {dom, cod : SliceObj b} ->
+  (f, g : SPFamData {b} dom cod) ->
+  SPFnt f g -> SPFdepNTfam (SPFCslice f) (SPFCslice g)
+SPFCsliceMap {b} {dom} {cod} f g nt eb =
+  SPFDm
+    (\ec => spOnPos nt (eb ** ec))
+    (\ec, ep, ed => spOnDir nt (eb ** ec) ep (eb ** ed))
 
 -- This adjunction exhibits `SPFDataFam {b} dom cod` as a subcategory of
 -- `SPFamData {b} dom cod`, which is simply a name for the category
@@ -4262,6 +4282,37 @@ SPFCsliceCounitIdR : FunExt -> {b : Type} -> {dom, cod : SliceObj b} ->
     (sliceId {a=(cod eb)} (InterpSPFData (SPFCslice (SPFCtot sf) eb) sd))
 SPFCsliceCounitIdR fext {b} {dom} {cod} sf eb ed ec (ep ** dm) =
   dpEq12 Refl $ funExt $ \ed => funExt $ \(Refl ** dd) => Refl
+
+-- Here we compute all the adjunction data for the embedding of
+-- `SPFDataFam` into `SPFamData`.
+
+public export
+SPFdepAdjAdjoints : {b : Type} -> (dom, cod : SliceObj b) ->
+  IntAdjointsSig
+    (SPFdepCat {b} dom cod)
+    (SPFDcat (Sigma {a=b} dom) (Sigma {a=b} cod))
+SPFdepAdjAdjoints {b} dom cod =
+  IAdjoints
+    (IFunctor (SPFCslice {b} {dom} {cod}) (SPFCsliceMap {b} {dom} {cod}))
+    (IFunctor (SPFCtot {b} {dom} {cod}) (SPFCtotMap {b} {dom} {cod}))
+
+public export
+SPFdepAdjUnits : {b : Type} -> (dom, cod : SliceObj b) ->
+  IntUnitsSig (SPFdepAdjAdjoints {b} dom cod)
+SPFdepAdjUnits {b} dom cod =
+  IUnits
+    (SPFCsliceTotUnit {b} {dom} {cod})
+    (SPFCsliceTotCounit {b} {dom} {cod})
+
+public export
+SPFdepAdjunction : {b : Type} -> (dom, cod : SliceObj b) ->
+  IntAdjunctionSig
+    (SPFdepCat {b} dom cod)
+    (SPFDcat (Sigma {a=b} dom) (Sigma {a=b} cod))
+SPFdepAdjunction {b} dom cod =
+  IntAdjunctionFromUnits
+    (SPFdepAdjAdjoints {b} dom cod)
+    (SPFdepAdjUnits {b} dom cod)
 
 ---------------------
 ---- Quantifiers ----
