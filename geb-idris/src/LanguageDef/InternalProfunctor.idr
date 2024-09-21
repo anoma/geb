@@ -1254,3 +1254,317 @@ TypeToTPreNTnaturality : (0 x, y : Type) -> (f : x -> y) ->
     (TPreUniqueMapSig $ TPreFromType x) (TPreUniqueMapSig $ TPreFromType y)
     (TypeToTPreNT x y f)
 TypeToTPreNTnaturality x y f () () (DCid ()) ex = Refl
+
+-----------------------------------------
+-----------------------------------------
+---- Internal polynomial profunctors ----
+-----------------------------------------
+-----------------------------------------
+
+---------------------------
+---- Profunctor arenas ----
+---------------------------
+
+public export
+IntProAr : (d, c : Type) -> Type
+IntProAr d c = (pos : Type ** (pos -> d, pos -> c))
+
+public export
+IntEndoProAr : (c : Type) -> Type
+IntEndoProAr c = IntProAr c c
+
+-----------------------------------------
+---- Profunctor arena interpretation ----
+-----------------------------------------
+
+public export
+InterpIPPobj : (d, c : Type) ->
+  (dmor : IntDifunctorSig d) -> (cmor : IntDifunctorSig c) ->
+  IntProAr d c -> d -> c -> Type
+InterpIPPobj d c dmor cmor (pos ** (contra, covar)) a b =
+   (i : pos ** (dmor a (contra i), cmor (covar i) b))
+
+public export
+InterpIEPPobj : (c : Type) -> (mor : IntDifunctorSig c) ->
+  IntEndoProAr c -> c -> c -> Type
+InterpIEPPobj c mor = InterpIPPobj c c mor mor
+
+public export
+InterpIPPdimap : (d, c : Type) ->
+  (dmor : IntDifunctorSig d) -> (cmor : IntDifunctorSig c) ->
+  (dcomp : IntCompSig d dmor) -> (ccomp : IntCompSig c cmor) ->
+  (ar : IntProAr d c) ->
+  IntDimapSig d c dmor cmor (InterpIPPobj d c dmor cmor ar)
+InterpIPPdimap d c dmor cmor dcomp ccomp (pos ** (contra, covar)) s t a b
+  dmas cmtb (i ** (dmsx, cmyt)) =
+    (i ** (dcomp a s (contra i) dmsx dmas, ccomp (covar i) t b cmtb cmyt))
+
+public export
+InterpIEPPdimap : (c : Type) -> (mor : IntDifunctorSig c) ->
+  (comp : IntCompSig c mor) ->
+  (ar : IntEndoProAr c) ->
+  IntEndoDimapSig c mor (InterpIEPPobj c mor ar)
+InterpIEPPdimap c mor comp = InterpIPPdimap c c mor mor comp comp
+
+-----------------------------------------
+---- Profunctor arena id/composition ----
+-----------------------------------------
+
+public export
+IntProArId : (c : Type) -> IntEndoProAr c
+IntProArId c = (c ** (id, id))
+
+public export
+IntProArComp : (e, d, c : Type) -> (dmor : IntDifunctorSig d) ->
+  IntProAr e d -> IntProAr d c -> IntProAr e c
+IntProArComp e d c dmor
+  (qpos ** (qcont, qcovar)) (ppos ** (pcont, pcovar)) =
+    ((pi : ppos ** qi : qpos ** dmor (qcovar qi) (pcont pi)) **
+     (\(pi ** qi ** m) => qcont qi,
+      \(pi ** qi ** m) => pcovar pi))
+
+--------------------------------------------
+---- Profunctor natural transformations ----
+--------------------------------------------
+
+public export
+IntPPNTar : (d, c : Type) ->
+  (dmor : IntDifunctorSig d) -> (cmor : IntDifunctorSig c) ->
+  IntProAr d c -> IntProAr d c -> Type
+IntPPNTar d c dmor cmor
+  (ppos ** (pcontra, pcovar)) (qpos ** (qcontra, qcovar)) =
+    (onpos : ppos -> qpos **
+     ((i : ppos) -> dmor (pcontra i) (qcontra $ onpos i),
+      (i : ppos) -> cmor (qcovar $ onpos i) (pcovar i)))
+
+public export
+InterpIPPnt : (d, c : Type) ->
+  (dmor : IntDifunctorSig d) -> (cmor : IntDifunctorSig c) ->
+  (dcomp : IntCompSig d dmor) -> (ccomp : IntCompSig c cmor) ->
+  (p, q : IntProAr d c) -> IntPPNTar d c dmor cmor p q ->
+  IntProfNTSig d c (InterpIPPobj d c dmor cmor p) (InterpIPPobj d c dmor cmor q)
+InterpIPPnt d c dmor cmor dcomp ccomp
+  (ppos ** (pcontra, pcovar)) (qpos ** (qcontra, qcovar))
+  (onpos ** (dcontra, dcovar)) a b (i ** (dmax, cmyb)) =
+    (onpos i **
+     (dcomp a (pcontra i) (qcontra (onpos i)) (dcontra i) dmax,
+      ccomp (qcovar (onpos i)) (pcovar i) b cmyb (dcovar i)))
+
+public export
+0 InterpIPPntNatural : (d, c : Type) ->
+  (dmor : IntDifunctorSig d) -> (cmor : IntDifunctorSig c) ->
+  (dcomp : IntCompSig d dmor) -> (ccomp : IntCompSig c cmor) ->
+  (dassoc : IntAssocSig d dmor dcomp) ->
+  (cassoc : IntAssocSig c cmor ccomp) ->
+  (p, q : IntProAr d c) -> (ar : IntPPNTar d c dmor cmor p q) ->
+  IntProfNTNaturality d c dmor cmor
+    (InterpIPPobj d c dmor cmor p)
+    (InterpIPPobj d c dmor cmor q)
+    (InterpIPPdimap d c dmor cmor dcomp ccomp p)
+    (InterpIPPdimap d c dmor cmor dcomp ccomp q)
+    (InterpIPPnt d c dmor cmor dcomp ccomp p q ar)
+InterpIPPntNatural d c dmor cmor dcomp ccomp dassoc cassoc
+  (ppos ** (pcontra, pcovar)) (qpos ** (qcontra, qcovar))
+  (onpos ** (dcontra, dcovar)) s t a b dmas cmtb (i ** (dmsp, cmpt)) =
+    dpEq12
+      Refl
+      $ pairEqCong
+        (dassoc a s (pcontra i) (qcontra (onpos i)) (dcontra i) dmsp dmas)
+        (sym $ cassoc (qcovar $ onpos i) (pcovar i) t b cmtb cmpt (dcovar i))
+
+public export
+IntEPPNTar : (c : Type) -> (mor : IntDifunctorSig c) ->
+  IntEndoProAr c -> IntEndoProAr c -> Type
+IntEPPNTar c mor = IntPPNTar c c mor mor
+
+public export
+InterpIEPPnt : (c : Type) -> (mor : IntDifunctorSig c) ->
+  (comp : IntCompSig c mor) ->
+  (p, q : IntEndoProAr c) -> IntEPPNTar c mor p q ->
+  IntEndoProfNTSig c (InterpIEPPobj c mor p) (InterpIEPPobj c mor q)
+InterpIEPPnt c mor comp = InterpIPPnt c c mor mor comp comp
+
+public export
+intPPNTid :
+  (d, c : Type) -> (dmor : IntDifunctorSig d) -> (cmor : IntDifunctorSig c) ->
+  (did : IntIdSig d dmor) -> (cid : IntIdSig c cmor) ->
+  (p : IntProAr d c) -> IntPPNTar d c dmor cmor p p
+intPPNTid d c dmor cmor did cid (ppos ** (pcontra, pcovar)) =
+  (id ** (\i => did (pcontra i), \i => cid (pcovar i)))
+
+public export
+intPPNTvcomp : (d, c : Type) ->
+  (dmor : IntDifunctorSig d) -> (cmor : IntDifunctorSig c) ->
+  (dcomp : IntCompSig d dmor) -> (ccomp : IntCompSig c cmor) ->
+  (p, q, r : IntProAr d c) ->
+  IntPPNTar d c dmor cmor q r ->
+  IntPPNTar d c dmor cmor p q ->
+  IntPPNTar d c dmor cmor p r
+intPPNTvcomp d c dmor cmor dcomp ccomp
+  (ppos ** (pcontra, pcovar))
+  (qpos ** (qcontra, qcovar))
+  (rpos ** (rcontra, rcovar))
+  (bonpos ** (bcontra, bcovar))
+  (aonpos ** (acontra, acovar)) =
+    (bonpos . aonpos **
+     (\i =>
+        dcomp (pcontra i) (qcontra (aonpos i)) (rcontra (bonpos (aonpos i)))
+          (bcontra (aonpos i))
+          (acontra i),
+      \i =>
+        ccomp (rcovar (bonpos (aonpos i))) (qcovar (aonpos i)) (pcovar i)
+          (acovar i)
+          (bcovar (aonpos i))))
+
+public export
+intPPNThcomp :
+  (e, d, c : Type) ->
+  (emor : IntDifunctorSig e) ->
+  (dmor : IntDifunctorSig d) ->
+  (cmor : IntDifunctorSig c) ->
+  (dcomp : IntCompSig d dmor) ->
+  (p, p' : IntProAr d c) ->
+  (q, q' : IntProAr e d) ->
+  IntPPNTar e d emor dmor q q' ->
+  IntPPNTar d c dmor cmor p p' ->
+  IntPPNTar e c emor cmor
+    (IntProArComp e d c dmor q p)
+    (IntProArComp e d c dmor q' p')
+intPPNThcomp e d c emor dmor cmor dcomp
+  (ppos ** (pcont, pcovar))
+  (p'pos ** (p'cont, p'covar))
+  (qpos ** (qcont, qcovar))
+  (q'pos ** (q'cont, q'covar))
+  (bonpos ** (boncont, boncovar))
+  (aonpos ** (aoncont, aoncovar)) =
+    (\(pi ** qi ** m) =>
+      (aonpos pi **
+       bonpos qi **
+       dcomp (q'covar $ bonpos qi) (pcont pi) (p'cont $ aonpos pi) (aoncont pi)
+        $ dcomp (q'covar $ bonpos qi) (qcovar qi) (pcont pi) m (boncovar qi)) **
+     (\(pi ** qi ** m) => boncont qi,
+      \(pi ** qi ** m) => aoncovar pi))
+
+----------------------------------------------------
+---- Profunctor di/para-natural transformations ----
+----------------------------------------------------
+
+public export
+IntPDiNTar : (c : Type) -> (mor : IntDifunctorSig c) ->
+  IntEndoProAr c -> IntEndoProAr c -> Type
+IntPDiNTar c mor (ppos ** (pcontra, pcovar)) (qpos ** (qcontra, qcovar)) =
+  (onpos : ppos -> qpos **
+   ((i : ppos) ->
+      mor (pcovar i) (pcontra i) -> mor (pcontra i) (qcontra $ onpos i),
+    (i : ppos) ->
+      mor (pcovar i) (pcontra i) -> mor (qcovar $ onpos i) (pcovar i)))
+
+public export
+InterpIEPPdint : (c : Type) -> (mor : IntDifunctorSig c) ->
+  (comp : IntCompSig c mor) ->
+  (p, q : IntEndoProAr c) -> IntPDiNTar c mor p q ->
+  IntDiNTSig c (InterpIEPPobj c mor p) (InterpIEPPobj c mor q)
+InterpIEPPdint c mor comp
+  (ppos ** (pcontra, pcovar)) (qpos ** (qcontra, qcovar))
+  (onpos ** (dcontra, dcovar)) a (i ** (cmax, cmya)) =
+    let
+      passign : mor (pcovar i) (pcontra i) =
+        comp (pcovar i) a (pcontra i) cmax cmya
+    in
+    (onpos i **
+     (comp a (pcontra i) (qcontra $ onpos i) (dcontra i passign) cmax,
+      comp (qcovar $ onpos i) (pcovar i) a cmya (dcovar i passign)))
+
+public export
+IntPDiNTPara : (c : Type) -> (mor : IntDifunctorSig c) ->
+  (cid : IntIdSig c mor) -> (comp : IntCompSig c mor) ->
+  (idl : IntIdLSig c mor comp cid) ->
+  (idr : IntIdRSig c mor comp cid) ->
+  (assoc : IntAssocSig c mor comp) ->
+  (p, q : IntEndoProAr c) -> (ar : IntPDiNTar c mor p q) ->
+  IntParaNTCond c mor
+    (InterpIEPPobj c mor p)
+    (InterpIEPPobj c mor q)
+    (IntEndoLmapFromDimap c mor cid
+      (InterpIEPPobj c mor p) (InterpIEPPdimap c mor comp p))
+    (IntEndoRmapFromDimap c mor cid
+      (InterpIEPPobj c mor p) (InterpIEPPdimap c mor comp p))
+    (IntEndoLmapFromDimap c mor cid
+      (InterpIEPPobj c mor q) (InterpIEPPdimap c mor comp q))
+    (IntEndoRmapFromDimap c mor cid
+      (InterpIEPPobj c mor q) (InterpIEPPdimap c mor comp q))
+  (InterpIEPPdint c mor comp p q ar)
+IntPDiNTPara c mor cid comp idl idr assoc
+  (ppos ** (pcovar, pcontra)) (qpos ** (qcovar, qcontra))
+  (onpos ** (dcontra, dcovar)) c0 c1 mc0c1
+  (i0 ** (mcp0, mpc0)) (i1 ** (mcp1, mpc1)) cond =
+    case mkDPairInjectiveFstHet cond of
+      Refl =>
+        let
+          eq2 = mkDPairInjectiveSndHet cond
+          eq21 = trans (fstEq eq2) $ idl c0 (pcovar i1) mcp0
+          eq22 = trans (sym $ idr (pcontra i1) c1 mpc1) $ sndEq eq2
+          a1 = assoc c0 c1 (pcovar i1) (qcovar $ onpos i1)
+            (dcontra i1 (comp (pcontra i1) c1 (pcovar i1) mcp1 mpc1)) mcp1 mc0c1
+          a2 = sym $ assoc c0 c0 (pcovar i1) (qcovar $ onpos i1)
+            (dcontra i1 (comp (pcontra i1) c0 (pcovar i1) mcp0 mpc0)) mcp0
+              (cid c0)
+          a3 = assoc (qcontra (onpos i1)) (pcontra i1) c0 c1
+            mc0c1 mpc0 (dcovar i1 (comp (pcontra i1) c0 (pcovar i1) mcp0 mpc0))
+          a4 = assoc (pcontra i1) c0 c1 (pcovar i1)
+            mcp1 mc0c1 mpc0
+          il1 = idl c0 (pcovar i1) mcp0
+          ir1 = idr (qcontra (onpos i1)) c1
+            (comp (qcontra (onpos i1)) (pcontra i1) c1
+              mpc1 (dcovar i1 (comp (pcontra i1) c1 (pcovar i1) mcp1 mpc1)))
+          contracomp :
+            (comp (pcontra i1) c1 (pcovar i1) mcp1 mpc1 =
+             comp (pcontra i1) c0 (pcovar i1) mcp0 mpc0) =
+              rewrite sym eq21 in rewrite eq22 in rewrite a4 in Refl
+        in
+        dpEq12
+          Refl
+          $ pairEqCong
+            (trans a1 $ trans (rewrite il1 in rewrite eq21 in
+             (rewrite contracomp in Refl)) a2)
+            (rewrite ir1 in rewrite contracomp in rewrite eq22 in
+             rewrite a3 in Refl)
+
+public export
+intPDiNTid :
+  (c : Type) -> (mor : IntDifunctorSig c) -> (cid : IntIdSig c mor) ->
+  (p : IntEndoProAr c) -> IntPDiNTar c mor p p
+intPDiNTid c mor cid (ppos ** (pcontra, pcovar)) =
+  (id ** (\i, _ => cid (pcontra i), \i, _ => cid (pcovar i)))
+
+public export
+intPDiNTvcomp :
+  (c : Type) -> (mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
+  (p, q, r : IntEndoProAr c) ->
+  IntPDiNTar c mor q r -> IntPDiNTar c mor p q -> IntPDiNTar c mor p r
+intPDiNTvcomp c mor comp
+  (ppos ** (pcontra, pcovar))
+  (qpos ** (qcontra, qcovar))
+  (rpos ** (rcontra, rcovar))
+  (bonpos ** (bcontra, bcovar))
+  (aonpos ** (acontra, acovar)) =
+    (bonpos . aonpos **
+      let
+        qasn :
+          ((i : ppos) -> mor (pcovar i) (pcontra i) ->
+            mor (qcovar (aonpos i)) (qcontra (aonpos i))) =
+          \i, pasn =>
+            comp (qcovar (aonpos i)) (pcontra i) (qcontra (aonpos i))
+              (acontra i pasn)
+              (comp (qcovar (aonpos i)) (pcovar i) (pcontra i)
+                pasn
+                (acovar i pasn))
+      in
+      (\i, pasn =>
+        comp (pcontra i) (qcontra (aonpos i)) (rcontra (bonpos (aonpos i)))
+          (bcontra (aonpos i) (qasn i pasn))
+          (acontra i pasn),
+       \i, pasn =>
+        comp (rcovar (bonpos (aonpos i))) (qcovar (aonpos i)) (pcovar i)
+          (acovar i pasn)
+          (bcovar (aonpos i) (qasn i pasn))))
