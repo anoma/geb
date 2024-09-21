@@ -4822,3 +4822,26 @@ SPFntFromNT fext {dom} {cod} {f} {g} nt isnat =
   SPFDm
     (SPFntFromNTpos fext {f} {g} nt isnat)
     (SPFntFromNTdir fext {f} {g} nt isnat)
+
+public export
+SPFDextCovarDirRepMapId : FunExt ->
+  {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (ec : cod) -> (ep : spfdPos spfd ec) ->
+  (0 b : SliceObj dom) -> (m : SliceMorphism {a=dom} (spfdDir spfd ec ep) b) ->
+  SPFDextCovarDirRepMap {dom} {cod} spfd ec ep (spfdDir spfd ec ep) b m
+    (sliceId $ spfdDir spfd ec ep) = m
+SPFDextCovarDirRepMapId fext {dom} {cod} spfd ec ep b m = funExt $ \ed => Refl
+
+public export
+SPFntComplete : FunExt ->
+  {dom, cod : Type} -> {f, g : SPFData dom cod} ->
+  (nt : SliceNatTrans {x=dom} {y=cod} (InterpSPFData f) (InterpSPFData g)) ->
+  (isnat : SPFDntNaturality {dom} {cod} {f} {g} nt) ->
+  (x : SliceObj dom) ->
+  SliceExtEq {a=cod}
+    (nt x)
+    (InterpSPFnt f g (SPFntFromNT fext {f} {g} nt isnat) x)
+SPFntComplete fext {dom} {cod} {f=(SPFD fpos fdir)} {g=(SPFD gpos gdir)}
+  nt isnat x ec (efp ** fdm) =
+    rewrite sym $ SPFDextCovarDirRepMapId fext (SPFD fpos fdir) ec efp x fdm in
+    isnat (fdir ec efp) x fdm ec (efp ** sliceId $ fdir ec efp)
