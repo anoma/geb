@@ -6148,6 +6148,78 @@ public export
 ImpredTCFromNu : (f : Type -> Type) -> Nu f -> ImpredTerminalCoalg f
 ImpredTCFromNu f x z alpha = DPair.uncurry alpha (ImpredTCExFromNu f x)
 
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+---- Impredicative encodings of universal properties of internal categories ----
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+IntIsInitCovar : (c : Type) -> (mor : IntDifunctorSig c) -> c -> Type
+IntIsInitCovar c mor i =
+  (z : c) -> mor i z
+
+IntHasInitCovar : (c : Type) -> (mor : IntDifunctorSig c) -> Type
+IntHasInitCovar c mor = (i : c ** IntIsInitCovar c mor i)
+
+-- This follows from `IntIsInitCovar` by post-composition (of the unique
+-- morphism after the given morphism).  Note that initial objects come
+-- from left adjoints.
+IntIsInitContra : (c : Type) -> (mor : IntDifunctorSig c) -> c -> Type
+IntIsInitContra c mor i =
+  (w, z : c) -> mor w i -> mor w z
+
+-- This follows from `IntIsTermContra` by pre-composition (of the unique
+-- morphism before the given morphism).  Note that terminal objects
+-- come from right adjoints.
+IntIsTermCovar : (c : Type) -> (mor : IntDifunctorSig c) -> c -> Type
+IntIsTermCovar c mor t =
+  (w, z : c) -> mor t z -> mor w z
+
+IntIsTermContra : (c : Type) -> (mor : IntDifunctorSig c) -> c -> Type
+IntIsTermContra c mor t =
+  (w : c) -> mor w t
+
+IntHasTermContra : (c : Type) -> (mor : IntDifunctorSig c) -> Type
+IntHasTermContra c mor = (i : c ** IntIsTermContra c mor i)
+
+-- Compare `ImpredCoprod`.
+IntIsCoprodCovar :
+  (c : Type) -> (mor : IntDifunctorSig c) -> c -> c -> c -> Type
+IntIsCoprodCovar c mor x y cxy =
+  (z : c) -> (mor x z, mor y z) -> mor cxy z
+
+IntHasCoprodCovar : (c : Type) -> (mor : IntDifunctorSig c) -> c -> c -> Type
+IntHasCoprodCovar c mor x y = (cxy : c ** IntIsCoprodCovar c mor x y cxy)
+
+IntHasAllCoprodCovar : (c : Type) -> (mor : IntDifunctorSig c) -> Type
+IntHasAllCoprodCovar c mor = (x, y : c) -> IntHasCoprodCovar c mor x y
+
+-- This follows from `IntIsCoprodCovar` by post-composition (of the
+-- unique morphism after the given morphisms).  Note that coproducts come
+-- from left adjoints.
+IntIsCoprodContra :
+  (c : Type) -> (mor : IntDifunctorSig c) -> c -> c -> c -> Type
+IntIsCoprodContra c mor x y cxy =
+  (w, z : c) -> mor w cxy -> (mor x z, mor y z) -> mor w z
+
+-- This follows from `IntIsProdContra` by pre-composition (of the unique
+-- morphism before the given morphism).  Note that products come from
+-- right adjoints.
+IntIsProdCovar : (c : Type) -> (mor : IntDifunctorSig c) -> c -> c -> c -> Type
+IntIsProdCovar c mor x y pxy =
+  (w, z : c) -> mor pxy z -> (mor w x, mor w y) -> mor w z
+
+-- Compare `ImpredProdPar`.
+IntIsProdContra : (c : Type) -> (mor : IntDifunctorSig c) -> c -> c -> c -> Type
+IntIsProdContra c mor x y pxy =
+  (w : c) -> (mor w x, mor w y) -> mor w pxy
+
+IntHasProdContra : (c : Type) -> (mor : IntDifunctorSig c) -> c -> c -> Type
+IntHasProdContra c mor x y = (pxy : c ** IntIsProdContra c mor x y pxy)
+
+IntHasAllProdContra : (c : Type) -> (mor : IntDifunctorSig c) -> Type
+IntHasAllProdContra c mor = (x, y : c) -> IntHasProdContra c mor x y
+
 --------------------------------------------------------
 --------------------------------------------------------
 ---- (Co)slice categories as categories of elements ----
