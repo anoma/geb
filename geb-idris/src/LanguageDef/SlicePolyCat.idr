@@ -4755,3 +4755,70 @@ spfdDirGenQuant : {dom, cod : Type} ->
   (spfd : SPFData dom cod) -> SliceObj (SPFDbase spfd)
 spfdDirGenQuant {dom} {cod} spfd ep =
   (ec' : cod ** spfdDirGenQuantCod {dom} {cod} spfd ep ec')
+
+----------------------------------------------
+----------------------------------------------
+---- Correctness/completeness of `SPFDnt` ----
+----------------------------------------------
+----------------------------------------------
+
+public export
+SPFDntSig : {dom, cod : Type} -> (f, g : SPFData dom cod) -> Type
+SPFDntSig {dom} {cod} f g =
+  SliceNatTrans {x=dom} {y=cod} (InterpSPFData f) (InterpSPFData g)
+
+-- The naturality condition for a general slice-category natural transformation.
+public export
+SPFDntNaturality : {dom, cod : Type} -> {f, g : SPFData dom cod} ->
+  SPFDntSig {dom} {cod} f g -> Type
+SPFDntNaturality {dom} {cod} {f} {g} nt =
+  (x, x' : SliceObj dom) -> (m : SliceMorphism {a=dom} x x') ->
+  SliceExtEq {a=cod} {s=(InterpSPFData f x)} {s'=(InterpSPFData g x')}
+    (sliceComp (nt x') (InterpSPFDataMap f x x' m))
+    (sliceComp (InterpSPFDataMap g x x' m) (nt x))
+
+-- Here we show that a slice-category transformation defined by an `SPFnt`
+-- does satisfy the naturality condition -- that is, `SPFnt` is correct.
+public export
+SPFntCorrect : FunExt ->
+  {dom, cod : Type} -> {f, g : SPFData dom cod} ->
+  (nt : SPFnt {dom} {cod} f g) ->
+  SPFDntNaturality {dom} {cod} {f} {g} (InterpSPFnt f g nt)
+SPFntCorrect fext {dom} {cod} {f=(SPFD fpos fdir)} {g=(SPFD gpos gdir)}
+  (SPFDm onpos ondir) x x' m ec (efp ** dm) =
+    dpEq12 Refl (funExt $ \ed => funExt $ \gd => Refl)
+
+-- Next we show that any slice-category transformation which satisfies the
+-- naturality condition can be defined by an `SPDnt` -- that is, `SPFnt` is
+-- complete.
+
+public export
+SPFntFromNTpos : FunExt ->
+  {dom, cod : Type} -> {f, g : SPFData dom cod} ->
+  (nt : SliceNatTrans {x=dom} {y=cod} (InterpSPFData f) (InterpSPFData g)) ->
+  SPFDntNaturality {dom} {cod} {f} {g} nt ->
+  SPFntPos {dom} {cod} f g
+SPFntFromNTpos fext {dom} {cod} {f=(SPFD fpos fdir)} {g=(SPFD gpos gdir)}
+  nt isnat ec efp =
+    fst $ nt (fdir ec efp) ec (efp ** sliceId $ fdir ec efp)
+
+public export
+SPFntFromNTdir : (fext : FunExt) ->
+  {dom, cod : Type} -> {f, g : SPFData dom cod} ->
+  (nt : SliceNatTrans {x=dom} {y=cod} (InterpSPFData f) (InterpSPFData g)) ->
+  (isnat : SPFDntNaturality {dom} {cod} {f} {g} nt) ->
+  SPFntDir {dom} {cod} f g (SPFntFromNTpos {f} {g} fext nt isnat)
+SPFntFromNTdir fext {dom} {cod} {f=(SPFD fpos fdir)} {g=(SPFD gpos gdir)}
+  nt isnat ec efp =
+    snd (nt (fdir ec efp) ec (efp ** sliceId $ fdir ec efp))
+
+public export
+SPFntFromNT : FunExt ->
+  {dom, cod : Type} -> {f, g : SPFData dom cod} ->
+  (nt : SliceNatTrans {x=dom} {y=cod} (InterpSPFData f) (InterpSPFData g)) ->
+  SPFDntNaturality {dom} {cod} {f} {g} nt ->
+  SPFnt {dom} {cod} f g
+SPFntFromNT fext {dom} {cod} {f} {g} nt isnat =
+  SPFDm
+    (SPFntFromNTpos fext {f} {g} nt isnat)
+    (SPFntFromNTdir fext {f} {g} nt isnat)
