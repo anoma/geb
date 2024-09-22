@@ -6,8 +6,46 @@ import public LanguageDef.SlicePolyCat
 import public LanguageDef.SlicePolyUMorph
 import public LanguageDef.MLDirichCat
 
--- Comma categories, algebras, coalgebras, and dialgebras of slice polynomial
--- functors.
+-- Profunctors, algebras, coalgebras, dialgebras, and comma categories of
+-- slice polynomial functors.
+
+--------------------------------------
+--------------------------------------
+---- Slice polynomial profunctors ----
+--------------------------------------
+--------------------------------------
+
+-- We begin with a dependent-slice-polynomial expression of difunctors
+-- on `Type` (that is, profunctors of the form `op(Type) -> Type -> Type`).
+
+public export
+record MLPolyDiF where
+  mpdT1 : MLDirichCatObj
+  mpdSPF : SPFDataFam {b=(dfPos mpdT1)} (dfDir mpdT1) (\_ => Unit)
+
+public export
+mpdPos1 : MLPolyDiF -> Type
+mpdPos1 = dfPos . mpdT1
+
+public export
+mpdDir1 : (mpd : MLPolyDiF) -> SliceObj (mpdPos1 mpd)
+mpdDir1 mpd = dfDir $ mpdT1 mpd
+
+public export
+mpdPos2 : (mpd : MLPolyDiF) -> SliceObj (mpdPos1 mpd)
+mpdPos2 mpd i = spfdPos (mpdSPF mpd i) ()
+
+public export
+mpdDir2 : (mpd : MLPolyDiF) ->
+  (i : mpdPos1 mpd) -> SPFdirType (mpdDir1 mpd i) Unit (\_ => mpdPos2 mpd i)
+mpdDir2 mpd i () = spfdDir (mpdSPF mpd i) ()
+
+public export
+InterpMLPDF : MLPolyDiF -> ProfunctorSig
+InterpMLPDF mpd j z =
+  (i1 : mpdPos1 mpd **
+   d1 : j -> mpdDir1 mpd i1 **
+   (i2 : mpdPos2 mpd i1) -> Pi {a=j} (mpdDir2 mpd i1 () i2 . d1) -> z)
 
 -----------------------------------------------
 -----------------------------------------------
