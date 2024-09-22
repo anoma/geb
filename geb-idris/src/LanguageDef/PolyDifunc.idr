@@ -147,6 +147,26 @@ InterpPolyDi : (pdid : PDiData) -> (j, z : Type) -> Type
 InterpPolyDi pdid j z =
   (x : InterpDirichFunc (pdiT1 pdid) j ** InterpPDiE pdid j x -> z)
 
+public export
+InterpPolyDiForm : (pdid : PDiData) -> (j, z : Type) -> Type
+InterpPolyDiForm pdid j z =
+  (i1: PDiPos1 pdid **
+   d1 : j -> PDiDir1 pdid i1 **
+   (i2 : mdsOnPos (pdiF pdid) i1) ->
+     Pi {a=j} (mdsDir (pdiF pdid) i1 i2 . d1) -> z)
+
+public export
+InterpPolyDiToForm : (pdid : PDiData) -> (j, z : Type) ->
+  InterpPolyDi pdid j z -> InterpPolyDiForm pdid j z
+InterpPolyDiToForm pdid j z ((i1 ** d1) ** d2) =
+  (i1 ** d1 ** \i2, pid => d2 (i2 ** \ej, () => pid ej))
+
+public export
+InterpPolyDiFromForm : (pdid : PDiData) -> (j, z : Type) ->
+  InterpPolyDiForm pdid j z -> InterpPolyDi pdid j z
+InterpPolyDiFromForm pdid j z (i1 ** (d1 ** d2)) =
+  ((i1 ** d1) ** \(i2 ** pid) => d2 i2 $ \ej => pid ej ())
+
 -- This is the interpretation of the above family of `SPFData`s.
 public export
 InterpPDiSPF : (pdid : PDiData) ->
