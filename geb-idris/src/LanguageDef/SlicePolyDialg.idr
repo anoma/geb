@@ -20,32 +20,17 @@ import public LanguageDef.MLDirichCat
 
 public export
 record MLPolyDiF where
-  mpdT1 : MLDirichCatObj
-  mpdSPF : SPFDataFam {b=(dfPos mpdT1)} (dfDir mpdT1) (\_ => Unit)
-
-public export
-mpdPos1 : MLPolyDiF -> Type
-mpdPos1 = dfPos . mpdT1
-
-public export
-mpdDir1 : (mpd : MLPolyDiF) -> SliceObj (mpdPos1 mpd)
-mpdDir1 mpd = dfDir $ mpdT1 mpd
-
-public export
-mpdPos2 : (mpd : MLPolyDiF) -> SliceObj (mpdPos1 mpd)
-mpdPos2 mpd i = spfdPos (mpdSPF mpd i) ()
-
-public export
-mpdDir2 : (mpd : MLPolyDiF) ->
-  (i : mpdPos1 mpd) -> SPFdirType (mpdDir1 mpd i) Unit (\_ => mpdPos2 mpd i)
-mpdDir2 mpd i () = spfdDir (mpdSPF mpd i) ()
+  mpdPos1 : Type
+  mpdDir1 : SliceObj mpdPos1
+  mpdPos2 : SliceObj mpdPos1
+  mpdDir2 : (i : mpdPos1) -> mpdPos2 i -> mpdDir1 i -> Type
 
 public export
 InterpMLPDF : MLPolyDiF -> ProfunctorSig
 InterpMLPDF mpd j z =
   (i1 : mpdPos1 mpd **
    d1 : j -> mpdDir1 mpd i1 **
-   (i2 : mpdPos2 mpd i1) -> Pi {a=j} (mpdDir2 mpd i1 () i2 . d1) -> z)
+   (i2 : mpdPos2 mpd i1) -> Pi {a=j} (mpdDir2 mpd i1 i2 . d1) -> z)
 
 -----------------------------------------------
 -----------------------------------------------
