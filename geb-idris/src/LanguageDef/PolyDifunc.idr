@@ -124,6 +124,25 @@ InterpPDiE : (pdid : PDiData) ->
 InterpPDiE pdid = InterpMlDirichSlObj {ar=(pdiT1 pdid)} (pdiF pdid)
 
 public export
+InterpPDiEform : (pdid : PDiData) ->
+  (j : Type) -> (i1 : PDiPos1 pdid) -> (d1 : j -> PDiDir1 pdid i1) -> Type
+InterpPDiEform pdid j i1 d1 =
+  (i2 : mdsOnPos (pdiF pdid) i1 **
+   Pi {a=j} (mdsDir (pdiF pdid) i1 i2 . d1))
+
+public export
+InterpPDiEtoForm : (pdid : PDiData) ->
+  (j : Type) -> (i1 : PDiPos1 pdid) -> (d1 : j -> PDiDir1 pdid i1) ->
+  InterpPDiE pdid j (i1 ** d1) -> InterpPDiEform pdid j i1 d1
+InterpPDiEtoForm pdid j i1 d1 = dpMapSnd $ \i2, pid, ej => pid ej ()
+
+public export
+InterpPDiEfromForm : (pdid : PDiData) ->
+  (j : Type) -> (i1 : PDiPos1 pdid) -> (d1 : j -> PDiDir1 pdid i1) ->
+  InterpPDiEform pdid j i1 d1 -> InterpPDiE pdid j (i1 ** d1)
+InterpPDiEfromForm pdid j i1 d1 = dpMapSnd $ \i2, pid, ej, () => pid ej
+
+public export
 InterpPolyDi : (pdid : PDiData) -> (j, z : Type) -> Type
 InterpPolyDi pdid j z =
   (x : InterpDirichFunc (pdiT1 pdid) j ** InterpPDiE pdid j x -> z)
