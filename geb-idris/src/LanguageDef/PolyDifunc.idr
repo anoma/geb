@@ -113,6 +113,21 @@ PDiToSPFData pdid = SPFDataFamFromDep (PDiToSPFdepData pdid)
 ---- Interpretation of polydifunctors ----
 ------------------------------------------
 
+-- From the formula in the "Proposition 2.10" section of the ncat
+-- page on parametric right adjoints.  `z` here is the covariant
+-- argument -- a presheaf from the terminal category to `Type`,
+-- which is simply a type.  `j` is the contravariant argument,
+-- an object of `op(Type)`.
+public export
+InterpPDiE : (pdid : PDiData) ->
+  (j : Type) -> InterpDirichFunc (pdiT1 pdid) j -> Type
+InterpPDiE pdid = InterpMlDirichSlObj {ar=(pdiT1 pdid)} (pdiF pdid)
+
+public export
+InterpPolyDi : (pdid : PDiData) -> (j, z : Type) -> Type
+InterpPolyDi pdid j z =
+  (x : InterpDirichFunc (pdiT1 pdid) j ** InterpPDiE pdid j x -> z)
+
 -- This is the interpretation of the above family of `SPFData`s.
 public export
 InterpPDiSPF : (pdid : PDiData) ->
