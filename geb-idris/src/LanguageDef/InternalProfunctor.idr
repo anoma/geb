@@ -567,13 +567,6 @@ IntDiYonedaEmbedObj c mor i0 i1 j0 j1 = (mor j0 i1, mor i0 j1)
 -- always turn "x"s into "y"s, and thereby define difunctors such as that
 -- of wild groups with the likes of associativity included.
 
--- Embed `OpProd(c)` into `Type`.
-public export
-0 IntDiYonedaFullEmbedObj : (c : Type) ->
-  (mor : IntDifunctorSig c) -> IntDifunctorSig c
-IntDiYonedaFullEmbedObj c mor i0 i1 =
-  IntEndBase c $ IntDiYonedaEmbedObj c mor i0 i1
-
 -- We now show that for a given `(s, t)` in `opProd(c)`, the diYoneda
 -- embedding `IntDiYonedaEmbedObj c mor s t` is a difunctor on `c`.
 public export
