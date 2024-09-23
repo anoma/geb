@@ -22,14 +22,14 @@ public export
 record MLPolyDiFPos (pos1 : Type) where
   mpdpDir1 : SliceObj pos1
   mpdpPos2 : SliceObj pos1
-  mpdpDir2 : (i : pos1) -> mpdpPos2 i -> mpdpDir1 i -> Type
+  mpdpDepDir : (i : pos1) -> mpdpPos2 i -> mpdpDir1 i -> Type
 
 public export
 InterpMLPDFP : {pos1 : Type} -> (mpdp : MLPolyDiFPos pos1) ->
   pos1 -> ProfunctorSig
 InterpMLPDFP {pos1} mpdp i1 j z =
   (d1 : j -> mpdpDir1 mpdp i1 **
-   (i2 : mpdpPos2 mpdp i1) -> Pi {a=j} (mpdpDir2 mpdp i1 i2 . d1) -> z)
+   (i2 : mpdpPos2 mpdp i1) -> Pi {a=j} (mpdpDepDir mpdp i1 i2 . d1) -> z)
 
 public export
 record MLPolyDiF where
@@ -45,9 +45,9 @@ mpdPos2 : (mpd : MLPolyDiF) -> SliceObj (mpdPos1 mpd)
 mpdPos2 mpd = mpdpPos2 $ mpdPosF mpd
 
 public export
-mpdDir2 : (mpd : MLPolyDiF) ->
+mpdDepDir : (mpd : MLPolyDiF) ->
   (i : mpdPos1 mpd) -> mpdPos2 mpd i -> mpdDir1 mpd i -> Type
-mpdDir2 mpd = mpdpDir2 $ mpdPosF mpd
+mpdDepDir mpd = mpdpDepDir $ mpdPosF mpd
 
 public export
 InterpMLPDF : MLPolyDiF -> ProfunctorSig
