@@ -26,8 +26,8 @@ record MLPolyDiFDirs (pos : Type) where
 
 public export
 InterpMLPDFP : {pos : Type} -> (mpdp : MLPolyDiFDirs pos) ->
-  pos -> ProfunctorSig
-InterpMLPDFP {pos} mpdp i1 j z =
+  Type -> Type -> SliceObj pos
+InterpMLPDFP {pos} mpdp j z i1 =
   (d1 : j -> mpdpContraDir mpdp i1 **
    (d2 : mpdpCovarDir mpdp i1) -> Pi {a=j} (mpdpDepDir mpdp i1 d2 . d1) -> z)
 
@@ -52,7 +52,7 @@ mpdDepDir mpd = mpdpDepDir $ mpdDirs mpd
 public export
 InterpMLPDF : MLPolyDiF -> ProfunctorSig
 InterpMLPDF mpd j z =
-  (i1 : mpdPos mpd ** InterpMLPDFP {pos=(mpdPos mpd)} (mpdDirs mpd) i1 j z)
+  Sigma {a=(mpdPos mpd)} (InterpMLPDFP {pos=(mpdPos mpd)} (mpdDirs mpd) j z)
 
 -----------------------------------------------
 -----------------------------------------------
