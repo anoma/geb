@@ -19,40 +19,40 @@ import public LanguageDef.MLDirichCat
 -- on `Type` (that is, profunctors of the form `op(Type) -> Type -> Type`).
 
 public export
-record MLPolyDiFPos (pos1 : Type) where
-  mpdpContraDir : SliceObj pos1
-  mpdpCovarDir : SliceObj pos1
-  mpdpDepDir : (i : pos1) -> mpdpCovarDir i -> mpdpContraDir i -> Type
+record MLPolyDiFPos (pos : Type) where
+  mpdpContraDir : SliceObj pos
+  mpdpCovarDir : SliceObj pos
+  mpdpDepDir : (i : pos) -> mpdpCovarDir i -> mpdpContraDir i -> Type
 
 public export
-InterpMLPDFP : {pos1 : Type} -> (mpdp : MLPolyDiFPos pos1) ->
-  pos1 -> ProfunctorSig
-InterpMLPDFP {pos1} mpdp i1 j z =
+InterpMLPDFP : {pos : Type} -> (mpdp : MLPolyDiFPos pos) ->
+  pos -> ProfunctorSig
+InterpMLPDFP {pos} mpdp i1 j z =
   (d1 : j -> mpdpContraDir mpdp i1 **
    (d2 : mpdpCovarDir mpdp i1) -> Pi {a=j} (mpdpDepDir mpdp i1 d2 . d1) -> z)
 
 public export
 record MLPolyDiF where
-  mpdPos1 : Type
-  mpdDirs : MLPolyDiFPos mpdPos1
+  mpdPos : Type
+  mpdDirs : MLPolyDiFPos mpdPos
 
 public export
-mpdContraDir : (mpd : MLPolyDiF) -> SliceObj (mpdPos1 mpd)
+mpdContraDir : (mpd : MLPolyDiF) -> SliceObj (mpdPos mpd)
 mpdContraDir mpd = mpdpContraDir $ mpdDirs mpd
 
 public export
-mpdCovarDir : (mpd : MLPolyDiF) -> SliceObj (mpdPos1 mpd)
+mpdCovarDir : (mpd : MLPolyDiF) -> SliceObj (mpdPos mpd)
 mpdCovarDir mpd = mpdpCovarDir $ mpdDirs mpd
 
 public export
 mpdDepDir : (mpd : MLPolyDiF) ->
-  (i : mpdPos1 mpd) -> mpdCovarDir mpd i -> mpdContraDir mpd i -> Type
+  (i : mpdPos mpd) -> mpdCovarDir mpd i -> mpdContraDir mpd i -> Type
 mpdDepDir mpd = mpdpDepDir $ mpdDirs mpd
 
 public export
 InterpMLPDF : MLPolyDiF -> ProfunctorSig
 InterpMLPDF mpd j z =
-  (i1 : mpdPos1 mpd ** InterpMLPDFP {pos1=(mpdPos1 mpd)} (mpdDirs mpd) i1 j z)
+  (i1 : mpdPos mpd ** InterpMLPDFP {pos=(mpdPos mpd)} (mpdDirs mpd) i1 j z)
 
 -----------------------------------------------
 -----------------------------------------------
