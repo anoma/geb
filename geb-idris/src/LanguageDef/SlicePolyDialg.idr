@@ -19,13 +19,13 @@ import public LanguageDef.MLDirichCat
 -- on `Type` (that is, profunctors of the form `op(Type) -> Type -> Type`).
 
 public export
-record MLPolyDiFPos (pos : Type) where
+record MLPolyDiFDirs (pos : Type) where
   mpdpContraDir : SliceObj pos
   mpdpCovarDir : SliceObj pos
   mpdpDepDir : (i : pos) -> mpdpCovarDir i -> mpdpContraDir i -> Type
 
 public export
-InterpMLPDFP : {pos : Type} -> (mpdp : MLPolyDiFPos pos) ->
+InterpMLPDFP : {pos : Type} -> (mpdp : MLPolyDiFDirs pos) ->
   pos -> ProfunctorSig
 InterpMLPDFP {pos} mpdp i1 j z =
   (d1 : j -> mpdpContraDir mpdp i1 **
@@ -34,7 +34,7 @@ InterpMLPDFP {pos} mpdp i1 j z =
 public export
 record MLPolyDiF where
   mpdPos : Type
-  mpdDirs : MLPolyDiFPos mpdPos
+  mpdDirs : MLPolyDiFDirs mpdPos
 
 public export
 mpdContraDir : (mpd : MLPolyDiF) -> SliceObj (mpdPos mpd)
