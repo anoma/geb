@@ -29,7 +29,7 @@ InterpMLPDFP : {pos1 : Type} -> (mpdp : MLPolyDiFPos pos1) ->
   pos1 -> ProfunctorSig
 InterpMLPDFP {pos1} mpdp i1 j z =
   (d1 : j -> mpdpDir1 mpdp i1 **
-   (i2 : mpdpDir2 mpdp i1) -> Pi {a=j} (mpdpDepDir mpdp i1 i2 . d1) -> z)
+   (d2 : mpdpDir2 mpdp i1) -> Pi {a=j} (mpdpDepDir mpdp i1 d2 . d1) -> z)
 
 public export
 record MLPolyDiF where
