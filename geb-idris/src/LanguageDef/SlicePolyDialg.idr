@@ -34,25 +34,25 @@ InterpMLPDFP {pos1} mpdp i1 j z =
 public export
 record MLPolyDiF where
   mpdPos1 : Type
-  mpdPosF : MLPolyDiFPos mpdPos1
+  mpdDirs : MLPolyDiFPos mpdPos1
 
 public export
 mpdContraDir : (mpd : MLPolyDiF) -> SliceObj (mpdPos1 mpd)
-mpdContraDir mpd = mpdpContraDir $ mpdPosF mpd
+mpdContraDir mpd = mpdpContraDir $ mpdDirs mpd
 
 public export
 mpdCovarDir : (mpd : MLPolyDiF) -> SliceObj (mpdPos1 mpd)
-mpdCovarDir mpd = mpdpCovarDir $ mpdPosF mpd
+mpdCovarDir mpd = mpdpCovarDir $ mpdDirs mpd
 
 public export
 mpdDepDir : (mpd : MLPolyDiF) ->
   (i : mpdPos1 mpd) -> mpdCovarDir mpd i -> mpdContraDir mpd i -> Type
-mpdDepDir mpd = mpdpDepDir $ mpdPosF mpd
+mpdDepDir mpd = mpdpDepDir $ mpdDirs mpd
 
 public export
 InterpMLPDF : MLPolyDiF -> ProfunctorSig
 InterpMLPDF mpd j z =
-  (i1 : mpdPos1 mpd ** InterpMLPDFP {pos1=(mpdPos1 mpd)} (mpdPosF mpd) i1 j z)
+  (i1 : mpdPos1 mpd ** InterpMLPDFP {pos1=(mpdPos1 mpd)} (mpdDirs mpd) i1 j z)
 
 -----------------------------------------------
 -----------------------------------------------
