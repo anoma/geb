@@ -882,6 +882,22 @@ SlProNatCond {c} {p} {q} alpha =
     (sliceComp (alpha j0 j1) (sdaDimap p mcont mcovar))
 
 public export
+0 SlDiNatCond : {c, v : Type} -> {p, q : SlDiAr c v} ->
+  SlDiPara {c} {v} p q -> Type
+SlDiNatCond {c} {v} {p} {q} =
+  SlProNatCond {c} {v} {p} {q} . InterpSlProPara {c} {v} {p} {q}
+
+public export
+0 SlDiNatCorrect : FunExt ->
+  {c, v : Type} -> {p, q : SlDiAr c v} ->
+  (para : SlDiPara {c} {v} p q) -> SlDiNatCond {c} {v} {p} {q} para
+SlDiNatCorrect fext {c} {v}
+  {p=(SDAr ppos pcontra pcovar)} {q=(SDAr qpos qcontra qcovar)}
+  (SDPara onpos oncont oncov) =
+    \i0, i1, j0, j1, mcont, mcovar, ev, (pp0 ** dcont0 ** dcov0) =>
+      Refl
+
+public export
 InterpSlDiPara : {c, v : Type} -> {p, q : SlDiAr c v} ->
   SlDiPara {c} {v} p q -> SlDifuncSig {c} {v} p q
 InterpSlDiPara {c} {v} {p} {q} para slc =
@@ -905,7 +921,7 @@ SlDiArParaCond {c} {v} {p} {q} =
 public export
 0 SlDiParaCorrect : FunExt ->
   {c, v : Type} -> {p, q : SlDiAr c v} ->
-  (para : SlDiPara {c} {v} p q) -> SlDiArParaCond {c} {p} {q} para
+  (para : SlDiPara {c} {v} p q) -> SlDiArParaCond {c} {v} {p} {q} para
 SlDiParaCorrect fext {c} {v}
   {p=(SDAr ppos pcontra pcovar)} {q=(SDAr qpos qcontra qcovar)}
   (SDPara onpos oncont oncov) =
