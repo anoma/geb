@@ -871,6 +871,17 @@ InterpSlProPara {c} {v} {p} {q} para x y ev =
         (fst qd ** sdarCovar para ev ep ec (dmcont ec $ fst qd) (snd qd)))
 
 public export
+0 SlProNatCond : {c, v : Type} -> {p, q : SlDiAr c v} ->
+  SlProfuncSig {c} p q -> Type
+SlProNatCond {c} {p} {q} alpha =
+  (i0, i1, j0, j1 : SliceObj c) ->
+  (mcont : SliceMorphism {a=c} j0 i0) ->
+  (mcovar : SliceMorphism {a=c} i1 j1) ->
+  SliceExtEq {a=v} {s=(InterpSDA p i0 i1)} {s'=(InterpSDA q j0 j1)}
+    (sliceComp (sdaDimap q mcont mcovar) (alpha i0 i1))
+    (sliceComp (alpha j0 j1) (sdaDimap p mcont mcovar))
+
+public export
 InterpSlDiPara : {c, v : Type} -> {p, q : SlDiAr c v} ->
   SlDiPara {c} {v} p q -> SlDifuncSig {c} {v} p q
 InterpSlDiPara {c} {v} {p} {q} para slc =
