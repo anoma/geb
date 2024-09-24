@@ -849,15 +849,19 @@ record SlDiPara {c, v : Type} (p, q : SlDiAr c v) where
       (sdaCovar p ev ep ec)
 
 public export
-SlDifuncSig : {c, v : Type} -> (p, q : SlDiAr c v) -> Type
-SlDifuncSig {c} {v} p q =
-  (slc : SliceObj c) ->
-  SliceMorphism {a=v} (InterpSDA p slc slc) (InterpSDA q slc slc)
+SlProfuncSig : {c, v : Type} -> (p, q : SlDiAr c v) -> Type
+SlProfuncSig {c} {v} p q =
+  (x, y : SliceObj c) -> SliceMorphism {a=v} (InterpSDA p x y) (InterpSDA q x y)
 
 public export
-InterpSlDiPara : {c, v : Type} -> {p, q : SlDiAr c v} ->
-  SlDiPara {c} {v} p q -> SlDifuncSig {c} {v} p q
-InterpSlDiPara {c} {v} {p} {q} para slc ev =
+SlDifuncSig : {c, v : Type} -> (p, q : SlDiAr c v) -> Type
+SlDifuncSig {c} {v} p q =
+  (x : SliceObj c) -> SliceMorphism {a=v} (InterpSDA p x x) (InterpSDA q x x)
+
+public export
+InterpSlProPara : {c, v : Type} -> {p, q : SlDiAr c v} ->
+  SlDiPara {c} {v} p q -> SlProfuncSig {c} {v} p q
+InterpSlProPara {c} {v} {p} {q} para x y ev =
   dpBimap
     (sdarPos para ev)
   $ \ep => dpBimap
@@ -865,6 +869,12 @@ InterpSlDiPara {c} {v} {p} {q} para slc ev =
     (\dmcont, dmcovar, ec, qd =>
       dmcovar ec
         (fst qd ** sdarCovar para ev ep ec (dmcont ec $ fst qd) (snd qd)))
+
+public export
+InterpSlDiPara : {c, v : Type} -> {p, q : SlDiAr c v} ->
+  SlDiPara {c} {v} p q -> SlDifuncSig {c} {v} p q
+InterpSlDiPara {c} {v} {p} {q} para slc =
+  InterpSlProPara {c} {v} {p} {q} para slc slc
 
 public export
 0 SlDiParaCond : {c, v : Type} -> {p, q : SlDiAr c v} ->
