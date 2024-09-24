@@ -791,6 +791,26 @@ SlParaCond {c} {p=p@(SPA ppos pcontra pcovar)} {q=q@(SPA qpos qcontra qcovar)}
   SlProPara {c} p q -> Type
 SlProParaCond alpha = SlParaCond (InterpSlProPara alpha)
 
+public export
+SlProParaCorrect : FunExt ->
+  {c : Type} -> {p, q : SlProAr c c Unit} ->
+  (para : SlProPara {c} p q) -> SlProParaCond {c} {p} {q} para
+SlProParaCorrect fext {c}
+  {p=p@(SPA ppos pcontra pcovar)} {q=q@(SPA qpos qcontra qcovar)}
+  (SPara onpos oncont oncov) =
+    \i0, i1, i2, (pp0 ** (dcont0, dcov0)), (pp1 ** (dcont1, dcov1)), cond =>
+      case dpeq1 cond of
+        Refl =>
+          let
+            cond2 = dpeq2 cond
+            cond21 = fstEq cond2
+            cond22 = sndEq cond2
+          in
+          dpEq12 Refl
+            $ pairEqCong
+              (funExt $ \ec => funExt $ \ei0 => rewrite sym cond21 in Refl)
+              (funExt $ \ec => funExt $ \eqcov => rewrite cond22 in Refl)
+
 -------------------------------------------------------------------------
 -------------------------------------------------------------------------
 ---- Polynomial functors enriched over polynomial functors on `Type` ----
