@@ -751,6 +751,27 @@ InterpSlProNT {d} {c} {v}
      (sliceComp (oncont ev i) mcont,
       sliceComp mcovar (oncov ev i)))
 
+public export
+record SlProPara {c : Type} (p, q : SlProAr c c Unit) where
+  constructor SPara
+  sparPos : SliceMorphism {a=Unit} (spaPos p) (spaPos q)
+  sparContra : (ev : Unit) -> (ep : spaPos p ev) ->
+    SliceMorphism {a=c} (spaContra p ev ep) (spaContra q ev (sparPos ev ep))
+  sparCovar : (ev : Unit) -> (ep : spaPos p ev) ->
+    SliceMorphism {a=c} (spaCovar q ev (sparPos ev ep)) (spaCovar p ev ep)
+
+InterpSlProPara : {c : Type} -> {p, q : SlProAr c c Unit} ->
+  SlProPara {c} p q ->
+  (slc : SliceObj c) ->
+  SliceMorphism {a=Unit}
+    (InterpSPA c c Unit p slc slc) (InterpSPA c c Unit q slc slc)
+InterpSlProPara {c}
+  {p=(SPA ppos pcontra pcovar)} {q=(SPA qpos qcontra qcovar)}
+  (SPara onpos oncont oncov) slc ev (i ** (mcont, mcovar)) =
+    (onpos ev i **
+     (sliceComp (oncont ev i) mcont,
+      sliceComp mcovar (oncov ev i)))
+
 -------------------------------------------------------------------------
 -------------------------------------------------------------------------
 ---- Polynomial functors enriched over polynomial functors on `Type` ----
