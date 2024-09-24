@@ -867,6 +867,15 @@ InterpSlDiPara {c} {v} {p} {q} para slc ev =
         (fst qd ** sdarCovar para ev ep ec (dmcont ec $ fst qd) (snd qd)))
 
 public export
+0 SlDiParaCond : {c, v : Type} -> {p, q : SlDiAr c v} ->
+  SlDifuncSig {c} p q -> Type
+SlDiParaCond {c} {p} {q} gamma =
+  (i0, i1 : SliceObj c) -> (i2 : SliceMorphism {a=c} i0 i1) ->
+  (ev : v) -> (d0 : InterpSDA p i0 i0 ev) -> (d1 : InterpSDA p i1 i1 ev) ->
+  (sdaLmap p i2 ev d1 = sdaRmap p i2 ev d0) ->
+  (sdaLmap q i2 ev (gamma i1 ev d1) = sdaRmap q i2 ev (gamma i0 ev d0))
+
+public export
 record SlProPara {c : Type} (p, q : SlProAr c c Unit) where
   constructor SPara
   sparPos : SliceMorphism {a=Unit} (spaPos p) (spaPos q)
