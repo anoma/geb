@@ -760,17 +760,36 @@ record SlProPara {c : Type} (p, q : SlProAr c c Unit) where
   sparCovar : (ev : Unit) -> (ep : spaPos p ev) ->
     SliceMorphism {a=c} (spaCovar q ev (sparPos ev ep)) (spaCovar p ev ep)
 
-InterpSlProPara : {c : Type} -> {p, q : SlProAr c c Unit} ->
-  SlProPara {c} p q ->
+public export
+SlParaSig : {c : Type} -> (p, q : SlProAr c c Unit) -> Type
+SlParaSig {c} p q =
   (slc : SliceObj c) ->
-  SliceMorphism {a=Unit}
-    (InterpSPA c c Unit p slc slc) (InterpSPA c c Unit q slc slc)
+  InterpSPA c c Unit p slc slc () -> InterpSPA c c Unit q slc slc ()
+
+InterpSlProPara : {c : Type} -> {p, q : SlProAr c c Unit} ->
+  SlProPara {c} p q -> SlParaSig {c} p q
 InterpSlProPara {c}
   {p=(SPA ppos pcontra pcovar)} {q=(SPA qpos qcontra qcovar)}
-  (SPara onpos oncont oncov) slc ev (i ** (mcont, mcovar)) =
-    (onpos ev i **
-     (sliceComp (oncont ev i) mcont,
-      sliceComp mcovar (oncov ev i)))
+  (SPara onpos oncont oncov) slc (i ** (mcont, mcovar)) =
+    (onpos () i **
+     (sliceComp (oncont () i) mcont,
+      sliceComp mcovar (oncov () i)))
+
+0 SlParaCond : {c : Type} -> {p, q : SlProAr c c Unit} ->
+  SlParaSig {c} p q -> Type
+SlParaCond {c} {p=p@(SPA ppos pcontra pcovar)} {q=q@(SPA qpos qcontra qcovar)}
+  alpha =
+    (i0, i1 : SliceObj c) -> (i2 : SliceMorphism {a=c} i0 i1) ->
+    (d0 : InterpSPA c c Unit p i0 i0 ()) ->
+    (d1 : InterpSPA c c Unit p i1 i1 ()) ->
+    (spaLmap c c Unit p i1 i0 i1 i2 () d1 =
+     spaRmap c c Unit p i0 i0 i1 i2 () d0) ->
+    (spaLmap c c Unit q i1 i0 i1 i2 () (alpha i1 d1) =
+     spaRmap c c Unit q i0 i0 i1 i2 () (alpha i0 d0))
+
+0 SlProParaCond : {c : Type} -> {p, q : SlProAr c c Unit} ->
+  SlProPara {c} p q -> Type
+SlProParaCond alpha = SlParaCond (InterpSlProPara alpha)
 
 -------------------------------------------------------------------------
 -------------------------------------------------------------------------
