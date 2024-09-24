@@ -896,13 +896,13 @@ SlDiParaCorrect fext {c} {v}
             cond21 = dpeq1 cond2
             cond22 = dpeq2 cond2
           in
-          dpEq12
-            Refl
-          $ dpEq12
-            (funExt $ \ec => funExt $ \ei0 => rewrite sym cond21 in Refl)
-            (case cond21 of
-              Refl => funExt $ \ec => funExt $
-                \eqi0qcovar => fcongdep $ fcongdep cond22)
+          case cond21 of
+            Refl =>
+              dpEq12
+                Refl
+              $ dpEq12
+                Refl
+                (funExt $ \_ => funExt $ \_ => fcongdep $ fcongdep cond22)
 
 public export
 record SlProPara {c : Type} (p, q : SlProAr c c Unit) where
