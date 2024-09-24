@@ -731,6 +731,26 @@ spaDimap d c v spa sld sld' slc slc' md'd mcc' elv =
   spaLmap d c v spa sld sld' slc' md'd elv
   . spaRmap d c v spa sld slc slc' mcc' elv
 
+public export
+record SlProNT {d, c, v : Type} (p, q : SlProAr d c v) where
+  constructor SProNT
+  sproPos : SliceMorphism {a=v} (spaPos p) (spaPos q)
+  sproContra : (ev : v) -> (ep : spaPos p ev) ->
+    SliceMorphism {a=d} (spaContra p ev ep) (spaContra q ev (sproPos ev ep))
+  sproCovar : (ev : v) -> (ep : spaPos p ev) ->
+    SliceMorphism {a=c} (spaCovar q ev (sproPos ev ep)) (spaCovar p ev ep)
+
+InterpSlProNT : {d, c, v : Type} -> {p, q : SlProAr d c v} ->
+  SlProNT {d} {c} {v} p q ->
+  (sld : SliceObj d) -> (slc : SliceObj c) ->
+  SliceMorphism {a=v} (InterpSPA d c v p sld slc) (InterpSPA d c v q sld slc)
+InterpSlProNT {d} {c} {v}
+  {p=(SPA ppos pcontra pcovar)} {q=(SPA qpos qcontra qcovar)}
+  (SProNT onpos oncont oncov) sld slc ev (i ** (mcont, mcovar)) =
+    (onpos ev i **
+     (sliceComp (oncont ev i) mcont,
+      sliceComp mcovar (oncov ev i)))
+
 -------------------------------------------------------------------------
 -------------------------------------------------------------------------
 ---- Polynomial functors enriched over polynomial functors on `Type` ----
