@@ -882,6 +882,29 @@ SlDiArParaCond {c} {v} {p} {q} =
   SlDiParaCond {c} {v} {p} {q} . InterpSlDiPara {c} {v} {p} {q}
 
 public export
+0 SlDiParaCorrect : FunExt ->
+  {c, v : Type} -> {p, q : SlDiAr c v} ->
+  (para : SlDiPara {c} {v} p q) -> SlDiArParaCond {c} {p} {q} para
+SlDiParaCorrect fext {c} {v}
+  {p=(SDAr ppos pcontra pcovar)} {q=(SDAr qpos qcontra qcovar)}
+  (SDPara onpos oncont oncov) =
+    \i0, i1, i2, ev, (pp0 ** dcont0 ** dcov0), (pp1 ** dcont1 ** dcov1), cond =>
+      case dpeq1 cond of
+        Refl =>
+          let
+            cond2 = dpeq2 cond
+            cond21 = dpeq1 cond2
+            cond22 = dpeq2 cond2
+          in
+          dpEq12
+            Refl
+          $ dpEq12
+            (funExt $ \ec => funExt $ \ei0 => rewrite sym cond21 in Refl)
+            (case cond21 of
+              Refl => funExt $ \ec => funExt $
+                \eqi0qcovar => fcongdep $ fcongdep cond22)
+
+public export
 record SlProPara {c : Type} (p, q : SlProAr c c Unit) where
   constructor SPara
   sparPos : SliceMorphism {a=Unit} (spaPos p) (spaPos q)
