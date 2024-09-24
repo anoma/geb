@@ -803,6 +803,31 @@ InterpSDAdmCovar : {c, v : Type} -> {p : SlDiAr c v} -> {x, y : SliceObj c} ->
 InterpSDAdmCovar {c} {v} {p} {x} {y} ev el = DPair.snd (DPair.snd el)
 
 public export
+sdaLmap : {c, v : Type} -> (p : SlDiAr c v) ->
+  {s, t, a : SliceObj c} ->
+  SliceMorphism {a=c} a s ->
+  SliceMorphism {a=v} (InterpSDA p s t) (InterpSDA p a t)
+sdaLmap {c} {v} p {s} {t} {a} mas ev =
+  dpMapSnd $ \ep => dpBimap (flip sliceComp mas) (\dmcont => id)
+
+public export
+sdaRmap : {c, v : Type} -> (p : SlDiAr c v) ->
+  {s, t, b : SliceObj c} ->
+  SliceMorphism {a=c} t b ->
+  SliceMorphism {a=v} (InterpSDA p s t) (InterpSDA p s b)
+sdaRmap {c} {v} p {s} {t} {b} mtb ev =
+  dpMapSnd $ \ep => dpMapSnd $ \dmcont => sliceComp mtb
+
+public export
+sdaDimap : {c, v : Type} -> (p : SlDiAr c v) ->
+  {s, t, a, b : SliceObj c} ->
+  SliceMorphism {a=c} a s ->
+  SliceMorphism {a=c} t b ->
+  SliceMorphism {a=v} (InterpSDA p s t) (InterpSDA p a b)
+sdaDimap {c} {v} p {s} {t} {a} mas mtb ev =
+  sdaRmap {s=a} {t} {b} p mtb ev . sdaLmap {s} {t} {a} p mas ev
+
+public export
 record SlDiPara {c, v : Type} (p, q : SlDiAr c v) where
   constructor SDPara
   sdarPos : SliceMorphism {a=v} (sdaPos p) (sdaPos q)
