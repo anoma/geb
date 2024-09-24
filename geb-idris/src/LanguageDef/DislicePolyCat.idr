@@ -756,10 +756,37 @@ InterpSlProNT {d} {c} {v}
      (sliceComp (oncont ev i) mcont,
       sliceComp mcovar (oncov ev i)))
 
+-------------------------------------
+-------------------------------------
+---- Slice polynomial difunctors ----
+-------------------------------------
+-------------------------------------
+
 public export
-sproDirPB : {c : Type} ->
-  (p : SlProAr c c Unit) -> spaPos p () -> SliceObj c
-sproDirPB {c} p = spaDirPB {c} {v=Unit} p ()
+record SlDiAr (c, v : Type) where
+  constructor SDAr
+  sdaPos :
+    SliceObj v
+  sdaContra :
+    (ev : v) -> sdaPos ev -> SliceObj c
+  sdaCovar :
+    (ev : v) -> (ep : sdaPos ev) -> Pi {a=c} (SliceObj . sdaContra ev ep)
+
+public export
+sdaDirPB : {c, v : Type} ->
+  (p : SlDiAr c v) -> (ev : v) -> sdaPos p ev -> SliceObj c
+sdaDirPB {c} {v} p ev ep ec = DPair (sdaContra p ev ep ec) (sdaCovar p ev ep ec)
+
+public export
+record SlDiPara {c, v : Type} (p, q : SlDiAr c v) where
+  constructor SDPara
+  sdarPos : SliceMorphism {a=v} (sdaPos p) (sdaPos q)
+  sdarContra : (ev : v) -> (ep : sdaPos p ev) ->
+    SliceMorphism {a=c} (sdaContra p ev ep) (sdaContra q ev (sdarPos ev ep))
+  sdarCovar : (ev : v) -> (ep : sdaPos p ev) -> (ec : c) ->
+    SliceMorphism {a=(sdaContra p ev ep ec)}
+      (sdaCovar q ev (sdarPos ev ep) ec . sdarContra ev ep ec)
+      (sdaCovar p ev ep ec)
 
 public export
 record SlProPara {c : Type} (p, q : SlProAr c c Unit) where
