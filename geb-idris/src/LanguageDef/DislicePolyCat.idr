@@ -783,10 +783,7 @@ InterpSDA : {c, v : Type} -> SlDiAr c v ->
 InterpSDA {c} {v} p x y ev =
   (ep : sdaPos p ev **
    dmcont : SliceMorphism {a=c} x (sdaContra p ev ep) **
-   (ec : c) ->
-    SliceMorphism {a=(sdaContra p ev ep ec)}
-      (sdaCovar p ev ep ec)
-      (\_ => y ec))
+   SliceMorphism {a=c} (sdaDirPB {c} {v} p ev ep) y)
 
 public export
 InterpSDApos : {c, v : Type} -> {p : SlDiAr c v} -> {x, y : SliceObj c} ->
@@ -802,10 +799,7 @@ InterpSDAdmContra {c} {v} {p} {x} {y} ev el = DPair.fst (DPair.snd el)
 public export
 InterpSDAdmCovar : {c, v : Type} -> {p : SlDiAr c v} -> {x, y : SliceObj c} ->
   (ev : v) -> (el : InterpSDA {c} {v} p x y ev) ->
-  (ec : c) ->
-    SliceMorphism {a=(sdaContra p ev (InterpSDApos {p} ev el) ec)}
-      (sdaCovar p ev (InterpSDApos {p} ev el) ec)
-      (\_ => y ec)
+  SliceMorphism {a=c} (sdaDirPB p ev (InterpSDApos {p} ev el)) y
 InterpSDAdmCovar {c} {v} {p} {x} {y} ev el = DPair.snd (DPair.snd el)
 
 public export
