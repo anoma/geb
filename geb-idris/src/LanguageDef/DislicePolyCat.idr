@@ -778,6 +778,37 @@ sdaDirPB : {c, v : Type} ->
 sdaDirPB {c} {v} p ev ep ec = DPair (sdaContra p ev ep ec) (sdaCovar p ev ep ec)
 
 public export
+InterpSDA : {c, v : Type} -> SlDiAr c v ->
+  SliceObj c -> SliceObj c -> SliceObj v
+InterpSDA {c} {v} p x y ev =
+  (ep : sdaPos p ev **
+   dmcont : SliceMorphism {a=c} x (sdaContra p ev ep) **
+   (ec : c) ->
+    SliceMorphism {a=(sdaContra p ev ep ec)}
+      (sdaCovar p ev ep ec)
+      (\_ => y ec))
+
+public export
+InterpSDApos : {c, v : Type} -> {p : SlDiAr c v} -> {x, y : SliceObj c} ->
+  SliceMorphism {a=v} (InterpSDA {c} {v} p x y) (sdaPos p)
+InterpSDApos {c} {v} {p} {x} {y} ev = DPair.fst
+
+public export
+InterpSDAdmContra : {c, v : Type} -> {p : SlDiAr c v} -> {x, y : SliceObj c} ->
+  (ev : v) -> (el : InterpSDA {c} {v} p x y ev) ->
+  SliceMorphism {a=c} x (sdaContra p ev (InterpSDApos {p} ev el))
+InterpSDAdmContra {c} {v} {p} {x} {y} ev el = DPair.fst (DPair.snd el)
+
+public export
+InterpSDAdmCovar : {c, v : Type} -> {p : SlDiAr c v} -> {x, y : SliceObj c} ->
+  (ev : v) -> (el : InterpSDA {c} {v} p x y ev) ->
+  (ec : c) ->
+    SliceMorphism {a=(sdaContra p ev (InterpSDApos {p} ev el) ec)}
+      (sdaCovar p ev (InterpSDApos {p} ev el) ec)
+      (\_ => y ec)
+InterpSDAdmCovar {c} {v} {p} {x} {y} ev el = DPair.snd (DPair.snd el)
+
+public export
 record SlDiPara {c, v : Type} (p, q : SlDiAr c v) where
   constructor SDPara
   sdarPos : SliceMorphism {a=v} (sdaPos p) (sdaPos q)
