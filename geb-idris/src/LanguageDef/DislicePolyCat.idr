@@ -693,6 +693,11 @@ record SlProAr (d, c, v : Type) where
   spaContra : (ev : v) -> spaPos ev -> SliceObj d
   spaCovar : (ev : v) -> spaPos ev -> SliceObj c
 
+public export
+spaDirPB : {c, v : Type} ->
+  (p : SlProAr c c v) -> (ev : v) -> spaPos p ev -> SliceObj c
+spaDirPB {c} {v} p ev ep ec = (spaContra p ev ep ec, spaCovar p ev ep ec)
+
 InterpSPA : (d, c, v : Type) -> SlProAr d c v ->
   SliceObj d -> SliceObj c -> SliceObj v
 InterpSPA d c v (SPA pos contra covar) sld slc elv =
@@ -750,6 +755,11 @@ InterpSlProNT {d} {c} {v}
     (onpos ev i **
      (sliceComp (oncont ev i) mcont,
       sliceComp mcovar (oncov ev i)))
+
+public export
+sproDirPB : {c : Type} ->
+  (p : SlProAr c c Unit) -> spaPos p () -> SliceObj c
+sproDirPB {c} p = spaDirPB {c} {v=Unit} p ()
 
 public export
 record SlProPara {c : Type} (p, q : SlProAr c c Unit) where
