@@ -876,6 +876,12 @@ SlDiParaCond {c} {p} {q} gamma =
   (sdaLmap q i2 ev (gamma i1 ev d1) = sdaRmap q i2 ev (gamma i0 ev d0))
 
 public export
+0 SlDiArParaCond : {c, v : Type} -> {p, q : SlDiAr c v} ->
+  SlDiPara {c} {v} p q -> Type
+SlDiArParaCond {c} {v} {p} {q} =
+  SlDiParaCond {c} {v} {p} {q} . InterpSlDiPara {c} {v} {p} {q}
+
+public export
 record SlProPara {c : Type} (p, q : SlProAr c c Unit) where
   constructor SPara
   sparPos : SliceMorphism {a=Unit} (spaPos p) (spaPos q)
