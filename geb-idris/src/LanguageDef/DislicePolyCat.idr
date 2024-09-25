@@ -798,7 +798,8 @@ InterpSlProNT {d} {c} {v}
 -- other words, it is the product (in the category of Dirichlet functors)
 -- of an arbitrary Dirichlet functor with the representable (therefore
 -- Dirichlet) functor represented by `d`.  Thus it turns out that `T1`
--- can be determined simply by a Dirichlet functor.
+-- can be determined simply by a Dirichlet functor.  We will refer to that
+-- determining functor as the `position-set` of the profunctor.
 --
 -- Now we consider the data called `E_T` on the ncatlab page.  This is a
 -- functor from the category of elements of `T1` to the category of
@@ -814,6 +815,12 @@ InterpSlProNT {d} {c} {v}
 -- presheaves on the category of elements of `T1`, and therefore as
 -- a Dirichlet functor sliced over `T1` (i.e. as an object in the slice
 -- category of Dirichlet functors over `T1`).
+--
+-- We shall refer to `E_T` as the `direction-set` of the profunctor.
+-- Putting together all of the above, we obtain the following definition:
+public export
+SlProDir : (d, c : Type) -> (pos : MLDirichCatObj) -> Type
+SlProDir d c pos = (ec : c) -> MlDirichSlObj (dfParProductRep d pos)
 
 public export
 record SlDiAr (c, v : Type) where

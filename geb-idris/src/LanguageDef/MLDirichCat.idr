@@ -1713,6 +1713,24 @@ dirichParPair : {p, q, r : MLDirichCatObj} ->
 dirichParPair {p} {q} {r} f g =
   (dirichParPairOnPos p q r f g ** dirichParPairOnDir p q r f g)
 
+-- A utility function for defining the parallel product of a Dirichlet
+-- functor with a _representable_ (hence Dirichlet) functor.  The point
+-- of this is to elide the redundant product with `Unit` which would
+-- be produced by the default parallel-product computation.
+
+public export
+dfParProductRepPos : Type -> MLDirichCatObj -> Type
+dfParProductRepPos _ q = dfPos q
+
+public export
+dfParProductRepDir : (p : Type) -> (q : MLDirichCatObj) ->
+  dfParProductRepPos p q -> Type
+dfParProductRepDir p q qi = (p, dfDir q qi)
+
+public export
+dfParProductRep : Type -> MLDirichCatObj -> MLDirichCatObj
+dfParProductRep p q = (dfParProductRepPos p q ** dfParProductRepDir p q)
+
 -------------------------------
 ---- Set-indexed coproduct ----
 -------------------------------
