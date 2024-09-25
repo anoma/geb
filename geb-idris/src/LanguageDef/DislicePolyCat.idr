@@ -822,6 +822,19 @@ public export
 SlProDir : (d, c : Type) -> (pos : MLDirichCatObj) -> Type
 SlProDir d c pos = (ec : c) -> MlDirichSlObj (dfParProductRep d pos)
 
+-- Thus we can define the data of what we shall call a slice polynomial
+-- profunctor as follows:
+public export
+SlProData : (d, c : Type) -> Type
+SlProData d c = DPair MLDirichCatObj (SlProDir d c)
+
+-- Finally, we again use the equivalence of a functor into `SliceObj v` as
+-- a `v`-way product of functors into `Type` to define the data of a
+-- slice polynomial profunctor _enriched_ over a slice category:
+public export
+SlEnrProData : (d, c, v : Type) -> Type
+SlEnrProData d c v = v -> DPair MLDirichCatObj (SlProDir d c)
+
 public export
 record SlDiAr (c, v : Type) where
   constructor SDAr
