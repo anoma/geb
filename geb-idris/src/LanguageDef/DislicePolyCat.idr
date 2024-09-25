@@ -756,11 +756,15 @@ InterpSlProNT {d} {c} {v}
      (sliceComp (oncont ev i) mcont,
       sliceComp mcovar (oncov ev i)))
 
--------------------------------------
--------------------------------------
----- Slice polynomial difunctors ----
--------------------------------------
--------------------------------------
+-----------------------------------------
+-----------------------------------------
+---- Slice polynomial pro/difunctors ----
+-----------------------------------------
+-----------------------------------------
+
+----------------------------------------------------------
+---- Determining data of slice polynomial profunctors ----
+----------------------------------------------------------
 
 -- https://ncatlab.org/nlab/show/parametric+right+adjoint#generic_morphisms
 -- describes how a PRA functor between presheaf categories is determined
@@ -834,6 +838,14 @@ SlProData d c = DPair MLDirichCatObj (SlProDir d c)
 public export
 SlEnrProData : (d, c, v : Type) -> Type
 SlEnrProData d c v = v -> DPair MLDirichCatObj (SlProDir d c)
+
+--------------------------------------------------------
+---- Interpretation of slice polynomial profunctors ----
+--------------------------------------------------------
+
+--------------------------
+---- Slice difunctors ----
+--------------------------
 
 public export
 record SlDiAr (c, v : Type) where
