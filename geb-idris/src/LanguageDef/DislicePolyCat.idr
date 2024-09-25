@@ -762,6 +762,59 @@ InterpSlProNT {d} {c} {v}
 -------------------------------------
 -------------------------------------
 
+-- https://ncatlab.org/nlab/show/parametric+right+adjoint#generic_morphisms
+-- describes how a PRA functor between presheaf categories is determined
+-- by two pieces of data which it calls `T1` and `E_T`.  It refers to
+-- general presheaf categories over categories it calls `I` and `J`.
+--
+-- Suppose we wish to determine what constitutes a parametric right adjoint
+-- which is a profunctor on slice categories -- that is, a parametric right
+-- adjoint from `(op(SliceObj d), SliceObj c)` to `Type` (AKA `SliceObj Unit`).
+--
+-- We could write the curried form of such a profunctor in the style of the
+-- Yoneda embedding, as `SliceObj c -> op(SliceObj d) -> Type`.  Because a
+-- slice category is a discrete presheaf, this is a functor between presheaves,
+-- as in the ncatlab page, with `I = disc(c)` (where `disc(c)` is the discrete
+-- category whose objects are the terms of `c`) and `J = SliceObj d`.
+--
+-- Thus, the object called `T1` on the ncatlab page is a presheaf on
+-- `SliceObj d`.  `SliceObj d` is the category of elements of the contravariant
+-- representable functor represented by `d`, and a presheaf on a category of
+-- elements is a slice object in the presheaf category.  Thus `T1` is a presheaf
+-- sliced over the presheaf represented by `d`.
+--
+-- Suppose that, in our attempt to define a notion of polynomial profunctor,
+-- we constrain `T1` to be a _Dirichlet_ functor -- a polynomial functor on
+-- `op(SliceObj d)`.  Then `T1` would have to be a Dirichlet functor sliced
+-- over the presheaf represented by `d`, which is the Dirichlet functor with
+-- one position, whose direction-set is `d`.
+--
+-- If we examine the definition of `MlDirichSlObj`, and constrain the
+-- position-set of the base functor to be `Unit`, then the on-positions
+-- component, `mdsOnPos`, becomes `SliceObj Unit`, or simply `Type`, while the
+-- on-directions component, `mdsDir`, becomes `SliceObj(mdsOnPos, d)`.
+-- Note that this is simply a Dirichlet functor, whose positions are
+-- `mdsOnPos`, and whose directions are all multiplied by `d` -- or, in
+-- other words, it is the product (in the category of Dirichlet functors)
+-- of an arbitrary Dirichlet functor with the representable (therefore
+-- Dirichlet) functor represented by `d`.  Thus it turns out that `T1`
+-- can be determined simply by a Dirichlet functor.
+--
+-- Now we consider the data called `E_T` on the ncatlab page.  This is a
+-- functor from the category of elements of `T1` to the category of
+-- presheaves on `I`.  `I` in this case is `disc(c)`, so this means a
+-- functor from the category of elements of `T1` to `SliceObj c`.
+--
+-- A functor into `SliceObj c` is equivalently a `c`-way product of functors
+-- into `Type`, so `E_T` is equivalently a `c`-way product of presheaves
+-- on the category of elements of `T1`.
+--
+-- Again imposing a constraint in our attempt to define _polynomial_
+-- profunctors specifically, we treat `E_T` as a `c`-way product of _Dirichlet_
+-- presheaves on the category of elements of `T1`, and therefore as
+-- a Dirichlet functor sliced over `T1` (i.e. as an object in the slice
+-- category of Dirichlet functors over `T1`).
+
 public export
 record SlDiAr (c, v : Type) where
   constructor SDAr
