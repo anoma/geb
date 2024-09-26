@@ -903,6 +903,27 @@ SlProDataET : {d, c : Type} ->
   (p : SlProData d c) -> SlProETtype {d} c (SlProDataT1 {d} {c} p)
 SlProDataET {d} {c} = DPair.snd
 
+public export
+SlProDataT1pos : {d, c : Type} -> SlProData d c -> Type
+SlProDataT1pos {d} {c} = SlProT1pos {d} . SlProDataT1 {d} {c}
+
+public export
+SlProDataT1dir : {d, c : Type} ->
+  (p : SlProData d c) -> SlProDataT1pos {d} {c} p -> SliceObj d
+SlProDataT1dir {d} {c} p = SlProT1dir (SlProDataT1 p)
+
+public export
+SlProDataETpos : {d, c : Type} -> (p : SlProData d c) ->
+  c -> SliceObj (SlProDataT1pos {d} {c} p)
+SlProDataETpos {d} {c} p = SlProETtypePos (SlProDataET {d} {c} p)
+
+public export
+SlProDataETdir : {d, c : Type} -> (p : SlProData d c) ->
+  SliceMorphism {a=(SlProDataT1pos {d} {c} p)}
+    (Sigma {a=c} . flip (SlProDataETpos {d} {c} p))
+    (SliceObj . Sigma {a=d} . SlProDataT1dir {d} {c} p)
+SlProDataETdir {d} {c} p = SlProETtypeDir (SlProDataET {d} {c} p)
+
 -- With respect to
 -- https://ncatlab.org/nlab/show/parametric+right+adjoint#generic_morphisms ,
 -- what we call `SlProDataInterpT1` here is `T1(j)` for a given
