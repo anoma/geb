@@ -5,6 +5,7 @@ import Library.IdrisCategories
 import public LanguageDef.DisliceCat
 import LanguageDef.PolyCat
 import LanguageDef.SlicePolyCat
+import LanguageDef.PolySliceCat
 import LanguageDef.InternalCat
 
 --------------------------------------------------------
@@ -790,21 +791,36 @@ InterpSlProNT {d} {c} {v}
 -- Suppose that, in our attempt to define a notion of polynomial profunctor,
 -- we constrain `T1` to be a _Dirichlet_ functor -- a polynomial functor on
 -- `op(SliceObj d)`.  Then `T1` would have to be a Dirichlet functor sliced
--- over the presheaf represented by `d`, which is the Dirichlet functor with
--- one position, whose direction-set is `d`.
+-- over the presheaf represented by `d` (which is the Dirichlet functor with
+-- one position, whose direction-set is `d`).
 --
--- If we examine the definition of `MlDirichSlObj`, and constrain the
--- position-set of the base functor to be `Unit`, then the on-positions
--- component, `mdsOnPos`, becomes `SliceObj Unit`, or simply `Type`, while the
--- on-directions component, `mdsDir`, becomes `SliceObj(mdsOnPos, d)`.
--- Note that this is simply a Dirichlet functor, whose positions are
--- `mdsOnPos`, and whose directions are all multiplied by `d` -- or, in
--- other words, it is the product (in the category of Dirichlet functors)
--- of an arbitrary Dirichlet functor with the representable (therefore
--- Dirichlet) functor represented by `d`.  Thus it turns out that `T1`
--- can be determined simply by a Dirichlet functor.  We will refer to that
--- determining functor as the `position-set` of the profunctor.
---
+-- Hence we define:
+
+-- This is equivalent to a Dirichlet slice over a representable, but with
+-- a redundant `Unit` removed.
+public export
+SlProT1type : Type -> Type
+SlProT1type d = (pos : Type ** pos -> SliceObj d)
+
+public export
+SlProT1pos : {d : Type} -> SlProT1type d -> Type
+SlProT1pos {d} = DPair.fst
+
+public export
+SlProT1dir : {d : Type} -> (p : SlProT1type d) -> SlProT1pos p -> SliceObj d
+SlProT1dir {d} = DPair.snd
+
+public export
+SlProT1toSl : {d : Type} -> SlProT1type d -> MlDirichSlObj (dfRepObj d)
+SlProT1toSl {d} t1 = MDSobj (\() => fst t1) (\(), i, d => snd t1 i d)
+
+-- This is equivalent to `InterpMlDirichSlObj` on `T1`, but again with
+-- some redundancies removed.
+public export
+InterpProT1 : {d : Type} -> SlProT1type d -> SliceObj d -> Type
+InterpProT1 {d} t1 j =
+  (i : SlProT1pos t1 ** SliceMorphism {a=d} j (SlProT1dir t1 i))
+
 -- Now we consider the data called `E_T` on the ncatlab page.  This is a
 -- functor from the category of elements of `T1` to the category of
 -- presheaves on `I`.  `I` in this case is `disc(c)`, so this means a
@@ -820,28 +836,115 @@ InterpSlProNT {d} {c} {v}
 -- a Dirichlet functor sliced over `T1` (i.e. as an object in the slice
 -- category of Dirichlet functors over `T1`).
 --
--- We shall refer to `E_T` as the `direction-set` of the profunctor.
--- Putting together all of the above, we obtain the following definition:
+-- We have defined `T1` itself as a slice object, so a presheaf on its
+-- category of elements is a slice of a slice.  The definition below is
+-- effectively a slice of `T1` (which is itself a slice of `dfRepObj d`),
+-- but with some redundancies removed.  We call it `Fib` as in a single
+-- fiber of the overall `ET`, which is a `c`-way product of such fibers.
 public export
-SlProDir : (d, c : Type) -> (pos : MLDirichCatObj) -> Type
-SlProDir d c pos = (ec : c) -> MlDirichSlObj (dfParProductRep d pos)
+SlProETtypeFib : {d : Type} -> SlProT1type d -> Type
+SlProETtypeFib {d} t1 =
+  (etPos : SliceObj (SlProT1pos t1) **
+   SliceMorphism {a=(SlProT1pos t1)}
+    etPos
+    (SliceObj . Sigma {a=d} . SlProT1dir t1))
+
+public export
+SlProETtypeFibPos : {d : Type} -> {t1 : SlProT1type d} ->
+  SlProETtypeFib {d} t1 -> SliceObj (SlProT1pos t1)
+SlProETtypeFibPos {d} {t1} = DPair.fst
+
+public export
+SlProETtypeFibDir : {d : Type} -> {t1 : SlProT1type d} ->
+  (etf : SlProETtypeFib {d} t1) ->
+  SliceMorphism {a=(SlProT1pos t1)}
+    (SlProETtypeFibPos {d} {t1} etf)
+    (SliceObj . Sigma {a=d} . SlProT1dir t1)
+SlProETtypeFibDir {d} {t1} = DPair.snd
+
+public export
+SlProETtypeFibToSlOfSl : {d : Type} -> (p : SlProT1type d) ->
+  SlProETtypeFib {d} p -> MlDirichSlOfSl {ar=(dfRepObj d)} (SlProT1toSl {d} p)
+SlProETtypeFibToSlOfSl {d} p et =
+  MDSobj
+    (\(() ** t1i) => SlProETtypeFibPos et t1i)
+    (\(() ** t1i), eti, (ed ** etd) => SlProETtypeFibDir et t1i eti (ed ** etd))
+
+public export
+SlProETtype : {d : Type} -> (c : Type) -> SlProT1type d -> Type
+SlProETtype {d} c t1ty = c -> SlProETtypeFib {d} t1ty
 
 -- Thus we can define the data of what we shall call a slice polynomial
 -- profunctor as follows:
 public export
 SlProData : (d, c : Type) -> Type
-SlProData d c = DPair MLDirichCatObj (SlProDir d c)
+SlProData d c = DPair (SlProT1type d) (SlProETtype {d} c)
 
--- Finally, we again use the equivalence of a functor into `SliceObj v` as
+public export
+SlProDataT1 : {d, c : Type} -> SlProData d c -> SlProT1type d
+SlProDataT1 {d} {c} = DPair.fst
+
+public export
+SlProDataET : {d, c : Type} ->
+  (p : SlProData d c) -> SlProETtype {d} c (SlProDataT1 {d} {c} p)
+SlProDataET {d} {c} = DPair.snd
+
+-- With respect to
+-- https://ncatlab.org/nlab/show/parametric+right+adjoint#generic_morphisms ,
+-- what we call `SlProDataPos` here is `T1(j)` for a given `j : SliceObj d`.
+public export
+SlProDataPos : {d, c : Type} -> SlProData d c -> SliceObj d -> Type
+SlProDataPos {d} {c} = InterpProT1 {d} . SlProDataT1
+
+-- With respect to
+-- https://ncatlab.org/nlab/show/parametric+right+adjoint#generic_morphisms ,
+-- what we call `SlProDataDir` here is `ET(x)` for a given `j : SliceObj d`
+-- and `x : T1(j)` (i.e. `x : SlProDataPos p j`).
+public export
+SlProDataDir : {d, c : Type} -> (p : SlProData d c) -> (j : SliceObj d) ->
+  SlProDataPos {d} {c} p j -> SliceObj c
+SlProDataDir {d} {c} p j t1idm ec =
+  InterpMlDirichSlObj
+    (SlProETtypeFibToSlOfSl (SlProDataT1 p) (SlProDataET p ec))
+    (Sigma {a=d} j)
+    ((() ** fst t1idm) ** \(ed ** ej) => (ed ** snd t1idm ed ej))
+
+-- Finally, we again use the equivalence of a functor into `SliceObj v` with
 -- a `v`-way product of functors into `Type` to define the data of a
 -- slice polynomial profunctor _enriched_ over a slice category:
 public export
 SlEnrProData : (d, c, v : Type) -> Type
-SlEnrProData d c v = v -> DPair MLDirichCatObj (SlProDir d c)
+SlEnrProData d c v = v -> SlProData d c
 
 --------------------------------------------------------
 ---- Interpretation of slice polynomial profunctors ----
 --------------------------------------------------------
+
+-- Now we use the formula for the functor referred to as `T` in
+-- https://ncatlab.org/nlab/show/parametric+right+adjoint#generic_morphisms
+-- to compute our interpretation of a slice polynomial profunctor.
+-- The variable called `Z` in that definition is in `[op(I), Set]`, which
+-- in our case, since `I` is `disc(c)`, is equivalent to `SliceObj c`.
+-- The variable called `j` in that definition is in `op(J)`, which in our
+-- case, since `J` is `SliceObj d`, is `op(SliceObj d)`.
+
+public export
+InterpSlProFib : {d, c : Type} -> (p : SlProData d c) ->
+  (j : SliceObj d) -> (z : SliceObj c) ->
+  SlProDataPos {d} {c} p j -> Type
+InterpSlProFib {d} {c} p j z i =
+  SliceMorphism {a=c} (SlProDataDir {d} {c} p j i) z
+
+public export
+InterpSlPro : {d, c : Type} -> (p : SlProData d c) ->
+  (j : SliceObj d) -> (z : SliceObj c) -> Type
+InterpSlPro {d} {c} p j z =
+  DPair (SlProDataPos {d} {c} p j) (InterpSlProFib p j z)
+
+public export
+InterpSlEnrPro : {d, c, v : Type} -> (p : SlEnrProData d c v) ->
+  (j : SliceObj d) -> (z : SliceObj c) -> SliceObj v
+InterpSlEnrPro {d} {c} p j z ev = InterpSlPro {d} {c} (p ev) j z
 
 --------------------------
 ---- Slice difunctors ----
