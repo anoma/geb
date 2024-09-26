@@ -57,6 +57,46 @@ pdfLKanCounit : (q : MLDirichCatObj) ->
   (p : MLPolyCatObj) -> PolyNatTrans (pdfLKanExt q $ pdfPrecomp q p) p
 pdfLKanCounit q p = (fst ** \pdqp, qd => (snd pdqp qd ** \pdqd => pdqd qd))
 
+---------------------------------------
+---------------------------------------
+---- Opposite-category adjunctions ----
+---------------------------------------
+---------------------------------------
+
+-- The hom-profunctor of `(op(Type), Type)`.
+public export
+opProdHom : Type -> Type -> Type -> Type -> Type
+opProdHom s t a b = (a -> s, t -> b)
+
+public export
+opProdHomDimap : {s, t, a, b, s', t', a', b' : Type} ->
+  (s -> s') -> (t' -> t) -> (a' -> a) -> (b -> b') ->
+  opProdHom s t a b -> opProdHom s' t' a' b'
+opProdHomDimap mss' mt't ma'a mbb' (mas, mtb) =
+  (mss' . mas . ma'a, mbb' . mtb . mt't)
+
+-- The covariant representable of an object of `(op(Type), Type)`.
+public export
+opProdCovarRep : Type -> Type -> Type -> Type -> Type
+opProdCovarRep = opProdHom
+
+public export
+opProdCovarRepMap : {s, t, a, b, a', b' : Type} ->
+  (a' -> a) -> (b -> b') ->
+  opProdCovarRep s t a b -> opProdCovarRep s t a' b'
+opProdCovarRepMap = opProdHomDimap id id
+
+-- The contravariant representable of an object of `(op(Type), Type)`.
+public export
+opProdContravarRep : Type -> Type -> Type -> Type -> Type
+opProdContravarRep s t a b = opProdHom a b s t
+
+public export
+opProdContravarRepMap : {s, t, a, b, a', b' : Type} ->
+  (a -> a') -> (b' -> b) ->
+  opProdContravarRep s t a b -> opProdContravarRep s t a' b'
+opProdContravarRepMap maa' mb'b = opProdHomDimap maa' mb'b id id
+
 -------------------------------------------------
 -------------------------------------------------
 ---- Dirichlet slices as polynomial functors ----
