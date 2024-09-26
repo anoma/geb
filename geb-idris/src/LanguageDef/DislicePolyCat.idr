@@ -821,6 +821,13 @@ InterpProT1 : {d : Type} -> SlProT1type d -> SliceObj d -> Type
 InterpProT1 {d} t1 j =
   (i : SlProT1pos t1 ** SliceMorphism {a=d} j (SlProT1dir t1 i))
 
+public export
+InterpProT1contramap : {d : Type} -> (t1 : SlProT1type d) ->
+  (a, b : SliceObj d) ->
+  SliceMorphism {a=d} b a ->
+  InterpProT1 {d} t1 a -> InterpProT1 {d} t1 b
+InterpProT1contramap {d} t1 a b mba = dpMapSnd $ \t1i => flip sliceComp mba
+
 -- Now we consider the data called `E_T` on the ncatlab page.  This is a
 -- functor from the category of elements of `T1` to the category of
 -- presheaves on `I`.  `I` in this case is `disc(c)`, so this means a
@@ -881,6 +888,16 @@ InterpProETfib {d} et j t1idm =
   (eti : SlProETtypeFibPos et (fst t1idm) **
    (ed : d) -> (ej : j ed) ->
     SlProETtypeFibDir et (fst t1idm) eti (ed ** snd t1idm ed ej))
+
+public export
+InterpProETfibContramap : {d : Type} -> {t1 : SlProT1type d} ->
+  (et : SlProETtypeFib {d} t1) ->
+  (a, b : SliceObj d) -> (et1 : InterpProT1 {d} t1 a) ->
+  (mba : SliceMorphism {a=d} b a) ->
+  InterpProETfib {d} {t1} et a et1 ->
+  InterpProETfib {d} {t1} et b (InterpProT1contramap t1 a b mba et1)
+InterpProETfibContramap {d} {t1} et a b et1 mba =
+  dpMapSnd $ \eti, etdm, ed, eb => etdm ed (mba ed eb)
 
 public export
 SlProETtype : {d : Type} -> (c : Type) -> SlProT1type d -> Type
@@ -944,6 +961,13 @@ public export
 SlProDataInterpT1 : {d, c : Type} -> SlProData d c -> SliceObj d -> Type
 SlProDataInterpT1 {d} {c} = InterpProT1 {d} . SlProDataT1
 
+public export
+InterpSlProDataT1contramap : {d, c : Type} -> (p : SlProData d c) ->
+  (a, b : SliceObj d) -> SliceMorphism {a=d} b a ->
+  SlProDataInterpT1 {d} {c} p a ->
+  SlProDataInterpT1 {d} {c} p b
+InterpSlProDataT1contramap {d} {c} p = InterpProT1contramap (SlProDataT1 p)
+
 -- With respect to
 -- https://ncatlab.org/nlab/show/parametric+right+adjoint#generic_morphisms ,
 -- what we call `SlProDataInterpET` here is `ET(x)` for a given `j : SliceObj d`
@@ -957,6 +981,16 @@ SlProDataInterpET : {d, c : Type} -> (p : SlProData d c) -> (j : SliceObj d) ->
   SlProDataInterpT1 {d} {c} p j -> SliceObj c
 SlProDataInterpET {d} {c} p j t1idm ec =
   InterpProETfib {d} {t1=(SlProDataT1 p)} (SlProDataET p ec) j t1idm
+
+public export
+InterpSlProDataETcontramap : {d, c : Type} -> (p : SlProData d c) ->
+  (a, b : SliceObj d) -> (mba : SliceMorphism {a=d} b a) ->
+  (et1 : SlProDataInterpT1 {d} {c} p a) ->
+  SliceMorphism {a=c}
+    (SlProDataInterpET p a et1)
+    (SlProDataInterpET p b $ InterpSlProDataT1contramap {d} {c} p a b mba et1)
+InterpSlProDataETcontramap {d} {c} p a b mba et1 ec =
+  InterpProETfibContramap {t1=(SlProDataT1 p)} (SlProDataET p ec) a b et1 mba
 
 -- Finally, we again use the equivalence of a functor into `SliceObj v` with
 -- a `v`-way product of functors into `Type` to define the data of a
