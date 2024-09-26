@@ -905,19 +905,20 @@ SlProDataET {d} {c} = DPair.snd
 
 -- With respect to
 -- https://ncatlab.org/nlab/show/parametric+right+adjoint#generic_morphisms ,
--- what we call `SlProDataPos` here is `T1(j)` for a given `j : SliceObj d`.
+-- what we call `SlProDataInterpT1` here is `T1(j)` for a given
+-- `j : SliceObj d`.
 public export
-SlProDataPos : {d, c : Type} -> SlProData d c -> SliceObj d -> Type
-SlProDataPos {d} {c} = InterpProT1 {d} . SlProDataT1
+SlProDataInterpT1 : {d, c : Type} -> SlProData d c -> SliceObj d -> Type
+SlProDataInterpT1 {d} {c} = InterpProT1 {d} . SlProDataT1
 
 -- With respect to
 -- https://ncatlab.org/nlab/show/parametric+right+adjoint#generic_morphisms ,
--- what we call `SlProDataDir` here is `ET(x)` for a given `j : SliceObj d`
--- and `x : T1(j)` (i.e. `x : SlProDataPos p j`).
+-- what we call `SlProDataInterpET` here is `ET(x)` for a given `j : SliceObj d`
+-- and `x : T1(j)` (i.e. `x : SlProDataInterpT1 p j`).
 public export
-SlProDataDir : {d, c : Type} -> (p : SlProData d c) -> (j : SliceObj d) ->
-  SlProDataPos {d} {c} p j -> SliceObj c
-SlProDataDir {d} {c} p j t1idm ec =
+SlProDataInterpET : {d, c : Type} -> (p : SlProData d c) -> (j : SliceObj d) ->
+  SlProDataInterpT1 {d} {c} p j -> SliceObj c
+SlProDataInterpET {d} {c} p j t1idm ec =
   InterpMlDirichSlObj
     (SlProETtypeFibToSlOfSl (SlProDataT1 p) (SlProDataET p ec))
     (Sigma {a=d} j)
@@ -945,15 +946,15 @@ SlEnrProData d c v = v -> SlProData d c
 public export
 InterpSlProFib : {d, c : Type} -> (p : SlProData d c) ->
   (j : SliceObj d) -> (z : SliceObj c) ->
-  SlProDataPos {d} {c} p j -> Type
+  SlProDataInterpT1 {d} {c} p j -> Type
 InterpSlProFib {d} {c} p j z i =
-  SliceMorphism {a=c} (SlProDataDir {d} {c} p j i) z
+  SliceMorphism {a=c} (SlProDataInterpET {d} {c} p j i) z
 
 public export
 InterpSlPro : {d, c : Type} -> (p : SlProData d c) ->
   (j : SliceObj d) -> (z : SliceObj c) -> Type
 InterpSlPro {d} {c} p j z =
-  DPair (SlProDataPos {d} {c} p j) (InterpSlProFib p j z)
+  DPair (SlProDataInterpT1 {d} {c} p j) (InterpSlProFib p j z)
 
 public export
 InterpSlEnrPro : {d, c, v : Type} -> (p : SlEnrProData d c v) ->
