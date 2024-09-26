@@ -63,6 +63,10 @@ pdfLKanCounit q p = (fst ** \pdqp, qd => (snd pdqp qd ** \pdqd => pdqd qd))
 ---------------------------------------
 ---------------------------------------
 
+----------------------------------------------------
+---- Hom-profunctor forms on `(op(Type), Type)` ----
+----------------------------------------------------
+
 -- The hom-profunctor of `(op(Type), Type)`.
 public export
 opProdHom : Type -> Type -> Type -> Type -> Type
@@ -96,6 +100,47 @@ opProdContravarRepMap : {s, t, a, b, a', b' : Type} ->
   (a -> a') -> (b' -> b) ->
   opProdContravarRep s t a b -> opProdContravarRep s t a' b'
 opProdContravarRepMap maa' mb'b = opProdHomDimap maa' mb'b id id
+
+-------------------------------------------------
+---- Left adjoint of covariant representable ----
+-------------------------------------------------
+
+public export
+opProdCovarRepL : Type -> Type -> Type -> (Type, Type)
+opProdCovarRepL s t a = (a -> s, (a, t))
+
+public export
+opProdCovarRepLmap : {s, t, a, b : Type} ->
+  (a -> b) ->
+  (fst (opProdCovarRepL s t b) -> fst (opProdCovarRepL s t a),
+   snd (opProdCovarRepL s t a) -> snd (opProdCovarRepL s t b))
+opProdCovarRepLmap {s} {t} {a} {b} mab = ((|>) mab, mapFst mab)
+
+public export
+opProdCovarRepMonad : Type -> Type -> Type -> Type
+opProdCovarRepMonad s t a =
+  opProdCovarRep s t (fst $ opProdCovarRepL s t a) (snd $ opProdCovarRepL s t a)
+
+public export
+opProdCovarRepMonadMap : {s, t, a, b : Type} ->
+  (a -> b) -> opProdCovarRepMonad s t a -> opProdCovarRepMonad s t b
+opProdCovarRepMonadMap {s} {t} {a} {b} mab psta
+    with (opProdCovarRepLmap {s} {t} mab)
+  opProdCovarRepMonadMap {s} {t} {a} {b} mab psta | (mbsas, matbt) =
+    opProdCovarRepMap mbsas matbt psta
+
+public export
+opProdCovarRepComonad : Type -> Type -> (Type, Type) -> (Type, Type)
+opProdCovarRepComonad s t (a, b) = opProdCovarRepL s t $ opProdCovarRep s t a b
+
+public export
+opProdCovarRepComonadMap : {s, t, a, b, a', b' : Type} ->
+  (a' -> a) -> (b -> b') ->
+  (fst (opProdCovarRepComonad s t (a', b')) ->
+    fst (opProdCovarRepComonad s t (a, b)),
+   snd (opProdCovarRepComonad s t (a, b)) ->
+    snd (opProdCovarRepComonad s t (a', b')))
+opProdCovarRepComonadMap = opProdCovarRepLmap .* opProdCovarRepMap
 
 -------------------------------------------------
 -------------------------------------------------
