@@ -812,7 +812,7 @@ SlProT1dir {d} = DPair.snd
 
 public export
 SlProT1toSl : {d : Type} -> SlProT1type d -> MlDirichSlObj (dfRepObj d)
-SlProT1toSl {d} t1 = MDSobj (\() => fst t1) (\(), i, d => snd t1 i d)
+SlProT1toSl {d} t1 = MDSobj (\() => fst t1) (\() => snd t1)
 
 -- This is equivalent to `InterpMlDirichSlObj` on `T1`, but again with
 -- some redundancies removed.
@@ -870,14 +870,17 @@ SlProETtypeFibToSlOfSl {d} p et =
     (\(() ** t1i) => SlProETtypeFibPos et t1i)
     (\(() ** t1i), eti, (ed ** etd) => SlProETtypeFibDir et t1i eti (ed ** etd))
 
+-- This is equivalent to interpreting an `SlProETtypeFib`, which we
+-- represent internally as a Dirichlet slice object, as a presheaf on
+-- its category of elements, and then applying it to `Sigma {a=d} j`.
+-- It just removes a redundant `Unit`.
 public export
 InterpProETfib : {d : Type} -> {t1 : SlProT1type d} ->
   SlProETtypeFib {d} t1 -> (j : SliceObj d) -> InterpProT1 {d} t1 j -> Type
 InterpProETfib {d} et j t1idm =
-  InterpMlDirichSlObj
-    (SlProETtypeFibToSlOfSl t1 et)
-    (Sigma {a=d} j)
-    ((() ** fst t1idm) ** \(ed ** ej) => (ed ** snd t1idm ed ej))
+  (eti : SlProETtypeFibPos et (fst t1idm) **
+   (ed : d) -> (ej : j ed) ->
+    SlProETtypeFibDir et (fst t1idm) eti (ed ** snd t1idm ed ej))
 
 public export
 SlProETtype : {d : Type} -> (c : Type) -> SlProT1type d -> Type
