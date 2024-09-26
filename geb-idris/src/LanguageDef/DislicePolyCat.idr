@@ -871,6 +871,15 @@ SlProETtypeFibToSlOfSl {d} p et =
     (\(() ** t1i), eti, (ed ** etd) => SlProETtypeFibDir et t1i eti (ed ** etd))
 
 public export
+InterpProETfib : {d : Type} -> {t1 : SlProT1type d} ->
+  SlProETtypeFib {d} t1 -> (j : SliceObj d) -> InterpProT1 {d} t1 j -> Type
+InterpProETfib {d} et j t1idm =
+  InterpMlDirichSlObj
+    (SlProETtypeFibToSlOfSl t1 et)
+    (Sigma {a=d} j)
+    ((() ** fst t1idm) ** \(ed ** ej) => (ed ** snd t1idm ed ej))
+
+public export
 SlProETtype : {d : Type} -> (c : Type) -> SlProT1type d -> Type
 SlProETtype {d} c t1ty = c -> SlProETtypeFib {d} t1ty
 
@@ -936,14 +945,15 @@ SlProDataInterpT1 {d} {c} = InterpProT1 {d} . SlProDataT1
 -- https://ncatlab.org/nlab/show/parametric+right+adjoint#generic_morphisms ,
 -- what we call `SlProDataInterpET` here is `ET(x)` for a given `j : SliceObj d`
 -- and `x : T1(j)` (i.e. `x : SlProDataInterpT1 p j`).
+--
+-- This is equivalent to interpreting `ET`, which we represent internally
+-- as a Dirichlet slice object, as a presheaf on its category of elements,
+-- and then applying it to `Sigma {a=d} j`.  It just removes a redundant `Unit`.
 public export
 SlProDataInterpET : {d, c : Type} -> (p : SlProData d c) -> (j : SliceObj d) ->
   SlProDataInterpT1 {d} {c} p j -> SliceObj c
 SlProDataInterpET {d} {c} p j t1idm ec =
-  InterpMlDirichSlObj
-    (SlProETtypeFibToSlOfSl (SlProDataT1 p) (SlProDataET p ec))
-    (Sigma {a=d} j)
-    ((() ** fst t1idm) ** \(ed ** ej) => (ed ** snd t1idm ed ej))
+  InterpProETfib {d} {t1=(SlProDataT1 p)} (SlProDataET p ec) j t1idm
 
 -- Finally, we again use the equivalence of a functor into `SliceObj v` with
 -- a `v`-way product of functors into `Type` to define the data of a
