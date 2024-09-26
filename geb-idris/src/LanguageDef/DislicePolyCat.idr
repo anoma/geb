@@ -874,6 +874,20 @@ public export
 SlProETtype : {d : Type} -> (c : Type) -> SlProT1type d -> Type
 SlProETtype {d} c t1ty = c -> SlProETtypeFib {d} t1ty
 
+public export
+SlProETtypePos : {d, c : Type} -> {t1 : SlProT1type d} ->
+  SlProETtype {d} c t1 -> c -> SliceObj (SlProT1pos t1)
+SlProETtypePos {d} {c} {t1} et = SlProETtypeFibPos . et
+
+public export
+SlProETtypeDir : {d, c : Type} -> {t1 : SlProT1type d} ->
+  (et : SlProETtype {d} c t1) ->
+  SliceMorphism {a=(SlProT1pos t1)}
+    (Sigma {a=c} . flip (SlProETtypePos {d} {t1} et))
+    (SliceObj . Sigma {a=d} . SlProT1dir t1)
+SlProETtypeDir {d} {c} {t1} et et1i eceti =
+  SlProETtypeFibDir {d} {t1} (et $ fst eceti) et1i (snd eceti)
+
 -- Thus we can define the data of what we shall call a slice polynomial
 -- profunctor as follows:
 public export
