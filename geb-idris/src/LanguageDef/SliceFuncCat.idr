@@ -1046,7 +1046,14 @@ ssplSingletonsToRepresented : {c, e : Type} -> (d : e -> SliceObj c) ->
   SliceMorphism {a=c}
     (SliceSigmaPiFL {c} {e} (uncurry $ flip d) (\ee => Unit))
     (Sigma {a=e} . flip d)
-ssplSingletonsToRepresented {c} {e} d ec = DPair.fst
+ssplSingletonsToRepresented {c} {e} d ec (ed ** ()) = ed
+
+public export
+ssplSingletonsFromRepresented : {c, e : Type} -> (d : e -> SliceObj c) ->
+  SliceMorphism {a=c}
+    (Sigma {a=e} . flip d)
+    (SliceSigmaPiFL {c} {e} (uncurry $ flip d) (\ee => Unit))
+ssplSingletonsFromRepresented {c} {e} d ec ed = (ed ** ())
 
 -- This is the right adjoint of the composed
 -- dependent-sum/dependent-product adjunction, in category-theoretic style.
