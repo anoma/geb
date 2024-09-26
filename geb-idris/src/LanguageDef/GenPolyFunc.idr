@@ -142,6 +142,16 @@ opProdCovarRepComonadMap : {s, t, a, b, a', b' : Type} ->
     snd (opProdCovarRepComonad s t (a', b')))
 opProdCovarRepComonadMap = opProdCovarRepLmap .* opProdCovarRepMap
 
+public export
+opProdCovarRepAdjUnit : (s, t, a : Type) -> a -> opProdCovarRepMonad s t a
+opProdCovarRepAdjUnit s t a ea = (flip apply ea, MkPair ea)
+
+public export
+opProdCovarRepAdjCounit : (s, t, a, b : Type) ->
+  (a -> fst (opProdCovarRepComonad s t (a, b)),
+   snd (opProdCovarRepComonad s t (a, b)) -> b)
+opProdCovarRepAdjCounit s t a b = (flip fst, \mpt => snd (fst mpt) (snd mpt))
+
 -------------------------------------------------
 -------------------------------------------------
 ---- Dirichlet slices as polynomial functors ----
