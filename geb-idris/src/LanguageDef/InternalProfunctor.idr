@@ -1447,11 +1447,11 @@ public export
 IntPDiNTar : (c : Type) -> (mor : IntDifunctorSig c) ->
   IntEndoProAr c -> IntEndoProAr c -> Type
 IntPDiNTar c mor (ppos ** (pcontra, pcovar)) (qpos ** (qcontra, qcovar)) =
-  (onpos : ppos -> qpos **
-   ((i : ppos) ->
-      mor (pcovar i) (pcontra i) -> mor (pcontra i) (qcontra $ onpos i),
-    (i : ppos) ->
-      mor (pcovar i) (pcontra i) -> mor (qcovar $ onpos i) (pcovar i)))
+  (onpos : (i : ppos) -> mor (pcovar i) (pcontra i) -> qpos **
+   ((i : ppos) -> (asn : mor (pcovar i) (pcontra i)) ->
+    mor (pcontra i) (qcontra $ onpos i asn),
+    (i : ppos) -> (asn : mor (pcovar i) (pcontra i)) ->
+    mor (qcovar $ onpos i asn) (pcovar i)))
 
 public export
 InterpIEPPdint : (c : Type) -> (mor : IntDifunctorSig c) ->
@@ -1465,9 +1465,9 @@ InterpIEPPdint c mor comp
       passign : mor (pcovar i) (pcontra i) =
         comp (pcovar i) a (pcontra i) cmax cmya
     in
-    (onpos i **
-     (comp a (pcontra i) (qcontra $ onpos i) (dcontra i passign) cmax,
-      comp (qcovar $ onpos i) (pcovar i) a cmya (dcovar i passign)))
+    (onpos i passign **
+     (comp a (pcontra i) (qcontra $ onpos i passign) (dcontra i passign) cmax,
+      comp (qcovar $ onpos i passign) (pcovar i) a cmya (dcovar i passign)))
 
 public export
 IntPDiNTPara : (c : Type) -> (mor : IntDifunctorSig c) ->
@@ -1498,38 +1498,59 @@ IntPDiNTPara c mor cid comp idl idr assoc
           eq2 = mkDPairInjectiveSndHet cond
           eq21 = trans (fstEq eq2) $ idl c0 (pcovar i1) mcp0
           eq22 = trans (sym $ idr (pcontra i1) c1 mpc1) $ sndEq eq2
-          a1 = assoc c0 c1 (pcovar i1) (qcovar $ onpos i1)
-            (dcontra i1 (comp (pcontra i1) c1 (pcovar i1) mcp1 mpc1)) mcp1 mc0c1
-          a2 = sym $ assoc c0 c0 (pcovar i1) (qcovar $ onpos i1)
-            (dcontra i1 (comp (pcontra i1) c0 (pcovar i1) mcp0 mpc0)) mcp0
-              (cid c0)
-          a3 = assoc (qcontra (onpos i1)) (pcontra i1) c0 c1
-            mc0c1 mpc0 (dcovar i1 (comp (pcontra i1) c0 (pcovar i1) mcp0 mpc0))
-          a4 = assoc (pcontra i1) c0 c1 (pcovar i1)
+          a0 = assoc (pcontra i1) c0 c1 (pcovar i1)
             mcp1 mc0c1 mpc0
-          il1 = idl c0 (pcovar i1) mcp0
-          ir1 = idr (qcontra (onpos i1)) c1
-            (comp (qcontra (onpos i1)) (pcontra i1) c1
-              mpc1 (dcovar i1 (comp (pcontra i1) c1 (pcovar i1) mcp1 mpc1)))
+          pcont2cov0 : mor (pcontra i0) (pcovar i0) =
+            comp (pcontra i0) c0 (pcovar i0) mcp0 mpc0
+          pcont2cov1 : mor (pcontra i1) (pcovar i1) =
+            comp (pcontra i0) c1 (pcovar i0) mcp1 mpc1
           contracomp :
             (comp (pcontra i1) c1 (pcovar i1) mcp1 mpc1 =
              comp (pcontra i1) c0 (pcovar i1) mcp0 mpc0) =
-              rewrite sym eq21 in rewrite eq22 in rewrite a4 in Refl
+              rewrite sym eq21 in rewrite eq22 in rewrite a0 in Refl
+          a1 = assoc c0 c1 (pcovar i1)
+            (qcovar $ onpos i1 $ comp (pcontra i0) c1 (pcovar i0) mcp1 mpc1)
+            (dcontra i1 (comp (pcontra i1) c1 (pcovar i1) mcp1 mpc1)) mcp1 mc0c1
+          a2 = sym $ assoc c0 c0 (pcovar i1)
+            (qcovar $ onpos i1 $ comp (pcontra i0) c0 (pcovar i0) mcp0 mpc0)
+            (dcontra i1 (comp (pcontra i1) c0 (pcovar i1) mcp0 mpc0)) mcp0
+              (cid c0)
+          a3 = assoc
+            (qcontra (onpos i1 (comp (pcontra i0) c0 (pcovar i0) mcp0 mpc0)))
+            (pcontra i1) c0 c1
+            mc0c1 mpc0 (dcovar i1 (comp (pcontra i1) c0 (pcovar i1) mcp0 mpc0))
+          il1 = idl c0 (pcovar i1) mcp0
+          ir1 = idr
+            (qcontra (onpos i1 (comp (pcontra i0) c0 (pcovar i0) mcp0 mpc0)))
+            c1
+            (comp
+              (qcontra (onpos i1 (comp (pcontra i0) c0 (pcovar i0) mcp0 mpc0)))
+              (pcontra i1)
+              c1
+              mpc1
+              (dcovar i1 ( comp (pcontra i0) c0 (pcovar i0) mcp0 mpc0)))
         in
+        rewrite contracomp in
         dpEq12
           Refl
           $ pairEqCong
-            (trans a1 $ trans (rewrite il1 in rewrite eq21 in
-             (rewrite contracomp in Refl)) a2)
-            (rewrite ir1 in rewrite contracomp in rewrite eq22 in
-             rewrite a3 in Refl)
+            (rewrite
+              idl _ _ (comp _ _ _ (dcontra _ (comp _ _ _ mcp0 mpc0)) mcp0) in
+             rewrite
+              assoc _ _ _ _ (dcontra _ (comp _ _ _ mcp0 mpc0)) mcp1 mc0c1 in
+             rewrite eq21 in Refl)
+            (rewrite
+              idr _ _ (comp _ _ _ mpc1 (dcovar _ (comp _ _ _ mcp0 mpc0))) in
+             rewrite sym $
+              assoc _ _ _ _ mc0c1 mpc0 (dcovar _ (comp _ _ _ mcp0 mpc0)) in
+             rewrite eq22 in Refl)
 
 public export
 intPDiNTid :
   (c : Type) -> (mor : IntDifunctorSig c) -> (cid : IntIdSig c mor) ->
   (p : IntEndoProAr c) -> IntPDiNTar c mor p p
 intPDiNTid c mor cid (ppos ** (pcontra, pcovar)) =
-  (id ** (\i, _ => cid (pcontra i), \i, _ => cid (pcovar i)))
+  (\i, _ => i ** (\i, _ => cid (pcontra i), \i, _ => cid (pcovar i)))
 
 public export
 intPDiNTvcomp :
@@ -1542,23 +1563,29 @@ intPDiNTvcomp c mor comp
   (rpos ** (rcontra, rcovar))
   (bonpos ** (bcontra, bcovar))
   (aonpos ** (acontra, acovar)) =
-    (bonpos . aonpos **
-      let
-        qasn :
-          ((i : ppos) -> mor (pcovar i) (pcontra i) ->
-            mor (qcovar (aonpos i)) (qcontra (aonpos i))) =
-          \i, pasn =>
-            comp (qcovar (aonpos i)) (pcontra i) (qcontra (aonpos i))
-              (acontra i pasn)
-              (comp (qcovar (aonpos i)) (pcovar i) (pcontra i)
-                pasn
-                (acovar i pasn))
-      in
+    let
+      qasn :
+        ((i : ppos) -> (asn : mor (pcovar i) (pcontra i)) ->
+          mor (qcovar (aonpos i asn)) (qcontra (aonpos i asn))) =
+        \i, pasn =>
+          comp (qcovar (aonpos i pasn)) (pcontra i) (qcontra (aonpos i pasn))
+            (acontra i pasn)
+            (comp (qcovar (aonpos i pasn)) (pcovar i) (pcontra i)
+              pasn
+              (acovar i pasn))
+    in
+    (\i, pasn => bonpos (aonpos i pasn) (qasn i pasn) **
       (\i, pasn =>
-        comp (pcontra i) (qcontra (aonpos i)) (rcontra (bonpos (aonpos i)))
-          (bcontra (aonpos i) (qasn i pasn))
+        comp
+          (pcontra i)
+          (qcontra (aonpos i pasn))
+          (rcontra (bonpos (aonpos i pasn) (qasn i pasn)))
+          (bcontra (aonpos i pasn) (qasn i pasn))
           (acontra i pasn),
        \i, pasn =>
-        comp (rcovar (bonpos (aonpos i))) (qcovar (aonpos i)) (pcovar i)
+         comp
+          (rcovar (bonpos (aonpos i pasn) (qasn i pasn)))
+          (qcovar (aonpos i pasn))
+          (pcovar i)
           (acovar i pasn)
-          (bcovar (aonpos i) (qasn i pasn))))
+          (bcovar (aonpos i pasn) (qasn i pasn))))
