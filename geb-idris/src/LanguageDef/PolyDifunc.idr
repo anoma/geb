@@ -74,6 +74,17 @@ TypeProArFromNT (ppos ** (pcontra, pcovar)) (qpos ** (qcontra, qcovar)) alpha =
    (\pi => fst (snd $ nti pi),
     \pi => snd (snd $ nti pi)))
 
+public export
+0 TypeProArComplete : (p, q : TypeProAr) -> (alpha : TypeProNTSig p q) ->
+  (cond : TypeProArNaturality p q alpha) ->
+  (x, y : Type) ->
+  ExtEq {a=(InterpTypeProAr p x y)} {b=(InterpTypeProAr q x y)}
+    (alpha x y)
+    (InterpTypeProNT p q (TypeProArFromNT p q alpha) x y)
+TypeProArComplete (ppos ** (pcontra, pcovar)) (qpos ** (qcontra, qcovar)) alpha
+  cond x y (pi ** (dmx, dmy)) =
+    sym $ cond (pcontra pi) (pcovar pi) x y dmx dmy (pi ** (id, id))
+
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 ---- Category of pi types, viewed as a subcategory of the category of monos ----
