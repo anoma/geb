@@ -24,13 +24,41 @@ public export
 TypeProDimap = IntEndoDimapSig Type TypeMor
 
 public export
+0 TypeProLmap : ProfunctorSig -> Type
+TypeProLmap = IntEndoLmapSig Type TypeMor
+
+public export
+0 TypeProRmap : ProfunctorSig -> Type
+TypeProRmap = IntEndoRmapSig Type TypeMor
+
+public export
+0 TypeLmapFromDimap : (p : ProfunctorSig) -> TypeProDimap p -> TypeProLmap p
+TypeLmapFromDimap = IntEndoLmapFromDimap Type TypeMor typeId
+
+public export
+0 TypeRmapFromDimap : (p : ProfunctorSig) -> TypeProDimap p -> TypeProRmap p
+TypeRmapFromDimap = IntEndoRmapFromDimap Type TypeMor typeId
+
+public export
 0 TypeProfNT : IntMorSig ProfunctorSig
 TypeProfNT = IntEndoProfNTSig Type
+
+public export
+0 TypeProfDiNT : IntMorSig ProfunctorSig
+TypeProfDiNT = IntDiNTSig Type
 
 public export
 0 TypeNTNaturality : (p, q : ProfunctorSig) ->
   TypeProDimap p -> TypeProDimap q -> TypeProfNT p q -> Type
 TypeNTNaturality = IntProfNTNaturality Type Type TypeMor TypeMor
+
+public export
+0 TypeNTParanaturality : (p, q : ProfunctorSig) ->
+  TypeProDimap p -> TypeProDimap q -> TypeProfDiNT p q -> Type
+TypeNTParanaturality p q pdm qdm =
+  IntParaNTCond Type TypeMor p q
+    (TypeLmapFromDimap p pdm) (TypeRmapFromDimap p pdm)
+    (TypeLmapFromDimap q qdm) (TypeRmapFromDimap q qdm)
 
 public export
 TypeProAr : Type
@@ -41,16 +69,36 @@ InterpTypeProAr : TypeProAr -> Type -> Type -> Type
 InterpTypeProAr = InterpIEPPobj Type TypeMor
 
 public export
-0 TypeProArDimapSig : TypeProAr -> Type
-TypeProArDimapSig = TypeProDimap . InterpTypeProAr
+0 TypeProDimapSig : TypeProAr -> Type
+TypeProDimapSig = TypeProDimap . InterpTypeProAr
 
 public export
-TypeProArDimap : (ar : TypeProAr) -> TypeProArDimapSig ar
+0 TypeProLmapSig : TypeProAr -> Type
+TypeProLmapSig = TypeProLmap . InterpTypeProAr
+
+public export
+0 TypeProRmapSig : TypeProAr -> Type
+TypeProRmapSig = TypeProRmap . InterpTypeProAr
+
+public export
+TypeProArDimap : (ar : TypeProAr) -> TypeProDimapSig ar
 TypeProArDimap = InterpIEPPdimap Type TypeMor typeComp
+
+public export
+0 TypeProArLmap : (ar : TypeProAr) -> TypeProLmapSig ar
+TypeProArLmap ar = TypeLmapFromDimap (InterpTypeProAr ar) (TypeProArDimap ar)
+
+public export
+0 TypeProArRmap : (ar : TypeProAr) -> TypeProRmapSig ar
+TypeProArRmap ar = TypeRmapFromDimap (InterpTypeProAr ar) (TypeProArDimap ar)
 
 public export
 0 TypeProNTSig : IntMorSig TypeProAr
 TypeProNTSig p q = TypeProfNT (InterpTypeProAr p) (InterpTypeProAr q)
+
+public export
+0 TypeDiNTSig : IntMorSig TypeProAr
+TypeDiNTSig p q = TypeProfDiNT (InterpTypeProAr p) (InterpTypeProAr q)
 
 public export
 TypeProNTar : IntMorSig TypeProAr
@@ -64,6 +112,12 @@ public export
 0 TypeProArNaturality : (p, q : TypeProAr) -> TypeProNTSig p q -> Type
 TypeProArNaturality p q =
   TypeNTNaturality (InterpTypeProAr p) (InterpTypeProAr q)
+    (TypeProArDimap p) (TypeProArDimap q)
+
+public export
+0 TypeProArParanaturality : (p, q : TypeProAr) -> TypeDiNTSig p q -> Type
+TypeProArParanaturality p q =
+  TypeNTParanaturality (InterpTypeProAr p) (InterpTypeProAr q)
     (TypeProArDimap p) (TypeProArDimap q)
 
 public export
