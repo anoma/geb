@@ -60,6 +60,22 @@ public export
 InterpTypeProNT : (p, q : TypeProAr) -> TypeProNTar p q -> TypeProNTSig p q
 InterpTypeProNT = InterpIEPPnt Type TypeMor typeComp
 
+public export
+0 TypeProArNaturality : (p, q : TypeProAr) -> TypeProNTSig p q -> Type
+TypeProArNaturality p q =
+  TypeNTNaturality (InterpTypeProAr p) (InterpTypeProAr q)
+    (TypeProArDimap p) (TypeProArDimap q)
+
+public export
+TypeProArFromNT : (p, q : TypeProAr) ->
+  (alpha : TypeProNTSig p q) -> TypeProArNaturality p q alpha -> TypeProNTar p q
+TypeProArFromNT (ppos ** (pcontra, pcovar)) (qpos ** (qcontra, qcovar))
+  alpha cond =
+    let nti = \pi : ppos => alpha (pcontra pi) (pcovar pi) (pi ** (id, id)) in
+    (\pi => fst (nti pi) **
+     (\pi => fst (snd $ nti pi),
+      \pi => snd (snd $ nti pi)))
+
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 ---- Category of pi types, viewed as a subcategory of the category of monos ----
