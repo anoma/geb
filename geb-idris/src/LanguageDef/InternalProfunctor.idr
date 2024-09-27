@@ -1498,37 +1498,12 @@ IntPDiNTPara c mor cid comp idl idr assoc
           eq2 = mkDPairInjectiveSndHet cond
           eq21 = trans (fstEq eq2) $ idl c0 (pcovar i1) mcp0
           eq22 = trans (sym $ idr (pcontra i1) c1 mpc1) $ sndEq eq2
-          a0 = assoc (pcontra i1) c0 c1 (pcovar i1)
-            mcp1 mc0c1 mpc0
-          pcont2cov0 : mor (pcontra i0) (pcovar i0) =
-            comp (pcontra i0) c0 (pcovar i0) mcp0 mpc0
-          pcont2cov1 : mor (pcontra i1) (pcovar i1) =
-            comp (pcontra i0) c1 (pcovar i0) mcp1 mpc1
           contracomp :
             (comp (pcontra i1) c1 (pcovar i1) mcp1 mpc1 =
              comp (pcontra i1) c0 (pcovar i1) mcp0 mpc0) =
-              rewrite sym eq21 in rewrite eq22 in rewrite a0 in Refl
-          a1 = assoc c0 c1 (pcovar i1)
-            (qcovar $ onpos i1 $ comp (pcontra i0) c1 (pcovar i0) mcp1 mpc1)
-            (dcontra i1 (comp (pcontra i1) c1 (pcovar i1) mcp1 mpc1)) mcp1 mc0c1
-          a2 = sym $ assoc c0 c0 (pcovar i1)
-            (qcovar $ onpos i1 $ comp (pcontra i0) c0 (pcovar i0) mcp0 mpc0)
-            (dcontra i1 (comp (pcontra i1) c0 (pcovar i1) mcp0 mpc0)) mcp0
-              (cid c0)
-          a3 = assoc
-            (qcontra (onpos i1 (comp (pcontra i0) c0 (pcovar i0) mcp0 mpc0)))
-            (pcontra i1) c0 c1
-            mc0c1 mpc0 (dcovar i1 (comp (pcontra i1) c0 (pcovar i1) mcp0 mpc0))
-          il1 = idl c0 (pcovar i1) mcp0
-          ir1 = idr
-            (qcontra (onpos i1 (comp (pcontra i0) c0 (pcovar i0) mcp0 mpc0)))
-            c1
-            (comp
-              (qcontra (onpos i1 (comp (pcontra i0) c0 (pcovar i0) mcp0 mpc0)))
-              (pcontra i1)
-              c1
-              mpc1
-              (dcovar i1 ( comp (pcontra i0) c0 (pcovar i0) mcp0 mpc0)))
+              rewrite sym eq21 in rewrite eq22 in
+              rewrite assoc (pcontra i1) c0 c1 (pcovar i1) mcp1 mc0c1 mpc0
+              in Refl
         in
         rewrite contracomp in
         dpEq12
