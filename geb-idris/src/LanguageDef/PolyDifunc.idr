@@ -147,6 +147,27 @@ TypeProArComplete (ppos ** (pcontra, pcovar)) (qpos ** (qcontra, qcovar)) alpha
   cond x y (pi ** (dmx, dmy)) =
     sym $ cond (pcontra pi) (pcovar pi) x y dmx dmy (pi ** (id, id))
 
+public export
+TypeDiArFromDi: (p, q : TypeProAr) ->
+  (gamma : TypeDiNTSig p q) -> TypeProArParanaturality p q gamma ->
+  TypeDiNTar p q
+TypeDiArFromDi (ppos ** (pcontra, pcovar)) (qpos ** (qcontra, qcovar)) gamma
+  cond =
+    (\pi, asn =>
+      fst $ gamma (pcovar pi) (pi ** (asn, id)) **
+     (\pi, asn, pcont =>
+        let
+          condapp =
+            cond (pcovar pi) (pcontra pi) asn
+              (pi ** (asn, id))
+              (pi ** (id, asn))
+              Refl
+        in
+        rewrite sym (dpeq1 condapp) in
+        fst (snd $ gamma (pcontra pi) (pi ** (id, asn))) pcont,
+      \pi, asn =>
+        snd $ snd $ gamma (pcovar pi) (pi ** (asn, id))))
+
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 ---- Category of pi types, viewed as a subcategory of the category of monos ----
