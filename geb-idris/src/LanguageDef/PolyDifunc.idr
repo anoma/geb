@@ -13,6 +13,49 @@ import public LanguageDef.IntDisheafCat
 %hide Library.IdrisCategories.BaseChangeF
 %hide Prelude.Ops.infixl.(|>)
 
+-------------------------------------
+-------------------------------------
+---- Simple difunctors on `Type` ----
+-------------------------------------
+-------------------------------------
+
+public export
+0 TypeProDimap : ProfunctorSig -> Type
+TypeProDimap = IntEndoDimapSig Type TypeMor
+
+public export
+0 TypeNTNaturality : (p, q : ProfunctorSig) ->
+  TypeProDimap p -> TypeProDimap q -> ProfNT p q -> Type
+TypeNTNaturality = IntProfNTNaturality Type Type TypeMor TypeMor
+
+public export
+TypeProAr : Type
+TypeProAr = IntEndoProAr Type
+
+public export
+InterpTypeProAr : TypeProAr -> Type -> Type -> Type
+InterpTypeProAr = InterpIEPPobj Type TypeMor
+
+public export
+0 TypeProArDimapSig : TypeProAr -> Type
+TypeProArDimapSig = TypeProDimap . InterpTypeProAr
+
+public export
+TypeProArDimap : (ar : TypeProAr) -> TypeProArDimapSig ar
+TypeProArDimap = InterpIEPPdimap Type TypeMor typeComp
+
+public export
+TypeProNTSig : IntMorSig TypeProAr
+TypeProNTSig p q = ProfNT (InterpTypeProAr p) (InterpTypeProAr q)
+
+public export
+TypeProNTar : IntMorSig TypeProAr
+TypeProNTar = IntEPPNTar Type TypeMor
+
+public export
+InterpTypeProNT : (p, q : TypeProAr) -> TypeProNTar p q -> TypeProNTSig p q
+InterpTypeProNT = InterpIEPPnt Type TypeMor typeComp
+
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 ---- Category of pi types, viewed as a subcategory of the category of monos ----
