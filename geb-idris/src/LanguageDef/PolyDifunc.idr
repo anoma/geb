@@ -109,6 +109,14 @@ InterpTypeProNT : (p, q : TypeProAr) -> TypeProNTar p q -> TypeProNTSig p q
 InterpTypeProNT = InterpIEPPnt Type TypeMor typeComp
 
 public export
+TypeDiNTar : IntMorSig TypeProAr
+TypeDiNTar = IntPDiNTar Type TypeMor
+
+public export
+InterpTypeDiNT : (p, q : TypeProAr) -> TypeDiNTar p q -> TypeDiNTSig p q
+InterpTypeDiNT = InterpIEPPdint Type TypeMor typeComp
+
+public export
 0 TypeProArNaturality : (p, q : TypeProAr) -> TypeProNTSig p q -> Type
 TypeProArNaturality p q =
   TypeNTNaturality (InterpTypeProAr p) (InterpTypeProAr q)
