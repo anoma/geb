@@ -24,8 +24,12 @@ public export
 TypeProDimap = IntEndoDimapSig Type TypeMor
 
 public export
+0 TypeProfNT : IntMorSig ProfunctorSig
+TypeProfNT = IntEndoProfNTSig Type
+
+public export
 0 TypeNTNaturality : (p, q : ProfunctorSig) ->
-  TypeProDimap p -> TypeProDimap q -> ProfNT p q -> Type
+  TypeProDimap p -> TypeProDimap q -> TypeProfNT p q -> Type
 TypeNTNaturality = IntProfNTNaturality Type Type TypeMor TypeMor
 
 public export
@@ -45,8 +49,8 @@ TypeProArDimap : (ar : TypeProAr) -> TypeProArDimapSig ar
 TypeProArDimap = InterpIEPPdimap Type TypeMor typeComp
 
 public export
-TypeProNTSig : IntMorSig TypeProAr
-TypeProNTSig p q = ProfNT (InterpTypeProAr p) (InterpTypeProAr q)
+0 TypeProNTSig : IntMorSig TypeProAr
+TypeProNTSig p q = TypeProfNT (InterpTypeProAr p) (InterpTypeProAr q)
 
 public export
 TypeProNTar : IntMorSig TypeProAr
