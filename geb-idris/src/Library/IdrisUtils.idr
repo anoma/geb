@@ -617,12 +617,12 @@ sndEqHetTy Refl = Refl
 
 public export
 fstEqHet : {a, a', b, b' : Type} -> {x : (a, b)} -> {y : (a', b')} ->
-  x = y -> fst x = fst y
+  (eq : x = y) -> fst x = (rewrite fstEqHetTy eq in fst y)
 fstEqHet Refl = Refl
 
 public export
 sndEqHet : {a, a', b, b' : Type} -> {x : (a, b)} -> {y : (a', b')} ->
-  x = y -> snd x = snd y
+  (eq : x = y) -> snd x = (rewrite sndEqHetTy eq in snd y)
 sndEqHet Refl = Refl
 
 public export
