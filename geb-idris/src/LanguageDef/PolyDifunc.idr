@@ -19,6 +19,10 @@ import public LanguageDef.IntDisheafCat
 -------------------------------------
 -------------------------------------
 
+------------------------------------------------------------------
+---- Aliases for polynomial difunctors specifically on `Type` ----
+------------------------------------------------------------------
+
 public export
 0 TypeProDimap : ProfunctorSig -> Type
 TypeProDimap = IntEndoDimapSig Type TypeMor
@@ -128,6 +132,10 @@ TypeProArParanaturality p q =
   TypeNTParanaturality (InterpTypeProAr p) (InterpTypeProAr q)
     (TypeProArDimap p) (TypeProArDimap q)
 
+-------------------------------------------------
+---- Completeness of natural transformations ----
+-------------------------------------------------
+
 public export
 TypeProArFromNT : (p, q : TypeProAr) -> TypeProNTSig p q -> TypeProNTar p q
 TypeProArFromNT (ppos ** (pcontra, pcovar)) (qpos ** (qcontra, qcovar)) alpha =
@@ -146,6 +154,10 @@ public export
 TypeProArComplete (ppos ** (pcontra, pcovar)) (qpos ** (qcontra, qcovar)) alpha
   cond x y (pi ** (dmx, dmy)) =
     sym $ cond (pcontra pi) (pcovar pi) x y dmx dmy (pi ** (id, id))
+
+-----------------------------------------------------
+---- Completeness of paranatural transformations ----
+-----------------------------------------------------
 
 public export
 TypeDiArFromDi: (p, q : TypeProAr) ->
