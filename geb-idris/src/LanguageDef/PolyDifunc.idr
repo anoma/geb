@@ -372,11 +372,11 @@ TypeParaTerminalPos = Unit
 
 public export
 TypeParaTerminalContra : TypeParaTerminalPos -> Type
-TypeParaTerminalContra _ = Unit
+TypeParaTerminalContra u = Unit
 
 public export
 TypeParaTerminalCovar : TypeParaTerminalPos -> Type
-TypeParaTerminalCovar _ = Void
+TypeParaTerminalCovar u = Void
 
 public export
 TypeParaTerminal : TypeProAr
@@ -384,25 +384,47 @@ TypeParaTerminal =
   (TypeParaTerminalPos ** (TypeParaTerminalContra, TypeParaTerminalCovar))
 
 public export
-typeParaToTerminalPos : (p : TypeProAr) -> TypeDiNTpos p TypeParaTerminal
-typeParaToTerminalPos p _ _ = ()
+typeProToTerminalPos : (p : TypeProAr) -> TypeProNTpos p TypeParaTerminal
+typeProToTerminalPos p i = ()
 
 public export
-typeParaToTerminalContra : (p : TypeProAr) ->
-  TypeDiNTcontra p TypeParaTerminal (typeParaToTerminalPos p)
-typeParaToTerminalContra p _ _ _ = ()
+typeProToTerminalContra : (p : TypeProAr) ->
+  TypeProNTcontra p TypeParaTerminal (typeProToTerminalPos p)
+typeProToTerminalContra p i asn = ()
 
 public export
-typeParaToTerminalCovar : (p : TypeProAr) ->
-  TypeDiNTcovar p TypeParaTerminal (typeParaToTerminalPos p)
-typeParaToTerminalCovar p _ _ v = void v
+typeProToTerminalCovar : (p : TypeProAr) ->
+  TypeProNTcovar p TypeParaTerminal (typeProToTerminalPos p)
+typeProToTerminalCovar p i v = void v
+
+public export
+typeProToTerminal : (p : TypeProAr) -> TypeProNTar p TypeParaTerminal
+typeProToTerminal p =
+  (typeProToTerminalPos p **
+   (typeProToTerminalContra p,
+    typeProToTerminalCovar p))
 
 public export
 typeParaToTerminal : (p : TypeProAr) -> TypeDiNTar p TypeParaTerminal
 typeParaToTerminal p =
-  (typeParaToTerminalPos p **
-   (typeParaToTerminalContra p,
-    typeParaToTerminalCovar p))
+  TypeProNTrestrict {p} {q=TypeParaTerminal} $ typeProToTerminal p
+
+public export
+typeParaToTerminalPos : (p : TypeProAr) -> TypeDiNTpos p TypeParaTerminal
+typeParaToTerminalPos p =
+  typeDiNTpos {p} {q=TypeParaTerminal} $ typeParaToTerminal p
+
+public export
+typeParaToTerminalContra : (p : TypeProAr) ->
+  TypeDiNTcontra p TypeParaTerminal (typeParaToTerminalPos p)
+typeParaToTerminalContra p =
+  typeDiNTcontra {p} {q=TypeParaTerminal} $ typeParaToTerminal p
+
+public export
+typeParaToTerminalCovar : (p : TypeProAr) ->
+  TypeDiNTcovar p TypeParaTerminal (typeParaToTerminalPos p)
+typeParaToTerminalCovar p =
+  typeDiNTcovar {p} {q=TypeParaTerminal} $ typeParaToTerminal p
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
