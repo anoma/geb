@@ -606,6 +606,26 @@ sndEq : {a, b : Type} -> {x, y : (a, b)} -> x = y -> snd x = snd y
 sndEq Refl = Refl
 
 public export
+fstEqHetTy : {a, a', b, b' : Type} -> {x : (a, b)} -> {y : (a', b')} ->
+  x = y -> a = a'
+fstEqHetTy Refl = Refl
+
+public export
+sndEqHetTy : {a, a', b, b' : Type} -> {x : (a, b)} -> {y : (a', b')} ->
+  x = y -> b = b'
+sndEqHetTy Refl = Refl
+
+public export
+fstEqHet : {a, a', b, b' : Type} -> {x : (a, b)} -> {y : (a', b')} ->
+  x = y -> fst x = fst y
+fstEqHet Refl = Refl
+
+public export
+sndEqHet : {a, a', b, b' : Type} -> {x : (a, b)} -> {y : (a', b')} ->
+  x = y -> snd x = snd y
+sndEqHet Refl = Refl
+
+public export
 fromLteSuccYes : {m, n : Nat} ->
   IsYesTrue (isLT (S m) (S n)) -> IsYesTrue (isLT m n)
 fromLteSuccYes y = toIsYes (fromLteSucc $ fromIsYes y)
