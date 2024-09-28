@@ -168,6 +168,73 @@ TypeDiArFromDi (ppos ** (pcontra, pcovar)) (qpos ** (qcontra, qcovar)) gamma
       \pi, asn =>
         snd $ snd $ gamma (pcovar pi) (pi ** (asn, id))))
 
+public export
+0 TypeDiArCompleteFst :
+  (p, q : TypeProAr) -> (gamma : TypeDiNTSig p q) ->
+  (cond : TypeProArParanaturality p q gamma) ->
+  (x : Type) ->
+  (i : InterpTypeProAr p x x) ->
+    fst (gamma x i) =
+    (fst $ InterpTypeDiNT p q (TypeDiArFromDi p q gamma cond) x i)
+TypeDiArCompleteFst (ppos ** (pcontra, pcovar)) (qpos ** (qcontra, qcovar))
+  gamma cond x (pi ** (dmx, dmy)) =
+    rewrite dpeq1 $
+      cond (pcovar pi) x dmy (pi ** (dmx . dmy, id)) (pi ** (dmx, dmy)) Refl in
+    Refl
+
+public export
+0 TypeDiArCompleteFstSnd :
+  (p, q : TypeProAr) -> (gamma : TypeDiNTSig p q) ->
+  (cond : TypeProArParanaturality p q gamma) ->
+  (x : Type) ->
+  (i : InterpTypeProAr p x x) ->
+    fst (snd $ gamma x i) =
+    (rewrite TypeDiArCompleteFst p q gamma cond x i in
+     fst (snd $ InterpTypeDiNT p q (TypeDiArFromDi p q gamma cond) x i))
+TypeDiArCompleteFstSnd
+  (ppos ** (pcontra, pcovar)) (qpos ** (qcontra, qcovar))
+  gamma cond x (pi ** (dmx, dmy)) =
+    let
+      condapp =
+        cond x (pcontra pi) dmx (pi ** (dmx, dmy)) (pi ** (id, dmx . dmy)) Refl
+    in
+    rewrite sym $ dpeq1 condapp in
+    sym $ fstEqHet $ dpeq2 condapp
+
+public export
+0 TypeDiArCompleteSndSnd :
+  (p, q : TypeProAr) -> (gamma : TypeDiNTSig p q) ->
+  (cond : TypeProArParanaturality p q gamma) ->
+  (x : Type) ->
+  (i : InterpTypeProAr p x x) ->
+    snd (snd $ gamma x i) =
+    (rewrite TypeDiArCompleteFst p q gamma cond x i in
+     snd (snd $ InterpTypeDiNT p q (TypeDiArFromDi p q gamma cond) x i))
+TypeDiArCompleteSndSnd
+  (ppos ** (pcontra, pcovar)) (qpos ** (qcontra, qcovar))
+  gamma cond x (pi ** (dmx, dmy)) =
+    sndEqHet $ dpeq2 $
+      cond (pcovar pi) x dmy (pi ** (dmx . dmy, id)) (pi ** (dmx, dmy)) Refl
+
+public export
+0 TypeDiArComplete :
+  (p, q : TypeProAr) -> (gamma : TypeDiNTSig p q) ->
+  (cond : TypeProArParanaturality p q gamma) ->
+  (x : Type) ->
+  ExtEq {a=(InterpTypeProAr p x x)} {b=(InterpTypeProAr q x x)}
+    (gamma x)
+    (InterpTypeDiNT p q (TypeDiArFromDi p q gamma cond) x)
+TypeDiArComplete
+  p@(ppos ** (pcontra, pcovar)) q@(qpos ** (qcontra, qcovar))
+  gamma cond x i@(pi ** (dmx, dmy)) =
+    rewrite sym $ TypeDiArCompleteFst p q gamma cond x i in
+    rewrite sym $ TypeDiArCompleteFstSnd p q gamma cond x i in
+    rewrite dpEqPat {dp=(gamma x (pi ** (dmx, dmy)))} in
+    dpEq12
+      Refl
+    $ rewrite pairFstSnd (snd $ gamma x (pi ** (dmx, dmy))) in
+      pairEqCong Refl (TypeDiArCompleteSndSnd p q gamma cond x i)
+
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 ---- Category of pi types, viewed as a subcategory of the category of monos ----
