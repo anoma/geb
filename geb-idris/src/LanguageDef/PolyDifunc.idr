@@ -320,25 +320,47 @@ TypeParaInitial =
   (TypeParaInitialPos ** (TypeParaInitialContra, TypeParaInitialCovar))
 
 public export
-typeParaFromInitialPos : (p : TypeProAr) -> TypeDiNTpos TypeParaInitial p
-typeParaFromInitialPos p v = void v
+typeProFromInitialPos : (p : TypeProAr) -> TypeProNTpos TypeParaInitial p
+typeProFromInitialPos p v = void v
 
 public export
-typeParaFromInitialContra : (p : TypeProAr) ->
-  TypeDiNTcontra TypeParaInitial p (typeParaFromInitialPos p)
-typeParaFromInitialContra p v = void v
+typeProFromInitialContra : (p : TypeProAr) ->
+  TypeProNTcontra TypeParaInitial p (typeProFromInitialPos p)
+typeProFromInitialContra p v = void v
 
 public export
-typeParaFromInitialCovar : (p : TypeProAr) ->
-  TypeDiNTcovar TypeParaInitial p (typeParaFromInitialPos p)
-typeParaFromInitialCovar p v = void v
+typeProFromInitialCovar : (p : TypeProAr) ->
+  TypeProNTcovar TypeParaInitial p (typeProFromInitialPos p)
+typeProFromInitialCovar p v = void v
+
+public export
+typeProFromInitial : (p : TypeProAr) -> TypeProNTar TypeParaInitial p
+typeProFromInitial p =
+  (typeProFromInitialPos p **
+   (typeProFromInitialContra p,
+    typeProFromInitialCovar p))
 
 public export
 typeParaFromInitial : (p : TypeProAr) -> TypeDiNTar TypeParaInitial p
 typeParaFromInitial p =
-  (typeParaFromInitialPos p **
-   (typeParaFromInitialContra p,
-    typeParaFromInitialCovar p))
+  TypeProNTrestrict {p=TypeParaInitial} {q=p} $ typeProFromInitial p
+
+public export
+typeParaFromInitialPos : (p : TypeProAr) -> TypeDiNTpos TypeParaInitial p
+typeParaFromInitialPos p =
+  typeDiNTpos {p=TypeParaInitial} {q=p} $ typeParaFromInitial p
+
+public export
+typeParaFromInitialContra : (p : TypeProAr) ->
+  TypeDiNTcontra TypeParaInitial p (typeParaFromInitialPos p)
+typeParaFromInitialContra p =
+  typeDiNTcontra {p=TypeParaInitial} {q=p} $ typeParaFromInitial p
+
+public export
+typeParaFromInitialCovar : (p : TypeProAr) ->
+  TypeDiNTcovar TypeParaInitial p (typeParaFromInitialPos p)
+typeParaFromInitialCovar p =
+  typeDiNTcovar {p=TypeParaInitial} {q=p} $ typeParaFromInitial p
 
 -------------------------
 ---- Terminal object ----
