@@ -257,6 +257,18 @@ TypeDiArComplete
 -------------------------------------
 
 public export
+TypeProNTpos : (p, q : TypeProAr) -> Type
+TypeProNTpos = IntPPNTpos {d=Type} {c=Type} {dmor=TypeMor} {cmor=TypeMor}
+
+public export
+TypeProNTcontra : (p, q : TypeProAr) -> TypeProNTpos p q -> Type
+TypeProNTcontra = IntPPNTcontra {d=Type} {c=Type} {dmor=TypeMor} {cmor=TypeMor}
+
+public export
+TypeProNTcovar : (p, q : TypeProAr) -> TypeProNTpos p q -> Type
+TypeProNTcovar = IntPPNTcovar {d=Type} {c=Type} {dmor=TypeMor} {cmor=TypeMor}
+
+public export
 TypeDiNTpos : (p, q : TypeProAr) -> Type
 TypeDiNTpos = IntPDiNTpos {c=Type} {mor=TypeMor}
 
