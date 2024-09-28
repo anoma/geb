@@ -541,6 +541,38 @@ typeParaInjRcovar : (p, q : TypeProAr) ->
 typeParaInjRcovar p q =
   typeDiNTcovar {p=q} {q=(TypeParaCoproduct p q)} $ typeParaInjR p q
 
+public export
+typeDiCasePos : {p, q, r : TypeProAr} ->
+  TypeDiNTar p r -> TypeDiNTar q r ->
+  TypeDiNTpos (TypeParaCoproduct p q) r
+typeDiCasePos {p} {q} {r} pr qr i asn with (i)
+  typeDiCasePos {p} {q} {r} pr qr i asn | Left pi = typeDiNTpos pr pi asn
+  typeDiCasePos {p} {q} {r} pr qr i asn | Right qi = typeDiNTpos qr qi asn
+
+public export
+typeDiCaseContra : {p, q, r : TypeProAr} ->
+  (pr : TypeDiNTar p r) -> (qr : TypeDiNTar q r) ->
+  TypeDiNTcontra (TypeParaCoproduct p q) r (typeDiCasePos {p} {q} {r} pr qr)
+typeDiCaseContra {p} {q} {r} pr qr i asn with (i)
+  typeDiCaseContra {p} {q} {r} pr qr i asn | Left pi = typeDiNTcontra pr pi asn
+  typeDiCaseContra {p} {q} {r} pr qr i asn | Right qi = typeDiNTcontra qr qi asn
+
+public export
+typeDiCaseCovar : {p, q, r : TypeProAr} ->
+  (pr : TypeDiNTar p r) -> (qr : TypeDiNTar q r) ->
+  TypeDiNTcovar (TypeParaCoproduct p q) r (typeDiCasePos {p} {q} {r} pr qr)
+typeDiCaseCovar {p} {q} {r} pr qr i asn with (i)
+  typeDiCaseCovar {p} {q} {r} pr qr i asn | Left pi = typeDiNTcovar pr pi asn
+  typeDiCaseCovar {p} {q} {r} pr qr i asn | Right qi = typeDiNTcovar qr qi asn
+
+public export
+typeDiCase : {p, q, r : TypeProAr} ->
+  TypeDiNTar p r -> TypeDiNTar q r -> TypeDiNTar (TypeParaCoproduct p q) r
+typeDiCase {p} {q} {r} pr qr =
+  (typeDiCasePos pr qr **
+   (typeDiCaseContra pr qr,
+    typeDiCaseCovar pr qr))
+
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 ---- Category of pi types, viewed as a subcategory of the category of monos ----
