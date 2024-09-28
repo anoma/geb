@@ -246,6 +246,70 @@ TypeDiArComplete
     $ rewrite pairFstSnd (snd $ gamma x (pi ** (dmx, dmy))) in
       pairEqCong Refl (TypeDiArCompleteSndSnd p q gamma cond x i)
 
+---------------------------------------------------------------------------
+---------------------------------------------------------------------------
+---- Universal morphisms of poly-paranatural transformations on `Type` ----
+---------------------------------------------------------------------------
+---------------------------------------------------------------------------
+
+-------------------------------------
+---- Utility types and functions ----
+-------------------------------------
+
+public export
+TypeDiNTpos : (p, q : TypeProAr) -> Type
+TypeDiNTpos = IntPDiNTpos {c=Type} {mor=TypeMor}
+
+public export
+TypeDiNTcontra : (p, q : TypeProAr) -> TypeDiNTpos p q -> Type
+TypeDiNTcontra = IntPDiNTcontra {c=Type} {mor=TypeMor}
+
+public export
+TypeDiNTcovar : (p, q : TypeProAr) -> TypeDiNTpos p q -> Type
+TypeDiNTcovar = IntPDiNTcovar {c=Type} {mor=TypeMor}
+
+-------------------------
+---- Terminal object ----
+-------------------------
+
+public export
+TypeParaTerminalPos : Type
+TypeParaTerminalPos = Unit
+
+public export
+TypeParaTerminalContra : TypeParaTerminalPos -> Type
+TypeParaTerminalContra _ = Unit
+
+public export
+TypeParaTerminalCovar : TypeParaTerminalPos -> Type
+TypeParaTerminalCovar _ = Void
+
+public export
+TypeParaTerminal : TypeProAr
+TypeParaTerminal =
+  (TypeParaTerminalPos ** (TypeParaTerminalContra, TypeParaTerminalCovar))
+
+public export
+typeParaToTerminalPos : (p : TypeProAr) -> TypeDiNTpos p TypeParaTerminal
+typeParaToTerminalPos p _ _ = ()
+
+public export
+typeParaToTerminalContra : (p : TypeProAr) ->
+  TypeDiNTcontra p TypeParaTerminal (typeParaToTerminalPos p)
+typeParaToTerminalContra p _ _ _ = ()
+
+public export
+typeParaToTerminalCovar : (p : TypeProAr) ->
+  TypeDiNTcovar p TypeParaTerminal (typeParaToTerminalPos p)
+typeParaToTerminalCovar p _ _ v = void v
+
+public export
+typeParaToTerminal : (p : TypeProAr) -> TypeDiNTar p TypeParaTerminal
+typeParaToTerminal p =
+  (typeParaToTerminalPos p **
+   (typeParaToTerminalContra p,
+    typeParaToTerminalCovar p))
+
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 ---- Category of pi types, viewed as a subcategory of the category of monos ----
