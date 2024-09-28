@@ -1344,14 +1344,58 @@ IntProArComp e d c dmor
 --------------------------------------------
 
 public export
+IntPPNTpos : {d, c : Type} ->
+  {cmor : IntDifunctorSig c} -> {dmor : IntDifunctorSig d} ->
+  (p, q : IntProAr d c) -> Type
+IntPPNTpos {d} {c} {dmor} {cmor} p q = ipaPos p -> ipaPos q
+
+public export
+IntPPNTcontra : {d, c : Type} ->
+  {dmor : IntDifunctorSig d} -> {cmor : IntDifunctorSig c} ->
+  (p, q : IntProAr d c) -> IntPPNTpos {d} {c} {dmor} {cmor} p q -> Type
+IntPPNTcontra {d} {c} {dmor} {cmor} p q onpos =
+   (i : ipaPos p) -> dmor (ipaContra p i) (ipaContra q $ onpos i)
+
+public export
+IntPPNTcovar : {d, c : Type} ->
+  {dmor : IntDifunctorSig d} -> {cmor : IntDifunctorSig c} ->
+  (p, q : IntProAr d c) -> IntPPNTpos {d} {c} {dmor} {cmor} p q -> Type
+IntPPNTcovar {d} {c} {dmor} {cmor} p q onpos =
+   (i : ipaPos p) -> cmor (ipaCovar q $ onpos i) (ipaCovar p i)
+
+public export
 IntPPNTar : (d, c : Type) ->
   (dmor : IntDifunctorSig d) -> (cmor : IntDifunctorSig c) ->
   IntProAr d c -> IntProAr d c -> Type
-IntPPNTar d c dmor cmor
-  (ppos ** (pcontra, pcovar)) (qpos ** (qcontra, qcovar)) =
-    (onpos : ppos -> qpos **
-     ((i : ppos) -> dmor (pcontra i) (qcontra $ onpos i),
-      (i : ppos) -> cmor (qcovar $ onpos i) (pcovar i)))
+IntPPNTar d c dmor cmor p q =
+  (onpos : IntPPNTpos {d} {c} {dmor} {cmor} p q **
+   (IntPPNTcontra {d} {c} {dmor} {cmor} p q onpos,
+    IntPPNTcovar {d} {c} {dmor} {cmor} p q onpos))
+
+public export
+intPPNTpos : {d, c : Type} ->
+  {dmor : IntDifunctorSig d} -> {cmor : IntDifunctorSig c} ->
+  {p, q : IntProAr d c} ->
+  IntPPNTar d c dmor cmor p q -> IntPPNTpos {d} {c} {dmor} {cmor} p q
+intPPNTpos {d} {c} {dmor} {cmor} {p} {q} = DPair.fst
+
+public export
+intPPNTcontra : {d, c : Type} ->
+  {dmor : IntDifunctorSig d} -> {cmor : IntDifunctorSig c} ->
+  {p, q : IntProAr d c} ->
+  (ar : IntPPNTar d c dmor cmor p q) ->
+  IntPPNTcontra {d} {c} {dmor} {cmor} p q $
+    intPPNTpos {d} {c} {dmor} {cmor} {p} {q} ar
+intPPNTcontra {d} {c} {dmor} {cmor} {p} {q} ar = Builtin.fst $ DPair.snd ar
+
+public export
+intPPNTcovar : {d, c : Type} ->
+  {dmor : IntDifunctorSig d} -> {cmor : IntDifunctorSig c} ->
+  {p, q : IntProAr d c} ->
+  (ar : IntPPNTar d c dmor cmor p q) ->
+  IntPPNTcovar {d} {c} {dmor} {cmor} p q $
+    intPPNTpos {d} {c} {dmor} {cmor} {p} {q} ar
+intPPNTcovar {d} {c} {dmor} {cmor} {p} {q} ar = Builtin.snd $ DPair.snd ar
 
 public export
 InterpIPPnt : (d, c : Type) ->
@@ -1493,6 +1537,26 @@ IntPDiNTar c mor p q =
     IntPDiNTcovar {c} {mor} p q onpos))
 
 public export
+intPDiNTpos : {c : Type} -> {mor : IntDifunctorSig c} ->
+  {p, q : IntEndoProAr c} ->
+  IntPDiNTar c mor p q -> IntPDiNTpos {c} {mor} p q
+intPDiNTpos {c} {mor} {p} {q} = DPair.fst
+
+public export
+intPDiNTcontra : {c : Type} -> {mor : IntDifunctorSig c} ->
+  {p, q : IntEndoProAr c} ->
+  (ar : IntPDiNTar c mor p q) ->
+  IntPDiNTcontra {c} {mor} p q (intPDiNTpos {c} {mor} {p} {q} ar)
+intPDiNTcontra {c} {mor} {p} {q} ar = Builtin.fst $ DPair.snd ar
+
+public export
+intPDiNTcovar : {c : Type} -> {mor : IntDifunctorSig c} ->
+  {p, q : IntEndoProAr c} ->
+  (ar : IntPDiNTar c mor p q) ->
+  IntPDiNTcovar {c} {mor} p q (intPDiNTpos {c} {mor} {p} {q} ar)
+intPDiNTcovar {c} {mor} {p} {q} ar = Builtin.snd $ DPair.snd ar
+
+public export
 InterpIEPPdint : (c : Type) -> (mor : IntDifunctorSig c) ->
   (comp : IntCompSig c mor) ->
   (p, q : IntEndoProAr c) -> IntPDiNTar c mor p q ->
@@ -1558,6 +1622,14 @@ IntPDiNTPara c mor cid comp idl idr assoc
              rewrite sym $
               assoc _ _ _ _ mc0c1 mpc0 (dcovar _ (comp _ _ _ mcp0 mpc0)) in
              rewrite eq22 in Refl)
+
+intPPNTrestrict :
+  {c : Type} -> {cmor : IntDifunctorSig c} -> {p, q : IntEndoProAr c} ->
+  IntPPNTar c c cmor cmor p q -> IntPDiNTar c cmor p q
+intPPNTrestrict {c} {cmor} {p} {q} ar =
+  (\i, _ => intPPNTpos {d=c} {c} {dmor=cmor} {cmor} ar i **
+   (\i, _ => intPPNTcontra {d=c} {c} {dmor=cmor} {cmor} ar i,
+    \i, _ => intPPNTcovar {d=c} {c} {dmor=cmor} {cmor} ar i))
 
 public export
 intPDiNTid :
