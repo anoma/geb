@@ -269,6 +269,48 @@ TypeDiNTcovar : (p, q : TypeProAr) -> TypeDiNTpos p q -> Type
 TypeDiNTcovar = IntPDiNTcovar {c=Type} {mor=TypeMor}
 
 -------------------------
+---- Initial object ----
+-------------------------
+
+public export
+TypeParaInitialPos : Type
+TypeParaInitialPos = Void
+
+public export
+TypeParaInitialContra : TypeParaInitialPos -> Type
+TypeParaInitialContra v = void v
+
+public export
+TypeParaInitialCovar : TypeParaInitialPos -> Type
+TypeParaInitialCovar v = void v
+
+public export
+TypeParaInitial : TypeProAr
+TypeParaInitial =
+  (TypeParaInitialPos ** (TypeParaInitialContra, TypeParaInitialCovar))
+
+public export
+typeParaFromInitialPos : (p : TypeProAr) -> TypeDiNTpos TypeParaInitial p
+typeParaFromInitialPos p v = void v
+
+public export
+typeParaFromInitialContra : (p : TypeProAr) ->
+  TypeDiNTcontra TypeParaInitial p (typeParaFromInitialPos p)
+typeParaFromInitialContra p v = void v
+
+public export
+typeParaFromInitialCovar : (p : TypeProAr) ->
+  TypeDiNTcovar TypeParaInitial p (typeParaFromInitialPos p)
+typeParaFromInitialCovar p v = void v
+
+public export
+typeParaFromInitial : (p : TypeProAr) -> TypeDiNTar TypeParaInitial p
+typeParaFromInitial p =
+  (typeParaFromInitialPos p **
+   (typeParaFromInitialContra p,
+    typeParaFromInitialCovar p))
+
+-------------------------
 ---- Terminal object ----
 -------------------------
 
