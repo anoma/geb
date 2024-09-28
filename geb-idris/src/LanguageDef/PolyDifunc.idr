@@ -281,8 +281,8 @@ TypeDiNTcovar : (p, q : TypeProAr) -> TypeDiNTpos p q -> Type
 TypeDiNTcovar = IntPDiNTcovar {c=Type} {mor=TypeMor}
 
 public export
-TypeProNTrestrict : {p, q : TypeProAr} -> TypeProNTar p q -> TypeDiNTar p q
-TypeProNTrestrict = intPPNTrestrict {c=Type} {cmor=TypeMor}
+TypeProNTrestrict : (p, q : TypeProAr) -> TypeProNTar p q -> TypeDiNTar p q
+TypeProNTrestrict p q = intPPNTrestrict {c=Type} {cmor=TypeMor} {p} {q}
 
 public export
 typeDiNTpos : {p, q : TypeProAr} -> TypeDiNTar p q -> TypeDiNTpos p q
@@ -343,7 +343,7 @@ typeProFromInitial p =
 public export
 typeParaFromInitial : (p : TypeProAr) -> TypeDiNTar TypeParaInitial p
 typeParaFromInitial p =
-  TypeProNTrestrict {p=TypeParaInitial} {q=p} $ typeProFromInitial p
+  TypeProNTrestrict TypeParaInitial p $ typeProFromInitial p
 
 public export
 typeParaFromInitialPos : (p : TypeProAr) -> TypeDiNTpos TypeParaInitial p
@@ -407,7 +407,7 @@ typeProToTerminal p =
 public export
 typeParaToTerminal : (p : TypeProAr) -> TypeDiNTar p TypeParaTerminal
 typeParaToTerminal p =
-  TypeProNTrestrict {p} {q=TypeParaTerminal} $ typeProToTerminal p
+  TypeProNTrestrict p TypeParaTerminal $ typeProToTerminal p
 
 public export
 typeParaToTerminalPos : (p : TypeProAr) -> TypeDiNTpos p TypeParaTerminal
@@ -425,6 +425,121 @@ typeParaToTerminalCovar : (p : TypeProAr) ->
   TypeDiNTcovar p TypeParaTerminal (typeParaToTerminalPos p)
 typeParaToTerminalCovar p =
   typeDiNTcovar {p} {q=TypeParaTerminal} $ typeParaToTerminal p
+
+---------------------------
+---- Binary coproducts ----
+---------------------------
+
+public export
+TypeParaCoproductPos : TypeProAr -> TypeProAr -> Type
+TypeParaCoproductPos p q = Either (ipaPos p) (ipaPos q)
+
+public export
+TypeParaCoproductContra : (p, q : TypeProAr) ->
+  TypeParaCoproductPos p q -> Type
+TypeParaCoproductContra p q i =
+  case i of
+    Left pi => ipaContra p pi
+    Right qi => ipaContra q qi
+
+public export
+TypeParaCoproductCovar : (p, q : TypeProAr) ->
+  TypeParaCoproductPos p q -> Type
+TypeParaCoproductCovar p q i =
+  case i of
+    Left pi => ipaCovar p pi
+    Right qi => ipaCovar q qi
+
+public export
+TypeParaCoproduct : TypeProAr -> TypeProAr -> TypeProAr
+TypeParaCoproduct p q =
+  (TypeParaCoproductPos p q **
+   (TypeParaCoproductContra p q,
+    TypeParaCoproductCovar p q))
+
+public export
+typeProInjLpos : (p, q : TypeProAr) -> TypeProNTpos p (TypeParaCoproduct p q)
+typeProInjLpos p q = Left
+
+public export
+typeProInjLcontra : (p, q : TypeProAr) ->
+  TypeProNTcontra p (TypeParaCoproduct p q) (typeProInjLpos p q)
+typeProInjLcontra p q = sliceId (ipaContra p)
+
+public export
+typeProInjLcovar : (p, q : TypeProAr) ->
+  TypeProNTcovar p (TypeParaCoproduct p q) (typeProInjLpos p q)
+typeProInjLcovar p q = sliceId (ipaCovar p)
+
+public export
+typeProInjL : (p, q : TypeProAr) -> TypeProNTar p (TypeParaCoproduct p q)
+typeProInjL p q =
+  (typeProInjLpos p q **
+   (typeProInjLcontra p q,
+    typeProInjLcovar p q))
+
+public export
+typeParaInjL : (p, q : TypeProAr) -> TypeDiNTar p (TypeParaCoproduct p q)
+typeParaInjL p q = TypeProNTrestrict p (TypeParaCoproduct p q) $ typeProInjL p q
+
+public export
+typeParaInjLpos : (p, q : TypeProAr) -> TypeDiNTpos p (TypeParaCoproduct p q)
+typeParaInjLpos p q =
+  typeDiNTpos {p} {q=(TypeParaCoproduct p q)} $ typeParaInjL p q
+
+public export
+typeParaInjLcontra : (p, q : TypeProAr) ->
+  TypeDiNTcontra p (TypeParaCoproduct p q) (typeParaInjLpos p q)
+typeParaInjLcontra p q =
+  typeDiNTcontra {p} {q=(TypeParaCoproduct p q)} $ typeParaInjL p q
+
+public export
+typeParaInjLcovar : (p, q : TypeProAr) ->
+  TypeDiNTcovar p (TypeParaCoproduct p q) (typeParaInjLpos p q)
+typeParaInjLcovar p q =
+  typeDiNTcovar {p} {q=(TypeParaCoproduct p q)} $ typeParaInjL p q
+
+public export
+typeProInjRpos : (p, q : TypeProAr) -> TypeProNTpos q (TypeParaCoproduct p q)
+typeProInjRpos p q = Right
+
+public export
+typeProInjRcontra : (p, q : TypeProAr) ->
+  TypeProNTcontra q (TypeParaCoproduct p q) (typeProInjRpos p q)
+typeProInjRcontra p q = sliceId (ipaContra q)
+
+public export
+typeProInjRcovar : (p, q : TypeProAr) ->
+  TypeProNTcovar q (TypeParaCoproduct p q) (typeProInjRpos p q)
+typeProInjRcovar p q = sliceId (ipaCovar q)
+
+public export
+typeProInjR : (p, q : TypeProAr) -> TypeProNTar q (TypeParaCoproduct p q)
+typeProInjR p q =
+  (typeProInjRpos p q **
+   (typeProInjRcontra p q,
+    typeProInjRcovar p q))
+
+public export
+typeParaInjR : (p, q : TypeProAr) -> TypeDiNTar q (TypeParaCoproduct p q)
+typeParaInjR p q = TypeProNTrestrict q (TypeParaCoproduct p q) $ typeProInjR p q
+
+public export
+typeParaInjRpos : (p, q : TypeProAr) -> TypeDiNTpos q (TypeParaCoproduct p q)
+typeParaInjRpos p q =
+  typeDiNTpos {p=q} {q=(TypeParaCoproduct p q)} $ typeParaInjR p q
+
+public export
+typeParaInjRcontra : (p, q : TypeProAr) ->
+  TypeDiNTcontra q (TypeParaCoproduct p q) (typeParaInjRpos p q)
+typeParaInjRcontra p q =
+  typeDiNTcontra {p=q} {q=(TypeParaCoproduct p q)} $ typeParaInjR p q
+
+public export
+typeParaInjRcovar : (p, q : TypeProAr) ->
+  TypeDiNTcovar q (TypeParaCoproduct p q) (typeParaInjRpos p q)
+typeParaInjRcovar p q =
+  typeDiNTcovar {p=q} {q=(TypeParaCoproduct p q)} $ typeParaInjR p q
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
