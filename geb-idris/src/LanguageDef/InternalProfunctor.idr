@@ -1471,14 +1471,26 @@ IntPDiNTpos : {c : Type} -> {mor : IntDifunctorSig c} ->
 IntPDiNTpos {c} {mor} p q = (i : ipaPos p) -> IEPAassignPos mor p i -> ipaPos q
 
 public export
+IntPDiNTcontra : {c : Type} -> {mor : IntDifunctorSig c} ->
+  (p, q : IntEndoProAr c) -> IntPDiNTpos {c} {mor} p q -> Type
+IntPDiNTcontra {c} {mor} p q onpos =
+   (i : ipaPos p) -> (asn : IEPAassignPos mor p i) ->
+   mor (ipaContra p i) (ipaContra q $ onpos i asn)
+
+public export
+IntPDiNTcovar : {c : Type} -> {mor : IntDifunctorSig c} ->
+  (p, q : IntEndoProAr c) -> IntPDiNTpos {c} {mor} p q -> Type
+IntPDiNTcovar {c} {mor} p q onpos =
+   (i : ipaPos p) -> (asn : IEPAassignPos mor p i) ->
+   mor (ipaCovar q $ onpos i asn) (ipaCovar p i)
+
+public export
 IntPDiNTar : (c : Type) -> (mor : IntDifunctorSig c) ->
   IntEndoProAr c -> IntEndoProAr c -> Type
-IntPDiNTar c mor p@(ppos ** (pcontra, pcovar)) q@(qpos ** (qcontra, qcovar)) =
+IntPDiNTar c mor p q =
   (onpos : IntPDiNTpos {c} {mor} p q **
-   ((i : ppos) -> (asn : mor (pcovar i) (pcontra i)) ->
-    mor (pcontra i) (qcontra $ onpos i asn),
-    (i : ppos) -> (asn : mor (pcovar i) (pcontra i)) ->
-    mor (qcovar $ onpos i asn) (pcovar i)))
+   (IntPDiNTcontra {c} {mor} p q onpos,
+    IntPDiNTcovar {c} {mor} p q onpos))
 
 public export
 InterpIEPPdint : (c : Type) -> (mor : IntDifunctorSig c) ->
