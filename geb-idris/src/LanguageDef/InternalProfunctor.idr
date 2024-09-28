@@ -1339,6 +1339,11 @@ IntProArComp e d c dmor
      (\(pi ** qi ** m) => qcont qi,
       \(pi ** qi ** m) => pcovar pi))
 
+public export
+IntEndoProArComp : (c : Type) -> (cmor : IntDifunctorSig c) ->
+  IntEndoProAr c -> IntEndoProAr c -> IntEndoProAr c
+IntEndoProArComp c cmor = IntProArComp c c c cmor
+
 --------------------------------------------
 ---- Profunctor natural transformations ----
 --------------------------------------------
