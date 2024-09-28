@@ -1623,6 +1623,7 @@ IntPDiNTPara c mor cid comp idl idr assoc
               assoc _ _ _ _ mc0c1 mpc0 (dcovar _ (comp _ _ _ mcp0 mpc0)) in
              rewrite eq22 in Refl)
 
+public export
 intPPNTrestrict :
   {c : Type} -> {cmor : IntDifunctorSig c} -> {p, q : IntEndoProAr c} ->
   IntPPNTar c c cmor cmor p q -> IntPDiNTar c cmor p q
