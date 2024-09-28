@@ -280,6 +280,24 @@ public export
 TypeDiNTcovar : (p, q : TypeProAr) -> TypeDiNTpos p q -> Type
 TypeDiNTcovar = IntPDiNTcovar {c=Type} {mor=TypeMor}
 
+public export
+TypeProNTrestrict : {p, q : TypeProAr} -> TypeProNTar p q -> TypeDiNTar p q
+TypeProNTrestrict = intPPNTrestrict {c=Type} {cmor=TypeMor}
+
+public export
+typeDiNTpos : {p, q : TypeProAr} -> TypeDiNTar p q -> TypeDiNTpos p q
+typeDiNTpos = intPDiNTpos {c=Type} {mor=TypeMor}
+
+public export
+typeDiNTcontra : {p, q : TypeProAr} -> (ar : TypeDiNTar p q) ->
+  TypeDiNTcontra p q (typeDiNTpos {p} {q} ar)
+typeDiNTcontra = intPDiNTcontra {c=Type} {mor=TypeMor}
+
+public export
+typeDiNTcovar : {p, q : TypeProAr} -> (ar : TypeDiNTar p q) ->
+  TypeDiNTcovar p q (typeDiNTpos {p} {q} ar)
+typeDiNTcovar = intPDiNTcovar {c=Type} {mor=TypeMor}
+
 -------------------------
 ---- Initial object ----
 -------------------------
