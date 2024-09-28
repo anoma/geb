@@ -156,14 +156,13 @@ TypeDiArFromDi (ppos ** (pcontra, pcovar)) (qpos ** (qcontra, qcovar)) gamma
     (\pi, asn =>
       fst $ gamma (pcovar pi) (pi ** (asn, id)) **
      (\pi, asn, pcont =>
-        let
-          condapp =
+        rewrite
+          sym (dpeq1 $
             cond (pcovar pi) (pcontra pi) asn
               (pi ** (asn, id))
               (pi ** (id, asn))
-              Refl
+              Refl)
         in
-        rewrite sym (dpeq1 condapp) in
         fst (snd $ gamma (pcontra pi) (pi ** (id, asn))) pcont,
       \pi, asn =>
         snd $ snd $ gamma (pcovar pi) (pi ** (asn, id))))
