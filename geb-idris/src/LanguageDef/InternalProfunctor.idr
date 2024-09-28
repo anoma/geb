@@ -1266,6 +1266,28 @@ public export
 IntEndoProAr : (c : Type) -> Type
 IntEndoProAr c = IntProAr c c
 
+public export
+ipaPos : {d, c : Type} -> IntProAr d c -> Type
+ipaPos = DPair.fst
+
+public export
+ipaContra : {d, c : Type} -> (ar : IntProAr d c) -> ipaPos ar -> d
+ipaContra ar = Builtin.fst $ DPair.snd ar
+
+public export
+ipaCovar : {d, c : Type} -> (ar : IntProAr d c) -> ipaPos ar -> c
+ipaCovar ar = Builtin.snd $ DPair.snd ar
+
+public export
+IEPAassignPos : {c : Type} ->
+  IntDifunctorSig c -> (ar : IntEndoProAr c) -> ipaPos ar -> Type
+IEPAassignPos {c} mor ar i =
+  mor (ipaCovar {d=c} {c} ar i) (ipaContra {d=c} {c} ar i)
+
+public export
+IEPAassign : {c : Type} -> IntDifunctorSig c -> IntEndoProAr c -> Type
+IEPAassign {c} mor ar = (i : ipaPos ar) -> IEPAassignPos {c} mor ar i
+
 -----------------------------------------
 ---- Profunctor arena interpretation ----
 -----------------------------------------
@@ -1444,10 +1466,15 @@ intPPNThcomp e d c emor dmor cmor dcomp
 ----------------------------------------------------
 
 public export
+IntPDiNTpos : {c : Type} -> {mor : IntDifunctorSig c} ->
+  (p, q : IntEndoProAr c) -> Type
+IntPDiNTpos {c} {mor} p q = (i : ipaPos p) -> IEPAassignPos mor p i -> ipaPos q
+
+public export
 IntPDiNTar : (c : Type) -> (mor : IntDifunctorSig c) ->
   IntEndoProAr c -> IntEndoProAr c -> Type
-IntPDiNTar c mor (ppos ** (pcontra, pcovar)) (qpos ** (qcontra, qcovar)) =
-  (onpos : (i : ppos) -> mor (pcovar i) (pcontra i) -> qpos **
+IntPDiNTar c mor p@(ppos ** (pcontra, pcovar)) q@(qpos ** (qcontra, qcovar)) =
+  (onpos : IntPDiNTpos {c} {mor} p q **
    ((i : ppos) -> (asn : mor (pcovar i) (pcontra i)) ->
     mor (pcontra i) (qcontra $ onpos i asn),
     (i : ppos) -> (asn : mor (pcovar i) (pcontra i)) ->
