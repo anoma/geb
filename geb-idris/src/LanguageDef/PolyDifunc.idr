@@ -246,6 +246,30 @@ TypeDiArComplete
     $ rewrite pairFstSnd (snd $ gamma x (pi ** (dmx, dmy))) in
       pairEqCong Refl (TypeDiArCompleteSndSnd p q gamma cond x i)
 
+----------------------------------------------
+---- Interpretation of composition monoid ----
+----------------------------------------------
+
+public export
+TypeProInterpCompToCompInterp : (q, p : TypeProAr) ->
+  TypeProfNT
+    (InterpTypeProAr (IntEndoProArComp Type TypeMor q p))
+    (EndoProfCompose (InterpTypeProAr q) (InterpTypeProAr p))
+TypeProInterpCompToCompInterp
+  (qpos ** (qcontra, qcovar)) (ppos ** (pcontra, pcovar)) x y
+  ((pi ** qi ** mqp) ** (dmx, dmy)) =
+    (pcontra pi ** ((qi ** (dmx, mqp)), (pi ** (id, dmy))))
+
+public export
+TypeProCompInterpToInterpComp : (q, p : TypeProAr) ->
+  TypeProfNT
+    (EndoProfCompose (InterpTypeProAr q) (InterpTypeProAr p))
+    (InterpTypeProAr (IntEndoProArComp Type TypeMor q p))
+TypeProCompInterpToInterpComp
+  (qpos ** (qcontra, qcovar)) (ppos ** (pcontra, pcovar)) x y
+  (b ** ((qi ** (qcontm, qcovm)), (pi ** (pcontm, pcovm)))) =
+    ((pi ** qi ** pcontm . qcovm) ** (qcontm, pcovm))
+
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
 ---- Universal morphisms of poly-(para)natural transformations on `Type` ----
