@@ -8107,11 +8107,23 @@ Functor f => Profunctor (flip $ ExpFunctor f) where
 -- The left Kan extension of `g` along `j`.
 public export
 LKanExt : (j, g : Type -> Type) -> Type -> Type
-LKanExt j g a = (b : Type ** (ExpFunctor j a b, g b))
+LKanExt j g a = (c : Type ** (ExpFunctor j a c, g c))
 
 public export
 Functor (LKanExt j g) where
   map {j} {g} {a} {b} mab = dpMapSnd (\x => mapFst ((.) mab))
+
+-- The left Kan extension of `g : op(Type) -> Type` along
+-- `j : op(Type) -> op(Type)`.
+public export
+LKanExtContra : (j, g : Type -> Type) -> Type -> Type
+LKanExtContra j g a = (w : Type ** (ExpFunctor j w a, g w))
+
+public export
+lkContramap : (j, g : Type -> Type) ->
+  (jm : (c, d : Type) -> (d -> c) -> j d -> j c) ->
+  (x, y : Type) -> (y -> x) -> LKanExtContra j g x -> LKanExtContra j g y
+lkContramap j g jm x y myx = dpMapSnd $ \w => mapFst ((|>) (jm x y myx))
 
 ---------------------------------------
 ---------------------------------------
