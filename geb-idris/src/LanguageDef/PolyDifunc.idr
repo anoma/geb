@@ -251,6 +251,16 @@ TypeDiArComplete
 ----------------------------------------------
 
 public export
+TypeProIdToIdInterp :
+  TypeProfNT (InterpTypeProAr (IntProArId Type)) HomProf
+TypeProIdToIdInterp x y (i ** (mxi, miy)) = miy . mxi
+
+public export
+TypeIdInterpToProId :
+  TypeProfNT HomProf (InterpTypeProAr (IntProArId Type))
+TypeIdInterpToProId x y mxy = (x ** (id, mxy))
+
+public export
 TypeProInterpCompToCompInterp : (q, p : TypeProAr) ->
   TypeProfNT
     (InterpTypeProAr (IntEndoProArComp Type TypeMor q p))
@@ -269,6 +279,16 @@ TypeProCompInterpToInterpComp
   (qpos ** (qcontra, qcovar)) (ppos ** (pcontra, pcovar)) x y
   (b ** ((qi ** (qcontm, qcovm)), (pi ** (pcontm, pcovm)))) =
     ((pi ** qi ** pcontm . qcovm) ** (qcontm, pcovm))
+
+public export
+TypeDiIdToIdInterp :
+  TypeProfDiNT (InterpTypeProAr (IntProArId Type)) HomProf
+TypeDiIdToIdInterp x (i ** (mxi, mix)) = mix . mxi
+
+public export
+TypeIdInterpToDiId :
+  TypeProfDiNT HomProf (InterpTypeProAr (IntProArId Type))
+TypeIdInterpToDiId x mxx = (x ** (id, mxx))
 
 public export
 TypeDiInterpCompToCompInterp : (q, p : TypeProAr) ->
