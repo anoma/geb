@@ -270,6 +270,26 @@ TypeProCompInterpToInterpComp
   (b ** ((qi ** (qcontm, qcovm)), (pi ** (pcontm, pcovm)))) =
     ((pi ** qi ** pcontm . qcovm) ** (qcontm, pcovm))
 
+public export
+TypeDiInterpCompToCompInterp : (q, p : TypeProAr) ->
+  TypeProfDiNT
+    (InterpTypeProAr (IntEndoProArComp Type TypeMor q p))
+    (EndoProfCompose (InterpTypeProAr q) (InterpTypeProAr p))
+TypeDiInterpCompToCompInterp
+  (qpos ** (qcontra, qcovar)) (ppos ** (pcontra, pcovar)) x
+  ((pi ** qi ** mqp) ** (dmx, dmy)) =
+    (pcontra pi ** ((qi ** (dmx, mqp)), (pi ** (id, dmy))))
+
+public export
+TypeDiCompInterpToInterpComp : (q, p : TypeProAr) ->
+  TypeProfDiNT
+    (EndoProfCompose (InterpTypeProAr q) (InterpTypeProAr p))
+    (InterpTypeProAr (IntEndoProArComp Type TypeMor q p))
+TypeDiCompInterpToInterpComp
+  (qpos ** (qcontra, qcovar)) (ppos ** (pcontra, pcovar)) x
+  (b ** ((qi ** (qcontm, qcovm)), (pi ** (pcontm, pcovm)))) =
+    ((pi ** qi ** pcontm . qcovm) ** (qcontm, pcovm))
+
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
 ---- Universal morphisms of poly-(para)natural transformations on `Type` ----
