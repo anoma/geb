@@ -246,6 +246,171 @@ TypeDiArComplete
     $ rewrite pairFstSnd (snd $ gamma x (pi ** (dmx, dmy))) in
       pairEqCong Refl (TypeDiArCompleteSndSnd p q gamma cond x i)
 
+------------------------------------
+---- Laws of composition monoid ----
+------------------------------------
+
+public export
+TypeProArId : TypeProAr
+TypeProArId = IntProArId Type
+
+public export
+TypeProArComp : TypeProAr -> TypeProAr -> TypeProAr
+TypeProArComp = IntEndoProArComp Type TypeMor
+
+public export
+TypeProCompToIdL : (p : TypeProAr) ->
+  TypeProNTar p (TypeProArComp TypeProArId p)
+TypeProCompToIdL (ppos ** (pcontra, pcovar)) =
+  (\pi => (pi ** pcontra pi ** id) **
+   (\_ => id,
+    \_ => id))
+
+public export
+TypeProCompFromIdL : (p : TypeProAr) ->
+  TypeProNTar (TypeProArComp TypeProArId p) p
+TypeProCompFromIdL (ppos ** (pcontra, pcovar)) =
+  (fst **
+   (\(pi ** qi ** mqp) => mqp,
+    \(pi ** qi ** mqp) => id))
+
+public export
+TypeProCompToIdR : (p : TypeProAr) ->
+  TypeProNTar p (TypeProArComp p TypeProArId)
+TypeProCompToIdR (ppos ** (pcontra, pcovar)) =
+  (\pi => (pcovar pi ** pi ** id) **
+   (\pi => id,
+    \pi => id))
+
+public export
+TypeProCompFromIdR : (p : TypeProAr) ->
+  TypeProNTar (TypeProArComp p TypeProArId) p
+TypeProCompFromIdR (ppos ** (pcontra, pcovar)) =
+  (\(x ** pi ** dmcov) => pi **
+   (\(x ** pi ** dmcov) => id,
+    \(x ** pi ** dmcov) => dmcov))
+
+public export
+TypeProCompAssocL : (p, q, r : TypeProAr) ->
+  TypeProNTar
+    (TypeProArComp r (TypeProArComp q p))
+    (TypeProArComp (TypeProArComp r q) p)
+TypeProCompAssocL
+  (rpos ** (rcontra, rcovar))
+  (qpos ** (qcontra, qcovar))
+  (ppos ** (pcontra, pcovar)) =
+    (\((ri ** qi ** mqr) ** pi ** mpq) =>
+      (ri ** (qi ** pi ** mpq) ** mqr) **
+     (\((ri ** qi ** mqr) ** pi ** mpq) => id,
+      \((ri ** qi ** mqr) ** pi ** mpq) => id))
+
+public export
+TypeProCompAssocR : (p, q, r : TypeProAr) ->
+  TypeProNTar
+    (TypeProArComp (TypeProArComp r q) p)
+    (TypeProArComp r (TypeProArComp q p))
+TypeProCompAssocR
+  (rpos ** (rcontra, rcovar))
+  (qpos ** (qcontra, qcovar))
+  (ppos ** (pcontra, pcovar)) =
+    (\(ri ** (qi ** pi ** mpq) ** mqr) => ((ri ** qi ** mqr) ** (pi ** mpq)) **
+     (\(ri ** (qi ** pi ** mpq) ** mqr) => id,
+      \(ri ** (qi ** pi ** mpq) ** mqr) => id))
+
+public export
+TypeProCompRelToInterp : (q, p : TypeProAr) -> (s, t, x : Type) ->
+  InterpTypeProAr q s x -> InterpTypeProAr p x t ->
+  InterpTypeProAr (TypeProArComp q p) s t
+TypeProCompRelToInterp
+  (qpos ** (qcontra, qcovar)) (ppos ** (pcontra, pcovar)) s t x
+  (qi ** (qdmcont, qdmcovar)) (pi ** (pdmcont, pdmcovar)) =
+    ((pi ** qi ** pdmcont . qdmcovar) ** (qdmcont, pdmcovar))
+
+public export
+TypeProDimapDistrib : (q, p : TypeProAr) -> (s, t, a, b, x : Type) ->
+  (qsx : InterpTypeProAr q s x) -> (pxt : InterpTypeProAr p x t) ->
+  (mas : a -> s) -> (mtb : t -> b) ->
+  TypeProArDimap (TypeProArComp q p) s t a b mas mtb
+    (TypeProCompRelToInterp q p s t x qsx pxt) =
+  TypeProCompRelToInterp q p a b x
+    (TypeProArDimap q s x a x mas Prelude.id qsx)
+    (TypeProArDimap p x t x b Prelude.id mtb pxt)
+TypeProDimapDistrib
+  (qpos ** (qcontra, qcovar)) (ppos ** (pcontra, pcovar)) s t x
+  qsx pst (qi ** (qdmcont, qdmcovar)) (pi ** (pdmcont, pdmcovar)) mas mtb =
+    Refl
+
+public export
+TypeProCompIntObj : (q, p : TypeProAr) -> (s, t : Type) ->
+  InterpTypeProAr (TypeProArComp q p) s t -> Type
+TypeProCompIntObj
+  (qpos ** (qcontra, qcovar)) (ppos ** (pcontra, pcovar)) s t
+  ((pi ** qi ** mqp) ** (dmcont, dmcov)) =
+    pcontra pi
+
+public export
+TypeProCompFactFst : (q, p : TypeProAr) -> (s, t : Type) ->
+  (qpst : InterpTypeProAr (TypeProArComp q p) s t) ->
+  InterpTypeProAr p (TypeProCompIntObj q p s t qpst) t
+TypeProCompFactFst
+  (qpos ** (qcontra, qcovar)) (ppos ** (pcontra, pcovar)) s t
+  ((pi ** qi ** mqp) ** (dmcont, dmcov)) =
+    (pi ** (id, dmcov))
+
+public export
+TypeProCompFactSnd : (q, p : TypeProAr) -> (s, t : Type) ->
+  (qpst : InterpTypeProAr (TypeProArComp q p) s t) ->
+  InterpTypeProAr q s (TypeProCompIntObj q p s t qpst)
+TypeProCompFactSnd
+  (qpos ** (qcontra, qcovar)) (ppos ** (pcontra, pcovar)) s t
+  ((pi ** qi ** mqp) ** (dmcont, dmcov)) =
+    (qi ** (dmcont, mqp))
+
+public export
+TypeDiArId : TypeProAr
+TypeDiArId = IntProArId Type
+
+public export
+TypeDiArComp : TypeProAr -> TypeProAr -> TypeProAr
+TypeDiArComp = IntDiArComp Type TypeMor
+
+public export
+TypeDiCompToIdL : (p : TypeProAr) ->
+  TypeDiNTar p (TypeDiArComp TypeDiArId p)
+TypeDiCompToIdL (ppos ** (pcontra, pcovar)) =
+  ((\pi, asn =>
+    (pi **
+     pcontra pi **
+     (asn,
+      (id,
+       id)))) **
+   (\_, _ => id,
+    \_, _ => id))
+
+public export
+TypeDiCompFromIdL : (p : TypeProAr) ->
+  TypeDiNTar (TypeDiArComp TypeDiArId p) p
+TypeDiCompFromIdL (ppos ** (pcontra, pcovar)) =
+  ((\pi, asn => fst pi) **
+   (\(pi ** x ** (pasn, mxx, dmcont)), dmcov => dmcont,
+    \(pi ** x ** (pasn, mxx, dmcont)), dmcov => id))
+
+public export
+TypeDiCompToIdR : (p : TypeProAr) ->
+  TypeDiNTar p (TypeDiArComp p TypeDiArId)
+TypeDiCompToIdR (ppos ** (pcontra, pcovar)) =
+  (\pi, asn => (pcovar pi ** pi ** (id, (asn, id))) **
+   (\_, _ => id,
+    \_, _ => id))
+
+public export
+TypeDiCompFromIdR : (p : TypeProAr) ->
+  TypeDiNTar (TypeDiArComp p TypeDiArId) p
+TypeDiCompFromIdR (ppos ** (pcontra, pcovar)) =
+  (\(x ** pi ** (mxx, pasn, dmcov)), dmcont => pi **
+   (\(x ** pi ** (mxx, pasn, dmcov)), dmcont => id,
+    \(x ** pi ** (mxx, pasn, dmcov)), dmcont => dmcov))
+
 ----------------------------------------------
 ---- Interpretation of composition monoid ----
 ----------------------------------------------
