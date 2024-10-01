@@ -109,12 +109,28 @@ TypeProNTar : IntMorSig TypeProAr
 TypeProNTar = IntEPPNTar Type TypeMor
 
 public export
+TypeProNTid : IntIdSig TypeProAr TypeProNTar
+TypeProNTid = intPPNTid Type Type TypeMor TypeMor typeId typeId
+
+public export
+TypeProNTvcomp : IntCompSig TypeProAr TypeProNTar
+TypeProNTvcomp = intPPNTvcomp Type Type TypeMor TypeMor typeComp typeComp
+
+public export
 InterpTypeProNT : (p, q : TypeProAr) -> TypeProNTar p q -> TypeProNTSig p q
 InterpTypeProNT = InterpIEPPnt Type TypeMor typeComp
 
 public export
 TypeDiNTar : IntMorSig TypeProAr
 TypeDiNTar = IntPDiNTar Type TypeMor
+
+public export
+TypeDiNTid : IntIdSig TypeProAr TypeDiNTar
+TypeDiNTid = intPDiNTid Type TypeMor typeId
+
+public export
+TypeDiNTvcomp : IntCompSig TypeProAr TypeDiNTar
+TypeDiNTvcomp = intPDiNTvcomp Type TypeMor typeComp
 
 public export
 InterpTypeDiNT : (p, q : TypeProAr) -> TypeDiNTar p q -> TypeDiNTSig p q
@@ -245,6 +261,44 @@ TypeDiArComplete
       Refl
     $ rewrite pairFstSnd (snd $ gamma x (pi ** (dmx, dmy))) in
       pairEqCong Refl (TypeDiArCompleteSndSnd p q gamma cond x i)
+
+---------------------------------------------------------
+---- Categorical laws of paranatural transformations ----
+---------------------------------------------------------
+
+public export
+TypeDiNTcompIdL : {p, q : TypeProAr} ->
+  (gamma : TypeDiNTar p q) ->
+  TypeDiNTvcomp p q q (TypeDiNTid q) gamma = gamma
+TypeDiNTcompIdL
+  {p=(ppos ** (pcontra, pcovar))} {q=(qpos ** (qcontra, qcovar))}
+  (onpos ** (oncontra, oncovar)) =
+    Refl
+
+public export
+TypeDiNTcompIdR : {p, q : TypeProAr} ->
+  (gamma : TypeDiNTar p q) ->
+  TypeDiNTvcomp p p q gamma (TypeDiNTid p) = gamma
+TypeDiNTcompIdR
+  {p=(ppos ** (pcontra, pcovar))} {q=(qpos ** (qcontra, qcovar))}
+  (onpos ** (oncontra, oncovar)) =
+    Refl
+
+public export
+TypeDiNTcompAssoc : {p, q, r, s : TypeProAr} ->
+  (gamma : TypeDiNTar r s) ->
+  (beta : TypeDiNTar q r) ->
+  (alpha : TypeDiNTar p q) ->
+  TypeDiNTvcomp p r s gamma (TypeDiNTvcomp p q r beta alpha) =
+  TypeDiNTvcomp p q s (TypeDiNTvcomp q r s gamma beta) alpha
+TypeDiNTcompAssoc
+  {p=(ppos ** (pcontra, pcovar))}
+  {q=(qpos ** (qcontra, qcovar))}
+  {r=(rpos ** (rcontra, rcovar))}
+  (gonpos ** (goncontra, goncovar))
+  (bonpos ** (boncontra, boncovar))
+  (aonpos ** (aoncontra, aoncovar)) =
+    Refl
 
 ------------------------------------
 ---- Laws of composition monoid ----
