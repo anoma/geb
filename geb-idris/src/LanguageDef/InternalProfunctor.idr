@@ -1661,38 +1661,43 @@ intPDiNTvcomp :
   (c : Type) -> (mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
   (p, q, r : IntEndoProAr c) ->
   IntPDiNTar c mor q r -> IntPDiNTar c mor p q -> IntPDiNTar c mor p r
-intPDiNTvcomp c mor comp
-  (ppos ** (pcontra, pcovar))
-  (qpos ** (qcontra, qcovar))
-  (rpos ** (rcontra, rcovar))
-  (bonpos ** (bcontra, bcovar))
-  (aonpos ** (acontra, acovar)) =
+intPDiNTvcomp c mor comp p q r beta alpha =
     let
       qasn :
-        ((i : ppos) -> (asn : mor (pcovar i) (pcontra i)) ->
-          mor (qcovar (aonpos i asn)) (qcontra (aonpos i asn))) =
+        ((i : ipaPos p) -> (asn : mor (ipaCovar p i) (ipaContra p i)) ->
+          mor
+            (ipaCovar q (intPDiNTpos {mor} {p} {q} alpha i asn))
+            (ipaContra q (intPDiNTpos {mor} {p} {q} alpha i asn))) =
         \i, pasn =>
-          comp (qcovar (aonpos i pasn)) (pcontra i) (qcontra (aonpos i pasn))
-            (acontra i pasn)
-            (comp (qcovar (aonpos i pasn)) (pcovar i) (pcontra i)
+          comp (ipaCovar q (intPDiNTpos {mor} {p} {q} alpha i pasn))
+               (ipaContra p i)
+               (ipaContra q (intPDiNTpos {mor} {p} {q} alpha i pasn))
+            (intPDiNTcontra {mor} {p} {q} alpha i pasn)
+            (comp (ipaCovar q (intPDiNTpos {mor} {p} {q} alpha i pasn))
+              (ipaCovar p i) (ipaContra p i)
               pasn
-              (acovar i pasn))
+              (intPDiNTcovar {mor} {p} {q} alpha i pasn))
     in
-    (\i, pasn => bonpos (aonpos i pasn) (qasn i pasn) **
+    (\i, pasn => intPDiNTpos {mor} {p=q} {q=r} beta
+        (intPDiNTpos {mor} {p} {q} alpha i pasn) (qasn i pasn) **
       (\i, pasn =>
         comp
-          (pcontra i)
-          (qcontra (aonpos i pasn))
-          (rcontra (bonpos (aonpos i pasn) (qasn i pasn)))
-          (bcontra (aonpos i pasn) (qasn i pasn))
-          (acontra i pasn),
+          (ipaContra p i)
+          (ipaContra q (intPDiNTpos {mor} {p} {q} alpha i pasn))
+          (ipaContra r (intPDiNTpos {mor} {p=q} {q=r} beta
+            (intPDiNTpos {mor} {p} {q} alpha i pasn) (qasn i pasn)))
+          (intPDiNTcontra {mor} {p=q} {q=r} beta
+            (intPDiNTpos {mor} {p} {q} alpha i pasn) (qasn i pasn))
+          (intPDiNTcontra {mor} {p} {q} alpha i pasn),
        \i, pasn =>
          comp
-          (rcovar (bonpos (aonpos i pasn) (qasn i pasn)))
-          (qcovar (aonpos i pasn))
-          (pcovar i)
-          (acovar i pasn)
-          (bcovar (aonpos i pasn) (qasn i pasn))))
+          (ipaCovar r (intPDiNTpos {mor} {p=q} {q=r} beta
+            (intPDiNTpos {mor} {p} {q} alpha i pasn) (qasn i pasn)))
+          (ipaCovar q (intPDiNTpos {mor} {p} {q} alpha i pasn))
+          (ipaCovar p i)
+          (intPDiNTcovar {mor} {p} {q} alpha i pasn)
+          (intPDiNTcovar {mor} {p=q} {q=r} beta
+            (intPDiNTpos {mor} {p} {q} alpha i pasn) (qasn i pasn))))
 
 public export
 intPDiNThcomp :
