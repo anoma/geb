@@ -435,9 +435,7 @@ TypeDiCompToIdL (ppos ** (pcontra, pcovar)) =
   ((\pi, asn =>
     (pi **
      pcontra pi **
-     (asn,
-      (id,
-       id)))) **
+     id)) **
    (\_, _ => id,
     \_, _ => id))
 
@@ -446,14 +444,14 @@ TypeDiCompFromIdL : (p : TypeProAr) ->
   TypeDiNTar (TypeDiArComp TypeDiArId p) p
 TypeDiCompFromIdL (ppos ** (pcontra, pcovar)) =
   ((\pi, asn => fst pi) **
-   (\(pi ** x ** (pasn, mxx, dmcont)), dmcov => dmcont,
-    \(pi ** x ** (pasn, mxx, dmcont)), dmcov => id))
+   (\(pi ** x ** dmcont), dmcov => dmcont,
+    \(pi ** x ** dmcont), dmcov => id))
 
 public export
 TypeDiCompToIdR : (p : TypeProAr) ->
   TypeDiNTar p (TypeDiArComp p TypeDiArId)
 TypeDiCompToIdR (ppos ** (pcontra, pcovar)) =
-  (\pi, asn => (pcovar pi ** pi ** (id, (asn, id))) **
+  (\pi, asn => (pcovar pi ** pi ** id) **
    (\_, _ => id,
     \_, _ => id))
 
@@ -461,9 +459,37 @@ public export
 TypeDiCompFromIdR : (p : TypeProAr) ->
   TypeDiNTar (TypeDiArComp p TypeDiArId) p
 TypeDiCompFromIdR (ppos ** (pcontra, pcovar)) =
-  (\(x ** pi ** (mxx, pasn, dmcov)), dmcont => pi **
-   (\(x ** pi ** (mxx, pasn, dmcov)), dmcont => id,
-    \(x ** pi ** (mxx, pasn, dmcov)), dmcont => dmcov))
+  (\(x ** pi ** dmcov), dmcont => pi **
+   (\(x ** pi ** dmcov), dmcont => id,
+    \(x ** pi ** dmcov), dmcont => dmcov))
+
+public export
+TypeDiCompAssocL : (p, q, r : TypeProAr) ->
+  TypeDiNTar
+    (TypeDiArComp r (TypeDiArComp q p))
+    (TypeDiArComp (TypeDiArComp r q) p)
+TypeDiCompAssocL
+  (rpos ** (rcontra, rcovar))
+  (qpos ** (qcontra, qcovar))
+  (ppos ** (pcontra, pcovar)) =
+    (\((ri ** qi ** mqr) ** (pi ** mpq)), mrp =>
+      (ri ** (qi ** pi ** mpq) ** mqr) **
+     (\((ri ** qi ** mqr) ** (pi ** mpq)), mrp => id,
+      \((ri ** qi ** mqr) ** (pi ** mpq)), mrp => id))
+
+public export
+TypeDiCompAssocR : (p, q, r : TypeProAr) ->
+  TypeDiNTar
+    (TypeDiArComp (TypeDiArComp r q) p)
+    (TypeDiArComp r (TypeDiArComp q p))
+TypeDiCompAssocR
+  (rpos ** (rcontra, rcovar))
+  (qpos ** (qcontra, qcovar))
+  (ppos ** (pcontra, pcovar)) =
+    (\(ri ** (qi ** pi ** mpq) ** mqr), mrp =>
+      ((ri ** qi ** mqr) ** (pi ** mpq)) **
+     (\(ri ** (qi ** pi ** mpq) ** mqr), mrp => id,
+      \(ri ** (qi ** pi ** mpq) ** mqr), mrp => id))
 
 ----------------------------------------------
 ---- Interpretation of composition monoid ----
@@ -508,6 +534,26 @@ public export
 TypeIdInterpToDiId :
   TypeProfDiNT HomProf (InterpTypeProAr (IntProArId Type))
 TypeIdInterpToDiId x mxx = (x ** (id, mxx))
+
+public export
+TypeDiInterpCompToCompInterp : (q, p : TypeProAr) ->
+  TypeProfDiNT
+    (InterpTypeProAr (TypeDiArComp q p))
+    (EndoProfCompose (InterpTypeProAr q) (InterpTypeProAr p))
+TypeDiInterpCompToCompInterp
+  (qpos ** (qcontra, qcovar)) (ppos ** (pcontra, pcovar)) x
+  ((pi ** qi ** asn) ** (dmx, dmy)) =
+    (pcontra pi ** ((qi ** (dmx, asn)), (pi ** (id, dmy))))
+
+public export
+TypeDiCompInterpToInterpComp : (q, p : TypeProAr) ->
+  TypeProfDiNT
+    (EndoProfCompose (InterpTypeProAr q) (InterpTypeProAr p))
+    (InterpTypeProAr (TypeDiArComp q p))
+TypeDiCompInterpToInterpComp
+  (qpos ** (qcontra, qcovar)) (ppos ** (pcontra, pcovar)) x
+  (b ** ((qi ** (xqc, qcb)), (pi ** (mbp, pcx)))) =
+    ((pi ** qi ** mbp . qcb) ** (xqc, pcx))
 
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
