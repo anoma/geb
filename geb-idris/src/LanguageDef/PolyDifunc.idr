@@ -491,6 +491,55 @@ TypeDiCompAssocR
      (\(ri ** (qi ** pi ** mpq) ** mqr), mrp => id,
       \(ri ** (qi ** pi ** mpq) ** mqr), mrp => id))
 
+public export
+TypeDiCompRelToInterp : (q, p : TypeProAr) -> (s, t, x : Type) ->
+  InterpTypeProAr q s x -> InterpTypeProAr p x t ->
+  InterpTypeProAr (TypeDiArComp q p) s t
+TypeDiCompRelToInterp
+  (qpos ** (qcontra, qcovar)) (ppos ** (pcontra, pcovar)) s t x
+  (qi ** (qdmcont, qdmcovar)) (pi ** (pdmcont, pdmcovar)) =
+    ((pi ** qi ** pdmcont . qdmcovar) ** (qdmcont, pdmcovar))
+
+public export
+TypeDiDimapDistrib : (q, p : TypeProAr) -> (s, t, a, b, x : Type) ->
+  (qsx : InterpTypeProAr q s x) -> (pxt : InterpTypeProAr p x t) ->
+  (mas : a -> s) -> (mtb : t -> b) ->
+  TypeProArDimap (TypeDiArComp q p) s t a b mas mtb
+    (TypeDiCompRelToInterp q p s t x qsx pxt) =
+  TypeDiCompRelToInterp q p a b x
+    (TypeProArDimap q s x a x mas Prelude.id qsx)
+    (TypeProArDimap p x t x b Prelude.id mtb pxt)
+TypeDiDimapDistrib
+  (qpos ** (qcontra, qcovar)) (ppos ** (pcontra, pcovar)) s t x
+  qsx pst (qi ** (qdmcont, qdmcovar)) (pi ** (pdmcont, pdmcovar)) mas mtb =
+    Refl
+
+public export
+TypeDiCompIntObj : (q, p : TypeProAr) -> (s, t : Type) ->
+  InterpTypeProAr (TypeDiArComp q p) s t -> Type
+TypeDiCompIntObj
+  (qpos ** (qcontra, qcovar)) (ppos ** (pcontra, pcovar)) s t
+  ((pi ** qi ** mqp) ** (dmcont, dmcov)) =
+    pcontra pi
+
+public export
+TypeDiCompFactFst : (q, p : TypeProAr) -> (s, t : Type) ->
+  (qpst : InterpTypeProAr (TypeDiArComp q p) s t) ->
+  InterpTypeProAr p (TypeDiCompIntObj q p s t qpst) t
+TypeDiCompFactFst
+  (qpos ** (qcontra, qcovar)) (ppos ** (pcontra, pcovar)) s t
+  ((pi ** qi ** mqp) ** (dmcont, dmcov)) =
+    (pi ** (id, dmcov))
+
+public export
+TypeDiCompFactSnd : (q, p : TypeProAr) -> (s, t : Type) ->
+  (qpst : InterpTypeProAr (TypeDiArComp q p) s t) ->
+  InterpTypeProAr q s (TypeDiCompIntObj q p s t qpst)
+TypeDiCompFactSnd
+  (qpos ** (qcontra, qcovar)) (ppos ** (pcontra, pcovar)) s t
+  ((pi ** qi ** mqp) ** (dmcont, dmcov)) =
+    (qi ** (dmcont, mqp))
+
 ----------------------------------------------
 ---- Interpretation of composition monoid ----
 ----------------------------------------------
