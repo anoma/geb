@@ -1349,10 +1349,7 @@ IntDiArComp : (c : Type) -> (cmor : IntDifunctorSig c) ->
   IntEndoProAr c -> IntEndoProAr c -> IntEndoProAr c
 IntDiArComp c cmor
   (qpos ** (qcont, qcovar)) (ppos ** (pcont, pcovar)) =
-    ((pi : ppos ** qi : qpos **
-     (cmor (pcovar pi) (pcont pi),
-      cmor (qcovar qi) (qcont qi),
-      cmor (qcovar qi) (pcont pi))) **
+    ((pi : ppos ** qi : qpos ** cmor (qcovar qi) (pcont pi)) **
      (\(pi ** qi ** m) => qcont qi,
       \(pi ** qi ** m) => pcovar pi))
 
@@ -1698,28 +1695,3 @@ intPDiNTvcomp c mor comp p q r beta alpha =
           (intPDiNTcovar {mor} {p} {q} alpha i pasn)
           (intPDiNTcovar {mor} {p=q} {q=r} beta
             (intPDiNTpos {mor} {p} {q} alpha i pasn) (qasn i pasn))))
-
-public export
-intPDiNThcomp :
-  (c : Type) -> (mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
-  (p, p', q, q' : IntEndoProAr c) ->
-  IntPDiNTar c mor q q' ->
-  IntPDiNTar c mor p p' ->
-  IntPDiNTar c mor
-    (IntDiArComp c mor q p)
-    (IntDiArComp c mor q' p')
-intPDiNThcomp c mor comp
-  (ppos ** (pcont, pcovar))
-  (p'pos ** (p'cont, p'covar))
-  (qpos ** (qcont, qcovar))
-  (q'pos ** (q'cont, q'covar))
-  (bonpos ** (boncont, boncovar))
-  (aonpos ** (aoncont, aoncovar)) =
-    (\(pi ** qi ** (mp, mq, asn)), asn' =>
-      (aonpos pi mp **
-       bonpos qi mq **
-       (comp _ _ _ (aoncont pi mp) $ comp _ _ _ mp $ aoncovar pi mp,
-        comp _ _ _ (boncont qi mq) $ comp _ _ _ mq $ boncovar qi mq,
-        comp _ _ _ (aoncont pi mp) $ comp _ _ _ asn $ boncovar qi mq)) **
-     (\(pi ** qi ** (mp, mq, asn)), asn' => boncont qi mq,
-      \(pi ** qi ** (mp, mq, asn)), asn' => aoncovar pi mp))
