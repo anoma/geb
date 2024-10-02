@@ -1790,13 +1790,6 @@ TwArrCoprSig = (x, y : Type) -> (x -> y) -> Type
 -- A presheaf on a category `C` (enriched over `Type`) is a functor
 -- from `op(C)` to `Type`.  A presheaf on the twisted-arrow category
 -- of a category `C` is therefore a functor from `op(Tw(C))` to `Type`.
---
--- However, we have `op(Tw(C)) ~=~ Tw(op(C))`, so a presheaf on the
--- twisted-arrow category of `C` may equivalently be viewed as a copresheaf
--- on the twisted-arrow category of `op(C)`.
---
--- Thus we express the signature of a presheaf on the twisted-arrow category
--- of `Type` as a copresheaf on the twisted-arrow category of `op(Type)`.
 public export
 TwArrPreshfSig : Type
 TwArrPreshfSig = (x, y : Type) -> (y -> x) -> Type
