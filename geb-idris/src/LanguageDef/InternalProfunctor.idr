@@ -1347,11 +1347,7 @@ IntEndoProArComp c cmor = IntProArComp c c c cmor
 public export
 IntDiArComp : (c : Type) -> (cmor : IntDifunctorSig c) ->
   IntEndoProAr c -> IntEndoProAr c -> IntEndoProAr c
-IntDiArComp c cmor
-  (qpos ** (qcont, qcovar)) (ppos ** (pcont, pcovar)) =
-    ((pi : ppos ** qi : qpos ** cmor (qcovar qi) (pcont pi)) **
-     (\(pi ** qi ** m) => qcont qi,
-      \(pi ** qi ** m) => pcovar pi))
+IntDiArComp c = IntProArComp c c c
 
 --------------------------------------------
 ---- Profunctor natural transformations ----
