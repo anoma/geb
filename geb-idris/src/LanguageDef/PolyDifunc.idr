@@ -931,6 +931,107 @@ typeDiCase {p} {q} {r} pr qr =
    (typeDiCaseContra pr qr,
     typeDiCaseCovar pr qr))
 
+-------------------------
+---- Binary products ----
+-------------------------
+
+public export
+TypeParaProductPos : TypeProAr -> TypeProAr -> Type
+TypeParaProductPos p q = Pair (ipaPos p) (ipaPos q)
+
+public export
+TypeParaProductContra : (p, q : TypeProAr) ->
+  TypeParaProductPos p q -> Type
+TypeParaProductContra p q i = Pair (ipaContra p (fst i)) (ipaContra q (snd i))
+
+public export
+TypeParaProductCovar : (p, q : TypeProAr) ->
+  TypeParaProductPos p q -> Type
+TypeParaProductCovar p q i = Either (ipaCovar p (fst i)) (ipaCovar q (snd i))
+
+public export
+TypeParaProduct : TypeProAr -> TypeProAr -> TypeProAr
+TypeParaProduct p q =
+  (TypeParaProductPos p q **
+   (TypeParaProductContra p q,
+    TypeParaProductCovar p q))
+
+public export
+typeDiProdIntroPos : {p, q, r : TypeProAr} ->
+  TypeDiNTar p q -> TypeDiNTar p r ->
+  TypeDiNTpos p (TypeParaProduct q r)
+typeDiProdIntroPos {p} {q} {r} pq pr i asn =
+  (typeDiNTpos pq i asn, typeDiNTpos pr i asn)
+
+public export
+typeDiProdIntroContra : {p, q, r : TypeProAr} ->
+  (pq : TypeDiNTar p q) -> (pr : TypeDiNTar p r) ->
+  TypeDiNTcontra p (TypeParaProduct q r) (typeDiProdIntroPos {p} {q} {r} pq pr)
+typeDiProdIntroContra {p} {q} {r} pq pr i asn d =
+  (typeDiNTcontra pq i asn d, typeDiNTcontra pr i asn d)
+
+public export
+typeDiProdIntroCovar : {p, q, r : TypeProAr} ->
+  (pq : TypeDiNTar p q) -> (pr : TypeDiNTar p r) ->
+  TypeDiNTcovar p (TypeParaProduct q r) (typeDiProdIntroPos {p} {q} {r} pq pr)
+typeDiProdIntroCovar {p} {q} {r} pq pr i asn d with (d)
+  typeDiProdIntroCovar {p} {q} {r} pq pr i asn d | Left pd =
+    typeDiNTcovar pq i asn pd
+  typeDiProdIntroCovar {p} {q} {r} pq pr i asn d | Right qd =
+    typeDiNTcovar pr i asn qd
+
+public export
+typeDiProdIntro : {p, q, r : TypeProAr} ->
+  TypeDiNTar p q -> TypeDiNTar p r -> TypeDiNTar p (TypeParaProduct q r)
+typeDiProdIntro {p} {q} {r} pq pr =
+  (typeDiProdIntroPos pq pr **
+   (typeDiProdIntroContra pq pr,
+    typeDiProdIntroCovar pq pr))
+
+public export
+typeParaProj1pos : (p, q : TypeProAr) -> TypeDiNTpos (TypeParaProduct p q) p
+typeParaProj1pos p q i asn = fst i
+
+public export
+typeParaProj1contra : (p, q : TypeProAr) ->
+  TypeDiNTcontra (TypeParaProduct p q) p (typeParaProj1pos p q)
+typeParaProj1contra p q i asn d = fst d
+
+public export
+typeParaProj1covar : (p, q : TypeProAr) ->
+  TypeDiNTcovar (TypeParaProduct p q) p (typeParaProj1pos p q)
+typeParaProj1covar p q i asn d = Left d
+
+public export
+typeParaProj1 : (p, q : TypeProAr) ->
+  TypeDiNTar (TypeParaProduct p q) p
+typeParaProj1 p q =
+  (typeParaProj1pos p q **
+   (typeParaProj1contra p q,
+    typeParaProj1covar p q))
+
+public export
+typeParaProj2pos : (p, q : TypeProAr) -> TypeDiNTpos (TypeParaProduct p q) q
+typeParaProj2pos p q i asn = snd i
+
+public export
+typeParaProj2contra : (p, q : TypeProAr) ->
+  TypeDiNTcontra (TypeParaProduct p q) q (typeParaProj2pos p q)
+typeParaProj2contra p q i asn d = snd d
+
+public export
+typeParaProj2covar : (p, q : TypeProAr) ->
+  TypeDiNTcovar (TypeParaProduct p q) q (typeParaProj2pos p q)
+typeParaProj2covar p q i asn d = Right d
+
+public export
+typeParaProj2 : (p, q : TypeProAr) ->
+  TypeDiNTar (TypeParaProduct p q) q
+typeParaProj2 p q =
+  (typeParaProj2pos p q **
+   (typeParaProj2contra p q,
+    typeParaProj2covar p q))
+
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 ---- Category of pi types, viewed as a subcategory of the category of monos ----
