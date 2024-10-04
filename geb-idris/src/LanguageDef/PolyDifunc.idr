@@ -1032,6 +1032,49 @@ typeParaProj2 p q =
    (typeParaProj2contra p q,
     typeParaProj2covar p q))
 
+----------------------------------------------------
+---- Distributivity of products over coproducts ----
+----------------------------------------------------
+
+public export
+typeParaDistribPos : (p, q, r : TypeProAr) ->
+  TypeDiNTpos
+    (TypeParaProduct p (TypeParaCoproduct q r))
+    (TypeParaCoproduct (TypeParaProduct p q) (TypeParaProduct p r))
+typeParaDistribPos p q r i asn with (i)
+  typeParaDistribPos p q r i asn | (pi, Left qi) = Left (pi, qi)
+  typeParaDistribPos p q r i asn | (pi, Right ri) = Right (pi, ri)
+
+public export
+typeParaDistribContra : (p, q, r : TypeProAr) ->
+  TypeDiNTcontra
+    (TypeParaProduct p (TypeParaCoproduct q r))
+    (TypeParaCoproduct (TypeParaProduct p q) (TypeParaProduct p r))
+    (typeParaDistribPos p q r)
+typeParaDistribContra p q r i asn d with (i)
+  typeParaDistribContra p q r i asn d | (pi, Left qi) = d
+  typeParaDistribContra p q r i asn d | (pi, Right ri) = d
+
+public export
+typeParaDistribCovar : (p, q, r : TypeProAr) ->
+  TypeDiNTcovar
+    (TypeParaProduct p (TypeParaCoproduct q r))
+    (TypeParaCoproduct (TypeParaProduct p q) (TypeParaProduct p r))
+    (typeParaDistribPos p q r)
+typeParaDistribCovar p q r i asn d with (i)
+  typeParaDistribCovar p q r i asn d | (pi, Left qi) = d
+  typeParaDistribCovar p q r i asn d | (pi, Right ri) = d
+
+public export
+typeParaDistrib : (p, q, r : TypeProAr) ->
+  TypeDiNTar
+    (TypeParaProduct p (TypeParaCoproduct q r))
+    (TypeParaCoproduct (TypeParaProduct p q) (TypeParaProduct p r))
+typeParaDistrib p q r =
+  (typeParaDistribPos p q r **
+   (typeParaDistribContra p q r,
+    typeParaDistribCovar p q r))
+
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 ---- Category of pi types, viewed as a subcategory of the category of monos ----
