@@ -627,6 +627,20 @@ TypeProNTcovar : (p, q : TypeProAr) -> TypeProNTpos p q -> Type
 TypeProNTcovar = IntPPNTcovar {d=Type} {c=Type} {dmor=TypeMor} {cmor=TypeMor}
 
 public export
+typeProNTpos : {p, q : TypeProAr} -> TypeProNTar p q -> TypeProNTpos p q
+typeProNTpos = intPPNTpos {c=Type} {cmor=TypeMor} {d=Type} {dmor=TypeMor}
+
+public export
+typeProNTcontra : {p, q : TypeProAr} -> (ar : TypeProNTar p q) ->
+  TypeProNTcontra p q (typeProNTpos {p} {q} ar)
+typeProNTcontra = intPPNTcontra {c=Type} {cmor=TypeMor} {d=Type} {dmor=TypeMor}
+
+public export
+typeProNTcovar : {p, q : TypeProAr} -> (ar : TypeProNTar p q) ->
+  TypeProNTcovar p q (typeProNTpos {p} {q} ar)
+typeProNTcovar = intPPNTcovar {c=Type} {cmor=TypeMor} {d=Type} {dmor=TypeMor}
+
+public export
 TypeDiNTpos : (p, q : TypeProAr) -> Type
 TypeDiNTpos = IntPDiNTpos {c=Type} {mor=TypeMor}
 
