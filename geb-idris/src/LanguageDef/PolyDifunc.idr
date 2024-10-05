@@ -1344,6 +1344,97 @@ typeParaContraRepCurry {q} {p} {r} ar =
    (typeParaContraRepCurryContra {q} {p} {r} ar,
     typeParaContraRepCurryCovar {q} {p} {r} ar))
 
+-- Now we can put the two forms of representables together to obtain
+-- the hom-object out of a representable which potentially uses both
+-- its covariant and contravariant arguments:  a general representable
+-- is a product of a contravariant and a covariant representable, so
+-- a hom-object out of it is equivalent to a hom-object out of one of
+-- them into a hom-object out of the other.  Thus we can define the
+-- hom-object of a general representable by composition.
+
+public export
+TypeParaRepHomObj : Type -> Type -> TypeProAr -> TypeProAr
+TypeParaRepHomObj p p' q =
+  TypeParaContraRepHomObj p (TypeParaCovarRepHomObj p' q)
+
+public export
+typeParaRepEvalPos : (p, p' : Type) -> (q : TypeProAr) ->
+  TypeProNTpos
+    (TypeParaProduct (TypeParaRepHomObj p p' q) (TypeParaRep p p'))
+    q
+typeParaRepEvalPos p p' q i = fst $ fst i
+
+public export
+typeParaRepEvalContra : (p, p' : Type) -> (q : TypeProAr) ->
+  TypeProNTcontra
+    (TypeParaProduct (TypeParaRepHomObj p p' q) (TypeParaRep p p'))
+    q
+    (typeParaRepEvalPos p p' q)
+typeParaRepEvalContra p p' q i d = fst d $ snd d
+
+public export
+typeParaRepEvalCovar : (p, p' : Type) -> (q : TypeProAr) ->
+  TypeProNTcovar
+    (TypeParaProduct (TypeParaRepHomObj p p' q) (TypeParaRep p p'))
+    q
+    (typeParaRepEvalPos p p' q)
+typeParaRepEvalCovar p p' q i d with (snd (fst i) d) proof eq
+  typeParaRepEvalCovar p p' q i d | Left () = Left (d ** rewrite eq in ())
+  typeParaRepEvalCovar p p' q i d | Right ep = Right ep
+
+public export
+typeParaRepEval : (p, p' : Type) -> (q : TypeProAr) ->
+  TypeProNTar
+    (TypeParaProduct (TypeParaRepHomObj p p' q) (TypeParaRep p p'))
+    q
+typeParaRepEval p p' q =
+  (typeParaRepEvalPos p p' q **
+   (typeParaRepEvalContra p p' q,
+    typeParaRepEvalCovar p p' q))
+
+public export
+typeParaRepCurryPos : {q, q' : Type} -> {p, r : TypeProAr} ->
+  TypeProNTar (TypeParaProduct p (TypeParaRep q q')) r ->
+  TypeProNTpos p (TypeParaRepHomObj q q' r)
+typeParaRepCurryPos {q} {q'} {p} {r} (onpos ** (oncontra, oncovar)) i =
+  (onpos (i, ()) **
+   \rcov => case oncovar (i, ()) rcov of
+    Left pcov => Left ()
+    Right elq => Right elq)
+
+public export
+typeParaRepCurryContra : {q, q' : Type} -> {p, r : TypeProAr} ->
+  (ar : TypeProNTar (TypeParaProduct p (TypeParaRep q q')) r) ->
+  TypeProNTcontra
+    p
+    (TypeParaRepHomObj q q' r)
+    (typeParaRepCurryPos {q} {q'} {p} {r} ar)
+typeParaRepCurryContra (onpos ** (oncontra, oncovar)) pi pcont elq =
+  oncontra (pi, ()) (pcont, elq)
+
+public export
+typeParaRepCurryCovar : {q, q' : Type} -> {p, r : TypeProAr} ->
+  (ar : TypeProNTar (TypeParaProduct p (TypeParaRep q q')) r) ->
+  TypeProNTcovar
+    p
+    (TypeParaRepHomObj q q' r)
+    (typeParaRepCurryPos {q} {q'} {p} {r} ar)
+typeParaRepCurryCovar (onpos ** (oncontra, oncovar)) pi (rcov1 ** rcov2)
+    with (oncovar (pi, ()) rcov1) proof eq
+  typeParaRepCurryCovar (onpos ** (oncontra, oncovar)) pi (rcov1 ** rcov2)
+    | Left pcov = pcov
+  typeParaRepCurryCovar (onpos ** (oncontra, oncovar)) pi (rcov1 ** rcov2)
+    | Right elq = void rcov2
+
+public export
+typeParaRepCurry : {q, q' : Type} -> {p, r : TypeProAr} ->
+  TypeProNTar (TypeParaProduct p (TypeParaRep q q')) r ->
+  TypeProNTar p (TypeParaRepHomObj q q' r)
+typeParaRepCurry {q} {q'} {p} {r} ar =
+  (typeParaRepCurryPos {q} {q'} {p} {r} ar **
+   (typeParaRepCurryContra {q} {q'} {p} {r} ar,
+    typeParaRepCurryCovar {q} {q'} {p} {r} ar))
+
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 ---- Category of pi types, viewed as a subcategory of the category of monos ----
