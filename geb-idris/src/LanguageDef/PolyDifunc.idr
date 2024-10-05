@@ -1130,6 +1130,123 @@ typeParaDistrib p q r =
    (typeParaDistribContra p q r,
     typeParaDistribCovar p q r))
 
+---------------------
+---- Hom-objects ----
+---------------------
+
+-- We compute hom-objects in steps, beginning with representable domains.
+
+-- First we consider hom-objects whose domains are covariant representables --
+-- that is, they ignore their contravariant arguments (in other words, they
+-- are representables represened by pairs with contravariant component `Unit`).
+
+public export
+TypeParaCovarRepHomObjPos : Type -> TypeProAr -> Type
+TypeParaCovarRepHomObjPos p q = (qi : ipaPos q ** ipaCovar q qi -> Either () p)
+
+public export
+TypeParaCovarRepHomObjContra : (p : Type) -> (q : TypeProAr) ->
+  (i : TypeParaCovarRepHomObjPos p q) -> Type
+TypeParaCovarRepHomObjContra p q i = ipaContra q $ fst i
+
+public export
+TypeParaCovarRepHomObjCovarSnd : (p : Type) -> (q : TypeProAr) ->
+  (i : TypeParaCovarRepHomObjPos p q) -> ipaCovar q (fst i) -> Type
+TypeParaCovarRepHomObjCovarSnd p q i qcov with (snd i qcov)
+  TypeParaCovarRepHomObjCovarSnd p q i qcov | Left () = Unit
+  TypeParaCovarRepHomObjCovarSnd p q i qcov | Right ep = Void
+
+public export
+TypeParaCovarRepHomObjCovar : (p : Type) -> (q : TypeProAr) ->
+  (i : TypeParaCovarRepHomObjPos p q) -> Type
+TypeParaCovarRepHomObjCovar p q i =
+  DPair (ipaCovar q $ fst i) (TypeParaCovarRepHomObjCovarSnd p q i)
+
+public export
+TypeParaCovarRepHomObj : Type -> TypeProAr -> TypeProAr
+TypeParaCovarRepHomObj p q =
+  (TypeParaCovarRepHomObjPos p q **
+   (TypeParaCovarRepHomObjContra p q,
+    TypeParaCovarRepHomObjCovar p q))
+
+public export
+typeParaCovarRepEvalPos : (p : Type) -> (q : TypeProAr) ->
+  TypeProNTpos
+    (TypeParaProduct (TypeParaCovarRepHomObj p q) (TypeParaCovarRep p))
+    q
+typeParaCovarRepEvalPos p q i = fst $ fst i
+
+public export
+typeParaCovarRepEvalContra : (p : Type) -> (q : TypeProAr) ->
+  TypeProNTcontra
+    (TypeParaProduct (TypeParaCovarRepHomObj p q) (TypeParaCovarRep p))
+    q
+    (typeParaCovarRepEvalPos p q)
+typeParaCovarRepEvalContra p q i d = fst d
+
+public export
+typeParaCovarRepEvalCovar : (p : Type) -> (q : TypeProAr) ->
+  TypeProNTcovar
+    (TypeParaProduct (TypeParaCovarRepHomObj p q) (TypeParaCovarRep p))
+    q
+    (typeParaCovarRepEvalPos p q)
+typeParaCovarRepEvalCovar p q i d with (snd (fst i) d) proof eq
+  typeParaCovarRepEvalCovar p q i d | Left () = Left (d ** rewrite eq in ())
+  typeParaCovarRepEvalCovar p q i d | Right ep = Right ep
+
+public export
+typeParaCovarRepEval : (p : Type) -> (q : TypeProAr) ->
+  TypeProNTar
+    (TypeParaProduct (TypeParaCovarRepHomObj p q) (TypeParaCovarRep p))
+    q
+typeParaCovarRepEval p q =
+  (typeParaCovarRepEvalPos p q **
+   (typeParaCovarRepEvalContra p q,
+    typeParaCovarRepEvalCovar p q))
+
+public export
+typeParaCovarRepCurryPos : {q : Type} -> {p, r : TypeProAr} ->
+  TypeProNTar (TypeParaProduct p (TypeParaCovarRep q)) r ->
+  TypeProNTpos p (TypeParaCovarRepHomObj q r)
+typeParaCovarRepCurryPos {q} {p} {r} (onpos ** (oncontra, oncovar)) i =
+  (onpos (i, ()) **
+   \rcov => case oncovar (i, ()) rcov of
+    Left pcov => Left ()
+    Right elq => Right elq)
+
+public export
+typeParaCovarRepCurryContra : {q : Type} -> {p, r : TypeProAr} ->
+  (ar : TypeProNTar (TypeParaProduct p (TypeParaCovarRep q)) r) ->
+  TypeProNTcontra
+    p
+    (TypeParaCovarRepHomObj q r)
+    (typeParaCovarRepCurryPos {q} {p} {r} ar)
+typeParaCovarRepCurryContra (onpos ** (oncontra, oncovar)) pi pcont =
+  oncontra (pi, ()) (pcont, ())
+
+public export
+typeParaCovarRepCurryCovar : {q : Type} -> {p, r : TypeProAr} ->
+  (ar : TypeProNTar (TypeParaProduct p (TypeParaCovarRep q)) r) ->
+  TypeProNTcovar
+    p
+    (TypeParaCovarRepHomObj q r)
+    (typeParaCovarRepCurryPos {q} {p} {r} ar)
+typeParaCovarRepCurryCovar (onpos ** (oncontra, oncovar)) pi (rcov1 ** rcov2)
+    with (oncovar (pi, ()) rcov1) proof eq
+  typeParaCovarRepCurryCovar (onpos ** (oncontra, oncovar)) pi (rcov1 ** rcov2)
+    | Left pcov = pcov
+  typeParaCovarRepCurryCovar (onpos ** (oncontra, oncovar)) pi (rcov1 ** rcov2)
+    | Right elq = void rcov2
+
+public export
+typeParaCovarRepCurry : {q : Type} -> {p, r : TypeProAr} ->
+  TypeProNTar (TypeParaProduct p (TypeParaCovarRep q)) r ->
+  TypeProNTar p (TypeParaCovarRepHomObj q r)
+typeParaCovarRepCurry {q} {p} {r} ar =
+  (typeParaCovarRepCurryPos {q} {p} {r} ar **
+   (typeParaCovarRepCurryContra {q} {p} {r} ar,
+    typeParaCovarRepCurryCovar {q} {p} {r} ar))
+
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 ---- Category of pi types, viewed as a subcategory of the category of monos ----
