@@ -784,6 +784,35 @@ typeParaToTerminalCovar : (p : TypeProAr) ->
 typeParaToTerminalCovar p =
   typeDiNTcovar {p} {q=TypeParaTerminal} $ typeParaToTerminal p
 
+------------------------
+---- Representables ----
+------------------------
+
+public export
+TypeParaRepPos : Type -> Type -> Type
+TypeParaRepPos x y = Unit
+
+public export
+TypeParaRepContra : (x, y : Type) -> TypeParaRepPos x y -> Type
+TypeParaRepContra x y _ = x
+
+public export
+TypeParaRepCovar : (x, y : Type) -> TypeParaRepPos x y -> Type
+TypeParaRepCovar x y _ = y
+
+public export
+TypeParaRep : Type -> Type -> TypeProAr
+TypeParaRep x y =
+  (TypeParaRepPos x y ** (TypeParaRepContra x y, TypeParaRepCovar x y))
+
+public export
+TypeParaContraRep : Type -> TypeProAr
+TypeParaContraRep x = TypeParaRep x Void
+
+public export
+TypeParaCovarRep : Type -> TypeProAr
+TypeParaCovarRep y = TypeParaRep Unit y
+
 ---------------------------
 ---- Binary coproducts ----
 ---------------------------
