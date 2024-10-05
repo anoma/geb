@@ -1248,7 +1248,7 @@ typeParaCovarRepCurry {q} {p} {r} ar =
     typeParaCovarRepCurryCovar {q} {p} {r} ar))
 
 -- Next we consider hom-objects whose domains are contravariant
--- representables that is, they ignore their covariant arguments (in other
+-- representables -- that is, they ignore their covariant arguments (in other
 -- words, they are representables represened by pairs with covariant component
 -- `Void`).
 
