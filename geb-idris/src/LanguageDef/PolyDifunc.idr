@@ -839,6 +839,18 @@ public export
 TypeParaCovarId : TypeProAr
 TypeParaCovarId = TypeParaCovarRep Unit
 
+-- Given a polynomial functor, we can create a polynomial profunctor which
+-- ignores its contravariant argument.
+public export
+TypeParaCovarPro : MLPolyCatObj -> TypeProAr
+TypeParaCovarPro p = (pfPos p ** (\_ => Unit, pfDir {p}))
+
+-- Given a Dirichlet functor, we can create a polynomial profunctor which
+-- ignores its covariant argument.
+public export
+TypeParaContravarPro : MLDirichCatObj -> TypeProAr
+TypeParaContravarPro p = (dfPos p ** (dfDir p, \_ => Void))
+
 ---------------------------
 ---- Binary coproducts ----
 ---------------------------
