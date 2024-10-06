@@ -1666,6 +1666,37 @@ TypeProPostcompPolyToInterp (qpos ** qdir) (ppos ** (pcontra, pcovar)) x y
     (qi **
      \qd => (qm qd ** (\ex => dmx ex qd, \pcov => dmy (qd ** pcov))))
 
+public export
+PolyPrecompTypePro : TypeProAr -> MLPolyCatObj -> TypeProAr
+PolyPrecompTypePro = flip TypeProPostcompPoly
+
+-----------------------------
+-----------------------------
+---- Left Kan extensions ----
+-----------------------------
+-----------------------------
+
+public export
+typeProArLKanExt : TypeProAr -> TypeProAr -> PolyFunc
+typeProArLKanExt q (ppos ** (pcontra, pcovar)) =
+  (ppos ** \pi => InterpTypeProAr q (pcontra pi) (pcovar pi))
+
+public export
+typeProLKanExtUnit : (q : TypeProAr) -> (p : TypeProAr) ->
+  TypeProNTar p (PolyPrecompTypePro q $ typeProArLKanExt q p)
+typeProLKanExtUnit (qpos ** (qcontra, qcovar)) (ppos ** (pcontra, pcovar)) =
+  (\pi => (pi ** \qi => fst qi) **
+   (\pi, pcont, qd => fst (snd qd) pcont,
+    \pi, (qd ** pcov) => snd (snd qd) pcov))
+
+public export
+typeProLKanExtCounit : (q : TypeProAr) -> (p : MLPolyCatObj) ->
+  PolyNatTrans (typeProArLKanExt q $ PolyPrecompTypePro q p) p
+typeProLKanExtCounit (qpos ** (qcontra, qcovar)) (ppos ** pdir) =
+  (fst **
+   \(pi ** mpqpos), pd =>
+    (mpqpos pd ** (\mpqcont => mpqcont pd, \qcov => (pd ** qcov))))
+
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 ---- Category of pi types, viewed as a subcategory of the category of monos ----
