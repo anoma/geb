@@ -1533,6 +1533,80 @@ typeProRepCurry {q} {q'} {p} {r} ar =
    (typeProRepCurryContra {q} {q'} {p} {r} ar,
     typeProRepCurryCovar {q} {q'} {p} {r} ar))
 
+-- Finally, we can write general hom-objects:  a polynomial profunctor
+-- is a coproduct of (general -- that is, potentially depending on both
+-- contravariant and covariant arguments) representables, so a morphism
+-- out of it is a product of morphisms out of general representables.
+
+public export
+TypeProHomObj : TypeProAr -> TypeProAr -> TypeProAr
+TypeProHomObj p q =
+  TypeParaSetProduct
+    {a=(ipaPos p)}
+    (\pi => TypeParaRepHomObj (ipaContra p pi) (ipaCovar p pi) q)
+
+public export
+typeProEvalPos : (p, q : TypeProAr) ->
+  TypeProNTpos (TypeParaProduct (TypeProHomObj p q) p) q
+typeProEvalPos p q i = fst $ fst i $ snd i
+
+public export
+typeProEvalContra : (p, q : TypeProAr) ->
+  TypeProNTcontra (TypeParaProduct (TypeProHomObj p q) p) q (typeProEvalPos p q)
+typeProEvalContra p q i d = fst d (snd i) (snd d)
+
+public export
+typeProEvalCovar : (p, q : TypeProAr) ->
+  TypeProNTcovar (TypeParaProduct (TypeProHomObj p q) p) q (typeProEvalPos p q)
+typeProEvalCovar p q i d with (snd (fst i $ snd i) d) proof eq
+  typeProEvalCovar p q i d | Left () = Left (snd i ** d ** rewrite eq in ())
+  typeProEvalCovar p q i d | Right pcov = Right pcov
+
+public export
+typeProEval : (p, q : TypeProAr) ->
+  TypeProNTar (TypeParaProduct (TypeProHomObj p q) p) q
+typeProEval p q =
+  (typeProEvalPos p q **
+   (typeProEvalContra p q,
+    typeProEvalCovar p q))
+
+public export
+typeProCurryPos : {p, q, r : TypeProAr} ->
+  TypeProNTar (TypeParaProduct p q) r ->
+  TypeProNTpos p (TypeProHomObj q r)
+typeProCurryPos {p} {q} {r} (onpos ** (oncontra, oncovar)) pi qi =
+  (onpos (pi, qi) **
+   \rcov => case oncovar (pi, qi) rcov of
+    Left pcov => Left ()
+    Right qcov => Right qcov)
+
+public export
+typeProCurryContra : {p, q, r : TypeProAr} ->
+  (ar : TypeProNTar (TypeParaProduct p q) r) ->
+  TypeProNTcontra p (TypeProHomObj q r) (typeProCurryPos {p} {q} {r} ar)
+typeProCurryContra (onpos ** (oncontra, oncovar)) pi pcont qi qcont =
+  oncontra (pi, qi) (pcont, qcont)
+
+public export
+typeProCurryCovar : {p, q, r : TypeProAr} ->
+  (ar : TypeProNTar (TypeParaProduct p q) r) ->
+  TypeProNTcovar p (TypeProHomObj q r) (typeProCurryPos {p} {q} {r} ar)
+typeProCurryCovar (onpos ** (oncontra, oncovar)) pi (qi ** rcov1 ** rcov2)
+    with (oncovar (pi, qi) rcov1) proof eq
+  typeProCurryCovar (onpos ** (oncontra, oncovar)) pi (qi ** rcov1 ** rcov2)
+    | Left pcov = pcov
+  typeProCurryCovar (onpos ** (oncontra, oncovar)) pi (qi ** rcov1 ** rcov2)
+    | Right qcov = void rcov2
+
+public export
+typeProCurry : {p, q, r : TypeProAr} ->
+  TypeProNTar (TypeParaProduct p q) r ->
+  TypeProNTar p (TypeProHomObj q r)
+typeProCurry {p} {q} {r} ar =
+  (typeProCurryPos {p} {q} {r} ar **
+   (typeProCurryContra {p} {q} {r} ar,
+    typeProCurryCovar {p} {q} {r} ar))
+
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 ---- Category of pi types, viewed as a subcategory of the category of monos ----
