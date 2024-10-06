@@ -1619,6 +1619,53 @@ typeProCurry {p} {q} {r} ar =
    (typeProCurryContra {p} {q} {r} ar,
     typeProCurryCovar {p} {q} {r} ar))
 
+--------------------------------------
+--------------------------------------
+---- Composition with polynomials ----
+--------------------------------------
+--------------------------------------
+
+-- A polynomial profunctor goes from `(op(Type), Type)` to `Type`, so we can
+-- postcompose an endofunctor on `Type` and obtain another profunctor.  In
+-- particular, we can postcompose a _polynomial_ endofunctor and obtain another
+-- _polynomial_ profunctor.
+--
+-- This composition turns out to have the same on-positions function as the
+-- composition of polynomials and the post-composition of polynomials after
+-- Dirichlet functors, both of which have the same on-positions function.
+-- Furthermore, it has the same on-covariant-directions function as the
+-- on-directions function of the composition of polynomials, and the same
+-- on-contravariant-directions function of the post-composition of polynomials
+-- after Dirichlets.
+public export
+TypeProPostcompPoly : MLPolyCatObj -> TypeProAr -> TypeProAr
+TypeProPostcompPoly (qpos ** qdir) (ppos ** (pcontra, pcovar)) =
+  ((qi : qpos ** qdir qi -> ppos) **
+   (\(qi ** qm) => (qd : qdir qi) -> pcontra $ qm qd,
+    \(qi ** qm) => (qd : qdir qi ** pcovar $ qm qd)))
+
+-- We show that that produces the expected composition.
+public export
+TypeProPostcompPolyFromInterp : (q : MLPolyCatObj) -> (p : TypeProAr) ->
+  (x, y : Type) ->
+  InterpPolyFunc q (InterpTypeProAr p x y) ->
+  InterpTypeProAr (TypeProPostcompPoly q p) x y
+TypeProPostcompPolyFromInterp (qpos ** qdir) (ppos ** (pcontra, pcovar)) x y
+  (i ** dm) =
+    ((i ** \qd => fst (dm qd)) **
+     (\ex, qd => fst (snd $ dm qd) ex,
+      \(qd ** pcov) => snd (snd $ dm qd) pcov))
+
+public export
+TypeProPostcompPolyToInterp : (q : MLPolyCatObj) -> (p : TypeProAr) ->
+  (x, y : Type) ->
+  InterpTypeProAr (TypeProPostcompPoly q p) x y ->
+  InterpPolyFunc q (InterpTypeProAr p x y)
+TypeProPostcompPolyToInterp (qpos ** qdir) (ppos ** (pcontra, pcovar)) x y
+  ((qi ** qm) ** (dmx, dmy)) =
+    (qi **
+     \qd => (qm qd ** (\ex => dmx ex qd, \pcov => dmy (qd ** pcov))))
+
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 ---- Category of pi types, viewed as a subcategory of the category of monos ----
