@@ -1456,82 +1456,82 @@ TypeParaRepHomObj p p' q =
   TypeParaContraRepHomObj p (TypeParaCovarRepHomObj p' q)
 
 public export
-typeParaRepEvalPos : (p, p' : Type) -> (q : TypeProAr) ->
+typeProRepEvalPos : (p, p' : Type) -> (q : TypeProAr) ->
   TypeProNTpos
     (TypeParaProduct (TypeParaRepHomObj p p' q) (TypeParaRep p p'))
     q
-typeParaRepEvalPos p p' q i = fst $ fst i
+typeProRepEvalPos p p' q i = fst $ fst i
 
 public export
-typeParaRepEvalContra : (p, p' : Type) -> (q : TypeProAr) ->
+typeProRepEvalContra : (p, p' : Type) -> (q : TypeProAr) ->
   TypeProNTcontra
     (TypeParaProduct (TypeParaRepHomObj p p' q) (TypeParaRep p p'))
     q
-    (typeParaRepEvalPos p p' q)
-typeParaRepEvalContra p p' q i d = fst d $ snd d
+    (typeProRepEvalPos p p' q)
+typeProRepEvalContra p p' q i d = fst d $ snd d
 
 public export
-typeParaRepEvalCovar : (p, p' : Type) -> (q : TypeProAr) ->
+typeProRepEvalCovar : (p, p' : Type) -> (q : TypeProAr) ->
   TypeProNTcovar
     (TypeParaProduct (TypeParaRepHomObj p p' q) (TypeParaRep p p'))
     q
-    (typeParaRepEvalPos p p' q)
-typeParaRepEvalCovar p p' q i d with (snd (fst i) d) proof eq
-  typeParaRepEvalCovar p p' q i d | Left () = Left (d ** rewrite eq in ())
-  typeParaRepEvalCovar p p' q i d | Right ep = Right ep
+    (typeProRepEvalPos p p' q)
+typeProRepEvalCovar p p' q i d with (snd (fst i) d) proof eq
+  typeProRepEvalCovar p p' q i d | Left () = Left (d ** rewrite eq in ())
+  typeProRepEvalCovar p p' q i d | Right ep = Right ep
 
 public export
-typeParaRepEval : (p, p' : Type) -> (q : TypeProAr) ->
+typeProRepEval : (p, p' : Type) -> (q : TypeProAr) ->
   TypeProNTar
     (TypeParaProduct (TypeParaRepHomObj p p' q) (TypeParaRep p p'))
     q
-typeParaRepEval p p' q =
-  (typeParaRepEvalPos p p' q **
-   (typeParaRepEvalContra p p' q,
-    typeParaRepEvalCovar p p' q))
+typeProRepEval p p' q =
+  (typeProRepEvalPos p p' q **
+   (typeProRepEvalContra p p' q,
+    typeProRepEvalCovar p p' q))
 
 public export
-typeParaRepCurryPos : {q, q' : Type} -> {p, r : TypeProAr} ->
+typeProRepCurryPos : {q, q' : Type} -> {p, r : TypeProAr} ->
   TypeProNTar (TypeParaProduct p (TypeParaRep q q')) r ->
   TypeProNTpos p (TypeParaRepHomObj q q' r)
-typeParaRepCurryPos {q} {q'} {p} {r} (onpos ** (oncontra, oncovar)) i =
+typeProRepCurryPos {q} {q'} {p} {r} (onpos ** (oncontra, oncovar)) i =
   (onpos (i, ()) **
    \rcov => case oncovar (i, ()) rcov of
     Left pcov => Left ()
     Right elq => Right elq)
 
 public export
-typeParaRepCurryContra : {q, q' : Type} -> {p, r : TypeProAr} ->
+typeProRepCurryContra : {q, q' : Type} -> {p, r : TypeProAr} ->
   (ar : TypeProNTar (TypeParaProduct p (TypeParaRep q q')) r) ->
   TypeProNTcontra
     p
     (TypeParaRepHomObj q q' r)
-    (typeParaRepCurryPos {q} {q'} {p} {r} ar)
-typeParaRepCurryContra (onpos ** (oncontra, oncovar)) pi pcont elq =
+    (typeProRepCurryPos {q} {q'} {p} {r} ar)
+typeProRepCurryContra (onpos ** (oncontra, oncovar)) pi pcont elq =
   oncontra (pi, ()) (pcont, elq)
 
 public export
-typeParaRepCurryCovar : {q, q' : Type} -> {p, r : TypeProAr} ->
+typeProRepCurryCovar : {q, q' : Type} -> {p, r : TypeProAr} ->
   (ar : TypeProNTar (TypeParaProduct p (TypeParaRep q q')) r) ->
   TypeProNTcovar
     p
     (TypeParaRepHomObj q q' r)
-    (typeParaRepCurryPos {q} {q'} {p} {r} ar)
-typeParaRepCurryCovar (onpos ** (oncontra, oncovar)) pi (rcov1 ** rcov2)
+    (typeProRepCurryPos {q} {q'} {p} {r} ar)
+typeProRepCurryCovar (onpos ** (oncontra, oncovar)) pi (rcov1 ** rcov2)
     with (oncovar (pi, ()) rcov1) proof eq
-  typeParaRepCurryCovar (onpos ** (oncontra, oncovar)) pi (rcov1 ** rcov2)
+  typeProRepCurryCovar (onpos ** (oncontra, oncovar)) pi (rcov1 ** rcov2)
     | Left pcov = pcov
-  typeParaRepCurryCovar (onpos ** (oncontra, oncovar)) pi (rcov1 ** rcov2)
+  typeProRepCurryCovar (onpos ** (oncontra, oncovar)) pi (rcov1 ** rcov2)
     | Right elq = void rcov2
 
 public export
-typeParaRepCurry : {q, q' : Type} -> {p, r : TypeProAr} ->
+typeProRepCurry : {q, q' : Type} -> {p, r : TypeProAr} ->
   TypeProNTar (TypeParaProduct p (TypeParaRep q q')) r ->
   TypeProNTar p (TypeParaRepHomObj q q' r)
-typeParaRepCurry {q} {q'} {p} {r} ar =
-  (typeParaRepCurryPos {q} {q'} {p} {r} ar **
-   (typeParaRepCurryContra {q} {q'} {p} {r} ar,
-    typeParaRepCurryCovar {q} {q'} {p} {r} ar))
+typeProRepCurry {q} {q'} {p} {r} ar =
+  (typeProRepCurryPos {q} {q'} {p} {r} ar **
+   (typeProRepCurryContra {q} {q'} {p} {r} ar,
+    typeProRepCurryCovar {q} {q'} {p} {r} ar))
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
