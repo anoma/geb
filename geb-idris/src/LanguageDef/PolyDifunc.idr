@@ -1087,6 +1087,104 @@ typeParaProj2 p q =
    (typeParaProj2contra p q,
     typeParaProj2covar p q))
 
+----------------------
+---- Set products ----
+----------------------
+
+public export
+TypeParaSetProductPos : {a : Type} -> (a -> TypeProAr) -> Type
+TypeParaSetProductPos {a} ps = Pi {a} (ipaPos . ps)
+
+public export
+TypeParaSetProductContra : {a : Type} -> (ps : a -> TypeProAr) ->
+  TypeParaSetProductPos {a} ps -> Type
+TypeParaSetProductContra {a} ps i = (ea : a) -> ipaContra (ps ea) (i ea)
+
+public export
+TypeParaSetProductCovar : {a : Type} -> (ps : a -> TypeProAr) ->
+  TypeParaSetProductPos {a} ps -> Type
+TypeParaSetProductCovar {a} ps i = (ea : a ** ipaCovar (ps ea) (i ea))
+
+public export
+TypeParaSetProduct : {a : Type} -> (a -> TypeProAr) -> TypeProAr
+TypeParaSetProduct {a} ps =
+  (TypeParaSetProductPos {a} ps **
+   (TypeParaSetProductContra {a} ps,
+    TypeParaSetProductCovar {a} ps))
+
+public export
+typeDiSetProdIntroPos :
+  {a : Type} -> {p : TypeProAr} -> {qs : a -> TypeProAr} ->
+  ((ea : a) -> TypeDiNTar p (qs ea)) ->
+  TypeDiNTpos p (TypeParaSetProduct {a} qs)
+typeDiSetProdIntroPos {a} {p} {qs} arfam i asn ea =
+  typeDiNTpos (arfam ea) i asn
+
+public export
+typeDiSetProdIntroContra :
+  {a : Type} -> {p : TypeProAr} -> {qs : a -> TypeProAr} ->
+  (arfam : (ea : a) -> TypeDiNTar p (qs ea)) ->
+  TypeDiNTcontra
+    p
+    (TypeParaSetProduct {a} qs)
+    (typeDiSetProdIntroPos {a} {p} {qs} arfam)
+typeDiSetProdIntroContra {a} {p} {qs} arfam i asn d ea =
+  typeDiNTcontra (arfam ea) i asn d
+
+public export
+typeDiSetProdIntroCovar :
+  {a : Type} -> {p : TypeProAr} -> {qs : a -> TypeProAr} ->
+  (arfam : (ea : a) -> TypeDiNTar p (qs ea)) ->
+  TypeDiNTcovar
+    p
+    (TypeParaSetProduct {a} qs)
+    (typeDiSetProdIntroPos {a} {p} {qs} arfam)
+typeDiSetProdIntroCovar {a} {p} {qs} arfam i asn d =
+  typeDiNTcovar (arfam $ fst d) i asn (snd d)
+
+public export
+typeDiSetProdIntro : {a : Type} -> {p : TypeProAr} -> {qs : a -> TypeProAr} ->
+  ((ea : a) -> TypeDiNTar p (qs ea)) ->
+  TypeDiNTar p (TypeParaSetProduct {a} qs)
+typeDiSetProdIntro {a} {p} {qs} arfam =
+  (typeDiSetProdIntroPos arfam **
+   (typeDiSetProdIntroContra arfam,
+    typeDiSetProdIntroCovar arfam))
+
+public export
+typeDiSetProjPos :
+  {a : Type} -> (qs : a -> TypeProAr) ->
+  (ea : a) -> TypeDiNTpos (TypeParaSetProduct {a} qs) (qs ea)
+typeDiSetProjPos {a} qs ea i asn = i ea
+
+public export
+typeDiSetProjContra :
+  {a : Type} -> (qs : a -> TypeProAr) ->
+  (ea : a) ->
+  TypeDiNTcontra
+    (TypeParaSetProduct {a} qs)
+    (qs ea)
+    (typeDiSetProjPos {a} qs ea)
+typeDiSetProjContra {a} qs ea i asn d = d ea
+
+public export
+typeDiSetProjCovar :
+  {a : Type} -> (qs : a -> TypeProAr) ->
+  (ea : a) ->
+  TypeDiNTcovar
+    (TypeParaSetProduct {a} qs)
+    (qs ea)
+    (typeDiSetProjPos {a} qs ea)
+typeDiSetProjCovar {a} qs ea i asn d = (ea ** d)
+
+public export
+typeDiSetProj : {a : Type} -> (qs : a -> TypeProAr) ->
+  (ea : a) -> TypeDiNTar (TypeParaSetProduct {a} qs) (qs ea)
+typeDiSetProj {a} qs ea =
+  (typeDiSetProjPos {a} qs ea **
+   (typeDiSetProjContra {a} qs ea,
+    typeDiSetProjCovar {a} qs ea))
+
 ----------------------------------------------------
 ---- Distributivity of products over coproducts ----
 ----------------------------------------------------
