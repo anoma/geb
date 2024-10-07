@@ -1701,6 +1701,19 @@ typeProLKanExtCounit (qpos ** (qcontra, qcovar)) (ppos ** pdir) =
    \(pi ** mpqpos), pd =>
     (mpqpos pd ** (\mpqcont => mpqcont pd, \qcov => (pd ** qcov))))
 
+public export
+typeDiLKanExtUnit : (q : TypeProAr) -> (p : TypeProAr) ->
+  TypeDiNTar p (PolyPrecompTypePro q $ typeProArLKanExt q p)
+typeDiLKanExtUnit (qpos ** (qcontra, qcovar)) (ppos ** (pcontra, pcovar)) =
+  (\pi, asn => (pi ** \qd => fst qd) **
+   (\pi, asn, pcont, qd => fst (snd qd) pcont,
+    \pi, asn, qd => snd (snd $ fst qd) (snd qd)))
+
+public export
+typeDiLKanExtCounit : (q : TypeProAr) -> (p : MLPolyCatObj) ->
+  PolyNatTrans (typeProArLKanExt q $ PolyPrecompTypePro q p) p
+typeDiLKanExtCounit = typeProLKanExtCounit
+
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 ---- Category of pi types, viewed as a subcategory of the category of monos ----
