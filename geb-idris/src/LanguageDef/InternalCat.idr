@@ -3624,69 +3624,69 @@ itaCMCoalgToAlg {c} {d} ita x = iasRAdj (itaCMAdjunction ita) x x
 -------------------------------------------
 
 public export
-CongNTLSig : {d, c : IntCatSig} ->
+ConjNTLSig : {d, c : IntCatSig} ->
   IntMorSig (IntAdjunctionSig d c)
-CongNTLSig {d} {c} adj1 adj2 =
+ConjNTLSig {d} {c} adj1 adj2 =
   IntNTSig {c=(icObj c)} {d=(icObj d)} (icMor d)
     (ifOmap $ iasL adj1)
     (ifOmap $ iasL adj2)
 
 public export
-CongNTRSig : {d, c : IntCatSig} -> IntMorSig (IntAdjunctionSig d c)
-CongNTRSig {d} {c} adj1 adj2 =
+ConjNTRSig : {d, c : IntCatSig} -> IntMorSig (IntAdjunctionSig d c)
+ConjNTRSig {d} {c} adj1 adj2 =
   IntNTSig {c=(icObj d)} {d=(icObj c)} (icMor c)
     (ifOmap $ iasR adj2)
     (ifOmap $ iasR adj1)
 
 public export
-record CongNTSig {d, c : IntCatSig} (dom, cod : IntAdjunctionSig d c) where
-  constructor CongNT
-  cntL : CongNTLSig dom cod
-  cntR : CongNTRSig dom cod
+record ConjNTSig {d, c : IntCatSig} (dom, cod : IntAdjunctionSig d c) where
+  constructor ConjNT
+  cntL : ConjNTLSig dom cod
+  cntR : ConjNTRSig dom cod
 
 public export
-congNTidL : {d, c : IntCatSig} ->
-  (adj : IntAdjunctionSig d c) -> CongNTLSig adj adj
-congNTidL {d} {c} adj =
+conjNTidL : {d, c : IntCatSig} ->
+  (adj : IntAdjunctionSig d c) -> ConjNTLSig adj adj
+conjNTidL {d} {c} adj =
   intNTid {c=(icObj c)} {d=(icObj d)} (icMor d) (icId d) (iasLOmap adj)
 
 public export
-congNTidR : {d, c : IntCatSig} ->
-  (adj : IntAdjunctionSig d c) -> CongNTRSig adj adj
-congNTidR {d} {c} adj =
+conjNTidR : {d, c : IntCatSig} ->
+  (adj : IntAdjunctionSig d c) -> ConjNTRSig adj adj
+conjNTidR {d} {c} adj =
   intNTid {c=(icObj d)} {d=(icObj c)} (icMor c) (icId c) (iasROmap adj)
 
 public export
-congNTid : {d, c : IntCatSig} ->
-  IntIdSig (IntAdjunctionSig d c) (CongNTSig {d} {c})
-congNTid {d} {c} adj = CongNT (congNTidL adj) (congNTidR adj)
+conjNTid : {d, c : IntCatSig} ->
+  IntIdSig (IntAdjunctionSig d c) (ConjNTSig {d} {c})
+conjNTid {d} {c} adj = ConjNT (conjNTidL adj) (conjNTidR adj)
 
 public export
-congNTcompL : {d, c : IntCatSig} ->
+conjNTcompL : {d, c : IntCatSig} ->
   (adj, adj', adj'' : IntAdjunctionSig d c) ->
-  CongNTLSig adj' adj'' -> CongNTLSig adj adj' -> CongNTLSig adj adj''
-congNTcompL {d} {c} adj adj' adj'' =
+  ConjNTLSig adj' adj'' -> ConjNTLSig adj adj' -> ConjNTLSig adj adj''
+conjNTcompL {d} {c} adj adj' adj'' =
   intNTvcomp {c=(icObj c)} {d=(icObj d)} {dmor=(icMor d)} (icComp d)
 
 public export
-congNTcompR : {d, c : IntCatSig} ->
+conjNTcompR : {d, c : IntCatSig} ->
   (adj, adj', adj'' : IntAdjunctionSig d c) ->
-  CongNTRSig adj' adj'' -> CongNTRSig adj adj' -> CongNTRSig adj adj''
-congNTcompR {d} {c} adj adj' adj'' =
+  ConjNTRSig adj' adj'' -> ConjNTRSig adj adj' -> ConjNTRSig adj adj''
+conjNTcompR {d} {c} adj adj' adj'' =
   flip $ intNTvcomp {c=(icObj d)} {d=(icObj c)} {dmor=(icMor c)} (icComp c)
 
 public export
-congNTcomp : {d, c : IntCatSig} ->
-  IntCompSig (IntAdjunctionSig d c) (CongNTSig {d} {c})
-congNTcomp {d} {c} adj adj' adj'' beta alpha =
-  CongNT
-    (congNTcompL adj adj' adj'' (cntL beta) (cntL alpha))
-    (congNTcompR adj adj' adj'' (cntR beta) (cntR alpha))
+conjNTcomp : {d, c : IntCatSig} ->
+  IntCompSig (IntAdjunctionSig d c) (ConjNTSig {d} {c})
+conjNTcomp {d} {c} adj adj' adj'' beta alpha =
+  ConjNT
+    (conjNTcompL adj adj' adj'' (cntL beta) (cntL alpha))
+    (conjNTcompR adj adj' adj'' (cntR beta) (cntR alpha))
 
 public export
-congNTLtoR : {d, c : IntCatSig} -> (dom, cod : IntAdjunctionSig d c) ->
-  CongNTLSig {d} {c} dom cod -> CongNTRSig {d} {c} dom cod
-congNTLtoR {d} {c} dom cod ntl x =
+conjNTLtoR : {d, c : IntCatSig} -> (dom, cod : IntAdjunctionSig d c) ->
+  ConjNTLSig {d} {c} dom cod -> ConjNTRSig {d} {c} dom cod
+conjNTLtoR {d} {c} dom cod ntl x =
   iasLAdj dom (iasROmap cod x) x $
     icComp d
       (iasLOmap dom (iasROmap cod x))
@@ -3696,9 +3696,9 @@ congNTLtoR {d} {c} dom cod ntl x =
       (ntl (iasROmap cod x))
 
 public export
-congNTRtoL : {d, c : IntCatSig} -> (dom, cod : IntAdjunctionSig d c) ->
-  CongNTRSig {d} {c} dom cod -> CongNTLSig {d} {c} dom cod
-congNTRtoL {d} {c} dom cod ntr x =
+conjNTRtoL : {d, c : IntCatSig} -> (dom, cod : IntAdjunctionSig d c) ->
+  ConjNTRSig {d} {c} dom cod -> ConjNTLSig {d} {c} dom cod
+conjNTRtoL {d} {c} dom cod ntr x =
   iasRAdj dom x (iasLOmap cod x) $
     icComp c
       x
@@ -3708,25 +3708,25 @@ congNTRtoL {d} {c} dom cod ntr x =
       (iasUnit cod x)
 
 public export
-CongNTCat : IntCatSig -> IntCatSig -> IntCatSig
-CongNTCat d c =
+ConjNTCat : IntCatSig -> IntCatSig -> IntCatSig
+ConjNTCat d c =
   ICat
     (IntAdjunctionSig d c)
   $ MICS
-    (CongNTSig {d} {c})
+    (ConjNTSig {d} {c})
   $ ICS
-    (congNTid {d} {c})
-    (congNTcomp {d} {c})
+    (conjNTid {d} {c})
+    (conjNTcomp {d} {c})
 
 public export
-congNThcomp : {e, d, c : IntCatSig} ->
+conjNThcomp : {e, d, c : IntCatSig} ->
   {f, f' : IntAdjunctionSig e d} -> {g, g' : IntAdjunctionSig d c} ->
-  CongNTSig g g' -> CongNTSig f f' ->
-  CongNTSig {d=e} {c}
+  ConjNTSig g g' -> ConjNTSig f f' ->
+  ConjNTSig {d=e} {c}
     (intAdjunctionSigCompose g f)
     (intAdjunctionSigCompose g' f')
-congNThcomp {e} {d} {c} {f} {f'} {g} {g'} beta alpha =
-  CongNT
+conjNThcomp {e} {d} {c} {f} {f'} {g} {g'} beta alpha =
+  ConjNT
     (intNThcomp {emor=(icMor e)} {dmor=(icMor d)}
       (icComp e)
       (iasLFmap f)
