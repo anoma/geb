@@ -1670,10 +1670,14 @@ public export
 PolyPrecompTypePro : TypeProAr -> MLPolyCatObj -> TypeProAr
 PolyPrecompTypePro = flip TypeProPostcompPoly
 
------------------------------
+------------------------------
+------------------------------
+---- Kan extensions/lifts ----
+------------------------------
+------------------------------
+
 -----------------------------
 ---- Left Kan extensions ----
------------------------------
 -----------------------------
 
 public export
