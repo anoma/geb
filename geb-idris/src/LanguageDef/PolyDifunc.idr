@@ -1714,11 +1714,35 @@ typeDiLKanExtCounit : (q : TypeProAr) -> (p : MLPolyCatObj) ->
   PolyNatTrans (typeProArLKanExt q $ PolyPrecompTypePro q p) p
 typeDiLKanExtCounit = typeProLKanExtCounit
 
--------------------------------------------
--------------------------------------------
----- Coalgebras as profunctor algebras ----
--------------------------------------------
--------------------------------------------
+----------------------------------------------------
+----------------------------------------------------
+---- Polynomial algebras as profunctor algebras ----
+----------------------------------------------------
+----------------------------------------------------
+
+public export
+typeProPolyAlg : MLPolyCatObj -> TypeProAr
+typeProPolyAlg p = (Type ** (id, InterpPolyFunc p))
+
+public export
+typeProPolyAlgToProAlgCarrier : (p : MLPolyCatObj) -> (x, y : Type) ->
+  InterpTypeProAr (typeProPolyAlg p) x y ->
+  (InterpPolyFunc p x -> y)
+typeProPolyAlgToProAlgCarrier p x y
+  (arpos ** (arcont, arcov)) (pi ** dmx) =
+    arcov (pi ** arcont . dmx)
+
+public export
+typeProPolyAlgFromProAlgCarrier : (p : MLPolyCatObj) -> (x, y : Type) ->
+  (InterpPolyFunc p x -> y) ->
+  InterpTypeProAr (typeProPolyAlg p) x y
+typeProPolyAlgFromProAlgCarrier p x y dmxy = (x ** (id, dmxy))
+
+------------------------------------------------------
+------------------------------------------------------
+---- Polynomial coalgebras as profunctor algebras ----
+------------------------------------------------------
+------------------------------------------------------
 
 public export
 typeProPolyCoalg : MLPolyCatObj -> TypeProAr
