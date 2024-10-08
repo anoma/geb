@@ -1736,7 +1736,7 @@ public export
 typeProPolyCoalgFromProCoalgCarrier : (p : MLPolyCatObj) -> (x, y : Type) ->
   (x -> InterpPolyFunc p y) ->
   InterpTypeProAr (typeProPolyCoalg p) x y
-typeProPolyCoalgFromProCoalgCarrier p x y dmx = (y ** (dmx, id))
+typeProPolyCoalgFromProCoalgCarrier p x y dmxy = (y ** (dmxy, id))
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
