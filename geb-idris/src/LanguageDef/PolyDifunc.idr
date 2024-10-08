@@ -1722,14 +1722,13 @@ typeDiLKanExtCounit = typeProLKanExtCounit
 
 public export
 typeProPolyCoalg : MLPolyCatObj -> TypeProAr
-typeProPolyCoalg (ppos ** pdir) =
-  (Type ** (\y => (pi : ppos ** pdir pi -> y), id))
+typeProPolyCoalg p = (Type ** (InterpPolyFunc p, id))
 
 public export
 typeProPolyCoalgToProCoalgCarrier : (p : MLPolyCatObj) -> (x, y : Type) ->
   InterpTypeProAr (typeProPolyCoalg p) x y ->
   (x -> InterpPolyFunc p y)
-typeProPolyCoalgToProCoalgCarrier (ppos ** pdir) x y
+typeProPolyCoalgToProCoalgCarrier p x y
   (arpos ** (arcont, arcov)) elx =
     (fst (arcont elx) ** arcov . snd (arcont elx))
 
@@ -1737,7 +1736,7 @@ public export
 typeProPolyCoalgFromProCoalgCarrier : (p : MLPolyCatObj) -> (x, y : Type) ->
   (x -> InterpPolyFunc p y) ->
   InterpTypeProAr (typeProPolyCoalg p) x y
-typeProPolyCoalgFromProCoalgCarrier (ppos ** pdir) x y dmx = (y ** (dmx, id))
+typeProPolyCoalgFromProCoalgCarrier p x y dmx = (y ** (dmx, id))
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
