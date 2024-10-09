@@ -1762,6 +1762,22 @@ typeProPolyCoalgFromProCoalgCarrier : (p : MLPolyCatObj) -> (x, y : Type) ->
   InterpTypeProAr (typeProPolyCoalg p) x y
 typeProPolyCoalgFromProCoalgCarrier p x y dmxy = (y ** (dmxy, id))
 
+-- Note that the profunctor `(x, y) -> x -> p y` is
+-- precisely what we have earlier called `FunctorExp p`,
+-- which we use as a utility function to define `RKanExt p`.
+
+public export
+typeProPolyCoalgToFunctorExp : (p : MLPolyCatObj) -> (x, y : Type) ->
+  InterpTypeProAr (typeProPolyCoalg p) x y ->
+  FunctorExp (InterpPolyFunc p) x y
+typeProPolyCoalgToFunctorExp = typeProPolyCoalgToProCoalgCarrier
+
+public export
+typeProPolyCoalgFromFunctorExp : (p : MLPolyCatObj) -> (x, y : Type) ->
+  FunctorExp (InterpPolyFunc p) x y ->
+  InterpTypeProAr (typeProPolyCoalg p) x y
+typeProPolyCoalgFromFunctorExp = typeProPolyCoalgFromProCoalgCarrier
+
 ------------------------------------------------------
 ------------------------------------------------------
 ---- Polynomial dialgebras as profunctor algebras ----
