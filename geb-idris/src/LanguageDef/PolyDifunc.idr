@@ -1768,6 +1768,9 @@ typeProPolyCoalgFromProCoalgCarrier p x y dmxy = (y ** (dmxy, id))
 ------------------------------------------------------
 ------------------------------------------------------
 
+-- First, we compute dialgebras where the domain functor is a (covariant)
+-- representable.
+
 public export
 typeProRepPolyDialg : Type -> MLPolyCatObj -> TypeProAr
 typeProRepPolyDialg p q =
@@ -1791,6 +1794,43 @@ typeProRepPolyDialgFromDialgCarrier : (p : Type) -> (q : MLPolyCatObj) ->
   InterpTypeProAr (typeProRepPolyDialg p q) x x
 typeProRepPolyDialgFromDialgCarrier p q x mqdm =
   ((x ** fst . mqdm) ** (id, \(m1 ** idx) => snd (mqdm m1) idx))
+
+-- Then, we compute general dialgebras where the domain functor is any
+-- (covariant) polynomial functor, given that such a functor is a coproduct
+-- over its positions of (covariant) representables.
+
+public export
+typeProPolyDialg : MLPolyCatObj -> MLPolyCatObj -> TypeProAr
+typeProPolyDialg p q =
+  TypeParaSetProduct {a=(pfPos p)} (\i => typeProRepPolyDialg (pfDir {p} i) q)
+
+public export
+typeProPolyDialgToDialgCarrier : (p, q : MLPolyCatObj) ->
+  (x : Type) ->
+  InterpTypeProAr (typeProPolyDialg p q) x x ->
+  (InterpPolyFunc p x -> InterpPolyFunc q x)
+typeProPolyDialgToDialgCarrier p q x (aridx ** (arcont, arconv)) (pi ** pdm)
+    with (aridx pi) proof eq
+  typeProPolyDialgToDialgCarrier p q x (aridx ** (arcont, arconv)) (pi ** pdm)
+    | (ty ** m1) =
+      let
+        arcomp =
+          \pd : pfDir {p} pi =>
+            replace eq {p=(\aridxpi => let (ty ** m1) = aridxpi in ty)} $
+              arcont (pdm pd) pi
+      in
+      (m1 arcomp **
+       \qd => arconv (pi ** rewrite eq in (arcomp ** qd)))
+
+public export
+typeProPolyDialgFromDialgCarrier : (p, q : MLPolyCatObj) ->
+  (x : Type) ->
+  (InterpPolyFunc p x -> InterpPolyFunc q x) ->
+  InterpTypeProAr (typeProPolyDialg p q) x x
+typeProPolyDialgFromDialgCarrier p q x mqdm =
+  (\pi => (x ** \pdm => fst $ mqdm (pi ** pdm)) **
+   (\ex, pi => ex,
+    \(pi ** pdm ** qd) => snd (mqdm (pi ** pdm)) qd))
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
