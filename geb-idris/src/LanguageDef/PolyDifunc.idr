@@ -851,6 +851,46 @@ public export
 TypeParaContravarPro : MLDirichCatObj -> TypeProAr
 TypeParaContravarPro p = (dfPos p ** (dfDir p, \_ => Void))
 
+-----------------------------
+---- Partial application ----
+-----------------------------
+
+public export
+typeProAppContra : TypeProAr -> Type -> MLPolyCatObj
+typeProAppContra = ipaAppContra {d=Type} {c=Type} TypeMor
+
+public export
+typeProAppCovar : TypeProAr -> Type -> MLDirichCatObj
+typeProAppCovar = ipaAppCovar {d=Type} {c=Type} TypeMor
+
+public export
+typeProAppContraToInterp : (ar : TypeProAr) -> (x, y : Type) ->
+  InterpPolyFunc (typeProAppContra ar x) y ->
+  InterpTypeProAr ar x y
+typeProAppContraToInterp (pos ** (contra, covar)) x y ((i ** dmx) ** dmy) =
+  (i ** (dmx, dmy))
+
+public export
+typeProAppContraFromInterp : (ar : TypeProAr) -> (x, y : Type) ->
+  InterpTypeProAr ar x y ->
+  InterpPolyFunc (typeProAppContra ar x) y
+typeProAppContraFromInterp (pos ** (contra, covar)) x y (i ** (dmx, dmy)) =
+  ((i ** dmx) ** dmy)
+
+public export
+typeProAppCovarToInterp : (ar : TypeProAr) -> (x, y : Type) ->
+  InterpDirichFunc (typeProAppCovar ar y) x ->
+  InterpTypeProAr ar x y
+typeProAppCovarToInterp (pos ** (contra, covar)) x y ((i ** dmy) ** dmx) =
+  (i ** (dmx, dmy))
+
+public export
+typeProAppCovarFromInterp : (ar : TypeProAr) -> (x, y : Type) ->
+  InterpTypeProAr ar x y ->
+  InterpDirichFunc (typeProAppCovar ar y) x
+typeProAppCovarFromInterp (pos ** (contra, covar)) x y (i ** (dmx, dmy)) =
+  ((i ** dmy) ** dmx)
+
 ---------------------------
 ---- Binary coproducts ----
 ---------------------------

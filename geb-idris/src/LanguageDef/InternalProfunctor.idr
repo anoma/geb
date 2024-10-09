@@ -4,6 +4,7 @@ import Library.IdrisUtils
 import Library.IdrisCategories
 import Library.IdrisAlgebra
 import public LanguageDef.InternalCat
+import public LanguageDef.IntArena
 
 ----------------------------------------------------------------------
 ----------------------------------------------------------------------
@@ -1691,6 +1692,30 @@ intPDiNTvcomp c mor comp p q r beta alpha =
           (intPDiNTcovar {mor} {p} {q} alpha i pasn)
           (intPDiNTcovar {mor} {p=q} {q=r} beta
             (intPDiNTpos {mor} {p} {q} alpha i pasn) (qasn i pasn))))
+
+-----------------------------
+-----------------------------
+---- Partial application ----
+-----------------------------
+-----------------------------
+
+-- Apply a profunctor to its contravariant parameter, yielding a covariant
+-- polynomial functor.
+public export
+ipaAppContra : {d, c : Type} -> (dmor : IntDifunctorSig d) ->
+  (ar : IntProAr d c) -> d -> IntArena c
+ipaAppContra {d} {c} dmor ar ed =
+  ((i : ipaPos ar ** dmor ed (ipaContra ar i)) **
+   \(i ** dmcont) => ipaCovar ar i)
+
+-- Apply a profunctor to its covariant parameter, yielding a contravariant
+-- polynomial (Dirichlet) functor.
+public export
+ipaAppCovar : {d, c : Type} -> (cmor : IntDifunctorSig c) ->
+  (ar : IntProAr d c) -> c -> IntArena d
+ipaAppCovar {d} {c} cmor ar ec =
+  ((i : ipaPos ar ** cmor (ipaCovar ar i) ec) **
+   \(i ** dmcont) => ipaContra ar i)
 
 ------------------------------------------------------
 ------------------------------------------------------
