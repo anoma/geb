@@ -1704,10 +1704,10 @@ typeProLKanExtCounit (qpos ** (qcontra, qcovar)) (ppos ** pdir) =
 public export
 typeDiLKanExtUnit : (q : TypeProAr) -> (p : TypeProAr) ->
   TypeDiNTar p (PolyPrecompTypePro q $ typeProArLKanExt q p)
-typeDiLKanExtUnit (qpos ** (qcontra, qcovar)) (ppos ** (pcontra, pcovar)) =
-  (\pi, asn => (pi ** \qd => fst qd) **
-   (\pi, asn, pcont, qd => fst (snd qd) pcont,
-    \pi, asn, qd => snd (snd $ fst qd) (snd qd)))
+typeDiLKanExtUnit q p =
+  TypeProNTrestrict p
+    (PolyPrecompTypePro q $ typeProArLKanExt q p)
+    (typeProLKanExtUnit q p)
 
 public export
 typeDiLKanExtCounit : (q : TypeProAr) -> (p : MLPolyCatObj) ->
