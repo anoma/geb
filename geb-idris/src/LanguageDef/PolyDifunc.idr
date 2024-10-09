@@ -1762,6 +1762,36 @@ typeProPolyCoalgFromProCoalgCarrier : (p : MLPolyCatObj) -> (x, y : Type) ->
   InterpTypeProAr (typeProPolyCoalg p) x y
 typeProPolyCoalgFromProCoalgCarrier p x y dmxy = (y ** (dmxy, id))
 
+------------------------------------------------------
+------------------------------------------------------
+---- Polynomial dialgebras as profunctor algebras ----
+------------------------------------------------------
+------------------------------------------------------
+
+public export
+typeProRepPolyDialg : Type -> MLPolyCatObj -> TypeProAr
+typeProRepPolyDialg p q =
+  ((ty : Type ** (p -> ty) -> InterpPolyFunc q ty) **
+   (\(ty ** m1) => ty,
+    \(ty ** m1) => (idx : p -> ty ** pfDir {p=q} (fst $ m1 idx))))
+
+public export
+typeProRepPolyDialgToDialgCarrier : (p : Type) -> (q : MLPolyCatObj) ->
+  (x : Type) ->
+  InterpTypeProAr (typeProRepPolyDialg p q) x x ->
+  (CovarHomFunc p x -> InterpPolyFunc q x)
+typeProRepPolyDialgToDialgCarrier p q x
+  ((ty ** m1) ** (arcont, arcov)) idx =
+    (fst (m1 (arcont . idx)) ** \qd => arcov (arcont . idx ** qd))
+
+public export
+typeProRepPolyDialgFromDialgCarrier : (p : Type) -> (q : MLPolyCatObj) ->
+  (x : Type) ->
+  (CovarHomFunc p x -> InterpPolyFunc q x) ->
+  InterpTypeProAr (typeProRepPolyDialg p q) x x
+typeProRepPolyDialgFromDialgCarrier p q x mqdm =
+  ((x ** mqdm) ** (id, \(m1 ** idx) => snd (mqdm m1) idx))
+
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 ---- Category of pi types, viewed as a subcategory of the category of monos ----
