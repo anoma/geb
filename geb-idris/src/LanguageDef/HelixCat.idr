@@ -46,11 +46,11 @@ record HelixObj where
   hDirich : Type
 
 public export
-record HelixReqMorphs (h : HelixObj) where
-  constructor HRM
-  hrmCoasn : hCodirich h -> hCopoly h
-  hrmPolyArr : hCopoly h -> hPoly h
-  hrmAsn : hPoly h -> hDirich h
+record HelixInternalMorphs (h : HelixObj) where
+  constructor HIM
+  himCoasn : hCodirich h -> hCopoly h
+  himPolyArr : hCopoly h -> hPoly h
+  himAsn : hPoly h -> hDirich h
 
 -------------------
 ---- Morphisms ----
@@ -105,8 +105,8 @@ hmDomDirichArr {h} {h'} hm = hmDomAsn hm . hmDomPolyArr hm . hmDomCoasn hm
 ----------------------------
 
 public export
-hmId : {h : HelixObj} -> HelixReqMorphs h -> HelixMor h h
-hmId {h} hrm = HMor id (hrmCoasn hrm) id (hrmPolyArr hrm) id (hrmAsn hrm) id
+hmId : {h : HelixObj} -> HelixInternalMorphs h -> HelixMor h h
+hmId {h} him = HMor id (himCoasn him) id (himPolyArr him) id (himAsn him) id
 
 public export
 hmComp : {hx, hy, hz : HelixObj} ->
