@@ -18,6 +18,10 @@ import public LanguageDef.SlicePolyCat
 ------------------------
 ------------------------
 
+-----------------
+---- Objects ----
+-----------------
+
 -- These four objects will be treated as a twisted-arrow morphism from
 -- 'Copoly -> Poly' to 'Codirich -> Dirich' -- but with the morphisms
 -- themselves unspecified, so that we can view the composite "Helix" object
@@ -40,6 +44,17 @@ record HelixObj where
   hCopoly : Type
   hPoly : Type
   hDirich : Type
+
+public export
+record HelixReqMorphs (h : HelixObj) where
+  constructor HRM
+  hrmCoasn : hCodirich h -> hCopoly h
+  hrmPolyArr : hCopoly h -> hPoly h
+  hrmAsn : hPoly h -> hDirich h
+
+-------------------
+---- Morphisms ----
+-------------------
 
 -- The seven morphisms of the underlying category which comprise a helix
 -- morphism form a chain (it is acycling and unbranching), and it orders
@@ -84,3 +99,25 @@ public export
 hmDomDirichArr : {h, h' : HelixObj} ->
   HelixMor h h' -> hCodirich h -> hDirich h
 hmDomDirichArr {h} {h'} hm = hmDomAsn hm . hmDomPolyArr hm . hmDomCoasn hm
+
+----------------------------
+---- Category structure ----
+----------------------------
+
+public export
+hmId : {h : HelixObj} -> HelixReqMorphs h -> HelixMor h h
+hmId {h} hrm = HMor id (hrmCoasn hrm) id (hrmPolyArr hrm) id (hrmAsn hrm) id
+
+public export
+hmComp : {hx, hy, hz : HelixObj} ->
+  HelixReqMorphs hx -> HelixReqMorphs hz ->
+  HelixMor hy hz -> HelixMor hx hy -> HelixMor hx hz
+hmComp {hx} {hy} {hz} hrmx hrmz hm' hm =
+  HMor
+    (hmCodirich hm' . hmCodirich hm)
+    (hrmCoasn hrmz)
+    (hmCopoly hm . hmCopoly hm')
+    (hrmPolyArr hrmx)
+    (hmPoly hm' . hmPoly hm)
+    (hrmAsn hrmz)
+    (hmDirich hm . hmDirich hm')
