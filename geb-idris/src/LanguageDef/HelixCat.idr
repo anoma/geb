@@ -85,56 +85,56 @@ hmDomDirichArr : {h, h' : HelixObj} ->
   HelixMor h h' -> hCodirich h -> hDirich h
 hmDomDirichArr {h} {h'} hm = hmDomAsn hm . hmDomPolyArr hm . hmDomCoasn hm
 
------------------------
------------------------
----- Tetrafunctors ----
------------------------
------------------------
+-------------------------------
+-------------------------------
+---- Ropes (tetrafunctors) ----
+-------------------------------
+-------------------------------
 
 public export
-record MLTetraFunc where
-  constructor MLTF
-  mltfPos : Type
-  mltfDir : mltfPos -> HelixObj
+record MLRope where
+  constructor MLR
+  mlrPos : Type
+  mlrDir : mlrPos -> HelixObj
 
 public export
-mltfCodirich : (mltf : MLTetraFunc) -> mltfPos mltf -> Type
-mltfCodirich mltf = hCodirich . mltfDir mltf
+mlrCodirich : (mlr : MLRope) -> mlrPos mlr -> Type
+mlrCodirich mlr = hCodirich . mlrDir mlr
 
 public export
-mltfCopoly : (mltf : MLTetraFunc) -> mltfPos mltf -> Type
-mltfCopoly mltf = hCopoly . mltfDir mltf
+mlrCopoly : (mlr : MLRope) -> mlrPos mlr -> Type
+mlrCopoly mlr = hCopoly . mlrDir mlr
 
 public export
-mltfPoly : (mltf : MLTetraFunc) -> mltfPos mltf -> Type
-mltfPoly mltf = hPoly . mltfDir mltf
+mlrPoly : (mlr : MLRope) -> mlrPos mlr -> Type
+mlrPoly mlr = hPoly . mlrDir mlr
 
 public export
-mltfDirich : (mltf : MLTetraFunc) -> mltfPos mltf -> Type
-mltfDirich mltf = hDirich . mltfDir mltf
+mlrDirich : (mlr : MLRope) -> mlrPos mlr -> Type
+mlrDirich mlr = hDirich . mlrDir mlr
 
 public export
-record InterpMLTF (mltf: MLTetraFunc) (h : HelixObj) where
-  constructor IMLTF
-  imltfPos : mltfPos mltf
-  imltfDirAsn : HelixMor (mltfDir mltf imltfPos) h
+record InterpMLR (mlr: MLRope) (h : HelixObj) where
+  constructor Imlr
+  imlrPos : mlrPos mlr
+  imlrDirAsn : HelixMor (mlrDir mlr imlrPos) h
 
 public export
-imltfDirich : {h : HelixObj} -> {mltf : MLTetraFunc} ->
-  (el : InterpMLTF mltf h) -> hDirich h -> mltfDirich mltf (imltfPos el)
-imltfDirich {h} {mltf} el = hmDirich (imltfDirAsn el)
+imlrDirich : {h : HelixObj} -> {mlr : MLRope} ->
+  (el : InterpMLR mlr h) -> hDirich h -> mlrDirich mlr (imlrPos el)
+imlrDirich {h} {mlr} el = hmDirich (imlrDirAsn el)
 
 public export
-imltfPoly : {h : HelixObj} -> {mltf : MLTetraFunc} ->
-  (el : InterpMLTF mltf h) -> mltfPoly mltf (imltfPos el) -> hPoly h
-imltfPoly {h} {mltf} el = hmPoly (imltfDirAsn el)
+imlrPoly : {h : HelixObj} -> {mlr : MLRope} ->
+  (el : InterpMLR mlr h) -> mlrPoly mlr (imlrPos el) -> hPoly h
+imlrPoly {h} {mlr} el = hmPoly (imlrDirAsn el)
 
 public export
-imltfCodirich : {h : HelixObj} -> {mltf : MLTetraFunc} ->
-  (el : InterpMLTF mltf h) -> mltfCodirich mltf (imltfPos el) -> hCodirich h
-imltfCodirich {h} {mltf} el = hmCodirich (imltfDirAsn el)
+imlrCodirich : {h : HelixObj} -> {mlr : MLRope} ->
+  (el : InterpMLR mlr h) -> mlrCodirich mlr (imlrPos el) -> hCodirich h
+imlrCodirich {h} {mlr} el = hmCodirich (imlrDirAsn el)
 
 public export
-imltfCopoly : {h : HelixObj} -> {mltf : MLTetraFunc} ->
-  (el : InterpMLTF mltf h) -> hCopoly h -> mltfCopoly mltf (imltfPos el)
-imltfCopoly {h} {mltf} el = hmCopoly (imltfDirAsn el)
+imlrCopoly : {h : HelixObj} -> {mlr : MLRope} ->
+  (el : InterpMLR mlr h) -> hCopoly h -> mlrCopoly mlr (imlrPos el)
+imlrCopoly {h} {mlr} el = hmCopoly (imlrDirAsn el)
