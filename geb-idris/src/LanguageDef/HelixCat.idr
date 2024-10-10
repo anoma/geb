@@ -109,15 +109,21 @@ hmId : {h : HelixObj} -> HelixReqMorphs h -> HelixMor h h
 hmId {h} hrm = HMor id (hrmCoasn hrm) id (hrmPolyArr hrm) id (hrmAsn hrm) id
 
 public export
-hmComp : {hx, hy, hz : HelixObj} ->
-  HelixReqMorphs hx -> HelixReqMorphs hz ->
+record HelixCompReqMorphs (dom, cod : HelixObj) where
+  constructor HCRM
+  hcrmCoasn : hCodirich cod -> hCopoly cod
+  hcrmPolyArr : hCopoly dom -> hPoly dom
+  hcrmAsn : hPoly cod -> hDirich cod
+
+public export
+hmComp : {hx, hy, hz : HelixObj} -> HelixCompReqMorphs hx hz ->
   HelixMor hy hz -> HelixMor hx hy -> HelixMor hx hz
-hmComp {hx} {hy} {hz} hrmx hrmz hm' hm =
+hmComp {hx} {hy} {hz} hcrm hm' hm =
   HMor
     (hmCodirich hm' . hmCodirich hm)
-    (hrmCoasn hrmz)
+    (hcrmCoasn hcrm)
     (hmCopoly hm . hmCopoly hm')
-    (hrmPolyArr hrmx)
+    (hcrmPolyArr hcrm)
     (hmPoly hm' . hmPoly hm)
-    (hrmAsn hrmz)
+    (hcrmAsn hcrm)
     (hmDirich hm . hmDirich hm')
