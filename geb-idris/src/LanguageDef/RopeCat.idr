@@ -69,13 +69,10 @@ imlrCopoly {h} {mlr} el = hmCopoly (imlrDirAsn el)
 
 public export
 InterpMLRmap : {mlr: MLRope} -> {h, h' : HelixObj} ->
-  HelixMor h h' ->
-  (imlr : InterpMLR mlr h) ->
-  HelixCompReqMorphs (mlrDir mlr $ imlrPos imlr) h' ->
-  InterpMLR mlr h'
-InterpMLRmap {mlr} {h} {h'} hm imlr hcrm =
+  HelixMor h h' -> InterpMLR mlr h -> InterpMLR mlr h'
+InterpMLRmap {mlr} {h} {h'} hm imlr =
   IMLR
     (imlrPos imlr)
-    (hmComp {hx=(mlrDir mlr $ imlrPos imlr)} {hy=h} {hz=h'} hcrm
+    (hmComp {hx=(mlrDir mlr $ imlrPos imlr)} {hy=h} {hz=h'}
       hm
       (imlrDirAsn imlr))
