@@ -43,7 +43,7 @@ mlrDirich mlr = hDirich . mlrDir mlr
 
 public export
 record InterpMLR (mlr: MLRope) (h : HelixObj) where
-  constructor Imlr
+  constructor IMLR
   imlrPos : mlrPos mlr
   imlrDirAsn : HelixMor (mlrDir mlr imlrPos) h
 
@@ -66,3 +66,16 @@ public export
 imlrCopoly : {h : HelixObj} -> {mlr : MLRope} ->
   (el : InterpMLR mlr h) -> hCopoly h -> mlrCopoly mlr (imlrPos el)
 imlrCopoly {h} {mlr} el = hmCopoly (imlrDirAsn el)
+
+public export
+InterpMLRmap : {mlr: MLRope} -> {h, h' : HelixObj} ->
+  HelixMor h h' ->
+  (imlr : InterpMLR mlr h) ->
+  HelixCompReqMorphs (mlrDir mlr $ imlrPos imlr) h' ->
+  InterpMLR mlr h'
+InterpMLRmap {mlr} {h} {h'} hm imlr hcrm =
+  IMLR
+    (imlrPos imlr)
+    (hmComp {hx=(mlrDir mlr $ imlrPos imlr)} {hy=h} {hz=h'} hcrm
+      hm
+      (imlrDirAsn imlr))
