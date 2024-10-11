@@ -1139,6 +1139,34 @@ typeParaProj2 p q =
    (typeParaProj2contra p q,
     typeParaProj2covar p q))
 
+----------------------------------
+---- Binary parallel products ----
+----------------------------------
+
+public export
+TypeParaParProductPos : TypeProAr -> TypeProAr -> Type
+TypeParaParProductPos p q =
+  Pair (ipaPos p) (ipaPos q)
+
+public export
+TypeParaParProductContra : (p, q : TypeProAr) ->
+  TypeParaParProductPos p q -> Type
+TypeParaParProductContra p q i =
+  Pair (ipaContra p (fst i)) (ipaContra q (snd i))
+
+public export
+TypeParaParProductCovar : (p, q : TypeProAr) ->
+  TypeParaParProductPos p q -> Type
+TypeParaParProductCovar p q i =
+  Pair (ipaCovar p (fst i)) (ipaCovar q (snd i))
+
+public export
+TypeParaParProduct : TypeProAr -> TypeProAr -> TypeProAr
+TypeParaParProduct p q =
+  (TypeParaParProductPos p q **
+   (TypeParaParProductContra p q,
+    TypeParaParProductCovar p q))
+
 ----------------------
 ---- Set products ----
 ----------------------
