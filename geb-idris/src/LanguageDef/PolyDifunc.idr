@@ -1687,6 +1687,107 @@ typeProCurry {p} {q} {r} ar =
    (typeProCurryContra {p} {q} {r} ar,
     typeProCurryCovar {p} {q} {r} ar))
 
+----------------------------------
+---- Parallel product closure ----
+----------------------------------
+
+-- As with hom-objects, we compute the parallel product closure in steps.
+
+-- First we consider parallel-closure-objects whose domains are covariant
+-- representables -- that is, they ignore their contravariant arguments (in
+-- other words, they are representables represened by pairs with contravariant
+-- component `Unit`).
+
+public export
+TypeParaCovarRepParClosPos : Type -> TypeProAr -> Type
+TypeParaCovarRepParClosPos p q = (qi : ipaPos q ** ipaCovar q qi -> p)
+
+public export
+TypeParaCovarRepParClosContra : (p : Type) -> (q : TypeProAr) ->
+  (i : TypeParaCovarRepParClosPos p q) -> Type
+TypeParaCovarRepParClosContra p q i = ipaContra q $ fst i
+
+public export
+TypeParaCovarRepParClosCovar : (p : Type) -> (q : TypeProAr) ->
+  (i : TypeParaCovarRepParClosPos p q) -> Type
+TypeParaCovarRepParClosCovar p q i = ipaCovar q $ fst i
+
+public export
+TypeParaCovarRepParClos : Type -> TypeProAr -> TypeProAr
+TypeParaCovarRepParClos p q =
+  (TypeParaCovarRepParClosPos p q **
+   (TypeParaCovarRepParClosContra p q,
+    TypeParaCovarRepParClosCovar p q))
+
+public export
+typeParaCovarRepParEvalPos : (p : Type) -> (q : TypeProAr) ->
+  TypeProNTpos
+    (TypeParaParProduct (TypeParaCovarRepParClos p q) (TypeParaCovarRep p))
+    q
+typeParaCovarRepParEvalPos p q i = fst $ fst i
+
+public export
+typeParaCovarRepParEvalContra : (p : Type) -> (q : TypeProAr) ->
+  TypeProNTcontra
+    (TypeParaParProduct (TypeParaCovarRepParClos p q) (TypeParaCovarRep p))
+    q
+    (typeParaCovarRepParEvalPos p q)
+typeParaCovarRepParEvalContra p q i d = fst d
+
+public export
+typeParaCovarRepParEvalCovar : (p : Type) -> (q : TypeProAr) ->
+  TypeProNTcovar
+    (TypeParaParProduct (TypeParaCovarRepParClos p q) (TypeParaCovarRep p))
+    q
+    (typeParaCovarRepParEvalPos p q)
+typeParaCovarRepParEvalCovar p q i d = (d, snd (fst i) d)
+
+public export
+typeParaCovarRepParEval : (p : Type) -> (q : TypeProAr) ->
+  TypeProNTar
+    (TypeParaParProduct (TypeParaCovarRepParClos p q) (TypeParaCovarRep p))
+    q
+typeParaCovarRepParEval p q =
+  (typeParaCovarRepParEvalPos p q **
+   (typeParaCovarRepParEvalContra p q,
+    typeParaCovarRepParEvalCovar p q))
+
+public export
+typeParaCovarRepParCurryPos : {q : Type} -> {p, r : TypeProAr} ->
+  TypeProNTar (TypeParaParProduct p (TypeParaCovarRep q)) r ->
+  TypeProNTpos p (TypeParaCovarRepParClos q r)
+typeParaCovarRepParCurryPos {q} {p} {r} (onpos ** (oncontra, oncovar)) i =
+  (onpos (i, ()) ** snd . oncovar (i, ()))
+
+public export
+typeParaCovarRepParCurryContra : {q : Type} -> {p, r : TypeProAr} ->
+  (ar : TypeProNTar (TypeParaParProduct p (TypeParaCovarRep q)) r) ->
+  TypeProNTcontra
+    p
+    (TypeParaCovarRepParClos q r)
+    (typeParaCovarRepParCurryPos {q} {p} {r} ar)
+typeParaCovarRepParCurryContra (onpos ** (oncontra, oncovar)) pi pcont =
+  oncontra (pi, ()) (pcont, ())
+
+public export
+typeParaCovarRepParCurryCovar : {q : Type} -> {p, r : TypeProAr} ->
+  (ar : TypeProNTar (TypeParaParProduct p (TypeParaCovarRep q)) r) ->
+  TypeProNTcovar
+    p
+    (TypeParaCovarRepParClos q r)
+    (typeParaCovarRepParCurryPos {q} {p} {r} ar)
+typeParaCovarRepParCurryCovar (onpos ** (oncontra, oncovar)) pi =
+  fst . oncovar (pi, ())
+
+public export
+typeParaCovarRepParCurry : {q : Type} -> {p, r : TypeProAr} ->
+  TypeProNTar (TypeParaParProduct p (TypeParaCovarRep q)) r ->
+  TypeProNTar p (TypeParaCovarRepParClos q r)
+typeParaCovarRepParCurry {q} {p} {r} ar =
+  (typeParaCovarRepParCurryPos {q} {p} {r} ar **
+   (typeParaCovarRepParCurryContra {q} {p} {r} ar,
+    typeParaCovarRepParCurryCovar {q} {p} {r} ar))
+
 --------------------------------------
 --------------------------------------
 ---- Composition with polynomials ----
