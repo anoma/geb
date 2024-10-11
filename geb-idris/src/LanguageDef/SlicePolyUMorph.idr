@@ -1479,7 +1479,7 @@ spfdCompToPosNT {x} {y} {z} (SPFD qpos qdir) (SPFD rpos rdir) =
 ---- Representable copresheaves on `SliceObj dom`) ----
 -------------------------------------------------------
 
--- See formula 5.27 in "Polynomial Functors: A Mathematical Theory
+-- See formula 5.28 in "Polynomial Functors: A Mathematical Theory
 -- of Interaction".
 public export
 spfdRepHomObj : {dom : Type} ->
