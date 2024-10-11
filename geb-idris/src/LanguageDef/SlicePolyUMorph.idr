@@ -2513,6 +2513,36 @@ spfdNuToCoalgCovarSl :
 spfdNuToCoalgCovarSl {x} {w} f k =
   spfdNuToCoalgCovar {x} f (Sigma {a=w} . k)
 
+---------------------
+---------------------
+---- Free monads ----
+---------------------
+---------------------
+
+-- The free monad of a polynomial functor `f` can be defined pointwise
+-- at each object `a` as the initial algebra of the polynomial functor
+-- `x -> a + f x`.  From the pointwise definition, we can then extract
+-- the position-set (as the functor applied to the terminal object) and
+-- then the direction-sets.
+public export
+spfdFMbase : {x : Type} -> SPFData x x -> SliceObj x -> SPFData x x
+spfdFMbase {x} f a = spfdCoproduct {dom=x} {cod=x} (SPFDataConst x a) f
+
+public export
+spfdInterpFree : {x : Type} -> SPFData x x -> SliceEndofunctor x
+spfdInterpFree {x} f = SPFDmu {x} . spfdFMbase {x} f
+
+public export
+spfdFMeval : {x : Type} -> (f : SPFData x x) -> (slv, sla : SliceObj x) ->
+  SliceMorphism {a=x} slv sla -> SliceAlgSPFD f sla ->
+  SliceMorphism {a=x} (spfdInterpFree {x} f slv) sla
+spfdFMeval {x} f slv sla subst alg =
+  spfdCata {x} {spfd=(spfdFMbase {x} f slv)} {a=sla} $
+    \ex, el => case el of
+      (i ** dm) => case i of
+        Left ev => subst ex ev
+        Right ep => alg ex (ep ** dm)
+
 ------------------------------------------------
 ------------------------------------------------
 ---- Universal slice polynomial 2-morphisms ----
