@@ -1280,6 +1280,10 @@ ipaCovar : {d, c : Type} -> (ar : IntProAr d c) -> ipaPos ar -> c
 ipaCovar ar = Builtin.snd $ DPair.snd ar
 
 public export
+ipaProj : {d, c : Type} -> (ar : IntProAr d c) -> ipaPos ar -> IntProAr d c
+ipaProj ar i = (Unit ** (\_ => ipaContra ar i, \_ => ipaCovar ar i))
+
+public export
 IEPAssignPos : {c : Type} ->
   IntDifunctorSig c -> (ar : IntEndoProAr c) -> ipaPos ar -> Type
 IEPAssignPos {c} mor ar i =
@@ -1334,11 +1338,9 @@ IntProArId c = (c ** (id, id))
 public export
 IntProArComp : (e, d, c : Type) -> (dmor : IntDifunctorSig d) ->
   IntProAr e d -> IntProAr d c -> IntProAr e c
-IntProArComp e d c dmor
-  (qpos ** (qcont, qcovar)) (ppos ** (pcont, pcovar)) =
-    ((pi : ppos ** qi : qpos ** dmor (qcovar qi) (pcont pi)) **
-     (\(pi ** qi ** m) => qcont qi,
-      \(pi ** qi ** m) => pcovar pi))
+IntProArComp e d c dmor q p =
+  ((pi : ipaPos p ** qi : ipaPos q ** dmor (ipaCovar q qi) (ipaContra p pi)) **
+   (\pqm => ipaContra q (fst $ snd pqm), \pqm => ipaCovar p (fst pqm)))
 
 public export
 IntEndoProArComp : (c : Type) -> (cmor : IntDifunctorSig c) ->
