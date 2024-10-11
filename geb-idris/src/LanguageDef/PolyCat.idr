@@ -50,7 +50,7 @@ InterpPolyFunc p x = (i : pfPos p ** (pfDir {p} i -> x))
 public export
 InterpPFMap : (p : PolyFunc) -> {0 a, b : Type} ->
   (a -> b) -> InterpPolyFunc p a -> InterpPolyFunc p b
-InterpPFMap (_ ** _) m (i ** d) = (i ** m . d)
+InterpPFMap p m = dpMapSnd $ \_ => (.) m
 
 public export
 (p : PolyFunc) => Functor (InterpPolyFunc p) where
