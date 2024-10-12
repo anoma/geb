@@ -1818,8 +1818,8 @@ TwArrPreshfSig = TwArrCoprSig
 -- The signature of the fmap of a presheaf on the twisted-arrow category
 -- of `Type`.
 public export
-TwArrPreshfDimapSig : TwArrPreshfSig -> Type
-TwArrPreshfDimapSig p =
+TwArrPreshfContraDimapSig : TwArrPreshfSig -> Type
+TwArrPreshfContraDimapSig p =
   (s, t, a, b : Type) -> (mab : a -> b) -> (msa : s -> a) -> (mbt : b -> t) ->
   p s t (mbt . mab . msa) -> p a b mab
 
@@ -1842,8 +1842,8 @@ TwArrPreshfOpSig = TwArrCoprOpSig
 -- in the contravariant position, consistent with the signatures of those
 -- functions independently.
 public export
-TwArrPreshfOpContraDimapSig : TwArrPreshfOpSig -> Type
-TwArrPreshfOpContraDimapSig p =
+TwArrPreshfOpDimapSig : TwArrPreshfOpSig -> Type
+TwArrPreshfOpDimapSig p =
   (s, t, a, b : Type) -> (mba : b -> a) -> (mas : a -> s) -> (mtb : t -> b) ->
   p s t (mas . mba . mtb) -> p a b mba
 
