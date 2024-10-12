@@ -1800,6 +1800,8 @@ TwArrCoprDimapSig p =
   (s, t, a, b : Type) -> (mst : s -> t) -> (mas : a -> s) -> (mtb : t -> b) ->
   p s t mst -> p a b (mtb . mst . mas)
 
+-- This is actually the signature of a copreheaf on op(Tw(Type)), not
+-- a presheaf on Tw(Type).
 public export
 TwArrPreshfContraDimapSig : TwArrPreshfSig -> Type
 TwArrPreshfContraDimapSig p =
