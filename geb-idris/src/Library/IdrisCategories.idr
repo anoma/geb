@@ -1834,7 +1834,13 @@ TwArrPreshfOpSig = TwArrCoprOpSig
 -- of `op(Type)`.
 --
 -- This is the type signature which is consistent with embedding
--- polynomial and Dirichlet functors simultaneously.
+-- polynomial and Dirichlet functors simultaneously:  the arrow points
+-- from the polynomial to the Dirichlet arguments, which is necessary
+-- to allow either of them to be mute (by setting the polynomial directions
+-- to `Void` or the Dirichlet directions to `Unit`), and the polynomial
+-- argument appears in the covariant position and the Dirichlet argument
+-- in the contravariant position, consistent with the signatures of those
+-- functions independently.
 public export
 TwArrPreshfOpContraDimapSig : TwArrPreshfOpSig -> Type
 TwArrPreshfOpContraDimapSig p =
