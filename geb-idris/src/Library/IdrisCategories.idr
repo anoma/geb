@@ -1783,16 +1783,10 @@ Profunctor p => Profunctor (CofreeProcomonad p) where
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
+-- The signature of a copresheaf on the twisted-arrow category of `Type`.
 public export
 TwArrCoprSig : Type
 TwArrCoprSig = (x, y : Type) -> (x -> y) -> Type
-
--- A presheaf on a category `C` (enriched over `Type`) is a functor
--- from `op(C)` to `Type`.  A presheaf on the twisted-arrow category
--- of a category `C` is therefore a functor from `op(Tw(C))` to `Type`.
-public export
-TwArrCoprOpSig : Type
-TwArrCoprOpSig = (x, y : Type) -> (y -> x) -> Type
 
 -- This is the signature of the fmap of a copresheaf on Tw(Type).
 public export
@@ -1800,6 +1794,11 @@ TwArrCoprDimapSig : TwArrCoprSig -> Type
 TwArrCoprDimapSig p =
   (s, t, a, b : Type) -> (mst : s -> t) -> (mas : a -> s) -> (mtb : t -> b) ->
   p s t mst -> p a b (mtb . mst . mas)
+
+-- The signature of a copresheaf on the twisted-arrow category of `op(Type)`.
+public export
+TwArrCoprOpSig : Type
+TwArrCoprOpSig = (x, y : Type) -> (y -> x) -> Type
 
 -- This is the signature of the fmap of a copresheaf on (Tw(op(Type))
 -- (not, for example, a presheaf on Tw(Type)).
