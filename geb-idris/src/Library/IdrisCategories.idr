@@ -1808,6 +1808,36 @@ TwArrCoprOpContraDimapSig p =
   (s, t, a, b : Type) -> (mts : t -> s) -> (msa : s -> a) -> (mbt : b -> t) ->
   p s t mts -> p a b (msa . mts . mbt)
 
+-- The signature of a presheaf on the twisted-arrow category of `Type`
+-- (which may also be called a copresheaf on the opposite of the
+-- twisted-arrow category of `Type`).
+public export
+TwArrPreshfSig : Type
+TwArrPreshfSig = TwArrCoprSig
+
+-- The signature of the fmap of a presheaf on the twisted-arrow category
+-- of `Type`.
+public export
+TwArrPreshfDimapSig : TwArrPreshfSig -> Type
+TwArrPreshfDimapSig p =
+  (s, t, a, b : Type) -> (mab : a -> b) -> (msa : s -> a) -> (mbt : b -> t) ->
+  p s t (mbt . mab . msa) -> p a b mab
+
+-- The signature of a presheaf on the twisted-arrow category of `op(Type)`
+-- (which may also be called a copresheaf on the opposite of the
+-- twisted-arrow category of `op(Type)`).
+public export
+TwArrPreshfOpSig : Type
+TwArrPreshfOpSig = TwArrCoprOpSig
+
+-- The signature of the fmap of a presheaf on the twisted-arrow category
+-- of `op(Type)`.
+public export
+TwArrPreshfOpContraDimapSig : TwArrPreshfOpSig -> Type
+TwArrPreshfOpContraDimapSig p =
+  (s, t, a, b : Type) -> (mba : b -> a) -> (mas : a -> s) -> (mtb : t -> b) ->
+  p s t (mas . mba . mtb) -> p a b mba
+
 public export
 TwArrCoprCompose : TwArrCoprSig -> TwArrCoprSig -> TwArrCoprSig
 TwArrCoprCompose q p x z mxz =
