@@ -1832,6 +1832,9 @@ TwArrPreshfOpSig = TwArrCoprOpSig
 
 -- The signature of the fmap of a presheaf on the twisted-arrow category
 -- of `op(Type)`.
+--
+-- This is the type signature which is consistent with embedding
+-- polynomial and Dirichlet functors simultaneously.
 public export
 TwArrPreshfOpContraDimapSig : TwArrPreshfOpSig -> Type
 TwArrPreshfOpContraDimapSig p =
