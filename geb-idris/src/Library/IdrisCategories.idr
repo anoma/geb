@@ -1794,14 +1794,15 @@ public export
 TwArrCoprOpSig : Type
 TwArrCoprOpSig = (x, y : Type) -> (y -> x) -> Type
 
+-- This is the signature of the fmap of a copresheaf on Tw(Type).
 public export
 TwArrCoprDimapSig : TwArrCoprSig -> Type
 TwArrCoprDimapSig p =
   (s, t, a, b : Type) -> (mst : s -> t) -> (mas : a -> s) -> (mtb : t -> b) ->
   p s t mst -> p a b (mtb . mst . mas)
 
--- This is the signature of a copresheaf on (Tw(op(Type)) (not, for example,
--- a presheaf on Tw(Type)).
+-- This is the signature of the fmap of a copresheaf on (Tw(op(Type))
+-- (not, for example, a presheaf on Tw(Type)).
 public export
 TwArrCoprOpContraDimapSig : TwArrCoprOpSig -> Type
 TwArrCoprOpContraDimapSig p =
