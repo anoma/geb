@@ -1086,7 +1086,8 @@ ProfYonedaEmbedProf = PrePostPairProf
 -- transformations.  This type is an explicit name for that object on
 -- the category `(op(Type), Type)`.  An analogous type is called
 -- `Yoneda/runYoneda` in some Haskell libraries, where it is referred
--- to as "the cofree profunctor".
+-- to as "the cofree profunctor".  It is precisely what we have called
+-- `ProYo` in `IdrisCategories.idr`.
 public export
 ProfYonedaLemmaNT : ProfunctorSig -> ProfunctorSig
 ProfYonedaLemmaNT p c d = ProfNT (ProfYonedaEmbed c d) p
@@ -1115,7 +1116,8 @@ ProfYonedaLemmaR p dyembed {a=i} {b=j} = dyembed (id {a=i}, id {a=j})
 -- This type is an explicit name for that object on the category
 -- `(op(Type), Type)`.  An analogous type is called `CoYoneda` in some
 -- Haskell libraries.  It is the existential dual of `ProfYonedaLemmaNT`
--- (the "cofree profunctor").
+-- (the "cofree profunctor").  It is precisely what we have called
+-- `CoProYo` in `IdrisCategories.idr`.
 public export
 ProfCoYonedaLemmaCoend : ProfunctorSig -> ProfunctorSig
 ProfCoYonedaLemmaCoend p c d =
