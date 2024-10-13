@@ -1867,6 +1867,20 @@ public export
 TwArrPreshfOpIdDimap : TwArrPreshfOpDimapSig TwArrPreshfOpId
 TwArrPreshfOpIdDimap s t a b mba mas mtb = id
 
+-- This computes the requirement to build a `(q . p) a b mba`
+-- in the style of profunctor composition -- starting from an
+-- `(s, t, mts)` with a `(u, v, mvu)` as an intermediate object.
+public export
+data TwArrPreshfOpComposeSig :
+    TwArrPreshfOpSig -> TwArrPreshfOpSig -> TwArrPreshfOpSig where
+  TwAPOCDS : (q, p : TwArrPreshfOpSig) ->
+    (s, t, u, v, a, b : Type) ->
+    (mba : b -> a) -> (mau : a -> u) -> (mvb : v -> b) ->
+    q u v (mau . mba . mvb) ->
+    (mus : u -> s) -> (mtv : t -> v) ->
+    p s t (mus . mau . mba . mvb . mtv) ->
+    TwArrPreshfOpComposeSig q p a b mba
+
 public export
 TwArrPreshfOpCompose : TwArrPreshfOpSig -> TwArrPreshfOpSig -> TwArrPreshfOpSig
 TwArrPreshfOpCompose q p x z mzx =
