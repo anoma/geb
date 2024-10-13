@@ -1274,6 +1274,10 @@ public export
 HomToCompPEA : PolyFunc -> PolyFunc -> PolyEnrAr
 HomToCompPEA p q = PEA (pfPos p -> pfPos q) (pfPosChangeArena p q)
 
+-- This shows that `HomToCompPEA` is an embedding of the postcomposition
+-- functor into the category of polynomial functors (parametric right
+-- adjoints) on `Poly` itself.
+
 public export
 0 HomToCompPEAcorrect : (p, q, r : PolyFunc) ->
   InterpPEA (HomToCompPEA p q) r = pfHomToCompArena p q r
