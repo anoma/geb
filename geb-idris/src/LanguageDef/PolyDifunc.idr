@@ -1808,10 +1808,10 @@ typeParaCovarRepParCurry {q} {p} {r} ar =
 -- after Dirichlets.
 public export
 TypeProPostcompPoly : MLPolyCatObj -> TypeProAr -> TypeProAr
-TypeProPostcompPoly (qpos ** qdir) (ppos ** (pcontra, pcovar)) =
-  ((qi : qpos ** qdir qi -> ppos) **
-   (\(qi ** qm) => (qd : qdir qi) -> pcontra $ qm qd,
-    \(qi ** qm) => (qd : qdir qi ** pcovar $ qm qd)))
+TypeProPostcompPoly q p =
+  ((qi : pfPos q ** pfDir {p=q} qi -> ipaPos p) **
+   (\qiqm => (qd : pfDir {p=q} (fst qiqm)) -> ipaContra p $ snd qiqm qd,
+    \qiqm => (qd : pfDir {p=q} (fst qiqm) ** ipaCovar p $ snd qiqm qd)))
 
 -- We show that that produces the expected composition.
 public export
@@ -1819,7 +1819,7 @@ TypeProPostcompPolyFromInterp : (q : MLPolyCatObj) -> (p : TypeProAr) ->
   (x, y : Type) ->
   InterpPolyFunc q (InterpTypeProAr p x y) ->
   InterpTypeProAr (TypeProPostcompPoly q p) x y
-TypeProPostcompPolyFromInterp (qpos ** qdir) (ppos ** (pcontra, pcovar)) x y
+TypeProPostcompPolyFromInterp q p x y
   (i ** dm) =
     ((i ** \qd => fst (dm qd)) **
      (\ex, qd => fst (snd $ dm qd) ex,
@@ -1830,7 +1830,7 @@ TypeProPostcompPolyToInterp : (q : MLPolyCatObj) -> (p : TypeProAr) ->
   (x, y : Type) ->
   InterpTypeProAr (TypeProPostcompPoly q p) x y ->
   InterpPolyFunc q (InterpTypeProAr p x y)
-TypeProPostcompPolyToInterp (qpos ** qdir) (ppos ** (pcontra, pcovar)) x y
+TypeProPostcompPolyToInterp q p x y
   ((qi ** qm) ** (dmx, dmy)) =
     (qi **
      \qd => (qm qd ** (\ex => dmx ex qd, \pcov => dmy (qd ** pcov))))
@@ -1851,24 +1851,24 @@ PolyPrecompTypePro = flip TypeProPostcompPoly
 
 public export
 typeProArLKanExt : TypeProAr -> TypeProAr -> PolyFunc
-typeProArLKanExt q (ppos ** (pcontra, pcovar)) =
-  (ppos ** \pi => InterpTypeProAr q (pcontra pi) (pcovar pi))
+typeProArLKanExt q p =
+  (ipaPos p ** \pi => InterpTypeProAr q (ipaContra p pi) (ipaCovar p pi))
 
 public export
 typeProLKanExtUnit : (q : TypeProAr) -> (p : TypeProAr) ->
   TypeProNTar p (PolyPrecompTypePro q $ typeProArLKanExt q p)
-typeProLKanExtUnit (qpos ** (qcontra, qcovar)) (ppos ** (pcontra, pcovar)) =
+typeProLKanExtUnit q p =
   (\pi => (pi ** \qi => fst qi) **
    (\pi, pcont, qd => fst (snd qd) pcont,
-    \pi, (qd ** pcov) => snd (snd qd) pcov))
+    \pi, qdpcov => snd (snd $ fst qdpcov) (snd qdpcov)))
 
 public export
 typeProLKanExtCounit : (q : TypeProAr) -> (p : MLPolyCatObj) ->
   PolyNatTrans (typeProArLKanExt q $ PolyPrecompTypePro q p) p
-typeProLKanExtCounit (qpos ** (qcontra, qcovar)) (ppos ** pdir) =
+typeProLKanExtCounit q p =
   (fst **
-   \(pi ** mpqpos), pd =>
-    (mpqpos pd ** (\mpqcont => mpqcont pd, \qcov => (pd ** qcov))))
+   \mpqpos, pd =>
+    (snd mpqpos pd ** (\mpqcont => mpqcont pd, \qcov => (pd ** qcov))))
 
 public export
 typeDiLKanExtUnit : (q : TypeProAr) -> (p : TypeProAr) ->
