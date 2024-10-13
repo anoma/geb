@@ -715,6 +715,10 @@ pfPosChangeArena p q f = (pfPosChangePos p q f ** pfPosChangeDir p q f)
 -- https://ncatlab.org/nlab/show/parametric+right+adjoint correctly, that
 -- in turn also means that that postcomposition functor is itself a
 -- parametric right adjoint (i.e., is polynomial).
+--
+-- See `InterpPEA` and `HomToCompPEA` for an explicit embedding of
+-- the postcomposition functor into the category of polynomial functors
+-- (parametric right adjoints) on `Poly` itself.
 public export
 pfHomToCompArena : PolyFunc -> PolyFunc -> PolyFunc -> PolyFunc
 pfHomToCompArena p q r =
