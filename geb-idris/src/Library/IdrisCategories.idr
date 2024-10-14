@@ -1887,7 +1887,7 @@ TwArrPreshfOpComposeSigDimap : (q, p : TwArrPreshfOpSig) ->
   TwArrPreshfOpDimapSig (TwArrPreshfOpComposeSig q p)
 TwArrPreshfOpComposeSigDimap q p qdm pdm s t a b mba mas mtb
   (TwAPOCDS q p s' t' u' v' s t
-    (mas . mba. mtb) msu' mvt' quv' mus' mtv' pst') =
+    (mas . mba . mtb) msu' mvt' quv' mus' mtv' pst') =
   TwAPOCDS q p s' t' u' v' a b
     mba (msu' . mas) (mtb . mvt') quv' mus' mtv' pst'
 
