@@ -657,6 +657,19 @@ PolyDensityComonad : PolyFunc -> PolyFunc
 PolyDensityComonad f = PolyLKanExt f f
 
 public export
+PolyRKanExtRepPos : Type -> PolyFunc -> Type
+PolyRKanExtRepPos j g = InterpPolyFunc g j
+
+public export
+PolyRKanExtRepDir : (j : Type) -> (g : PolyFunc) ->
+  PolyRKanExtRepPos j g -> Type
+PolyRKanExtRepDir j (gpos ** gdir) i = gdir $ fst i
+
+public export
+PolyRKanExtRep : Type -> PolyFunc -> PolyFunc
+PolyRKanExtRep j g = (PolyRKanExtRepPos j g ** PolyRKanExtRepDir j g)
+
+public export
 pfHomComposePos : Type -> Type -> Type
 pfHomComposePos a b = pfCompositionPos (PFHomArena a) (PFHomArena b)
 
@@ -1145,6 +1158,64 @@ PolyLKnt : (g, j : PolyFunc) ->
   PolyNatTrans g (pfCompositionArena (PolyLKanExt j g) j)
 PolyLKnt (gpos ** gdir) (jpos ** jdir) =
   (\gi => (gi ** \(ji ** jgd) => ji) ** \gi, ((ji ** jgd) ** jd) => jgd jd)
+
+public export
+PolyRKanExtRepUnit : (j : Type) -> (g : PolyFunc) ->
+  PolyNatTrans g (PolyRKanExtRep j $ pfCompositionArena g (PFHomArena j))
+PolyRKanExtRepUnit j (gpos ** gdir) =
+  (\gi => ((gi ** \_ => ()) ** snd) ** \gi => fst)
+
+public export
+PolyRKanExtRepCounit : (j : Type) -> (g : PolyFunc) ->
+  PolyNatTrans (pfCompositionArena (PolyRKanExtRep j g) (PFHomArena j)) g
+PolyRKanExtRepCounit j (gpos ** gdir) =
+  (\i => fst (fst i) **
+   \((gi ** mgdj) ** tounit), gd => (gd ** mgdj gd))
+
+public export
+PolyRKanExtRepToInterp : (j : Type) -> (g : PolyFunc) ->
+  NaturalTransformation
+    (InterpPolyFunc (PolyRKanExtRep j g))
+    (RKanExt (CovarHomFunc j) (InterpPolyFunc g))
+PolyRKanExtRepToInterp j (gpos ** gdir) x ((gi ** mgdj) ** mgdx) y mxjy =
+  (gi ** \gd => mxjy (mgdx gd) (mgdj gd))
+
+public export
+PFfunctorExpMap : (p : PolyFunc) ->
+  (a : Type) ->
+  (0 x, y : Type) -> (x -> y) ->
+  FunctorExp (InterpPolyFunc p) a x -> FunctorExp (InterpPolyFunc p) a y
+PFfunctorExpMap p a x y = (.) . InterpPFMap p
+
+public export
+0 PolyRKanExtRepFromInterp : (j : Type) -> (g : PolyFunc) ->
+  (z : Type) ->
+  (rk : NaturalTransformation
+    (FunctorExp (InterpPolyFunc $ PFHomArena j) z)
+    (InterpPolyFunc g)) ->
+  (rknat :
+    NaturalityCondition
+      (PFfunctorExpMap (PFHomArena j) z)
+      (\_, _ => InterpPFMap g) rk) ->
+  InterpPolyFunc (PolyRKanExtRep j g) z
+PolyRKanExtRepFromInterp j (gpos ** gdir) z rk rknat =
+  (rk j (\_ => (() ** id)) **
+   \gd =>
+    let
+      rkn =
+        rknat z j
+          (\_ => snd (rk j (\_ => (() ** id))) gd)
+          (\ez => (() ** \ej => ez))
+      rkn1 = dpeq1 rkn
+      rkeq :
+        (fst (rk j (\_ => (() ** id))) =
+         fst (rk z (\ez => (() ** \ej => ez)))) =
+          trans
+            (?PolyRKanExtRepFromInterp_hole)
+            rkn1
+    in
+    snd (rk z (\ez => (() ** \ej => ez))) $
+      rewrite sym rkeq in gd)
 
 ------------------------------------------------
 ------------------------------------------------
