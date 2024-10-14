@@ -1882,6 +1882,16 @@ data TwArrPreshfOpComposeSig :
     TwArrPreshfOpComposeSig q p a b mba
 
 public export
+TwArrPreshfOpComposeSigDimap : (q, p : TwArrPreshfOpSig) ->
+  TwArrPreshfOpDimapSig q -> TwArrPreshfOpDimapSig p ->
+  TwArrPreshfOpDimapSig (TwArrPreshfOpComposeSig q p)
+TwArrPreshfOpComposeSigDimap q p qdm pdm s t a b mba mas mtb
+  (TwAPOCDS q p s' t' u' v' s t
+    (mas . mba. mtb) msu' mvt' quv' mus' mtv' pst') =
+  TwAPOCDS q p s' t' u' v' a b
+    mba (msu' . mas) (mtb . mvt') quv' mus' mtv' pst'
+
+public export
 TwArrPreshfOpCompose : TwArrPreshfOpSig -> TwArrPreshfOpSig -> TwArrPreshfOpSig
 TwArrPreshfOpCompose q p x z mzx =
   (y : Type ** mp : (x -> y, y -> z) **
