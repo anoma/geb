@@ -1783,6 +1783,10 @@ Profunctor p => Profunctor (CofreeProcomonad p) where
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
+-------------------------------------------
+---- Functor ((co)presheaf) signatures ----
+-------------------------------------------
+
 -- The signature of a copresheaf on the twisted-arrow category of `Type`.
 public export
 TwArrCoprSig : Type
@@ -1846,6 +1850,10 @@ TwArrPreshfOpDimapSig : TwArrPreshfOpSig -> Type
 TwArrPreshfOpDimapSig p =
   (s, t, a, b : Type) -> (mba : b -> a) -> (mas : a -> s) -> (mtb : t -> b) ->
   p s t (mas . mba . mtb) -> p a b mba
+
+------------------------------------------------
+---- Monoid of profunctor-style composition ----
+------------------------------------------------
 
 public export
 TwArrCoprCompose : TwArrCoprSig -> TwArrCoprSig -> TwArrCoprSig
@@ -1931,6 +1939,10 @@ TwArrCoprOpComposeContraDimap q p qdm pdm s t a b mts msa mbt
       qdm s y a y mys msa id qsy,
       pdm y t y b mty id mbt pyt))
 
+----------------------------------------------------------------------------
+---- Natural transformations (morphisms of the (co)presheaf categories) ----
+----------------------------------------------------------------------------
+
 public export
 TwArrCoprNatTrans : TwArrCoprSig -> TwArrCoprSig -> Type
 TwArrCoprNatTrans p q =
@@ -2010,6 +2022,10 @@ TwArrPreshfOpNatTransHcomp p p' q q' beta alpha x z _
     mus
     mtv
     (alpha s t (mus . mxu . mzx . mvz . mtv) pst))
+
+-------------------------------------------------------------------
+---- Embeddings of ordinary (non-twisted-arrow) (co)presheaves ----
+-------------------------------------------------------------------
 
 public export
 TwArrCoprEmbedCopreshf : (Type -> Type) -> TwArrCoprSig
@@ -2190,6 +2206,10 @@ TwArrPreshfOpEmbedProfFMap : (p, q : Type -> Type -> Type) ->
     (TwArrPreshfOpEmbedProf q)
 TwArrPreshfOpEmbedProfFMap p q pdm qdm gamma a b mba = gamma
 
+------------------------------------------------------------------
+---- Yoneda embeddings of `Type` twisted-arrow (co)presheaves ----
+------------------------------------------------------------------
+
 public export
 TwArrCoprId : TwArrCoprSig
 TwArrCoprId = TwArrCoprEmbedProf HomProf
@@ -2317,6 +2337,10 @@ TwPreshfEmbedOpMor :
   (x, y : Type) -> (myx : y -> x) ->
   TwArrCoprOpNatTrans (TwPreshfEmbedOpObjOmap x) (TwPreshfEmbedOpObjOmap y)
 TwPreshfEmbedOpMor x y myx a b mba mxa = mxa . myx
+
+-----------------------------------------------------------------------------
+---- Yoneda embeddings of twisted-arrow categories into their presheaves ----
+-----------------------------------------------------------------------------
 
 -- Embed an object of the twisted-arrow category of `Type` into the category
 -- of presheaves on the twisted-arrow category of `Type`.  This is the simply
