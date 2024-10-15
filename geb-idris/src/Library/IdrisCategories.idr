@@ -1976,7 +1976,7 @@ TwArrCoprOpNatTransHcomp p p' q q' beta alpha x z mzx
     (y ** (myx, mzy) ** (comm, beta x y myx qxy, alpha y z mzy pyz))
 
 public export
-TwArrPreshfOpNatTrans : TwArrCoprOpSig -> TwArrCoprOpSig -> Type
+TwArrPreshfOpNatTrans : TwArrPreshfOpSig -> TwArrPreshfOpSig -> Type
 TwArrPreshfOpNatTrans = TwArrCoprOpNatTrans
 
 public export
