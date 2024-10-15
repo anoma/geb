@@ -2023,6 +2023,23 @@ TwArrPreshfOpNatTransHcomp p p' q q' beta alpha x z _
     mtv
     (alpha s t (mus . mxu . mzx . mvz . mtv) pst))
 
+-------------------------------
+---- Naturality conditions ----
+-------------------------------
+
+-- The naturality condition for a presheaf on `Tw(op(Type))` (AKA a
+-- copresheaf on `op(Tw(op(Type)))`.
+
+public export
+0 TwArrPreshfOpNaturality : {p, q : TwArrPreshfOpSig} ->
+  TwArrPreshfOpDimapSig p -> TwArrPreshfOpDimapSig q ->
+  TwArrPreshfOpNatTrans p q -> Type
+TwArrPreshfOpNaturality {p} {q} pdm qdm gamma =
+  (s, t, a, b : Type) -> (mba : b -> a) -> (mas : a -> s) -> (mtb : t -> b) ->
+  ExtEq {a=(p s t (mas . mba . mtb))} {b=(q a b mba)}
+    (qdm s t a b mba mas mtb . gamma s t (mas . mba . mtb))
+    (gamma a b mba . pdm s t a b mba mas mtb)
+
 -------------------------------------------------------------------
 ---- Embeddings of ordinary (non-twisted-arrow) (co)presheaves ----
 -------------------------------------------------------------------
