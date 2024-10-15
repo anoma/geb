@@ -1976,6 +1976,42 @@ TwArrCoprOpNatTransHcomp p p' q q' beta alpha x z mzx
     (y ** (myx, mzy) ** (comm, beta x y myx qxy, alpha y z mzy pyz))
 
 public export
+TwArrPreshfOpNatTrans : TwArrCoprOpSig -> TwArrCoprOpSig -> Type
+TwArrPreshfOpNatTrans = TwArrCoprOpNatTrans
+
+public export
+TwArrPreshfOpNatTransId : (p : TwArrPreshfOpSig) -> TwArrPreshfOpNatTrans p p
+TwArrPreshfOpNatTransId p x y myx = Prelude.id
+
+public export
+TwArrPreshfOpNatTransVcomp : (p, q, r : TwArrPreshfOpSig) ->
+  TwArrPreshfOpNatTrans q r ->
+  TwArrPreshfOpNatTrans p q ->
+  TwArrPreshfOpNatTrans p r
+TwArrPreshfOpNatTransVcomp p q r beta alpha x y myx =
+  beta x y myx . alpha x y myx
+
+public export
+TwArrPreshfOpNatTransHcomp : (p, p', q, q' : TwArrPreshfOpSig) ->
+  TwArrPreshfOpNatTrans q q' -> TwArrPreshfOpNatTrans p p' ->
+  TwArrPreshfOpNatTrans
+    (TwArrPreshfOpComposeSig q p)
+    (TwArrPreshfOpComposeSig q' p')
+TwArrPreshfOpNatTransHcomp p p' q q' beta alpha x z _
+  (TwAPOCDS q p s t u v x z
+    mzx mxu mvz
+    quv
+    mus
+    mtv
+    pst) =
+  (TwAPOCDS q' p' s t u v x z
+    mzx mxu mvz
+    (beta u v (mxu . mzx . mvz) quv)
+    mus
+    mtv
+    (alpha s t (mus . mxu . mzx . mvz . mtv) pst))
+
+public export
 TwArrCoprEmbedCopreshf : (Type -> Type) -> TwArrCoprSig
 TwArrCoprEmbedCopreshf f x y mxy = f y
 
