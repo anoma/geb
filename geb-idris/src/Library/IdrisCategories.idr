@@ -2127,6 +2127,69 @@ TwArrCoprOpEmbedProfFMap : (p, q : Type -> Type -> Type) ->
     (TwArrCoprOpEmbedProf q)
 TwArrCoprOpEmbedProfFMap p q pdm qdm alpha x y myx epyx = alpha epyx
 
+-- Embed a copresheaf on `Type` into the category of presheaves on the
+-- twisted-arrow category of `op(Type)`.
+
+public export
+TwArrPreshfOpEmbedCopreshf : (Type -> Type) -> TwArrPreshfOpSig
+TwArrPreshfOpEmbedCopreshf f x y myx = f y
+
+public export
+TwArrPreshfOpEmbedCopreshfMap : (f : Type -> Type) -> Functor f ->
+  TwArrPreshfOpDimapSig (TwArrPreshfOpEmbedCopreshf f)
+TwArrPreshfOpEmbedCopreshfMap f fm s t a b mst mas mtb = map {f} mtb
+
+public export
+TwArrPreshfOpEmbedCopreshfFMap : (f, g : Type -> Type) ->
+  Functor f -> Functor g ->
+  NaturalTransformation f g ->
+  TwArrPreshfOpNatTrans
+    (TwArrPreshfOpEmbedCopreshf f)
+    (TwArrPreshfOpEmbedCopreshf g)
+TwArrPreshfOpEmbedCopreshfFMap f g fm gm alpha a b mab = alpha b
+
+-- Embed a presheaf on `Type` into the category of presheaves on the
+-- twisted-arrow category of `op(Type)`.
+
+public export
+TwArrPreshfOpEmbedPreshf : (Type -> Type) -> TwArrPreshfOpSig
+TwArrPreshfOpEmbedPreshf f x y myx = f x
+
+public export
+TwArrPreshfOpEmbedPreshfContramap : (f : Type -> Type) -> Contravariant f ->
+  TwArrPreshfOpDimapSig (TwArrPreshfOpEmbedPreshf f)
+TwArrPreshfOpEmbedPreshfContramap f fm s t a b mst mas mtb = contramap {f} mas
+
+public export
+TwArrPreshfOpEmbedPreshfFMap : (f, g : Type -> Type) ->
+  Contravariant f -> Contravariant g ->
+  NaturalTransformation f g ->
+  TwArrPreshfOpNatTrans
+    (TwArrPreshfOpEmbedPreshf f)
+    (TwArrPreshfOpEmbedPreshf g)
+TwArrPreshfOpEmbedPreshfFMap f g fm gm alpha a b mab = alpha a
+
+-- Embed an endoprofunctor (AKA difunctor) on `Type` into the category of
+-- presheaves on the twisted-arrow category of `op(Type)`.
+
+public export
+TwArrPreshfOpEmbedProf : (Type -> Type -> Type) -> TwArrPreshfOpSig
+TwArrPreshfOpEmbedProf f x y myx = f x y
+
+public export
+TwArrPreshfOpEmbedProfMap : (p : Type -> Type -> Type) -> Profunctor p ->
+  TwArrPreshfOpDimapSig (TwArrPreshfOpEmbedProf p)
+TwArrPreshfOpEmbedProfMap p pdm s t a b mst = dimap {f=p}
+
+public export
+TwArrPreshfOpEmbedProfFMap : (p, q : Type -> Type -> Type) ->
+  Profunctor p -> Profunctor q ->
+  ProfNT p q ->
+  TwArrPreshfOpNatTrans
+    (TwArrPreshfOpEmbedProf p)
+    (TwArrPreshfOpEmbedProf q)
+TwArrPreshfOpEmbedProfFMap p q pdm qdm gamma a b mba = gamma
+
 public export
 TwArrCoprId : TwArrCoprSig
 TwArrCoprId = TwArrCoprEmbedProf HomProf
