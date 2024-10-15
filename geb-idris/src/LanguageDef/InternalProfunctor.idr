@@ -1789,3 +1789,41 @@ data PProfCatDiagElemMor :
     PProfCatDiagElemMor c mor comp (pos ** (contra, covar))
       (x ** i ** (comp x y (contra i) mcontra mxy, mcovar))
       (y ** i ** (mcontra, comp (covar i) x y mxy mcovar))
+
+-------------------------------------------------------
+-------------------------------------------------------
+---- Profunctors on Idris's base category (`Type`) ----
+-------------------------------------------------------
+-------------------------------------------------------
+
+public export
+0 TypeDimapSig : (0 _ : Type -> Type -> Type) -> Type
+TypeDimapSig p = IntEndoDimapSig Type HomProf p
+
+public export
+0 TypeLmapSig : (0 _ : Type -> Type -> Type) -> Type
+TypeLmapSig p = IntEndoLmapSig Type HomProf p
+
+public export
+0 TypeRmapSig : (0 _ : Type -> Type -> Type) -> Type
+TypeRmapSig p = IntEndoRmapSig Type HomProf p
+
+public export
+0 TypeDimapFromLR : (p : ProfunctorSig) ->
+  TypeLmapSig p -> TypeRmapSig p -> TypeDimapSig p
+TypeDimapFromLR p = IntEndoDimapFromLRmaps Type HomProf p
+
+public export
+0 ProfNaturality : (0 p, q : ProfunctorSig) ->
+  (0 pdm : TypeDimapSig p) -> (0 qdm : TypeDimapSig q) ->
+  ProfNT p q -> Type
+ProfNaturality p q pdm qdm alpha =
+  IntProfNTNaturality Type Type HomProf HomProf p q pdm qdm $ \_, _ => alpha
+
+public export
+0 ProfParanaturality : (0 p, q : ProfunctorSig) ->
+  (0 plm : TypeLmapSig p) -> (0 prm : TypeRmapSig p) ->
+  (0 qlm : TypeLmapSig q) -> (0 qrm : TypeRmapSig q) ->
+  ProfDiNT p q -> Type
+ProfParanaturality p q plm prm qlm qrm =
+  IntParaNTCond Type HomProf p q plm prm qlm qrm
