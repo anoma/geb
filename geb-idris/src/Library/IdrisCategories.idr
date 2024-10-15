@@ -2223,6 +2223,28 @@ TwArrPreshfOpEmbedProfFMap : (p, q : Type -> Type -> Type) ->
     (TwArrPreshfOpEmbedProf q)
 TwArrPreshfOpEmbedProfFMap p q pdm qdm gamma a b mba = gamma
 
+-- The signature of a natural transformation between the embeddings of
+-- two profunctors into the category of presheaves on `Tw(op(Type))`.
+public export
+TwArrPreshfOpEmbeddingNT : (p, q : ProfunctorSig) -> Type
+TwArrPreshfOpEmbeddingNT p q =
+  TwArrPreshfOpNatTrans (TwArrPreshfOpEmbedProf p) (TwArrPreshfOpEmbedProf q)
+
+-- Suppose we have two profunctors and a natural transformation between
+-- their embeddings into the category of presheaves on `Tw(op(Type))`.
+-- Then we can derive a mapping with the signature of a paranatural, or
+-- generally dinatural, transformation between the original
+-- profunctors.  Note that we can _not_ derive a natural transformation,
+-- because two arbitrary types do not necessarily have a morphism between
+-- them, and even when they do, we can not algorithmically _find_ one to plug
+-- into the natural transformation between the op-twisted-arrow presheaves.
+-- But we can, of course, always find a morphism between a type and itself,
+-- namely the identity.
+public export
+TwArrPreshfOpEmbeddingNTtoProfParaNT : {p, q : ProfunctorSig} ->
+  TwArrPreshfOpEmbeddingNT p q -> ProfDiNT p q
+TwArrPreshfOpEmbeddingNTtoProfParaNT {p} {q} {a} gamma = gamma a a id
+
 ------------------------------------------------------------------
 ---- Yoneda embeddings of `Type` twisted-arrow (co)presheaves ----
 ------------------------------------------------------------------
