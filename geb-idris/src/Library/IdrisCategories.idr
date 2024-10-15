@@ -2095,6 +2095,19 @@ TwArrPreshfOpNatTransHcomp p p' q q' beta alpha x z _
 ---- Naturality conditions ----
 -------------------------------
 
+-- The naturality condition for a presheaf on `Tw(Type)` (AKA a
+-- copresheaf on `op(Tw(Type))`.
+
+public export
+0 TwArrPreshfNaturality : {p, q : TwArrPreshfSig} ->
+  TwArrPreshfContraDimapSig p -> TwArrPreshfContraDimapSig q ->
+  TwArrPreshfNatTrans p q -> Type
+TwArrPreshfNaturality {p} {q} pdm qdm gamma =
+  (s, t, a, b : Type) -> (mab : a -> b) -> (msa : s -> a) -> (mbt : b -> t) ->
+  ExtEq {a=(p s t (mbt . mab . msa))} {b=(q a b mab)}
+    (qdm s t a b mab msa mbt . gamma s t (mbt . mab . msa))
+    (gamma a b mab . pdm s t a b mab msa mbt)
+
 -- The naturality condition for a presheaf on `Tw(op(Type))` (AKA a
 -- copresheaf on `op(Tw(op(Type)))`.
 
@@ -2227,6 +2240,91 @@ TwArrCoprOpEmbedProfFMap : (p, q : Type -> Type -> Type) ->
     (TwArrCoprOpEmbedProf p)
     (TwArrCoprOpEmbedProf q)
 TwArrCoprOpEmbedProfFMap p q pdm qdm alpha x y myx epyx = alpha epyx
+
+-- Embed a copresheaf on `Type` into the category of presheaves on the
+-- twisted-arrow category of `Type`.
+
+public export
+TwArrPreshfEmbedCopreshf : (Type -> Type) -> TwArrPreshfSig
+TwArrPreshfEmbedCopreshf f x y mxy = f x
+
+public export
+TwArrPreshfEmbedCopreshfMap : (f : Type -> Type) -> Functor f ->
+  TwArrPreshfContraDimapSig (TwArrPreshfEmbedCopreshf f)
+TwArrPreshfEmbedCopreshfMap f fm s t a b mts msa mbt = map {f} msa
+
+public export
+TwArrPreshfEmbedCopreshfFMap : (f, g : Type -> Type) ->
+  Functor f -> Functor g ->
+  NaturalTransformation f g ->
+  TwArrPreshfNatTrans
+    (TwArrPreshfEmbedCopreshf f)
+    (TwArrPreshfEmbedCopreshf g)
+TwArrPreshfEmbedCopreshfFMap f g fm gm alpha a b mab = alpha a
+
+-- Embed a presheaf on `Type` into the category of presheaves on the
+-- twisted-arrow category of `Type`.
+
+public export
+TwArrPreshfEmbedPreshf : (Type -> Type) -> TwArrPreshfSig
+TwArrPreshfEmbedPreshf f x y mxy = f y
+
+public export
+TwArrPreshfEmbedPreshfContramap : (f : Type -> Type) -> Contravariant f ->
+  TwArrPreshfContraDimapSig (TwArrPreshfEmbedPreshf f)
+TwArrPreshfEmbedPreshfContramap f fm s t a b mts msa mbt = contramap {f} mbt
+
+public export
+TwArrPreshfEmbedPreshfFMap : (f, g : Type -> Type) ->
+  Contravariant f -> Contravariant g ->
+  NaturalTransformation f g ->
+  TwArrPreshfNatTrans
+    (TwArrPreshfEmbedPreshf f)
+    (TwArrPreshfEmbedPreshf g)
+TwArrPreshfEmbedPreshfFMap f g fm gm alpha a b mab = alpha b
+
+-- Embed an endoprofunctor (AKA difunctor) on `Type` into the category of
+-- presheaves on the twisted-arrow category of `Type`.
+
+public export
+TwArrPreshfEmbedProf : (Type -> Type -> Type) -> TwArrPreshfSig
+TwArrPreshfEmbedProf f x y mxy = f y x
+
+public export
+TwArrPreshfEmbedProfMap : (p : Type -> Type -> Type) -> Profunctor p ->
+  TwArrPreshfContraDimapSig (TwArrPreshfEmbedProf p)
+TwArrPreshfEmbedProfMap p pdm s t a b mab = flip $ dimap {f=p}
+
+public export
+TwArrPreshfEmbedProfFMap : (p, q : Type -> Type -> Type) ->
+  Profunctor p -> Profunctor q ->
+  ProfNT p q ->
+  TwArrPreshfNatTrans
+    (TwArrPreshfEmbedProf p)
+    (TwArrPreshfEmbedProf q)
+TwArrPreshfEmbedProfFMap p q pdm qdm gamma a b mba = gamma
+
+-- The signature of a natural transformation between the embeddings of
+-- two profunctors into the category of presheaves on `Tw(Type)`.
+public export
+TwArrPreshfEmbeddingNT : (p, q : ProfunctorSig) -> Type
+TwArrPreshfEmbeddingNT p q =
+  TwArrPreshfNatTrans (TwArrPreshfEmbedProf p) (TwArrPreshfEmbedProf q)
+
+-- Suppose we have two profunctors and a natural transformation between
+-- their embeddings into the category of presheaves on `Tw(Type)`.
+-- Then we can derive a mapping with the signature of a paranatural, or
+-- generally dinatural, transformation between the original
+-- profunctors.  Note that we can _not_ derive a natural transformation,
+-- because two arbitrary types do not necessarily have a morphism between
+-- them, and even when they do, we can not algorithmically _find_ one to plug
+-- into the natural transformation between the op-twisted-arrow presheaves.
+-- But we can, of course, always find a morphism between a type and itself,
+-- namely the identity.
+public export
+TwArrPreshfEmbeddingNTtoProfParaNT : {p, q : ProfunctorSig} ->
+  TwArrPreshfEmbeddingNT p q -> ProfDiNT p q
+TwArrPreshfEmbeddingNTtoProfParaNT {p} {q} {a} gamma = gamma a a id
 
 -- Embed a copresheaf on `Type` into the category of presheaves on the
 -- twisted-arrow category of `op(Type)`.
