@@ -242,6 +242,7 @@ IntParaNTCond c cmor p q plm prm qlm qrm alpha =
   (qlm i1 i1 i0 i2 (alpha i1 d1) = qrm i0 i0 i1 i2 (alpha i0 d0))
 
 -- Paranaturality is a (strictly) stronger condition than dinaturality.
+public export
 0 IntParaNTimpliesDi : (c : Type) -> (cmor : IntDifunctorSig c) ->
   (p, q : IntDifunctorSig c) ->
   (plm : IntEndoLmapSig c cmor p) -> (prm : IntEndoRmapSig c cmor p) ->
