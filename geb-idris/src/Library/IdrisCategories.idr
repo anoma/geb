@@ -2020,6 +2020,42 @@ TwArrCoprOpNatTransHcomp p p' q q' beta alpha x z mzx
     (y ** (myx, mzy) ** (comm, beta x y myx qxy, alpha y z mzy pyz))
 
 public export
+TwArrPreshfNatTrans : TwArrPreshfSig -> TwArrPreshfSig -> Type
+TwArrPreshfNatTrans = TwArrCoprNatTrans
+
+public export
+TwArrPreshfNatTransId : (p : TwArrPreshfSig) -> TwArrPreshfNatTrans p p
+TwArrPreshfNatTransId p x y mxy = Prelude.id
+
+public export
+TwArrPreshfNatTransVcomp : (p, q, r : TwArrPreshfSig) ->
+  TwArrPreshfNatTrans q r ->
+  TwArrPreshfNatTrans p q ->
+  TwArrPreshfNatTrans p r
+TwArrPreshfNatTransVcomp p q r beta alpha x y mxy =
+  beta x y mxy . alpha x y mxy
+
+public export
+TwArrPreshfNatTransHcomp : (p, p', q, q' : TwArrPreshfSig) ->
+  TwArrPreshfNatTrans q q' -> TwArrPreshfNatTrans p p' ->
+  TwArrPreshfNatTrans
+    (TwArrPreshfComposeSig q p)
+    (TwArrPreshfComposeSig q' p')
+TwArrPreshfNatTransHcomp p p' q q' beta alpha x z mxz
+  (TwAPCS q p s t u v x z
+    mxz mux mzv
+    quv
+    msu
+    mvt
+    pst) =
+  (TwAPCS q' p' s t u v x z
+    mxz mux mzv
+    (beta u v (mzv . mxz . mux) quv)
+    msu
+    mvt
+    (alpha s t (mvt . mzv . mxz . mux . msu) pst))
+
+public export
 TwArrPreshfOpNatTrans : TwArrPreshfOpSig -> TwArrPreshfOpSig -> Type
 TwArrPreshfOpNatTrans = TwArrCoprOpNatTrans
 
