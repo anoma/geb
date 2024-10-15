@@ -1821,6 +1821,14 @@ ProfNaturality p q pdm qdm alpha =
   IntProfNTNaturality Type Type HomProf HomProf p q pdm qdm $ \_, _ => alpha
 
 public export
+0 ProfDinaturality : (0 p, q : ProfunctorSig) ->
+  (0 plm : TypeLmapSig p) -> (0 prm : TypeRmapSig p) ->
+  (0 qlm : TypeLmapSig q) -> (0 qrm : TypeRmapSig q) ->
+  ProfDiNT p q -> Type
+ProfDinaturality p q plm prm qlm qrm =
+  IntDiNTCond Type HomProf p q plm prm qlm qrm
+
+public export
 0 ProfParanaturality : (0 p, q : ProfunctorSig) ->
   (0 plm : TypeLmapSig p) -> (0 prm : TypeRmapSig p) ->
   (0 qlm : TypeLmapSig q) -> (0 qrm : TypeRmapSig q) ->
