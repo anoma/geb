@@ -352,6 +352,48 @@ TypeDiArAsNatTransIsNatural
   (onpos ** (oncontra, oncovar)) s t a b mba mas mtb (i ** (dcont, dcovar)) =
     Refl
 
+public export
+TypeDiArFromNatTrans : (p, q : TypeProAr) ->
+  (gamma : TwArrPreshfOpEmbeddingNT (InterpTypeProAr p) (InterpTypeProAr q)) ->
+  TwArrPreshfOpNaturality
+    {p=(TwArrPreshfOpEmbedProf $ InterpTypeProAr p)}
+    {q=(TwArrPreshfOpEmbedProf $ InterpTypeProAr q)}
+    (TwArrPreshfOpEmbedProfMap (InterpTypeProAr p) $
+      MkProfunctor $ \mca, mbd => TypeProArDimap p _ _ _ _ mca mbd)
+    (TwArrPreshfOpEmbedProfMap (InterpTypeProAr q) $
+      MkProfunctor $ \mca, mbd => TypeProArDimap q _ _ _ _ mca mbd)
+    gamma ->
+  TypeDiNTar p q
+TypeDiArFromNatTrans
+  (ppos ** (pcontra, pcovar)) (qpos ** (qcontra, qcovar)) gamma isnat =
+    (\pi, asn =>
+      fst $ gamma (pcontra pi) (pcovar pi) asn (pi ** (id, id)) **
+     (\pi, asn, pdcont =>
+        fst (snd $ gamma (pcontra pi) (pcovar pi) asn (pi ** (id, id))) pdcont,
+      \pi, asn, qdcov =>
+        snd (snd $ gamma (pcontra pi) (pcovar pi) asn (pi ** (id, id))) qdcov))
+
+public export
+TypeDiArFromNatTransComplete : (p, q : TypeProAr) ->
+  (gamma : TwArrPreshfOpEmbeddingNT (InterpTypeProAr p) (InterpTypeProAr q)) ->
+  (isnat : TwArrPreshfOpNaturality
+    {p=(TwArrPreshfOpEmbedProf $ InterpTypeProAr p)}
+    {q=(TwArrPreshfOpEmbedProf $ InterpTypeProAr q)}
+    (TwArrPreshfOpEmbedProfMap (InterpTypeProAr p) $
+      MkProfunctor $ \mca, mbd => TypeProArDimap p _ _ _ _ mca mbd)
+    (TwArrPreshfOpEmbedProfMap (InterpTypeProAr q) $
+      MkProfunctor $ \mca, mbd => TypeProArDimap q _ _ _ _ mca mbd)
+    gamma) ->
+  (x : Type) ->
+  ExtEq {a=(InterpTypeProAr p x x)} {b=(InterpTypeProAr q x x)}
+    (TwArrPreshfOpEmbeddingNTtoProfParaNT
+      {p=(InterpTypeProAr p)} {q=(InterpTypeProAr q)} gamma x)
+    (InterpTypeDiNT p q (TypeDiArFromNatTrans p q gamma isnat) x)
+TypeDiArFromNatTransComplete
+  (ppos ** (pcontra, pcovar)) (qpos ** (qcontra, qcovar)) gamma isnat x
+  (pi ** (dcont, dcovar)) =
+    sym $ isnat (pcontra pi) (pcovar pi) x x id dcont dcovar (pi ** (id, id))
+
 ---------------------------------------------------------
 ---- Categorical laws of paranatural transformations ----
 ---------------------------------------------------------
