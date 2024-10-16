@@ -332,45 +332,58 @@ cbPullback cbo {b'} m with (CSBaseChange m (CBOsl cbo))
 -- copresheaf on the category of Dirichlet functors on `Type`).
 public export
 BundleCoprSig : Type
-BundleCoprSig = (x, y : Type) -> (y -> x) -> Type
+BundleCoprSig = CBundleObj -> Type
 
 -- The signature of the fmap of a presheaf on the bundle/Dirichlet category
 -- of `Type`.
 public export
 BundleCoprDimapSig : BundleCoprSig -> Type
-BundleCoprDimapSig p =
-  -- `mts` and `mba` are bundles.
-  (s, t, a, b : Type) -> (mts : t -> s) -> (mba : b -> a) ->
-  -- `msa` and `mtb` comprise a bundle morphism from `mts` to `mba`.
-  (msa : s -> a) ->
-  (mtb :
-    CSliceMorphism {c=s}
-      (t ** mts)
-      (CSBaseChange {c=a} {d=s} msa (b ** mba))) ->
-  p s t mts -> p a b mba
+BundleCoprDimapSig p = (a, b : CBundleObj) -> CBundleMor a b -> p a -> p b
 
--- This computes the requirement to build a `(q . p) a b mba`
--- in the style of profunctor composition -- starting from an
--- `(s, t, mts)` with a `(u, v, mvu)` as an intermediate object.
+-- This computes the requirement to build a `(q . p) c e`
+-- in the style of profunctor composition -- with a `d` as an intermediate
+-- object.
 public export
-data BundleCoprComposeSig :
-    BundleCoprSig -> BundleCoprSig -> BundleCoprSig where
+data BundleCoprComposeSig : BundleCoprSig -> BundleCoprSig -> BundleCoprSig
+    where
   BunCC : (q, p : BundleCoprSig) ->
-    (s, t, u, v, a, b : Type) ->
-    -- `mts`, `mvu`, and `mba` are bundles.
-    (mts : t -> s) -> (mvu : v -> u) -> (mba : b -> a) ->
-    -- `mua` and `mvb` comprise a bundle morphism from `mvu` to `mba`.
-    (mua : u -> a) ->
-    (mvb :
-      CSliceMorphism {c=u}
-        (v ** mvu)
-        (CSBaseChange {c=a} {d=u} mua (b ** mba))) ->
-    q u v mvu ->
-    -- `msu` and `mtv` comprise a bundle morphism from `mts` to `mvu`.
-    (msu : s -> u) ->
-    (mtv :
-      CSliceMorphism {c=s}
-        (t ** mts)
-        (CSBaseChange {c=u} {d=s} msu (v ** mvu))) ->
-    p s t mts ->
-    BundleCoprComposeSig q p a b mba
+    (c, d, e : Type) ->
+    (med : e -> d) -> q (CBO d e med) ->
+    (mdc : d -> c) -> p (CBO c d mdc) ->
+    BundleCoprComposeSig q p (CBO c e (mdc . med))
+
+public export
+BundleCoprComposeSigDimap : {q, p : BundleCoprSig} ->
+  BundleCoprDimapSig q -> BundleCoprDimapSig p ->
+  BundleCoprDimapSig (BundleCoprComposeSig q p)
+BundleCoprComposeSigDimap {q} {p} qdm pdm
+  (CBO c e (mdc . med)) (CBO s t mts) (CBM mcs (Element0 mec comm))
+  (BunCC q p c d e
+    med
+    qed
+    mdc
+    pdc) =
+  (BunCC q p s s t
+    mts
+    (qdm
+      (CBO d e med)
+      (CBO s t mts)
+      (CBM
+        (mcs . mdc)
+        (Element0
+          (\ee =>
+            Element0
+              (med ee, snd $ fst0 $ mec ee)
+              (trans (cong mcs $ comm ee) (snd0 $ mec ee)))
+          (\_ => Refl)))
+      qed)
+    id
+    (pdm
+      (CBO c d mdc)
+      (CBO s s id)
+      (CBM
+        mcs
+        (Element0
+          (\ed => Element0 (mdc ed, mcs $ mdc ed) Refl)
+          (\_ => Refl)))
+      pdc))
