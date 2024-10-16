@@ -326,8 +326,8 @@ cbPullback cbo {b'} m with (CSBaseChange m (CBOsl cbo))
 -----------------------------------
 -----------------------------------
 
--- The signature of a copresheaf on the bundle category of `Type`
--- recall that the bundle category of `Type` is equivalent to the category
+-- The signature of a copresheaf on the bundle category of `Type`.
+-- Recall that the bundle category of `Type` is equivalent to the category
 -- of Dirichlet functors on `Type`, so this is also the signature of a
 -- copresheaf on the category of Dirichlet functors on `Type`).
 public export
