@@ -319,3 +319,58 @@ cbPullback : (cb : CBundleObj) -> {b' : Type} ->
 cbPullback cbo {b'} m with (CSBaseChange m (CBOsl cbo))
   cbPullback cbo {b'} m | (cb' ** proj') =
     CBO b' cb' proj'
+
+-----------------------------------
+-----------------------------------
+---- (Co)presheaves on bundles ----
+-----------------------------------
+-----------------------------------
+
+-- The signature of a copresheaf on the bundle category of `Type`
+-- recall that the bundle category of `Type` is equivalent to the category
+-- of Dirichlet functors on `Type`, so this is also the signature of a
+-- copresheaf on the category of Dirichlet functors on `Type`).
+public export
+BundleCoprSig : Type
+BundleCoprSig = (x, y : Type) -> (y -> x) -> Type
+
+-- The signature of the fmap of a presheaf on the bundle/Dirichlet category
+-- of `Type`.
+public export
+BundleCoprDimapSig : BundleCoprSig -> Type
+BundleCoprDimapSig p =
+  -- `mts` and `mba` are bundles.
+  (s, t, a, b : Type) -> (mts : t -> s) -> (mba : b -> a) ->
+  -- `msa` and `mtb` comprise a bundle morphism from `mts` to `mba`.
+  (msa : s -> a) ->
+  (mtb :
+    CSliceMorphism {c=s}
+      (t ** mts)
+      (CSBaseChange {c=a} {d=s} msa (b ** mba))) ->
+  p s t mts -> p a b mba
+
+-- This computes the requirement to build a `(q . p) a b mba`
+-- in the style of profunctor composition -- starting from an
+-- `(s, t, mts)` with a `(u, v, mvu)` as an intermediate object.
+public export
+data BundleCoprComposeSig :
+    BundleCoprSig -> BundleCoprSig -> BundleCoprSig where
+  BunCC : (q, p : BundleCoprSig) ->
+    (s, t, u, v, a, b : Type) ->
+    -- `mts`, `mvu`, and `mba` are bundles.
+    (mts : t -> s) -> (mvu : v -> u) -> (mba : b -> a) ->
+    -- `mua` and `mvb` comprise a bundle morphism from `mvu` to `mba`.
+    (mua : u -> a) ->
+    (mvb :
+      CSliceMorphism {c=u}
+        (v ** mvu)
+        (CSBaseChange {c=a} {d=u} mua (b ** mba))) ->
+    q u v mvu ->
+    -- `msu` and `mtv` comprise a bundle morphism from `mts` to `mvu`.
+    (msu : s -> u) ->
+    (mtv :
+      CSliceMorphism {c=s}
+        (t ** mts)
+        (CSBaseChange {c=u} {d=s} msu (v ** mvu))) ->
+    p s t mts ->
+    BundleCoprComposeSig q p a b mba
