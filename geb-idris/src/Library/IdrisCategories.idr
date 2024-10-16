@@ -2027,24 +2027,6 @@ TwArrPreshfOpComposeSigDimap q p qdm pdm s t a b mba mas mtb
     mba (msu' . mas) (mtb . mvt') quv' mus' mtv' pst'
 
 public export
-TwArrPreshfOpCompose : TwArrPreshfOpSig -> TwArrPreshfOpSig -> TwArrPreshfOpSig
-TwArrPreshfOpCompose q p x z mzx =
-  (y : Type ** mp : (x -> y, y -> z) **
-   (FunExtEq (fst mp . mzx . snd mp) (id {a=y}),
-    q y z (fst mp . mzx), p x y (mzx . snd mp)))
-
-public export
-TwArrPreshfOpComposeDimap : (q, p : TwArrPreshfOpSig) ->
-  TwArrPreshfOpDimapSig q -> TwArrPreshfOpDimapSig p ->
-  TwArrPreshfOpDimapSig (TwArrPreshfOpCompose q p)
-TwArrPreshfOpComposeDimap q p qdm pdm s t a b mba mas mtb
-  (y ** (msy, myt) ** (comm, qyt, psy)) =
-    (y ** (msy . mas, mtb . myt) **
-     (comm,
-      qdm y t y b (msy . mas . mba) id mtb qyt,
-      pdm s y a y (mba . mtb . myt) mas id psy))
-
-public export
 TwArrCoprComposeDimap : (q, p : TwArrCoprSig) ->
   TwArrCoprDimapSig q -> TwArrCoprDimapSig p ->
   TwArrCoprDimapSig (TwArrCoprCompose q p)
