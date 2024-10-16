@@ -387,3 +387,36 @@ BundleCoprComposeSigDimap {q} {p} qdm pdm
           (\ed => Element0 (mdc ed, mcs $ mdc ed) Refl)
           (\_ => Refl)))
       pdc))
+
+public export
+BundleCoprNatTrans : BundleCoprSig -> BundleCoprSig -> Type
+BundleCoprNatTrans p q = (a : CBundleObj) -> p a -> q a
+
+public export
+BundleCoprNatTransId : (p : BundleCoprSig) -> BundleCoprNatTrans p p
+BundleCoprNatTransId p a = Prelude.id
+
+public export
+BundleCoprNatTransVcomp : (p, q, r : BundleCoprSig) ->
+  BundleCoprNatTrans q r ->
+  BundleCoprNatTrans p q ->
+  BundleCoprNatTrans p r
+BundleCoprNatTransVcomp p q r beta alpha a = beta a . alpha a
+
+public export
+BundleCoprNatTransHcomp : (p, p', q, q' : BundleCoprSig) ->
+  BundleCoprNatTrans q q' -> BundleCoprNatTrans p p' ->
+  BundleCoprNatTrans
+    (BundleCoprComposeSig q p)
+    (BundleCoprComposeSig q' p')
+BundleCoprNatTransHcomp p p' q q' beta alpha (CBO c e (mdc . med))
+  (BunCC q p c d e
+    med
+    qed
+    mdc
+    pdc) =
+  (BunCC q' p' c d e
+    med
+    (beta (CBO d e med) qed)
+    mdc
+    (alpha (CBO c d mdc) pdc))
