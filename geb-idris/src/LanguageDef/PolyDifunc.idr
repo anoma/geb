@@ -322,6 +322,36 @@ TypeDiArComplete
     $ rewrite pairFstSnd (snd $ gamma x (pi ** (dmx, dmy))) in
       pairEqCong Refl (TypeDiArCompleteSndSnd p q gamma cond x i)
 
+----------------------------------------------------------------
+---- Paranatural transformations as natural transformations ----
+----------------------------------------------------------------
+
+public export
+TypeDiArAsNatTrans :
+  {p, q : TypeProAr} -> (gamma : TypeDiNTar p q) ->
+  TwArrPreshfOpEmbeddingNT (InterpTypeProAr p) (InterpTypeProAr q)
+TypeDiArAsNatTrans {p} {q} gamma x y myx (i ** (dcont, dcov)) =
+  let asn = dcont . myx . dcov in
+  (typeDiNTpos gamma i asn **
+   (typeDiNTcontra gamma i asn . dcont,
+    dcov . typeDiNTcovar gamma i asn))
+
+public export
+0 TypeDiArAsNatTransIsNatural :
+  (p, q : TypeProAr) -> (gamma : TypeDiNTar p q) ->
+  TwArrPreshfOpNaturality
+    {p=(TwArrPreshfOpEmbedProf $ InterpTypeProAr p)}
+    {q=(TwArrPreshfOpEmbedProf $ InterpTypeProAr q)}
+    (TwArrPreshfOpEmbedProfMap (InterpTypeProAr p) $
+      MkProfunctor $ \mca, mbd => TypeProArDimap p _ _ _ _ mca mbd)
+    (TwArrPreshfOpEmbedProfMap (InterpTypeProAr q) $
+      MkProfunctor $ \mca, mbd => TypeProArDimap q _ _ _ _ mca mbd)
+    (TypeDiArAsNatTrans {p} {q} gamma)
+TypeDiArAsNatTransIsNatural
+  (ppos ** (pcontra, pcovar)) (qpos ** (qcontra, qcovar))
+  (onpos ** (oncontra, oncovar)) s t a b mba mas mtb (i ** (dcont, dcovar)) =
+    Refl
+
 ---------------------------------------------------------
 ---- Categorical laws of paranatural transformations ----
 ---------------------------------------------------------
