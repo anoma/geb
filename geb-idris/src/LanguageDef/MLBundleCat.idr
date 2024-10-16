@@ -8,6 +8,7 @@ import public LanguageDef.IntTwistedArrowCat
 import public LanguageDef.IntParamCat
 import public LanguageDef.IntArena
 import public LanguageDef.PolyCat
+import public LanguageDef.MLDirichCat
 
 %default total
 
