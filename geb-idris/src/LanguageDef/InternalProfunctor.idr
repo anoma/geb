@@ -1726,6 +1726,7 @@ ipaAppCovar {d} {c} cmor ar ec =
 ------------------------------------------------------
 ------------------------------------------------------
 
+public export
 PProfCatElemObj : (d, c : Type) ->
   (dmor : IntDifunctorSig d) -> (cmor : IntDifunctorSig c) ->
   IntProAr d c -> Type
