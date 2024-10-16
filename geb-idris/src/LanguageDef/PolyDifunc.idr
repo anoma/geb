@@ -148,6 +148,66 @@ TypeProArParanaturality p q =
   TypeNTParanaturality (InterpTypeProAr p) (InterpTypeProAr q)
     (TypeProArDimap p) (TypeProArDimap q)
 
+-------------------------------------
+---- Utility types and functions ----
+-------------------------------------
+
+public export
+TypeProNTpos : (p, q : TypeProAr) -> Type
+TypeProNTpos = IntPPNTpos {d=Type} {c=Type} {dmor=TypeMor} {cmor=TypeMor}
+
+public export
+TypeProNTcontra : (p, q : TypeProAr) -> TypeProNTpos p q -> Type
+TypeProNTcontra = IntPPNTcontra {d=Type} {c=Type} {dmor=TypeMor} {cmor=TypeMor}
+
+public export
+TypeProNTcovar : (p, q : TypeProAr) -> TypeProNTpos p q -> Type
+TypeProNTcovar = IntPPNTcovar {d=Type} {c=Type} {dmor=TypeMor} {cmor=TypeMor}
+
+public export
+typeProNTpos : {p, q : TypeProAr} -> TypeProNTar p q -> TypeProNTpos p q
+typeProNTpos = intPPNTpos {c=Type} {cmor=TypeMor} {d=Type} {dmor=TypeMor}
+
+public export
+typeProNTcontra : {p, q : TypeProAr} -> (ar : TypeProNTar p q) ->
+  TypeProNTcontra p q (typeProNTpos {p} {q} ar)
+typeProNTcontra = intPPNTcontra {c=Type} {cmor=TypeMor} {d=Type} {dmor=TypeMor}
+
+public export
+typeProNTcovar : {p, q : TypeProAr} -> (ar : TypeProNTar p q) ->
+  TypeProNTcovar p q (typeProNTpos {p} {q} ar)
+typeProNTcovar = intPPNTcovar {c=Type} {cmor=TypeMor} {d=Type} {dmor=TypeMor}
+
+public export
+TypeDiNTpos : (p, q : TypeProAr) -> Type
+TypeDiNTpos = IntPDiNTpos {c=Type} {mor=TypeMor}
+
+public export
+TypeDiNTcontra : (p, q : TypeProAr) -> TypeDiNTpos p q -> Type
+TypeDiNTcontra = IntPDiNTcontra {c=Type} {mor=TypeMor}
+
+public export
+TypeDiNTcovar : (p, q : TypeProAr) -> TypeDiNTpos p q -> Type
+TypeDiNTcovar = IntPDiNTcovar {c=Type} {mor=TypeMor}
+
+public export
+TypeProNTrestrict : (p, q : TypeProAr) -> TypeProNTar p q -> TypeDiNTar p q
+TypeProNTrestrict p q = intPPNTrestrict {c=Type} {cmor=TypeMor} {p} {q}
+
+public export
+typeDiNTpos : {p, q : TypeProAr} -> TypeDiNTar p q -> TypeDiNTpos p q
+typeDiNTpos = intPDiNTpos {c=Type} {mor=TypeMor}
+
+public export
+typeDiNTcontra : {p, q : TypeProAr} -> (ar : TypeDiNTar p q) ->
+  TypeDiNTcontra p q (typeDiNTpos {p} {q} ar)
+typeDiNTcontra = intPDiNTcontra {c=Type} {mor=TypeMor}
+
+public export
+typeDiNTcovar : {p, q : TypeProAr} -> (ar : TypeDiNTar p q) ->
+  TypeDiNTcovar p q (typeDiNTpos {p} {q} ar)
+typeDiNTcovar = intPDiNTcovar {c=Type} {mor=TypeMor}
+
 -------------------------------------------------
 ---- Completeness of natural transformations ----
 -------------------------------------------------
@@ -609,66 +669,6 @@ TypeDiCompInterpToInterpComp
 ---- Universal morphisms of poly-(para)natural transformations on `Type` ----
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
-
--------------------------------------
----- Utility types and functions ----
--------------------------------------
-
-public export
-TypeProNTpos : (p, q : TypeProAr) -> Type
-TypeProNTpos = IntPPNTpos {d=Type} {c=Type} {dmor=TypeMor} {cmor=TypeMor}
-
-public export
-TypeProNTcontra : (p, q : TypeProAr) -> TypeProNTpos p q -> Type
-TypeProNTcontra = IntPPNTcontra {d=Type} {c=Type} {dmor=TypeMor} {cmor=TypeMor}
-
-public export
-TypeProNTcovar : (p, q : TypeProAr) -> TypeProNTpos p q -> Type
-TypeProNTcovar = IntPPNTcovar {d=Type} {c=Type} {dmor=TypeMor} {cmor=TypeMor}
-
-public export
-typeProNTpos : {p, q : TypeProAr} -> TypeProNTar p q -> TypeProNTpos p q
-typeProNTpos = intPPNTpos {c=Type} {cmor=TypeMor} {d=Type} {dmor=TypeMor}
-
-public export
-typeProNTcontra : {p, q : TypeProAr} -> (ar : TypeProNTar p q) ->
-  TypeProNTcontra p q (typeProNTpos {p} {q} ar)
-typeProNTcontra = intPPNTcontra {c=Type} {cmor=TypeMor} {d=Type} {dmor=TypeMor}
-
-public export
-typeProNTcovar : {p, q : TypeProAr} -> (ar : TypeProNTar p q) ->
-  TypeProNTcovar p q (typeProNTpos {p} {q} ar)
-typeProNTcovar = intPPNTcovar {c=Type} {cmor=TypeMor} {d=Type} {dmor=TypeMor}
-
-public export
-TypeDiNTpos : (p, q : TypeProAr) -> Type
-TypeDiNTpos = IntPDiNTpos {c=Type} {mor=TypeMor}
-
-public export
-TypeDiNTcontra : (p, q : TypeProAr) -> TypeDiNTpos p q -> Type
-TypeDiNTcontra = IntPDiNTcontra {c=Type} {mor=TypeMor}
-
-public export
-TypeDiNTcovar : (p, q : TypeProAr) -> TypeDiNTpos p q -> Type
-TypeDiNTcovar = IntPDiNTcovar {c=Type} {mor=TypeMor}
-
-public export
-TypeProNTrestrict : (p, q : TypeProAr) -> TypeProNTar p q -> TypeDiNTar p q
-TypeProNTrestrict p q = intPPNTrestrict {c=Type} {cmor=TypeMor} {p} {q}
-
-public export
-typeDiNTpos : {p, q : TypeProAr} -> TypeDiNTar p q -> TypeDiNTpos p q
-typeDiNTpos = intPDiNTpos {c=Type} {mor=TypeMor}
-
-public export
-typeDiNTcontra : {p, q : TypeProAr} -> (ar : TypeDiNTar p q) ->
-  TypeDiNTcontra p q (typeDiNTpos {p} {q} ar)
-typeDiNTcontra = intPDiNTcontra {c=Type} {mor=TypeMor}
-
-public export
-typeDiNTcovar : {p, q : TypeProAr} -> (ar : TypeDiNTar p q) ->
-  TypeDiNTcovar p q (typeDiNTpos {p} {q} ar)
-typeDiNTcovar = intPDiNTcovar {c=Type} {mor=TypeMor}
 
 -------------------------
 ---- Initial object ----
