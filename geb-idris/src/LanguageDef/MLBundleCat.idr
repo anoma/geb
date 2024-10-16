@@ -420,3 +420,16 @@ BundleCoprNatTransHcomp p p' q q' beta alpha (CBO c e (mdc . med))
     (beta (CBO d e med) qed)
     mdc
     (alpha (CBO c d mdc) pdc))
+
+-- The naturality condition for a copresheaf on `Bun(Type)` (AKA a
+-- copresheaf on `MLDirichCat`).
+
+public export
+0 BundleCoprNaturality : {p, q : BundleCoprSig} ->
+  BundleCoprDimapSig p -> BundleCoprDimapSig q ->
+  BundleCoprNatTrans p q -> Type
+BundleCoprNaturality {p} {q} pdm qdm gamma =
+  (a, b : CBundleObj) -> (mab : CBundleMor a b) ->
+  ExtEq {a=(p a)} {b=(q b)}
+    (qdm a b mab . gamma a)
+    (gamma b . pdm a b mab)
