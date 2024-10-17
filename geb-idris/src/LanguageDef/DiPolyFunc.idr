@@ -106,9 +106,8 @@ InterpPolyParaNT :
   {p, q : PolyDiSig c} ->
   PolyParaNT c mor p q ->
   IntDiNTSig c (InterpPolyDi {c} mor p) (InterpPolyDi {c} mor q)
-InterpPolyParaNT {c} {mor} comp
-  {p=(ppos ** (pcontra, pcovar))} {q=(qpos ** (qcontra, qcovar))}
+InterpPolyParaNT {c} {mor} comp {p} {q}
   (onpos ** (oncovar, oncontra)) x (pi ** (mxcov, mcontx)) =
     (onpos pi **
-     (comp x (pcovar pi) (qcovar (onpos pi)) (oncovar pi) mxcov,
-      comp (qcontra (onpos pi)) (pcontra pi) x mcontx (oncontra pi)))
+     (comp x (ipaCovar p pi) (ipaCovar q (onpos pi)) (oncovar pi) mxcov,
+      comp (ipaContra q (onpos pi)) (ipaContra p pi) x mcontx (oncontra pi)))
