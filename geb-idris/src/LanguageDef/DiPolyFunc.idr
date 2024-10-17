@@ -30,7 +30,7 @@ import public LanguageDef.PolyDifunc
 
 public export
 PolyDiSig : (c : Type) -> Type
-PolyDiSig c = (pos : Type ** (pos -> c, pos -> c))
+PolyDiSig = IntEndoProAr
 
 public export
 InterpPolyDi : {c : Type} -> (mor : IntDifunctorSig c) -> PolyDiSig c ->
