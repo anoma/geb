@@ -1765,6 +1765,11 @@ data PProfCatElemMor :
       (a ** b ** i **
        (dcomp a x (contra i) ddm dmax, ccomp (covar i) y b cmyb cdm))
 
+-- The category of diagonal elements, as it is called in Neumann's
+-- "Paranatural Category Theory", is also referred to as the "D is
+-- the one-object category" case of an algebra for a profunctor at
+-- https://ncatlab.org/nlab/show/algebra+for+a+profunctor#definition .
+
 public export
 PProfCatDiagElemObj : (c : Type) -> (mor : IntDifunctorSig c) ->
   IntEndoProAr c -> Type
