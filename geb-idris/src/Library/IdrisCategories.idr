@@ -1970,30 +1970,6 @@ public export
 TwArrPreshfIdContraDimap : TwArrPreshfContraDimapSig TwArrPreshfId
 TwArrPreshfIdContraDimap s t a b mab msa mbt = id
 
--- This computes the requirement to build a `(q . p) a b mab`
--- in the style of profunctor composition -- starting from an
--- `(s, t, mst)` with a `(u, v, muv)` as an intermediate object.
-public export
-data TwArrPreshfComposeSig :
-    TwArrPreshfSig -> TwArrPreshfSig -> TwArrPreshfSig where
-  TwAPCS : (q, p : TwArrPreshfSig) ->
-    (s, t, u, v, a, b : Type) ->
-    (mab : a -> b) -> (mua : u -> a) -> (mbv : b -> v) ->
-    q u v (mbv . mab . mua) ->
-    (msu : s -> u) -> (mvt : v -> t) ->
-    p s t (mvt . mbv . mab . mua . msu) ->
-    TwArrPreshfComposeSig q p a b mab
-
-public export
-TwArrPreshfComposeSigContraDimap : (q, p : TwArrPreshfSig) ->
-  TwArrPreshfContraDimapSig q -> TwArrPreshfContraDimapSig p ->
-  TwArrPreshfContraDimapSig (TwArrPreshfComposeSig q p)
-TwArrPreshfComposeSigContraDimap q p qdm pdm s t a b mab msa mbt
-  (TwAPCS q p s' t' u' v' s t
-    (mbt . mab . msa) mu's mtv' qu'v' ms'u' mv't' ps't') =
-  (TwAPCS q p s' t' u' v' a b
-    mab (msa . mu's) (mtv' . mbt) qu'v' ms'u' mv't' ps't')
-
 public export
 TwArrPreshfOpId : TwArrPreshfOpSig
 TwArrPreshfOpId x y mxy = Unit
@@ -2111,26 +2087,6 @@ TwArrPreshfNatTransVcomp : (p, q, r : TwArrPreshfSig) ->
   TwArrPreshfNatTrans p r
 TwArrPreshfNatTransVcomp p q r beta alpha x y mxy =
   beta x y mxy . alpha x y mxy
-
-public export
-TwArrPreshfNatTransHcomp : (p, p', q, q' : TwArrPreshfSig) ->
-  TwArrPreshfNatTrans q q' -> TwArrPreshfNatTrans p p' ->
-  TwArrPreshfNatTrans
-    (TwArrPreshfComposeSig q p)
-    (TwArrPreshfComposeSig q' p')
-TwArrPreshfNatTransHcomp p p' q q' beta alpha x z mxz
-  (TwAPCS q p s t u v x z
-    mxz mux mzv
-    quv
-    msu
-    mvt
-    pst) =
-  (TwAPCS q' p' s t u v x z
-    mxz mux mzv
-    (beta u v (mzv . mxz . mux) quv)
-    msu
-    mvt
-    (alpha s t (mvt . mzv . mxz . mux . msu) pst))
 
 public export
 TwArrPreshfOpNatTrans : TwArrPreshfOpSig -> TwArrPreshfOpSig -> Type
