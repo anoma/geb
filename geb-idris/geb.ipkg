@@ -33,6 +33,7 @@ modules =
     , LanguageDef.SlicePolyCat
     , LanguageDef.SliceFuncCat
     , LanguageDef.HelixCat
+    , LanguageDef.DiPolyFunc
     , LanguageDef.RopeCat
     , LanguageDef.SlPolyIntCat
     , LanguageDef.SlPolyImpred
@@ -91,6 +92,7 @@ modules =
     , LanguageDef.Test.SlicePolyCatTest
     , LanguageDef.Test.SliceFuncCatTest
     , LanguageDef.Test.HelixCatTest
+    , LanguageDef.Test.DiPolyFuncTest
     , LanguageDef.Test.RopeCatTest
     , LanguageDef.Test.SlPolyIntCatTest
     , LanguageDef.Test.SlPolyImpredTest
