@@ -208,6 +208,24 @@ typeDiNTcovar : {p, q : TypeProAr} -> (ar : TypeDiNTar p q) ->
   TypeDiNTcovar p q (typeDiNTpos {p} {q} ar)
 typeDiNTcovar = intPDiNTcovar {c=Type} {mor=TypeMor}
 
+public export
+TypeProCatElemObj : TypeProAr -> Type
+TypeProCatElemObj = PProfCatElemObj Type Type TypeMor TypeMor
+
+public export
+TypeProCatElemMor : {ar : TypeProAr} -> IntMorSig (TypeProCatElemObj ar)
+TypeProCatElemMor {ar} =
+  PProfCatElemMor Type Type TypeMor TypeMor typeComp typeComp ar
+
+public export
+TypeProCatDiagElemObj : TypeProAr -> Type
+TypeProCatDiagElemObj = PProfCatDiagElemObj Type TypeMor
+
+public export
+TypeProCatDiagElemMor : {ar : TypeProAr} -> IntMorSig (TypeProCatDiagElemObj ar)
+TypeProCatDiagElemMor {ar} =
+  PProfCatDiagElemMor Type TypeMor typeComp ar
+
 -------------------------------------------------
 ---- Completeness of natural transformations ----
 -------------------------------------------------
