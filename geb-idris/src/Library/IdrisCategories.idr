@@ -2274,6 +2274,16 @@ TwArrCoprOpEmbedProfFMap : (p, q : Type -> Type -> Type) ->
     (TwArrCoprOpEmbedProf q)
 TwArrCoprOpEmbedProfFMap p q pdm qdm alpha x y myx epyx = alpha epyx
 
+public export
+TwArrCoprEmbeddingNT : (p, q : ProfunctorSig) -> Type
+TwArrCoprEmbeddingNT p q =
+  TwArrCoprNatTrans (TwArrCoprEmbedProf p) (TwArrCoprEmbedProf q)
+
+public export
+TwArrCoprOpEmbeddingNT : (p, q : ProfunctorSig) -> Type
+TwArrCoprOpEmbeddingNT p q =
+  TwArrCoprOpNatTrans (TwArrCoprOpEmbedProf p) (TwArrCoprOpEmbedProf q)
+
 -- Embed a copresheaf on `Type` into the category of presheaves on the
 -- twisted-arrow category of `Type`.
 
