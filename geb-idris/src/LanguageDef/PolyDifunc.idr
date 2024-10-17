@@ -337,16 +337,6 @@ TypeDiArAsNatTrans {p} {q} gamma x y myx (i ** (dcont, dcov)) =
     dcov . typeDiNTcovar gamma i asn))
 
 public export
-TypeDiArAsNatTrans' :
-  {p, q : TypeProAr} -> (gamma : TypeDiNTar p q) ->
-  TwArrPreshfEmbeddingNT (InterpTypeProAr p) (InterpTypeProAr q)
-TypeDiArAsNatTrans' {p} {q} gamma x y myx (i ** (dcont, dcov)) =
-  let asn = dcont . myx . dcov in
-  (typeDiNTpos gamma i asn **
-   (typeDiNTcontra gamma i asn . dcont,
-    dcov . typeDiNTcovar gamma i asn))
-
-public export
 0 TypeDiArAsNatTransIsNatural :
   (p, q : TypeProAr) -> (gamma : TypeDiNTar p q) ->
   TwArrPreshfOpNaturality
@@ -358,22 +348,6 @@ public export
       MkProfunctor $ \mca, mbd => TypeProArDimap q _ _ _ _ mca mbd)
     (TypeDiArAsNatTrans {p} {q} gamma)
 TypeDiArAsNatTransIsNatural
-  (ppos ** (pcontra, pcovar)) (qpos ** (qcontra, qcovar))
-  (onpos ** (oncontra, oncovar)) s t a b mba mas mtb (i ** (dcont, dcovar)) =
-    Refl
-
-public export
-0 TypeDiArAsNatTransIsNatural' :
-  (p, q : TypeProAr) -> (gamma : TypeDiNTar p q) ->
-  TwArrPreshfNaturality
-    {p=(TwArrPreshfEmbedProf $ InterpTypeProAr p)}
-    {q=(TwArrPreshfEmbedProf $ InterpTypeProAr q)}
-    (TwArrPreshfEmbedProfMap (InterpTypeProAr p) $
-      MkProfunctor $ \mca, mbd => TypeProArDimap p _ _ _ _ mca mbd)
-    (TwArrPreshfEmbedProfMap (InterpTypeProAr q) $
-      MkProfunctor $ \mca, mbd => TypeProArDimap q _ _ _ _ mca mbd)
-    (TypeDiArAsNatTrans' {p} {q} gamma)
-TypeDiArAsNatTransIsNatural'
   (ppos ** (pcontra, pcovar)) (qpos ** (qcontra, qcovar))
   (onpos ** (oncontra, oncovar)) s t a b mba mas mtb (i ** (dcont, dcovar)) =
     Refl
@@ -400,27 +374,6 @@ TypeDiArFromNatTrans
         snd (snd $ gamma (pcontra pi) (pcovar pi) asn (pi ** (id, id))) qdcov))
 
 public export
-TypeDiArFromNatTrans' : (p, q : TypeProAr) ->
-  (gamma : TwArrPreshfEmbeddingNT (InterpTypeProAr p) (InterpTypeProAr q)) ->
-  TwArrPreshfNaturality
-    {p=(TwArrPreshfEmbedProf $ InterpTypeProAr p)}
-    {q=(TwArrPreshfEmbedProf $ InterpTypeProAr q)}
-    (TwArrPreshfEmbedProfMap (InterpTypeProAr p) $
-      MkProfunctor $ \mca, mbd => TypeProArDimap p _ _ _ _ mca mbd)
-    (TwArrPreshfEmbedProfMap (InterpTypeProAr q) $
-      MkProfunctor $ \mca, mbd => TypeProArDimap q _ _ _ _ mca mbd)
-    gamma ->
-  TypeDiNTar p q
-TypeDiArFromNatTrans'
-  (ppos ** (pcontra, pcovar)) (qpos ** (qcontra, qcovar)) gamma isnat =
-    (\pi, asn =>
-      fst $ gamma (pcovar pi) (pcontra pi) asn (pi ** (id, id)) **
-     (\pi, asn, pdcont =>
-        fst (snd $ gamma (pcovar pi) (pcontra pi) asn (pi ** (id, id))) pdcont,
-      \pi, asn, qdcov =>
-        snd (snd $ gamma (pcovar pi) (pcontra pi) asn (pi ** (id, id))) qdcov))
-
-public export
 TypeDiArFromNatTransComplete : (p, q : TypeProAr) ->
   (gamma : TwArrPreshfOpEmbeddingNT (InterpTypeProAr p) (InterpTypeProAr q)) ->
   (isnat : TwArrPreshfOpNaturality
@@ -440,27 +393,6 @@ TypeDiArFromNatTransComplete
   (ppos ** (pcontra, pcovar)) (qpos ** (qcontra, qcovar)) gamma isnat x
   (pi ** (dcont, dcovar)) =
     sym $ isnat (pcontra pi) (pcovar pi) x x id dcont dcovar (pi ** (id, id))
-
-public export
-TypeDiArFromNatTransComplete' : (p, q : TypeProAr) ->
-  (gamma : TwArrPreshfEmbeddingNT (InterpTypeProAr p) (InterpTypeProAr q)) ->
-  (isnat : TwArrPreshfNaturality
-    {p=(TwArrPreshfEmbedProf $ InterpTypeProAr p)}
-    {q=(TwArrPreshfEmbedProf $ InterpTypeProAr q)}
-    (TwArrPreshfEmbedProfMap (InterpTypeProAr p) $
-      MkProfunctor $ \mca, mbd => TypeProArDimap p _ _ _ _ mca mbd)
-    (TwArrPreshfEmbedProfMap (InterpTypeProAr q) $
-      MkProfunctor $ \mca, mbd => TypeProArDimap q _ _ _ _ mca mbd)
-    gamma) ->
-  (x : Type) ->
-  ExtEq {a=(InterpTypeProAr p x x)} {b=(InterpTypeProAr q x x)}
-    (TwArrPreshfEmbeddingNTtoProfParaNT
-      {p=(InterpTypeProAr p)} {q=(InterpTypeProAr q)} gamma x)
-    (InterpTypeDiNT p q (TypeDiArFromNatTrans' p q gamma isnat) x)
-TypeDiArFromNatTransComplete'
-  (ppos ** (pcontra, pcovar)) (qpos ** (qcontra, qcovar)) gamma isnat x
-  (pi ** (dcont, dcovar)) =
-    sym $ isnat (pcovar pi) (pcontra pi) x x id dcovar dcont (pi ** (id, id))
 
 ---------------------------------------------------------
 ---- Categorical laws of paranatural transformations ----
