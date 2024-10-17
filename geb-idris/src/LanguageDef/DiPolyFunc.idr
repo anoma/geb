@@ -68,37 +68,36 @@ PolyParaNTfromDirep c mor s t p = ParaNTfromDirep c mor s t (InterpPolyDi mor p)
 -- polynomial difunctors.
 public export
 PolyParaNT : (c : Type) -> (mor : IntDifunctorSig c) -> IntMorSig (PolyDiSig c)
-PolyParaNT c mor (ppos ** (pcontra, pcovar)) q =
-  (pi : ppos) -> PolyParaNTfromDirep c mor (pcontra pi) (pcovar pi) q
+PolyParaNT c mor p q =
+  (pi : ipaPos p) ->
+  PolyParaNTfromDirep c mor (ipaContra p pi) (ipaCovar p pi) q
 
 -- Having defined the set of paranatural transformations between polynomial
 -- difunctors via the Yoneda lemma, we now write it in a more explicit form
 -- and show they are the same.
 public export
 PolyParaNT' : (c : Type) -> (mor : IntDifunctorSig c) -> IntMorSig (PolyDiSig c)
-PolyParaNT' c mor (ppos ** (pcontra, pcovar)) (qpos ** (qcontra, qcovar)) =
-  (onpos : ppos -> qpos **
-   ((pi : ppos) -> mor (pcovar pi) (qcovar (onpos pi)),
-    (pi : ppos) -> mor (qcontra (onpos pi)) (pcontra pi)))
+PolyParaNT' c mor p q =
+  (onpos : ipaPos p -> ipaPos q **
+   ((pi : ipaPos p) -> mor (ipaCovar p pi) (ipaCovar q (onpos pi)),
+    (pi : ipaPos p) -> mor (ipaContra q (onpos pi)) (ipaContra p pi)))
 
 public export
 PolyParaNTisoL : {c : Type} -> {mor : IntDifunctorSig c} ->
   {p, q : PolyDiSig c} ->
   PolyParaNT c mor p q -> PolyParaNT' c mor p q
-PolyParaNTisoL {c} {mor}
-  {p=(ppos ** (pcontra, pcovar))} {q=(qpos ** (qcontra, qcovar))} gamma =
-    (\pi => fst (gamma pi) **
-     (\pi => fst (snd $ gamma pi),
-      \pi => snd (snd $ gamma pi)))
+PolyParaNTisoL {c} {mor} gamma =
+  (\pi => fst (gamma pi) **
+   (\pi => fst (snd $ gamma pi),
+    \pi => snd (snd $ gamma pi)))
 
 public export
 PolyParaNTisoR : {c : Type} -> {mor : IntDifunctorSig c} ->
   {p, q : PolyDiSig c} ->
   PolyParaNT' c mor p q -> PolyParaNT c mor p q
-PolyParaNTisoR {c} {mor}
-  {p=(ppos ** (pcontra, pcovar))} {q=(qpos ** (qcontra, qcovar))}
+PolyParaNTisoR {c} {mor} {p} {q}
   (onpos ** (oncovar, oncontra)) =
-    \pi : ppos => (onpos pi ** (oncovar pi, oncontra pi))
+    \pi : ipaPos p => (onpos pi ** (oncovar pi, oncontra pi))
 
 public export
 InterpPolyParaNT :
