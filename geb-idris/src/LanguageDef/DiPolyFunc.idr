@@ -67,8 +67,9 @@ PolyParaNTfromDirep c mor s t p = ParaNTfromDirep c mor s t (InterpPolyDi mor p)
 -- The set of paranatural transformations between arbitrary
 -- polynomial difunctors.
 public export
-PolyParaNT : (c : Type) -> (mor : IntDifunctorSig c) -> IntMorSig (PolyDiSig c)
-PolyParaNT c mor p q =
+PolyParaNTasProd : (c : Type) -> (mor : IntDifunctorSig c) ->
+  IntMorSig (PolyDiSig c)
+PolyParaNTasProd c mor p q =
   (pi : ipaPos p) ->
   PolyParaNTfromDirep c mor (ipaContra p pi) (ipaCovar p pi) q
 
@@ -76,8 +77,8 @@ PolyParaNT c mor p q =
 -- difunctors via the Yoneda lemma, we now write it in a more explicit form
 -- and show they are the same.
 public export
-PolyParaNT' : (c : Type) -> (mor : IntDifunctorSig c) -> IntMorSig (PolyDiSig c)
-PolyParaNT' c mor p q =
+PolyParaNT : (c : Type) -> (mor : IntDifunctorSig c) -> IntMorSig (PolyDiSig c)
+PolyParaNT c mor p q =
   (onpos : ipaPos p -> ipaPos q **
    ((pi : ipaPos p) -> mor (ipaCovar p pi) (ipaCovar q (onpos pi)),
     (pi : ipaPos p) -> mor (ipaContra q (onpos pi)) (ipaContra p pi)))
@@ -85,7 +86,7 @@ PolyParaNT' c mor p q =
 public export
 PolyParaNTisoL : {c : Type} -> {mor : IntDifunctorSig c} ->
   {p, q : PolyDiSig c} ->
-  PolyParaNT c mor p q -> PolyParaNT' c mor p q
+  PolyParaNTasProd c mor p q -> PolyParaNT c mor p q
 PolyParaNTisoL {c} {mor} gamma =
   (\pi => fst (gamma pi) **
    (\pi => fst (snd $ gamma pi),
@@ -94,7 +95,7 @@ PolyParaNTisoL {c} {mor} gamma =
 public export
 PolyParaNTisoR : {c : Type} -> {mor : IntDifunctorSig c} ->
   {p, q : PolyDiSig c} ->
-  PolyParaNT' c mor p q -> PolyParaNT c mor p q
+  PolyParaNT c mor p q -> PolyParaNTasProd c mor p q
 PolyParaNTisoR {c} {mor} {p} {q}
   (onpos ** (oncovar, oncontra)) =
     \pi : ipaPos p => (onpos pi ** (oncovar pi, oncontra pi))
@@ -103,7 +104,7 @@ public export
 InterpPolyParaNT :
   {c : Type} -> {mor : IntDifunctorSig c} -> (comp : IntCompSig c mor) ->
   {p, q : PolyDiSig c} ->
-  PolyParaNT' c mor p q ->
+  PolyParaNT c mor p q ->
   IntDiNTSig c (InterpPolyDi {c} mor p) (InterpPolyDi {c} mor q)
 InterpPolyParaNT {c} {mor} comp
   {p=(ppos ** (pcontra, pcovar))} {q=(qpos ** (qcontra, qcovar))}
