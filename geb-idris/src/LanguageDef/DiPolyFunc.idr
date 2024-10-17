@@ -27,3 +27,88 @@ import public LanguageDef.PolyDifunc
 -- but has different morphisms.  (This resembles the way in which polynomial
 -- and Dirichlet functors are determined by the same arenas but have different
 -- morphisms and interpretations as functors.)
+
+public export
+PolyDiSig : (c : Type) -> Type
+PolyDiSig c = (pos : Type ** (pos -> c, pos -> c))
+
+public export
+InterpPolyDi : {c : Type} -> (mor : IntDifunctorSig c) -> PolyDiSig c ->
+  IntDifunctorSig c
+InterpPolyDi {c} mor (pos ** (contra, covar)) a b =
+  (i : pos ** IntDiYonedaEmbedObj c mor (contra i) (covar i) a b)
+
+public export
+InterpPolyDimap : {c : Type} -> {mor : IntDifunctorSig c} ->
+  IntCompSig c mor ->
+  (p : PolyDiSig c) -> IntEndoDimapSig c mor (InterpPolyDi {c} mor p)
+InterpPolyDimap {c} {mor} comp (pos ** (contra, covar)) s t a b mas mtb =
+  dpMapSnd $
+    \pi => bimap (flip (comp a s (covar pi)) mas) (comp (contra pi) t b mtb)
+
+------------------------------------------------
+---- Polynomial paranatural transformations ----
+------------------------------------------------
+
+-- The set of paranatural transformations from a direpresentable,
+-- (IntDiYonedaEmbedObj i j), to an arbitrary difunctor `p`.
+public export
+ParaNTfromDirep : (0 c : Type) -> (0 mor : IntDifunctorSig c) ->
+  (s, t : c) -> (p : IntDifunctorSig c) -> Type
+ParaNTfromDirep c mor s t p = p t s
+
+-- The set of paranatural transformations from a direpresentable,
+-- (IntDiYonedaEmbedObj i j), to an arbitrary polynomial difunctor `p`.
+public export
+PolyParaNTfromDirep : (c : Type) -> (mor : IntDifunctorSig c) ->
+  (s, t : c) -> (p : PolyDiSig c) -> Type
+PolyParaNTfromDirep c mor s t p = ParaNTfromDirep c mor s t (InterpPolyDi mor p)
+
+-- The set of paranatural transformations between arbitrary
+-- polynomial difunctors.
+public export
+PolyParaNT : (c : Type) -> (mor : IntDifunctorSig c) -> IntMorSig (PolyDiSig c)
+PolyParaNT c mor (ppos ** (pcontra, pcovar)) q =
+  (pi : ppos) -> PolyParaNTfromDirep c mor (pcontra pi) (pcovar pi) q
+
+-- Having defined the set of paranatural transformations between polynomial
+-- difunctors via the Yoneda lemma, we now write it in a more explicit form
+-- and show they are the same.
+public export
+PolyParaNT' : (c : Type) -> (mor : IntDifunctorSig c) -> IntMorSig (PolyDiSig c)
+PolyParaNT' c mor (ppos ** (pcontra, pcovar)) (qpos ** (qcontra, qcovar)) =
+  (onpos : ppos -> qpos **
+   ((pi : ppos) -> mor (pcovar pi) (qcovar (onpos pi)),
+    (pi : ppos) -> mor (qcontra (onpos pi)) (pcontra pi)))
+
+public export
+PolyParaNTisoL : {c : Type} -> {mor : IntDifunctorSig c} ->
+  {p, q : PolyDiSig c} ->
+  PolyParaNT c mor p q -> PolyParaNT' c mor p q
+PolyParaNTisoL {c} {mor}
+  {p=(ppos ** (pcontra, pcovar))} {q=(qpos ** (qcontra, qcovar))} gamma =
+    (\pi => fst (gamma pi) **
+     (\pi => fst (snd $ gamma pi),
+      \pi => snd (snd $ gamma pi)))
+
+public export
+PolyParaNTisoR : {c : Type} -> {mor : IntDifunctorSig c} ->
+  {p, q : PolyDiSig c} ->
+  PolyParaNT' c mor p q -> PolyParaNT c mor p q
+PolyParaNTisoR {c} {mor}
+  {p=(ppos ** (pcontra, pcovar))} {q=(qpos ** (qcontra, qcovar))}
+  (onpos ** (oncovar, oncontra)) =
+    \pi : ppos => (onpos pi ** (oncovar pi, oncontra pi))
+
+public export
+InterpPolyParaNT :
+  {c : Type} -> {mor : IntDifunctorSig c} -> (comp : IntCompSig c mor) ->
+  {p, q : PolyDiSig c} ->
+  PolyParaNT' c mor p q ->
+  IntDiNTSig c (InterpPolyDi {c} mor p) (InterpPolyDi {c} mor q)
+InterpPolyParaNT {c} {mor} comp
+  {p=(ppos ** (pcontra, pcovar))} {q=(qpos ** (qcontra, qcovar))}
+  (onpos ** (oncovar, oncontra)) x (pi ** (mxcov, mcontx)) =
+    (onpos pi **
+     (comp x (pcovar pi) (qcovar (onpos pi)) (oncovar pi) mxcov,
+      comp (qcontra (onpos pi)) (pcontra pi) x mcontx (oncontra pi)))
