@@ -35,16 +35,16 @@ PolyDiSig = IntEndoProAr
 public export
 InterpPolyDi : {c : Type} -> (mor : IntDifunctorSig c) -> PolyDiSig c ->
   IntDifunctorSig c
-InterpPolyDi {c} mor (pos ** (contra, covar)) a b =
-  (i : pos ** IntDiYonedaEmbedObj c mor (contra i) (covar i) a b)
+InterpPolyDi {c} mor p a b =
+  (i : ipaPos p ** IntDiYonedaEmbedObj c mor (ipaContra p i) (ipaCovar p i) a b)
 
 public export
 InterpPolyDimap : {c : Type} -> {mor : IntDifunctorSig c} ->
   IntCompSig c mor ->
   (p : PolyDiSig c) -> IntEndoDimapSig c mor (InterpPolyDi {c} mor p)
-InterpPolyDimap {c} {mor} comp (pos ** (contra, covar)) s t a b mas mtb =
-  dpMapSnd $
-    \pi => bimap (flip (comp a s (covar pi)) mas) (comp (contra pi) t b mtb)
+InterpPolyDimap {c} {mor} comp p s t a b mas mtb =
+  dpMapSnd $ \pi =>
+    bimap (flip (comp a s (ipaCovar p pi)) mas) (comp (ipaContra p pi) t b mtb)
 
 ------------------------------------------------
 ---- Polynomial paranatural transformations ----
