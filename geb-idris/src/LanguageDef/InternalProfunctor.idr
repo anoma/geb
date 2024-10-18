@@ -59,6 +59,10 @@ IntAssocSig c mor comp =
   comp w x z (comp x y z h g) f = comp w y z h (comp w x y g f)
 
 public export
+0 typeAssoc : IntAssocSig Type TypeMor InternalCat.typeComp
+typeAssoc w x y z h g f = Refl
+
+public export
 0 IntDimapSig : (0 d, c : Type) ->
   (0 dmor : IntDifunctorSig d) -> (0 cmor : IntDifunctorSig c) ->
   IntProfunctorSig d c -> Type
