@@ -168,3 +168,20 @@ MLPolyParaArFromParaNT p@(ppos ** (pdirL, pdirR)) q@(qpos ** (qdirL, qdirR))
         mlipdDirL {p=q} (gamma (pdirR pi) (pi ** (id, asn))) pdr,
       \pi, asn =>
         mlipdDirR {p=q} (gamma (pdirL pi) (pi ** (asn, id)))))
+
+public export
+0 MLPolyParaArCompleteFst :
+  (p, q : MLPolyDiSig) -> (gamma : MLParaNTinterp p q) ->
+  (cond : MLPolyParanaturality {p} {q} gamma) ->
+  (x : Type) ->
+  (i : InterpMLPolyDiDiag p x) ->
+    mlipdPos {p=q} (gamma x i) =
+    mlipdPos {p=q}
+      (InterpMLPolyParaNT {p} {q} (MLPolyParaArFromParaNT p q gamma cond) x i)
+MLPolyParaArCompleteFst (ppos ** (pdirL, pdirR)) (qpos ** (qdirL, qdirR))
+  gamma cond x (pi ** (dmr, dml)) =
+    rewrite
+      dpeq1 $
+        cond (pdirL pi) x dml (pi ** (dmr . dml, id)) (pi ** (dmr, dml)) Refl
+    in
+    Refl
