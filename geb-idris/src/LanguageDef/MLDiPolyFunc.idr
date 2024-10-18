@@ -104,9 +104,12 @@ mlppntOnR : {p, q : MLPolyDiSig} -> (nt : MLPolyParaNT p q) ->
 mlppntOnR = ppntOnR {c=Type} {mor=TypeMor}
 
 public export
+0 MLParaNTinterp : (p, q : MLPolyDiSig) -> Type
+MLParaNTinterp p q = TypeProfDiNT (InterpMLPolyDi p) (InterpMLPolyDi q)
+
+public export
 InterpMLPolyParaNT : {p, q : MLPolyDiSig} ->
-  MLPolyParaNT p q ->
-  TypeProfDiNT (InterpMLPolyDi p) (InterpMLPolyDi q)
+  MLPolyParaNT p q -> MLParaNTinterp p q
 InterpMLPolyParaNT = InterpPolyParaNT {c=Type} {mor=TypeMor} typeComp
 
 -----------------------------------------
@@ -124,7 +127,7 @@ InterpMLPolyParaNT = InterpPolyParaNT {c=Type} {mor=TypeMor} typeComp
 
 public export
 0 MLPolyParanaturality : {p, q : MLPolyDiSig} ->
-  (nt : TypeProfDiNT (InterpMLPolyDi p) (InterpMLPolyDi q)) -> Type
+  (nt : MLParaNTinterp p q) -> Type
 MLPolyParanaturality {p} {q} =
   IntParaNTCond Type TypeMor
     (InterpMLPolyDi p) (InterpMLPolyDi q)
@@ -145,7 +148,7 @@ MLPolyParaNTisParanatural =
 
 public export
 0 MLPolyParaArFromParaNT : (p, q : MLPolyDiSig) ->
-  (gamma : TypeProfDiNT (InterpMLPolyDi p) (InterpMLPolyDi q)) ->
+  (gamma : MLParaNTinterp p q) ->
   MLPolyParanaturality {p} {q} gamma -> MLPolyParaNT p q
 MLPolyParaArFromParaNT p@(ppos ** (pdirL, pdirR)) q@(qpos ** (qdirL, qdirR))
   gamma cond =
