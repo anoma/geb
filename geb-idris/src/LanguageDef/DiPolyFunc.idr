@@ -33,10 +33,39 @@ PolyDiSig : (c : Type) -> Type
 PolyDiSig = IntEndoProAr
 
 public export
+pdPos : {c : Type} -> PolyDiSig c -> Type
+pdPos {c} = ipaPos {c}
+
+public export
+pdDirL : {c : Type} -> (pd : PolyDiSig c) -> pdPos {c} pd -> c
+pdDirL {c} = ipaCovar {c}
+
+public export
+pdDirR : {c : Type} -> (pd : PolyDiSig c) -> pdPos {c} pd -> c
+pdDirR {c} = ipaContra {c}
+
+public export
 InterpPolyDi : {c : Type} -> (mor : IntDifunctorSig c) -> PolyDiSig c ->
   IntDifunctorSig c
 InterpPolyDi {c} mor p a b =
-  (i : ipaPos p ** IntDiYonedaEmbedObj c mor (ipaContra p i) (ipaCovar p i) a b)
+  (i : ipaPos p ** IntDiYonedaEmbedObj c mor (pdDirR p i) (pdDirL p i) a b)
+
+public export
+ipdPos : {c : Type} -> {mor : IntDifunctorSig c} -> {p : PolyDiSig c} ->
+  {x, y : c} -> InterpPolyDi {c} mor p x y -> ipaPos p
+ipdPos {c} {mor} {p} = DPair.fst
+
+public export
+ipdDirL : {c : Type} -> {mor : IntDifunctorSig c} -> {p : PolyDiSig c} ->
+  {x, y : c} -> (ipd : InterpPolyDi {c} mor p x y) ->
+  mor x (pdDirL p $ ipdPos {c} {mor} {p} {x} {y} ipd)
+ipdDirL {c} {mor} {p} ipd = Builtin.fst (DPair.snd ipd)
+
+public export
+ipdDirR : {c : Type} -> {mor : IntDifunctorSig c} -> {p : PolyDiSig c} ->
+  {x, y : c} -> (ipd : InterpPolyDi {c} mor p x y) ->
+  mor (pdDirR p $ ipdPos {c} {mor} {p} {x} {y} ipd) y
+ipdDirR {c} {mor} {p} ipd = Builtin.snd (DPair.snd ipd)
 
 public export
 InterpPolyDimap : {c : Type} -> {mor : IntDifunctorSig c} ->
@@ -44,7 +73,7 @@ InterpPolyDimap : {c : Type} -> {mor : IntDifunctorSig c} ->
   (p : PolyDiSig c) -> IntEndoDimapSig c mor (InterpPolyDi {c} mor p)
 InterpPolyDimap {c} {mor} comp p s t a b mas mtb =
   dpMapSnd $ \pi =>
-    bimap (flip (comp a s (ipaCovar p pi)) mas) (comp (ipaContra p pi) t b mtb)
+    bimap (flip (comp a s (pdDirL p pi)) mas) (comp (pdDirR p pi) t b mtb)
 
 ------------------------------------------------
 ---- Polynomial paranatural transformations ----
@@ -71,7 +100,7 @@ PolyParaNTasProd : (c : Type) -> (mor : IntDifunctorSig c) ->
   IntMorSig (PolyDiSig c)
 PolyParaNTasProd c mor p q =
   (pi : ipaPos p) ->
-  PolyParaNTfromDirep c mor (ipaContra p pi) (ipaCovar p pi) q
+  PolyParaNTfromDirep c mor (pdDirR p pi) (pdDirL p pi) q
 
 -- Having defined the set of paranatural transformations between polynomial
 -- difunctors via the Yoneda lemma, we now write it in a more explicit form
@@ -80,8 +109,8 @@ public export
 PolyParaNT : (c : Type) -> (mor : IntDifunctorSig c) -> IntMorSig (PolyDiSig c)
 PolyParaNT c mor p q =
   (onpos : ipaPos p -> ipaPos q **
-   ((pi : ipaPos p) -> mor (ipaCovar p pi) (ipaCovar q (onpos pi)),
-    (pi : ipaPos p) -> mor (ipaContra q (onpos pi)) (ipaContra p pi)))
+   ((pi : ipaPos p) -> mor (pdDirL p pi) (pdDirL q (onpos pi)),
+    (pi : ipaPos p) -> mor (pdDirR q (onpos pi)) (pdDirR p pi)))
 
 public export
 ppntOnPos : {c : Type} -> {mor : IntDifunctorSig c} -> {p, q : PolyDiSig c} ->
@@ -89,16 +118,16 @@ ppntOnPos : {c : Type} -> {mor : IntDifunctorSig c} -> {p, q : PolyDiSig c} ->
 ppntOnPos {c} {mor} {p} {q} = DPair.fst
 
 public export
-ppntOnCovar : {c : Type} -> {mor : IntDifunctorSig c} -> {p, q : PolyDiSig c} ->
+ppntOnL : {c : Type} -> {mor : IntDifunctorSig c} -> {p, q : PolyDiSig c} ->
   (nt : PolyParaNT c mor p q) -> (pi : ipaPos p) ->
-  mor (ipaCovar p pi) (ipaCovar q (ppntOnPos {c} {mor} {p} {q} nt pi))
-ppntOnCovar {c} {mor} {p} {q} nt = Builtin.fst $ DPair.snd nt
+  mor (pdDirL p pi) (pdDirL q (ppntOnPos {c} {mor} {p} {q} nt pi))
+ppntOnL {c} {mor} {p} {q} nt = Builtin.fst $ DPair.snd nt
 
 public export
-ppntOnContra : {c : Type} -> {mor : IntDifunctorSig c} -> {p, q : PolyDiSig c} ->
+ppntOnR : {c : Type} -> {mor : IntDifunctorSig c} -> {p, q : PolyDiSig c} ->
   (nt : PolyParaNT c mor p q) -> (pi : ipaPos p) ->
-  mor (ipaContra q (ppntOnPos {c} {mor} {p} {q} nt pi)) (ipaContra p pi)
-ppntOnContra {c} {mor} {p} {q} nt = Builtin.snd $ DPair.snd nt
+  mor (pdDirR q (ppntOnPos {c} {mor} {p} {q} nt pi)) (pdDirR p pi)
+ppntOnR {c} {mor} {p} {q} nt = Builtin.snd $ DPair.snd nt
 
 public export
 PolyParaNTisoL : {c : Type} -> {mor : IntDifunctorSig c} ->
@@ -116,8 +145,8 @@ PolyParaNTisoR : {c : Type} -> {mor : IntDifunctorSig c} ->
 PolyParaNTisoR {c} {mor} {p} {q} nt =
   \pi : ipaPos p =>
     (ppntOnPos {mor} {p} {q} nt pi **
-     (ppntOnCovar {mor} {p} {q} nt pi,
-      ppntOnContra {mor} {p} {q} nt pi))
+     (ppntOnL {mor} {p} {q} nt pi,
+      ppntOnR {mor} {p} {q} nt pi))
 
 public export
 InterpPolyParaNT :
@@ -125,11 +154,17 @@ InterpPolyParaNT :
   {p, q : PolyDiSig c} ->
   PolyParaNT c mor p q ->
   IntDiNTSig c (InterpPolyDi {c} mor p) (InterpPolyDi {c} mor q)
-InterpPolyParaNT {c} {mor} comp {p} {q} nt x (pi ** (mxcov, mcontx)) =
-  (ppntOnPos {mor} {p} {q} nt pi **
-   (comp x (ipaCovar p pi) (ipaCovar q (ppntOnPos {mor} {p} {q} nt pi))
-      (ppntOnCovar {mor} {p} {q} nt pi)
-    mxcov,
-    comp (ipaContra q (ppntOnPos {mor} {p} {q} nt pi)) (ipaContra p pi) x
-      mcontx
-      (ppntOnContra {mor} {p} {q} nt pi)))
+InterpPolyParaNT {c} {mor} comp {p} {q} nt x ipd =
+  (ppntOnPos {mor} {p} {q} nt (ipdPos {mor} ipd) **
+   (comp
+      x
+      (pdDirL p (ipdPos {mor} ipd))
+      (pdDirL q (ppntOnPos {mor} {p} {q} nt (ipdPos {mor} ipd)))
+      (ppntOnL {mor} {p} {q} nt (ipdPos {mor} ipd))
+      (ipdDirL {mor} ipd),
+    comp
+      (pdDirR q (ppntOnPos {mor} {p} {q} nt (ipdPos {mor} ipd)))
+      (pdDirR p (ipdPos {mor} ipd))
+      x
+      (ipdDirR {mor} ipd)
+      (ppntOnR {mor} {p} {q} nt (ipdPos {mor} ipd))))
