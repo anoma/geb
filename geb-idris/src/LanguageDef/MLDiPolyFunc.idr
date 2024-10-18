@@ -116,10 +116,6 @@ InterpMLPolyParaNT = InterpPolyParaNT {c=Type} {mor=TypeMor} typeComp
 -----------------------------------------
 
 public export
-0 typeAssoc : IntAssocSig Type TypeMor InternalCat.typeComp
-typeAssoc w x y z h g f = Refl
-
-public export
 0 MLPolyParaNTisParanatural :
   {p, q : MLPolyDiSig} ->
   (nt : MLPolyParaNT p q) ->
