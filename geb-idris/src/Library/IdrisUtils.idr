@@ -626,6 +626,10 @@ sndEqHet : {a, a', b, b' : Type} -> {x : (a, b)} -> {y : (a', b')} ->
 sndEqHet Refl = Refl
 
 public export
+typeEq : {a, a' : Type} -> {ea : a} -> {ea' : a'} -> ea = ea' -> a = a'
+typeEq {a} {a'=a} {ea} {ea'=ea} Refl = Refl
+
+public export
 fromLteSuccYes : {m, n : Nat} ->
   IsYesTrue (isLT (S m) (S n)) -> IsYesTrue (isLT m n)
 fromLteSuccYes y = toIsYes (fromLteSucc $ fromIsYes y)
@@ -1182,12 +1186,14 @@ mapNonEmpty : {0 a, b : Type} -> {0 f : a -> b} -> {0 l : List a} ->
 mapNonEmpty {a} {b} {f} {l=(x :: xs)} {ne=IsNonEmpty} = IsNonEmpty
 
 public export
-pairInj1 : {a, b : Type} -> {p, p' : (a, b)} -> p = p' -> fst p = fst p'
-pairInj1 Refl = Refl
+pairInj1 : {a, a', b, b' : Type} -> {p : (a, b)} -> {p' : (a', b')} ->
+  p = p' -> fst p = fst p'
+pairInj1 {a} {a'=a} {b} {b'=b} {p=(ea, eb)} {p'=(ea, eb)} Refl = Refl
 
 public export
-pairInj2 : {a, b : Type} -> {p, p' : (a, b)} -> p = p' -> snd p = snd p'
-pairInj2 Refl = Refl
+pairInj2 : {a, a', b, b' : Type} -> {p : (a, b)} -> {p' : (a', b')} ->
+  p = p' -> snd p = snd p'
+pairInj2 {a} {a'=a} {b} {b'=b} {p=(ea, eb)} {p'=(ea, eb)} Refl = Refl
 
 public export
 pairFstSnd : {0 a, b : Type} -> (p : (a, b)) -> p = (fst p, snd p)
