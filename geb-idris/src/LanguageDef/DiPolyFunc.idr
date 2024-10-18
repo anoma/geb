@@ -84,6 +84,23 @@ PolyParaNT c mor p q =
     (pi : ipaPos p) -> mor (ipaContra q (onpos pi)) (ipaContra p pi)))
 
 public export
+ppntOnPos : {c : Type} -> {mor : IntDifunctorSig c} -> {p, q : PolyDiSig c} ->
+  PolyParaNT c mor p q -> ipaPos p -> ipaPos q
+ppntOnPos {c} {mor} {p} {q} = DPair.fst
+
+public export
+ppntOnCovar : {c : Type} -> {mor : IntDifunctorSig c} -> {p, q : PolyDiSig c} ->
+  (nt : PolyParaNT c mor p q) -> (pi : ipaPos p) ->
+  mor (ipaCovar p pi) (ipaCovar q (ppntOnPos {c} {mor} {p} {q} nt pi))
+ppntOnCovar {c} {mor} {p} {q} nt = Builtin.fst $ DPair.snd nt
+
+public export
+ppntOnContra : {c : Type} -> {mor : IntDifunctorSig c} -> {p, q : PolyDiSig c} ->
+  (nt : PolyParaNT c mor p q) -> (pi : ipaPos p) ->
+  mor (ipaContra q (ppntOnPos {c} {mor} {p} {q} nt pi)) (ipaContra p pi)
+ppntOnContra {c} {mor} {p} {q} nt = Builtin.snd $ DPair.snd nt
+
+public export
 PolyParaNTisoL : {c : Type} -> {mor : IntDifunctorSig c} ->
   {p, q : PolyDiSig c} ->
   PolyParaNTasProd c mor p q -> PolyParaNT c mor p q
@@ -96,9 +113,11 @@ public export
 PolyParaNTisoR : {c : Type} -> {mor : IntDifunctorSig c} ->
   {p, q : PolyDiSig c} ->
   PolyParaNT c mor p q -> PolyParaNTasProd c mor p q
-PolyParaNTisoR {c} {mor} {p} {q}
-  (onpos ** (oncovar, oncontra)) =
-    \pi : ipaPos p => (onpos pi ** (oncovar pi, oncontra pi))
+PolyParaNTisoR {c} {mor} {p} {q} nt =
+  \pi : ipaPos p =>
+    (ppntOnPos {mor} {p} {q} nt pi **
+     (ppntOnCovar {mor} {p} {q} nt pi,
+      ppntOnContra {mor} {p} {q} nt pi))
 
 public export
 InterpPolyParaNT :
@@ -106,8 +125,11 @@ InterpPolyParaNT :
   {p, q : PolyDiSig c} ->
   PolyParaNT c mor p q ->
   IntDiNTSig c (InterpPolyDi {c} mor p) (InterpPolyDi {c} mor q)
-InterpPolyParaNT {c} {mor} comp {p} {q}
-  (onpos ** (oncovar, oncontra)) x (pi ** (mxcov, mcontx)) =
-    (onpos pi **
-     (comp x (ipaCovar p pi) (ipaCovar q (onpos pi)) (oncovar pi) mxcov,
-      comp (ipaContra q (onpos pi)) (ipaContra p pi) x mcontx (oncontra pi)))
+InterpPolyParaNT {c} {mor} comp {p} {q} nt x (pi ** (mxcov, mcontx)) =
+  (ppntOnPos {mor} {p} {q} nt pi **
+   (comp x (ipaCovar p pi) (ipaCovar q (ppntOnPos {mor} {p} {q} nt pi))
+      (ppntOnCovar {mor} {p} {q} nt pi)
+    mxcov,
+    comp (ipaContra q (ppntOnPos {mor} {p} {q} nt pi)) (ipaContra p pi) x
+      mcontx
+      (ppntOnContra {mor} {p} {q} nt pi)))
