@@ -1200,6 +1200,16 @@ pairEqCong {a} {b} {p=(ela, elb)} {p'=(ela', elb')} eq eq' =
   rewrite eq in rewrite eq' in Refl
 
 public export
+bimapIdL : {0 a, c, d : Type} -> {0 g : c -> d} -> {ea : a} -> {ec : c} ->
+  bimap Prelude.id g (ea, ec) = (ea, g ec)
+bimapIdL {a} {c} {d} {g} {ea} {ec} = Refl
+
+public export
+bimapIdR : {0 a, b, d : Type} -> {0 f : a -> b} -> {ea : a} -> {ed : d} ->
+  bimap f Prelude.id (ea, ed) = (f ea, ed)
+bimapIdR {a} {b} {d} {f} {ea} {ed} = Refl
+
+public export
 DecEqPred : (a: Type) -> Type
 DecEqPred a = (x, x': a) -> Dec (x = x')
 
