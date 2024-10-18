@@ -116,13 +116,16 @@ InterpMLPolyParaNT = InterpPolyParaNT {c=Type} {mor=TypeMor} typeComp
 -----------------------------------------
 
 public export
-0 MLPolyParaNTisParanatural :
-  {p, q : MLPolyDiSig} ->
-  (nt : MLPolyParaNT p q) ->
+0 MLPolyParanaturality : {p, q : MLPolyDiSig} -> (nt : MLPolyParaNT p q) -> Type
+MLPolyParanaturality {p} {q} nt =
   IntParaNTCond Type TypeMor
     (InterpMLPolyDi p) (InterpMLPolyDi q)
     (InterpMLPolyLmap p) (InterpMLPolyRmap p)
     (InterpMLPolyLmap q) (InterpMLPolyRmap q)
     (InterpMLPolyParaNT {p} {q} nt)
+
+public export
+0 MLPolyParaNTisParanatural : {p, q : MLPolyDiSig} ->
+  (nt : MLPolyParaNT p q) -> MLPolyParanaturality {p} {q} nt
 MLPolyParaNTisParanatural =
   PolyParaNTisParanatural {c=Type} {mor=TypeMor} typeComp typeAssoc
