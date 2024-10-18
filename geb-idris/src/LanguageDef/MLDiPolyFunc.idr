@@ -130,3 +130,22 @@ public export
   MLPolyParanaturality {p} {q} (InterpMLPolyParaNT {p} {q} nt)
 MLPolyParaNTisParanatural =
   PolyParaNTisParanatural {c=Type} {mor=TypeMor} typeComp typeAssoc
+
+public export
+0 MLPolyParaArFromParaNT : (p, q : MLPolyDiSig) ->
+  (gamma : TypeProfDiNT (InterpMLPolyDi p) (InterpMLPolyDi q)) ->
+  MLPolyParanaturality {p} {q} gamma -> MLPolyParaNT p q
+MLPolyParaArFromParaNT p@(ppos ** (pdirL, pdirR)) q@(qpos ** (qdirL, qdirR))
+  gamma cond =
+    (\pi, asn =>
+      mlipdPos {p=q} (gamma (pdirL pi) (pi ** (asn, id))) **
+     (\pi, asn, pdr =>
+        rewrite
+          sym $ dpeq1 $ cond (pdirL pi) (pdirR pi) asn
+            (pi ** (asn, id))
+            (pi ** (id, asn))
+            Refl
+        in
+        mlipdDirL {p=q} (gamma (pdirR pi) (pi ** (id, asn))) pdr,
+      \pi, asn =>
+        mlipdDirR {p=q} (gamma (pdirL pi) (pi ** (asn, id)))))
