@@ -168,3 +168,47 @@ InterpPolyParaNT {c} {mor} comp {p} {q} nt x ipd =
       x
       (ipdDirR {mor} ipd)
       (ppntOnR {mor} {p} {q} nt (ipdPos {mor} ipd) pasn)))
+
+-------------------------------
+-------------------------------
+---- Paranaturality proofs ----
+-------------------------------
+-------------------------------
+
+public export
+0 PolyParaNTisParanatural :
+  {c : Type} -> {mor : IntDifunctorSig c} -> (comp : IntCompSig c mor) ->
+  (assoc : IntAssocSig c mor comp) ->
+  {p, q : PolyDiSig c} ->
+  (nt : PolyParaNT {c} mor p q) ->
+  IntParaNTCond c mor
+    (InterpPolyDi {c} mor p) (InterpPolyDi {c} mor q)
+    (InterpPolyLmap {c} {mor} comp p) (InterpPolyRmap {c} {mor} comp p)
+    (InterpPolyLmap {c} {mor} comp q) (InterpPolyRmap {c} {mor} comp q)
+    (InterpPolyParaNT {c} {mor} comp {p} {q} nt)
+PolyParaNTisParanatural {c} {mor} comp assoc
+  {p=(ppos ** (pdirL, pdirR))} {q=(qpos ** (qdirL, qdirR))}
+  (onpos ** (onL, onR)) i0 i1 i2
+  (pi0 ** (mi0pr, mpli0)) (pi1 ** (mi1pr, mpli1)) cond =
+    case dpeq1 cond of
+      Refl => case (fstEq $ dpeq2 cond) of
+        Refl => case (sndEq $ dpeq2 cond) of
+          Refl =>
+            rewrite assoc _ _ _ _ mi1pr i2 mpli0 in
+            dpEq12
+              Refl
+            $ pairEqCong
+              (rewrite assoc _ _ _ _
+                (onL pi0
+                  (comp (pdirL pi0) i1 (pdirR pi0) mi1pr (comp (pdirL pi0)
+                    i0 i1 i2 mpli0)))
+                mi1pr
+                i2
+               in Refl)
+              (rewrite assoc _ _ _ _
+                i2
+                mpli0
+                (onR pi0
+                  (comp (pdirL pi0) i1 (pdirR pi0) mi1pr (comp (pdirL pi0)
+                    i0 i1 i2 mpli0)))
+               in Refl)
