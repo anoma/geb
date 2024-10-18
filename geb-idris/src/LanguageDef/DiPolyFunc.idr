@@ -48,11 +48,11 @@ public export
 InterpPolyDi : {c : Type} -> (mor : IntDifunctorSig c) -> PolyDiSig c ->
   IntDifunctorSig c
 InterpPolyDi {c} mor p a b =
-  (i : ipaPos p ** IntDiYonedaEmbedObj c mor (pdDirR p i) (pdDirL p i) a b)
+  (i : pdPos p ** IntDiYonedaEmbedObj c mor (pdDirR p i) (pdDirL p i) a b)
 
 public export
 ipdPos : {c : Type} -> {mor : IntDifunctorSig c} -> {p : PolyDiSig c} ->
-  {x, y : c} -> InterpPolyDi {c} mor p x y -> ipaPos p
+  {x, y : c} -> InterpPolyDi {c} mor p x y -> pdPos p
 ipdPos {c} {mor} {p} = DPair.fst
 
 public export
@@ -97,29 +97,29 @@ public export
 PPNTonPos : {c : Type} -> {mor : IntDifunctorSig c} ->
   (p, q : PolyDiSig c) -> Type
 PPNTonPos {c} {mor} p q =
-  (pi : ipaPos p) -> mor (pdDirR p pi) (pdDirL p pi) -> ipaPos q
+  (pi : pdPos p) -> mor (pdDirR p pi) (pdDirL p pi) -> pdPos q
 
 public export
 PPNTonL : {c : Type} -> {mor : IntDifunctorSig c} ->
   (p, q : PolyDiSig c) -> PPNTonPos {c} {mor} p q -> Type
 PPNTonL {c} {mor} p q onpos =
-  (pi : ipaPos p) -> (asn : mor (pdDirR p pi) (pdDirL p pi)) ->
+  (pi : pdPos p) -> (asn : mor (pdDirR p pi) (pdDirL p pi)) ->
   mor (pdDirL p pi) (pdDirL q (onpos pi asn))
 
 public export
 PPNTonR : {c : Type} -> {mor : IntDifunctorSig c} ->
   (p, q : PolyDiSig c) -> PPNTonPos {c} {mor} p q -> Type
 PPNTonR {c} {mor} p q onpos =
-  (pi : ipaPos p) -> (asn : mor (pdDirR p pi) (pdDirL p pi)) ->
+  (pi : pdPos p) -> (asn : mor (pdDirR p pi) (pdDirL p pi)) ->
   mor (pdDirR q (onpos pi asn)) (pdDirR p pi)
 
 public export
 PolyParaNT : {c : Type} -> (mor : IntDifunctorSig c) -> IntMorSig (PolyDiSig c)
 PolyParaNT {c} mor p q =
-  (onpos : (pi : ipaPos p) -> (mor (pdDirR p pi) (pdDirL p pi)) -> ipaPos q **
-   ((pi : ipaPos p) -> (asn : mor (pdDirR p pi) (pdDirL p pi)) ->
+  (onpos : (pi : pdPos p) -> (mor (pdDirR p pi) (pdDirL p pi)) -> pdPos q **
+   ((pi : pdPos p) -> (asn : mor (pdDirR p pi) (pdDirL p pi)) ->
       mor (pdDirL p pi) (pdDirL q (onpos pi asn)),
-    (pi : ipaPos p) -> (asn : mor (pdDirR p pi) (pdDirL p pi)) ->
+    (pi : pdPos p) -> (asn : mor (pdDirR p pi) (pdDirL p pi)) ->
       mor (pdDirR q (onpos pi asn)) (pdDirR p pi)))
 
 public export
