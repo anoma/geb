@@ -94,6 +94,26 @@ InterpPolyDimap {c} {mor} comp p =
 ------------------------------------------------
 
 public export
+PPNTonPos : {c : Type} -> {mor : IntDifunctorSig c} ->
+  (p, q : PolyDiSig c) -> Type
+PPNTonPos {c} {mor} p q =
+  (pi : ipaPos p) -> mor (pdDirR p pi) (pdDirL p pi) -> ipaPos q
+
+public export
+PPNTonL : {c : Type} -> {mor : IntDifunctorSig c} ->
+  (p, q : PolyDiSig c) -> PPNTonPos {c} {mor} p q -> Type
+PPNTonL {c} {mor} p q onpos =
+  (pi : ipaPos p) -> (asn : mor (pdDirR p pi) (pdDirL p pi)) ->
+  mor (pdDirL p pi) (pdDirL q (onpos pi asn))
+
+public export
+PPNTonR : {c : Type} -> {mor : IntDifunctorSig c} ->
+  (p, q : PolyDiSig c) -> PPNTonPos {c} {mor} p q -> Type
+PPNTonR {c} {mor} p q onpos =
+  (pi : ipaPos p) -> (asn : mor (pdDirR p pi) (pdDirL p pi)) ->
+  mor (pdDirR q (onpos pi asn)) (pdDirR p pi)
+
+public export
 PolyParaNT : (c : Type) -> (mor : IntDifunctorSig c) -> IntMorSig (PolyDiSig c)
 PolyParaNT c mor p q =
   (onpos : (pi : ipaPos p) -> (mor (pdDirR p pi) (pdDirL p pi)) -> ipaPos q **
@@ -104,22 +124,19 @@ PolyParaNT c mor p q =
 
 public export
 ppntOnPos : {c : Type} -> {mor : IntDifunctorSig c} -> {p, q : PolyDiSig c} ->
-  PolyParaNT c mor p q ->
-  (pi : ipaPos p) -> mor (pdDirR p pi) (pdDirL p pi) -> ipaPos q
+  PolyParaNT c mor p q -> PPNTonPos {c} {mor} p q
 ppntOnPos {c} {mor} {p} {q} = DPair.fst
 
 public export
 ppntOnL : {c : Type} -> {mor : IntDifunctorSig c} -> {p, q : PolyDiSig c} ->
   (nt : PolyParaNT c mor p q) ->
-  (pi : ipaPos p) -> (asn : mor (pdDirR p pi) (pdDirL p pi)) ->
-  mor (pdDirL p pi) (pdDirL q (ppntOnPos {c} {mor} {p} {q} nt pi asn))
+  PPNTonL {c} {mor} p q (ppntOnPos {c} {mor} {p} {q} nt)
 ppntOnL {c} {mor} {p} {q} nt = Builtin.fst $ DPair.snd nt
 
 public export
 ppntOnR : {c : Type} -> {mor : IntDifunctorSig c} -> {p, q : PolyDiSig c} ->
   (nt : PolyParaNT c mor p q) ->
-  (pi : ipaPos p) -> (asn : mor (pdDirR p pi) (pdDirL p pi)) ->
-  mor (pdDirR q (ppntOnPos {c} {mor} {p} {q} nt pi asn)) (pdDirR p pi)
+  PPNTonR {c} {mor} p q (ppntOnPos {c} {mor} {p} {q} nt)
 ppntOnR {c} {mor} {p} {q} nt = Builtin.snd $ DPair.snd nt
 
 public export
