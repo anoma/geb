@@ -93,74 +93,34 @@ InterpPolyDimap {c} {mor} comp p =
 ---- Polynomial paranatural transformations ----
 ------------------------------------------------
 
--- The set of paranatural transformations from a direpresentable,
--- (IntDiYonedaEmbedObj i j), to an arbitrary difunctor `p`.
-public export
-ParaNTfromDirep : (0 c : Type) -> (0 mor : IntDifunctorSig c) ->
-  (s, t : c) -> (p : IntDifunctorSig c) -> Type
-ParaNTfromDirep c mor s t p = p t s
-
--- The set of paranatural transformations from a direpresentable,
--- (IntDiYonedaEmbedObj i j), to an arbitrary polynomial difunctor `p`.
-public export
-PolyParaNTfromDirep : (c : Type) -> (mor : IntDifunctorSig c) ->
-  (s, t : c) -> (p : PolyDiSig c) -> Type
-PolyParaNTfromDirep c mor s t p = ParaNTfromDirep c mor s t (InterpPolyDi mor p)
-
--- The set of paranatural transformations between arbitrary
--- polynomial difunctors.
-public export
-PolyParaNTasProd : (c : Type) -> (mor : IntDifunctorSig c) ->
-  IntMorSig (PolyDiSig c)
-PolyParaNTasProd c mor p q =
-  (pi : ipaPos p) ->
-  PolyParaNTfromDirep c mor (pdDirR p pi) (pdDirL p pi) q
-
--- Having defined the set of paranatural transformations between polynomial
--- difunctors via the Yoneda lemma, we now write it in a more explicit form
--- and show they are the same.
 public export
 PolyParaNT : (c : Type) -> (mor : IntDifunctorSig c) -> IntMorSig (PolyDiSig c)
 PolyParaNT c mor p q =
-  (onpos : ipaPos p -> ipaPos q **
-   ((pi : ipaPos p) -> mor (pdDirL p pi) (pdDirL q (onpos pi)),
-    (pi : ipaPos p) -> mor (pdDirR q (onpos pi)) (pdDirR p pi)))
+  (onpos : (pi : ipaPos p) -> (mor (pdDirR p pi) (pdDirL p pi)) -> ipaPos q **
+   ((pi : ipaPos p) -> (asn : mor (pdDirR p pi) (pdDirL p pi)) ->
+      mor (pdDirL p pi) (pdDirL q (onpos pi asn)),
+    (pi : ipaPos p) -> (asn : mor (pdDirR p pi) (pdDirL p pi)) ->
+      mor (pdDirR q (onpos pi asn)) (pdDirR p pi)))
 
 public export
 ppntOnPos : {c : Type} -> {mor : IntDifunctorSig c} -> {p, q : PolyDiSig c} ->
-  PolyParaNT c mor p q -> ipaPos p -> ipaPos q
+  PolyParaNT c mor p q ->
+  (pi : ipaPos p) -> mor (pdDirR p pi) (pdDirL p pi) -> ipaPos q
 ppntOnPos {c} {mor} {p} {q} = DPair.fst
 
 public export
 ppntOnL : {c : Type} -> {mor : IntDifunctorSig c} -> {p, q : PolyDiSig c} ->
-  (nt : PolyParaNT c mor p q) -> (pi : ipaPos p) ->
-  mor (pdDirL p pi) (pdDirL q (ppntOnPos {c} {mor} {p} {q} nt pi))
+  (nt : PolyParaNT c mor p q) ->
+  (pi : ipaPos p) -> (asn : mor (pdDirR p pi) (pdDirL p pi)) ->
+  mor (pdDirL p pi) (pdDirL q (ppntOnPos {c} {mor} {p} {q} nt pi asn))
 ppntOnL {c} {mor} {p} {q} nt = Builtin.fst $ DPair.snd nt
 
 public export
 ppntOnR : {c : Type} -> {mor : IntDifunctorSig c} -> {p, q : PolyDiSig c} ->
-  (nt : PolyParaNT c mor p q) -> (pi : ipaPos p) ->
-  mor (pdDirR q (ppntOnPos {c} {mor} {p} {q} nt pi)) (pdDirR p pi)
+  (nt : PolyParaNT c mor p q) ->
+  (pi : ipaPos p) -> (asn : mor (pdDirR p pi) (pdDirL p pi)) ->
+  mor (pdDirR q (ppntOnPos {c} {mor} {p} {q} nt pi asn)) (pdDirR p pi)
 ppntOnR {c} {mor} {p} {q} nt = Builtin.snd $ DPair.snd nt
-
-public export
-PolyParaNTisoL : {c : Type} -> {mor : IntDifunctorSig c} ->
-  {p, q : PolyDiSig c} ->
-  PolyParaNTasProd c mor p q -> PolyParaNT c mor p q
-PolyParaNTisoL {c} {mor} gamma =
-  (\pi => fst (gamma pi) **
-   (\pi => fst (snd $ gamma pi),
-    \pi => snd (snd $ gamma pi)))
-
-public export
-PolyParaNTisoR : {c : Type} -> {mor : IntDifunctorSig c} ->
-  {p, q : PolyDiSig c} ->
-  PolyParaNT c mor p q -> PolyParaNTasProd c mor p q
-PolyParaNTisoR {c} {mor} {p} {q} nt =
-  \pi : ipaPos p =>
-    (ppntOnPos {mor} {p} {q} nt pi **
-     (ppntOnL {mor} {p} {q} nt pi,
-      ppntOnR {mor} {p} {q} nt pi))
 
 public export
 InterpPolyParaNT :
@@ -169,16 +129,25 @@ InterpPolyParaNT :
   PolyParaNT c mor p q ->
   IntDiNTSig c (InterpPolyDi {c} mor p) (InterpPolyDi {c} mor q)
 InterpPolyParaNT {c} {mor} comp {p} {q} nt x ipd =
-  (ppntOnPos {mor} {p} {q} nt (ipdPos {mor} ipd) **
+  let
+    pasn :
+      mor
+        (pdDirR p (ipdPos {c} {mor} {p} ipd))
+        (pdDirL p (ipdPos {c} {mor} {p} ipd)) =
+      comp (fst (p .snd) (ipd .fst)) x (snd (p .snd) (ipd .fst))
+        (ipdDirL {c} {mor} {p} ipd)
+        (ipdDirR {c} {mor} {p} ipd)
+  in
+  (ppntOnPos {mor} {p} {q} nt (ipdPos {mor} ipd) pasn **
    (comp
       x
       (pdDirL p (ipdPos {mor} ipd))
-      (pdDirL q (ppntOnPos {mor} {p} {q} nt (ipdPos {mor} ipd)))
-      (ppntOnL {mor} {p} {q} nt (ipdPos {mor} ipd))
+      (pdDirL q (ppntOnPos {mor} {p} {q} nt (ipdPos {mor} ipd) pasn))
+      (ppntOnL {mor} {p} {q} nt (ipdPos {mor} ipd) pasn)
       (ipdDirL {mor} ipd),
     comp
-      (pdDirR q (ppntOnPos {mor} {p} {q} nt (ipdPos {mor} ipd)))
+      (pdDirR q (ppntOnPos {mor} {p} {q} nt (ipdPos {mor} ipd) pasn))
       (pdDirR p (ipdPos {mor} ipd))
       x
       (ipdDirR {mor} ipd)
-      (ppntOnR {mor} {p} {q} nt (ipdPos {mor} ipd))))
+      (ppntOnR {mor} {p} {q} nt (ipdPos {mor} ipd) pasn)))
