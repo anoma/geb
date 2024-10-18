@@ -68,12 +68,26 @@ ipdDirR : {c : Type} -> {mor : IntDifunctorSig c} -> {p : PolyDiSig c} ->
 ipdDirR {c} {mor} {p} ipd = Builtin.snd (DPair.snd ipd)
 
 public export
+InterpPolyLmap : {c : Type} -> {mor : IntDifunctorSig c} ->
+  IntCompSig c mor ->
+  (p : PolyDiSig c) -> IntEndoLmapSig c mor (InterpPolyDi {c} mor p)
+InterpPolyLmap {c} {mor} comp p s t a mas =
+  dpMapSnd $ \pi => mapFst (flip (comp a s (pdDirL p pi)) mas)
+
+public export
+InterpPolyRmap : {c : Type} -> {mor : IntDifunctorSig c} ->
+  IntCompSig c mor ->
+  (p : PolyDiSig c) -> IntEndoRmapSig c mor (InterpPolyDi {c} mor p)
+InterpPolyRmap {c} {mor} comp p s t b mtb =
+  dpMapSnd $ \pi => mapSnd (comp (pdDirR p pi) t b mtb)
+
+public export
 InterpPolyDimap : {c : Type} -> {mor : IntDifunctorSig c} ->
   IntCompSig c mor ->
   (p : PolyDiSig c) -> IntEndoDimapSig c mor (InterpPolyDi {c} mor p)
-InterpPolyDimap {c} {mor} comp p s t a b mas mtb =
-  dpMapSnd $ \pi =>
-    bimap (flip (comp a s (pdDirL p pi)) mas) (comp (pdDirR p pi) t b mtb)
+InterpPolyDimap {c} {mor} comp p =
+  IntEndoDimapFromLRmaps c mor (InterpPolyDi {c} mor p)
+    (InterpPolyLmap {c} {mor} comp p) (InterpPolyRmap {c} {mor} comp p)
 
 ------------------------------------------------
 ---- Polynomial paranatural transformations ----
