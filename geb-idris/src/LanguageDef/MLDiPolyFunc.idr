@@ -185,3 +185,25 @@ MLPolyParaArCompleteFst (ppos ** (pdirL, pdirR)) (qpos ** (qdirL, qdirR))
         cond (pdirL pi) x dml (pi ** (dmr . dml, id)) (pi ** (dmr, dml)) Refl
     in
     Refl
+
+public export
+0 MLPolyParaArCompleteL :
+  (p, q : MLPolyDiSig) -> (gamma : MLParaNTinterp p q) ->
+  (cond : MLPolyParanaturality {p} {q} gamma) ->
+  (x : Type) ->
+  (i : InterpMLPolyDiDiag p x) ->
+    (mlipdDirL {p=q} (gamma x i)) =
+    (rewrite MLPolyParaArCompleteFst p q gamma cond x i in
+     mlipdDirL {p=q}
+      (InterpMLPolyParaNT {p} {q} (MLPolyParaArFromParaNT p q gamma cond) x i))
+MLPolyParaArCompleteL (ppos ** (pdirL, pdirR)) (qpos ** (qdirL, qdirR))
+  gamma cond x (pi ** (dmr, dml)) =
+    let
+      condapp =
+        cond x (pdirR pi) dmr (pi ** (dmr, dml)) (pi ** (id, dmr . dml)) Refl
+    in
+    trans
+      (sym $
+        bimapIdL1 {g=((.) dmr)} {eac=(((gamma x (pi ** (dmr, dml))) .snd))})
+    $ rewrite sym (fstEqHetTy $ dpeq2 condapp) in
+      trans (sym $ fstEqHet $ dpeq2 condapp) bimapIdR1
