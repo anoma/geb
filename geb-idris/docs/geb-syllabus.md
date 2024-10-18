@@ -10,6 +10,10 @@ Practically none of the following is required just to write code in Geb!  But it
 
 The two main threads of theory underlying Geb are category theory and polynomial functors.  To some degree I am treating the former as the theory of (programming) languages and the latter as the theory of data structures, but in Geb they are intertwined, defined through mutual recursion:  category theory defined by data structures, data structures given semantics by category theory, and "(programming) language" emerging as a notion of its own (broader than "category").
 
+### The big picture
+
+The end goal of the language definition of Geb -- the point at which the language itself is finished and all else is libraries -- is what I have been calling "programming languages à la carte".  That is a reference, to "Data Types à la Carte", so the founding paper there (see the Bibliography) is one place you might start.  It illustrates how to define data structures in ways which allow for more combinators than traditional explicitly-recursive ADTs.  Geb aims to extend this notion to programming languages -- defining them in terms of individual language features and combinators on languages themselves.
+
 ### Track: category theory
 
 Fortunately, but not just coincidentally, the aspects of category theory underpinning Geb are mainly the foundational ones -- the first few that are typically presented in books on category theory.  One of my aims in the reading group will be to communicate these foundations in terms that will be most familiar to programmers -- each of them has a clear analogue in and application to programming.
@@ -36,6 +40,10 @@ Here is a rough order of topics I'd recommend.
 - [Conjugate Hylomorphisms](http://www.cs.ox.ac.uk/people/jeremy.gibbons/publications/conjugate-hylos.pdf)
 - [Kan Extensions for Program Optimization](https://www.cs.ox.ac.uk/ralf.hinze/Kan.pdf)
 - [Data Types à la Carte](https://www.cambridge.org/core/journals/journal-of-functional-programming/article/data-types-a-la-carte/14416CB20C4637164EA9F77097909409)
+- [Richard Southwell: Category Theory for Beginners (videos)](https://www.youtube.com/playlist?list=PLCTMeyjMKRkoS699U0OJ3ymr3r01sI08l)
+- [Bartosz Milewski video playlists](https://www.youtube.com/@DrBartosz/playlists)
+- [Recursion schemes without the barbed wire (part 1)](https://www.youtube.com/watch?v=0y0EuoToTco)
+- [Recursion schemes without the barbed wire (part 2)](https://www.youtube.com/watch?v=i-H_MqhRQNU)
 
 ### Polynomial functors
 
