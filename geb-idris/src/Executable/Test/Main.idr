@@ -22,6 +22,7 @@ import LanguageDef.Test.SlicePolyCatTest
 import LanguageDef.Test.SliceFuncCatTest
 import LanguageDef.Test.HelixCatTest
 import LanguageDef.Test.DiPolyFuncTest
+import LanguageDef.Test.MLDiPolyFuncTest
 import LanguageDef.Test.RopeCatTest
 import LanguageDef.Test.SlPolyImpredTest
 import LanguageDef.Test.SlPolyIntCatTest
@@ -133,6 +134,7 @@ totalTests = do
   LanguageDef.Test.QTypeTest.qtypeTest
   LanguageDef.Test.HelixCatTest.helixCatTest
   LanguageDef.Test.DiPolyFuncTest.diPolyFuncTest
+  LanguageDef.Test.MLDiPolyFuncTest.mlDiPolyFuncTest
   LanguageDef.Test.RopeCatTest.ropeCatTest
 
 export
