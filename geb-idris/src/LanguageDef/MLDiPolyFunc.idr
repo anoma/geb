@@ -207,3 +207,29 @@ MLPolyParaArCompleteL (ppos ** (pdirL, pdirR)) (qpos ** (qdirL, qdirR))
         bimapIdL1 {g=((.) dmr)} {eac=(((gamma x (pi ** (dmr, dml))) .snd))})
     $ rewrite sym (fstEqHetTy $ dpeq2 condapp) in
       trans (sym $ fstEqHet $ dpeq2 condapp) bimapIdR1
+
+public export
+0 MLPolyParaArCompleteR :
+  (p, q : MLPolyDiSig) -> (gamma : MLParaNTinterp p q) ->
+  (cond : MLPolyParanaturality {p} {q} gamma) ->
+  (x : Type) ->
+  (i : InterpMLPolyDiDiag p x) ->
+    (mlipdDirR {p=q} (gamma x i)) =
+    (rewrite MLPolyParaArCompleteFst p q gamma cond x i in
+     mlipdDirR {p=q}
+      (InterpMLPolyParaNT {p} {q} (MLPolyParaArFromParaNT p q gamma cond) x i))
+MLPolyParaArCompleteR (ppos ** (pdirL, pdirR)) (qpos ** (qdirL, qdirR))
+  gamma cond x (pi ** (dmr, dml)) =
+    let
+      condapp =
+        cond (pdirL pi) x dml (pi ** (dmr . dml, id)) (pi ** (dmr, dml)) Refl
+    in
+    trans (sym $
+      bimapIdR2 {f=((|>) dml)} {ead=(((gamma x (pi ** (dmr, dml))) .snd))})
+    $
+      trans
+        (sndEqHet $ dpeq2 condapp)
+        (rewrite (sndEqHetTy $ dpeq2 condapp) in
+         bimapIdL2
+          {g=((.) dml)}
+          {eac=((gamma (pdirL pi) (pi ** (\x => dmr (dml x), id))) .snd)})
