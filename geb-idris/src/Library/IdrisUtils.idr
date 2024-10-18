@@ -1205,9 +1205,29 @@ bimapIdL : {0 a, c, d : Type} -> {0 g : c -> d} -> {ea : a} -> {ec : c} ->
 bimapIdL {a} {c} {d} {g} {ea} {ec} = Refl
 
 public export
+bimapIdL1 : {0 a, c, d : Type} -> {0 g : c -> d} -> {eac : (a, c)} ->
+  fst (bimap Prelude.id g eac) = fst eac-- , g $ snd eac)
+bimapIdL1 {a} {c} {d} {g} {eac=(ea, ec)} = Refl
+
+public export
+bimapIdL2 : {0 a, c, d : Type} -> {0 g : c -> d} -> {eac : (a, c)} ->
+  snd (bimap Prelude.id g eac) = g (snd eac)
+bimapIdL2 {a} {c} {d} {g} {eac=(ea, ec)} = Refl
+
+public export
 bimapIdR : {0 a, b, d : Type} -> {0 f : a -> b} -> {ea : a} -> {ed : d} ->
   bimap f Prelude.id (ea, ed) = (f ea, ed)
 bimapIdR {a} {b} {d} {f} {ea} {ed} = Refl
+
+public export
+bimapIdR1 : {0 a, b, d : Type} -> {0 f : a -> b} -> {ead : (a, d)} ->
+  fst (bimap f Prelude.id ead) = f (fst ead)
+bimapIdR1 {a} {b} {d} {f} {ead=(ea, ed)} = Refl
+
+public export
+bimapIdR2 : {0 a, b, d : Type} -> {0 f : a -> b} -> {ead : (a, d)} ->
+  snd (bimap f Prelude.id ead) = snd ead
+bimapIdR2 {a} {b} {d} {f} {ead=(ea, ed)} = Refl
 
 public export
 DecEqPred : (a: Type) -> Type
