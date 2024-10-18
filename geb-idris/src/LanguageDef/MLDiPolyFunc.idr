@@ -42,6 +42,10 @@ InterpMLPolyDi : MLPolyDiSig -> IntDifunctorSig Type
 InterpMLPolyDi = InterpPolyDi {c=Type} TypeMor
 
 public export
+InterpMLPolyDiDiag : MLPolyDiSig -> Type -> Type
+InterpMLPolyDiDiag p x = InterpMLPolyDi p x x
+
+public export
 mlipdPos : {p : MLPolyDiSig} ->
   {x, y : Type} -> InterpMLPolyDi p x y -> mlpdPos p
 mlipdPos = ipdPos {c=Type} {mor=TypeMor}
