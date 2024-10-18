@@ -114,8 +114,8 @@ PPNTonR {c} {mor} p q onpos =
   mor (pdDirR q (onpos pi asn)) (pdDirR p pi)
 
 public export
-PolyParaNT : (c : Type) -> (mor : IntDifunctorSig c) -> IntMorSig (PolyDiSig c)
-PolyParaNT c mor p q =
+PolyParaNT : {c : Type} -> (mor : IntDifunctorSig c) -> IntMorSig (PolyDiSig c)
+PolyParaNT {c} mor p q =
   (onpos : (pi : ipaPos p) -> (mor (pdDirR p pi) (pdDirL p pi)) -> ipaPos q **
    ((pi : ipaPos p) -> (asn : mor (pdDirR p pi) (pdDirL p pi)) ->
       mor (pdDirL p pi) (pdDirL q (onpos pi asn)),
@@ -124,18 +124,18 @@ PolyParaNT c mor p q =
 
 public export
 ppntOnPos : {c : Type} -> {mor : IntDifunctorSig c} -> {p, q : PolyDiSig c} ->
-  PolyParaNT c mor p q -> PPNTonPos {c} {mor} p q
+  PolyParaNT {c} mor p q -> PPNTonPos {c} {mor} p q
 ppntOnPos {c} {mor} {p} {q} = DPair.fst
 
 public export
 ppntOnL : {c : Type} -> {mor : IntDifunctorSig c} -> {p, q : PolyDiSig c} ->
-  (nt : PolyParaNT c mor p q) ->
+  (nt : PolyParaNT {c} mor p q) ->
   PPNTonL {c} {mor} p q (ppntOnPos {c} {mor} {p} {q} nt)
 ppntOnL {c} {mor} {p} {q} nt = Builtin.fst $ DPair.snd nt
 
 public export
 ppntOnR : {c : Type} -> {mor : IntDifunctorSig c} -> {p, q : PolyDiSig c} ->
-  (nt : PolyParaNT c mor p q) ->
+  (nt : PolyParaNT {c} mor p q) ->
   PPNTonR {c} {mor} p q (ppntOnPos {c} {mor} {p} {q} nt)
 ppntOnR {c} {mor} {p} {q} nt = Builtin.snd $ DPair.snd nt
 
@@ -143,7 +143,7 @@ public export
 InterpPolyParaNT :
   {c : Type} -> {mor : IntDifunctorSig c} -> (comp : IntCompSig c mor) ->
   {p, q : PolyDiSig c} ->
-  PolyParaNT c mor p q ->
+  PolyParaNT {c} mor p q ->
   IntDiNTSig c (InterpPolyDi {c} mor p) (InterpPolyDi {c} mor q)
 InterpPolyParaNT {c} {mor} comp {p} {q} nt x ipd =
   let
