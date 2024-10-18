@@ -233,3 +233,21 @@ MLPolyParaArCompleteR (ppos ** (pdirL, pdirR)) (qpos ** (qdirL, qdirR))
          bimapIdL2
           {g=((.) dml)}
           {eac=((gamma (pdirL pi) (pi ** (\x => dmr (dml x), id))) .snd)})
+
+public export
+0 MLPolyParaArComplete :
+  (p, q : MLPolyDiSig) -> (gamma : MLParaNTinterp p q) ->
+  (cond : MLPolyParanaturality {p} {q} gamma) ->
+  (x : Type) ->
+  ExtEq {a=(InterpMLPolyDiDiag p x)} {b=(InterpMLPolyDiDiag q x)}
+    (gamma x)
+    (InterpMLPolyParaNT {p} {q} (MLPolyParaArFromParaNT p q gamma cond) x)
+MLPolyParaArComplete p@(ppos ** (pdirL, pdirR)) q@(qpos ** (qdirL, qdirR))
+  gamma cond x i@(pi ** (dmr, dml)) =
+    rewrite sym $ MLPolyParaArCompleteFst p q gamma cond x i in
+    rewrite sym $ MLPolyParaArCompleteL p q gamma cond x i in
+    rewrite dpEqPat {dp=(gamma x (pi ** (dmr, dml)))} in
+    dpEq12
+      Refl
+    $ rewrite pairFstSnd (snd $ gamma x (pi ** (dmr, dml))) in
+      pairEqCong Refl (MLPolyParaArCompleteR p q gamma cond x i)
