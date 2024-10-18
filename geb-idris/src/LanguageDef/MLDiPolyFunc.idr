@@ -115,6 +115,13 @@ InterpMLPolyParaNT = InterpPolyParaNT {c=Type} {mor=TypeMor} typeComp
 -----------------------------------------
 -----------------------------------------
 
+------------------------
+---- Paranaturality ----
+------------------------
+
+-- Here we show that our interpretation of a polynomial "paranatural" arena
+-- is indeed paranatural.
+
 public export
 0 MLPolyParanaturality : {p, q : MLPolyDiSig} ->
   (nt : TypeProfDiNT (InterpMLPolyDi p) (InterpMLPolyDi q)) -> Type
@@ -130,6 +137,11 @@ public export
   MLPolyParanaturality {p} {q} (InterpMLPolyParaNT {p} {q} nt)
 MLPolyParaNTisParanatural =
   PolyParaNTisParanatural {c=Type} {mor=TypeMor} typeComp typeAssoc
+
+-- Here we show that our representation of paranatural transformations
+-- as arenas is complete -- that is, for any paranatural transformation
+-- that we can write in the metalanguage, we can derive an arena whose
+-- interpretation is the given transformation.
 
 public export
 0 MLPolyParaArFromParaNT : (p, q : MLPolyDiSig) ->
