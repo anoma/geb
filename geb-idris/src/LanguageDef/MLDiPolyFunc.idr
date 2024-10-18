@@ -108,3 +108,25 @@ InterpMLPolyParaNT : {p, q : MLPolyDiSig} ->
   MLPolyParaNT p q ->
   TypeProfDiNT (InterpMLPolyDi p) (InterpMLPolyDi q)
 InterpMLPolyParaNT = InterpPolyParaNT {c=Type} {mor=TypeMor} typeComp
+
+-----------------------------------------
+-----------------------------------------
+---- Correctness/completeness proofs ----
+-----------------------------------------
+-----------------------------------------
+
+public export
+0 typeAssoc : IntAssocSig Type TypeMor InternalCat.typeComp
+typeAssoc w x y z h g f = Refl
+
+public export
+0 MLPolyParaNTisParanatural :
+  {p, q : MLPolyDiSig} ->
+  (nt : MLPolyParaNT p q) ->
+  IntParaNTCond Type TypeMor
+    (InterpMLPolyDi p) (InterpMLPolyDi q)
+    (InterpMLPolyLmap p) (InterpMLPolyRmap p)
+    (InterpMLPolyLmap q) (InterpMLPolyRmap q)
+    (InterpMLPolyParaNT {p} {q} nt)
+MLPolyParaNTisParanatural =
+  PolyParaNTisParanatural {c=Type} {mor=TypeMor} typeComp typeAssoc
