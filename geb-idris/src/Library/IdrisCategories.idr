@@ -2142,6 +2142,21 @@ TwArrPreshfOpNatTransVcomp : (p, q, r : TwArrPreshfOpSig) ->
 TwArrPreshfOpNatTransVcomp p q r beta alpha x y myx =
   beta x y myx . alpha x y myx
 
+public export
+TwArrPreshfOpNatTransHcomp : (p, p', q, q' : TwArrPreshfOpSig) ->
+  TwArrPreshfOpNatTrans q q' -> TwArrPreshfOpNatTrans p p' ->
+  TwArrPreshfOpNatTrans (TwArrPreshfOpCompose q p) (TwArrPreshfOpCompose q' p')
+TwArrPreshfOpNatTransHcomp p p' q q' beta alpha x z =
+  TwArrPreshfNatTransHcomp
+    (\x, z => p z x)
+    (\x, z => p' z x)
+    (\x, z => q z x)
+    (\x, z => q' z x)
+    (\x, y => beta y x)
+    (\x, y => alpha y x)
+    z
+    x
+
 -------------------------------
 ---- Naturality conditions ----
 -------------------------------
