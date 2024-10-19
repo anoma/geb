@@ -51,6 +51,11 @@ InterpPolyDi {c} mor p a b =
   (i : pdPos p ** IntDiYonedaEmbedObj c mor (pdDirR p i) (pdDirL p i) a b)
 
 public export
+InterpPolyDiDiag : {c : Type} -> (mor : IntDifunctorSig c) -> PolyDiSig c ->
+  c -> Type
+InterpPolyDiDiag {c} mor p a = InterpPolyDi {c} mor p a a
+
+public export
 ipdPos : {c : Type} -> {mor : IntDifunctorSig c} -> {p : PolyDiSig c} ->
   {x, y : c} -> InterpPolyDi {c} mor p x y -> pdPos p
 ipdPos {c} {mor} {p} = DPair.fst
