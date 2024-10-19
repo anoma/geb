@@ -1692,10 +1692,10 @@ data PProfCatDiagElemMor :
   PPCDEM :
     {c : Type} -> {mor : IntDifunctorSig c} -> {comp : IntCompSig c mor} ->
     -- `pos`, `contra`, and `covar` together form an `IntEndoProAr c`.
-    (pos : Type) -> (contra : pos -> c) -> (covar : pos -> c) ->
+    {pos : Type} -> {contra : pos -> c} -> {covar : pos -> c} ->
     -- `mxy` is the morphism of the underlying category (`c`) which
     -- underlies the morphism of the category of elements.
-    (x, y : c) -> (mxy : mor x y) ->
+    {x, y : c} -> (mxy : mor x y) ->
     -- `i`, `mcontra`, and `mcovar` together comprise a term of
     -- `InterpIEPPobj c mor (pos ** (contra, covar)) y x`; `y` and
     -- `mcontra` together comprise an object of the slice category of
