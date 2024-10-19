@@ -2060,12 +2060,16 @@ TwArrCoprOpNatTrans p q =
   (x, y : Type) -> (myx : y -> x) -> p x y myx -> q x y myx
 
 public export
-TwArrCoprNatTransId : (p : TwArrCoprSig) -> TwArrCoprNatTrans p p
-TwArrCoprNatTransId p x y mxy = Prelude.id
+TwArrPreshfNatTrans : TwArrPreshfSig -> TwArrPreshfSig -> Type
+TwArrPreshfNatTrans = TwArrCoprNatTrans
 
 public export
-TwArrCoprOpNatTransId : (p : TwArrCoprOpSig) -> TwArrCoprOpNatTrans p p
-TwArrCoprOpNatTransId p x y myx = Prelude.id
+TwArrPreshfOpNatTrans : TwArrPreshfOpSig -> TwArrPreshfOpSig -> Type
+TwArrPreshfOpNatTrans = TwArrCoprOpNatTrans
+
+public export
+TwArrCoprNatTransId : (p : TwArrCoprSig) -> TwArrCoprNatTrans p p
+TwArrCoprNatTransId p x y mxy = Prelude.id
 
 public export
 TwArrCoprNatTransVcomp : (p, q, r : TwArrCoprSig) ->
@@ -2079,6 +2083,10 @@ TwArrCoprNatTransHcomp : (p, p', q, q' : TwArrCoprSig) ->
 TwArrCoprNatTransHcomp p p' q q' beta alpha x z mxz
   (y ** (mxy, myz) ** (comm, qxy, pyz)) =
     (y ** (mxy, myz) ** (comm, beta x y mxy qxy, alpha y z myz pyz))
+
+public export
+TwArrCoprOpNatTransId : (p : TwArrCoprOpSig) -> TwArrCoprOpNatTrans p p
+TwArrCoprOpNatTransId p x y myx = Prelude.id
 
 public export
 TwArrCoprOpNatTransVcomp : (p, q, r : TwArrCoprOpSig) ->
@@ -2101,10 +2109,6 @@ TwArrCoprOpNatTransHcomp p p' q q' beta alpha x z =
     x
 
 public export
-TwArrPreshfNatTrans : TwArrPreshfSig -> TwArrPreshfSig -> Type
-TwArrPreshfNatTrans = TwArrCoprNatTrans
-
-public export
 TwArrPreshfNatTransId : (p : TwArrPreshfSig) -> TwArrPreshfNatTrans p p
 TwArrPreshfNatTransId p x y mxy = Prelude.id
 
@@ -2115,10 +2119,6 @@ TwArrPreshfNatTransVcomp : (p, q, r : TwArrPreshfSig) ->
   TwArrPreshfNatTrans p r
 TwArrPreshfNatTransVcomp p q r beta alpha x y mxy =
   beta x y mxy . alpha x y mxy
-
-public export
-TwArrPreshfOpNatTrans : TwArrPreshfOpSig -> TwArrPreshfOpSig -> Type
-TwArrPreshfOpNatTrans = TwArrCoprOpNatTrans
 
 public export
 TwArrPreshfOpNatTransId : (p : TwArrPreshfOpSig) -> TwArrPreshfOpNatTrans p p
