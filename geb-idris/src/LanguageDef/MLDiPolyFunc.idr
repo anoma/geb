@@ -63,6 +63,14 @@ mlipdDirR : {p : MLPolyDiSig} ->
 mlipdDirR = ipdDirR {c=Type} {mor=TypeMor}
 
 public export
+MLPDiagObj : MLPolyDiSig -> Type
+MLPDiagObj = PProfCatDiagElemObj Type TypeMor
+
+public export
+MLPDiagMor : {p : MLPolyDiSig} -> IntMorSig (MLPDiagObj p)
+MLPDiagMor {p} = PProfCatDiagElemMor Type TypeMor typeComp p
+
+public export
 InterpMLPolyLmap : (p : MLPolyDiSig) ->
   IntEndoLmapSig Type TypeMor (InterpMLPolyDi p)
 InterpMLPolyLmap = InterpPolyLmap {c=Type} {mor=TypeMor} typeComp
