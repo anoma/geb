@@ -284,3 +284,62 @@ MLPolyParaAsNatTransIsNatural
   (ppos ** (pdirL, pdirR)) (qpos ** (qdirL, qdirR))
   (onpos ** (onR, onL)) s t a b mba mas mtb (i ** (dcont, dcovar)) =
     Refl
+
+public export
+MLPolyDiSigFromNatTrans : (p, q : MLPolyDiSig) ->
+  (gamma : TwArrPreshfEmbeddingNT (InterpMLPolyDi p) (InterpMLPolyDi q)) ->
+  TwArrPreshfNaturality
+    {p=(TwArrPreshfEmbedProf $ InterpMLPolyDi p)}
+    {q=(TwArrPreshfEmbedProf $ InterpMLPolyDi q)}
+    (TwArrPreshfEmbedProfMap (InterpMLPolyDi p) $
+      MkProfunctor $ \mca, mbd => InterpMLPolyDimap p _ _ _ _ mca mbd)
+    (TwArrPreshfEmbedProfMap (InterpMLPolyDi q) $
+      MkProfunctor $ \mca, mbd => InterpMLPolyDimap q _ _ _ _ mca mbd)
+    gamma ->
+  MLPolyParaNT p q
+MLPolyDiSigFromNatTrans
+  (ppos ** (pcontra, pcovar)) (qpos ** (qcontra, qcovar)) gamma isnat =
+    (\pi, asn =>
+      fst $ gamma (pcontra pi) (pcovar pi) asn (pi ** (id, id)) **
+     (\pi, asn, pdcont =>
+        fst (snd $ gamma (pcontra pi) (pcovar pi) asn (pi ** (id, id))) pdcont,
+      \pi, asn, qdcov =>
+        snd (snd $ gamma (pcontra pi) (pcovar pi) asn (pi ** (id, id))) qdcov))
+
+public export
+MLPolyDiSigFromNatTransComplete : (p, q : MLPolyDiSig) ->
+  (gamma : TwArrPreshfEmbeddingNT (InterpMLPolyDi p) (InterpMLPolyDi q)) ->
+  (isnat : TwArrPreshfNaturality
+    {p=(TwArrPreshfEmbedProf $ InterpMLPolyDi p)}
+    {q=(TwArrPreshfEmbedProf $ InterpMLPolyDi q)}
+    (TwArrPreshfEmbedProfMap (InterpMLPolyDi p) $
+      MkProfunctor $ \mca, mbd => InterpMLPolyDimap p _ _ _ _ mca mbd)
+    (TwArrPreshfEmbedProfMap (InterpMLPolyDi q) $
+      MkProfunctor $ \mca, mbd => InterpMLPolyDimap q _ _ _ _ mca mbd)
+    gamma) ->
+  (x : Type) ->
+  ExtEq {a=(InterpMLPolyDi p x x)} {b=(InterpMLPolyDi q x x)}
+    (TwArrPreshfEmbeddingNTtoProfParaNT
+      {p=(InterpMLPolyDi p)} {q=(InterpMLPolyDi q)} gamma x)
+    (InterpMLPolyParaNT {p} {q} (MLPolyDiSigFromNatTrans p q gamma isnat) x)
+MLPolyDiSigFromNatTransComplete
+  (ppos ** (pcontra, pcovar)) (qpos ** (qcontra, qcovar)) gamma isnat x
+  (pi ** (dcont, dcovar)) =
+    trans
+      (sym
+       $ isnat (pcontra pi) (pcovar pi) x x id dcovar dcont (pi ** (id, id)))
+    $ dpEq12
+      Refl
+    $ pairEqCong
+      (trans
+        (bimapIdR1 {f=(IdrisUtils.(|>) dcont)})
+        (cong (IdrisUtils.(|>) dcont)
+         $ bimapIdL1
+          {g=((.) dcovar)}
+          {eac=(
+            DPair.snd
+              (gamma (pcontra pi) (pcovar pi)
+               (dcont . dcovar) (pi ** (id, id))))}))
+      (trans
+        (bimapIdR2 {f=(IdrisUtils.(|>) dcont)})
+        (bimapIdL2 {g=((.) dcovar)}))
