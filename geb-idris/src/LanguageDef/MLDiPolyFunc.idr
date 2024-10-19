@@ -251,3 +251,36 @@ MLPolyParaArComplete p@(ppos ** (pdirL, pdirR)) q@(qpos ** (qdirL, qdirR))
       Refl
     $ rewrite pairFstSnd (snd $ gamma x (pi ** (dmr, dml))) in
       pairEqCong Refl (MLPolyParaArCompleteR p q gamma cond x i)
+
+----------------------------------------------------------------
+----------------------------------------------------------------
+---- Paranatural transformations as natural transformations ----
+----------------------------------------------------------------
+----------------------------------------------------------------
+
+public export
+MLPolyParaAsNatTrans :
+  {p, q : MLPolyDiSig} -> (gamma : MLPolyParaNT p q) ->
+  TwArrPreshfEmbeddingNT (InterpMLPolyDi p) (InterpMLPolyDi q)
+MLPolyParaAsNatTrans {p=(ppos ** (pdirL, pdirR))} {q=(qpos ** (qdirL, qdirR))}
+  (onpos ** (onL, onR)) x y myx (pi ** (pdmR, pdmL)) =
+    let asn = pdmR . myx . pdmL in
+    (onpos pi asn **
+     (onL pi asn . pdmR,
+      pdmL . onR pi asn))
+
+public export
+0 MLPolyParaAsNatTransIsNatural :
+  (p, q : MLPolyDiSig) -> (gamma : MLPolyParaNT p q) ->
+  TwArrPreshfNaturality
+    {p=(TwArrPreshfEmbedProf $ InterpMLPolyDi p)}
+    {q=(TwArrPreshfEmbedProf $ InterpMLPolyDi q)}
+    (TwArrPreshfEmbedProfMap (InterpMLPolyDi p) $
+      MkProfunctor $ \mca, mbd => InterpMLPolyDimap p _ _ _ _ mca mbd)
+    (TwArrPreshfEmbedProfMap (InterpMLPolyDi q) $
+      MkProfunctor $ \mca, mbd => InterpMLPolyDimap q _ _ _ _ mca mbd)
+    (MLPolyParaAsNatTrans {p} {q} gamma)
+MLPolyParaAsNatTransIsNatural
+  (ppos ** (pdirL, pdirR)) (qpos ** (qdirL, qdirR))
+  (onpos ** (onR, onL)) s t a b mba mas mtb (i ** (dcont, dcovar)) =
+    Refl
