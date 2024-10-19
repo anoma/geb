@@ -1951,10 +1951,26 @@ TwArrPreshfOpDimapSig p =
 ------------------------------------------------
 
 public export
+TwArrCoprId : TwArrCoprSig
+TwArrCoprId x y mxy = Unit
+
+public export
+TwArrCoprIdMap : TwArrCoprDimapSig TwArrCoprId
+TwArrCoprIdMap s t a b mst mas mtb = id
+
+public export
 TwArrCoprCompose : TwArrCoprSig -> TwArrCoprSig -> TwArrCoprSig
 TwArrCoprCompose q p x z mxz =
   (y : Type ** mp : (x -> y, y -> z) **
    (FunExtEq (snd mp . fst mp) mxz, q x y (fst mp), p y z (snd mp)))
+
+public export
+TwArrCoprOpId : TwArrCoprOpSig
+TwArrCoprOpId x y myx = Unit
+
+public export
+TwArrCoprOpIdMap : TwArrCoprOpContraDimapSig TwArrCoprOpId
+TwArrCoprOpIdMap s t a b mts msa mbt = id
 
 public export
 TwArrCoprOpCompose : TwArrCoprOpSig -> TwArrCoprOpSig -> TwArrCoprOpSig
@@ -2462,22 +2478,6 @@ TwArrPreshfOpEmbeddingNTtoProfParaNT {p} {q} {a} gamma = gamma a a id
 ------------------------------------------------------------------
 ---- Yoneda embeddings of `Type` twisted-arrow (co)presheaves ----
 ------------------------------------------------------------------
-
-public export
-TwArrCoprId : TwArrCoprSig
-TwArrCoprId = TwArrCoprEmbedProf HomProf
-
-public export
-TwArrCoprOpId : TwArrCoprOpSig
-TwArrCoprOpId = TwArrCoprOpEmbedProf HomProf
-
-public export
-TwArrCoprIdMap : TwArrCoprDimapSig TwArrCoprId
-TwArrCoprIdMap = TwArrCoprEmbedDimap HomProf HomProfProfunctor
-
-public export
-TwArrCoprOpIdMap : TwArrCoprOpContraDimapSig TwArrCoprOpId
-TwArrCoprOpIdMap = TwArrCoprOpEmbedDimap HomProf HomProfProfunctor
 
 -- Embed an object of `Type` into the category of copresheaves on
 -- the twisted-arrow category of `Type`.  This is the object-map component
