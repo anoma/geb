@@ -2007,6 +2007,22 @@ TwArrPreshfIdContraDimap : TwArrPreshfContraDimapSig TwArrPreshfId
 TwArrPreshfIdContraDimap s t a b mab msa mbt = id
 
 public export
+TwArrPreshfCompose : TwArrPreshfSig -> TwArrPreshfSig -> TwArrPreshfSig
+TwArrPreshfCompose q p x z mxz =
+  (yy' : (Type, Type) ** mp : (fst yy' -> x, z -> snd yy') **
+   (p (fst yy') z (mxz . fst mp), q x (snd yy') (snd mp . mxz)))
+
+public export
+TwArrPreshfComposeDimap : (q, p : TwArrPreshfSig) ->
+  TwArrPreshfContraDimapSig q -> TwArrPreshfContraDimapSig p ->
+  TwArrPreshfContraDimapSig (TwArrPreshfCompose q p)
+TwArrPreshfComposeDimap q p qdm pdm s t a b mab msa mbt
+  ((y, y') ** (mys, mty') ** (pyt, qsy')) =
+    ((y, y') ** (msa . mys, mty' . mbt) **
+     (pdm y t y b (mab . msa . mys) id mbt pyt,
+      qdm s y' a y' (mty' . mbt . mab) msa id qsy'))
+
+public export
 TwArrPreshfOpId : TwArrPreshfOpSig
 TwArrPreshfOpId x y mxy = Unit
 
