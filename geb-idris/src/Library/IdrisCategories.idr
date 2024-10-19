@@ -2030,6 +2030,21 @@ public export
 TwArrPreshfOpIdDimap : TwArrPreshfOpDimapSig TwArrPreshfOpId
 TwArrPreshfOpIdDimap s t a b mba mas mtb = id
 
+public export
+TwArrPreshfOpCompose : TwArrPreshfOpSig -> TwArrPreshfOpSig -> TwArrPreshfOpSig
+TwArrPreshfOpCompose q p x z =
+  TwArrPreshfCompose (\x, z => q z x) (\x, z => p z x) z x
+
+public export
+TwArrPreshfOpComposeDimap : (q, p : TwArrPreshfOpSig) ->
+  TwArrPreshfOpDimapSig q -> TwArrPreshfOpDimapSig p ->
+  TwArrPreshfOpDimapSig (TwArrPreshfOpCompose q p)
+TwArrPreshfOpComposeDimap q p qdm pdm s t a b mba mas mtb =
+  TwArrPreshfComposeDimap (\x, z => q z x) (\x, z => p z x)
+    (\s, t, a, b, mst, mas, mtb => qdm t s b a mst mtb mas)
+    (\s, t, a, b, mst, mas, mtb => pdm t s b a mst mtb mas)
+    t s b a mba mtb mas
+
 ----------------------------------------------------------------------------
 ---- Natural transformations (morphisms of the (co)presheaf categories) ----
 ----------------------------------------------------------------------------
