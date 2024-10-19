@@ -43,7 +43,7 @@ InterpMLPolyDi = InterpPolyDi {c=Type} TypeMor
 
 public export
 InterpMLPolyDiDiag : MLPolyDiSig -> Type -> Type
-InterpMLPolyDiDiag p x = InterpMLPolyDi p x x
+InterpMLPolyDiDiag = InterpPolyDiDiag {c=Type} TypeMor
 
 public export
 mlipdPos : {p : MLPolyDiSig} ->
