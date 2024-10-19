@@ -1220,15 +1220,36 @@ InterpIEPPobj : (c : Type) -> (mor : IntDifunctorSig c) ->
 InterpIEPPobj c mor = InterpIPPobj c c mor mor
 
 public export
+InterpIPPlmap : (d, c : Type) ->
+  (dmor : IntDifunctorSig d) -> (cmor : IntDifunctorSig c) ->
+  (dcomp : IntCompSig d dmor) -> (ccomp : IntCompSig c cmor) ->
+  (ar : IntProAr d c) ->
+  IntLmapSig d c dmor cmor (InterpIPPobj d c dmor cmor ar)
+InterpIPPlmap d c dmor cmor dcomp ccomp p s t a dmas el =
+    (fst el **
+     (dcomp a s (fst (snd p) (fst el)) (fst $ snd el) dmas,
+      snd $ snd el))
+
+public export
+InterpIPPrmap : (d, c : Type) ->
+  (dmor : IntDifunctorSig d) -> (cmor : IntDifunctorSig c) ->
+  (dcomp : IntCompSig d dmor) -> (ccomp : IntCompSig c cmor) ->
+  (ar : IntProAr d c) ->
+  IntRmapSig d c dmor cmor (InterpIPPobj d c dmor cmor ar)
+InterpIPPrmap d c dmor cmor dcomp ccomp p s t b cmtb el =
+    (fst el **
+     (fst $ snd el,
+      ccomp (snd (snd p) (fst el)) t b cmtb (snd $ snd el)))
+
+public export
 InterpIPPdimap : (d, c : Type) ->
   (dmor : IntDifunctorSig d) -> (cmor : IntDifunctorSig c) ->
   (dcomp : IntCompSig d dmor) -> (ccomp : IntCompSig c cmor) ->
   (ar : IntProAr d c) ->
   IntDimapSig d c dmor cmor (InterpIPPobj d c dmor cmor ar)
-InterpIPPdimap d c dmor cmor dcomp ccomp p s t a b dmas cmtb el =
-    (fst el **
-     (dcomp a s (fst (snd p) (fst el)) (fst $ snd el) dmas,
-      ccomp (snd (snd p) (fst el)) t b cmtb (snd $ snd el)))
+InterpIPPdimap d c dmor cmor dcomp ccomp p s t a b dmas cmtb =
+  InterpIPPlmap d c dmor cmor dcomp ccomp p s b a dmas
+  . InterpIPPrmap d c dmor cmor dcomp ccomp p s t b cmtb
 
 public export
 InterpIEPPdimap : (c : Type) -> (mor : IntDifunctorSig c) ->
@@ -1236,6 +1257,20 @@ InterpIEPPdimap : (c : Type) -> (mor : IntDifunctorSig c) ->
   (ar : IntEndoProAr c) ->
   IntEndoDimapSig c mor (InterpIEPPobj c mor ar)
 InterpIEPPdimap c mor comp = InterpIPPdimap c c mor mor comp comp
+
+public export
+InterpIEPPlmap : (c : Type) -> (mor : IntDifunctorSig c) ->
+  (comp : IntCompSig c mor) ->
+  (ar : IntEndoProAr c) ->
+  IntEndoLmapSig c mor (InterpIEPPobj c mor ar)
+InterpIEPPlmap c mor comp = InterpIPPlmap c c mor mor comp comp
+
+public export
+InterpIEPPrmap : (c : Type) -> (mor : IntDifunctorSig c) ->
+  (comp : IntCompSig c mor) ->
+  (ar : IntEndoProAr c) ->
+  IntEndoRmapSig c mor (InterpIEPPobj c mor ar)
+InterpIEPPrmap c mor comp = InterpIPPrmap c c mor mor comp comp
 
 -----------------------------------------
 ---- Profunctor arena id/composition ----
