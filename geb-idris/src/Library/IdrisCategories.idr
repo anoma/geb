@@ -1965,6 +1965,17 @@ TwArrCoprCompose q p x z mxz =
    (FunExtEq (snd mp . fst mp) mxz, q x y (fst mp), p y z (snd mp)))
 
 public export
+TwArrCoprComposeDimap : (q, p : TwArrCoprSig) ->
+  TwArrCoprDimapSig q -> TwArrCoprDimapSig p ->
+  TwArrCoprDimapSig (TwArrCoprCompose q p)
+TwArrCoprComposeDimap q p qdm pdm s t a b mst mas mtb
+  (y ** (msy, myt) ** (comm, qsy, pyt)) =
+    (y ** (msy . mas, mtb . myt) **
+     (\fext => funExt $ \ea => cong mtb $ fcong {x=(mas ea)} $ comm fext,
+      qdm s y a y msy mas id qsy,
+      pdm y t y b myt id mtb pyt))
+
+public export
 TwArrCoprOpId : TwArrCoprOpSig
 TwArrCoprOpId x y myx = Unit
 
@@ -1976,6 +1987,16 @@ public export
 TwArrCoprOpCompose : TwArrCoprOpSig -> TwArrCoprOpSig -> TwArrCoprOpSig
 TwArrCoprOpCompose q p x z =
   TwArrCoprCompose (\x, z => q z x) (\x, z => p z x) z x
+
+public export
+TwArrCoprOpComposeContraDimap : (q, p : TwArrCoprOpSig) ->
+  TwArrCoprOpContraDimapSig q -> TwArrCoprOpContraDimapSig p ->
+  TwArrCoprOpContraDimapSig (TwArrCoprOpCompose q p)
+TwArrCoprOpComposeContraDimap q p qdm pdm s t a b mts msa mbt =
+  TwArrCoprComposeDimap (\x, z => q z x) (\x, z => p z x)
+    (\s, t, a, b, mst, mas, mtb => qdm t s b a mst mtb mas)
+    (\s, t, a, b, mst, mas, mtb => pdm t s b a mst mtb mas)
+    t s b a mts mbt msa
 
 public export
 TwArrPreshfId : TwArrPreshfSig
@@ -1992,27 +2013,6 @@ TwArrPreshfOpId x y mxy = Unit
 public export
 TwArrPreshfOpIdDimap : TwArrPreshfOpDimapSig TwArrPreshfOpId
 TwArrPreshfOpIdDimap s t a b mba mas mtb = id
-
-public export
-TwArrCoprComposeDimap : (q, p : TwArrCoprSig) ->
-  TwArrCoprDimapSig q -> TwArrCoprDimapSig p ->
-  TwArrCoprDimapSig (TwArrCoprCompose q p)
-TwArrCoprComposeDimap q p qdm pdm s t a b mst mas mtb
-  (y ** (msy, myt) ** (comm, qsy, pyt)) =
-    (y ** (msy . mas, mtb . myt) **
-     (\fext => funExt $ \ea => cong mtb $ fcong {x=(mas ea)} $ comm fext,
-      qdm s y a y msy mas id qsy,
-      pdm y t y b myt id mtb pyt))
-
-public export
-TwArrCoprOpComposeContraDimap : (q, p : TwArrCoprOpSig) ->
-  TwArrCoprOpContraDimapSig q -> TwArrCoprOpContraDimapSig p ->
-  TwArrCoprOpContraDimapSig (TwArrCoprOpCompose q p)
-TwArrCoprOpComposeContraDimap q p qdm pdm s t a b mts msa mbt =
-  TwArrCoprComposeDimap (\x, z => q z x) (\x, z => p z x)
-    (\s, t, a, b, mst, mas, mtb => qdm t s b a mst mtb mas)
-    (\s, t, a, b, mst, mas, mtb => pdm t s b a mst mtb mas)
-    t s b a mts mbt msa
 
 ----------------------------------------------------------------------------
 ---- Natural transformations (morphisms of the (co)presheaf categories) ----
