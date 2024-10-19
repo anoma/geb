@@ -1993,30 +1993,6 @@ public export
 TwArrPreshfOpIdDimap : TwArrPreshfOpDimapSig TwArrPreshfOpId
 TwArrPreshfOpIdDimap s t a b mba mas mtb = id
 
--- This computes the requirement to build a `(q . p) a b mba`
--- in the style of profunctor composition -- starting from an
--- `(s, t, mts)` with a `(u, v, mvu)` as an intermediate object.
-public export
-data TwArrPreshfOpComposeSig :
-    TwArrPreshfOpSig -> TwArrPreshfOpSig -> TwArrPreshfOpSig where
-  TwAPOCDS : (q, p : TwArrPreshfOpSig) ->
-    (s, t, u, v, a, b : Type) ->
-    (mba : b -> a) -> (mau : a -> u) -> (mvb : v -> b) ->
-    q u v (mau . mba . mvb) ->
-    (mus : u -> s) -> (mtv : t -> v) ->
-    p s t (mus . mau . mba . mvb . mtv) ->
-    TwArrPreshfOpComposeSig q p a b mba
-
-public export
-TwArrPreshfOpComposeSigDimap : (q, p : TwArrPreshfOpSig) ->
-  TwArrPreshfOpDimapSig q -> TwArrPreshfOpDimapSig p ->
-  TwArrPreshfOpDimapSig (TwArrPreshfOpComposeSig q p)
-TwArrPreshfOpComposeSigDimap q p qdm pdm s t a b mba mas mtb
-  (TwAPOCDS q p s' t' u' v' s t
-    (mas . mba . mtb) msu' mvt' quv' mus' mtv' pst') =
-  TwAPOCDS q p s' t' u' v' a b
-    mba (msu' . mas) (mtb . mvt') quv' mus' mtv' pst'
-
 public export
 TwArrCoprComposeDimap : (q, p : TwArrCoprSig) ->
   TwArrCoprDimapSig q -> TwArrCoprDimapSig p ->
@@ -2124,26 +2100,6 @@ TwArrPreshfOpNatTransVcomp : (p, q, r : TwArrPreshfOpSig) ->
   TwArrPreshfOpNatTrans p r
 TwArrPreshfOpNatTransVcomp p q r beta alpha x y myx =
   beta x y myx . alpha x y myx
-
-public export
-TwArrPreshfOpNatTransHcomp : (p, p', q, q' : TwArrPreshfOpSig) ->
-  TwArrPreshfOpNatTrans q q' -> TwArrPreshfOpNatTrans p p' ->
-  TwArrPreshfOpNatTrans
-    (TwArrPreshfOpComposeSig q p)
-    (TwArrPreshfOpComposeSig q' p')
-TwArrPreshfOpNatTransHcomp p p' q q' beta alpha x z _
-  (TwAPOCDS q p s t u v x z
-    mzx mxu mvz
-    quv
-    mus
-    mtv
-    pst) =
-  (TwAPOCDS q' p' s t u v x z
-    mzx mxu mvz
-    (beta u v (mxu . mzx . mvz) quv)
-    mus
-    mtv
-    (alpha s t (mus . mxu . mzx . mvz . mtv) pst))
 
 -------------------------------
 ---- Naturality conditions ----
