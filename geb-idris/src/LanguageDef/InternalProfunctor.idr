@@ -1741,6 +1741,39 @@ data PProfCatDiagElemMor :
       (x ** i ** (comp x y (contra i) mcontra mxy, mcovar))
       (y ** i ** (mcontra, comp (covar i) x y mxy mcovar))
 
+-- Here we show the equivalence of our definition of `PProfCatDiagElemMor`
+-- with the standard definition in terms of lmap/rmap equality.
+
+public export
+0 PProfCatDiagElemMorToCommutingEl :
+    {c : Type} -> {mor : IntDifunctorSig c} -> {comp : IntCompSig c mor} ->
+    {p : IntEndoProAr c} ->
+    (x, y : PProfCatDiagElemObj c mor p) ->
+    PProfCatDiagElemMor c mor comp p x y ->
+    (mxy : mor (fst x) (fst y) **
+     InterpIEPPlmap c mor comp p (fst y) (fst y) (fst x) mxy (snd y) =
+     InterpIEPPrmap c mor comp p (fst x) (fst x) (fst y) mxy (snd x))
+PProfCatDiagElemMorToCommutingEl {c} {mor} {comp} {p=(pos ** (contra, covar))}
+  (x ** _) (y ** _) (PPCDEM mxy i mcontra mcovar) =
+    (mxy ** Refl)
+
+public export
+0 PProfCatDiagElemMorFromCommutingEl :
+    {c : Type} -> {mor : IntDifunctorSig c} -> {comp : IntCompSig c mor} ->
+    {p : IntEndoProAr c} ->
+    (x, y : PProfCatDiagElemObj c mor p) ->
+    (mxy : mor (fst x) (fst y) **
+     InterpIEPPlmap c mor comp p (fst y) (fst y) (fst x) mxy (snd y) =
+     InterpIEPPrmap c mor comp p (fst x) (fst x) (fst y) mxy (snd x)) ->
+    PProfCatDiagElemMor c mor comp p x y
+PProfCatDiagElemMorFromCommutingEl {c} {mor} {comp} {p=(pos ** (contra, covar))}
+  (x ** xi ** (xcont, xcovar)) (y ** yi ** (ycont, ycovar)) (mxy ** lmeq) =
+    case dpeq1 lmeq of
+      Refl =>
+        rewrite sym $ fstEq (dpeq2 lmeq) in
+        rewrite sndEq (dpeq2 lmeq) in
+        PPCDEM {mor} {comp} {contra} {covar} {x} {y} mxy xi ycont xcovar
+
 -------------------------------------------------------
 -------------------------------------------------------
 ---- Profunctors on Idris's base category (`Type`) ----
