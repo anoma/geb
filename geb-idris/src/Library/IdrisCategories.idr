@@ -1958,9 +1958,8 @@ TwArrCoprCompose q p x z mxz =
 
 public export
 TwArrCoprOpCompose : TwArrCoprOpSig -> TwArrCoprOpSig -> TwArrCoprOpSig
-TwArrCoprOpCompose q p x z mzx =
-  (y : Type ** mp : (y -> x, z -> y) **
-   (FunExtEq (fst mp . snd mp) mzx, q x y (fst mp), p y z (snd mp)))
+TwArrCoprOpCompose q p x z =
+  TwArrCoprCompose (\x, z => q z x) (\x, z => p z x) z x
 
 public export
 TwArrPreshfId : TwArrPreshfSig
@@ -2017,12 +2016,11 @@ public export
 TwArrCoprOpComposeContraDimap : (q, p : TwArrCoprOpSig) ->
   TwArrCoprOpContraDimapSig q -> TwArrCoprOpContraDimapSig p ->
   TwArrCoprOpContraDimapSig (TwArrCoprOpCompose q p)
-TwArrCoprOpComposeContraDimap q p qdm pdm s t a b mts msa mbt
-  (y ** (mys, mty) ** (comm, qsy, pyt)) =
-    (y ** (msa . mys, mty . mbt) **
-     (\fext => funExt $ \eb => cong msa $ fcong {x=(mbt eb)} $ comm fext,
-      qdm s y a y mys msa id qsy,
-      pdm y t y b mty id mbt pyt))
+TwArrCoprOpComposeContraDimap q p qdm pdm s t a b mts msa mbt =
+  TwArrCoprComposeDimap (\x, z => q z x) (\x, z => p z x)
+    (\s, t, a, b, mst, mas, mtb => qdm t s b a mst mtb mas)
+    (\s, t, a, b, mst, mas, mtb => pdm t s b a mst mtb mas)
+    t s b a mts mbt msa
 
 ----------------------------------------------------------------------------
 ---- Natural transformations (morphisms of the (co)presheaf categories) ----
@@ -2068,9 +2066,16 @@ public export
 TwArrCoprOpNatTransHcomp : (p, p', q, q' : TwArrCoprOpSig) ->
   TwArrCoprOpNatTrans q q' -> TwArrCoprOpNatTrans p p' ->
   TwArrCoprOpNatTrans (TwArrCoprOpCompose q p) (TwArrCoprOpCompose q' p')
-TwArrCoprOpNatTransHcomp p p' q q' beta alpha x z mzx
-  (y ** (myx, mzy) ** (comm, qxy, pyz)) =
-    (y ** (myx, mzy) ** (comm, beta x y myx qxy, alpha y z mzy pyz))
+TwArrCoprOpNatTransHcomp p p' q q' beta alpha x z =
+  TwArrCoprNatTransHcomp
+    (\x, z => p z x)
+    (\x, z => p' z x)
+    (\x, z => q z x)
+    (\x, z => q' z x)
+    (\x, y => beta y x)
+    (\x, y => alpha y x)
+    z
+    x
 
 public export
 TwArrPreshfNatTrans : TwArrPreshfSig -> TwArrPreshfSig -> Type
