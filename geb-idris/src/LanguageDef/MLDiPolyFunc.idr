@@ -318,7 +318,7 @@ MLPolyDiSigFromNatTransComplete : (p, q : MLPolyDiSig) ->
       MkProfunctor $ \mca, mbd => InterpMLPolyDimap q _ _ _ _ mca mbd)
     gamma) ->
   (x : Type) ->
-  ExtEq {a=(InterpMLPolyDi p x x)} {b=(InterpMLPolyDi q x x)}
+  ExtEq {a=(InterpMLPolyDiDiag p x)} {b=(InterpMLPolyDiDiag q x)}
     (TwArrPreshfEmbeddingNTtoProfParaNT
       {p=(InterpMLPolyDi p)} {q=(InterpMLPolyDi q)} gamma x)
     (InterpMLPolyParaNT {p} {q} (MLPolyDiSigFromNatTrans p q gamma isnat) x)
