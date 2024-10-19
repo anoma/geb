@@ -2121,6 +2121,16 @@ TwArrPreshfNatTransVcomp p q r beta alpha x y mxy =
   beta x y mxy . alpha x y mxy
 
 public export
+TwArrPreshfNatTransHcomp : (p, p', q, q' : TwArrPreshfSig) ->
+  TwArrPreshfNatTrans q q' -> TwArrPreshfNatTrans p p' ->
+  TwArrPreshfNatTrans (TwArrPreshfCompose q p) (TwArrPreshfCompose q' p')
+TwArrPreshfNatTransHcomp p p' q q' beta alpha x z mxz
+  ((y, y') ** (myx, mzy') ** (pyz, qxy')) =
+    ((y, y') ** (myx, mzy') **
+     (alpha y z (mxz . myx) pyz,
+      beta x y' (mzy' . mxz) qxy'))
+
+public export
 TwArrPreshfOpNatTransId : (p : TwArrPreshfOpSig) -> TwArrPreshfOpNatTrans p p
 TwArrPreshfOpNatTransId p x y myx = Prelude.id
 
