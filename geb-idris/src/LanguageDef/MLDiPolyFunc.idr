@@ -465,7 +465,7 @@ mlpdCompToInterp :
     (InterpMLPolyDi (mlpdComp q p))
     (EndoProfCompose (InterpMLPolyDi q) (InterpMLPolyDi p))
 mlpdCompToInterp (qpos ** (qdirL, qdirR)) (ppos ** (pdirL, pdirR)) x
-  ((pi ** qi ** qlpr) ** (dmR, dmL)) =
+  ((pi ** qi ** (plqr, qlpr)) ** (dmR, dmL)) =
     (qdirL qi ** ((qi ** (dmR, id {a=(qdirL qi)})), (pi ** (qlpr, dmL))))
 
 public export
@@ -476,7 +476,7 @@ mlpdCompFromInterp :
     (InterpMLPolyDi (mlpdComp q p))
 mlpdCompFromInterp (qpos ** (qdirL, qdirR)) (ppos ** (pdirL, pdirR)) x
   (b ** ((qi ** (qdmR, qdmL)), (pi ** (pdmR, pdmL)))) =
-    ((pi ** qi ** pdmR . qdmL) ** (qdmR, pdmL))
+    ((pi ** qi ** (qdmR . pdmL, pdmR . qdmL)) ** (qdmR, pdmL))
 
 public export
 mlpCompToTwInterp :
@@ -487,7 +487,7 @@ mlpCompToTwInterp :
     (TwArrPreshfEmbedProf $
       EndoProfCompose (InterpMLPolyDi q) (InterpMLPolyDi p))
 mlpCompToTwInterp (qpos ** (qdirL, qdirR)) (ppos ** (pdirL, pdirR)) x y mxy
-  ((pi ** qi ** qlpr) ** (qdmR, pdmL)) =
+  ((pi ** qi ** (plqr, qlpr)) ** (qdmR, pdmL)) =
     (qdirL qi ** ((qi ** (qdmR, id {a=(qdirL qi)})), (pi ** (qlpr, pdmL))))
 
 public export
@@ -500,7 +500,7 @@ mlpCompFromTwInterp :
       InterpMLPolyDi (mlpdComp q p))
 mlpCompFromTwInterp (qpos ** (qdirL, qdirR)) (ppos ** (pdirL, pdirR)) x y mxy
   (b ** ((qi ** (qdmR, qdmL)), (pi ** (pdmR, pdmL)))) =
-    ((pi ** qi ** pdmR . qdmL) ** (qdmR, pdmL))
+    ((pi ** qi ** (qdmR . mxy . pdmL, pdmR . qdmL)) ** (qdmR, pdmL))
 
 -----------------------------------------------
 -----------------------------------------------
