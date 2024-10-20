@@ -2420,7 +2420,7 @@ PDiDiagElemObj = Sigma {a=Type} . InterpPDiDiag
 
 public export
 data PDiDiagElemMor : (pdid : PDiData) -> IntMorSig (PDiDiagElemObj pdid) where
-  PDEM : {pdid : PDiData} -> {x : Type} -> {x' : SliceObj x} ->
+  PDEM' : {pdid : PDiData} -> {x : Type} -> {x' : SliceObj x} ->
     (el : InterpPDiDiag pdid x) -> (m : Pi {a=x} x') ->
     PDiDiagElemMor pdid
       (x ** el)
