@@ -59,7 +59,7 @@ IntAssocSig c mor comp =
   comp w x z (comp x y z h g) f = comp w y z h (comp w x y g f)
 
 public export
-0 typeAssoc : IntAssocSig Type TypeMor InternalCat.typeComp
+typeAssoc : IntAssocSig Type TypeMor InternalCat.typeComp
 typeAssoc w x y z h g f = Refl
 
 public export
