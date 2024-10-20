@@ -478,6 +478,30 @@ mlpdCompFromInterp (qpos ** (qdirL, qdirR)) (ppos ** (pdirL, pdirR)) x
   (b ** ((qi ** (qdmR, qdmL)), (pi ** (pdmR, pdmL)))) =
     ((pi ** qi ** pdmR . qdmL) ** (qdmR, pdmL))
 
+public export
+mlpCompToTwInterp :
+  (q, p : MLPolyDiSig) ->
+  TwArrPreshfNatTrans
+    (TwArrPreshfEmbedProf $
+      InterpMLPolyDi (mlpdComp q p))
+    (TwArrPreshfEmbedProf $
+      EndoProfCompose (InterpMLPolyDi q) (InterpMLPolyDi p))
+mlpCompToTwInterp (qpos ** (qdirL, qdirR)) (ppos ** (pdirL, pdirR)) x y mxy
+  ((pi ** qi ** qlpr) ** (qdmR, pdmL)) =
+    (qdirL qi ** ((qi ** (qdmR, id {a=(qdirL qi)})), (pi ** (qlpr, pdmL))))
+
+public export
+mlpCompFromTwInterp :
+  (q, p : MLPolyDiSig) ->
+  TwArrPreshfNatTrans
+    (TwArrPreshfEmbedProf $
+      EndoProfCompose (InterpMLPolyDi q) (InterpMLPolyDi p))
+    (TwArrPreshfEmbedProf $
+      InterpMLPolyDi (mlpdComp q p))
+mlpCompFromTwInterp (qpos ** (qdirL, qdirR)) (ppos ** (pdirL, pdirR)) x y mxy
+  (b ** ((qi ** (qdmR, qdmL)), (pi ** (pdmR, pdmL)))) =
+    ((pi ** qi ** pdmR . qdmL) ** (qdmR, pdmL))
+
 -----------------------------------------------
 -----------------------------------------------
 ---- Categorical structure of paranaturals ----
