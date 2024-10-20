@@ -421,3 +421,18 @@ MLPolyDiYonedaR : (a, b : Type) -> (p : MLPolyDiSig) ->
       TypeProfDiNT (IntDiYonedaEmbedObj Type TypeMor j i) (InterpMLPolyDi p))
     (InterpMLPolyDi p)
 MLPolyDiYonedaR a b (ppos ** (pdirL, pdirR)) x gamma = gamma x (id, id)
+
+-----------------------------------------------
+-----------------------------------------------
+---- Categorical structure of paranaturals ----
+-----------------------------------------------
+-----------------------------------------------
+
+public export
+mlpId : (p : MLPolyDiSig) -> MLPolyParaNT p p
+mlpId = polyParaNTid {c=Type} {mor=TypeMor} {cid=typeId}
+
+public export
+mlpVcomp : {p, q, r : MLPolyDiSig} ->
+  MLPolyParaNT q r -> MLPolyParaNT p q -> MLPolyParaNT p r
+mlpVcomp = polyParaNTvcomp {c=Type} {mor=TypeMor} {comp=typeComp}
