@@ -217,3 +217,46 @@ PolyParaNTisParanatural {c} {mor} comp assoc
                   (comp (pdirL pi0) i1 (pdirR pi0) mi1pr (comp (pdirL pi0)
                     i0 i1 i2 mpli0)))
                in Refl)
+
+-----------------------------------------
+-----------------------------------------
+---- Categories of diagonal elements ----
+-----------------------------------------
+-----------------------------------------
+
+public export
+PolyDiagElemObj : {c : Type} -> (mor : IntDifunctorSig c) ->
+  PolyDiSig c -> Type
+PolyDiagElemObj {c} mor p = (x : c ** InterpPolyDiDiag {c} mor p x)
+
+public export
+pdeObj : {c : Type} -> {mor : IntDifunctorSig c} ->
+  {p : PolyDiSig c} -> PolyDiagElemObj {c} mor p -> c
+pdeObj {c} {mor} {p} = DPair.fst
+
+public export
+pdeEl : {c : Type} -> {mor : IntDifunctorSig c} ->
+  {p : PolyDiSig c} -> (el : PolyDiagElemObj {c} mor p) ->
+  InterpPolyDiDiag {c} mor p (pdeObj {c} {mor} {p} el)
+pdeEl {c} {mor} {p} = DPair.snd
+
+public export
+PolyDiagElemMor : {c : Type} -> {mor : IntDifunctorSig c} ->
+  {p : PolyDiSig c} -> IntMorSig (PolyDiagElemObj {c} mor p)
+PolyDiagElemMor {c} {mor} {p} x y =
+  (mor (pdeObj {mor} x) (pdeObj {mor} y),
+   InterpPolyDi {c} mor p (pdeObj {mor} y) (pdeObj {mor} x))
+
+public export
+pdeMor : {c : Type} -> {mor : IntDifunctorSig c} ->
+  {p : PolyDiSig c} -> {x, y : PolyDiagElemObj {c} mor p} ->
+  PolyDiagElemMor {c} {mor} {p} x y ->
+  mor (pdeObj {mor} {p} x) (pdeObj {mor} {p} y)
+pdeMor {c} {mor} {p} {x} {y} = Builtin.fst
+
+public export
+pdeCrossEl : {c : Type} -> {mor : IntDifunctorSig c} ->
+  {p : PolyDiSig c} -> {x, y : PolyDiagElemObj {c} mor p} ->
+  PolyDiagElemMor {c} {mor} {p} x y ->
+  InterpPolyDi {c} mor p (pdeObj {mor} {p} y) (pdeObj {mor} {p} x)
+pdeCrossEl {c} {mor} {p} {x} {y} = Builtin.snd
