@@ -415,3 +415,54 @@ PolyParaToCatElemFMap {c} {mor} {comp} {assoc}
         comp (dirR mi) y (dirL mi) mL (comp (dirR mi) x y mxy mR)))
       (onL mi $ comp (dirR mi) y (dirL mi) mL (comp (dirR mi) x y mxy mR))
       mL)
+
+-----------------------------------------------
+-----------------------------------------------
+---- Categorical structure of paranaturals ----
+-----------------------------------------------
+-----------------------------------------------
+
+public export
+polyParaNTid :
+  {c : Type} -> {mor : IntDifunctorSig c} -> {cid : IntIdSig c mor} ->
+  (p : PolyDiSig c) -> PolyParaNT {c} mor p p
+polyParaNTid {c} {mor} {cid} p =
+  (\pi, asn => pi **
+   (\pi, asn => cid (pdDirL p pi),
+    \pi, asn => cid (pdDirR p pi)))
+
+public export
+polyParaNTvcomp :
+  {c : Type} -> {mor : IntDifunctorSig c} -> {comp : IntCompSig c mor} ->
+  {p, q, r : PolyDiSig c} ->
+  PolyParaNT {c} mor q r -> PolyParaNT {c} mor p q -> PolyParaNT {c} mor p r
+polyParaNTvcomp {c} {mor} {comp} {p} {q} {r} gamma delta =
+  let
+    qasn :
+      ((pi : pdPos p) -> (asn : mor (pdDirR p pi) (pdDirL p pi)) ->
+       mor
+        (pdDirR q $ ppntOnPos {mor} delta pi asn)
+        (pdDirL q $ ppntOnPos {mor} delta pi asn)) =
+          \pi, asn =>
+            comp
+              (pdDirR q $ ppntOnPos {mor} delta pi asn)
+              (pdDirL p pi)
+              (pdDirL q $ ppntOnPos {mor} delta pi asn)
+              (ppntOnL {mor} delta pi asn)
+            $ comp
+              (pdDirR q $ ppntOnPos {mor} delta pi asn)
+              (pdDirR p pi)
+              (pdDirL p pi)
+              asn
+            $ ppntOnR {mor} delta pi asn
+  in
+  (\pi, asn =>
+    ppntOnPos {mor} gamma (ppntOnPos {mor} delta pi asn) (qasn pi asn) **
+   (\pi, asn =>
+      comp _ _ _
+        (ppntOnL {mor} gamma (ppntOnPos {mor} delta pi asn) (qasn pi asn))
+        (ppntOnL {mor} delta pi asn),
+    \pi, asn =>
+      comp _ _ _
+        (ppntOnR {mor} delta pi asn)
+        (ppntOnR {mor} gamma (ppntOnPos {mor} delta pi asn) (qasn pi asn))))
