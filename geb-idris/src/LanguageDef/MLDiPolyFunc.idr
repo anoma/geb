@@ -371,3 +371,33 @@ MLPolyDiSigFromNatTransComplete
       (trans
         (bimapIdR2 {f=(IdrisUtils.(|>) dcont)})
         (bimapIdL2 {g=((.) dcovar)}))
+
+---------------------------------------------------------------------
+---------------------------------------------------------------------
+---- Paranaturals as functors on categories of diagonal elements ----
+---------------------------------------------------------------------
+---------------------------------------------------------------------
+
+public export
+MLPolyParaToCatElemObjMap : {p, q : MLPolyDiSig} -> MLPolyParaNT p q ->
+  MLPDiagObj p -> MLPDiagObj q
+MLPolyParaToCatElemObjMap
+  {p=(ppos ** (pdirR, pdirL))} {q=(qpos ** (qdirR, qdirL))}
+  (onpos ** (onL, onR)) (x ** pi ** (pdmR, pdmL)) =
+    let asn = pdmR . pdmL in
+    (x ** onpos pi asn ** (onL pi asn . pdmR, pdmL . onR pi asn))
+
+public export
+MLPolyParaToCatElemFMap : {p, q : MLPolyDiSig} -> (gamma : MLPolyParaNT p q) ->
+  (x, y : MLPDiagObj p) ->
+  MLPDiagMor {p} x y ->
+  MLPDiagMor {p=q}
+    (MLPolyParaToCatElemObjMap {p} {q} gamma x)
+    (MLPolyParaToCatElemObjMap {p} {q} gamma y)
+MLPolyParaToCatElemFMap
+  {p=(ppos ** (pdirR, pdirL))} {q=(qpos ** (qdirR, qdirL))}
+  (onpos ** (onL, onR))
+  (x ** xpi ** (xpdmL, xpdmR)) (y ** ypi ** (ypdmL, ypdmR))
+  (mxy, (mi ** (mL, mR))) =
+    let asn = mL . mxy . mR in
+    (mxy, (onpos mi asn ** (onL mi asn . mL, mR . onR mi asn)))
