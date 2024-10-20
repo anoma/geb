@@ -437,12 +437,12 @@ mlpdComp : MLPolyDiSig -> MLPolyDiSig -> MLPolyDiSig
 mlpdComp = pdComp {c=Type} {mor=TypeMor}
 
 public export
-mlpIdToInterp : TypeProfNT (InterpMLPolyDi MLDiPolyFunc.mlpdId) HomProf
-mlpIdToInterp x y (pi ** (dmR, dmL)) = dmL . dmR
+mlpIdToInterp : TypeProfDiNT (InterpMLPolyDi MLDiPolyFunc.mlpdId) HomProf
+mlpIdToInterp x (pi ** (dmR, dmL)) = dmL . dmR
 
 public export
-mlpIdFromInterp : TypeProfNT HomProf (InterpMLPolyDi MLDiPolyFunc.mlpdId)
-mlpIdFromInterp x y m = (x ** (id {a=x}, m))
+mlpIdFromInterp : TypeProfDiNT HomProf (InterpMLPolyDi MLDiPolyFunc.mlpdId)
+mlpIdFromInterp x m = (x ** (m , m))
 
 public export
 mlpIdToTwInterp :
