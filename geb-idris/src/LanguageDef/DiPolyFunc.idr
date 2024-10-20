@@ -241,22 +241,104 @@ pdeEl : {c : Type} -> {mor : IntDifunctorSig c} ->
 pdeEl {c} {mor} {p} = DPair.snd
 
 public export
-PolyDiagElemMor : {c : Type} -> {mor : IntDifunctorSig c} ->
-  {p : PolyDiSig c} -> IntMorSig (PolyDiagElemObj {c} mor p)
-PolyDiagElemMor {c} {mor} {p} x y =
-  (mor (pdeObj {mor} x) (pdeObj {mor} y),
-   InterpPolyDi {c} mor p (pdeObj {mor} y) (pdeObj {mor} x))
+data PolyDiagElemMor :
+    {c : Type} -> {mor : IntDifunctorSig c} -> {comp : IntCompSig c mor} ->
+    {p : PolyDiSig c} -> IntMorSig (PolyDiagElemObj {c} mor p) where
+  PDEM :
+    -- `pos`, `dirR`, and `dirL` together form a `PolyDiSig c`.
+    {pos : Type} -> {dirL : pos -> c} -> {dirR : pos -> c} ->
+    -- `mxy` is the morphism of the underlying category (`c`) which
+    -- underlies the morphism of the category of elements.
+    {x, y : c} -> (mxy : mor x y) ->
+    -- `i`, `mR`, and `mL` together comprise a term of
+    -- `InterpPolyDi c mor (pos ** (dirL, dirR)) y x`; `y` and
+    -- `mcontra` together comprise an object of the slice category of
+    -- `contra i`; `x` and `mcovar` together comprise an object of the coslice
+    -- category of `covar i`.
+    (mi : pos) -> (mR : mor (dirR mi) x) -> (mL : mor y (dirL mi)) ->
+    PolyDiagElemMor {c} {mor} {comp} {p=(pos ** (dirR, dirL))}
+      (x ** mi ** (comp x y (dirL mi) mL mxy, mR))
+      (y ** mi ** (mL, comp (dirR mi) x y mxy mR))
 
 public export
-pdeMor : {c : Type} -> {mor : IntDifunctorSig c} ->
+pdeMor :
+  {c : Type} -> {mor : IntDifunctorSig c} -> {comp : IntCompSig c mor} ->
   {p : PolyDiSig c} -> {x, y : PolyDiagElemObj {c} mor p} ->
-  PolyDiagElemMor {c} {mor} {p} x y ->
+  PolyDiagElemMor {c} {mor} {comp} {p} x y ->
   mor (pdeObj {mor} {p} x) (pdeObj {mor} {p} y)
-pdeMor {c} {mor} {p} {x} {y} = Builtin.fst
+pdeMor {c} {mor} (PDEM mxy mi mR mL) = mxy
 
 public export
-pdeCrossEl : {c : Type} -> {mor : IntDifunctorSig c} ->
+pdeCrossEl :
+  {c : Type} -> {mor : IntDifunctorSig c} -> {comp : IntCompSig c mor} ->
   {p : PolyDiSig c} -> {x, y : PolyDiagElemObj {c} mor p} ->
-  PolyDiagElemMor {c} {mor} {p} x y ->
+  PolyDiagElemMor {c} {mor} {comp} {p} x y ->
   InterpPolyDi {c} mor p (pdeObj {mor} {p} y) (pdeObj {mor} {p} x)
-pdeCrossEl {c} {mor} {p} {x} {y} = Builtin.snd
+pdeCrossEl {c} {mor} (PDEM mxy mi mR mL) = (mi ** (mL, mR))
+
+-- Here we show the equivalence of our definition of `PolyDiagElemMor`
+-- with the standard definition in terms of lmap/rmap equality.
+
+public export
+0 PolyDiagElemMorToCommutingEl :
+  {c : Type} -> {mor : IntDifunctorSig c} -> {comp : IntCompSig c mor} ->
+  {p : PolyDiSig c} ->
+  (x, y : PolyDiagElemObj {c} mor p) ->
+  PolyDiagElemMor {c} {mor} {comp} {p} x y ->
+  (mxy : mor (pdeObj {mor} {p} x) (pdeObj {mor} {p} y) **
+   InterpPolyLmap {c} {mor} comp p
+    (pdeObj {mor} {p} y) (pdeObj {mor} {p} y) (pdeObj {mor} {p} x)
+    mxy (pdeEl {mor} {p} y) =
+   InterpPolyRmap {c} {mor} comp p
+    (pdeObj {mor} {p} x) (pdeObj {mor} {p} x) (pdeObj {mor} {p} y)
+    mxy (pdeEl {mor} {p} x))
+PolyDiagElemMorToCommutingEl {c} {mor} {comp} {p=(pos ** (pdirL, pdirR))}
+  (x ** (_ ** (_, _))) (y ** (_ ** (_, _))) (PDEM mxy mi mR mL) =
+    (mxy ** Refl)
+
+public export
+0 PolyDiagElemMorFromCommutingEl :
+  {c : Type} -> {mor : IntDifunctorSig c} -> {comp : IntCompSig c mor} ->
+  {p : PolyDiSig c} ->
+  (x, y : PolyDiagElemObj {c} mor p) ->
+  (mxy : mor (pdeObj {mor} {p} x) (pdeObj {mor} {p} y) **
+   InterpPolyLmap {c} {mor} comp p
+    (pdeObj {mor} {p} y) (pdeObj {mor} {p} y) (pdeObj {mor} {p} x)
+    mxy (pdeEl {mor} {p} y) =
+   InterpPolyRmap {c} {mor} comp p
+    (pdeObj {mor} {p} x) (pdeObj {mor} {p} x) (pdeObj {mor} {p} y)
+    mxy (pdeEl {mor} {p} x)) ->
+  PolyDiagElemMor {c} {mor} {comp} {p} x y
+PolyDiagElemMorFromCommutingEl {c} {mor} {comp} {p=(pos ** (pdirL, pdirR))}
+  (x ** (xi ** (_, xL))) (y ** (_ ** (yR, _))) (mxy ** Refl) =
+    PDEM mxy xi xL yR
+
+public export
+0 PolyDiagElemMorCommutingElIdL :
+  {c : Type} -> {mor : IntDifunctorSig c} -> {comp : IntCompSig c mor} ->
+  {p : PolyDiSig c} ->
+  (x, y : PolyDiagElemObj {c} mor p) ->
+  (elmor : (mxy : mor (pdeObj {mor} {p} x) (pdeObj {mor} {p} y) **
+   InterpPolyLmap {c} {mor} comp p
+    (pdeObj {mor} {p} y) (pdeObj {mor} {p} y) (pdeObj {mor} {p} x)
+    mxy (pdeEl {mor} {p} y) =
+   InterpPolyRmap {c} {mor} comp p
+    (pdeObj {mor} {p} x) (pdeObj {mor} {p} x) (pdeObj {mor} {p} y)
+    mxy (pdeEl {mor} {p} x))) ->
+  PolyDiagElemMorToCommutingEl {c} {mor} {comp} {p} x y
+    (PolyDiagElemMorFromCommutingEl {c} {mor} {comp} {p} x y elmor) = elmor
+PolyDiagElemMorCommutingElIdL {c} {mor} {comp} {p=(pos ** (pdirL, pdirR))}
+  (x ** (xi ** (_, xL))) (y ** (_ ** (yR, _))) (mxy ** Refl) =
+    Refl
+
+public export
+0 PolyDiagElemMorCommutingElIdR :
+  {c : Type} -> {mor : IntDifunctorSig c} -> {comp : IntCompSig c mor} ->
+  {p : PolyDiSig c} ->
+  (x, y : PolyDiagElemObj {c} mor p) ->
+  (elmor : PolyDiagElemMor {c} {mor} {comp} {p} x y) ->
+  PolyDiagElemMorFromCommutingEl {c} {mor} {comp} {p} x y
+    (PolyDiagElemMorToCommutingEl {c} {mor} {comp} {p} x y elmor) = elmor
+PolyDiagElemMorCommutingElIdR {c} {mor} {comp} {p=(pos ** (pdirL, pdirR))}
+  (x ** (_ ** (_, _))) (y ** (_ ** (_, _))) (PDEM mxy mi mR mL) =
+    Refl
