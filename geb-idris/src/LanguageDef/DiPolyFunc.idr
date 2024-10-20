@@ -224,6 +224,12 @@ PolyParaNTisParanatural {c} {mor} comp assoc
 -----------------------------------------
 -----------------------------------------
 
+-- We define the category of diagonal elements as in "Paranatural Category
+-- Theory" by Neumann; it corresponds precisely to what is referred to as the
+-- "D is the one-object category" case of the definition of an algebra for a
+-- profunctor at
+-- https://ncatlab.org/nlab/show/algebra+for+a+profunctor#definition .
+
 public export
 PolyDiagElemObj : {c : Type} -> (mor : IntDifunctorSig c) ->
   PolyDiSig c -> Type
@@ -342,3 +348,22 @@ public export
 PolyDiagElemMorCommutingElIdR {c} {mor} {comp} {p=(pos ** (pdirL, pdirR))}
   (x ** (_ ** (_, _))) (y ** (_ ** (_, _))) (PDEM mxy mi mR mL) =
     Refl
+
+-- Here we show that a paranatural transformation induces a functor
+-- between categories of diagonal elements which commutes with the
+-- projections (meaning, the induced functor is the identity on objects
+-- and morphisms, and transforms the associated elements functorially).
+
+public export
+PolyParaToCatElemObjMap :
+  {c : Type} -> {mor : IntDifunctorSig c} -> {comp : IntCompSig c mor} ->
+  {p, q : PolyDiSig c} -> PolyParaNT {c} mor p q ->
+  PolyDiagElemObj {c} mor p -> PolyDiagElemObj {c} mor q
+PolyParaToCatElemObjMap {c} {mor} {comp}
+  {p=(ppos ** (pdirR, pdirL))} {q=(qpos ** (qdirR, qdirL))}
+  (onpos ** (onL, onR)) (x ** pi ** (pdmR, pdmL)) =
+    let asn = comp (pdirR pi) x (pdirL pi) pdmR pdmL in
+    (x **
+     onpos pi asn **
+     (comp x (pdirL pi) (qdirL (onpos pi asn)) (onL pi asn) pdmR,
+      comp (qdirR (onpos pi asn)) (pdirR pi) x pdmL (onR pi asn)))

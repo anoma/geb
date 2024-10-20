@@ -77,7 +77,7 @@ mlpdeEl = pdeEl {c=Type} {mor=TypeMor}
 
 public export
 MLPDiagMor : {p : MLPolyDiSig} -> IntMorSig (MLPDiagObj p)
-MLPDiagMor {p} = PolyDiagElemMor {c=Type} {mor=TypeMor} {p}
+MLPDiagMor {p} = PolyDiagElemMor {c=Type} {mor=TypeMor} {comp=typeComp} {p}
 
 public export
 mlpdeMor : {p : MLPolyDiSig} -> {x, y : MLPDiagObj p} ->
@@ -381,11 +381,8 @@ MLPolyDiSigFromNatTransComplete
 public export
 MLPolyParaToCatElemObjMap : {p, q : MLPolyDiSig} -> MLPolyParaNT p q ->
   MLPDiagObj p -> MLPDiagObj q
-MLPolyParaToCatElemObjMap
-  {p=(ppos ** (pdirR, pdirL))} {q=(qpos ** (qdirR, qdirL))}
-  (onpos ** (onL, onR)) (x ** pi ** (pdmR, pdmL)) =
-    let asn = pdmR . pdmL in
-    (x ** onpos pi asn ** (onL pi asn . pdmR, pdmL . onR pi asn))
+MLPolyParaToCatElemObjMap =
+  PolyParaToCatElemObjMap {c=Type} {mor=TypeMor} {comp=typeComp}
 
 public export
 MLPolyParaToCatElemFMap : {p, q : MLPolyDiSig} -> (gamma : MLPolyParaNT p q) ->
@@ -397,7 +394,11 @@ MLPolyParaToCatElemFMap : {p, q : MLPolyDiSig} -> (gamma : MLPolyParaNT p q) ->
 MLPolyParaToCatElemFMap
   {p=(ppos ** (pdirR, pdirL))} {q=(qpos ** (qdirR, qdirL))}
   (onpos ** (onL, onR))
-  (x ** xpi ** (xpdmL, xpdmR)) (y ** ypi ** (ypdmL, ypdmR))
-  (mxy, (mi ** (mL, mR))) =
+  (x ** _ ** (_, _)) (y ** _ ** (_, _))
+  (PDEM mxy mi mR mL) =
     let asn = mL . mxy . mR in
-    (mxy, (onpos mi asn ** (onL mi asn . mL, mR . onR mi asn)))
+    PDEM
+      mxy
+      (onpos mi (mL . mxy . mR))
+      (mR . onR mi (mL . mxy . mR))
+      (onL mi (mL . mxy . mR) . mL)
