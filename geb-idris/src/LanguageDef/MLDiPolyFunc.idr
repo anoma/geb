@@ -64,11 +64,31 @@ mlipdDirR = ipdDirR {c=Type} {mor=TypeMor}
 
 public export
 MLPDiagObj : MLPolyDiSig -> Type
-MLPDiagObj = PProfCatDiagElemObj Type TypeMor
+MLPDiagObj = PolyDiagElemObj {c=Type} TypeMor
+
+public export
+mlpdeObj : {p : MLPolyDiSig} -> MLPDiagObj p -> Type
+mlpdeObj = pdeObj {c=Type} {mor=TypeMor}
+
+public export
+mlpdeEl : {p : MLPolyDiSig} -> (el : MLPDiagObj p) ->
+  InterpMLPolyDiDiag p (mlpdeObj {p} el)
+mlpdeEl = pdeEl {c=Type} {mor=TypeMor}
 
 public export
 MLPDiagMor : {p : MLPolyDiSig} -> IntMorSig (MLPDiagObj p)
-MLPDiagMor {p} = PProfCatDiagElemMor Type TypeMor typeComp p
+MLPDiagMor {p} = PolyDiagElemMor {c=Type} {mor=TypeMor} {p}
+
+public export
+mlpdeMor : {p : MLPolyDiSig} -> {x, y : MLPDiagObj p} ->
+  MLPDiagMor {p} x y -> mlpdeObj {p} x -> mlpdeObj {p} y
+mlpdeMor = pdeMor {c=Type} {mor=TypeMor}
+
+public export
+mlpdeCrossEl :
+  {p : MLPolyDiSig} -> {x, y : MLPDiagObj p} ->
+  MLPDiagMor {p} x y -> InterpMLPolyDi p (mlpdeObj {p} y) (mlpdeObj {p} x)
+mlpdeCrossEl = pdeCrossEl {c=Type} {mor=TypeMor}
 
 public export
 InterpMLPolyLmap : (p : MLPolyDiSig) ->
