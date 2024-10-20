@@ -38,6 +38,10 @@ mlpdDirR : (pd : MLPolyDiSig) -> mlpdPos pd -> Type
 mlpdDirR = pdDirR {c=Type}
 
 public export
+RepMLPolyDi : (x, y : Type) -> MLPolyDiSig
+RepMLPolyDi = RepPolyDi {c=Type}
+
+public export
 InterpMLPolyDi : MLPolyDiSig -> IntDifunctorSig Type
 InterpMLPolyDi = InterpPolyDi {c=Type} TypeMor
 
@@ -393,3 +397,27 @@ MLPolyParaToCatElemFMap : {p, q : MLPolyDiSig} -> (gamma : MLPolyParaNT p q) ->
     (MLPolyParaToCatElemObjMap {p} {q} gamma y)
 MLPolyParaToCatElemFMap =
   PolyParaToCatElemFMap {c=Type} {mor=TypeMor} {comp=typeComp} {assoc=typeAssoc}
+
+--------------------------------------------
+--------------------------------------------
+---- Polynomial-specific diYoneda lemma ----
+--------------------------------------------
+--------------------------------------------
+
+public export
+MLPolyDiYonedaL : (a, b : Type) -> (p : MLPolyDiSig) ->
+  TypeProfDiNT
+    (InterpMLPolyDi p)
+    (\i, j =>
+      TypeProfDiNT (IntDiYonedaEmbedObj Type TypeMor j i) (InterpMLPolyDi p))
+MLPolyDiYonedaL a b (ppos ** (pdirL, pdirR)) x (pi ** (pdmR, pdmL)) y
+  (myx, mxy) =
+    (pi ** (pdmR . myx, mxy . pdmL))
+
+public export
+MLPolyDiYonedaR : (a, b : Type) -> (p : MLPolyDiSig) ->
+  TypeProfDiNT
+    (\i, j =>
+      TypeProfDiNT (IntDiYonedaEmbedObj Type TypeMor j i) (InterpMLPolyDi p))
+    (InterpMLPolyDi p)
+MLPolyDiYonedaR a b (ppos ** (pdirL, pdirR)) x gamma = gamma x (id, id)
