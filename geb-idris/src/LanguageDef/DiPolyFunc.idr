@@ -45,6 +45,10 @@ pdDirR : {c : Type} -> (pd : PolyDiSig c) -> pdPos {c} pd -> c
 pdDirR {c} = ipaContra {c}
 
 public export
+RepPolyDi : {c : Type} -> (x, y : c) -> PolyDiSig c
+RepPolyDi {c} x y = (Unit ** (\_ => x, \_ => y))
+
+public export
 InterpPolyDi : {c : Type} -> (mor : IntDifunctorSig c) -> PolyDiSig c ->
   IntDifunctorSig c
 InterpPolyDi {c} mor p a b =
