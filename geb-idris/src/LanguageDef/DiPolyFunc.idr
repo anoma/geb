@@ -430,8 +430,7 @@ public export
 pdComp : {c : Type} -> {mor : IntMorSig c} ->
   PolyDiSig c -> PolyDiSig c -> PolyDiSig c
 pdComp {c} {mor} (qpos ** (qdirL, qdirR)) (ppos ** (pdirL, pdirR)) =
-  ((pi : ppos ** qi : qpos **
-    (mor (pdirL pi) (qdirR qi), mor (qdirL qi) (pdirR pi))) **
+  ((pi : ppos ** qi : qpos ** mor (qdirL qi) (pdirR pi)) **
    (\i => pdirL (fst i), \i => qdirR (fst $ snd i)))
 
 -----------------------------------------------
