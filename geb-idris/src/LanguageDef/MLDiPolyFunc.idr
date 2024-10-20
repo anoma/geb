@@ -422,6 +422,62 @@ MLPolyDiYonedaR : (a, b : Type) -> (p : MLPolyDiSig) ->
     (InterpMLPolyDi p)
 MLPolyDiYonedaR a b (ppos ** (pdirL, pdirR)) x gamma = gamma x (id, id)
 
+--------------------------------------------------------
+--------------------------------------------------------
+---- Monoidal composition product on di-polynomials ----
+--------------------------------------------------------
+--------------------------------------------------------
+
+public export
+mlpdId : MLPolyDiSig
+mlpdId = pdId Type
+
+public export
+mlpdComp : MLPolyDiSig -> MLPolyDiSig -> MLPolyDiSig
+mlpdComp = pdComp {c=Type} {mor=TypeMor}
+
+public export
+mlpIdToInterp : TypeProfNT (InterpMLPolyDi MLDiPolyFunc.mlpdId) HomProf
+mlpIdToInterp x y (pi ** (dmR, dmL)) = dmL . dmR
+
+public export
+mlpIdFromInterp : TypeProfNT HomProf (InterpMLPolyDi MLDiPolyFunc.mlpdId)
+mlpIdFromInterp x y m = (x ** (id {a=x}, m))
+
+public export
+mlpIdToTwInterp :
+  TwArrPreshfNatTrans
+    (TwArrPreshfEmbedProf $ InterpMLPolyDi MLDiPolyFunc.mlpdId)
+    (TwArrPreshfEmbedProf HomProf)
+mlpIdToTwInterp x y m el = snd (snd el) . fst (snd el)
+
+public export
+mlpIdFromTwInterp :
+  TwArrPreshfNatTrans
+    (TwArrPreshfEmbedProf HomProf)
+    (TwArrPreshfEmbedProf $ InterpMLPolyDi MLDiPolyFunc.mlpdId)
+mlpIdFromTwInterp x y mxy myx = (y ** (id {a=y}, myx))
+
+public export
+mlpdCompToInterp :
+  (q, p : MLPolyDiSig) ->
+  TypeProfDiNT
+    (InterpMLPolyDi (mlpdComp q p))
+    (EndoProfCompose (InterpMLPolyDi q) (InterpMLPolyDi p))
+mlpdCompToInterp (qpos ** (qdirL, qdirR)) (ppos ** (pdirL, pdirR)) x
+  ((pi ** qi ** qlpr) ** (dmR, dmL)) =
+    (qdirL qi ** ((qi ** (dmR, id {a=(qdirL qi)})), (pi ** (qlpr, dmL))))
+
+public export
+mlpdCompFromInterp :
+  (q, p : MLPolyDiSig) ->
+  TypeProfDiNT
+    (EndoProfCompose (InterpMLPolyDi q) (InterpMLPolyDi p))
+    (InterpMLPolyDi (mlpdComp q p))
+mlpdCompFromInterp (qpos ** (qdirL, qdirR)) (ppos ** (pdirL, pdirR)) x
+  (b ** ((qi ** (qdmR, qdmL)), (pi ** (pdmR, pdmL)))) =
+    ((pi ** qi ** pdmR . qdmL) ** (qdmR, pdmL))
+
 -----------------------------------------------
 -----------------------------------------------
 ---- Categorical structure of paranaturals ----
