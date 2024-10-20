@@ -391,14 +391,5 @@ MLPolyParaToCatElemFMap : {p, q : MLPolyDiSig} -> (gamma : MLPolyParaNT p q) ->
   MLPDiagMor {p=q}
     (MLPolyParaToCatElemObjMap {p} {q} gamma x)
     (MLPolyParaToCatElemObjMap {p} {q} gamma y)
-MLPolyParaToCatElemFMap
-  {p=(ppos ** (pdirR, pdirL))} {q=(qpos ** (qdirR, qdirL))}
-  (onpos ** (onL, onR))
-  (x ** _ ** (_, _)) (y ** _ ** (_, _))
-  (PDEM mxy mi mR mL) =
-    let asn = mL . mxy . mR in
-    PDEM
-      mxy
-      (onpos mi (mL . mxy . mR))
-      (mR . onR mi (mL . mxy . mR))
-      (onL mi (mL . mxy . mR) . mL)
+MLPolyParaToCatElemFMap =
+  PolyParaToCatElemFMap {c=Type} {mor=TypeMor} {comp=typeComp} {assoc=typeAssoc}

@@ -367,3 +367,47 @@ PolyParaToCatElemObjMap {c} {mor} {comp}
      onpos pi asn **
      (comp x (pdirL pi) (qdirL (onpos pi asn)) (onL pi asn) pdmR,
       comp (qdirR (onpos pi asn)) (pdirR pi) x pdmL (onR pi asn)))
+
+public export
+PolyParaToCatElemFMap :
+  {c : Type} -> {mor : IntDifunctorSig c} -> {comp : IntCompSig c mor} ->
+  {assoc : IntAssocSig c mor comp} ->
+  {p, q : PolyDiSig c} -> (gamma : PolyParaNT {c} mor p q) ->
+  (x, y : PolyDiagElemObj {c} mor p) ->
+  PolyDiagElemMor {c} {mor} {comp} {p} x y ->
+  PolyDiagElemMor {c} {mor} {comp} {p=q}
+    (PolyParaToCatElemObjMap {c} {mor} {comp} {p} {q} gamma x)
+    (PolyParaToCatElemObjMap {c} {mor} {comp} {p} {q} gamma y)
+PolyParaToCatElemFMap {c} {mor} {comp} {assoc}
+  {p=(_ ** (_, _))} {q=(qpos ** (qdirR, qdirL))}
+  (onpos ** (onL, onR))
+  (x ** _ ** (_, _)) (y ** _ ** (_, _))
+  (PDEM {c} {mor} {comp} {pos} {x} {y} {dirL} {dirR} mxy mi mR mL) =
+   rewrite assoc _ _ _ _ mL mxy mR in
+   rewrite sym $ assoc _ _ _ _
+    (onL mi $ comp (dirR mi) y (dirL mi) mL (comp (dirR mi) x y mxy mR))
+    mL
+    mxy
+   in
+   rewrite assoc _ _ _ _
+    mxy
+    mR
+    (onR mi $ comp (dirR mi) y (dirL mi) mL (comp (dirR mi) x y mxy mR))
+   in
+   PDEM {c} {mor} {comp} {pos=qpos} {dirL=qdirL} {dirR=qdirR}
+    mxy
+    (onpos mi $ comp (dirR mi) y (dirL mi) mL (comp (dirR mi) x y mxy mR))
+    (comp
+      (qdirR (onpos mi $
+        comp (dirR mi) y (dirL mi) mL (comp (dirR mi) x y mxy mR)))
+      (dirR mi)
+      x
+      mR
+      (onR mi $ comp (dirR mi) y (dirL mi) mL (comp (dirR mi) x y mxy mR)))
+    (comp
+      y
+      (dirL mi)
+      (qdirL (onpos mi $
+        comp (dirR mi) y (dirL mi) mL (comp (dirR mi) x y mxy mR)))
+      (onL mi $ comp (dirR mi) y (dirL mi) mL (comp (dirR mi) x y mxy mR))
+      mL)
