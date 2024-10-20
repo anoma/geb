@@ -416,6 +416,23 @@ PolyParaToCatElemFMap {c} {mor} {comp} {assoc}
       (onL mi $ comp (dirR mi) y (dirL mi) mL (comp (dirR mi) x y mxy mR))
       mL)
 
+--------------------------------------------------------
+--------------------------------------------------------
+---- Monoidal composition product on di-polynomials ----
+--------------------------------------------------------
+--------------------------------------------------------
+
+public export
+pdId : (c : Type) -> PolyDiSig c
+pdId c = (c ** (id, id))
+
+public export
+pdComp : {c : Type} -> {mor : IntMorSig c} ->
+  PolyDiSig c -> PolyDiSig c -> PolyDiSig c
+pdComp {c} {mor} (qpos ** (qdirL, qdirR)) (ppos ** (pdirL, pdirR)) =
+  ((pi : ppos ** qi : qpos ** mor (qdirL qi) (pdirR pi)) **
+   (\i => pdirL (fst i), \i => qdirR (fst $ snd i)))
+
 -----------------------------------------------
 -----------------------------------------------
 ---- Categorical structure of paranaturals ----
