@@ -1673,6 +1673,25 @@ IntParaFromNT {c} {mor}
      (\pi, asn => oncontra (pi ** asn),
       \pi, asn => oncovar (pi ** asn)))
 
+public export
+IntParaAsNTlift :
+  {c : Type} -> {mor : IntMorSig c} -> {comp : IntCompSig c mor} ->
+  {p, q : IntEndoProAr c} ->
+  IntPDiNTar c mor p q ->
+  IntEPPNTar c mor (IntParaDomFunc mor p) (IntParaDomFunc mor q)
+IntParaAsNTlift {c} {mor}
+  {p=(ppos ** (pcontra, pcovar))} {q=(qpos ** (qcontra, qcovar))}
+  (onpos ** (oncontra, oncovar)) =
+    (\(pi ** pasn) =>
+      (onpos pi pasn **
+        comp (qcovar (onpos pi pasn)) (pcontra pi) (qcontra (onpos pi pasn))
+          (oncontra pi pasn)
+        $ comp (qcovar (onpos pi pasn)) (pcovar pi) (pcontra pi)
+          pasn
+        (oncovar pi pasn)) **
+     (\(pi ** pasn) => oncontra pi pasn,
+      \(pi ** pasn) => oncovar pi pasn))
+
 -----------------------------
 -----------------------------
 ---- Partial application ----
