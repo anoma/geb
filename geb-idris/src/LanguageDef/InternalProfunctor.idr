@@ -1640,6 +1640,39 @@ intPDiNTvcomp c mor comp p q r beta alpha =
           (intPDiNTcovar {mor} {p=q} {q=r} beta
             (intPDiNTpos {mor} {p} {q} alpha i pasn) (qasn i pasn))))
 
+--------------------------------------------------------
+--------------------------------------------------------
+---- Paranatural polynomials as natural polynomials ----
+--------------------------------------------------------
+--------------------------------------------------------
+
+public export
+IntParaDomFunc : {c : Type} -> (mor : IntMorSig c) ->
+  IntEndoProAr c -> IntEndoProAr c
+IntParaDomFunc {c} mor (pos ** (contra, covar)) =
+  ((i : pos ** mor (covar i) (contra i)) **
+   (contra . DPair.fst, covar . DPair.fst))
+
+public export
+IntParaAsNT : {c : Type} -> {mor : IntMorSig c} -> {p, q : IntEndoProAr c} ->
+  IntPDiNTar c mor p q -> IntEPPNTar c mor (IntParaDomFunc mor p) q
+IntParaAsNT {c} {mor}
+  {p=(ppos ** (pcontra, pcovar))} {q=(qpos ** (qcontra, qcovar))}
+  (onpos ** (oncontra, oncovar)) =
+    (DPair.uncurry onpos **
+     (\(pi ** dcontm) => oncontra pi dcontm,
+      \(pi ** dcovm) => oncovar pi dcovm))
+
+public export
+IntParaFromNT : {c : Type} -> {mor : IntMorSig c} -> {p, q : IntEndoProAr c} ->
+  IntEPPNTar c mor (IntParaDomFunc mor p) q -> IntPDiNTar c mor p q
+IntParaFromNT {c} {mor}
+  {p=(ppos ** (pcontra, pcovar))} {q=(qpos ** (qcontra, qcovar))}
+  (onpos ** (oncontra, oncovar)) =
+    (DPair.curry onpos **
+     (\pi, asn => oncontra (pi ** asn),
+      \pi, asn => oncovar (pi ** asn)))
+
 -----------------------------
 -----------------------------
 ---- Partial application ----
