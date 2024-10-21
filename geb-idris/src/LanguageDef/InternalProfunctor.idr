@@ -1660,8 +1660,8 @@ IntParaAsNT {c} {mor}
   {p=(ppos ** (pcontra, pcovar))} {q=(qpos ** (qcontra, qcovar))}
   (onpos ** (oncontra, oncovar)) =
     (DPair.uncurry onpos **
-     (\(pi ** dcontm) => oncontra pi dcontm,
-      \(pi ** dcovm) => oncovar pi dcovm))
+     (\(pi ** pasn) => oncontra pi pasn,
+      \(pi ** pasn) => oncovar pi pasn))
 
 public export
 IntParaFromNT : {c : Type} -> {mor : IntMorSig c} -> {p, q : IntEndoProAr c} ->
