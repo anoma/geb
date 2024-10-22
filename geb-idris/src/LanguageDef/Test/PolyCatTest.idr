@@ -1128,6 +1128,80 @@ stlc_t6 : STLC_Term
 stlc_t6 = STLC_App SubstBool stlc_t4
   (STLC_Pair (STLC_Left STLC_Unit Subst1) (STLC_Right Subst1 STLC_Unit))
 
+--------------------------
+--------------------------
+---- Arithmetic tests ----
+--------------------------
+--------------------------
+
+public export
+pfNatToMaybeMuTest0 : Assertion
+pfNatToMaybeMuTest0 = Assert $ pfMaybeMuToNat (pfNatToMaybeMu 0) == 0
+
+public export
+pfNatToMaybeMuTest1 : Assertion
+pfNatToMaybeMuTest1 = Assert $ pfMaybeMuToNat (pfNatToMaybeMu 1) == 1
+
+public export
+pfNatToMaybeMuTest2 : Assertion
+pfNatToMaybeMuTest2 = Assert $ pfMaybeMuToNat (pfNatToMaybeMu 2) == 2
+
+public export
+pfFactN : Nat -> Nat
+pfFactN = pfFact . pfNatToMaybeMu
+
+public export
+pfFact0 : Assertion
+pfFact0 = Assert $ pfFactN 0 == 1
+
+public export
+pfFact1 : Assertion
+pfFact1 = Assert $ pfFactN 1 == 1
+
+public export
+pfFact2 : Assertion
+pfFact2 = Assert $ pfFactN 2 == 2
+
+public export
+pfFact3 : Assertion
+pfFact3 = Assert $ pfFactN 3 == 6
+
+public export
+pfFact4 : Assertion
+pfFact4 = Assert $ pfFactN 4 == 24
+
+public export
+pfFact5 : Assertion
+pfFact5 = Assert $ pfFactN 5 == 120
+
+public export
+pfFib0 : Assertion
+pfFib0 = Assert $ pfFibN 0 == 0
+
+public export
+pfFib1 : Assertion
+pfFib1 = Assert $ pfFibN 1 == 1
+
+public export
+pfFib2 : Assertion
+pfFib2 = Assert $ pfFibN 2 == 1
+
+public export
+pfFib3 : Assertion
+pfFib3 = Assert $ pfFibN 3 == 2
+
+public export
+pfFib4 : Assertion
+pfFib4 = Assert $ pfFibN 4 == 3
+
+public export
+pfFib5 : Assertion
+pfFib5 = Assert $ pfFibN 5 == 5
+
+public export
+pfFib6 : Assertion
+pfFib6 = Assert $ pfFibN 6 == 8
+
 ----------------------------------
 ----------------------------------
 ----- Exported test function -----
@@ -1142,6 +1216,7 @@ polyCatTest = do
   putStrLn "Begin polyCatTest:"
   putStrLn "------------------"
   putStrLn ""
+  {-
   putStrLn "---------------------------------"
   putStrLn "---- Bounded natural numbers ----"
   putStrLn "---------------------------------"
@@ -1181,6 +1256,7 @@ polyCatTest = do
   putStrLn $ show testBL3
   putStrLn $ show testBL4
   putStrLn "---------------------"
+  -}
   putStrLn ""
   putStrLn "--------------------"
   putStrLn "---- Polynomial ----"

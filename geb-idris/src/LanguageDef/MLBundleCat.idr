@@ -166,6 +166,34 @@ record CBundleMor (dom, cod : CBundleObj) where
       (CBOsl dom)
       (CSBaseChange cbmBase (CBOsl cod))
 
+-- Another form of `CBundleMor`, making the commutativity explicit.
+public export
+record CBundleMorAsCovarArrow (dom, cod : CBundleObj) where
+  constructor CBMCovArr
+  cbmeBase : cbBase dom -> cbBase cod
+  cbmeTot : cbTot dom -> cbTot cod
+  cbmeComm : ExtEq {a=(cbTot dom)} {b=(cbBase cod)}
+    (cbProj cod . cbmeTot) (cbmeBase . cbProj dom)
+
+public export
+CBMEtoCBM : {dom, cod : CBundleObj} ->
+  CBundleMorAsCovarArrow dom cod -> CBundleMor dom cod
+CBMEtoCBM {dom} {cod} (CBMCovArr base tot comm) =
+  (CBM
+    base
+    (Element0
+      (\dt => Element0 (cbProj dom dt, tot dt) (sym $ comm dt))
+      (\_ => Refl)))
+
+public export
+CBMEfromCBM : {dom, cod : CBundleObj} ->
+  CBundleMor dom cod -> CBundleMorAsCovarArrow dom cod
+CBMEfromCBM {dom} {cod} (CBM base (Element0 tot comm)) =
+  CBMCovArr
+    base
+    (\dt => snd $ fst0 $ tot dt)
+    (\dt => rewrite comm dt in sym $ snd0 $ tot dt)
+
 ---------------------------------------
 ---- Categorial-arena translations ----
 ---------------------------------------

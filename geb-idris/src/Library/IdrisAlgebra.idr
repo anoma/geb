@@ -410,6 +410,14 @@ DialgebraDimap : (f, g : Type -> Type) -> Functor f -> Functor g ->
   DimapSig (DialgebraProf f g)
 DialgebraDimap f g fm gm mca mbd dialg = map {f=g} mbd . dialg . map {f} mca
 
+public export
+AlgebraProf : (Type -> Type) -> ProfunctorSig
+AlgebraProf = flip DialgebraProf id
+
+public export
+CoalgebraProf : (Type -> Type) -> ProfunctorSig
+CoalgebraProf = DialgebraProf id
+
 -------------------------------------
 -------------------------------------
 ---- Initial/terminal dialgebras ----
@@ -441,3 +449,196 @@ public export
 DialgebraTwMap : (f, g : Type -> Type) -> Functor f -> Functor g ->
   TwArrCoprDimapSig (DialgebraTwF f g)
 DialgebraTwMap f g fm gm s t a b mst = DialgebraDimap f g fm gm
+
+--------------------------------
+--------------------------------
+---- Twisted-arrow algebras ----
+--------------------------------
+--------------------------------
+
+public export
+TwArrDialg : TwArrPreshfOpSig -> TwArrCoprSig -> TwArrCoprSig
+TwArrDialg p q x y mxy = p y x mxy -> q x y mxy
+
+public export
+TwArrDialgDimap : (p : TwArrPreshfOpSig) -> (q : TwArrCoprSig) ->
+  (pdm : TwArrPreshfOpDimapSig p) -> (qdm : TwArrCoprDimapSig q) ->
+  TwArrCoprDimapSig (TwArrDialg p q)
+TwArrDialgDimap p q pdm qdm s t a b mst mas mtb dialg =
+  qdm s t a b mst mas mtb . dialg . pdm b a t s mst mtb mas
+
+public export
+TwArrDialgLmap : (p : TwArrPreshfOpSig) -> (q : TwArrCoprSig) ->
+  (pdm : TwArrPreshfOpDimapSig p) -> (qdm : TwArrCoprDimapSig q) ->
+  (s, t, a : Type) -> (mst : s -> t) -> (mas : a -> s) ->
+  TwArrDialg p q s t mst -> TwArrDialg p q a t (mst . mas)
+TwArrDialgLmap p q pdm qdm s t a mst mas =
+  TwArrDialgDimap p q pdm qdm s t a t mst mas id
+
+public export
+TwArrDialgRmap : (p : TwArrPreshfOpSig) -> (q : TwArrCoprSig) ->
+  (pdm : TwArrPreshfOpDimapSig p) -> (qdm : TwArrCoprDimapSig q) ->
+  (s, t, b : Type) -> (mst : s -> t) -> (mtb : t -> b) ->
+  TwArrDialg p q s t mst -> TwArrDialg p q s b (mtb . mst)
+TwArrDialgRmap p q pdm qdm s t b mst mtb =
+  TwArrDialgDimap p q pdm qdm s t s b mst id mtb
+
+public export
+TwArrDialgConeBase :
+  (p : TwArrPreshfOpSig) -> (q : TwArrCoprSig) -> Type -> Type
+TwArrDialgConeBase p q apex =
+  (x, y : Type) -> (mxy : x -> y) -> (apex -> TwArrDialg p q x y mxy)
+
+public export
+TwArrDialgConeCond :
+  (p : TwArrPreshfOpSig) -> (q : TwArrCoprSig) ->
+  (pdm : TwArrPreshfOpDimapSig p) -> (qdm : TwArrCoprDimapSig q) ->
+  (apex : Type) -> TwArrDialgConeBase p q apex -> Type
+TwArrDialgConeCond p q pdm qdm apex cone =
+  (fext : FunExt) ->
+  (x, y, x', y' : Type) -> (mxy : x -> y) -> (mxy' : x' -> y') ->
+  (mx : x' -> x) -> (my : y -> y') ->
+  (mcomm : ExtEq {a=x'} {b=y'} (my . mxy . mx) mxy') ->
+  ExtEq {a=apex} {b=(TwArrDialg p q x' y' mxy')}
+    (rewrite sym (funExt mcomm) in
+     TwArrDialgDimap p q pdm qdm x y x' y' mxy mx my . cone x y mxy)
+    (cone x' y' mxy')
+
+public export
+TwArrDialgCone :
+  (p : TwArrPreshfOpSig) -> (q : TwArrCoprSig) ->
+  (pdm : TwArrPreshfOpDimapSig p) -> (qdm : TwArrCoprDimapSig q) ->
+  Type -> Type
+TwArrDialgCone p q pdm qdm apex =
+  Subset0 (TwArrDialgConeBase p q apex) (TwArrDialgConeCond p q pdm qdm apex)
+
+-- A morphism between cones is a morphism between their apexes together
+-- with the following commutativity condition.
+public export
+0 TwArrDialgConeMorphCond :
+  (p : TwArrPreshfOpSig) -> (q : TwArrCoprSig) ->
+  (pdm : TwArrPreshfOpDimapSig p) -> (qdm : TwArrCoprDimapSig q) ->
+  (apex, apex' : Type) ->
+  TwArrDialgConeBase p q apex -> TwArrDialgConeBase p q apex' ->
+  (mapex : apex -> apex') ->
+  Type
+TwArrDialgConeMorphCond p q pdm qdm apex apex' cone cone' mapex =
+  (x, y : Type) -> (mxy : x -> y) ->
+  ExtEq {a=apex} {b=(TwArrDialg p q x y mxy)}
+    (cone' x y mxy . mapex)
+    (cone x y mxy)
+
+-- A limit is a terminal cone.  We can compute a set-valued limit as
+-- a set of natural transformations.
+
+public export
+TwArrCoprConstUnit : TwArrCoprSig
+TwArrCoprConstUnit x y mxy = Unit
+
+public export
+TwArrCoprConstUnitDimap : TwArrCoprDimapSig TwArrCoprConstUnit
+TwArrCoprConstUnitDimap s t a b mst mas mtb = Prelude.id {a=Unit}
+
+public export
+TwArrDialgLimitApexBase : (p : TwArrPreshfOpSig) -> (q : TwArrCoprSig) -> Type
+TwArrDialgLimitApexBase p q =
+  TwArrCoprNatTrans TwArrCoprConstUnit (TwArrDialg p q)
+
+public export
+0 TwArrDialgLimitApexCond : (p : TwArrPreshfOpSig) -> (q : TwArrCoprSig) ->
+  (pdm : TwArrPreshfOpDimapSig p) -> (qdm : TwArrCoprDimapSig q) ->
+  TwArrDialgLimitApexBase p q -> Type
+TwArrDialgLimitApexCond p q pdm qdm =
+  TwArrCoprNaturality
+    {p=TwArrCoprConstUnit} {q=(TwArrDialg p q)}
+    TwArrCoprConstUnitDimap (TwArrDialgDimap p q pdm qdm)
+
+public export
+TwArrDialgLimitApex : (p : TwArrPreshfOpSig) -> (q : TwArrCoprSig) ->
+  (pdm : TwArrPreshfOpDimapSig p) -> (qdm : TwArrCoprDimapSig q) -> Type
+TwArrDialgLimitApex p q pdm qdm =
+  Subset0 (TwArrDialgLimitApexBase p q) (TwArrDialgLimitApexCond p q pdm qdm)
+
+public export
+TwArrDialgLimitBaseBase : (p : TwArrPreshfOpSig) -> (q : TwArrCoprSig) ->
+  TwArrDialgConeBase p q (TwArrDialgLimitApexBase p q)
+TwArrDialgLimitBaseBase p q x y mxy alpha = alpha x y mxy ()
+
+public export
+TwArrDialgLimitBase : (p : TwArrPreshfOpSig) -> (q : TwArrCoprSig) ->
+  (pdm : TwArrPreshfOpDimapSig p) -> (qdm : TwArrCoprDimapSig q) ->
+  TwArrDialgConeBase p q (TwArrDialgLimitApex p q pdm qdm)
+TwArrDialgLimitBase p q pdm qdm x y mxy alpha =
+  TwArrDialgLimitBaseBase p q x y mxy (fst0 alpha)
+
+public export
+TwArrDialgLimitCond : (p : TwArrPreshfOpSig) -> (q : TwArrCoprSig) ->
+  (pdm : TwArrPreshfOpDimapSig p) -> (qdm : TwArrCoprDimapSig q) ->
+  TwArrDialgConeCond p q pdm qdm
+    (TwArrDialgLimitApex p q pdm qdm) (TwArrDialgLimitBase p q pdm qdm)
+TwArrDialgLimitCond p q pdm qdm fext x y x' y' mxy mxy' mx my mcomm alpha =
+  rewrite snd0 alpha x y x' y' mxy mx my () in rewrite (funExt mcomm) in Refl
+
+public export
+TwArrMorToLimitBase : (p : TwArrPreshfOpSig) -> (q : TwArrCoprSig) ->
+  (pdm : TwArrPreshfOpDimapSig p) -> (qdm : TwArrCoprDimapSig q) ->
+  (apex : Type) -> TwArrDialgConeBase p q apex ->
+  apex -> TwArrDialgLimitApexBase p q
+TwArrMorToLimitBase p q pdm qdm apex cone ea x y mxy _ = cone x y mxy ea
+
+public export
+TwArrMorToLimitCond : (p : TwArrPreshfOpSig) -> (q : TwArrCoprSig) ->
+  (pdm : TwArrPreshfOpDimapSig p) -> (qdm : TwArrCoprDimapSig q) ->
+  (apex : Type) -> (cone : TwArrDialgConeBase p q apex) ->
+  TwArrDialgConeMorphCond p q pdm qdm
+    apex (TwArrDialgLimitApexBase p q)
+    cone (TwArrDialgLimitBaseBase p q)
+    (TwArrMorToLimitBase p q pdm qdm apex cone)
+TwArrMorToLimitCond p q pdm qdm apex cone x y mxy ea = Refl
+
+------------------------------------
+------------------------------------
+---- Impredicative (co)algebras ----
+------------------------------------
+------------------------------------
+
+public export
+ImpredInitAlg : (Type -> Type) -> Type
+ImpredInitAlg f = NaturalTransformation (Algebra f) Prelude.id
+
+public export
+SeededCoalgF : (Type -> Type) -> Type -> Type
+SeededCoalgF f = ProductF (Coalgebra f) Prelude.id
+
+public export
+SeededCoalgElim : (Type -> Type) -> Type -> Type
+SeededCoalgElim f z = NaturalTransformation (SeededCoalgF f) (const z)
+
+-- An object of the category of elements of `SeededCoalgF`.
+-- We shall show that this is ismorphic to `Nu`.
+public export
+ImpredTerminalCoalgExist : (Type -> Type) -> Type
+ImpredTerminalCoalgExist f = (a : Type ** SeededCoalgF f a)
+
+public export
+ImpredTCExToNu : (f : Type -> Type) -> Anamorphism f ->
+  ImpredTerminalCoalgExist f -> Nu f
+ImpredTCExToNu f af (a ** (coalg, ea)) = af a coalg ea
+
+public export
+ImpredTCExFromNu : (f : Type -> Type) -> Nu f -> ImpredTerminalCoalgExist f
+ImpredTCExFromNu f x = (Nu f ** (treeSubtree . outCofree, x))
+
+-- Simply the Yoneda embedding of `ImpredTerminalCoalgExist f`.
+public export
+ImpredTerminalCoalg : (Type -> Type) -> Type
+ImpredTerminalCoalg f = NaturalTransformation (SeededCoalgElim f) Prelude.id
+
+public export
+ImpredTCToNu : (f : Type -> Type) -> Anamorphism f ->
+  ImpredTerminalCoalg f -> Nu f
+ImpredTCToNu f af alpha = alpha (Nu f) $ DPair.curry $ ImpredTCExToNu f af
+
+public export
+ImpredTCFromNu : (f : Type -> Type) -> Nu f -> ImpredTerminalCoalg f
+ImpredTCFromNu f x z alpha = DPair.uncurry alpha (ImpredTCExFromNu f x)

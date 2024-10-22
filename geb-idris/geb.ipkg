@@ -16,6 +16,7 @@ modules =
     , LanguageDef.InternalCat
     , LanguageDef.InternalHigherCat
     , LanguageDef.InternalProfunctor
+    , LanguageDef.Nock
     , LanguageDef.IntArena
     , LanguageDef.IntTwistedArrowCat
     , LanguageDef.IntUFamCat
@@ -41,6 +42,9 @@ modules =
     , LanguageDef.SlicePolyDialg
     , LanguageDef.HigherPolyCat
     , LanguageDef.SlicePolyUMorph
+    , LanguageDef.Telescope
+    , LanguageDef.FinPoly
+    , LanguageDef.RQFin
     , LanguageDef.DisliceCat
     , LanguageDef.DislicePolyCat
     , LanguageDef.Quiver
@@ -71,6 +75,10 @@ modules =
     , LanguageDef.ComputationalEffects
     , LanguageDef.Embedded
     , LanguageDef.FullLanguageDef
+    , LanguageDef.Diprofunctor
+    , LanguageDef.TreeCalculus
+    , LanguageDef.FinCatPRA
+    , LanguageDef.SlicePolyDifunc
     , LanguageDef.Test.QTypeTest
     , LanguageDef.Test.IntArenaTest
     , LanguageDef.Test.IntTwistedArrowCatTest
@@ -87,6 +95,7 @@ modules =
     , LanguageDef.Test.InternalCatTest
     , LanguageDef.Test.InternalHigherCatTest
     , LanguageDef.Test.InternalProfunctorTest
+    , LanguageDef.Test.NockTest
     , LanguageDef.Test.MLBundleCatTest
     , LanguageDef.Test.MLDirichCatTest
     , LanguageDef.Test.MLTwistPairTest
@@ -99,6 +108,7 @@ modules =
     , LanguageDef.Test.SlPolyIntCatTest
     , LanguageDef.Test.SlPolyImpredTest
     , LanguageDef.Test.SlicePolyUMorphTest
+    , LanguageDef.Test.TelescopeTest
     , LanguageDef.Test.SlicePolyDialgTest
     , LanguageDef.Test.DisliceCatTest
     , LanguageDef.Test.QuiverTest
@@ -129,12 +139,18 @@ modules =
     , LanguageDef.Test.LogicTest
     , LanguageDef.Test.ComputationalEffectsTest
     , LanguageDef.Test.EmbeddedTest
+    , LanguageDef.Test.FinPolyTest
+    , LanguageDef.Test.RQFinTest
+    , LanguageDef.Test.DiprofunctorTest
+    , LanguageDef.Test.TreeCalculusTest
+    , LanguageDef.Test.FinCatPRATest
+    , LanguageDef.Test.SlicePolyDifuncTest
 
 depends = contrib, network, test
 
 sourcedir = "src"
 
-opts = "--total --warnpartial"
+opts = "--total"
 
 main = Executable.Test.Main
 executable = geb

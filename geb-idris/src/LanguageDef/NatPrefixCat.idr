@@ -85,7 +85,7 @@ baS (Element0 m lt) = Element0 (S m) lt
 
 public export
 baShowLong : {n : Nat} -> BANat n -> String
-baShowLong {n} m = show m ++ "[<" ++ show n ++ "]"
+baShowLong {n} m = show (fst0 m) ++ "[<" ++ show n ++ "]"
 
 public export
 baNatDepCata :
@@ -266,7 +266,7 @@ metaToNatToBNC {n} f k =
     k' = natToInteger k
     fk = integerToNat $ f k'
   in
-  Element0 (modNatNZ fk (S n) SIsNonZero) (modLtDivisor fk n)
+  Element0 (modNatNZ fk (S n) ItIsSucc) (modLtDivisor fk n)
 
 public export
 metaToBNCToBNC : {m, n : Nat} -> (Integer -> Integer) -> BANat m -> BANat (S n)
@@ -515,8 +515,8 @@ fsProdElimLeft a Z = rewrite multZeroRightZero a in []
 fsProdElimLeft a (S b) =
   finFToVect $ \i =>
     natToFinLT
-      {prf=(multDivLT (finToNatLT i) SIsNonZero)}
-      (divNatNZ (finToNat i) (S b) SIsNonZero)
+      {prf=(multDivLT (finToNatLT i) ItIsSucc)}
+      (divNatNZ (finToNat i) (S b) ItIsSucc)
 
 public export
 fsProdElimRight : (a, b : FSObj) -> FSMorph (FSProduct a b) b
@@ -525,7 +525,7 @@ fsProdElimRight a (S b) =
   finFToVect $ \i =>
     natToFinLT
       {prf=(modLTDivisor (finToNat i) b)}
-      (modNatNZ (finToNat i) (S b) SIsNonZero)
+      (modNatNZ (finToNat i) (S b) ItIsSucc)
 
 public export
 FSExpObj : FSObj -> FSObj -> FSObj
@@ -541,7 +541,7 @@ fsPowerElimRight a b =
   finFToVect $ \i =>
     natToFinLT
       {prf=(modLTDivisor (finToNat i) b)}
-      (modNatNZ (finToNat i) (S b) SIsNonZero)
+      (modNatNZ (finToNat i) (S b) ItIsSucc)
 
 public export
 fsEval : (a, b : FSObj) -> FSMorph (FSProduct (FSHomObj a b) a) b
@@ -1095,14 +1095,14 @@ InterpFSPNT {p=ap} {q=aq} (onPos ** onDir) x (i ** v) =
 -- identity.)
 
 public export
-FSSliceMorphismToFSNT : {n : FSObj} -> {0 s, s' : FSSlice n} ->
+0 FSSliceMorphismToFSNT : {n : FSObj} -> {0 s, s' : FSSlice n} ->
   FSSliceMorphism s s' -> FSPNatTrans (SliceToFSPolyF s') (SliceToFSPolyF s)
 FSSliceMorphismToFSNT {n} {s} {s'} m =
   (?FSSliceMorphismToFSNT_hole_onpos (FSId n) **
    ?FSSliceMorphismToFSNT_hole_ondir)
 
 public export
-FSNTToFSSliceMorph : {0 p, q : FSPolyF} ->
+0 FSNTToFSSliceMorph : {0 p, q : FSPolyF} ->
   {eqpos : fsPolyNPos p = fsPolyNPos q} ->
   (alpha : FSPNatTrans p q) ->
   (fspOnPos {p} {q} alpha =
@@ -1154,7 +1154,7 @@ data FSPolyFMu : FSPolyF -> Type where
 -----------------------------------------------------
 
 public export
-fspCata : {p : FSPolyF} -> {0 a : FSObj} ->
+0 fspCata : {p : FSPolyF} -> {0 a : FSObj} ->
   FSPAlg p a -> FSPolyFMu p -> FSElem a
 fspCata {p=l} {a} alg (InFSP i v) =
   ?fspCata_hole

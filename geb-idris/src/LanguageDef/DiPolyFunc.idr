@@ -81,14 +81,16 @@ InterpPolyLmap : {c : Type} -> {mor : IntDifunctorSig c} ->
   IntCompSig c mor ->
   (p : PolyDiSig c) -> IntEndoLmapSig c mor (InterpPolyDi {c} mor p)
 InterpPolyLmap {c} {mor} comp p s t a mas =
-  dpMapSnd $ \pi => mapFst (flip (comp a s (pdDirL p pi)) mas)
+  dpMapSnd $
+    \pi => IntDiYonedaEmbedLmap c mor comp (pdDirR p pi) (pdDirL p pi) s t a mas
 
 public export
 InterpPolyRmap : {c : Type} -> {mor : IntDifunctorSig c} ->
   IntCompSig c mor ->
   (p : PolyDiSig c) -> IntEndoRmapSig c mor (InterpPolyDi {c} mor p)
 InterpPolyRmap {c} {mor} comp p s t b mtb =
-  dpMapSnd $ \pi => mapSnd (comp (pdDirR p pi) t b mtb)
+  dpMapSnd $
+    \pi => IntDiYonedaEmbedRmap c mor comp (pdDirR p pi) (pdDirL p pi) s t b mtb
 
 public export
 InterpPolyDimap : {c : Type} -> {mor : IntDifunctorSig c} ->

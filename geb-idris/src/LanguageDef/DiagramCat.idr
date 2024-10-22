@@ -1212,10 +1212,11 @@ PreDiagTwoId : {c, d : PreDiagram} -> (f : PreDiagMorphism c d) ->
 PreDiagTwoId {c} {d} f = MkPD2Morph $ \x => preDiagFreeId d (dfpVmap f x)
 
 public export
-record DiagTwoMorph {c, d : Diagram} (f, g : DiagMorphism c d) where
-  constructor MkD2Morph
-  d2Pre : PreDiagTwoMorph {c=(dPre c)} {d=(dPre d)} (dmPreM f) (dmPreM g)
-  0 d2IsNatural : (x, y : DiagFreeObj c) -> (m : DiagFreeHom c (x, y)) ->
+D2isNatural : {c, d : Diagram} -> (f, g : DiagMorphism c d) ->
+  PreDiagTwoMorph {c=(dPre c)} {d=(dPre d)} (dmPreM f) (dmPreM g) ->
+  Type
+D2isNatural {c} {d} f g d2Pre =
+  (x, y : DiagFreeObj c) -> (m : DiagFreeHom c (x, y)) ->
     DiagFreeCatRel d
       ((dpVmap f x, dpVmap g y) **
        (diagFreeComp {diag=d}
@@ -1224,6 +1225,12 @@ record DiagTwoMorph {c, d : Diagram} (f, g : DiagMorphism c d) where
         diagFreeComp {diag=d}
           (pd2Component d2Pre y)
           (freeHomMapExtendLeft {m=(dpVmap f)} (dpEmap f) (x, y) m)))
+
+public export
+record DiagTwoMorph {c, d : Diagram} (f, g : DiagMorphism c d) where
+  constructor MkD2Morph
+  d2Pre : PreDiagTwoMorph {c=(dPre c)} {d=(dPre d)} (dmPreM f) (dmPreM g)
+  0 d2IsNatural : D2isNatural {c} {d} f g d2Pre
 
 public export
 d2Component : {c, d : Diagram} -> {f, g : DiagMorphism c d} ->

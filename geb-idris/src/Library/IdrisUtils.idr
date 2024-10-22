@@ -7,6 +7,8 @@ import public Data.List
 import public Data.List.Equalities
 import public Data.List.Reverse
 import public Data.List.Quantifiers
+import public Data.SnocList
+import public Data.SnocList.Quantifiers
 import public Data.Vect.Quantifiers
 import public Data.Nat
 import public Data.Nat.Order.Properties
@@ -119,6 +121,12 @@ public export
 fcongdep : {0 a : Type} -> {0 b : a -> Type} -> {0 f, g : (ea : a) -> b ea} ->
   (f ~=~ g) -> {x : a} -> f x = g x
 fcongdep Refl = Refl
+
+public export
+fconghet : {0 a, a' : Type} -> {0 b : a -> Type} -> {0 b' : a' -> Type} ->
+  {0 f : (ea : a) -> b ea} -> {0 f' : (ea' : a') -> b' ea'} ->
+  (f ~=~ f') -> {ea : a} -> {ea' : a'} -> ea = ea' -> f ea ~=~ f' ea'
+fconghet Refl Refl = Refl
 
 public export
 fcompeq : {0 a, b, c : Type} -> {0 g, g' : b -> c} -> {0 f, f' : a -> b} ->
@@ -342,8 +350,8 @@ CExists0 a b = Exists0 a (const0 b)
 
 public export
 DecNonZero : (n : Nat) -> Dec (NonZero n)
-DecNonZero Z = No $ \nzz => case nzz of SIsNonZero impossible
-DecNonZero (S n) = Yes SIsNonZero
+DecNonZero Z = No $ \nzz => case nzz of ItIsSucc impossible
+DecNonZero (S n) = Yes ItIsSucc
 
 public export
 divMaybe : Nat -> Nat -> Maybe Nat
@@ -522,6 +530,20 @@ andBoth {p=True} {q=True} Refl Refl = Refl
 andBoth {p=True} {q=False} Refl Refl impossible
 andBoth {p=False} {q=True} Refl Refl impossible
 andBoth {p=False} {q=False} Refl Refl impossible
+
+public export
+orLeft : {p, q : Bool} -> IsTrue p -> IsTrue (p || q)
+orLeft {p=True} {q=True} Refl = Refl
+orLeft {p=True} {q=False} Refl = Refl
+orLeft {p=False} {q=True} Refl impossible
+orLeft {p=False} {q=False} Refl impossible
+
+public export
+orRight : {p, q : Bool} -> IsTrue q -> IsTrue (p || q)
+orRight {p=True} {q=True} Refl = Refl
+orRight {p=True} {q=False} Refl impossible
+orRight {p=False} {q=True} Refl = Refl
+orRight {p=False} {q=False} Refl impossible
 
 public export
 foldTrueInit : (b : Bool) -> (bs : List Bool) ->
@@ -737,6 +759,16 @@ finFToVectIdx : {0 a : Type} -> {n : Nat} -> (f : Fin n -> a) -> (i : Fin n) ->
   index i (finFToVect f) = f i
 finFToVectIdx {a} {n=(S _)} f FZ = Refl
 finFToVectIdx {a} {n=(S n)} f (FS i) = finFToVectIdx {a} {n} (f . FS) i
+
+public export
+finFToFromVectInv : FunExt -> {0 a : Type} -> {n : Nat} -> (v : Fin n -> a) ->
+  (flip (Vect.index {len=n} {elem=a}) (finFToVect {a} {n} v) = v)
+finFToFromVectInv fext {a} {n=Z} v =
+  funExt $ \i => case i of _ impossible
+finFToFromVectInv fext {a} {n=(S n)} v =
+  funExt $ \i => case i of
+    FZ => Refl
+    FS i' => fcong {x=i'} (finFToFromVectInv fext {a} {n} (v . FS))
 
 public export
 finHFToHVect : {n : Nat} -> {t : Fin n -> Type} -> ((i : Fin n) -> t i) ->
@@ -1121,19 +1153,19 @@ diffToLte {m} {n} {k=(S k)} pleq =
 public export
 0 multDivLTLemma : (k, m, n, diffmsnsk : Nat) ->
   diffmsnsk + S k = m * S n ->
-  (diffmdivksn : Nat ** diffmdivksn + S (divNatNZ k (S n) SIsNonZero) = m)
+  (diffmdivksn : Nat ** diffmdivksn + S (divNatNZ k (S n) ItIsSucc) = m)
 multDivLTLemma k m n diffmsnsk diffmsnskeq = ?multDivLTLemma_hole
 
 public export
 0 multDivLT : {k, m, n : Nat} ->
   LT k (m * n) -> (nz : NonZero n) -> LT (divNatNZ k n nz) m
-multDivLT {k} {m} {n=(S n)} lt SIsNonZero =
+multDivLT {k} {m} {n=(S n)} lt ItIsSucc =
   let
     (diffmsnsk ** diffmsnskeq) = lteToDiff lt
     (diffmdivksn ** diffmdivksneq) = multDivLTLemma k m n diffmsnsk diffmsnskeq
   in
   diffToLte
-    {m=(S (divNatNZ k (S n) SIsNonZero))} {n=m} {k=diffmdivksn} diffmdivksneq
+    {m=(S (divNatNZ k (S n) ItIsSucc))} {n=m} {k=diffmdivksn} diffmdivksneq
 
 public export
 multAddLT : {k, m, n, p : Nat} ->
@@ -1151,11 +1183,11 @@ multAddLT {k} {m} {n=(S n)} {p=(S p)} (LTESucc ltkn) (LTESucc ltmp) =
       ltmp
 
 public export
-modLTDivisor : (m, n : Nat) -> LT (modNatNZ m (S n) SIsNonZero) (S n)
-modLTDivisor m n = boundModNatNZ m (S n) SIsNonZero
+modLTDivisor : (m, n : Nat) -> LT (modNatNZ m (S n) ItIsSucc) (S n)
+modLTDivisor m n = boundModNatNZ m (S n) ItIsSucc
 
 public export
-modLtDivisor : (m, n : Nat) -> IsTrue $ gt (S n) $ modNatNZ m (S n) SIsNonZero
+modLtDivisor : (m, n : Nat) -> IsTrue $ gt (S n) $ modNatNZ m (S n) ItIsSucc
 modLtDivisor m n = LTEReflectsLte $ fromLteSucc $ modLTDivisor m n
 
 public export
@@ -1691,7 +1723,7 @@ zipLen f (x :: xs) (y :: ys) eq = f x y :: zipLen f xs ys (injective eq)
 
 public export
 nzUnique : {n : Nat} -> (nz, nz' : NonZero n) -> nz = nz'
-nzUnique {n=(S n)} SIsNonZero SIsNonZero = Refl
+nzUnique {n=(S n)} ItIsSucc ItIsSucc = Refl
 
 -- The number of bits required to store a natural number less than or equal to
 -- the input.  (Note that we don't need any bits to store a number less than
@@ -1736,3 +1768,17 @@ applyPure = (|>) pure . (<*>)
 public export
 unitUnique : (x, y : Unit) -> x = y
 unitUnique () () = Refl
+
+public export
+congList : {0 a : Type} -> {x, x' : a} -> {l, l' : List a} ->
+  x = x' -> l = l' -> x :: l = x' :: l'
+congList {a} {x} {x'=x} {l} {l'=l} Refl Refl = Refl
+
+public export
+iterNpnt : Nat -> (x : Type) -> (x -> x) -> (x -> x)
+iterNpnt Z x f = id
+iterNpnt (S n) x f = f . iterNpnt n x f
+
+public export
+iterNf : (x : Type) -> (x -> x) -> Nat -> (x -> x)
+iterNf x f n = iterNpnt n x f

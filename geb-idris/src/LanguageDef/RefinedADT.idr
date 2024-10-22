@@ -239,6 +239,7 @@ public export
 pzPolyCoeff : (poly : PZPoly) -> pzPowT poly -> NatObj
 pzPolyCoeff poly pow = pzCoeff (pzCoeffRep poly pow) (fst pow) (pzMaxPow poly)
 
+{-
 public export
 Show PZPoly where
   show poly =
@@ -256,9 +257,10 @@ Show PZPoly where
               (ss ++ " + ", " * n^" ++ show n')
         in
         ss' ++ sc ++ pow')
+        -}
 
 public export
-pzApplyMeta : PZPoly -> Nat -> Nat
+0 pzApplyMeta : PZPoly -> Nat -> Nat
 pzApplyMeta poly n =
   NatObjBoundedMapFold {a=(const NatObj)} {b=(const Nat)} {c=(const Nat)}
     (const NatObjToMeta)
@@ -267,7 +269,7 @@ pzApplyMeta poly n =
     (\pow, lt, coeff, sum => sum + coeff * power n (NatObjToMeta pow))
 
 public export
-pzApply : PZPoly -> NatObj -> NatObj
+0 pzApply : PZPoly -> NatObj -> NatObj
 pzApply poly = MetaToNatObj . pzApplyMeta poly . NatObjToMeta
 
 public export
@@ -279,15 +281,15 @@ pzSetTerminalObj : NatObj
 pzSetTerminalObj = NatO1
 
 public export
-pzPolyInitialObj : PZPoly
+0 pzPolyInitialObj : PZPoly
 pzPolyInitialObj = MkPZPoly NatOZ $ sliceArrayFromList NatOZ []
 
 public export
-pzPolyTerminalObj : PZPoly
+0 pzPolyTerminalObj : PZPoly
 pzPolyTerminalObj = MkPZPoly NatOZ $ sliceArrayFromList NatO1 []
 
 public export
-pzIdentity : PZPoly
+0 pzIdentity : PZPoly
 pzIdentity = MkPZPoly NatO1 $ sliceArrayFromList NatOZ [NatOZ]
 
 ---------------------------
@@ -308,6 +310,7 @@ public export
 pzDirT : (ar : PZArena) -> (pos : pzPosT ar) -> Type
 pzDirT ar pos = NatOPrefix (pzNumDir ar pos)
 
+{-
 public export
 Show PZArena where
   show (MkPZArena n nd) =
@@ -319,6 +322,7 @@ Show PZArena where
       (\n', morph, sc, ss =>
         let ss' = if n' == NatOZ then "" else ss ++ "; " in
         ss' ++ "#Dirs[" ++ show n' ++ "] = " ++ sc)
+        -}
 
 public export
 OnPosT : PZArena -> PZArena -> Type
@@ -332,14 +336,14 @@ OnDirT {domain} {codomain} =
     (pzNumDir domain) (pzNumDir codomain)
 
 public export
-onDirFromLists : {domain, codomain : PZArena} ->
+0 onDirFromLists : {domain, codomain : PZArena} ->
   (onpos : OnPosT domain codomain) -> List (List Nat) ->
   Maybe (OnDirT {domain} {codomain} onpos)
 onDirFromLists {domain} {codomain} =
   depPrefixContraMapFromLists (pzNumDir domain) (pzNumDir codomain)
 
 public export
-InitOnDir : {domain, codomain : PZArena} ->
+0 InitOnDir : {domain, codomain : PZArena} ->
   (onpos : OnPosT domain codomain) -> (l : List (List Nat)) ->
   {auto ok : IsJustTrue (onDirFromLists {domain} {codomain} onpos l)} ->
   OnDirT {domain} {codomain} onpos
@@ -352,14 +356,14 @@ record PZLens (domain, codomain : PZArena) where
   pzOnDir : OnDirT {domain} {codomain} pzOnPos
 
 public export
-showPZLens : {domain : PZArena} -> {codomain : PZArena} ->
+0 showPZLens : {domain : PZArena} -> {codomain : PZArena} ->
   PZLens domain codomain -> String
 showPZLens {domain} {codomain} (MkPZLens op od) =
   "pzOnPos: " ++ showPrefixMap op ++ "; pzOnDir: " ++
   showDepPrefixContraMap (pzNumDir domain) (pzNumDir codomain) op od
 
 public export
-pzLensFromLists :
+0 pzLensFromLists :
   {domain, codomain : PZArena} ->
   (onpos : OnPosT domain codomain) ->
   List (List Nat) ->
@@ -373,7 +377,7 @@ pzLensFromLists onpos l with (onDirFromLists onpos l)
 ------------------------------------------
 
 public export
-pzSumCoeff : PZPoly -> NatObj
+0 pzSumCoeff : PZPoly -> NatObj
 pzSumCoeff poly = natSliceSum (pzPolyCoeff poly)
 
 public export
@@ -383,17 +387,17 @@ NatPrefixReplicateMap :
 NatPrefixReplicateMap {n} v sl = NatPrefixReplicate (v sl) (fst sl)
 
 public export
-posPowers : (n : NatObj) ->
+0 posPowers : (n : NatObj) ->
   (v : SliceArray n NatObj) ->
   PrefixArray (natSliceSum v) NatObj
 posPowers n v = NatPrefixFoldAppend {n} v (NatPrefixReplicateMap {n} v)
 
 public export
-pzDirs : (poly : PZPoly) -> NatOPrefix (pzSumCoeff poly) -> NatObj
+0 pzDirs : (poly : PZPoly) -> NatOPrefix (pzSumCoeff poly) -> NatObj
 pzDirs poly = posPowers (pzMaxPow poly) (pzPolyCoeff poly)
 
 public export
-pzToArena : PZPoly -> PZArena
+0 pzToArena : PZPoly -> PZArena
 pzToArena poly = MkPZArena (pzSumCoeff poly) (pzDirs poly)
 
 -------------------------------
@@ -590,7 +594,7 @@ data NatPolyLTP : NatPolyTermPair -> Type where
     NatLTStrict p p' -> NatPolyLTP (NatCoeffPow (c, p), NatCoeffPow (c', p'))
 
 public export
-decNatPolyLTP : (np : NatPolyTermPair) -> Dec (NatPolyLTP np)
+0 decNatPolyLTP : (np : NatPolyTermPair) -> Dec (NatPolyLTP np)
 decNatPolyLTP (NatCoeffPow (_, p), NatCoeffPow (_, p')) =
   case NatMorphCompare p p' of
     Left eq => No $ \ltp => case ltp of
@@ -793,7 +797,7 @@ Show S0EInitColimit where
   show = omegaColimitShow {f=Subst0EndoF} {a=Void} showS0EFAlg
 
 public export
-FInitAlgS0EF : FInitAlg Subst0EndoF
+0 FInitAlgS0EF : FInitAlg Subst0EndoF
 FInitAlgS0EF Subst0EndoEmpty = colimitConst Subst0EndoEmpty
 FInitAlgS0EF (Subst0EndoCovarRep f) = colimitOne Subst0EndoCovarRep f
 FInitAlgS0EF (Subst0EndoSum f g) = colimitPair Subst0EndoSum f g

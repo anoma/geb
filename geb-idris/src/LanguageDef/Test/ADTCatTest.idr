@@ -41,7 +41,7 @@ wnsStr : WriterNatString -> String
 wnsStr = pfFreeCata wnsStrAlg
 
 Show WriterNatString where
-  show wns = "(" ++ show (wnsNat wns) ++ ", " ++ wnsStr wns ++ ")"
+  show wns = wnsStr wns
 
 wns3s : String
 wns3s = show wns3

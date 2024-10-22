@@ -28,24 +28,11 @@ import public LanguageDef.MLDirichCat
 -----------------------------------------------------------------------
 
 public export
-CPFSliceObj : MLPolyCatObj -> Type
-CPFSliceObj p = (q : MLPolyCatObj ** PolyNatTrans q p)
-
-public export
-0 CPFNatTransEq :
-  (p, q : MLPolyCatObj) -> (alpha, beta : PolyNatTrans p q) -> Type
-CPFNatTransEq (ppos ** pdir) (qpos ** qdir)
-  (aonpos ** aondir) (bonpos ** bondir) =
-    Exists0
-      (ExtEq {a=ppos} {b=qpos} aonpos bonpos)
-      $ \onposeq =>
-        (i : ppos) -> (d : qdir (aonpos i)) ->
-        bondir i (replace {p=qdir} (onposeq i) d) = aondir i d
-
-public export
 CPFSliceMorph : (p : MLPolyCatObj) -> CPFSliceObj p -> CPFSliceObj p -> Type
-CPFSliceMorph p (q ** qp) (r ** rp) =
-  Subset0 (PolyNatTrans q r) (\qr => CPFNatTransEq q p qp (pntVCatComp rp qr))
+CPFSliceMorph p q r =
+  Subset0
+    (PolyNatTrans (fst q) (fst r))
+    (\qr => CPFNatTransEq (fst q) p (snd q) (pntVCatComp (snd r) qr))
 
 -- In any slice category, we can infer a slice morphism from a slice object
 -- and a morphism from any object of the base category to the domain of the

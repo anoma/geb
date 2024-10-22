@@ -488,13 +488,12 @@ CDFSliceObj p = (q : MLDirichCatObj ** MLDirichCatMor q p)
 public export
 0 CDFNatTransEq :
   (p, q : MLDirichCatObj) -> (alpha, beta : MLDirichCatMor p q) -> Type
-CDFNatTransEq (ppos ** pdir) (qpos ** qdir)
-  (aonpos ** aondir) (bonpos ** bondir) =
-    Exists0
-      (ExtEq {a=ppos} {b=qpos} aonpos bonpos)
-      $ \onposeq =>
-        (i : ppos) -> (d : pdir i) ->
-        bondir i d = replace {p=qdir} (onposeq i) (aondir i d)
+CDFNatTransEq p q alpha beta =
+  Exists0
+    (ExtEq {a=(dfPos p)} {b=(dfPos q)} (fst alpha) (fst beta))
+    $ \onposeq =>
+      (i : dfPos p) -> (d : dfDir p i) ->
+      snd beta i d = replace {p=(dfDir q)} (onposeq i) (snd alpha i d)
 
 public export
 CDFSliceMorph : (p : MLDirichCatObj) -> CDFSliceObj p -> CDFSliceObj p -> Type
@@ -1742,7 +1741,7 @@ dfSetCoproductPos {a} ps = DPair a (fst . ps)
 public export
 dfSetCoproductDir : {a : Type} ->
   (ps : a -> MLDirichCatObj) -> dfSetCoproductPos ps -> Type
-dfSetCoproductDir ps (x ** xpos) = snd (ps x) xpos
+dfSetCoproductDir ps xpos = snd (ps $ fst xpos) (snd xpos)
 
 public export
 dfSetCoproductArena : {a : Type} -> (a -> MLDirichCatObj) -> MLDirichCatObj

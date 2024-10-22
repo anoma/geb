@@ -18,6 +18,7 @@ import LanguageDef.Test.SpanCospanTest
 import LanguageDef.Test.InternalCatTest
 import LanguageDef.Test.InternalHigherCatTest
 import LanguageDef.Test.InternalProfunctorTest
+import LanguageDef.Test.NockTest
 import LanguageDef.Test.SlicePolyCatTest
 import LanguageDef.Test.SliceFuncCatTest
 import LanguageDef.Test.HelixCatTest
@@ -27,6 +28,11 @@ import LanguageDef.Test.RopeCatTest
 import LanguageDef.Test.SlPolyImpredTest
 import LanguageDef.Test.SlPolyIntCatTest
 import LanguageDef.Test.SlicePolyUMorphTest
+import LanguageDef.Test.TelescopeTest
+import LanguageDef.Test.RQFinTest
+import LanguageDef.Test.DiprofunctorTest
+import LanguageDef.Test.TreeCalculusTest
+import LanguageDef.Test.FinPolyTest
 import LanguageDef.Test.SlicePolyDialgTest
 import LanguageDef.Test.HigherPolyCatTest
 import LanguageDef.Test.DisliceCatTest
@@ -65,6 +71,9 @@ import LanguageDef.Test.LogicTest
 import LanguageDef.Test.ComputationalEffectsTest
 import LanguageDef.Test.EmbeddedTest
 import LanguageDef.Test.PolyIndTypesTest
+import LanguageDef.Test.TreeCalculusTest
+import LanguageDef.Test.FinCatPRATest
+import LanguageDef.Test.SlicePolyDifuncTest
 
 %default total
 
@@ -104,7 +113,6 @@ totalTests = do
   LanguageDef.Test.QuiverTest.quiverTest
   LanguageDef.Test.MLQuivCatTest.mlQuivCatTest
   LanguageDef.Test.MLQuivUnivTest.mlQuivUnivTest
-  LanguageDef.Test.PolyDifuncTest.polyDifuncTest
   LanguageDef.Test.MLQuivPolyTest.mlQuivPolyTest
   LanguageDef.Test.GenPolyFuncTest.genPolyFuncTest
   LanguageDef.Test.PolySliceCatTest.polySliceCatTest
@@ -136,6 +144,15 @@ totalTests = do
   LanguageDef.Test.DiPolyFuncTest.diPolyFuncTest
   LanguageDef.Test.MLDiPolyFuncTest.mlDiPolyFuncTest
   LanguageDef.Test.RopeCatTest.ropeCatTest
+  LanguageDef.Test.NockTest.nockTest
+  LanguageDef.Test.TelescopeTest.telescopeTest
+  LanguageDef.Test.FinPolyTest.finPolyTest
+  LanguageDef.Test.RQFinTest.rqFinTest
+  LanguageDef.Test.DiprofunctorTest.diprofunctorTest
+  LanguageDef.Test.TreeCalculusTest.treeCalculusTest
+  LanguageDef.Test.FinCatPRATest.finCatPRATest
+  LanguageDef.Test.PolyDifuncTest.polyDifuncTest
+  LanguageDef.Test.SlicePolyDifuncTest.slicePolyDifuncTest
 
 export
 partial potentiallyNonTerminatingTests : IO ()

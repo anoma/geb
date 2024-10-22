@@ -2,6 +2,7 @@ module LanguageDef.PolyDifunc
 
 import Library.IdrisUtils
 import Library.IdrisCategories
+import Library.IdrisAlgebra
 import LanguageDef.DisliceCat
 import public LanguageDef.PolyCat
 import public LanguageDef.DislicePolyCat
@@ -12,6 +13,1165 @@ import public LanguageDef.IntDisheafCat
 %default total
 %hide Library.IdrisCategories.BaseChangeF
 %hide Prelude.Ops.infixl.(|>)
+
+----------------------------------------------------
+----------------------------------------------------
+---- PRA functors from `PolyFunc` to `PolyFunc` ----
+----------------------------------------------------
+----------------------------------------------------
+
+-- The data which determine a parametric right adjoint endofunctor on
+-- the category of polynomial functors on `Type`.
+public export
+PolyEndoPRA : Type
+PolyEndoPRA = (pp : Type ** dp : SliceObj pp ** (pi : pp) -> SliceObj (dp pi))
+
+public export
+InterpPolyEndoPRApos : PolyEndoPRA -> PolyFunc -> Type
+InterpPolyEndoPRApos (pp ** dp ** dd) (qpos ** qdir) =
+  InterpPolyFunc (pp ** dp) qpos
+
+public export
+InterpPolyEndoPRAposMap : (pra : PolyEndoPRA) -> (q, r : PolyFunc) ->
+  PolyNatTrans q r -> InterpPolyEndoPRApos pra q -> InterpPolyEndoPRApos pra r
+InterpPolyEndoPRAposMap (pp ** dp ** dd) (qpos ** qdir) (rpos ** rdir)
+  (onpos ** ondir) (pi ** pm) =
+    (pi ** onpos . pm)
+
+public export
+InterpPolyEndoPRAdir : (pra : PolyEndoPRA) -> (q : PolyFunc) ->
+  InterpPolyEndoPRApos pra q -> Type
+InterpPolyEndoPRAdir (pp ** dp ** dd) (qpos ** qdir) (pi ** pm) =
+  (dp : dp pi ** Either (qdir $ pm dp) (dd pi dp))
+
+public export
+InterpPolyEndoPRAdirMap : (pra : PolyEndoPRA) -> (q, r : PolyFunc) ->
+  (alpha : PolyNatTrans q r) ->
+  (qi : InterpPolyEndoPRApos pra q) ->
+  InterpPolyEndoPRAdir pra r (InterpPolyEndoPRAposMap pra q r alpha qi) ->
+  InterpPolyEndoPRAdir pra q qi
+InterpPolyEndoPRAdirMap (pp ** dp ** dd) (qpos ** qdir) (rpos ** rdir)
+  (onpos ** ondir) (pi ** qpm) (dpi ** dpd) =
+    (dpi ** mapFst (ondir $ qpm dpi) dpd)
+
+public export
+InterpPolyEndoPRA : PolyEndoPRA -> PolyFunc -> PolyFunc
+InterpPolyEndoPRA pra q =
+  (InterpPolyEndoPRApos pra q ** InterpPolyEndoPRAdir pra q)
+
+public export
+InterpPolyEndoPRAmap : (pra : PolyEndoPRA) -> (q, r : PolyFunc) ->
+  PolyNatTrans q r ->
+  PolyNatTrans (InterpPolyEndoPRA pra q) (InterpPolyEndoPRA pra r)
+InterpPolyEndoPRAmap pra q r alpha =
+  (InterpPolyEndoPRAposMap pra q r alpha **
+   InterpPolyEndoPRAdirMap pra q r alpha)
+
+-------------------------------------
+---- In the style of `MLDirichF` ----
+-------------------------------------
+
+public export
+MLPolyF1 : Type
+MLPolyF1 = MLDirichF1
+
+public export
+InterpMLPolyF1 : MLDirichF1 -> MLPolyCatObj -> Type
+InterpMLPolyF1 f1 p = (i : mldPos1 f1 ** PolyNatTrans (mldET1 f1 i) p)
+
+public export
+0 MLPF1elExtEq : {f1 : MLPolyF1} -> {p : MLPolyCatObj} ->
+  IntMorSig (InterpMLPolyF1 f1 p)
+MLPF1elExtEq {f1} {p} el el' =
+  (fsteq :
+    fst el = fst el' **
+   onposeq :
+    (i : mldET1Pos f1 (fst el)) ->
+      fst (snd el) i = fst (snd el') (rewrite sym fsteq in i) **
+   (i : mldET1Pos f1 (fst el)) -> (d : pfDir {p} (fst (snd el) i)) ->
+      snd (snd el) i d =
+      (rewrite fsteq in
+       snd (snd el') (rewrite sym fsteq in i) $ rewrite sym (onposeq i) in d))
+
+public export
+InterpMLPolyF1map : (f1 : MLPolyF1) -> {p, q : MLPolyCatObj} ->
+  PolyNatTrans p q -> InterpMLPolyF1 f1 p -> InterpMLPolyF1 f1 q
+InterpMLPolyF1map f1 {p} {q} alpha =
+  dpMapSnd $ \pi => pntVCatComp {p=(mldET1 f1 pi)} alpha
+
+public export
+MLPolyF1NT : IntMorSig MLPolyF1
+MLPolyF1NT p q =
+  (onpos1 : mldPos1 p -> mldPos1 q **
+   onpos2 : (pi : mldPos1 p) -> mldET1Pos q (onpos1 pi) -> mldET1Pos p pi **
+   (pi : mldPos1 p) -> (qi : mldET1Pos q (onpos1 pi)) ->
+    mldET1Dir p pi (onpos2 pi qi) -> mldET1Dir q (onpos1 pi) qi)
+
+-------------------------------------------
+-------------------------------------------
+---- PRA endofunctors on `TwArr(Type)` ----
+-------------------------------------------
+-------------------------------------------
+
+-- The data which determine a parametric right adjoint endofunctor on
+-- the category of polynomial functors on `Type`.
+public export
+TwArrEndoPRA : Type
+TwArrEndoPRA =
+  (pp : Type **
+   dp : SliceObj pp **
+   dd : (pi : pp) -> SliceObj (dp pi) **
+   (pi : pp) -> (di : dp pi) -> SliceObj (dd pi di))
+
+public export
+taepPosPos : TwArrEndoPRA -> Type
+taepPosPos = DPair.fst
+
+public export
+taepDirPos : (taep : TwArrEndoPRA) -> SliceObj (taepPosPos taep)
+taepDirPos taep = DPair.fst (DPair.snd taep)
+
+public export
+taepDirPosTot : TwArrEndoPRA -> Type
+taepDirPosTot taep = Sigma {a=(taepPosPos taep)} (taepDirPos taep)
+
+public export
+taepDirDir : (taep : TwArrEndoPRA) ->
+  (pi : taepPosPos taep) -> SliceObj (taepDirPos taep pi)
+taepDirDir taep = DPair.fst (DPair.snd $ DPair.snd taep)
+
+public export
+taepDirDirDep : (taep : TwArrEndoPRA) -> SliceObj (taepDirPosTot taep)
+taepDirDirDep taep = DPair.uncurry (taepDirDir taep)
+
+public export
+taepDirDirTot : TwArrEndoPRA -> Type
+taepDirDirTot taep = Sigma {a=(taepDirPosTot taep)} (taepDirDirDep taep)
+
+public export
+taepPosDir : (taep : TwArrEndoPRA) ->
+  (pi : taepPosPos taep) -> (di : taepDirPos taep pi) ->
+  SliceObj (taepDirDir taep pi di)
+taepPosDir taep = DPair.snd (DPair.snd $ DPair.snd taep)
+
+public export
+taepPosDirDep : (taep : TwArrEndoPRA) -> SliceObj (taepPosPos taep)
+taepPosDirDep taep pi =
+  (di : taepDirPos taep pi **
+   dd : taepDirDir taep pi di **
+   taepPosDir taep pi di dd)
+
+public export
+taepPos : TwArrEndoPRA -> PolyFunc
+taepPos taep = (taepPosPos taep ** taepPosDirDep taep)
+
+public export
+taepDir : TwArrEndoPRA -> PolyFunc
+taepDir taep = (taepDirPosTot taep ** taepDirDirDep taep)
+
+public export
+taepToTwArrM : (taep : TwArrEndoPRA) ->
+  TwArrMsl
+    {b=(taepDirPosTot taep)}
+    {b'=(taepPosPos taep)}
+    (taepDirDirDep taep)
+    (taepPosDirDep taep)
+taepToTwArrM (pp ** dp ** dd ** pd) =
+  (DPair.fst **
+   \pi, (di ** dd ** pd) => Element0 (pi ** di) Refl **
+   \pi, (di ** dd ** pd) => dd)
+
+public export
+taepFromTwArrM :
+  {dp, pp : Type} -> (dd : SliceObj dp) -> (pd : SliceObj pp) ->
+  TwArrMsl {b=dp} {b'=pp} dd pd ->
+  TwArrEndoPRA
+taepFromTwArrM {dp} {pp} dd pd (mcov ** mcont1 ** mcont2) =
+  (pp **
+   \pi =>
+    PreImage {a=dp} {b=pp} mcov pi **
+   \pi, (Element0 di pcov) =>
+    dd di **
+   \pi, (Element0 di pcov), dd =>
+    Subset0
+      (pd pi)
+      (\pdd =>
+        (eq1 : fst0 (mcont1 pi pdd) = di **
+         mcont2 pi pdd = (rewrite eq1 in dd))))
+
+------------------------------------------
+------------------------------------------
+---- Slices of covariant hom-functors ----
+------------------------------------------
+------------------------------------------
+
+-- A slice over the covariant hom-functor of `a` is a polynomial
+-- functor together with an `a`-way selection of its directions.
+public export
+CovHomSlice : Type -> Type
+CovHomSlice a = (pos : Type ** dir : SliceObj pos ** (i : pos) -> a -> dir i)
+
+public export
+CovHomCoslice : Type -> Type
+CovHomCoslice a =
+  (pos : Type ** dir : SliceObj pos ** InterpPolyFunc (pos ** dir) a)
+
+public export
+chsPos : {a : Type} -> CovHomSlice a -> Type
+chsPos {a} = DPair.fst
+
+public export
+chsDir : {a : Type} -> (sl : CovHomSlice a) -> SliceObj (chsPos {a} sl)
+chsDir {a} sl = DPair.fst (DPair.snd sl)
+
+public export
+chsOnDir : {a : Type} -> (sl : CovHomSlice a) ->
+  (i : chsPos {a} sl) -> a -> chsDir {a} sl i
+chsOnDir {a} sl = DPair.snd (DPair.snd sl)
+
+public export
+chsTot : {a : Type} -> CovHomSlice a -> PolyFunc
+chsTot {a} sl = (chsPos sl ** chsDir sl)
+
+public export
+chsTotInterp : {a : Type} -> CovHomSlice a -> Type -> Type
+chsTotInterp {a} sl = InterpPolyFunc (chsTot {a} sl)
+
+public export
+chsProj : {a : Type} -> (sl : CovHomSlice a) ->
+  PolyNatTrans (chsTot {a} sl) (PFHomArena a)
+chsProj {a} sl = (\_ => () ** chsOnDir {a} sl)
+
+public export
+chsProjInterp : {a : Type} -> (sl : CovHomSlice a) ->
+  NaturalTransformation (chsTotInterp {a} sl) (CovarHomFunc a)
+chsProjInterp {a} sl x =
+  DPair.snd
+  . InterpPolyNT {p=(chsTot {a} sl)} {q=(PFHomArena a)} (chsProj {a} sl) x
+
+public export
+0 chiProjInterpExplicit : {a : Type} -> (sl : CovHomSlice a) -> (x : Type) ->
+  (i : chsPos sl) -> (dm : chsDir {a} sl i -> x) ->
+  chsProjInterp {a} sl x (i ** dm) = dm . chsOnDir {a} sl i
+chiProjInterpExplicit {a} sl x i dm = Refl
+
+-- A slice over a copresheaf is a copresheaf on its category of
+-- elements.  Here is the specific case in which we compute a
+-- copresheaf on the category of elements of a covariant hom-functor
+-- from a slice over it.
+public export
+CovHomElemCopr : (a : Type) -> CovHomSlice a -> (x : Type) -> (a -> x) -> Type
+CovHomElemCopr a sl x max =
+  (i : chsPos {a} sl **
+   dm : chsDir {a} sl i -> x **
+   ExtEq {a=a} {b=x} (dm . chsOnDir {a} sl i) max)
+
+public export
+CovHomElemCoprMap : (a : Type) -> (sl : CovHomSlice a) ->
+  (x, y : Type) -> (max : a -> x) -> (mxy : x -> y) ->
+  CovHomElemCopr a sl x max ->
+  CovHomElemCopr a sl y (mxy . max)
+CovHomElemCoprMap a sl x y max mxy =
+  dpMapSnd $ \sli => dpBimap ((.) mxy) $ \dmx, comm, ea => cong mxy $ comm ea
+
+-- A morphism between slices of a given covariant hom-functor
+-- is a natural transformation between the total spaces which
+-- commutes with the projections.
+public export
+CovHomSliceMor : {a : Type} -> IntMorSig (CovHomSlice a)
+CovHomSliceMor {a} sl sl' =
+  (onpos : chsPos sl -> chsPos sl' **
+   ondir : (i : chsPos sl) -> chsDir sl' (onpos i) -> chsDir sl i **
+   (i : chsPos sl) ->
+      ExtEq {a=a} {b=(chsDir sl i)}
+        (ondir i . chsOnDir sl' (onpos i))
+        (chsOnDir sl i))
+
+public export
+chsmOnPos : {a : Type} -> {sl, sl' : CovHomSlice a} ->
+  CovHomSliceMor {a} sl sl' -> chsPos sl -> chsPos sl'
+chsmOnPos {a} {sl} {sl'} = DPair.fst
+
+public export
+chsmOnDir : {a : Type} -> {sl, sl' : CovHomSlice a} ->
+  (m : CovHomSliceMor {a} sl sl') -> (i : chsPos sl) ->
+  chsDir sl' (chsmOnPos {a} {sl} {sl'} m i) -> chsDir sl i
+chsmOnDir {a} {sl} {sl'} m = DPair.fst (DPair.snd m)
+
+public export
+chsmComm : {a : Type} -> {sl, sl' : CovHomSlice a} ->
+  (m : CovHomSliceMor {a} sl sl') -> (i : chsPos sl) ->
+  ExtEq {a=a} {b=(chsDir sl i)}
+    (chsmOnDir {sl} {sl'} m i . chsOnDir sl' (chsmOnPos {sl} {sl'} m i))
+    (chsOnDir sl i)
+chsmComm {a} {sl} {sl'} m = DPair.snd (DPair.snd m)
+
+-- As slice objects induce copresheaves, slice morphisms induce
+-- natural transformations between copresheaves.
+public export
+CovHomElemCoprNT : {a : Type} -> {sl, sl' : CovHomSlice a} ->
+  CovHomSliceMor {a} sl sl' ->
+  (x : Type) -> (max : a -> x) ->
+  CovHomElemCopr a sl x max -> CovHomElemCopr a sl' x max
+CovHomElemCoprNT {a} {sl} {sl'} slm x max =
+  dpBimap (chsmOnPos slm) $ \i =>
+    dpBimap
+      ((|>) (chsmOnDir slm i))
+      (\dm, comm, ea => trans (cong dm $ chsmComm slm i ea) (comm ea))
+
+--------------------------------------------
+--------------------------------------------
+---- Coslices of covariant hom-functors ----
+--------------------------------------------
+--------------------------------------------
+
+public export
+chcsPos : {a : Type} -> CovHomCoslice a -> Type
+chcsPos {a} = DPair.fst
+
+public export
+chcsDir : {a : Type} -> (sl : CovHomCoslice a) -> SliceObj (chcsPos {a} sl)
+chcsDir {a} sl = DPair.fst (DPair.snd sl)
+
+public export
+chcsCotot : {a : Type} -> (sl : CovHomCoslice a) -> PolyFunc
+chcsCotot {a} sl = (chcsPos {a} sl ** chcsDir {a} sl)
+
+public export
+chcsEl : {a : Type} -> (sl : CovHomCoslice a) ->
+  InterpPolyFunc (chcsCotot {a} sl) a
+chcsEl {a} sl = DPair.snd (DPair.snd sl)
+
+public export
+chcsElPos : {a : Type} -> (sl : CovHomCoslice a) -> chcsPos {a} sl
+chcsElPos {a} sl = DPair.fst (chcsEl {a} sl)
+
+public export
+chcsElDirMap : {a : Type} -> (sl : CovHomCoslice a) ->
+  chcsDir {a} sl (chcsElPos {a} sl) -> a
+chcsElDirMap {a} sl = DPair.snd (chcsEl {a} sl)
+
+public export
+chcsCototInterp : {a : Type} -> CovHomCoslice a -> Type -> Type
+chcsCototInterp {a} sl = InterpPolyFunc (chcsCotot {a} sl)
+
+public export
+chcsCoproj : {a : Type} -> (sl : CovHomCoslice a) ->
+  PolyNatTrans (PFHomArena a) (chcsCotot {a} sl)
+chcsCoproj {a} sl =
+  dpBimap (flip $ \_ => id) (\_ => flip $ \_ => id) (chcsEl {a} sl)
+
+public export
+chcsCoprojInterp : {a : Type} -> (sl : CovHomCoslice a) ->
+  NaturalTransformation (CovarHomFunc a) (chcsCototInterp {a} sl)
+chcsCoprojInterp {a} sl x =
+  InterpPolyNT {p=(PFHomArena a)} {q=(chcsCotot {a} sl)} (chcsCoproj {a} sl) x
+  . MkDPair ()
+
+public export
+0 chciCoprojInterpExplicit : {a : Type} -> (sl : CovHomCoslice a) ->
+  (x : Type) -> (max : a -> x) ->
+  chcsCoprojInterp {a} sl x max =
+    InterpPFMap {a=a} {b=x} (chcsCotot {a} sl) max (chcsEl {a} sl)
+chciCoprojInterpExplicit {a} sl x max = Refl
+
+---------------------------------------------------------------------
+---------------------------------------------------------------------
+---- Polynomial difunctors on `Type` as coproducts of dialgebras ----
+---------------------------------------------------------------------
+---------------------------------------------------------------------
+
+public export
+PolyDiProf : Type
+PolyDiProf =
+  (polyPos : Type **
+   contraPos : SliceObj polyPos **
+   contraDir : Pi {a=polyPos} (SliceObj . contraPos) **
+   covarPos : Pi {a=polyPos} (SliceObj . contraPos) **
+   {-covarDir:-} (i : polyPos) -> (j : contraPos i) -> SliceObj (covarPos i j))
+
+public export
+InterpPDP : PolyDiProf -> Type -> Type -> Type
+InterpPDP (polyPos ** contraPos ** contraDir ** covarPos ** covarDir) j z =
+  (i : polyPos **
+   (el : InterpPolyFunc (contraPos i ** contraDir i) j) ->
+    InterpPolyFunc (covarPos i (fst el) ** covarDir i (fst el)) z)
+
+public export
+InterpPDPdimap : (pdp : PolyDiProf) -> (s, t, a, b : Type) ->
+  (a -> s) -> (t -> b) -> InterpPDP pdp s t -> InterpPDP pdp a b
+InterpPDPdimap (polyPos ** contraPos ** contraDir ** covarPos ** covarDir)
+  s t a b mas mtb (ipoly ** dialg) =
+    (ipoly ** \ic =>
+      let idm = dialg (fst ic ** mas . snd ic) in
+      (fst idm ** mtb . snd idm))
+
+public export
+PDPnt : IntMorSig PolyDiProf
+PDPnt
+  (ppolyPos ** pcontraPos ** pcontraDir ** pcovarPos ** pcovarDir)
+  (qpolyPos ** qcontraPos ** qcontraDir ** qcovarPos ** qcovarDir) =
+    (onpoly : ppolyPos -> qpolyPos **
+     oncontraPos : (i : ppolyPos) -> qcontraPos (onpoly i) -> pcontraPos i **
+     oncontraDir : (i : ppolyPos) -> (j : qcontraPos (onpoly i)) ->
+      pcontraDir i (oncontraPos i j) -> qcontraDir (onpoly i) j **
+     oncovarPos : (i : ppolyPos) -> (j : qcontraPos (onpoly i)) ->
+      pcovarPos i (oncontraPos i j) -> qcovarPos (onpoly i) j **
+     (i : ppolyPos) -> (j : qcontraPos (onpoly i)) ->
+      (k : pcovarPos i (oncontraPos i j)) ->
+      qcovarDir (onpoly i) j (oncovarPos i j k) ->
+      pcovarDir i (oncontraPos i j) k)
+
+public export
+InterpPDPnt : {p, q : PolyDiProf} -> PDPnt p q ->
+  TypeProfNT (InterpPDP p) (InterpPDP q)
+InterpPDPnt
+  {p=(ppolyPos ** pcontraPos ** pcontraDir ** pcovarPos ** pcovarDir)}
+  {q=(qpolyPos ** qcontraPos ** qcontraDir ** qcovarPos ** qcovarDir)}
+  (onpoly ** onContraPos ** onContraDir ** onCovarPos ** onCovarDir)
+  x y (pipoly ** dialg) =
+    (onpoly pipoly **
+     \qidmcontra =>
+      let
+        pidmcovar =
+          dialg
+            (onContraPos pipoly (fst qidmcontra) **
+             snd qidmcontra . onContraDir pipoly (fst qidmcontra))
+      in
+      (onCovarPos pipoly (fst qidmcontra) (fst pidmcovar) **
+       snd pidmcovar . onCovarDir pipoly (fst qidmcontra) (fst pidmcovar)))
+
+public export
+PDPcoprod : PolyDiProf -> PolyDiProf -> PolyDiProf
+PDPcoprod
+  (polyPos1 ** contraPos1 ** contraDir1 ** covarPos1 ** covarDir1)
+  (polyPos2 ** contraPos2 ** contraDir2 ** covarPos2 ** covarDir2) =
+    (Either polyPos1 polyPos2 **
+     \ipoly => case ipoly of
+      Left ipoly1 => contraPos1 ipoly1
+      Right ipoly2 => contraPos2 ipoly2 **
+     \ipoly => case ipoly of
+      Left ipoly1 => contraDir1 ipoly1
+      Right ipoly2 => contraDir2 ipoly2 **
+     \ipoly => case ipoly of
+      Left ipoly1 => covarPos1 ipoly1
+      Right ipoly2 => covarPos2 ipoly2 **
+     \ipoly => case ipoly of
+      Left ipoly1 => covarDir1 ipoly1
+      Right ipoly2 => covarDir2 ipoly2)
+
+public export
+PDPtoCoprod : (p, q : PolyDiProf) -> (j, z : Type) ->
+  InterpPDP (PDPcoprod p q) j z -> Either (InterpPDP p j z) (InterpPDP q j z)
+PDPtoCoprod
+  (polyPos1 ** contraPos1 ** contraDir1 ** covarPos1 ** covarDir1)
+  (polyPos2 ** contraPos2 ** contraDir2 ** covarPos2 ** covarDir2)
+  j z (ipoly ** dialg) =
+    case ipoly of
+      Left ipoly1 => Left (ipoly1 ** dialg)
+      Right ipoly2 => Right (ipoly2 ** dialg)
+
+public export
+PDPfromCoprod : (p, q : PolyDiProf) -> (j, z : Type) ->
+  Either (InterpPDP p j z) (InterpPDP q j z) -> InterpPDP (PDPcoprod p q) j z
+PDPfromCoprod
+  (polyPos1 ** contraPos1 ** contraDir1 ** covarPos1 ** covarDir1)
+  (polyPos2 ** contraPos2 ** contraDir2 ** covarPos2 ** covarDir2)
+  j z ipd =
+    case ipd of
+      Left (ipoly1 ** dialg) => (Left ipoly1 ** dialg)
+      Right (ipoly2 ** dialg) => (Right ipoly2 ** dialg)
+
+public export
+PDPprod : PolyDiProf -> PolyDiProf -> PolyDiProf
+PDPprod
+  (polyPos1 ** contraPos1 ** contraDir1 ** covarPos1 ** covarDir1)
+  (polyPos2 ** contraPos2 ** contraDir2 ** covarPos2 ** covarDir2) =
+    ((polyPos1, polyPos2) **
+     \(ipoly1, ipoly2) =>
+      Either (contraPos1 ipoly1) (contraPos2 ipoly2) **
+     \(ipoly1, ipoly2) =>
+      eitherElim (contraDir1 ipoly1) (contraDir2 ipoly2) **
+     \(ipoly1, ipoly2) =>
+      eitherElim (covarPos1 ipoly1) (covarPos2 ipoly2) **
+     \(ipoly1, ipoly2), icontra, icovar => case icontra of
+        Left icontra1 => covarDir1 ipoly1 icontra1 icovar
+        Right icontra2 => covarDir2 ipoly2 icontra2 icovar)
+
+public export
+PDPtoProd : (p, q : PolyDiProf) -> (j, z : Type) ->
+  InterpPDP (PDPprod p q) j z -> (InterpPDP p j z, InterpPDP q j z)
+PDPtoProd
+  (polyPos1 ** contraPos1 ** contraDir1 ** covarPos1 ** covarDir1)
+  (polyPos2 ** contraPos2 ** contraDir2 ** covarPos2 ** covarDir2)
+  j z ((ipoly1, ipoly2) ** dialg) =
+    ((ipoly1 ** \(icontra1 ** dmcontra1) =>
+      dialg (Left icontra1 ** dmcontra1)),
+     (ipoly2 ** \(icontra2 ** dmcontra2) =>
+      dialg (Right icontra2 ** dmcontra2)))
+
+public export
+PDPfromProd : (p, q : PolyDiProf) -> (j, z : Type) ->
+  (InterpPDP p j z, InterpPDP q j z) ->
+  InterpPDP (PDPprod p q) j z
+PDPfromProd
+  (polyPos1 ** contraPos1 ** contraDir1 ** covarPos1 ** covarDir1)
+  (polyPos2 ** contraPos2 ** contraDir2 ** covarPos2 ** covarDir2)
+  j z ((ipoly1 ** dialg1), (ipoly2 ** dialg2)) =
+    ((ipoly1, ipoly2) **
+     \(i ** dm) => case i of
+      Left i1 => dialg1 (i1 ** dm)
+      Right i2 => dialg2 (i2 ** dm))
+
+----------------------------------------------------------------
+---- Polynomial dialgebras as special cases of `PolyDiProf` ----
+----------------------------------------------------------------
+
+public export
+PolyDialgToPDP : PolyFunc -> PolyFunc -> PolyDiProf
+PolyDialgToPDP p q =
+  (Unit **
+   \_ => pfPos p **
+   \_ => pfDir {p} **
+   \_, _ => pfPos q **
+   \_, _ => pfDir {p=q})
+
+public export
+InterpPolyDialgToPDP : (p, q : PolyFunc) ->
+  (x, y : Type) ->
+  (InterpPolyFunc p x -> InterpPolyFunc q y) ->
+  InterpPDP (PolyDialgToPDP p q) x y
+InterpPolyDialgToPDP p q x y = MkDPair ()
+
+public export
+InterpPolyDialgFromPDP : (p, q : PolyFunc) ->
+  (x, y : Type) ->
+  InterpPDP (PolyDialgToPDP p q) x y ->
+  (InterpPolyFunc p x -> InterpPolyFunc q y)
+InterpPolyDialgFromPDP p q x y = DPair.snd
+
+----------------------------------------
+---- `PolyDiProf` as `PolyPolyFunc` ----
+----------------------------------------
+
+public export
+PolyPolyFunctorExp : PolyFunc -> PolyPolyFunc
+PolyPolyFunctorExp = flip pfFunctorExpArena
+
+public export
+PolyDiProfToPP : PolyDiProf -> PolyPolyFunc
+PolyDiProfToPP
+  (polypos ** contrapos ** contradir ** covarpos ** covardir) a =
+    pfSetCoproductArena {a=polypos}
+      $ \ipoly => pfSetProductArena {a=(contrapos ipoly)}
+        $ \icontra => pfFunctorExpArena
+          (contradir ipoly icontra -> a)
+          (covarpos ipoly icontra ** covardir ipoly icontra)
+
+public export
+InterpPolyDiProfToPP : (p : PolyDiProf) ->
+  (x, y : Type) -> InterpPDP p x y -> InterpPolyFunc (PolyDiProfToPP p x) y
+InterpPolyDiProfToPP
+  (polypos ** contrapos ** contradir ** covarpos ** covardir) x y
+  (ipoly ** f) =
+    ((ipoly ** \icontra, dmcontra => fst (f (icontra ** dmcontra))) **
+     \(icontra ** dmcontra ** dcovar) => snd (f (icontra ** dmcontra)) dcovar)
+
+public export
+InterpPolyDiProfFromPP : (p : PolyDiProf) ->
+  (x, y : Type) -> InterpPolyFunc (PolyDiProfToPP p x) y -> InterpPDP p x y
+InterpPolyDiProfFromPP
+  (polypos ** contrapos ** contradir ** covarpos ** covardir) x y
+  ((ipoly ** dmp) ** dmy) =
+    (ipoly ** \(icontra ** dmcontra) =>
+      (dmp icontra dmcontra **
+       \dcovar => dmy (icontra ** dmcontra ** dcovar)))
+
+public export
+PolyDiProfToPPcontramap : (p : PolyDiProf) ->
+  PolyPolyFuncContramap (PolyDiProfToPP p)
+PolyDiProfToPPcontramap
+  (polypos ** contrapos ** contradir ** covarpos ** covardir) a b mba =
+    (dpMapSnd $ \ipoly, dmp, icontra, dmb => dmp icontra (mba . dmb) **
+     \(ipoly ** dmp), (icontra ** dmcontra ** dcovar) =>
+      (icontra ** mba . dmcontra ** dcovar))
+
+public export
+PDPparamFix : PolyDiProf -> Type -> Type
+PDPparamFix p = ProfToParamFix (PolyDiProfToPP p)
+
+public export
+PolyDiAlg : PolyDiProf -> Type -> Type -> Type
+PolyDiAlg p a = PFAlg (PolyDiProfToPP p a)
+
+public export
+polyDiParamCata : (p : PolyDiProf) -> (a, b : Type) ->
+  PolyDiAlg p a b -> PDPparamFix p a -> b
+polyDiParamCata p = profToParamCata (PolyDiProfToPP p)
+
+public export
+PDPsquareFix : PolyDiProf -> Type -> Type
+PDPsquareFix = SquareParamFix . PolyDiProfToPP
+
+public export
+PolyDiProfFix : PolyDiProf -> Type
+PolyDiProfFix = Mu . PDPsquareFix
+
+-----------------------------------------------------
+---- Dirichlet functors embedded into PolyDiProf ----
+-----------------------------------------------------
+
+public export
+DirichToPDP : MLDirichCatObj -> PolyDiProf
+DirichToPDP p =
+  (dfPos p ** \_ => () ** \_, _ => () ** \i, _ => dfDir p i ** \_, _, _ => Void)
+
+public export
+InterpDirichToPDP : (p : MLDirichCatObj) -> (a, b : Type) ->
+  InterpDirichFunc p a -> InterpPDP (DirichToPDP p) a b
+InterpDirichToPDP p a b idm =
+  (fst idm ** \ufa => (snd idm (snd ufa ()) ** \ev => void ev))
+
+public export
+InterpDirichFromPDP : (p : MLDirichCatObj) -> (a, b : Type) ->
+  InterpPDP (DirichToPDP p) a b -> InterpDirichFunc p a
+InterpDirichFromPDP p a b idm =
+  (fst idm ** \ea => fst $ snd idm (() ** \_ => ea))
+
+public export
+InterpDirichToPDPdimap : FunExt ->
+  (p : MLDirichCatObj) -> (s, t, a, b : Type) ->
+  (mas : a -> s) -> (mtb : t -> b) ->
+  (el : InterpPDP (DirichToPDP p) s t) ->
+  InterpPDPdimap (DirichToPDP p) s t a b mas mtb el =
+  InterpDirichToPDP p a b (InterpDFMap p mas $ InterpDirichFromPDP p s t el)
+InterpDirichToPDPdimap fext (pos ** dir) s t a b mas mtb (i ** dm) =
+  dpEq12
+    Refl
+    (funExt $ \(() ** fa) =>
+      dpEq12
+        (let
+          eq : ((\x => mas (fa x)) = (\_ => mas (fa ()))) = funExt $ \() => Refl
+         in
+         rewrite eq in
+         Refl)
+        (funExt $ \ev => void ev))
+
+public export
+InterpDirichFromPDPdimap : FunExt ->
+  (p : MLDirichCatObj) -> (s, t, a, b : Type) ->
+  (mas : a -> s) -> (mtb : t -> b) ->
+  (el : InterpDirichFunc p s) ->
+  InterpDFMap p mas el =
+  InterpDirichFromPDP p a b
+    (InterpPDPdimap (DirichToPDP p) s t a b mas mtb
+      (InterpDirichToPDP p s t el))
+InterpDirichFromPDPdimap fext (pos ** dir) s t a b mas mtb (i ** dm) = Refl
+
+public export
+DirichNatTransToPDP :
+  (p, q : MLDirichCatObj) -> MLDirichCatMor p q ->
+  PDPnt (DirichToPDP p) (DirichToPDP q)
+DirichNatTransToPDP (ppos ** pdir) (qpos ** qdir) (onpos ** ondir) =
+  (onpos **
+   \_ => id **
+   \_, _ => id **
+   \pi, _ => ondir pi **
+   \_, _, _, ev => void ev)
+
+public export
+DirichNatTransToPDPeq :
+  FunExt ->
+  (p, q : MLDirichCatObj) -> (alpha : MLDirichCatMor p q) ->
+  (a, b : Type) ->
+  ExtEq
+    (InterpPDPnt {p=(DirichToPDP p)} {q=(DirichToPDP q)}
+      (DirichNatTransToPDP p q alpha) a b)
+    (InterpDirichToPDP q a b
+     . InterpDirichNT {p} {q} alpha a
+     . InterpDirichFromPDP p a b)
+DirichNatTransToPDPeq fext (ppos ** pdir) (qpos ** qdir) (onpos ** ondir) a b
+  (i ** dm) =
+    dpEq12
+      Refl
+      (funExt $ \(() ** fa) =>
+        (let eq : (fa = (\_ => fa ())) = funExt $ \() => Refl in
+         rewrite eq in
+         dpEq12
+          Refl
+          (funExt $ \ev => void ev)))
+
+----------------------------------------------------------
+---- Profunctor-iterated fixed points of `PolyDiProf` ----
+----------------------------------------------------------
+
+public export
+PDPopmu : PolyDiProf -> Type
+PDPopmu = ProfOpMu . InterpPDP
+
+public export
+PDPmu : PolyDiProf -> Type
+PDPmu = ProfMu . InterpPDP
+
+mutual
+  public export
+  partial
+  pdpCata : (p : PolyDiProf) -> (a, b : Type) ->
+    (InterpPDP p b a -> a) -> (b -> InterpPDP p a b) -> PDPmu p -> a
+  pdpCata
+    (polypos ** contrapos ** contradir ** covarpos ** covardir)
+    a b alg coalg (InPrF (FS FZ) (InPTv vu)) =
+      void vu
+  pdpCata
+    (polypos ** contrapos ** contradir ** covarpos ** covardir)
+    a b alg coalg (InPrF (FS FZ) (InPTc (ipoly ** dm))) =
+      alg
+        (ipoly **
+         \(icontra ** dmcontra) =>
+          let
+            idmcovar = dm (icontra ** (pdpCocata
+              (polypos ** contrapos ** contradir ** covarpos ** covardir)
+              a b alg coalg . dmcontra))
+          in
+          (fst idmcovar **
+           pdpCata
+            (polypos ** contrapos ** contradir ** covarpos ** covardir)
+            a b alg coalg
+           . snd idmcovar))
+
+  public export
+  partial
+  pdpCocata : (p : PolyDiProf) -> (a, b : Type) ->
+    (InterpPDP p b a -> a) -> (b -> InterpPDP p a b) -> b -> PDPopmu p
+  pdpCocata
+    (polypos ** contrapos ** contradir ** covarpos ** covardir)
+    a b alg coalg eb =
+      InPrF FZ $ InPTn () $ let (ipoly ** dm) = coalg eb in
+        (ipoly **
+         \(icontra ** dmcontra) =>
+          let
+            idmcovar = dm (icontra ** pdpCata
+              (polypos ** contrapos ** contradir ** covarpos ** covardir)
+              a b alg coalg . dmcontra)
+          in
+          (fst idmcovar **
+           pdpCocata
+            (polypos ** contrapos ** contradir ** covarpos ** covardir)
+            a b alg coalg
+           . snd idmcovar))
+
+public export
+partial
+pdpDiCata : (p : PolyDiProf) -> ProfDiCata (InterpPDP p)
+pdpDiCata p a b alg coalg = (pdpCata p a b alg coalg, pdpCocata p a b alg coalg)
+
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+---- Dual-variance data structures as polynomial profunctors ----
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+
+public export
+TypePolyDifunc : Type
+TypePolyDifunc =
+  (pos1 : Type **
+   dir1 : SliceObj pos1 **
+   pos2 : SliceObj pos1 **
+   (i1 : pos1) -> dir1 i1 -> SliceObj (pos2 i1))
+
+public export
+tpdfPos1 : TypePolyDifunc -> Type
+tpdfPos1 tpdf = DPair.fst tpdf
+
+public export
+tpdfDir1 : (tpdf : TypePolyDifunc) -> SliceObj (tpdfPos1 tpdf)
+tpdfDir1 tpdf = DPair.fst $ DPair.snd tpdf
+
+public export
+tpdfPos2 : (tpdf : TypePolyDifunc) -> SliceObj (tpdfPos1 tpdf)
+tpdfPos2 tpdf = DPair.fst $ DPair.snd $ DPair.snd tpdf
+
+public export
+tpdfDir2 : (tpdf : TypePolyDifunc) ->
+  (i1 : tpdfPos1 tpdf) -> tpdfDir1 tpdf i1 -> SliceObj (tpdfPos2 tpdf i1)
+tpdfDir2 tpdf = DPair.snd $ DPair.snd $ DPair.snd tpdf
+
+public export
+InterpTPDF : TypePolyDifunc -> ProfunctorSig
+InterpTPDF tpdf x y =
+  (i1 : tpdfPos1 tpdf **
+   dm1 : x -> tpdfDir1 tpdf i1 **
+   (i2 : tpdfPos2 tpdf i1) ->
+    ((d1 : tpdfDir1 tpdf i1) ->
+     tpdfDir2 tpdf i1 d1 i2 ->
+     (ex : x ** dm1 ex = d1)) ->
+    y)
+
+public export
+itpdfDimap : (tpdf : TypePolyDifunc) -> TypeDimapSig (InterpTPDF tpdf)
+itpdfDimap tpdf s t a b mas mtb =
+  dpMapSnd
+    $ \i1 => dpBimap ((|>) mas)
+    $ \dms, dmt, i2, dma => mtb
+    $ dmt i2 $ \d1, d2 => (mas (fst $ dma d1 d2) ** snd $ dma d1 d2)
+
+-------------------------------------------------------------------------
+-------------------------------------------------------------------------
+---- Polynomial profunctors as PRA functors `[Type, MlDirichCatObj]` ----
+-------------------------------------------------------------------------
+-------------------------------------------------------------------------
+
+-------------------------------
+---- Objects (profunctors) ----
+-------------------------------
+
+public export
+MlPolyProf : Type
+MlPolyProf =
+  (pos : Type **
+   contra : SliceObj pos **
+   (i : pos) -> SliceObj (contra i))
+
+public export
+mlpPos : MlPolyProf -> Type
+mlpPos = DPair.fst
+
+public export
+mlpContra : (mlp : MlPolyProf) -> SliceObj (mlpPos mlp)
+mlpContra mlp = DPair.fst (DPair.snd mlp)
+
+public export
+mlpCovar : (mlp : MlPolyProf) -> (i : mlpPos mlp) -> SliceObj (mlpContra mlp i)
+mlpCovar mlp = DPair.snd (DPair.snd mlp)
+
+public export
+mlpT1 : MlPolyProf -> MLDirichCatObj
+mlpT1 mlp = (mlpPos mlp ** mlpContra mlp)
+
+public export
+mlpET : (mlp : MlPolyProf) -> mlpPos mlp -> MLPolyCatObj
+mlpET mlp i = (mlpContra mlp i ** mlpCovar mlp i)
+
+public export
+InterpMLPradjFact :
+  (mlp : MlPolyProf) -> Type -> MlDirichSlObj (mlpT1 mlp)
+InterpMLPradjFact mlp z =
+  MDSobj (\i => Unit) (\i, u_, dcont => mlpCovar mlp i dcont -> z)
+
+public export
+InterpMLPradjFactMap : (mlp : MlPolyProf) ->
+  (z, z' : Type) -> (z -> z') ->
+  MlDirichSlMor {ar=(mlpT1 mlp)}
+    (InterpMLPradjFact mlp z)
+    (InterpMLPradjFact mlp z')
+InterpMLPradjFactMap mlp z z' mz =
+  MDSM (\i1, u_ => ()) (\i1, u_, dcont => (.) mz)
+
+public export
+InterpMLPsigma : (mlp : MlPolyProf) ->
+  MlDirichSlObj (mlpT1 mlp) -> MLDirichCatObj
+InterpMLPsigma mlp = mlDirichSlObjTot {ar=(mlpT1 mlp)}
+
+public export
+InterpMLPsigmaMap : (mlp : MlPolyProf) ->
+  (sl, sl' : MlDirichSlObj (mlpT1 mlp)) ->
+  MlDirichSlMor {ar=(mlpT1 mlp)} sl sl' ->
+  MLDirichCatMor (InterpMLPsigma mlp sl) (InterpMLPsigma mlp sl')
+InterpMLPsigmaMap mlp sl sl' (MDSM onpos ondir) =
+  (\(i ** eslp) => (i ** onpos i eslp) **
+   \(i ** eslp), (dcont ** esld) => (dcont ** ondir i eslp dcont esld))
+
+public export
+InterpMLPcurried : (mlp : MlPolyProf) -> Type -> MLDirichCatObj
+InterpMLPcurried mlp = InterpMLPsigma mlp . InterpMLPradjFact mlp
+
+public export
+InterpMLPcurriedMap : (mlp : MlPolyProf) -> (x, y : Type) ->
+  (x -> y) ->
+  MLDirichCatMor (InterpMLPcurried mlp x) (InterpMLPcurried mlp y)
+InterpMLPcurriedMap mlp x y m =
+  InterpMLPsigmaMap
+    mlp
+    (InterpMLPradjFact mlp x)
+    (InterpMLPradjFact mlp y)
+    (InterpMLPradjFactMap mlp x y m)
+
+public export
+InterpMLP : (mlp : MlPolyProf) -> (j, z : Type) -> Type
+InterpMLP mlp = (|>) (InterpMLPcurried mlp) . flip InterpDirichFunc
+
+public export
+InterpMLPlmap : (mlp : MlPolyProf) -> (j, j', z : Type) ->
+  (j' -> j) -> InterpMLP mlp j z -> InterpMLP mlp j' z
+InterpMLPlmap mlp j j' z = InterpDFMap {a=j'} {b=j} (InterpMLPcurried mlp z)
+
+public export
+InterpMLPrmap : (mlp : MlPolyProf) -> (j, z, z' : Type) ->
+  (z -> z') -> InterpMLP mlp j z -> InterpMLP mlp j z'
+InterpMLPrmap mlp j z z' mz (i ** dmcov) =
+  InterpDFMap
+    ((DPair (mlpPos mlp) (const Unit)) **
+     (\i' =>
+      DPair
+        (mlpContra mlp (fst i'))
+        (\dcont => mlpCovar mlp (fst i') dcont -> z')))
+    dmcov
+    (i ** InterpPFMap {a=z} {b=z'} (mlpET mlp (fst i)) mz)
+
+public export
+InterpMLPdimap : (mlp : MlPolyProf) -> (j, z, j', z' : Type) ->
+  (j' -> j) -> (z -> z') -> InterpMLP mlp j z -> InterpMLP mlp j' z'
+InterpMLPdimap mlp j z j' z' mj mz =
+  InterpMLPlmap mlp j j' z' mj . InterpMLPrmap mlp j z z' mz
+
+public export
+InterpMLPladjFact : (mlp : MlPolyProf) -> MlDirichSlObj (mlpT1 mlp) -> Type
+InterpMLPladjFact mlp (MDSobj apos adir) =
+  (pi : mlpPos mlp ** ai : apos pi **
+   dcont : mlpContra mlp pi **
+   (mlpCovar mlp pi dcont, adir pi ai dcont))
+
+public export
+InterpMLPladjFactMap : (mlp : MlPolyProf) ->
+  (sl, sl' : MlDirichSlObj (mlpT1 mlp)) ->
+  MlDirichSlMor {ar=(mlpT1 mlp)} sl sl' ->
+  InterpMLPladjFact mlp sl -> InterpMLPladjFact mlp sl'
+InterpMLPladjFactMap mlp
+  (MDSobj slpos sldir) (MDSobj slpos' sldir') (MDSM monpos mondir)
+  (pi ** ai ** dcont ** (dcov, ad)) =
+    (pi ** monpos pi ai ** dcont ** (dcov, mondir pi ai dcont ad))
+
+public export
+InterpMLPladjunct : (mlp : MlPolyProf) ->
+  (a : MlDirichSlObj (mlpT1 mlp)) -> (b : Type) ->
+  (InterpMLPladjFact mlp a -> b) ->
+  MlDirichSlMor {ar=(mlpT1 mlp)} a (InterpMLPradjFact mlp b)
+InterpMLPladjunct mlp (MDSobj apos adir) b m =
+  MDSM
+    (\pi, ai => ())
+    (\pi, ai, dcont, ad, dcov => m (pi ** ai ** dcont ** (dcov, ad)))
+
+public export
+InterpMLPradjunct : (mlp : MlPolyProf) ->
+  (a : MlDirichSlObj (mlpT1 mlp)) -> (b : Type) ->
+  MlDirichSlMor {ar=(mlpT1 mlp)} a (InterpMLPradjFact mlp b) ->
+  (InterpMLPladjFact mlp a -> b)
+InterpMLPradjunct mlp (MDSobj apos adir) b
+  (MDSM monpos_ mondir) (pi ** ai ** dcont ** (dcov, ad)) =
+    mondir pi ai dcont ad dcov
+
+public export
+InterpMLPlradjunctId : (mlp : MlPolyProf) ->
+  (a : MlDirichSlObj (mlpT1 mlp)) -> (b : Type) ->
+  (m : InterpMLPladjFact mlp a -> b) ->
+  ExtEq m (InterpMLPradjunct mlp a b $ InterpMLPladjunct mlp a b m)
+InterpMLPlradjunctId mlp
+  (MDSobj apos adir) b m (pi ** ai ** dcont ** (dcov, ad)) =
+    Refl
+
+public export
+InterpMLPrladjunctId : FunExt -> (mlp : MlPolyProf) ->
+  (a : MlDirichSlObj (mlpT1 mlp)) -> (b : Type) ->
+  (m : MlDirichSlMor {ar=(mlpT1 mlp)} a (InterpMLPradjFact mlp b)) ->
+  m = (InterpMLPladjunct mlp a b $ InterpMLPradjunct mlp a b m)
+InterpMLPrladjunctId fext mlp (MDSobj apos adir) b (MDSM monpos mondir) =
+  let
+    onposeq : (monpos = (\pi, ai => ())) =
+      funExt (\pi => funExt $ \ai => unitUnique (monpos pi ai) ())
+  in
+  rewrite onposeq in
+  Refl
+
+-- An explicit formulation of `InterpMLP` which presents it as a
+-- coproduct of representable presheaves on the category of polynomial
+-- functors.
+public export
+InterpMLPasNT : (mlp : MlPolyProf) -> (j, z : Type) -> Type
+InterpMLPasNT mlp j z =
+  (i : mlpPos mlp ** MLPolyCatMor (pfMonomialArena j z) (mlpET mlp i))
+
+public export
+InterpMLPfromNT : (mlp : MlPolyProf) -> (j, z : Type) ->
+  InterpMLPasNT mlp j z -> InterpMLP mlp j z
+InterpMLPfromNT mlp j z (i ** onpos ** ondir) =
+  ((i ** ()) ** \ej => (onpos ej ** ondir ej))
+
+public export
+InterpMLPtoNT : (mlp : MlPolyProf) -> (j, z : Type) ->
+  InterpMLP mlp j z -> InterpMLPasNT mlp j z
+InterpMLPtoNT mlp j z ((i ** ()) ** dm) = (i ** fst . dm ** \ej => snd (dm ej))
+
+public export
+InterpMLPasNTlmap : (mlp : MlPolyProf) -> (j, j', z : Type) ->
+  (j' -> j) -> InterpMLPasNT mlp j z -> InterpMLPasNT mlp j' z
+InterpMLPasNTlmap mlp j j' z mj =
+  dpMapSnd $
+    \i => dpBimap ((|>) mj) (\dmcont, dmcov, ej', dcov => dmcov (mj ej') dcov)
+
+public export
+InterpMLPasNTrmap : (mlp : MlPolyProf) -> (j, z, z' : Type) ->
+  (z -> z') -> InterpMLPasNT mlp j z -> InterpMLPasNT mlp j z'
+InterpMLPasNTrmap mlp j z z' mz =
+  dpMapSnd $
+    \i => dpMapSnd $ \dmcont, dmcov, ej => mz . dmcov ej
+
+public export
+InterpMLPasNTdimap : (mlp : MlPolyProf) -> (j, z, j', z' : Type) ->
+  (j' -> j) -> (z -> z') -> InterpMLPasNT mlp j z -> InterpMLPasNT mlp j' z'
+InterpMLPasNTdimap mlp j z j' z' mj mz =
+  InterpMLPasNTlmap mlp j j' z' mj . InterpMLPasNTrmap mlp j z z' mz
+
+-- An explicit formulation of `InterpMLP` which presents it as a
+-- coproduct of morphisms into the images of polynomial functors --
+-- which are also covariant-representable profunctors represented
+-- by polynomial functors.
+public export
+InterpMLPcovarRep : (mlp : MlPolyProf) -> (j, z : Type) -> Type
+InterpMLPcovarRep mlp j z =
+  (i : mlpPos mlp ** j -> InterpPolyFunc (mlpET mlp i) z)
+
+public export
+InterpMLPfromCovarRep : (mlp : MlPolyProf) -> (j, z : Type) ->
+  InterpMLPcovarRep mlp j z -> InterpMLP mlp j z
+InterpMLPfromCovarRep mlp j z (i ** dm) = ((i ** ()) ** dm)
+
+public export
+InterpMLPtoCovarRep : (mlp : MlPolyProf) -> (j, z : Type) ->
+  InterpMLP mlp j z -> InterpMLPcovarRep mlp j z
+InterpMLPtoCovarRep mlp j z ((i ** ()) ** dm) = (i ** dm)
+
+---------------------------------------------
+---- Morphisms (natural transformations) ----
+---------------------------------------------
+
+public export
+MlPolyProfNT : IntMorSig MlPolyProf
+MlPolyProfNT p q =
+  (onpos : mlpPos p -> mlpPos q **
+   oncontra : (i : mlpPos p) -> mlpContra p i -> mlpContra q (onpos i) **
+   (i : mlpPos p) -> (dcont : mlpContra p i) ->
+    mlpCovar q (onpos i) (oncontra i dcont) ->
+    mlpCovar p i dcont)
+
+public export
+mlpNTonPos : {0 p, q : MlPolyProf} ->
+  MlPolyProfNT p q -> mlpPos p -> mlpPos q
+mlpNTonPos {p} {q} = DPair.fst
+
+public export
+mlpNTonContra : {0 p, q : MlPolyProf} ->
+  (mlp : MlPolyProfNT p q) -> (i : mlpPos p) ->
+  mlpContra p i -> mlpContra q (mlpNTonPos {p} {q} mlp i)
+mlpNTonContra {p} {q} mlp = DPair.fst (DPair.snd mlp)
+
+public export
+mlpNTonCovar : {0 p, q : MlPolyProf} ->
+  (mlp : MlPolyProfNT p q) -> (i : mlpPos p) -> (dcont : mlpContra p i) ->
+  mlpCovar q (mlpNTonPos {p} {q} mlp i) (mlpNTonContra {p} {q} mlp i dcont) ->
+  mlpCovar p i dcont
+mlpNTonCovar {p} {q} mlp = DPair.snd (DPair.snd mlp)
+
+public export
+InterpMLPnt : {p, q : MlPolyProf} ->
+  MlPolyProfNT p q -> TypeProfNT (InterpMLPasNT p) (InterpMLPasNT q)
+InterpMLPnt {p} {q} (onpos ** oncontra ** oncovar) j z (i ** dmcont ** dmcov) =
+  (onpos i **
+   oncontra i . dmcont **
+   sliceComp {a=j} dmcov (\ej => oncovar i $ dmcont ej))
+
+-------------------------------------------------
+---- Morphisms (paranatural transformations) ----
+-------------------------------------------------
+
+---------------------------------------------
+---------------------------------------------
+---- Twisted-arrow category PRA functors ----
+---------------------------------------------
+---------------------------------------------
+
+public export
+TwArrPolyF : Type
+TwArrPolyF =
+  (pos : Type **
+   d1 : SliceObj pos **
+   d2 : SliceObj pos **
+   (i : pos) -> d2 i -> d1 i)
+
+public export
+TwArrPolyFRAdjFact :
+  (twp : TwArrPolyF) -> (x, y : Type) -> (y -> x) -> SliceObj (fst twp)
+TwArrPolyFRAdjFact twp x y m i =
+  (dms : (x -> fst (snd twp) i, fst (snd (snd twp)) i -> y) **
+   ExtEq {a=(fst (snd (snd twp)) i)} {b=(fst (snd twp) i)}
+    (snd (snd (snd twp)) i)
+    (fst dms . m . snd dms))
+
+public export
+TwArrPolyFRAdjFactMap :
+  (twp : TwArrPolyF) ->
+  (s, t, a, b : Type) ->
+  (mts : t -> s) -> (mba : b -> a) ->
+  (mas : a -> s) -> (mtb : t -> b) ->
+  ExtEq {a=t} {b=s} (mas . mba . mtb) mts ->
+  SliceMorphism {a=(fst twp)}
+    (TwArrPolyFRAdjFact twp s t mts)
+    (TwArrPolyFRAdjFact twp a b mba)
+TwArrPolyFRAdjFactMap twp s t a b mts mba mas mtb comm i el =
+  let elcomm = snd el in
+  ((fst (fst el) . mas, mtb . snd (fst el)) **
+   \edcov => rewrite comm (snd (fst el) edcov) in elcomm edcov)
+
+public export
+InterpTwArrPoly : (twp : TwArrPolyF) -> (x, y : Type) -> (y -> x) -> Type
+InterpTwArrPoly twp x y m = Sigma {a=(fst twp)} (TwArrPolyFRAdjFact twp x y m)
+
+--------------------------------------
+--------------------------------------
+---- Polynomial slice profunctors ----
+--------------------------------------
+--------------------------------------
+
+public export
+SPProf : Type -> Type -> Type
+SPProf x y =
+  (pos : Type **
+   dir1 : pos -> SliceObj x **
+   (elp : pos) -> (elx : x) -> dir1 elp elx -> SliceObj y)
+
+public export
+sppPos : {0 x, y : Type} -> SPProf x y ->
+  Type
+sppPos {x} {y} = DPair.fst
+
+public export
+sppDir1 : {0 x, y : Type} -> (spp : SPProf x y) ->
+  sppPos spp -> SliceObj x
+sppDir1 {x} {y} spp = DPair.fst (DPair.snd spp)
+
+public export
+sppDir2 : {0 x, y : Type} -> (spp : SPProf x y) ->
+  (elp : sppPos spp) -> (elx : x) -> (eld1 : sppDir1 {x} {y} spp elp elx) ->
+  SliceObj y
+sppDir2 {x} {y} spp = DPair.snd (DPair.snd spp)
+
+public export
+InterpSPP : {x, y : Type} -> (spp : SPProf x y) ->
+  SliceObj x -> SliceObj y -> Type
+InterpSPP {x} {y} spp slx sly =
+  (elp : sppPos spp **
+   dm1 : SliceMorphism {a=x} slx (sppDir1 {x} {y} spp elp) **
+   (elx : x) -> (eslx : slx elx) ->
+    SliceMorphism {a=y} (sppDir2 {x} {y} spp elp elx (dm1 elx eslx)) sly)
+
+public export
+InterpSPPdimap : {x, y : Type} -> (spp : SPProf x y) ->
+  (slx, slx' : SliceObj x) -> (sly, sly' : SliceObj y) ->
+  (mx : SliceMorphism {a=x} slx' slx) -> (my : SliceMorphism {a=y} sly sly') ->
+  InterpSPP {x} {y} spp slx sly -> InterpSPP {x} {y} spp slx' sly'
+InterpSPPdimap {x} {y} spp slx slx' sly sly' mx my (elp ** dm1 ** dm2) =
+  (elp **
+   \elx, eslx' => dm1 elx (mx elx eslx') **
+   \elx, eslx', ely, d2 => my ely $ dm2 elx (mx elx eslx') ely d2)
 
 -------------------------------------
 -------------------------------------
@@ -34,35 +1194,6 @@ TypeProLmap = IntEndoLmapSig Type TypeMor
 public export
 0 TypeProRmap : ProfunctorSig -> Type
 TypeProRmap = IntEndoRmapSig Type TypeMor
-
-public export
-0 TypeLmapFromDimap : (p : ProfunctorSig) -> TypeProDimap p -> TypeProLmap p
-TypeLmapFromDimap = IntEndoLmapFromDimap Type TypeMor typeId
-
-public export
-0 TypeRmapFromDimap : (p : ProfunctorSig) -> TypeProDimap p -> TypeProRmap p
-TypeRmapFromDimap = IntEndoRmapFromDimap Type TypeMor typeId
-
-public export
-0 TypeProfNT : IntMorSig ProfunctorSig
-TypeProfNT = IntEndoProfNTSig Type
-
-public export
-0 TypeProfDiNT : IntMorSig ProfunctorSig
-TypeProfDiNT = IntDiNTSig Type
-
-public export
-0 TypeNTNaturality : (p, q : ProfunctorSig) ->
-  TypeProDimap p -> TypeProDimap q -> TypeProfNT p q -> Type
-TypeNTNaturality = IntProfNTNaturality Type Type TypeMor TypeMor
-
-public export
-0 TypeNTParanaturality : (p, q : ProfunctorSig) ->
-  TypeProDimap p -> TypeProDimap q -> TypeProfDiNT p q -> Type
-TypeNTParanaturality p q pdm qdm =
-  IntParaNTCond Type TypeMor p q
-    (TypeLmapFromDimap p pdm) (TypeRmapFromDimap p pdm)
-    (TypeLmapFromDimap q qdm) (TypeRmapFromDimap q qdm)
 
 public export
 TypeProAr : Type
@@ -147,6 +1278,20 @@ public export
 TypeProArParanaturality p q =
   TypeNTParanaturality (InterpTypeProAr p) (InterpTypeProAr q)
     (TypeProArDimap p) (TypeProArDimap q)
+
+public export
+TypeParaDomFunc : TypeProAr -> TypeProAr
+TypeParaDomFunc = IntParaDomFunc {c=Type} {mor=TypeMor}
+
+public export
+TypeParaAsNT : {p, q : TypeProAr} ->
+  TypeDiNTar p q -> TypeProNTar (TypeParaDomFunc p) q
+TypeParaAsNT = IntParaAsNT {c=Type} {mor=TypeMor}
+
+public export
+TypeParaFromNT : {p, q : TypeProAr} ->
+  TypeProNTar (TypeParaDomFunc p) q -> TypeDiNTar p q
+TypeParaFromNT = IntParaFromNT {c=Type} {mor=TypeMor}
 
 -------------------------------------
 ---- Utility types and functions ----
@@ -254,6 +1399,12 @@ TypeProArComplete (ppos ** (pcontra, pcovar)) (qpos ** (qcontra, qcovar)) alpha
 -----------------------------------------------------
 
 public export
+TypeDiArIsPara : (p, q : TypeProAr) -> (ar : TypeDiNTar p q) ->
+  TypeProArParanaturality p q (InterpTypeDiNT p q ar)
+TypeDiArIsPara p q ar =
+  IntPDiNTPara Type TypeMor typeId typeComp typeIdL typeIdR typeAssoc p q ar
+
+public export
 TypeDiArFromDi: (p, q : TypeProAr) ->
   (gamma : TypeDiNTSig p q) -> TypeProArParanaturality p q gamma ->
   TypeDiNTar p q
@@ -345,17 +1496,85 @@ TypeDiArComplete
 ----------------------------------------------------------------
 
 public export
-TypeDiArAsNatTrans :
+TypeDiArAsPreshfNatTrans :
   {p, q : TypeProAr} -> (gamma : TypeDiNTar p q) ->
-  TwArrPreshfOpEmbeddingNT (InterpTypeProAr p) (InterpTypeProAr q)
-TypeDiArAsNatTrans {p} {q} gamma x y myx (i ** (dcont, dcov)) =
+  TwArrPreshfEmbeddingNT (InterpTypeProAr p) (InterpTypeProAr q)
+TypeDiArAsPreshfNatTrans {p} {q} gamma x y myx (i ** (dcont, dcov)) =
   let asn = dcont . myx . dcov in
   (typeDiNTpos gamma i asn **
    (typeDiNTcontra gamma i asn . dcont,
     dcov . typeDiNTcovar gamma i asn))
 
 public export
-0 TypeDiArAsNatTransIsNatural :
+0 TypeDiArAsPreshfNatTransIsNatural :
+  (p, q : TypeProAr) -> (gamma : TypeDiNTar p q) ->
+  TwArrPreshfNaturality
+    {p=(TwArrPreshfEmbedProf $ InterpTypeProAr p)}
+    {q=(TwArrPreshfEmbedProf $ InterpTypeProAr q)}
+    (TwArrPreshfEmbedProfMap (InterpTypeProAr p) $
+      MkProfunctor $ \mca, mbd => TypeProArDimap p _ _ _ _ mca mbd)
+    (TwArrPreshfEmbedProfMap (InterpTypeProAr q) $
+      MkProfunctor $ \mca, mbd => TypeProArDimap q _ _ _ _ mca mbd)
+    (TypeDiArAsPreshfNatTrans {p} {q} gamma)
+TypeDiArAsPreshfNatTransIsNatural
+  (ppos ** (pcontra, pcovar)) (qpos ** (qcontra, qcovar))
+  (onpos ** (oncontra, oncovar)) s t a b mba mas mtb (i ** (dcont, dcovar)) =
+    Refl
+
+public export
+TypeDiArFromPreshfNatTrans : (p, q : TypeProAr) ->
+  (gamma : TwArrPreshfEmbeddingNT (InterpTypeProAr p) (InterpTypeProAr q)) ->
+  TwArrPreshfNaturality
+    {p=(TwArrPreshfEmbedProf $ InterpTypeProAr p)}
+    {q=(TwArrPreshfEmbedProf $ InterpTypeProAr q)}
+    (TwArrPreshfEmbedProfMap (InterpTypeProAr p) $
+      MkProfunctor $ \mca, mbd => TypeProArDimap p _ _ _ _ mca mbd)
+    (TwArrPreshfEmbedProfMap (InterpTypeProAr q) $
+      MkProfunctor $ \mca, mbd => TypeProArDimap q _ _ _ _ mca mbd)
+    gamma ->
+  TypeDiNTar p q
+TypeDiArFromPreshfNatTrans
+  (ppos ** (pcontra, pcovar)) (qpos ** (qcontra, qcovar)) gamma isnat =
+    (\pi, asn =>
+      fst $ gamma (pcovar pi) (pcontra pi) asn (pi ** (id, id)) **
+     (\pi, asn, pdcont =>
+        fst (snd $ gamma (pcovar pi) (pcontra pi) asn (pi ** (id, id))) pdcont,
+      \pi, asn, qdcov =>
+        snd (snd $ gamma (pcovar pi) (pcontra pi) asn (pi ** (id, id))) qdcov))
+
+public export
+TypeDiArFromPreshfNatTransComplete : (p, q : TypeProAr) ->
+  (gamma : TwArrPreshfEmbeddingNT (InterpTypeProAr p) (InterpTypeProAr q)) ->
+  (isnat : TwArrPreshfNaturality
+    {p=(TwArrPreshfEmbedProf $ InterpTypeProAr p)}
+    {q=(TwArrPreshfEmbedProf $ InterpTypeProAr q)}
+    (TwArrPreshfEmbedProfMap (InterpTypeProAr p) $
+      MkProfunctor $ \mca, mbd => TypeProArDimap p _ _ _ _ mca mbd)
+    (TwArrPreshfEmbedProfMap (InterpTypeProAr q) $
+      MkProfunctor $ \mca, mbd => TypeProArDimap q _ _ _ _ mca mbd)
+    gamma) ->
+  (x : Type) ->
+  ExtEq {a=(InterpTypeProAr p x x)} {b=(InterpTypeProAr q x x)}
+    (TwArrPreshfEmbeddingNTtoProfParaNT
+      {p=(InterpTypeProAr p)} {q=(InterpTypeProAr q)} gamma x)
+    (InterpTypeDiNT p q (TypeDiArFromPreshfNatTrans p q gamma isnat) x)
+TypeDiArFromPreshfNatTransComplete
+  (ppos ** (pcontra, pcovar)) (qpos ** (qcontra, qcovar)) gamma isnat x
+  (pi ** (dcont, dcovar)) =
+    sym $ isnat (pcovar pi) (pcontra pi) x x id dcovar dcont (pi ** (id, id))
+
+public export
+TypeDiArAsPreshfOpNatTrans :
+  {p, q : TypeProAr} -> (gamma : TypeDiNTar p q) ->
+  TwArrPreshfOpEmbeddingNT (InterpTypeProAr p) (InterpTypeProAr q)
+TypeDiArAsPreshfOpNatTrans {p} {q} gamma x y myx (i ** (dcont, dcov)) =
+  let asn = dcont . myx . dcov in
+  (typeDiNTpos gamma i asn **
+   (typeDiNTcontra gamma i asn . dcont,
+    dcov . typeDiNTcovar gamma i asn))
+
+public export
+0 TypeDiArAsPreshfOpNatTransIsNatural :
   (p, q : TypeProAr) -> (gamma : TypeDiNTar p q) ->
   TwArrPreshfOpNaturality
     {p=(TwArrPreshfOpEmbedProf $ InterpTypeProAr p)}
@@ -364,14 +1583,14 @@ public export
       MkProfunctor $ \mca, mbd => TypeProArDimap p _ _ _ _ mca mbd)
     (TwArrPreshfOpEmbedProfMap (InterpTypeProAr q) $
       MkProfunctor $ \mca, mbd => TypeProArDimap q _ _ _ _ mca mbd)
-    (TypeDiArAsNatTrans {p} {q} gamma)
-TypeDiArAsNatTransIsNatural
+    (TypeDiArAsPreshfOpNatTrans {p} {q} gamma)
+TypeDiArAsPreshfOpNatTransIsNatural
   (ppos ** (pcontra, pcovar)) (qpos ** (qcontra, qcovar))
   (onpos ** (oncontra, oncovar)) s t a b mba mas mtb (i ** (dcont, dcovar)) =
     Refl
 
 public export
-TypeDiArFromNatTrans : (p, q : TypeProAr) ->
+TypeDiArFromPreshfOpNatTrans : (p, q : TypeProAr) ->
   (gamma : TwArrPreshfOpEmbeddingNT (InterpTypeProAr p) (InterpTypeProAr q)) ->
   TwArrPreshfOpNaturality
     {p=(TwArrPreshfOpEmbedProf $ InterpTypeProAr p)}
@@ -382,7 +1601,7 @@ TypeDiArFromNatTrans : (p, q : TypeProAr) ->
       MkProfunctor $ \mca, mbd => TypeProArDimap q _ _ _ _ mca mbd)
     gamma ->
   TypeDiNTar p q
-TypeDiArFromNatTrans
+TypeDiArFromPreshfOpNatTrans
   (ppos ** (pcontra, pcovar)) (qpos ** (qcontra, qcovar)) gamma isnat =
     (\pi, asn =>
       fst $ gamma (pcontra pi) (pcovar pi) asn (pi ** (id, id)) **
@@ -392,7 +1611,7 @@ TypeDiArFromNatTrans
         snd (snd $ gamma (pcontra pi) (pcovar pi) asn (pi ** (id, id))) qdcov))
 
 public export
-TypeDiArFromNatTransComplete : (p, q : TypeProAr) ->
+TypeDiArFromPreshfOpNatTransComplete : (p, q : TypeProAr) ->
   (gamma : TwArrPreshfOpEmbeddingNT (InterpTypeProAr p) (InterpTypeProAr q)) ->
   (isnat : TwArrPreshfOpNaturality
     {p=(TwArrPreshfOpEmbedProf $ InterpTypeProAr p)}
@@ -406,8 +1625,8 @@ TypeDiArFromNatTransComplete : (p, q : TypeProAr) ->
   ExtEq {a=(InterpTypeProAr p x x)} {b=(InterpTypeProAr q x x)}
     (TwArrPreshfOpEmbeddingNTtoProfParaNT
       {p=(InterpTypeProAr p)} {q=(InterpTypeProAr q)} gamma x)
-    (InterpTypeDiNT p q (TypeDiArFromNatTrans p q gamma isnat) x)
-TypeDiArFromNatTransComplete
+    (InterpTypeDiNT p q (TypeDiArFromPreshfOpNatTrans p q gamma isnat) x)
+TypeDiArFromPreshfOpNatTransComplete
   (ppos ** (pcontra, pcovar)) (qpos ** (qcontra, qcovar)) gamma isnat x
   (pi ** (dcont, dcovar)) =
     sym $ isnat (pcontra pi) (pcovar pi) x x id dcont dcovar (pi ** (id, id))
@@ -940,6 +2159,46 @@ TypeParaCovarPro p = (pfPos p ** (\_ => Unit, pfDir {p}))
 public export
 TypeParaContravarPro : MLDirichCatObj -> TypeProAr
 TypeParaContravarPro p = (dfPos p ** (dfDir p, \_ => Void))
+
+-------------------
+---- Constants ----
+-------------------
+
+public export
+TypeProConst : Type -> TypeProAr
+TypeProConst x = (x ** (\_ => Unit, \_ => Void))
+
+public export
+TypeProConstCorrectL : (x, y, z : Type) ->
+  x -> InterpTypeProAr (TypeProConst x) y z
+TypeProConstCorrectL x y z ex = (ex ** (\_ => (), \v => void v))
+
+public export
+TypeProConstCorrectR : (x, y, z : Type) ->
+  InterpTypeProAr (TypeProConst x) y z -> x
+TypeProConstCorrectR x y z = DPair.fst
+
+---------------------------
+---- Hom-functor forms ----
+---------------------------
+
+-- This form of the hom-functor is the left adjoint of an adjunction
+-- with the end functor.
+public export
+TypeProEndLAdj : Type -> TypeProAr
+TypeProEndLAdj y = ((y ** Type) ** (\(ey ** ty) => ty, \(ey ** ty) => ty))
+
+public export
+TypeProEndLAdjCorrectL : (y : Type) ->
+  TypeProfNT (TypeEndLAdj y) (InterpTypeProAr $ TypeProEndLAdj y)
+TypeProEndLAdjCorrectL y a b (mab, ey) =
+  ((ey ** a) ** (id {a}, mab))
+
+public export
+TypeProEndLAdjCorrectR : (y : Type) ->
+  TypeProfNT (InterpTypeProAr $ TypeProEndLAdj y) (TypeEndLAdj y)
+TypeProEndLAdjCorrectR y a b ((ey ** ty) ** (contra, covar)) =
+  (covar . contra, ey)
 
 -----------------------------
 ---- Partial application ----
@@ -1878,6 +3137,56 @@ typeParaCovarRepParCurry {q} {p} {r} ar =
    (typeParaCovarRepParCurryContra {q} {p} {r} ar,
     typeParaCovarRepParCurryCovar {q} {p} {r} ar))
 
+---------------
+---------------
+---- Ends ----
+---------------
+---------------
+
+public export
+EndRAdj : TypeProAr -> Type
+EndRAdj p = TypeDiNTar (TypeProConst Unit) p
+
+public export
+0 EndRAdjCorrectR : FunExt -> (p : TypeProAr) ->
+  EndRAdj p -> TypeEnd (InterpTypeProAr p) (TypeProArLmap p) (TypeProArRmap p)
+EndRAdjCorrectR fext p e =
+  ProfParaNTtoEnd
+    fext
+    (InterpTypeProAr p)
+    (TypeProArLmap p)
+    (TypeProArRmap p)
+    (\a, () =>
+      InterpTypeDiNT (TypeProConst Unit) p e a (() ** (\_ => (), \v => void v)))
+    (\i0, i1, i2, (), (), Refl =>
+      TypeDiArIsPara (TypeProConst Unit) p e i0 i1 i2
+        (() ** (\_ => (), \v => void v)) (() ** (\_ => (), \v => void v))
+        (dpEq12 Refl (pairEqCong Refl (funExt $ \v => void v))))
+
+public export
+0 EndRAdjCorrectL : FunExt -> (p : TypeProAr) ->
+  TypeEnd (InterpTypeProAr p) (TypeProArLmap p) (TypeProArRmap p) -> EndRAdj p
+EndRAdjCorrectL fext p e =
+  TypeDiArFromDi (TypeProConst Unit) p
+    (\x, _ =>
+      ProfParaNTfromEnd fext
+        (InterpTypeProAr p) (TypeProArLmap p) (TypeProArRmap p) e x ())
+    (\i0, i1, i2, (() ** (uf, vf)), (() ** (uf', vf')), cond =>
+      ProfParaNTfromEndisPara fext
+        (InterpTypeProAr p) (TypeProArLmap p) (TypeProArRmap p) e i0 i1 i2
+        () () Refl)
+
+public export
+EndLAdj : Type -> TypeProAr
+EndLAdj = TypeProEndLAdj
+
+public export
+EndCounit : (p : TypeProAr) -> TypeProNTar (EndLAdj $ EndRAdj p) p
+EndCounit (pos ** (contra, covar)) =
+  (\((ip ** (icont, icov)) ** ty) => ip () (\_ => ()) **
+   (\((ip ** (icont, icov)) ** ty), ety => icont () (\_ => ()) (),
+    \((ip ** (icont, icov)) ** ty), dcov => void $ icov () (\_ => ()) dcov))
+
 --------------------------------------
 --------------------------------------
 ---- Composition with polynomials ----
@@ -2036,6 +3345,50 @@ typeProPolyCoalgFromFunctorExp : (p : MLPolyCatObj) -> (x, y : Type) ->
   FunctorExp (InterpPolyFunc p) x y ->
   InterpTypeProAr (typeProPolyCoalg p) x y
 typeProPolyCoalgFromFunctorExp = typeProPolyCoalgFromProCoalgCarrier
+
+------------------------------------------
+------------------------------------------
+---- Dialgebra-generating profunctors ----
+------------------------------------------
+------------------------------------------
+
+public export
+InterpPolyDialg : PolyFunc -> PolyFunc -> Type -> Type -> Type
+InterpPolyDialg f g x y = InterpPolyFunc f x -> InterpPolyFunc g y
+
+public export
+PolyDialgPos : (f, g : PolyFunc) -> Type
+PolyDialgPos f g =
+  (xy : (Type, Type) ** InterpPolyFunc f (fst xy) -> InterpPolyFunc g (snd xy))
+
+public export
+PolyDialgContra : (f, g : PolyFunc) -> PolyDialgPos f g -> Type
+PolyDialgContra f g = Builtin.fst . DPair.fst
+
+public export
+PolyDialgCovar : (f, g : PolyFunc) -> PolyDialgPos f g -> Type
+PolyDialgCovar f g = Builtin.snd . DPair.fst
+
+public export
+PolyDialg : (f, g : PolyFunc) -> TypeProAr
+PolyDialg f g =
+  (PolyDialgPos f g ** (PolyDialgContra f g, PolyDialgCovar f g))
+
+public export
+PolyDialgToInterp : (f, g : PolyFunc) -> (x, y : Type) ->
+  InterpTypeProAr (PolyDialg f g) x y ->
+  (InterpPolyFunc f x -> InterpPolyFunc g y)
+PolyDialgToInterp (fpos ** fdir) (gpos ** gdir) x y
+  (((c, d) ** pm) ** (dmcont, dmcov)) (fi ** fdm) =
+    let pmel = pm (fi ** dmcont . fdm) in
+    (fst pmel ** dmcov . snd pmel)
+
+public export
+PolyDialgFromInterp : (f, g : PolyFunc) -> (x, y : Type) ->
+  (InterpPolyFunc f x -> InterpPolyFunc g y) ->
+  InterpTypeProAr (PolyDialg f g) x y
+PolyDialgFromInterp (fpos ** fdir) (gpos ** gdir) x y dialg =
+  (((x, y) ** dialg) ** (id, id))
 
 ------------------------------------------------------
 ------------------------------------------------------
@@ -2207,59 +3560,252 @@ PDiToSPFData pdid = SPFDataFamFromDep (PDiToSPFdepData pdid)
 ---- Interpretation of polydifunctors ----
 ------------------------------------------
 
--- From the formula in the "Proposition 2.10" section of the ncat
--- page on parametric right adjoints.  `z` here is the covariant
--- argument -- a presheaf from the terminal category to `Type`,
--- which is simply a type.  `j` is the contravariant argument,
--- an object of `op(Type)`.
+public export
+InterpPDiET0 : (pdid : PDiData) -> PDiPos1 pdid -> Type
+InterpPDiET0 = PDiPos2
+
+public export
+InterpPDiET1dep : (pdid : PDiData) ->
+  (d1 : Sigma {a=(PDiPos1 pdid)} (PDiDir1 pdid)) ->
+  InterpPDiET0 pdid (fst d1) ->
+  Type
+InterpPDiET1dep pdid d1 = flip (PDiDir2 pdid (fst d1)) (snd d1)
+
+public export
+InterpPDiET1 : (pdid : PDiData) ->
+  Sigma {a=(PDiPos1 pdid)} (PDiDir1 pdid) -> Type
+InterpPDiET1 pdid d1 =
+  Sigma {a=(InterpPDiET0 pdid $ fst d1)} $ InterpPDiET1dep pdid d1
+
+-- `MLDirichCatObj` is a presheaf category over the walking arrow `0 -> 1`,
+-- so in the notation of
+-- https://ncatlab.org/nlab/show/parametric+right+adjoint#generic_morphisms,
+-- we have for a given `z` a `T(z)(0)`, a `T(z)(1)`, and a morphism from
+-- the latter to the former, which in turn we may express in dependent-type
+-- form as making `T(z)(1)` dependent on `T(z)(0)`.  Note that
+-- `T1(0)` is `pos(T1)` and `T1(1)` is `dir(T1)`.
+public export
+InterpPDiT0 : PDiData -> Type -> Type
+InterpPDiT0 pdid z = (i1 : PDiPos1 pdid ** InterpPDiET0 pdid i1 -> z)
+
+public export
+0 InterpPDiT0isPoly : (pdid : PDiData) -> (z : Type) ->
+  InterpPDiT0 pdid z = InterpPolyFunc (PDiPos1 pdid ** PDiPos2 pdid) z
+InterpPDiT0isPoly pdid z = Refl
+
+public export
+InterpPDiT1dep : (pdid : PDiData) -> (z : Type) -> PDiPos1 pdid -> Type
+InterpPDiT1dep pdid z i1 =
+  (d1 : PDiDir1 pdid i1 ** InterpPDiET1 pdid (i1 ** d1) -> z)
+
+public export
+InterpPDiT1 : (pdid : PDiData) -> (z : Type) -> Type
+InterpPDiT1 pdid z = Sigma {a=(PDiPos1 pdid)} $ InterpPDiT1dep pdid z
+
+public export
+InterpPDiEradjFact : (pdid : PDiData) -> Type -> MlDirichSlObj (pdiT1 pdid)
+InterpPDiEradjFact pdid z =
+  MDSobj
+    (\i1 => Unit)
+    (\i1, u_, d1 => (i2 : PDiPos2 pdid i1) -> PDiDir2 pdid i1 i2 d1 -> z)
+
+public export
+InterpPDiEradjFactMap : (pdid : PDiData) ->
+  (z, z' : Type) -> (z -> z') ->
+  MlDirichSlMor {ar=(pdiT1 pdid)}
+    (InterpPDiEradjFact pdid z)
+    (InterpPDiEradjFact pdid z')
+InterpPDiEradjFactMap pdid z z' mz =
+  MDSM (\i1, u_ => ()) (\i1, (), d1, dm, i2 => mz . dm i2)
+
+public export
+InterpPDiEsigma : (pdid : PDiData) ->
+  MlDirichSlObj (pdiT1 pdid) -> MLDirichCatObj
+InterpPDiEsigma pdid = mlDirichSlObjTot {ar=(pdiT1 pdid)}
+
+public export
+InterpPDiEsigmaMap : (pdid : PDiData) ->
+  (sl, sl' : MlDirichSlObj (pdiT1 pdid)) ->
+  MlDirichSlMor {ar=(pdiT1 pdid)} sl sl' ->
+  MLDirichCatMor (InterpPDiEsigma pdid sl) (InterpPDiEsigma pdid sl')
+InterpPDiEsigmaMap pdid sl sl' (MDSM onpos ondir) =
+  (\(i1 ** eslp) => (i1 ** onpos i1 eslp) **
+   \(i1 ** eslp), (i2 ** esld) => (i2 ** ondir i1 eslp i2 esld))
+
 public export
 InterpPDiE : (pdid : PDiData) ->
-  (j : Type) -> InterpDirichFunc (pdiT1 pdid) j -> Type
-InterpPDiE pdid = InterpMlDirichSlObj {ar=(pdiT1 pdid)} (pdiF pdid)
-
-public export
-InterpPDiEform : (pdid : PDiData) ->
   (j : Type) -> (i1 : PDiPos1 pdid) -> (d1 : j -> PDiDir1 pdid i1) -> Type
-InterpPDiEform pdid j i1 d1 =
-  (i2 : mdsOnPos (pdiF pdid) i1 **
-   Pi {a=j} (mdsDir (pdiF pdid) i1 i2 . d1))
+InterpPDiE pdid j i1 d1 =
+  (i2 : PDiPos2 pdid i1 ** Sigma {a=j} (PDiDir2 pdid i1 i2 . d1))
 
 public export
-InterpPDiEtoForm : (pdid : PDiData) ->
-  (j : Type) -> (i1 : PDiPos1 pdid) -> (d1 : j -> PDiDir1 pdid i1) ->
-  InterpPDiE pdid j (i1 ** d1) -> InterpPDiEform pdid j i1 d1
-InterpPDiEtoForm pdid j i1 d1 = dpMapSnd $ \i2, pid, ej => pid ej ()
+InterpPolyDiCurried : (pdid : PDiData) -> Type -> MLDirichCatObj
+InterpPolyDiCurried pdid z = InterpPDiEsigma pdid (InterpPDiEradjFact pdid z)
 
 public export
-InterpPDiEfromForm : (pdid : PDiData) ->
-  (j : Type) -> (i1 : PDiPos1 pdid) -> (d1 : j -> PDiDir1 pdid i1) ->
-  InterpPDiEform pdid j i1 d1 -> InterpPDiE pdid j (i1 ** d1)
-InterpPDiEfromForm pdid j i1 d1 = dpMapSnd $ \i2, pid, ej, () => pid ej
+InterpPolyDiCurriedMap : (pdid : PDiData) -> (x, y : Type) ->
+  (x -> y) ->
+  MLDirichCatMor (InterpPolyDiCurried pdid x) (InterpPolyDiCurried pdid y)
+InterpPolyDiCurriedMap pdid x y m =
+  InterpPDiEsigmaMap
+    pdid
+    (InterpPDiEradjFact pdid x)
+    (InterpPDiEradjFact pdid y)
+    (InterpPDiEradjFactMap pdid x y m)
+
+public export
+InterpPolyDi' : (pdid : PDiData) -> (j, z : Type) -> Type
+InterpPolyDi' pdid j z = InterpDirichFunc (InterpPolyDiCurried pdid z) j
+
+public export
+InterpPolyDiLmap : (pdid : PDiData) -> (j, j', z : Type) ->
+  (j' -> j) -> InterpPolyDi' pdid j z -> InterpPolyDi' pdid j' z
+InterpPolyDiLmap pdid j j' z =
+  InterpDFMap {a=j'} {b=j} (InterpPolyDiCurried pdid z)
+
+public export
+InterpPolyDiRmap : (pdid : PDiData) -> (j, z, z' : Type) ->
+  (z -> z') -> InterpPolyDi' pdid j z -> InterpPolyDi' pdid j z'
+InterpPolyDiRmap pdid j z z' mz ((i1 ** ()) ** dm) =
+  ((i1 ** ()) ** \ej => (fst (dm ej) ** \i2 => mz . snd (dm ej) i2))
+
+public export
+InterpPolyDi'Map : (pdid : PDiData) -> (j, z, j', z' : Type) ->
+  (j' -> j) -> (z -> z') -> InterpPolyDi' pdid j z -> InterpPolyDi' pdid j' z'
+InterpPolyDi'Map pdid j z j' z' mj mz =
+  InterpPolyDiLmap pdid j j' z' mj . InterpPolyDiRmap pdid j z z' mz
+
+-- Here we show that `PDiData` is more complicated than necessary:
+-- we can convert any `PDiData` to an `MlPolyProf` which is naturally
+-- isomorphic to it.
+public export
+PDiToMLP : PDiData -> MlPolyProf
+PDiToMLP (PDiD (tpos ** tdir) (MDSobj epos edir)) =
+  (tpos ** tdir ** \ti, td => Sigma {a=(epos ti)} (flip (edir ti) td))
+
+public export
+InterpPDi'ToMLP : (pdid : PDiData) -> (x, y : Type) ->
+  InterpPolyDi' pdid x y -> InterpMLP (PDiToMLP pdid) x y
+InterpPDi'ToMLP (PDiD (tpos ** tdir) (MDSobj epos edir)) x y
+  ((i ** ()) ** dm) =
+    ((i ** ()) ** \ex => (fst (dm ex) ** DPair.uncurry $ snd $ dm ex))
+
+public export
+InterpPDi'FromMLP : (pdid : PDiData) -> (x, y : Type) ->
+  InterpMLP (PDiToMLP pdid) x y -> InterpPolyDi' pdid x y
+InterpPDi'FromMLP (PDiD (tpos ** tdir) (MDSobj epos edir)) x y
+  ((i ** ()) ** dm) =
+    ((i ** ()) ** \ex => (fst (dm ex) ** DPair.curry $ snd $ dm ex))
+
+public export
+InterpPDiEladjFact : (pdid : PDiData) -> MlDirichSlObj (pdiT1 pdid) -> Type
+InterpPDiEladjFact (PDiD (tpos ** tdir) (MDSobj epos edir)) (MDSobj apos adir) =
+  (ti : tpos ** ei : epos ti ** ai : apos ti **
+   td : tdir ti ** (edir ti ei td, adir ti ai td))
+
+public export
+InterpPDiEladjFactMap : (pdid : PDiData) ->
+  (sl, sl' : MlDirichSlObj (pdiT1 pdid)) ->
+  MlDirichSlMor {ar=(pdiT1 pdid)} sl sl' ->
+  InterpPDiEladjFact pdid sl -> InterpPDiEladjFact pdid sl'
+InterpPDiEladjFactMap (PDiD (tpos ** tdir) (MDSobj epos edir))
+  (MDSobj slpos sldir) (MDSobj slpos' sldir') (MDSM monpos mondir)
+  (ti ** ei ** ai ** td ** (ed, ad)) =
+    (ti ** ei ** monpos ti ai ** td ** (ed, mondir ti ai td ad))
+
+public export
+InterpPDiELadjunct : (pdid : PDiData) ->
+  (a : MlDirichSlObj (pdiT1 pdid)) -> (b : Type) ->
+  (InterpPDiEladjFact pdid a -> b) ->
+  MlDirichSlMor {ar=(pdiT1 pdid)} a (InterpPDiEradjFact pdid b)
+InterpPDiELadjunct (PDiD (tpos ** tdir) (MDSobj epos edir))
+  (MDSobj apos adir) b m =
+    MDSM
+      (\ti, ai => ())
+      (\ti, ai, td, ad, ei, ed => m (ti ** ei ** ai ** td ** (ed, ad)))
+
+public export
+InterpPDiERadjunct : (pdid : PDiData) ->
+  (a : MlDirichSlObj (pdiT1 pdid)) -> (b : Type) ->
+  MlDirichSlMor {ar=(pdiT1 pdid)} a (InterpPDiEradjFact pdid b) ->
+  (InterpPDiEladjFact pdid a -> b)
+InterpPDiERadjunct (PDiD (tpos ** tdir) (MDSobj epos edir))
+  (MDSobj apos adir) b (MDSM monpos mondir) (ti ** ei ** ai ** td ** (ed, ad)) =
+    mondir ti ai td ad ei ed
+
+public export
+InterpPDiELRadjunctId : (pdid : PDiData) ->
+  (a : MlDirichSlObj (pdiT1 pdid)) -> (b : Type) ->
+  (m : InterpPDiEladjFact pdid a -> b) ->
+  ExtEq m (InterpPDiERadjunct pdid a b $ InterpPDiELadjunct pdid a b m)
+InterpPDiELRadjunctId (PDiD (tpos ** tdir) (MDSobj epos edir))
+  (MDSobj apos adir) b m (ti ** ei ** ai ** td ** (ed, ad)) =
+    Refl
+
+public export
+InterpPDiERLadjunctId : FunExt -> (pdid : PDiData) ->
+  (a : MlDirichSlObj (pdiT1 pdid)) -> (b : Type) ->
+  (m : MlDirichSlMor {ar=(pdiT1 pdid)} a (InterpPDiEradjFact pdid b)) ->
+  m = (InterpPDiELadjunct pdid a b $ InterpPDiERadjunct pdid a b m)
+InterpPDiERLadjunctId fext (PDiD (tpos ** tdir) (MDSobj epos edir))
+  (MDSobj apos adir) b (MDSM monpos mondir) =
+    let
+      onposeq : (monpos = (\ti, ai => ())) =
+        funExt (\ti => funExt $ \ai => unitUnique (monpos ti ai) ())
+    in
+    rewrite onposeq in
+    Refl
 
 public export
 InterpPolyDi : (pdid : PDiData) -> (j, z : Type) -> Type
 InterpPolyDi pdid j z =
-  (x : InterpDirichFunc (pdiT1 pdid) j ** InterpPDiE pdid j x -> z)
+  (x : InterpDirichFunc (pdiT1 pdid) j **
+   InterpPDiE pdid j (idfPos x) (idfDirMap x) -> z)
 
 public export
 InterpPolyDiForm : (pdid : PDiData) -> (j, z : Type) -> Type
 InterpPolyDiForm pdid j z =
-  (i1: PDiPos1 pdid **
+  (i1 : PDiPos1 pdid **
    d1 : j -> PDiDir1 pdid i1 **
-   (i2 : mdsOnPos (pdiF pdid) i1) ->
-     Pi {a=j} (mdsDir (pdiF pdid) i1 i2 . d1) -> z)
+   (i2 : PDiPos2 pdid i1) ->
+    SliceMorphism {a=j} (PDiDir2 pdid i1 i2 . d1) (const z))
 
 public export
 InterpPolyDiToForm : (pdid : PDiData) -> (j, z : Type) ->
   InterpPolyDi pdid j z -> InterpPolyDiForm pdid j z
 InterpPolyDiToForm pdid j z ((i1 ** d1) ** d2) =
-  (i1 ** d1 ** \i2, pid => d2 (i2 ** \ej, () => pid ej))
+  (i1 ** d1 ** \i2, ej, dd => d2 (i2 ** ej ** dd))
 
 public export
 InterpPolyDiFromForm : (pdid : PDiData) -> (j, z : Type) ->
   InterpPolyDiForm pdid j z -> InterpPolyDi pdid j z
 InterpPolyDiFromForm pdid j z (i1 ** (d1 ** d2)) =
-  ((i1 ** d1) ** \(i2 ** pid) => d2 i2 $ \ej => pid ej ())
+  ((i1 ** d1) ** \(i2 ** ej ** dd) => d2 i2 ej dd)
+
+public export
+InterpPolyDi'ToForm : (pdid : PDiData) -> (j, z : Type) ->
+  InterpPolyDi' pdid j z -> InterpPolyDiForm pdid j z
+InterpPolyDi'ToForm pdid j z ((i ** ()) ** dm) =
+  (i ** DPair.fst . dm ** \i2, ej => snd (dm ej) i2)
+
+public export
+InterpPolyDi'FromForm : (pdid : PDiData) -> (j, z : Type) ->
+  InterpPolyDiForm pdid j z -> InterpPolyDi' pdid j z
+InterpPolyDi'FromForm pdid j z (i1 ** dm1 ** dm2) =
+  ((i1 ** ()) ** \ej => (dm1 ej ** \i2 => dm2 i2 ej))
+
+public export
+InterpPolyDimap : (pdid : PDiData) -> TypeDimapSig (InterpPolyDi pdid)
+InterpPolyDimap (PDiD pt1 (MDSobj possl dirsl)) s t a b mas mtb
+  ((i1 ** dm1) ** dm2) =
+    ((i1 ** dm1 . mas) ** \(i2 ** ea ** esl) => mtb $ dm2 (i2 ** mas ea ** esl))
+
+public export
+InterpPolyDiDepForm : (pdid : PDiData) -> (j : Type) -> (z : SliceObj j) -> Type
+InterpPolyDiDepForm pdid j z =
+  (i1 : PDiPos1 pdid **
+   d1 : j -> PDiDir1 pdid i1 **
+   (i2 : PDiPos2 pdid i1) -> SliceMorphism {a=j} (PDiDir2 pdid i1 i2 . d1) z)
 
 -- This is the interpretation of the above family of `SPFData`s.
 public export
@@ -3100,3 +4646,101 @@ pdiFromInitial p =
     (\v => void v)
     (\v => void v)
     (\v => void v)
+
+-------------------------------------------------------------------------
+-------------------------------------------------------------------------
+---- Polynomial presheaves (Dirichlet functors) on `TwArr(op(Type))` ----
+-------------------------------------------------------------------------
+-------------------------------------------------------------------------
+
+-----------------------------------------------
+---- General op-twisted Dirichlet functors ----
+-----------------------------------------------
+
+public export
+TwArrOpDirich : Type
+TwArrOpDirich =
+  (pos : Type **
+   contra : pos -> Type **
+   covar : pos -> Type **
+   (i : pos) -> covar i -> contra i)
+
+public export
+InterpTwArrOpDirich : TwArrOpDirich -> TwArrPreshfOpSig
+InterpTwArrOpDirich (pos ** contra ** covar ** proj) x y myx =
+  (i : pos **
+   dmcont : x -> contra i **
+   dmcov : covar i -> y **
+   ExtEq {a=(covar i)} {b=(contra i)} (proj i) (dmcont . myx . dmcov))
+
+public export
+InterpTwArrOpDirichDimap :
+  (p : TwArrOpDirich) -> TwArrPreshfOpDimapSig (InterpTwArrOpDirich p)
+InterpTwArrOpDirichDimap (pos ** contra ** covar ** proj) s t a b mba mas mtb
+  (i ** dmcont ** dmcov ** comm) =
+    (i ** dmcont . mas ** mtb . dmcov ** comm)
+
+public export
+TwArrOpDirichRep : (x, y : Type) -> (y -> x) -> TwArrOpDirich
+TwArrOpDirichRep x y myx = (Unit ** \_ => x ** \_ => y ** \_ => myx)
+
+public export
+TwArrOpDirichNTfromRepFromYoneda :
+  (x, y : Type) -> (y -> x) -> TwArrOpDirich -> Type
+TwArrOpDirichNTfromRepFromYoneda x y myx p = InterpTwArrOpDirich p x y myx
+
+public export
+InterpTwArrOpDirichNTfromRep :
+  (x, y : Type) -> (myx : y -> x) -> (p : TwArrOpDirich) ->
+  TwArrOpDirichNTfromRepFromYoneda x y myx p ->
+  (a, b : Type) -> (mba : b -> a) ->
+  InterpTwArrOpDirich (TwArrOpDirichRep x y myx) a b mba ->
+  InterpTwArrOpDirich p a b mba
+InterpTwArrOpDirichNTfromRep x y myx (pos ** contra ** covar ** proj)
+  (i ** dmcont ** dmcov ** pcomm) a b mba (() ** max ** myb ** mcomm) =
+    (i ** dmcont . max ** myb . dmcov **
+     \el => trans (pcomm el) (cong dmcont $ mcomm $ dmcov el))
+
+public export
+TwArrOpDirichNTfromYoneda : IntMorSig TwArrOpDirich
+TwArrOpDirichNTfromYoneda (ppos ** pcontra ** pcovar ** pproj) q =
+  (pi : ppos) ->
+  TwArrOpDirichNTfromRepFromYoneda (pcontra pi) (pcovar pi) (pproj pi) q
+
+public export
+TwArrOpDirichNT : IntMorSig TwArrOpDirich
+TwArrOpDirichNT
+  (ppos ** pcontra ** pcovar ** pproj)
+  (qpos ** qcontra ** qcovar ** qproj) =
+    (onpos : ppos -> qpos **
+     oncont : (pi : ppos) -> pcontra pi -> qcontra (onpos pi) **
+     oncov : (pi : ppos) -> qcovar (onpos pi) -> pcovar pi **
+     (pi : ppos) ->
+      ExtEq {a=(qcovar $ onpos pi)} {b=(qcontra $ onpos pi)}
+        (qproj (onpos pi))
+        (oncont pi . pproj pi . oncov pi))
+
+public export
+TwArrOpDirichNTtoYonedaVersion :
+  (p, q : TwArrOpDirich) ->
+  TwArrOpDirichNT p q ->
+  TwArrOpDirichNTfromYoneda p q
+TwArrOpDirichNTtoYonedaVersion
+  (ppos ** pcontra ** pcovar ** pproj)
+  (qpos ** qcontra ** qcovar ** qproj)
+  (onpos ** oncont ** oncov ** alpha) =
+    \pi => (onpos pi ** oncont pi ** oncov pi ** alpha pi)
+
+public export
+TwArrOpDirichNTfromYonedaVersion :
+  (p, q : TwArrOpDirich) ->
+  TwArrOpDirichNTfromYoneda p q ->
+  TwArrOpDirichNT p q
+TwArrOpDirichNTfromYonedaVersion
+  (ppos ** pcontra ** pcovar ** pproj)
+  (qpos ** qcontra ** qcovar ** qproj)
+  alpha =
+    (\pi => fst (alpha pi) **
+     \pi => fst (snd $ alpha pi) **
+     \pi => fst (snd $ snd $ alpha pi) **
+     \pi => snd (snd $ snd $ alpha pi))

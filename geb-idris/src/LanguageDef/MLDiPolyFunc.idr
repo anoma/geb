@@ -516,3 +516,55 @@ public export
 mlpVcomp : {p, q, r : MLPolyDiSig} ->
   MLPolyParaNT q r -> MLPolyParaNT p q -> MLPolyParaNT p r
 mlpVcomp = polyParaNTvcomp {c=Type} {mor=TypeMor} {comp=typeComp}
+
+-----------------------------
+-----------------------------
+---- Universal morphisms ----
+-----------------------------
+-----------------------------
+
+-------------------------
+---- Terminal object ----
+-------------------------
+
+public export
+MLPterminal : MLPolyDiSig
+MLPterminal = (Unit ** (\_ => Void, \_ => Unit))
+
+public export
+mlpToTerminal : (p : MLPolyDiSig) -> MLPolyParaNT p MLPterminal
+mlpToTerminal p = (\_, _ => () ** (\_, _, _ => (), \_, _, v => void v))
+
+------------------------
+---- Binary product ----
+------------------------
+
+public export
+MLPproduct : MLPolyDiSig -> MLPolyDiSig -> MLPolyDiSig
+MLPproduct p q =
+  ((mlpdPos p, mlpdPos q) **
+   (\i => Either (mlpdDirR p $ fst i) (mlpdDirR q $ snd i),
+    \i => (mlpdDirL p $ fst i, mlpdDirL q $ snd i)))
+
+public export
+mlpProdIntro : {p, q, r : MLPolyDiSig} ->
+  MLPolyParaNT p q -> MLPolyParaNT p r -> MLPolyParaNT p (MLPproduct q r)
+mlpProdIntro
+  {p=(ppos ** (pdirR, pdirL))}
+  {q=(qpos ** (qdirR, qdirL))}
+  {r=(rpos ** (rdirR, rdirL))}
+  (pqonpos ** (pqonL, pqonR))
+  (pronpos ** (pronL, pronR))
+    = (\pi, asn => (pqonpos pi asn, pronpos pi asn) **
+       (\pi, asn, pdl => (pqonL pi asn pdl, pronL pi asn pdl),
+        \pi, asn => eitherElim (pqonR pi asn) (pronR pi asn)))
+
+public export
+mlpProj1 : (p, q : MLPolyDiSig) -> MLPolyParaNT (MLPproduct p q) p
+mlpProj1 p q =
+  (\pi, asn => fst pi ** (\pi, asn => fst, \pi, asn => Left))
+
+public export
+mlpProj2 : (p, q : MLPolyDiSig) -> MLPolyParaNT (MLPproduct p q) q
+mlpProj2 p q =
+  (\pi, asn => snd pi ** (\pi, asn => snd, \pi, asn => Right))

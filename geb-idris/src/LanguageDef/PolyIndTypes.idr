@@ -360,10 +360,26 @@ ElemCatDiagOpMorph {j} {pcpr} = flip $ ElemCatDiagMorph {j} {pcpr}
 public export
 record PRAFunctor (dom, cod : PreDiagram) where
   constructor PRAf
+  -- In the notation of the "Imagining Bicomodules" page linked above,
+  -- the object-map component of `prafPos` gives `P_I`, the positions
+  -- (of type `I`) indexed by objects of `cod`, while the morphism-map
+  -- component gives `f_flat`.
   prafPos : PCopresheaf cod
   -- `prafDirObj` and `prafDirMorph` between them comprise a contravariant
   -- functor from the category of elements of `prafPos` (which is a copresheaf
   -- over `cod`) to the category of copresheaves over `dom`.
+  --
+  -- The first projection of `prafDirObj` gives `D_IJ`, the type of
+  -- directions, which is indexed by objects of `cod`, corresponding
+  -- positions `P_I`, and objects of `dom`.  `pi_IJ` is simply the
+  -- projection of `D_IJ` onto the position of `P_I` by which it is indexed.
+  --
+  -- The second projection of `prafDirObj` gives `g_I`, which for each
+  -- object `i` of `cod`, position `p` of `P_I(i)`, objects `j` and `j'`
+  -- of `dom`, and morphism `g : j -> j'` of `dom` gives a map (a morphism
+  -- of `Type`) `D_IJ(i, p, j) -> D_IJ(i, p, j')`.
+  --
+  -- `prafDirMorph` is a functorial way of writing `f_sharp`.
   prafDirObj : ElemCatObj {j=cod} prafPos -> PCopresheaf dom
   prafDirMorph :
     (p, p' : ElemCatObj {j=cod} prafPos) ->

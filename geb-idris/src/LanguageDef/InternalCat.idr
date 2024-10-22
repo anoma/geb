@@ -24,6 +24,58 @@ IntCompSig : (c : Type) -> (mor : IntMorSig c) -> Type
 IntCompSig c mor = (x, y, z : c) -> mor y z -> mor x y -> mor x z
 
 public export
+IntEqSig : {c : Type} -> (mor : IntMorSig c) -> Type
+IntEqSig {c} mor = (x, y : c) -> IntMorSig (mor x y)
+
+public export
+IntEqReflSig : {c : Type} -> {mor : IntMorSig c} -> IntEqSig {c} mor -> Type
+IntEqReflSig {c} {mor} eq =
+  (x, y : c) -> (m : mor x y) -> eq x y m m
+
+public export
+IntEqSymSig : {c : Type} -> {mor : IntMorSig c} -> IntEqSig {c} mor -> Type
+IntEqSymSig {c} {mor} eq =
+  (x, y : c) -> (m, n : mor x y) -> eq x y m n -> eq x y n m
+
+public export
+IntEqTransSig : {c : Type} -> {mor : IntMorSig c} -> IntEqSig {c} mor -> Type
+IntEqTransSig {c} {mor} eq =
+  (x, y : c) -> (k, m, n : mor x y) -> eq x y m n -> eq x y k m -> eq x y k n
+
+public export
+IntEqCongLSig : {c : Type} -> {mor : IntMorSig c} ->
+  IntCompSig c mor -> IntEqSig {c} mor -> Type
+IntEqCongLSig {c} {mor} comp eq =
+  (x, y, z : c) -> (g, h : mor y z) -> (f : mor x y) ->
+  eq y z g h -> eq x z (comp x y z g f) (comp x y z h f)
+
+public export
+IntEqCongRSig : {c : Type} -> {mor : IntMorSig c} ->
+  IntCompSig c mor -> IntEqSig {c} mor -> Type
+IntEqCongRSig {c} {mor} comp eq =
+  (x, y, z : c) -> (f, g : mor x y) -> (h : mor y z) ->
+  eq x y f g -> eq x z (comp x y z h f) (comp x y z h g)
+
+public export
+0 IntEqIdLSig : {0 c : Type} -> {0 mor : IntMorSig c} ->
+  IntCompSig c mor -> IntIdSig c mor -> IntEqSig {c} mor -> Type
+IntEqIdLSig {c} {mor} comp cid eq =
+  (0 x, y : c) -> (m : mor x y) -> eq x y (comp x x y m (cid x)) m
+
+public export
+0 IntEqIdRSig : {0 c : Type} -> {0 mor : IntMorSig c} ->
+  IntCompSig c mor -> IntIdSig c mor -> IntEqSig {c} mor -> Type
+IntEqIdRSig {c} {mor} comp cid eq =
+  (0 x, y : c) -> (m : mor x y) -> eq x y (comp x y y (cid y) m) m
+
+public export
+0 IntEqAssocSig : {0 c : Type} -> {0 mor : IntMorSig c} ->
+  IntCompSig c mor -> IntEqSig {c} mor -> Type
+IntEqAssocSig {c} {mor} comp eq =
+  (0 w, x, y, z : c) -> (h : mor y z) -> (g : mor x y) -> (f : mor w x) ->
+  eq w z (comp w x z (comp x y z h g) f) (comp w y z h (comp w x y g f))
+
+public export
 record IdCompSig (obj : Type) (mor : IntMorSig obj) where
   constructor ICS
   icsId : IntIdSig obj mor
@@ -62,6 +114,252 @@ icId cat = micsId {obj=(icObj cat)} $ icMICS cat
 public export
 icComp : (cat : IntCatSig) -> IntCompSig (icObj cat) (icMor cat)
 icComp cat = micsComp {obj=(icObj cat)} $ icMICS cat
+
+public export
+record IntCatEqSig where
+  constructor ICatEq
+  iceBase : IntCatSig
+  iceObjEq : PrERel (icObj iceBase)
+  iceMorEq : (x, y : icObj iceBase) -> PrERel (icMor iceBase x y)
+
+public export
+IsLeftInv : (ice : IntCatEqSig) ->
+  {x, y : icObj (iceBase ice)} ->
+  (f : icMor (iceBase ice) x y) -> (g : icMor (iceBase ice) y x) -> Type
+IsLeftInv ice {x} {y} f g =
+  iceMorEq ice x x (icComp (iceBase ice) x y x g f, icId (iceBase ice) x)
+
+public export
+IsRightInv : (ice : IntCatEqSig) ->
+  {x, y : icObj (iceBase ice)} ->
+  (f : icMor (iceBase ice) x y) -> (g : icMor (iceBase ice) y x) -> Type
+IsRightInv ice {x} {y} f g = IsLeftInv ice {x=y} {y=x} g f
+
+public export
+IsIso : (ice : IntCatEqSig) ->
+  {x, y : icObj (iceBase ice)} ->
+  (f : icMor (iceBase ice) x y) -> (g : icMor (iceBase ice) y x) -> Type
+IsIso ice f g = (IsLeftInv ice f g, IsRightInv ice f g)
+
+public export
+record Isomorphism (ice : IntCatEqSig) (x, y : icObj (iceBase ice)) where
+  constructor MkIso
+  isoFwd : icMor (iceBase ice) x y
+  isoRev : icMor (iceBase ice) y x
+  isoProof : IsIso {x} {y} ice isoFwd isoRev
+
+-- A family of morphism relations indexed by domain and codomain.
+public export
+MorRelFamily : (ice : IntCatEqSig) -> Type
+MorRelFamily ice =
+  (x, y : icObj (iceBase ice)) -> PrERel (icMor (iceBase ice) x y)
+
+-- The Endofunctor on families of morphism relations whose algebras are
+-- families which respect substitution into composites.  (That is, for any
+-- algebra of this endofunctor, and any two pairs of composable morphisms,
+-- if the algebra holds pairwise for both the left and right sides of the
+-- composites, then it holds for their composite.)  This is the property
+-- which makes an equivalence relation on morphisms into a congruence.
+public export
+data MorCongF :
+    {0 ice : IntCatEqSig} -> MorRelFamily ice -> MorRelFamily ice where
+  MCsubst :
+    {0 x, y, z : icObj (iceBase ice)} ->
+    {0 g, g' : icMor (iceBase ice) y z} ->
+    {0 f, f' : icMor (iceBase ice) x y} ->
+    {0 r : (x, y : icObj (iceBase ice)) -> PrERel (icMor (iceBase ice) x y)} ->
+    r y z (g, g') -> r x y (f, f') ->
+    MorCongF {ice} r x z
+      (icComp (iceBase ice) x y z g f, icComp (iceBase ice) x y z g' f')
+
+-- An algebra of a `MorCongF`, which is a family of morphism relations
+-- which respects substitution into composites.
+public export
+MorCongI : {ice : IntCatEqSig} -> MorRelFamily ice -> Type
+MorCongI {ice} relfam =
+  (x, y : icObj (iceBase ice)) -> (f, f' : icMor (iceBase ice) x y) ->
+  MorCongF {ice} relfam x y (f, f') -> relfam x y (f, f')
+
+-- The coherency conditions on an `IntEqCatSig` which make it a category.
+-- These comprise the congruence axiom for the object and morphism equivalence
+-- relations, the axioms of category theory (left identity, right identity,
+-- and associativity), and a consistency condition on the equivalence relation
+-- on objects (namely, if we treat objects as equivalent, then there must
+-- exist an isomorphism between them so that we can transfer all incoming and
+-- outgoing morphisms and all universal properties between them.  If the
+-- metalanguage has quotient types, then one way of satisfying this condition
+-- is simply to equate equivalent objects in the metalanguage, make the
+-- equivalence relation trivial, and define the isomorphisms as the identities.
+-- The object equivalence allows us to express effectively that even in a
+-- metalanguage without quotient types).
+public export
+record IntCatEqCoherence (ice : IntCatEqSig) where
+  constructor ICatEqCoh
+  iceObjEquiv :
+    PrEquivRelI (icObj (iceBase ice)) (iceObjEq ice)
+  iceMorEquiv :(x, y : icObj (iceBase ice)) ->
+    PrEquivRelI (icMor (iceBase ice) x y) (iceMorEq ice x y)
+
+  iceMorCong : MorCongI {ice} (iceMorEq ice)
+
+  iceIdLeft :
+    {x, y : icObj (iceBase ice)} ->
+    (f : icMor (iceBase ice) x y) ->
+    iceMorEq ice x y (icComp (iceBase ice) x y y (icId (iceBase ice) y) f, f)
+
+  iceIdRight :
+    {x, y : icObj (iceBase ice)} ->
+    (f : icMor (iceBase ice) x y) ->
+    iceMorEq ice x y (icComp (iceBase ice) x x y f (icId (iceBase ice) x), f)
+
+  iceAssoc :
+    {w, x, y, z : icObj (iceBase ice)} ->
+    (h : icMor (iceBase ice) y z) ->
+    (g : icMor (iceBase ice) x y) ->
+    (f : icMor (iceBase ice) w x) ->
+    iceMorEq ice w z
+      (icComp (iceBase ice) w x z (icComp (iceBase ice) x y z h g) f,
+      icComp (iceBase ice) w y z h (icComp (iceBase ice) w x y g f))
+
+  iceObjIso :
+    {x, y : icObj (iceBase ice)} -> iceObjEq ice (x, y) -> Isomorphism ice x y
+
+public export
+record IntCatWithEq where
+  constructor ICatWEq
+  icweBase : IntCatEqSig
+  icweCoh : IntCatEqCoherence icweBase
+
+public export
+iceObjEqIso : {ice : IntCatEqSig} -> {coh : IntCatEqCoherence ice} ->
+  {x, y : icObj (iceBase ice)} ->
+  (prf : iceObjEq ice (x, y)) -> Isomorphism ice x y
+iceObjEqIso {coh} prf = iceObjIso coh prf
+
+public export
+iceMorSubstEq : {ice : IntCatEqSig} -> {coh : IntCatEqCoherence ice} ->
+  {x, y : icObj (iceBase ice)} ->
+  {f, f' : icMor (iceBase ice) x y} ->
+  MorCongF {ice} (iceMorEq ice) x y (f, f') ->
+  iceMorEq ice x y (f, f')
+iceMorSubstEq {coh} = iceMorCong coh x y f f'
+
+public export
+iceMorRefl : {ice : IntCatEqSig} -> {coh : IntCatEqCoherence ice} ->
+  {x, y : icObj (iceBase ice)} ->
+  {f : icMor (iceBase ice) x y} ->
+  iceMorEq ice x y (f, f)
+iceMorRefl {coh} {x} {y} {f} =
+  iceMorEquiv coh x y (f, f) (PrErefl f)
+
+public export
+iceMorSym : {ice : IntCatEqSig} -> {coh : IntCatEqCoherence ice} ->
+  {x, y : icObj (iceBase ice)} ->
+  {f, g : icMor (iceBase ice) x y} ->
+  iceMorEq ice x y (f, g) -> iceMorEq ice x y (g, f)
+iceMorSym {coh} {x} {y} {f} {g} eq =
+  iceMorEquiv coh x y (g, f) (PrEsym f g eq)
+
+public export
+iceMorTrans : {ice : IntCatEqSig} -> {coh : IntCatEqCoherence ice} ->
+  {x, y : icObj (iceBase ice)} ->
+  {f, g, h : icMor (iceBase ice) x y} ->
+  iceMorEq ice x y (g, h) -> iceMorEq ice x y (f, g) ->
+  iceMorEq ice x y (f, h)
+iceMorTrans {coh} {x} {y} {f} {g} {h} gh fg =
+  iceMorEquiv coh x y (f, h) (PrEtrans f g h gh fg)
+
+public export
+isoToLeftInv : {ice : IntCatEqSig} -> {x, y : icObj (iceBase ice)} ->
+  (iso : Isomorphism ice x y) -> IsLeftInv {x} {y} ice (isoFwd iso) (isoRev iso)
+isoToLeftInv iso = fst (isoProof iso)
+
+public export
+isoToRightInv : {ice : IntCatEqSig} -> {x, y : icObj (iceBase ice)} ->
+  (iso : Isomorphism ice x y) -> IsRightInv {x} {y}ice (isoFwd iso) (isoRev iso)
+isoToRightInv iso = snd (isoProof iso)
+
+public export
+symIso : {ice : IntCatEqSig} -> {x, y : icObj (iceBase ice)} ->
+  Isomorphism ice x y -> Isomorphism ice y x
+symIso iso = MkIso (isoRev iso) (isoFwd iso)
+  ((snd (isoProof iso)), (fst (isoProof iso)))
+
+public export
+congComp : {ice : IntCatEqSig} -> {coh : IntCatEqCoherence ice} ->
+  {x, y, z : icObj (iceBase ice)} ->
+  {g, g' : icMor (iceBase ice) y z} ->
+  {f, f' : icMor (iceBase ice) x y} ->
+  iceMorEq ice y z (g, g') -> iceMorEq ice x y (f, f') ->
+  iceMorEq ice x z
+    (icComp (iceBase ice) x y z g f, icComp (iceBase ice) x y z g' f')
+congComp {coh} eqg eqf = iceMorCong coh _ _ _ _
+  (MCsubst {ice} {r=(iceMorEq ice)} eqg eqf)
+
+leftInvsCompose : {ice : IntCatEqSig} -> {coh : IntCatEqCoherence ice} ->
+  {x, y, z : icObj (iceBase ice)} ->
+  {f : icMor (iceBase ice) x y} -> {f' : icMor (iceBase ice) y x} ->
+  {g : icMor (iceBase ice) y z} -> {g' : icMor (iceBase ice) z y} ->
+  IsLeftInv {x} {y} ice f f' -> IsLeftInv {x=y} {y=z} ice g g' ->
+  IsLeftInv {x} {y=z} ice
+    (icComp (iceBase ice) x y z g f)
+    (icComp (iceBase ice) z y x f' g')
+leftInvsCompose {ice} {coh} {x} {y} {z} {f} {f'} {g} {g'} linv1 linv2 =
+  iceMorTrans {coh}
+    {f=(icComp (iceBase ice) x z x
+        (icComp (iceBase ice) z y x f' g')
+        (icComp (iceBase ice) x y z g f))}
+    {g=(icComp (iceBase ice) x y x f'
+        (icComp (iceBase ice) x z y g'
+          (icComp (iceBase ice) x y z g f)))}
+    {h=(icId (iceBase ice) x)}
+    (iceMorTrans {coh}
+      {f=(icComp (iceBase ice) x y x f'
+          (icComp (iceBase ice) x z y g'
+            (icComp (iceBase ice) x y z g f)))}
+      {g=(icComp (iceBase ice) x y x f' f)}
+      {h=(icId (iceBase ice) x)}
+      linv1
+      (congComp {coh} (iceMorRefl {coh} {f=f'})
+        (iceMorTrans {coh}
+          {f=(icComp (iceBase ice) x z y g'
+             (icComp (iceBase ice) x y z g f))}
+          {g=(icComp (iceBase ice) x y y
+             (icComp (iceBase ice) y z y g' g) f)}
+          {h=f}
+          (iceMorTrans {coh}
+            {f=(icComp (iceBase ice) x y y
+               (icComp (iceBase ice) y z y g' g) f)}
+            {g=(icComp (iceBase ice) x y y
+               (icId (iceBase ice) y) f)}
+            {h=f}
+            (iceIdLeft coh f)
+            (congComp {coh} linv2 (iceMorRefl {coh} {f=f})))
+          (iceMorSym {coh} (iceAssoc coh g' g f)))))
+    (iceAssoc coh f' g' (icComp (iceBase ice) x y z g f))
+
+public export
+rightInvsCompose : {ice : IntCatEqSig} -> {coh : IntCatEqCoherence ice} ->
+  {x, y, z : icObj (iceBase ice)} ->
+  {f : icMor (iceBase ice) x y} -> {f' : icMor (iceBase ice) y x} ->
+  {g : icMor (iceBase ice) y z} -> {g' : icMor (iceBase ice) z y} ->
+  IsRightInv {x} {y} ice f f' -> IsRightInv {x=y} {y=z} ice g g' ->
+  IsRightInv {x} {y=z} ice
+    (icComp (iceBase ice) x y z g f)
+    (icComp (iceBase ice) z y x f' g')
+rightInvsCompose {ice} {coh} {x} {y} {z} {f} {f'} {g} {g'} =
+  flip $
+    leftInvsCompose {ice} {coh} {x=z} {y} {z=x} {f=(g')} {f'=(g)} {g=f'} {g'=f}
+
+public export
+iceMorIsosCompose : {ice : IntCatEqSig} -> {coh : IntCatEqCoherence ice} ->
+  {x, y, z : icObj (iceBase ice)} ->
+  Isomorphism ice y z -> Isomorphism ice x y -> Isomorphism ice x z
+iceMorIsosCompose {ice} {coh} iso2 iso1 = MkIso
+  (icComp (iceBase ice) x y z (isoFwd iso2) (isoFwd iso1))
+  (icComp (iceBase ice) z y x (isoRev iso1) (isoRev iso2))
+  (leftInvsCompose {coh} (isoToLeftInv iso1) (isoToLeftInv iso2),
+   rightInvsCompose {coh} (isoToRightInv iso1) (isoToRightInv iso2))
 
 -----------------
 -----------------

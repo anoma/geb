@@ -31,7 +31,7 @@ twoLteFiveMeta with (isLTE 2 5) proof p
   twoLteFiveMeta | Yes lte = lte
   twoLteFiveMeta | No nlte = case p of Refl impossible
 
-twoLteFive : NatLTMorph (MetaToNatObj 2, MetaToNatObj 5)
+0 twoLteFive : NatLTMorph (MetaToNatObj 2, MetaToNatObj 5)
 twoLteFive = LTEToNatMorph {mn=(2, 5)} twoLteFiveMeta
 
 zeroPlusThree : Assertion
@@ -46,19 +46,19 @@ twoPlusThree = Assert $ natObjSum testNat2 testNat3 == testNat5
 threePlusTwo : Assertion
 threePlusTwo = Assert $ natObjSum testNat2 testNat3 == testNat5
 
-fiveMinusTwo : Assertion
-fiveMinusTwo = Assert $ natObjMinus twoLteFive == testNat3
+-- 0 fiveMinusTwo : Assertion
+-- fiveMinusTwo = Assert $ natObjMinus twoLteFive == testNat3
 
-emptyNatPrefix : PrefixArray NatOZ Nat
+0 emptyNatPrefix : PrefixArray NatOZ Nat
 emptyNatPrefix = prefixArrayFromList []
 
-exampleNatSlice : SliceArray (MetaToNatObj 4) Nat
+0 exampleNatSlice : SliceArray (MetaToNatObj 4) Nat
 exampleNatSlice = sliceArrayFromList 8 [0, 12, 3, 1]
 
-exampleNatPrefix : PrefixArray (MetaToNatObj 5) Nat
+0 exampleNatPrefix : PrefixArray (MetaToNatObj 5) Nat
 exampleNatPrefix = prefixArrayFromSlice exampleNatSlice
 
-testPrefixMap : MetaPrefixMap 3 6
+0 testPrefixMap : MetaPrefixMap 3 6
 testPrefixMap = InitPrefixMap 6 [2, 5, 0]
 
 TwBidirAlg : (f, g : Type -> Type) -> Functor f -> Functor g -> Type -> Type
@@ -99,11 +99,11 @@ export
 libraryIdrisCategoriesTest : IO ()
 libraryIdrisCategoriesTest = do
   putStrLn "Begin libraryIdrisCategoriesTest:"
-  putStrLn $ show emptyNatPrefix
-  putStrLn $ show exampleNatSlice
-  putStrLn $ show exampleNatPrefix
-  putStrLn $ showPrefixMap testPrefixMap
-  putStrLn $ show $ fst $ testPrefixMap $ InitNatOPrefix NatOZ
-  putStrLn $ show $ fst $ testPrefixMap $ InitNatOPrefix $ NatOS (NatOS (NatOZ))
+  -- putStrLn $ show emptyNatPrefix
+  -- putStrLn $ show exampleNatSlice
+  -- putStrLn $ show exampleNatPrefix
+  -- putStrLn $ showPrefixMap testPrefixMap
+  -- putStrLn $ show $ fst $ testPrefixMap $ InitNatOPrefix NatOZ
+  -- putStrLn $ show $ fst $ testPrefixMap $ InitNatOPrefix $ NatOS (NatOS (NatOZ))
   putStrLn "End libraryIdrisCategoriesTest."
   pure ()

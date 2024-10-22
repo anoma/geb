@@ -1706,7 +1706,7 @@ UBTreeAlgToPF : {a : Type} -> UBTreeAlg a -> PFAlg UBTreeF a
 UBTreeAlgToPF {a} (u, p) (Right () ** i) d = u
 UBTreeAlgToPF {a} (u, p) (Left () ** i) d with (i ()) proof ieq
   UBTreeAlgToPF {a} (u, p) (Left () ** i) d | ((), ()) =
-    p (d (() ** rewrite ieq in Left ())) (d (() ** rewrite ieq in Right ()))
+    p (d (() ** Left ())) (d (() ** Right ()))
 
 public export
 UBTreeMu : Type
@@ -2561,7 +2561,8 @@ MetaPolyCoalg : Type -> Type
 MetaPolyCoalg x = x -> PolyF x
 
 public export
-metaPolyAna : MetaPolyCoalg x -> x -> Inf PolyNu
+partial
+0 metaPolyAna : MetaPolyCoalg x -> x -> Inf PolyNu
 metaPolyAna coalg t = case coalg t of
   PFI => InPLabel PFI
   PF0 => InPLabel PF0
@@ -2570,16 +2571,19 @@ metaPolyAna coalg t = case coalg t of
   p $$* q => InPLabel $ metaPolyAna coalg p $$* metaPolyAna coalg q
 
 public export
-metaPolyAnaCPS : MetaPolyCoalg x -> x -> Inf PolyNu
+partial
+0 metaPolyAnaCPS : MetaPolyCoalg x -> x -> Inf PolyNu
 metaPolyAnaCPS coalg = metaPolyUnfold id where
   mutual
-    metaPolyAnaCont : (PolyNu -> PolyNu -> PolyF PolyNu) ->
+    partial
+    0 metaPolyAnaCont : (PolyNu -> PolyNu -> PolyF PolyNu) ->
       (PolyNu -> PolyNu) -> x -> x -> PolyNu
     metaPolyAnaCont op cont x y =
       metaPolyUnfold
         (\x' => metaPolyUnfold (\y' => cont $ InPLabel $ op x' y') y) x
 
-    metaPolyUnfold : (PolyNu -> PolyNu) -> x -> Inf PolyNu
+    partial
+    0 metaPolyUnfold : (PolyNu -> PolyNu) -> x -> Inf PolyNu
     metaPolyUnfold cont t = case coalg t of
       PFI => cont (InPLabel PFI)
       PF0 => cont (InPLabel PF0)

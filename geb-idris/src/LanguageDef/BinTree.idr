@@ -534,6 +534,503 @@ binTreeFMsubstTree {atom} {v} =
 ---------------------------------------
 ---------------------------------------
 
+--------------------------------------------------------------
+---- Binary trees as "list-of-S-expression" S-expressions ----
+--------------------------------------------------------------
+
+-- First we use a slice-functor formulation to define a form
+-- of S-expression defined as "atom together with list of S-expression".
+-- We shall see that this is equivalent to `BinTreeFM`, but with a
+-- richer default algebra since that lives in a slice category.
+
+public export
+SLSs : Nat
+SLSs = 0
+
+public export
+SLSne : Nat
+SLSne = S SLSs
+
+public export
+SLSl : Nat
+SLSl = S SLSne
+
+public export
+SLSa : Nat
+SLSa = S SLSl
+
+public export
+SLSn : Nat
+SLSn = S SLSa
+
+public export
+SLSsl : Type
+SLSsl = Fin SLSn
+
+public export
+SLSSs : SLSsl
+SLSSs = natToFinLT SLSs
+
+public export
+SLSSne : SLSsl
+SLSSne = natToFinLT SLSne
+
+public export
+SLSSl : SLSsl
+SLSSl = natToFinLT SLSl
+
+public export
+SLSSa : SLSsl
+SLSSa = natToFinLT SLSa
+
+public export
+SLSslF : (atom : Type) -> FinSliceEndofunctor SLSn
+-- An S-expression (`SLSs`) is an atom together with a list of S-expressions.
+SLSslF atom sl FZ = Pair (sl SLSSa) (sl SLSSl)
+-- A non-empty list of S-expressions (`SLSne`) is an S-expression together
+-- with a list of S-expressions.
+SLSslF atom sl (FS FZ) = Pair (sl SLSSs) (sl SLSSl)
+-- A list of S-expressions (`SLSl`) is either `nil` (`Unit`) or a non-empty
+-- list of S-expressions.
+SLSslF atom sl (FS $ FS FZ) = Either Unit (sl SLSSne)
+SLSslF atom sl (FS $ FS $ FS FZ) = atom
+
+public export
+SLSslFM : (atom : Type) -> FinSliceEndofunctor SLSn
+SLSslFM = SliceFreeM . SLSslF
+
+public export
+SLSslMu : (atom : Type) -> FinSliceObj SLSn
+SLSslMu = SliceMu . SLSslF
+
+-- We can generate a functor which is naturally isomorphic to the
+-- `Type`-free-monad formulation from the slice-free-monad formulation
+-- by restricting variables to be only of S-expression type -- that is,
+-- by making `Void` the type of other variables -- by precomposition,
+-- and then projecting out the S-expression component of the output type
+-- by post-composition.
+
+public export
+SLSvarF : Type -> SliceObj (Fin SLSn)
+SLSvarF ty FZ = ty
+SLSvarF ty (FS FZ) = Void
+SLSvarF ty (FS (FS FZ)) = Void
+SLSvarF ty (FS (FS (FS FZ))) = Void
+
+public export
+SLSprojF : SLSsl -> SliceObj SLSsl -> Type
+SLSprojF = flip apply
+
+public export
+SLSFM : (atom : Type) -> Type -> Type
+SLSFM atom = SLSprojF SLSSs . SLSslFM atom . SLSvarF
+
+public export
+SLSFMl : (atom : Type) -> Type -> Type
+SLSFMl atom = SLSprojF SLSSl . SLSslFM atom . SLSvarF
+
+public export
+SLSFMne : (atom : Type) -> Type -> Type
+SLSFMne atom = SLSprojF SLSSne . SLSslFM atom . SLSvarF
+
+mutual
+  public export
+  slsSlEval : {0 atom : Type} -> SliceFreeFEval (SLSslF atom)
+  slsSlEval {atom} sv sa subst alg i (InSlF i el) = case el of
+    InSlV v => subst i v
+    InSlC t => slsSlEvalF {atom} sv sa subst alg i t
+
+  public export
+  slsSlEvalF : {0 atom : Type} -> SliceFreeFEvalF (SLSslF atom)
+  slsSlEvalF {atom} sv sa subst alg FZ (a, l) =
+    alg
+      FZ
+      (slsSlEval {atom} sv sa subst alg (FS $ FS $ FS FZ) a,
+       slsSlEval {atom} sv sa subst alg (FS $ FS FZ) l)
+  slsSlEvalF {atom} sv sa subst alg (FS FZ) (x, l) =
+    alg
+      (FS FZ)
+      (slsSlEval {atom} sv sa subst alg FZ x,
+       slsSlEval {atom} sv sa subst alg (FS $ FS FZ) l)
+  slsSlEvalF {atom} sv sa subst alg (FS $ FS FZ) (Left ()) =
+    alg
+      (FS $ FS FZ)
+      (Left ())
+  slsSlEvalF {atom} sv sa subst alg (FS $ FS FZ) (Right ne) =
+    alg
+      (FS $ FS FZ)
+      (Right $ slsSlEval {atom} sv sa subst alg (FS FZ) ne)
+  slsSlEvalF {atom} sv sa subst alg (FS $ FS $ FS FZ) ea =
+    alg
+      (FS $ FS $ FS FZ)
+      ea
+
+-- Now we show that the slice-functor version of `SLSFM` is
+-- indeed naturally isomorphic to a version defined purely
+-- within `Type` using `SnocList`.
+
+public export
+SLSF : Type -> Type -> Type
+SLSF atom x = (atom, SnocList x)
+
+public export
+SLSFmu : Type -> Type
+SLSFmu = Mu . SLSF
+
+public export
+SLSFMnonSl : Type -> Type -> Type
+SLSFMnonSl = FreeMonad . SLSF
+
+-- Here we show how to define algebras and substitutions for
+-- `SLSFmu`/`SLSFMnonSl` in the style of those for `SLSslMu`/`SLSslFM`.
+public export
+SLSFnonSlAlg : Type -> Type -> Type -> Type -> Type -> Type
+SLSFnonSlAlg atom xty nety lty aty =
+  (aty -> lty -> xty, xty -> lty -> nety, lty, nety -> lty, atom -> aty)
+
+mutual
+  public export
+  slsfCata : {atom, xty, nety, lty, aty : Type} ->
+    SLSFnonSlAlg atom xty nety lty aty ->
+    SLSFmu atom -> xty
+  slsfCata alg@(algx, algne, alge, algl, alga) (InFree (TFV ev)) =
+    void ev
+  slsfCata alg@(algx, algne, alge, algl, alga) (InFree (TFC (ea, l))) =
+    algx (slsfAtomCata alg ea) (slsfLCata alg l)
+
+  public export
+  slsfNeCata : {atom, xty, nety, lty, aty : Type} ->
+    SLSFnonSlAlg atom xty nety lty aty ->
+    SLSFmu atom -> SnocList (SLSFmu atom) -> nety
+  slsfNeCata alg@(algx, algne, alge, algl, alga) ex el =
+    algne (slsfCata alg ex) (slsfLCata alg el)
+
+  public export
+  slsfLCata : {atom, xty, nety, lty, aty : Type} ->
+    SLSFnonSlAlg atom xty nety lty aty ->
+    SnocList (SLSFmu atom) -> lty
+  slsfLCata alg@(algx, algne, alge, algl, alga) [<] =
+    alge
+  slsfLCata alg@(algx, algne, alge, algl, alga) (el :< ex) =
+    algl (slsfNeCata alg ex el)
+
+  public export
+  slsfAtomCata : {atom, xty, nety, lty, aty : Type} ->
+    SLSFnonSlAlg atom xty nety lty aty ->
+    atom -> aty
+  slsfAtomCata alg@(algx, algne, alge, algl, alga) ea = alga ea
+
+public export
+SLSfromSlSl : Type -> Type -> FinSliceObj SLSn
+SLSfromSlSl atom ty FZ = ty
+SLSfromSlSl atom ty (FS FZ) = Pair ty (SnocList ty)
+SLSfromSlSl atom ty (FS (FS FZ)) = SnocList ty
+SLSfromSlSl atom ty (FS (FS (FS FZ))) = atom
+
+public export
+SLSFMfromSlSl : (atom, var : Type) -> FinSliceObj SLSn
+SLSFMfromSlSl atom var = SLSfromSlSl atom (SLSFMnonSl atom var)
+
+public export
+SLSFMfromSlSlSubst : (atom, var : Type) ->
+  SliceMorphism {a=SLSsl}
+    (SLSvarF var)
+    (SLSFMfromSlSl atom var)
+SLSFMfromSlSlSubst atom var FZ v = inFV v
+SLSFMfromSlSlSubst atom var (FS FZ) v = void v
+SLSFMfromSlSlSubst atom var (FS (FS FZ)) v = void v
+SLSFMfromSlSlSubst atom var (FS (FS (FS FZ))) v = void v
+
+public export
+SLSFMfromSlSlAlg : (atom, var : Type) ->
+  SliceMorphism {a=SLSsl}
+    (SLSslF atom $ SLSFMfromSlSl atom var)
+    (SLSFMfromSlSl atom var)
+SLSFMfromSlSlAlg atom var FZ (a, l) = inFC (a, l)
+SLSFMfromSlSlAlg atom var (FS FZ) (x, l) = (x, l)
+SLSFMfromSlSlAlg atom var (FS (FS FZ)) (Left ()) = Lin
+SLSFMfromSlSlAlg atom var (FS (FS FZ)) (Right (x, l)) = l :< x
+SLSFMfromSlSlAlg atom var (FS (FS (FS FZ))) ea = ea
+
+public export
+SLSFMfromSl : (atom, var : Type) -> SLSFM atom var -> SLSFMnonSl atom var
+SLSFMfromSl atom var =
+  slsSlEval
+    {atom}
+    (SLSvarF var)
+    (SLSFMfromSlSl atom var)
+    (SLSFMfromSlSlSubst atom var)
+    (SLSFMfromSlSlAlg atom var)
+    FZ
+
+mutual
+  public export
+  SLSFMtoSl : (atom, var : Type) ->
+    SLSFMnonSl atom var -> SLSFM atom var
+  SLSFMtoSl atom var (InFree (TFV ev)) =
+    InSlFv ev
+  SLSFMtoSl atom var (InFree (TFC (a, l))) =
+    InSlFc (InSlFc a, SLSFMtoSlL atom var l)
+
+  public export
+  SLSFMtoSlL : (atom, var : Type) ->
+    SnocList (SLSFMnonSl atom var) -> SLSFMl atom var
+  SLSFMtoSlL atom var Lin = InSlFc (Left ())
+  SLSFMtoSlL atom var (l :< x) = InSlFc (Right $ SLSFMtoSlNE atom var l x)
+
+  public export
+  SLSFMtoSlNE : (atom, var : Type) ->
+    SnocList (SLSFMnonSl atom var) -> SLSFMnonSl atom var -> SLSFMne atom var
+  SLSFMtoSlNE atom var l x =
+    InSlFc (SLSFMtoSl atom var x, SLSFMtoSlL atom var l)
+
+-- Now we can use the isomorphism between the slice (`SLSFM`) and
+-- non-slice (`SLSFMnonSl`) versions of S-expressions to define the
+-- evaluation of the latter in terms of the evaluation of the former.
+
+public export
+slsSubstFromSlSl : {atom : Type} -> (v, a : Type) ->
+  (v -> a) ->
+  SliceMorphism {a=SLSsl} (SLSvarF v) (SLSfromSlSl atom a)
+slsSubstFromSlSl {atom} v a subst FZ ev = subst ev
+slsSubstFromSlSl {atom} v a subst (FS FZ) ev = void ev
+slsSubstFromSlSl {atom} v a subst (FS (FS FZ)) ev = void ev
+slsSubstFromSlSl {atom} v a subst (FS (FS (FS FZ))) ev = void ev
+
+public export
+slsAlgFromSlSl : {atom : Type} -> (v, a : Type) ->
+  (SLSF atom a -> a) ->
+  SliceMorphism {a=SLSsl}
+    (SLSslF atom (SLSfromSlSl atom a))
+    (SLSfromSlSl atom a)
+slsAlgFromSlSl {atom} v a alg FZ x = alg x
+slsAlgFromSlSl {atom} v a alg (FS FZ) x = x
+slsAlgFromSlSl {atom} v a alg (FS (FS FZ)) (Left ()) = Lin
+slsAlgFromSlSl {atom} v a alg (FS (FS FZ)) (Right (ea, el)) = el :< ea
+slsAlgFromSlSl {atom} v a alg (FS (FS (FS FZ))) ea = ea
+
+public export
+slsFMeval : {atom : Type} -> FreeFEval (SLSF atom)
+slsFMeval {atom} v a subst alg el =
+  slsSlEval {atom} (SLSvarF v) (SLSfromSlSl atom a)
+    (slsSubstFromSlSl {atom} v a subst)
+    (slsAlgFromSlSl {atom} v a alg)
+    FZ
+    (SLSFMtoSl atom v el)
+
+public export
+slsFMevalL : {atom : Type} -> (v, a : Type) ->
+  (v -> a) -> (SLSF atom a -> a) -> SnocList (SLSFMnonSl atom v) -> SnocList a
+slsFMevalL {atom} v a subst alg = map (slsFMeval {atom} v a subst alg)
+
+-- Now we show that the slice-functor version of `SLSFM` can
+-- indeed be represented by a `BinTreeFM`.
+--
+-- However, it is only a subset of `BinTreeFM`s which represent
+-- `SLSFM`s, so `SLSFM` can be viewed as a refinement of `BinTreeFM`.
+-- The reason is that a `BinTreeFM` term can only be seen as a valid
+-- `SLSFM` term if variable terms are never _applied_ to other terms --
+-- that is, if it has subterms of the form `Pair(var, tree)`.  Because
+-- a variable term is always a leaf, we could not meaningfully interpret
+-- its application to another term.
+
+public export
+BTisSLSret : Type
+BTisSLSret = Fin 3
+
+public export
+BTisVarN : Nat
+BTisVarN = Z
+
+public export
+BTisVar : BTisSLSret
+BTisVar = natToFinLT BTisVarN
+
+public export
+BTisCompoundSLSN : Nat
+BTisCompoundSLSN = S BTisVarN
+
+public export
+BTisCompoundSLS : BTisSLSret
+BTisCompoundSLS = natToFinLT BTisCompoundSLSN
+
+public export
+BTisNotSLSN : Nat
+BTisNotSLSN = S BTisCompoundSLSN
+
+public export
+BTisNotSLS : BTisSLSret
+BTisNotSLS = natToFinLT BTisNotSLSN
+
+public export
+btSLStypeSubst : (var : Type) -> var -> BTisSLSret
+btSLStypeSubst var _ = BTisVar
+
+public export
+btSLSpairType : BTisSLSret -> BTisSLSret -> BTisSLSret
+btSLSpairType l r = case l of
+  FZ => BTisNotSLS
+  FS FZ => case r of
+    FZ => BTisCompoundSLS
+    FS FZ => BTisCompoundSLS
+    FS (FS FZ) => BTisNotSLS
+  FS (FS FZ) => BTisNotSLS
+
+public export
+btRetIsCompoundSLS : BTisSLSret -> Bool
+btRetIsCompoundSLS sls = sls == BTisCompoundSLS
+
+public export
+btRetIsSLS : BTisSLSret -> Bool
+btRetIsSLS sls = btRetIsCompoundSLS sls || (sls == BTisVar)
+
+public export
+btSLSappType : (l, r : BTisSLSret) ->
+  IsTrue (btRetIsCompoundSLS l) ->
+  IsTrue (btRetIsSLS r) ->
+  IsTrue (btRetIsCompoundSLS $ btSLSpairType l r)
+btSLSappType FZ r eql eqr = case eql of Refl impossible
+btSLSappType (FS FZ) FZ eql eqr = Refl
+btSLSappType (FS FZ) (FS FZ) eql eqr = Refl
+btSLSappType (FS FZ) (FS (FS FZ)) eql eqr = case eqr of Refl impossible
+btSLSappType (FS (FS FZ)) r eql eqr = case eql of Refl impossible
+
+public export
+btSLStypeAlg : (atom : Type) -> BinTreeAlg atom BTisSLSret
+btSLStypeAlg atom (Left ea) = BTisCompoundSLS
+btSLStypeAlg atom (Right (l, r)) = btSLSpairType l r
+
+public export
+btSLStype : (atom, var : Type) -> BinTreeFM atom var -> BTisSLSret
+btSLStype atom var =
+  binTreeFMEval {atom} {v=var} {a=BTisSLSret}
+    (btSLStypeSubst var)
+    (btSLStypeAlg atom)
+
+public export
+btIsCompoundSLS : (atom, var : Type) -> BinTreeFM atom var -> Bool
+btIsCompoundSLS atom var = btRetIsCompoundSLS . btSLStype atom var
+
+public export
+btIsSLS : (atom, var : Type) -> BinTreeFM atom var -> Bool
+btIsSLS atom var = btRetIsSLS . btSLStype atom var
+
+public export
+BinTreeSLS : Type -> Type -> Type
+BinTreeSLS atom var =
+  Refinement {a=(BinTreeFM atom var)} (btIsSLS atom var)
+
+public export
+BinTreeCompoundSLS : Type -> Type -> Type
+BinTreeCompoundSLS atom var =
+  Refinement {a=(BinTreeFM atom var)} (btIsCompoundSLS atom var)
+
+public export
+btAppCompoundSLS : {atom, var : Type} ->
+  (tl, tr : BinTreeFM atom var) ->
+  IsTrue (btIsCompoundSLS atom var tl) ->
+  IsTrue (btIsSLS atom var tr) ->
+  IsTrue (btIsCompoundSLS atom var (InBTm $ Right (tl, tr)))
+btAppCompoundSLS {atom} {var} tl tr = btSLSappType _ _
+
+public export
+btAppCompound : {atom, var : Type} ->
+  BinTreeCompoundSLS atom var -> BinTreeSLS atom var ->
+  BinTreeCompoundSLS atom var
+btAppCompound {atom} {var} tl tr =
+  Element0
+    (InBTm $ Right (fst0 tl, fst0 tr))
+    (btAppCompoundSLS {atom} {var} (fst0 tl) (fst0 tr) (snd0 tl) (snd0 tr))
+
+public export
+btIsSLSfromCompound : {atom, var : Type} -> (t : BinTreeFM atom var) ->
+  IsTrue (btIsCompoundSLS atom var t) -> IsTrue (btIsSLS atom var t)
+btIsSLSfromCompound {atom} {var} t = orLeft
+
+public export
+btSLSfromCompound : {atom, var : Type} ->
+  BinTreeCompoundSLS atom var -> BinTreeSLS atom var
+btSLSfromCompound {atom} {var} = s0MapSnd $ btIsSLSfromCompound {atom} {var}
+
+public export
+BinTreeFMfromSlSl : (atom, var : Type) -> FinSliceObj SLSn
+BinTreeFMfromSlSl atom var FZ =
+  BinTreeSLS atom var
+BinTreeFMfromSlSl atom var (FS FZ) =
+  (BinTreeSLS atom var, atom -> BinTreeCompoundSLS atom var)
+BinTreeFMfromSlSl atom var (FS (FS FZ)) =
+  atom -> BinTreeCompoundSLS atom var
+BinTreeFMfromSlSl atom var (FS (FS (FS FZ))) =
+  atom
+
+public export
+BinTreeFMfromSlSlSubst : (atom, var : Type) ->
+  SliceMorphism {a=SLSsl}
+    (SLSvarF var)
+    (BinTreeFMfromSlSl atom var)
+BinTreeFMfromSlSlSubst atom var FZ v = Element0 (InBTm $ Left $ Left v) Refl
+BinTreeFMfromSlSlSubst atom var (FS FZ) v = void v
+BinTreeFMfromSlSlSubst atom var (FS (FS FZ)) v = void v
+BinTreeFMfromSlSlSubst atom var (FS (FS (FS FZ))) v = void v
+
+public export
+BinTreeFMfromSlSlAlg : (atom, var : Type) ->
+  SliceMorphism {a=SLSsl}
+    (SLSslF atom $ BinTreeFMfromSlSl atom var)
+    (BinTreeFMfromSlSl atom var)
+BinTreeFMfromSlSlAlg atom var FZ (a, l) = btSLSfromCompound $ l a
+BinTreeFMfromSlSlAlg atom var (FS FZ) (tl, tr) = (tl, tr)
+BinTreeFMfromSlSlAlg atom var (FS (FS FZ))
+  (Left ()) =
+    \ea => Element0 (InBTm $ Left $ Right ea) Refl
+BinTreeFMfromSlSlAlg atom var (FS (FS FZ))
+  (Right (tr, tlv)) = \ea => (btAppCompound {atom} {var} (tlv ea) tr)
+BinTreeFMfromSlSlAlg atom var (FS (FS (FS FZ))) ea = ea
+
+public export
+BinTreeSLSfromSl : (atom, var : Type) -> SLSFM atom var -> BinTreeSLS atom var
+BinTreeSLSfromSl atom var =
+  slsSlEval
+    {atom}
+    (SLSvarF var)
+    (BinTreeFMfromSlSl atom var)
+    (BinTreeFMfromSlSlSubst atom var)
+    (BinTreeFMfromSlSlAlg atom var)
+    FZ
+
+public export
+BinTreeFMfromSl : (atom, var : Type) -> SLSFM atom var -> BinTreeFM atom var
+BinTreeFMfromSl atom var el = fst0 $ BinTreeSLSfromSl atom var el
+
+----------------------------------------------
+---- Dependent predicates on binary trees ----
+----------------------------------------------
+
+public export
+data BTisSLSty : {atom, var : Type} -> BinTreeFM atom var -> BTisSLSret -> Type
+    where
+  BTtyVar : {atom, var : Type} ->
+    (ev : var) -> BTisSLSty (InBTv ev) BTisVar
+  BTtyAtom : {atom, var : Type} ->
+    (ea : atom) -> BTisSLSty (InBTa ea) BTisCompoundSLS
+  BTtyAppVar : {atom, var : Type} ->
+    (l, r : BinTreeFM atom var) ->
+    BTisSLSty l BTisVar -> BTisSLSty (InBTp l r) BTisNotSLS
+  BTtyNonSLSl : {atom, var : Type} ->
+    (l, r : BinTreeFM atom var) ->
+    BTisSLSty l BTisNotSLS -> BTisSLSty (InBTp l r) BTisNotSLS
+  BTtyNonSLSr : {atom, var : Type} ->
+    (l, r : BinTreeFM atom var) ->
+    BTisSLSty r BTisNotSLS -> BTisSLSty (InBTp l r) BTisNotSLS
+  BTtyCompAppVar : {atom, var : Type} ->
+    (l, r : BinTreeFM atom var) ->
+    BTisSLSty l BTisCompoundSLS -> BTisSLSty r BTisVar ->
+    BTisSLSty (InBTp l r) BTisCompoundSLS
+  BTtyCompAppComp : {atom, var : Type} ->
+    (l, r : BinTreeFM atom var) ->
+    BTisSLSty l BTisCompoundSLS -> BTisSLSty r BTisCompoundSLS ->
+    BTisSLSty (InBTp l r) BTisCompoundSLS
+
 --------------------------------------------------------
 ---- Binary trees as "atom-or-pair"-style S-expressions
 --------------------------------------------------------
@@ -563,8 +1060,8 @@ BTSexpF atom (x, p) = (BTSexp1 atom p, BTSexp2 x)
 -- a slice algebra.  This definition of a "BTSexp" algebra is another way
 -- of writing a morphism in the slice category of `Type` over `2`.
 --
--- What this allows as an expressive (not logical) extension to the notion
--- of a binary-tree algebra is a catamorphism that returns different types
+-- What this allows is an expressive (not logical) extension to the notion
+-- of a binary-tree algebra as a catamorphism that returns different types
 -- for induction on expressions and pairs.
 public export
 BTSexpAlg : Type -> Type -> Type -> Type
@@ -692,6 +1189,22 @@ Show atom => Show (BinTreeMu atom) where
 -----------------------------------------------
 -----------------------------------------------
 
+-- An algebra for paramorphisms on `BinTreeMu`.
+public export
+BinTreeParaAlg : Type -> Type -> Type
+BinTreeParaAlg atom a = BinTreeF atom (BinTreeMu atom, a) -> a
+
+public export
+BinTreeParaToCataAlg : {0 atom, a : Type} ->
+  BinTreeParaAlg atom a -> BinTreeAlg atom (BinTreeMu atom, a)
+BinTreeParaToCataAlg {atom} {a} alg el =
+  (InBTm (mapSnd {f=Either} (mapHom {f=Pair} fst) el), alg el)
+
+public export
+binTreePara : {0 atom, a : Type} -> BinTreeParaAlg atom a -> BinTreeMu atom -> a
+binTreePara {atom} {a} alg =
+  snd . binTreeCata {atom} {a=(BinTreeMu atom, a)} (BinTreeParaToCataAlg alg)
+
 -- An algebra for catamorphisms on pairs of `BinTreeMu`s that uses the
 -- product-hom adjunction.
 public export
@@ -787,6 +1300,73 @@ public export
 binTreeParProdCata : {0 atom, atom', a : Type} ->
   BinTreeParProdAlg atom atom' a -> BinTreeMu atom -> BinTreeMu atom' -> a
 binTreeParProdCata = binTreeProdCata . BinTreeParProdAlgToProdAlg
+
+-----------------------------------------------
+---- Algebras for products of binary trees ----
+-----------------------------------------------
+
+public export
+BTFpos : Type -> Type
+BTFpos atom = Either atom Unit
+
+public export
+btfPosA : {atom : Type} -> atom -> BTFpos atom
+btfPosA {atom} = Left
+
+public export
+btfPosP : (atom : Type) -> BTFpos atom
+btfPosP atom = Right ()
+
+public export
+BTFdir : (atom : Type) -> BTFpos atom -> Type
+BTFdir atom (Left ea) = Void
+BTFdir atom (Right ()) = Fin 2
+
+public export
+BTFradj : (atom : Type) -> Type -> SliceObj (BTFpos atom)
+BTFradj atom x (Left ea) = Unit
+BTFradj atom x (Right ()) = (x, x)
+
+public export
+BTFsl : Type -> Type
+BTFsl atom = Either (BTFpos atom) Unit
+
+public export
+BTFradjEither : (atom : Type) -> Type -> SliceObj (BTFsl atom)
+BTFradjEither atom x (Left i) = BTFradj atom x i
+BTFradjEither atom x (Right ()) = (i : BTFpos atom ** BTFradj atom x i)
+
+public export
+BTFslF : (atom : Type) -> SliceEndofunctor (BTFsl atom)
+BTFslF atom sl = BTFradjEither atom (sl $ Right ())
+
+public export
+BTSslMu : (atom : Type) -> SliceObj (BTFsl atom)
+BTSslMu atom = SliceMu $ BTFslF atom
+
+public export
+BTSslFM : (atom : Type) -> SliceEndofunctor (BTFsl atom)
+BTSslFM atom = SliceFreeM $ BTFslF atom
+
+public export
+BinTreeProdHomAlgAlt : (atom, atom', x : Type) -> Type
+BinTreeProdHomAlgAlt atom atom' x =
+  (atom -> BinTreeMu atom' -> x,
+   BinTreeMu atom' -> (BinTreeMu atom' -> x) -> (BinTreeMu atom' -> x) -> x)
+
+public export
+BinTreeProdHomAlgFromAlt : (atom, atom', x : Type) ->
+  BinTreeProdHomAlgAlt atom atom' x -> BinTreeProdHomAlg atom atom' x
+BinTreeProdHomAlgFromAlt atom atom' x (algl, algr) (Left ea) el' =
+  algl ea el'
+BinTreeProdHomAlgFromAlt atom atom' x (algl, algr) (Right (algl', algr')) el' =
+  algr el' algl' algr'
+
+public export
+BinTreeProdHomAlgToAlt : (atom, atom', x : Type) ->
+  BinTreeProdHomAlg atom atom' x -> BinTreeProdHomAlgAlt atom atom' x
+BinTreeProdHomAlgToAlt atom atom' x alg =
+  (alg . Left, Prelude.curry . flip (alg . Right))
 
 -------------------
 ---- Utilities ----

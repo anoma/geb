@@ -5,6 +5,8 @@ import Library.IdrisCategories
 import public LanguageDef.InternalCat
 import public LanguageDef.SlicePolyCat
 
+%hide Library.IdrisCategories.BaseChangeF
+
 ------------------------------------------------
 ------------------------------------------------
 ---- Limits/colimits of polynomial functors ----
@@ -1850,9 +1852,9 @@ spfdParRepEvalDir : {dom : Type} ->
     q
     (spfdParRepEvalPos {dom} p q)
 spfdParRepEvalDir {dom} p q () (qpdm, ()) ed qd
-    with (snd qpdm ed qd) proof eq
+    with (snd qpdm ed qd)
   spfdParRepEvalDir {dom} p q () ((qp ** dm), ()) ed qd | ((), pd) =
-    (((ed ** qd) ** Left $ rewrite fstEq eq in Refl), pd)
+    (((ed ** qd) ** Left $ rewrite unitUnique (fst $ dm ed qd) () in Refl), pd)
 
 public export
 spfdParRepEval : {dom : Type} ->
@@ -2260,11 +2262,383 @@ spfdParClosureObjDirFromIntDir {dom} {cod} q r ed ec (() ** dm) (qp ** rd)
        rewrite eq in
        ((ed ** rd) ** Left $ rewrite unitUnique (fst (rqd ed rd)) () in Refl))
 
------------------------------------------------------------
------------------------------------------------------------
----- Initial algebras of slice polynomial endofunctors ----
------------------------------------------------------------
------------------------------------------------------------
+------------------------------------------
+------------------------------------------
+---- Translation and scaling functors ----
+------------------------------------------
+------------------------------------------
+
+-- We call this functor "translate" since it adds a constant to the
+-- input functor.
+public export
+spfdTranslate : {dom, cod : Type} ->
+  SPFData dom cod -> SliceObj cod -> SPFData dom cod
+spfdTranslate {dom} {cod} f a =
+  spfdCoproduct {dom} {cod} (SPFDataConst {cod} dom a) f
+
+public export
+spfdTranslateTerminal : {dom, cod : Type} ->
+  SPFData dom cod -> SPFData dom cod
+spfdTranslateTerminal {dom} {cod} f =
+  spfdTranslate {dom} {cod} f (SliceObjTerminal cod)
+
+-- We call this functor "scale" since it multiplies a constant by the
+-- input functor.
+public export
+spfdScale : {dom, cod : Type} ->
+  SPFData dom cod -> SliceObj cod -> SPFData dom cod
+spfdScale {dom} {cod} f a =
+  spfdProduct {dom} {cod} (SPFDataConst {cod} dom a) f
+
+----------------------------------------
+----------------------------------------
+---- Pointed and copointed functors ----
+----------------------------------------
+----------------------------------------
+
+-- We may call this the "free pointed" endofunctor of a given endofunctor, since
+-- we are adjoining to it a natural transformation from the identity functor.
+-- (See https://ncatlab.org/nlab/show/pointed+endofunctor .)
+public export
+spfdFreePointed : {x : Type} -> (f : SPFData x x) -> SPFData x x
+spfdFreePointed {x} = spfdCoproduct {dom=x} {cod=x} (SPFDid x)
+
+public export
+spfdFreePointedUnit : {x : Type} ->
+  (f : SPFData x x) ->
+  SPFnt {dom=x} {cod=x} (SPFDid x) (spfdFreePointed {x} f)
+spfdFreePointedUnit {x} f = SPFDm (\_, _ => Left ()) (\_, (), _ => id)
+
+-- We may this the "cofree copointed" functor of a given endofunctor, since
+-- we are adjoining to it a natural transformation to the identity functor.
+-- (See https://ncatlab.org/nlab/show/copointed+endofunctor .)
+public export
+spfdCofreeCopointed : {x : Type} -> (f : SPFData x x) -> SPFData x x
+spfdCofreeCopointed {x} = spfdProduct {dom=x} {cod=x} (SPFDid x)
+
+public export
+spfdCofreeCopointedCounit : {x : Type} ->
+  (f : SPFData x x) ->
+  SPFnt {dom=x} {cod=x} (spfdCofreeCopointed {x} f) (SPFDid x)
+spfdCofreeCopointedCounit {x} f =
+  SPFDm (\_, _ => ()) (\ex, ((), ep), ex, Refl => Left Refl)
+
+-----------------------------
+-----------------------------
+---- Horizontal products ----
+-----------------------------
+-----------------------------
+
+-- Products in the horizontal category of the double category of slice
+-- polynomial functors (i.e. the one where the objects are the slice polynomial
+-- functors, the morphisms are the cells, and the composition is cell
+-- vertical composition).
+
+public export
+spfdHProdProj1 : (a, b : Type) -> SPFData (a, b) a
+spfdHProdProj1 a b = SPFDsigma fst
+
+public export
+spfdHProdProj2 : (a, b : Type) -> SPFData (a, b) b
+spfdHProdProj2 a b = SPFDsigma snd
+
+public export
+spfdHProdIntro : {a, b, b' : Type} ->
+  SPFData a b -> SPFData a b' -> SPFData a (b, b')
+spfdHProdIntro {a} {b} {b'} f g =
+  SPFD
+    (\(eb, eb') => (spfdPos f eb, spfdPos g eb'))
+    (\(eb, eb'), (efp, egp), ea => (spfdDir f eb efp ea, spfdDir g eb' egp ea))
+
+-------------------------
+-------------------------
+---- Higher products ----
+-------------------------
+-------------------------
+
+-- `SliceObj (Either a b)` is equivalent to `(SliceObj a, SliceObj b)`,
+-- so we can postcompose projections after functors whose codomains
+-- are of `Either` types.
+
+public export
+spfdPostProj1 : {x, y, z : Type} -> SPFData x (Either y z) -> SPFData x y
+spfdPostProj1 {x} {y} f = SPFD (spfdPos f . Left) (\ey => spfdDir f (Left ey))
+
+public export
+spfdPostProj2 : {x, y, z : Type} -> SPFData x (Either y z) -> SPFData x z
+spfdPostProj2 {x} {y} f = SPFD (spfdPos f . Right) (\ez => spfdDir f (Right ez))
+
+public export
+spfdProdIntroCod : {x, y, z : Type} ->
+  SPFData x y -> SPFData x z -> SPFData x (Either y z)
+spfdProdIntroCod {x} {y} {z} f g =
+  SPFD
+    (eitherElim (spfdPos f) (spfdPos g))
+    (\eyz => case eyz of Left ey => spfdDir f ey ; Right ez => spfdDir g ez)
+
+---------------------------------------------------------
+---------------------------------------------------------
+---- Higher-order postcomposition polynomial functor ----
+---------------------------------------------------------
+---------------------------------------------------------
+
+-- A wrapper around `SPFDcompDir` which operates on the pre-composed
+-- functor's direction-type in its alternate `SPFdirSl` form (rather
+-- than `SPFdirType`).
+public export
+SPFDcompDirSl : {x, y, z : Type} -> (f : SPFData y z) ->
+  (fmpos : SliceObj y) ->
+  SPFdirSl x y fmpos ->
+  SPFdirSl x z (SPFDcompPosSl f fmpos)
+SPFDcompDirSl {x} {y} {z} f fmpos dir =
+  SPFdirToSl $ SPFDcompDir f (SPFD fmpos (SPFdirFromSl dir))
+
+-- Next we internalize `SPFDcompDirSl` -- meaning,
+-- given that `SPFDcompDirSl` maps slice objects to
+-- slice objects (specifically, slices over `SPFdirSlBase x y fmpos`
+-- to slices over `SPFdirSlBase x z (SPFDcompPosSl f fmpos)`),
+-- we exhibit an `SPFData` whose interpretation is precisely
+-- `SPFDcompDirSl`.  (Note that the internalization of `SPFDcompPosSl f`,
+-- as a functor between slice objects representing position-types, is
+-- simply `f` itself!  This makes sense because for any polynomial functor
+-- `p`, the position-type of `f . p` depends only on the position-type
+-- of `p`, not on its direction-type.  It does depend on both the position-type
+-- and the direction-type of `f`.)
+--
+-- This is the position-type of the polynomial internalization of
+-- `SPFDcompDirSl`.
+public export
+SPFDcompDirSPFDpos : {x : Type} -> (f : SPFData x x) ->
+  (fmpos : SliceObj x) ->
+  SPFdirSl x x (SPFDcompPosSl f fmpos)
+SPFDcompDirSPFDpos {x} (SPFD fpos fdir) fmpos ((ec ** ep ** dm), ed) =
+  (ex : x ** fdir ec ep ex)
+
+-- This is the direction-type of the polynomial internalization of
+-- `SPFDcompDirSl`.
+public export
+SPFDcompDirSPFDdir : {x : Type} -> (f : SPFData x x) ->
+  (fmpos : SliceObj x) ->
+  SPFdirType
+    (SPFdirSlBase x x fmpos)
+    (SPFdirSlBase x x (SPFDcompPosSl f fmpos))
+    (SPFDcompDirSPFDpos {x} f fmpos)
+SPFDcompDirSPFDdir {x} (SPFD fpos fdir) fmpos
+  ((ec ** ep ** dm), ed) (ex ** fd) ((ec' ** efmp), ed') =
+    (eceq : ec' = ex ** edeq : ed' = ed ** dm ex fd = efmp)
+
+-- Now that we have defined both position and the direction types, we
+-- can define the polynomial internalization of `SPFDcompDirSl`.
+public export
+SPFDcompDirSPFD : {x : Type} -> (f : SPFData x x) ->
+  (fmpos : SliceObj x) ->
+  SPFData
+    (SPFdirSlBase x x fmpos)
+    (SPFdirSlBase x x (SPFDcompPosSl f fmpos))
+SPFDcompDirSPFD {x} f fmpos =
+  SPFD
+    (SPFDcompDirSPFDpos {x} f fmpos)
+    (SPFDcompDirSPFDdir {x} f fmpos)
+
+-- Next we demonstrate that `SPFDcompDirSPFD` _is_ a correct
+-- internalization of `SPFDcompDirSl`, by showing inverse natural
+-- transformations between the latter and the interpetation of the
+-- former.
+
+public export
+InterpSPFDcompDirSPFD : {x : Type} -> (f : SPFData x x) ->
+  (fmpos : SliceObj x) ->
+  SPFdirSl x x fmpos ->
+  SPFdirSl x x (SPFDcompPosSl f fmpos)
+InterpSPFDcompDirSPFD {x} f fmpos =
+  InterpSPFData (SPFDcompDirSPFD f fmpos)
+
+public export
+SPFDcompDirSPFDtoF : {x : Type} -> (f : SPFData x x) ->
+  (fmpos : SliceObj x) ->
+  SliceNatTrans
+    {x=(SPFdirSlBase x x fmpos)}
+    {y=(SPFdirSlBase x x (SPFDcompPosSl f fmpos))}
+    (InterpSPFDcompDirSPFD {x} f fmpos)
+    (SPFDcompDirSl {x} f fmpos)
+SPFDcompDirSPFDtoF {x} (SPFD fpos fdir) fmpos sl
+  ((ec ** ep ** fdmp), ed) ((ex ** efd) ** sldm) =
+    ((ex ** efd) ** sldm ((ex ** fdmp ex efd), ed) (Refl ** Refl ** Refl))
+
+public export
+SPFDcompDirSPFDfromF : {x : Type} -> (f : SPFData x x) ->
+  (fmpos : SliceObj x) ->
+  SliceNatTrans
+    {x=(SPFdirSlBase x x fmpos)}
+    {y=(SPFdirSlBase x x (SPFDcompPosSl f fmpos))}
+    (SPFDcompDirSl {x} f fmpos)
+    (InterpSPFDcompDirSPFD {x} f fmpos)
+SPFDcompDirSPFDfromF {x} (SPFD fpos fdir) fmpos sl
+  ((ec ** ep ** dm), ed) ((ex ** dd) ** esl) =
+    ((ex ** dd) **
+     \((ec ** ep), ed), (Refl ** Refl ** Refl) => esl)
+
+-- Given an endofunctor `f` and a position-type `fmpos`, this produces the
+-- type of positions of the free pointed functor of the functor resulting
+-- from composing `f` after a functor with positions `fmpos`.
+public export
+SPFDcompPosPointedSl : {x : Type} ->
+  SPFData x x -> SliceObj x -> SliceObj x
+SPFDcompPosPointedSl g fmpos ec =
+  Either (SPFDidPos x ec) (SPFDcompPosSl {y=x} {z=x} g fmpos ec)
+
+-- Now we show that `spfdTranslateTerminal f` is an internalization
+-- of `SPFDcompPosPointedSl`:  that is, the interpretation of the
+-- former is naturally isomorphic to the latter.
+
+public export
+SPFDfmDirAlgBaseFdirPosBaseAlgPointed : {x : Type} -> {f : SPFData x x} ->
+  {pos : SliceObj x} ->
+  SliceMorphism {a=x} (SPFDcompPosPointedSl {x} f pos) pos ->
+  SliceMorphism {a=x}
+    (InterpSPFData (spfdTranslateTerminal {dom=x} {cod=x} f) pos)
+    pos
+SPFDfmDirAlgBaseFdirPosBaseAlgPointed {x} {f} {pos} m ex (Left () ** dm) =
+  m ex (Left ())
+SPFDfmDirAlgBaseFdirPosBaseAlgPointed {x} {f} {pos} m ex (Right ep ** dm) =
+  m ex (Right (ep ** dm))
+
+public export
+SPFDcompPosPointedSPFDtoF : {x : Type} -> (f : SPFData x x) ->
+  SliceNatTrans {x} {y=x}
+    (InterpSPFData (spfdTranslateTerminal f))
+    (SPFDcompPosPointedSl f)
+SPFDcompPosPointedSPFDtoF {x} (SPFD fpos fdir) fmpos ex (Left () ** dmv_) =
+  Left ()
+SPFDcompPosPointedSPFDtoF {x} (SPFD fpos fdir) fmpos ex (Right ep ** dm) =
+  Right (ep ** dm)
+
+public export
+SPFDcompPosPointedSPFDfromF : {x : Type} -> (f : SPFData x x) ->
+  SliceNatTrans {x} {y=x}
+    (SPFDcompPosPointedSl f)
+    (InterpSPFData (spfdTranslateTerminal f))
+SPFDcompPosPointedSPFDfromF {x} (SPFD fpos fdir) fmpos ex (Left ()) =
+  (Left () ** \_ => voidF _)
+SPFDcompPosPointedSPFDfromF {x} (SPFD fpos fdir) fmpos ex (Right (ep ** dm)) =
+  (Right ep ** dm)
+
+-- Given an endofunctor `f`, this produces the type of directions of the
+-- free pointed functor of the functor resulting from composing `f` after a
+-- functor with positions `fmpos` and directions `fmdir`.
+public export
+SPFDcompDirPointedSl : {x : Type} -> (f : SPFData x x) ->
+  (fmpos : SliceObj x) ->
+  SPFdirSl x x fmpos ->
+  SPFdirSl x x (SPFDcompPosPointedSl f fmpos)
+SPFDcompDirPointedSl {x} f fmpos fmdir ((ec ** Left ()), ed) =
+  SPFDidDir x ec () ed
+SPFDcompDirPointedSl {x} f fmpos fmdir ((ec ** Right epdm), ed) =
+  SPFDcompDirSl {x} f fmpos fmdir ((ec ** epdm), ed)
+
+-- Next we internalize `SPFDcompDirPointedSl` -- meaning,
+-- given that `SPFDcompDirPointedSl` maps slice objects to
+-- slice objects (specifically, slices over `SPFdirSlBase x x fmpos`
+-- to slices over `SPFdirSlBase x x (SPFDcompPosPointedSl f fmpos)`),
+-- we exhibit it as a functor, and specifically as a _polynomial_
+-- functor, by building an `SPFData` whose interpretation is precisely
+-- `SPFDcompDirPointedSl`.
+--
+-- This is the position-type of the polynomial internalization of
+-- `SPFDcompDirPointedSl`.
+public export
+SPFDcompDirPointedSPFDpos : {x : Type} -> (f : SPFData x x) ->
+  (fmpos : SliceObj x) ->
+  SPFdirSl x x (SPFDcompPosPointedSl f fmpos)
+SPFDcompDirPointedSPFDpos {x} (SPFD fpos fdir) fmpos
+  ((ec ** Left ()), ed) =
+    ec = ed
+SPFDcompDirPointedSPFDpos {x} (SPFD fpos fdir) fmpos
+  ((ec ** Right (ep ** dm)), ed) =
+    SPFDcompDirSPFDpos {x} (SPFD fpos fdir) fmpos
+      ((ec ** ep ** dm), ed)
+
+-- This is the direction-type of the polynomial internalization of
+-- `SPFDcompDirPointedSl`.
+public export
+SPFDcompDirPointedSPFDdir : {x : Type} -> (f : SPFData x x) ->
+  (fmpos : SliceObj x) ->
+  SPFdirType
+    (SPFdirSlBase x x fmpos)
+    (SPFdirSlBase x x (SPFDcompPosPointedSl f fmpos))
+    (SPFDcompDirPointedSPFDpos {x} f fmpos)
+SPFDcompDirPointedSPFDdir {x} (SPFD fpos fdir) fmpos
+  ((ex ** Left ()), ex) Refl ((ec' ** efmp), ed') =
+    Void
+SPFDcompDirPointedSPFDdir {x} (SPFD fpos fdir) fmpos
+  ((ec ** Right (ep ** dm)), ed) (ex ** fd) ((ec' ** efmp), ed') =
+    SPFDcompDirSPFDdir {x} (SPFD fpos fdir) fmpos
+      ((ec ** ep ** dm), ed) (ex ** fd) ((ec' ** efmp), ed')
+
+-- Now that we have defined both position and the direction types, we
+-- can define the polynomial internalization of `SPFDcompDirPointedSl`.
+public export
+SPFDcompDirPointedSPFD : {x : Type} -> (f : SPFData x x) ->
+  (fmpos : SliceObj x) ->
+  SPFData
+    (SPFdirSlBase x x fmpos)
+    (SPFdirSlBase x x (SPFDcompPosPointedSl f fmpos))
+SPFDcompDirPointedSPFD {x} f fmpos =
+  SPFD
+    (SPFDcompDirPointedSPFDpos {x} f fmpos)
+    (SPFDcompDirPointedSPFDdir {x} f fmpos)
+
+-- Next we demonstrate that `SPFDcompDirPointedSPFD` _is_ a correct
+-- internalization of `SPFDcompDirPointedSl`, by showing inverse natural
+-- transformations between the latter and the interpetation of the
+-- former.
+
+public export
+InterpSPFDcompDirPointedSPFD : {x : Type} -> (f : SPFData x x) ->
+  (fmpos : SliceObj x) ->
+  SPFdirSl x x fmpos ->
+  SPFdirSl x x (SPFDcompPosPointedSl f fmpos)
+InterpSPFDcompDirPointedSPFD {x} f fmpos =
+  InterpSPFData (SPFDcompDirPointedSPFD f fmpos)
+
+public export
+SPFDcompDirPointedSPFDtoF : {x : Type} -> (f : SPFData x x) ->
+  (fmpos : SliceObj x) ->
+  SliceNatTrans
+    {x=(SPFdirSlBase x x fmpos)}
+    {y=(SPFdirSlBase x x (SPFDcompPosPointedSl f fmpos))}
+    (InterpSPFDcompDirPointedSPFD {x} f fmpos)
+    (SPFDcompDirPointedSl {x} f fmpos)
+SPFDcompDirPointedSPFDtoF {x} (SPFD fpos fdir) fmpos sl
+  ((ex ** Left ()), ex) (Refl ** dm') =
+    Refl
+SPFDcompDirPointedSPFDtoF {x} (SPFD fpos fdir) fmpos sl
+  ((ec ** Right (ep ** fdmp)), ed) ((ex ** efd) ** sldm) =
+    SPFDcompDirSPFDtoF {x} (SPFD fpos fdir) fmpos sl
+      ((ec ** ep ** fdmp), ed)
+      ((ex ** efd) ** \((ec ** ep), ed) => sldm ((ec ** ep), ed))
+
+public export
+SPFDcompDirPointedSPFDfromF : {x : Type} -> (f : SPFData x x) ->
+  (fmpos : SliceObj x) ->
+  SliceNatTrans
+    {x=(SPFdirSlBase x x fmpos)}
+    {y=(SPFdirSlBase x x (SPFDcompPosPointedSl f fmpos))}
+    (SPFDcompDirPointedSl {x} f fmpos)
+    (InterpSPFDcompDirPointedSPFD {x} f fmpos)
+SPFDcompDirPointedSPFDfromF {x} (SPFD fpos fdir) fmpos sl
+  ((ex ** Left ()), ex) Refl =
+    (Refl ** \((ec ** ep), ed), dd => void dd)
+SPFDcompDirPointedSPFDfromF {x} (SPFD fpos fdir) fmpos sl
+  ((ec ** Right (ep ** dm)), ed) ((ex ** dd) ** esl) =
+    ((ex ** dd) **
+     \((ec ** ep), ed), (Refl ** Refl ** Refl) => esl)
+
+------------------------------------------------------------------
+------------------------------------------------------------------
+---- Algebras and coalgebras of slice polynomial endofunctors ----
+------------------------------------------------------------------
+------------------------------------------------------------------
 
 ---------------------------
 ---- Convenience types ----
@@ -2278,26 +2652,559 @@ public export
 SliceCoalgSPFD : {x : Type} -> SPFData x x -> SliceObj x -> Type
 SliceCoalgSPFD {x} f = SliceCoalg {a=x} (InterpSPFData {dom=x} {cod=x} f)
 
------------------------------------
---- `SPFData` initial algebras ----
------------------------------------
+------------------------------
+---- Type-valued algebras ----
+------------------------------
 
+-- The slice-polynomial version of the reflective `PolyFuncDirIsAlg`:
+-- the direction type of a slice polynomial endofunctor (on `SliceObj x` for
+-- some `x : Type`) whose position type is itself given by the application of
+-- a slice polynomial functor is equivalently an algebra of the latter
+-- polynomial functor with carrier `const (SliceObj x)` (the object of
+-- `SliceObj x` whose value at every term of `x` is itself `SliceObj x`).
+--
+-- `const (SliceObj x)` may be viewed as a reflection of the slice
+-- category over `x` within `SliceObj y`, analogously to (and as a
+-- generalization of) how `Type` is a reflection of the category `Type`
+-- within itself.
+public export
+SPFfposType : {x, y : Type} -> SPFData x y -> SliceObj y
+SPFfposType {x} {y} f = InterpSPFData f (const $ SliceObj x)
+
+-- Now we note that the reflection `SPFfposType` is precisely the
+-- position-type of post-composition.
+public export
+0 SPFfposTypeIsComp : {x, y : Type} -> (g : SPFData x y) ->
+  ExtEq {a=y} {b=Type}
+    (SPFfposType {x} {y} g)
+    (SPFDcompPosSl {y=x} {z=y} g (const $ SliceObj x))
+SPFfposTypeIsComp {x} {y} (SPFD gpos gdir) ex = Refl
+
+-- Now we note that an algebra of the type of types is the direction-type
+-- of a polynomial functor whose position-type is the position-type of
+-- post-composition.
+
+public export
+SPFDtypeAlg : {x : Type} -> SPFData x x -> Type
+SPFDtypeAlg {x} f = SliceAlgSPFD {x} f (const $ SliceObj x)
+
+public export
+SPFDdirIsAlg : {x : Type} -> (f : SPFData x x) ->
+  (SPFdirType x x (SPFfposType {x} f) = SPFDtypeAlg {x} f)
+SPFDdirIsAlg {x} f = Refl
+
+-- Therefore, specifying an algebra of `f` whose carrier is the type of types
+-- is equivalent to specifying a polynomial functor whose position-type is the
+-- position-type of post-composition with `f`.  (Given a fixed position-type,
+-- specifying a polynomial functor means specifying a direction-type, and
+-- when the position-type is the position-type of post-composition with `f`,
+-- the direction-type, we have just noted, is the same as the type of
+-- type-valued algebras of `f`.)
+public export
+SPFDdepSPFD : {x : Type} -> {f : SPFData x x} ->
+  SPFDtypeAlg {x} f -> SPFData x x
+SPFDdepSPFD {x} {f} = SPFD (SPFfposType {x} f)
+
+-- An algebra which collapses an SPFD-shaped tree of types into the coproduct
+-- of all those types.
+public export
+SPFDcoprodTypeAlg : {x : Type} -> (f : SPFData x x) -> SPFDtypeAlg {x} f
+SPFDcoprodTypeAlg {x} f =
+  SPFDcompDir f (SPFD (const $ SliceObj x) (sliceId (const $ SliceObj x)))
+
+-- Since `SPFDcoprodTypeAlg` is a type-algebra, it must be, we have just
+-- established, the direction-type of post-composition with some polynomial
+-- functor.  Here we exhibit that polynomial functor and show that
+-- `SPFDcoprodTypeAlg` is the direction-type of post-composition with it.
+--
+-- The position-type of the polynomial functor that we exhibit is itself
+-- the type of types.
+public export
+SPFDtypeIdPos : (x, y : Type) -> SliceObj y
+SPFDtypeIdPos x y = const $ SliceObj x
+
+-- The direction-type of the polynomial functor of which we show
+-- `SPFDcoprodTypeAlg` to be the direction-type of post-composition
+-- is the identity -- which makes sense only because the positions
+-- are themselves types (the position-type is the type of types).
+public export
+SPFDtypeIdDir : (x, y : Type) -> SPFdirType x y (SPFDtypeIdPos x y)
+SPFDtypeIdDir x y = sliceId {a=y} (const $ SliceObj x)
+
+public export
+SPFDtypeId : (x, y : Type) -> SPFData x y
+SPFDtypeId x y = SPFD (SPFDtypeIdPos x y) (SPFDtypeIdDir x y)
+
+-- To characterize `SPFDtypeId`: applying it to a type `a` produces
+-- a choice of type `d` together with a morphism from `d` to `a`.
+-- One way of looking at that is as a generic container type:  choose
+-- an index type (`d`) and then a collection of values of `a` indexed
+-- by `d`.  A morphism of the category of elements of `SPFDtypeId` is
+-- a map over a collection -- it leaves the index type unchanged, while
+-- transforming the contents via the morphism of the underlying category.
+--
+-- Another thing of note about this functor is that if we were to replace
+-- the coproduct with a _coend_, it would become the density formula for
+-- the identity functor.
+public export
+0 SPFDtypeIdCharacterization : (x, y : Type) ->
+  (a : SliceObj x) -> (ey : y) ->
+  InterpSPFData {dom=x} {cod=y} (SPFDtypeId x y) a ey =
+  (d : SliceObj x ** SliceMorphism {a=x} d a)
+SPFDtypeIdCharacterization x y a ey = Refl
+
+-- Now we confirm that `SPFDcoprodTypeAlg f` is indeed the direction-type
+-- of `f .  SPFDtypeId`.
+
+public export
+0 SPFDcoprodTypeAlgToComp : {x : Type} -> (f : SPFData x x) ->
+  (ec : x) ->
+  (ep : spfdPos f ec) ->
+  (dir : (ex : x) -> spfdDir f ec ep ex -> SliceObj x) ->
+  SliceMorphism {a=x}
+    (SPFDcoprodTypeAlg {x} f ec (ep ** dir))
+    (SPFDcompDir {x} {y=x} {z=x} f (SPFDtypeId x x) ec (ep ** dir))
+SPFDcoprodTypeAlgToComp {x} f ec ep dir = sliceId _
+
+public export
+0 SPFDcoprodTypeAlgFromComp : {x : Type} -> (f : SPFData x x) ->
+  (ec : x) ->
+  (ep : spfdPos f ec) ->
+  (dir : (ex : x) -> spfdDir f ec ep ex -> SliceObj x) ->
+  SliceMorphism {a=x}
+    (SPFDcompDir {x} {y=x} {z=x} f (SPFDtypeId x x) ec (ep ** dir))
+    (SPFDcoprodTypeAlg {x} f ec (ep ** dir))
+SPFDcoprodTypeAlgFromComp {x} f ec ep dir = sliceId _
+
+-- Now we confirm that `f . SPFDtypeId` is indeed
+-- `SPFDdepSPFD {f} (SPFDcoprodTypeAlg f)`.
+
+public export
+SPFDtypeIdCompToDepCoprod : {x : Type} -> (f : SPFData x x) ->
+  SPFnt {dom=x} {cod=x}
+    (SPFDcomp x x x f $ SPFDtypeId x x)
+    (SPFDdepSPFD {f} $ SPFDcoprodTypeAlg f)
+SPFDtypeIdCompToDepCoprod {x} f =
+  SPFDm
+    (sliceId _)
+    (\ex, (ep ** dm), ed, ((ex'' ** fd'') ** dd'') => ((ex'' ** fd'') ** dd''))
+
+public export
+SPFDdepCoprodTotypeIdComp : {x : Type} -> (f : SPFData x x) ->
+  SPFnt {dom=x} {cod=x}
+    (SPFDdepSPFD {f} $ SPFDcoprodTypeAlg f)
+    (SPFDcomp x x x f $ SPFDtypeId x x)
+SPFDdepCoprodTotypeIdComp {x} f =
+  SPFDm
+    (sliceId _)
+    (\ex, (ep ** dm), ed, ((ex'' ** fd'') ** dd'') => ((ex'' ** fd'') ** dd''))
+
+-----------------------------------------------------------
+-----------------------------------------------------------
+---- Initial algebras of slice polynomial endofunctors ----
+-----------------------------------------------------------
+-----------------------------------------------------------
+
+--------------------------------------------
+---- Least fixed point and catamorphism ----
+--------------------------------------------
+
+-- `SPFDmu` is the carrier, and `InSPFm` the action, of the initial
+-- algebra of `spfd`.  (As such, it is the algebra picked out by the
+-- left adjoint of the adjunction between the category of `spfd`-algebras
+-- and the terminal category.)
 public export
 data SPFDmu : {0 x : Type} -> SPFData x x -> SliceObj x where
   InSPFm : {0 spfd : SPFData x x} -> SliceAlgSPFD {x} spfd (SPFDmu {x} spfd)
 
+-- This coalgebra is the inverse of `InSPFm`.
 public export
 OutSPFm: {0 x : Type} -> {0 spfd : SPFData x x} ->
   SliceCoalgSPFD {x} spfd (SPFDmu {x} spfd)
 OutSPFm {x} {spfd} ex em = case em of InSPFm ex emx => emx
 
+-- `spfdCata` is the unique algebra morphism from `(SPFDmu spfd, InSPFm)`
+-- to `(a, alg)`.  (As such, it is the algebra morphism picked out by the right
+-- adjunct of the adjunction between the category of `spfd`-algebras and
+-- the terminal category.  It is also the counit of the adjunction, since
+-- the adjunction is with the terminal category -- the counit is the right
+-- adjunct applied to the identity, which is the only morphism in the terminal
+-- category.)
+mutual
+  public export
+  spfdCata : {0 x : Type} -> {0 spfd : SPFData x x} -> {0 a : SliceObj x} ->
+    SliceAlgSPFD {x} spfd a -> SliceMorphism {a=x} (SPFDmu {x} spfd) a
+  spfdCata {x} {spfd} {a} alg ex em =
+    case em of
+      InSPFm ex (emp ** emdm) =>
+        alg ex (emp ** spfdCataDir {x} {spfd} {a} alg ex emp emdm)
+
+  public export
+  spfdCataDir : {0 x : Type} -> {0 spfd : SPFData x x} -> {0 a : SliceObj x} ->
+    SliceAlgSPFD {x} spfd a ->
+    (ec : x) -> (emp : spfdPos spfd ec) ->
+    (emdm : SliceMorphism {a=x} (spfdDir spfd ec emp) (SPFDmu spfd)) ->
+    SliceMorphism {a=x} (spfdDir spfd ec emp) a
+  -- If Idris recognized it as terminating, this could be written as:
+  --  spfdCataDir {x} {spfd} {a} alg ec emp =
+  --    sliceComp {x=(spfdDir spfd ec emp)} {y=(SPFDmu {x} spfd)} {z=a}
+  --    (spfdCata {x} {spfd} {a} alg)
+  spfdCataDir {x} {spfd} {a} alg ec emp emdm ed =
+    spfdCata {x} {spfd} {a} alg ed . emdm ed
+
 public export
-spfdCata : {0 x : Type} -> {0 spfd : SPFData x x} -> {0 a : SliceObj x} ->
-  SliceAlgSPFD {x} spfd a -> SliceMorphism {a=x} (SPFDmu {x} spfd) a
-spfdCata {x} {spfd} {a} alg ex em =
-  case em of
-    InSPFm ex (emp ** emdm) =>
-      alg ex (emp ** \ex' => spfdCata {x} {spfd} {a} alg ex' . emdm ex')
+0 SPFDcataRewrite :
+  {0 x : Type} -> {0 spfd : SPFData x x} -> {0 a : SliceObj x} ->
+  (alg : SliceAlgSPFD {x} spfd a) ->
+  (ex : x) -> (emp : spfdPos spfd ex) ->
+  (emdm : SliceMorphism {a=x} (spfdDir spfd ex emp) (SPFDmu {x} spfd)) ->
+    spfdCata {x} {spfd} {a} alg ex (InSPFm ex (emp ** emdm)) =
+    alg ex (emp ** spfdCataDir {x} {spfd} {a} alg ex emp emdm)
+SPFDcataRewrite {x} {spfd} {a} alg ex emp emdm = Refl
+
+public export
+0 SPFDcataDirRewrite :
+  {0 x : Type} -> {0 spfd : SPFData x x} -> {0 a : SliceObj x} ->
+  (alg : SliceAlgSPFD {x} spfd a) ->
+  (ex : x) -> (emp : spfdPos spfd ex) ->
+  (emdm : SliceMorphism {a=x} (spfdDir spfd ex emp) (SPFDmu {x} spfd)) ->
+    spfdCataDir {x} {spfd} {a} alg ex emp emdm =
+    sliceComp {x=(spfdDir spfd ex emp)} {y=(SPFDmu {x} spfd)} {z=a}
+      (spfdCata {x} {spfd} {a} alg) emdm
+SPFDcataDirRewrite {x} {spfd} {a} alg ex emp emdm = Refl
+
+-- Because `SPFDmu` is left adjoint to the terminal category, the
+-- comonad of the adjunction -- which takes any algebra to `InSPFm` --
+-- is idempotent.  Thus the comultiplication of the comonad is simply
+-- the identity.
+
+-- `SPFDmu` itself is a functor, from `SPFData x x` to `SliceObj x`.
+public export
+spfdMuMapAlg : {x : Type} -> {p, q : SPFData x x} ->
+  SPFnt p q -> SliceAlgSPFD {x} p (SPFDmu {x} q)
+spfdMuMapAlg {x} {p} {q} (SPFDm onpos ondir) ex (ep ** dm) =
+  InSPFm ex (onpos ex ep ** sliceComp dm $ ondir ex ep)
+
+public export
+spfdMuMap : {x : Type} -> {p, q : SPFData x x} ->
+  SPFnt p q -> SliceMorphism (SPFDmu {x} p) (SPFDmu {x} q)
+spfdMuMap {x} {p} {q} =
+  spfdCata {x} {spfd=p} {a=(SPFDmu {x} q)} . spfdMuMapAlg {x} {p} {q}
+
+-- An algebra for a composite of a polynomial functor with itself
+-- also produces a catamorphism (for the original functor).
+public export
+spfdCataCompMutAlg :
+  {x : Type} -> {spfd : SPFData x x} -> {a : SliceObj x} ->
+  SliceMorphism {a=x} (InterpSPFData spfd (InterpSPFData spfd a)) a ->
+  SliceAlgSPFD spfd (SliceProduct {a=x} a (InterpSPFData spfd a))
+spfdCataCompMutAlg {x} {spfd} {a} alg ex (ep ** dm) =
+  (alg ex (ep ** sliceComp (sliceProj2 a (InterpSPFData spfd a)) dm),
+   (ep ** sliceComp (sliceProj1 a (InterpSPFData spfd a)) dm))
+
+public export
+spfdCataCompMut :
+  {x : Type} -> {spfd : SPFData x x} -> {a : SliceObj x} ->
+  SliceMorphism {a=x} (InterpSPFData spfd (InterpSPFData spfd a)) a ->
+  SliceMorphism {a=x}
+    (SPFDmu {x} spfd)
+    (SliceProduct {a=x} a (InterpSPFData spfd a))
+spfdCataCompMut {x} {spfd} {a} = spfdCata . spfdCataCompMutAlg {x} {spfd} {a}
+
+public export
+spfdCataComp :
+  {x : Type} -> {spfd : SPFData x x} -> {a : SliceObj x} ->
+  SliceMorphism {a=x} (InterpSPFData spfd (InterpSPFData spfd a)) a ->
+  SliceMorphism {a=x} (SPFDmu {x} spfd) a
+spfdCataComp {x} {spfd} {a} alg =
+  sliceComp
+    (sliceProj1 a (InterpSPFData spfd a))
+    (spfdCataCompMut {x} {spfd} {a} alg)
+
+public export
+spfdCataCompApp :
+  {x : Type} -> {spfd : SPFData x x} -> {a : SliceObj x} ->
+  SliceMorphism {a=x} (InterpSPFData spfd (InterpSPFData spfd a)) a ->
+  SliceMorphism {a=x} (SPFDmu {x} spfd) (InterpSPFData spfd a)
+spfdCataCompApp {x} {spfd} {a} alg =
+  sliceComp
+    (sliceProj2 a (InterpSPFData spfd a))
+    (spfdCataCompMut {x} {spfd} {a} alg)
+
+public export
+spfdCataSPFDcomp :
+  {x : Type} -> {spfd : SPFData x x} -> {a : SliceObj x} ->
+  SliceAlgSPFD {x} (SPFDcomp x x x spfd spfd) a ->
+  SliceMorphism {a=x} (SPFDmu {x} spfd) a
+spfdCataSPFDcomp {x} {spfd} {a} alg =
+  spfdCataComp (sliceComp alg (InterpSPFfromComp spfd spfd a))
+
+public export
+spfdMuCompToMuAlg : {x : Type} -> (p : SPFData x x) ->
+  SliceAlgSPFD {x} (SPFDcomp x x x p p) (SPFDmu {x} p)
+spfdMuCompToMuAlg {x} p =
+  sliceComp
+    (sliceComp
+      (InSPFm {spfd=p})
+      (InterpSPFDataMap p (InterpSPFData p $ SPFDmu p) (SPFDmu p)
+        (InSPFm {spfd=p})))
+    (InterpSPFtoComp p p (SPFDmu p))
+
+public export
+spfdMuCompToMu : {x : Type} -> (p : SPFData x x) ->
+  SliceMorphism {a=x} (SPFDmu {x} (SPFDcomp x x x p p)) (SPFDmu {x} p)
+spfdMuCompToMu {x} p =
+  spfdCata {x} {spfd=(SPFDcomp x x x p p)} {a=SPFDmu {x} p}
+    (spfdMuCompToMuAlg {x} p)
+
+public export
+spfdMuToMuComp : {x : Type} -> (p : SPFData x x) ->
+  SliceMorphism {a=x} (SPFDmu {x} p) (SPFDmu {x} (SPFDcomp x x x p p))
+spfdMuToMuComp {x} p =
+  spfdCataComp
+    (sliceComp
+      (InSPFm {spfd=(SPFDcomp x x x p p)})
+      (InterpSPFfromComp p p (SPFDmu {x} $ SPFDcomp x x x p p)))
+
+---------------------------------
+---- `SPFData` adjoint folds ----
+---------------------------------
+
+-- An adjoint fold on an `SPFData` using the dependent-sum/base-change
+-- adjunction between `SliceObj x` and `SliceObj (Sigma {a=x} slx)`.
+export
+spfdSigmaFold : {x : Type} -> {slx : SliceObj x} ->
+  (f : SPFData (Sigma {a=x} slx) (Sigma {a=x} slx)) ->
+  (a : SliceObj x) ->
+  SliceAlgSPFD f (SliceBCF {c=x} slx a) ->
+  SliceMorphism {a=x} (SliceSigmaF {c=x} slx $ SPFDmu {x=(Sigma {a=x} slx)} f) a
+spfdSigmaFold {x} {slx} f a alg =
+  sliceComp {a=x}
+    (sSout {c=x} {sl=slx} a)
+    (ssMap {c=x} {sl=slx}
+      (SPFDmu f)
+      (SliceBCF {c=x} slx a)
+      (spfdCata {spfd=f} {a=(SliceBCF {c=x} slx a)} alg))
+
+-- An adjoint fold on an `SPFData` using the base-change/dependent-product
+-- adjunction between `SliceObj (Sigma {a=x} slx)` and `SliceObj x`.
+export
+spfdBCFold : {x : Type} -> {slx : SliceObj x} ->
+  (f : SPFData x x) ->
+  (a : SliceObj (Sigma {a=x} slx)) ->
+  SliceAlgSPFD f (SlicePiF {c=x} slx a) ->
+  SliceMorphism {a=(Sigma {a=x} slx)} (SliceBCF {c=x} slx $ SPFDmu {x} f) a
+spfdBCFold {x} {slx} f a alg =
+  sliceComp {a=(Sigma {a=x} slx)}
+    (spCounit {c=x} {sl=slx} a)
+    (sbcMap {c=x} {sl=slx}
+      (SPFDmu f)
+      (SlicePiF {c=x} slx a)
+      (spfdCata {spfd=f} {a=(SlicePiF {c=x} slx a)} alg))
+
+-- A convenience function for producing terms dependent on an initial algebra.
+public export
+SPFDmuBCalg : {x : Type} -> {spfd : SPFData x x} ->
+  ((ex : x) -> SliceObj (SPFDmu {x} spfd ex)) ->
+  Type
+SPFDmuBCalg {x} {spfd} a =
+  SliceAlgSPFD {x} spfd (SlicePiF {c=x} (SPFDmu {x} spfd) (DPair.uncurry a))
+
+public export
+spfdMuBCfold : {x : Type} -> {spfd : SPFData x x} ->
+  {a : (ex : x) -> SliceObj (SPFDmu {x} spfd ex)} ->
+  SPFDmuBCalg {x} {spfd} a ->
+  (ex : x) -> Pi {a=(SPFDmu {x} spfd ex)} (a ex)
+spfdMuBCfold {x} {spfd} {a} alg ex em =
+  spfdBCFold {x} {slx=(SPFDmu {x} spfd)} spfd
+    (DPair.uncurry a) alg (ex ** em) em
+
+-- A convenience function for producing terms dependent on terms of an
+-- `spfdMuBCfold` (i.e. terms which are themselves dependent on an initial
+-- algebra).  Since this is itself an `spfdMuBCfold`, we do not need a
+-- further hierarchy; we can produce arbitrary-depth dependencies just by
+-- specializing the parameters of `spfdMuBCfold`.  This reflects the theorem
+-- that the slice categories of a locally Cartesian closed category (such
+-- as `Type`) are themselves locally Cartesian closed.
+public export
+SPFDmuBCdepFoldSl : {x : Type} -> {spfd : SPFData x x} ->
+  {a : (ex : x) -> SliceObj (SPFDmu {x} spfd ex)} ->
+  (adep : (ex : x) -> (em : SPFDmu {x} spfd ex) -> SliceObj (a ex em)) ->
+  (ex : x) -> SliceObj (SPFDmu {x} spfd ex)
+SPFDmuBCdepFoldSl {x} {spfd} {a} adep ex em = Pi {a=(a ex em)} (adep ex em)
+
+public export
+SPFDmuBCdepFoldAlg : {x : Type} -> {spfd : SPFData x x} ->
+  {a : (ex : x) -> SliceObj (SPFDmu {x} spfd ex)} ->
+  (adep : (ex : x) -> (em : SPFDmu {x} spfd ex) -> SliceObj (a ex em)) ->
+  Type
+SPFDmuBCdepFoldAlg {x} {spfd} {a} adep =
+  SPFDmuBCalg {x} {spfd} (SPFDmuBCdepFoldSl {x} {spfd} {a} adep)
+
+public export
+spfdMuBCdepFold : {x : Type} -> {spfd : SPFData x x} ->
+  {a : (ex : x) -> SliceObj (SPFDmu {x} spfd ex)} ->
+  {adep : (ex : x) -> (em : SPFDmu {x} spfd ex) -> SliceObj (a ex em)} ->
+  SPFDmuBCdepFoldAlg {x} {spfd} {a} adep ->
+  (ex : x) -> (em : SPFDmu {x} spfd ex) -> Pi {a=(a ex em)} (adep ex em)
+spfdMuBCdepFold {x} {spfd} {a} {adep} =
+  spfdMuBCfold {x} {spfd} {a=(SPFDmuBCdepFoldSl {x} {spfd} {a} adep)}
+
+export
+spfdSPFDsigmaFold : {dom, cod : Type} ->
+  (f : SPFData (SPFDataAsSigma dom cod) (SPFDataAsSigma dom cod)) ->
+  (a : SliceObj (SliceObj cod)) ->
+  SliceAlgSPFD f (SliceBCF {c=(SliceObj cod)} (SPFDataToSigmaSl dom cod) a) ->
+  SliceMorphism {a=(SliceObj cod)}
+    (SliceSigmaF {c=(SliceObj cod)} (SPFDataToSigmaSl dom cod) $ SPFDmu f)
+    a
+spfdSPFDsigmaFold {dom} {cod} =
+  spfdSigmaFold {x=(SliceObj cod)} {slx=(SPFDataToSigmaSl dom cod)}
+
+-- A specialization of `spfdBCFold` which produces a morphism in the
+-- slice category of `Sigma {a=(SliceObj cod)} (SPFDataToSigmaSl dom cod)`.
+-- Such a sigma type is precisely an `SPFData dom cod`, so a morphism in that
+-- slice category can be interpreted as a mapping between predicates on
+-- slice polynomial functors (from the slice category over `dom` to the
+-- slice category over `cod`), quantified over all such functors.
+-- The domain of the morphism in this specialization is (a base change of)
+-- the initial algebra of a polynomial endofunctor on the slice category
+-- over `SliceObj cod` (not just the slice category over `cod`, but the
+-- category whose objects are of type `SliceObj (SliceObj cod)`), which
+-- is in particular the type of position-types of slice polynomial functors
+-- with domain `cod`.
+export
+spfdSPFDbcFold : {dom, cod : Type} ->
+  (f : SPFData (SliceObj cod) (SliceObj cod)) ->
+  (a : SliceObj (Sigma {a=(SliceObj cod)} (SPFDataToSigmaSl dom cod))) ->
+  SliceAlgSPFD f (SlicePiF {c=(SliceObj cod)} (SPFDataToSigmaSl dom cod) a) ->
+  SliceMorphism {a=(Sigma {a=(SliceObj cod)} (SPFDataToSigmaSl dom cod))}
+    (SliceBCF (SPFDataToSigmaSl dom cod) $ SPFDmu {x=(SliceObj cod)} f)
+    a
+spfdSPFDbcFold {dom} {cod} =
+  spfdBCFold {x=(SliceObj cod)} {slx=(SPFDataToSigmaSl dom cod)}
+
+------------------------------------------------------
+---- `SPFDmu` as least fixed point of composition ----
+------------------------------------------------------
+
+public export
+SPFDsnat : (x : Type) -> SliceObj x
+SPFDsnat x = SPFDmu {x} (spfdMaybe x)
+
+public export
+spfdMaybeAlg : {x : Type} -> {a : SliceObj x} ->
+  SliceMorphism {a=x} (SliceObjTerminal x) a ->
+  SliceMorphism {a=x} a a ->
+  SliceAlgSPFD {x} (spfdMaybe x) a
+spfdMaybeAlg {x} {a} z s ex (Left () ** m) = z ex ()
+spfdMaybeAlg {x} {a} z s ex (Right () ** m) = s ex $ m ex Refl
+
+public export
+spfdMaybeU : SPFData Unit Unit
+spfdMaybeU = spfdMaybe Unit
+
+public export
+SPFDunat : SliceObj Unit
+SPFDunat = SPFDsnat Unit
+
+public export
+SPFDnat : Type
+SPFDnat = SPFDunat ()
+
+public export
+spfdMaybeAlgU : {a : Type} ->
+  a -> (a -> a) ->
+  SliceAlgSPFD {x=Unit} SlicePolyUMorph.spfdMaybeU (const a)
+spfdMaybeAlgU {a} z s () =
+  spfdMaybeAlg {x=Unit} {a=(const a)} (const $ const z) (const s) ()
+
+public export
+spfdNatCata : {x : Type} -> {a : SliceObj x} ->
+  SliceMorphism {a=x} (SliceObjTerminal x) a ->
+  SliceMorphism {a=x} a a ->
+  SliceMorphism {a=x} (SPFDsnat x) a
+spfdNatCata {a} z s =
+  spfdCata {x} {spfd=(spfdMaybe x)} {a} (spfdMaybeAlg {a} z s)
+
+public export
+spfdNatCataU : {a : Type} -> a -> (a -> a) -> SPFDnat -> a
+spfdNatCataU {a} z s =
+  spfdNatCata {x=Unit} {a=(const a)} (const $ const z) (const s) ()
+
+public export
+SPFDmuRn : {x : Type} -> SPFData x x -> SPFDnat -> SliceObj x
+SPFDmuRn {x} f =
+  spfdNatCataU {a=(SliceObj x)}
+    (SliceObjInitial x)
+    (InterpSPFData {dom=x} {cod=x} f)
+
+-- There are injections from each `SPFDmuRn` to `SPFDmu`.
+
+public export
+spfdNinj : {x : Type} -> {f : SPFData x x} ->
+  (n : SPFDnat) -> SliceMorphism {a=x} (SPFDmuRn {x} f n) (SPFDmu f)
+spfdNinj {x} {f} (InSPFm () (Left () ** n)) ex el =
+  void el
+spfdNinj {x} {f} (InSPFm () (Right () ** n)) ex el =
+  InSPFm ex (fst el ** \ex' => spfdNinj {x} {f} (n () Refl) ex' . snd el ex')
+
+public export
+SPFDiter : {x : Type} -> SPFData x x -> SPFDnat -> SPFData x x
+SPFDiter {x} f = spfdNatCataU {a=(SPFData x x)} (SPFDid x) (SPFDcomp x x x f)
+
+-----------------------------------------------------------
+---- Positions and directions from polynomial functors ----
+-----------------------------------------------------------
+
+-- Given a type-algebra of a polynomial functor, produce a type dependent on
+-- the least fixed point (initial algebra) of that functor.  Note that such
+-- a dependent type has the same type signature as the direction type of a
+-- polynomial functor whose position-type is the initial algebra of the
+-- given functor.  We might think of `SPFDmu` as generating inductive types
+-- and `spfdDirMu` as generating recursive types.
+public export
+spfdDirMu : {x : Type} -> {f : SPFData x x} ->
+  SPFDtypeAlg {x} f -> SPFdirType x x (SPFDmu {x} f)
+spfdDirMu {x} {f} = spfdCata {spfd=f} {a=(const $ SliceObj x)}
+
+public export
+spfdDirMuSl : {x : Type} -> {f : SPFData x x} ->
+  SPFDtypeAlg {x} f -> SPFdirSl x x (SPFDmu {x} f)
+spfdDirMuSl {x} {f} = SPFdirToSl . spfdDirMu {x} {f}
+
+-- Compilable documentation to spell out what `spfdDirMu` becomes.
+
+public export
+0 spfdDirMuInterpDir : {x : Type} -> {f : SPFData x x} ->
+  (tyalg : SPFDtypeAlg {x} f) ->
+  (ex : x) ->
+  (efp : spfdPos f ex) ->
+  (efdm : SliceMorphism {a=x} (spfdDir f ex efp) (SPFDmu f)) ->
+    spfdCataDir tyalg ex efp efdm = spfdDirComp (spfdDirMu {x} {f} tyalg) efdm
+spfdDirMuInterpDir {x} {f} =
+  SPFDcataDirRewrite {x} {spfd=f} {a=(const $ SliceObj x)}
+
+public export
+0 spfdDirMuInterp : {x : Type} -> {f : SPFData x x} ->
+  (tyalg : SPFDtypeAlg {x} f) ->
+  (ex : x) ->
+  (efp : spfdPos f ex) ->
+  (efdm : SliceMorphism {a=x} (spfdDir f ex efp) (SPFDmu f)) ->
+  (ex' : x) ->
+    spfdDirMu {x} {f} tyalg ex (InSPFm ex (efp ** efdm)) ex' =
+    tyalg ex (efp ** spfdDirComp (spfdDirMu {x} {f} tyalg) efdm) ex'
+spfdDirMuInterp {x} {f} tyalg ex efp efdm ex' =
+  rewrite spfdDirMuInterpDir {x} {f} tyalg ex efp efdm in Refl
+
+-- Given a type-algebra of a polynomial functor, produce another
+-- polynomial functor whose positions are the initial algebra of the
+-- given functor and whose directions are given by the type-algebra
+-- (via `spfdDirMu`).
+public export
+spfdDepSPFD : {x : Type} -> {f : SPFData x x} ->
+  SPFDtypeAlg {x} f -> SPFData x x
+spfdDepSPFD {x} {f} tyalg = SPFD (SPFDmu {x} f) (spfdDirMu {x} {f} tyalg)
 
 --------------------------------------------------
 ---- Paranatural initial-algebra Yoneda forms ----
@@ -2342,6 +3249,14 @@ spfdAlgParaNTtoMuCovarSl {x} {w} f k =
   spfdAlgParaNTtoMuCovar {x} f (Pi {a=w} . k)
 
 public export
+spfdAlgParaNTtoMuCovarSlSigma : {x, w : Type} ->
+  (f : SPFData x x) -> (k : SliceFunctor x w) ->
+  ((a : SliceObj x) -> SliceAlgSPFD {x} f a -> Sigma {a=w} (k a)) ->
+  Sigma {a=w} (k (SPFDmu {x} f))
+spfdAlgParaNTtoMuCovarSlSigma {x} {w} f k =
+  spfdAlgParaNTtoMuCovar {x} f (Sigma {a=w} . k)
+
+public export
 spfdMuToAlgParaNTcovarSl : {x, w : Type} ->
   (f : SPFData x x) -> (k : SliceFunctor x w) ->
   (kmap : (y, z : SliceObj x) ->
@@ -2351,6 +3266,17 @@ spfdMuToAlgParaNTcovarSl : {x, w : Type} ->
 spfdMuToAlgParaNTcovarSl {x} {w} f k kmap =
   spfdMuToAlgParaNTcovar {x} f
     (Pi {a=w} . k) (piMapComp {c=x} {d=w} {k} kmap)
+
+public export
+spfdMuToAlgParaNTcovarSlSigma : {x, w : Type} ->
+  (f : SPFData x x) -> (k : SliceFunctor x w) ->
+  (kmap : (y, z : SliceObj x) ->
+    SliceMorphism {a=x} y z -> SliceMorphism {a=w} (k y) (k z)) ->
+  Sigma {a=w} (k (SPFDmu {x} f)) ->
+  ((a : SliceObj x) -> SliceAlgSPFD {x} f a -> Sigma {a=w} (k a))
+spfdMuToAlgParaNTcovarSlSigma {x} {w} f k kmap =
+  spfdMuToAlgParaNTcovar {x} f
+    (Sigma {a=w} . k) (sigmaMapComp {c=x} {d=w} {k} kmap)
 
 -- The following isomorphism is an existential, contravariant form.
 
@@ -2389,6 +3315,1199 @@ spfdMuToAlgContraSl :
   Sigma {a=w} (k (SPFDmu {x} f)) ->
   (a : SliceObj x ** (SliceAlgSPFD {x} f a, Sigma {a=w} (k a)))
 spfdMuToAlgContraSl {x} {w} f k = spfdMuToAlgContra {x} f (Sigma {a=w} . k)
+
+---------------------
+---------------------
+---- Free monads ----
+---------------------
+---------------------
+
+----------------------
+---- Base functor ----
+----------------------
+
+-- The free monad of a polynomial functor `f` can be defined pointwise
+-- at each object `a` as the initial algebra of the polynomial functor
+-- `x -> a + f x`.  From the pointwise definition, we can then extract
+-- the position-set (as the functor applied to the terminal object) and
+-- then the direction-sets.
+--
+-- There is also another way of looking at the free monad, as a higher-order
+-- fixed point of repeated post-composition of the free pointed endofunctor.
+-- We have shown above that `spfdTranslateTerminal f` is an internalization
+-- of the position-type of post-composition of `spfdFreePointed f`, so
+-- the fixed point of `spfdTranslateTerminal f` should be the position-type
+-- of the free monad, and that does agree with the conclusion drawn from
+-- the pointwise definition.
+public export
+spfdFMbase : {x : Type} -> SPFData x x -> SliceObj x -> SPFData x x
+spfdFMbase {x} = spfdTranslate {dom=x} {cod=x}
+
+-- This is the carrier component of the object-map component of the left
+-- adjoint of the the free/forgetful adjunction between the category of
+-- algebras of the free monad of `f` (on the left) and `SliceObj x` (on the
+-- right).  It takes a slice object to the carrier of the free algebra of
+-- the free monad of `f` applied at that object.
+public export
+spfdGenFree : {x : Type} -> SPFData x x -> SliceEndofunctor x
+spfdGenFree {x} f = SPFDmu {x} . spfdFMbase {x} f
+
+-- This is the algebra component of the object-map component of the left
+-- adjoint of the the free/forgetful adjunction between the category of
+-- algebras of the free monad of `f` (on the left) and `SliceObj x` (on
+-- the right).  It takes a slice object to the morphism component of the free
+-- algebra of the free monad of `f` applied at that object.
+public export
+InSPFfgen : {x : Type} -> {f : SPFData x x} -> {slv : SliceObj x} ->
+  SliceAlgSPFD {x} f (spfdGenFree {x} f slv)
+InSPFfgen {x} {f} {slv} ex (ep ** dm) = InSPFm ex (Right ep ** dm)
+
+-- This is the unit of the adjunction.
+public export
+InSPFvgen : {x : Type} -> {f : SPFData x x} -> {slv : SliceObj x} ->
+  SliceMorphism {a=x} slv (spfdGenFree {x} f slv)
+InSPFvgen {x} {f} {slv} ex ev = InSPFm ex (Left ev ** \_ => voidF _)
+
+public export
+InSPFg : {x : Type} -> {f : SPFData x x} ->
+  SliceNatTrans {x} {y=x}
+    (InterpSPFData (SlicePolyUMorph.spfdFreePointed f) . spfdGenFree {x} f)
+    (spfdGenFree {x} f)
+InSPFg {x} {f} slv ec (Left () ** dm) = dm ec Refl
+InSPFg {x} {f} slv ec (Right ep ** dm) = InSPFfgen ec (ep ** dm)
+
+-- This is the morphism-map component of the left adjoint of the the
+-- free/forgetful adjunction between the category of algebras of the
+-- free monad of `f` (on the left) and `SliceObj x` (on the right).  It takes
+-- a slice morphism to an algebra morphism between the free algebras of
+-- the free monad of `f` applied to the domain and codomain.
+
+public export
+spfdGenFreeMorAlg : {x : Type} -> (f : SPFData x x) ->
+  (sa, sb : SliceObj x) -> SliceMorphism {a=x} sa sb ->
+  SliceAlgSPFD {x} (spfdFMbase {x} f sa) (spfdGenFree {x} f sb)
+spfdGenFreeMorAlg {x} f sa sb mab ex (Left esa ** dm) =
+  InSPFm ex (Left (mab ex esa) ** \ex, ev => void ev)
+spfdGenFreeMorAlg {x} f sa sb mab ex (Right ep ** dm) =
+  InSPFm ex (Right ep ** dm)
+
+public export
+spfdGenFreeMor : {x : Type} -> (f : SPFData x x) ->
+  (sa, sb : SliceObj x) -> SliceMorphism {a=x} sa sb ->
+  SliceMorphism {a=x} (spfdGenFree {x} f sa) (spfdGenFree {x} f sb)
+spfdGenFreeMor {x} f sa sb mab =
+  spfdCata {spfd=(spfdFMbase {x} f sa)} {a=(spfdGenFree {x} f sb)} $
+    spfdGenFreeMorAlg {x} f sa sb mab
+
+-- The "eval" universal morphism for `f : SPFData x x` is the right adjunct
+-- of the the free/forgetful adjunction between the category of algebras of
+-- the free monad of `f` (on the left) and `SliceObj x` (on the right).
+-- Among the parameters, `slv` is an object of `SliceObj x`, `(sla, alg)` is an
+-- algebra of `f`, `subst` is a morphism of `SliceObj x` (from `slv` to `sla`,
+-- where the latter is the application of the forgetful functor to
+-- `(sla, alg)`), and the result is a morphism from the free algebra of
+-- `SPFDfreeM` applied at `slv` to `sla`.  Hence, in terms of the adjunction,
+-- it is a mapping `(A, RB) -> (LA, B)`.
+public export
+spfdFMeval : {x : Type} -> (f : SPFData x x) -> (slv, sla : SliceObj x) ->
+  SliceAlgSPFD f sla -> SliceMorphism {a=x} slv sla ->
+  SliceMorphism {a=x} (spfdGenFree {x} f slv) sla
+spfdFMeval {x} f slv sla alg subst =
+  spfdCata {x} {spfd=(spfdFMbase {x} f slv)} {a=sla} $
+    \ex, el => case el of
+      (i ** dm) => case i of
+        Left ev => subst ex ev
+        Right ep => alg ex (ep ** dm)
+
+-- The left adjunct of the the free/forgetful adjunction between the category
+-- of algebras of the free monad of `f` (on the left) and `SliceObj x` (on the
+-- right).  The parameters are as `spfdFMeval` except:
+--  - We swap the last parameter (`subst`) and the result, since here we are
+--    taking `(LA, B) -> (A, RB)`
+--  - We omit the parameter `alg : SliceAlgSPFD f sla`, because we do not
+--    use it -- the codomain of the output morphism is `RB` and `R` is the
+--    functor that forgets the algebra component, leaving only the carrier,
+--    so we have no need for the algebra component among the inputs
+public export
+spfdFMladj : {x : Type} -> (f : SPFData x x) -> (slv, sla : SliceObj x) ->
+  SliceMorphism {a=x} (spfdGenFree {x} f slv) sla ->
+  SliceMorphism {a=x} slv sla
+spfdFMladj {x} f slv sla fmalg ex eslvx =
+  fmalg ex (InSPFm ex (Left eslvx ** \ex', ev => void ev))
+
+-------------------------------------
+---- Positions of the free monad ----
+-------------------------------------
+
+-- Here we generate the positions and directions of the free monad,
+-- thereby representing it as a polynomial functor.
+
+public export
+SPFDfmPos : {x : Type} -> SPFData x x -> SliceObj x
+SPFDfmPos {x} spfd = spfdGenFree {x} spfd (SliceObjTerminal x)
+
+public export
+SPFDfmSigmaPos : {x : Type} -> SPFData x x -> Type
+SPFDfmSigmaPos {x} = Sigma {a=x} . SPFDfmPos {x}
+
+-- Documentation of another (intensionally equal) way of writing `SPFDfmPos`.
+public export
+spfdFMposBase : {x : Type} -> SPFData x x -> SPFData x x
+spfdFMposBase {x} =
+  -- Equivalently `flip (spfdFMbase {x}) (SliceObjTerminal x)`.
+  spfdTranslateTerminal {dom=x} {cod=x}
+
+public export
+SPFDfmPosAlt : {x : Type} -> (f : SPFData x x) ->
+  SPFDfmPos {x} f = SPFDmu {x} (spfdFMposBase {x} f)
+SPFDfmPosAlt {x} f = Refl
+
+public export
+SPFDfmPosLeaf : {x : Type} -> (f : SPFData x x) ->
+  (ex : x) -> SPFDfmPos {x} f ex
+SPFDfmPosLeaf {x} f ex = InSPFm ex (Left () ** \_ => voidF _)
+
+public export
+SPFDfmPosPath : {x : Type} -> (f : SPFData x x) ->
+  (ex : x) -> (ep : InterpSPFData f (SPFDfmPos {x} f) ex) ->
+  SPFDfmPos {x} f ex
+SPFDfmPosPath {x} f ex ep = InSPFm ex (Right (fst ep) ** snd ep)
+
+------------------------------------------
+---- Free monad from mutual recursion ----
+------------------------------------------
+
+-- Having generated the positions of the free monad in the usual
+-- way for a polynomial functor whose interpretation we know --
+-- by applying its interpretation to the terminal object -- we now
+-- generate them in a different way, by mutual recursion with the
+-- directions.  The point of using mutual recursion even though
+-- the positions do not depend on the directions (because of the
+-- insensitivity of post-composition to the direction-type of the
+-- pre-composed functor) is that this enables each direction to be
+-- expressed in terms of a _finite_ type (if each direction-type
+-- is finite), whereas the overall position-type can be infinite
+-- (even if each direction-type is finite).  This makes sense because
+-- the positions are well-founded `f`-shaped trees, and the directions
+-- at a given position are the leaves.
+--
+-- Because we are using mutual recursion to generate more than one
+-- (dependent) type simultaneously, some of the functors that we use to generate
+-- them will not be sliced simply over position-types and direction-types
+-- for `SPFData x x`, but over larger slice categories representing
+-- collections of interdependent dependent types.
+
+-- Note that, in general, because the direction-types are also sliced
+-- over position-types, we would need some form of inductive-inductive
+-- type to generate them together with the position-types, and we have
+-- not yet defined any form of inductive-inductive type.  However, in
+-- the specific case of this generation of positions and directions of
+-- the free monad, it will turn out that we do not need that, because
+-- we will set up the recursion so that for any direction, we can
+-- compute exactly one position of which it must be a direction.
+--
+-- We will use the `SlicePolyFunc` variant of `SPFData`, as it is
+-- more convenient for this purpose than `SPFData` itself.
+-- We will also compose the functor that we finally recurse over
+-- from several smaller functors.
+
+-- There is only one position representing a one-node tree,
+-- because a one-node tree has no further characteristics!
+-- (Any two one-node trees are equal.)  Note that this means
+-- that we do not even need to provide a functor parameter;
+-- one-node trees even of different functor shapes are
+-- indistinguishable.
+public export
+SPFDfmMutGenTree1pos : (x : Type) -> SliceObj x
+SPFDfmMutGenTree1pos = SliceObjTerminal
+
+-- A one-node tree has no directions, because it has no children.
+public export
+SPFDfmMutGenTree1dir : (x : Type) ->
+  SliceObj (Sigma $ SPFDfmMutGenTree1pos x)
+SPFDfmMutGenTree1dir x _ = Void
+
+-- Because a one-node tree has no directions, it may as well have a trivial
+-- domain, namely the terminal category -- which is equivalent to the slice
+-- category over `Void`.
+public export
+SPFDfmMutGenTree1asn : (x : Type) ->
+  Sigma (SPFDfmMutGenTree1dir x) -> Void
+SPFDfmMutGenTree1asn x = DPair.snd
+
+public export
+SPFDfmMutGenTree1SPF : (x : Type) -> SlicePolyFunc Void x
+SPFDfmMutGenTree1SPF x =
+  (SPFDfmMutGenTree1pos x ** SPFDfmMutGenTree1dir x ** SPFDfmMutGenTree1asn x)
+
+-- A (potentially) multi-node tree simply has precisely the shape of `f` itself.
+public export
+SPFDfmMutGenTreeM : {x : Type} -> SlicePolyFunc x x -> SlicePolyFunc x x
+SPFDfmMutGenTreeM {x} = id {a=(SlicePolyFunc x x)}
+
+public export
+SPFDfmMutGenTreeMpos : {x : Type} -> SlicePolyFunc x x -> SliceObj x
+SPFDfmMutGenTreeMpos {x} = spfPos
+
+public export
+SPFDfmMutGenTreeMdir : {x : Type} -> (f : SlicePolyFunc x x) ->
+  SliceObj (Sigma $ SPFDfmMutGenTreeMpos {x} f)
+SPFDfmMutGenTreeMdir {x} = spfDir
+
+public export
+SPFDfmMutGenTreeMasn : {x : Type} -> (f : SlicePolyFunc x x) ->
+  Sigma (SPFDfmMutGenTreeMdir {x} f) -> x
+SPFDfmMutGenTreeMasn {x} = spfAssign
+
+-- A tree is either a one-node tree or a multi-node (`f`-shaped) tree.
+-- Thus we give it two positions, and we will use the corresponding
+-- tree types as directions.  Note that since we are operating only
+-- on tree types, without any dependency on specific shapes, this functor
+-- does not require a functor parameter.
+
+public export
+SPFDfmTreeTypeSl : Type -> Type
+SPFDfmTreeTypeSl x = Either x x
+
+public export
+SPFDfmTreeType1Sl : {x : Type} -> x -> SPFDfmTreeTypeSl x
+SPFDfmTreeType1Sl {x} = Left
+
+public export
+SPFDfmTreeTypeMSl : {x : Type} -> x -> SPFDfmTreeTypeSl x
+SPFDfmTreeTypeMSl {x} = Right
+
+public export
+SPFDfmMutGenTreeTypePos : (x : Type) -> SliceObj x
+SPFDfmMutGenTreeTypePos x ex = Either Unit Unit
+
+-- Each position has one direction (a tree).  The assignment will
+-- determine which type of tree.
+public export
+SPFDfmMutGenTreeTypeDir : (x : Type) ->
+  SliceObj (Sigma $ SPFDfmMutGenTreeTypePos x)
+SPFDfmMutGenTreeTypeDir x _ = Unit
+
+public export
+SPFDfmMutGenTreeTypeAsn : (x : Type) ->
+  Sigma (SPFDfmMutGenTreeTypeDir x) -> SPFDfmTreeTypeSl x
+SPFDfmMutGenTreeTypeAsn x ((ex ** Left ()) ** ()) = Left ex
+SPFDfmMutGenTreeTypeAsn x ((ex ** Right ()) ** ()) = Right ex
+
+public export
+SPFDfmMutGenTreeTypeSPF : (x : Type) -> SlicePolyFunc (SPFDfmTreeTypeSl x) x
+SPFDfmMutGenTreeTypeSPF x =
+  (SPFDfmMutGenTreeTypePos x **
+   SPFDfmMutGenTreeTypeDir x **
+   SPFDfmMutGenTreeTypeAsn x)
+
+-- We can now build a functor which suffices to construct the
+-- positions (not yet the directions) of the free monad of `f`.
+
+-- The functor that generates trees (which are the positions of
+-- the free monad) uses three slices (per term of the codomain) --
+-- one for each of the two tree forms (so that we generate a type
+-- of one-node trees and a type of `f`-shaped, potentially multi-node
+-- trees), and one for the type of any tree of either form.
+
+public export
+SPFDfmTreeGenSl : Type -> Type
+SPFDfmTreeGenSl x = Either x (SPFDfmTreeTypeSl x)
+
+public export
+SPFDfmTreeGenAnyTree : {x : Type} -> x -> SPFDfmTreeGenSl x
+SPFDfmTreeGenAnyTree {x} = Left
+
+public export
+SPFDfmTreeGenSpecificTree : {x : Type} ->
+  SPFDfmTreeTypeSl x -> SPFDfmTreeGenSl x
+SPFDfmTreeGenSpecificTree {x} = Right
+
+-- Every `SPFDfmTreeGenSl x` contains precisely one `x`; this extracts it.
+public export
+SPFDfmPosCodiag : NaturalTransformation SPFDfmTreeGenSl Prelude.id
+SPFDfmPosCodiag x (Left ex) = ex
+SPFDfmPosCodiag x (Right $ Left ex) = ex
+SPFDfmPosCodiag x (Right $ Right ex) = ex
+
+public export
+SPFDfmTreeMutGenTreePos : {x : Type} ->
+  SlicePolyEndoFunc x -> SliceObj (SPFDfmTreeGenSl x)
+SPFDfmTreeMutGenTreePos {x} f (Left ex) = SPFDfmMutGenTreeTypePos x ex
+SPFDfmTreeMutGenTreePos {x} f (Right $ Left ex) = SPFDfmMutGenTree1pos x ex
+SPFDfmTreeMutGenTreePos {x} f (Right $ Right ex) = SPFDfmMutGenTreeMpos {x} f ex
+
+public export
+SPFDfmTreeMutGenTreeDir : {x : Type} ->
+  (f : SlicePolyEndoFunc x) -> SliceObj (Sigma $ SPFDfmTreeMutGenTreePos {x} f)
+SPFDfmTreeMutGenTreeDir {x} f (Left ex ** ep) =
+  SPFDfmMutGenTreeTypeDir x (ex ** ep)
+SPFDfmTreeMutGenTreeDir {x} f (Right (Left ex) ** ep) =
+  SPFDfmMutGenTree1dir x (ex ** ep)
+SPFDfmTreeMutGenTreeDir {x} f (Right (Right ex) ** ep) =
+  SPFDfmMutGenTreeMdir {x} f (ex ** ep)
+
+public export
+SPFDfmTreeMutGenTreeAsn : {x : Type} ->
+  (f : SlicePolyEndoFunc x) ->
+  Sigma (SPFDfmTreeMutGenTreeDir {x} f) -> SPFDfmTreeGenSl x
+SPFDfmTreeMutGenTreeAsn {x} f ((Left ec ** ep) ** dd) =
+  -- A tree consists of either a one-node tree or a multi-node tree.
+  -- `SPFDfmMutGenTreeTypeAsn` tells us which, and then we inject
+  -- the answer into the part of the domain which represents specific
+  -- tree types.
+  SPFDfmTreeGenSpecificTree $ SPFDfmMutGenTreeTypeAsn x ((ec ** ep) ** dd)
+SPFDfmTreeMutGenTreeAsn {x} f ((Right (Left ec) ** ep) ** dd) =
+  -- A one-node tree has no directions, hence a trivial assignment.
+  void $ SPFDfmMutGenTree1asn x ((ec ** ep) ** dd)
+SPFDfmTreeMutGenTreeAsn {x} f ((Right (Right ec) ** efp) ** efd) =
+  -- A multi-node tree's directions are themselves trees of _either_
+  -- type, so we inject the return value of `SPFDfmMutGenTreeMasn`
+  -- into the part of the domain which represents any type of tree.
+  SPFDfmTreeGenAnyTree $ SPFDfmMutGenTreeMasn f ((ec ** efp) ** efd)
+
+public export
+SPFDfmTreeMutGenTree : {x : Type} ->
+  SlicePolyEndoFunc x -> SlicePolyEndoFunc (SPFDfmTreeGenSl x)
+SPFDfmTreeMutGenTree {x} f =
+  (SPFDfmTreeMutGenTreePos {x} f **
+   SPFDfmTreeMutGenTreeDir {x} f **
+   SPFDfmTreeMutGenTreeAsn {x} f)
+
+public export
+SPFDfmTreeMutGenTreeSPFD : {x : Type} ->
+  SlicePolyEndoFunc x -> SPFData (SPFDfmTreeGenSl x) (SPFDfmTreeGenSl x)
+SPFDfmTreeMutGenTreeSPFD = SPFtoSPFD . SPFDfmTreeMutGenTree
+
+public export
+SPFDfmTreeMut : {x : Type} ->
+  SlicePolyEndoFunc x -> SliceObj (SPFDfmTreeGenSl x)
+SPFDfmTreeMut {x} = SPFDmu {x=(SPFDfmTreeGenSl x)} . SPFDfmTreeMutGenTreeSPFD
+
+public export
+SPFDfmPosMutSPF : {x : Type} -> SlicePolyEndoFunc x -> SliceObj x
+SPFDfmPosMutSPF {x} f = SPFDfmTreeMut {x} f . Left
+
+public export
+SPFDfmPosMut : {x : Type} -> SPFData x x -> SliceObj x
+SPFDfmPosMut {x} f = SPFDfmPosMutSPF {x} (SPFDtoSPF f)
+
+-- Now we show that we can translate back and forth between free-monad
+-- positions (AKA well-founded `f`-shaped trees) as generated by the
+-- mutual recursion and by the usual least fixed point of `spfdFMposBase f`.
+
+public export
+SPFDfmPosToMutAlg : {x : Type} -> (f : SPFData x x) ->
+  SliceAlgSPFD (spfdFMposBase {x} f) (SPFDfmPosMutSPF {x} (SPFDtoSPF f))
+SPFDfmPosToMutAlg {x} f ex (Left () ** dmv_) =
+  InSPFm
+    (Left ex)
+    (Left () **
+     \esl, (Element0 () cond) =>
+      rewrite sym cond in
+      InSPFm (Right $ Left ex) (() ** \esl, (Element0 ev _) => void ev))
+SPFDfmPosToMutAlg {x} f ex (Right ep ** dm) =
+  InSPFm
+    (Left ex)
+    (Right () **
+     \esl, (Element0 () cond) =>
+      rewrite sym cond in
+      InSPFm
+        (Right $ Right ex)
+        (ep **
+         \esl', (Element0 (ex' ** fd') cond') =>
+          rewrite sym cond' in dm ex' fd'))
+
+public export
+SPFDfmPosToMut : {x : Type} -> (f : SPFData x x) ->
+  SliceMorphism {a=x} (SPFDfmPos {x} f) (SPFDfmPosMutSPF {x} (SPFDtoSPF f))
+SPFDfmPosToMut {x} f =
+  spfdCata {spfd=(spfdFMposBase f)} $ SPFDfmPosToMutAlg {x} f
+
+-- To convert from the mutual-recursion-generated version of the
+-- position-type to the translate-generated one, we can generate
+-- a larger slice morphism from the whole set of mutual-recursion-generated
+-- position-types (one-node form, `f`-shaped form, and either-form) to
+-- the type of translate-generated positions.  This makes sense because
+-- all the mutual-recursion-generated position-types do represent
+-- free-monad-position types -- the extra components of the slice simply
+-- generate more _specific_ types as well, allowing a type-level distinction
+-- between one-node and `f`-shaped positions.
+
+public export
+SPFDfmPosFromMutCod : {x : Type} -> SPFData x x -> SliceObj (SPFDfmTreeGenSl x)
+SPFDfmPosFromMutCod {x} f esl = SPFDfmPos {x} f (SPFDfmPosCodiag x esl)
+
+public export
+SPFDfmPosFromMutGenAlg : {x : Type} -> (f : SPFData x x) ->
+  SliceAlgSPFD {x=(SPFDfmTreeGenSl x)}
+    (SPFDfmTreeMutGenTreeSPFD {x} $ SPFDtoSPF f)
+    (SPFDfmPosFromMutCod {x} f)
+SPFDfmPosFromMutGenAlg {x} f (Left ex) (Left () ** dm) =
+  dm (Right $ Left ex) (Element0 () Refl)
+SPFDfmPosFromMutGenAlg {x} f (Left ex) (Right () ** dm) =
+  dm (Right $ Right ex) (Element0 () Refl)
+SPFDfmPosFromMutGenAlg {x} f (Right $ Left ex) (() ** dm) =
+  InSPFm ex (Left () ** \_ => voidF _)
+SPFDfmPosFromMutGenAlg {x} f (Right $ Right ex) (efp ** dm) =
+  InSPFm
+    ex
+    (Right efp **
+     \ex', efd' => dm (Left ex') (Element0 (ex' ** efd') Refl))
+
+public export
+SPFDfmPosFromMutGen : {x : Type} -> (f : SPFData x x) ->
+  SliceMorphism {a=(SPFDfmTreeGenSl x)}
+    (SPFDfmTreeMut {x} $ SPFDtoSPF f)
+    (SPFDfmPosFromMutCod {x} f)
+SPFDfmPosFromMutGen {x} f =
+  spfdCata
+    {a=(SPFDfmPosFromMutCod {x} f)}
+    {spfd=(SPFDfmTreeMutGenTreeSPFD {x} $ SPFDtoSPF f)}
+    (SPFDfmPosFromMutGenAlg {x} f)
+
+public export
+SPFDfmPosFromMut : {x : Type} -> (f : SPFData x x) ->
+  SliceMorphism {a=x} (SPFDfmPosMutSPF {x} $ SPFDtoSPF f) (SPFDfmPos {x} f)
+SPFDfmPosFromMut {x} f ex = SPFDfmPosFromMutGen {x} f (Left ex)
+
+-- Now that we have defined the positions using mutual recursion, and
+-- exhibited a correspondence between that definition and the standard
+-- one in terms of the translate functor, we extend the mutual recursion
+-- to include directions.
+
+---------------------------------------------------------
+---- Free monad from fixed point of post-composition ----
+---------------------------------------------------------
+
+-- We have noted above that the free monad may be viewed as a higher-order
+-- fixed point of repeated post-composition of the free pointed endofunctor.
+-- Let us now consider how to represent that particular post-composition
+-- as a polynomial functor.  If we were to write it as an explicit mutual
+-- recursion, it could look like this:
+--
+{-
+mutual
+  public export
+  data SPFDfmmPos : {x : Type} ->
+      SPFData x x -> SliceObj x where
+    SFMPid : {x : Type} -> (f : SPFData x x) ->
+      (ex : x) -> SPFDidPos x ex ->
+      SPFDfmmPos {x} f ex
+    SFMPcomp : {x : Type} -> (f : SPFData x x) ->
+      (ex : x) -> SPFDcompPos {x} {y=x} {z=x} f (SPFDfmm {x} f) ex ->
+      SPFDfmmPos {x} f ex
+
+  public export
+  data SPFDfmmDir : {x : Type} ->
+      (f : SPFData x x) -> SPFdirType x x (SPFDfmmPos f) where
+    SFMDid : {x : Type} -> {f : SPFData x x} ->
+      {ex : x} -> {ep : SPFDidPos x ex} -> (ex' : x) -> SPFDidDir x ex ep ex' ->
+      SPFDfmmDir {x} f ex (SFMPid {x} f ex ep) ex'
+    SFMDcomp : {x : Type} -> {f : SPFData x x} ->
+      {ex : x} -> {ep : SPFDcompPos {x} {y=x} {z=x} f (SPFDfmm {x} f) ex} ->
+      (ex' : x) -> SPFDcompDir {x} {y=x} {z=x} f (SPFDfmm {x} f) ex ep ex' ->
+      SPFDfmmDir {x} f ex (SFMPcomp {x} f ex ep) ex'
+
+  public export
+  SPFDfmm : {x : Type} ->
+      SPFData x x -> SPFData x x
+  SPFDfmm {x} f = SPFD (SPFDfmmPos {x} f) (SPFDfmmDir {x} f)
+-}
+--
+-- But we can note that because of the insensitivity of `SPDcompPos`
+-- to the direction-type of the pre-composed functor, the
+-- `SPFDcompPos . SPFDfmm` part of `SFMPcomp` can be replaced with
+-- simply `SPFDfmmPos`.  That breaks the mutual recursion, and
+-- allows `SPFDfmmPos` to be defined first, independently of `SPFDfmmDir`
+-- (and thus independently of the full `SPFDfmm`).  And what we are left
+-- with is precisely what we have already defined as `SPFDfmPos`.
+-- Therefore, we can continue to `SPFDfmmDir`, substitute `SPFDfmPos`
+-- for `SPFDfmmPos`, and obtain the following (still explicitly-recursive)
+-- definition for `SPFDfmmDir`:
+--
+{-
+public export
+data SPFDfmmDir : {x : Type} ->
+    (f : SPFData x x) -> SPFdirType x x (SPFDfmPos {x} f) where
+  SFMDid : {x : Type} -> {f : SPFData x x} ->
+    (ex : x) ->
+    -- `SPFDidPos x ex` is just `Unit` and `SPFDidDir x ex () ex'` is
+    -- just `ex = ex`', so we can reduce the parameters to the `id`
+    -- case to just `ex : x`.  This is how the `id` case amounts to just
+    -- adding a single position with a single direction -- that is,
+    -- taking the free pointed endofunctor.
+    SPFDfmmDir {x} f ex (SPFDfmPosLeaf {x} f ex) ex
+  SFMDcomp : {x : Type} -> {f : SPFData x x} ->
+    {ex : x} ->
+    {ep : SPFDcompPos {x} {y=x} {z=x}
+      f (SPFD (SPFDfmPos {x} f) (SPFDfmmDir {x} f)) ex} ->
+    (ex' : x) ->
+    SPFDcompDir {x} {y=x} {z=x}
+      f (SPFD (SPFDfmPos {x} f) (SPFDfmmDir {x} f)) ex ep ex' ->
+    SPFDfmmDir {x} f ex (SPFDfmPosPath {x} f ex ep) ex'
+-}
+--
+-- Next, we can substitute in the definitions of `SPFDcompPos` and
+-- `SPFDcompDir` to simplify the definition:
+--
+{-
+public export
+data SPFDfmmDir : {x : Type} ->
+    (f : SPFData x x) -> SPFdirType x x (SPFDfmPos {x} f) where
+  SFMDid : {x : Type} -> {f : SPFData x x} ->
+    (ex : x) ->
+    -- `SPFDidPos x ex` is just `Unit` and `SPFDidDir x ex () ex'` is
+    -- just `ex = ex`', so we can reduce the parameters to the `id`
+    -- case to just `ex : x`.  This is how the `id` case amounts to just
+    -- adding a single position with a single direction -- that is,
+    -- taking the free pointed endofunctor.
+    SPFDfmmDir {x} f ex (SPFDfmPosLeaf {x} f ex) ex
+  SFMDcomp : {x : Type} -> {f : SPFData x x} ->
+    {ec : x} ->
+    {efp : spfdPos f ec} ->
+    {fdmp : SliceMorphism {a=x} (spfdDir f ec efp) (SPFDfmPos {x} f)} ->
+    (ex : x) ->
+    (efd : spfdDir f ec efp ex) ->
+    (ed : x) ->
+    SPFDfmmDir {x} f ex (fdmp ex efd) ed ->
+    SPFDfmmDir {x} f ec (SPFDfmPosPath {x} f ec (efp ** fdmp)) ed
+-}
+--
+-- Now we convert from using `SPFdirType` to using `SPFdirSl`, and
+-- turn the explicitly-recursive definition into the definition of
+-- an endofunctor on `SPFdirSl` whose initial algebra will be
+-- equivalent to the explicitly-recursive definition.
+public export
+data SPFDfmmDirF : {x : Type} ->
+    (f : SPFData x x) ->
+    SPFdirSl x x (SPFDfmPos {x} f) ->
+    SPFdirSl x x (SPFDfmPos {x} f)
+    where
+  SFMDid : {x : Type} -> {f : SPFData x x} ->
+    {dir : SPFdirSl x x (SPFDfmPos {x} f)} ->
+    (ex : x) ->
+    -- `SPFDidPos x ex` is just `Unit` and `SPFDidDir x ex () ex'` is
+    -- just `ex = ex`', so we can reduce the parameters to the `id`
+    -- case to just `ex : x`.  This is how the `id` case amounts to just
+    -- adding a single position with a single direction -- that is,
+    -- taking the free pointed endofunctor.
+    SPFDfmmDirF {x} f dir ((ex ** SPFDfmPosLeaf {x} f ex), ex)
+  SFMDcomp : {x : Type} -> {f : SPFData x x} ->
+    {dir : SPFdirSl x x (SPFDfmPos {x} f)} ->
+    {ec : x} ->
+    {efp : spfdPos f ec} ->
+    {fdmp : SliceMorphism {a=x} (spfdDir f ec efp) (SPFDfmPos {x} f)} ->
+    (ex : x) ->
+    (efd : spfdDir f ec efp ex) ->
+    (ed : x) ->
+    (dd : dir ((ex ** fdmp ex efd), ed)) ->
+    SPFDfmmDirF {x} f dir ((ec ** SPFDfmPosPath {x} f ec (efp ** fdmp)), ed)
+--
+-- Now, finally, we can read off the positions and directions of the
+-- polynomial representation of `SPFDfmmDir` as an endofunctor on
+-- `SPFdirSl x x (SPFDfPos {x} f)`:
+--
+public export
+SPFDfmmDirPos : {x : Type} -> (f : SPFData x x) ->
+  SPFdirSl x x (SPFDfmPos {x} f)
+SPFDfmmDirPos {x} f ((ec ** InSPFm ec (Left () ** fdmp)), ed) =
+  ec = ed
+SPFDfmmDirPos {x} f ((ec ** InSPFm ec (Right efp ** fdmp)), ed) =
+  (ei : x ** spfdDir f ec efp ei)
+
+public export
+SPFDfmmDirDir : {x : Type} -> (f : SPFData x x) ->
+  SPFdirType
+    (SPFdirSlBase x x (SPFDfmPos {x} f))
+    (SPFdirSlBase x x (SPFDfmPos {x} f))
+    (SPFDfmmDirPos {x} f)
+SPFDfmmDirDir {x} f
+  ((ex ** InSPFm ex (Left () ** fdmp)), ex)
+  Refl
+  _ =
+    Void
+SPFDfmmDirDir {x} f
+  ((ec ** InSPFm ec (Right efp ** fdmp)), ed)
+  (ei ** efd)
+  ((ec' ** ep'), ed') =
+    ((eieq : ec' = ei ** ep' = (rewrite eieq in fdmp ei efd)),
+     ed' = ed)
+
+public export
+spfdFMMdirDirPosNotLeft : {x : Type} -> {f : SPFData x x} ->
+  {ec : x} -> {ep : SPFDfmPos {x} f ec} -> {ed : x} ->
+  {dp : SPFDfmmDirPos {x} f ((ec ** ep), ed)} ->
+  {sld : SPFdirSlBase x x (SPFDfmPos {x} f)} ->
+  SPFDfmmDirDir {x} f ((ec ** ep), ed) dp sld ->
+  fst (OutSPFm {spfd=(spfdFMposBase {x} f)} ec ep) = Left () ->
+  Void
+spfdFMMdirDirPosNotLeft {x} {f} {ep=(InSPFm ec (Left () ** fdmp))} {dp=Refl}
+  dd Refl = dd
+spfdFMMdirDirPosNotLeft {x} {f} {ep=(InSPFm ec (Right efp ** fdmp))}
+  dd Refl impossible
+
+public export
+SPFDnoLeafDirs : {x : Type} -> {f : SPFData x x} ->
+  {ex : x} -> {ec : x} -> {ep : SPFDfmPos {x} f ec} -> {ed : x} ->
+  SPFDfmmDirDir {x} f
+    ((ex ** SPFDfmPosLeaf {x} f ex), ex)
+    Refl
+    ((ec ** ep), ed) ->
+  Void
+SPFDnoLeafDirs {x} {f} dd = dd
+
+-- And now we can take the fixed point of `SPFDfmmDirDir` to generate the
+-- directions of the free monad, and put them together with `SPFDfmPos`
+-- to obtain the full free monad as an `SPFData`.
+public export
+SPFDfmmDirSPFD : {x : Type} -> (f : SPFData x x) ->
+  SPFData
+    (SPFdirSlBase x x (SPFDfmPos {x} f))
+    (SPFdirSlBase x x (SPFDfmPos {x} f))
+SPFDfmmDirSPFD {x} f = SPFD (SPFDfmmDirPos {x} f) (SPFDfmmDirDir {x} f)
+
+public export
+SPFDfmmDirSl : {x : Type} -> (f : SPFData x x) -> SPFdirSl x x (SPFDfmPos {x} f)
+SPFDfmmDirSl {x} f =
+  SPFDmu {x=(SPFdirSlBase x x (SPFDfmPos {x} f))} (SPFDfmmDirSPFD {x} f)
+
+public export
+SPFDfmmDir : {x : Type} -> (f : SPFData x x) -> SPFdirType x x (SPFDfmPos {x} f)
+SPFDfmmDir {x} f = SPFdirFromSl (SPFDfmmDirSl {x} f)
+
+public export
+SPFDfmm : {x : Type} -> SPFData x x -> SPFData x x
+SPFDfmm {x} f = SPFD (SPFDfmPos {x} f) (SPFDfmmDir {x} f)
+
+public export
+SPFDfmmLeaf : {x : Type} -> {f : SPFData x x} ->
+  (ex : x) ->
+  SPFDfmmDir {x} f ex (SPFDfmPosLeaf {x} f ex) ex
+SPFDfmmLeaf {x} {f} ex =
+  InSPFm
+    ((ex ** SPFDfmPosLeaf {x} f ex), ex)
+    (Refl ** \((ec ** ep), ed), dd =>
+      void $ SPFDnoLeafDirs {ex} {ec} {ep} {ed} dd)
+
+-- As a position of the free monad represents a tree with variables
+-- at the leaves, its direction-type is that of all the leaves below
+-- it.  A direction of a tree which is an internal node (i.e. not itself
+-- a leaf) is a path to a leaf below it.
+public export
+SPFDfmmPath : {x : Type} -> {f : SPFData x x} ->
+  (ec : x) -> (el : InterpSPFData {dom=x} {cod=x} f (SPFDfmPos {x} f) ec) ->
+  (ei : x) -> (fd : spfdDir f ec (fst el) ei) ->
+  (ed : x) -> SPFDfmmDir {x} f ei (snd el ei fd) ed ->
+  SPFDfmmDir {x} f ec (SPFDfmPosPath {x} f ec el) ed
+SPFDfmmPath {x} {f} ec (efp ** fdmp) ei fd ed dd =
+  InSPFm
+    ((ec ** SPFDfmPosPath {x} f ec (efp ** fdmp)), ed)
+    ((ei ** fd) **
+     \((ei ** InSPFm ei ep'), ed), ((Refl ** fdmpeq), Refl) =>
+      rewrite fdmpeq in dd)
+
+-- The elimination rule for the directions of the free monad at
+-- a given position.
+public export
+SPFDfmmDirEvalAlg : {x : Type} -> {f : SPFData x x} ->
+  (a : SliceObj x) ->
+  ((ex : x) -> SPFDfmmDir f ex (SPFDfmPosLeaf {x} f ex) ex -> a ex) ->
+  SliceAlgSPFD
+    {x=(SPFdirSlBase x x (SPFDfmPos {x} f))}
+    (SPFDfmmDirSPFD {x} f)
+    (a . Builtin.snd)
+SPFDfmmDirEvalAlg {x} {f} a lelim
+  ((ex ** InSPFm ex (Left () ** fdmp)), ex) (Refl ** ddmv_) =
+    lelim ex (SPFDfmmLeaf {x} {f} ex)
+SPFDfmmDirEvalAlg {x} {f} a lelim
+  ((ec ** InSPFm ec (Right efp ** fdmp)), ed) ((ei ** efd) ** ddm) =
+    ddm ((ei ** fdmp ei efd), ed) ((Refl ** Refl), Refl)
+
+public export
+SPFDfmmDirEval : {x : Type} -> {f : SPFData x x} ->
+  (a : SliceObj x) ->
+  ((ex : x) -> SPFDfmmDir f ex (SPFDfmPosLeaf {x} f ex) ex -> a ex) ->
+  {ec : x} -> (ep : SPFDfmPos {x} f ec) ->
+  SliceMorphism {a=x} (SPFDfmmDir {x} f ec ep) a
+SPFDfmmDirEval {x} {f} a lelim {ec} ep ed dd =
+  spfdCata
+    {x=(SPFdirSlBase x x (SPFDfmPos {x} f))}
+    {spfd=(SPFDfmmDirSPFD {x} f)}
+    {a=(a . Builtin.snd)}
+    (SPFDfmmDirEvalAlg {x} {f} a lelim)
+    ((ec ** ep), ed)
+    dd
+
+------------------------------------------------------------
+---- Free monad from mutually-recursive inductive types ----
+------------------------------------------------------------
+
+-- We have shown above that for any polynomial functor `f`, there is a
+-- polynomial-functor internalization of the direction-type of post-composition
+-- with `spfdFreePointed f`, and we have noted that the higher-order fixed
+-- point of repeating that composition produces the free monad of a polynomial
+-- functor, so we may conclude that the direction-type of the free monad
+-- is the fixed point of that composition's internalization, which we have
+-- called `SPFDcompDirPointedSPFD`.
+--
+-- Thus we can specialize the internalization of post-composition to define
+-- the directions of the free monad.  Firstly, the non-recursive
+-- post-composition -- the operation which we will iterate -- can be
+-- specialized to take slices of the free monad's position-type to
+-- slices of the application of the base functor of the free monad's
+-- position-type.
+public export
+SPFDfmDirBasePos : {x : Type} -> (f : SPFData x x) ->
+  SPFdirSl x x (SPFDcompPosPointedSl f $ SPFDfmPos {x} f)
+SPFDfmDirBasePos {x} f = SPFDcompDirPointedSPFDpos {x} f (SPFDfmPos {x} f)
+
+public export
+SPFDfmDirBaseDir : {x : Type} -> (f : SPFData x x) ->
+  SPFdirType
+    (SPFdirSlBase x x $ SPFDfmPos {x} f)
+    (SPFdirSlBase x x (SPFDcompPosPointedSl f $ SPFDfmPos {x} f))
+    (SPFDfmDirBasePos {x} f)
+SPFDfmDirBaseDir {x} f = SPFDcompDirPointedSPFDdir {x} f (SPFDfmPos {x} f)
+
+public export
+SPFDfmDirBase : {x : Type} -> (f : SPFData x x) ->
+  SPFData
+    (SPFdirSlBase x x $ SPFDfmPos {x} f)
+    (SPFdirSlBase x x (SPFDcompPosPointedSl f $ SPFDfmPos {x} f))
+SPFDfmDirBase {x} f = SPFDcompDirPointedSPFD {x} f (SPFDfmPos {x} f)
+
+-- Now we note that, although `SPFDfmDirBase` is not an endofunctor,
+-- we can inject its domain into its codomain, in this specific
+-- case where the position-type is that of the free monad.
+public export
+SPFDfmDirBaseInj : {x : Type} -> (f : SPFData x x) ->
+  SliceMorphism {a=x}
+    (SPFDfmPos {x} f)
+    (SPFDcompPosPointedSl f $ SPFDfmPos {x} f)
+SPFDfmDirBaseInj {x} f ex (InSPFm ex (Left () ** dmv_)) = Left ()
+SPFDfmDirBaseInj {x} f ex (InSPFm ex (Right ep ** dm)) = Right (ep ** dm)
+
+-- We furthermore note that `SPFDfmDirBaseInj` is an isomorphism.
+-- This is its inverse.
+public export
+SPFDfmDirBaseInjInv : {x : Type} -> (f : SPFData x x) ->
+  SliceMorphism {a=x}
+    (SPFDcompPosPointedSl f $ SPFDfmPos {x} f)
+    (SPFDfmPos {x} f)
+SPFDfmDirBaseInjInv {x} f ex (Left ()) = InSPFm ex (Left () ** \_ => voidF _)
+SPFDfmDirBaseInjInv {x} f ex (Right (ep ** dm)) = InSPFm ex (Right ep ** dm)
+
+public export
+SPFDfmDirAlgBaseFdir : {x : Type} -> {f : SPFData x x} -> {pos : SliceObj x} ->
+  SliceAlgSPFD {x} (spfdFMposBase {x} f) pos ->
+  SPFdirType x x pos ->
+  SPFdirType x x (InterpSPFData (spfdFMposBase {x} f) pos)
+SPFDfmDirAlgBaseFdir {x} {f} {pos} alg dir ex (Left () ** pmv_) ex' =
+  (ex = ex', dir ex (alg ex (Left () ** pmv_)) ex)
+SPFDfmDirAlgBaseFdir {x} {f} {pos} alg dir ex (Right efp ** fdmp) ex' =
+  SPFDcompDir {x} {y=x} {z=x} f (SPFD pos dir) ex (efp ** fdmp) ex'
+
+public export
+SPFDfmDirAlgBaseFdirPointed : {x : Type} -> {f : SPFData x x} ->
+  {pos : SliceObj x} ->
+  SliceMorphism {a=x} (SPFDcompPosPointedSl {x} f pos) pos ->
+  SPFdirType x x pos ->
+  SPFdirType x x (SPFDcompPosPointedSl f pos)
+SPFDfmDirAlgBaseFdirPointed {x} {f} {pos} alg dir =
+  spfdDirComp
+    (SPFDfmDirAlgBaseFdir {x} {f} {pos}
+      (SPFDfmDirAlgBaseFdirPosBaseAlgPointed {x} {f} {pos} alg)
+      dir)
+    (SPFDcompPosPointedSPFDfromF {x} f pos)
+
+public export
+SPFDfmDirAlgBaseEndoFdir : {x : Type} ->
+  {f : SPFData x x} -> {pos : SliceObj x} ->
+  SliceAlgSPFD {x} (spfdFMposBase {x} f) pos ->
+  SliceCoalgSPFD {x} (spfdFMposBase {x} f) pos ->
+  SPFdirType x x pos ->
+  SPFdirType x x pos
+SPFDfmDirAlgBaseEndoFdir {x} {f} {pos} alg coalg dir =
+  spfdDirComp (SPFDfmDirAlgBaseFdir {x} {f} {pos} alg dir) coalg
+
+public export
+SPFDfmDirBaseEndoFdir : {x : Type} -> {f : SPFData x x} ->
+  SPFdirType x x (SPFDfmPos {x} f) ->
+  SPFdirType x x (SPFDfmPos {x} f)
+SPFDfmDirBaseEndoFdir {x} {f} =
+  SPFDfmDirAlgBaseEndoFdir {x} {f} {pos=(SPFDfmPos {x} f)} InSPFm OutSPFm
+
+-----------------------------------------
+---- Free monad from recursive types ----
+-----------------------------------------
+
+public export
+SPFDtranslateTypeAlg : {x : Type} -> (f : SPFData x x) -> SliceObj x ->
+  SPFDtypeAlg {x} (spfdFMposBase {x} f)
+SPFDtranslateTypeAlg {x} f v =
+  SPFDfmDirAlgBaseFdir
+    {x}
+    {f}
+    {pos=(const $ SliceObj x)}
+    (\_, _ => v)
+    (sliceId $ const $ SliceObj x)
+
+-- The type-algebra which generates the type of leaves of an `f`-shaped
+-- tree -- which is the type of directions of the free monad.
+public export
+SPFDfmDirAlg : {x : Type} -> (f : SPFData x x) ->
+  SPFDtypeAlg {x} (spfdFMposBase {x} f)
+SPFDfmDirAlg {x} f = SPFDtranslateTypeAlg {x} f (SliceObjTerminal x)
+
+public export
+SPFDfmDir : {x : Type} -> (f : SPFData x x) ->
+  SPFdirType x x (SPFDfmPos {x} f)
+SPFDfmDir {x} f = spfdDirMu {x} {f=(spfdFMposBase {x} f)} (SPFDfmDirAlg {x} f)
+
+-- For documentation, we show a property of the above type signature.
+public export
+0 SPFDfmDirIsCataAlg : {x : Type} -> (f : SPFData x x) ->
+  (ex : x) -> (ep : spfdPos f ex) ->
+  (pm : SliceMorphism {a=x} (spfdDir f ex ep) (SPFDfmPos {x} f)) ->
+  (ex' : x) ->
+    SPFDfmDir {x} f ex (InSPFm ex (Right ep ** pm)) ex' =
+    SPFDcoprodTypeAlg f ex (ep ** sliceComp (SPFDfmDir f) pm) ex'
+SPFDfmDirIsCataAlg {x} f ex ep pm ex' = Refl
+
+-- Introduction and elimination rules for directions of the free monad.
+
+-- For any functor, the tree consisting of a single leaf -- effectively,
+-- a pure pattern variable -- is a position of the free monad, and it
+-- has one direction, which represents filling in that pattern variable.
+-- Put another way, it's an open term consisting simply of a metavariable.
+public export
+SPFDfmLeaf : {x : Type} -> {f : SPFData x x} ->
+  (ex : x) ->
+  SPFDfmDir {x} f ex (SPFDfmPosLeaf {x} f ex) ex
+SPFDfmLeaf {x} {f} ex = (Refl, ())
+
+-- As a position of the free monad represents a tree with variables
+-- at the leaves, its direction-type is that of all the leaves below
+-- it.  A direction of a tree which is an internal node (i.e. not itself
+-- a leaf) is a path to a leaf below it.
+public export
+SPFDfmPath : {x : Type} -> {f : SPFData x x} ->
+  (ec : x) -> (el : InterpSPFData {dom=x} {cod=x} f (SPFDfmPos {x} f) ec) ->
+  (ei : x) -> (fd : spfdDir f ec (fst el) ei) ->
+  (ed : x) -> SPFDfmDir {x} f ei (snd el ei fd) ed ->
+  SPFDfmDir {x} f ec (SPFDfmPosPath {x} f ec el) ed
+SPFDfmPath {x} {f} ec el ei fd ed dd = ((ei ** fd) ** dd)
+
+-- The elimination rule for the directions of the free monad at
+-- a given position.
+public export
+SPFDfmDirEval : {x : Type} -> {f : SPFData x x} ->
+  (a : SliceObj x) ->
+  ((ex : x) -> SPFDfmDir f ex (SPFDfmPosLeaf {x} f ex) ex -> a ex) ->
+  {ec : x} -> (ep : SPFDfmPos {x} f ec) ->
+  SliceMorphism {a=x} (SPFDfmDir {x} f ec ep) a
+SPFDfmDirEval {x} {f} a lelim
+  {ec} (InSPFm ec (Left () ** fdmpv_)) ec (Refl, ()) =
+    lelim ec (Refl, ())
+SPFDfmDirEval {x} {f} a lelim
+    {ec} (InSPFm ec (Right efp ** fdmp)) ed ((ex ** dd) ** dm)
+    with (fdmp ex dd) proof fdmpeq
+  SPFDfmDirEval {x} {f} a lelim
+    {ec} (InSPFm ec (Right efp ** fdmp)) ed ((ex ** dd) ** dm)
+    | InSPFm ex (fdmp' ** dm') =
+      SPFDfmDirEval {x} {f} a lelim {ec=ex} (fdmp ex dd) ed $
+        rewrite fdmpeq in dm
+
+public export
+SPFDfreeM : {x : Type} -> SPFData x x -> SPFData x x
+SPFDfreeM {x} f = spfdDepSPFD {x} {f=(spfdFMposBase {x} f)} (SPFDfmDirAlg {x} f)
+
+--------------------------------------
+---- Interpretation of free monad ----
+--------------------------------------
+
+public export
+SPFDfreeMAlg : {x : Type} -> SPFData x x -> SliceObj x -> Type
+SPFDfreeMAlg {x} f = SliceAlgSPFD {x} (SPFDfreeM {x} f)
+
+-- The free monad of `f` comes from a ("free-forgetful") adjunction between
+-- the category of algebras of `f` (on the left) and the base (slice)
+-- category (on the right).
+--
+-- The right adjoint is the forgetful one -- it simply forgets the action
+-- of the algebra, leaving only the carrier.
+--
+-- The left adjoint is the free monad -- it takes a slice object and
+-- produces its free algebra.  This is the carrier component of the
+-- object-map component of the left adjoint.
+public export
+InterpSPFDfreeM : {x : Type} -> SPFData x x -> SliceEndofunctor x
+InterpSPFDfreeM {x} f = InterpSPFData {dom=x} {cod=x} (SPFDfreeM {x} f)
+
+-- This is the action component of the object-map component of the left adjoint.
+public export
+InSPFfc : {x : Type} -> {f : SPFData x x} -> {slv : SliceObj x} ->
+  SliceAlgSPFD {x} f (InterpSPFDfreeM {x} f slv)
+InSPFfc {x} {f} {slv} ex (ep ** dm) =
+  (InSPFm ex (Right ep ** \ex', dd => fst (dm ex' dd)) **
+   \ex', ((ex'' ** dd) ** alg) => snd (dm ex'' dd) ex' alg)
+
+-- This is the morphism-map component of the left adjoint.
+public export
+InterpSPFDfreeMmap : {x : Type} -> {f : SPFData x x} -> {a, b : SliceObj x} ->
+  SliceMorphism {a=x} a b ->
+  SliceMorphism {a=x} (InterpSPFDfreeM {x} f a) (InterpSPFDfreeM {x} f b)
+InterpSPFDfreeMmap {x} {f} {a} {b} =
+  InterpSPFDataMap {dom=x} {cod=x} (SPFDfreeM {x} f) a b
+
+-- This is the unit of the free-monad adjunction.
+public export
+InSPFfmv : {x : Type} -> (f : SPFData x x) ->
+  SPFnt (SPFDid x) (SPFDfreeM {x} f)
+InSPFfmv {x} f =
+  SPFDm
+    (\ex, () => InSPFm ex (Left () ** \_ => voidF _))
+    (\ex, (), ex', (Refl, ()) => Refl)
+
+public export
+InSPFfv : {x : Type} -> {f : SPFData x x} -> {slv : SliceObj x} ->
+  SliceMorphism {a=x} slv (InterpSPFDfreeM {x} f slv)
+InSPFfv {x} {f} {slv} ex eslv =
+  InterpSPFnt {dom=x} {cod=x} (SPFDid x) (SPFDfreeM {x} f) (InSPFfmv f) slv ex
+    (() ** \ex, Refl => eslv)
+
+public export
+SPFDfmDirMap : {x : Type} -> (f : SPFData x x) ->
+  (slv : SliceObj x) -> (ex : x) -> SliceObj (SPFDfmPos {x} f ex)
+SPFDfmDirMap {x} f slv ex epp = SliceMorphism {a=x} (SPFDfmDir {x} f ex epp) slv
+
+-- This is the counit of the free-monad adjunction.
+public export
+spfdFreeCounitCurried : {x : Type} -> (f : SPFData x x) ->
+  (sla : SliceObj x) -> SliceAlgSPFD f sla ->
+  (ex : x) -> (epp : SPFDfmPos {x} f ex) ->
+  SPFDfmDirMap {x} f sla ex epp ->
+  sla ex
+spfdFreeCounitCurried {x} f sla alg ex (InSPFm ex (Left () ** pm)) dm =
+  dm ex (Refl, ())
+spfdFreeCounitCurried {x} f sla alg ex (InSPFm ex (Right ep ** pm)) dm =
+  alg
+    ex
+    (ep **
+     \ex', fd' =>
+      spfdFreeCounitCurried {x} f sla alg ex' (pm ex' fd') $
+        \ex'', dd' => dm ex'' ((ex' ** fd') ** dd'))
+
+public export
+spfdFreeCounit : {x : Type} -> (f : SPFData x x) ->
+  (sla : SliceObj x) -> SliceAlgSPFD f sla ->
+  SliceMorphism {a=x} (InterpSPFDfreeM {x} f sla) sla
+spfdFreeCounit {x} f sla alg ex (ep ** dm) =
+  spfdFreeCounitCurried {x} f sla alg ex ep dm
+
+-- This is the right adjunct of the free-monad adjunction.
+public export
+spfdFreeEval : {x : Type} -> (f : SPFData x x) -> (slv, sla : SliceObj x) ->
+  SliceAlgSPFD f sla -> SliceMorphism {a=x} slv sla ->
+  SliceMorphism {a=x} (InterpSPFDfreeM {x} f slv) sla
+spfdFreeEval {x} f slv sla alg subst =
+  sliceComp
+    (spfdFreeCounit {x} f sla alg)
+    (InterpSPFDfreeMmap {f} subst)
+
+-- This is the left adjunct of the free-monad adjunction.
+public export
+spfdFreeLAdj : {x : Type} -> (f : SPFData x x) -> (slv, sla : SliceObj x) ->
+  SliceMorphism {a=x} (InterpSPFDfreeM {x} f slv) sla ->
+  SliceMorphism {a=x} slv sla
+spfdFreeLAdj {x} f slv sla alg = sliceComp alg InSPFfv
+
+-- This is the comultiplication of the free-monad adjunction.
+
+public export
+spfdFreeComultOnPos : {x : Type} -> (f : SPFData x x) ->
+  SPFntPos
+    (SPFDfreeM {x} f)
+    (SPFDcomp x x x (SPFDfreeM {x} f) (SPFDfreeM {x} f))
+spfdFreeComultOnPos {x} f ex em =
+  (InSPFm ex (Left () ** \_ => voidF _) ** \ex, (Refl, ()) => em)
+
+public export
+spfdFreeComultOnDir : {x : Type} -> (f : SPFData x x) ->
+  SPFntDir
+    (SPFDfreeM {x} f)
+    (SPFDcomp x x x (SPFDfreeM {x} f) (SPFDfreeM {x} f))
+    (spfdFreeComultOnPos {x} f)
+spfdFreeComultOnDir {x} f ex em ex' ((ex ** (Refl, ())) ** em') = em'
+
+public export
+spfdFreeComult : {x : Type} -> (f : SPFData x x) ->
+  SPFnt (SPFDfreeM {x} f) (SPFDcomp x x x (SPFDfreeM {x} f) (SPFDfreeM {x} f))
+spfdFreeComult {x} f =
+  SPFDm (spfdFreeComultOnPos {x} f) (spfdFreeComultOnDir {x} f)
+
+--------------------------------------------------------------------
+---- Equivalence of free monad with fixed point of base functor ----
+--------------------------------------------------------------------
+
+-- Here we show how to translate between the representation of the free
+-- monad that we used to generate the polynomial representation and the
+-- interpretation (by `InterpSPFData`) of the resulting polynomial
+-- representation.
+
+public export
+spfdGenToFree : {x : Type} -> (f : SPFData x x) ->
+  SliceNatTrans {x=x} {y=x} (spfdGenFree {x} f) (InterpSPFDfreeM {x} f)
+spfdGenToFree {x} f sx =
+  spfdFMeval {x} f sx (InterpSPFDfreeM {x} f sx)
+    (InSPFfc {x} {f} {slv=sx})
+    (InSPFfv {x} {f} {slv=sx})
+
+public export
+spfdFreeToGenAlg : {x : Type} -> (f : SPFData x x) -> (sx : SliceObj x) ->
+  SliceAlgSPFD f (spfdGenFree {x} f sx)
+spfdFreeToGenAlg {x} f sx ex (ep ** dm) = InSPFm ex (Right ep ** dm)
+
+public export
+spfdGenUnit : {x : Type} -> (f : SPFData x x) ->
+  SlicePure {c=x} (spfdGenFree {x} f)
+spfdGenUnit {x} f sx ex esx = InSPFm ex (Left esx ** \_, ev => void ev)
+
+public export
+spfdFreeToGen : {x : Type} -> (f : SPFData x x) ->
+  SliceNatTrans {x=x} {y=x} (InterpSPFDfreeM {x} f) (spfdGenFree {x} f)
+spfdFreeToGen {x} f sx =
+  spfdFreeEval {x} f sx
+    (spfdGenFree {x} f sx)
+    (spfdFreeToGenAlg {x} f sx)
+    (spfdGenUnit {x} f sx)
+
+------------------------------
+------------------------------
+---- M-types from W-types ----
+------------------------------
+------------------------------
+
+-- We follow the construction (of M-types from W-types) in section 4
+-- of Abbott, Altenkirch, and Ghani's "Containers: Constructing
+-- strictly positive types".
+
+-- The base functor of the object which the paper calls `M-hat`.
+public export
+MHbasePos : {x : Type} -> (f : SPFData x x) -> SliceObj x
+MHbasePos {x} f = spfdPos (spfdTranslateTerminal f)
+
+-- What the paper writes as "bottom" -- "points where the tree has been
+-- cut off".
+public export
+mhpCut : {0 x : Type} -> (f : SPFData x x) -> (ex : x) -> MHbasePos {x} f ex
+mhpCut {x} f ex = Left ()
+
+public export
+mhpSup : {0 x : Type} -> (f : SPFData x x) ->
+  {ex : x} -> spfdPos f ex -> MHbasePos {x} f ex
+mhpSup {x} f {ex} = Right
+
+public export
+MHbaseDir : {x : Type} ->
+  (f : SPFData x x) -> SPFdirType x x (MHbasePos {x} f)
+MHbaseDir {x} f = spfdDir (spfdTranslateTerminal f)
+
+public export
+mhdSup : {0 x : Type} -> {f : SPFData x x} ->
+  {exc : x} -> {efp : spfdPos f exc} -> {exd : x} ->
+  spfdDir f exc efp exd -> MHbaseDir {x} f exc (mhpSup {x} f {ex=exc} efp) exd
+mhdSup {x} {f} {exc} {efp} {exd} = id
+
+public export
+MHbaseF : {x : Type} -> SPFData x x -> SPFData x x
+MHbaseF {x} f = SPFD (MHbasePos {x} f) (MHbaseDir {x} f)
+
+public export
+MH : {x : Type} -> SPFData x x -> SliceObj x
+MH = SPFDfmPos
+
+-- The base functor of the object which the paper calls `M-bar`.
+public export
+MBbasePos : {x : Type} -> (f : SPFData x x) -> SliceObj x
+MBbasePos {x} f ex = Either (MHbasePos {x} f ex) Unit
+
+-- What the paper writes as "bottom" -- "points where the tree has been
+-- cut off".
+public export
+mbpCut : {0 x : Type} -> (f : SPFData x x) -> (ex : x) -> MBbasePos {x} f ex
+mbpCut {x} f ex = Left $ mhpCut {x} f ex
+
+public export
+mbpSup : {0 x : Type} -> (f : SPFData x x) ->
+  {ex : x} -> spfdPos f ex -> MBbasePos {x} f ex
+mbpSup {x} f {ex} ep = Left $ mhpSup {x} f {ex} ep
+
+-- What the paper writes as "star".
+public export
+mbpStar : {0 x : Type} -> (f : SPFData x x) -> (ex : x) -> MBbasePos {x} f ex
+mbpStar {x} f ex = Right ()
+
+public export
+MBbaseDir : {x : Type} ->
+  (f : SPFData x x) -> SPFdirType x x (MBbasePos {x} f)
+MBbaseDir {x} f exc ep exd = case ep of
+  Left epl => MHbaseDir {x} f exc epl exd
+  Right () => Void
+
+public export
+mbdSup : {0 x : Type} -> {f : SPFData x x} ->
+  {exc : x} -> {efp : spfdPos f exc} -> {exd : x} ->
+  spfdDir f exc efp exd -> MBbaseDir {x} f exc (mbpSup {x} f {ex=exc} efp) exd
+mbdSup {x} {f} {exc} {efp} {exd} = id
+
+public export
+MBbaseF : {x : Type} -> SPFData x x -> SPFData x x
+MBbaseF {x} f = SPFD (MBbasePos {x} f) (MBbaseDir {x} f)
+
+public export
+MB : {x : Type} -> SPFData x x -> SliceObj x
+MB {x} f = SPFDmu {x} (MBbaseF {x} f)
+
+public export
+mbTruncAlg : {x : Type} -> {f : SPFData x x} ->
+  Nat -> SliceAlgSPFD {x} (MBbaseF {x} f) (MB {x} f)
+mbTruncAlg {x} {f} Z ex epdm = InSPFm ex (mbpCut {x} f ex ** \_, v => void v)
+mbTruncAlg {x} {f} (S n) ex epdm = case epdm of
+  (Left (Left ()) ** _) => InSPFm ex (mbpStar {x} f ex ** \_, v => void v)
+  (Left (Right efp) ** dm) =>
+    spfdCata {spfd=(MBbaseF {x} f)} {a=(MB {x} f)}
+      (mbTruncAlg {x} {f} n)
+      ex
+      (InSPFm ex epdm)
+  (Right () ** _) => InSPFm ex (mbpStar {x} f ex ** \_, v => void v)
+
+public export
+mbTrunc : {x : Type} -> {f : SPFData x x} ->
+  Nat -> SliceMorphism {a=x} (MB {x} f) (MB {x} f)
+mbTrunc {x} {f} =
+  spfdCata {a=(MB {x} f)} {spfd=(MBbaseF {x} f)} . mbTruncAlg {x} {f}
+
+public export
+mbIncl : {x : Type} -> (f : SPFData x x) ->
+  SliceMorphism {a=x} (MH {x} f) (MB {x} f)
+mbIncl {x} f =
+  spfdCata {a=(MB {x} f)} {spfd=(MHbaseF {x} f)} $
+    \ex, (ep ** dm) => InSPFm ex (Left ep ** dm)
+
+public export
+mhTrunc : {x : Type} -> {f : SPFData x x} ->
+  Nat -> SliceMorphism {a=x} (MH {x} f) (MB {x} f)
+mhTrunc {x} {f} n = sliceComp {a=x} (mbTrunc {x} {f} n) (mbIncl {x} f)
+
+-- Called simply `M` in the paper, this is the terminal (or "final")
+-- coalgebra of the given polynomial functor.
+public export
+SPFDnuM : {x : Type} -> SPFData x x -> SliceObj x
+SPFDnuM {x} f ex =
+  (m : Nat -> MH {x} f ex **
+   (n : Nat) -> mbIncl {x} f ex (m n) = mhTrunc {x} {f} n ex (m $ S n))
 
 --------------------------------------------------------------
 --------------------------------------------------------------
@@ -2513,35 +4632,96 @@ spfdNuToCoalgCovarSl :
 spfdNuToCoalgCovarSl {x} {w} f k =
   spfdNuToCoalgCovar {x} f (Sigma {a=w} . k)
 
----------------------
----------------------
----- Free monads ----
----------------------
----------------------
-
--- The free monad of a polynomial functor `f` can be defined pointwise
--- at each object `a` as the initial algebra of the polynomial functor
--- `x -> a + f x`.  From the pointwise definition, we can then extract
--- the position-set (as the functor applied to the terminal object) and
--- then the direction-sets.
-public export
-spfdFMbase : {x : Type} -> SPFData x x -> SliceObj x -> SPFData x x
-spfdFMbase {x} f a = spfdCoproduct {dom=x} {cod=x} (SPFDataConst x a) f
+--------------------------------------
+--------------------------------------
+---- Products of initial algebras ----
+--------------------------------------
+--------------------------------------
 
 public export
-spfdInterpFree : {x : Type} -> SPFData x x -> SliceEndofunctor x
-spfdInterpFree {x} f = SPFDmu {x} . spfdFMbase {x} f
+pfProdToSl : PolyFunc -> PolyFunc -> SPFData (Fin 3) (Fin 3)
+pfProdToSl p q =
+  SPFD
+    (flip index [pfPos p, pfPos q, Unit])
+    (\ec, ep, ed => case ec of
+      FZ => (ed = FZ, pfDir {p} ep)
+      FS FZ => (ed = FS FZ, pfDir {p=q} ep)
+      FS (FS FZ) => case ep of
+        () => case ed of
+          FZ => Unit
+          FS FZ => Unit
+          FS (FS FZ) => Void)
 
 public export
-spfdFMeval : {x : Type} -> (f : SPFData x x) -> (slv, sla : SliceObj x) ->
-  SliceMorphism {a=x} slv sla -> SliceAlgSPFD f sla ->
-  SliceMorphism {a=x} (spfdInterpFree {x} f slv) sla
-spfdFMeval {x} f slv sla subst alg =
-  spfdCata {x} {spfd=(spfdFMbase {x} f slv)} {a=sla} $
-    \ex, el => case el of
-      (i ** dm) => case i of
-        Left ev => subst ex ev
-        Right ep => alg ex (ep ** dm)
+pfProdSlMu : PolyFunc -> PolyFunc -> FinSliceObj 3
+pfProdSlMu p q = SPFDmu (pfProdToSl p q)
+
+public export
+PFProdMu : PolyFunc -> PolyFunc -> Type
+PFProdMu p q = pfProdSlMu p q (FS $ FS FZ)
+
+public export
+PFprodSlAlg : PolyFunc -> PolyFunc -> FinSliceObj 3 -> Type
+PFprodSlAlg p q = SliceAlgSPFD {x=(Fin 3)} (pfProdToSl p q)
+
+public export
+pfProdSlCata : {p, q : PolyFunc} -> {sl : FinSliceObj 3} ->
+  PFprodSlAlg p q sl -> SliceMorphism (pfProdSlMu p q) sl
+pfProdSlCata {p} {q} {sl} = spfdCata {spfd=(pfProdToSl p q)} {a=sl}
+
+public export
+pfProdMuFromSlObj : PolyFunc -> PolyFunc -> FinSliceObj 3
+pfProdMuFromSlObj p q FZ = PolyFuncMu p
+pfProdMuFromSlObj p q (FS FZ) = PolyFuncMu q
+pfProdMuFromSlObj p q (FS $ FS FZ) = (PolyFuncMu p, PolyFuncMu q)
+
+public export
+pfProdMuFromSlAlg : (p, q : PolyFunc) -> PFprodSlAlg p q (pfProdMuFromSlObj p q)
+pfProdMuFromSlAlg p q FZ (ep ** dm) = InPFM ep (\d => dm FZ (Refl, d))
+pfProdMuFromSlAlg p q (FS FZ) (ep ** dm) = InPFM ep (\d => dm (FS FZ) (Refl, d))
+pfProdMuFromSlAlg p q (FS $ FS FZ) (() ** dm) = (dm FZ (), dm (FS FZ) ())
+
+public export
+pfProdSlToProdMu : (p, q : PolyFunc) ->
+  PFProdMu p q -> (PolyFuncMu p, PolyFuncMu q)
+pfProdSlToProdMu p q =
+  spfdCata {spfd=(pfProdToSl p q)} (pfProdMuFromSlAlg p q) (FS $ FS FZ)
+
+public export
+pfProdSlFromProdMuSlCurried0 : (p, q : PolyFunc) ->
+  PolyFuncMu p -> pfProdSlMu p q FZ
+pfProdSlFromProdMuSlCurried0 p q (InPFM pi pdm) =
+  InSPFm
+    FZ
+    (pi **
+     \idx, (eq, pd) =>
+      case eq of Refl => pfProdSlFromProdMuSlCurried0 p q $ pdm pd)
+
+public export
+pfProdSlFromProdMuSlCurried1 : (p, q : PolyFunc) ->
+  PolyFuncMu q -> pfProdSlMu p q (FS FZ)
+pfProdSlFromProdMuSlCurried1 p q (InPFM qi qdm) =
+  InSPFm
+    (FS FZ)
+    (qi **
+     \idx, (eq, qd) =>
+      case eq of Refl => pfProdSlFromProdMuSlCurried1 p q $ qdm qd)
+
+public export
+pfProdSlFromProdMuSlCurried2 : (p, q : PolyFunc) ->
+  PolyFuncMu p -> PolyFuncMu q -> pfProdSlMu p q (FS $ FS FZ)
+pfProdSlFromProdMuSlCurried2 p q elp elq =
+  InSPFm
+    (FS $ FS FZ)
+    (() ** \idx, ep => case idx of
+      FZ => case ep of () => pfProdSlFromProdMuSlCurried0 p q elp
+      FS FZ => case ep of () => pfProdSlFromProdMuSlCurried1 p q elq
+      FS (FS FZ) => void ep)
+
+public export
+pfProdSlFromProdMu : (p, q : PolyFunc) ->
+  (PolyFuncMu p, PolyFuncMu q) -> PFProdMu p q
+pfProdSlFromProdMu p q = uncurry $ pfProdSlFromProdMuSlCurried2 p q
 
 ------------------------------------------------
 ------------------------------------------------

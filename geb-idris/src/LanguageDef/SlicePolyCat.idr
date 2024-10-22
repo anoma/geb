@@ -51,6 +51,10 @@ TyElMor e e' =
 ---- Definition ----
 --------------------
 
+public export
+0 SPFdirTypeSl : (0 dom, cod : Type) -> SliceEndofunctor cod
+SPFdirTypeSl dom cod pos ec = pos ec -> SliceObj dom
+
 -- At https://ncatlab.org/nlab/show/parametric+right+adjoint#generic_morphisms
 -- in the proposition about the "especially nice form" of PRA functors between
 -- presheaf categories, this `SPFdirType` corresponds to what is called the
@@ -60,20 +64,24 @@ TyElMor e e' =
 -- Note that this is equivalent to `SliceObj (Sigma {a=cod} pos, dom)`.
 public export
 0 SPFdirType : (0 dom, cod : Type) -> (0 _ : SliceObj cod) -> Type
-SPFdirType dom cod pos = (ec : cod) -> pos ec -> SliceObj dom
+SPFdirType dom cod pos = Pi {a=cod} (SPFdirTypeSl dom cod pos)
 
 -- The slice-object form of `SPFdirType`.
 public export
-SPFdirSl : (dom, cod : Type) -> (pos : SliceObj cod) -> Type
-SPFdirSl dom cod pos = SliceObj (Sigma {a=cod} pos, dom)
+SPFdirSlBase : (dom, cod : Type) -> (pos : SliceObj cod) -> Type
+SPFdirSlBase dom cod pos = (Sigma {a=cod} pos, dom)
 
 public export
-0 SPFdirToSl : {dom, cod : Type} -> {pos : SliceObj cod} ->
+SPFdirSl : (dom, cod : Type) -> (pos : SliceObj cod) -> Type
+SPFdirSl dom cod pos = SliceObj (SPFdirSlBase dom cod pos)
+
+public export
+SPFdirToSl : {dom, cod : Type} -> {pos : SliceObj cod} ->
   SPFdirType dom cod pos -> SPFdirSl dom cod pos
 SPFdirToSl {dom} {cod} {pos} dir ((ec ** ep), ed) = dir ec ep ed
 
 public export
-0 SPFdirFromSl : {dom, cod : Type} -> {pos : SliceObj cod} ->
+SPFdirFromSl : {dom, cod : Type} -> {pos : SliceObj cod} ->
   SPFdirSl dom cod pos -> SPFdirType dom cod pos
 SPFdirFromSl {dom} {cod} {pos} dir ec ep ed = dir ((ec ** ep), ed)
 
@@ -102,6 +110,16 @@ public export
   SPFdirType dom cod pos -> SPFdirSlF dom cod pos
 SPFdirToSlF {dom} {cod} {pos} = SPFdirSlFfromSl . SPFdirToSl
 
+-- Note the contravariance:  because we will pre-compose the morphism
+-- between the position types, that morphism must go from `pos'` to
+-- `pos` to transform a direction type dependent on `pos` to a direction
+-- type dependent on `pos`'.
+public export
+spfdDirComp : {0 dom, cod : Type} -> {0 pos, pos' : SliceObj cod} ->
+  SPFdirType dom cod pos -> SliceMorphism {a=cod} pos' pos ->
+  SPFdirType dom cod pos'
+spfdDirComp {dom} {cod} {pos} {pos'} dir mp ec = dir ec . mp ec
+
 -- A polynomial functor on slice categories may be described as a parametric
 -- right adjoint whose right-adjoint component is a form of `SliceSigmaPiFR`
 -- (which has the left adjoint `SliceSigmaPiFL`) and whose following
@@ -122,6 +140,79 @@ record SPFData (dom, cod : Type) where
   constructor SPFD
   spfdPos : SliceObj cod
   spfdDir : SPFdirType dom cod spfdPos
+
+-- This is just a (non-zero-usage) restatement of `SPFdirType`.
+public export
+SPFDataToSigmaSl : (dom, cod : Type) -> SliceObj (SliceObj cod)
+SPFDataToSigmaSl dom cod pos = (ec : cod) -> pos ec -> SliceObj dom
+
+-- This is just a restatement of `SPFData`.  Its purpose is to
+-- exhibit `SPFData` as a sigma type -- which makes it a left adjoint
+-- (of base change).
+public export
+SPFDataAsSigma : Type -> Type -> Type
+SPFDataAsSigma dom cod = Sigma {a=(SliceObj cod)} (SPFDataToSigmaSl dom cod)
+
+public export
+SPFDataToSigma : {dom, cod : Type} ->
+  SPFData dom cod -> SPFDataAsSigma dom cod
+SPFDataToSigma {dom} {cod} (SPFD pos dir) = (pos ** dir)
+
+public export
+SPFDataFromSigma : {dom, cod : Type} ->
+  SPFDataAsSigma dom cod -> SPFData dom cod
+SPFDataFromSigma {dom} {cod} (pos ** dir) = SPFD pos dir
+
+-- A polynomial functor from a polynomial-functor category.
+public export
+SPFDataSPFSl : (dom, cod, cod' : Type) -> Type
+SPFDataSPFSl dom cod cod' = SPFData (SPFData dom cod) cod'
+
+public export
+SPFDataSPFSlFromSigma : {dom, cod, cod' : Type} ->
+  SPFData (SPFDataAsSigma dom cod) cod' ->
+  SPFDataSPFSl dom cod cod'
+SPFDataSPFSlFromSigma {dom} {cod} {cod'} spfd =
+  SPFD
+    (spfdPos spfd)
+    (\ec => (.) ((|>) SPFDataToSigma) (spfdDir spfd ec))
+
+-- A polynomial functor to a polynomial-functor category.
+public export
+SPFDataSlSPF : (dom, dom', cod' : Type) -> Type
+SPFDataSlSPF dom dom' cod' = SPFData dom (SPFData dom' cod')
+
+public export
+SPFDataSlSPFFromSigma : {dom, dom', cod' : Type} ->
+  SPFData dom (SPFDataAsSigma dom' cod') ->
+  SPFDataSlSPF dom dom' cod'
+SPFDataSlSPFFromSigma {dom} {dom'} {cod'} spfd =
+  SPFD
+    (spfdPos spfd . SPFDataToSigma)
+    (\spfd' => spfdDir spfd (SPFDataToSigma spfd'))
+
+-- A polynomial functor between polynomial-functor categories.
+public export
+SPFDataSPFSPF : (dom, cod, dom', cod' : Type) -> Type
+SPFDataSPFSPF dom cod dom' cod' = SPFData (SPFData dom cod) (SPFData dom' cod')
+
+public export
+SPFDataSPFSPFFromSigma : {dom, cod, dom', cod' : Type} ->
+  SPFData (SPFDataAsSigma dom cod) (SPFDataAsSigma dom' cod') ->
+  SPFDataSPFSPF dom cod dom' cod'
+SPFDataSPFSPFFromSigma {dom} {cod} {dom'} {cod'} =
+  SPFDataSlSPFFromSigma {dom=(SPFData dom cod)} {dom'} {cod'}
+  . SPFDataSPFSlFromSigma {dom} {cod} {cod'=(SPFDataAsSigma dom' cod')}
+
+-- A polynomial endofunctor on a polynomial-functor category.
+public export
+SPFDataSPF : (dom, cod : Type) -> Type
+SPFDataSPF dom cod = SPFData (SPFData dom cod) (SPFData dom cod)
+
+-- A polynomial endofunctor on a polynomial-endofunctor category.
+public export
+SPFDataESPF : (x : Type) -> Type
+SPFDataESPF x = SPFDataSPF x x
 
 -- Category-theory-style `spfdPos`.
 public export
@@ -1950,45 +2041,32 @@ public export
 SPFDid : (x : Type) -> SPFData x x
 SPFDid x = SPFD (SPFDidPos x) (SPFDidDir x)
 
+-- A preliminary to `SPFDcompPos` which allows the caller to pass in only
+-- the post-composed functor's position-type, not its direction-type, to
+-- compute the position-type of a composition.  (The position-type of a
+-- composition is sensitive only to the position-type of the pre-composed
+-- functor, but to the entire post-composed functor.  Specifically, it is
+-- the post-composed functor _applied_ to the pre-composed functor's
+-- position-type.  One way of saying this is that the internalization of
+-- the projection of the post-composition functor of `g` onto position types
+-- is `g` itself after the projection onto position types.)
 public export
-SPFDcompPosFst : {x, y, z : Type} ->
-  SPFData y z -> SPFData x y -> SliceObj z
-SPFDcompPosFst {x} {y} {z} g f = spfdPos g
-
-public export
-SPFDcompPosSnd : {x, y, z : Type} ->
-  (g : SPFData y z) -> (f : SPFData x y) ->
-  (ez : z) -> SPFDcompPosFst g f ez -> Type
-SPFDcompPosSnd {x} {y} {z} g f ez egp =
-  SliceMorphism {a=y} (spfdDir g ez egp) (spfdPos f)
+SPFDcompPosSl : {y, z : Type} ->
+  SPFData y z -> SliceObj y -> SliceObj z
+SPFDcompPosSl {y} {z} g fpos = InterpSPFData {dom=y} {cod=z} g fpos
 
 public export
 SPFDcompPos : {x, y, z : Type} ->
   SPFData y z -> SPFData x y -> SliceObj z
-SPFDcompPos {x} {y} {z} g f ez =
-  Sigma {a=(SPFDcompPosFst g f ez)} $ SPFDcompPosSnd g f ez
-
-public export
-SPFDcompDirFst : {x, y, z : Type} ->
-  (g : SPFData y z) -> (f : SPFData x y) ->
-  SPFdirType x z (SPFDcompPos {x} {y} {z} g f)
-SPFDcompDirFst {x} {y} {z} g f ez ep ex =
-  Sigma {a=y} $ spfdDir g ez (fst ep)
-
-public export
-SPFDcompDirSnd : {x, y, z : Type} ->
-  (g : SPFData y z) -> (f : SPFData x y) ->
-  (ez : z) -> (ep : SPFDcompPos g f ez) -> (ex : x) ->
-  SPFDcompDirFst g f ez ep ex -> Type
-SPFDcompDirSnd {x} {y} {z} g f ez ep ex ecd =
-  spfdDir f (fst ecd) (snd ep (fst ecd) (snd ecd)) ex
+SPFDcompPos {x} {y} {z} g f = SPFDcompPosSl {y} {z} g (spfdPos f)
 
 public export
 SPFDcompDir : {x, y, z : Type} ->
   (g : SPFData y z) -> (f : SPFData x y) ->
   SPFdirType x z (SPFDcompPos {x} {y} {z} g f)
-SPFDcompDir {x} {y} {z} g f ez ep ex =
-  Sigma {a=(SPFDcompDirFst g f ez ep ex)} $ SPFDcompDirSnd g f ez ep ex
+SPFDcompDir {x} {y} {z} g f ez egfp ex =
+  (eygd : Sigma {a=y} (spfdDir g ez (fst egfp)) **
+   spfdDir f (fst eygd) (snd egfp (fst eygd) (snd eygd)) ex)
 
 public export
 SPFDcomp : (x, y, z : Type) ->
@@ -2943,12 +3021,13 @@ public export
 0 SPFntToWType : {w, z : Type} ->
   {f, g : SPFData w z} ->
   SPFnt {dom=w} {cod=z} f g ->
-  WTypeNT {w} {z} (SPFDasWTF f) (SPFDasWTF g)
-SPFntToWType {w} {z} {f} {g} spnt =
-  SPFpoCellToWType {w} {w'=w} {z} {z'=z} Prelude.id Prelude.id f g $
-    SPFDm
-      (\ez, (SFS ez ep) => spOnPos spnt ez ep)
-      (\ez, (SFS ez ep), ew, egd => SFS ew $ spOnDir spnt ez ep ew egd)
+  WTypeNT {w} {z'=z} (SPFDasWTF f) (SPFDasWTF g)
+SPFntToWType {w} {z} {f} {g} (SPFDm onpos ondir) =
+  WTntFromCell (SPFDasWTF f) (SPFDasWTF g)
+    (SPFpoCellToWType {w} {w'=w} {z} {z'=z} id id f g
+      $ SPFDm
+        (\ez, (SFS ez ep) => onpos ez ep)
+        (\ez, (SFS ez ep), ew, egd => SFS ew $ ondir ez ep ew egd))
 
 public export
 spocVid : {w, z : Type} -> (f : SPFData w z) ->
@@ -3107,13 +3186,19 @@ SPFelemCatObj : {dom, cod : Type} -> SliceObj (SPFData dom cod)
 SPFelemCatObj {dom} {cod} = Sigma {a=(SliceObj dom)} . SPFelem {dom} {cod}
 
 public export
+SPELeq : {dom, cod : Type} -> (f : SPFData dom cod) ->
+  (elx, ely : SPFelemCatObj {dom} {cod} f) ->
+  SliceMorphism {a=dom} (fst elx) (fst ely) ->
+  Type
+SPELeq {dom} {cod} f (sdx ** dmx) (sdy ** dmy) spelM =
+  FunExt -> dmy = (\ec => InterpSPFDataMap f sdx sdy spelM ec (dmx ec))
+
+public export
 record SPFelemCatMor {dom, cod : Type}
     (f : SPFData dom cod) (elx, ely : SPFelemCatObj {dom} {cod} f) where
   constructor SPelM
   spelM : SliceMorphism {a=dom} (fst elx) (fst ely)
-  spelEq : FunExt ->
-    (snd ely) =
-    (\ec => InterpSPFDataMap f (fst elx) (fst ely) spelM ec (DPair.snd elx ec))
+  spelEq : SPELeq {dom} {cod} f elx ely spelM
 
 public export
 SPelMc : {dom, cod : Type} -> {f : SPFData dom cod} -> {x, y : SliceObj dom} ->
@@ -4685,6 +4770,30 @@ SPFpoCellFamFromDep : {b : Type} -> {w, w', z, z' : SliceObj b} ->
   SPFdepPoCell bcl bcr f g
 SPFpoCellFamFromDep {b} {w} {w'} {z} {z'} bcl bcr f g = SPFntDepFromFam
 
+----------------------------------------------------------------------
+----------------------------------------------------------------------
+---- Dependent data structures (constructor form of `SPFDataFam`) ----
+----------------------------------------------------------------------
+----------------------------------------------------------------------
+
+-- Now we develop a form of `SPFDataFam` (and therefore `SPFData`, via
+-- the translation above) which emulates the way that data structures
+-- are often defined in dependently-typed programming languages:  via
+-- constructors each of which might represent more than one position
+-- (or exactly one, or none).  In particular, the morphisms between
+-- such data structures are defined by dependent pattern-matching.
+
+public export
+SPFctor' : {b : Type} -> (dom, cod : SliceObj b) -> Type
+SPFctor' {b} dom cod =
+  (pos : Type ** dir : Type **
+   pb : pos -> b ** pc : Pi {a=pos} (cod . pb) **
+   dp : dir -> pos ** Pi {a=dir} (dom . pb . dp))
+
+public export
+SPFstruct' : {b : Type} -> (dom, cod : SliceObj b) -> Type
+SPFstruct' {b} dom cod = (ctor : Type ** ctor -> SPFctor' {b} dom cod)
+
 ------------------------------------------
 ------------------------------------------
 ---- Morphisms between direction-sets ----
@@ -4755,6 +4864,25 @@ spfdDirGenQuant : {dom, cod : Type} ->
   (spfd : SPFData dom cod) -> SliceObj (SPFDbase spfd)
 spfdDirGenQuant {dom} {cod} spfd ep =
   (ec' : cod ** spfdDirGenQuantCod {dom} {cod} spfd ep ec')
+
+------------------------------------------------------------------------------
+---- Polynomial functors on direction types (dependent on position types) ----
+------------------------------------------------------------------------------
+
+public export
+SPFdirSPF : (dom, cod : Type) -> SliceObj (SliceObj cod)
+SPFdirSPF dom cod =
+  SPFParamData {b=(SliceObj cod)} (SPFdirSlBase dom cod) (SPFdirSlBase dom cod)
+
+public export
+SPFdirSPFam : (dom, cod : Type) -> Type
+SPFdirSPFam dom cod =
+  SPFDataFam {b=(SliceObj cod)} (SPFdirSlBase dom cod) (SPFdirSlBase dom cod)
+
+public export
+SPFdirSigmaF : (dom, cod : Type) -> Type
+SPFdirSigmaF dom cod =
+  SPFamData {b=(SliceObj cod)} (SPFdirSlBase dom cod) (SPFdirSlBase dom cod)
 
 ----------------------------------------------
 ----------------------------------------------
@@ -4845,3 +4973,950 @@ SPFntComplete fext {dom} {cod} {f=(SPFD fpos fdir)} {g=(SPFD gpos gdir)}
   nt isnat x ec (efp ** fdm) =
     rewrite sym $ SPFDextCovarDirRepMapId fext (SPFD fpos fdir) ec efp x fdm in
     isnat (fdir ec efp) x fdm ec (efp ** sliceId $ fdir ec efp)
+
+----------------------------------------------
+----------------------------------------------
+---- Constructor formulation of `SPFData` ----
+----------------------------------------------
+----------------------------------------------
+
+public export
+SPFctorCheck : (dom, cod, dir : Type) -> Type
+SPFctorCheck dom cod dir = (dir -> dom) -> Maybe cod
+
+public export
+SPFctor : (dom, cod : Type) -> Type
+SPFctor dom cod = DPair Type (SPFctorCheck dom cod)
+
+public export
+SPFctorDirIdx : {dom, cod : Type} -> SPFctor dom cod -> Type
+SPFctorDirIdx {dom} {cod} = DPair.fst
+
+public export
+spfCtorCheck : {dom, cod : Type} ->
+  (ctor : SPFctor dom cod) ->
+  SPFctorCheck dom cod (SPFctorDirIdx {dom} {cod} ctor)
+spfCtorCheck {dom} {cod} = DPair.snd
+
+public export
+SPFctorPosMap : {dom, cod : Type} -> SPFctor dom cod -> Type
+SPFctorPosMap {dom} {cod} ctor = SPFctorDirIdx ctor -> dom
+
+public export
+SPFctorPosCheck : {dom, cod : Type} ->
+  (ctor : SPFctor dom cod) -> SPFctorPosMap {dom} {cod} ctor -> SliceObj cod
+SPFctorPosCheck {dom} {cod} ctor dm ec =
+  spfCtorCheck {dom} {cod} ctor dm = Just ec
+
+public export
+SPFctorPos : {dom, cod : Type} -> SPFctor dom cod -> SliceObj cod
+SPFctorPos {dom} {cod} ctor ec =
+  (dm : SPFctorPosMap {dom} {cod} ctor **
+   SPFctorPosCheck {dom} {cod} ctor dm ec)
+
+public export
+spfCtorPosMap : {dom, cod : Type} -> {ctor : SPFctor dom cod} -> (ec : cod) ->
+  SPFctorPos {dom} {cod} ctor ec -> SPFctorDirIdx {dom} {cod} ctor -> dom
+spfCtorPosMap {dom} {cod} {ctor} ec = DPair.fst
+
+public export
+spfCtorPosCheck : {dom, cod : Type} -> {ctor : SPFctor dom cod} ->
+  (ec : cod) ->
+  (ep : SPFctorPos {dom} {cod} ctor ec) ->
+  SPFctorPosCheck {dom} {cod} ctor (spfCtorPosMap {dom} {cod} {ctor} ec ep) ec
+spfCtorPosCheck {dom} {cod} {ctor} ec = DPair.snd
+
+public export
+SPFctorCDir : {dom, cod : Type} -> (ctor : SPFctor dom cod) ->
+  (ec : cod) -> SPFctorPos {dom} {cod} ctor ec -> CSliceObj dom
+SPFctorCDir {dom} {cod} ctor ec ep =
+  (SPFctorDirIdx {dom} {cod} ctor ** spfCtorPosMap {dom} {cod} {ctor} ec ep)
+
+public export
+SPFctorDir : {dom, cod : Type} -> (ctor : SPFctor dom cod) ->
+  SPFdirType dom cod (SPFctorPos {dom} {cod} ctor)
+SPFctorDir {dom} {cod} ctor ec ep =
+  SliceFromCSlice {c=dom} (SPFctorCDir {dom} {cod} ctor ec ep)
+
+public export
+InterpSPFctor : {dom, cod : Type} -> SPFctor dom cod -> SliceFunctor dom cod
+InterpSPFctor {dom} {cod} ctor sd ec =
+  (ep : SPFctorPos {dom} {cod} ctor ec **
+   CSliceMorphism {c=dom}
+    (SPFctorCDir {dom} {cod} ctor ec ep)
+    (CSliceFromSlice {c=dom} sd))
+
+public export
+SPFctorToSPFD : {dom, cod : Type} -> SPFctor dom cod -> SPFData dom cod
+SPFctorToSPFD {dom} {cod} ctor = SPFD (SPFctorPos ctor) (SPFctorDir ctor)
+
+public export
+SPFstruct : (dom, cod : Type) -> Type
+SPFstruct dom cod = (ctor : Type ** ctor -> SPFctor dom cod)
+
+public export
+SPFstructCtor : {dom, cod : Type} -> SPFstruct dom cod -> Type
+SPFstructCtor {dom} {cod} = DPair.fst
+
+public export
+SPFstructRec : {dom, cod : Type} ->
+  (spf : SPFstruct dom cod) -> SPFstructCtor {dom} {cod} spf -> SPFctor dom cod
+SPFstructRec {dom} {cod} = DPair.snd
+
+public export
+spfStructDirIdx : {dom, cod : Type} ->
+  (spf : SPFstruct dom cod) ->
+  (i : SPFstructCtor {dom} {cod} spf) ->
+  Type
+spfStructDirIdx {dom} {cod} spf = SPFctorDirIdx . SPFstructRec spf
+
+public export
+spfStructCheck : {dom, cod : Type} ->
+  (spf : SPFstruct dom cod) ->
+  (i : SPFstructCtor {dom} {cod} spf) ->
+  SPFctorCheck dom cod (spfStructDirIdx {dom} {cod} spf i)
+spfStructCheck {dom} {cod} spf i = spfCtorCheck $ SPFstructRec spf i
+
+public export
+SPFstructPosMap : {dom, cod : Type} ->
+  (spf : SPFstruct dom cod) -> SPFstructCtor {dom} {cod} spf -> Type
+SPFstructPosMap {dom} {cod} spf = SPFctorPosMap {dom} {cod} . SPFstructRec spf
+
+public export
+SPFstructPosCheck : {dom, cod : Type} ->
+  (spf : SPFstruct dom cod) -> (i : SPFstructCtor {dom} {cod} spf) ->
+  SPFstructPosMap {dom} {cod} spf i -> SliceObj cod
+SPFstructPosCheck {dom} {cod} spf i =
+  SPFctorPosCheck {dom} {cod} $ SPFstructRec spf i
+
+public export
+SPFstructPos : {dom, cod : Type} ->
+  (spf : SPFstruct dom cod) -> (i : SPFstructCtor {dom} {cod} spf) ->
+  SliceObj cod
+SPFstructPos {dom} {cod} spf i = SPFctorPos {dom} {cod} $ SPFstructRec spf i
+
+public export
+SPFstructPosTot : {dom, cod : Type} ->
+  (spf : SPFstruct dom cod) -> SliceObj cod
+SPFstructPosTot {dom} {cod} spf ec =
+  (i : SPFstructCtor {dom} {cod} spf ** SPFstructPos {dom} {cod} spf i ec)
+
+public export
+SPFstructPosCtor : {dom, cod : Type} ->
+  (spf : SPFstruct dom cod) ->
+  (ec : cod) -> SPFstructPosTot {dom} {cod} spf ec ->
+  SPFstructCtor {dom} {cod} spf
+SPFstructPosCtor {dom} {cod} spf ec = DPair.fst
+
+public export
+SPFstructPosProj : {dom, cod : Type} ->
+  (spf : SPFstruct dom cod) ->
+  (ec : cod) -> (ep : SPFstructPosTot {dom} {cod} spf ec) ->
+  SPFstructPos {dom} {cod} spf (SPFstructPosCtor {dom} {cod} spf ec ep) ec
+SPFstructPosProj {dom} {cod} spf ec = DPair.snd
+
+public export
+spfStructPosMap : {dom, cod : Type} ->
+  {spf : SPFstruct dom cod} -> {i : SPFstructCtor {dom} {cod} spf} ->
+  (ec : cod) ->
+  SPFstructPos {dom} {cod} spf i ec -> spfStructDirIdx {dom} {cod} spf i -> dom
+spfStructPosMap {dom} {cod} {spf} {i} =
+  spfCtorPosMap {dom} {cod} {ctor=(SPFstructRec spf i)}
+
+public export
+spfStructPosCheck : {dom, cod : Type} ->
+  {spf : SPFstruct dom cod} -> {i : SPFstructCtor {dom} {cod} spf} ->
+  (ec : cod) ->
+  (ep : SPFstructPos {dom} {cod} spf i ec) ->
+  SPFstructPosCheck {dom} {cod} spf i
+    (spfStructPosMap {dom} {cod} {spf} {i} ec ep) ec
+spfStructPosCheck {dom} {cod} {spf} {i} =
+  spfCtorPosCheck {dom} {cod} {ctor=(SPFstructRec spf i)}
+
+public export
+SPFstructCDir : {dom, cod : Type} ->
+  (spf : SPFstruct dom cod) -> (i : SPFstructCtor {dom} {cod} spf) ->
+  (ec : cod) -> SPFstructPos {dom} {cod} spf i ec -> CSliceObj dom
+SPFstructCDir {dom} {cod} spf i = SPFctorCDir {dom} {cod} $ SPFstructRec spf i
+
+public export
+SPFstructDir : {dom, cod : Type} ->
+  (spf : SPFstruct dom cod) -> (i : SPFstructCtor {dom} {cod} spf) ->
+  SPFdirType dom cod (SPFstructPos {dom} {cod} spf i)
+SPFstructDir {dom} {cod} spf i = SPFctorDir {dom} {cod} $ SPFstructRec spf i
+
+public export
+SPFstructDirTot : {dom, cod : Type} ->
+  (spf : SPFstruct dom cod) ->
+  SPFdirType dom cod (SPFstructPosTot {dom} {cod} spf)
+SPFstructDirTot {dom} {cod} spf ec ep ed =
+  SPFstructDir {dom} {cod} spf
+    (SPFstructPosCtor {dom} {cod} spf ec ep)
+    ec
+    (SPFstructPosProj {dom} {cod} spf ec ep)
+    ed
+
+public export
+InterpSPFstruct : {dom, cod : Type} -> SPFstruct dom cod -> SliceFunctor dom cod
+InterpSPFstruct {dom} {cod} spf sd ec =
+  (ct : SPFstructCtor {dom} {cod} spf **
+   InterpSPFctor {dom} {cod} (SPFstructRec spf ct) sd ec)
+
+public export
+SPFstructToSPFD : {dom, cod : Type} -> SPFstruct dom cod -> SPFData dom cod
+SPFstructToSPFD {dom} {cod} spf =
+  SPFD (SPFstructPosTot spf) (SPFstructDirTot spf)
+
+---------------------------------------------
+---------------------------------------------
+---- Assignment formulation of `SPFData` ----
+---------------------------------------------
+---------------------------------------------
+
+-- Another way of expressing an `SPFData` treats the codomains and positions
+-- in dependent-type style (like `SPFData`) but the directions in categorial
+-- style.  This means that instead of viewing the directions as a type
+-- dependent on the product of the positions and the domain, we split them
+-- into a type dependent on the positions and a morphism (an "assignment")
+-- from that type to the domain.  This is a sort of mixture of the
+-- parametric-right-adjoint style (`SPFData`) the W-type style.
+
+public export
+SPFDtoSPFpos : {dom, cod : Type} -> SPFData dom cod -> SliceObj cod
+SPFDtoSPFpos {dom} {cod} = spfdPos
+
+public export
+SPFDtoSPFdir : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  SliceObj (Sigma {a=cod} $ SPFDtoSPFpos spfd)
+SPFDtoSPFdir {dom} {cod} spfd = Sigma {a=dom} . DPair.uncurry (spfdDir spfd)
+
+public export
+SPFDtoSPFasn : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  Sigma {a=(Sigma {a=cod} $ SPFDtoSPFpos spfd)} (SPFDtoSPFdir spfd) -> dom
+SPFDtoSPFasn {dom} {cod} spfd dir = DPair.fst $ DPair.snd dir
+
+public export
+SPFDtoSPF : {dom, cod : Type} -> SPFData dom cod -> SlicePolyFunc dom cod
+SPFDtoSPF {dom} {cod} spfd =
+  (SPFDtoSPFpos spfd ** SPFDtoSPFdir spfd ** SPFDtoSPFasn spfd)
+
+public export
+SPFtoSPFDpos : {dom, cod : Type} -> SlicePolyFunc dom cod -> SliceObj cod
+SPFtoSPFDpos {dom} {cod} = spfPos
+
+public export
+SPFtoSPFDdirBase : {dom, cod : Type} -> (spf : SlicePolyFunc dom cod) ->
+  (ec : cod) -> SliceObj (SPFtoSPFDpos spf ec)
+SPFtoSPFDdirBase {dom} {cod} spf ec ep = spfDir spf (ec ** ep)
+
+public export
+0 SPFtoSPFDdirCond : {dom, cod : Type} -> (spf : SlicePolyFunc dom cod) ->
+  (ec : cod) -> (ep : SPFtoSPFDpos spf ec) -> dom ->
+  SliceObj (SPFtoSPFDdirBase spf ec ep)
+SPFtoSPFDdirCond {dom} {cod} spf ec ep ed dd =
+  spfAssign spf ((ec ** ep) ** dd) = ed
+
+public export
+SPFtoSPFDdir : {dom, cod : Type} ->
+  (spf : SlicePolyFunc dom cod) -> SPFdirType dom cod (SPFtoSPFDpos spf)
+SPFtoSPFDdir {dom} {cod} spf ec ep ed =
+  Subset0 (SPFtoSPFDdirBase spf ec ep) (SPFtoSPFDdirCond spf ec ep ed)
+
+public export
+SPFtoSPFD : {dom, cod : Type} -> SlicePolyFunc dom cod -> SPFData dom cod
+SPFtoSPFD {dom} {cod} spf = SPFD (SPFtoSPFDpos spf) (SPFtoSPFDdir spf)
+
+-- Convenience functions for natural transformations between assignment
+-- forms of `SPFData` (AKA `SlicePolyFunc`).
+
+public export
+SPFAntPos : {dom, cod : Type} ->
+  SlicePolyFunc dom cod -> SlicePolyFunc dom cod -> Type
+SPFAntPos {dom} {cod} f g = SliceMorphism {a=cod} (spfPos f) (spfPos g)
+
+public export
+SPFAntDir : {dom, cod : Type} ->
+  (f, g : SlicePolyFunc dom cod) -> SPFAntPos f g -> Type
+SPFAntDir {dom} {cod} f g onpos =
+  (ec : cod) -> (ep : spfPos f ec) ->
+  spfDir g (ec ** onpos ec ep) -> spfDir f (ec ** ep)
+
+public export
+SPFAntCond : {dom, cod : Type} ->
+  (f, g : SlicePolyFunc dom cod) -> (onpos : SPFAntPos f g) ->
+  SPFAntDir f g onpos -> Type
+SPFAntCond {dom} {cod} f g onpos ondir =
+  (ec : cod) -> (ep : spfPos f ec) ->
+  (dd : spfDir g (ec ** onpos ec ep)) ->
+  (spfAssign f ((ec ** ep) ** ondir ec ep dd) =
+   spfAssign g ((ec ** onpos ec ep) ** dd))
+
+public export
+SPFAnt : {dom, cod : Type} -> IntMorSig (SlicePolyFunc dom cod)
+SPFAnt f g =
+  (onpos : SPFAntPos f g **
+   ondir : SPFAntDir f g onpos **
+   SPFAntCond f g onpos ondir)
+
+public export
+spfaOnPos : {dom, cod : Type} -> {f, g : SlicePolyFunc dom cod} ->
+  (nt : SPFAnt f g) -> SPFAntPos f g
+spfaOnPos = DPair.fst
+
+public export
+spfaOnDir : {dom, cod : Type} -> {f, g : SlicePolyFunc dom cod} ->
+  (nt : SPFAnt f g) -> SPFAntDir f g (spfaOnPos {f} {g} nt)
+spfaOnDir nt = DPair.fst $ DPair.snd nt
+
+public export
+spfaCond : {dom, cod : Type} -> {f, g : SlicePolyFunc dom cod} ->
+  (nt : SPFAnt f g) ->
+  SPFAntCond f g (spfaOnPos {f} {g} nt) (spfaOnDir {f} {g} nt)
+spfaCond nt = DPair.snd $ DPair.snd nt
+
+public export
+SPFntToSPFAntPos : {dom, cod : Type} -> {f, g : SPFData dom cod} ->
+  SPFnt f g -> SPFAntPos (SPFDtoSPF f) (SPFDtoSPF g)
+SPFntToSPFAntPos {dom} {cod} {f} {g} nt = spOnPos nt
+
+public export
+SPFntToSPFAntDir : {dom, cod : Type} -> {f, g : SPFData dom cod} ->
+  (nt : SPFnt f g) ->
+  SPFAntDir (SPFDtoSPF f) (SPFDtoSPF g) (SPFntToSPFAntPos {f} {g} nt)
+SPFntToSPFAntDir {dom} {cod} {f} {g} nt ec ep = dpMapSnd $ spOnDir nt ec ep
+
+public export
+SPFntToSPFAntCond : {dom, cod : Type} -> {f, g : SPFData dom cod} ->
+  (nt : SPFnt f g) ->
+  SPFAntCond (SPFDtoSPF f) (SPFDtoSPF g)
+    (SPFntToSPFAntPos {f} {g} nt)
+    (SPFntToSPFAntDir {f} {g} nt)
+SPFntToSPFAntCond {dom} {cod} {f} {g} nt ec ep _ = Refl
+
+public export
+SPFntToSPFAnt : {dom, cod : Type} -> {f, g : SPFData dom cod} ->
+  SPFnt f g -> SPFAnt (SPFDtoSPF f) (SPFDtoSPF g)
+SPFntToSPFAnt {dom} {cod} {f} {g} nt =
+  (SPFntToSPFAntPos nt ** SPFntToSPFAntDir nt ** SPFntToSPFAntCond nt)
+
+public export
+SPFAntToSPFDpos : {dom, cod : Type} -> {f, g : SlicePolyFunc dom cod} ->
+  SPFAnt f g -> SPFntPos (SPFtoSPFD f) (SPFtoSPFD g)
+SPFAntToSPFDpos {dom} {cod} {f} {g} nt = spfaOnPos nt
+
+public export
+0 SPFAntToSPFDcond : {dom, cod : Type} -> {f, g : SlicePolyFunc dom cod} ->
+  (nt : SPFAnt f g) ->
+  (ec : cod) -> (efp : spfPos f ec) ->
+  (ed : dom) ->
+  (egd : spfDir g (ec ** spfaOnPos {f} {g} nt ec efp)) ->
+  SPFtoSPFDdirCond g ec (spfaOnPos {f} {g} nt ec efp) ed egd ->
+  SPFtoSPFDdirCond f ec efp ed (spfaOnDir {f} {g} nt ec efp egd)
+SPFAntToSPFDcond {dom} {cod} {f} {g} nt ec efp ed egd gcond =
+  trans (spfaCond nt ec efp egd) gcond
+
+public export
+SPFAntToSPFDdir : {dom, cod : Type} -> {f, g : SlicePolyFunc dom cod} ->
+  (nt : SPFAnt f g) ->
+  SPFntDir (SPFtoSPFD f) (SPFtoSPFD g) (SPFAntToSPFDpos {f} {g} nt)
+SPFAntToSPFDdir {dom} {cod} {f} {g} nt ec efp ed =
+  s0Bimap
+    (spfaOnDir nt ec efp)
+    (SPFAntToSPFDcond {f} {g} nt ec efp ed)
+
+public export
+SPFAntToSPFD : {dom, cod : Type} -> {f, g : SlicePolyFunc dom cod} ->
+  SPFAnt f g -> SPFnt (SPFtoSPFD f) (SPFtoSPFD g)
+SPFAntToSPFD {dom} {cod} {f} {g} nt =
+  SPFDm (SPFAntToSPFDpos nt) (SPFAntToSPFDdir nt)
+
+---------------------------------------------------------
+---------------------------------------------------------
+---- Domain-sliced form of slice polynomial functors ----
+---------------------------------------------------------
+---------------------------------------------------------
+
+-----------------------------
+---- Objects (`DSPFunc`) ----
+-----------------------------
+
+-- Another way we can express slice polynomial functors is by fibering the
+-- positions over the domain as well as the codomain.  We will call this
+-- a "domain-sliced polynomial functor".  They can be expressed as a special
+-- case of `SPFDataFam`.
+
+public export
+DSPFuncPosType : Type -> Type -> Type
+DSPFuncPosType dom cod = dom -> cod -> Type
+
+public export
+DSPFuncDirType : (dom, cod : Type) -> DSPFuncPosType dom cod -> Type
+DSPFuncDirType dom cod pos =
+  (ed : dom) -> (ec : cod) -> SliceObj (pos ed ec)
+
+public export
+DSPFuncDirToSPF : {dom, cod : Type} -> (pos : DSPFuncPosType dom cod) ->
+  (dir : DSPFuncDirType dom cod pos) ->
+  (ed : dom) -> (ec : cod) -> pos ed ec -> SliceObj dom
+DSPFuncDirToSPF {dom} {cod} pos dir ed ec ep ed' = (ed' = ed, dir ed ec ep)
+
+public export
+DSPFunc : Type -> Type -> Type
+DSPFunc dom cod = SPFDataFam {b=dom} (const dom) (const cod)
+
+public export
+DSPFuncToSPF : {dom, cod : Type} ->
+  (pos : DSPFuncPosType dom cod) -> DSPFuncDirType dom cod pos ->
+  DSPFunc dom cod
+DSPFuncToSPF {dom} {cod} pos dir ed = SPFD (pos ed) (DSPFuncDirToSPF pos dir ed)
+
+public export
+dspfPos : {dom, cod : Type} -> DSPFunc dom cod -> DSPFuncPosType dom cod
+dspfPos = SPFDataFamPos
+
+public export
+dspfDir : {dom, cod : Type} -> (f : DSPFunc dom cod) ->
+  DSPFuncDirType dom cod (dspfPos {dom} {cod} f)
+dspfDir f ed ec ep = SPFDataFamDir f ed ec ep ed
+
+public export
+DSPFuncSPFDtype : Type -> Type -> Type
+DSPFuncSPFDtype dom cod = SPFamData {b=dom} (const dom) (const cod)
+
+public export
+SPFDtoDSPF : {dom, cod : Type} -> DSPFuncSPFDtype dom cod -> DSPFunc dom cod
+SPFDtoDSPF {dom} {cod} = SPFCslice {b=dom} {dom=(const dom)} {cod=(const cod)}
+
+public export
+DSPFtoSPFD : {dom, cod : Type} -> DSPFunc dom cod -> DSPFuncSPFDtype dom cod
+DSPFtoSPFD {dom} {cod} = SPFCtot {b=dom} {dom=(const dom)} {cod=(const cod)}
+
+--------------------------------------------------------
+---- Morphisms (natural transformations -- `DSPnt`) ----
+--------------------------------------------------------
+
+public export
+DSPFnt : {dom, cod : Type} -> IntMorSig (DSPFunc dom cod)
+DSPFnt = SPFdepNTfam {b=dom} {dom=(const dom)} {cod=(const cod)}
+
+---------------------------------
+---- Two-morphisms (2-cells) ----
+---------------------------------
+
+-- Both functors in a domain-sliced cell must have their positions
+-- sliced over _both_ domains.
+public export
+DSPFpoCellFam : {w, w', z, z' : Type} ->
+  (bcl : w -> w') -> (bcr : z -> z') ->
+  (f : DSPFunc w z) -> (g : DSPFunc w' z') ->
+  Type
+DSPFpoCellFam {w} {w'} {z} {z'} bcl bcr f g =
+  SPFpoCellFam {b=(w, w')}
+    {w=(const w)} {w'=(const w')} {z=(const z)} {z'=(const z')}
+    (const bcl . fst) (const bcr . snd) (f . fst) (g . snd)
+
+-------------------------------------
+-------------------------------------
+---- Bundles in slice categories ----
+-------------------------------------
+-------------------------------------
+
+-----------------
+---- Objects ----
+-----------------
+
+-- A bundle in a slice category consists of a pair of slice objects with a
+-- slice morphism between them.  This may equivalently be represented as a
+-- Dirichlet functor internal to a slice category -- an object of the slice
+-- category together with a slice over its total space.
+--
+-- A slice over the total space may be curried as follows:
+public export
+SliceTotSl : {a : Type} -> SliceObj a -> Type
+SliceTotSl {a} sl = Pi {a} (SliceObj . sl)
+
+public export
+SliceDirichObj : Type -> Type
+SliceDirichObj a = DPair (SliceObj a) (SliceTotSl {a})
+
+public export
+slDirichPos : {a : Type} -> SliceDirichObj a -> SliceObj a
+slDirichPos {a} = DPair.fst
+
+public export
+slDirichDir : {a : Type} ->
+  (f : SliceDirichObj a) -> SliceTotSl {a} (slDirichPos {a} f)
+slDirichDir {a} = DPair.snd
+
+-- Now we show that a Dirichlet functor internal to a slice category may
+-- equivalently be written as a parameterized Dirichlet functor.
+
+public export
+ParamDirichObj : Type -> Type
+ParamDirichObj a = a -> MLDirichCatObj
+
+public export
+SliceToParamDirichObj : {a : Type} -> SliceDirichObj a -> ParamDirichObj a
+SliceToParamDirichObj {a} f ea = (slDirichPos {a} f ea ** slDirichDir {a} f ea)
+
+public export
+ParamToSliceDirichObjPos : {a : Type} -> ParamDirichObj a -> SliceObj a
+ParamToSliceDirichObjPos {a} f = dfPos . f
+
+public export
+ParamToSliceDirichObjDir : {a : Type} -> (f : ParamDirichObj a) ->
+  SliceTotSl {a} (ParamToSliceDirichObjPos {a} f)
+ParamToSliceDirichObjDir {a} f ea = dfDir (f ea)
+
+public export
+ParamToSliceDirichObj : {a : Type} -> ParamDirichObj a -> SliceDirichObj a
+ParamToSliceDirichObj {a} f =
+  (ParamToSliceDirichObjPos {a} f ** ParamToSliceDirichObjDir {a} f)
+
+-------------------
+---- Morphisms ----
+-------------------
+
+-- A morphism in a Dirichlet-functor category consists of a pair of
+-- parallel morphisms that form a commutative square with the morphisms
+-- in the objects.
+
+public export
+SliceDirichOnPos : {a : Type} -> IntMorSig (SliceDirichObj a)
+SliceDirichOnPos {a} f g = SliceMorphism {a} (slDirichPos f) (slDirichPos g)
+
+public export
+SliceDirichOnDirSl : {a : Type} -> (f, g : SliceDirichObj a) ->
+  SliceDirichOnPos {a} f g -> SliceObj a
+SliceDirichOnDirSl {a} f g onpos ea =
+  SliceMorphism
+    {a=(slDirichPos {a} f ea)}
+    (slDirichDir {a} f ea)
+    (slDirichDir {a} g ea . onpos ea)
+
+public export
+SliceDirichOnDir : {a : Type} -> (f, g : SliceDirichObj a) ->
+  SliceDirichOnPos {a} f g -> Type
+SliceDirichOnDir {a} f g onpos = Pi {a} (SliceDirichOnDirSl {a} f g onpos)
+
+public export
+SliceDirichMor : {a : Type} -> IntMorSig (SliceDirichObj a)
+SliceDirichMor {a} f g =
+  DPair (SliceDirichOnPos {a} f g) (SliceDirichOnDir {a} f g)
+
+public export
+slDirichOnPos : {a : Type} -> {f, g : SliceDirichObj a} ->
+  SliceDirichMor {a} f g -> SliceDirichOnPos {a} f g
+slDirichOnPos {a} {f} {g} = DPair.fst
+
+public export
+slDirichOnDir : {a : Type} -> {f, g : SliceDirichObj a} ->
+  (alpha : SliceDirichMor {a} f g) ->
+  SliceDirichOnDir {a} f g (slDirichOnPos {a} {f} {g} alpha)
+slDirichOnDir {a} {f} {g} = DPair.snd
+
+-- Now we show that a Dirichlet morphism (natural transformation) internal
+-- to a slice category may equivalently be written as a parameterized
+-- Dirichlet morphism.
+
+public export
+ParamDirichMor : {a : Type} -> IntMorSig (ParamDirichObj a)
+ParamDirichMor {a} f g = (ea : a) -> MLDirichCatMor (f ea) (g ea)
+
+public export
+SliceToParamDirichMor : {a : Type} -> {f, g : SliceDirichObj a} ->
+  SliceDirichMor {a} f g ->
+  ParamDirichMor {a} (SliceToParamDirichObj {a} f) (SliceToParamDirichObj {a} g)
+SliceToParamDirichMor {a} {f} {g} alpha ea =
+  (slDirichOnPos {a} {f} {g} alpha ea ** slDirichOnDir {a} {f} {g} alpha ea)
+
+public export
+SliceFromParamDirichOnPos : {a : Type} -> {f, g : SliceDirichObj a} ->
+  ParamDirichMor {a}
+    (SliceToParamDirichObj {a} f)
+    (SliceToParamDirichObj {a} g) ->
+  SliceDirichOnPos {a} f g
+SliceFromParamDirichOnPos {a} {f} {g} alpha ea =
+  dntOnPos
+    {p=(SliceToParamDirichObj {a} f ea)}
+    {q=(SliceToParamDirichObj {a} g ea)}
+    (alpha ea)
+
+public export
+SliceFromParamDirichOnDir : {a : Type} -> {f, g : SliceDirichObj a} ->
+  (alpha : ParamDirichMor {a}
+    (SliceToParamDirichObj {a} f)
+    (SliceToParamDirichObj {a} g)) ->
+  SliceDirichOnDir {a} f g (SliceFromParamDirichOnPos {a} {f} {g} alpha)
+SliceFromParamDirichOnDir {a} {f} {g} alpha ea =
+  dntOnDir
+    {p=(SliceToParamDirichObj {a} f ea)}
+    {q=(SliceToParamDirichObj {a} g ea)}
+    (alpha ea)
+
+public export
+SliceFromParamDirichMor : {a : Type} -> {f, g : SliceDirichObj a} ->
+  ParamDirichMor {a}
+    (SliceToParamDirichObj {a} f)
+    (SliceToParamDirichObj {a} g) ->
+  SliceDirichMor {a} f g
+SliceFromParamDirichMor {a} {f} {g} alpha =
+  (SliceFromParamDirichOnPos {a} {f} {g} alpha **
+   SliceFromParamDirichOnDir {a} {f} {g} alpha)
+
+public export
+ParamToSliceDirichOnPos : {a : Type} -> {f, g : ParamDirichObj a} ->
+  ParamDirichMor {a} f g ->
+  SliceDirichOnPos {a}
+    (ParamToSliceDirichObj {a} f)
+    (ParamToSliceDirichObj {a} g)
+ParamToSliceDirichOnPos {a} {f} {g} alpha ea = dntOnPos (alpha ea)
+
+public export
+ParamToSliceDirichOnDir : {a : Type} -> {f, g : ParamDirichObj a} ->
+  (alpha : ParamDirichMor {a} f g) ->
+  SliceDirichOnDir {a}
+    (ParamToSliceDirichObj {a} f)
+    (ParamToSliceDirichObj {a} g)
+    (ParamToSliceDirichOnPos {a} {f} {g} alpha)
+ParamToSliceDirichOnDir {a} {f} {g} alpha ea = dntOnDir (alpha ea)
+
+public export
+ParamToSliceDirichMor : {a : Type} -> {f, g : ParamDirichObj a} ->
+  ParamDirichMor {a} f g ->
+  SliceDirichMor {a} (ParamToSliceDirichObj {a} f) (ParamToSliceDirichObj {a} g)
+ParamToSliceDirichMor {a} {f} {g} alpha =
+  (ParamToSliceDirichOnPos {a} {f} {g} alpha **
+   ParamToSliceDirichOnDir {a} {f} {g} alpha)
+
+public export
+ParamFromSliceDirichMor : {a : Type} -> {f, g : ParamDirichObj a} ->
+  SliceDirichMor {a}
+    (ParamToSliceDirichObj {a} f)
+    (ParamToSliceDirichObj {a} g) ->
+  ParamDirichMor {a} f g
+ParamFromSliceDirichMor {a} {f} {g} alpha ea =
+  (slDirichOnPos {a}
+    {f=(ParamToSliceDirichObj {a} f)}
+    {g=(ParamToSliceDirichObj {a} g)}
+    alpha
+    ea **
+   slDirichOnDir {a}
+    {f=(ParamToSliceDirichObj {a} f)}
+    {g=(ParamToSliceDirichObj {a} g)}
+    alpha
+    ea)
+
+--------------------------------
+---- Categorial definitions ----
+--------------------------------
+
+public export
+slDirichIdOnPos : {a : Type} -> (f : SliceDirichObj a) ->
+  SliceDirichOnPos {a} f f
+slDirichIdOnPos {a} f =
+  sliceId {a} (slDirichPos {a} f)
+
+public export
+slDirichIdOnDir : {a : Type} -> (f : SliceDirichObj a) ->
+  SliceDirichOnDir {a} f f (slDirichIdOnPos {a} f)
+slDirichIdOnDir {a} f ea =
+  sliceId {a=(slDirichPos {a} f ea)} (slDirichDir {a} f ea)
+
+public export
+slDirichId : {a : Type} -> (f : SliceDirichObj a) -> SliceDirichMor {a} f f
+slDirichId {a} f =
+  (slDirichIdOnPos {a} f ** slDirichIdOnDir {a} f)
+
+public export
+slDirichCompOnPos : {a : Type} -> {f, g, h : SliceDirichObj a} ->
+  SliceDirichMor {a} g h -> SliceDirichMor {a} f g ->
+  SliceDirichOnPos {a} f h
+slDirichCompOnPos {a} {f} {g} {h} beta alpha =
+  sliceComp {a}
+    (slDirichOnPos {a} {f=g} {g=h} beta)
+    (slDirichOnPos {a} {f} {g} alpha)
+
+public export
+slDirichCompOnDir : {a : Type} -> {f, g, h : SliceDirichObj a} ->
+  (beta : SliceDirichMor {a} g h) -> (alpha : SliceDirichMor {a} f g) ->
+  SliceDirichOnDir {a} f h (slDirichCompOnPos {a} {f} {g} {h} beta alpha)
+slDirichCompOnDir {a} {f} {g} {h} beta alpha ea efp efd =
+  slDirichOnDir beta ea
+    (slDirichOnPos alpha ea efp)
+    (slDirichOnDir alpha ea efp efd)
+
+public export
+slDirichComp : {a : Type} -> {f, g, h : SliceDirichObj a} ->
+  SliceDirichMor {a} g h -> SliceDirichMor {a} f g ->
+  SliceDirichMor {a} f h
+slDirichComp {a} {f} {g} {h} beta alpha =
+  (slDirichCompOnPos {a} {f} {g} {h} beta alpha **
+   slDirichCompOnDir {a} {f} {g} {h} beta alpha)
+
+------------------------
+---- Interpretation ----
+------------------------
+
+-- The interpretation of a bundle in a slice category of `Type` as a
+-- Dirichlet (contravariant-polynomial) functor, analogously to that
+-- of a bundle in `Type` itself, has domain `op(SliceObj a)` and codomain
+-- `SliceObj a`.
+public export
+InterpSlDirichObj : {a : Type} -> SliceDirichObj a -> SliceObj a -> SliceObj a
+InterpSlDirichObj {a} f sa ea =
+  (efp : slDirichPos {a} f ea ** sa ea -> slDirichDir {a} f ea efp)
+
+public export
+InterpSlDirichObjContramap : {a : Type} -> (f : SliceDirichObj a) ->
+  {sa, sb : SliceObj a} ->
+  SliceMorphism {a} sb sa ->
+  SliceMorphism {a} (InterpSlDirichObj {a} f sa) (InterpSlDirichObj {a} f sb)
+InterpSlDirichObjContramap {a} f {sa} {sb} m ea = dpMapSnd $ \efp => (|>) (m ea)
+
+public export
+InterpSlDirichMor : {a : Type} -> {f, g : SliceDirichObj a} ->
+  SliceDirichMor {a} f g ->
+  (sa : SliceObj a) ->
+  SliceMorphism {a} (InterpSlDirichObj {a} f sa) (InterpSlDirichObj {a} g sa)
+InterpSlDirichMor {a} {f} {g} p sa ea =
+  dpBimap (slDirichOnPos p ea) (\efp => (.) (slDirichOnDir p ea efp))
+
+---------------------------------
+---------------------------------
+---- Slices of slice-bundles ----
+---------------------------------
+---------------------------------
+
+---------------------------------------
+---- Objects (dependent-type form) ----
+---------------------------------------
+
+public export
+SlDirichSlPos : {a : Type} -> SliceDirichObj a -> Type
+SlDirichSlPos {a} f = SliceTotSl {a} (slDirichPos {a} f)
+
+public export
+SlDirichSlDir : {a : Type} -> (f : SliceDirichObj a) ->
+  SlDirichSlPos {a} f -> Type
+SlDirichSlDir {a} f pos =
+  (ea : a) -> (efp : slDirichPos {a} f ea) ->
+  pos ea efp -> slDirichDir {a} f ea efp -> Type
+
+public export
+SlDirichSlObj : {a : Type} -> SliceDirichObj a -> Type
+SlDirichSlObj {a} f = DPair (SlDirichSlPos {a} f) (SlDirichSlDir {a} f)
+
+public export
+slDirichSlPos : {a : Type} -> {f : SliceDirichObj a} ->
+  SlDirichSlObj {a} f -> SlDirichSlPos {a} f
+slDirichSlPos {a} {f} = DPair.fst
+
+public export
+slDirichSlDir : {a : Type} -> {f : SliceDirichObj a} ->
+  (p : SlDirichSlObj {a} f) -> SlDirichSlDir {a} f (slDirichSlPos {a} {f} p)
+slDirichSlDir {a} {f} = DPair.snd
+
+------------------------------------
+---- Objects (categorial style) ----
+------------------------------------
+
+public export
+SlDirichSlTotPos : {a : Type} -> (f : SliceDirichObj a) ->
+  SlDirichSlPos {a} f -> SliceObj a
+SlDirichSlTotPos {a} f pos ea = Sigma {a=(slDirichPos {a} f ea)} (pos ea)
+
+public export
+SlDirichSlTotDir : {a : Type} -> (f : SliceDirichObj a) ->
+  (pos : SlDirichSlPos {a} f) -> SlDirichSlDir {a} f pos ->
+  SliceTotSl {a} (SlDirichSlTotPos {a} f pos)
+SlDirichSlTotDir {a} f pos dir ea efpp =
+  Sigma {a=(slDirichDir {a} f ea (fst efpp))} (dir ea (fst efpp) (snd efpp))
+
+public export
+SlDirichSlTot : {a : Type} -> (f : SliceDirichObj a) ->
+  (pos : SlDirichSlPos {a} f) -> SlDirichSlDir {a} f pos ->
+  SliceDirichObj a
+SlDirichSlTot {a} f pos dir =
+  (SlDirichSlTotPos {a} f pos ** SlDirichSlTotDir {a} f pos dir)
+
+public export
+SlDirichSlProjOnPos : {a : Type} -> (f : SliceDirichObj a) ->
+  (pos : SlDirichSlPos {a} f) -> (dir : SlDirichSlDir {a} f pos) ->
+  SliceDirichOnPos {a} (SlDirichSlTot {a} f pos dir) f
+SlDirichSlProjOnPos {a} f pos dir ea = DPair.fst
+
+public export
+SlDirichSlProjOnDir : {a : Type} -> (f : SliceDirichObj a) ->
+  (pos : SlDirichSlPos {a} f) -> (dir : SlDirichSlDir {a} f pos) ->
+  SliceDirichOnDir {a}
+    (SlDirichSlTot {a} f pos dir)
+    f
+    (SlDirichSlProjOnPos {a} f pos dir)
+SlDirichSlProjOnDir {a} f pos dir ea efpp = DPair.fst
+
+public export
+SlDirichSlProj : {a : Type} -> (f : SliceDirichObj a) ->
+  (pos : SlDirichSlPos {a} f) -> (dir : SlDirichSlDir {a} f pos) ->
+  SliceDirichMor {a} (SlDirichSlTot {a} f pos dir) f
+SlDirichSlProj {a} f pos dir =
+  (SlDirichSlProjOnPos {a} f pos dir ** SlDirichSlProjOnDir {a} f pos dir)
+
+------------------------------------------
+---- Morphisms (dependent-type style) ----
+------------------------------------------
+
+public export
+SlDirichSlMorOnPos : {a : Type} -> {f : SliceDirichObj a} ->
+  IntMorSig (SlDirichSlObj {a} f)
+SlDirichSlMorOnPos {a} {f} p q =
+  (ea : a) -> (efp : slDirichPos {a} f ea) ->
+  slDirichSlPos {a} p ea efp -> slDirichSlPos {a} q ea efp
+
+public export
+SlDirichSlMorOnDir : {a : Type} -> {f : SliceDirichObj a} ->
+  (p, q : SlDirichSlObj {a} f) -> SlDirichSlMorOnPos {a} {f} p q -> Type
+SlDirichSlMorOnDir {a} {f} p q onpos =
+  (ea : a) -> (efp : slDirichPos {a} f ea) ->
+  (epp : slDirichSlPos {a} p ea efp) -> (efd : slDirichDir {a} f ea efp) ->
+  slDirichSlDir {a} p ea efp epp efd ->
+  slDirichSlDir {a} q ea efp (onpos ea efp epp) efd
+
+public export
+SlDirichSlMor : {a : Type} -> {f : SliceDirichObj a} ->
+  IntMorSig (SlDirichSlObj {a} f)
+SlDirichSlMor {a} {f} p q =
+  DPair (SlDirichSlMorOnPos {a} {f} p q) (SlDirichSlMorOnDir {a} {f} p q)
+
+public export
+slDirichSlMorOnPos : {a : Type} -> {f : SliceDirichObj a} ->
+  {p, q : SlDirichSlObj {a} f} ->
+  SlDirichSlMor {a} {f} p q ->
+  SlDirichSlMorOnPos {a} {f} p q
+slDirichSlMorOnPos {a} {f} {p} {q} = DPair.fst
+
+public export
+slDirichSlMorOnDir : {a : Type} -> {f : SliceDirichObj a} ->
+  {p, q : SlDirichSlObj {a} f} ->
+  (alpha : SlDirichSlMor {a} {f} p q) ->
+  SlDirichSlMorOnDir {a} {f} p q (slDirichSlMorOnPos {a} {f} {p} {q} alpha)
+slDirichSlMorOnDir {a} {f} {p} {q} = DPair.snd
+
+--------------------------------
+---- Categorial definitions ----
+--------------------------------
+
+public export
+slDirichSlIdOnPos : {a : Type} -> {f : SliceDirichObj a} ->
+  (p : SlDirichSlObj {a} f) -> SlDirichSlMorOnPos {a} {f} p p
+slDirichSlIdOnPos {a} {f} p ea =
+  sliceId {a=(slDirichPos f ea)} (slDirichSlPos p ea)
+
+public export
+slDirichSlIdOnDir : {a : Type} -> {f : SliceDirichObj a} ->
+  (p : SlDirichSlObj {a} f) ->
+  SlDirichSlMorOnDir {a} {f} p p (slDirichSlIdOnPos {a} {f} p)
+slDirichSlIdOnDir {a} {f} p ea efp epp =
+  sliceId {a=(slDirichDir f ea efp)} (slDirichSlDir p ea efp epp)
+
+public export
+slDirichSlId : {a : Type} -> {f : SliceDirichObj a} ->
+  (p : SlDirichSlObj {a} f) -> SlDirichSlMor {a} {f} p p
+slDirichSlId {a} {f} p =
+  (slDirichSlIdOnPos {a} {f} p ** slDirichSlIdOnDir {a} {f} p)
+
+public export
+slDirichSlCompOnPos : {a : Type} -> {f : SliceDirichObj a} ->
+  {p, q, r : SlDirichSlObj {a} f} ->
+  SlDirichSlMor {a} {f} q r ->
+  SlDirichSlMor {a} {f} p q ->
+  SlDirichSlMorOnPos {a} {f} p r
+slDirichSlCompOnPos {a} {f} {p} {q} {r} beta alpha ea =
+  sliceComp {a=(slDirichPos f ea)}
+    (slDirichSlMorOnPos {p=q} {q=r} beta ea)
+    (slDirichSlMorOnPos {p} {q} alpha ea)
+
+----------------------------------------------
+----------------------------------------------
+---- Polynomial functors on slice bundles ----
+----------------------------------------------
+----------------------------------------------
+
+-- Following https://ncatlab.org/nlab/show/parametric+right+adjoint , we
+-- can define a parametric right adjoint functor -- a generalization of
+-- the notion of polynomial functor -- between slice-bundle categories
+-- in stages below.  In this case, given `a, b : Type`, the domain
+-- category `A` is `SliceDirichObj a` and the codomain is `SliceDirichObj b`.
+--
+-- Given what the nlab page calls `T1` -- the object of the codomain to
+-- which the terminal object of the domain is mapped by the PRA functor --
+-- we now define the type of what the nlab page calls `E_T`:  the piece of
+-- data which, in addition to (and dependent on) a `T1`, determines a
+-- PRA functor between presheaf categories.
+--
+-- We reason as follows.  A bundle category is a category of functors whose
+-- domain is the interval category -- the category with two objects and one
+-- non-identity morphism between them.  (The interval category is often
+-- called `I`, but here I shall call it `Iv` to avoid conflict with the `I`
+-- from the nlab page.)
+--
+-- The bundle category on the slice category of `Type` over `a` is therefore
+-- the category of functors from `Iv` to `SliceObj a`.  A slice category
+-- of `Type` is itself a discrete presheaf (equivalently because of the
+-- discreteness, a discrete copresheaf) into `Type` (the objects of the domain
+-- are the terms of `a`).  We may thus uncurry the bundle category and view
+-- it as a presheaf into `Type` from the product category of `Iv` with the
+-- discrete category of terms of `a`.  Such a functor is effectively an
+-- `a`-indexed set of bundles, which agrees with the conclusion above that
+-- a `SliceDirichObj a` is an `a`-parameterized Dirichlet functor.
+--
+-- Thus, a functor between slice-bundle categories over `a` and `b` is a
+-- functor from copresheaves on `(Iv, a)` to copresheaves on `(Iv, b)`.
+-- We can therefore characterize the PRA class of such functors by using the
+-- data formula from
+-- https://ncatlab.org/nlab/show/parametric+right+adjoint#generic_morphisms .
+--
+-- First, however, we perform some transformations to (I hope) clarify the
+-- computation of the types of `T1` and `E_T`.  A functor
+-- `SliceDirichObj a -> [(Iv, b), Type]` may through uncurrying be viewed
+-- as a functor `(SliceDirichObj a, b) -> [Iv, Type]`.  Then we observe
+-- that a functor into that codomain, the category of bundles on `Type`
+-- (equivalently, the category of Dirichlet functors internal to `Type`),
+-- may be broken into two components, like a morphism into the image of
+-- a PRA functor itself:  a functor into `Type` which generates a position-type
+-- (when we view the output bundle as a Dirichlet functor) and a functor
+-- which depends on it which generates a direction-type.
+--
+-- So we begin by defining the position-type component.  That is a functor
+-- `SliceDirichObj a -> SliceObj b`.
+public export
+SlDirichT1_1 : Type -> Type
+SlDirichT1_1 = SliceObj
+
+public export
+SlDirichET_1 : (a, b : Type) -> SlDirichT1_1 b -> Type
+SlDirichET_1 a b pos = (eb : b) -> pos eb -> SliceDirichObj a
+
+-- We can now interpret the position-type component using the
+-- formula from the nlab page (recall that `Type` is equivalently
+-- a (co)presheaf on the terminal category):
+public export
+InterpSlDirich_1 : {a, b : Type} ->
+  (pos : SlDirichT1_1 b) -> SlDirichET_1 a b pos ->
+  SliceDirichObj a -> SliceObj b
+InterpSlDirich_1 {a} {b} pos dir f eb =
+  (i : pos eb ** SliceDirichMor {a} (dir eb i) f)
+
+public export
+InterpSlDirich_1_map : {a, b : Type} ->
+  (pos : SlDirichT1_1 b) -> (dir : SlDirichET_1 a b pos) ->
+  (f, g : SliceDirichObj a) ->
+  SliceDirichMor {a} f g ->
+  SliceMorphism {a=b}
+    (InterpSlDirich_1 {a} {b} pos dir f)
+    (InterpSlDirich_1 {a} {b} pos dir g)
+InterpSlDirich_1_map {a} {b} pos dir f g alpha eb =
+  dpMapSnd $
+    \ep, (onpos ** ondir) =>
+      (sliceComp (slDirichOnPos alpha) onpos **
+       \ea, etp => slDirichOnDir alpha ea (onpos ea etp) . ondir ea etp)

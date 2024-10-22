@@ -1038,10 +1038,20 @@ ProdCounit a b = (fst {a} {b}, snd {a} {b})
 public export
 data ProdMorphF : {a : Type} -> (mag : MagmaI a) -> HomEndofunctor a where
   PMPair :
+    {x, y, z : a} ->
     PPContraHomT {a} {b=a} (curry h) (y, z) x ->
     ProdMorphF mag h (x, Mb mag y z)
   PMProj1 : (x, y : a) -> ProdMorphF mag h (Mb mag x y, x)
   PMProj2 : (x, y : a) -> ProdMorphF mag h (Mb mag x y, y)
+
+public export
+prodMorphFmap : {a : Type} -> (mag : MagmaI a) -> SliceFMap (ProdMorphF {a} mag)
+prodMorphFmap {a} mag slx sly mxy (dom, _) (PMPair {x=dom} {y} {z} (mdy, mdz)) =
+  PMPair (mxy (dom, y) mdy, mxy (dom, z) mdz)
+prodMorphFmap {a} mag slx sly mxy (_, _) (PMProj1 x y) =
+  PMProj1 x y
+prodMorphFmap {a} mag slx sly mxy (_, _) (PMProj2 x y) =
+  PMProj2 x y
 
 public export
 ProductI : {a : Type} -> MagmaI a -> HomSlice a -> Type
@@ -1117,8 +1127,22 @@ data CoprodMorphF : {a : Type} -> (mag : MagmaI a) -> HomEndofunctor a where
   CMInjL : (x, y : a) -> CoprodMorphF mag h (x, Mb mag x y)
   CMInjR : (x, y : a) -> CoprodMorphF mag h (y, Mb mag x y)
   CMCase :
+    {x, y, z : a} ->
     PCCovarHomT {a} {b=a} (curry h) (x, y) z ->
     CoprodMorphF mag h (Mb mag x y, z)
+
+public export
+coprodMorphFmap : {a : Type} -> (mag : MagmaI a) ->
+  SliceFMap (CoprodMorphF {a} mag)
+coprodMorphFmap {a} mag slx sly mxy (_, _)
+  (CMInjL x y) =
+    CMInjL x y
+coprodMorphFmap {a} mag slx sly mxy (_, _)
+  (CMInjR x y) =
+    CMInjR x y
+coprodMorphFmap {a} mag slx sly mxy (_, cod)
+  (CMCase {x} {y} {z=cod} (mxc, myc)) =
+    CMCase (mxy (x, cod) mxc, mxy (y, cod) myc)
 
 public export
 CoproductI : {a : Type} -> MagmaI a -> HomSlice a -> Type

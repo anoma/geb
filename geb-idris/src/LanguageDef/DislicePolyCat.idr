@@ -1224,13 +1224,21 @@ record PolyEnrAr where
   peaPos : Type
   peaDir : peaPos -> PolyFunc
 
+public export
+peaPos2 : (pea : PolyEnrAr) -> peaPos pea -> Type
+peaPos2 pea i = fst (peaDir pea i)
+
+public export
+peaDir2 : (pea : PolyEnrAr) -> (i : peaPos pea) -> peaPos2 pea i -> Type
+peaDir2 pea i = snd (peaDir pea i)
+
 -------------------
 ---- Poly-poly ----
 -------------------
 
 -- Interpret a `PolyEnrAr` as a (covariant) polynomial functor on the
 -- category of (covariant) polynomial functors.
-export
+public export
 InterpPEA : PolyEnrAr -> PolyFunc -> PolyFunc
 InterpPEA (PEA epos edir) pf =
   pfSetCoproductArena $ (\i : epos => pfHomObj (edir i) pf)
@@ -1270,6 +1278,8 @@ peaMap : (pea : PolyEnrAr) ->
   PolyNatTrans (InterpPEA pea p) (InterpPEA pea q)
 peaMap pea p q alpha = (peaMapOnPos pea p q alpha ** peaMapOnDir pea p q alpha)
 
+-- A `Poly`-internal representation of the right side of formula 6.78
+-- from the polynomial functors book.
 public export
 HomToCompPEA : PolyFunc -> PolyFunc -> PolyEnrAr
 HomToCompPEA p q = PEA (pfPos p -> pfPos q) (pfPosChangeArena p q)
@@ -1282,3 +1292,39 @@ public export
 0 HomToCompPEAcorrect : (p, q, r : PolyFunc) ->
   InterpPEA (HomToCompPEA p q) r = pfHomToCompArena p q r
 HomToCompPEAcorrect p q r = Refl
+
+public export
+PostcompPEA : PolyFunc -> PolyEnrAr
+PostcompPEA q = PEA (pfPos q) (\i => (pfDir {p=q} i ** const Void))
+
+public export
+PostcompFromPEApos: (q, p : PolyFunc) ->
+  pfPos (InterpPEA (PostcompPEA q) p) -> pfPos (pfCompositionArena q p)
+PostcompFromPEApos (qpos ** qdir) (ppos ** pdir) qidm =
+  (fst qidm ** DPair.fst . snd qidm)
+
+public export
+PostcompFromPEAdir: (q, p : PolyFunc) ->
+  (i : pfPos (InterpPEA (PostcompPEA q) p)) ->
+  pfDir {p=(pfCompositionArena q p)} (PostcompFromPEApos q p i) ->
+  pfDir {p=(InterpPEA (PostcompPEA q) p)} i
+PostcompFromPEAdir (qpos ** qdir) (ppos ** pdir) qidm (qd ** pd)
+    with (snd (snd qidm qd) pd) proof eq
+  PostcompFromPEAdir (qpos ** qdir) (ppos ** pdir) qidm (qd ** pd)
+    | Left () =
+      (qd ** pd ** rewrite eq in ())
+  PostcompFromPEAdir (qpos ** qdir) (ppos ** pdir) qidm (qd ** pd)
+    | Right ev =
+      void ev
+
+public export
+PostcompFromPEA: (q, p : PolyFunc) ->
+  PolyNatTrans (InterpPEA (PostcompPEA q) p) (pfCompositionArena q p)
+PostcompFromPEA q p = (PostcompFromPEApos q p ** PostcompFromPEAdir q p)
+
+public export
+PostcompToPEA: (q, p : PolyFunc) ->
+  PolyNatTrans (pfCompositionArena q p) (InterpPEA (PostcompPEA q) p)
+PostcompToPEA (qpos ** qdir) (ppos ** pdir) =
+  (\(qi ** qdm) => (qi ** \qd => (qdm qd ** \_ => Left ())) **
+   \(qi ** qdm), (qd ** (pd ** ())) => (qd ** pd))

@@ -556,8 +556,8 @@ data LawBoolObj : Type where
 public export
 DecEq LawBoolObj where
   decEq (LBOn m) (LBOn n) = case decEq m n of
-    Yes Refl => Yes Refl
-    No neq => case neq of Refl impossible
+    Yes eq => rewrite eq in Yes Refl
+    No neq => ?decEq_LawBoolObj_hole
 
 public export
 Eq LawBoolObj where
@@ -766,7 +766,7 @@ public export
 DecEq BCLawObj where
   decEq (BCLOnbits m) (BCLOnbits n) = case decEq m n of
     Yes Refl => Yes Refl
-    No neq => case neq of Refl impossible
+    No neq => ?BCLawObj_hole_neq
 
 public export
 Eq BCLawObj where
@@ -817,6 +817,8 @@ data BCLawMorph : Type where
 
 public export
 DecEq BCLawMorph where
+  decEq = ?dec_bCLawMorph_hole
+  {-
   decEq = decEqOne where
     mutual
       public export
@@ -916,6 +918,7 @@ DecEq BCLawMorph where
         (Yes Refl, Yes Refl) => Yes Refl
         (No neq, _) => No $ \eq => case eq of Refl => neq Refl
         (_, No neq) => No $ \eq => case eq of Refl => neq Refl
+        -}
 
 public export
 Eq BCLawMorph where

@@ -635,6 +635,14 @@ FinSliceFunctor : Nat -> Nat -> Type
 FinSliceFunctor m n = FinSliceObj m -> FinSliceObj n
 
 public export
+SliceFin2 : (a, b : Type) -> SliceObj (Fin 2)
+SliceFin2 a b = flip Vect.index [a, b]
+
+public export
+PiSliceFin2 : (a, b : Type) -> Type
+PiSliceFin2 a b = Pi {a=(Fin 2)} (SliceFin2 a b)
+
+public export
 SliceEndofunctor : Type -> Type
 SliceEndofunctor a = SliceFunctor a a
 
@@ -761,6 +769,13 @@ SliceFMap {c} {d} f =
   (x, y : SliceObj c) -> SliceMorphism x y -> SliceMorphism (f x) (f y)
 
 public export
+sliceFMapComp : {c, d, e : Type} ->
+  {g : SliceFunctor d e} -> {f : SliceFunctor c d} ->
+  SliceFMap {c=d} {d=e} g -> SliceFMap {c} {d} f ->
+  SliceFMap {c} {d=e} (g . f)
+sliceFMapComp {c} {d} {e} {g} {f} gm fm x y = gm (f x) (f y) . fm x y
+
+public export
 SliceNatTrans : {x, y : Type} -> (f, g : SliceFunctor x y) -> Type
 SliceNatTrans {x} {y} f g = (s : SliceObj x) -> SliceMorphism (f s) (g s)
 
@@ -802,7 +817,17 @@ SliceNThcomp {c} {d} {e} {f} {f'} {g} {g'} gm beta alpha a =
 
 public export
 SliceProduct : {0 a : Type} -> SliceObj a -> SliceObj a -> SliceObj a
-SliceProduct = biapp Pair
+SliceProduct = biapp {a} {b=Type} {c=Type} {d=Type} Pair
+
+public export
+sliceProj1 : {0 a : Type} ->
+  (x, y : SliceObj a) -> SliceMorphism {a} (SliceProduct {a} x y) x
+sliceProj1 {a} x y ea = fst
+
+public export
+sliceProj2 : {0 a : Type} ->
+  (x, y : SliceObj a) -> SliceMorphism {a} (SliceProduct {a} x y) y
+sliceProj2 {a} x y ea = snd
 
 public export
 SlProdBaseChange : {a, b, c : Type} -> (b -> a) -> SliceFunctor (a, c) (b, c)
@@ -874,6 +899,24 @@ sliceApp : {0 c : Type} -> {0 x, y, z : SliceObj c} ->
   SliceMorphism x (SliceHom y z) -> SliceMorphism x y ->
   SliceMorphism x z
 sliceApp {c} {x} {y} {z} g f ec ex = g ec ex $ f ec ex
+
+public export
+pbHomOut : {c : Type} -> SliceObj c -> SliceObj c -> Type -> Type
+pbHomOut {c} f g d = Sigma {a=c} (SliceProduct {a=c} f g) -> d
+
+public export
+pbHomOutCurried : {c : Type} -> SliceObj c -> SliceObj c -> Type -> Type
+pbHomOutCurried {c} f g d = Pi {a=c} (SliceHom {a=c} f (SliceHom g (const d)))
+
+public export
+pbHomOutCurry : {c : Type} -> (f, g : SliceObj c) -> (d : Type) ->
+  pbHomOut {c} f g d -> pbHomOutCurried {c} f g d
+pbHomOutCurry {c} f g d prodhom ec = Prelude.curry $ DPair.curry prodhom ec
+
+public export
+pbHomOutUncurry : {c : Type} -> (f, g : SliceObj c) -> (d : Type) ->
+  pbHomOutCurried {c} f g d -> pbHomOut {c} f g d
+pbHomOutUncurry {c} f g d prodhom (ec ** (efc, egc)) = prodhom ec efc egc
 
 -- A slice object over `Sigma` of a given slice object.
 --
@@ -1409,19 +1452,21 @@ PolyProdP : (Type -> Type -> Type) -> Type
 PolyProdP p = (a, b : Type) -> (a -> b) -> p a b
 
 public export
-wedgeLeft : {p : Type -> Type -> Type} -> Profunctor p =>
+0 wedgeLeft : {p : Type -> Type -> Type} -> {0 isP : Profunctor p} ->
   EndBase p -> PolyProdP p
-wedgeLeft {p} i a b f = lmap {f=p} {a=b} {b} {c=a} f (i b)
+wedgeLeft {p} {isP} i a b f = lmap {f=p} {a=b} {b} {c=a} f (i b)
 
 public export
-wedgeRight : {p : Type -> Type -> Type} -> Profunctor p =>
+0 wedgeRight : {p : Type -> Type -> Type} -> {0 isP : Profunctor p} ->
   EndBase p -> PolyProdP p
-wedgeRight {p} i a b f = rmap {f=p} {a} {b=a} {d=b} f (i a)
+wedgeRight {p} {isP} i a b f = rmap {f=p} {a} {b=a} {d=b} f (i a)
 
 public export
-End : (p : Type -> Type -> Type) -> {isP : Profunctor p} -> Type
+End : (p : Type -> Type -> Type) -> {0 isP : Profunctor p} -> Type
 End p {isP} =
-  Equalizer {a=(EndBase p)} {b=(PolyProdP p)} (wedgeLeft {p}) (wedgeRight {p})
+  Equalizer {a=(EndBase p)} {b=(PolyProdP p)}
+    (wedgeLeft {p} {isP})
+    (wedgeRight {p} {isP})
 
 -- Given two functors, we can define a profunctor whose end is the object
 -- of natural transformations between the given functors.
@@ -1729,10 +1774,6 @@ ProfBicatDuplicate pf = (p : Type -> Type -> Type) -> ProfNT (pf p) (pf (pf p))
 public export
 ProfCoalg : (Type -> Type) -> ProfunctorSig
 ProfCoalg f a b = a -> f b
-
-public export
-ProfDialg : (Type -> Type) -> (Type -> Type) -> ProfunctorSig
-ProfDialg = NatTransProf
 
 public export
 ProfAlg : ProfunctorSig -> (Type -> Type) -> Type
@@ -2161,6 +2202,18 @@ TwArrPreshfOpNatTransHcomp p p' q q' beta alpha x z =
 ---- Naturality conditions ----
 -------------------------------
 
+public export
+0 TwArrCoprNaturality : {p, q : TwArrCoprSig} ->
+  TwArrCoprDimapSig p -> TwArrCoprDimapSig q ->
+  TwArrCoprNatTrans p q -> Type
+TwArrCoprNaturality {p} {q} pdm qdm gamma =
+  (s, t, a, b : Type) -> (mst : s -> t) -> (mas : a -> s) -> (mtb : t -> b) ->
+  ExtEq
+    {a=(p s t mst)}
+    {b=(q a b (mtb . mst . mas))}
+    (qdm s t a b mst mas mtb . gamma s t mst)
+    (gamma a b (mtb . mst . mas) . pdm s t a b mst mas mtb)
+
 -- The naturality condition for a presheaf on `Tw(Type)` (AKA a
 -- copresheaf on `op(Tw(Type))`.
 
@@ -2283,6 +2336,18 @@ TwArrCoprEmbedDimap : (p : Type -> Type -> Type) -> Profunctor p ->
 TwArrCoprEmbedDimap p pdm s t a b mst =
   dimap {f=p} {a=s} {b=t} {c=a} {d=b}
 
+-- The signature of a natural transformation between the embeddings of
+-- two profunctors into the category of copresheaves on `Tw(Type)`.
+public export
+TwArrCoprEmbeddingNT : (p, q : ProfunctorSig) -> Type
+TwArrCoprEmbeddingNT p q =
+  TwArrCoprNatTrans (TwArrCoprEmbedProf p) (TwArrCoprEmbedProf q)
+
+public export
+TwArrCoprEmbeddingNTtoProfParaNT : {p, q : ProfunctorSig} ->
+  TwArrCoprEmbeddingNT p q -> ProfDiNT p q
+TwArrCoprEmbeddingNTtoProfParaNT {p} {q} {a} gamma = gamma a a id
+
 public export
 TwArrCoprOpEmbedDimap : (p : Type -> Type -> Type) -> Profunctor p ->
   TwArrCoprOpContraDimapSig (TwArrCoprOpEmbedProf p)
@@ -2306,11 +2371,6 @@ TwArrCoprOpEmbedProfFMap : (p, q : Type -> Type -> Type) ->
     (TwArrCoprOpEmbedProf p)
     (TwArrCoprOpEmbedProf q)
 TwArrCoprOpEmbedProfFMap p q pdm qdm alpha x y myx epyx = alpha epyx
-
-public export
-TwArrCoprEmbeddingNT : (p, q : ProfunctorSig) -> Type
-TwArrCoprEmbeddingNT p q =
-  TwArrCoprNatTrans (TwArrCoprEmbedProf p) (TwArrCoprEmbedProf q)
 
 public export
 TwArrCoprOpEmbeddingNT : (p, q : ProfunctorSig) -> Type
@@ -2679,6 +2739,31 @@ TwCoprEmbedOpArrFmap x y x' y' mxy mxy' twmx twmy twmcomm a b mab
      \fext => funExt $
       \ea => rewrite (twmcomm $ max ea) in fcong {x=ea} $ mcomm fext)
 
+--------------------------------------
+---- Dependent twisted dialgebras ----
+--------------------------------------
+
+public export
+TwArrDepDialg : (f : Type -> Type) -> (g : (a : Type) -> f a -> Type) ->
+  (fm : (a, b : Type) -> (a -> b) -> f a -> f b) ->
+  ((a, b : Type) ->
+   (m : a -> b) -> (el : f a) -> g a el -> g b (fm a b m el)) ->
+  TwArrCoprSig
+TwArrDepDialg f g fm gm x y mxy = (el : f x) -> g y (fm x y mxy el)
+
+public export
+TwArrDepDialgDimap : (f : Type -> Type) -> (g : (a : Type) -> f a -> Type) ->
+  (fm : (a, b : Type) -> (a -> b) -> f a -> f b) ->
+  (fmcomp : (a, b, c : Type) -> (mbc : b -> c) -> (mab : a -> b) ->
+    ExtEq {a=(f a)} {b=(f c)} (fm a c (mbc . mab)) (fm b c mbc . fm a b mab)) ->
+  (gm : (a, b : Type) ->
+   (m : a -> b) -> (el : f a) -> g a el -> g b (fm a b m el)) ->
+  TwArrCoprDimapSig (TwArrDepDialg f g fm gm)
+TwArrDepDialgDimap f g fm fmcomp gm s t a b mst mas mtb dialg el =
+  rewrite fmcomp a t b mtb (mst . mas) el in
+  rewrite fmcomp a s t mst mas el in
+  gm t b mtb (fm s t mst (fm a s mas el)) (dialg $ fm a s mas el)
+
 -------------------------------------------
 -------------------------------------------
 ---- Dependent polynomial endofunctors ----
@@ -2861,6 +2946,12 @@ SliceFreeFEvalF : {a : Type} -> SliceEndofunctor a -> Type
 SliceFreeFEvalF {a} f =
   (sv, sa : SliceObj a) -> SliceMorphism {a} sv sa -> SliceAlg f sa ->
   SliceMorphism {a} (f $ SliceFreeM f sv) sa
+
+public export
+SliceFreeFEvalA : {a : Type} -> SliceEndofunctor a -> Type
+SliceFreeFEvalA {a} f =
+  (sv, sa : SliceObj a) -> SliceMorphism {a} sv sa ->
+  SliceAlg f sa -> SliceAlg f sa
 
 -- The type of the slice-category free monad's return.
 public export
@@ -4426,6 +4517,17 @@ public export
 CSPi : {c, d : Type} -> (c -> d) -> CSliceFunctor c d
 CSPi {c} {d} = CSliceFromSlice {c=d} .* CSGBCMorph {c} {d}
 
+-- Just a more explicit characterization of `CSPi`.
+0 cspieq : (c, d : Type) -> (f : c -> d) -> (slc : CSliceObj c) ->
+  fst (CSPi {c} {d} f slc) ->
+  (ed : d **
+   m : (ec : c) -> f ec = ed -> fst slc **
+   (ec : c) -> (eq : f ec = ed) -> ec = snd slc (m ec eq))
+cspieq c d f (tot ** proj) (ed ** Element0 m comm) =
+  (ed **
+   \ec, deq => m (Element0 (ec, ()) deq) **
+   \ec, eq => comm (Element0 (ec, ()) eq))
+
 public export
 csPiMap : {0 c, d : Type} -> {0 f : c -> d} ->
   CSliceFMap {c} {d} (CSPi {c} {d} f)
@@ -5236,6 +5338,23 @@ InterpWTF {parambase} {posbase} wtf sl ib =
    (d : PreImage {a=(wtDir wtf)} {b=(wtPos wtf)} (wtDirSlice wtf) (fst0 i)) ->
    sl $ wtAssign wtf $ fst0 d)
 
+public export
+record WTypeNT {w, z' : Type} (f : WTypeFunc w z') (g : WTypeFunc w z') where
+  constructor WTNT
+  wtnOnPos : wtPos f -> wtPos g
+  wtnOnDir :
+    Pullback {a=(wtDir g)} {b=(wtPos f)} {c=(wtPos g)}
+      (wtDirSlice g) wtnOnPos ->
+    wtDir f
+  0 wtnCommPos :
+    ExtEq (wtPosSlice f) (wtPosSlice g . wtnOnPos)
+  0 wtnCommDir :
+    ExtEq (wtDirSlice f . wtnOnDir) (pbProj2 {f=(wtDirSlice g)} {g=wtnOnPos})
+  0 wtnCommAssign :
+    ExtEq
+      (wtAssign f . wtnOnDir)
+      (wtAssign g . pbProj1 {f=(wtDirSlice g)} {g=wtnOnPos})
+
 -- See https://ncatlab.org/nlab/show/polynomial+functor#the_2category_of_polynomial_functors .
 public export
 record WTypeCell {w, w', z, z' : Type}
@@ -5257,8 +5376,11 @@ record WTypeCell {w, w', z, z' : Type}
       (wtAssign g . pbProj1 {f=(wtDirSlice g)} {g=wtcOnPos})
 
 public export
-WTypeNT : {w, z : Type} -> WTypeFunc w z -> WTypeFunc w z -> Type
-WTypeNT {w} {z} = WTypeCell {w} {w'=w} {z} {z'=z} Prelude.id Prelude.id
+WTntFromCell : {w, z' : Type} -> (f : WTypeFunc w z') -> (g : WTypeFunc w z') ->
+  WTypeCell {w} {w'=w} {z=z'} {z'} Prelude.id Prelude.id f g ->
+  WTypeNT {w} {z'} f g
+WTntFromCell f g (WTCell onpos ondir commpos commdir commasn) =
+  WTNT onpos ondir commpos commdir commasn
 
 -----------------------------
 ---- Algebras of W-types ----
@@ -5625,8 +5747,13 @@ TerminalMonad : Type -> Type
 TerminalMonad = ConstF Unit
 
 public export
+terminalMonadMap :
+  (0 a, b : Type) -> (a -> b) -> TerminalMonad a -> TerminalMonad b
+terminalMonadMap a b mab () = ()
+
+public export
 Functor TerminalMonad where
-  map _ () = ()
+  map {a} {b} = terminalMonadMap a b
 
 public export
 TerminalNTUnit : (a : Type) -> a -> TerminalMonad a
@@ -5741,8 +5868,13 @@ ProductMonad : Type -> Type
 ProductMonad = ProductRAdjoint . DiagonalF
 
 public export
+productMonadMap :
+  (0 a, b : Type) -> (a -> b) -> ProductMonad a -> ProductMonad b
+productMonadMap a b = mapHom {f=Pair} {a} {b}
+
+public export
 Functor ProductMonad where
-  map = mapHom
+  map {a} {b} = productMonadMap a b
 
 public export
 Applicative ProductMonad where
@@ -6984,7 +7116,8 @@ NatDepCoalgebra : NatSliceObj -> Type
 NatDepCoalgebra p = NatSliceMorphism p (Maybe . p . S)
 
 public export
-natDepAna : {0 p : NatSliceObj} ->
+partial
+0 natDepAna : {0 p : NatSliceObj} ->
   NatDepCoalgebra p -> NatSigma p -> Inf (Maybe (NatSigma p))
 natDepAna coalg (n ** x) with (coalg n x)
   natDepAna coalg (n ** x) | Nothing = Nothing
@@ -7030,7 +7163,8 @@ NatCoalgebra : Type -> Type
 NatCoalgebra a = Nat -> a -> Maybe a
 
 public export
-natAna : {0 a : Type} -> NatCoalgebra a -> (Nat, a) -> Inf (Maybe (Nat, a))
+partial
+0 natAna : {0 a : Type} -> NatCoalgebra a -> (Nat, a) -> Inf (Maybe (Nat, a))
 natAna coalg nx =
   map {f=Maybe} SigmaToPair $ natDepAna {p=(const a)} coalg $ PairToSigma nx
 
@@ -7089,6 +7223,14 @@ FIFaceMorph {fm} = FAlgMorph {fm}
 public export
 Contravariant f => Functor (Algebra f) where
   map m alg = m . alg . contramap {f} m
+
+-- If a category has a reflection of itself, such as Idris's `Type : Type`,
+-- the its endofunctor category also has the reflective property that a
+-- slice of the application of a functor to `Type` itself is equivalently
+-- an algebra of the functor with carrier `Type`.
+public export
+FunctorSliceIsAlg : (f : Type -> Type) -> SliceObj (f Type) = Algebra f Type
+FunctorSliceIsAlg p = Refl
 
 -- The dual of an F-algebra: an F-coalgebra.
 public export
@@ -9078,6 +9220,26 @@ TraversalP = ExOpticP TraversalShape
 -----------------------
 -----------------------
 
+public export
+Cont : Type -> Type -> Type
+Cont r a = (a -> r) -> r
+
+public export
+mapCont : (0 r, a, b : Type) -> (a -> b) -> Cont r a -> Cont r b
+mapCont r a b mab ca mbr = ca (mbr . mab)
+
+public export
+Functor (Cont r) where
+  map {r} {a} {b} = mapCont r a b
+
+public export
+unitCont : (0 r, a : Type) -> a -> Cont r a
+unitCont r a = flip (apply {a} {b=r})
+
+public export
+joinCont : (0 r, a : Type) -> Cont r (Cont r a) -> Cont r a
+joinCont r a cca mar = cca $ flip apply mar
+
 -- Drawn from:
 --  https://www.austinseipp.com/hs-asai/doc/Control-Delimited.html
 --  https://hackage.haskell.org/package/kan-extensions-5.2.5/docs/Control-Monad-Codensity.html
@@ -9105,6 +9267,18 @@ record Delim (s, t, b : Type) where
   unDelim : (b -> s) -> t
 
 public export
+callCC : {a, b, s, t, u : Type} ->
+  ((b -> Delim u s a) -> Delim s t b) -> Delim s t b
+callCC f = MkDelim (\k => unDelim (f (\a => MkDelim $ \_ => k a)) k)
+
+-- Just `callCC`, but with the wrapper names removed to, I feel,
+-- make it clearer what it's doing.
+public export
+callCC' : {a, b, s, t, u : Type} ->
+  ((b -> (a -> u) -> s) -> (b -> s) -> t) -> (b -> s) -> t
+callCC' f k = f (flip $ const k) k
+
+public export
 DelimNoAnsTypeMod : ProfunctorSig
 DelimNoAnsTypeMod s b = Delim s s b
 
@@ -9112,7 +9286,8 @@ public export
 PolyDelim : Type -> Type
 PolyDelim b = (r : Type) -> DelimNoAnsTypeMod r b
 
--- PolyDelim is another way of getting to `Continuation`.
+-- PolyDelim is another way of saying `Continuation` -- so it is a
+-- Yoneda embedding.
 public export
 PolyDelimToCont : {a : Type} -> PolyDelim a -> Continuation a
 PolyDelimToCont f = MkYo $ \r => unDelim (f r)
@@ -9122,18 +9297,75 @@ ContToPolyDelim : {a : Type} -> Continuation a -> PolyDelim a
 ContToPolyDelim (MkYo f) r = MkDelim $ f r
 
 public export
-DelimEndo : ProfunctorSig
-DelimEndo s t = Delim s t s
+pdExtract : {s : Type} -> PolyDelim s -> s
+pdExtract {s} pd = unDelim (pd s) id
 
+public export
+pdEmbed : {s : Type} -> s -> PolyDelim s
+pdEmbed {s} es r = MkDelim $ flip apply es
+
+-- This corresponds to the ":=>" operator of
+-- https://www.austinseipp.com/hs-asai/doc/Control-Delimited.html.
+--
+-- Because it is a natural transformation between continuation types,
+-- it may be viewed as a morphism at the level of continuations --
+-- that is, in the (co)presheaf category into which each continuation
+-- represents an object embedding.
 public export
 DelimTrans : ProfunctorSig
 DelimTrans a b =
   NaturalTransformation (flip DelimNoAnsTypeMod a) (flip DelimNoAnsTypeMod b)
 
+-- We may lift a morphism of `Type` to a morphism between continuations
+-- of that type.  Since the continuation types may be viewed as Yoneda
+-- embeddings of the underlying types, this may be viewed as the morphism-map
+-- component of that Yoneda embedding.
+--
+-- Furthermore, because it's mapping a `Type`-level function to
+-- a morphism between continuations of its domain and codomain, it
+-- may also be viewed as a CPS transformation.
 public export
-resetDelim : {s, t : Type} -> DelimEndo s t -> PolyDelim t
-resetDelim {s} {t} (MkDelim {b=s} {s} {t} f) s' =
-  MkDelim {s=s'} {t=s'} {b=t} $ \k : (t -> s') => k (f id)
+DelimTransLift : {a, b : Type} -> (a -> b) -> DelimTrans a b
+DelimTransLift {a} {b} m x (MkDelim d) = MkDelim (d . ((|>) m))
+
+-- This corresponds to the ":~>" operator of
+-- https://www.austinseipp.com/hs-asai/doc/Control-Delimited.html.
+-- We shall show that it is effectively `a -> PolyDelim b`, so it
+-- can be seen as a function with its codomain CPS-transformed
+-- (i.e. a function returning a continuation).
+public export
+PolyAnsDelim : ProfunctorSig
+PolyAnsDelim a b = NaturalTransformation (const a) (flip DelimNoAnsTypeMod b)
+
+public export
+PolyAnsDelimToCont : {a, b : Type} -> PolyAnsDelim a b -> (a -> PolyDelim b)
+PolyAnsDelimToCont {a} {b} d ea x = d x ea
+
+public export
+PolyAnsDelimFromCont : {a, b : Type} -> (a -> PolyDelim b) -> PolyAnsDelim a b
+PolyAnsDelimFromCont {a} {b} d x ea = d ea x
+
+public export
+DelimReturnI : {b, s : Type} -> b -> DelimNoAnsTypeMod s b
+DelimReturnI = MkDelim . flip apply
+
+public export
+dtSpecialize : {b, s : Type} -> DelimTrans b s -> (b -> PolyDelim s)
+dtSpecialize {b} {s} f eb x = f x $ DelimReturnI eb
+
+public export
+DelimEndo : ProfunctorSig
+DelimEndo s t = Delim s t s
+
+public export
+-- This type signature is equivalent to the following, just with a
+-- reordering of a couple arguments:
+--  resetDelim : {s, t : Type} -> DelimEndo s t -> PolyDelim t
+--
+-- Another way of viewing it (again with some argument reordering) is:
+--  resetDelim : {s, t : Type} -> PolyAnsDelim (DelimEndo s t) t
+resetDelim : {s : Type} -> NaturalTransformation (DelimEndo s) PolyDelim
+resetDelim {s} t (MkDelim {b=s} {s} {t} f) s' = DelimReturnI {b=t} {s=s'} (f id)
 
 public export
 shift0 : {s, t, b : Type} -> ((b -> s) -> t) -> Delim s t b
@@ -9144,20 +9376,48 @@ shift1 : {a, b, s, t : Type} -> ((b -> s) -> Delim a t a) -> Delim s t b
 shift1 f = shift0 (\k => unDelim (f k) id)
 
 public export
-DelimReturnI : {b, s : Type} -> b -> DelimNoAnsTypeMod s b
-DelimReturnI x = MkDelim (\k : (b -> s) => k x)
-
-public export
 shift2 : {a, b, s, t : Type} ->
+  -- Spelling out this type signature more explicitly:
+  --  ((b -> forall a'.  Delim a' a' s) -> Delim a t a) -> Delim s t b
   ((b -> PolyDelim s) -> DelimEndo a t) -> Delim s t b
 shift2 {a} {b} {s} {t} f =
   shift1 $
     \k : (b -> s) => f $ \x : b, r : Type => DelimReturnI {b=s} {s=r} $ k x
 
 public export
-callCC : {a, b, s, t, u : Type} ->
-  ((b -> Delim u s a) -> Delim s t b) -> Delim s t b
-callCC f = shift0 (\k => unDelim (f (\a => shift0 $ \_ => k a)) k)
+shift3 : {a, b, s, t : Type} ->
+  -- Spelling out this type signature more explicitly:
+  -- ((forall a'. Delim a' a' b -> Delim a' a' s) -> Delim a t a) -> Delim s t b
+  (DelimTrans b s -> DelimEndo a t) -> Delim s t b
+shift3 {a} {b} {s} {t} f =
+  shift2
+    (\k =>
+      f
+        (\a', (MkDelim d) =>
+          MkDelim $ \msa' => d $ \eb : b => unDelim (k eb a') msa'))
+
+public export
+shift3' : {a, b, s, t : Type} ->
+  -- Spelling out this type signature more explicitly:
+  -- ((forall a'. Delim a' a' b -> Delim a' a' s) -> Delim a t a) -> Delim s t b
+  (DelimTrans b s -> DelimEndo a t) -> Delim s t b
+shift3' {a} {b} {s} {t} f =
+  MkDelim $ flip unDelim id . f . DelimTransLift {a=b} {b=s}
+
+public export
+shift2' : {a, b, s, t : Type} ->
+  -- Spelling out this type signature more explicitly:
+  --  ((b -> forall a'.  Delim a' a' s) -> Delim a t a) -> Delim s t b
+  ((b -> PolyDelim s) -> DelimEndo a t) -> Delim s t b
+shift2' {a} {b} {s} {t} = shift3' . (|>) (dtSpecialize {b} {s})
+
+public export
+shift1' : {a, b, s, t : Type} -> ((b -> s) -> DelimEndo a t) -> Delim s t b
+shift1' = shift2' {a} {b} {s} {t} . (|>) ((.) (pdExtract {s}))
+
+public export
+shift0' : {s, t, b : Type} -> ((b -> s) -> t) -> Delim s t b
+shift0' = MkDelim
 
 public export
 runDelim : {t : Type} -> Delim t t t -> t
@@ -9216,18 +9476,20 @@ CodensityMonad f =
 
 -- Also known as `rep`.
 public export
-MonadTrans Codensity where
-  lift {m} {a} ma = MkCodensity $ \ty => (>>=) {m} {a} {b=ty} ma
+liftCodensity : Monad m => {0 a : Type} -> m a -> Codensity m a
+liftCodensity {m} {a} ma = MkCodensity $ \ty => (>>=) {m} {a} {b=ty} ma
 
 public export
-liftCodensity : Monad m => {a : Type} -> m a -> Codensity m a
-liftCodensity {m} {a} = lift {t=Codensity} {m} {a}
+MonadTrans Codensity where
+  lift {m} {a} = liftCodensity {m} {a}
 
 -- Also known as `abs`.
 public export
 lowerCodensity : Applicative f => {a : Type} -> Codensity f a -> f a
 lowerCodensity {f} {a} ca = runCodensity ca a $ pure {f}
 
+-- This could be viewed as surrounding a monad action with a "finally"
+-- (represented by a natural transformation).
 public export
 wrapCodensity :
   {m : Type -> Type} -> (NaturalTransformation m m) -> Codensity m ()
@@ -9235,39 +9497,47 @@ wrapCodensity f = MkCodensity $ \ty, k => f ty (k ())
 
 public export
 reset : Monad m => {a : Type} -> Codensity m a -> Codensity m a
-reset = lift {m} {t=Codensity} . lowerCodensity {f=m}
+reset = liftCodensity {m} . lowerCodensity {f=m}
 
 public export
-shift : Monad m => {a : Type} -> RKanExt m (Codensity m) a -> Codensity m a
-shift {a} f = MkCodensity $ \y => lowerCodensity . f y
+shift : Applicative f =>
+  NaturalTransformation (RKanExt f (Codensity f)) (Codensity f)
+shift {f} a k =
+  MkCodensity {m=f} $
+    -- This is simply the vertical composition of `lowerCodensity` after `k`.
+    \y => lowerCodensity {f} . k y
 
 public export
-interface (Functor f, Monad m) => FreeLike f m where
-  constructor MkFreeLike
-  total
-  wrap : (a : Type) -> f (m a) -> m a
+interface (Functor f, Monad m) => MonadFree f m where
+  constructor MkMonadFree
+  total wrap : NaturalTransformation (f . m) m
 
 public export
-FreeMonadFreeLike : {f : Type -> Type} -> Functor f ->
-  {auto isM : Monad (FreeMonad f)} -> FreeLike f (FreeMonad f)
-FreeMonadFreeLike isF {isM} = MkFreeLike $ \a, x => InFree $ TFC x
+FreeMonadMonadFree : {f : Type -> Type} -> Functor f ->
+  {auto isM : Monad (FreeMonad f)} -> MonadFree f (FreeMonad f)
+FreeMonadMonadFree {f} isF {isM} = MkMonadFree $ \a => InFree {f} {a} . TFC
 
 public export
-CodensityFreeLike : {f, m : Type -> Type} ->
-  FreeLike f m -> FreeLike f (Codensity m)
-CodensityFreeLike {f} {m} (MkFreeLike wrapm) =
+CodensityMonadFree : {f, m : Type -> Type} ->
+  MonadFree f m -> MonadFree f (Codensity m)
+CodensityMonadFree {f} {m} (MkMonadFree wrapm) =
   let _ = CodensityFunctor f in
   let _ = CodensityMonad m in
-  MkFreeLike $ \a, fca => MkCodensity $ \ty, maty =>
+  MkMonadFree $ \a, fca => MkCodensity $ \ty, maty =>
       wrapm ty $ map {f} {a=(Codensity m a)} {b=(m ty)}
         (\ca => runCodensity ca ty maty) fca
 
 public export
+improveM : Monad m => NaturalTransformation m m
+improveM {m} a = lowerCodensity {f=m} {a} . liftCodensity {m} {a}
+
+public export
 improve : {f : Type -> Type} -> Functor f ->
-  {a : Type} -> ((m : Type -> Type) -> FreeLike f m -> m a) ->
+  {a : Type} -> ((m : Type -> Type) -> MonadFree f m -> m a) ->
   {auto isM : Monad (FreeMonad f)} -> FreeMonad f a
-improve {f} isF allWrap {isM} =
-  lowerCodensity $ lift $ allWrap (FreeMonad f) (FreeMonadFreeLike isF)
+improve {f} isF {a} allWrap {isM} =
+  improveM {m=(FreeMonad f)} a $
+    allWrap (FreeMonad f) (FreeMonadMonadFree isF {isM})
 
 -------------------------
 -------------------------
@@ -10643,7 +10913,7 @@ NatLTMorphToSucc : {m, n : NatObj} ->
 NatLTMorphToSucc morph = InNatLT _ (NatLTS _ morph)
 
 public export
-NatMorphIndCurried :
+0 NatMorphIndCurried :
   (p : (mn : NatObjPair) -> NatLTMorph mn -> Type) ->
   ((n : NatF NatObj) -> p (NatOZ, InNat n) $ InNatLT (ZeroF, n) $ NatLTZ n) ->
   ((m, n : NatObj) ->
@@ -10652,6 +10922,8 @@ NatMorphIndCurried :
    p (InNat $ SuccF m, InNat $ SuccF n) $
     InNatLT (SuccF m, SuccF n) $ NatLTS (m, n) morph) ->
   (m, n : NatObj) -> (morph : NatLTMorph (m, n)) -> p (m, n) morph
+NatMorphIndCurried = ?NatMorphIndCurried_hole
+{-
 NatMorphIndCurried p zn ss (InNat ZeroF) _ (InNatLT _ (NatLTZ $ n'')) =
   zn n''
 NatMorphIndCurried p zn ss (InNat ZeroF) _ (InNatLT _ (NatLTS (_, _) _))
@@ -10673,6 +10945,7 @@ NatMorphIndCurried p zn ss (InNat $ SuccF n) (InNat $ SuccF n')
 NatMorphIndCurried p zn ss (InNat $ SuccF n) (InNat $ SuccF n')
   (InNatLT (ZeroF, ZeroF) (NatLTS (n, n') lte))
     impossible
+    -}
 
 public export
 NatMorphIndZCase : (p : (mn : NatObjPair) -> NatLTMorph mn -> Type) -> Type
@@ -10689,7 +10962,7 @@ NatMorphIndSCase p =
     InNatLT (SuccF m, SuccF n) $ NatLTS (m, n) morph
 
 public export
-NatMorphInd :
+0 NatMorphInd :
   (p : (mn : NatObjPair) -> NatLTMorph mn -> Type) ->
   NatMorphIndZCase p ->
   NatMorphIndSCase p ->
@@ -10723,7 +10996,7 @@ NatMorphDepIndSCase {p} dp sp =
     (sp m n morph pmn)
 
 public export
-NatMorphDepInd :
+0 NatMorphDepInd :
   {p : (mn : NatObjPair) -> NatLTMorph mn -> Type} ->
   (dp : (mn : NatObjPair) -> (morph : NatLTMorph mn) -> p mn morph -> Type) ->
   {zp : NatMorphIndZCase p} ->
@@ -10732,12 +11005,15 @@ NatMorphDepInd :
   (dsp : NatMorphDepIndSCase dp sp) ->
   (mn : NatObjPair) -> (morph : NatLTMorph mn) ->
   dp mn morph (NatMorphInd p zp sp mn morph)
+NatMorphDepInd = ?NatMorphDepInd_hole
+{-
 NatMorphDepInd {p} dp {zp} {sp} dzp dsp =
   NatMorphInd
     (\mn', morph' => dp mn' morph' (NatMorphInd p zp sp mn' morph'))
     dzp
     (\m', n', morph', dpmn' =>
       dsp m' n' morph' (NatMorphInd p zp sp (m', n') morph') dpmn')
+      -}
 
 public export
 NatMorphZThin : (n : NatF NatObj) ->
@@ -10782,7 +11058,7 @@ LTEThin (LTESucc l) LTEZero impossible
 LTEThin (LTESucc l) (LTESucc l') = cong LTESucc (LTEThin l l')
 
 public export
-NatMorphToLTE : {mn : NatObjPair} ->
+0 NatMorphToLTE : {mn : NatObjPair} ->
   NatLTMorph mn -> LTE (NatObjToMeta (fst mn)) (NatObjToMeta (snd mn))
 NatMorphToLTE {mn=mn'} =
   NatMorphInd
@@ -10792,8 +11068,10 @@ NatMorphToLTE {mn=mn'} =
     mn'
 
 public export
-LTEToNatMorph : {mn : NatPair} ->
+0 LTEToNatMorph : {mn : NatPair} ->
   LTE (fst mn) (snd mn) -> NatLTMorph (NatMetaPairToObj mn)
+LTEToNatMorph = ?LTEToNatMorph_hole
+{-
 LTEToNatMorph {mn=(Z, Z)} LTEZero =
   InNatLT (ZeroF, ZeroF) $ NatLTZ ZeroF
 LTEToNatMorph {mn=(Z, Z)} (LTESucc _) impossible
@@ -10807,9 +11085,10 @@ LTEToNatMorph {mn=(S m, S n)} (LTESucc lt) =
   InNatLT (SuccF $ MetaToNatObj m, SuccF $ MetaToNatObj n) $
     NatLTS (MetaToNatObj m, MetaToNatObj n) $
       LTEToNatMorph {mn=(m, n)} lt
+      -}
 
 public export
-NatMorphCompose : {m, n, p : NatObj} ->
+0 NatMorphCompose : {m, n, p : NatObj} ->
   NatLTMorph (n, p) ->
   NatLTMorph (m, n) ->
   NatLTMorph (m, p)
@@ -10840,13 +11119,16 @@ OnlyZLtZ (InNat n) (InNatLT (n, ZeroF) m) = case n of
     NatLTS (s, z) m' impossible
 
 public export
-OnlyZLtZMorph : (n : NatObj) -> (morph : NatLTMorph (n, NatOZ)) ->
+0 OnlyZLtZMorph : (n : NatObj) -> (morph : NatLTMorph (n, NatOZ)) ->
   morph = NatLTOZ NatOZ
+OnlyZLtZMorph = ?OnlyZLtZMorph_hole
+{-
 OnlyZLtZMorph n morph =
   rewrite OnlyZLtZ n morph in
   case morph of
     InNatLT _ (NatLTZ _) => Refl
     InNatLT _ (NatLTS (_, _) _) impossible
+    -}
 
 public export
 NatMorphId : (n : NatObj) -> NatLTMorph (n, n)
@@ -10860,11 +11142,11 @@ NatLTSucc = NatObjInd _ NatLTOZ1 $
   \n', morph => InNatLT _ $ NatLTS (n', InNat $ SuccF n') morph
 
 public export
-NatLTInc : {m, n : NatObj} -> NatLTMorph (m, n) -> NatLTMorph (m, NatOS n)
+0 NatLTInc : {m, n : NatObj} -> NatLTMorph (m, n) -> NatLTMorph (m, NatOS n)
 NatLTInc {n} = NatMorphCompose (NatLTSucc n)
 
 public export
-NatLTDec : {n, n' : NatObj} -> NatLTMorph (NatOS n, n') -> NatLTMorph (n, n')
+0 NatLTDec : {n, n' : NatObj} -> NatLTMorph (NatOS n, n') -> NatLTMorph (n, n')
 NatLTDec {n} morph = NatMorphCompose morph $ NatLTSucc n
 
 public export
@@ -10872,7 +11154,7 @@ NatMorphIdZ : NatLTMorph (NatOZ, NatOZ)
 NatMorphIdZ = NatMorphId NatOZ
 
 public export
-NatMorphCompare : (m, n : NatObj) ->
+0 NatMorphCompare : (m, n : NatObj) ->
   Either (m = n) $ Either (NatLTStrict m n) (NatLTStrict n m)
 NatMorphCompare m n with (decEq (NatObjToMeta m) (NatObjToMeta n))
   NatMorphCompare m n | Yes eq = Left $ NatObjToMetaInj m n eq
@@ -10895,8 +11177,10 @@ NatMorphCompare m n with (decEq (NatObjToMeta m) (NatObjToMeta n))
       morph
 
 public export
-NatLTFromSucc : (m, n : NatObj) -> NatLTMorph (NatOS m, NatOS n) ->
+0 NatLTFromSucc : (m, n : NatObj) -> NatLTMorph (NatOS m, NatOS n) ->
   NatLTMorph (m, n)
+NatLTFromSucc = ?NatLTFromSucc_hole
+{-
 NatLTFromSucc (InNat m) = case m of
   ZeroF => \n => case n of
     InNat ZeroF => \lte => case lte of
@@ -10927,21 +11211,22 @@ NatLTFromSucc (InNat m) = case m of
           NatLTS (InNat $ SuccF q, InNat ZeroF) y impossible
           NatLTS (InNat ZeroF, InNat $ SuccF q') y impossible
           NatLTS (InNat $ SuccF q, InNat $ SuccF q') y => y
+          -}
 
 public export
-FromLTZeroContra : (n : NatObj) -> NatLTMorph (NatOS n, NatOZ) -> Void
+0 FromLTZeroContra : (n : NatObj) -> NatLTMorph (NatOS n, NatOZ) -> Void
 FromLTZeroContra _ = succNotLTEzero . NatMorphToLTE
 
 public export
-FromSuccContra : (n : NatObj) -> NatLTMorph (NatOS n, n) -> Void
+0 FromSuccContra : (n : NatObj) -> NatLTMorph (NatOS n, n) -> Void
 FromSuccContra _ = succNotLTEpred . NatMorphToLTE
 
 public export
-LTcontraGTE : {m, n : NatObj} -> NatLTStrict m n -> NatLTMorph (n, m) -> Void
+0 LTcontraGTE : {m, n : NatObj} -> NatLTStrict m n -> NatLTMorph (n, m) -> Void
 LTcontraGTE lt gte = FromSuccContra _ $ NatMorphCompose gte lt
 
 public export
-MorphToStrict : {m, n : NatObj} ->
+0 MorphToStrict : {m, n : NatObj} ->
   NatLTMorph (m, n) -> Either (m = n) (NatLTStrict m n)
 MorphToStrict {m} {n} morph with (NatMorphCompare m n)
   MorphToStrict {m} {n} morph | Left eq = Left eq
@@ -10949,14 +11234,14 @@ MorphToStrict {m} {n} morph with (NatMorphCompare m n)
   MorphToStrict {m} {n} morph | Right (Right gt) = void $ LTcontraGTE gt morph
 
 public export
-NatMorphDec : (m, n : NatObj) ->
+0 NatMorphDec : (m, n : NatObj) ->
   Either (m = n) $ Either (NatLTMorph (m, n)) (NatLTMorph (n, m))
 NatMorphDec m n = case NatMorphCompare m n of
   Left eq => Left eq
   Right morph => Right $ bimap {f=Either} NatLTDec NatLTDec morph
 
 public export
-NatMorphMaybe : (m, n : NatObj) -> Maybe (NatLTMorph (m, n))
+0 NatMorphMaybe : (m, n : NatObj) -> Maybe (NatLTMorph (m, n))
 NatMorphMaybe m n = case NatMorphDec m n of
   Left _ => Nothing
   Right e => case e of
@@ -10964,7 +11249,7 @@ NatMorphMaybe m n = case NatMorphDec m n of
     Right _ => Nothing
 
 public export
-NatLTEDec : (m, n : NatObj) -> Either (NatLTMorph (m, n)) (NatLTStrict n m)
+0 NatLTEDec : (m, n : NatObj) -> Either (NatLTMorph (m, n)) (NatLTStrict n m)
 NatLTEDec m n = case NatMorphCompare m n of
   Left eq => rewrite eq in Left $ NatMorphId _
   Right morph => case morph of
@@ -10972,7 +11257,7 @@ NatLTEDec m n = case NatMorphCompare m n of
     Right gt => Right gt
 
 public export
-NatStrictLTDec : (m, n : NatObj) -> Either (NatLTStrict m n) (NatLTMorph (n, m))
+0 NatStrictLTDec : (m, n : NatObj) -> Either (NatLTStrict m n) (NatLTMorph (n, m))
 NatStrictLTDec m n = case NatMorphCompare m n of
   Left eq => rewrite eq in Right $ NatMorphId _
   Right morph => case morph of
@@ -10980,13 +11265,13 @@ NatStrictLTDec m n = case NatMorphCompare m n of
     Right gt => Right $ NatLTDec gt
 
 public export
-NatLTStrictMaybe : (m, n : NatObj) -> Maybe (NatLTStrict m n)
+0 NatLTStrictMaybe : (m, n : NatObj) -> Maybe (NatLTStrict m n)
 NatLTStrictMaybe m n = case NatStrictLTDec m n of
   Left morph => Just morph
   Right _ => Nothing
 
 public export
-NatMorphDecSucc : (m, n : NatObj) ->
+0 NatMorphDecSucc : (m, n : NatObj) ->
   Either (m = n) $
     Either (NatLTMorph (NatOS m, NatOS n)) (NatLTMorph (NatOS n, NatOS m))
 NatMorphDecSucc m n = case NatMorphDec m n of
@@ -10996,7 +11281,7 @@ NatMorphDecSucc m n = case NatMorphDec m n of
     Right $ bimap {f=Either} NatLTMorphToSucc NatLTMorphToSucc morph
 
 public export
-NatMorphSucc : (m, n : NatObj) -> NatLTMorph (m, NatOS n) ->
+0 NatMorphSucc : (m, n : NatObj) -> NatLTMorph (m, NatOS n) ->
   Either (NatLTMorph (m, n)) (m = NatOS n)
 NatMorphSucc m n morph =
   case NatMorphCompare m (NatOS n) of
@@ -11028,7 +11313,7 @@ colimitOne :
 colimitOne succ (n ** f') = (NatOS n ** OmegaIter $ succ f')
 
 public export
-OmegaChainCompose : {f : Type -> Type} -> {a : Type} -> {n, n' : NatObj} ->
+0 OmegaChainCompose : {f : Type -> Type} -> {a : Type} -> {n, n' : NatObj} ->
   Functor f => NatLTMorph (n, n') -> OmegaChain f n a -> OmegaChain f n' a
 OmegaChainCompose {f} {n} {n'} =
   NatMorphInd
@@ -11038,7 +11323,7 @@ OmegaChainCompose {f} {n} {n'} =
     (n, n')
 
 public export
-colimitPair :
+0 colimitPair :
   {f : Type -> Type} -> Functor f =>
   (combine : {n : NatObj} ->
     InitialChain f n -> InitialChain f n -> f (InitialChain f n)) ->
@@ -11072,7 +11357,7 @@ ltSliceObjToNatMorph =
   FunctorIterInd _ (const NatMorphIdZ) ltSliceObjToNatMorphStep
 
 public export
-natMorphToLTSlice : {m, n : NatObj} -> NatLTMorph (m, n) -> NatLTSlice n
+0 natMorphToLTSlice : {m, n : NatObj} -> NatLTMorph (m, n) -> NatLTSlice n
 natMorphToLTSlice {m} {n} =
   NatMorphInd
     (\mn, _ => NatLTSlice (snd mn))
@@ -11091,13 +11376,13 @@ NatOPrefix : NatObj -> Type
 NatOPrefix n = (m : NatObj ** NatLTStrict m n)
 
 public export
-NatOPrefixMaybe : {n : NatObj} -> NatObj -> Maybe (NatOPrefix n)
+0 NatOPrefixMaybe : {n : NatObj} -> NatObj -> Maybe (NatOPrefix n)
 NatOPrefixMaybe {n} m = case NatLTStrictMaybe m n of
   Just lt => Just (m ** lt)
   Nothing => Nothing
 
 public export
-InitNatOPrefix :
+0 InitNatOPrefix :
   {n : NatObj} -> (m : NatObj) ->
   {auto ok : IsJustTrue (NatOPrefixMaybe {n} m)} ->
   NatOPrefix n
@@ -11112,13 +11397,13 @@ NatOSlice : NatObj -> Type
 NatOSlice n = (m : NatObj ** NatLTMorph (m, n))
 
 public export
-NatOSliceMaybe : {n : NatObj} -> NatObj -> Maybe (NatOSlice n)
+0 NatOSliceMaybe : {n : NatObj} -> NatObj -> Maybe (NatOSlice n)
 NatOSliceMaybe {n} m = case NatMorphMaybe m n of
   Just lt => Just (m ** lt)
   Nothing => Nothing
 
 public export
-InitNatOSlice :
+0 InitNatOSlice :
   {n : NatObj} -> (m : NatObj) ->
   {auto ok : isJust (NatOSliceMaybe {n} m) = True} ->
   NatOSlice n
@@ -11214,7 +11499,7 @@ public export
     No _ => False
 
 public export
-NatObjBoundedGenIndMorph : {n : NatObj} -> {0 a : NatOSlice n -> Type} ->
+0 NatObjBoundedGenIndMorph : {n : NatObj} -> {0 a : NatOSlice n -> Type} ->
   a (NatOSliceZ n) ->
   ((m : NatObj) -> (morph : NatLTStrict m n) -> a (m ** NatLTDec morph) ->
     a (NatOS m ** morph)) ->
@@ -11226,7 +11511,7 @@ NatObjBoundedGenIndMorph {n} {a} i f =
     (\n', hyp, morph => f n' morph $ hyp $ NatLTDec morph)
 
 public export
-NatObjBoundedGenInd : {n : NatObj} -> {0 a : NatOSlice n -> Type} ->
+0 NatObjBoundedGenInd : {n : NatObj} -> {0 a : NatOSlice n -> Type} ->
   a (NatOSliceZ n) ->
   ((m : NatObj) -> (morph : NatLTStrict m n) -> a (m ** NatLTDec morph) ->
     a (NatOS m ** morph)) ->
@@ -11235,7 +11520,7 @@ NatObjBoundedGenInd {a} i f (n' ** morph) =
   NatObjBoundedGenIndMorph {a} i f n' morph
 
 public export
-NatObjBoundedInd : {n : NatObj} -> {a : NatOSlice n -> Type} ->
+0 NatObjBoundedInd : {n : NatObj} -> {a : NatOSlice n -> Type} ->
   a (NatOSliceZ n) ->
   ((m : NatObj) -> (morph : NatLTStrict m n) -> a (m ** NatLTDec morph) ->
     a (NatOS m ** morph)) ->
@@ -11243,16 +11528,18 @@ NatObjBoundedInd : {n : NatObj} -> {a : NatOSlice n -> Type} ->
 NatObjBoundedInd {n} {a} i f = NatObjBoundedGenInd {a} i f (NatOSliceMax n)
 
 public export
-NatOSliceFromSucc : {n : NatObj} ->
+0 NatOSliceFromSucc : {n : NatObj} ->
   (m : NatObj ** NatLTMorph (NatOS m, NatOS n)) -> NatOSlice n
 NatOSliceFromSucc {n} (m ** morph) = (m ** NatLTFromSucc m n morph)
 
 public export
-NatOSliceSuccElimMorph : {n : NatObj} ->
+0 NatOSliceSuccElimMorph : {n : NatObj} ->
   {a : NatOSlice n -> Type} ->
   ((sl : (m : NatObj ** NatLTMorph (NatOS m, NatOS n))) ->
     a (fst sl ** NatLTFromSucc _ _ $ snd sl)) ->
   (m : NatObj) -> (morph : NatLTMorph (m, n)) -> a (m ** morph)
+NatOSliceSuccElimMorph = ?NatOSliceSuccElimMorph_hole
+{-
 NatOSliceSuccElimMorph {n} {a} f
   (InNat ZeroF) = \lte => case lte of
     (InNatLT (ZeroF, ZeroF) (NatLTZ ZeroF)) =>
@@ -11265,20 +11552,10 @@ NatOSliceSuccElimMorph {n} {a} f
       f (NatOZ ** InNatLT (SuccF NatOZ, SuccF $ InNat $ SuccF p) $
         NatLTS _ $ InNatLT (ZeroF, SuccF p) (NatLTZ $ SuccF p))
     (InNatLT (SuccF k, SuccF p) (NatLTS (_, _) lte)) impossible
-NatOSliceSuccElimMorph {n} {a} f
-  (InNat $ SuccF b) = \lte => case lte of
-    (InNatLT (ZeroF, ZeroF) (NatLTZ ZeroF)) impossible
-    (InNatLT (SuccF _, ZeroF) (NatLTS (_, _) _)) impossible
-    (InNatLT (ZeroF, SuccF _) (NatLTS (_, _) _)) impossible
-    (InNatLT (SuccF _, ZeroF) (NatLTZ _)) impossible
-    (InNatLT (ZeroF, SuccF _) (NatLTZ _)) impossible
-    (InNatLT (SuccF b, SuccF c) (NatLTS (b, c) d)) =>
-      f (InNat (SuccF b) **
-        InNatLT (SuccF $ NatOS b, SuccF $ NatOS c) $
-          NatLTS _ $ InNatLT (SuccF b, SuccF c) (NatLTS (b, c) d))
+    -}
 
 public export
-NatOSliceSuccElim : {n : NatObj} ->
+0 NatOSliceSuccElim : {n : NatObj} ->
   {a : NatOSlice n -> Type} ->
   ((sl : (m : NatObj ** NatLTMorph (NatOS m, NatOS n))) ->
     a (fst sl ** NatLTFromSucc _ _ $ snd sl)) ->
@@ -11305,7 +11582,7 @@ NatObjBoundedMap {a} {b} {n} m g =
   NatObjBoundedGenMap {a} {b} {n} m g $ NatOSliceMax n
 
 public export
-NatObjBoundedGenFold :
+0 NatObjBoundedGenFold :
   {n : NatObj} ->
   {a : NatOSlice n -> Type} ->
   {b : NatOSlice (NatOS n) -> Type} ->
@@ -11327,7 +11604,7 @@ NatObjBoundedGenFold {a} {b} {n} ga z s =
         (rewrite NatCatThin (n', NatOS n) (NatLTInc morph') _ in b'))
 
 public export
-NatObjBoundedFold :
+0 NatObjBoundedFold :
   {n : NatObj} ->
   {a : NatOSlice n -> Type} ->
   {b : NatOSlice (NatOS n) -> Type} ->
@@ -11342,7 +11619,7 @@ NatObjBoundedFold {n} {a} {b} ga z s =
   NatObjBoundedGenFold {a} {b} ga z s (NatOSliceMax (NatOS n))
 
 public export
-NatObjBoundedGenMapFold :
+0 NatObjBoundedGenMapFold :
   {n : NatObj} ->
   {a, b : NatOSlice n -> Type} ->
   {c : NatOSlice (NatOS n) -> Type} ->
@@ -11358,7 +11635,7 @@ NatObjBoundedGenMapFold {a} {b} {c} {n} mab ga =
   NatObjBoundedGenFold {a=b} {b=c} $ NatObjBoundedGenMap {a} {b} mab ga
 
 public export
-NatObjBoundedMapFold :
+0 NatObjBoundedMapFold :
   {n : NatObj} ->
   {a, b : NatOSlice n -> Type} ->
   {c : NatOSlice (NatOS n) -> Type} ->
@@ -11383,7 +11660,7 @@ NatObjPrefixGenMap :
 NatObjPrefixGenMap {n} m g sl = m sl $ g sl
 
 public export
-NatObjPrefixGenFold :
+0 NatObjPrefixGenFold :
   {n : NatObj} ->
   {0 a : NatOPrefix n -> Type} ->
   {0 b : NatOSlice n -> Type} ->
@@ -11398,7 +11675,7 @@ NatObjPrefixGenFold {a} {b} {n} ga z s =
     (\n', morph, b' => s n' morph (ga (n' ** morph)) b')
 
 public export
-NatObjPrefixFold :
+0 NatObjPrefixFold :
   {n : NatObj} ->
   {0 a : NatOPrefix n -> Type} ->
   {0 b : NatOSlice n -> Type} ->
@@ -11411,7 +11688,7 @@ NatObjPrefixFold {a} {b} {n} ga z s =
   NatObjPrefixGenFold {a} {b} {n} ga z s (NatOSliceMax n)
 
 public export
-NatObjPrefixGenMapFold :
+0 NatObjPrefixGenMapFold :
   {n : NatObj} ->
   {0 a, b : NatOPrefix n -> Type} ->
   {0 c : NatOSlice n -> Type} ->
@@ -11425,7 +11702,7 @@ NatObjPrefixGenMapFold {a} {b} {c} {n} m ga =
   NatObjPrefixGenFold {a=b} {b=c} $ NatObjPrefixGenMap {a} {b} m ga
 
 public export
-NatObjPrefixMapFold :
+0 NatObjPrefixMapFold :
   {n : NatObj} ->
   {0 a, b : NatOPrefix n -> Type} ->
   {0 c : NatOSlice n -> Type} ->
@@ -11451,7 +11728,7 @@ NatObjGenInductionStep : (NatObj -> Type) -> Type
 NatObjGenInductionStep p = (n' : NatObj) -> ForallLTE p n' -> p (NatOS n')
 
 public export
-NatObjGenIndStrengthenedStep :
+0 NatObjGenIndStrengthenedStep :
   (p : NatObj -> Type) ->
   NatObjGenInductionStep p ->
   (n : NatObj) ->
@@ -11463,7 +11740,7 @@ NatObjGenIndStrengthenedStep p s n hyp (n' ** m) =
     Right eqn => rewrite eqn in s n hyp
 
 public export
-NatObjGenIndStrengthened :
+0 NatObjGenIndStrengthened :
   (p : NatObj -> Type) ->
   NatObjIndBaseCase p ->
   NatObjGenInductionStep p ->
@@ -11475,7 +11752,7 @@ NatObjGenIndStrengthened p z s =
     (NatObjGenIndStrengthenedStep p s)
 
 public export
-NatObjGenInd :
+0 NatObjGenInd :
   (p : NatObj -> Type) ->
   NatObjIndBaseCase p ->
   NatObjGenInductionStep p ->
@@ -11499,7 +11776,7 @@ NatObjDepGenInductionStep {p} dp sp =
   dp (NatOS n') (sp n' pn)
 
 public export
-NatObjDepGenIndStrengthenedStep :
+0 NatObjDepGenIndStrengthenedStep :
   (p : NatObj -> Type) ->
   (dp : (n : NatObj) -> p n -> Type) ->
   (sp : NatObjGenInductionStep p) ->
@@ -11518,7 +11795,7 @@ NatObjDepGenIndStrengthenedStep p dp sp dsp n hyp dh (n' ** m)
       dsp n hyp dh
 
 public export
-NatObjDepGenIndStrengthened :
+0 NatObjDepGenIndStrengthened :
   {p : NatObj -> Type} ->
   (dp : (n : NatObj) -> p n -> Type) ->
   {zp : NatObjIndBaseCase p} ->
@@ -11536,7 +11813,7 @@ NatObjDepGenIndStrengthened {p} dp {zp} {sp} dzp dsp =
     (NatObjDepGenIndStrengthenedStep p dp sp dsp)
 
 public export
-NatObjDepGenInd :
+0 NatObjDepGenInd :
   {p : NatObj -> Type} ->
   (dp : (n : NatObj) -> p n -> Type) ->
   {zp : NatObjIndBaseCase p} ->
@@ -11563,7 +11840,7 @@ FunctorIterGenIndStep {f} {a} p =
   p (NatOS n') ty
 
 public export
-FunctorIterGenInd : {f : Type -> Type} -> {a : Type} ->
+0 FunctorIterGenInd : {f : Type -> Type} -> {a : Type} ->
   (p : (n' : NatObj) -> FunctorIter f n' a -> Type) ->
   FunctorIterIndBaseCase {f} {a} p ->
   FunctorIterGenIndStep {f} {a} p ->
@@ -11594,7 +11871,7 @@ FunctorIterDepGenInductionStep {f} {a} {p} dp sp =
   ((ty : f (FunctorIter f n' a)) -> dp (NatOS n') ty (sp n' pty ty))
 
 public export
-FunctorIterDepGenInd : {f : Type -> Type} -> {a : Type} ->
+0 FunctorIterDepGenInd : {f : Type -> Type} -> {a : Type} ->
   {p : (n' : NatObj) -> FunctorIter f n' a -> Type} ->
   (dp : (n' : NatObj) -> (it : FunctorIter f n' a) -> p n' it -> Type) ->
   {zp : FunctorIterIndBaseCase {f} {a} p} ->
@@ -11620,7 +11897,7 @@ ChainGenIndStep : {f : Type -> Type} -> {a : Type} ->
 ChainGenIndStep {f} = FunctorIterGenIndStep {f=(OmegaStep f)}
 
 public export
-ChainGenInd : {f : Type -> Type} -> {a : Type} ->
+0 ChainGenInd : {f : Type -> Type} -> {a : Type} ->
   (p : (n' : NatObj) -> OmegaChain f n' a -> Type) ->
   ChainIndBaseCase {f} {a} p ->
   ChainGenIndStep {f} {a} p ->
@@ -11650,7 +11927,7 @@ ChainDepGenInductionStep {f} {a} {p} dp sp =
   ((ty : OmegaStep f (OmegaChain f n' a)) -> dp (NatOS n') ty (sp n' pty ty))
 
 public export
-ChainDepGenInd : {f : Type -> Type} -> {a : Type} ->
+0 ChainDepGenInd : {f : Type -> Type} -> {a : Type} ->
   {p : (n' : NatObj) -> OmegaChain f n' a -> Type} ->
   (dp : (n' : NatObj) -> (it : OmegaChain f n' a) -> p n' it -> Type) ->
   {zp : ChainIndBaseCase {f} {a} p} ->
@@ -11667,7 +11944,7 @@ ColimitGenIndStep : {f : Type -> Type} -> {a : Type} ->
 ColimitGenIndStep = ChainGenIndStep . PredColimitToChain
 
 public export
-ColimitGenInd : {f : Type -> Type} -> {a : Type} ->
+0 ColimitGenInd : {f : Type -> Type} -> {a : Type} ->
   (p : OmegaColimit f a -> Type) ->
   ColimitIndBaseCase {f} {a} p ->
   ColimitGenIndStep {f} {a} p ->
@@ -11683,7 +11960,7 @@ ColimitDepGenInductionStep : {f : Type -> Type} -> {a : Type} ->
 ColimitDepGenInductionStep = ChainDepGenInductionStep . DepPredColimitToChain
 
 public export
-ColimitDepGenInd : {f : Type -> Type} -> {a : Type} ->
+0 ColimitDepGenInd : {f : Type -> Type} -> {a : Type} ->
   {p : OmegaColimit f a -> Type} ->
   (dp : (c : OmegaColimit f a) -> p c -> Type) ->
   {zp : ColimitIndBaseCase {f} {a} p} ->
@@ -11711,12 +11988,12 @@ SliceArray : NatObj -> Type -> Type
 SliceArray n ty = NatOSlice n -> ty
 
 public export
-prefixArrayFromSlice : {a : Type} -> {n : NatObj} ->
+0 prefixArrayFromSlice : {a : Type} -> {n : NatObj} ->
   SliceArray n a -> PrefixArray (NatOS n) a
 prefixArrayFromSlice {n} v (m ** morph) = v (m ** NatLTFromSucc m n morph)
 
 public export
-prefixArrayFromList : {a : Type} ->
+0 prefixArrayFromList : {a : Type} ->
   (l : List a) -> PrefixArray (MetaToNatObj (length l)) a
 prefixArrayFromList [] (m ** morph) = void $ FromLTZeroContra m morph
 prefixArrayFromList (x :: xs) (m ** morph) = case m of
@@ -11724,14 +12001,14 @@ prefixArrayFromList (x :: xs) (m ** morph) = case m of
   InNat (SuccF m') => prefixArrayFromList xs (m' ** NatLTFromSucc _ _ morph)
 
 public export
-sliceArrayFromList : {a : Type} ->
+0 sliceArrayFromList : {a : Type} ->
   (i : a) -> (l : List a) -> SliceArray (MetaToNatObj (length l)) a
 sliceArrayFromList i l (m ** morph) = case m of
   InNat ZeroF => i
   InNat (SuccF m') => prefixArrayFromList l (m' ** morph)
 
 public export
-prefixArrayStringFold : {n : NatObj} -> {0 a : Type} ->
+0 prefixArrayStringFold : {n : NatObj} -> {0 a : Type} ->
   (a -> String) -> PrefixArray n a -> String
 prefixArrayStringFold {n} {a} sa v =
   NatObjPrefixMapFold {a=(const a)} {b=(const String)} {c=(const String)}
@@ -11743,17 +12020,17 @@ prefixArrayStringFold {n} {a} sa v =
       sc' ++ "val[" ++ show n' ++ "]=" ++ ss)
 
 public export
-showPrefixArrayArray : {m, n : NatObj} -> {0 a : Type} ->
+0 showPrefixArrayArray : {m, n : NatObj} -> {0 a : Type} ->
   (a -> String) -> PrefixArray m (PrefixArray n a) -> String
 showPrefixArrayArray = prefixArrayStringFold . prefixArrayStringFold
 
 public export
-PrefixArrayTruncate : {m : NatObj} -> {0 a : Type} ->
+0 PrefixArrayTruncate : {m : NatObj} -> {0 a : Type} ->
   PrefixArray (NatOS m) a -> PrefixArray m a
 PrefixArrayTruncate arr (m ** morph) = arr (m ** NatLTInc morph)
 
 public export
-PrefixArrayTruncateEq : {m : NatObj} -> {0 a : Type} ->
+0 PrefixArrayTruncateEq : {m : NatObj} -> {0 a : Type} ->
   (arr : PrefixArray (NatOS m) a) ->
   (n : NatObj) ->
   (morph : NatLTStrict n m) ->
@@ -11771,17 +12048,17 @@ MetaPrefixMap : Nat -> Nat -> Type
 MetaPrefixMap m n = PrefixMap (MetaToNatObj m) (MetaToNatObj n)
 
 public export
-showPrefixMap : {m, n : NatObj} ->
+0 showPrefixMap : {m, n : NatObj} ->
   (NatOPrefix m -> NatOPrefix n) -> String
 showPrefixMap = prefixArrayStringFold (show . fst)
 
 public export
-PrefixMapTruncate : {m, n : NatObj} ->
+0 PrefixMapTruncate : {m, n : NatObj} ->
   PrefixMap (NatOS m) n -> PrefixMap m n
 PrefixMapTruncate arr (m ** morph) = arr (m ** NatLTInc morph)
 
 public export
-PrefixMapTruncateEq : {m, n : NatObj} ->
+0 PrefixMapTruncateEq : {m, n : NatObj} ->
   (pm : PrefixMap (NatOS m) n) ->
   (k : NatObj) ->
   (morph : NatLTStrict k m) ->
@@ -11791,11 +12068,12 @@ PrefixMapTruncateEq pm k morph morph' =
   rewrite NatCatThin _ morph' _ in Refl
 
 public export
-sliceArrayStringFold : {n : NatObj} -> {a : Type} ->
+0 sliceArrayStringFold : {n : NatObj} -> {a : Type} ->
   (a -> String) -> SliceArray n a -> String
 sliceArrayStringFold {n} {a} sa v =
   prefixArrayStringFold sa $ prefixArrayFromSlice {n} v
 
+{-
 public export
 (n : NatObj) => (a : Type) => Show a => Show (PrefixArray n a) where
   show {n} {a} = prefixArrayStringFold show
@@ -11803,6 +12081,7 @@ public export
 public export
 (n : NatObj) => (a : Type) => Show a => Show (SliceArray n a) where
   show {n} {a} = sliceArrayStringFold show
+  -}
 
 public export
 PrefixArrayConst : {n : NatObj} -> {a : Type} -> (x : a) -> PrefixArray n a
@@ -11821,7 +12100,7 @@ natObjSum =
     (const $ (.) NatOS)
 
 public export
-natObjMinus : {m, n : NatObj} -> NatLTMorph (n, m) -> NatObj
+0 natObjMinus : {m, n : NatObj} -> NatLTMorph (n, m) -> NatObj
 natObjMinus {m} {n} =
   NatMorphInd
     (\_, _ => NatObj)
@@ -11830,9 +12109,11 @@ natObjMinus {m} {n} =
     (n, m)
 
 public export
-natObjMinusLt : {m, n, k : NatObj} ->
+0 natObjMinusLt : {m, n, k : NatObj} ->
   (lte : NatLTMorph (m, k)) ->
   NatLTStrict k (natObjSum m n) -> NatLTStrict (natObjMinus lte) n
+natObjMinusLt = ?natObjMinusLt_hole
+{-
 natObjMinusLt {m} {n} {k} =
   NatMorphInd
     (\mk, morph => case mk of
@@ -11842,6 +12123,7 @@ natObjMinusLt {m} {n} {k} =
     (\n', morph' => morph')
     (\m', n', morph', hyp, lte' => hyp $ NatLTFromSucc _ _ lte')
     (m, k)
+    -}
 
 public export
 natObjMul : NatObj -> NatObj -> NatObj
@@ -11868,7 +12150,7 @@ NatPrefixReplicate : {a : Type} -> (n : NatObj) -> (x : a) -> PrefixArray n a
 NatPrefixReplicate n x sl = x
 
 public export
-NatPrefixAppend : {a : Type} -> {m, n : NatObj} ->
+0 NatPrefixAppend : {a : Type} -> {m, n : NatObj} ->
   PrefixArray m a -> PrefixArray n a -> PrefixArray (natObjSum m n) a
 NatPrefixAppend {a} {m} {n} f g (k ** morph) with (NatStrictLTDec k m)
   NatPrefixAppend {a} {m} {n} f g (k ** morph) | Left lt =
@@ -11877,28 +12159,28 @@ NatPrefixAppend {a} {m} {n} f g (k ** morph) with (NatStrictLTDec k m)
     g (natObjMinus gte ** natObjMinusLt gte morph)
 
 public export
-natSliceRunningSum : {n : NatObj} ->
+0 natSliceRunningSum : {n : NatObj} ->
   SliceArray n NatObj -> SliceArray (NatOS n) NatObj
 natSliceRunningSum {n} v =
   NatObjBoundedGenFold {n} {a=(const NatObj)} {b=(const NatObj)}
     v NatOZ (\_, _ => natObjSum)
 
 public export
-natSliceSum : {n : NatObj} -> SliceArray n NatObj -> NatObj
+0 natSliceSum : {n : NatObj} -> SliceArray n NatObj -> NatObj
 natSliceSum {n} v = natSliceRunningSum v (NatOSliceMax (NatOS n))
 
 public export
-NatSliceTruncate : {a : Type} -> {n : NatObj} ->
+0 NatSliceTruncate : {a : Type} -> {n : NatObj} ->
   SliceArray (NatOS n) a -> SliceArray n a
 NatSliceTruncate arr (m ** morph) = arr (m ** NatLTInc morph)
 
 public export
-NatPrefixTruncate : {a : Type} -> {n : NatObj} ->
+0 NatPrefixTruncate : {a : Type} -> {n : NatObj} ->
   PrefixArray (NatOS n) a -> PrefixArray n a
 NatPrefixTruncate arr (m ** morph) = arr (m ** NatLTInc morph)
 
 public export
-NatPrefixFoldAppendStepSumMorph : {a : Type} -> {n : NatObj} ->
+0 NatPrefixFoldAppendStepSumMorph : {a : Type} -> {n : NatObj} ->
   (lengths : SliceArray n NatObj) ->
   (m : NatObj) ->
   (morph : NatLTMorph (m, n)) ->
@@ -11908,13 +12190,16 @@ NatPrefixFoldAppendStepSumMorph : {a : Type} -> {n : NatObj} ->
     (lengths (m ** morph))
     (natSliceRunningSum lengths (m ** morph')) =
   natSliceRunningSum lengths (NatOS m ** morph'')
+NatPrefixFoldAppendStepSumMorph = ?NatPrefixFoldAppendStepSumMorph_hole
+{-
 NatPrefixFoldAppendStepSumMorph {a} {n} lengths m morph morph' morph'' =
   rewrite NatCatThin _ (NatLTFromSucc m n morph'') morph in
   rewrite NatCatThin _ morph' _ in
   Refl
+  -}
 
 public export
-NatPrefixFoldAppendStepSum : {a : Type} -> {n : NatObj} ->
+0 NatPrefixFoldAppendStepSum : {a : Type} -> {n : NatObj} ->
   (lengths : SliceArray n NatObj) ->
   (m : NatObj) ->
   (morph : NatLTMorph (m, n)) ->
@@ -11927,7 +12212,7 @@ NatPrefixFoldAppendStepSum {a} {n} lengths m morph =
     (NatLTInc morph) (NatLTMorphToSucc morph)
 
 public export
-NatPrefixFoldAppendStep : {a : Type} -> {n : NatObj} ->
+0 NatPrefixFoldAppendStep : {a : Type} -> {n : NatObj} ->
   (lengths : SliceArray n NatObj) ->
   (m : NatObj) -> (morph : NatLTMorph (m, n)) ->
   PrefixArray (lengths (m ** morph)) a ->
@@ -11938,7 +12223,7 @@ NatPrefixFoldAppendStep {a} {n} lengths m morph sc ss =
   NatPrefixAppend sc ss
 
 public export
-NatPrefixFoldAppend : {a : Type} -> {n : NatObj} ->
+0 NatPrefixFoldAppend : {a : Type} -> {n : NatObj} ->
   (lengths : SliceArray n NatObj) ->
   (prefixes : (sl : NatOSlice n) -> PrefixArray (lengths sl) a) ->
   PrefixArray (natSliceSum lengths) a
@@ -11951,7 +12236,7 @@ NatPrefixFoldAppend {a} {n} lengths prefixes =
     (NatPrefixFoldAppendStep {a} {n} lengths)
 
 public export
-prefixMapFromListRev : (n : Nat) -> (l : List Nat) ->
+0 prefixMapFromListRev : (n : Nat) -> (l : List Nat) ->
   Maybe (NatOPrefix (MetaToNatObj (length l)) -> NatOPrefix (MetaToNatObj n))
 prefixMapFromListRev n [] =
   Just $ \sl => void $ FromLTZeroContra (fst sl) (snd sl)
@@ -11967,13 +12252,13 @@ prefixMapFromListRev n (x :: xs) = case prefixMapFromListRev n xs of
   Nothing => Nothing
 
 public export
-prefixMapFromList : (n : Nat) -> (l : List Nat) ->
+0 prefixMapFromList : (n : Nat) -> (l : List Nat) ->
   Maybe (NatOPrefix (MetaToNatObj (length l)) -> NatOPrefix (MetaToNatObj n))
 prefixMapFromList n l =
   rewrite sym (reverseLength l) in prefixMapFromListRev n (reverse l)
 
 public export
-InitPrefixMap : (n : Nat) ->
+0 InitPrefixMap : (n : Nat) ->
   (l : List Nat) -> {auto ok : IsJustTrue (prefixMapFromList n l)} ->
   MetaPrefixMap (length l) n
 InitPrefixMap _ _ {ok} = fromIsJust ok
@@ -11989,7 +12274,7 @@ DepPrefixContraMap {domPos} {codPos} domDir codDir posMap =
   (pos : NatOPrefix domPos) -> PrefixMap (codDir (posMap pos)) (domDir pos)
 
 public export
-showDepPrefixContraMap :
+0 showDepPrefixContraMap :
   {domPos, codPos : NatObj} ->
   (domDir : PrefixArray domPos NatObj) ->
   (codDir : PrefixArray codPos NatObj) ->
@@ -12010,7 +12295,7 @@ showDepPrefixContraMap {domPos} {codPos} domDir codDir posMap dpm =
       prefixArrayStringFold (show . fst) dirmap)
 
 public export
-depPrefixContraMapFromListsRev :
+0 depPrefixContraMapFromListsRev :
   {domPos, codPos : NatObj} ->
   (domDir : PrefixArray domPos NatObj) ->
   (codDir : PrefixArray codPos NatObj) ->
@@ -12064,7 +12349,7 @@ depPrefixContraMapFromListsRev {domPos} {codPos} domDir codDir posMap (l :: ls) 
         Nothing => Nothing
 
 public export
-depPrefixContraMapFromLists :
+0 depPrefixContraMapFromLists :
   {domPos, codPos : NatObj} ->
   (domDir : PrefixArray domPos NatObj) ->
   (codDir : PrefixArray codPos NatObj) ->
@@ -14118,3 +14403,102 @@ FreeMEquiv = FreeMRelation EquivGenF
 
 CofreeCMEquiv : {t : Type} -> RelFunctor t
 CofreeCMEquiv = CofreeCMRelation EquivGenF
+
+------------------------------
+------------------------------
+---- M-types from W-types ----
+------------------------------
+------------------------------
+
+-- A derivation of M-types from W-types from "Data types as quotients of
+-- polynomial functors" by Avigad, Carneiro, and Hudon.
+public export
+data M_approx : (Type -> Type) -> Nat -> Type where
+  Map_cont : {f : Type -> Type} -> M_approx f Z
+  Map_intro : {f : Type -> Type} -> {n : Nat} -> {a : Type} ->
+    (f a -> M_approx f n) -> M_approx f (S n)
+
+public export
+data M_agree : (f : Type -> Type) -> {n : Nat} ->
+    M_approx f n -> M_approx f (S n) -> Type where
+  Mag_cont : {f : Type -> Type} ->
+    (x : M_approx f Z) -> (y : M_approx f (S Z)) -> M_agree f x y
+  Mag_intro : {f : Type -> Type} -> {n : Nat} -> {a : Type} ->
+    (x : f a -> M_approx f n) ->
+    (y : f a -> M_approx f (S n)) ->
+    ((i : f a) -> M_agree f {n} (x i) (y i)) ->
+    M_agree f {n=(S n)}
+      (Map_intro {f} {n} {a} x)
+      (Map_intro {f} {n=(S n)} {a} y)
+
+public export
+M_type : (Type -> Type) -> Type
+M_type f =
+  (mapp : (n : Nat) -> M_approx f n **
+   (n : Nat) -> M_agree f {n} (mapp n) (mapp $ S n))
+
+-------------------------------------------
+-------------------------------------------
+---- Hom-object out of natural numbers ----
+-------------------------------------------
+-------------------------------------------
+
+public export
+HomNatF : Type -> Type -> Type
+HomNatF x = ProductF (const x) (Prelude.id {a=Type})
+
+-- As a terminal coalgebra (a stream of `a`s).
+public export
+data HomNatM : Type -> Type where
+  HN : {x : Type} -> Inf (HomNatF x $ HomNatM x) -> HomNatM x
+
+public export
+natEvalM : {b : Type} -> HomNatM b -> Nat -> b
+natEvalM {b} (HN (hz, hs)) Z = hz
+natEvalM {b} (HN (hz, hs)) (S n) = natEvalM {b} hs n
+
+public export
+natCurryM : {a, c : Type} -> (a -> Nat -> c) -> a -> HomNatM c
+natCurryM {a} {c} f ea = HN (f ea Z, natCurryM {a} {c} (\ea' => f ea' . S) ea)
+
+public export
+HN_M_to_stream : (x : Type) -> HomNatM x -> Nat -> x
+HN_M_to_stream x = natEvalM {b=x}
+
+public export
+HN_stream_to_M : (x : Type) -> (Nat -> x) -> HomNatM x
+HN_stream_to_M x f = natCurryM {a=Unit} {c=x} (\() => f) ()
+
+------------------------------------------
+------------------------------------------
+---- Negative-datatype contradictions ----
+------------------------------------------
+------------------------------------------
+
+partial
+data BadNonRec : Type -> Type where
+  BNR : (a : Type) -> (BadNonRec a -> a) -> BadNonRec a
+
+partial
+0 bnrSelfApp : (a : Type) -> BadNonRec a -> a
+bnrSelfApp a (BNR a f) = f (BNR a f)
+
+partial
+0 bnrAllInhabited : (a : Type) -> a
+bnrAllInhabited a = bnrSelfApp a (BNR a $ bnrSelfApp a)
+
+partial
+0 bnrContradiction : Void
+bnrContradiction = bnrAllInhabited Void
+
+partial
+data BadRec : Type where
+  BR : (BadRec -> BadRec) -> BadRec
+
+partial
+0 brSelfApp : BadRec -> BadRec
+brSelfApp (BR f) = f (BR f)
+
+partial
+0 brNonTerminating : BadRec
+brNonTerminating = brSelfApp (BR brSelfApp)

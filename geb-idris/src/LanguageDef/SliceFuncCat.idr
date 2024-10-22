@@ -2,6 +2,7 @@ module LanguageDef.SliceFuncCat
 
 import Library.IdrisUtils
 import Library.IdrisCategories
+import LanguageDef.QType
 import public LanguageDef.InternalCat
 
 %default total
@@ -164,6 +165,23 @@ sfsLAdj : {c, d : Type} -> (f : c -> d) ->
   SliceMorphism {a=d} (SliceFibSigmaF {c} f sa) sb ->
   SliceMorphism {a=c} sa (BaseChangeF f sb)
 sfsLAdj {c} {d} f {sa} {sb} m ec esa = m (f ec) $ SFS ec esa
+
+public export
+CSSigmaToSl : {c, d : Type} -> (f : c -> d) -> {e : Type} -> (m : e -> c) ->
+  SliceMorphism {a=d}
+    (SliceFromCSlice $ CSSigma {c} {d} f (e ** m))
+    (SliceFibSigmaF {c} {d} f (SliceFromCSlice {c} (e ** m)))
+CSSigmaToSl {c} {d} f {e} m ed (Element0 ele comm) =
+  rewrite sym comm in
+  SFS {f} {sc=(SliceFromCSlice (e ** m))} (m ele) (Element0 ele Refl)
+
+public export
+CSSigmaFromSl : {c, d : Type} -> (f : c -> d) -> {e : Type} -> (m : e -> c) ->
+  SliceMorphism {a=d}
+    (SliceFibSigmaF {c} {d} f (SliceFromCSlice {c} (e ** m)))
+    (SliceFromCSlice $ CSSigma {c} {d} f (e ** m))
+CSSigmaFromSl {c} {d} f {e} m (f ec) (SFS ec (Element0 ele comm)) =
+  Element0 ele (cong f comm)
 
 --------------------------
 ----- Sigma as W-type ----
@@ -668,6 +686,9 @@ sPdup {c} {sl} =
 public export
 SliceSBCPlL : {c : Type} -> {sl : SliceObj c} ->
   SliceEndofunctor (Sigma {a=c} sl)
+-- One explicit way of writing this would be:
+--  SliceSBCPlL {c} {sl} sls ecsl =
+--    (esl' : sl (fst ecsl) ** sls ((fst ecsl) ** esl'))
 SliceSBCPlL {c} {sl} = SSMonad {c} sl
 
 public export
@@ -680,6 +701,9 @@ sliceSBCPlLmap {c} {sl} = ssMonadMap sl
 public export
 SliceSBCPlR : {c : Type} -> {sl : SliceObj c} ->
   SliceEndofunctor (Sigma {a=c} sl)
+-- One explicit way of writing this would be:
+--  SliceSBCPlR {c} {sl} sls ecsl =
+--    (esl' : sl (fst ecsl)) -> sls ((fst ecsl) ** esl')
 SliceSBCPlR {c} {sl} = SPComonad {c} sl
 
 public export
@@ -692,6 +716,9 @@ sliceSBCPlRmap {c} {sl} = spComonadMap sl
 public export
 SliceSBCPrL : {c : Type} -> {sl : SliceObj c} ->
   SliceEndofunctor c
+-- One explicit way of writing this would be:
+--  SliceSBCPrL {c} {sl} sl' ec = (esl_ : sl ec ** sl' ec)
+-- Note that this is simply the pullback.
 SliceSBCPrL {c} {sl} = SSComonad {c} sl
 
 public export
@@ -704,6 +731,9 @@ sliceSBCPrLmap {c} {sl} = ssComonadMap sl
 public export
 SliceSBCPrR : {c : Type} -> {sl : SliceObj c} ->
   SliceEndofunctor c
+-- One explicit way of writing this would be:
+--  SliceSBCPrR {c} {sl} sl' ec = sl ec -> sl' ec
+-- Note that this is simply the hom-object.
 SliceSBCPrR {c} {sl} = SPMonad {c} sl
 
 public export
@@ -1058,17 +1088,17 @@ ssplSingletonsFromRepresented {c} {e} d ec ed = (ed ** ())
 -- This is the right adjoint of the composed
 -- dependent-sum/dependent-product adjunction, in category-theoretic style.
 public export
-SliceFibSigmaPiFR : {c, d, e : Type} -> (d -> e) -> (d -> c) ->
+SliceFibSigmaPiFR : {c, d, e : Type} -> (d -> c) -> (d -> e) ->
   SliceFunctor c e
 SliceFibSigmaPiFR {c} {d} {e} g f =
-  SliceFibPiF {c=d} {d=e} g . BaseChangeF {c} {d} f
+  SliceFibPiF {c=d} {d=e} f . BaseChangeF {c} {d} g
 
 public export
-sfsprMap : {c, d, e : Type} -> (g : d -> e) -> (f : d -> c) ->
+sfsprMap : {c, d, e : Type} -> (g : d -> c) -> (f : d -> e) ->
   SliceFMap (SliceFibSigmaPiFR {c} {d} {e} g f)
 sfsprMap {c} {d} {e} g f x y =
-  sfpMap {c=d} {d=e} {f=g} (BaseChangeF f x) (BaseChangeF f y)
-  . bcMap {c} {d} {f} x y
+  sfpMap {c=d} {d=e} {f} (BaseChangeF g x) (BaseChangeF g y)
+  . bcMap {c} {d} {f=g} x y
 
 -- This is the right adjoint of the composed
 -- dependent-sum/dependent-product adjunction, in dependent-type style.
@@ -1202,6 +1232,39 @@ SliceSigmaPiFDup {c} {e} {d} =
     {h=(SSPMonad {c} {e} d)}
     (sspUnit {c} {e} d)
     (SliceSigmaPiFR {c} {e} d)
+
+----------------------------------------------------------
+----------------------------------------------------------
+---- Extensional equality and coequalizers as W-types ----
+----------------------------------------------------------
+----------------------------------------------------------
+
+public export
+WExtEq : {a, b : Type} -> (f, g : a -> b) -> Type
+WExtEq {a} {b} f g =
+  SliceFibPiF {c=a} {d=Unit} (\_ => ()) (WEqualizes {a} {b} f g) ()
+
+public export
+impredCoeqFFW : {a, b : Type} ->
+  (f, g : a -> b) -> {c : Type} -> (b -> c) -> Type
+impredCoeqFFW {a} {b} f g {c} h = WExtEq {a} {b=c} (h . f) (h . g)
+
+public export
+impredCoeqFFtoW : {a, b : Type} ->
+  (f, g : a -> b) -> {c : Type} -> (h : b -> c) ->
+  impredCoeqFF {a} {b} f g {c} h -> impredCoeqFFW {a} {b} f g {c} h
+impredCoeqFFtoW {a} {b} f g {c} h hfgeq ea =
+  rewrite sym $ hfgeq $ sfsFst ea in
+  SFS {c} {sc=(SliceObjTerminal c)} {d=(ProductMonad c)} {f=(ProductNTUnit)}
+    (h $ f $ sfsFst ea)
+    ()
+
+public export
+impredCoeqFFfromW : {a, b : Type} ->
+  (f, g : a -> b) -> {c : Type} -> (h : b -> c) ->
+  impredCoeqFFW {a} {b} f g {c} h -> impredCoeqFF {a} {b} f g {c} h
+impredCoeqFFfromW {a} {b} f g {c} h el ea =
+  let hfgeq = sfsEq $ el (SFS ea ()) in trans (sym $ fstEq hfgeq) (sndEq hfgeq)
 
 ----------------------------------
 ----------------------------------
@@ -1723,13 +1786,35 @@ SliceRKanExtAdjoints a b c g gm =
     (SliceRKanExtSig a b c g)
 
 public export
+SliceRKanUnit : (a, b, c : Type) ->
+  (g : SliceFunctor a c) -> (gm : SliceFMap g) ->
+  IntAdjUnitSig
+    {c=(icObj $ SliceFuncCat c b)}
+    {d=(icObj $ SliceFuncCat a b)}
+    (icMor $ SliceFuncCat c b)
+    (SlicePrecompFSigOmap a b c g gm)
+    (SliceRKanExtSigOmap a b c g)
+SliceRKanUnit a b c g gm f sc eb efb sa rk = ifMmap f sc (g sa) rk eb efb
+
+public export
+SliceRKanCounit : (a, b, c : Type) ->
+  (g : SliceFunctor a c) -> (gm : SliceFMap g) ->
+  IntAdjCounitSig
+    {c=(icObj $ SliceFuncCat c b)}
+    {d=(icObj $ SliceFuncCat a b)}
+    (icMor $ SliceFuncCat a b)
+    (SlicePrecompFSigOmap a b c g gm)
+    (SliceRKanExtSigOmap a b c g)
+SliceRKanCounit a b c g gm f sa eb rk = rk sa $ SliceId c $ g sa
+
+public export
 SliceRKanExtAdjUnits : (a, b, c : Type) ->
   (g : SliceFunctor a c) -> (gm : SliceFMap g) ->
   IntUnitsSig (SliceRKanExtAdjoints a b c g gm)
 SliceRKanExtAdjUnits a b c g gm =
   IUnits
-    (\f, sc, eb, efb, sa, rk => ifMmap f sc (g sa) rk eb efb)
-    (\f, sa, eb, rk => rk sa $ SliceId c $ g sa)
+    (SliceRKanUnit a b c g gm)
+    (SliceRKanCounit a b c g gm)
 
 public export
 SliceRKanExtAdjUnitInputs : (a, b, c : Type) ->
@@ -1773,10 +1858,95 @@ public export
 SliceKanExtTripleAdjunctionSig : (a, b, c : Type) ->
   (g : SliceFunctor a c) -> (gm : SliceFMap g) ->
   ITASig (SliceFuncCat a b) (SliceFuncCat c b)
-SliceKanExtTripleAdjunctionSig a b c g gm=
+SliceKanExtTripleAdjunctionSig a b c g gm =
   ITAFromUnits
     (SliceKanExtTripleAdjoints a b c g gm)
     (SliceKanExtTripleUnitsSig a b c g gm)
+
+-- Hinze's "Kan Extensions for Program Optimization" calls the counit of
+-- the adjunction between precomposition and right Kan extension "run".
+-- It is the elimination rule for right Kan extensions.  Note that the
+-- paper calls it the unit of the (right) extension, although it is the
+-- _co_unit of the precomposition/right-extension adjunction.
+public export
+sliceRKanRun : {a, b, c : Type} ->
+  (j : SliceFunctor a c) -> (jm : SliceFMap j) ->
+  (g : SliceFunctor a b) -> (gm : SliceFMap g) ->
+  SliceNatTrans {x=a} {y=b} (SliceRKanExt j g . j) g
+sliceRKanRun {a} {b} {c} j jm g gm = SliceRKanCounit a b c j jm (IFunctor g gm)
+
+-- Hinze's "Kan Extensions for Program Optimization" calls the left adjunct of
+-- the adjunction between precomposition and right Kan extension "shift".
+-- It is the introduction rule for right Kan extensions.
+public export
+sliceRKanExtShift : {a, b, c : Type} ->
+  (j : SliceFunctor a c) -> (jm : SliceFMap j) ->
+  (g : SliceFunctor a b) -> (gm : SliceFMap g) ->
+  (f : SliceFunctor c b) -> (fm : SliceFMap f) ->
+  SliceNatTrans {x=a} {y=b} (f . j) g ->
+  SliceNatTrans {x=c} {y=b} f (SliceRKanExt {a} {b} {c} j g)
+sliceRKanExtShift {a} {b} {c} j jm g gm f fm =
+  iaLAdj (iadAdjuncts $ itaRData $ itaData $
+    SliceKanExtTripleAdjunctionSig a b c j jm) (IFunctor f fm) (IFunctor g gm)
+
+-- The endofunctor part of the monad of the precomposition/right-Kan-extension
+-- adjunction.  We write convenience aliases here for individual components
+-- of it, some of which can omit some of the parameters to the adjunction
+-- as a whole.
+
+public export
+sliceRKanExtMOmap : {a, b, c : Type} -> (j : SliceFunctor a c) ->
+  SliceFunctor c b -> SliceFunctor c b
+sliceRKanExtMOmap {a} {b} {c} j g = SliceRKanExt j (g . j)
+
+public export
+sliceRKanExtMFmap : {a, b, c : Type} ->
+  (j : SliceFunctor a c) -> (g, g' : SliceFunctor c b) ->
+  SliceNatTrans {x=c} {y=b} g g' ->
+  SliceNatTrans {x=c} {y=b} (sliceRKanExtMOmap j g) (sliceRKanExtMOmap j g')
+sliceRKanExtMFmap {a} {b} {c} j g g' alpha sc eb rk sa uj =
+  alpha (j sa) eb $ rk sa uj
+
+-- The unit of the monad of the precomposition/right-Kan-extension adjunction.
+public export
+sliceRKanExtMunit : {a, b, c : Type} -> (j : SliceFunctor a c) ->
+  (g : SliceFunctor c b) -> (gm : SliceFMap g) ->
+  SliceNatTrans {x=c} {y=b} g (sliceRKanExtMOmap j g)
+sliceRKanExtMunit {a} {b} {c} j g gm sc eb egscb sa rk =
+  gm sc (j sa) rk eb egscb
+
+-- The multiplication of the monad of the precomposition/right-Kan-extension
+-- adjunction.
+public export
+sliceRKanExtMmult : {a, b, c : Type} -> (j : SliceFunctor a c) ->
+  (g : SliceFunctor c b) ->
+  SliceNatTrans {x=c} {y=b}
+    (sliceRKanExtMOmap j $ sliceRKanExtMOmap j g)
+    (sliceRKanExtMOmap j g)
+sliceRKanExtMmult {a} {b} {c} j g sc eb rk sa uj =
+  rk sa uj sa (sliceId $ j sa)
+
+-- The comultiplication of the monad of the precomposition/right-Kan-extension
+-- adjunction.
+public export
+sliceRKanExtMcomult : {a, b, c : Type} -> (j : SliceFunctor a c) ->
+  (g : SliceFunctor c b) -> (gm : SliceFMap g) ->
+  SliceNatTrans {x=c} {y=b}
+    (sliceRKanExtMOmap j g)
+    (sliceRKanExtMOmap j $ sliceRKanExtMOmap j g)
+sliceRKanExtMcomult {a} {b} {c} j g gm =
+  sliceRKanExtMFmap j g (sliceRKanExtMOmap j g) (sliceRKanExtMunit j g gm)
+
+-- The bind of the monad of the precomposition/right-Kan-extension
+-- adjunction.
+public export
+sliceRKanExtMbind : {a, b, c : Type} -> (j : SliceFunctor a c) ->
+  (g, g' : SliceFunctor c b) ->
+  SliceNatTrans {x=c} {y=b} g (sliceRKanExtMOmap j g') ->
+  SliceNatTrans {x=c} {y=b} (sliceRKanExtMOmap j g) (sliceRKanExtMOmap j g')
+sliceRKanExtMbind {a} {b} {c} j g g' =
+  SliceNTvcomp (sliceRKanExtMmult j g')
+  . sliceRKanExtMFmap j g (sliceRKanExtMOmap j g')
 
 ----------------------------
 ----------------------------
@@ -1912,6 +2082,368 @@ SliceRKanLiftSig a b c g =
   IFunctor
     (SliceRKanLiftSigOmap a b c g)
     (\f, h => sliceRKanLiftFmap g {f=(ifOmap f)} {h=(ifOmap h)})
+
+--------------------------
+--------------------------
+---- Codensity monads ----
+--------------------------
+--------------------------
+
+---------------------------------------------
+---- General codensity monad transformer ----
+---------------------------------------------
+
+-- This generalizes the Haskell-style codensity monad transformer,
+-- which transforms a monad by turning it into its own endofunctor's
+-- codensity monad and integrating the monadic structure of the original
+-- monad into that of the codensity monad.
+--
+-- This more general form transforms a monad by transforming it by integrating
+-- both its underlying endofunctor and its monadic structure into the
+-- underlying endofunctor and codensity monad of some arbitrary functor
+-- (i.e. that functor need not be the underlying endofunctor of the given
+-- monad; it may not even be an endofunctor).
+
+-- The functor operation corresponding to the codensity monad transformer
+-- (see https://stringdiagram.com/2023/05/14/the-codensity-monad-transformer/)
+-- that is, the object-map component of the codensity monad transformer as
+-- a functor between categories of monads.  Note that if we make `t`
+-- the identity monad, then this is simply the codensity monad of `f`.
+public export
+SliceCodensityMonadTransObj : {a, b : Type} ->
+  SliceFunctor a b -> SliceFunctor a a -> SliceFunctor b b
+SliceCodensityMonadTransObj {a} {b} f t = SliceRKanExt {a} {b} {c=b} f (f . t)
+
+public export
+SliceCodensityMonadTransMap : {a, b : Type} ->
+  (f : SliceFunctor a b) -> (t : SliceFunctor a a) ->
+  SliceFMap {c=b} {d=b} (SliceCodensityMonadTransObj {a} {b} f t)
+SliceCodensityMonadTransMap {a} {b} f t = SliceRKanExtMor f (f . t)
+
+-- The `run` of the codensity monad transformer is the same as the
+-- `run` of any right Kan extension, i.e., the counit of the
+-- precomposition/right-Kan-extension adjunction.  We provide this
+-- type signature simply because it turns out we can omit some parameters
+-- that we might in general need for a counit (such as the morphism-map
+-- components of the functors).  Note in particular that this `run` does
+-- not depend on `t`'s having a monadic structure; that we'll need when we
+-- define the unit and multiplication below.
+--
+-- This `run` is the elimination rule for the codensity monad transformer.
+public export
+runCMT : {a, b : Type} ->
+  (f : SliceFunctor a b) -> (t : SliceFunctor a a) ->
+  SliceNatTrans {x=a} {y=b} (SliceCodensityMonadTransObj f t . f) (f . t)
+runCMT {a} {b} f t sa eb u = u sa (sliceId $ f sa)
+
+-- This is the left adjunct of the precomposition/right-Kan-extension
+-- adjunction, which serves as the introduction rule for a right Kan
+-- extension, applied to the specific case of the codensity monad transformer.
+-- We provide this convenience version because we can omit parameters which we
+-- don't need to use in this particular function, even though we might a
+-- priori in a left adjunct.
+public export
+shiftCMT : {a, b : Type} ->
+  (f : SliceFunctor a b) ->
+  (t : SliceFunctor a a) ->
+  (g : SliceFunctor b b) -> (gm : SliceFMap g) ->
+  SliceNatTrans {x=a} {y=b} (g . f) (f . t) ->
+  SliceNatTrans {x=b} {y=b} g (SliceCodensityMonadTransObj {a} {b} f t)
+shiftCMT {a} {b} f t g gm alpha sb eb egsb sa uft =
+  -- This is equivalent to...
+  --  sliceRKanExtShift f fm (f . t) (sliceFMapComp fm tm) g gm alpha
+  --    sb eb egsb sa uft
+  -- ...if we assume we have to provide all the morphism-map parameters,
+  -- but as it turns out we don't use some of them in this particular function.
+  alpha sa eb $ gm sb (f sa) uft eb egsb
+
+-- The unit of a monad produced by the codensity monad transformer.
+public export
+SliceCodensityMonadTransUnit : {a, b : Type} ->
+  {f : SliceFunctor a b} -> (fm : SliceFMap f) ->
+  (t : SliceFunctor a a) ->
+  SlicePure {c=a} t ->
+  SlicePure {c=b} (SliceCodensityMonadTransObj f t)
+SliceCodensityMonadTransUnit {a} {b} {f} fm t ut =
+  shiftCMT {a} {b} f t id (\_, _ => id) $ SliceWhiskerRight fm ut
+
+-- The multiplication of a monad produced by the codensity monad transformer.
+public export
+SliceCodensityMonadTransMult : {a, b : Type} ->
+  {f : SliceFunctor a b} -> (fm : SliceFMap f) ->
+  (t : SliceFunctor a a) ->
+  SliceJoin {c=a} t ->
+  SliceJoin {c=b} (SliceCodensityMonadTransObj f t)
+SliceCodensityMonadTransMult {a} {b} {f} fm t mt sb eb mft sa ufb =
+  fm (t $ t sa) (t sa) (mt sa) eb $ mft (t sa) (\eb', run => run sa ufb)
+
+-- The bind of a monad produced by the codensity monad transformer.
+public export
+SliceCodensityMonadTransBind : {a, b : Type} ->
+  {f : SliceFunctor a b} -> (fm : SliceFMap f) ->
+  (t : SliceFunctor a a) ->
+  SliceJoin {c=a} t ->
+  SliceBind {c=b} (SliceCodensityMonadTransObj f t)
+SliceCodensityMonadTransBind {a} {b} {f} fm t mt =
+  sliceBindFromMapAndJoin {c=b}
+    (SliceCodensityMonadTransObj f t)
+    (SliceCodensityMonadTransMap f t)
+    (SliceCodensityMonadTransMult {a} {b} {f} fm t mt)
+
+-- We can lift any `f` into its codensity transformation of any monad
+-- composed after itself.  This is just mapping the unit; if we think
+-- of `f` as a container (data structure) and `t` as an effect, then
+-- we could see this as lifting a data structure to a data structure
+-- the access of which has an effect.
+public export
+sliceLiftCodensityTransF : {a, b : Type} ->
+  {f : SliceFunctor a b} -> (fm : SliceFMap f) ->
+  {t : SliceFunctor a a} ->
+  (pt : SlicePure {c=a} t) ->
+  SliceNatTrans {x=a} {y=b} f (SliceCodensityMonadTransObj f t . f)
+sliceLiftCodensityTransF {a} {f} fm {t} pt sa =
+  SliceCodensityMonadTransUnit {a} {f} fm t pt (f sa)
+
+-- If `f` is a monad, then we can lift it simply into its codensity
+-- transformation of any monad.  This is a generalization of Haskell's
+-- `liftCodensity` to the case where `t` can be different from `id`.
+-- This is a significant generalization:  if we consider the case where
+-- `f` is a monadic container (data structure), such as a codensity
+-- monad or free monad, and `t` is an effect, then this allows us to
+-- lift `f` to a monad which, like the codensity monad, encapsulates
+-- `f`'s own monadic structure along with continuations, but also any
+-- other effects as encapsulated by `t`.
+--
+-- When we use the special case where `t` is `id`, such as in the
+-- "Asymptotic Optimization of Computations on Free Monads" (which
+-- in turn generalizes optimizations such as those of difference
+-- lists as functions), this is what is often called `rep` (as in
+-- "represent").
+public export
+sliceLiftCodensityTransMMJ : {a : Type} ->
+  {f : SliceFunctor a a} -> (fm : SliceFMap f) ->
+  {t : SliceFunctor a a} ->
+  (pt : SlicePure {c=a} t) ->
+  (jf : SliceJoin {c=a} f) ->
+  SliceNatTrans {x=a} {y=a} f (SliceCodensityMonadTransObj f t)
+sliceLiftCodensityTransMMJ {a} {f} fm {t} pt jf =
+  shiftCMT f t f fm
+    (SliceNTvcomp {f=(f . f)} {g=f} {h=(f . t)}
+      (SliceWhiskerRight {f=id} {g=t} {h=f} fm pt)
+      jf)
+
+public export
+sliceLiftCodensityTransMB : {a : Type} ->
+  {f : SliceFunctor a a} -> (pf : SlicePure f) -> (bf : SliceBind f) ->
+  {t : SliceFunctor a a} ->
+  (pt : SlicePure {c=a} t) ->
+  SliceNatTrans {x=a} {y=a} f (SliceCodensityMonadTransObj f t)
+sliceLiftCodensityTransMB {a} {f} pf bf {t} pt =
+  sliceLiftCodensityTransMMJ {a} {f}
+    (sliceMapFromPureAndBind f pf bf)
+    {t}
+    pt
+    (sliceJoinFromBind f bf)
+
+-- When we use the special case where `t` is `id`, such as in the
+-- "Asymptotic Optimization of Computations on Free Monads" (which
+-- in turn generalizes optimizations such as those of difference
+-- lists as functions), this is what is often called `abs` (as in
+-- "abstract").
+public export
+sliceLowerCodensityTrans : {a : Type} ->
+  {f : SliceFunctor a a} -> {t : SliceFunctor a a} ->
+  (pf : SlicePure {c=a} f) ->
+  SliceNatTrans {x=a} {y=a} (SliceCodensityMonadTransObj f t) (f . t)
+sliceLowerCodensityTrans {a} {f} {t} pf sa ea rk = rk sa (pf sa)
+
+-- This could be viewed as surrounding a monad action with a "finally"
+-- (represented by a natural transformation).
+public export
+sliceWrapCodensityTrans : {a, b : Type} ->
+  {f : SliceFunctor a b} -> (fm : SliceFMap f) ->
+  {t : SliceFunctor a a} -> (pt : SlicePure {c=a} t) ->
+  SliceNatTrans {x=a} {y=b} (f . t) (f . t) ->
+  Pi {a=b} (SliceCodensityMonadTransObj f t (SliceObjTerminal b))
+sliceWrapCodensityTrans {a} {b} {f} fm {t} pt alpha eb sa rk =
+  alpha sa eb $ fm sa (t sa) (pt sa) eb $ rk eb ()
+
+------------------------------------------------
+---- Special case: ordinary codensity monad ----
+------------------------------------------------
+
+-- This exhibits the codensity monad as a special case of the general codensity
+-- monad transformer.
+public export
+SliceCodensityMonad : {a, b : Type} -> SliceFunctor a b -> SliceFunctor b b
+SliceCodensityMonad {a} {b} f = SliceCodensityMonadTransObj {a} {b} f id
+
+public export
+SliceCodensityMonadUnit : {a, b : Type} ->
+  {f : SliceFunctor a b} -> (fm : SliceFMap f) ->
+  SlicePure {c=b} (SliceCodensityMonad f)
+SliceCodensityMonadUnit {a} {b} {f} fm =
+  SliceCodensityMonadTransUnit {a} {b} {f} fm id sliceId
+
+public export
+SliceCodensityMonadMult : {a, b : Type} ->
+  {f : SliceFunctor a b} -> (fm : SliceFMap f) ->
+  SliceJoin {c=b} (SliceCodensityMonad f)
+SliceCodensityMonadMult {a} {b} {f} fm =
+  SliceCodensityMonadTransMult {a} {b} {f} fm id sliceId
+
+public export
+sliceLiftCodensityB : {a : Type} -> (m : SliceEndofunctor a) ->
+  (bm : SliceBind m) ->
+  SliceNatTrans {x=a} {y=a} m (SliceCodensityMonad m)
+sliceLiftCodensityB {a} m bm sa ea ema sa' um = bm sa sa' um ea ema
+
+public export
+sliceLiftCodensityMJ : {a : Type} -> (m : SliceEndofunctor a) ->
+  (fm : SliceFMap m) -> (jm : SliceJoin m) ->
+  SliceNatTrans {x=a} {y=a} m (SliceCodensityMonad m)
+sliceLiftCodensityMJ {a} m fm jm =
+  sliceLiftCodensityB {a} m (sliceBindFromMapAndJoin {c=a} m fm jm)
+
+public export
+sliceLowerCodensityB : {a : Type} -> (f : SliceEndofunctor a) ->
+  (pf : SlicePure f) ->
+  SliceNatTrans {x=a} {y=a} (SliceCodensityMonad f) f
+sliceLowerCodensityB {a} f pf sa ea um = um sa $ pf sa
+
+public export
+sliceLiftCodensityTransC : {a, b : Type} ->
+  {f : SliceFunctor a b} -> (fm : SliceFMap f) ->
+  {t : SliceFunctor a a} ->
+  (pt : SlicePure {c=a} t) ->
+  SliceNatTrans {x=b} {y=b}
+    (SliceCodensityMonad f)
+    (SliceCodensityMonadTransObj f t)
+sliceLiftCodensityTransC {a} {f} fm {t} pt sb eb rk sa mbfa =
+  fm sa (t sa) (pt sa) eb $ rk sa mbfa
+
+-- This could be viewed as surrounding a monad action with a "finally"
+-- (represented by a natural transformation).
+public export
+sliceWrapCodensity : {a, b : Type} ->
+  {f : SliceFunctor a b} ->
+  SliceNatTrans {x=a} {y=b} f f ->
+  Pi {a=b} (SliceCodensityMonad f (SliceObjTerminal b))
+sliceWrapCodensity {a} {b} {f} alpha eb sa rk = alpha sa eb $ rk eb ()
+
+-- The codensity monad generalizes (internal) continuations.
+public export
+SliceInternalContinuation : {a : Type} -> SliceObj a -> SliceObj a
+SliceInternalContinuation {a} = SliceCodensityMonad id
+
+-----------------------------------------------------------------
+---- Special case: Haskell-style codensity monad transformer ----
+-----------------------------------------------------------------
+
+-- Applying the codensity monad transformation of a monad by itself
+-- produces a monad whose underlying endofunctor is naturally isomorphic
+-- to that of the ordinary codensity monad of the underlying endofunctor,
+-- but whose monadic structure accounts for that of the original monad.
+public export
+SliceCodensityTransAuto : {a : Type} -> SliceEndofunctor a -> SliceEndofunctor a
+SliceCodensityTransAuto {a} f = SliceCodensityMonadTransObj {a} {b=a} f f
+
+-- This is a form of `lower`, of the codensity monad transformer of `f` applied
+-- to itself to the codensity monad of `f`.
+public export
+sliceCodensityToAuto : {a : Type} -> (m : SliceEndofunctor a) ->
+  (fm : SliceFMap m) -> (um : SlicePure m) ->
+  SliceNatTrans {x=a} {y=a} (SliceCodensityMonad m) (SliceCodensityTransAuto m)
+sliceCodensityToAuto {a} m fm um sa ea mt sa' msa =
+  fm sa' (m sa') (um sa') ea $ mt sa' msa
+
+-- This is a form of `lift`, of the codensity monad of `f` into the
+-- codensity monad transformer of `f` applied to itself.
+public export
+sliceCodensityFromAuto : {a : Type} -> (m : SliceEndofunctor a) ->
+  (jm : SliceJoin m) ->
+  SliceNatTrans {x=a} {y=a} (SliceCodensityTransAuto m) (SliceCodensityMonad m)
+sliceCodensityFromAuto {a} m jm sa ea mt sa' msa = jm sa' ea $ mt sa' msa
+
+---------------------------------------------------------------
+---- Special case: type-changing non-monadic continuations ----
+---------------------------------------------------------------
+
+-- The slice-category analogue of `Delim` (see `IdrisCategories.idr`);
+-- below we show it to be a special case of the right Kan extension
+-- (where both functors are constant).  Note that we also show that `Delim`
+-- is a special case of `SliceDelim` (where `c` and `c'` are `Unit`).
+public export
+SliceDelim : {c, c' : Type} ->
+  SliceObj c -> SliceObj c' -> SliceObj c -> SliceObj c'
+SliceDelim {c} {c'} s t b ec' = SliceMorphism {a=c} b s -> t ec'
+
+public export
+SliceDelimToDelim : {b, s, t : Type} ->
+  SliceDelim {c=Unit} (\() => s) (\() => t) (\() => b) () ->
+  Delim s t b
+SliceDelimToDelim {b} {s} {t} d = MkDelim $ \mbs => d $ \() => mbs
+
+public export
+SliceDelimFromDelim : {b, s, t : Type} ->
+  Delim s t b ->
+  SliceDelim {c=Unit} (\() => s) (\() => t) (\() => b) ()
+SliceDelimFromDelim {b} {s} {t} d mbs = unDelim d $ \eb => mbs () eb
+
+public export
+SliceDelimFromRKan : {c, c' : Type} -> {s : SliceObj c} -> {t : SliceObj c'} ->
+  SliceNatTrans {x=c} {y=c'}
+    (SliceDelim {c} s t)
+    (SliceRKanExt {a=c} {b=c'} {c} (const s) (const t))
+SliceDelimFromRKan {c} {c'} {s} {t} b ec delim sc_ mbs = delim mbs
+
+public export
+SliceDelimToRKan : {c, c' : Type} -> {s : SliceObj c} -> {t : SliceObj c'} ->
+  SliceNatTrans {x=c} {y=c'}
+    (SliceRKanExt {a=c} {b=c'} {c} (const s) (const t))
+    (SliceDelim {c} s t)
+SliceDelimToRKan {c} {c'} {s} {t} b ec rk mbs = rk (SliceObjTerminal c) mbs
+
+-------------------------------------------------------------
+---- Special case: polymorphic non-monadic continuations ----
+-------------------------------------------------------------
+
+-- The slice-category analogue of `PolyDelim` (see `IdrisCategories.idr`);
+-- below we show it to be a special case of the codensity monad (where the
+-- functor is the identity), which in turn is a special case of the right
+-- Kan extension (where the two functors are the same).  Note that we also show
+-- that `PolyDelim` is a special case of `PolySliceDelim` (where `c` is `Unit`).
+-- Also recall that `PolyDelim` is equivalent to `Continuation`.
+public export
+PolySliceDelim : {c : Type} -> SliceObj c -> SliceObj c
+PolySliceDelim {c} b ec = (r : SliceObj c) -> SliceDelim r r b ec
+
+public export
+PolySliceDelimToPolyDelim : {b : Type} ->
+  PolySliceDelim {c=Unit} (\() => b) () ->
+  PolyDelim b
+PolySliceDelimToPolyDelim {b} delim s =
+  MkDelim $ \mbs => mbs $ delim (\() => b) $ \() => id
+
+public export
+PolySliceDelimFromPolyDelim : {b : Type} ->
+  PolyDelim b ->
+  PolySliceDelim {c=Unit} (\() => b) ()
+PolySliceDelimFromPolyDelim {b} delim r mbr = unDelim (delim $ r ()) $ mbr ()
+
+public export
+PolySliceDelimToCodensity : {c : Type} -> {s : SliceObj c} ->
+  SliceNatTrans {x=c} {y=c}
+    (PolySliceDelim {c})
+    (SliceCodensityMonad {a=c} {b=c} Prelude.id)
+PolySliceDelimToCodensity {c} {s} b ec = Prelude.id
+
+public export
+PolySliceDelimFromCodensity : {c : Type} -> {s : SliceObj c} ->
+  SliceNatTrans {x=c} {y=c}
+    (SliceCodensityMonad {a=c} {b=c} Prelude.id)
+    (PolySliceDelim {c})
+PolySliceDelimFromCodensity {c} {s} b ec = Prelude.id
 
 --------------------------------
 --------------------------------

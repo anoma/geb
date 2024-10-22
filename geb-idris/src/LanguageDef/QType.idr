@@ -10,6 +10,86 @@ import Library.IdrisAlgebra
 ------------------------
 ------------------------
 
+-----------------------------------------
+---- Impredicative version in `Type` ----
+-----------------------------------------
+
+public export
+impredCoeqEqF : {a, b : Type} ->
+  (f, g : a -> b) -> {c : Type} -> (b -> c) -> a -> Type
+impredCoeqEqF {a} {b} f g {c} h ea = (h (f ea) = h (g ea))
+
+public export
+impredCoeqFF : {a, b : Type} ->
+  (f, g : a -> b) -> {c : Type} -> (b -> c) -> Type
+impredCoeqFF {a} {b} f g {c} h = Pi {a} (impredCoeqEqF {a} {b} f g {c} h)
+
+public export
+impredCoeqF : {a, b : Type} -> (f, g : a -> b) -> Type -> Type
+impredCoeqF {a} {b} f g c = Sigma {a=(b -> c)} (impredCoeqFF {a} {b} f g {c})
+
+public export
+impredCoeqFmap : {a, b : Type} -> (f, g : a -> b) ->
+  (c, c' : Type) -> (c -> c') ->
+  impredCoeqF {a} {b} f g c -> impredCoeqF {a} {b} f g c'
+impredCoeqFmap {a} {b} f g c c' mcc' el =
+  (mcc' . fst el ** \ea => cong mcc' $ snd el ea)
+
+public export
+impredCoeq : {a, b : Type} -> (f, g : a -> b) -> Type
+impredCoeq {a} {b} f g =
+  NaturalTransformation (impredCoeqF {a} {b} f g) (Prelude.id {a=Type})
+
+public export
+impredCoeqInj : {a, b : Type} -> (f, g : a -> b) -> b -> impredCoeq {a} {b} f g
+impredCoeqInj {a} {b} f g eb c el = fst el eb
+
+public export
+impredCoeqElim : {a, b : Type} -> {f, g : a -> b} ->
+  impredCoeq {a} {b} f g -> {c : Type} -> (h : b -> c) ->
+  ExtEq {a} {b=c} (h . f) (h . g) -> c
+impredCoeqElim {a} {b} {f} {g} el {c} h eq = el c (h ** eq)
+
+public export
+impredCoeqEquiv : {a, b : Type} -> {f, g : a -> b} ->
+  RelationOn (impredCoeq {a} {b} f g)
+impredCoeqEquiv {a} {b} {f} {g} el el' =
+  (y : Type) -> (h : impredCoeq {a} {b} f g -> y) -> h el = h el'
+
+public export
+impredPushout : {a, b, c : Type} -> (a -> b) -> (a -> c) -> Type
+impredPushout {a} {b} {c} f g =
+  impredCoeq {a} {b=(Either b c)} (Left . f) (Right . g)
+
+public export
+impredPushoutInjL :
+  {a, b, c : Type} -> {f : a -> b} -> {g : a -> c} ->
+  b -> impredPushout {a} {b} {c} f g
+impredPushoutInjL {a} {b} {c} {f} {g} =
+  impredCoeqInj {a} {b=(Either b c)} (Left . f) (Right . g) . Left
+
+public export
+impredPushoutInjR :
+  {a, b, c : Type} -> {f : a -> b} -> {g : a -> c} ->
+  c -> impredPushout {a} {b} {c} f g
+impredPushoutInjR {a} {b} {c} {f} {g} =
+  impredCoeqInj {a} {b=(Either b c)} (Left . f) (Right . g) . Right
+
+public export
+impredPushoutElim : {a, b, c : Type} -> {f : a -> b} -> {g : a -> c} ->
+  impredPushout {a} {b} {c} f g -> {d : Type} ->
+  (h : b -> d) -> (j : c -> d) ->
+  ExtEq {a} {b=d} (h . f) (j . g) -> d
+impredPushoutElim {a} {b} {c} {f} {g} el {d} h j =
+  impredCoeqElim {a} {b=(Either b c)} {f=(Left . f)} {g=(Right . g)}
+    el {c=d} (eitherElim h j)
+
+public export
+impredPushoutEquiv : {a, b, c : Type} -> (f : a -> b) -> (g : a -> c) ->
+  RelationOn (impredPushout {a} {b} {c} f g)
+impredPushoutEquiv {a} {b} {c} f g el el' =
+  (y : Type) -> (h : impredPushout {a} {b} {c} f g -> y) -> h el = h el'
+
 ---------------------
 ---- Definitions ----
 ---------------------
@@ -940,3 +1020,98 @@ QPred a = QHom a QTypeQT
 public export
 QQuivEdge : QType -> QType
 QQuivEdge vert = QPred $ QProduct vert vert
+
+----------------------------------------------------------------
+----------------------------------------------------------------
+---- Endoprofunctors on (and in, AKA enriched over) `QType` ----
+----------------------------------------------------------------
+----------------------------------------------------------------
+
+---------------------------------
+---- `QType` endoprofunctors ----
+---------------------------------
+
+public export
+QProfSig : Type
+QProfSig = QType -> QType -> QType
+
+public export
+QLmapSig : QProfSig -> Type
+QLmapSig p = (s, t, a : QType) -> QMorph a s -> QMorph (p s t) (p a t)
+
+public export
+QRmapSig : QProfSig -> Type
+QRmapSig p = (s, t, b : QType) -> QMorph t b -> QMorph (p s t) (p s b)
+
+public export
+QDimapSig : QProfSig -> Type
+QDimapSig p = (s, t, a, b : QType) ->
+  QMorph a s -> QMorph t b -> QMorph (p s t) (p a b)
+
+---------------------------------------------
+---- `QType` paranatural transformations ----
+---------------------------------------------
+
+public export
+QParaNTSig : (p, q : QProfSig) -> Type
+QParaNTSig p q = (x : QType) -> QMorph (p x x) (q x x)
+
+public export
+0 QParaNTCond : (p, q : QProfSig) ->
+  QLmapSig p -> QRmapSig p -> QLmapSig q -> QRmapSig q ->
+  QParaNTSig p q -> Type
+QParaNTCond p q plm prm qlm qrm alpha =
+  (i0, i1 : QType) -> (i2 : QMorph i0 i1) ->
+  (d0 : QBase $ p i0 i0) -> (d1 : QBase $ p i1 i1) ->
+  QBaseRel (p i0 i1)
+    (QMorphBase (plm i1 i1 i0 i2) d1,
+     QMorphBase (prm i0 i0 i1 i2) d0) ->
+  QBaseRel (q i0 i1)
+    (QMorphBase (qlm i1 i1 i0 i2) (QMorphBase (alpha i1) d1),
+     QMorphBase (qrm i0 i0 i1 i2) (QMorphBase (alpha i0) d0))
+
+--------------------------------------------
+---- `QType` twisted-arrow copresheaves ----
+--------------------------------------------
+
+public export
+0 QTwArrMorphCond : {a, b, a', b' : QType} ->
+  QMorph a b -> QMorph a' b' -> QMorph a' a -> QMorph b b' -> Type
+QTwArrMorphCond {a} {b} {a'} {b'} f f' g h =
+  QMExtEq {x=a'} {y=b'} (qmComp h (qmComp f g), f')
+
+public export
+QTwArrCoprSig : Type
+QTwArrCoprSig = (a, b : QType) -> QMorph a b -> QType
+
+public export
+0 QTwArrCoprMapSig : QTwArrCoprSig -> Type
+QTwArrCoprMapSig p =
+  (s, t, a, b : QType) ->
+  (f : QMorph s t) -> (f' : QMorph a b) ->
+  (g : QMorph a s) -> (h : QMorph t b) ->
+  QTwArrMorphCond {a=s} {b=t} {a'=a} {b'=b} f f' g h ->
+  QMorph (p s t f) (p a b f')
+
+----------------------------------------------
+---- `op(QType)` twisted-arrow presheaves ----
+----------------------------------------------
+
+public export
+0 QopTwArrMorphCond : {a, b, a', b' : QType} ->
+  QMorph b a -> QMorph b' a' -> QMorph a a' -> QMorph b' b -> Type
+QopTwArrMorphCond {a} {b} {a'} {b'} f f' =
+  flip $ QTwArrMorphCond {a=b} {b=a} {a'=b'} {b'=a'} f f'
+
+public export
+QopTwArrPreshfSig : Type
+QopTwArrPreshfSig = (a, b : QType) -> QMorph b a -> QType
+
+public export
+0 QopTwArrPreshfMapSig : QopTwArrPreshfSig -> Type
+QopTwArrPreshfMapSig p =
+  (s, t, a, b : QType) ->
+  (f : QMorph t s) -> (f' : QMorph b a) ->
+  (g : QMorph a s) -> (h : QMorph t b) ->
+  QopTwArrMorphCond {a=a} {b=b} {a'=s} {b'=t} f' f g h ->
+  QMorph (p s t f) (p a b f')

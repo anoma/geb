@@ -44,10 +44,18 @@ IntIdLSig c mor comp cid =
   (0 x, y : c) -> (m : mor x y) -> comp x x y m (cid x) = m
 
 public export
+typeIdL : IntIdLSig Type TypeMor InternalCat.typeComp InternalCat.typeId
+typeIdL x y m = Refl
+
+public export
 0 IntIdRSig : (0 c : Type) -> (0 mor : IntMorSig c) ->
   (comp : IntCompSig c mor) -> IntIdSig c mor -> Type
 IntIdRSig c mor comp cid =
   (0 x, y : c) -> (m : mor x y) -> comp x y y (cid y) m = m
+
+public export
+typeIdR : IntIdRSig Type TypeMor InternalCat.typeComp InternalCat.typeId
+typeIdR x y m = Refl
 
 public export
 0 IntAssocSig : (0 c : Type) ->
@@ -130,32 +138,32 @@ public export
 IntEndoRmapIdSig c cmor = IntRmapIdSig c c cmor cmor
 
 public export
-0 IntLmapFromDimap : (0 d, c : Type) ->
+IntLmapFromDimap : (0 d, c : Type) ->
   (0 dmor : IntDifunctorSig d) -> (0 cmor : IntDifunctorSig c) ->
-  (0 cid : IntIdSig c cmor) ->
+  (cid : IntIdSig c cmor) ->
   (p : IntProfunctorSig d c) ->
   IntDimapSig d c dmor cmor p ->
   IntLmapSig d c dmor cmor p
 IntLmapFromDimap d c dmor cmor cid p pdm s t a = flip (pdm s t a t) (cid t)
 
 public export
-0 IntEndoLmapFromDimap : (0 c : Type) -> (0 cmor : IntDifunctorSig c) ->
-  (0 cid : IntIdSig c cmor) -> (p : IntDifunctorSig c) ->
+IntEndoLmapFromDimap : (0 c : Type) -> (0 cmor : IntDifunctorSig c) ->
+  (cid : IntIdSig c cmor) -> (p : IntDifunctorSig c) ->
   IntEndoDimapSig c cmor p -> IntEndoLmapSig c cmor p
 IntEndoLmapFromDimap c cmor cid = IntLmapFromDimap c c cmor cmor cid
 
 public export
-0 IntRmapFromDimap : (0 d, c : Type) ->
+IntRmapFromDimap : (0 d, c : Type) ->
   (0 dmor : IntDifunctorSig d) -> (0 cmor : IntDifunctorSig c) ->
-  (0 did : IntIdSig d dmor) ->
+  (did : IntIdSig d dmor) ->
   (p : IntProfunctorSig d c) ->
   IntDimapSig d c dmor cmor p ->
   IntRmapSig d c dmor cmor p
 IntRmapFromDimap d c dmor cmor did p pdm s t b = pdm s t s b (did s)
 
 public export
-0 IntEndoRmapFromDimap : (0 c : Type) -> (0 cmor : IntDifunctorSig c) ->
-  (0 cid : IntIdSig c cmor) -> (p : IntDifunctorSig c) ->
+IntEndoRmapFromDimap : (0 c : Type) -> (0 cmor : IntDifunctorSig c) ->
+  (cid : IntIdSig c cmor) -> (p : IntDifunctorSig c) ->
   IntEndoDimapSig c cmor p -> IntEndoRmapSig c cmor p
 IntEndoRmapFromDimap c cmor cid = IntRmapFromDimap c c cmor cmor cid
 
@@ -179,6 +187,32 @@ public export
   IntEndoLmapSig c cmor p -> IntEndoRmapSig c cmor p ->
   Type
 IntEndoLRmapsCommute c cmor p plm prm = IntLRmapsCommute c c cmor cmor p plm prm
+
+public export
+0 IntLmapComp : (0 c : Type) -> (0 cmor : IntDifunctorSig c) ->
+  (0 ccomp : IntCompSig c cmor) ->
+  (p : IntDifunctorSig c) ->
+  IntEndoLmapSig c cmor p ->
+  Type
+IntLmapComp c cmor ccomp p plm =
+  (0 s, t, a, a' : c) ->
+  (0 cma's : cmor a' s) -> (0 cmaa' : cmor a a') ->
+  ExtEq {a=(p s t)} {b=(p a t)}
+    (plm a' t a cmaa' . plm s t a' cma's)
+    (plm s t a (ccomp a a' s cma's cmaa'))
+
+public export
+0 IntRmapComp : (0 c : Type) -> (0 cmor : IntDifunctorSig c) ->
+  (0 ccomp : IntCompSig c cmor) ->
+  (p : IntDifunctorSig c) ->
+  IntEndoRmapSig c cmor p ->
+  Type
+IntRmapComp c cmor ccomp p prm =
+  (0 s, t, b, b' : c) ->
+  (0 cmtb' : cmor t b') -> (0 cmb'b : cmor b' b) ->
+  ExtEq {a=(p s t)} {b=(p s b)}
+    (prm s b' b cmb'b . prm s t b' cmtb')
+    (prm s t b (ccomp t b' b cmb'b cmtb'))
 
 public export
 IntDimapFromLRmaps : (0 d, c : Type) ->
@@ -282,12 +316,12 @@ IntParaNTcomp c mor p q r plm prm qlm qrm rlm rrm beta bcond alpha acond
 --------------------------------------------
 
 public export
-0 IntProfNTSig : (d, c : Type) ->
+IntProfNTSig : (d, c : Type) ->
   (p, q : IntProfunctorSig d c) -> Type
 IntProfNTSig d c p q = (x : d) -> (y : c) -> p x y -> q x y
 
 public export
-0 IntEndoProfNTSig : (c : Type) ->
+IntEndoProfNTSig : (c : Type) ->
   (p, q : IntDifunctorSig c) -> Type
 IntEndoProfNTSig c = IntProfNTSig c c
 
@@ -552,6 +586,16 @@ IntDiYonedaEmbedObj c mor i0 i1 j0 j1 = (mor j0 i1, mor i0 j1)
                        --  i  j  x  y       x -> j    i -> y
                        --  i0 -> i1 / i -> j  &   j0 -> j1 / x -> y
 
+public export
+intDiYoEmbedRL : {c : Type} -> {mor : IntDifunctorSig c} ->
+  {i0, i1, j0, j1 : c} -> IntDiYonedaEmbedObj c mor i0 i1 j0 j1 -> mor j0 i1
+intDiYoEmbedRL {c} {mor} {i0} {i1} {j0} {j1} = fst
+
+public export
+intDiYoEmbedLR : {c : Type} -> {mor : IntDifunctorSig c} ->
+  {i0, i1, j0, j1 : c} -> IntDiYonedaEmbedObj c mor i0 i1 j0 j1 -> mor i0 j1
+intDiYoEmbedLR {c} {mor} {i0} {i1} {j0} {j1} = snd
+
 ---  i0/I/d  j0/x/c' j1/y/d'  i1/J/c
 -- 1)  --------------------------> (part of graph object in arena)
 -- 2)          ------->            (part of graph object in interpretation)
@@ -579,15 +623,13 @@ public export
 IntDiYonedaEmbedLmap : (c : Type) -> (mor : IntDifunctorSig c) ->
   (comp : IntCompSig c mor) ->
   (s, t : c) -> IntEndoLmapSig c mor (IntDiYonedaEmbedObj c mor s t)
-IntDiYonedaEmbedLmap c mor comp s t a b i cmia (cmat, cmsb) =
-  (comp i a t cmat cmia, cmsb)
+IntDiYonedaEmbedLmap c mor comp s t a b i cmia = mapFst $ flip (comp i a t) cmia
 
 public export
 IntDiYonedaEmbedRmap : (c : Type) -> (0 mor : IntDifunctorSig c) ->
   (comp : IntCompSig c mor) ->
   (s, t : c) -> IntEndoRmapSig c mor (IntDiYonedaEmbedObj c mor s t)
-IntDiYonedaEmbedRmap c mor comp s t a b j cmbj (cmat, cmsb) =
-  (cmat, comp s b j cmbj cmsb)
+IntDiYonedaEmbedRmap c mor comp s t a b j cmbj = mapSnd $ (comp s b j cmbj)
 
 public export
 IntDiYonedaEmbedDimap : (c : Type) -> (mor : IntDifunctorSig c) ->
@@ -1192,6 +1234,14 @@ ipaCovar ar = Builtin.snd $ DPair.snd ar
 public export
 ipaProj : {d, c : Type} -> (ar : IntProAr d c) -> ipaPos ar -> IntProAr d c
 ipaProj ar i = (Unit ** (\_ => ipaContra ar i, \_ => ipaCovar ar i))
+
+public export
+ipaFlip : {d, c : Type} -> IntProAr d c -> IntProAr c d
+ipaFlip {d} {c} ar = (ipaPos ar ** (ipaCovar ar, ipaContra ar))
+
+public export
+iepaFlip : {c : Type} -> IntEndoProAr c -> IntEndoProAr c
+iepaFlip {c} = ipaFlip {c} {d=c}
 
 public export
 IEPAssignPos : {c : Type} ->
@@ -1833,6 +1883,14 @@ PProfCatDiagElemMorFromCommutingEl {c} {mor} {comp} {p=(pos ** (contra, covar))}
 -------------------------------------------------------
 
 public export
+0 TypeProfNT : IntMorSig ProfunctorSig
+TypeProfNT = IntEndoProfNTSig Type
+
+public export
+0 TypeProfDiNT : IntMorSig ProfunctorSig
+TypeProfDiNT = IntDiNTSig Type
+
+public export
 0 TypeDimapSig : (0 _ : Type -> Type -> Type) -> Type
 TypeDimapSig p = IntEndoDimapSig Type HomProf p
 
@@ -1845,9 +1903,84 @@ public export
 TypeRmapSig p = IntEndoRmapSig Type HomProf p
 
 public export
-0 TypeDimapFromLR : (p : ProfunctorSig) ->
+TypeDimapFromLR : (p : ProfunctorSig) ->
   TypeLmapSig p -> TypeRmapSig p -> TypeDimapSig p
-TypeDimapFromLR p = IntEndoDimapFromLRmaps Type HomProf p
+TypeDimapFromLR p plm prm s t a b mas mtb = plm s b a mas . prm s t b mtb
+
+public export
+0 MkProfunctorFromLR : (p : ProfunctorSig) ->
+  TypeLmapSig p -> TypeRmapSig p -> Profunctor p
+MkProfunctorFromLR p plm prm = MkProfunctor $ TypeDimapFromLR p plm prm _ _ _ _
+
+public export
+TypeLmapFromDimap : (p : ProfunctorSig) -> TypeDimapSig p -> TypeLmapSig p
+TypeLmapFromDimap = IntEndoLmapFromDimap Type TypeMor typeId
+
+public export
+TypeRmapFromDimap : (p : ProfunctorSig) -> TypeDimapSig p -> TypeRmapSig p
+TypeRmapFromDimap = IntEndoRmapFromDimap Type TypeMor typeId
+
+public export
+0 TypeLRmapsCommute : (p : Type -> Type -> Type) ->
+  TypeLmapSig p -> TypeRmapSig p -> Type
+TypeLRmapsCommute = IntLRmapsCommute Type Type HomProf HomProf
+
+public export
+0 TypeLmapComp : (p : Type -> Type -> Type) -> TypeLmapSig p -> Type
+TypeLmapComp = IntLmapComp Type TypeMor typeComp
+
+public export
+0 TypeRmapComp : (p : Type -> Type -> Type) -> TypeRmapSig p -> Type
+TypeRmapComp = IntRmapComp Type TypeMor typeComp
+
+public export
+0 TypeNTNaturality : (p, q : ProfunctorSig) ->
+  TypeDimapSig p -> TypeDimapSig q -> TypeProfNT p q -> Type
+TypeNTNaturality = IntProfNTNaturality Type Type TypeMor TypeMor
+
+public export
+0 TypeNTParanaturalityLR : (p, q : ProfunctorSig) ->
+  TypeLmapSig p -> TypeRmapSig p -> TypeLmapSig q -> TypeRmapSig q ->
+  TypeProfDiNT p q -> Type
+TypeNTParanaturalityLR = IntParaNTCond Type TypeMor
+
+public export
+0 TypeNTParanaturality : (p, q : ProfunctorSig) ->
+  TypeDimapSig p -> TypeDimapSig q -> TypeProfDiNT p q -> Type
+TypeNTParanaturality p q pdm qdm =
+  IntParaNTCond Type TypeMor p q
+    (TypeLmapFromDimap p pdm) (TypeRmapFromDimap p pdm)
+    (TypeLmapFromDimap q qdm) (TypeRmapFromDimap q qdm)
+
+public export
+TypeProfConst : Type -> ProfunctorSig
+TypeProfConst w x y = w
+
+public export
+TypeProfConstLmap : (w : Type) -> TypeLmapSig (TypeProfConst w)
+TypeProfConstLmap w _ _ _ _ = id
+
+public export
+TypeProfConstRmap : (w : Type) -> TypeRmapSig (TypeProfConst w)
+TypeProfConstRmap w _ _ _ _ = id
+
+public export
+TypeProfConstDimap : (w : Type) -> TypeDimapSig (TypeProfConst w)
+TypeProfConstDimap w _ _ _ _ _ _ = id
+
+public export
+TypeProfConstProfunctor : (w : Type) -> Profunctor (TypeProfConst w)
+TypeProfConstProfunctor w = MkProfunctor $ \_, _ => id
+
+public export
+TypeDiYonedaEmbedLmap :
+  (s, t : Type) -> TypeLmapSig (DiYonedaEmbed s t)
+TypeDiYonedaEmbedLmap = IntDiYonedaEmbedLmap Type TypeMor typeComp
+
+public export
+TypeDiYonedaEmbedRmap :
+  (s, t : Type) -> TypeRmapSig (DiYonedaEmbed s t)
+TypeDiYonedaEmbedRmap = IntDiYonedaEmbedRmap Type TypeMor typeComp
 
 public export
 0 ProfNaturality : (0 p, q : ProfunctorSig) ->
@@ -1871,3 +2004,1291 @@ public export
   ProfDiNT p q -> Type
 ProfParanaturality p q plm prm qlm qrm =
   IntParaNTCond Type HomProf p q plm prm qlm qrm
+
+public export
+0 TypeLmapIdSig : (p : ProfunctorSig) -> TypeLmapSig p -> Type
+TypeLmapIdSig = IntEndoLmapIdSig Type TypeMor typeId
+
+public export
+0 TypeRmapIdSig : (p : ProfunctorSig) -> TypeRmapSig p -> Type
+TypeRmapIdSig = IntEndoRmapIdSig Type TypeMor typeId
+
+public export
+0 TwArrPreshfEmbeddingNTparanaturalConst :
+  {w : Type} -> {q : ProfunctorSig} ->
+  (0 qlm : TypeLmapSig q) -> (0 qrm : TypeRmapSig q) ->
+  (0 qlid : TypeLmapIdSig q qlm) -> (0 qrid : TypeRmapIdSig q qrm) ->
+  (0 lcomp : TypeLmapComp q qlm) -> (0 rcomp : TypeRmapComp q qrm) ->
+  (0 lrcomm : TypeLRmapsCommute q qlm qrm) ->
+  (gamma : TwArrPreshfEmbeddingNT (TypeProfConst w) q) ->
+  TwArrPreshfNaturality
+    {p=(TwArrPreshfEmbedProf $ TypeProfConst w)}
+    {q=(TwArrPreshfEmbedProf q)}
+    (TwArrPreshfEmbedProfMap (TypeProfConst w) (TypeProfConstProfunctor w))
+    (TwArrPreshfEmbedProfMap q (MkProfunctorFromLR q qlm qrm))
+    gamma ->
+  ProfParanaturality (TypeProfConst w) q
+    (TypeProfConstLmap w)
+    (TypeProfConstRmap w)
+    qlm
+    qrm
+    (TwArrPreshfEmbeddingNTtoProfParaNT {p=(TypeProfConst w)} {q} gamma)
+TwArrPreshfEmbeddingNTparanaturalConst {w} {q}
+  qlm qrm qlid qrid lcomp rcomp lrcomm
+  gamma gnat i0 i1 i2 ew0 ew1 cond =
+    rewrite sym $ gnat i0 i1 i0 i0 id id i2 ew0 in
+    rewrite sym $ gnat i0 i1 i1 i1 id i2 id ew1 in
+    rewrite qlid i1 i1 (qrm i1 i0 i1 i2 (gamma i0 i1 i2 ew1)) in
+    rewrite qrid i1 i0 (gamma i0 i1 i2 ew0) in
+    rewrite cond in
+    lrcomm i1 i0 i0 i1 i2 i2 (gamma i0 i1 i2 ew0)
+
+-- Here we show that the set of natural transformations from the
+-- twisted-arrow-copresheaf embedding of a constant profunctor to the
+-- twisted-arrow-copresheaf embedding of an arbitrary profunctor is the
+-- same as the set of paranatural transformations from that constant
+-- profunctor to that arbitrary profunctor.  This in particular means
+-- that the paranatural transformations out of constant profunctors
+-- are the same as the extranatural transformations out of
+-- constant profunctors, which also means that paranaturals and extranaturals
+-- classify wedges in the same way (and thus lead to the same
+-- notions of ends and coends).
+
+public export
+0 TwArrCoprEmbeddingNTparanaturalConst :
+  {w : Type} -> {q : ProfunctorSig} ->
+  (0 qlm : TypeLmapSig q) -> (0 qrm : TypeRmapSig q) ->
+  (0 qlid : TypeLmapIdSig q qlm) -> (0 qrid : TypeRmapIdSig q qrm) ->
+  (0 lcomp : TypeLmapComp q qlm) -> (0 rcomp : TypeRmapComp q qrm) ->
+  (0 lrcomm : TypeLRmapsCommute q qlm qrm) ->
+  (gamma : TwArrCoprEmbeddingNT (TypeProfConst w) q) ->
+  TwArrCoprNaturality
+    {p=(TwArrCoprEmbedProf $ TypeProfConst w)}
+    {q=(TwArrCoprEmbedProf q)}
+    (TwArrCoprEmbedDimap (TypeProfConst w) (TypeProfConstProfunctor w))
+    (TwArrCoprEmbedDimap q (MkProfunctorFromLR q qlm qrm))
+    gamma ->
+  ProfParanaturality (TypeProfConst w) q
+    (TypeProfConstLmap w)
+    (TypeProfConstRmap w)
+    qlm
+    qrm
+    (TwArrCoprEmbeddingNTtoProfParaNT {p=(TypeProfConst w)} {q} gamma)
+TwArrCoprEmbeddingNTparanaturalConst {w} {q}
+  qlm qrm qlid qrid lcomp rcomp lrcomm
+  gamma gnat i0 i1 i2 ew0 ew1 cond =
+    rewrite sym $ qlid i0 i1 (qrm i0 i0 i1 i2 (gamma i0 i0 id ew0)) in
+    rewrite sym $ qrid i1 i1 (gamma i1 i1 id ew1) in
+    rewrite gnat i0 i0 i0 i1 id id i2 ew0 in
+    rewrite gnat i1 i1 i0 i1 id i2 id ew1 in
+    rewrite cond in
+    Refl
+
+public export
+0 TwArrParanaturalFromConstToCoprEmbeddingNT :
+  {w : Type} -> {q : ProfunctorSig} ->
+  (0 qlm : TypeLmapSig q) -> (0 qrm : TypeRmapSig q) ->
+  (0 qlid : TypeLmapIdSig q qlm) -> (0 qrid : TypeRmapIdSig q qrm) ->
+  (0 lcomp : TypeLmapComp q qlm) -> (0 rcomp : TypeRmapComp q qrm) ->
+  (0 lrcomm : TypeLRmapsCommute q qlm qrm) ->
+  (gamma : TypeProfDiNT (TypeProfConst w) q) ->
+  ProfParanaturality (TypeProfConst w) q
+    (TypeProfConstLmap w)
+    (TypeProfConstRmap w)
+    qlm
+    qrm
+    gamma ->
+  TwArrCoprEmbeddingNT (TypeProfConst w) q
+TwArrParanaturalFromConstToCoprEmbeddingNT {w} {q}
+  qlm qrm qlid qrid lcomp rcomp lrcomm
+  gamma cond x y mxy ew =
+    let
+      -- There are two ways we might obtain an answer, so we show that
+      -- they are the same.
+      0 qxyeq : (qlm y y x mxy (gamma y ew) = qrm x x y mxy (gamma x ew)) =
+        cond x y mxy ew ew Refl
+    in
+    qrm x x y mxy (gamma x ew)
+
+public export
+0 TwArrParanaturalFromConstToCoprEmbeddingNTisNatural :
+  {w : Type} -> {q : ProfunctorSig} ->
+  (0 qlm : TypeLmapSig q) -> (0 qrm : TypeRmapSig q) ->
+  (0 qlid : TypeLmapIdSig q qlm) -> (0 qrid : TypeRmapIdSig q qrm) ->
+  (0 lcomp : TypeLmapComp q qlm) -> (0 rcomp : TypeRmapComp q qrm) ->
+  (0 lrcomm : TypeLRmapsCommute q qlm qrm) ->
+  (gamma : TypeProfDiNT (TypeProfConst w) q) ->
+  (cond : ProfParanaturality (TypeProfConst w) q
+    (TypeProfConstLmap w)
+    (TypeProfConstRmap w)
+    qlm
+    qrm
+    gamma) ->
+  TwArrCoprNaturality
+    {p=(TwArrCoprEmbedProf $ TypeProfConst w)}
+    {q=(TwArrCoprEmbedProf q)}
+    (TwArrCoprEmbedDimap (TypeProfConst w) (TypeProfConstProfunctor w))
+    (TwArrCoprEmbedDimap q (MkProfunctorFromLR q qlm qrm))
+    (TwArrParanaturalFromConstToCoprEmbeddingNT
+      {w} {q} qlm qrm qlid qrid lcomp rcomp lrcomm gamma cond)
+TwArrParanaturalFromConstToCoprEmbeddingNTisNatural {w} {q}
+  qlm qrm qlid qrid lcomp rcomp lrcomm
+  gamma cond s t a b mst mas mtb ew =
+    rewrite rcomp s s b t mst mtb (gamma s ew) in
+    rewrite sym $ cond a b (mtb . mst . mas) ew ew Refl in
+    rewrite sym $ cond s b (mtb . mst) ew ew Refl in
+    lcomp b b a s (mtb . mst) mas (gamma b ew)
+
+-- Here we show that a natural transformation from the twisted-arrow-copresheaf
+-- embedding of a direpresentable profunctor to the twisted-arrow-copresheaf
+-- embedding of an arbitrary profunctor is paranatural when viewed as a
+-- transformation of the underlying profunctors.  The converse is not
+-- necessarily true -- we can not necessarily derive a twisted-arrow-copresheaf
+-- embedding from an arbitrary paranatural transformation out of a
+-- direpresentable profunctor.  In that sense the set of paranatural
+-- transformations out of direpresentables is strictly larger than the set of
+-- natural transformations between twisted-arrow-copresheaf embeddings out of
+-- direpresentables.
+public export
+0 TwArrCoprEmbeddingNTparanaturalDirep :
+  {p, p' : Type} -> {q : ProfunctorSig} ->
+  (0 qlm : TypeLmapSig q) -> (0 qrm : TypeRmapSig q) ->
+  (0 qlid : TypeLmapIdSig q qlm) -> (0 qrid : TypeRmapIdSig q qrm) ->
+  (0 lcomp : TypeLmapComp q qlm) -> (0 rcomp : TypeRmapComp q qrm) ->
+  (0 lrcomm : TypeLRmapsCommute q qlm qrm) ->
+  (gamma : TwArrCoprEmbeddingNT (DiYonedaEmbed p p') q) ->
+  TwArrCoprNaturality
+    {p=(TwArrCoprEmbedProf $ DiYonedaEmbed p p')}
+    {q=(TwArrCoprEmbedProf q)}
+    (TwArrCoprEmbedDimap (DiYonedaEmbed p p') (DiYonedaEmbedProf p p'))
+    (TwArrCoprEmbedDimap q (MkProfunctorFromLR q qlm qrm))
+    gamma ->
+  ProfParanaturality (DiYonedaEmbed p p') q
+    (TypeDiYonedaEmbedLmap p p')
+    (TypeDiYonedaEmbedRmap p p')
+    qlm
+    qrm
+    (TwArrCoprEmbeddingNTtoProfParaNT {p=(DiYonedaEmbed p p')} {q} gamma)
+TwArrCoprEmbeddingNTparanaturalDirep {p} {p'} {q}
+  qlm qrm qlid qrid lcomp rcomp lrcomm
+  gamma gnat i0 i1 i2 (mi0p', mpi0) (mi1p', mpi1) cond =
+    rewrite sym $ qlid i0 i1 (qrm i0 i0 i1 i2 (gamma i0 i0 id (mi0p', mpi0))) in
+    rewrite sym $ qrid i1 i1 (gamma i1 i1 id (mi1p', mpi1)) in
+    rewrite gnat i0 i0 i0 i1 id id i2 (mi0p', mpi0) in
+    rewrite gnat i1 i1 i0 i1 id i2 id (mi1p', mpi1) in
+    rewrite fstEq cond in
+    rewrite sndEq cond in
+    Refl
+
+public export
+0 TypeNatDiYonedaLemmaLnt :
+  {p, p' : Type} -> {q : ProfunctorSig} ->
+  (0 qlm : TypeLmapSig q) -> (0 qrm : TypeRmapSig q) ->
+  (0 lcomp : TypeLmapComp q qlm) -> (0 rcomp : TypeRmapComp q qrm) ->
+  (0 lrcomm : TypeLRmapsCommute q qlm qrm) ->
+  ((p -> p') -> q p' p) ->
+  ProfDiNT (DiYonedaEmbed p p') q
+TypeNatDiYonedaLemmaLnt {p} {p'} {q} qlm qrm lcomp rcomp lrcomm
+  mpq a (map', mpa) =
+    qlm p' a a map' $ qrm p' p a mpa $ mpq (map' . mpa)
+
+public export
+0 TypeNatDiYonedaLemmaLisPara :
+  {p, p' : Type} -> {q : ProfunctorSig} ->
+  (0 qlm : TypeLmapSig q) -> (0 qrm : TypeRmapSig q) ->
+  (0 lcomp : TypeLmapComp q qlm) -> (0 rcomp : TypeRmapComp q qrm) ->
+  (0 lrcomm : TypeLRmapsCommute q qlm qrm) ->
+  (mpq : (p -> p') -> q p' p) ->
+  ProfParanaturality (DiYonedaEmbed p p') q
+    (TypeDiYonedaEmbedLmap p p')
+    (TypeDiYonedaEmbedRmap p p')
+    qlm
+    qrm
+    (TypeNatDiYonedaLemmaLnt {p} {p'} {q} qlm qrm lcomp rcomp lrcomm mpq)
+TypeNatDiYonedaLemmaLisPara {p} {p'} {q} qlm qrm lcomp rcomp lrcomm
+  mpq i0 i1 i2 (mi0p', mpi0) (mi1p', mpi1) cond =
+    rewrite sym (fstEq cond) in
+    rewrite sndEq cond in
+    trans
+      (lcomp p' i1 i0 i1 mi1p' i2
+        (qrm p' p i1 (i2 . mpi0) (mpq (mi1p' . i2 . mpi0))))
+    $ trans
+      (rewrite sym $ rcomp p' p i1 i0 mpi0 i2 (mpq (mi1p' . i2 . mpi0)) in Refl)
+      (lrcomm p' i0 i0 i1 (mi1p' . i2) i2
+        (qrm p' p i0 mpi0 (mpq (mi1p' . i2 . mpi0))))
+
+public export
+0 TypeNatDiYonedaLemmaR :
+  {p, p' : Type} -> {q : ProfunctorSig} ->
+  (0 qlm : TypeLmapSig q) -> (0 qrm : TypeRmapSig q) ->
+  (0 lcomp : TypeLmapComp q qlm) -> (0 rcomp : TypeRmapComp q qrm) ->
+  (0 lrcomm : TypeLRmapsCommute q qlm qrm) ->
+  (gamma : ProfDiNT (DiYonedaEmbed p p') q) ->
+  ProfParanaturality (DiYonedaEmbed p p') q
+    (TypeDiYonedaEmbedLmap p p')
+    (TypeDiYonedaEmbedRmap p p')
+    qlm
+    qrm
+    gamma ->
+  ((p -> p') -> q p p')
+TypeNatDiYonedaLemmaR {p} {p'} {q} qlm qrm lcomp rcomp lrcomm
+  gamma cond mpp' =
+    let
+      -- There are two ways we might obtain an answer, so we show that
+      -- they are the same.
+      0 lreq :
+        (qrm p p p' mpp' (gamma p (mpp', id {a=p})) =
+         qlm p' p' p mpp' (gamma p' (id {a=p'}, mpp'))) =
+          sym $ cond p p' mpp' (mpp', id) (id, mpp') Refl
+    in
+    qrm p p p' mpp' (gamma p (mpp', id {a=p}))
+
+public export
+0 TwArrPreshfEmbeddingNTparanaturalRep :
+  {p, p' : Type} -> {q : ProfunctorSig} ->
+  (0 qlm : TypeLmapSig q) -> (0 qrm : TypeRmapSig q) ->
+  (0 lcomp : TypeLmapComp q qlm) -> (0 rcomp : TypeRmapComp q qrm) ->
+  (0 lrcomm : TypeLRmapsCommute q qlm qrm) ->
+  (gamma : TwArrPreshfEmbeddingNT (opProdHom p p') q) ->
+  TwArrPreshfNaturality
+    {p=(TwArrPreshfEmbedProf $ opProdHom p p')}
+    {q=(TwArrPreshfEmbedProf q)}
+    (TwArrPreshfEmbedProfMap (opProdHom p p')
+      (MkProfunctor $ opProdHomDimap Prelude.id Prelude.id))
+    (TwArrPreshfEmbedProfMap q
+      (MkProfunctor $ TypeDimapFromLR q qlm qrm _ _ _ _))
+    gamma ->
+  ProfParanaturality (opProdHom p p') q
+    (\s, t, a, mas => opProdHomDimap Prelude.id Prelude.id mas Prelude.id)
+    (\s, t, b => opProdHomDimap Prelude.id Prelude.id Prelude.id)
+    qlm
+    qrm
+    (TwArrPreshfEmbeddingNTtoProfParaNT {p=(opProdHom p p')} {q} gamma)
+TwArrPreshfEmbeddingNTparanaturalRep {p} {p'} {q} qlm qrm lcomp rcomp lrcomm
+  gamma gnat i0 i1 i2 (mi0p, mp'i0) (mi1p, mp'i1) cond =
+    rewrite sym $ gnat p' p i0 i0 id mp'i0 mi0p (id {a=p}, id {a=p'}) in
+    rewrite sym $ gnat p' p i1 i1 id mp'i1 mi1p (id {a=p}, id {a=p'}) in
+    trans
+      (lcomp p i1 i0 i1 mi1p i2
+        (qrm p p' i1 mp'i1 (gamma p' p (mi1p . mp'i1) (id, id))))
+    $ rewrite
+        lrcomm p p' i0 i0 mi0p mp'i0 (gamma p' p (mi0p . mp'i0) (id, id)) in
+      rewrite rcomp i0 p' i1 i0 mp'i0 i2
+        (qlm p p' i0 mi0p (gamma p' p (mi0p . mp'i0) (id, id))) in
+    trans
+      (lrcomm p p' i0 i1 (mi1p . i2) mp'i1 (gamma p' p (mi1p . mp'i1) (id, id)))
+    $ rewrite sym $ fstEq cond in
+      rewrite sndEq cond in
+      Refl
+
+-------------------------------
+-------------------------------
+---- Profunctor dialgebras ----
+-------------------------------
+-------------------------------
+
+public export
+ProfDialg : ProfunctorSig -> ProfunctorSig -> ProfunctorSig
+ProfDialg p q x y = p y x -> q x y
+
+public export
+ProfDialgLmap : (p, q : ProfunctorSig) -> TypeRmapSig p -> TypeLmapSig q ->
+  TypeLmapSig (ProfDialg p q)
+ProfDialgLmap p q prm qlm s t a mas dialg =
+  qlm s t a mas . dialg . prm t a s mas
+
+public export
+ProfDialgRmap : (p, q : ProfunctorSig) -> TypeLmapSig p -> TypeRmapSig q ->
+  TypeRmapSig (ProfDialg p q)
+ProfDialgRmap p q plm qrm s t b mtb dialg =
+  qrm s t b mtb . dialg . plm b s t mtb
+
+public export
+ProfDialgDimap : (p, q : ProfunctorSig) ->
+  TypeLmapSig p -> TypeRmapSig p -> TypeLmapSig q -> TypeRmapSig q ->
+  TypeDimapSig (ProfDialg p q)
+ProfDialgDimap p q plm prm qlm qrm =
+  TypeDimapFromLR (ProfDialg p q)
+    (ProfDialgLmap p q prm qlm)
+    (ProfDialgRmap p q plm qrm)
+
+-- See for example "ends as equalizers" at
+-- https://bartoszmilewski.com/2017/03/29/ends-and-coends/ .
+
+public export
+typeWedgeLeft : {p : ProfunctorSig} -> TypeLmapSig p ->
+  EndBase p -> PolyProdP p
+typeWedgeLeft {p} plm i a b f = plm b b a f (i b)
+
+public export
+typeWedgeRight : {p : ProfunctorSig} -> TypeRmapSig p ->
+  EndBase p -> PolyProdP p
+typeWedgeRight {p} prm i a b f = prm a a b f (i a)
+
+public export
+TypeProfUnit : ProfunctorSig
+TypeProfUnit _ _ = Unit
+
+public export
+TypeProfUnitLmap : TypeLmapSig TypeProfUnit
+TypeProfUnitLmap _ _ _ _ _ = ()
+
+public export
+TypeProfUnitRmap : TypeRmapSig TypeProfUnit
+TypeProfUnitRmap _ _ _ _ _ = ()
+
+public export
+TypeEnd : (p : Type -> Type -> Type) -> TypeLmapSig p -> TypeRmapSig p -> Type
+TypeEnd p plm prm =
+  Equalizer {a=(EndBase p)} {b=(PolyProdP p)}
+    (typeWedgeLeft {p} plm)
+    (typeWedgeRight {p} prm)
+
+public export
+TypeEndLAdj : Type -> ProfunctorSig
+TypeEndLAdj y a b = (HomProf a b, y)
+
+public export
+TypeEndLAdjLmap : (y : Type) -> TypeLmapSig (TypeEndLAdj y)
+TypeEndLAdjLmap y s t a = mapFst . (|>)
+
+public export
+TypeEndLAdjRmap : (y : Type) -> TypeRmapSig (TypeEndLAdj y)
+TypeEndLAdjRmap y s t b = mapFst . (.)
+
+public export
+TypeEndLAdjDimap : (y : Type) -> TypeDimapSig (TypeEndLAdj y)
+TypeEndLAdjDimap y =
+  TypeDimapFromLR (TypeEndLAdj y) (TypeEndLAdjLmap y) (TypeEndLAdjRmap y)
+
+public export
+TypeEndUnit : FunExt -> (y : Type) ->
+  y -> TypeEnd (TypeEndLAdj y) (TypeEndLAdjLmap y) (TypeEndLAdjRmap y)
+TypeEndUnit fext y ey =
+  Element0
+    (\b => (id {a=b}, ey))
+    (funExt $ \a => funExt $ \b => funExt $ \f => Refl)
+
+public export
+TypeEndCounit :
+  (p : ProfunctorSig) -> (plm : TypeLmapSig p) -> (prm : TypeRmapSig p) ->
+  TypeProfNT (TypeEndLAdj (TypeEnd p plm prm)) p
+TypeEndCounit p plm prm x y (mxy, Element0 e wcond) =
+  let
+    -- There are two ways we might obtain an answer, so we show that
+    -- they are the same.
+    0 pxyeq : (plm y y x mxy (e y) = prm x x y mxy (e x)) =
+      fcongdep {x=mxy} $ fcongdep {x=y} $ fcongdep {x=x} wcond
+  in
+  prm x x y mxy (e x)
+
+-- Here we show that the end (in `Type`) of a profunctor is the same as
+-- its set of paranatural transformations from the constant-`Unit` profunctor.
+
+public export
+ProfParaNTtoEnd : FunExt -> (q : ProfunctorSig) ->
+  (qlm : TypeLmapSig q) -> (qrm : TypeRmapSig q) ->
+  (gamma : ProfDiNT TypeProfUnit q) ->
+  (0 _ : TypeNTParanaturalityLR
+    TypeProfUnit q TypeProfUnitLmap TypeProfUnitRmap qlm qrm gamma) ->
+  TypeEnd q qlm qrm
+ProfParaNTtoEnd fext q qlm qrm gamma cond =
+  Element0
+    (\b => gamma b ())
+    (funExt $ \i0 => funExt $ \i1 => funExt $ \i2 => cond i0 i1 i2 () () Refl)
+
+public export
+ProfParaNTfromEnd : FunExt -> (q : ProfunctorSig) ->
+  (qlm : TypeLmapSig q) -> (qrm : TypeRmapSig q) ->
+  TypeEnd q qlm qrm ->
+  ProfDiNT TypeProfUnit q
+ProfParaNTfromEnd fext q qlm qrm gamma a () = fst0 gamma a
+
+public export
+0 ProfParaNTfromEndisPara : (fext : FunExt) -> (q : ProfunctorSig) ->
+  (qlm : TypeLmapSig q) -> (qrm : TypeRmapSig q) ->
+  (e : TypeEnd q qlm qrm) ->
+  TypeNTParanaturalityLR
+    TypeProfUnit q TypeProfUnitLmap TypeProfUnitRmap qlm qrm
+    (ProfParaNTfromEnd fext q qlm qrm e)
+ProfParaNTfromEndisPara fext q qlm qrm
+  (Element0 gamma wcond) i0 i1 i2 () () Refl =
+    fcongdep {x=i2} $ fcongdep {x=i1} $ fcongdep {x=i0} wcond
+
+-- A convenience function for the dialgebra special case of an end.
+public export
+ProfDialgParaNTtoEnd : FunExt -> (p, q : ProfunctorSig) ->
+  (plm : TypeLmapSig p) -> (prm : TypeRmapSig p) ->
+  TypeLRmapsCommute p plm prm ->
+  (qlm : TypeLmapSig q) -> (qrm : TypeRmapSig q) ->
+  (gamma : ProfDiNT TypeProfUnit (ProfDialg p q)) ->
+  (0 _ : TypeNTParanaturalityLR
+    TypeProfUnit
+    (ProfDialg p q)
+    TypeProfUnitLmap
+    TypeProfUnitRmap
+    (ProfDialgLmap p q prm qlm)
+    (ProfDialgRmap p q plm qrm)
+    gamma) ->
+  TypeEnd
+    (ProfDialg p q)
+    (ProfDialgLmap p q prm qlm)
+    (ProfDialgRmap p q plm qrm)
+ProfDialgParaNTtoEnd fext p q plm prm lrcomm qlm qrm =
+  ProfParaNTtoEnd
+    fext
+    (ProfDialg p q)
+    (ProfDialgLmap p q prm qlm)
+    (ProfDialgRmap p q plm qrm)
+
+-- Here we show that the end of a profunctor in `Type` is the same as
+-- the set of natural transformations from the twisted-arrow-copresheaf
+-- embedding of the constant-`Unit` profunctor to the twisted-arrow-copresheaf
+-- embedding of the given profunctor.
+
+public export
+ProfCoprEmbedToEnd : FunExt -> (q : ProfunctorSig) ->
+  (qlm : TypeLmapSig q) -> (qrm : TypeRmapSig q) ->
+  (0 qlid : TypeLmapIdSig q qlm) -> (0 qrid : TypeRmapIdSig q qrm) ->
+  (0 lcomp : TypeLmapComp q qlm) -> (0 rcomp : TypeRmapComp q qrm) ->
+  (0 lrcomm : TypeLRmapsCommute q qlm qrm) ->
+  (gamma : TwArrCoprEmbeddingNT (TypeProfConst Unit) q) ->
+  TwArrCoprNaturality
+    {p=(TwArrCoprEmbedProf $ TypeProfConst Unit)}
+    {q=(TwArrCoprEmbedProf q)}
+    (TwArrCoprEmbedDimap (TypeProfConst Unit) (TypeProfConstProfunctor Unit))
+    (TwArrCoprEmbedDimap q (MkProfunctorFromLR q qlm qrm))
+    gamma ->
+  TypeEnd q qlm qrm
+ProfCoprEmbedToEnd fext q qlm qrm qlid qrid lcomp rcomp lrcomm gamma isnat =
+  ProfParaNTtoEnd fext q qlm qrm
+    (TwArrCoprEmbeddingNTtoProfParaNT {p=(TypeProfConst Unit)} {q} gamma)
+    (\i0, i1, i2, (), (), Refl =>
+        TwArrCoprEmbeddingNTparanaturalConst {w=Unit} {q}
+          qlm qrm qlid qrid lcomp rcomp lrcomm gamma isnat i0 i1 i2 () () Refl)
+
+public export
+0 ProfEndToCoprEmbed : FunExt -> (q : ProfunctorSig) ->
+  (qlm : TypeLmapSig q) -> (qrm : TypeRmapSig q) ->
+  (0 qlid : TypeLmapIdSig q qlm) -> (0 qrid : TypeRmapIdSig q qrm) ->
+  (0 lcomp : TypeLmapComp q qlm) -> (0 rcomp : TypeRmapComp q qrm) ->
+  (0 lrcomm : TypeLRmapsCommute q qlm qrm) ->
+  TypeEnd q qlm qrm ->
+  TwArrCoprEmbeddingNT (TypeProfConst Unit) q
+ProfEndToCoprEmbed fext q qlm qrm qlid qrid lcomp rcomp lrcomm e =
+  TwArrParanaturalFromConstToCoprEmbeddingNT {w=Unit} {q}
+    qlm qrm qlid qrid lcomp rcomp lrcomm
+    (ProfParaNTfromEnd fext q qlm qrm e)
+    (\i0, i1, i2, (), (), Refl =>
+      ProfParaNTfromEndisPara fext q qlm qrm e i0 i1 i2 () () Refl)
+
+public export
+0 ProfEndToCoprEmbedIsNatural : (fext : FunExt) -> (q : ProfunctorSig) ->
+  (qlm : TypeLmapSig q) -> (qrm : TypeRmapSig q) ->
+  (0 qlid : TypeLmapIdSig q qlm) -> (0 qrid : TypeRmapIdSig q qrm) ->
+  (0 lcomp : TypeLmapComp q qlm) -> (0 rcomp : TypeRmapComp q qrm) ->
+  (0 lrcomm : TypeLRmapsCommute q qlm qrm) ->
+  (e : TypeEnd q qlm qrm) ->
+  TwArrCoprNaturality
+    {p=(TwArrCoprEmbedProf $ TypeProfConst Unit)}
+    {q=(TwArrCoprEmbedProf q)}
+    (TwArrCoprEmbedDimap (TypeProfConst Unit) (TypeProfConstProfunctor Unit))
+    (TwArrCoprEmbedDimap q (MkProfunctorFromLR q qlm qrm))
+    (ProfEndToCoprEmbed fext q qlm qrm qlid qrid lcomp rcomp lrcomm e)
+ProfEndToCoprEmbedIsNatural fext q qlm qrm qlid qrid lcomp rcomp lrcomm e =
+  TwArrParanaturalFromConstToCoprEmbeddingNTisNatural {w=Unit} {q}
+    qlm qrm qlid qrid lcomp rcomp lrcomm
+    (ProfParaNTfromEnd fext q qlm qrm e)
+    (\i0, i1, i2, (), (), Refl =>
+      ProfParaNTfromEndisPara fext q qlm qrm e i0 i1 i2 () () Refl)
+
+--------------------------------------------------------------
+--------------------------------------------------------------
+---- Natural transformations from hom-profunctor and ends ----
+--------------------------------------------------------------
+--------------------------------------------------------------
+
+public export
+HomProfDimap : TypeDimapSig HomProf
+HomProfDimap s t a b mas mtb mst = mtb . mst . mas
+
+public export
+HomProfNTtoEnd : FunExt -> (p : ProfunctorSig) ->
+  (plm : TypeLmapSig p) -> (prm : TypeRmapSig p) ->
+  (plid : TypeLmapIdSig p plm) -> (prid : TypeRmapIdSig p prm) ->
+  (alpha : TypeProfNT HomProf p) ->
+  TypeNTNaturality HomProf p HomProfDimap (TypeDimapFromLR p plm prm) alpha ->
+  TypeEnd p plm prm
+HomProfNTtoEnd fext p plm prm plid prid alpha isnat =
+  Element0
+    (\x => alpha x x id)
+    (funExt $ \a => funExt $ \b => funExt $ \mab =>
+      trans
+        (cong (plm b b a mab) (sym $ prid b b (alpha b b id)))
+      $ trans
+        (trans
+          (isnat b b a b mab id id)
+          (sym $ isnat a a a b id mab id))
+      $ plid a b (prm a a b mab (alpha a a id)))
+
+--------------------------------------------
+--------------------------------------------
+---- Relative structural ends as limits ----
+--------------------------------------------
+--------------------------------------------
+
+public export
+ProfDiNTfromTwArrDialgLimitBase : (p, q : ProfunctorSig) ->
+  (plm : TypeLmapSig p) -> (prm : TypeRmapSig p) ->
+  (qlm : TypeLmapSig q) -> (qrm : TypeRmapSig q) ->
+  TwArrDialgLimitApexBase (TwArrPreshfOpEmbedProf p) (TwArrCoprEmbedProf q) ->
+  ProfDiNT p q
+ProfDiNTfromTwArrDialgLimitBase p q plm prm qlm qrm cone x =
+  cone x x (id {a=x}) ()
+
+----------------------------
+---- Twisted-arrow ends ----
+----------------------------
+
+public export
+TwArrDialgP : TwArrPreshfOpSig -> TwArrCoprSig -> ProfunctorSig
+TwArrDialgP p q x y = (mxy : x -> y) -> TwArrDialg p q x y mxy
+
+public export
+TwArrDialgEndBase : TwArrPreshfOpSig -> TwArrCoprSig -> Type
+TwArrDialgEndBase p q = (x, y : Type) -> TwArrDialgP p q x y
+
+public export
+TwArrDialgDiNTbase : TwArrPreshfOpSig -> TwArrCoprSig -> Type
+TwArrDialgDiNTbase p q = (x : Type) -> TwArrDialg p q x x id
+
+public export
+TwArrDialgEndBaseToDiNTbase : (p : TwArrPreshfOpSig) -> (q : TwArrCoprSig) ->
+  (pdm : TwArrPreshfOpDimapSig p) -> (qdm : TwArrCoprDimapSig q) ->
+  TwArrDialgEndBase p q -> TwArrDialgDiNTbase p q
+TwArrDialgEndBaseToDiNTbase p q pdm qdm i x = i x x id
+
+public export
+TwArrDialgDiNTbaseToEndBaseL : (p : TwArrPreshfOpSig) -> (q : TwArrCoprSig) ->
+  (pdm : TwArrPreshfOpDimapSig p) -> (qdm : TwArrCoprDimapSig q) ->
+  TwArrDialgDiNTbase p q -> TwArrDialgEndBase p q
+TwArrDialgDiNTbaseToEndBaseL p q pdm qdm i x y mxy =
+  TwArrDialgLmap p q pdm qdm y y x Prelude.id mxy (i y)
+
+public export
+TwArrDialgDiNTbaseToEndBaseR : (p : TwArrPreshfOpSig) -> (q : TwArrCoprSig) ->
+  (pdm : TwArrPreshfOpDimapSig p) -> (qdm : TwArrCoprDimapSig q) ->
+  TwArrDialgDiNTbase p q -> TwArrDialgEndBase p q
+TwArrDialgDiNTbaseToEndBaseR p q pdm qdm i x y mxy =
+  TwArrDialgRmap p q pdm qdm x x y Prelude.id mxy (i x)
+
+public export
+TwArrDialgDiNTcond : (p : TwArrPreshfOpSig) -> (q : TwArrCoprSig) ->
+  (pdm : TwArrPreshfOpDimapSig p) -> (qdm : TwArrCoprDimapSig q) ->
+  TwArrDialgDiNTbase p q -> Type
+TwArrDialgDiNTcond p q pdm qdm i =
+  (x, y : Type) -> (mxy : x -> y) ->
+  ExtEq {a=(p y x mxy)} {b=(q x y mxy)}
+    (TwArrDialgDiNTbaseToEndBaseL p q pdm qdm i x y mxy)
+    (TwArrDialgDiNTbaseToEndBaseR p q pdm qdm i x y mxy)
+
+public export
+TwArrDialgEndCond : (p : TwArrPreshfOpSig) -> (q : TwArrCoprSig) ->
+  (pdm : TwArrPreshfOpDimapSig p) -> (qdm : TwArrCoprDimapSig q) ->
+  TwArrDialgEndBase p q -> Type
+TwArrDialgEndCond p q pdm qdm i =
+  TwArrDialgDiNTcond p q pdm qdm (TwArrDialgEndBaseToDiNTbase p q pdm qdm i)
+
+public export
+ProfDiNTtoTwArrL : (p, q : ProfunctorSig) ->
+  (plm : TypeLmapSig p) -> (prm : TypeRmapSig p) ->
+  (qlm : TypeLmapSig q) -> (qrm : TypeRmapSig q) ->
+  (plid : TypeLmapIdSig p plm) -> (prid : TypeRmapIdSig p prm) ->
+  (qlid : TypeLmapIdSig q qlm) -> (qrid : TypeRmapIdSig q qrm) ->
+  (0 plrcomm : TypeLRmapsCommute p plm prm) ->
+  (0 qlrcomm : TypeLRmapsCommute q qlm qrm) ->
+  (gamma : TypeProfDiNT p q) ->
+  TwArrDialgEndBase (TwArrPreshfOpEmbedProf p) (TwArrCoprEmbedProf q)
+ProfDiNTtoTwArrL p q plm prm qlm qrm plid prid qlid qrid plrcomm qlrcomm
+  gamma x y mxy =
+    TwArrDialgLmap
+      (TwArrPreshfOpEmbedProf p) (TwArrCoprEmbedProf q)
+      (\_, _, _, _, _ => TypeDimapFromLR p plm prm _ _ _ _)
+      (\_, _, _, _, _ => TypeDimapFromLR q qlm qrm _ _ _ _)
+      y y x id mxy (gamma y)
+
+public export
+ProfDiNTtoTwArrR : (p, q : ProfunctorSig) ->
+  (plm : TypeLmapSig p) -> (prm : TypeRmapSig p) ->
+  (qlm : TypeLmapSig q) -> (qrm : TypeRmapSig q) ->
+  (plid : TypeLmapIdSig p plm) -> (prid : TypeRmapIdSig p prm) ->
+  (qlid : TypeLmapIdSig q qlm) -> (qrid : TypeRmapIdSig q qrm) ->
+  (0 plrcomm : TypeLRmapsCommute p plm prm) ->
+  (0 qlrcomm : TypeLRmapsCommute q qlm qrm) ->
+  (gamma : TypeProfDiNT p q) ->
+  TwArrDialgEndBase (TwArrPreshfOpEmbedProf p) (TwArrCoprEmbedProf q)
+ProfDiNTtoTwArrR p q plm prm qlm qrm plid prid qlid qrid plrcomm qlrcomm
+  gamma x y mxy =
+    TwArrDialgRmap
+      (TwArrPreshfOpEmbedProf p) (TwArrCoprEmbedProf q)
+      (\_, _, _, _, _ => TypeDimapFromLR p plm prm _ _ _ _)
+      (\_, _, _, _, _ => TypeDimapFromLR q qlm qrm _ _ _ _)
+      x x y id mxy (gamma x)
+
+public export
+ProfDiNTtoTwArr : (p, q : ProfunctorSig) ->
+  (plm : TypeLmapSig p) -> (prm : TypeRmapSig p) ->
+  (qlm : TypeLmapSig q) -> (qrm : TypeRmapSig q) ->
+  (plid : TypeLmapIdSig p plm) -> (prid : TypeRmapIdSig p prm) ->
+  (qlid : TypeLmapIdSig q qlm) -> (qrid : TypeRmapIdSig q qrm) ->
+  (0 plrcomm : TypeLRmapsCommute p plm prm) ->
+  (0 qlrcomm : TypeLRmapsCommute q qlm qrm) ->
+  (gamma : TypeProfDiNT p q) ->
+  TypeNTParanaturality
+    p q (TypeDimapFromLR p plm prm) (TypeDimapFromLR q qlm qrm) gamma ->
+  TwArrDialgEndBase (TwArrPreshfOpEmbedProf p) (TwArrCoprEmbedProf q)
+ProfDiNTtoTwArr p q plm prm qlm qrm plid prid qlid qrid plrcomm qlrcomm
+    gamma cond x y mxy pyx
+    with
+      (ProfDiNTtoTwArrR p q plm prm qlm qrm plid prid qlid qrid plrcomm qlrcomm
+        gamma x y mxy pyx) proof qeq
+  ProfDiNTtoTwArr p q plm prm qlm qrm plid prid qlid qrid plrcomm qlrcomm
+    gamma cond x y mxy pyx
+    | qxy =
+      let
+        -- There are two ways we could make a `qxy`, so we show that
+        -- they are equivalent.
+        0 eq :
+          ((ProfDiNTtoTwArrL p q plm prm qlm qrm plid prid qlid qrid
+            plrcomm qlrcomm gamma x y mxy pyx) =
+           qxy) =
+          rewrite sym qeq in
+          rewrite plid y y (prm y x y mxy pyx) in
+          rewrite prid y x pyx in
+          cond x y mxy (plm y x x mxy pyx) (prm y x y mxy pyx)
+            (rewrite prid y y (prm y x y mxy pyx) in
+             rewrite plid x y (prm x x y mxy (plm y x x mxy pyx)) in
+             plrcomm y x x y mxy mxy pyx)
+      in
+      qxy
+
+public export
+0 ProfDiNTtoTwArrCond : (p, q : ProfunctorSig) ->
+  (plm : TypeLmapSig p) -> (prm : TypeRmapSig p) ->
+  (qlm : TypeLmapSig q) -> (qrm : TypeRmapSig q) ->
+  (plid : TypeLmapIdSig p plm) -> (prid : TypeRmapIdSig p prm) ->
+  (qlid : TypeLmapIdSig q qlm) -> (qrid : TypeRmapIdSig q qrm) ->
+  (0 plrcomm : TypeLRmapsCommute p plm prm) ->
+  (0 qlrcomm : TypeLRmapsCommute q qlm qrm) ->
+  (gamma : TypeProfDiNT p q) ->
+  (cond : TypeNTParanaturality
+    p q (TypeDimapFromLR p plm prm) (TypeDimapFromLR q qlm qrm) gamma) ->
+  TwArrDialgEndCond
+    (TwArrPreshfOpEmbedProf p) (TwArrCoprEmbedProf q)
+    (TwArrPreshfOpEmbedProfMap p (MkProfunctorFromLR p plm prm))
+    (TwArrCoprEmbedDimap q (MkProfunctorFromLR q qlm qrm))
+    (ProfDiNTtoTwArr
+      p q plm prm qlm qrm plid prid qlid qrid plrcomm qlrcomm gamma cond)
+ProfDiNTtoTwArrCond p q plm prm qlm qrm plid prid qlid qrid plrcomm qlrcomm
+  gamma cond x y mxy pyx =
+    rewrite plid y y (prm y x y mxy pyx) in
+    rewrite prid y y (prm y x y mxy pyx) in
+    rewrite plid y y (prm y x y mxy pyx) in
+    rewrite qrid y y (gamma y (prm y x y mxy pyx)) in
+    rewrite qlid y y (gamma y (prm y x y mxy pyx)) in
+    rewrite prid y x pyx in
+    rewrite prid x x (plm y x x mxy pyx) in
+    rewrite plid x x (plm y x x mxy pyx) in
+    rewrite qrid x x (gamma x (plm y x x mxy pyx)) in
+    rewrite qlid x x (gamma x (plm y x x mxy pyx)) in
+    cond x y mxy
+      (plm y x x mxy pyx)
+      (prm y x y mxy pyx)
+      (rewrite prid y y (prm y x y mxy pyx) in
+       rewrite plid x y
+        (prm x x y mxy (plm y x x mxy pyx)) in
+       plrcomm y x x y mxy mxy pyx)
+
+--------------------------
+---- Coends in `Type` ----
+--------------------------
+
+public export
+TypeCoendRAdj : Type -> ProfunctorSig
+TypeCoendRAdj y a b = HomProf b a -> y
+
+public export
+TypeCoendRAdjLmap : (y : Type) -> TypeLmapSig (TypeCoendRAdj y)
+TypeCoendRAdjLmap y s t a mas myst = myst . ((.) mas)
+
+public export
+TypeCoendRAdjRmap : (y : Type) -> TypeRmapSig (TypeCoendRAdj y)
+TypeCoendRAdjRmap y s t b mtb myst = myst . ((|>) mtb)
+
+public export
+TypeCoendRAdjDimap : (y : Type) -> TypeDimapSig (TypeCoendRAdj y)
+TypeCoendRAdjDimap y =
+  TypeDimapFromLR (TypeCoendRAdj y) (TypeCoendRAdjLmap y) (TypeCoendRAdjRmap y)
+
+public export
+TypeCoendMap : (x, y : Type) -> (x -> y) ->
+  TypeProfNT (TypeCoendRAdj x) (TypeCoendRAdj y)
+TypeCoendMap x y mxy a b mbax mba = mxy (mbax mba)
+
+public export
+TypeCoendUnitBase : (p : ProfunctorSig) -> TypeRmapSig p ->
+  TypeProfNT p (TypeCoendRAdj $ CoendBase p)
+TypeCoendUnitBase p prm x y pxy myx = (x ** prm x y x myx pxy)
+
+public export
+TypeCoendCounit : (y : Type) -> CoendBase (TypeCoendRAdj y) -> y
+TypeCoendCounit y (b ** mbby) = mbby id
+
+------------------------------------------
+---- Profunctor iterative application ----
+------------------------------------------
+
+public export
+ProfToEndoF : ProfunctorSig -> FinSliceEndofunctor 2
+ProfToEndoF p sl FZ = p (sl $ FS FZ) (sl FZ)
+ProfToEndoF p sl (FS FZ) = p (sl FZ) (sl $ FS FZ)
+
+public export
+ProfEndoFMapNeg : FinSliceEndofunctor 2 -> Type
+ProfEndoFMapNeg f =
+  ((st, ab : FinSliceObj 2) ->
+   (ab FZ -> st FZ) -> (st (FS FZ) -> ab (FS FZ)) ->
+   f ab FZ -> f st FZ)
+
+public export
+ProfEndoFMapPos : FinSliceEndofunctor 2 -> Type
+ProfEndoFMapPos f =
+  ((st, ab : FinSliceObj 2) ->
+   (ab FZ -> st FZ) -> (st (FS FZ) -> ab (FS FZ)) ->
+   f st (FS FZ) -> f ab (FS FZ))
+
+public export
+ProfEndoFMap : FinSliceEndofunctor 2 -> Type
+ProfEndoFMap f = (ProfEndoFMapNeg f, ProfEndoFMapPos f)
+
+public export
+p2efMapNeg : {p : ProfunctorSig} ->
+  TypeDimapSig p -> ProfEndoFMapNeg (ProfToEndoF p)
+p2efMapNeg {p} pdm st ab = flip $ pdm (ab (FS FZ)) (ab FZ) (st (FS FZ)) (st FZ)
+
+public export
+p2efMapPos : {p : ProfunctorSig} ->
+  TypeDimapSig p -> ProfEndoFMapPos (ProfToEndoF p)
+p2efMapPos {p} pdm st ab = pdm (st FZ) (st (FS FZ)) (ab FZ) (ab (FS FZ))
+
+public export
+p2efMap : {p : ProfunctorSig} ->
+  TypeDimapSig p -> ProfEndoFMap (ProfToEndoF p)
+p2efMap {p} pdm = (p2efMapNeg {p} pdm, p2efMapPos {p} pdm)
+
+public export
+OpProfFromEndoF : FinSliceEndofunctor 2 -> ProfunctorSig
+OpProfFromEndoF f x y = f (flip index [x, y]) FZ
+
+public export
+opfeOpDimap : {f : FinSliceEndofunctor 2} -> ProfEndoFMapNeg f ->
+  TypeDimapSig (flip $ OpProfFromEndoF f)
+opfeOpDimap {f} fmn s t a b = flip $ fmn (flip index [b, a]) (flip index [t, s])
+
+public export
+ProfFromEndoF : FinSliceEndofunctor 2 -> ProfunctorSig
+ProfFromEndoF f x y = f (flip index [x, y]) (FS FZ)
+
+public export
+pfeDimap : {f : FinSliceEndofunctor 2} -> ProfEndoFMapPos f ->
+  TypeDimapSig (ProfFromEndoF f)
+pfeDimap {f} fmp s t a b = fmp (flip index [s, t]) (flip index [a, b])
+
+public export
+HomEndoF : FinSliceEndofunctor 2
+HomEndoF = ProfToEndoF HomProf
+
+public export
+HomEndoFMap : ProfEndoFMap HomEndoF
+HomEndoFMap = p2efMap {p=HomProf} HomProfDimap
+
+-- The "translate" functor which generates the free monad is a coproduct --
+-- but coproducts in `op(Type)` are products in `Type`.
+public export
+data ProfTranslateF :
+    FinSliceEndofunctor 2 -> FinSliceObj 2 -> FinSliceEndofunctor 2 where
+  InPTn : {f : FinSliceEndofunctor 2} -> {0 sv, sa : FinSliceObj 2} ->
+    sv FZ -> f sa FZ -> ProfTranslateF f sv sa FZ
+  InPTv : {f : FinSliceEndofunctor 2} -> {0 sv, sa : FinSliceObj 2} ->
+    sv (FS FZ) -> ProfTranslateF f sv sa (FS FZ)
+  InPTc : {f : FinSliceEndofunctor 2} -> {0 sv, sa : FinSliceObj 2} ->
+    f sa (FS FZ) -> ProfTranslateF f sv sa (FS FZ)
+
+public export
+ProfTranslateFMapNeg : {f : FinSliceEndofunctor 2} -> {sv : FinSliceObj 2} ->
+  ProfEndoFMapNeg f -> ProfEndoFMapNeg (ProfTranslateF f sv)
+ProfTranslateFMapNeg {f} {sv} fmn st ab mas mtb (InPTn esv efa) =
+  InPTn esv $ fmn st ab mas mtb efa
+ProfTranslateFMapNeg {f} {sv} fmn st ab mas mtb (InPTv esv) impossible
+ProfTranslateFMapNeg {f} {sv} fmn st ab mas mtb (InPTc efa) impossible
+
+public export
+ProfTranslateFMapPos : {f : FinSliceEndofunctor 2} -> {sv : FinSliceObj 2} ->
+  ProfEndoFMapPos f -> ProfEndoFMapPos (ProfTranslateF f sv)
+ProfTranslateFMapPos {f} {sv} fmp st ab mas mtb (InPTn {f} {sv} {sa} ev eft)
+  impossible
+ProfTranslateFMapPos {f} {sv} fmp st ab mas mtb (InPTv ev) =
+  InPTv ev
+ProfTranslateFMapPos {f} {sv} fmp st ab mas mtb (InPTc eft) =
+  InPTc $ fmp st ab mas mtb eft
+
+public export
+ProfTranslateFMap : {f : FinSliceEndofunctor 2} -> {sv : FinSliceObj 2} ->
+  ProfEndoFMap f -> ProfEndoFMap (ProfTranslateF f sv)
+ProfTranslateFMap {f} {sv} fmp =
+  (ProfTranslateFMapNeg {f} {sv} (fst fmp),
+   ProfTranslateFMapPos {f} {sv} (snd fmp))
+
+public export
+data ProfFreeM2 : FinSliceEndofunctor 2 -> FinSliceEndofunctor 2 where
+  InPrF : {f : FinSliceEndofunctor 2} -> {sa : FinSliceObj 2} ->
+    SliceAlg {a=(Fin 2)} (ProfTranslateF f sa) (ProfFreeM2 f sa)
+
+public export
+ProfFreeMPair : ProfunctorSig -> FinSliceEndofunctor 2
+ProfFreeMPair = ProfFreeM2 . ProfToEndoF
+
+public export
+ProfOpFreeM : ProfunctorSig -> ProfunctorSig
+ProfOpFreeM = OpProfFromEndoF . ProfFreeM2 . ProfToEndoF
+
+public export
+ProfFreeM : ProfunctorSig -> ProfunctorSig
+ProfFreeM = ProfFromEndoF . ProfFreeM2 . ProfToEndoF
+
+public export
+inPFC : {p : ProfunctorSig} -> {x, y : Type} ->
+  p (ProfOpFreeM p x y) (ProfFreeM p x y) -> ProfFreeM p x y
+inPFC {p} {x} {y} el = InPrF (FS FZ) (InPTc el)
+
+public export
+ProfMuPair : ProfunctorSig -> FinSliceObj 2
+ProfMuPair p = ProfFreeMPair p (flip index [Unit, Void])
+
+public export
+ProfOpMu : ProfunctorSig -> Type
+ProfOpMu = flip ProfMuPair FZ
+
+public export
+ProfMu : ProfunctorSig -> Type
+ProfMu = flip ProfMuPair (FS FZ)
+
+public export
+ProfFixF : ProfunctorSig -> Type -> Type
+ProfFixF p = p (ProfOpMu p)
+
+public export
+profFixFmap : {p : ProfunctorSig} -> TypeRmapSig p ->
+  (a, b : Type) -> (a -> b) -> ProfFixF p a -> ProfFixF p b
+profFixFmap {p} prm = prm (ProfOpMu p)
+
+public export
+InPRm : {p : ProfunctorSig} -> ProfFixF p (ProfMu p) -> ProfMu p
+InPRm {p} el = InPrF (FS FZ) (InPTc el)
+
+public export
+OutPRm : {p : ProfunctorSig} -> ProfMu p -> ProfFixF p (ProfMu p)
+OutPRm {p} (InPrF (FS FZ) (InPTn () el)) impossible
+OutPRm {p} (InPrF (FS FZ) (InPTv ev)) = void ev
+OutPRm {p} (InPrF (FS FZ) (InPTc el)) = el
+
+public export
+ProfDiCata : ProfunctorSig -> Type
+ProfDiCata p = (a, b : Type) ->
+  (p b a -> a) -> (b -> p a b) -> (ProfMu p -> a, b -> ProfOpMu p)
+
+----------------------------------------------------
+----------------------------------------------------
+---- (Co)free twisted-arrow(-op) (co)presheaves ----
+----------------------------------------------------
+----------------------------------------------------
+
+-- The analogue of `CoProYo` for presheaves on the twisted-arrow category
+-- of `Type`.  This is the object-map component of the object-map component
+-- of an endofunctor on twisted-arrow presheaves.
+public export
+CoTwArrPreshfYo : TwArrPreshfSig -> TwArrPreshfSig
+CoTwArrPreshfYo p x y mxy =
+  (ab : (Type, Type) **
+   mp : (fst ab -> x, y -> snd ab) **
+   p (fst ab) (snd ab) (snd mp . mxy . fst mp))
+
+-- The morphism-map component of the object-map component of `CoTwArrPreshfYo`.
+public export
+CoTwArrPreshfYoContraDimap : (p : TwArrPreshfSig) ->
+  TwArrPreshfContraDimapSig (CoTwArrPreshfYo p)
+CoTwArrPreshfYoContraDimap p s t a b mab msa mbt ((c, d) ** (mcs, mtd) ** pcd) =
+  ((c, d) ** (msa . mcs, mtd . mbt) ** pcd)
+
+-- The morphism-map component of `CoTwArrPreshfYo`.
+public export
+CoTwArrPreshfYoFMap : (p, q : TwArrPreshfSig) ->
+  TwArrPreshfNatTrans p q ->
+  TwArrPreshfNatTrans (CoTwArrPreshfYo p) (CoTwArrPreshfYo q)
+CoTwArrPreshfYoFMap p q gamma x y mxy ((a, b) ** (max, myb) ** pab) =
+  ((a, b) ** (max, myb) ** gamma a b (myb . mxy . max) pab)
+
+-- The analogue of `CoProYo` for presheaves on the twisted-arrow category
+-- of `op(Type)`.
+public export
+CoTwArrPreshfOpYo : TwArrPreshfOpSig -> TwArrPreshfOpSig
+CoTwArrPreshfOpYo p x y myx =
+  (ab : (Type, Type) **
+   mp : (x -> fst ab, snd ab -> y) **
+   p (fst ab) (snd ab) (fst mp . myx . snd mp))
+
+public export
+CoTwArrPreshfOpYoDimap : (p : TwArrPreshfOpSig) ->
+  TwArrPreshfOpDimapSig (CoTwArrPreshfOpYo p)
+CoTwArrPreshfOpYoDimap p s t a b mba mas mtb ((c, d) ** (msc, mdt) ** pcd) =
+  ((c, d) ** (msc . mas, mtb . mdt) ** pcd)
+
+public export
+CoTwArrPreshfOpYoFMap : (p, q : TwArrPreshfOpSig) ->
+  TwArrPreshfOpNatTrans p q ->
+  TwArrPreshfOpNatTrans (CoTwArrPreshfOpYo p) (CoTwArrPreshfOpYo q)
+CoTwArrPreshfOpYoFMap p q gamma x y myx ((a, b) ** (mxa, mby) ** pba) =
+  ((a, b) ** (mxa, mby) ** gamma a b (mxa . myx . mby) pba)
+
+------------------------------------------------------------
+------------------------------------------------------------
+---- (Co)free twisted-arrow(-op) paranatural embeddings ----
+------------------------------------------------------------
+------------------------------------------------------------
+
+public export
+TwArrPreshfParaEmbedProfBase : (p : Type -> Type -> Type) ->
+  TypeLmapSig p -> TypeRmapSig p -> TwArrPreshfSig
+TwArrPreshfParaEmbedProfBase p plm prm x y mxy =
+  (pp : (p x x, p y y) ** prm x x y mxy (fst pp) = plm y y x mxy (snd pp))
+
+public export
+TwArrPreshfParaEmbedProfBaseNT : (p, q : Type -> Type -> Type) ->
+  (plm : TypeLmapSig p) -> (prm : TypeRmapSig p) ->
+  (qlm : TypeLmapSig q) -> (qrm : TypeRmapSig q) ->
+  Type
+TwArrPreshfParaEmbedProfBaseNT p q plm prm qlm qrm =
+  TwArrPreshfNatTrans
+    (TwArrPreshfParaEmbedProfBase p plm prm)
+    (TwArrPreshfParaEmbedProfBase q qlm qrm)
+
+public export
+TwArrPreshfParaEmbedProfBaseFMap : (p, q : Type -> Type -> Type) ->
+  (plm : TypeLmapSig p) -> (prm : TypeRmapSig p) ->
+  (qlm : TypeLmapSig q) -> (qrm : TypeRmapSig q) ->
+  TypeLmapIdSig p plm -> TypeRmapIdSig p prm ->
+  TypeLmapIdSig q qlm -> TypeRmapIdSig q qrm ->
+  (alpha : TypeProfDiNT p q) ->
+  TypeNTParanaturality
+    p q (TypeDimapFromLR p plm prm) (TypeDimapFromLR q qlm qrm) alpha ->
+  TwArrPreshfParaEmbedProfBaseNT p q plm prm qlm qrm
+TwArrPreshfParaEmbedProfBaseFMap p q plm prm qlm qrm plid prid qlid qrid
+  alpha cond x y mxy ((pxx, pyy) ** eq) =
+    ((alpha x pxx, alpha y pyy) **
+     rewrite sym $ qrid y y $ alpha y pyy in
+     rewrite sym $ qlid x y $ qrm x x y mxy $ alpha x pxx in
+     sym $ cond x y mxy pxx pyy
+      (rewrite eq in
+       rewrite prid y y pyy in
+       rewrite plid x y (plm y y x mxy pyy) in Refl))
+
+public export
+TwArrPreshfParaEmbedProf : (p : Type -> Type -> Type) ->
+  TypeLmapSig p -> TypeRmapSig p -> TwArrPreshfSig
+TwArrPreshfParaEmbedProf p plm prm =
+  CoTwArrPreshfYo (TwArrPreshfParaEmbedProfBase p plm prm)
+
+public export
+TwArrPreshfParaEmbedProfMap : (p : Type -> Type -> Type) ->
+  (plm : TypeLmapSig p) -> (prm : TypeRmapSig p) ->
+  TwArrPreshfContraDimapSig (TwArrPreshfParaEmbedProf p plm prm)
+TwArrPreshfParaEmbedProfMap p plm prm =
+  CoTwArrPreshfYoContraDimap (TwArrPreshfParaEmbedProfBase p plm prm)
+
+public export
+TwArrPreshfParaEmbedProfNT : (p, q : Type -> Type -> Type) ->
+  (plm : TypeLmapSig p) -> (prm : TypeRmapSig p) ->
+  (qlm : TypeLmapSig q) -> (qrm : TypeRmapSig q) ->
+  Type
+TwArrPreshfParaEmbedProfNT p q plm prm qlm qrm =
+  TwArrPreshfNatTrans
+    (TwArrPreshfParaEmbedProf p plm prm)
+    (TwArrPreshfParaEmbedProf q qlm qrm)
+
+public export
+TwArrPreshfParaEmbedProfFMap : (p, q : Type -> Type -> Type) ->
+  (plm : TypeLmapSig p) -> (prm : TypeRmapSig p) ->
+  (qlm : TypeLmapSig q) -> (qrm : TypeRmapSig q) ->
+  TypeLmapIdSig p plm -> TypeRmapIdSig p prm ->
+  TypeLmapIdSig q qlm -> TypeRmapIdSig q qrm ->
+  (alpha : TypeProfDiNT p q) ->
+  TypeNTParanaturality
+    p q (TypeDimapFromLR p plm prm) (TypeDimapFromLR q qlm qrm) alpha ->
+  TwArrPreshfParaEmbedProfNT p q plm prm qlm qrm
+TwArrPreshfParaEmbedProfFMap p q plm prm qlm qrm plid prid qlid qrid
+  alpha isnat =
+    CoTwArrPreshfYoFMap
+      (TwArrPreshfParaEmbedProfBase p plm prm)
+      (TwArrPreshfParaEmbedProfBase q qlm qrm)
+      (TwArrPreshfParaEmbedProfBaseFMap
+        p q plm prm qlm qrm plid prid qlid qrid alpha isnat)
+
+public export
+TwArrPreshfOpParaEmbedProfBase : (p : Type -> Type -> Type) ->
+  TypeLmapSig p -> TypeRmapSig p -> TwArrPreshfOpSig
+TwArrPreshfOpParaEmbedProfBase p plm prm x y myx =
+  (pp : (p x x, p y y) ** plm x x y myx (fst pp) = prm y y x myx (snd pp))
+
+public export
+TwArrPreshfOpParaEmbedProfBaseNT : (p, q : Type -> Type -> Type) ->
+  (plm : TypeLmapSig p) -> (prm : TypeRmapSig p) ->
+  (qlm : TypeLmapSig q) -> (qrm : TypeRmapSig q) ->
+  Type
+TwArrPreshfOpParaEmbedProfBaseNT p q plm prm qlm qrm =
+  TwArrPreshfOpNatTrans
+    (TwArrPreshfOpParaEmbedProfBase p plm prm)
+    (TwArrPreshfOpParaEmbedProfBase q qlm qrm)
+
+public export
+TwArrPreshfOpParaEmbedProfBaseFMap : (p, q : Type -> Type -> Type) ->
+  (plm : TypeLmapSig p) -> (prm : TypeRmapSig p) ->
+  (qlm : TypeLmapSig q) -> (qrm : TypeRmapSig q) ->
+  TypeLmapIdSig p plm -> TypeRmapIdSig p prm ->
+  TypeLmapIdSig q qlm -> TypeRmapIdSig q qrm ->
+  (alpha : TypeProfDiNT p q) ->
+  TypeNTParanaturality
+    p q (TypeDimapFromLR p plm prm) (TypeDimapFromLR q qlm qrm) alpha ->
+  TwArrPreshfOpParaEmbedProfBaseNT p q plm prm qlm qrm
+TwArrPreshfOpParaEmbedProfBaseFMap p q plm prm qlm qrm plid prid qlid qrid
+  alpha cond x y myx ((pxx, pyy) ** eq) =
+    ((alpha x pxx, alpha y pyy) **
+     rewrite sym $ qrid x x $ alpha x pxx in
+     rewrite sym $ qlid y x $ qrm y y x myx (alpha y pyy) in
+     cond y x myx pyy pxx
+      (rewrite sym eq in
+       rewrite prid x x pxx in
+       rewrite plid y x (plm x x y myx pxx) in Refl))
+
+public export
+TwArrPreshfOpParaEmbedProf : (p : Type -> Type -> Type) ->
+  TypeLmapSig p -> TypeRmapSig p -> TwArrPreshfOpSig
+TwArrPreshfOpParaEmbedProf p plm prm =
+  CoTwArrPreshfOpYo (TwArrPreshfOpParaEmbedProfBase p plm prm)
+
+public export
+TwArrPreshfOpParaEmbedProfMap : (p : Type -> Type -> Type) ->
+  (plm : TypeLmapSig p) -> (prm : TypeRmapSig p) ->
+  TwArrPreshfOpDimapSig (TwArrPreshfOpParaEmbedProf p plm prm)
+TwArrPreshfOpParaEmbedProfMap p plm prm =
+  CoTwArrPreshfOpYoDimap (TwArrPreshfOpParaEmbedProfBase p plm prm)
+
+public export
+TwArrPreshfOpParaEmbedProfNT : (p, q : Type -> Type -> Type) ->
+  (plm : TypeLmapSig p) -> (prm : TypeRmapSig p) ->
+  (qlm : TypeLmapSig q) -> (qrm : TypeRmapSig q) ->
+  Type
+TwArrPreshfOpParaEmbedProfNT p q plm prm qlm qrm =
+  TwArrPreshfOpNatTrans
+    (TwArrPreshfOpParaEmbedProf p plm prm)
+    (TwArrPreshfOpParaEmbedProf q qlm qrm)
+
+public export
+TwArrPreshfOpParaEmbedProfFMap : (p, q : Type -> Type -> Type) ->
+  (plm : TypeLmapSig p) -> (prm : TypeRmapSig p) ->
+  (qlm : TypeLmapSig q) -> (qrm : TypeRmapSig q) ->
+  TypeLmapIdSig p plm -> TypeRmapIdSig p prm ->
+  TypeLmapIdSig q qlm -> TypeRmapIdSig q qrm ->
+  (alpha : TypeProfDiNT p q) ->
+  TypeNTParanaturality
+    p q (TypeDimapFromLR p plm prm) (TypeDimapFromLR q qlm qrm) alpha ->
+  TwArrPreshfOpParaEmbedProfNT p q plm prm qlm qrm
+TwArrPreshfOpParaEmbedProfFMap p q plm prm qlm qrm plid prid qlid qrid
+  alpha isnat =
+    CoTwArrPreshfOpYoFMap
+      (TwArrPreshfOpParaEmbedProfBase p plm prm)
+      (TwArrPreshfOpParaEmbedProfBase q qlm qrm)
+      (TwArrPreshfOpParaEmbedProfBaseFMap
+        p q plm prm qlm qrm plid prid qlid qrid alpha isnat)
+
+---------------------------
+---------------------------
+---- Dinatural numbers ----
+---------------------------
+---------------------------
+
+public export
+0 EndoHomParaSig : Type
+EndoHomParaSig = TypeProfDiNT HomProf HomProf
+
+public export
+0 EndoHomParaCond : EndoHomParaSig -> Type
+EndoHomParaCond = TypeNTParanaturality HomProf HomProf HomProfDimap HomProfDimap
+
+public export
+EndoHomParaFromNat : Nat -> EndoHomParaSig
+EndoHomParaFromNat = iterNpnt
+
+public export
+EndoHomParaFromNatCond : FunExt ->
+  (n : Nat) -> EndoHomParaCond (EndoHomParaFromNat n)
+EndoHomParaFromNatCond fext Z i0 i1 i2 d0 d1 cond = Refl
+EndoHomParaFromNatCond fext (S n) i0 i1 i2 d0 d1 cond =
+  funExt $ \ex =>
+    rewrite fcong {x=ex} (EndoHomParaFromNatCond fext n i0 i1 i2 d0 d1 cond) in
+    fcong {x=(EndoHomParaFromNat n i0 d0 ex)} cond
+
+public export
+EndoHomParaToNat : EndoHomParaSig -> Nat
+EndoHomParaToNat gamma = gamma Nat S Z
+
+public export
+EndoHomParaToNatCompleteN : FunExt ->
+  (gamma : EndoHomParaSig) -> EndoHomParaCond gamma ->
+  (n : Nat) -> EndoHomParaToNat gamma = n ->
+  (x : Type) -> (f : x -> x) ->
+  ExtEq (gamma x f) (EndoHomParaFromNat (EndoHomParaToNat gamma) x f)
+EndoHomParaToNatCompleteN fext gamma cond n neq x f ex =
+  fcong {x=Z} $ cond Nat x (flip (iterNf x f) ex) S f Refl
+
+public export
+EndoHomParaToNatComplete : FunExt ->
+  (gamma : EndoHomParaSig) -> EndoHomParaCond gamma ->
+  (x : Type) -> (f : x -> x) ->
+  ExtEq (gamma x f) (EndoHomParaFromNat (EndoHomParaToNat gamma) x f)
+EndoHomParaToNatComplete fext gamma cond x =
+  EndoHomParaToNatCompleteN fext gamma cond (EndoHomParaToNat gamma) Refl x
+
+------------------------------------------------------
+------------------------------------------------------
+---- Mendler-style mixed-variance inductive types ----
+------------------------------------------------------
+------------------------------------------------------
+
+-- See Uustalu's "Mendler-style inductive types, categorically".
+
+public export
+ProfCov : (Type -> Type) -> ProfunctorSig
+ProfCov f x y = f y
+
+public export
+ProfCovDimap : (f : Type -> Type) ->
+  ((a, b : Type) -> (a -> b) -> f a -> f b) ->
+  TypeDimapSig (ProfCov f)
+ProfCovDimap f fm s t a b mas mtb = fm t b mtb
+
+public export
+ProfCovId : ProfunctorSig
+ProfCovId = ProfCov (id {a=Type})
+
+public export
+ProfOver : ProfunctorSig -> Type -> ProfunctorSig
+ProfOver g c x y = g y x -> c
+
+public export
+ProfOverDimap : (g : ProfunctorSig) -> (gdm : TypeDimapSig g) ->
+  (c : Type) -> TypeDimapSig (ProfOver g c)
+ProfOverDimap g gdm c s t a b mas mtb mgc = mgc . gdm b a t s mtb mas
+
+public export
+ProfContraHom : Type -> ProfunctorSig
+ProfContraHom = ProfOver (ProfCov (id {a=Type}))
+
+public export
+ProfContraHomFormula : (c : Type) -> (x, y : Type) ->
+  ProfContraHom c x y = (x -> c)
+ProfContraHomFormula c x y = Refl
+
+public export
+RCowedgeF : ProfunctorSig -> ProfunctorSig -> Type -> Type
+RCowedgeF h g c = (y : Type) -> h y y -> ProfOver g c y y
+
+public export
+RCowedgeMap : (h, g : ProfunctorSig) -> (c, d : Type) ->
+  (c -> d) -> RCowedgeF h g c -> RCowedgeF h g d
+RCowedgeMap h g c d mcd cow x elh elg = mcd $ cow x elh elg
+
+public export
+RCoendUniv : ProfunctorSig -> ProfunctorSig -> Type
+RCoendUniv h g = NaturalTransformation (RCowedgeF h g) (id {a=Type})
+
+public export
+RCoendExt : ProfunctorSig -> ProfunctorSig -> Type
+RCoendExt h g = (x : Type ** (h x x, g x x))
+
+public export
+RCoendExtToUniv : (h, g : ProfunctorSig) -> RCoendExt h g -> RCoendUniv h g
+RCoendExtToUniv h g (x ** (hxx, gxx)) y gamma = gamma x hxx gxx
+
+public export
+RCoendUnivToExt : (h, g : ProfunctorSig) -> RCoendUniv h g -> RCoendExt h g
+RCoendUnivToExt h g ce = ce (RCoendExt h g) (\y, hyy, gyy => (y ** (hyy, gyy)))
+
+public export
+ProfMendlerExt : ProfunctorSig -> Type -> Type
+ProfMendlerExt g = \c : Type => RCoendExt (ProfContraHom c) g
+
+public export
+ProfMendlerUniv : ProfunctorSig -> Type -> Type
+ProfMendlerUniv g = \c : Type => RCoendUniv (ProfContraHom c) g
+
+public export
+ProfMendlerExtFormula : (g : ProfunctorSig) -> (c : Type) ->
+  ProfMendlerExt g c = (x : Type ** (x -> c, g x x))
+ProfMendlerExtFormula g c = Refl
+
+public export
+ProfMendlerUnivFormula : (g : ProfunctorSig) -> (c : Type) ->
+  ProfMendlerUniv g c =
+  ((x : Type) -> ((y : Type) -> (y -> c) -> g y y -> x) -> x)
+ProfMendlerUnivFormula g c = Refl
+
+public export
+ProfMendlerExtMap : (g : ProfunctorSig) ->
+  (a, b : Type) -> (a -> b) -> ProfMendlerExt g a -> ProfMendlerExt g b
+ProfMendlerExtMap g a b mab =
+  dpMapSnd $ \x : Type => mapFst ((.) mab)
+
+public export
+ProfMendlerUnivMap : (g : ProfunctorSig) ->
+  (a, b : Type) -> (a -> b) -> ProfMendlerUniv g a -> ProfMendlerUniv g b
+ProfMendlerUnivMap g a b mab gamma x delta =
+  gamma x $ \y, mya => delta y (mab . mya)
+
+public export
+MendlerAlg : ProfunctorSig -> Type -> Type
+MendlerAlg g c = RCowedgeF (ProfContraHom c) g c
+
+public export
+MendlerAlgFormula : (g : ProfunctorSig) -> (c : Type) ->
+  MendlerAlg g c = ((x : Type) -> (x -> c) -> g x x -> c)
+MendlerAlgFormula g c = Refl
+
+public export
+MendlerAlgToFAlgExt : (g : ProfunctorSig) -> (c : Type) ->
+  MendlerAlg g c -> Algebra (ProfMendlerExt g) c
+MendlerAlgToFAlgExt g c malg (x ** (mxc, gxx)) = malg x mxc gxx
+
+public export
+FAlgToMendlerAlgExt : (g : ProfunctorSig) -> (c : Type) ->
+  Algebra (ProfMendlerExt g) c -> MendlerAlg g c
+FAlgToMendlerAlgExt g c alg x mxc gxx = alg (x ** (mxc, gxx))
+
+public export
+MendlerAlgToFAlgUniv : (g : ProfunctorSig) -> (c : Type) ->
+  MendlerAlg g c -> Algebra (ProfMendlerUniv g) c
+MendlerAlgToFAlgUniv g c malg gamma = gamma c malg
+
+public export
+FAlgToMendlerAlgUniv : (g : ProfunctorSig) -> (c : Type) ->
+  Algebra (ProfMendlerUniv g) c -> MendlerAlg g c
+FAlgToMendlerAlgUniv g c alg y myc gyy = alg $ \x, malg => malg y myc gyy
