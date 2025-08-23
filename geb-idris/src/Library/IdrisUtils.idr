@@ -1723,7 +1723,6 @@ zipLen f (x :: xs) (y :: ys) eq = f x y :: zipLen f xs ys (injective eq)
 
 public export
 nzUnique : {n : Nat} -> (nz, nz' : NonZero n) -> nz = nz'
-nzUnique {n=(S n)} SIsNonZero SIsNonZero = Refl
 nzUnique {n=(S n)} ItIsSucc ItIsSucc = Refl
 
 -- The number of bits required to store a natural number less than or equal to
