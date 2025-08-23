@@ -8656,7 +8656,6 @@ SubstN n {nz} = InSO (SOn n {nz})
 public export
 SubstN1 : SubstObjMu
 SubstN1 = SubstN 1 {nz=ItIsSucc}
-SubstN1 = SubstN 1 {nz=SIsNonZero}
 
 public export
 SubstBool : SubstObjMu
@@ -8938,17 +8937,6 @@ SubstTrAlg SO1 = ()
 SubstTrAlg (x !!+ y) = Either x y
 SubstTrAlg (x !!* y) = Pair x y
 SubstTrAlg (SOn n) = Fin n
-SubstTermAlg : MetaSOAlg Type
-SubstTermAlg SO0 = Void
-SubstTermAlg SO1 = ()
-SubstTermAlg (x !!+ y) = Either x y
-SubstTermAlg (x !!* y) = Pair x y
-SubstTermAlg : MetaSOAlg Type
-SubstTermAlg SO0 = Void
-SubstTermAlg SO1 = ()
-SubstTermAlg (x !!+ y) = Either x y
-SubstTermAlg (x !!* y) = Pair x y
-SubstTermAlg (SOn n) = Fin n
 
 -- Variant from an algebra rather than explicit recursion
 public export
@@ -9007,9 +8995,6 @@ SubstHomObjAlgN : (n : Nat) -> (0 _ : NonZero n) -> SubstObjMu -> SubstObjMu
 SubstHomObjAlgN Z ItIsSucc q impossible
 SubstHomObjAlgN (S Z) ItIsSucc q = q
 SubstHomObjAlgN (S (S n)) ItIsSucc q = q !* SubstHomObjAlgN (S n) ItIsSucc q
-SubstHomObjAlgN Z SIsNonZero q impossible
-SubstHomObjAlgN (S Z) SIsNonZero q = q
-SubstHomObjAlgN (S (S n)) SIsNonZero q = q !* SubstHomObjAlgN (S n) SIsNonZero q
 
 public export
 SubstHomObjAlg : MetaSOAlg (SubstObjMu -> SubstObjMu)
@@ -9330,8 +9315,6 @@ soEval (InSO (x !!* y)) z =
       (SMProjRight _ _ <! SMProjRight _ _)
 soEval (InSO (SOn Z {nz=ItIsSucc})) z impossible
 soEval (InSO (SOn (S n) {nz=ItIsSucc})) z = soEvalN n z
-soEval (InSO (SOn Z {nz=SIsNonZero})) z impossible
-soEval (InSO (SOn (S n) {nz=SIsNonZero})) z = soEvalN n z
 
 public export
 soCurry0 : {x, z : SubstObjMu} ->
@@ -9365,8 +9348,6 @@ soCurry {x} {y=(InSO (y !!* y'))} {z} f =
   cxhyz $ cxyz $ soProdLeftAssoc f
 soCurry {x} {y=(InSO (SOn Z {nz=ItIsSucc}))} {z} f impossible
 soCurry {x} {y=(InSO (SOn (S n) {nz=ItIsSucc}))} {z} f =
-soCurry {x} {y=(InSO (SOn Z {nz=SIsNonZero}))} {z} f impossible
-soCurry {x} {y=(InSO (SOn (S n) {nz=SIsNonZero}))} {z} f =
   soCurryN {x} {z} {n} f
 
 public export
@@ -9566,24 +9547,6 @@ soReflectedPairN (S n) y z =
           SMProjRight
             (y !* SubstHomObjAlgN (S n) ItIsSucc y)
             (z !* SubstHomObjAlgN (S n) ItIsSucc z)))
-        (SMProjLeft y (SubstHomObjAlgN (S n) SIsNonZero y) <!
-          SMProjLeft
-            (y !* SubstHomObjAlgN (S n) SIsNonZero y)
-            (z !* SubstHomObjAlgN (S n) SIsNonZero z))
-        (SMProjLeft z (SubstHomObjAlgN (S n) SIsNonZero z) <!
-          SMProjRight
-            (y !* SubstHomObjAlgN (S n) SIsNonZero y)
-            (z !* SubstHomObjAlgN (S n) SIsNonZero z)))
-    (nyz <!
-      SMPair
-        (SMProjRight y (SubstHomObjAlgN (S n) SIsNonZero y) <!
-          SMProjLeft
-            (y !* SubstHomObjAlgN (S n) SIsNonZero y)
-            (z !* SubstHomObjAlgN (S n) SIsNonZero z))
-        (SMProjRight z (SubstHomObjAlgN (S n) SIsNonZero z) <!
-          SMProjRight
-            (y !* SubstHomObjAlgN (S n) SIsNonZero y)
-            (z !* SubstHomObjAlgN (S n) SIsNonZero z)))
 
 public export
 soReflectedPair : (x, y, z : SubstObjMu) ->
@@ -9637,34 +9600,6 @@ soReflectedComposeN (S n) y z =
         (SMProjLeft (y !-> z) (y !* SubstHomObjAlgN (S n) ItIsSucc y))
         (SMProjRight y (SubstHomObjAlgN (S n) ItIsSucc y) <!
          SMProjRight (y !-> z) (y !* SubstHomObjAlgN (S n) ItIsSucc y)))
-  covarYonedaEmbed xyz w <! wxyz
-soReflectedPair (InSO (SOn (S n) {nz=SIsNonZero})) y z = soReflectedPairN n y z
-
-public export
-soReflectedCompose0 : (y, z : SubstObjMu) ->
-  SubstMorph ((y !-> z) !* (SubstN (S Z) !-> y)) (SubstN (S Z) !-> z)
-soReflectedCompose0 y z = soEval y z
-
-public export
-soReflectedComposeN : (n : Nat) -> (y, z : SubstObjMu) ->
-  SubstMorph ((y !-> z) !* (SubstN (S n) !-> y)) (SubstN (S n) !-> z)
-soReflectedComposeN Z y z = soReflectedCompose0 y z
-soReflectedComposeN (S n) y z =
-  let
-    czyz = soReflectedCompose0 y z
-    csyz = soReflectedComposeN n y z
-  in
-  SMPair
-    (czyz <!
-      SMPair
-        (SMProjLeft (y !-> z) (y !* SubstHomObjAlgN (S n) SIsNonZero y))
-        (SMProjLeft y (SubstHomObjAlgN (S n) SIsNonZero y) <!
-         SMProjRight (y !-> z) (y !* SubstHomObjAlgN (S n) SIsNonZero y)))
-    (csyz <!
-      SMPair
-        (SMProjLeft (y !-> z) (y !* SubstHomObjAlgN (S n) SIsNonZero y))
-        (SMProjRight y (SubstHomObjAlgN (S n) SIsNonZero y) <!
-         SMProjRight (y !-> z) (y !* SubstHomObjAlgN (S n) SIsNonZero y)))
 
 public export
 soReflectedCompose : (x, y, z : SubstObjMu) ->
@@ -9689,7 +9624,6 @@ soReflectedCompose (InSO (w !!* x)) y z =
           (SMProjRight _ _ <! SMProjLeft _ _))
         (SMProjRight _ _))
 soReflectedCompose (InSO (SOn (S n) {nz=ItIsSucc})) y z =
-soReflectedCompose (InSO (SOn (S n) {nz=SIsNonZero})) y z =
   soReflectedComposeN n y z
 
 public export
@@ -9767,7 +9701,6 @@ substHomTermToFunc {x=(InSO (x !!+ x'))} (f, f') (Right t) =
 substHomTermToFunc {x=(InSO (x !!* x'))} f (t, t') =
   substHomTermToFunc {x=x'} {y} (substHomTermToFunc {x} {y=(x' !-> y)} f t) t'
 substHomTermToFunc {x=(InSO (SOn (S n) {nz=ItIsSucc}))} {y} f t =
-substHomTermToFunc {x=(InSO (SOn (S n) {nz=SIsNonZero}))} {y} f t =
   substHomTermToFuncN {n} {y} f t
 
 public export
@@ -9790,7 +9723,6 @@ substFuncToHomTerm {x=(InSO (x !!* x'))} f =
   substFuncToHomTerm {x} {y=(x' !-> y)} $
     \t => substFuncToHomTerm {x=x'} {y} $ \t' => f (t, t')
 substFuncToHomTerm {x=(InSO (SOn (S n) {nz=ItIsSucc}))} f =
-substFuncToHomTerm {x=(InSO (SOn (S n) {nz=SIsNonZero}))} f =
   substFuncToHomTermN {n} {y} f
 
 public export
@@ -9940,18 +9872,6 @@ finBinOpMod op {n=(S n)} {nz=ItIsSucc} m k =
     _ = modLTDivisor res n
   in
   natToFinLT $ modNatNZ res (S n) ItIsSucc
-SubstTermToSubstMorph {x=(InSO (SOn (S n) {nz=SIsNonZero}))} {y} t =
-  SubstTermToSubstMorphN {n} {y} t
-
-public export
-finBinOpMod : (Nat -> Nat -> Nat) ->
-  {n : Nat} -> {nz : NonZero n} -> (m, k : Fin n) -> Fin n
-finBinOpMod op {n=(S n)} {nz=SIsNonZero} m k =
-  let
-    res = op (finToNat m) (finToNat k)
-    _ = modLTDivisor res n
-  in
-  natToFinLT $ modNatNZ res (S n) SIsNonZero
 
 public export
 SubstMorphToSubstTerm : {x, y : SubstObjMu} ->
@@ -10001,36 +9921,6 @@ SubstMorphToSubstTerm (SMNEq (S n) {nz=ItIsSucc}) =
   substFuncToHomTerm {x=(SubstN (S n) !* (SubstN (S n)))} {y=SubstBool} $
     \(k, p) => case k == p of False => Left () ; True => Right ()
 SubstMorphToSubstTerm (SMNLt (S n) {nz=ItIsSucc}) =
-  {m_nz=SIsNonZero} {n_nz=SIsNonZero}) =
-    substFuncToHomTerm {x=(SubstN (S m))} {y=(SubstN (S n))} $
-      \k =>
-        let
-          k' = finToNat k
-          _ = modLTDivisor k' n
-        in
-        natToFinLT $ modNatNZ k' (S n) SIsNonZero
-SubstMorphToSubstTerm (SMNConst (S n) k {nz=SIsNonZero}) =
-  substFuncToHomTerm {x=(SubstN 1)} {y=(SubstN (S n))} $
-    \FZ => let _ = modLTDivisor k n in natToFinLT $ modNatNZ k (S n) SIsNonZero
-SubstMorphToSubstTerm (SMNAdd (S n) {nz=SIsNonZero}) =
-  substFuncToHomTerm {x=(SubstN (S n) !* (SubstN (S n)))} {y=(SubstN (S n))} $
-    \(k, p) => finBinOpMod {n=(S n)} {nz=SIsNonZero} (+) k p
-SubstMorphToSubstTerm (SMNMult (S n) {nz=SIsNonZero}) =
-  substFuncToHomTerm {x=(SubstN (S n) !* (SubstN (S n)))} {y=(SubstN (S n))} $
-    \(k, p) => finBinOpMod {n=(S n)} {nz=SIsNonZero} (*) k p
-SubstMorphToSubstTerm (SMNSub (S n) {nz=SIsNonZero}) =
-  substFuncToHomTerm {x=(SubstN (S n) !* (SubstN (S n)))} {y=(SubstN (S n))} $
-    \(k, p) => finBinOpMod {n=(S n)} {nz=SIsNonZero} minus k p
-SubstMorphToSubstTerm (SMNDiv (S n) {nz=SIsNonZero}) =
-  substFuncToHomTerm {x=(SubstN (S n) !* (SubstN (S n)))} {y=(SubstN (S n))} $
-    \(k, p) => finBinOpMod {n=(S n)} {nz=SIsNonZero} div k p
-SubstMorphToSubstTerm (SMNMod (S n) {nz=SIsNonZero}) =
-  substFuncToHomTerm {x=(SubstN (S n) !* (SubstN (S n)))} {y=(SubstN (S n))} $
-    \(k, p) => finBinOpMod {n=(S n)} {nz=SIsNonZero} mod k p
-SubstMorphToSubstTerm (SMNEq (S n) {nz=SIsNonZero}) =
-  substFuncToHomTerm {x=(SubstN (S n) !* (SubstN (S n)))} {y=SubstBool} $
-    \(k, p) => case k == p of False => Left () ; True => Right ()
-SubstMorphToSubstTerm (SMNLt (S n) {nz=SIsNonZero}) =
   substFuncToHomTerm {x=(SubstN (S n) !* (SubstN (S n)))} {y=SubstBool} $
     \(k, p) => case k < p of False => Left () ; True => Right ()
 
@@ -10614,7 +10504,6 @@ public export
 substMorphBinOpToBNC : (BNCPolyM -> BNCPolyM -> BNCPolyM) ->
   (n : Nat) -> (0 _ : NonZero n) -> BNCPolyM
 substMorphBinOpToBNC op (S n) ItIsSucc = op (PI #/ #| (S n)) (PI #% #| (S n))
-substMorphBinOpToBNC op (S n) SIsNonZero = op (PI #/ #| (S n)) (PI #% #| (S n))
 
 public export
 substMorphToBNC : {x, y : SubstObjMu} -> SubstMorph x y -> BNCPolyM
