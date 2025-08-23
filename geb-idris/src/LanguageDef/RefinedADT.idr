@@ -2803,8 +2803,8 @@ data RewritableTermF : Type -> Type where
 -- may exhibit free equalities, objects may as well, unlike in traditional
 -- category theory.  The typechecking of morphisms must respect a carrier
 -- free equivalence on _objects_, because an equivalence of objects may allow a
--- composition which would not have been allowed by intentional equality
--- (meaning that the domain of the following morphism was not intentionally
+-- composition which would not have been allowed by intensional equality
+-- (meaning that the domain of the following morphism was not intensionally
 -- equal to the codomain of the preceding morphism).
 public export
 data MorphismF : Type -> Type -> Type where
