@@ -2169,6 +2169,46 @@ IntHomProfObj {c} {mor} cid comp =
     (IntHomProfOmap {c} mor)
     (IntHomProfFmap {c} {mor} comp)
 
+----------------------------
+----------------------------
+---- Yoneda lemma forms ----
+----------------------------
+----------------------------
+
+------------------------------
+---- Universal, covariant ----
+------------------------------
+
+public export
+IntCovarHomFunc : {c : Type} -> IntMorSig c -> c -> IntCopreshfSig c
+IntCovarHomFunc {c} = id
+
+public export
+IntCovarHomFuncMap :
+  {c : Type} -> {mor : IntMorSig c} ->
+  (comp : IntCompSig c mor) ->
+  (a : c) -> IntCopreshfMapSig c mor (IntCovarHomFunc {c} mor a)
+IntCovarHomFuncMap {c} {mor} = id
+
+public export
+IntCovarUnivYoL : {c : Type} -> (mor : IntMorSig c) ->
+  c -> IntCopreshfSig c -> Type
+IntCovarUnivYoL {c} mor a f = IntCopreshfNTSig c (IntCovarHomFunc {c} mor a) f
+
+public export
+IntCovarUnivYoLR :
+  {c : Type} -> {mor : IntMorSig c} -> (cid : IntIdSig c mor) ->
+  {a : c} -> {f : IntCopreshfSig c} ->
+  IntCovarUnivYoL {c} mor a f -> f a
+IntCovarUnivYoLR {c} {mor} cid {a} {f} alpha = alpha a (cid a)
+
+public export
+IntCovarUnivYoRL :
+  {c : Type} -> {mor : IntMorSig c} ->
+  {a : c} -> {f : IntCopreshfSig c} -> (fm : IntCopreshfMapSig c mor f) ->
+  f a -> IntCovarUnivYoL {c} mor a f
+IntCovarUnivYoRL {c} {mor} {a} {f} fm efa x max = fm a x max efa
+
 --------------------------------
 --------------------------------
 ---- Twisted-arrow category ----
