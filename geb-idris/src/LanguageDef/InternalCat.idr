@@ -2209,6 +2209,40 @@ IntCovarUnivYoRL :
   f a -> IntCovarUnivYoL {c} mor a f
 IntCovarUnivYoRL {c} {mor} {a} {f} fm efa x max = fm a x max efa
 
+----------------------------------
+---- Universal, contravariant ----
+----------------------------------
+
+public export
+IntContravarHomFunc : {c : Type} -> IntMorSig c -> c -> IntPreshfSig c
+IntContravarHomFunc {c} = flip
+
+public export
+IntContravarHomFuncMap :
+  {c : Type} -> {mor : IntMorSig c} ->
+  (comp : IntCompSig c mor) ->
+  (a : c) -> IntPreshfMapSig c mor (IntContravarHomFunc {c} mor a)
+IntContravarHomFuncMap {c} {mor} comp a x y = flip $ comp y x a
+
+public export
+IntContravarUnivYoL : {c : Type} -> (mor : IntMorSig c) ->
+  c -> IntPreshfSig c -> Type
+IntContravarUnivYoL {c} mor = IntPreshfNTSig c . IntContravarHomFunc {c} mor
+
+public export
+IntContravarUnivYoLR :
+  {c : Type} -> {mor : IntMorSig c} -> (cid : IntIdSig c mor) ->
+  {a : c} -> {f : IntPreshfSig c} ->
+  IntContravarUnivYoL {c} mor a f -> f a
+IntContravarUnivYoLR {c} {mor} cid {a} {f} alpha = alpha a (cid a)
+
+public export
+IntContravarUnivYoRL :
+  {c : Type} -> {mor : IntMorSig c} ->
+  {a : c} -> {f : IntPreshfSig c} -> (fcm : IntPreshfMapSig c mor f) ->
+  f a -> IntContravarUnivYoL {c} mor a f
+IntContravarUnivYoRL {c} {mor} {a} {f} fcm efa x max = fcm a x max efa
+
 --------------------------------
 --------------------------------
 ---- Twisted-arrow category ----
