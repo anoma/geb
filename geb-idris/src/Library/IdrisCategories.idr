@@ -155,6 +155,18 @@ FunExtEqEquiv : IsEquivalence FunExtEq
 FunExtEqEquiv = MkEquivalence FunExtEqRefl FunExtEqSym FunExtEqTrans
 
 public export
+Reflexive a FunExtEq where
+  reflexive _ = Refl
+
+public export
+Symmetric a FunExtEq where
+  symmetric = FunExtEqSym
+
+public export
+Transitive a FunExtEq where
+  transitive = FunExtEqTrans
+
+public export
 EqFunctionFunExt : f = g -> FunExtEq f g
 EqFunctionFunExt Refl _ = Refl
 
