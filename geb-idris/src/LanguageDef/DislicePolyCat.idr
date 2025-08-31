@@ -416,6 +416,44 @@ CDSLpiFunc fext pproj cbpproj =
 -- copresheaves), so we may equally view this copresheaf as an object
 -- in the slice category of the category of endoprofunctors over the
 -- hom-profunctor.
+--
+-- This copresheaf on the twisted-arrow category can be seen as analogous
+-- to a simultaneous covariant and contravariant hom-functor in the base
+-- category -- where the (co)total spaces are shared.  Compared to the
+-- profunctor `SpliceObj`, this partitions the splice category into its
+-- connected components, with each component determined by the composite
+-- of the two morphisms in each object (which must be the same for all
+-- objects in each connected component).  Thus a splice category is the
+-- coproduct category over all morphisms.
+--
+-- Because this is the analogue of a combination of covariant and contravariant
+-- hom-functors on the base category, we shall view these as direpresentables,
+-- one per twisted-arrow object -- the bundles are viewed as objects of the
+-- twisted-arrow category as opposed to any other category whose objects are
+-- bundles because twisted-arrow morphisms are the ones which act on the
+-- pairs of morphisms contained within the `CDisliceObj` objects in the same
+-- way as the covariant and contravariant hom-functors do on those morphisms
+-- (while preserving the factorization condition thanks to the commutativity
+-- condition of twisted-arrow morphisms).
+--
+-- Thus `CDSLtwCopr` is a further-refined version of the sequence of
+-- covariant or contravariant hom-functor and hom-profunctor:  the
+-- one-variable hom-functors act on objects of the base category and
+-- produce types of outgoing or incoming morphisms; the hom-profunctor
+-- acts on objects of the product of the opposite of the base category
+-- with the base category itself and produces types of morphisms between
+-- them; and the factorization functor acts on twisted arrows to produce
+-- compatible pairs of outgoing and incoming morphisms (i.e. pairs which
+-- compose with each other and whose composites equal the arrow part of
+-- the twisted-arrow object).
+--
+-- Note that while the twisted-arrow category itself, like any category,
+-- has representable functors for each object (covariant and contravariant),
+-- the _direpresentable_ functors, also indexed by twisted arrows, are
+-- different.  The representable functors, as with any category, produce
+-- sets of outgoing (for the covariant representable functor) or incoming
+-- (for the contravariant representable functor) morphisms (twisted-arrow
+-- morphisms, in this case); `CDSLtwCopr` produces sets of _factorizations_.
 public export
 CDSLtwCopr : TwArrCoprSig
 CDSLtwCopr x y mxy = CDisliceObj (CBO y x mxy)
