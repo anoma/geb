@@ -428,6 +428,19 @@ CDSLtwMap s t a b mst mas mtb =
       {b=t} {b'=b} {cb=s} {cb'=a} {proj=mst} {proj'=(mtb . mst . mas)}
       mas mtb (\_ => Refl)
 
+-- The objects of the coproduct category of the dislice categories
+-- over all morphisms from `x` to `y`, which is equivalent to the
+-- splice category of `x` and `y`.
+public export
+CDSLtwToHomSlTot : ProfunctorSig
+CDSLtwToHomSlTot x y = DPair (x -> y) (CDSLtwCopr x y)
+
+-- This projection exhibits `CDSLtwCopr` as an object in the slice category
+-- of the category of endoprofunctors over the hom-profunctor.
+public export
+CDSLtwToHomSlProj : TypeProfNT CDSLtwToHomSlTot HomProf
+CDSLtwToHomSlProj x y = DPair.fst
+
 ---------------------------------------------------
 ---------------------------------------------------
 ---- Dipolynomial functors from dislice arenas ----
