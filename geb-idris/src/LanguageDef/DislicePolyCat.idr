@@ -469,6 +469,31 @@ CDSLtwMap s t a b mst mas mtb =
       {b=t} {b'=b} {cb=s} {cb'=a} {proj=mst} {proj'=(mtb . mst . mas)}
       mas mtb (\_ => Refl)
 
+-- Here we make precise the comment above about why we treat the bundles
+-- as twisted-arrow objects by showing that the copresheaf `CDSLtwCopr`
+-- on the twisted-arrow category extends to a functor from the twisted-arrow
+-- category to `Cat`, of which it is the object projection.
+public export
+CDSLtwCoprMor : (s, t : Type) -> (mst : s -> t) ->
+  IntMorSig (CDSLtwCopr s t mst)
+CDSLtwCoprMor s t mst = CDisliceMorph {cat=(CBO t s mst)}
+
+public export
+CDSLtwCoprMorMap : (s, t, a, b : Type) ->
+  (mst : s -> t) -> (mas : a -> s) -> (mtb : t -> b) ->
+  (x, y : CDSLtwCopr s t mst) ->
+  CDSLtwCoprMor s t mst
+    x
+    y ->
+  CDSLtwCoprMor a b (mtb . mst . mas)
+    (CDSLtwMap s t a b mst mas mtb x)
+    (CDSLtwMap s t a b mst mas mtb y)
+CDSLtwCoprMorMap s t a b mst mas mtb =
+  cdslF $
+    CDSLcbcSigmaFuncTw
+      {b=t} {b'=b} {cb=s} {cb'=a} {proj=mst} {proj'=(mtb . mst . mas)}
+      mas mtb (\_ => Refl)
+
 -- The objects of the coproduct category of the dislice categories
 -- over all morphisms from `x` to `y`, which is equivalent to the
 -- splice category of `x` and `y`.
