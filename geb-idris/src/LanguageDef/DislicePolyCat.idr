@@ -328,6 +328,17 @@ CDSLcbcSigmaFunc :
   CDSLfunc (CBO b cb proj) (CBO b' cb' proj')
 CDSLcbcSigmaFunc mb mcb = CDSLf (CDSLcbcSigma mb mcb) (CDSLcbcSigmaMap mb mcb)
 
+-- Here we show that the parameters to `CDSLcbcSigmaFunc` may be seen
+-- as a twisted-arrow morphism.
+export
+CDSLcbcSigmaFuncTw :
+  {b, b', cb, cb' : Type} -> {proj : cb -> b} -> {proj' : cb' -> b'} ->
+  (mcb : cb' -> cb) -> (mb : b -> b') ->
+  ExtEq {a=cb'} {b=b'} (mb . proj . mcb) proj' ->
+  CDSLfunc (CBO b cb proj) (CBO b' cb' proj')
+CDSLcbcSigmaFuncTw {proj} {proj'} mcb mb twcomm =
+  CDSLcbcSigmaFunc {proj} {proj'} mb (Element0 mcb $ \ecb' => sym $ twcomm ecb')
+
 export
 CDSLpi : {b, p, cb : Type} ->
   (pproj : p -> b) -> {cbbproj : cb -> b} ->
@@ -384,6 +395,38 @@ CDSLpiFunc : FunExt -> {b, p, cb : Type} ->
       (CSliceObjMap $ CSPi {c=p} {d=b} pproj (cb ** fst0 cbpproj)))
 CDSLpiFunc fext pproj cbpproj =
   CDSLf (CDSLpi pproj cbpproj) (CDSLpiMap fext pproj cbpproj)
+
+------------------------------------------
+------------------------------------------
+---- CDislice as category of elements ----
+------------------------------------------
+------------------------------------------
+
+-- Here we use `CDSLcbcSigmaFuncTw` to exhibit dislice categories
+-- as categories of elements of twisted-arrow copresheaves.
+--
+-- It turns out that what I've called the "dislice category" has a
+-- standard name, the "factorization category":
+--
+-- https://ncatlab.org/nlab/show/factorization+category
+--
+-- Note also that the twisted-arrow category is the category of elements
+-- of the (covariant) hom-profunctor, and a copresheaf on the category of
+-- elements of a copresheaf `p` is a slice over `p` (in the category of
+-- copresheaves), so we may equally view this copresheaf as an object
+-- in the slice category of the category of endoprofunctors over the
+-- hom-profunctor.
+public export
+CDSLtwCopr : TwArrCoprSig
+CDSLtwCopr x y mxy = CDisliceObj (CBO y x mxy)
+
+public export
+CDSLtwMap : TwArrCoprDimapSig CDSLtwCopr
+CDSLtwMap s t a b mst mas mtb =
+  cdslO $
+    CDSLcbcSigmaFuncTw
+      {b=t} {b'=b} {cb=s} {cb'=a} {proj=mst} {proj'=(mtb . mst . mas)}
+      mas mtb (\_ => Refl)
 
 ---------------------------------------------------
 ---------------------------------------------------
