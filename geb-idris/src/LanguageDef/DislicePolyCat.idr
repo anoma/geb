@@ -454,6 +454,9 @@ CDSLpiFunc fext pproj cbpproj =
 -- sets of outgoing (for the covariant representable functor) or incoming
 -- (for the contravariant representable functor) morphisms (twisted-arrow
 -- morphisms, in this case); `CDSLtwCopr` produces sets of _factorizations_.
+-- We tend to view the direpresentables as probes of the underlying category,
+-- like the one-variable representables, rather than of the twisted-arrow
+-- category.
 public export
 CDSLtwCopr : TwArrCoprSig
 CDSLtwCopr x y mxy = CDisliceObj (CBO y x mxy)
