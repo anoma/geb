@@ -507,6 +507,24 @@ public export
 CDSLtwToHomSlProj : TypeProfNT CDSLtwToHomSlTot HomProf
 CDSLtwToHomSlProj x y = DPair.fst
 
+-- The opposite of a dislice category is equivalent to the dislice
+-- category of the opposite morphism (i.e. the same morphism of the
+-- underlying category, viewed as a morphism in the opposite category -
+-- so for `a, b : C` and `f : C(a,b)`, we have `f^op : C^op (b,a)`).
+-- We define here another functor from the twisted-arrow category to
+-- `Cat`, this time yielding the dislice category of the opposite morphism.
+-- For Grothendieck-construction purposes, we will end up viewing this
+-- as a presheaf on `(Tw(C^op)^op)`, meaning we'll use the contravariant
+-- Grothendieck construction, where we pull back the codomain instead
+-- of pushing forward the domain.
+public export
+CDSLtwOp : TwArrCoprOpSig
+CDSLtwOp x y = CDSLtwCopr y x
+
+public export
+CDSLtwOpMap : TwArrCoprOpContraDimapSig CDSLtwOp
+CDSLtwOpMap s t a b mts msa mbt = CDSLtwMap t s b a mts mbt msa
+
 ---------------------------------------------------
 ---------------------------------------------------
 ---- Dipolynomial functors from dislice arenas ----
