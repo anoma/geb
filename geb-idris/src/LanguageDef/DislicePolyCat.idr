@@ -525,6 +525,31 @@ public export
 CDSLtwOpMap : TwArrCoprOpContraDimapSig CDSLtwOp
 CDSLtwOpMap s t a b mts msa mbt = CDSLtwMap t s b a mts mbt msa
 
+public export
+CDSLtwOpMor : (s, t : Type) -> (mst : t -> s) ->
+  IntMorSig (CDSLtwOp s t mst)
+CDSLtwOpMor s t = CDSLtwCoprMor t s
+
+public export
+CDSLtwOpMorMap : (s, t, a, b : Type) ->
+  (mts : t -> s) -> (msa : s -> a) -> (mbt : b -> t) ->
+  (x, y : CDSLtwOp s t mts) ->
+  CDSLtwOpMor s t mts
+    x
+    y ->
+  CDSLtwOpMor a b (msa . mts . mbt)
+    (CDSLtwOpMap s t a b mts msa mbt x)
+    (CDSLtwOpMap s t a b mts msa mbt y)
+CDSLtwOpMorMap s t a b mts msa mbt = CDSLtwCoprMorMap t s b a mts mbt msa
+
+public export
+CDSLtwOpToHomSlTot : ProfunctorSig
+CDSLtwOpToHomSlTot x y = DPair (y -> x) (CDSLtwOp x y)
+
+public export
+CDSLtwOpToHomSlProj : TypeProfNT CDSLtwOpToHomSlTot (flip HomProf)
+CDSLtwOpToHomSlProj x y = DPair.fst
+
 ---------------------------------------------------
 ---------------------------------------------------
 ---- Dipolynomial functors from dislice arenas ----
