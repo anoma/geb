@@ -3220,6 +3220,65 @@ HomDiagToNatFuncMorIsNat x y mxx myy mxy comm (S m) (S n) (LTESucc lte) ex =
   rewrite sym $ HomDiagToNatFuncMorIsNat x y mxx myy mxy comm m n lte ex in
   sym $ comm $ HomDiagToNatFuncMap x mxx m n lte ex
 
+-- The object-map component of the functor from _the category of functors
+-- from the natural numbers (viewed as a preorder, i.e. a thin category)
+-- to `Type`_ to the category of diagonal elements of the hom-profunctor
+-- on `Type`.  This is an inverse up to natural isomorphism (as we shall
+-- show) to `HomDiagToNatFunc`.
+
+-- The type component of the object map.
+public export
+NatFuncToHomDiagFst :
+  (f : Nat -> Type) -> (fm : (m, n : Nat) -> LTE m n -> f m -> f n) -> Type
+NatFuncToHomDiagFst f fm = DPair Nat f
+
+-- The element component of the object map.
+public export
+NatFuncToHomDiagSnd :
+  (f : Nat -> Type) -> (fm : (m, n : Nat) -> LTE m n -> f m -> f n) ->
+  NatFuncToHomDiagFst f fm -> NatFuncToHomDiagFst f fm
+NatFuncToHomDiagSnd f fm =
+  dpBimap S $ \m => fm m (S m) $ lteSuccRight {m} {n=m} reflexive
+
+-- The full object map.
+public export
+NatFuncToHomDiag :
+  (f : Nat -> Type) -> (fm : (m, n : Nat) -> LTE m n -> f m -> f n) ->
+  (x : Type ** x -> x)
+NatFuncToHomDiag f fm = (NatFuncToHomDiagFst f fm ** NatFuncToHomDiagSnd f fm)
+
+-- The morphism component of the morphism-map component of `NatFuncToHomDiag`.
+public export
+NatFuncToHomDiagMapFst :
+  (f : Nat -> Type) -> (fm : (m, n : Nat) -> LTE m n -> f m -> f n) ->
+  (g : Nat -> Type) -> (gm : (m, n : Nat) -> LTE m n -> g m -> g n) ->
+  ((n : Nat) -> f n -> g n) ->
+  NatFuncToHomDiagFst f fm -> NatFuncToHomDiagFst g gm
+NatFuncToHomDiagMapFst f fm g gm = dpMapSnd
+
+-- The equality component of the morphism-map component of `NatFuncToHomDiag`.
+public export
+NatFuncToHomDiagMapSnd :
+  (f : Nat -> Type) -> (fm : (m, n : Nat) -> LTE m n -> f m -> f n) ->
+  (g : Nat -> Type) -> (gm : (m, n : Nat) -> LTE m n -> g m -> g n) ->
+  (alpha : (n : Nat) -> f n -> g n) ->
+  (isnat :
+    (m, n : Nat) -> (lte : LTE m n) ->
+    ExtEq {a=(f m)} {b=(g n)}
+      (gm m n lte . alpha m)
+      (alpha n . fm m n lte)) ->
+  ExtEq
+    {a=(NatFuncToHomDiagFst f fm)}
+    {b=(NatFuncToHomDiagFst g gm)}
+    (NatFuncToHomDiagMapFst f fm g gm alpha
+     . NatFuncToHomDiagSnd f fm) -- rmap is postcomposition
+    (NatFuncToHomDiagSnd g gm
+     . NatFuncToHomDiagMapFst f fm g gm alpha) -- lmap is precomposition
+NatFuncToHomDiagMapSnd f fm g gm alpha isnat el =
+  dpEq12
+    Refl
+    (sym $ isnat (fst el) (S $ fst el) (lteSuccRight reflexive) (snd el))
+
 ------------------------------------------------------
 ------------------------------------------------------
 ---- Mendler-style mixed-variance inductive types ----
