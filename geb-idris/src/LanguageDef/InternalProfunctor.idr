@@ -3168,6 +3168,58 @@ EndoHomParaToNatComplete : FunExt ->
 EndoHomParaToNatComplete fext gamma cond x =
   EndoHomParaToNatCompleteN fext gamma cond (EndoHomParaToNat gamma) Refl x
 
+---------------------------------------------------------------------------
+---- Categories of diagonal elements and functors from natural numbers ----
+---------------------------------------------------------------------------
+
+-- See
+-- https://mathoverflow.net/questions/442566/is-there-a-name-for-this-variant-of-the-category-of-elements-of-a-profunctor,
+-- including the replies and comments.
+
+-- The object-map component of the object-map component of the functor
+-- from the category of diagonal elements of the hom-profunctor on `Type`
+-- to the category of functors from the natural numbers (viewed as a preorder,
+-- i.e. a thin category) to `Type`.
+public export
+HomDiagToNatFunc : (x : Type) -> (x -> x) -> Nat -> Type
+HomDiagToNatFunc x mxx n = x
+
+-- The morphism-map component of the object-map component of `HomDiagToNatFunc`.
+public export
+HomDiagToNatFuncMap : (x : Type) -> (mxx : x -> x) -> (m, n : Nat) ->
+  LTE m n -> HomDiagToNatFunc x mxx m -> HomDiagToNatFunc x mxx n
+HomDiagToNatFuncMap x mxx 0 n LTEZero =
+  id {a=x}
+HomDiagToNatFuncMap x mxx (S m) (S n) (LTESucc mmn) =
+  mxx . HomDiagToNatFuncMap x mxx m n mmn
+
+-- The morphism-family component of the moprhism-map component of
+-- `HomDiagToNatFunc`.
+public export
+HomDiagToNatFuncMor : (x, y : Type) -> (mxx : x -> x) -> (myy : y -> y) ->
+  (mxy : x -> y) -> ExtEq {a=x} {b=y} (myy . mxy) (mxy . mxx) ->
+  (n : Nat) -> HomDiagToNatFunc x mxx n -> HomDiagToNatFunc y myy n
+HomDiagToNatFuncMor x y mxx myy mxy comm n = mxy
+
+-- The naturality-condition component of the moprhism-map component of
+-- `HomDiagToNatFunc`.
+public export
+HomDiagToNatFuncMorIsNat : (x, y : Type) -> (mxx : x -> x) -> (myy : y -> y) ->
+  (mxy : x -> y) -> (comm : ExtEq {a=x} {b=y} (myy . mxy) (mxy . mxx)) ->
+  (m, n : Nat) -> (mmn : LTE m n) ->
+  ExtEq
+    {a=(HomDiagToNatFunc x mxx m)}
+    {b=(HomDiagToNatFunc y myy n)}
+    (HomDiagToNatFuncMor x y mxx myy mxy comm n
+     . HomDiagToNatFuncMap x mxx m n mmn)
+    (HomDiagToNatFuncMap y myy m n mmn
+     . HomDiagToNatFuncMor x y mxx myy mxy comm m)
+HomDiagToNatFuncMorIsNat x y mxx myy mxy comm 0 n LTEZero ex =
+  Refl
+HomDiagToNatFuncMorIsNat x y mxx myy mxy comm (S m) (S n) (LTESucc lte) ex =
+  rewrite sym $ HomDiagToNatFuncMorIsNat x y mxx myy mxy comm m n lte ex in
+  sym $ comm $ HomDiagToNatFuncMap x mxx m n lte ex
+
 ------------------------------------------------------
 ------------------------------------------------------
 ---- Mendler-style mixed-variance inductive types ----
