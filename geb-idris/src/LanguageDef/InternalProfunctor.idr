@@ -3279,6 +3279,46 @@ NatFuncToHomDiagMapSnd f fm g gm alpha isnat el =
     Refl
     (sym $ isnat (fst el) (S $ fst el) (lteSuccRight reflexive) (snd el))
 
+-- Inverse relationships between functors.
+
+public export
+HomDiagToNatFuncToHomDiagToIdFst :
+  (x : Type) -> (mxx : x -> x) ->
+  NatFuncToHomDiagFst
+    (HomDiagToNatFunc x mxx)
+    (HomDiagToNatFuncMap x mxx) ->
+  x
+HomDiagToNatFuncToHomDiagToIdFst x mxx = DPair.snd
+
+public export
+HomDiagToNatFuncToHomDiagFromIdFst :
+  (x : Type) -> (mxx : x -> x) ->
+  x ->
+  NatFuncToHomDiagFst
+    (HomDiagToNatFunc x mxx)
+    (HomDiagToNatFuncMap x mxx)
+HomDiagToNatFuncToHomDiagFromIdFst x mxx ex = (Z ** ex)
+
+public export
+HomDiagToNatFuncToFromHomDiagFstId :
+  (x : Type) -> (mxx : x -> x) ->
+  (el : NatFuncToHomDiagFst
+    (HomDiagToNatFunc x mxx)
+    (HomDiagToNatFuncMap x mxx)) ->
+  snd
+    (HomDiagToNatFuncToHomDiagFromIdFst x mxx
+      (HomDiagToNatFuncToHomDiagToIdFst x mxx el)) =
+  snd el
+HomDiagToNatFuncToFromHomDiagFstId x mxx (n ** ex) = Refl
+
+public export
+HomDiagToNatFuncFromToHomDiagFstId :
+  (x : Type) -> (mxx : x -> x) -> (ex : x) ->
+  HomDiagToNatFuncToHomDiagToIdFst x mxx
+    (HomDiagToNatFuncToHomDiagFromIdFst x mxx ex) =
+  ex
+HomDiagToNatFuncFromToHomDiagFstId x mxx ex = Refl
+
 ------------------------------------------------------
 ------------------------------------------------------
 ---- Mendler-style mixed-variance inductive types ----
