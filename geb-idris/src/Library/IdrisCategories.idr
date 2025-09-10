@@ -14514,3 +14514,20 @@ brSelfApp (BR f) = f (BR f)
 partial
 0 brNonTerminating : BadRec
 brNonTerminating = brSelfApp (BR brSelfApp)
+
+--------------------------------
+--------------------------------
+---- Dependently-typed S, K ----
+--------------------------------
+--------------------------------
+
+public export
+DK : {a : Type} -> {b : a -> Type} -> (ea : a) -> b ea -> a
+DK {a} {b} ea eb = ea
+
+public export
+DS : {a : Type} -> {b : a -> Type} -> {c : (ea : a) -> b ea -> Type} ->
+  (x : (ea : a) -> (eb : b ea) -> c ea eb) ->
+  (y : (ea : a) -> b ea) ->
+  (z : a) -> c z (y z)
+DS {a} {b} {c} x y z = x z (y z)
