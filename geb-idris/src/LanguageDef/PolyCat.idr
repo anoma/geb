@@ -1050,6 +1050,14 @@ rkpMap j g a b mab =
       dpBimap mab (sliceId {a} (snd j . bj . mab)) $ ondir (bj . mab) gd)
 
 public export
+0 RKanExtPolyFormula : (j, g : PolyFunc) -> (a : Type) ->
+  RKanExtPoly j g a =
+  (onpos : (a -> pfPos j) -> pfPos g **
+   (aji : a -> pfPos j) -> (gd : pfDir {p=g} (onpos aji)) ->
+    DPair a (pfDir {p=j} . aji))
+RKanExtPolyFormula j g a = Refl
+
+public export
 CountableType : Type
 CountableType = Either Nat Unit
 
