@@ -1053,7 +1053,7 @@ public export
 0 RKanExtPolyFormula : (j, g : PolyFunc) -> (a : Type) ->
   RKanExtPoly j g a =
   (onpos : (a -> pfPos j) -> pfPos g **
-   (aji : a -> pfPos j) -> (gd : pfDir {p=g} (onpos aji)) ->
+   {- ondir : -} (aji : a -> pfPos j) -> pfDir {p=g} (onpos aji) ->
     DPair a (pfDir {p=j} . aji))
 RKanExtPolyFormula j g a = Refl
 
