@@ -1036,6 +1036,20 @@ PolyRKanExt : (j, g : PolyFunc) -> PolyFunc
 PolyRKanExt j g = (PolyRKanExtPos j g ** PolyRKanExtDir j g)
 
 public export
+RKanExtPoly : PolyFunc -> PolyFunc -> Type -> Type
+RKanExtPoly j g a = PolyNatTrans (pfFunctorExpArena a j) g
+
+public export
+rkpMap : (j, g : PolyFunc) ->
+  (a, b : Type) -> (a -> b) -> RKanExtPoly j g a -> RKanExtPoly j g b
+rkpMap j g a b mab =
+  dpBimap
+    (\rk, bj =>
+      rk (bj . mab))
+    (\onpos, ondir, bj, gd =>
+      dpBimap mab (sliceId {a} (snd j . bj . mab)) $ ondir (bj . mab) gd)
+
+public export
 CountableType : Type
 CountableType = Either Nat Unit
 
