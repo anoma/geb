@@ -2756,43 +2756,43 @@ TwCoprEmbedOpArrFmap x y x' y' mxy mxy' twmx twmy twmcomm a b mab
 --------------------------------------
 
 public export
-TwArrDepDialg : (f : Type -> Type) -> (g : (a : Type) -> f a -> Type) ->
+TwArrDepUFam : (f : Type -> Type) -> (g : (a : Type) -> f a -> Type) ->
   (fm : (a, b : Type) -> (a -> b) -> f a -> f b) ->
   ((a, b : Type) ->
    (m : a -> b) -> (el : f a) -> g a el -> g b (fm a b m el)) ->
   TwArrCoprSig
-TwArrDepDialg f g fm gm x y mxy = (el : f x) -> g y (fm x y mxy el)
+TwArrDepUFam f g fm gm x y mxy = (el : f x) -> g y (fm x y mxy el)
 
 public export
-TwArrDepDialgDimap : (f : Type -> Type) -> (g : (a : Type) -> f a -> Type) ->
+TwArrDepUFamDimap : (f : Type -> Type) -> (g : (a : Type) -> f a -> Type) ->
   (fm : (a, b : Type) -> (a -> b) -> f a -> f b) ->
   (fmcomp : (a, b, c : Type) -> (mbc : b -> c) -> (mab : a -> b) ->
     ExtEq {a=(f a)} {b=(f c)} (fm a c (mbc . mab)) (fm b c mbc . fm a b mab)) ->
   (gm : (a, b : Type) ->
    (m : a -> b) -> (el : f a) -> g a el -> g b (fm a b m el)) ->
-  TwArrCoprDimapSig (TwArrDepDialg f g fm gm)
-TwArrDepDialgDimap f g fm fmcomp gm s t a b mst mas mtb dialg el =
+  TwArrCoprDimapSig (TwArrDepUFam f g fm gm)
+TwArrDepUFamDimap f g fm fmcomp gm s t a b mst mas mtb dialg el =
   rewrite fmcomp a t b mtb (mst . mas) el in
   rewrite fmcomp a s t mst mas el in
   gm t b mtb (fm s t mst (fm a s mas el)) (dialg $ fm a s mas el)
 
 public export
-TwArrOpDepEFam : (f : Type -> Type) -> (g : (a : Type) -> f a -> Type) ->
+TwArrOpDepECofam : (f : Type -> Type) -> (g : (a : Type) -> f a -> Type) ->
   (fm : (a, b : Type) -> (a -> b) -> f a -> f b) ->
   ((a, b : Type) ->
    (m : a -> b) -> (el : f a) -> g b (fm a b m el) -> g a el) ->
   TwArrPreshfOpSig
-TwArrOpDepEFam f g fm gm x y myx = Sigma {a=(f y)} (g x . fm y x myx)
+TwArrOpDepECofam f g fm gm x y myx = Sigma {a=(f y)} (g x . fm y x myx)
 
 public export
-TwArrOpDepEFamDimap : (f : Type -> Type) -> (g : (a : Type) -> f a -> Type) ->
+TwArrOpDepECofamDimap : (f : Type -> Type) -> (g : (a : Type) -> f a -> Type) ->
   (fm : (a, b : Type) -> (a -> b) -> f a -> f b) ->
   (fmcomp : (a, b, c : Type) -> (mbc : b -> c) -> (mab : a -> b) ->
     ExtEq {a=(f a)} {b=(f c)} (fm a c (mbc . mab)) (fm b c mbc . fm a b mab)) ->
   (gm : (a, b : Type) ->
    (m : a -> b) -> (el : f a) -> g b (fm a b m el) -> g a el) ->
-  TwArrPreshfOpDimapSig (TwArrOpDepEFam f g fm gm)
-TwArrOpDepEFamDimap f g fm fmcomp gm s t a b mba mas mtb =
+  TwArrPreshfOpDimapSig (TwArrOpDepECofam f g fm gm)
+TwArrOpDepECofamDimap f g fm fmcomp gm s t a b mba mas mtb =
   dpBimap
     (fm t b mtb)
     (\eft, egsf =>
