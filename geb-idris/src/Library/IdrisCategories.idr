@@ -1982,6 +1982,18 @@ public export
 TwArrPreshfOpSig : Type
 TwArrPreshfOpSig = TwArrCoprOpSig
 
+public export
+TwArrPreshfOpLmapSig : TwArrPreshfOpSig -> Type
+TwArrPreshfOpLmapSig p =
+  (s, a, b : Type) -> (mba : b -> a) -> (mas : a -> s) ->
+  p s b (mas . mba) -> p a b mba
+
+public export
+TwArrPreshfOpRmapSig : TwArrPreshfOpSig -> Type
+TwArrPreshfOpRmapSig p =
+  (t, a, b : Type) -> (mba : b -> a) -> (mtb : t -> b) ->
+  p a t (mba . mtb) -> p a b mba
+
 -- The signature of the fmap of a presheaf on the twisted-arrow category
 -- of `op(Type)`.
 --
