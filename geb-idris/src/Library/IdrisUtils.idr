@@ -588,6 +588,12 @@ fromIsJust {x=(Just x)} Refl = x
 fromIsJust {x=Nothing} Refl impossible
 
 public export
+decCase : {0 a, b : Type} -> (e : Either a b) ->
+  Either (ea : a ** e = Left ea) (eb : b ** e = Right eb)
+decCase {a} {b} (Left ea) = Left (ea ** Refl)
+decCase {a} {b} (Right eb) = Right (eb ** Refl)
+
+public export
 IsLeftTrue : {0 a, b : Type} -> Either a b -> Type
 IsLeftTrue x = isLeft x = True
 
