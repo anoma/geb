@@ -1643,10 +1643,19 @@ polyCatElemToTerminal b p =
    \pi => (snd (snd $ snd p pi) ** sym $ dpEqPat {dp=(snd $ snd p pi)}))
 
 public export
-InterpPFsliceHomDom : {b : PolyFunc} -> (q : PolyFunc) ->
+InterpPFsliceHomDomTot : {b : PolyFunc} -> (q : PolyFunc) ->
   PolyNatTrans q b -> (x : Type) -> InterpPolyFunc b x -> PolyFunc
-InterpPFsliceHomDom {b} q qsl x bel =
+InterpPFsliceHomDomTot {b} q qsl x bel =
   pfPullbackAr {p=(PFelemRepSliceTot b x bel)} {q} {r=b}
+    (PFelemRepSliceProj b x bel)
+    qsl
+
+public export
+InterpPFsliceHomDomProj : {b : PolyFunc} -> (q : PolyFunc) ->
+  (qsl : PolyNatTrans q b) -> (x : Type) -> (bel : InterpPolyFunc b x) ->
+  PolyNatTrans (InterpPFsliceHomDomTot {b} q qsl x bel) b
+InterpPFsliceHomDomProj {b} q qsl x bel =
+  pfPullbackArSlProj {p=(PFelemRepSliceTot b x bel)} {q} {r=b}
     (PFelemRepSliceProj b x bel)
     qsl
 
@@ -1654,30 +1663,17 @@ public export
 InterpPFsliceHom : {b : PolyFunc} -> (q, p : PolyFunc) ->
   PolyNatTrans q b -> (x : Type) -> InterpPolyFunc b x -> Type
 InterpPFsliceHom {b} q p qsl x bel =
-  PolyNatTrans (InterpPFsliceHomDom {b} q qsl x bel) p
+  PolyNatTrans (InterpPFsliceHomDomTot {b} q qsl x bel) p
 
 public export
-InterpPFsliceHomCommL : {b : PolyFunc} -> (q, p : PolyFunc) ->
+InterpPFsliceHomComm : {b : PolyFunc} -> (q, p : PolyFunc) ->
   (qsl : PolyNatTrans q b) -> (psl : PolyNatTrans p b) ->
   (x : Type) -> (bel : InterpPolyFunc b x) ->
   InterpPFsliceHom {b} q p qsl x bel -> Type
-InterpPFsliceHomCommL {b} q p qsl psl x bel =
-  PNTisSliceM {p=b} {q=(InterpPFsliceHomDom {b} q qsl x bel)} {r=p}
-    (\(qi ** ieq) => fst bel **
-     \(qi ** ieq), bd, x', el => fst el $ Left $ snd bel bd)
+InterpPFsliceHomComm {b} q p qsl psl x bel =
+  PNTisSliceM {p=b} {q=(InterpPFsliceHomDomTot {b} q qsl x bel)} {r=p}
+    (InterpPFsliceHomDomProj {b} q qsl x bel)
     psl
-
-public export
-InterpPFsliceHomCommR : {b : PolyFunc} -> (q, p : PolyFunc) ->
-  (qsl : PolyNatTrans q b) -> (psl : PolyNatTrans p b) ->
-  (x : Type) -> (bel : InterpPolyFunc b x) ->
-  InterpPFsliceHom {b} q p qsl x bel -> Type
-InterpPFsliceHomCommR {b} q p qsl psl x bel isl =
-  PNTisSliceM {p=b} {q=(InterpPFsliceHomDom {b} q qsl x bel)} {r=p}
-    (\(qi ** ieq) => fst qsl (snd qi) **
-     \(qi ** ieq), bd, x', el => fst el $ Right $ snd qsl (snd qi) bd)
-    psl
-    isl
 
 public export
 InterpPFrepSliceHom : {b : PolyFunc} ->
@@ -1688,23 +1684,13 @@ InterpPFrepSliceHom {b} q qel p =
     (PFelemRepSliceTot b q qel) p (PFelemRepSliceProj b q qel)
 
 public export
-InterpPFrepSliceHomCommL : {b : PolyFunc} ->
+InterpPFrepSliceHomComm : {b : PolyFunc} ->
   (q : Type) -> (qel : InterpPolyFunc b q) ->
   (p : PolyFunc) -> (psl : PolyNatTrans p b) ->
   (x : Type) -> (bel : InterpPolyFunc b x) ->
   InterpPFrepSliceHom {b} q qel p x bel -> Type
-InterpPFrepSliceHomCommL {b} q qel p =
-  InterpPFsliceHomCommL {b}
-    (PFelemRepSliceTot b q qel) p (PFelemRepSliceProj b q qel)
-
-public export
-InterpPFrepSliceHomCommR : {b : PolyFunc} ->
-  (q : Type) -> (qel : InterpPolyFunc b q) ->
-  (p : PolyFunc) -> (psl : PolyNatTrans p b) ->
-  (x : Type) -> (bel : InterpPolyFunc b x) ->
-  InterpPFrepSliceHom {b} q qel p x bel -> Type
-InterpPFrepSliceHomCommR {b} q qel p =
-  InterpPFsliceHomCommR {b}
+InterpPFrepSliceHomComm {b} q qel p =
+  InterpPFsliceHomComm {b}
     (PFelemRepSliceTot b q qel) p (PFelemRepSliceProj b q qel)
 
 ---------------------------------------
