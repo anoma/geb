@@ -161,7 +161,7 @@ public export
 PolyNTonPosEq : {p, q : PolyFunc} ->
   PolyNatTrans p q -> PolyNatTrans p q -> Type
 PolyNTonPosEq {p} {q} alpha beta =
-  ExtEq {a=(pfPos p)} {b=(pfPos q)} (pntOnPos alpha) (pntOnPos beta)
+  (i : pfPos p) -> pntOnPos alpha i ~=~ pntOnPos beta i
 
 public export
 PolyNTonDirEq : {p, q : PolyFunc} ->
@@ -170,7 +170,7 @@ PolyNTonDirEq : {p, q : PolyFunc} ->
   Type
 PolyNTonDirEq {p} {q} alpha beta poseq =
   (pi : pfPos p) -> (qd : pfDir {p=q} (pntOnPos alpha pi)) ->
-  pntOnDir alpha pi qd =
+  pntOnDir alpha pi qd ~=~
     pntOnDir beta pi (replace {p=(pfDir {p=q})} (poseq pi) qd)
 
 public export
