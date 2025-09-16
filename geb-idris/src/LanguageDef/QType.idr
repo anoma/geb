@@ -56,6 +56,25 @@ impredCoeqEquiv : {a, b : Type} -> {f, g : a -> b} ->
 impredCoeqEquiv {a} {b} {f} {g} el el' =
   (y : Type) -> (h : impredCoeq {a} {b} f g -> y) -> h el = h el'
 
+-- Coequalize by a relation -- that is, coequalize any two terms
+-- of a type which satisfy the given relation.
+public export
+impredCoeqRel : (a : Type) -> RelationOn a -> Type
+impredCoeqRel a rel =
+  impredCoeq {a=(p : (a, a) ** rel (fst p) (snd p))} {b=a}
+    (fst . fst)
+    (snd . fst)
+
+public export
+ImpredCoeqRelEqAssumption : Type
+ImpredCoeqRelEqAssumption =
+  (a : Type) -> (rel : RelationOn a) ->
+  (el, el' : a) -> rel el el' ->
+  impredCoeqEquiv
+    {a=(p : (a, a) ** rel (fst p) (snd p))} {b=a}
+    {f=(fst . fst)} {g=(snd . fst)}
+    (impredCoeqInj el) (impredCoeqInj el')
+
 public export
 impredPushout : {a, b, c : Type} -> (a -> b) -> (a -> c) -> Type
 impredPushout {a} {b} {c} f g =
@@ -85,10 +104,10 @@ impredPushoutElim {a} {b} {c} {f} {g} el {d} h j =
     el {c=d} (eitherElim h j)
 
 public export
-impredPushoutEquiv : {a, b, c : Type} -> (f : a -> b) -> (g : a -> c) ->
+impredPushoutEquiv : {a, b, c : Type} -> {f : a -> b} -> {g : a -> c} ->
   RelationOn (impredPushout {a} {b} {c} f g)
-impredPushoutEquiv {a} {b} {c} f g el el' =
-  (y : Type) -> (h : impredPushout {a} {b} {c} f g -> y) -> h el = h el'
+impredPushoutEquiv {a} {b} {c} {f} {g} =
+  impredCoeqEquiv {a} {b=(Either b c)} {f=(Left . f)} {g=(Right . g)}
 
 ---------------------
 ---- Definitions ----
