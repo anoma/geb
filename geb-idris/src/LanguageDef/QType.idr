@@ -66,14 +66,10 @@ impredCoeqRel a rel =
     (snd . fst)
 
 public export
-ImpredCoeqRelEqAssumption : Type
+0 ImpredCoeqRelEqAssumption : Type
 ImpredCoeqRelEqAssumption =
   (a : Type) -> (rel : RelationOn a) ->
-  (el, el' : a) -> rel el el' ->
-  impredCoeqEquiv
-    {a=(p : (a, a) ** rel (fst p) (snd p))} {b=a}
-    {f=(fst . fst)} {g=(snd . fst)}
-    (impredCoeqInj el) (impredCoeqInj el')
+  (el, el' : a) -> rel el el' -> el = el'
 
 public export
 impredPushout : {a, b, c : Type} -> (a -> b) -> (a -> c) -> Type
