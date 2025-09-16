@@ -41,8 +41,8 @@ impredCoeq {a} {b} f g =
   NaturalTransformation (impredCoeqF {a} {b} f g) (Prelude.id {a=Type})
 
 public export
-impredCoeqInj : {a, b : Type} -> (f, g : a -> b) -> b -> impredCoeq {a} {b} f g
-impredCoeqInj {a} {b} f g eb c el = fst el eb
+impredCoeqInj : {a, b : Type} -> {f, g : a -> b} -> b -> impredCoeq {a} {b} f g
+impredCoeqInj {a} {b} {f} {g} eb c el = fst el eb
 
 public export
 impredCoeqElim : {a, b : Type} -> {f, g : a -> b} ->
@@ -66,14 +66,14 @@ impredPushoutInjL :
   {a, b, c : Type} -> {f : a -> b} -> {g : a -> c} ->
   b -> impredPushout {a} {b} {c} f g
 impredPushoutInjL {a} {b} {c} {f} {g} =
-  impredCoeqInj {a} {b=(Either b c)} (Left . f) (Right . g) . Left
+  impredCoeqInj {a} {b=(Either b c)} {f=(Left . f)} {g=(Right . g)} . Left
 
 public export
 impredPushoutInjR :
   {a, b, c : Type} -> {f : a -> b} -> {g : a -> c} ->
   c -> impredPushout {a} {b} {c} f g
 impredPushoutInjR {a} {b} {c} {f} {g} =
-  impredCoeqInj {a} {b=(Either b c)} (Left . f) (Right . g) . Right
+  impredCoeqInj {a} {b=(Either b c)} {f=(Left . f)} {g=(Right . g)} . Right
 
 public export
 impredPushoutElim : {a, b, c : Type} -> {f : a -> b} -> {g : a -> c} ->
