@@ -1875,3 +1875,186 @@ polyCatElemCoprRepProd b a ela f elf =
       {r=b}
       (PFelemRepSliceProj b a ela)
       (PFelemRepSliceProj b f elf))
+
+-------------------------------------
+-------------------------------------
+---- `Poly`-slice hom-objects -------
+-------------------------------------
+-------------------------------------
+
+-- A pullback is a product in a slice category, so the product-hom
+-- adjunction in a slice category is a pullback-hom adjunction.
+
+public export
+polySliceHomObjPos : {b : PolyFunc} -> {q, p : PolyFunc} ->
+  (qsl : PolyNatTrans q b) -> (psl : PolyNatTrans p b) -> Type
+polySliceHomObjPos {b} {q} {p} qsl psl =
+  (bi : pfPos b **
+   onpos : (qi : pfPos q) -> pntOnPos qsl qi = bi -> pfPos p **
+   poscomm :
+    (qi : pfPos q) -> (qieq : pntOnPos qsl qi = bi) ->
+    pntOnPos psl (onpos qi qieq) = bi **
+   ondir :
+    (qi : pfPos q) -> (qieq : pntOnPos qsl qi = bi) ->
+    pfDir {p} (onpos qi qieq) -> Either Unit (pfDir {p=q} qi) **
+   {- ondircomm : -}
+    (qi : pfPos q) -> (qieq : pntOnPos qsl qi = bi) ->
+    (bd : pfDir {p=b} bi) ->
+      (ondir qi qieq (pntOnDir psl (onpos qi qieq) $
+        replace {p=(pfDir {p=b})} (sym $ poscomm qi qieq) bd)) =
+      (Right $ pntOnDir qsl qi (replace {p=(pfDir {p=b})} (sym qieq) bd)))
+
+public export
+polySliceHomObjDirBase : {b : PolyFunc} -> {q, p : PolyFunc} ->
+  (qsl : PolyNatTrans q b) -> (psl : PolyNatTrans p b) ->
+  polySliceHomObjPos {b} {q} {p} qsl psl -> Type
+polySliceHomObjDirBase {b} {q} {p} qsl psl
+  (bi ** qponpos ** onposcomm ** qpondir ** ondircomm) =
+    Either
+      (pfDir {p=b} bi)
+      (qi : pfPos q **
+       ieq : pntOnPos qsl qi = bi **
+       pd : pfDir {p} (qponpos qi ieq) **
+       qpondir qi ieq pd = Left ())
+
+public export
+polySliceHomObjDirRel : {b : PolyFunc} -> {q, p : PolyFunc} ->
+  (qsl : PolyNatTrans q b) -> (psl : PolyNatTrans p b) ->
+  (i : polySliceHomObjPos {b} {q} {p} qsl psl) ->
+  RelationOn (polySliceHomObjDirBase {b} {q} {p} qsl psl i)
+polySliceHomObjDirRel {b} {q} {p} qsl psl
+  (bi ** qponpos ** onposcomm ** qpondir ** ondircomm)
+  (Left bd) (Right (qi ** ieq ** pd ** isl)) =
+    pntOnDir psl
+      (qponpos qi ieq)
+      (replace {p=(pfDir {p=b})} (sym $ onposcomm qi ieq) bd) =
+    pd
+polySliceHomObjDirRel {b} {q} {p} qsl psl
+  (bi ** qponpos ** onposcomm ** qpondir ** ondircomm)
+  _ _ =
+    Void
+
+public export
+polySliceHomObjDir : {b : PolyFunc} -> {q, p : PolyFunc} ->
+  (qsl : PolyNatTrans q b) -> (psl : PolyNatTrans p b) ->
+  polySliceHomObjPos {b} {q} {p} qsl psl -> Type
+polySliceHomObjDir {b} {q} {p} qsl psl i =
+  impredCoeqRel
+    (polySliceHomObjDirBase {b} {q} {p} qsl psl i)
+    (polySliceHomObjDirRel {b} {q} {p} qsl psl i)
+
+public export
+polySliceHomObjTot : {b : PolyFunc} -> {q, p : PolyFunc} ->
+  (qsl : PolyNatTrans q b) -> (psl : PolyNatTrans p b) ->
+  PolyFunc
+polySliceHomObjTot {b} {q} {p} qsl psl =
+  (polySliceHomObjPos {b} {q} {p} qsl psl **
+   polySliceHomObjDir {b} {q} {p} qsl psl)
+
+public export
+polySliceHomObjProjOnPos : {b : PolyFunc} -> {q, p : PolyFunc} ->
+  (qsl : PolyNatTrans q b) -> (psl : PolyNatTrans p b) ->
+  pfPos (polySliceHomObjTot {b} {q} {p} qsl psl) -> pfPos b
+polySliceHomObjProjOnPos {b} {q} {p} qsl psl = DPair.fst
+
+public export
+polySliceHomObjProjOnDir : {b : PolyFunc} -> {q, p : PolyFunc} ->
+  (qsl : PolyNatTrans q b) -> (psl : PolyNatTrans p b) ->
+  (i : pfPos (polySliceHomObjTot {b} {q} {p} qsl psl)) ->
+  pfDir {p=b} (polySliceHomObjProjOnPos {b} {q} {p} qsl psl i) ->
+  pfDir {p=(polySliceHomObjTot {b} {q} {p} qsl psl)} i
+polySliceHomObjProjOnDir {b} {q} {p} qsl psl
+  (bi ** pqonpos ** onposcomm ** qpondir ** ondircomm) =
+    impredCoeqInj . Left
+
+public export
+polySliceHomObjProj : {b : PolyFunc} -> {q, p : PolyFunc} ->
+  (qsl : PolyNatTrans q b) -> (psl : PolyNatTrans p b) ->
+  PolyNatTrans (polySliceHomObjTot {b} {q} {p} qsl psl) b
+polySliceHomObjProj {b} {q} {p} qsl psl =
+  (polySliceHomObjProjOnPos {b} {q} {p} qsl psl **
+   polySliceHomObjProjOnDir {b} {q} {p} qsl psl)
+
+-- Since a polynomial-slice category is equivalent to a copresheaf
+-- category, we can use Yoneda reasoning to determine what its
+-- hom-objects must be.
+public export
+PolySliceToNT : (b : PolyFunc) -> (q, p : PolyFunc) ->
+  (qsl : PolyNatTrans q b) -> (psl : PolyNatTrans p b) ->
+  (x : Type) -> (bel : InterpPolyFunc b x) ->
+  InterpPolySlice
+    b
+    (polySliceHomObjTot {b} {q} {p} qsl psl)
+    (polySliceHomObjProj {b} {q} {p} qsl psl)
+    x
+    bel ->
+  InterpPFsliceHom {b} q p qsl x bel
+PolySliceToNT b q p (qonpos ** qondir) (ponpos ** pondir) x
+  (bi ** bdx)
+  (((_ **  qponpos ** onposcomm ** ondir ** ondircomm) ** bondir) **
+   Refl ** ondireq) =
+    (\(qi ** ieq) =>
+      qponpos (snd qi) (sym ieq) **
+     \(qi ** ieq), pd, y, el =>
+      fst el $ case decCase $ ondir (snd qi) (sym ieq) pd of
+        Left (() ** isl) =>
+          Left $ bondir $ impredCoeqInj $
+            Right (snd qi ** sym ieq ** pd ** isl)
+        Right (qd ** isr) =>
+          Right qd)
+
+public export
+0 PolySliceToNTcomm : FunExt -> ImpredCoeqRelEqAssumption ->
+  (b : PolyFunc) -> (q, p : PolyFunc) ->
+  (qsl : PolyNatTrans q b) -> (psl : PolyNatTrans p b) ->
+  (x : Type) -> (bel : InterpPolyFunc b x) ->
+  (isl : InterpPolySlice
+    b
+    (polySliceHomObjTot {b} {q} {p} qsl psl)
+    (polySliceHomObjProj {b} {q} {p} qsl psl)
+    x
+    bel) ->
+  InterpPFsliceHomComm {b} q p qsl psl x bel
+    (PolySliceToNT b q p qsl psl x bel isl)
+PolySliceToNTcomm fext coeqr b q p (qonpos ** qondir) (ponpos ** pondir) x
+  (bi ** bdx)
+  (((_ **  qponpos ** onposcomm ** ondir ** ondircomm) ** pdx) **
+   Refl ** ondireq) =
+    (\(qi ** pqieq) =>
+      trans (onposcomm (snd qi) (sym pqieq)) Refl **
+     \(qi ** pqieq), bd =>
+      let bieq = trans (onposcomm (snd qi) (sym pqieq)) Refl in
+      funExt $ \y => funExt $ \el =>
+        case
+          decCase
+            (ondir (snd qi) (sym pqieq)
+              (pondir (qponpos (snd qi) (sym pqieq)) bd))
+          of
+            Left (() ** isl) =>
+              rewrite isl in
+              rewrite ondireq (replace {p=(pfDir {p=b})} bieq bd) in
+              ?PolySliceToNTcomm_hole_rewrite_uip $
+              cong (fst el) $
+                cong Left $
+                cong pdx $ cong impredCoeqInj $ sym $
+                  coeqr
+                    (polySliceHomObjDirBase
+                      {b} {q} {p} (qonpos ** qondir) (ponpos ** pondir)
+                      (bi ** qponpos ** onposcomm ** ondir ** ondircomm))
+                    (polySliceHomObjDirRel
+                      {b} {q} {p} (qonpos ** qondir) (ponpos ** pondir)
+                      (bi ** qponpos ** onposcomm ** ondir ** ondircomm))
+                    (Left $ replace {p=(pfDir {p=b})} bieq bd)
+                    (Right (snd qi ** (sym pqieq **
+                      (pondir (qponpos (snd qi) (sym pqieq)) bd ** isl))))
+                    Refl
+            Right (qd ** isr) =>
+              rewrite isr in
+              rewrite
+                sym $ injective $
+                  trans
+                    (sym $ ondircomm (snd qi) (sym pqieq)
+                      (replace {p=(pfDir {p=b})} bieq bd))
+                    isr
+              in
+              sym $ snd el $ replace {p=(pfDir {p=b})} bieq bd)
