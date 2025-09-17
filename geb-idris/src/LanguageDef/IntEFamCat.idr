@@ -249,6 +249,26 @@ InterpEFamPreshfNaturality c mor comp assoc
     dpEq12 Refl
       $ assoc b a (xobj exi) (yobj (midx exi)) (mobj exi) max mba
 
+--------------------------------
+--------------------------------
+---- Categories of elements ----
+--------------------------------
+--------------------------------
+
+public export
+EFamElObj : {c : Type} -> (mor : IntDifunctorSig c) ->
+  IntEFamObj c -> Type
+EFamElObj {c} mor f = Sigma {a=c} (InterpEFamPreshfOMap c mor f)
+
+public export
+EFamElMor : {c : Type} -> {mor : IntDifunctorSig c} ->
+  (comp : IntCompSig c mor) ->
+  (f : IntEFamObj c) -> IntMorSig (EFamElObj {c} mor f)
+EFamElMor {c} {mor} comp f o o' =
+  (m : mor (fst o) (fst o') **
+   InterpEFamPreshfFMap c mor comp f (fst o') (fst o) m (snd o') =
+   snd o)
+
 -------------------------------------------
 -------------------------------------------
 ---- Metalanguage existential families ----
