@@ -276,6 +276,72 @@ ECofamElMor {c} {mor} comp f o o' =
   (m : mor (fst o) (fst o') **
    InterpECofamCopreshfFMap c mor comp f (fst o) (fst o') m (snd o) = snd o')
 
+-- For the equivalence of the _opposite_ of `ECofamElObj`/`ECofamElMor`
+-- with the comma category `y / F` shown below, see, for example,
+-- https://ncatlab.org/nlab/show/category+of+elements#definition .
+
+public export
+ECofamRepObj : {c : Type} -> (mor : IntDifunctorSig c) -> c -> IntECofamObj c
+ECofamRepObj {c} mor a = (() ** \_ => a)
+
+public export
+ECofamYoCommaObj : {c : Type} -> (mor : IntDifunctorSig c) ->
+  IntECofamObj c -> Type
+ECofamYoCommaObj {c} mor f =
+  (a : c ** IntECofamMor {c} mor (ECofamRepObj {c} mor a) f)
+
+public export
+ECofamYoCommaMor : {c : Type} -> {mor : IntDifunctorSig c} ->
+  (comp : IntCompSig c mor) ->
+  (f : IntECofamObj c) -> IntMorSig (ECofamYoCommaObj {c} mor f)
+ECofamYoCommaMor {c} {mor} comp f x y =
+  (m : mor (fst y) (fst x) **
+   eq1 : fst (snd y) () = fst (snd x) () **
+   comp (snd f (fst (snd y) ())) (fst y) (fst x) m (snd (snd y) ()) =
+    (rewrite eq1 in snd (snd x) ()))
+
+public export
+ECofamYoCommaObjToOpECofamElObj : {c : Type} -> (mor : IntDifunctorSig c) ->
+  (f : IntEFamObj c) ->
+  ECofamYoCommaObj {c} mor f -> IntOpCatObj (ECofamElObj {c} mor f)
+ECofamYoCommaObjToOpECofamElObj {c} mor f el =
+  (fst el ** fst (snd el) () ** snd (snd el) ())
+
+public export
+ECofamYoCommaObjFromOpECofamElObj : {c : Type} -> (mor : IntDifunctorSig c) ->
+  (f : IntEFamObj c) ->
+  IntOpCatObj (ECofamElObj {c} mor f) -> ECofamYoCommaObj {c} mor f
+ECofamYoCommaObjFromOpECofamElObj {c} mor f el =
+  (fst el ** \() => fst (snd el) ** \() => snd (snd el))
+
+public export
+ECofamYoCommaMorToOpECofamElMor : {c : Type} -> (mor : IntDifunctorSig c) ->
+  (comp : IntCompSig c mor) ->
+  (f : IntEFamObj c) ->
+  (x, y : IntOpCatObj (ECofamElObj {c} mor f)) ->
+  IntOpCatMor (ECofamElObj {c} mor f) (ECofamElMor {c} {mor} comp f)
+    x
+    y ->
+  ECofamYoCommaMor {c} {mor} comp f
+    (ECofamYoCommaObjFromOpECofamElObj {c} mor f x)
+    (ECofamYoCommaObjFromOpECofamElObj {c} mor f y)
+ECofamYoCommaMorToOpECofamElMor {c} mor f comp x y (m ** eq) =
+  (m ** rewrite sym eq in (Refl ** Refl))
+
+public export
+ECofamYoCommaMorFromOpECofamElMor : {c : Type} -> (mor : IntDifunctorSig c) ->
+  (comp : IntCompSig c mor) ->
+  (f : IntEFamObj c) ->
+  (x, y : IntOpCatObj (ECofamElObj {c} mor f)) ->
+  ECofamYoCommaMor {c} {mor} comp f
+    (ECofamYoCommaObjFromOpECofamElObj {c} mor f x)
+    (ECofamYoCommaObjFromOpECofamElObj {c} mor f y) ->
+  IntOpCatMor (ECofamElObj {c} mor f) (ECofamElMor {c} {mor} comp f)
+    x
+    y
+ECofamYoCommaMorFromOpECofamElMor {c} mor f comp x y (m ** eq1 ** eq2) =
+  (m ** trans (dpEq12 eq1 (rewrite sym eq1 in eq2)) (sym dpEqPat))
+
 ---------------------------------------------
 ---------------------------------------------
 ---- Metalanguage existential cofamilies ----
