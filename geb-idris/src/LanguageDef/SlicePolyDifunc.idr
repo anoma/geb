@@ -1314,11 +1314,39 @@ InterpPolyCatElemCoprMap : FunExt ->
   (x, y : Type) -> (elx : InterpPolyFunc b x) -> (mxy : x -> y) ->
   InterpPolyCatElemCopr {b} p x elx ->
   InterpPolyCatElemCopr {b} p y (InterpPFMap b mxy elx)
-InterpPolyCatElemCoprMap funext {b} p x y (bi ** bdx) mxy (pi ** pdx ** comm) =
+InterpPolyCatElemCoprMap fext {b} p x y (bi ** bdx) mxy (pi ** pdx ** comm) =
   (pi **
    mxy . pdx **
    case dpeq1 comm of
     Refl => dpEq12 Refl (funExt $ \bd => cong mxy $ fcong (dpeq2 comm) {x=bd}))
+
+public export
+InterpPolyCatElemCoprNT : FunExt ->
+  {b : PolyFunc} -> (p, q : PolyCatElemCopr b) ->
+  PolyCatElemCoprMap {p=b} p q ->
+  (x : Type) -> (elx : InterpPolyFunc b x) ->
+  InterpPolyCatElemCopr {b} p x elx ->
+  InterpPolyCatElemCopr {b} q x elx
+InterpPolyCatElemCoprNT fext {b} p q (onpos ** ondir) x
+  (bi ** bdx) (pi ** pdx ** comm) =
+    (onpos pi **
+     pdx . fst (ondir pi) **
+     let
+      comm1 = dpeq1 comm
+      comm2 = dpeq2 comm
+      dcomm = trans (snd (ondir pi)) dpEqPat
+      dcomm1 = dpeq1 dcomm
+      dcomm2 = dpeq2 dcomm
+     in
+     case comm1 of
+      Refl =>
+        rewrite dcomm1 in
+        dpEq12
+          Refl
+          (trans
+            (funExt $
+              \bd => cong pdx $ ?InterpPolyCatElemCoprNT_dcomm2_hole)
+            comm2))
 
 -- This predicate states that the component of `alpha` at `x`
 -- applied to `elp` equals `elb`.
