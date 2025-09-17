@@ -257,6 +257,25 @@ InterpECofamCopreshfNaturality c mor comp assoc
     dpEq12 Refl
       $ sym $ assoc (yobj (midx exi)) (xobj exi) a b mab mxa (mobj exi)
 
+--------------------------------
+--------------------------------
+---- Categories of elements ----
+--------------------------------
+--------------------------------
+
+public export
+ECofamElObj : {c : Type} -> (mor : IntDifunctorSig c) ->
+  IntECofamObj c -> Type
+ECofamElObj {c} mor f = Sigma {a=c} (InterpECofamCopreshfOMap c mor f)
+
+public export
+ECofamElMor : {c : Type} -> {mor : IntDifunctorSig c} ->
+  (comp : IntCompSig c mor) ->
+  (f : IntECofamObj c) -> IntMorSig (ECofamElObj {c} mor f)
+ECofamElMor {c} {mor} comp f o o' =
+  (m : mor (fst o) (fst o') **
+   InterpECofamCopreshfFMap c mor comp f (fst o) (fst o') m (snd o) = snd o')
+
 ---------------------------------------------
 ---------------------------------------------
 ---- Metalanguage existential cofamilies ----

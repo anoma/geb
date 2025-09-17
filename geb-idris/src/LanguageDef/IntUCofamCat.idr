@@ -156,14 +156,14 @@ IntElemUCofamFMap {c} {d} cmor dmor f fm g gm x y mxy =
 public export
 InterpUCofamCopreshfOMap : (c : Type) -> (mor : IntDifunctorSig c) ->
   IntUCofamObj c -> IntCopreshfSig c
-InterpUCofamCopreshfOMap c mor (idx ** obj) a = Pi {a=idx} $ flip mor a . obj
+InterpUCofamCopreshfOMap c mor o a = Pi {a=(fst o)} $ flip mor a . (snd o)
 
 public export
 InterpUCofamCopreshfFMap :
   (c : Type) -> (mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
   (x : IntUCofamObj c) -> IntCopreshfMapSig c mor (InterpUCofamCopreshfOMap c mor x)
-InterpUCofamCopreshfFMap c mor comp (idx ** obj) xobj yobj mxy pix =
-  \ei : idx => comp (obj ei) xobj yobj mxy (pix ei)
+InterpUCofamCopreshfFMap c mor comp o xobj yobj mxy pix =
+  \ei : fst o => comp (snd o ei) xobj yobj mxy (pix ei)
 
 public export
 InterpUCofamCopreshfNT :
@@ -194,6 +194,27 @@ InterpUCofamCopreshfNaturality fext c mor comp assoc
           mab
           (pix $ midx eyi)
           (mobj eyi)
+
+--------------------------------
+--------------------------------
+---- Categories of elements ----
+--------------------------------
+--------------------------------
+
+public export
+UCofamElObj : {c : Type} -> (mor : IntDifunctorSig c) ->
+  IntUCofamObj c -> Type
+UCofamElObj {c} mor f = Sigma {a=c} (InterpUCofamCopreshfOMap c mor f)
+
+public export
+UCofamElMor : {c : Type} -> {mor : IntDifunctorSig c} ->
+  (comp : IntCompSig c mor) ->
+  (f : IntUCofamObj c) -> IntMorSig (UCofamElObj {c} mor f)
+UCofamElMor {c} {mor} comp f o o' =
+  (m : mor (fst o) (fst o') **
+   (i : fst f) ->
+    InterpUCofamCopreshfFMap c mor comp f (fst o) (fst o') m (snd o) i =
+    snd o' i)
 
 -------------------------------------------
 -------------------------------------------
