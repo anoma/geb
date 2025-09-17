@@ -1152,6 +1152,12 @@ PolyCatElemCoprMap {p} f g =
    (i : fst f) -> PolyCatElemMor (snd g $ onpos i) (snd f i))
 
 public export
+PolyCatElemPreshfMap : {p : PolyFunc} -> IntMorSig (PolyCatElemCopr p)
+PolyCatElemPreshfMap {p} f g =
+  (onpos : fst f -> fst g **
+   (i : fst f) -> PolyCatElemMor (snd f i) (snd g $ onpos i))
+
+public export
 PolyCatElemRepCopr : {p : PolyFunc} ->
   (x : Type) -> InterpPolyFunc p x -> PolyCatElemCopr p
 PolyCatElemRepCopr {p} x elb = (Unit ** \_ => (x ** elb))
@@ -1301,6 +1307,18 @@ InterpPolyCatElemCopr : {b : PolyFunc} -> PolyCatElemCopr b ->
   (x : Type) -> SliceObj (InterpPolyFunc b x)
 InterpPolyCatElemCopr {b} p x elb =
   (i : fst p ** PolyCatElemMor {p=b} (snd p i) (x ** elb))
+
+public export
+InterpPolyCatElemCoprMap : FunExt ->
+  {b : PolyFunc} -> (p : PolyCatElemCopr b) ->
+  (x, y : Type) -> (elx : InterpPolyFunc b x) -> (mxy : x -> y) ->
+  InterpPolyCatElemCopr {b} p x elx ->
+  InterpPolyCatElemCopr {b} p y (InterpPFMap b mxy elx)
+InterpPolyCatElemCoprMap funext {b} p x y (bi ** bdx) mxy (pi ** pdx ** comm) =
+  (pi **
+   mxy . pdx **
+   case dpeq1 comm of
+    Refl => dpEq12 Refl (funExt $ \bd => cong mxy $ fcong (dpeq2 comm) {x=bd}))
 
 -- This predicate states that the component of `alpha` at `x`
 -- applied to `elp` equals `elb`.
