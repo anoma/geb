@@ -1152,6 +1152,10 @@ PolyCatElemCoprMap {p} f g =
    (i : fst f) -> PolyCatElemMor (snd g $ onpos i) (snd f i))
 
 public export
+PolyCatElemPreshf : PolyFunc -> Type
+PolyCatElemPreshf = PolyCatElemCopr
+
+public export
 PolyCatElemPreshfMap : {p : PolyFunc} -> IntMorSig (PolyCatElemCopr p)
 PolyCatElemPreshfMap {p} f g =
   (onpos : fst f -> fst g **
@@ -1347,6 +1351,50 @@ InterpPolyCatElemCoprNT fext {b} p q (onpos ** ondir) x
             (funExt $
               \bd => cong pdx $ ?InterpPolyCatElemCoprNT_dcomm2_hole)
             comm2))
+
+-- Interpret a coproduct of representable presheaves on a category
+-- of elements of a polynomial functor (i.e. a polynomial functor on
+-- the _opposite_ of the category of elements of a polynomial functor).
+public export
+InterpPolyCatElemPreshf : {b : PolyFunc} -> PolyCatElemPreshf b ->
+  (x : Type) -> SliceObj (InterpPolyFunc b x)
+InterpPolyCatElemPreshf {b} p x elb =
+  (i : fst p ** PolyCatElemMor {p=b} (x ** elb) (snd p i))
+
+public export
+InterpPolyCatElemPreshfMap : FunExt ->
+  {b : PolyFunc} -> (p : PolyCatElemPreshf b) ->
+  (x, y : Type) -> (ely : InterpPolyFunc b y) -> (myx : y -> x) ->
+  InterpPolyCatElemPreshf {b} p x (InterpPFMap b myx ely) ->
+  InterpPolyCatElemPreshf {b} p y ely
+InterpPolyCatElemPreshfMap fext {b} p x y (bi ** bdx) myx (pi ** xpd ** comm) =
+  (pi ** xpd . myx ** comm)
+
+public export
+InterpPolyCatElemPreshfNT : FunExt ->
+  {b : PolyFunc} -> (p, q : PolyCatElemPreshf b) ->
+  PolyCatElemPreshfMap {p=b} p q ->
+  (x : Type) -> (elx : InterpPolyFunc b x) ->
+  InterpPolyCatElemPreshf {b} p x elx ->
+  InterpPolyCatElemPreshf {b} q x elx
+InterpPolyCatElemPreshfNT fext {b} p q (onpos ** ondir) x
+  (bi ** bdx) (pi ** xpd ** comm) =
+    (onpos pi **
+     fst (ondir pi) . xpd **
+     let
+      comm1 = dpeq1 comm
+      comm2 = dpeq2 comm
+      deq = snd (ondir pi)
+      deq1 = dpeq1 deq
+      deq2 = dpeq2 deq
+     in
+     case comm1 of
+      Refl =>
+        trans
+          (dpEq12
+            deq1
+            (rewrite deq1 in ?InterpPolyCatElemPreshfNT_hole_comm2_deq2))
+          (sym $ dpEqPat {dp=(snd (snd q (onpos pi)))}))
 
 -- This predicate states that the component of `alpha` at `x`
 -- applied to `elp` equals `elb`.
