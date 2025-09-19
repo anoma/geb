@@ -2233,3 +2233,67 @@ PolyBCFtotMap : {p, q : PolyFunc} -> (f : PolyNatTrans q p) ->
 PolyBCFtotMap {p} {q} f r rsl s ssl alpha comm =
   (PolyBCFtotMapPos {p} {q} f r rsl s ssl alpha comm **
    PolyBCFtotMapDir {p} {q} f r rsl s ssl alpha comm)
+
+--------------------------------
+---- Pi / dependent product ----
+--------------------------------
+
+public export
+PolyPiPbDom1Tot : {p, q : PolyFunc} -> (f : PolyNatTrans p q) ->
+  (r : PolyFunc) -> (rsl : PolyNatTrans r p) ->
+  PolyFunc
+PolyPiPbDom1Tot {p} {q} f r rsl = q
+
+public export
+PolyPiPbDom1Proj : {p, q : PolyFunc} -> (f : PolyNatTrans p q) ->
+  (r : PolyFunc) -> (rsl : PolyNatTrans r p) ->
+  PolyNatTrans (PolyPiPbDom1Tot {p} {q} f r rsl) q
+PolyPiPbDom1Proj {p} {q} f r rsl = pntId q
+
+public export
+PolyPiPbDom2DomTot : {p, q : PolyFunc} -> (f : PolyNatTrans p q) ->
+  (r : PolyFunc) -> (rsl : PolyNatTrans r p) ->
+  PolyFunc
+PolyPiPbDom2DomTot {p} {q} f r rsl = p
+
+public export
+PolyPiPbDom2DomProj : {p, q : PolyFunc} -> (f : PolyNatTrans p q) ->
+  (r : PolyFunc) -> (rsl : PolyNatTrans r p) ->
+  PolyNatTrans (PolyPiPbDom2DomTot {p} {q} f r rsl) q
+PolyPiPbDom2DomProj {p} {q} f r rsl = f
+
+public export
+PolyPiPbDom2CodTot : {p, q : PolyFunc} -> (f : PolyNatTrans p q) ->
+  (r : PolyFunc) -> (rsl : PolyNatTrans r p) ->
+  PolyFunc
+PolyPiPbDom2CodTot {p} {q} f r rsl = r
+
+public export
+PolyPiPbDom2CodProj : {p, q : PolyFunc} -> (f : PolyNatTrans p q) ->
+  (r : PolyFunc) -> (rsl : PolyNatTrans r p) ->
+  PolyNatTrans (PolyPiPbDom2CodTot {p} {q} f r rsl) q
+PolyPiPbDom2CodProj {p} {q} f r rsl = pntVCatComp {p=r} {q=p} {r=q} f rsl
+
+public export
+PolyPiPbDom2Tot : {p, q : PolyFunc} -> (f : PolyNatTrans p q) ->
+  (r : PolyFunc) -> (rsl : PolyNatTrans r p) ->
+  PolyFunc
+PolyPiPbDom2Tot {p} {q} f r rsl =
+  polySliceHomObjTot
+    {b=q}
+    {q=(PolyPiPbDom2DomTot {p} {q} f r rsl)}
+    {p=(PolyPiPbDom2CodTot {p} {q} f r rsl)}
+    (PolyPiPbDom2DomProj {p} {q} f r rsl)
+    (PolyPiPbDom2CodProj {p} {q} f r rsl)
+
+public export
+PolyPiPbDom2Proj : {p, q : PolyFunc} -> (f : PolyNatTrans p q) ->
+  (r : PolyFunc) -> (rsl : PolyNatTrans r p) ->
+  PolyNatTrans (PolyPiPbDom2Tot {p} {q} f r rsl) q
+PolyPiPbDom2Proj {p} {q} f r rsl =
+  polySliceHomObjProj
+    {b=q}
+    {q=(PolyPiPbDom2DomTot {p} {q} f r rsl)}
+    {p=(PolyPiPbDom2CodTot {p} {q} f r rsl)}
+    (PolyPiPbDom2DomProj {p} {q} f r rsl)
+    (PolyPiPbDom2CodProj {p} {q} f r rsl)
