@@ -2382,10 +2382,31 @@ PolyPiPbMor2 : {p, q : PolyFunc} -> (f : PolyNatTrans p q) ->
     (PolyPiPbDom2Tot {p} {q} f r rsl)
     (PolyPiPbCodTot {p} {q} f r rsl)
 PolyPiPbMor2 {p} {q} f r rsl =
-  (\(bi ** onpos ** ondir) =>
-    ?PolyPiPbMor2_hole_onpos **
-   \(bi ** onpos ** ondir) =>
-    ?PolyPiPbMor2_hole_ondir)
+  (\(qi ** onpos ** poscomm ** ondir ** dircomm) =>
+    (qi **
+     \pi, fqieq => pi **
+     \pi, fqieq => fqieq **
+     \pi, fqieq, pd => Right pd **
+     \pi, fqieq, qd => Refl) **
+   \(qi ** onpos ** poscomm ** ondir ** dircomm), bd, x,
+    (dmx ** el) =>
+    bd
+      x
+      (\dd =>
+        dmx
+          (eitherElim
+            Left
+            (\(_ ** _ ** _ ** pdeq) => case pdeq of Refl impossible)
+            dd) **
+       \((dl, dr) ** dh) =>
+        case decCase dl of
+          Left (qd ** lisl) => rewrite lisl in case decCase dr of
+            Left (qd' ** risl) =>
+              case lisl of Refl => case risl of Refl => void dh
+            Right ((qi ** ieq ** pd ** comm) ** risr) =>
+              rewrite risr in case comm of Refl impossible
+          Right ((qi ** ieq ** pd ** comm) ** lisr) =>
+            rewrite lisr in case comm of Refl impossible))
 
 public export
 PolyPiTot : {p, q : PolyFunc} -> (f : PolyNatTrans p q) ->
