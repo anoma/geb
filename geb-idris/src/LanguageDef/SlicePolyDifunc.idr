@@ -2297,3 +2297,51 @@ PolyPiPbDom2Proj {p} {q} f r rsl =
     {p=(PolyPiPbDom2CodTot {p} {q} f r rsl)}
     (PolyPiPbDom2DomProj {p} {q} f r rsl)
     (PolyPiPbDom2CodProj {p} {q} f r rsl)
+
+public export
+PolyPiPbCodDomTot : {p, q : PolyFunc} -> (f : PolyNatTrans p q) ->
+  (r : PolyFunc) -> (rsl : PolyNatTrans r p) ->
+  PolyFunc
+PolyPiPbCodDomTot {p} {q} f r rsl = p
+
+public export
+PolyPiPbCodDomProj : {p, q : PolyFunc} -> (f : PolyNatTrans p q) ->
+  (r : PolyFunc) -> (rsl : PolyNatTrans r p) ->
+  PolyNatTrans (PolyPiPbCodDomTot {p} {q} f r rsl) q
+PolyPiPbCodDomProj {p} {q} f r rsl = f
+
+public export
+PolyPiPbCodCodTot : {p, q : PolyFunc} -> (f : PolyNatTrans p q) ->
+  (r : PolyFunc) -> (rsl : PolyNatTrans r p) ->
+  PolyFunc
+PolyPiPbCodCodTot {p} {q} f r rsl = p
+
+public export
+PolyPiPbCodCodProj : {p, q : PolyFunc} -> (f : PolyNatTrans p q) ->
+  (r : PolyFunc) -> (rsl : PolyNatTrans r p) ->
+  PolyNatTrans (PolyPiPbCodCodTot {p} {q} f r rsl) q
+PolyPiPbCodCodProj {p} {q} f r rsl = f
+
+public export
+PolyPiPbCodTot : {p, q : PolyFunc} -> (f : PolyNatTrans p q) ->
+  (r : PolyFunc) -> (rsl : PolyNatTrans r p) ->
+  PolyFunc
+PolyPiPbCodTot {p} {q} f r rsl =
+  polySliceHomObjTot
+    {b=q}
+    {q=(PolyPiPbCodDomTot {p} {q} f r rsl)}
+    {p=(PolyPiPbCodCodTot {p} {q} f r rsl)}
+    (PolyPiPbCodDomProj {p} {q} f r rsl)
+    (PolyPiPbCodCodProj {p} {q} f r rsl)
+
+public export
+PolyPiPbCodProj : {p, q : PolyFunc} -> (f : PolyNatTrans p q) ->
+  (r : PolyFunc) -> (rsl : PolyNatTrans r p) ->
+  PolyNatTrans (PolyPiPbCodTot {p} {q} f r rsl) q
+PolyPiPbCodProj {p} {q} f r rsl =
+  polySliceHomObjProj
+    {b=q}
+    {q=(PolyPiPbCodDomTot {p} {q} f r rsl)}
+    {p=(PolyPiPbCodCodTot {p} {q} f r rsl)}
+    (PolyPiPbCodDomProj {p} {q} f r rsl)
+    (PolyPiPbCodCodProj {p} {q} f r rsl)
