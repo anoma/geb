@@ -2345,3 +2345,72 @@ PolyPiPbCodProj {p} {q} f r rsl =
     {p=(PolyPiPbCodCodTot {p} {q} f r rsl)}
     (PolyPiPbCodDomProj {p} {q} f r rsl)
     (PolyPiPbCodCodProj {p} {q} f r rsl)
+
+public export
+PolyPiPbMor1 : {p, q : PolyFunc} -> (f : PolyNatTrans p q) ->
+  (r : PolyFunc) -> (rsl : PolyNatTrans r p) ->
+  PolyNatTrans
+    (PolyPiPbDom1Tot {p} {q} f r rsl)
+    (PolyPiPbCodTot {p} {q} f r rsl)
+PolyPiPbMor1 {p} {q} f r rsl =
+  (\qi =>
+    (qi **
+     \pi, fqieq => pi **
+     \pi, fqieq => fqieq **
+     \pi, fqieq, pd => Right pd **
+     \pi, fqieq, pd => Refl) **
+   \qi, bd =>
+    impredCoeqElim
+      bd
+      (eitherElim
+        id
+        (\(qi ** ieq ** pd ** comm) => case comm of Refl impossible))
+      (\((dl, dr) ** dh) =>
+        case decCase dl of
+          Left (qd ** lisl) => rewrite lisl in case decCase dr of
+            Left (qd' ** risl) =>
+              case lisl of Refl => case risl of Refl => void dh
+            Right ((qi ** ieq ** pd ** comm) ** risr) =>
+              rewrite risr in case comm of Refl impossible
+          Right ((qi ** ieq ** pd ** comm) ** lisr) =>
+            rewrite lisr in case comm of Refl impossible))
+
+public export
+PolyPiPbMor2 : {p, q : PolyFunc} -> (f : PolyNatTrans p q) ->
+  (r : PolyFunc) -> (rsl : PolyNatTrans r p) ->
+  PolyNatTrans
+    (PolyPiPbDom2Tot {p} {q} f r rsl)
+    (PolyPiPbCodTot {p} {q} f r rsl)
+PolyPiPbMor2 {p} {q} f r rsl =
+  (\(bi ** onpos ** ondir) =>
+    ?PolyPiPbMor2_hole_onpos **
+   \(bi ** onpos ** ondir) =>
+    ?PolyPiPbMor2_hole_ondir)
+
+public export
+PolyPiTot : {p, q : PolyFunc} -> (f : PolyNatTrans p q) ->
+  (r : PolyFunc) -> (rsl : PolyNatTrans r p) -> PolyFunc
+PolyPiTot {p} {q} f r rsl =
+  pfPullbackAr
+    {p=(PolyPiPbDom1Tot {p} {q} f r rsl)}
+    {q=(PolyPiPbDom2Tot {p} {q} f r rsl)}
+    {r=(PolyPiPbCodTot {p} {q} f r rsl)}
+    (PolyPiPbMor1 {p} {q} f r rsl)
+    (PolyPiPbMor2 {p} {q} f r rsl)
+
+public export
+PolyPiProj : {p, q : PolyFunc} -> (f : PolyNatTrans p q) ->
+  (r : PolyFunc) -> (rsl : PolyNatTrans r p) ->
+  PolyNatTrans (PolyPiTot {p} {q} f r rsl) q
+PolyPiProj {p} {q} f r rsl =
+  pntVCatComp
+    {p=(PolyPiTot {p} {q} f r rsl)}
+    {q=(PolyPiPbCodTot {p} {q} f r rsl)}
+    {r=q}
+    (PolyPiPbCodProj {p} {q} f r rsl)
+    (pfPullbackArSlProj
+      {p=(PolyPiPbDom1Tot {p} {q} f r rsl)}
+      {q=(PolyPiPbDom2Tot {p} {q} f r rsl)}
+      {r=(PolyPiPbCodTot {p} {q} f r rsl)}
+      (PolyPiPbMor1 {p} {q} f r rsl)
+      (PolyPiPbMor2 {p} {q} f r rsl))
