@@ -1,5 +1,6 @@
 import Mathlib.CategoryTheory.Category.Basic
 import Mathlib.CategoryTheory.FinCategory.Basic
+import Mathlib.CategoryTheory.Types.Basic
 
 /-!
 # Category Judgments
@@ -231,6 +232,10 @@ def mkFunctor
     cases f <;> cases g <;> (try rfl) <;>
       (simp_all only [Category.id_comp, Category.comp_id]) <;>
       (first | rfl)
+
+/-- Construct a copresheaf (covariant functor into Type) from
+    CategoryJudgments from minimal category data. -/
+abbrev mkCopresheaf := mkFunctor (C := Type _)
 
 end Functors
 
