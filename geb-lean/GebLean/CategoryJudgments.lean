@@ -240,29 +240,30 @@ def mkFunctor (data : FunctorData C) : Obj ⥤ C where
     CategoryJudgments from minimal category data. -/
 abbrev mkCopresheaf := mkFunctor (C := Type _)
 
+/-- Data for a category structure using dependent types. -/
+structure DepCategoryData.{u} where
+  objT : Type u
+  morT : objT → objT → Type u
+  idT : {o : objT} → morT o o → Type u
+  compT : {a b c : objT} → morT a b → morT b c → morT a c → Type u
+
 /-- Construct a copresheaf using dependent types to enforce equality
     conditions. Both identities and composition are represented as
     relations. The key insight is that since morphisms already encode
     their domains and codomains in their types, the compatibility
     conditions are enforced by the type structure. -/
-def mkCopresheafDep.{u}
-    (objT : Type u)
-    (morT : objT → objT → Type u)
-    (idT : {o : objT} → morT o o → Type u)
-    (compT : {a b c : objT} → morT a b → morT b c → morT a c →
-             Type u) :
-    Obj ⥤ Type u :=
+def mkCopresheafDep.{u} (data : DepCategoryData.{u}) : Obj ⥤ Type u :=
   mkCopresheaf {
     -- Objects
-    objC := objT
+    objC := data.objT
     -- Morphisms: domain, codomain, and morphism data
-    morC := Σ (a b : objT), morT a b
+    morC := Σ (a b : data.objT), data.morT a b
     -- Identities: morphism that is an identity
-    idC := Σ (o : objT) (m : morT o o), idT m
+    idC := Σ (o : data.objT) (m : data.morT o o), data.idT m
     -- Compositions: witness that h is the composite of f and g
     -- The dependent types ensure f : a→b, g : b→c, h : a→c
-    compC := Σ (a b c : objT) (f : morT a b) (g : morT b c) (h : morT a c),
-      compT f g h
+    compC := Σ (a b c : data.objT) (f : data.morT a b) (g : data.morT b c)
+      (h : data.morT a c), data.compT f g h
     -- dom: extract source
     dom := fun m => m.1
     -- cod: extract target
