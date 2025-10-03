@@ -247,44 +247,48 @@ structure DepCategoryData.{u} where
   idT : {o : objT} → morT o o → Type u
   compT : {a b c : objT} → morT a b → morT b c → morT a c → Type u
 
+/-- Convert dependent category data to FunctorData for Type.
+    The dependent types enforce the equality conditions automatically. -/
+def depToFunctorData.{u} (data : DepCategoryData.{u}) :
+    FunctorData (Type u) where
+  -- Objects
+  objC := data.objT
+  -- Morphisms: domain, codomain, and morphism data
+  morC := Σ (a b : data.objT), data.morT a b
+  -- Identities: morphism that is an identity
+  idC := Σ (o : data.objT) (m : data.morT o o), data.idT m
+  -- Compositions: witness that h is the composite of f and g
+  -- The dependent types ensure f : a→b, g : b→c, h : a→c
+  compC := Σ (a b c : data.objT) (f : data.morT a b) (g : data.morT b c)
+    (h : data.morT a c), data.compT f g h
+  -- dom: extract source
+  dom := fun m => m.1
+  -- cod: extract target
+  cod := fun m => m.2.1
+  -- idMor: extract the morphism from an identity witness
+  idMor := fun i => ⟨i.1, i.1, i.2.1⟩
+  -- left: second morphism in composition (b → c, "post-composed")
+  left := fun c => ⟨c.2.1, c.2.2.1, c.2.2.2.2.1⟩
+  -- right: first morphism in composition (a → b, "pre-composed")
+  right := fun c => ⟨c.1, c.2.1, c.2.2.2.1⟩
+  -- composite: result of composition (a → c)
+  composite := fun c => ⟨c.1, c.2.2.1, c.2.2.2.2.2.1⟩
+  -- h_id_endo: idMor ≫ dom = idMor ≫ cod
+  h_id_endo := by funext i; simp
+  -- h_comp_match: right ≫ cod = left ≫ dom
+  h_comp_match := by funext c; rfl
+  -- h_comp_dom: composite ≫ dom = right ≫ dom
+  h_comp_dom := by funext c; simp
+  -- h_comp_cod: composite ≫ cod = left ≫ cod
+  h_comp_cod := by funext c; simp
+
 /-- Construct a copresheaf using dependent types to enforce equality
     conditions. Both identities and composition are represented as
     relations. The key insight is that since morphisms already encode
     their domains and codomains in their types, the compatibility
     conditions are enforced by the type structure. -/
 def mkCopresheafDep.{u} (data : DepCategoryData.{u}) : Obj ⥤ Type u :=
-  mkCopresheaf {
-    -- Objects
-    objC := data.objT
-    -- Morphisms: domain, codomain, and morphism data
-    morC := Σ (a b : data.objT), data.morT a b
-    -- Identities: morphism that is an identity
-    idC := Σ (o : data.objT) (m : data.morT o o), data.idT m
-    -- Compositions: witness that h is the composite of f and g
-    -- The dependent types ensure f : a→b, g : b→c, h : a→c
-    compC := Σ (a b c : data.objT) (f : data.morT a b) (g : data.morT b c)
-      (h : data.morT a c), data.compT f g h
-    -- dom: extract source
-    dom := fun m => m.1
-    -- cod: extract target
-    cod := fun m => m.2.1
-    -- idMor: extract the morphism from an identity witness
-    idMor := fun i => ⟨i.1, i.1, i.2.1⟩
-    -- left: second morphism in composition (b → c, "post-composed")
-    left := fun c => ⟨c.2.1, c.2.2.1, c.2.2.2.2.1⟩
-    -- right: first morphism in composition (a → b, "pre-composed")
-    right := fun c => ⟨c.1, c.2.1, c.2.2.2.1⟩
-    -- composite: result of composition (a → c)
-    composite := fun c => ⟨c.1, c.2.2.1, c.2.2.2.2.2.1⟩
-    -- h_id_endo: idMor ≫ dom = idMor ≫ cod
-    h_id_endo := by funext i; simp
-    -- h_comp_match: right ≫ cod = left ≫ dom
-    h_comp_match := by funext c; rfl
-    -- h_comp_dom: composite ≫ dom = right ≫ dom
-    h_comp_dom := by funext c; simp
-    -- h_comp_cod: composite ≫ cod = left ≫ cod
-    h_comp_cod := by funext c; simp
-  }
+  mkCopresheaf (depToFunctorData data)
 
 end Functors
 
