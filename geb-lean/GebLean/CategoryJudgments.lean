@@ -191,46 +191,49 @@ open CategoryTheory
 
 variable {C : Type*} [Category C]
 
+/-- Data required to construct a functor from CategoryJudgments to C. -/
+structure FunctorData (C : Type*) [Category C] where
+  objC : C
+  morC : C
+  idC : C
+  compC : C
+  dom : morC ⟶ objC
+  cod : morC ⟶ objC
+  idMor : idC ⟶ morC
+  left : compC ⟶ morC
+  right : compC ⟶ morC
+  composite : compC ⟶ morC
+  h_id_endo : idMor ≫ dom = idMor ≫ cod
+  h_comp_match : right ≫ cod = left ≫ dom
+  h_comp_dom : composite ≫ dom = right ≫ dom
+  h_comp_cod : composite ≫ cod = left ≫ cod
+
 /-- Construct a functor from CategoryJudgments to C from minimal
     category data. The caller provides only primitive morphisms and
     compatibility conditions; derived morphisms are computed. -/
-def mkFunctor
-    (objC : C)
-    (morC : C)
-    (idC : C)
-    (compC : C)
-    (dom : morC ⟶ objC)
-    (cod : morC ⟶ objC)
-    (idMor : idC ⟶ morC)
-    (left : compC ⟶ morC)
-    (right : compC ⟶ morC)
-    (composite : compC ⟶ morC)
-    (h_id_endo : idMor ≫ dom = idMor ≫ cod)
-    (h_comp_match : right ≫ cod = left ≫ dom)
-    (h_comp_dom : composite ≫ dom = right ≫ dom)
-    (h_comp_cod : composite ≫ cod = left ≫ cod) :
-    Obj ⥤ C where
+def mkFunctor (data : FunctorData C) : Obj ⥤ C where
   obj
-    | .obj => objC
-    | .mor => morC
-    | .id => idC
-    | .comp => compC
+    | .obj => data.objC
+    | .mor => data.morC
+    | .id => data.idC
+    | .comp => data.compC
   map {X Y} f := match X, Y, f with
     | _, _, .identity _ => 𝟙 _
-    | _, _, .dom => dom
-    | _, _, .cod => cod
-    | _, _, .idObj => idMor ≫ dom
-    | _, _, .idMor => idMor
-    | _, _, .left => left
-    | _, _, .right => right
-    | _, _, .composite => composite
-    | _, _, .intermediate => right ≫ cod
-    | _, _, .compositeDom => right ≫ dom
-    | _, _, .compositeCod => left ≫ cod
+    | _, _, .dom => data.dom
+    | _, _, .cod => data.cod
+    | _, _, .idObj => data.idMor ≫ data.dom
+    | _, _, .idMor => data.idMor
+    | _, _, .left => data.left
+    | _, _, .right => data.right
+    | _, _, .composite => data.composite
+    | _, _, .intermediate => data.right ≫ data.cod
+    | _, _, .compositeDom => data.right ≫ data.dom
+    | _, _, .compositeCod => data.left ≫ data.cod
   map_id := by intro X; cases X <;> rfl
   map_comp {X Y Z} f g := by
     cases f <;> cases g <;> (try rfl) <;>
-      (simp_all only [Category.id_comp, Category.comp_id]) <;>
+      (simp_all only [Category.id_comp, Category.comp_id, data.h_id_endo,
+        data.h_comp_match, data.h_comp_dom, data.h_comp_cod]) <;>
       (first | rfl)
 
 /-- Construct a copresheaf (covariant functor into Type) from
@@ -249,37 +252,38 @@ def mkCopresheafDep.{u}
     (compT : {a b c : objT} → morT a b → morT b c → morT a c →
              Type u) :
     Obj ⥤ Type u :=
-  mkCopresheaf
+  mkCopresheaf {
     -- Objects
-    objT
+    objC := objT
     -- Morphisms: domain, codomain, and morphism data
-    (Σ (a b : objT), morT a b)
+    morC := Σ (a b : objT), morT a b
     -- Identities: morphism that is an identity
-    (Σ (o : objT) (m : morT o o), idT m)
+    idC := Σ (o : objT) (m : morT o o), idT m
     -- Compositions: witness that h is the composite of f and g
     -- The dependent types ensure f : a→b, g : b→c, h : a→c
-    (Σ (a b c : objT) (f : morT a b) (g : morT b c) (h : morT a c),
-      compT f g h)
+    compC := Σ (a b c : objT) (f : morT a b) (g : morT b c) (h : morT a c),
+      compT f g h
     -- dom: extract source
-    (fun m => m.1)
+    dom := fun m => m.1
     -- cod: extract target
-    (fun m => m.2.1)
+    cod := fun m => m.2.1
     -- idMor: extract the morphism from an identity witness
-    (fun i => ⟨i.1, i.1, i.2.1⟩)
+    idMor := fun i => ⟨i.1, i.1, i.2.1⟩
     -- left: second morphism in composition (b → c, "post-composed")
-    (fun c => ⟨c.2.1, c.2.2.1, c.2.2.2.2.1⟩)
+    left := fun c => ⟨c.2.1, c.2.2.1, c.2.2.2.2.1⟩
     -- right: first morphism in composition (a → b, "pre-composed")
-    (fun c => ⟨c.1, c.2.1, c.2.2.2.1⟩)
+    right := fun c => ⟨c.1, c.2.1, c.2.2.2.1⟩
     -- composite: result of composition (a → c)
-    (fun c => ⟨c.1, c.2.2.1, c.2.2.2.2.2.1⟩)
+    composite := fun c => ⟨c.1, c.2.2.1, c.2.2.2.2.2.1⟩
     -- h_id_endo: idMor ≫ dom = idMor ≫ cod
-    (by funext i; simp)
+    h_id_endo := by funext i; simp
     -- h_comp_match: right ≫ cod = left ≫ dom
-    (by funext c; rfl)
+    h_comp_match := by funext c; rfl
     -- h_comp_dom: composite ≫ dom = right ≫ dom
-    (by funext c; simp)
+    h_comp_dom := by funext c; simp
     -- h_comp_cod: composite ≫ cod = left ≫ cod
-    (by funext c; simp)
+    h_comp_cod := by funext c; simp
+  }
 
 end Functors
 
