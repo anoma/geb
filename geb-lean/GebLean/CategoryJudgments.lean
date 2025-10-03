@@ -87,6 +87,17 @@ def Hom.comp : ∀ {X Y Z : Obj}, Hom X Y → Hom Y Z → Hom X Z
   | _, _, _, composite, dom => compositeDom
   | _, _, _, composite, cod => compositeCod
 
+@[simp] theorem Hom.comp_idMor_dom : idMor.comp dom = idObj := rfl
+@[simp] theorem Hom.comp_idMor_cod : idMor.comp cod = idObj := rfl
+@[simp] theorem Hom.comp_left_dom : left.comp dom = intermediate := rfl
+@[simp] theorem Hom.comp_left_cod : left.comp cod = compositeCod := rfl
+@[simp] theorem Hom.comp_right_dom : right.comp dom = compositeDom := rfl
+@[simp] theorem Hom.comp_right_cod : right.comp cod = intermediate := rfl
+@[simp] theorem Hom.comp_composite_dom :
+    composite.comp dom = compositeDom := rfl
+@[simp] theorem Hom.comp_composite_cod :
+    composite.comp cod = compositeCod := rfl
+
 /-- Left identity law for composition -/
 theorem Hom.id_comp : ∀ {X Y : Obj} (f : Hom X Y),
     (identity X).comp f = f
@@ -167,5 +178,60 @@ instance (X Y : Obj) : Fintype (X ⟶ Y) :=
 
 /-- The category of category judgments is a finite category -/
 instance : CategoryTheory.FinCategory Obj where
+
+/-- The opposite of the category judgment category is also finite
+    (automatically via `CategoryTheory.finCategoryOpposite`). -/
+instance instJudgmentCatOpFinite :
+    CategoryTheory.FinCategory Objᵒᵖ := inferInstance
+
+section Functors
+
+open CategoryTheory
+
+variable {C : Type*} [Category C]
+
+/-- Construct a functor from CategoryJudgments to C from minimal
+    category data. The caller provides only primitive morphisms and
+    compatibility conditions; derived morphisms are computed. -/
+def mkFunctor
+    (objC : C)
+    (morC : C)
+    (idC : C)
+    (compC : C)
+    (dom : morC ⟶ objC)
+    (cod : morC ⟶ objC)
+    (idMor : idC ⟶ morC)
+    (left : compC ⟶ morC)
+    (right : compC ⟶ morC)
+    (composite : compC ⟶ morC)
+    (h_id_endo : idMor ≫ dom = idMor ≫ cod)
+    (h_comp_match : right ≫ cod = left ≫ dom)
+    (h_comp_dom : composite ≫ dom = right ≫ dom)
+    (h_comp_cod : composite ≫ cod = left ≫ cod) :
+    Obj ⥤ C where
+  obj
+    | .obj => objC
+    | .mor => morC
+    | .id => idC
+    | .comp => compC
+  map {X Y} f := match X, Y, f with
+    | _, _, .identity _ => 𝟙 _
+    | _, _, .dom => dom
+    | _, _, .cod => cod
+    | _, _, .idObj => idMor ≫ dom
+    | _, _, .idMor => idMor
+    | _, _, .left => left
+    | _, _, .right => right
+    | _, _, .composite => composite
+    | _, _, .intermediate => right ≫ cod
+    | _, _, .compositeDom => right ≫ dom
+    | _, _, .compositeCod => left ≫ cod
+  map_id := by intro X; cases X <;> rfl
+  map_comp {X Y Z} f g := by
+    cases f <;> cases g <;> (try rfl) <;>
+      (simp_all only [Category.id_comp, Category.comp_id]) <;>
+      (first | rfl)
+
+end Functors
 
 end CategoryJudgments
