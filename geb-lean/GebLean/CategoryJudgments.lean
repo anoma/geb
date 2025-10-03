@@ -43,7 +43,7 @@ inductive Obj : Type where
   | mor  : Obj  -- represents the type of morphisms
   | id   : Obj  -- represents identity judgments
   | comp : Obj  -- represents composition judgments
-  deriving DecidableEq, Inhabited
+  deriving DecidableEq, Inhabited, Repr
 
 /-- The morphisms of the category judgment category -/
 inductive Hom : Obj → Obj → Type where
@@ -67,7 +67,7 @@ inductive Hom : Obj → Obj → Type where
   | intermediate  : Hom Obj.comp Obj.obj  -- shared intermediate object
   | compositeDom  : Hom Obj.comp Obj.obj  -- domain of composite
   | compositeCod  : Hom Obj.comp Obj.obj  -- codomain of composite
-  deriving DecidableEq
+  deriving DecidableEq, Repr
 
 /-- Composition of morphisms in the category judgment category -/
 def Hom.comp : ∀ {X Y Z : Obj}, Hom X Y → Hom Y Z → Hom X Z
