@@ -237,6 +237,50 @@ def mkFunctor
     CategoryJudgments from minimal category data. -/
 abbrev mkCopresheaf := mkFunctor (C := Type _)
 
+/-- Construct a copresheaf using dependent types to enforce equality
+    conditions. Both identities and composition are represented as
+    relations. The key insight is that since morphisms already encode
+    their domains and codomains in their types, the compatibility
+    conditions are enforced by the type structure. -/
+def mkCopresheafDep.{u}
+    (objT : Type u)
+    (morT : objT → objT → Type u)
+    (idT : {o : objT} → morT o o → Type u)
+    (compT : {a b c : objT} → morT a b → morT b c → morT a c →
+             Type u) :
+    Obj ⥤ Type u :=
+  mkCopresheaf
+    -- Objects
+    objT
+    -- Morphisms: domain, codomain, and morphism data
+    (Σ (a b : objT), morT a b)
+    -- Identities: morphism that is an identity
+    (Σ (o : objT) (m : morT o o), idT m)
+    -- Compositions: witness that h is the composite of f and g
+    -- The dependent types ensure f : a→b, g : b→c, h : a→c
+    (Σ (a b c : objT) (f : morT a b) (g : morT b c) (h : morT a c),
+      compT f g h)
+    -- dom: extract source
+    (fun m => m.1)
+    -- cod: extract target
+    (fun m => m.2.1)
+    -- idMor: extract the morphism from an identity witness
+    (fun i => ⟨i.1, i.1, i.2.1⟩)
+    -- left: second morphism in composition (b → c, "post-composed")
+    (fun c => ⟨c.2.1, c.2.2.1, c.2.2.2.2.1⟩)
+    -- right: first morphism in composition (a → b, "pre-composed")
+    (fun c => ⟨c.1, c.2.1, c.2.2.2.1⟩)
+    -- composite: result of composition (a → c)
+    (fun c => ⟨c.1, c.2.2.1, c.2.2.2.2.2.1⟩)
+    -- h_id_endo: idMor ≫ dom = idMor ≫ cod
+    (by funext i; simp)
+    -- h_comp_match: right ≫ cod = left ≫ dom
+    (by funext c; rfl)
+    -- h_comp_dom: composite ≫ dom = right ≫ dom
+    (by funext c; simp)
+    -- h_comp_cod: composite ≫ cod = left ≫ cod
+    (by funext c; simp)
+
 end Functors
 
 end CategoryJudgments
