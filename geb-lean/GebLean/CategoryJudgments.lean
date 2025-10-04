@@ -309,7 +309,8 @@ def mkCopresheafDep.{u} (data : DepCategoryData.{u}) : Obj ⥤ Type u :=
 
 /-- Round-tripping from DepCategoryData to CopresheafData and back
     preserves the object type. -/
-theorem functorDataToDep_depToFunctorData_objT.{u} (data : DepCategoryData.{u}) :
+theorem functorDataToDep_depToFunctorData_objT.{u}
+    (data : DepCategoryData.{u}) :
     (functorDataToDep (depToFunctorData data)).objT = data.objT := rfl
 
 /-- Round-tripping from CopresheafData to DepCategoryData and back
@@ -319,9 +320,12 @@ theorem depToFunctorData_functorDataToDep_objC.{u} (data : CopresheafData.{u}) :
 
 /-- Round-tripping from DepCategoryData to CopresheafData and back
     gives an equivalent morphism type. -/
-def functorDataToDep_depToFunctorData_morT.{u} (data : DepCategoryData.{u}) (a b : data.objT) :
-    (functorDataToDep (depToFunctorData data)).morT a b ≃ data.morT a b where
-  toFun m := cast (congrArg₂ data.morT m.prop.1 m.prop.2) m.val.2.2
+def functorDataToDep_depToFunctorData_morT.{u} (data : DepCategoryData.{u})
+    (a b : data.objT) :
+    (functorDataToDep (depToFunctorData data)).morT a b ≃
+    data.morT a b where
+  toFun m := cast
+    (congrArg₂ data.morT m.prop.1 m.prop.2) m.val.2.2
   invFun m := ⟨⟨a, b, m⟩, rfl, rfl⟩
   left_inv m := by
     rcases m with ⟨⟨a', b', m⟩, ha : a' = a, hb : b' = b⟩
@@ -331,8 +335,10 @@ def functorDataToDep_depToFunctorData_morT.{u} (data : DepCategoryData.{u}) (a b
 
 /-- Round-tripping from CopresheafData to DepCategoryData and back
     gives an equivalent morphism type. -/
-def depToFunctorData_functorDataToDep_morC.{u} (data : CopresheafData.{u}) :
-    (depToFunctorData (functorDataToDep data)).morC ≃ data.morC where
+def depToFunctorData_functorDataToDep_morC.{u}
+    (data : CopresheafData.{u}) :
+    (depToFunctorData (functorDataToDep data)).morC ≃
+    data.morC where
   toFun m := m.2.2.val
   invFun m := ⟨data.dom m, data.cod m, ⟨m, rfl, rfl⟩⟩
   left_inv m := by
@@ -343,46 +349,57 @@ def depToFunctorData_functorDataToDep_morC.{u} (data : CopresheafData.{u}) :
 
 /-- Extract the underlying morphism from a round-tripped morphism type.
     When we go DepCategoryData → CopresheafData → DepCategoryData,
-    morphisms get wrapped in sigma types and subtypes. This extracts the original. -/
-def extractRoundTrippedMor.{u} (data : DepCategoryData.{u}) (a b : data.objT)
-    (m : (functorDataToDep (depToFunctorData data)).morT a b) : data.morT a b :=
+    morphisms get wrapped in sigma types and subtypes.
+    This extracts the original. -/
+def extractRoundTrippedMor.{u} (data : DepCategoryData.{u})
+    (a b : data.objT)
+    (m : (functorDataToDep (depToFunctorData data)).morT a b) :
+    data.morT a b :=
   cast (congrArg₂ data.morT m.prop.1 m.prop.2) m.val.2.2
 
 /-- Round-tripping from CopresheafData to DepCategoryData and back
     gives an equivalent identity type. -/
-def depToFunctorData_functorDataToDep_idC.{u} (data : CopresheafData.{u}) :
-    (depToFunctorData (functorDataToDep data)).idC ≃ data.idC where
+def depToFunctorData_functorDataToDep_idC.{u}
+    (data : CopresheafData.{u}) :
+    (depToFunctorData (functorDataToDep data)).idC ≃
+    data.idC where
   toFun i := i.2.2.val
   invFun i := ⟨data.dom (data.idMor i), ⟨data.idMor i, rfl,
-    show data.cod (data.idMor i) = data.dom (data.idMor i) by
+    show data.cod (data.idMor i) =
+      data.dom (data.idMor i) by
       have := congrFun data.h_id_endo i
       simp at this
       exact this.symm⟩, ⟨i, rfl⟩⟩
   left_inv i := by
     rcases i with ⟨o, ⟨m, hdom, hcod⟩, ⟨i, hi⟩⟩
     -- Extract: data.idMor i = m
-    have him : data.idMor i =
-      (⟨m, hdom, hcod⟩ : {m : data.morC // data.dom m = o ∧ data.cod m = o}).val := hi
+    have him : data.idMor i = (⟨m, hdom, hcod⟩ :
+      {m : data.morC // data.dom m = o ∧ data.cod m = o}).val := hi
     simp at him
     subst him hdom
     -- Now goal is: ⟨m, hcod⟩ = ⟨m, proof_from_h_id_endo⟩
-    -- Both proofs are of the same Prop, equal by proof irrelevance
+    -- Both proofs are of the same Prop,
+    -- equal by proof irrelevance
     rfl
   right_inv i := rfl
 
 /-- Round-tripping from DepCategoryData to CopresheafData and back
     gives an equivalent identity type. -/
-def functorDataToDep_depToFunctorData_idT.{u} (data : DepCategoryData.{u})
-    (o : data.objT) (m : (functorDataToDep (depToFunctorData data)).morT o o) :
+def functorDataToDep_depToFunctorData_idT.{u}
+    (data : DepCategoryData.{u}) (o : data.objT)
+    (m : (functorDataToDep (depToFunctorData data)).morT o o) :
     (functorDataToDep (depToFunctorData data)).idT m ≃
     data.idT (extractRoundTrippedMor data o o m) where
   toFun wit := by
-    -- wit : {i : Σ (o : objT) (m : morT o o), idT m // idMor i = m.val}
-    rcases wit with ⟨⟨o', m', w⟩, h : (depToFunctorData data).idMor ⟨o', m', w⟩ = m.val⟩
+    -- wit : {i : Σ (o : objT) (m : morT o o), idT m //
+    --        idMor i = m.val}
+    rcases wit with ⟨⟨o', m', w⟩,
+      h : (depToFunctorData data).idMor ⟨o', m', w⟩ = m.val⟩
     -- m : {m : Σ a b, morT a b // dom m = o ∧ cod m = o}
     rcases m with ⟨⟨a, b, m⟩, ha : a = o, hb : b = o⟩
     -- Unfold depToFunctorData.idMor - it produces ⟨o', ⟨o', m'⟩⟩
-    change (⟨o', ⟨o', m'⟩⟩ : Σ (a b : data.objT), data.morT a b) = ⟨a, ⟨b, m⟩⟩ at h
+    change (⟨o', ⟨o', m'⟩⟩ : Σ (a b : data.objT), data.morT a b) =
+      ⟨a, ⟨b, m⟩⟩ at h
     -- Use Sigma.mk.inj to extract equalities
     rw [Sigma.mk.injEq] at h
     have ⟨ho', hsig⟩ := h
@@ -399,7 +416,8 @@ def functorDataToDep_depToFunctorData_idT.{u} (data : DepCategoryData.{u})
     -- wit : idT (extractRoundTrippedMor ...)
     -- m : {m : Σ a b, morT a b // dom m = o ∧ cod m = o}
     refine ⟨⟨o, ⟨extractRoundTrippedMor data o o m, wit⟩⟩, ?_⟩
-    -- Need to show: idMor ⟨o, ⟨extractRoundTrippedMor..., wit⟩⟩ = m.val
+    -- Need to show:
+    -- idMor ⟨o, ⟨extractRoundTrippedMor..., wit⟩⟩ = m.val
     simp only [depToFunctorData, extractRoundTrippedMor]
     rcases m with ⟨⟨a, b, mor⟩, ha, hb⟩
     simp only [depToFunctorData] at ha hb
@@ -408,7 +426,8 @@ def functorDataToDep_depToFunctorData_idT.{u} (data : DepCategoryData.{u})
   left_inv wit := by
     rcases wit with ⟨⟨o', m', w⟩, h⟩
     rcases m with ⟨⟨a, b, m⟩, ha : a = o, hb : b = o⟩
-    change (⟨o', ⟨o', m'⟩⟩ : Σ (a b : data.objT), data.morT a b) = ⟨a, ⟨b, m⟩⟩ at h
+    change (⟨o', ⟨o', m'⟩⟩ : Σ (a b : data.objT), data.morT a b) =
+      ⟨a, ⟨b, m⟩⟩ at h
     rw [Sigma.mk.injEq] at h
     have ⟨ho', hsig⟩ := h
     -- Subst a and b first, before ho'
@@ -418,7 +437,8 @@ def functorDataToDep_depToFunctorData_idT.{u} (data : DepCategoryData.{u})
     have ⟨_, hm⟩ := hsig_eq
     simp at hm
     subst hm
-    -- extractRoundTrippedMor evaluates to cast ... m' which simplifies to m'
+    -- extractRoundTrippedMor evaluates to cast ... m'
+    -- which simplifies to m'
     simp [extractRoundTrippedMor]
     -- The identity witness just needs the matches to reduce
     congr 2
@@ -436,14 +456,17 @@ def functorDataToDep_depToFunctorData_idT.{u} (data : DepCategoryData.{u})
 
 /-- Round-tripping from CopresheafData to DepCategoryData and back
     gives an equivalent composition type. -/
-def depToFunctorData_functorDataToDep_compC.{u} (data : CopresheafData.{u}) :
-    (depToFunctorData (functorDataToDep data)).compC ≃ data.compC where
+def depToFunctorData_functorDataToDep_compC.{u}
+    (data : CopresheafData.{u}) :
+    (depToFunctorData (functorDataToDep data)).compC ≃
+    data.compC where
   toFun c := by
-    -- c : Σ a b c f g h, {comp : compC // right comp = f ∧ left comp = g ∧ composite comp = h}
+    -- c : Σ a b c f g h, {comp : compC //
+    --     right comp = f ∧ left comp = g ∧ composite comp = h}
     rcases c with ⟨_, _, _, _, _, _, ⟨comp, _⟩⟩
     exact comp
-  invFun c := ⟨data.dom (data.right c), data.cod (data.right c), data.cod (data.left c),
-    ⟨data.right c, rfl, rfl⟩,
+  invFun c := ⟨data.dom (data.right c), data.cod (data.right c),
+    data.cod (data.left c), ⟨data.right c, rfl, rfl⟩,
     ⟨data.left c,
       show data.dom (data.left c) = data.cod (data.right c) by
         have := congrFun data.h_comp_match c
@@ -461,7 +484,8 @@ def depToFunctorData_functorDataToDep_compC.{u} (data : CopresheafData.{u}) :
         exact this⟩,
     ⟨c, rfl, rfl, rfl⟩⟩
   left_inv c := by
-    rcases c with ⟨a, b, c_obj, ⟨f, hfa, hfb⟩, ⟨g, hga, hgb⟩, ⟨h, hha, hhc⟩, ⟨comp, hr, hl, hcomp⟩⟩
+    rcases c with ⟨a, b, c_obj, ⟨f, hfa, hfb⟩, ⟨g, hga, hgb⟩,
+      ⟨h, hha, hhc⟩, ⟨comp, hr, hl, hcomp⟩⟩
     simp at hr hl hcomp hfa hfb hga hgb hha hhc
     subst hfa hfb hr hl hcomp hgb
     rfl
