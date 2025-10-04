@@ -434,6 +434,39 @@ def functorDataToDep_depToFunctorData_idT.{u} (data : DepCategoryData.{u})
     simp only [extractRoundTrippedMor]
     (split; split; rfl)
 
+/-- Round-tripping from CopresheafData to DepCategoryData and back
+    gives an equivalent composition type. -/
+def depToFunctorData_functorDataToDep_compC.{u} (data : CopresheafData.{u}) :
+    (depToFunctorData (functorDataToDep data)).compC ≃ data.compC where
+  toFun c := by
+    -- c : Σ a b c f g h, {comp : compC // right comp = f ∧ left comp = g ∧ composite comp = h}
+    rcases c with ⟨_, _, _, _, _, _, ⟨comp, _⟩⟩
+    exact comp
+  invFun c := ⟨data.dom (data.right c), data.cod (data.right c), data.cod (data.left c),
+    ⟨data.right c, rfl, rfl⟩,
+    ⟨data.left c,
+      show data.dom (data.left c) = data.cod (data.right c) by
+        have := congrFun data.h_comp_match c
+        simp at this
+        exact this.symm,
+      rfl⟩,
+    ⟨data.composite c,
+      show data.dom (data.composite c) = data.dom (data.right c) by
+        have := congrFun data.h_comp_dom c
+        simp at this
+        exact this,
+      show data.cod (data.composite c) = data.cod (data.left c) by
+        have := congrFun data.h_comp_cod c
+        simp at this
+        exact this⟩,
+    ⟨c, rfl, rfl, rfl⟩⟩
+  left_inv c := by
+    rcases c with ⟨a, b, c_obj, ⟨f, hfa, hfb⟩, ⟨g, hga, hgb⟩, ⟨h, hha, hhc⟩, ⟨comp, hr, hl, hcomp⟩⟩
+    simp at hr hl hcomp hfa hfb hga hgb hha hhc
+    subst hfa hfb hr hl hcomp hgb
+    rfl
+  right_inv c := rfl
+
 end Functors
 
 section CategoryCopresheafCorrespondence
