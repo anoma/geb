@@ -76,6 +76,70 @@ def roundtrip_equiv (data : A) : B_of_A data ≃ original_type where
 
 **Proof irrelevance**: Lean automatically handles proof irrelevance for `Prop`-valued types. After using `subst` to substitute equalities, different proofs of the same proposition are automatically considered equal.
 
+### Proving Equivalences with Pattern Matching and Dependent Types
+
+When proving `left_inv` and `right_inv` for equivalences involving dependent types with pattern matching:
+
+#### The Core Challenge
+
+Pattern matching in tactic mode creates eliminator applications (`Subtype.rec`, `Sigma.rec`, `Eq.rec`) that don't reduce symbolically. These appear as complex nested expressions with `match` statements that block definitional equality.
+
+#### The Solution Pattern
+
+1. **Pattern match early** in term mode using `match` to destructure all inputs
+2. **Simplify definitions** with `simp only` to unfold and normalize
+3. **Remove casts** with `simp only [cast_eq]` after substitutions make all equalities reflexive
+4. **Beta-reduce** with `dsimp only [id]` to eliminate `id` wrappers
+5. **Split matches** with `split; split; ...` to reduce all pattern match expressions
+6. **Close with reflexivity** using `rfl`
+
+Example structure:
+```lean
+left_inv := fun ⟨⟨components...⟩, proofs...⟩ => by
+  match inputs with
+  | ⟨patterns...⟩ =>
+    simp only [definitions...] at *
+    -- Extract equalities from hypotheses
+    rw [Sigma.mk.injEq] at hyps
+    -- Substitute to make all indices equal
+    subst equalities...
+    -- Now everything should be definitionally equal
+    simp only [cast_eq]
+    dsimp only [id]
+    split; split; split; ... -- one split per match
+    rfl
+```
+
+#### Key Insights
+
+- **Component-by-component equality** with `Sigma.ext` works well when the structure is exposed, but fails when hidden behind pattern match eliminators
+- **Proof irrelevance** is automatic for `Prop` components after the data components match
+- **Don't use `subst` prematurely** - it can prevent later tactics from working. Apply it only after extracting all needed equalities
+- **The `split` tactic** is crucial for reducing pattern match expressions that appear in goal types
+
+#### What Doesn't Work
+
+- Trying to use `Sigma.ext` chains before reducing pattern matches
+- Using `congr` on goals with unreduced eliminators
+- Attempting to use `ext` on types without registered extensionality lemmas
+- Relying on definitional equality when pattern match eliminators are present
+
+#### Automation Tactics to Try
+
+When facing complex goals, it's worth trying powerful automation tactics before manual proof:
+
+- **`grind`** - SMT-based solver (https://lean-lang.org/doc/reference/latest/The--grind--tactic/)
+  - Good for goals involving arithmetic, equality reasoning, and propositional logic
+  - May timeout on complex dependent type problems
+  - Use `set_option maxHeartbeats <n>` to increase timeout if needed
+
+- **`aesop`** - General-purpose automation using best-first search
+  - Effective for structural goals and standard library lemmas
+  - May timeout on goals with heavy pattern matching or dependent types
+  - Can be configured with custom rule sets
+
+These tactics didn't work for our pattern matching equivalence proofs, but they can save significant time when they do apply. Always worth trying before embarking on complex manual proofs.
+
 ### Project-Specific Context
 
 - **CategoryJudgments**: Finite category with 4 objects (Obj, Mor, Id, Comp) and 11 morphisms
