@@ -1,0 +1,92 @@
+# Instructions for Claude Code
+
+This document contains guidance for AI assistants working on this Lean 4 project.
+
+## Workflow
+
+### Build Before Proposing Changes
+
+When making changes to Lean code:
+
+1. **Build first**: Always run `lake build` after making edits
+2. **Iterate on errors**: If the build fails, fix errors yourself and rebuild (potentially multiple cycles)
+3. **Only show results once it builds**: Don't ask for approval until you have a working build
+4. **Exception - Ask for help if stuck**: If you're making no progress, unsure how to proceed, or don't understand what's wrong, pause and explain:
+   - What you're trying to accomplish
+   - What problems you're encountering
+   - What you've tried so far
+
+This approach minimizes back-and-forth and keeps the conversation focused on design decisions rather than syntax errors.
+
+## Lean 4 Proof Techniques
+
+### Working with Dependent Types and Equivalences
+
+When proving equivalences (`Equiv`) between structures with dependent types:
+
+1. **Destructuring**: Use `rcases` to destructure nested sigma types and subtypes
+   - Example: `rcases wit with ⟨⟨o', m', w⟩, h⟩`
+   - Be explicit with type annotations to help Lean: `ha : a = o`
+
+2. **Substitution**: Use `subst` to substitute equalities
+   - Order matters with dependent types - substitute simpler equalities first
+   - Example: `subst ha hb ho'` (substitute `a = o`, `b = o` before `o' = ...`)
+
+3. **Heterogeneous Equality**: When substitution produces `≍` (HEq):
+   - Use `eq_of_heq` to convert to regular equality when types are definitionally equal
+   - Then use `Sigma.mk.injEq` or similar to extract component equalities
+
+4. **Simplification hierarchy**:
+   - `simp only [...]` - most controlled, only unfolds specified definitions
+   - `simp [...]` - more aggressive, may unfold additional things
+   - `dsimp only [...]` - definitional simplification, good for reducing `id`, beta-reduction
+   - Use `simp only [depToFunctorData] at ha` to simplify hypotheses in-place
+
+5. **Breaking down equality goals**:
+   - `congr n` - apply congruence `n` levels deep to decompose structured equalities
+   - Helpful before using `split` to reduce match expressions
+   - Example: `congr 2` to get through nested sigma types to the core equality
+
+6. **Reducing match expressions**:
+   - `split` - case splits on match/if expressions in the goal
+   - Use parentheses for sequencing: `(split; split; rfl)`
+   - Combine with `dsimp only [id]` first to expose matches hidden in function applications
+
+7. **Handling Sigma types**:
+   - Use `change` to rewrite goal with explicit type annotations for nested sigmas
+   - `Sigma.mk.injEq` to convert sigma equality to component equalities
+   - Extract components: `have ⟨ho', hsig⟩ := h` after `rw [Sigma.mk.injEq] at h`
+
+### Common Patterns
+
+**Round-trip equivalence proofs** (A → B → A):
+```lean
+def roundtrip_equiv (data : A) : B_of_A data ≃ original_type where
+  toFun := ...      -- Convert forward
+  invFun := ...     -- Convert backward
+  left_inv := by    -- Show toFun ∘ invFun = id
+    rcases ...
+    subst ...
+    simp [...]
+  right_inv := by   -- Show invFun ∘ toFun = id
+    rcases ...
+    subst ...
+    simp [...]
+```
+
+**Proof irrelevance**: Lean automatically handles proof irrelevance for `Prop`-valued types. After using `subst` to substitute equalities, different proofs of the same proposition are automatically considered equal.
+
+### Project-Specific Context
+
+- **CategoryJudgments**: Finite category with 4 objects (Obj, Mor, Id, Comp) and 11 morphisms
+- **FunctorData**: Category structure represented as morphisms in target category
+- **DepCategoryData**: Same structure using dependent types
+- **CopresheafData**: Alias for `FunctorData (Type u)` - functors to Type
+- These representations should be equivalent (ongoing work to prove full correspondence)
+
+## Code Style
+
+- Prefer editing existing files over creating new ones
+- Don't create documentation files unless explicitly requested
+- Keep responses concise - match verbosity to task complexity
+- Avoid emojis unless explicitly requested by the user
