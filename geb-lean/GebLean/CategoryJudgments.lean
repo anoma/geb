@@ -285,6 +285,20 @@ def depToFunctorData.{u} (data : DepCategoryData.{u}) :
   -- h_comp_cod: composite ≫ cod = left ≫ cod
   h_comp_cod := by funext c; simp
 
+/-- Convert CopresheafData to dependent category data.
+    This extracts the dependent type structure from the copresheaf. -/
+def functorDataToDep.{u} (data : CopresheafData.{u}) :
+    DepCategoryData.{u} where
+  objT := data.objC
+  morT := fun a b => {m : data.morC // data.dom m = a ∧ data.cod m = b}
+  idT := fun m => {i : data.idC // data.idMor i = m.val}
+  compT := fun {a b c} (f : {m : data.morC // data.dom m = a ∧ data.cod m = b})
+              (g : {m : data.morC // data.dom m = b ∧ data.cod m = c})
+              (h : {m : data.morC // data.dom m = a ∧ data.cod m = c}) =>
+    {comp : data.compC // data.right comp = f.val ∧
+                          data.left comp = g.val ∧
+                          data.composite comp = h.val}
+
 /-- Construct a copresheaf using dependent types to enforce equality
     conditions. Both identities and composition are represented as
     relations. The key insight is that since morphisms already encode
@@ -292,6 +306,16 @@ def depToFunctorData.{u} (data : DepCategoryData.{u}) :
     conditions are enforced by the type structure. -/
 def mkCopresheafDep.{u} (data : DepCategoryData.{u}) : Obj ⥤ Type u :=
   mkCopresheaf (depToFunctorData data)
+
+/-- Round-tripping from DepCategoryData to CopresheafData and back
+    preserves the object type. -/
+theorem functorDataToDep_depToFunctorData_objT.{u} (data : DepCategoryData.{u}) :
+    (functorDataToDep (depToFunctorData data)).objT = data.objT := rfl
+
+/-- Round-tripping from CopresheafData to DepCategoryData and back
+    preserves the object type. -/
+theorem depToFunctorData_functorDataToDep_objC.{u} (data : CopresheafData.{u}) :
+    (depToFunctorData (functorDataToDep data)).objC = data.objC := rfl
 
 end Functors
 
