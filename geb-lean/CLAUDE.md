@@ -86,7 +86,23 @@ def roundtrip_equiv (data : A) : B_of_A data ≃ original_type where
 
 ## Code Style
 
+- **Line length**: Keep lines to 80 characters or less
 - Prefer editing existing files over creating new ones
 - Don't create documentation files unless explicitly requested
 - Keep responses concise - match verbosity to task complexity
 - Avoid emojis unless explicitly requested by the user
+
+## Problem-Solving Strategy
+
+When struggling with a definition or proof that's becoming excessively long or complicated:
+
+1. **Factor out helper lemmas**: Break down the problem into smaller, provable steps
+2. **Make incremental progress**: Prove useful intermediate results that build toward your goal
+3. **Take smaller steps**: If stuck, step back and prove something simpler first
+4. **Create helper functions**: Extract complex expressions into named definitions
+
+This approach helps you:
+- Make firm progress even when the full goal seems difficult
+- Create reusable building blocks for later proofs
+- Keep individual proofs manageable and understandable
+- Debug issues more easily by isolating problems
