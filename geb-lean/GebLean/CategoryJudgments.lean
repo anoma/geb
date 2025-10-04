@@ -370,6 +370,70 @@ def depToFunctorData_functorDataToDep_idC.{u} (data : CopresheafData.{u}) :
     rfl
   right_inv i := rfl
 
+/-- Round-tripping from DepCategoryData to CopresheafData and back
+    gives an equivalent identity type. -/
+def functorDataToDep_depToFunctorData_idT.{u} (data : DepCategoryData.{u})
+    (o : data.objT) (m : (functorDataToDep (depToFunctorData data)).morT o o) :
+    (functorDataToDep (depToFunctorData data)).idT m ≃
+    data.idT (extractRoundTrippedMor data o o m) where
+  toFun wit := by
+    -- wit : {i : Σ (o : objT) (m : morT o o), idT m // idMor i = m.val}
+    rcases wit with ⟨⟨o', m', w⟩, h : (depToFunctorData data).idMor ⟨o', m', w⟩ = m.val⟩
+    -- m : {m : Σ a b, morT a b // dom m = o ∧ cod m = o}
+    rcases m with ⟨⟨a, b, m⟩, ha : a = o, hb : b = o⟩
+    -- Unfold depToFunctorData.idMor - it produces ⟨o', ⟨o', m'⟩⟩
+    change (⟨o', ⟨o', m'⟩⟩ : Σ (a b : data.objT), data.morT a b) = ⟨a, ⟨b, m⟩⟩ at h
+    -- Use Sigma.mk.inj to extract equalities
+    rw [Sigma.mk.injEq] at h
+    have ⟨ho', hsig⟩ := h
+    subst ho' ha hb
+    -- Now hsig : ⟨o, m'⟩ ≍ ⟨o, m⟩, convert to regular equality
+    have hsig_eq := eq_of_heq hsig
+    rw [Sigma.mk.injEq] at hsig_eq
+    have ⟨_, hm⟩ := hsig_eq
+    simp at hm
+    subst hm
+    simp [extractRoundTrippedMor]
+    exact w
+  invFun wit := by
+    -- wit : idT (extractRoundTrippedMor ...)
+    -- m : {m : Σ a b, morT a b // dom m = o ∧ cod m = o}
+    refine ⟨⟨o, ⟨extractRoundTrippedMor data o o m, wit⟩⟩, ?_⟩
+    -- Need to show: idMor ⟨o, ⟨extractRoundTrippedMor..., wit⟩⟩ = m.val
+    simp only [depToFunctorData, extractRoundTrippedMor]
+    rcases m with ⟨⟨a, b, mor⟩, ha, hb⟩
+    simp only [depToFunctorData] at ha hb
+    subst ha hb
+    congr
+  left_inv wit := by
+    rcases wit with ⟨⟨o', m', w⟩, h⟩
+    rcases m with ⟨⟨a, b, m⟩, ha : a = o, hb : b = o⟩
+    change (⟨o', ⟨o', m'⟩⟩ : Σ (a b : data.objT), data.morT a b) = ⟨a, ⟨b, m⟩⟩ at h
+    rw [Sigma.mk.injEq] at h
+    have ⟨ho', hsig⟩ := h
+    -- Subst a and b first, before ho'
+    subst ha hb ho'
+    have hsig_eq := eq_of_heq hsig
+    rw [Sigma.mk.injEq] at hsig_eq
+    have ⟨_, hm⟩ := hsig_eq
+    simp at hm
+    subst hm
+    -- extractRoundTrippedMor evaluates to cast ... m' which simplifies to m'
+    simp [extractRoundTrippedMor]
+    -- The identity witness just needs the matches to reduce
+    congr 2
+    (split; split; rfl)
+  right_inv wit := by
+    -- After round-trip, we should get back the same witness
+    rcases m with ⟨⟨a, b, mor⟩, ha, hb⟩
+    simp only [depToFunctorData] at ha hb
+    subst ha hb
+    -- Now mor : morT o o and wit : idT (cast ... mor)
+    -- Beta-reduce to expose the match expressions
+    dsimp only [id]
+    simp only [extractRoundTrippedMor]
+    (split; split; rfl)
+
 end Functors
 
 section CategoryCopresheafCorrespondence
