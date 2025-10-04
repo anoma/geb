@@ -329,6 +329,18 @@ def functorDataToDep_depToFunctorData_morT.{u} (data : DepCategoryData.{u}) (a b
     rfl
   right_inv m := rfl
 
+/-- Round-tripping from CopresheafData to DepCategoryData and back
+    gives an equivalent morphism type. -/
+def depToFunctorData_functorDataToDep_morC.{u} (data : CopresheafData.{u}) :
+    (depToFunctorData (functorDataToDep data)).morC ≃ data.morC where
+  toFun m := m.2.2.val
+  invFun m := ⟨data.dom m, data.cod m, ⟨m, rfl, rfl⟩⟩
+  left_inv m := by
+    rcases m with ⟨a, b, ⟨m, ha, hb⟩⟩
+    subst ha hb
+    rfl
+  right_inv m := rfl
+
 end Functors
 
 section CategoryCopresheafCorrespondence
