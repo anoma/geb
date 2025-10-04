@@ -292,4 +292,32 @@ def mkCopresheafDep.{u} (data : DepCategoryData.{u}) : Obj ⥤ Type u :=
 
 end Functors
 
+section CategoryCopresheafCorrespondence
+
+open CategoryTheory
+
+variable {C : Type*} [Category C]
+
+/-- The functor category from CategoryJudgments to an arbitrary category C. -/
+abbrev JudgmentFunctors (C : Type*) [Category C] := Obj ⥤ C
+
+/-- The category of copresheaves on CategoryJudgments (functors to Type). -/
+abbrev JudgmentCopresheaves.{u} := Obj ⥤ Type u
+
+/-- Construct an object in the functor category from FunctorData. -/
+abbrev mkJudgmentFunctor (data : FunctorData C) : JudgmentFunctors C :=
+  mkFunctor data
+
+/-- Construct an object in the copresheaf category from FunctorData. -/
+abbrev mkJudgmentCopresheaf.{u} (data : FunctorData (Type u)) :
+    JudgmentCopresheaves.{u} :=
+  mkCopresheaf data
+
+/-- Construct an object in the copresheaf category from DepCategoryData. -/
+abbrev mkJudgmentCopresheafDep.{u} (data : DepCategoryData.{u}) :
+    JudgmentCopresheaves.{u} :=
+  mkCopresheafDep data
+
+end CategoryCopresheafCorrespondence
+
 end CategoryJudgments
