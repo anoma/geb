@@ -150,6 +150,15 @@ left_inv := fun ⟨⟨components...⟩, proofs...⟩ => by
 - Attempting to use `ext` on types without registered extensionality lemmas
 - Relying on definitional equality when pattern match eliminators are present
 
+#### Debugging Tactics
+
+When working on proofs, **never use `all_goals sorry`** to hide unsolved goals.
+This prevents you from seeing what remains to be proven. Instead:
+
+- Let the build fail to see the actual unsolved goals
+- Use `all_goals (try <tactic>)` to apply tactics conditionally
+- Add targeted `sorry` only after understanding what's needed
+
 #### Automation Tactics to Try
 
 When facing complex goals, it's worth trying powerful automation tactics
