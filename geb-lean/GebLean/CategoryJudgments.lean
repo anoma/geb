@@ -341,6 +341,28 @@ def depToFunctorData_functorDataToDep_morC.{u} (data : CopresheafData.{u}) :
     rfl
   right_inv m := rfl
 
+/-- Round-tripping from CopresheafData to DepCategoryData and back
+    gives an equivalent identity type. -/
+def depToFunctorData_functorDataToDep_idC.{u} (data : CopresheafData.{u}) :
+    (depToFunctorData (functorDataToDep data)).idC ≃ data.idC where
+  toFun i := i.2.2.val
+  invFun i := ⟨data.dom (data.idMor i), ⟨data.idMor i, rfl,
+    show data.cod (data.idMor i) = data.dom (data.idMor i) by
+      have := congrFun data.h_id_endo i
+      simp at this
+      exact this.symm⟩, ⟨i, rfl⟩⟩
+  left_inv i := by
+    rcases i with ⟨o, ⟨m, hdom, hcod⟩, ⟨i, hi⟩⟩
+    -- Extract: data.idMor i = m
+    have him : data.idMor i =
+      (⟨m, hdom, hcod⟩ : {m : data.morC // data.dom m = o ∧ data.cod m = o}).val := hi
+    simp at him
+    subst him hdom
+    -- Now goal is: ⟨m, hcod⟩ = ⟨m, proof_from_h_id_endo⟩
+    -- Both proofs are of the same Prop, equal by proof irrelevance
+    rfl
+  right_inv i := rfl
+
 end Functors
 
 section CategoryCopresheafCorrespondence
