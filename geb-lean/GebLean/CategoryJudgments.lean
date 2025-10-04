@@ -317,6 +317,18 @@ theorem functorDataToDep_depToFunctorData_objT.{u} (data : DepCategoryData.{u}) 
 theorem depToFunctorData_functorDataToDep_objC.{u} (data : CopresheafData.{u}) :
     (depToFunctorData (functorDataToDep data)).objC = data.objC := rfl
 
+/-- Round-tripping from DepCategoryData to CopresheafData and back
+    gives an equivalent morphism type. -/
+def functorDataToDep_depToFunctorData_morT.{u} (data : DepCategoryData.{u}) (a b : data.objT) :
+    (functorDataToDep (depToFunctorData data)).morT a b ≃ data.morT a b where
+  toFun m := cast (congrArg₂ data.morT m.prop.1 m.prop.2) m.val.2.2
+  invFun m := ⟨⟨a, b, m⟩, rfl, rfl⟩
+  left_inv m := by
+    rcases m with ⟨⟨a', b', m⟩, ha : a' = a, hb : b' = b⟩
+    subst ha hb
+    rfl
+  right_inv m := rfl
+
 end Functors
 
 section CategoryCopresheafCorrespondence
