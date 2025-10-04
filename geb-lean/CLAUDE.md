@@ -9,14 +9,18 @@ This document contains guidance for AI assistants working on this Lean 4 project
 When making changes to Lean code:
 
 1. **Build first**: Always run `lake build` after making edits
-2. **Iterate on errors**: If the build fails, fix errors yourself and rebuild (potentially multiple cycles)
-3. **Only show results once it builds**: Don't ask for approval until you have a working build
-4. **Exception - Ask for help if stuck**: If you're making no progress, unsure how to proceed, or don't understand what's wrong, pause and explain:
+2. **Iterate on errors**: If the build fails, fix errors yourself and rebuild
+   (potentially multiple cycles)
+3. **Only show results once it builds**: Don't ask for approval until you have
+   a working build
+4. **Exception - Ask for help if stuck**: If you're making no progress, unsure
+   how to proceed, or don't understand what's wrong, pause and explain:
    - What you're trying to accomplish
    - What problems you're encountering
    - What you've tried so far
 
-This approach minimizes back-and-forth and keeps the conversation focused on design decisions rather than syntax errors.
+This approach minimizes back-and-forth and keeps the conversation focused on
+design decisions rather than syntax errors.
 
 ## Lean 4 Proof Techniques
 
@@ -33,33 +37,41 @@ When proving equivalences (`Equiv`) between structures with dependent types:
    - Example: `subst ha hb ho'` (substitute `a = o`, `b = o` before `o' = ...`)
 
 3. **Heterogeneous Equality**: When substitution produces `≍` (HEq):
-   - Use `eq_of_heq` to convert to regular equality when types are definitionally equal
+   - Use `eq_of_heq` to convert to regular equality when types are
+     definitionally equal
    - Then use `Sigma.mk.injEq` or similar to extract component equalities
 
 4. **Simplification hierarchy**:
    - `simp only [...]` - most controlled, only unfolds specified definitions
    - `simp [...]` - more aggressive, may unfold additional things
-   - `dsimp only [...]` - definitional simplification, good for reducing `id`, beta-reduction
+   - `dsimp only [...]` - definitional simplification, good for reducing `id`,
+     beta-reduction
    - Use `simp only [depToFunctorData] at ha` to simplify hypotheses in-place
 
 5. **Breaking down equality goals**:
-   - `congr n` - apply congruence `n` levels deep to decompose structured equalities
+   - `congr n` - apply congruence `n` levels deep to decompose structured
+     equalities
    - Helpful before using `split` to reduce match expressions
-   - Example: `congr 2` to get through nested sigma types to the core equality
+   - Example: `congr 2` to get through nested sigma types to the core
+     equality
 
 6. **Reducing match expressions**:
    - `split` - case splits on match/if expressions in the goal
    - Use parentheses for sequencing: `(split; split; rfl)`
-   - Combine with `dsimp only [id]` first to expose matches hidden in function applications
+   - Combine with `dsimp only [id]` first to expose matches hidden in function
+     applications
 
 7. **Handling Sigma types**:
-   - Use `change` to rewrite goal with explicit type annotations for nested sigmas
+   - Use `change` to rewrite goal with explicit type annotations for nested
+     sigmas
    - `Sigma.mk.injEq` to convert sigma equality to component equalities
-   - Extract components: `have ⟨ho', hsig⟩ := h` after `rw [Sigma.mk.injEq] at h`
+   - Extract components: `have ⟨ho', hsig⟩ := h` after
+     `rw [Sigma.mk.injEq] at h`
 
 ### Common Patterns
 
 **Round-trip equivalence proofs** (A → B → A):
+
 ```lean
 def roundtrip_equiv (data : A) : B_of_A data ≃ original_type where
   toFun := ...      -- Convert forward
@@ -74,26 +86,36 @@ def roundtrip_equiv (data : A) : B_of_A data ≃ original_type where
     simp [...]
 ```
 
-**Proof irrelevance**: Lean automatically handles proof irrelevance for `Prop`-valued types. After using `subst` to substitute equalities, different proofs of the same proposition are automatically considered equal.
+**Proof irrelevance**: Lean automatically handles proof irrelevance for
+`Prop`-valued types. After using `subst` to substitute equalities, different
+proofs of the same proposition are automatically considered equal.
 
 ### Proving Equivalences with Pattern Matching and Dependent Types
 
-When proving `left_inv` and `right_inv` for equivalences involving dependent types with pattern matching:
+When proving `left_inv` and `right_inv` for equivalences involving dependent
+types with pattern matching:
 
 #### The Core Challenge
 
-Pattern matching in tactic mode creates eliminator applications (`Subtype.rec`, `Sigma.rec`, `Eq.rec`) that don't reduce symbolically. These appear as complex nested expressions with `match` statements that block definitional equality.
+Pattern matching in tactic mode creates eliminator applications
+(`Subtype.rec`, `Sigma.rec`, `Eq.rec`) that don't reduce symbolically. These
+appear as complex nested expressions with `match` statements that block
+definitional equality.
 
 #### The Solution Pattern
 
-1. **Pattern match early** in term mode using `match` to destructure all inputs
+1. **Pattern match early** in term mode using `match` to destructure all
+   inputs
 2. **Simplify definitions** with `simp only` to unfold and normalize
-3. **Remove casts** with `simp only [cast_eq]` after substitutions make all equalities reflexive
+3. **Remove casts** with `simp only [cast_eq]` after substitutions make all
+   equalities reflexive
 4. **Beta-reduce** with `dsimp only [id]` to eliminate `id` wrappers
-5. **Split matches** with `split; split; ...` to reduce all pattern match expressions
+5. **Split matches** with `split; split; ...` to reduce all pattern match
+   expressions
 6. **Close with reflexivity** using `rfl`
 
 Example structure:
+
 ```lean
 left_inv := fun ⟨⟨components...⟩, proofs...⟩ => by
   match inputs with
@@ -112,10 +134,14 @@ left_inv := fun ⟨⟨components...⟩, proofs...⟩ => by
 
 #### Key Insights
 
-- **Component-by-component equality** with `Sigma.ext` works well when the structure is exposed, but fails when hidden behind pattern match eliminators
-- **Proof irrelevance** is automatic for `Prop` components after the data components match
-- **Don't use `subst` prematurely** - it can prevent later tactics from working. Apply it only after extracting all needed equalities
-- **The `split` tactic** is crucial for reducing pattern match expressions that appear in goal types
+- **Component-by-component equality** with `Sigma.ext` works well when the
+  structure is exposed, but fails when hidden behind pattern match eliminators
+- **Proof irrelevance** is automatic for `Prop` components after the data
+  components match
+- **Don't use `subst` prematurely** - it can prevent later tactics from
+  working. Apply it only after extracting all needed equalities
+- **The `split` tactic** is crucial for reducing pattern match expressions that
+  appear in goal types
 
 #### What Doesn't Work
 
@@ -126,10 +152,13 @@ left_inv := fun ⟨⟨components...⟩, proofs...⟩ => by
 
 #### Automation Tactics to Try
 
-When facing complex goals, it's worth trying powerful automation tactics before manual proof:
+When facing complex goals, it's worth trying powerful automation tactics
+before manual proof:
 
-- **`grind`** - SMT-based solver (https://lean-lang.org/doc/reference/latest/The--grind--tactic/)
-  - Good for goals involving arithmetic, equality reasoning, and propositional logic
+- **`grind`** - SMT-based solver
+  (<https://lean-lang.org/doc/reference/latest/The--grind--tactic/>)
+  - Good for goals involving arithmetic, equality reasoning, and propositional
+    logic
   - May timeout on complex dependent type problems
   - Use `set_option maxHeartbeats <n>` to increase timeout if needed
 
@@ -138,15 +167,20 @@ When facing complex goals, it's worth trying powerful automation tactics before 
   - May timeout on goals with heavy pattern matching or dependent types
   - Can be configured with custom rule sets
 
-These tactics didn't work for our pattern matching equivalence proofs, but they can save significant time when they do apply. Always worth trying before embarking on complex manual proofs.
+These tactics didn't work for our pattern matching equivalence proofs, but they
+can save significant time when they do apply. Always worth trying before
+embarking on complex manual proofs.
 
 ### Project-Specific Context
 
-- **CategoryJudgments**: Finite category with 4 objects (Obj, Mor, Id, Comp) and 11 morphisms
-- **FunctorData**: Category structure represented as morphisms in target category
+- **CategoryJudgments**: Finite category with 4 objects (Obj, Mor, Id, Comp)
+  and 11 morphisms
+- **FunctorData**: Category structure represented as morphisms in target
+  category
 - **DepCategoryData**: Same structure using dependent types
 - **CopresheafData**: Alias for `FunctorData (Type u)` - functors to Type
-- These representations should be equivalent (ongoing work to prove full correspondence)
+- These representations should be equivalent (ongoing work to prove full
+  correspondence)
 
 ## Code Style
 
@@ -158,15 +192,37 @@ These tactics didn't work for our pattern matching equivalence proofs, but they 
 
 ## Problem-Solving Strategy
 
-When struggling with a definition or proof that's becoming excessively long or complicated:
+When struggling with a definition or proof that's becoming excessively long or
+complicated:
 
-1. **Factor out helper lemmas**: Break down the problem into smaller, provable steps
-2. **Make incremental progress**: Prove useful intermediate results that build toward your goal
-3. **Take smaller steps**: If stuck, step back and prove something simpler first
-4. **Create helper functions**: Extract complex expressions into named definitions
+1. **Factor out helper lemmas**: Break down the problem into smaller, provable
+   steps
+2. **Make incremental progress**: Prove useful intermediate results that build
+   toward your goal
+3. **Take smaller steps**: If stuck, step back and prove something simpler
+   first
+4. **Create helper functions**: Extract complex expressions into named
+   definitions
 
 This approach helps you:
+
 - Make firm progress even when the full goal seems difficult
 - Create reusable building blocks for later proofs
 - Keep individual proofs manageable and understandable
 - Debug issues more easily by isolating problems
+
+## Markdown Linting
+
+All markdown files in this repository should be free of lint warnings. Use
+`markdownlint-cli2` to check for and fix any issues:
+
+```bash
+markdownlint-cli2 README.md CLAUDE.md .github/copilot-instructions.md
+```
+
+Common issues to watch for:
+
+- Line length: Keep lines to 80 characters or less (MD013)
+- Fenced code blocks: Surround with blank lines (MD031)
+- Lists: Surround with blank lines (MD032)
+- URLs: Use angle brackets for bare URLs (MD034)
