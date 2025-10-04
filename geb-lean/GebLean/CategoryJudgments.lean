@@ -341,6 +341,13 @@ def depToFunctorData_functorDataToDep_morC.{u} (data : CopresheafData.{u}) :
     rfl
   right_inv m := rfl
 
+/-- Extract the underlying morphism from a round-tripped morphism type.
+    When we go DepCategoryData → CopresheafData → DepCategoryData,
+    morphisms get wrapped in sigma types and subtypes. This extracts the original. -/
+def extractRoundTrippedMor.{u} (data : DepCategoryData.{u}) (a b : data.objT)
+    (m : (functorDataToDep (depToFunctorData data)).morT a b) : data.morT a b :=
+  cast (congrArg₂ data.morT m.prop.1 m.prop.2) m.val.2.2
+
 /-- Round-tripping from CopresheafData to DepCategoryData and back
     gives an equivalent identity type. -/
 def depToFunctorData_functorDataToDep_idC.{u} (data : CopresheafData.{u}) :
