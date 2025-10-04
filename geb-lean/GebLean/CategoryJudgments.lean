@@ -240,6 +240,9 @@ def mkFunctor (data : FunctorData C) : Obj ⥤ C where
     CategoryJudgments from minimal category data. -/
 abbrev mkCopresheaf := mkFunctor (C := Type _)
 
+/-- Data required to construct a copresheaf (functor to Type). -/
+abbrev CopresheafData.{u} := FunctorData (Type u)
+
 /-- Data for a category structure using dependent types. -/
 structure DepCategoryData.{u} where
   objT : Type u
@@ -247,10 +250,10 @@ structure DepCategoryData.{u} where
   idT : {o : objT} → morT o o → Type u
   compT : {a b c : objT} → morT a b → morT b c → morT a c → Type u
 
-/-- Convert dependent category data to FunctorData for Type.
+/-- Convert dependent category data to CopresheafData.
     The dependent types enforce the equality conditions automatically. -/
 def depToFunctorData.{u} (data : DepCategoryData.{u}) :
-    FunctorData (Type u) where
+    CopresheafData.{u} where
   -- Objects
   objC := data.objT
   -- Morphisms: domain, codomain, and morphism data
@@ -308,8 +311,8 @@ abbrev JudgmentCopresheaves.{u} := Obj ⥤ Type u
 abbrev mkJudgmentFunctor (data : FunctorData C) : JudgmentFunctors C :=
   mkFunctor data
 
-/-- Construct an object in the copresheaf category from FunctorData. -/
-abbrev mkJudgmentCopresheaf.{u} (data : FunctorData (Type u)) :
+/-- Construct an object in the copresheaf category from CopresheafData. -/
+abbrev mkJudgmentCopresheaf.{u} (data : CopresheafData.{u}) :
     JudgmentCopresheaves.{u} :=
   mkCopresheaf data
 
