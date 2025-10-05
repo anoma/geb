@@ -243,6 +243,44 @@ abbrev mkCopresheaf := mkFunctor (C := Type _)
 /-- Data required to construct a copresheaf (functor to Type). -/
 abbrev CopresheafData.{u} := FunctorData (Type u)
 
+/-- Extract FunctorData from a functor. This is inverse to mkFunctor. -/
+def functorToData {C : Type*} [Category C] (F : Obj ⥤ C) :
+    FunctorData C where
+  objC := F.obj .obj
+  morC := F.obj .mor
+  idC := F.obj .id
+  compC := F.obj .comp
+  dom := F.map .dom
+  cod := F.map .cod
+  idMor := F.map .idMor
+  left := F.map .left
+  right := F.map .right
+  composite := F.map .composite
+  h_id_endo := by
+    calc F.map .idMor ≫ F.map .dom
+      _ = F.map (.idMor ≫ .dom) := (F.map_comp _ _).symm
+      _ = F.map .idObj := congrArg F.map Hom.comp_idMor_dom
+      _ = F.map (.idMor ≫ .cod) := (congrArg F.map Hom.comp_idMor_cod).symm
+      _ = F.map .idMor ≫ F.map .cod := F.map_comp _ _
+  h_comp_match := by
+    calc F.map .right ≫ F.map .cod
+      _ = F.map (.right ≫ .cod) := (F.map_comp _ _).symm
+      _ = F.map .intermediate := congrArg F.map Hom.comp_right_cod
+      _ = F.map (.left ≫ .dom) := (congrArg F.map Hom.comp_left_dom).symm
+      _ = F.map .left ≫ F.map .dom := F.map_comp _ _
+  h_comp_dom := by
+    calc F.map .composite ≫ F.map .dom
+      _ = F.map (.composite ≫ .dom) := (F.map_comp _ _).symm
+      _ = F.map .compositeDom := congrArg F.map Hom.comp_composite_dom
+      _ = F.map (.right ≫ .dom) := (congrArg F.map Hom.comp_right_dom).symm
+      _ = F.map .right ≫ F.map .dom := F.map_comp _ _
+  h_comp_cod := by
+    calc F.map .composite ≫ F.map .cod
+      _ = F.map (.composite ≫ .cod) := (F.map_comp _ _).symm
+      _ = F.map .compositeCod := congrArg F.map Hom.comp_composite_cod
+      _ = F.map (.left ≫ .cod) := (congrArg F.map Hom.comp_left_cod).symm
+      _ = F.map .left ≫ F.map .cod := F.map_comp _ _
+
 /-- Data for a category structure using dependent types. -/
 structure DepCategoryData.{u} where
   objT : Type u
