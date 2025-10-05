@@ -347,6 +347,21 @@ def mkFunctorDep.{u} (data : DepCategoryData.{u}) : Obj ⥤ Type u where
   map_id := by intro X; cases X <;> rfl
   map_comp {X Y Z} f g := by cases f <;> cases g <;> rfl
 
+/-- Extract DepCategoryData from a copresheaf. This is inverse to
+    mkFunctorDep. -/
+def functorToDataDep.{u} (F : Obj ⥤ Type u) : DepCategoryData.{u} where
+  objT := F.obj .obj
+  morT := fun a b => {m : F.obj .mor // F.map .dom m = a ∧ F.map .cod m = b}
+  idT := fun m => {i : F.obj .id // F.map .idMor i = m.val}
+  compT := fun {a b c} (f : {m : F.obj .mor // F.map .dom m = a ∧
+      F.map .cod m = b})
+      (g : {m : F.obj .mor // F.map .dom m = b ∧ F.map .cod m = c})
+      (h : {m : F.obj .mor // F.map .dom m = a ∧ F.map .cod m = c}) =>
+    {wit : F.obj .comp //
+      F.map .left wit = g.val ∧
+      F.map .right wit = f.val ∧
+      F.map .composite wit = h.val}
+
 /-- Convert dependent category data to CopresheafData.
     The dependent types enforce the equality conditions automatically. -/
 def depToFunctorData.{u} (data : DepCategoryData.{u}) :
