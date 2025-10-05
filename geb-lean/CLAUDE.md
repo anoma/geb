@@ -173,19 +173,26 @@ before manual proof:
 
 - **`grind`** - SMT-based solver
   (<https://lean-lang.org/doc/reference/latest/The--grind--tactic/>)
-  - Good for goals involving arithmetic, equality reasoning, and propositional
-    logic
-  - May timeout on complex dependent type problems
+  - **EXCELLENT for dependent congruence** - This is the standard idiomatic
+    way to handle dependent type equality in Lean!
+  - Automatically builds equivalence classes and applies congruence rules
+  - Works well with `Equiv.left_inv` and `Equiv.right_inv` lemmas
+  - Success rate depends on complexity:
+    - ✅ Works great for 1-2 dependent parameters
+    - ⚠️ May timeout with 3+ dependent parameters
   - Use `set_option maxHeartbeats <n>` to increase timeout if needed
+  - **Usage pattern**: After simplifying with `simp`, add hypotheses with
+    `have`, then just call `grind`
 
 - **`aesop`** - General-purpose automation using best-first search
   - Effective for structural goals and standard library lemmas
   - May timeout on goals with heavy pattern matching or dependent types
   - Can be configured with custom rule sets
 
-These tactics didn't work for our pattern matching equivalence proofs, but they
-can save significant time when they do apply. Always worth trying before
-embarking on complex manual proofs.
+**Key Discovery**: `grind` is THE solution for dependent congruence problems
+that would otherwise require complex manual application of `Eq.recOn`,
+heterogeneous equality, or dependent rewriting. Always try `grind` first when
+you have equalities involving dependent types!
 
 ### Project-Specific Context
 
