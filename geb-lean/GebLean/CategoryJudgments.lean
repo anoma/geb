@@ -281,6 +281,22 @@ def functorToData {C : Type*} [Category C] (F : Obj ⥤ C) :
       _ = F.map (.left ≫ .cod) := (congrArg F.map Hom.comp_left_cod).symm
       _ = F.map .left ≫ F.map .cod := F.map_comp _ _
 
+/-- Round-tripping a functor through functorToData gives back the
+    original functor. -/
+theorem mkFunctor_functorToData (F : Obj ⥤ C) :
+    mkFunctor (functorToData F) = F := by
+  apply CategoryTheory.Functor.ext
+  case h_obj => intro X; cases X <;> rfl
+  case h_map =>
+    intro X Y f
+    cases X <;> cases Y <;> cases f <;> (
+      simp only [mkFunctor, functorToData, eqToHom_refl,
+        Category.id_comp, Category.comp_id]
+      try rfl
+      try exact (F.map_id _).symm
+      try (rw [← F.map_comp]; rfl)
+    )
+
 /-- Data for a category structure using dependent types. -/
 structure DepCategoryData.{u} where
   objT : Type u
