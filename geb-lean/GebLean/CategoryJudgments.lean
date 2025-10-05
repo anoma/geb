@@ -322,6 +322,31 @@ structure DepCategoryData.{u} where
   idT : {o : objT} → morT o o → Type u
   compT : {a b c : objT} → morT a b → morT b c → morT a c → Type u
 
+/-- Construct a copresheaf (functor to Type) directly from dependent
+    category data. The dependent types automatically ensure domain/codomain
+    compatibility without needing equality proofs. -/
+def mkFunctorDep.{u} (data : DepCategoryData.{u}) : Obj ⥤ Type u where
+  obj
+    | .obj => data.objT
+    | .mor => Σ (a b : data.objT), data.morT a b
+    | .id => Σ (o : data.objT) (m : data.morT o o), data.idT m
+    | .comp => Σ (a b c : data.objT) (f : data.morT a b) (g : data.morT b c)
+        (h : data.morT a c), data.compT f g h
+  map {X Y} f := match X, Y, f with
+    | _, _, .identity _ => id
+    | _, _, .dom => fun m => m.1
+    | _, _, .cod => fun m => m.2.1
+    | _, _, .idObj => fun i => i.1
+    | _, _, .idMor => fun i => ⟨i.1, i.1, i.2.1⟩
+    | _, _, .left => fun c => ⟨c.2.1, c.2.2.1, c.2.2.2.2.1⟩
+    | _, _, .right => fun c => ⟨c.1, c.2.1, c.2.2.2.1⟩
+    | _, _, .composite => fun c => ⟨c.1, c.2.2.1, c.2.2.2.2.2.1⟩
+    | _, _, .intermediate => fun c => c.2.1
+    | _, _, .compositeDom => fun c => c.1
+    | _, _, .compositeCod => fun c => c.2.2.1
+  map_id := by intro X; cases X <;> rfl
+  map_comp {X Y Z} f g := by cases f <;> cases g <;> rfl
+
 /-- Convert dependent category data to CopresheafData.
     The dependent types enforce the equality conditions automatically. -/
 def depToFunctorData.{u} (data : DepCategoryData.{u}) :
