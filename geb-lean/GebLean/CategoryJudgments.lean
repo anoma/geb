@@ -559,15 +559,13 @@ def functorDataToDep_depToFunctorData_compT.{u}
       simp only [depToFunctorData] at hha hhb
       subst hha hhb
       rfl
-  left_inv := fun ⟨⟨a_c, b_c, c_c, f_c, g_c, h_c, comp_wit⟩, hr, hl, hcomp⟩ => by
-    -- Pattern match directly in term mode
+  left_inv :=
+    fun ⟨⟨a_c, b_c, c_c, f_c, g_c, h_c, comp_wit⟩, hr, hl, hcomp⟩ => by
     match f, g, h with
     | ⟨⟨a_f, b_f, f'⟩, hfa, hfb⟩, ⟨⟨a_g, b_g, g'⟩, hga, hgb⟩,
       ⟨⟨a_h, b_h, h'⟩, hha, hhb⟩ =>
-      -- Simplify depToFunctorData  applications
       simp only [depToFunctorData] at hr hl hcomp hfa hfb hga hgb hha hhb
       simp only [extractRoundTrippedMor, cast_eq]
-      -- hr : ⟨a_c, ⟨b_c, f_c⟩⟩ = ⟨a_f, ⟨b_f, f'⟩⟩
       -- hl : ⟨b_c, ⟨c_c, g_c⟩⟩ = ⟨a_g, ⟨b_g, g'⟩⟩
       -- hcomp : ⟨a_c, ⟨c_c, h_c⟩⟩ = ⟨a_h, ⟨b_h, h'⟩⟩
       rw [Sigma.mk.injEq] at hr hl hcomp
@@ -606,10 +604,12 @@ def functorDataToDep_depToFunctorData_compT.{u}
       split; split; split; split; split; split
       rfl
 
-/-- Round-tripping CopresheafData through DepCategoryData gives a naturally
-    isomorphic functor. The component equivalences we proved show that the
-    functors are the same on objects, morphisms, identities, and composition. -/
-def mkCopresheaf_depToFunctorData_functorDataToDep.{u} (data : CopresheafData.{u}) :
+/-- Round-tripping CopresheafData through DepCategoryData gives a
+    naturally isomorphic functor. The component equivalences we proved
+    show that the functors are the same on objects, morphisms, identities,
+    and composition. -/
+def mkCopresheaf_depToFunctorData_functorDataToDep.{u}
+    (data : CopresheafData.{u}) :
     mkCopresheaf (depToFunctorData (functorDataToDep data)) ≅
     mkCopresheaf data :=
   NatIso.ofComponents
@@ -638,10 +638,13 @@ def mkCopresheaf_depToFunctorData_functorDataToDep.{u} (data : CopresheafData.{u
             inv := (depToFunctorData_functorDataToDep_compC data).invFun
             hom_inv_id := by
               funext x
-              exact (depToFunctorData_functorDataToDep_compC data).left_inv x
+              exact
+                (depToFunctorData_functorDataToDep_compC data).left_inv x
             inv_hom_id := by
               funext x
-              exact (depToFunctorData_functorDataToDep_compC data).right_inv x })
+              exact
+                (depToFunctorData_functorDataToDep_compC data).right_inv x
+          })
     (by
       intro X Y f
       cases f
@@ -699,13 +702,16 @@ def mkCopresheaf_depToFunctorData_functorDataToDep.{u} (data : CopresheafData.{u
                    depToFunctorData_functorDataToDep_compC]
         ext x; simp
         calc x.snd.snd.fst
-          _ = data.cod ↑x.snd.snd.snd.snd.fst := x.snd.snd.snd.snd.fst.property.2.symm
+          _ = data.cod ↑x.snd.snd.snd.snd.fst :=
+            x.snd.snd.snd.snd.fst.property.2.symm
           _ = data.cod (data.left ↑x.snd.snd.snd.snd.snd.snd) :=
-                congrArg data.cod x.snd.snd.snd.snd.snd.snd.property.2.1.symm)
+            congrArg data.cod
+              x.snd.snd.snd.snd.snd.snd.property.2.1.symm)
 
-/-- Round-tripping DepCategoryData through CopresheafData gives a naturally
-    isomorphic functor. -/
-def mkCopresheafDep_functorDataToDep_depToFunctorData.{u} (data : DepCategoryData.{u}) :
+/-- Round-tripping DepCategoryData through CopresheafData gives a
+    naturally isomorphic functor. -/
+def mkCopresheafDep_functorDataToDep_depToFunctorData.{u}
+    (data : DepCategoryData.{u}) :
     mkCopresheafDep (functorDataToDep (depToFunctorData data)) ≅
     mkCopresheafDep data :=
   NatIso.ofComponents
@@ -713,26 +719,28 @@ def mkCopresheafDep_functorDataToDep_depToFunctorData.{u} (data : DepCategoryDat
       | .obj => eqToIso (functorDataToDep_depToFunctorData_objT data)
       | .mor =>
           { hom := fun m => ⟨m.1, m.2.1,
-                     (functorDataToDep_depToFunctorData_morT data m.1 m.2.1).toFun m.2.2⟩
+                     (functorDataToDep_depToFunctorData_morT data m.1
+                       m.2.1).toFun m.2.2⟩
             inv := fun m => ⟨m.1, m.2.1,
-                     (functorDataToDep_depToFunctorData_morT data m.1 m.2.1).invFun m.2.2⟩
+                     (functorDataToDep_depToFunctorData_morT data m.1
+                       m.2.1).invFun m.2.2⟩
             hom_inv_id := by funext m; simp
             inv_hom_id := by funext m; simp }
       | .id =>
           { hom := fun i =>
-              let m_equiv := functorDataToDep_depToFunctorData_morT data i.1 i.1
+              let m_equiv :=
+                functorDataToDep_depToFunctorData_morT data i.1 i.1
               let m' := m_equiv.toFun i.2.1
-              ⟨i.1, m', (functorDataToDep_depToFunctorData_idT data i.1 i.2.1).toFun i.2.2⟩
+              ⟨i.1, m',
+                (functorDataToDep_depToFunctorData_idT data i.1
+                  i.2.1).toFun i.2.2⟩
             inv := fun i =>
-              let m_equiv := functorDataToDep_depToFunctorData_morT data i.1 i.1
+              let m_equiv :=
+                functorDataToDep_depToFunctorData_morT data i.1 i.1
               let m_inv := m_equiv.invFun i.2.1
-              let id_equiv := functorDataToDep_depToFunctorData_idT data i.1 m_inv
-              -- We have: i.2.2 : data.idT i.2.1
-              -- We need: (functorDataToDep (depToFunctorData data)).idT m_inv
-              -- id_equiv expects: data.idT (extractRoundTrippedMor data i.1 i.1 m_inv)
-              -- Need to show: extractRoundTrippedMor data i.1 i.1 m_inv = i.2.1
+              let id_equiv :=
+                functorDataToDep_depToFunctorData_idT data i.1 m_inv
               ⟨i.1, m_inv, id_equiv.invFun (cast (by
-                -- m_inv = ⟨⟨i.1, i.1, i.2.1⟩, rfl, rfl⟩ so (↑m_inv).snd.snd = i.2.1
                 simp [extractRoundTrippedMor, m_equiv]
                 rfl) i.2.2)⟩
             hom_inv_id := by
@@ -740,89 +748,115 @@ def mkCopresheafDep_functorDataToDep_depToFunctorData.{u} (data : DepCategoryDat
               simp only [CategoryStruct.comp, CategoryStruct.id,
                 Function.comp_apply, id_eq, cast_eq]
               congr 1
-              have hm := (functorDataToDep_depToFunctorData_morT data o o).left_inv m
-              have hid := (functorDataToDep_depToFunctorData_idT data o m).left_inv id_wit
+              have hm :=
+                (functorDataToDep_depToFunctorData_morT data o o).left_inv
+                  m
+              have hid :=
+                (functorDataToDep_depToFunctorData_idT data o m).left_inv
+                  id_wit
               rw [Sigma.mk.injEq]
               constructor
               · exact hm
-              · -- This requires dependent congruence which is complex
-                -- The key insight is that after hm, both equivalences are the same
-                -- Use grind to try automated solving
-                grind
+              · grind
             inv_hom_id := by
               funext ⟨o, ⟨m, id_wit⟩⟩
               simp only [CategoryStruct.comp, CategoryStruct.id,
                 Function.comp_apply, id_eq, cast_eq]
               congr 1
-              have hm := (functorDataToDep_depToFunctorData_morT data o o).right_inv m
-              let m_inv := (functorDataToDep_depToFunctorData_morT data o o).invFun m
-              have hid := (functorDataToDep_depToFunctorData_idT data o m_inv).right_inv id_wit
+              have hm :=
+                (functorDataToDep_depToFunctorData_morT data o o).right_inv
+                  m
+              let m_inv :=
+                (functorDataToDep_depToFunctorData_morT data o o).invFun m
+              have hid :=
+                (functorDataToDep_depToFunctorData_idT data o
+                  m_inv).right_inv id_wit
               rw [Sigma.mk.injEq]
               constructor
               · exact hm
               · grind }
       | .comp =>
           { hom := fun c =>
-              let f_equiv := functorDataToDep_depToFunctorData_morT data c.1 c.2.1
-              let g_equiv := functorDataToDep_depToFunctorData_morT data c.2.1 c.2.2.1
-              let h_equiv := functorDataToDep_depToFunctorData_morT data c.1 c.2.2.1
+              let f_equiv :=
+                functorDataToDep_depToFunctorData_morT data c.1 c.2.1
+              let g_equiv :=
+                functorDataToDep_depToFunctorData_morT data c.2.1 c.2.2.1
+              let h_equiv :=
+                functorDataToDep_depToFunctorData_morT data c.1 c.2.2.1
               ⟨c.1, c.2.1, c.2.2.1,
                f_equiv.toFun c.2.2.2.1,
                g_equiv.toFun c.2.2.2.2.1,
                h_equiv.toFun c.2.2.2.2.2.1,
-               (functorDataToDep_depToFunctorData_compT data c.1 c.2.1 c.2.2.1
-                 c.2.2.2.1 c.2.2.2.2.1 c.2.2.2.2.2.1).toFun c.2.2.2.2.2.2⟩
+               (functorDataToDep_depToFunctorData_compT data c.1 c.2.1
+                 c.2.2.1 c.2.2.2.1 c.2.2.2.2.1
+                 c.2.2.2.2.2.1).toFun c.2.2.2.2.2.2⟩
             inv := fun c =>
-              let f_equiv := functorDataToDep_depToFunctorData_morT data c.1 c.2.1
-              let g_equiv := functorDataToDep_depToFunctorData_morT data c.2.1 c.2.2.1
-              let h_equiv := functorDataToDep_depToFunctorData_morT data c.1 c.2.2.1
+              let f_equiv :=
+                functorDataToDep_depToFunctorData_morT data c.1 c.2.1
+              let g_equiv :=
+                functorDataToDep_depToFunctorData_morT data c.2.1 c.2.2.1
+              let h_equiv :=
+                functorDataToDep_depToFunctorData_morT data c.1 c.2.2.1
               let f_inv := f_equiv.invFun c.2.2.2.1
               let g_inv := g_equiv.invFun c.2.2.2.2.1
               let h_inv := h_equiv.invFun c.2.2.2.2.2.1
-              let comp_equiv := functorDataToDep_depToFunctorData_compT data c.1 c.2.1 c.2.2.1
-                                  f_inv g_inv h_inv
+              let comp_equiv :=
+                functorDataToDep_depToFunctorData_compT data c.1 c.2.1
+                  c.2.2.1 f_inv g_inv h_inv
               ⟨c.1, c.2.1, c.2.2.1, f_inv, g_inv, h_inv,
                comp_equiv.invFun (cast (by
-                 simp [extractRoundTrippedMor, f_equiv, g_equiv, h_equiv]
+                 simp [extractRoundTrippedMor, f_equiv, g_equiv,
+                   h_equiv]
                  rfl) c.2.2.2.2.2.2)⟩
             hom_inv_id := by
               funext ⟨a, b, c, f, g, h, comp_wit⟩
               simp only [CategoryStruct.comp, CategoryStruct.id,
                 Function.comp_apply, id_eq, cast_eq]
-              -- Destructure to get the underlying data
-              rcases f with ⟨⟨a_f, b_f, f'⟩, ha_f : a_f = a, hb_f : b_f = b⟩
-              rcases g with ⟨⟨a_g, b_g, g'⟩, ha_g : a_g = b, hb_g : b_g = c⟩
-              rcases h with ⟨⟨a_h, b_h, h'⟩, ha_h : a_h = a, hb_h : b_h = c⟩
-              -- Get the left_inv lemmas BEFORE substituting
-              have hf := (functorDataToDep_depToFunctorData_morT data a b).left_inv
-                ⟨⟨a_f, b_f, f'⟩, ha_f, hb_f⟩
-              have hg := (functorDataToDep_depToFunctorData_morT data b c).left_inv
-                ⟨⟨a_g, b_g, g'⟩, ha_g, hb_g⟩
-              have hh := (functorDataToDep_depToFunctorData_morT data a c).left_inv
-                ⟨⟨a_h, b_h, h'⟩, ha_h, hb_h⟩
-              have hcomp := (functorDataToDep_depToFunctorData_compT data a b c
-                ⟨⟨a_f, b_f, f'⟩, ha_f, hb_f⟩
-                ⟨⟨a_g, b_g, g'⟩, ha_g, hb_g⟩
-                ⟨⟨a_h, b_h, h'⟩, ha_h, hb_h⟩).left_inv comp_wit
-              -- Now substitute equalities to align indices
+              rcases f with
+                ⟨⟨a_f, b_f, f'⟩, ha_f : a_f = a, hb_f : b_f = b⟩
+              rcases g with
+                ⟨⟨a_g, b_g, g'⟩, ha_g : a_g = b, hb_g : b_g = c⟩
+              rcases h with
+                ⟨⟨a_h, b_h, h'⟩, ha_h : a_h = a, hb_h : b_h = c⟩
+              have hf :=
+                (functorDataToDep_depToFunctorData_morT data a b).left_inv
+                  ⟨⟨a_f, b_f, f'⟩, ha_f, hb_f⟩
+              have hg :=
+                (functorDataToDep_depToFunctorData_morT data b c).left_inv
+                  ⟨⟨a_g, b_g, g'⟩, ha_g, hb_g⟩
+              have hh :=
+                (functorDataToDep_depToFunctorData_morT data a c).left_inv
+                  ⟨⟨a_h, b_h, h'⟩, ha_h, hb_h⟩
+              have hcomp :=
+                (functorDataToDep_depToFunctorData_compT data a b c
+                  ⟨⟨a_f, b_f, f'⟩, ha_f, hb_f⟩
+                  ⟨⟨a_g, b_g, g'⟩, ha_g, hb_g⟩
+                  ⟨⟨a_h, b_h, h'⟩, ha_h, hb_h⟩).left_inv comp_wit
               subst ha_f hb_f ha_g hb_g ha_h hb_h
-              -- After substitution, all indices match and we can use congr + grind
               congr 1
               grind
             inv_hom_id := by
               funext ⟨a, b, c, f, g, h, comp_wit⟩
               simp only [CategoryStruct.comp, CategoryStruct.id,
                 Function.comp_apply, id_eq, cast_eq]
-              -- Get the right_inv lemmas
-              have hf := (functorDataToDep_depToFunctorData_morT data a b).right_inv f
-              have hg := (functorDataToDep_depToFunctorData_morT data b c).right_inv g
-              have hh := (functorDataToDep_depToFunctorData_morT data a c).right_inv h
-              let f_inv := (functorDataToDep_depToFunctorData_morT data a b).invFun f
-              let g_inv := (functorDataToDep_depToFunctorData_morT data b c).invFun g
-              let h_inv := (functorDataToDep_depToFunctorData_morT data a c).invFun h
-              have hcomp := (functorDataToDep_depToFunctorData_compT
-                data a b c f_inv g_inv h_inv).right_inv comp_wit
-              -- After simplification, use congr + grind
+              have hf :=
+                (functorDataToDep_depToFunctorData_morT data a b).right_inv
+                  f
+              have hg :=
+                (functorDataToDep_depToFunctorData_morT data b c).right_inv
+                  g
+              have hh :=
+                (functorDataToDep_depToFunctorData_morT data a c).right_inv
+                  h
+              let f_inv :=
+                (functorDataToDep_depToFunctorData_morT data a b).invFun f
+              let g_inv :=
+                (functorDataToDep_depToFunctorData_morT data b c).invFun g
+              let h_inv :=
+                (functorDataToDep_depToFunctorData_morT data a c).invFun h
+              have hcomp :=
+                (functorDataToDep_depToFunctorData_compT data a b c f_inv
+                  g_inv h_inv).right_inv comp_wit
               congr 1
               grind })
     (by
