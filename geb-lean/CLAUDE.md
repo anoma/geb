@@ -231,6 +231,7 @@ hom_inv_id := by
 ```
 
 **Why this works**:
+
 - Destructuring early gives you explicit equality hypotheses
 - Applying lemmas before `subst` keeps the original variables in scope
 - `subst` then replaces all the index variables at once
@@ -238,6 +239,7 @@ hom_inv_id := by
 - This breaks down a complex 3+ dependency problem into manageable pieces
 
 **When to use**:
+
 - `grind` alone times out (too many dependencies)
 - You have nested sigma types with dependent components
 - Multiple equivalences need to compose correctly
@@ -260,6 +262,29 @@ hom_inv_id := by
 - Don't create documentation files unless explicitly requested
 - Keep responses concise - match verbosity to task complexity
 - Avoid emojis unless explicitly requested by the user
+
+### Comment Style
+
+Comments should explain **what the code does and why**, not the historical
+process of how we arrived at it:
+
+- **Good**: Comments that clarify intent, explain non-obvious behavior, or
+  document important constraints
+- **Avoid**: Process-oriented comments like "key insight", "we discovered",
+  "after trying X we found Y"
+- **Rationale**: What feels like a "key insight" during development might be
+  obvious to another reader, or they might find a different aspect insightful.
+  Focus on the code itself, not the journey to write it.
+
+Example:
+
+```lean
+-- Bad: "The key insight is that after hm, both equivalences are the same"
+-- Good: Remove the comment - the code is clear enough
+
+-- Bad: "We need to destructure early before substituting"
+-- Good: Remove or replace with "Destructure to extract equality hypotheses"
+```
 
 ## Problem-Solving Strategy
 
