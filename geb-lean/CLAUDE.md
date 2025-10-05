@@ -11,16 +11,23 @@ When making changes to Lean code:
 1. **Build first**: Always run `lake build` after making edits
 2. **Iterate on errors**: If the build fails, fix errors yourself and rebuild
    (potentially multiple cycles)
-3. **Only show results once it builds**: Don't ask for approval until you have
-   a working build
-4. **Exception - Ask for help if stuck**: If you're making no progress, unsure
-   how to proceed, or don't understand what's wrong, pause and explain:
+3. **No warnings or sorry**: Code must build **without any warnings**,
+   including:
+   - No `declaration uses 'sorry'` warnings
+   - No unused variable or parameter warnings
+   - No other linter warnings
+4. **Only show results once complete**: Don't ask for approval until you have
+   a clean build with no warnings
+5. **Exception - Ask for help if stuck**: If you can't figure out how to fill
+   in a `sorry`, are making no progress, or don't understand what's wrong,
+   pause and explain:
    - What you're trying to accomplish
    - What problems you're encountering
    - What you've tried so far
+   - Why you're stuck on a particular `sorry`
 
 This approach minimizes back-and-forth and keeps the conversation focused on
-design decisions rather than syntax errors.
+design decisions rather than syntax errors or incomplete proofs.
 
 ## Lean 4 Proof Techniques
 
