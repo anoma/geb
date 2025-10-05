@@ -309,6 +309,12 @@ def functorDataEquiv : FunctorData C ≃ (Obj ⥤ C) where
   left_inv := functorToData_mkFunctor
   right_inv := mkFunctor_functorToData
 
+/-- Extract CopresheafData from a copresheaf (functor to Type). -/
+abbrev copresheafToData := functorToData (C := Type _)
+
+/-- The equivalence between copresheaves and CopresheafData. -/
+abbrev copresheafDataEquiv := functorDataEquiv (C := Type _)
+
 /-- Data for a category structure using dependent types. -/
 structure DepCategoryData.{u} where
   objT : Type u
