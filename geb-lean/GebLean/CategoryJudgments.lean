@@ -297,6 +297,11 @@ theorem mkFunctor_functorToData (F : Obj ⥤ C) :
       try (rw [← F.map_comp]; rfl)
     )
 
+theorem functorToData_mkFunctor (data : FunctorData C) :
+    functorToData (mkFunctor data) = data := by
+  cases data
+  rfl
+
 /-- Data for a category structure using dependent types. -/
 structure DepCategoryData.{u} where
   objT : Type u
