@@ -302,6 +302,13 @@ theorem functorToData_mkFunctor (data : FunctorData C) :
   cases data
   rfl
 
+/-- The equivalence between functors from Obj to C and FunctorData C. -/
+def functorDataEquiv : FunctorData C ≃ (Obj ⥤ C) where
+  toFun := mkFunctor
+  invFun := functorToData
+  left_inv := functorToData_mkFunctor
+  right_inv := mkFunctor_functorToData
+
 /-- Data for a category structure using dependent types. -/
 structure DepCategoryData.{u} where
   objT : Type u
