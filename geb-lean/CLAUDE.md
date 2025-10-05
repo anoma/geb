@@ -194,6 +194,54 @@ that would otherwise require complex manual application of `Eq.recOn`,
 heterogeneous equality, or dependent rewriting. Always try `grind` first when
 you have equalities involving dependent types!
 
+#### Advanced Pattern: Handling Complex Dependencies with `rcases` + `grind`
+
+When `grind` times out on complex goals with 3+ dependent parameters, use
+this pattern:
+
+1. **Destructure early with `rcases`**: Extract all equalities from sigma
+   types before substituting
+2. **Apply equivalence lemmas BEFORE substituting**: Get `left_inv`/
+   `right_inv` results while variables are still in scope
+3. **Substitute all equalities at once**: Use `subst` to align all indices
+4. **Apply `congr 1` then `grind`**: Let `grind` handle the remaining
+   dependent congruence
+
+Example:
+
+```lean
+hom_inv_id := by
+  funext ⟨a, b, c, f, g, h, comp_wit⟩
+  simp only [CategoryStruct.comp, CategoryStruct.id,
+    Function.comp_apply, id_eq, cast_eq]
+  -- Destructure to extract equalities
+  rcases f with ⟨⟨a_f, b_f, f'⟩, ha_f : a_f = a, hb_f : b_f = b⟩
+  rcases g with ⟨⟨a_g, b_g, g'⟩, ha_g : a_g = b, hb_g : b_g = c⟩
+  rcases h with ⟨⟨a_h, b_h, h'⟩, ha_h : a_h = a, hb_h : b_h = c⟩
+  -- Get left_inv results BEFORE substituting (while a, b, c in scope)
+  have hf := (equiv_f data a b).left_inv ⟨⟨a_f, b_f, f'⟩, ha_f, hb_f⟩
+  have hg := (equiv_g data b c).left_inv ⟨⟨a_g, b_g, g'⟩, ha_g, hb_g⟩
+  have hh := (equiv_h data a c).left_inv ⟨⟨a_h, b_h, h'⟩, ha_h, hb_h⟩
+  have hcomp := (equiv_comp data a b c ...).left_inv comp_wit
+  -- NOW substitute - this aligns all indices
+  subst ha_f hb_f ha_g hb_g ha_h hb_h
+  -- After substitution, use congr + grind
+  congr 1
+  grind
+```
+
+**Why this works**:
+- Destructuring early gives you explicit equality hypotheses
+- Applying lemmas before `subst` keeps the original variables in scope
+- `subst` then replaces all the index variables at once
+- After substitution, the problem is simple enough for `grind` to handle
+- This breaks down a complex 3+ dependency problem into manageable pieces
+
+**When to use**:
+- `grind` alone times out (too many dependencies)
+- You have nested sigma types with dependent components
+- Multiple equivalences need to compose correctly
+
 ### Project-Specific Context
 
 - **CategoryJudgments**: Finite category with 4 objects (Obj, Mor, Id, Comp)
