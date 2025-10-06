@@ -380,32 +380,6 @@ def functorDataToDep.{u} (data : CopresheafData.{u}) :
 def mkCopresheafDep.{u} (data : DepCategoryData.{u}) : Obj ⥤ Type u :=
   mkCopresheaf (depToFunctorData data)
 
-/-- Round-tripping from DepCategoryData to CopresheafData and back
-    preserves the object type. -/
-theorem functorDataToDep_depToFunctorData_objT.{u}
-    (data : DepCategoryData.{u}) :
-    (functorDataToDep (depToFunctorData data)).objT = data.objT := rfl
-
-/-- Round-tripping from CopresheafData to DepCategoryData and back
-    preserves the object type. -/
-theorem depToFunctorData_functorDataToDep_objC.{u} (data : CopresheafData.{u}) :
-    (depToFunctorData (functorDataToDep data)).objC = data.objC := rfl
-
-/-- Round-tripping from DepCategoryData to CopresheafData and back
-    gives an equivalent morphism type. -/
-def functorDataToDep_depToFunctorData_morT.{u} (data : DepCategoryData.{u})
-    (a b : data.objT) :
-    (functorDataToDep (depToFunctorData data)).morT a b ≃
-    data.morT a b where
-  toFun m := cast
-    (congrArg₂ data.morT m.prop.1 m.prop.2) m.val.2.2
-  invFun m := ⟨⟨a, b, m⟩, rfl, rfl⟩
-  left_inv m := by
-    rcases m with ⟨⟨a', b', m⟩, ha : a' = a, hb : b' = b⟩
-    subst ha hb
-    rfl
-  right_inv m := rfl
-
 /-- Construct a copresheaf (functor to Type) directly from dependent
     category data. This is defined as the composition of depToFunctorData
     and mkFunctor, which is the same as mkCopresheafDep. -/
@@ -470,6 +444,32 @@ def functorToDataDep_mkFunctorDep_compEquiv.{u} (data : DepCategoryData.{u})
     cases hcomp
     rfl
   right_inv := by intro wit; rfl
+
+/-- Round-tripping from DepCategoryData to CopresheafData and back
+    preserves the object type. -/
+theorem functorDataToDep_depToFunctorData_objT.{u}
+    (data : DepCategoryData.{u}) :
+    (functorDataToDep (depToFunctorData data)).objT = data.objT := rfl
+
+/-- Round-tripping from CopresheafData to DepCategoryData and back
+    preserves the object type. -/
+theorem depToFunctorData_functorDataToDep_objC.{u} (data : CopresheafData.{u}) :
+    (depToFunctorData (functorDataToDep data)).objC = data.objC := rfl
+
+/-- Round-tripping from DepCategoryData to CopresheafData and back
+    gives an equivalent morphism type. -/
+def functorDataToDep_depToFunctorData_morT.{u} (data : DepCategoryData.{u})
+    (a b : data.objT) :
+    (functorDataToDep (depToFunctorData data)).morT a b ≃
+    data.morT a b where
+  toFun m := cast
+    (congrArg₂ data.morT m.prop.1 m.prop.2) m.val.2.2
+  invFun m := ⟨⟨a, b, m⟩, rfl, rfl⟩
+  left_inv m := by
+    rcases m with ⟨⟨a', b', m⟩, ha : a' = a, hb : b' = b⟩
+    subst ha hb
+    rfl
+  right_inv m := rfl
 
 /-- Round-tripping from CopresheafData to DepCategoryData and back
     gives an equivalent morphism type. -/
