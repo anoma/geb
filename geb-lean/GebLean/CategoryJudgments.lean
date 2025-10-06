@@ -384,6 +384,15 @@ def mkCopresheafDep.{u} (data : DepCategoryData.{u}) : Obj ⥤ Type u :=
 abbrev functorToDataDep.{u} (F : Obj ⥤ Type u) : DepCategoryData.{u} :=
   functorDataToDep (functorToData F)
 
+/-- The composition functorToDataDep ∘ mkCopresheafDep simplifies to
+    functorDataToDep ∘ depToFunctorData, since functorToData and mkCopresheaf
+    are inverses (they compose to the identity). -/
+theorem functorToDataDep_mkCopresheafDep.{u} (data : DepCategoryData.{u}) :
+    functorToDataDep (mkCopresheafDep data) =
+    functorDataToDep (depToFunctorData data) := by
+  simp only [functorToDataDep, mkCopresheafDep, mkCopresheaf,
+    functorToData_mkFunctor]
+
 /-- The round-trip functorToDataDep ∘ mkCopresheafDep gives back equivalent
     DepCategoryData. While not strictly equal (due to sigma/subtype encoding),
     the morphism types are naturally equivalent via sigmaTrivialSubtype. -/
