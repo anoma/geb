@@ -380,8 +380,7 @@ def functorDataToDep.{u} (data : CopresheafData.{u}) :
 def mkCopresheafDep.{u} (data : DepCategoryData.{u}) : Obj ⥤ Type u :=
   mkCopresheaf (depToFunctorData data)
 
-/-- Extract DepCategoryData from a copresheaf. This is defined as the
-    composition of functorToData and functorDataToDep. -/
+/-- Extract DepCategoryData from a copresheaf. -/
 abbrev functorToDataDep.{u} (F : Obj ⥤ Type u) : DepCategoryData.{u} :=
   functorDataToDep (functorToData F)
 
