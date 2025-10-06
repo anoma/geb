@@ -362,6 +362,75 @@ def functorToDataDep.{u} (F : Obj ⥤ Type u) : DepCategoryData.{u} where
       F.map .right wit = f.val ∧
       F.map .composite wit = h.val}
 
+/-- Helper equivalence: a subtype of sigma with trivial conditions is
+    equivalent to the original type. -/
+def sigmaTrivialSubtype {α : Type*} {β : α → α → Type*} (a b : α) :
+    {m : Σ (a' b' : α), β a' b' // m.1 = a ∧ m.2.1 = b} ≃ β a b where
+  toFun m := by
+    obtain ⟨⟨a', b', x⟩, ha, hb⟩ := m
+    subst ha hb
+    exact x
+  invFun x := ⟨⟨a, b, x⟩, rfl, rfl⟩
+  left_inv := by
+    intro ⟨⟨a', b', x⟩, ha, hb⟩
+    subst ha hb
+    rfl
+  right_inv := by intro x; rfl
+
+/-- The round-trip functorToDataDep ∘ mkFunctorDep gives back equivalent
+    DepCategoryData. While not strictly equal (due to sigma/subtype encoding),
+    the morphism types are naturally equivalent via sigmaTrivialSubtype. -/
+def functorToDataDep_mkFunctorDep_morEquiv.{u} (data : DepCategoryData.{u})
+    (a b : data.objT) :
+    (functorToDataDep (mkFunctorDep data)).morT a b ≃ data.morT a b :=
+  sigmaTrivialSubtype a b
+
+/-- Helper equivalence for idT: extracting from the round-trip gives back
+    the original identity type. -/
+def functorToDataDep_mkFunctorDep_idEquiv.{u} (data : DepCategoryData.{u})
+    {o : data.objT} (m : data.morT o o) :
+    (functorToDataDep (mkFunctorDep data)).idT
+      ((sigmaTrivialSubtype o o).invFun m) ≃ data.idT m where
+  toFun i := by
+    obtain ⟨⟨o', m', wit⟩, h⟩ := i
+    simp only [mkFunctorDep, sigmaTrivialSubtype] at *
+    cases h
+    exact wit
+  invFun wit := ⟨⟨o, m, wit⟩, rfl⟩
+  left_inv := by
+    intro ⟨⟨o', m', wit⟩, h⟩
+    simp only [mkFunctorDep, sigmaTrivialSubtype] at *
+    cases h
+    rfl
+  right_inv := by intro wit; rfl
+
+/-- Helper equivalence for compT: extracting from the round-trip gives back
+    the original composition type. -/
+def functorToDataDep_mkFunctorDep_compEquiv.{u} (data : DepCategoryData.{u})
+    {a b c : data.objT}
+    (f : data.morT a b) (g : data.morT b c) (h : data.morT a c) :
+    (functorToDataDep (mkFunctorDep data)).compT
+      ((sigmaTrivialSubtype a b).invFun f)
+      ((sigmaTrivialSubtype b c).invFun g)
+      ((sigmaTrivialSubtype a c).invFun h) ≃
+    data.compT f g h where
+  toFun comp := by
+    obtain ⟨⟨a', b', c', f', g', h', wit⟩, hleft, hright, hcomp⟩ := comp
+    simp only [mkFunctorDep, sigmaTrivialSubtype] at *
+    cases hleft
+    cases hright
+    cases hcomp
+    exact wit
+  invFun wit := ⟨⟨a, b, c, f, g, h, wit⟩, rfl, rfl, rfl⟩
+  left_inv := by
+    intro ⟨⟨a', b', c', f', g', h', wit⟩, hleft, hright, hcomp⟩
+    simp only [mkFunctorDep, sigmaTrivialSubtype] at *
+    cases hleft
+    cases hright
+    cases hcomp
+    rfl
+  right_inv := by intro wit; rfl
+
 /-- Convert dependent category data to CopresheafData.
     The dependent types enforce the equality conditions automatically. -/
 def depToFunctorData.{u} (data : DepCategoryData.{u}) :
