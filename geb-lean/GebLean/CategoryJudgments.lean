@@ -323,100 +323,6 @@ structure DepCategoryData.{u} where
   idT : {o : objT} → morT o o → Type u
   compT : {a b c : objT} → morT a b → morT b c → morT a c → Type u
 
-/-- Construct a copresheaf (functor to Type) directly from dependent
-    category data. The dependent types automatically ensure domain/codomain
-    compatibility without needing equality proofs. -/
-def mkFunctorDep.{u} (data : DepCategoryData.{u}) : Obj ⥤ Type u where
-  obj
-    | .obj => data.objT
-    | .mor => Σ (a b : data.objT), data.morT a b
-    | .id => Σ (o : data.objT) (m : data.morT o o), data.idT m
-    | .comp => Σ (a b c : data.objT) (f : data.morT a b) (g : data.morT b c)
-        (h : data.morT a c), data.compT f g h
-  map {X Y} f := match X, Y, f with
-    | _, _, .identity _ => id
-    | _, _, .dom => fun m => m.1
-    | _, _, .cod => fun m => m.2.1
-    | _, _, .idObj => fun i => i.1
-    | _, _, .idMor => fun i => ⟨i.1, i.1, i.2.1⟩
-    | _, _, .left => fun c => ⟨c.2.1, c.2.2.1, c.2.2.2.2.1⟩
-    | _, _, .right => fun c => ⟨c.1, c.2.1, c.2.2.2.1⟩
-    | _, _, .composite => fun c => ⟨c.1, c.2.2.1, c.2.2.2.2.2.1⟩
-    | _, _, .intermediate => fun c => c.2.1
-    | _, _, .compositeDom => fun c => c.1
-    | _, _, .compositeCod => fun c => c.2.2.1
-  map_id := by intro X; cases X <;> rfl
-  map_comp {X Y Z} f g := by cases f <;> cases g <;> rfl
-
-/-- Extract DepCategoryData from a copresheaf. This is inverse to
-    mkFunctorDep. -/
-def functorToDataDep.{u} (F : Obj ⥤ Type u) : DepCategoryData.{u} where
-  objT := F.obj .obj
-  morT := fun a b => {m : F.obj .mor // F.map .dom m = a ∧ F.map .cod m = b}
-  idT := fun m => {i : F.obj .id // F.map .idMor i = m.val}
-  compT := fun {a b c} (f : {m : F.obj .mor // F.map .dom m = a ∧
-      F.map .cod m = b})
-      (g : {m : F.obj .mor // F.map .dom m = b ∧ F.map .cod m = c})
-      (h : {m : F.obj .mor // F.map .dom m = a ∧ F.map .cod m = c}) =>
-    {wit : F.obj .comp //
-      F.map .left wit = g.val ∧
-      F.map .right wit = f.val ∧
-      F.map .composite wit = h.val}
-
-/-- The round-trip functorToDataDep ∘ mkFunctorDep gives back equivalent
-    DepCategoryData. While not strictly equal (due to sigma/subtype encoding),
-    the morphism types are naturally equivalent via sigmaTrivialSubtype. -/
-def functorToDataDep_mkFunctorDep_morEquiv.{u} (data : DepCategoryData.{u})
-    (a b : data.objT) :
-    (functorToDataDep (mkFunctorDep data)).morT a b ≃ data.morT a b :=
-  sigmaTrivialSubtype a b
-
-/-- Helper equivalence for idT: extracting from the round-trip gives back
-    the original identity type. -/
-def functorToDataDep_mkFunctorDep_idEquiv.{u} (data : DepCategoryData.{u})
-    {o : data.objT} (m : data.morT o o) :
-    (functorToDataDep (mkFunctorDep data)).idT
-      ((sigmaTrivialSubtype o o).invFun m) ≃ data.idT m where
-  toFun i := by
-    obtain ⟨⟨o', m', wit⟩, h⟩ := i
-    simp only [mkFunctorDep, sigmaTrivialSubtype] at *
-    cases h
-    exact wit
-  invFun wit := ⟨⟨o, m, wit⟩, rfl⟩
-  left_inv := by
-    intro ⟨⟨o', m', wit⟩, h⟩
-    simp only [mkFunctorDep, sigmaTrivialSubtype] at *
-    cases h
-    rfl
-  right_inv := by intro wit; rfl
-
-/-- Helper equivalence for compT: extracting from the round-trip gives back
-    the original composition type. -/
-def functorToDataDep_mkFunctorDep_compEquiv.{u} (data : DepCategoryData.{u})
-    {a b c : data.objT}
-    (f : data.morT a b) (g : data.morT b c) (h : data.morT a c) :
-    (functorToDataDep (mkFunctorDep data)).compT
-      ((sigmaTrivialSubtype a b).invFun f)
-      ((sigmaTrivialSubtype b c).invFun g)
-      ((sigmaTrivialSubtype a c).invFun h) ≃
-    data.compT f g h where
-  toFun comp := by
-    obtain ⟨⟨a', b', c', f', g', h', wit⟩, hleft, hright, hcomp⟩ := comp
-    simp only [mkFunctorDep, sigmaTrivialSubtype] at *
-    cases hleft
-    cases hright
-    cases hcomp
-    exact wit
-  invFun wit := ⟨⟨a, b, c, f, g, h, wit⟩, rfl, rfl, rfl⟩
-  left_inv := by
-    intro ⟨⟨a', b', c', f', g', h', wit⟩, hleft, hright, hcomp⟩
-    simp only [mkFunctorDep, sigmaTrivialSubtype] at *
-    cases hleft
-    cases hright
-    cases hcomp
-    rfl
-  right_inv := by intro wit; rfl
-
 /-- Convert dependent category data to CopresheafData.
     The dependent types enforce the equality conditions automatically. -/
 def depToFunctorData.{u} (data : DepCategoryData.{u}) :
@@ -499,6 +405,71 @@ def functorDataToDep_depToFunctorData_morT.{u} (data : DepCategoryData.{u})
     subst ha hb
     rfl
   right_inv m := rfl
+
+/-- Construct a copresheaf (functor to Type) directly from dependent
+    category data. This is defined as the composition of depToFunctorData
+    and mkFunctor, which is the same as mkCopresheafDep. -/
+abbrev mkFunctorDep.{u} (data : DepCategoryData.{u}) : Obj ⥤ Type u :=
+  mkFunctor (depToFunctorData data)
+
+/-- Extract DepCategoryData from a copresheaf. This is defined as the
+    composition of functorToData and functorDataToDep. -/
+abbrev functorToDataDep.{u} (F : Obj ⥤ Type u) : DepCategoryData.{u} :=
+  functorDataToDep (functorToData F)
+
+/-- The round-trip functorToDataDep ∘ mkFunctorDep gives back equivalent
+    DepCategoryData. While not strictly equal (due to sigma/subtype encoding),
+    the morphism types are naturally equivalent via sigmaTrivialSubtype. -/
+def functorToDataDep_mkFunctorDep_morEquiv.{u} (data : DepCategoryData.{u})
+    (a b : data.objT) :
+    (functorToDataDep (mkFunctorDep data)).morT a b ≃ data.morT a b :=
+  sigmaTrivialSubtype a b
+
+/-- Helper equivalence for idT: extracting from the round-trip gives back
+    the original identity type. -/
+def functorToDataDep_mkFunctorDep_idEquiv.{u} (data : DepCategoryData.{u})
+    {o : data.objT} (m : data.morT o o) :
+    (functorToDataDep (mkFunctorDep data)).idT
+      ((sigmaTrivialSubtype o o).invFun m) ≃ data.idT m where
+  toFun i := by
+    obtain ⟨⟨o', m', wit⟩, h⟩ := i
+    simp only [mkFunctorDep, sigmaTrivialSubtype] at *
+    cases h
+    exact wit
+  invFun wit := ⟨⟨o, m, wit⟩, rfl⟩
+  left_inv := by
+    intro ⟨⟨o', m', wit⟩, h⟩
+    simp only [mkFunctorDep, sigmaTrivialSubtype] at *
+    cases h
+    rfl
+  right_inv := by intro wit; rfl
+
+/-- Helper equivalence for compT: extracting from the round-trip gives back
+    the original composition type. -/
+def functorToDataDep_mkFunctorDep_compEquiv.{u} (data : DepCategoryData.{u})
+    {a b c : data.objT}
+    (f : data.morT a b) (g : data.morT b c) (h : data.morT a c) :
+    (functorToDataDep (mkFunctorDep data)).compT
+      ((sigmaTrivialSubtype a b).invFun f)
+      ((sigmaTrivialSubtype b c).invFun g)
+      ((sigmaTrivialSubtype a c).invFun h) ≃
+    data.compT f g h where
+  toFun comp := by
+    obtain ⟨⟨a', b', c', f', g', h', wit⟩, hleft, hright, hcomp⟩ := comp
+    simp only [mkFunctorDep, sigmaTrivialSubtype] at *
+    cases hleft
+    cases hright
+    cases hcomp
+    exact wit
+  invFun wit := ⟨⟨a, b, c, f, g, h, wit⟩, rfl, rfl, rfl⟩
+  left_inv := by
+    intro ⟨⟨a', b', c', f', g', h', wit⟩, hleft, hright, hcomp⟩
+    simp only [mkFunctorDep, sigmaTrivialSubtype] at *
+    cases hleft
+    cases hright
+    cases hcomp
+    rfl
+  right_inv := by intro wit; rfl
 
 /-- Round-tripping from CopresheafData to DepCategoryData and back
     gives an equivalent morphism type. -/
