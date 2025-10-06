@@ -393,60 +393,6 @@ theorem functorToDataDep_mkCopresheafDep.{u} (data : DepCategoryData.{u}) :
   simp only [functorToDataDep, mkCopresheafDep, mkCopresheaf,
     functorToData_mkFunctor]
 
-/-- The round-trip functorToDataDep ∘ mkCopresheafDep gives back equivalent
-    DepCategoryData. While not strictly equal (due to sigma/subtype encoding),
-    the morphism types are naturally equivalent via sigmaTrivialSubtype. -/
-def functorToDataDep_mkCopresheafDep_morEquiv.{u} (data : DepCategoryData.{u})
-    (a b : data.objT) :
-    (functorToDataDep (mkCopresheafDep data)).morT a b ≃ data.morT a b :=
-  sigmaTrivialSubtype a b
-
-/-- Helper equivalence for idT: extracting from the round-trip gives back
-    the original identity type. -/
-def functorToDataDep_mkCopresheafDep_idEquiv.{u} (data : DepCategoryData.{u})
-    {o : data.objT} (m : data.morT o o) :
-    (functorToDataDep (mkCopresheafDep data)).idT
-      ((sigmaTrivialSubtype o o).invFun m) ≃ data.idT m where
-  toFun i := by
-    obtain ⟨⟨o', m', wit⟩, h⟩ := i
-    simp only [mkCopresheafDep, sigmaTrivialSubtype] at *
-    cases h
-    exact wit
-  invFun wit := ⟨⟨o, m, wit⟩, rfl⟩
-  left_inv := by
-    intro ⟨⟨o', m', wit⟩, h⟩
-    simp only [mkCopresheafDep, sigmaTrivialSubtype] at *
-    cases h
-    rfl
-  right_inv := by intro wit; rfl
-
-/-- Helper equivalence for compT: extracting from the round-trip gives back
-    the original composition type. -/
-def functorToDataDep_mkCopresheafDep_compEquiv.{u} (data : DepCategoryData.{u})
-    {a b c : data.objT}
-    (f : data.morT a b) (g : data.morT b c) (h : data.morT a c) :
-    (functorToDataDep (mkCopresheafDep data)).compT
-      ((sigmaTrivialSubtype a b).invFun f)
-      ((sigmaTrivialSubtype b c).invFun g)
-      ((sigmaTrivialSubtype a c).invFun h) ≃
-    data.compT f g h where
-  toFun comp := by
-    obtain ⟨⟨a', b', c', f', g', h', wit⟩, hleft, hright, hcomp⟩ := comp
-    simp only [mkCopresheafDep, sigmaTrivialSubtype] at *
-    cases hleft
-    cases hright
-    cases hcomp
-    exact wit
-  invFun wit := ⟨⟨a, b, c, f, g, h, wit⟩, rfl, rfl, rfl⟩
-  left_inv := by
-    intro ⟨⟨a', b', c', f', g', h', wit⟩, hleft, hright, hcomp⟩
-    simp only [mkCopresheafDep, sigmaTrivialSubtype] at *
-    cases hleft
-    cases hright
-    cases hcomp
-    rfl
-  right_inv := by intro wit; rfl
-
 /-- Round-tripping from DepCategoryData to CopresheafData and back
     preserves the object type. -/
 theorem functorDataToDep_depToFunctorData_objT.{u}
@@ -741,6 +687,38 @@ def functorDataToDep_depToFunctorData_compT.{u}
       dsimp only [id]
       split; split; split; split; split; split
       rfl
+
+abbrev functorToDataDep_mkCopresheafDep_morEquiv.{u} (data : DepCategoryData.{u})
+    (a b : data.objT) :
+    (functorToDataDep (mkCopresheafDep data)).morT a b ≃ data.morT a b := by
+  change (functorDataToDep (depToFunctorData data)).morT a b ≃ data.morT a b
+  exact functorDataToDep_depToFunctorData_morT data a b
+
+abbrev functorToDataDep_mkCopresheafDep_idEquiv.{u} (data : DepCategoryData.{u})
+    {o : data.objT} (m : data.morT o o) :
+    (functorToDataDep (mkCopresheafDep data)).idT
+      ((sigmaTrivialSubtype o o).invFun m) ≃ data.idT m := by
+  change (functorDataToDep (depToFunctorData data)).idT
+    ((sigmaTrivialSubtype o o).invFun m) ≃ data.idT m
+  exact functorDataToDep_depToFunctorData_idT data o
+    ((sigmaTrivialSubtype o o).invFun m)
+
+abbrev functorToDataDep_mkCopresheafDep_compEquiv.{u} (data : DepCategoryData.{u})
+    {a b c : data.objT}
+    (f : data.morT a b) (g : data.morT b c) (h : data.morT a c) :
+    (functorToDataDep (mkCopresheafDep data)).compT
+      ((sigmaTrivialSubtype a b).invFun f)
+      ((sigmaTrivialSubtype b c).invFun g)
+      ((sigmaTrivialSubtype a c).invFun h) ≃
+    data.compT f g h := by
+  change (functorDataToDep (depToFunctorData data)).compT
+    ((sigmaTrivialSubtype a b).invFun f)
+    ((sigmaTrivialSubtype b c).invFun g)
+    ((sigmaTrivialSubtype a c).invFun h) ≃ data.compT f g h
+  exact functorDataToDep_depToFunctorData_compT data a b c
+    ((sigmaTrivialSubtype a b).invFun f)
+    ((sigmaTrivialSubtype b c).invFun g)
+    ((sigmaTrivialSubtype a c).invFun h)
 
 /-- Round-tripping CopresheafData through DepCategoryData gives a
     naturally isomorphic functor. The component equivalences we proved
