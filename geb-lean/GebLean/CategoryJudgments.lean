@@ -517,12 +517,10 @@ def depToFunctorData_functorDataToDep_morC.{u}
 /-- Extract the underlying morphism from a round-tripped morphism type.
     When we go DepCategoryData → CopresheafData → DepCategoryData,
     morphisms get wrapped in sigma types and subtypes.
-    This extracts the original. -/
-def extractRoundTrippedMor.{u} (data : DepCategoryData.{u})
-    (a b : data.objT)
-    (m : (functorDataToDep (depToFunctorData data)).morT a b) :
-    data.morT a b :=
-  cast (congrArg₂ data.morT m.prop.1 m.prop.2) m.val.2.2
+    This extracts the original using the round-trip equivalence. -/
+abbrev extractRoundTrippedMor.{u} (data : DepCategoryData.{u})
+    (a b : data.objT) :=
+  (functorDataToDep_depToFunctorData_morT data a b).toFun
 
 /-- Round-tripping from CopresheafData to DepCategoryData and back
     gives an equivalent identity type. -/
@@ -606,7 +604,7 @@ def functorDataToDep_depToFunctorData_idT.{u}
     subst hm
     -- extractRoundTrippedMor evaluates to cast ... m'
     -- which simplifies to m'
-    simp [extractRoundTrippedMor]
+    simp
     -- The identity witness just needs the matches to reduce
     congr 2
     (split; split; rfl)
@@ -703,7 +701,7 @@ def functorDataToDep_depToFunctorData_compT.{u}
     have : b = b_c := hfb.symm
     have : c = c_c := hgb.symm
     subst_vars
-    simp only [extractRoundTrippedMor, cast_eq]
+    simp only [extractRoundTrippedMor]
     exact comp_wit
   invFun wit := by
     refine ⟨⟨a, b, c,
@@ -732,7 +730,7 @@ def functorDataToDep_depToFunctorData_compT.{u}
     | ⟨⟨a_f, b_f, f'⟩, hfa, hfb⟩, ⟨⟨a_g, b_g, g'⟩, hga, hgb⟩,
       ⟨⟨a_h, b_h, h'⟩, hha, hhb⟩ =>
       simp only [depToFunctorData] at hr hl hcomp hfa hfb hga hgb hha hhb
-      simp only [extractRoundTrippedMor, cast_eq]
+      simp only [extractRoundTrippedMor]
       -- hl : ⟨b_c, ⟨c_c, g_c⟩⟩ = ⟨a_g, ⟨b_g, g'⟩⟩
       -- hcomp : ⟨a_c, ⟨c_c, h_c⟩⟩ = ⟨a_h, ⟨b_h, h'⟩⟩
       rw [Sigma.mk.injEq] at hr hl hcomp
@@ -756,7 +754,7 @@ def functorDataToDep_depToFunctorData_compT.{u}
       have : b = b_c := hfb.symm
       have : c = c_c := hgb.symm
       subst_vars
-      simp only [cast_eq]
+      simp only []
       dsimp only [id]
       split; split; split; split; split; split
       rfl
@@ -765,7 +763,7 @@ def functorDataToDep_depToFunctorData_compT.{u}
     | ⟨⟨a_f, b_f, f'⟩, hfa, hfb⟩, ⟨⟨a_g, b_g, g'⟩, hga, hgb⟩,
       ⟨⟨a_h, b_h, h'⟩, hha, hhb⟩ =>
       simp only [depToFunctorData] at hfa hfb hga hgb hha hhb
-      simp only [extractRoundTrippedMor, cast_eq]
+      simp only [extractRoundTrippedMor]
       subst hfa hfb hga hgb hha hhb
       dsimp only [id]
       split; split; split; split; split; split
@@ -908,7 +906,7 @@ def mkCopresheafDep_functorDataToDep_depToFunctorData.{u}
               let id_equiv :=
                 functorDataToDep_depToFunctorData_idT data i.1 m_inv
               ⟨i.1, m_inv, id_equiv.invFun (cast (by
-                simp [extractRoundTrippedMor, m_equiv]
+                simp [extractRoundTrippedMor]
                 rfl) i.2.2)⟩
             hom_inv_id := by
               funext ⟨o, ⟨m, id_wit⟩⟩
@@ -972,8 +970,7 @@ def mkCopresheafDep_functorDataToDep_depToFunctorData.{u}
                   c.2.2.1 f_inv g_inv h_inv
               ⟨c.1, c.2.1, c.2.2.1, f_inv, g_inv, h_inv,
                comp_equiv.invFun (cast (by
-                 simp [extractRoundTrippedMor, f_equiv, g_equiv,
-                   h_equiv]
+                 simp [extractRoundTrippedMor]
                  rfl) c.2.2.2.2.2.2)⟩
             hom_inv_id := by
               funext ⟨a, b, c, f, g, h, comp_wit⟩
