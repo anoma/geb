@@ -399,6 +399,21 @@ def mkCopresheafDep.{u} (data : DepCategoryData.{u}) : Obj ⥤ Type u :=
 abbrev functorToDataDep.{u} (F : Obj ⥤ Type u) : DepCategoryData.{u} :=
   functorDataToDep (functorToData F)
 
+/-- Two DepCategoryData structures are equivalent if their corresponding
+    FunctorData structures (via depToFunctorData) are equivalent. -/
+def DepCategoryData.Equiv (data₁ data₂ : DepCategoryData) : Prop :=
+  FunctorData.Equiv (depToFunctorData data₁) (depToFunctorData data₂)
+
+/-- The equivalence relation on FunctorData induces an equivalence relation
+    on DepCategoryData via depToFunctorData. -/
+instance : Setoid DepCategoryData where
+  r := DepCategoryData.Equiv
+  iseqv := {
+    refl := fun _ => ⟨Iso.refl _⟩
+    symm := fun ⟨iso⟩ => ⟨iso.symm⟩
+    trans := fun ⟨iso₁⟩ ⟨iso₂⟩ => ⟨iso₁.trans iso₂⟩
+  }
+
 /-- The composition functorToDataDep ∘ mkCopresheafDep simplifies to
     functorDataToDep ∘ depToFunctorData, since functorToData and mkCopresheaf
     are inverses (they compose to the identity). -/
