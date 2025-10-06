@@ -1,6 +1,7 @@
 import Mathlib.CategoryTheory.Category.Basic
 import Mathlib.CategoryTheory.FinCategory.Basic
 import Mathlib.CategoryTheory.Types.Basic
+import GebLean.Utilities
 
 /-!
 # Category Judgments
@@ -361,21 +362,6 @@ def functorToDataDep.{u} (F : Obj ⥤ Type u) : DepCategoryData.{u} where
       F.map .left wit = g.val ∧
       F.map .right wit = f.val ∧
       F.map .composite wit = h.val}
-
-/-- Helper equivalence: a subtype of sigma with trivial conditions is
-    equivalent to the original type. -/
-def sigmaTrivialSubtype {α : Type*} {β : α → α → Type*} (a b : α) :
-    {m : Σ (a' b' : α), β a' b' // m.1 = a ∧ m.2.1 = b} ≃ β a b where
-  toFun m := by
-    obtain ⟨⟨a', b', x⟩, ha, hb⟩ := m
-    subst ha hb
-    exact x
-  invFun x := ⟨⟨a, b, x⟩, rfl, rfl⟩
-  left_inv := by
-    intro ⟨⟨a', b', x⟩, ha, hb⟩
-    subst ha hb
-    rfl
-  right_inv := by intro x; rfl
 
 /-- The round-trip functorToDataDep ∘ mkFunctorDep gives back equivalent
     DepCategoryData. While not strictly equal (due to sigma/subtype encoding),
