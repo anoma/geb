@@ -316,6 +316,21 @@ abbrev copresheafToData := functorToData (C := Type _)
 /-- The equivalence between copresheaves and CopresheafData. -/
 abbrev copresheafDataEquiv := functorDataEquiv (C := Type _)
 
+/-- Two FunctorData structures are equivalent if their corresponding functors
+    are naturally isomorphic. -/
+def FunctorData.Equiv (data₁ data₂ : FunctorData C) : Prop :=
+  Nonempty (mkFunctor data₁ ≅ mkFunctor data₂)
+
+/-- Natural isomorphism on functors induces an equivalence relation on
+    FunctorData via mkFunctor. -/
+instance : Setoid (FunctorData C) where
+  r := FunctorData.Equiv
+  iseqv := {
+    refl := fun _ => ⟨Iso.refl _⟩
+    symm := fun ⟨iso⟩ => ⟨iso.symm⟩
+    trans := fun ⟨iso₁⟩ ⟨iso₂⟩ => ⟨iso₁.trans iso₂⟩
+  }
+
 /-- Data for a category structure using dependent types. -/
 structure DepCategoryData.{u} where
   objT : Type u
