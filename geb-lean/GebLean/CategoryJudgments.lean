@@ -711,38 +711,24 @@ def natTransToDepNatTrans {F G : CopresheafData}
     (α : NatTransData F G) :
     DepNatTransData (functorDataToDep F) (functorDataToDep G) where
   appObj := α.appObj
-  appMor := fun {a b} m =>
-    ⟨α.appMor m.val, by
-      have hdom := congr_fun α.naturality_dom m.val
-      have hcod := congr_fun α.naturality_cod m.val
-      simp only [functorDataToDep] at m
-      obtain ⟨m_val, ha, hb⟩ := m
-      exact ⟨hdom.symm.trans (congr_arg α.appObj ha),
-             hcod.symm.trans (congr_arg α.appObj hb)⟩⟩
-  appId := fun {o} {m} i =>
-    ⟨α.appId i.val, by
-      have hidMor := congr_fun α.naturality_idMor i.val
-      simp only [functorDataToDep] at i
-      obtain ⟨i_val, hm⟩ := i
-      calc G.idMor (α.appId i_val)
-        = α.appMor (F.idMor i_val) := hidMor.symm
-        _ = α.appMor m.val := by rw [hm]⟩
-  appComp := fun {a b c} {f} {g} {h} comp =>
-    ⟨α.appComp comp.val, by
-      obtain ⟨comp_val, hf, hg, hh⟩ := comp
-      have hr := congr_fun α.naturality_right comp_val
-      have hl := congr_fun α.naturality_left comp_val
-      have hc := congr_fun α.naturality_composite comp_val
-      refine ⟨?_, ?_, ?_⟩
-      · calc G.right (α.appComp comp_val)
-          = α.appMor (F.right comp_val) := hr.symm
-          _ = α.appMor f.val := by rw [hf]
-      · calc G.left (α.appComp comp_val)
-          = α.appMor (F.left comp_val) := hl.symm
-          _ = α.appMor g.val := by rw [hg]
-      · calc G.composite (α.appComp comp_val)
-          = α.appMor (F.composite comp_val) := hc.symm
-          _ = α.appMor h.val := by rw [hh]⟩
+  appMor := fun m =>
+    let hdom := congr_fun α.naturality_dom m.val
+    let hcod := congr_fun α.naturality_cod m.val
+    ⟨α.appMor m.val,
+     hdom.symm.trans (congr_arg α.appObj m.property.1),
+     hcod.symm.trans (congr_arg α.appObj m.property.2)⟩
+  appId := fun i =>
+    let hidMor := congr_fun α.naturality_idMor i.val
+    ⟨α.appId i.val,
+     hidMor.symm.trans (congr_arg α.appMor i.property)⟩
+  appComp := fun comp =>
+    let hr := congr_fun α.naturality_right comp.val
+    let hl := congr_fun α.naturality_left comp.val
+    let hc := congr_fun α.naturality_composite comp.val
+    ⟨α.appComp comp.val,
+     hr.symm.trans (congr_arg α.appMor comp.property.1),
+     hl.symm.trans (congr_arg α.appMor comp.property.2.1),
+     hc.symm.trans (congr_arg α.appMor comp.property.2.2)⟩
 
 /-- Functor from DepCategoryData to CopresheafData using depToFunctorData. -/
 def depCatToCopresheaf : DepCategoryData ⥤ CopresheafData where
