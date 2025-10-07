@@ -212,6 +212,80 @@ structure FunctorData (C : Type*) [Category C] where
   h_comp_dom : composite ≫ dom = right ≫ dom
   h_comp_cod : composite ≫ cod = left ≫ cod
 
+/-- Minimal data needed to specify a natural transformation between two
+    FunctorData structures. We only need the components at the 4 objects plus
+    naturality conditions for the 6 basic morphisms (dom, cod, idMor, left,
+    right, composite); the remaining 4 conditions (intermediate, compositeDom,
+    compositeCod, idObj) are derivable. -/
+@[ext]
+structure NatTransData {C : Type*} [Category C]
+    (F G : FunctorData C) where
+  appObj : F.objC ⟶ G.objC
+  appMor : F.morC ⟶ G.morC
+  appId : F.idC ⟶ G.idC
+  appComp : F.compC ⟶ G.compC
+  naturality_dom : F.dom ≫ appObj = appMor ≫ G.dom
+  naturality_cod : F.cod ≫ appObj = appMor ≫ G.cod
+  naturality_idMor : F.idMor ≫ appMor = appId ≫ G.idMor
+  naturality_left : F.left ≫ appMor = appComp ≫ G.left
+  naturality_right : F.right ≫ appMor = appComp ≫ G.right
+  naturality_composite : F.composite ≫ appMor = appComp ≫ G.composite
+
+/-- Identity natural transformation for FunctorData. -/
+def NatTransData.id (F : FunctorData C) : NatTransData F F where
+  appObj := 𝟙 F.objC
+  appMor := 𝟙 F.morC
+  appId := 𝟙 F.idC
+  appComp := 𝟙 F.compC
+  naturality_dom := by simp
+  naturality_cod := by simp
+  naturality_idMor := by simp
+  naturality_left := by simp
+  naturality_right := by simp
+  naturality_composite := by simp
+
+/-- Composition of natural transformations for FunctorData. -/
+def NatTransData.comp {F G H : FunctorData C}
+    (α : NatTransData F G) (β : NatTransData G H) :
+    NatTransData F H where
+  appObj := α.appObj ≫ β.appObj
+  appMor := α.appMor ≫ β.appMor
+  appId := α.appId ≫ β.appId
+  appComp := α.appComp ≫ β.appComp
+  naturality_dom := by
+    rw [← Category.assoc, α.naturality_dom, Category.assoc, β.naturality_dom,
+      ← Category.assoc]
+  naturality_cod := by
+    rw [← Category.assoc, α.naturality_cod, Category.assoc, β.naturality_cod,
+      ← Category.assoc]
+  naturality_idMor := by
+    rw [← Category.assoc, α.naturality_idMor, Category.assoc,
+      β.naturality_idMor, ← Category.assoc]
+  naturality_left := by
+    rw [← Category.assoc, α.naturality_left, Category.assoc,
+      β.naturality_left, ← Category.assoc]
+  naturality_right := by
+    rw [← Category.assoc, α.naturality_right, Category.assoc,
+      β.naturality_right, ← Category.assoc]
+  naturality_composite := by
+    rw [← Category.assoc, α.naturality_composite, Category.assoc,
+      β.naturality_composite, ← Category.assoc]
+
+/-- FunctorData with NatTransData forms a category. -/
+instance : Category (FunctorData C) where
+  Hom := NatTransData
+  id := NatTransData.id
+  comp := NatTransData.comp
+  id_comp := by
+    intros
+    ext <;> simp [NatTransData.comp, NatTransData.id]
+  comp_id := by
+    intros
+    ext <;> simp [NatTransData.comp, NatTransData.id]
+  assoc := by
+    intros
+    ext <;> simp [NatTransData.comp, Category.assoc]
+
 /-- Construct a functor from CategoryJudgments to C from minimal
     category data. The caller provides only primitive morphisms and
     compatibility conditions; derived morphisms are computed. -/
@@ -318,80 +392,6 @@ abbrev copresheafToData := functorToData (C := Type _)
 
 /-- The equivalence between copresheaves and CopresheafData. -/
 abbrev copresheafDataEquiv := functorDataEquiv (C := Type _)
-
-/-- Minimal data needed to specify a natural transformation between two
-    FunctorData structures. We only need the components at the 4 objects plus
-    naturality conditions for the 6 basic morphisms (dom, cod, idMor, left,
-    right, composite); the remaining 4 conditions (intermediate, compositeDom,
-    compositeCod, idObj) are derivable. -/
-@[ext]
-structure NatTransData {C : Type*} [Category C]
-    (F G : FunctorData C) where
-  appObj : F.objC ⟶ G.objC
-  appMor : F.morC ⟶ G.morC
-  appId : F.idC ⟶ G.idC
-  appComp : F.compC ⟶ G.compC
-  naturality_dom : F.dom ≫ appObj = appMor ≫ G.dom
-  naturality_cod : F.cod ≫ appObj = appMor ≫ G.cod
-  naturality_idMor : F.idMor ≫ appMor = appId ≫ G.idMor
-  naturality_left : F.left ≫ appMor = appComp ≫ G.left
-  naturality_right : F.right ≫ appMor = appComp ≫ G.right
-  naturality_composite : F.composite ≫ appMor = appComp ≫ G.composite
-
-/-- Identity natural transformation for FunctorData. -/
-def NatTransData.id (F : FunctorData C) : NatTransData F F where
-  appObj := 𝟙 F.objC
-  appMor := 𝟙 F.morC
-  appId := 𝟙 F.idC
-  appComp := 𝟙 F.compC
-  naturality_dom := by simp
-  naturality_cod := by simp
-  naturality_idMor := by simp
-  naturality_left := by simp
-  naturality_right := by simp
-  naturality_composite := by simp
-
-/-- Composition of natural transformations for FunctorData. -/
-def NatTransData.comp {F G H : FunctorData C}
-    (α : NatTransData F G) (β : NatTransData G H) :
-    NatTransData F H where
-  appObj := α.appObj ≫ β.appObj
-  appMor := α.appMor ≫ β.appMor
-  appId := α.appId ≫ β.appId
-  appComp := α.appComp ≫ β.appComp
-  naturality_dom := by
-    rw [← Category.assoc, α.naturality_dom, Category.assoc, β.naturality_dom,
-      ← Category.assoc]
-  naturality_cod := by
-    rw [← Category.assoc, α.naturality_cod, Category.assoc, β.naturality_cod,
-      ← Category.assoc]
-  naturality_idMor := by
-    rw [← Category.assoc, α.naturality_idMor, Category.assoc,
-      β.naturality_idMor, ← Category.assoc]
-  naturality_left := by
-    rw [← Category.assoc, α.naturality_left, Category.assoc,
-      β.naturality_left, ← Category.assoc]
-  naturality_right := by
-    rw [← Category.assoc, α.naturality_right, Category.assoc,
-      β.naturality_right, ← Category.assoc]
-  naturality_composite := by
-    rw [← Category.assoc, α.naturality_composite, Category.assoc,
-      β.naturality_composite, ← Category.assoc]
-
-/-- FunctorData with NatTransData forms a category. -/
-instance : Category (FunctorData C) where
-  Hom := NatTransData
-  id := NatTransData.id
-  comp := NatTransData.comp
-  id_comp := by
-    intros
-    ext <;> simp [NatTransData.comp, NatTransData.id]
-  comp_id := by
-    intros
-    ext <;> simp [NatTransData.comp, NatTransData.id]
-  assoc := by
-    intros
-    ext <;> simp [NatTransData.comp, Category.assoc]
 
 /-- Naturality for the composite morphism `intermediate = right ≫ cod` is
     derivable from naturality for `right` and `cod`. -/
