@@ -319,7 +319,7 @@ abbrev copresheafDataEquiv := functorDataEquiv (C := Type _)
 
 /-- Minimal data needed to specify a natural transformation between two
     FunctorData structures. We only need the components at the 4 objects plus
-    naturality conditions for the 7 basic morphisms (dom, cod, idMor, left,
+    naturality conditions for the 6 basic morphisms (dom, cod, idMor, left,
     right, composite); the remaining 4 conditions (intermediate, compositeDom,
     compositeCod, idObj) are derivable. -/
 @[ext]
