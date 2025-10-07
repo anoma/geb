@@ -664,9 +664,8 @@ def functorDataToDep.{u} (data : CopresheafData.{u}) :
 
 /-- Construct a copresheaf using dependent types to enforce equality
     conditions. Both identities and composition are represented as
-    relations. The key insight is that since morphisms already encode
-    their domains and codomains in their types, the compatibility
-    conditions are enforced by the type structure. -/
+    relations. Morphisms encode their domains and codomains in their types,
+    so the compatibility conditions are enforced by the type structure. -/
 def mkCopresheafDep.{u} (data : DepCategoryData.{u}) : Obj ⥤ Type u :=
   mkCopresheaf (depToFunctorData data)
 
