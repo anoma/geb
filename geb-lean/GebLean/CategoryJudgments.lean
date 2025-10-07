@@ -529,25 +529,42 @@ def functorToFunctorData : (Obj ⥤ C) ⥤ FunctorData C where
     intros F G H α β
     rfl
 
-/-- The two functors form an isomorphism of categories. -/
-def functorDataIsoCat : FunctorData C ≌ (Obj ⥤ C) where
+/-- The composition functorToFunctorData ⋙ functorDataToFunctor is
+    equal to the identity functor. -/
+theorem functorToFunctorData_comp_functorDataToFunctor :
+    functorToFunctorData ⋙ functorDataToFunctor = 𝟭 (Obj ⥤ C) := by
+  apply CategoryTheory.Functor.ext
+  case h_obj => intro F; exact mkFunctor_functorToData F
+  case h_map =>
+    intro F G α
+    simp only [Functor.comp_obj, Functor.comp_map, Functor.id_obj,
+      Functor.id_map, functorToFunctorData, functorDataToFunctor,
+      mkNatTrans_natTransToData]
+
+/-- The composition functorDataToFunctor ⋙ functorToFunctorData is
+    equal to the identity functor. -/
+theorem functorDataToFunctor_comp_functorToFunctorData :
+    functorDataToFunctor ⋙ functorToFunctorData = 𝟭 (FunctorData C) := by
+  apply CategoryTheory.Functor.ext
+  case h_obj => intro F; exact functorToData_mkFunctor F
+  case h_map =>
+    intro F G α
+    simp only [Functor.comp_obj, Functor.comp_map, Functor.id_obj,
+      Functor.id_map, functorToFunctorData, functorDataToFunctor,
+      natTransToData_mkNatTrans]
+    simp
+
+/-- The two functors form an equivalence of categories where the unit and
+    counit are identity natural transformations (not just isomorphisms).
+    This is stronger than a general equivalence. -/
+def functorDataEquivCat : FunctorData C ≌ (Obj ⥤ C) where
   functor := functorDataToFunctor
   inverse := functorToFunctorData
-  unitIso := NatIso.ofComponents
-    (fun F => eqToIso (by
-      simp only [functorToFunctorData, functorDataToFunctor]
-      exact (functorToData_mkFunctor F).symm))
-    (by
-      intros F G α
-      simp [functorToFunctorData, functorDataToFunctor]
-      apply NatTransData.ext <;> rfl)
-  counitIso := NatIso.ofComponents
-    (fun F => eqToIso (mkFunctor_functorToData F))
-    (by
-      intros F G α
-      simp [functorToFunctorData, functorDataToFunctor]
-      rw [mkNatTrans_natTransToData]
-      simp)
+  unitIso := eqToIso functorDataToFunctor_comp_functorToFunctorData
+  counitIso := eqToIso functorToFunctorData_comp_functorDataToFunctor
+  functor_unitIso_comp := by
+    intro F
+    simp
 
 /-- Data for a category structure using dependent types. -/
 structure DepCategoryData.{u} where
