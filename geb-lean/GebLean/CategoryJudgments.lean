@@ -566,6 +566,18 @@ instance : Setoid (FunctorData C) where
     trans := fun ⟨iso₁⟩ ⟨iso₂⟩ => ⟨iso₁.trans iso₂⟩
   }
 
+/-- Two `FunctorData` are isomorphic in the category if and only if they are
+    equivalent under the Setoid. This follows from the categorical equivalence
+    `functorDataEquivCat` and the fact that functors preserve isomorphisms. -/
+theorem functorData_iso_iff_setoid_equiv (F G : FunctorData C) :
+    Nonempty (F ≅ G) ↔ F ≈ G := by
+  change Nonempty (F ≅ G) ↔ Nonempty (mkFunctor F ≅ mkFunctor G)
+  constructor
+  · intro ⟨e⟩
+    exact ⟨functorDataToFunctor.mapIso e⟩
+  · intro ⟨e⟩
+    exact ⟨functorDataEquivCat.inverse.mapIso e⟩
+
 /-- Data for a category structure using dependent types. -/
 structure DepCategoryData.{u} where
   objT : Type u
