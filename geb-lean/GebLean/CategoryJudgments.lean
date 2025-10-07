@@ -193,6 +193,7 @@ open CategoryTheory
 variable {C : Type*} [Category C]
 
 /-- Data required to construct a functor from CategoryJudgments to C. -/
+@[ext]
 structure FunctorData (C : Type*) [Category C] where
   objC : C
   morC : C
@@ -321,6 +322,7 @@ abbrev copresheafDataEquiv := functorDataEquiv (C := Type _)
     naturality conditions for the 7 basic morphisms (dom, cod, idMor, left,
     right, composite); the remaining 4 conditions (intermediate, compositeDom,
     compositeCod, idObj) are derivable. -/
+@[ext]
 structure NatTransData {C : Type*} [Category C]
     (F G : FunctorData C) where
   appObj : F.objC ⟶ G.objC
@@ -333,19 +335,6 @@ structure NatTransData {C : Type*} [Category C]
   naturality_left : F.left ≫ appMor = appComp ≫ G.left
   naturality_right : F.right ≫ appMor = appComp ≫ G.right
   naturality_composite : F.composite ≫ appMor = appComp ≫ G.composite
-
-/-- Extensionality for NatTransData: two natural transformations are equal
-    if their components are equal. -/
-@[ext]
-theorem NatTransData.ext {C : Type*} [Category C] {F G : FunctorData C}
-    {α β : NatTransData F G}
-    (hObj : α.appObj = β.appObj)
-    (hMor : α.appMor = β.appMor)
-    (hId : α.appId = β.appId)
-    (hComp : α.appComp = β.appComp) :
-    α = β := by
-  cases α; cases β
-  congr
 
 /-- Identity natural transformation for FunctorData. -/
 def NatTransData.id (F : FunctorData C) : NatTransData F F where
@@ -579,6 +568,7 @@ theorem functorData_iso_iff_setoid_equiv (F G : FunctorData C) :
     exact ⟨functorDataEquivCat.inverse.mapIso e⟩
 
 /-- Data for a category structure using dependent types. -/
+@[ext]
 structure DepCategoryData.{u} where
   objT : Type u
   morT : objT → objT → Type u
@@ -587,6 +577,7 @@ structure DepCategoryData.{u} where
 
 /-- Natural transformation data between two DepCategoryData structures.
     Components are dependent functions respecting the type structure. -/
+@[ext]
 structure DepNatTransData (F G : DepCategoryData) where
   appObj : F.objT → G.objT
   appMor : {a b : F.objT} → F.morT a b → G.morT (appObj a) (appObj b)
