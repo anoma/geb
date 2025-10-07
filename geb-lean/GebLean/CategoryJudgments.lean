@@ -192,6 +192,8 @@ open CategoryTheory
 
 variable {C : Type*} [Category C]
 
+section FunctorDataCategory
+
 /-- Data required to construct a functor from CategoryJudgments to C. -/
 @[ext]
 structure FunctorData (C : Type*) [Category C] where
@@ -477,6 +479,10 @@ theorem mkNatTrans_natTransToData {F G : Obj ⥤ C} (α : F ⟶ G) :
   ext X
   cases X <;> simp [mkNatTrans, natTransToData]
 
+end FunctorDataCategory
+
+section FunctorDataEquivalence
+
 /-- The functor from FunctorData to the functor category that sends
     FunctorData to the corresponding functor via mkFunctor. -/
 def functorDataToFunctor : FunctorData C ⥤ (Obj ⥤ C) where
@@ -567,6 +573,10 @@ theorem functorData_iso_iff_setoid_equiv (F G : FunctorData C) :
   · intro ⟨e⟩
     exact ⟨functorDataEquivCat.inverse.mapIso e⟩
 
+end FunctorDataEquivalence
+
+section DepCategoryDataCategory
+
 /-- Data for a category structure using dependent types. -/
 @[ext]
 structure DepCategoryData.{u} where
@@ -612,6 +622,10 @@ instance : Category DepCategoryData where
   id_comp := by intros; rfl
   comp_id := by intros; rfl
   assoc := by intros; rfl
+
+end DepCategoryDataCategory
+
+section DepCategoryDataCorrespondences
 
 /-- Convert dependent category data to CopresheafData.
     The dependent types enforce the equality conditions automatically. -/
@@ -1406,6 +1420,8 @@ def mkCopresheafDep_functorDataToDep_depToFunctorData.{u}
         simp only [mkCopresheafDep, mkCopresheaf, mkFunctor,
                    depToFunctorData, functorDataToDep]
         ext x; simp)
+
+end DepCategoryDataCorrespondences
 
 end Functors
 
