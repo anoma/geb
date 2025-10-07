@@ -649,6 +649,115 @@ instance : Setoid DepCategoryData where
     trans := fun ⟨iso₁⟩ ⟨iso₂⟩ => ⟨iso₁.trans iso₂⟩
   }
 
+/-- Natural transformation data between two DepCategoryData structures.
+    Components are dependent functions respecting the type structure. -/
+structure DepNatTransData (F G : DepCategoryData) where
+  appObj : F.objT → G.objT
+  appMor : {a b : F.objT} → F.morT a b → G.morT (appObj a) (appObj b)
+  appId : {o : F.objT} → {m : F.morT o o} → F.idT m →
+    G.idT (appMor m)
+  appComp : {a b c : F.objT} → {f : F.morT a b} → {g : F.morT b c} →
+    {h : F.morT a c} → F.compT f g h →
+    G.compT (appMor f) (appMor g) (appMor h)
+
+/-- Identity natural transformation for DepCategoryData. -/
+def DepNatTransData.id (F : DepCategoryData) : DepNatTransData F F where
+  appObj := _root_.id
+  appMor := _root_.id
+  appId := _root_.id
+  appComp := _root_.id
+
+/-- Composition of natural transformations for DepCategoryData. -/
+def DepNatTransData.comp {F G H : DepCategoryData}
+    (α : DepNatTransData F G) (β : DepNatTransData G H) :
+    DepNatTransData F H where
+  appObj := β.appObj ∘ α.appObj
+  appMor := fun m => β.appMor (α.appMor m)
+  appId := fun i => β.appId (α.appId i)
+  appComp := fun comp => β.appComp (α.appComp comp)
+
+/-- Category instance for DepCategoryData with DepNatTransData as
+    morphisms. -/
+instance : Category DepCategoryData where
+  Hom := DepNatTransData
+  id := DepNatTransData.id
+  comp := DepNatTransData.comp
+  id_comp := by intros; rfl
+  comp_id := by intros; rfl
+  assoc := by intros; rfl
+
+/-- Convert a DepNatTransData to a NatTransData by packaging the dependent
+    components into sigma types. -/
+def depNatTransToNatTrans {F G : DepCategoryData}
+    (α : DepNatTransData F G) :
+    NatTransData (depToFunctorData F) (depToFunctorData G) where
+  appObj := α.appObj
+  appMor := fun ⟨a, b, m⟩ => ⟨α.appObj a, α.appObj b, α.appMor m⟩
+  appId := fun ⟨o, m, i⟩ => ⟨α.appObj o, α.appMor m, α.appId i⟩
+  appComp := fun ⟨a, b, c, f, g, h, comp⟩ =>
+    ⟨α.appObj a, α.appObj b, α.appObj c, α.appMor f, α.appMor g,
+      α.appMor h, α.appComp comp⟩
+  naturality_dom := by funext ⟨a, b, m⟩; rfl
+  naturality_cod := by funext ⟨a, b, m⟩; rfl
+  naturality_idMor := by funext ⟨o, m, i⟩; rfl
+  naturality_left := by funext ⟨a, b, c, f, g, h, comp⟩; rfl
+  naturality_right := by funext ⟨a, b, c, f, g, h, comp⟩; rfl
+  naturality_composite := by funext ⟨a, b, c, f, g, h, comp⟩; rfl
+
+/-- Convert a NatTransData to a DepNatTransData by extracting from sigma
+    types. -/
+def natTransToDepNatTrans {F G : CopresheafData}
+    (α : NatTransData F G) :
+    DepNatTransData (functorDataToDep F) (functorDataToDep G) where
+  appObj := α.appObj
+  appMor := fun {a b} m =>
+    ⟨α.appMor m.val, by
+      have hdom := congr_fun α.naturality_dom m.val
+      have hcod := congr_fun α.naturality_cod m.val
+      simp only [functorDataToDep] at m
+      obtain ⟨m_val, ha, hb⟩ := m
+      exact ⟨hdom.symm.trans (congr_arg α.appObj ha),
+             hcod.symm.trans (congr_arg α.appObj hb)⟩⟩
+  appId := fun {o} {m} i =>
+    ⟨α.appId i.val, by
+      have hidMor := congr_fun α.naturality_idMor i.val
+      simp only [functorDataToDep] at i
+      obtain ⟨i_val, hm⟩ := i
+      calc G.idMor (α.appId i_val)
+        = α.appMor (F.idMor i_val) := hidMor.symm
+        _ = α.appMor m.val := by rw [hm]⟩
+  appComp := fun {a b c} {f} {g} {h} comp =>
+    ⟨α.appComp comp.val, by
+      obtain ⟨comp_val, hf, hg, hh⟩ := comp
+      have hr := congr_fun α.naturality_right comp_val
+      have hl := congr_fun α.naturality_left comp_val
+      have hc := congr_fun α.naturality_composite comp_val
+      refine ⟨?_, ?_, ?_⟩
+      · calc G.right (α.appComp comp_val)
+          = α.appMor (F.right comp_val) := hr.symm
+          _ = α.appMor f.val := by rw [hf]
+      · calc G.left (α.appComp comp_val)
+          = α.appMor (F.left comp_val) := hl.symm
+          _ = α.appMor g.val := by rw [hg]
+      · calc G.composite (α.appComp comp_val)
+          = α.appMor (F.composite comp_val) := hc.symm
+          _ = α.appMor h.val := by rw [hh]⟩
+
+/-- Functor from DepCategoryData to CopresheafData using depToFunctorData. -/
+def depCatToCopresheaf : DepCategoryData ⥤ CopresheafData where
+  obj := depToFunctorData
+  map := depNatTransToNatTrans
+  map_id := by intro F; rfl
+  map_comp := by intros; rfl
+
+/-- Functor from CopresheafData to DepCategoryData using
+    functorDataToDep. -/
+def copresheafToDepCat : CopresheafData ⥤ DepCategoryData where
+  obj := functorDataToDep
+  map := natTransToDepNatTrans
+  map_id := by intro F; rfl
+  map_comp := by intros; rfl
+
 /-- The composition functorToDataDep ∘ mkCopresheafDep simplifies to
     functorDataToDep ∘ depToFunctorData, since functorToData and mkCopresheaf
     are inverses (they compose to the identity). -/
