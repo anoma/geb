@@ -503,6 +503,52 @@ instance : Category (FunctorData C) where
     intros
     ext <;> simp [NatTransData.comp, Category.assoc]
 
+/-- The functor from FunctorData to the functor category that sends
+    FunctorData to the corresponding functor via mkFunctor. -/
+def functorDataToFunctor : FunctorData C ⥤ (Obj ⥤ C) where
+  obj := mkFunctor
+  map := mkNatTrans
+  map_id := by
+    intro F
+    ext X
+    cases X <;> rfl
+  map_comp := by
+    intros F G H α β
+    ext X
+    cases X <;> rfl
+
+/-- The functor from the functor category to FunctorData that sends
+    functors to their corresponding FunctorData via functorToData. -/
+def functorToFunctorData : (Obj ⥤ C) ⥤ FunctorData C where
+  obj := functorToData
+  map := natTransToData
+  map_id := by
+    intro F
+    rfl
+  map_comp := by
+    intros F G H α β
+    rfl
+
+/-- The two functors form an isomorphism of categories. -/
+def functorDataIsoCat : FunctorData C ≌ (Obj ⥤ C) where
+  functor := functorDataToFunctor
+  inverse := functorToFunctorData
+  unitIso := NatIso.ofComponents
+    (fun F => eqToIso (by
+      simp only [functorToFunctorData, functorDataToFunctor]
+      exact (functorToData_mkFunctor F).symm))
+    (by
+      intros F G α
+      simp [functorToFunctorData, functorDataToFunctor]
+      apply NatTransData.ext <;> rfl)
+  counitIso := NatIso.ofComponents
+    (fun F => eqToIso (mkFunctor_functorToData F))
+    (by
+      intros F G α
+      simp [functorToFunctorData, functorDataToFunctor]
+      rw [mkNatTrans_natTransToData]
+      simp)
+
 /-- Data for a category structure using dependent types. -/
 structure DepCategoryData.{u} where
   objT : Type u
