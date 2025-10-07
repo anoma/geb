@@ -286,6 +286,10 @@ instance : Category (FunctorData C) where
     intros
     ext <;> simp [NatTransData.comp, Category.assoc]
 
+end FunctorDataCategory
+
+section FunctorDataEquivalence
+
 /-- Construct a functor from CategoryJudgments to C from minimal
     category data. The caller provides only primitive morphisms and
     compatibility conditions; derived morphisms are computed. -/
@@ -478,10 +482,6 @@ theorem mkNatTrans_natTransToData {F G : Obj ⥤ C} (α : F ⟶ G) :
     eqToHom (mkFunctor_functorToData G).symm := by
   ext X
   cases X <;> simp [mkNatTrans, natTransToData]
-
-end FunctorDataCategory
-
-section FunctorDataEquivalence
 
 /-- The functor from FunctorData to the functor category that sends
     FunctorData to the corresponding functor via mkFunctor. -/
