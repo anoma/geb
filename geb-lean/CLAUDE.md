@@ -263,6 +263,62 @@ hom_inv_id := by
 - Keep responses concise - match verbosity to task complexity
 - Avoid emojis unless explicitly requested by the user
 
+### Extensionality Lemmas
+
+Always add the `@[ext]` attribute to structure definitions to automatically
+generate extensionality lemmas:
+
+```lean
+@[ext]
+structure MyStruct where
+  field1 : Type
+  field2 : field1 → Type
+  proof_field : SomeProp field1 field2
+```
+
+**Benefits**:
+
+- Lean automatically generates the appropriate ext theorem
+- Handles proof irrelevance automatically (fields in `Prop` are ignored)
+- Works correctly with dependent types and heterogeneous equality
+- Follows the mathlib pattern (see `NatTrans` in
+  `Mathlib.CategoryTheory.NatTrans`)
+- Avoids manual ext theorems that need `cases`, `congr`, etc.
+
+**When NOT to use**: Don't use `@[ext]` on `inductive` types - they use case
+analysis rather than field-based extensionality.
+
+### Equality in Categories: Use `eqToHom` and `eqToIso`
+
+**Reference**:
+<https://leanprover-community.github.io/mathlib4_docs/Mathlib/CategoryTheory/EqToHom.html>
+
+When working with object equalities in categories, **avoid rewriting by
+equalities**. Instead, use `eqToHom` and `eqToIso`:
+
+```lean
+-- Given h : X = Y in a category C
+
+-- Don't do this:
+rw [h]  -- Can lead to dependent type theory problems
+
+-- Do this instead:
+eqToHom h     -- Creates a morphism X ⟶ Y
+eqToIso h     -- Creates an isomorphism X ≅ Y
+```
+
+**Why this matters**:
+
+- Rewriting by object equalities can create complex dependent type issues
+- `eqToHom` and `eqToIso` provide clean morphisms/isomorphisms
+- Mathlib provides many simplification lemmas for these functions
+- This pattern extends to dependent types: use explicit transport functions
+  instead of raw rewrites
+
+**Similar principle for dependent types**: When you have equality of indices
+in dependent types (e.g., morphism equalities `f = g` where types depend on
+objects), prefer explicit casts or equivalences over direct rewrites.
+
 ### Comment Style
 
 Comments should explain **what the code does and why**, not the historical
