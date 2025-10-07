@@ -1064,8 +1064,8 @@ def functorDataToDep_depToFunctorData_compT.{u}
       split; split; split; split; split; split
       rfl
 
-abbrev functorToDataDep_mkCopresheafDep_morEquiv.{u} (data : DepCategoryData.{u})
-    (a b : data.objT) :
+abbrev functorToDataDep_mkCopresheafDep_morEquiv.{u}
+    (data : DepCategoryData.{u}) (a b : data.objT) :
     (functorToDataDep (mkCopresheafDep data)).morT a b ≃ data.morT a b := by
   change (functorDataToDep (depToFunctorData data)).morT a b ≃ data.morT a b
   exact functorDataToDep_depToFunctorData_morT data a b
@@ -1079,8 +1079,8 @@ abbrev functorToDataDep_mkCopresheafDep_idEquiv.{u} (data : DepCategoryData.{u})
   exact functorDataToDep_depToFunctorData_idT data o
     ((sigmaTrivialSubtype o o).invFun m)
 
-abbrev functorToDataDep_mkCopresheafDep_compEquiv.{u} (data : DepCategoryData.{u})
-    {a b c : data.objT}
+abbrev functorToDataDep_mkCopresheafDep_compEquiv.{u}
+    (data : DepCategoryData.{u}) {a b c : data.objT}
     (f : data.morT a b) (g : data.morT b c) (h : data.morT a c) :
     (functorToDataDep (mkCopresheafDep data)).compT
       ((sigmaTrivialSubtype a b).invFun f)
