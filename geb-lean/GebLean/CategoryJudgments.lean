@@ -438,6 +438,16 @@ theorem natTransToData_mkNatTrans {F G : FunctorData C}
   cases α
   rfl
 
+/-- Extracting NatTransData from a natural transformation and converting
+    back gives the original natural transformation (modulo the required
+    eqToHom cast along the functor equality mkFunctor ∘ functorToData = id). -/
+theorem mkNatTrans_natTransToData {F G : Obj ⥤ C} (α : F ⟶ G) :
+    mkNatTrans (natTransToData α) =
+    eqToHom (mkFunctor_functorToData F) ≫ α ≫
+    eqToHom (mkFunctor_functorToData G).symm := by
+  ext X
+  cases X <;> simp [mkNatTrans, natTransToData]
+
 /-- Identity natural transformation for FunctorData. -/
 def NatTransData.id (F : FunctorData C) : NatTransData F F where
   appObj := 𝟙 F.objC
