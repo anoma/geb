@@ -573,6 +573,43 @@ structure DepCategoryData.{u} where
   idT : {o : objT} → morT o o → Type u
   compT : {a b c : objT} → morT a b → morT b c → morT a c → Type u
 
+/-- Natural transformation data between two DepCategoryData structures.
+    Components are dependent functions respecting the type structure. -/
+structure DepNatTransData (F G : DepCategoryData) where
+  appObj : F.objT → G.objT
+  appMor : {a b : F.objT} → F.morT a b → G.morT (appObj a) (appObj b)
+  appId : {o : F.objT} → {m : F.morT o o} → F.idT m →
+    G.idT (appMor m)
+  appComp : {a b c : F.objT} → {f : F.morT a b} → {g : F.morT b c} →
+    {h : F.morT a c} → F.compT f g h →
+    G.compT (appMor f) (appMor g) (appMor h)
+
+/-- Identity natural transformation for DepCategoryData. -/
+def DepNatTransData.id (F : DepCategoryData) : DepNatTransData F F where
+  appObj := _root_.id
+  appMor := _root_.id
+  appId := _root_.id
+  appComp := _root_.id
+
+/-- Composition of natural transformations for DepCategoryData. -/
+def DepNatTransData.comp {F G H : DepCategoryData}
+    (α : DepNatTransData F G) (β : DepNatTransData G H) :
+    DepNatTransData F H where
+  appObj := β.appObj ∘ α.appObj
+  appMor := fun m => β.appMor (α.appMor m)
+  appId := fun i => β.appId (α.appId i)
+  appComp := fun comp => β.appComp (α.appComp comp)
+
+/-- Category instance for DepCategoryData with DepNatTransData as
+    morphisms. -/
+instance : Category DepCategoryData where
+  Hom := DepNatTransData
+  id := DepNatTransData.id
+  comp := DepNatTransData.comp
+  id_comp := by intros; rfl
+  comp_id := by intros; rfl
+  assoc := by intros; rfl
+
 /-- Convert dependent category data to CopresheafData.
     The dependent types enforce the equality conditions automatically. -/
 def depToFunctorData.{u} (data : DepCategoryData.{u}) :
@@ -648,43 +685,6 @@ instance : Setoid DepCategoryData where
     symm := fun ⟨iso⟩ => ⟨iso.symm⟩
     trans := fun ⟨iso₁⟩ ⟨iso₂⟩ => ⟨iso₁.trans iso₂⟩
   }
-
-/-- Natural transformation data between two DepCategoryData structures.
-    Components are dependent functions respecting the type structure. -/
-structure DepNatTransData (F G : DepCategoryData) where
-  appObj : F.objT → G.objT
-  appMor : {a b : F.objT} → F.morT a b → G.morT (appObj a) (appObj b)
-  appId : {o : F.objT} → {m : F.morT o o} → F.idT m →
-    G.idT (appMor m)
-  appComp : {a b c : F.objT} → {f : F.morT a b} → {g : F.morT b c} →
-    {h : F.morT a c} → F.compT f g h →
-    G.compT (appMor f) (appMor g) (appMor h)
-
-/-- Identity natural transformation for DepCategoryData. -/
-def DepNatTransData.id (F : DepCategoryData) : DepNatTransData F F where
-  appObj := _root_.id
-  appMor := _root_.id
-  appId := _root_.id
-  appComp := _root_.id
-
-/-- Composition of natural transformations for DepCategoryData. -/
-def DepNatTransData.comp {F G H : DepCategoryData}
-    (α : DepNatTransData F G) (β : DepNatTransData G H) :
-    DepNatTransData F H where
-  appObj := β.appObj ∘ α.appObj
-  appMor := fun m => β.appMor (α.appMor m)
-  appId := fun i => β.appId (α.appId i)
-  appComp := fun comp => β.appComp (α.appComp comp)
-
-/-- Category instance for DepCategoryData with DepNatTransData as
-    morphisms. -/
-instance : Category DepCategoryData where
-  Hom := DepNatTransData
-  id := DepNatTransData.id
-  comp := DepNatTransData.comp
-  id_comp := by intros; rfl
-  comp_id := by intros; rfl
-  assoc := by intros; rfl
 
 /-- Convert a DepNatTransData to a NatTransData by packaging the dependent
     components into sigma types. -/
