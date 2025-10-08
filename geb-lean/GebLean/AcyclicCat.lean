@@ -4,6 +4,7 @@ import Mathlib.CategoryTheory.Category.Basic
 import Mathlib.CategoryTheory.ObjectProperty.FullSubcategory
 import Mathlib.Data.Fintype.Basic
 import Mathlib.Order.Basic
+import GebLean.Semicategory
 
 /-!
 # Acyclic Categories
@@ -19,10 +20,6 @@ sorting as the acyclicity criterion.
 * `FiniteQuiver`: A quiver with finitely many vertices and edges
 * `FiniteAcyclicQuiver`: An acyclic quiver with finitely many vertices
   and edges
-* `Semicategory`: A quiver with associative composition but no identity
-  morphisms
-* `FiniteSemicategory`: A semicategory with finitely many vertices and
-  morphisms
 * `AcyclicCategory`: An acyclic quiver with a semicategory structure
 * `FiniteAcyclicCategory`: A finite acyclic category
 -/
@@ -43,16 +40,6 @@ abbrev PrefunctorPreservesOrder {V W : Type u} [Quiver V] [Quiver W]
     [LinearOrder V] [LinearOrder W] (F : Prefunctor V W) :=
   StrictMono F.obj
 
-/-- A proof of finiteness of a quiver. -/
-structure FinQuiverWitness (V : Type u) [Quiver.{v + 1} V] where
-  /-- The vertex set is finite -/
-  fintypeVertex : Fintype V
-  /-- Each edge set is finite -/
-  fintypeEdge : ∀ a b : V, Fintype (a ⟶ b)
-
-attribute [instance] FinQuiverWitness.fintypeVertex
-  FinQuiverWitness.fintypeEdge
-
 /-- A finite quiver has finitely many vertices and finitely many edges
     between each pair of vertices. This requires morphisms to be in
     Type (not Prop). -/
@@ -70,27 +57,25 @@ class FiniteAcyclicQuiver (V : Type u) [AcyclicQuiver V] where
 instance {V : Type u} [AcyclicQuiver V] [h : FiniteAcyclicQuiver V] :
     FinQuiverWitness V := h.toFiniteness
 
-/-- A semicategory is a quiver with associative composition but no
-    identity morphisms. -/
-class Semicategory (V : Type u) extends Quiver.{v} V where
+/-- An acyclic category is an acyclic quiver with a semicategory
+    structure. The strict ordering ensures there are no identity
+    morphisms. Identities can be added later to form a category.
+
+    Note: We store composition and associativity directly rather than
+    extending Semicategory, to avoid diamond problems with the Quiver
+    instance. -/
+class AcyclicCategory (V : Type u) [AcyclicQuiver V] where
   /-- Composition of morphisms -/
   comp : ∀ {a b c : V}, (a ⟶ b) → (b ⟶ c) → (a ⟶ c)
   /-- Associativity of composition -/
   assoc : ∀ {a b c d : V} (f : a ⟶ b) (g : b ⟶ c) (h : c ⟶ d),
     comp (comp f g) h = comp f (comp g h)
 
-/-- A finite semicategory has finitely many objects and morphisms. -/
-class FiniteSemicategory (V : Type u) [Semicategory V] where
-  toFiniteness : FinQuiverWitness V := by infer_instance
-
-instance {V : Type u} [Semicategory V] [h : FiniteSemicategory V] :
-    FinQuiverWitness V := h.toFiniteness
-
-/-- An acyclic category is an acyclic quiver with a semicategory
-    structure. The strict ordering ensures there are no identity
-    morphisms. Identities can be added later to form a category. -/
-class AcyclicCategory (V : Type u) [AcyclicQuiver V]
-    extends Semicategory V
+instance {V : Type u} [inst : AcyclicQuiver V] [h : AcyclicCategory V] :
+    Semicategory V where
+  toQuiver := inst.toQuiver
+  comp := h.comp
+  assoc := h.assoc
 
 /-- A finite acyclic category combines finiteness with the acyclic
     composition structure. -/
@@ -227,96 +212,14 @@ instance : Category.{u} AcyclicQuiverCat where
 
 end AcyclicQuiverCat
 
-/-- A semifunctor is a morphism between semicategories that preserves
-    composition but not necessarily identities (since semicategories
-    may not have identities). -/
-structure Semifunctor (U V : Type u) [Semicategory U]
-    [Semicategory V] extends Prefunctor U V where
-  /-- A semifunctor preserves composition -/
-  map_comp : ∀ {a b c : U} (f : a ⟶ b) (g : b ⟶ c),
-    map (Semicategory.comp f g) = Semicategory.comp (map f) (map g)
-
-namespace Semifunctor
-
-variable {U V W : Type u} [Semicategory U] [Semicategory V]
-  [Semicategory W]
-
-@[ext]
-theorem ext {F G : Semifunctor U V} (h : F.toPrefunctor = G.toPrefunctor) :
-    F = G := by
-  cases F
-  cases G
-  congr
-
-/-- The identity semifunctor. -/
-def id (V : Type u) [Semicategory V] : Semifunctor V V where
-  toPrefunctor := Prefunctor.id V
-  map_comp _ _ := rfl
-
-/-- Composition of semifunctors. -/
-def comp (F : Semifunctor U V) (G : Semifunctor V W) :
-    Semifunctor U W where
-  toPrefunctor := F.toPrefunctor.comp G.toPrefunctor
-  map_comp f g := by
-    simp [Prefunctor.comp]
-    rw [F.map_comp, G.map_comp]
-
-theorem id_comp (F : Semifunctor V W) : (id V).comp F = F := by
-  apply Semifunctor.ext
-  rfl
-
-theorem comp_id (F : Semifunctor V W) : F.comp (id W) = F := by
-  apply Semifunctor.ext
-  rfl
-
-theorem comp_assoc {X : Type u} [Semicategory X]
-    (F : Semifunctor U V) (G : Semifunctor V W)
-    (H : Semifunctor W X) :
-    (F.comp G).comp H = F.comp (G.comp H) := by
-  apply Semifunctor.ext
-  rfl
-
-end Semifunctor
-
-/-- The category of semicategories (as a small category where objects
-    and morphisms are in the same universe). -/
-structure SemicategoryCat : Type (u + 1) where
-  /-- The underlying type of objects. -/
-  carrier : Type u
-  [quiver : Quiver.{u} carrier]
-  [semicat : Semicategory.{u, u} carrier]
-
-attribute [instance] SemicategoryCat.quiver SemicategoryCat.semicat
-
-namespace SemicategoryCat
-
-open CategoryTheory
-
-instance : CoeSort SemicategoryCat (Type u) where
-  coe V := V.carrier
-
-/-- Construct a bundled semicategory from a type with a semicategory
-    instance. -/
-def of (V : Type u) [Quiver.{u} V] [Semicategory.{u, u} V] :
-    SemicategoryCat := ⟨V⟩
-
-instance : Category.{u} SemicategoryCat where
-  Hom V W := Semifunctor.{u} V W
-  id V := Semifunctor.id V
-  comp {_ _ _} F G := F.comp G
-  id_comp {_ _} := Semifunctor.id_comp
-  comp_id {_ _} := Semifunctor.comp_id
-  assoc {_ _ _ _} := Semifunctor.comp_assoc
-
-end SemicategoryCat
-
 /-- A morphism of acyclic categories is a semifunctor that also
     preserves the strict order on objects. -/
 structure AcyclicCategoryHom (U V : Type u) [AcyclicQuiver U]
-    [AcyclicCategory U] [AcyclicQuiver V] [AcyclicCategory V]
-    extends Semifunctor U V where
+    [AcyclicCategory U] [AcyclicQuiver V] [AcyclicCategory V] where
+  /-- The underlying semifunctor -/
+  toSemifunctor : Semifunctor U V
   /-- The object map preserves the order -/
-  obj_mono : PrefunctorPreservesOrder toPrefunctor
+  obj_mono : PrefunctorPreservesOrder toSemifunctor.toPrefunctor
 
 namespace AcyclicCategoryHom
 
@@ -365,17 +268,14 @@ end AcyclicCategoryHom
 
 /-- The category of acyclic categories (as a small category where objects
     and morphisms are in the same universe). We bundle the carrier,
-    quiver, acyclic quiver, and semicategory structure. The
-    `AcyclicCategory` instance is derived from these. -/
+    acyclic quiver, and acyclic category structure. -/
 structure AcyclicCategoryCat : Type (u + 1) where
   /-- The type of objects. -/
   carrier : Type u
-  [quiver : Quiver.{u} carrier]
   [acyclic : AcyclicQuiver.{u, u} carrier]
-  [semicat : Semicategory.{u, u} carrier]
+  [acat : AcyclicCategory carrier]
 
-attribute [instance] AcyclicCategoryCat.quiver
-  AcyclicCategoryCat.acyclic AcyclicCategoryCat.semicat
+attribute [instance] AcyclicCategoryCat.acyclic AcyclicCategoryCat.acat
 
 namespace AcyclicCategoryCat
 
@@ -384,16 +284,10 @@ open CategoryTheory
 instance : CoeSort AcyclicCategoryCat (Type u) where
   coe V := V.carrier
 
-/-- Since `AcyclicCategory` just extends `Semicategory`, we can derive
-    it from the bundled fields. -/
-instance (V : AcyclicCategoryCat) : AcyclicCategory V where
-  toSemicategory := V.semicat
-
 /-- Construct a bundled acyclic category from a type with an acyclic
     category instance. -/
 def of (V : Type u) [Quiver.{u} V] [AcyclicQuiver.{u, u} V]
-    [Semicategory.{u, u} V] [AcyclicCategory V] :
-    AcyclicCategoryCat := ⟨V⟩
+    [AcyclicCategory V] : AcyclicCategoryCat := ⟨V⟩
 
 instance : Category.{u} AcyclicCategoryCat where
   Hom V W := AcyclicCategoryHom.{u} V W
