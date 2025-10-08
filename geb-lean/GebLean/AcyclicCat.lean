@@ -164,7 +164,61 @@ theorem map_edge_increases (F : AcyclicQuiverHom V W) {a b : V}
   have hab : a < b := AcyclicQuiver.edge_increases f
   exact F.obj_mono hab
 
+@[ext]
+theorem ext {F G : AcyclicQuiverHom V W} (h : F.toPrefunctor = G.toPrefunctor) :
+    F = G := by
+  cases F
+  cases G
+  congr
+
+theorem id_comp (F : AcyclicQuiverHom V W) : (id V).comp F = F := by
+  apply ext
+  rfl
+
+theorem comp_id (F : AcyclicQuiverHom V W) : F.comp (id W) = F := by
+  apply ext
+  rfl
+
+theorem comp_assoc {X : Type u} [AcyclicQuiver X]
+    (F : AcyclicQuiverHom U V) (G : AcyclicQuiverHom V W)
+    (H : AcyclicQuiverHom W X) :
+    (F.comp G).comp H = F.comp (G.comp H) := by
+  apply ext
+  rfl
+
 end AcyclicQuiverHom
+
+/-- The category of acyclic quivers (as a small category where vertices
+    and edges are in the same universe). -/
+structure AcyclicQuiverCat : Type (u + 1) where
+  /-- The type of vertices. -/
+  carrier : Type u
+  [quiver : Quiver.{u} carrier]
+  [acyclic : AcyclicQuiver.{u, u} carrier]
+
+attribute [instance] AcyclicQuiverCat.quiver AcyclicQuiverCat.acyclic
+
+namespace AcyclicQuiverCat
+
+open CategoryTheory
+
+instance : CoeSort AcyclicQuiverCat (Type u) where
+  coe V := V.carrier
+
+/-- Construct a bundled acyclic quiver from a type with an acyclic
+    quiver instance. -/
+def of (V : Type u) [Quiver.{u} V] [AcyclicQuiver.{u, u} V] :
+    AcyclicQuiverCat := ⟨V⟩
+
+instance : Category.{u} AcyclicQuiverCat where
+  Hom V W := AcyclicQuiverHom.{u, u} V W
+  id V := AcyclicQuiverHom.id V
+  comp {_ _ _} F G := F.comp G
+  id_comp {_ _} := AcyclicQuiverHom.id_comp
+  comp_id {_ _} := AcyclicQuiverHom.comp_id
+  assoc {_ _ _ _} := AcyclicQuiverHom.comp_assoc
+
+end AcyclicQuiverCat
 
 namespace AcyclicCategory
 
