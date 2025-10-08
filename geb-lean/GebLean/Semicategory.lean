@@ -1,7 +1,7 @@
 import Mathlib.Combinatorics.Quiver.Basic
 import Mathlib.Combinatorics.Quiver.Prefunctor
 import Mathlib.CategoryTheory.Category.Basic
-import Mathlib.Data.Fintype.Basic
+import GebLean.FiniteQuiver
 
 /-!
 # Semicategories
@@ -21,16 +21,6 @@ This file defines semicategories and their morphisms.
 -/
 
 universe u v w
-
-/-- A proof of finiteness of a quiver. -/
-structure FinQuiverWitness (V : Type u) [Quiver.{v + 1} V] where
-  /-- The vertex set is finite -/
-  fintypeVertex : Fintype V
-  /-- Each edge set is finite -/
-  fintypeEdge : ∀ a b : V, Fintype (a ⟶ b)
-
-attribute [instance] FinQuiverWitness.fintypeVertex
-  FinQuiverWitness.fintypeEdge
 
 /-- A semicategory is a quiver with associative composition but no
     identity morphisms. -/

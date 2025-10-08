@@ -4,6 +4,7 @@ import Mathlib.CategoryTheory.Category.Basic
 import Mathlib.CategoryTheory.ObjectProperty.FullSubcategory
 import Mathlib.Data.Fintype.Basic
 import Mathlib.Order.Basic
+import GebLean.FiniteQuiver
 import GebLean.Semicategory
 
 /-!
@@ -39,15 +40,6 @@ class AcyclicQuiver (V : Type u) extends Quiver.{v} V, LinearOrder V where
 abbrev PrefunctorPreservesOrder {V W : Type u} [Quiver V] [Quiver W]
     [LinearOrder V] [LinearOrder W] (F : Prefunctor V W) :=
   StrictMono F.obj
-
-/-- A finite quiver has finitely many vertices and finitely many edges
-    between each pair of vertices. This requires morphisms to be in
-    Type (not Prop). -/
-class FiniteQuiver (V : Type u) [Quiver.{v + 1} V] where
-  toFiniteness : FinQuiverWitness V := by infer_instance
-
-instance {V : Type u} [Quiver.{v + 1} V] [h : FiniteQuiver V] :
-    FinQuiverWitness V := h.toFiniteness
 
 /-- A finite acyclic quiver has finitely many vertices and finitely
     many edges between each pair of vertices. -/
