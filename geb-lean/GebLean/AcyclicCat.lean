@@ -189,10 +189,9 @@ end AcyclicQuiverHom
 structure AcyclicQuiverCat : Type (u + 1) where
   /-- The type of vertices. -/
   carrier : Type u
-  [quiver : Quiver.{u} carrier]
   [acyclic : AcyclicQuiver.{u, u} carrier]
 
-attribute [instance] AcyclicQuiverCat.quiver AcyclicQuiverCat.acyclic
+attribute [instance] AcyclicQuiverCat.acyclic
 
 namespace AcyclicQuiverCat
 
@@ -203,8 +202,7 @@ instance : CoeSort AcyclicQuiverCat (Type u) where
 
 /-- Construct a bundled acyclic quiver from a type with an acyclic
     quiver instance. -/
-def of (V : Type u) [Quiver.{u} V] [AcyclicQuiver.{u, u} V] :
-    AcyclicQuiverCat := ⟨V⟩
+def of (V : Type u) [AcyclicQuiver.{u, u} V] : AcyclicQuiverCat := ⟨V⟩
 
 instance : Category.{u} AcyclicQuiverCat where
   Hom V W := AcyclicQuiverHom.{u, u} V W
@@ -290,8 +288,8 @@ instance : CoeSort AcyclicCategoryCat (Type u) where
 
 /-- Construct a bundled acyclic category from a type with an acyclic
     category instance. -/
-def of (V : Type u) [Quiver.{u} V] [AcyclicQuiver.{u, u} V]
-    [AcyclicCategory V] : AcyclicCategoryCat := ⟨V⟩
+def of (V : Type u) [AcyclicQuiver.{u, u} V] [AcyclicCategory V] :
+    AcyclicCategoryCat := ⟨V⟩
 
 instance : Category.{u} AcyclicCategoryCat where
   Hom V W := AcyclicCategoryHom.{u} V W
