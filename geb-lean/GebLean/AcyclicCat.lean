@@ -274,10 +274,25 @@ end AcyclicCategoryHom
 structure AcyclicCategoryCat : Type (u + 1) where
   /-- The type of objects. -/
   carrier : Type u
-  [acyclic : AcyclicQuiver.{u, u} carrier]
-  [acat : AcyclicCategory carrier]
+  /-- The quiver structure -/
+  quiver : Quiver.{u} carrier
+  /-- The linear order on objects -/
+  order : LinearOrder carrier
+  /-- Proof that edges increase -/
+  edgesIncrease : @QuiverEdgesIncrease carrier quiver order
+  /-- The semicategory structure -/
+  semicat : @SemicategoryStruct carrier quiver
 
-attribute [instance] AcyclicCategoryCat.acyclic AcyclicCategoryCat.acat
+instance (V : AcyclicCategoryCat) : Quiver V.carrier := V.quiver
+instance (V : AcyclicCategoryCat) : LinearOrder V.carrier := V.order
+instance (V : AcyclicCategoryCat) : QuiverEdgesIncrease V.carrier := V.edgesIncrease
+instance (V : AcyclicCategoryCat) : SemicategoryStruct V.carrier := V.semicat
+
+instance (V : AcyclicCategoryCat) : AcyclicQuiver V.carrier where
+  edgesIncrease := V.edgesIncrease
+
+instance (V : AcyclicCategoryCat) : AcyclicCategory V.carrier where
+  toSemicategoryStruct := V.semicat
 
 namespace AcyclicCategoryCat
 
@@ -288,8 +303,9 @@ instance : CoeSort AcyclicCategoryCat (Type u) where
 
 /-- Construct a bundled acyclic category from a type with an acyclic
     category instance. -/
-def of (V : Type u) [AcyclicQuiver.{u, u} V] [AcyclicCategory V] :
-    AcyclicCategoryCat := ⟨V⟩
+def of (V : Type u) [q : Quiver.{u} V] [o : LinearOrder V]
+    (ei : QuiverEdgesIncrease V) (sc : SemicategoryStruct V) :
+    AcyclicCategoryCat := ⟨V, q, o, ei, sc⟩
 
 instance : Category.{u} AcyclicCategoryCat where
   Hom V W := AcyclicCategoryHom.{u} V W
