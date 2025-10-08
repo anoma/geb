@@ -303,6 +303,64 @@ instance : Category.{u} SemicategoryCat where
 
 end SemicategoryCat
 
+/-- A morphism of acyclic categories is a semifunctor that also
+    preserves the strict order on objects. -/
+structure AcyclicCategoryHom (U V : Type u) [AcyclicQuiver U]
+    [AcyclicCategory U] [AcyclicQuiver V] [AcyclicCategory V]
+    extends Semifunctor U V where
+  /-- The object map is strictly monotone -/
+  obj_mono : StrictMono toPrefunctor.obj
+
+namespace AcyclicCategoryHom
+
+variable {U V W : Type u} [AcyclicQuiver U] [AcyclicCategory U]
+  [AcyclicQuiver V] [AcyclicCategory V] [AcyclicQuiver W]
+  [AcyclicCategory W]
+
+/-- The identity morphism of acyclic categories. -/
+def id (V : Type u) [AcyclicQuiver V] [AcyclicCategory V] :
+    AcyclicCategoryHom V V where
+  toSemifunctor := Semifunctor.id V
+  obj_mono := fun _ _ h => h
+
+/-- Composition of morphisms of acyclic categories. -/
+def comp (F : AcyclicCategoryHom U V) (G : AcyclicCategoryHom V W) :
+    AcyclicCategoryHom U W where
+  toSemifunctor := F.toSemifunctor.comp G.toSemifunctor
+  obj_mono := fun _ _ h => G.obj_mono (F.obj_mono h)
+
+@[ext]
+theorem ext {F G : AcyclicCategoryHom U V}
+    (h : F.toSemifunctor = G.toSemifunctor) : F = G := by
+  cases F
+  cases G
+  congr
+
+theorem id_comp (F : AcyclicCategoryHom V W) : (id V).comp F = F := by
+  apply ext
+  apply Semifunctor.ext
+  rfl
+
+theorem comp_id (F : AcyclicCategoryHom V W) : F.comp (id W) = F := by
+  apply ext
+  apply Semifunctor.ext
+  rfl
+
+theorem comp_assoc {X : Type u} [AcyclicQuiver X] [AcyclicCategory X]
+    (F : AcyclicCategoryHom U V) (G : AcyclicCategoryHom V W)
+    (H : AcyclicCategoryHom W X) :
+    (F.comp G).comp H = F.comp (G.comp H) := by
+  apply ext
+  apply Semifunctor.ext
+  rfl
+
+end AcyclicCategoryHom
+
+-- Note: `AcyclicCategoryHom` morphisms satisfy the category laws,
+-- but we cannot easily create a bundled category of acyclic categories
+-- due to universe level constraints in the `AcyclicCategory` typeclass
+-- (which extends `Semicategory` with a free universe variable).
+
 namespace AcyclicCategory
 
 open CategoryTheory
