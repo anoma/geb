@@ -81,8 +81,7 @@ instance {V : Type u} [Semicategory V] [h : FiniteSemicategory V] :
 
 /-- An acyclic category is an acyclic quiver with a semicategory
     structure. The strict ordering ensures there are no identity
-    morphisms. Identities can be added later to form a complete
-    category. -/
+    morphisms. Identities can be added later to form a category. -/
 class AcyclicCategory (V : Type u) [AcyclicQuiver V]
     extends Semicategory V
 
