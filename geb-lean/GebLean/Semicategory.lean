@@ -44,13 +44,13 @@ instance {V : Type u} [h : Semicategory V] :
 namespace Semicategory
 
 /-- Composition of morphisms in a semicategory. -/
-def comp {V : Type u} [Semicategory V]
-    {a b c : V} (f : a ⟶ b) (g : b ⟶ c) : (a ⟶ c) :=
+abbrev comp {V : Type u} [Semicategory V] {a b c : V}
+    (f : a ⟶ b) (g : b ⟶ c) : (a ⟶ c) :=
   (toSemicategoryStruct (V := V)).comp f g
 
 /-- Associativity of composition in a semicategory. -/
-theorem assoc {V : Type u} [Semicategory V]
-    {a b c d : V} (f : a ⟶ b) (g : b ⟶ c) (h : c ⟶ d) :
+abbrev assoc {V : Type u} [Semicategory V] {a b c d : V}
+    (f : a ⟶ b) (g : b ⟶ c) (h : c ⟶ d) :
     comp (comp f g) h = comp f (comp g h) :=
   (toSemicategoryStruct (V := V)).assoc f g h
 
