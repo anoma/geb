@@ -840,6 +840,30 @@ def depToFunctorData_functorDataToDep_idC.{u}
     rfl
   right_inv i := rfl
 
+/-- Helper lemma: Extract the morphism equality from the identity constraint.
+    This proves that the morphism m' in the witness equals extractRoundTrippedMor. -/
+private lemma idT_mor_eq.{u} (data : DepCategoryData.{u}) (o : data.objT)
+    (m : (functorDataToDep (depToFunctorData data)).morT o o)
+    (wit : (functorDataToDep (depToFunctorData data)).idT m) :
+    data.idT wit.1.2.1 = data.idT (extractRoundTrippedMor data o o m) := by
+  rcases wit with ⟨⟨o', m', w⟩,
+    h : (depToFunctorData data).idMor ⟨o', m', w⟩ = m.val⟩
+  rcases m with ⟨⟨a, b, m_val⟩, ha : a = o, hb : b = o⟩
+  -- h says: ⟨o', ⟨o', m'⟩⟩ = ⟨a, ⟨b, m_val⟩⟩ (equality of nested sigmas)
+  change (⟨o', ⟨o', m'⟩⟩ : Σ (a b : data.objT), data.morT a b) =
+    ⟨a, ⟨b, m_val⟩⟩ at h
+  rw [Sigma.mk.injEq] at h  -- Extract: o' = a and ⟨o', m'⟩ ≍ ⟨b, m_val⟩
+  have ⟨ho', hsig⟩ := h
+  subst ho' ha hb  -- Substitute equalities to align indices
+  -- Convert HEq to regular equality
+  have hsig_eq := eq_of_heq hsig
+  rw [Sigma.mk.injEq] at hsig_eq  -- Extract: o' = b and m' ≍ m_val
+  have ⟨_, hm⟩ := hsig_eq
+  simp at hm  -- Simplify HEq to regular equality: m' = m_val
+  subst hm  -- Now m' = m_val
+  simp [extractRoundTrippedMor]
+  rfl
+
 /-- Round-tripping from DepCategoryData to CopresheafData and back
     gives an equivalent identity type. -/
 def functorDataToDep_depToFunctorData_idT.{u}
@@ -847,22 +871,8 @@ def functorDataToDep_depToFunctorData_idT.{u}
     (m : (functorDataToDep (depToFunctorData data)).morT o o) :
     (functorDataToDep (depToFunctorData data)).idT m ≃
     data.idT (extractRoundTrippedMor data o o m) where
-  toFun wit := by
-    rcases wit with ⟨⟨o', m', w⟩,
-      h : (depToFunctorData data).idMor ⟨o', m', w⟩ = m.val⟩
-    rcases m with ⟨⟨a, b, m⟩, ha : a = o, hb : b = o⟩
-    change (⟨o', ⟨o', m'⟩⟩ : Σ (a b : data.objT), data.morT a b) =
-      ⟨a, ⟨b, m⟩⟩ at h
-    rw [Sigma.mk.injEq] at h
-    have ⟨ho', hsig⟩ := h
-    subst ho' ha hb
-    have hsig_eq := eq_of_heq hsig
-    rw [Sigma.mk.injEq] at hsig_eq
-    have ⟨_, hm⟩ := hsig_eq
-    simp at hm
-    subst hm
-    simp [extractRoundTrippedMor]
-    exact w
+  toFun wit :=
+    cast (idT_mor_eq data o m wit) wit.1.2.2
   invFun wit := by
     refine ⟨⟨o, ⟨extractRoundTrippedMor data o o m, wit⟩⟩, ?_⟩
     simp only [depToFunctorData, extractRoundTrippedMor]
@@ -872,34 +882,26 @@ def functorDataToDep_depToFunctorData_idT.{u}
     congr
   left_inv wit := by
     rcases wit with ⟨⟨o', m', w⟩, h⟩
-    rcases m with ⟨⟨a, b, m⟩, ha : a = o, hb : b = o⟩
+    rcases m with ⟨⟨a, b, m_val⟩, ha : a = o, hb : b = o⟩
     change (⟨o', ⟨o', m'⟩⟩ : Σ (a b : data.objT), data.morT a b) =
-      ⟨a, ⟨b, m⟩⟩ at h
+      ⟨a, ⟨b, m_val⟩⟩ at h
     rw [Sigma.mk.injEq] at h
     have ⟨ho', hsig⟩ := h
-    -- Subst a and b first, before ho'
     subst ha hb ho'
     have hsig_eq := eq_of_heq hsig
     rw [Sigma.mk.injEq] at hsig_eq
     have ⟨_, hm⟩ := hsig_eq
     simp at hm
     subst hm
-    -- extractRoundTrippedMor evaluates to cast ... m'
-    -- which simplifies to m'
-    simp
-    -- The identity witness just needs the matches to reduce
-    congr 2
-    (split; split; rfl)
+    -- After all substitutions, cast becomes identity
+    simp only [cast_eq, depToFunctorData, extractRoundTrippedMor]
+    congr 1
   right_inv wit := by
-    -- After round-trip, we should get back the same witness
     rcases m with ⟨⟨a, b, mor⟩, ha, hb⟩
     simp only [depToFunctorData] at ha hb
     subst ha hb
-    -- Now mor : morT o o and wit : idT (cast ... mor)
-    -- Beta-reduce to expose the match expressions
-    dsimp only [id]
-    simp only [extractRoundTrippedMor]
-    (split; split; rfl)
+    -- After substitution, cast becomes identity
+    simp only [cast_eq]
 
 /-- Round-tripping from CopresheafData to DepCategoryData and back
     gives an equivalent composition type. -/
@@ -1230,19 +1232,7 @@ def mkCopresheafDep_functorDataToDep_depToFunctorData.{u}
               funext ⟨o, ⟨m, id_wit⟩⟩
               simp only [CategoryStruct.comp, CategoryStruct.id,
                 Function.comp_apply, id_eq, cast_eq]
-              congr 1
-              have hm :=
-                (functorDataToDep_depToFunctorData_morT data o o).right_inv
-                  m
-              let m_inv :=
-                (functorDataToDep_depToFunctorData_morT data o o).invFun m
-              have hid :=
-                (functorDataToDep_depToFunctorData_idT data o
-                  m_inv).right_inv id_wit
-              rw [Sigma.mk.injEq]
-              constructor
-              · exact hm
-              · grind }
+              congr 1 }
       | .comp =>
           { hom := fun c =>
               let f_equiv :=
