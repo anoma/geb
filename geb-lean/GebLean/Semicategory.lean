@@ -20,7 +20,7 @@ This file defines semicategories and their morphisms.
   morphisms
 -/
 
-universe u v w
+universe u v
 
 /-- A semicategory is a quiver with associative composition but no
     identity morphisms. -/

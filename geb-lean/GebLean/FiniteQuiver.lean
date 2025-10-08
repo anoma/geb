@@ -13,7 +13,7 @@ This file defines finite quivers and related structures.
 * `FiniteQuiver`: A quiver with finitely many vertices and edges
 -/
 
-universe u v w
+universe u v
 
 /-- A proof of finiteness of a quiver. -/
 structure FinQuiverWitness (V : Type u) [Quiver.{v + 1} V] where

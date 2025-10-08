@@ -25,7 +25,7 @@ sorting as the acyclicity criterion.
 * `FiniteAcyclicCategory`: A finite acyclic category
 -/
 
-universe u v w
+universe u v
 
 /-- An acyclic quiver is a quiver equipped with a strict total order
     on vertices such that every edge goes from a smaller to a larger
