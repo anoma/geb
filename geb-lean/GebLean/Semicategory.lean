@@ -94,10 +94,9 @@ end Semifunctor
 structure SemicategoryCat : Type (u + 1) where
   /-- The underlying type of objects. -/
   carrier : Type u
-  [quiver : Quiver.{u} carrier]
   [semicat : Semicategory.{u, u} carrier]
 
-attribute [instance] SemicategoryCat.quiver SemicategoryCat.semicat
+attribute [instance] SemicategoryCat.semicat
 
 namespace SemicategoryCat
 
@@ -108,8 +107,7 @@ instance : CoeSort SemicategoryCat (Type u) where
 
 /-- Construct a bundled semicategory from a type with a semicategory
     instance. -/
-def of (V : Type u) [Quiver.{u} V] [Semicategory.{u, u} V] :
-    SemicategoryCat := ⟨V⟩
+def of (V : Type u) [Semicategory.{u, u} V] : SemicategoryCat := ⟨V⟩
 
 instance : Category.{u} SemicategoryCat where
   Hom V W := Semifunctor.{u} V W
