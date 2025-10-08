@@ -18,11 +18,14 @@ sorting as the acyclicity criterion.
 * `AcyclicQuiver`: A quiver with a strict total order on vertices such
   that every edge goes from a smaller vertex to a larger vertex
   (topological sort)
-* `FiniteQuiver`: A quiver with finitely many vertices and edges
 * `FiniteAcyclicQuiver`: An acyclic quiver with finitely many vertices
   and edges
 * `AcyclicCategory`: An acyclic quiver with a semicategory structure
 * `FiniteAcyclicCategory`: A finite acyclic category
+* `AcyclicQuiverHom`: Morphisms of acyclic quivers
+* `AcyclicQuiverCat`: The category of acyclic quivers
+* `AcyclicCategoryHom`: Morphisms of acyclic categories
+* `AcyclicCategoryCat`: The category of acyclic categories
 -/
 
 universe u v

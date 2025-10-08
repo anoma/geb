@@ -10,14 +10,16 @@ This file defines semicategories and their morphisms.
 
 ## Main definitions
 
+* `SemicategoryStruct`: The structure of a semicategory (composition and
+  associativity)
 * `Semicategory`: A quiver with associative composition but no identity
+  morphisms
+* `FiniteSemicategory`: A semicategory with finitely many objects and
   morphisms
 * `Semifunctor`: A morphism between semicategories that preserves
   composition
 * `SemicategoryCat`: The category of semicategories (as a small category
   where objects and morphisms are in the same universe)
-* `FiniteSemicategory`: A semicategory with finitely many objects and
-  morphisms
 -/
 
 universe u v
