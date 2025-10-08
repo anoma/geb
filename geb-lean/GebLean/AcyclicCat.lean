@@ -36,27 +36,32 @@ class AcyclicQuiver (V : Type u) extends Quiver.{v} V, LinearOrder V where
   /-- Every edge goes from a smaller vertex to a larger vertex -/
   edge_increases : ∀ {a b : V}, (a ⟶ b) → a < b
 
+/-- A proof of finiteness of a quiver. -/
+structure FinQuiverWitness (V : Type u) [Quiver.{v + 1} V] where
+  /-- The vertex set is finite -/
+  fintypeVertex : Fintype V
+  /-- Each edge set is finite -/
+  fintypeEdge : ∀ a b : V, Fintype (a ⟶ b)
+
+attribute [instance] FinQuiverWitness.fintypeVertex
+  FinQuiverWitness.fintypeEdge
+
 /-- A finite quiver has finitely many vertices and finitely many edges
     between each pair of vertices. This requires morphisms to be in
     Type (not Prop). -/
 class FiniteQuiver (V : Type u) [Quiver.{v + 1} V] where
-  /-- The vertex set is finite -/
-  fintypeObj : Fintype V := by infer_instance
-  /-- Each hom-set is finite -/
-  fintypeHom : ∀ a b : V, Fintype (a ⟶ b) := by infer_instance
+  toFiniteness : FinQuiverWitness V := by infer_instance
 
-attribute [instance] FiniteQuiver.fintypeObj FiniteQuiver.fintypeHom
+instance {V : Type u} [Quiver.{v + 1} V] [h : FiniteQuiver V] :
+    FinQuiverWitness V := h.toFiniteness
 
 /-- A finite acyclic quiver has finitely many vertices and finitely
     many edges between each pair of vertices. -/
 class FiniteAcyclicQuiver (V : Type u) [AcyclicQuiver V] where
-  /-- The vertex set is finite -/
-  fintypeObj : Fintype V := by infer_instance
-  /-- Each hom-set is finite -/
-  fintypeHom : ∀ a b : V, Fintype (a ⟶ b) := by infer_instance
+  toFiniteness : FinQuiverWitness V := by infer_instance
 
-attribute [instance] FiniteAcyclicQuiver.fintypeObj
-  FiniteAcyclicQuiver.fintypeHom
+instance {V : Type u} [AcyclicQuiver V] [h : FiniteAcyclicQuiver V] :
+    FinQuiverWitness V := h.toFiniteness
 
 /-- A semicategory is a quiver with associative composition but no
     identity morphisms. -/
@@ -69,13 +74,10 @@ class Semicategory (V : Type u) extends Quiver.{v} V where
 
 /-- A finite semicategory has finitely many vertices and morphisms. -/
 class FiniteSemicategory (V : Type u) [Semicategory V] where
-  /-- The vertex set is finite -/
-  fintypeObj : Fintype V := by infer_instance
-  /-- Each hom-set is finite -/
-  fintypeHom : ∀ a b : V, Fintype (a ⟶ b) := by infer_instance
+  toFiniteness : FinQuiverWitness V := by infer_instance
 
-attribute [instance] FiniteSemicategory.fintypeObj
-  FiniteSemicategory.fintypeHom
+instance {V : Type u} [Semicategory V] [h : FiniteSemicategory V] :
+    FinQuiverWitness V := h.toFiniteness
 
 /-- An acyclic category is an acyclic quiver with a semicategory
     structure. The strict ordering ensures there are no identity
