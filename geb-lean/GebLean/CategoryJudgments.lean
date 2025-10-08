@@ -824,12 +824,9 @@ def depToFunctorData_functorDataToDep_idC.{u}
     (depToFunctorData (functorDataToDep data)).idC ≃
     data.idC where
   toFun i := i.2.2.val
-  invFun i := ⟨data.dom (data.idMor i), ⟨data.idMor i, rfl,
-    show data.cod (data.idMor i) =
-      data.dom (data.idMor i) by
-      have := congrFun data.h_id_endo i
-      simp at this
-      exact this.symm⟩, ⟨i, rfl⟩⟩
+  invFun i :=
+    let h_endo := congrFun data.h_id_endo i
+    ⟨data.dom (data.idMor i), ⟨data.idMor i, rfl, h_endo.symm⟩, ⟨i, rfl⟩⟩
   left_inv i := by
     rcases i with ⟨o, ⟨m, hdom, hcod⟩, ⟨i, hi⟩⟩
     -- Extract: data.idMor i = m
@@ -851,20 +848,14 @@ def functorDataToDep_depToFunctorData_idT.{u}
     (functorDataToDep (depToFunctorData data)).idT m ≃
     data.idT (extractRoundTrippedMor data o o m) where
   toFun wit := by
-    -- wit : {i : Σ (o : objT) (m : morT o o), idT m //
-    --        idMor i = m.val}
     rcases wit with ⟨⟨o', m', w⟩,
       h : (depToFunctorData data).idMor ⟨o', m', w⟩ = m.val⟩
-    -- m : {m : Σ a b, morT a b // dom m = o ∧ cod m = o}
     rcases m with ⟨⟨a, b, m⟩, ha : a = o, hb : b = o⟩
-    -- Unfold depToFunctorData.idMor - it produces ⟨o', ⟨o', m'⟩⟩
     change (⟨o', ⟨o', m'⟩⟩ : Σ (a b : data.objT), data.morT a b) =
       ⟨a, ⟨b, m⟩⟩ at h
-    -- Use Sigma.mk.inj to extract equalities
     rw [Sigma.mk.injEq] at h
     have ⟨ho', hsig⟩ := h
     subst ho' ha hb
-    -- Now hsig : ⟨o, m'⟩ ≍ ⟨o, m⟩, convert to regular equality
     have hsig_eq := eq_of_heq hsig
     rw [Sigma.mk.injEq] at hsig_eq
     have ⟨_, hm⟩ := hsig_eq
@@ -873,11 +864,7 @@ def functorDataToDep_depToFunctorData_idT.{u}
     simp [extractRoundTrippedMor]
     exact w
   invFun wit := by
-    -- wit : idT (extractRoundTrippedMor ...)
-    -- m : {m : Σ a b, morT a b // dom m = o ∧ cod m = o}
     refine ⟨⟨o, ⟨extractRoundTrippedMor data o o m, wit⟩⟩, ?_⟩
-    -- Need to show:
-    -- idMor ⟨o, ⟨extractRoundTrippedMor..., wit⟩⟩ = m.val
     simp only [depToFunctorData, extractRoundTrippedMor]
     rcases m with ⟨⟨a, b, mor⟩, ha, hb⟩
     simp only [depToFunctorData] at ha hb
@@ -920,29 +907,18 @@ def depToFunctorData_functorDataToDep_compC.{u}
     (data : CopresheafData.{u}) :
     (depToFunctorData (functorDataToDep data)).compC ≃
     data.compC where
-  toFun c := by
-    -- c : Σ a b c f g h, {comp : compC //
-    --     right comp = f ∧ left comp = g ∧ composite comp = h}
-    rcases c with ⟨_, _, _, _, _, _, ⟨comp, _⟩⟩
-    exact comp
-  invFun c := ⟨data.dom (data.right c), data.cod (data.right c),
-    data.cod (data.left c), ⟨data.right c, rfl, rfl⟩,
-    ⟨data.left c,
-      show data.dom (data.left c) = data.cod (data.right c) by
-        have := congrFun data.h_comp_match c
-        simp at this
-        exact this.symm,
-      rfl⟩,
-    ⟨data.composite c,
-      show data.dom (data.composite c) = data.dom (data.right c) by
-        have := congrFun data.h_comp_dom c
-        simp at this
-        exact this,
-      show data.cod (data.composite c) = data.cod (data.left c) by
-        have := congrFun data.h_comp_cod c
-        simp at this
-        exact this⟩,
-    ⟨c, rfl, rfl, rfl⟩⟩
+  toFun c :=
+    let ⟨_, _, _, _, _, _, ⟨comp, _⟩⟩ := c
+    comp
+  invFun c :=
+    let h_match := congrFun data.h_comp_match c
+    let h_dom := congrFun data.h_comp_dom c
+    let h_cod := congrFun data.h_comp_cod c
+    ⟨data.dom (data.right c), data.cod (data.right c),
+     data.cod (data.left c), ⟨data.right c, rfl, rfl⟩,
+     ⟨data.left c, h_match.symm, rfl⟩,
+     ⟨data.composite c, h_dom, h_cod⟩,
+     ⟨c, rfl, rfl, rfl⟩⟩
   left_inv c := by
     rcases c with ⟨a, b, c_obj, ⟨f, hfa, hfb⟩, ⟨g, hga, hgb⟩,
       ⟨h, hha, hhc⟩, ⟨comp, hr, hl, hcomp⟩⟩
