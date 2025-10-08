@@ -915,6 +915,60 @@ def functorDataToDep_depToFunctorData_idT.{u}
 /-- Helper lemma: Extract the composition equality from the witness.
     Proves that the composition in the witness equals
     extractRoundTrippedMor applied to each component. -/
+private lemma compT_invFun_right.{u} (data : DepCategoryData.{u})
+    (a b c : data.objT)
+    (f : (functorDataToDep (depToFunctorData data)).morT a b)
+    (g : (functorDataToDep (depToFunctorData data)).morT b c)
+    (h : (functorDataToDep (depToFunctorData data)).morT a c)
+    (wit : data.compT (extractRoundTrippedMor data a b f)
+      (extractRoundTrippedMor data b c g)
+      (extractRoundTrippedMor data a c h)) :
+    (depToFunctorData data).right
+      ⟨a, b, c, extractRoundTrippedMor data a b f,
+       extractRoundTrippedMor data b c g,
+       extractRoundTrippedMor data a c h, wit⟩ = f.val := by
+  simp only [depToFunctorData, extractRoundTrippedMor]
+  rcases f with ⟨⟨a', b', f'⟩, hfa, hfb⟩
+  simp only [depToFunctorData] at hfa hfb
+  subst hfa hfb
+  rfl
+
+private lemma compT_invFun_left.{u} (data : DepCategoryData.{u})
+    (a b c : data.objT)
+    (f : (functorDataToDep (depToFunctorData data)).morT a b)
+    (g : (functorDataToDep (depToFunctorData data)).morT b c)
+    (h : (functorDataToDep (depToFunctorData data)).morT a c)
+    (wit : data.compT (extractRoundTrippedMor data a b f)
+      (extractRoundTrippedMor data b c g)
+      (extractRoundTrippedMor data a c h)) :
+    (depToFunctorData data).left
+      ⟨a, b, c, extractRoundTrippedMor data a b f,
+       extractRoundTrippedMor data b c g,
+       extractRoundTrippedMor data a c h, wit⟩ = g.val := by
+  simp only [depToFunctorData, extractRoundTrippedMor]
+  rcases g with ⟨⟨a', b', g'⟩, hga, hgb⟩
+  simp only [depToFunctorData] at hga hgb
+  subst hga hgb
+  rfl
+
+private lemma compT_invFun_composite.{u} (data : DepCategoryData.{u})
+    (a b c : data.objT)
+    (f : (functorDataToDep (depToFunctorData data)).morT a b)
+    (g : (functorDataToDep (depToFunctorData data)).morT b c)
+    (h : (functorDataToDep (depToFunctorData data)).morT a c)
+    (wit : data.compT (extractRoundTrippedMor data a b f)
+      (extractRoundTrippedMor data b c g)
+      (extractRoundTrippedMor data a c h)) :
+    (depToFunctorData data).composite
+      ⟨a, b, c, extractRoundTrippedMor data a b f,
+       extractRoundTrippedMor data b c g,
+       extractRoundTrippedMor data a c h, wit⟩ = h.val := by
+  simp only [depToFunctorData, extractRoundTrippedMor]
+  rcases h with ⟨⟨a', b', h'⟩, hha, hhb⟩
+  simp only [depToFunctorData] at hha hhb
+  subst hha hhb
+  rfl
+
 private lemma compT_mor_eq.{u} (data : DepCategoryData.{u}) (a b c : data.objT)
     (f : (functorDataToDep (depToFunctorData data)).morT a b)
     (g : (functorDataToDep (depToFunctorData data)).morT b c)
@@ -994,27 +1048,15 @@ def functorDataToDep_depToFunctorData_compT.{u}
       (extractRoundTrippedMor data a c h) where
   toFun wit :=
     cast (compT_mor_eq data a b c f g h wit) wit.val.2.2.2.2.2.2
-  invFun wit := by
-    refine ⟨⟨a, b, c,
+  invFun wit :=
+    ⟨⟨a, b, c,
       extractRoundTrippedMor data a b f,
       extractRoundTrippedMor data b c g,
       extractRoundTrippedMor data a c h,
-      wit⟩, ?_, ?_, ?_⟩
-    · simp only [depToFunctorData, extractRoundTrippedMor]
-      rcases f with ⟨⟨a', b', f'⟩, hfa, hfb⟩
-      simp only [depToFunctorData] at hfa hfb
-      subst hfa hfb
-      rfl
-    · simp only [depToFunctorData, extractRoundTrippedMor]
-      rcases g with ⟨⟨a', b', g'⟩, hga, hgb⟩
-      simp only [depToFunctorData] at hga hgb
-      subst hga hgb
-      rfl
-    · simp only [depToFunctorData, extractRoundTrippedMor]
-      rcases h with ⟨⟨a', b', h'⟩, hha, hhb⟩
-      simp only [depToFunctorData] at hha hhb
-      subst hha hhb
-      rfl
+      wit⟩,
+     compT_invFun_right data a b c f g h wit,
+     compT_invFun_left data a b c f g h wit,
+     compT_invFun_composite data a b c f g h wit⟩
   left_inv :=
     fun ⟨⟨a_c, b_c, c_c, f_c, g_c, h_c, comp_wit⟩, hr, hl, hcomp⟩ => by
     match f, g, h with
