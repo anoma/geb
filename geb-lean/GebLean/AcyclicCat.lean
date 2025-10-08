@@ -220,6 +220,89 @@ instance : Category.{u} AcyclicQuiverCat where
 
 end AcyclicQuiverCat
 
+/-- A semifunctor is a morphism between semicategories that preserves
+    composition but not necessarily identities (since semicategories
+    may not have identities). -/
+structure Semifunctor (U V : Type u) [Semicategory U]
+    [Semicategory V] extends Prefunctor U V where
+  /-- A semifunctor preserves composition -/
+  map_comp : ∀ {a b c : U} (f : a ⟶ b) (g : b ⟶ c),
+    map (Semicategory.comp f g) = Semicategory.comp (map f) (map g)
+
+namespace Semifunctor
+
+variable {U V W : Type u} [Semicategory U] [Semicategory V]
+  [Semicategory W]
+
+@[ext]
+theorem ext {F G : Semifunctor U V} (h : F.toPrefunctor = G.toPrefunctor) :
+    F = G := by
+  cases F
+  cases G
+  congr
+
+/-- The identity semifunctor. -/
+def id (V : Type u) [Semicategory V] : Semifunctor V V where
+  toPrefunctor := Prefunctor.id V
+  map_comp _ _ := rfl
+
+/-- Composition of semifunctors. -/
+def comp (F : Semifunctor U V) (G : Semifunctor V W) :
+    Semifunctor U W where
+  toPrefunctor := F.toPrefunctor.comp G.toPrefunctor
+  map_comp f g := by
+    simp [Prefunctor.comp]
+    rw [F.map_comp, G.map_comp]
+
+theorem id_comp (F : Semifunctor V W) : (id V).comp F = F := by
+  apply Semifunctor.ext
+  rfl
+
+theorem comp_id (F : Semifunctor V W) : F.comp (id W) = F := by
+  apply Semifunctor.ext
+  rfl
+
+theorem comp_assoc {X : Type u} [Semicategory X]
+    (F : Semifunctor U V) (G : Semifunctor V W)
+    (H : Semifunctor W X) :
+    (F.comp G).comp H = F.comp (G.comp H) := by
+  apply Semifunctor.ext
+  rfl
+
+end Semifunctor
+
+/-- The category of semicategories (as a small category where objects
+    and morphisms are in the same universe). -/
+structure SemicategoryCat : Type (u + 1) where
+  /-- The underlying type of objects. -/
+  carrier : Type u
+  [quiver : Quiver.{u} carrier]
+  [semicat : Semicategory.{u, u} carrier]
+
+attribute [instance] SemicategoryCat.quiver SemicategoryCat.semicat
+
+namespace SemicategoryCat
+
+open CategoryTheory
+
+instance : CoeSort SemicategoryCat (Type u) where
+  coe V := V.carrier
+
+/-- Construct a bundled semicategory from a type with a semicategory
+    instance. -/
+def of (V : Type u) [Quiver.{u} V] [Semicategory.{u, u} V] :
+    SemicategoryCat := ⟨V⟩
+
+instance : Category.{u} SemicategoryCat where
+  Hom V W := Semifunctor.{u} V W
+  id V := Semifunctor.id V
+  comp {_ _ _} F G := F.comp G
+  id_comp {_ _} := Semifunctor.id_comp
+  comp_id {_ _} := Semifunctor.comp_id
+  assoc {_ _ _ _} := Semifunctor.comp_assoc
+
+end SemicategoryCat
+
 namespace AcyclicCategory
 
 open CategoryTheory
