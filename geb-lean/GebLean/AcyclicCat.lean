@@ -189,9 +189,20 @@ end AcyclicQuiverHom
 structure AcyclicQuiverCat : Type (u + 1) where
   /-- The type of vertices. -/
   carrier : Type u
-  [acyclic : AcyclicQuiver.{u, u} carrier]
+  /-- The quiver structure -/
+  quiver : Quiver.{u} carrier
+  /-- The linear order on vertices -/
+  order : LinearOrder carrier
+  /-- Proof that edges increase -/
+  edgesIncrease : @QuiverEdgesIncrease carrier quiver order
 
-attribute [instance] AcyclicQuiverCat.acyclic
+instance (V : AcyclicQuiverCat) : Quiver V.carrier := V.quiver
+instance (V : AcyclicQuiverCat) : LinearOrder V.carrier := V.order
+instance (V : AcyclicQuiverCat) : QuiverEdgesIncrease V.carrier :=
+  V.edgesIncrease
+
+instance (V : AcyclicQuiverCat) : AcyclicQuiver V.carrier where
+  edgesIncrease := V.edgesIncrease
 
 namespace AcyclicQuiverCat
 
@@ -202,7 +213,8 @@ instance : CoeSort AcyclicQuiverCat (Type u) where
 
 /-- Construct a bundled acyclic quiver from a type with an acyclic
     quiver instance. -/
-def of (V : Type u) [AcyclicQuiver.{u, u} V] : AcyclicQuiverCat := ⟨V⟩
+def of (V : Type u) [q : Quiver.{u} V] [o : LinearOrder V]
+    (ei : QuiverEdgesIncrease V) : AcyclicQuiverCat := ⟨V, q, o, ei⟩
 
 instance : Category.{u} AcyclicQuiverCat where
   Hom V W := AcyclicQuiverHom.{u, u} V W
