@@ -30,10 +30,11 @@ sorting as the acyclicity criterion.
 
 universe u v
 
-/-- A topological order is a linear order used to witness acyclicity via
-    topological sort. We use an alias to make it easy to change the order
-    type if needed. -/
-abbrev TopologicalOrder := LinearOrder
+/-- A topological order is a partial order used to witness acyclicity via
+    topological sort. We use a partial order rather than a total order
+    because vertices in different connected components don't need to be
+    comparable. This allows forming coproducts of acyclic categories. -/
+abbrev TopologicalOrder := PartialOrder
 
 /-- The property that every edge in a quiver goes from a smaller vertex
     to a larger vertex with respect to a topological order. -/
