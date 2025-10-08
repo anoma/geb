@@ -288,6 +288,37 @@ structure MyStruct where
 **When NOT to use**: Don't use `@[ext]` on `inductive` types - they use case
 analysis rather than field-based extensionality.
 
+### Factoring Common Typeclass Fields
+
+When multiple typeclasses share the same data fields (like finiteness
+witnesses), you can factor them out using a `Type`-valued structure:
+
+```lean
+/-- A proof of finiteness of a quiver. -/
+structure FinQuiverWitness (V : Type u) [Quiver.{v + 1} V] where
+  fintypeVertex : Fintype V
+  fintypeEdge : ∀ a b : V, Fintype (a ⟶ b)
+
+attribute [instance] FinQuiverWitness.fintypeVertex
+  FinQuiverWitness.fintypeEdge
+
+class FiniteQuiver (V : Type u) [Quiver.{v + 1} V] where
+  toFiniteness : FinQuiverWitness V := by infer_instance
+
+instance {V : Type u} [Quiver.{v + 1} V] [h : FiniteQuiver V] :
+    FinQuiverWitness V := h.toFiniteness
+```
+
+**Key points**:
+
+- Use a `Type`-valued structure (not `Prop`) to hold the actual data
+- Mark the structure's fields as `[instance]` to make them available
+- Each typeclass contains a single field of the witness structure type
+- Provide an instance to extract the witness from the typeclass
+- This avoids duplicating field definitions across multiple classes
+- **Cannot use `Prop`**: Prop-valued structures can only contain proofs,
+  not data like `Fintype` instances
+
 ### Equality in Categories: Use `eqToHom` and `eqToIso`
 
 **Reference**:
