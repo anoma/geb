@@ -30,16 +30,23 @@ sorting as the acyclicity criterion.
 
 universe u v
 
+/-- A topological order is a linear order used to witness acyclicity via
+    topological sort. We use an alias to make it easy to change the order
+    type if needed. -/
+abbrev TopologicalOrder := LinearOrder
+
 /-- The property that every edge in a quiver goes from a smaller vertex
-    to a larger vertex with respect to a linear order. -/
-abbrev QuiverEdgesIncrease (V : Type u) [Quiver.{v} V] [LinearOrder V] :=
+    to a larger vertex with respect to a topological order. -/
+abbrev QuiverEdgesIncrease (V : Type u) [Quiver.{v} V]
+    [TopologicalOrder V] :=
   ∀ {a b : V}, (a ⟶ b) → a < b
 
 /-- An acyclic quiver is a quiver equipped with a strict total order
     on vertices such that every edge goes from a smaller to a larger
     vertex. This provides a topological sort, which proves the quiver
     is acyclic. -/
-class AcyclicQuiver (V : Type u) extends Quiver.{v} V, LinearOrder V where
+class AcyclicQuiver (V : Type u) extends Quiver.{v} V,
+    TopologicalOrder V where
   edgesIncrease : QuiverEdgesIncrease V := by infer_instance
 
 instance {V : Type u} [h : AcyclicQuiver V] : QuiverEdgesIncrease V :=
@@ -52,7 +59,7 @@ abbrev edge_increases := @AcyclicQuiver.edgesIncrease
 /-- Morphisms of acyclic quivers and categories preserve the strict
     ordering on vertices via their object maps. -/
 abbrev PrefunctorPreservesOrder {V W : Type u} [Quiver V] [Quiver W]
-    [LinearOrder V] [LinearOrder W] (F : Prefunctor V W) :=
+    [TopologicalOrder V] [TopologicalOrder W] (F : Prefunctor V W) :=
   StrictMono F.obj
 
 /-- A finite acyclic quiver has finitely many vertices and finitely
@@ -191,13 +198,13 @@ structure AcyclicQuiverCat : Type (u + 1) where
   carrier : Type u
   /-- The quiver structure -/
   quiver : Quiver.{u} carrier
-  /-- The linear order on vertices -/
-  order : LinearOrder carrier
+  /-- The topological order on vertices -/
+  order : TopologicalOrder carrier
   /-- Proof that edges increase -/
   edgesIncrease : @QuiverEdgesIncrease carrier quiver order
 
 instance (V : AcyclicQuiverCat) : Quiver V.carrier := V.quiver
-instance (V : AcyclicQuiverCat) : LinearOrder V.carrier := V.order
+instance (V : AcyclicQuiverCat) : TopologicalOrder V.carrier := V.order
 instance (V : AcyclicQuiverCat) : QuiverEdgesIncrease V.carrier :=
   V.edgesIncrease
 
@@ -213,7 +220,7 @@ instance : CoeSort AcyclicQuiverCat (Type u) where
 
 /-- Construct a bundled acyclic quiver from a type with an acyclic
     quiver instance. -/
-def of (V : Type u) [q : Quiver.{u} V] [o : LinearOrder V]
+def of (V : Type u) [q : Quiver.{u} V] [o : TopologicalOrder V]
     (ei : QuiverEdgesIncrease V) : AcyclicQuiverCat := ⟨V, q, o, ei⟩
 
 instance : Category.{u} AcyclicQuiverCat where
@@ -292,7 +299,8 @@ structure AcyclicCategoryCat : Type (u + 1) where
 
 instance (V : AcyclicCategoryCat) : Quiver V.toAcyclicQuiverCat.carrier :=
   V.toAcyclicQuiverCat.quiver
-instance (V : AcyclicCategoryCat) : LinearOrder V.toAcyclicQuiverCat.carrier :=
+instance (V : AcyclicCategoryCat) : TopologicalOrder
+    V.toAcyclicQuiverCat.carrier :=
   V.toAcyclicQuiverCat.order
 instance (V : AcyclicCategoryCat) : QuiverEdgesIncrease
     V.toAcyclicQuiverCat.carrier :=
@@ -318,7 +326,7 @@ instance : CoeSort AcyclicCategoryCat (Type u) where
 
 /-- Construct a bundled acyclic category from a type with an acyclic
     category instance. -/
-def of (V : Type u) [q : Quiver.{u} V] [o : LinearOrder V]
+def of (V : Type u) [q : Quiver.{u} V] [o : TopologicalOrder V]
     (ei : QuiverEdgesIncrease V) (sc : SemicategoryStruct V) :
     AcyclicCategoryCat :=
   ⟨⟨V, q, o, ei⟩, sc⟩
