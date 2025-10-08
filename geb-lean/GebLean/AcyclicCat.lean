@@ -281,29 +281,32 @@ theorem comp_assoc {X : Type u} [AcyclicQuiver X] [AcyclicCategory X]
 end AcyclicCategoryHom
 
 /-- The category of acyclic categories (as a small category where objects
-    and morphisms are in the same universe). We bundle the carrier,
-    acyclic quiver, and acyclic category structure. -/
+    and morphisms are in the same universe). We bundle an acyclic quiver
+    with a semicategory structure. -/
 structure AcyclicCategoryCat : Type (u + 1) where
-  /-- The type of objects. -/
-  carrier : Type u
-  /-- The quiver structure -/
-  quiver : Quiver.{u} carrier
-  /-- The linear order on objects -/
-  order : LinearOrder carrier
-  /-- Proof that edges increase -/
-  edgesIncrease : @QuiverEdgesIncrease carrier quiver order
+  /-- The underlying acyclic quiver -/
+  toAcyclicQuiverCat : AcyclicQuiverCat
   /-- The semicategory structure -/
-  semicat : @SemicategoryStruct carrier quiver
+  semicat : @SemicategoryStruct toAcyclicQuiverCat.carrier
+    toAcyclicQuiverCat.quiver
 
-instance (V : AcyclicCategoryCat) : Quiver V.carrier := V.quiver
-instance (V : AcyclicCategoryCat) : LinearOrder V.carrier := V.order
-instance (V : AcyclicCategoryCat) : QuiverEdgesIncrease V.carrier := V.edgesIncrease
-instance (V : AcyclicCategoryCat) : SemicategoryStruct V.carrier := V.semicat
+instance (V : AcyclicCategoryCat) : Quiver V.toAcyclicQuiverCat.carrier :=
+  V.toAcyclicQuiverCat.quiver
+instance (V : AcyclicCategoryCat) : LinearOrder V.toAcyclicQuiverCat.carrier :=
+  V.toAcyclicQuiverCat.order
+instance (V : AcyclicCategoryCat) : QuiverEdgesIncrease
+    V.toAcyclicQuiverCat.carrier :=
+  V.toAcyclicQuiverCat.edgesIncrease
+instance (V : AcyclicCategoryCat) : SemicategoryStruct
+    V.toAcyclicQuiverCat.carrier :=
+  V.semicat
 
-instance (V : AcyclicCategoryCat) : AcyclicQuiver V.carrier where
-  edgesIncrease := V.edgesIncrease
+instance (V : AcyclicCategoryCat) : AcyclicQuiver
+    V.toAcyclicQuiverCat.carrier where
+  edgesIncrease := V.toAcyclicQuiverCat.edgesIncrease
 
-instance (V : AcyclicCategoryCat) : AcyclicCategory V.carrier where
+instance (V : AcyclicCategoryCat) : AcyclicCategory
+    V.toAcyclicQuiverCat.carrier where
   toSemicategoryStruct := V.semicat
 
 namespace AcyclicCategoryCat
@@ -311,13 +314,14 @@ namespace AcyclicCategoryCat
 open CategoryTheory
 
 instance : CoeSort AcyclicCategoryCat (Type u) where
-  coe V := V.carrier
+  coe V := V.toAcyclicQuiverCat.carrier
 
 /-- Construct a bundled acyclic category from a type with an acyclic
     category instance. -/
 def of (V : Type u) [q : Quiver.{u} V] [o : LinearOrder V]
     (ei : QuiverEdgesIncrease V) (sc : SemicategoryStruct V) :
-    AcyclicCategoryCat := ⟨V, q, o, ei, sc⟩
+    AcyclicCategoryCat :=
+  ⟨⟨V, q, o, ei⟩, sc⟩
 
 instance : Category.{u} AcyclicCategoryCat where
   Hom V W := AcyclicCategoryHom.{u} V W
@@ -334,7 +338,7 @@ open CategoryTheory
 /-- The property that an acyclic category is finite (has finitely many
     vertices and edges). -/
 def IsFiniteAcyclicCategory : ObjectProperty AcyclicCategoryCat :=
-  fun V => Nonempty (FinQuiverWitness V.carrier)
+  fun V => Nonempty (FinQuiverWitness V.toAcyclicQuiverCat.carrier)
 
 /-- The full subcategory of finite acyclic categories. -/
 abbrev FiniteAcyclicCategoryCat :=
