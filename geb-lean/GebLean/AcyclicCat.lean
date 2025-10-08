@@ -15,12 +15,14 @@ sorting as the acyclicity criterion.
 * `AcyclicQuiver`: A quiver with a strict total order on vertices such
   that every edge goes from a smaller vertex to a larger vertex
   (topological sort)
+* `FiniteQuiver`: A quiver with finitely many vertices and edges
 * `FiniteAcyclicQuiver`: An acyclic quiver with finitely many vertices
-  and finitely many edges
-* `AcyclicCategory`: An acyclic quiver with associative composition
-  (semicategory structure). Note: The strict ordering forbids identity
-  morphisms, so the structure does not specify them explicitly, but we
-  can generate a category structure by adjoining identities.
+  and edges
+* `Semicategory`: A quiver with associative composition but no identity
+  morphisms
+* `FiniteSemicategory`: A semicategory with finitely many vertices and
+  morphisms
+* `AcyclicCategory`: An acyclic quiver with a semicategory structure
 * `FiniteAcyclicCategory`: A finite acyclic category
 -/
 
@@ -34,28 +36,53 @@ class AcyclicQuiver (V : Type u) extends Quiver.{v} V, LinearOrder V where
   /-- Every edge goes from a smaller vertex to a larger vertex -/
   edge_increases : ∀ {a b : V}, (a ⟶ b) → a < b
 
+/-- A finite quiver has finitely many vertices and finitely many edges
+    between each pair of vertices. This requires morphisms to be in
+    Type (not Prop). -/
+class FiniteQuiver (V : Type u) [Quiver.{v + 1} V] where
+  /-- The vertex set is finite -/
+  fintypeObj : Fintype V := by infer_instance
+  /-- Each hom-set is finite -/
+  fintypeHom : ∀ a b : V, Fintype (a ⟶ b) := by infer_instance
+
+attribute [instance] FiniteQuiver.fintypeObj FiniteQuiver.fintypeHom
+
 /-- A finite acyclic quiver has finitely many vertices and finitely
     many edges between each pair of vertices. -/
 class FiniteAcyclicQuiver (V : Type u) [AcyclicQuiver V] where
   /-- The vertex set is finite -/
   fintypeObj : Fintype V := by infer_instance
   /-- Each hom-set is finite -/
-  fintypeHom (a b : V) : Fintype (a ⟶ b) := by infer_instance
+  fintypeHom : ∀ a b : V, Fintype (a ⟶ b) := by infer_instance
 
 attribute [instance] FiniteAcyclicQuiver.fintypeObj
   FiniteAcyclicQuiver.fintypeHom
 
-/-- An acyclic category is an acyclic quiver with a composition
-    operation. The strict ordering ensures there are no identity
-    morphisms, so this is a semicategory structure rather than a full
-    category. Identities can be added later to form a complete
-    category. -/
-class AcyclicCategory (V : Type u) [AcyclicQuiver V] where
+/-- A semicategory is a quiver with associative composition but no
+    identity morphisms. -/
+class Semicategory (V : Type u) extends Quiver.{v} V where
   /-- Composition of morphisms -/
   comp : ∀ {a b c : V}, (a ⟶ b) → (b ⟶ c) → (a ⟶ c)
   /-- Associativity of composition -/
   assoc : ∀ {a b c d : V} (f : a ⟶ b) (g : b ⟶ c) (h : c ⟶ d),
     comp (comp f g) h = comp f (comp g h)
+
+/-- A finite semicategory has finitely many vertices and morphisms. -/
+class FiniteSemicategory (V : Type u) [Semicategory V] where
+  /-- The vertex set is finite -/
+  fintypeObj : Fintype V := by infer_instance
+  /-- Each hom-set is finite -/
+  fintypeHom : ∀ a b : V, Fintype (a ⟶ b) := by infer_instance
+
+attribute [instance] FiniteSemicategory.fintypeObj
+  FiniteSemicategory.fintypeHom
+
+/-- An acyclic category is an acyclic quiver with a semicategory
+    structure. The strict ordering ensures there are no identity
+    morphisms. Identities can be added later to form a complete
+    category. -/
+class AcyclicCategory (V : Type u) [AcyclicQuiver V]
+    extends Semicategory V
 
 /-- A finite acyclic category combines finiteness with the acyclic
     composition structure. -/
