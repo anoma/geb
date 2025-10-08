@@ -66,8 +66,10 @@ class AcyclicCategory (V : Type u) [AcyclicQuiver V] where
 instance {V : Type u} [inst : AcyclicQuiver V] [h : AcyclicCategory V] :
     Semicategory V where
   toQuiver := inst.toQuiver
-  comp := h.comp
-  assoc := h.assoc
+  toSemicategoryStruct := {
+    comp := h.comp
+    assoc := h.assoc
+  }
 
 /-- A finite acyclic category combines finiteness with the acyclic
     composition structure. -/

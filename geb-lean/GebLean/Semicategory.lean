@@ -22,14 +22,36 @@ This file defines semicategories and their morphisms.
 
 universe u v
 
-/-- A semicategory is a quiver with associative composition but no
-    identity morphisms. -/
-class Semicategory (V : Type u) extends Quiver.{v} V where
+/-- The structure of a semicategory: composition and associativity,
+    without requiring identity morphisms. -/
+structure SemicategoryStruct (V : Type u) [Quiver.{v} V] where
   /-- Composition of morphisms -/
   comp : ∀ {a b c : V}, (a ⟶ b) → (b ⟶ c) → (a ⟶ c)
   /-- Associativity of composition -/
   assoc : ∀ {a b c d : V} (f : a ⟶ b) (g : b ⟶ c) (h : c ⟶ d),
     comp (comp f g) h = comp f (comp g h)
+
+attribute [instance] SemicategoryStruct.comp
+
+/-- A semicategory is a quiver with associative composition but no
+    identity morphisms. -/
+class Semicategory (V : Type u) extends Quiver.{v} V where
+  toSemicategoryStruct : SemicategoryStruct V := by infer_instance
+
+instance {V : Type u} [h : Semicategory V] :
+    SemicategoryStruct V := h.toSemicategoryStruct
+
+/-- Access the composition from a Semicategory instance. -/
+def Semicategory.comp {V : Type u} [Semicategory V]
+    {a b c : V} (f : a ⟶ b) (g : b ⟶ c) : (a ⟶ c) :=
+  (Semicategory.toSemicategoryStruct (V := V)).comp f g
+
+/-- Access the associativity proof from a Semicategory instance. -/
+theorem Semicategory.assoc {V : Type u} [Semicategory V]
+    {a b c d : V} (f : a ⟶ b) (g : b ⟶ c) (h : c ⟶ d) :
+    Semicategory.comp (Semicategory.comp f g) h =
+      Semicategory.comp f (Semicategory.comp g h) :=
+  (Semicategory.toSemicategoryStruct (V := V)).assoc f g h
 
 /-- A finite semicategory has finitely many objects and morphisms. -/
 class FiniteSemicategory (V : Type u) [Semicategory V] where
