@@ -53,23 +53,19 @@ instance {V : Type u} [AcyclicQuiver V] [h : FiniteAcyclicQuiver V] :
     structure. The strict ordering ensures there are no identity
     morphisms. Identities can be added later to form a category.
 
-    Note: We store composition and associativity directly rather than
+    Note: We store the semicategory structure directly rather than
     extending Semicategory, to avoid diamond problems with the Quiver
     instance. -/
 class AcyclicCategory (V : Type u) [AcyclicQuiver V] where
-  /-- Composition of morphisms -/
-  comp : ∀ {a b c : V}, (a ⟶ b) → (b ⟶ c) → (a ⟶ c)
-  /-- Associativity of composition -/
-  assoc : ∀ {a b c d : V} (f : a ⟶ b) (g : b ⟶ c) (h : c ⟶ d),
-    comp (comp f g) h = comp f (comp g h)
+  toSemicategoryStruct : SemicategoryStruct V := by infer_instance
+
+instance {V : Type u} [AcyclicQuiver V] [h : AcyclicCategory V] :
+    SemicategoryStruct V := h.toSemicategoryStruct
 
 instance {V : Type u} [inst : AcyclicQuiver V] [h : AcyclicCategory V] :
     Semicategory V where
   toQuiver := inst.toQuiver
-  toSemicategoryStruct := {
-    comp := h.comp
-    assoc := h.assoc
-  }
+  toSemicategoryStruct := h.toSemicategoryStruct
 
 /-- A finite acyclic category combines finiteness with the acyclic
     composition structure. -/
