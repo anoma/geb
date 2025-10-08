@@ -72,7 +72,7 @@ class Semicategory (V : Type u) extends Quiver.{v} V where
   assoc : ∀ {a b c d : V} (f : a ⟶ b) (g : b ⟶ c) (h : c ⟶ d),
     comp (comp f g) h = comp f (comp g h)
 
-/-- A finite semicategory has finitely many vertices and morphisms. -/
+/-- A finite semicategory has finitely many objects and morphisms. -/
 class FiniteSemicategory (V : Type u) [Semicategory V] where
   toFiniteness : FinQuiverWitness V := by infer_instance
 
