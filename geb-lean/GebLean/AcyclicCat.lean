@@ -362,16 +362,47 @@ theorem comp_assoc {X : Type u} [AcyclicQuiver X] [AcyclicCategory X]
 
 end AcyclicCategoryHom
 
--- Note: We cannot easily create a bundled `AcyclicCategoryCat` due to
--- universe constraints. The `Semicategory (V : Type u)` typeclass extends
--- `Quiver.{v} V`, which introduces a free universe variable `v`. When
--- bundling into a structure `{ carrier : Type u, ... }`, Lean creates a
--- fresh universe variable for the quiver edges, making `Semicategory
--- carrier` live in `Type (max (u+1) (?v+1))` which exceeds the
--- structure's universe `Type (u+1)`. This is a fundamental limitation of
--- Lean's universe system when bundling typeclasses with multiple universe
--- parameters. The morphisms `AcyclicCategoryHom` and their category laws
--- are still available for use.
+/-- The category of acyclic categories (as a small category where objects
+    and morphisms are in the same universe). We bundle the carrier,
+    quiver, acyclic quiver, and semicategory structure. The
+    `AcyclicCategory` instance is derived from these. -/
+structure AcyclicCategoryCat : Type (u + 1) where
+  /-- The type of objects. -/
+  carrier : Type u
+  [quiver : Quiver.{u} carrier]
+  [acyclic : AcyclicQuiver.{u, u} carrier]
+  [semicat : Semicategory.{u, u} carrier]
+
+attribute [instance] AcyclicCategoryCat.quiver
+  AcyclicCategoryCat.acyclic AcyclicCategoryCat.semicat
+
+namespace AcyclicCategoryCat
+
+open CategoryTheory
+
+instance : CoeSort AcyclicCategoryCat (Type u) where
+  coe V := V.carrier
+
+/-- Since `AcyclicCategory` just extends `Semicategory`, we can derive
+    it from the bundled fields. -/
+instance (V : AcyclicCategoryCat) : AcyclicCategory V where
+  toSemicategory := V.semicat
+
+/-- Construct a bundled acyclic category from a type with an acyclic
+    category instance. -/
+def of (V : Type u) [Quiver.{u} V] [AcyclicQuiver.{u, u} V]
+    [Semicategory.{u, u} V] [AcyclicCategory V] :
+    AcyclicCategoryCat := ⟨V⟩
+
+instance : Category.{u} AcyclicCategoryCat where
+  Hom V W := AcyclicCategoryHom.{u} V W
+  id V := AcyclicCategoryHom.id V
+  comp {_ _ _} F G := F.comp G
+  id_comp {_ _} := AcyclicCategoryHom.id_comp
+  comp_id {_ _} := AcyclicCategoryHom.comp_id
+  assoc {_ _ _ _} := AcyclicCategoryHom.comp_assoc
+
+end AcyclicCategoryCat
 
 namespace AcyclicCategory
 
