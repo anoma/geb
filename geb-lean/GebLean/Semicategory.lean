@@ -92,7 +92,7 @@ def id (V : Type u) [Semicategory V] : Semifunctor V V where
 /-- Composition of semifunctors. -/
 def comp (F : Semifunctor U V) (G : Semifunctor V W) :
     Semifunctor U W where
-  toPrefunctor := F.toPrefunctor.comp G.toPrefunctor
+  toPrefunctor := Prefunctor.comp F.toPrefunctor G.toPrefunctor
   map_comp f g := by
     simp [Prefunctor.comp]
     rw [F.map_comp, G.map_comp]

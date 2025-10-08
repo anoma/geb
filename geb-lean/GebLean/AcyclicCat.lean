@@ -150,7 +150,7 @@ def id (V : Type u) [AcyclicQuiver V] : AcyclicQuiverHom V V where
 /-- Composition of morphisms of acyclic quivers. -/
 def comp (F : AcyclicQuiverHom U V) (G : AcyclicQuiverHom V W) :
     AcyclicQuiverHom U W where
-  toPrefunctor := F.toPrefunctor.comp G.toPrefunctor
+  toPrefunctor := Prefunctor.comp F.toPrefunctor G.toPrefunctor
   obj_mono := fun _ _ h => G.obj_mono (F.obj_mono h)
 
 /-- Morphisms of acyclic quivers preserve the edge_increases
@@ -250,7 +250,7 @@ def id (V : Type u) [AcyclicQuiver V] [AcyclicCategory V] :
 /-- Composition of morphisms of acyclic categories. -/
 def comp (F : AcyclicCategoryHom U V) (G : AcyclicCategoryHom V W) :
     AcyclicCategoryHom U W where
-  toSemifunctor := F.toSemifunctor.comp G.toSemifunctor
+  toSemifunctor := Semifunctor.comp F.toSemifunctor G.toSemifunctor
   obj_mono := fun _ _ h => G.obj_mono (F.obj_mono h)
 
 @[ext]
