@@ -30,13 +30,24 @@ sorting as the acyclicity criterion.
 
 universe u v
 
+/-- The property that every edge in a quiver goes from a smaller vertex
+    to a larger vertex with respect to a linear order. -/
+abbrev QuiverEdgesIncrease (V : Type u) [Quiver.{v} V] [LinearOrder V] :=
+  ∀ {a b : V}, (a ⟶ b) → a < b
+
 /-- An acyclic quiver is a quiver equipped with a strict total order
     on vertices such that every edge goes from a smaller to a larger
     vertex. This provides a topological sort, which proves the quiver
     is acyclic. -/
 class AcyclicQuiver (V : Type u) extends Quiver.{v} V, LinearOrder V where
-  /-- Every edge goes from a smaller vertex to a larger vertex -/
-  edge_increases : ∀ {a b : V}, (a ⟶ b) → a < b
+  edgesIncrease : QuiverEdgesIncrease V := by infer_instance
+
+instance {V : Type u} [h : AcyclicQuiver V] : QuiverEdgesIncrease V :=
+  h.edgesIncrease
+
+/-- Every edge in an acyclic quiver goes from a smaller vertex to a
+    larger vertex. -/
+abbrev edge_increases := @AcyclicQuiver.edgesIncrease
 
 /-- Morphisms of acyclic quivers and categories preserve the strict
     ordering on vertices via their object maps. -/
@@ -146,7 +157,7 @@ def comp (F : AcyclicQuiverHom U V) (G : AcyclicQuiverHom V W) :
     property. -/
 theorem map_edge_increases (F : AcyclicQuiverHom V W) {a b : V}
     (f : a ⟶ b) : F.obj a < F.obj b := by
-  have hab : a < b := AcyclicQuiver.edge_increases f
+  have hab : a < b := edge_increases f
   exact F.obj_mono hab
 
 @[ext]
