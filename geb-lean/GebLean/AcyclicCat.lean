@@ -134,6 +134,38 @@ theorem no_cycles {a : V} (p : Quiver.Path a a) :
 
 end AcyclicQuiver
 
+/-- A morphism of acyclic quivers is a prefunctor that preserves the
+    order on vertices. -/
+structure AcyclicQuiverHom (V W : Type u) [AcyclicQuiver V]
+    [AcyclicQuiver W] extends Prefunctor V W where
+  /-- The vertex map is strictly monotone -/
+  obj_mono : StrictMono toPrefunctor.obj
+
+namespace AcyclicQuiverHom
+
+variable {U V W : Type u} [AcyclicQuiver U] [AcyclicQuiver V]
+  [AcyclicQuiver W]
+
+/-- The identity morphism of acyclic quivers. -/
+def id (V : Type u) [AcyclicQuiver V] : AcyclicQuiverHom V V where
+  toPrefunctor := Prefunctor.id V
+  obj_mono := fun _ _ h => h
+
+/-- Composition of morphisms of acyclic quivers. -/
+def comp (F : AcyclicQuiverHom U V) (G : AcyclicQuiverHom V W) :
+    AcyclicQuiverHom U W where
+  toPrefunctor := F.toPrefunctor.comp G.toPrefunctor
+  obj_mono := fun _ _ h => G.obj_mono (F.obj_mono h)
+
+/-- Morphisms of acyclic quivers preserve the edge_increases
+    property. -/
+theorem map_edge_increases (F : AcyclicQuiverHom V W) {a b : V}
+    (f : a ⟶ b) : F.obj a < F.obj b := by
+  have hab : a < b := AcyclicQuiver.edge_increases f
+  exact F.obj_mono hab
+
+end AcyclicQuiverHom
+
 namespace AcyclicCategory
 
 open CategoryTheory
