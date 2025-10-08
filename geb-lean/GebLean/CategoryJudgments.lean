@@ -965,9 +965,7 @@ def depToFunctorData_functorDataToDep_compC.{u}
     (data : CopresheafData.{u}) :
     (depToFunctorData (functorDataToDep data)).compC ≃
     data.compC where
-  toFun c :=
-    let ⟨_, _, _, _, _, _, ⟨comp, _⟩⟩ := c
-    comp
+  toFun c := c.2.2.2.2.2.2.1
   invFun c :=
     let h_match := congrFun data.h_comp_match c
     let h_dom := congrFun data.h_comp_dom c
