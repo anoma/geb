@@ -1,6 +1,7 @@
 import Mathlib.Combinatorics.Quiver.Basic
 import Mathlib.Combinatorics.Quiver.Path
 import Mathlib.CategoryTheory.Category.Basic
+import Mathlib.CategoryTheory.ObjectProperty.FullSubcategory
 import Mathlib.Data.Fintype.Basic
 import Mathlib.Order.Basic
 
@@ -403,6 +404,26 @@ instance : Category.{u} AcyclicCategoryCat where
   assoc {_ _ _ _} := AcyclicCategoryHom.comp_assoc
 
 end AcyclicCategoryCat
+
+open CategoryTheory
+
+/-- The property that an acyclic category is finite (has finitely many
+    vertices and edges). -/
+def IsFiniteAcyclicCategory : ObjectProperty AcyclicCategoryCat :=
+  fun V => Nonempty (FinQuiverWitness V.carrier)
+
+/-- The full subcategory of finite acyclic categories. -/
+abbrev FiniteAcyclicCategoryCat :=
+  IsFiniteAcyclicCategory.FullSubcategory
+
+namespace FiniteAcyclicCategoryCat
+
+/-- The inclusion functor from finite acyclic categories to all acyclic
+    categories. -/
+abbrev ι : FiniteAcyclicCategoryCat ⥤ AcyclicCategoryCat :=
+  IsFiniteAcyclicCategory.ι
+
+end FiniteAcyclicCategoryCat
 
 namespace AcyclicCategory
 
