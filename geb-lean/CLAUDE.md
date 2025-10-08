@@ -319,6 +319,72 @@ instance {V : Type u} [Quiver.{v + 1} V] [h : FiniteQuiver V] :
 - **Cannot use `Prop`**: Prop-valued structures can only contain proofs,
   not data like `Fintype` instances
 
+### Bundled Structures: Store Data, Not Typeclass Instances
+
+**Key Principle**: Bundled category structures (like `SemicategoryCat`,
+`AcyclicQuiverCat`) should store witness/struct data directly rather than
+typeclass instances in brackets. Then derive typeclasses via instances.
+
+**Don't do this** (redundant and hides dependencies):
+
+```lean
+structure AcyclicCategoryCat : Type (u + 1) where
+  carrier : Type u
+  [acyclic : AcyclicQuiver carrier]  -- Redundant!
+  [acat : AcyclicCategory carrier]   -- Requires acyclic but it's hidden
+```
+
+**Do this instead** (explicit and clean):
+
+```lean
+structure AcyclicCategoryCat : Type (u + 1) where
+  toAcyclicQuiverCat : AcyclicQuiverCat
+  semicat : @SemicategoryStruct toAcyclicQuiverCat.carrier
+    toAcyclicQuiverCat.quiver
+
+instance (V : AcyclicCategoryCat) : AcyclicQuiver
+    V.toAcyclicQuiverCat.carrier where
+  edgesIncrease := V.toAcyclicQuiverCat.edgesIncrease
+
+instance (V : AcyclicCategoryCat) : AcyclicCategory
+    V.toAcyclicQuiverCat.carrier where
+  toSemicategoryStruct := V.semicat
+```
+
+**Benefits**:
+
+- **No redundancy**: Each piece of data stored exactly once
+- **Explicit dependencies**: Clear what data is needed and how it relates
+- **Avoids diamonds**: No duplicate typeclass instances
+- **Enables factoring**: Can compose structures via fields (e.g.,
+  `AcyclicCategoryCat` extends `AcyclicQuiverCat`)
+- **Better semantics**: Structure fields are data; instances are derived
+  properties
+
+**Extension vs Parameters**:
+
+- **`extends`**: `class A extends B` means `[A]` automatically provides `[B]`
+  - Example: `AcyclicQuiver extends Quiver` → `[AcyclicQuiver V]` gives
+    `[Quiver V]`
+- **Parameters**: `class A (V) [B V]` means `[A V]` requires but doesn't
+  provide `[B V]`
+  - Example: `AcyclicCategory (V) [AcyclicQuiver V]` → need both
+    `[AcyclicQuiver V]` and `[AcyclicCategory V]`
+  - Used to add properties/structure to existing types without creating
+    diamonds
+
+**Pattern for abbreviations**: When creating convenient access functions,
+use `abbrev` for conciseness:
+
+```lean
+/-- Every edge in an acyclic quiver goes from a smaller vertex to a
+    larger vertex. -/
+abbrev edge_increases := @AcyclicQuiver.edgesIncrease
+```
+
+This is cleaner than spelling out the full type signature when the function
+just wraps a typeclass field.
+
 ### Equality in Categories: Use `eqToHom` and `eqToIso`
 
 **Reference**:
