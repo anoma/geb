@@ -95,18 +95,18 @@ def comp (F : Semifunctor U V) (G : Semifunctor V W) :
     simp [Prefunctor.comp]
     rw [F.map_comp, G.map_comp]
 
-theorem id_comp (F : Semifunctor V W) : (id V).comp F = F := by
+theorem id_comp (F : Semifunctor V W) : comp (id V) F = F := by
   apply Semifunctor.ext
   rfl
 
-theorem comp_id (F : Semifunctor V W) : F.comp (id W) = F := by
+theorem comp_id (F : Semifunctor V W) : comp F (id W) = F := by
   apply Semifunctor.ext
   rfl
 
 theorem comp_assoc {X : Type u} [Semicategory X]
     (F : Semifunctor U V) (G : Semifunctor V W)
     (H : Semifunctor W X) :
-    (F.comp G).comp H = F.comp (G.comp H) := by
+    comp (comp F G) H = comp F (comp G H) := by
   apply Semifunctor.ext
   rfl
 
@@ -135,7 +135,7 @@ def of (V : Type u) [Semicategory.{u, u} V] : SemicategoryCat := ⟨V⟩
 instance : Category.{u} SemicategoryCat where
   Hom V W := Semifunctor.{u} V W
   id V := Semifunctor.id V
-  comp {_ _ _} F G := F.comp G
+  comp {_ _ _} F G := Semifunctor.comp F G
   id_comp {_ _} := Semifunctor.id_comp
   comp_id {_ _} := Semifunctor.comp_id
   assoc {_ _ _ _} := Semifunctor.comp_assoc

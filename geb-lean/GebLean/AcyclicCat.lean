@@ -153,18 +153,18 @@ theorem ext {F G : AcyclicQuiverHom V W} (h : F.toPrefunctor = G.toPrefunctor) :
   cases G
   congr
 
-theorem id_comp (F : AcyclicQuiverHom V W) : (id V).comp F = F := by
+theorem id_comp (F : AcyclicQuiverHom V W) : comp (id V) F = F := by
   apply ext
   rfl
 
-theorem comp_id (F : AcyclicQuiverHom V W) : F.comp (id W) = F := by
+theorem comp_id (F : AcyclicQuiverHom V W) : comp F (id W) = F := by
   apply ext
   rfl
 
 theorem comp_assoc {X : Type u} [AcyclicQuiver X]
     (F : AcyclicQuiverHom U V) (G : AcyclicQuiverHom V W)
     (H : AcyclicQuiverHom W X) :
-    (F.comp G).comp H = F.comp (G.comp H) := by
+    comp (comp F G) H = comp F (comp G H) := by
   apply ext
   rfl
 
@@ -195,7 +195,7 @@ def of (V : Type u) [Quiver.{u} V] [AcyclicQuiver.{u, u} V] :
 instance : Category.{u} AcyclicQuiverCat where
   Hom V W := AcyclicQuiverHom.{u, u} V W
   id V := AcyclicQuiverHom.id V
-  comp {_ _ _} F G := F.comp G
+  comp {_ _ _} F G := AcyclicQuiverHom.comp F G
   id_comp {_ _} := AcyclicQuiverHom.id_comp
   comp_id {_ _} := AcyclicQuiverHom.comp_id
   assoc {_ _ _ _} := AcyclicQuiverHom.comp_assoc
@@ -236,12 +236,12 @@ theorem ext {F G : AcyclicCategoryHom U V}
   cases G
   congr
 
-theorem id_comp (F : AcyclicCategoryHom V W) : (id V).comp F = F := by
+theorem id_comp (F : AcyclicCategoryHom V W) : comp (id V) F = F := by
   apply ext
   apply Semifunctor.ext
   rfl
 
-theorem comp_id (F : AcyclicCategoryHom V W) : F.comp (id W) = F := by
+theorem comp_id (F : AcyclicCategoryHom V W) : comp F (id W) = F := by
   apply ext
   apply Semifunctor.ext
   rfl
@@ -249,7 +249,7 @@ theorem comp_id (F : AcyclicCategoryHom V W) : F.comp (id W) = F := by
 theorem comp_assoc {X : Type u} [AcyclicQuiver X] [AcyclicCategory X]
     (F : AcyclicCategoryHom U V) (G : AcyclicCategoryHom V W)
     (H : AcyclicCategoryHom W X) :
-    (F.comp G).comp H = F.comp (G.comp H) := by
+    comp (comp F G) H = comp F (comp G H) := by
   apply ext
   apply Semifunctor.ext
   rfl
@@ -282,7 +282,7 @@ def of (V : Type u) [Quiver.{u} V] [AcyclicQuiver.{u, u} V]
 instance : Category.{u} AcyclicCategoryCat where
   Hom V W := AcyclicCategoryHom.{u} V W
   id V := AcyclicCategoryHom.id V
-  comp {_ _ _} F G := F.comp G
+  comp {_ _ _} F G := AcyclicCategoryHom.comp F G
   id_comp {_ _} := AcyclicCategoryHom.id_comp
   comp_id {_ _} := AcyclicCategoryHom.comp_id
   assoc {_ _ _ _} := AcyclicCategoryHom.comp_assoc
