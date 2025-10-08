@@ -36,6 +36,12 @@ class AcyclicQuiver (V : Type u) extends Quiver.{v} V, LinearOrder V where
   /-- Every edge goes from a smaller vertex to a larger vertex -/
   edge_increases : ∀ {a b : V}, (a ⟶ b) → a < b
 
+/-- Morphisms of acyclic quivers and categories preserve the strict
+    ordering on vertices via their object maps. -/
+abbrev PrefunctorPreservesOrder {V W : Type u} [Quiver V] [Quiver W]
+    [LinearOrder V] [LinearOrder W] (F : Prefunctor V W) :=
+  StrictMono F.obj
+
 /-- A proof of finiteness of a quiver. -/
 structure FinQuiverWitness (V : Type u) [Quiver.{v + 1} V] where
   /-- The vertex set is finite -/
@@ -138,8 +144,8 @@ end AcyclicQuiver
     order on vertices. -/
 structure AcyclicQuiverHom (V W : Type u) [AcyclicQuiver V]
     [AcyclicQuiver W] extends Prefunctor V W where
-  /-- The vertex map is strictly monotone -/
-  obj_mono : StrictMono toPrefunctor.obj
+  /-- The vertex map preserves the order -/
+  obj_mono : PrefunctorPreservesOrder toPrefunctor
 
 namespace AcyclicQuiverHom
 
@@ -308,8 +314,8 @@ end SemicategoryCat
 structure AcyclicCategoryHom (U V : Type u) [AcyclicQuiver U]
     [AcyclicCategory U] [AcyclicQuiver V] [AcyclicCategory V]
     extends Semifunctor U V where
-  /-- The object map is strictly monotone -/
-  obj_mono : StrictMono toPrefunctor.obj
+  /-- The object map preserves the order -/
+  obj_mono : PrefunctorPreservesOrder toPrefunctor
 
 namespace AcyclicCategoryHom
 
@@ -356,10 +362,16 @@ theorem comp_assoc {X : Type u} [AcyclicQuiver X] [AcyclicCategory X]
 
 end AcyclicCategoryHom
 
--- Note: `AcyclicCategoryHom` morphisms satisfy the category laws,
--- but we cannot easily create a bundled category of acyclic categories
--- due to universe level constraints in the `AcyclicCategory` typeclass
--- (which extends `Semicategory` with a free universe variable).
+-- Note: We cannot easily create a bundled `AcyclicCategoryCat` due to
+-- universe constraints. The `Semicategory (V : Type u)` typeclass extends
+-- `Quiver.{v} V`, which introduces a free universe variable `v`. When
+-- bundling into a structure `{ carrier : Type u, ... }`, Lean creates a
+-- fresh universe variable for the quiver edges, making `Semicategory
+-- carrier` live in `Type (max (u+1) (?v+1))` which exceeds the
+-- structure's universe `Type (u+1)`. This is a fundamental limitation of
+-- Lean's universe system when bundling typeclasses with multiple universe
+-- parameters. The morphisms `AcyclicCategoryHom` and their category laws
+-- are still available for use.
 
 namespace AcyclicCategory
 
