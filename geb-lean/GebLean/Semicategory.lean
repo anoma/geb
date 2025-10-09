@@ -10,6 +10,8 @@ This file defines semicategories and their morphisms.
 
 ## Main definitions
 
+* `CompositionalStruct`: A structure providing composition of morphisms
+* `AssociativityLaw`: An associativity law for a compositional structure
 * `SemicategoryStruct`: The structure of a semicategory (composition and
   associativity)
 * `Semicategory`: A quiver with associative composition but no identity
@@ -24,14 +26,25 @@ This file defines semicategories and their morphisms.
 
 universe u v
 
+/-- A compositional structure provides a way to compose morphisms in a
+    quiver. -/
+abbrev CompositionalStruct (V : Type u) [Quiver.{v} V] :=
+  ∀ {a b c : V}, (a ⟶ b) → (b ⟶ c) → (a ⟶ c)
+
+/-- An associativity law states that composition is associative. This is
+    a property dependent upon having a compositional structure. -/
+abbrev AssociativityLaw (V : Type u) [Quiver.{v} V]
+    (comp : CompositionalStruct V) :=
+  ∀ {a b c d : V} (f : a ⟶ b) (g : b ⟶ c) (h : c ⟶ d),
+    comp (comp f g) h = comp f (comp g h)
+
 /-- The structure of a semicategory: composition and associativity,
     without requiring identity morphisms. -/
 structure SemicategoryStruct (V : Type u) [Quiver.{v} V] where
   /-- Composition of morphisms -/
-  comp : ∀ {a b c : V}, (a ⟶ b) → (b ⟶ c) → (a ⟶ c)
+  comp : CompositionalStruct V
   /-- Associativity of composition -/
-  assoc : ∀ {a b c d : V} (f : a ⟶ b) (g : b ⟶ c) (h : c ⟶ d),
-    comp (comp f g) h = comp f (comp g h)
+  assoc : AssociativityLaw V comp
 
 /-- A semicategory is a quiver with associative composition but no
     identity morphisms. -/
