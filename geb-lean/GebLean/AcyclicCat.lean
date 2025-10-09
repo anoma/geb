@@ -18,7 +18,7 @@ structure) and the category of acyclic categories.
   categories
 -/
 
-universe u u' u'' v v' v''
+universe u u' u''
 
 /-- An acyclic category is an acyclic quiver with a semicategory
     structure. The strict ordering ensures there are no identity

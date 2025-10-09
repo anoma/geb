@@ -21,7 +21,7 @@ acyclicity criterion.
 * `AcyclicQuiverCat`: The category of acyclic quivers
 -/
 
-universe u u' u'' v v' v''
+universe u u' u'' v
 
 /-- A topological order is a partial order used to witness acyclicity
     via topological sort. We use a partial order rather than a total

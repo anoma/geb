@@ -24,7 +24,7 @@ This file defines semicategories and their morphisms.
   where objects and morphisms are in the same universe)
 -/
 
-universe u u' u'' v v' v''
+universe u u' u'' v
 
 /-- A compositional structure provides a way to compose morphisms in a
     quiver. -/
