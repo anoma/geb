@@ -1,4 +1,6 @@
 import Mathlib.Combinatorics.Quiver.Basic
+import Mathlib.CategoryTheory.Category.Quiv
+import Mathlib.CategoryTheory.ObjectProperty.FullSubcategory
 import Mathlib.Data.Fintype.Basic
 
 /-!
@@ -11,6 +13,8 @@ This file defines finite quivers and related structures.
 * `FinQuiverWitness`: A proof that a quiver has finitely many vertices
   and edges
 * `FiniteQuiver`: A quiver with finitely many vertices and edges
+* `IsFiniteQuiver`: The property that a quiver (in Quiv) is finite
+* `FiniteQuiverCat`: The full subcategory of finite quivers
 -/
 
 universe u v
@@ -33,3 +37,22 @@ class FiniteQuiver (V : Type u) [Quiver.{v + 1} V] where
 
 instance {V : Type u} [Quiver.{v + 1} V] [h : FiniteQuiver V] :
     FinQuiverWitness V := h.toFiniteness
+
+open CategoryTheory
+
+/-- The property that a quiver (in Quiv) is finite (has finitely many
+    vertices and edges). -/
+def IsFiniteQuiver : ObjectProperty (Quiv.{v, u}) :=
+  fun V => Nonempty (FinQuiverWitness V)
+
+/-- The full subcategory of finite quivers. -/
+abbrev FiniteQuiverCat :=
+  IsFiniteQuiver.FullSubcategory
+
+namespace FiniteQuiverCat
+
+/-- The inclusion functor from finite quivers to all quivers. -/
+abbrev ι : FiniteQuiverCat.{v, u} ⥤ Quiv.{v, u} :=
+  IsFiniteQuiver.ι
+
+end FiniteQuiverCat
