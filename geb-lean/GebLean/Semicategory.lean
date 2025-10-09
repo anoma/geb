@@ -24,7 +24,7 @@ This file defines semicategories and their morphisms.
   where objects and morphisms are in the same universe)
 -/
 
-universe u v
+universe u u' u'' v v' v''
 
 /-- A compositional structure provides a way to compose morphisms in a
     quiver. -/
@@ -79,7 +79,7 @@ instance {V : Type u} [Semicategory V] [h : FiniteSemicategory V] :
 /-- A semifunctor is a morphism between semicategories that preserves
     composition but not necessarily identities (since semicategories
     may not have identities). -/
-structure Semifunctor (U V : Type u) [Semicategory U]
+structure Semifunctor (U : Type u) (V : Type u') [Semicategory U]
     [Semicategory V] extends Prefunctor U V where
   /-- A semifunctor preserves composition -/
   map_comp : ∀ {a b c : U} (f : a ⟶ b) (g : b ⟶ c),
@@ -87,8 +87,8 @@ structure Semifunctor (U V : Type u) [Semicategory U]
 
 namespace Semifunctor
 
-variable {U V W : Type u} [Semicategory U] [Semicategory V]
-  [Semicategory W]
+variable {U : Type u} {V : Type u'} {W : Type u''}
+  [Semicategory U] [Semicategory V] [Semicategory W]
 
 @[ext]
 theorem ext {F G : Semifunctor U V} (h : F.toPrefunctor = G.toPrefunctor) :
@@ -127,8 +127,10 @@ theorem comp_assoc {X : Type u} [Semicategory X]
 
 end Semifunctor
 
-/-- The category of semicategories (as a small category where objects
-    and morphisms are in the same universe). -/
+/-- The category of semicategories as a small category where objects
+    and morphisms are in the same universe. For unbundled
+    semicategories, objects and morphisms may be in different
+    universes. -/
 structure SemicategoryCat : Type (u + 1) where
   /-- The underlying type of objects. -/
   carrier : Type u
@@ -137,27 +139,30 @@ structure SemicategoryCat : Type (u + 1) where
   /-- The semicategory structure -/
   semicat : @SemicategoryStruct carrier quiver
 
-instance (V : SemicategoryCat) : Quiver V.carrier := V.quiver
-instance (V : SemicategoryCat) : SemicategoryStruct V.carrier := V.semicat
+instance instSemicategoryCatQuiver (V : SemicategoryCat) :
+    Quiver V.carrier := V.quiver
+instance instSemicategoryCatSemicategoryStruct (V : SemicategoryCat) :
+    SemicategoryStruct V.carrier := V.semicat
 
-instance (V : SemicategoryCat) : Semicategory V.carrier where
+instance instSemicategoryCatSemicategory (V : SemicategoryCat) :
+    Semicategory V.carrier where
   toSemicategoryStruct := V.semicat
 
 namespace SemicategoryCat
 
 open CategoryTheory
 
-instance : CoeSort SemicategoryCat (Type u) where
+instance : CoeSort SemicategoryCat.{u} (Type u) where
   coe V := V.carrier
 
 /-- Construct a bundled semicategory from a type with a semicategory
     instance. -/
 def of (V : Type u) [q : Quiver.{u} V] (sc : SemicategoryStruct V) :
-    SemicategoryCat := ⟨V, q, sc⟩
+    SemicategoryCat.{u} := ⟨V, q, sc⟩
 
-instance : Category.{u} SemicategoryCat where
-  Hom V W := Semifunctor.{u} V W
-  id V := Semifunctor.id V
+instance : Category.{u} SemicategoryCat.{u} where
+  Hom V W := Semifunctor V.carrier W.carrier
+  id V := Semifunctor.id V.carrier
   comp {_ _ _} F G := Semifunctor.comp F G
   id_comp {_ _} := Semifunctor.id_comp
   comp_id {_ _} := Semifunctor.comp_id

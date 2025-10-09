@@ -18,7 +18,7 @@ structure) and the category of acyclic categories.
   categories
 -/
 
-universe u v
+universe u u' u'' v v' v''
 
 /-- An acyclic category is an acyclic quiver with a semicategory
     structure. The strict ordering ensures there are no identity
@@ -45,7 +45,7 @@ class FiniteAcyclicCategory (V : Type u) [AcyclicQuiver V]
 
 /-- A morphism of acyclic categories is a semifunctor that also
     preserves the strict order on objects. -/
-structure AcyclicCategoryHom (U V : Type u) [AcyclicQuiver U]
+structure AcyclicCategoryHom (U : Type u) (V : Type u') [AcyclicQuiver U]
     [AcyclicCategory U] [AcyclicQuiver V] [AcyclicCategory V] where
   /-- The underlying semifunctor -/
   toSemifunctor : Semifunctor U V
@@ -54,7 +54,8 @@ structure AcyclicCategoryHom (U V : Type u) [AcyclicQuiver U]
 
 namespace AcyclicCategoryHom
 
-variable {U V W : Type u} [AcyclicQuiver U] [AcyclicCategory U]
+variable {U : Type u} {V : Type u'} {W : Type u''}
+  [AcyclicQuiver U] [AcyclicCategory U]
   [AcyclicQuiver V] [AcyclicCategory V] [AcyclicQuiver W]
   [AcyclicCategory W]
 

@@ -21,7 +21,7 @@ acyclicity criterion.
 * `AcyclicQuiverCat`: The category of acyclic quivers
 -/
 
-universe u v
+universe u u' u'' v v' v''
 
 /-- A topological order is a partial order used to witness acyclicity
     via topological sort. We use a partial order rather than a total
@@ -53,8 +53,9 @@ abbrev edge_increases := @AcyclicQuiver.edgesIncrease
 
 /-- Morphisms of acyclic quivers preserve the strict ordering on
     vertices via their object maps. -/
-abbrev PrefunctorPreservesOrder {V W : Type u} [Quiver V] [Quiver W]
-    [TopologicalOrder V] [TopologicalOrder W] (F : Prefunctor V W) :=
+abbrev PrefunctorPreservesOrder {V : Type u} {W : Type u'} [Quiver V]
+    [Quiver W] [TopologicalOrder V] [TopologicalOrder W]
+    (F : Prefunctor V W) :=
   StrictMono F.obj
 
 /-- A finite acyclic quiver has finitely many vertices and finitely
@@ -111,15 +112,15 @@ end AcyclicQuiver
 
 /-- A morphism of acyclic quivers is a prefunctor that preserves the
     order on vertices. -/
-structure AcyclicQuiverHom (V W : Type u) [AcyclicQuiver V]
+structure AcyclicQuiverHom (V : Type u) (W : Type u') [AcyclicQuiver V]
     [AcyclicQuiver W] extends Prefunctor V W where
   /-- The vertex map preserves the order -/
   obj_mono : PrefunctorPreservesOrder toPrefunctor
 
 namespace AcyclicQuiverHom
 
-variable {U V W : Type u} [AcyclicQuiver U] [AcyclicQuiver V]
-  [AcyclicQuiver W]
+variable {U : Type u} {V : Type u'} {W : Type u''}
+  [AcyclicQuiver U] [AcyclicQuiver V] [AcyclicQuiver W]
 
 /-- The identity morphism of acyclic quivers. -/
 def id (V : Type u) [AcyclicQuiver V] : AcyclicQuiverHom V V where
