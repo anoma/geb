@@ -1,4 +1,5 @@
 import GebLean.Utilities
 import GebLean.CategoryJudgments
+import GebLean.DepCategoryJudgments
 import GebLean.AcyclicQuiver
 import GebLean.AcyclicCat
