@@ -1,6 +1,7 @@
 # geb-lean
 
-A Lean 4 formalization of categorical concepts from Gödel, Escher, Bach.
+A Lean 4 formalization of (mostly category-theoretic) concepts (to be) used
+by the Geb programming language.
 
 ## Building
 
