@@ -1,12 +1,12 @@
 import GebLean.AcyclicCat
-import Mathlib.CategoryTheory.Category.Basic
 import Mathlib.Data.Fintype.Basic
 
 /-!
 # Tests for Acyclic Categories
 
-This file tests the acyclic category infrastructure using a concrete example:
-a walking parallel pair without identities.
+This file tests the acyclic category infrastructure.
+
+## WalkingParallelPairSemi
 
 We construct a finite acyclic semicategory representing two parallel arrows
 between two objects (like the walking parallel pair, but without identities).
@@ -153,16 +153,21 @@ example : FiniteAcyclicCategory WalkingParallelPairSemi := inferInstance
 ## Relationship to Mathlib's WalkingParallelPair
 
 Mathlib's `WalkingParallelPair` (from `Mathlib.CategoryTheory.Limits.Shapes.
-Equalizers`) is the category with two objects and two parallel arrows plus
-identities. Our `WalkingParallelPairSemi` is the underlying semicategory
-without identities.
+Equalizers`) is the category with:
+- Two objects: `zero` and `one`
+- Two parallel morphisms: `left` and `right` (both from `zero` to `one`)
+- Identity morphisms for each object
 
-The two are related as follows:
-- `WalkingParallelPairSemi` is a finite acyclic category (semicategory)
-- `WalkingParallelPair` is the result of adjoining identities to this
-  semicategory
-- These should be categorically equivalent via the identity adjoining functor
+Our `WalkingParallelPairSemi` is the underlying *semicategory* - it has the
+same objects and the same two parallel morphisms, but *without* the identity
+morphisms.
 
-This demonstrates that our acyclic category infrastructure correctly handles
-standard categorical examples from mathlib.
+The relationship between these two structures demonstrates a key aspect of our
+acyclic category framework:
+1. `WalkingParallelPairSemi` is a `FiniteAcyclicCategory` (a semicategory)
+2. Identities can be adjoined to yield mathlib's `WalkingParallelPair`
+3. The two are equivalent via identity adjoining
+
+This shows that our acyclic category infrastructure correctly models the
+semicategory structure underlying standard categorical examples from mathlib.
 -/
