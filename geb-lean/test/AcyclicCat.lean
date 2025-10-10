@@ -282,8 +282,15 @@ theorem fromMathlib_toMathlib : fromMathlib ⋙ toMathlib = 𝟭 _ := by
     | right => rfl
     | id => cases x <;> rfl
 
-/-- The two categories are isomorphic. -/
-def isomorphism : WalkingParallelPairCat ≌ WalkingParallelPair where
+/-- The two categories are isomorphic (as objects in Cat). -/
+def isomorphism : Cat.of WalkingParallelPairCat ≅ Cat.of WalkingParallelPair where
+  hom := toMathlib
+  inv := fromMathlib
+  hom_inv_id := toMathlib_fromMathlib
+  inv_hom_id := fromMathlib_toMathlib
+
+/-- The two categories are equivalent. -/
+def equivalence : WalkingParallelPairCat ≌ WalkingParallelPair where
   functor := toMathlib
   inverse := fromMathlib
   unitIso := eqToIso toMathlib_fromMathlib.symm
