@@ -1,4 +1,5 @@
 import test.Basic
+import test.AcyclicCat
 
 /-!
 # Test Suite Root

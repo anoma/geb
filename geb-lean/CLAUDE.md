@@ -536,3 +536,28 @@ Common issues to watch for:
 - Fenced code blocks: Surround with blank lines (MD031)
 - Lists: Surround with blank lines (MD032)
 - URLs: Use angle brackets for bare URLs (MD034)
+
+## Future Work
+
+This section tracks planned improvements and extensions to the codebase.
+These should not appear as TODO comments in code files.
+
+### Acyclic Quiver Infrastructure
+
+**Automatic decidability for finite quivers**:
+
+- Implement decidability instance for `Relation.ReflTransGen` on finite types
+- This would enable `AcyclicQuiver.ofFiniteAcyclic` to work with `by decide`
+- Requires: bounded path enumeration up to n vertices
+- File: `GebLean/AcyclicQuiver.lean` (currently has `sorry`)
+
+### Test Coverage
+
+**WalkingParallelPairSemi completion**:
+
+- Add semicategory structure (composition is trivial - these are maximal paths)
+- Define identity adjoining to construct a full category
+- Prove isomorphism between the completed category and mathlib's
+  `WalkingParallelPair`
+- Show this is a `FiniteAcyclicCategory`
+- File: `test/AcyclicCat.lean`
