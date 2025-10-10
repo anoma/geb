@@ -1,5 +1,8 @@
 import GebLean.AcyclicCat
 import Mathlib.Data.Fintype.Basic
+import Mathlib.CategoryTheory.Category.Basic
+import Mathlib.CategoryTheory.Limits.Shapes.Equalizers
+import Mathlib.CategoryTheory.Equivalence
 
 /-!
 # Tests for Acyclic Categories
@@ -148,3 +151,146 @@ example : AcyclicQuiver WalkingParallelPairSemi := inferInstance
 example : Semicategory WalkingParallelPairSemi := inferInstance
 example : AcyclicCategory WalkingParallelPairSemi := inferInstance
 example : FiniteAcyclicCategory WalkingParallelPairSemi := inferInstance
+
+/-!
+## Categorical Isomorphism with Mathlib's WalkingParallelPair
+
+We adjoin identities to our semicategory and show the result is isomorphic to
+mathlib's `WalkingParallelPair`.
+-/
+
+open CategoryTheory
+open Limits (WalkingParallelPair WalkingParallelPairHom)
+
+/-- The walking parallel pair with identities adjoined. -/
+def WalkingParallelPairCat : Type := WalkingParallelPairSemi
+
+namespace WalkingParallelPairCat
+
+/-- Morphisms: extend the semicategory morphisms with identities. -/
+inductive Hom : WalkingParallelPairCat → WalkingParallelPairCat → Type
+  | ofSemi {a b : WalkingParallelPairSemi} :
+      WalkingParallelPairSemi.Hom a b → Hom a b
+  | id (a : WalkingParallelPairCat) : Hom a a
+  deriving DecidableEq
+
+/-- The left morphism from the semicategory. -/
+abbrev left : Hom WalkingParallelPairSemi.zero WalkingParallelPairSemi.one :=
+  Hom.ofSemi WalkingParallelPairSemi.Hom.left
+
+/-- The right morphism from the semicategory. -/
+abbrev right : Hom WalkingParallelPairSemi.zero WalkingParallelPairSemi.one :=
+  Hom.ofSemi WalkingParallelPairSemi.Hom.right
+
+/-- Composition. There are no composable non-identity morphisms in the
+    semicategory (all morphisms go from 0 to 1). -/
+def comp : {a b c : WalkingParallelPairCat} → Hom a b → Hom b c → Hom a c
+  | _, _, _, Hom.id _, g => g
+  | _, _, _, f, Hom.id _ => f
+
+/-- Category structure. -/
+instance : Category WalkingParallelPairCat where
+  Hom := Hom
+  id := Hom.id
+  comp := comp
+  id_comp := by intro _ _ f; cases f <;> rfl
+  comp_id := by intro _ _ f; cases f <;> rfl
+  assoc := by
+    intro W X Y Z f g h
+    cases f with
+    | id =>
+      cases g with
+      | id => cases h <;> rfl
+      | ofSemi g' =>
+        cases h with
+        | id => rfl
+        | ofSemi h' => cases g' <;> cases h'
+    | ofSemi f' =>
+      cases g with
+      | id =>
+        cases h <;> rfl
+      | ofSemi g' =>
+        -- f' : W.Hom X and g' : X.Hom Y, both in semicategory
+        -- Since all semicategory morphisms go 0→1, these can't compose
+        cases f' <;> cases g'
+
+/-- Map an object from our category to mathlib's. -/
+def toMathlibObj : WalkingParallelPairCat → WalkingParallelPair
+  | WalkingParallelPairSemi.zero => WalkingParallelPair.zero
+  | WalkingParallelPairSemi.one => WalkingParallelPair.one
+
+/-- Map a morphism from our category to mathlib's. -/
+def toMathlibMap : {X Y : WalkingParallelPairCat} →
+    Hom X Y → (toMathlibObj X ⟶ toMathlibObj Y)
+  | .zero, .one, Hom.ofSemi .left => WalkingParallelPairHom.left
+  | .zero, .one, Hom.ofSemi .right => WalkingParallelPairHom.right
+  | .zero, .zero, Hom.id .zero => WalkingParallelPairHom.id .zero
+  | .one, .one, Hom.id .one => WalkingParallelPairHom.id .one
+
+/-- Functor to mathlib's WalkingParallelPair. -/
+def toMathlib : WalkingParallelPairCat ⥤ WalkingParallelPair where
+  obj := toMathlibObj
+  map := toMathlibMap
+  map_id := by intro x; cases x <;> rfl
+  map_comp := by
+    intro X Y Z f g
+    match f, g with
+    | Hom.id _, Hom.id _ => cases X <;> rfl
+    | Hom.id _, Hom.ofSemi g' => cases g' <;> rfl
+    | Hom.ofSemi f', Hom.id _ => cases f' <;> rfl
+    | Hom.ofSemi f', Hom.ofSemi g' => cases f' <;> cases g'
+
+/-- Map an object from mathlib's category to ours. -/
+def fromMathlibObj : WalkingParallelPair → WalkingParallelPairCat
+  | WalkingParallelPair.zero => WalkingParallelPairSemi.zero
+  | WalkingParallelPair.one => WalkingParallelPairSemi.one
+
+/-- Map a morphism from mathlib's category to ours. -/
+def fromMathlibMap : {X Y : WalkingParallelPair} →
+    (X ⟶ Y) → Hom (fromMathlibObj X) (fromMathlibObj Y)
+  | .zero, .one, .left => Hom.ofSemi .left
+  | .zero, .one, .right => Hom.ofSemi .right
+  | .zero, .zero, .id .zero => Hom.id .zero
+  | .one, .one, .id .one => Hom.id .one
+
+/-- Functor from mathlib's WalkingParallelPair. -/
+def fromMathlib : WalkingParallelPair ⥤ WalkingParallelPairCat where
+  obj := fromMathlibObj
+  map := fromMathlibMap
+  map_id := by intro x; cases x <;> rfl
+  map_comp := by
+    intro X Y Z f g
+    cases f <;> cases g <;> try rfl
+    · cases X <;> rfl
+
+/-- The composition toMathlib ∘ fromMathlib is the identity functor. -/
+theorem toMathlib_fromMathlib : toMathlib ⋙ fromMathlib = 𝟭 _ := by
+  apply Functor.hext
+  · intro x; cases x <;> rfl
+  · intro x y f
+    cases f with
+    | ofSemi f' => cases f' <;> rfl  -- only left and right exist (zero → one)
+    | id => cases x <;> rfl  -- id case
+
+/-- The composition fromMathlib ∘ toMathlib is the identity functor. -/
+theorem fromMathlib_toMathlib : fromMathlib ⋙ toMathlib = 𝟭 _ := by
+  apply Functor.hext
+  · intro x; cases x <;> rfl
+  · intro x y f
+    cases f with
+    | left => rfl
+    | right => rfl
+    | id => cases x <;> rfl
+
+/-- The two categories are isomorphic. -/
+def isomorphism : WalkingParallelPairCat ≌ WalkingParallelPair where
+  functor := toMathlib
+  inverse := fromMathlib
+  unitIso := eqToIso toMathlib_fromMathlib.symm
+  counitIso := eqToIso fromMathlib_toMathlib
+  functor_unitIso_comp := by
+    intro X
+    simp
+    cases X <;> rfl
+
+end WalkingParallelPairCat
