@@ -54,7 +54,7 @@ instance (a b : WalkingParallelPairSemi) : Decidable (Nonempty (a ⟶ b)) := by
   · exact isFalse (fun ⟨f⟩ => nomatch f)
 
 /-- The partial order on the walking parallel pair: 0 ≤ 1. -/
-instance : PartialOrder WalkingParallelPairSemi where
+instance : TopologicalOrder WalkingParallelPairSemi where
   le a b := a = zero ∨ (a = one ∧ b = one)
   le_refl a := by cases a <;> simp
   le_trans a b c hab hbc := by
@@ -148,26 +148,3 @@ example : AcyclicQuiver WalkingParallelPairSemi := inferInstance
 example : Semicategory WalkingParallelPairSemi := inferInstance
 example : AcyclicCategory WalkingParallelPairSemi := inferInstance
 example : FiniteAcyclicCategory WalkingParallelPairSemi := inferInstance
-
-/-!
-## Relationship to Mathlib's WalkingParallelPair
-
-Mathlib's `WalkingParallelPair` (from `Mathlib.CategoryTheory.Limits.Shapes.
-Equalizers`) is the category with:
-- Two objects: `zero` and `one`
-- Two parallel morphisms: `left` and `right` (both from `zero` to `one`)
-- Identity morphisms for each object
-
-Our `WalkingParallelPairSemi` is the underlying *semicategory* - it has the
-same objects and the same two parallel morphisms, but *without* the identity
-morphisms.
-
-The relationship between these two structures demonstrates a key aspect of our
-acyclic category framework:
-1. `WalkingParallelPairSemi` is a `FiniteAcyclicCategory` (a semicategory)
-2. Identities can be adjoined to yield mathlib's `WalkingParallelPair`
-3. The two are equivalent via identity adjoining
-
-This shows that our acyclic category infrastructure correctly models the
-semicategory structure underlying standard categorical examples from mathlib.
--/
