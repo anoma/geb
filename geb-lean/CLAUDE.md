@@ -460,6 +460,64 @@ This approach helps you:
 - Keep individual proofs manageable and understandable
 - Debug issues more easily by isolating problems
 
+## Testing
+
+This project uses Lean 4's built-in testing capabilities along with
+property-based testing via Plausible.
+
+### Running Tests
+
+```bash
+lake build test
+```
+
+### Writing Tests
+
+Tests live in the `test/` directory. See [test/README.md](test/README.md) for
+detailed information.
+
+#### Quick Reference
+
+**Unit tests with `#guard`**:
+
+```lean
+import GebLean
+
+#guard some_function arg == expected_result
+```
+
+**Property-based testing with Plausible**:
+
+```lean
+import Plausible
+
+-- Test that associativity holds
+example (a b c : MyType) : (a ∘ b) ∘ c = a ∘ (b ∘ c) := by
+  plausible  -- Finds counterexamples if property doesn't hold
+```
+
+**Note**: The `linter.hashCommand` linter is disabled for all test files via
+the lakefile configuration, so you don't need `set_option` in test files.
+
+### Testing Strategy
+
+- **Algebraic laws** (associativity, identity, etc.): Use `plausible` to test
+  properties
+- **Concrete examples**: Use `#guard` with specific values
+- **Edge cases**: Test boundary conditions explicitly
+- **Functors and morphisms**: Verify composition and identity laws
+
+### Why Plausible is Available
+
+Plausible is already available as a transitive dependency through mathlib.
+It provides QuickCheck-style property testing integrated with Lean's tactic
+framework.
+
+**References**:
+
+- <https://github.com/leanprover-community/plausible/>
+- <https://brandonrozek.com/blog/writing-unit-tests-lean-4/>
+
 ## Markdown Linting
 
 All markdown files in this repository should be free of lint warnings. Use

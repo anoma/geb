@@ -16,3 +16,11 @@ scope = "leanprover-community"
 
 [[lean_lib]]
 name = "GebLean"
+
+# Test library
+[[lean_lib]]
+name = "test"
+roots = ["test"]
+
+[lean_lib.leanOptions]
+linter.hashCommand = false

@@ -1,5 +1,23 @@
 # geb-lean
 
+A Lean 4 formalization of categorical concepts from Gödel, Escher, Bach.
+
+## Building
+
+```bash
+lake build
+```
+
+## Testing
+
+Run the test suite:
+
+```bash
+lake build test
+```
+
+See [test/README.md](test/README.md) for more information about writing tests.
+
 ## GitHub configuration
 
 To set up your new GitHub repository, follow these steps:
