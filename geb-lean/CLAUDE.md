@@ -418,6 +418,51 @@ eqToIso h     -- Creates an isomorphism X ≅ Y
 in dependent types (e.g., morphism equalities `f = g` where types depend on
 objects), prefer explicit casts or equivalences over direct rewrites.
 
+### Proving Functor Equality
+
+When proving that two functors are equal (e.g., `F ⋙ G = 𝟭 C`):
+
+1. **Use `Functor.hext`** for heterogeneous equality:
+   - First goal: object equality `∀ x, F.obj x = G.obj x`
+   - Second goal: morphism equality using `≍` (heterogeneous equality)
+   - The morphism goal has form: `∀ x y f, F.map f ≍ G.map f`
+
+2. **Pattern matching strategy**:
+   - Case on the morphism constructor first: `cases f with`
+   - Handle each constructor separately
+   - For dependent pattern matching, remember which combinations are possible
+   - Use `nomatch` or just omit cases that are impossible
+
+3. **Working with dependent pattern matches**:
+   - When casing creates subcases, check which are actually inhabited
+   - Example: In a semicategory with only `zero → one` morphisms:
+     - `ofSemi` only exists when `x = zero` and `y = one`
+     - Other combinations (`zero → zero`, `one → one`, `one → zero`)
+       have no `ofSemi` morphisms
+   - Use `cases` on the actual morphism value to handle all constructors
+
+4. **Avoid computational definitions in proofs**:
+   - Don't use tactics like `cases` in the `map` field of a functor
+   - Define `map` computationally with explicit pattern matching
+   - Keep proofs (`map_id`, `map_comp`) separate and proof-irrelevant
+
+Example pattern:
+
+```lean
+theorem functor_comp_id : F ⋙ G = 𝟭 C := by
+  apply Functor.hext
+  · intro x; cases x <;> rfl  -- object equality
+  · intro x y f
+    cases f with
+    | constructor1 => ...  -- handle each constructor
+    | constructor2 x' => cases x' <;> rfl  -- nested case if needed
+```
+
+**Key insight**: When proving functor equality with `Functor.hext`, the
+heterogeneous equality `≍` won't reduce unless you properly case on all the
+variables involved. If `rfl` fails, you likely haven't cased enough to expose
+the definitional equality.
+
 ### Comment Style
 
 Comments should explain **what the code does and why**, not the historical
