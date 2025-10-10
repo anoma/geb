@@ -534,17 +534,18 @@ theorem functorDataToFunctor_comp_functorToFunctorData :
       natTransToData_mkNatTrans]
     simp
 
-/-- The two functors form an equivalence of categories where the unit and
-    counit are identity natural transformations (not just isomorphisms).
-    This is stronger than a general equivalence. -/
-def functorDataEquivCat : FunctorData C ≌ (Obj ⥤ C) where
-  functor := functorDataToFunctor
-  inverse := functorToFunctorData
-  unitIso := eqToIso functorDataToFunctor_comp_functorToFunctorData
-  counitIso := eqToIso functorToFunctorData_comp_functorDataToFunctor
-  functor_unitIso_comp := by
-    intro F
-    simp
+/-- The two functors form a categorical isomorphism: they compose to the
+    identity functor in both directions. -/
+def functorDataIsoCat : FunctorData C ≅Cat (Obj ⥤ C) where
+  hom := functorDataToFunctor
+  inv := functorToFunctorData
+  hom_inv_id := functorDataToFunctor_comp_functorToFunctorData
+  inv_hom_id := functorToFunctorData_comp_functorDataToFunctor
+
+/-- The two functors form an equivalence of categories (derived from the
+    isomorphism). -/
+def functorDataEquivCat : FunctorData C ≌ (Obj ⥤ C) :=
+  CategoryTheory.Equivalence.ofIso functorDataIsoCat
 
 /-- Two FunctorData structures are equivalent if their corresponding functors
     are naturally isomorphic. -/
