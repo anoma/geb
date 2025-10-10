@@ -12,6 +12,3 @@ compile time. If it fails, the build will fail.
 
 -- Test that we can import the library
 #guard true
-
--- TODO: Add actual tests for GebLean functionality once we have
--- concrete examples to test
