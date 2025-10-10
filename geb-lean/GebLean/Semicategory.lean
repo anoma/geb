@@ -1,6 +1,7 @@
 import Mathlib.Combinatorics.Quiver.Basic
 import Mathlib.Combinatorics.Quiver.Prefunctor
 import Mathlib.CategoryTheory.Category.Basic
+import Mathlib.CategoryTheory.ConcreteCategory.Bundled
 import GebLean.FiniteQuiver
 
 /-!
@@ -28,19 +29,19 @@ universe u u' u'' v
 
 /-- A compositional structure provides a way to compose morphisms in a
     quiver. -/
-abbrev CompositionalStruct (V : Type u) [Quiver.{v} V] :=
+abbrev CompositionalStruct (V : Type u) [Quiver.{v + 1} V] :=
   ∀ {a b c : V}, (a ⟶ b) → (b ⟶ c) → (a ⟶ c)
 
 /-- An associativity law states that composition is associative. This is
     a property dependent upon having a compositional structure. -/
-abbrev AssociativityLaw (V : Type u) [Quiver.{v} V]
+abbrev AssociativityLaw (V : Type u) [Quiver.{v + 1} V]
     (comp : CompositionalStruct V) :=
   ∀ {a b c d : V} (f : a ⟶ b) (g : b ⟶ c) (h : c ⟶ d),
     comp (comp f g) h = comp f (comp g h)
 
 /-- The structure of a semicategory: composition and associativity,
     without requiring identity morphisms. -/
-structure SemicategoryStruct (V : Type u) [Quiver.{v} V] where
+structure SemicategoryStruct (V : Type u) [Quiver.{v + 1} V] where
   /-- Composition of morphisms -/
   comp : CompositionalStruct V
   /-- Associativity of composition -/
@@ -48,7 +49,7 @@ structure SemicategoryStruct (V : Type u) [Quiver.{v} V] where
 
 /-- A semicategory is a quiver with associative composition but no
     identity morphisms. -/
-class Semicategory (V : Type u) extends Quiver.{v} V where
+class Semicategory (V : Type u) extends Quiver.{v + 1} V where
   toSemicategoryStruct : SemicategoryStruct V := by infer_instance
 
 instance {V : Type u} [h : Semicategory V] :
@@ -127,45 +128,45 @@ theorem comp_assoc {X : Type u} [Semicategory X]
 
 end Semifunctor
 
-/-- The category of semicategories as a small category where objects
-    and morphisms are in the same universe. For unbundled
-    semicategories, objects and morphisms may be in different
-    universes. -/
-structure SemicategoryCat : Type (u + 1) where
-  /-- The underlying type of objects. -/
-  carrier : Type u
-  /-- The quiver structure -/
-  quiver : Quiver.{u} carrier
-  /-- The semicategory structure -/
-  semicat : @SemicategoryStruct carrier quiver
+/-- The large category of semicategories, allowing objects and
+    morphisms to be in different universes. Uses the Bundled pattern
+    from mathlib. -/
+def SemicategoryCat.Large : Type (max (u + 1) (v + 1)) :=
+  CategoryTheory.Bundled (Semicategory.{u, v})
 
-instance instSemicategoryCatQuiver (V : SemicategoryCat) :
-    Quiver V.carrier := V.quiver
-instance instSemicategoryCatSemicategoryStruct (V : SemicategoryCat) :
-    SemicategoryStruct V.carrier := V.semicat
-
-instance instSemicategoryCatSemicategory (V : SemicategoryCat) :
-    Semicategory V.carrier where
-  toSemicategoryStruct := V.semicat
-
-namespace SemicategoryCat
+namespace SemicategoryCat.Large
 
 open CategoryTheory
 
-instance : CoeSort SemicategoryCat.{u} (Type u) where
-  coe V := V.carrier
+instance : CoeSort (SemicategoryCat.Large.{u, v}) (Type u) where
+  coe V := V.α
 
-/-- Construct a bundled semicategory from a type with a semicategory
-    instance. -/
-def of (V : Type u) [q : Quiver.{u} V] (sc : SemicategoryStruct V) :
-    SemicategoryCat.{u} := ⟨V, q, sc⟩
+/-- Extract the Semicategory instance from a bundled semicategory. -/
+def str' (V : SemicategoryCat.Large.{u, v}) : Semicategory.{u, v} V.α :=
+  V.str
 
-instance : Category.{u} SemicategoryCat.{u} where
-  Hom V W := Semifunctor V.carrier W.carrier
-  id V := Semifunctor.id V.carrier
+-- Make the instance available automatically
+instance (V : SemicategoryCat.Large.{u, v}) : Semicategory.{u, v} V.α :=
+  V.str
+
+/-- Construct a large bundled semicategory from a type with a
+    semicategory instance. -/
+def of (V : Type u) [Semicategory.{u, v} V] : SemicategoryCat.Large.{u, v} :=
+  Bundled.of V
+
+instance : Category.{max u v} (SemicategoryCat.Large.{u, v}) where
+  Hom V W := Semifunctor V.α W.α
+  id V := Semifunctor.id V.α
   comp {_ _ _} F G := Semifunctor.comp F G
   id_comp {_ _} := Semifunctor.id_comp
   comp_id {_ _} := Semifunctor.comp_id
   assoc {_ _ _ _} := Semifunctor.comp_assoc
 
-end SemicategoryCat
+end SemicategoryCat.Large
+
+/-- The small category of semicategories, where objects and morphisms
+    are in the same universe. -/
+abbrev SemicategoryCat.Small := SemicategoryCat.Large.{u, u}
+
+/-- The default is the small category of semicategories. -/
+abbrev SemicategoryCat := SemicategoryCat.Small

@@ -32,7 +32,7 @@ abbrev TopologicalOrder := PartialOrder
 
 /-- The property that every edge in a quiver goes from a smaller vertex
     to a larger vertex with respect to a topological order. -/
-abbrev QuiverEdgesIncrease (V : Type u) [Quiver.{v} V]
+abbrev QuiverEdgesIncrease (V : Type u) [Quiver.{v + 1} V]
     [TopologicalOrder V] :=
   ∀ {a b : V}, (a ⟶ b) → a < b
 
@@ -40,7 +40,7 @@ abbrev QuiverEdgesIncrease (V : Type u) [Quiver.{v} V]
     vertices such that every edge goes from a smaller to a larger
     vertex. This provides a topological sort, which proves the quiver
     is acyclic. -/
-class AcyclicQuiver (V : Type u) extends Quiver.{v} V,
+class AcyclicQuiver (V : Type u) extends Quiver.{v + 1} V,
     TopologicalOrder V where
   edgesIncrease : QuiverEdgesIncrease V := by infer_instance
 
@@ -164,48 +164,40 @@ theorem comp_assoc {X : Type u} [AcyclicQuiver X]
 
 end AcyclicQuiverHom
 
-/-- The category of acyclic quivers (as a small category where vertices
-    and edges are in the same universe). -/
-structure AcyclicQuiverCat : Type (u + 1) where
-  /-- The type of vertices. -/
-  carrier : Type u
-  /-- The quiver structure -/
-  quiver : Quiver.{u} carrier
-  /-- The topological order on vertices -/
-  order : TopologicalOrder carrier
-  /-- Proof that edges increase -/
-  edgesIncrease : @QuiverEdgesIncrease carrier quiver order
+/-- The large category of acyclic quivers, allowing vertices and edges
+    to be in different universes. Uses the Bundled pattern from
+    mathlib. -/
+def AcyclicQuiverCat.Large : Type (max (u + 1) (v + 1)) :=
+  CategoryTheory.Bundled (AcyclicQuiver.{u, v})
 
-instance instAcyclicQuiverCatQuiver (V : AcyclicQuiverCat) :
-    Quiver V.carrier := V.quiver
-instance instAcyclicQuiverCatOrder (V : AcyclicQuiverCat) :
-    TopologicalOrder V.carrier := V.order
-instance instAcyclicQuiverCatEdgesIncrease (V : AcyclicQuiverCat) :
-    QuiverEdgesIncrease V.carrier :=
-  V.edgesIncrease
-
-instance instAcyclicQuiverCatAcyclicQuiver (V : AcyclicQuiverCat) :
-    AcyclicQuiver V.carrier where
-  edgesIncrease := V.edgesIncrease
-
-namespace AcyclicQuiverCat
+namespace AcyclicQuiverCat.Large
 
 open CategoryTheory
 
-instance : CoeSort AcyclicQuiverCat (Type u) where
-  coe V := V.carrier
+instance : CoeSort (AcyclicQuiverCat.Large.{u, v}) (Type u) where
+  coe V := V.α
 
-/-- Construct a bundled acyclic quiver from a type with an acyclic
-    quiver instance. -/
-def of (V : Type u) [q : Quiver.{u} V] [o : TopologicalOrder V]
-    (ei : QuiverEdgesIncrease V) : AcyclicQuiverCat := ⟨V, q, o, ei⟩
+instance (V : AcyclicQuiverCat.Large.{u, v}) : AcyclicQuiver.{u, v} V.α :=
+  V.str
 
-instance : Category.{u} AcyclicQuiverCat where
-  Hom V W := AcyclicQuiverHom.{u, u} V W
-  id V := AcyclicQuiverHom.id V
+/-- Construct a large bundled acyclic quiver from a type with an
+    acyclic quiver instance. -/
+def of (V : Type u) [AcyclicQuiver.{u, v} V] : AcyclicQuiverCat.Large.{u, v} :=
+  Bundled.of V
+
+instance : Category.{max u v} (AcyclicQuiverCat.Large.{u, v}) where
+  Hom V W := AcyclicQuiverHom V.α W.α
+  id V := AcyclicQuiverHom.id V.α
   comp {_ _ _} F G := AcyclicQuiverHom.comp F G
   id_comp {_ _} := AcyclicQuiverHom.id_comp
   comp_id {_ _} := AcyclicQuiverHom.comp_id
   assoc {_ _ _ _} := AcyclicQuiverHom.comp_assoc
 
-end AcyclicQuiverCat
+end AcyclicQuiverCat.Large
+
+/-- The small category of acyclic quivers, where vertices and edges are
+    in the same universe. -/
+abbrev AcyclicQuiverCat.Small := AcyclicQuiverCat.Large.{u, u}
+
+/-- The default is the small category of acyclic quivers. -/
+abbrev AcyclicQuiverCat := AcyclicQuiverCat.Small
