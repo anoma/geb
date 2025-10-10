@@ -8,8 +8,6 @@ import Mathlib.Data.Fintype.Basic
 This file tests the acyclic category infrastructure using a concrete example:
 a walking parallel pair without identities.
 
-## Main Example
-
 We construct a finite acyclic semicategory representing two parallel arrows
 between two objects (like the walking parallel pair, but without identities).
 This is the free semicategory on the graph:
@@ -76,7 +74,95 @@ theorem edges_increase : ∀ {a b : WalkingParallelPairSemi},
 instance : AcyclicQuiver WalkingParallelPairSemi where
   edgesIncrease := edges_increase
 
+/-- Composition in the walking parallel pair semicategory. Since all
+    morphisms go from 0 to 1, there are no composable pairs. -/
+def comp : ∀ {a b c : WalkingParallelPairSemi},
+    (a ⟶ b) → (b ⟶ c) → (a ⟶ c) := by
+  intro a b c f g
+  cases f <;> cases g
+
+/-- Associativity of composition (vacuously true since no composable
+    pairs exist). -/
+theorem comp_assoc : ∀ {a b c d : WalkingParallelPairSemi}
+    (f : a ⟶ b) (g : b ⟶ c) (h : c ⟶ d),
+    comp (comp f g) h = comp f (comp g h) := by
+  intro a b c d f g h
+  cases f <;> cases g
+
+/-- The walking parallel pair is a semicategory. -/
+instance : Semicategory WalkingParallelPairSemi where
+  toSemicategoryStruct := {
+    comp := comp
+    assoc := comp_assoc
+  }
+
+/-- The walking parallel pair is an acyclic category. -/
+instance : AcyclicCategory WalkingParallelPairSemi where
+  toSemicategoryStruct := {
+    comp := comp
+    assoc := comp_assoc
+  }
+
+/-- No edges from zero to zero. -/
+instance : IsEmpty (zero ⟶ zero) where
+  false f := nomatch f
+
+instance : Fintype (zero ⟶ zero) := Fintype.ofIsEmpty
+
+/-- No edges from one to zero. -/
+instance : IsEmpty (one ⟶ zero) where
+  false f := nomatch f
+
+instance : Fintype (one ⟶ zero) := Fintype.ofIsEmpty
+
+/-- No edges from one to one. -/
+instance : IsEmpty (one ⟶ one) where
+  false f := nomatch f
+
+instance : Fintype (one ⟶ one) := Fintype.ofIsEmpty
+
+/-- Edges from zero to one form a finite type (isomorphic to Bool). -/
+instance : Fintype (zero ⟶ one) :=
+  Fintype.ofEquiv Bool {
+    toFun := fun b => match b with | true => Hom.left | false => Hom.right
+    invFun := fun h => match h with | Hom.left => true | Hom.right => false
+    left_inv := by intro b; cases b <;> rfl
+    right_inv := by intro h; cases h <;> rfl
+  }
+
+/-- Finiteness witness for the walking parallel pair. -/
+instance finQuiverWitness : FinQuiverWitness WalkingParallelPairSemi where
+  fintypeVertex := inferInstance
+  fintypeEdge a b := by
+    cases a <;> cases b
+    all_goals infer_instance
+
+/-- The walking parallel pair is a finite acyclic category. -/
+instance : FiniteAcyclicCategory WalkingParallelPairSemi where
+  toFiniteness := finQuiverWitness
+
 end WalkingParallelPairSemi
 
-/-- Test that we can construct acyclic quiver instances. -/
+/-- Test that we can construct the necessary instances. -/
 example : AcyclicQuiver WalkingParallelPairSemi := inferInstance
+example : Semicategory WalkingParallelPairSemi := inferInstance
+example : AcyclicCategory WalkingParallelPairSemi := inferInstance
+example : FiniteAcyclicCategory WalkingParallelPairSemi := inferInstance
+
+/-!
+## Relationship to Mathlib's WalkingParallelPair
+
+Mathlib's `WalkingParallelPair` (from `Mathlib.CategoryTheory.Limits.Shapes.
+Equalizers`) is the category with two objects and two parallel arrows plus
+identities. Our `WalkingParallelPairSemi` is the underlying semicategory
+without identities.
+
+The two are related as follows:
+- `WalkingParallelPairSemi` is a finite acyclic category (semicategory)
+- `WalkingParallelPair` is the result of adjoining identities to this
+  semicategory
+- These should be categorically equivalent via the identity adjoining functor
+
+This demonstrates that our acyclic category infrastructure correctly handles
+standard categorical examples from mathlib.
+-/
