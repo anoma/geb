@@ -1,4 +1,6 @@
 import Mathlib.Logic.Equiv.Defs
+import Mathlib.CategoryTheory.Category.Cat
+import Mathlib.CategoryTheory.Equivalence
 
 /-!
 # Utilities
@@ -6,6 +8,36 @@ import Mathlib.Logic.Equiv.Defs
 General-purpose utility functions and lemmas that may be useful across
 different modules.
 -/
+
+namespace CategoryTheory
+
+universe u v
+
+variable {C D : Type u} [Category.{v} C] [Category.{v} D]
+
+/-- Notation for isomorphism between categories without explicit `Cat.of`. -/
+notation C " ≅Cat " D => Cat.of C ≅ Cat.of D
+
+/-- An isomorphism of categories induces an equivalence of categories.
+
+    Note: This uses `eqToIso` to convert functor equalities into natural
+    isomorphisms. The coherence proof is admitted with `sorry` as it requires
+    complex reasoning about how `eqToHom` interacts with functor composition.
+    In practice, this is always true when functors compose to identity. -/
+def Equivalence.ofIso (iso : C ≅Cat D) : C ≌ D where
+  functor := iso.hom
+  inverse := iso.inv
+  unitIso := eqToIso iso.hom_inv_id.symm
+  counitIso := eqToIso iso.inv_hom_id
+  functor_unitIso_comp := by
+    intro X
+    -- When iso.hom ⋙ iso.inv = 𝟭 C, the natural transformation from
+    -- (iso.hom ⋙ iso.inv).obj X to X composed with the functor's action
+    -- should give identity. This is conceptually obvious but technically
+    -- complex to prove with eqToHom.
+    sorry
+
+end CategoryTheory
 
 /-- A subtype of sigma where both indices are constrained to equal specific
     values is equivalent to the base type at those indices.

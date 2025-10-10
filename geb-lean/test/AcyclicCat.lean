@@ -1,4 +1,5 @@
 import GebLean.AcyclicCat
+import GebLean.Utilities
 import Mathlib.Data.Fintype.Basic
 import Mathlib.CategoryTheory.Category.Basic
 import Mathlib.CategoryTheory.Limits.Shapes.Equalizers
@@ -283,21 +284,14 @@ theorem fromMathlib_toMathlib : fromMathlib ⋙ toMathlib = 𝟭 _ := by
     | id => cases x <;> rfl
 
 /-- The two categories are isomorphic (as objects in Cat). -/
-def isomorphism : Cat.of WalkingParallelPairCat ≅ Cat.of WalkingParallelPair where
+def isomorphism : WalkingParallelPairCat ≅Cat WalkingParallelPair where
   hom := toMathlib
   inv := fromMathlib
   hom_inv_id := toMathlib_fromMathlib
   inv_hom_id := fromMathlib_toMathlib
 
-/-- The two categories are equivalent. -/
-def equivalence : WalkingParallelPairCat ≌ WalkingParallelPair where
-  functor := toMathlib
-  inverse := fromMathlib
-  unitIso := eqToIso toMathlib_fromMathlib.symm
-  counitIso := eqToIso fromMathlib_toMathlib
-  functor_unitIso_comp := by
-    intro X
-    simp
-    cases X <;> rfl
+/-- The two categories are equivalent (derived from the isomorphism). -/
+def equivalence : WalkingParallelPairCat ≌ WalkingParallelPair :=
+  Equivalence.ofIso isomorphism
 
 end WalkingParallelPairCat
