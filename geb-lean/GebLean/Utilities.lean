@@ -31,11 +31,43 @@ def Equivalence.ofIso (iso : C ≅Cat D) : C ≌ D where
   counitIso := eqToIso iso.inv_hom_id
   functor_unitIso_comp := by
     intro X
-    -- When iso.hom ⋙ iso.inv = 𝟭 C, the natural transformation from
-    -- (iso.hom ⋙ iso.inv).obj X to X composed with the functor's action
-    -- should give identity. This is conceptually obvious but technically
-    -- complex to prove with eqToHom.
-    sorry
+    -- Unfold eqToIso to eqToHom at natural transformation level
+    rw [eqToIso.hom, eqToIso.hom]
+
+    -- Extract object equalities from functor equalities
+    -- iso.hom_inv_id : iso.hom ≫ iso.inv = 𝟙 (Cat.of C)
+    -- This means as functors: iso.hom ≫ iso.inv = identity functor on C
+    have h1 : (iso.hom ≫ iso.inv).obj X = X := by
+      rw [iso.hom_inv_id]
+      rfl
+
+    have h2 : (iso.inv ≫ iso.hom).obj (iso.hom.obj X) = iso.hom.obj X := by
+      rw [iso.inv_hom_id]
+      rfl
+
+    -- The eqToHom components are based on these object equalities
+    -- Goal: iso.hom.map (eqToHom h1.symm) ≫ eqToHom h2 = 𝟙 (iso.hom.obj X)
+
+    -- Expand composition on objects
+    rw [Cat.comp_obj] at h1 h2
+
+    -- Now h1 : iso.inv.obj (iso.hom.obj X) = X
+    -- and h2 : iso.hom.obj (iso.inv.obj (iso.hom.obj X)) = iso.hom.obj X
+
+    -- Convert natural transformation components to eqToHom of object equalities
+    rw [eqToHom_app, eqToHom_app]
+
+    -- Now the goal is about morphisms eqToHom in the target category
+    -- iso.hom.map (eqToHom ...) ≫ eqToHom ... = 𝟙
+
+    -- Use functoriality: F.map (eqToHom p) = eqToHom (congrArg F.obj p)
+    rw [eqToHom_map]
+
+    -- Now both are eqToHom, so we can use eqToHom_trans
+    rw [eqToHom_trans]
+
+    -- The composite equality should be refl, giving identity
+    simp [eqToHom_refl]
 
 end CategoryTheory
 
