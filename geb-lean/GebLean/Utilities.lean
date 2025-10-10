@@ -20,10 +20,9 @@ notation C " ≅Cat " D => Cat.of C ≅ Cat.of D
 
 /-- An isomorphism of categories induces an equivalence of categories.
 
-    Note: This uses `eqToIso` to convert functor equalities into natural
-    isomorphisms. The coherence proof is admitted with `sorry` as it requires
-    complex reasoning about how `eqToHom` interacts with functor composition.
-    In practice, this is always true when functors compose to identity. -/
+    This uses `eqToIso` to convert functor equalities into natural isomorphisms.
+    The coherence condition follows from functoriality and composition of
+    `eqToHom` morphisms. -/
 def Equivalence.ofIso (iso : C ≅Cat D) : C ≌ D where
   functor := iso.hom
   inverse := iso.inv
