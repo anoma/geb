@@ -262,6 +262,8 @@ hom_inv_id := by
 - Don't create documentation files unless explicitly requested
 - Keep responses concise - match verbosity to task complexity
 - Avoid emojis unless explicitly requested by the user
+- Don't write "TODO" comments or summaries of completed or future work in the
+  code itself; track to-dos/future work below in `CLAUDE.md` if necessary
 
 ### Extensionality Lemmas
 
@@ -540,7 +542,6 @@ Common issues to watch for:
 ## Future Work
 
 This section tracks planned improvements and extensions to the codebase.
-These should not appear as TODO comments in code files.
 
 ### Acyclic Quiver Infrastructure
 

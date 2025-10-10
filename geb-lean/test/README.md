@@ -59,6 +59,7 @@ example (xs : Array Int) (w : ∃ x : Int, x ∈ xs) :
 ```
 
 Plausible integrates with the tactic framework and can automatically:
+
 - Generate test cases for built-in types
 - Shrink counterexamples to minimal failing cases
 - Find edge cases you might not think of
