@@ -13,7 +13,7 @@ lake build
 Run the test suite:
 
 ```bash
-lake build test
+lake test
 ```
 
 See [test/README.md](test/README.md) for more information about writing tests.

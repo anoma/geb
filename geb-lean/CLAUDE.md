@@ -468,8 +468,11 @@ property-based testing via Plausible.
 ### Running Tests
 
 ```bash
-lake build test
+lake test
 ```
+
+The test driver is configured as a library, so tests run during the build
+process. Any `#guard` assertion failures will cause the build to fail.
 
 ### Writing Tests
 

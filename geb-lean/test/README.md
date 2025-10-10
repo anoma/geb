@@ -4,11 +4,19 @@ This directory contains tests for the GebLean library.
 
 ## Running Tests
 
-Build and run all tests:
+Run all tests:
+
+```bash
+lake test
+```
+
+Or explicitly build the test library:
 
 ```bash
 lake build test
 ```
+
+Both commands will fail if any `#guard` assertions fail.
 
 ## Test Structure
 
