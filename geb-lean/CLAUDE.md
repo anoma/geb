@@ -442,9 +442,10 @@ When proving that two functors are equal (e.g., `F ⋙ G = 𝟭 C`):
    - Use `cases` on the actual morphism value to handle all constructors
 
 4. **Avoid computational definitions in proofs**:
-   - Don't use tactics like `cases` in the `map` field of a functor
-   - Define `map` computationally with explicit pattern matching
-   - Keep proofs (`map_id`, `map_comp`) separate and proof-irrelevant
+   - Don't use tactics (such as `cases`) to generate computational content;
+     for any computational content, construct terms explicitly
+   - Separate proof-irrelevant proof content, which may use tactics, from
+     computational content
 
 Example pattern:
 
