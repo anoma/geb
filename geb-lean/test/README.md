@@ -45,6 +45,16 @@ decidability instances to enable equality testing. See
 [Brandon Rozek's guide](https://brandonrozek.com/blog/writing-unit-tests-lean-4/)
 for details.
 
+When you need cardinality checks on `Fintype`s, prefer explicit witness
+lists whose length reduces definitionally, e.g.
+
+```lean
+def exampleVertices : List MyFiniteType := [x₀, x₁]
+#guard decide (exampleVertices.length = 2)
+```
+
+This avoids introducing classical choice just to evaluate `Fintype.card`.
+
 ### Using Plausible (Property-Based Testing)
 
 Plausible is a property testing framework (similar to QuickCheck/Hypothesis)
