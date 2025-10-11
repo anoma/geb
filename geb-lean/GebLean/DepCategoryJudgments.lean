@@ -400,6 +400,14 @@ private lemma compT_invFun_composite.{u} (data : DepCategoryData.{u})
     cases hhb
     simp [depToFunctorData, functorDataToDep_depToFunctorData_morT, cast_eq]
 
+/-- Helper to eliminate six equalities over a common type in sequence. -/
+private def elimSixEq {P : Sort _} {α : Sort _}
+    {x₁ y₁ x₂ y₂ x₃ y₃ x₄ y₄ x₅ y₅ x₆ y₆ : α}
+    (h₁ : x₁ = y₁) (h₂ : x₂ = y₂) (h₃ : x₃ = y₃)
+    (h₄ : x₄ = y₄) (h₅ : x₅ = y₅) (h₆ : x₆ = y₆) (k : P) : P := by
+  cases h₁; cases h₂; cases h₃; cases h₄; cases h₅; cases h₆
+  exact k
+
 private lemma compT_mor_eq.{u} (data : DepCategoryData.{u}) (a b c : data.objT)
     (f : (functorDataToDep (depToFunctorData data)).morT a b)
     (g : (functorDataToDep (depToFunctorData data)).morT b c)
@@ -504,8 +512,8 @@ def functorDataToDep_depToFunctorData_compT.{u}
       ⟨⟨a_h, b_h, h'⟩, hha, hhb⟩ =>
       simp only [depToFunctorData] at hfa hfb hga hgb hha hhb
       simp only [extractRoundTrippedMor]
-      cases hfa; cases hfb; cases hga; cases hgb; cases hha; cases hhb
-      simp [cast_eq]
+      exact elimSixEq (α := data.objT) hfa hfb hga hgb hha hhb <| by
+        simp
 
 abbrev functorToDataDep_mkCopresheafDep_morEquiv.{u}
     (data : DepCategoryData.{u}) (a b : data.objT) :
