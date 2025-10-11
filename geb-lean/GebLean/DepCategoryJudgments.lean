@@ -279,14 +279,8 @@ def depToFunctorData_functorDataToDep_idC.{u}
     ⟨data.dom (data.idMor i), ⟨data.idMor i, rfl, h_endo.symm⟩, ⟨i, rfl⟩⟩
   left_inv i := by
     rcases i with ⟨o, ⟨m, hdom, hcod⟩, ⟨i, hi⟩⟩
-    -- Extract: data.idMor i = m
-    have him : data.idMor i = (⟨m, hdom, hcod⟩ :
-      {m : data.morC // data.dom m = o ∧ data.cod m = o}).val := hi
-    simp at him
-    subst him hdom
-    -- Now goal is: ⟨m, hcod⟩ = ⟨m, proof_from_h_id_endo⟩
-    -- Both proofs are of the same Prop,
-    -- equal by proof irrelevance
+    cases hi
+    cases hdom
     rfl
   right_inv i := rfl
 
