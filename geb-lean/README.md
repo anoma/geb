@@ -41,3 +41,23 @@ lake test
 
 See [test/README.md](test/README.md) for conventions and future testing
 plans.
+
+## Example
+
+Create the walking parallel pair semicategory from the library and check a
+few facts interactively:
+
+```lean
+import GebLean
+
+open WalkingParallelPairSemi
+
+example : Semicategory WalkingParallelPairSemi := inferInstance
+
+def bothArrows : List (zero ⟶ one) :=
+  [Hom.left, Hom.right]
+
+#guard decide (bothArrows.length = 2)
+```
+
+This runs inside `lake repl` or a `lean` file that imports `GebLean`.
