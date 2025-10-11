@@ -2,6 +2,11 @@
 
 This document contains guidance for AI assistants working on this Lean 4 project.
 
+## Project Notes
+
+- All modules under `GebLean/` should open `namespace GebLean … end GebLean`; tests may need `open GebLean` rather than un-qualified names.
+- Prefer `CategoryTheory.catIsoToEquivalence` (or `Cat.equivOfIso`) when turning category isomorphisms into equivalences; `GebLean/Utilities.lean` re-exports a `catIsoToEquivalence` helper for convenience.
+
 ## Workflow
 
 ### Build Before Proposing Changes
