@@ -153,6 +153,20 @@ example : Semicategory WalkingParallelPairSemi := inferInstance
 example : AcyclicCategory WalkingParallelPairSemi := inferInstance
 example : FiniteAcyclicCategory WalkingParallelPairSemi := inferInstance
 
+open WalkingParallelPairSemi
+
+-- Cardinality sanity checks for the semicategory data.
+def vertexList : List WalkingParallelPairSemi := [zero, one]
+
+def zeroOneEdgeList : List (zero ⟶ one) :=
+  [WalkingParallelPairSemi.Hom.left, WalkingParallelPairSemi.Hom.right]
+
+def zeroZeroEdgeList : List (zero ⟶ zero) := []
+
+#guard decide (vertexList.length = 2)
+#guard decide (zeroOneEdgeList.length = 2)
+#guard decide (zeroZeroEdgeList = [])
+
 /-!
 ## Categorical Isomorphism with Mathlib's WalkingParallelPair
 
