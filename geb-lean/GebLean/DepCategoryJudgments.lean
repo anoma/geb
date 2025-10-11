@@ -367,11 +367,10 @@ private lemma compT_invFun_right.{u} (data : DepCategoryData.{u})
       ⟨a, b, c, extractRoundTrippedMor data a b f,
        extractRoundTrippedMor data b c g,
        extractRoundTrippedMor data a c h, wit⟩ = f.val := by
-  simp only [depToFunctorData, extractRoundTrippedMor]
-  rcases f with ⟨⟨a', b', f'⟩, hfa, hfb⟩
-  simp only [depToFunctorData] at hfa hfb
-  subst hfa hfb
-  rfl
+    rcases f with ⟨⟨a', b', f'⟩, hfa, hfb⟩
+    cases hfa
+    cases hfb
+    simp [depToFunctorData, functorDataToDep_depToFunctorData_morT, cast_eq]
 
 private lemma compT_invFun_left.{u} (data : DepCategoryData.{u})
     (a b c : data.objT)
@@ -385,11 +384,10 @@ private lemma compT_invFun_left.{u} (data : DepCategoryData.{u})
       ⟨a, b, c, extractRoundTrippedMor data a b f,
        extractRoundTrippedMor data b c g,
        extractRoundTrippedMor data a c h, wit⟩ = g.val := by
-  simp only [depToFunctorData, extractRoundTrippedMor]
-  rcases g with ⟨⟨a', b', g'⟩, hga, hgb⟩
-  simp only [depToFunctorData] at hga hgb
-  subst hga hgb
-  rfl
+    rcases g with ⟨⟨a', b', g'⟩, hga, hgb⟩
+    cases hga
+    cases hgb
+    simp [depToFunctorData, functorDataToDep_depToFunctorData_morT, cast_eq]
 
 private lemma compT_invFun_composite.{u} (data : DepCategoryData.{u})
     (a b c : data.objT)
@@ -403,11 +401,10 @@ private lemma compT_invFun_composite.{u} (data : DepCategoryData.{u})
       ⟨a, b, c, extractRoundTrippedMor data a b f,
        extractRoundTrippedMor data b c g,
        extractRoundTrippedMor data a c h, wit⟩ = h.val := by
-  simp only [depToFunctorData, extractRoundTrippedMor]
-  rcases h with ⟨⟨a', b', h'⟩, hha, hhb⟩
-  simp only [depToFunctorData] at hha hhb
-  subst hha hhb
-  rfl
+    rcases h with ⟨⟨a', b', h'⟩, hha, hhb⟩
+    cases hha
+    cases hhb
+    simp [depToFunctorData, functorDataToDep_depToFunctorData_morT, cast_eq]
 
 private lemma compT_mor_eq.{u} (data : DepCategoryData.{u}) (a b c : data.objT)
     (f : (functorDataToDep (depToFunctorData data)).morT a b)
