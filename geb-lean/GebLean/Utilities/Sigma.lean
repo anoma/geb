@@ -1,17 +1,34 @@
+import Mathlib.Logic.Equiv.Defs
+
+/-!
+# Sigma Utilities
+
+Lemmas and equivalences for working with sigma types when encoding
+dependent categorical data.
+-/
+
 universe u v
 
 namespace GebLean
 
-namespace Utilities
-
-/-- Auxiliary lemma for unpacking sigma equalities after `simp`. -/
-lemma sigmaCases {α : Sort u} {β : α → Sort v}
-    {a₁ : α} {b₁ : β a₁} {a₂ : α} {b₂ : β a₂}
-    (h : Sigma.mk a₁ b₁ = Sigma.mk a₂ b₂) :
-    HEq b₁ (cast (by cases h; simp) b₂) := by
-  cases h
-  simp
-
-end Utilities
+/-- A subtype of a sigma where both indices are constrained to specific
+values is equivalent to the underlying fiber. -/
+def sigmaTrivialSubtype {α : Type*} {β : α → α → Type*} (a b : α) :
+    {m : Σ (a' b' : α), β a' b' // m.1 = a ∧ m.2.1 = b} ≃ β a b where
+  toFun m := by
+    rcases m with ⟨⟨a', b', x⟩, ha, hb⟩
+    cases ha
+    cases hb
+    exact x
+  invFun x := ⟨⟨a, b, x⟩, rfl, rfl⟩
+  left_inv := by
+    intro m
+    rcases m with ⟨⟨a', b', x⟩, ha, hb⟩
+    cases ha
+    cases hb
+    rfl
+  right_inv := by
+    intro x
+    rfl
 
 end GebLean
