@@ -448,6 +448,16 @@ private lemma compT_mor_eq.{u} (data : DepCategoryData.{u}) (a b c : data.objT)
   simp only [extractRoundTrippedMor]
   rfl
 
+/-- Convenience lemma packaging the sigma equality arising from
+  `extractRoundTrippedMor`. -/
+private lemma extractRoundTrippedMor_sigma_eq.{u}
+  (data : DepCategoryData.{u}) {a b a' b' : data.objT}
+  {m : data.morT a' b'} (ha : a' = a) (hb : b' = b) :
+  (⟨a, ⟨b, extractRoundTrippedMor data a b ⟨⟨a', b', m⟩, ha, hb⟩⟩⟩ :
+    Σ (x y : data.objT), data.morT x y) = ⟨a', ⟨b', m⟩⟩ := by
+  subst ha hb
+  simp [extractRoundTrippedMor, functorDataToDep_depToFunctorData_morT, cast_eq]
+
 /-- Proves that the reconstructed composition witness matches the original
     sigma tuple after applying `extractRoundTrippedMor` to its components. -/
 private lemma compTSigma_eq.{u} (data : DepCategoryData.{u})
@@ -546,30 +556,11 @@ def functorDataToDep_depToFunctorData_compT.{u}
     | ⟨⟨a_f, b_f, f'⟩, hfa, hfb⟩, ⟨⟨a_g, b_g, g'⟩, hga, hgb⟩,
       ⟨⟨a_h, b_h, h'⟩, hha, hhb⟩ =>
       simp only [depToFunctorData] at hfa hfb hga hgb hha hhb
-      have hr :
-          (⟨a, ⟨b, extractRoundTrippedMor data a b
-              ⟨⟨a_f, b_f, f'⟩, hfa, hfb⟩⟩⟩ : Σ (x y : data.objT), data.morT x y) =
-            ⟨a_f, ⟨b_f, f'⟩⟩ := by
-        cases hfa
-        cases hfb
-        simp [extractRoundTrippedMor, functorDataToDep_depToFunctorData_morT,
-          cast_eq]
-      have hl :
-          (⟨b, ⟨c, extractRoundTrippedMor data b c
-              ⟨⟨a_g, b_g, g'⟩, hga, hgb⟩⟩⟩ : Σ (x y : data.objT), data.morT x y) =
-            ⟨a_g, ⟨b_g, g'⟩⟩ := by
-        cases hga
-        cases hgb
-        simp [extractRoundTrippedMor, functorDataToDep_depToFunctorData_morT,
-          cast_eq]
-      have hcomp_eq :
-          (⟨a, ⟨c, extractRoundTrippedMor data a c
-              ⟨⟨a_h, b_h, h'⟩, hha, hhb⟩⟩⟩ : Σ (x y : data.objT), data.morT x y) =
-            ⟨a_h, ⟨b_h, h'⟩⟩ := by
-        cases hha
-        cases hhb
-        simp [extractRoundTrippedMor, functorDataToDep_depToFunctorData_morT,
-          cast_eq]
+      have hr := extractRoundTrippedMor_sigma_eq (data := data) (m := f') hfa hfb
+      have hl := extractRoundTrippedMor_sigma_eq (data := data) (a := b)
+        (b := c) (a' := a_g) (b' := b_g) (m := g') hga hgb
+      have hcomp_eq := extractRoundTrippedMor_sigma_eq (data := data) (a := a)
+        (b := c) (a' := a_h) (b' := b_h) (m := h') hha hhb
       have hσ :=
         compTSigma_eq data hfa hfb hga hgb hha hhb hr hl hcomp_eq wit
       cases hσ
