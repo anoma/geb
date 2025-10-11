@@ -50,14 +50,15 @@ few facts interactively:
 ```lean
 import GebLean
 
-open WalkingParallelPairSemi
+open WalkingParallelPairSemi in
+  example : Semicategory WalkingParallelPairSemi := inferInstance
 
-example : Semicategory WalkingParallelPairSemi := inferInstance
+open WalkingParallelPairSemi in
+  def bothArrows : List (zero ⟶ one) :=
+    [Hom.left, Hom.right]
 
-def bothArrows : List (zero ⟶ one) :=
-  [Hom.left, Hom.right]
-
-#guard decide (bothArrows.length = 2)
+open WalkingParallelPairSemi in
+  #guard decide (bothArrows.length = 2)
 ```
 
 This runs inside `lake repl` or a `lean` file that imports `GebLean`.
