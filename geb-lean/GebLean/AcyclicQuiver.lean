@@ -66,7 +66,7 @@ class FiniteAcyclicQuiver (V : Type u) [AcyclicQuiver V] where
   toFiniteness : FinQuiverWitness V := by infer_instance
 
 instance {V : Type u} [AcyclicQuiver V] [h : FiniteAcyclicQuiver V] :
-    FinQuiverWitness V := h.toFiniteness
+  FinQuiverWitness V := h.toFiniteness
 
 namespace AcyclicQuiver
 
