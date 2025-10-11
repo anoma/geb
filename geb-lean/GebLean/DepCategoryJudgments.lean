@@ -554,9 +554,34 @@ def functorDataToDep_depToFunctorData_compT.{u}
     | ⟨⟨a_f, b_f, f'⟩, hfa, hfb⟩, ⟨⟨a_g, b_g, g'⟩, hga, hgb⟩,
       ⟨⟨a_h, b_h, h'⟩, hha, hhb⟩ =>
       simp only [depToFunctorData] at hfa hfb hga hgb hha hhb
-      simp only [extractRoundTrippedMor]
-      exact elimSixEq (α := data.objT) hfa hfb hga hgb hha hhb <| by
-        simp
+      have hr :
+          (⟨a, ⟨b, extractRoundTrippedMor data a b
+              ⟨⟨a_f, b_f, f'⟩, hfa, hfb⟩⟩⟩ : Σ (x y : data.objT), data.morT x y) =
+            ⟨a_f, ⟨b_f, f'⟩⟩ := by
+        cases hfa
+        cases hfb
+        simp [extractRoundTrippedMor, functorDataToDep_depToFunctorData_morT,
+          cast_eq]
+      have hl :
+          (⟨b, ⟨c, extractRoundTrippedMor data b c
+              ⟨⟨a_g, b_g, g'⟩, hga, hgb⟩⟩⟩ : Σ (x y : data.objT), data.morT x y) =
+            ⟨a_g, ⟨b_g, g'⟩⟩ := by
+        cases hga
+        cases hgb
+        simp [extractRoundTrippedMor, functorDataToDep_depToFunctorData_morT,
+          cast_eq]
+      have hcomp_eq :
+          (⟨a, ⟨c, extractRoundTrippedMor data a c
+              ⟨⟨a_h, b_h, h'⟩, hha, hhb⟩⟩⟩ : Σ (x y : data.objT), data.morT x y) =
+            ⟨a_h, ⟨b_h, h'⟩⟩ := by
+        cases hha
+        cases hhb
+        simp [extractRoundTrippedMor, functorDataToDep_depToFunctorData_morT,
+          cast_eq]
+      have hσ :=
+        compTSigma_eq data hfa hfb hga hgb hha hhb hr hl hcomp_eq wit
+      cases hσ
+      simp [functorDataToDep_depToFunctorData_morT, cast_eq]
 
 abbrev functorToDataDep_mkCopresheafDep_morEquiv.{u}
     (data : DepCategoryData.{u}) (a b : data.objT) :
