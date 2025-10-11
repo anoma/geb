@@ -11,6 +11,8 @@ project.
   turning category isomorphisms into equivalences;
   `GebLean/Utilities.lean` re-exports a `catIsoToEquivalence` helper for
   convenience.
+- Keep the development constructive: do not import or `open` `Classical`
+  and avoid the `classical` attribute in proofs.
 
 ## Workflow
 
@@ -79,7 +81,16 @@ When proving equivalences (`Equiv`) between structures with dependent types:
    - Combine with `dsimp only [id]` first to expose matches hidden in function
      applications
 
-7. **Handling Sigma types**:
+7. **Subtype projections without classical choice**:
+   - Destructure subtypes and sigma terms with `rcases`, then `cases` the
+     stored domain/codomain equalities instead of relying on `simp` +
+     `classical` to resolve transports
+   - Follow the substitutions with `simp [depToFunctorData,
+     functorDataToDep_depToFunctorData_morT, cast_eq]` so casts drop away
+   - This keeps proofs fully constructive while still collapsing the round-trip
+     transports introduced by equivalences
+
+8. **Handling Sigma types**:
    - Use `change` to rewrite goal with explicit type annotations for nested
      sigmas
    - `Sigma.mk.injEq` to convert sigma equality to component equalities
