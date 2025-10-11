@@ -11,6 +11,9 @@ project.
   turning category isomorphisms into equivalences;
   `GebLean/Utilities.lean` re-exports a `catIsoToEquivalence` helper for
   convenience.
+- `GebLean/Utilities.lean` now acts as an index module. Add new utility files
+  under `GebLean/Utilities/` and import them from the index. For example,
+  `sigmaTrivialSubtype` lives in `GebLean/Utilities/Sigma.lean`.
 - Keep the development constructive: do not import or `open` `Classical`
   and avoid the `classical` attribute in proofs.
 
@@ -74,6 +77,9 @@ When proving equivalences (`Equiv`) between structures with dependent types:
    - Helpful before using `split` to reduce match expressions
    - Example: `congr 2` to get through nested sigma types to the core
      equality
+   - For repeated `cases` on equalities between the same object type, prefer
+     the helper `elimSixEq` in `DepCategoryJudgments.lean` to keep proofs
+     compact.
 
 6. **Reducing match expressions**:
    - `split` - case splits on match/if expressions in the goal
