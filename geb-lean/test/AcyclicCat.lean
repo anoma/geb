@@ -311,6 +311,6 @@ def isomorphism : WalkingParallelPairCat ≅Cat WalkingParallelPair where
 
 /-- The two categories are equivalent (derived from the isomorphism). -/
 def equivalence : WalkingParallelPairCat ≌ WalkingParallelPair :=
-  Equivalence.ofIso isomorphism
+  CategoryTheory.Cat.equivOfIso isomorphism
 
 end WalkingParallelPairCat
