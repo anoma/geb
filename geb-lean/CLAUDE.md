@@ -89,6 +89,9 @@ When proving equivalences (`Equiv`) between structures with dependent types:
      functorDataToDep_depToFunctorData_morT, cast_eq]` so casts drop away
    - This keeps proofs fully constructive while still collapsing the round-trip
      transports introduced by equivalences
+   - When the final goal is a sigma equality, prefer `cases` on the stored
+     equalities to obtain definitional `rfl`s rather than running `simp` and
+     `subst` on the whole expression
 
 8. **Handling Sigma types**:
    - Use `change` to rewrite goal with explicit type annotations for nested
