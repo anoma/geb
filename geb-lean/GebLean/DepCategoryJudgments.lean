@@ -495,38 +495,17 @@ def functorDataToDep_depToFunctorData_compT.{u}
       ⟨⟨a_h, b_h, h'⟩, hha, hhb⟩ =>
       simp only [depToFunctorData] at hr hl hcomp hfa hfb hga hgb hha hhb
       simp only [extractRoundTrippedMor]
-      -- hl : ⟨b_c, ⟨c_c, g_c⟩⟩ = ⟨a_g, ⟨b_g, g'⟩⟩
-      -- hcomp : ⟨a_c, ⟨c_c, h_c⟩⟩ = ⟨a_h, ⟨b_h, h'⟩⟩
-      rw [Sigma.mk.injEq] at hr hl hcomp
-      have ⟨ha_c, hrf⟩ := hr
-      have ⟨hb_c, hlg⟩ := hl
-      have ⟨ha_c', hcomph⟩ := hcomp
-      subst ha_c ha_c' hb_c
-      have hrf_eq := eq_of_heq hrf
-      have hlg_eq := eq_of_heq hlg
-      have hcomph_eq := eq_of_heq hcomph
-      rw [Sigma.mk.injEq] at hrf_eq hlg_eq hcomph_eq
-      have ⟨hb_f, hf'⟩ := hrf_eq
-      have ⟨hb_g, hg'⟩ := hlg_eq
-      have ⟨hb_h, hh'⟩ := hcomph_eq
-      subst hb_f hb_g hb_h
-      have hf : f_c = f' := eq_of_heq hf'
-      have hg : g_c = g' := eq_of_heq hg'
-      have hh : h_c = h' := eq_of_heq hh'
-      subst hf hg hh
-      have : a = a_c := hfa.symm
-      have : b = b_c := hfb.symm
-      have : c = c_c := hgb.symm
-      subst_vars
-      simp only [cast_eq, functorDataToDep_depToFunctorData_morT]
+      cases hfa; cases hfb; cases hga; cases hgb; cases hha; cases hhb
+      cases hr; cases hl; cases hcomp
+      simp [functorDataToDep_depToFunctorData_morT, cast_eq]
   right_inv := fun wit => by
     match f, g, h with
     | ⟨⟨a_f, b_f, f'⟩, hfa, hfb⟩, ⟨⟨a_g, b_g, g'⟩, hga, hgb⟩,
       ⟨⟨a_h, b_h, h'⟩, hha, hhb⟩ =>
       simp only [depToFunctorData] at hfa hfb hga hgb hha hhb
       simp only [extractRoundTrippedMor]
-      subst hfa hfb hga hgb hha hhb
-      simp only [cast_eq]
+      cases hfa; cases hfb; cases hga; cases hgb; cases hha; cases hhb
+      simp [cast_eq]
 
 abbrev functorToDataDep_mkCopresheafDep_morEquiv.{u}
     (data : DepCategoryData.{u}) (a b : data.objT) :
