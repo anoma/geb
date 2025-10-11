@@ -299,20 +299,11 @@ private lemma idT_mor_eq.{u} (data : DepCategoryData.{u}) (o : data.objT)
   rcases wit with ⟨⟨o', m', w⟩,
     h : (depToFunctorData data).idMor ⟨o', m', w⟩ = m.val⟩
   rcases m with ⟨⟨a, b, m_val⟩, ha : a = o, hb : b = o⟩
-  -- h says: ⟨o', ⟨o', m'⟩⟩ = ⟨a, ⟨b, m_val⟩⟩ (equality of nested sigmas)
-  change (⟨o', ⟨o', m'⟩⟩ : Σ (a b : data.objT), data.morT a b) =
-    ⟨a, ⟨b, m_val⟩⟩ at h
-  rw [Sigma.mk.injEq] at h  -- Extract: o' = a and ⟨o', m'⟩ ≍ ⟨b, m_val⟩
-  have ⟨ho', hsig⟩ := h
-  subst ho' ha hb  -- Substitute equalities to align indices
-  -- Convert HEq to regular equality
-  have hsig_eq := eq_of_heq hsig
-  rw [Sigma.mk.injEq] at hsig_eq  -- Extract: o' = b and m' ≍ m_val
-  have ⟨_, hm⟩ := hsig_eq
-  simp at hm  -- Simplify HEq to regular equality: m' = m_val
-  subst hm  -- Now m' = m_val
-  simp [extractRoundTrippedMor]
-  rfl
+  cases h
+  cases ha
+  cases hb
+  simp [extractRoundTrippedMor, functorDataToDep_depToFunctorData_morT,
+    depToFunctorData]
 
 /-- Helper lemma: Prove the idMor constraint for the inverse function. -/
 private lemma idT_invFun_constraint.{u} (data : DepCategoryData.{u})
@@ -321,11 +312,10 @@ private lemma idT_invFun_constraint.{u} (data : DepCategoryData.{u})
     (wit : data.idT (extractRoundTrippedMor data o o m)) :
     (depToFunctorData data).idMor
       ⟨o, ⟨extractRoundTrippedMor data o o m, wit⟩⟩ = m.val := by
-  simp only [depToFunctorData, extractRoundTrippedMor]
   rcases m with ⟨⟨a, b, mor⟩, ha, hb⟩
-  simp only [depToFunctorData] at ha hb
-  subst ha hb
-  congr
+  cases ha
+  cases hb
+  simp [depToFunctorData, functorDataToDep_depToFunctorData_morT]
 
 /-- Round-tripping from DepCategoryData to CopresheafData and back
     gives an equivalent identity type. -/
