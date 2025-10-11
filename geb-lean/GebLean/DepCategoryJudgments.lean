@@ -291,7 +291,7 @@ def depToFunctorData_functorDataToDep_idC.{u}
   right_inv i := rfl
 
 /-- Helper lemma: Extract the morphism equality from the identity constraint.
-    This proves that the morphism m' in the witness equals extractRoundTrippedMor. -/
+  This proves that the witness morphism equals `extractRoundTrippedMor`. -/
 private lemma idT_mor_eq.{u} (data : DepCategoryData.{u}) (o : data.objT)
     (m : (functorDataToDep (depToFunctorData data)).morT o o)
     (wit : (functorDataToDep (depToFunctorData data)).idT m) :

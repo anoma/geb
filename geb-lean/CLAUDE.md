@@ -1,11 +1,16 @@
 # Instructions for Claude Code
 
-This document contains guidance for AI assistants working on this Lean 4 project.
+This document contains guidance for AI assistants working on this Lean 4
+project.
 
 ## Project Notes
 
-- All modules under `GebLean/` should open `namespace GebLean … end GebLean`; tests may need `open GebLean` rather than un-qualified names.
-- Prefer `CategoryTheory.catIsoToEquivalence` (or `Cat.equivOfIso`) when turning category isomorphisms into equivalences; `GebLean/Utilities.lean` re-exports a `catIsoToEquivalence` helper for convenience.
+- All modules under `GebLean/` should open `namespace GebLean … end GebLean`;
+  tests may need `open GebLean` rather than un-qualified names.
+- Prefer `CategoryTheory.catIsoToEquivalence` (or `Cat.equivOfIso`) when
+  turning category isomorphisms into equivalences;
+  `GebLean/Utilities.lean` re-exports a `catIsoToEquivalence` helper for
+  convenience.
 
 ## Workflow
 
@@ -40,7 +45,8 @@ design decisions rather than syntax errors or incomplete proofs.
 
 When proving equivalences (`Equiv`) between structures with dependent types:
 
-1. **Destructuring**: Use `rcases` to destructure nested sigma types and subtypes
+1. **Destructuring**: Use `rcases` to destructure nested sigma types and
+  subtypes
    - Example: `rcases wit with ⟨⟨o', m', w⟩, h⟩`
    - Be explicit with type annotations to help Lean: `ha : a = o`
 
@@ -394,8 +400,8 @@ just wraps a typeclass field.
 
 ### Equality in Categories: Use `eqToHom` and `eqToIso`
 
-**Reference**:
-<https://leanprover-community.github.io/mathlib4_docs/Mathlib/CategoryTheory/EqToHom.html>
+**Reference**: See the mathlib4 docs for `Mathlib/CategoryTheory/EqToHom`
+(`EqToHom` search).
 
 When working with object equalities in categories, **avoid rewriting by
 equalities**. Instead, use `eqToHom` and `eqToIso`:
