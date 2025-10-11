@@ -19,6 +19,8 @@ This file defines finite quivers and related structures.
 
 universe u v
 
+namespace GebLean
+
 /-- A proof of finiteness of a quiver. -/
 structure FinQuiverWitness (V : Type u) [Quiver.{v + 1} V] where
   /-- The vertex set is finite -/
@@ -56,3 +58,5 @@ abbrev ι : FiniteQuiverCat.{v, u} ⥤ Quiv.{v, u} :=
   IsFiniteQuiver.ι
 
 end FiniteQuiverCat
+
+end GebLean

@@ -18,6 +18,8 @@ structure) and the category of acyclic categories.
   categories
 -/
 
+namespace GebLean
+
 universe u u' u'' v
 
 /-- An acyclic category is an acyclic quiver with a semicategory
@@ -197,3 +199,5 @@ open CategoryTheory
 variable {V : Type u} [AcyclicQuiver V]
 
 end AcyclicCategory
+
+end GebLean

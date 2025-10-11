@@ -21,6 +21,8 @@ acyclicity criterion.
 * `AcyclicQuiverCat`: The category of acyclic quivers
 -/
 
+namespace GebLean
+
 universe u u' u'' v
 
 /-- A topological order is a partial order used to witness acyclicity
@@ -201,3 +203,5 @@ abbrev AcyclicQuiverCat.Small := AcyclicQuiverCat.Large.{u, u}
 
 /-- The default is the small category of acyclic quivers. -/
 abbrev AcyclicQuiverCat := AcyclicQuiverCat.Small
+
+end GebLean

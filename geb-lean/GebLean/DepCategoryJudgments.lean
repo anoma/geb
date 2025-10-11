@@ -19,6 +19,8 @@ CategoryJudgments.
 * Equivalences and round-trip theorems
 -/
 
+namespace GebLean
+
 namespace CategoryJudgments
 
 open CategoryTheory
@@ -887,3 +889,5 @@ abbrev mkJudgmentCopresheafDep.{u} (data : DepCategoryData.{u}) :
 end CategoryCopresheafCorrespondence
 
 end CategoryJudgments
+
+end GebLean

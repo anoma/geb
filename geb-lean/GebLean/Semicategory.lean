@@ -27,6 +27,8 @@ This file defines semicategories and their morphisms.
 
 universe u u' u'' v
 
+namespace GebLean
+
 /-- A compositional structure provides a way to compose morphisms in a
     quiver. -/
 abbrev CompositionalStruct (V : Type u) [Quiver.{v + 1} V] :=
@@ -170,3 +172,5 @@ abbrev SemicategoryCat.Small := SemicategoryCat.Large.{u, u}
 
 /-- The default is the small category of semicategories. -/
 abbrev SemicategoryCat := SemicategoryCat.Small
+
+end GebLean

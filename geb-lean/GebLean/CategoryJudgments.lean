@@ -37,6 +37,8 @@ The categorical structure encodes type correctness constraints:
   ensure codomain is preserved
 -/
 
+namespace GebLean
+
 namespace CategoryJudgments
 
 /-- The objects of the category judgment category -/
@@ -602,3 +604,5 @@ abbrev mkJudgmentCopresheaf.{u} (data : CopresheafData.{u}) :
 end CategoryCopresheafCorrespondence
 
 end CategoryJudgments
+
+end GebLean

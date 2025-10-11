@@ -5,6 +5,11 @@ import Mathlib.CategoryTheory.Category.Basic
 import Mathlib.CategoryTheory.Limits.Shapes.Equalizers
 import Mathlib.CategoryTheory.Equivalence
 
+namespace GebLean
+end GebLean
+
+open GebLean
+
 /-!
 # Tests for Acyclic Categories
 
