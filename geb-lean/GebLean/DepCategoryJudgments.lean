@@ -347,8 +347,8 @@ def functorDataToDep_depToFunctorData_idT.{u}
     simp only [cast_eq]
 
 /-- Helper lemma: Extract the composition equality from the witness.
-    Proves that the composition in the witness equals
-    extractRoundTrippedMor applied to each component. -/
+    Proves that the right projection of the reconstructed witness matches
+    the original morphism. -/
 private lemma compT_invFun_right.{u} (data : DepCategoryData.{u})
     (a b c : data.objT)
     (f : (functorDataToDep (depToFunctorData data)).morT a b)
@@ -366,6 +366,9 @@ private lemma compT_invFun_right.{u} (data : DepCategoryData.{u})
     cases hfb
     simp [depToFunctorData, functorDataToDep_depToFunctorData_morT, cast_eq]
 
+/-- Helper lemma: Extract the composition equality from the witness.
+    Proves that the left projection of the reconstructed witness matches
+    the original morphism. -/
 private lemma compT_invFun_left.{u} (data : DepCategoryData.{u})
     (a b c : data.objT)
     (f : (functorDataToDep (depToFunctorData data)).morT a b)
@@ -383,6 +386,7 @@ private lemma compT_invFun_left.{u} (data : DepCategoryData.{u})
     cases hgb
     simp [depToFunctorData, functorDataToDep_depToFunctorData_morT, cast_eq]
 
+/-- Helper lemma: Extract the composition equality from the witness. -/
 private lemma compT_invFun_composite.{u} (data : DepCategoryData.{u})
     (a b c : data.objT)
     (f : (functorDataToDep (depToFunctorData data)).morT a b)
@@ -452,6 +456,45 @@ private lemma compT_mor_eq.{u} (data : DepCategoryData.{u}) (a b c : data.objT)
   simp only [extractRoundTrippedMor]
   rfl
 
+/-- Proves that the reconstructed composition witness matches the original
+    sigma tuple after applying `extractRoundTrippedMor` to its components. -/
+private lemma compTSigma_eq.{u} (data : DepCategoryData.{u})
+    {a b c a_c b_c c_c : data.objT}
+    {f_c : data.morT a_c b_c} {g_c : data.morT b_c c_c}
+    {h_c : data.morT a_c c_c}
+    {a_f a_g a_h b_f b_g b_h : data.objT}
+    {f' : data.morT a_f b_f} {g' : data.morT a_g b_g}
+    {h' : data.morT a_h b_h}
+    (hfa : a_f = a) (hfb : b_f = b) (hga : a_g = b)
+    (hgb : b_g = c) (hha : a_h = a) (hhb : b_h = c)
+    (hr : (⟨a_c, ⟨b_c, f_c⟩⟩ : Σ (x y : data.objT), data.morT x y) =
+      ⟨a_f, ⟨b_f, f'⟩⟩)
+    (hl : (⟨b_c, ⟨c_c, g_c⟩⟩ : Σ (x y : data.objT), data.morT x y) =
+      ⟨a_g, ⟨b_g, g'⟩⟩)
+    (hcomp : (⟨a_c, ⟨c_c, h_c⟩⟩ : Σ (x y : data.objT), data.morT x y) =
+      ⟨a_h, ⟨b_h, h'⟩⟩)
+    (comp_wit : data.compT f_c g_c h_c) :
+    ((⟨a,
+        ⟨b,
+          ⟨c,
+            ⟨extractRoundTrippedMor data a b ⟨⟨a_f, b_f, f'⟩, hfa, hfb⟩,
+              ⟨extractRoundTrippedMor data b c ⟨⟨a_g, b_g, g'⟩, hga, hgb⟩,
+                ⟨extractRoundTrippedMor data a c ⟨⟨a_h, b_h, h'⟩, hha, hhb⟩,
+                  cast (compT_mor_eq data a b c
+                    ⟨⟨a_f, b_f, f'⟩, hfa, hfb⟩
+                    ⟨⟨a_g, b_g, g'⟩, hga, hgb⟩
+                    ⟨⟨a_h, b_h, h'⟩, hha, hhb⟩
+                    ⟨⟨a_c, b_c, c_c, f_c, g_c, h_c, comp_wit⟩, hr, hl, hcomp⟩)
+                    comp_wit⟩⟩⟩⟩⟩⟩) :
+        Σ (x : data.objT), Σ (y : data.objT), Σ (z : data.objT),
+          Σ (f : data.morT x y), Σ (g : data.morT y z),
+            Σ (h : data.morT x z), data.compT f g h)
+    = ⟨a_c, ⟨b_c, ⟨c_c, ⟨f_c, ⟨g_c, ⟨h_c, comp_wit⟩⟩⟩⟩⟩⟩ := by
+  subst hfa hfb hga hgb hha hhb
+  simp only [extractRoundTrippedMor]
+  cases hr; cases hl; cases hcomp
+  simp [functorDataToDep_depToFunctorData_morT, cast_eq]
+
 /-- Round-tripping from CopresheafData to DepCategoryData and back
     gives an equivalent composition type. -/
 def depToFunctorData_functorDataToDep_compC.{u}
@@ -502,9 +545,9 @@ def functorDataToDep_depToFunctorData_compT.{u}
     | ⟨⟨a_f, b_f, f'⟩, hfa, hfb⟩, ⟨⟨a_g, b_g, g'⟩, hga, hgb⟩,
       ⟨⟨a_h, b_h, h'⟩, hha, hhb⟩ =>
       simp only [depToFunctorData] at hr hl hcomp hfa hfb hga hgb hha hhb
-      simp only [extractRoundTrippedMor]
-      cases hfa; cases hfb; cases hga; cases hgb; cases hha; cases hhb
-      cases hr; cases hl; cases hcomp
+      have hσ :=
+        compTSigma_eq data hfa hfb hga hgb hha hhb hr hl hcomp comp_wit
+      cases hσ
       simp [functorDataToDep_depToFunctorData_morT, cast_eq]
   right_inv := fun wit => by
     match f, g, h with
