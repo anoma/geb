@@ -46,6 +46,69 @@ When making changes to Lean code:
 This approach minimizes back-and-forth and keeps the conversation focused on
 design decisions rather than syntax errors or incomplete proofs.
 
+## Lean 4 Library and Categorical Theory Resources
+
+Links to mathematical concepts available in Lean 4 libraries (particularly
+`mathlib`).  In our code, we should only use standard libraries, but we
+might want to examine external libraries for ideas.
+
+### Searchable:  Loogle
+
+- [Loogle](https://loogle.lean-lang.org/)
+  - A searchable reference to the Lean standard libraries -- we should
+    use this to try to find standard implementations of concepts that
+    we don't already know about.
+
+- [Mathlib.CategoryTheory.Grothendieck](https://leanprover-community.github.io/mathlib4_docs/Mathlib/CategoryTheory/Grothendieck.html)
+
+### Grothendieck Construction
+
+- [Mathlib.CategoryTheory.Grothendieck](https://leanprover-community.github.io/mathlib4_docs/Mathlib/CategoryTheory/Grothendieck.html)
+  - Provides Lean formalization of the Grothendieck construction for functors
+    valued in categories (\(C \to Cat\)), including morphisms and universal
+    properties.
+
+- [Mathlib.CategoryTheory.Bicategory.Grothendieck](https://leanprover-community.github.io/mathlib4_docs/Mathlib/CategoryTheory/Bicategory/Grothendieck.html)
+  - Bicategorical generalization of the Grothendieck construction.
+
+### Topos Theory
+
+- [b-mehta/topos: Topos theory in Lean](https://github.com/b-mehta/topos)
+  - Independent repository formalizing foundational aspects of topos theory,
+    including subobject classifiers, Lawvere-Tierney topologies, and
+    categorical theorems.
+
+### Presheaf/Copresheaf Universal Properties
+
+- [Mathlib.CategoryTheory.Limits.Presheaf](https://leanprover-community.github.io/mathlib4_docs/Mathlib/CategoryTheory/Limits/Presheaf.html)
+  - Formalizes limits and colimits within presheaf categories, including the
+    colimit-of-representables theorem.
+
+- [Mathlib.CategoryTheory.Comma.Presheaf.Colimit](https://leanprover-community.github.io/mathlib4_docs/Mathlib/CategoryTheory/Comma/Presheaf/Colimit.html)
+  - Addresses colimit structures in comma categories related to presheaf
+    categories.
+
+- [Mathlib.Topology.Sheaves.Sheaf](https://leanprover-community.github.io/mathlib4_docs/Mathlib/Topology/Sheaves/Sheaf.html)
+  - Implementation of sheaf theory, with presheaves and categorical structures
+    detailed for topological spaces.
+
+- [Mathlib.Topology.Sheaves.Presheaf](https://leanprover-community.github.io/mathlib4_docs/Mathlib/Topology/Sheaves/Presheaf.html)
+  - Documents presheaf categories for sheaf-theoretic constructions.
+
+### Subobject Classifiers and Related
+
+- [Mathlib.CategoryTheory.Topos.Classifier](https://leanprover-community.github.io/mathlib4_docs/Mathlib/CategoryTheory/Topos/Classifier.html)
+  - Detailed formalization of subobject classifiers in category theory,
+    including construction for presheaf categories.
+
+- [Mathlib.CategoryTheory.Subpresheaf.Subobject](https://leanprover-community.github.io/mathlib4_docs/Mathlib/CategoryTheory/Subpresheaf/Subobject.html)
+  - Focuses on subobjects and subpresheaf categories, relevant to classifier
+    theory and morphism structure.
+
+- [Mathlib/CategoryTheory/Sites/Closed.lean](https://plmlab.math.cnrs.fr/nuccio/octonions/-/blob/add-vector-api-alt/Mathlib/CategoryTheory/Sites/Closed.lean)
+  - Code and theory for closed sites, relevant for power objects and
+    classifier constructions.
+
 ## Lean 4 Proof Techniques
 
 ### Working with Dependent Types and Equivalences
