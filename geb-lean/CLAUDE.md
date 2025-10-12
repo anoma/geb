@@ -59,6 +59,10 @@ might want to examine external libraries for ideas.
     use this to try to find standard implementations of concepts that
     we don't already know about.
 
+### General category theory
+
+- [Lean's "category theory" page](https://leanprover-community.github.io/theories/category_theory.html)
+
 - [Mathlib.CategoryTheory.Grothendieck](https://leanprover-community.github.io/mathlib4_docs/Mathlib/CategoryTheory/Grothendieck.html)
 
 ### Grothendieck Construction
