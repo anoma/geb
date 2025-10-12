@@ -430,6 +430,9 @@ hom_inv_id := by
 - Explain module placement and imports.
 - Keep Lean options consistent (don't override project-level options without
   discussion).
+- Any style guidelines which aren't specific to Lean apply to documentation
+  and style guidelines and such as well -- in particular, they apply to this
+  file itself (`CLAUDE.md`).
 
 ### Extensionality Lemmas
 
