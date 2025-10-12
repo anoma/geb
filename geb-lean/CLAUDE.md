@@ -775,11 +775,8 @@ This section tracks planned improvements and extensions to the codebase.
 
 ### Test Coverage
 
-**WalkingParallelPairSemi completion**:
-
-- Add semicategory structure (composition is trivial - these are maximal paths)
-- Define identity adjoining to construct a full category
-- Prove isomorphism between the completed category and mathlib's
-  `WalkingParallelPair`
-- Show this is a `FiniteAcyclicCategory`
-- File: `test/AcyclicCat.lean`
+The test directory includes a complete example of a finite acyclic
+semicategory (`WalkingParallelPairSemi` in `test/AcyclicCat.lean`), with
+identity adjoining and an isomorphism to mathlib's `WalkingParallelPair`.
+Additional test coverage could include property-based testing of algebraic
+laws using Plausible.
