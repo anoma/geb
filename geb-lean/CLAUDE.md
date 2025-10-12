@@ -119,7 +119,17 @@ might want to examine external libraries for ideas.
   - Code and theory for closed sites, relevant for power objects and
     classifier constructions.
 
-## Lean 4 Proof Techniques
+## Lean 4 Development Techniques
+
+### Procedures
+
+1. When you want to see the type of a goal you're working on (you can
+   do this with computational content as well as proof content), insert
+   an underscore (`_`) as the implementation of the goal.  Building
+   will then produce an "unsolved goals" error and will print the type
+   of the goal.  Do this whenever you take a step in a definition or
+   proof, so that you know exactly what it is that you're trying to
+   define or prove next.
 
 ### Working with Dependent Types and Equivalences
 
