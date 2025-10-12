@@ -147,7 +147,6 @@ instance : CoeSort (SemicategoryCat.Large.{u, v}) (Type u) where
 def str' (V : SemicategoryCat.Large.{u, v}) : Semicategory.{u, v} V.α :=
   V.str
 
--- Make the instance available automatically
 instance (V : SemicategoryCat.Large.{u, v}) : Semicategory.{u, v} V.α :=
   V.str
 
