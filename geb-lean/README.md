@@ -44,21 +44,17 @@ plans.
 
 ## Example
 
-Create the walking parallel pair semicategory from the library and check a
-few facts interactively:
+Import the library and access its core definitions:
 
 ```lean
 import GebLean
 
-open WalkingParallelPairSemi in
-  example : Semicategory WalkingParallelPairSemi := inferInstance
+example (V : Type) [Quiver V] [AcyclicQuiver V] [AcyclicCategory V] :
+    Semicategory V := inferInstance
 
-open WalkingParallelPairSemi in
-  def bothArrows : List (zero ⟶ one) :=
-    [Hom.left, Hom.right]
-
-open WalkingParallelPairSemi in
-  #guard decide (bothArrows.length = 2)
+example (V : Type) [inst : AcyclicQuiver V] [AcyclicCategory V] :
+    Quiver V := inst.toQuiver
 ```
 
-This runs inside `lake repl` or a `lean` file that imports `GebLean`.
+Concrete examples such as the walking parallel pair semicategory are
+available in the test directory (see [test/AcyclicCat.lean](test/AcyclicCat.lean)).

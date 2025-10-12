@@ -86,8 +86,8 @@ Hspec.
 ## Test Guidelines
 
 - Each test file should import `GebLean` or the specific modules being tested
-- Use `set_option linter.hashCommand false` to disable the hash command linter
-  in test files
+- The `linter.hashCommand` linter is automatically disabled for all test files
+  via the lakefile configuration
 - Group related tests into modules (e.g., `test/Semicategory.lean`,
   `test/AcyclicQuiver.lean`)
 - Add comprehensive tests for:
