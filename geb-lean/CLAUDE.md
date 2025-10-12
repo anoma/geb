@@ -7,11 +7,8 @@ project.
 
 - All modules under `GebLean/` should open `namespace GebLean … end GebLean`;
   tests may need `open GebLean` rather than un-qualified names.
-- Prefer `CategoryTheory.catIsoToEquivalence` (or `Cat.equivOfIso`) when
-  turning category isomorphisms into equivalences;
-  `GebLean/Utilities.lean` re-exports a `catIsoToEquivalence` helper for
-  convenience.
-- `GebLean/Utilities.lean` now acts as an index module. Add new utility files
+- Use `Cat.equivOfIso` when turning category isomorphisms into equivalences.
+- `GebLean/Utilities.lean` acts as an index module. Add new utility files
   under `GebLean/Utilities/` and import them from the index. For example,
   `sigmaTrivialSubtype` lives in `GebLean/Utilities/Sigma.lean`.
 - Keep the development constructive: do not import or `open` `Classical`

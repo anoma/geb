@@ -547,7 +547,7 @@ def functorDataIsoCat : FunctorData C ≅Cat (Obj ⥤ C) where
 /-- The two functors form an equivalence of categories (derived from the
     isomorphism). -/
 def functorDataEquivCat : FunctorData C ≌ (Obj ⥤ C) :=
-  CategoryTheory.catIsoToEquivalence functorDataIsoCat
+  Cat.equivOfIso functorDataIsoCat
 
 /-- Two FunctorData structures are equivalent if their corresponding functors
     are naturally isomorphic. -/
