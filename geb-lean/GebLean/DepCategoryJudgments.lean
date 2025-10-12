@@ -619,7 +619,8 @@ def functorDataToDep_depToFunctorData_compT.{u}
     | ⟨⟨a_f, b_f, f'⟩, hfa, hfb⟩, ⟨⟨a_g, b_g, g'⟩, hga, hgb⟩,
       ⟨⟨a_h, b_h, h'⟩, hha, hhb⟩ =>
       simp only [depToFunctorData] at hfa hfb hga hgb hha hhb
-      have hr := extractRoundTrippedMor_sigma_eq (data := data) (m := f') hfa hfb
+      have hr :=
+        extractRoundTrippedMor_sigma_eq (data := data) (m := f') hfa hfb
       have hl := extractRoundTrippedMor_sigma_eq (data := data) (a := b)
         (b := c) (a' := a_g) (b' := b_g) (m := g') hga hgb
       have hcomp_eq := extractRoundTrippedMor_sigma_eq (data := data) (a := a)

@@ -24,11 +24,7 @@ universe u u' u'' v
 
 /-- An acyclic category is an acyclic quiver with a semicategory
     structure. The strict ordering ensures there are no identity
-    morphisms. Identities can be added later to form a category.
-
-    Note: We store the semicategory structure directly rather than
-    extending Semicategory, to avoid diamond problems with the Quiver
-    instance. -/
+    morphisms. Identities can be adjoined to form a category. -/
 class AcyclicCategory (V : Type u) [AcyclicQuiver V] where
   toSemicategoryStruct : SemicategoryStruct V := by infer_instance
 
@@ -130,13 +126,16 @@ instance (V : AcyclicCategoryCat.Large.{u, v}) : Quiver.{v + 1} V.carrier :=
 instance (V : AcyclicCategoryCat.Large.{u, v}) : TopologicalOrder V.carrier :=
   V.wit.order
 
-instance (V : AcyclicCategoryCat.Large.{u, v}) : QuiverEdgesIncrease V.carrier :=
+instance (V : AcyclicCategoryCat.Large.{u, v}) :
+    QuiverEdgesIncrease V.carrier :=
   V.wit.edgesIncrease
 
-instance (V : AcyclicCategoryCat.Large.{u, v}) : SemicategoryStruct V.carrier :=
+instance (V : AcyclicCategoryCat.Large.{u, v}) :
+    SemicategoryStruct V.carrier :=
   V.wit.semicat
 
-instance (V : AcyclicCategoryCat.Large.{u, v}) : AcyclicQuiver.{u, v} V.carrier where
+instance (V : AcyclicCategoryCat.Large.{u, v}) :
+    AcyclicQuiver.{u, v} V.carrier where
   toQuiver := V.wit.quiver
   toPartialOrder := V.wit.order
   edgesIncrease := V.wit.edgesIncrease
