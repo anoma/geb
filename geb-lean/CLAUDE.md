@@ -356,6 +356,8 @@ hom_inv_id := by
 
 ## Code Style
 
+- There are standard Lean style guidelines at
+  [Lean Library Style Guidelines](https://leanprover-community.github.io/contribute/style.html)
 - **Line length**: Keep lines to 80 characters or less
 - Prefer editing existing files over creating new ones
 - Don't create documentation files unless explicitly requested
