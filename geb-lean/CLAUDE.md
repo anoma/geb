@@ -308,7 +308,7 @@ before manual proof:
   - May timeout on goals with heavy pattern matching or dependent types
   - Can be configured with custom rule sets
 
-**Note**: `grind` is THE solution for dependent congruence problems
+**Note**: `grind` can sometimes solve dependent congruence problems
 that would otherwise require complex manual application of `Eq.recOn`,
 heterogeneous equality, or dependent rewriting. Always try `grind` first when
 you have equalities involving dependent types!
@@ -406,6 +406,7 @@ hom_inv_id := by
   some code or design because you don't think it's immediately obvious
   just from reading the code itself, then simply call it a "property"
   or similar detached word.
+- Do not use all-caps words unless they're acronyms.
 - Don't write "TODO" comments or summaries of completed or future work in the
   code itself; track to-dos/future work below in `CLAUDE.md` if necessary
 - Options in `lakefile.toml` are authoritative:
