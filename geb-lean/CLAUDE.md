@@ -394,7 +394,18 @@ hom_inv_id := by
 - Prefer editing existing files over creating new ones
 - Don't create documentation files unless explicitly requested
 - Keep responses concise - match verbosity to task complexity
-- Avoid emojis unless explicitly requested by the user
+- Don't use emojis
+- In transient (unrecorded) conversation, you may be informal and
+  enthusiastic if you like, but in any persistent work (such as
+  all source code (including comments), documentation, and project
+  guidelines/instructions), stick to a dry, formal, unopinonated, mathematical
+  style.  Do not promote any aspect or passage of code as more significant
+  than any other, such as by calling something a "key insight" or
+  "core concept".  Do not refer to properties of code or constructions
+  as "advantages" or "benefits"; if you want to document a property of
+  some code or design because you don't think it's immediately obvious
+  just from reading the code itself, then simply call it a "property"
+  or similar detached word.
 - Don't write "TODO" comments or summaries of completed or future work in the
   code itself; track to-dos/future work below in `CLAUDE.md` if necessary
 - Options in `lakefile.toml` are authoritative:
