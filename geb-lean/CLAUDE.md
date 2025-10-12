@@ -25,7 +25,9 @@ project.
 
 When making changes to Lean code:
 
-1. **Build first**: Always run `lake build` after making edits
+1. **Build first**: Always run `lake build` after making edits. If adding
+   dependencies, update `lakefile.toml`, run `lake update`, and commit the
+   updated `lake-manifest.json`.
 2. **Iterate on errors**: If the build fails, fix errors yourself and rebuild
    (potentially multiple cycles)
 3. **No warnings or sorry**: Code must build **without any warnings**,
@@ -362,6 +364,18 @@ hom_inv_id := by
 - These representations should be equivalent (ongoing work to prove full
   correspondence)
 
+## Project shape
+
+- Root entry module: `GebLean.lean` re-exports the library's public API.
+- When you add a new public module, list it in `GebLean.lean` so downstream users
+  keep a single entry point.
+- Library namespace: `GebLean` (see `[[lean_lib]] name = "GebLean"` in
+  `lakefile.toml`).
+- Source files live under `GebLean/` and should use the `GebLean` namespace.
+- External deps: mathlib and related tools are pinned in
+  `lake-manifest.json`; Lean toolchain is `leanprover/lean4:v4.24.0-rc1` (see
+  `lean-toolchain`).
+
 ## Code Style
 
 - There are standard Lean style guidelines at
@@ -373,6 +387,28 @@ hom_inv_id := by
 - Avoid emojis unless explicitly requested by the user
 - Don't write "TODO" comments or summaries of completed or future work in the
   code itself; track to-dos/future work below in `CLAUDE.md` if necessary
+- Options in `lakefile.toml` are authoritative:
+  - `autoImplicit = false` and `relaxedAutoImplicit = false`: write binders
+    explicitly; don't rely on implicit inference.
+  - `pp.unicode.fun = true`: prefer `fun x ↦ ...` formatting.
+  - `weak.linter.mathlibStandardSet = true`: follow mathlib's standard
+    linters.
+  - `maxSynthPendingDepth = 3`: avoid tactics requiring deep typeclass search;
+    structure instances explicitly when possible.
+- Namespaces: put code under `namespace GebLean` (matching file path).
+- Imports: centralize in `GebLean.lean` for library public surface; modules
+  should import only what they use.
+- LSP: Lean files are typechecked on save via the Lean server; keep files
+  compilable.
+- Using mathlib:
+  - Import selective modules, e.g. `import Mathlib.Data.Nat.Basic`. Avoid
+    blanket imports; keep dependency surface small.
+- Proving lemmas:
+  - Prefer `by` proof blocks with readable tactic scripts; keep simp sets
+    local via `[simp]` only when justified.
+- Explain module placement and imports.
+- Keep Lean options consistent (don't override project-level options without
+  discussion).
 
 ### Extensionality Lemmas
 
