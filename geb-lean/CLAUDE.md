@@ -258,7 +258,7 @@ left_inv := fun ⟨⟨components...⟩, proofs...⟩ => by
     rfl
 ```
 
-#### Key Insights
+#### Observations
 
 - **Component-by-component equality** with `Sigma.ext` works well when the
   structure is exposed, but fails when hidden behind pattern match eliminators
@@ -266,8 +266,8 @@ left_inv := fun ⟨⟨components...⟩, proofs...⟩ => by
   components match
 - **Don't use `subst` prematurely** - it can prevent later tactics from
   working. Apply it only after extracting all needed equalities
-- **The `split` tactic** is crucial for reducing pattern match expressions that
-  appear in goal types
+- **The `split` tactic** reduces pattern match expressions that appear in
+  goal types
 
 #### What Doesn't Work
 
@@ -308,7 +308,7 @@ before manual proof:
   - May timeout on goals with heavy pattern matching or dependent types
   - Can be configured with custom rule sets
 
-**Key Discovery**: `grind` is THE solution for dependent congruence problems
+**Note**: `grind` is THE solution for dependent congruence problems
 that would otherwise require complex manual application of `Eq.recOn`,
 heterogeneous equality, or dependent rewriting. Always try `grind` first when
 you have equalities involving dependent types!
@@ -447,7 +447,7 @@ structure MyStruct where
   proof_field : SomeProp field1 field2
 ```
 
-**Benefits**:
+**Properties**:
 
 - Lean automatically generates the appropriate ext theorem
 - Handles proof irrelevance automatically (fields in `Prop` are ignored)
@@ -480,7 +480,7 @@ instance {V : Type u} [Quiver.{v + 1} V] [h : FiniteQuiver V] :
     FinQuiverWitness V := h.toFiniteness
 ```
 
-**Key points**:
+**Properties**:
 
 - Use a `Type`-valued structure (not `Prop`) to hold the actual data
 - Mark the structure's fields as `[instance]` to make them available
@@ -492,7 +492,7 @@ instance {V : Type u} [Quiver.{v + 1} V] [h : FiniteQuiver V] :
 
 ### Bundled Structures: Store Data, Not Typeclass Instances
 
-**Key Principle**: Bundled category structures (like `SemicategoryCat`,
+**Principle**: Bundled category structures (like `SemicategoryCat`,
 `AcyclicQuiverCat`) should store witness/struct data directly rather than
 typeclass instances in brackets. Then derive typeclasses via instances.
 
@@ -522,7 +522,7 @@ instance (V : AcyclicCategoryCat) : AcyclicCategory
   toSemicategoryStruct := V.semicat
 ```
 
-**Benefits**:
+**Properties**:
 
 - **No redundancy**: Each piece of data stored exactly once
 - **Explicit dependencies**: Clear what data is needed and how it relates
@@ -628,7 +628,7 @@ theorem functor_comp_id : F ⋙ G = 𝟭 C := by
     | constructor2 x' => cases x' <;> rfl  -- nested case if needed
 ```
 
-**Key insight**: When proving functor equality with `Functor.hext`, the
+**Note**: When proving functor equality with `Functor.hext`, the
 heterogeneous equality `≍` won't reduce unless you properly case on all the
 variables involved. If `rfl` fails, you likely haven't cased enough to expose
 the definitional equality.
