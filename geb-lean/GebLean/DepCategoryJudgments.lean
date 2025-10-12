@@ -490,6 +490,13 @@ private lemma compTSigma_eq.{u} (data : DepCategoryData.{u})
   cases hr; cases hl; cases hcomp
   simp [functorDataToDep_depToFunctorData_morT, cast_eq]
 
+@[simp] lemma extractRoundTrippedMor_invFun.{u}
+  (data : DepCategoryData.{u}) {a b : data.objT}
+  (f : data.morT a b) :
+  extractRoundTrippedMor data a b
+    ((functorDataToDep_depToFunctorData_morT data a b).invFun f) = f := by
+  simp [extractRoundTrippedMor]
+
 /-- Round-tripping from CopresheafData to DepCategoryData and back
     gives an equivalent composition type. -/
 def depToFunctorData_functorDataToDep_compC.{u}
