@@ -409,6 +409,11 @@ hom_inv_id := by
 - Do not use all-caps words unless they're acronyms.
 - Don't write "TODO" comments or summaries of completed or future work in the
   code itself; track to-dos/future work below in `CLAUDE.md` if necessary
+- Don't write comments which state in natural language what the
+  code following them does.  We can assume that readers of our code
+  are coders and can understand the code itself.  Comments can sometimes
+  be appropriate for explaining relationships with _concepts_ or with _other_
+  areas of code, which may not be obvious from the nearby code.
 - Options in `lakefile.toml` are authoritative:
   - `autoImplicit = false` and `relaxedAutoImplicit = false`: write binders
     explicitly; don't rely on implicit inference.
