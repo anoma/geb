@@ -178,7 +178,7 @@ def natTransToDepNatTrans {F G : CopresheafData}
     ⟨α.appComp comp.val,
      hr.symm.trans (congr_arg α.appMor comp.property.1),
      hl.symm.trans (congr_arg α.appMor comp.property.2.1),
-     hc.symm.trans (congr_arg α.appMor comp.property.2.2)⟩
+      hc.symm.trans (congr_arg α.appMor comp.property.2.2)⟩
 
 /-- Functor from DepCategoryData to CopresheafData using depToFunctorData. -/
 def depCatToCopresheaf : DepCategoryData ⥤ CopresheafData where
@@ -259,6 +259,18 @@ def depToFunctorData_functorDataToDep_morC.{u}
     rfl
   right_inv m := rfl
 
+def depToFunctorData_functorDataToDep_morCIso.{u}
+    (data : CopresheafData.{u}) :
+    (depToFunctorData (functorDataToDep data)).morC ≅ data.morC where
+  hom := (depToFunctorData_functorDataToDep_morC data).toFun
+  inv := (depToFunctorData_functorDataToDep_morC data).invFun
+  hom_inv_id := by
+    funext m
+    exact (depToFunctorData_functorDataToDep_morC data).left_inv m
+  inv_hom_id := by
+    funext m
+    exact (depToFunctorData_functorDataToDep_morC data).right_inv m
+
 /-- Extract the underlying morphism from a round-tripped morphism type.
     When we go DepCategoryData → CopresheafData → DepCategoryData,
     morphisms get wrapped in sigma types and subtypes.
@@ -266,6 +278,19 @@ def depToFunctorData_functorDataToDep_morC.{u}
 abbrev extractRoundTrippedMor.{u} (data : DepCategoryData.{u})
     (a b : data.objT) :=
   (functorDataToDep_depToFunctorData_morT data a b).toFun
+
+def functorDataToDep_depToFunctorData_morTIso.{u}
+    (data : DepCategoryData.{u}) (a b : data.objT) :
+    (functorDataToDep (depToFunctorData data)).morT a b ≅
+    data.morT a b where
+  hom := (functorDataToDep_depToFunctorData_morT data a b).toFun
+  inv := (functorDataToDep_depToFunctorData_morT data a b).invFun
+  hom_inv_id := by
+    funext m
+    exact (functorDataToDep_depToFunctorData_morT data a b).left_inv m
+  inv_hom_id := by
+    funext m
+    exact (functorDataToDep_depToFunctorData_morT data a b).right_inv m
 
 /-- Round-tripping from CopresheafData to DepCategoryData and back
     gives an equivalent identity type. -/
@@ -283,6 +308,18 @@ def depToFunctorData_functorDataToDep_idC.{u}
     cases hdom
     rfl
   right_inv i := rfl
+
+def depToFunctorData_functorDataToDep_idCIso.{u}
+    (data : CopresheafData.{u}) :
+    (depToFunctorData (functorDataToDep data)).idC ≅ data.idC where
+  hom := (depToFunctorData_functorDataToDep_idC data).toFun
+  inv := (depToFunctorData_functorDataToDep_idC data).invFun
+  hom_inv_id := by
+    funext i
+    exact (depToFunctorData_functorDataToDep_idC data).left_inv i
+  inv_hom_id := by
+    funext i
+    exact (depToFunctorData_functorDataToDep_idC data).right_inv i
 
 /-- Helper lemma: Extract the morphism equality from the identity constraint.
   This proves that the witness morphism equals `extractRoundTrippedMor`. -/
@@ -345,6 +382,20 @@ def functorDataToDep_depToFunctorData_idT.{u}
     subst ha hb
     -- After substitution, cast becomes identity
     simp only [cast_eq]
+
+def functorDataToDep_depToFunctorData_idIso.{u}
+    (data : DepCategoryData.{u}) (o : data.objT)
+    (m : (functorDataToDep (depToFunctorData data)).morT o o) :
+    (functorDataToDep (depToFunctorData data)).idT m ≅
+    data.idT (extractRoundTrippedMor data o o m) where
+  hom := (functorDataToDep_depToFunctorData_idT data o m).toFun
+  inv := (functorDataToDep_depToFunctorData_idT data o m).invFun
+  hom_inv_id := by
+    funext i
+    exact (functorDataToDep_depToFunctorData_idT data o m).left_inv i
+  inv_hom_id := by
+    funext i
+    exact (functorDataToDep_depToFunctorData_idT data o m).right_inv i
 
 /-- Helper lemma: Extract the composition equality from the witness.
     Proves that the right projection of the reconstructed witness matches
@@ -521,6 +572,18 @@ def depToFunctorData_functorDataToDep_compC.{u}
     rfl
   right_inv c := rfl
 
+def depToFunctorData_functorDataToDep_compCIso.{u}
+    (data : CopresheafData.{u}) :
+    (depToFunctorData (functorDataToDep data)).compC ≅ data.compC where
+  hom := (depToFunctorData_functorDataToDep_compC data).toFun
+  inv := (depToFunctorData_functorDataToDep_compC data).invFun
+  hom_inv_id := by
+    funext c
+    exact (depToFunctorData_functorDataToDep_compC data).left_inv c
+  inv_hom_id := by
+    funext c
+    exact (depToFunctorData_functorDataToDep_compC data).right_inv c
+
 def functorDataToDep_depToFunctorData_compT.{u}
     (data : DepCategoryData.{u}) (a b c : data.objT)
     (f : (functorDataToDep (depToFunctorData data)).morT a b)
@@ -565,6 +628,30 @@ def functorDataToDep_depToFunctorData_compT.{u}
         compTSigma_eq data hfa hfb hga hgb hha hhb hr hl hcomp_eq wit
       cases hσ
       simp [functorDataToDep_depToFunctorData_morT, cast_eq]
+
+def functorDataToDep_depToFunctorData_compIso.{u}
+    (data : DepCategoryData.{u}) (a b c : data.objT)
+    (f : (functorDataToDep (depToFunctorData data)).morT a b)
+    (g : (functorDataToDep (depToFunctorData data)).morT b c)
+    (h : (functorDataToDep (depToFunctorData data)).morT a c) :
+    (functorDataToDep (depToFunctorData data)).compT f g h ≅
+    data.compT (extractRoundTrippedMor data a b f)
+      (extractRoundTrippedMor data b c g)
+      (extractRoundTrippedMor data a c h) where
+  hom :=
+    (functorDataToDep_depToFunctorData_compT data a b c f g h).toFun
+  inv :=
+    (functorDataToDep_depToFunctorData_compT data a b c f g h).invFun
+  hom_inv_id := by
+    funext comp_wit
+    exact
+      (functorDataToDep_depToFunctorData_compT data a b c f g h).left_inv
+        comp_wit
+  inv_hom_id := by
+    funext comp_wit
+    exact
+      (functorDataToDep_depToFunctorData_compT data a b c f g h).right_inv
+        comp_wit
 
 abbrev functorToDataDep_mkCopresheafDep_morEquiv.{u}
     (data : DepCategoryData.{u}) (a b : data.objT) :
