@@ -28,7 +28,7 @@ universe u u' u'' v
 /-- A topological order is a partial order used to witness acyclicity
     via topological sort. We use a partial order rather than a total
     order because vertices in different connected components don't need
-    to be comparable. This allows forming coproducts of acyclic
+    to be comparable. This in particular allows forming coproducts of acyclic
     categories. -/
 abbrev TopologicalOrder := PartialOrder
 
@@ -124,12 +124,12 @@ namespace AcyclicQuiverHom
 variable {U : Type u} {V : Type u'} {W : Type u''}
   [AcyclicQuiver U] [AcyclicQuiver V] [AcyclicQuiver W]
 
-/-- The identity morphism of acyclic quivers. -/
+/-- Identities in the category of acyclic quivers. -/
 def id (V : Type u) [AcyclicQuiver V] : AcyclicQuiverHom V V where
   toPrefunctor := Prefunctor.id V
   obj_mono := fun _ _ h => h
 
-/-- Composition of morphisms of acyclic quivers. -/
+/-- Composition in the category of acyclic quivers. -/
 def comp (F : AcyclicQuiverHom U V) (G : AcyclicQuiverHom V W) :
     AcyclicQuiverHom U W where
   toPrefunctor := Prefunctor.comp F.toPrefunctor G.toPrefunctor
