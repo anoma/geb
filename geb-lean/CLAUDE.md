@@ -3,6 +3,11 @@
 This document contains guidance for AI assistants working on this Lean 4
 project.
 
+## General design and coding guidelines
+
+- When an error occurs, analyze the root cause step-by-step before proposing
+  a fix.
+
 ## Project Notes
 
 - All modules under `GebLean/` should open `namespace GebLean … end GebLean`;
@@ -95,9 +100,9 @@ When proving equivalences (`Equiv`) between structures with dependent types:
    - When the final goal is a sigma equality, prefer `cases` on the stored
      equalities to obtain definitional `rfl`s rather than running `simp` and
      `subst` on the whole expression
-   - Chain simple `cases` eliminations with semicolons (`cases hfa; cases hfb; …`) after
-     a targeted `simp` to reduce the amount of boilerplate while keeping lines
-     under 80 characters
+   - Chain simple `cases` eliminations with semicolons
+     (`cases hfa; cases hfb; …`) after a targeted `simp` to reduce the amount
+     of boilerplate while keeping lines under 80 characters
 
 8. **Handling Sigma types**:
    - Use `change` to rewrite goal with explicit type annotations for nested
