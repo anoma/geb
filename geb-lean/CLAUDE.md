@@ -522,6 +522,51 @@ Use explicit transport functions.  When you have equality of indices
 in dependent types (e.g., morphism equalities `f = g` where types depend on
 objects), prefer explicit transport functions or casts over rewrite tactics.
 
+### Pattern Matching in Functor Definitions
+
+When defining functors with pattern matching on morphisms that include
+composition:
+
+1. **Avoid composition in match discriminants**: Pattern matching on `f ≫ g`
+   directly in the discriminant prevents definitional reduction, blocking
+   proofs of `map_comp`.
+
+2. **Use helper functions**: When morphisms have inductive structure (like
+   `AdjoinedIdHom`), create a separate helper function for the non-trivial
+   cases:
+
+   ```lean
+   def mapHelper : SemiHom X Y → (obj X ⟶ obj Y)
+     | .case1 => ...
+     | .case2 => ...
+
+   def map : Hom X Y → (obj X ⟶ obj Y)
+     | .id _ => 𝟙 _
+     | .hom f => mapHelper f
+   ```
+
+3. **Proving map_comp**: Use `cases` to split on constructors, then use
+   `change` to explicitly state the expected goal form:
+
+   ```lean
+   map_comp f g := by
+     cases f with
+     | id =>
+       cases g with
+       | id => change 𝟙 _ = 𝟙 _ ≫ 𝟙 _; simp
+       | hom g' => change mapHelper g' = 𝟙 _ ≫ mapHelper g'; simp
+     | hom f' =>
+       cases g with
+       | id => change mapHelper f' = mapHelper f' ≫ 𝟙 _; simp
+       | hom g' =>
+         change mapHelper (comp f' g') = mapHelper f' ≫ mapHelper g'
+         cases f' <;> cases g' <;> simp [mapHelper, comp, ...]
+   ```
+
+4. **Properties**: This approach keeps composition reduction in the proof
+   where it can be handled explicitly, rather than requiring it to reduce
+   definitionally in the pattern match.
+
 ### Proving Functor Equality
 
 When proving that two functors are equal (e.g., `F ⋙ G = 𝟭 C`):
