@@ -19,6 +19,17 @@ project.
 - Keep the development constructive: do not import or `open` `Classical`
   and avoid the `classical` attribute in proofs.
 
+### High-Level Types
+
+- **CategoryJudgments**: Finite category with 4 objects (Obj, Mor, Id, Comp)
+  and 11 morphisms
+- **FunctorData**: Category structure represented as morphisms in target
+  category
+- **DepCategoryData**: Same structure using dependent types
+- **CopresheafData**: Alias for `FunctorData (Type u)` - functors to Type
+- These representations should be equivalent (ongoing work to prove full
+  correspondence)
+
 ## Workflow
 
 ### Build Before Proposing Changes
@@ -68,8 +79,6 @@ might want to examine external libraries for ideas.
 ### General category theory
 
 - [Lean's "category theory" page](https://leanprover-community.github.io/theories/category_theory.html)
-
-- [Mathlib.CategoryTheory.Grothendieck](https://leanprover-community.github.io/mathlib4_docs/Mathlib/CategoryTheory/Grothendieck.html)
 
 ### Polynomial functors
 
@@ -227,11 +236,11 @@ def roundtrip_equiv (data : A) : B_of_A data ≃ original_type where
     simp [...]
 ```
 
-**Proof irrelevance**: Lean automatically handles proof irrelevance for
-`Prop`-valued types. After using `subst` to substitute equalities, different
-proofs of the same proposition are automatically considered equal.
-
 ### Proving Equivalences with Pattern Matching and Dependent Types
+
+See also "Working with Dependent Types and Equivalences" above for general
+techniques. This section focuses specifically on the challenges introduced
+by pattern matching.
 
 When proving `left_inv` and `right_inv` for equivalences involving dependent
 types with pattern matching:
@@ -273,15 +282,15 @@ left_inv := fun ⟨⟨components...⟩, proofs...⟩ => by
     rfl
 ```
 
-#### Observations
+#### Properties
 
-- **Component-by-component equality** with `Sigma.ext` works well when the
+- Component-by-component equality with `Sigma.ext` works well when the
   structure is exposed, but fails when hidden behind pattern match eliminators
-- **Proof irrelevance** is automatic for `Prop` components after the data
+- Proof irrelevance is automatic for `Prop` components after the data
   components match
-- **Don't use `subst` prematurely** - it can prevent later tactics from
+- Don't use `subst` prematurely - it can prevent later tactics from
   working. Apply it only after extracting all needed equalities
-- **The `split` tactic** reduces pattern match expressions that appear in
+- The `split` tactic reduces pattern match expressions that appear in
   goal types
 
 #### What Doesn't Work
@@ -307,13 +316,13 @@ before manual proof:
 
 - **`grind`** - SMT-based solver
   (<https://lean-lang.org/doc/reference/latest/The--grind--tactic/>)
-  - **EXCELLENT for dependent congruence** - This is the standard idiomatic
+  - Well-suited for dependent congruence - This is the standard idiomatic
     way to handle dependent type equality in Lean!
   - Automatically builds equivalence classes and applies congruence rules
   - Works well with `Equiv.left_inv` and `Equiv.right_inv` lemmas
   - Success rate depends on complexity:
-    - ✅ Works great for 1-2 dependent parameters
-    - ⚠️ May timeout with 3+ dependent parameters
+    - Works well for 1-2 dependent parameters
+    - May timeout with 3+ dependent parameters
   - Use `set_option maxHeartbeats <n>` to increase timeout if needed
   - **Usage pattern**: After simplifying with `simp`, add hypotheses with
     `have`, then just call `grind`
@@ -328,7 +337,7 @@ that would otherwise require complex manual application of `Eq.recOn`,
 heterogeneous equality, or dependent rewriting. Always try `grind` first when
 you have equalities involving dependent types!
 
-#### Advanced Pattern: Handling Complex Dependencies with `rcases` + `grind`
+#### Pattern: Handling Complex Dependencies with `rcases` + `grind`
 
 When `grind` times out on complex goals with 3+ dependent parameters, use
 this pattern:
@@ -378,17 +387,6 @@ hom_inv_id := by
 - You have nested sigma types with dependent components
 - Multiple equivalences need to compose correctly
 
-### Project-Specific Context
-
-- **CategoryJudgments**: Finite category with 4 objects (Obj, Mor, Id, Comp)
-  and 11 morphisms
-- **FunctorData**: Category structure represented as morphisms in target
-  category
-- **DepCategoryData**: Same structure using dependent types
-- **CopresheafData**: Alias for `FunctorData (Type u)` - functors to Type
-- These representations should be equivalent (ongoing work to prove full
-  correspondence)
-
 ## Project shape
 
 - Root entry module: `GebLean.lean` re-exports the library's public API.
@@ -413,13 +411,13 @@ hom_inv_id := by
 - In transient (unrecorded) conversation, you may be informal and
   enthusiastic if you like, but in any persistent work (such as
   all source code (including comments), documentation, and project
-  guidelines/instructions), stick to a dry, formal, unopinonated, mathematical
+  guidelines/instructions), stick to a dry, formal, unopinionated, mathematical
   style.  Do not promote any aspect or passage of code as more significant
-  than any other, such as by calling something a "key insight" or
-  "core concept".  Do not refer to properties of code or constructions
-  as "advantages" or "benefits"; if you want to document a property of
-  some code or design because you don't think it's immediately obvious
-  just from reading the code itself, then simply call it a "property"
+  than any other, such as by calling something a "key insight",
+  "core concept", or "advanced".  Do not refer to properties of code or
+  constructions as "advantages" or "benefits"; if you want to document a
+  property of some code or design because you don't think it's immediately
+  obvious just from reading the code itself, then simply call it a "property"
   or similar detached word.
 - Do not use all-caps words unless they're acronyms.
 - Don't write "TODO" comments or summaries of completed or future work in the
@@ -470,6 +468,31 @@ hom_inv_id := by
 - Any style guidelines which aren't specific to Lean apply to documentation
   and style guidelines and such as well -- in particular, they apply to this
   file itself (`CLAUDE.md`).
+
+### Comment Style
+
+Comments should explain **what the code does and why**, not the historical
+process of how we arrived at it:
+
+- **Good**: Comments that clarify intent, explain non-obvious behavior, or
+  document important constraints
+- **Avoid**: Process-oriented comments like "key insight", "we discovered",
+  "after trying X we found Y"
+- **Rationale**: What feels like a "key insight" during development might be
+  obvious to another reader, or they might find a different aspect insightful.
+  Focus on the code itself, not the journey to write it.
+
+Example:
+
+```lean
+-- Bad: "The key insight is that after hm, both equivalences are the same"
+-- Good: Remove the comment - the code is clear enough
+
+-- Bad: "We need to destructure early before substituting"
+-- Good: Remove or replace with "Destructure to extract equality hypotheses"
+```
+
+## Code Patterns
 
 ### Extensionality Lemmas
 
@@ -669,29 +692,6 @@ theorem functor_comp_id : F ⋙ G = 𝟭 C := by
 heterogeneous equality `≍` won't reduce unless you properly case on all the
 variables involved. If `rfl` fails, you likely haven't cased enough to expose
 the definitional equality.
-
-### Comment Style
-
-Comments should explain **what the code does and why**, not the historical
-process of how we arrived at it:
-
-- **Good**: Comments that clarify intent, explain non-obvious behavior, or
-  document important constraints
-- **Avoid**: Process-oriented comments like "key insight", "we discovered",
-  "after trying X we found Y"
-- **Rationale**: What feels like a "key insight" during development might be
-  obvious to another reader, or they might find a different aspect insightful.
-  Focus on the code itself, not the journey to write it.
-
-Example:
-
-```lean
--- Bad: "The key insight is that after hm, both equivalences are the same"
--- Good: Remove the comment - the code is clear enough
-
--- Bad: "We need to destructure early before substituting"
--- Good: Remove or replace with "Destructure to extract equality hypotheses"
-```
 
 ## Problem-Solving Strategy
 
