@@ -201,12 +201,12 @@ variable {V : Type u} [AcyclicQuiver.{u, u} V] [AcyclicCategory V]
 
 /-- Acyclic categories are semicategories, so identity adjoining applies.
     This is just an alias for the general construction. -/
-abbrev AdjoinedIdHom := GebLean.AdjoinedIdHom (V := V)
+abbrev AdjoinedIdHom := Semicategory.AdjoinedIdHom (V := V)
 
 /-- The category structure obtained by adjoining identities to an
     acyclic category uses the general semicategory construction. -/
 instance adjoinedIdCategory : Category V :=
-  GebLean.adjoinedIdCategory
+  Semicategory.adjoinedIdCategory
 
 /-- Lift an acyclic category homomorphism to a functor between the
     categories with adjoined identities. -/
@@ -214,7 +214,7 @@ def liftToFunctor {U : Type u} {V : Type u}
     [AcyclicQuiver.{u, u} U] [AcyclicCategory U]
     [AcyclicQuiver.{u, u} V] [AcyclicCategory V]
     (F : AcyclicCategoryHom U V) : U ⥤ V :=
-  GebLean.liftToFunctor F.toSemifunctor
+  Semicategory.liftToFunctor F.toSemifunctor
 
 /-- The forgetful functor from acyclic categories to semicategories. -/
 def toSemicategoryCat : AcyclicCategoryCat ⥤ SemicategoryCat where
@@ -225,7 +225,7 @@ def toSemicategoryCat : AcyclicCategoryCat ⥤ SemicategoryCat where
 
 /-- The inclusion functor from acyclic categories to categories. -/
 def toCat : AcyclicCategoryCat ⥤ Cat :=
-  toSemicategoryCat ⋙ GebLean.toCat
+  toSemicategoryCat ⋙ Semicategory.toCat
 
 /-- The composed inclusion functor from finite acyclic categories to
     categories. -/

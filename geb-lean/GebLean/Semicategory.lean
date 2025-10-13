@@ -172,6 +172,8 @@ abbrev SemicategoryCat.Small := SemicategoryCat.Large.{u, u}
 /-- The default is the small category of semicategories. -/
 abbrev SemicategoryCat := SemicategoryCat.Small
 
+namespace Semicategory
+
 open CategoryTheory
 
 /-- Morphisms in the category obtained by adjoining identities to a
@@ -286,5 +288,7 @@ def toCat : SemicategoryCat ⥤ Cat where
       simp only [CategoryStruct.comp, CategoryTheory.Functor.comp_obj,
         eqToHom_refl]
       cases f <;> rfl
+
+end Semicategory
 
 end GebLean
