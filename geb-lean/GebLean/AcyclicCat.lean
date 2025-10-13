@@ -232,6 +232,31 @@ def toCat : AcyclicCategoryCat ⥤ Cat :=
 def finiteAcyclicCatToCat : FiniteAcyclicCategoryCat ⥤ Cat :=
   FiniteAcyclicCategoryCat.ι ⋙ toCat
 
+/-- The property that every morphism in a category with adjoined
+    identities either goes from a strictly smaller vertex to a strictly
+    larger vertex, or is an identity morphism on equal vertices. This is
+    the non-strict version of QuiverEdgesIncrease that holds after
+    adjoining identities to an acyclic category. -/
+def QuiverEdgesNonStrictlyIncrease (V : Type u) [AcyclicQuiver.{u, u} V]
+    [AcyclicCategory V] :=
+  ∀ {a b : V}, (f : Semicategory.AdjoinedIdHom a b) →
+    (a < b) ∨ (∃ (h : a = b), f = h ▸ Semicategory.AdjoinedIdHom.id a)
+
+/-- After adjoining identities to an acyclic category, the resulting
+    category satisfies the non-strict increase property: every morphism
+    either goes from a strictly smaller to a strictly larger vertex, or
+    is an identity morphism. -/
+theorem adjoinedId_edges_nonstrictly_increase :
+    QuiverEdgesNonStrictlyIncrease V := by
+  intro a b f
+  cases f with
+  | id =>
+    right
+    exists rfl
+  | hom g =>
+    left
+    exact AcyclicQuiver.edgesIncrease g
+
 end CategoryTheory
 
 end AcyclicCategory
