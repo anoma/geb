@@ -373,14 +373,12 @@ def functorDataToDep_depToFunctorData_idT.{u}
     have ⟨_, hm⟩ := hsig_eq
     simp at hm
     subst hm
-    -- After all substitutions, cast becomes identity
     simp only [cast_eq, depToFunctorData, extractRoundTrippedMor]
     congr 1
   right_inv wit := by
     rcases m with ⟨⟨a, b, mor⟩, ha, hb⟩
     simp only [depToFunctorData] at ha hb
     subst ha hb
-    -- After substitution, cast becomes identity
     simp only [cast_eq]
 
 def functorDataToDep_depToFunctorData_idIso.{u}
