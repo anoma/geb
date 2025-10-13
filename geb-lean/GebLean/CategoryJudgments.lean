@@ -119,7 +119,8 @@ instance instSemicategoryStructObj : SemicategoryStruct Obj where
     - id → mor (idMor)
     - comp → obj (intermediate, compositeDom, compositeCod)
     - comp → mor (left, right, composite)
-    So the ordering should be: comp < id < mor < obj -/
+    Note that comp and id have no edges between them, so they are incomparable.
+    The ordering is: {comp, id} < mor < obj -/
 instance instPartialOrderObj : PartialOrder Obj where
   le a b := match a, b with
     | Obj.obj, Obj.obj => True
@@ -131,7 +132,10 @@ instance instPartialOrderObj : PartialOrder Obj where
     | Obj.id, Obj.mor => True
     | Obj.id, Obj.id => True
     | Obj.id, Obj.comp => False
-    | Obj.comp, _ => True
+    | Obj.comp, Obj.obj => True
+    | Obj.comp, Obj.mor => True
+    | Obj.comp, Obj.id => False
+    | Obj.comp, Obj.comp => True
   le_refl := by intro x; cases x <;> trivial
   le_trans := by
     intros a b c hab hbc
