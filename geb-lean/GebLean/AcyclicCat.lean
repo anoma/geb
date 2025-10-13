@@ -216,24 +216,16 @@ def liftToFunctor {U : Type u} {V : Type u}
     (F : AcyclicCategoryHom U V) : U ⥤ V :=
   GebLean.liftToFunctor F.toSemifunctor
 
+/-- The forgetful functor from acyclic categories to semicategories. -/
+def toSemicategoryCat : AcyclicCategoryCat ⥤ SemicategoryCat where
+  obj V := ⟨V.carrier, inferInstance⟩
+  map F := F.toSemifunctor
+  map_id _ := rfl
+  map_comp _ _ := rfl
+
 /-- The inclusion functor from acyclic categories to categories. -/
-def toCat : AcyclicCategoryCat ⥤ Cat where
-  obj V := ⟨V.carrier, adjoinedIdCategory⟩
-  map {V W} F := liftToFunctor F
-  map_id V := by
-    refine CategoryTheory.Functor.ext ?_ ?_
-    · intro x
-      rfl
-    · intro x y f
-      simp only [CategoryStruct.id, CategoryTheory.Functor.id_obj, eqToHom_refl]
-      cases f <;> rfl
-  map_comp {U V W} F G := by
-    refine CategoryTheory.Functor.ext ?_ ?_
-    · intro x
-      rfl
-    · intro x y f
-      simp only [CategoryStruct.comp, CategoryTheory.Functor.comp_obj, eqToHom_refl]
-      cases f <;> rfl
+def toCat : AcyclicCategoryCat ⥤ Cat :=
+  toSemicategoryCat ⋙ GebLean.toCat
 
 /-- The composed inclusion functor from finite acyclic categories to
     categories. -/
