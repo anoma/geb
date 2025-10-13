@@ -727,66 +727,41 @@ def mkCopresheaf_depToFunctorData_functorDataToDep.{u}
           })
     (by
       intro X Y f
-      cases f
-      case identity => cases X <;> rfl
-      case dom =>
+      cases f with
+      | id => cases X <;> rfl
+      | hom f' => cases f' <;>
         simp only [mkCopresheaf, mkFunctor, depToFunctorData, functorDataToDep,
-                   depToFunctorData_functorDataToDep_morC]
-        ext x; simp; exact x.snd.snd.property.1.symm
-      case cod =>
-        simp only [mkCopresheaf, mkFunctor, depToFunctorData, functorDataToDep,
-                   depToFunctorData_functorDataToDep_morC]
-        ext x; simp; exact x.snd.snd.property.2.symm
-      case idObj =>
-        simp only [mkCopresheaf, mkFunctor, depToFunctorData, functorDataToDep,
-                   depToFunctorData_functorDataToDep_idC]
-        ext x; simp
-        calc x.fst
-          _ = data.dom ↑x.snd.fst := x.snd.fst.property.1.symm
-          _ = data.dom (data.idMor ↑x.snd.snd) :=
-                congrArg data.dom x.snd.snd.property.symm
-      case idMor =>
-        simp only [mkCopresheaf, mkFunctor, depToFunctorData, functorDataToDep,
-                   depToFunctorData_functorDataToDep_idC]
-        ext x; simp; exact x.snd.snd.property.symm
-      case left =>
-        simp only [mkCopresheaf, mkFunctor, depToFunctorData, functorDataToDep,
-                   depToFunctorData_functorDataToDep_compC]
-        ext x; simp; exact x.snd.snd.snd.snd.snd.snd.property.2.1.symm
-      case right =>
-        simp only [mkCopresheaf, mkFunctor, depToFunctorData, functorDataToDep,
-                   depToFunctorData_functorDataToDep_compC]
-        ext x; simp; exact x.snd.snd.snd.snd.snd.snd.property.1.symm
-      case composite =>
-        simp only [mkCopresheaf, mkFunctor, depToFunctorData, functorDataToDep,
-                   depToFunctorData_functorDataToDep_compC]
-        ext x; simp; exact x.snd.snd.snd.snd.snd.snd.property.2.2.symm
-      case intermediate =>
-        simp only [mkCopresheaf, mkFunctor, depToFunctorData, functorDataToDep,
-                   depToFunctorData_functorDataToDep_compC]
-        ext x; simp
-        calc x.snd.fst
-          _ = data.cod ↑x.snd.snd.snd.fst := x.snd.snd.snd.fst.property.2.symm
-          _ = data.cod (data.right ↑x.snd.snd.snd.snd.snd.snd) :=
-                congrArg data.cod x.snd.snd.snd.snd.snd.snd.property.1.symm
-      case compositeDom =>
-        simp only [mkCopresheaf, mkFunctor, depToFunctorData, functorDataToDep,
-                   depToFunctorData_functorDataToDep_compC]
-        ext x; simp
-        calc x.fst
-          _ = data.dom ↑x.snd.snd.snd.fst := x.snd.snd.snd.fst.property.1.symm
-          _ = data.dom (data.right ↑x.snd.snd.snd.snd.snd.snd) :=
-                congrArg data.dom x.snd.snd.snd.snd.snd.snd.property.1.symm
-      case compositeCod =>
-        simp only [mkCopresheaf, mkFunctor, depToFunctorData, functorDataToDep,
-                   depToFunctorData_functorDataToDep_compC]
-        ext x; simp
-        calc x.snd.snd.fst
-          _ = data.cod ↑x.snd.snd.snd.snd.fst :=
-            x.snd.snd.snd.snd.fst.property.2.symm
-          _ = data.cod (data.left ↑x.snd.snd.snd.snd.snd.snd) :=
-            congrArg data.cod
-              x.snd.snd.snd.snd.snd.snd.property.2.1.symm)
+                   depToFunctorData_functorDataToDep_morC,
+                   depToFunctorData_functorDataToDep_idC,
+                   depToFunctorData_functorDataToDep_compC, mapSemiHom]
+        <;> (first | (ext x; simp; exact x.snd.snd.property.1.symm)
+                    | (ext x; simp; exact x.snd.snd.property.2.symm)
+                    | (ext x; simp; exact x.snd.snd.property.symm)
+                    | (ext x; simp; exact x.snd.snd.snd.snd.snd.snd.property.1.symm)
+                    | (ext x; simp; exact x.snd.snd.snd.snd.snd.snd.property.2.1.symm)
+                    | (ext x; simp; exact x.snd.snd.snd.snd.snd.snd.property.2.2.symm)
+                    | (ext x; simp
+                       calc x.fst
+                         _ = data.dom ↑x.snd.fst := x.snd.fst.property.1.symm
+                         _ = data.dom (data.idMor ↑x.snd.snd) :=
+                               congrArg data.dom x.snd.snd.property.symm)
+                    | (ext x; simp
+                       calc x.snd.fst
+                         _ = data.cod ↑x.snd.snd.snd.fst := x.snd.snd.snd.fst.property.2.symm
+                         _ = data.cod (data.right ↑x.snd.snd.snd.snd.snd.snd) :=
+                               congrArg data.cod x.snd.snd.snd.snd.snd.snd.property.1.symm)
+                    | (ext x; simp
+                       calc x.fst
+                         _ = data.dom ↑x.snd.snd.snd.fst := x.snd.snd.snd.fst.property.1.symm
+                         _ = data.dom (data.right ↑x.snd.snd.snd.snd.snd.snd) :=
+                               congrArg data.dom x.snd.snd.snd.snd.snd.snd.property.1.symm)
+                    | (ext x; simp
+                       calc x.snd.snd.fst
+                         _ = data.cod ↑x.snd.snd.snd.snd.fst :=
+                           x.snd.snd.snd.snd.fst.property.2.symm
+                         _ = data.cod (data.left ↑x.snd.snd.snd.snd.snd.snd) :=
+                           congrArg data.cod
+                             x.snd.snd.snd.snd.snd.snd.property.2.1.symm)))
 
 /-- Round-tripping DepCategoryData through CopresheafData gives a
     naturally isomorphic functor. -/
@@ -927,60 +902,62 @@ def mkCopresheafDep_functorDataToDep_depToFunctorData.{u}
               congr 1 })
     (by
       intro X Y f
-      cases f
-      case identity => cases X <;> rfl
-      case dom =>
-        simp only [mkCopresheafDep, mkCopresheaf, mkFunctor,
-                   depToFunctorData, functorDataToDep]
-        ext x; simp
-      case cod =>
-        simp only [mkCopresheafDep, mkCopresheaf, mkFunctor,
-                   depToFunctorData, functorDataToDep]
-        ext x; simp
-      case idObj =>
-        simp only [mkCopresheafDep, mkCopresheaf, mkFunctor,
-                   depToFunctorData, functorDataToDep]
-        ext x; simp
-      case idMor =>
-        simp only [mkCopresheafDep, mkCopresheaf, mkFunctor,
-                   depToFunctorData, functorDataToDep]
-        ext x
-        on_goal 1 => simp only [CategoryStruct.comp, Function.comp_apply]
-        rcases x with ⟨o, m, i⟩
-        congr 1
-      case left =>
-        simp only [mkCopresheafDep, mkCopresheaf, mkFunctor,
-                   depToFunctorData, functorDataToDep]
-        ext x
-        on_goal 1 => simp only [CategoryStruct.comp, Function.comp_apply]
-        rcases x with ⟨a, b, c, f, g, h, comp_wit⟩
-        congr 1
-      case right =>
-        simp only [mkCopresheafDep, mkCopresheaf, mkFunctor,
-                   depToFunctorData, functorDataToDep]
-        ext x
-        on_goal 1 => simp only [CategoryStruct.comp, Function.comp_apply]
-        rcases x with ⟨a, b, c, f, g, h, comp_wit⟩
-        congr 1
-      case composite =>
-        simp only [mkCopresheafDep, mkCopresheaf, mkFunctor,
-                   depToFunctorData, functorDataToDep]
-        ext x
-        on_goal 1 => simp only [CategoryStruct.comp, Function.comp_apply]
-        rcases x with ⟨a, b, c, f, g, h, comp_wit⟩
-        congr 1
-      case intermediate =>
-        simp only [mkCopresheafDep, mkCopresheaf, mkFunctor,
-                   depToFunctorData, functorDataToDep]
-        ext x; simp
-      case compositeDom =>
-        simp only [mkCopresheafDep, mkCopresheaf, mkFunctor,
-                   depToFunctorData, functorDataToDep]
-        ext x; simp
-      case compositeCod =>
-        simp only [mkCopresheafDep, mkCopresheaf, mkFunctor,
-                   depToFunctorData, functorDataToDep]
-        ext x; simp)
+      cases f with
+      | id => cases X <;> rfl
+      | hom f' =>
+        cases f' with
+        | dom =>
+          simp only [mkCopresheafDep, mkCopresheaf, mkFunctor,
+                     depToFunctorData, functorDataToDep, mapSemiHom]
+          ext x; simp
+        | cod =>
+          simp only [mkCopresheafDep, mkCopresheaf, mkFunctor,
+                     depToFunctorData, functorDataToDep, mapSemiHom]
+          ext x; simp
+        | idObj =>
+          simp only [mkCopresheafDep, mkCopresheaf, mkFunctor,
+                     depToFunctorData, functorDataToDep, mapSemiHom]
+          ext x; simp
+        | idMor =>
+          simp only [mkCopresheafDep, mkCopresheaf, mkFunctor,
+                     depToFunctorData, functorDataToDep, mapSemiHom]
+          ext x
+          on_goal 1 => simp only [CategoryStruct.comp, Function.comp_apply]
+          rcases x with ⟨o, m, i⟩
+          congr 1
+        | left =>
+          simp only [mkCopresheafDep, mkCopresheaf, mkFunctor,
+                     depToFunctorData, functorDataToDep, mapSemiHom]
+          ext x
+          on_goal 1 => simp only [CategoryStruct.comp, Function.comp_apply]
+          rcases x with ⟨a, b, c, f, g, h, comp_wit⟩
+          congr 1
+        | right =>
+          simp only [mkCopresheafDep, mkCopresheaf, mkFunctor,
+                     depToFunctorData, functorDataToDep, mapSemiHom]
+          ext x
+          on_goal 1 => simp only [CategoryStruct.comp, Function.comp_apply]
+          rcases x with ⟨a, b, c, f, g, h, comp_wit⟩
+          congr 1
+        | composite =>
+          simp only [mkCopresheafDep, mkCopresheaf, mkFunctor,
+                     depToFunctorData, functorDataToDep, mapSemiHom]
+          ext x
+          on_goal 1 => simp only [CategoryStruct.comp, Function.comp_apply]
+          rcases x with ⟨a, b, c, f, g, h, comp_wit⟩
+          congr 1
+        | intermediate =>
+          simp only [mkCopresheafDep, mkCopresheaf, mkFunctor,
+                     depToFunctorData, functorDataToDep, mapSemiHom]
+          ext x; simp
+        | compositeDom =>
+          simp only [mkCopresheafDep, mkCopresheaf, mkFunctor,
+                     depToFunctorData, functorDataToDep, mapSemiHom]
+          ext x; simp
+        | compositeCod =>
+          simp only [mkCopresheafDep, mkCopresheaf, mkFunctor,
+                     depToFunctorData, functorDataToDep, mapSemiHom]
+          ext x; simp)
 
 end DepCategoryDataCorrespondences
 

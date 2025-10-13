@@ -2,6 +2,7 @@ import Mathlib.CategoryTheory.Category.Basic
 import Mathlib.CategoryTheory.FinCategory.Basic
 import Mathlib.CategoryTheory.Types.Basic
 import GebLean.Utilities
+import GebLean.AcyclicCat
 
 /-!
 # Category Judgments
@@ -49,36 +50,30 @@ inductive Obj : Type where
   | comp : Obj  -- represents composition judgments
   deriving DecidableEq, Inhabited, Repr
 
-/-- The morphisms of the category judgment category -/
-inductive Hom : Obj → Obj → Type where
-  -- Identity morphisms
-  | identity (X : Obj) : Hom X X
-
+/-- The non-identity morphisms of the category judgment category.
+    These form a semicategory, and identities will be adjoined. -/
+inductive SemiHom : Obj → Obj → Type where
   -- Morphisms from Mor to Obj (domain and codomain)
-  | dom : Hom Obj.mor Obj.obj
-  | cod : Hom Obj.mor Obj.obj
+  | dom : SemiHom Obj.mor Obj.obj
+  | cod : SemiHom Obj.mor Obj.obj
 
   -- Morphisms from Id
-  | idObj : Hom Obj.id Obj.obj  -- which object this is an identity for
-  | idMor : Hom Obj.id Obj.mor  -- which morphism is the identity
+  | idObj : SemiHom Obj.id Obj.obj  -- which object this is an identity for
+  | idMor : SemiHom Obj.id Obj.mor  -- which morphism is the identity
 
   -- Morphisms from Comp to Mor
-  | left      : Hom Obj.comp Obj.mor  -- morphism being post-composed
-  | right     : Hom Obj.comp Obj.mor  -- morphism being pre-composed
-  | composite : Hom Obj.comp Obj.mor  -- resulting composite
+  | left      : SemiHom Obj.comp Obj.mor  -- morphism being post-composed
+  | right     : SemiHom Obj.comp Obj.mor  -- morphism being pre-composed
+  | composite : SemiHom Obj.comp Obj.mor  -- resulting composite
 
   -- Morphisms from Comp to Obj
-  | intermediate  : Hom Obj.comp Obj.obj  -- shared intermediate object
-  | compositeDom  : Hom Obj.comp Obj.obj  -- domain of composite
-  | compositeCod  : Hom Obj.comp Obj.obj  -- codomain of composite
+  | intermediate  : SemiHom Obj.comp Obj.obj  -- shared intermediate object
+  | compositeDom  : SemiHom Obj.comp Obj.obj  -- domain of composite
+  | compositeCod  : SemiHom Obj.comp Obj.obj  -- codomain of composite
   deriving DecidableEq, Repr
 
-/-- Composition of morphisms in the category judgment category -/
-def Hom.comp : ∀ {X Y Z : Obj}, Hom X Y → Hom Y Z → Hom X Z
-  -- Identity laws
-  | _, _, _, identity _, f => f
-  | _, _, _, f, identity _ => f
-
+/-- Composition of non-identity morphisms in the semicategory -/
+def SemiHom.comp : ∀ {X Y Z : Obj}, SemiHom X Y → SemiHom Y Z → SemiHom X Z
   -- Compositions from Id to Obj (idMor ≫ dom/cod = idObj)
   | _, _, _, idMor, dom => idObj
   | _, _, _, idMor, cod => idObj
@@ -91,97 +86,156 @@ def Hom.comp : ∀ {X Y Z : Obj}, Hom X Y → Hom Y Z → Hom X Z
   | _, _, _, composite, dom => compositeDom
   | _, _, _, composite, cod => compositeCod
 
-@[simp] theorem Hom.comp_idMor_dom : idMor.comp dom = idObj := rfl
-@[simp] theorem Hom.comp_idMor_cod : idMor.comp cod = idObj := rfl
-@[simp] theorem Hom.comp_left_dom : left.comp dom = intermediate := rfl
-@[simp] theorem Hom.comp_left_cod : left.comp cod = compositeCod := rfl
-@[simp] theorem Hom.comp_right_dom : right.comp dom = compositeDom := rfl
-@[simp] theorem Hom.comp_right_cod : right.comp cod = intermediate := rfl
-@[simp] theorem Hom.comp_composite_dom :
+@[simp] theorem SemiHom.comp_idMor_dom : idMor.comp dom = idObj := rfl
+@[simp] theorem SemiHom.comp_idMor_cod : idMor.comp cod = idObj := rfl
+@[simp] theorem SemiHom.comp_left_dom : left.comp dom = intermediate := rfl
+@[simp] theorem SemiHom.comp_left_cod : left.comp cod = compositeCod := rfl
+@[simp] theorem SemiHom.comp_right_dom : right.comp dom = compositeDom := rfl
+@[simp] theorem SemiHom.comp_right_cod : right.comp cod = intermediate := rfl
+@[simp] theorem SemiHom.comp_composite_dom :
     composite.comp dom = compositeDom := rfl
-@[simp] theorem Hom.comp_composite_cod :
+@[simp] theorem SemiHom.comp_composite_cod :
     composite.comp cod = compositeCod := rfl
 
-/-- Left identity law for composition -/
-theorem Hom.id_comp : ∀ {X Y : Obj} (f : Hom X Y),
-    (identity X).comp f = f
-  | _, _, identity _ => rfl
-  | _, _, dom => rfl
-  | _, _, cod => rfl
-  | _, _, idObj => rfl
-  | _, _, idMor => rfl
-  | _, _, left => rfl
-  | _, _, right => rfl
-  | _, _, composite => rfl
-  | _, _, intermediate => rfl
-  | _, _, compositeDom => rfl
-  | _, _, compositeCod => rfl
-
-/-- Right identity law for composition -/
-theorem Hom.comp_id : ∀ {X Y : Obj} (f : Hom X Y),
-    f.comp (identity Y) = f
-  | _, _, identity _ => rfl
-  | _, _, dom => rfl
-  | _, _, cod => rfl
-  | _, _, idObj => rfl
-  | _, _, idMor => rfl
-  | _, _, left => rfl
-  | _, _, right => rfl
-  | _, _, composite => rfl
-  | _, _, intermediate => rfl
-  | _, _, compositeDom => rfl
-  | _, _, compositeCod => rfl
-
-/-- Associativity of composition -/
-theorem Hom.assoc : ∀ {W X Y Z : Obj} (f : Hom W X) (g : Hom X Y)
-    (h : Hom Y Z), (f.comp g).comp h = f.comp (g.comp h) := by
+/-- Associativity of composition in the semicategory -/
+theorem SemiHom.assoc : ∀ {W X Y Z : Obj} (f : SemiHom W X) (g : SemiHom X Y)
+    (h : SemiHom Y Z), (f.comp g).comp h = f.comp (g.comp h) := by
   intros W X Y Z f g h
-  -- All paths have length at most 2, so we check all cases
-  cases f <;> cases g <;> (try cases h) <;> rfl
+  cases f <;> cases g <;> cases h
 
-/-- The category structure on CategoryJudgments -/
-instance : CategoryTheory.CategoryStruct Obj where
-  Hom := Hom
-  id := Hom.identity
-  comp := Hom.comp
+/-- Quiver instance for CategoryJudgments.Obj -/
+instance : Quiver Obj where
+  Hom := SemiHom
 
-instance : CategoryTheory.Category Obj where
-  id_comp := Hom.id_comp
-  comp_id := Hom.comp_id
-  assoc := Hom.assoc
+/-- Semicategory structure on CategoryJudgments.Obj -/
+instance instSemicategoryStructObj : SemicategoryStruct Obj where
+  comp := SemiHom.comp
+  assoc := SemiHom.assoc
+
+/-- TopologicalOrder on CategoryJudgments.Obj.
+    Examining the edges:
+    - mor → obj (dom, cod)
+    - id → obj (idObj)
+    - id → mor (idMor)
+    - comp → obj (intermediate, compositeDom, compositeCod)
+    - comp → mor (left, right, composite)
+    So the ordering should be: comp < id < mor < obj -/
+instance instPartialOrderObj : PartialOrder Obj where
+  le a b := match a, b with
+    | Obj.obj, Obj.obj => True
+    | Obj.obj, _ => False
+    | Obj.mor, Obj.obj => True
+    | Obj.mor, Obj.mor => True
+    | Obj.mor, _ => False
+    | Obj.id, Obj.obj => True
+    | Obj.id, Obj.mor => True
+    | Obj.id, Obj.id => True
+    | Obj.id, Obj.comp => False
+    | Obj.comp, _ => True
+  le_refl := by intro x; cases x <;> trivial
+  le_trans := by
+    intros a b c hab hbc
+    cases a <;> cases b <;> cases c <;> trivial
+  le_antisymm := by
+    intros a b hab hba
+    cases a <;> cases b <;> trivial
+  lt_iff_le_not_ge := by
+    intros a b
+    cases a <;> cases b <;> decide
+
+/-- AcyclicQuiver instance for CategoryJudgments.Obj -/
+instance : AcyclicQuiver Obj where
+  toQuiver := inferInstance
+  toPartialOrder := instPartialOrderObj
+  edgesIncrease := fun {a b} f => by cases a <;> cases b <;> cases f <;> trivial
+
+/-- Semicategory instance for CategoryJudgments.Obj -/
+instance instSemicategoryObj : Semicategory Obj where
+  toQuiver := inferInstance
+  toSemicategoryStruct := instSemicategoryStructObj
+
+/-- AcyclicCategory instance for CategoryJudgments.Obj -/
+instance instAcyclicCategoryObj : AcyclicCategory Obj where
+  toSemicategoryStruct := instSemicategoryStructObj
+
+/-- The full Hom type with adjoined identities -/
+abbrev Hom := Semicategory.AdjoinedIdHom (V := Obj)
+
+/-- DecidableEq instance for Hom -/
+instance (X Y : Obj) : DecidableEq (Hom X Y) :=
+  fun f g => by
+    cases f with
+    | id =>
+      cases g with
+      | id => exact isTrue rfl
+      | hom _ => exact isFalse (fun h => nomatch h)
+    | hom f' =>
+      cases g with
+      | id => exact isFalse (fun h => nomatch h)
+      | hom g' =>
+        have : DecidableEq (SemiHom X Y) := inferInstance
+        cases this f' g' with
+        | isTrue h => exact isTrue (congrArg Semicategory.AdjoinedIdHom.hom h)
+        | isFalse h => exact isFalse (fun heq => h (by cases heq; rfl))
+
+/-- The category structure on CategoryJudgments with adjoined identities -/
+instance : CategoryTheory.Category Obj :=
+  Semicategory.adjoinedIdCategory
 
 /-- Fintype instance for objects -/
 instance : Fintype Obj where
   elems := {Obj.obj, Obj.mor, Obj.id, Obj.comp}
   complete := by intro x; cases x <;> simp
 
-/-- Fintype instance for morphisms -/
+/-- Fintype instance for morphisms with adjoined identities -/
 instance : ∀ (X Y : Obj), Fintype (Hom X Y)
-  | .obj, .obj => ⟨{.identity .obj}, by intro f; cases f; simp⟩
-  | .obj, .mor => ⟨∅, by intro f; cases f⟩
-  | .obj, .id => ⟨∅, by intro f; cases f⟩
-  | .obj, .comp => ⟨∅, by intro f; cases f⟩
-  | .mor, .obj => ⟨{.dom, .cod}, by intro f; cases f <;> simp⟩
-  | .mor, .mor => ⟨{.identity .mor}, by intro f; cases f; simp⟩
-  | .mor, .id => ⟨∅, by intro f; cases f⟩
-  | .mor, .comp => ⟨∅, by intro f; cases f⟩
-  | .id, .obj => ⟨{.idObj}, by intro f; cases f; simp⟩
-  | .id, .mor => ⟨{.idMor}, by intro f; cases f; simp⟩
-  | .id, .id => ⟨{.identity .id}, by intro f; cases f; simp⟩
-  | .id, .comp => ⟨∅, by intro f; cases f⟩
-  | .comp, .obj => ⟨{.intermediate, .compositeDom, .compositeCod},
-                    by intro f; cases f <;> simp⟩
-  | .comp, .mor => ⟨{.left, .right, .composite},
-                    by intro f; cases f <;> simp⟩
-  | .comp, .id => ⟨∅, by intro f; cases f⟩
-  | .comp, .comp => ⟨{.identity .comp}, by intro f; cases f; simp⟩
-
-/-- Fintype instance for category theory morphisms -/
-instance (X Y : Obj) : Fintype (X ⟶ Y) :=
-  inferInstanceAs (Fintype (Hom X Y))
+  | .obj, .obj => ⟨{Semicategory.AdjoinedIdHom.id Obj.obj}, by
+      intro f; cases f with
+      | id => simp
+      | hom f => exact (AcyclicQuiver.edge_irrefl Obj.obj).elim f⟩
+  | .obj, .mor => ⟨∅, by intro f; cases f with | hom f => cases f⟩
+  | .obj, .id => ⟨∅, by intro f; cases f with | hom f => cases f⟩
+  | .obj, .comp => ⟨∅, by intro f; cases f with | hom f => cases f⟩
+  | .mor, .obj => ⟨{Semicategory.AdjoinedIdHom.hom SemiHom.dom,
+                     Semicategory.AdjoinedIdHom.hom SemiHom.cod}, by
+      intro f; cases f with
+      | hom f => cases f <;> simp⟩
+  | .mor, .mor => ⟨{Semicategory.AdjoinedIdHom.id Obj.mor}, by
+      intro f; cases f with
+      | id => simp
+      | hom f => exact (AcyclicQuiver.edge_irrefl Obj.mor).elim f⟩
+  | .mor, .id => ⟨∅, by intro f; cases f with | hom f => cases f⟩
+  | .mor, .comp => ⟨∅, by intro f; cases f with | hom f => cases f⟩
+  | .id, .obj => ⟨{Semicategory.AdjoinedIdHom.hom SemiHom.idObj}, by
+      intro f; cases f with
+      | hom f => cases f; simp⟩
+  | .id, .mor => ⟨{Semicategory.AdjoinedIdHom.hom SemiHom.idMor}, by
+      intro f; cases f with
+      | hom f => cases f; simp⟩
+  | .id, .id => ⟨{Semicategory.AdjoinedIdHom.id Obj.id}, by
+      intro f; cases f with
+      | id => simp
+      | hom f => exact (AcyclicQuiver.edge_irrefl Obj.id).elim f⟩
+  | .id, .comp => ⟨∅, by intro f; cases f with | hom f => cases f⟩
+  | .comp, .obj => ⟨{Semicategory.AdjoinedIdHom.hom SemiHom.intermediate,
+                      Semicategory.AdjoinedIdHom.hom SemiHom.compositeDom,
+                      Semicategory.AdjoinedIdHom.hom SemiHom.compositeCod}, by
+      intro f; cases f with
+      | hom f => cases f <;> simp⟩
+  | .comp, .mor => ⟨{Semicategory.AdjoinedIdHom.hom SemiHom.left,
+                      Semicategory.AdjoinedIdHom.hom SemiHom.right,
+                      Semicategory.AdjoinedIdHom.hom SemiHom.composite}, by
+      intro f; cases f with
+      | hom f => cases f <;> simp⟩
+  | .comp, .id => ⟨∅, by intro f; cases f with | hom f => cases f⟩
+  | .comp, .comp => ⟨{Semicategory.AdjoinedIdHom.id Obj.comp}, by
+      intro f; cases f with
+      | id => simp
+      | hom f => exact (AcyclicQuiver.edge_irrefl Obj.comp).elim f⟩
 
 /-- The category of category judgments is a finite category -/
 instance : CategoryTheory.FinCategory Obj where
+  fintypeHom := fun X Y => inferInstanceAs (Fintype (Hom X Y))
 
 /-- The opposite of the category judgment category is also finite
     (automatically via `CategoryTheory.finCategoryOpposite`). -/
@@ -292,6 +346,23 @@ end FunctorDataCategory
 
 section FunctorDataEquivalence
 
+/-- Helper function to map a SemiHom to a morphism in C. -/
+def mapSemiHom (data : FunctorData C) : ∀ {X Y : Obj}, SemiHom X Y →
+    ((match X with | .obj => data.objC | .mor => data.morC
+                   | .id => data.idC | .comp => data.compC) ⟶
+     (match Y with | .obj => data.objC | .mor => data.morC
+                   | .id => data.idC | .comp => data.compC))
+  | .mor, .obj, .dom => data.dom
+  | .mor, .obj, .cod => data.cod
+  | .id, .obj, .idObj => data.idMor ≫ data.dom
+  | .id, .mor, .idMor => data.idMor
+  | .comp, .mor, .left => data.left
+  | .comp, .mor, .right => data.right
+  | .comp, .mor, .composite => data.composite
+  | .comp, .obj, .intermediate => data.right ≫ data.cod
+  | .comp, .obj, .compositeDom => data.right ≫ data.dom
+  | .comp, .obj, .compositeCod => data.left ≫ data.cod
+
 /-- Construct a functor from CategoryJudgments to C from minimal
     category data. The caller provides only primitive morphisms and
     compatibility conditions; derived morphisms are computed. -/
@@ -301,24 +372,30 @@ def mkFunctor (data : FunctorData C) : Obj ⥤ C where
     | .mor => data.morC
     | .id => data.idC
     | .comp => data.compC
-  map {X Y} f := match X, Y, f with
-    | _, _, .identity _ => 𝟙 _
-    | _, _, .dom => data.dom
-    | _, _, .cod => data.cod
-    | _, _, .idObj => data.idMor ≫ data.dom
-    | _, _, .idMor => data.idMor
-    | _, _, .left => data.left
-    | _, _, .right => data.right
-    | _, _, .composite => data.composite
-    | _, _, .intermediate => data.right ≫ data.cod
-    | _, _, .compositeDom => data.right ≫ data.dom
-    | _, _, .compositeCod => data.left ≫ data.cod
-  map_id := by intro X; cases X <;> rfl
+  map {X Y} f := match f with
+    | Semicategory.AdjoinedIdHom.id _ => 𝟙 _
+    | Semicategory.AdjoinedIdHom.hom g => mapSemiHom data g
+  map_id := by intro X; rfl
   map_comp {X Y Z} f g := by
-    cases f <;> cases g <;> (try rfl) <;>
-      (simp_all only [Category.id_comp, Category.comp_id, data.h_id_endo,
-        data.h_comp_match, data.h_comp_dom, data.h_comp_cod]) <;>
-      (first | rfl)
+    cases f with
+    | id =>
+      cases g with
+      | id =>
+        change 𝟙 _ = 𝟙 _ ≫ 𝟙 _
+        simp
+      | hom g' =>
+        change mapSemiHom data g' = 𝟙 _ ≫ mapSemiHom data g'
+        simp
+    | hom f' =>
+      cases g with
+      | id =>
+        change mapSemiHom data f' = mapSemiHom data f' ≫ 𝟙 _
+        simp
+      | hom g' =>
+        change mapSemiHom data (SemiHom.comp f' g') =
+               mapSemiHom data f' ≫ mapSemiHom data g'
+        cases f' <;> cases g' <;> simp [mapSemiHom, SemiHom.comp,
+          data.h_id_endo, data.h_comp_match, data.h_comp_dom, data.h_comp_cod]
 
 /-- Construct a copresheaf (covariant functor into Type) from
     CategoryJudgments from minimal category data. -/
@@ -334,36 +411,60 @@ def functorToData {C : Type*} [Category C] (F : Obj ⥤ C) :
   morC := F.obj .mor
   idC := F.obj .id
   compC := F.obj .comp
-  dom := F.map .dom
-  cod := F.map .cod
-  idMor := F.map .idMor
-  left := F.map .left
-  right := F.map .right
-  composite := F.map .composite
+  dom := F.map (Semicategory.AdjoinedIdHom.hom SemiHom.dom)
+  cod := F.map (Semicategory.AdjoinedIdHom.hom SemiHom.cod)
+  idMor := F.map (Semicategory.AdjoinedIdHom.hom SemiHom.idMor)
+  left := F.map (Semicategory.AdjoinedIdHom.hom SemiHom.left)
+  right := F.map (Semicategory.AdjoinedIdHom.hom SemiHom.right)
+  composite := F.map (Semicategory.AdjoinedIdHom.hom SemiHom.composite)
   h_id_endo := by
-    calc F.map .idMor ≫ F.map .dom
-      _ = F.map (.idMor ≫ .dom) := (F.map_comp _ _).symm
-      _ = F.map .idObj := congrArg F.map Hom.comp_idMor_dom
-      _ = F.map (.idMor ≫ .cod) := (congrArg F.map Hom.comp_idMor_cod).symm
-      _ = F.map .idMor ≫ F.map .cod := F.map_comp _ _
+    calc F.map (Semicategory.AdjoinedIdHom.hom SemiHom.idMor) ≫
+           F.map (Semicategory.AdjoinedIdHom.hom SemiHom.dom)
+      _ = F.map (Semicategory.AdjoinedIdHom.hom SemiHom.idMor ≫
+                 Semicategory.AdjoinedIdHom.hom SemiHom.dom) := (F.map_comp _ _).symm
+      _ = F.map (Semicategory.AdjoinedIdHom.hom SemiHom.idObj) :=
+          congrArg F.map rfl
+      _ = F.map (Semicategory.AdjoinedIdHom.hom SemiHom.idMor ≫
+                 Semicategory.AdjoinedIdHom.hom SemiHom.cod) :=
+          congrArg F.map rfl
+      _ = F.map (Semicategory.AdjoinedIdHom.hom SemiHom.idMor) ≫
+           F.map (Semicategory.AdjoinedIdHom.hom SemiHom.cod) := F.map_comp _ _
   h_comp_match := by
-    calc F.map .right ≫ F.map .cod
-      _ = F.map (.right ≫ .cod) := (F.map_comp _ _).symm
-      _ = F.map .intermediate := congrArg F.map Hom.comp_right_cod
-      _ = F.map (.left ≫ .dom) := (congrArg F.map Hom.comp_left_dom).symm
-      _ = F.map .left ≫ F.map .dom := F.map_comp _ _
+    calc F.map (Semicategory.AdjoinedIdHom.hom SemiHom.right) ≫
+           F.map (Semicategory.AdjoinedIdHom.hom SemiHom.cod)
+      _ = F.map (Semicategory.AdjoinedIdHom.hom SemiHom.right ≫
+                 Semicategory.AdjoinedIdHom.hom SemiHom.cod) := (F.map_comp _ _).symm
+      _ = F.map (Semicategory.AdjoinedIdHom.hom SemiHom.intermediate) :=
+          congrArg F.map rfl
+      _ = F.map (Semicategory.AdjoinedIdHom.hom SemiHom.left ≫
+                 Semicategory.AdjoinedIdHom.hom SemiHom.dom) :=
+          congrArg F.map rfl
+      _ = F.map (Semicategory.AdjoinedIdHom.hom SemiHom.left) ≫
+           F.map (Semicategory.AdjoinedIdHom.hom SemiHom.dom) := F.map_comp _ _
   h_comp_dom := by
-    calc F.map .composite ≫ F.map .dom
-      _ = F.map (.composite ≫ .dom) := (F.map_comp _ _).symm
-      _ = F.map .compositeDom := congrArg F.map Hom.comp_composite_dom
-      _ = F.map (.right ≫ .dom) := (congrArg F.map Hom.comp_right_dom).symm
-      _ = F.map .right ≫ F.map .dom := F.map_comp _ _
+    calc F.map (Semicategory.AdjoinedIdHom.hom SemiHom.composite) ≫
+           F.map (Semicategory.AdjoinedIdHom.hom SemiHom.dom)
+      _ = F.map (Semicategory.AdjoinedIdHom.hom SemiHom.composite ≫
+                 Semicategory.AdjoinedIdHom.hom SemiHom.dom) := (F.map_comp _ _).symm
+      _ = F.map (Semicategory.AdjoinedIdHom.hom SemiHom.compositeDom) :=
+          congrArg F.map rfl
+      _ = F.map (Semicategory.AdjoinedIdHom.hom SemiHom.right ≫
+                 Semicategory.AdjoinedIdHom.hom SemiHom.dom) :=
+          congrArg F.map rfl
+      _ = F.map (Semicategory.AdjoinedIdHom.hom SemiHom.right) ≫
+           F.map (Semicategory.AdjoinedIdHom.hom SemiHom.dom) := F.map_comp _ _
   h_comp_cod := by
-    calc F.map .composite ≫ F.map .cod
-      _ = F.map (.composite ≫ .cod) := (F.map_comp _ _).symm
-      _ = F.map .compositeCod := congrArg F.map Hom.comp_composite_cod
-      _ = F.map (.left ≫ .cod) := (congrArg F.map Hom.comp_left_cod).symm
-      _ = F.map .left ≫ F.map .cod := F.map_comp _ _
+    calc F.map (Semicategory.AdjoinedIdHom.hom SemiHom.composite) ≫
+           F.map (Semicategory.AdjoinedIdHom.hom SemiHom.cod)
+      _ = F.map (Semicategory.AdjoinedIdHom.hom SemiHom.composite ≫
+                 Semicategory.AdjoinedIdHom.hom SemiHom.cod) := (F.map_comp _ _).symm
+      _ = F.map (Semicategory.AdjoinedIdHom.hom SemiHom.compositeCod) :=
+          congrArg F.map rfl
+      _ = F.map (Semicategory.AdjoinedIdHom.hom SemiHom.left ≫
+                 Semicategory.AdjoinedIdHom.hom SemiHom.cod) :=
+          congrArg F.map rfl
+      _ = F.map (Semicategory.AdjoinedIdHom.hom SemiHom.left) ≫
+           F.map (Semicategory.AdjoinedIdHom.hom SemiHom.cod) := F.map_comp _ _
 
 /-- Round-tripping a functor through functorToData gives back the
     original functor. -/
@@ -373,13 +474,24 @@ theorem mkFunctor_functorToData (F : Obj ⥤ C) :
   case h_obj => intro X; cases X <;> rfl
   case h_map =>
     intro X Y f
-    cases X <;> cases Y <;> cases f <;> (
-      simp only [mkFunctor, functorToData, eqToHom_refl,
-        Category.id_comp, Category.comp_id]
-      try rfl
-      try exact (F.map_id _).symm
-      try (rw [← F.map_comp]; rfl)
-    )
+    cases f with
+    | id =>
+      cases X <;> (simp [mkFunctor, functorToData]; exact (F.map_id _).symm)
+    | hom f' =>
+      cases f' <;> simp only [mkFunctor, functorToData, mapSemiHom,
+        eqToHom_refl, Category.comp_id, Category.id_comp]
+      case idObj =>
+        rw [← F.map_comp]
+        exact congrArg F.map rfl
+      case intermediate =>
+        rw [← F.map_comp]
+        exact congrArg F.map rfl
+      case compositeDom =>
+        rw [← F.map_comp]
+        exact congrArg F.map rfl
+      case compositeCod =>
+        rw [← F.map_comp]
+        exact congrArg F.map rfl
 
 theorem functorToData_mkFunctor (data : FunctorData C) :
     functorToData (mkFunctor data) = data := by
@@ -438,12 +550,15 @@ def natTransToData {F G : Obj ⥤ C} (α : F ⟶ G) :
   appMor := α.app .mor
   appId := α.app .id
   appComp := α.app .comp
-  naturality_dom := α.naturality Hom.dom
-  naturality_cod := α.naturality Hom.cod
-  naturality_idMor := α.naturality Hom.idMor
-  naturality_left := α.naturality Hom.left
-  naturality_right := α.naturality Hom.right
-  naturality_composite := α.naturality Hom.composite
+  naturality_dom := α.naturality (Semicategory.AdjoinedIdHom.hom SemiHom.dom)
+  naturality_cod := α.naturality (Semicategory.AdjoinedIdHom.hom SemiHom.cod)
+  naturality_idMor :=
+    α.naturality (Semicategory.AdjoinedIdHom.hom SemiHom.idMor)
+  naturality_left := α.naturality (Semicategory.AdjoinedIdHom.hom SemiHom.left)
+  naturality_right :=
+    α.naturality (Semicategory.AdjoinedIdHom.hom SemiHom.right)
+  naturality_composite :=
+    α.naturality (Semicategory.AdjoinedIdHom.hom SemiHom.composite)
 
 /-- Construct a natural transformation from NatTransData. -/
 def mkNatTrans {F G : FunctorData C} (α : NatTransData F G) :
@@ -454,18 +569,20 @@ def mkNatTrans {F G : FunctorData C} (α : NatTransData F G) :
     | .id => α.appId
     | .comp => α.appComp
   naturality X Y f := by
-    cases X <;> cases Y <;> cases f
-    all_goals simp only [mkFunctor, Category.comp_id, Category.id_comp]
-    case mor.obj.dom => exact α.naturality_dom
-    case mor.obj.cod => exact α.naturality_cod
-    case id.obj.idObj => exact α.naturality_idObj
-    case id.mor.idMor => exact α.naturality_idMor
-    case comp.obj.intermediate => exact α.naturality_intermediate
-    case comp.obj.compositeDom => exact α.naturality_compositeDom
-    case comp.obj.compositeCod => exact α.naturality_compositeCod
-    case comp.mor.left => exact α.naturality_left
-    case comp.mor.right => exact α.naturality_right
-    case comp.mor.composite => exact α.naturality_composite
+    cases f with
+    | id => simp only [mkFunctor, Category.comp_id, Category.id_comp]
+    | hom f' =>
+      cases f' <;> simp only [mkFunctor]
+      case dom => exact α.naturality_dom
+      case cod => exact α.naturality_cod
+      case idObj => exact α.naturality_idObj
+      case idMor => exact α.naturality_idMor
+      case intermediate => exact α.naturality_intermediate
+      case compositeDom => exact α.naturality_compositeDom
+      case compositeCod => exact α.naturality_compositeCod
+      case left => exact α.naturality_left
+      case right => exact α.naturality_right
+      case composite => exact α.naturality_composite
 
 /-- Converting a NatTransData to a natural transformation and extracting
     back gives the original NatTransData. -/
