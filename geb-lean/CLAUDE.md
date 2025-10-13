@@ -21,14 +21,14 @@ project.
 
 ### High-Level Types
 
-- **CategoryJudgments**: Finite category with 4 objects (Obj, Mor, Id, Comp)
-  and 11 morphisms
-- **FunctorData**: Category structure represented as morphisms in target
-  category
-- **DepCategoryData**: Same structure using dependent types
-- **CopresheafData**: Alias for `FunctorData (Type u)` - functors to Type
-- These representations should be equivalent (ongoing work to prove full
-  correspondence)
+- **CategoryJudgments**: Finite category representing the judgments of
+  the essentially algebraic theory of categories
+- **FunctorData**: Presentation of the category of functors from
+  `CategoryJudgments` to an arbitrary category
+- **CopresheafData**: Alias for `FunctorData (Type u)` - functors to `Type`,
+  AKA copresheaves on `CategoryJudgments`
+- **DepCategoryData**: Equivalent presentation of `CopresheafData` using
+  dependent types
 
 ## Workflow
 
@@ -38,7 +38,7 @@ When making changes to Lean code:
 
 1. **Build first**: Always run `lake build` after making edits. If adding
    dependencies, update `lakefile.toml`, run `lake update`, and commit the
-   updated `lake-manifest.json`.
+   updated `lake-manifest.json`.  Also always run `lake test`.
 2. **Iterate on errors**: If the build fails, fix errors yourself and rebuild
    (potentially multiple cycles)
 3. **No warnings or sorry**: Code must build **without any warnings**,
@@ -49,15 +49,18 @@ When making changes to Lean code:
 4. **Only show results once complete**: Don't ask for approval until you have
    a clean build with no warnings
 5. **Exception - Ask for help if stuck**: If you can't figure out how to fill
-   in a `sorry`, are making no progress, or don't understand what's wrong,
-   pause and explain:
+   in a `sorry` or underscore (prefer underscores whenever possible), are
+   making no progress, or don't understand what's wrong, pause and explain:
    - What you're trying to accomplish
    - What problems you're encountering
    - What you've tried so far
-   - Why you're stuck on a particular `sorry`
+   - Why you're stuck on a particular `sorry` or underscore
+6. **First errors first**: When there are multiple warnings or errors in a
+    build, always fix the first error first.  Later errors may be caused by
+    earlier ones, or their fixes may be affected by earlier fixes.
 
-This approach minimizes back-and-forth and keeps the conversation focused on
-design decisions rather than syntax errors or incomplete proofs.
+This approach attempts to minimize back-and-forth and keeps the conversation
+focused on design decisions rather than syntax errors or incomplete proofs.
 
 ## Lean 4 Library and Categorical Theory Resources
 
@@ -153,7 +156,8 @@ might want to examine external libraries for ideas.
    will then produce an "unsolved goals" error and will print the type
    of the goal.  Do this whenever you take a step in a definition or
    proof, so that you know exactly what it is that you're trying to
-   define or prove next.
+   define or prove next.  In general, prefer `_` over `sorry` whenever
+   possible.
 
 ### Working with Dependent Types and Equivalences
 
@@ -176,19 +180,16 @@ When proving equivalences (`Equiv`) between structures with dependent types:
 4. **Simplification hierarchy**:
    - `simp only [...]` - most controlled, only unfolds specified definitions
    - `simp [...]` - more aggressive, may unfold additional things
-   - `dsimp only [...]` - definitional simplification, good for reducing `id`,
-     beta-reduction
+   - `dsimp only [...]` - definitional simplification; reduces `id`,
+     performs beta-reduction
    - Use `simp only [depToFunctorData] at ha` to simplify hypotheses in-place
 
 5. **Breaking down equality goals**:
    - `congr n` - apply congruence `n` levels deep to decompose structured
      equalities
-   - Helpful before using `split` to reduce match expressions
+   - Often useful before using `split` to reduce match expressions
    - Example: `congr 2` to get through nested sigma types to the core
      equality
-   - For repeated `cases` on equalities between the same object type, prefer
-     the helper `elimSixEq` in `DepCategoryJudgments.lean` to keep proofs
-     compact.
 
 6. **Reducing match expressions**:
    - `split` - case splits on match/if expressions in the goal
@@ -200,8 +201,6 @@ When proving equivalences (`Equiv`) between structures with dependent types:
    - Destructure subtypes and sigma terms with `rcases`, then `cases` the
      stored domain/codomain equalities instead of relying on `simp` +
      `classical` to resolve transports
-   - Follow the substitutions with `simp [depToFunctorData,
-     functorDataToDep_depToFunctorData_morT, cast_eq]` so casts drop away
    - This keeps proofs fully constructive while still collapsing the round-trip
      transports introduced by equivalences
    - When the final goal is a sigma equality, prefer `cases` on the stored
@@ -243,16 +242,12 @@ techniques. This section focuses specifically on the challenges introduced
 by pattern matching.
 
 When proving `left_inv` and `right_inv` for equivalences involving dependent
-types with pattern matching:
+types with pattern matching, pattern matching in tactic mode often creates
+eliminator applications (`Subtype.rec`, `Sigma.rec`, `Eq.rec`) that don't
+reduce symbolically. These appear as complex nested expressions with `match`
+statements that block definitional equality.
 
-#### The Core Challenge
-
-Pattern matching in tactic mode creates eliminator applications
-(`Subtype.rec`, `Sigma.rec`, `Eq.rec`) that don't reduce symbolically. These
-appear as complex nested expressions with `match` statements that block
-definitional equality.
-
-#### The Solution Pattern
+#### Potentially-useful techniques
 
 1. **Pattern match early** in term mode using `match` to destructure all
    inputs
@@ -293,13 +288,6 @@ left_inv := fun ⟨⟨components...⟩, proofs...⟩ => by
 - The `split` tactic reduces pattern match expressions that appear in
   goal types
 
-#### What Doesn't Work
-
-- Trying to use `Sigma.ext` chains before reducing pattern matches
-- Using `congr` on goals with unreduced eliminators
-- Attempting to use `ext` on types without registered extensionality lemmas
-- Relying on definitional equality when pattern match eliminators are present
-
 #### Debugging Tactics
 
 When working on proofs, **never use `all_goals sorry`** to hide unsolved goals.
@@ -307,40 +295,33 @@ This prevents you from seeing what remains to be proven. Instead:
 
 - Let the build fail to see the actual unsolved goals
 - Use `all_goals (try <tactic>)` to apply tactics conditionally
-- Add targeted `sorry` only after understanding what's needed
+- Add targeted `_` to see specific goal types
 
 #### Automation Tactics to Try
 
-When facing complex goals, it's worth trying powerful automation tactics
+When facing complex goals, it's worth trying automation tactics
 before manual proof:
 
 - **`grind`** - SMT-based solver
   (<https://lean-lang.org/doc/reference/latest/The--grind--tactic/>)
-  - Well-suited for dependent congruence - This is the standard idiomatic
-    way to handle dependent type equality in Lean!
   - Automatically builds equivalence classes and applies congruence rules
   - Works well with `Equiv.left_inv` and `Equiv.right_inv` lemmas
-  - Success rate depends on complexity:
-    - Works well for 1-2 dependent parameters
-    - May timeout with 3+ dependent parameters
-  - Use `set_option maxHeartbeats <n>` to increase timeout if needed
-  - **Usage pattern**: After simplifying with `simp`, add hypotheses with
-    `have`, then just call `grind`
+  - One possible pattern is to simplify with `simp`, add hypotheses with
+    `have`, then call `grind`
 
-- **`aesop`** - General-purpose automation using best-first search
-  - Effective for structural goals and standard library lemmas
-  - May timeout on goals with heavy pattern matching or dependent types
-  - Can be configured with custom rule sets
+- **`aesop`** - General-purpose automation using best-first search;
+  can be configured with custom rule sets
 
 **Note**: `grind` can sometimes solve dependent congruence problems
 that would otherwise require complex manual application of `Eq.recOn`,
-heterogeneous equality, or dependent rewriting. Always try `grind` first when
-you have equalities involving dependent types!
+heterogeneous equality, or dependent rewriting. Try `grind` when
+you have equalities involving dependent types.
 
 #### Pattern: Handling Complex Dependencies with `rcases` + `grind`
 
-When `grind` times out on complex goals with 3+ dependent parameters, use
-this pattern:
+When `grind` times out on complex goals with dependent parameters,
+or you have nested sigma types with dependent components, or
+multiple equivalences need to compose correctly, you can try this pattern:
 
 1. **Destructure early with `rcases`**: Extract all equalities from sigma
    types before substituting
@@ -361,31 +342,24 @@ hom_inv_id := by
   rcases f with ⟨⟨a_f, b_f, f'⟩, ha_f : a_f = a, hb_f : b_f = b⟩
   rcases g with ⟨⟨a_g, b_g, g'⟩, ha_g : a_g = b, hb_g : b_g = c⟩
   rcases h with ⟨⟨a_h, b_h, h'⟩, ha_h : a_h = a, hb_h : b_h = c⟩
-  -- Get left_inv results BEFORE substituting (while a, b, c in scope)
+  -- Get left_inv results before substituting (while a, b, c in scope)
   have hf := (equiv_f data a b).left_inv ⟨⟨a_f, b_f, f'⟩, ha_f, hb_f⟩
   have hg := (equiv_g data b c).left_inv ⟨⟨a_g, b_g, g'⟩, ha_g, hb_g⟩
   have hh := (equiv_h data a c).left_inv ⟨⟨a_h, b_h, h'⟩, ha_h, hb_h⟩
   have hcomp := (equiv_comp data a b c ...).left_inv comp_wit
-  -- NOW substitute - this aligns all indices
+  -- Now substitute - this aligns all indices
   subst ha_f hb_f ha_g hb_g ha_h hb_h
   -- After substitution, use congr + grind
   congr 1
   grind
 ```
 
-**Why this works**:
+That pattern sometimes works because:
 
 - Destructuring early gives you explicit equality hypotheses
 - Applying lemmas before `subst` keeps the original variables in scope
 - `subst` then replaces all the index variables at once
 - After substitution, the problem is simple enough for `grind` to handle
-- This breaks down a complex 3+ dependency problem into manageable pieces
-
-**When to use**:
-
-- `grind` alone times out (too many dependencies)
-- You have nested sigma types with dependent components
-- Multiple equivalences need to compose correctly
 
 ## Project shape
 
@@ -404,8 +378,7 @@ hom_inv_id := by
 - There are standard Lean style guidelines at
   [Lean Library Style Guidelines](https://leanprover-community.github.io/contribute/style.html)
 - **Line length**: Keep lines to 80 characters or less
-- Prefer editing existing files over creating new ones
-- Don't create documentation files unless explicitly requested
+  (the Lean standard only requires <=100, but we prefer a stricter one)
 - Keep responses concise - match verbosity to task complexity
 - Don't use emojis
 - In transient (unrecorded) conversation, you may be informal and
@@ -413,8 +386,8 @@ hom_inv_id := by
   all source code (including comments), documentation, and project
   guidelines/instructions), stick to a dry, formal, unopinionated, mathematical
   style.  Do not promote any aspect or passage of code as more significant
-  than any other, such as by calling something a "key insight",
-  "core concept", or "advanced".  Do not refer to properties of code or
+  than any other, such as by calling something "key", or an "insight",
+  or "core", or "advanced".  Do not refer to properties of code or
   constructions as "advantages" or "benefits"; if you want to document a
   property of some code or design because you don't think it's immediately
   obvious just from reading the code itself, then simply call it a "property"
@@ -432,6 +405,11 @@ hom_inv_id := by
   or anything like that.  If you do think there's a good reason not to do
   it, first pause and discuss it with me -- don't just abandon it or call
   it "done" or "good enough".
+- Comments should never refer to the historical process of the code's
+  development, and we should never do anything related to "backwards
+  compatibility" (including making comments about it).  We're writing
+  completely new code here; as far as users are concerned, there is no
+  history yet.
 - Make our tests as compositional as possible.  In general, this will mean
   calculating only one value per test, asserting that it matches what we
   expect, and then returning it as a value.  That will allow us to reuse that
@@ -443,7 +421,7 @@ hom_inv_id := by
     and immediately fix any problems before moving on to the next code change.
   - Make sure we're not removing any existing tests, unless removing tests
     is a specific goal of the change we're making.
-- Options in `lakefile.toml` are authoritative:
+- Preseve the options in `lakefile.toml`, such as:
   - `autoImplicit = false` and `relaxedAutoImplicit = false`: write binders
     explicitly; don't rely on implicit inference.
   - `pp.unicode.fun = true`: prefer `fun x ↦ ...` formatting.
@@ -469,35 +447,12 @@ hom_inv_id := by
   and style guidelines and such as well -- in particular, they apply to this
   file itself (`CLAUDE.md`).
 
-### Comment Style
-
-Comments should explain **what the code does and why**, not the historical
-process of how we arrived at it:
-
-- **Good**: Comments that clarify intent, explain non-obvious behavior, or
-  document important constraints
-- **Avoid**: Process-oriented comments like "key insight", "we discovered",
-  "after trying X we found Y"
-- **Rationale**: What feels like a "key insight" during development might be
-  obvious to another reader, or they might find a different aspect insightful.
-  Focus on the code itself, not the journey to write it.
-
-Example:
-
-```lean
--- Bad: "The key insight is that after hm, both equivalences are the same"
--- Good: Remove the comment - the code is clear enough
-
--- Bad: "We need to destructure early before substituting"
--- Good: Remove or replace with "Destructure to extract equality hypotheses"
-```
-
 ## Code Patterns
 
 ### Extensionality Lemmas
 
-Always add the `@[ext]` attribute to structure definitions to automatically
-generate extensionality lemmas:
+Always add the `@[ext]` attribute to structure definitions (when it compiles)
+to automatically generate extensionality lemmas:
 
 ```lean
 @[ext]
@@ -516,13 +471,10 @@ structure MyStruct where
   `Mathlib.CategoryTheory.NatTrans`)
 - Avoids manual ext theorems that need `cases`, `congr`, etc.
 
-**When NOT to use**: Don't use `@[ext]` on `inductive` types - they use case
-analysis rather than field-based extensionality.
-
 ### Factoring Common Typeclass Fields
 
 When multiple typeclasses share the same data fields (like finiteness
-witnesses), you can factor them out using a `Type`-valued structure:
+witnesses), factor them out using a `Type`-valued structure:
 
 ```lean
 /-- A proof of finiteness of a quiver. -/
@@ -540,112 +492,35 @@ instance {V : Type u} [Quiver.{v + 1} V] [h : FiniteQuiver V] :
     FinQuiverWitness V := h.toFiniteness
 ```
 
-**Properties**:
+**Typeclass declaration format**:
 
-- Use a `Type`-valued structure (not `Prop`) to hold the actual data
+- Use a `Type`-valued structure (`Prop` if it compiles -- i.e., when
+  the data/interface is pure proof content) to hold the actual data/interface
 - Mark the structure's fields as `[instance]` to make them available
 - Each typeclass contains a single field of the witness structure type
 - Provide an instance to extract the witness from the typeclass
-- This avoids duplicating field definitions across multiple classes
-- **Cannot use `Prop`**: Prop-valued structures can only contain proofs,
-  not data like `Fintype` instances
 
-### Bundled Structures: Store Data, Not Typeclass Instances
+That process, in short, is to treat the data/interface required by a typeclass
+as a first-class structure in and of itself, and constrain the operation
+of the language's `typeclass` mechanism to operations on those structures.
+We can use extension and dependent typing on the structures themselves to
+generate the interfaces of "derived" classes, then use `typeclass` solely
+on the resulting structures, then declare instances that extract components
+of the structure to ensure that instances of "derived" classes also guarantee
+instances of "inherited" classes.
 
-**Principle**: Bundled category structures (like `SemicategoryCat`,
-`AcyclicQuiverCat`) should store witness/struct data directly rather than
-typeclass instances in brackets. Then derive typeclasses via instances.
-
-**Don't do this** (redundant and hides dependencies):
-
-```lean
-structure AcyclicCategoryCat : Type (u + 1) where
-  carrier : Type u
-  [acyclic : AcyclicQuiver carrier]  -- Redundant!
-  [acat : AcyclicCategory carrier]   -- Requires acyclic but it's hidden
-```
-
-**Do this instead** (explicit and clean):
-
-```lean
-structure AcyclicCategoryCat : Type (u + 1) where
-  toAcyclicQuiverCat : AcyclicQuiverCat
-  semicat : @SemicategoryStruct toAcyclicQuiverCat.carrier
-    toAcyclicQuiverCat.quiver
-
-instance (V : AcyclicCategoryCat) : AcyclicQuiver
-    V.toAcyclicQuiverCat.carrier where
-  edgesIncrease := V.toAcyclicQuiverCat.edgesIncrease
-
-instance (V : AcyclicCategoryCat) : AcyclicCategory
-    V.toAcyclicQuiverCat.carrier where
-  toSemicategoryStruct := V.semicat
-```
-
-**Properties**:
-
-- **No redundancy**: Each piece of data stored exactly once
-- **Explicit dependencies**: Clear what data is needed and how it relates
-- **Avoids diamonds**: No duplicate typeclass instances
-- **Enables factoring**: Can compose structures via fields (e.g.,
-  `AcyclicCategoryCat` extends `AcyclicQuiverCat`)
-- **Better semantics**: Structure fields are data; instances are derived
-  properties
-
-**Extension vs Parameters**:
-
-- **`extends`**: `class A extends B` means `[A]` automatically provides `[B]`
-  - Example: `AcyclicQuiver extends Quiver` → `[AcyclicQuiver V]` gives
-    `[Quiver V]`
-- **Parameters**: `class A (V) [B V]` means `[A V]` requires but doesn't
-  provide `[B V]`
-  - Example: `AcyclicCategory (V) [AcyclicQuiver V]` → need both
-    `[AcyclicQuiver V]` and `[AcyclicCategory V]`
-  - Used to add properties/structure to existing types without creating
-    diamonds
-
-**Pattern for abbreviations**: When creating convenient access functions,
-use `abbrev` for conciseness:
-
-```lean
-/-- Every edge in an acyclic quiver goes from a smaller vertex to a
-    larger vertex. -/
-abbrev edge_increases := @AcyclicQuiver.edgesIncrease
-```
-
-This is cleaner than spelling out the full type signature when the function
-just wraps a typeclass field.
+Bundled category structures (like `SemicategoryCat`, `AcyclicQuiverCat`)
+should store witness/struct data directly (which will often take the
+form of nested dependently-typed structures) rather than typeclass instances
+in brackets. Then derive typeclasses via instances.
 
 ### Equality in Categories: Use `eqToHom` and `eqToIso`
 
-**Reference**: See the mathlib4 docs for `Mathlib/CategoryTheory/EqToHom`
-(`EqToHom` search).
-
-When working with object equalities in categories, **avoid rewriting by
-equalities**. Instead, use `eqToHom` and `eqToIso`:
-
-```lean
--- Given h : X = Y in a category C
-
--- Don't do this:
-rw [h]  -- Can lead to dependent type theory problems
-
--- Do this instead:
-eqToHom h     -- Creates a morphism X ⟶ Y
-eqToIso h     -- Creates an isomorphism X ≅ Y
-```
-
-**Why this matters**:
-
-- Rewriting by object equalities can create complex dependent type issues
-- `eqToHom` and `eqToIso` provide clean morphisms/isomorphisms
-- Mathlib provides many simplification lemmas for these functions
-- This pattern extends to dependent types: use explicit transport functions
-  instead of raw rewrites
-
-**Similar principle for dependent types**: When you have equality of indices
+When working with object equalities in categories, use `eqToHom` and `eqToIso`
+when applicable.  See the mathlib4 docs for `Mathlib/CategoryTheory/EqToHom`.
+Use explicit transport functions.  When you have equality of indices
 in dependent types (e.g., morphism equalities `f = g` where types depend on
-objects), prefer explicit casts or equivalences over direct rewrites.
+objects), prefer explicit transport functions or casts over rewrite tactics.
 
 ### Proving Functor Equality
 
@@ -664,10 +539,6 @@ When proving that two functors are equal (e.g., `F ⋙ G = 𝟭 C`):
 
 3. **Working with dependent pattern matches**:
    - When casing creates subcases, check which are actually inhabited
-   - Example: In a semicategory with only `zero → one` morphisms:
-     - `ofSemi` only exists when `x = zero` and `y = one`
-     - Other combinations (`zero → zero`, `one → one`, `one → zero`)
-       have no `ofSemi` morphisms
    - Use `cases` on the actual morphism value to handle all constructors
 
 4. **Avoid computational definitions in proofs**:
@@ -688,9 +559,9 @@ theorem functor_comp_id : F ⋙ G = 𝟭 C := by
     | constructor2 x' => cases x' <;> rfl  -- nested case if needed
 ```
 
-**Note**: When proving functor equality with `Functor.hext`, the
-heterogeneous equality `≍` won't reduce unless you properly case on all the
-variables involved. If `rfl` fails, you likely haven't cased enough to expose
+When proving functor equality with `Functor.hext`, the heterogeneous
+equality `≍` won't reduce unless you properly case on all the variables
+involved. If `rfl` fails, you likely haven't cased enough to expose
 the definitional equality.
 
 ## Problem-Solving Strategy
@@ -706,13 +577,8 @@ complicated:
    first
 4. **Create helper functions**: Extract complex expressions into named
    definitions
-
-This approach helps you:
-
-- Make firm progress even when the full goal seems difficult
-- Create reusable building blocks for later proofs
-- Keep individual proofs manageable and understandable
-- Debug issues more easily by isolating problems
+5. **Use underscore**: Insert underscores (`_`) and compile to see the types
+   of goals you're working on (either computational or proof content)
 
 ## Testing
 
@@ -764,7 +630,7 @@ the lakefile configuration, so you don't need `set_option` in test files.
 - **Edge cases**: Test boundary conditions explicitly
 - **Functors and morphisms**: Verify composition and identity laws
 
-### Why Plausible is Available
+### Plausible
 
 Plausible is already available as a transitive dependency through mathlib.
 It provides QuickCheck-style property testing integrated with Lean's tactic
@@ -778,7 +644,7 @@ framework.
 ## Markdown Linting
 
 All markdown files in this repository should be free of lint warnings. Use
-`markdownlint-cli2` to check for and fix any issues:
+`markdownlint-cli2` to check for and fix any issues, for example:
 
 ```bash
 markdownlint-cli2 README.md CLAUDE.md .github/copilot-instructions.md
