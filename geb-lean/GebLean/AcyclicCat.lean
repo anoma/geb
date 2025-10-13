@@ -308,6 +308,11 @@ def toCat : AcyclicCategoryCat ⥤ Cat where
       simp only [CategoryStruct.comp, CategoryTheory.Functor.comp_obj, eqToHom_refl]
       cases f <;> rfl
 
+/-- The composed inclusion functor from finite acyclic categories to
+    categories. -/
+def finiteAcyclicCatToCat : FiniteAcyclicCategoryCat ⥤ Cat :=
+  FiniteAcyclicCategoryCat.ι ⋙ toCat
+
 end CategoryTheory
 
 end AcyclicCategory
