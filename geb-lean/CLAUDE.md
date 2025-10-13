@@ -429,6 +429,22 @@ hom_inv_id := by
   are coders and can understand the code itself.  Comments can sometimes
   be appropriate for explaining relationships with _concepts_ or with _other_
   areas of code, which may not be obvious from the nearby code.
+- Do not give up on a task we've agreed to try just because it seems like
+  a lot of work, or you think it's unimportant or unsuitable in some cases,
+  or anything like that.  If you do think there's a good reason not to do
+  it, first pause and discuss it with me -- don't just abandon it or call
+  it "done" or "good enough".
+- Make our tests as compositional as possible.  In general, this will mean
+  calculating only one value per test, asserting that it matches what we
+  expect, and then returning it as a value.  That will allow us to reuse that
+  test, and its return value, in other tests, minimize code duplication, and
+  chain tests together.
+- When making changes, especially long-running large changes, be strict
+  about the following procedures:
+  - After each individual code change, re-run `lake build` and `lake test`,
+    and immediately fix any problems before moving on to the next code change.
+  - Make sure we're not removing any existing tests, unless removing tests
+    is a specific goal of the change we're making.
 - Options in `lakefile.toml` are authoritative:
   - `autoImplicit = false` and `relaxedAutoImplicit = false`: write binders
     explicitly; don't rely on implicit inference.
