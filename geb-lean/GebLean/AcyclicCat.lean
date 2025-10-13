@@ -195,7 +195,120 @@ namespace AcyclicCategory
 
 open CategoryTheory
 
-variable {V : Type u} [AcyclicQuiver V]
+section CategoryTheory
+
+variable {V : Type u} [AcyclicQuiver.{u, u} V] [AcyclicCategory V]
+
+/-- Morphisms in the category obtained by adjoining identities to an
+    acyclic category. A morphism is either an identity or a morphism
+    from the underlying acyclic category. -/
+inductive AdjoinedIdHom : V → V → Type u where
+  | id (a : V) : AdjoinedIdHom a a
+  | hom {a b : V} (f : a ⟶ b) : AdjoinedIdHom a b
+
+namespace AdjoinedIdHom
+
+/-- Compose two morphisms with adjoined identities. -/
+def comp {a b c : V} : AdjoinedIdHom a b → AdjoinedIdHom b c →
+    AdjoinedIdHom a c
+  | id _, id _ => id a
+  | id _, hom g => hom g
+  | hom f, id _ => hom f
+  | hom f, hom g => hom (Semicategory.comp f g)
+
+theorem comp_id {a b : V} (f : AdjoinedIdHom a b) :
+    comp f (id b) = f := by
+  cases f <;> rfl
+
+theorem id_comp {a b : V} (f : AdjoinedIdHom a b) :
+    comp (id a) f = f := by
+  cases f <;> rfl
+
+theorem comp_assoc {a b c d : V}
+    (f : AdjoinedIdHom a b) (g : AdjoinedIdHom b c)
+    (h : AdjoinedIdHom c d) :
+    comp (comp f g) h = comp f (comp g h) := by
+  cases f with
+  | id =>
+    cases g with
+    | id =>
+      cases h with
+      | id => rfl
+      | hom => rfl
+    | hom =>
+      cases h with
+      | id => rfl
+      | hom => rfl
+  | hom =>
+    cases g with
+    | id =>
+      cases h with
+      | id => rfl
+      | hom => rfl
+    | hom =>
+      cases h with
+      | id => rfl
+      | hom => simp only [comp]; rw [Semicategory.assoc]
+
+end AdjoinedIdHom
+
+/-- The category structure obtained by adjoining identities to an
+    acyclic category. -/
+instance adjoinedIdCategory : Category V where
+  Hom := AdjoinedIdHom
+  id a := AdjoinedIdHom.id a
+  comp := AdjoinedIdHom.comp
+  id_comp := AdjoinedIdHom.id_comp
+  comp_id := AdjoinedIdHom.comp_id
+  assoc := AdjoinedIdHom.comp_assoc
+
+/-- Lift an acyclic category homomorphism to a functor between the
+    categories with adjoined identities. -/
+def liftToFunctor {U : Type u} {V : Type u}
+    [AcyclicQuiver.{u, u} U] [AcyclicCategory U]
+    [AcyclicQuiver.{u, u} V] [AcyclicCategory V]
+    (F : AcyclicCategoryHom U V) : U ⥤ V where
+  obj := F.toSemifunctor.obj
+  map := fun {a b} f =>
+    match f with
+    | AdjoinedIdHom.id _ => AdjoinedIdHom.id (F.toSemifunctor.obj a)
+    | AdjoinedIdHom.hom g => AdjoinedIdHom.hom (F.toSemifunctor.map g)
+  map_id a := rfl
+  map_comp {a b c} f g := by
+    cases f with
+    | id =>
+      cases g with
+      | id => rfl
+      | hom => rfl
+    | hom f' =>
+      cases g with
+      | id => rfl
+      | hom g' =>
+        change AdjoinedIdHom.hom (F.toSemifunctor.map (Semicategory.comp f' g')) =
+          AdjoinedIdHom.comp (AdjoinedIdHom.hom (F.toSemifunctor.map f'))
+            (AdjoinedIdHom.hom (F.toSemifunctor.map g'))
+        simp only [AdjoinedIdHom.comp, F.toSemifunctor.map_comp]
+
+/-- The inclusion functor from acyclic categories to categories. -/
+def toCat : AcyclicCategoryCat ⥤ Cat where
+  obj V := ⟨V.carrier, adjoinedIdCategory⟩
+  map {V W} F := liftToFunctor F
+  map_id V := by
+    refine CategoryTheory.Functor.ext ?_ ?_
+    · intro x
+      rfl
+    · intro x y f
+      simp only [CategoryStruct.id, CategoryTheory.Functor.id_obj, eqToHom_refl]
+      cases f <;> rfl
+  map_comp {U V W} F G := by
+    refine CategoryTheory.Functor.ext ?_ ?_
+    · intro x
+      rfl
+    · intro x y f
+      simp only [CategoryStruct.comp, CategoryTheory.Functor.comp_obj, eqToHom_refl]
+      cases f <;> rfl
+
+end CategoryTheory
 
 end AcyclicCategory
 
