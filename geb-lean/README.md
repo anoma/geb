@@ -8,7 +8,7 @@ that encode the axioms of (semi)categories.
 ## Layout
 
 - `GebLean/FiniteQuiver.lean`: witnesses and packages finite quivers
-  together with their embeddings into mathlib’s `Quiv`.
+  together with their embeddings into mathlib's `Quiver`.
 - `GebLean/Semicategory.lean`: axiomatizes semicategories and semifunctors
   and bundles them into categorical structures.
 - `GebLean/AcyclicQuiver.lean`, `GebLean/AcyclicCat.lean`: extend quivers
@@ -44,7 +44,7 @@ plans.
 
 ## Example
 
-Import the library and access its core definitions:
+Import the library and access its definitions:
 
 ```lean
 import GebLean
@@ -57,4 +57,4 @@ example (V : Type) [inst : AcyclicQuiver V] [AcyclicCategory V] :
 ```
 
 Concrete examples such as the walking parallel pair semicategory are
-available in the test directory (see [test/AcyclicCat.lean](test/AcyclicCat.lean)).
+available in `test/AcyclicCat.lean`.
