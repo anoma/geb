@@ -172,4 +172,119 @@ abbrev SemicategoryCat.Small := SemicategoryCat.Large.{u, u}
 /-- The default is the small category of semicategories. -/
 abbrev SemicategoryCat := SemicategoryCat.Small
 
+open CategoryTheory
+
+/-- Morphisms in the category obtained by adjoining identities to a
+    semicategory. A morphism is either an identity or a morphism
+    from the underlying semicategory. -/
+inductive AdjoinedIdHom {V : Type u} [Semicategory.{u, u} V] :
+    V → V → Type u where
+  | id (a : V) : AdjoinedIdHom a a
+  | hom {a b : V} (f : a ⟶ b) : AdjoinedIdHom a b
+
+namespace AdjoinedIdHom
+
+variable {V : Type u} [Semicategory.{u, u} V]
+
+/-- Compose two morphisms with adjoined identities. -/
+def comp {a b c : V} : AdjoinedIdHom a b → AdjoinedIdHom b c →
+    AdjoinedIdHom a c
+  | id _, id _ => id a
+  | id _, hom g => hom g
+  | hom f, id _ => hom f
+  | hom f, hom g => hom (Semicategory.comp f g)
+
+theorem comp_id {a b : V} (f : AdjoinedIdHom a b) :
+    comp f (id b) = f := by
+  cases f <;> rfl
+
+theorem id_comp {a b : V} (f : AdjoinedIdHom a b) :
+    comp (id a) f = f := by
+  cases f <;> rfl
+
+theorem comp_assoc {a b c d : V}
+    (f : AdjoinedIdHom a b) (g : AdjoinedIdHom b c)
+    (h : AdjoinedIdHom c d) :
+    comp (comp f g) h = comp f (comp g h) := by
+  cases f with
+  | id =>
+    cases g with
+    | id =>
+      cases h with
+      | id => rfl
+      | hom => rfl
+    | hom =>
+      cases h with
+      | id => rfl
+      | hom => rfl
+  | hom =>
+    cases g with
+    | id =>
+      cases h with
+      | id => rfl
+      | hom => rfl
+    | hom =>
+      cases h with
+      | id => rfl
+      | hom => simp only [comp]; rw [Semicategory.assoc]
+
+end AdjoinedIdHom
+
+/-- The category structure obtained by adjoining identities to a
+    semicategory. -/
+instance adjoinedIdCategory {V : Type u} [Semicategory.{u, u} V] :
+    Category V where
+  Hom := AdjoinedIdHom
+  id a := AdjoinedIdHom.id a
+  comp := AdjoinedIdHom.comp
+  id_comp := AdjoinedIdHom.id_comp
+  comp_id := AdjoinedIdHom.comp_id
+  assoc := AdjoinedIdHom.comp_assoc
+
+/-- Lift a semifunctor to a functor between the categories with
+    adjoined identities. -/
+def liftToFunctor {U : Type u} {V : Type u}
+    [Semicategory.{u, u} U] [Semicategory.{u, u} V]
+    (F : Semifunctor U V) : U ⥤ V where
+  obj := F.obj
+  map := fun {a b} f =>
+    match f with
+    | AdjoinedIdHom.id _ => AdjoinedIdHom.id (F.obj a)
+    | AdjoinedIdHom.hom g => AdjoinedIdHom.hom (F.map g)
+  map_id a := rfl
+  map_comp {a b c} f g := by
+    cases f with
+    | id =>
+      cases g with
+      | id => rfl
+      | hom => rfl
+    | hom f' =>
+      cases g with
+      | id => rfl
+      | hom g' =>
+        change AdjoinedIdHom.hom (F.map (Semicategory.comp f' g')) =
+          AdjoinedIdHom.comp (AdjoinedIdHom.hom (F.map f'))
+            (AdjoinedIdHom.hom (F.map g'))
+        simp only [AdjoinedIdHom.comp, F.map_comp]
+
+/-- The inclusion functor from semicategories to categories. -/
+def toCat : SemicategoryCat ⥤ Cat where
+  obj V := ⟨V.α, adjoinedIdCategory⟩
+  map {V W} F := liftToFunctor F
+  map_id V := by
+    refine CategoryTheory.Functor.ext ?_ ?_
+    · intro x
+      rfl
+    · intro x y f
+      simp only [CategoryStruct.id, CategoryTheory.Functor.id_obj, eqToHom_refl]
+      cases f <;> rfl
+  map_comp {U V W} F G := by
+    refine CategoryTheory.Functor.ext ?_ ?_
+    · intro x
+      rfl
+    · intro x y f
+      simp only [CategoryStruct.comp, CategoryTheory.Functor.comp_obj,
+        eqToHom_refl]
+      cases f <;> rfl
+
 end GebLean
