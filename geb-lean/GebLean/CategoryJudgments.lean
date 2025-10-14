@@ -335,12 +335,16 @@ end FunctorDataCategory
 
 section FunctorDataEquivalence
 
+/-- Map an Obj to its corresponding object in C according to FunctorData. -/
+def objMap (data : FunctorData C) : Obj → C
+  | .obj => data.objC
+  | .mor => data.morC
+  | .id => data.idC
+  | .comp => data.compC
+
 /-- Helper function to map a SemiHom to a morphism in C. -/
 def mapSemiHom (data : FunctorData C) : ∀ {X Y : Obj}, SemiHom X Y →
-    ((match X with | .obj => data.objC | .mor => data.morC
-                   | .id => data.idC | .comp => data.compC) ⟶
-     (match Y with | .obj => data.objC | .mor => data.morC
-                   | .id => data.idC | .comp => data.compC))
+    (objMap data X ⟶ objMap data Y)
   | .mor, .obj, .dom => data.dom
   | .mor, .obj, .cod => data.cod
   | .id, .obj, .idObj => data.idMor ≫ data.dom
@@ -356,11 +360,7 @@ def mapSemiHom (data : FunctorData C) : ∀ {X Y : Obj}, SemiHom X Y →
     category data. The caller provides only primitive morphisms and
     compatibility conditions; derived morphisms are computed. -/
 def mkFunctor (data : FunctorData C) : Obj ⥤ C where
-  obj
-    | .obj => data.objC
-    | .mor => data.morC
-    | .id => data.idC
-    | .comp => data.compC
+  obj := objMap data
   map {X Y} f := match f with
     | Semicategory.AdjoinedIdHom.id _ => 𝟙 _
     | Semicategory.AdjoinedIdHom.hom g => mapSemiHom data g

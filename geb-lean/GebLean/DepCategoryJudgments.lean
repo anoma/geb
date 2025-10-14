@@ -921,31 +921,19 @@ def mkCopresheafDep_functorDataToDep_depToFunctorData.{u}
         | idMor =>
           simp only [mkCopresheafDep, mkCopresheaf, mkFunctor,
                      depToFunctorData, functorDataToDep, mapSemiHom]
-          ext x
-          on_goal 1 => simp only [CategoryStruct.comp, Function.comp_apply]
-          rcases x with ⟨o, m, i⟩
-          congr 1
+          ext x; simp
         | left =>
           simp only [mkCopresheafDep, mkCopresheaf, mkFunctor,
                      depToFunctorData, functorDataToDep, mapSemiHom]
-          ext x
-          on_goal 1 => simp only [CategoryStruct.comp, Function.comp_apply]
-          rcases x with ⟨a, b, c, f, g, h, comp_wit⟩
-          congr 1
+          ext x; simp
         | right =>
           simp only [mkCopresheafDep, mkCopresheaf, mkFunctor,
                      depToFunctorData, functorDataToDep, mapSemiHom]
-          ext x
-          on_goal 1 => simp only [CategoryStruct.comp, Function.comp_apply]
-          rcases x with ⟨a, b, c, f, g, h, comp_wit⟩
-          congr 1
+          ext x; simp
         | composite =>
           simp only [mkCopresheafDep, mkCopresheaf, mkFunctor,
                      depToFunctorData, functorDataToDep, mapSemiHom]
-          ext x
-          on_goal 1 => simp only [CategoryStruct.comp, Function.comp_apply]
-          rcases x with ⟨a, b, c, f, g, h, comp_wit⟩
-          congr 1
+          ext x; simp
         | intermediate =>
           simp only [mkCopresheafDep, mkCopresheaf, mkFunctor,
                      depToFunctorData, functorDataToDep, mapSemiHom]
