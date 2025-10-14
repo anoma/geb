@@ -5,6 +5,7 @@ import GebLean.CategoryJudgments
 import GebLean.DepCategoryJudgments
 import GebLean.AcyclicQuiver
 import GebLean.AcyclicCat
+import GebLean.CategoryPresentation
 
 /-!
 # GebLean
@@ -21,4 +22,6 @@ that make up the project:
   categorical axioms.
 - `AcyclicQuiver` and `AcyclicCat`: finite acyclic quivers and the
   associated categories.
+- `CategoryPresentation`: presentation of categories by generators and
+  relations.
 -/
