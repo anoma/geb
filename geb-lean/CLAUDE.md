@@ -18,7 +18,8 @@ project.
   `sigmaTrivialSubtype` lives in `GebLean/Utilities/Sigma.lean`.
 - Keep the development constructive: do not import or `open` `Classical`
   and avoid the `classical` attribute in proofs.  Similarly, never use
-  `noncomputable`.
+  `noncomputable`.  Similarly, never use `axiom` -- our results should depend
+  only on Lean's native type theory.
 
 ### High-Level Types
 
