@@ -1,7 +1,8 @@
 # Instructions for Claude Code
 
 This document contains guidance for AI assistants working on this Lean 4
-project.
+project.  When beginning a session, please read this entire file and
+adhere to its guidelines throughout the session.
 
 ## General design and coding guidelines
 
