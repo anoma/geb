@@ -17,7 +17,8 @@ project.
   under `GebLean/Utilities/` and import them from the index. For example,
   `sigmaTrivialSubtype` lives in `GebLean/Utilities/Sigma.lean`.
 - Keep the development constructive: do not import or `open` `Classical`
-  and avoid the `classical` attribute in proofs.
+  and avoid the `classical` attribute in proofs.  Similarly, never use
+  `noncomputable`.
 
 ### High-Level Types
 
