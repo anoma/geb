@@ -230,6 +230,30 @@ theorem comp_assoc {a b c d : V}
       | id => rfl
       | hom => simp only [comp]; rw [Semicategory.assoc]
 
+/-- Given decidable equality on semicategory morphisms, provide decidable
+    equality on morphisms with adjoined identities. -/
+def decidableEq (decEqSemi : ∀ (X Y : V), DecidableEq (X ⟶ Y))
+    (X Y : V) : DecidableEq (AdjoinedIdHom X Y) :=
+  fun f g => by
+    cases f with
+    | id =>
+      cases g with
+      | id => exact isTrue rfl
+      | hom _ => exact isFalse (fun h => nomatch h)
+    | hom f' =>
+      cases g with
+      | id => exact isFalse (fun h => nomatch h)
+      | hom g' =>
+        have : DecidableEq (X ⟶ Y) := decEqSemi X Y
+        cases this f' g' with
+        | isTrue h => exact isTrue (congrArg AdjoinedIdHom.hom h)
+        | isFalse h => exact isFalse (fun heq => h (by cases heq; rfl))
+
+/-- Instance version of decidableEq for automatic inference -/
+instance instDecidableEq [decEqSemi : ∀ (X Y : V), DecidableEq (X ⟶ Y)]
+    (X Y : V) : DecidableEq (AdjoinedIdHom X Y) :=
+  decidableEq decEqSemi X Y
+
 end AdjoinedIdHom
 
 /-- The category structure obtained by adjoining identities to a

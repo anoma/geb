@@ -165,26 +165,16 @@ instance instAcyclicCategoryObj : AcyclicCategory Obj where
 /-- The full Hom type with adjoined identities -/
 abbrev Hom := Semicategory.AdjoinedIdHom (V := Obj)
 
-/-- DecidableEq instance for Hom -/
-instance (X Y : Obj) : DecidableEq (Hom X Y) :=
-  fun f g => by
-    cases f with
-    | id =>
-      cases g with
-      | id => exact isTrue rfl
-      | hom _ => exact isFalse (fun h => nomatch h)
-    | hom f' =>
-      cases g with
-      | id => exact isFalse (fun h => nomatch h)
-      | hom g' =>
-        have : DecidableEq (SemiHom X Y) := inferInstance
-        cases this f' g' with
-        | isTrue h => exact isTrue (congrArg Semicategory.AdjoinedIdHom.hom h)
-        | isFalse h => exact isFalse (fun heq => h (by cases heq; rfl))
-
 /-- The category structure on CategoryJudgments with adjoined identities -/
 instance : CategoryTheory.Category Obj :=
   Semicategory.adjoinedIdCategory
+
+/-- DecidableEq on morphisms with adjoined identities, derived from the
+    generic utility Semicategory.AdjoinedIdHom.decidableEq applied to the
+    DecidableEq on SemiHom (which comes from deriving). -/
+instance (X Y : Obj) : DecidableEq (Hom X Y) :=
+  Semicategory.AdjoinedIdHom.decidableEq
+    (fun A B => fun (f g : SemiHom A B) => decEq f g) X Y
 
 /-- Fintype instance for objects -/
 instance : Fintype Obj where
