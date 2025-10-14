@@ -2,6 +2,7 @@ import Mathlib.Combinatorics.Quiver.Basic
 import Mathlib.Combinatorics.Quiver.Prefunctor
 import Mathlib.CategoryTheory.Category.Basic
 import Mathlib.CategoryTheory.ConcreteCategory.Bundled
+import Mathlib.Data.Fintype.Sum
 import GebLean.FiniteQuiver
 
 /-!
@@ -254,6 +255,46 @@ instance instDecidableEq [decEqSemi : ∀ (X Y : V), DecidableEq (X ⟶ Y)]
     (X Y : V) : DecidableEq (AdjoinedIdHom X Y) :=
   decidableEq decEqSemi X Y
 
+/-- Given a FinQuiverWitness on a semicategory (with the original quiver
+    structure), produce a Fintype for AdjoinedIdHom morphisms between any
+    two vertices. -/
+def fintypeAdjoinedIdHom [DecidableEq V]
+    (wit : @FinQuiverWitness V (Semicategory.toQuiver))
+    (a b : V) : Fintype (AdjoinedIdHom a b) :=
+  if h : a = b then
+    @Fintype.ofEquiv _ _
+      (@instFintypeSum PUnit.{1} (a ⟶ b)
+        (Fintype.ofSubsingleton PUnit.unit) (wit.fintypeEdge a b))
+      { toFun := fun (x : Sum PUnit.{1} (a ⟶ b)) => match x with
+          | Sum.inl _ => h ▸ id a
+          | Sum.inr f => hom f
+        invFun := fun f => match f with
+          | id _ => Sum.inl PUnit.unit
+          | hom g => Sum.inr g
+        left_inv := by
+          intro x
+          cases x with
+          | inl p => cases p; cases h; rfl
+          | inr f => rfl
+        right_inv := by
+          intro f
+          cases f with
+          | id => cases h; rfl
+          | hom g => rfl }
+  else
+    @Fintype.ofEquiv _ _
+      (wit.fintypeEdge a b)
+      { toFun := hom
+        invFun := fun f => match f with
+          | id _ => absurd rfl h
+          | hom g => g
+        left_inv := by intro; rfl
+        right_inv := by
+          intro f
+          cases f with
+          | id => exact absurd rfl h
+          | hom => rfl }
+
 end AdjoinedIdHom
 
 /-- The category structure obtained by adjoining identities to a
@@ -266,6 +307,28 @@ instance adjoinedIdCategory {V : Type u} [Semicategory.{u, u} V] :
   id_comp := AdjoinedIdHom.id_comp
   comp_id := AdjoinedIdHom.comp_id
   assoc := AdjoinedIdHom.comp_assoc
+
+namespace AdjoinedIdHom
+
+variable {V : Type u} [Semicategory.{u, u} V]
+
+/-- Given a FinQuiverWitness on a semicategory, produce a FinQuiverWitness
+    for the category with adjoined identities. This uses the quiver structure
+    from adjoinedIdCategory (where morphisms are AdjoinedIdHom). -/
+def finQuiverWitness [DecidableEq V]
+    (wit : @FinQuiverWitness V (Semicategory.toQuiver)) :
+    @FinQuiverWitness V adjoinedIdCategory.toQuiver :=
+  let ftV := wit.fintypeVertex
+  let ftE := fintypeAdjoinedIdHom wit
+  @FinQuiverWitness.mk V adjoinedIdCategory.toQuiver ftV ftE
+
+/-- Instance version of finQuiverWitness for automatic inference. -/
+instance instFinQuiverWitness [DecidableEq V]
+    (wit : @FinQuiverWitness V (Semicategory.toQuiver)) :
+    @FinQuiverWitness V adjoinedIdCategory.toQuiver :=
+  finQuiverWitness wit
+
+end AdjoinedIdHom
 
 /-- Lift a semifunctor to a functor between the categories with
     adjoined identities. -/

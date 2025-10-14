@@ -181,51 +181,46 @@ instance : Fintype Obj where
   elems := {Obj.obj, Obj.mor, Obj.id, Obj.comp}
   complete := by intro x; cases x <;> simp
 
-/-- Fintype instance for morphisms with adjoined identities -/
-instance : ∀ (X Y : Obj), Fintype (Hom X Y)
-  | .obj, .obj => ⟨{Semicategory.AdjoinedIdHom.id Obj.obj}, by
-      intro f; cases f with
-      | id => simp
-      | hom f => exact (AcyclicQuiver.edge_irrefl Obj.obj).elim f⟩
-  | .obj, .mor => ⟨∅, by intro f; cases f with | hom f => cases f⟩
-  | .obj, .id => ⟨∅, by intro f; cases f with | hom f => cases f⟩
-  | .obj, .comp => ⟨∅, by intro f; cases f with | hom f => cases f⟩
-  | .mor, .obj => ⟨{Semicategory.AdjoinedIdHom.hom SemiHom.dom,
-                     Semicategory.AdjoinedIdHom.hom SemiHom.cod}, by
-      intro f; cases f with
-      | hom f => cases f <;> simp⟩
-  | .mor, .mor => ⟨{Semicategory.AdjoinedIdHom.id Obj.mor}, by
-      intro f; cases f with
-      | id => simp
-      | hom f => exact (AcyclicQuiver.edge_irrefl Obj.mor).elim f⟩
-  | .mor, .id => ⟨∅, by intro f; cases f with | hom f => cases f⟩
-  | .mor, .comp => ⟨∅, by intro f; cases f with | hom f => cases f⟩
-  | .id, .obj => ⟨{Semicategory.AdjoinedIdHom.hom SemiHom.idObj}, by
-      intro f; cases f with
-      | hom f => cases f; simp⟩
-  | .id, .mor => ⟨{Semicategory.AdjoinedIdHom.hom SemiHom.idMor}, by
-      intro f; cases f with
-      | hom f => cases f; simp⟩
-  | .id, .id => ⟨{Semicategory.AdjoinedIdHom.id Obj.id}, by
-      intro f; cases f with
-      | id => simp
-      | hom f => exact (AcyclicQuiver.edge_irrefl Obj.id).elim f⟩
-  | .id, .comp => ⟨∅, by intro f; cases f with | hom f => cases f⟩
-  | .comp, .obj => ⟨{Semicategory.AdjoinedIdHom.hom SemiHom.intermediate,
-                      Semicategory.AdjoinedIdHom.hom SemiHom.compositeDom,
-                      Semicategory.AdjoinedIdHom.hom SemiHom.compositeCod}, by
-      intro f; cases f with
-      | hom f => cases f <;> simp⟩
-  | .comp, .mor => ⟨{Semicategory.AdjoinedIdHom.hom SemiHom.left,
-                      Semicategory.AdjoinedIdHom.hom SemiHom.right,
-                      Semicategory.AdjoinedIdHom.hom SemiHom.composite}, by
-      intro f; cases f with
-      | hom f => cases f <;> simp⟩
-  | .comp, .id => ⟨∅, by intro f; cases f with | hom f => cases f⟩
-  | .comp, .comp => ⟨{Semicategory.AdjoinedIdHom.id Obj.comp}, by
-      intro f; cases f with
-      | id => simp
-      | hom f => exact (AcyclicQuiver.edge_irrefl Obj.comp).elim f⟩
+/-- Fintype instance for semicategory morphisms (non-identity morphisms) -/
+instance : ∀ (X Y : Obj), Fintype (SemiHom X Y)
+  | .obj, .obj => ⟨∅, by intro f; cases f⟩
+  | .obj, .mor => ⟨∅, by intro f; cases f⟩
+  | .obj, .id => ⟨∅, by intro f; cases f⟩
+  | .obj, .comp => ⟨∅, by intro f; cases f⟩
+  | .mor, .obj => ⟨{SemiHom.dom, SemiHom.cod}, by intro f; cases f <;> simp⟩
+  | .mor, .mor => ⟨∅, by intro f; cases f⟩
+  | .mor, .id => ⟨∅, by intro f; cases f⟩
+  | .mor, .comp => ⟨∅, by intro f; cases f⟩
+  | .id, .obj => ⟨{SemiHom.idObj}, by intro f; cases f; simp⟩
+  | .id, .mor => ⟨{SemiHom.idMor}, by intro f; cases f; simp⟩
+  | .id, .id => ⟨∅, by intro f; cases f⟩
+  | .id, .comp => ⟨∅, by intro f; cases f⟩
+  | .comp, .obj => ⟨{SemiHom.intermediate, SemiHom.compositeDom,
+                      SemiHom.compositeCod}, by intro f; cases f <;> simp⟩
+  | .comp, .mor => ⟨{SemiHom.left, SemiHom.right, SemiHom.composite}, by
+      intro f; cases f <;> simp⟩
+  | .comp, .id => ⟨∅, by intro f; cases f⟩
+  | .comp, .comp => ⟨∅, by intro f; cases f⟩
+
+/-- FinQuiverWitness for the semicategory structure (non-identity
+    morphisms only). -/
+def semiFinQuiverWitness : @FinQuiverWitness Obj instSemicategoryObj.toQuiver
+    where
+  fintypeVertex := inferInstance
+  fintypeEdge := fun X Y => inferInstanceAs (Fintype (SemiHom X Y))
+
+/-- FinQuiverWitness for the category with adjoined identities, derived from
+    the semicategory witness using the generic utility. -/
+def finQuiverWitness :
+    @FinQuiverWitness Obj Semicategory.adjoinedIdCategory.toQuiver :=
+  @Semicategory.AdjoinedIdHom.finQuiverWitness Obj instSemicategoryObj
+    inferInstance semiFinQuiverWitness
+
+/-- Fintype instance for morphisms with adjoined identities, derived from
+    the FinQuiverWitness. -/
+instance (X Y : Obj) : Fintype (Hom X Y) :=
+  @FinQuiverWitness.fintypeEdge Obj Semicategory.adjoinedIdCategory.toQuiver
+    finQuiverWitness X Y
 
 /-- The category of category judgments is a finite category -/
 instance : CategoryTheory.FinCategory Obj where
