@@ -36,22 +36,23 @@ open CategoryTheory Quiver
 universe v u
 
 /-- A presentation of a category consists of:
-    - A quiver `V` (the generators)
-    - A relation `rels` on morphisms in the free category on `V`
+    - A type of vertices (generators)
+    - A quiver structure (not a typeclass instance)
+    - Relations on morphisms in the free category
 -/
 structure CategoryPresentation where
-  /-- The quiver of generators -/
+  /-- The type of vertices (generators) -/
   generators : Type u
-  /-- The quiver structure on generators -/
-  [generatorQuiver : Quiver.{v + 1} generators]
+  /-- The quiver structure on generators (explicit, not a typeclass) -/
+  generatorQuiver : Quiver.{v + 1} generators
   /-- Relations on paths in the free category -/
-  relations : @HomRel (Paths generators) _
+  relations : let _ := generatorQuiver; @HomRel (Paths generators) _
 
 namespace CategoryPresentation
 
 variable (P : CategoryPresentation.{v, u})
 
-/-- Make the quiver instance available -/
+/-- Make the quiver instance available as a typeclass instance (wrapper) -/
 instance : Quiver.{v + 1} P.generators := P.generatorQuiver
 
 /-- The free category on the generators has Paths as morphisms -/
@@ -59,10 +60,14 @@ abbrev FreeCategory := Paths P.generators
 
 /-- The presented category, formed by quotienting the free category by the
     relations -/
-def toCategory : Type u := Quotient P.relations
+def toCategory (P : CategoryPresentation.{v, u}) : Type u :=
+  let _ := P.generatorQuiver
+  Quotient P.relations
 
 /-- The presented category has a natural category structure -/
-instance categoryToCategory : Category.{max u v} P.toCategory :=
+instance categoryToCategory (P : CategoryPresentation.{v, u}) :
+    Category.{max u v} P.toCategory :=
+  let _ := P.generatorQuiver
   Quotient.category P.relations
 
 end CategoryPresentation

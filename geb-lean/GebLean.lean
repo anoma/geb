@@ -6,6 +6,7 @@ import GebLean.DepCategoryJudgments
 import GebLean.AcyclicQuiver
 import GebLean.AcyclicCat
 import GebLean.CategoryPresentation
+import GebLean.AcyclicPresentation
 
 /-!
 # GebLean
@@ -24,4 +25,6 @@ that make up the project:
   associated categories.
 - `CategoryPresentation`: presentation of categories by generators and
   relations.
+- `AcyclicPresentation`: specialization to acyclic and finite acyclic
+  category presentations.
 -/

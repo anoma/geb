@@ -38,16 +38,33 @@ abbrev QuiverEdgesIncrease (V : Type u) [Quiver.{v + 1} V]
     [TopologicalOrder V] :=
   ∀ {a b : V}, (a ⟶ b) → a < b
 
-/-- An acyclic quiver is a quiver equipped with a partial order on
-    vertices such that every edge goes from a smaller to a larger
-    vertex. This provides a topological sort, which proves the quiver
-    is acyclic. -/
+/-- Witness that a quiver is acyclic: a partial order on vertices such
+    that every edge goes from a smaller to a larger vertex. This provides
+    a topological sort, which proves the quiver is acyclic.
+
+    This is a structure (not a class) containing the data needed to prove
+    acyclicity, for a quiver that's already been provided. -/
+structure AcyclicQuiverWitness (V : Type u) (q : Quiver.{v + 1} V) where
+  /-- The topological order on vertices -/
+  order : TopologicalOrder V
+  /-- Proof that every edge respects the order -/
+  edgesIncrease : @QuiverEdgesIncrease V q order
+
+/-- An acyclic quiver bundles a quiver with a witness of acyclicity.
+    This is the typeclass version that extends Quiver. -/
 class AcyclicQuiver (V : Type u) extends Quiver.{v + 1} V,
     TopologicalOrder V where
   edgesIncrease : QuiverEdgesIncrease V := by infer_instance
 
 instance {V : Type u} [h : AcyclicQuiver V] : QuiverEdgesIncrease V :=
   h.edgesIncrease
+
+/-- Extract the witness from an AcyclicQuiver instance. This is a wrapper
+    that converts from the typeclass to the explicit structure form. -/
+instance (V : Type u) [h : AcyclicQuiver V] :
+    AcyclicQuiverWitness V h.toQuiver :=
+  { order := h.toPartialOrder
+    edgesIncrease := h.edgesIncrease }
 
 /-- Every edge in an acyclic quiver goes from a smaller vertex to a
     larger vertex. -/
@@ -70,7 +87,7 @@ instance {V : Type u} [AcyclicQuiver V] [h : FiniteAcyclicQuiver V] :
 
 namespace AcyclicQuiver
 
-variable {V : Type u} [AcyclicQuiver V]
+variable {V : Type u} [AcyclicQuiver.{u, v} V]
 
 /-- In an acyclic quiver, the edge relation is irreflexive. -/
 theorem edge_irrefl (a : V) : IsEmpty (a ⟶ a) := by
