@@ -17,8 +17,8 @@ adhere to its guidelines throughout the session.
 - `GebLean/Utilities.lean` acts as an index module. Add new utility files
   under `GebLean/Utilities/` and import them from the index. For example,
   `sigmaTrivialSubtype` lives in `GebLean/Utilities/Sigma.lean`.
-- Keep the development constructive: do not import or `open` `Classical`
-  and avoid the `classical` attribute in proofs.  Similarly, never use
+- Keep the development constructive: never import or `open` `Classical`,
+  and never use `classical` attribute in proofs.  Similarly, never use
   `noncomputable`.  Similarly, never use `axiom` -- our results should depend
   only on Lean's native type theory.
 
