@@ -46,18 +46,18 @@ When making changes to Lean code:
    (potentially multiple cycles)
 3. **No warnings or sorry**: Code must build **without any warnings**,
    including:
-   - No `declaration uses 'sorry'` warnings
+   - No `declaration uses 'sorry'` warnings (never use `sorry`)
    - No unused variable or parameter warnings
    - No other linter warnings
 4. **Only show results once complete**: Don't ask for approval until you have
    a clean build with no warnings
-5. **Exception - Ask for help if stuck**: If you can't figure out how to fill
-   in a `sorry` or underscore (prefer underscores whenever possible), are
-   making no progress, or don't understand what's wrong, pause and explain:
+5. **Exception - Ask for help if stuck**: If you can't figure out how to
+   fill in an underscore (never use `sorry`), are making no progress, or
+   don't understand what's wrong, pause and explain:
    - What you're trying to accomplish
    - What problems you're encountering
    - What you've tried so far
-   - Why you're stuck on a particular `sorry` or underscore
+   - Why you're stuck on a particular underscore
 6. **First errors first**: When there are multiple warnings or errors in a
     build, always fix the first error first.  Later errors may be caused by
     earlier ones, or their fixes may be affected by earlier fixes.
@@ -165,8 +165,9 @@ might want to examine external libraries for ideas.
    will then produce an "unsolved goals" error and will print the type
    of the goal.  Do this whenever you take a step in a definition or
    proof, so that you know exactly what it is that you're trying to
-   define or prove next.  In general, prefer `_` over `sorry` whenever
-   possible.
+   define or prove next.  Use `_`, not `sorry` -- we _want_ the build to
+   be broken when there's a hole we haven't filled in yet, and `_` also
+   shows the type of the hole.
 
 ### Working with Dependent Types and Equivalences
 
@@ -299,12 +300,8 @@ left_inv := fun ⟨⟨components...⟩, proofs...⟩ => by
 
 #### Debugging Tactics
 
-When working on proofs, **never use `all_goals sorry`** to hide unsolved goals.
-This prevents you from seeing what remains to be proven. Instead:
-
-- Let the build fail to see the actual unsolved goals
+- When working on proofs, see the types of unsolved goals by inserting `_`
 - Use `all_goals (try <tactic>)` to apply tactics conditionally
-- Add targeted `_` to see specific goal types
 
 #### Automation Tactics to Try
 
@@ -722,7 +719,30 @@ This section tracks planned improvements and extensions to the codebase.
 - Implement decidability instance for `Relation.ReflTransGen` on finite types
 - This would enable `AcyclicQuiver.ofFiniteAcyclic` to work with `by decide`
 - Requires: bounded path enumeration up to n vertices
-- File: `GebLean/AcyclicQuiver.lean` (currently has `sorry`)
+- File: `GebLean/AcyclicQuiver.lean`
+
+**Fintype instances for paths in finite quivers**:
+
+- `finite_paths_of_bounded_length`: Constructive Fintype for paths of
+  bounded length in finite quivers
+  - Challenge: paths don't decompose uniquely, making inductive construction
+    complex
+  - Requires: careful well-founded recursion or alternative enumeration
+    strategy
+  - File: `GebLean/AcyclicPresentation.lean:268`
+
+- `finite_paths_in_finite_acyclic_quiver`: Fintype for all paths in finite
+  acyclic quivers
+  - Depends on: `finite_paths_of_bounded_length` and `path_length_bounded`
+  - Uses transport via equivalence (all paths = bounded paths in acyclic case)
+  - File: `GebLean/AcyclicPresentation.lean:282`
+
+- `finiteAcyclicPresentationFinQuiver.fintypeEdge`: Fintype for morphisms in
+  presented categories
+  - Depends on: `finite_paths_in_finite_acyclic_quiver`
+  - Requires: decidability infrastructure for path equality and quotient
+    relations
+  - File: `GebLean/AcyclicPresentation.lean:297`
 
 ### Test Coverage
 
