@@ -25,6 +25,8 @@ This file defines semicategories and their morphisms.
   composition
 * `SemicategoryCat`: The category of semicategories (as a small category
   where objects and morphisms are in the same universe)
+* `AdjoinedIdHom`: Morphisms in the category obtained by adjoining identities
+  to a semicategory
 -/
 
 universe u u' u'' v

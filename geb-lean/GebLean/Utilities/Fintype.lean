@@ -8,9 +8,9 @@ Structure-based representation of the Fintype interface.
 
 ## Main definitions
 
+* `FinsetComplete`: Property that a finset contains all elements of a type
 * `FintypeData`: Structure containing a `Finset` with the property that it
   contains all elements of the type
-* `fintypeOfFintypeData`: Build a `Fintype` typeclass from `FintypeData`
 * `fintypeDataOfFintype`: Extract `FintypeData` from a `Fintype` typeclass
 -/
 
