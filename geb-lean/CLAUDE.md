@@ -4,27 +4,20 @@ This document contains guidance for AI assistants working on this Lean 4
 project.  When beginning a session, please read this entire file and
 adhere to its guidelines throughout the session.
 
-## General design and coding guidelines
-
-- When an error occurs, analyze the root cause step-by-step before proposing
-  a fix.
-
 ## Project Notes
 
 - All modules under `GebLean/` should open `namespace GebLean … end GebLean`;
   tests may need `open GebLean` rather than un-qualified names.
 - `GebLean/Utilities.lean` acts as an index module. Add new utility files
-  under `GebLean/Utilities/` and import them from the index. For example,
-  `sigmaTrivialSubtype` lives in `GebLean/Utilities/Sigma.lean`.
+  under `GebLean/Utilities/` and import them from the index.
 - Root entry module: `GebLean.lean` re-exports the library's public API.
-- When you add a new public module, list it in `GebLean.lean` so downstream users
-  keep a single entry point.
+- When you add a new public module, list it in `GebLean.lean` so downstream
+  users keep a single entry point.
 - Library namespace: `GebLean` (see `[[lean_lib]] name = "GebLean"` in
   `lakefile.toml`).
 - Source files live under `GebLean/` and should use the `GebLean` namespace.
 - External deps: mathlib and related tools are pinned in
-  `lake-manifest.json`; Lean toolchain is `leanprover/lean4:v4.24.0-rc1` (see
-  `lean-toolchain`).
+  `lake-manifest.json`; see `lean-toolchain` for the toolchain.
 
 ## Workflow
 
@@ -54,6 +47,15 @@ When making changes to Lean code:
 6. **First errors first**: When there are multiple warnings or errors in a
     build, always fix the first error first.  Later errors may be caused by
     earlier ones, or their fixes may be affected by earlier fixes.
+7. **Underscores**: When you want to see the type of a goal you're working on
+   (you can do this with computational content as well as proof content),
+   insert an underscore (`_`) as the implementation of the goal.  Building
+   will then produce an "unsolved goals" error and will print the type
+   of the goal.  Do this whenever you take a step in a definition or
+   proof, so that you know exactly what it is that you're trying to
+   define or prove next.  Use `_`, not `sorry` -- we _want_ the build to
+   be broken when there's a hole we haven't filled in yet, and `_` also
+   shows the type of the hole.
 
 This approach attempts to minimize back-and-forth and keeps the conversation
 focused on design decisions rather than syntax errors or incomplete proofs.
@@ -137,6 +139,22 @@ focused on design decisions rather than syntax errors or incomplete proofs.
 - Any style guidelines which aren't specific to Lean apply to documentation
   and style guidelines and such as well -- in particular, they apply to this
   file itself (`CLAUDE.md`).
+
+## Markdown Linting
+
+All markdown files in this repository should be free of lint warnings. Use
+`markdownlint-cli2` to check for and fix any issues, for example:
+
+```bash
+markdownlint-cli2 README.md CLAUDE.md .github/copilot-instructions.md
+```
+
+Common issues to watch for:
+
+- Line length: Keep lines to 80 characters or less (MD013)
+- Fenced code blocks: Surround with blank lines (MD031)
+- Lists: Surround with blank lines (MD032)
+- URLs: Use angle brackets for bare URLs (MD034)
 
 ## Lean 4 Library and Categorical Theory Resources
 
@@ -232,19 +250,60 @@ might want to examine external libraries for ideas.
   - Code and theory for closed sites, relevant for power objects and
     classifier constructions.
 
-## Lean 4 Development Techniques
+## Testing
 
-### Procedures
+This project uses Lean 4's built-in testing capabilities along with
+property-based testing via Plausible.
 
-- When you want to see the type of a goal you're working on (you can
-  do this with computational content as well as proof content), insert
-  an underscore (`_`) as the implementation of the goal.  Building
-  will then produce an "unsolved goals" error and will print the type
-  of the goal.  Do this whenever you take a step in a definition or
-  proof, so that you know exactly what it is that you're trying to
-  define or prove next.  Use `_`, not `sorry` -- we _want_ the build to
-  be broken when there's a hole we haven't filled in yet, and `_` also
-  shows the type of the hole.
+### Running Tests
+
+```bash
+lake test
+```
+
+The test driver is configured as a library, so tests run during the build
+process. Any `#guard` assertion failures will cause the build to fail.
+
+### Writing Tests
+
+Tests live in the `test/` directory. See [test/README.md](test/README.md) for
+detailed information.
+
+#### Quick Reference
+
+**Unit tests with `#guard`**:
+
+```lean
+import GebLean
+
+#guard some_function arg == expected_result
+```
+
+**Property-based testing with Plausible**:
+
+```lean
+import Plausible
+
+-- Test that associativity holds
+example (a b c : MyType) : (a ∘ b) ∘ c = a ∘ (b ∘ c) := by
+  plausible  -- Finds counterexamples if property doesn't hold
+```
+
+**Note**: The `linter.hashCommand` linter is disabled for all test files via
+the lakefile configuration, so you don't need `set_option` in test files.
+
+### Plausible
+
+Plausible is already available as a transitive dependency through mathlib.
+It provides QuickCheck-style property testing integrated with Lean's tactic
+framework.
+
+**References**:
+
+- <https://github.com/leanprover-community/plausible/>
+- <https://brandonrozek.com/blog/writing-unit-tests-lean-4/>
+
+## Development Tips
 
 ### Working with Dependent Types and Equivalences
 
@@ -304,9 +363,9 @@ When proving equivalences (`Equiv`) between structures with dependent types:
    - Extract components: `have ⟨ho', hsig⟩ := h` after
      `rw [Sigma.mk.injEq] at h`
 
-### Common Patterns
+### Isomorphisms
 
-**Round-trip equivalence proofs** (A → B → A):
+Proofs of isomorphisms look like this:
 
 ```lean
 def roundtrip_equiv (data : A) : B_of_A data ≃ original_type where
@@ -377,31 +436,14 @@ left_inv := fun ⟨⟨components...⟩, proofs...⟩ => by
   working. Apply it only after extracting all needed equalities
 - The `split` tactic reduces pattern match expressions that appear in
   goal types
-
-#### Debugging Tactics
-
-- When working on proofs, see the types of unsolved goals by inserting `_`
-- Use `all_goals (try <tactic>)` to apply tactics conditionally
-
-#### Automation Tactics to Try
-
-When facing complex goals, it's worth trying automation tactics
-before manual proof:
-
-- **`grind`** - SMT-based solver
-  (<https://lean-lang.org/doc/reference/latest/The--grind--tactic/>)
+- Consider using `grind`, an SMT-based solver
+  (<https://lean-lang.org/doc/reference/latest/The--grind--tactic/>), which:
   - Automatically builds equivalence classes and applies congruence rules
   - Works well with `Equiv.left_inv` and `Equiv.right_inv` lemmas
   - One possible pattern is to simplify with `simp`, add hypotheses with
     `have`, then call `grind`
-
-- **`aesop`** - General-purpose automation using best-first search;
-  can be configured with custom rule sets
-
-**Note**: `grind` can sometimes solve dependent congruence problems
-that would otherwise require complex manual application of `Eq.recOn`,
-heterogeneous equality, or dependent rewriting. Try `grind` when
-you have equalities involving dependent types.
+- Consider using `aesop`, a general-purpose automation using best-first search;
+  it can be configured with custom rule sets
 
 #### Pattern: Handling Complex Dependencies with `rcases` + `grind`
 
@@ -446,8 +488,6 @@ That pattern sometimes works because:
 - Applying lemmas before `subst` keeps the original variables in scope
 - `subst` then replaces all the index variables at once
 - After substitution, the problem is simple enough for `grind` to handle
-
-## Code Patterns
 
 ### Extensionality Lemmas
 
@@ -669,140 +709,3 @@ When proving functor equality with `Functor.hext`, the heterogeneous
 equality `≍` won't reduce unless you properly case on all the variables
 involved. If `rfl` fails, you likely haven't cased enough to expose
 the definitional equality.
-
-## Problem-Solving Strategy
-
-When struggling with a definition or proof that's becoming excessively long or
-complicated:
-
-1. **Factor out helper lemmas**: Break down the problem into smaller, provable
-   steps
-2. **Make incremental progress**: Prove useful intermediate results that build
-   toward your goal
-3. **Take smaller steps**: If stuck, step back and prove something simpler
-   first
-4. **Create helper functions**: Extract complex expressions into named
-   definitions
-5. **Use underscore**: Insert underscores (`_`) and compile to see the types
-   of goals you're working on (either computational or proof content)
-
-## Testing
-
-This project uses Lean 4's built-in testing capabilities along with
-property-based testing via Plausible.
-
-### Running Tests
-
-```bash
-lake test
-```
-
-The test driver is configured as a library, so tests run during the build
-process. Any `#guard` assertion failures will cause the build to fail.
-
-### Writing Tests
-
-Tests live in the `test/` directory. See [test/README.md](test/README.md) for
-detailed information.
-
-#### Quick Reference
-
-**Unit tests with `#guard`**:
-
-```lean
-import GebLean
-
-#guard some_function arg == expected_result
-```
-
-**Property-based testing with Plausible**:
-
-```lean
-import Plausible
-
--- Test that associativity holds
-example (a b c : MyType) : (a ∘ b) ∘ c = a ∘ (b ∘ c) := by
-  plausible  -- Finds counterexamples if property doesn't hold
-```
-
-**Note**: The `linter.hashCommand` linter is disabled for all test files via
-the lakefile configuration, so you don't need `set_option` in test files.
-
-### Testing Strategy
-
-- **Algebraic laws** (associativity, identity, etc.): Use `plausible` to test
-  properties
-- **Concrete examples**: Use `#guard` with specific values
-- **Edge cases**: Test boundary conditions explicitly
-- **Functors and morphisms**: Verify composition and identity laws
-
-### Plausible
-
-Plausible is already available as a transitive dependency through mathlib.
-It provides QuickCheck-style property testing integrated with Lean's tactic
-framework.
-
-**References**:
-
-- <https://github.com/leanprover-community/plausible/>
-- <https://brandonrozek.com/blog/writing-unit-tests-lean-4/>
-
-## Markdown Linting
-
-All markdown files in this repository should be free of lint warnings. Use
-`markdownlint-cli2` to check for and fix any issues, for example:
-
-```bash
-markdownlint-cli2 README.md CLAUDE.md .github/copilot-instructions.md
-```
-
-Common issues to watch for:
-
-- Line length: Keep lines to 80 characters or less (MD013)
-- Fenced code blocks: Surround with blank lines (MD031)
-- Lists: Surround with blank lines (MD032)
-- URLs: Use angle brackets for bare URLs (MD034)
-
-## Future Work
-
-This section tracks planned improvements and extensions to the codebase.
-
-### Acyclic Quiver Infrastructure
-
-**Automatic decidability for finite quivers**:
-
-- Implement decidability instance for `Relation.ReflTransGen` on finite types
-- This would enable `AcyclicQuiver.ofFiniteAcyclic` to work with `by decide`
-- Requires: bounded path enumeration up to n vertices
-- File: `GebLean/AcyclicQuiver.lean`
-
-**Fintype instances for paths in finite quivers**:
-
-- `finite_paths_of_bounded_length`: Constructive Fintype for paths of
-  bounded length in finite quivers
-  - Challenge: paths don't decompose uniquely, making inductive construction
-    complex
-  - Requires: careful well-founded recursion or alternative enumeration
-    strategy
-  - File: `GebLean/AcyclicPresentation.lean:268`
-
-- `finite_paths_in_finite_acyclic_quiver`: Fintype for all paths in finite
-  acyclic quivers
-  - Depends on: `finite_paths_of_bounded_length` and `path_length_bounded`
-  - Uses transport via equivalence (all paths = bounded paths in acyclic case)
-  - File: `GebLean/AcyclicPresentation.lean:282`
-
-- `finiteAcyclicPresentationFinQuiver.fintypeEdge`: Fintype for morphisms in
-  presented categories
-  - Depends on: `finite_paths_in_finite_acyclic_quiver`
-  - Requires: decidability infrastructure for path equality and quotient
-    relations
-  - File: `GebLean/AcyclicPresentation.lean:297`
-
-### Test Coverage
-
-The test directory includes a complete example of a finite acyclic
-semicategory (`WalkingParallelPairSemi` in `test/AcyclicCat.lean`), with
-identity adjoining and an isomorphism to mathlib's `WalkingParallelPair`.
-Additional test coverage could include property-based testing of algebraic
-laws using Plausible.
