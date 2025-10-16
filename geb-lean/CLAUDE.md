@@ -564,6 +564,9 @@ should store witness/struct data directly (which will often take the
 form of nested dependently-typed structures) rather than typeclass instances
 in brackets. Then derive typeclasses via instances.
 
+We should do this for interactions with Lean standard-library typeclasses.
+For our own new code, just don't create typeclasses; use interface structures.
+
 ### Converting Between Structures and Typeclasses
 
 When creating bidirectional conversions between structure-based
