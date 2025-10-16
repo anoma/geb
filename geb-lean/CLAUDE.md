@@ -483,6 +483,12 @@ structure MyStruct where
   `Mathlib.CategoryTheory.NatTrans`)
 - Avoids manual ext theorems that need `cases`, `congr`, etc.
 
+### Derived instances
+
+When defining a structure, derive whatever standard instances are
+applicable to that structure, such as `Inhabited`, `DecidableEq`, and
+`Repr`.
+
 ### Factoring Common Typeclass Fields
 
 When multiple typeclasses share the same data fields (like finiteness
