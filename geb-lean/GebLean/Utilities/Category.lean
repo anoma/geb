@@ -17,9 +17,9 @@ Convenience notation and helpers for working with categories.
 * `IdentityStruct`: Identity morphisms for each object
 * `identityStructOfReflQuiver`: Extract an `IdentityStruct` from a `ReflQuiver`
   typeclass instance
-* `IdComp`: Left identity law for composition
-* `CompId`: Right identity law for composition
-* `IdentityLaws`: Both left and right identity laws
+* `IdComp`: Law for composition after an identity
+* `CompId`: Law for composition before an identity
+* `IdentityLaws`: Identity laws for both directions of composition
 * `CategoryOps`: Category operations (composition and identity)
 * `categoryOpsOfCategoryStruct`: Extract `CategoryOps` from a `CategoryStruct`
   typeclass
