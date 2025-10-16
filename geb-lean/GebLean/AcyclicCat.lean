@@ -26,10 +26,10 @@ universe u u' u'' v
     structure. The strict ordering ensures there are no identity
     morphisms. Identities can be adjoined to form a category. -/
 class AcyclicCategory (V : Type u) [AcyclicQuiver V] where
-  toSemicategoryStruct : SemicategoryStruct V := by infer_instance
+  toSemicategoryStruct : Quiver.SemicategoryStruct V := by infer_instance
 
 instance {V : Type u} [AcyclicQuiver V] [h : AcyclicCategory V] :
-    SemicategoryStruct V := h.toSemicategoryStruct
+    Quiver.SemicategoryStruct V := h.toSemicategoryStruct
 
 instance {V : Type u} [inst : AcyclicQuiver V] [h : AcyclicCategory V] :
     Semicategory V where
@@ -102,7 +102,7 @@ structure AcyclicCategoryWitness (V : Type u) where
   quiver : Quiver.{v + 1} V
   order : TopologicalOrder V
   edgesIncrease : @QuiverEdgesIncrease V quiver order
-  semicat : @SemicategoryStruct V quiver
+  semicat : @Quiver.SemicategoryStruct V quiver
 
 /-- The large category of acyclic categories. Since AcyclicCategory
     depends on AcyclicQuiver, we store witness data directly rather
@@ -131,7 +131,7 @@ instance (V : AcyclicCategoryCat.Large.{u, v}) :
   V.wit.edgesIncrease
 
 instance (V : AcyclicCategoryCat.Large.{u, v}) :
-    SemicategoryStruct V.carrier :=
+    Quiver.SemicategoryStruct V.carrier :=
   V.wit.semicat
 
 instance (V : AcyclicCategoryCat.Large.{u, v}) :

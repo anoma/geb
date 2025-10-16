@@ -108,7 +108,7 @@ instance : Quiver Obj where
   Hom := SemiHom
 
 /-- Semicategory structure on CategoryJudgments.Obj -/
-instance instSemicategoryStructObj : SemicategoryStruct Obj where
+instance instSemicategoryStructObj : Quiver.SemicategoryStruct Obj where
   comp := SemiHom.comp
   assoc := SemiHom.assoc
 

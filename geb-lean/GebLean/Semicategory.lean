@@ -4,6 +4,7 @@ import Mathlib.CategoryTheory.Category.Basic
 import Mathlib.CategoryTheory.ConcreteCategory.Bundled
 import Mathlib.Data.Fintype.Sum
 import GebLean.FiniteQuiver
+import GebLean.Utilities.Category
 
 /-!
 # Semicategories
@@ -30,33 +31,34 @@ universe u u' u'' v
 
 namespace GebLean
 
-/-- A compositional structure provides a way to compose morphisms in a
-    quiver. -/
-abbrev CompositionalStruct (V : Type u) [Quiver.{v + 1} V] :=
-  ∀ {a b c : V}, (a ⟶ b) → (b ⟶ c) → (a ⟶ c)
+namespace Quiver
 
-/-- An associativity law states that composition is associative. This is
-    a property dependent upon having a compositional structure. -/
+/-- A compositional structure provides a way to compose morphisms in a
+    quiver. This delegates to the `HomSet`-based definition. -/
+abbrev CompositionalStruct (V : Type u) [Quiver.{v + 1} V] :=
+  GebLean.CompositionalStruct (homSetOfQuiver V)
+
+/-- An associativity law states that composition is associative. This
+    delegates to the `HomSet`-based definition. -/
 abbrev AssociativityLaw (V : Type u) [Quiver.{v + 1} V]
     (comp : CompositionalStruct V) :=
-  ∀ {a b c d : V} (f : a ⟶ b) (g : b ⟶ c) (h : c ⟶ d),
-    comp (comp f g) h = comp f (comp g h)
+  GebLean.AssociativityLaw (homSetOfQuiver V) comp
 
 /-- The structure of a semicategory: composition and associativity,
-    without requiring identity morphisms. -/
-structure SemicategoryStruct (V : Type u) [Quiver.{v + 1} V] where
-  /-- Composition of morphisms -/
-  comp : CompositionalStruct V
-  /-- Associativity of composition -/
-  assoc : AssociativityLaw V comp
+    without requiring identity morphisms. This delegates to the
+    `HomSet`-based definition. -/
+abbrev SemicategoryStruct (V : Type u) [Quiver.{v + 1} V] :=
+  GebLean.SemicategoryStruct V (homSetOfQuiver V)
+
+end Quiver
 
 /-- A semicategory is a quiver with associative composition but no
     identity morphisms. -/
 class Semicategory (V : Type u) extends Quiver.{v + 1} V where
-  toSemicategoryStruct : SemicategoryStruct V := by infer_instance
+  toSemicategoryStruct : Quiver.SemicategoryStruct V := by infer_instance
 
 instance {V : Type u} [h : Semicategory V] :
-    SemicategoryStruct V := h.toSemicategoryStruct
+    Quiver.SemicategoryStruct V := h.toSemicategoryStruct
 
 namespace Semicategory
 

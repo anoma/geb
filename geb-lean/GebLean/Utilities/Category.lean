@@ -20,17 +20,32 @@ open CategoryTheory
 universe v u
 
 /-- The data of a quiver: a family of types indexed by pairs of vertices. -/
-structure HomSet (V : Type u) where
-  /-- The type of edges/arrows/morphisms between a given source and target. -/
-  Hom : V → V → Sort v
+abbrev HomSet (U : Type u) := U → U → Sort v
+
+/-- Compositional structure: composition of morphisms. -/
+abbrev CompositionalStruct {U : Type u} (hs : HomSet.{v, u} U) :=
+  ∀ {a b c : U}, hs a b → hs b c → hs a c
+
+/-- Associativity law for composition. -/
+abbrev AssociativityLaw {U : Type u} (hs : HomSet.{v, u} U)
+    (comp : CompositionalStruct hs) :=
+  ∀ {a b c d : U} (f : hs a b) (g : hs b c) (h : hs c d),
+    comp (comp f g) h = comp f (comp g h)
+
+/-- Semicategory structure: composition and associativity. -/
+structure SemicategoryStruct (U : Type u) (hs : HomSet.{v, u} U) where
+  /-- Composition of morphisms -/
+  comp : CompositionalStruct hs
+  /-- Associativity of composition -/
+  assoc : AssociativityLaw hs comp
 
 /-- Extract a `Quiver` typeclass instance from a `HomSet`. -/
-instance {V : Type u} (hs : HomSet.{v, u} V) : Quiver.{v} V where
-  Hom := hs.Hom
+instance {U : Type u} (hs : HomSet.{v, u} U) : Quiver.{v, u} U where
+  Hom := hs
 
 /-- Extract the `HomSet` from a `Quiver` typeclass instance. -/
-def homSetOfQuiver (V : Type u) [Quiver.{v} V] : HomSet.{v, u} V where
-  Hom := Quiver.Hom
+abbrev homSetOfQuiver (U : Type u) [Quiver.{v, u} U] : HomSet.{v, u} U :=
+  Quiver.Hom
 
 end GebLean
 
