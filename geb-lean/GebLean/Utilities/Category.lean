@@ -8,7 +8,16 @@ Convenience notation and helpers for working with categories.
 
 ## Main definitions
 
-* `HomSet`: Structure containing the data of a quiver (the Hom type family)
+* `HomSet`: The data of a quiver (the Hom type family)
+* `CompositionalStruct`: Composition of morphisms
+* `AssociativityLaw`: Associativity law for composition
+* `SemicategoryStruct`: Semicategory structure (composition and associativity)
+* `IdentityStruct`: Identity morphisms for each object
+* `LeftIdentityLaw`: Left identity law for composition
+* `RightIdentityLaw`: Right identity law for composition
+* `IdentityLaws`: Both left and right identity laws
+* `CategoryStruct`: Category structure (composition, associativity, identities,
+  and identity laws)
 * `≅Cat`: Notation for isomorphisms between categories without explicit
   `Cat.of`
 -/
@@ -38,6 +47,40 @@ structure SemicategoryStruct (U : Type u) (hs : HomSet.{v, u} U) where
   comp : CompositionalStruct hs
   /-- Associativity of composition -/
   assoc : AssociativityLaw hs comp
+
+/-- Identity structure: identity morphisms for each object. -/
+abbrev IdentityStruct {U : Type u} (hs : HomSet.{v, u} U) :=
+  ∀ (a : U), hs a a
+
+/-- Left identity law for composition. -/
+abbrev LeftIdentityLaw {U : Type u} (hs : HomSet.{v, u} U)
+    (comp : CompositionalStruct hs) (id : IdentityStruct hs) :=
+  ∀ {a b : U} (f : hs a b), comp (id a) f = f
+
+/-- Right identity law for composition. -/
+abbrev RightIdentityLaw {U : Type u} (hs : HomSet.{v, u} U)
+    (comp : CompositionalStruct hs) (id : IdentityStruct hs) :=
+  ∀ {a b : U} (f : hs a b), comp f (id b) = f
+
+/-- Identity laws: both left and right identity laws. -/
+structure IdentityLaws {U : Type u} (hs : HomSet.{v, u} U)
+    (comp : CompositionalStruct hs) (id : IdentityStruct hs) : Prop where
+  /-- Left identity law -/
+  id_comp : LeftIdentityLaw hs comp id
+  /-- Right identity law -/
+  comp_id : RightIdentityLaw hs comp id
+
+/-- Category structure: composition, associativity, identities, and
+    identity laws. -/
+structure CategoryStruct (U : Type u) (hs : HomSet.{v, u} U) where
+  /-- Compositional structure -/
+  toCompositionalStruct : CompositionalStruct hs
+  /-- Associativity law -/
+  toAssociativityLaw : AssociativityLaw hs toCompositionalStruct
+  /-- Identity morphisms -/
+  toIdentityStruct : IdentityStruct hs
+  /-- Identity laws -/
+  toIdentityLaws : IdentityLaws hs toCompositionalStruct toIdentityStruct
 
 /-- Extract a `Quiver` typeclass instance from a `HomSet`. -/
 instance {U : Type u} (hs : HomSet.{v, u} U) : Quiver.{v, u} U where
