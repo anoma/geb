@@ -23,6 +23,8 @@ Convenience notation and helpers for working with categories.
 * `CategoryOps`: Category operations (composition and identity)
 * `CategoryLaws`: Category laws (associativity and identity laws)
 * `CategoryData`: Category data (operations and laws)
+* `categoryOfCategoryData`: Build a `Category` typeclass from `CategoryData`
+* `categoryDataOfCategory`: Extract `CategoryData` from a `Category` typeclass
 * `≅Cat`: Notation for isomorphisms between categories without explicit
   `Cat.of`
 -/
@@ -139,6 +141,29 @@ variable {U : Type u} {hs : HomSet.{v, u} U}
   cs.laws.id_laws
 
 end CategoryData
+
+/-- Build a `Category` typeclass instance from category data.
+    Note: This only works when the HomSet is in Type (not general Sort). -/
+def categoryOfCategoryData (U : Type u) [Quiver.{v + 1, u} U]
+    (data : CategoryData U (homSetOfQuiver U)) : Category.{v, u} U where
+  id := data.id
+  comp := data.comp
+  id_comp := data.laws.id_laws.id_comp
+  comp_id := data.laws.id_laws.comp_id
+  assoc := data.laws.assoc
+
+/-- Extract the `CategoryData` from a `Category` typeclass instance. -/
+def categoryDataOfCategory (U : Type u) [Category.{v, u} U] :
+    CategoryData U (homSetOfQuiver U) where
+  comp := CategoryStruct.comp
+  id := CategoryStruct.id
+  laws := {
+    assoc := Category.assoc
+    id_laws := {
+      id_comp := Category.id_comp
+      comp_id := Category.comp_id
+    }
+  }
 
 end GebLean
 
