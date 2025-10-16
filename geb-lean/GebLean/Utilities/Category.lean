@@ -117,13 +117,14 @@ structure CategoryOps {U : Type u} (hs : HomSet.{v, u} U) where
 
 /-- Build a `CategoryStruct` typeclass instance from category operations.
     Note: This only works when the HomSet is in Type (not general Sort). -/
-def categoryStructOfCategoryOps (U : Type u) [Quiver.{v + 1, u} U]
-    (ops : CategoryOps (homSetOfQuiver U)) : CategoryStruct.{v, u} U where
+instance {U : Type u} (hs : HomSet.{v + 1, u} U)
+    (ops : CategoryOps hs) : CategoryStruct.{v, u} U where
+  Hom := hs
   id := ops.id
   comp := ops.comp
 
 /-- Extract the `CategoryOps` from a `CategoryStruct` typeclass instance. -/
-def categoryOpsOfCategoryStruct (U : Type u) [CategoryStruct.{v, u} U] :
+abbrev categoryOpsOfCategoryStruct (U : Type u) [CategoryStruct.{v, u} U] :
     CategoryOps (homSetOfQuiver U) where
   comp := CategoryStruct.comp
   id := CategoryStruct.id
@@ -161,8 +162,9 @@ end CategoryData
 
 /-- Build a `Category` typeclass instance from category data.
     Note: This only works when the HomSet is in Type (not general Sort). -/
-def categoryOfCategoryData (U : Type u) [Quiver.{v + 1, u} U]
-    (data : CategoryData U (homSetOfQuiver U)) : Category.{v, u} U where
+instance {U : Type u} (hs : HomSet.{v + 1, u} U)
+    (data : CategoryData U hs) : Category.{v, u} U where
+  Hom := hs
   id := data.id
   comp := data.comp
   id_comp := data.laws.id_laws.id_comp
@@ -170,7 +172,7 @@ def categoryOfCategoryData (U : Type u) [Quiver.{v + 1, u} U]
   assoc := data.laws.assoc
 
 /-- Extract the `CategoryData` from a `Category` typeclass instance. -/
-def categoryDataOfCategory (U : Type u) [Category.{v, u} U] :
+abbrev categoryDataOfCategory (U : Type u) [Category.{v, u} U] :
     CategoryData U (homSetOfQuiver U) where
   comp := CategoryStruct.comp
   id := CategoryStruct.id
