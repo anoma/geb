@@ -532,6 +532,61 @@ should store witness/struct data directly (which will often take the
 form of nested dependently-typed structures) rather than typeclass instances
 in brackets. Then derive typeclasses via instances.
 
+### Converting Between Structures and Typeclasses
+
+When creating bidirectional conversions between structure-based
+implementations and typeclass-based interfaces, follow this pattern:
+
+**Structure → Typeclass (use `instance`)**:
+
+- Take structure parameters explicitly (e.g., `HomSet`, `CategoryOps`,
+  `CategoryData`)
+- Make the type parameter implicit: `{U : Type u}`
+- Explicitly provide typeclass fields that define the interface
+  (e.g., `Hom := hs`)
+- The typeclass instance is the output, not an input parameter
+
+```lean
+instance {U : Type u} (hs : HomSet.{v + 1, u} U)
+    (ops : CategoryOps hs) : CategoryStruct.{v, u} U where
+  Hom := hs
+  id := ops.id
+  comp := ops.comp
+```
+
+**Typeclass → Structure (use `abbrev`)**:
+
+- Take typeclass instances as implicit parameters: `[Category U]`
+- Extract structure data from the typeclass
+- Use `abbrev` for definitional equality
+
+```lean
+abbrev categoryOpsOfCategoryStruct (U : Type u) [CategoryStruct.{v, u} U] :
+    CategoryOps (homSetOfQuiver U) where
+  comp := CategoryStruct.comp
+  id := CategoryStruct.id
+```
+
+**Rationale**:
+
+This pattern avoids circular typeclass search. When converting structure
+to typeclass, all input data comes from explicit structure parameters,
+not from typeclass synthesis. This prevents Lean from entering infinite
+loops trying to synthesize a typeclass to construct that same typeclass.
+
+**Example hierarchy in the codebase**:
+
+- `HomSet` ↔ `Quiver`: `instance` / `abbrev homSetOfQuiver`
+- `IdentityStruct` ↔ `ReflQuiver`: `instance` /
+  `abbrev identityStructOfReflQuiver`
+- `CategoryOps` ↔ `CategoryStruct`: `instance` /
+  `abbrev categoryOpsOfCategoryStruct`
+- `CategoryData` ↔ `Category`: `instance` /
+  `abbrev categoryDataOfCategory`
+
+This creates a clean separation where structures are the source of truth,
+and typeclasses are derived interfaces for interoperability with mathlib.
+
 ### Equality in Categories: Use `eqToHom` and `eqToIso`
 
 When working with object equalities in categories, use `eqToHom` and `eqToIso`
