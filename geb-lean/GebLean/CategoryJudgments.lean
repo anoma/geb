@@ -204,7 +204,8 @@ instance : ∀ (X Y : Obj), Fintype (SemiHom X Y)
 
 /-- FinQuiverWitness for the semicategory structure (non-identity
     morphisms only). -/
-def semiFinQuiverWitness : @FinQuiverWitness Obj instSemicategoryObj.toQuiver
+def semiFinQuiverWitness :
+    FinQuiverWitness Obj (@homSetOfQuiver Obj instSemicategoryObj.toQuiver)
     where
   fintypeVertex := inferInstance
   fintypeEdge := fun X Y => inferInstanceAs (Fintype (SemiHom X Y))
@@ -212,15 +213,15 @@ def semiFinQuiverWitness : @FinQuiverWitness Obj instSemicategoryObj.toQuiver
 /-- FinQuiverWitness for the category with adjoined identities, derived from
     the semicategory witness using the generic utility. -/
 def finQuiverWitness :
-    @FinQuiverWitness Obj Semicategory.adjoinedIdCategory.toQuiver :=
+    FinQuiverWitness Obj
+      (@homSetOfQuiver Obj Semicategory.adjoinedIdCategory.toQuiver) :=
   @Semicategory.AdjoinedIdHom.finQuiverWitness Obj instSemicategoryObj
     inferInstance semiFinQuiverWitness
 
 /-- Fintype instance for morphisms with adjoined identities, derived from
     the FinQuiverWitness. -/
 instance (X Y : Obj) : Fintype (Hom X Y) :=
-  @FinQuiverWitness.fintypeEdge Obj Semicategory.adjoinedIdCategory.toQuiver
-    finQuiverWitness X Y
+  finQuiverWitness.fintypeEdge X Y
 
 /-- The category of category judgments is a finite category -/
 instance : CategoryTheory.FinCategory Obj where

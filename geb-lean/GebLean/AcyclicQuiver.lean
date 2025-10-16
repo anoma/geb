@@ -80,10 +80,10 @@ abbrev PrefunctorPreservesOrder {V : Type u} {W : Type u'} [Quiver V]
 /-- A finite acyclic quiver has finitely many vertices and finitely
     many edges between each pair of vertices. -/
 class FiniteAcyclicQuiver (V : Type u) [AcyclicQuiver V] where
-  toFiniteness : FinQuiverWitness V := by infer_instance
+  toFiniteness : FinQuiverWitness V (homSetOfQuiver V) := by infer_instance
 
 instance {V : Type u} [AcyclicQuiver V] [h : FiniteAcyclicQuiver V] :
-  FinQuiverWitness V := h.toFiniteness
+  FinQuiverWitness V (homSetOfQuiver V) := h.toFiniteness
 
 namespace AcyclicQuiver
 

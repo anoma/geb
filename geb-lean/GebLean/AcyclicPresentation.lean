@@ -61,7 +61,7 @@ end AcyclicPresentation
     the generators form a finite quiver with decidable equality. -/
 structure FiniteAcyclicPresentation extends AcyclicPresentation.{v, u} where
   /-- The generators form a finite quiver -/
-  generatorFinQuiver : FinQuiverWitness generators
+  generatorFinQuiver : FinQuiverWitness generators (homSetOfQuiver generators)
   /-- Decidable equality on generators -/
   generatorDecEq : DecidableEq generators
   /-- Decidable equality on generator edges -/

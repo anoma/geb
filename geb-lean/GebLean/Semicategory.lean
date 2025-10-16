@@ -77,10 +77,10 @@ end Semicategory
 
 /-- A finite semicategory has finitely many objects and morphisms. -/
 class FiniteSemicategory (V : Type u) [Semicategory V] where
-  toFiniteness : FinQuiverWitness V := by infer_instance
+  toFiniteness : FinQuiverWitness V (homSetOfQuiver V) := by infer_instance
 
 instance {V : Type u} [Semicategory V] [h : FiniteSemicategory V] :
-    FinQuiverWitness V := h.toFiniteness
+    FinQuiverWitness V (homSetOfQuiver V) := h.toFiniteness
 
 /-- A semifunctor is a morphism between semicategories that preserves
     composition but not necessarily identities (since semicategories
@@ -261,7 +261,7 @@ instance instDecidableEq [decEqSemi : ∀ (X Y : V), DecidableEq (X ⟶ Y)]
     structure), produce a Fintype for AdjoinedIdHom morphisms between any
     two vertices. -/
 def fintypeAdjoinedIdHom [DecidableEq V]
-    (wit : @FinQuiverWitness V (Semicategory.toQuiver))
+    (wit : FinQuiverWitness V (homSetOfQuiver V))
     (a b : V) : Fintype (AdjoinedIdHom a b) :=
   if h : a = b then
     @Fintype.ofEquiv _ _
@@ -318,16 +318,16 @@ variable {V : Type u} [Semicategory.{u, u} V]
     for the category with adjoined identities. This uses the quiver structure
     from adjoinedIdCategory (where morphisms are AdjoinedIdHom). -/
 def finQuiverWitness [DecidableEq V]
-    (wit : @FinQuiverWitness V (Semicategory.toQuiver)) :
-    @FinQuiverWitness V adjoinedIdCategory.toQuiver :=
+    (wit : FinQuiverWitness V (homSetOfQuiver V)) :
+    FinQuiverWitness V (@homSetOfQuiver V adjoinedIdCategory.toQuiver) :=
   let ftV := wit.fintypeVertex
   let ftE := fintypeAdjoinedIdHom wit
-  @FinQuiverWitness.mk V adjoinedIdCategory.toQuiver ftV ftE
+  ⟨ftV, ftE⟩
 
 /-- Instance version of finQuiverWitness for automatic inference. -/
 instance instFinQuiverWitness [DecidableEq V]
-    (wit : @FinQuiverWitness V (Semicategory.toQuiver)) :
-    @FinQuiverWitness V adjoinedIdCategory.toQuiver :=
+    (wit : FinQuiverWitness V (homSetOfQuiver V)) :
+    FinQuiverWitness V (@homSetOfQuiver V adjoinedIdCategory.toQuiver) :=
   finQuiverWitness wit
 
 end AdjoinedIdHom

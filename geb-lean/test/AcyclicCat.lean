@@ -140,7 +140,8 @@ instance : Fintype (zero ⟶ one) :=
   }
 
 /-- Finiteness witness for the walking parallel pair. -/
-instance finQuiverWitness : FinQuiverWitness WalkingParallelPairSemi where
+instance finQuiverWitness :
+    FinQuiverWitness WalkingParallelPairSemi (homSetOfQuiver WalkingParallelPairSemi) where
   fintypeVertex := inferInstance
   fintypeEdge a b := by
     cases a <;> cases b

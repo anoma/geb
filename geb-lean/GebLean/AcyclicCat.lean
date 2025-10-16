@@ -176,7 +176,7 @@ open CategoryTheory
 /-- The property that an acyclic category is finite (has finitely
     many vertices and edges). -/
 def IsFiniteAcyclicCategory : ObjectProperty AcyclicCategoryCat :=
-  fun V => Nonempty (FinQuiverWitness V.carrier)
+  fun V => Nonempty (FinQuiverWitness V.carrier (homSetOfQuiver V.carrier))
 
 /-- The full subcategory of finite acyclic categories. -/
 abbrev FiniteAcyclicCategoryCat :=
