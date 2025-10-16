@@ -95,12 +95,10 @@ abbrev CompId {U : Type u} (hs : HomSet.{v, u} U)
     (comp : CompositionalStruct hs) (id : IdentityStruct hs) :=
   ∀ {a b : U} (f : hs a b), comp f (id b) = f
 
-/-- Identity laws: both left and right identity laws. -/
+/-- Identity laws for both pre- and post-composition with identities. -/
 structure IdentityLaws {U : Type u} (hs : HomSet.{v, u} U)
     (comp : CompositionalStruct hs) (id : IdentityStruct hs) : Prop where
-  /-- Left identity law -/
   id_comp : IdComp hs comp id
-  /-- Right identity law -/
   comp_id : CompId hs comp id
 
 /-- Category operations: composition and identity morphisms. -/
