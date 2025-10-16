@@ -25,20 +25,18 @@ abbrev FinsetComplete (s : Finset α) : Prop := ∀ x : α, x ∈ s
 
 /-- Structure-based representation of a finite type: a finset containing
     all elements. -/
-structure FintypeData (α : Type u) where
-  /-- The finite set of all elements -/
-  elems : Finset α
+structure FintypeData (α : Type u) extends Finset α where
   /-- Property that the finset contains all elements -/
-  complete : FinsetComplete elems
+  complete : FinsetComplete toFinset
 
 /-- Build a `Fintype` typeclass instance from `FintypeData`. -/
 instance (data : FintypeData α) : Fintype α where
-  elems := data.elems
+  elems := data.toFinset
   complete := data.complete
 
 /-- Extract the `FintypeData` from a `Fintype` typeclass instance. -/
 abbrev fintypeDataOfFintype (α : Type u) [ft : Fintype α] : FintypeData α where
-  elems := ft.elems
+  toFinset := ft.elems
   complete := ft.complete
 
 end GebLean

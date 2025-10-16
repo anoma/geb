@@ -225,7 +225,7 @@ def finQuiverWitness :
     the FinQuiverWitness. -/
 instance (X Y : Obj) : Fintype (Hom X Y) :=
   let data := finQuiverWitness.fintypeEdge X Y
-  ⟨data.elems, data.complete⟩
+  ⟨data.toFinset, data.complete⟩
 
 /-- The category of category judgments is a finite category -/
 instance : CategoryTheory.FinCategory Obj where

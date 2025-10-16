@@ -266,7 +266,7 @@ def fintypeAdjoinedIdHom [DecidableEq V]
     (wit : FinQuiverWitness V (homSetOfQuiver V))
     (a b : V) : Fintype (AdjoinedIdHom a b) :=
   let ftEdgeData := wit.fintypeEdge a b
-  let ftEdge : Fintype (a ⟶ b) := ⟨ftEdgeData.elems, ftEdgeData.complete⟩
+  let ftEdge : Fintype (a ⟶ b) := ⟨ftEdgeData.toFinset, ftEdgeData.complete⟩
   if h : a = b then
     @Fintype.ofEquiv _ _
       (@instFintypeSum PUnit.{1} (a ⟶ b)
