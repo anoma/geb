@@ -21,13 +21,10 @@ Convenience notation and helpers for working with categories.
 * `CompId`: Right identity law for composition
 * `IdentityLaws`: Both left and right identity laws
 * `CategoryOps`: Category operations (composition and identity)
-* `categoryStructOfCategoryOps`: Build a `CategoryStruct` typeclass from
-  `CategoryOps`
 * `categoryOpsOfCategoryStruct`: Extract `CategoryOps` from a `CategoryStruct`
   typeclass
 * `CategoryLaws`: Category laws (associativity and identity laws)
 * `CategoryData`: Category data (operations and laws)
-* `categoryOfCategoryData`: Build a `Category` typeclass from `CategoryData`
 * `categoryDataOfCategory`: Extract `CategoryData` from a `Category` typeclass
 * `≅Cat`: Notation for isomorphisms between categories without explicit
   `Cat.of`
