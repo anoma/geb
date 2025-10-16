@@ -619,6 +619,38 @@ loops trying to synthesize a typeclass to construct that same typeclass.
 This creates a clean separation where structures are the source of truth,
 and typeclasses are derived interfaces for interoperability with mathlib.
 
+### Structure Composition with `extends`
+
+In Lean, `extends` is implemented using composition, not classical
+object-oriented inheritance. This makes it appropriate for situations where
+a structure logically builds upon another structure by adding fields.
+
+**When to use `extends`**:
+
+Use `extends` when structure B contains all of structure A's data plus
+additional fields. For example:
+
+```lean
+structure FintypeData (α : Type u) extends Finset α where
+  complete : FinsetComplete toFinset
+```
+
+This expresses that `FintypeData` is a `Finset` with an additional
+completeness property.
+
+**Properties**:
+
+- `extends` creates a `toX` field automatically (e.g., `toFinset`)
+- The extending structure inherits all fields from the base structure
+- This is composition, not inheritance in the OO sense
+- Moving up the hierarchy is not upcasting
+
+**Reference**:
+
+See [Functional Programming in Lean: Structures and
+Inheritance](https://leanprover.github.io/functional_programming_in_lean/functor-applicative-monad/inheritance.html)
+for details on how `extends` works in Lean.
+
 ### Equality in Categories: Use `eqToHom` and `eqToIso`
 
 When working with object equalities in categories, use `eqToHom` and `eqToIso`
