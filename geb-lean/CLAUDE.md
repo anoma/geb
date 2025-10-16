@@ -169,6 +169,10 @@ might want to examine external libraries for ideas.
     use this to try to find standard implementations of concepts that
     we don't already know about.
 
+### Lean language
+
+- [Functional Programming in Lean: Structures and Inheritance](https://leanprover.github.io/functional_programming_in_lean/functor-applicative-monad/inheritance.html)
+
 ### General mathematics
 
 - [Lean's "mathlib" page](https://leanprover-community.github.io/mathlib-overview.html)
