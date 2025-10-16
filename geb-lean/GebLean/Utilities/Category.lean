@@ -21,6 +21,10 @@ Convenience notation and helpers for working with categories.
 * `CompId`: Right identity law for composition
 * `IdentityLaws`: Both left and right identity laws
 * `CategoryOps`: Category operations (composition and identity)
+* `categoryStructOfCategoryOps`: Build a `CategoryStruct` typeclass from
+  `CategoryOps`
+* `categoryOpsOfCategoryStruct`: Extract `CategoryOps` from a `CategoryStruct`
+  typeclass
 * `CategoryLaws`: Category laws (associativity and identity laws)
 * `CategoryData`: Category data (operations and laws)
 * `categoryOfCategoryData`: Build a `Category` typeclass from `CategoryData`
@@ -110,6 +114,19 @@ structure CategoryOps {U : Type u} (hs : HomSet.{v, u} U) where
   comp : CompositionalStruct hs
   /-- Identity morphisms -/
   id : IdentityStruct hs
+
+/-- Build a `CategoryStruct` typeclass instance from category operations.
+    Note: This only works when the HomSet is in Type (not general Sort). -/
+def categoryStructOfCategoryOps (U : Type u) [Quiver.{v + 1, u} U]
+    (ops : CategoryOps (homSetOfQuiver U)) : CategoryStruct.{v, u} U where
+  id := ops.id
+  comp := ops.comp
+
+/-- Extract the `CategoryOps` from a `CategoryStruct` typeclass instance. -/
+def categoryOpsOfCategoryStruct (U : Type u) [CategoryStruct.{v, u} U] :
+    CategoryOps (homSetOfQuiver U) where
+  comp := CategoryStruct.comp
+  id := CategoryStruct.id
 
 /-- Category laws: associativity and identity laws. -/
 structure CategoryLaws {U : Type u} (hs : HomSet.{v, u} U)
