@@ -395,13 +395,15 @@ That pattern sometimes works because:
   enthusiastic if you like, but in any persistent work (such as
   all source code (including comments), documentation, and project
   guidelines/instructions), stick to a dry, formal, unopinionated, mathematical
-  style.  Do not promote any aspect or passage of code as more significant
+  style.  Never promote any aspect or passage of code as more significant
   than any other, such as by calling something "key", or an "insight",
-  or "core", or "advanced".  Do not refer to properties of code or
+  or "core", or "advanced".  Never refer to properties of code or
   constructions as "advantages" or "benefits"; if you want to document a
   property of some code or design because you don't think it's immediately
   obvious just from reading the code itself, then simply call it a "property"
-  or similar detached word.
+  or similar detached word.  Never call code "important" (if we didn't
+  think it were important, we wouldn't be writing it).  Never opine that
+  something is "complex" or "complicated".
 - Do not use all-caps words unless they're acronyms.
 - Don't write "TODO" comments or summaries of completed or future work in the
   code itself; track to-dos/future work below in `CLAUDE.md` if necessary
