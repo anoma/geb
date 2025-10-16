@@ -3,8 +3,7 @@ import Mathlib.Logic.Equiv.Defs
 /-!
 # Sigma Utilities
 
-Lemmas and equivalences for working with sigma types when encoding
-dependent categorical data.
+Miscellaneous utilities for working with sigma types.
 -/
 
 universe u v
