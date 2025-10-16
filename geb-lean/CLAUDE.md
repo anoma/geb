@@ -13,25 +13,18 @@ adhere to its guidelines throughout the session.
 
 - All modules under `GebLean/` should open `namespace GebLean … end GebLean`;
   tests may need `open GebLean` rather than un-qualified names.
-- Use `Cat.equivOfIso` when turning category isomorphisms into equivalences.
 - `GebLean/Utilities.lean` acts as an index module. Add new utility files
   under `GebLean/Utilities/` and import them from the index. For example,
   `sigmaTrivialSubtype` lives in `GebLean/Utilities/Sigma.lean`.
-- Keep the development constructive: never import or `open` `Classical`,
-  and never use `classical` attribute in proofs.  Similarly, never use
-  `noncomputable`.  Similarly, never use `axiom` -- our results should depend
-  only on Lean's native type theory.
-
-### High-Level Types
-
-- **CategoryJudgments**: Finite category representing the judgments of
-  the essentially algebraic theory of categories
-- **FunctorData**: Presentation of the category of functors from
-  `CategoryJudgments` to an arbitrary category
-- **CopresheafData**: Alias for `FunctorData (Type u)` - functors to `Type`,
-  AKA copresheaves on `CategoryJudgments`
-- **DepCategoryData**: Equivalent presentation of `CopresheafData` using
-  dependent types
+- Root entry module: `GebLean.lean` re-exports the library's public API.
+- When you add a new public module, list it in `GebLean.lean` so downstream users
+  keep a single entry point.
+- Library namespace: `GebLean` (see `[[lean_lib]] name = "GebLean"` in
+  `lakefile.toml`).
+- Source files live under `GebLean/` and should use the `GebLean` namespace.
+- External deps: mathlib and related tools are pinned in
+  `lake-manifest.json`; Lean toolchain is `leanprover/lean4:v4.24.0-rc1` (see
+  `lean-toolchain`).
 
 ## Workflow
 
@@ -64,6 +57,86 @@ When making changes to Lean code:
 
 This approach attempts to minimize back-and-forth and keeps the conversation
 focused on design decisions rather than syntax errors or incomplete proofs.
+
+## Code Style
+
+- There are standard Lean style guidelines at
+  [Lean Library Style Guidelines](https://leanprover-community.github.io/contribute/style.html)
+- **Line length**: Keep lines to 80 characters or less
+  (the Lean standard only requires <=100, but we prefer a stricter one)
+- Keep responses concise - match verbosity to task complexity
+- Don't use emojis
+- In transient (unrecorded) conversation, you may be informal and
+  enthusiastic if you like, but in any persistent work (such as
+  all source code (including comments), documentation, and project
+  guidelines/instructions), stick to a dry, formal, unopinionated, mathematical
+  style.  Never promote any aspect or passage of code as more significant
+  than any other, such as by calling something "key", or an "insight",
+  or "core", or "advanced".  Never refer to properties of code or
+  constructions as "advantages" or "benefits"; if you want to document a
+  property of some code or design because you don't think it's immediately
+  obvious just from reading the code itself, then simply call it a "property"
+  or similar detached word.  Never call code "important" (if we didn't
+  think it were important, we wouldn't be writing it).  Never opine that
+  something is "complex" or "complicated".
+- Do not use all-caps words unless they're acronyms.
+- Don't write "TODO" comments or summaries of completed or future work in the
+  code itself; track to-dos/future work below in `CLAUDE.md` if necessary
+- Don't write comments which state in natural language what the
+  code following them does.  We can assume that readers of our code
+  are coders and can understand the code itself.  Comments can sometimes
+  be appropriate for explaining relationships with _concepts_ or with _other_
+  areas of code, which may not be obvious from the nearby code.
+- Do not give up on a task we've agreed to try just because it seems like
+  a lot of work, or you think it's unimportant or unsuitable in some cases,
+  or anything like that.  If you do think there's a good reason not to do
+  it, first pause and discuss it with me -- don't just abandon it or call
+  it "done" or "good enough".
+- Comments should never refer to the historical process of the code's
+  development, and we should never do anything related to "backwards
+  compatibility" (including making comments about it).  We're writing
+  completely new code here; as far as users are concerned, there is no
+  history yet.
+- Make our tests as compositional as possible.  In general, this will mean
+  calculating only one value per test, asserting that it matches what we
+  expect, and then returning it as a value.  That will allow us to reuse that
+  test, and its return value, in other tests, minimize code duplication, and
+  chain tests together.
+- When making changes, especially long-running large changes, be strict
+  about the following procedures:
+  - After each individual code change, re-run `lake build` and `lake test`,
+    and immediately fix any problems before moving on to the next code change.
+  - Make sure we're not removing any existing tests, unless removing tests
+    is a specific goal of the change we're making.
+- Preseve the options in `lakefile.toml`, such as:
+  - `autoImplicit = false` and `relaxedAutoImplicit = false`: write binders
+    explicitly; don't rely on implicit inference.
+  - `pp.unicode.fun = true`: prefer `fun x ↦ ...` formatting.
+  - `weak.linter.mathlibStandardSet = true`: follow mathlib's standard
+    linters.
+  - `maxSynthPendingDepth = 3`: avoid tactics requiring deep typeclass search;
+    structure instances explicitly when possible.
+- Namespaces: put code under `namespace GebLean` (matching file path).
+- Imports: centralize in `GebLean.lean` for library public surface; modules
+  should import only what they use.
+- LSP: Lean files are typechecked on save via the Lean server; keep files
+  compilable.
+- Using mathlib:
+  - Import selective modules, e.g. `import Mathlib.Data.Nat.Basic`. Avoid
+    blanket imports; keep dependency surface small.
+- Proving lemmas:
+  - Prefer `by` proof blocks with readable tactic scripts; keep simp sets
+    local via `[simp]` only when justified.
+- Keep the development constructive: never import or `open` `Classical`,
+  and never use `classical` attribute in proofs.  Similarly, never use
+  `noncomputable`.  Similarly, never use `axiom` -- our results should depend
+  only on Lean's native type theory.
+- Explain module placement and imports.
+- Keep Lean options consistent (don't override project-level options without
+  discussion).
+- Any style guidelines which aren't specific to Lean apply to documentation
+  and style guidelines and such as well -- in particular, they apply to this
+  file itself (`CLAUDE.md`).
 
 ## Lean 4 Library and Categorical Theory Resources
 
@@ -163,15 +236,15 @@ might want to examine external libraries for ideas.
 
 ### Procedures
 
-1. When you want to see the type of a goal you're working on (you can
-   do this with computational content as well as proof content), insert
-   an underscore (`_`) as the implementation of the goal.  Building
-   will then produce an "unsolved goals" error and will print the type
-   of the goal.  Do this whenever you take a step in a definition or
-   proof, so that you know exactly what it is that you're trying to
-   define or prove next.  Use `_`, not `sorry` -- we _want_ the build to
-   be broken when there's a hole we haven't filled in yet, and `_` also
-   shows the type of the hole.
+- When you want to see the type of a goal you're working on (you can
+  do this with computational content as well as proof content), insert
+  an underscore (`_`) as the implementation of the goal.  Building
+  will then produce an "unsolved goals" error and will print the type
+  of the goal.  Do this whenever you take a step in a definition or
+  proof, so that you know exactly what it is that you're trying to
+  define or prove next.  Use `_`, not `sorry` -- we _want_ the build to
+  be broken when there's a hole we haven't filled in yet, and `_` also
+  shows the type of the hole.
 
 ### Working with Dependent Types and Equivalences
 
@@ -261,6 +334,9 @@ eliminator applications (`Subtype.rec`, `Sigma.rec`, `Eq.rec`) that don't
 reduce symbolically. These appear as complex nested expressions with `match`
 statements that block definitional equality.
 
+Given a categorical isomorphism, you can derive an equivalence
+(which is strictly weaker) using `Cat.equivOfIso`.
+
 #### Potentially-useful techniques
 
 1. **Pattern match early** in term mode using `match` to destructure all
@@ -291,7 +367,7 @@ left_inv := fun ⟨⟨components...⟩, proofs...⟩ => by
     rfl
 ```
 
-#### Properties
+#### Tips
 
 - Component-by-component equality with `Sigma.ext` works well when the
   structure is exposed, but fails when hidden behind pattern match eliminators
@@ -335,7 +411,7 @@ multiple equivalences need to compose correctly, you can try this pattern:
 
 1. **Destructure early with `rcases`**: Extract all equalities from sigma
    types before substituting
-2. **Apply equivalence lemmas BEFORE substituting**: Get `left_inv`/
+2. **Apply equivalence lemmas before substituting**: Get `left_inv`/
    `right_inv` results while variables are still in scope
 3. **Substitute all equalities at once**: Use `subst` to align all indices
 4. **Apply `congr 1` then `grind`**: Let `grind` handle the remaining
@@ -370,94 +446,6 @@ That pattern sometimes works because:
 - Applying lemmas before `subst` keeps the original variables in scope
 - `subst` then replaces all the index variables at once
 - After substitution, the problem is simple enough for `grind` to handle
-
-## Project shape
-
-- Root entry module: `GebLean.lean` re-exports the library's public API.
-- When you add a new public module, list it in `GebLean.lean` so downstream users
-  keep a single entry point.
-- Library namespace: `GebLean` (see `[[lean_lib]] name = "GebLean"` in
-  `lakefile.toml`).
-- Source files live under `GebLean/` and should use the `GebLean` namespace.
-- External deps: mathlib and related tools are pinned in
-  `lake-manifest.json`; Lean toolchain is `leanprover/lean4:v4.24.0-rc1` (see
-  `lean-toolchain`).
-
-## Code Style
-
-- There are standard Lean style guidelines at
-  [Lean Library Style Guidelines](https://leanprover-community.github.io/contribute/style.html)
-- **Line length**: Keep lines to 80 characters or less
-  (the Lean standard only requires <=100, but we prefer a stricter one)
-- Keep responses concise - match verbosity to task complexity
-- Don't use emojis
-- In transient (unrecorded) conversation, you may be informal and
-  enthusiastic if you like, but in any persistent work (such as
-  all source code (including comments), documentation, and project
-  guidelines/instructions), stick to a dry, formal, unopinionated, mathematical
-  style.  Never promote any aspect or passage of code as more significant
-  than any other, such as by calling something "key", or an "insight",
-  or "core", or "advanced".  Never refer to properties of code or
-  constructions as "advantages" or "benefits"; if you want to document a
-  property of some code or design because you don't think it's immediately
-  obvious just from reading the code itself, then simply call it a "property"
-  or similar detached word.  Never call code "important" (if we didn't
-  think it were important, we wouldn't be writing it).  Never opine that
-  something is "complex" or "complicated".
-- Do not use all-caps words unless they're acronyms.
-- Don't write "TODO" comments or summaries of completed or future work in the
-  code itself; track to-dos/future work below in `CLAUDE.md` if necessary
-- Don't write comments which state in natural language what the
-  code following them does.  We can assume that readers of our code
-  are coders and can understand the code itself.  Comments can sometimes
-  be appropriate for explaining relationships with _concepts_ or with _other_
-  areas of code, which may not be obvious from the nearby code.
-- Do not give up on a task we've agreed to try just because it seems like
-  a lot of work, or you think it's unimportant or unsuitable in some cases,
-  or anything like that.  If you do think there's a good reason not to do
-  it, first pause and discuss it with me -- don't just abandon it or call
-  it "done" or "good enough".
-- Comments should never refer to the historical process of the code's
-  development, and we should never do anything related to "backwards
-  compatibility" (including making comments about it).  We're writing
-  completely new code here; as far as users are concerned, there is no
-  history yet.
-- Make our tests as compositional as possible.  In general, this will mean
-  calculating only one value per test, asserting that it matches what we
-  expect, and then returning it as a value.  That will allow us to reuse that
-  test, and its return value, in other tests, minimize code duplication, and
-  chain tests together.
-- When making changes, especially long-running large changes, be strict
-  about the following procedures:
-  - After each individual code change, re-run `lake build` and `lake test`,
-    and immediately fix any problems before moving on to the next code change.
-  - Make sure we're not removing any existing tests, unless removing tests
-    is a specific goal of the change we're making.
-- Preseve the options in `lakefile.toml`, such as:
-  - `autoImplicit = false` and `relaxedAutoImplicit = false`: write binders
-    explicitly; don't rely on implicit inference.
-  - `pp.unicode.fun = true`: prefer `fun x ↦ ...` formatting.
-  - `weak.linter.mathlibStandardSet = true`: follow mathlib's standard
-    linters.
-  - `maxSynthPendingDepth = 3`: avoid tactics requiring deep typeclass search;
-    structure instances explicitly when possible.
-- Namespaces: put code under `namespace GebLean` (matching file path).
-- Imports: centralize in `GebLean.lean` for library public surface; modules
-  should import only what they use.
-- LSP: Lean files are typechecked on save via the Lean server; keep files
-  compilable.
-- Using mathlib:
-  - Import selective modules, e.g. `import Mathlib.Data.Nat.Basic`. Avoid
-    blanket imports; keep dependency surface small.
-- Proving lemmas:
-  - Prefer `by` proof blocks with readable tactic scripts; keep simp sets
-    local via `[simp]` only when justified.
-- Explain module placement and imports.
-- Keep Lean options consistent (don't override project-level options without
-  discussion).
-- Any style guidelines which aren't specific to Lean apply to documentation
-  and style guidelines and such as well -- in particular, they apply to this
-  file itself (`CLAUDE.md`).
 
 ## Code Patterns
 
