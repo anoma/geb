@@ -37,13 +37,13 @@ universe v u
 
 /-- A presentation of a category consists of:
     - A type of vertices (generators)
-    - A quiver structure (not a typeclass instance)
+    - A quiver structure
     - Relations on morphisms in the free category
 -/
 structure CategoryPresentation where
   /-- The type of vertices (generators) -/
   generators : Type u
-  /-- The quiver structure on generators (explicit, not a typeclass) -/
+  /-- The quiver structure on generators -/
   generatorQuiver : Quiver.{v + 1} generators
   /-- Relations on paths in the free category -/
   relations : let _ := generatorQuiver; @HomRel (Paths generators) _

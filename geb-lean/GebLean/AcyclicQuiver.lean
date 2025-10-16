@@ -40,10 +40,7 @@ abbrev QuiverEdgesIncrease (V : Type u) (hs : HomSet.{v + 1, u} V)
 
 /-- Witness that a quiver is acyclic: a partial order on vertices such
     that every edge goes from a smaller to a larger vertex. This provides
-    a topological sort, which proves the quiver is acyclic.
-
-    This is a structure (not a class) containing the data needed to prove
-    acyclicity, for a quiver that's already been provided. -/
+    a topological sort, which proves the quiver is acyclic. -/
 structure AcyclicQuiverWitness (V : Type u) (hs : HomSet.{v + 1, u} V) where
   /-- The topological order on vertices -/
   order : TopologicalOrder V
