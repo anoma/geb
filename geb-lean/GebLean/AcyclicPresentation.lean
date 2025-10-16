@@ -117,7 +117,7 @@ The current implementation is incomplete. The full approach would be:
    provide `DecidableEq` for `Quot (CompClosure r)`.
 
 4. **Fintype.ofSurjective**: With decidable equality, use the standard
-   constructive `Fintype.ofSurjective` without classical axioms.
+   constructive `Fintype.ofSurjective`.
 
 This is left as future work, as the full implementation requires substantial
 infrastructure for decidability of equivalence closure.-/
@@ -575,57 +575,6 @@ def finite_paths_in_finite_acyclic_quiver
     left_inv := fun _ => rfl
     right_inv := fun _ => rfl
   }
-
-/-- The category presented by a finite acyclic presentation is finite.
-
-This follows by composition: the free category on finite acyclic generators
-is finite (by bounded path length), and quotienting preserves finiteness.
-
-In a finite acyclic quiver with n vertices, any path has
-length at most n-1 (since we cannot repeat vertices due to acyclicity).
-Therefore, there are finitely many paths between any two vertices, and
-quotienting by relations only reduces this number.
-
-This definition is `noncomputable` because it uses `Classical.decEq` to decide
-equality in the quotient. While the quotient of a finite type is finite,
-constructively enumerating the elements requires `DecidableEq` on the quotient.
-This in turn requires decidability for the equivalence closure of `CompClosure
-P.relations`, which is complex to provide constructively. For presentations
-with decidable generating relations (see `FiniteAcyclicDecidablePresentation`),
-a fully constructive version could be developed by proving decidability for
-the equivalence closure. -/
-noncomputable def finiteAcyclicPresentationFinQuiver
-    (P : FiniteAcyclicPresentation.{v, u}) : FinQuiverWitness P.toCategory where
-  fintypeVertex := Fintype.ofEquiv P.generators {
-    toFun := fun v => ⟨v⟩
-    invFun := fun q => q.as
-    left_inv := fun v => rfl
-    right_inv := fun q => by cases q; rfl
-  }
-  fintypeEdge := fun a b => by
-    letI : Quiver.{v + 1} P.generators := P.generatorQuiver
-    letI catPaths : Category (Paths P.generators) := inferInstance
-    letI : AcyclicQuiver P.generators :=
-      { toQuiver := P.generatorQuiver
-        toPartialOrder := P.generatorAcyclicWitness.order
-        edgesIncrease := P.generatorAcyclicWitness.edgesIncrease }
-    letI := P.generatorFinQuiver.fintypeVertex
-    letI := P.generatorFinQuiver.fintypeEdge
-    letI := P.generatorDecEq
-    letI := P.generatorEdgeDecEq
-    letI instPath : Fintype (@Quiver.Hom (Paths P.generators) _ a.as b.as) :=
-      @finite_paths_in_finite_acyclic_quiver P.generators _
-        P.generatorFinQuiver.fintypeVertex
-        P.generatorDecEq
-        P.generatorFinQuiver.fintypeEdge
-        P.generatorEdgeDecEq
-        a.as b.as
-    letI : DecidableEq (a ⟶ b) := Classical.decEq _
-    have eqHom : (a ⟶ b) = CategoryTheory.Quotient.Hom P.relations a b := rfl
-    rw [eqHom]
-    exact Fintype.ofSurjective
-      (fun p => Quot.mk _ p)
-      (fun f => Quot.inductionOn f fun p => ⟨p, rfl⟩)
 
 /-!
 ## Special properties and potential theorems
