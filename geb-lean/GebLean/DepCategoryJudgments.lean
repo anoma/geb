@@ -800,8 +800,7 @@ def mkCopresheafDep_functorDataToDep_depToFunctorData.{u}
                 rfl) i.2.2)⟩
             hom_inv_id := by
               funext ⟨o, ⟨m, id_wit⟩⟩
-              simp only [CategoryStruct.comp, CategoryStruct.id,
-                Function.comp_apply, id_eq, cast_eq]
+              simp only [CategoryStruct.comp, Function.comp_apply, cast_eq]
               congr 1
               have hm :=
                 (functorDataToDep_depToFunctorData_morT data o o).left_inv
@@ -815,8 +814,7 @@ def mkCopresheafDep_functorDataToDep_depToFunctorData.{u}
               · grind
             inv_hom_id := by
               funext ⟨o, ⟨m, id_wit⟩⟩
-              simp only [CategoryStruct.comp, CategoryStruct.id,
-                Function.comp_apply, id_eq, cast_eq]
+              simp only [CategoryStruct.comp, Function.comp_apply, cast_eq]
               congr 1 }
       | .comp =>
           { hom := fun c =>
@@ -852,8 +850,7 @@ def mkCopresheafDep_functorDataToDep_depToFunctorData.{u}
                  rfl) c.2.2.2.2.2.2)⟩
             hom_inv_id := by
               funext ⟨a, b, c, f, g, h, comp_wit⟩
-              simp only [CategoryStruct.comp, CategoryStruct.id,
-                Function.comp_apply, id_eq, cast_eq]
+              simp only [CategoryStruct.comp, Function.comp_apply, cast_eq]
               rcases f with
                 ⟨⟨a_f, b_f, f'⟩, ha_f : a_f = a, hb_f : b_f = b⟩
               rcases g with
@@ -879,8 +876,7 @@ def mkCopresheafDep_functorDataToDep_depToFunctorData.{u}
               grind
             inv_hom_id := by
               funext ⟨a, b, c, f, g, h, comp_wit⟩
-              simp only [CategoryStruct.comp, CategoryStruct.id,
-                Function.comp_apply, id_eq, cast_eq]
+              simp only [CategoryStruct.comp, Function.comp_apply, cast_eq]
               have hf :=
                 (functorDataToDep_depToFunctorData_morT data a b).right_inv
                   f

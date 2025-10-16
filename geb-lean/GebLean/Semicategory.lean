@@ -367,15 +367,14 @@ def toCat : SemicategoryCat ⥤ Cat where
     · intro x
       rfl
     · intro x y f
-      simp only [CategoryStruct.id, CategoryTheory.Functor.id_obj, eqToHom_refl]
+      simp only [eqToHom_refl]
       cases f <;> rfl
   map_comp {U V W} F G := by
     refine CategoryTheory.Functor.ext ?_ ?_
     · intro x
       rfl
     · intro x y f
-      simp only [CategoryStruct.comp, CategoryTheory.Functor.comp_obj,
-        eqToHom_refl]
+      simp only [eqToHom_refl]
       cases f <;> rfl
 
 end Semicategory

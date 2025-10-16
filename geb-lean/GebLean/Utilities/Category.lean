@@ -13,11 +13,11 @@ Convenience notation and helpers for working with categories.
 * `AssociativityLaw`: Associativity law for composition
 * `SemicategoryStruct`: Semicategory structure (composition and associativity)
 * `IdentityStruct`: Identity morphisms for each object
-* `LeftIdentityLaw`: Left identity law for composition
-* `RightIdentityLaw`: Right identity law for composition
+* `IdComp`: Left identity law for composition
+* `CompId`: Right identity law for composition
 * `IdentityLaws`: Both left and right identity laws
-* `CategoryStruct`: Category structure (composition, associativity, identities,
-  and identity laws)
+* `CategoryStruct`: Category structure (extends `SemicategoryStruct` with
+  identities and identity laws)
 * `≅Cat`: Notation for isomorphisms between categories without explicit
   `Cat.of`
 -/
@@ -31,7 +31,12 @@ universe v u
 /-- The data of a quiver: a family of types indexed by pairs of vertices. -/
 abbrev HomSet (U : Type u) := U → U → Sort v
 
-/-- Compositional structure: composition of morphisms. -/
+/-- Compositional structure: composition of morphisms.
+
+Note: Most presentations of category theory put composition in the opposite
+order (e.g., `g ∘ f` for `f : a → b` and `g : b → c`). We follow the
+convention of Lean's standard libraries, where composition is written
+`f ≫ g` or `comp f g`, with the first morphism applied first. -/
 abbrev CompositionalStruct {U : Type u} (hs : HomSet.{v, u} U) :=
   ∀ {a b c : U}, hs a b → hs b c → hs a c
 
@@ -52,13 +57,15 @@ structure SemicategoryStruct (U : Type u) (hs : HomSet.{v, u} U) where
 abbrev IdentityStruct {U : Type u} (hs : HomSet.{v, u} U) :=
   ∀ (a : U), hs a a
 
-/-- Left identity law for composition. -/
-abbrev LeftIdentityLaw {U : Type u} (hs : HomSet.{v, u} U)
+/-- Left identity law: composing with identity on the left gives the
+    original morphism. -/
+abbrev IdComp {U : Type u} (hs : HomSet.{v, u} U)
     (comp : CompositionalStruct hs) (id : IdentityStruct hs) :=
   ∀ {a b : U} (f : hs a b), comp (id a) f = f
 
-/-- Right identity law for composition. -/
-abbrev RightIdentityLaw {U : Type u} (hs : HomSet.{v, u} U)
+/-- Right identity law: composing with identity on the right gives the
+    original morphism. -/
+abbrev CompId {U : Type u} (hs : HomSet.{v, u} U)
     (comp : CompositionalStruct hs) (id : IdentityStruct hs) :=
   ∀ {a b : U} (f : hs a b), comp f (id b) = f
 
@@ -66,21 +73,18 @@ abbrev RightIdentityLaw {U : Type u} (hs : HomSet.{v, u} U)
 structure IdentityLaws {U : Type u} (hs : HomSet.{v, u} U)
     (comp : CompositionalStruct hs) (id : IdentityStruct hs) : Prop where
   /-- Left identity law -/
-  id_comp : LeftIdentityLaw hs comp id
+  id_comp : IdComp hs comp id
   /-- Right identity law -/
-  comp_id : RightIdentityLaw hs comp id
+  comp_id : CompId hs comp id
 
 /-- Category structure: composition, associativity, identities, and
     identity laws. -/
-structure CategoryStruct (U : Type u) (hs : HomSet.{v, u} U) where
-  /-- Compositional structure -/
-  toCompositionalStruct : CompositionalStruct hs
-  /-- Associativity law -/
-  toAssociativityLaw : AssociativityLaw hs toCompositionalStruct
+structure CategoryStruct (U : Type u) (hs : HomSet.{v, u} U)
+    extends SemicategoryStruct U hs where
   /-- Identity morphisms -/
-  toIdentityStruct : IdentityStruct hs
+  id : IdentityStruct hs
   /-- Identity laws -/
-  toIdentityLaws : IdentityLaws hs toCompositionalStruct toIdentityStruct
+  id_laws : IdentityLaws hs comp id
 
 /-- Extract a `Quiver` typeclass instance from a `HomSet`. -/
 instance {U : Type u} (hs : HomSet.{v, u} U) : Quiver.{v, u} U where
