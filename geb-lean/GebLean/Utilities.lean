@@ -1,4 +1,5 @@
 import GebLean.Utilities.Category
+import GebLean.Utilities.Fintype
 import GebLean.Utilities.Sigma
 
 /-!

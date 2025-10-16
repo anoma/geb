@@ -263,10 +263,12 @@ instance instDecidableEq [decEqSemi : ∀ (X Y : V), DecidableEq (X ⟶ Y)]
 def fintypeAdjoinedIdHom [DecidableEq V]
     (wit : FinQuiverWitness V (homSetOfQuiver V))
     (a b : V) : Fintype (AdjoinedIdHom a b) :=
+  let ftEdgeData := wit.fintypeEdge a b
+  let ftEdge : Fintype (a ⟶ b) := ⟨ftEdgeData.elems, ftEdgeData.complete⟩
   if h : a = b then
     @Fintype.ofEquiv _ _
       (@instFintypeSum PUnit.{1} (a ⟶ b)
-        (Fintype.ofSubsingleton PUnit.unit) (wit.fintypeEdge a b))
+        (Fintype.ofSubsingleton PUnit.unit) ftEdge)
       { toFun := fun (x : Sum PUnit.{1} (a ⟶ b)) => match x with
           | Sum.inl _ => h ▸ id a
           | Sum.inr f => hom f
@@ -285,7 +287,7 @@ def fintypeAdjoinedIdHom [DecidableEq V]
           | hom g => rfl }
   else
     @Fintype.ofEquiv _ _
-      (wit.fintypeEdge a b)
+      ftEdge
       { toFun := hom
         invFun := fun f => match f with
           | id _ => absurd rfl h
@@ -321,7 +323,9 @@ def finQuiverWitness [DecidableEq V]
     (wit : FinQuiverWitness V (homSetOfQuiver V)) :
     FinQuiverWitness V (@homSetOfQuiver V adjoinedIdCategory.toQuiver) :=
   let ftV := wit.fintypeVertex
-  let ftE := fintypeAdjoinedIdHom wit
+  let ftE (a b : V) : FintypeData (AdjoinedIdHom a b) :=
+    let ft := fintypeAdjoinedIdHom wit a b
+    ⟨ft.elems, ft.complete⟩
   ⟨ftV, ftE⟩
 
 /-- Instance version of finQuiverWitness for automatic inference. -/

@@ -3,6 +3,7 @@ import Mathlib.CategoryTheory.Category.Quiv
 import Mathlib.CategoryTheory.ObjectProperty.FullSubcategory
 import Mathlib.Data.Fintype.Basic
 import GebLean.Utilities.Category
+import GebLean.Utilities.Fintype
 
 /-!
 # Finite Quivers
@@ -25,9 +26,9 @@ namespace GebLean
 /-- A proof of finiteness of a quiver. -/
 structure FinQuiverWitness (V : Type u) (hs : HomSet.{v + 1, u} V) where
   /-- The vertex set is finite -/
-  fintypeVertex : Fintype V
+  fintypeVertex : FintypeData V
   /-- Each edge set is finite -/
-  fintypeEdge : ∀ a b : V, Fintype (hs a b)
+  fintypeEdge : ∀ a b : V, FintypeData (hs a b)
 
 attribute [instance] FinQuiverWitness.fintypeVertex
   FinQuiverWitness.fintypeEdge

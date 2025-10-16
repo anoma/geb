@@ -72,11 +72,14 @@ namespace FiniteAcyclicPresentation
 variable (P : FiniteAcyclicPresentation.{v, u})
 
 /-- Make the vertex fintype instance available -/
-instance : Fintype P.generators := P.generatorFinQuiver.fintypeVertex
+instance : Fintype P.generators :=
+  let data := P.generatorFinQuiver.fintypeVertex
+  ⟨data.elems, data.complete⟩
 
 /-- Make the edge fintype instance available -/
 instance (X Y : P.generators) : Fintype (X ⟶ Y) :=
-  P.generatorFinQuiver.fintypeEdge X Y
+  let data := P.generatorFinQuiver.fintypeEdge X Y
+  ⟨data.elems, data.complete⟩
 
 end FiniteAcyclicPresentation
 

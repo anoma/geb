@@ -142,10 +142,17 @@ instance : Fintype (zero ⟶ one) :=
 /-- Finiteness witness for the walking parallel pair. -/
 instance finQuiverWitness :
     FinQuiverWitness WalkingParallelPairSemi (homSetOfQuiver WalkingParallelPairSemi) where
-  fintypeVertex := inferInstance
-  fintypeEdge a b := by
-    cases a <;> cases b
-    all_goals infer_instance
+  fintypeVertex := let ft : Fintype WalkingParallelPairSemi := inferInstance
+                   ⟨ft.elems, ft.complete⟩
+  fintypeEdge
+    | zero, zero => let ft : Fintype (zero ⟶ zero) := inferInstance
+                    ⟨ft.elems, ft.complete⟩
+    | zero, one => let ft : Fintype (zero ⟶ one) := inferInstance
+                   ⟨ft.elems, ft.complete⟩
+    | one, zero => let ft : Fintype (one ⟶ zero) := inferInstance
+                   ⟨ft.elems, ft.complete⟩
+    | one, one => let ft : Fintype (one ⟶ one) := inferInstance
+                  ⟨ft.elems, ft.complete⟩
 
 /-- The walking parallel pair is a finite acyclic category. -/
 instance : FiniteAcyclicCategory WalkingParallelPairSemi where
