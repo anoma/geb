@@ -32,6 +32,14 @@ universe v u
 /-- The data of a quiver: a family of types indexed by pairs of vertices. -/
 abbrev HomSet (U : Type u) := U → U → Sort v
 
+/-- Extract a `Quiver` typeclass instance from a `HomSet`. -/
+instance {U : Type u} (hs : HomSet.{v, u} U) : Quiver.{v, u} U where
+  Hom := hs
+
+/-- Extract the `HomSet` from a `Quiver` typeclass instance. -/
+abbrev homSetOfQuiver (U : Type u) [Quiver.{v, u} U] : HomSet.{v, u} U :=
+  Quiver.Hom
+
 /-- Compositional structure: composition of morphisms.
 
 Note: Most presentations of category theory put composition in the opposite
@@ -115,14 +123,6 @@ variable {U : Type u} {hs : HomSet.{v, u} U}
   cs.laws.id_laws
 
 end CategoryData
-
-/-- Extract a `Quiver` typeclass instance from a `HomSet`. -/
-instance {U : Type u} (hs : HomSet.{v, u} U) : Quiver.{v, u} U where
-  Hom := hs
-
-/-- Extract the `HomSet` from a `Quiver` typeclass instance. -/
-abbrev homSetOfQuiver (U : Type u) [Quiver.{v, u} U] : HomSet.{v, u} U :=
-  Quiver.Hom
 
 end GebLean
 
