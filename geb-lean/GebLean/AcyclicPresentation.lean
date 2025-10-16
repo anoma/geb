@@ -107,7 +107,7 @@ of decidability for quotient morphism equality is possible but complex.
 The approach would be:
 
 1. **CompClosure decidability**: Enumerate all factorizations of paths and check
-   if any match with related middle edges. The key lemma needed:
+   if any match with related middle edges. We would need the following lemma:
    ```
    CompClosure r f g ↔ ∃ (c d : V) (pref : Path a c) (m₁ m₂ : c ⟶ d) (suff : Path d b),
      f = pref.comp (Path.cons Path.nil m₁).comp suff ∧
@@ -136,7 +136,7 @@ end FiniteAcyclicDecidablePresentation
 We prove that acyclicity and finiteness are preserved through the presentation
 construction.
 
-### Key Insight for Acyclic Case
+### Acyclic presentations produce acyclic categories
 
 In an acyclic quiver, there are no non-trivial cycles. This means:
 1. The free semicategory consists of non-empty paths (non-nil)
@@ -587,7 +587,7 @@ def finite_paths_in_finite_acyclic_quiver
 This follows by composition: the free category on finite acyclic generators
 is finite (by bounded path length), and quotienting preserves finiteness.
 
-The key insight: In a finite acyclic quiver with n vertices, any path has
+In a finite acyclic quiver with n vertices, any path has
 length at most n-1 (since we cannot repeat vertices due to acyclicity).
 Therefore, there are finitely many paths between any two vertices, and
 quotienting by relations only reduces this number.
