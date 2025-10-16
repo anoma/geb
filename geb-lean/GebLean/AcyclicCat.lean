@@ -102,7 +102,7 @@ structure AcyclicCategoryWitness (V : Type u) where
   homSet : HomSet.{v + 1, u} V
   order : TopologicalOrder V
   edgesIncrease : @QuiverEdgesIncrease V homSet order
-  semicat : @Quiver.SemicategoryStruct V ⟨homSet⟩
+  semicat : SemicategoryStruct V homSet
 
 /-- The large category of acyclic categories. Since AcyclicCategory
     depends on AcyclicQuiver, we store witness data directly rather
