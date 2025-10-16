@@ -39,7 +39,7 @@ instance {V : Type u} [inst : AcyclicQuiver V] [h : AcyclicCategory V] :
 /-- A finite acyclic category combines finiteness with the acyclic
     composition structure. -/
 class FiniteAcyclicCategory (V : Type u) [AcyclicQuiver V]
-    [AcyclicCategory V] extends FiniteAcyclicQuiver V
+    [AcyclicCategory V] [FiniteQuiver V] where
 
 /-- A morphism of acyclic categories is a semifunctor that also
     preserves the strict order on objects. -/

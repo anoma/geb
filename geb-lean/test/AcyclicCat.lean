@@ -154,9 +154,11 @@ instance finQuiverWitness :
     | one, one => let ft : Fintype (one ⟶ one) := inferInstance
                   ⟨ft.elems, ft.complete⟩
 
+instance : FiniteQuiver WalkingParallelPairSemi where
+  toFiniteness := finQuiverWitness
+
 /-- The walking parallel pair is a finite acyclic category. -/
 instance : FiniteAcyclicCategory WalkingParallelPairSemi where
-  toFiniteness := finQuiverWitness
 
 end WalkingParallelPairSemi
 
