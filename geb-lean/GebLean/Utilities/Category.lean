@@ -85,13 +85,13 @@ abbrev identityStructOfReflQuiver (U : Type u) [ReflQuiver U] :
     IdentityStruct (homSetOfQuiver U) :=
   ReflQuiver.id
 
-/-- Left identity law: composing with identity on the left gives the
+/-- Left identity law: composing after the identity gives the
     original morphism. -/
 abbrev IdComp {U : Type u} (hs : HomSet.{v, u} U)
     (comp : CompositionalStruct hs) (id : IdentityStruct hs) :=
   ∀ {a b : U} (f : hs a b), comp (id a) f = f
 
-/-- Right identity law: composing with identity on the right gives the
+/-- Right identity law: composing before the identity gives the
     original morphism. -/
 abbrev CompId {U : Type u} (hs : HomSet.{v, u} U)
     (comp : CompositionalStruct hs) (id : IdentityStruct hs) :=
