@@ -14,6 +14,7 @@ This file defines finite quivers and related structures.
 
 * `FinQuiverWitness`: A proof that a quiver has finitely many vertices
   and edges
+* `FiniteQuiver`: A quiver with finitely many vertices and edges
 * `IsFiniteQuiver`: The property that a quiver (in Quiv) is finite
 * `FiniteQuiverCat`: The full subcategory of finite quivers
 -/
