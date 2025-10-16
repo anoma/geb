@@ -95,32 +95,23 @@ structure CategoryLaws {U : Type u} (hs : HomSet.{v, u} U)
 
 /-- Category data: composition, associativity, identities, and
     identity laws. -/
-structure CategoryData (U : Type u) (hs : HomSet.{v, u} U) where
-  /-- Category operations -/
-  ops : CategoryOps hs
+structure CategoryData (U : Type u) (hs : HomSet.{v, u} U)
+    extends CategoryOps hs where
   /-- Category laws -/
-  laws : CategoryLaws hs ops
+  laws : CategoryLaws hs toCategoryOps
 
 namespace CategoryData
 
 variable {U : Type u} {hs : HomSet.{v, u} U}
 
-/-- Composition operation from category data. -/
-@[reducible] def comp (cs : CategoryData U hs) : CompositionalStruct hs :=
-  cs.ops.comp
-
-/-- Identity operation from category data. -/
-@[reducible] def id (cs : CategoryData U hs) : IdentityStruct hs :=
-  cs.ops.id
-
 /-- Associativity law from category data. -/
 @[reducible] def assoc (cs : CategoryData U hs) :
-    AssociativityLaw hs cs.ops.comp :=
+    AssociativityLaw hs cs.comp :=
   cs.laws.assoc
 
 /-- Identity laws from category data. -/
 @[reducible] def id_laws (cs : CategoryData U hs) :
-    IdentityLaws hs cs.ops.comp cs.ops.id :=
+    IdentityLaws hs cs.comp cs.id :=
   cs.laws.id_laws
 
 end CategoryData
