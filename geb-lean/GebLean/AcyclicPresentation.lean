@@ -60,14 +60,9 @@ instance : QuiverEdgesIncrease P.generators (homSetOfQuiver P.generators) :=
 end AcyclicPresentation
 
 /-- A finite acyclic category presentation is an acyclic presentation where
-    the generators form a finite quiver with decidable equality. -/
+    the generators form a finite quiver. -/
 structure FiniteAcyclicPresentation extends AcyclicPresentation.{v, u} where
-  /-- The generators form a finite quiver -/
   generatorFinQuiver : FinQuiverWitness generators (homSetOfQuiver generators)
-  /-- Decidable equality on generators -/
-  generatorDecEq : DecidableEq generators
-  /-- Decidable equality on generator edges -/
-  generatorEdgeDecEq : ∀ a b : generators, DecidableEq (a ⟶ b)
 
 namespace FiniteAcyclicPresentation
 
