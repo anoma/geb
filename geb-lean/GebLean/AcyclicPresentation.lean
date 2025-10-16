@@ -80,6 +80,56 @@ instance (X Y : P.generators) : Fintype (X ⟶ Y) :=
 
 end FiniteAcyclicPresentation
 
+/-- A finite acyclic presentation with decidable generating relations.
+    This extension is needed for constructive Fintype instances on the quotient
+    category. -/
+structure FiniteAcyclicDecidablePresentation extends FiniteAcyclicPresentation.{v, u} where
+  /-- Decidability for the generating relations -/
+  generatorRelationsDecEq : let _ := generatorQuiver;
+    ∀ {a b : generators} (f g : Quiver.Path a b), Decidable (relations f g)
+
+namespace FiniteAcyclicDecidablePresentation
+
+variable (P : FiniteAcyclicDecidablePresentation.{v, u})
+
+/-- Make the relation decidability available as an instance -/
+instance : let _ := P.generatorQuiver;
+    ∀ {a b : P.generators} (f g : Quiver.Path a b),
+      Decidable (P.relations f g) :=
+  P.generatorRelationsDecEq
+
+/-!
+### Constructive Decidability (Future Work)
+
+For `FiniteAcyclicDecidablePresentation`, a fully constructive implementation
+of decidability for quotient morphism equality is possible but complex.
+
+The approach would be:
+
+1. **CompClosure decidability**: Enumerate all factorizations of paths and check
+   if any match with related middle edges. The key lemma needed:
+   ```
+   CompClosure r f g ↔ ∃ (c d : V) (pref : Path a c) (m₁ m₂ : c ⟶ d) (suff : Path d b),
+     f = pref.comp (Path.cons Path.nil m₁).comp suff ∧
+     g = pref.comp (Path.cons Path.nil m₂).comp suff ∧
+     r (Path.cons Path.nil m₁) (Path.cons Path.nil m₂)
+   ```
+
+2. **EqvGen decidability**: Compute equivalence closure iteratively using
+   fixed-point iteration on the finite set of paths. Since paths are bounded
+   in finite acyclic quivers, this terminates.
+
+3. **Quotient DecidableEq**: Use the decidable `EqvGen (CompClosure r)` to
+   provide `DecidableEq` for `Quot (CompClosure r)`.
+
+4. **Fintype.ofSurjective**: With decidable equality, use the standard
+   constructive `Fintype.ofSurjective` without classical axioms.
+
+This would make `finiteAcyclicPresentationFinQuiver` fully computable.
+-/
+
+end FiniteAcyclicDecidablePresentation
+
 /-!
 ## Fundamental properties of acyclic presentations
 
@@ -540,7 +590,16 @@ is finite (by bounded path length), and quotienting preserves finiteness.
 The key insight: In a finite acyclic quiver with n vertices, any path has
 length at most n-1 (since we cannot repeat vertices due to acyclicity).
 Therefore, there are finitely many paths between any two vertices, and
-quotienting by relations only reduces this number. -/
+quotienting by relations only reduces this number.
+
+This definition is `noncomputable` because it uses `Classical.decEq` to decide
+equality in the quotient. While the quotient of a finite type is finite,
+constructively enumerating the elements requires `DecidableEq` on the quotient.
+This in turn requires decidability for the equivalence closure of `CompClosure
+P.relations`, which is complex to provide constructively. For presentations
+with decidable generating relations (see `FiniteAcyclicDecidablePresentation`),
+a fully constructive version could be developed by proving decidability for
+the equivalence closure. -/
 noncomputable def finiteAcyclicPresentationFinQuiver
     (P : FiniteAcyclicPresentation.{v, u}) : FinQuiverWitness P.toCategory where
   fintypeVertex := Fintype.ofEquiv P.generators {
