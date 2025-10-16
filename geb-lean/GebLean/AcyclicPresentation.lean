@@ -42,7 +42,9 @@ universe v u
     for the quiver structure provided by the base presentation. -/
 structure AcyclicPresentation extends CategoryPresentation.{v, u} where
   /-- Witness that the generators form an acyclic quiver -/
-  generatorAcyclicWitness : @AcyclicQuiverWitness generators generatorQuiver
+  generatorAcyclicWitness :
+    let _ := generatorQuiver
+    AcyclicQuiverWitness generators (homSetOfQuiver generators)
 
 namespace AcyclicPresentation
 
@@ -52,7 +54,7 @@ variable (P : AcyclicPresentation.{v, u})
 instance : PartialOrder P.generators := P.generatorAcyclicWitness.order
 
 /-- Provide the QuiverEdgesIncrease instance from the acyclicity witness -/
-instance : QuiverEdgesIncrease P.generators :=
+instance : QuiverEdgesIncrease P.generators (homSetOfQuiver P.generators) :=
   P.generatorAcyclicWitness.edgesIncrease
 
 end AcyclicPresentation

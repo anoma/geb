@@ -99,10 +99,10 @@ end AcyclicCategoryHom
 /-- Witness data for an acyclic category: combines quiver, order,
     acyclicity, and composition structure. -/
 structure AcyclicCategoryWitness (V : Type u) where
-  quiver : Quiver.{v + 1} V
+  homSet : HomSet.{v + 1, u} V
   order : TopologicalOrder V
-  edgesIncrease : @QuiverEdgesIncrease V quiver order
-  semicat : @Quiver.SemicategoryStruct V quiver
+  edgesIncrease : @QuiverEdgesIncrease V homSet order
+  semicat : @Quiver.SemicategoryStruct V ⟨homSet⟩
 
 /-- The large category of acyclic categories. Since AcyclicCategory
     depends on AcyclicQuiver, we store witness data directly rather
@@ -120,14 +120,14 @@ open CategoryTheory
 instance : CoeSort (AcyclicCategoryCat.Large.{u, v}) (Type u) where
   coe V := V.carrier
 
-instance (V : AcyclicCategoryCat.Large.{u, v}) : Quiver.{v + 1} V.carrier :=
-  V.wit.quiver
+instance (V : AcyclicCategoryCat.Large.{u, v}) : Quiver.{v + 1} V.carrier where
+  Hom := V.wit.homSet
 
 instance (V : AcyclicCategoryCat.Large.{u, v}) : TopologicalOrder V.carrier :=
   V.wit.order
 
 instance (V : AcyclicCategoryCat.Large.{u, v}) :
-    QuiverEdgesIncrease V.carrier :=
+    QuiverEdgesIncrease V.carrier (homSetOfQuiver V.carrier) :=
   V.wit.edgesIncrease
 
 instance (V : AcyclicCategoryCat.Large.{u, v}) :
@@ -136,7 +136,7 @@ instance (V : AcyclicCategoryCat.Large.{u, v}) :
 
 instance (V : AcyclicCategoryCat.Large.{u, v}) :
     AcyclicQuiver.{u, v} V.carrier where
-  toQuiver := V.wit.quiver
+  toQuiver := ⟨V.wit.homSet⟩
   toPartialOrder := V.wit.order
   edgesIncrease := V.wit.edgesIncrease
 
@@ -148,7 +148,7 @@ instance (V : AcyclicCategoryCat.Large.{u, v}) : AcyclicCategory V.carrier where
 def of (V : Type u) [q : AcyclicQuiver.{u, v} V] [c : AcyclicCategory V] :
     AcyclicCategoryCat.Large.{u, v} :=
   ⟨V, {
-    quiver := q.toQuiver
+    homSet := homSetOfQuiver V
     order := q.toPartialOrder
     edgesIncrease := q.edgesIncrease
     semicat := c.toSemicategoryStruct

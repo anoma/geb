@@ -34,9 +34,9 @@ abbrev TopologicalOrder := PartialOrder
 
 /-- The property that every edge in a quiver goes from a smaller vertex
     to a larger vertex with respect to a topological order. -/
-abbrev QuiverEdgesIncrease (V : Type u) [Quiver.{v + 1} V]
+abbrev QuiverEdgesIncrease (V : Type u) (hs : HomSet.{v + 1, u} V)
     [TopologicalOrder V] :=
-  ∀ {a b : V}, (a ⟶ b) → a < b
+  ∀ {a b : V}, hs a b → a < b
 
 /-- Witness that a quiver is acyclic: a partial order on vertices such
     that every edge goes from a smaller to a larger vertex. This provides
@@ -44,25 +44,26 @@ abbrev QuiverEdgesIncrease (V : Type u) [Quiver.{v + 1} V]
 
     This is a structure (not a class) containing the data needed to prove
     acyclicity, for a quiver that's already been provided. -/
-structure AcyclicQuiverWitness (V : Type u) (q : Quiver.{v + 1} V) where
+structure AcyclicQuiverWitness (V : Type u) (hs : HomSet.{v + 1, u} V) where
   /-- The topological order on vertices -/
   order : TopologicalOrder V
   /-- Proof that every edge respects the order -/
-  edgesIncrease : @QuiverEdgesIncrease V q order
+  edgesIncrease : @QuiverEdgesIncrease V hs order
 
 /-- An acyclic quiver bundles a quiver with a witness of acyclicity.
     This is the typeclass version that extends Quiver. -/
 class AcyclicQuiver (V : Type u) extends Quiver.{v + 1} V,
     TopologicalOrder V where
-  edgesIncrease : QuiverEdgesIncrease V := by infer_instance
+  edgesIncrease : QuiverEdgesIncrease V (homSetOfQuiver V) := by infer_instance
 
-instance {V : Type u} [h : AcyclicQuiver V] : QuiverEdgesIncrease V :=
+instance {V : Type u} [h : AcyclicQuiver V] :
+    QuiverEdgesIncrease V (homSetOfQuiver V) :=
   h.edgesIncrease
 
 /-- Extract the witness from an AcyclicQuiver instance. This is a wrapper
     that converts from the typeclass to the explicit structure form. -/
 instance (V : Type u) [h : AcyclicQuiver V] :
-    AcyclicQuiverWitness V h.toQuiver :=
+    AcyclicQuiverWitness V (homSetOfQuiver V) :=
   { order := h.toPartialOrder
     edgesIncrease := h.edgesIncrease }
 
