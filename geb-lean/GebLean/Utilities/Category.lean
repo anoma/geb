@@ -16,8 +16,9 @@ Convenience notation and helpers for working with categories.
 * `IdComp`: Left identity law for composition
 * `CompId`: Right identity law for composition
 * `IdentityLaws`: Both left and right identity laws
-* `CategoryStruct`: Category structure (extends `SemicategoryStruct` with
-  identities and identity laws)
+* `CategoryOps`: Category operations (composition and identity)
+* `CategoryLaws`: Category laws (associativity and identity laws)
+* `CategoryData`: Category data (operations and laws)
 * `≅Cat`: Notation for isomorphisms between categories without explicit
   `Cat.of`
 -/
@@ -77,14 +78,52 @@ structure IdentityLaws {U : Type u} (hs : HomSet.{v, u} U)
   /-- Right identity law -/
   comp_id : CompId hs comp id
 
-/-- Category structure: composition, associativity, identities, and
-    identity laws. -/
-structure CategoryStruct (U : Type u) (hs : HomSet.{v, u} U)
-    extends SemicategoryStruct U hs where
+/-- Category operations: composition and identity morphisms. -/
+structure CategoryOps {U : Type u} (hs : HomSet.{v, u} U) where
+  /-- Composition of morphisms -/
+  comp : CompositionalStruct hs
   /-- Identity morphisms -/
   id : IdentityStruct hs
+
+/-- Category laws: associativity and identity laws. -/
+structure CategoryLaws {U : Type u} (hs : HomSet.{v, u} U)
+    (ops : CategoryOps hs) : Prop where
+  /-- Associativity of composition -/
+  assoc : AssociativityLaw hs ops.comp
   /-- Identity laws -/
-  id_laws : IdentityLaws hs comp id
+  id_laws : IdentityLaws hs ops.comp ops.id
+
+/-- Category data: composition, associativity, identities, and
+    identity laws. -/
+structure CategoryData (U : Type u) (hs : HomSet.{v, u} U) where
+  /-- Category operations -/
+  ops : CategoryOps hs
+  /-- Category laws -/
+  laws : CategoryLaws hs ops
+
+namespace CategoryData
+
+variable {U : Type u} {hs : HomSet.{v, u} U}
+
+/-- Composition operation from category data. -/
+@[reducible] def comp (cs : CategoryData U hs) : CompositionalStruct hs :=
+  cs.ops.comp
+
+/-- Identity operation from category data. -/
+@[reducible] def id (cs : CategoryData U hs) : IdentityStruct hs :=
+  cs.ops.id
+
+/-- Associativity law from category data. -/
+@[reducible] def assoc (cs : CategoryData U hs) :
+    AssociativityLaw hs cs.ops.comp :=
+  cs.laws.assoc
+
+/-- Identity laws from category data. -/
+@[reducible] def id_laws (cs : CategoryData U hs) :
+    IdentityLaws hs cs.ops.comp cs.ops.id :=
+  cs.laws.id_laws
+
+end CategoryData
 
 /-- Extract a `Quiver` typeclass instance from a `HomSet`. -/
 instance {U : Type u} (hs : HomSet.{v, u} U) : Quiver.{v, u} U where
