@@ -260,14 +260,14 @@ instance instDecidableEq [decEqSemi : ∀ (X Y : V), DecidableEq (X ⟶ Y)]
   decidableEq decEqSemi X Y
 
 /-- Given a FinQuiverWitness on a semicategory (with the original quiver
-    structure), produce a Fintype for AdjoinedIdHom morphisms between any
+    structure), produce FintypeData for AdjoinedIdHom morphisms between any
     two vertices. -/
 def fintypeAdjoinedIdHom [DecidableEq V]
     (wit : FinQuiverWitness V (homSetOfQuiver V))
-    (a b : V) : Fintype (AdjoinedIdHom a b) :=
+    (a b : V) : FintypeData (AdjoinedIdHom a b) :=
   let ftEdgeData := wit.fintypeEdge a b
   let ftEdge : Fintype (a ⟶ b) := ⟨ftEdgeData.toFinset, ftEdgeData.complete⟩
-  if h : a = b then
+  let ft : Fintype (AdjoinedIdHom a b) := if h : a = b then
     @Fintype.ofEquiv _ _
       (@instFintypeSum PUnit.{1} (a ⟶ b)
         (Fintype.ofSubsingleton PUnit.unit) ftEdge)
@@ -300,6 +300,7 @@ def fintypeAdjoinedIdHom [DecidableEq V]
           cases f with
           | id => exact absurd rfl h
           | hom => rfl }
+  ⟨ft.elems, ft.complete⟩
 
 end AdjoinedIdHom
 
@@ -326,8 +327,7 @@ def finQuiverWitness [DecidableEq V]
     FinQuiverWitness V (@homSetOfQuiver V adjoinedIdCategory.toQuiver) :=
   let ftV := wit.fintypeVertex
   let ftE (a b : V) : FintypeData (AdjoinedIdHom a b) :=
-    let ft := fintypeAdjoinedIdHom wit a b
-    ⟨ft.elems, ft.complete⟩
+    fintypeAdjoinedIdHom wit a b
   ⟨ftV, ftE⟩
 
 /-- Instance version of finQuiverWitness for automatic inference. -/
