@@ -1,5 +1,6 @@
 import Mathlib.CategoryTheory.Category.Cat
 import Mathlib.CategoryTheory.Equivalence
+import Mathlib.Combinatorics.Quiver.ReflQuiver
 
 /-!
 # Category Theory Utilities
@@ -9,10 +10,13 @@ Convenience notation and helpers for working with categories.
 ## Main definitions
 
 * `HomSet`: The data of a quiver (the Hom type family)
+* `homSetOfQuiver`: Extract a `HomSet` from a `Quiver` typeclass instance
 * `CompositionalStruct`: Composition of morphisms
 * `AssociativityLaw`: Associativity law for composition
 * `SemicategoryStruct`: Semicategory structure (composition and associativity)
 * `IdentityStruct`: Identity morphisms for each object
+* `identityStructOfReflQuiver`: Extract an `IdentityStruct` from a `ReflQuiver`
+  typeclass instance
 * `IdComp`: Left identity law for composition
 * `CompId`: Right identity law for composition
 * `IdentityLaws`: Both left and right identity laws
@@ -65,6 +69,18 @@ structure SemicategoryStruct (U : Type u) (hs : HomSet.{v, u} U) where
 /-- Identity structure: identity morphisms for each object. -/
 abbrev IdentityStruct {U : Type u} (hs : HomSet.{v, u} U) :=
   ∀ (a : U), hs a a
+
+/-- Extract a `ReflQuiver` typeclass instance from a `HomSet` with identity
+    structure. -/
+instance {U : Type u} (hs : HomSet.{v, u} U) (ids : IdentityStruct hs) :
+    ReflQuiver U where
+  Hom := hs
+  id := ids
+
+/-- Extract the `IdentityStruct` from a `ReflQuiver` typeclass instance. -/
+abbrev identityStructOfReflQuiver (U : Type u) [ReflQuiver U] :
+    IdentityStruct (homSetOfQuiver U) :=
+  ReflQuiver.id
 
 /-- Left identity law: composing with identity on the left gives the
     original morphism. -/
