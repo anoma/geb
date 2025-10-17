@@ -527,7 +527,9 @@ When defining a structure, derive whatever standard instances are
 applicable to that structure, such as `Inhabited`, `DecidableEq`, and
 `Repr`.
 
-### Factoring Common Typeclass Fields
+### Type Classes
+
+#### Factoring Common Typeclass Fields
 
 When multiple typeclasses share the same data fields (like finiteness
 witnesses), factor them out using a `Type`-valued structure:
@@ -573,7 +575,7 @@ in brackets. Then derive typeclasses via instances.
 We should do this for interactions with Lean standard-library typeclasses.
 For our own new code, just don't create typeclasses; use interface structures.
 
-### Converting Between Structures and Typeclasses
+#### Converting Between Structures and Typeclasses
 
 When creating bidirectional conversions between structure-based
 implementations and typeclass-based interfaces, follow this pattern:
@@ -627,6 +629,19 @@ loops trying to synthesize a typeclass to construct that same typeclass.
 
 This creates a clean separation where structures are the source of truth,
 and typeclasses are derived interfaces for interoperability with mathlib.
+
+#### Type Class Troubleshooting
+
+If you struggle with instance resolution or other aspects of type class
+use, do the following:
+
+- Check the Lean documentation references about type classes in this document
+- Write a version of the definition you're trying to implement which
+  factors out all usage of type classes into usage of the underlying
+  structures that we have defined, get that implemented, and then
+  implement the type class version by wrapping its inputs and outputs
+  with the structure/typeclass conversion functions we have defined
+  along with the underlying-structure definitions
 
 ### Structure Composition with `extends`
 
