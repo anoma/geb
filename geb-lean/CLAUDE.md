@@ -162,12 +162,13 @@ Links to mathematical concepts available in Lean 4 libraries (particularly
 `mathlib`).  In our code, we should only use standard libraries, but we
 might want to examine external libraries for ideas.
 
-### Searchable:  Loogle
+### Searchable
 
 - [Loogle](https://loogle.lean-lang.org/)
   - A searchable reference to the Lean standard libraries -- we should
     use this to try to find standard implementations of concepts that
     we don't already know about.
+- [Reservoir](https://reservoir.lean-lang.org/)
 
 ### Lean language
 
