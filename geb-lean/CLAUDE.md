@@ -749,3 +749,77 @@ When proving functor equality with `Functor.hext`, the heterogeneous
 equality `≍` won't reduce unless you properly case on all the variables
 involved. If `rfl` fails, you likely haven't cased enough to expose
 the definitional equality.
+
+### Finset-based Fintype Instances
+
+When defining `Fintype` instances for types with recursive structure (such as
+bounded-length paths in a quiver), follow mathlib's pattern of separating
+computational content (`Finset`) from typeclass (`Fintype`).
+
+Reference: `Mathlib.Combinatorics.SimpleGraph.Connectivity.WalkCounting`
+
+**The pattern**:
+
+1. Define a recursive `Finset` function that constructs the set directly
+2. Prove completeness (membership theorem)
+3. Derive the `Fintype` instance via `Fintype.ofFinset` or direct construction
+
+**Rationale**: Lean's typeclass synthesis does not work well with `letI`
+bindings in recursive function contexts. Mathlib instances like `Sigma.
+instFintype` and `Quiver.Path.instDecidableEq` exist but cannot be used
+directly in recursive definitions due to these synthesis limitations.
+
+The Finset-based approach avoids typeclass synthesis entirely by working
+directly with concrete `Finset` values.
+
+**Example** (adapted from [AcyclicPresentation.lean:339-403](GebLean/
+AcyclicPresentation.lean)):
+
+```lean
+def finsetPathsBounded {V : Type u} [Quiver.{v + 1} V] [Fintype V]
+    [DecidableEq V] [∀ a b : V, DecidableEq (a ⟶ b)]
+    [∀ a b : V, Fintype (a ⟶ b)] (a b : V) (n : ℕ) :
+    Finset {p : Quiver.Path a b // pathLength p ≤ n} :=
+  match n with
+  | 0 =>
+    if h : a = b then
+      {⟨h ▸ Quiver.Path.nil, by subst h; simp [pathLength]⟩}
+    else
+      ∅
+  | n + 1 =>
+    let baseCase : Finset {p : Quiver.Path a b // pathLength p ≤ n + 1} :=
+      if h : a = b then
+        {⟨h ▸ Quiver.Path.nil, by subst h; simp [pathLength]⟩}
+      else
+        ∅
+    let consCase : Finset {p : Quiver.Path a b // pathLength p ≤ n + 1} :=
+      Finset.univ.biUnion fun (c : V) =>
+        (finsetPathsBounded a c n).biUnion fun ⟨p, hp⟩ =>
+          (Finset.univ : Finset (c ⟶ b)).map
+            ⟨fun f => ⟨Quiver.Path.cons p f, by simp [pathLength]; omega⟩,
+             fun f₁ f₂ h => by cases h; rfl⟩
+    baseCase ∪ consCase
+
+theorem mem_finsetPathsBounded_iff {V : Type u} [Quiver.{v + 1} V]
+    [Fintype V] [DecidableEq V] [∀ a b : V, DecidableEq (a ⟶ b)]
+    [∀ a b : V, Fintype (a ⟶ b)] {a b : V} {n : ℕ}
+    (p : {p : Quiver.Path a b // pathLength p ≤ n}) :
+    p ∈ finsetPathsBounded a b n := by
+  -- Proof by induction on n, casing on path structure...
+
+instance fintypePathsBounded {V : Type u} [Quiver.{v + 1} V] [Fintype V]
+    [DecidableEq V] [∀ a b : V, DecidableEq (a ⟶ b)]
+    [∀ a b : V, Fintype (a ⟶ b)] (a b : V) (n : ℕ) :
+    Fintype {p : Quiver.Path a b // pathLength p ≤ n} :=
+  ⟨finsetPathsBounded a b n, fun p => mem_finsetPathsBounded_iff p⟩
+```
+
+**Techniques**:
+
+- Use `Finset.univ.biUnion` to enumerate over all vertices/edges
+- Use `Finset.map` with explicit embeddings (`⟨fun ... , fun ... => ...⟩`)
+  to transform elements
+- Avoid products; use nested `biUnion` instead
+- In completeness proofs, use `simp only` with specific lemmas to control
+  unfolding
+- Pattern match on path constructors to extract implicit intermediate vertices
