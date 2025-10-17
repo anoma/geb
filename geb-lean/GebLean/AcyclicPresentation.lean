@@ -323,8 +323,7 @@ instance decEqBoundedPath {V : Type u} [Quiver.{v + 1} V]
 
 Following mathlib's pattern (see `Mathlib.Combinatorics.SimpleGraph.Connectivity.WalkCounting`),
 we separate the computational content (Finset construction) from the typeclass
-(Fintype instance). This avoids typeclass synthesis issues and produces cleaner,
-more idiomatic code.
+(Fintype instance).
 
 The pattern:
 1. Define recursive `Finset` function (no typeclass issues)
