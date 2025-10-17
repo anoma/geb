@@ -172,6 +172,7 @@ might want to examine external libraries for ideas.
 
 ### Lean language
 
+- [The Lean 4 Theorem Prover and Programming Language (conference paper)](https://link.springer.com/content/pdf/10.1007/978-3-030-79876-5_37.pdf?pdf=inline%20link)
 - [Functional Programming in Lean: Structures and Inheritance](https://leanprover.github.io/functional_programming_in_lean/functor-applicative-monad/inheritance.html)
 - [Lean Language Reference: Type Classes](https://lean-lang.org/doc/reference/latest/Type-Classes/)
 - [Theorem Proving in Lean 4: Type Classes](https://lean-lang.org/theorem_proving_in_lean4/Type-Classes/)
