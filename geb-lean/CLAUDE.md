@@ -357,3 +357,5 @@ applicable to that structure, such as `Inhabited`, `DecidableEq`, and
   Use explicit transport functions.
 - Factor out definitions of structure components into separate definitions
   to make their type signatures explicit.
+- Make universe levels as polymorphic as possible (that is, as polymorphic
+  as will compile!).
