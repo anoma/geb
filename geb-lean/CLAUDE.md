@@ -21,8 +21,6 @@ adhere to its guidelines throughout the session.
 
 ## Workflow
 
-### Build Before Proposing Changes
-
 When making changes to Lean code:
 
 1. **Build first**: Always run `lake build` after making edits. If adding
@@ -56,6 +54,7 @@ When making changes to Lean code:
    define or prove next.  Use `_`, not `sorry` -- we _want_ the build to
    be broken when there's a hole we haven't filled in yet, and `_` also
    shows the type of the hole.
+8. **#check**: Use `#check <expr>` to check the type of an expression
 
 ## Code Style
 
