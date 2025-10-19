@@ -29,7 +29,7 @@ When making changes to Lean code:
    dependencies, update `lakefile.toml`, run `lake update`, and commit the
    updated `lake-manifest.json`.  Also always run `lake test`.
 2. **Iterate on errors**: If the build fails, fix errors yourself and rebuild
-   (potentially multiple cycles)
+   before proposing a change.
 3. **No warnings or sorry**: Code must build **without any warnings**,
    including:
    - No `declaration uses 'sorry'` warnings (never use `sorry`)
@@ -57,16 +57,12 @@ When making changes to Lean code:
    be broken when there's a hole we haven't filled in yet, and `_` also
    shows the type of the hole.
 
-This approach attempts to minimize back-and-forth and keeps the conversation
-focused on design decisions rather than syntax errors or incomplete proofs.
-
 ## Code Style
 
 - There are standard Lean style guidelines at
   [Lean Library Style Guidelines](https://leanprover-community.github.io/contribute/style.html)
 - **Line length**: Keep lines to 80 characters or less
   (the Lean standard only requires <=100, but we prefer a stricter one)
-- Keep responses concise - match verbosity to task complexity
 - Don't use emojis
 - In transient (unrecorded) conversation, you may be informal and
   enthusiastic if you like, but in any persistent work (such as
@@ -80,7 +76,8 @@ focused on design decisions rather than syntax errors or incomplete proofs.
   obvious just from reading the code itself, then simply call it a "property"
   or similar detached word.  Never call code "important" (if we didn't
   think it were important, we wouldn't be writing it).  Never opine that
-  something is "complex" or "complicated".
+  something is "complex" or "complicated"; readers can decide what they
+  consider complex.
 - Do not use all-caps words unless they're acronyms.
 - Don't write "TODO" comments or summaries of completed or future work in the
   code itself; track to-dos/future work below in `CLAUDE.md` if necessary
@@ -123,12 +120,6 @@ focused on design decisions rather than syntax errors or incomplete proofs.
   should import only what they use.
 - LSP: Lean files are typechecked on save via the Lean server; keep files
   compilable.
-- Using mathlib:
-  - Import selective modules, e.g. `import Mathlib.Data.Nat.Basic`. Avoid
-    blanket imports; keep dependency surface small.
-- Proving lemmas:
-  - Prefer `by` proof blocks with readable tactic scripts; keep simp sets
-    local via `[simp]` only when justified.
 - Keep the development constructive: never import or `open` `Classical`,
   and never use `classical` attribute in proofs.  Similarly, never use
   `noncomputable`.  Similarly, never use `axiom` -- our results should depend
@@ -149,12 +140,8 @@ All markdown files in this repository should be free of lint warnings. Use
 markdownlint-cli2 README.md CLAUDE.md .github/copilot-instructions.md
 ```
 
-Common issues to watch for:
-
-- Line length: Keep lines to 80 characters or less (MD013)
-- Fenced code blocks: Surround with blank lines (MD031)
-- Lists: Surround with blank lines (MD032)
-- URLs: Use angle brackets for bare URLs (MD034)
+Always fix all warnings/errors before proposing a Markdown-file change
+(as with any other source file).
 
 ## Lean 4 Library and Categorical Theory Resources
 
