@@ -221,10 +221,16 @@ might want to examine external libraries for ideas.
 
 ### Quotients
 
+- [Init.Prelude.Quot](https://leanprover-community.github.io/mathlib4_docs/Init/Prelude.html#Quot)
+  - Other operations on `Quot` follow
+- [Init.Core.Quot.recOn](https://leanprover-community.github.io/mathlib4_docs/Init/Core.html#Quot.recOn)
+  - Other operations on `Quot` precede and follow
+- [Init.Core.Quotient](https://leanprover-community.github.io/mathlib4_docs/Init/Core.html#Quotient)
 - [Mathlib.Data.Fintype.Quotient](https://leanprover-community.github.io/mathlib4_docs/Mathlib/Data/Fintype/Quotient.html)
 
 ### Topos Theory
 
+- [Mathlib.CategoryTheory.Topos.Classifier](https://leanprover-community.github.io/mathlib4_docs/Mathlib/CategoryTheory/Topos/Classifier.html)
 - [b-mehta/topos: Topos theory in Lean](https://github.com/b-mehta/topos)
   - Independent repository formalizing foundational aspects of topos theory,
     including subobject classifiers, Lawvere-Tierney topologies, and
