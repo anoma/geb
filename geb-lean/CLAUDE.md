@@ -182,6 +182,12 @@ might want to examine external libraries for ideas.
 - [mathlib4's W-types](https://leanprover-community.github.io/mathlib4_docs/Mathlib/Data/PFunctor/Multivariate/W.html)
 - [mathlib4's M-types](https://leanprover-community.github.io/mathlib4_docs/Mathlib/Data/PFunctor/Multivariate/M.html)
 
+### Computability
+
+- [Mathlib.Computability.Primrec](https://leanprover-community.github.io/mathlib4_docs/Mathlib/Computability/Primrec.html)
+- [Mathlib.Computability.TMComputable](https://leanprover-community.github.io/mathlib4_docs/Mathlib/Computability/TMComputable.html)
+- [Mathlib.Computability.TuringMachine](https://leanprover-community.github.io/mathlib4_docs/Mathlib/Computability/TuringMachine.html)
+
 ### Monad algebra
 
 - [mathlib4's Monad.Algebra](https://leanprover-community.github.io/mathlib4_docs/Mathlib/CategoryTheory/Monad/Algebra.html)
