@@ -96,22 +96,22 @@ theorem comp_assoc {X : Type u} [AcyclicQuiver X] [AcyclicCategory X]
 
 end AcyclicCategoryHom
 
-/-- Witness data for an acyclic category: combines quiver, order,
+/-- Data for an acyclic category: combines quiver, order,
     acyclicity, and composition structure. -/
-structure AcyclicCategoryWitness (V : Type u) where
+structure AcyclicCategoryData (V : Type u) where
   homSet : HomSet.{v + 1, u} V
   order : TopologicalOrder V
   edgesIncrease : @QuiverEdgesIncrease V homSet order
   semicat : SemicategoryStruct V homSet
 
 /-- The large category of acyclic categories. Since AcyclicCategory
-    depends on AcyclicQuiver, we store witness data directly rather
+    depends on AcyclicQuiver, we store data directly rather
     than typeclass instances to avoid diamond problems. -/
 structure AcyclicCategoryCat.Large : Type (max (u + 1) (v + 1)) where
   /-- The carrier type -/
   carrier : Type u
-  /-- The witness data for the acyclic category structure -/
-  wit : AcyclicCategoryWitness.{u, v} carrier
+  /-- The data for the acyclic category structure -/
+  wit : AcyclicCategoryData.{u, v} carrier
 
 namespace AcyclicCategoryCat.Large
 
