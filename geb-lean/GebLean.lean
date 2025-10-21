@@ -3,6 +3,7 @@ import GebLean.Semicategory
 import GebLean.FiniteQuiver
 import GebLean.CategoryJudgments
 import GebLean.DepCategoryJudgments
+import GebLean.LayeredEquivalence
 import GebLean.AcyclicQuiver
 import GebLean.AcyclicCat
 import GebLean.CategoryPresentation
@@ -21,6 +22,8 @@ that make up the project:
   subcategory of `Quiv`.
 - `CategoryJudgments` and `DepCategoryJudgments`: the two encodings of the
   categorical axioms.
+- `LayeredEquivalence`: the layered construction of the equivalence between
+  copresheaves and dependent category data.
 - `AcyclicQuiver` and `AcyclicCat`: finite acyclic quivers and the
   associated categories.
 - `CategoryPresentation`: presentation of categories by generators and

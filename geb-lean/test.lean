@@ -1,5 +1,6 @@
 import test.Basic
 import test.AcyclicCat
+import test.LayeredEquivalence
 
 /-!
 # Test Suite Root
