@@ -175,6 +175,11 @@ might want to examine external libraries for ideas.
 
 - [Lean's "category theory" page](https://leanprover-community.github.io/theories/category_theory.html)
 
+### Comma / slice (over) / coslice (under) categories
+
+- [Mathlib.CategoryTheory.Comma.Basic](https://leanprover-community.github.io/mathlib4_docs/Mathlib/CategoryTheory/Comma/Basic.html)
+- [PLMlab's `Over.lean`](https://plmlab.math.cnrs.fr/nuccio/mathlib4/-/blob/master/Mathlib/CategoryTheory/Over.lean?ref_type=heads)
+
 ### Polynomial functors
 
 - [mathlib4's univariate polynomial functors](https://leanprover-community.github.io/mathlib4_docs/Mathlib/Data/PFunctor/Univariate/Basic.html)
