@@ -182,6 +182,10 @@ might want to examine external libraries for ideas.
 - [mathlib4's W-types](https://leanprover-community.github.io/mathlib4_docs/Mathlib/Data/PFunctor/Multivariate/W.html)
 - [mathlib4's M-types](https://leanprover-community.github.io/mathlib4_docs/Mathlib/Data/PFunctor/Multivariate/M.html)
 
+### Profunctors
+
+- [Mathlib.CategoryTheory.Limits.Shapes.End (ends and coends)](https://leanprover-community.github.io/mathlib4_docs/Mathlib/CategoryTheory/Limits/Shapes/End.html)
+
 ### Computability
 
 - [Mathlib.Computability.Primrec](https://leanprover-community.github.io/mathlib4_docs/Mathlib/Computability/Primrec.html)
