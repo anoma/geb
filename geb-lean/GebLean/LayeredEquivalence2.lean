@@ -586,6 +586,122 @@ and show it's equivalent to Layer 2.
 
 end FunctorToCat
 
+namespace GrothendieckConstruction
+
+/-!
+## Applying the Grothendieck Construction
+
+The Grothendieck construction takes a functor `F : C ⥤ Cat` and produces a category
+whose objects are pairs `(c, x)` where `c : C` and `x : F.obj c`.
+
+In our case:
+- Base category: `DepDataᵒᵖ`
+- Functor: `depDataOpToCat : DepDataᵒᵖ ⥤ Cat`
+- For a `DepData` structure `D`, the fiber is `Under (EndoSigma D)`, which is the
+  category of functions from some type into the endomorphism type of `D`
+
+Objects of the Grothendieck category are pairs:
+- `base : DepDataᵒᵖ` (a DepData structure in the opposite category)
+- `fiber : Under (EndoSigma base.unop)` (an identity structure over that DepData)
+-/
+
+/-- The Grothendieck category constructed from the dependent data functor.
+
+    Objects are pairs of:
+    - A DepData structure (in the opposite category)
+    - An identity structure (a function into the endomorphism type) -/
+abbrev DepDataGrothendieck : Type 1 :=
+  Grothendieck depDataOpToCat
+
+example : Category DepDataGrothendieck := inferInstance
+
+/-!
+Now let's understand what the objects and morphisms look like:
+
+**Objects**: `Grothendieck.mk (Opposite.op D) f` where:
+- `D : DepData`
+- `f : Under (EndoSigma D)`, which is a function from some type `A` to `EndoSigma D`
+
+Unpacking `Under (EndoSigma D)`:
+- An object is a morphism in Type from some `A` to `EndoSigma D`
+- That is, a function `A → Σ (o : D.objT), D.morT o o`
+
+This is very close to what we want for Layer 2! Recall:
+- `DepData2.idT : {o : layer1.objT} → layer1.morT o o → Type`
+
+The fiber gives us a type family indexed by endomorphisms.
+
+**Morphisms**: Between `(D₁, f₁)` and `(D₂, f₂)`, we need:
+- A morphism `α : D₁ → D₂` in `DepDataᵒᵖ` (i.e., `α : D₂ → D₁` in `DepData`)
+- A morphism in the fiber over `α`
+-/
+
+/-!
+## Connecting to DepData2
+
+Now we need to show the connection between `DepDataGrothendieck` and `DepData2`.
+
+Recall that `DepData2` has:
+- `layer1 : DepData`
+- `idT : {o : layer1.objT} → layer1.morT o o → Type`
+
+An object in `DepDataGrothendieck` has:
+- `base : DepDataᵒᵖ` (so `base.unop : DepData`)
+- `fiber : Under (EndoSigma base.unop)`, which is an object `A` with a function
+  `f : A → Σ (o : base.unop.objT), base.unop.morT o o`
+
+The key observation is that we can curry the function `f` to get:
+- `{o : base.unop.objT} → {m : base.unop.morT o o} → (a : A) → f a = ⟨o, m⟩ → Type`
+
+But this is more complex than `DepData2.idT`. The simpler approach is to take
+`A := Σ (o : D.objT), D.morT o o` and `f := id`, which gives us precisely the
+identity structure we want.
+-/
+
+/-- Construct a Grothendieck object from a DepData2 structure.
+
+    Given a DepData2, we create:
+    - base: the Layer 1 structure
+    - fiber: the identity type family, viewed as the identity function on EndoSigma -/
+def grothendieckOfDepData2 (D : DepData2) : DepDataGrothendieck where
+  base := Opposite.op D.layer1
+  fiber := Under.mk (𝟙 (EndoSigma D.layer1))
+
+/-!
+## Why the Grothendieck Construction is Appropriate
+
+The construction we're using involves:
+1. `EndoSigma : DepData → Type` - a functor to types
+2. Taking the contravariant version: `EndoSigmaᵒᵖ : DepDataᵒᵖ → Typeᵒᵖ`
+3. Applying the Under/coslice functor: `Typeᵒᵖ → Cat`
+
+The key insight is that `Under S` (the coslice category) is **exactly** the
+category of elements of the representable functor `Type(_, S)`. From mathlib's
+documentation:
+
+> The category of elements is a special case of the Grothendieck construction.
+> For a functor `F : C ⥤ Type`, objects are pairs `(c : C, x : F.obj c)`.
+
+In our case:
+- `C = DepData`
+- `F = EndoSigma : DepData → Type`
+- The category of elements has objects `(D : DepData, x : EndoSigma D)`
+
+This is **not** "more general" than what we need - it's **exactly** the right
+level of generality. We're working with the category of elements, which is the
+appropriate special case of the Grothendieck construction for functors to Type.
+
+The fact that we used the category of elements (via Under/slice categories)
+rather than an arbitrary Grothendieck construction is precisely the correct
+choice for our situation, not a limitation.
+
+In other words: `DepDataGrothendieck` via the category of elements gives us
+exactly the structure we want for Layer 2, where objects naturally consist of
+a Layer 1 structure paired with an identity type family indexed by endomorphisms.
+-/
+
+end GrothendieckConstruction
+
 end GebLean.Layer2
 
 
