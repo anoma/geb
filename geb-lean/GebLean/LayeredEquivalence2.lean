@@ -589,83 +589,75 @@ end FunctorToCat
 namespace GrothendieckConstruction
 
 /-!
-## Applying the Grothendieck Construction
+## Layer 2 via the Category of Elements
 
-The Grothendieck construction takes a functor `F : C ⥤ Cat` and produces a category
-whose objects are pairs `(c, x)` where `c : C` and `x : F.obj c`.
+Layer 2 is obtained by applying a special case of the Grothendieck construction:
+the **category of elements** for the functor `EndoSigmaFunctor : DepData ⥤ Type`.
 
-In our case:
-- Base category: `DepDataᵒᵖ`
-- Functor: `depDataOpToCat : DepDataᵒᵖ ⥤ Cat`
-- For a `DepData` structure `D`, the fiber is `Under (EndoSigma D)`, which is the
-  category of functions from some type into the endomorphism type of `D`
+The category of elements is the appropriate construction when working with
+functors to `Type`. Objects are pairs `(D : DepData, e : EndoSigma D)` where
+`e : Σ (o : D.objT), D.morT o o` is an element of the endomorphism type.
 
-Objects of the Grothendieck category are pairs:
-- `base : DepDataᵒᵖ` (a DepData structure in the opposite category)
-- `fiber : Under (EndoSigma base.unop)` (an identity structure over that DepData)
+This gives us exactly the structure we need: Layer 1 data paired with an
+endomorphism (which will index the identity structure in the full Layer 2).
+
+We use mathlib's `.Elements` notation to make it clear we're working with this
+fundamental special case, rather than the fully general Grothendieck construction
+for arbitrary functors to `Cat`.
 -/
 
-/-- The Grothendieck category constructed from the dependent data functor.
+/-- The category of elements of the endomorphism functor.
 
-    Objects are pairs of:
-    - A DepData structure (in the opposite category)
-    - An identity structure (a function into the endomorphism type) -/
+    This is the Layer 2 structure obtained via the Grothendieck construction.
+    Objects are pairs `(D : DepData, e : EndoSigma D)` where:
+    - `D` is a Layer 1 structure (objects and morphisms)
+    - `e : Σ (o : D.objT), D.morT o o` is an element of the endomorphism type
+
+    This is a special case of the Grothendieck construction: the category of
+    elements for functors `F : C ⥤ Type`. We use the `.Elements` notation to
+    make it clear we're working with this fundamental special case. -/
+abbrev DepDataLayer2 : Type 1 :=
+  EndoSigmaFunctor.Elements
+
+example : Category DepDataLayer2 := inferInstance
+
+/-- Alternative formulation via the general Grothendieck construction.
+
+    This goes through the opposite category and Under/slice categories:
+    `DepDataᵒᵖ ⥤ Typeᵒᵖ ⥤ Cat`. This formulation makes the relationship to
+    slice categories more explicit, but `DepDataLayer2` using `.Elements`
+    is more direct and idiomatic.
+
+    The two should be naturally equivalent. -/
 abbrev DepDataGrothendieck : Type 1 :=
   Grothendieck depDataOpToCat
 
 example : Category DepDataGrothendieck := inferInstance
 
 /-!
-Now let's understand what the objects and morphisms look like:
+## Structure of DepDataLayer2
 
-**Objects**: `Grothendieck.mk (Opposite.op D) f` where:
-- `D : DepData`
-- `f : Under (EndoSigma D)`, which is a function from some type `A` to `EndoSigma D`
+Objects of `DepDataLayer2` (using the category of elements) are pairs
+`(D : DepData, e : EndoSigma D)` where:
+- `D` is a Layer 1 structure with `objT : Type` and `morT : objT → objT → Type`
+- `e : Σ (o : D.objT), D.morT o o` is an element of the endomorphism type
 
-Unpacking `Under (EndoSigma D)`:
-- An object is a morphism in Type from some `A` to `EndoSigma D`
-- That is, a function `A → Σ (o : D.objT), D.morT o o`
+Morphisms between `(D₁, e₁)` and `(D₂, e₂)` consist of:
+- A Layer 1 morphism `α : D₁ ⟶ D₂` (a natural transformation)
+- Such that `EndoSigma.map α e₁ = e₂`
 
-This is very close to what we want for Layer 2! Recall:
-- `DepData2.idT : {o : layer1.objT} → layer1.morT o o → Type`
+This is exactly the structure we need for Layer 2!
 
-The fiber gives us a type family indexed by endomorphisms.
-
-**Morphisms**: Between `(D₁, f₁)` and `(D₂, f₂)`, we need:
-- A morphism `α : D₁ → D₂` in `DepDataᵒᵖ` (i.e., `α : D₂ → D₁` in `DepData`)
-- A morphism in the fiber over `α`
+For comparison with `DepData2`:
+- `DepData2` has `layer1 : DepData` and `idT : {o : objT} → morT o o → Type`
+- An object of `DepDataLayer2` can be viewed as a `DepData` with a specific
+  chosen endomorphism (the element `e : EndoSigma D`)
 -/
 
-/-!
-## Connecting to DepData2
-
-Now we need to show the connection between `DepDataGrothendieck` and `DepData2`.
-
-Recall that `DepData2` has:
-- `layer1 : DepData`
-- `idT : {o : layer1.objT} → layer1.morT o o → Type`
-
-An object in `DepDataGrothendieck` has:
-- `base : DepDataᵒᵖ` (so `base.unop : DepData`)
-- `fiber : Under (EndoSigma base.unop)`, which is an object `A` with a function
-  `f : A → Σ (o : base.unop.objT), base.unop.morT o o`
-
-The key observation is that we can curry the function `f` to get:
-- `{o : base.unop.objT} → {m : base.unop.morT o o} → (a : A) → f a = ⟨o, m⟩ → Type`
-
-But this is more complex than `DepData2.idT`. The simpler approach is to take
-`A := Σ (o : D.objT), D.morT o o` and `f := id`, which gives us precisely the
-identity structure we want.
--/
-
-/-- Construct a Grothendieck object from a DepData2 structure.
-
-    Given a DepData2, we create:
-    - base: the Layer 1 structure
-    - fiber: the identity type family, viewed as the identity function on EndoSigma -/
-def grothendieckOfDepData2 (D : DepData2) : DepDataGrothendieck where
-  base := Opposite.op D.layer1
-  fiber := Under.mk (𝟙 (EndoSigma D.layer1))
+/-- Construct an element of DepDataLayer2 from DepData and an endomorphism. -/
+def layer2OfDepDataEndo (D : DepData) (o : D.objT) (m : D.morT o o) :
+    DepDataLayer2 :=
+  ⟨D, ⟨o, m⟩⟩
 
 /-!
 ## Why the Grothendieck Construction is Appropriate
