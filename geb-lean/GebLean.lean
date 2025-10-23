@@ -4,7 +4,6 @@ import GebLean.FiniteQuiver
 import GebLean.CategoryJudgments
 import GebLean.DepCategoryJudgments
 import GebLean.LayeredEquivalence
-import GebLean.LayeredEquivalence2
 import GebLean.AcyclicQuiver
 import GebLean.AcyclicCat
 import GebLean.CategoryPresentation
