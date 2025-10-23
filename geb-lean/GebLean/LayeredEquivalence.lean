@@ -135,6 +135,38 @@ abbrev mkCopresheaf := mkFunctor (C := Type)
 
 abbrev CopresheafData := FunctorData Type
 
+/-- Extract FunctorData from a functor. -/
+def functorToData {C : Type*} [Category C] (F : Obj ⥤ C) : FunctorData C where
+  objC := F.obj .obj
+  morC := F.obj .mor
+  dom := F.map (Semicategory.AdjoinedIdHom.hom SemiHom.dom)
+  cod := F.map (Semicategory.AdjoinedIdHom.hom SemiHom.cod)
+
+/-- Converting FunctorData to a functor and extracting back gives the
+    original FunctorData. -/
+theorem functorToData_mkFunctor {C : Type*} [Category C] (data : FunctorData C) :
+    functorToData (mkFunctor data) = data := by
+  cases data
+  rfl
+
+/-- Extracting FunctorData from a functor and converting back gives a
+    functor equal to the original. -/
+theorem mkFunctor_functorToData {C : Type*} [Category C] (F : Obj ⥤ C) :
+    mkFunctor (functorToData F) = F := by
+  apply CategoryTheory.Functor.ext
+  case h_obj =>
+    intro X
+    cases X <;> rfl
+  case h_map =>
+    intro X Y f
+    cases f with
+    | id =>
+      cases X
+      all_goals
+        simp [mkFunctor, functorToData, objMap]
+        exact (F.map_id _).symm
+    | hom g => cases g <;> simp [mkFunctor, functorToData, mapSemiHom]
+
 @[ext]
 structure NatTransData {C : Type*} [Category C] (F G : FunctorData C) where
   appObj : F.objC ⟶ G.objC
@@ -168,6 +200,106 @@ instance {C : Type*} [Category C] : Category (FunctorData C) where
   id_comp := by intros; ext <;> simp [NatTransData.comp, NatTransData.id]
   comp_id := by intros; ext <;> simp [NatTransData.comp, NatTransData.id]
   assoc := by intros; ext <;> simp [NatTransData.comp, Category.assoc]
+
+/-- Extract NatTransData from a natural transformation. -/
+def natTransToData {C : Type*} [Category C] {F G : Obj ⥤ C} (α : F ⟶ G) :
+    NatTransData (functorToData F) (functorToData G) where
+  appObj := α.app .obj
+  appMor := α.app .mor
+  naturality_dom := α.naturality (Semicategory.AdjoinedIdHom.hom SemiHom.dom)
+  naturality_cod := α.naturality (Semicategory.AdjoinedIdHom.hom SemiHom.cod)
+
+/-- Construct a natural transformation from NatTransData. -/
+def mkNatTrans {C : Type*} [Category C] {F G : FunctorData C}
+    (α : NatTransData F G) : mkFunctor F ⟶ mkFunctor G where
+  app X := match X with
+    | .obj => α.appObj
+    | .mor => α.appMor
+  naturality X Y f := by
+    cases f with
+    | id => simp only [mkFunctor, Category.comp_id, Category.id_comp]
+    | hom f' =>
+      cases f' <;> simp only [mkFunctor]
+      case dom => exact α.naturality_dom
+      case cod => exact α.naturality_cod
+
+/-- Converting a NatTransData to a natural transformation and extracting
+    back gives the original NatTransData. -/
+theorem natTransToData_mkNatTrans {C : Type*} [Category C] {F G : FunctorData C}
+    (α : NatTransData F G) :
+    natTransToData (mkNatTrans α) = α := by
+  cases α
+  rfl
+
+/-- Extracting NatTransData from a natural transformation and converting
+    back gives the original natural transformation (modulo eqToHom cast). -/
+theorem mkNatTrans_natTransToData {C : Type*} [Category C] {F G : Obj ⥤ C}
+    (α : F ⟶ G) :
+    mkNatTrans (natTransToData α) =
+    eqToHom (mkFunctor_functorToData F) ≫ α ≫
+    eqToHom (mkFunctor_functorToData G).symm := by
+  ext X
+  cases X <;> simp [mkNatTrans, natTransToData]
+
+/-- The functor from FunctorData to the functor category. -/
+def functorDataToFunctor {C : Type*} [Category C] : FunctorData C ⥤ (Obj ⥤ C) where
+  obj := mkFunctor
+  map := mkNatTrans
+  map_id := by
+    intro F
+    ext X
+    cases X <;> rfl
+  map_comp := by
+    intros F G H α β
+    ext X
+    cases X <;> rfl
+
+/-- The functor from the functor category to FunctorData. -/
+def functorToFunctorData {C : Type*} [Category C] : (Obj ⥤ C) ⥤ FunctorData C where
+  obj := functorToData
+  map := natTransToData
+  map_id := by
+    intro F
+    rfl
+  map_comp := by
+    intros F G H α β
+    rfl
+
+/-- The composition functorToFunctorData ⋙ functorDataToFunctor equals
+    the identity functor. -/
+theorem functorToFunctorData_comp_functorDataToFunctor {C : Type*} [Category C] :
+    functorToFunctorData ⋙ functorDataToFunctor = 𝟭 (Obj ⥤ C) := by
+  apply CategoryTheory.Functor.ext
+  case h_obj => intro F; exact mkFunctor_functorToData F
+  case h_map =>
+    intro F G α
+    simp only [Functor.comp_obj, Functor.comp_map, Functor.id_obj,
+      Functor.id_map, functorToFunctorData, functorDataToFunctor,
+      mkNatTrans_natTransToData]
+
+/-- The composition functorDataToFunctor ⋙ functorToFunctorData equals
+    the identity functor. -/
+theorem functorDataToFunctor_comp_functorToFunctorData {C : Type*} [Category C] :
+    functorDataToFunctor ⋙ functorToFunctorData = 𝟭 (FunctorData C) := by
+  apply CategoryTheory.Functor.ext
+  case h_obj => intro F; exact functorToData_mkFunctor F
+  case h_map =>
+    intro F G α
+    simp only [Functor.comp_obj, Functor.comp_map, Functor.id_obj,
+      Functor.id_map, functorToFunctorData, functorDataToFunctor,
+      natTransToData_mkNatTrans]
+    simp
+
+/-- The categorical isomorphism between FunctorData C and Obj ⥤ C. -/
+def functorDataIsoCat {C : Type*} [Category C] : FunctorData C ≅Cat (Obj ⥤ C) where
+  hom := functorDataToFunctor
+  inv := functorToFunctorData
+  hom_inv_id := functorDataToFunctor_comp_functorToFunctorData
+  inv_hom_id := functorToFunctorData_comp_functorDataToFunctor
+
+/-- The categorical equivalence between FunctorData C and Obj ⥤ C. -/
+def functorDataEquivCat {C : Type*} [Category C] : FunctorData C ≌ (Obj ⥤ C) :=
+  Cat.equivOfIso functorDataIsoCat
 
 /-! ## Dependent Type Representation -/
 
