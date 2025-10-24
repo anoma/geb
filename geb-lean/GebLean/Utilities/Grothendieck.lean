@@ -85,28 +85,12 @@ def id (X : GrothendieckContra' F') : Hom X X where
 instance (X : GrothendieckContra' F') : Inhabited (Hom X X) :=
   ⟨id X⟩
 
-@[simp]
-theorem id_base (X : GrothendieckContra' F') : (id X).base = 𝟙 X.base := rfl
-
-@[simp]
-theorem id_fiber (X : GrothendieckContra' F') :
-    (id X).fiber = eqToHom (fObjEq (F'.map_id X.base).symm X.fiber) := rfl
-
 /-- Composition of morphisms in the contravariant Grothendieck category.
 -/
 def comp {X Y Z : GrothendieckContra' F'} (f : Hom X Y) (g : Hom Y Z) : Hom X Z where
   base := f.base ≫ g.base
   fiber := f.fiber ≫ (F'.map f.base).map g.fiber ≫
     eqToHom (symm <| fObjEq (F'.map_comp g.base f.base) Z.fiber)
-
-@[simp]
-theorem comp_base {X Y Z : GrothendieckContra' F'} (f : Hom X Y) (g : Hom Y Z) :
-    (comp f g).base = f.base ≫ g.base := rfl
-
-@[simp]
-theorem comp_fiber {X Y Z : GrothendieckContra' F'} (f : Hom X Y) (g : Hom Y Z) :
-    (comp f g).fiber = f.fiber ≫ (F'.map f.base).map g.fiber ≫
-      eqToHom (symm <| fObjEq (F'.map_comp g.base f.base) Z.fiber) := rfl
 
 attribute [local simp] eqToHom_map Functor.map_id
 
@@ -131,6 +115,30 @@ instance : Category (GrothendieckContra' F') where
     · dsimp [comp]
       slice_lhs 2 4 => erw [fMapEq (F'.map_comp g.base f.base) h.fiber]
       simp
+
+@[simp]
+theorem id_base (X : GrothendieckContra' F') : (id X).base = 𝟙 X.base := rfl
+
+@[simp]
+theorem id_fiber (X : GrothendieckContra' F') :
+    (id X).fiber = eqToHom (fObjEq (F'.map_id X.base).symm X.fiber) := rfl
+
+@[simp]
+theorem comp_base {X Y Z : GrothendieckContra' F'} (f : Hom X Y) (g : Hom Y Z) :
+    (comp f g).base = f.base ≫ g.base := rfl
+
+@[simp]
+theorem comp_fiber {X Y Z : GrothendieckContra' F'} (f : Hom X Y) (g : Hom Y Z) :
+    (comp f g).fiber = f.fiber ≫ (F'.map f.base).map g.fiber ≫
+      eqToHom (symm <| fObjEq (F'.map_comp g.base f.base) Z.fiber) := rfl
+
+/--
+The forgetful functor from `GrothendieckContra' F'` to `C`.
+-/
+@[simps]
+def forget : GrothendieckContra' F' ⥤ C where
+  obj X := X.base
+  map f := f.base
 
 end GrothendieckContra'
 
