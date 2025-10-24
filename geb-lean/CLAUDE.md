@@ -141,12 +141,16 @@ When making changes to Lean code:
   and never use `classical` attribute in proofs.  Similarly, never use
   `noncomputable`.  Similarly, never use `axiom` -- our results should depend
   only on Lean's native type theory.
+- When you write or modify a file that uses `universe` and/or `variable`
+  declarations anywhere, check after you're done whether they're all
+  necessary, or whether some are unused, in which case they should be removed.
 - Explain module placement and imports.
 - Keep Lean options consistent (don't override project-level options without
   discussion).
 - Any style guidelines which aren't specific to Lean apply to documentation
   and style guidelines and such as well -- in particular, they apply to this
   file itself (`CLAUDE.md`).
+- Don't write copyright notices or author notices or anything else like that.
 
 ## Markdown Linting
 
