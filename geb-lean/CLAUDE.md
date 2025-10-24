@@ -79,6 +79,13 @@ When making changes to Lean code:
     or performing just one proof step at a time and then re-checking the goal
     with an underscore.  Once you have everything working, you can go back
     and combine some or all steps into single tactics insofar as possible.
+12. **Use `Write`, not shell commands, for experiments**: Instead of using
+    `bash` commands to generate temporary files to check types and do other
+    such experiments, do the experiments by doing things that don't require
+    explicit user permission every time.  You have permission to create
+    files, so you can make a `.lean` however you normally do that and then
+    compile it with a `lake` command yourself instead of using a `bash`
+    script.  Running scripts requires the user to grant permission every time.
 
 ## Code Style
 
