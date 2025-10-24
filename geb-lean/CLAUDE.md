@@ -73,6 +73,12 @@ When making changes to Lean code:
     what previous step would allow you to get to your current goal).
     Sometimes both will be useful, and the easiest approach will be to
     work from both directions towards the middle.
+11. **Try one proof step at a time**: If you rewrite by many things at once,
+    or in general try to do something that can perform many proof steps at
+    once, and you get an error, please try rewriting by one thing at a time
+    or performing just one proof step at a time and then re-checking the goal
+    with an underscore.  Once you have everything working, you can go back
+    and combine some or all steps into single tactics insofar as possible.
 
 ## Code Style
 
