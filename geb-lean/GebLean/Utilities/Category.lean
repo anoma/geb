@@ -184,23 +184,4 @@ namespace CategoryTheory
 /-- Notation for isomorphism between categories without explicit `Cat.of`. -/
 notation C " ≅Cat " D => Cat.of C ≅ Cat.of D
 
-/--
-Convert an equality of functors (in `Cat`) to an equality of their object mappings.
-Given `h : F = G` where `F` and `G` are morphisms in `Cat` (i.e., functors),
-produces `F.obj x = G.obj x` for any object `x` in the target category.
--/
-def fObjEq {α β : Type*} [Category α] [Category β]
-    {F G : α ⥤ β} (h : F = G) (x : α) : F.obj x = G.obj x :=
-  by rw [h]
-
-/--
-Convert an equality of functors (in `Cat`) to an equality of their morphism mappings.
-Given `h : F = G` where `F` and `G` are morphisms in `Cat` (i.e., functors),
-produces `F.map f = eqToHom _ ≫ G.map f ≫ eqToHom _` for any morphism `f`.
--/
-def fMapEq {α β : Type*} [Category α] [Category β]
-    {F G : α ⥤ β} (h : F = G) {x y : α} (f : x ⟶ y) :
-    F.map f = eqToHom (fObjEq h x) ≫ G.map f ≫ eqToHom (fObjEq h y).symm :=
-  by subst h; simp
-
 end CategoryTheory
