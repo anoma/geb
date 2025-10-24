@@ -1,5 +1,7 @@
 import GebLean.Utilities.Category
 import GebLean.Utilities.Fintype
+import GebLean.Utilities.Grothendieck
+import GebLean.Utilities.Opposites
 import GebLean.Utilities.Sigma
 
 /-!
