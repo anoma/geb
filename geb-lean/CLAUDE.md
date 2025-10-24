@@ -55,6 +55,17 @@ When making changes to Lean code:
    be broken when there's a hole we haven't filled in yet, and `_` also
    shows the type of the hole.
 8. **#check**: Use `#check <expr>` to check the type of an expression
+9. **Write module developments one definition at a time**: When creating an
+   entire new module, it's extremely confusing and time-consuming to start
+   right out receiving errors on the entire module.  Much of what you
+   write later will be based on misconceptions of what came earlier.  Instead
+   of writing the file all at once, just write one definition or function or
+   theorem at a time and get that completely working, with no holes (no
+   underscores or `sorry`s), clearly corresponding to the meaning that
+   you intend for that definition, and documented if the definition depends
+   on anything that might not be clear just from the code.  _Then_ you can
+   move on to the next definition, and so on until you get to the end of
+   the module.
 
 ## Code Style
 
