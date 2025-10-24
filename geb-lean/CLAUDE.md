@@ -66,6 +66,13 @@ When making changes to Lean code:
    on anything that might not be clear just from the code.  _Then_ you can
    move on to the next definition, and so on until you get to the end of
    the module.
+10. **Work both forwards and backwards**:  When developing a definition,
+    consider options both to work forwards (meaning figuring out how to
+    apply the input parameters and local definitions available to you in
+    the context of your current goal) and backwards (meaning figuring out
+    what previous step would allow you to get to your current goal).
+    Sometimes both will be useful, and the easiest approach will be to
+    work from both directions towards the middle.
 
 ## Code Style
 
