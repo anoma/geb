@@ -181,4 +181,26 @@ The equivalence of functor categories induced by the isomorphism.
 def functorOpOpEquivOp'Op' : (Cᵒᵖ ⥤ Dᵒᵖ) ≌ (Cᵒᵖ' ⥤ Dᵒᵖ') :=
   Cat.equivOfIso functorOpOpIsoOp'Op'
 
+/--
+Convert an isomorphism in `C` to an isomorphism in `Cᵒᵖ'`.
+For an isomorphism `e : X ≅ Y` in `C`, this produces an isomorphism
+`Y ≅ X` in `Cᵒᵖ'` (the direction is reversed due to contravariance).
+-/
+def isoToOp' {X Y : C} (e : X ≅ Y) : (Y : Cᵒᵖ') ≅ (X : Cᵒᵖ') where
+  hom := e.inv
+  inv := e.hom
+  hom_inv_id := e.inv_hom_id
+  inv_hom_id := e.hom_inv_id
+
+/--
+Convert an isomorphism in `Cᵒᵖ'` to an isomorphism in `C`.
+For an isomorphism `e : X ≅ Y` in `Cᵒᵖ'`, this produces an isomorphism
+`Y ≅ X` in `C` (the direction is reversed due to contravariance).
+-/
+def isoFromOp' {X Y : Cᵒᵖ'} (e : X ≅ Y) : (Y : C) ≅ (X : C) where
+  hom := e.inv
+  inv := e.hom
+  hom_inv_id := e.inv_hom_id
+  inv_hom_id := e.hom_inv_id
+
 end GebLean
