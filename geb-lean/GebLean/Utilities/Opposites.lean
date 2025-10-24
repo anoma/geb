@@ -114,6 +114,12 @@ The categorical equivalence induced by the isomorphism of categories.
 -/
 def opEquivOp' : Cᵒᵖ ≌ Cᵒᵖ' := Cat.equivOfIso opIsoOp'
 
+instance : Coe Cᵒᵖ Cᵒᵖ' where
+  coe := opToOp'.obj
+
+instance : Coe Cᵒᵖ' Cᵒᵖ where
+  coe := op'ToOp.obj
+
 /--
 Functor-category isomorphisms induced by precomposition and
 postcomposition with the isomorphism between `Cᵒᵖ` and `Cᵒᵖ'`.
@@ -152,6 +158,12 @@ The equivalence of functor categories induced by the isomorphism.
 def functorOpEquivOp' : (Cᵒᵖ ⥤ D) ≌ (Cᵒᵖ' ⥤ D) :=
   Cat.equivOfIso functorOpIsoOp'
 
+instance : Coe (Cᵒᵖ ⥤ D) (Cᵒᵖ' ⥤ D) where
+  coe := preCompToOp'.obj
+
+instance : Coe (Cᵒᵖ' ⥤ D) (Cᵒᵖ ⥤ D) where
+  coe := preCompToOp.obj
+
 /--
 Isomorphism of functor categories induced by postcomposition with the categorical
 isomorphism.
@@ -168,6 +180,12 @@ The equivalence of functor categories induced by the isomorphism.
 def functorToOpEquivToOp' : (C ⥤ Dᵒᵖ) ≌ (C ⥤ Dᵒᵖ') :=
   Cat.equivOfIso functorToOpIsoToOp'
 
+instance : Coe (C ⥤ Dᵒᵖ) (C ⥤ Dᵒᵖ') where
+  coe := postCompToOp'.obj
+
+instance : Coe (C ⥤ Dᵒᵖ') (C ⥤ Dᵒᵖ) where
+  coe := postCompToOp.obj
+
 /--
 Isomorphism of functor categories induced by pre- and postcomposition with the
 categorical isomorphisms.
@@ -180,6 +198,12 @@ The equivalence of functor categories induced by the isomorphism.
 -/
 def functorOpOpEquivOp'Op' : (Cᵒᵖ ⥤ Dᵒᵖ) ≌ (Cᵒᵖ' ⥤ Dᵒᵖ') :=
   Cat.equivOfIso functorOpOpIsoOp'Op'
+
+instance : Coe (Cᵒᵖ ⥤ Dᵒᵖ) (Cᵒᵖ' ⥤ Dᵒᵖ') where
+  coe := biCompToOp'.obj
+
+instance : Coe (Cᵒᵖ' ⥤ Dᵒᵖ') (Cᵒᵖ ⥤ Dᵒᵖ) where
+  coe := biCompToOp.obj
 
 /--
 An isomorphism in `C` is an isomorphism in `Cᵒᵖ'`.
