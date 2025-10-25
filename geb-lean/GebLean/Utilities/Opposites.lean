@@ -213,4 +213,10 @@ def isoToOp' {X Y : C} :
 def isoFromOp' {X Y : Cᵒᵖ'} :
   ((X : Cᵒᵖ') ≅ (Y : Cᵒᵖ')) -> ((X : C) ≅ (Y : C)) := id
 
+instance {X Y : C} : Coe ((X : C) ≅ (Y : C)) ((X : Cᵒᵖ') ≅ (Y : Cᵒᵖ')) where
+  coe := isoToOp'
+
+instance {X Y : Cᵒᵖ'} : Coe ((X : Cᵒᵖ') ≅ (Y : Cᵒᵖ')) ((X : C) ≅ (Y : C)) where
+  coe := isoFromOp'
+
 end GebLean
