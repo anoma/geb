@@ -22,8 +22,8 @@ This file dualizes `Mathlib.CategoryTheory.Grothendieck`, providing the
 contravariant version of each construction. We try to adhere to mathlib
 names, while placing them in the `GrothendieckContra` namespace.
 
-To avoid issues with definitional equality of opposite categories, we
-convert functors `F : Cᵒᵖ ⥤ Cat` to functors `F' : Cᵒᵖ' ⥤ Cat` using our
+To avoid wrapping and unwrapping `op` constructors in the implementations,
+we convert functors `F : Cᵒᵖ ⥤ Cat` to functors `F' : Cᵒᵖ' ⥤ Cat` using an
 alternative opposite category construction `op'`, which provides
 definitional equality `op' (op' C) = C`.
 
@@ -45,10 +45,13 @@ variable {D : Type u₁} [Category.{v₁} D]
 /--
 The contravariant Grothendieck construction for a functor `F' : Cᵒᵖ' ⥤ Cat`
 gives a category whose
+
 * objects `X` consist of `X.base : C` and `X.fiber : F'.obj base`
 * morphisms `f : X ⟶ Y` consist of
   `base : X.base ⟶ Y.base` and
   `f.fiber : X.fiber ⟶ (F'.map base).obj Y.fiber`
+
+In the `ᵒᵖ'` form, the corresponding definition is:
 -/
 structure GrothendieckContra' (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) where
   /-- The underlying object in `C` -/
@@ -178,11 +181,11 @@ If `F' : Cᵒᵖ' ⥤ Cat` is a contravariant functor and `t : c ⟶ x.base` is 
 morphism in `C`, then `transport` maps each `x.base`-based element `x` of
 `GrothendieckContra' F'` to a `c`-based element `x.transport t`.
 
-`toTransport` is the morphism `x.transport t ⟶ x` induced by `t` and the
+`fromTransport` is the morphism `x.transport t ⟶ x` induced by `t` and the
 identity on fibers.
 -/
 @[simps]
-def toTransport (x : GrothendieckContra' F') {c : C} (t : c ⟶ x.base) :
+def fromTransport (x : GrothendieckContra' F') {c : C} (t : c ⟶ x.base) :
     x.transport t ⟶ x :=
   ⟨t, 𝟙 _⟩
 
