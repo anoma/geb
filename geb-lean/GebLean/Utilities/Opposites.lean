@@ -222,19 +222,36 @@ instance {X Y : Cᵒᵖ'} : Coe ((X : Cᵒᵖ') ≅ (Y : Cᵒᵖ')) ((X : C) ≅
 variable {D : Type u₁} [Category.{v₁} D]
 
 /--
-The contravariant opposite functor, mapping `C ⥤ D` to `Cᵒᵖ' ⥤ Dᵒᵖ'`.
-This is the `op'` analogue of `Functor.op`.
+Maps a functor `C ⥤ D` to a functor `Cᵒᵖ' ⥤ Dᵒᵖ'`.
+This is the `op'` analogue of `Functor.op` as an operation on objects.
 -/
-def functorOp' (G : C ⥤ D) : Cᵒᵖ' ⥤ Dᵒᵖ' where
+def functorOp'Obj (G : C ⥤ D) : Cᵒᵖ' ⥤ Dᵒᵖ' where
   obj X := G.obj X
   map f := G.map f
   map_id X := G.map_id X
   map_comp f g := G.map_comp g f
 
 /--
-The `functorOp'` is equal to composing through the standard opposite.
+The functor `(C ⥤ D)ᵒᵖ' ⥤ (Cᵒᵖ' ⥤ Dᵒᵖ')` mapping functors to their `op'` versions.
+This is analogous to mathlib's `opHom : (C ⥤ D)ᵒᵖ ⥤ Cᵒᵖ ⥤ Dᵒᵖ`.
 -/
-theorem functorOp'_eq_comp (G : C ⥤ D) :
-    functorOp' G = op'ToOp ⋙ G.op ⋙ opToOp' := rfl
+def functorOp' : (C ⥤ D)ᵒᵖ' ⥤ (Cᵒᵖ' ⥤ Dᵒᵖ') where
+  obj G := functorOp'Obj G
+  map {G H} α := {
+    app := fun X => α.app X
+    naturality := fun X Y f => (α.naturality f).symm
+  }
+  map_id G := by
+    ext X
+    rfl
+  map_comp {G H K} α β := by
+    ext X
+    rfl
+
+/--
+The `functorOp'Obj` is equal to composing through the standard opposite.
+-/
+theorem functorOp'Obj_eq_comp (G : C ⥤ D) :
+    functorOp'Obj G = op'ToOp ⋙ G.op ⋙ opToOp' := rfl
 
 end GebLean
