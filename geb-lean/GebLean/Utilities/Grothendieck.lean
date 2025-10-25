@@ -3,6 +3,7 @@ import Mathlib.CategoryTheory.Elements
 import Mathlib.CategoryTheory.Comma.Over.Basic
 import Mathlib.CategoryTheory.Whiskering
 import GebLean.Utilities.Opposites
+import GebLean.Utilities.Elements
 
 /-!
 # The contravariant Grothendieck construction
@@ -354,26 +355,26 @@ variable {F' : Cᵒᵖ' ⥤ Type w}
 
 /--
 The functor from the contravariant Grothendieck construction to the
-category of elements.
+contravariant category of elements.
 -/
 def grothendieckTypeToCatFunctor :
-    GrothendieckContra' (F' ⋙ typeToCat) ⥤ F'.Elements :=
+    GrothendieckContra' (F' ⋙ typeToCat) ⥤ F'.ElementsContra :=
   sorry
 
 /--
-The inverse functor from the category of elements to the contravariant
-Grothendieck construction.
+The inverse functor from the contravariant category of elements to the
+contravariant Grothendieck construction.
 -/
 def grothendieckTypeToCatInverse :
-    F'.Elements ⥤ GrothendieckContra' (F' ⋙ typeToCat) :=
+    F'.ElementsContra ⥤ GrothendieckContra' (F' ⋙ typeToCat) :=
   sorry
 
 /--
 Equivalence between the contravariant Grothendieck construction on `F' ⋙ typeToCat`
-and the category of elements of `F'`.
+and the contravariant category of elements of `F'`.
 -/
 def grothendieckTypeToCat :
-    GrothendieckContra' (F' ⋙ typeToCat) ≌ F'.Elements :=
+    GrothendieckContra' (F' ⋙ typeToCat) ≌ F'.ElementsContra :=
   sorry
 
 end TypeToCategory
