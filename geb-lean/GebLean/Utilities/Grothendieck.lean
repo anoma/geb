@@ -388,24 +388,21 @@ variable {F' : Cᵒᵖ' ⥤ Cat.{w, v}}
 A functor `G : E ⥤ C` induces a functor between the contravariant Grothendieck
 constructions.
 -/
-def pre : GrothendieckContra' ((op'ToOp ⋙ G.op ⋙ opToOp') ⋙ F') ⥤
-    GrothendieckContra' F' :=
+def pre : GrothendieckContra' (functorOp' G ⋙ F') ⥤ GrothendieckContra' F' :=
   sorry
 
 /--
 The weak inverse to `pre` when `G` is an equivalence.
 -/
 def preInv [G.IsEquivalence] :
-    GrothendieckContra' F' ⥤
-    GrothendieckContra' ((op'ToOp ⋙ G.op ⋙ opToOp') ⋙ F') :=
+    GrothendieckContra' F' ⥤ GrothendieckContra' (functorOp' G ⋙ F') :=
   sorry
 
 /--
 When `G` is an equivalence, `pre G` is also an equivalence.
 -/
 def preEquivalence [G.IsEquivalence] :
-    GrothendieckContra' ((op'ToOp ⋙ G.op ⋙ opToOp') ⋙ F') ≌
-    GrothendieckContra' F' :=
+    GrothendieckContra' (functorOp' G ⋙ F') ≌ GrothendieckContra' F' :=
   sorry
 
 end Pre

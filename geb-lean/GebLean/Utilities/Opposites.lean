@@ -219,4 +219,22 @@ instance {X Y : C} : Coe ((X : C) ≅ (Y : C)) ((X : Cᵒᵖ') ≅ (Y : Cᵒᵖ'
 instance {X Y : Cᵒᵖ'} : Coe ((X : Cᵒᵖ') ≅ (Y : Cᵒᵖ')) ((X : C) ≅ (Y : C)) where
   coe := isoFromOp'
 
+variable {D : Type u₁} [Category.{v₁} D]
+
+/--
+The contravariant opposite functor, mapping `C ⥤ D` to `Cᵒᵖ' ⥤ Dᵒᵖ'`.
+This is the `op'` analogue of `Functor.op`.
+-/
+def functorOp' (G : C ⥤ D) : Cᵒᵖ' ⥤ Dᵒᵖ' where
+  obj X := G.obj X
+  map f := G.map f
+  map_id X := G.map_id X
+  map_comp f g := G.map_comp g f
+
+/--
+The `functorOp'` is equal to composing through the standard opposite.
+-/
+theorem functorOp'_eq_comp (G : C ⥤ D) :
+    functorOp' G = op'ToOp ⋙ G.op ⋙ opToOp' := rfl
+
 end GebLean
