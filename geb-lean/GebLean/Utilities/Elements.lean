@@ -499,8 +499,14 @@ def presheafToSlice : (P.ElementsContra'ᵒᵖ' ⥤ Type w) ⥤ Over P where
         dsimp [totalSpace]
         ext
         · rfl
-        · dsimp
-          sorry }
+        · have h : P.map f x = P.map f x := rfl
+          let src : P.ElementsContra' := ⟨Y, P.map f x⟩
+          let tgt : P.ElementsContra' := ⟨X, x⟩
+          have nat := α.naturality (⟨f, h⟩ : src ⟶ tgt)
+          have nat_at_gx := congrFun nat gx
+          simp only [types_comp_apply, src, tgt] at nat_at_gx
+          exact heq_of_eq (congrArg
+            (fun z => (Sigma.mk (P.map f x) z : Σ _ : P.obj Y, _).snd) nat_at_gx) }
     right := eqToHom rfl }
   map_id := by
     intro G
