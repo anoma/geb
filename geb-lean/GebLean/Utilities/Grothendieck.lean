@@ -206,8 +206,37 @@ def isoMk {X Y : GrothendieckContra' F'} (e₁ : X.base ≅ Y.base)
   hom := ⟨e₁.hom, e₂.hom⟩
   inv := ⟨e₁.inv, eqToHom (map_iso_comp_obj_eq e₁ Y.fiber) ≫
     (F'.map e₁.inv).map e₂.inv⟩
-  hom_inv_id := sorry
-  inv_hom_id := sorry
+  hom_inv_id := ext _ _ (by
+      change (comp (Hom.mk e₁.hom e₂.hom)
+        (Hom.mk e₁.inv (eqToHom (map_iso_comp_obj_eq e₁ Y.fiber) ≫
+        (F'.map e₁.inv).map e₂.inv))).base = (id X).base
+      rw [comp_base, id_base]
+      exact e₁.hom_inv_id) (by
+      let e₁op : @Iso Cᵒᵖ' _ X.base Y.base := {
+        hom := e₁.inv
+        inv := e₁.hom
+        hom_inv_id := e₁.hom_inv_id
+        inv_hom_id := e₁.inv_hom_id
+      }
+      have h := Functor.congr_hom (F'.mapIso e₁op).hom_inv_id e₂.inv
+      dsimp at h
+      change (comp (Hom.mk e₁.hom e₂.hom)
+        (Hom.mk e₁.inv (eqToHom (map_iso_comp_obj_eq e₁ Y.fiber) ≫
+        (F'.map e₁.inv).map e₂.inv))).fiber ≫ eqToHom _ = (id X).fiber
+      rw [comp_fiber, id_fiber]
+      simp only [Functor.map_comp, eqToHom_map]
+      rw [h]
+      simp)
+  inv_hom_id := ext _ _ (by
+      change (comp (Hom.mk e₁.inv (eqToHom (map_iso_comp_obj_eq e₁ Y.fiber) ≫
+        (F'.map e₁.inv).map e₂.inv)) (Hom.mk e₁.hom e₂.hom)).base = (id Y).base
+      rw [comp_base, id_base]
+      exact e₁.inv_hom_id) (by
+      change (comp (Hom.mk e₁.inv (eqToHom (map_iso_comp_obj_eq e₁ Y.fiber) ≫
+        (F'.map e₁.inv).map e₂.inv)) (Hom.mk e₁.hom e₂.hom)).fiber ≫
+        eqToHom _ = (id Y).fiber
+      rw [comp_fiber, id_fiber]
+      simp)
 
 /--
 Create an isomorphism between a transported element and the original.
@@ -239,6 +268,15 @@ def map (α : F' ⟶ G') : GrothendieckContra' F' ⥤ GrothendieckContra' G' whe
     (eqToHom (α.naturality f.base)).app Y.fiber⟩
   map_id := sorry
   map_comp := sorry
+
+@[simp]
+theorem map_obj (α : F' ⟶ G') (X : GrothendieckContra' F') :
+    (map α).obj X = ⟨X.base, (α.app X.base).obj X.fiber⟩ := rfl
+
+@[simp]
+theorem map_map (α : F' ⟶ G') {X Y : GrothendieckContra' F'} (f : X ⟶ Y) :
+    (map α).map f = ⟨f.base, (α.app X.base).map f.fiber ≫
+      (eqToHom (α.naturality f.base)).app Y.fiber⟩ := rfl
 
 theorem functor_comp_forget {α : F' ⟶ G'} :
     GrothendieckContra'.map α ⋙ GrothendieckContra'.forget =
@@ -389,6 +427,14 @@ The fiber inclusion functor is faithful.
 -/
 instance faithful_ι (c : C) : (ι c : F'.obj c ⥤ GrothendieckContra' F').Faithful :=
   sorry
+
+/--
+Natural transformation induced by a morphism in the base category.
+-/
+@[simps]
+def ιNatTrans {c d : C} (f : c ⟶ d) : F'.map f ⋙ ι c ⟶ ι d where
+  app := sorry
+  naturality := sorry
 
 /--
 Construct a functor from the contravariant Grothendieck construction given
