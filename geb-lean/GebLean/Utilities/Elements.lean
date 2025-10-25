@@ -7,8 +7,8 @@ import GebLean.Utilities.Opposites
 This file defines the contravariant category of elements for a functor `F : Cᵒᵖ' ⥤ Type`.
 
 Given a functor `F : Cᵒᵖ' ⥤ Type`, an object of `F.ElementsContra` is a pair `(X : C, x : F.obj X)`.
-A morphism `(X, x) ⟶ (Y, y)` is a morphism `f : Y ⟶ X` in `C` (note the direction reversal),
-such that `F.map f` takes `y` to `x`.
+A morphism `(X, x) ⟶ (Y, y)` is a morphism `f : X ⟶ Y` in `C`, such that `F.map f` takes `y` to `x`
+(where `F.map f : F.obj Y → F.obj X` since `F` is contravariant).
 
 This is the dual of the (covariant) category of elements in
 `Mathlib.CategoryTheory.Elements`.
@@ -19,6 +19,9 @@ While mathlib handles presheaves `F : Cᵒᵖ ⥤ Type` by taking the opposite o
 category of elements, we provide a direct contravariant construction using our `op'` alternative
 opposite category. This avoids nested opposites and provides definitional equalities
 `op' (op' C) = C`.
+
+In the implementation, morphisms are stored as `f : @Quiver.Hom Cᵒᵖ' _ Y X`, which corresponds
+to `f : X ⟶ Y` in `C`.
 
 ## References
 
@@ -57,8 +60,7 @@ lemma Functor.ElementsContra.ext {F : Cᵒᵖ' ⥤ Type w} (x y : F.ElementsCont
 
 /--
 The category structure on `F.ElementsContra`, for `F : Cᵒᵖ' ⥤ Type`.
-A morphism `(X, x) ⟶ (Y, y)` is a morphism `f : X ⟶ Y` in `C`,
-such that `F.map f` takes `y` to `x` (since `F` is contravariant, `F.map f : F.obj Y → F.obj X`).
+A morphism `(X, x) ⟶ (Y, y)` is a morphism `f : X ⟶ Y` in `C`, such that `F.map f` takes `y` to `x`.
 -/
 instance categoryOfElementsContra (F : Cᵒᵖ' ⥤ Type w) : Category.{v} F.ElementsContra where
   Hom p q := { f : @Quiver.Hom Cᵒᵖ' _ q.1 p.1 // (F.map f) q.2 = p.2 }
@@ -83,7 +85,9 @@ instance categoryOfElementsContra (F : Cᵒᵖ' ⥤ Type w) : Category.{v} F.Ele
 namespace CategoryOfElementsContra
 
 /--
-Constructor for morphisms in the contravariant category of elements of a functor to types.
+Constructor for morphisms in the contravariant category of elements.
+Given `f : x.1 ⟶ y.1` in `C` such that `F.map f` takes `y.snd` to `x.snd`,
+constructs a morphism `x ⟶ y` in `F.ElementsContra`.
 -/
 def homMk {F : Cᵒᵖ' ⥤ Type w} (x y : F.ElementsContra) (f : x.1 ⟶ y.1)
     (hf : F.map f y.snd = x.snd) : x ⟶ y :=
