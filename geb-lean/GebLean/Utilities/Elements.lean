@@ -464,6 +464,23 @@ lemma totalSpace_map_id_aux (G : P.ElementsContra'ᵒᵖ' ⥤ Type w) {X : Cᵒ�
   simp
 
 /--
+Helper lemma: Morphisms with equal underlying morphisms give heterogeneously
+equal results when mapped by a functor, even if the morphisms are in different
+(but equal) hom-sets.
+-/
+lemma functor_map_subtype_heq (G : P.ElementsContra'ᵒᵖ' ⥤ Type w)
+    {p q p' q' : P.ElementsContra'} (hp : p = p') (hq : q = q')
+    (f : p ⟶ q) (g : p' ⟶ q') (hval : f.val ≍ g.val)
+    {t : G.obj q} {t' : G.obj q'} (ht : t ≍ t') :
+    G.map f t ≍ G.map g t' := by
+  subst hp hq
+  have hval' : f.val = g.val := eq_of_heq hval
+  have ht' : t = t' := eq_of_heq ht
+  subst ht'
+  have : f = g := Subtype.ext hval'
+  rw [this]
+
+/--
 The total space functor for a presheaf `G` on `P.ElementsContra'ᵒᵖ'`.
 Sends `X : C` to `Σ (x : P.obj X), G.obj ⟨X, x⟩`.
 -/
