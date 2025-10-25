@@ -246,7 +246,8 @@ def isoMk {X Y : GrothendieckContra' F'} (e₁ : X.base ≅ Y.base)
 Create an isomorphism between a transported element and the original.
 -/
 def transportIso (x : GrothendieckContra' F') {c : C} (α : x.base ≅ c) :
-    x.transport α.inv ≅ x := sorry
+    x.transport α.inv ≅ x :=
+  isoMk α.symm (eqToIso (by simp [transport]))
 
 end Transport
 
@@ -285,21 +286,34 @@ theorem map_map (α : F' ⟶ G') {X Y : GrothendieckContra' F'} (f : X ⟶ Y) :
 theorem functor_comp_forget {α : F' ⟶ G'} :
     GrothendieckContra'.map α ⋙ GrothendieckContra'.forget =
     GrothendieckContra'.forget :=
-  sorry
+  rfl
 
-theorem map_id_eq : map (𝟙 F') = 𝟙 (Cat.of <| GrothendieckContra' F') :=
-  sorry
+theorem map_id_eq : map (𝟙 F') = 𝟙 (Cat.of <| GrothendieckContra' F') := by
+  fapply Functor.ext
+  · intro X
+    rfl
+  · intro X Y f
+    simp [map_map]
+    rfl
 
 def mapIdIso : map (𝟙 F') ≅ 𝟙 (Cat.of <| GrothendieckContra' F') :=
-  sorry
+  eqToIso map_id_eq
 
 theorem map_comp_eq (α : F' ⟶ G') (β : G' ⟶ H') :
-    map (α ≫ β) = map α ⋙ map β :=
-  sorry
+    map (α ≫ β) = map α ⋙ map β := by
+  fapply Functor.ext
+  · intro X
+    rfl
+  · intro X Y f
+    simp only [map_map, map_obj, NatTrans.comp_app, Cat.comp_obj, Cat.comp_map,
+      eqToHom_refl, Functor.comp_map, Functor.map_comp, Category.comp_id, Category.id_comp]
+    fapply ext
+    · rfl
+    · simp
 
 def mapCompIso (α : F' ⟶ G') (β : G' ⟶ H') :
     map (α ≫ β) ≅ map α ⋙ map β :=
-  sorry
+  eqToIso (map_comp_eq α β)
 
 section UniverseScaling
 
@@ -404,7 +418,7 @@ The functor `pre` applied to the identity functor is the identity.
 -/
 @[simp]
 theorem pre_id : pre F' (𝟭 C) = 𝟭 (GrothendieckContra' F') :=
-  sorry
+  rfl
 
 /--
 Natural isomorphism between `pre` applied to naturally isomorphic functors.
