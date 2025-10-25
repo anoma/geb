@@ -451,6 +451,19 @@ def sliceToPresheaf : Over P ⥤ (P.ElementsContra'ᵒᵖ' ⥤ Type w) where
     rfl
 
 /--
+Helper lemma: Mapping the identity morphism in the category of elements
+applies the identity function.
+-/
+lemma totalSpace_map_id_aux (G : P.ElementsContra'ᵒᵖ' ⥤ Type w) {X : Cᵒᵖ'} :
+    ∀ (x : P.obj X) (gx : G.obj ⟨X, x⟩),
+    G.map ⟨𝟙 X, congrFun (P.map_id X) x⟩ gx = gx := by
+  intro x gx
+  have h1 : G.map ⟨𝟙 X, congrFun (P.map_id X) x⟩ gx = G.map (𝟙 ⟨X, x⟩) gx := by
+    congr 1
+  rw [h1]
+  simp
+
+/--
 The total space functor for a presheaf `G` on `P.ElementsContra'ᵒᵖ'`.
 Sends `X : C` to `Σ (x : P.obj X), G.obj ⟨X, x⟩`.
 -/
@@ -460,18 +473,24 @@ def totalSpace (G : P.ElementsContra'ᵒᵖ' ⥤ Type w) : Cᵒᵖ' ⥤ Type w w
     ⟨P.map f pair.fst, G.map (Subtype.mk f rfl) pair.snd⟩
   map_id := by
     intro X
-    funext ⟨x, gx⟩
-    ext
-    simp
+    funext pair
+    rcases pair with ⟨x, gx⟩
+    have tsmiea := totalSpace_map_id_aux P G x gx
+    have hx : P.map (𝟙 X) x = x := congrFun (P.map_id X) x
+    refine Sigma.ext hx ?_
+    have h : G.map ⟨𝟙 X, hx⟩ gx = gx := by
+      simpa [hx] using totalSpace_map_id_aux P G x gx
     simp
     _
   map_comp := by
     intros X Y Z f g
     ext ⟨x, gx⟩
-    dsimp
-    simp
-    dsimp
-    _
+    · simp
+    · simp
+      -- Goal: G.map (Subtype.mk (f ≫ g) rfl) gx ≍
+      --       G.map (Subtype.mk g rfl) (G.map (Subtype.mk f rfl) gx)
+      -- Show Subtype.mk (f ≫ g) rfl = composition, then apply G.map_comp
+      sorry
 
 /--
 The projection from the total space to the base.
