@@ -454,6 +454,10 @@ def sliceToPresheaf : Over P ⥤ (P.ElementsContra'ᵒᵖ' ⥤ Type w) where
 Helper lemma: Mapping the identity morphism in the category of elements
 applies the identity function.
 -/
+lemma sigma_ext_rfl_heq {α : Type*} {β : α → Type*} {a : α} {b₁ b₂ : β a}
+    (h : b₁ = b₂) : (⟨a, b₁⟩ : Sigma β) = ⟨a, b₂⟩ :=
+  Sigma.ext rfl (heq_of_eq h)
+
 lemma totalSpace_map_id_aux (G : P.ElementsContra'ᵒᵖ' ⥤ Type w) {X : Cᵒᵖ'} :
     ∀ (x : P.obj X) (gx : G.obj ⟨X, x⟩),
     G.map ⟨𝟙 X, congrFun (P.map_id X) x⟩ gx = gx := by
@@ -462,6 +466,7 @@ lemma totalSpace_map_id_aux (G : P.ElementsContra'ᵒᵖ' ⥤ Type w) {X : Cᵒ�
     congr 1
   rw [h1]
   simp
+
 
 /--
 Helper lemma: Morphisms with equal underlying morphisms give heterogeneously
@@ -500,24 +505,22 @@ def totalSpace (G : P.ElementsContra'ᵒᵖ' ⥤ Type w) : Cᵒᵖ' ⥤ Type w w
     simp
     convert heq_of_eq h using 2
     case h.e'_2.e'_3 =>
-      apply Sigma.ext
-      · rfl
-      · exact heq_of_eq hx
+      exact sigma_ext_rfl_heq hx
     case h.e'_2.e'_4 =>
       congr 2
       · funext
         simp
       case e_4 => exact proof_irrel_heq rfl hx
     case h.e'_1.h.e'_6 =>
-      exact Sigma.ext rfl (heq_of_eq hx)
+      exact sigma_ext_rfl_heq hx
   map_comp := by
     intros X Y Z f g
     ext ⟨x, gx⟩
     · simp
     · simp
-      -- Goal: G.map (Subtype.mk (f ≫ g) rfl) gx ≍
-      --       G.map (Subtype.mk g rfl) (G.map (Subtype.mk f rfl) gx)
-      -- Show Subtype.mk (f ≫ g) rfl = composition, then apply G.map_comp
+      -- After simp, all morphisms are self-loops on ⟨X, x⟩
+      -- The goal involves angle bracket morphisms ⟨f ≫ g, rfl⟩, ⟨f, rfl⟩, ⟨g, rfl⟩
+      -- Use G.map_comp and show morphisms are equal by proof irrelevance
       sorry
 
 /--
