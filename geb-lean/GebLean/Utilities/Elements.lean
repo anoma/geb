@@ -518,10 +518,23 @@ def totalSpace (G : P.ElementsContra'ᵒᵖ' ⥤ Type w) : Cᵒᵖ' ⥤ Type w w
     ext ⟨x, gx⟩
     · simp
     · simp
-      -- After simp, all morphisms are self-loops on ⟨X, x⟩
-      -- The goal involves angle bracket morphisms ⟨f ≫ g, rfl⟩, ⟨f, rfl⟩, ⟨g, rfl⟩
-      -- Use G.map_comp and show morphisms are equal by proof irrelevance
-      sorry
+      -- Get G.map_comp into context
+      have h := congrFun (@Functor.map_comp _ _ _ _ G ⟨X, x⟩ ⟨Y, P.map f x⟩ ⟨Z, P.map g (P.map f x)⟩
+        (Subtype.mk f rfl) (Subtype.mk g rfl)) gx
+      simp only [types_comp_apply] at h
+      have hcomp : P.map (f ≫ g) x = P.map g (P.map f x) := by
+        rw [P.map_comp]
+        rfl
+      convert heq_of_eq h using 2
+      case h.e'_1.h.e'_6 =>
+        exact sigma_ext_rfl_heq hcomp
+      case h.e'_2.e'_3 =>
+        exact sigma_ext_rfl_heq hcomp
+      case h.e'_2.e'_4 =>
+        congr 2
+        · ext
+          simp
+        case e_4 => exact proof_irrel_heq _ _
 
 /--
 The projection from the total space to the base.
