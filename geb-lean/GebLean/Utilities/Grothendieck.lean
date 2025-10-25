@@ -485,6 +485,19 @@ def preEquivalence (G : D ≌ C) :
     GrothendieckContra' F' :=
   sorry
 
+variable {F'} in
+/--
+Conjugation of `map` by `preEquivalence`.
+
+Left-whiskering `α` by `functorOp'Obj G.functor` and then taking the Grothendieck
+construction is, up to isomorphism, the same as taking the Grothendieck construction
+of `α` and using the equivalences from `preEquivalence` to match the expected type.
+-/
+def mapWhiskerLeftIsoConjPreMap {G' : Cᵒᵖ' ⥤ Cat.{w, u₁}} (G : D ≌ C) (α : F' ⟶ G') :
+    map (Functor.whiskerLeft (functorOp'Obj G.functor) α) ≅
+      (preEquivalence F' G).functor ⋙ map α ⋙ (preEquivalence G' G).inverse :=
+  sorry
+
 end PreComp
 
 
