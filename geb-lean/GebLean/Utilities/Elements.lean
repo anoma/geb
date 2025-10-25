@@ -495,10 +495,21 @@ def totalSpace (G : P.ElementsContra'ᵒᵖ' ⥤ Type w) : Cᵒᵖ' ⥤ Type w w
     have tsmiea := totalSpace_map_id_aux P G x gx
     have hx : P.map (𝟙 X) x = x := congrFun (P.map_id X) x
     refine Sigma.ext hx ?_
-    have h : G.map ⟨𝟙 X, hx⟩ gx = gx := by
+    have h : G.map (Subtype.mk (𝟙 X) hx) gx = gx := by
       simpa [hx] using totalSpace_map_id_aux P G x gx
     simp
-    _
+    convert heq_of_eq h using 2
+    case h.e'_2.e'_3 =>
+      apply Sigma.ext
+      · rfl
+      · exact heq_of_eq hx
+    case h.e'_2.e'_4 =>
+      congr 2
+      · funext
+        simp
+      case e_4 => exact proof_irrel_heq rfl hx
+    case h.e'_1.h.e'_6 =>
+      exact Sigma.ext rfl (heq_of_eq hx)
   map_comp := by
     intros X Y Z f g
     ext ⟨x, gx⟩
