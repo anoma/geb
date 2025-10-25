@@ -380,47 +380,30 @@ end TypeToCategory
 
 section Pre
 
-variable {E : Type u₂} [Category.{v₂} E]
-variable (G : E ⥤ C)
-variable {F' : Cᵒᵖ' ⥤ Cat.{w, v}}
+variable {D : Type u₂} [Category.{v₂} D]
+variable (F' : Cᵒᵖ' ⥤ Cat.{w, u₁})
 
 /--
-A functor `G : E ⥤ C` induces a functor between the contravariant Grothendieck
+A functor `G : D ⥤ C` induces a functor between the contravariant Grothendieck
 constructions.
--/
-def pre : GrothendieckContra' (functorOp'Obj G ⋙ F') ⥤
-    GrothendieckContra' F' :=
-  sorry
 
-/--
-The weak inverse to `pre` when `G` is an equivalence.
+Applying a functor `G : D ⥤ C` to the base of the Grothendieck construction
+induces a functor `GrothendieckContra' (functorOp'Obj G ⋙ F') ⥤ GrothendieckContra' F'`.
 -/
-def preInv [G.IsEquivalence] :
-    GrothendieckContra' F' ⥤
-    GrothendieckContra' (functorOp'Obj G ⋙ F') :=
-  sorry
-
-/--
-When `G` is an equivalence, `pre G` is also an equivalence.
--/
-def preEquivalence [G.IsEquivalence] :
-    GrothendieckContra' (functorOp'Obj G ⋙ F') ≌
-    GrothendieckContra' F' :=
-  sorry
+@[simps!]
+def pre (G : D ⥤ C) : GrothendieckContra' (functorOp'Obj G ⋙ F') ⥤
+    GrothendieckContra' F' where
+  obj X := ⟨G.obj X.base, X.fiber⟩
+  map f := ⟨G.map f.base, f.fiber⟩
+  map_id X := ext _ _ (G.map_id _) sorry
+  map_comp f g := ext _ _ (G.map_comp _ _) sorry
 
 /--
 The functor `pre` applied to the identity functor is the identity.
 -/
-theorem pre_id : pre (𝟭 C) = 𝟭 (GrothendieckContra' F') :=
+@[simp]
+theorem pre_id : pre F' (𝟭 C) = 𝟭 (GrothendieckContra' F') :=
   sorry
-
-/--
-Given an isomorphism `α : G ≅ H` in `E ⥤ C`, construct the corresponding
-morphism in `Eᵒᵖ' ⥤ Cᵒᵖ'` between the opposite functors.
--/
-def functorOp'NatTrans {G H : E ⥤ C} (α : G ⟶ H) : functorOp'Obj H ⟶ functorOp'Obj G where
-  app _ := α.app _
-  naturality _ _ _ := (α.naturality _).symm
 
 /--
 Natural isomorphism between `pre` applied to naturally isomorphic functors.
@@ -428,43 +411,81 @@ Natural isomorphism between `pre` applied to naturally isomorphic functors.
 An isomorphism between functors `α : G ≅ H` induces an isomorphism between
 `pre G` and `pre H`, up to composition with the `map` induced by whiskering.
 -/
-def preNatIso {G H : E ⥤ C} (α : G ≅ H) :
-    pre G ≅ map (Functor.whiskerRight (functorOp'NatTrans α.inv) F') ⋙
-      (pre H) :=
+def preNatIso {G H : D ⥤ C} (α : G ≅ H) :
+    pre F' G ≅ map (Functor.whiskerRight (functorOp'.map α.inv) F') ⋙
+      (pre F' H) :=
   sorry
+
+/--
+The weak inverse to `pre` when `G` is an equivalence.
+-/
+def preInv (G : D ≌ C) :
+    GrothendieckContra' F' ⥤
+    GrothendieckContra' (functorOp'Obj G.functor ⋙ F') :=
+  sorry
+
+end Pre
+
+section PreWithMorphisms
+
+variable {D : Type u₂} [Category.{v₂} D]
+variable {F' : Cᵒᵖ' ⥤ Cat.{w, u₁}}
 
 /--
 Composition of `pre` with `map` commutes with whiskering.
 -/
-lemma pre_comp_map (G : E ⥤ C) {H : Cᵒᵖ' ⥤ Cat} (α : F' ⟶ H) :
-    pre G ⋙ map α = map (Functor.whiskerLeft (functorOp'Obj G) α) ⋙ pre G :=
+lemma pre_comp_map (G : D ⥤ C) {H : Cᵒᵖ' ⥤ Cat} (α : F' ⟶ H) :
+    pre F' G ⋙ map α = map (Functor.whiskerLeft (functorOp'Obj G) α) ⋙ pre H G :=
   sorry
 
 /--
 Associativity version of `pre_comp_map`.
 -/
-lemma pre_comp_map_assoc (G : E ⥤ C) {H : Cᵒᵖ' ⥤ Cat} (α : F' ⟶ H) {A : Type*}
+lemma pre_comp_map_assoc (G : D ⥤ C) {H : Cᵒᵖ' ⥤ Cat} (α : F' ⟶ H) {A : Type*}
     [Category A] (K : GrothendieckContra' H ⥤ A) :
-    pre G ⋙ map α ⋙ K = map (Functor.whiskerLeft (functorOp'Obj G) α) ⋙
-      pre G ⋙ K :=
+    pre F' G ⋙ map α ⋙ K = map (Functor.whiskerLeft (functorOp'Obj G) α) ⋙
+      pre H G ⋙ K :=
   sorry
+
+end PreWithMorphisms
+
+section PreComp
+
+variable {D : Type u₂} [Category.{v₂} D]
+variable (F' : Cᵒᵖ' ⥤ Cat.{w, u₁})
 
 /--
 Composition of `pre` functors.
+
+Precomposing with `H ⋙ G` is the same as precomposing with `H` then with `G`.
 -/
-lemma pre_comp (G : E ⥤ C) (H : D ⥤ E) : True :=
+@[simp]
+lemma pre_comp {E : Type*} [Category E] (G : D ⥤ C) (H : E ⥤ D) :
+    pre F' (H ⋙ G) = pre (functorOp'Obj G ⋙ F') H ⋙ pre F' G :=
   sorry
 
 /--
 Unit isomorphism for `pre` applied to an equivalence.
 
 The functor induced via `pre` by `G.functor ⋙ G.inverse` is naturally isomorphic
-to the functor induced via `map` by a whiskered version of `G`'s inverse unit.
+to the functor induced via `map` by a whiskered version of `G`'s unit (note:
+`unit`, not `unitInv` as in the covariant case, due to the direction reversal
+from `functorOp'`).
 -/
-protected def preUnitIso (G : E ≌ C) : True :=
+protected def preUnitIso (G : D ≌ C) :
+    map (Functor.whiskerRight (functorOp'.map G.unit) (functorOp'Obj G.functor ⋙ F')) ≅
+    pre (functorOp'Obj G.functor ⋙ F') (G.functor ⋙ G.inverse) :=
+  preNatIso (functorOp'Obj G.functor ⋙ F') G.unitIso.symm |>.symm
+
+/--
+When `G` is an equivalence, `pre G` is also an equivalence.
+-/
+def preEquivalence (G : D ≌ C) :
+    GrothendieckContra' (functorOp'Obj G.functor ⋙ F') ≌
+    GrothendieckContra' F' :=
   sorry
 
-end Pre
+end PreComp
 
 
 section FunctorFrom
