@@ -462,15 +462,16 @@ def totalSpace (G : P.ElementsContra'ᵒᵖ' ⥤ Type w) : Cᵒᵖ' ⥤ Type w w
     intro X
     funext ⟨x, gx⟩
     ext
-    · simp
-    · sorry
+    simp
+    simp
+    _
   map_comp := by
     intros X Y Z f g
     ext ⟨x, gx⟩
-    · dsimp
-      simp
-    · dsimp
-      sorry
+    dsimp
+    simp
+    dsimp
+    _
 
 /--
 The projection from the total space to the base.
