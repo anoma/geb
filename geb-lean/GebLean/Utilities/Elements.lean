@@ -53,6 +53,274 @@ open GebLean
 
 variable {C : Type u} [Category.{v} C]
 
+section CopresheafSliceEquivalence
+
+variable (F : C ⥤ Type w)
+
+/--
+Helper lemma: Sigma types with equal first components and heterogeneously equal
+second components are equal.
+-/
+lemma sigma_ext_rfl_heq {α : Type*} {β : α → Type*} {a : α} {b₁ b₂ : β a}
+    (h : b₁ = b₂) : (⟨a, b₁⟩ : Sigma β) = ⟨a, b₂⟩ :=
+  Sigma.ext rfl (heq_of_eq h)
+
+/--
+Helper lemma: Subtypes with the same value but different proofs are
+heterogeneously equal.
+-/
+lemma subtype_mk_heq {α : Type*} {p : α → Prop} {a : α} (h₁ h₂ : p a) :
+    (Subtype.mk a h₁ : Subtype p) ≍ Subtype.mk a h₂ :=
+  heq_of_eq (Subtype.ext rfl)
+
+/--
+The fiber of `η : G ⟶ F` over an element `x : F.obj X`.
+-/
+def Fiber {G F : C ⥤ Type w} (η : G ⟶ F) (X : C) (x : F.obj X) : Type w :=
+  { y : G.obj X // η.app X y = x }
+
+/--
+Map a morphism in the category of elements to a function between fibers.
+For covariant functors, morphisms `f : (X, x) → (Y, y)` satisfy `F.map f x = y`.
+-/
+def fiberMap {G F : C ⥤ Type w} (η : G ⟶ F)
+    {p q : F.Elements} (f : p ⟶ q) :
+    Fiber η p.fst p.snd → Fiber η q.fst q.snd :=
+  fun y => ⟨G.map f.val y.val, by
+    have hy := y.property
+    have hf := f.property
+    have nat := congrFun (η.naturality f.val) y.val
+    calc η.app q.fst (G.map f.val y.val)
+        = F.map f.val (η.app p.fst y.val) := nat
+      _ = F.map f.val p.snd := by rw [hy]
+      _ = q.snd := hf⟩
+
+/--
+Functor from `Over F` to copresheaves on `F.Elements`.
+Maps `η : G ⟶ F` to the fiber functor.
+-/
+def sliceToCopresheaf : Over F ⥤ (F.Elements ⥤ Type w) where
+  obj η := {
+    obj := fun p => Fiber η.hom p.fst p.snd
+    map := fun {p q} f => fiberMap η.hom f
+    map_id := by
+      intro p
+      ext y
+      dsimp [fiberMap, Fiber]
+      congr 1
+      exact congrFun (η.left.map_id p.fst) y.val
+    map_comp := by
+      intros p q r f g
+      ext y
+      dsimp [fiberMap, Fiber]
+      congr 1
+      exact congrFun (η.left.map_comp f.val g.val) y.val }
+  map {η₁ η₂} α := {
+    app := fun p y => ⟨α.left.app p.fst y.val, by
+      have hy := y.property
+      have h : α.left.app p.fst ≫ η₂.hom.app p.fst = η₁.hom.app p.fst :=
+        congrFun (congrArg NatTrans.app α.w) p.fst
+      calc η₂.hom.app p.fst (α.left.app p.fst y.val)
+          = (α.left.app p.fst ≫ η₂.hom.app p.fst) y.val := rfl
+        _ = η₁.hom.app p.fst y.val := congrFun h y.val
+        _ = p.snd := hy⟩
+    naturality := by
+      intros p q f
+      ext y
+      dsimp [fiberMap, Fiber]
+      congr 1
+      exact congrFun (α.left.naturality f.val) y.val
+  }
+  map_id := by
+    intro η
+    ext p y
+    simp [Fiber]
+  map_comp := by
+    intros η₁ η₂ η₃ α β
+    ext p y
+    simp [Fiber]
+
+/--
+The total space copresheaf for a copresheaf `G` on `F.Elements`.
+Sends `X : C` to `Σ (x : F.obj X), G.obj ⟨X, x⟩`.
+-/
+def totalSpace (G : F.Elements ⥤ Type w) : C ⥤ Type w where
+  obj X := Σ (x : F.obj X), G.obj ⟨X, x⟩
+  map {X Y} f pair :=
+    ⟨F.map f pair.fst, G.map ⟨f, rfl⟩ pair.snd⟩
+  map_id := by
+    intro X
+    funext ⟨x, gx⟩
+    have hx : F.map (𝟙 X) x = x := congrFun (F.map_id X) x
+    have h : G.map ⟨𝟙 X, hx⟩ gx = gx := by
+      have : G.map ⟨𝟙 X, hx⟩ gx = G.map (𝟙 ⟨X, x⟩) gx := by
+        congr 1
+      rw [this]
+      simp
+    refine Sigma.ext hx ?_
+    simp
+    convert heq_of_eq h using 2 <;> try exact sigma_ext_rfl_heq hx
+    congr 2
+    · funext; simp
+    exact proof_irrel_heq rfl hx
+  map_comp := by
+    intros X Y Z f g
+    ext ⟨x, gx⟩
+    · simp
+    · simp
+      have h := congrFun (@Functor.map_comp _ _ _ _ G ⟨X, x⟩ ⟨Y, F.map f x⟩ ⟨Z, F.map g (F.map f x)⟩
+        ⟨f, rfl⟩ ⟨g, rfl⟩) gx
+      simp only [types_comp_apply] at h
+      have hcomp : F.map (f ≫ g) x = F.map g (F.map f x) := by
+        rw [F.map_comp]; rfl
+      convert heq_of_eq h using 2 <;> try exact sigma_ext_rfl_heq hcomp
+      congr 2
+      · funext; simp
+      exact proof_irrel_heq _ _
+
+/--
+The projection from the total space to the base.
+-/
+def totalSpaceProj (G : F.Elements ⥤ Type w) : totalSpace F G ⟶ F where
+  app X pair := pair.fst
+  naturality := by
+    intros X Y f
+    funext pair
+    obtain ⟨x, gx⟩ := pair
+    rfl
+
+/--
+The inverse functor. Maps a copresheaf `G : F.Elements ⥤ Type w` to an
+object in `Over F`.
+-/
+def copresheafToSlice : (F.Elements ⥤ Type w) ⥤ Over F where
+  obj G := Over.mk (totalSpaceProj F G)
+  map {G H} α := {
+    left := {
+      app := fun X pair => ⟨pair.fst, α.app ⟨X, pair.fst⟩ pair.snd⟩
+      naturality := by
+        intros X Y f
+        funext pair
+        obtain ⟨x, gx⟩ := pair
+        dsimp [totalSpace]
+        ext
+        · rfl
+        · have h : F.map f x = F.map f x := rfl
+          let src : F.Elements := ⟨X, x⟩
+          let tgt : F.Elements := ⟨Y, F.map f x⟩
+          have nat := α.naturality (⟨f, h⟩ : src ⟶ tgt)
+          have nat_at_gx := congrFun nat gx
+          simp only [types_comp_apply, src, tgt] at nat_at_gx
+          exact heq_of_eq (congrArg
+            (fun z => (Sigma.mk (F.map f x) z : Σ _ : F.obj Y, _).snd) nat_at_gx)
+    }
+    right := eqToHom rfl }
+  map_id := by
+    intro G
+    ext X ⟨x, gx⟩
+    rfl
+  map_comp := by
+    intros G H K α β
+    ext X ⟨x, gx⟩
+    rfl
+
+/--
+The unit isomorphism of the equivalence.
+For `η : G ⟶ F`, we have `η ≅ copresheafToSlice (sliceToCopresheaf η)`.
+-/
+def sliceCopresheafUnitIso : 𝟭 (Over F) ≅ sliceToCopresheaf F ⋙ copresheafToSlice F where
+  hom := {
+    app := fun η => {
+      left := {
+        app := fun X fx => ⟨η.hom.app X fx, ⟨fx, rfl⟩⟩
+        naturality := by
+          intros X Y f
+          funext fx
+          dsimp [totalSpace, copresheafToSlice, sliceToCopresheaf, Fiber, fiberMap]
+          ext
+          · exact congrFun (η.hom.naturality f) fx
+          · dsimp
+      }
+      right := eqToHom rfl
+    }
+    naturality := by
+      intros η₁ η₂ α
+      ext X fx
+      simp only [Functor.comp_map, Functor.id_map]
+      dsimp [copresheafToSlice, sliceToCopresheaf, Fiber]
+      congr 1
+      · exact congrFun (congrFun (congrArg NatTrans.app α.w) X) fx
+      · sorry
+  }
+  inv := {
+    app := fun η => {
+      left := {
+        app := fun X pair => pair.snd.val
+        naturality := by
+          intros X Y f
+          funext pair
+          obtain ⟨x, ⟨fx, hfx⟩⟩ := pair
+          dsimp [totalSpace, Fiber, fiberMap]
+          rfl
+      }
+      right := eqToHom rfl
+      w := by
+        ext X pair
+        obtain ⟨x, ⟨fx, hfx⟩⟩ := pair
+        exact hfx
+    }
+    naturality := by
+      intros η₁ η₂ α
+      ext X ⟨x, ⟨fx, hfx⟩⟩
+      rfl
+  }
+  hom_inv_id := by
+    ext η X fx
+    rfl
+  inv_hom_id := by
+    ext η X ⟨x, ⟨fx, hfx⟩⟩
+    dsimp [Fiber]
+    refine Sigma.ext ?_ ?_
+    · exact hfx
+    · simp [hfx]
+      sorry
+
+/--
+The counit isomorphism of the equivalence.
+For `G : F.Elements ⥤ Type w`,
+we have `G ≅ sliceToCopresheaf (copresheafToSlice G)`.
+-/
+def sliceCopresheafCounitIso :
+    copresheafToSlice F ⋙ sliceToCopresheaf F ≅ 𝟭 (F.Elements ⥤ Type w) where
+  hom := {
+    app := fun G => {
+      app := sorry
+      naturality := sorry
+    }
+    naturality := sorry
+  }
+  inv := {
+    app := fun G => {
+      app := sorry
+      naturality := sorry
+    }
+    naturality := sorry
+  }
+  hom_inv_id := sorry
+  inv_hom_id := sorry
+
+/--
+The categorical equivalence between `Over F` and copresheaves on `F.Elements`.
+-/
+def sliceEquivCopresheaf : Over F ≌ (F.Elements ⥤ Type w) where
+  functor := sliceToCopresheaf F
+  inverse := copresheafToSlice F
+  unitIso := sliceCopresheafUnitIso F
+  counitIso := sliceCopresheafCounitIso F
+  functor_unitIso_comp := sorry
+
+end CopresheafSliceEquivalence
+
 /--
 The type of objects for the contravariant category of elements of a functor `F : Cᵒᵖ' ⥤ Type`
 is a pair `(X : C, x : F.obj X)`.
