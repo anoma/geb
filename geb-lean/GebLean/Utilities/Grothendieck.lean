@@ -631,7 +631,10 @@ def ιNatTrans {c d : C} (f : c ⟶ d) : F'.map f ⋙ ι c ⟶ ι d where
 variable (fib : ∀ c, F'.obj c ⥤ T)
 variable (hom : ∀ {c d : C} (f : c ⟶ d), F'.map f ⋙ fib c ⟶ fib d)
 variable (hom_id : ∀ c, hom (𝟙 c) = eqToHom (congrArg (· ⋙ fib c) (F'.map_id c)))
-variable (hom_comp : ∀ {c d e : C} (f : c ⟶ d) (g : d ⟶ e), hom (f ≫ g) = sorry)
+
+variable (hom_comp : ∀ {c d e : C} (f : c ⟶ d) (g : d ⟶ e),
+  hom (f ≫ g) = eqToHom (congrArg (· ⋙ fib c) (F'.map_comp g f)) ≫
+    Functor.whiskerLeft (F'.map g) (hom f) ≫ hom g)
 
 /--
 Construct a functor from the contravariant Grothendieck construction given
@@ -640,17 +643,25 @@ compatible functors from each fiber.
 def functorFrom : GrothendieckContra' F' ⥤ T where
   obj X := (fib X.base).obj X.fiber
   map {X Y} f := (fib X.base).map f.fiber ≫ (hom f.base).app Y.fiber
-  map_id := sorry
-  map_comp := sorry
+  map_id := by
+    intro X
+    change (fib X.base).map (id X).fiber ≫ (hom (id X).base).app X.fiber = _
+    unfold id
+    simp only []
+    rw [hom_id]
+    simp
+  map_comp := by
+    intro X Y Z f g
+    sorry
 
 /--
 The fiber inclusion composed with `functorFrom` recovers the original fiber functor.
 -/
 theorem ιCompFunctorFrom (c : C) :
-    ι c ⋙ functorFrom fib hom = fib c := by
+    ι c ⋙ functorFrom fib hom hom_id = fib c := by
   apply Functor.ext
   · intros X Y φ
-    dsimp [ι, functorFrom]
+    dsimp [ι]
     sorry
   · intro f
     rfl
