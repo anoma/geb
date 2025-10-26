@@ -179,6 +179,20 @@ lemma coe_subtype_sigma_transport_coe {α : Type*} {β : α → Type*}
 For the specific pattern in the triangle identity: when transporting a subtype
 built from a coercion along a sigma equality, the outer coercion is preserved.
 -/
+lemma triangle_identity_transport_aux {G F : C ⥤ Type w} (η : G ⟶ F)
+    (pfst : C) (psnd : F.obj pfst)
+    (aval : G.obj pfst) (aproof : η.app pfst aval = psnd)
+    (pf₂ : (⟨pfst, η.app pfst aval⟩ : (c : C) × F.obj c) = ⟨pfst, psnd⟩) :
+    (@Eq.rec ((c : C) × F.obj c) ⟨pfst, η.app pfst aval⟩
+      (fun s _ => {y : G.obj s.fst // η.app s.fst y = s.snd})
+      (⟨aval, rfl⟩ : {y : G.obj pfst // η.app pfst y = η.app pfst aval})
+      (⟨pfst, psnd⟩ : (c : C) × F.obj c) pf₂).val = aval := by
+  obtain ⟨h₁, h₂⟩ := Sigma.mk.inj_iff.mp pf₂
+  simp at h₁ h₂
+  cases h₁
+  cases pf₂
+  rfl
+
 lemma triangle_identity_transport {G F : C ⥤ Type w} (η : G ⟶ F)
     (p : (c : C) × F.obj c)
     (a : {y : G.obj p.fst // η.app p.fst y = p.snd})
@@ -191,7 +205,8 @@ lemma triangle_identity_transport {G F : C ⥤ Type w} (η : G ⟶ F)
   obtain ⟨pfst, psnd⟩ := p
   simp
   cases pf₁ with
-    | refl => _
+    | refl =>
+      exact triangle_identity_transport_aux η pfst psnd aval aproof pf₂
 
 /--
 The fiber of `η : G ⟶ F` over an element `x : F.obj X`.
