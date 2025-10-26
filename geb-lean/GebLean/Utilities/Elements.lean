@@ -121,6 +121,61 @@ lemma coe_transport_pair {α : Type*} {a b : α} (h : a = b)
   simp only [eq_of_heq heq]
 
 /--
+When transporting a value along a sigma equality where the first component
+is definitionally equal, the transport is the identity.
+-/
+lemma sigma_transport_fst_rfl {α : Type*} {β : α → Type*}
+    {a b : Σ x, β x} (h : a = b) (hab : a.fst = b.fst)
+    (v : β a.fst) :
+    (h ▸ v : β b.fst) = (hab ▸ v : β b.fst) := by
+  cases h
+  rfl
+
+/--
+When transporting a subtype along a sigma equality where the first components
+are definitionally equal, the coercion is preserved.
+-/
+lemma coe_subtype_sigma_transport_fst_rfl {α : Type*} {β : α → Type*}
+    {a b : Σ x, β x}
+    (P : (s : Σ x, β x) → β s.fst → Prop)
+    (h : a = b) (hab : a.fst = b.fst)
+    {v : β a.fst} (pf : P a v) :
+    (h ▸ (⟨v, pf⟩ : {y : β a.fst // P a y})).val = (hab ▸ v : β b.fst) := by
+  rw [← sigma_transport_fst_rfl h hab v]
+  cases h
+  rfl
+
+/--
+Special case when the first component equality is definitionally `rfl`.
+-/
+lemma coe_subtype_sigma_transport_fst_refl {α : Type*} {β : α → Type*}
+    {x : α} {a b : β x}
+    (P : (s : Σ y, β y) → β s.fst → Prop)
+    (h : (⟨x, a⟩ : Σ y, β y) = ⟨x, b⟩)
+    (v : β x) (pf : P ⟨x, a⟩ v) :
+    (@Eq.rec (Σ y, β y) ⟨x, a⟩ (fun s _ => {y : β s.fst // P s y})
+      ⟨v, pf⟩ ⟨x, b⟩ h).val = v := by
+  obtain ⟨h₁, h₂⟩ := Sigma.mk.inj_iff.mp h
+  cases h₁
+  cases (eq_of_heq h₂)
+  rfl
+
+/--
+When we take a subtype `w`, extract its coercion, build a new subtype from that
+coercion, transport it along a sigma equality where the first component is `rfl`,
+and take the coercion again, we get back the original coercion.
+-/
+lemma coe_subtype_sigma_transport_coe {α : Type*} {β : α → Type*}
+    {x : α} {a b : β x}
+    (P : (s : Σ y, β y) → β s.fst → Prop)
+    {Q : β x → Prop}
+    (h : (⟨x, a⟩ : Σ y, β y) = ⟨x, b⟩)
+    (w : Subtype Q) (pf : P ⟨x, a⟩ w.val) :
+    (@Eq.rec (Σ y, β y) ⟨x, a⟩ (fun s _ => {y : β s.fst // P s y})
+      ⟨w.val, pf⟩ ⟨x, b⟩ h).val = w.val := by
+  exact coe_subtype_sigma_transport_fst_refl P h w.val pf
+
+/--
 The fiber of `η : G ⟶ F` over an element `x : F.obj X`.
 -/
 def Fiber {G F : C ⥤ Type w} (η : G ⟶ F) (X : C) (x : F.obj X) : Type w :=
@@ -436,9 +491,8 @@ private lemma sliceCopresheaf_functor_unitIso_comp_helper (η : Over F) :
   apply Subtype.ext
   simp [Fiber]
   -- Goal: ↑(⋯ ▸ ⟨↑a, ⋯⟩) = ↑a
-  -- After much investigation, this requires showing that transporting a subtype
-  -- along a sigma equality preserves the coercion when the first components match.
-  -- This is a complex dependent type equality that requires careful handling.
+  -- This should follow from coe_subtype_sigma_transport_coe, but there are
+  -- unification issues with implicit arguments
   sorry
 
 /--
