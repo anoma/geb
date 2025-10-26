@@ -630,7 +630,7 @@ def ιNatTrans {c d : C} (f : c ⟶ d) : F'.map f ⋙ ι c ⟶ ι d where
 
 variable (fib : ∀ c, F'.obj c ⥤ T)
 variable (hom : ∀ {c d : C} (f : c ⟶ d), F'.map f ⋙ fib c ⟶ fib d)
-variable (hom_id : ∀ c, hom (𝟙 c) = eqToHom sorry)
+variable (hom_id : ∀ c, hom (𝟙 c) = eqToHom (congrArg (· ⋙ fib c) (F'.map_id c)))
 variable (hom_comp : ∀ {c d e : C} (f : c ⟶ d) (g : d ⟶ e), hom (f ≫ g) = sorry)
 
 /--
