@@ -271,8 +271,23 @@ def map (α : F' ⟶ G') : GrothendieckContra' F' ⥤ GrothendieckContra' G' whe
   obj X := ⟨X.base, (α.app X.base).obj X.fiber⟩
   map {X Y} f := ⟨f.base, (α.app X.base).map f.fiber ≫
     (eqToHom (α.naturality f.base)).app Y.fiber⟩
-  map_id := sorry
-  map_comp := sorry
+  map_id X := by
+    refine ext _ _ ?_ ?_
+    · rfl
+    · dsimp [CategoryStruct.id]
+      simp only [Cat.eqToHom_app, eqToHom_map, eqToHom_trans]
+      rw [Category.comp_id]
+  map_comp {X Y Z} f g := by
+    refine ext _ _ ?_ ?_
+    · dsimp
+      rfl
+    · dsimp [comp, CategoryStruct.comp]
+      simp only [Functor.map_comp, Category.assoc]
+      simp only [Cat.eqToHom_app, eqToHom_map, eqToHom_trans, Category.comp_id]
+      congr 1
+      simp only [← Cat.comp_map]
+      rw [Functor.congr_hom (α.naturality f.base) g.fiber]
+      simp only [Category.assoc, eqToHom_trans]
 
 @[simp]
 theorem map_obj (α : F' ⟶ G') (X : GrothendieckContra' F') :
@@ -410,8 +425,10 @@ def pre (G : D ⥤ C) : GrothendieckContra' (functorOp'Obj G ⋙ F') ⥤
     GrothendieckContra' F' where
   obj X := ⟨G.obj X.base, X.fiber⟩
   map f := ⟨G.map f.base, f.fiber⟩
-  map_id X := ext _ _ (G.map_id _) sorry
-  map_comp f g := ext _ _ (G.map_comp _ _) sorry
+  map_id X := ext _ _ (G.map_id _) (by simp [CategoryStruct.id])
+  map_comp f g := ext _ _ (G.map_comp _ _) (by
+    simp [comp, CategoryStruct.comp]
+    rfl)
 
 /--
 The functor `pre` applied to the identity functor is the identity.
