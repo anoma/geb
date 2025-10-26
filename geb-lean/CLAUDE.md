@@ -409,3 +409,12 @@ applicable to that structure, such as `Inhabited`, `DecidableEq`, and
   to make their type signatures explicit.
 - Make universe levels as polymorphic as possible (that is, as polymorphic
   as will compile!).
+- When proving heterogeneous equality of subtypes `⟨val, proof1⟩ ≍ ⟨val,
+  proof2⟩` where the subtypes have the same value but different proofs
+  (possibly in different dependent types), use the following pattern: (1)
+  `congr 1` to split the goal into predicate equality and proof heterogeneous
+  equality, (2) `funext` followed by rewriting to show the predicates are
+  equal, (3) `proof_irrel_heq _ _` to establish heterogeneous equality of the
+  proofs by proof irrelevance. This pattern applies when working with dependent
+  types where the predicate depends on other variables that have been changed
+  via equality proofs.
