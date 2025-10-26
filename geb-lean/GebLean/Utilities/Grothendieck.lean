@@ -387,7 +387,7 @@ The functor from the contravariant Grothendieck construction to the
 contravariant category of elements.
 -/
 def grothendieckTypeToCatFunctor :
-    GrothendieckContra' (F' ⋙ typeToCat) ⥤ F'.ElementsContra :=
+    GrothendieckContra' (F' ⋙ typeToCat) ⥤ F'.ElementsContra' :=
   sorry
 
 /--
@@ -395,15 +395,19 @@ The inverse functor from the contravariant category of elements to the
 contravariant Grothendieck construction.
 -/
 def grothendieckTypeToCatInverse :
-    F'.ElementsContra ⥤ GrothendieckContra' (F' ⋙ typeToCat) :=
+    F'.ElementsContra' ⥤ GrothendieckContra' (F' ⋙ typeToCat) :=
   sorry
 
 /--
 Equivalence between the contravariant Grothendieck construction on `F' ⋙ typeToCat`
 and the contravariant category of elements of `F'`.
+
+This shows that when target categories are discrete (sets viewed as categories with only
+identity morphisms), the Grothendieck construction reduces to the category of elements,
+since morphism existence becomes just an equality condition.
 -/
 def grothendieckTypeToCat :
-    GrothendieckContra' (F' ⋙ typeToCat) ≌ F'.ElementsContra :=
+    GrothendieckContra' (F' ⋙ typeToCat) ≌ F'.ElementsContra' :=
   sorry
 
 end TypeToCategory
