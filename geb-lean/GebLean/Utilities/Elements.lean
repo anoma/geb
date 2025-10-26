@@ -228,62 +228,51 @@ def copresheafToSlice : (F.Elements ⥤ Type w) ⥤ Over F where
 The unit isomorphism of the equivalence.
 For `η : G ⟶ F`, we have `η ≅ copresheafToSlice (sliceToCopresheaf η)`.
 -/
-def sliceCopresheafUnitIso : 𝟭 (Over F) ≅ sliceToCopresheaf F ⋙ copresheafToSlice F where
-  hom := {
-    app := fun η => {
-      left := {
-        app := fun X fx => ⟨η.hom.app X fx, ⟨fx, rfl⟩⟩
-        naturality := by
-          intros X Y f
-          funext fx
-          dsimp [totalSpace, copresheafToSlice, sliceToCopresheaf, Fiber, fiberMap]
-          ext
-          · exact congrFun (η.hom.naturality f) fx
-          · dsimp
-      }
-      right := eqToHom rfl
-    }
-    naturality := by
-      intros η₁ η₂ α
-      ext X fx
-      simp only [Functor.comp_map, Functor.id_map]
-      dsimp [copresheafToSlice, sliceToCopresheaf, Fiber]
-      congr 1
-      · exact congrFun (congrFun (congrArg NatTrans.app α.w) X) fx
-      · sorry
-  }
-  inv := {
-    app := fun η => {
-      left := {
-        app := fun X pair => pair.snd.val
-        naturality := by
-          intros X Y f
-          funext pair
-          obtain ⟨x, ⟨fx, hfx⟩⟩ := pair
-          dsimp [totalSpace, Fiber, fiberMap]
+def sliceCopresheafUnitIso : 𝟭 (Over F) ≅ sliceToCopresheaf F ⋙ copresheafToSlice F :=
+  NatIso.ofComponents
+    (fun η => Over.isoMk
+      { hom := {
+          app := fun X fx => ⟨η.hom.app X fx, ⟨fx, rfl⟩⟩
+          naturality := by
+            intros X Y f
+            funext fx
+            dsimp [totalSpace, copresheafToSlice, sliceToCopresheaf, Fiber, fiberMap]
+            ext
+            · exact congrFun (η.hom.naturality f) fx
+            · dsimp
+            }
+        inv := {
+          app := fun X pair => pair.snd.val
+          naturality := by
+            intros X Y f
+            funext pair
+            obtain ⟨x, ⟨fx, hfx⟩⟩ := pair
+            dsimp [totalSpace, Fiber, fiberMap]
+            rfl }
+        hom_inv_id := by
+          ext X fx
           rfl
-      }
-      right := eqToHom rfl
-      w := by
-        ext X pair
-        obtain ⟨x, ⟨fx, hfx⟩⟩ := pair
-        exact hfx
-    }
-    naturality := by
-      intros η₁ η₂ α
-      ext X ⟨x, ⟨fx, hfx⟩⟩
-      rfl
-  }
-  hom_inv_id := by
-    ext η X fx
-    rfl
-  inv_hom_id := by
-    ext η X ⟨x, ⟨fx, hfx⟩⟩
-    dsimp [Fiber]
-    refine Sigma.ext ?_ ?_
-    · exact hfx
-    · simp [hfx]
-      sorry
+        inv_hom_id := by
+          ext X ⟨x, ⟨fx, hfx⟩⟩
+          dsimp [Fiber]
+          refine Sigma.ext hfx ?_
+          simp
+          congr 1
+          · funext y
+            rw [hfx]
+          · exact proof_irrel_heq _ _ }
+      (by ext X x; rfl))
+    (fun {η₁ η₂} α => by
+      ext X fx
+      dsimp [sliceToCopresheaf, copresheafToSlice, totalSpace, Fiber]
+      refine Sigma.ext (congrFun (congrFun (congrArg NatTrans.app α.w) X) fx) ?_
+      simp
+      congr 1
+      · funext y
+        have h := congrFun (congrFun (congrArg NatTrans.app α.w) X) fx
+        dsimp at h
+        simp only [h]
+      · exact proof_irrel_heq _ _)
 
 /--
 The counit isomorphism of the equivalence.
