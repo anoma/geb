@@ -458,6 +458,10 @@ lemma sigma_ext_rfl_heq {α : Type*} {β : α → Type*} {a : α} {b₁ b₂ : �
     (h : b₁ = b₂) : (⟨a, b₁⟩ : Sigma β) = ⟨a, b₂⟩ :=
   Sigma.ext rfl (heq_of_eq h)
 
+lemma subtype_mk_heq {α : Type*} {p : α → Prop} {a : α} (h₁ h₂ : p a) :
+    (Subtype.mk a h₁ : Subtype p) ≍ Subtype.mk a h₂ :=
+  heq_of_eq (Subtype.ext rfl)
+
 lemma totalSpace_map_id_aux (G : P.ElementsContra'ᵒᵖ' ⥤ Type w) {X : Cᵒᵖ'} :
     ∀ (x : P.obj X) (gx : G.obj ⟨X, x⟩),
     G.map ⟨𝟙 X, congrFun (P.map_id X) x⟩ gx = gx := by
@@ -495,46 +499,30 @@ def totalSpace (G : P.ElementsContra'ᵒᵖ' ⥤ Type w) : Cᵒᵖ' ⥤ Type w w
     ⟨P.map f pair.fst, G.map (Subtype.mk f rfl) pair.snd⟩
   map_id := by
     intro X
-    funext pair
-    rcases pair with ⟨x, gx⟩
-    have tsmiea := totalSpace_map_id_aux P G x gx
+    funext ⟨x, gx⟩
     have hx : P.map (𝟙 X) x = x := congrFun (P.map_id X) x
-    refine Sigma.ext hx ?_
     have h : G.map (Subtype.mk (𝟙 X) hx) gx = gx := by
       simpa [hx] using totalSpace_map_id_aux P G x gx
+    refine Sigma.ext hx ?_
     simp
-    convert heq_of_eq h using 2
-    case h.e'_2.e'_3 =>
-      exact sigma_ext_rfl_heq hx
-    case h.e'_2.e'_4 =>
-      congr 2
-      · funext
-        simp
-      case e_4 => exact proof_irrel_heq rfl hx
-    case h.e'_1.h.e'_6 =>
-      exact sigma_ext_rfl_heq hx
+    convert heq_of_eq h using 2 <;> try exact sigma_ext_rfl_heq hx
+    congr 2
+    · funext; simp
+    exact proof_irrel_heq rfl hx
   map_comp := by
     intros X Y Z f g
     ext ⟨x, gx⟩
     · simp
     · simp
-      -- Get G.map_comp into context
       have h := congrFun (@Functor.map_comp _ _ _ _ G ⟨X, x⟩ ⟨Y, P.map f x⟩ ⟨Z, P.map g (P.map f x)⟩
         (Subtype.mk f rfl) (Subtype.mk g rfl)) gx
       simp only [types_comp_apply] at h
       have hcomp : P.map (f ≫ g) x = P.map g (P.map f x) := by
-        rw [P.map_comp]
-        rfl
-      convert heq_of_eq h using 2
-      case h.e'_1.h.e'_6 =>
-        exact sigma_ext_rfl_heq hcomp
-      case h.e'_2.e'_3 =>
-        exact sigma_ext_rfl_heq hcomp
-      case h.e'_2.e'_4 =>
-        congr 2
-        · ext
-          simp
-        case e_4 => exact proof_irrel_heq _ _
+        rw [P.map_comp]; rfl
+      convert heq_of_eq h using 2 <;> try exact sigma_ext_rfl_heq hcomp
+      congr 2
+      · funext; simp
+      exact proof_irrel_heq _ _
 
 /--
 The projection from the total space to the base.
@@ -588,8 +576,12 @@ For `η : F ⟶ P`, we have `η ≅ presheafToSlice (sliceToPresheaf η)`.
 def slicePresheafUnitIso : 𝟭 (Over P) ≅ sliceToPresheaf P ⋙ presheafToSlice P where
   hom := {
     app := fun η => {
-      left := sorry
-      right := sorry }
+      left := {
+        app := fun X fx => ⟨η.hom.app X fx, ⟨fx, rfl⟩⟩
+        naturality := sorry
+      }
+      right := eqToHom rfl
+    }
     naturality := sorry }
   inv := {
     app := fun η => {
