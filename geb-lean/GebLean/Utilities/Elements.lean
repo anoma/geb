@@ -93,6 +93,34 @@ lemma cast_heq {α : Type*} {a b : α} (h : a = b) {β : α → Type*}
   exact eq_of_heq heq
 
 /--
+Coercion of transported subtype equals target if coercions are heterogeneously equal.
+When we transport a subtype value and then take its coercion, if the original
+coercion is heterogeneously equal to the target, then the coercion of the
+transported value equals the target.
+-/
+lemma cast_heq_coe {α : Type*} {a b : α} (h : a = b) {β : α → Type*}
+    {P : ∀ x, β x → Prop} {x : Subtype (P a)} {z : β b}
+    (heq : x.val ≍ z) : (h ▸ x : Subtype (P b)).val = z := by
+  cases h
+  exact eq_of_heq heq
+
+/--
+Coercion of transported pair equals the first component.
+For a subtype constructed from a pair `⟨v, proof⟩`, transporting it
+and taking the coercion just gives back the value `v` (up to heterogeneous equality).
+This handles the general case where both the type and predicate may vary.
+The motive must have the form `fun x h => {y : β x // P x y}` where `P` may
+depend on the index `x` but not on the equality proof `h`.
+-/
+lemma coe_transport_pair {α : Type*} {a b : α} (h : a = b)
+    {β : α → Type*} {P : (x : α) → β x → Prop}
+    {v : β a} {prf : _} {z : β b}
+    (heq : v ≍ z) :
+    (@Eq.rec α a (fun x (_ : a = x) => {y : β x // P x y}) ⟨v, prf⟩ b h).val = z := by
+  cases h
+  simp only [eq_of_heq heq]
+
+/--
 The fiber of `η : G ⟶ F` over an element `x : F.obj X`.
 -/
 def Fiber {G F : C ⥤ Type w} (η : G ⟶ F) (X : C) (x : F.obj X) : Type w :=
@@ -401,8 +429,16 @@ private lemma sliceCopresheaf_functor_unitIso_comp_helper (η : Over F) :
     (sliceToCopresheaf F).map ((sliceCopresheafUnitIso F).hom.app η) ≫
     (sliceCopresheafCounitIso F).hom.app ((sliceToCopresheaf F).obj η) =
     𝟙 ((sliceToCopresheaf F).obj η) := by
-  -- This is the triangle identity: F ∘ unit ∘ counit = F
-  -- The proof requires careful handling of transports
+  -- This is the triangle identity
+  ext p a
+  dsimp [sliceToCopresheaf, sliceCopresheafUnitIso, sliceCopresheafCounitIso]
+  -- Use Subtype.ext to reduce to showing coercions equal
+  apply Subtype.ext
+  simp [Fiber]
+  -- Goal: ↑(⋯ ▸ ⟨↑a, ⋯⟩) = ↑a
+  -- After much investigation, this requires showing that transporting a subtype
+  -- along a sigma equality preserves the coercion when the first components match.
+  -- This is a complex dependent type equality that requires careful handling.
   sorry
 
 /--
