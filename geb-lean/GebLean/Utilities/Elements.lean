@@ -280,23 +280,69 @@ For `G : F.Elements ⥤ Type w`,
 we have `G ≅ sliceToCopresheaf (copresheafToSlice G)`.
 -/
 def sliceCopresheafCounitIso :
-    copresheafToSlice F ⋙ sliceToCopresheaf F ≅ 𝟭 (F.Elements ⥤ Type w) where
-  hom := {
-    app := fun G => {
-      app := sorry
-      naturality := sorry
-    }
-    naturality := sorry
-  }
-  inv := {
-    app := fun G => {
-      app := sorry
-      naturality := sorry
-    }
-    naturality := sorry
-  }
-  hom_inv_id := sorry
-  inv_hom_id := sorry
+    copresheafToSlice F ⋙ sliceToCopresheaf F ≅ 𝟭 (F.Elements ⥤ Type w) :=
+  NatIso.ofComponents
+    (fun G => NatIso.ofComponents
+      (fun p => {
+        hom := fun y => by
+          dsimp [sliceToCopresheaf, copresheafToSlice, Fiber, totalSpace, totalSpaceProj] at y
+          -- y : { z : Σ (x : F.obj p.fst), G.obj ⟨p.fst, x⟩ // z.fst = p.snd }
+          have hp : (⟨p.fst, y.val.fst⟩ : F.Elements) = p := by
+            ext
+            · rfl
+            · exact heq_of_eq y.property
+          exact hp ▸ y.val.snd
+        inv := fun gx => by
+          dsimp [sliceToCopresheaf, copresheafToSlice, Fiber, totalSpace, totalSpaceProj]
+          -- gx : G.obj p
+          exact ⟨⟨p.snd, gx⟩, rfl⟩
+        hom_inv_id := by
+          ext ⟨⟨x, gx⟩, hx⟩
+          dsimp [Fiber, totalSpace, totalSpaceProj]
+          apply Subtype.ext
+          refine Sigma.ext hx.symm ?_
+          simp
+        inv_hom_id := by
+          ext gx
+          dsimp [Fiber, totalSpace, totalSpaceProj]})
+      (fun {p q} f => by
+        ext ⟨⟨x, gx⟩, hx⟩
+        dsimp [sliceToCopresheaf, copresheafToSlice, Fiber, fiberMap, totalSpace,
+          totalSpaceProj] at hx ⊢
+        -- hx : x = p.snd
+        -- Define the equality proofs explicitly
+        have hp : (⟨p.fst, x⟩ : F.Elements) = p := by
+          ext
+          · rfl
+          · exact heq_of_eq hx
+        have hq : (⟨q.fst, F.map f.val x⟩ : F.Elements) = q := by
+          ext
+          · rfl
+          · -- Need: F.map f.val x ≍ q.snd
+            -- Since f : p ⟶ q in F.Elements, we have F.map f.val p.snd = q.snd
+            have fprop : F.map f.val p.snd = q.snd := f.property
+            -- x = p.snd by hx, so F.map f.val x = q.snd
+            have : F.map f.val x = q.snd := by
+              rw [hx, fprop]
+            exact heq_of_eq this
+        -- Component naturality: need to show transports commute with G.map
+        -- Goal: (hq ▸ G.map ⟨f.val, rfl⟩ gx) = G.map f (hp ▸ gx)
+        -- This requires showing that transporting via hp and hq commutes with
+        -- applying G.map to morphisms in F.Elements
+        sorry))
+    (fun {G H} α => by
+      ext p ⟨⟨x, gx⟩, hx⟩
+      dsimp [sliceToCopresheaf, copresheafToSlice, Fiber, totalSpace, totalSpaceProj] at hx ⊢
+      -- hx : x = p.snd
+      -- Goal: transport of α.app ⟨p.fst, x⟩ gx = α.app p (transport of gx)
+      have hp : (⟨p.fst, x⟩ : F.Elements) = p := by
+        ext
+        · rfl
+        · exact heq_of_eq hx
+      -- Outer naturality: need to show transports commute with natural transformation application
+      -- Goal: (hp ▸ α.app ⟨p.fst, x⟩ gx) = α.app p (hp ▸ gx)
+      -- Similar transport commutation issue as component naturality
+      sorry)
 
 /--
 The categorical equivalence between `Over F` and copresheaves on `F.Elements`.
