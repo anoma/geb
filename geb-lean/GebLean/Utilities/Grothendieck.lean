@@ -439,7 +439,11 @@ def grothendieckTypeToCatInverse :
     -- So p.snd = F'.map f.val q.snd
     exact discrete_eqToHom_of_eq f.property.symm
   map_comp {X Y Z} f g := by
-    sorry
+    refine ext _ _ ?_ ?_
+    · rfl
+    · dsimp [comp, CategoryStruct.comp, typeToCat, Functor.comp]
+      simp only [Category.comp_id]
+      apply Subsingleton.elim
 
 /--
 Equivalence between the contravariant Grothendieck construction on `F' ⋙ typeToCat`
@@ -450,8 +454,24 @@ identity morphisms), the Grothendieck construction reduces to the category of el
 since morphism existence becomes just an equality condition.
 -/
 def grothendieckTypeToCat :
-    GrothendieckContra' (F' ⋙ typeToCat) ≌ F'.ElementsContra' :=
-  sorry
+    GrothendieckContra' (F' ⋙ typeToCat) ≌ F'.ElementsContra' where
+  functor := grothendieckTypeToCatFunctor
+  inverse := grothendieckTypeToCatInverse
+  unitIso := NatIso.ofComponents
+    (fun X => Iso.refl _)
+    (fun f => by
+      refine ext _ _ ?_ ?_
+      · simp; rfl
+      · simp; apply Subsingleton.elim)
+  counitIso := NatIso.ofComponents
+    (fun p => Iso.refl _)
+    (fun f => by
+      ext
+      simp
+      rfl)
+  functor_unitIso_comp := by
+    intro X
+    simp
 
 end TypeToCategory
 
@@ -592,8 +612,18 @@ def ι (c : C) : F'.obj c ⥤ GrothendieckContra' F' where
   obj f := ⟨c, f⟩
   map φ := ⟨𝟙 c, eqToHom (Functor.congr_obj (F'.map_id c).symm _) ≫
     (F'.map (𝟙 c)).map φ⟩
-  map_id := sorry
-  map_comp := sorry
+  map_id f := by
+    refine ext _ _ ?_ ?_
+    · rfl
+    · dsimp
+      erw [Functor.congr_hom (F'.map_id c) (𝟙 f)]
+      simp
+  map_comp φ ψ := by
+    refine ext _ _ ?_ ?_
+    · simp
+    · dsimp
+      erw [Functor.congr_hom (F'.map_id c) (φ ≫ ψ)]
+      simp
 
 /--
 The fiber inclusion functor is faithful.
