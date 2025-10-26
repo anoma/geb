@@ -633,10 +633,10 @@ Construct a functor from the contravariant Grothendieck construction given
 compatible functors from each fiber.
 -/
 def functorFrom (G : ∀ (c : C), F'.obj c ⥤ T)
-    (h : ∀ {c d : C} (f : c ⟶ d), G d ⟶ F'.map f ⋙ G c) :
+    (h : ∀ {c d : C} (f : c ⟶ d), F'.map f ⋙ G c ⟶ G d) :
     GrothendieckContra' F' ⥤ T where
   obj X := (G X.base).obj X.fiber
-  map f := sorry
+  map {X Y} f := (G X.base).map f.fiber ≫ (h f.base).app Y.fiber
   map_id := sorry
   map_comp := sorry
 
@@ -644,7 +644,7 @@ def functorFrom (G : ∀ (c : C), F'.obj c ⥤ T)
 The fiber inclusion composed with `functorFrom` recovers the original fiber functor.
 -/
 theorem ιCompFunctorFrom (G : ∀ (c : C), F'.obj c ⥤ T)
-    (h : ∀ {c d : C} (f : c ⟶ d), G d ⟶ F'.map f ⋙ G c) (c : C) :
+    (h : ∀ {c d : C} (f : c ⟶ d), F'.map f ⋙ G c ⟶ G d) (c : C) :
     ι c ⋙ functorFrom G h = G c :=
   sorry
 
