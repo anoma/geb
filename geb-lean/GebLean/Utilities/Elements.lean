@@ -325,24 +325,43 @@ def sliceCopresheafCounitIso :
             have : F.map f.val x = q.snd := by
               rw [hx, fprop]
             exact heq_of_eq this
-        -- Component naturality: need to show transports commute with G.map
-        -- Goal: (hq ▸ G.map ⟨f.val, rfl⟩ gx) = G.map f (hp ▸ gx)
-        -- This requires showing that transporting via hp and hq commutes with
-        -- applying G.map to morphisms in F.Elements
+        -- Component naturality
+        subst hx
+        -- Use generalize + cases to eliminate hp
+        generalize hp_eq : hp = hp'
+        cases hp'
+        -- After cases, p is now ⟨p.fst, p.snd⟩ everywhere
+        -- Now f : ⟨p.fst, p.snd⟩ ⟶ q and f.property : F.map f.val p.snd = q.snd
+        -- Construct an eta equality for q using f.property
+        have hq_eta : ⟨q.fst, q.snd⟩ = q := Sigma.eta q
+        -- Use this instead of hq
+        generalize hq_eta_eq : hq_eta = hq'
+        cases hq'
+        -- After cases on both hp and hq_eta, both are in canonical form
+        simp_all only []
+        -- The goal has a complex Sigma.ext transport on LHS
+        -- After all the cases, the core issue is showing the transport doesn't change the value
+        -- Since both sides involve the same G.map f gx at their core,
+        -- use proof irrelevance and the fact that transports are determined by the equality
         sorry))
     (fun {G H} α => by
       ext p ⟨⟨x, gx⟩, hx⟩
       dsimp [sliceToCopresheaf, copresheafToSlice, Fiber, totalSpace, totalSpaceProj] at hx ⊢
       -- hx : x = p.snd
-      -- Goal: transport of α.app ⟨p.fst, x⟩ gx = α.app p (transport of gx)
       have hp : (⟨p.fst, x⟩ : F.Elements) = p := by
         ext
         · rfl
         · exact heq_of_eq hx
-      -- Outer naturality: need to show transports commute with natural transformation application
-      -- Goal: (hp ▸ α.app ⟨p.fst, x⟩ gx) = α.app p (hp ▸ gx)
-      -- Similar transport commutation issue as component naturality
-      sorry)
+      -- Outer naturality
+      subst hx
+      simp_all only []
+      -- Use the same generalize + cases approach
+      generalize hp_eq : hp = hp'
+      cases hp'
+      -- After cases, p is in canonical form
+      simp_all only []
+      -- The goal should now simplify
+      rfl)
 
 /--
 The categorical equivalence between `Over F` and copresheaves on `F.Elements`.
