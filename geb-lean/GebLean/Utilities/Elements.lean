@@ -187,11 +187,11 @@ lemma triangle_identity_transport {G F : C ⥤ Type w} (η : G ⟶ F)
     (@Eq.rec ((c : C) × F.obj c) ⟨p.fst, η.app p.fst a.val⟩
       (fun s _ => {y : G.obj s.fst // η.app s.fst y = s.snd})
       ⟨a.val, pf₁⟩ p pf₂).val = a.val := by
-  obtain ⟨h₁, h₂⟩ := Sigma.mk.inj_iff.mp pf₂
-  cases h₁
-  have snd_eq : η.app p.fst ↑a = p.snd := eq_of_heq h₂
-  rw [Sigma.ext_iff] at pf₂
-  _
+  obtain ⟨aval, aproof⟩ := a
+  obtain ⟨pfst, psnd⟩ := p
+  simp
+  cases pf₁ with
+    | refl => _
 
 /--
 The fiber of `η : G ⟶ F` over an element `x : F.obj X`.
