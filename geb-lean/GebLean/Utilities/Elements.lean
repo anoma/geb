@@ -188,7 +188,6 @@ lemma triangle_identity_transport_aux {G F : C ⥤ Type w} (η : G ⟶ F)
       (⟨aval, rfl⟩ : {y : G.obj pfst // η.app pfst y = η.app pfst aval})
       (⟨pfst, psnd⟩ : (c : C) × F.obj c) pf₂).val = aval := by
   obtain ⟨h₁, h₂⟩ := Sigma.mk.inj_iff.mp pf₂
-  simp at h₁ h₂
   cases h₁
   cases pf₂
   rfl
