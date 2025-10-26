@@ -720,6 +720,98 @@ section PresheafSliceEquivalence
 variable (P : Cᵒᵖ' ⥤ Type w)
 
 /--
+Functor from `P.Elements` to `P.ElementsContra'ᵒᵖ'`.
+For `P : Cᵒᵖ' ⥤ Type w`, the category of elements `P.Elements` has objects
+`(X : Cᵒᵖ', x : P.obj X)` and morphisms `f : X ⟶ Y` in `Cᵒᵖ'` with `P.map f x = y`.
+The category `P.ElementsContra'` has objects `(X : C, x : P.obj X)` and
+morphisms `(X, x) → (Y, y)` given by `g : Y → X` in `Cᵒᵖ'` with `P.map g y = x`.
+The category `P.ElementsContra'ᵒᵖ'` reverses these morphisms, so morphisms
+`(X, x) → (Y, y)` in `P.ElementsContra'ᵒᵖ'` correspond to morphisms
+`(Y, y) → (X, x)` in `P.ElementsContra'`, which are `f : X → Y` in `Cᵒᵖ'`
+with `P.map f x = y` - exactly matching `P.Elements`.
+-/
+def elementsToElementsContraOp : P.Elements ⥤ P.ElementsContra'ᵒᵖ' where
+  obj p := ⟨p.fst, p.snd⟩
+  map {p q} f := by
+    -- f : p ⟶ q in P.Elements is f.val : p.fst ⟶ q.fst in Cᵒᵖ' with P.map f.val p.snd = q.snd
+    -- Need: ⟨p.fst, p.snd⟩ ⟶ ⟨q.fst, q.snd⟩ in P.ElementsContra'ᵒᵖ'
+    -- = ⟨q.fst, q.snd⟩ ⟶ ⟨p.fst, p.snd⟩ in P.ElementsContra'
+    -- = g : p.fst ⟶ q.fst in Cᵒᵖ' with P.map g p.snd = q.snd
+    -- This matches f exactly
+    exact ⟨f.val, f.property⟩
+  map_id := by
+    intro p
+    rfl
+  map_comp := by
+    intros p q r f g
+    rfl
+
+/--
+Functor from `P.ElementsContra'ᵒᵖ'` to `P.Elements`.
+The inverse of `elementsToElementsContraOp`.
+-/
+def elementsContraOpToElements : P.ElementsContra'ᵒᵖ' ⥤ P.Elements where
+  obj p := ⟨p.fst, p.snd⟩
+  map {p q} f := ⟨f.val, f.property⟩
+  map_id := by
+    intro p
+    rfl
+  map_comp := by
+    intros p q r f g
+    rfl
+
+/--
+The roundtrip `elementsToElementsContraOp ⋙ elementsContraOpToElements`
+is the identity.
+-/
+lemma elements_elementsContraOp_roundtrip :
+    elementsToElementsContraOp P ⋙ elementsContraOpToElements P = 𝟭 _ := by
+  apply Functor.ext
+  case h_obj =>
+    intro p
+    cases p
+    rfl
+  case h_map =>
+    intros p q f
+    simp only [Functor.comp_map, Functor.id_map, eqToHom_refl,
+      Category.id_comp, Category.comp_id]
+    rfl
+
+/--
+The roundtrip `elementsContraOpToElements ⋙ elementsToElementsContraOp`
+is the identity.
+-/
+lemma elementsContraOp_elements_roundtrip :
+    elementsContraOpToElements P ⋙ elementsToElementsContraOp P = 𝟭 _ := by
+  apply Functor.ext
+  case h_obj =>
+    intro p
+    cases p
+    rfl
+  case h_map =>
+    intros p q f
+    simp only [Functor.comp_map, Functor.id_map, eqToHom_refl,
+      Category.id_comp, Category.comp_id]
+    rfl
+
+/--
+Isomorphism in `Cat` between `P.Elements` and `P.ElementsContra'ᵒᵖ'`.
+-/
+def elementsIsoElementsContraOp : P.Elements ≅Cat P.ElementsContra'ᵒᵖ' where
+  hom := elementsToElementsContraOp P
+  inv := elementsContraOpToElements P
+  hom_inv_id := elements_elementsContraOp_roundtrip P
+  inv_hom_id := elementsContraOp_elements_roundtrip P
+
+/--
+The categorical equivalence between `P.Elements` and `P.ElementsContra'ᵒᵖ'`.
+This shows that mathlib's category of elements for a presheaf is equivalent
+to the opposite of our direct contravariant construction.
+-/
+def elementsEquivElementsContraOp : P.Elements ≌ P.ElementsContra'ᵒᵖ' :=
+  Cat.equivOfIso (elementsIsoElementsContraOp P)
+
+/--
 The fiber of `η : F ⟶ P` over an element `x : P.obj X`.
 -/
 def Fiber {F : Cᵒᵖ' ⥤ Type w} {P : Cᵒᵖ' ⥤ Type w} (η : F ⟶ P) (X : C) (x : P.obj X) : Type w :=
