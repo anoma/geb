@@ -628,25 +628,32 @@ def ιNatTrans {c d : C} (f : c ⟶ d) : F'.map f ⋙ ι c ⟶ ι d where
   app := fun X => ⟨f, 𝟙 _⟩
   naturality := sorry
 
+variable (fib : ∀ c, F'.obj c ⥤ T)
+variable (hom : ∀ {c d : C} (f : c ⟶ d), F'.map f ⋙ fib c ⟶ fib d)
+variable (hom_id : ∀ c, hom (𝟙 c) = eqToHom sorry)
+variable (hom_comp : ∀ {c d e : C} (f : c ⟶ d) (g : d ⟶ e), hom (f ≫ g) = sorry)
+
 /--
 Construct a functor from the contravariant Grothendieck construction given
 compatible functors from each fiber.
 -/
-def functorFrom (G : ∀ (c : C), F'.obj c ⥤ T)
-    (h : ∀ {c d : C} (f : c ⟶ d), F'.map f ⋙ G c ⟶ G d) :
-    GrothendieckContra' F' ⥤ T where
-  obj X := (G X.base).obj X.fiber
-  map {X Y} f := (G X.base).map f.fiber ≫ (h f.base).app Y.fiber
+def functorFrom : GrothendieckContra' F' ⥤ T where
+  obj X := (fib X.base).obj X.fiber
+  map {X Y} f := (fib X.base).map f.fiber ≫ (hom f.base).app Y.fiber
   map_id := sorry
   map_comp := sorry
 
 /--
 The fiber inclusion composed with `functorFrom` recovers the original fiber functor.
 -/
-theorem ιCompFunctorFrom (G : ∀ (c : C), F'.obj c ⥤ T)
-    (h : ∀ {c d : C} (f : c ⟶ d), F'.map f ⋙ G c ⟶ G d) (c : C) :
-    ι c ⋙ functorFrom G h = G c :=
-  sorry
+theorem ιCompFunctorFrom (c : C) :
+    ι c ⋙ functorFrom fib hom = fib c := by
+  apply Functor.ext
+  · intros X Y φ
+    dsimp [ι, functorFrom]
+    sorry
+  · intro f
+    rfl
 
 /--
 Interaction between fiber inclusion and `map`.
