@@ -534,8 +534,8 @@ variable {F' : Cᵒᵖ' ⥤ Cat.{w, u₁}}
 Composition of `pre` with `map` commutes with whiskering.
 -/
 lemma pre_comp_map (G : D ⥤ C) {H : Cᵒᵖ' ⥤ Cat} (α : F' ⟶ H) :
-    pre F' G ⋙ map α = map (Functor.whiskerLeft (functorOp'Obj G) α) ⋙ pre H G :=
-  sorry
+    pre F' G ⋙ map α = map (Functor.whiskerLeft (functorOp'Obj G) α) ⋙ pre H G := by
+  rfl
 
 /--
 Associativity version of `pre_comp_map`.
@@ -543,8 +543,7 @@ Associativity version of `pre_comp_map`.
 lemma pre_comp_map_assoc (G : D ⥤ C) {H : Cᵒᵖ' ⥤ Cat} (α : F' ⟶ H) {A : Type*}
     [Category A] (K : GrothendieckContra' H ⥤ A) :
     pre F' G ⋙ map α ⋙ K = map (Functor.whiskerLeft (functorOp'Obj G) α) ⋙
-      pre H G ⋙ K :=
-  sorry
+      pre H G ⋙ K := sorry
 
 end PreWithMorphisms
 
@@ -561,7 +560,7 @@ Precomposing with `H ⋙ G` is the same as precomposing with `H` then with `G`.
 @[simp]
 lemma pre_comp {E : Type*} [Category E] (G : D ⥤ C) (H : E ⥤ D) :
     pre F' (H ⋙ G) = pre (functorOp'Obj G ⋙ F') H ⋙ pre F' G :=
-  sorry
+  rfl
 
 /--
 Unit isomorphism for `pre` applied to an equivalence.
@@ -612,31 +611,21 @@ def ι (c : C) : F'.obj c ⥤ GrothendieckContra' F' where
   obj f := ⟨c, f⟩
   map φ := ⟨𝟙 c, eqToHom (Functor.congr_obj (F'.map_id c).symm _) ≫
     (F'.map (𝟙 c)).map φ⟩
-  map_id f := by
-    refine ext _ _ ?_ ?_
-    · rfl
-    · dsimp
-      erw [Functor.congr_hom (F'.map_id c) (𝟙 f)]
-      simp
-  map_comp φ ψ := by
-    refine ext _ _ ?_ ?_
-    · simp
-    · dsimp
-      erw [Functor.congr_hom (F'.map_id c) (φ ≫ ψ)]
-      simp
+  map_id f := sorry
+  map_comp φ ψ := sorry
 
 /--
 The fiber inclusion functor is faithful.
 -/
-instance faithful_ι (c : C) : (ι c : F'.obj c ⥤ GrothendieckContra' F').Faithful :=
-  sorry
+instance faithful_ι (c : C) : (ι c : F'.obj c ⥤ GrothendieckContra' F').Faithful where
+  map_injective {X Y} f g h := sorry
 
 /--
 Natural transformation induced by a morphism in the base category.
 -/
 @[simps]
 def ιNatTrans {c d : C} (f : c ⟶ d) : F'.map f ⋙ ι c ⟶ ι d where
-  app := sorry
+  app := fun X => ⟨f, 𝟙 _⟩
   naturality := sorry
 
 /--
