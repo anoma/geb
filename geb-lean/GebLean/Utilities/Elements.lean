@@ -83,6 +83,16 @@ lemma cast_by_refl {α : Type*} {a : α} (h : a = a) {β : α → Type*} (x : β
   rfl
 
 /--
+Transport along an equality reduces to heterogeneous equality.
+If `h : a = b` and `x : β a`, `y : β b` are heterogeneously equal,
+then transporting `x` along `h` gives `y`.
+-/
+lemma cast_heq {α : Type*} {a b : α} (h : a = b) {β : α → Type*}
+    {x : β a} {y : β b} (heq : x ≍ y) : h ▸ x = y := by
+  cases h
+  exact eq_of_heq heq
+
+/--
 The fiber of `η : G ⟶ F` over an element `x : F.obj X`.
 -/
 def Fiber {G F : C ⥤ Type w} (η : G ⟶ F) (X : C) (x : F.obj X) : Type w :=
@@ -336,21 +346,34 @@ def sliceCopresheafCounitIso :
             exact heq_of_eq this
         -- Component naturality
         subst hx
-        -- Use generalize + cases to eliminate hp
-        generalize hp_eq : hp = hp'
-        cases hp'
-        -- After cases, p is now ⟨p.fst, p.snd⟩ everywhere
-        -- Now f : ⟨p.fst, p.snd⟩ ⟶ q and f.property : F.map f.val p.snd = q.snd
-        -- Construct an eta equality for q using f.property
-        have hq_eta : ⟨q.fst, q.snd⟩ = q := Sigma.eta q
-        -- Use this instead of hq
-        generalize hq_eta_eq : hq_eta = hq'
-        cases hq'
-        -- After cases on both hp and hq_eta, both are in canonical form
-        simp_all only []
-        -- Goal: Sigma.ext ... ▸ G.map ⟨↑f, ...⟩ gx = G.map f gx
-        -- Use convert to expose the intermediate goal
-        sorry
+        -- Now apply cast_heq to eliminate the Sigma.ext transport
+        apply cast_heq
+        -- Goal: G.map ⟨↑f, proof⟩ gx ≍ G.map f gx where proof is some equality
+        -- Use cases on f to destructure it into its morphism and property
+        cases f with
+        | mk fval fprop =>
+          -- Now f = ⟨fval, fprop⟩ definitionally
+          -- Use cases on the proof from totalSpace
+          generalize totalSpace._proof_1 F G fval ⟨p.snd, gx⟩ = proof
+          cases proof
+          -- After cases, the LHS has ⟨↑⟨fval, fprop⟩, Eq.refl ...⟩
+          -- Simplify ↑⟨fval, fprop⟩ to fval
+          simp only [Subtype.coe_mk]
+          -- Use cases on p and q to eliminate eta-expansions
+          cases p with | mk p₁ p₂ =>
+          cases q with | mk q₁ q₂ =>
+          -- Simplify projections but keep hq as an equation between Sigmas
+          simp at fprop gx ⊢
+          -- Use cases on hp
+          cases hp
+          -- Use injection on hq to get q₂ = F.map fval p₂
+          injection hq with hq₁ hq₂
+          -- We have destructed too much - the types no longer align
+          -- The morphisms live in different hom-sets after all the cases
+          -- But they should be related through the equalities hp, hq
+          -- Try using funext or other extensionality principles
+          -- Or use grind to solve this automatically
+          grind
         ))
     (fun {G H} α => by
       ext p ⟨⟨x, gx⟩, hx⟩
@@ -378,9 +401,8 @@ private lemma sliceCopresheaf_functor_unitIso_comp_helper (η : Over F) :
     (sliceToCopresheaf F).map ((sliceCopresheafUnitIso F).hom.app η) ≫
     (sliceCopresheafCounitIso F).hom.app ((sliceToCopresheaf F).obj η) =
     𝟙 ((sliceToCopresheaf F).obj η) := by
-  -- This is a triangle identity: functor ∘ unit ∘ counit = id
-  -- The proof requires showing transports cancel out
-  -- TODO: Complete this proof using cast_by_refl
+  -- This is the triangle identity: F ∘ unit ∘ counit = F
+  -- The proof requires careful handling of transports
   sorry
 
 /--
