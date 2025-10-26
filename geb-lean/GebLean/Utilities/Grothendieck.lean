@@ -383,20 +383,63 @@ section TypeToCategory
 variable {F' : Cᵒᵖ' ⥤ Type w}
 
 /--
+A morphism in a discrete category implies equality of the underlying elements.
+-/
+lemma discrete_morphism_eq {X : Type w} {a b : Discrete X} (f : a ⟶ b) : a.as = b.as := by
+  cases a using Discrete.recOn
+  cases b using Discrete.recOn
+  -- Morphisms in Discrete X are eqToHom of equalities
+  -- f.down : PLift (a = b)
+  exact f.down.down
+
+/--
+For a morphism in the Grothendieck construction over discrete categories,
+the fiber component witnesses that `F'.map f.base` maps `Y.fiber.as` to `X.fiber.as`.
+-/
+lemma grothendieck_discrete_fiber_eq (F' : Cᵒᵖ' ⥤ Type w)
+    {X Y : GrothendieckContra' (F' ⋙ typeToCat)} (f : X ⟶ Y) :
+    F'.map f.base Y.fiber.as = X.fiber.as := by
+  -- f.fiber : (F' ⋙ typeToCat).map f.base |>.obj X.fiber ⟶ Y.fiber in the discrete category
+  -- (F' ⋙ typeToCat).map f.base is Discrete.functor (Discrete.mk ∘ F'.map f.base)
+  -- So (F' ⋙ typeToCat).map f.base |>.obj X.fiber = Discrete.mk ((F'.map f.base) X.fiber.as)
+  have h := discrete_morphism_eq f.fiber
+  dsimp [typeToCat, Functor.comp] at h
+  -- h : ((F'.map f.base) X.fiber.as) = Y.fiber.as
+  exact h.symm
+
+/--
 The functor from the contravariant Grothendieck construction to the
 contravariant category of elements.
 -/
 def grothendieckTypeToCatFunctor :
-    GrothendieckContra' (F' ⋙ typeToCat) ⥤ F'.ElementsContra' :=
-  sorry
+    GrothendieckContra' (F' ⋙ typeToCat) ⥤ F'.ElementsContra' where
+  obj X := ⟨X.base, X.fiber.as⟩
+  map {X Y} f := ⟨f.base, grothendieck_discrete_fiber_eq F' f⟩
+
+/--
+Construct a morphism in a discrete category from an equality of the underlying elements.
+-/
+def discrete_eqToHom_of_eq {X : Type w} {a b : X} (h : a = b) :
+    Discrete.mk a ⟶ Discrete.mk b :=
+  Discrete.eqToHom (by rw [h])
+
 
 /--
 The inverse functor from the contravariant category of elements to the
 contravariant Grothendieck construction.
 -/
 def grothendieckTypeToCatInverse :
-    F'.ElementsContra' ⥤ GrothendieckContra' (F' ⋙ typeToCat) :=
-  sorry
+    F'.ElementsContra' ⥤ GrothendieckContra' (F' ⋙ typeToCat) where
+  obj p := ⟨p.fst, Discrete.mk p.snd⟩
+  map {p q} f := by
+    refine ⟨f.val, ?_⟩
+    dsimp [typeToCat, Functor.comp]
+    -- Need: { as := p.snd } ⟶ { as := F'.map (↑f) q.snd }
+    -- f.property : F'.map f.val q.snd = p.snd
+    -- So p.snd = F'.map f.val q.snd
+    exact discrete_eqToHom_of_eq f.property.symm
+  map_comp {X Y Z} f g := by
+    sorry
 
 /--
 Equivalence between the contravariant Grothendieck construction on `F' ⋙ typeToCat`
