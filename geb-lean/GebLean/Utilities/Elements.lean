@@ -74,6 +74,15 @@ lemma subtype_mk_heq {α : Type*} {p : α → Prop} {a : α} (h₁ h₂ : p a) :
   heq_of_eq (Subtype.ext rfl)
 
 /--
+Transport by a reflexivity proof is the identity.
+For any proof `h : a = a`, transporting along `h` does nothing.
+-/
+lemma cast_by_refl {α : Type*} {a : α} (h : a = a) {β : α → Type*} (x : β a) :
+    h ▸ x = x := by
+  cases h
+  rfl
+
+/--
 The fiber of `η : G ⟶ F` over an element `x : F.obj X`.
 -/
 def Fiber {G F : C ⥤ Type w} (η : G ⟶ F) (X : C) (x : F.obj X) : Type w :=
@@ -339,11 +348,10 @@ def sliceCopresheafCounitIso :
         cases hq'
         -- After cases on both hp and hq_eta, both are in canonical form
         simp_all only []
-        -- The goal has a complex Sigma.ext transport on LHS
-        -- After all the cases, the core issue is showing the transport doesn't change the value
-        -- Since both sides involve the same G.map f gx at their core,
-        -- use proof irrelevance and the fact that transports are determined by the equality
-        sorry))
+        -- Goal: Sigma.ext ... ▸ G.map ⟨↑f, ...⟩ gx = G.map f gx
+        -- Use convert to expose the intermediate goal
+        sorry
+        ))
     (fun {G H} α => by
       ext p ⟨⟨x, gx⟩, hx⟩
       dsimp [sliceToCopresheaf, copresheafToSlice, Fiber, totalSpace, totalSpaceProj] at hx ⊢
@@ -364,6 +372,18 @@ def sliceCopresheafCounitIso :
       rfl)
 
 /--
+Helper lemma for the triangle identity in the slice-copresheaf equivalence.
+-/
+private lemma sliceCopresheaf_functor_unitIso_comp_helper (η : Over F) :
+    (sliceToCopresheaf F).map ((sliceCopresheafUnitIso F).hom.app η) ≫
+    (sliceCopresheafCounitIso F).hom.app ((sliceToCopresheaf F).obj η) =
+    𝟙 ((sliceToCopresheaf F).obj η) := by
+  -- This is a triangle identity: functor ∘ unit ∘ counit = id
+  -- The proof requires showing transports cancel out
+  -- TODO: Complete this proof using cast_by_refl
+  sorry
+
+/--
 The categorical equivalence between `Over F` and copresheaves on `F.Elements`.
 -/
 def sliceEquivCopresheaf : Over F ≌ (F.Elements ⥤ Type w) where
@@ -371,7 +391,7 @@ def sliceEquivCopresheaf : Over F ≌ (F.Elements ⥤ Type w) where
   inverse := copresheafToSlice F
   unitIso := sliceCopresheafUnitIso F
   counitIso := sliceCopresheafCounitIso F
-  functor_unitIso_comp := sorry
+  functor_unitIso_comp η := sliceCopresheaf_functor_unitIso_comp_helper F η
 
 end CopresheafSliceEquivalence
 
