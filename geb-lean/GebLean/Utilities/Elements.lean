@@ -176,6 +176,24 @@ lemma coe_subtype_sigma_transport_coe {α : Type*} {β : α → Type*}
   exact coe_subtype_sigma_transport_fst_refl P h w.val pf
 
 /--
+For the specific pattern in the triangle identity: when transporting a subtype
+built from a coercion along a sigma equality, the outer coercion is preserved.
+-/
+lemma triangle_identity_transport {G F : C ⥤ Type w} (η : G ⟶ F)
+    (p : (c : C) × F.obj c)
+    (a : {y : G.obj p.fst // η.app p.fst y = p.snd})
+    (pf₁ : η.app p.fst a.val = η.app p.fst a.val)
+    (pf₂ : ⟨p.fst, η.app p.fst a.val⟩ = p) :
+    (@Eq.rec ((c : C) × F.obj c) ⟨p.fst, η.app p.fst a.val⟩
+      (fun s _ => {y : G.obj s.fst // η.app s.fst y = s.snd})
+      ⟨a.val, pf₁⟩ p pf₂).val = a.val := by
+  obtain ⟨h₁, h₂⟩ := Sigma.mk.inj_iff.mp pf₂
+  cases h₁
+  have snd_eq : η.app p.fst ↑a = p.snd := eq_of_heq h₂
+  rw [Sigma.ext_iff] at pf₂
+  _
+
+/--
 The fiber of `η : G ⟶ F` over an element `x : F.obj X`.
 -/
 def Fiber {G F : C ⥤ Type w} (η : G ⟶ F) (X : C) (x : F.obj X) : Type w :=
@@ -491,9 +509,8 @@ private lemma sliceCopresheaf_functor_unitIso_comp_helper (η : Over F) :
   apply Subtype.ext
   simp [Fiber]
   -- Goal: ↑(⋯ ▸ ⟨↑a, ⋯⟩) = ↑a
-  -- This should follow from coe_subtype_sigma_transport_coe, but there are
-  -- unification issues with implicit arguments
-  sorry
+  generalize_proofs pf₁ pf₂
+  exact triangle_identity_transport η.hom p a pf₁ pf₂
 
 /--
 The categorical equivalence between `Over F` and copresheaves on `F.Elements`.
