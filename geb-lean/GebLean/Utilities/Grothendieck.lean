@@ -442,7 +442,12 @@ def mapWhiskerRightAsSmallFunctor (α : F' ⟶ G') :
     map (Functor.whiskerRight α Cat.asSmallFunctor.{w}) ≅
     compAsSmallFunctorEquivalenceInverse (F' := F') ⋙ map α ⋙
       compAsSmallFunctorEquivalenceFunctor (F' := G') :=
-  sorry
+  NatIso.ofComponents
+    (fun _ => Iso.refl _)
+    (fun _ => by
+      apply GrothendieckContra'.ext
+      · simp [compAsSmallFunctorEquivalenceInverse, compAsSmallFunctorEquivalenceFunctor]
+      · simp [compAsSmallFunctorEquivalenceInverse, compAsSmallFunctorEquivalenceFunctor])
 
 end UniverseScaling
 
