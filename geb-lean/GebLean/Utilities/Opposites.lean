@@ -3,6 +3,7 @@ import Mathlib.CategoryTheory.Equivalence
 import Mathlib.CategoryTheory.Whiskering
 import Mathlib.CategoryTheory.EqToHom
 import Mathlib.CategoryTheory.Category.Cat
+import Mathlib.CategoryTheory.Category.Cat.Op
 import GebLean.Utilities.Category
 
 /-!
@@ -336,6 +337,83 @@ def opEquivalence' : Cat.{v, u} ≌ Cat.{v, u} where
   unitIso := (eqToIso opFunctor'_comp_self_eq_id).symm
   counitIso := eqToIso opFunctor'_comp_self_eq_id
 
+/--
+Natural isomorphism between mathlib's `opFunctor` and our `opFunctor'` as
+endofunctors on `Cat`. The components at each category `C` are the categorical
+isomorphisms `catOfOpToOp' : Cᵒᵖ ⟶ Cᵒᵖ'`.
+-/
+def opFunctorIsoOpFunctor' : Cat.opFunctor.{v, u} ≅ opFunctor'.{v, u} where
+  hom := {
+    app := fun C => catOfOpToOp'
+    naturality := by
+      intros C D F
+      apply Functor.ext
+      case h_obj =>
+        intro X
+        rfl
+      case h_map =>
+        intros X Y f
+        simp
+        rfl
+  }
+  inv := {
+    app := fun C => catOfOp'ToOp
+    naturality := by
+      intros C D F
+      apply Functor.ext
+      case h_obj =>
+        intro X
+        rfl
+      case h_map =>
+        intros X Y f
+        simp
+        rfl
+  }
+  hom_inv_id := by
+    ext C
+    change catOfOpToOp' ⋙ catOfOp'ToOp = 𝟭 _
+    exact opToOp'_comp_op'ToOp
+  inv_hom_id := by
+    ext C
+    change catOfOp'ToOp ⋙ catOfOpToOp' = 𝟭 _
+    exact op'ToOp_comp_opToOp'
+
 end Cat
+
+namespace Functor
+
+/--
+Natural isomorphism showing that `opHom'` is naturally isomorphic to the
+composition that converts through mathlib's `opHom`. This demonstrates that
+our `opHom'` is compatible with mathlib's `opHom` via the categorical
+isomorphisms between `op` and `op'`.
+-/
+def opHomIsoOpHom' :
+    (op'ToOp ⋙ CategoryTheory.Functor.opHom C D ⋙ biCompToOp' :
+      (C ⥤ D)ᵒᵖ' ⥤ (Cᵒᵖ' ⥤ Dᵒᵖ')) ≅ opHom' where
+  hom := {
+    app := fun F => 𝟙 _
+    naturality := by
+      intros X Y f
+      ext Z
+      simp
+      rfl
+  }
+  inv := {
+    app := fun F => 𝟙 _
+    naturality := by
+      intros X Y f
+      ext Z
+      simp
+      rfl
+  }
+  hom_inv_id := by
+    ext F Z
+    simp
+  inv_hom_id := by
+    ext F Z
+    simp
+
+end Functor
 
 end GebLean
