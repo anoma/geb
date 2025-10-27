@@ -2,6 +2,7 @@ import Mathlib.CategoryTheory.Category.Cat.AsSmall
 import Mathlib.CategoryTheory.Elements
 import Mathlib.CategoryTheory.Comma.Over.Basic
 import Mathlib.CategoryTheory.Whiskering
+import Mathlib.CategoryTheory.Grothendieck
 import GebLean.Utilities.Opposites
 import GebLean.Utilities.Elements
 
@@ -39,6 +40,14 @@ universe w u v u₁ v₁ u₂ v₂
 namespace GebLean
 
 open CategoryTheory GebLean
+
+def GrothendieckContra {C : Type} [Category C] (F' : Cᵒᵖ' ⥤ Cat) : Type :=
+  (CategoryTheory.Grothendieck (C := Cᵒᵖ') (Cat.postCompOpFunctor'.obj F'))ᵒᵖ'
+
+instance {C : Type} [Category C] (F' : Cᵒᵖ' ⥤ Cat) :
+  Category (GrothendieckContra (C := C) F') := by
+    unfold GrothendieckContra
+    infer_instance
 
 variable {C : Type u} [Category.{v} C]
 variable {D : Type u₁} [Category.{v₁} D]
