@@ -548,14 +548,19 @@ namespace CategoryOfElementsContra'
 
 /--
 Constructor for morphisms in the contravariant category of elements.
-Given `f : y.1 ⟶ x.1` in `Cᵒᵖ'` such that `F.map f` takes `y.snd` to `x.snd`,
+Given `f : x.1 ⟶ y.1` in `C` such that `F.map f` takes `y.snd` to `x.snd`,
 constructs a morphism `x ⟶ y` in `F.ElementsContra'`.
--/
-def homMk {F : Cᵒᵖ' ⥤ Type w} (x y : F.ElementsContra') (f : y.1 ⟶ x.1)
-    (hf : F.map f y.snd = x.snd) : x ⟶ y :=
-  ⟨f, hf⟩
 
-lemma homMk_val {F : Cᵒᵖ' ⥤ Type w} {x y : F.ElementsContra'} (f : y.1 ⟶ x.1)
+This is defined using mathlib's `CategoryOfElements.homMk` transferred through
+the opposite construction.
+-/
+def homMk {F : Cᵒᵖ' ⥤ Type w} (x y : F.ElementsContra')
+    (f : @Quiver.Hom C _ x.1 y.1)
+    (hf : F.map f y.snd = x.snd) : x ⟶ y :=
+  CategoryOfElements.homMk y x f hf
+
+lemma homMk_val {F : Cᵒᵖ' ⥤ Type w} {x y : F.ElementsContra'}
+    (f : @Quiver.Hom C _ x.1 y.1)
     (hf : F.map f y.snd = x.snd) : (homMk x y f hf).val = f :=
   rfl
 
@@ -626,24 +631,19 @@ instance π_reflects_isomorphisms (F : Cᵒᵖ' ⥤ Type w) :
 
 /--
 Constructor for isomorphisms in the contravariant category of elements.
-This could be derived from mathlib's `CategoryOfElements.isoMk` via
-isomorphism transfer.
+Given an isomorphism `e : x.1 ≅ y.1` in `C` and proof that `F.map e.hom`
+maps `y.snd` to `x.snd`, constructs an isomorphism in `F.ElementsContra'`.
+
+This is defined using mathlib's `CategoryOfElements.isoMk` transferred through
+the opposite construction.
 -/
-@[simps]
 def isoMk {F : Cᵒᵖ' ⥤ Type w} (x y : F.ElementsContra')
-    (e : x.1 ≅ y.1)
-    (he : F.map e.hom x.snd = y.snd) :
-    x ≅ y where
-  hom := homMk x y e.inv (by
-    have : F.map (e.hom ≫ e.inv) x.snd = F.map e.inv (F.map e.hom x.snd) := by
-      rw [F.map_comp]; rfl
-    rw [he] at this
-    rw [Iso.hom_inv_id] at this
-    simp only [F.map_id, types_id_apply] at this
-    exact this.symm)
-  inv := homMk y x e.hom he
-  hom_inv_id := by ext; simp [homMk]
-  inv_hom_id := by ext; simp [homMk]
+    (e : @Iso C _ x.1 y.1)
+    (he : F.map e.hom y.snd = x.snd) :
+    x ≅ y :=
+  Iso.symm <|
+    (CategoryOfElements.isoMk (C := Cᵒᵖ') (F := F) y x (Iso.symm e))
+    (by unfold isoToOp' ; simp ; exact he)
 
 end CategoryOfElementsContra'
 
