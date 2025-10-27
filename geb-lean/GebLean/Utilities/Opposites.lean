@@ -414,6 +414,27 @@ def opHomIsoOpHom' :
     ext F Z
     simp
 
+/--
+Functor from `Xᵒᵖ ⥤ Y` constructed by taking the opposite of a functor
+`G : X ⥤ Yᵒᵖ` and postcomposing with the involutive isomorphism `unopUnop`.
+This is the composition `G.op ⋙ unopUnop Y`.
+-/
+def unopFunctor {X Y : Type _} [Category X] [Category Y] (G : X ⥤ Yᵒᵖ) :
+    Xᵒᵖ ⥤ Y :=
+  G.op ⋙ unopUnop Y
+
+instance unopFunctor_faithful {X Y : Type _} [Category X] [Category Y]
+    (G : X ⥤ Yᵒᵖ) [G.Faithful] : (unopFunctor G).Faithful := by
+  unfold unopFunctor
+  infer_instance
+
+instance unopFunctor_reflects_isomorphisms {X Y : Type _} [Category X] [Category Y]
+    (G : X ⥤ Yᵒᵖ) [G.ReflectsIsomorphisms] : (unopFunctor G).ReflectsIsomorphisms := by
+  unfold unopFunctor
+  have : G.op.ReflectsIsomorphisms := sorry
+  have : (unopUnop Y).ReflectsIsomorphisms := inferInstance
+  infer_instance
+
 end Functor
 
 end GebLean
