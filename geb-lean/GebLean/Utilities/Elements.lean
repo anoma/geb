@@ -628,37 +628,13 @@ theorem map_snd {F : Cᵒᵖ' ⥤ Type w} {p q : F.ElementsContra'}
   f.property
 
 /--
-Helper: Functor from `Xᵒᵖ ⥤ Y` by composing a functor `G : X ⥤ Yᵒᵖ` with opposite
-isomorphisms.
--/
-def unopFunctor {X Y : Type _} [Category X] [Category Y] (G : X ⥤ Yᵒᵖ) : Xᵒᵖ ⥤ Y where
-  obj x := opToOp'.obj (G.obj x.unop)
-  map f := opToOp'.map (G.map f.unop)
-
-instance unopFunctor_faithful {X Y : Type _} [Category X] [Category Y]
-    (G : X ⥤ Yᵒᵖ) [G.Faithful] : (unopFunctor G).Faithful where
-  map_injective {_ _} := by
-    intro f g h
-    apply Opposite.unop_injective
-    apply G.map_injective
-    apply Opposite.unop_injective
-    -- opToOp'.map is definitionally the identity on morphisms
-    exact h
-
-instance unopFunctor_reflects_iso {X Y : Type _} [Category X] [Category Y]
-    (G : X ⥤ Yᵒᵖ) [G.ReflectsIsomorphisms] :
-    (unopFunctor G).ReflectsIsomorphisms where
-  reflects {_ _} f hf := by
-    sorry  -- Transfer through the isomorphisms
-
-/--
 The forgetful functor from the contravariant category of elements,
 transferred from mathlib's `CategoryOfElements.π` through the categorical
 isomorphisms.
 -/
 def πTransferred (F : Cᵒᵖ' ⥤ Type w) : F.ElementsContra' ⥤ C :=
   elementsContra'ToElementsContra F ⋙
-  unopFunctor (CategoryOfElements.π (opToOp' ⋙ F))
+  _root_.GebLean.Functor.unopFunctor (CategoryOfElements.π (opToOp' ⋙ F))
 
 /--
 The forgetful functor from the contravariant category of elements,
