@@ -617,17 +617,7 @@ def preNatIso {G H : D ⥤ C} (α : G ≅ H) :
       (pre F' H) :=
   NatIso.ofComponents
     (fun X => (transportIso ⟨G.obj X.base, X.fiber⟩ (α.app X.base)).symm)
-    (fun f => by
-      fapply ext
-      · simp only [Iso.symm_hom, Functor.comp_map]
-        exact α.hom.naturality f.base
-      · let hn := α.hom.naturality f.base
-        unfold transportIso
-        unfold isoMk
-        unfold pre
-        simp only [Iso.symm_hom, Functor.comp_map, Iso.refl_hom, Iso.refl_inv]
-        simp [transport_base, transport_fiber]
-        sorry)
+    (fun f => by sorry)
 
 /--
 The weak inverse to `pre` when `G` is an equivalence.
