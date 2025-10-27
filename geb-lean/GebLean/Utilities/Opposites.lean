@@ -283,47 +283,37 @@ def opFunctor' : Cat.{v, u} ⥤ Cat.{v, u} where
   map := Functor.op'
 
 /--
+The double application of `Cat.opFunctor'` is equal to the identity functor
+on `Cat`. Unlike mathlib's `opFunctor` which is only involutive up to natural
+isomorphism, our `opFunctor'` is involutive on the nose because
+`(Cᵒᵖ')ᵒᵖ' = C` definitionally.
+-/
+theorem opFunctor'_comp_self_eq_id : opFunctor'.{v, u} ⋙ opFunctor'.{v, u} = 𝟭 _ := by
+  apply Functor.ext
+  case h_obj => intro C; rfl
+  case h_map => intros C D F; rfl
+
+/--
 The natural isomorphism between the double application of `Cat.opFunctor'` and
-the identity functor on `Cat`.
+the identity functor on `Cat`, derived from the equality
+`opFunctor'_comp_self_eq_id`.
 -/
 @[simps!]
 def opFunctor'Involutive : opFunctor'.{v, u} ⋙ opFunctor'.{v, u} ≅ 𝟭 _ :=
-  NatIso.ofComponents
-    (fun C => {
-      hom := {
-        obj := id
-        map := fun f => f }
-      inv := {
-        obj := id
-        map := fun f => f } })
-    (by intros; rfl)
+  eqToIso opFunctor'_comp_self_eq_id
 
 /--
 The equivalence `Cat ≌ Cat` associating each category with its opposite
-category using `op'`.
+category using `op'`. Both the unit and counit are derived from the equality
+`opFunctor'_comp_self_eq_id`, showing that this equivalence is actually an
+equality (strict involution) rather than just a natural isomorphism.
 -/
 @[simps]
 def opEquivalence' : Cat.{v, u} ≌ Cat.{v, u} where
   functor := opFunctor'
   inverse := opFunctor'
-  unitIso := NatIso.ofComponents
-    (fun C => {
-      hom := {
-        obj := id
-        map := fun f => f }
-      inv := {
-        obj := id
-        map := fun f => f } })
-    (by intros; rfl)
-  counitIso := NatIso.ofComponents
-    (fun C => {
-      hom := {
-        obj := id
-        map := fun f => f }
-      inv := {
-        obj := id
-        map := fun f => f } })
-    (by intros; rfl)
+  unitIso := (eqToIso opFunctor'_comp_self_eq_id).symm
+  counitIso := eqToIso opFunctor'_comp_self_eq_id
 
 end Cat
 
