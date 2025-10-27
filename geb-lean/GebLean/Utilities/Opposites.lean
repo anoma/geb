@@ -428,13 +428,6 @@ instance unopFunctor_faithful {X Y : Type _} [Category X] [Category Y]
   unfold unopFunctor
   infer_instance
 
-instance unopFunctor_reflects_isomorphisms {X Y : Type _} [Category X] [Category Y]
-    (G : X ⥤ Yᵒᵖ) [G.ReflectsIsomorphisms] : (unopFunctor G).ReflectsIsomorphisms := by
-  unfold unopFunctor
-  have : G.op.ReflectsIsomorphisms := sorry
-  have : (unopUnop Y).ReflectsIsomorphisms := inferInstance
-  infer_instance
-
 end Functor
 
 end GebLean
