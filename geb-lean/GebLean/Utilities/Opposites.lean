@@ -296,6 +296,29 @@ lemma isIso_of_isIso_op' {C : Type*} [Category C] {X Y : C} (f : Y ⟶ X)
     [h : @IsIso Cᵒᵖ' _ X Y f] : IsIso f :=
   ⟨@inv Cᵒᵖ' _ X Y f _, @IsIso.inv_hom_id Cᵒᵖ' _ X Y f _, @IsIso.hom_inv_id Cᵒᵖ' _ X Y f _⟩
 
+instance op'_faithful (F : C ⥤ D) [F.Faithful] : (Functor.op' F).Faithful where
+  map_injective {X Y} {f g} h := by
+    unfold Functor.op' at h
+    simp only at h
+    exact F.map_injective h
+
+instance op'_reflects_isomorphisms (F : C ⥤ D) [F.ReflectsIsomorphisms] :
+    (Functor.op' F).ReflectsIsomorphisms where
+  reflects {X Y} f hf := by
+    unfold Functor.op' at hf
+    simp only at hf
+    haveI h1 : @IsIso D _ _ _ (F.map f) := isIso_of_isIso_op' (F.map f)
+    haveI h2 : @IsIso C _ Y X f := Functor.ReflectsIsomorphisms.reflects F f
+    exact @isIso_op'_of_isIso C _ X Y f h2
+
+/--
+`Functor.op'` preserves composition of functors.
+-/
+theorem op'_comp {E : Type u₂} [Category.{v₂} E]
+    (F : C ⥤ D) (G : D ⥤ E) :
+    Functor.op' (F ⋙ G) = Functor.op' F ⋙ Functor.op' G :=
+  rfl
+
 namespace Functor
 
 /--
@@ -346,29 +369,6 @@ def opHomIsoOpHom' :
   inv_hom_id := by
     ext F Z
     simp
-
-instance op'_faithful (F : C ⥤ D) [F.Faithful] : (Functor.op' F).Faithful where
-  map_injective {X Y} {f g} h := by
-    unfold Functor.op' at h
-    simp only at h
-    exact F.map_injective h
-
-instance op'_reflects_isomorphisms (F : C ⥤ D) [F.ReflectsIsomorphisms] :
-    (Functor.op' F).ReflectsIsomorphisms where
-  reflects {X Y} f hf := by
-    unfold Functor.op' at hf
-    simp only at hf
-    haveI h1 : @IsIso D _ _ _ (F.map f) := isIso_of_isIso_op' (F.map f)
-    haveI h2 : @IsIso C _ Y X f := Functor.ReflectsIsomorphisms.reflects F f
-    exact @isIso_op'_of_isIso C _ X Y f h2
-
-/--
-`Functor.op'` preserves composition of functors.
--/
-theorem op'_comp {E : Type u₂} [Category.{v₂} E]
-    (F : C ⥤ D) (G : D ⥤ E) :
-    Functor.op' (F ⋙ G) = Functor.op' F ⋙ Functor.op' G :=
-  rfl
 
 end Functor
 
