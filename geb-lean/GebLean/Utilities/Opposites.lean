@@ -2,6 +2,7 @@ import Mathlib.CategoryTheory.Opposites
 import Mathlib.CategoryTheory.Equivalence
 import Mathlib.CategoryTheory.Whiskering
 import Mathlib.CategoryTheory.EqToHom
+import Mathlib.CategoryTheory.Category.Cat
 import GebLean.Utilities.Category
 
 /-!
@@ -253,5 +254,77 @@ The `functorOp'Obj` is equal to composing through the standard opposite.
 -/
 theorem functorOp'Obj_eq_comp (G : C ⥤ D) :
     functorOp'Obj G = op'ToOp ⋙ G.op ⋙ opToOp' := rfl
+
+/--
+The opposite of a functor `F : C ⥤ D` using the `op'` construction.
+For a functor between categories, the opposite functor goes between the
+opposite categories.
+
+Since morphisms in `Cᵒᵖ'` from `X` to `Y` are morphisms from `Y` to `X` in `C`,
+and composition is reversed, the functor naturally maps them correctly.
+-/
+@[simps]
+def Functor.op' {C D : Type*} [Category C] [Category D] (F : C ⥤ D) :
+    Cᵒᵖ' ⥤ Dᵒᵖ' where
+  obj X := F.obj X
+  map f := F.map f
+  map_id X := F.map_id X
+  map_comp f g := F.map_comp g f
+
+namespace Cat
+
+/--
+The endofunctor `Cat ⥤ Cat` assigning to each category its opposite category
+using the `op'` construction.
+-/
+@[simps]
+def opFunctor' : Cat.{v, u} ⥤ Cat.{v, u} where
+  obj C := .of Cᵒᵖ'
+  map := Functor.op'
+
+/--
+The natural isomorphism between the double application of `Cat.opFunctor'` and
+the identity functor on `Cat`.
+-/
+@[simps!]
+def opFunctor'Involutive : opFunctor'.{v, u} ⋙ opFunctor'.{v, u} ≅ 𝟭 _ :=
+  NatIso.ofComponents
+    (fun C => {
+      hom := {
+        obj := id
+        map := fun f => f }
+      inv := {
+        obj := id
+        map := fun f => f } })
+    (by intros; rfl)
+
+/--
+The equivalence `Cat ≌ Cat` associating each category with its opposite
+category using `op'`.
+-/
+@[simps]
+def opEquivalence' : Cat.{v, u} ≌ Cat.{v, u} where
+  functor := opFunctor'
+  inverse := opFunctor'
+  unitIso := NatIso.ofComponents
+    (fun C => {
+      hom := {
+        obj := id
+        map := fun f => f }
+      inv := {
+        obj := id
+        map := fun f => f } })
+    (by intros; rfl)
+  counitIso := NatIso.ofComponents
+    (fun C => {
+      hom := {
+        obj := id
+        map := fun f => f }
+      inv := {
+        obj := id
+        map := fun f => f } })
+    (by intros; rfl)
+
+end Cat
 
 end GebLean
