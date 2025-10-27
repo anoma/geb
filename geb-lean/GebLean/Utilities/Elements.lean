@@ -624,8 +624,6 @@ instance π_reflects_isomorphisms (F : Cᵒᵖ' ⥤ Type w) :
     haveI : (CategoryOfElements.π F).ReflectsIsomorphisms := inferInstance
     have h_iso_cop' : @IsIso Cᵒᵖ' _ ((CategoryOfElements.π F).obj Y)
         ((CategoryOfElements.π F).obj X) ((CategoryOfElements.π F).map f) :=
-      isIso_of_isIso_op' ((CategoryOfElements.π F).map f)
-    have h_f_elements : @IsIso F.Elements _ X Y f := by
       -- Need to use the fact that CategoryOfElements.π F reflects isomorphisms
       -- Given h_iso_cop' : IsIso ((CategoryOfElements.π F).map f) in Cᵒᵖ'
       -- We should be able to deduce IsIso f in F.Elements
