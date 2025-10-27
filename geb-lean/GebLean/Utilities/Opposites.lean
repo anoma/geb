@@ -415,29 +415,23 @@ def opHomIsoOpHom' :
     simp
 
 /--
-Functor from `Xᵒᵖ ⥤ Y` constructed by composing a functor `G : X ⥤ Yᵒᵖ` with
-the opposite isomorphisms between `op` and `op'`. This allows converting
-functors targeting mathlib's `Opposite` to functors from mathlib's `Opposite`
-targeting our `op'`.
+Functor from `Xᵒᵖ ⥤ Y` constructed by taking the opposite of a functor
+`G : X ⥤ Yᵒᵖ` and postcomposing with the involutive isomorphism `unopUnop`.
+This is the composition `G.op ⋙ unopUnop Y`.
 -/
 def unopFunctor {X Y : Type _} [Category X] [Category Y] (G : X ⥤ Yᵒᵖ) :
-    Xᵒᵖ ⥤ Y where
-  obj x := opToOp'.obj (G.obj x.unop)
-  map f := opToOp'.map (G.map f.unop)
+    Xᵒᵖ ⥤ Y :=
+  G.op ⋙ unopUnop Y
 
 instance unopFunctor_faithful {X Y : Type _} [Category X] [Category Y]
-    (G : X ⥤ Yᵒᵖ) [G.Faithful] : (unopFunctor G).Faithful where
-  map_injective {_ _} := by
-    intro f g h
-    apply Opposite.unop_injective
-    apply G.map_injective
-    apply Opposite.unop_injective
-    exact h
+    (G : X ⥤ Yᵒᵖ) [G.Faithful] : (unopFunctor G).Faithful := by
+  unfold unopFunctor
+  infer_instance
 
 instance unopFunctor_reflects_iso {X Y : Type _} [Category X] [Category Y]
     (G : X ⥤ Yᵒᵖ) [G.ReflectsIsomorphisms] :
     (unopFunctor G).ReflectsIsomorphisms where
-  reflects {_ _} f hf := by
+  reflects {A B} f hf := by
     sorry
 
 end Functor
