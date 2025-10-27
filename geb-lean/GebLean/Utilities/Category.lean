@@ -252,6 +252,16 @@ lemma heq_iff_eqToHom_comp {X Y Z : C} (f : Y ⟶ Z) (g : X ⟶ Z) (p : X = Y) :
     simp at h
     exact heq_of_eq h
 
+/--
+Any `eqToHom` of a reflexive equality is equal to the identity.
+By proof irrelevance, all proofs of `X = X` are equal to `rfl`, and
+`eqToHom rfl = 𝟙 X`.
+-/
+@[simp]
+lemma eqToHom_refl' {X : C} (p : X = X) : eqToHom p = 𝟙 X := by
+  rw [Subsingleton.elim p rfl]
+  simp
+
 end EqToHom
 
 end GebLean
