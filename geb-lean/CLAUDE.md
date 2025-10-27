@@ -210,6 +210,11 @@ might want to examine external libraries for ideas.
 
 - [Lean's "category theory" page](https://leanprover-community.github.io/theories/category_theory.html)
 
+### Opposite categories
+
+- [Mathlib.CategoryTheory.Opposites](https://leanprover-community.github.io/mathlib4_docs/Mathlib/CategoryTheory/Opposites.html)
+- [Mathlib.CategoryTheory.Category.Cat.Op](https://leanprover-community.github.io/mathlib4_docs/Mathlib/CategoryTheory/Category/Cat/Op.html)
+
 ### Comma / slice (over) / coslice (under) categories
 
 - [Mathlib.CategoryTheory.Comma.Basic](https://leanprover-community.github.io/mathlib4_docs/Mathlib/CategoryTheory/Comma/Basic.html)
