@@ -640,19 +640,14 @@ end CategoryOfElementsContra'
 
 /--
 Natural transformations between contravariant functors induce functors between
-their categories of elements. This could be derived from mathlib's
-`NatTrans.mapElements` via isomorphism transfer, but we give a direct
-definition.
+their categories of elements.
+
+This is defined using mathlib's `NatTrans.mapElements` transferred through
+the opposite construction.
 -/
-@[simps]
 def NatTrans.mapElementsContra' {F G : Cᵒᵖ' ⥤ Type w} (φ : F ⟶ G) :
-    F.ElementsContra' ⥤ G.ElementsContra' where
-  obj p := ⟨p.1, φ.app p.1 p.2⟩
-  map {p q} f := ⟨f.val, by
-    have h := f.property
-    have hb := congrFun (φ.naturality f.val) q.2
-    dsimp at hb ⊢
-    rw [← hb, h]⟩
+    F.ElementsContra' ⥤ G.ElementsContra' :=
+  Functor.op' (φ.mapElements)
 
 namespace CategoryOfElementsContra'
 
@@ -666,14 +661,9 @@ abbrev map {F G : Cᵒᵖ' ⥤ Type w} (α : F ⟶ G) :
 @[simp]
 theorem map_π {F G : Cᵒᵖ' ⥤ Type w} (α : F ⟶ G) :
     map α ⋙ π G = π F := by
-  apply Functor.ext
-  case h_obj =>
-    intro X
-    rfl
-  case h_map =>
-    intros X Y f
-    simp only [Functor.comp_map, eqToHom_refl, Category.id_comp, Category.comp_id]
-    rfl
+  unfold map NatTrans.mapElementsContra' π
+  rw [← Functor.op'_comp]
+  rfl
 
 end CategoryOfElementsContra'
 

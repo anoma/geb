@@ -23,7 +23,7 @@ and mathlib's `Opposite` construction, along with functorial transformations.
 
 -/
 
-universe v u v₁ u₁
+universe v u v₁ u₁ v₂ u₂
 
 namespace GebLean
 
@@ -329,6 +329,14 @@ instance op'_reflects_isomorphisms (F : C ⥤ D) [F.ReflectsIsomorphisms] :
     haveI h1 : @IsIso D _ _ _ (F.map f) := isIso_of_isIso_op' (F.map f)
     haveI h2 : @IsIso C _ Y X f := Functor.ReflectsIsomorphisms.reflects F f
     exact @isIso_op'_of_isIso C _ X Y f h2
+
+/--
+`Functor.op'` preserves composition of functors.
+-/
+theorem op'_comp {E : Type u₂} [Category.{v₂} E]
+    (F : C ⥤ D) (G : D ⥤ E) :
+    Functor.op' (F ⋙ G) = Functor.op' F ⋙ Functor.op' G :=
+  rfl
 
 end Functor
 
