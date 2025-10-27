@@ -627,7 +627,8 @@ The weak inverse to `pre` when `G` is an equivalence.
 def preInv (G : D ≌ C) :
     GrothendieckContra' F' ⥤
     GrothendieckContra' (functorOp'Obj G.functor ⋙ F') :=
-  sorry
+  map (Functor.whiskerRight (functorOp'.map G.counitIso.hom) F') ⋙
+    pre (functorOp'Obj G.functor ⋙ F') G.inverse
 
 end Pre
 
