@@ -315,6 +315,38 @@ def opHom' : (C ⥤ D)ᵒᵖ' ⥤ (Cᵒᵖ' ⥤ Dᵒᵖ') where
     ext X
     rfl
 
+/--
+Natural isomorphism showing that `opHom'` is naturally isomorphic to the
+composition that converts through mathlib's `opHom`. This demonstrates that
+our `opHom'` is compatible with mathlib's `opHom` via the categorical
+isomorphisms between `op` and `op'`.
+-/
+def opHomIsoOpHom' :
+    (op'ToOp ⋙ CategoryTheory.Functor.opHom C D ⋙ biCompToOp' :
+      (C ⥤ D)ᵒᵖ' ⥤ (Cᵒᵖ' ⥤ Dᵒᵖ')) ≅ opHom' where
+  hom := {
+    app := fun F => 𝟙 _
+    naturality := by
+      intros X Y f
+      ext Z
+      simp
+      rfl
+  }
+  inv := {
+    app := fun F => 𝟙 _
+    naturality := by
+      intros X Y f
+      ext Z
+      simp
+      rfl
+  }
+  hom_inv_id := by
+    ext F Z
+    simp
+  inv_hom_id := by
+    ext F Z
+    simp
+
 instance op'_faithful (F : C ⥤ D) [F.Faithful] : (Functor.op' F).Faithful where
   map_injective {X Y} {f g} h := by
     unfold Functor.op' at h
@@ -441,38 +473,6 @@ def biCompOpFunctor : (Cat ⥤ Cat) ⥤ (Cat ⥤ Cat) :=
 end Cat
 
 namespace Functor
-
-/--
-Natural isomorphism showing that `opHom'` is naturally isomorphic to the
-composition that converts through mathlib's `opHom`. This demonstrates that
-our `opHom'` is compatible with mathlib's `opHom` via the categorical
-isomorphisms between `op` and `op'`.
--/
-def opHomIsoOpHom' :
-    (op'ToOp ⋙ CategoryTheory.Functor.opHom C D ⋙ biCompToOp' :
-      (C ⥤ D)ᵒᵖ' ⥤ (Cᵒᵖ' ⥤ Dᵒᵖ')) ≅ opHom' where
-  hom := {
-    app := fun F => 𝟙 _
-    naturality := by
-      intros X Y f
-      ext Z
-      simp
-      rfl
-  }
-  inv := {
-    app := fun F => 𝟙 _
-    naturality := by
-      intros X Y f
-      ext Z
-      simp
-      rfl
-  }
-  hom_inv_id := by
-    ext F Z
-    simp
-  inv_hom_id := by
-    ext F Z
-    simp
 
 namespace MathlibExt
 
