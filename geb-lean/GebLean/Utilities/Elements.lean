@@ -422,49 +422,13 @@ def sliceEquivCopresheaf : Over F ≌ (F.Elements ⥤ Type w) where
 end CopresheafSliceEquivalence
 
 /--
-The type of objects for the contravariant category of elements of a functor `F : Cᵒᵖ' ⥤ Type`
-is a pair `(X : C, x : F.obj X)`.
+The contravariant category of elements for a functor `F : Cᵒᵖ' ⥤ Type`.
+This is simply the opposite of mathlib's category of elements.
 -/
-def Functor.ElementsContra' (F : Cᵒᵖ' ⥤ Type w) :=
-  Σ c : C, F.obj c
+def Functor.ElementsContra' (F : Cᵒᵖ' ⥤ Type w) := F.Elementsᵒᵖ'
 
-/--
-Constructor for the type `F.ElementsContra'` when `F` is a contravariant functor to types.
--/
-abbrev Functor.elementsContraMk (F : Cᵒᵖ' ⥤ Type w) (X : C) (x : F.obj X) :
-    F.ElementsContra' := ⟨X, x⟩
-
-lemma Functor.ElementsContra'.ext {F : Cᵒᵖ' ⥤ Type w} (x y : F.ElementsContra')
-    (h₁ : x.fst = y.fst) (h₂ : F.map (eqToHom h₁) x.snd = y.snd) : x = y := by
-  cases x
-  cases y
-  cases h₁
-  simp only [eqToHom_refl, FunctorToTypes.map_id_apply] at h₂
-  simp [h₂]
-
-/--
-The category structure on `F.ElementsContra'`, for `F : Cᵒᵖ' ⥤ Type`.
-A morphism `(X, x) ⟶ (Y, y)` is a morphism `f : X ⟶ Y` in `C`, such that `F.map f` takes `y` to `x`.
--/
-instance categoryOfElementsContra' (F : Cᵒᵖ' ⥤ Type w) : Category.{v} F.ElementsContra' where
-  Hom p q := { f : @Quiver.Hom Cᵒᵖ' _ q.1 p.1 // (F.map f) q.2 = p.2 }
-  id p := ⟨𝟙 p.1, congrFun (F.map_id p.fst) p.snd⟩
-  comp {X Y Z} f g := ⟨g.1 ≫ f.1, by
-    rw [F.map_comp]
-    simp only [types_comp_apply]
-    rw [g.2, f.2]⟩
-  id_comp := by
-    intros X Y f
-    ext
-    exact Category.comp_id f.val
-  comp_id := by
-    intros X Y f
-    ext
-    exact Category.id_comp f.val
-  assoc := by
-    intros W X Y Z f g h
-    ext
-    exact (Category.assoc h.val g.val f.val).symm
+instance (F : Cᵒᵖ' ⥤ Type w) : Category F.ElementsContra' :=
+  inferInstanceAs (Category F.Elementsᵒᵖ')
 
 /--
 The category of elements using mathlib's definition.
@@ -479,42 +443,19 @@ instance (F : Cᵒᵖ' ⥤ Type w) : Category F.ElementsContra :=
 
 /--
 The functor from `F.ElementsContra'` to `F.ElementsContra`.
-Maps `(X : C, x : F.obj X)` to `op ⟨op X : Cᵒᵖ, x : F.obj X⟩`.
 -/
 def elementsContra'ToElementsContra (F : Cᵒᵖ' ⥤ Type w) :
     F.ElementsContra' ⥤ F.ElementsContra where
-  obj p := Opposite.op ⟨Opposite.op p.fst, p.snd⟩
-  map {p q} f := by
-    -- f : p ⟶ q in F.ElementsContra'
-    -- f.val : q.1 ⟶ p.1 in Cᵒᵖ'
-    -- Need: Opposite.op ⟨Opposite.op p.fst, p.snd⟩ ⟶ Opposite.op ⟨Opposite.op q.fst, q.snd⟩
-    -- This is in ((opToOp' ⋙ F).Elements)ᵒᵖ
-    -- We construct the underlying morphism in Elements, then apply .op
-    let src : (opToOp' ⋙ F).Elements := ⟨Opposite.op q.fst, q.snd⟩
-    let tgt : (opToOp' ⋙ F).Elements := ⟨Opposite.op p.fst, p.snd⟩
-    let mor_in_elements : src ⟶ tgt := Subtype.mk (op'ToOp.map f.val) (by
-      -- Need: (opToOp' ⋙ F).map (op'ToOp.map f.val) q.snd = p.snd
-      -- This simplifies to F.map f.val q.snd = p.snd using op'ToOp_comp_opToOp'
-      convert f.property using 2)
-    exact mor_in_elements.op
+  obj p := Opposite.op ⟨op'ToOp.obj p.fst, p.snd⟩
+  map {p q} f := Opposite.op ⟨op'ToOp.map f.val, f.property⟩
 
 /--
 The functor from `F.ElementsContra` to `F.ElementsContra'`.
-Maps `op ⟨op X : Cᵒᵖ, x : F.obj X⟩` to `(X : C, x : F.obj X)`.
 -/
 def elementsContraToElementsContra' (F : Cᵒᵖ' ⥤ Type w) :
     F.ElementsContra ⥤ F.ElementsContra' where
-  obj p := ⟨p.unop.fst.unop, p.unop.snd⟩
-  map {p q} f := by
-    -- f : p ⟶ q in F.ElementsContra = ((opToOp' ⋙ F).Elements)ᵒᵖ
-    -- f.unop : q.unop ⟶ p.unop in (opToOp' ⋙ F).Elements
-    -- f.unop.val : q.unop.fst ⟶ p.unop.fst in Cᵒᵖ
-    -- Need morphism in ElementsContra':
-    --   ⟨p.unop.fst.unop, p.unop.snd⟩ to ⟨q.unop.fst.unop, q.unop.snd⟩
-    -- This needs: q.unop.fst.unop ⟶ p.unop.fst.unop in Cᵒᵖ'
-    refine Subtype.mk (opToOp'.map f.unop.val) ?_
-    -- Need: F.map (opToOp'.map f.unop.val) q.unop.snd = p.unop.snd
-    convert f.unop.property using 2
+  obj p := ⟨opToOp'.obj p.unop.fst, p.unop.snd⟩
+  map {p q} f := ⟨opToOp'.map f.unop.val, f.unop.property⟩
 
 /--
 The composition `elementsContra'ToElementsContra ⋙ elementsContraToElementsContra'`
@@ -536,8 +477,7 @@ lemma elementsContra'_roundtrip_eq_id (F : Cᵒᵖ' ⥤ Type w) :
     simp only [eqToHom_refl, Category.id_comp, Category.comp_id, Functor.id_map]
     apply Subtype.ext
     simp only [Functor.comp_map,
-               elementsContra'ToElementsContra, elementsContraToElementsContra',
-               Quiver.Hom.unop_op, Subtype.coe_mk]
+               elementsContra'ToElementsContra, elementsContraToElementsContra']
     rfl
 
 /--
@@ -558,8 +498,7 @@ lemma elementsContra_roundtrip_eq_id (F : Cᵒᵖ' ⥤ Type w) :
     apply Quiver.Hom.unop_inj
     apply Subtype.ext
     simp only [Functor.comp_map,
-               elementsContraToElementsContra', elementsContra'ToElementsContra,
-               Quiver.Hom.unop_op, Subtype.coe_mk]
+               elementsContraToElementsContra', elementsContra'ToElementsContra]
     rfl
 
 def elementsContraIso (F : Cᵒᵖ' ⥤ Type w) :
@@ -595,14 +534,14 @@ namespace CategoryOfElementsContra'
 
 /--
 Constructor for morphisms in the contravariant category of elements.
-Given `f : x.1 ⟶ y.1` in `C` such that `F.map f` takes `y.snd` to `x.snd`,
+Given `f : y.1 ⟶ x.1` in `Cᵒᵖ'` such that `F.map f` takes `y.snd` to `x.snd`,
 constructs a morphism `x ⟶ y` in `F.ElementsContra'`.
 -/
-def homMk {F : Cᵒᵖ' ⥤ Type w} (x y : F.ElementsContra') (f : x.1 ⟶ y.1)
+def homMk {F : Cᵒᵖ' ⥤ Type w} (x y : F.ElementsContra') (f : y.1 ⟶ x.1)
     (hf : F.map f y.snd = x.snd) : x ⟶ y :=
   ⟨f, hf⟩
 
-lemma homMk_val {F : Cᵒᵖ' ⥤ Type w} {x y : F.ElementsContra'} (f : x.1 ⟶ y.1)
+lemma homMk_val {F : Cᵒᵖ' ⥤ Type w} {x y : F.ElementsContra'} (f : y.1 ⟶ x.1)
     (hf : F.map f y.snd = x.snd) : (homMk x y f hf).val = f :=
   rfl
 
@@ -684,7 +623,13 @@ instance π_faithful (F : Cᵒᵖ' ⥤ Type w) : (π F).Faithful := by
 
 instance π_reflects_isomorphisms (F : Cᵒᵖ' ⥤ Type w) :
     (π F).ReflectsIsomorphisms := by
-  sorry
+  have h := π_eq_transferred F
+  rw [h]
+  unfold πTransferred
+  have : (elementsContra'ToElementsContra F).ReflectsIsomorphisms := inferInstance
+  have : (_root_.GebLean.Functor.unopFunctor
+    (CategoryOfElements.π (opToOp' ⋙ F))).ReflectsIsomorphisms := inferInstance
+  infer_instance
 
 /--
 Constructor for isomorphisms in the contravariant category of elements.
@@ -694,10 +639,18 @@ isomorphism transfer.
 @[simps]
 def isoMk {F : Cᵒᵖ' ⥤ Type w} (x y : F.ElementsContra')
     (e : x.1 ≅ y.1)
-    (he : F.map e.hom y.snd = x.snd) :
+    (he : F.map e.hom x.snd = y.snd) :
     x ≅ y where
-  hom := homMk x y e.hom he
-  inv := homMk y x e.inv (by sorry)
+  hom := homMk x y e.inv (by
+    have : F.map (e.hom ≫ e.inv) x.snd = F.map e.inv (F.map e.hom x.snd) := by
+      rw [F.map_comp]; rfl
+    rw [he] at this
+    rw [Iso.hom_inv_id] at this
+    simp only [F.map_id, types_id_apply] at this
+    exact this.symm)
+  inv := homMk y x e.hom he
+  hom_inv_id := by ext; simp [homMk]
+  inv_hom_id := by ext; simp [homMk]
 
 end CategoryOfElementsContra'
 
@@ -729,7 +682,14 @@ abbrev map {F G : Cᵒᵖ' ⥤ Type w} (α : F ⟶ G) :
 @[simp]
 theorem map_π {F G : Cᵒᵖ' ⥤ Type w} (α : F ⟶ G) :
     map α ⋙ π G = π F := by
-  sorry  -- Can be proven via definition unfolding
+  apply Functor.ext
+  case h_obj =>
+    intro X
+    rfl
+  case h_map =>
+    intros X Y f
+    simp only [Functor.comp_map, eqToHom_refl, Category.id_comp, Category.comp_id]
+    rfl
 
 end CategoryOfElementsContra'
 
@@ -807,12 +767,14 @@ private lemma counit_naturality_val (X : C) {p q : (coyoneda'.obj X).ElementsCon
     ((elementsToOver X ⋙ overToElements X).map g ≫
       (⟨𝟙 q.fst, by
         change (coyoneda'.obj X).map (𝟙 q.fst) q.snd = q.snd
-        rw [coyoneda'_obj_map, Category.id_comp]⟩ :
+        rw [coyoneda'_obj_map]
+        exact Category.id_comp q.snd⟩ :
         (elementsToOver X ⋙ overToElements X).obj q ⟶
         (𝟭 ((coyoneda'.obj X).ElementsContra')).obj q)).val =
     ((⟨𝟙 p.fst, by
         change (coyoneda'.obj X).map (𝟙 p.fst) p.snd = p.snd
-        rw [coyoneda'_obj_map, Category.id_comp]⟩ :
+        rw [coyoneda'_obj_map]
+        exact Category.id_comp p.snd⟩ :
         (elementsToOver X ⋙ overToElements X).obj p ⟶
         (𝟭 ((coyoneda'.obj X).ElementsContra')).obj p) ≫ g).val := by
   dsimp [elementsToOver, overToElements]
@@ -833,10 +795,10 @@ def overElementsCounitIso :
   NatIso.ofComponents
     (fun p => ⟨⟨𝟙 p.fst, by
                 change (coyoneda'.obj X).map (𝟙 p.fst) p.snd = p.snd
-                rw [coyoneda'_obj_map, Category.id_comp]⟩,
+                simp only [(coyoneda'.obj X).map_id, types_id_apply]⟩,
               ⟨𝟙 p.fst, by
                 change (coyoneda'.obj X).map (𝟙 p.fst) p.snd = p.snd
-                rw [coyoneda'_obj_map, Category.id_comp]⟩,
+                simp only [(coyoneda'.obj X).map_id, types_id_apply]⟩,
               by ext; exact counit_hom_comp_inv X p,
               by ext; exact counit_inv_comp_hom X p⟩)
     (fun g => by ext; exact counit_naturality_val X g)
@@ -889,8 +851,9 @@ The category `P.ElementsContra'ᵒᵖ'` reverses these morphisms, so morphisms
 `(Y, y) → (X, x)` in `P.ElementsContra'`, which are `f : X → Y` in `Cᵒᵖ'`
 with `P.map f x = y` - exactly matching `P.Elements`.
 -/
+def elementsToElementsContraOpEq : P.Elements = P.ElementsContra'ᵒᵖ' := rfl
 def elementsToElementsContraOp : P.Elements ⥤ P.ElementsContra'ᵒᵖ' where
-  obj p := ⟨p.fst, p.snd⟩
+  obj p := p
   map {p q} f := by
     -- f : p ⟶ q in P.Elements is f.val : p.fst ⟶ q.fst in Cᵒᵖ' with P.map f.val p.snd = q.snd
     -- Need: ⟨p.fst, p.snd⟩ ⟶ ⟨q.fst, q.snd⟩ in P.ElementsContra'ᵒᵖ'
