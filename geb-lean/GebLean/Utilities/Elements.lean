@@ -471,36 +471,50 @@ The category of elements using mathlib's definition.
 For `F : Cᵒᵖ' ⥤ Type w`, transport `F` to a functor `Cᵒᵖ ⥤ Type w` using `opToOp'`,
 then take mathlib's category of elements and reverse the morphisms (opposite).
 -/
-def Functor.ElementsContra (F : Cᵒᵖ' ⥤ Type w) := (F.Elements)ᵒᵖ'
+def Functor.ElementsContra (F : Cᵒᵖ' ⥤ Type w) :=
+  ((opToOp' ⋙ F).Elements)ᵒᵖ
 
 instance (F : Cᵒᵖ' ⥤ Type w) : Category F.ElementsContra :=
-  inferInstanceAs (Category F.Elementsᵒᵖ')
+  inferInstanceAs (Category ((opToOp' ⋙ F).Elements)ᵒᵖ)
 
 /--
 The functor from `F.ElementsContra'` to `F.ElementsContra`.
-Maps `(X : C, x : F.obj X)` to `⟨X : Cᵒᵖ', x⟩` in `(F.Elements)ᵒᵖ'`.
+Maps `(X : C, x : F.obj X)` to `op ⟨op X : Cᵒᵖ, x : F.obj X⟩`.
 -/
 def elementsContra'ToElementsContra (F : Cᵒᵖ' ⥤ Type w) :
     F.ElementsContra' ⥤ F.ElementsContra where
-  obj p := ⟨p.fst, p.snd⟩
-  map {p q} f := Subtype.mk f.val f.property
+  obj p := Opposite.op ⟨Opposite.op p.fst, p.snd⟩
+  map {p q} f := by
+    -- f : p ⟶ q in F.ElementsContra'
+    -- f.val : q.1 ⟶ p.1 in Cᵒᵖ'
+    -- Need: Opposite.op ⟨Opposite.op p.fst, p.snd⟩ ⟶ Opposite.op ⟨Opposite.op q.fst, q.snd⟩
+    -- This is in ((opToOp' ⋙ F).Elements)ᵒᵖ
+    -- We construct the underlying morphism in Elements, then apply .op
+    let src : (opToOp' ⋙ F).Elements := ⟨Opposite.op q.fst, q.snd⟩
+    let tgt : (opToOp' ⋙ F).Elements := ⟨Opposite.op p.fst, p.snd⟩
+    let mor_in_elements : src ⟶ tgt := Subtype.mk (op'ToOp.map f.val) (by
+      -- Need: (opToOp' ⋙ F).map (op'ToOp.map f.val) q.snd = p.snd
+      -- This simplifies to F.map f.val q.snd = p.snd using op'ToOp_comp_opToOp'
+      convert f.property using 2)
+    exact mor_in_elements.op
 
 /--
 The functor from `F.ElementsContra` to `F.ElementsContra'`.
-Maps `⟨X : Cᵒᵖ', x⟩` in `(F.Elements)ᵒᵖ'` to `(X : C, x : F.obj X)`.
+Maps `op ⟨op X : Cᵒᵖ, x : F.obj X⟩` to `(X : C, x : F.obj X)`.
 -/
 def elementsContraToElementsContra' (F : Cᵒᵖ' ⥤ Type w) :
     F.ElementsContra ⥤ F.ElementsContra' where
-  obj p := ⟨p.fst, p.snd⟩
+  obj p := ⟨p.unop.fst.unop, p.unop.snd⟩
   map {p q} f := by
-    -- f : p ⟶ q in F.ElementsContra = F.Elementsᵒᵖ'
-    -- In ᵒᵖ', this means f : q ⟶ p in F.Elements
-    -- f.val : q.fst ⟶ p.fst in Cᵒᵖ'
-    -- Need morphism in ElementsContra': p to q
-    -- This needs: q.fst ⟶ p.fst in Cᵒᵖ'
-    refine Subtype.mk f.val ?_
-    -- Need: F.map f.val q.snd = p.snd
-    exact f.property
+    -- f : p ⟶ q in F.ElementsContra = ((opToOp' ⋙ F).Elements)ᵒᵖ
+    -- f.unop : q.unop ⟶ p.unop in (opToOp' ⋙ F).Elements
+    -- f.unop.val : q.unop.fst ⟶ p.unop.fst in Cᵒᵖ
+    -- Need morphism in ElementsContra':
+    --   ⟨p.unop.fst.unop, p.unop.snd⟩ to ⟨q.unop.fst.unop, q.unop.snd⟩
+    -- This needs: q.unop.fst.unop ⟶ p.unop.fst.unop in Cᵒᵖ'
+    refine Subtype.mk (opToOp'.map f.unop.val) ?_
+    -- Need: F.map (opToOp'.map f.unop.val) q.unop.snd = p.unop.snd
+    convert f.unop.property using 2
 
 /--
 The composition `elementsContra'ToElementsContra ⋙ elementsContraToElementsContra'`
@@ -510,12 +524,20 @@ lemma elementsContra'_roundtrip_eq_id (F : Cᵒᵖ' ⥤ Type w) :
     elementsContra'ToElementsContra F ⋙ elementsContraToElementsContra' F = 𝟭 _ := by
   apply Functor.ext
   case h_obj =>
+    -- Objects: ⟨X, x⟩ → op ⟨op X, x⟩ → ⟨X, x⟩ = ⟨X, x⟩
     intro X
+    simp only [Functor.comp_obj, Functor.id_obj,
+               elementsContra'ToElementsContra, elementsContraToElementsContra']
+    -- Goal is now ⟨X.fst, X.snd⟩ = X, which is sigma eta
     cases X
     rfl
   case h_map =>
     intro X Y f
-    simp only [eqToHom_refl, Category.id_comp, Category.comp_id]
+    simp only [eqToHom_refl, Category.id_comp, Category.comp_id, Functor.id_map]
+    apply Subtype.ext
+    simp only [Functor.comp_map,
+               elementsContra'ToElementsContra, elementsContraToElementsContra',
+               Quiver.Hom.unop_op, Subtype.coe_mk]
     rfl
 
 /--
@@ -527,11 +549,17 @@ lemma elementsContra_roundtrip_eq_id (F : Cᵒᵖ' ⥤ Type w) :
   apply Functor.ext
   case h_obj =>
     intro X
-    cases X
+    simp only [Functor.comp_obj, Functor.id_obj,
+               elementsContraToElementsContra', elementsContra'ToElementsContra]
     rfl
   case h_map =>
     intro X Y f
-    simp only [eqToHom_refl, Category.id_comp, Category.comp_id]
+    simp only [eqToHom_refl, Category.id_comp, Category.comp_id, Functor.id_map]
+    apply Quiver.Hom.unop_inj
+    apply Subtype.ext
+    simp only [Functor.comp_map,
+               elementsContraToElementsContra', elementsContra'ToElementsContra,
+               Quiver.Hom.unop_op, Subtype.coe_mk]
     rfl
 
 def elementsContraIso (F : Cᵒᵖ' ⥤ Type w) :
@@ -630,7 +658,7 @@ isomorphisms.
 -/
 def πTransferred (F : Cᵒᵖ' ⥤ Type w) : F.ElementsContra' ⥤ C :=
   elementsContra'ToElementsContra F ⋙
-  _root_.GebLean.Functor.op' (CategoryOfElements.π F)
+  unopFunctor (CategoryOfElements.π (opToOp' ⋙ F))
 
 /--
 The forgetful functor from the contravariant category of elements,
