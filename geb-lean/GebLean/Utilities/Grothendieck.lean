@@ -42,6 +42,7 @@ open CategoryTheory GebLean
 
 variable {C : Type u} [Category.{v} C]
 variable {D : Type u₁} [Category.{v₁} D]
+variable (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂})
 
 /--
 The contravariant Grothendieck construction for a functor `F' : Cᵒᵖ' ⥤ Cat`
@@ -54,7 +55,7 @@ gives a category whose
 
 In the `ᵒᵖ'` form, the corresponding definition is:
 -/
-structure GrothendieckContra' (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) where
+structure GrothendieckContra' where
   /-- The underlying object in `C` -/
   base : C
   /-- The object in the fiber of the base object. -/
@@ -62,7 +63,7 @@ structure GrothendieckContra' (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) where
 
 namespace GrothendieckContra'
 
-variable {F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}}
+variable {F'}
 
 /-- A morphism in the contravariant Grothendieck category `F' : Cᵒᵖ' ⥤ Cat` consists of
 `base : X.base ⟶ Y.base` and `f.fiber : X.fiber ⟶ (F'.map base).obj Y.fiber`.
