@@ -271,6 +271,27 @@ def Functor.op' {C D : Type*} [Category C] [Category D] (F : C ⥤ D) :
   map_id X := F.map_id X
   map_comp f g := F.map_comp g f
 
+namespace Functor
+
+/--
+The functor `(C ⥤ D)ᵒᵖ' ⥤ (Cᵒᵖ' ⥤ Dᵒᵖ')` that makes "taking the opposite
+of a functor" functorial. This is the `op'` analogue of mathlib's `Functor.opHom`.
+-/
+def opHom' : (C ⥤ D)ᵒᵖ' ⥤ (Cᵒᵖ' ⥤ Dᵒᵖ') where
+  obj G := _root_.GebLean.Functor.op' G
+  map {G H} α := {
+    app := fun X => α.app X
+    naturality := fun X Y f => (α.naturality f).symm
+  }
+  map_id G := by
+    ext X
+    rfl
+  map_comp {G H K} α β := by
+    ext X
+    rfl
+
+end Functor
+
 namespace Cat
 
 /--
@@ -280,7 +301,7 @@ using the `op'` construction.
 @[simps]
 def opFunctor' : Cat.{v, u} ⥤ Cat.{v, u} where
   obj C := .of Cᵒᵖ'
-  map := Functor.op'
+  map := _root_.GebLean.Functor.op'
 
 /--
 The double application of `Cat.opFunctor'` is equal to the identity functor
