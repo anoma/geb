@@ -438,7 +438,7 @@ def elementsToElementsContraOpEq (F : Cᵒᵖ' ⥤ Type w) :
     rfl
 
 /--
-The categorical equivalence between `Over F` and presheaves on `F.ElementsContra'ᵒᵖ'`.
+The categorical equivalence between `Over F` and presheaves on `F.ElementsContra'`.
 -/
 def sliceEquivPresheaf (F : Cᵒᵖ' ⥤ Type w) :
   Over F ≌ (F.ElementsContra'ᵒᵖ' ⥤ Type w) :=
@@ -819,12 +819,6 @@ def overEquivElements : Over X ≌ (coyoneda'.obj X).ElementsContra' where
     exact functor_unitIso_comp_helper X f
 
 end OverEquivalence
-
-section PresheafSliceEquivalence
-
-variable (P : Cᵒᵖ' ⥤ Type w)
-
-end PresheafSliceEquivalence
 
 end ElementsContra'
 
