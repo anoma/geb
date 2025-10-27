@@ -366,8 +366,7 @@ lemma compAsSmallFunctorEquivalenceInverse_map_comp
       (⟨Z.base, AsSmall.down.obj Z.fiber⟩ : GrothendieckContra' F')) :
       (⟨X.base, AsSmall.down.obj X.fiber⟩ : GrothendieckContra' F') ⟶
       (⟨Z.base, AsSmall.down.obj Z.fiber⟩ : GrothendieckContra' F')) := by
-  apply GrothendieckContra'.ext <;> simp [CategoryStruct.comp]
-  sorry
+  apply GrothendieckContra'.ext <;> simp [CategoryStruct.comp, down_comp]
 
 /--
 Inverse of the equivalence relating Grothendieck constructions across universes.
@@ -409,8 +408,9 @@ lemma compAsSmallFunctorEquivalenceFunctor_map_comp
       (⟨Z.base, AsSmall.up.obj Z.fiber⟩ : GrothendieckContra' (F' ⋙ Cat.asSmallFunctor.{w}))) :
       (⟨X.base, AsSmall.up.obj X.fiber⟩ : GrothendieckContra' (F' ⋙ Cat.asSmallFunctor.{w})) ⟶
       (⟨Z.base, AsSmall.up.obj Z.fiber⟩ : GrothendieckContra' (F' ⋙ Cat.asSmallFunctor.{w}))) := by
-  apply GrothendieckContra'.ext <;> simp [CategoryStruct.comp]
-  sorry
+  apply GrothendieckContra'.ext <;> simp [CategoryStruct.comp, Functor.map_comp]
+  apply ULift.ext
+  simp [down_comp, AsSmall.up_map_down]
 
 /--
 The functor part of the equivalence relating Grothendieck constructions

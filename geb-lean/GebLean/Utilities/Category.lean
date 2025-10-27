@@ -177,6 +177,83 @@ abbrev categoryDataOfCategory (U : Type u) [Category.{v, u} U] :
     }
   }
 
+section EqToHom
+
+variable {C : Type u} [Category.{v} C]
+
+/--
+Composition of `eqToHom` with its symmetric gives identity.
+-/
+lemma eqToHom_comp_eqToHom_symm {X Y : C} (p : X = Y) :
+    eqToHom p ≫ eqToHom p.symm = 𝟙 X := by
+  cases p
+  simp
+
+/--
+Composition of symmetric `eqToHom` with the original gives identity.
+-/
+lemma eqToHom_symm_comp_eqToHom {X Y : C} (p : X = Y) :
+    eqToHom p.symm ≫ eqToHom p = 𝟙 Y := by
+  cases p
+  simp
+
+/--
+Two morphisms composed with `eqToHom` are equal if and only if
+the first morphism composed with the combined equality is equal to the second.
+-/
+lemma comp_eqToHom_eq_comp_eqToHom {X Y Z W : C}
+    (f : X ⟶ Y) (g : X ⟶ Z) (p : Y = W) (q : Z = W) :
+    f ≫ eqToHom p = g ≫ eqToHom q ↔
+    f ≫ eqToHom (p.trans q.symm) = g := by
+  constructor
+  · intro h
+    calc f ≫ eqToHom (p.trans q.symm)
+        = f ≫ (eqToHom p ≫ eqToHom q.symm) := by rw [← eqToHom_trans]
+      _ = (f ≫ eqToHom p) ≫ eqToHom q.symm := by rw [Category.assoc]
+      _ = (g ≫ eqToHom q) ≫ eqToHom q.symm := by rw [h]
+      _ = g ≫ (eqToHom q ≫ eqToHom q.symm) := by rw [← Category.assoc]
+      _ = g ≫ 𝟙 Z := by rw [eqToHom_comp_eqToHom_symm]
+      _ = g := by rw [Category.comp_id]
+  · intro h
+    calc f ≫ eqToHom p
+        = f ≫ (eqToHom (p.trans q.symm) ≫ eqToHom q) := by rw [← eqToHom_trans]
+      _ = (f ≫ eqToHom (p.trans q.symm)) ≫ eqToHom q := by rw [Category.assoc]
+      _ = g ≫ eqToHom q := by rw [h]
+
+/--
+Heterogeneous equality of morphisms is equivalent to equality after postcomposing
+with `eqToHom`.
+-/
+lemma heq_iff_comp_eqToHom {X Y Z : C} (f : X ⟶ Y) (g : X ⟶ Z) (p : Y = Z) :
+    HEq f g ↔ f ≫ eqToHom p = g := by
+  constructor
+  · intro h
+    cases p
+    simp
+    exact eq_of_heq h
+  · intro h
+    cases p
+    simp at h
+    exact heq_of_eq h
+
+/--
+Heterogeneous equality of morphisms is equivalent to equality after precomposing
+with `eqToHom`.
+-/
+lemma heq_iff_eqToHom_comp {X Y Z : C} (f : Y ⟶ Z) (g : X ⟶ Z) (p : X = Y) :
+    HEq f g ↔ eqToHom p ≫ f = g := by
+  constructor
+  · intro h
+    cases p
+    simp
+    exact eq_of_heq h
+  · intro h
+    cases p
+    simp at h
+    exact heq_of_eq h
+
+end EqToHom
+
 end GebLean
 
 namespace CategoryTheory
