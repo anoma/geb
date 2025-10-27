@@ -251,6 +251,10 @@ def transportIso (x : GrothendieckContra' F') {c : C} (α : x.base ≅ c) :
 
 end Transport
 
+section
+
+variable (F')
+
 /--
 The forgetful functor from `GrothendieckContra' F'` to `C`.
 -/
@@ -258,6 +262,8 @@ The forgetful functor from `GrothendieckContra' F'` to `C`.
 def forget : GrothendieckContra' F' ⥤ C where
   obj X := X.base
   map f := f.base
+
+end
 
 section Functoriality
 
@@ -299,8 +305,8 @@ theorem map_map (α : F' ⟶ G') {X Y : GrothendieckContra' F'} (f : X ⟶ Y) :
       (eqToHom (α.naturality f.base)).app Y.fiber⟩ := rfl
 
 theorem functor_comp_forget {α : F' ⟶ G'} :
-    GrothendieckContra'.map α ⋙ GrothendieckContra'.forget =
-    GrothendieckContra'.forget :=
+    GrothendieckContra'.map α ⋙ GrothendieckContra'.forget G' =
+    GrothendieckContra'.forget F' :=
   rfl
 
 theorem map_id_eq : map (𝟙 F') = 𝟙 (Cat.of <| GrothendieckContra' F') := by
@@ -458,8 +464,17 @@ The contravariant Grothendieck construction as a functor from the functor
 category `(Cᵒᵖ' ⥤ Cat)` to the over category over the base category.
 -/
 def functor {E : Type u} [Category.{v} E] :
-    (Eᵒᵖ' ⥤ Cat.{v, u}) ⥤ Over (T := Cat.{v, u}) (Cat.of Eᵒᵖ') :=
-  sorry
+    (Eᵒᵖ' ⥤ Cat.{v, u}) ⥤ Over (T := Cat.{v, u}) (Cat.of E) where
+  obj F' := Over.mk (X := Cat.of E) (Y := Cat.of (GrothendieckContra' F'))
+                    (GrothendieckContra'.forget F')
+  map {_ _} α := Over.homMk (X := Cat.of E) (GrothendieckContra'.map α)
+                            GrothendieckContra'.functor_comp_forget
+  map_id F' := by
+    ext
+    exact GrothendieckContra'.map_id_eq (F' := F')
+  map_comp α β := by
+    simp [GrothendieckContra'.map_comp_eq α β]
+    rfl
 
 section TypeToCategory
 
