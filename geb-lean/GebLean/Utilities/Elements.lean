@@ -610,7 +610,7 @@ def π (F : Cᵒᵖ' ⥤ Type w) : F.ElementsContra' ⥤ C :=
 
 instance π_faithful (F : Cᵒᵖ' ⥤ Type w) : (π F).Faithful := by
   unfold π
-  exact Functor.op'_faithful (CategoryOfElements.π F)
+  exact op'_faithful (CategoryOfElements.π F)
 
 /--
 The contravariant projection functor reflects isomorphisms.
@@ -618,7 +618,7 @@ The contravariant projection functor reflects isomorphisms.
 instance π_reflects_isomorphisms (F : Cᵒᵖ' ⥤ Type w) :
     (π F).ReflectsIsomorphisms := by
   unfold π
-  exact Functor.op'_reflects_isomorphisms (CategoryOfElements.π F)
+  exact op'_reflects_isomorphisms (CategoryOfElements.π F)
 
 /--
 Constructor for isomorphisms in the contravariant category of elements.
@@ -662,7 +662,7 @@ abbrev map {F G : Cᵒᵖ' ⥤ Type w} (α : F ⟶ G) :
 theorem map_π {F G : Cᵒᵖ' ⥤ Type w} (α : F ⟶ G) :
     map α ⋙ π G = π F := by
   unfold map NatTrans.mapElementsContra' π
-  rw [← Functor.op'_comp]
+  rw [← op'_comp]
   rfl
 
 end CategoryOfElementsContra'
