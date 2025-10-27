@@ -577,6 +577,20 @@ def elementsContraEquiv (F : Cᵒᵖ' ⥤ Type w) :
     F.ElementsContra' ≌ F.ElementsContra :=
   Cat.equivOfIso (elementsContraIso F)
 
+instance (F : Cᵒᵖ' ⥤ Type w) : (elementsContra'ToElementsContra F).Faithful :=
+  inferInstanceAs (elementsContraEquiv F).functor.Faithful
+
+instance (F : Cᵒᵖ' ⥤ Type w) : (elementsContraToElementsContra' F).Faithful :=
+  inferInstanceAs (elementsContraEquiv F).inverse.Faithful
+
+instance (F : Cᵒᵖ' ⥤ Type w) :
+    (elementsContra'ToElementsContra F).ReflectsIsomorphisms :=
+  inferInstanceAs (elementsContraEquiv F).functor.ReflectsIsomorphisms
+
+instance (F : Cᵒᵖ' ⥤ Type w) :
+    (elementsContraToElementsContra' F).ReflectsIsomorphisms :=
+  inferInstanceAs (elementsContraEquiv F).inverse.ReflectsIsomorphisms
+
 namespace CategoryOfElementsContra'
 
 /--
@@ -650,23 +664,26 @@ def π (F : Cᵒᵖ' ⥤ Type w) : F.ElementsContra' ⥤ C where
 Our explicit π functor equals the transferred one from mathlib.
 -/
 theorem π_eq_transferred (F : Cᵒᵖ' ⥤ Type w) : π F = πTransferred F := by
-  sorry
+  apply Functor.ext
+  case h_obj =>
+    intro X
+    rfl
+  case h_map =>
+    intro X Y f
+    simp only [eqToHom_refl, Category.id_comp, Category.comp_id]
+    rfl
 
 instance π_faithful (F : Cᵒᵖ' ⥤ Type w) : (π F).Faithful := by
   have h := π_eq_transferred F
   rw [h]
   unfold πTransferred
-  -- The composition is faithful if both functors are faithful
-  -- elementsContra'ToElementsContra F is an isomorphism equivalence, hence faithful
-  -- unopFunctor (CategoryOfElements.π (opToOp' ⋙ F)) is faithful (by instance)
-  sorry
+  have : (elementsContra'ToElementsContra F).Faithful := inferInstance
+  have : (_root_.GebLean.Functor.unopFunctor
+    (CategoryOfElements.π (opToOp' ⋙ F))).Faithful := inferInstance
+  infer_instance
 
 instance π_reflects_isomorphisms (F : Cᵒᵖ' ⥤ Type w) :
     (π F).ReflectsIsomorphisms := by
-  have h := π_eq_transferred F
-  rw [h]
-  unfold πTransferred
-  -- Both functors reflect isomorphisms
   sorry
 
 /--
@@ -680,9 +697,7 @@ def isoMk {F : Cᵒᵖ' ⥤ Type w} (x y : F.ElementsContra')
     (he : F.map e.hom y.snd = x.snd) :
     x ≅ y where
   hom := homMk x y e.hom he
-  inv := homMk y x e.inv (by
-    -- This can be proven by composing e.inv after e.hom and using isomorphism laws
-    sorry)
+  inv := homMk y x e.inv (by sorry)
 
 end CategoryOfElementsContra'
 
