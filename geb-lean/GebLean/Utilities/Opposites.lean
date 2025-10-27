@@ -210,15 +210,22 @@ instance : Coe (Cᵒᵖ' ⥤ Dᵒᵖ') (Cᵒᵖ ⥤ Dᵒᵖ) where
 /--
 An isomorphism in `C` is an isomorphism in `Cᵒᵖ'`.
 -/
-def isoToOp' {X Y : C} :
-  ((X : C) ≅ (Y : C)) -> ((X : Cᵒᵖ') ≅ (Y : Cᵒᵖ')) := id
-def isoFromOp' {X Y : Cᵒᵖ'} :
-  ((X : Cᵒᵖ') ≅ (Y : Cᵒᵖ')) -> ((X : C) ≅ (Y : C)) := id
+def isoToOp' {X Y : C} (i : @Iso C _ X Y) : @Iso Cᵒᵖ' _ X Y where
+  hom := i.inv
+  inv := i.hom
+  hom_inv_id := i.hom_inv_id
+  inv_hom_id := i.inv_hom_id
 
-instance {X Y : C} : Coe ((X : C) ≅ (Y : C)) ((X : Cᵒᵖ') ≅ (Y : Cᵒᵖ')) where
+def isoFromOp' {X Y : Cᵒᵖ'} (i : @Iso Cᵒᵖ' _ X Y) : @Iso C _ X Y where
+  hom := i.inv
+  inv := i.hom
+  hom_inv_id := i.hom_inv_id
+  inv_hom_id := i.inv_hom_id
+
+instance {X Y : C} : Coe (@Iso C _ X Y) (@Iso Cᵒᵖ' _ X Y) where
   coe := isoToOp'
 
-instance {X Y : Cᵒᵖ'} : Coe ((X : Cᵒᵖ') ≅ (Y : Cᵒᵖ')) ((X : C) ≅ (Y : C)) where
+instance {X Y : Cᵒᵖ'} : Coe (@Iso Cᵒᵖ' _ X Y) (@Iso C _ X Y) where
   coe := isoFromOp'
 
 variable {D : Type u₁} [Category.{v₁} D]
