@@ -311,6 +311,7 @@ theorem functor_comp_forget {α : F' ⟶ G'} :
     GrothendieckContra'.forget F' :=
   rfl
 
+@[simp]
 theorem map_id_eq : map (𝟙 F') = 𝟙 (Cat.of <| GrothendieckContra' F') := by
   fapply Functor.ext
   · intro X
@@ -322,6 +323,7 @@ theorem map_id_eq : map (𝟙 F') = 𝟙 (Cat.of <| GrothendieckContra' F') := b
 def mapIdIso : map (𝟙 F') ≅ 𝟙 (Cat.of <| GrothendieckContra' F') :=
   eqToIso map_id_eq
 
+@[simp]
 theorem map_comp_eq (α : F' ⟶ G') (β : G' ⟶ H') :
     map (α ≫ β) = map α ⋙ map β := by
   fapply Functor.ext
