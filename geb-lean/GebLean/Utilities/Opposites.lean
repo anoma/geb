@@ -425,6 +425,19 @@ def opFunctorIsoOpFunctor' : Cat.opFunctor.{v, u} ≅ opFunctor'.{v, u} where
     change catOfOp'ToOp ⋙ catOfOpToOp' = 𝟭 _
     exact op'ToOp_comp_opToOp'
 
+/--
+Functor-category endofunctors induced by precomposition and
+postcomposition with `opFunctor'`.
+-/
+def preCompOpFunctor' : (Cat ⥤ D) ⥤ (Cat ⥤ D) :=
+  (Functor.whiskeringLeft Cat Cat D).obj opFunctor'
+
+def postCompOpFunctor' : (C ⥤ Cat) ⥤ (C ⥤ Cat) :=
+  (Functor.whiskeringRight C Cat Cat).obj opFunctor'
+
+def biCompOpFunctor : (Cat ⥤ Cat) ⥤ (Cat ⥤ Cat) :=
+  preCompOpFunctor' ⋙ postCompOpFunctor'
+
 end Cat
 
 namespace Functor
