@@ -461,6 +461,8 @@ def opHomIsoOpHom' :
     ext F Z
     simp
 
+namespace MathlibExt
+
 /--
 Functor from `Xᵒᵖ ⥤ Y` constructed by taking the opposite of a functor
 `G : X ⥤ Yᵒᵖ` and postcomposing with the involutive isomorphism `unopUnop`.
@@ -474,6 +476,8 @@ instance unopFunctor_faithful {X Y : Type _} [Category X] [Category Y]
     (G : X ⥤ Yᵒᵖ) [G.Faithful] : (unopFunctor G).Faithful := by
   unfold unopFunctor
   infer_instance
+
+end MathlibExt
 
 end Functor
 
