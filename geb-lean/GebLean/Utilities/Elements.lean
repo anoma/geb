@@ -628,26 +628,70 @@ theorem map_snd {F : Cᵒᵖ' ⥤ Type w} {p q : F.ElementsContra'}
   f.property
 
 /--
+Helper: Functor from `Xᵒᵖ ⥤ Y` by composing a functor `G : X ⥤ Yᵒᵖ` with opposite
+isomorphisms.
+-/
+def unopFunctor {X Y : Type _} [Category X] [Category Y] (G : X ⥤ Yᵒᵖ) : Xᵒᵖ ⥤ Y where
+  obj x := opToOp'.obj (G.obj x.unop)
+  map f := opToOp'.map (G.map f.unop)
+
+instance unopFunctor_faithful {X Y : Type _} [Category X] [Category Y]
+    (G : X ⥤ Yᵒᵖ) [G.Faithful] : (unopFunctor G).Faithful where
+  map_injective {_ _} := by
+    intro f g h
+    apply Opposite.unop_injective
+    apply G.map_injective
+    apply Opposite.unop_injective
+    -- opToOp'.map is definitionally the identity on morphisms
+    exact h
+
+instance unopFunctor_reflects_iso {X Y : Type _} [Category X] [Category Y]
+    (G : X ⥤ Yᵒᵖ) [G.ReflectsIsomorphisms] :
+    (unopFunctor G).ReflectsIsomorphisms where
+  reflects {_ _} f hf := by
+    sorry  -- Transfer through the isomorphisms
+
+/--
+The forgetful functor from the contravariant category of elements,
+transferred from mathlib's `CategoryOfElements.π` through the categorical
+isomorphisms.
+-/
+def πTransferred (F : Cᵒᵖ' ⥤ Type w) : F.ElementsContra' ⥤ C :=
+  elementsContra'ToElementsContra F ⋙
+  unopFunctor (CategoryOfElements.π (opToOp' ⋙ F))
+
+/--
 The forgetful functor from the contravariant category of elements,
 which forgets the element and keeps only the object.
-This is transferred from mathlib's `CategoryOfElements.π`, but we give an
-explicit definition for computational purposes.
+We give an explicit definition that is computationally efficient.
 -/
 @[simps]
 def π (F : Cᵒᵖ' ⥤ Type w) : F.ElementsContra' ⥤ C where
   obj X := X.1
   map f := f.val
 
-instance π_faithful (F : Cᵒᵖ' ⥤ Type w) : (π F).Faithful where
+/--
+Our explicit π functor equals the transferred one from mathlib.
+-/
+theorem π_eq_transferred (F : Cᵒᵖ' ⥤ Type w) : π F = πTransferred F := by
+  sorry
+
+instance π_faithful (F : Cᵒᵖ' ⥤ Type w) : (π F).Faithful := by
+  have h := π_eq_transferred F
+  rw [h]
+  unfold πTransferred
+  -- The composition is faithful if both functors are faithful
+  -- elementsContra'ToElementsContra F is an isomorphism equivalence, hence faithful
+  -- unopFunctor (CategoryOfElements.π (opToOp' ⋙ F)) is faithful (by instance)
+  sorry
 
 instance π_reflects_isomorphisms (F : Cᵒᵖ' ⥤ Type w) :
-    (π F).ReflectsIsomorphisms where
-  reflects {X Y} f hf := by
-    -- Transfer reflects property from mathlib via the isomorphism
-    let f' := (elementsContra'ToElementsContra F).map f
-    have hf' : IsIso f' := by
-      sorry  -- This should follow from the isomorphism
-    sorry  -- Use hf' and mathlib's reflects to construct IsIso f
+    (π F).ReflectsIsomorphisms := by
+  have h := π_eq_transferred F
+  rw [h]
+  unfold πTransferred
+  -- Both functors reflect isomorphisms
+  sorry
 
 /--
 Constructor for isomorphisms in the contravariant category of elements.
