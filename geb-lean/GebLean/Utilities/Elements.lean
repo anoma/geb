@@ -609,25 +609,16 @@ def π (F : Cᵒᵖ' ⥤ Type w) : F.ElementsContra' ⥤ C :=
   Functor.op' (CategoryOfElements.π F)
 
 instance π_faithful (F : Cᵒᵖ' ⥤ Type w) : (π F).Faithful := by
-  unfold π Functor.op'
-  constructor
-  intros X Y f g h
-  exact (CategoryOfElements.π F).map_injective h
+  unfold π
+  exact Functor.op'_faithful (CategoryOfElements.π F)
 
 /--
 The contravariant projection functor reflects isomorphisms.
-
-This proof is currently incomplete. The challenge is that we need to transfer
-an `IsIso` instance from `C` to `Cᵒᵖ'` and then use the fact that
-`CategoryOfElements.π F` reflects isomorphisms.
 -/
 instance π_reflects_isomorphisms (F : Cᵒᵖ' ⥤ Type w) :
-    (π F).ReflectsIsomorphisms where
-  reflects {X Y} f hf := by
-    unfold π Functor.op' at hf
-    simp only at hf
-    haveI : (CategoryOfElements.π F).ReflectsIsomorphisms := inferInstance
-    sorry
+    (π F).ReflectsIsomorphisms := by
+  unfold π
+  exact Functor.op'_reflects_isomorphisms (CategoryOfElements.π F)
 
 /--
 Constructor for isomorphisms in the contravariant category of elements.
