@@ -650,7 +650,8 @@ Associativity version of `pre_comp_map`.
 lemma pre_comp_map_assoc (G : D ⥤ C) {H : Cᵒᵖ' ⥤ Cat} (α : F' ⟶ H) {A : Type*}
     [Category A] (K : GrothendieckContra' H ⥤ A) :
     pre F' G ⋙ map α ⋙ K = map (Functor.whiskerLeft (functorOp'Obj G) α) ⋙
-      pre H G ⋙ K := sorry
+      pre H G ⋙ K := by
+  rw [← Functor.assoc, pre_comp_map, Functor.assoc]
 
 end PreWithMorphisms
 
@@ -687,8 +688,12 @@ When `G` is an equivalence, `pre G` is also an equivalence.
 -/
 def preEquivalence (G : D ≌ C) :
     GrothendieckContra' (functorOp'Obj G.functor ⋙ F') ≌
-    GrothendieckContra' F' :=
-  sorry
+    GrothendieckContra' F' where
+  functor := pre F' G.functor
+  inverse := preInv F' G
+  unitIso := sorry
+  counitIso := preNatIso F' G.counitIso.symm |>.symm
+  functor_unitIso_comp := sorry
 
 variable {F'} in
 /--
@@ -718,7 +723,10 @@ def ι (c : C) : F'.obj c ⥤ GrothendieckContra' F' where
   obj f := ⟨c, f⟩
   map φ := ⟨𝟙 c, eqToHom (Functor.congr_obj (F'.map_id c).symm _) ≫
     (F'.map (𝟙 c)).map φ⟩
-  map_id f := sorry
+  map_id f := by
+    fapply ext
+    · rfl
+    · sorry
   map_comp φ ψ := sorry
 
 /--
