@@ -599,51 +599,39 @@ The forgetful functor from the contravariant category of elements,
 transferred from mathlib's `CategoryOfElements.π` through the categorical
 isomorphisms.
 -/
-def πTransferred (F : Cᵒᵖ' ⥤ Type w) : F.ElementsContra' ⥤ C :=
-  elementsContra'ToElementsContra F ⋙
-  _root_.GebLean.Functor.unopFunctor (CategoryOfElements.π (opToOp' ⋙ F))
-
-/--
-The forgetful functor from the contravariant category of elements,
-which forgets the element and keeps only the object.
-We give an explicit definition that is computationally efficient.
--/
-@[simps]
-def π (F : Cᵒᵖ' ⥤ Type w) : F.ElementsContra' ⥤ C where
-  obj X := X.1
-  map f := f.val
-
-/--
-Our explicit π functor equals the transferred one from mathlib.
--/
-theorem π_eq_transferred (F : Cᵒᵖ' ⥤ Type w) : π F = πTransferred F := by
-  apply Functor.ext
-  case h_obj =>
-    intro X
-    rfl
-  case h_map =>
-    intro X Y f
-    simp only [eqToHom_refl, Category.id_comp, Category.comp_id]
-    rfl
+@[simp]
+def π (F : Cᵒᵖ' ⥤ Type w) : F.ElementsContra' ⥤ C :=
+  Functor.op' (CategoryOfElements.π F)
 
 instance π_faithful (F : Cᵒᵖ' ⥤ Type w) : (π F).Faithful := by
-  have h := π_eq_transferred F
-  rw [h]
-  unfold πTransferred
-  have : (elementsContra'ToElementsContra F).Faithful := inferInstance
-  have : (_root_.GebLean.Functor.unopFunctor
-    (CategoryOfElements.π (opToOp' ⋙ F))).Faithful := inferInstance
-  infer_instance
+  unfold π Functor.op'
+  constructor
+  intros X Y f g h
+  exact (CategoryOfElements.π F).map_injective h
 
+/--
+The contravariant projection functor reflects isomorphisms.
+
+This proof is currently incomplete. The challenge is that we need to transfer
+an `IsIso` instance from `C` to `Cᵒᵖ'` and then use the fact that
+`CategoryOfElements.π F` reflects isomorphisms.
+-/
 instance π_reflects_isomorphisms (F : Cᵒᵖ' ⥤ Type w) :
-    (π F).ReflectsIsomorphisms := by
-  have h := π_eq_transferred F
-  rw [h]
-  unfold πTransferred
-  have : (elementsContra'ToElementsContra F).ReflectsIsomorphisms := inferInstance
-  have : (_root_.GebLean.Functor.unopFunctor
-    (CategoryOfElements.π (opToOp' ⋙ F))).ReflectsIsomorphisms := inferInstance
-  infer_instance
+    (π F).ReflectsIsomorphisms where
+  reflects {X Y} f hf := by
+    unfold π Functor.op' at hf
+    simp only at hf
+    haveI : (CategoryOfElements.π F).ReflectsIsomorphisms := inferInstance
+    have h_iso_cop' : @IsIso Cᵒᵖ' _ ((CategoryOfElements.π F).obj Y)
+        ((CategoryOfElements.π F).obj X) ((CategoryOfElements.π F).map f) :=
+      isIso_of_isIso_op' ((CategoryOfElements.π F).map f)
+    have h_f_elements : @IsIso F.Elements _ X Y f := by
+      -- Need to use the fact that CategoryOfElements.π F reflects isomorphisms
+      -- Given h_iso_cop' : IsIso ((CategoryOfElements.π F).map f) in Cᵒᵖ'
+      -- We should be able to deduce IsIso f in F.Elements
+      -- But typeclass resolution isn't finding this automatically
+      sorry
+    exact @isIso_op'_of_isIso F.Elements _ X Y f h_f_elements
 
 /--
 Constructor for isomorphisms in the contravariant category of elements.

@@ -272,6 +272,23 @@ def Functor.op' {C D : Type*} [Category C] [Category D] (F : C ⥤ D) :
   map_id X := F.map_id X
   map_comp f g := F.map_comp g f
 
+/--
+For morphisms, isomorphisms transfer between a category and its `op'` opposite.
+If `f : Y ⟶ X` is an isomorphism in `C`, then `f : X ⟶ Y` is an isomorphism
+in `Cᵒᵖ'` (where the morphism is viewed as going in the opposite direction).
+-/
+lemma isIso_op'_of_isIso {C : Type*} [Category C] {X Y : C} (f : Y ⟶ X)
+    [h : IsIso f] : @IsIso Cᵒᵖ' _ X Y f :=
+  ⟨@inv C _ Y X f h, IsIso.inv_hom_id f, IsIso.hom_inv_id f⟩
+
+/--
+Conversely, if `f` is an isomorphism in `Cᵒᵖ'`, then it is also an isomorphism
+in `C`.
+-/
+lemma isIso_of_isIso_op' {C : Type*} [Category C] {X Y : C} (f : Y ⟶ X)
+    [h : @IsIso Cᵒᵖ' _ X Y f] : IsIso f :=
+  ⟨@inv Cᵒᵖ' _ X Y f _, @IsIso.inv_hom_id Cᵒᵖ' _ X Y f _, @IsIso.hom_inv_id Cᵒᵖ' _ X Y f _⟩
+
 namespace Functor
 
 /--
