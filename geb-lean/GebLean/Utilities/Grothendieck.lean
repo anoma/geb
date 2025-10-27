@@ -619,7 +619,13 @@ def preNatIso {G H : D ⥤ C} (α : G ≅ H) :
       fapply ext
       · simp only [Iso.symm_hom, Functor.comp_map]
         exact α.hom.naturality f.base
-      · sorry)
+      · let hn := α.hom.naturality f.base
+        unfold transportIso
+        unfold isoMk
+        unfold pre
+        simp only [Iso.symm_hom, Functor.comp_map]
+        simp
+        sorry)
 
 /--
 The weak inverse to `pre` when `G` is an equivalence.
