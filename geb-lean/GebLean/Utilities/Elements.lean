@@ -622,14 +622,7 @@ instance π_reflects_isomorphisms (F : Cᵒᵖ' ⥤ Type w) :
     unfold π Functor.op' at hf
     simp only at hf
     haveI : (CategoryOfElements.π F).ReflectsIsomorphisms := inferInstance
-    have h_iso_cop' : @IsIso Cᵒᵖ' _ ((CategoryOfElements.π F).obj Y)
-        ((CategoryOfElements.π F).obj X) ((CategoryOfElements.π F).map f) :=
-      -- Need to use the fact that CategoryOfElements.π F reflects isomorphisms
-      -- Given h_iso_cop' : IsIso ((CategoryOfElements.π F).map f) in Cᵒᵖ'
-      -- We should be able to deduce IsIso f in F.Elements
-      -- But typeclass resolution isn't finding this automatically
-      sorry
-    exact @isIso_op'_of_isIso F.Elements _ X Y f h_f_elements
+    sorry
 
 /--
 Constructor for isomorphisms in the contravariant category of elements.
