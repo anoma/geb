@@ -245,6 +245,7 @@ def isoMk {X Y : GrothendieckContra' F'} (e₁ : X.base ≅ Y.base)
 /--
 Create an isomorphism between a transported element and the original.
 -/
+@[simps!]
 def transportIso (x : GrothendieckContra' F') {c : C} (α : x.base ≅ c) :
     x.transport α.inv ≅ x :=
   isoMk α.symm (eqToIso (by simp [transport]))
@@ -273,6 +274,7 @@ variable {F' G' H' : Cᵒᵖ' ⥤ Cat}
 A natural transformation `α : F' ⟶ G'` induces a functor between the corresponding
 contravariant Grothendieck constructions.
 -/
+@[simps!]
 def map (α : F' ⟶ G') : GrothendieckContra' F' ⥤ GrothendieckContra' G' where
   obj X := ⟨X.base, (α.app X.base).obj X.fiber⟩
   map {X Y} f := ⟨f.base, (α.app X.base).map f.fiber ≫
@@ -611,7 +613,13 @@ An isomorphism between functors `α : G ≅ H` induces an isomorphism between
 def preNatIso {G H : D ⥤ C} (α : G ≅ H) :
     pre F' G ≅ map (Functor.whiskerRight (functorOp'.map α.inv) F') ⋙
       (pre F' H) :=
-  sorry
+  NatIso.ofComponents
+    (fun X => (transportIso ⟨G.obj X.base, X.fiber⟩ (α.app X.base)).symm)
+    (fun f => by
+      fapply ext
+      · simp only [Iso.symm_hom, Functor.comp_map]
+        exact α.hom.naturality f.base
+      · sorry)
 
 /--
 The weak inverse to `pre` when `G` is an equivalence.
