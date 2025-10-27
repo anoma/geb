@@ -248,7 +248,7 @@ Create an isomorphism between a transported element and the original.
 @[simps!]
 def transportIso (x : GrothendieckContra' F') {c : C} (α : x.base ≅ c) :
     x.transport α.inv ≅ x :=
-  isoMk α.symm (eqToIso (by simp [transport]))
+  isoMk α.symm (Iso.refl _)
 
 end Transport
 
@@ -623,8 +623,8 @@ def preNatIso {G H : D ⥤ C} (α : G ≅ H) :
         unfold transportIso
         unfold isoMk
         unfold pre
-        simp only [Iso.symm_hom, Functor.comp_map]
-        simp
+        simp only [Iso.symm_hom, Functor.comp_map, Iso.refl_hom, Iso.refl_inv]
+        simp [transport_base, transport_fiber]
         sorry)
 
 /--
