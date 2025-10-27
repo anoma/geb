@@ -429,8 +429,11 @@ Equivalence relating Grothendieck constructions across universes, showing that
 the construction respects universe scaling.
 -/
 def compAsSmallFunctorEquivalence :
-    GrothendieckContra' F' ≌ GrothendieckContra' (F' ⋙ Cat.asSmallFunctor.{w}) :=
-  sorry
+    GrothendieckContra' F' ≌ GrothendieckContra' (F' ⋙ Cat.asSmallFunctor.{w}) where
+  functor := compAsSmallFunctorEquivalenceFunctor
+  inverse := compAsSmallFunctorEquivalenceInverse
+  unitIso := Iso.refl _
+  counitIso := Iso.refl _
 
 /--
 Natural isomorphism for whiskering with universe-scaling functor.
