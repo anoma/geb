@@ -212,6 +212,30 @@ def grothendieckContraIsoInvMap {C0 : Type} [Category C0] (F0 : C0ᵒᵖ' ⥤ Ca
     (X ⟶ Y) → (grothendieckContraIsoInvObj F0 X ⟶ grothendieckContraIsoInvObj F0 Y) :=
   fun f => ⟨f.base, f.fiber⟩
 
+theorem grothendieckContraIsoHomInvObj {C0 : Type} [Category C0] (F0 : C0ᵒᵖ' ⥤ Cat)
+    (X : GrothendieckContra F0) :
+    grothendieckContraIsoInvObj F0 (grothendieckContraIsoHomObj F0 X) = X := by
+  cases X
+  rfl
+
+theorem grothendieckContraIsoInvHomObj {C0 : Type} [Category C0] (F0 : C0ᵒᵖ' ⥤ Cat)
+    (X : GrothendieckContra' F0) :
+    grothendieckContraIsoHomObj F0 (grothendieckContraIsoInvObj F0 X) = X := by
+  cases X
+  rfl
+
+theorem grothendieckContraIsoHomInvMap {C0 : Type} [Category C0] (F0 : C0ᵒᵖ' ⥤ Cat)
+    {X Y : GrothendieckContra F0} (f : X ⟶ Y) :
+    grothendieckContraIsoInvMap F0 (grothendieckContraIsoHomMap F0 f) = f := by
+  cases f
+  rfl
+
+theorem grothendieckContraIsoInvHomMap {C0 : Type} [Category C0] (F0 : C0ᵒᵖ' ⥤ Cat)
+    {X Y : GrothendieckContra' F0} (f : X ⟶ Y) :
+    grothendieckContraIsoHomMap F0 (grothendieckContraIsoInvMap F0 f) = f := by
+  cases f
+  rfl
+
 end Isomorphism
 
 section Transport
