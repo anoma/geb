@@ -40,10 +40,10 @@ def CategoryOp' (C : Type u) : Type u := C
 
 notation:max C "ᵒᵖ'" => CategoryOp' C
 
-instance [Quiver.{v} C] : Quiver.{v} (CategoryOp' C) where
+instance [Quiver.{v, u} C] : Quiver.{v, u} (CategoryOp' C) where
   Hom X Y := @Quiver.Hom C _ Y X
 
-instance CategoryOp'Inst [CI : Category.{v} C] : Category.{v} (CategoryOp' C) where
+instance CategoryOp'Inst [CI : Category.{v, u} C] : Category.{v, u} (CategoryOp' C) where
   id X := @CategoryStruct.id C _ X
   comp f g := @CategoryStruct.comp C _ _ _ _ g f
   id_comp f := @Category.comp_id C _ _ _ f
@@ -378,9 +378,11 @@ namespace Cat
 The endofunctor `Cat ⥤ Cat` assigning to each category its opposite category
 using the `op'` construction.
 -/
+def opFunctorObj' (E : Cat.{v, u}) : Cat.{v, u} := .of Eᵒᵖ'
+
 @[simps]
 def opFunctor' : Cat.{v, u} ⥤ Cat.{v, u} where
-  obj C := .of Cᵒᵖ'
+  obj := opFunctorObj'
   map := _root_.GebLean.Functor.op'
 
 /--
@@ -404,17 +406,16 @@ def opFunctor'Involutive : opFunctor'.{v, u} ⋙ opFunctor'.{v, u} ≅ 𝟭 _ :=
   eqToIso opFunctor'_comp_self_eq_id
 
 /--
-The equivalence `Cat ≌ Cat` associating each category with its opposite
+The isomorphism `Cat ≌ Cat` associating each category with its opposite
 category using `op'`. Both the unit and counit are derived from the equality
-`opFunctor'_comp_self_eq_id`, showing that this equivalence is actually an
-equality (strict involution) rather than just a natural isomorphism.
+`opFunctor'_comp_self_eq_id`, showing that this isomorphism is actually an
+equality (strict involution) rather than just an equivalence.
 -/
-@[simps]
-def opEquivalence' : Cat.{v, u} ≌ Cat.{v, u} where
-  functor := opFunctor'
-  inverse := opFunctor'
-  unitIso := (eqToIso opFunctor'_comp_self_eq_id).symm
-  counitIso := eqToIso opFunctor'_comp_self_eq_id
+def opCatIso' : Cat.{v, u} ≅Cat Cat.{v, u} where
+  hom := opFunctor'.{v, u}
+  inv := opFunctor'.{v, u}
+
+def opEquivalence' : Cat.{v, u} ≌ Cat.{v, u} := Cat.equivOfIso opCatIso'
 
 /--
 Natural isomorphism between mathlib's `opFunctor` and our `opFunctor'` as
