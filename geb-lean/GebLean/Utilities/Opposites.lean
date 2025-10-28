@@ -43,7 +43,7 @@ notation:max C "ᵒᵖ'" => CategoryOp' C
 instance [Quiver.{v} C] : Quiver.{v} (CategoryOp' C) where
   Hom X Y := @Quiver.Hom C _ Y X
 
-instance [Category.{v} C] : Category.{v} (CategoryOp' C) where
+instance CategoryOp'Inst [CI : Category.{v} C] : Category.{v} (CategoryOp' C) where
   id X := @CategoryStruct.id C _ X
   comp f g := @CategoryStruct.comp C _ _ _ _ g f
   id_comp f := @Category.comp_id C _ _ _ f

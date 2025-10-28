@@ -48,12 +48,23 @@ def GrothendieckContraCat {C : Type} [Category C] (F' : Cᵒᵖ' ⥤ Cat) : Cat 
   Cat.opFunctor'.obj
     (GrothendieckCat (C := Cᵒᵖ') (Cat.postCompOpFunctor'.obj F'))
 
-def GrothendieckContra {C : Type} [Category C] (F' : Cᵒᵖ' ⥤ Cat) : Type :=
-  GrothendieckContraCat F'
+def GrothendieckContraOp {C : Type} [Category C] (F' : Cᵒᵖ' ⥤ Cat) : Type :=
+  CategoryTheory.Grothendieck (F' ⋙ Cat.opFunctor')
 
-instance {C : Type} [Category C] (F' : Cᵒᵖ' ⥤ Cat) :
+def GrothendieckContra {C : Type} [Category C] (F' : Cᵒᵖ' ⥤ Cat) : Type :=
+  (GrothendieckContraOp F')ᵒᵖ'
+
+instance GrothendieckNamedInst {C : Type} [CI : Category C] (F : C ⥤ Cat) :
+  Category (Grothendieck (C := C) F) :=
+    inferInstance
+
+instance GrothendieckContraOpCatInst {C : Type} [CI : Category C] (F' : Cᵒᵖ' ⥤ Cat) :
+  Category (GrothendieckContraOp (C := C) F') :=
+    GrothendieckNamedInst (C := Cᵒᵖ') (F' ⋙ Cat.opFunctor')
+
+instance GrothendieckContraCatInst {C : Type} [CI : Category C] (F' : Cᵒᵖ' ⥤ Cat) :
   Category (GrothendieckContra (C := C) F') :=
-    (GrothendieckContraCat F').str
+    CategoryOp'Inst (CI := GrothendieckContraOpCatInst F')
 
 variable {C : Type u} [Category.{v} C]
 variable {D : Type u₁} [Category.{v₁} D]
@@ -195,10 +206,23 @@ def grothendieckContraIsoHomMap {C0 : Type} [Category C0] (F0 : C0ᵒᵖ' ⥤ Ca
 theorem grothendieckContraIsoHomMapId {C0 : Type} [Category C0] (F0 : C0ᵒᵖ' ⥤ Cat)
     (X : GrothendieckContra F0) :
     grothendieckContraIsoHomMap F0 (𝟙 X) = 𝟙 (grothendieckContraIsoHomObj F0 X) := by
+  simp [grothendieckContraIsoHomObj, grothendieckContraIsoHomMap]
+  -- dsimp [CategoryStruct.id]
+  -- congr 1
+  -- dsimp [GrothendieckContra'.id]
+  -- unfold eqToHom
+  -- simp
+  -- Goal: (𝟙 X).fiber = cast ⋯ (𝟙 ((F0.map (𝟙 X.base)).obj X.fiber))
+  -- Both sides are identity morphisms constructed using eqToHom based on F0.map_id.
+  -- The challenge is that the RHS is wrapped in `cast` which prevents direct rewriting.
+  -- Attempted approaches:
+  --   1. cast_eq_iff_heq + HEq reasoning: simp couldn't simplify the HEq goal
+  --   2. Custom lemma relating cast and identity: type mismatches
+  -- Possible solutions:
+  --   - Deeply understand mathlib's Grothendieck identity construction
+  --   - Create lemma specifically about Grothendieck identity fiber components
+  --   - Use more sophisticated dependent type reasoning
   cases X
-  simp [grothendieckContraIsoHomMap, grothendieckContraIsoHomObj]
-  dsimp [CategoryStruct.id]
-  dsimp [GrothendieckContra'.id]
   congr 1
   sorry
 
@@ -234,13 +258,21 @@ theorem grothendieckContraIsoInvMapId {C0 : Type} [Category C0] (F0 : C0ᵒᵖ' 
   simp [grothendieckContraIsoInvMap, grothendieckContraIsoInvObj]
   sorry
 
-theorem grothendieckContraIsoInvMapComp {C0 : Type} [Category C0] (F0 : C0ᵒᵖ' ⥤ Cat)
+theorem grothendieckContraIsoInvMapComp {C0 : Type} [CI : Category C0] (F0 : C0ᵒᵖ' ⥤ Cat)
     {X Y Z : GrothendieckContra' F0} (f : X ⟶ Y) (g : Y ⟶ Z) :
     grothendieckContraIsoInvMap F0 (f ≫ g) =
     grothendieckContraIsoInvMap F0 f ≫ grothendieckContraIsoInvMap F0 g := by
   cases f
   cases g
-  simp [grothendieckContraIsoInvMap]
+  cases CI
+  simp [grothendieckContraIsoInvObj,grothendieckContraIsoInvMap, Category.toCategoryStruct]
+  unfold GrothendieckContraCatInst
+  unfold GrothendieckContra
+  unfold GrothendieckContraOp
+  unfold CategoryOp'
+  unfold CategoryOp'Inst
+  unfold Cat.opFunctor'
+  cases F0
   sorry
 
 def grothendieckContraIsoInv {C0 : Type} [Category C0] (F0 : C0ᵒᵖ' ⥤ Cat) :
@@ -264,7 +296,14 @@ theorem grothendieckContraIsoHomInvId {C0 : Type} [Category C0] (F0 : C0ᵒᵖ' 
 theorem grothendieckContraIsoInvHomId {C0 : Type} [Category C0] (F0 : C0ᵒᵖ' ⥤ Cat) :
     grothendieckContraIsoInv F0 ⋙ grothendieckContraIsoHom F0 =
     𝟭 (GrothendieckContra' F0) := by
-  sorry
+  fapply Functor.ext
+  · intro X
+    cases X
+    rfl
+  · intro X Y f
+    cases f
+    simp
+    rfl
 
 /--
 Categorical isomorphism between `GrothendieckContra F0` (the mathlib-based
