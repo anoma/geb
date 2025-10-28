@@ -179,7 +179,7 @@ abbrev categoryDataOfCategory (U : Type u) [Category.{v, u} U] :
 
 section EqToHom
 
-variable {C : Type u} [Category.{v} C]
+variable {C : Type u} [Category.{v, u} C]
 
 /--
 Composition of `eqToHom` with its symmetric gives identity.
@@ -257,7 +257,6 @@ Any `eqToHom` of a reflexive equality is equal to the identity.
 By proof irrelevance, all proofs of `X = X` are equal to `rfl`, and
 `eqToHom rfl = 𝟙 X`.
 -/
-@[simp]
 lemma eqToHom_refl' {X : C} (p : X = X) : eqToHom p = 𝟙 X := by
   rw [Subsingleton.elim p rfl]
   simp
@@ -265,9 +264,9 @@ lemma eqToHom_refl' {X : C} (p : X = X) : eqToHom p = 𝟙 X := by
 /--
 Any two `eqToHom` terms of reflexive equalities are equal.
 -/
-@[simp]
-lemma eqToHom_refl_eq {X : C} (p q : X = X) : eqToHom p = eqToHom q := by
-  simp
+lemma eqToHom_refl_eq {X Y : C} (p q : Eq.{u + 1} X Y) :
+  Eq (eqToHom.{v, u} p) (eqToHom.{v, u} q) := by
+    simp
 
 end EqToHom
 
