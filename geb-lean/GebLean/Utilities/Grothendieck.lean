@@ -203,34 +203,6 @@ def grothendieckContraIsoHomMap {C0 : Type} [Category C0] (F0 : C0ᵒᵖ' ⥤ Ca
     (X ⟶ Y) → (grothendieckContraIsoHomObj F0 X ⟶ grothendieckContraIsoHomObj F0 Y) :=
   fun f => ⟨f.base, f.fiber⟩
 
-theorem grothendieckContraIsoHomMapId {C0 : Type} [Category C0] (F0 : C0ᵒᵖ' ⥤ Cat)
-    (X : GrothendieckContra F0) :
-    grothendieckContraIsoHomMap F0 (𝟙 X) = 𝟙 (grothendieckContraIsoHomObj F0 X) := by
-  simp [grothendieckContraIsoHomObj, grothendieckContraIsoHomMap]
-  cases X
-  congr 1
-  dsimp [CategoryStruct.id]
-  dsimp [Grothendieck.id]
-  -- Goal: eqToHom ⋯ = eqToHom ⋯
-  -- Both eqToHoms have reflexive equality proofs, so they're equal by eqToHom_refl_eq
-  sorry
-
-theorem grothendieckContraIsoHomMapComp {C0 : Type} [Category C0] (F0 : C0ᵒᵖ' ⥤ Cat)
-    {X Y Z : GrothendieckContra F0} (f : X ⟶ Y) (g : Y ⟶ Z) :
-    grothendieckContraIsoHomMap F0 (f ≫ g) =
-    grothendieckContraIsoHomMap F0 f ≫ grothendieckContraIsoHomMap F0 g := by
-  cases f
-  cases g
-  simp [grothendieckContraIsoHomMap]
-  sorry
-
-def grothendieckContraIsoHom {C0 : Type} [Category C0] (F0 : C0ᵒᵖ' ⥤ Cat) :
-    GrothendieckContra F0 ⥤ GrothendieckContra' F0 where
-  obj := grothendieckContraIsoHomObj F0
-  map := grothendieckContraIsoHomMap F0
-  map_id := grothendieckContraIsoHomMapId F0
-  map_comp := grothendieckContraIsoHomMapComp F0
-
 def grothendieckContraIsoInvObj {C0 : Type} [Category C0] (F0 : C0ᵒᵖ' ⥤ Cat) :
     GrothendieckContra' F0 → GrothendieckContra F0 :=
   fun X => ⟨X.base, X.fiber⟩
@@ -239,81 +211,6 @@ def grothendieckContraIsoInvMap {C0 : Type} [Category C0] (F0 : C0ᵒᵖ' ⥤ Ca
     {X Y : GrothendieckContra' F0} :
     (X ⟶ Y) → (grothendieckContraIsoInvObj F0 X ⟶ grothendieckContraIsoInvObj F0 Y) :=
   fun f => ⟨f.base, f.fiber⟩
-
-theorem grothendieckContraIsoInvMapId {C0 : Type} [Category C0] (F0 : C0ᵒᵖ' ⥤ Cat)
-    (X : GrothendieckContra' F0) :
-    grothendieckContraIsoInvMap F0 (𝟙 X) = 𝟙 (grothendieckContraIsoInvObj F0 X) := by
-  cases X
-  simp [grothendieckContraIsoInvMap, grothendieckContraIsoInvObj]
-  dsimp [CategoryStruct.id]
-  sorry
-
-theorem grothendieckContraIsoInvMapComp {C0 : Type} [CI : Category C0] (F0 : C0ᵒᵖ' ⥤ Cat)
-    {X Y Z : GrothendieckContra' F0} (f : X ⟶ Y) (g : Y ⟶ Z) :
-    grothendieckContraIsoInvMap F0 (f ≫ g) =
-    grothendieckContraIsoInvMap F0 f ≫ grothendieckContraIsoInvMap F0 g := by
-  cases f
-  cases g
-  cases CI
-  simp [grothendieckContraIsoInvObj,grothendieckContraIsoInvMap, Category.toCategoryStruct]
-  unfold GrothendieckContraCatInst
-  unfold GrothendieckContra
-  unfold GrothendieckContraOp
-  unfold CategoryOp'
-  unfold CategoryOp'Inst
-  unfold Cat.opFunctor'
-  cases F0
-  sorry
-
-def grothendieckContraIsoInv {C0 : Type} [Category C0] (F0 : C0ᵒᵖ' ⥤ Cat) :
-    GrothendieckContra' F0 ⥤ GrothendieckContra F0 where
-  obj := grothendieckContraIsoInvObj F0
-  map := grothendieckContraIsoInvMap F0
-  map_id := grothendieckContraIsoInvMapId F0
-  map_comp := grothendieckContraIsoInvMapComp F0
-
-theorem grothendieckContraIsoHomInvId {C0 : Type} [Category C0] (F0 : C0ᵒᵖ' ⥤ Cat) :
-    grothendieckContraIsoHom F0 ⋙ grothendieckContraIsoInv F0 = 𝟭 (GrothendieckContra F0) := by
-  fapply Functor.ext
-  · intro X
-    cases X
-    rfl
-  · intro X Y f
-    cases f
-    simp
-    rfl
-
-theorem grothendieckContraIsoInvHomId {C0 : Type} [Category C0] (F0 : C0ᵒᵖ' ⥤ Cat) :
-    grothendieckContraIsoInv F0 ⋙ grothendieckContraIsoHom F0 =
-    𝟭 (GrothendieckContra' F0) := by
-  fapply Functor.ext
-  · intro X
-    cases X
-    rfl
-  · intro X Y f
-    cases f
-    simp
-    rfl
-
-/--
-Categorical isomorphism between `GrothendieckContra F0` (the mathlib-based
-definition using opposite categories) and `GrothendieckContra' F0` (our direct
-definition), for a specific functor `F0 : Cᵒᵖ' ⥤ Cat` at the base universe level.
-
-Note: While the objects and morphisms have the same underlying data, the identity
-and composition operations involve different `eqToHom` terms, so this requires
-proving equations rather than just definitional equality.
--/
-def grothendieckContraIso {C0 : Type} [Category C0] (F0 : C0ᵒᵖ' ⥤ Cat) :
-    GrothendieckContra F0 ≅Cat GrothendieckContra' F0 where
-  hom := grothendieckContraIsoHom F0
-  inv := grothendieckContraIsoInv F0
-  hom_inv_id := grothendieckContraIsoHomInvId F0
-  inv_hom_id := grothendieckContraIsoInvHomId F0
-
-def grothendieckContraEquiv {C0 : Type} [Category C0] (F0 : C0ᵒᵖ' ⥤ Cat) :
-  GrothendieckContra F0 ≌ GrothendieckContra' F0 :=
-    Cat.equivOfIso (grothendieckContraIso F0)
 
 end Isomorphism
 
