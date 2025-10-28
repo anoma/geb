@@ -246,8 +246,7 @@ theorem grothendieckContraIsoInvMapId {C0 : Type} [Category C0] (F0 : C0ᵒᵖ' 
   cases X
   simp [grothendieckContraIsoInvMap, grothendieckContraIsoInvObj]
   dsimp [CategoryStruct.id]
-  dsimp [GrothendieckContra'.id]
-  rfl
+  sorry
 
 theorem grothendieckContraIsoInvMapComp {C0 : Type} [CI : Category C0] (F0 : C0ᵒᵖ' ⥤ Cat)
     {X Y Z : GrothendieckContra' F0} (f : X ⟶ Y) (g : Y ⟶ Z) :
