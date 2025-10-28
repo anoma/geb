@@ -207,23 +207,12 @@ theorem grothendieckContraIsoHomMapId {C0 : Type} [Category C0] (F0 : C0ᵒᵖ' 
     (X : GrothendieckContra F0) :
     grothendieckContraIsoHomMap F0 (𝟙 X) = 𝟙 (grothendieckContraIsoHomObj F0 X) := by
   simp [grothendieckContraIsoHomObj, grothendieckContraIsoHomMap]
-  -- dsimp [CategoryStruct.id]
-  -- congr 1
-  -- dsimp [GrothendieckContra'.id]
-  -- unfold eqToHom
-  -- simp
-  -- Goal: (𝟙 X).fiber = cast ⋯ (𝟙 ((F0.map (𝟙 X.base)).obj X.fiber))
-  -- Both sides are identity morphisms constructed using eqToHom based on F0.map_id.
-  -- The challenge is that the RHS is wrapped in `cast` which prevents direct rewriting.
-  -- Attempted approaches:
-  --   1. cast_eq_iff_heq + HEq reasoning: simp couldn't simplify the HEq goal
-  --   2. Custom lemma relating cast and identity: type mismatches
-  -- Possible solutions:
-  --   - Deeply understand mathlib's Grothendieck identity construction
-  --   - Create lemma specifically about Grothendieck identity fiber components
-  --   - Use more sophisticated dependent type reasoning
   cases X
   congr 1
+  dsimp [CategoryStruct.id]
+  dsimp [Grothendieck.id]
+  -- Goal: eqToHom ⋯ = eqToHom ⋯
+  -- Both eqToHoms have reflexive equality proofs, so they're equal by eqToHom_refl_eq
   sorry
 
 theorem grothendieckContraIsoHomMapComp {C0 : Type} [Category C0] (F0 : C0ᵒᵖ' ⥤ Cat)
@@ -256,7 +245,9 @@ theorem grothendieckContraIsoInvMapId {C0 : Type} [Category C0] (F0 : C0ᵒᵖ' 
     grothendieckContraIsoInvMap F0 (𝟙 X) = 𝟙 (grothendieckContraIsoInvObj F0 X) := by
   cases X
   simp [grothendieckContraIsoInvMap, grothendieckContraIsoInvObj]
-  sorry
+  dsimp [CategoryStruct.id]
+  dsimp [GrothendieckContra'.id]
+  rfl
 
 theorem grothendieckContraIsoInvMapComp {C0 : Type} [CI : Category C0] (F0 : C0ᵒᵖ' ⥤ Cat)
     {X Y Z : GrothendieckContra' F0} (f : X ⟶ Y) (g : Y ⟶ Z) :

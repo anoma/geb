@@ -262,6 +262,13 @@ lemma eqToHom_refl' {X : C} (p : X = X) : eqToHom p = 𝟙 X := by
   rw [Subsingleton.elim p rfl]
   simp
 
+/--
+Any two `eqToHom` terms of reflexive equalities are equal.
+-/
+@[simp]
+lemma eqToHom_refl_eq {X : C} (p q : X = X) : eqToHom p = eqToHom q := by
+  simp
+
 end EqToHom
 
 end GebLean
