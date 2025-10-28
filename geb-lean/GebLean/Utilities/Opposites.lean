@@ -40,7 +40,7 @@ def CategoryOp' (C : Type u) : Type u := C
 
 notation:max C "ᵒᵖ'" => CategoryOp' C
 
-instance [Quiver.{v, u} C] : Quiver.{v, u} (CategoryOp' C) where
+instance CategoryOpQuivInst [Quiver.{v, u} C] : Quiver.{v, u} (CategoryOp' C) where
   Hom X Y := @Quiver.Hom C _ Y X
 
 instance CategoryOp'Inst [CI : Category.{v, u} C] : Category.{v, u} (CategoryOp' C) where

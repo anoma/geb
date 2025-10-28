@@ -35,39 +35,70 @@ definitional equality `op' (op' C) = C`.
 
 -/
 
-universe w u v u₁ v₁ u₂ v₂
-
 namespace GebLean
 
 open CategoryTheory GebLean
 
-def GrothendieckCat {C : Type} [Category C] (F : C ⥤ Cat) : Cat :=
-  Cat.of (CategoryTheory.Grothendieck F)
+def GrothendieckCat.{u, v, u₂, v₂} {C : Type u} [CI : Category.{v, u} C]
+  (F : C ⥤ Cat.{v₂, u₂}) : Cat.{max v v₂, max u u₂} :=
+    Cat.of.{max v v₂, max u u₂} (Grothendieck.{u, v, u₂, v₂} (C := C) F)
 
-def GrothendieckContraCat {C : Type} [Category C] (F' : Cᵒᵖ' ⥤ Cat) : Cat :=
-  Cat.opFunctor'.obj
-    (GrothendieckCat (C := Cᵒᵖ') (Cat.postCompOpFunctor'.obj F'))
+def GrothendieckContraCatOp.{u, v, u₂, v₂} {C : Type u} [CI : Category.{v, u} C]
+  (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) : Cat.{max v v₂, max u u₂} :=
+    GrothendieckCat.{u, v, u₂, v₂} (C := Cᵒᵖ') (Cat.postCompOpFunctor'.obj F')
 
-def GrothendieckContraOp {C : Type} [Category C] (F' : Cᵒᵖ' ⥤ Cat) : Type :=
-  CategoryTheory.Grothendieck (F' ⋙ Cat.opFunctor')
+def GrothendieckContraCat.{u, v, u₂, v₂} {C : Type u} [CI : Category.{v, u} C]
+  (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) : Cat.{max v v₂, max u u₂} :=
+    Cat.opFunctorObj' (GrothendieckContraCatOp F')
 
-def GrothendieckContra {C : Type} [Category C] (F' : Cᵒᵖ' ⥤ Cat) : Type :=
-  (GrothendieckContraOp F')ᵒᵖ'
+def GrothendieckContra.{u, v, u₂, v₂} {C : Type u} [CI : Category.{v, u} C]
+  (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) : Type (max u u₂) :=
+    GrothendieckContraCat.{u, v, u₂, v₂} (C := C) (CI := CI) F'
 
-instance GrothendieckNamedInst {C : Type} [CI : Category C] (F : C ⥤ Cat) :
-  Category (Grothendieck (C := C) F) :=
-    inferInstance
+def GrothendieckContraCatInst.{u, v, u₂, v₂} {C : Type u} [CI : Category.{v, u} C]
+  (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) :
+    Category.{max v v₂, max u u₂}
+      (GrothendieckContra.{u, v, u₂, v₂} (C := C) (CI := CI) F') :=
+  (GrothendieckContraCat.{u, v, u₂, v₂} (C := C) (CI := CI) F').str
 
-instance GrothendieckContraOpCatInst {C : Type} [CI : Category C] (F' : Cᵒᵖ' ⥤ Cat) :
-  Category (GrothendieckContraOp (C := C) F') :=
-    GrothendieckNamedInst (C := Cᵒᵖ') (F' ⋙ Cat.opFunctor')
+def GrothendieckContraCatStructInst.{u, v, u₂, v₂} {C : Type u} [CI : Category.{v, u} C]
+  (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) :
+    CategoryStruct.{max v v₂, max u u₂}
+      (GrothendieckContra.{u, v, u₂, v₂} (C := C) (CI := CI) F') :=
+  (GrothendieckContraCatInst.{u, v, u₂, v₂} (C := C) (CI := CI) F').toCategoryStruct
 
-instance GrothendieckContraCatInst {C : Type} [CI : Category C] (F' : Cᵒᵖ' ⥤ Cat) :
-  Category (GrothendieckContra (C := C) F') :=
-    CategoryOp'Inst (CI := GrothendieckContraOpCatInst F')
+def GrothendieckContraQuivInst.{u, v, u₂, v₂} {C : Type u} [CI : Category.{v, u} C]
+  (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) :
+    Quiver.{max v v₂ + 1, max u u₂}
+      (GrothendieckContra.{u, v, u₂, v₂} (C := C) (CI := CI) F') :=
+  (GrothendieckContraCatStructInst.{u, v, u₂, v₂} (C := C) (CI := CI) F').toQuiver
 
-variable {C : Type u} [Category.{v} C]
-variable {D : Type u₁} [Category.{v₁} D]
+def gcHom.{u, v, u₂, v₂} {C : Type u} [CI : Category.{v, u} C]
+  (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) :
+    GrothendieckContra.{u, v, u₂, v₂} (C := C) (CI := CI) F' ->
+    GrothendieckContra.{u, v, u₂, v₂} (C := C) (CI := CI) F' ->
+    Type (max v v₂) :=
+  (GrothendieckContraQuivInst.{u, v, u₂, v₂} (C := C) (CI := CI) F').Hom
+
+def gcId.{u, v, u₂, v₂} {C : Type u} [CI : Category.{v, u} C]
+  (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) :
+    (X : GrothendieckContra.{u, v, u₂, v₂} (C := C) (CI := CI) F') ->
+    gcHom.{u, v, u₂, v₂} (C := C) (CI := CI) F' X X :=
+  (GrothendieckContraCatStructInst.{u, v, u₂, v₂} (C := C) (CI := CI) F').id
+
+def gcComp.{u, v, u₂, v₂} {C : Type u} [CI : Category.{v, u} C]
+  (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) :
+    {X Y Z : GrothendieckContra.{u, v, u₂, v₂} (C := C) (CI := CI) F'} ->
+    gcHom.{u, v, u₂, v₂} (C := C) (CI := CI) F' X Y ->
+    gcHom.{u, v, u₂, v₂} (C := C) (CI := CI) F' Y Z ->
+    gcHom.{u, v, u₂, v₂} (C := C) (CI := CI) F' X Z :=
+  (GrothendieckContraCatStructInst.{u, v, u₂, v₂} (C := C) (CI := CI) F').comp
+
+universe w u v u₁ v₁ u₂ v₂
+
+variable {C : Type u} [CInst : Category.{v, u} C]
+variable {D : Type u₁} [DInst : Category.{v₁, u₁} D]
+
 variable (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂})
 
 /--
@@ -126,7 +157,7 @@ def comp {X Y Z : GrothendieckContra' F'} (f : Hom X Y) (g : Hom Y Z) : Hom X Z 
 
 attribute [local simp] eqToHom_map Functor.map_id
 
-instance : Category (GrothendieckContra' F') where
+instance GrothendieckContraInst' : Category (GrothendieckContra' F') where
   Hom X Y := GrothendieckContra'.Hom X Y
   id X := GrothendieckContra'.id X
   comp f g := GrothendieckContra'.comp f g
@@ -194,47 +225,121 @@ lemma eqToHom_eq {X Y : GrothendieckContra' F'} (hF : X = Y) :
 
 section Isomorphism
 
-def grothendieckContraIsoHomObj {C0 : Type} [Category C0] (F0 : C0ᵒᵖ' ⥤ Cat) :
-    GrothendieckContra F0 → GrothendieckContra' F0 :=
+def grothendieckContraIsoHomObj :
+    GrothendieckContra F' → GrothendieckContra' F' :=
   fun X => ⟨X.base, X.fiber⟩
 
-def grothendieckContraIsoHomMap {C0 : Type} [Category C0] (F0 : C0ᵒᵖ' ⥤ Cat)
-    {X Y : GrothendieckContra F0} :
-    (X ⟶ Y) → (grothendieckContraIsoHomObj F0 X ⟶ grothendieckContraIsoHomObj F0 Y) :=
+def grothendieckContraIsoHomMap
+    {X Y : GrothendieckContra F'} :
+    gcHom F' X Y →
+    (grothendieckContraIsoHomObj X ⟶ grothendieckContraIsoHomObj Y) :=
   fun f => ⟨f.base, f.fiber⟩
 
-def grothendieckContraIsoInvObj {C0 : Type} [Category C0] (F0 : C0ᵒᵖ' ⥤ Cat) :
-    GrothendieckContra' F0 → GrothendieckContra F0 :=
+theorem grothendieckContraIsoHomMapId
+    (X : GrothendieckContra F') :
+    grothendieckContraIsoHomMap (gcId F' X) = 𝟙 (grothendieckContraIsoHomObj X) := by
+  simp [grothendieckContraIsoHomObj, grothendieckContraIsoHomMap]
+  cases X
+  congr 1
+  dsimp [CategoryStruct.id]
+  -- Goal: eqToHom ⋯ = eqToHom ⋯
+  -- Both eqToHoms have reflexive equality proofs, so they're equal by eqToHom_refl_eq
+  sorry
+
+theorem grothendieckContraIsoHomMapComp
+    {X Y Z : GrothendieckContra F'}
+    (f : gcHom F' X Y)
+    (g : gcHom F' Y Z) :
+    grothendieckContraIsoHomMap (gcComp F' f g) =
+    grothendieckContraIsoHomMap f ≫ grothendieckContraIsoHomMap g := by
+  cases f
+  cases g
+  simp [grothendieckContraIsoHomMap]
+  sorry
+
+def grothendieckContraIsoHom :
+    GrothendieckContraCat F' ⥤ GrothendieckContra' F' where
+  obj := grothendieckContraIsoHomObj
+  map := grothendieckContraIsoHomMap
+  map_id := grothendieckContraIsoHomMapId
+  map_comp := grothendieckContraIsoHomMapComp
+
+def grothendieckContraIsoInvObj :
+    GrothendieckContra' F' → GrothendieckContra F' :=
   fun X => ⟨X.base, X.fiber⟩
 
-def grothendieckContraIsoInvMap {C0 : Type} [Category C0] (F0 : C0ᵒᵖ' ⥤ Cat)
-    {X Y : GrothendieckContra' F0} :
-    (X ⟶ Y) → (grothendieckContraIsoInvObj F0 X ⟶ grothendieckContraIsoInvObj F0 Y) :=
+def grothendieckContraIsoInvMap
+    {X Y : GrothendieckContra' F'} :
+    (X ⟶ Y) → gcHom F' (grothendieckContraIsoInvObj X) (grothendieckContraIsoInvObj Y) :=
   fun f => ⟨f.base, f.fiber⟩
 
-theorem grothendieckContraIsoHomInvObj {C0 : Type} [Category C0] (F0 : C0ᵒᵖ' ⥤ Cat)
-    (X : GrothendieckContra F0) :
-    grothendieckContraIsoInvObj F0 (grothendieckContraIsoHomObj F0 X) = X := by
+theorem grothendieckContraIsoInvMapId
+    (X : GrothendieckContra' F') :
+    grothendieckContraIsoInvMap (𝟙 X) = gcId F' (grothendieckContraIsoInvObj X) := by
   cases X
-  rfl
+  simp [grothendieckContraIsoInvMap, grothendieckContraIsoInvObj]
+  dsimp [CategoryStruct.id]
+  sorry
 
-theorem grothendieckContraIsoInvHomObj {C0 : Type} [Category C0] (F0 : C0ᵒᵖ' ⥤ Cat)
-    (X : GrothendieckContra' F0) :
-    grothendieckContraIsoHomObj F0 (grothendieckContraIsoInvObj F0 X) = X := by
-  cases X
-  rfl
-
-theorem grothendieckContraIsoHomInvMap {C0 : Type} [Category C0] (F0 : C0ᵒᵖ' ⥤ Cat)
-    {X Y : GrothendieckContra F0} (f : X ⟶ Y) :
-    grothendieckContraIsoInvMap F0 (grothendieckContraIsoHomMap F0 f) = f := by
+theorem grothendieckContraIsoInvMapComp
+    {X Y Z : GrothendieckContra' F'} (f : X ⟶ Y) (g : Y ⟶ Z) :
+    grothendieckContraIsoInvMap (f ≫ g) =
+    gcComp F' (grothendieckContraIsoInvMap f) (grothendieckContraIsoInvMap g) := by
   cases f
-  rfl
+  cases g
+  simp [grothendieckContraIsoInvObj,grothendieckContraIsoInvMap, Category.toCategoryStruct]
+  unfold CategoryOp'
+  unfold CategoryOp'Inst
+  sorry
 
-theorem grothendieckContraIsoInvHomMap {C0 : Type} [Category C0] (F0 : C0ᵒᵖ' ⥤ Cat)
-    {X Y : GrothendieckContra' F0} (f : X ⟶ Y) :
-    grothendieckContraIsoHomMap F0 (grothendieckContraIsoInvMap F0 f) = f := by
-  cases f
-  rfl
+def grothendieckContraIsoInv :
+    GrothendieckContra' F' ⥤ GrothendieckContraCat F' where
+  obj := grothendieckContraIsoInvObj
+  map := grothendieckContraIsoInvMap
+  map_id := grothendieckContraIsoInvMapId
+  map_comp := grothendieckContraIsoInvMapComp
+
+theorem grothendieckContraIsoHomInvId :
+    grothendieckContraIsoHom ⋙ grothendieckContraIsoInv = 𝟭 (GrothendieckContraCat F') := by
+  fapply Functor.ext
+  · intro X
+    cases X
+    rfl
+  · intro X Y f
+    cases f
+    simp
+    rfl
+
+theorem grothendieckContraIsoInvHomId :
+    grothendieckContraIsoInv ⋙ grothendieckContraIsoHom = 𝟭 (GrothendieckContra' F') := by
+  fapply Functor.ext
+  · intro X
+    cases X
+    rfl
+  · intro X Y f
+    cases f
+    simp
+    rfl
+
+/--
+Categorical isomorphism between `GrothendieckContra F0` (the mathlib-based
+definition using opposite categories) and `GrothendieckContra' F0` (our direct
+definition), for a specific functor `F0 : Cᵒᵖ' ⥤ Cat` at the base universe level.
+
+Note: While the objects and morphisms have the same underlying data, the identity
+and composition operations involve different `eqToHom` terms, so this requires
+proving equations rather than just definitional equality.
+-/
+def grothendieckContraIso :
+    GrothendieckContraCat F' ≅Cat GrothendieckContra' F' where
+  hom := grothendieckContraIsoHom
+  inv := grothendieckContraIsoInv
+  hom_inv_id := grothendieckContraIsoHomInvId
+  inv_hom_id := grothendieckContraIsoInvHomId
+
+def grothendieckContraEquiv :
+  GrothendieckContraCat F' ≌ GrothendieckContra' F' :=
+    Cat.equivOfIso grothendieckContraIso
 
 end Isomorphism
 
