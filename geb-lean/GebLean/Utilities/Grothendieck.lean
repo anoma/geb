@@ -39,40 +39,48 @@ namespace GebLean
 
 open CategoryTheory GebLean
 
+@[simp]
 def GrothendieckCat.{u, v, u₂, v₂} {C : Type u} [CI : Category.{v, u} C]
   (F : C ⥤ Cat.{v₂, u₂}) : Cat.{max v v₂, max u u₂} :=
     Cat.of.{max v v₂, max u u₂} (Grothendieck.{u, v, u₂, v₂} (C := C) F)
 
+@[simp]
 def GrothendieckContraCatOp.{u, v, u₂, v₂} {C : Type u} [CI : Category.{v, u} C]
   (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) : Cat.{max v v₂, max u u₂} :=
     GrothendieckCat.{u, v, u₂, v₂} (C := Cᵒᵖ') (Cat.postCompOpFunctor'.obj F')
 
+@[simp]
 def GrothendieckContraCat.{u, v, u₂, v₂} {C : Type u} [CI : Category.{v, u} C]
   (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) : Cat.{max v v₂, max u u₂} :=
     Cat.opFunctorObj' (GrothendieckContraCatOp F')
 
+@[simp]
 def GrothendieckContra.{u, v, u₂, v₂} {C : Type u} [CI : Category.{v, u} C]
   (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) : Type (max u u₂) :=
     GrothendieckContraCat.{u, v, u₂, v₂} (C := C) (CI := CI) F'
 
+@[simp]
 def GrothendieckContraCatInst.{u, v, u₂, v₂} {C : Type u} [CI : Category.{v, u} C]
   (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) :
     Category.{max v v₂, max u u₂}
       (GrothendieckContra.{u, v, u₂, v₂} (C := C) (CI := CI) F') :=
   (GrothendieckContraCat.{u, v, u₂, v₂} (C := C) (CI := CI) F').str
 
+@[simp]
 def GrothendieckContraCatStructInst.{u, v, u₂, v₂} {C : Type u} [CI : Category.{v, u} C]
   (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) :
     CategoryStruct.{max v v₂, max u u₂}
       (GrothendieckContra.{u, v, u₂, v₂} (C := C) (CI := CI) F') :=
   (GrothendieckContraCatInst.{u, v, u₂, v₂} (C := C) (CI := CI) F').toCategoryStruct
 
+@[simp]
 def GrothendieckContraQuivInst.{u, v, u₂, v₂} {C : Type u} [CI : Category.{v, u} C]
   (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) :
     Quiver.{max v v₂ + 1, max u u₂}
       (GrothendieckContra.{u, v, u₂, v₂} (C := C) (CI := CI) F') :=
   (GrothendieckContraCatStructInst.{u, v, u₂, v₂} (C := C) (CI := CI) F').toQuiver
 
+@[simp]
 def gcHom.{u, v, u₂, v₂} {C : Type u} [CI : Category.{v, u} C]
   (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) :
     GrothendieckContra.{u, v, u₂, v₂} (C := C) (CI := CI) F' ->
@@ -80,12 +88,14 @@ def gcHom.{u, v, u₂, v₂} {C : Type u} [CI : Category.{v, u} C]
     Type (max v v₂) :=
   (GrothendieckContraQuivInst.{u, v, u₂, v₂} (C := C) (CI := CI) F').Hom
 
+@[simp]
 def gcId.{u, v, u₂, v₂} {C : Type u} [CI : Category.{v, u} C]
   (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) :
     (X : GrothendieckContra.{u, v, u₂, v₂} (C := C) (CI := CI) F') ->
     gcHom.{u, v, u₂, v₂} (C := C) (CI := CI) F' X X :=
   (GrothendieckContraCatStructInst.{u, v, u₂, v₂} (C := C) (CI := CI) F').id
 
+@[simp]
 def gcComp.{u, v, u₂, v₂} {C : Type u} [CI : Category.{v, u} C]
   (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) :
     {X Y Z : GrothendieckContra.{u, v, u₂, v₂} (C := C) (CI := CI) F'} ->
@@ -93,6 +103,30 @@ def gcComp.{u, v, u₂, v₂} {C : Type u} [CI : Category.{v, u} C]
     gcHom.{u, v, u₂, v₂} (C := C) (CI := CI) F' Y Z ->
     gcHom.{u, v, u₂, v₂} (C := C) (CI := CI) F' X Z :=
   (GrothendieckContraCatStructInst.{u, v, u₂, v₂} (C := C) (CI := CI) F').comp
+
+def gcConv.{u, v, u₂, v₂} {C : Type u} [CI : Category.{v, u} C]
+  (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) {X Y : GrothendieckContra (C := C) F'}
+  (f g : gcHom F' X Y) (w_base : f.base = g.base) :
+    ((Cat.postCompOpFunctor'.obj F').map f.base).obj Y.fiber ⟶
+    ((Cat.postCompOpFunctor'.obj F').map g.base).obj Y.fiber :=
+      eqToHom (by rw [w_base])
+
+@[ext (iff := false)]
+theorem gcExt.{u, v, u₂, v₂} {C : Type u} [CI : Category.{v, u} C]
+  (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) {X Y : GrothendieckContra (C := C) F'}
+  (f g : gcHom F' X Y) (w_base : f.base = g.base)
+    (w_fiber : f.fiber = (gcConv F' f g w_base) ≫ g.fiber) : f = g := by
+  cases f; cases g
+  congr
+  dsimp at w_base
+  unfold gcConv at w_fiber
+  cat_disch
+
+@[simp]
+theorem gcf_id_base.{u, v, u₂, v₂} {C : Type u} [CI : Category.{v, u} C]
+  (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) (X : GrothendieckContra F') :
+    (gcId F' X).base = 𝟙 X.base :=
+      rfl
 
 universe w u v u₁ v₁ u₂ v₂
 
@@ -238,12 +272,11 @@ def grothendieckContraIsoHomMap
 theorem grothendieckContraIsoHomMapId
     (X : GrothendieckContra F') :
     grothendieckContraIsoHomMap (gcId F' X) = 𝟙 (grothendieckContraIsoHomObj X) := by
-  simp [grothendieckContraIsoHomObj, grothendieckContraIsoHomMap]
-  cases X
-  congr 1
-  dsimp [CategoryStruct.id]
-  -- Goal: eqToHom ⋯ = eqToHom ⋯
-  -- Both eqToHoms have reflexive equality proofs, so they're equal by eqToHom_refl_eq
+  let gidb := gcf_id_base (F' := F') X
+  simp at gidb
+  simp
+    [grothendieckContraIsoHomObj, grothendieckContraIsoHomMap,
+     CategoryStruct.id, Cat.of, Category.toCategoryStruct]
   sorry
 
 theorem grothendieckContraIsoHomMapComp
@@ -276,9 +309,7 @@ def grothendieckContraIsoInvMap
 theorem grothendieckContraIsoInvMapId
     (X : GrothendieckContra' F') :
     grothendieckContraIsoInvMap (𝟙 X) = gcId F' (grothendieckContraIsoInvObj X) := by
-  cases X
   simp [grothendieckContraIsoInvMap, grothendieckContraIsoInvObj]
-  dsimp [CategoryStruct.id]
   sorry
 
 theorem grothendieckContraIsoInvMapComp
@@ -288,8 +319,6 @@ theorem grothendieckContraIsoInvMapComp
   cases f
   cases g
   simp [grothendieckContraIsoInvObj,grothendieckContraIsoInvMap, Category.toCategoryStruct]
-  unfold CategoryOp'
-  unfold CategoryOp'Inst
   sorry
 
 def grothendieckContraIsoInv :
@@ -774,8 +803,7 @@ def pre (G : D ⥤ C) : GrothendieckContra' (functorOp'Obj G ⋙ F') ⥤
   map f := ⟨G.map f.base, f.fiber⟩
   map_id X := ext _ _ (G.map_id _) (by simp [CategoryStruct.id])
   map_comp f g := ext _ _ (G.map_comp _ _) (by
-    simp [comp, CategoryStruct.comp]
-    rfl)
+    simp [comp, CategoryStruct.comp])
 
 /--
 The functor `pre` applied to the identity functor is the identity.
