@@ -36,13 +36,16 @@ variable {D : Type u₁} [Category.{v₁} D]
 An alternative opposite category that uses the same type for objects but
 reverses morphisms. This gives definitional equality `op' (op' C) = C`.
 -/
+@[simp]
 def CategoryOp' (C : Type u) : Type u := C
 
 notation:max C "ᵒᵖ'" => CategoryOp' C
 
+@[simp]
 instance CategoryOpQuivInst [Quiver.{v, u} C] : Quiver.{v, u} (CategoryOp' C) where
   Hom X Y := @Quiver.Hom C _ Y X
 
+@[simp]
 instance CategoryOp'Inst [CI : Category.{v, u} C] : Category.{v, u} (CategoryOp' C) where
   id X := @CategoryStruct.id C _ X
   comp f g := @CategoryStruct.comp C _ _ _ _ g f
@@ -64,24 +67,28 @@ theorem eq_op'_op' (C : Type u) : C = (CategoryOp' (CategoryOp' C)) := rfl
 The functor from `Cᵒᵖ` to `Cᵒᵖ'` that converts between mathlib's opposite
 and our opposite.
 -/
+@[simp]
 def catOfOpToOp' : Cat.of Cᵒᵖ ⟶ Cat.of Cᵒᵖ' where
   obj X := X.unop
   map f := f.unop
   map_id _ := rfl
   map_comp _ _ := rfl
 
+@[simp]
 def opToOp' : Cᵒᵖ ⥤ Cᵒᵖ' := catOfOpToOp'
 
 /--
 The functor from `Cᵒᵖ'` to `Cᵒᵖ` that converts between our opposite and
 mathlib's opposite.
 -/
+@[simp]
 def catOfOp'ToOp : Cat.of Cᵒᵖ' ⟶ Cat.of Cᵒᵖ where
   obj := Opposite.op
   map f := f.op
   map_id _ := rfl
   map_comp _ _ := rfl
 
+@[simp]
 def op'ToOp : Cᵒᵖ' ⥤ Cᵒᵖ := catOfOp'ToOp
 
 /--
@@ -96,15 +103,18 @@ theorem op'ToOp_comp_opToOp' : op'ToOp ⋙ opToOp' = 𝟭 Cᵒᵖ' := rfl
 Natural isomorphisms derived from the equalities (for use in contexts requiring
 isomorphisms rather than equalities).
 -/
+@[simp]
 def opToOp'Iso : opToOp' ⋙ op'ToOp ≅ 𝟭 Cᵒᵖ :=
   eqToIso opToOp'_comp_op'ToOp
 
+@[simp]
 def op'ToOpIso : op'ToOp ⋙ opToOp' ≅ 𝟭 Cᵒᵖ' :=
   eqToIso op'ToOp_comp_opToOp'
 
 /--
 Categorical isomorphism between `Cᵒᵖ` and `Cᵒᵖ'` in the category of categories.
 -/
+@[simp]
 def opIsoOp' : Cᵒᵖ ≅Cat Cᵒᵖ' where
   hom := catOfOpToOp'
   inv := catOfOp'ToOp
@@ -114,11 +124,14 @@ def opIsoOp' : Cᵒᵖ ≅Cat Cᵒᵖ' where
 /--
 The categorical equivalence induced by the isomorphism of categories.
 -/
+@[simp]
 def opEquivOp' : Cᵒᵖ ≌ Cᵒᵖ' := Cat.equivOfIso opIsoOp'
 
+@[simp]
 instance : Coe Cᵒᵖ Cᵒᵖ' where
   coe := opToOp'.obj
 
+@[simp]
 instance : Coe Cᵒᵖ' Cᵒᵖ where
   coe := op'ToOp.obj
 
@@ -126,21 +139,27 @@ instance : Coe Cᵒᵖ' Cᵒᵖ where
 Functor-category isomorphisms induced by precomposition and
 postcomposition with the isomorphism between `Cᵒᵖ` and `Cᵒᵖ'`.
 -/
+@[simp]
 def preCompToOp : (Cᵒᵖ' ⥤ D) ⥤ (Cᵒᵖ ⥤ D) :=
   (Functor.whiskeringLeft Cᵒᵖ Cᵒᵖ' D).obj catOfOpToOp'
 
+@[simp]
 def preCompToOp' : (Cᵒᵖ ⥤ D) ⥤ (Cᵒᵖ' ⥤ D) :=
   (Functor.whiskeringLeft Cᵒᵖ' Cᵒᵖ D).obj catOfOp'ToOp
 
+@[simp]
 def postCompToOp : (C ⥤ Dᵒᵖ') ⥤ (C ⥤ Dᵒᵖ) :=
   (Functor.whiskeringRight C Dᵒᵖ' Dᵒᵖ).obj catOfOp'ToOp
 
+@[simp]
 def postCompToOp' : (C ⥤ Dᵒᵖ) ⥤ (C ⥤ Dᵒᵖ') :=
   (Functor.whiskeringRight C Dᵒᵖ Dᵒᵖ').obj catOfOpToOp'
 
+@[simp]
 def biCompToOp : (Cᵒᵖ' ⥤ Dᵒᵖ') ⥤ (Cᵒᵖ ⥤ Dᵒᵖ) :=
   preCompToOp ⋙ postCompToOp
 
+@[simp]
 def biCompToOp' : (Cᵒᵖ ⥤ Dᵒᵖ) ⥤ (Cᵒᵖ' ⥤ Dᵒᵖ') :=
   preCompToOp' ⋙ postCompToOp'
 
@@ -148,6 +167,7 @@ def biCompToOp' : (Cᵒᵖ ⥤ Dᵒᵖ) ⥤ (Cᵒᵖ' ⥤ Dᵒᵖ') :=
 Isomorphism of functor categories induced by precomposition with the categorical
 isomorphism.
 -/
+@[simp]
 def functorOpIsoOp' : (Cᵒᵖ ⥤ D) ≅Cat (Cᵒᵖ' ⥤ D) where
   hom := preCompToOp'
   inv := preCompToOp
@@ -157,12 +177,15 @@ def functorOpIsoOp' : (Cᵒᵖ ⥤ D) ≅Cat (Cᵒᵖ' ⥤ D) where
 /--
 The equivalence of functor categories induced by the isomorphism.
 -/
+@[simp]
 def functorOpEquivOp' : (Cᵒᵖ ⥤ D) ≌ (Cᵒᵖ' ⥤ D) :=
   Cat.equivOfIso functorOpIsoOp'
 
+@[simp]
 instance : Coe (Cᵒᵖ ⥤ D) (Cᵒᵖ' ⥤ D) where
   coe := preCompToOp'.obj
 
+@[simp]
 instance : Coe (Cᵒᵖ' ⥤ D) (Cᵒᵖ ⥤ D) where
   coe := preCompToOp.obj
 
@@ -170,6 +193,7 @@ instance : Coe (Cᵒᵖ' ⥤ D) (Cᵒᵖ ⥤ D) where
 Isomorphism of functor categories induced by postcomposition with the categorical
 isomorphism.
 -/
+@[simp]
 def functorToOpIsoToOp' : (C ⥤ Dᵒᵖ) ≅Cat (C ⥤ Dᵒᵖ') where
   hom := postCompToOp'
   inv := postCompToOp
@@ -179,12 +203,15 @@ def functorToOpIsoToOp' : (C ⥤ Dᵒᵖ) ≅Cat (C ⥤ Dᵒᵖ') where
 /--
 The equivalence of functor categories induced by the isomorphism.
 -/
+@[simp]
 def functorToOpEquivToOp' : (C ⥤ Dᵒᵖ) ≌ (C ⥤ Dᵒᵖ') :=
   Cat.equivOfIso functorToOpIsoToOp'
 
+@[simp]
 instance : Coe (C ⥤ Dᵒᵖ) (C ⥤ Dᵒᵖ') where
   coe := postCompToOp'.obj
 
+@[simp]
 instance : Coe (C ⥤ Dᵒᵖ') (C ⥤ Dᵒᵖ) where
   coe := postCompToOp.obj
 
@@ -192,39 +219,47 @@ instance : Coe (C ⥤ Dᵒᵖ') (C ⥤ Dᵒᵖ) where
 Isomorphism of functor categories induced by pre- and postcomposition with the
 categorical isomorphisms.
 -/
+@[simp]
 def functorOpOpIsoOp'Op' : (Cᵒᵖ ⥤ Dᵒᵖ) ≅Cat (Cᵒᵖ' ⥤ Dᵒᵖ') :=
   functorOpIsoOp' ≪≫ functorToOpIsoToOp'
 
 /--
 The equivalence of functor categories induced by the isomorphism.
 -/
+@[simp]
 def functorOpOpEquivOp'Op' : (Cᵒᵖ ⥤ Dᵒᵖ) ≌ (Cᵒᵖ' ⥤ Dᵒᵖ') :=
   Cat.equivOfIso functorOpOpIsoOp'Op'
 
+@[simp]
 instance : Coe (Cᵒᵖ ⥤ Dᵒᵖ) (Cᵒᵖ' ⥤ Dᵒᵖ') where
   coe := biCompToOp'.obj
 
+@[simp]
 instance : Coe (Cᵒᵖ' ⥤ Dᵒᵖ') (Cᵒᵖ ⥤ Dᵒᵖ) where
   coe := biCompToOp.obj
 
 /--
 An isomorphism in `C` is an isomorphism in `Cᵒᵖ'`.
 -/
+@[simp]
 def isoToOp' {X Y : C} (i : @Iso C _ X Y) : @Iso Cᵒᵖ' _ X Y where
   hom := i.inv
   inv := i.hom
   hom_inv_id := i.hom_inv_id
   inv_hom_id := i.inv_hom_id
 
+@[simp]
 def isoFromOp' {X Y : Cᵒᵖ'} (i : @Iso Cᵒᵖ' _ X Y) : @Iso C _ X Y where
   hom := i.inv
   inv := i.hom
   hom_inv_id := i.hom_inv_id
   inv_hom_id := i.inv_hom_id
 
+@[simp]
 instance {X Y : C} : Coe (@Iso C _ X Y) (@Iso Cᵒᵖ' _ X Y) where
   coe := isoToOp'
 
+@[simp]
 instance {X Y : Cᵒᵖ'} : Coe (@Iso Cᵒᵖ' _ X Y) (@Iso C _ X Y) where
   coe := isoFromOp'
 
@@ -234,6 +269,7 @@ variable {D : Type u₁} [Category.{v₁} D]
 Maps a functor `C ⥤ D` to a functor `Cᵒᵖ' ⥤ Dᵒᵖ'`.
 This is the `op'` analogue of `Functor.op` as an operation on objects.
 -/
+@[simp]
 def functorOp'Obj (G : C ⥤ D) : Cᵒᵖ' ⥤ Dᵒᵖ' where
   obj X := G.obj X
   map f := G.map f
@@ -244,6 +280,7 @@ def functorOp'Obj (G : C ⥤ D) : Cᵒᵖ' ⥤ Dᵒᵖ' where
 The functor `(C ⥤ D)ᵒᵖ' ⥤ (Cᵒᵖ' ⥤ Dᵒᵖ')` mapping functors to their `op'` versions.
 This is analogous to mathlib's `opHom : (C ⥤ D)ᵒᵖ ⥤ Cᵒᵖ ⥤ Dᵒᵖ`.
 -/
+@[simp]
 def functorOp' : (C ⥤ D)ᵒᵖ' ⥤ (Cᵒᵖ' ⥤ Dᵒᵖ') where
   obj G := functorOp'Obj G
   map {G H} α := {
@@ -271,7 +308,7 @@ opposite categories.
 Since morphisms in `Cᵒᵖ'` from `X` to `Y` are morphisms from `Y` to `X` in `C`,
 and composition is reversed, the functor naturally maps them correctly.
 -/
-@[simps]
+@[simp]
 def Functor.op' {C D : Type*} [Category C] [Category D] (F : C ⥤ D) :
     Cᵒᵖ' ⥤ Dᵒᵖ' where
   obj X := F.obj X
@@ -296,12 +333,14 @@ lemma isIso_of_isIso_op' {C : Type*} [Category C] {X Y : C} (f : Y ⟶ X)
     [h : @IsIso Cᵒᵖ' _ X Y f] : IsIso f :=
   ⟨@inv Cᵒᵖ' _ X Y f _, @IsIso.inv_hom_id Cᵒᵖ' _ X Y f _, @IsIso.hom_inv_id Cᵒᵖ' _ X Y f _⟩
 
+@[simp]
 instance op'_faithful (F : C ⥤ D) [F.Faithful] : (Functor.op' F).Faithful where
   map_injective {X Y} {f g} h := by
     unfold Functor.op' at h
     simp only at h
     exact F.map_injective h
 
+@[simp]
 instance op'_reflects_isomorphisms (F : C ⥤ D) [F.ReflectsIsomorphisms] :
     (Functor.op' F).ReflectsIsomorphisms where
   reflects {X Y} f hf := by
@@ -380,7 +419,7 @@ using the `op'` construction.
 -/
 def opFunctorObj' (E : Cat.{v, u}) : Cat.{v, u} := .of Eᵒᵖ'
 
-@[simps]
+@[simp]
 def opFunctor' : Cat.{v, u} ⥤ Cat.{v, u} where
   obj := opFunctorObj'
   map := _root_.GebLean.Functor.op'
@@ -401,7 +440,7 @@ The natural isomorphism between the double application of `Cat.opFunctor'` and
 the identity functor on `Cat`, derived from the equality
 `opFunctor'_comp_self_eq_id`.
 -/
-@[simps!]
+@[simp]
 def opFunctor'Involutive : opFunctor'.{v, u} ⋙ opFunctor'.{v, u} ≅ 𝟭 _ :=
   eqToIso opFunctor'_comp_self_eq_id
 
@@ -411,10 +450,12 @@ category using `op'`. Both the unit and counit are derived from the equality
 `opFunctor'_comp_self_eq_id`, showing that this isomorphism is actually an
 equality (strict involution) rather than just an equivalence.
 -/
+@[simp]
 def opCatIso' : Cat.{v, u} ≅Cat Cat.{v, u} where
   hom := opFunctor'.{v, u}
   inv := opFunctor'.{v, u}
 
+@[simp]
 def opEquivalence' : Cat.{v, u} ≌ Cat.{v, u} := Cat.equivOfIso opCatIso'
 
 /--
@@ -422,6 +463,7 @@ Natural isomorphism between mathlib's `opFunctor` and our `opFunctor'` as
 endofunctors on `Cat`. The components at each category `C` are the categorical
 isomorphisms `catOfOpToOp' : Cᵒᵖ ⟶ Cᵒᵖ'`.
 -/
+@[simp]
 def opFunctorIsoOpFunctor' : Cat.opFunctor.{v, u} ≅ opFunctor'.{v, u} where
   hom := {
     app := fun C => catOfOpToOp'
@@ -434,7 +476,6 @@ def opFunctorIsoOpFunctor' : Cat.opFunctor.{v, u} ≅ opFunctor'.{v, u} where
       case h_map =>
         intros X Y f
         simp
-        rfl
   }
   inv := {
     app := fun C => catOfOp'ToOp
@@ -462,12 +503,15 @@ def opFunctorIsoOpFunctor' : Cat.opFunctor.{v, u} ≅ opFunctor'.{v, u} where
 Functor-category endofunctors induced by precomposition and
 postcomposition with `opFunctor'`.
 -/
+@[simp]
 def preCompOpFunctor' : (Cat ⥤ D) ⥤ (Cat ⥤ D) :=
   (Functor.whiskeringLeft Cat Cat D).obj opFunctor'
 
+@[simp]
 def postCompOpFunctor' : (C ⥤ Cat) ⥤ (C ⥤ Cat) :=
   (Functor.whiskeringRight C Cat Cat).obj opFunctor'
 
+@[simp]
 def biCompOpFunctor : (Cat ⥤ Cat) ⥤ (Cat ⥤ Cat) :=
   preCompOpFunctor' ⋙ postCompOpFunctor'
 
@@ -482,10 +526,12 @@ Functor from `Xᵒᵖ ⥤ Y` constructed by taking the opposite of a functor
 `G : X ⥤ Yᵒᵖ` and postcomposing with the involutive isomorphism `unopUnop`.
 This is the composition `G.op ⋙ unopUnop Y`.
 -/
+@[simp]
 def unopFunctor {X Y : Type _} [Category X] [Category Y] (G : X ⥤ Yᵒᵖ) :
     Xᵒᵖ ⥤ Y :=
   G.op ⋙ unopUnop Y
 
+@[simp]
 instance unopFunctor_faithful {X Y : Type _} [Category X] [Category Y]
     (G : X ⥤ Yᵒᵖ) [G.Faithful] : (unopFunctor G).Faithful := by
   unfold unopFunctor

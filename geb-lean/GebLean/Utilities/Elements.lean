@@ -680,7 +680,6 @@ def coyoneda' : C ⥤ (Cᵒᵖ' ⥤ Type v) :=
 
 lemma coyoneda'_obj_obj (X Y : C) : (coyoneda'.obj X).obj Y = (Y ⟶ X) := by
   dsimp [coyoneda', preCompToOp']
-  rfl
 
 lemma coyoneda'_obj_map (X : C) {Y Z : C} (f : (Z : Cᵒᵖ') ⟶ (Y : Cᵒᵖ')) (g : Y ⟶ X) :
     (coyoneda'.obj X).map f g = f ≫ g := by
