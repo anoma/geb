@@ -58,7 +58,7 @@ abbrev CompositionalStruct {U : Type u} (hs : HomSet.{v, u} U) :=
 
 /-- Associativity law for composition. -/
 abbrev AssociativityLaw {U : Type u} (hs : HomSet.{v, u} U)
-    (comp : CompositionalStruct hs) :=
+    (comp : CompositionalStruct hs) : Prop :=
   ∀ {a b c d : U} (f : hs a b) (g : hs b c) (h : hs c d),
     comp (comp f g) h = comp f (comp g h)
 
@@ -87,12 +87,12 @@ abbrev identityStructOfReflQuiver (U : Type u) [ReflQuiver U] :
 
 /-- Composing any morphism after the identity gives the original morphism. -/
 abbrev IdComp {U : Type u} (hs : HomSet.{v, u} U)
-    (comp : CompositionalStruct hs) (id : IdentityStruct hs) :=
+    (comp : CompositionalStruct hs) (id : IdentityStruct hs) : Prop :=
   ∀ {a b : U} (f : hs a b), comp (id a) f = f
 
 /-- Composing any morphism before the identity gives the original morphism. -/
 abbrev CompId {U : Type u} (hs : HomSet.{v, u} U)
-    (comp : CompositionalStruct hs) (id : IdentityStruct hs) :=
+    (comp : CompositionalStruct hs) (id : IdentityStruct hs) : Prop :=
   ∀ {a b : U} (f : hs a b), comp f (id b) = f
 
 /-- Identity laws for both pre- and post-composition with identities. -/
