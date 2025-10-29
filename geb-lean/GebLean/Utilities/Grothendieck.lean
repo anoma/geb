@@ -202,6 +202,12 @@ theorem id_fiber_eq_op (X : GrothendieckContra' F') :
   ((F'.map  (𝟙 X.base)).obj X.fiber ⟶ X.fiber) = (X.fiber ⟶ X.fiber) :=
     (congrFun (congrArg Quiver.Hom (id_fiber_cod_eq X).symm) X.fiber).symm
 
+@[simp]
+theorem id_fiber_eq_rev (X : GrothendieckContra' F') :
+  ((F'.map  (𝟙 X.base)).obj X.fiber ⟶ X.fiber) =
+  (X.fiber ⟶ (F'.map  (𝟙 X.base)).obj X.fiber) :=
+    Eq.trans (id_fiber_eq_op X) (id_fiber_eq X).symm
+
 /-- The identity morphism in the contravariant Grothendieck category.
 -/
 def id (X : GrothendieckContra' F') : Hom X X where
@@ -322,9 +328,19 @@ theorem grothendieckContraIsoHomMapId
     (𝟙 (grothendieckContraIsoHomObj X))
     rfl
     (by
+      let idfeq := id_fiber_eq (grothendieckContraIsoHomObj X)
+      unfold grothendieckContraIsoHomMap grothendieckContraIsoHomObj at idfeq
+      simp at idfeq
+      let idfeq_op := id_fiber_eq_op (grothendieckContraIsoHomObj X)
+      unfold grothendieckContraIsoHomMap grothendieckContraIsoHomObj at idfeq_op
+      simp at idfeq_op
+      let idfcodeq := (id_fiber_cod_eq <| grothendieckContraIsoHomObj X).symm
+      unfold grothendieckContraIsoHomMap grothendieckContraIsoHomObj at idfcodeq
+      simp at idfcodeq
+      let idfeq_rev := id_fiber_eq_rev <| grothendieckContraIsoHomObj X
+      unfold grothendieckContraIsoHomMap grothendieckContraIsoHomObj at idfeq_rev
+      simp at idfeq_rev
       unfold grothendieckContraIsoHomMap grothendieckContraIsoHomObj
-      simp only [CategoryStruct.id]
-      rw [gcf_id_fiber, id_fiber]
       sorry
       )
 
