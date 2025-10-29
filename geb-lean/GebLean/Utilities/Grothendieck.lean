@@ -149,6 +149,58 @@ theorem gcf_id_fiber_cod_eq.{u, v, u₂, v₂} {C : Type u} [CI : Category.{v, u
   (F'.map  (𝟙 X.base)).obj X.fiber = X.fiber :=
     (Functor.congr_obj (F'.map_id X.base).symm X.fiber).symm
 
+@[simp]
+theorem gcf_id_fiber_eq.{u, v, u₂, v₂} {C : Type u} [CI : Category.{v, u} C]
+    (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) (X : GrothendieckContra F') :
+  (X.fiber ⟶ (F'.map  (𝟙 X.base)).obj X.fiber) = (X.fiber ⟶ X.fiber) :=
+    (congrArg (Quiver.Hom X.fiber) (gcf_id_fiber_cod_eq F' X).symm).symm
+
+@[simp]
+theorem gcf_id_fiber_eq_op.{u, v, u₂, v₂} {C : Type u} [CI : Category.{v, u} C]
+    (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) (X : GrothendieckContra F') :
+  ((F'.map  (𝟙 X.base)).obj X.fiber ⟶ X.fiber) = (X.fiber ⟶ X.fiber) :=
+    (congrFun (congrArg Quiver.Hom (gcf_id_fiber_cod_eq F' X).symm)
+      X.fiber).symm
+
+@[simp]
+theorem gcf_id_fiber_eq_rev.{u, v, u₂, v₂} {C : Type u} [CI : Category.{v, u} C]
+    (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) (X : GrothendieckContra F') :
+  ((F'.map  (𝟙 X.base)).obj X.fiber ⟶ X.fiber) =
+  (X.fiber ⟶ (F'.map  (𝟙 X.base)).obj X.fiber) :=
+    Eq.trans (gcf_id_fiber_eq_op F' X) (gcf_id_fiber_eq F' X).symm
+
+@[simp]
+theorem gcf_comp_fiber_cod_eq.{u, v, u₂, v₂} {C : Type u}
+    [CI : Category.{v, u} C] (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂})
+    {X Y Z : GrothendieckContra F'} (f : gcHom F' X Y) (g : gcHom F' Y Z) :
+  (F'.map f.base).obj ((F'.map g.base).obj Z.fiber) =
+  (F'.map (g.base ≫ f.base)).obj Z.fiber :=
+    by rw [F'.map_comp] ; rfl
+
+@[simp]
+theorem gcf_comp_fiber_eq.{u, v, u₂, v₂} {C : Type u}
+    [CI : Category.{v, u} C] (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂})
+    {X Y Z : GrothendieckContra F'} (f : gcHom F' X Y) (g : gcHom F' Y Z) :
+  ((F'.map f.base).obj Y.fiber ⟶
+    (F'.map f.base).obj ((F'.map g.base).obj Z.fiber)) =
+  ((F'.map f.base).obj Y.fiber ⟶
+    (F'.map (g.base ≫ f.base)).obj Z.fiber) :=
+  (congrArg
+    (Quiver.Hom ((F'.map f.base).obj Y.fiber))
+    (gcf_comp_fiber_cod_eq F' f g).symm).symm
+
+@[simp]
+theorem gcf_comp_fiber_eq_op.{u, v, u₂, v₂} {C : Type u}
+    [CI : Category.{v, u} C] (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂})
+    {X Y Z : GrothendieckContra F'} (f : gcHom F' X Y) (g : gcHom F' Y Z) :
+  ((F'.map f.base).obj ((F'.map g.base).obj Z.fiber) ⟶
+    (F'.map f.base).obj Y.fiber) =
+  ((F'.map (g.base ≫ f.base)).obj Z.fiber ⟶
+    (F'.map f.base).obj Y.fiber) :=
+  (congrFun
+    (congrArg Quiver.Hom (gcf_comp_fiber_cod_eq F' f g).symm)
+    ((F'.map f.base).obj Y.fiber)).symm
+
 universe w u v u₁ v₁ u₂ v₂
 
 variable {C : Type u} [CInst : Category.{v, u} C]
