@@ -129,12 +129,14 @@ theorem gcf_id_base.{u, v, u₂, v₂} {C : Type u} [CI : Category.{v, u} C]
     (gcId F' X).base = 𝟙 X.base :=
       rfl
 
+@[simp]
 theorem gcf_id_base_eq.{u, v, u₂, v₂} {C : Type u} [CI : Category.{v, u} C]
   (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) (X : GrothendieckContra F') :
     ((Cat.postCompOpFunctor'.obj F').map (gcId F' X).base).obj X.fiber = X.fiber := by
   simp
   exact Grothendieck.id._proof_1 X
 
+@[simp]
 theorem gcf_id_fiber.{u, v, u₂, v₂} {C : Type u} [CI : Category.{v, u} C]
   (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) (X : GrothendieckContra F') :
     (gcId F' X).fiber = eqToHom (gcf_id_base_eq F' X) :=
