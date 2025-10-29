@@ -271,7 +271,7 @@ theorem id_fiber_eq_rev (X : GrothendieckContra' F') :
 -/
 def id (X : GrothendieckContra' F') : Hom X X where
   base := 𝟙 X.base
-  fiber := eqToHom (Functor.congr_obj (F'.map_id X.base).symm X.fiber)
+  fiber := eqToHom (id_fiber_cod_eq X).symm
 
 instance (X : GrothendieckContra' F') : Inhabited (Hom X X) :=
   ⟨id X⟩
@@ -339,13 +339,14 @@ instance GrothendieckContraInst' : Category (GrothendieckContra' F') where
 @[simp]
 theorem id_base (X : GrothendieckContra' F') : (id X).base = 𝟙 X.base := rfl
 
+@[simp]
 theorem id_base_eq (X : GrothendieckContra' F') :
-  X.fiber = (F'.map X.id.base).obj X.fiber :=
-    (Functor.congr_obj (F'.map_id X.base).symm X.fiber)
+  (F'.map X.id.base).obj X.fiber = X.fiber :=
+    (Functor.congr_obj (F'.map_id X.base).symm X.fiber).symm
 
 @[simp]
 theorem id_fiber (X : GrothendieckContra' F') :
-    (id X).fiber = eqToHom (id_base_eq X) := rfl
+    (id X).fiber = eqToHom (id_base_eq X).symm := rfl
 
 @[simp]
 theorem comp_base {X Y Z : GrothendieckContra' F'} (f : Hom X Y) (g : Hom Y Z) :
@@ -396,7 +397,7 @@ private lemma grothendieckContra_id_fiber_base_eq (X : GrothendieckContra F') :
 
 private lemma grothendieckContra_id_fiber_eq (X : GrothendieckContra F') :
     grothendieckContra_id_fiber_base_eq X =
-    Eq.symm (id_base_eq (grothendieckContraIsoHomObj X)) := by
+    (id_base_eq (grothendieckContraIsoHomObj X)) := by
   unfold grothendieckContraIsoHomObj grothendieckContra_id_fiber_base_eq id_base_eq
   simp
 
