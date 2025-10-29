@@ -187,6 +187,21 @@ theorem ext {X Y : GrothendieckContra' F'} (f g : Hom X Y) (w_base : f.base = g.
   dsimp at w_base
   cat_disch
 
+@[simp]
+theorem id_fiber_cod_eq (X : GrothendieckContra' F') :
+  (F'.map  (𝟙 X.base)).obj X.fiber = X.fiber :=
+    (Functor.congr_obj (F'.map_id X.base).symm X.fiber).symm
+
+@[simp]
+theorem id_fiber_eq (X : GrothendieckContra' F') :
+  (X.fiber ⟶ (F'.map  (𝟙 X.base)).obj X.fiber) = (X.fiber ⟶ X.fiber) :=
+    (congrArg (Quiver.Hom X.fiber) (id_fiber_cod_eq X).symm).symm
+
+@[simp]
+theorem id_fiber_eq_op (X : GrothendieckContra' F') :
+  ((F'.map  (𝟙 X.base)).obj X.fiber ⟶ X.fiber) = (X.fiber ⟶ X.fiber) :=
+    (congrFun (congrArg Quiver.Hom (id_fiber_cod_eq X).symm) X.fiber).symm
+
 /-- The identity morphism in the contravariant Grothendieck category.
 -/
 def id (X : GrothendieckContra' F') : Hom X X where
