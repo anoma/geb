@@ -3,6 +3,7 @@ import Mathlib.CategoryTheory.Elements
 import Mathlib.CategoryTheory.Comma.Over.Basic
 import Mathlib.CategoryTheory.Whiskering
 import Mathlib.CategoryTheory.Grothendieck
+import GebLean.Utilities.Equalities
 import GebLean.Utilities.Opposites
 import GebLean.Utilities.Elements
 
@@ -141,6 +142,12 @@ theorem gcf_id_fiber.{u, v, u₂, v₂} {C : Type u} [CI : Category.{v, u} C]
   (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) (X : GrothendieckContra F') :
     (gcId F' X).fiber = eqToHom (gcf_id_base_eq F' X) :=
       rfl
+
+@[simp]
+theorem gcf_id_fiber_cod_eq.{u, v, u₂, v₂} {C : Type u} [CI : Category.{v, u} C]
+    (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) (X : GrothendieckContra F') :
+  (F'.map  (𝟙 X.base)).obj X.fiber = X.fiber :=
+    (Functor.congr_obj (F'.map_id X.base).symm X.fiber).symm
 
 universe w u v u₁ v₁ u₂ v₂
 
