@@ -104,6 +104,7 @@ def gcComp.{u, v, u₂, v₂} {C : Type u} [CI : Category.{v, u} C]
     gcHom.{u, v, u₂, v₂} (C := C) (CI := CI) F' X Z :=
   (GrothendieckContraCatStructInst.{u, v, u₂, v₂} (C := C) (CI := CI) F').comp
 
+@[simp]
 def gcConv.{u, v, u₂, v₂} {C : Type u} [CI : Category.{v, u} C]
   (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) {X Y : GrothendieckContra (C := C) F'}
   (f g : gcHom F' X Y) (w_base : f.base = g.base) :
@@ -217,8 +218,13 @@ instance GrothendieckContraInst' : Category (GrothendieckContra' F') where
 theorem id_base (X : GrothendieckContra' F') : (id X).base = 𝟙 X.base := rfl
 
 @[simp]
+theorem id_base_eq (X : GrothendieckContra' F') :
+  X.fiber = (F'.map X.id.base).obj X.fiber :=
+    (Functor.congr_obj (F'.map_id X.base).symm X.fiber)
+
+@[simp]
 theorem id_fiber (X : GrothendieckContra' F') :
-    (id X).fiber = eqToHom (Functor.congr_obj (F'.map_id X.base).symm X.fiber) := rfl
+    (id X).fiber = eqToHom (id_base_eq X) := rfl
 
 @[simp]
 theorem comp_base {X Y Z : GrothendieckContra' F'} (f : Hom X Y) (g : Hom Y Z) :
@@ -271,13 +277,33 @@ def grothendieckContraIsoHomMap
 
 theorem grothendieckContraIsoHomMapId
     (X : GrothendieckContra F') :
-    grothendieckContraIsoHomMap (gcId F' X) = 𝟙 (grothendieckContraIsoHomObj X) := by
-  let gidb := gcf_id_base (F' := F') X
-  simp at gidb
-  simp
-    [grothendieckContraIsoHomObj, grothendieckContraIsoHomMap,
-     CategoryStruct.id, Cat.of, Category.toCategoryStruct]
-  sorry
+    grothendieckContraIsoHomMap (gcId F' X) = 𝟙 (grothendieckContraIsoHomObj X) :=
+  GrothendieckContra'.ext (F' := F')
+    (X := grothendieckContraIsoHomObj X)
+    (Y := grothendieckContraIsoHomObj X)
+    (grothendieckContraIsoHomMap (gcId F' X))
+    (𝟙 (grothendieckContraIsoHomObj X))
+    rfl
+    (by
+      simp
+        [grothendieckContraIsoHomMap, grothendieckContraIsoHomObj,
+         CategoryStruct.id, Cat.opFunctorObj', Cat.of, Cat.str, Bundled.of]
+      let idf := id_fiber (F' := F') (grothendieckContraIsoHomObj X)
+      unfold grothendieckContraIsoHomObj at idf
+      let gp := Grothendieck.id._proof_1 X
+      simp at gp
+      let gps := Eq.symm gp
+      let ibe := id_base_eq (F' := F') (grothendieckContraIsoHomObj X)
+      unfold grothendieckContraIsoHomObj at ibe
+      simp at ibe
+      unfold Grothendieck.id
+      simp
+      let ere :=
+        eqToHom_refl_eq (C := F'.obj X.base)
+          (Grothendieck.id._proof_1 X)
+      cases F'
+      sorry
+      )
 
 theorem grothendieckContraIsoHomMapComp
     {X Y Z : GrothendieckContra F'}
@@ -481,7 +507,7 @@ variable {F' G' H' : Cᵒᵖ' ⥤ Cat}
 A natural transformation `α : F' ⟶ G'` induces a functor between the corresponding
 contravariant Grothendieck constructions.
 -/
-@[simps!]
+@[simps]
 def map (α : F' ⟶ G') : GrothendieckContra' F' ⥤ GrothendieckContra' G' where
   obj X := ⟨X.base, (α.app X.base).obj X.fiber⟩
   map {X Y} f := ⟨f.base, (α.app X.base).map f.fiber ≫
@@ -633,7 +659,7 @@ lemma compAsSmallFunctorEquivalenceFunctor_map_comp
 The functor part of the equivalence relating Grothendieck constructions
 across universes.
 -/
-@[simps!]
+@[simps]
 def compAsSmallFunctorEquivalenceFunctor :
     GrothendieckContra' F' ⥤ GrothendieckContra' (F' ⋙ Cat.asSmallFunctor.{w}) where
   obj X := ⟨X.base, AsSmall.up.obj X.fiber⟩
@@ -796,7 +822,7 @@ constructions.
 Applying a functor `G : D ⥤ C` to the base of the Grothendieck construction
 induces a functor `GrothendieckContra' (functorOp'Obj G ⋙ F') ⥤ GrothendieckContra' F'`.
 -/
-@[simps!]
+@[simps]
 def pre (G : D ⥤ C) : GrothendieckContra' (functorOp'Obj G ⋙ F') ⥤
     GrothendieckContra' F' where
   obj X := ⟨G.obj X.base, X.fiber⟩
