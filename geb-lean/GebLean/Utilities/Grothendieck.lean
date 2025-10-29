@@ -268,6 +268,22 @@ def grothendieckContraIsoHomObj :
     GrothendieckContra F' → GrothendieckContra' F' :=
   fun X => ⟨X.base, X.fiber⟩
 
+private lemma grothendieckContra_id_fiber_base_eq (X : GrothendieckContra F') :
+    (F'.map (𝟙 X.base)).obj X.fiber = X.fiber :=
+  Grothendieck.id._proof_1 X
+
+private lemma grothendieckContra_id_fiber_eq (X : GrothendieckContra F') :
+    grothendieckContra_id_fiber_base_eq X =
+    Eq.symm (id_base_eq (grothendieckContraIsoHomObj X)) := by
+  unfold grothendieckContraIsoHomObj grothendieckContra_id_fiber_base_eq id_base_eq
+  simp
+
+private lemma id_base_eq_transport (X : GrothendieckContra F')
+    (trw_obj : (F'.map (𝟙 X.base)).obj X.fiber = X.fiber) :
+    id_base_eq (grothendieckContraIsoHomObj X) = Eq.refl X.fiber := by
+  unfold id_base_eq grothendieckContraIsoHomObj
+  simp [id_base, trw_obj]
+
 def grothendieckContraIsoHomMap
     {X Y : GrothendieckContra F'} :
     gcHom F' X Y →
@@ -303,7 +319,15 @@ theorem grothendieckContraIsoHomMapId
           (id_base_eq (F' := F') (grothendieckContraIsoHomObj X))
       unfold grothendieckContraIsoHomObj at ese
       let trw := F'.map_id X.base
-      sorry
+      have h := grothendieckContra_id_fiber_eq X
+      unfold grothendieckContraIsoHomObj grothendieckContra_id_fiber_base_eq at h
+      rw [h]
+      have trw_obj : (F'.map (𝟙 X.base)).obj X.fiber = X.fiber := by
+        rw [trw]
+        rfl
+      have id_eq_refl := id_base_eq_transport X trw_obj
+      rw [id_eq_refl]
+      simp
       )
 
 theorem grothendieckContraIsoHomMapComp
