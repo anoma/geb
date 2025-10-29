@@ -217,7 +217,6 @@ instance GrothendieckContraInst' : Category (GrothendieckContra' F') where
 @[simp]
 theorem id_base (X : GrothendieckContra' F') : (id X).base = 𝟙 X.base := rfl
 
-@[simp]
 theorem id_base_eq (X : GrothendieckContra' F') :
   X.fiber = (F'.map X.id.base).obj X.fiber :=
     (Functor.congr_obj (F'.map_id X.base).symm X.fiber)
@@ -507,7 +506,7 @@ variable {F' G' H' : Cᵒᵖ' ⥤ Cat}
 A natural transformation `α : F' ⟶ G'` induces a functor between the corresponding
 contravariant Grothendieck constructions.
 -/
-@[simps]
+@[simps!]
 def map (α : F' ⟶ G') : GrothendieckContra' F' ⥤ GrothendieckContra' G' where
   obj X := ⟨X.base, (α.app X.base).obj X.fiber⟩
   map {X Y} f := ⟨f.base, (α.app X.base).map f.fiber ≫
@@ -659,7 +658,7 @@ lemma compAsSmallFunctorEquivalenceFunctor_map_comp
 The functor part of the equivalence relating Grothendieck constructions
 across universes.
 -/
-@[simps]
+@[simps!]
 def compAsSmallFunctorEquivalenceFunctor :
     GrothendieckContra' F' ⥤ GrothendieckContra' (F' ⋙ Cat.asSmallFunctor.{w}) where
   obj X := ⟨X.base, AsSmall.up.obj X.fiber⟩
@@ -822,7 +821,7 @@ constructions.
 Applying a functor `G : D ⥤ C` to the base of the Grothendieck construction
 induces a functor `GrothendieckContra' (functorOp'Obj G ⋙ F') ⥤ GrothendieckContra' F'`.
 -/
-@[simps]
+@[simps!]
 def pre (G : D ⥤ C) : GrothendieckContra' (functorOp'Obj G ⋙ F') ⥤
     GrothendieckContra' F' where
   obj X := ⟨G.obj X.base, X.fiber⟩
