@@ -217,6 +217,35 @@ def id (X : GrothendieckContra' F') : Hom X X where
 instance (X : GrothendieckContra' F') : Inhabited (Hom X X) :=
   ⟨id X⟩
 
+@[simp]
+theorem comp_fiber_cod_eq {X Y Z : GrothendieckContra' F'}
+  (f : Hom X Y) (g : Hom Y Z) :
+    (F'.map f.base).obj ((F'.map g.base).obj Z.fiber) =
+    (F'.map (g.base ≫ f.base)).obj Z.fiber :=
+      by rw [F'.map_comp] ; rfl
+
+@[simp]
+theorem comp_fiber_eq {X Y Z : GrothendieckContra' F'}
+  (f : Hom X Y) (g : Hom Y Z) :
+  ((F'.map f.base).obj Y.fiber ⟶
+    (F'.map f.base).obj ((F'.map g.base).obj Z.fiber)) =
+  ((F'.map f.base).obj Y.fiber ⟶
+    (F'.map (g.base ≫ f.base)).obj Z.fiber) :=
+  (congrArg
+    (Quiver.Hom ((F'.map f.base).obj Y.fiber))
+    (comp_fiber_cod_eq f g ).symm).symm
+
+@[simp]
+theorem comp_fiber_eq_op {X Y Z : GrothendieckContra' F'}
+  (f : Hom X Y) (g : Hom Y Z) :
+  ((F'.map f.base).obj ((F'.map g.base).obj Z.fiber) ⟶
+    (F'.map f.base).obj Y.fiber) =
+  ((F'.map (g.base ≫ f.base)).obj Z.fiber ⟶
+    (F'.map f.base).obj Y.fiber) :=
+  (congrFun
+    (congrArg Quiver.Hom (comp_fiber_cod_eq f g).symm)
+    ((F'.map f.base).obj Y.fiber)).symm
+
 /-- Composition of morphisms in the contravariant Grothendieck category.
 -/
 def comp {X Y Z : GrothendieckContra' F'} (f : Hom X Y) (g : Hom Y Z) : Hom X Z where
