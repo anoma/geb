@@ -6,7 +6,7 @@ testDriver = "test"
 
 [leanOptions]
 pp.unicode.fun = true # pretty-prints `fun a ↦ b`
-pp.proofs = false
+pp.proofs = true
 autoImplicit = false
 relaxedAutoImplicit = false
 weak.linter.mathlibStandardSet = true
