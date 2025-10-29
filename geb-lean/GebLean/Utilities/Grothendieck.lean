@@ -129,6 +129,17 @@ theorem gcf_id_base.{u, v, u₂, v₂} {C : Type u} [CI : Category.{v, u} C]
     (gcId F' X).base = 𝟙 X.base :=
       rfl
 
+theorem gcf_id_base_eq.{u, v, u₂, v₂} {C : Type u} [CI : Category.{v, u} C]
+  (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) (X : GrothendieckContra F') :
+    ((Cat.postCompOpFunctor'.obj F').map (gcId F' X).base).obj X.fiber = X.fiber := by
+  simp
+  exact Grothendieck.id._proof_1 X
+
+theorem gcf_id_fiber.{u, v, u₂, v₂} {C : Type u} [CI : Category.{v, u} C]
+  (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) (X : GrothendieckContra F') :
+    (gcId F' X).fiber = eqToHom (gcf_id_base_eq F' X) :=
+      rfl
+
 universe w u v u₁ v₁ u₂ v₂
 
 variable {C : Type u} [CInst : Category.{v, u} C]
@@ -278,12 +289,6 @@ private lemma grothendieckContra_id_fiber_eq (X : GrothendieckContra F') :
   unfold grothendieckContraIsoHomObj grothendieckContra_id_fiber_base_eq id_base_eq
   simp
 
-private lemma id_base_eq_transport (X : GrothendieckContra F')
-    (trw_obj : (F'.map (𝟙 X.base)).obj X.fiber = X.fiber) :
-    id_base_eq (grothendieckContraIsoHomObj X) = Eq.refl X.fiber := by
-  unfold id_base_eq grothendieckContraIsoHomObj
-  simp [id_base, trw_obj]
-
 def grothendieckContraIsoHomMap
     {X Y : GrothendieckContra F'} :
     gcHom F' X Y →
@@ -300,34 +305,10 @@ theorem grothendieckContraIsoHomMapId
     (𝟙 (grothendieckContraIsoHomObj X))
     rfl
     (by
-      simp
-        [grothendieckContraIsoHomMap, grothendieckContraIsoHomObj,
-         CategoryStruct.id, Cat.opFunctorObj', Cat.of, Cat.str, Bundled.of]
-      let idf := id_fiber (F' := F') (grothendieckContraIsoHomObj X)
-      unfold grothendieckContraIsoHomObj at idf
-      let gp := Grothendieck.id._proof_1 X
-      simp at gp
-      let gps := Eq.symm gp
-      let ibe := id_base_eq (F' := F') (grothendieckContraIsoHomObj X)
-      unfold grothendieckContraIsoHomObj at ibe
-      simp at ibe
-      unfold Grothendieck.id
-      simp
-      let ese :=
-        eqToHom_sym_eq (C := F'.obj X.base)
-          (Grothendieck.id._proof_1 X)
-          (id_base_eq (F' := F') (grothendieckContraIsoHomObj X))
-      unfold grothendieckContraIsoHomObj at ese
-      let trw := F'.map_id X.base
-      have h := grothendieckContra_id_fiber_eq X
-      unfold grothendieckContraIsoHomObj grothendieckContra_id_fiber_base_eq at h
-      rw [h]
-      have trw_obj : (F'.map (𝟙 X.base)).obj X.fiber = X.fiber := by
-        rw [trw]
-        rfl
-      have id_eq_refl := id_base_eq_transport X trw_obj
-      rw [id_eq_refl]
-      simp
+      unfold grothendieckContraIsoHomMap grothendieckContraIsoHomObj
+      simp only [CategoryStruct.id]
+      rw [gcf_id_fiber, id_fiber]
+      sorry
       )
 
 theorem grothendieckContraIsoHomMapComp
