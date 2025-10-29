@@ -377,16 +377,7 @@ theorem grothendieckContraIsoHomMapId
       let idfeq_rev := id_fiber_eq_rev <| grothendieckContraIsoHomObj X
       unfold grothendieckContraIsoHomMap grothendieckContraIsoHomObj at idfeq_rev
       simp at idfeq_rev
-      -- Goal: eqToHom ⋯ = eqToHom ⋯
-      -- The LHS eqToHom has a type that idfeq shows equals (X.fiber ⟶ X.fiber)
-      -- The RHS eqToHom has a type that idfeq_op shows equals (X.fiber ⟶ X.fiber)
-      -- Both eqToHom terms should simplify to identity morphisms
-      congr 1
-      unfold Cat.str
-      simp
-      _
-      (exact idfcodeq.symm)
-      (exact proof_irrel_heq _ _)
+      sorry
       )
 
 theorem grothendieckContraIsoHomMapComp
