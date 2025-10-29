@@ -368,20 +368,15 @@ theorem base_eqToHom {X Y : GrothendieckContra' F'} (h : X = Y) :
   subst h
   rfl
 
-private lemma fiber_eq_of_obj_eq (X : GrothendieckContra' F') :
-    X.fiber = (F'.map (id X).base).obj X.fiber := by
-  rw [id_base]
-  exact Functor.congr_obj (F'.map_id X.base).symm X.fiber
-
 @[simp]
 theorem fiber_eqToHom {X Y : GrothendieckContra' F'} (h : X = Y) :
-    (eqToHom h).fiber = eqToHom (by subst h; exact fiber_eq_of_obj_eq X) := by
+    (eqToHom h).fiber = eqToHom (by subst h; exact (id_fiber_cod_eq X).symm) := by
   subst h
   rfl
 
 lemma eqToHom_eq {X Y : GrothendieckContra' F'} (hF : X = Y) :
     eqToHom hF = { base := eqToHom (by subst hF; rfl)
-                   fiber := eqToHom (by subst hF; exact fiber_eq_of_obj_eq X) } := by
+                   fiber := eqToHom (by subst hF; exact (id_fiber_cod_eq X).symm) } := by
   subst hF
   rfl
 
@@ -390,16 +385,6 @@ section Isomorphism
 def grothendieckContraIsoHomObj :
     GrothendieckContra F' → GrothendieckContra' F' :=
   fun X => ⟨X.base, X.fiber⟩
-
-private lemma grothendieckContra_id_fiber_base_eq (X : GrothendieckContra F') :
-    (F'.map (𝟙 X.base)).obj X.fiber = X.fiber :=
-  Grothendieck.id._proof_1 X
-
-private lemma grothendieckContra_id_fiber_eq (X : GrothendieckContra F') :
-    grothendieckContra_id_fiber_base_eq X =
-    (id_base_eq (grothendieckContraIsoHomObj X)) := by
-  unfold grothendieckContraIsoHomObj grothendieckContra_id_fiber_base_eq id_base_eq
-  simp
 
 def grothendieckContraIsoHomMap
     {X Y : GrothendieckContra F'} :
