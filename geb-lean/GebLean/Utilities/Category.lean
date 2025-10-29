@@ -253,6 +253,28 @@ lemma heq_iff_eqToHom_comp {X Y Z : C} (f : Y ⟶ Z) (g : X ⟶ Z) (p : X = Y) :
     exact heq_of_eq h
 
 /--
+Heterogeneous equality of morphisms is equivalent to equality after precomposing
+and postcomposing with `eqToHom`.
+-/
+lemma heq_iff_comp_eqToHom_comp {W X Y Z : C}
+    (f : X ⟶ Y) (g : W ⟶ Z) (p : W = X) (q : Y = Z) :
+    HEq f g ↔ eqToHom p ≫ f ≫ eqToHom q = g := by
+  constructor
+  · intro h
+    -- f : X ⟶ Y and g : W ⟶ Z with f ≍ g
+    -- First use heq_iff_eqToHom_comp to get eqToHom p ≫ f = intermediate
+    -- Then use heq_iff_comp_eqToHom to handle the postcomposition
+    cases p
+    cases q
+    simp
+    exact eq_of_heq h
+  · intro h
+    cases p
+    cases q
+    simp at h
+    exact heq_of_eq h
+
+/--
 Any `eqToHom` of a reflexive equality is equal to the identity.
 By proof irrelevance, all proofs of `X = X` are equal to `rfl`, and
 `eqToHom rfl = 𝟙 X`.
