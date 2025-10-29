@@ -206,7 +206,12 @@ theorem id_fiber_eq_op (X : GrothendieckContra' F') :
 -/
 def id (X : GrothendieckContra' F') : Hom X X where
   base := 𝟙 X.base
-  fiber := eqToHom (Functor.congr_obj (F'.map_id X.base).symm X.fiber)
+  fiber :=
+    cast
+      (α := X.fiber ⟶ X.fiber)
+      (β := X.fiber ⟶ (F'.map (𝟙 X.base)).obj X.fiber)
+      (id_fiber_eq X).symm
+      (CategoryStruct.id X.fiber)
 
 instance (X : GrothendieckContra' F') : Inhabited (Hom X X) :=
   ⟨id X⟩
