@@ -328,6 +328,14 @@ theorem grothendieckContraIsoHomMapId
     (𝟙 (grothendieckContraIsoHomObj X))
     rfl
     (by
+      unfold grothendieckContraIsoHomMap grothendieckContraIsoHomObj
+      simp
+      unfold Cat.opFunctorObj'
+      unfold Cat.of
+      unfold Cat.str
+      unfold Bundled.of
+      unfold GrothendieckContraInst'
+      simp
       let idfeq := id_fiber_eq (grothendieckContraIsoHomObj X)
       unfold grothendieckContraIsoHomMap grothendieckContraIsoHomObj at idfeq
       simp at idfeq
@@ -340,7 +348,6 @@ theorem grothendieckContraIsoHomMapId
       let idfeq_rev := id_fiber_eq_rev <| grothendieckContraIsoHomObj X
       unfold grothendieckContraIsoHomMap grothendieckContraIsoHomObj at idfeq_rev
       simp at idfeq_rev
-      unfold grothendieckContraIsoHomMap grothendieckContraIsoHomObj
       sorry
       )
 
