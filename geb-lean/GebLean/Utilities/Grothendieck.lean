@@ -297,10 +297,12 @@ theorem grothendieckContraIsoHomMapId
       simp at ibe
       unfold Grothendieck.id
       simp
-      let ere :=
-        eqToHom_refl_eq (C := F'.obj X.base)
+      let ese :=
+        eqToHom_sym_eq (C := F'.obj X.base)
           (Grothendieck.id._proof_1 X)
-      cases F'
+          (id_base_eq (F' := F') (grothendieckContraIsoHomObj X))
+      unfold grothendieckContraIsoHomObj at ese
+      let trw := F'.map_id X.base
       sorry
       )
 
