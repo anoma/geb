@@ -2,6 +2,13 @@ import Mathlib.Data.Sigma.Basic
 
 namespace GebLean
 
+def typeEq_eq.{u} {α β : Sort u} (h : α = β) (a : α) (b : β) : Prop :=
+  match h with | rfl => a = b
+
+def typeEq_of_heq.{u} {α β : Sort u} (h : α = β) {a : α} {b : β} (heq : a ≍ b) :
+  typeEq_eq h a b :=
+    by cases h ; exact eq_of_heq heq
+
 /--
 Helper lemma: Sigma types with equal first components and heterogeneously equal
 second components are equal.
