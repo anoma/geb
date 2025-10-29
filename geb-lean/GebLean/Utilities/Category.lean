@@ -268,6 +268,14 @@ lemma eqToHom_refl_eq {X Y : C} (p q : Eq.{u + 1} X Y) :
   Eq (eqToHom.{v, u} p) (eqToHom.{v, u} q) := by
     simp
 
+/--
+Proofs of symmetric equalities produce equal `eqToHom` terms.
+-/
+lemma eqToHom_sym_eq {X Y : C} (p : X = Y) (q : Y = X) :
+  eqToHom p = cast (by rw [p]) (eqToHom q) := by
+    cases p ; cases q
+    simp
+
 end EqToHom
 
 end GebLean
