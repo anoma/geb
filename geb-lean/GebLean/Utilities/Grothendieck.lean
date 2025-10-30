@@ -500,30 +500,13 @@ theorem grothendieckContraIsoHomMapComp_fiber_eq
     eqToHom (gcf_comp_fiber_precomp F' f g) ≫
       ((Cat.postCompOpFunctor'.obj F').map f.base).map g.fiber ≫ f.fiber =
     (grothendieckContraIsoHomMap f ≫ grothendieckContraIsoHomMap g).fiber := by
-  -- Unfold Cat.postCompOpFunctor' to eliminate it and work with F'.map directly
-  unfold Cat.postCompOpFunctor'
   simp
-  -- Now we have: eqToHom (...) ≫ (F'.map f.base).map g.fiber ≫ f.fiber =
-  --   (grothendieckContraIsoHomMap f ≫ grothendieckContraIsoHomMap g).fiber
-  -- Simplify the RHS
-  simp [grothendieckContraIsoHomMap, grothendieckContraIsoHomObj]
-  -- Now RHS has anonymous constructors. Unfold the composition
-  unfold GrothendieckContraInst'
-  unfold CategoryStruct.comp
-  -- Simplify to get comp explicit
-  simp only []
-  -- Now I can rewrite with comp_fiber
-  rw [comp_fiber]
-  simp
-  unfold Cat.opFunctorObj'
-  unfold Cat.of
-  unfold Cat.str
-  unfold Bundled.of
-  unfold CategoryOp'Inst
-  simp
+    [ grothendieckContraIsoHomMap, grothendieckContraIsoHomObj,
+      Cat.postCompOpFunctor', GrothendieckContraInst', CategoryStruct.comp,
+      Cat.opFunctorObj', Cat.of, Cat.str, Bundled.of, CategoryOp'Inst]
   apply congrArg
   apply congrArg
-  sorry
+  apply Cat.eqToHom_postCompOp_eq
 
 theorem grothendieckContraIsoHomMapComp_fiber_components
     {X Y Z : GrothendieckContra F'}
