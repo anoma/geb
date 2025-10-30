@@ -86,6 +86,14 @@ When making changes to Lean code:
     files, so you can make a `.lean` however you normally do that and then
     compile it with a `lake` command yourself instead of using a `bash`
     script.  Running scripts requires the user to grant permission every time.
+13. **Test within our own codebase**:  Do not create temporary test
+    files in places such as `/tmp` to test code fragments. Instead, place the
+    code fragments directly in our own codebase, optionally in temporary
+    files, but not using `cat` or `bash` -- just edit them using the same
+    edit permissions that you do to make other code changes.  That way,
+    edit permission allows you to do that without having to request
+    permission for shell commands or filesystem access, and you avoid
+    cluttering up the filesystem.
 
 ## Code Style
 
