@@ -1227,17 +1227,18 @@ variable {F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}}
 variable {T : Type u₁} [Category.{v₁} T]
 
 /--
+The fiber inclusion functor from `F'.obj c` viewed as a
+functor to `GrothendieckContra F'`, which is the expression
+of `GrothendieckContra' F'` as a covariant Grothendieck construction.
+-/
+def ι_cov (c : C) : F'.obj c ⥤ GrothendieckContraCat F' :=
+  Functor.op' <| Grothendieck.ι (Cat.postCompOpFunctor'.obj F') c
+
+/--
 The fiber inclusion functor from `F'.obj c` to `GrothendieckContra' F'`.
 -/
-def ι (c : C) : F'.obj c ⥤ GrothendieckContra' F' where
-  obj f := ⟨c, f⟩
-  map φ := ⟨𝟙 c, eqToHom (Functor.congr_obj (F'.map_id c).symm _) ≫
-    (F'.map (𝟙 c)).map φ⟩
-  map_id f := by
-    fapply ext
-    · rfl
-    · sorry
-  map_comp φ ψ := sorry
+def ι (c : C) : F'.obj c ⥤ GrothendieckContraCat' (F' := F') :=
+  ι_cov c ⋙ grothendieckContraIsoHom (F' := F')
 
 /--
 The fiber inclusion functor is faithful.
