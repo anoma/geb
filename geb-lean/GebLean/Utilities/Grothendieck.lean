@@ -482,9 +482,9 @@ theorem grothendieckContraIsoHomMapId
   have h_base := @grothendieckContraIsoHomMapId_base_components _ CInst F' base fiber
   have h_fiber := @grothendieckContraIsoHomMapId_fiber_components _ CInst F' base fiber
   refine GrothendieckContra'.ext _ _ h_base ?_
-  rw [h_fiber, id_fiber]
+  rw [h_fiber]
   simp
-  sorry
+  rfl
 
 theorem grothendieckContraIsoHomMapComp
     {X Y Z : GrothendieckContra F'}
