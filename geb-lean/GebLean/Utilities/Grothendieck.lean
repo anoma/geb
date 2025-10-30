@@ -218,7 +218,7 @@ theorem gcf_comp_fiber.{u, v, u₂, v₂} {C : Type u}
     eqToHom (Grothendieck.comp._proof_1 g f) ≫
     ((Cat.postCompOpFunctor'.obj F').map f.base).map g.fiber ≫
     f.fiber
-      := sorry
+      := rfl
 
 theorem gcf_congr.{u, v, u₂, v₂} {C : Type u}
     [CI : Category.{v, u} C] (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂})
