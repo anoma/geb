@@ -1226,6 +1226,9 @@ section FunctorFrom
 variable {F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}}
 variable {T : Type u₁} [Category.{v₁} T]
 
+private def CI : Category.{max v v₂, max u u₂} (GrothendieckContra F') :=
+  GrothendieckContraCatInst.{u, v, u₂, v₂} (F' := F')
+
 /--
 The fiber inclusion functor from `F'.obj c` viewed as a
 functor to `GrothendieckContra F'`, which is the expression
