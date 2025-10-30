@@ -398,6 +398,8 @@ instance GrothendieckContraInst' : Category (GrothendieckContra' F') where
       slice_lhs 2 4 => erw [Functor.congr_hom (F'.map_comp g.base f.base) h.fiber]
       simp
 
+abbrev GrothendieckContraCat' : Cat := Cat.of (GrothendieckContra' F')
+
 @[simp]
 theorem id_base (X : GrothendieckContra' F') : (id X).base = 𝟙 X.base := rfl
 
