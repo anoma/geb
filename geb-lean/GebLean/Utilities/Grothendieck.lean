@@ -521,6 +521,8 @@ theorem grothendieckContraIsoHomMapComp_fiber_eq
   unfold Bundled.of
   unfold CategoryOp'Inst
   simp
+  apply congrArg
+  apply congrArg
   sorry
 
 theorem grothendieckContraIsoHomMapComp_fiber_components
