@@ -458,35 +458,7 @@ def grothendieckContraIsoHomMap
 theorem grothendieckContraIsoHomMapId
     (X : GrothendieckContra F') :
     grothendieckContraIsoHomMap (gcId F' X) = 𝟙 (grothendieckContraIsoHomObj X) :=
-  GrothendieckContra'.ext (F' := F')
-    (X := grothendieckContraIsoHomObj X)
-    (Y := grothendieckContraIsoHomObj X)
-    (grothendieckContraIsoHomMap (gcId F' X))
-    (𝟙 (grothendieckContraIsoHomObj X))
-    rfl
-    (by
-      unfold grothendieckContraIsoHomMap grothendieckContraIsoHomObj
-      simp
-      unfold Cat.opFunctorObj'
-      unfold Cat.of
-      unfold Cat.str
-      unfold Bundled.of
-      unfold GrothendieckContraInst'
-      simp
-      let idfeq := id_fiber_eq (grothendieckContraIsoHomObj X)
-      unfold grothendieckContraIsoHomMap grothendieckContraIsoHomObj at idfeq
-      simp at idfeq
-      let idfeq_op := id_fiber_eq_op (grothendieckContraIsoHomObj X)
-      unfold grothendieckContraIsoHomMap grothendieckContraIsoHomObj at idfeq_op
-      simp at idfeq_op
-      let idfcodeq := (id_fiber_cod_eq <| grothendieckContraIsoHomObj X).symm
-      unfold grothendieckContraIsoHomMap grothendieckContraIsoHomObj at idfcodeq
-      simp at idfcodeq
-      let idfeq_rev := id_fiber_eq_rev <| grothendieckContraIsoHomObj X
-      unfold grothendieckContraIsoHomMap grothendieckContraIsoHomObj at idfeq_rev
-      simp at idfeq_rev
-      sorry
-      )
+  sorry
 
 theorem grothendieckContraIsoHomMapComp
     {X Y Z : GrothendieckContra F'}
@@ -494,9 +466,6 @@ theorem grothendieckContraIsoHomMapComp
     (g : gcHom F' Y Z) :
     grothendieckContraIsoHomMap (gcComp F' f g) =
     grothendieckContraIsoHomMap f ≫ grothendieckContraIsoHomMap g := by
-  cases f
-  cases g
-  simp [grothendieckContraIsoHomMap]
   sorry
 
 def grothendieckContraIsoHom :
@@ -518,16 +487,12 @@ def grothendieckContraIsoInvMap
 theorem grothendieckContraIsoInvMapId
     (X : GrothendieckContra' F') :
     grothendieckContraIsoInvMap (𝟙 X) = gcId F' (grothendieckContraIsoInvObj X) := by
-  simp [grothendieckContraIsoInvMap, grothendieckContraIsoInvObj]
   sorry
 
 theorem grothendieckContraIsoInvMapComp
     {X Y Z : GrothendieckContra' F'} (f : X ⟶ Y) (g : Y ⟶ Z) :
     grothendieckContraIsoInvMap (f ≫ g) =
     gcComp F' (grothendieckContraIsoInvMap f) (grothendieckContraIsoInvMap g) := by
-  cases f
-  cases g
-  simp [grothendieckContraIsoInvObj,grothendieckContraIsoInvMap, Category.toCategoryStruct]
   sorry
 
 def grothendieckContraIsoInv :
