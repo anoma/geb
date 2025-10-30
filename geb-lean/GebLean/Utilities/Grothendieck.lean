@@ -524,7 +524,8 @@ theorem grothendieckContraIsoInvMapId_fiber_components
   simp
     [grothendieckContraIsoInvMap, grothendieckContraIsoInvObj,
      Cat.opFunctorObj', Cat.of, Cat.str, Bundled.of]
-  exact Eq.trans (id_fiber _) (by simp ; sorry)
+  exact Eq.trans (id_fiber _)
+    (by simp ; exact (Cat.eqToHom_postCompOp_eq F' base _ _ rfl).symm)
 
 theorem grothendieckContraIsoInvMapId
     (X : GrothendieckContra' F') :
