@@ -179,7 +179,10 @@ abbrev categoryDataOfCategory (U : Type u) [Category.{v, u} U] :
 
 section EqToHom
 
+universe v₂ u₂
+
 variable {C : Type u} [Category.{v, u} C]
+variable {D : Type u₂} [Category.{v₂, u₂} D]
 
 /--
 Composition of `eqToHom` with its symmetric gives identity.
@@ -302,6 +305,15 @@ lemma eqToHom_sym_eq {X Y : C} (p : X = Y) (q : Y = X) :
   eqToHom p = cast (by rw [p]) (eqToHom q) := by
     cases p ; cases q
     simp
+
+/--
+A functor maps `eqToHom` to `eqToHom` of the transported equality.
+-/
+@[simp]
+lemma functor_map_eqToHom (F : C ⥤ D) {X Y : C} (p : X = Y) :
+    F.map (eqToHom p) = eqToHom (congrArg F.obj p) := by
+  cases p
+  simp
 
 end EqToHom
 
