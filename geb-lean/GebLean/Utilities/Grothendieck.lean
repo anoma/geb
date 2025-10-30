@@ -510,10 +510,35 @@ def grothendieckContraIsoInvMap
     (X ⟶ Y) → gcHom F' (grothendieckContraIsoInvObj X) (grothendieckContraIsoInvObj Y) :=
   fun f => ⟨f.base, f.fiber⟩
 
+theorem grothendieckContraIsoInvMapId_base_components
+    (X : GrothendieckContra' F') :
+    (grothendieckContraIsoInvMap (𝟙 X)).base = (gcId F' (grothendieckContraIsoInvObj X)).base := by
+  simp [grothendieckContraIsoInvMap, grothendieckContraIsoInvObj]
+  rfl
+
+theorem grothendieckContraIsoInvMapId_fiber_components
+    (X : GrothendieckContra' F') :
+    (grothendieckContraIsoInvMap (𝟙 X)).fiber =
+    (gcId F' (grothendieckContraIsoInvObj X)).fiber := by
+  cases X with | mk base fiber =>
+  simp [grothendieckContraIsoInvMap, grothendieckContraIsoInvObj]
+  unfold Cat.opFunctorObj'
+  unfold Cat.of
+  unfold Cat.str
+  unfold Bundled.of
+  simp
+  unfold Cat.str
+  simp
+  sorry
+
 theorem grothendieckContraIsoInvMapId
     (X : GrothendieckContra' F') :
     grothendieckContraIsoInvMap (𝟙 X) = gcId F' (grothendieckContraIsoInvObj X) := by
-  sorry
+  have h_base := grothendieckContraIsoInvMapId_base_components X
+  have h_fiber := grothendieckContraIsoInvMapId_fiber_components X
+  refine gcExt F' _ _ h_base ?_
+  rw [h_fiber]
+  simp
 
 theorem grothendieckContraIsoInvMapComp
     {X Y Z : GrothendieckContra' F'} (f : X ⟶ Y) (g : Y ⟶ Z) :
