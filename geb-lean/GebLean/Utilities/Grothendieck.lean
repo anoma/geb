@@ -573,11 +573,57 @@ theorem grothendieckContraIsoInvMapId
   rw [h_fiber]
   simp
 
+theorem grothendieckContraIsoInvMapComp_base_components
+    {X Y Z : GrothendieckContra' F'} (f : X ⟶ Y) (g : Y ⟶ Z) :
+    (grothendieckContraIsoInvMap (f ≫ g)).base =
+    (gcComp F' (grothendieckContraIsoInvMap f) (grothendieckContraIsoInvMap g)).base := by
+  simp only [grothendieckContraIsoInvMap, grothendieckContraIsoInvObj]
+  unfold GrothendieckContraInst'
+  unfold CategoryStruct.comp
+  simp only []
+  rw [comp_base]
+  rw [gcf_comp_base]
+  simp
+
+theorem grothendieckContraIsoInvMapComp_fiber_eq
+    {X Y Z : GrothendieckContra' F'} (f : X ⟶ Y) (g : Y ⟶ Z) :
+    f.fiber ≫ (F'.map f.base).map g.fiber ≫ eqToHom (comp_fiber_cod_eq f g) =
+    eqToHom (gcf_comp_fiber_precomp F' (grothendieckContraIsoInvMap f)
+      (grothendieckContraIsoInvMap g)) ≫
+    ((Cat.postCompOpFunctor'.obj F').map (grothendieckContraIsoInvMap f).base).map
+      (grothendieckContraIsoInvMap g).fiber ≫
+    (grothendieckContraIsoInvMap f).fiber := by
+  simp
+    [ grothendieckContraIsoInvMap, grothendieckContraIsoInvObj,
+      Cat.postCompOpFunctor', CategoryStruct.comp,
+      Cat.opFunctorObj', Cat.of, Cat.str, Bundled.of, CategoryOp'Inst]
+  apply congrArg
+  apply congrArg
+  apply Eq.symm
+  apply Cat.eqToHom_postCompOp_eq
+
+theorem grothendieckContraIsoInvMapComp_fiber_components
+    {X Y Z : GrothendieckContra' F'} (f : X ⟶ Y) (g : Y ⟶ Z) :
+    (grothendieckContraIsoInvMap (f ≫ g)).fiber =
+    (gcComp F' (grothendieckContraIsoInvMap f) (grothendieckContraIsoInvMap g)).fiber := by
+  simp only [grothendieckContraIsoInvMap, grothendieckContraIsoInvObj]
+  unfold GrothendieckContraInst'
+  unfold CategoryStruct.comp
+  simp only []
+  rw [comp_fiber]
+  rw [gcf_comp_fiber]
+  simp only []
+  exact grothendieckContraIsoInvMapComp_fiber_eq f g
+
 theorem grothendieckContraIsoInvMapComp
     {X Y Z : GrothendieckContra' F'} (f : X ⟶ Y) (g : Y ⟶ Z) :
     grothendieckContraIsoInvMap (f ≫ g) =
     gcComp F' (grothendieckContraIsoInvMap f) (grothendieckContraIsoInvMap g) := by
-  sorry
+  have h_base := grothendieckContraIsoInvMapComp_base_components f g
+  have h_fiber := grothendieckContraIsoInvMapComp_fiber_components f g
+  refine gcExt F' _ _ h_base ?_
+  rw [h_fiber]
+  simp
 
 def grothendieckContraIsoInv :
     GrothendieckContra' F' ⥤ GrothendieckContraCat F' where
