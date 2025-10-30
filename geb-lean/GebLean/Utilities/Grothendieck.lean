@@ -134,7 +134,10 @@ theorem gcf_id_base.{u, v, u₂, v₂} {C : Type u} [CI : Category.{v, u} C]
 theorem gcf_id_base_eq.{u, v, u₂, v₂} {C : Type u} [CI : Category.{v, u} C]
   (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) (X : GrothendieckContra F') :
     ((Cat.postCompOpFunctor'.obj F').map (gcId F' X).base).obj X.fiber = X.fiber :=
-  Grothendieck.id._proof_1 X
+  of_eq_true
+    (Eq.trans
+      (congrArg (fun x ↦ x.obj X.fiber = X.fiber) (F'.map_id X.base))
+      (eq_self X.fiber))
 
 @[simp]
 theorem gcf_id_fiber.{u, v, u₂, v₂} {C : Type u} [CI : Category.{v, u} C]
@@ -212,11 +215,9 @@ theorem gcf_comp_fiber.{u, v, u₂, v₂} {C : Type u}
     [CI : Category.{v, u} C] (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂})
     {X Y Z : GrothendieckContra F'} (f : gcHom F' X Y) (g : gcHom F' Y Z) :
   (gcComp F' f g).fiber =
-    let ff := f.fiber
-    let gf := g.fiber
-    let c2h := eqToHom (gcf_comp_fiber_cod_eq F' f g).symm
-    let fmg := (F'.map f.base).map g.fiber
-    sorry
+    eqToHom (Grothendieck.comp._proof_1 g f) ≫
+    ((Cat.postCompOpFunctor'.obj F').map f.base).map g.fiber ≫
+    f.fiber
       := sorry
 
 theorem gcf_congr.{u, v, u₂, v₂} {C : Type u}
