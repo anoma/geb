@@ -544,11 +544,10 @@ fiber category of `F` itself (non-opposite) with reversed direction.
 -/
 theorem eqToHom_postCompOp_eq {C : Type u} [Category.{v} C]
     (F : Cᵒᵖ' ⥤ Cat.{v₁, u₁}) (X : C)
-    {A B : F.obj X} (p : A = B) (q : B = A) (h : p = q.symm) :
+    {A B : F.obj X} (p : A = B) (q : B = A) :
     @eqToHom ((Cat.postCompOpFunctor'.obj F).obj X) _ A B p =
     @eqToHom (F.obj X) _ B A q := by
-  subst h
-  subst q
+  subst p
   rfl
 
 end Cat

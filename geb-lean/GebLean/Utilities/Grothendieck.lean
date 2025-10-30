@@ -472,8 +472,6 @@ theorem grothendieckContraIsoHomMapId_fiber_components
   exact Cat.eqToHom_postCompOp_eq F' base
     (gcf_id_base_eq F' ⟨base, fiber⟩)
     (id_base_eq ⟨base, fiber⟩).symm
-    (gcf_id_base_eq_components base fiber)
-
 
 theorem grothendieckContraIsoHomMapId
     (X : GrothendieckContra F') :
@@ -525,7 +523,7 @@ theorem grothendieckContraIsoInvMapId_fiber_components
     [grothendieckContraIsoInvMap, grothendieckContraIsoInvObj,
      Cat.opFunctorObj', Cat.of, Cat.str, Bundled.of]
   exact Eq.trans (id_fiber _)
-    (by simp ; exact (Cat.eqToHom_postCompOp_eq F' base _ _ rfl).symm)
+    (by simp ; exact (Cat.eqToHom_postCompOp_eq F' base _ _).symm)
 
 theorem grothendieckContraIsoInvMapId
     (X : GrothendieckContra' F') :
