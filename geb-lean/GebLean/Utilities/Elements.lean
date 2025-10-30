@@ -392,10 +392,7 @@ lemma triangle_identity_transport {G F : C ⥤ Type w} (η : G ⟶ F)
     | refl =>
       exact triangle_identity_transport_aux η pfst psnd aval aproof pf₂
 
-/--
-Helper lemma for the triangle identity in the slice-copresheaf equivalence.
--/
-private lemma sliceCopresheaf_functor_unitIso_comp_helper (η : Over F) :
+private lemma sliceCopresheafFunctorUnitIso (η : Over F) :
     (sliceToCopresheaf F).map ((sliceCopresheafUnitIso F).hom.app η) ≫
     (sliceCopresheafCounitIso F).hom.app ((sliceToCopresheaf F).obj η) =
     𝟙 ((sliceToCopresheaf F).obj η) := by
@@ -417,13 +414,14 @@ def sliceEquivCopresheaf : Over F ≌ (F.Elements ⥤ Type w) where
   inverse := copresheafToSlice F
   unitIso := sliceCopresheafUnitIso F
   counitIso := sliceCopresheafCounitIso F
-  functor_unitIso_comp η := sliceCopresheaf_functor_unitIso_comp_helper F η
+  functor_unitIso_comp η := sliceCopresheafFunctorUnitIso F η
 
 end CopresheafSliceEquivalence
 
 /--
 The contravariant category of elements for a functor `F : Cᵒᵖ' ⥤ Type`.
-This is simply the opposite of mathlib's category of elements.
+This is simply the opposite of mathlib's covariant category of elements
+of `F` viewed as a copresheaf on `Cᵒᵖ'`.
 -/
 def Functor.ElementsContra' (F : Cᵒᵖ' ⥤ Type w) := F.Elementsᵒᵖ'
 
@@ -431,7 +429,7 @@ instance (F : Cᵒᵖ' ⥤ Type w) : Category F.ElementsContra' :=
   inferInstanceAs (Category F.Elementsᵒᵖ')
 
 /--
-`P.Elements` is `P.ElementsContra'ᵒᵖ'`.
+For a presheaf `F`, `F.Elements` is `F.ElementsContra'ᵒᵖ'`.
 -/
 def elementsToElementsContraOpEq (F : Cᵒᵖ' ⥤ Type w) :
   F.Elements = F.ElementsContra'ᵒᵖ' :=
@@ -445,7 +443,8 @@ def sliceEquivPresheaf (F : Cᵒᵖ' ⥤ Type w) :
     sliceEquivCopresheaf F
 
 /--
-The category of elements using mathlib's definition.
+The category of elements of a presheaf using mathlib's definition of `op`
+(as opposed to our `op'`).
 For `F : Cᵒᵖ' ⥤ Type w`, transport `F` to a functor `Cᵒᵖ ⥤ Type w` using `opToOp'`,
 then take mathlib's category of elements and reverse the morphisms (opposite).
 -/
