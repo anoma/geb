@@ -495,6 +495,22 @@ theorem grothendieckContraIsoHomMapComp_base_components
   simp
   rfl
 
+theorem grothendieckContraIsoHomMapComp_fiber_eq
+    {X Y Z : GrothendieckContra F'} (f : gcHom F' X Y) (g : gcHom F' Y Z) :
+    eqToHom (gcf_comp_fiber_precomp F' f g) ≫
+      ((Cat.postCompOpFunctor'.obj F').map f.base).map g.fiber ≫ f.fiber =
+    (grothendieckContraIsoHomMap f ≫ grothendieckContraIsoHomMap g).fiber := by
+  simp
+    [grothendieckContraIsoHomMap, grothendieckContraIsoHomObj,
+     Cat.opFunctorObj', Cat.of, Cat.str, Bundled.of]
+  unfold GrothendieckContraInst'
+  unfold CategoryStruct.comp
+  simp
+  exact
+    Eq.trans
+    sorry
+    (comp_fiber (grothendieckContraIsoHomMap f) (grothendieckContraIsoHomMap g)).symm
+
 theorem grothendieckContraIsoHomMapComp_fiber_components
     {X Y Z : GrothendieckContra F'}
     (f : gcHom F' X Y)
@@ -503,8 +519,8 @@ theorem grothendieckContraIsoHomMapComp_fiber_components
     (grothendieckContraIsoHomMap f ≫ grothendieckContraIsoHomMap g).fiber := by
   simp only [grothendieckContraIsoHomMap, grothendieckContraIsoHomObj]
   rw [gcf_comp_fiber]
-  simp
-  sorry
+  simp only [Cat.str]
+  exact grothendieckContraIsoHomMapComp_fiber_eq f g
 
 theorem grothendieckContraIsoHomMapComp
     {X Y Z : GrothendieckContra F'}
