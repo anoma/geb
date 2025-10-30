@@ -133,9 +133,8 @@ theorem gcf_id_base.{u, v, u₂, v₂} {C : Type u} [CI : Category.{v, u} C]
 @[simp]
 theorem gcf_id_base_eq.{u, v, u₂, v₂} {C : Type u} [CI : Category.{v, u} C]
   (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) (X : GrothendieckContra F') :
-    ((Cat.postCompOpFunctor'.obj F').map (gcId F' X).base).obj X.fiber = X.fiber := by
-  simp
-  exact Grothendieck.id._proof_1 X
+    ((Cat.postCompOpFunctor'.obj F').map (gcId F' X).base).obj X.fiber = X.fiber :=
+  Grothendieck.id._proof_1 X
 
 @[simp]
 theorem gcf_id_fiber.{u, v, u₂, v₂} {C : Type u} [CI : Category.{v, u} C]
@@ -175,7 +174,7 @@ theorem gcf_comp_fiber_cod_eq.{u, v, u₂, v₂} {C : Type u}
     {X Y Z : GrothendieckContra F'} (f : gcHom F' X Y) (g : gcHom F' Y Z) :
   (F'.map f.base).obj ((F'.map g.base).obj Z.fiber) =
   (F'.map (g.base ≫ f.base)).obj Z.fiber :=
-    by rw [F'.map_comp] ; rfl
+    (symm <| Functor.congr_obj (F'.map_comp g.base f.base) Z.fiber)
 
 @[simp]
 theorem gcf_comp_fiber_eq.{u, v, u₂, v₂} {C : Type u}
@@ -200,6 +199,54 @@ theorem gcf_comp_fiber_eq_op.{u, v, u₂, v₂} {C : Type u}
   (congrFun
     (congrArg Quiver.Hom (gcf_comp_fiber_cod_eq F' f g).symm)
     ((F'.map f.base).obj Y.fiber)).symm
+
+@[simp]
+theorem gcf_comp_base.{u, v, u₂, v₂} {C : Type u}
+    [CI : Category.{v, u} C] (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂})
+    {X Y Z : GrothendieckContra F'} (f : gcHom F' X Y) (g : gcHom F' Y Z) :
+  (gcComp F' f g).base = g.base ≫ f.base :=
+    rfl
+
+@[simp]
+theorem gcf_comp_fiber.{u, v, u₂, v₂} {C : Type u}
+    [CI : Category.{v, u} C] (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂})
+    {X Y Z : GrothendieckContra F'} (f : gcHom F' X Y) (g : gcHom F' Y Z) :
+  (gcComp F' f g).fiber =
+    let ff := f.fiber
+    let gf := g.fiber
+    let c2h := eqToHom (gcf_comp_fiber_cod_eq F' f g).symm
+    let fmg := (F'.map f.base).map g.fiber
+    sorry
+      := sorry
+
+theorem gcf_congr.{u, v, u₂, v₂} {C : Type u}
+    [CI : Category.{v, u} C] (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂})
+    {X Y : GrothendieckContra F'} {f g : gcHom F' X Y} (h : f = g) :
+  f.fiber = eqToHom (by subst h; rfl) ≫ g.fiber :=
+    by subst h ; simp
+
+def gcf_eqToHom.{u, v, u₂, v₂} {C : Type u}
+    [CI : Category.{v, u} C] (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂})
+    {X Y : GrothendieckContra F'} (h : X = Y) : gcHom F' X Y :=
+  letI := GrothendieckContraCatInst F'
+  eqToHom h
+
+@[simp]
+theorem gcf_fiber_eqToHom.{u, v, u₂, v₂} {C : Type u}
+    [CI : Category.{v, u} C] (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂})
+    {X Y : GrothendieckContra F'} (h : X = Y) :
+  (gcf_eqToHom F' h).fiber =
+  eqToHom (by subst h ; exact gcf_id_fiber_cod_eq F' X) :=
+    by subst h ; rfl
+
+@[simp]
+theorem gcf_eqToHom_eq.{u, v, u₂, v₂} {C : Type u}
+    [CI : Category.{v, u} C] (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂})
+    {X Y : GrothendieckContra F'} (hF : X = Y) :
+  gcf_eqToHom F' hF =
+  { base := eqToHom (by subst hF; rfl)
+    fiber := eqToHom (by subst hF; exact gcf_id_fiber_cod_eq F' X) } :=
+  by subst hF ; rfl
 
 universe w u v u₁ v₁ u₂ v₂
 
@@ -281,7 +328,7 @@ theorem comp_fiber_cod_eq {X Y Z : GrothendieckContra' F'}
   (f : Hom X Y) (g : Hom Y Z) :
     (F'.map f.base).obj ((F'.map g.base).obj Z.fiber) =
     (F'.map (g.base ≫ f.base)).obj Z.fiber :=
-      by rw [F'.map_comp] ; rfl
+      (symm <| Functor.congr_obj (F'.map_comp g.base f.base) Z.fiber)
 
 @[simp]
 theorem comp_fiber_eq {X Y Z : GrothendieckContra' F'}
@@ -310,7 +357,7 @@ theorem comp_fiber_eq_op {X Y Z : GrothendieckContra' F'}
 def comp {X Y Z : GrothendieckContra' F'} (f : Hom X Y) (g : Hom Y Z) : Hom X Z where
   base := f.base ≫ g.base
   fiber := f.fiber ≫ (F'.map f.base).map g.fiber ≫
-    eqToHom (symm <| Functor.congr_obj (F'.map_comp g.base f.base) Z.fiber)
+    eqToHom (comp_fiber_cod_eq f g)
 
 attribute [local simp] eqToHom_map Functor.map_id
 
@@ -355,7 +402,8 @@ theorem comp_base {X Y Z : GrothendieckContra' F'} (f : Hom X Y) (g : Hom Y Z) :
 @[simp]
 theorem comp_fiber {X Y Z : GrothendieckContra' F'} (f : Hom X Y) (g : Hom Y Z) :
     (comp f g).fiber = f.fiber ≫ (F'.map f.base).map g.fiber ≫
-      eqToHom (symm <| Functor.congr_obj (F'.map_comp g.base f.base) Z.fiber) := rfl
+      eqToHom (comp_fiber_cod_eq f g) :=
+        rfl
 
 theorem congr {X Y : GrothendieckContra' F'} {f g : X ⟶ Y} (h : f = g) :
     f.fiber = g.fiber ≫ eqToHom (by subst h; rfl) := by
