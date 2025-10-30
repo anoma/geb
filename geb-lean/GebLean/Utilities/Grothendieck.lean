@@ -521,15 +521,10 @@ theorem grothendieckContraIsoInvMapId_fiber_components
     (grothendieckContraIsoInvMap (𝟙 X)).fiber =
     (gcId F' (grothendieckContraIsoInvObj X)).fiber := by
   cases X with | mk base fiber =>
-  simp [grothendieckContraIsoInvMap, grothendieckContraIsoInvObj]
-  unfold Cat.opFunctorObj'
-  unfold Cat.of
-  unfold Cat.str
-  unfold Bundled.of
   simp
-  unfold Cat.str
-  simp
-  sorry
+    [grothendieckContraIsoInvMap, grothendieckContraIsoInvObj,
+     Cat.opFunctorObj', Cat.of, Cat.str, Bundled.of]
+  exact Eq.trans (id_fiber _) (by simp ; sorry)
 
 theorem grothendieckContraIsoInvMapId
     (X : GrothendieckContra' F') :
