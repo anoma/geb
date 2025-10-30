@@ -107,7 +107,8 @@ When making changes to Lean code:
   or similar detached word.  Never call code "important" (if we didn't
   think it were important, we wouldn't be writing it).  Never opine that
   something is "complex" or "complicated"; readers can decide what they
-  consider complex.
+  consider complex.  Never call code "difficult" or refer to any aspect of
+  it as a "challenge"; that is also for readers to decide.
 - Do not use all-caps words unless they're acronyms.
 - Don't write "TODO" comments or summaries of completed or future work in the
   code itself; track to-dos/future work below in `CLAUDE.md` if necessary
