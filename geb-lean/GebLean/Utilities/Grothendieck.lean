@@ -676,6 +676,10 @@ def grothendieckContraEquiv :
   GrothendieckContraCat F' ≌ GrothendieckContra' F' :=
     Cat.equivOfIso grothendieckContraIso
 
+instance gcIsoFaithful : (grothendieckContraIsoHom (F' := F')).Faithful := by
+  change (grothendieckContraEquiv (F' := F')).functor.Faithful
+  infer_instance
+
 end Isomorphism
 
 section Transport
@@ -1244,10 +1248,19 @@ def ι (c : C) : F'.obj c ⥤ GrothendieckContraCat' (F' := F') :=
   ι_cov c ⋙ grothendieckContraIsoHom (F' := F')
 
 /--
+The covariant fiber inclusion functor is faithful.
+-/
+instance faithful_ι_cov (c : C) : (ι_cov (F' := F') c).Faithful :=
+  op'_faithful (Grothendieck.ι (Cat.postCompOpFunctor'.obj F') c)
+
+/--
 The fiber inclusion functor is faithful.
 -/
-instance faithful_ι (c : C) : (ι c : F'.obj c ⥤ GrothendieckContra' F').Faithful where
-  map_injective f := sorry
+instance faithful_ι (c : C) : (ι (F' := F') c).Faithful := by
+  have : (ι_cov (F' := F') c).Faithful := inferInstance
+  have : (grothendieckContraIsoHom (F' := F')).Faithful := inferInstance
+  unfold ι
+  infer_instance
 
 /--
 Natural transformation induced by a morphism in the base category.
