@@ -506,10 +506,14 @@ theorem grothendieckContraIsoHomMapComp_fiber_eq
   unfold GrothendieckContraInst'
   unfold CategoryStruct.comp
   simp
-  exact
-    Eq.trans
+  congr 1
+  letI ci := GrothendieckContraCatInst F'
+  let h :=
+    GebLean.heq_iff_comp_eqToHom
+      (Z := (F'.map (g.base ≫ f.base)).obj Z.fiber)
+      ((F'.map f.base).map g.fiber)
+  exact Eq.symm <|
     sorry
-    (comp_fiber (grothendieckContraIsoHomMap f) (grothendieckContraIsoHomMap g)).symm
 
 theorem grothendieckContraIsoHomMapComp_fiber_components
     {X Y Z : GrothendieckContra F'}
