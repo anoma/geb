@@ -515,6 +515,42 @@ def postCompOpFunctor' : (C ⥤ Cat) ⥤ (C ⥤ Cat) :=
 def biCompOpFunctor : (Cat ⥤ Cat) ⥤ (Cat ⥤ Cat) :=
   preCompOpFunctor' ⋙ postCompOpFunctor'
 
+/--
+For a functor `F : Cᵒᵖ' ⥤ Cat`, the object `(Cat.postCompOpFunctor'.obj F).obj X`
+is the opposite category of `F.obj X`.
+-/
+theorem postCompOpFunctor'_obj_eq (F : Cᵒᵖ' ⥤ Cat.{v₁, u₁}) (X : C) :
+    (Cat.postCompOpFunctor'.obj F).obj X = Cat.opFunctorObj' (F.obj X) := rfl
+
+/--
+An equality proof in an opposite category corresponds to an equality proof in
+the reverse direction in the original category. When converting between a
+category and its opposite, `eqToHom p` in the opposite category equals
+`eqToHom q` in the original category when `p` and `q` are equal object
+equalities in opposite directions.
+-/
+theorem eqToHom_op'_eq {E : Type u₁} [Category.{v₁} E]
+    {A B : E} (p : A = B) (q : B = A) (h : p = q.symm) :
+    @eqToHom (Cat.opFunctorObj' (Cat.of E)) _ A B p =
+    @eqToHom E _ B A q := by
+  subst h
+  subst q
+  rfl
+
+/--
+For a functor `F : Cᵒᵖ' ⥤ Cat`, an `eqToHom` in the fiber category of
+`postCompOpFunctor'.obj F` (which is opposite) equals an `eqToHom` in the
+fiber category of `F` itself (non-opposite) with reversed direction.
+-/
+theorem eqToHom_postCompOp_eq {C : Type u} [Category.{v} C]
+    (F : Cᵒᵖ' ⥤ Cat.{v₁, u₁}) (X : C)
+    {A B : F.obj X} (p : A = B) (q : B = A) (h : p = q.symm) :
+    @eqToHom ((Cat.postCompOpFunctor'.obj F).obj X) _ A B p =
+    @eqToHom (F.obj X) _ B A q := by
+  subst h
+  subst q
+  rfl
+
 end Cat
 
 namespace Functor

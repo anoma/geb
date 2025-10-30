@@ -455,9 +455,35 @@ def grothendieckContraIsoHomMap
     (grothendieckContraIsoHomObj X ⟶ grothendieckContraIsoHomObj Y) :=
   fun f => ⟨f.base, f.fiber⟩
 
+theorem grothendieckContraIsoHomMapId_base_components
+    (base : C) (fiber : F'.obj base) :
+    (grothendieckContraIsoHomMap (gcId F' ⟨base, fiber⟩)).base =
+    (id ⟨base, fiber⟩).base :=
+  Eq.trans (gcf_id_base F' ⟨base, fiber⟩) (id_base ⟨base, fiber⟩).symm
+
+theorem gcf_id_base_eq_components (base : C) (fiber : F'.obj base) :
+    gcf_id_base_eq F' ⟨base, fiber⟩ = id_base_eq ⟨base, fiber⟩ := rfl
+
+theorem grothendieckContraIsoHomMapId_fiber_components
+    (base : C) (fiber : F'.obj base) :
+    (grothendieckContraIsoHomMap (gcId F' ⟨base, fiber⟩)).fiber =
+    (id ⟨base, fiber⟩).fiber := by
+  simp only [grothendieckContraIsoHomMap, gcf_id_fiber, id_fiber]
+  exact Cat.eqToHom_postCompOp_eq F' base
+    (gcf_id_base_eq F' ⟨base, fiber⟩)
+    (id_base_eq ⟨base, fiber⟩).symm
+    (gcf_id_base_eq_components base fiber)
+
+
 theorem grothendieckContraIsoHomMapId
     (X : GrothendieckContra F') :
-    grothendieckContraIsoHomMap (gcId F' X) = 𝟙 (grothendieckContraIsoHomObj X) :=
+    grothendieckContraIsoHomMap (gcId F' X) = 𝟙 (grothendieckContraIsoHomObj X) := by
+  cases X with | mk base fiber =>
+  have h_base := @grothendieckContraIsoHomMapId_base_components _ CInst F' base fiber
+  have h_fiber := @grothendieckContraIsoHomMapId_fiber_components _ CInst F' base fiber
+  refine GrothendieckContra'.ext _ _ h_base ?_
+  rw [h_fiber, id_fiber]
+  simp
   sorry
 
 theorem grothendieckContraIsoHomMapComp
