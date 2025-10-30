@@ -484,13 +484,39 @@ theorem grothendieckContraIsoHomMapId
   simp
   rfl
 
+theorem grothendieckContraIsoHomMapComp_base_components
+    {X Y Z : GrothendieckContra F'}
+    (f : gcHom F' X Y)
+    (g : gcHom F' Y Z) :
+    (grothendieckContraIsoHomMap (gcComp F' f g)).base =
+    (grothendieckContraIsoHomMap f ≫ grothendieckContraIsoHomMap g).base := by
+  simp only [grothendieckContraIsoHomMap, grothendieckContraIsoHomObj]
+  rw [gcf_comp_base]
+  simp
+  rfl
+
+theorem grothendieckContraIsoHomMapComp_fiber_components
+    {X Y Z : GrothendieckContra F'}
+    (f : gcHom F' X Y)
+    (g : gcHom F' Y Z) :
+    (grothendieckContraIsoHomMap (gcComp F' f g)).fiber =
+    (grothendieckContraIsoHomMap f ≫ grothendieckContraIsoHomMap g).fiber := by
+  simp only [grothendieckContraIsoHomMap, grothendieckContraIsoHomObj]
+  rw [gcf_comp_fiber]
+  simp
+  sorry
+
 theorem grothendieckContraIsoHomMapComp
     {X Y Z : GrothendieckContra F'}
     (f : gcHom F' X Y)
     (g : gcHom F' Y Z) :
     grothendieckContraIsoHomMap (gcComp F' f g) =
     grothendieckContraIsoHomMap f ≫ grothendieckContraIsoHomMap g := by
-  sorry
+  have h_base := grothendieckContraIsoHomMapComp_base_components f g
+  have h_fiber := grothendieckContraIsoHomMapComp_fiber_components f g
+  refine GrothendieckContra'.ext _ _ h_base ?_
+  rw [h_fiber]
+  simp
 
 def grothendieckContraIsoHom :
     GrothendieckContraCat F' ⥤ GrothendieckContra' F' where
