@@ -253,6 +253,7 @@ might want to examine external libraries for ideas.
 ### Kan extensions
 
 - [mathlib4's KanExtension](https://leanprover-community.github.io/mathlib4_docs/Mathlib/CategoryTheory/Functor/KanExtension/Basic.html)
+- [mathlib4's CategoryTheory.Bicategory.KanExtension.Adjunction](https://leanprover-community.github.io/mathlib4_docs/Mathlib/CategoryTheory/Bicategory/Kan/Adjunction.html)
 
 ### Grothendieck Construction
 
