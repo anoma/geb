@@ -210,6 +210,7 @@ might want to examine external libraries for ideas.
 - [Functional Programming in Lean: Type Classes and Polymorphism](https://leanprover.github.io/functional_programming_in_lean/type-classes/polymorphism.html)
 - [Tabled Typeclass Resolution](https://arxiv.org/pdf/2001.04301)
 - [Use and abuse of instance parameters in the Lean mathematical library](https://arxiv.org/pdf/2202.01629.pdf)
+- [Lean projects and build process](https://leanprover-community.github.io/install/project.html)
 
 ### General mathematics
 
