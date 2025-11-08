@@ -81,6 +81,16 @@ def GrothendieckContraQuivInst.{u, v, u₂, v₂} {C : Type u} [CI : Category.{v
       (GrothendieckContra.{u, v, u₂, v₂} (C := C) (CI := CI) F') :=
   (GrothendieckContraCatStructInst.{u, v, u₂, v₂} (C := C) (CI := CI) F').toQuiver
 
+def gcCodFuncToGcContra.{u, v, u₂, v₂, u₃, v₃} {C : Type u} {D : Type u₃}
+  [CI : Category.{v, u} C] [DI : Category.{v₃, u₃} D]
+  (G :
+   (F : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) ->
+   (D ⥤ Grothendieck.{u, v, u₂, v₂} (C := Cᵒᵖ') F))
+  (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) :
+    (Dᵒᵖ' ⥤ GrothendieckContraCat.{u, v, u₂, v₂} (C := C) (CI := CI) F')
+      :=
+  Functor.op' <| G <| Cat.postCompOpFunctor'.obj F'
+
 @[simp]
 def gcHom.{u, v, u₂, v₂} {C : Type u} [CI : Category.{v, u} C]
   (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) :
@@ -679,6 +689,16 @@ def grothendieckContraEquiv :
 instance gcIsoFaithful : (grothendieckContraIsoHom (F' := F')).Faithful := by
   change (grothendieckContraEquiv (F' := F')).functor.Faithful
   infer_instance
+
+def gcCodFuncToGcContra'.{u₃, v₃} {D : Type u₃} [DI : Category.{v₃, u₃} D]
+  (G :
+   (F : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) ->
+   (D ⥤ Grothendieck.{u, v, u₂, v₂} (C := Cᵒᵖ') F))
+  (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) :
+    (Dᵒᵖ' ⥤ GrothendieckContra'.{u, v, u₂, v₂} (C := C) F')
+      :=
+  gcCodFuncToGcContra (D := D) (DI := DI) G F'
+    ⋙ grothendieckContraIsoHom (F' := F')
 
 end Isomorphism
 
