@@ -459,13 +459,13 @@ section Isomorphism
 
 def grothendieckContraIsoHomObj :
     GrothendieckContra F' → GrothendieckContra' F' :=
-  fun X => ⟨X.base, X.fiber⟩
+  fun X ↦ ⟨X.base, X.fiber⟩
 
 def grothendieckContraIsoHomMap
     {X Y : GrothendieckContra F'} :
     gcHom F' X Y →
     (grothendieckContraIsoHomObj X ⟶ grothendieckContraIsoHomObj Y) :=
-  fun f => ⟨f.base, f.fiber⟩
+  fun f ↦ ⟨f.base, f.fiber⟩
 
 theorem grothendieckContraIsoHomMapId_base_components
     (base : C) (fiber : F'.obj base) :
@@ -552,12 +552,12 @@ def grothendieckContraIsoHom :
 
 def grothendieckContraIsoInvObj :
     GrothendieckContra' F' → GrothendieckContra F' :=
-  fun X => ⟨X.base, X.fiber⟩
+  fun X ↦ ⟨X.base, X.fiber⟩
 
 def grothendieckContraIsoInvMap
     {X Y : GrothendieckContra' F'} :
     (X ⟶ Y) → gcHom F' (grothendieckContraIsoInvObj X) (grothendieckContraIsoInvObj Y) :=
-  fun f => ⟨f.base, f.fiber⟩
+  fun f ↦ ⟨f.base, f.fiber⟩
 
 theorem grothendieckContraIsoInvMapId_base_components
     (X : GrothendieckContra' F') :
@@ -990,8 +990,8 @@ def mapWhiskerRightAsSmallFunctor (α : F' ⟶ G') :
     compAsSmallFunctorEquivalenceInverse (F' := F') ⋙ map α ⋙
       compAsSmallFunctorEquivalenceFunctor (F' := G') :=
   NatIso.ofComponents
-    (fun _ => Iso.refl _)
-    (fun _ => by
+    (fun _ ↦ Iso.refl _)
+    (fun _ ↦ by
       apply GrothendieckContra'.ext
       · simp [compAsSmallFunctorEquivalenceInverse, compAsSmallFunctorEquivalenceFunctor]
       · simp [compAsSmallFunctorEquivalenceInverse, compAsSmallFunctorEquivalenceFunctor])
@@ -1097,14 +1097,14 @@ def grothendieckTypeToCat :
   functor := grothendieckTypeToCatFunctor
   inverse := grothendieckTypeToCatInverse
   unitIso := NatIso.ofComponents
-    (fun X => Iso.refl _)
-    (fun f => by
+    (fun X ↦ Iso.refl _)
+    (fun f ↦ by
       refine ext _ _ ?_ ?_
       · simp; rfl
       · simp; apply Subsingleton.elim)
   counitIso := NatIso.ofComponents
-    (fun p => Iso.refl _)
-    (fun f => by
+    (fun p ↦ Iso.refl _)
+    (fun f ↦ by
       ext
       simp
       rfl)
@@ -1152,8 +1152,8 @@ def preNatIso {G H : D ⥤ C} (α : G ≅ H) :
     pre F' G ≅ map (Functor.whiskerRight (functorOp'.map α.inv) F') ⋙
       (pre F' H) :=
   NatIso.ofComponents
-    (fun X => (transportIso ⟨G.obj X.base, X.fiber⟩ (α.app X.base)).symm)
-    (fun f => by sorry)
+    (fun X ↦ (transportIso ⟨G.obj X.base, X.fiber⟩ (α.app X.base)).symm)
+    (fun f ↦ by sorry)
 
 /--
 The weak inverse to `pre` when `G` is an equivalence.
@@ -1259,7 +1259,9 @@ functor to `GrothendieckContra F'`, which is the expression
 of `GrothendieckContra' F'` as a covariant Grothendieck construction.
 -/
 def ι_cov (c : C) : F'.obj c ⥤ GrothendieckContraCat F' :=
-  Functor.op' <| Grothendieck.ι (Cat.postCompOpFunctor'.obj F') c
+  Functor.op' (C := (F'.obj c)ᵒᵖ') (D := GrothendieckContraCatOp F') <|
+    (fun (f : Cᵒᵖ' ⥤ Cat) ↦ Grothendieck.ι (C := Cᵒᵖ') f c)
+      (Cat.postCompOpFunctor'.obj (C := Cᵒᵖ' ⥤ Cat) (D := Cᵒᵖ' ⥤ Cat) F')
 
 /--
 The fiber inclusion functor from `F'.obj c` to `GrothendieckContra' F'`.
@@ -1287,7 +1289,7 @@ Natural transformation induced by a morphism in the base category.
 -/
 @[simps]
 def ιNatTrans {c d : C} (f : c ⟶ d) : F'.map f ⋙ ι c ⟶ ι d where
-  app := fun X => ⟨f, 𝟙 _⟩
+  app := fun X ↦ ⟨f, 𝟙 _⟩
   naturality := sorry
 
 variable (fib : ∀ c, F'.obj c ⥤ T)
