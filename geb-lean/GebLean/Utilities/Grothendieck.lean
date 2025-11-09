@@ -3,6 +3,7 @@ import Mathlib.CategoryTheory.Elements
 import Mathlib.CategoryTheory.Comma.Over.Basic
 import Mathlib.CategoryTheory.Whiskering
 import Mathlib.CategoryTheory.Grothendieck
+import Mathlib.CategoryTheory.Products.Basic
 import GebLean.Utilities.Equalities
 import GebLean.Utilities.Opposites
 import GebLean.Utilities.Elements
@@ -81,15 +82,20 @@ def GrothendieckContraQuivInst.{u, v, u₂, v₂} {C : Type u} [CI : Category.{v
       (GrothendieckContra.{u, v, u₂, v₂} (C := C) (CI := CI) F') :=
   (GrothendieckContraCatStructInst.{u, v, u₂, v₂} (C := C) (CI := CI) F').toQuiver
 
-def gcCodFuncToGcContra.{u, v, u₂, v₂, u₃, v₃} {C : Type u} {D : Type u₃}
-  [CI : Category.{v, u} C] [DI : Category.{v₃, u₃} D]
+def gcCodFuncToGcContra.{u, v, u₂, v₂, u₃, v₃} {C : Type u}
+  [CI : Category.{v, u} C]
+  (D : (Cᵒᵖ' ⥤ Cat.{v₂, u₂}) ⥤ Cat.{v₃, u₃})
   (G :
-   (F : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) ->
-   (D ⥤ Grothendieck.{u, v, u₂, v₂} (C := Cᵒᵖ') F))
+    (F : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) ->
+    ((D.obj F)ᵒᵖ' ⥤ Grothendieck.{u, v, u₂, v₂} (C := Cᵒᵖ') F))
   (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) :
-    (Dᵒᵖ' ⥤ GrothendieckContraCat.{u, v, u₂, v₂} (C := C) (CI := CI) F')
-      :=
-  Functor.op' <| G <| Cat.postCompOpFunctor'.obj F'
+    (D.obj (Cat.postCompOpFunctor'.obj F') ⥤
+     GrothendieckContraCat.{u, v, u₂, v₂} (C := C) (CI := CI) F') :=
+  Functor.op'
+    (C := (D.obj (Cat.postCompOpFunctor'.obj F'))ᵒᵖ')
+    (D := GrothendieckContraCatOp.{u, v, u₂, v₂} (C := C) F')
+  <| G
+  <| Cat.postCompOpFunctor'.obj (C := Cᵒᵖ' ⥤ Cat) (D := Cᵒᵖ' ⥤ Cat) F'
 
 @[simp]
 def gcHom.{u, v, u₂, v₂} {C : Type u} [CI : Category.{v, u} C]
@@ -690,15 +696,15 @@ instance gcIsoFaithful : (grothendieckContraIsoHom (F' := F')).Faithful := by
   change (grothendieckContraEquiv (F' := F')).functor.Faithful
   infer_instance
 
-def gcCodFuncToGcContra'.{u₃, v₃} {D : Type u₃} [DI : Category.{v₃, u₃} D]
+def gcCodFuncToGcContra'.{u₃, v₃}
+  (D : (Cᵒᵖ' ⥤ Cat.{v₂, u₂}) ⥤ Cat.{v₃, u₃})
   (G :
-   (F : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) ->
-   (D ⥤ Grothendieck.{u, v, u₂, v₂} (C := Cᵒᵖ') F))
+    (F : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) ->
+    ((D.obj F)ᵒᵖ' ⥤ Grothendieck.{u, v, u₂, v₂} (C := Cᵒᵖ') F))
   (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) :
-    (Dᵒᵖ' ⥤ GrothendieckContra'.{u, v, u₂, v₂} (C := C) F')
-      :=
-  gcCodFuncToGcContra (D := D) (DI := DI) G F'
-    ⋙ grothendieckContraIsoHom (F' := F')
+    (D.obj (Cat.postCompOpFunctor'.obj F') ⥤
+     GrothendieckContra'.{u, v, u₂, v₂} (C := C) (CInst := CInst) F') :=
+  gcCodFuncToGcContra D G F' ⋙ grothendieckContraIsoHom (F' := F')
 
 end Isomorphism
 
@@ -1253,15 +1259,20 @@ variable {T : Type u₁} [Category.{v₁} T]
 private def CI : Category.{max v v₂, max u u₂} (GrothendieckContra F') :=
   GrothendieckContraCatInst.{u, v, u₂, v₂} (F' := F')
 
+def gr_ι_flip (c : C) (F : C ⥤ Cat) : ↑(F.obj c) ⥤ Grothendieck F :=
+  (Grothendieck.ι (C := C)) F c
+
 /--
 The fiber inclusion functor from `F'.obj c` viewed as a
 functor to `GrothendieckContra F'`, which is the expression
 of `GrothendieckContra' F'` as a covariant Grothendieck construction.
 -/
 def ι_cov (c : C) : F'.obj c ⥤ GrothendieckContraCat F' :=
-  Functor.op' (C := (F'.obj c)ᵒᵖ') (D := GrothendieckContraCatOp F') <|
-    (fun (f : Cᵒᵖ' ⥤ Cat) ↦ Grothendieck.ι (C := Cᵒᵖ') f c)
-      (Cat.postCompOpFunctor'.obj (C := Cᵒᵖ' ⥤ Cat) (D := Cᵒᵖ' ⥤ Cat) F')
+  gcCodFuncToGcContra
+    (C := C)
+    (Cat.postCompOpFunctor' ⋙ (CategoryTheory.evaluation Cᵒᵖ' Cat).obj c)
+    (gr_ι_flip (C := Cᵒᵖ') c)
+    F'
 
 /--
 The fiber inclusion functor from `F'.obj c` to `GrothendieckContra' F'`.
