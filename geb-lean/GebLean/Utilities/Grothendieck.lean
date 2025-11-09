@@ -692,8 +692,12 @@ def grothendieckContraEquiv :
   GrothendieckContraCat F' ≌ GrothendieckContra' F' :=
     Cat.equivOfIso grothendieckContraIso
 
-instance gcIsoFaithful : (grothendieckContraIsoHom (F' := F')).Faithful := by
+instance gcIsoHomFaithful : (grothendieckContraIsoHom (F' := F')).Faithful := by
   change (grothendieckContraEquiv (F' := F')).functor.Faithful
+  infer_instance
+
+instance gcIsoInvFaithful : (grothendieckContraIsoInv (F' := F')).Faithful := by
+  change (grothendieckContraEquiv (F' := F')).symm.functor.Faithful
   infer_instance
 
 def gcCodFuncToGcContra'.{u₃, v₃}
@@ -1267,7 +1271,7 @@ The fiber inclusion functor from `F'.obj c` viewed as a
 functor to `GrothendieckContra F'`, which is the expression
 of `GrothendieckContra' F'` as a covariant Grothendieck construction.
 -/
-def ι_cov (c : C) : F'.obj c ⥤ GrothendieckContraCat F' :=
+abbrev ι_cov (c : C) : F'.obj c ⥤ GrothendieckContraCat F' :=
   gcCodFuncToGcContra
     (C := C)
     (Cat.postCompOpFunctor' ⋙ (CategoryTheory.evaluation Cᵒᵖ' Cat).obj c)
@@ -1278,21 +1282,26 @@ def ι_cov (c : C) : F'.obj c ⥤ GrothendieckContraCat F' :=
 The fiber inclusion functor from `F'.obj c` to `GrothendieckContra' F'`.
 -/
 def ι (c : C) : F'.obj c ⥤ GrothendieckContraCat' (F' := F') :=
-  ι_cov c ⋙ grothendieckContraIsoHom (F' := F')
+  gcCodFuncToGcContra'
+    (C := C)
+    (Cat.postCompOpFunctor' ⋙ (CategoryTheory.evaluation Cᵒᵖ' Cat).obj c)
+    (gr_ι_flip (C := Cᵒᵖ') c)
+    F'
 
 /--
 The covariant fiber inclusion functor is faithful.
 -/
-instance faithful_ι_cov (c : C) : (ι_cov (F' := F') c).Faithful :=
+abbrev faithful_ι_cov (c : C) : (ι_cov (F' := F') c).Faithful :=
   op'_faithful (Grothendieck.ι (Cat.postCompOpFunctor'.obj F') c)
 
 /--
 The fiber inclusion functor is faithful.
 -/
 instance faithful_ι (c : C) : (ι (F' := F') c).Faithful := by
-  have : (ι_cov (F' := F') c).Faithful := inferInstance
-  have : (grothendieckContraIsoHom (F' := F')).Faithful := inferInstance
+  have : (ι_cov (F' := F') c).Faithful := faithful_ι_cov c
+  have : (grothendieckContraIsoHom (F' := F')).Faithful := gcIsoHomFaithful
   unfold ι
+  unfold gcCodFuncToGcContra'
   infer_instance
 
 /--
