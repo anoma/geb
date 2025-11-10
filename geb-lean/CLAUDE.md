@@ -236,6 +236,8 @@ might want to examine external libraries for ideas.
 - [mathlib4's multivariate polynomial functors](https://leanprover-community.github.io/mathlib4_docs/Mathlib/Data/PFunctor/Multivariate/Basic.html)
 - [mathlib4's W-types](https://leanprover-community.github.io/mathlib4_docs/Mathlib/Data/PFunctor/Multivariate/W.html)
 - [mathlib4's M-types](https://leanprover-community.github.io/mathlib4_docs/Mathlib/Data/PFunctor/Multivariate/M.html)
+- [mathlib4's univariate QPFs (quotients of polynomial functors)](https://leanprover-community.github.io/mathlib4_docs/Mathlib/Data/QPF/Univariate/Basic.html)
+- [mathlib4's multivariate QPFs (quotients of polynomial functors)](https://leanprover-community.github.io/mathlib4_docs/Mathlib/Data/QPF/Multivariate/Basic.html)
 
 ### Profunctors
 
