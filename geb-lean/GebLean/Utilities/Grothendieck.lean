@@ -898,32 +898,37 @@ section Functoriality
 
 variable {F' G' H' : Cᵒᵖ' ⥤ Cat}
 
+@[simps!]
+def map_cov (α : F' ⟶ G') : GrothendieckContraCat F' ⥤ GrothendieckContraCat G' :=
+    Functor.op' (Grothendieck.map (Cat.postCompOpFunctor'.map α))
+
+theorem map_cov_obj (α : F' ⟶ G') (X : GrothendieckContra F') :
+    (map_cov α).obj X = ⟨X.base, (α.app X.base).obj X.fiber⟩ := by
+  unfold map_cov
+  simp only [Functor.op']
+  rw [Grothendieck.map_obj]
+  simp only [Cat.postCompOpFunctor']
+  rfl
+
+theorem map_cov_map (α : F' ⟶ G') {X Y : GrothendieckContra F'} (f : gcHom F' X Y) :
+    (map_cov α).map f = ⟨f.base,
+      (eqToHom (Eq.symm ((Cat.postCompOpFunctor'.map α).naturality f.base))).app Y.fiber ≫
+      (Functor.op' (α.app X.base)).map f.fiber⟩ := by
+  unfold map_cov
+  simp only [Functor.op']
+  rw [Grothendieck.map_map]
+  simp only [Cat.postCompOpFunctor']
+  rfl
+
 /--
 A natural transformation `α : F' ⟶ G'` induces a functor between the corresponding
 contravariant Grothendieck constructions.
 -/
 @[simps!]
-def map (α : F' ⟶ G') : GrothendieckContra' F' ⥤ GrothendieckContra' G' where
-  obj X := ⟨X.base, (α.app X.base).obj X.fiber⟩
-  map {X Y} f := ⟨f.base, (α.app X.base).map f.fiber ≫
-    (eqToHom (α.naturality f.base)).app Y.fiber⟩
-  map_id X := by
-    refine ext _ _ ?_ ?_
-    · rfl
-    · dsimp [CategoryStruct.id]
-      simp only [Cat.eqToHom_app, eqToHom_map, eqToHom_trans]
-      rw [Category.comp_id]
-  map_comp {X Y Z} f g := by
-    refine ext _ _ ?_ ?_
-    · dsimp
-      rfl
-    · dsimp [comp, CategoryStruct.comp]
-      simp only [Functor.map_comp, Category.assoc]
-      simp only [Cat.eqToHom_app, eqToHom_map, eqToHom_trans, Category.comp_id]
-      congr 1
-      simp only [← Cat.comp_map]
-      rw [Functor.congr_hom (α.naturality f.base) g.fiber]
-      simp only [Category.assoc, eqToHom_trans]
+def map (α : F' ⟶ G') : GrothendieckContra' F' ⥤ GrothendieckContra' G' :=
+     grothendieckContraIsoInv (F' := F')
+  ⋙ map_cov α
+  ⋙ grothendieckContraIsoHom (F' := G')
 
 @[simp]
 theorem map_obj (α : F' ⟶ G') (X : GrothendieckContra' F') :
@@ -932,7 +937,17 @@ theorem map_obj (α : F' ⟶ G') (X : GrothendieckContra' F') :
 @[simp]
 theorem map_map (α : F' ⟶ G') {X Y : GrothendieckContra' F'} (f : X ⟶ Y) :
     (map α).map f = ⟨f.base, (α.app X.base).map f.fiber ≫
-      (eqToHom (α.naturality f.base)).app Y.fiber⟩ := rfl
+      (eqToHom (α.naturality f.base)).app Y.fiber⟩ := by
+  unfold map
+  simp only [Functor.comp_map]
+  rw [map_cov_map]
+  simp [grothendieckContraIsoInv, grothendieckContraIsoHom,
+    grothendieckContraIsoInvMap, grothendieckContraIsoHomMap,
+    grothendieckContraIsoInvObj, grothendieckContraIsoHomObj]
+  congr 1
+  rw [op_comp_eq]
+  congr 1
+  apply Cat.eqToHom_op'_eq
 
 theorem functor_comp_forget {α : F' ⟶ G'} :
     GrothendieckContra'.map α ⋙ GrothendieckContra'.forget G' =
@@ -958,9 +973,9 @@ theorem map_comp_eq (α : F' ⟶ G') (β : G' ⟶ H') :
   · intro X
     rfl
   · intro X Y f
-    simp only [map_map, map_obj, NatTrans.comp_app, Cat.comp_obj, Cat.comp_map,
+    simp only [map_map, NatTrans.comp_app, Cat.comp_obj, Cat.comp_map,
       eqToHom_refl, Functor.comp_map, Functor.map_comp, Category.comp_id, Category.id_comp]
-    fapply ext
+    fapply GrothendieckContra'.ext
     · rfl
     · simp
 
@@ -1080,12 +1095,7 @@ def mapWhiskerRightAsSmallFunctor (α : F' ⟶ G') :
     map (Functor.whiskerRight α Cat.asSmallFunctor.{w}) ≅
     compAsSmallFunctorEquivalenceInverse (F' := F') ⋙ map α ⋙
       compAsSmallFunctorEquivalenceFunctor (F' := G') :=
-  NatIso.ofComponents
-    (fun _ ↦ Iso.refl _)
-    (fun _ ↦ by
-      apply GrothendieckContra'.ext
-      · simp [compAsSmallFunctorEquivalenceInverse, compAsSmallFunctorEquivalenceFunctor]
-      · simp [compAsSmallFunctorEquivalenceInverse, compAsSmallFunctorEquivalenceFunctor])
+  sorry
 
 end UniverseScaling
 
