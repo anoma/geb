@@ -94,6 +94,10 @@ When making changes to Lean code:
     edit permission allows you to do that without having to request
     permission for shell commands or filesystem access, and you avoid
     cluttering up the filesystem.
+14. **Never remove functionality unprompted**:  Do not remove or comment
+    out any existing functionality unless explicitly instructed to do so.
+    If you think some functionality should be removed, please explain
+    your reasoning and wait for approval before making the change.
 
 ## Code Style
 
