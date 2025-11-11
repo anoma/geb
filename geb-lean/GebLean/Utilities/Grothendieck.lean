@@ -889,7 +889,7 @@ The forgetful functor from `GrothendieckContra' F'` to `C`.
 def forget : GrothendieckContra' F' ⥤ C :=
   gcDomFuncToGcContra'
     ((Functor.const (Cᵒᵖ' ⥤ Cat.{v₂, u₂})).obj (Cat.of C))
-    (fun F => Grothendieck.forget F)
+    Grothendieck.forget
     F'
 
 end
