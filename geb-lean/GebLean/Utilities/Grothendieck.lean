@@ -42,6 +42,11 @@ namespace GebLean
 open CategoryTheory GebLean
 
 @[simp]
+def GrothendieckCatF.{u, v} {C : Type u} [CI : Category.{v, u} C] :
+  (Cat.of C ⥤ Cat.{v, u}) ⥤ Cat.{v, u} :=
+    Grothendieck.functor.{u, v} (E := Cat.of C) ⋙ Over.forget (Cat.of C)
+
+@[simp]
 def GrothendieckCat.{u, v, u₂, v₂} {C : Type u} [CI : Category.{v, u} C]
   (F : C ⥤ Cat.{v₂, u₂}) : Cat.{max v v₂, max u u₂} :=
     Cat.of.{max v v₂, max u u₂} (Grothendieck.{u, v, u₂, v₂} (C := C) F)
@@ -81,6 +86,19 @@ def GrothendieckContraQuivInst.{u, v, u₂, v₂} {C : Type u} [CI : Category.{v
     Quiver.{max v v₂ + 1, max u u₂}
       (GrothendieckContra.{u, v, u₂, v₂} (C := C) (CI := CI) F') :=
   (GrothendieckContraCatStructInst.{u, v, u₂, v₂} (C := C) (CI := CI) F').toQuiver
+
+def gcFuncToGcContra.{u, v, u₂, v₂, u₃, v₃} {C : Type u}
+  [CI : Category.{v, u} C]
+  (D E : (Cᵒᵖ' ⥤ Cat.{v₂, u₂}) ⥤ Cat.{v₃, u₃})
+  (G : (F : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) -> (D.obj F) ⥤ (E.obj F)ᵒᵖ')
+  (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) :
+    ((D.obj (Cat.postCompOpFunctor'.obj F'))ᵒᵖ' ⥤
+     (E.obj (Cat.postCompOpFunctor'.obj F'))) :=
+  Functor.op'
+    (C := (D.obj (Cat.postCompOpFunctor'.obj F')))
+    (D := (E.obj (Cat.postCompOpFunctor'.obj F'))ᵒᵖ')
+  <| G
+  <| Cat.postCompOpFunctor'.obj (C := Cᵒᵖ' ⥤ Cat) (D := Cᵒᵖ' ⥤ Cat) F'
 
 def gcDomFuncToGcContra.{u, v, u₂, v₂, u₃, v₃} {C : Type u}
   [CI : Category.{v, u} C]
