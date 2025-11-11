@@ -539,10 +539,9 @@ category and its opposite, `eqToHom p` in the opposite category equals
 equalities in opposite directions.
 -/
 theorem eqToHom_op'_eq {E : Type u₁} [Category.{v₁} E]
-    {A B : E} (p : A = B) (q : B = A) (h : p = q.symm) :
+    {A B : E} (p : A = B) (q : B = A) :
     @eqToHom (Cat.opFunctorObj' (Cat.of E)) _ A B p =
     @eqToHom E _ B A q := by
-  subst h
   subst q
   rfl
 
