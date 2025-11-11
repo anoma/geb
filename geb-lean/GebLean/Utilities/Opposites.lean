@@ -53,6 +53,15 @@ instance CategoryOp'Inst [CI : Category.{v, u} C] : Category.{v, u} (CategoryOp'
   comp_id f := @Category.id_comp C _ _ _ f
   assoc f g h := (@Category.assoc C _ _ _ _ _ h g f).symm
 
+@[simp]
+def op_comp_eq {C : Type u} [CI : Category.{v, u} C] {X Y Z : Cᵒᵖ'}
+  (f : @Quiver.Hom Cᵒᵖ' _ X Y) (g : @Quiver.Hom Cᵒᵖ' _ Y Z) :
+    f ≫ g =
+    @CategoryStruct.comp C _ _ _ _
+      (g : @Quiver.Hom C _ Z Y)
+      (f : @Quiver.Hom C _ Y X) :=
+  rfl
+
 /--
 Definitional equality: `op' (op' C) = C` in one direction.
 -/
