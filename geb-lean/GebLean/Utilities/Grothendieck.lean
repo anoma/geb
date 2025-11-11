@@ -112,6 +112,26 @@ def gcCodFuncToGcContra.{u, v, u₂, v₂, u₃, v₃} {C : Type u}
   <| G
   <| Cat.postCompOpFunctor'.obj (C := Cᵒᵖ' ⥤ Cat) (D := Cᵒᵖ' ⥤ Cat) F'
 
+/--
+Transfer a functor from mathlib's covariant Grothendieck construction where
+Grothendieck categories appear in both domain and codomain.
+-/
+def gcDomCodFuncToGcContra.{u, v, u₂, v₂} {C : Type u}
+  [CI : Category.{v, u} C]
+  (G :
+    (F G : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) ->
+    (Grothendieck.{u, v, u₂, v₂} (C := Cᵒᵖ') F ⥤
+     Grothendieck.{u, v, u₂, v₂} (C := Cᵒᵖ') G))
+  (F' G' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) :
+    (GrothendieckContraCat.{u, v, u₂, v₂} (C := C) (CI := CI) F' ⥤
+     GrothendieckContraCat.{u, v, u₂, v₂} (C := C) (CI := CI) G') :=
+  Functor.op'
+    (C := GrothendieckContraCatOp.{u, v, u₂, v₂} (C := C) F')
+    (D := GrothendieckContraCatOp.{u, v, u₂, v₂} (C := C) G')
+  <| G
+    (Cat.postCompOpFunctor'.obj (C := Cᵒᵖ' ⥤ Cat) (D := Cᵒᵖ' ⥤ Cat) F')
+    (Cat.postCompOpFunctor'.obj (C := Cᵒᵖ' ⥤ Cat) (D := Cᵒᵖ' ⥤ Cat) G')
+
 @[simp]
 def gcHom.{u, v, u₂, v₂} {C : Type u} [CI : Category.{v, u} C]
   (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) :
@@ -735,6 +755,22 @@ def gcCodFuncToGcContra'.{u₃, v₃}
      GrothendieckContra'.{u, v, u₂, v₂} (C := C) (CInst := CInst) F') :=
   gcCodFuncToGcContra D G F' ⋙ grothendieckContraIsoHom (F' := F')
 
+/--
+Transfer a functor from mathlib's covariant Grothendieck construction where
+Grothendieck categories appear in both domain and codomain, to `GrothendieckContra'`.
+-/
+def gcDomCodFuncToGcContra'
+  (G :
+    (F G : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) ->
+    (Grothendieck.{u, v, u₂, v₂} (C := Cᵒᵖ') F ⥤
+     Grothendieck.{u, v, u₂, v₂} (C := Cᵒᵖ') G))
+  (F' G' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) :
+    (GrothendieckContra'.{u, v, u₂, v₂} (C := C) (CInst := CInst) F' ⥤
+     GrothendieckContra'.{u, v, u₂, v₂} (C := C) (CInst := CInst) G') :=
+  grothendieckContraIsoInv (F' := F') ⋙
+    gcDomCodFuncToGcContra G F' G' ⋙
+    grothendieckContraIsoHom (F' := G')
+
 end Isomorphism
 
 section Transport
@@ -831,10 +867,12 @@ variable (F')
 /--
 The forgetful functor from `GrothendieckContra' F'` to `C`.
 -/
-@[simps]
-def forget : GrothendieckContra' F' ⥤ C where
-  obj X := X.base
-  map f := f.base
+@[simps!]
+def forget : GrothendieckContra' F' ⥤ C :=
+  gcDomFuncToGcContra'
+    ((Functor.const (Cᵒᵖ' ⥤ Cat.{v₂, u₂})).obj (Cat.of C))
+    (fun F => Grothendieck.forget F)
+    F'
 
 end
 
