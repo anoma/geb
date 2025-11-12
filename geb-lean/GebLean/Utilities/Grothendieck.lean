@@ -1167,6 +1167,27 @@ section Pre
 variable {D : Type u₂} [Category.{v₂} D]
 variable (F' : Cᵒᵖ' ⥤ Cat.{w, u₁})
 
+def pre_cov (G : D ⥤ C) :
+    GrothendieckContraCat (functorOp'Obj G ⋙ F') ⥤ GrothendieckContraCat F' :=
+  Functor.op' (Grothendieck.pre (Cat.postCompOpFunctor'.obj F') (functorOp'Obj G))
+
+theorem pre_cov_obj (G : D ⥤ C)
+    (X : GrothendieckContra (functorOp'Obj G ⋙ F')) :
+    (pre_cov F' G).obj X = ⟨G.obj X.base, X.fiber⟩ := by
+  unfold pre_cov
+  simp [Functor.op', Grothendieck.pre]
+
+theorem pre_cov_map (G : D ⥤ C)
+    {X Y : GrothendieckContra (functorOp'Obj G ⋙ F')}
+    (f : gcHom (functorOp'Obj G ⋙ F') X Y) :
+    (pre_cov F' G).map f = ⟨G.map f.base, f.fiber⟩ := by
+  unfold pre_cov
+  simp [Functor.op', Grothendieck.pre]
+
+@[simp]
+theorem pre_cov_id : pre_cov F' (𝟭 C) = 𝟭 (GrothendieckContraCat F') :=
+  rfl
+
 /--
 A functor `G : D ⥤ C` induces a functor between the contravariant Grothendieck
 constructions.
@@ -1176,12 +1197,10 @@ induces a functor `GrothendieckContra' (functorOp'Obj G ⋙ F') ⥤ Grothendieck
 -/
 @[simps!]
 def pre (G : D ⥤ C) : GrothendieckContra' (functorOp'Obj G ⋙ F') ⥤
-    GrothendieckContra' F' where
-  obj X := ⟨G.obj X.base, X.fiber⟩
-  map f := ⟨G.map f.base, f.fiber⟩
-  map_id X := ext _ _ (G.map_id _) (by simp [CategoryStruct.id])
-  map_comp f g := ext _ _ (G.map_comp _ _) (by
-    simp [comp, CategoryStruct.comp])
+    GrothendieckContra' F' :=
+  grothendieckContraIsoInv (F' := functorOp'Obj G ⋙ F') ⋙
+    pre_cov F' G ⋙
+    grothendieckContraIsoHom (F' := F')
 
 /--
 The functor `pre` applied to the identity functor is the identity.
@@ -1189,6 +1208,11 @@ The functor `pre` applied to the identity functor is the identity.
 @[simp]
 theorem pre_id : pre F' (𝟭 C) = 𝟭 (GrothendieckContra' F') :=
   rfl
+
+def preNatIso_cov {G H : D ⥤ C} (α : G ≅ H) :
+    pre_cov F' G ≅ map_cov (Functor.whiskerRight (functorOp'.map α.inv) F') ⋙
+      pre_cov F' H := by
+  sorry
 
 /--
 Natural isomorphism between `pre` applied to naturally isomorphic functors.
@@ -1198,10 +1222,8 @@ An isomorphism between functors `α : G ≅ H` induces an isomorphism between
 -/
 def preNatIso {G H : D ⥤ C} (α : G ≅ H) :
     pre F' G ≅ map (Functor.whiskerRight (functorOp'.map α.inv) F') ⋙
-      (pre F' H) :=
-  NatIso.ofComponents
-    (fun X ↦ (transportIso ⟨G.obj X.base, X.fiber⟩ (α.app X.base)).symm)
-    (fun f ↦ by sorry)
+      (pre F' H) := by
+  sorry
 
 /--
 The weak inverse to `pre` when `G` is an equivalence.
