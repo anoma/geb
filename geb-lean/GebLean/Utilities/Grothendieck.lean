@@ -1227,7 +1227,26 @@ An isomorphism between functors `α : G ≅ H` induces an isomorphism between
 def preNatIso {G H : D ⥤ C} (α : G ≅ H) :
     pre F' G ≅ map (Functor.whiskerRight (functorOp'.map α.inv) F') ⋙
       (pre F' H) := by
-  sorry
+  unfold pre map
+  calc grothendieckContraIsoInv ⋙ pre_cov F' G ⋙ grothendieckContraIsoHom
+      ≅ grothendieckContraIsoInv ⋙
+          (map_cov (Functor.whiskerRight (functorOp'.map α.inv) F') ⋙ pre_cov F' H) ⋙
+          grothendieckContraIsoHom := by
+        apply Functor.isoWhiskerLeft
+        apply Functor.isoWhiskerRight
+        exact preNatIso_cov F' α
+    _ ≅ grothendieckContraIsoInv ⋙
+          map_cov (Functor.whiskerRight (functorOp'.map α.inv) F') ⋙
+          grothendieckContraIsoHom ⋙
+          grothendieckContraIsoInv ⋙
+          pre_cov F' H ⋙
+          grothendieckContraIsoHom := by
+        refine Iso.refl _
+    _ ≅ grothendieckContraIsoInv ⋙
+          map_cov (Functor.whiskerRight (functorOp'.map α.inv) F') ⋙
+          grothendieckContraIsoHom ⋙
+          (grothendieckContraIsoInv ⋙ pre_cov F' H ⋙ grothendieckContraIsoHom) := by
+        refine Iso.refl _
 
 /--
 The weak inverse to `pre` when `G` is an equivalence.
