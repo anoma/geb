@@ -1212,7 +1212,11 @@ theorem pre_id : pre F' (𝟭 C) = 𝟭 (GrothendieckContra' F') :=
 def preNatIso_cov {G H : D ⥤ C} (α : G ≅ H) :
     pre_cov F' G ≅ map_cov (Functor.whiskerRight (functorOp'.map α.inv) F') ⋙
       pre_cov F' H := by
-  sorry
+  unfold pre_cov map_cov
+  simp only [Functor.op']
+  have covar_iso := @Grothendieck.preNatIso _ _ _ _ (Cat.postCompOpFunctor'.obj F')
+    (functorOp'Obj G) (functorOp'Obj H) (functorOp'.mapIso <| isoToOp' α)
+  convert Functor.op'_mapIso covar_iso using 2
 
 /--
 Natural isomorphism between `pre` applied to naturally isomorphic functors.
