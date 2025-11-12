@@ -1383,11 +1383,11 @@ def mapWhiskerLeftIsoConjPreMap {G' : Cᵒᵖ' ⥤ Cat.{w, u₁}} (G : D ≌ C) 
         --   Functor.op' (Grothendieck.map ...) ⋙
         --   Functor.op' (Grothendieck.preEquivalence...).inverse
 
-        -- The key is that iso_transported now has Functor.op' of mathlib's preEquivalence
-        -- And we need grothendieckContraIsoHom ⋙ preF.functor ⋙ grothendieckContraIsoInv
+        -- iso_transported now has Functor.op' of mathlib's preEquivalence.
+        -- We need grothendieckContraIsoHom ⋙ preF.functor ⋙ grothendieckContraIsoInv,
         -- which by definition of preF equals the conjugation of Equivalence.op' mathlib_equiv
 
-        -- Observe that the goal after Functor.isoWhiskerLeft/Right should match
+        -- The goal after Functor.isoWhiskerLeft/Right should match
         -- iso_transported after accounting for the conjugation with grothendieckContraIso
         simp only [preF, preG]
         unfold preEquivalence
@@ -1440,6 +1440,31 @@ def ι (c : C) : F'.obj c ⥤ GrothendieckContraCat' (F' := F') :=
     (gr_ι_flip (C := Cᵒᵖ') c)
     F'
 
+def ι_obj (c : C) (d : F'.obj c) :
+  (ι c).obj d = ⟨c, d⟩ :=
+    rfl
+
+def ι_map_fiber (c : C) {d : F'.obj c} :
+  d = (F'.map (𝟙 c)).obj ((ι c).obj d).fiber := by
+    simp [ι_obj]
+    have deq := (congrFun (congrArg Functor.obj <| F'.map_id c) d).symm
+    simp at deq
+    exact deq
+
+def ι_map (c : C) {d d' : F'.obj c} (f : d ⟶ d') :
+  (ι c).map f = ⟨𝟙 c, f ≫ eqToHom (ι_map_fiber c (d := d'))⟩ := by
+    simp [ι_obj]
+    unfold ι
+    unfold gr_ι_flip
+    apply ext
+    all_goals simp
+      [gcCodFuncToGcContra', gcCodFuncToGcContra, evaluation,
+       grothendieckContraIsoHom, grothendieckContraIsoHomMap]
+    -- The base goal is now solved, only fiber remains
+    rw [op_comp_eq]
+    apply congrArg
+    rw [Cat.eqToHom_op'_eq]
+
 /--
 The covariant fiber inclusion functor is faithful.
 -/
@@ -1458,11 +1483,28 @@ instance faithful_ι (c : C) : (ι (F' := F') c).Faithful := by
 
 /--
 Natural transformation induced by a morphism in the base category.
+For f : c ⟶ d in C (viewed as d ⟶ c in Cᵒᵖ'), the natural transformation
+goes from F'.map f ⋙ ι c to ι d.
 -/
-@[simps]
 def ιNatTrans {c d : C} (f : c ⟶ d) : F'.map f ⋙ ι c ⟶ ι d where
-  app := fun X ↦ ⟨f, 𝟙 _⟩
-  naturality := sorry
+  app X := { base := f, fiber := 𝟙 _ }
+  naturality X Y g := by
+    simp only [ι_obj, ι_map, Functor.comp_obj, Functor.comp_map]
+    unfold CategoryStruct.comp
+    unfold Category.toCategoryStruct
+    unfold GrothendieckContraCat'
+    unfold Cat.of Cat.str Bundled.of
+    simp
+    unfold GrothendieckContraInst'
+    unfold comp
+    apply ext
+    case w_base =>
+      -- base component: both compositions have base f
+      simp
+    case w_fiber =>
+      -- fiber component: involves eqToHom and functoriality
+      simp only [Category.id_comp, Functor.map_id]
+      sorry
 
 variable (fib : ∀ c, F'.obj c ⥤ T)
 variable (hom : ∀ {c d : C} (f : c ⟶ d), F'.map f ⋙ fib c ⟶ fib d)
@@ -1493,15 +1535,15 @@ def functorFrom : GrothendieckContra' F' ⥤ T where
 /--
 The fiber inclusion composed with `functorFrom` recovers the original fiber functor.
 -/
-theorem ιCompFunctorFrom (c : C) :
-    ι c ⋙ functorFrom fib hom hom_id = fib c := by
+def ιCompFunctorFrom (c : C) :
+    ι c ⋙ functorFrom fib hom hom_id ≅ fib c := by
   sorry
 
 /--
 Interaction between fiber inclusion and `map`.
 -/
-theorem ιCompMap {G' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}} (α : F' ⟶ G') (c : C) :
-    ι c ⋙ map α = (α.app c) ⋙ ι c :=
+def ιCompMap {G' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}} (α : F' ⟶ G') (c : C) :
+    ι c ⋙ map α ≅ (α.app c) ⋙ ι c :=
   sorry
 
 end FunctorFrom
