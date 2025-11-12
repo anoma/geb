@@ -309,6 +309,20 @@ The `functorOp'Obj` is equal to composing through the standard opposite.
 theorem functorOp'Obj_eq_comp (G : C ⥤ D) :
     functorOp'Obj G = op'ToOp ⋙ G.op ⋙ opToOp' := rfl
 
+namespace Equivalence
+
+/--
+Maps an equivalence `C ≌ D` to an equivalence `Cᵒᵖ' ≌ Dᵒᵖ'`.
+
+This composes the standard `Equivalence.op` (which gives `Cᵒᵖ ≌ Dᵒᵖ`) with
+the equivalences `opEquivOp'` to get `Cᵒᵖ' ≌ Dᵒᵖ'`.
+-/
+def op' {C : Type*} [Category C] {D : Type*} [Category D]
+    (e : C ≌ D) : Cᵒᵖ' ≌ Dᵒᵖ' :=
+  (opEquivOp' (C := C)).symm.trans (e.op.trans (opEquivOp' (C := D)))
+
+end Equivalence
+
 /--
 The opposite of a functor `F : C ⥤ D` using the `op'` construction.
 For a functor between categories, the opposite functor goes between the
