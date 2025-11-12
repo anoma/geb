@@ -1346,8 +1346,49 @@ of `α` and using the equivalences from `preEquivalence` to match the expected t
 -/
 def mapWhiskerLeftIsoConjPreMap {G' : Cᵒᵖ' ⥤ Cat.{w, u₁}} (G : D ≌ C) (α : F' ⟶ G') :
     map (Functor.whiskerLeft (functorOp'Obj G.functor) α) ≅
-      (preEquivalence F' G).functor ⋙ map α ⋙ (preEquivalence G' G).inverse :=
-  sorry
+      (preEquivalence F' G).functor ⋙ map α ⋙ (preEquivalence G' G).inverse := by
+  unfold map
+  -- Define helper variables for preEquivalence at F' and G'
+  let preF := preEquivalence F' G
+  let preG := preEquivalence G' G
+
+  calc grothendieckContraIsoInv ⋙
+        map_cov (Functor.whiskerLeft (functorOp'Obj G.functor) α) ⋙
+        grothendieckContraIsoHom
+      ≅ grothendieckContraIsoInv ⋙
+          (grothendieckContraIsoHom ⋙ preF.functor ⋙ grothendieckContraIsoInv ⋙
+            map_cov α ⋙
+            grothendieckContraIsoHom ⋙ preG.inverse ⋙ grothendieckContraIsoInv) ⋙
+          grothendieckContraIsoHom := by
+        apply Functor.isoWhiskerLeft
+        apply Functor.isoWhiskerRight
+        -- Strategy: relate our isomorphism to mathlib's through composition
+        unfold map_cov
+        -- Note: functorOp'Obj G.functor = (Equivalence.op' G).functor by rfl
+        -- Get mathlib's isomorphism
+        have mathlib_iso :=
+          @Grothendieck.mapWhiskerLeftIsoConjPreMap
+            Cᵒᵖ' _ Dᵒᵖ' _
+            (Cat.postCompOpFunctor'.obj F')
+            (Cat.postCompOpFunctor'.obj G')
+            (Equivalence.op' G)
+            (Cat.postCompOpFunctor'.map α)
+        -- Apply Functor.op'_mapIso to transport through opposite
+        have iso_transported := GebLean.Functor.op'_mapIso mathlib_iso
+        -- Now we need to show the relationship between:
+        -- grothendieckContraIsoHom ⋙ preF.functor ⋙ grothendieckContraIsoInv
+        -- and the transported mathlib preEquivalence
+        sorry
+    _ ≅ grothendieckContraIsoInv ⋙
+          grothendieckContraIsoHom ⋙
+          preF.functor ⋙
+          grothendieckContraIsoInv ⋙
+          map_cov α ⋙
+          grothendieckContraIsoHom ⋙
+          preG.inverse ⋙
+          grothendieckContraIsoInv ⋙
+          grothendieckContraIsoHom := by
+        refine Iso.refl _
 
 end PreComp
 
