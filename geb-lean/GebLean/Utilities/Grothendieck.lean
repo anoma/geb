@@ -1315,12 +1315,26 @@ When `G` is an equivalence, `pre G` is also an equivalence.
 -/
 def preEquivalence (G : D ≌ C) :
     GrothendieckContra' (functorOp'Obj G.functor ⋙ F') ≌
-    GrothendieckContra' F' where
-  functor := pre F' G.functor
-  inverse := preInv F' G
-  unitIso := sorry
-  counitIso := preNatIso F' G.counitIso.symm |>.symm
-  functor_unitIso_comp := sorry
+    GrothendieckContra' F' := by
+  have mathlib_equiv :=
+    Grothendieck.preEquivalence
+      (Cat.postCompOpFunctor'.obj F')
+      (Equivalence.op' G)
+  -- Apply Equivalence.op' to get the equivalence on opposite categories
+  have contra_equiv_op := Equivalence.op' mathlib_equiv
+  -- Show that functorOp'Obj G.functor and (Equivalence.op' G).functor are naturally isomorphic
+  have functor_iso : functorOp'Obj G.functor ≅ (Equivalence.op' G).functor := by
+    -- Both equal op'ToOp ⋙ G.op.functor ⋙ opToOp'
+    -- functorOp'Obj G.functor = op'ToOp ⋙ G.op ⋙ opToOp' (by functorOp'Obj_eq_comp)
+    -- (Equivalence.op' G).functor = opEquivOp'.symm.functor ⋙ G.op.functor ⋙ opEquivOp'.functor
+    --                             = op'ToOp ⋙ G.op.functor ⋙ opToOp'
+    -- So they should be definitionally equal
+    rfl
+  -- First, get the equivalence for (Equivalence.op' G).functor
+  have equiv1 : GrothendieckContra' ((Equivalence.op' G).functor ⋙ F') ≌ GrothendieckContra' F' :=
+    grothendieckContraEquiv.symm.trans (contra_equiv_op.trans grothendieckContraEquiv)
+  -- Since functor_iso is rfl, the functors are definitionally equal, so equiv1 is what we need
+  exact equiv1
 
 variable {F'} in
 /--
