@@ -1503,8 +1503,12 @@ def ιNatTrans {c d : C} (f : c ⟶ d) : F'.map f ⋙ ι c ⟶ ι d where
       simp
     case w_fiber =>
       -- fiber component: involves eqToHom and functoriality
-      simp only [Category.id_comp, Functor.map_id]
-      sorry
+      simp only [Category.id_comp, Functor.map_id, Category.assoc]
+      change ((F'.map f).map g ≫ _) ≫ _ ≫ _ = (F'.map f).map (g ≫ _) ≫ _
+      rw [Functor.map_comp]
+      rw [eqToHom_map]
+      simp only [Category.assoc]
+      simp
 
 variable (fib : ∀ c, F'.obj c ⥤ T)
 variable (hom : ∀ {c d : C} (f : c ⟶ d), F'.map f ⋙ fib c ⟶ fib d)
