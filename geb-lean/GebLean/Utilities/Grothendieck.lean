@@ -987,115 +987,62 @@ section UniverseScaling
 
 variable {F' G' : Cᵒᵖ' ⥤ Cat.{v, u}}
 
+def compAsSmallFunctorEquivalenceFunctor_cov :
+    GrothendieckContraCat (F' ⋙ Cat.asSmallFunctor.{w}) ⥤ GrothendieckContraCat F' :=
+  Functor.op' (Grothendieck.compAsSmallFunctorEquivalence (Cat.postCompOpFunctor'.obj F')).functor
 
-/--
-Proof that mapping identity through compAsSmallFunctorEquivalenceInverse preserves identity.
--/
-lemma compAsSmallFunctorEquivalenceInverse_map_id
-    (X : GrothendieckContra' (F' ⋙ Cat.asSmallFunctor.{w})) :
-    let idX : X ⟶ X := 𝟙 X
-    (⟨idX.base, AsSmall.down.map idX.fiber⟩ :
-      (⟨X.base, AsSmall.down.obj X.fiber⟩ : GrothendieckContra' F') ⟶
-      (⟨X.base, AsSmall.down.obj X.fiber⟩ : GrothendieckContra' F')) =
-    𝟙 (⟨X.base, AsSmall.down.obj X.fiber⟩ : GrothendieckContra' F') := by
-  apply GrothendieckContra'.ext
-  · simp [CategoryStruct.id]
-  · simp [CategoryStruct.id]
-
-/--
-Proof that mapping composition through compAsSmallFunctorEquivalenceInverse preserves composition.
--/
-lemma compAsSmallFunctorEquivalenceInverse_map_comp
-    {X Y Z : GrothendieckContra' (F' ⋙ Cat.asSmallFunctor.{w})}
-    (f : X ⟶ Y) (g : Y ⟶ Z) :
-    (⟨(f ≫ g).base, AsSmall.down.map (f ≫ g).fiber⟩ :
-      (⟨X.base, AsSmall.down.obj X.fiber⟩ : GrothendieckContra' F') ⟶
-      (⟨Z.base, AsSmall.down.obj Z.fiber⟩ : GrothendieckContra' F')) =
-    ((⟨f.base, AsSmall.down.map f.fiber⟩ :
-      (⟨X.base, AsSmall.down.obj X.fiber⟩ : GrothendieckContra' F') ⟶
-      (⟨Y.base, AsSmall.down.obj Y.fiber⟩ : GrothendieckContra' F')) ≫
-    (⟨g.base, AsSmall.down.map g.fiber⟩ :
-      (⟨Y.base, AsSmall.down.obj Y.fiber⟩ : GrothendieckContra' F') ⟶
-      (⟨Z.base, AsSmall.down.obj Z.fiber⟩ : GrothendieckContra' F')) :
-      (⟨X.base, AsSmall.down.obj X.fiber⟩ : GrothendieckContra' F') ⟶
-      (⟨Z.base, AsSmall.down.obj Z.fiber⟩ : GrothendieckContra' F')) := by
-  apply GrothendieckContra'.ext <;> simp [CategoryStruct.comp, down_comp]
-
-/--
-Inverse of the equivalence relating Grothendieck constructions across universes.
--/
-@[simps]
-def compAsSmallFunctorEquivalenceInverse :
-    GrothendieckContra' (F' ⋙ Cat.asSmallFunctor.{w}) ⥤ GrothendieckContra' F' where
-  obj X := ⟨X.base, AsSmall.down.obj X.fiber⟩
-  map f := ⟨f.base, AsSmall.down.map f.fiber⟩
-  map_id := compAsSmallFunctorEquivalenceInverse_map_id
-  map_comp := compAsSmallFunctorEquivalenceInverse_map_comp
-
-/--
-Proof that mapping identity through compAsSmallFunctorEquivalenceFunctor preserves identity.
--/
-lemma compAsSmallFunctorEquivalenceFunctor_map_id (X : GrothendieckContra' F') :
-    let idX : X ⟶ X := 𝟙 X
-    (⟨idX.base, AsSmall.up.map idX.fiber⟩ :
-      (⟨X.base, AsSmall.up.obj X.fiber⟩ : GrothendieckContra' (F' ⋙ Cat.asSmallFunctor.{w})) ⟶
-      (⟨X.base, AsSmall.up.obj X.fiber⟩ : GrothendieckContra' (F' ⋙ Cat.asSmallFunctor.{w}))) =
-    𝟙 (⟨X.base, AsSmall.up.obj X.fiber⟩ : GrothendieckContra' (F' ⋙ Cat.asSmallFunctor.{w})) := by
-  apply GrothendieckContra'.ext
-  · simp [CategoryStruct.id]
-  · simp [CategoryStruct.id]
-
-/--
-Proof that mapping composition through compAsSmallFunctorEquivalenceFunctor preserves composition.
--/
-lemma compAsSmallFunctorEquivalenceFunctor_map_comp
-    {X Y Z : GrothendieckContra' F'} (f : X ⟶ Y) (g : Y ⟶ Z) :
-    (⟨(f ≫ g).base, AsSmall.up.map (f ≫ g).fiber⟩ :
-      (⟨X.base, AsSmall.up.obj X.fiber⟩ : GrothendieckContra' (F' ⋙ Cat.asSmallFunctor.{w})) ⟶
-      (⟨Z.base, AsSmall.up.obj Z.fiber⟩ : GrothendieckContra' (F' ⋙ Cat.asSmallFunctor.{w}))) =
-    ((⟨f.base, AsSmall.up.map f.fiber⟩ :
-      (⟨X.base, AsSmall.up.obj X.fiber⟩ : GrothendieckContra' (F' ⋙ Cat.asSmallFunctor.{w})) ⟶
-      (⟨Y.base, AsSmall.up.obj Y.fiber⟩ : GrothendieckContra' (F' ⋙ Cat.asSmallFunctor.{w}))) ≫
-    (⟨g.base, AsSmall.up.map g.fiber⟩ :
-      (⟨Y.base, AsSmall.up.obj Y.fiber⟩ : GrothendieckContra' (F' ⋙ Cat.asSmallFunctor.{w})) ⟶
-      (⟨Z.base, AsSmall.up.obj Z.fiber⟩ : GrothendieckContra' (F' ⋙ Cat.asSmallFunctor.{w}))) :
-      (⟨X.base, AsSmall.up.obj X.fiber⟩ : GrothendieckContra' (F' ⋙ Cat.asSmallFunctor.{w})) ⟶
-      (⟨Z.base, AsSmall.up.obj Z.fiber⟩ : GrothendieckContra' (F' ⋙ Cat.asSmallFunctor.{w}))) := by
-  apply GrothendieckContra'.ext <;> simp [CategoryStruct.comp, Functor.map_comp]
-  apply ULift.ext
-  simp [down_comp, AsSmall.up_map_down]
-
-/--
-The functor part of the equivalence relating Grothendieck constructions
-across universes.
--/
-@[simps!]
 def compAsSmallFunctorEquivalenceFunctor :
-    GrothendieckContra' F' ⥤ GrothendieckContra' (F' ⋙ Cat.asSmallFunctor.{w}) where
-  obj X := ⟨X.base, AsSmall.up.obj X.fiber⟩
-  map f := ⟨f.base, AsSmall.up.map f.fiber⟩
-  map_id := compAsSmallFunctorEquivalenceFunctor_map_id
-  map_comp := compAsSmallFunctorEquivalenceFunctor_map_comp
+    GrothendieckContra' (F' ⋙ Cat.asSmallFunctor.{w}) ⥤ GrothendieckContra' F' :=
+  grothendieckContraIsoInv (F' := F' ⋙ Cat.asSmallFunctor) ⋙
+    compAsSmallFunctorEquivalenceFunctor_cov ⋙
+    grothendieckContraIsoHom (F' := F')
 
-/--
-Equivalence relating Grothendieck constructions across universes, showing that
-the construction respects universe scaling.
--/
+def compAsSmallFunctorEquivalenceInverse_cov :
+    GrothendieckContraCat F' ⥤ GrothendieckContraCat (F' ⋙ Cat.asSmallFunctor.{w}) :=
+  Functor.op' (Grothendieck.compAsSmallFunctorEquivalence (Cat.postCompOpFunctor'.obj F')).inverse
+
+def compAsSmallFunctorEquivalenceInverse :
+    GrothendieckContra' F' ⥤ GrothendieckContra' (F' ⋙ Cat.asSmallFunctor.{w}) :=
+  grothendieckContraIsoInv (F' := F') ⋙
+    compAsSmallFunctorEquivalenceInverse_cov ⋙
+    grothendieckContraIsoHom (F' := F' ⋙ Cat.asSmallFunctor)
+
 def compAsSmallFunctorEquivalence :
-    GrothendieckContra' F' ≌ GrothendieckContra' (F' ⋙ Cat.asSmallFunctor.{w}) where
+    GrothendieckContra' (F' ⋙ Cat.asSmallFunctor.{w}) ≌ GrothendieckContra' F' where
   functor := compAsSmallFunctorEquivalenceFunctor
   inverse := compAsSmallFunctorEquivalenceInverse
   unitIso := Iso.refl _
   counitIso := Iso.refl _
 
-/--
-Natural isomorphism for whiskering with universe-scaling functor.
--/
 def mapWhiskerRightAsSmallFunctor (α : F' ⟶ G') :
     map (Functor.whiskerRight α Cat.asSmallFunctor.{w}) ≅
-    compAsSmallFunctorEquivalenceInverse (F' := F') ⋙ map α ⋙
-      compAsSmallFunctorEquivalenceFunctor (F' := G') :=
-  sorry
+    compAsSmallFunctorEquivalenceFunctor ⋙ map α ⋙
+      compAsSmallFunctorEquivalenceInverse (F' := G') := by
+  unfold map compAsSmallFunctorEquivalenceFunctor compAsSmallFunctorEquivalenceInverse
+  calc grothendieckContraIsoInv ⋙ map_cov (Functor.whiskerRight α Cat.asSmallFunctor) ⋙
+        grothendieckContraIsoHom
+      ≅ grothendieckContraIsoInv ⋙
+          (compAsSmallFunctorEquivalenceFunctor_cov ⋙ map_cov α ⋙
+            compAsSmallFunctorEquivalenceInverse_cov) ⋙
+          grothendieckContraIsoHom := by
+        apply Functor.isoWhiskerLeft
+        apply Functor.isoWhiskerRight
+        unfold map_cov compAsSmallFunctorEquivalenceFunctor_cov
+          compAsSmallFunctorEquivalenceInverse_cov
+        have mathlib_iso := Grothendieck.mapWhiskerRightAsSmallFunctor
+          (Cat.postCompOpFunctor'.map α)
+        rw [← op'_comp, ← op'_comp]
+        exact GebLean.Functor.op'_mapIso mathlib_iso
+    _ ≅ grothendieckContraIsoInv ⋙
+          compAsSmallFunctorEquivalenceFunctor_cov ⋙
+          grothendieckContraIsoHom ⋙
+          grothendieckContraIsoInv ⋙
+          map_cov α ⋙
+          grothendieckContraIsoHom ⋙
+          grothendieckContraIsoInv ⋙
+          compAsSmallFunctorEquivalenceInverse_cov ⋙
+          grothendieckContraIsoHom := by
+        refine Iso.refl _
 
 end UniverseScaling
 
