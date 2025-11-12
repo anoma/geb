@@ -1375,10 +1375,24 @@ def mapWhiskerLeftIsoConjPreMap {G' : Cᵒᵖ' ⥤ Cat.{w, u₁}} (G : D ≌ C) 
             (Cat.postCompOpFunctor'.map α)
         -- Apply Functor.op'_mapIso to transport through opposite
         have iso_transported := GebLean.Functor.op'_mapIso mathlib_iso
-        -- Now we need to show the relationship between:
-        -- grothendieckContraIsoHom ⋙ preF.functor ⋙ grothendieckContraIsoInv
-        -- and the transported mathlib preEquivalence
-        sorry
+        -- Use op'_comp to break up the RHS into a composition of opposites
+        rw [op'_comp, op'_comp] at iso_transported
+        -- Now iso_transported has:
+        -- Functor.op' (Grothendieck.map ...) ≅
+        --   Functor.op' (Grothendieck.preEquivalence...).functor ⋙
+        --   Functor.op' (Grothendieck.map ...) ⋙
+        --   Functor.op' (Grothendieck.preEquivalence...).inverse
+
+        -- The key is that iso_transported now has Functor.op' of mathlib's preEquivalence
+        -- And we need grothendieckContraIsoHom ⋙ preF.functor ⋙ grothendieckContraIsoInv
+        -- which by definition of preF equals the conjugation of Equivalence.op' mathlib_equiv
+
+        -- Observe that the goal after Functor.isoWhiskerLeft/Right should match
+        -- iso_transported after accounting for the conjugation with grothendieckContraIso
+        simp only [preF, preG]
+        unfold preEquivalence
+        -- Now both sides should be expressed in terms of the underlying equivalences
+        exact iso_transported
     _ ≅ grothendieckContraIsoInv ⋙
           grothendieckContraIsoHom ⋙
           preF.functor ⋙
