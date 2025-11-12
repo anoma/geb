@@ -386,6 +386,10 @@ def opHom' : (C ⥤ D)ᵒᵖ' ⥤ (Cᵒᵖ' ⥤ Dᵒᵖ') where
     ext X
     rfl
 
+def op'_mapIso {F G : C ⥤ D} (e : F ≅ G) :
+    Functor.op' F ≅ Functor.op' G :=
+  Functor.mapIso opHom' e
+
 /--
 Natural isomorphism showing that `opHom'` is naturally isomorphic to the
 composition that converts through mathlib's `opHom`. This demonstrates that
