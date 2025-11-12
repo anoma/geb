@@ -1534,18 +1534,47 @@ def functorFrom : GrothendieckContra' F' ⥤ T where
     simp
   map_comp := by
     intro X Y Z f g
-    sorry
+    -- Need to show: map (f ≫ g) = map f ≫ map g
+    simp only [comp, CategoryStruct.comp]
+    -- Use Functor.map_comp for fib X.base
+    rw [Functor.map_comp, Functor.map_comp]
+    -- Use hom_comp to expand hom (f.base ≫ g.base)
+    rw [hom_comp]
+    -- Simplify whiskerLeft - this eliminates the eqToHom terms
+    simp [Functor.whiskerLeft]
+    -- Cancel common prefix
+    congr 1
+    -- The goal is now showing naturality of hom f.base
+    -- Recognize (fib X.base).map ∘ (F'.map f.base).map as (F'.map f ⋙ fib X).map
+    change (fib X.base).map ((F'.map f.base).map g.fiber) ≫
+      (hom f.base).app ((F'.map g.base).obj Z.fiber) ≫ (hom g.base).app Z.fiber =
+      (hom f.base).app Y.fiber ≫ (fib Y.base).map g.fiber ≫ (hom g.base).app Z.fiber
+    rw [← Functor.comp_map]
+    -- Reassociate to separate the naturality square
+    rw [← Category.assoc]
+    -- Now apply naturality
+    rw [NatTrans.naturality (hom f.base) g.fiber]
+    simp
 
 /--
 The fiber inclusion composed with `functorFrom` recovers the original fiber functor.
 -/
 def ιCompFunctorFrom (c : C) :
-    ι c ⋙ functorFrom fib hom hom_id ≅ fib c :=
+    ι c ⋙ functorFrom fib hom hom_id hom_comp ≅ fib c :=
   NatIso.ofComponents
     (fun _ => Iso.refl _)
     (fun f => by
+      -- Need to show: (ι c ⋙ functorFrom).map f ≫ Iso.refl _ = Iso.refl _ ≫ (fib c).map f
+      -- which simplifies to: (functorFrom).map (ι c).map f = (fib c).map f
+      simp [functorFrom, ι_obj]
+      -- Use ι_map to rewrite (ι c).map f
+      rw [ι_map]
+      -- Now we have (fib c).map (f ≫ eqToHom ...) ≫ (hom (𝟙 c)).app _
+      simp only [Functor.map_comp, ι_obj]
+      -- Use hom_id to simplify hom (𝟙 c)
+      rw [hom_id]
+      -- Simplify the eqToHom terms
       simp
-      sorry
     )
 
 
@@ -1557,8 +1586,9 @@ def ιCompMap {G' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}} (α : F' ⟶ G') (c : C) :
   NatIso.ofComponents
     (fun _ => Iso.refl _)
     (fun f => by
-      simp [map]
-      sorry
+      -- Need to show: (ι c ⋙ map α).map f ≫ Iso.refl _ = Iso.refl _ ≫ ((α.app c) ⋙ ι c).map f
+      -- Simplify using map_map, ι_obj, and ι_map
+      simp [map_map, ι_obj, ι_map]
     )
 
 end FunctorFrom
