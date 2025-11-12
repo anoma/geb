@@ -384,15 +384,24 @@ theorem op'_comp {E : Type u₂} [Category.{v₂} E]
 namespace Functor
 
 /--
+A natural transformation `α : F ⟶ G` induces a natural transformation
+`Functor.op' G ⟶ Functor.op' F` (in the opposite direction) by mapping through `opHom'`.
+Since `opHom'` is contravariant, it reverses the direction of natural transformations.
+-/
+def op'_mapNatTrans {F G : C ⥤ D} (α : F ⟶ G) :
+    Functor.op' G ⟶ Functor.op' F :=
+  {
+    app := fun X => α.app X
+    naturality := fun _ _ f => (α.naturality f).symm
+  }
+
+/--
 The functor `(C ⥤ D)ᵒᵖ' ⥤ (Cᵒᵖ' ⥤ Dᵒᵖ')` that makes "taking the opposite
 of a functor" functorial. This is the `op'` analogue of mathlib's `Functor.opHom`.
 -/
 def opHom' : (C ⥤ D)ᵒᵖ' ⥤ (Cᵒᵖ' ⥤ Dᵒᵖ') where
   obj G := _root_.GebLean.Functor.op' G
-  map {G H} α := {
-    app := fun X => α.app X
-    naturality := fun X Y f => (α.naturality f).symm
-  }
+  map α := op'_mapNatTrans α
   map_id G := by
     ext X
     rfl
