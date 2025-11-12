@@ -1540,15 +1540,26 @@ def functorFrom : GrothendieckContra' F' ⥤ T where
 The fiber inclusion composed with `functorFrom` recovers the original fiber functor.
 -/
 def ιCompFunctorFrom (c : C) :
-    ι c ⋙ functorFrom fib hom hom_id ≅ fib c := by
-  sorry
+    ι c ⋙ functorFrom fib hom hom_id ≅ fib c :=
+  NatIso.ofComponents
+    (fun _ => Iso.refl _)
+    (fun f => by
+      simp
+      sorry
+    )
+
 
 /--
 Interaction between fiber inclusion and `map`.
 -/
 def ιCompMap {G' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}} (α : F' ⟶ G') (c : C) :
     ι c ⋙ map α ≅ (α.app c) ⋙ ι c :=
-  sorry
+  NatIso.ofComponents
+    (fun _ => Iso.refl _)
+    (fun f => by
+      simp [map]
+      sorry
+    )
 
 end FunctorFrom
 
