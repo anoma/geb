@@ -856,7 +856,7 @@ image of an object under `F_cov`.
 def transferredId {G' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}}
     (F_cov : GrothendieckContraCat F' ⥤ GrothendieckContraCat G')
     (X : GrothendieckContra' F') :
-    (transferFromCov F_cov).obj X ⟶ (transferFromCov F_cov).obj X :=
+    transferredObj F_cov X ⟶ transferredObj F_cov X :=
   let Yobj := F_cov.obj (⟨X.base, X.fiber⟩)
   ⟨@CategoryStruct.id C _ Yobj.base,
    @eqToHom (G'.obj Yobj.base) _ _ _
@@ -869,14 +869,14 @@ Helper function: constructs the composition of two transferred morphisms in
 def transferredComp {G' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}}
     (F_cov : GrothendieckContraCat F' ⥤ GrothendieckContraCat G')
     {X Y Z : GrothendieckContra' F'} (f : X ⟶ Y) (g : Y ⟶ Z) :
-    (transferFromCov F_cov).obj X ⟶ (transferFromCov F_cov).obj Z :=
+    transferredObj F_cov X ⟶ transferredObj F_cov Z :=
   -- Map f and g through F_cov to get morphisms in mathlib's Grothendieck
   let fImg := F_cov.map (⟨f.base, f.fiber⟩ : gcHom F' ⟨X.base, X.fiber⟩ ⟨Y.base, Y.fiber⟩)
   let gImg := F_cov.map (⟨g.base, g.fiber⟩ : gcHom F' ⟨Y.base, Y.fiber⟩ ⟨Z.base, Z.fiber⟩)
   -- Convert to morphisms in our GrothendieckContra' G' for use with comp_fiber_cod_eq
-  let fImgAsContra : (transferFromCov F_cov).obj X ⟶ (transferFromCov F_cov).obj Y :=
+  let fImgAsContra : transferredObj F_cov X ⟶ transferredObj F_cov Y :=
     ⟨fImg.base, fImg.fiber⟩
-  let gImgAsContra : (transferFromCov F_cov).obj Y ⟶ (transferFromCov F_cov).obj Z :=
+  let gImgAsContra : transferredObj F_cov Y ⟶ transferredObj F_cov Z :=
     ⟨gImg.base, gImg.fiber⟩
   -- Compose them in GrothendieckContra' G'
   ⟨fImg.base ≫ gImg.base,
