@@ -818,9 +818,7 @@ theorem transferFromCov_obj {G' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}}
     (F_cov : GrothendieckContraCat F' ⥤ GrothendieckContraCat G')
     (X : GrothendieckContra' F') :
     (transferFromCov F_cov).obj X =
-    ⟨(F_cov.obj (Grothendieck.mk X.base X.fiber)).base,
-     (F_cov.obj (Grothendieck.mk X.base X.fiber)).fiber⟩ := by
-  unfold transferFromCov
+    ⟨(F_cov.obj ⟨X.base, X.fiber⟩).base, (F_cov.obj ⟨X.base, X.fiber⟩).fiber⟩ :=
   rfl
 
 /--
