@@ -791,40 +791,46 @@ def gcDomCodFuncToGcContra'
 
 section Transfer
 
+-- Universe levels for the Transfer section (independent of the outer v₂, u₂)
+universe v₃ u₃ v₄ u₄
+
 /--
-Transfer a functor `F_cov : GrothendieckContra F' ⥤ GrothendieckContra G'`
+Transfer a functor `F_cov : GrothendieckContra G' ⥤ GrothendieckContra H'`
 (defined on the mathlib-derived construction) to a functor
-`GrothendieckContra' F' ⥤ GrothendieckContra' G'` (on our direct construction)
+`GrothendieckContra' G' ⥤ GrothendieckContra' H'` (on our direct construction)
 by composing with the isomorphisms.
 
 This is the primary mechanism for lifting constructions from mathlib's covariant
 Grothendieck construction to our contravariant version.
+
+Note: This version is polymorphic over universe levels, allowing transfer of
+functors between Grothendieck constructions at different universe levels.
 -/
-def transferFromCov {G' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}}
-    (F_cov : GrothendieckContraCat F' ⥤ GrothendieckContraCat G') :
-    GrothendieckContra' F' ⥤ GrothendieckContra' G' :=
-  grothendieckContraIsoInv (F' := F') ⋙ F_cov ⋙ grothendieckContraIsoHom (F' := G')
+def transferFromCov {G' : Cᵒᵖ' ⥤ Cat.{v₃, u₃}} {H' : Cᵒᵖ' ⥤ Cat.{v₄, u₄}}
+    (F_cov : GrothendieckContraCat G' ⥤ GrothendieckContraCat H') :
+    GrothendieckContra' G' ⥤ GrothendieckContra' H' :=
+  grothendieckContraIsoInv (F' := G') ⋙ F_cov ⋙ grothendieckContraIsoHom (F' := H')
 
 /--
-Helper function: constructs an object in `GrothendieckContra' G'` from the
+Helper function: constructs an object in `GrothendieckContra' H'` from the
 result of applying `F_cov` to an object.
 -/
-def transferredObj {G' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}}
-    (F_cov : GrothendieckContraCat F' ⥤ GrothendieckContraCat G')
-    (X : GrothendieckContra' F') :
-    GrothendieckContra' G' :=
+def transferredObj {G' : Cᵒᵖ' ⥤ Cat.{v₃, u₃}} {H' : Cᵒᵖ' ⥤ Cat.{v₄, u₄}}
+    (F_cov : GrothendieckContraCat G' ⥤ GrothendieckContraCat H')
+    (X : GrothendieckContra' G') :
+    GrothendieckContra' H' :=
   let Yobj := F_cov.obj (⟨X.base, X.fiber⟩)
   ⟨Yobj.base, Yobj.fiber⟩
 
 /--
-Helper function: constructs a morphism in `GrothendieckContra' G'` from the
+Helper function: constructs a morphism in `GrothendieckContra' H'` from the
 result of applying `F_cov` to a morphism.
 -/
-def transferredMap {G' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}}
-    (F_cov : GrothendieckContraCat F' ⥤ GrothendieckContraCat G')
-    {X Y : GrothendieckContra' F'} (f : X ⟶ Y) :
+def transferredMap {G' : Cᵒᵖ' ⥤ Cat.{v₃, u₃}} {H' : Cᵒᵖ' ⥤ Cat.{v₄, u₄}}
+    (F_cov : GrothendieckContraCat G' ⥤ GrothendieckContraCat H')
+    {X Y : GrothendieckContra' G'} (f : X ⟶ Y) :
     transferredObj F_cov X ⟶ transferredObj F_cov Y :=
-  let fImg := F_cov.map (⟨f.base, f.fiber⟩ : gcHom F' ⟨X.base, X.fiber⟩ ⟨Y.base, Y.fiber⟩)
+  let fImg := F_cov.map (⟨f.base, f.fiber⟩ : gcHom G' ⟨X.base, X.fiber⟩ ⟨Y.base, Y.fiber⟩)
   ⟨fImg.base, fImg.fiber⟩
 
 /--
@@ -832,9 +838,9 @@ The object function of a transferred functor equals the explicitly constructed
 transferred object.
 -/
 @[simp]
-theorem transferFromCov_obj {G' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}}
-    (F_cov : GrothendieckContraCat F' ⥤ GrothendieckContraCat G')
-    (X : GrothendieckContra' F') :
+theorem transferFromCov_obj {G' : Cᵒᵖ' ⥤ Cat.{v₃, u₃}} {H' : Cᵒᵖ' ⥤ Cat.{v₄, u₄}}
+    (F_cov : GrothendieckContraCat G' ⥤ GrothendieckContraCat H')
+    (X : GrothendieckContra' G') :
     (transferFromCov F_cov).obj X = transferredObj F_cov X :=
   rfl
 
@@ -843,44 +849,44 @@ The morphism function of a transferred functor equals the explicitly constructed
 transferred morphism.
 -/
 @[simp]
-theorem transferFromCov_map {G' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}}
-    (F_cov : GrothendieckContraCat F' ⥤ GrothendieckContraCat G')
-    {X Y : GrothendieckContra' F'} (f : X ⟶ Y) :
+theorem transferFromCov_map {G' : Cᵒᵖ' ⥤ Cat.{v₃, u₃}} {H' : Cᵒᵖ' ⥤ Cat.{v₄, u₄}}
+    (F_cov : GrothendieckContraCat G' ⥤ GrothendieckContraCat H')
+    {X Y : GrothendieckContra' G'} (f : X ⟶ Y) :
     (transferFromCov F_cov).map f = transferredMap F_cov f :=
   rfl
 
 /--
-Helper function: constructs the identity morphism in `GrothendieckContra' G'` at the
+Helper function: constructs the identity morphism in `GrothendieckContra' H'` at the
 image of an object under `F_cov`.
 -/
-def transferredId {G' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}}
-    (F_cov : GrothendieckContraCat F' ⥤ GrothendieckContraCat G')
-    (X : GrothendieckContra' F') :
+def transferredId {G' : Cᵒᵖ' ⥤ Cat.{v₃, u₃}} {H' : Cᵒᵖ' ⥤ Cat.{v₄, u₄}}
+    (F_cov : GrothendieckContraCat G' ⥤ GrothendieckContraCat H')
+    (X : GrothendieckContra' G') :
     transferredObj F_cov X ⟶ transferredObj F_cov X :=
   let Yobj := F_cov.obj (⟨X.base, X.fiber⟩)
   ⟨@CategoryStruct.id C _ Yobj.base,
-   @eqToHom (G'.obj Yobj.base) _ _ _
-     (@id_fiber_cod_eq C _ G' ⟨Yobj.base, Yobj.fiber⟩).symm⟩
+   @eqToHom (H'.obj Yobj.base) _ _ _
+     (@id_fiber_cod_eq C _ H' ⟨Yobj.base, Yobj.fiber⟩).symm⟩
 
 /--
 Helper function: constructs the composition of two transferred morphisms in
-`GrothendieckContra' G'`.
+`GrothendieckContra' H'`.
 -/
-def transferredComp {G' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}}
-    (F_cov : GrothendieckContraCat F' ⥤ GrothendieckContraCat G')
-    {X Y Z : GrothendieckContra' F'} (f : X ⟶ Y) (g : Y ⟶ Z) :
+def transferredComp {G' : Cᵒᵖ' ⥤ Cat.{v₃, u₃}} {H' : Cᵒᵖ' ⥤ Cat.{v₄, u₄}}
+    (F_cov : GrothendieckContraCat G' ⥤ GrothendieckContraCat H')
+    {X Y Z : GrothendieckContra' G'} (f : X ⟶ Y) (g : Y ⟶ Z) :
     transferredObj F_cov X ⟶ transferredObj F_cov Z :=
   -- Map f and g through F_cov to get morphisms in mathlib's Grothendieck
-  let fImg := F_cov.map (⟨f.base, f.fiber⟩ : gcHom F' ⟨X.base, X.fiber⟩ ⟨Y.base, Y.fiber⟩)
-  let gImg := F_cov.map (⟨g.base, g.fiber⟩ : gcHom F' ⟨Y.base, Y.fiber⟩ ⟨Z.base, Z.fiber⟩)
-  -- Convert to morphisms in our GrothendieckContra' G' for use with comp_fiber_cod_eq
+  let fImg := F_cov.map (⟨f.base, f.fiber⟩ : gcHom G' ⟨X.base, X.fiber⟩ ⟨Y.base, Y.fiber⟩)
+  let gImg := F_cov.map (⟨g.base, g.fiber⟩ : gcHom G' ⟨Y.base, Y.fiber⟩ ⟨Z.base, Z.fiber⟩)
+  -- Convert to morphisms in our GrothendieckContra' H' for use with comp_fiber_cod_eq
   let fImgAsContra : transferredObj F_cov X ⟶ transferredObj F_cov Y :=
     ⟨fImg.base, fImg.fiber⟩
   let gImgAsContra : transferredObj F_cov Y ⟶ transferredObj F_cov Z :=
     ⟨gImg.base, gImg.fiber⟩
-  -- Compose them in GrothendieckContra' G'
+  -- Compose them in GrothendieckContra' H'
   ⟨fImg.base ≫ gImg.base,
-   fImg.fiber ≫ (G'.map fImg.base).map gImg.fiber ≫
+   fImg.fiber ≫ (H'.map fImg.base).map gImg.fiber ≫
      eqToHom (comp_fiber_cod_eq fImgAsContra gImgAsContra)⟩
 
 /--
@@ -888,9 +894,9 @@ The transferred functor maps identity morphisms to the explicitly constructed
 identity morphism.
 -/
 @[simp]
-theorem transferFromCov_map_id {G' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}}
-    (F_cov : GrothendieckContraCat F' ⥤ GrothendieckContraCat G')
-    (X : GrothendieckContra' F') :
+theorem transferFromCov_map_id {G' : Cᵒᵖ' ⥤ Cat.{v₃, u₃}} {H' : Cᵒᵖ' ⥤ Cat.{v₄, u₄}}
+    (F_cov : GrothendieckContraCat G' ⥤ GrothendieckContraCat H')
+    (X : GrothendieckContra' G') :
     (transferFromCov F_cov).map (𝟙 X) = transferredId F_cov X := by
   exact Functor.map_id (transferFromCov F_cov) X
 
@@ -898,9 +904,9 @@ theorem transferFromCov_map_id {G' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}}
 The transferred functor maps composition to the explicitly constructed composition.
 -/
 @[simp]
-theorem transferFromCov_map_comp {G' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}}
-    (F_cov : GrothendieckContraCat F' ⥤ GrothendieckContraCat G')
-    {X Y Z : GrothendieckContra' F'} (f : X ⟶ Y) (g : Y ⟶ Z) :
+theorem transferFromCov_map_comp {G' : Cᵒᵖ' ⥤ Cat.{v₃, u₃}} {H' : Cᵒᵖ' ⥤ Cat.{v₄, u₄}}
+    (F_cov : GrothendieckContraCat G' ⥤ GrothendieckContraCat H')
+    {X Y Z : GrothendieckContra' G'} (f : X ⟶ Y) (g : Y ⟶ Z) :
     (transferFromCov F_cov).map (f ≫ g) = transferredComp F_cov f g := by
   exact Functor.map_comp (transferFromCov F_cov) f g
 
@@ -1108,9 +1114,7 @@ def compAsSmallFunctorEquivalenceFunctor_cov :
 
 def compAsSmallFunctorEquivalenceFunctor :
     GrothendieckContra' (F' ⋙ Cat.asSmallFunctor.{w}) ⥤ GrothendieckContra' F' :=
-  grothendieckContraIsoInv (F' := F' ⋙ Cat.asSmallFunctor) ⋙
-    compAsSmallFunctorEquivalenceFunctor_cov ⋙
-    grothendieckContraIsoHom (F' := F')
+  transferFromCov compAsSmallFunctorEquivalenceFunctor_cov
 
 def compAsSmallFunctorEquivalenceInverse_cov :
     GrothendieckContraCat F' ⥤ GrothendieckContraCat (F' ⋙ Cat.asSmallFunctor.{w}) :=
@@ -1118,9 +1122,7 @@ def compAsSmallFunctorEquivalenceInverse_cov :
 
 def compAsSmallFunctorEquivalenceInverse :
     GrothendieckContra' F' ⥤ GrothendieckContra' (F' ⋙ Cat.asSmallFunctor.{w}) :=
-  grothendieckContraIsoInv (F' := F') ⋙
-    compAsSmallFunctorEquivalenceInverse_cov ⋙
-    grothendieckContraIsoHom (F' := F' ⋙ Cat.asSmallFunctor)
+  transferFromCov compAsSmallFunctorEquivalenceInverse_cov
 
 def compAsSmallFunctorEquivalence :
     GrothendieckContra' (F' ⋙ Cat.asSmallFunctor.{w}) ≌ GrothendieckContra' F' where
