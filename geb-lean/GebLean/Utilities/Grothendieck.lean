@@ -1325,9 +1325,7 @@ induces a functor `GrothendieckContra' (functorOp'Obj G ⋙ F') ⥤ Grothendieck
 @[simps!]
 def pre (G : D ⥤ C) : GrothendieckContra' (functorOp'Obj G ⋙ F') ⥤
     GrothendieckContra' F' :=
-  grothendieckContraIsoInv (F' := functorOp'Obj G ⋙ F') ⋙
-    pre_cov F' G ⋙
-    grothendieckContraIsoHom (F' := F')
+  transferFromCov (pre_cov F' G)
 
 /--
 The functor `pre` applied to the identity functor is the identity.
