@@ -848,11 +848,10 @@ def transferredId {G' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}}
     (F_cov : GrothendieckContraCat F' ⥤ GrothendieckContraCat G')
     (X : GrothendieckContra' F') :
     (transferFromCov F_cov).obj X ⟶ (transferFromCov F_cov).obj X :=
-  let Ybase := (F_cov.obj (Grothendieck.mk X.base X.fiber)).base
-  let Yfiber := (F_cov.obj (Grothendieck.mk X.base X.fiber)).fiber
-  ⟨@CategoryStruct.id C _ Ybase,
-   @eqToHom (G'.obj Ybase) _ _ _
-     (@id_fiber_cod_eq C _ G' ⟨Ybase, Yfiber⟩).symm⟩
+  let Yobj := F_cov.obj (⟨X.base, X.fiber⟩)
+  ⟨@CategoryStruct.id C _ Yobj.base,
+   @eqToHom (G'.obj Yobj.base) _ _ _
+     (@id_fiber_cod_eq C _ G' ⟨Yobj.base, Yobj.fiber⟩).symm⟩
 
 /--
 Helper function: constructs the composition of two transferred morphisms in
