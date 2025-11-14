@@ -806,38 +806,47 @@ def transferFromCov {G' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}}
   grothendieckContraIsoInv (F' := F') ⋙ F_cov ⋙ grothendieckContraIsoHom (F' := G')
 
 /--
-The object function of a transferred functor can be computed by applying
-the covariant functor to the input object (converted to the mathlib type),
-then converting the result back.
+Helper function: constructs an object in `GrothendieckContra' G'` from the
+result of applying `F_cov` to an object.
+-/
+def transferredObj {G' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}}
+    (F_cov : GrothendieckContraCat F' ⥤ GrothendieckContraCat G')
+    (X : GrothendieckContra' F') :
+    GrothendieckContra' G' :=
+  let Yobj := F_cov.obj (⟨X.base, X.fiber⟩)
+  ⟨Yobj.base, Yobj.fiber⟩
 
-Since the isomorphisms are essentially identity on objects (just type conversions),
-this simplifies to extracting base and fiber components.
+/--
+Helper function: constructs a morphism in `GrothendieckContra' G'` from the
+result of applying `F_cov` to a morphism.
+-/
+def transferredMap {G' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}}
+    (F_cov : GrothendieckContraCat F' ⥤ GrothendieckContraCat G')
+    {X Y : GrothendieckContra' F'} (f : X ⟶ Y) :
+    transferredObj F_cov X ⟶ transferredObj F_cov Y :=
+  let fImg := F_cov.map (⟨f.base, f.fiber⟩ : gcHom F' ⟨X.base, X.fiber⟩ ⟨Y.base, Y.fiber⟩)
+  ⟨fImg.base, fImg.fiber⟩
+
+/--
+The object function of a transferred functor equals the explicitly constructed
+transferred object.
 -/
 @[simp]
 theorem transferFromCov_obj {G' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}}
     (F_cov : GrothendieckContraCat F' ⥤ GrothendieckContraCat G')
     (X : GrothendieckContra' F') :
-    (transferFromCov F_cov).obj X =
-    ⟨(F_cov.obj ⟨X.base, X.fiber⟩).base, (F_cov.obj ⟨X.base, X.fiber⟩).fiber⟩ :=
+    (transferFromCov F_cov).obj X = transferredObj F_cov X :=
   rfl
 
 /--
-The morphism function of a transferred functor can be computed by applying
-the covariant functor to the input morphism (converted to the mathlib type),
-then converting the result back.
-
-Since the isomorphisms are essentially identity on morphisms (just type conversions),
-this simplifies to extracting base and fiber components.
+The morphism function of a transferred functor equals the explicitly constructed
+transferred morphism.
 -/
 @[simp]
 theorem transferFromCov_map {G' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}}
     (F_cov : GrothendieckContraCat F' ⥤ GrothendieckContraCat G')
     {X Y : GrothendieckContra' F'} (f : X ⟶ Y) :
-    (transferFromCov F_cov).map f =
-    ⟨(F_cov.map (⟨f.base, f.fiber⟩ :
-        gcHom F' ⟨X.base, X.fiber⟩ ⟨Y.base, Y.fiber⟩)).base,
-     (F_cov.map (⟨f.base, f.fiber⟩ :
-        gcHom F' ⟨X.base, X.fiber⟩ ⟨Y.base, Y.fiber⟩)).fiber⟩ :=
+    (transferFromCov F_cov).map f = transferredMap F_cov f :=
   rfl
 
 /--
@@ -1047,7 +1056,7 @@ theorem map_map (α : F' ⟶ G') {X Y : GrothendieckContra' F'} (f : X ⟶ Y) :
     (map α).map f = ⟨f.base, (α.app X.base).map f.fiber ≫
       (eqToHom (α.naturality f.base)).app Y.fiber⟩ := by
   unfold map
-  simp only [transferFromCov_map]
+  simp only [transferFromCov_map, transferredMap]
   rw [map_cov_map]
   simp
   congr 1
