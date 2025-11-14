@@ -789,6 +789,85 @@ def gcDomCodFuncToGcContra'
     gcDomCodFuncToGcContra G F' G' ⋙
     grothendieckContraIsoHom (F' := G')
 
+section Transfer
+
+/--
+Transfer a functor `F_cov : GrothendieckContra F' ⥤ GrothendieckContra G'`
+(defined on the mathlib-derived construction) to a functor
+`GrothendieckContra' F' ⥤ GrothendieckContra' G'` (on our direct construction)
+by composing with the isomorphisms.
+
+This is the primary mechanism for lifting constructions from mathlib's covariant
+Grothendieck construction to our contravariant version.
+-/
+def transferFromCov {G' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}}
+    (F_cov : GrothendieckContraCat F' ⥤ GrothendieckContraCat G') :
+    GrothendieckContra' F' ⥤ GrothendieckContra' G' :=
+  grothendieckContraIsoInv (F' := F') ⋙ F_cov ⋙ grothendieckContraIsoHom (F' := G')
+
+/--
+The object function of a transferred functor can be computed by applying
+the covariant functor to the input object (converted to the mathlib type),
+then converting the result back.
+
+Since the isomorphisms are essentially identity on objects (just type conversions),
+this simplifies to extracting base and fiber components.
+-/
+@[simp]
+theorem transferFromCov_obj {G' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}}
+    (F_cov : GrothendieckContraCat F' ⥤ GrothendieckContraCat G')
+    (X : GrothendieckContra' F') :
+    (transferFromCov F_cov).obj X =
+    ⟨(F_cov.obj (Grothendieck.mk X.base X.fiber)).base,
+     (F_cov.obj (Grothendieck.mk X.base X.fiber)).fiber⟩ := by
+  unfold transferFromCov
+  rfl
+
+/--
+The morphism function of a transferred functor can be computed by applying
+the covariant functor to the input morphism (converted to the mathlib type),
+then converting the result back.
+
+Since the isomorphisms are essentially identity on morphisms (just type conversions),
+this simplifies to extracting base and fiber components.
+-/
+@[simp]
+theorem transferFromCov_map {G' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}}
+    (F_cov : GrothendieckContraCat F' ⥤ GrothendieckContraCat G')
+    {X Y : GrothendieckContra' F'} (f : X ⟶ Y) :
+    (transferFromCov F_cov).map f =
+    ⟨(F_cov.map (⟨f.base, f.fiber⟩ :
+        gcHom F' ⟨X.base, X.fiber⟩ ⟨Y.base, Y.fiber⟩)).base,
+     (F_cov.map (⟨f.base, f.fiber⟩ :
+        gcHom F' ⟨X.base, X.fiber⟩ ⟨Y.base, Y.fiber⟩)).fiber⟩ := by
+  unfold transferFromCov
+  rfl
+
+/--
+If the covariant functor preserves identity morphisms, so does the transferred functor.
+This is automatic by functoriality, but we provide it as a simp lemma for convenience.
+-/
+@[simp]
+theorem transferFromCov_map_id {G' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}}
+    (F_cov : GrothendieckContraCat F' ⥤ GrothendieckContraCat G')
+    (X : GrothendieckContra' F') :
+    (transferFromCov F_cov).map (𝟙 X) = 𝟙 ((transferFromCov F_cov).obj X) :=
+  Functor.map_id _ _
+
+/--
+If the covariant functor preserves composition, so does the transferred functor.
+This is automatic by functoriality, but we provide it as a simp lemma for convenience.
+-/
+@[simp]
+theorem transferFromCov_map_comp {G' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}}
+    (F_cov : GrothendieckContraCat F' ⥤ GrothendieckContraCat G')
+    {X Y Z : GrothendieckContra' F'} (f : X ⟶ Y) (g : Y ⟶ Z) :
+    (transferFromCov F_cov).map (f ≫ g) =
+    (transferFromCov F_cov).map f ≫ (transferFromCov F_cov).map g :=
+  Functor.map_comp _ _ _
+
+end Transfer
+
 end Isomorphism
 
 section Transport
@@ -923,12 +1002,12 @@ theorem map_cov_map (α : F' ⟶ G') {X Y : GrothendieckContra F'} (f : gcHom F'
 /--
 A natural transformation `α : F' ⟶ G'` induces a functor between the corresponding
 contravariant Grothendieck constructions.
+
+This is defined by transferring mathlib's `Grothendieck.map` through our isomorphism.
 -/
 @[simps!]
 def map (α : F' ⟶ G') : GrothendieckContra' F' ⥤ GrothendieckContra' G' :=
-     grothendieckContraIsoInv (F' := F')
-  ⋙ map_cov α
-  ⋙ grothendieckContraIsoHom (F' := G')
+  transferFromCov (map_cov α)
 
 @[simp]
 theorem map_obj (α : F' ⟶ G') (X : GrothendieckContra' F') :
@@ -939,11 +1018,9 @@ theorem map_map (α : F' ⟶ G') {X Y : GrothendieckContra' F'} (f : X ⟶ Y) :
     (map α).map f = ⟨f.base, (α.app X.base).map f.fiber ≫
       (eqToHom (α.naturality f.base)).app Y.fiber⟩ := by
   unfold map
-  simp only [Functor.comp_map]
+  simp only [transferFromCov_map]
   rw [map_cov_map]
-  simp [grothendieckContraIsoInv, grothendieckContraIsoHom,
-    grothendieckContraIsoInvMap, grothendieckContraIsoHomMap,
-    grothendieckContraIsoInvObj, grothendieckContraIsoHomObj]
+  simp
   congr 1
   rw [op_comp_eq]
   congr 1

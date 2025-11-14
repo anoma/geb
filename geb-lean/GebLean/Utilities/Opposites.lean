@@ -585,6 +585,15 @@ theorem eqToHom_postCompOp_eq {C : Type u} [Category.{v} C]
   subst p
   rfl
 
+/--
+For a functor `F : Cᵒᵖ' ⥤ Cat`, the morphism function
+`(postCompOpFunctor'.obj F).map φ` equals the opposite functor `(F.map φ).op'`.
+-/
+@[simp]
+theorem postCompOpFunctor'_map_eq {C : Type u} [Category.{v} C]
+    (F : Cᵒᵖ' ⥤ Cat.{v₁, u₁}) {X Y : C} (φ : X ⟶ Y) :
+    (Cat.postCompOpFunctor'.obj F).map φ = Functor.op' (F.map φ) := rfl
+
 end Cat
 
 namespace Functor
