@@ -837,8 +837,7 @@ theorem transferFromCov_map {G' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}}
     ⟨(F_cov.map (⟨f.base, f.fiber⟩ :
         gcHom F' ⟨X.base, X.fiber⟩ ⟨Y.base, Y.fiber⟩)).base,
      (F_cov.map (⟨f.base, f.fiber⟩ :
-        gcHom F' ⟨X.base, X.fiber⟩ ⟨Y.base, Y.fiber⟩)).fiber⟩ := by
-  unfold transferFromCov
+        gcHom F' ⟨X.base, X.fiber⟩ ⟨Y.base, Y.fiber⟩)).fiber⟩ :=
   rfl
 
 /--
