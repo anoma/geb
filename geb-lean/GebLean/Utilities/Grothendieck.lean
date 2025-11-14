@@ -844,27 +844,60 @@ theorem transferFromCov_map {G' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}}
   rfl
 
 /--
-If the covariant functor preserves identity morphisms, so does the transferred functor.
-This is automatic by functoriality, but we provide it as a simp lemma for convenience.
+Helper function: constructs the identity morphism in `GrothendieckContra' G'` at the
+image of an object under `F_cov`.
+-/
+def transferredId {G' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}}
+    (F_cov : GrothendieckContraCat F' ⥤ GrothendieckContraCat G')
+    (X : GrothendieckContra' F') :
+    (transferFromCov F_cov).obj X ⟶ (transferFromCov F_cov).obj X :=
+  let Ybase := (F_cov.obj (Grothendieck.mk X.base X.fiber)).base
+  let Yfiber := (F_cov.obj (Grothendieck.mk X.base X.fiber)).fiber
+  ⟨@CategoryStruct.id C _ Ybase,
+   @eqToHom (G'.obj Ybase) _ _ _
+     (@id_fiber_cod_eq C _ G' ⟨Ybase, Yfiber⟩).symm⟩
+
+/--
+Helper function: constructs the composition of two transferred morphisms in
+`GrothendieckContra' G'`.
+-/
+def transferredComp {G' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}}
+    (F_cov : GrothendieckContraCat F' ⥤ GrothendieckContraCat G')
+    {X Y Z : GrothendieckContra' F'} (f : X ⟶ Y) (g : Y ⟶ Z) :
+    (transferFromCov F_cov).obj X ⟶ (transferFromCov F_cov).obj Z :=
+  -- Map f and g through F_cov to get morphisms in mathlib's Grothendieck
+  let fImg := F_cov.map (⟨f.base, f.fiber⟩ : gcHom F' ⟨X.base, X.fiber⟩ ⟨Y.base, Y.fiber⟩)
+  let gImg := F_cov.map (⟨g.base, g.fiber⟩ : gcHom F' ⟨Y.base, Y.fiber⟩ ⟨Z.base, Z.fiber⟩)
+  -- Convert to morphisms in our GrothendieckContra' G' for use with comp_fiber_cod_eq
+  let fImgAsContra : (transferFromCov F_cov).obj X ⟶ (transferFromCov F_cov).obj Y :=
+    ⟨fImg.base, fImg.fiber⟩
+  let gImgAsContra : (transferFromCov F_cov).obj Y ⟶ (transferFromCov F_cov).obj Z :=
+    ⟨gImg.base, gImg.fiber⟩
+  -- Compose them in GrothendieckContra' G'
+  ⟨fImg.base ≫ gImg.base,
+   fImg.fiber ≫ (G'.map fImg.base).map gImg.fiber ≫
+     eqToHom (comp_fiber_cod_eq fImgAsContra gImgAsContra)⟩
+
+/--
+The transferred functor maps identity morphisms to the explicitly constructed
+identity morphism.
 -/
 @[simp]
 theorem transferFromCov_map_id {G' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}}
     (F_cov : GrothendieckContraCat F' ⥤ GrothendieckContraCat G')
     (X : GrothendieckContra' F') :
-    (transferFromCov F_cov).map (𝟙 X) = 𝟙 ((transferFromCov F_cov).obj X) :=
-  Functor.map_id _ _
+    (transferFromCov F_cov).map (𝟙 X) = transferredId F_cov X := by
+  exact Functor.map_id (transferFromCov F_cov) X
 
 /--
-If the covariant functor preserves composition, so does the transferred functor.
-This is automatic by functoriality, but we provide it as a simp lemma for convenience.
+The transferred functor maps composition to the explicitly constructed composition.
 -/
 @[simp]
 theorem transferFromCov_map_comp {G' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}}
     (F_cov : GrothendieckContraCat F' ⥤ GrothendieckContraCat G')
     {X Y Z : GrothendieckContra' F'} (f : X ⟶ Y) (g : Y ⟶ Z) :
-    (transferFromCov F_cov).map (f ≫ g) =
-    (transferFromCov F_cov).map f ≫ (transferFromCov F_cov).map g :=
-  Functor.map_comp _ _ _
+    (transferFromCov F_cov).map (f ≫ g) = transferredComp F_cov f g := by
+  exact Functor.map_comp (transferFromCov F_cov) f g
 
 end Transfer
 
