@@ -2435,3 +2435,173 @@ PolyPiProj {p} {q} f r rsl =
       {r=(PolyPiPbCodTot {p} {q} f r rsl)}
       (PolyPiPbMor1 {p} {q} f r rsl)
       (PolyPiPbMor2 {p} {q} f r rsl))
+
+-------------------------------------
+---- Sigma / dependent sum ----------
+-------------------------------------
+
+-- The dependent sum (Sigma) functor internal to `PolyFunc`.
+-- A natural transformation `p -> q` induces a functor from slices
+-- over `p` to slices over `q`, which is left adjoint to base change.
+-- The Sigma functor simply composes the slice projection with the
+-- given natural transformation.
+public export
+PolySigmaTot : {p, q : PolyFunc} -> (f : PolyNatTrans p q) ->
+  (r : PolyFunc) -> (rsl : PolyNatTrans r p) ->
+  PolyFunc
+PolySigmaTot {p} {q} f r rsl = r
+
+public export
+PolySigmaProj : {p, q : PolyFunc} -> (f : PolyNatTrans p q) ->
+  (r : PolyFunc) -> (rsl : PolyNatTrans r p) ->
+  PolyNatTrans (PolySigmaTot {p} {q} f r rsl) q
+PolySigmaProj {p} {q} f r rsl = pntVCatComp {p=r} {q=p} {r=q} f rsl
+
+public export
+PolySigmaTotMap : {p, q : PolyFunc} -> (f : PolyNatTrans p q) ->
+  (r : PolyFunc) -> (rsl : PolyNatTrans r p) ->
+  (s : PolyFunc) -> (ssl : PolyNatTrans s p) ->
+  (alpha : PolyNatTrans r s) ->
+  PNTisSliceM {p} {q=r} {r=s} rsl ssl alpha ->
+  PolyNatTrans (PolySigmaTot {p} {q} f r rsl) (PolySigmaTot {p} {q} f s ssl)
+PolySigmaTotMap {p} {q} f r rsl s ssl alpha comm = alpha
+
+------------------------------------------------------------
+---- Full polynomial functor (Sigma . Pi . base change) ----
+------------------------------------------------------------
+
+-- A polynomial functor between slice categories of PolyFunc is determined
+-- by a diagram: b <- i -> e -> a (reading right to left)
+-- which gives the composition: Sigma_g . Pi_h . f*
+-- where f* is base change along f : e -> a,
+-- Pi_h is dependent product along h : e -> i,
+-- and Sigma_g is dependent sum along g : i -> b.
+
+public export
+record PolyFuncArena where
+  constructor MkPolyFuncArena
+  baseA : PolyFunc
+  baseB : PolyFunc
+  intermediate : PolyFunc
+  exponent : PolyFunc
+  bcMor : PolyNatTrans exponent baseA
+  piMor : PolyNatTrans exponent intermediate
+  sigmaMor : PolyNatTrans intermediate baseB
+
+-- The full polynomial functor from PolyFunc/baseA to PolyFunc/baseB
+public export
+PolyFuncArenaInterpTot : (arena : PolyFuncArena) ->
+  (r : PolyFunc) -> (rsl : PolyNatTrans r (baseA arena)) ->
+  PolyFunc
+PolyFuncArenaInterpTot arena r rsl =
+  let bcResult : PolyFunc
+      bcResult = PolyBCFtot
+        {p=(baseA arena)}
+        {q=(exponent arena)}
+        (bcMor arena)
+        r
+        rsl
+      bcpbsl : PolyNatTrans bcResult (exponent arena)
+      bcpbsl = PolyBCFproj
+        {p=(baseA arena)}
+        {q=(exponent arena)}
+        (bcMor arena)
+        r
+        rsl
+      piResult : PolyFunc
+      piResult = PolyPiTot
+        {p=(exponent arena)}
+        {q=(intermediate arena)}
+        (piMor arena)
+        bcResult
+        bcpbsl
+      pisl : PolyNatTrans piResult (intermediate arena)
+      pisl = PolyPiProj
+        {p=(exponent arena)}
+        {q=(intermediate arena)}
+        (piMor arena)
+        bcResult
+        bcpbsl
+  in PolySigmaTot
+       {p=(intermediate arena)}
+       {q=(baseB arena)}
+       (sigmaMor arena)
+       piResult
+       pisl
+
+public export
+PolyFuncArenaInterpProj : (arena : PolyFuncArena) ->
+  (r : PolyFunc) -> (rsl : PolyNatTrans r (baseA arena)) ->
+  PolyNatTrans (PolyFuncArenaInterpTot arena r rsl) (baseB arena)
+PolyFuncArenaInterpProj arena r rsl =
+  let bcResult : PolyFunc
+      bcResult = PolyBCFtot
+        {p=(baseA arena)}
+        {q=(exponent arena)}
+        (bcMor arena)
+        r
+        rsl
+      bcpbsl : PolyNatTrans bcResult (exponent arena)
+      bcpbsl = PolyBCFproj
+        {p=(baseA arena)}
+        {q=(exponent arena)}
+        (bcMor arena)
+        r
+        rsl
+      piResult : PolyFunc
+      piResult = PolyPiTot
+        {p=(exponent arena)}
+        {q=(intermediate arena)}
+        (piMor arena)
+        bcResult
+        bcpbsl
+      pisl : PolyNatTrans piResult (intermediate arena)
+      pisl = PolyPiProj
+        {p=(exponent arena)}
+        {q=(intermediate arena)}
+        (piMor arena)
+        bcResult
+        bcpbsl
+  in PolySigmaProj
+       {p=(intermediate arena)}
+       {q=(baseB arena)}
+       (sigmaMor arena)
+       piResult
+       pisl
+
+----------------------------------------------
+---- Closed form of the composition ----------
+----------------------------------------------
+
+-- To better understand the polynomial functor defined by a PolyFuncArena,
+-- let's write out the explicit closed form by expanding the definitions.
+--
+-- Given an arena with:
+--   baseA = (aPos ** aDir)
+--   exponent = (ePos ** eDir)
+--   intermediate = (iPos ** iDir)
+--   baseB = (bPos ** bDir)
+--   bcMor : e -> a
+--   piMor : e -> i
+--   sigmaMor : i -> b
+--
+-- And a slice r with rsl : r -> a, the result is:
+--
+-- Since PolySigmaTot just returns its input, the result is PolyPiTot applied
+-- to the base change result. PolyPiTot itself is defined as a pullback, which
+-- makes the full expansion quite involved. For practical purposes, we provide
+-- accessor functions below.
+
+public export
+PolyFuncArenaInterpPos : (arena : PolyFuncArena) ->
+  (r : PolyFunc) -> (rsl : PolyNatTrans r (baseA arena)) ->
+  Type
+PolyFuncArenaInterpPos arena r rsl =
+  pfPos (PolyFuncArenaInterpTot arena r rsl)
+
+public export
+PolyFuncArenaInterpDir : (arena : PolyFuncArena) ->
+  (r : PolyFunc) -> (rsl : PolyNatTrans r (baseA arena)) ->
+  PolyFuncArenaInterpPos arena r rsl -> Type
+PolyFuncArenaInterpDir arena r rsl i =
+  pfDir {p=(PolyFuncArenaInterpTot arena r rsl)} i
