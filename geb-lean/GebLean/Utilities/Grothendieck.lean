@@ -920,6 +920,30 @@ theorem transferFromCov_map_comp {E : Type uₑ} [Category.{vₑ} E] {E' : Type 
     (transferFromCov F_cov).map (f ≫ g) = transferredComp F_cov f g := by
   exact Functor.map_comp (transferFromCov F_cov) f g
 
+/--
+Helper function that wraps a mathlib Grothendieck function that takes a natural
+transformation.
+
+This abstracts the pattern:
+  `Functor.op' (MathlibFunction (Cat.postCompOpFunctor'.map α))`
+
+Takes a natural transformation `α` between our contravariant functors, applies
+`Cat.postCompOpFunctor'.map` to convert it to mathlib's format, passes it to a mathlib
+Grothendieck function, and wraps the result in `Functor.op'`.
+
+Note: For functors (not natural transformations), the pattern
+`Functor.op' (MathlibFunction (Cat.postCompOpFunctor'.obj F'))` is simple enough
+to write directly without a helper.
+-/
+abbrev transferCovFunctorOnMap {E : Type uₑ} [Category.{vₑ} E]
+    {G' H' : Eᵒᵖ' ⥤ Cat.{v₃, u₃}}
+    (α : G' ⟶ H')
+    (mathlibFunc : (Cat.postCompOpFunctor'.obj G' ⟶ Cat.postCompOpFunctor'.obj H') →
+                   (Grothendieck (Cat.postCompOpFunctor'.obj G') ⥤
+                    Grothendieck (Cat.postCompOpFunctor'.obj H'))) :
+    GrothendieckContraCat G' ⥤ GrothendieckContraCat H' :=
+  Functor.op' (mathlibFunc (Cat.postCompOpFunctor'.map α))
+
 end Transfer
 
 end Isomorphism
@@ -1033,7 +1057,7 @@ variable {F' G' H' : Cᵒᵖ' ⥤ Cat}
 
 @[simps!]
 def map_cov (α : F' ⟶ G') : GrothendieckContraCat F' ⥤ GrothendieckContraCat G' :=
-    Functor.op' (Grothendieck.map (Cat.postCompOpFunctor'.map α))
+    transferCovFunctorOnMap α Grothendieck.map
 
 theorem map_cov_obj (α : F' ⟶ G') (X : GrothendieckContra F') :
     (map_cov α).obj X = ⟨X.base, (α.app X.base).obj X.fiber⟩ := by
@@ -1120,7 +1144,8 @@ variable {F' G' : Cᵒᵖ' ⥤ Cat.{v, u}}
 
 def compAsSmallFunctorEquivalenceFunctor_cov :
     GrothendieckContraCat (F' ⋙ Cat.asSmallFunctor.{w}) ⥤ GrothendieckContraCat F' :=
-  Functor.op' (Grothendieck.compAsSmallFunctorEquivalence (Cat.postCompOpFunctor'.obj F')).functor
+  Functor.op'
+    (Grothendieck.compAsSmallFunctorEquivalence (Cat.postCompOpFunctor'.obj F')).functor
 
 def compAsSmallFunctorEquivalenceFunctor :
     GrothendieckContra' (F' ⋙ Cat.asSmallFunctor.{w}) ⥤ GrothendieckContra' F' :=
@@ -1128,7 +1153,8 @@ def compAsSmallFunctorEquivalenceFunctor :
 
 def compAsSmallFunctorEquivalenceInverse_cov :
     GrothendieckContraCat F' ⥤ GrothendieckContraCat (F' ⋙ Cat.asSmallFunctor.{w}) :=
-  Functor.op' (Grothendieck.compAsSmallFunctorEquivalence (Cat.postCompOpFunctor'.obj F')).inverse
+  Functor.op'
+    (Grothendieck.compAsSmallFunctorEquivalence (Cat.postCompOpFunctor'.obj F')).inverse
 
 def compAsSmallFunctorEquivalenceInverse :
     GrothendieckContra' F' ⥤ GrothendieckContra' (F' ⋙ Cat.asSmallFunctor.{w}) :=
