@@ -924,16 +924,9 @@ theorem transferFromCov_map_comp {E : Type uₑ} [Category.{vₑ} E] {E' : Type 
 Helper function that wraps a mathlib Grothendieck function that takes a natural
 transformation.
 
-This abstracts the pattern:
-  `Functor.op' (MathlibFunction (Cat.postCompOpFunctor'.map α))`
-
 Takes a natural transformation `α` between our contravariant functors, applies
 `Cat.postCompOpFunctor'.map` to convert it to mathlib's format, passes it to a mathlib
 Grothendieck function, and wraps the result in `Functor.op'`.
-
-Note: For functors (not natural transformations), the pattern
-`Functor.op' (MathlibFunction (Cat.postCompOpFunctor'.obj F'))` is simple enough
-to write directly without a helper.
 -/
 abbrev transferCovFunctorOnMap {E : Type uₑ} [Category.{vₑ} E]
     {G' H' : Eᵒᵖ' ⥤ Cat.{v₃, u₃}}
