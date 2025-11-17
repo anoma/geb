@@ -937,6 +937,68 @@ abbrev transferCovFunctorOnMap {E : Type uₑ} [Category.{vₑ} E]
     GrothendieckContraCat G' ⥤ GrothendieckContraCat H' :=
   Functor.op' (mathlibFunc (Cat.postCompOpFunctor'.map α))
 
+/--
+Computation lemma: the object function of `transferCovFunctorOnMap` in terms of the
+mathlib function's object function.
+-/
+theorem transferCovFunctorOnMap_obj {E : Type uₑ} [Category.{vₑ} E]
+    {G' H' : Eᵒᵖ' ⥤ Cat.{v₃, u₃}}
+    (α : G' ⟶ H')
+    (mathlibFunc : (Cat.postCompOpFunctor'.obj G' ⟶ Cat.postCompOpFunctor'.obj H') →
+                   (Grothendieck (Cat.postCompOpFunctor'.obj G') ⥤
+                    Grothendieck (Cat.postCompOpFunctor'.obj H')))
+    (X : GrothendieckContra G') :
+    (transferCovFunctorOnMap α mathlibFunc).obj X =
+      (mathlibFunc (Cat.postCompOpFunctor'.map α)).obj X := rfl
+
+/--
+Computation lemma: the morphism function of `transferCovFunctorOnMap` in terms of the
+mathlib function's morphism function.
+-/
+theorem transferCovFunctorOnMap_map {E : Type uₑ} [Category.{vₑ} E]
+    {G' H' : Eᵒᵖ' ⥤ Cat.{v₃, u₃}}
+    (α : G' ⟶ H')
+    (mathlibFunc : (Cat.postCompOpFunctor'.obj G' ⟶ Cat.postCompOpFunctor'.obj H') →
+                   (Grothendieck (Cat.postCompOpFunctor'.obj G') ⥤
+                    Grothendieck (Cat.postCompOpFunctor'.obj H')))
+    {X Y : GrothendieckContra G'} (f : gcHom G' X Y) :
+    (transferCovFunctorOnMap α mathlibFunc).map f =
+      (mathlibFunc (Cat.postCompOpFunctor'.map α)).map f := rfl
+
+/--
+Specialized computation for `transferCovFunctorOnMap` when used with `Grothendieck.map`.
+This computes all the way down to the components of `α`, removing all the `Cat.postCompOpFunctor'`
+wrappers.
+-/
+theorem transferCovFunctorOnMap_grothendieckMap_obj {E : Type uₑ} [Category.{vₑ} E]
+    {G' H' : Eᵒᵖ' ⥤ Cat.{v₃, u₃}}
+    (α : G' ⟶ H')
+    (X : GrothendieckContra G') :
+    (transferCovFunctorOnMap α Grothendieck.map).obj X =
+      ⟨X.base, (α.app X.base).obj X.fiber⟩ := by
+  rw [transferCovFunctorOnMap_obj]
+  simp [Functor.op', Grothendieck.map, Cat.postCompOpFunctor']
+
+/--
+Specialized computation for `transferCovFunctorOnMap` when used with `Grothendieck.map`.
+This computes all the way down to the components of `α`, removing all the `Cat.postCompOpFunctor'`
+wrappers.
+
+Note: The morphism still contains `(Cat.postCompOpFunctor'.map α).naturality` which is the
+naturality of `whiskerRight α opFunctor'`. This can be further expanded if needed, but is
+left in this form as it's a standard naturality condition.
+-/
+theorem transferCovFunctorOnMap_grothendieckMap_map {E : Type uₑ} [Category.{vₑ} E]
+    {G' H' : Eᵒᵖ' ⥤ Cat.{v₃, u₃}}
+    (α : G' ⟶ H')
+    {X Y : GrothendieckContra G'} (f : gcHom G' X Y) :
+    (transferCovFunctorOnMap α Grothendieck.map).map f =
+      ⟨f.base,
+        (eqToHom (Eq.symm ((Cat.postCompOpFunctor'.map α).naturality f.base))).app Y.fiber ≫
+        (Functor.op' (α.app X.base)).map f.fiber⟩ := by
+  rw [transferCovFunctorOnMap_map]
+  simp [Functor.op', Grothendieck.map, Cat.postCompOpFunctor']
+
 end Transfer
 
 end Isomorphism
@@ -1140,18 +1202,77 @@ def compAsSmallFunctorEquivalenceFunctor_cov :
   Functor.op'
     (Grothendieck.compAsSmallFunctorEquivalence (Cat.postCompOpFunctor'.obj F')).functor
 
+theorem compAsSmallFunctorEquivalenceFunctor_cov_obj
+    (X : GrothendieckContra (F' ⋙ Cat.asSmallFunctor.{w})) :
+    (compAsSmallFunctorEquivalenceFunctor_cov (F' := F')).obj X =
+      ⟨X.base, AsSmall.down.obj X.fiber⟩ := by
+  unfold compAsSmallFunctorEquivalenceFunctor_cov
+  simp [Functor.op', Grothendieck.compAsSmallFunctorEquivalenceFunctor]
+
+theorem compAsSmallFunctorEquivalenceFunctor_cov_map
+    {X Y : GrothendieckContra (F' ⋙ Cat.asSmallFunctor.{w})}
+    (f : gcHom (F' ⋙ Cat.asSmallFunctor.{w}) X Y) :
+    (compAsSmallFunctorEquivalenceFunctor_cov (F' := F')).map f =
+      ⟨f.base, AsSmall.down.map f.fiber⟩ := by
+  unfold compAsSmallFunctorEquivalenceFunctor_cov
+  simp [Functor.op', Grothendieck.compAsSmallFunctorEquivalenceFunctor]
+
 def compAsSmallFunctorEquivalenceFunctor :
     GrothendieckContra' (F' ⋙ Cat.asSmallFunctor.{w}) ⥤ GrothendieckContra' F' :=
   transferFromCov compAsSmallFunctorEquivalenceFunctor_cov
+
+theorem compAsSmallFunctorEquivalenceFunctor_obj
+    (X : GrothendieckContra' (F' ⋙ Cat.asSmallFunctor.{w})) :
+    (compAsSmallFunctorEquivalenceFunctor (F' := F')).obj X =
+      ⟨X.base, AsSmall.down.obj X.fiber⟩ := by
+  unfold compAsSmallFunctorEquivalenceFunctor
+  simp only [transferFromCov_obj, transferredObj]
+  rw [compAsSmallFunctorEquivalenceFunctor_cov_obj]
+  simp
+
+theorem compAsSmallFunctorEquivalenceFunctor_map
+    {X Y : GrothendieckContra' (F' ⋙ Cat.asSmallFunctor.{w})} (f : X ⟶ Y) :
+    (compAsSmallFunctorEquivalenceFunctor (F' := F')).map f =
+      ⟨f.base, AsSmall.down.map f.fiber⟩ := by
+  unfold compAsSmallFunctorEquivalenceFunctor
+  simp only [transferFromCov_map, transferredMap]
+  rw [compAsSmallFunctorEquivalenceFunctor_cov_map]
+  simp
 
 def compAsSmallFunctorEquivalenceInverse_cov :
     GrothendieckContraCat F' ⥤ GrothendieckContraCat (F' ⋙ Cat.asSmallFunctor.{w}) :=
   Functor.op'
     (Grothendieck.compAsSmallFunctorEquivalence (Cat.postCompOpFunctor'.obj F')).inverse
 
+theorem compAsSmallFunctorEquivalenceInverse_cov_obj
+    (X : GrothendieckContra F') :
+    (compAsSmallFunctorEquivalenceInverse_cov (F' := F')).obj X =
+      ⟨X.base, AsSmall.up.obj X.fiber⟩ := rfl
+
+theorem compAsSmallFunctorEquivalenceInverse_cov_map
+    {X Y : GrothendieckContra F'} (f : gcHom F' X Y) :
+    (compAsSmallFunctorEquivalenceInverse_cov (F' := F')).map f =
+      ⟨f.base, AsSmall.up.map f.fiber⟩ := rfl
+
 def compAsSmallFunctorEquivalenceInverse :
     GrothendieckContra' F' ⥤ GrothendieckContra' (F' ⋙ Cat.asSmallFunctor.{w}) :=
   transferFromCov compAsSmallFunctorEquivalenceInverse_cov
+
+theorem compAsSmallFunctorEquivalenceInverse_obj (X : GrothendieckContra' F') :
+    (compAsSmallFunctorEquivalenceInverse (F' := F')).obj X =
+      ⟨X.base, AsSmall.up.obj X.fiber⟩ := by
+  unfold compAsSmallFunctorEquivalenceInverse
+  simp only [transferFromCov_obj, transferredObj]
+  rw [compAsSmallFunctorEquivalenceInverse_cov_obj]
+
+-- Note: This lemma has type class synthesis issues and is omitted
+-- theorem compAsSmallFunctorEquivalenceInverse_map
+--     {X Y : GrothendieckContra' F'} (f : X ⟶ Y) :
+--     (compAsSmallFunctorEquivalenceInverse (F' := F')).map f =
+--       ⟨f.base, AsSmall.up.map f.fiber⟩ := by
+--   unfold compAsSmallFunctorEquivalenceInverse
+--   simp only [transferFromCov_map, transferredMap]
+--   rw [compAsSmallFunctorEquivalenceInverse_cov_map]
 
 def compAsSmallFunctorEquivalence :
     GrothendieckContra' (F' ⋙ Cat.asSmallFunctor.{w}) ≌ GrothendieckContra' F' where
@@ -1345,6 +1466,20 @@ induces a functor `GrothendieckContra' (functorOp'Obj G ⋙ F') ⥤ Grothendieck
 def pre (G : D ⥤ C) : GrothendieckContra' (functorOp'Obj G ⋙ F') ⥤
     GrothendieckContra' F' :=
   transferFromCov (pre_cov F' G)
+
+@[simp]
+theorem pre_obj (G : D ⥤ C) (X : GrothendieckContra' (functorOp'Obj G ⋙ F')) :
+    (pre F' G).obj X = ⟨G.obj X.base, X.fiber⟩ := by
+  unfold pre
+  simp only [transferFromCov_obj, transferredObj]
+  rw [pre_cov_obj]
+
+@[simp]
+theorem pre_map (G : D ⥤ C) {X Y : GrothendieckContra' (functorOp'Obj G ⋙ F')} (f : X ⟶ Y) :
+    (pre F' G).map f = ⟨G.map f.base, f.fiber⟩ := by
+  unfold pre
+  simp only [transferFromCov_map, transferredMap]
+  rw [pre_cov_map]
 
 /--
 The functor `pre` applied to the identity functor is the identity.
