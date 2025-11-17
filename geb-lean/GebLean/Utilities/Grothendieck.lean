@@ -967,6 +967,13 @@ theorem transferFromCov_map_comp {E : Type uₑ} [Category.{vₑ} E] {E' : Type 
     (transferFromCov F_cov).map (f ≫ g) = transferredComp F_cov f g := by
   exact Functor.map_comp (transferFromCov F_cov) f g
 
+def transferFromCovMap
+    {E : Type uₑ} [Category.{vₑ} E] {E' : Type uₑ'} [Category.{vₑ'} E']
+    {G' : Eᵒᵖ' ⥤ Cat.{v₃, u₃}} {H' : E'ᵒᵖ' ⥤ Cat.{v₄, u₄}}
+    {F_cov G_cov : GrothendieckContraCat G' ⥤ GrothendieckContraCat H'} :
+    (F_cov ⟶ G_cov) ⟶ (transferFromCov F_cov ⟶ transferFromCov G_cov) :=
+  (bicompGcIsoHomInv' (G' := G') (H' := H')).map
+
 /--
 Helper function that wraps a mathlib Grothendieck function that takes a natural
 transformation.
