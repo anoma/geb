@@ -1074,10 +1074,9 @@ The forgetful functor from `GrothendieckContra' F'` to `C`.
 -/
 @[simps!]
 def forget : GrothendieckContra' F' ⥤ C :=
-  gcDomFuncToGcContra'
-    ((Functor.const (Cᵒᵖ' ⥤ Cat.{v₂, u₂})).obj (Cat.of C))
-    Grothendieck.forget
-    F'
+  precompGcIsoInv (G' := F').obj
+  <| Functor.op'
+  <| Grothendieck.forget (C := Cᵒᵖ') (Cat.postCompOpFunctor'.obj F')
 
 end
 
