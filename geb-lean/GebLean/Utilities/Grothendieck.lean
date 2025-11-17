@@ -974,85 +974,6 @@ def transferFromCovMap
     (F_cov ⟶ G_cov) ⟶ (transferFromCov F_cov ⟶ transferFromCov G_cov) :=
   (bicompGcIsoHomInv (G' := G') (H' := H')).map
 
-/--
-Helper function that wraps a mathlib Grothendieck function that takes a natural
-transformation.
-
-Takes a natural transformation `α` between our contravariant functors, applies
-`Cat.postCompOpFunctor'.map` to convert it to mathlib's format, passes it to a mathlib
-Grothendieck function, and wraps the result in `Functor.op'`.
--/
-abbrev transferCovFunctorOnMap {E : Type uₑ} [Category.{vₑ} E]
-    {G' H' : Eᵒᵖ' ⥤ Cat.{v₃, u₃}}
-    (α : G' ⟶ H')
-    (mathlibFunc : (Cat.postCompOpFunctor'.obj G' ⟶ Cat.postCompOpFunctor'.obj H') →
-                   (Grothendieck (Cat.postCompOpFunctor'.obj G') ⥤
-                    Grothendieck (Cat.postCompOpFunctor'.obj H'))) :
-    GrothendieckContraCat G' ⥤ GrothendieckContraCat H' :=
-  Functor.op' (mathlibFunc (Cat.postCompOpFunctor'.map α))
-
-/--
-Computation lemma: the object function of `transferCovFunctorOnMap` in terms of the
-mathlib function's object function.
--/
-theorem transferCovFunctorOnMap_obj {E : Type uₑ} [Category.{vₑ} E]
-    {G' H' : Eᵒᵖ' ⥤ Cat.{v₃, u₃}}
-    (α : G' ⟶ H')
-    (mathlibFunc : (Cat.postCompOpFunctor'.obj G' ⟶ Cat.postCompOpFunctor'.obj H') →
-                   (Grothendieck (Cat.postCompOpFunctor'.obj G') ⥤
-                    Grothendieck (Cat.postCompOpFunctor'.obj H')))
-    (X : GrothendieckContra G') :
-    (transferCovFunctorOnMap α mathlibFunc).obj X =
-      (mathlibFunc (Cat.postCompOpFunctor'.map α)).obj X := rfl
-
-/--
-Computation lemma: the morphism function of `transferCovFunctorOnMap` in terms of the
-mathlib function's morphism function.
--/
-theorem transferCovFunctorOnMap_map {E : Type uₑ} [Category.{vₑ} E]
-    {G' H' : Eᵒᵖ' ⥤ Cat.{v₃, u₃}}
-    (α : G' ⟶ H')
-    (mathlibFunc : (Cat.postCompOpFunctor'.obj G' ⟶ Cat.postCompOpFunctor'.obj H') →
-                   (Grothendieck (Cat.postCompOpFunctor'.obj G') ⥤
-                    Grothendieck (Cat.postCompOpFunctor'.obj H')))
-    {X Y : GrothendieckContra G'} (f : gcHom G' X Y) :
-    (transferCovFunctorOnMap α mathlibFunc).map f =
-      (mathlibFunc (Cat.postCompOpFunctor'.map α)).map f := rfl
-
-/--
-Specialized computation for `transferCovFunctorOnMap` when used with `Grothendieck.map`.
-This computes all the way down to the components of `α`, removing all the `Cat.postCompOpFunctor'`
-wrappers.
--/
-theorem transferCovFunctorOnMap_grothendieckMap_obj {E : Type uₑ} [Category.{vₑ} E]
-    {G' H' : Eᵒᵖ' ⥤ Cat.{v₃, u₃}}
-    (α : G' ⟶ H')
-    (X : GrothendieckContra G') :
-    (transferCovFunctorOnMap α Grothendieck.map).obj X =
-      ⟨X.base, (α.app X.base).obj X.fiber⟩ := by
-  rw [transferCovFunctorOnMap_obj]
-  simp [Functor.op', Grothendieck.map, Cat.postCompOpFunctor']
-
-/--
-Specialized computation for `transferCovFunctorOnMap` when used with `Grothendieck.map`.
-This computes all the way down to the components of `α`, removing all the `Cat.postCompOpFunctor'`
-wrappers.
-
-Note: The morphism still contains `(Cat.postCompOpFunctor'.map α).naturality` which is the
-naturality of `whiskerRight α opFunctor'`. This can be further expanded if needed, but is
-left in this form as it's a standard naturality condition.
--/
-theorem transferCovFunctorOnMap_grothendieckMap_map {E : Type uₑ} [Category.{vₑ} E]
-    {G' H' : Eᵒᵖ' ⥤ Cat.{v₃, u₃}}
-    (α : G' ⟶ H')
-    {X Y : GrothendieckContra G'} (f : gcHom G' X Y) :
-    (transferCovFunctorOnMap α Grothendieck.map).map f =
-      ⟨f.base,
-        (eqToHom (Eq.symm ((Cat.postCompOpFunctor'.map α).naturality f.base))).app Y.fiber ≫
-        (Functor.op' (α.app X.base)).map f.fiber⟩ := by
-  rw [transferCovFunctorOnMap_map]
-  simp [Functor.op', Grothendieck.map, Cat.postCompOpFunctor']
-
 end Transfer
 
 end Isomorphism
@@ -1165,8 +1086,9 @@ section Functoriality
 variable {F' G' H' : Cᵒᵖ' ⥤ Cat}
 
 @[simps!]
-def map_cov (α : F' ⟶ G') : GrothendieckContraCat F' ⥤ GrothendieckContraCat G' :=
-    transferCovFunctorOnMap α Grothendieck.map
+def map_cov (α : F' ⟶ G') :
+  GrothendieckContraCat F' ⥤ GrothendieckContraCat G' :=
+    Functor.op' (Grothendieck.map (Cat.postCompOpFunctor'.map α))
 
 theorem map_cov_obj (α : F' ⟶ G') (X : GrothendieckContra F') :
     (map_cov α).obj X = ⟨X.base, (α.app X.base).obj X.fiber⟩ := by
