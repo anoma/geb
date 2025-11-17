@@ -2436,6 +2436,96 @@ PolyPiProj {p} {q} f r rsl =
       (PolyPiPbMor1 {p} {q} f r rsl)
       (PolyPiPbMor2 {p} {q} f r rsl))
 
+-- Helper: functorial action of the internal hom object on morphisms.
+-- Given alpha : r -> s in the slice over b, we get a map between hom objects
+-- Hom_b(p, r) -> Hom_b(p, s) by postcomposition.
+--
+-- The positions of polySliceHomObjTot are not just PolyNatTrans, but rather
+-- a refined structure (bi, onpos, poscomm, ondir, ondircomm) that represents
+-- morphisms in the slice category with explicit coherence witnesses.
+--
+-- To implement this map, we need to:
+-- 1. Take a position gamma in Hom_b(p, r)
+-- 2. Compose it with alpha to get a position in Hom_b(p, s)
+-- 3. Show that all the coherence conditions are preserved
+--
+-- This is non-trivial because we need to show that the composite
+-- (alpha . gamma) still satisfies the slice commutativity and direction
+-- coherence conditions.
+polySliceHomObjMap : {b : PolyFunc} -> {p, r, s : PolyFunc} ->
+  (psl : PolyNatTrans p b) -> (rsl : PolyNatTrans r b) ->
+  (ssl : PolyNatTrans s b) ->
+  (alpha : PolyNatTrans r s) ->
+  PNTisSliceM {p=b} {q=r} {r=s} rsl ssl alpha ->
+  PolyNatTrans
+    (polySliceHomObjTot {b} {q=p} {p=r} psl rsl)
+    (polySliceHomObjTot {b} {q=p} {p=s} psl ssl)
+polySliceHomObjMap {b} {p} {r} {s} psl rsl ssl alpha comm =
+  -- Map on positions: compose the morphism structure with alpha
+  (\(bi ** onpos ** poscomm ** ondir ** ondircomm) =>
+    (bi **
+     -- Compose positions: p -> r -> s
+     (\pi, pieq => pntOnPos alpha (onpos pi pieq)) **
+     -- Position commutativity: need to show
+     --   pntOnPos ssl (pntOnPos alpha (onpos pi pieq)) = bi
+     -- We have: poscomm : pntOnPos psl (onpos pi pieq) = bi
+     --          comm : pntVCatComp ssl alpha = rsl
+     -- Need to use comm to relate ssl . alpha . onpos back to bi
+     (\pi, pieq => ?polySliceHomObjMap_poscomm_hole) **
+     -- Direction mapping: compose with alpha's direction map
+     (\pi, pieq, sd =>
+       case ondir pi pieq (pntOnDir alpha (onpos pi pieq) sd) of
+         Left () => Left ()
+         Right rd => Right rd) **
+     -- Direction commutativity (hole for now)
+     (\pi, pieq, bd => ?polySliceHomObjMap_ondircomm_hole)) **
+   -- Map on directions (hole for now)
+   \gamma, dir => ?polySliceHomObjMap_dir_hole)
+
+-- The functorial action of PolyPiTot on morphisms in the slice category.
+-- Since PolyPiTot is defined as a pullback, and pullbacks are functorial,
+-- we can lift morphisms through the pullback structure.
+public export
+PolyPiTotMap : {p, q : PolyFunc} -> (f : PolyNatTrans p q) ->
+  (r : PolyFunc) -> (rsl : PolyNatTrans r p) ->
+  (s : PolyFunc) -> (ssl : PolyNatTrans s p) ->
+  (alpha : PolyNatTrans r s) ->
+  PNTisSliceM {p} {q=r} {r=s} rsl ssl alpha ->
+  PolyNatTrans (PolyPiTot {p} {q} f r rsl) (PolyPiTot {p} {q} f s ssl)
+PolyPiTotMap {p} {q} f r rsl s ssl alpha comm =
+  -- PolyPiTot is defined as:
+  --   pfPullbackAr (PolyPiPbMor1 f r rsl) (PolyPiPbMor2 f r rsl)
+  -- where the pullback is over PolyPiPbCodTot with domains
+  -- PolyPiPbDom1Tot (= q) and PolyPiPbDom2Tot (= Hom(p, r)).
+  --
+  -- To lift alpha through the pullback, we need to construct a morphism
+  -- between the pullback objects. The positions of the pullback are:
+  --   ((qi, hom) ** eq : PolyPiPbMor1.onPos qi
+  --                    = PolyPiPbMor2.onPos hom)
+  --
+  -- Since PolyPiPbDom1Tot = q (constant), the first component doesn't
+  -- change. The second component is mapped via homAlpha.
+  let homAlpha : PolyNatTrans
+        (PolyPiPbDom2Tot {p} {q} f r rsl)
+        (PolyPiPbDom2Tot {p} {q} f s ssl)
+      homAlpha = polySliceHomObjMap
+        {b=q}
+        {p}
+        {r}
+        {s}
+        f
+        (pntVCatComp {p=r} {q=p} {r=q} f rsl)
+        (pntVCatComp {p=s} {q=p} {r=q} f ssl)
+        alpha
+        ?PolyPiTotMap_comm_hole
+  in -- Map on positions: lift through pullback
+     -- Pullback positions are: ((dom1pos, dom2pos) ** proof)
+     (\((qi, hom) ** eq) =>
+       ((qi, fst homAlpha hom) **
+        ?PolyPiTotMap_pullback_eq_hole) **
+      -- Map on directions: lift through pullback
+      \i, dir => ?PolyPiTotMap_dir_hole)
+
 -------------------------------------
 ---- Sigma / dependent sum ----------
 -------------------------------------
@@ -2605,3 +2695,184 @@ PolyFuncArenaInterpDir : (arena : PolyFuncArena) ->
   PolyFuncArenaInterpPos arena r rsl -> Type
 PolyFuncArenaInterpDir arena r rsl i =
   pfDir {p=(PolyFuncArenaInterpTot arena r rsl)} i
+
+------------------------------------------------------------
+---- Special case: Polynomial functors Poly -> Poly --------
+------------------------------------------------------------
+
+-- When baseA and baseB are both terminal, we have a polynomial functor
+-- from Poly to Poly (since Poly is equivalent to Poly/Terminal).
+-- We use the existing PFTerminalArena and polyToTerm from PolyCat.
+--
+-- In this case, the arena simplifies:
+-- - bcMor : e -> Terminal (unique morphism)
+-- - piMor : e -> i
+-- - sigmaMor : i -> Terminal (unique morphism)
+--
+-- The formula simplifies dramatically:
+-- 1. Base change along (e -> Terminal): pullback over terminal = product
+--    Result: e × r = (pfPos e, pfPos r)
+--            with directions Either (pfDir e) (pfDir r)
+--
+-- 2. Dependent product Π along piMor : e -> i
+--    This is PolyPiTot piMor (e × r) ...
+--    The formula for Pi is complex, but the result is the internal
+--    hom in the slice over i.
+--
+-- 3. Dependent sum Σ along (i -> Terminal): forgets slice structure
+--    Result: Same as step 2, since Sigma to terminal just forgets
+--
+-- EXPLICIT FORMULA for Poly -> Poly:
+-- Given e, i : PolyFunc and piMor : e -> i, and input r : PolyFunc,
+-- the output polynomial functor is Π_piMor(e × r).
+--
+-- This matches the standard formula! A polynomial functor on Poly
+-- is determined by a diagram  i ← e  where:
+-- - Positions are determined by sections of e -> i
+-- - Directions involve the interaction with r
+--
+-- More explicitly (expanding PolyPiTot):
+-- Positions: Pairs (qi : pfPos i, section : e_qi -> pfPos r)
+--            where e_qi is the fiber
+-- Directions: Complex interaction of directions from e, i, and r
+
+public export
+PolyFuncArenaTerminal : (e, i : PolyFunc) ->
+  (piMor : PolyNatTrans e i) -> PolyFuncArena
+PolyFuncArenaTerminal e i piMor = MkPolyFuncArena
+  PFTerminalArena  -- baseA
+  PFTerminalArena  -- baseB
+  i                -- intermediate
+  e                -- exponent
+  (polyToTerm e)   -- bcMor
+  piMor            -- piMor
+  (polyToTerm i)   -- sigmaMor
+
+-- The functorial action on morphisms: given a morphism alpha : r -> s
+-- in the slice category over baseA, we get a morphism between the
+-- interpreted polynomial functors.
+public export
+PolyFuncArenaInterpMap : (arena : PolyFuncArena) ->
+  (r : PolyFunc) -> (rsl : PolyNatTrans r (baseA arena)) ->
+  (s : PolyFunc) -> (ssl : PolyNatTrans s (baseA arena)) ->
+  (alpha : PolyNatTrans r s) ->
+  PNTisSliceM {p=(baseA arena)} {q=r} {r=s} rsl ssl alpha ->
+  PolyNatTrans
+    (PolyFuncArenaInterpTot arena r rsl)
+    (PolyFuncArenaInterpTot arena s ssl)
+PolyFuncArenaInterpMap arena r rsl s ssl alpha comm =
+  let -- First apply base change functorially
+      bcAlpha : PolyNatTrans
+        (PolyBCFtot {p=(baseA arena)} {q=(exponent arena)}
+          (bcMor arena) r rsl)
+        (PolyBCFtot {p=(baseA arena)} {q=(exponent arena)}
+          (bcMor arena) s ssl)
+      bcAlpha = PolyBCFtotMap
+        {p=(baseA arena)}
+        {q=(exponent arena)}
+        (bcMor arena)
+        r rsl s ssl alpha comm
+      -- Then apply Pi functorially (TODO: implement PolyPiTotMap)
+      piAlpha : PolyNatTrans
+        (PolyPiTot {p=(exponent arena)} {q=(intermediate arena)}
+          (piMor arena)
+          (PolyBCFtot {p=(baseA arena)} {q=(exponent arena)}
+            (bcMor arena) r rsl)
+          (PolyBCFproj {p=(baseA arena)} {q=(exponent arena)}
+            (bcMor arena) r rsl))
+        (PolyPiTot {p=(exponent arena)} {q=(intermediate arena)}
+          (piMor arena)
+          (PolyBCFtot {p=(baseA arena)} {q=(exponent arena)}
+            (bcMor arena) s ssl)
+          (PolyBCFproj {p=(baseA arena)} {q=(exponent arena)}
+            (bcMor arena) s ssl))
+      piAlpha = ?PolyFuncArenaInterpMap_piAlpha_hole
+      -- Finally, Sigma is functorial and just returns the input
+  in piAlpha  -- Since PolySigmaTotMap is the identity on morphisms
+
+------------------------------------------------------------
+---- Simplified formula: Poly -> Poly --------------------
+------------------------------------------------------------
+
+-- When both baseA and baseB are terminal, the formula simplifies
+-- dramatically. We compute an explicit formula and prove it's equivalent.
+--
+-- The simplified formula: Given e, i : PolyFunc, piMor : e -> i,
+-- and input r : PolyFunc, the result is:
+--
+-- Positions: (ii : pfPos i **
+--             section : (ei : pfPos e) -> pntOnPos piMor ei = ii ->
+--                       pfPos r)
+--
+-- Directions: Complex coequalizer involving directions from e, i, and r
+
+-- First, the simplified positions are sections of the fiber of piMor
+public export
+PolyFuncSimplifiedPos : (e, i, r : PolyFunc) ->
+  (piMor : PolyNatTrans e i) -> Type
+PolyFuncSimplifiedPos e i r piMor =
+  (ii : pfPos i **
+   (ei : pfPos e) -> pntOnPos piMor ei = ii -> pfPos r)
+
+-- The directions: Either from i or from r over each fiber element
+-- Note: The coequalizer relation is empty (Void everywhere), so we don't
+-- need to quotient - the directions are just the sum type directly!
+public export
+PolyFuncSimplifiedDir : (e, i, r : PolyFunc) ->
+  (piMor : PolyNatTrans e i) ->
+  PolyFuncSimplifiedPos e i r piMor -> Type
+PolyFuncSimplifiedDir e i r piMor (ii ** section) =
+  Either
+    (pfDir {p=i} ii)
+    (ei : pfPos e ** eieq : pntOnPos piMor ei = ii **
+     pfDir {p=r} (section ei eieq))
+
+-- The simplified polynomial functor
+public export
+PolyFuncSimplified : (e, i, r : PolyFunc) ->
+  (piMor : PolyNatTrans e i) -> PolyFunc
+PolyFuncSimplified e i r piMor =
+  (PolyFuncSimplifiedPos e i r piMor **
+   PolyFuncSimplifiedDir e i r piMor)
+
+-- Now we prove this is equivalent to the general formula applied to the
+-- terminal case. The general formula is:
+-- PolyFuncArenaInterpTot (PolyFuncArenaTerminal e i piMor) r rsl
+-- where rsl : r -> Terminal is the unique morphism.
+
+-- Forward direction: from general to simplified
+public export
+PolyFuncTermToSimplifiedPos : (e, i, r : PolyFunc) ->
+  (piMor : PolyNatTrans e i) ->
+  pfPos (PolyFuncArenaInterpTot
+    (PolyFuncArenaTerminal e i piMor)
+    r
+    (polyToTerm r)) ->
+  PolyFuncSimplifiedPos e i r piMor
+PolyFuncTermToSimplifiedPos e i r piMor genPos =
+  ?PolyFuncTermToSimplifiedPos_hole
+
+-- Reverse direction: from simplified to general
+public export
+PolyFuncSimplifiedToTermPos : (e, i, r : PolyFunc) ->
+  (piMor : PolyNatTrans e i) ->
+  PolyFuncSimplifiedPos e i r piMor ->
+  pfPos (PolyFuncArenaInterpTot
+    (PolyFuncArenaTerminal e i piMor)
+    r
+    (polyToTerm r))
+PolyFuncSimplifiedToTermPos e i r piMor simpPos =
+  ?PolyFuncSimplifiedToTermPos_hole
+
+public export
+PolyFuncSimplifiedToTermDir : (e, i, r : PolyFunc) ->
+  (piMor : PolyNatTrans e i) ->
+  (simpPos : PolyFuncSimplifiedPos e i r piMor) ->
+  pfDir {p=(PolyFuncSimplified e i r piMor)} simpPos ->
+  pfDir {p=(PolyFuncArenaInterpTot
+    (PolyFuncArenaTerminal e i piMor)
+    r
+    (polyToTerm r))}
+    (PolyFuncSimplifiedToTermPos e i r piMor simpPos)
+PolyFuncSimplifiedToTermDir e i r piMor simpPos simpDir =
+  ?PolyFuncSimplifiedToTermDir_hole
