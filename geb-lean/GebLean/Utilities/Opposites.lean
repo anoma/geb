@@ -333,11 +333,8 @@ and composition is reversed, the functor naturally maps them correctly.
 -/
 @[simp]
 def Functor.op' {C D : Type*} [Category C] [Category D] (F : C ⥤ D) :
-    Cᵒᵖ' ⥤ Dᵒᵖ' where
-  obj X := F.obj X
-  map f := F.map f
-  map_id X := F.map_id X
-  map_comp f g := F.map_comp g f
+    Cᵒᵖ' ⥤ Dᵒᵖ' :=
+  functorOp'Obj F
 
 /--
 For morphisms, isomorphisms transfer between a category and its `op'` opposite.
@@ -360,6 +357,7 @@ lemma isIso_of_isIso_op' {C : Type*} [Category C] {X Y : C} (f : Y ⟶ X)
 instance op'_faithful (F : C ⥤ D) [F.Faithful] : (Functor.op' F).Faithful where
   map_injective {X Y} {f g} h := by
     unfold Functor.op' at h
+    unfold functorOp'Obj at h
     simp only at h
     exact F.map_injective h
 
@@ -368,6 +366,7 @@ instance op'_reflects_isomorphisms (F : C ⥤ D) [F.ReflectsIsomorphisms] :
     (Functor.op' F).ReflectsIsomorphisms where
   reflects {X Y} f hf := by
     unfold Functor.op' at hf
+    unfold functorOp'Obj at hf
     simp only at hf
     haveI h1 : @IsIso D _ _ _ (F.map f) := isIso_of_isIso_op' (F.map f)
     haveI h2 : @IsIso C _ Y X f := Functor.ReflectsIsomorphisms.reflects F f

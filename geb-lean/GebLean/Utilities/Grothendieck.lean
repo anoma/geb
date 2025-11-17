@@ -1164,7 +1164,7 @@ def map_cov (α : F' ⟶ G') : GrothendieckContraCat F' ⥤ GrothendieckContraCa
 theorem map_cov_obj (α : F' ⟶ G') (X : GrothendieckContra F') :
     (map_cov α).obj X = ⟨X.base, (α.app X.base).obj X.fiber⟩ := by
   unfold map_cov
-  simp only [Functor.op']
+  simp only [Functor.op', functorOp'Obj]
   rw [Grothendieck.map_obj]
   simp only [Cat.postCompOpFunctor']
   rfl
@@ -1174,7 +1174,7 @@ theorem map_cov_map (α : F' ⟶ G') {X Y : GrothendieckContra F'} (f : gcHom F'
       (eqToHom (Eq.symm ((Cat.postCompOpFunctor'.map α).naturality f.base))).app Y.fiber ≫
       (Functor.op' (α.app X.base)).map f.fiber⟩ := by
   unfold map_cov
-  simp only [Functor.op']
+  simp only [Functor.op', functorOp'Obj]
   rw [Grothendieck.map_map]
   simp only [Cat.postCompOpFunctor']
   rfl
