@@ -806,7 +806,7 @@ def precompGcIsoInv
     (GrothendieckContraCat G' ⥤ E') ⥤ (GrothendieckContra' G' ⥤ E') :=
   (Functor.whiskeringLeft _ _ _).obj (grothendieckContraIsoInv (F' := G'))
 
-def bicompGcIsoInv
+def bicompGcIsoHomInv
     {E : Type uₑ} [Category.{vₑ} E] {E' : Type uₑ'} [Category.{vₑ'} E']
     {G' : Eᵒᵖ' ⥤ Cat.{v₃, u₃}} {H' : E'ᵒᵖ' ⥤ Cat.{v₄, u₄}} :
     (GrothendieckContraCat G' ⥤ GrothendieckContraCat H') ⥤
@@ -820,7 +820,7 @@ def bicompGcIsoInv
     (E' := GrothendieckContra' H')
     (G' := G')
 
-def bicompGcIsoInv'
+def bicompGcIsoHomInv'
     {E : Type uₑ} [Category.{vₑ} E] {E' : Type uₑ'} [Category.{vₑ'} E']
     {G' : Eᵒᵖ' ⥤ Cat.{v₃, u₃}} {H' : E'ᵒᵖ' ⥤ Cat.{v₄, u₄}} :
     (GrothendieckContraCat G' ⥤ GrothendieckContraCat H') ⥤
@@ -837,8 +837,8 @@ def bicompGcIsoInv'
 def bicompGcIsoEquiv
     {E : Type uₑ} [Category.{vₑ} E] {E' : Type uₑ'} [Category.{vₑ'} E']
     {G' : Eᵒᵖ' ⥤ Cat.{v₃, u₃}} {H' : E'ᵒᵖ' ⥤ Cat.{v₄, u₄}} :
-    bicompGcIsoInv (E := E) (E' := E') (G' := G') (H' := H') =
-    bicompGcIsoInv' (E := E) (E' := E') (G' := G') (H' := H') :=
+    bicompGcIsoHomInv (E := E) (E' := E') (G' := G') (H' := H') =
+    bicompGcIsoHomInv' (E := E) (E' := E') (G' := G') (H' := H') :=
   rfl
 
 /--
@@ -858,7 +858,7 @@ def transferFromCov {E : Type uₑ} [Category.{vₑ} E] {E' : Type uₑ'} [Categ
     {G' : Eᵒᵖ' ⥤ Cat.{v₃, u₃}} {H' : E'ᵒᵖ' ⥤ Cat.{v₄, u₄}}
     (F_cov : GrothendieckContraCat G' ⥤ GrothendieckContraCat H') :
     GrothendieckContra' G' ⥤ GrothendieckContra' H' :=
-  (bicompGcIsoInv' (G' := G') (H' := H')).obj F_cov
+  (bicompGcIsoHomInv' (G' := G') (H' := H')).obj F_cov
 
 /--
 Helper function: constructs an object in `GrothendieckContra' H'` from the
