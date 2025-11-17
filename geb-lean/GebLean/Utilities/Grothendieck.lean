@@ -1245,9 +1245,11 @@ section UniverseScaling
 variable {F' G' : Cᵒᵖ' ⥤ Cat.{v, u}}
 
 def compAsSmallFunctorEquivalenceFunctor_cov :
-    GrothendieckContraCat (F' ⋙ Cat.asSmallFunctor.{w}) ⥤ GrothendieckContraCat F' :=
+    GrothendieckContraCat (F' ⋙ Cat.asSmallFunctor.{w}) ⥤
+    GrothendieckContraCat F' :=
   Functor.op'
-    (Grothendieck.compAsSmallFunctorEquivalence (Cat.postCompOpFunctor'.obj F')).functor
+    (Grothendieck.compAsSmallFunctorEquivalence
+      (Cat.postCompOpFunctor'.obj F')).functor
 
 theorem compAsSmallFunctorEquivalenceFunctor_cov_obj
     (X : GrothendieckContra (F' ⋙ Cat.asSmallFunctor.{w})) :
@@ -1265,7 +1267,8 @@ theorem compAsSmallFunctorEquivalenceFunctor_cov_map
   simp [Functor.op', Grothendieck.compAsSmallFunctorEquivalenceFunctor]
 
 def compAsSmallFunctorEquivalenceFunctor :
-    GrothendieckContra' (F' ⋙ Cat.asSmallFunctor.{w}) ⥤ GrothendieckContra' F' :=
+    GrothendieckContra' (F' ⋙ Cat.asSmallFunctor.{w}) ⥤
+    GrothendieckContra' F' :=
   transferFromCov compAsSmallFunctorEquivalenceFunctor_cov
 
 theorem compAsSmallFunctorEquivalenceFunctor_obj
@@ -1275,7 +1278,7 @@ theorem compAsSmallFunctorEquivalenceFunctor_obj
   unfold compAsSmallFunctorEquivalenceFunctor
   simp only [transferFromCov_obj, transferredObj]
   rw [compAsSmallFunctorEquivalenceFunctor_cov_obj]
-  simp
+  rfl
 
 theorem compAsSmallFunctorEquivalenceFunctor_map
     {X Y : GrothendieckContra' (F' ⋙ Cat.asSmallFunctor.{w})} (f : X ⟶ Y) :
@@ -1284,12 +1287,13 @@ theorem compAsSmallFunctorEquivalenceFunctor_map
   unfold compAsSmallFunctorEquivalenceFunctor
   simp only [transferFromCov_map, transferredMap]
   rw [compAsSmallFunctorEquivalenceFunctor_cov_map]
-  simp
+  rfl
 
 def compAsSmallFunctorEquivalenceInverse_cov :
     GrothendieckContraCat F' ⥤ GrothendieckContraCat (F' ⋙ Cat.asSmallFunctor.{w}) :=
   Functor.op'
-    (Grothendieck.compAsSmallFunctorEquivalence (Cat.postCompOpFunctor'.obj F')).inverse
+    (Grothendieck.compAsSmallFunctorEquivalence
+      (Cat.postCompOpFunctor'.obj F')).inverse
 
 theorem compAsSmallFunctorEquivalenceInverse_cov_obj
     (X : GrothendieckContra F') :
@@ -1305,24 +1309,32 @@ def compAsSmallFunctorEquivalenceInverse :
     GrothendieckContra' F' ⥤ GrothendieckContra' (F' ⋙ Cat.asSmallFunctor.{w}) :=
   transferFromCov compAsSmallFunctorEquivalenceInverse_cov
 
+@[simp]
+theorem compAsSmallFunctorEquivalenceInverse_obj_fiber (X : GrothendieckContra' F') :
+    ((compAsSmallFunctorEquivalenceInverse (F' := F')).obj X).fiber =
+      AsSmall.up.obj X.fiber := rfl
+
+@[simp]
 theorem compAsSmallFunctorEquivalenceInverse_obj (X : GrothendieckContra' F') :
     (compAsSmallFunctorEquivalenceInverse (F' := F')).obj X =
       ⟨X.base, AsSmall.up.obj X.fiber⟩ := by
-  unfold compAsSmallFunctorEquivalenceInverse
-  simp only [transferFromCov_obj, transferredObj]
-  rw [compAsSmallFunctorEquivalenceInverse_cov_obj]
+  rfl
 
--- Note: This lemma has type class synthesis issues and is omitted
--- theorem compAsSmallFunctorEquivalenceInverse_map
---     {X Y : GrothendieckContra' F'} (f : X ⟶ Y) :
---     (compAsSmallFunctorEquivalenceInverse (F' := F')).map f =
---       ⟨f.base, AsSmall.up.map f.fiber⟩ := by
---   unfold compAsSmallFunctorEquivalenceInverse
---   simp only [transferFromCov_map, transferredMap]
---   rw [compAsSmallFunctorEquivalenceInverse_cov_map]
+theorem compAsSmallFunctorEquivalenceInverse_map
+    {X Y : GrothendieckContra' F'} (f : X ⟶ Y) :
+    (compAsSmallFunctorEquivalenceInverse (F' := F')).map f =
+    ⟨f.base,
+     eqToHom (compAsSmallFunctorEquivalenceInverse_obj_fiber X) ≫
+     AsSmall.up.map f.fiber⟩ := by
+  simp
+  unfold compAsSmallFunctorEquivalenceInverse
+  simp only
+    [transferFromCov_map, transferredMap,
+     compAsSmallFunctorEquivalenceInverse_cov_map]
 
 def compAsSmallFunctorEquivalence :
-    GrothendieckContra' (F' ⋙ Cat.asSmallFunctor.{w}) ≌ GrothendieckContra' F' where
+    GrothendieckContra' (F' ⋙ Cat.asSmallFunctor.{w}) ≌
+    GrothendieckContra' F' where
   functor := compAsSmallFunctorEquivalenceFunctor
   inverse := compAsSmallFunctorEquivalenceInverse
   unitIso := Iso.refl _
