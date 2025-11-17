@@ -858,7 +858,7 @@ def transferFromCov {E : Type uₑ} [Category.{vₑ} E] {E' : Type uₑ'} [Categ
     {G' : Eᵒᵖ' ⥤ Cat.{v₃, u₃}} {H' : E'ᵒᵖ' ⥤ Cat.{v₄, u₄}}
     (F_cov : GrothendieckContraCat G' ⥤ GrothendieckContraCat H') :
     GrothendieckContra' G' ⥤ GrothendieckContra' H' :=
-  (bicompGcIsoHomInv' (G' := G') (H' := H')).obj F_cov
+  (bicompGcIsoHomInv (G' := G') (H' := H')).obj F_cov
 
 /--
 Helper function: constructs an object in `GrothendieckContra' H'` from the
@@ -972,7 +972,7 @@ def transferFromCovMap
     {G' : Eᵒᵖ' ⥤ Cat.{v₃, u₃}} {H' : E'ᵒᵖ' ⥤ Cat.{v₄, u₄}}
     {F_cov G_cov : GrothendieckContraCat G' ⥤ GrothendieckContraCat H'} :
     (F_cov ⟶ G_cov) ⟶ (transferFromCov F_cov ⟶ transferFromCov G_cov) :=
-  (bicompGcIsoHomInv' (G' := G') (H' := H')).map
+  (bicompGcIsoHomInv (G' := G') (H' := H')).map
 
 /--
 Helper function that wraps a mathlib Grothendieck function that takes a natural
