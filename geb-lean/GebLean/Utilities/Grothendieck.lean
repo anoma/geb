@@ -794,6 +794,53 @@ section Transfer
 -- Universe levels for the Transfer section (independent of the outer v₂, u₂)
 universe v₃ u₃ v₄ u₄ uₑ vₑ uₑ' vₑ'
 
+def postcompGcIsoHom
+    {E : Type uₑ} [Category.{vₑ} E] {E' : Type uₑ'} [Category.{vₑ'} E']
+    {H' : E'ᵒᵖ' ⥤ Cat.{v₄, u₄}} :
+    (E ⥤ GrothendieckContraCat H') ⥤ (E ⥤ GrothendieckContra' H') :=
+  (Functor.whiskeringRight _ _ _).obj (grothendieckContraIsoHom (F' := H'))
+
+def precompGcIsoInv
+    {E : Type uₑ} [Category.{vₑ} E] {E' : Type uₑ'} [Category.{vₑ'} E']
+    {G' : Eᵒᵖ' ⥤ Cat.{v₃, u₃}} :
+    (GrothendieckContraCat G' ⥤ E') ⥤ (GrothendieckContra' G' ⥤ E') :=
+  (Functor.whiskeringLeft _ _ _).obj (grothendieckContraIsoInv (F' := G'))
+
+def bicompGcIsoInv
+    {E : Type uₑ} [Category.{vₑ} E] {E' : Type uₑ'} [Category.{vₑ'} E']
+    {G' : Eᵒᵖ' ⥤ Cat.{v₃, u₃}} {H' : E'ᵒᵖ' ⥤ Cat.{v₄, u₄}} :
+    (GrothendieckContraCat G' ⥤ GrothendieckContraCat H') ⥤
+    (GrothendieckContra' G' ⥤ GrothendieckContra' H') :=
+  postcompGcIsoHom
+    (E := GrothendieckContraCat G')
+    (E' := E')
+    (H' := H')
+  ⋙ precompGcIsoInv
+    (E := E)
+    (E' := GrothendieckContra' H')
+    (G' := G')
+
+def bicompGcIsoInv'
+    {E : Type uₑ} [Category.{vₑ} E] {E' : Type uₑ'} [Category.{vₑ'} E']
+    {G' : Eᵒᵖ' ⥤ Cat.{v₃, u₃}} {H' : E'ᵒᵖ' ⥤ Cat.{v₄, u₄}} :
+    (GrothendieckContraCat G' ⥤ GrothendieckContraCat H') ⥤
+    (GrothendieckContra' G' ⥤ GrothendieckContra' H') :=
+  precompGcIsoInv
+    (E := E)
+    (E' := GrothendieckContraCat H')
+    (G' := G')
+  ⋙ postcompGcIsoHom
+    (E := GrothendieckContra' G')
+    (E' := E')
+    (H' := H')
+
+def bicompGcIsoEquiv
+    {E : Type uₑ} [Category.{vₑ} E] {E' : Type uₑ'} [Category.{vₑ'} E']
+    {G' : Eᵒᵖ' ⥤ Cat.{v₃, u₃}} {H' : E'ᵒᵖ' ⥤ Cat.{v₄, u₄}} :
+    bicompGcIsoInv (E := E) (E' := E') (G' := G') (H' := H') =
+    bicompGcIsoInv' (E := E) (E' := E') (G' := G') (H' := H') :=
+  rfl
+
 /--
 Transfer a functor `F_cov : GrothendieckContra G' ⥤ GrothendieckContra H'`
 (defined on the mathlib-derived construction) to a functor
@@ -811,7 +858,7 @@ def transferFromCov {E : Type uₑ} [Category.{vₑ} E] {E' : Type uₑ'} [Categ
     {G' : Eᵒᵖ' ⥤ Cat.{v₃, u₃}} {H' : E'ᵒᵖ' ⥤ Cat.{v₄, u₄}}
     (F_cov : GrothendieckContraCat G' ⥤ GrothendieckContraCat H') :
     GrothendieckContra' G' ⥤ GrothendieckContra' H' :=
-  grothendieckContraIsoInv (F' := G') ⋙ F_cov ⋙ grothendieckContraIsoHom (F' := H')
+  (bicompGcIsoInv' (G' := G') (H' := H')).obj F_cov
 
 /--
 Helper function: constructs an object in `GrothendieckContra' H'` from the
