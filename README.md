@@ -81,7 +81,7 @@ Welcome to the GEB project.
 
 <a id="x-28GEB-DOCS-2FDOCS-3A-40LINKS-20MGL-PAX-3ASECTION-29"></a>
 
-## 1 Links
+## 1. Links
 
 
 
@@ -120,7 +120,7 @@ Currently they are manually generated, and thus for a more accurate assessment s
 
 <a id="x-28GEB-DOCS-2FDOCS-3A-40GETTING-STARTED-20MGL-PAX-3ASECTION-29"></a>
 
-## 2 Getting Started
+## 2. Getting Started
 
 Welcome to the GEB Project!
 
@@ -275,7 +275,7 @@ foo x1 ... xn = y
 
 <a id="x-28GEB-DOCS-2FDOCS-3A-40GLOSSARY-20MGL-PAX-3ASECTION-29"></a>
 
-## 3 Glossary
+## 3. Glossary
 
 <a id="x-28GEB-DOCS-2FDOCS-3A-40CLOSED-TYPE-20MGL-PAX-3AGLOSSARY-TERM-29"></a>
 
@@ -372,7 +372,7 @@ foo x1 ... xn = y
 
 <a id="x-28GEB-DOCS-2FDOCS-3A-40ORIGINAL-EFFORTS-20MGL-PAX-3ASECTION-29"></a>
 
-## 4 Original Efforts
+## 4. Original Efforts
 
 Originally GEB started off as an Idris codebase written by the
 designer and creator of GEB, Terence Rokop, However further efforts
@@ -409,7 +409,7 @@ conjectures about GEB
 
 <a id="x-28GEB-DOCS-2FDOCS-3A-40MODEL-20MGL-PAX-3ASECTION-29"></a>
 
-## 5 Categorical Model
+## 5. Categorical Model
 
 
 
@@ -551,7 +551,7 @@ covers the background we need in 60 short pages.
 
 <a id="x-28GEB-DOCS-2FDOCS-3A-40IDIOMS-20MGL-PAX-3ASECTION-29"></a>
 
-## 6 Project Idioms and Conventions
+## 6. Project Idioms and Conventions
 
 The Geb Project is written in [Common
 Lisp](https://common-lisp.net/), which means the authors have a great
@@ -716,7 +716,7 @@ one sees a type like GEB:<SUBSTOBJ> it is the open version of
 
 <a id="x-28GEB-3A-40GEB-20MGL-PAX-3ASECTION-29"></a>
 
-## 7 The Geb Model
+## 7. The Geb Model
 
 ###### \[in package GEB\]
 Everything here relates directly to the underlying machinery of
@@ -2292,7 +2292,7 @@ with GEB:
 
 <a id="x-28GEB-2EEXTENSION-2ESPEC-3A-40GEB-EXTENSIONS-20MGL-PAX-3ASECTION-29"></a>
 
-## 8 Extension Sets for Categories
+## 8. Extension Sets for Categories
 
 ###### \[in package GEB.EXTENSION.SPEC\]
 This package contains many extensions one may see over the codebase.
@@ -2708,7 +2708,7 @@ natural numbers along with basic operation relating to those.
 
 <a id="x-28GEB-GUI-3A-40GEB-GUI-MANUAL-20MGL-PAX-3ASECTION-29"></a>
 
-## 9 The GEB GUI
+## 9. The GEB GUI
 
 ###### \[in package GEB-GUI\]
 This section covers the suite of tools that help visualize geb
@@ -2946,7 +2946,7 @@ ways that are intuitive to the user
 
 <a id="x-28GEB-2ESEQN-3A-40SEQN-MANUAL-20MGL-PAX-3ASECTION-29"></a>
 
-## 10 Seqn Specification
+## 10. Seqn Specification
 
 ###### \[in package GEB.SEQN\]
 This covers a GEB view of multibit sequences. In particular this type will
@@ -3527,7 +3527,7 @@ This covers transformation functions from
 
 <a id="x-28GEB-2EBITC-3A-40BITC-MANUAL-20MGL-PAX-3ASECTION-29"></a>
 
-## 11 Bits (Boolean Circuit) Specification
+## 11. Bits (Boolean Circuit) Specification
 
 ###### \[in package GEB.BITC\]
 This covers a GEB view of Boolean Circuits. In particular this type will
@@ -3847,7 +3847,7 @@ This covers transformation functions from
 
 <a id="x-28GEB-2EPOLY-3A-40POLY-MANUAL-20MGL-PAX-3ASECTION-29"></a>
 
-## 12 Polynomial Specification
+## 12. Polynomial Specification
 
 ###### \[in package GEB.POLY\]
 This covers a GEB view of Polynomials. In particular this type will
@@ -4092,7 +4092,7 @@ This covers transformation functions from
 
 <a id="x-28GEB-2ELAMBDA-3A-40STLC-20MGL-PAX-3ASECTION-29"></a>
 
-## 13 The Simply Typed Lambda Calculus model
+## 13. The Simply Typed Lambda Calculus model
 
 ###### \[in package GEB.LAMBDA\]
 This covers GEB's view on simply typed lambda calculus
@@ -5391,7 +5391,7 @@ These are utility functions relating to translating lambda terms to other types
 
 <a id="x-28GEB-2EMIXINS-3A-40MIXINS-20MGL-PAX-3ASECTION-29"></a>
 
-## 14 Mixins
+## 14. Mixins
 
 ###### \[in package GEB.MIXINS\]
 Various [mixins](https://en.wikipedia.org/wiki/Mixin) of the
@@ -5582,7 +5582,7 @@ storage.
 
 <a id="x-28GEB-2EUTILS-3A-40GEB-UTILS-MANUAL-20MGL-PAX-3ASECTION-29"></a>
 
-## 15 Geb Utilities
+## 15. Geb Utilities
 
 ###### \[in package GEB.UTILS\]
 The Utilities package provides general utility functionality that is
@@ -5841,7 +5841,7 @@ likely to be used. They may even augment existing classes.
 
 <a id="x-28GEB-TEST-3A-40GEB-TEST-MANUAL-20MGL-PAX-3ASECTION-29"></a>
 
-## 16 Testing
+## 16. Testing
 
 ###### \[in package GEB-TEST\]
 We use [parachute](https://quickref.common-lisp.net/parachute.html)
