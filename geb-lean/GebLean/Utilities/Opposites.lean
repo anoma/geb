@@ -345,6 +345,15 @@ lemma isIso_op'_of_isIso {C : Type*} [Category C] {X Y : C} (f : Y ⟶ X)
     [h : IsIso f] : @IsIso Cᵒᵖ' _ X Y f :=
   ⟨@inv C _ Y X f h, IsIso.inv_hom_id f, IsIso.hom_inv_id f⟩
 
+def opIso {C : Type*} [Category C] {X Y : C}
+    (e : Iso (C := C) X Y) : Iso (C := Cᵒᵖ') X Y :=
+  {
+    hom := e.inv
+    inv := e.hom
+    hom_inv_id := e.hom_inv_id
+    inv_hom_id := e.inv_hom_id
+  }
+
 /--
 Conversely, if `f` is an isomorphism in `Cᵒᵖ'`, then it is also an isomorphism
 in `C`.

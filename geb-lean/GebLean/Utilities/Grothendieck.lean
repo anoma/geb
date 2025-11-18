@@ -1022,47 +1022,62 @@ def isoMk_cov {X Y : GrothendieckContraCat F'} (e₁ : X.base ≅ Y.base)
       eqToIso (Functor.congr_obj ((Cat.postCompOpFunctor'.obj F').mapIso e₁).inv_hom_id Y.fiber))
 
 /--
+Transfer a base isomorphism from `GrothendieckContra'` to `GrothendieckContra`.
+
+In `GrothendieckContra'`, bases live in `C`, but in `GrothendieckContra` (via
+`grothendieckContraIsoInv`), they live in `Cᵒᵖ'`. An isomorphism `e₁ : X.base ≅ Y.base`
+in `C` becomes an isomorphism in `Cᵒᵖ'` with `.hom` and `.inv` swapped (and composition
+reversed).
+-/
+def baseIsoToCov {X Y : GrothendieckContra' F'} (e₁ : X.base ≅ Y.base) :
+    (grothendieckContraIsoInv.obj X).base ≅ (grothendieckContraIsoInv.obj Y).base :=
+  opIso (C := C) e₁
+
+/--
+Transfer a fiber isomorphism from `GrothendieckContra'` to `GrothendieckContra`.
+
+In `GrothendieckContra'`, fibers live in `F'.obj X.base`. In `GrothendieckContra` (via
+`grothendieckContraIsoInv`), fibers live in `(Cat.postCompOpFunctor'.obj F').obj X.base`,
+which is `(F'.obj X.base)ᵒᵖ'`. An isomorphism in `F'.obj X.base` becomes an isomorphism
+in its opposite category with `.hom` and `.inv` swapped (and composition reversed).
+
+Additionally, `(baseIsoToCov e₁).inv` is definitionally equal to `e₁.hom`, so the
+functor application `(F'.map (baseIsoToCov e₁).inv).obj` equals `(F'.map e₁.hom).obj`.
+-/
+def fiberIsoToCov {X Y : GrothendieckContra' F'} (e₁ : X.base ≅ Y.base)
+    (e₂ : X.fiber ≅ (F'.map e₁.hom).obj Y.fiber) :
+    (grothendieckContraIsoInv.obj X).fiber ≅
+    (F'.map (baseIsoToCov e₁).inv).obj (grothendieckContraIsoInv.obj Y).fiber :=
+  -- grothendieckContraIsoInv maps to GrothendieckContra which uses Cat.postCompOpFunctor'.obj F'
+  -- This means fibers are in (F'.obj _)ᵒᵖ' instead of F'.obj _
+  -- We need to convert e₂ to an iso in the opposite category
+  -- baseIsoToCov e₁ has .inv = e₁.hom by definition
+  -- In (F'.obj X.base)ᵒᵖ', the iso e₂ becomes an iso with .hom and .inv swapped
+  -- and composition is also reversed
+  opIso (C := F'.obj X.base) e₂
+
+/--
+If we have an isomorphism in `GrothendieckContra` between `grothendieckContraIsoInv.obj X`
+and `grothendieckContraIsoInv.obj Y`, we can transfer it to an isomorphism `X ≅ Y`
+in `GrothendieckContra'`.
+-/
+def isoFromCov {X Y : GrothendieckContra' F'}
+    (iso_cov : grothendieckContraIsoInv.obj X ≅ grothendieckContraIsoInv.obj Y) :
+    X ≅ Y :=
+  grothendieckContraIsoHom.mapIso iso_cov
+
+/--
 Construct an isomorphism in a contravariant Grothendieck construction from
 isomorphisms in its base and fiber.
+
+This is implemented by transferring mathlib's `Grothendieck.isoMk` through
+the isomorphism `grothendieckContraIso`.
 -/
 @[simps!]
 def isoMk {X Y : GrothendieckContra' F'} (e₁ : X.base ≅ Y.base)
     (e₂ : X.fiber ≅ (F'.map e₁.hom).obj Y.fiber) :
-    X ≅ Y where
-  hom := ⟨e₁.hom, e₂.hom⟩
-  inv := ⟨e₁.inv, eqToHom (map_iso_comp_obj_eq e₁ Y.fiber) ≫
-    (F'.map e₁.inv).map e₂.inv⟩
-  hom_inv_id := ext _ _ (by
-      change (comp (Hom.mk e₁.hom e₂.hom)
-        (Hom.mk e₁.inv (eqToHom (map_iso_comp_obj_eq e₁ Y.fiber) ≫
-        (F'.map e₁.inv).map e₂.inv))).base = (id X).base
-      rw [comp_base, id_base]
-      exact e₁.hom_inv_id) (by
-      let e₁op : @Iso Cᵒᵖ' _ X.base Y.base := {
-        hom := e₁.inv
-        inv := e₁.hom
-        hom_inv_id := e₁.hom_inv_id
-        inv_hom_id := e₁.inv_hom_id
-      }
-      have h := Functor.congr_hom (F'.mapIso e₁op).hom_inv_id e₂.inv
-      dsimp at h
-      change (comp (Hom.mk e₁.hom e₂.hom)
-        (Hom.mk e₁.inv (eqToHom (map_iso_comp_obj_eq e₁ Y.fiber) ≫
-        (F'.map e₁.inv).map e₂.inv))).fiber ≫ eqToHom _ = (id X).fiber
-      rw [comp_fiber, id_fiber]
-      simp only [Functor.map_comp, eqToHom_map]
-      rw [h]
-      simp)
-  inv_hom_id := ext _ _ (by
-      change (comp (Hom.mk e₁.inv (eqToHom (map_iso_comp_obj_eq e₁ Y.fiber) ≫
-        (F'.map e₁.inv).map e₂.inv)) (Hom.mk e₁.hom e₂.hom)).base = (id Y).base
-      rw [comp_base, id_base]
-      exact e₁.inv_hom_id) (by
-      change (comp (Hom.mk e₁.inv (eqToHom (map_iso_comp_obj_eq e₁ Y.fiber) ≫
-        (F'.map e₁.inv).map e₂.inv)) (Hom.mk e₁.hom e₂.hom)).fiber ≫
-        eqToHom _ = (id Y).fiber
-      rw [comp_fiber, id_fiber]
-      simp)
+    X ≅ Y :=
+  isoFromCov (isoMk_cov (baseIsoToCov e₁) (fiberIsoToCov e₁ e₂))
 
 /--
 Create an isomorphism between a transported element and the original.
