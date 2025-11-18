@@ -1012,6 +1012,15 @@ private lemma map_iso_comp_obj_eq {X Y : GrothendieckContra' F'}
     exact e₁.inv_hom_id
   simp [this]
 
+@[simps!]
+def isoMk_cov {X Y : GrothendieckContraCat F'} (e₁ : X.base ≅ Y.base)
+    (e₂ : X.fiber ≅ (F'.map e₁.inv).obj Y.fiber) :
+    X ≅ Y :=
+  Grothendieck.isoMk (X := X) (Y := Y)
+    e₁
+    (((Cat.postCompOpFunctor'.obj F').map e₁.hom).mapIso e₂ ≪≫
+      eqToIso (Functor.congr_obj ((Cat.postCompOpFunctor'.obj F').mapIso e₁).inv_hom_id Y.fiber))
+
 /--
 Construct an isomorphism in a contravariant Grothendieck construction from
 isomorphisms in its base and fiber.
