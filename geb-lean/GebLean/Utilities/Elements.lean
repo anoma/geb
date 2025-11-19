@@ -554,12 +554,12 @@ This is defined using mathlib's `CategoryOfElements.homMk` transferred through
 the opposite construction.
 -/
 def homMk {F : Cᵒᵖ' ⥤ Type w} (x y : F.ElementsContra')
-    (f : @Quiver.Hom C _ x.1 y.1)
+    (f : @Quiver.Hom C _ x.fst y.fst)
     (hf : F.map f y.snd = x.snd) : x ⟶ y :=
   CategoryOfElements.homMk y x f hf
 
 lemma homMk_val {F : Cᵒᵖ' ⥤ Type w} {x y : F.ElementsContra'}
-    (f : @Quiver.Hom C _ x.1 y.1)
+    (f : @Quiver.Hom C _ x.fst y.fst)
     (hf : F.map f y.snd = x.snd) : (homMk x y f hf).val = f :=
   rfl
 
