@@ -1037,24 +1037,6 @@ def isoMk_cov {X Y : GrothendieckContraCat F'} (e₁ : X.base ≅ Y.base)
     e₁
     (isoMk_cov_fiber_equiv e₁ e₂)
 
-lemma isoMk_cov_hom {X Y : GrothendieckContraCat F'} (e₁ : X.base ≅ Y.base)
-    (e₂ : X.fiber ≅ (F'.map e₁.inv).obj Y.fiber) :
-    (isoMk_cov (X := X) (Y := Y) e₁ e₂).hom =
-     ⟨e₁.inv, e₂.inv⟩ := by
-  unfold isoMk_cov
-  apply Grothendieck.ext
-  simp [Cat.opFunctorObj']
-  unfold Cat.of
-  unfold Cat.str
-  unfold Bundled.of
-  simp
-  -- Goal: eqToHom ... ≫ (F'.map e₁.inv).map ((F'.map e₁.hom).map e₂.inv) ≫ (F'.map e₁.inv).map (eqToHom ...) = e₂.inv
-  -- The key is to show the middle composition telescopes
-  -- First, let me work on simplifying just the core composition
-  sorry
-  unfold isoFromOp'
-  simp
-
 /--
 Transfer a base isomorphism from `GrothendieckContra'` to `GrothendieckContra`.
 
@@ -1112,24 +1094,6 @@ def isoMk {X Y : GrothendieckContra' F'} (e₁ : X.base ≅ Y.base)
     (e₂ : X.fiber ≅ (F'.map e₁.hom).obj Y.fiber) :
     X ≅ Y :=
   isoFromCov (isoMk_cov (baseIsoToCov e₁) (fiberIsoToCov e₁ e₂))
-
-@[simp]
-lemma isoMk_hom {X Y : GrothendieckContra' F'} (e₁ : X.base ≅ Y.base)
-    (e₂ : X.fiber ≅ (F'.map e₁.hom).obj Y.fiber) :
-    (isoMk (X := X) (Y := Y) e₁ e₂).hom =
-      ⟨e₁.hom, e₂.hom⟩ := by
-  simp
-    [isoMk, isoFromCov, fiberIsoToCov, baseIsoToCov, Functor.mapIso,
-     isoMk_cov_hom]
-  rfl
-
-@[simp]
-lemma isoMk_inv {X Y : GrothendieckContra' F'} (e₁ : X.base ≅ Y.base)
-    (e₂ : X.fiber ≅ (F'.map e₁.hom).obj Y.fiber) :
-    (isoMk (X := X) (Y := Y) e₁ e₂).inv =
-      ⟨e₁.inv, eqToHom (map_iso_comp_obj_eq e₁ Y.fiber) ≫
-      (F'.map e₁.inv).map e₂.inv⟩ := by
-  _
 
 /--
 Create an isomorphism between a transported element and the original.
