@@ -2238,6 +2238,10 @@ PolyBCFtotMap {p} {q} f r rsl s ssl alpha comm =
 ---- Pi / dependent product ----
 --------------------------------
 
+-- Derive the dependent product ("pi") from internal homs in slice categories,
+-- as described in Proposition 2.3 at
+-- https://ncatlab.org/nlab/show/locally+cartesian+closed+category#EquivalentCharacterizations.
+
 public export
 PolyPiPbDom1Tot : {p, q : PolyFunc} -> (f : PolyNatTrans p q) ->
   (r : PolyFunc) -> (rsl : PolyNatTrans r p) ->
