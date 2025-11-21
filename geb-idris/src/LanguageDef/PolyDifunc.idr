@@ -569,6 +569,28 @@ PolyDiProfToPP
           (covarpos ipoly icontra ** covardir ipoly icontra)
 
 public export
+PolyDiProfToPPposFormula : PolyDiProf -> Type -> Type
+PolyDiProfToPPposFormula
+  (polypos ** contrapos ** contradir ** covarpos ** covardir) a =
+    (ipoly : polypos **
+     (icontra : contrapos ipoly) ->
+      (contradir ipoly icontra -> a) -> covarpos ipoly icontra)
+
+public export
+PolyDiProfToPPposToFormula : (pdp : PolyDiProf) -> (a : Type) ->
+  pfPos (PolyDiProfToPP pdp a) -> PolyDiProfToPPposFormula pdp a
+PolyDiProfToPPposToFormula
+  (polypos ** contrapos ** contradir ** covarpos ** covardir) a ppi =
+    ppi
+
+public export
+PolyDiProfToPPposFromFormula : (pdp : PolyDiProf) -> (a : Type) ->
+  PolyDiProfToPPposFormula pdp a -> pfPos (PolyDiProfToPP pdp a)
+PolyDiProfToPPposFromFormula
+  (polypos ** contrapos ** contradir ** covarpos ** covardir) a ppfi =
+    ppfi
+
+public export
 InterpPolyDiProfToPP : (p : PolyDiProf) ->
   (x, y : Type) -> InterpPDP p x y -> InterpPolyFunc (PolyDiProfToPP p x) y
 InterpPolyDiProfToPP

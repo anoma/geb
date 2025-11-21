@@ -2773,7 +2773,7 @@ TwArrDepUFam : (f : Type -> Type) -> (g : (a : Type) -> f a -> Type) ->
   ((a, b : Type) ->
    (m : a -> b) -> (el : f a) -> g a el -> g b (fm a b m el)) ->
   TwArrCoprSig
-TwArrDepUFam f g fm gm x y mxy = (el : f x) -> g y (fm x y mxy el)
+TwArrDepUFam f g fm gm x y mxy = Pi {a=(f x)} (g y . fm x y mxy)
 
 public export
 TwArrDepUFamDimap : (f : Type -> Type) -> (g : (a : Type) -> f a -> Type) ->
@@ -11679,7 +11679,7 @@ public export
    b (m ** morph) ->
    c (m ** NatLTInc morph) ->
    c (NatOS m ** NatLTMorphToSucc morph)) ->
-  (m : NatOSlice (NatOS n)) -> c m
+  (m' : NatOSlice (NatOS n)) -> c m'
 NatObjBoundedGenMapFold {a} {b} {c} {n} mab ga =
   NatObjBoundedGenFold {a=b} {b=c} $ NatObjBoundedGenMap {a} {b} mab ga
 
