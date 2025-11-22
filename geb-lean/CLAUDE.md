@@ -233,6 +233,7 @@ might want to examine external libraries for ideas.
 
 - [Mathlib.CategoryTheory.Comma.Basic](https://leanprover-community.github.io/mathlib4_docs/Mathlib/CategoryTheory/Comma/Basic.html)
 - [PLMlab's `Over.lean`](https://plmlab.math.cnrs.fr/nuccio/mathlib4/-/blob/master/Mathlib/CategoryTheory/Over.lean?ref_type=heads)
+- [CategoryTheory.Arrow](https://leanprover-community.github.io/mathlib_docs/category_theory/arrow.html)
 
 ### Polynomial functors
 
