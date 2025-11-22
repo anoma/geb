@@ -207,6 +207,14 @@ showDP {a} {p} showA showP (x ** l) =
   "(" ++ showA x ++ " ** " ++ showP x l ++ ")"
 
 public export
+voidFalseTrue : {0 a : Type} -> False = True -> a
+voidFalseTrue {a} Refl impossible
+
+public export
+voidTrueFalse : {0 a : Type} -> True = False -> a
+voidTrueFalse {a} Refl impossible
+
+public export
 maybeElim : {0 a, b : Type} -> (a -> b) -> b -> Maybe a -> b
 maybeElim f g (Just e) = f e
 maybeElim f g Nothing = g
@@ -498,9 +506,9 @@ MkMaybe {a} {b} f x {j} with (f x)
 
 public export
 fromIsTrueNat : (m, n : Nat) -> m == n = True -> m = n
-fromIsTrueNat 0 0 Refl = Refl
-fromIsTrueNat 0 (S n) Refl impossible
-fromIsTrueNat (S m) 0 Refl impossible
+fromIsTrueNat Z Z Refl = Refl
+fromIsTrueNat Z (S n) Refl impossible
+fromIsTrueNat (S m) Z Refl impossible
 fromIsTrueNat (S m) (S n) eq = cong S $ fromIsTrueNat m n eq
 
 public export
@@ -1112,7 +1120,7 @@ public export
 notLteReflectsLTE : {k, n : Nat} -> lte k n = False -> Not (k `LTE` n)
 notLteReflectsLTE nlte with (isLTE k n)
   notLteReflectsLTE nlte | Yes yLTE =
-    case trans (sym nlte) (LTEReflectsLte yLTE) of Refl impossible
+    case trans (sym nlte) (LTEReflectsLte yLTE) of eq => voidFalseTrue eq
   notLteReflectsLTE nlte | No notLTE = notLTE
 
 public export
