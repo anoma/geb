@@ -2084,9 +2084,9 @@ finOrdId (S n) =
 public export
 finOrdCompose : {m, n, p : Nat} ->
   FinOrdMorph n p -> FinOrdMorph m n -> FinOrdMorph m p
-finOrdCompose {m=0} {n} {p} _ (FinOrdFromVoid n) = FinOrdFromVoid p
-finOrdCompose {m=(S m)} {n=0} (FinOrdFromVoid _) _ impossible
-finOrdCompose {m=(S m)} {n=(S n)} {p=0} _ _ impossible
+finOrdCompose {m=Z} {n} {p} _ (FinOrdFromVoid n) = FinOrdFromVoid p
+finOrdCompose {m=(S m)} {n=Z} (FinOrdFromVoid _) _ impossible
+finOrdCompose {m=(S m)} {n=(S n)} {p=Z} _ _ impossible
 finOrdCompose {m=(S m)} {n=(S n)} {p=(S p)} (FinOrdFromVoid _) _ impossible
 finOrdCompose {m=(S m)} {n=(S n)} {p=(S p)} _ (FinOrdFromVoid _) impossible
 finOrdCompose {m=(S m)} {n=(S n)} {p=(S p)}

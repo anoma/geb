@@ -436,8 +436,8 @@ SOHomAlg a = BinTree'Alg BoolF (a -> m a)
 public export
 SOHomAlgToFAlg : {m : Type -> Type} -> {isMonad : Monad m} -> {0 a : Type} ->
   SOHomAlg {m} {isMonad} a -> SOAlg (a -> m a)
-SOHomAlgToFAlg alg SOPos0 d = alg (Left False) $ \i => case i of _ impossible
-SOHomAlgToFAlg alg SOPos1 d = alg (Left True) $ \i => case i of _ impossible
+SOHomAlgToFAlg alg SOPos0 d = alg (Left False) $ \i => void i
+SOHomAlgToFAlg alg SOPos1 d = alg (Left True) $ \i => void i
 SOHomAlgToFAlg alg SOPosC d = alg (Right ()) $ \i => case i of
   False => d SODirL
   True => d SODirR

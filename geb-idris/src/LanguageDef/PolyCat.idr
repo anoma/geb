@@ -10816,7 +10816,7 @@ stlcCtxProj :
   SubstMorph (stlcCtxToSOMu ctx) (index n ctx {ok})
 stlcCtxProj (ty :: ctx) Z {ok=InFirst} =
   SMProjLeft ty (stlcCtxToSOMu ctx)
-stlcCtxProj (ty :: ctx) Z {ok=InLater} impossible
+stlcCtxProj (ty :: ctx) Z {ok=(InLater ok)} impossible
 stlcCtxProj (ty :: ctx) (S n) {ok=InFirst} impossible
 stlcCtxProj (ty :: ctx) (S n) {ok=(InLater ok)} =
   stlcCtxProj ctx n {ok} <! SMProjRight ty (stlcCtxToSOMu ctx)

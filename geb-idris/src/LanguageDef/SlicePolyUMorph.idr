@@ -3945,7 +3945,7 @@ spfdFMMdirDirPosNotLeft : {x : Type} -> {f : SPFData x x} ->
 spfdFMMdirDirPosNotLeft {x} {f} {ep=(InSPFm ec (Left () ** fdmp))} {dp=Refl}
   dd Refl = dd
 spfdFMMdirDirPosNotLeft {x} {f} {ep=(InSPFm ec (Right efp ** fdmp))}
-  dd Refl impossible
+  dd eq = voidRightLeft eq
 
 public export
 SPFDnoLeafDirs : {x : Type} -> {f : SPFData x x} ->

@@ -563,7 +563,7 @@ initialInterpUnit : {obj : Type} -> (hom : HomSlice obj) ->
   (a : obj) -> (b : InitialObjF obj) ->
   InitialUnitF hom (a, b) ->
   ointerp a -> InitialInterpObj {obj} ointerp b
-initialInterpUnit hom ointerp minterp a Obj0 f = case f of _ impossible
+initialInterpUnit hom ointerp minterp a Obj0 f oi = case f of _ impossible
 
 public export
 initialInterpRightAdj : {obj, obj' : Type} -> (hom : SliceObj (obj, obj')) ->

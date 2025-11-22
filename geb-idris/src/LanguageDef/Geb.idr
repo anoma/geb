@@ -3547,12 +3547,12 @@ mutual
   public export
   0 checkGebObjTerm :
     GebCatTerm -> GebObjTerm -> Bool
-  checkGebObjTerm _ impossible
+  checkGebObjTerm _ _ impossible
 
   public export
   0 checkGebMorphTerm :
     GebCatTerm -> GebObjTerm -> GebObjTerm -> GebMorphTerm -> Bool
-  checkGebMorphTerm _ impossible
+  checkGebMorphTerm _ _ _ _ impossible
 
 -------------------------------------------------------
 -------------------------------------------------------
@@ -3574,31 +3574,31 @@ mutual
   0 gmSigConsisCat :
     (c : GebCatTerm) -> (dom, cod : GebObjTerm) -> (m : GebMorphTerm) ->
     IsTrue (checkGebMorphTerm c dom cod m) -> IsTrue (checkGebCatTerm c)
-  gmSigConsisCat _ _ _ impossible
+  gmSigConsisCat _ _ _ _ _ impossible
 
   public export
   0 gmSigConsisDom :
     (c : GebCatTerm) -> (dom, cod : GebObjTerm) -> (m : GebMorphTerm) ->
     IsTrue (checkGebMorphTerm c dom cod m) -> IsTrue (checkGebObjTerm c dom)
-  gmSigConsisDom _ _ _ impossible
+  gmSigConsisDom _ _ _ _ _ impossible
 
   public export
   0 gmSigConsisCod :
     (c : GebCatTerm) -> (dom, cod : GebObjTerm) -> (m : GebMorphTerm) ->
     IsTrue (checkGebMorphTerm c dom cod m) -> IsTrue (checkGebObjTerm c cod)
-  gmSigConsisCod _ _ _ impossible
+  gmSigConsisCod _ _ _ _ _ impossible
 
   public export
   0 gmSigConsisDomCod :
     (c : GebCatTerm) -> (dom, cod : GebObjTerm) -> (m : GebMorphTerm) ->
     IsTrue (checkGebObjTerm c dom) -> IsTrue (checkGebObjTerm c cod)
-  gmSigConsisDomCod _ _ _ impossible
+  gmSigConsisDomCod _ _ _ _ _ impossible
 
   public export
   0 gmSigConsisCodDom :
     (c : GebCatTerm) -> (dom, cod : GebObjTerm) -> (m : GebMorphTerm) ->
     IsTrue (checkGebObjTerm c cod) -> IsTrue (checkGebObjTerm c dom)
-  gmSigConsisCodDom _ _ _ impossible
+  gmSigConsisCodDom _ _ _ _ _ impossible
 
 ---------------------------
 ---- Typechecked terms ----

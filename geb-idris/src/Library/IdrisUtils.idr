@@ -215,6 +215,16 @@ voidTrueFalse : {0 a : Type} -> True = False -> a
 voidTrueFalse {a} Refl impossible
 
 public export
+voidLeftRight : {0 a, b, c : Type} -> {0 ea : a} -> {0 eb : b} ->
+  Left ea = Right eb -> c
+voidLeftRight {a} {b} {c} Refl impossible
+
+public export
+voidRightLeft : {0 a, b, c : Type} -> {0 ea : a} -> {0 eb : b} ->
+  Right ea = Left eb -> c
+voidRightLeft {a} {b} {c} Refl impossible
+
+public export
 maybeElim : {0 a, b : Type} -> (a -> b) -> b -> Maybe a -> b
 maybeElim f g (Just e) = f e
 maybeElim f g Nothing = g
