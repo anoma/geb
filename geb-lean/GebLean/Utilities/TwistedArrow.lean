@@ -460,6 +460,95 @@ instance (C : Type u) [Category.{v} C] : Category (CoTwistedArrow C) := by
   unfold CoTwistedArrow
   infer_instance
 
+section CoTwistedArrowHelpers
+
+/--
+Construct an object of `CoTwistedArrow C` from domain, codomain, and arrow.
+Note: The arrow goes from `cod` to `dom`, and this is the opposite of
+`TwistedArrowOp' C`.
+-/
+def coTwObjMk' {dom cod : C} (arr : cod ⟶ dom) : CoTwistedArrow C :=
+  ⟨(cod, dom), arr⟩
+
+/--
+Extract the domain from an object of `CoTwistedArrow C`.
+-/
+def coTwDom' (x : CoTwistedArrow C) : C := x.fst.2
+
+/--
+Extract the codomain from an object of `CoTwistedArrow C`.
+-/
+def coTwCod' (x : CoTwistedArrow C) : C := x.fst.1
+
+/--
+Extract the arrow from an object of `CoTwistedArrow C`.
+-/
+def coTwArr' (x : CoTwistedArrow C) : coTwCod' x ⟶ coTwDom' x := x.snd
+
+lemma coTwObjMk'_dom {dom cod : C} (arr : cod ⟶ dom) :
+    coTwDom' (coTwObjMk' arr) = dom := rfl
+
+lemma coTwObjMk'_cod {dom cod : C} (arr : cod ⟶ dom) :
+    coTwCod' (coTwObjMk' arr) = cod := rfl
+
+lemma coTwObjMk'_arr {dom cod : C} (arr : cod ⟶ dom) :
+    coTwArr' (coTwObjMk' arr) = arr := rfl
+
+/--
+Construct a morphism in `CoTwistedArrow C` from morphisms on domains and
+codomains.
+
+A morphism from `(X, Y, f)` to `(X', Y', f')` consists of:
+- `domArr : X' ⟶ X` (morphism between domains, going backwards)
+- `codArr : Y ⟶ Y'` (morphism between codomains, going forwards)
+such that the square commutes: `codArr ≫ f' ≫ domArr = f`.
+
+Note: This is the opposite of `TwistedArrowOp' C`.
+-/
+def coTwHomMk' {x y : CoTwistedArrow C}
+    (domArr : coTwDom' y ⟶ coTwDom' x)
+    (codArr : coTwCod' x ⟶ coTwCod' y)
+    (comm : codArr ≫ coTwArr' y ≫ domArr = coTwArr' x) : x ⟶ y :=
+  CategoryOfElements.homMk y x (codArr, domArr)
+    (by simp [homPreOp', homPre', hom']; exact comm)
+
+/--
+Extract the domain arrow from a morphism in `CoTwistedArrow C`.
+Note: This goes backwards (from `y`'s domain to `x`'s domain).
+-/
+def coTwDomArr' {x y : CoTwistedArrow C} (f : x ⟶ y) :
+    coTwDom' y ⟶ coTwDom' x :=
+  f.val.2
+
+/--
+Extract the codomain arrow from a morphism in `CoTwistedArrow C`.
+-/
+def coTwCodArr' {x y : CoTwistedArrow C} (f : x ⟶ y) :
+    coTwCod' x ⟶ coTwCod' y :=
+  f.val.1
+
+lemma coTwHomMk'_domArr {x y : CoTwistedArrow C}
+    (domArr : coTwDom' y ⟶ coTwDom' x)
+    (codArr : coTwCod' x ⟶ coTwCod' y)
+    (comm : codArr ≫ coTwArr' y ≫ domArr = coTwArr' x) :
+    coTwDomArr' (coTwHomMk' domArr codArr comm) = domArr := rfl
+
+lemma coTwHomMk'_codArr {x y : CoTwistedArrow C}
+    (domArr : coTwDom' y ⟶ coTwDom' x)
+    (codArr : coTwCod' x ⟶ coTwCod' y)
+    (comm : codArr ≫ coTwArr' y ≫ domArr = coTwArr' x) :
+    coTwCodArr' (coTwHomMk' domArr codArr comm) = codArr := rfl
+
+@[ext]
+lemma coTwHom'_ext {x y : CoTwistedArrow C} (f g : x ⟶ y)
+    (hdom : coTwDomArr' f = coTwDomArr' g)
+    (hcod : coTwCodArr' f = coTwCodArr' g) : f = g := by
+  cases f; cases g
+  congr
+  exact Prod.ext hcod hdom
+
+end CoTwistedArrowHelpers
+
 end TwistedArrowCategories
 
 end GebLean
