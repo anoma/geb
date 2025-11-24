@@ -4,6 +4,7 @@ import Mathlib.CategoryTheory.Whiskering
 import Mathlib.CategoryTheory.EqToHom
 import Mathlib.CategoryTheory.Category.Cat
 import Mathlib.CategoryTheory.Category.Cat.Op
+import Mathlib.CategoryTheory.Products.Basic
 import GebLean.Utilities.Category
 
 /-!
@@ -273,6 +274,27 @@ instance {X Y : Cᵒᵖ'} : Coe (@Iso Cᵒᵖ' _ X Y) (@Iso C _ X Y) where
   coe := isoFromOp'
 
 variable {D : Type u₁} [Category.{v₁} D]
+
+def prodOpToOpProd : (C × D)ᵒᵖ' ⥤ (Cᵒᵖ' × Dᵒᵖ') :=
+  {
+    obj p := (p.1, p.2)
+    map f := (f.1, f.2)
+  }
+
+def opProdToProdOp : (Cᵒᵖ' × Dᵒᵖ') ⥤ (C × D)ᵒᵖ' :=
+  {
+    obj p := (p.1, p.2)
+    map f := (f.1, f.2)
+  }
+
+def prodOpIso : (C × D)ᵒᵖ' ≅Cat (Cᵒᵖ' × Dᵒᵖ') :=
+  {
+    hom := prodOpToOpProd
+    inv := opProdToProdOp
+  }
+
+def prodOpEquiv' : (C × D)ᵒᵖ' ≌ (Cᵒᵖ' × Dᵒᵖ') :=
+  Cat.equivOfIso prodOpIso
 
 /--
 Maps a functor `C ⥤ D` to a functor `Cᵒᵖ' ⥤ Dᵒᵖ'`.
