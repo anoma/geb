@@ -239,6 +239,13 @@ lemma twHomMk'_codArr {x y : TwistedArrow' C}
     (comm : domArr ≫ twArr' x ≫ codArr = twArr' y) :
     twCodArr' (twHomMk' domArr codArr comm) = codArr := rfl
 
+/--
+Extract the commutativity condition from a morphism in `TwistedArrow' C`.
+-/
+lemma twHomComm' {x y : TwistedArrow' C} (f : x ⟶ y) :
+    twDomArr' f ≫ twArr' x ≫ twCodArr' f = twArr' y :=
+  f.property
+
 @[ext]
 lemma twHom'_ext {x y : TwistedArrow' C} (f g : x ⟶ y)
     (hdom : twDomArr' f = twDomArr' g)
@@ -336,6 +343,13 @@ lemma twOpHomMk'_codArr {x y : TwistedArrowOp' C}
     (codArr : twOpCod' y ⟶ twOpCod' x)
     (comm : codArr ≫ twOpArr' x ≫ domArr = twOpArr' y) :
     twOpCodArr' (twOpHomMk' domArr codArr comm) = codArr := rfl
+
+/--
+Extract the commutativity condition from a morphism in `TwistedArrowOp' C`.
+-/
+lemma twOpHomComm' {x y : TwistedArrowOp' C} (f : x ⟶ y) :
+    twOpCodArr' f ≫ twOpArr' x ≫ twOpDomArr' f = twOpArr' y :=
+  f.property
 
 @[ext]
 lemma twOpHom'_ext {x y : TwistedArrowOp' C} (f g : x ⟶ y)
@@ -438,6 +452,13 @@ lemma opTwHomMk'_codArr {x y : OpTwistedArrow' C}
     (comm : domArr ≫ opTwArr' y ≫ codArr = opTwArr' x) :
     opTwCodArr' (opTwHomMk' domArr codArr comm) = codArr := rfl
 
+/--
+Extract the commutativity condition from a morphism in `OpTwistedArrow' C`.
+-/
+lemma opTwHomComm' {x y : OpTwistedArrow' C} (f : x ⟶ y) :
+    opTwDomArr' f ≫ opTwArr' y ≫ opTwCodArr' f = opTwArr' x :=
+  f.property
+
 @[ext]
 lemma opTwHom'_ext {x y : OpTwistedArrow' C} (f g : x ⟶ y)
     (hdom : opTwDomArr' f = opTwDomArr' g)
@@ -538,6 +559,18 @@ lemma coTwHomMk'_codArr {x y : CoTwistedArrow C}
     (codArr : coTwCod' x ⟶ coTwCod' y)
     (comm : codArr ≫ coTwArr' y ≫ domArr = coTwArr' x) :
     coTwCodArr' (coTwHomMk' domArr codArr comm) = codArr := rfl
+
+/--
+Extract the commutativity condition from a morphism in `CoTwistedArrow C`.
+-/
+lemma coTwHomComm' {x y : CoTwistedArrow C} (f : x ⟶ y) :
+    coTwCodArr' f ≫ coTwArr' y ≫ coTwDomArr' f = coTwArr' x := by
+  unfold coTwCodArr' coTwDomArr' coTwArr'
+  change f.val.1 ≫ y.snd ≫ f.val.2 = x.snd
+  convert f.property using 1
+  dsimp [homPreOp', homPre', hom']
+  simp [opProdEquiv, opProdSymSelfDual', prodOpEquiv', opProdProdOpEquiv']
+  rfl
 
 @[ext]
 lemma coTwHom'_ext {x y : CoTwistedArrow C} (f g : x ⟶ y)
