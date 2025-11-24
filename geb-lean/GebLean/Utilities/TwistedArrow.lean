@@ -151,7 +151,7 @@ instance (C : Type u) [Category.{v} C] : Category (TwistedArrow C) := by
 
 @[simp]
 def TwistedArrow' (C : Type u) [Category.{v} C] :=
-  hom'.Elements (C := opProdSym' C)
+  (hom' (C := C)).Elements
 
 instance (C : Type u) [Category.{v} C] : Category (TwistedArrow' C) := by
   unfold TwistedArrow'
