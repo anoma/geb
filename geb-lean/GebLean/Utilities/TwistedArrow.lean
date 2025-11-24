@@ -161,6 +161,94 @@ abbrev Tw := TwistedArrow
 
 abbrev Tw' := TwistedArrow'
 
+variable {C : Type u} [Category.{v} C]
+
+section TwistedArrow'Helpers
+
+/--
+Construct an object of `TwistedArrow' C` from domain, codomain, and arrow.
+-/
+def twObjMk' (dom cod : C) (arr : dom ⟶ cod) : TwistedArrow' C :=
+  ⟨(dom, cod), arr⟩
+
+/--
+Extract the domain from an object of `TwistedArrow' C`.
+-/
+def twDom' (x : TwistedArrow' C) : C := x.fst.1
+
+/--
+Extract the codomain from an object of `TwistedArrow' C`.
+-/
+def twCod' (x : TwistedArrow' C) : C := x.fst.2
+
+/--
+Extract the arrow from an object of `TwistedArrow' C`.
+-/
+def twArr' (x : TwistedArrow' C) : twDom' x ⟶ twCod' x := x.snd
+
+lemma twObjMk'_dom (dom cod : C) (arr : dom ⟶ cod) :
+    twDom' (twObjMk' dom cod arr) = dom := rfl
+
+lemma twObjMk'_cod (dom cod : C) (arr : dom ⟶ cod) :
+    twCod' (twObjMk' dom cod arr) = cod := rfl
+
+lemma twObjMk'_arr (dom cod : C) (arr : dom ⟶ cod) :
+    twArr' (twObjMk' dom cod arr) = arr := rfl
+
+/--
+Construct a morphism in `TwistedArrow' C` from morphisms on domains and
+codomains.
+
+A morphism from `(X, Y, f)` to `(X', Y', f')` consists of:
+- `domArr : X' ⟶ X` (morphism between domains, going backwards)
+- `codArr : Y ⟶ Y'` (morphism between codomains, going forwards)
+such that the square commutes: `domArr ≫ f ≫ codArr = f'`.
+
+Note: The domain arrow goes backwards because the first component of the
+product is in `Cᵒᵖ'`.
+-/
+def twHomMk' (x y : TwistedArrow' C)
+    (domArr : twDom' y ⟶ twDom' x)
+    (codArr : twCod' x ⟶ twCod' y)
+    (comm : domArr ≫ twArr' x ≫ codArr = twArr' y) : x ⟶ y :=
+  CategoryOfElements.homMk x y (domArr, codArr) comm
+
+/--
+Extract the domain arrow from a morphism in `TwistedArrow' C`.
+Note: This goes backwards (from codomain to domain) because the first component
+is in `Cᵒᵖ'`.
+-/
+def twDomArr' {x y : TwistedArrow' C} (f : x ⟶ y) : twDom' y ⟶ twDom' x :=
+  f.val.1
+
+/--
+Extract the codomain arrow from a morphism in `TwistedArrow' C`.
+-/
+def twCodArr' {x y : TwistedArrow' C} (f : x ⟶ y) : twCod' x ⟶ twCod' y :=
+  f.val.2
+
+lemma twHomMk'_domArr (x y : TwistedArrow' C)
+    (domArr : twDom' y ⟶ twDom' x)
+    (codArr : twCod' x ⟶ twCod' y)
+    (comm : domArr ≫ twArr' x ≫ codArr = twArr' y) :
+    twDomArr' (twHomMk' x y domArr codArr comm) = domArr := rfl
+
+lemma twHomMk'_codArr (x y : TwistedArrow' C)
+    (domArr : twDom' y ⟶ twDom' x)
+    (codArr : twCod' x ⟶ twCod' y)
+    (comm : domArr ≫ twArr' x ≫ codArr = twArr' y) :
+    twCodArr' (twHomMk' x y domArr codArr comm) = codArr := rfl
+
+@[ext]
+lemma twHom'_ext {x y : TwistedArrow' C} (f g : x ⟶ y)
+    (hdom : twDomArr' f = twDomArr' g)
+    (hcod : twCodArr' f = twCodArr' g) : f = g := by
+  cases f; cases g
+  congr
+  exact Prod.ext hdom hcod
+
+end TwistedArrow'Helpers
+
 /--
 The twisted arrow category of `Cᵒᵖ'`, defined as the category of elements
 of `homOp'`.
