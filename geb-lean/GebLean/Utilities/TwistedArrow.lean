@@ -207,7 +207,7 @@ such that the square commutes: `domArr ≫ f ≫ codArr = f'`.
 Note: The domain arrow goes backwards because the first component of the
 product is in `Cᵒᵖ'`.
 -/
-def twHomMk' (x y : TwistedArrow' C)
+def twHomMk' {x y : TwistedArrow' C}
     (domArr : twDom' y ⟶ twDom' x)
     (codArr : twCod' x ⟶ twCod' y)
     (comm : domArr ≫ twArr' x ≫ codArr = twArr' y) : x ⟶ y :=
@@ -227,17 +227,17 @@ Extract the codomain arrow from a morphism in `TwistedArrow' C`.
 def twCodArr' {x y : TwistedArrow' C} (f : x ⟶ y) : twCod' x ⟶ twCod' y :=
   f.val.2
 
-lemma twHomMk'_domArr (x y : TwistedArrow' C)
+lemma twHomMk'_domArr {x y : TwistedArrow' C}
     (domArr : twDom' y ⟶ twDom' x)
     (codArr : twCod' x ⟶ twCod' y)
     (comm : domArr ≫ twArr' x ≫ codArr = twArr' y) :
-    twDomArr' (twHomMk' x y domArr codArr comm) = domArr := rfl
+    twDomArr' (twHomMk' domArr codArr comm) = domArr := rfl
 
-lemma twHomMk'_codArr (x y : TwistedArrow' C)
+lemma twHomMk'_codArr {x y : TwistedArrow' C}
     (domArr : twDom' y ⟶ twDom' x)
     (codArr : twCod' x ⟶ twCod' y)
     (comm : domArr ≫ twArr' x ≫ codArr = twArr' y) :
-    twCodArr' (twHomMk' x y domArr codArr comm) = codArr := rfl
+    twCodArr' (twHomMk' domArr codArr comm) = codArr := rfl
 
 @[ext]
 lemma twHom'_ext {x y : TwistedArrow' C} (f g : x ⟶ y)
