@@ -36,6 +36,9 @@ abbrev opProdSym (C : Type u) [Category C] := opProd C C
 
 abbrev opProd' (C D : Type u) [Category C] [Category D] := Cᵒᵖ' × D
 
+instance OpProdInst' (C D : Type u) [Category C] [Category D] :
+  Category (opProd' C D) := inferInstance
+
 abbrev opProdSym' (C : Type u) [Category C] := opProd' C C
 
 def opProdEquiv (C D : Type u) [Category C] [Category D] :
@@ -84,14 +87,51 @@ section HomVariants
 
 variable {C : Type u} [Category.{v} C]
 
+/--
+The hom functor using our `ᵒᵖ'` instead of mathlib's `ᵒᵖ`.
+-/
 def hom' : opProdSym' C ⥤ Type v :=
   (opProdEquiv C C).inverse ⋙ Functor.hom C
 
 /--
+The hom functor viewed as the hom-functor of `Cᵒᵖ`.
+-/
+def homOp : opProdSym Cᵒᵖ ⥤ Type v :=
+  (opOpProdEquiv C Cᵒᵖ).functor
+  ⋙ CategoryTheory.Prod.swap C Cᵒᵖ
+  ⋙ Functor.hom C
+
+/--
+The hom functor viewed as the hom-functor of `Cᵒᵖ'`.
+-/
+def homOp' : opProdSym' Cᵒᵖ' ⥤ Type v :=
+  (opOpProdEquiv' C Cᵒᵖ').functor
+  ⋙ CategoryTheory.Prod.swap C Cᵒᵖ'
+  ⋙ hom'
+
+/--
+The hom functor viewed as a presheaf on `(Cᵒᵖ × C)`.
+-/
+def homPre : (opProdSym C)ᵒᵖ ⥤ Type v :=
+  (opProdSymSelfDual C).functor ⋙ Functor.hom C
+
+/--
 The hom functor viewed as a presheaf on `(Cᵒᵖ' × C)`.
 -/
-def homOp' : (opProdSym' C)ᵒᵖ' ⥤ Type v :=
+def homPre' : (opProdSym' C)ᵒᵖ' ⥤ Type v :=
   (opProdSymSelfDual' C).functor ⋙ hom'
+
+/--
+The hom functor viewed as a presheaf on `(Cᵒᵖᵒᵖ × Cᵒᵖ)`.
+-/
+def homPreOp : (opProdSym Cᵒᵖ)ᵒᵖ ⥤ Type v :=
+  homPre (C := Cᵒᵖ)
+
+/--
+The hom functor viewed as a presheaf on `(Cᵒᵖ'ᵒᵖ' × Cᵒᵖ')`.
+-/
+def homPreOp' : (opProdSym' Cᵒᵖ')ᵒᵖ' ⥤ Type v :=
+  homPre' (C := Cᵒᵖ')
 
 end HomVariants
 
@@ -109,7 +149,17 @@ instance (C : Type u) [Category.{v} C] : Category (TwistedArrow C) := by
   unfold TwistedArrow
   infer_instance
 
-notation "Tw(" C ")" => @TwistedArrow C _
+@[simp]
+def TwistedArrow' (C : Type u) [Category.{v} C] :=
+  hom'.Elements (C := opProdSym' C)
+
+instance (C : Type u) [Category.{v} C] : Category (TwistedArrow' C) := by
+  unfold TwistedArrow'
+  infer_instance
+
+abbrev Tw := TwistedArrow
+
+abbrev Tw' := TwistedArrow'
 
 /--
 The twisted arrow category of `Cᵒᵖ'`, defined as the category of elements
@@ -124,26 +174,27 @@ instance (C : Type u) [Category.{v} C] : Category (TwistedArrowOp' C) := by
   infer_instance
 
 /--
-The opposite of the twisted arrow category, defined as `(TwistedArrow C)ᵒᵖ'`.
+The opposite of the twisted arrow category, defined as a contravariant
+category of elements.
 -/
 @[simp]
-def TwistedArrowOpposite' (C : Type u) [Category.{v} C] :=
-  (TwistedArrow C)ᵒᵖ'
+def OpTwistedArrow' (C : Type u) [Category.{v} C] :=
+  (homPre' (C := C)).ElementsContra'
 
-instance (C : Type u) [Category.{v} C] : Category (TwistedArrowOpposite' C) := by
-  unfold TwistedArrowOpposite'
+instance (C : Type u) [Category.{v} C] : Category (OpTwistedArrow' C) := by
+  unfold OpTwistedArrow'
   infer_instance
 
 /--
-The double opposite (cotwisted) arrow category, defined as `(TwistedArrowOp' C)ᵒᵖ'`.
-This is equivalent to `Tw^op'(Cᵒᵖ')`.
+The opposite of the twisted arrow category of `Cᵒᵖ'`, which we
+are calling the co-twisted arrow category of `C`.
 -/
 @[simp]
-def TwistedArrowCo (C : Type u) [Category.{v} C] :=
-  (TwistedArrowOp' C)ᵒᵖ'
+def CoTwistedArrow (C : Type u) [Category.{v} C] :=
+  (homPreOp' (C := C)).ElementsContra'
 
-instance (C : Type u) [Category.{v} C] : Category (TwistedArrowCo C) := by
-  unfold TwistedArrowCo
+instance (C : Type u) [Category.{v} C] : Category (CoTwistedArrow C) := by
+  unfold CoTwistedArrow
   infer_instance
 
 end TwistedArrowCategories
