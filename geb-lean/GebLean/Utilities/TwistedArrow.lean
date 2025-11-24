@@ -168,7 +168,7 @@ section TwistedArrow'Helpers
 /--
 Construct an object of `TwistedArrow' C` from domain, codomain, and arrow.
 -/
-def twObjMk' (dom cod : C) (arr : dom ⟶ cod) : TwistedArrow' C :=
+def twObjMk' {dom cod : C} (arr : dom ⟶ cod) : TwistedArrow' C :=
   ⟨(dom, cod), arr⟩
 
 /--
@@ -186,14 +186,14 @@ Extract the arrow from an object of `TwistedArrow' C`.
 -/
 def twArr' (x : TwistedArrow' C) : twDom' x ⟶ twCod' x := x.snd
 
-lemma twObjMk'_dom (dom cod : C) (arr : dom ⟶ cod) :
-    twDom' (twObjMk' dom cod arr) = dom := rfl
+lemma twObjMk'_dom {dom cod : C} (arr : dom ⟶ cod) :
+    twDom' (twObjMk' arr) = dom := rfl
 
-lemma twObjMk'_cod (dom cod : C) (arr : dom ⟶ cod) :
-    twCod' (twObjMk' dom cod arr) = cod := rfl
+lemma twObjMk'_cod {dom cod : C} (arr : dom ⟶ cod) :
+    twCod' (twObjMk' arr) = cod := rfl
 
-lemma twObjMk'_arr (dom cod : C) (arr : dom ⟶ cod) :
-    twArr' (twObjMk' dom cod arr) = arr := rfl
+lemma twObjMk'_arr {dom cod : C} (arr : dom ⟶ cod) :
+    twArr' (twObjMk' arr) = arr := rfl
 
 /--
 Construct a morphism in `TwistedArrow' C` from morphisms on domains and
