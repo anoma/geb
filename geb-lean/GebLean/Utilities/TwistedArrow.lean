@@ -261,6 +261,92 @@ instance (C : Type u) [Category.{v} C] : Category (TwistedArrowOp' C) := by
   unfold TwistedArrowOp'
   infer_instance
 
+section TwistedArrowOp'Helpers
+
+/--
+Construct an object of `TwistedArrowOp' C` from domain, codomain, and arrow.
+Note: The arrow goes from `cod` to `dom` because this is the twisted arrow
+category of `Cᵒᵖ'`.
+-/
+def twOpObjMk' {dom cod : C} (arr : cod ⟶ dom) : TwistedArrowOp' C :=
+  ⟨(dom, cod), arr⟩
+
+/--
+Extract the domain from an object of `TwistedArrowOp' C`.
+-/
+def twOpDom' (x : TwistedArrowOp' C) : C := x.fst.1
+
+/--
+Extract the codomain from an object of `TwistedArrowOp' C`.
+-/
+def twOpCod' (x : TwistedArrowOp' C) : C := x.fst.2
+
+/--
+Extract the arrow from an object of `TwistedArrowOp' C`.
+-/
+def twOpArr' (x : TwistedArrowOp' C) : twOpCod' x ⟶ twOpDom' x := x.snd
+
+lemma twOpObjMk'_dom {dom cod : C} (arr : cod ⟶ dom) :
+    twOpDom' (twOpObjMk' arr) = dom := rfl
+
+lemma twOpObjMk'_cod {dom cod : C} (arr : cod ⟶ dom) :
+    twOpCod' (twOpObjMk' arr) = cod := rfl
+
+lemma twOpObjMk'_arr {dom cod : C} (arr : cod ⟶ dom) :
+    twOpArr' (twOpObjMk' arr) = arr := rfl
+
+/--
+Construct a morphism in `TwistedArrowOp' C` from morphisms on domains and
+codomains.
+
+A morphism from `(X, Y, f)` to `(X', Y', f')` consists of:
+- `domArr : X ⟶ X'` (morphism between domains, going forwards)
+- `codArr : Y' ⟶ Y` (morphism between codomains, going backwards)
+such that the square commutes: `codArr ≫ f ≫ domArr = f'`.
+-/
+def twOpHomMk' {x y : TwistedArrowOp' C}
+    (domArr : twOpDom' x ⟶ twOpDom' y)
+    (codArr : twOpCod' y ⟶ twOpCod' x)
+    (comm : codArr ≫ twOpArr' x ≫ domArr = twOpArr' y) : x ⟶ y :=
+  CategoryOfElements.homMk x y (domArr, codArr) comm
+
+/--
+Extract the domain arrow from a morphism in `TwistedArrowOp' C`.
+-/
+def twOpDomArr' {x y : TwistedArrowOp' C} (f : x ⟶ y) :
+    twOpDom' x ⟶ twOpDom' y :=
+  f.val.1
+
+/--
+Extract the codomain arrow from a morphism in `TwistedArrowOp' C`.
+Note: This goes backwards (from `y`'s codomain to `x`'s codomain).
+-/
+def twOpCodArr' {x y : TwistedArrowOp' C} (f : x ⟶ y) :
+    twOpCod' y ⟶ twOpCod' x :=
+  f.val.2
+
+lemma twOpHomMk'_domArr {x y : TwistedArrowOp' C}
+    (domArr : twOpDom' x ⟶ twOpDom' y)
+    (codArr : twOpCod' y ⟶ twOpCod' x)
+    (comm : codArr ≫ twOpArr' x ≫ domArr = twOpArr' y) :
+    twOpDomArr' (twOpHomMk' domArr codArr comm) = domArr := rfl
+
+lemma twOpHomMk'_codArr {x y : TwistedArrowOp' C}
+    (domArr : twOpDom' x ⟶ twOpDom' y)
+    (codArr : twOpCod' y ⟶ twOpCod' x)
+    (comm : codArr ≫ twOpArr' x ≫ domArr = twOpArr' y) :
+    twOpCodArr' (twOpHomMk' domArr codArr comm) = codArr := rfl
+
+@[ext]
+lemma twOpHom'_ext {x y : TwistedArrowOp' C} (f g : x ⟶ y)
+    (hdom : twOpDomArr' f = twOpDomArr' g)
+    (hcod : twOpCodArr' f = twOpCodArr' g) : f = g := by
+  cases f; cases g
+  congr
+  exact Prod.ext hdom hcod
+
+end TwistedArrowOp'Helpers
+
 /--
 The opposite of the twisted arrow category, defined as a contravariant
 category of elements.
@@ -272,6 +358,95 @@ def OpTwistedArrow' (C : Type u) [Category.{v} C] :=
 instance (C : Type u) [Category.{v} C] : Category (OpTwistedArrow' C) := by
   unfold OpTwistedArrow'
   infer_instance
+
+section OpTwistedArrow'Helpers
+
+/--
+Construct an object of `OpTwistedArrow' C` from domain, codomain, and arrow.
+Note: This is the opposite of `TwistedArrow' C`, so objects have the same
+structure.
+-/
+def opTwObjMk' {dom cod : C} (arr : dom ⟶ cod) : OpTwistedArrow' C :=
+  ⟨(cod, dom), arr⟩
+
+/--
+Extract the domain from an object of `OpTwistedArrow' C`.
+-/
+def opTwDom' (x : OpTwistedArrow' C) : C := x.fst.2
+
+/--
+Extract the codomain from an object of `OpTwistedArrow' C`.
+-/
+def opTwCod' (x : OpTwistedArrow' C) : C := x.fst.1
+
+/--
+Extract the arrow from an object of `OpTwistedArrow' C`.
+-/
+def opTwArr' (x : OpTwistedArrow' C) : opTwDom' x ⟶ opTwCod' x := x.snd
+
+lemma opTwObjMk'_dom {dom cod : C} (arr : dom ⟶ cod) :
+    opTwDom' (opTwObjMk' arr) = dom := rfl
+
+lemma opTwObjMk'_cod {dom cod : C} (arr : dom ⟶ cod) :
+    opTwCod' (opTwObjMk' arr) = cod := rfl
+
+lemma opTwObjMk'_arr {dom cod : C} (arr : dom ⟶ cod) :
+    opTwArr' (opTwObjMk' arr) = arr := rfl
+
+/--
+Construct a morphism in `OpTwistedArrow' C` from morphisms on domains and
+codomains.
+
+A morphism from `(X, Y, f)` to `(X', Y', f')` consists of:
+- `domArr : X ⟶ X'` (morphism between domains, going forwards)
+- `codArr : Y' ⟶ Y` (morphism between codomains, going backwards)
+such that the square commutes: `f ≫ codArr = domArr ≫ f'`.
+
+Note: This is the opposite of `TwistedArrow' C`, so morphisms go in opposite
+directions compared to `TwistedArrow' C`.
+-/
+def opTwHomMk' {x y : OpTwistedArrow' C}
+    (domArr : opTwDom' x ⟶ opTwDom' y)
+    (codArr : opTwCod' y ⟶ opTwCod' x)
+    (comm : domArr ≫ opTwArr' y ≫ codArr = opTwArr' x) : x ⟶ y :=
+  CategoryOfElements.homMk y x (codArr, domArr) comm
+
+/--
+Extract the domain arrow from a morphism in `OpTwistedArrow' C`.
+-/
+def opTwDomArr' {x y : OpTwistedArrow' C} (f : x ⟶ y) :
+    opTwDom' x ⟶ opTwDom' y :=
+  f.val.2
+
+/--
+Extract the codomain arrow from a morphism in `OpTwistedArrow' C`.
+Note: This goes backwards (from `y`'s codomain to `x`'s codomain).
+-/
+def opTwCodArr' {x y : OpTwistedArrow' C} (f : x ⟶ y) :
+    opTwCod' y ⟶ opTwCod' x :=
+  f.val.1
+
+lemma opTwHomMk'_domArr {x y : OpTwistedArrow' C}
+    (domArr : opTwDom' x ⟶ opTwDom' y)
+    (codArr : opTwCod' y ⟶ opTwCod' x)
+    (comm : domArr ≫ opTwArr' y ≫ codArr = opTwArr' x) :
+    opTwDomArr' (opTwHomMk' domArr codArr comm) = domArr := rfl
+
+lemma opTwHomMk'_codArr {x y : OpTwistedArrow' C}
+    (domArr : opTwDom' x ⟶ opTwDom' y)
+    (codArr : opTwCod' y ⟶ opTwCod' x)
+    (comm : domArr ≫ opTwArr' y ≫ codArr = opTwArr' x) :
+    opTwCodArr' (opTwHomMk' domArr codArr comm) = codArr := rfl
+
+@[ext]
+lemma opTwHom'_ext {x y : OpTwistedArrow' C} (f g : x ⟶ y)
+    (hdom : opTwDomArr' f = opTwDomArr' g)
+    (hcod : opTwCodArr' f = opTwCodArr' g) : f = g := by
+  cases f; cases g
+  congr
+  exact Prod.ext hcod hdom
+
+end OpTwistedArrow'Helpers
 
 /--
 The opposite of the twisted arrow category of `Cᵒᵖ'`, which we
