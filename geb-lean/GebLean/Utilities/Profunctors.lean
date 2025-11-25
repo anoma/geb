@@ -4,15 +4,15 @@ import Mathlib.CategoryTheory.Products.Basic
 import GebLean.Utilities.Opposites
 
 /-!
-# Hom-profunctors
+# Profunctors
 
-This module defines variants of the hom functor viewed as profunctors,
-using both mathlib's `ᵒᵖ` and our `ᵒᵖ'` opposite category constructions.
+This module defines profunctors and their variants, using both mathlib's `ᵒᵖ`
+and our `ᵒᵖ'` opposite category constructions.
 
-The hom functor `Hom : Cᵒᵖ × C ⥤ Type` can be viewed in several ways:
-- As a functor from the product category (covariant in second argument)
-- As a presheaf on the self-dual product category
-- With various combinations of opposite categories
+A profunctor from C to D is a functor `Cᵒᵖ × D ⥤ Type`. This module provides
+general machinery for viewing profunctors in different forms via
+precomposition with equivalences, and then specializes to the hom functor
+`Hom : Cᵒᵖ × C ⥤ Type`.
 -/
 
 universe v u w
@@ -74,6 +74,59 @@ def opProdSymSelfDual' (C : Type u) [Category C] :
     (prodOpEquiv' (C := Cᵒᵖ') (D := C))
     (opProdProdOpEquiv' C).symm
 
+section ProfunctorVariants
+
+variable {C : Type u} [Category.{v} C]
+
+/--
+Convert a profunctor using mathlib's `ᵒᵖ` to one using our `ᵒᵖ'`.
+-/
+def profunctorToOp' (P : opProdSym C ⥤ Type v) : opProdSym' C ⥤ Type v :=
+  (opProdEquiv C C).inverse ⋙ P
+
+/--
+View a profunctor on `C` as a profunctor on `Cᵒᵖ`.
+-/
+def profunctorOp (P : opProdSym C ⥤ Type v) : opProdSym Cᵒᵖ ⥤ Type v :=
+  (opOpProdEquiv C Cᵒᵖ).functor
+  ⋙ CategoryTheory.Prod.swap C Cᵒᵖ
+  ⋙ P
+
+/--
+View a profunctor on `C` (using `ᵒᵖ'`) as a profunctor on `Cᵒᵖ'`.
+-/
+def profunctorOp' (P : opProdSym' C ⥤ Type v) : opProdSym' Cᵒᵖ' ⥤ Type v :=
+  (opOpProdEquiv' C Cᵒᵖ').functor
+  ⋙ CategoryTheory.Prod.swap C Cᵒᵖ'
+  ⋙ P
+
+/--
+View a profunctor as a presheaf on `(Cᵒᵖ × C)`.
+-/
+def profunctorPre (P : opProdSym C ⥤ Type v) : (opProdSym C)ᵒᵖ ⥤ Type v :=
+  (opProdSymSelfDual C).functor ⋙ P
+
+/--
+View a profunctor (using `ᵒᵖ'`) as a presheaf on `(Cᵒᵖ' × C)`.
+-/
+def profunctorPre' (P : opProdSym' C ⥤ Type v) : (opProdSym' C)ᵒᵖ' ⥤ Type v :=
+  (opProdSymSelfDual' C).functor ⋙ P
+
+/--
+View a profunctor as a presheaf on `(Cᵒᵖᵒᵖ × Cᵒᵖ)`.
+-/
+def profunctorPreOp (P : opProdSym C ⥤ Type v) : (opProdSym Cᵒᵖ)ᵒᵖ ⥤ Type v :=
+  profunctorPre (C := Cᵒᵖ) (profunctorOp (C := C) P)
+
+/--
+View a profunctor (using `ᵒᵖ'`) as a presheaf on `(Cᵒᵖ'ᵒᵖ' × Cᵒᵖ')`.
+-/
+def profunctorPreOp' (P : opProdSym' C ⥤ Type v) :
+    (opProdSym' Cᵒᵖ')ᵒᵖ' ⥤ Type v :=
+  profunctorPre' (C := Cᵒᵖ') (profunctorOp' (C := C) P)
+
+end ProfunctorVariants
+
 section HomVariants
 
 variable {C : Type u} [Category.{v} C]
@@ -82,47 +135,43 @@ variable {C : Type u} [Category.{v} C]
 The hom functor using our `ᵒᵖ'` instead of mathlib's `ᵒᵖ`.
 -/
 def hom' : opProdSym' C ⥤ Type v :=
-  (opProdEquiv C C).inverse ⋙ Functor.hom C
+  profunctorToOp' (C := C) (Functor.hom C)
 
 /--
 The hom functor viewed as the hom-functor of `Cᵒᵖ`.
 -/
 def homOp : opProdSym Cᵒᵖ ⥤ Type v :=
-  (opOpProdEquiv C Cᵒᵖ).functor
-  ⋙ CategoryTheory.Prod.swap C Cᵒᵖ
-  ⋙ Functor.hom C
+  profunctorOp (C := C) (Functor.hom C)
 
 /--
 The hom functor viewed as the hom-functor of `Cᵒᵖ'`.
 -/
 def homOp' : opProdSym' Cᵒᵖ' ⥤ Type v :=
-  (opOpProdEquiv' C Cᵒᵖ').functor
-  ⋙ CategoryTheory.Prod.swap C Cᵒᵖ'
-  ⋙ hom'
+  profunctorOp' (C := C) hom'
 
 /--
 The hom functor viewed as a presheaf on `(Cᵒᵖ × C)`.
 -/
 def homPre : (opProdSym C)ᵒᵖ ⥤ Type v :=
-  (opProdSymSelfDual C).functor ⋙ Functor.hom C
+  profunctorPre (C := C) (Functor.hom C)
 
 /--
 The hom functor viewed as a presheaf on `(Cᵒᵖ' × C)`.
 -/
 def homPre' : (opProdSym' C)ᵒᵖ' ⥤ Type v :=
-  (opProdSymSelfDual' C).functor ⋙ hom'
+  profunctorPre' (C := C) hom'
 
 /--
 The hom functor viewed as a presheaf on `(Cᵒᵖᵒᵖ × Cᵒᵖ)`.
 -/
 def homPreOp : (opProdSym Cᵒᵖ)ᵒᵖ ⥤ Type v :=
-  homPre (C := Cᵒᵖ)
+  profunctorPreOp (C := C) (Functor.hom C)
 
 /--
 The hom functor viewed as a presheaf on `(Cᵒᵖ'ᵒᵖ' × Cᵒᵖ')`.
 -/
 def homPreOp' : (opProdSym' Cᵒᵖ')ᵒᵖ' ⥤ Type v :=
-  homPre' (C := Cᵒᵖ')
+  profunctorPreOp' (C := C) hom'
 
 end HomVariants
 

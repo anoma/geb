@@ -455,7 +455,7 @@ def coTwHomMk' {x y : CoTwistedArrow C}
     (codArr : coTwCod' x ⟶ coTwCod' y)
     (comm : codArr ≫ coTwArr' y ≫ domArr = coTwArr' x) : x ⟶ y :=
   CategoryOfElements.homMk y x (codArr, domArr)
-    (by simp [homPreOp', homPre', hom']; exact comm)
+    (by simp [homPreOp', profunctorToOp', hom']  ;exact comm)
 
 def coTwHomMkChain' {w x y z : C}
     (codArr : y ⟶ z) (codObjArr : z ⟶ x) (domArr : x ⟶ w) :
@@ -502,10 +502,11 @@ lemma coTwHomComm' {x y : CoTwistedArrow C} (f : x ⟶ y) :
     coTwCodArr' f ≫ coTwArr' y ≫ coTwDomArr' f = coTwArr' x := by
   unfold coTwCodArr' coTwDomArr' coTwArr'
   change f.val.1 ≫ y.snd ≫ f.val.2 = x.snd
-  convert f.property using 1
-  dsimp [homPreOp', homPre', hom']
-  simp [opProdEquiv, opProdSymSelfDual', prodOpEquiv', opProdProdOpEquiv']
-  rfl
+  have h := f.property
+  simp only [homPreOp', hom', profunctorToOp',
+    opProdEquiv, Equivalence.prod_inverse, Equivalence.refl_inverse,
+    Cat.equivOfIso, opEquivOp', opIsoOp', catOfOp'ToOp] at h
+  exact h
 
 @[ext]
 lemma coTwHom'_ext {x y : CoTwistedArrow C} (f g : x ⟶ y)
