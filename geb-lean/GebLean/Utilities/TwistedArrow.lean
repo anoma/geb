@@ -328,6 +328,17 @@ def twOpHomMk' {x y : TwistedArrowOp' C}
     (comm : codArr ≫ twOpArr' x ≫ domArr = twOpArr' y) : x ⟶ y :=
   CategoryOfElements.homMk x y (domArr, codArr) comm
 
+def twOpHomMkChain' {w x y z : C}
+    (codArr : z ⟶ y) (domObjArr : y ⟶ w) (domArr : w ⟶ x) :
+    twOpObjMk' (dom := w) (cod := y) domObjArr ⟶
+    twOpObjMk' (dom := x) (cod := z) (codArr ≫ domObjArr ≫ domArr) :=
+  twOpHomMk'
+    (x := twOpObjMk' (dom := w) (cod := y) domObjArr)
+    (y := twOpObjMk' (dom := x) (cod := z) (codArr ≫ domObjArr ≫ domArr))
+    (by simp [twOpObjMk'_dom] ; exact domArr)
+    (by simp [twOpObjMk'_cod] ; exact codArr)
+    rfl
+
 /--
 Extract the domain arrow from a morphism in `TwistedArrowOp' C`.
 -/
@@ -436,6 +447,17 @@ def opTwHomMk' {x y : OpTwistedArrow' C}
     (comm : domArr ≫ opTwArr' y ≫ codArr = opTwArr' x) : x ⟶ y :=
   CategoryOfElements.homMk y x (codArr, domArr) comm
 
+def opTwHomMkChain' {w x y z : C}
+    (domArr : w ⟶ x) (codObjArr : x ⟶ y) (codArr : y ⟶ z) :
+    opTwObjMk' (dom := w) (cod := z) (domArr ≫ codObjArr ≫ codArr) ⟶
+    opTwObjMk' (dom := x) (cod := y) codObjArr :=
+  opTwHomMk'
+    (x := opTwObjMk' (dom := w) (cod := z) (domArr ≫ codObjArr ≫ codArr))
+    (y := opTwObjMk' (dom := x) (cod := y) codObjArr)
+    (by simp [opTwObjMk'_dom] ; exact domArr)
+    (by simp [opTwObjMk'_cod] ; exact codArr)
+    rfl
+
 /--
 Extract the domain arrow from a morphism in `OpTwistedArrow' C`.
 -/
@@ -543,6 +565,17 @@ def coTwHomMk' {x y : CoTwistedArrow C}
     (comm : codArr ≫ coTwArr' y ≫ domArr = coTwArr' x) : x ⟶ y :=
   CategoryOfElements.homMk y x (codArr, domArr)
     (by simp [homPreOp', homPre', hom']; exact comm)
+
+def coTwHomMkChain' {w x y z : C}
+    (codArr : y ⟶ z) (codObjArr : z ⟶ x) (domArr : x ⟶ w) :
+    coTwObjMk' (dom := w) (cod := y) (codArr ≫ codObjArr ≫ domArr) ⟶
+    coTwObjMk' (dom := x) (cod := z) codObjArr :=
+  coTwHomMk'
+    (x := coTwObjMk' (dom := w) (cod := y) (codArr ≫ codObjArr ≫ domArr))
+    (y := coTwObjMk' (dom := x) (cod := z) codObjArr)
+    (by simp [coTwObjMk'_dom] ; exact domArr)
+    (by simp [coTwObjMk'_cod] ; exact codArr)
+    rfl
 
 /--
 Extract the domain arrow from a morphism in `CoTwistedArrow C`.
