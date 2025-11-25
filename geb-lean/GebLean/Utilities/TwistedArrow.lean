@@ -213,6 +213,17 @@ def twHomMk' {x y : TwistedArrow' C}
     (comm : domArr ≫ twArr' x ≫ codArr = twArr' y) : x ⟶ y :=
   CategoryOfElements.homMk x y (domArr, codArr) comm
 
+def twHomMkChain' {w x y z : C}
+    (domArr : x ⟶ w) (domObjArr : w ⟶ y) (codArr : y ⟶ z) :
+    twObjMk' (dom := w) (cod := y) domObjArr ⟶
+    twObjMk' (dom := x) (cod := z) (domArr ≫ domObjArr ≫ codArr) :=
+  twHomMk'
+    (x := twObjMk' (dom := w) (cod := y) domObjArr)
+    (y := twObjMk' (dom := x) (cod := z) (domArr ≫ domObjArr ≫ codArr))
+    (by simp [twObjMk'_dom] ; exact domArr)
+    (by simp [twObjMk'_cod] ; exact codArr)
+    rfl
+
 /--
 Extract the domain arrow from a morphism in `TwistedArrow' C`.
 Note: This goes backwards (from codomain to domain) because the first component
