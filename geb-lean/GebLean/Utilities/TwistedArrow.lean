@@ -574,6 +574,75 @@ def opTwistedArrowIsoTwistedArrowOp' :
   hom_inv_id := rfl
   inv_hom_id := rfl
 
+/--
+Functor from `CoTwistedArrow C` to `(TwistedArrowOp' C)ᵒᵖ'`.
+
+Objects of `CoTwistedArrow C` are stored as `((cod, dom), arr : cod ⟶ dom)`.
+Objects of `TwistedArrowOp' C` are stored as `((dom, cod), arr : cod ⟶ dom)`.
+So we swap the pair components.
+-/
+def coTwistedArrowToTwistedArrowOpOp' :
+    CoTwistedArrow C ⥤ (TwistedArrowOp' C)ᵒᵖ' where
+  obj x :=
+    let dom := coTwDom' x ; let cod := coTwCod' x ; let arr := coTwArr' x
+    ⟨(dom, cod), arr⟩
+  map {x y} f :=
+    let xDom := coTwDom' x ; let xCod := coTwCod' x ; let xArr := coTwArr' x
+    let yDom := coTwDom' y ; let yCod := coTwCod' y ; let yArr := coTwArr' y
+    let domArr := coTwDomArr' f ; let codArr := coTwCodArr' f
+    twOpHomMk'
+      (x := ⟨(yDom, yCod), yArr⟩)
+      (y := ⟨(xDom, xCod), xArr⟩)
+      domArr codArr (coTwHomComm' f)
+  map_id x := by apply twOpHom'_ext <;> rfl
+  map_comp {x y z} f g := by apply twOpHom'_ext <;> rfl
+
+/--
+Functor from `(TwistedArrowOp' C)ᵒᵖ'` to `CoTwistedArrow C`.
+-/
+def twistedArrowOpOp'ToCoTwistedArrow :
+    (TwistedArrowOp' C)ᵒᵖ' ⥤ CoTwistedArrow C where
+  obj x :=
+    let dom := twOpDom' x ; let cod := twOpCod' x ; let arr := twOpArr' x
+    ⟨(cod, dom), arr⟩
+  map {x y} f :=
+    let xDom := twOpDom' x ; let xCod := twOpCod' x ; let xArr := twOpArr' x
+    let yDom := twOpDom' y ; let yCod := twOpCod' y ; let yArr := twOpArr' y
+    let domArr := twOpDomArr' (C := C) f ; let codArr := twOpCodArr' (C := C) f
+    coTwHomMk'
+      (x := ⟨(xCod, xDom), xArr⟩)
+      (y := ⟨(yCod, yDom), yArr⟩)
+      domArr codArr (twOpHomComm' (C := C) f)
+  map_id x := by apply coTwHom'_ext <;> rfl
+  map_comp {x y z} f g := by apply coTwHom'_ext <;> rfl
+
+/--
+`CoTwistedArrow C` is isomorphic to `(TwistedArrowOp' C)ᵒᵖ'`.
+-/
+def coTwistedArrowIsoTwistedArrowOpOp' :
+    CoTwistedArrow C ≅Cat (TwistedArrowOp' C)ᵒᵖ' where
+  hom := coTwistedArrowToTwistedArrowOpOp'
+  inv := twistedArrowOpOp'ToCoTwistedArrow
+  hom_inv_id := rfl
+  inv_hom_id := rfl
+
+/--
+`TwistedArrowOp' C` is definitionally equal to `TwistedArrow' (Cᵒᵖ')`.
+
+Both are defined as the category of elements of `homOp'`, but Lean needs explicit
+coercion. We provide this as an equality rather than an isomorphism.
+-/
+theorem twistedArrowOpEqTwistedArrowOfOp' :
+    TwistedArrowOp' C = TwistedArrow' (Cᵒᵖ') := rfl
+
+/--
+`OpTwistedArrow' (Cᵒᵖ')` is definitionally equal to `CoTwistedArrow C`.
+
+Both are defined as `ElementsContra'` of `homPreOp'`.
+-/
+theorem opTwistedArrowOfOpEqCoTwistedArrow :
+    OpTwistedArrow' (Cᵒᵖ') = CoTwistedArrow C := rfl
+
 end TwistedArrowIsomorphisms
 
 end TwistedArrowCategories
