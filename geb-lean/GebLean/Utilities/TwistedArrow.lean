@@ -518,6 +518,64 @@ lemma coTwHom'_ext {x y : CoTwistedArrow C} (f g : x ⟶ y)
 
 end CoTwistedArrowHelpers
 
+section TwistedArrowIsomorphisms
+
+/--
+Functor from `OpTwistedArrow' C` to `(TwistedArrow' C)ᵒᵖ'`.
+-/
+def opTwistedArrowToTwistedArrowOp' :
+    OpTwistedArrow' C ⥤ (TwistedArrow' C)ᵒᵖ' where
+  obj := fun x => twObjMk' (opTwArr' x)
+  map := fun {x y} f =>
+    twHomMk'
+      (x := twObjMk' (opTwArr' y))
+      (y := twObjMk' (opTwArr' x))
+      (by simp only [twObjMk'_dom, opTwDom']; exact opTwDomArr' f)
+      (by simp only [twObjMk'_cod, opTwCod']; exact opTwCodArr' f)
+      (opTwHomComm' f)
+  map_id := fun x => by
+    apply twHom'_ext
+    · rfl
+    · rfl
+  map_comp := fun {x y z} f g => by
+    apply twHom'_ext
+    · rfl
+    · rfl
+
+/--
+Functor from `(TwistedArrow' C)ᵒᵖ'` to `OpTwistedArrow' C`.
+-/
+def twistedArrowOp'ToOpTwistedArrow :
+    (TwistedArrow' C)ᵒᵖ' ⥤ OpTwistedArrow' C where
+  obj := fun x => opTwObjMk' (twArr' x)
+  map := fun {x y} f =>
+    opTwHomMk'
+      (x := opTwObjMk' (twArr' x))
+      (y := opTwObjMk' (twArr' y))
+      (by simp only [opTwObjMk'_dom, twDom']; exact twDomArr' (C := C) f)
+      (by simp only [opTwObjMk'_cod, twCod']; exact twCodArr' (C := C) f)
+      (twHomComm' (C := C) f)
+  map_id := fun x => by
+    apply opTwHom'_ext
+    · rfl
+    · rfl
+  map_comp := fun {x y z} f g => by
+    apply opTwHom'_ext
+    · rfl
+    · rfl
+
+/--
+`OpTwistedArrow' C` is isomorphic to `(TwistedArrow' C)ᵒᵖ'`.
+-/
+def opTwistedArrowIsoTwistedArrowOp' :
+    OpTwistedArrow' C ≅Cat (TwistedArrow' C)ᵒᵖ' where
+  hom := opTwistedArrowToTwistedArrowOp'
+  inv := twistedArrowOp'ToOpTwistedArrow
+  hom_inv_id := rfl
+  inv_hom_id := rfl
+
+end TwistedArrowIsomorphisms
+
 end TwistedArrowCategories
 
 end GebLean
