@@ -1,5 +1,6 @@
 import GebLean.Utilities.Elements
 import GebLean.Utilities.Grothendieck
+import GebLean.Utilities.Presheaf
 import GebLean.Utilities.Slice
 import GebLean.Utilities.TwistedArrow
 
@@ -177,13 +178,15 @@ The type of presheaves on `(Over y)ᵒᵖ'` for a fixed `y : C`.
 abbrev OverOpPresheaf (y : C) := (Over y)ᵒᵖ' ⥤ Type v
 
 /--
-Functor `Cᵒᵖ' ⥤ Cat` sending `y` to the category of presheaves on `(Over y)ᵒᵖ'`.
+Functor `Cᵒᵖ' ⥤ Cat` sending `y` to the category of copresheaves on `(Over y)ᵒᵖ'`.
 
 For a morphism `h : y ⟶ y'` in `Cᵒᵖ'` (which is `h : y' ⟶ y` as a C-morphism),
 the induced functor is precomposition with `(Over.map h).op' : (Over y')ᵒᵖ' ⥤ (Over y)ᵒᵖ'`,
 giving `((Over y)ᵒᵖ' ⥤ Type v) ⥤ ((Over y')ᵒᵖ' ⥤ Type v)`.
+
+This is equivalent to the composition `Functor.op' (overOpMapFunctor C) ⋙ copresheafConstruction`.
 -/
-def presheafCatFunctor : Cᵒᵖ' ⥤ Cat where
+def overOpCopresheafFunctor : Cᵒᵖ' ⥤ Cat where
   obj y := Cat.of (OverOpPresheaf C y)
   map {y y'} (h : @Quiver.Hom Cᵒᵖ' _ y y') :=
     -- h : y ⟶ y' in Cᵒᵖ' is h : y' ⟶ y as a C-morphism
@@ -217,12 +220,27 @@ def presheafCatFunctor : Cᵒᵖ' ⥤ Cat where
     rfl
 
 /--
+`overOpCopresheafFunctor` is the composition of `Functor.op' (overOpMapFunctor C)`
+with `copresheafConstruction`.
+-/
+theorem overOpCopresheafFunctor_eq_comp :
+    overOpCopresheafFunctor C =
+      Functor.op' (overOpMapFunctor C) ⋙ copresheafConstruction := by
+  apply Functor.ext
+  case h_obj =>
+    intro y
+    rfl
+  case h_map =>
+    intro y y' h
+    rfl
+
+/--
 For a `TwArrCopresheaf F` and object `y : C`, this gives the object in the
-contravariant Grothendieck construction over `presheafCatFunctor` with base `y`
-and fiber `F.sliceFunctor C y`.
+contravariant Grothendieck construction over `overOpCopresheafFunctor` with
+base `y` and fiber `F.sliceFunctor C y`.
 -/
 def TwArrCopresheaf.sliceGrothendieckObj (F : TwArrCopresheaf C) (y : C) :
-    GrothendieckContra' (presheafCatFunctor C) where
+    GrothendieckContra' (overOpCopresheafFunctor C) where
   base := y
   fiber := (F.sliceFunctor C y : OverOpPresheaf C y)
 
