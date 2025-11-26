@@ -1,4 +1,5 @@
 import GebLean.Utilities.Elements
+import GebLean.Utilities.Grothendieck
 import GebLean.Utilities.Slice
 import GebLean.Utilities.TwistedArrow
 
@@ -163,6 +164,68 @@ def TwArrCopresheaf.sliceNatTrans (F : TwArrCopresheaf C) {y y' : C}
       simp only [categoryOfElements]
       simp only [prod_comp]
       simp
+
+/--
+The slice category `Over y` using the C-category structure (not the opposite).
+This is used when we need to explicitly specify which category instance to use.
+-/
+abbrev OverC (y : C) := @Over C _ y
+
+/--
+The type of presheaves on `(Over y)ᵒᵖ'` for a fixed `y : C`, using the C-category
+structure explicitly.
+-/
+abbrev OverOpPresheaf (y : C) := (OverC C y)ᵒᵖ' ⥤ Type v
+
+/--
+Functor `Cᵒᵖ' ⥤ Cat` sending `y` to the category of presheaves on `(Over y)ᵒᵖ'`.
+
+For a morphism `h : y ⟶ y'` in `Cᵒᵖ'` (which is `h : y' ⟶ y` as a C-morphism),
+the induced functor is precomposition with `(Over.map h).op' : (Over y')ᵒᵖ' ⥤ (Over y)ᵒᵖ'`,
+giving `((Over y)ᵒᵖ' ⥤ Type v) ⥤ ((Over y')ᵒᵖ' ⥤ Type v)`.
+-/
+def presheafCatFunctor : Cᵒᵖ' ⥤ Cat where
+  obj y := Cat.of (OverOpPresheaf C y)
+  map {y y'} (h : @Quiver.Hom Cᵒᵖ' _ y y') :=
+    -- h : y ⟶ y' in Cᵒᵖ' is h : y' ⟶ y as a C-morphism
+    -- Over.map h : Over y' ⥤ Over y (using C-morphism interpretation)
+    -- (Over.map h).op' : (Over y')ᵒᵖ' ⥤ (Over y)ᵒᵖ'
+    -- Precomposition gives: ((Over y)ᵒᵖ' ⥤ Type v) ⥤ ((Over y')ᵒᵖ' ⥤ Type v)
+    (Functor.whiskeringLeft (OverC C y')ᵒᵖ' (OverC C y)ᵒᵖ' (Type v)).obj
+      (GebLean.Functor.op' (@Over.map C _ y' y h))
+  map_id y := by
+    -- The identity in Cᵒᵖ' at y is definitionally equal to the identity in C at y
+    -- @CategoryStruct.id Cᵒᵖ' _ y = @CategoryStruct.id C _ y
+    -- So Over.map (𝟙 y) = 𝟭 (Over y) by Over.mapId_eq
+    have hid : @CategoryStruct.id Cᵒᵖ' _ y = @CategoryStruct.id C _ y := rfl
+    change (Functor.whiskeringLeft (OverC C y)ᵒᵖ' (OverC C y)ᵒᵖ' (Type v)).obj
+        (GebLean.Functor.op' (@Over.map C _ y y (@CategoryStruct.id Cᵒᵖ' _ y))) = 𝟭 _
+    rw [hid, Over.mapId_eq, Functor.op'_id]
+    rfl
+  map_comp {y y' y''} (h : @Quiver.Hom Cᵒᵖ' _ y y') (h' : @Quiver.Hom Cᵒᵖ' _ y' y'') := by
+    change (Functor.whiskeringLeft (OverC C y'')ᵒᵖ' (OverC C y)ᵒᵖ' (Type v)).obj
+        (GebLean.Functor.op' (@Over.map C _ y'' y _)) =
+      (Functor.whiskeringLeft (OverC C y')ᵒᵖ' (OverC C y)ᵒᵖ' (Type v)).obj
+        (GebLean.Functor.op' (@Over.map C _ y' y h)) ⋙
+      (Functor.whiskeringLeft (OverC C y'')ᵒᵖ' (OverC C y')ᵒᵖ' (Type v)).obj
+        (GebLean.Functor.op' (@Over.map C _ y'' y' h'))
+    let hC : @Quiver.Hom C _ y' y := h
+    let h'C : @Quiver.Hom C _ y'' y' := h'
+    have heq : @Over.map C _ y'' y (@CategoryStruct.comp Cᵒᵖ' _ y y' y'' h h') =
+        @Over.map C _ y'' y' h'C ⋙ @Over.map C _ y' y hC :=
+      @Over.mapComp_eq C _ y'' y' y h'C hC
+    simp only [heq, op'_comp]
+    rfl
+
+/--
+For a `TwArrCopresheaf F` and object `y : C`, this gives the object in the
+contravariant Grothendieck construction over `presheafCatFunctor` with base `y`
+and fiber `F.sliceFunctor C y`.
+-/
+def TwArrCopresheaf.sliceGrothendieckObj (F : TwArrCopresheaf C) (y : C) :
+    GrothendieckContra' (presheafCatFunctor C) where
+  base := y
+  fiber := (F.sliceFunctor C y : OverOpPresheaf C y)
 
 end TwArrCopresheaf
 

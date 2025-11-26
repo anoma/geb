@@ -414,6 +414,13 @@ theorem op'_comp {E : Type u₂} [Category.{v₂} E]
 namespace Functor
 
 /--
+`Functor.op'` maps the identity functor to the identity functor.
+-/
+@[simp]
+theorem op'_id : Functor.op' (𝟭 C) = 𝟭 Cᵒᵖ' :=
+  rfl
+
+/--
 A natural transformation `α : F ⟶ G` induces a natural transformation
 `Functor.op' G ⟶ Functor.op' F` (in the opposite direction) by mapping through `opHom'`.
 Since `opHom'` is contravariant, it reverses the direction of natural transformations.
