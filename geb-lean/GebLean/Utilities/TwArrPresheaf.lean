@@ -50,6 +50,22 @@ on the twisted arrow category.
 def sliceEquivTwArrCopresheaf : Over (hom' (C := C)) ≌ TwArrCopresheaf C :=
   sliceEquivCopresheaf (hom' (C := C))
 
+/--
+Curried object map for `TwArrCopresheaf`.
+
+Given `F : TwArrCopresheaf C`, the object map takes a twisted arrow `(x, y, f)`
+to a type. In curried form: `y` first (covariant), then `x` (contravariant),
+then `f : x ⟶ y`. This lets us view `f` as a slice over `y`.
+
+- `y : C` (covariant in the functor category)
+- `x : C` (contravariant in the functor category)
+- `f : x ⟶ y`
+- Returns: `F.obj (twObjMk' f) : Type v`
+-/
+def TwArrCopresheaf.curriedObj (F : TwArrCopresheaf C) (y : C) (x : C)
+    (f : x ⟶ y) : Type v :=
+  F.obj (twObjMk' f)
+
 end TwArrCopresheaf
 
 section TwArrPresheaf
@@ -66,6 +82,22 @@ def TwArrPresheaf := OpTwistedArrow' C ⥤ Type v
 instance : Category (TwArrPresheaf C) := by
   unfold TwArrPresheaf
   infer_instance
+
+/--
+Curried object map for `TwArrPresheaf`.
+
+Given `F : TwArrPresheaf C`, the object map takes an opposite-twisted arrow
+`(x, y, f)` to a type. In curried form: `y` first (covariant), then `x`
+(contravariant), then `f : x ⟶ y`. This lets us view `f` as a slice over `y`.
+
+- `y : C` (contravariant in the functor category)
+- `x : C` (covariant in the functor category)
+- `f : x ⟶ y`
+- Returns: `F.obj (opTwObjMk' f) : Type v`
+-/
+def TwArrPresheaf.curriedObj (F : TwArrPresheaf C) (y : C) (x : C)
+    (f : x ⟶ y) : Type v :=
+  F.obj (opTwObjMk' f)
 
 end TwArrPresheaf
 
@@ -88,6 +120,23 @@ on the opposite-variant twisted arrow category.
 def sliceEquivTwArrOpCopresheaf : Over (homOp' (C := C)) ≌ TwArrOpCopresheaf C :=
   sliceEquivCopresheaf (homOp' (C := C))
 
+/--
+Curried object map for `TwArrOpCopresheaf`.
+
+Given `F : TwArrOpCopresheaf C`, the object map takes a twisted arrow of `Cᵒᵖ'`,
+i.e., `(x, y, f : y ⟶ x)`, to a type. In curried form: `x` first (covariant),
+then `y` (contravariant), then `f : y ⟶ x`. This lets us view `f` as a slice
+over `x`.
+
+- `x : C` (covariant in the functor category)
+- `y : C` (contravariant in the functor category)
+- `f : y ⟶ x`
+- Returns: `F.obj (twOpObjMk' f) : Type v`
+-/
+def TwArrOpCopresheaf.curriedObj (F : TwArrOpCopresheaf C) (x : C) (y : C)
+    (f : y ⟶ x) : Type v :=
+  F.obj (twOpObjMk' f)
+
 end TwArrOpCopresheaf
 
 section TwArrOpPresheaf
@@ -104,6 +153,23 @@ def TwArrOpPresheaf := CoTwistedArrow C ⥤ Type v
 instance : Category (TwArrOpPresheaf C) := by
   unfold TwArrOpPresheaf
   infer_instance
+
+/--
+Curried object map for `TwArrOpPresheaf`.
+
+Given `F : TwArrOpPresheaf C`, the object map takes a co-twisted arrow, i.e.,
+`(x, y, f : y ⟶ x)`, to a type. In curried form: `x` first (contravariant),
+then `y` (covariant), then `f : y ⟶ x`. This lets us view `f` as a slice
+over `x`.
+
+- `x : C` (contravariant in the functor category)
+- `y : C` (covariant in the functor category)
+- `f : y ⟶ x`
+- Returns: `F.obj (coTwObjMk' f) : Type v`
+-/
+def TwArrOpPresheaf.curriedObj (F : TwArrOpPresheaf C) (x : C) (y : C)
+    (f : y ⟶ x) : Type v :=
+  F.obj (coTwObjMk' f)
 
 end TwArrOpPresheaf
 
