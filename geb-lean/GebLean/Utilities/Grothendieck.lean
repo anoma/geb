@@ -1325,7 +1325,7 @@ def mapWhiskerRightAsSmallFunctor (α : F' ⟶ G') :
           compAsSmallFunctorEquivalenceInverse_cov
         have mathlib_iso := Grothendieck.mapWhiskerRightAsSmallFunctor
           (Cat.postCompOpFunctor'.map α)
-        rw [← op'_comp, ← op'_comp]
+        rw [← Functor.op'_comp, ← Functor.op'_comp]
         exact GebLean.Functor.op'_mapIso mathlib_iso
     _ ≅ grothendieckContraIsoInv ⋙
           compAsSmallFunctorEquivalenceFunctor_cov ⋙
@@ -1682,7 +1682,7 @@ def mapWhiskerLeftIsoConjPreMap {G' : Cᵒᵖ' ⥤ Cat.{w, u₁}} (G : D ≌ C) 
         -- Apply Functor.op'_mapIso to transport through opposite
         have iso_transported := GebLean.Functor.op'_mapIso mathlib_iso
         -- Use op'_comp to break up the RHS into a composition of opposites
-        rw [op'_comp, op'_comp] at iso_transported
+        rw [Functor.op'_comp, Functor.op'_comp] at iso_transported
         -- Now iso_transported has:
         -- Functor.op' (Grothendieck.map ...) ≅
         --   Functor.op' (Grothendieck.preEquivalence...).functor ⋙

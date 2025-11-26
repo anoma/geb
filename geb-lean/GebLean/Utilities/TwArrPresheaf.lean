@@ -214,7 +214,7 @@ def presheafCatFunctor : Cᵒᵖ' ⥤ Cat where
     have heq : @Over.map C _ y'' y (@CategoryStruct.comp Cᵒᵖ' _ y y' y'' h h') =
         @Over.map C _ y'' y' h'C ⋙ @Over.map C _ y' y hC :=
       @Over.mapComp_eq C _ y'' y' y h'C hC
-    simp only [heq, op'_comp]
+    simp only [heq, Functor.op'_comp]
     rfl
 
 /--

@@ -661,7 +661,7 @@ abbrev map {F G : Cᵒᵖ' ⥤ Type w} (α : F ⟶ G) :
 theorem map_π {F G : Cᵒᵖ' ⥤ Type w} (α : F ⟶ G) :
     map α ⋙ π G = π F := by
   unfold map NatTrans.mapElementsContra' π
-  rw [← op'_comp]
+  rw [← Functor.op'_comp]
   rfl
 
 end CategoryOfElementsContra'

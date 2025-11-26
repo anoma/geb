@@ -403,14 +403,6 @@ instance op'_reflects_isomorphisms (F : C ⥤ D) [F.ReflectsIsomorphisms] :
     haveI h2 : @IsIso C _ Y X f := Functor.ReflectsIsomorphisms.reflects F f
     exact @isIso_op'_of_isIso C _ X Y f h2
 
-/--
-`Functor.op'` preserves composition of functors.
--/
-theorem op'_comp {E : Type u₂} [Category.{v₂} E]
-    (F : C ⥤ D) (G : D ⥤ E) :
-    Functor.op' (F ⋙ G) = Functor.op' F ⋙ Functor.op' G :=
-  rfl
-
 namespace Functor
 
 /--
@@ -418,6 +410,14 @@ namespace Functor
 -/
 @[simp]
 theorem op'_id : Functor.op' (𝟭 C) = 𝟭 Cᵒᵖ' :=
+  rfl
+
+/--
+`Functor.op'` preserves composition of functors.
+-/
+theorem op'_comp {E : Type u₂} [Category.{v₂} E]
+    (F : C ⥤ D) (G : D ⥤ E) :
+    Functor.op' (F ⋙ G) = Functor.op' F ⋙ Functor.op' G :=
   rfl
 
 /--
