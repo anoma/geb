@@ -66,6 +66,21 @@ def TwArrCopresheaf.curriedObj (F : TwArrCopresheaf C) (y : C) (x : C)
     (f : x ⟶ y) : Type v :=
   F.obj (twObjMk' f)
 
+/--
+Given a morphism in `Over y` from `(f : x ⟶ y)` to `(f' : x' ⟶ y)`, i.e.,
+`g : x ⟶ x'` with `g ≫ f' = f`, we get a twisted-arrow morphism from
+`twObjMk' f'` to `twObjMk' f` (note the reversal) with `domArr = g` and
+`codArr = 𝟙 y`.
+
+This induces a map `F.obj (twObjMk' f') → F.obj (twObjMk' f)` via `F.map`.
+-/
+def TwArrCopresheaf.sliceMap (F : TwArrCopresheaf C) {y : C} {x x' : C}
+    {f : x ⟶ y} {f' : x' ⟶ y} (g : x ⟶ x') (comm : g ≫ f' = f) :
+    F.obj (twObjMk' f') → F.obj (twObjMk' f) :=
+  F.map (twHomMk' g (𝟙 y) (by
+    simp only [twObjMk'_arr]
+    rw [show f' ≫ 𝟙 y = f' from Category.comp_id f', comm]))
+
 end TwArrCopresheaf
 
 section TwArrPresheaf
@@ -98,6 +113,20 @@ Given `F : TwArrPresheaf C`, the object map takes an opposite-twisted arrow
 def TwArrPresheaf.curriedObj (F : TwArrPresheaf C) (y : C) (x : C)
     (f : x ⟶ y) : Type v :=
   F.obj (opTwObjMk' f)
+
+/--
+Given a morphism in `Over y` from `(f : x ⟶ y)` to `(f' : x' ⟶ y)`, i.e.,
+`g : x ⟶ x'` with `g ≫ f' = f`, we get an opposite-twisted-arrow morphism from
+`opTwObjMk' f` to `opTwObjMk' f'` with `domArr = g` and `codArr = 𝟙 y`.
+
+This induces a map `F.obj (opTwObjMk' f) → F.obj (opTwObjMk' f')` via `F.map`.
+-/
+def TwArrPresheaf.sliceMap (F : TwArrPresheaf C) {y : C} {x x' : C}
+    {f : x ⟶ y} {f' : x' ⟶ y} (g : x ⟶ x') (comm : g ≫ f' = f) :
+    F.obj (opTwObjMk' f) → F.obj (opTwObjMk' f') :=
+  F.map (opTwHomMk' g (𝟙 y) (by
+    simp only [opTwObjMk'_arr]
+    rw [show f' ≫ 𝟙 y = f' from Category.comp_id f', comm]))
 
 end TwArrPresheaf
 
@@ -137,6 +166,21 @@ def TwArrOpCopresheaf.curriedObj (F : TwArrOpCopresheaf C) (x : C) (y : C)
     (f : y ⟶ x) : Type v :=
   F.obj (twOpObjMk' f)
 
+/--
+Given a morphism in `Over x` from `(f : y ⟶ x)` to `(f' : y' ⟶ x)`, i.e.,
+`g : y ⟶ y'` with `g ≫ f' = f`, we get a twisted-arrow-op morphism from
+`twOpObjMk' f'` to `twOpObjMk' f` (note the reversal) with `domArr = 𝟙 x`
+and `codArr = g`.
+
+This induces a map `F.obj (twOpObjMk' f') → F.obj (twOpObjMk' f)` via `F.map`.
+-/
+def TwArrOpCopresheaf.sliceMap (F : TwArrOpCopresheaf C) {x : C} {y y' : C}
+    {f : y ⟶ x} {f' : y' ⟶ x} (g : y ⟶ y') (comm : g ≫ f' = f) :
+    F.obj (twOpObjMk' f') → F.obj (twOpObjMk' f) :=
+  F.map (twOpHomMk' (𝟙 x) g (by
+    simp only [twOpObjMk'_arr]
+    rw [show f' ≫ 𝟙 x = f' from Category.comp_id f', comm]))
+
 end TwArrOpCopresheaf
 
 section TwArrOpPresheaf
@@ -170,6 +214,20 @@ over `x`.
 def TwArrOpPresheaf.curriedObj (F : TwArrOpPresheaf C) (x : C) (y : C)
     (f : y ⟶ x) : Type v :=
   F.obj (coTwObjMk' f)
+
+/--
+Given a morphism in `Over x` from `(f : y ⟶ x)` to `(f' : y' ⟶ x)`, i.e.,
+`g : y ⟶ y'` with `g ≫ f' = f`, we get a co-twisted-arrow morphism from
+`coTwObjMk' f` to `coTwObjMk' f'` with `domArr = 𝟙 x` and `codArr = g`.
+
+This induces a map `F.obj (coTwObjMk' f) → F.obj (coTwObjMk' f')` via `F.map`.
+-/
+def TwArrOpPresheaf.sliceMap (F : TwArrOpPresheaf C) {x : C} {y y' : C}
+    {f : y ⟶ x} {f' : y' ⟶ x} (g : y ⟶ y') (comm : g ≫ f' = f) :
+    F.obj (coTwObjMk' f) → F.obj (coTwObjMk' f') :=
+  F.map (coTwHomMk' (𝟙 x) g (by
+    simp only [coTwObjMk'_arr]
+    rw [show f' ≫ 𝟙 x = f' from Category.comp_id f', comm]))
 
 end TwArrOpPresheaf
 
