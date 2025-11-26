@@ -158,6 +158,38 @@ def TwArrPresheaf.sliceMap (F : TwArrPresheaf C) {y : C} {x x' : C}
     simp only [opTwObjMk'_arr]
     rw [show f' ≫ 𝟙 y = f' from Category.comp_id f', comm]))
 
+/--
+For a fixed `y : C`, a `TwArrPresheaf` induces a functor from `Over y`
+to `Type v`. Objects `(f : x ⟶ y)` in `Over y` map to `F.obj (opTwObjMk' f)`,
+and morphisms induce maps via `sliceMap`.
+-/
+def TwArrPresheaf.sliceFunctor (F : TwArrPresheaf C) (y : C) :
+    Over y ⥤ Type v where
+  obj f := F.obj (opTwObjMk' f.hom)
+  map {f f'} g := F.sliceMap C g.left (Over.w g)
+  map_id f := by apply F.map_id
+  map_comp {f f' f''} g g' := by
+    unfold sliceMap
+    rw [← F.map_comp]
+    congr 1
+    apply opTwHom'_ext
+    · simp only [opTwDomArr']
+      rfl
+    · simp only
+        [opTwCodArr', opTwObjMk', opTwHomMk', CategoryOfElements.homMk,
+         CategoryStruct.comp, Category.toCategoryStruct,
+         instCategoryOpTwistedArrow', OpProdInst']
+      unfold id CategoryStruct.id
+      simp
+      unfold OpProdInst'
+      simp
+      unfold CategoryStruct.id CategoryStruct.comp
+      unfold Category.toCategoryStruct
+      unfold opProd'
+      unfold uniformProd
+      simp
+      exact (Category.id_comp (𝟙 y)).symm
+
 end TwArrPresheaf
 
 section TwArrOpCopresheaf
@@ -210,6 +242,33 @@ def TwArrOpCopresheaf.sliceMap (F : TwArrOpCopresheaf C) {x : C} {y y' : C}
     simp only [twOpObjMk'_arr]
     rw [show f ≫ 𝟙 x = f from Category.comp_id f, comm]))
 
+/--
+For a fixed `x : C`, a `TwArrOpCopresheaf` induces a functor from `(Over x)ᵒᵖ'`
+to `Type v`. Objects `(f : y ⟶ x)` in `Over x` map to `F.obj (twOpObjMk' f)`,
+and morphisms in the opposite direction induce maps via `sliceMap`.
+-/
+def TwArrOpCopresheaf.sliceFunctor (F : TwArrOpCopresheaf C) (x : C) :
+    (Over x)ᵒᵖ' ⥤ Type v where
+  obj f := F.obj (twOpObjMk' f.hom)
+  map {f f'} g := F.sliceMap C g.left (Over.w g)
+  map_id f := by apply F.map_id
+  map_comp {f f' f''} g g' := by
+    unfold sliceMap
+    have hcomp : (g ≫ g').left = g'.left ≫ g.left := op_comp_eq _ _
+    rw [← F.map_comp]
+    congr 1
+    apply twOpHom'_ext
+    · simp only
+        [twOpDomArr', twOpHomMk', CategoryOfElements.homMk,
+         CategoryStruct.comp, Category.toCategoryStruct,
+         instCategoryTwistedArrowOp']
+      unfold id
+      simp only [categoryOfElements]
+      simp only [prod_comp]
+      simp
+    · simp only [hcomp, twOpCodArr']
+      rfl
+
 end TwArrOpCopresheaf
 
 section TwArrOpPresheaf
@@ -257,6 +316,30 @@ def TwArrOpPresheaf.sliceMap (F : TwArrOpPresheaf C) {x : C} {y y' : C}
   F.map (coTwHomMk' (𝟙 x) g (by
     simp only [coTwObjMk'_arr]
     rw [show f' ≫ 𝟙 x = f' from Category.comp_id f', comm]))
+
+/--
+For a fixed `x : C`, a `TwArrOpPresheaf` induces a functor from `Over x`
+to `Type v`. Objects `(f : y ⟶ x)` in `Over x` map to `F.obj (coTwObjMk' f)`,
+and morphisms induce maps via `sliceMap`.
+-/
+def TwArrOpPresheaf.sliceFunctor (F : TwArrOpPresheaf C) (x : C) :
+    Over x ⥤ Type v where
+  obj f := F.obj (coTwObjMk' f.hom)
+  map {f f'} g := F.sliceMap C g.left (Over.w g)
+  map_id f := by apply F.map_id
+  map_comp {f f' f''} g g' := by
+    unfold sliceMap
+    rw [← F.map_comp]
+    congr 1
+    apply coTwHom'_ext
+    · simp only
+        [coTwDomArr', coTwHomMk', CategoryOfElements.homMk,
+         CategoryStruct.comp, Category.toCategoryStruct,
+         CategoryOp'Inst, prod_comp]
+      simp
+      exact (Category.id_comp (𝟙 x)).symm
+    · simp only [coTwCodArr']
+      rfl
 
 end TwArrOpPresheaf
 
