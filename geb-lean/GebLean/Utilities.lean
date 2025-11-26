@@ -5,6 +5,7 @@ import GebLean.Utilities.Grothendieck
 import GebLean.Utilities.Opposites
 import GebLean.Utilities.Profunctors
 import GebLean.Utilities.Sigma
+import GebLean.Utilities.Slice
 import GebLean.Utilities.TwArrPresheaf
 import GebLean.Utilities.TwistedArrow
 
