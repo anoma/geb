@@ -183,10 +183,9 @@ def TwArrPresheaf.sliceFunctor (F : TwArrPresheaf C) (y : C) :
       simp
       unfold OpProdInst'
       simp
-      unfold CategoryStruct.id CategoryStruct.comp
-      unfold Category.toCategoryStruct
-      unfold opProd'
-      unfold uniformProd
+      unfold
+        CategoryStruct.id CategoryStruct.comp Category.toCategoryStruct
+        opProd' uniformProd
       simp
       exact (Category.id_comp (𝟙 y)).symm
 
