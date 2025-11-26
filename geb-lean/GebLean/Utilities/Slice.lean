@@ -1,5 +1,6 @@
 import Mathlib.CategoryTheory.Comma.Over.Basic
 import GebLean.Utilities.Opposites
+import GebLean.Utilities.Presheaf
 
 /-!
 # Slice and coslice category utilities
@@ -7,9 +8,13 @@ import GebLean.Utilities.Opposites
 This module provides utilities for working with slice (over) and coslice (under)
 categories, including equivalences involving opposite categories.
 
-The main result is `underEquivOverOp'Op'`, which establishes that the under
-category of `X` in `D` is equivalent to the opposite of the over category of `X`
-in `Dᵒᵖ'`.
+## Main definitions
+
+* `underEquivOverOp'Op'` - Equivalence between `Under X` and `(Over X)ᵒᵖ'` in `Dᵒᵖ'`
+* `overOpMapFunctor` - Functor `C ⥤ Cat` sending `y` to `(Over y)ᵒᵖ'`
+* `OverOpPresheaf` - Presheaves on `(Over y)ᵒᵖ'`
+* `overOpCopresheafFunctor` - Functor `Cᵒᵖ' ⥤ Cat` sending `y` to copresheaves on
+  `(Over y)ᵒᵖ'`
 -/
 
 universe v u
@@ -108,5 +113,43 @@ def underEquivOverOp'Op' : Under X ≌ (@Over Dᵒᵖ' _ X)ᵒᵖ' where
     simp only [Category.comp_id]
 
 end UnderOverEquivalence
+
+section OverOpFunctors
+
+variable (C : Type u) [Category.{v} C]
+
+/--
+The functor `C ⥤ Cat` sending `y` to `Cat.of ((Over y)ᵒᵖ')` and
+`h : y ⟶ y'` to `(Over.map h).op' : (Over y)ᵒᵖ' ⥤ (Over y')ᵒᵖ'`.
+
+This is `Over.mapFunctor` postcomposed with the opposite-category functor.
+-/
+def overOpMapFunctor : C ⥤ Cat :=
+  Cat.postCompOpFunctor'.obj (Over.mapFunctor C)
+
+/--
+Precomposition with `(overOpMapFunctor C).map h` for a morphism `h : y ⟶ y'`.
+-/
+def precompOverOpMap {y y' : C} (h : y ⟶ y') :
+    ((Over y')ᵒᵖ' ⥤ Type v) ⥤ ((Over y)ᵒᵖ' ⥤ Type v) :=
+  (Functor.whiskeringLeft ((Over y)ᵒᵖ') (Over y')ᵒᵖ' (Type v)).obj
+    ((overOpMapFunctor C).map h)
+
+/--
+The type of presheaves on `(Over y)ᵒᵖ'` for a fixed `y : C`.
+-/
+abbrev OverOpPresheaf (y : C) := Presheaf (Over y)
+
+/--
+Functor `Cᵒᵖ' ⥤ Cat` sending `y` to the category of copresheaves on `(Over y)ᵒᵖ'`.
+
+For a morphism `h : y ⟶ y'` in `Cᵒᵖ'` (which is `h : y' ⟶ y` as a C-morphism),
+the induced functor is precomposition with `(Over.map h).op' : (Over y')ᵒᵖ' ⥤ (Over y)ᵒᵖ'`,
+giving `((Over y)ᵒᵖ' ⥤ Type v) ⥤ ((Over y')ᵒᵖ' ⥤ Type v)`.
+-/
+def overOpCopresheafFunctor : Cᵒᵖ' ⥤ Cat :=
+  Functor.op' (overOpMapFunctor C) ⋙ copresheafConstruction
+
+end OverOpFunctors
 
 end GebLean

@@ -114,20 +114,6 @@ def TwArrCopresheaf.sliceFunctor (F : TwArrCopresheaf C) (y : C) :
       simp
 
 /--
-The functor `C ⥤ Cat` sending `y` to `Cat.of ((Over y)ᵒᵖ')` and
-`h : y ⟶ y'` to `(Over.map h).op' : (Over y)ᵒᵖ' ⥤ (Over y')ᵒᵖ'`.
-
-This is `Over.mapFunctor` postcomposed with the opposite-category functor.
--/
-def overOpMapFunctor : C ⥤ Cat :=
-  Cat.postCompOpFunctor'.obj (Over.mapFunctor C)
-
-def precompOverOpMap {y y' : C} (h : y ⟶ y') :
-  ((Over y')ᵒᵖ' ⥤ Type v) ⥤ ((Over y)ᵒᵖ' ⥤ Type v) :=
-    (Functor.whiskeringLeft ((Over y)ᵒᵖ') (Over y')ᵒᵖ' (Type v)).obj
-      ((overOpMapFunctor C).map h)
-
-/--
 Given a morphism `h : y ⟶ y'` in `C`, we get a natural transformation from
 `F.sliceFunctor y` to `(overOpMapFunctor C).map h ⋙ F.sliceFunctor y'`.
 
@@ -165,21 +151,6 @@ def TwArrCopresheaf.sliceNatTrans (F : TwArrCopresheaf C) {y y' : C}
       simp only [categoryOfElements]
       simp only [prod_comp]
       simp
-
-/--
-The type of presheaves on `(Over y)ᵒᵖ'` for a fixed `y : C`.
--/
-abbrev OverOpPresheaf (y : C) := Presheaf (Over y)
-
-/--
-Functor `Cᵒᵖ' ⥤ Cat` sending `y` to the category of copresheaves on `(Over y)ᵒᵖ'`.
-
-For a morphism `h : y ⟶ y'` in `Cᵒᵖ'` (which is `h : y' ⟶ y` as a C-morphism),
-the induced functor is precomposition with `(Over.map h).op' : (Over y')ᵒᵖ' ⥤ (Over y)ᵒᵖ'`,
-giving `((Over y)ᵒᵖ' ⥤ Type v) ⥤ ((Over y')ᵒᵖ' ⥤ Type v)`.
--/
-def overOpCopresheafFunctor : Cᵒᵖ' ⥤ Cat :=
-  Functor.op' (overOpMapFunctor C) ⋙ copresheafConstruction
 
 /--
 For a `TwArrCopresheaf F` and object `y : C`, this gives the object in the
