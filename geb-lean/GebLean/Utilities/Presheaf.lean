@@ -42,9 +42,9 @@ abbrev Presheaf (C : Type u) [Category.{v} C] := Cᵒᵖ' ⥤ Type v
 The map component of `copresheafConstruction`. For a functor `F : C ⥤ D`,
 returns the precomposition functor `(D ⥤ Type v) ⥤ (C ⥤ Type v)`.
 -/
-def copresheafConstructionMap {C D : Cat.{v, u}} (F : C ⟶ D) :
-    Cat.of (↑D ⥤ Type v) ⟶ Cat.of (↑C ⥤ Type v) :=
-  (Functor.whiskeringLeft (↑C) (↑D) (Type v)).obj F
+def copresheafConstructionMap {C D : Cat.{v, u}} :
+    (C ⥤ D) ⥤ (Cat.of (↑D ⥤ Type v) ⥤ Cat.of (↑C ⥤ Type v)) :=
+  Functor.whiskeringLeft (↑C) (↑D) (Type v)
 
 /--
 The copresheaf construction functor (contravariant).
@@ -61,7 +61,7 @@ def copresheafConstruction :
     Cat.{v, u}ᵒᵖ' ⥤ Cat.{max u v, max u v (v + 1)} where
   obj (C : Cat.{v, u}) := Cat.of (↑C ⥤ Type v)
   map {C D} (F : @Quiver.Hom Cat.{v, u}ᵒᵖ' _ C D) :=
-    copresheafConstructionMap (C := D) (D := C) F
+    copresheafConstructionMap.obj F
   map_id _ := rfl
   map_comp _ _ := rfl
 
@@ -72,10 +72,11 @@ returns the precomposition functor `(Dᵒᵖ' ⥤ Type v) ⥤ (Cᵒᵖ' ⥤ Type
 Since `F : C ⥤ D` gives `F.op' : Cᵒᵖ' ⥤ Dᵒᵖ'`, precomposition with `F.op'`
 maps presheaves on `D` to presheaves on `C`.
 -/
-def presheafConstructionMap {C D : Cat.{v, u}} (F : C ⟶ D) :
-    Cat.of ((↑D : Type u)ᵒᵖ' ⥤ Type v) ⟶ Cat.of ((↑C : Type u)ᵒᵖ' ⥤ Type v) :=
-  (Functor.whiskeringLeft (↑C : Type u)ᵒᵖ' (↑D : Type u)ᵒᵖ' (Type v)).obj
-    (functorOp'Obj (C := ↑C) (D := ↑D) F)
+def presheafConstructionMap {C D : Cat.{v, u}} :
+    (C ⥤ D)ᵒᵖ' ⥤
+    (Cat.of ((↑D : Type u)ᵒᵖ' ⥤ Type v) ⥤ Cat.of ((↑C : Type u)ᵒᵖ' ⥤ Type v)) :=
+  Functor.opHom' (C := ↑C) (D := ↑D) ⋙
+  Functor.whiskeringLeft (↑C : Type u)ᵒᵖ' (↑D : Type u)ᵒᵖ' (Type v)
 
 /--
 The presheaf construction functor (contravariant).
@@ -92,7 +93,7 @@ def presheafConstruction :
     Cat.{v, u}ᵒᵖ' ⥤ Cat.{max u v, max u v (v + 1)} where
   obj (C : Cat.{v, u}) := Cat.of ((↑C : Type u)ᵒᵖ' ⥤ Type v)
   map {C D} (F : @Quiver.Hom Cat.{v, u}ᵒᵖ' _ C D) :=
-    presheafConstructionMap (C := D) (D := C) F
+    presheafConstructionMap.obj F
   map_id _ := rfl
   map_comp _ _ := rfl
 
