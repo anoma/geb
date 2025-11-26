@@ -20,10 +20,6 @@ are presheaves on `TwistedArrowOp'`.
 Two of these have direct slice equivalences via `sliceEquivCopresheaf`:
 - `Over hom' ≌ TwArrCopresheaf C`
 - `Over homOp' ≌ TwArrOpCopresheaf C`
-
-The other two (`TwArrPresheaf` and `TwArrOpPresheaf`) use `ElementsContra'`
-rather than `Elements`, so expressing them as `Over` categories requires
-additional work.
 -/
 
 universe v u
