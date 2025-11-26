@@ -183,56 +183,9 @@ Functor `Cᵒᵖ' ⥤ Cat` sending `y` to the category of copresheaves on `(Over
 For a morphism `h : y ⟶ y'` in `Cᵒᵖ'` (which is `h : y' ⟶ y` as a C-morphism),
 the induced functor is precomposition with `(Over.map h).op' : (Over y')ᵒᵖ' ⥤ (Over y)ᵒᵖ'`,
 giving `((Over y)ᵒᵖ' ⥤ Type v) ⥤ ((Over y')ᵒᵖ' ⥤ Type v)`.
-
-This is equivalent to the composition `Functor.op' (overOpMapFunctor C) ⋙ copresheafConstruction`.
 -/
-def overOpCopresheafFunctor : Cᵒᵖ' ⥤ Cat where
-  obj y := Cat.of (OverOpPresheaf C y)
-  map {y y'} (h : @Quiver.Hom Cᵒᵖ' _ y y') :=
-    -- h : y ⟶ y' in Cᵒᵖ' is h : y' ⟶ y as a C-morphism
-    -- Over.map h : Over y' ⥤ Over y (using C-morphism interpretation)
-    -- (Over.map h).op' : (Over y')ᵒᵖ' ⥤ (Over y)ᵒᵖ'
-    -- Precomposition gives: ((Over y)ᵒᵖ' ⥤ Type v) ⥤ ((Over y')ᵒᵖ' ⥤ Type v)
-    (Functor.whiskeringLeft (OverC C y')ᵒᵖ' (OverC C y)ᵒᵖ' (Type v)).obj
-      (GebLean.Functor.op' (@Over.map C _ y' y h))
-  map_id y := by
-    -- The identity in Cᵒᵖ' at y is definitionally equal to the identity in C at y
-    -- @CategoryStruct.id Cᵒᵖ' _ y = @CategoryStruct.id C _ y
-    -- So Over.map (𝟙 y) = 𝟭 (Over y) by Over.mapId_eq
-    have hid : @CategoryStruct.id Cᵒᵖ' _ y = @CategoryStruct.id C _ y := rfl
-    change (Functor.whiskeringLeft (OverC C y)ᵒᵖ' (OverC C y)ᵒᵖ' (Type v)).obj
-        (GebLean.Functor.op' (@Over.map C _ y y (@CategoryStruct.id Cᵒᵖ' _ y))) = 𝟭 _
-    rw [hid, Over.mapId_eq, Functor.op'_id]
-    rfl
-  map_comp {y y' y''} (h : @Quiver.Hom Cᵒᵖ' _ y y') (h' : @Quiver.Hom Cᵒᵖ' _ y' y'') := by
-    change (Functor.whiskeringLeft (OverC C y'')ᵒᵖ' (OverC C y)ᵒᵖ' (Type v)).obj
-        (GebLean.Functor.op' (@Over.map C _ y'' y _)) =
-      (Functor.whiskeringLeft (OverC C y')ᵒᵖ' (OverC C y)ᵒᵖ' (Type v)).obj
-        (GebLean.Functor.op' (@Over.map C _ y' y h)) ⋙
-      (Functor.whiskeringLeft (OverC C y'')ᵒᵖ' (OverC C y')ᵒᵖ' (Type v)).obj
-        (GebLean.Functor.op' (@Over.map C _ y'' y' h'))
-    let hC : @Quiver.Hom C _ y' y := h
-    let h'C : @Quiver.Hom C _ y'' y' := h'
-    have heq : @Over.map C _ y'' y (@CategoryStruct.comp Cᵒᵖ' _ y y' y'' h h') =
-        @Over.map C _ y'' y' h'C ⋙ @Over.map C _ y' y hC :=
-      @Over.mapComp_eq C _ y'' y' y h'C hC
-    simp only [heq, Functor.op'_comp]
-    rfl
-
-/--
-`overOpCopresheafFunctor` is the composition of `Functor.op' (overOpMapFunctor C)`
-with `copresheafConstruction`.
--/
-theorem overOpCopresheafFunctor_eq_comp :
-    overOpCopresheafFunctor C =
-      Functor.op' (overOpMapFunctor C) ⋙ copresheafConstruction := by
-  apply Functor.ext
-  case h_obj =>
-    intro y
-    rfl
-  case h_map =>
-    intro y y' h
-    rfl
+def overOpCopresheafFunctor : Cᵒᵖ' ⥤ Cat :=
+  Functor.op' (overOpMapFunctor C) ⋙ copresheafConstruction
 
 /--
 For a `TwArrCopresheaf F` and object `y : C`, this gives the object in the
