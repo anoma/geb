@@ -167,15 +167,9 @@ def TwArrCopresheaf.sliceNatTrans (F : TwArrCopresheaf C) {y y' : C}
       simp
 
 /--
-The slice category `Over y` using the C-category structure (not the opposite).
-This is used when we need to explicitly specify which category instance to use.
--/
-abbrev OverC (y : C) := @Over C _ y
-
-/--
 The type of presheaves on `(Over y)ᵒᵖ'` for a fixed `y : C`.
 -/
-abbrev OverOpPresheaf (y : C) := (Over y)ᵒᵖ' ⥤ Type v
+abbrev OverOpPresheaf (y : C) := Presheaf (Over y)
 
 /--
 Functor `Cᵒᵖ' ⥤ Cat` sending `y` to the category of copresheaves on `(Over y)ᵒᵖ'`.
