@@ -80,6 +80,37 @@ def TwArrCopresheaf.sliceMap (F : TwArrCopresheaf C) {y : C} {x x' : C}
     simp only [twObjMk'_arr]
     rw [show f ≫ 𝟙 y = f from Category.comp_id f, comm]))
 
+/--
+For a fixed `y : C`, a `TwArrCopresheaf` induces a functor from `(Over y)ᵒᵖ'`
+to `Type v`. Objects `(f : x ⟶ y)` in `Over y` map to `F.obj (twObjMk' f)`,
+and morphisms in the opposite direction induce maps via `sliceMap`.
+-/
+def TwArrCopresheaf.sliceFunctor (F : TwArrCopresheaf C) (y : C) :
+    (Over y)ᵒᵖ' ⥤ Type v where
+  obj f := F.obj (twObjMk' f.hom)
+  map {f f'} g := F.sliceMap C g.left (Over.w g)
+  map_id f := by apply F.map_id
+  map_comp {f f' f''} g g' := by
+    unfold sliceMap
+    -- (g ≫ g') in (Over y)ᵒᵖ' is (g' ≫ g) in Over y
+    have hcomp : (g ≫ g').left = g'.left ≫ g.left := op_comp_eq _ _
+    -- Use F.map_comp and show the morphisms are equal
+    rw [← F.map_comp]
+    congr 1
+    apply twHom'_ext
+    · -- domArr: composition in TwistedArrow' reverses domain arrows
+      simp only [hcomp, twDomArr']
+      rfl
+    · -- codArr: Both sides reduce to 𝟙 y
+      simp only
+        [twCodArr', twHomMk', CategoryOfElements.homMk,
+         CategoryStruct.comp, Category.toCategoryStruct,
+         instCategoryTwistedArrow']
+      unfold id
+      simp only [categoryOfElements]
+      simp only [prod_comp]
+      simp
+
 end TwArrCopresheaf
 
 section TwArrPresheaf
