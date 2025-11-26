@@ -112,20 +112,9 @@ def TwArrCopresheaf.sliceFunctor (F : TwArrCopresheaf C) (y : C) :
       simp
 
 /--
-The postcomposition functor from `Over y` to `Over y'` induced by `h : y ⟶ y'`.
-Given `(f : x ⟶ y)`, produces `(f ≫ h : x ⟶ y')`.
--/
-def overPostcomp (C : Type u) [Category.{v} C] {y y' : C} (h : y ⟶ y') :
-    Over y ⥤ Over y' where
-  obj f := Over.mk (f.hom ≫ h)
-  map {f f'} g := Over.homMk g.left (by simp)
-  map_id _ := by ext; rfl
-  map_comp _ _ := by ext; rfl
-
-/--
 Given a morphism `h : y ⟶ y'` in `C` (viewed as `h : y' ⟶ y` in `Cᵒᵖ'`), we get
 a natural transformation from `F.sliceFunctor y` to
-`(overPostcomp C h).op' ⋙ F.sliceFunctor y'`.
+`(Over.map h).op' ⋙ F.sliceFunctor y'`.
 
 For an object `(f : x ⟶ y)` in `(Over y)ᵒᵖ'`, the component maps
 `F.obj (twObjMk' f.hom)` to `F.obj (twObjMk' (f.hom ≫ h))` via the twisted arrow
@@ -134,26 +123,26 @@ morphism with `domArr = 𝟙 x` and `codArr = h`.
 def TwArrCopresheaf.sliceNatTrans (F : TwArrCopresheaf C) {y y' : C}
     (h : y ⟶ y') :
     F.sliceFunctor C y ⟶
-    Functor.op' (overPostcomp C h) ⋙ F.sliceFunctor C y' where
+    Functor.op' (Over.map h) ⋙ F.sliceFunctor C y' where
   app f := F.map (twHomMk'
     (x := twObjMk' f.hom)
     (y := twObjMk' (f.hom ≫ h))
     (𝟙 f.left) h (by simp only [twObjMk'_arr]; exact Category.id_comp _))
   naturality {f f'} g := by
     simp only [sliceFunctor, Functor.comp_obj, Functor.op', functorOp'Obj,
-      overPostcomp, sliceMap, Functor.comp_map]
+      Over.map, Comma.mapRight, sliceMap, Functor.comp_map]
     rw [← F.map_comp, ← F.map_comp]
     congr 1
     apply twHom'_ext
     · simp only
-        [twDomArr', twHomMk', CategoryOfElements.homMk, Over.homMk_left,
+        [twDomArr', twHomMk', CategoryOfElements.homMk,
          Category.toCategoryStruct, instCategoryTwistedArrow']
       unfold id
       simp only [categoryOfElements]
       simp only [prod_comp]
       simp
     · simp only
-        [twCodArr', twHomMk', CategoryOfElements.homMk, Over.homMk_left,
+        [twCodArr', twHomMk', CategoryOfElements.homMk,
          Category.toCategoryStruct, instCategoryTwistedArrow']
       unfold id
       simp only [categoryOfElements]
