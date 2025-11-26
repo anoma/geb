@@ -120,6 +120,11 @@ This is `Over.mapFunctor` postcomposed with the opposite-category functor.
 def overOpMapFunctor : C ⥤ Cat :=
   Cat.postCompOpFunctor'.obj (Over.mapFunctor C)
 
+def precompOverOpMap {y y' : C} (h : y ⟶ y') :
+  ((Over y')ᵒᵖ' ⥤ Type v) ⥤ ((Over y)ᵒᵖ' ⥤ Type v) :=
+    (Functor.whiskeringLeft ((Over y)ᵒᵖ') (Over y')ᵒᵖ' (Type v)).obj
+      ((overOpMapFunctor C).map h)
+
 /--
 Given a morphism `h : y ⟶ y'` in `C`, we get a natural transformation from
 `F.sliceFunctor y` to `(overOpMapFunctor C).map h ⋙ F.sliceFunctor y'`.
@@ -131,13 +136,14 @@ morphism with `domArr = 𝟙 x` and `codArr = h`.
 def TwArrCopresheaf.sliceNatTrans (F : TwArrCopresheaf C) {y y' : C}
     (h : y ⟶ y') :
     F.sliceFunctor C y ⟶
-    (overOpMapFunctor C).map h ⋙ F.sliceFunctor C y' where
+    (precompOverOpMap C h).obj (F.sliceFunctor C y') where
   app f := F.map (twHomMk'
     (x := twObjMk' f.hom)
     (y := twObjMk' (f.hom ≫ h))
     (𝟙 f.left) h (by simp only [twObjMk'_arr]; exact Category.id_comp _))
   naturality {f f'} g := by
-    simp only [sliceFunctor, Functor.comp_obj, overOpMapFunctor,
+    simp only [sliceFunctor, precompOverOpMap, Functor.whiskeringLeft,
+      Functor.comp_obj, overOpMapFunctor,
       Cat.postCompOpFunctor', Functor.whiskeringRight, Over.mapFunctor,
       Functor.comp_map, Cat.opFunctor', sliceMap]
     rw [← F.map_comp, ← F.map_comp]
