@@ -15,6 +15,9 @@ categories, including equivalences involving opposite categories.
 * `OverOpPresheaf` - Presheaves on `(Over y)ᵒᵖ'`
 * `overOpCopresheafFunctor` - Functor `Cᵒᵖ' ⥤ Cat` sending `y` to copresheaves on
   `(Over y)ᵒᵖ'`
+* `OverCopresheaf` - Copresheaves on `Over y`
+* `overCopresheafFunctor` - Functor `Cᵒᵖ' ⥤ Cat` sending `y` to copresheaves on
+  `Over y`
 -/
 
 universe v u
@@ -149,6 +152,29 @@ giving `((Over y)ᵒᵖ' ⥤ Type v) ⥤ ((Over y')ᵒᵖ' ⥤ Type v)`.
 -/
 def overOpCopresheafFunctor : Cᵒᵖ' ⥤ Cat :=
   Functor.op' (overOpMapFunctor C) ⋙ copresheafConstruction
+
+/--
+The type of copresheaves on `Over y` for a fixed `y : C`.
+-/
+abbrev OverCopresheaf (y : C) := Copresheaf (Over y)
+
+/--
+Precomposition with `(Over.mapFunctor C).map h` for a morphism `h : y ⟶ y'`.
+-/
+def precompOverMap {y y' : C} (h : y ⟶ y') :
+    (Over y' ⥤ Type v) ⥤ (Over y ⥤ Type v) :=
+  (Functor.whiskeringLeft (Over y) (Over y') (Type v)).obj
+    ((Over.mapFunctor C).map h)
+
+/--
+Functor `Cᵒᵖ' ⥤ Cat` sending `y` to the category of copresheaves on `Over y`.
+
+For a morphism `h : y ⟶ y'` in `Cᵒᵖ'` (which is `h : y' ⟶ y` as a C-morphism),
+the induced functor is precomposition with `Over.map h : Over y' ⥤ Over y`,
+giving `(Over y ⥤ Type v) ⥤ (Over y' ⥤ Type v)`.
+-/
+def overCopresheafFunctor : Cᵒᵖ' ⥤ Cat :=
+  Functor.op' (Over.mapFunctor C) ⋙ copresheafConstruction
 
 end OverOpFunctors
 
