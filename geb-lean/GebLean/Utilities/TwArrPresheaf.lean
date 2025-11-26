@@ -112,9 +112,17 @@ def TwArrCopresheaf.sliceFunctor (F : TwArrCopresheaf C) (y : C) :
       simp
 
 /--
-Given a morphism `h : y ⟶ y'` in `C` (viewed as `h : y' ⟶ y` in `Cᵒᵖ'`), we get
-a natural transformation from `F.sliceFunctor y` to
-`(Over.map h).op' ⋙ F.sliceFunctor y'`.
+The functor `C ⥤ Cat` sending `y` to `Cat.of ((Over y)ᵒᵖ')` and
+`h : y ⟶ y'` to `(Over.map h).op' : (Over y)ᵒᵖ' ⥤ (Over y')ᵒᵖ'`.
+
+This is `Over.mapFunctor` postcomposed with the opposite-category functor.
+-/
+def overOpMapFunctor : C ⥤ Cat :=
+  Cat.postCompOpFunctor'.obj (Over.mapFunctor C)
+
+/--
+Given a morphism `h : y ⟶ y'` in `C`, we get a natural transformation from
+`F.sliceFunctor y` to `(overOpMapFunctor C).map h ⋙ F.sliceFunctor y'`.
 
 For an object `(f : x ⟶ y)` in `(Over y)ᵒᵖ'`, the component maps
 `F.obj (twObjMk' f.hom)` to `F.obj (twObjMk' (f.hom ≫ h))` via the twisted arrow
@@ -123,14 +131,15 @@ morphism with `domArr = 𝟙 x` and `codArr = h`.
 def TwArrCopresheaf.sliceNatTrans (F : TwArrCopresheaf C) {y y' : C}
     (h : y ⟶ y') :
     F.sliceFunctor C y ⟶
-    Functor.op' (Over.map h) ⋙ F.sliceFunctor C y' where
+    (overOpMapFunctor C).map h ⋙ F.sliceFunctor C y' where
   app f := F.map (twHomMk'
     (x := twObjMk' f.hom)
     (y := twObjMk' (f.hom ≫ h))
     (𝟙 f.left) h (by simp only [twObjMk'_arr]; exact Category.id_comp _))
   naturality {f f'} g := by
-    simp only [sliceFunctor, Functor.comp_obj, Functor.op', functorOp'Obj,
-      Over.map, Comma.mapRight, sliceMap, Functor.comp_map]
+    simp only [sliceFunctor, Functor.comp_obj, overOpMapFunctor,
+      Cat.postCompOpFunctor', Functor.whiskeringRight, Over.mapFunctor,
+      Functor.comp_map, Cat.opFunctor', sliceMap]
     rw [← F.map_comp, ← F.map_comp]
     congr 1
     apply twHom'_ext
