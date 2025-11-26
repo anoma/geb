@@ -31,6 +31,8 @@ open CategoryTheory
 
 variable (C : Type u) [Category.{v} C]
 
+section TwArrCopresheaf
+
 /--
 Copresheaves on the twisted arrow category: covariant functors from
 `TwistedArrow' C` to `Type v`.
@@ -48,6 +50,10 @@ on the twisted arrow category.
 def sliceEquivTwArrCopresheaf : Over (hom' (C := C)) ≌ TwArrCopresheaf C :=
   sliceEquivCopresheaf (hom' (C := C))
 
+end TwArrCopresheaf
+
+section TwArrPresheaf
+
 /--
 Presheaves on the twisted arrow category: covariant functors from
 `OpTwistedArrow' C` to `Type v`.
@@ -60,6 +66,10 @@ def TwArrPresheaf := OpTwistedArrow' C ⥤ Type v
 instance : Category (TwArrPresheaf C) := by
   unfold TwArrPresheaf
   infer_instance
+
+end TwArrPresheaf
+
+section TwArrOpCopresheaf
 
 /--
 Copresheaves on the opposite-variant twisted arrow category: covariant functors
@@ -78,6 +88,10 @@ on the opposite-variant twisted arrow category.
 def sliceEquivTwArrOpCopresheaf : Over (homOp' (C := C)) ≌ TwArrOpCopresheaf C :=
   sliceEquivCopresheaf (homOp' (C := C))
 
+end TwArrOpCopresheaf
+
+section TwArrOpPresheaf
+
 /--
 Presheaves on the opposite-variant twisted arrow category: covariant functors
 from `CoTwistedArrow C` to `Type v`.
@@ -90,5 +104,7 @@ def TwArrOpPresheaf := CoTwistedArrow C ⥤ Type v
 instance : Category (TwArrOpPresheaf C) := by
   unfold TwArrOpPresheaf
   infer_instance
+
+end TwArrOpPresheaf
 
 end GebLean
