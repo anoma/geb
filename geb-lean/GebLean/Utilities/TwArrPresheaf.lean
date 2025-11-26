@@ -67,19 +67,18 @@ def TwArrCopresheaf.curriedObj (F : TwArrCopresheaf C) (y : C) (x : C)
   F.obj (twObjMk' f)
 
 /--
-Given a morphism in `Over y` from `(f : x ⟶ y)` to `(f' : x' ⟶ y)`, i.e.,
-`g : x ⟶ x'` with `g ≫ f' = f`, we get a twisted-arrow morphism from
-`twObjMk' f'` to `twObjMk' f` (note the reversal) with `domArr = g` and
-`codArr = 𝟙 y`.
+Given a morphism in `Over y` from `(f' : x' ⟶ y)` to `(f : x ⟶ y)`, i.e.,
+`g : x' ⟶ x` with `g ≫ f = f'`, we get a twisted-arrow morphism from
+`twObjMk' f` to `twObjMk' f'` with `domArr = g` and `codArr = 𝟙 y`.
 
-This induces a map `F.obj (twObjMk' f') → F.obj (twObjMk' f)` via `F.map`.
+This induces a map `F.obj (twObjMk' f) → F.obj (twObjMk' f')` via `F.map`.
 -/
 def TwArrCopresheaf.sliceMap (F : TwArrCopresheaf C) {y : C} {x x' : C}
-    {f : x ⟶ y} {f' : x' ⟶ y} (g : x ⟶ x') (comm : g ≫ f' = f) :
-    F.obj (twObjMk' f') → F.obj (twObjMk' f) :=
+    {f : x ⟶ y} {f' : x' ⟶ y} (g : x' ⟶ x) (comm : g ≫ f = f') :
+    F.obj (twObjMk' f) → F.obj (twObjMk' f') :=
   F.map (twHomMk' g (𝟙 y) (by
     simp only [twObjMk'_arr]
-    rw [show f' ≫ 𝟙 y = f' from Category.comp_id f', comm]))
+    rw [show f ≫ 𝟙 y = f from Category.comp_id f, comm]))
 
 end TwArrCopresheaf
 
@@ -167,19 +166,18 @@ def TwArrOpCopresheaf.curriedObj (F : TwArrOpCopresheaf C) (x : C) (y : C)
   F.obj (twOpObjMk' f)
 
 /--
-Given a morphism in `Over x` from `(f : y ⟶ x)` to `(f' : y' ⟶ x)`, i.e.,
-`g : y ⟶ y'` with `g ≫ f' = f`, we get a twisted-arrow-op morphism from
-`twOpObjMk' f'` to `twOpObjMk' f` (note the reversal) with `domArr = 𝟙 x`
-and `codArr = g`.
+Given a morphism in `Over x` from `(f' : y' ⟶ x)` to `(f : y ⟶ x)`, i.e.,
+`g : y' ⟶ y` with `g ≫ f = f'`, we get a twisted-arrow-op morphism from
+`twOpObjMk' f` to `twOpObjMk' f'` with `domArr = 𝟙 x` and `codArr = g`.
 
-This induces a map `F.obj (twOpObjMk' f') → F.obj (twOpObjMk' f)` via `F.map`.
+This induces a map `F.obj (twOpObjMk' f) → F.obj (twOpObjMk' f')` via `F.map`.
 -/
 def TwArrOpCopresheaf.sliceMap (F : TwArrOpCopresheaf C) {x : C} {y y' : C}
-    {f : y ⟶ x} {f' : y' ⟶ x} (g : y ⟶ y') (comm : g ≫ f' = f) :
-    F.obj (twOpObjMk' f') → F.obj (twOpObjMk' f) :=
+    {f : y ⟶ x} {f' : y' ⟶ x} (g : y' ⟶ y) (comm : g ≫ f = f') :
+    F.obj (twOpObjMk' f) → F.obj (twOpObjMk' f') :=
   F.map (twOpHomMk' (𝟙 x) g (by
     simp only [twOpObjMk'_arr]
-    rw [show f' ≫ 𝟙 x = f' from Category.comp_id f', comm]))
+    rw [show f ≫ 𝟙 x = f from Category.comp_id f, comm]))
 
 end TwArrOpCopresheaf
 
