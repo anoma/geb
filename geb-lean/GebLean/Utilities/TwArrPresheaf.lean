@@ -172,10 +172,9 @@ This is used when we need to explicitly specify which category instance to use.
 abbrev OverC (y : C) := @Over C _ y
 
 /--
-The type of presheaves on `(Over y)ᵒᵖ'` for a fixed `y : C`, using the C-category
-structure explicitly.
+The type of presheaves on `(Over y)ᵒᵖ'` for a fixed `y : C`.
 -/
-abbrev OverOpPresheaf (y : C) := (OverC C y)ᵒᵖ' ⥤ Type v
+abbrev OverOpPresheaf (y : C) := (Over y)ᵒᵖ' ⥤ Type v
 
 /--
 Functor `Cᵒᵖ' ⥤ Cat` sending `y` to the category of presheaves on `(Over y)ᵒᵖ'`.
