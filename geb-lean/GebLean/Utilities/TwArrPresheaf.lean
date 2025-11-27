@@ -331,6 +331,27 @@ def TwArrPresheaf.sliceGrothendieckHomFiber (F : TwArrPresheaf C) :
       (F.sliceGrothendieckFib C) :=
   fun h => F.sliceNatTrans C h
 
+/--
+Equality proof for identity: the fiber after applying identity equals the fiber.
+-/
+def TwArrPresheaf.sliceGrothendieckEqId (F : TwArrPresheaf C) :
+    Grothendieck.FunctorToEqId (overCopresheafFunctor C) (𝟭 Cᵒᵖ')
+      (F.sliceGrothendieckFib C) := by
+  intro y
+  simp only [sliceGrothendieckFib, Functor.id_map]
+  exact congrFun (congrArg Functor.obj ((overCopresheafFunctor C).map_id y)) _
+
+/--
+Equality proof for composition: the fiber after applying composite equals
+applying them sequentially.
+-/
+def TwArrPresheaf.sliceGrothendieckEqComp (F : TwArrPresheaf C) :
+    Grothendieck.FunctorToEqComp (overCopresheafFunctor C) (𝟭 Cᵒᵖ')
+      (F.sliceGrothendieckFib C) := by
+  intro y y' y'' g h
+  simp only [sliceGrothendieckFib, Functor.id_map]
+  exact congrFun (congrArg Functor.obj ((overCopresheafFunctor C).map_comp g h)) _
+
 private lemma TwArrPresheaf.opTwObjMk'_comp_id {y : C} (f : Over y) :
     opTwObjMk' (f.hom ≫ 𝟙 y) = opTwObjMk' f.hom := by
   unfold opTwObjMk'
@@ -373,7 +394,8 @@ Identity coherence for sliceGrothendieckHomFiber.
 -/
 lemma TwArrPresheaf.sliceGrothendieck_hom_id (F : TwArrPresheaf C) :
     Grothendieck.FunctorToHomId (overCopresheafFunctor C) (𝟭 Cᵒᵖ')
-      (F.sliceGrothendieckFib C) (F.sliceGrothendieckHomFiber C) := by
+      (F.sliceGrothendieckFib C) (F.sliceGrothendieckHomFiber C)
+      (F.sliceGrothendieckEqId C) := by
   intro y
   apply NatTrans.ext
   funext f
@@ -389,7 +411,8 @@ Composition coherence for sliceGrothendieckHomFiber.
 -/
 lemma TwArrPresheaf.sliceGrothendieck_hom_comp (F : TwArrPresheaf C) :
     Grothendieck.FunctorToHomComp (overCopresheafFunctor C) (𝟭 Cᵒᵖ')
-      (F.sliceGrothendieckFib C) (F.sliceGrothendieckHomFiber C) := by
+      (F.sliceGrothendieckFib C) (F.sliceGrothendieckHomFiber C)
+      (F.sliceGrothendieckEqComp C) := by
   intro y y' y'' g h
   apply NatTrans.ext
   funext f
@@ -441,6 +464,8 @@ def TwArrPresheaf.sliceGrothendieckFunctor (F : TwArrPresheaf C) :
     (𝟭 Cᵒᵖ')
     (F.sliceGrothendieckFib C)
     (fun h => F.sliceGrothendieckHomFiber C h)
+    (F.sliceGrothendieckEqId C)
+    (F.sliceGrothendieckEqComp C)
     (F.sliceGrothendieck_hom_id C)
     (fun g h => F.sliceGrothendieck_hom_comp C g h)
 

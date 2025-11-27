@@ -367,38 +367,54 @@ abbrev FunctorToHom (baseFunc : D ⥤ C) (fib : FunctorToFib F baseFunc) :=
   ∀ {d d' : D} (g : d ⟶ d'), (F.map (baseFunc.map g)).obj (fib d) ⟶ fib d'
 
 /--
+The type of identity equality proofs for `functorTo`.
+States that the fiber after applying the identity morphism equals the original fiber.
+Clients can provide any proof of this equality; the specific proof is irrelevant.
+-/
+abbrev FunctorToEqId (baseFunc : D ⥤ C) (fib : FunctorToFib F baseFunc) :=
+  ∀ d, (F.map (baseFunc.map (𝟙 d))).obj (fib d) = fib d
+
+/--
+The type of composition equality proofs for `functorTo`.
+States that the fiber after applying a composite morphism equals applying them
+sequentially. Clients can provide any proof of this equality.
+-/
+abbrev FunctorToEqComp (baseFunc : D ⥤ C) (fib : FunctorToFib F baseFunc) :=
+  ∀ {d d' d'' : D} (g : d ⟶ d') (h : d' ⟶ d''),
+    (F.map (baseFunc.map (g ≫ h))).obj (fib d) =
+    (F.map (baseFunc.map h)).obj ((F.map (baseFunc.map g)).obj (fib d))
+
+/--
 The identity coherence property for `functorTo`.
-States that `hom (𝟙 d)` equals the canonical isomorphism from functoriality.
+States that `hom (𝟙 d)` equals the canonical isomorphism from the equality proof.
 -/
 abbrev FunctorToHomId (baseFunc : D ⥤ C) (fib : FunctorToFib F baseFunc)
-    (hom : FunctorToHom F baseFunc fib) :=
-  ∀ d, hom (𝟙 d) =
-    eqToHom ((Functor.congr_obj (congrArg F.map (baseFunc.map_id d)) (fib d)).trans
-             (Functor.congr_obj (F.map_id (baseFunc.obj d)) (fib d)))
+    (hom : FunctorToHom F baseFunc fib) (eq_id : FunctorToEqId F baseFunc fib) :=
+  ∀ d, hom (𝟙 d) = eqToHom (eq_id d)
 
 /--
 The composition coherence property for `functorTo`.
 States that `hom (g ≫ h)` decomposes into transport, `hom g`, and `hom h`.
 -/
 abbrev FunctorToHomComp (baseFunc : D ⥤ C) (fib : FunctorToFib F baseFunc)
-    (hom : FunctorToHom F baseFunc fib) :=
+    (hom : FunctorToHom F baseFunc fib) (eq_comp : FunctorToEqComp F baseFunc fib) :=
   ∀ {d d' d'' : D} (g : d ⟶ d') (h : d' ⟶ d''),
-    hom (g ≫ h) =
-    eqToHom ((Functor.congr_obj (congrArg F.map (baseFunc.map_comp g h)) (fib d)).trans
-             (Functor.congr_obj (F.map_comp (baseFunc.map g) (baseFunc.map h)) (fib d))) ≫
-    (F.map (baseFunc.map h)).map (hom g) ≫ hom h
+    hom (g ≫ h) = eqToHom (eq_comp g h) ≫ (F.map (baseFunc.map h)).map (hom g) ≫ hom h
 
 variable (baseFunc : D ⥤ C)
 variable (fib : FunctorToFib F baseFunc)
 variable (hom : FunctorToHom F baseFunc fib)
-variable (hom_id : FunctorToHomId F baseFunc fib hom)
-variable (hom_comp : FunctorToHomComp F baseFunc fib hom)
+variable (eq_id : FunctorToEqId F baseFunc fib)
+variable (eq_comp : FunctorToEqComp F baseFunc fib)
+variable (hom_id : FunctorToHomId F baseFunc fib hom eq_id)
+variable (hom_comp : FunctorToHomComp F baseFunc fib hom eq_comp)
 
 /--
 Construct a functor into the Grothendieck construction given:
 - `baseFunc : D ⥤ C` - the base functor
 - `fib : ∀ d, F.obj (baseFunc.obj d)` - fiber objects
 - `hom` - transport morphisms for each morphism in D
+- `eq_id`, `eq_comp` - equality proofs for identity and composition
 - coherence conditions `hom_id` and `hom_comp`
 -/
 def functorTo : D ⥤ Grothendieck F where
@@ -414,7 +430,8 @@ def functorTo : D ⥤ Grothendieck F where
 The functor `functorTo` composed with `forget` equals `baseFunc`.
 -/
 theorem functorTo_comp_forget :
-    functorTo F baseFunc fib hom hom_id hom_comp ⋙ Grothendieck.forget F = baseFunc := rfl
+    functorTo F baseFunc fib hom eq_id eq_comp hom_id hom_comp ⋙
+      Grothendieck.forget F = baseFunc := rfl
 
 end FunctorTo
 
@@ -2007,39 +2024,59 @@ abbrev FunctorToHom (baseFunc : E ⥤ C) (fib : FunctorToFib baseFunc) :=
   ∀ {e e' : E} (g : e ⟶ e'), fib e ⟶ (F'.map (baseFunc.map g)).obj (fib e')
 
 /--
-The identity coherence property for `GrothendieckContra'.functorTo`.
-States that `hom (𝟙 e)` equals the canonical isomorphism from functoriality.
+The type of identity equality proofs for `GrothendieckContra'.functorTo`.
+States that the fiber equals the fiber after applying the identity morphism.
+Clients can provide any proof of this equality; the specific proof is irrelevant.
 -/
-abbrev FunctorToHomId (baseFunc : E ⥤ C) (fib : FunctorToFib baseFunc)
-    (hom : FunctorToHom baseFunc fib) :=
-  ∀ e, hom (𝟙 e) =
-    eqToHom ((Functor.congr_obj (F'.map_id (baseFunc.obj e)) (fib e)).symm.trans
-             (Functor.congr_obj (congrArg F'.map (baseFunc.map_id e).symm) (fib e)))
+abbrev FunctorToEqId (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) (baseFunc : E ⥤ C)
+    (fib : FunctorToFib (F' := F') baseFunc) :=
+  ∀ e, fib e = (F'.map (baseFunc.map (𝟙 e))).obj (fib e)
+
+/--
+The type of composition equality proofs for `GrothendieckContra'.functorTo`.
+States that applying morphisms sequentially equals the fiber after applying
+the composite. Clients can provide any proof of this equality.
+-/
+abbrev FunctorToEqComp (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) (baseFunc : E ⥤ C)
+    (fib : FunctorToFib (F' := F') baseFunc) :=
+  ∀ {e e' e'' : E} (g : e ⟶ e') (h : e' ⟶ e''),
+    (F'.map (baseFunc.map g)).obj ((F'.map (baseFunc.map h)).obj (fib e'')) =
+    (F'.map (baseFunc.map (g ≫ h))).obj (fib e'')
+
+/--
+The identity coherence property for `GrothendieckContra'.functorTo`.
+States that `hom (𝟙 e)` equals the canonical isomorphism from the equality proof.
+-/
+abbrev FunctorToHomId (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) (baseFunc : E ⥤ C)
+    (fib : FunctorToFib (F' := F') baseFunc)
+    (hom : FunctorToHom baseFunc fib) (eq_id : FunctorToEqId F' baseFunc fib) :=
+  ∀ e, hom (𝟙 e) = eqToHom (eq_id e)
 
 /--
 The composition coherence property for `GrothendieckContra'.functorTo`.
 States that `hom (g ≫ h)` decomposes into `hom g`, `hom h`, and transport.
 -/
-abbrev FunctorToHomComp (baseFunc : E ⥤ C) (fib : FunctorToFib baseFunc)
-    (hom : FunctorToHom baseFunc fib) :=
+abbrev FunctorToHomComp (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) (baseFunc : E ⥤ C)
+    (fib : FunctorToFib (F' := F') baseFunc)
+    (hom : FunctorToHom baseFunc fib) (eq_comp : FunctorToEqComp F' baseFunc fib) :=
   ∀ {e e' e'' : E} (g : e ⟶ e') (h : e' ⟶ e''),
     hom (g ≫ h) =
-      hom g ≫ (F'.map (baseFunc.map g)).map (hom h) ≫
-      eqToHom ((Functor.congr_obj
-        (F'.map_comp (baseFunc.map h) (baseFunc.map g)) (fib e'')).symm.trans
-        (Functor.congr_obj (congrArg F'.map (baseFunc.map_comp g h).symm) (fib e'')))
+      hom g ≫ (F'.map (baseFunc.map g)).map (hom h) ≫ eqToHom (eq_comp g h)
 
 variable (baseFunc : E ⥤ C)
 variable (fib : FunctorToFib baseFunc)
 variable (hom : FunctorToHom baseFunc fib)
-variable (hom_id : FunctorToHomId baseFunc fib hom)
-variable (hom_comp : FunctorToHomComp baseFunc fib hom)
+variable (eq_id : FunctorToEqId F' baseFunc fib)
+variable (eq_comp : FunctorToEqComp F' baseFunc fib)
+variable (hom_id : FunctorToHomId F' baseFunc fib hom eq_id)
+variable (hom_comp : FunctorToHomComp F' baseFunc fib hom eq_comp)
 
 /--
 Construct a functor into the contravariant Grothendieck construction given:
 - `baseFunc : E ⥤ C` - the base functor
 - `fib : ∀ e, F'.obj (baseFunc.obj e)` - fiber objects
 - `hom` - transport morphisms for each morphism in E
+- `eq_id`, `eq_comp` - equality proofs for identity and composition
 - coherence conditions `hom_id` and `hom_comp`
 
 This is the contravariant dual of `Grothendieck.functorTo`.
@@ -2058,7 +2095,8 @@ def functorTo : E ⥤ GrothendieckContra' F' where
 The functor `functorTo` composed with `forget` equals `baseFunc`.
 -/
 theorem functorTo_comp_forget :
-    functorTo baseFunc fib hom hom_id hom_comp ⋙ forget F' = baseFunc := rfl
+    functorTo baseFunc fib hom eq_id eq_comp hom_id hom_comp ⋙
+      forget F' = baseFunc := rfl
 
 end FunctorTo
 
