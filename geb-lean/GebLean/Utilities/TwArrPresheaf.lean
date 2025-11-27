@@ -162,6 +162,19 @@ def TwArrCopresheaf.sliceGrothendieckObj (F : TwArrCopresheaf C) (y : C) :
   base := y
   fiber := (F.sliceFunctor C y : OverOpPresheaf C y)
 
+/--
+Given a morphism `h : y ⟶ y'` in `C`, we get a morphism in
+`GrothendieckContra' (overOpCopresheafFunctor C)` from
+`F.sliceGrothendieckObj y` to `F.sliceGrothendieckObj y'`.
+
+The base morphism is `h`, and the fiber morphism is `F.sliceNatTrans h`.
+-/
+def TwArrCopresheaf.sliceGrothendieckHom (F : TwArrCopresheaf C) {y y' : C}
+    (h : y ⟶ y') :
+    F.sliceGrothendieckObj C y ⟶ F.sliceGrothendieckObj C y' where
+  base := h
+  fiber := F.sliceNatTrans C h
+
 end TwArrCopresheaf
 
 section TwArrPresheaf
@@ -549,6 +562,19 @@ def TwArrOpCopresheaf.sliceGrothendieckObj (F : TwArrOpCopresheaf C) (x : C) :
   base := x
   fiber := (F.sliceFunctor C x : OverOpPresheaf C x)
 
+/--
+Given a morphism `h : x ⟶ x'` in `C`, we get a morphism in
+`GrothendieckContra' (overOpCopresheafFunctor C)` from
+`F.sliceGrothendieckObj x` to `F.sliceGrothendieckObj x'`.
+
+The base morphism is `h`, and the fiber morphism is `F.sliceNatTrans h`.
+-/
+def TwArrOpCopresheaf.sliceGrothendieckHom (F : TwArrOpCopresheaf C) {x x' : C}
+    (h : x ⟶ x') :
+    F.sliceGrothendieckObj C x ⟶ F.sliceGrothendieckObj C x' where
+  base := h
+  fiber := F.sliceNatTrans C h
+
 end TwArrOpCopresheaf
 
 section TwArrOpPresheaf
@@ -664,6 +690,20 @@ def TwArrOpPresheaf.sliceGrothendieckObj (F : TwArrOpPresheaf C) (x : C) :
     Grothendieck (overCopresheafFunctor C) where
   base := x
   fiber := (F.sliceFunctor C x : OverCopresheaf C x)
+
+/--
+Given a morphism `h : x ⟶ x'` in `Cᵒᵖ'` (which is `h : x' ⟶ x` in C), we get
+a morphism in `Grothendieck (overCopresheafFunctor C)` from
+`F.sliceGrothendieckObj x` to `F.sliceGrothendieckObj x'`.
+
+The base morphism is `h`, and the fiber morphism is `F.sliceNatTrans h` (viewing
+`h` as a C-morphism `x' ⟶ x`).
+-/
+def TwArrOpPresheaf.sliceGrothendieckHom (F : TwArrOpPresheaf C) {x x' : Cᵒᵖ'}
+    (h : @Quiver.Hom Cᵒᵖ' _ x x') :
+    F.sliceGrothendieckObj C x ⟶ F.sliceGrothendieckObj C x' where
+  base := h
+  fiber := F.sliceNatTrans C (h : @Quiver.Hom C _ x' x)
 
 end TwArrOpPresheaf
 
