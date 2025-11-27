@@ -26,6 +26,28 @@ namespace GebLean
 
 open CategoryTheory
 
+section OverUnderAccessors
+
+variable {C : Type u} [Category.{v} C] {X : C}
+
+/--
+The left morphism of an Over morphism. This is the underlying morphism between
+the source objects.
+
+For `f : A ⟶ B` in `Over X`, `Over.left f : A.left ⟶ B.left`.
+-/
+abbrev Over.left {A B : Over X} (f : A ⟶ B) : A.left ⟶ B.left := f.left
+
+/--
+The right morphism of an Under morphism. This is the underlying morphism between
+the target objects.
+
+For `f : A ⟶ B` in `Under X`, `Under.right f : A.right ⟶ B.right`.
+-/
+abbrev Under.right {A B : Under X} (f : A ⟶ B) : A.right ⟶ B.right := f.right
+
+end OverUnderAccessors
+
 section UnderOverEquivalence
 
 variable {D : Type u} [Category.{v} D] (X : D)

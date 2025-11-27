@@ -230,7 +230,7 @@ and morphisms induce maps via `sliceMap`.
 def TwArrPresheaf.sliceFunctor (F : TwArrPresheaf C) (y : C) :
     Over y ⥤ Type v where
   obj f := F.curriedObj C y f.left f.hom
-  map {f f'} g := F.sliceMap C g.left (Over.w g)
+  map {f f'} g := F.sliceMap C (Over.left g) (Over.w g)
   map_id f := by apply F.map_id
   map_comp {f f' f''} g g' := by
     unfold sliceMap
@@ -646,7 +646,7 @@ and morphisms induce maps via `sliceMap`.
 def TwArrOpPresheaf.sliceFunctor (F : TwArrOpPresheaf C) (x : C) :
     Over x ⥤ Type v where
   obj f := F.curriedObj C x f.left f.hom
-  map {f f'} g := F.sliceMap C g.left (Over.w g)
+  map {f f'} g := F.sliceMap C (Over.left g) (Over.w g)
   map_id f := by apply F.map_id
   map_comp {f f' f''} g g' := by
     unfold sliceMap
