@@ -449,6 +449,20 @@ lemma TwArrPresheaf.sliceGrothendieck_hom_comp (F : TwArrPresheaf C) :
     simp [opTwObjMk', CategoryStruct.id, CategoryStruct.comp]
 
 /--
+Bundled data for constructing a functor from `Cᵒᵖ'` into the Grothendieck
+construction over `overCopresheafFunctor`.
+-/
+def TwArrPresheaf.sliceGrothendieckData (F : TwArrPresheaf C) :
+    Grothendieck.FunctorToData (D := Cᵒᵖ') (overCopresheafFunctor C) where
+  baseFunc := 𝟭 Cᵒᵖ'
+  fib := F.sliceGrothendieckFib C
+  hom := fun h => F.sliceGrothendieckHomFiber C h
+  eq_id := F.sliceGrothendieckEqId C
+  eq_comp := F.sliceGrothendieckEqComp C
+  hom_id := F.sliceGrothendieck_hom_id C
+  hom_comp := fun g h => F.sliceGrothendieck_hom_comp C g h
+
+/--
 The slice construction for a `TwArrPresheaf` assembles into a functor from
 `Cᵒᵖ'` to the Grothendieck construction over `overCopresheafFunctor`.
 
@@ -459,15 +473,7 @@ Grothendieck construction. For each morphism `h : y ⟶ y'` in `Cᵒᵖ'` (which
 -/
 def TwArrPresheaf.sliceGrothendieckFunctor (F : TwArrPresheaf C) :
     Cᵒᵖ' ⥤ Grothendieck (overCopresheafFunctor C) :=
-  Grothendieck.functorTo
-    (overCopresheafFunctor C)
-    (𝟭 Cᵒᵖ')
-    (F.sliceGrothendieckFib C)
-    (fun h => F.sliceGrothendieckHomFiber C h)
-    (F.sliceGrothendieckEqId C)
-    (F.sliceGrothendieckEqComp C)
-    (F.sliceGrothendieck_hom_id C)
-    (fun g h => F.sliceGrothendieck_hom_comp C g h)
+  Grothendieck.functorTo (overCopresheafFunctor C) (F.sliceGrothendieckData C)
 
 end TwArrPresheaf
 
