@@ -357,13 +357,13 @@ variable (hom : ∀ {d d' : D} (g : d ⟶ d'),
   (F.map (baseFunc.map g)).obj (fib d) ⟶ fib d')
 
 variable (hom_id : ∀ d, hom (𝟙 d) =
-  eqToHom (Functor.congr_obj (congrArg F.map (baseFunc.map_id d)) (fib d)) ≫
-  eqToHom (Functor.congr_obj (F.map_id (baseFunc.obj d)) (fib d)))
+  eqToHom ((Functor.congr_obj (congrArg F.map (baseFunc.map_id d)) (fib d)).trans
+           (Functor.congr_obj (F.map_id (baseFunc.obj d)) (fib d))))
 
 variable (hom_comp : ∀ {d d' d'' : D} (g : d ⟶ d') (h : d' ⟶ d''),
   hom (g ≫ h) =
-  eqToHom (Functor.congr_obj (congrArg F.map (baseFunc.map_comp g h)) (fib d)) ≫
-  eqToHom (Functor.congr_obj (F.map_comp (baseFunc.map g) (baseFunc.map h)) (fib d)) ≫
+  eqToHom ((Functor.congr_obj (congrArg F.map (baseFunc.map_comp g h)) (fib d)).trans
+           (Functor.congr_obj (F.map_comp (baseFunc.map g) (baseFunc.map h)) (fib d))) ≫
   (F.map (baseFunc.map h)).map (hom g) ≫ hom h)
 
 /--
@@ -1967,13 +1967,14 @@ variable (fib : ∀ e, F'.obj (baseFunc.obj e))
 variable (hom : ∀ {e e' : E} (g : e ⟶ e'),
   fib e ⟶ (F'.map (baseFunc.map g)).obj (fib e'))
 variable (hom_id : ∀ e, hom (𝟙 e) =
-  eqToHom (Functor.congr_obj (F'.map_id (baseFunc.obj e)) (fib e)).symm ≫
-  eqToHom (Functor.congr_obj (congrArg F'.map (baseFunc.map_id e).symm) (fib e)))
+  eqToHom ((Functor.congr_obj (F'.map_id (baseFunc.obj e)) (fib e)).symm.trans
+           (Functor.congr_obj (congrArg F'.map (baseFunc.map_id e).symm) (fib e))))
 variable (hom_comp : ∀ {e e' e'' : E} (g : e ⟶ e') (h : e' ⟶ e''),
   hom (g ≫ h) =
     hom g ≫ (F'.map (baseFunc.map g)).map (hom h) ≫
-    eqToHom (Functor.congr_obj (F'.map_comp (baseFunc.map h) (baseFunc.map g)) (fib e'')).symm ≫
-    eqToHom (Functor.congr_obj (congrArg F'.map (baseFunc.map_comp g h).symm) (fib e'')))
+    eqToHom ((Functor.congr_obj
+      (F'.map_comp (baseFunc.map h) (baseFunc.map g)) (fib e'')).symm.trans
+      (Functor.congr_obj (congrArg F'.map (baseFunc.map_comp g h).symm) (fib e''))))
 
 /--
 Construct a functor into the contravariant Grothendieck construction given:
