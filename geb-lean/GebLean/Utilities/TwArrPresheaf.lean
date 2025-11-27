@@ -73,23 +73,23 @@ Given a morphism in `Over y` from `(f' : x' ⟶ y)` to `(f : x ⟶ y)`, i.e.,
 `g : x' ⟶ x` with `g ≫ f = f'`, we get a twisted-arrow morphism from
 `twObjMk' f` to `twObjMk' f'` with `domArr = g` and `codArr = 𝟙 y`.
 
-This induces a map `F.obj (twObjMk' f) → F.obj (twObjMk' f')` via `F.map`.
+This induces a map `F.curriedObj C y x f → F.curriedObj C y x' f'` via `F.map`.
 -/
 def TwArrCopresheaf.sliceMap (F : TwArrCopresheaf C) {y : C} {x x' : C}
     {f : x ⟶ y} {f' : x' ⟶ y} (g : x' ⟶ x) (comm : g ≫ f = f') :
-    F.obj (twObjMk' f) → F.obj (twObjMk' f') :=
+    F.curriedObj C y x f → F.curriedObj C y x' f' :=
   F.map (twHomMk' g (𝟙 y) (by
     simp only [twObjMk'_arr]
     rw [show f ≫ 𝟙 y = f from Category.comp_id f, comm]))
 
 /--
 For a fixed `y : C`, a `TwArrCopresheaf` induces a functor from `(Over y)ᵒᵖ'`
-to `Type v`. Objects `(f : x ⟶ y)` in `Over y` map to `F.obj (twObjMk' f)`,
+to `Type v`. Objects `(f : x ⟶ y)` in `Over y` map to `F.curriedObj C y x f`,
 and morphisms in the opposite direction induce maps via `sliceMap`.
 -/
 def TwArrCopresheaf.sliceFunctor (F : TwArrCopresheaf C) (y : C) :
     (Over y)ᵒᵖ' ⥤ Type v where
-  obj f := F.obj (twObjMk' f.hom)
+  obj f := F.curriedObj C y f.left f.hom
   map {f f'} g := F.sliceMap C g.left (Over.w g)
   map_id f := by apply F.map_id
   map_comp {f f' f''} g g' := by
@@ -213,23 +213,23 @@ Given a morphism in `Over y` from `(f : x ⟶ y)` to `(f' : x' ⟶ y)`, i.e.,
 `g : x ⟶ x'` with `g ≫ f' = f`, we get an opposite-twisted-arrow morphism from
 `opTwObjMk' f` to `opTwObjMk' f'` with `domArr = g` and `codArr = 𝟙 y`.
 
-This induces a map `F.obj (opTwObjMk' f) → F.obj (opTwObjMk' f')` via `F.map`.
+This induces a map `F.curriedObj C y x f → F.curriedObj C y x' f'` via `F.map`.
 -/
 def TwArrPresheaf.sliceMap (F : TwArrPresheaf C) {y : C} {x x' : C}
     {f : x ⟶ y} {f' : x' ⟶ y} (g : x ⟶ x') (comm : g ≫ f' = f) :
-    F.obj (opTwObjMk' f) → F.obj (opTwObjMk' f') :=
+    F.curriedObj C y x f → F.curriedObj C y x' f' :=
   F.map (opTwHomMk' g (𝟙 y) (by
     simp only [opTwObjMk'_arr]
     rw [show f' ≫ 𝟙 y = f' from Category.comp_id f', comm]))
 
 /--
 For a fixed `y : C`, a `TwArrPresheaf` induces a functor from `Over y`
-to `Type v`. Objects `(f : x ⟶ y)` in `Over y` map to `F.obj (opTwObjMk' f)`,
+to `Type v`. Objects `(f : x ⟶ y)` in `Over y` map to `F.curriedObj C y x f`,
 and morphisms induce maps via `sliceMap`.
 -/
 def TwArrPresheaf.sliceFunctor (F : TwArrPresheaf C) (y : C) :
     Over y ⥤ Type v where
-  obj f := F.obj (opTwObjMk' f.hom)
+  obj f := F.curriedObj C y f.left f.hom
   map {f f'} g := F.sliceMap C g.left (Over.w g)
   map_id f := by apply F.map_id
   map_comp {f f' f''} g g' := by
@@ -492,23 +492,23 @@ Given a morphism in `Over x` from `(f' : y' ⟶ x)` to `(f : y ⟶ x)`, i.e.,
 `g : y' ⟶ y` with `g ≫ f = f'`, we get a twisted-arrow-op morphism from
 `twOpObjMk' f` to `twOpObjMk' f'` with `domArr = 𝟙 x` and `codArr = g`.
 
-This induces a map `F.obj (twOpObjMk' f) → F.obj (twOpObjMk' f')` via `F.map`.
+This induces a map `F.curriedObj C x y f → F.curriedObj C x y' f'` via `F.map`.
 -/
 def TwArrOpCopresheaf.sliceMap (F : TwArrOpCopresheaf C) {x : C} {y y' : C}
     {f : y ⟶ x} {f' : y' ⟶ x} (g : y' ⟶ y) (comm : g ≫ f = f') :
-    F.obj (twOpObjMk' f) → F.obj (twOpObjMk' f') :=
+    F.curriedObj C x y f → F.curriedObj C x y' f' :=
   F.map (twOpHomMk' (𝟙 x) g (by
     simp only [twOpObjMk'_arr]
     rw [show f ≫ 𝟙 x = f from Category.comp_id f, comm]))
 
 /--
 For a fixed `x : C`, a `TwArrOpCopresheaf` induces a functor from `(Over x)ᵒᵖ'`
-to `Type v`. Objects `(f : y ⟶ x)` in `Over x` map to `F.obj (twOpObjMk' f)`,
+to `Type v`. Objects `(f : y ⟶ x)` in `Over x` map to `F.curriedObj C x y f`,
 and morphisms in the opposite direction induce maps via `sliceMap`.
 -/
 def TwArrOpCopresheaf.sliceFunctor (F : TwArrOpCopresheaf C) (x : C) :
     (Over x)ᵒᵖ' ⥤ Type v where
-  obj f := F.obj (twOpObjMk' f.hom)
+  obj f := F.curriedObj C x f.left f.hom
   map {f f'} g := F.sliceMap C g.left (Over.w g)
   map_id f := by apply F.map_id
   map_comp {f f' f''} g g' := by
@@ -629,23 +629,23 @@ Given a morphism in `Over x` from `(f : y ⟶ x)` to `(f' : y' ⟶ x)`, i.e.,
 `g : y ⟶ y'` with `g ≫ f' = f`, we get a co-twisted-arrow morphism from
 `coTwObjMk' f` to `coTwObjMk' f'` with `domArr = 𝟙 x` and `codArr = g`.
 
-This induces a map `F.obj (coTwObjMk' f) → F.obj (coTwObjMk' f')` via `F.map`.
+This induces a map `F.curriedObj C x y f → F.curriedObj C x y' f'` via `F.map`.
 -/
 def TwArrOpPresheaf.sliceMap (F : TwArrOpPresheaf C) {x : C} {y y' : C}
     {f : y ⟶ x} {f' : y' ⟶ x} (g : y ⟶ y') (comm : g ≫ f' = f) :
-    F.obj (coTwObjMk' f) → F.obj (coTwObjMk' f') :=
+    F.curriedObj C x y f → F.curriedObj C x y' f' :=
   F.map (coTwHomMk' (𝟙 x) g (by
     simp only [coTwObjMk'_arr]
     rw [show f' ≫ 𝟙 x = f' from Category.comp_id f', comm]))
 
 /--
 For a fixed `x : C`, a `TwArrOpPresheaf` induces a functor from `Over x`
-to `Type v`. Objects `(f : y ⟶ x)` in `Over x` map to `F.obj (coTwObjMk' f)`,
+to `Type v`. Objects `(f : y ⟶ x)` in `Over x` map to `F.curriedObj C x y f`,
 and morphisms induce maps via `sliceMap`.
 -/
 def TwArrOpPresheaf.sliceFunctor (F : TwArrOpPresheaf C) (x : C) :
     Over x ⥤ Type v where
-  obj f := F.obj (coTwObjMk' f.hom)
+  obj f := F.curriedObj C x f.left f.hom
   map {f f'} g := F.sliceMap C g.left (Over.w g)
   map_id f := by apply F.map_id
   map_comp {f f' f''} g g' := by
