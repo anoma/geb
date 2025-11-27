@@ -677,7 +677,7 @@ def NatTransToData.comp {dataG dataH dataK : FunctorToData F (D := D)}
 /--
 Category instance on `FunctorToData F (D := D)` using `NatTransToData` as morphisms.
 -/
-instance : Category (FunctorToData F (D := D)) where
+instance functorToDataCategory : Category (FunctorToData F (D := D)) where
   Hom := NatTransToData F
   id := NatTransToData.id F
   comp {X Y Z} := NatTransToData.comp (F := F)
@@ -695,6 +695,36 @@ instance : Category (FunctorToData F (D := D)) where
     unfold NatTransToData.comp
     congr 1
     exact Category.assoc _ _ _
+
+/--
+Functor from `FunctorToData F` to the functor category `D ⥤ Grothendieck F`.
+Sends `data` to `functorTo F data` and morphisms via `natTransTo`.
+-/
+def functorToDataToFunctorCat : FunctorToData F (D := D) ⥤ (D ⥤ Grothendieck F) where
+  obj := functorTo F
+  map := natTransTo F _ _
+  map_id _ := rfl
+  map_comp _ _ := rfl
+
+/--
+Functor from the functor category `D ⥤ Grothendieck F` to `FunctorToData F`.
+Sends `G` to `ofFunctor F G` and morphisms via `ofNatTrans`.
+-/
+def functorCatToFunctorToData : (D ⥤ Grothendieck F) ⥤ FunctorToData F (D := D) where
+  obj := ofFunctor F
+  map {G H} α := ofNatTrans F (ofFunctor F G) (ofFunctor F H) α
+  map_id _ := rfl
+  map_comp _ _ := rfl
+
+/--
+Categorical isomorphism between `FunctorToData F` and the functor category
+`D ⥤ Grothendieck F`.
+-/
+def functorToDataIsoCat : FunctorToData F (D := D) ≅Cat (D ⥤ Grothendieck F) where
+  hom := functorToDataToFunctorCat F (D := D)
+  inv := functorCatToFunctorToData F (D := D)
+  hom_inv_id := rfl
+  inv_hom_id := rfl
 
 end FunctorToDataCategory
 
