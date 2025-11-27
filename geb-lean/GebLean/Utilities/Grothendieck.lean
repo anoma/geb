@@ -351,20 +351,48 @@ namespace Grothendieck
 
 section FunctorTo
 
+/--
+The type of fiber functions for `functorTo`.
+Given a base functor `baseFunc : D ⥤ C`, a fiber function assigns to each
+`d : D` an object in the fiber category `F.obj (baseFunc.obj d)`.
+-/
+abbrev FunctorToFib (baseFunc : D ⥤ C) := ∀ d, F.obj (baseFunc.obj d)
+
+/--
+The type of morphism functions for `functorTo`.
+Given a fiber function `fib`, a morphism function assigns to each morphism
+`g : d ⟶ d'` in `D` a morphism from the transported fiber to the target fiber.
+-/
+abbrev FunctorToHom (baseFunc : D ⥤ C) (fib : FunctorToFib F baseFunc) :=
+  ∀ {d d' : D} (g : d ⟶ d'), (F.map (baseFunc.map g)).obj (fib d) ⟶ fib d'
+
+/--
+The identity coherence property for `functorTo`.
+States that `hom (𝟙 d)` equals the canonical isomorphism from functoriality.
+-/
+abbrev FunctorToHomId (baseFunc : D ⥤ C) (fib : FunctorToFib F baseFunc)
+    (hom : FunctorToHom F baseFunc fib) :=
+  ∀ d, hom (𝟙 d) =
+    eqToHom ((Functor.congr_obj (congrArg F.map (baseFunc.map_id d)) (fib d)).trans
+             (Functor.congr_obj (F.map_id (baseFunc.obj d)) (fib d)))
+
+/--
+The composition coherence property for `functorTo`.
+States that `hom (g ≫ h)` decomposes into transport, `hom g`, and `hom h`.
+-/
+abbrev FunctorToHomComp (baseFunc : D ⥤ C) (fib : FunctorToFib F baseFunc)
+    (hom : FunctorToHom F baseFunc fib) :=
+  ∀ {d d' d'' : D} (g : d ⟶ d') (h : d' ⟶ d''),
+    hom (g ≫ h) =
+    eqToHom ((Functor.congr_obj (congrArg F.map (baseFunc.map_comp g h)) (fib d)).trans
+             (Functor.congr_obj (F.map_comp (baseFunc.map g) (baseFunc.map h)) (fib d))) ≫
+    (F.map (baseFunc.map h)).map (hom g) ≫ hom h
+
 variable (baseFunc : D ⥤ C)
-variable (fib : ∀ d, F.obj (baseFunc.obj d))
-variable (hom : ∀ {d d' : D} (g : d ⟶ d'),
-  (F.map (baseFunc.map g)).obj (fib d) ⟶ fib d')
-
-variable (hom_id : ∀ d, hom (𝟙 d) =
-  eqToHom ((Functor.congr_obj (congrArg F.map (baseFunc.map_id d)) (fib d)).trans
-           (Functor.congr_obj (F.map_id (baseFunc.obj d)) (fib d))))
-
-variable (hom_comp : ∀ {d d' d'' : D} (g : d ⟶ d') (h : d' ⟶ d''),
-  hom (g ≫ h) =
-  eqToHom ((Functor.congr_obj (congrArg F.map (baseFunc.map_comp g h)) (fib d)).trans
-           (Functor.congr_obj (F.map_comp (baseFunc.map g) (baseFunc.map h)) (fib d))) ≫
-  (F.map (baseFunc.map h)).map (hom g) ≫ hom h)
+variable (fib : FunctorToFib F baseFunc)
+variable (hom : FunctorToHom F baseFunc fib)
+variable (hom_id : FunctorToHomId F baseFunc fib hom)
+variable (hom_comp : FunctorToHomComp F baseFunc fib hom)
 
 /--
 Construct a functor into the Grothendieck construction given:
@@ -1962,19 +1990,50 @@ end FunctorFrom
 section FunctorTo
 
 variable {E : Type*} [Category E]
+
+/--
+The type of fiber functions for `GrothendieckContra'.functorTo`.
+Given a base functor `baseFunc : E ⥤ C`, a fiber function assigns to each
+`e : E` an object in the fiber category `F'.obj (baseFunc.obj e)`.
+-/
+abbrev FunctorToFib (baseFunc : E ⥤ C) := ∀ e, F'.obj (baseFunc.obj e)
+
+/--
+The type of morphism functions for `GrothendieckContra'.functorTo`.
+Given a fiber function `fib`, a morphism function assigns to each morphism
+`g : e ⟶ e'` in `E` a morphism from the source fiber to the transported fiber.
+-/
+abbrev FunctorToHom (baseFunc : E ⥤ C) (fib : FunctorToFib baseFunc) :=
+  ∀ {e e' : E} (g : e ⟶ e'), fib e ⟶ (F'.map (baseFunc.map g)).obj (fib e')
+
+/--
+The identity coherence property for `GrothendieckContra'.functorTo`.
+States that `hom (𝟙 e)` equals the canonical isomorphism from functoriality.
+-/
+abbrev FunctorToHomId (baseFunc : E ⥤ C) (fib : FunctorToFib baseFunc)
+    (hom : FunctorToHom baseFunc fib) :=
+  ∀ e, hom (𝟙 e) =
+    eqToHom ((Functor.congr_obj (F'.map_id (baseFunc.obj e)) (fib e)).symm.trans
+             (Functor.congr_obj (congrArg F'.map (baseFunc.map_id e).symm) (fib e)))
+
+/--
+The composition coherence property for `GrothendieckContra'.functorTo`.
+States that `hom (g ≫ h)` decomposes into `hom g`, `hom h`, and transport.
+-/
+abbrev FunctorToHomComp (baseFunc : E ⥤ C) (fib : FunctorToFib baseFunc)
+    (hom : FunctorToHom baseFunc fib) :=
+  ∀ {e e' e'' : E} (g : e ⟶ e') (h : e' ⟶ e''),
+    hom (g ≫ h) =
+      hom g ≫ (F'.map (baseFunc.map g)).map (hom h) ≫
+      eqToHom ((Functor.congr_obj
+        (F'.map_comp (baseFunc.map h) (baseFunc.map g)) (fib e'')).symm.trans
+        (Functor.congr_obj (congrArg F'.map (baseFunc.map_comp g h).symm) (fib e'')))
+
 variable (baseFunc : E ⥤ C)
-variable (fib : ∀ e, F'.obj (baseFunc.obj e))
-variable (hom : ∀ {e e' : E} (g : e ⟶ e'),
-  fib e ⟶ (F'.map (baseFunc.map g)).obj (fib e'))
-variable (hom_id : ∀ e, hom (𝟙 e) =
-  eqToHom ((Functor.congr_obj (F'.map_id (baseFunc.obj e)) (fib e)).symm.trans
-           (Functor.congr_obj (congrArg F'.map (baseFunc.map_id e).symm) (fib e))))
-variable (hom_comp : ∀ {e e' e'' : E} (g : e ⟶ e') (h : e' ⟶ e''),
-  hom (g ≫ h) =
-    hom g ≫ (F'.map (baseFunc.map g)).map (hom h) ≫
-    eqToHom ((Functor.congr_obj
-      (F'.map_comp (baseFunc.map h) (baseFunc.map g)) (fib e'')).symm.trans
-      (Functor.congr_obj (congrArg F'.map (baseFunc.map_comp g h).symm) (fib e''))))
+variable (fib : FunctorToFib baseFunc)
+variable (hom : FunctorToHom baseFunc fib)
+variable (hom_id : FunctorToHomId baseFunc fib hom)
+variable (hom_comp : FunctorToHomComp baseFunc fib hom)
 
 /--
 Construct a functor into the contravariant Grothendieck construction given:
