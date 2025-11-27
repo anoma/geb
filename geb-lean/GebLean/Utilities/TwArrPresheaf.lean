@@ -331,27 +331,6 @@ def TwArrPresheaf.sliceGrothendieckHomFiber (F : TwArrPresheaf C) :
       (F.sliceGrothendieckFib C) :=
   fun h => F.sliceNatTrans C h
 
-/--
-Equality proof for identity: the fiber after applying identity equals the fiber.
--/
-def TwArrPresheaf.sliceGrothendieckEqId (F : TwArrPresheaf C) :
-    Grothendieck.FunctorToEqId (overCopresheafFunctor C) (𝟭 Cᵒᵖ')
-      (F.sliceGrothendieckFib C) := by
-  intro y
-  simp only [sliceGrothendieckFib, Functor.id_map]
-  exact congrFun (congrArg Functor.obj ((overCopresheafFunctor C).map_id y)) _
-
-/--
-Equality proof for composition: the fiber after applying composite equals
-applying them sequentially.
--/
-def TwArrPresheaf.sliceGrothendieckEqComp (F : TwArrPresheaf C) :
-    Grothendieck.FunctorToEqComp (overCopresheafFunctor C) (𝟭 Cᵒᵖ')
-      (F.sliceGrothendieckFib C) := by
-  intro y y' y'' g h
-  simp only [sliceGrothendieckFib, Functor.id_map]
-  exact congrFun (congrArg Functor.obj ((overCopresheafFunctor C).map_comp g h)) _
-
 private lemma TwArrPresheaf.opTwObjMk'_comp_id {y : C} (f : Over y) :
     opTwObjMk' (f.hom ≫ 𝟙 y) = opTwObjMk' f.hom := by
   unfold opTwObjMk'
@@ -390,48 +369,68 @@ private lemma TwArrPresheaf.sliceNatTrans_id_app_is_id
   rw [hmor, eqToHom_map]
 
 /--
-Identity coherence for sliceGrothendieckHomFiber.
+Identity coherence for sliceGrothendieckHomFiber: `hom (𝟙 y) ≍ 𝟙 (fib y)`.
 -/
 lemma TwArrPresheaf.sliceGrothendieck_hom_id (F : TwArrPresheaf C) :
     Grothendieck.FunctorToHomId (overCopresheafFunctor C) (𝟭 Cᵒᵖ')
-      (F.sliceGrothendieckFib C) (F.sliceGrothendieckHomFiber C)
-      (F.sliceGrothendieckEqId C) := by
+      (F.sliceGrothendieckFib C) (F.sliceGrothendieckHomFiber C) := by
   intro y
+  have p : ((overCopresheafFunctor C).map ((𝟭 Cᵒᵖ').map (𝟙 y))).obj
+      (F.sliceGrothendieckFib C y) = F.sliceGrothendieckFib C y := by
+    simp only [Functor.id_map]
+    exact congrFun (congrArg Functor.obj ((overCopresheafFunctor C).map_id y)) _
+  apply HEq.symm
+  apply (heq_iff_eqToHom_comp
+    (𝟙 (F.sliceGrothendieckFib C y))
+    (F.sliceGrothendieckHomFiber C (𝟙 y)) p).mpr
   apply NatTrans.ext
   funext f
-  simp only [sliceGrothendieckHomFiber, Functor.id_obj, Functor.id_map]
+  simp only [Functor.id_obj]
   have h := sliceNatTrans_id_app_is_id C F y f
-  simp only [sliceNatTrans] at h ⊢
-  rw [eqToHom_app]
-  refine Eq.trans h ?_
-  congr 1
+  simp only [sliceGrothendieckHomFiber, sliceNatTrans] at h ⊢
+  rw [NatTrans.comp_app, eqToHom_app, NatTrans.id_app]
+  simp only [Category.comp_id]
+  rw [h.symm]
+  simp
 
 /--
-Composition coherence for sliceGrothendieckHomFiber.
+Composition coherence for sliceGrothendieckHomFiber:
+`hom (g ≫ h) ≍ (F.map h).map (hom g) ≫ hom h`.
 -/
 lemma TwArrPresheaf.sliceGrothendieck_hom_comp (F : TwArrPresheaf C) :
     Grothendieck.FunctorToHomComp (overCopresheafFunctor C) (𝟭 Cᵒᵖ')
-      (F.sliceGrothendieckFib C) (F.sliceGrothendieckHomFiber C)
-      (F.sliceGrothendieckEqComp C) := by
+      (F.sliceGrothendieckFib C) (F.sliceGrothendieckHomFiber C) := by
   intro y y' y'' g h
+  have p : ((overCopresheafFunctor C).map ((𝟭 Cᵒᵖ').map (g ≫ h))).obj
+      (F.sliceGrothendieckFib C y) =
+      ((overCopresheafFunctor C).map ((𝟭 Cᵒᵖ').map h)).obj
+        (((overCopresheafFunctor C).map ((𝟭 Cᵒᵖ').map g)).obj
+          (F.sliceGrothendieckFib C y)) := by
+    simp only [Functor.id_map]
+    exact congrFun (congrArg Functor.obj ((overCopresheafFunctor C).map_comp g h)) _
+  apply HEq.symm
+  apply (heq_iff_eqToHom_comp
+    (((overCopresheafFunctor C).map ((𝟭 Cᵒᵖ').map h)).map
+      (F.sliceGrothendieckHomFiber C g) ≫ F.sliceGrothendieckHomFiber C h)
+    (F.sliceGrothendieckHomFiber C (g ≫ h)) p).mpr
   apply NatTrans.ext
   funext f
-  simp only [sliceGrothendieckHomFiber, sliceNatTrans, Functor.id_obj, Functor.id_map]
-  rw [NatTrans.comp_app, NatTrans.comp_app]
+  simp only [Functor.id_obj, Functor.id_map]
+  simp only [sliceGrothendieckHomFiber, sliceNatTrans]
+  rw [NatTrans.comp_app, eqToHom_app, NatTrans.comp_app]
   simp only [overCopresheafFunctor, copresheafConstruction,
     copresheafConstructionMap, Functor.op', Functor.comp_map,
-    Functor.whiskeringLeft, Over.mapFunctor, Functor.comp_obj,
-    Functor.whiskerLeft_app]
-  rw [eqToHom_app]
+    Functor.whiskeringLeft, Over.mapFunctor, Functor.comp_obj]
   funext x
-  simp only [types_comp_apply]
-  rw [← types_comp_apply (F.map _) (F.map _)]
-  rw [← F.map_comp]
+  simp only [types_comp_apply, Functor.whiskerLeft_app]
+  rw [← types_comp_apply (F.map _) (F.map _), ← F.map_comp]
   have hassoc : f.hom ≫ h ≫ g = (f.hom ≫ h) ≫ g := (Category.assoc _ _ _).symm
   have hsrc_type : opTwObjMk' (f.hom ≫ h ≫ g) = opTwObjMk' ((f.hom ≫ h) ≫ g) :=
     congrArg opTwObjMk' hassoc
-  conv_rhs => rw [← types_comp_apply (eqToHom _) (F.map _)]
-  conv_rhs => rw [← functor_map_eqToHom (p := hsrc_type), ← F.map_comp]
+  conv_lhs =>
+    rw [← types_comp_apply (eqToHom _) (F.map _)]
+    rw [← functor_map_eqToHom (p := hsrc_type)]
+    rw [← F.map_comp]
   refine congrFun (congrArg F.map ?_) x
   apply CategoryOfElementsContra'.hom_ext
   simp only [opTwHomMk', CategoryOfElements.homMk]
@@ -440,11 +439,11 @@ lemma TwArrPresheaf.sliceGrothendieck_hom_comp (F : TwArrPresheaf C) :
   have hfst_rfl : (congrArg Sigma.fst hsrc_type).symm = rfl := by
     apply proof_irrel
   rw [hfst_rfl, eqToHom_refl]
-  simp only [Category.comp_id]
   unfold functorOp'Obj at *
   simp only [Over.map_obj_left]
   apply Prod.ext
-  · rfl
+  · simp only [CategoryOp'Inst, prod_comp]
+    simp [opTwObjMk', CategoryStruct.id]
   · simp only [CategoryOp'Inst, prod_comp]
     simp [opTwObjMk', CategoryStruct.id, CategoryStruct.comp]
 
@@ -457,8 +456,6 @@ def TwArrPresheaf.sliceGrothendieckData (F : TwArrPresheaf C) :
   baseFunc := 𝟭 Cᵒᵖ'
   fib := F.sliceGrothendieckFib C
   hom := fun h => F.sliceGrothendieckHomFiber C h
-  eq_id := F.sliceGrothendieckEqId C
-  eq_comp := F.sliceGrothendieckEqComp C
   hom_id := F.sliceGrothendieck_hom_id C
   hom_comp := fun g h => F.sliceGrothendieck_hom_comp C g h
 
