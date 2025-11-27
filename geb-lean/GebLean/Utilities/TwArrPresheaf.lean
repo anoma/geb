@@ -114,6 +114,16 @@ def TwArrCopresheaf.sliceFunctor (F : TwArrCopresheaf C) (y : C) :
       simp
 
 /--
+For a `TwArrCopresheaf F` and object `y : C`, this gives the object in the
+contravariant Grothendieck construction over `overOpCopresheafFunctor` with
+base `y` and fiber `F.sliceFunctor C y`.
+-/
+def TwArrCopresheaf.sliceGrothendieckObj (F : TwArrCopresheaf C) (y : C) :
+    GrothendieckContra' (overOpCopresheafFunctor C) where
+  base := y
+  fiber := (F.sliceFunctor C y : OverOpPresheaf C y)
+
+/--
 Given a morphism `h : y ⟶ y'` in `C`, we get a natural transformation from
 `F.sliceFunctor y` to `(overOpMapFunctor C).map h ⋙ F.sliceFunctor y'`.
 
@@ -151,16 +161,6 @@ def TwArrCopresheaf.sliceNatTrans (F : TwArrCopresheaf C) {y y' : C}
       simp only [categoryOfElements]
       simp only [prod_comp]
       simp
-
-/--
-For a `TwArrCopresheaf F` and object `y : C`, this gives the object in the
-contravariant Grothendieck construction over `overOpCopresheafFunctor` with
-base `y` and fiber `F.sliceFunctor C y`.
--/
-def TwArrCopresheaf.sliceGrothendieckObj (F : TwArrCopresheaf C) (y : C) :
-    GrothendieckContra' (overOpCopresheafFunctor C) where
-  base := y
-  fiber := (F.sliceFunctor C y : OverOpPresheaf C y)
 
 /--
 Given a morphism `h : y ⟶ y'` in `C`, we get a morphism in
@@ -254,6 +254,16 @@ def TwArrPresheaf.sliceFunctor (F : TwArrPresheaf C) (y : C) :
       exact (Category.id_comp (𝟙 y)).symm
 
 /--
+For a `TwArrPresheaf F` and object `y : C`, this gives the object in the
+Grothendieck construction over `overCopresheafFunctor` with base `y` and
+fiber `F.sliceFunctor C y`.
+-/
+def TwArrPresheaf.sliceGrothendieckObj (F : TwArrPresheaf C) (y : C) :
+    Grothendieck (overCopresheafFunctor C) where
+  base := y
+  fiber := (F.sliceFunctor C y : OverCopresheaf C y)
+
+/--
 Given a morphism `h : y ⟶ y'` in `C`, we get a natural transformation from
 `(precompOverMap C h).obj (F.sliceFunctor y')` to `F.sliceFunctor y`.
 
@@ -285,16 +295,6 @@ def TwArrPresheaf.sliceNatTrans (F : TwArrPresheaf C) {y y' : C}
          Category.toCategoryStruct, instCategoryOpTwistedArrow', OpProdInst']
       change (h ≫ 𝟙 y', g.left ≫ 𝟙 f'.left).1 = (𝟙 y ≫ h, 𝟙 f.left ≫ g.left).1
       simp only [Category.id_comp, Category.comp_id]
-
-/--
-For a `TwArrPresheaf F` and object `y : C`, this gives the object in the
-Grothendieck construction over `overCopresheafFunctor` with base `y` and
-fiber `F.sliceFunctor C y`.
--/
-def TwArrPresheaf.sliceGrothendieckObj (F : TwArrPresheaf C) (y : C) :
-    Grothendieck (overCopresheafFunctor C) where
-  base := y
-  fiber := (F.sliceFunctor C y : OverCopresheaf C y)
 
 /--
 Given a morphism `h : y ⟶ y'` in `Cᵒᵖ'` (which is `h : y' ⟶ y` in C), we get
@@ -514,6 +514,16 @@ def TwArrOpCopresheaf.sliceFunctor (F : TwArrOpCopresheaf C) (x : C) :
       rfl
 
 /--
+For a `TwArrOpCopresheaf F` and object `x : C`, this gives the object in the
+contravariant Grothendieck construction over `overOpCopresheafFunctor` with
+base `x` and fiber `F.sliceFunctor C x`.
+-/
+def TwArrOpCopresheaf.sliceGrothendieckObj (F : TwArrOpCopresheaf C) (x : C) :
+    GrothendieckContra' (overOpCopresheafFunctor C) where
+  base := x
+  fiber := (F.sliceFunctor C x : OverOpPresheaf C x)
+
+/--
 Given a morphism `h : x ⟶ x'` in `C`, we get a natural transformation from
 `F.sliceFunctor x` to `(overOpMapFunctor C).map h ⋙ F.sliceFunctor x'`.
 
@@ -551,16 +561,6 @@ def TwArrOpCopresheaf.sliceNatTrans (F : TwArrOpCopresheaf C) {x x' : C}
       simp only [categoryOfElements]
       simp only [prod_comp]
       simp
-
-/--
-For a `TwArrOpCopresheaf F` and object `x : C`, this gives the object in the
-contravariant Grothendieck construction over `overOpCopresheafFunctor` with
-base `x` and fiber `F.sliceFunctor C x`.
--/
-def TwArrOpCopresheaf.sliceGrothendieckObj (F : TwArrOpCopresheaf C) (x : C) :
-    GrothendieckContra' (overOpCopresheafFunctor C) where
-  base := x
-  fiber := (F.sliceFunctor C x : OverOpPresheaf C x)
 
 /--
 Given a morphism `h : x ⟶ x'` in `C`, we get a morphism in
@@ -648,6 +648,16 @@ def TwArrOpPresheaf.sliceFunctor (F : TwArrOpPresheaf C) (x : C) :
       rfl
 
 /--
+For a `TwArrOpPresheaf F` and object `x : C`, this gives the object in the
+Grothendieck construction over `overCopresheafFunctor` with base `x` and
+fiber `F.sliceFunctor C x`.
+-/
+def TwArrOpPresheaf.sliceGrothendieckObj (F : TwArrOpPresheaf C) (x : C) :
+    Grothendieck (overCopresheafFunctor C) where
+  base := x
+  fiber := (F.sliceFunctor C x : OverCopresheaf C x)
+
+/--
 Given a morphism `h : x ⟶ x'` in `C`, we get a natural transformation from
 `(precompOverMap h).obj (F.sliceFunctor x')` to `F.sliceFunctor x`.
 
@@ -680,16 +690,6 @@ def TwArrOpPresheaf.sliceNatTrans (F : TwArrOpPresheaf C) {x x' : C}
          Category.toCategoryStruct, instCategoryCoTwistedArrow, CategoryOp'Inst]
       change (h ≫ 𝟙 x', g.left ≫ 𝟙 f'.left).2 = (𝟙 x ≫ h, 𝟙 f.left ≫ g.left).2
       simp only [Category.id_comp, Category.comp_id]
-
-/--
-For a `TwArrOpPresheaf F` and object `x : C`, this gives the object in the
-Grothendieck construction over `overCopresheafFunctor` with base `x` and
-fiber `F.sliceFunctor C x`.
--/
-def TwArrOpPresheaf.sliceGrothendieckObj (F : TwArrOpPresheaf C) (x : C) :
-    Grothendieck (overCopresheafFunctor C) where
-  base := x
-  fiber := (F.sliceFunctor C x : OverCopresheaf C x)
 
 /--
 Given a morphism `h : x ⟶ x'` in `Cᵒᵖ'` (which is `h : x' ⟶ x` in C), we get
