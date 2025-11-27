@@ -2471,6 +2471,240 @@ def functorToEquiv :
 
 end FunctorTo
 
+section NatTransTo
+
+variable {E : Type*} [Category E]
+
+/--
+The type of fiber morphism functions for `natTransTo` in the contravariant case.
+Given a base natural transformation `baseNat : dataG.baseFunc ⟶ dataH.baseFunc`,
+a fiber morphism function assigns to each `e : E` a morphism from the source
+fiber to the transported target fiber.
+-/
+abbrev NatTransToFibMor (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂})
+    (dataG dataH : FunctorToData F' (E := E))
+    (baseNat : dataG.baseFunc ⟶ dataH.baseFunc) :=
+  ∀ e, dataG.fib e ⟶ (F'.map (baseNat.app e)).obj (dataH.fib e)
+
+/--
+The type of base equality proofs for `natTransTo` in the contravariant case.
+This equality follows from naturality of `baseNat` and functoriality of `F'`.
+Clients can provide any proof of this equality.
+-/
+abbrev NatTransToEqBase (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂})
+    (dataG dataH : FunctorToData F' (E := E))
+    (baseNat : dataG.baseFunc ⟶ dataH.baseFunc) :=
+  ∀ {e e' : E} (f : e ⟶ e'),
+    let comp1 : dataG.baseFunc.obj e ⟶ dataH.baseFunc.obj e' :=
+      baseNat.app e ≫ dataH.baseFunc.map f
+    let comp2 : dataG.baseFunc.obj e ⟶ dataH.baseFunc.obj e' :=
+      dataG.baseFunc.map f ≫ baseNat.app e'
+    (F'.map comp1).obj (dataH.fib e') = (F'.map comp2).obj (dataH.fib e')
+
+/--
+The fiber naturality condition for `natTransTo` in the contravariant case.
+This expresses that the two paths from source to target fiber (via composition
+in the contravariant Grothendieck category) are equal after accounting for
+type transports.
+-/
+abbrev NatTransToFibNat (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂})
+    (dataG dataH : FunctorToData F' (E := E))
+    (baseNat : dataG.baseFunc ⟶ dataH.baseFunc)
+    (fibMor : NatTransToFibMor F' dataG dataH baseNat)
+    (eq_base : NatTransToEqBase F' dataG dataH baseNat) :=
+  ∀ {e e' : E} (f : e ⟶ e'),
+    dataG.hom f ≫
+      (F'.map (dataG.baseFunc.map f)).map (fibMor e') ≫
+      eqToHom (Functor.congr_obj
+        (F'.map_comp (baseNat.app e') (dataG.baseFunc.map f)).symm (dataH.fib e')) =
+    fibMor e ≫
+      (F'.map (baseNat.app e)).map (dataH.hom f) ≫
+      eqToHom ((Functor.congr_obj
+        (F'.map_comp (dataH.baseFunc.map f) (baseNat.app e)).symm (dataH.fib e')).trans
+        (eq_base f))
+
+/--
+The data required to construct a natural transformation between functors
+into the contravariant Grothendieck construction.
+
+This bundles together all the components needed for `natTransTo`:
+- A base natural transformation between the base functors
+- Fiber morphisms for each object
+- Equality proof for base naturality (for eqToHom flexibility)
+- Fiber naturality condition
+-/
+structure NatTransToData (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂})
+    (dataG dataH : FunctorToData F' (E := E)) where
+  /-- Natural transformation between base functors -/
+  baseNat : dataG.baseFunc ⟶ dataH.baseFunc
+  /-- Fiber morphisms: for each `e`, a morphism between fibers -/
+  fibMor : NatTransToFibMor F' dataG dataH baseNat
+  /-- Equality proof from base naturality -/
+  eq_base : NatTransToEqBase F' dataG dataH baseNat
+  /-- Fiber naturality condition -/
+  fibNat : NatTransToFibNat F' dataG dataH baseNat fibMor eq_base
+
+variable (dataG dataH : FunctorToData F' (E := E))
+variable (nat : NatTransToData F' dataG dataH)
+
+/--
+Construct a natural transformation between functors into the contravariant
+Grothendieck construction from bundled data.
+-/
+def natTransTo : functorTo dataG ⟶ functorTo dataH where
+  app e := ⟨nat.baseNat.app e, nat.fibMor e⟩
+  naturality {e e'} f := by
+    have w_base : (dataG.baseFunc.map f ≫ nat.baseNat.app e') =
+        (nat.baseNat.app e ≫ dataH.baseFunc.map f) :=
+      nat.baseNat.naturality f
+    refine ext _ _ w_base ?_
+    simp only [GrothendieckContraInst', comp_fiber, functorTo]
+    have h := @nat.fibNat e e' f
+    cat_disch
+
+variable (α : functorTo dataG ⟶ functorTo dataH)
+
+/--
+The base natural transformation extracted from a natural transformation
+between functors into the contravariant Grothendieck construction.
+-/
+def ofNatTransBaseNat : dataG.baseFunc ⟶ dataH.baseFunc where
+  app e := (α.app e).base
+  naturality {e e'} f := by
+    have h := α.naturality f
+    simp only [functorTo] at h
+    exact congrArg Hom.base h
+
+/--
+Extract `NatTransToData` from a natural transformation between functors
+into the contravariant Grothendieck construction.
+-/
+def ofNatTrans : NatTransToData F' dataG dataH where
+  baseNat := ofNatTransBaseNat dataG dataH α
+  fibMor e := (α.app e).fiber
+  eq_base {e e'} f := by
+    simp only [ofNatTransBaseNat]
+    have h := α.naturality f
+    simp only [functorTo] at h
+    have hbase := congrArg Hom.base h
+    simp only [GrothendieckContraInst', comp_base] at hbase
+    exact Functor.congr_obj (congrArg F'.map hbase.symm) (dataH.fib e')
+  fibNat {e e'} f := by
+    simp only [ofNatTransBaseNat, functorTo]
+    have h := α.naturality f
+    simp only [functorTo] at h
+    have hfiber := congr h
+    simp only [GrothendieckContraInst', comp_fiber] at hfiber
+    calc _ = _ := by cat_disch
+      _ = _ := hfiber
+      _ = _ := by cat_disch
+
+/--
+Converting a natural transformation to data and back gives the original.
+-/
+theorem natTransTo_ofNatTrans :
+    natTransTo dataG dataH (ofNatTrans dataG dataH α) = α := by
+  ext e
+  rfl
+
+/--
+Converting data to a natural transformation and back gives the original.
+-/
+theorem ofNatTrans_natTransTo :
+    ofNatTrans dataG dataH (natTransTo dataG dataH nat) = nat := rfl
+
+/--
+Equivalence between `NatTransToData` and natural transformations between
+functors into contravariant Grothendieck categories.
+-/
+def natTransToEquiv :
+    NatTransToData F' dataG dataH ≃ (functorTo dataG ⟶ functorTo dataH) where
+  toFun := natTransTo dataG dataH
+  invFun := ofNatTrans dataG dataH
+  left_inv := ofNatTrans_natTransTo dataG dataH
+  right_inv := natTransTo_ofNatTrans dataG dataH
+
+end NatTransTo
+
+section FunctorToDataCategory
+
+variable {E : Type*} [Category E]
+
+variable (data : FunctorToData F' (E := E))
+
+/--
+The identity `NatTransToData` for a `FunctorToData`, defined via the correspondence
+with identity natural transformations.
+-/
+def NatTransToData.id : NatTransToData F' data data :=
+  ofNatTrans data data (𝟙 (functorTo data))
+
+/--
+Composition of `NatTransToData`, defined via the correspondence with natural
+transformation composition.
+-/
+def NatTransToData.comp {dataG dataH dataK : FunctorToData F' (E := E)}
+    (nat1 : NatTransToData F' dataG dataH)
+    (nat2 : NatTransToData F' dataH dataK) : NatTransToData F' dataG dataK :=
+  ofNatTrans dataG dataK (natTransTo dataG dataH nat1 ≫ natTransTo dataH dataK nat2)
+
+/--
+Category instance on `FunctorToData F' (E := E)` using `NatTransToData` as morphisms.
+-/
+instance functorToDataCategory : Category (FunctorToData F' (E := E)) where
+  Hom := NatTransToData F'
+  id data := NatTransToData.id data
+  comp {X Y Z} := NatTransToData.comp
+  id_comp {_ _} nat := by
+    unfold NatTransToData.id NatTransToData.comp
+    conv_rhs => rw [← ofNatTrans_natTransTo _ _ nat]
+    congr 1
+    exact Category.id_comp _
+  comp_id {_ _} nat := by
+    unfold NatTransToData.id NatTransToData.comp
+    conv_rhs => rw [← ofNatTrans_natTransTo _ _ nat]
+    congr 1
+    exact Category.comp_id _
+  assoc {_ _ _ _} nat1 nat2 nat3 := by
+    unfold NatTransToData.comp
+    congr 1
+    exact Category.assoc _ _ _
+
+/--
+Functor from `FunctorToData F'` to the functor category `E ⥤ GrothendieckContra' F'`.
+Sends `data` to `functorTo data` and morphisms via `natTransTo`.
+-/
+def functorToDataToFunctorCat :
+    FunctorToData F' (E := E) ⥤ (E ⥤ GrothendieckContra' F') where
+  obj := functorTo
+  map := natTransTo _ _
+  map_id _ := rfl
+  map_comp _ _ := rfl
+
+/--
+Functor from the functor category `E ⥤ GrothendieckContra' F'` to `FunctorToData F'`.
+Sends `G` to `ofFunctor G` and morphisms via `ofNatTrans`.
+-/
+def functorCatToFunctorToData :
+    (E ⥤ GrothendieckContra' F') ⥤ FunctorToData F' (E := E) where
+  obj := ofFunctor
+  map {G H} α := ofNatTrans (ofFunctor G) (ofFunctor H) α
+  map_id _ := rfl
+  map_comp _ _ := rfl
+
+/--
+Categorical isomorphism between `FunctorToData F'` and the functor category
+`E ⥤ GrothendieckContra' F'`.
+-/
+def functorToDataIsoCat :
+    FunctorToData F' (E := E) ≅Cat (E ⥤ GrothendieckContra' F') where
+  hom := functorToDataToFunctorCat
+  inv := functorCatToFunctorToData
+  hom_inv_id := rfl
+  inv_hom_id := rfl
+
+end FunctorToDataCategory
+
 end GrothendieckContra'
 
 end GebLean
