@@ -46,6 +46,24 @@ For `f : A ⟶ B` in `Under X`, `Under.right f : A.right ⟶ B.right`.
 -/
 abbrev Under.right {A B : Under X} (f : A ⟶ B) : A.right ⟶ B.right := f.right
 
+/--
+The left morphism of an Over morphism in `(Over X)ᵒᵖ'`. For `f : A ⟶ B` in
+`(Over X)ᵒᵖ'`, the underlying morphism goes from `B.left` to `A.left`.
+
+For `f : A ⟶ B` in `(Over X)ᵒᵖ'`, `Over.leftOp' f : B.left ⟶ A.left`.
+-/
+abbrev Over.leftOp' {A B : Over X} (f : @Quiver.Hom (Over X)ᵒᵖ' _ A B) :
+    B.left ⟶ A.left := f.left
+
+/--
+The right morphism of an Under morphism in `(Under X)ᵒᵖ'`. For `f : A ⟶ B` in
+`(Under X)ᵒᵖ'`, the underlying morphism goes from `B.right` to `A.right`.
+
+For `f : A ⟶ B` in `(Under X)ᵒᵖ'`, `Under.rightOp' f : B.right ⟶ A.right`.
+-/
+abbrev Under.rightOp' {A B : Under X} (f : @Quiver.Hom (Under X)ᵒᵖ' _ A B) :
+    B.right ⟶ A.right := f.right
+
 end OverUnderAccessors
 
 section UnderOverEquivalence
