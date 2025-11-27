@@ -447,6 +447,67 @@ The functor `functorTo` composed with `forget` equals `baseFunc`.
 theorem functorTo_comp_forget :
     functorTo F data ⋙ Grothendieck.forget F = data.baseFunc := rfl
 
+variable (G : D ⥤ Grothendieck F)
+
+/--
+Extract `FunctorToData` from a functor into the Grothendieck construction.
+
+This is the inverse to `functorTo`, demonstrating that `functorTo` is the
+unique introduction rule for functors into Grothendieck categories.
+-/
+def ofFunctor : FunctorToData F (D := D) where
+  baseFunc := G ⋙ Grothendieck.forget F
+  fib d := (G.obj d).fiber
+  hom g := (G.map g).fiber
+  eq_id d := by
+    simp only [Functor.comp_obj, Grothendieck.forget_obj, Functor.comp_map,
+      Grothendieck.forget_map, G.map_id]
+    exact Functor.congr_obj (F.map_id (G.obj d).base) (G.obj d).fiber
+  eq_comp g h := by
+    simp only [Functor.comp_obj, Grothendieck.forget_obj, Functor.comp_map,
+      Grothendieck.forget_map, G.map_comp, Grothendieck.comp_base]
+    exact Functor.congr_obj (F.map_comp (G.map g).base (G.map h).base)
+      (G.obj _).fiber
+  hom_id d := by
+    change (G.map (𝟙 d)).fiber = eqToHom _
+    have h : G.map (𝟙 d) = 𝟙 (G.obj d) := G.map_id d
+    rw [Grothendieck.congr h, Grothendieck.id_fiber, eqToHom_trans]
+  hom_comp g h := by
+    change (G.map (g ≫ h)).fiber = eqToHom _ ≫ _ ≫ _
+    have hcomp : G.map (g ≫ h) = G.map g ≫ G.map h := G.map_comp g h
+    rw [Grothendieck.congr hcomp, Grothendieck.comp_fiber]
+    simp only [Functor.comp_map, Grothendieck.forget_map]
+    cat_disch
+
+/--
+Round-trip theorem: `functorTo (ofFunctor G) = G`.
+
+Building a functor from the extracted data recovers the original functor.
+-/
+theorem functorTo_ofFunctor : functorTo F (ofFunctor F G) = G := rfl
+
+/--
+Round-trip theorem: `ofFunctor (functorTo data) = data`.
+
+Extracting data from a constructed functor recovers the original data.
+-/
+theorem ofFunctor_functorTo : ofFunctor F (functorTo F data) = data := by
+  simp only [ofFunctor, functorTo]
+  rfl
+
+/--
+Equivalence between functors into `Grothendieck F` and `FunctorToData F`.
+
+This establishes that `functorTo` is the unique way to construct functors into
+Grothendieck categories: every such functor arises from some `FunctorToData`,
+and the correspondence is bijective.
+-/
+def functorToEquiv : (D ⥤ Grothendieck F) ≃ FunctorToData F (D := D) where
+  toFun := ofFunctor F
+  invFun := functorTo F
+  left_inv := functorTo_ofFunctor F
+  right_inv := ofFunctor_functorTo F
+
 end FunctorTo
 
 end Grothendieck
@@ -2127,6 +2188,70 @@ The functor `functorTo` composed with `forget` equals `baseFunc`.
 -/
 theorem functorTo_comp_forget :
     functorTo data ⋙ forget F' = data.baseFunc := rfl
+
+variable (G : E ⥤ GrothendieckContra' F')
+
+/--
+Extract `FunctorToData` from a functor into the contravariant Grothendieck
+construction.
+
+This is the inverse to `functorTo`, demonstrating that `functorTo` is the
+unique introduction rule for functors into contravariant Grothendieck
+categories.
+-/
+def ofFunctor : FunctorToData F' (E := E) where
+  baseFunc := G ⋙ forget F'
+  fib e := (G.obj e).fiber
+  hom g := (G.map g).fiber
+  eq_id e := by
+    simp only [Functor.comp_obj, forget_obj, Functor.comp_map, forget_map,
+      G.map_id]
+    exact (Functor.congr_obj (F'.map_id (G.obj e).base) (G.obj e).fiber).symm
+  eq_comp g h := by
+    simp only [Functor.comp_obj, forget_obj, Functor.comp_map, forget_map,
+      G.map_comp]
+    exact Functor.congr_obj (F'.map_comp (G.map h).base (G.map g).base).symm
+      (G.obj _).fiber
+  hom_id e := by
+    change (G.map (𝟙 e)).fiber = eqToHom _
+    have h : G.map (𝟙 e) = id (G.obj e) := G.map_id e
+    rw [congr h, id_fiber, eqToHom_trans]
+  hom_comp g h := by
+    change (G.map (g ≫ h)).fiber = _ ≫ _ ≫ eqToHom _
+    have hcomp : G.map (g ≫ h) = comp (G.map g) (G.map h) := G.map_comp g h
+    rw [congr hcomp, comp_fiber]
+    simp only [Functor.comp_map, forget_map]
+    cat_disch
+
+/--
+Round-trip theorem: `functorTo (ofFunctor G) = G`.
+
+Building a functor from the extracted data recovers the original functor.
+-/
+theorem functorTo_ofFunctor : functorTo (ofFunctor G) = G := rfl
+
+/--
+Round-trip theorem: `ofFunctor (functorTo data) = data`.
+
+Extracting data from a constructed functor recovers the original data.
+-/
+theorem ofFunctor_functorTo : ofFunctor (functorTo data) = data := by
+  simp only [ofFunctor, functorTo]
+  rfl
+
+/--
+Equivalence between functors into `GrothendieckContra' F'` and `FunctorToData`.
+
+This establishes that `functorTo` is the unique way to construct functors into
+contravariant Grothendieck categories: every such functor arises from some
+`FunctorToData`, and the correspondence is bijective.
+-/
+def functorToEquiv :
+    (E ⥤ GrothendieckContra' F') ≃ FunctorToData F' (E := E) where
+  toFun := ofFunctor
+  invFun := functorTo
+  left_inv := functorTo_ofFunctor
+  right_inv := ofFunctor_functorTo
 
 end FunctorTo
 
