@@ -589,6 +589,16 @@ theorem id_val {F : Cᵒᵖ' ⥤ Type w} {p : F.ElementsContra'} :
   rfl
 
 /--
+The underlying morphism of `eqToHom` in the contravariant category of elements
+is `eqToHom` of the symmetric of the base equality, since morphism `.val`
+components go in the opposite direction.
+-/
+@[simp]
+theorem eqToHom_val {F : Cᵒᵖ' ⥤ Type w} {p q : F.ElementsContra'}
+    (h : p = q) : (eqToHom h).val = eqToHom (congrArg Sigma.fst h).symm :=
+  by cases h; rfl
+
+/--
 For a morphism in the contravariant category of elements, the functor maps
 the element at the codomain to the element at the domain.
 -/
