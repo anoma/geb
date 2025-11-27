@@ -491,9 +491,7 @@ Round-trip theorem: `ofFunctor (functorTo data) = data`.
 
 Extracting data from a constructed functor recovers the original data.
 -/
-theorem ofFunctor_functorTo : ofFunctor F (functorTo F data) = data := by
-  simp only [ofFunctor, functorTo]
-  rfl
+theorem ofFunctor_functorTo : ofFunctor F (functorTo F data) = data := rfl
 
 /--
 Equivalence between functors into `Grothendieck F` and `FunctorToData F`.
@@ -2235,9 +2233,7 @@ Round-trip theorem: `ofFunctor (functorTo data) = data`.
 
 Extracting data from a constructed functor recovers the original data.
 -/
-theorem ofFunctor_functorTo : ofFunctor (functorTo data) = data := by
-  simp only [ofFunctor, functorTo]
-  rfl
+theorem ofFunctor_functorTo : ofFunctor (functorTo data) = data := rfl
 
 /--
 Equivalence between functors into `GrothendieckContra' F'` and `FunctorToData`.
