@@ -508,6 +508,196 @@ def functorToEquiv : (D ⥤ Grothendieck F) ≃ FunctorToData F (D := D) where
 
 end FunctorTo
 
+section NatTransTo
+
+/--
+The type of fiber morphism functions for `natTransTo`.
+Given a base natural transformation `baseNat : dataG.baseFunc ⟶ dataH.baseFunc`,
+a fiber morphism function assigns to each `d : D` a morphism from the transported
+source fiber to the target fiber.
+-/
+abbrev NatTransToFibMor (dataG dataH : FunctorToData F (D := D))
+    (baseNat : dataG.baseFunc ⟶ dataH.baseFunc) :=
+  ∀ d, (F.map (baseNat.app d)).obj (dataG.fib d) ⟶ dataH.fib d
+
+/--
+The type of base equality proofs for `natTransTo`.
+This equality follows from naturality of `baseNat` and functoriality of `F`.
+Clients can provide any proof of this equality.
+-/
+abbrev NatTransToEqBase (dataG dataH : FunctorToData F (D := D))
+    (baseNat : dataG.baseFunc ⟶ dataH.baseFunc) :=
+  ∀ {d d' : D} (f : d ⟶ d'),
+    (F.map (dataG.baseFunc.map f ≫ baseNat.app d')).obj (dataG.fib d) =
+    (F.map (baseNat.app d ≫ dataH.baseFunc.map f)).obj (dataG.fib d)
+
+/--
+The fiber naturality condition for `natTransTo`.
+This expresses that the two paths from source to target fiber (via composition
+in the Grothendieck category) are equal after accounting for type transports.
+
+Both sides start from `(F.map (dataG.baseFunc.map f ≫ baseNat.app d')).obj (dataG.fib d)`
+and end at `dataH.fib d'`.
+-/
+abbrev NatTransToFibNat (dataG dataH : FunctorToData F (D := D))
+    (baseNat : dataG.baseFunc ⟶ dataH.baseFunc)
+    (fibMor : NatTransToFibMor F dataG dataH baseNat)
+    (eq_base : NatTransToEqBase F dataG dataH baseNat) :=
+  ∀ {d d' : D} (f : d ⟶ d'),
+    eqToHom (Functor.congr_obj
+        (F.map_comp (dataG.baseFunc.map f) (baseNat.app d')) (dataG.fib d)) ≫
+      (F.map (baseNat.app d')).map (dataG.hom f) ≫
+      fibMor d' =
+    eqToHom ((eq_base f).trans (Functor.congr_obj
+        (F.map_comp (baseNat.app d) (dataH.baseFunc.map f)) (dataG.fib d))) ≫
+      (F.map (dataH.baseFunc.map f)).map (fibMor d) ≫
+      dataH.hom f
+
+/--
+The data required to construct a natural transformation between functors
+into the Grothendieck construction.
+
+This bundles together all the components needed for `natTransTo`:
+- A base natural transformation between the base functors
+- Fiber morphisms for each object
+- Equality proof for base naturality (for eqToHom flexibility)
+- Fiber naturality condition
+-/
+structure NatTransToData (dataG dataH : FunctorToData F (D := D)) where
+  /-- Natural transformation between base functors -/
+  baseNat : dataG.baseFunc ⟶ dataH.baseFunc
+  /-- Fiber morphisms: for each `d`, a morphism between fibers -/
+  fibMor : NatTransToFibMor F dataG dataH baseNat
+  /-- Equality proof from base naturality -/
+  eq_base : NatTransToEqBase F dataG dataH baseNat
+  /-- Fiber naturality condition -/
+  fibNat : NatTransToFibNat F dataG dataH baseNat fibMor eq_base
+
+variable (dataG dataH : FunctorToData F (D := D))
+variable (nat : NatTransToData F dataG dataH)
+
+/--
+Construct a natural transformation between functors into the Grothendieck
+construction from bundled data.
+-/
+def natTransTo : functorTo F dataG ⟶ functorTo F dataH where
+  app d := ⟨nat.baseNat.app d, nat.fibMor d⟩
+  naturality {d d'} f := by
+    have w_base : (dataG.baseFunc.map f ≫ nat.baseNat.app d') =
+        (nat.baseNat.app d ≫ dataH.baseFunc.map f) :=
+      nat.baseNat.naturality f
+    refine Grothendieck.ext _ _ w_base ?_
+    simp only [Grothendieck.comp_fiber, functorTo]
+    have h := @nat.fibNat d d' f
+    cat_disch
+
+variable (α : functorTo F dataG ⟶ functorTo F dataH)
+
+/--
+The base natural transformation extracted from a natural transformation
+between functors into Grothendieck.
+-/
+def ofNatTransBaseNat : dataG.baseFunc ⟶ dataH.baseFunc where
+  app d := (α.app d).base
+  naturality {d d'} f := by
+    have h := α.naturality f
+    simp only [functorTo] at h
+    exact congrArg Grothendieck.Hom.base h
+
+/--
+Extract `NatTransToData` from a natural transformation between functors
+into the Grothendieck construction.
+-/
+def ofNatTrans : NatTransToData F dataG dataH where
+  baseNat := ofNatTransBaseNat F dataG dataH α
+  fibMor d := (α.app d).fiber
+  eq_base {d d'} f := by
+    simp only [ofNatTransBaseNat]
+    have h := α.naturality f
+    simp only [functorTo] at h
+    have hbase := congrArg Grothendieck.Hom.base h
+    simp only [Grothendieck.comp_base] at hbase
+    exact Functor.congr_obj (congrArg F.map hbase) (dataG.fib d)
+  fibNat {d d'} f := by
+    simp only [ofNatTransBaseNat, functorTo]
+    have h := α.naturality f
+    simp only [functorTo] at h
+    have hfiber := Grothendieck.congr h
+    simp only [Grothendieck.comp_fiber] at hfiber
+    calc _ = _ := by cat_disch
+      _ = _ := hfiber
+      _ = _ := by cat_disch
+
+/--
+Converting a natural transformation to data and back gives the original.
+-/
+theorem natTransTo_ofNatTrans : natTransTo F dataG dataH (ofNatTrans F dataG dataH α) = α := by
+  ext d
+  rfl
+
+/--
+Converting data to a natural transformation and back gives the original.
+-/
+theorem ofNatTrans_natTransTo :
+    ofNatTrans F dataG dataH (natTransTo F dataG dataH nat) = nat := rfl
+
+/--
+Equivalence between `NatTransToData` and natural transformations between
+functors into Grothendieck categories.
+-/
+def natTransToEquiv :
+    NatTransToData F dataG dataH ≃ (functorTo F dataG ⟶ functorTo F dataH) where
+  toFun := natTransTo F dataG dataH
+  invFun := ofNatTrans F dataG dataH
+  left_inv := ofNatTrans_natTransTo F dataG dataH
+  right_inv := natTransTo_ofNatTrans F dataG dataH
+
+end NatTransTo
+
+section FunctorToDataCategory
+
+variable (data : FunctorToData F (D := D))
+
+/--
+The identity `NatTransToData` for a `FunctorToData`, defined via the correspondence
+with identity natural transformations.
+-/
+def NatTransToData.id : NatTransToData F data data :=
+  ofNatTrans F data data (𝟙 (functorTo F data))
+
+/--
+Composition of `NatTransToData`, defined via the correspondence with natural
+transformation composition.
+-/
+def NatTransToData.comp {dataG dataH dataK : FunctorToData F (D := D)}
+    (nat1 : NatTransToData F dataG dataH)
+    (nat2 : NatTransToData F dataH dataK) : NatTransToData F dataG dataK :=
+  ofNatTrans F dataG dataK (natTransTo F dataG dataH nat1 ≫ natTransTo F dataH dataK nat2)
+
+/--
+Category instance on `FunctorToData F (D := D)` using `NatTransToData` as morphisms.
+-/
+instance : Category (FunctorToData F (D := D)) where
+  Hom := NatTransToData F
+  id := NatTransToData.id F
+  comp {X Y Z} := NatTransToData.comp (F := F)
+  id_comp {_ _} nat := by
+    unfold NatTransToData.id NatTransToData.comp
+    conv_rhs => rw [← ofNatTrans_natTransTo F _ _ nat]
+    congr 1
+    exact Category.id_comp _
+  comp_id {_ _} nat := by
+    unfold NatTransToData.id NatTransToData.comp
+    conv_rhs => rw [← ofNatTrans_natTransTo F _ _ nat]
+    congr 1
+    exact Category.comp_id _
+  assoc {_ _ _ _} nat1 nat2 nat3 := by
+    unfold NatTransToData.comp
+    congr 1
+    exact Category.assoc _ _ _
+
+end FunctorToDataCategory
+
 end Grothendieck
 
 end Covariant
