@@ -315,6 +315,24 @@ lemma functor_map_eqToHom (F : C ⥤ D) {X Y : C} (p : X = Y) :
   cases p
   simp
 
+/--
+From HEq of morphisms with the same target, derive an equation with eqToHom.
+This is useful for converting HEq hypotheses into equations that tactics like
+`cat_disch` can use.
+-/
+lemma eq_of_heq_eqToHom {X Y Z : C} {f : X ⟶ Z} {g : Y ⟶ Z} (h : HEq f g)
+    (p : X = Y) : f = eqToHom p ≫ g := by
+  cases p
+  simp [eq_of_heq h]
+
+/--
+From HEq of morphisms with the same source, derive an equation with eqToHom.
+-/
+lemma eq_of_heq_comp_eqToHom {X Y Z : C} {f : X ⟶ Y} {g : X ⟶ Z} (h : HEq f g)
+    (p : Y = Z) : f ≫ eqToHom p = g := by
+  cases p
+  simp [eq_of_heq h]
+
 end EqToHom
 
 end GebLean
