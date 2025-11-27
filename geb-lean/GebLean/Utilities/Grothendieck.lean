@@ -334,6 +334,66 @@ theorem gcf_eqToHom_eq.{u, v, u₂, v₂} {C : Type u}
 
 universe w u v u₁ v₁ u₂ v₂
 
+section Covariant
+
+/-!
+## Covariant Grothendieck construction utilities
+
+This section provides utilities for mathlib's covariant Grothendieck construction,
+including `functorTo` which constructs functors INTO a Grothendieck category.
+-/
+
+variable {C : Type u} [Category.{v} C]
+variable {D : Type u₁} [Category.{v₁} D]
+variable (F : C ⥤ Cat.{v₂, u₂})
+
+namespace Grothendieck
+
+section FunctorTo
+
+variable (baseFunc : D ⥤ C)
+variable (fib : ∀ d, F.obj (baseFunc.obj d))
+variable (hom : ∀ {d d' : D} (g : d ⟶ d'),
+  (F.map (baseFunc.map g)).obj (fib d) ⟶ fib d')
+
+variable (hom_id : ∀ d, hom (𝟙 d) =
+  eqToHom (Functor.congr_obj (congrArg F.map (baseFunc.map_id d)) (fib d)) ≫
+  eqToHom (Functor.congr_obj (F.map_id (baseFunc.obj d)) (fib d)))
+
+variable (hom_comp : ∀ {d d' d'' : D} (g : d ⟶ d') (h : d' ⟶ d''),
+  hom (g ≫ h) =
+  eqToHom (Functor.congr_obj (congrArg F.map (baseFunc.map_comp g h)) (fib d)) ≫
+  eqToHom (Functor.congr_obj (F.map_comp (baseFunc.map g) (baseFunc.map h)) (fib d)) ≫
+  (F.map (baseFunc.map h)).map (hom g) ≫ hom h)
+
+/--
+Construct a functor into the Grothendieck construction given:
+- `baseFunc : D ⥤ C` - the base functor
+- `fib : ∀ d, F.obj (baseFunc.obj d)` - fiber objects
+- `hom` - transport morphisms for each morphism in D
+- coherence conditions `hom_id` and `hom_comp`
+-/
+def functorTo : D ⥤ Grothendieck F where
+  obj d := ⟨baseFunc.obj d, fib d⟩
+  map {d d'} g := ⟨baseFunc.map g, hom g⟩
+  map_id d := Grothendieck.ext _ _ (baseFunc.map_id d) (by
+    simp only [Grothendieck.id_fiber, hom_id, eqToHom_trans])
+  map_comp {d d' d''} g h := Grothendieck.ext _ _ (baseFunc.map_comp g h) (by
+    simp only [Grothendieck.comp_fiber, hom_comp]
+    cat_disch)
+
+/--
+The functor `functorTo` composed with `forget` equals `baseFunc`.
+-/
+theorem functorTo_comp_forget :
+    functorTo F baseFunc fib hom hom_id hom_comp ⋙ Grothendieck.forget F = baseFunc := rfl
+
+end FunctorTo
+
+end Grothendieck
+
+end Covariant
+
 variable {C : Type u} [CInst : Category.{v, u} C]
 variable {D : Type u₁} [DInst : Category.{v₁, u₁} D]
 
@@ -1898,6 +1958,49 @@ def ιCompMap {G' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}} (α : F' ⟶ G') (c : C) :
     )
 
 end FunctorFrom
+
+section FunctorTo
+
+variable {E : Type*} [Category E]
+variable (baseFunc : E ⥤ C)
+variable (fib : ∀ e, F'.obj (baseFunc.obj e))
+variable (hom : ∀ {e e' : E} (g : e ⟶ e'),
+  fib e ⟶ (F'.map (baseFunc.map g)).obj (fib e'))
+variable (hom_id : ∀ e, hom (𝟙 e) =
+  eqToHom (Functor.congr_obj (F'.map_id (baseFunc.obj e)) (fib e)).symm ≫
+  eqToHom (Functor.congr_obj (congrArg F'.map (baseFunc.map_id e).symm) (fib e)))
+variable (hom_comp : ∀ {e e' e'' : E} (g : e ⟶ e') (h : e' ⟶ e''),
+  hom (g ≫ h) =
+    hom g ≫ (F'.map (baseFunc.map g)).map (hom h) ≫
+    eqToHom (Functor.congr_obj (F'.map_comp (baseFunc.map h) (baseFunc.map g)) (fib e'')).symm ≫
+    eqToHom (Functor.congr_obj (congrArg F'.map (baseFunc.map_comp g h).symm) (fib e'')))
+
+/--
+Construct a functor into the contravariant Grothendieck construction given:
+- `baseFunc : E ⥤ C` - the base functor
+- `fib : ∀ e, F'.obj (baseFunc.obj e)` - fiber objects
+- `hom` - transport morphisms for each morphism in E
+- coherence conditions `hom_id` and `hom_comp`
+
+This is the contravariant dual of `Grothendieck.functorTo`.
+-/
+def functorTo : E ⥤ GrothendieckContra' F' where
+  obj e := ⟨baseFunc.obj e, fib e⟩
+  map {e e'} g := ⟨baseFunc.map g, hom g⟩
+  map_id e := ext _ _ (baseFunc.map_id e) (by
+    simp only [hom_id]
+    cat_disch)
+  map_comp {e e' e''} g h := ext _ _ (baseFunc.map_comp g h) (by
+    simp only [hom_comp]
+    cat_disch)
+
+/--
+The functor `functorTo` composed with `forget` equals `baseFunc`.
+-/
+theorem functorTo_comp_forget :
+    functorTo baseFunc fib hom hom_id hom_comp ⋙ forget F' = baseFunc := rfl
+
+end FunctorTo
 
 end GrothendieckContra'
 
