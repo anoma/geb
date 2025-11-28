@@ -333,6 +333,13 @@ lemma eq_of_heq_comp_eqToHom {X Y Z : C} {f : X ⟶ Y} {g : X ⟶ Z} (h : HEq f 
   cases p
   simp [eq_of_heq h]
 
+/--
+A round-trip through `eqToHom` with an identity in the middle equals the identity.
+-/
+lemma eqToHom_comp_id_comp_eqToHom {X Y : C} (p : X = Y) (q : Y = X) :
+    eqToHom p ≫ 𝟙 Y ≫ eqToHom q = 𝟙 X := by
+  simp only [Category.id_comp, eqToHom_trans, eqToHom_refl']
+
 end EqToHom
 
 end GebLean

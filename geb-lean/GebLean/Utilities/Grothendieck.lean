@@ -2592,18 +2592,9 @@ theorem functorFromData_ofFunctorFrom : functorFromData (ofFunctorFrom H) = H :=
     -- Use convert to get: ... = f.fiber ≫ 𝟙 _
     convert Category.comp_id f.fiber using 1
     -- Now: f.fiber ≫ eqToHom A ≫ 𝟙 X ≫ eqToHom B = f.fiber ≫ 𝟙 _
-    -- Use congr to separate f.fiber
     congr 1
-    -- Goal: eqToHom A ≫ 𝟙 X ≫ eqToHom B ≫ eqToHom C = 𝟙 ((F'.map f.base).obj Y.fiber)
-    -- First combine the two eqToHom terms at the end
     simp only [eqToHom_trans]
-    -- Now: eqToHom A ≫ 𝟙 X ≫ eqToHom (B.trans C) = 𝟙 Y
-    -- Factor out the lemma: round-trip eqToHom with identity in middle is identity
-    have round_trip_id : ∀ {A B : F'.obj X.base} (p : A = B) (q : B = A),
-        eqToHom p ≫ 𝟙 B ≫ eqToHom q = 𝟙 A := by
-      intros A B p q
-      simp only [Category.id_comp, eqToHom_trans, eqToHom_refl']
-    exact round_trip_id _ _
+    exact eqToHom_comp_id_comp_eqToHom _ _
 
 /--
 Round-trip: the fiber functors from extracted data equal the original fiber functors.
@@ -2624,6 +2615,26 @@ theorem ofFunctorFrom_functorFromData_fib :
     rw [h_hom_id]
     simp only [Functor.map_comp, eqToHom_map, eqToHom_trans,
       Category.assoc, Category.id_comp, Category.comp_id, eqToHom_refl']
+
+/--
+Round-trip: the natural transformations from extracted data equal the original
+natural transformations at each component.
+
+The two natural transformations have different types because their fiber functors
+differ propositionally. This theorem states that the `.app` components are equal
+up to `eqToHom` coercions.
+-/
+theorem ofFunctorFrom_functorFromData_hom_app {c d : C} (f : c ⟶ d) (x : F'.obj d) :
+    ((ofFunctorFrom (functorFromData data)).hom' f).app x =
+    eqToHom (congrFun (congrArg Functor.obj
+      (congrFun (ofFunctorFrom_functorFromData_fib data) c)) ((F'.map f).obj x)) ≫
+    (data.hom' f).app x ≫
+    eqToHom (congrFun (congrArg Functor.obj
+      (congrFun (ofFunctorFrom_functorFromData_fib data) d)) x).symm := by
+  simp only [ofFunctorFrom, Functor.whiskerRight_app, functorFromData, functorFrom,
+    ιNatTrans, ι_obj]
+  simp only [Functor.map_id, Category.id_comp]
+  simp only [eqToHom_refl', Category.id_comp, Category.comp_id]
 
 end FunctorFrom
 
