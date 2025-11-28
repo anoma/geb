@@ -3178,6 +3178,191 @@ theorem natTransFromData_comp :
   ext X
   simp only [natTransFromData, NatTransFromData.comp, NatTrans.comp_app]
 
+/--
+Category instance on `FunctorFromData F' (T := T)` using `NatTransFromData`
+as morphisms (contravariant case).
+-/
+instance functorFromDataCategory : Category (FunctorFromData (F' := F') (T := T)) where
+  Hom X Y := NatTransFromData (F' := F') X Y
+  id X := NatTransFromData.id (F' := F') X
+  comp {X Y Z} natXY natYZ := NatTransFromData.comp (F' := F') Z natXY natYZ
+  id_comp {X Y} nat := by
+    apply NatTransFromData.ext
+    funext c
+    simp only [NatTransFromData.comp, NatTransFromData.id, Category.id_comp]
+  comp_id {X Y} nat := by
+    apply NatTransFromData.ext
+    funext c
+    simp only [NatTransFromData.comp, NatTransFromData.id, Category.comp_id]
+  assoc {W X Y Z} nat1 nat2 nat3 := by
+    apply NatTransFromData.ext
+    funext c
+    simp only [NatTransFromData.comp, Category.assoc]
+
+/--
+Functor from `FunctorFromData F'` to the functor category `GrothendieckContra' F' ⥤ T`.
+Sends `data` to `functorFromData data` and morphisms via `natTransFromData`.
+-/
+def functorFromDataToFunctorCat :
+    FunctorFromData (F' := F') (T := T) ⥤ (GrothendieckContra' F' ⥤ T) where
+  obj data := functorFromData data
+  map {dataX dataY} nat := natTransFromData dataX dataY nat
+  map_id data := natTransFromData_id (F' := F') data
+  map_comp {dataX dataY dataZ} nat1 nat2 :=
+    natTransFromData_comp (F' := F') (dataG := dataX) (dataH := dataY) dataZ nat1 nat2
+
+/--
+Composition of natural transformations with `eqToHom` round-trips through intermediate
+functors: the middle `eqToHom` terms cancel (contravariant case).
+-/
+lemma eqToHom_comp_natTrans_comp_app' {A : Type*} [Category A]
+    {G' G H H' K K' : A ⥤ T} (pG : G' = G) (pH : H' = H) (pK : K' = K)
+    (α : G ⟶ H) (β : H ⟶ K) (X : A) :
+    (eqToHom pG ≫ (α ≫ β) ≫ eqToHom pK.symm).app X =
+    (eqToHom pG ≫ α ≫ eqToHom pH.symm).app X ≫ (eqToHom pH ≫ β ≫ eqToHom pK.symm).app X := by
+  simp only [NatTrans.comp_app, eqToHom_app]
+  simp only [Category.assoc]
+  congr 2
+  simp only [← Category.assoc]
+  simp only [eqToHom_trans, eqToHom_refl, Category.id_comp]
+
+/--
+Functor from the functor category `GrothendieckContra' F' ⥤ T` to `FunctorFromData F'`.
+Sends `H` to `ofFunctorFrom H` and morphisms via round-trip through `functorFromData`.
+-/
+def functorCatToFunctorFromData :
+    (GrothendieckContra' F' ⥤ T) ⥤ FunctorFromData (F' := F') (T := T) where
+  obj := ofFunctorFrom (F' := F') (T := T)
+  map {G H} α := ofNatTransFromData (F' := F')
+    (eqToHom (functorFromData_ofFunctorFrom G) ≫ α ≫
+     eqToHom (functorFromData_ofFunctorFrom H).symm)
+  map_id G := by
+    simp only [Category.id_comp, eqToHom_trans, eqToHom_refl]
+    exact ofNatTransFromData_natTransFromData (F' := F') _ _ (NatTransFromData.id (F' := F')
+      (ofFunctorFrom G))
+  map_comp {G H K} α β := by
+    apply NatTransFromData.ext
+    funext c
+    ext x
+    unfold CategoryStruct.comp
+    simp only [functorFromDataCategory, NatTransFromData.comp,
+      ofNatTransFromData, ofNatTransFromDataFibNat]
+    simp only [NatTrans.comp_app, Functor.whiskerLeft_app, eqToHom_app]
+    simp only [eqToHom_refl', Category.id_comp, Category.comp_id, ι_obj]
+    exact eqToHom_comp_natTrans_comp_app'
+      (functorFromData_ofFunctorFrom G)
+      (functorFromData_ofFunctorFrom H)
+      (functorFromData_ofFunctorFrom K)
+      α β ⟨c, x⟩
+
+/--
+Counit isomorphism for the equivalence: the round-trip through `FunctorFromData` gives
+back the original functor up to the canonical equality (contravariant case).
+-/
+def functorFromDataEquivCounitIso :
+    functorCatToFunctorFromData (F' := F') (T := T) ⋙ functorFromDataToFunctorCat (F' := F') ≅
+    𝟭 (GrothendieckContra' F' ⥤ T) :=
+  NatIso.ofComponents
+    (fun G => eqToIso (functorFromData_ofFunctorFrom G))
+    (fun {G H} α => by
+      simp only [Functor.comp_obj, Functor.comp_map, Functor.id_obj, Functor.id_map]
+      simp only [functorFromDataToFunctorCat, functorCatToFunctorFromData]
+      rw [natTransFromData_ofNatTransFromData]
+      simp only [eqToIso.hom, Category.assoc]
+      simp only [eqToHom_trans, eqToHom_refl, Category.comp_id])
+
+/--
+Forward morphism for the unit isomorphism:
+`data ⟶ ofFunctorFrom (functorFromData data)` (contravariant case).
+Uses the equality `ofFunctorFrom_functorFromData_fib` to build the natural transformation.
+-/
+def functorFromDataEquivUnitHom (data : FunctorFromData (F' := F') (T := T)) :
+    data ⟶ ofFunctorFrom (functorFromData data) where
+  fibNat c := eqToHom (congrFun (ofFunctorFrom_functorFromData_fib data) c).symm
+  coherence {c c'} f := by
+    ext x
+    simp only [NatTrans.comp_app, Functor.whiskerLeft_app, eqToHom_app]
+    simp only [ofFunctorFrom_functorFromData_hom_app, eqToHom_refl', Category.id_comp,
+      Category.comp_id]
+    simp
+
+/--
+Backward morphism for the unit isomorphism:
+`ofFunctorFrom (functorFromData data) ⟶ data` (contravariant case).
+-/
+def functorFromDataEquivUnitInv (data : FunctorFromData (F' := F') (T := T)) :
+    ofFunctorFrom (functorFromData data) ⟶ data where
+  fibNat c := eqToHom (congrFun (ofFunctorFrom_functorFromData_fib data) c)
+  coherence {c c'} f := by
+    ext x
+    simp only [NatTrans.comp_app, Functor.whiskerLeft_app, eqToHom_app]
+    simp only [ofFunctorFrom_functorFromData_hom_app, eqToHom_refl', Category.id_comp,
+      Category.comp_id]
+    simp
+
+/--
+Unit isomorphism component for the equivalence (contravariant case).
+-/
+def functorFromDataEquivUnitComponent (data : FunctorFromData (F' := F') (T := T)) :
+    data ≅ (functorFromDataToFunctorCat (F' := F') ⋙
+      functorCatToFunctorFromData (F' := F')).obj data := by
+  simp only [Functor.comp_obj, functorFromDataToFunctorCat, functorCatToFunctorFromData]
+  exact { hom := functorFromDataEquivUnitHom (F' := F') data
+          inv := functorFromDataEquivUnitInv (F' := F') data
+          hom_inv_id := by
+            apply NatTransFromData.ext
+            funext c
+            unfold CategoryStruct.comp CategoryStruct.id functorFromDataCategory
+            simp only [functorFromDataEquivUnitHom, functorFromDataEquivUnitInv,
+              NatTransFromData.comp, NatTransFromData.id, eqToHom_trans, eqToHom_refl]
+          inv_hom_id := by
+            apply NatTransFromData.ext
+            funext c
+            unfold CategoryStruct.comp CategoryStruct.id functorFromDataCategory
+            simp only [functorFromDataEquivUnitHom, functorFromDataEquivUnitInv,
+              NatTransFromData.comp, NatTransFromData.id, eqToHom_trans, eqToHom_refl] }
+
+/--
+Unit isomorphism for the equivalence (contravariant case).
+-/
+def functorFromDataEquivUnitIso :
+    𝟭 (FunctorFromData (F' := F') (T := T)) ≅
+    functorFromDataToFunctorCat (F' := F') ⋙ functorCatToFunctorFromData (F' := F') :=
+  NatIso.ofComponents
+    (fun data => functorFromDataEquivUnitComponent (F' := F') data)
+    (fun {data data'} nat => by
+      apply NatTransFromData.ext
+      funext c
+      ext x
+      simp only [Functor.comp_obj, Functor.comp_map, Functor.id_obj, Functor.id_map]
+      unfold CategoryStruct.comp functorFromDataCategory
+      simp only [functorFromDataToFunctorCat, functorCatToFunctorFromData,
+        functorFromDataEquivUnitComponent, functorFromDataEquivUnitHom,
+        NatTransFromData.comp, ofNatTransFromData, ofNatTransFromDataFibNat,
+        NatTrans.comp_app, Functor.whiskerLeft_app, eqToHom_app, natTransFromData, ι_obj]
+      simp)
+
+/--
+The category of `FunctorFromData F'` is equivalent to the functor category
+`GrothendieckContra' F' ⥤ T` (contravariant case).
+-/
+def functorFromDataEquivCat :
+    FunctorFromData (F' := F') (T := T) ≌ (GrothendieckContra' F' ⥤ T) where
+  functor := functorFromDataToFunctorCat (F' := F')
+  inverse := functorCatToFunctorFromData (F' := F')
+  unitIso := functorFromDataEquivUnitIso (F' := F')
+  counitIso := functorFromDataEquivCounitIso (F' := F')
+  functor_unitIso_comp data := by
+    apply NatTrans.ext
+    funext X
+    simp only [functorFromDataEquivUnitIso, NatIso.ofComponents_hom_app,
+      functorFromDataEquivCounitIso, functorFromDataToFunctorCat, functorCatToFunctorFromData,
+      functorFromDataEquivUnitComponent, Functor.comp_obj]
+    simp only [eqToIso.hom, NatTrans.comp_app, NatTrans.id_app]
+    simp only [natTransFromData, functorFromDataEquivUnitHom, eqToHom_app]
+    simp only [functorFromData, functorFrom]
+    simp
+
 end FunctorFromDataCategory
 
 end FunctorFrom
