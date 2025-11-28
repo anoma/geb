@@ -728,6 +728,158 @@ def functorToDataIsoCat : FunctorToData F (D := D) ≅Cat (D ⥤ Grothendieck F)
 
 end FunctorToDataCategory
 
+section FunctorFromData
+
+/-!
+### FunctorFromData: Bundled data for functors FROM Grothendieck constructions
+
+This section provides the dual to `FunctorToData`: a complete characterization of
+functors FROM a Grothendieck construction `Grothendieck F ⥤ E`.
+
+Every such functor is determined by:
+- A family of fiber functors `fib : ∀ c, F.obj c ⥤ E`
+- Natural transformations `hom f : fib c ⟶ F.map f ⋙ fib c'` for each `f : c ⟶ c'`
+- Coherence conditions for identity and composition
+-/
+
+variable {E : Type*} [Category E]
+
+/--
+The type of fiber functors for `Grothendieck.functorFrom`.
+For each `c : C`, we have a functor from the fiber `F.obj c` to `E`.
+-/
+abbrev FunctorFromFib := ∀ c, F.obj c ⥤ E
+
+/--
+The type of natural transformation data for `Grothendieck.functorFrom`.
+For each morphism `f : c ⟶ c'`, we have a natural transformation
+`fib c ⟶ F.map f ⋙ fib c'`.
+-/
+abbrev FunctorFromHom (fib : FunctorFromFib F (E := E)) :=
+  ∀ {c c' : C} (f : c ⟶ c'), fib c ⟶ F.map f ⋙ fib c'
+
+/--
+The identity coherence property for `Grothendieck.functorFrom`.
+States that `hom (𝟙 c)` equals the canonical isomorphism from `F.map_id`.
+-/
+abbrev FunctorFromHomId (fib : FunctorFromFib F (E := E))
+    (hom : FunctorFromHom F fib) :=
+  ∀ c, hom (𝟙 c) = eqToHom (by simp only [Functor.map_id]; rfl)
+
+/--
+The composition coherence property for `Grothendieck.functorFrom`.
+States that `hom (f ≫ g)` decomposes as the composition of `hom f`, whiskered `hom g`,
+and the canonical isomorphism from `F.map_comp`.
+-/
+abbrev FunctorFromHomComp (fib : FunctorFromFib F (E := E))
+    (hom : FunctorFromHom F fib) :=
+  ∀ c₁ c₂ c₃ (f : c₁ ⟶ c₂) (g : c₂ ⟶ c₃), hom (f ≫ g) =
+    hom f ≫ Functor.whiskerLeft (F.map f) (hom g) ≫
+    eqToHom (by simp only [Functor.map_comp]; rfl)
+
+/--
+Bundled data for constructing a functor from the Grothendieck construction.
+
+This structure captures all the data needed to define a functor `Grothendieck F ⥤ E`:
+- Fiber functors from each `F.obj c` to `E`
+- Natural transformations relating fibers along base morphisms
+- Coherence conditions ensuring functoriality
+-/
+structure FunctorFromData where
+  /-- Fiber functors: for each `c : C`, a functor `F.obj c ⥤ E` -/
+  fib : FunctorFromFib F (E := E)
+  /-- Natural transformations: for each `f : c ⟶ c'`, `fib c ⟶ F.map f ⋙ fib c'` -/
+  hom : FunctorFromHom F fib
+  /-- Identity coherence -/
+  hom_id : FunctorFromHomId F fib hom
+  /-- Composition coherence -/
+  hom_comp : FunctorFromHomComp F fib hom
+
+variable (data : FunctorFromData F (E := E))
+
+/--
+Construct a functor from the Grothendieck construction using bundled data.
+This wraps mathlib's `Grothendieck.functorFrom`.
+-/
+def functorFromData : Grothendieck F ⥤ E :=
+  Grothendieck.functorFrom data.fib data.hom data.hom_id data.hom_comp
+
+variable {F} (H : Grothendieck F ⥤ E)
+
+/--
+Extract bundled data from a functor `Grothendieck F ⥤ E`.
+
+The key insight is:
+- `fib c := ι F c ⋙ H` extracts the fiber functors
+- `hom f := ιNatTrans f ▷ H` constructs the natural transformations using
+  the canonical lifted base morphism
+-/
+def ofFunctorFrom : FunctorFromData F (E := E) where
+  fib c := Grothendieck.ι F c ⋙ H
+  hom {c c'} f := Functor.whiskerRight (Grothendieck.ιNatTrans (F := F) f) H
+  hom_id c := by
+    ext x
+    simp only [Functor.comp_obj, Grothendieck.ι_obj, Functor.whiskerRight_app, eqToHom_app,
+      Grothendieck.ιNatTrans]
+    have heq : (⟨c, x⟩ : Grothendieck F) = ⟨c, (F.map (𝟙 c)).obj x⟩ := by
+      simp only [Functor.map_id]
+      rfl
+    have h : (Grothendieck.Hom.mk (base := 𝟙 c)
+        (fiber := 𝟙 ((F.map (𝟙 c)).obj x)) :
+        Grothendieck.Hom (F := F) ⟨c, x⟩ ⟨c, (F.map (𝟙 c)).obj x⟩) = eqToHom heq := by
+      rw [Grothendieck.eqToHom_eq]
+      simp
+    rw [h, eqToHom_map]
+  hom_comp c₁ c₂ c₃ f g := by
+    ext x
+    simp only [Functor.comp_obj, Grothendieck.ι_obj, NatTrans.comp_app,
+      Functor.whiskerRight_app, Functor.whiskerLeft_app, eqToHom_app,
+      Grothendieck.ιNatTrans]
+    rw [← Category.assoc, ← H.map_comp]
+    have heq_obj : (⟨c₃, (F.map g).obj ((F.map f).obj x)⟩ : Grothendieck F) =
+        ⟨c₃, (F.map (f ≫ g)).obj x⟩ := by
+      congr 1
+      exact (congrFun (congrArg Functor.obj (F.map_comp f g)) x).symm
+    rw [← eqToHom_map H heq_obj, ← H.map_comp]
+    congr 1
+    apply Grothendieck.ext <;> simp
+
+/--
+Round-trip: constructing a functor from extracted data gives back the original functor.
+-/
+theorem functorFromData_ofFunctorFrom : functorFromData F (ofFunctorFrom H) = H := by
+  fapply Functor.ext
+  · intro X
+    rfl
+  · intro X Y f
+    simp only [functorFromData, ofFunctorFrom, Grothendieck.functorFrom_map,
+      Functor.comp_obj, Functor.comp_map, Grothendieck.ι_obj, Grothendieck.ι_map,
+      Functor.whiskerRight_app, Category.id_comp, Category.comp_id, eqToHom_refl]
+    rw [← H.map_comp]
+    congr 1
+    apply Grothendieck.ext <;> simp
+
+/--
+Round-trip: the fiber functors from extracted data equal the original fiber functors.
+-/
+theorem ofFunctorFrom_functorFromData_fib :
+    (ofFunctorFrom (functorFromData F data)).fib = data.fib := by
+  funext c
+  fapply Functor.ext
+  · intro x
+    simp only [ofFunctorFrom, functorFromData, Grothendieck.functorFrom_obj,
+      Functor.comp_obj, Grothendieck.ι_obj]
+  · intro x y f
+    simp only [ofFunctorFrom, functorFromData, Grothendieck.functorFrom_map,
+      Functor.comp_obj, Functor.comp_map, Grothendieck.ι_obj, Grothendieck.ι_map,
+      Category.id_comp, Category.comp_id, eqToHom_refl]
+    have h := congrFun (congrArg NatTrans.app (data.hom_id c)) x
+    simp only [eqToHom_app] at h
+    rw [h, Functor.map_comp, ← Category.assoc, eqToHom_map]
+    simp
+
+end FunctorFromData
+
 end Grothendieck
 
 end Covariant
@@ -2294,6 +2446,188 @@ def ιCompMap {G' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}} (α : F' ⟶ G') (c : C) :
       -- Simplify using map_map, ι_obj, and ι_map
       simp [map_map, ι_obj, ι_map]
     )
+
+/-!
+### FunctorFromData: Bundled data for functors FROM contravariant Grothendieck constructions
+
+This section provides the dual to `FunctorToData`: a complete characterization of
+functors FROM a contravariant Grothendieck construction `GrothendieckContra' F' ⥤ T`.
+
+Every such functor is determined by:
+- A family of fiber functors `fib : ∀ c, F'.obj c ⥤ T`
+- Natural transformations `hom f : F'.map f ⋙ fib c ⟶ fib d` for each `f : c ⟶ d`
+- Coherence conditions for identity and composition
+
+The existing `functorFrom` function takes these components as separate arguments.
+`FunctorFromData` bundles them into a single structure.
+-/
+
+/--
+The type of fiber functors for bundled `FunctorFromData`.
+For each `c : C`, a functor `F'.obj c ⥤ T`.
+-/
+abbrev FunctorFromDataFib := ∀ c, F'.obj c ⥤ T
+
+/--
+The type of natural transformations for bundled `FunctorFromData`.
+For each `f : c ⟶ d`, a natural transformation `F'.map f ⋙ fib c ⟶ fib d`.
+-/
+abbrev FunctorFromDataHom (fib : FunctorFromDataFib (F' := F') (T := T)) :=
+  ∀ {c d : C} (f : c ⟶ d), F'.map f ⋙ fib c ⟶ fib d
+
+/--
+The identity coherence property for bundled `FunctorFromData`.
+States that `hom (𝟙 c)` equals the canonical isomorphism from `F'.map_id`.
+-/
+abbrev FunctorFromDataHomId (fib : FunctorFromDataFib (F' := F') (T := T))
+    (hom : FunctorFromDataHom (F' := F') fib) :=
+  ∀ c, hom (𝟙 c) = eqToHom (congrArg (· ⋙ fib c) (F'.map_id c))
+
+/--
+The composition coherence property for bundled `FunctorFromData`.
+States that `hom (f ≫ g)` decomposes as the composition of whiskered `hom f`,
+`hom g`, and the canonical isomorphism from `F'.map_comp`.
+-/
+abbrev FunctorFromDataHomComp (fib : FunctorFromDataFib (F' := F') (T := T))
+    (hom : FunctorFromDataHom (F' := F') fib) :=
+  ∀ {c d e : C} (f : c ⟶ d) (g : d ⟶ e), hom (f ≫ g) =
+    eqToHom (congrArg (· ⋙ fib c) (F'.map_comp g f)) ≫
+    Functor.whiskerLeft (F'.map g) (hom f) ≫ hom g
+
+/--
+Bundled data for constructing a functor from the contravariant Grothendieck construction.
+
+This structure captures all the data needed to define a functor
+`GrothendieckContra' F' ⥤ T`:
+- Fiber functors from each `F'.obj c` to `T`
+- Natural transformations relating fibers along base morphisms
+- Coherence conditions ensuring functoriality
+-/
+structure FunctorFromData where
+  /-- Fiber functors: for each `c : C`, a functor `F'.obj c ⥤ T` -/
+  fib' : FunctorFromDataFib (F' := F') (T := T)
+  /-- Natural transformations: for each `f : c ⟶ d`, `F'.map f ⋙ fib' c ⟶ fib' d` -/
+  hom' : FunctorFromDataHom (F' := F') fib'
+  /-- Identity coherence -/
+  hom_id' : FunctorFromDataHomId (F' := F') fib' hom'
+  /-- Composition coherence -/
+  hom_comp' : FunctorFromDataHomComp (F' := F') fib' hom'
+
+variable (data : FunctorFromData (F' := F') (T := T))
+
+/--
+Construct a functor from the contravariant Grothendieck construction using bundled data.
+This wraps `GrothendieckContra'.functorFrom`.
+-/
+def functorFromData : GrothendieckContra' F' ⥤ T :=
+  functorFrom data.fib' data.hom' data.hom_id' data.hom_comp'
+
+variable (H : GrothendieckContra' F' ⥤ T)
+
+/--
+Extract bundled data from a functor `GrothendieckContra' F' ⥤ T`.
+
+The key insight is:
+- `fib' c := ι c ⋙ H` extracts the fiber functors
+- `hom' f := ιNatTrans f ▷ H` constructs the natural transformations using
+  the canonical natural transformation for base morphisms
+-/
+def ofFunctorFrom : FunctorFromData (F' := F') (T := T) where
+  fib' c := ι (F' := F') c ⋙ H
+  hom' {c d} f := Functor.whiskerRight (ιNatTrans (F' := F') f) H
+  hom_id' c := by
+    ext x
+    simp only [Functor.whiskerRight_app, eqToHom_app, ιNatTrans, ι_obj, Functor.comp_obj]
+    have h_fmap_id : (F'.map (𝟙 c)).obj x = x :=
+      congrFun (congrArg Functor.obj (F'.map_id c)) x
+    have hsrc_eq : (⟨c, (F'.map (𝟙 c)).obj x⟩ : GrothendieckContra' F') = ⟨c, x⟩ := by
+      simp only [h_fmap_id]
+    rw [← eqToHom_map H hsrc_eq]
+    congr 1
+    rw [eqToHom_eq]
+    apply ext <;> simp
+  hom_comp' {c₁ c₂ c₃} (f : c₁ ⟶ c₂) (g : c₂ ⟶ c₃) := by
+    ext (x : ↑(F'.obj c₃))
+    simp only [NatTrans.comp_app, Functor.whiskerRight_app, Functor.whiskerLeft_app,
+      eqToHom_app, ιNatTrans, ι_obj, Functor.comp_obj]
+    let fg : c₁ ⟶ c₃ := f ≫ g
+    have heq_obj : (⟨c₁, (F'.map f).obj ((F'.map g).obj x)⟩ : GrothendieckContra' F') =
+        ⟨c₁, (F'.map fg).obj x⟩ := by
+      simp only [fg]
+      congr 1
+      exact (congrFun (congrArg Functor.obj (F'.map_comp g f)) x).symm
+    simp only [← H.map_comp]
+    rw [← eqToHom_map H heq_obj.symm, ← H.map_comp]
+    congr 1
+    -- Prove equality of morphisms in GrothendieckContra' F'
+    apply ext
+    · simp [GrothendieckContraInst', comp_base, base_eqToHom, Category.id_comp]
+    · simp [GrothendieckContraInst', Category.id_comp, eqToHom_refl]
+
+/--
+Round-trip: constructing a functor from extracted data gives back the original functor.
+-/
+theorem functorFromData_ofFunctorFrom : functorFromData (ofFunctorFrom H) = H := by
+  fapply Functor.ext
+  · intro X
+    rfl
+  · intro X Y f
+    simp only [functorFromData, ofFunctorFrom, functorFrom, Functor.comp_obj,
+      Functor.comp_map, Functor.whiskerRight_app, ι_obj, ι_map, Category.id_comp,
+      Category.comp_id, eqToHom_refl]
+    rw [← H.map_comp]
+    congr 1
+    have w_base : (({ base := 𝟙 X.base, fiber := f.fiber ≫ eqToHom (ι_map_fiber X.base) } :
+        Hom X ((ι X.base).obj ((F'.map f.base).obj Y.fiber))) ≫
+        (ιNatTrans f.base).app Y.fiber).base = f.base := by
+      unfold CategoryStruct.comp Category.toCategoryStruct GrothendieckContraCat' Cat.of Cat.str
+        Bundled.of GrothendieckContraInst' comp ιNatTrans
+      simp only [Category.id_comp]
+    refine ext _ _ w_base ?_
+    simp only [GrothendieckContraInst', comp_fiber, ιNatTrans, Category.assoc]
+    -- Goal: f.fiber ≫ eqToHom _ ≫ (F'.map (𝟙 X.base)).map (𝟙 _) ≫ eqToHom _ ≫ eqToHom _ = f.fiber
+    -- Use the fact that (F'.map (𝟙 X.base)).map (𝟙 _) = 𝟙 _
+    have h_map_id : (F'.map (𝟙 X.base)).map
+        (𝟙 ((F'.map f.base ⋙ ι X.base).obj Y.fiber).fiber) =
+        𝟙 ((F'.map (𝟙 X.base)).obj ((F'.map f.base ⋙ ι X.base).obj Y.fiber).fiber) :=
+      (F'.map (𝟙 X.base)).map_id _
+    rw [h_map_id]
+    -- Goal: f.fiber ≫ eqToHom A ≫ 𝟙 X ≫ eqToHom B = f.fiber
+    -- Use convert to get: ... = f.fiber ≫ 𝟙 _
+    convert Category.comp_id f.fiber using 1
+    -- Now: f.fiber ≫ eqToHom A ≫ 𝟙 X ≫ eqToHom B = f.fiber ≫ 𝟙 _
+    -- Use congr to separate f.fiber
+    congr 1
+    -- Goal: eqToHom A ≫ 𝟙 X ≫ eqToHom B ≫ eqToHom C = 𝟙 ((F'.map f.base).obj Y.fiber)
+    -- First combine the two eqToHom terms at the end
+    simp only [eqToHom_trans]
+    -- Now: eqToHom A ≫ 𝟙 X ≫ eqToHom (B.trans C) = 𝟙 Y
+    -- Factor out the lemma: round-trip eqToHom with identity in middle is identity
+    have round_trip_id : ∀ {A B : F'.obj X.base} (p : A = B) (q : B = A),
+        eqToHom p ≫ 𝟙 B ≫ eqToHom q = 𝟙 A := by
+      intros A B p q
+      simp only [Category.id_comp, eqToHom_trans, eqToHom_refl']
+    exact round_trip_id _ _
+
+/--
+Round-trip: the fiber functors from extracted data equal the original fiber functors.
+-/
+theorem ofFunctorFrom_functorFromData_fib :
+    (ofFunctorFrom (functorFromData data)).fib' = data.fib' := by
+  funext c
+  fapply Functor.ext
+  · intro x
+    simp only [ofFunctorFrom, functorFromData, functorFrom,
+      Functor.comp_obj, ι_obj]
+  · intro x y f
+    simp only [ofFunctorFrom, Functor.comp_map]
+    simp only [functorFromData, ι_map]
+    simp only [functorFrom, ι_obj]
+    have h_hom_id := congrFun (congrArg NatTrans.app (data.hom_id' c)) y
+    simp only [eqToHom_app] at h_hom_id
+    rw [h_hom_id]
+    simp only [Functor.map_comp, eqToHom_map, eqToHom_trans,
+      Category.assoc, Category.id_comp, Category.comp_id, eqToHom_refl']
 
 end FunctorFrom
 
