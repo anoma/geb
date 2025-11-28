@@ -807,9 +807,7 @@ def functorFromData : Grothendieck F ⥤ E :=
 variable {F} (H : Grothendieck F ⥤ E)
 
 /--
-Extract bundled data from a functor `Grothendieck F ⥤ E`.
-
-The key insight is:
+Extract bundled data from a functor `Grothendieck F ⥤ E`:
 - `fib c := ι F c ⋙ H` extracts the fiber functors
 - `hom f := ιNatTrans f ▷ H` constructs the natural transformations using
   the canonical lifted base morphism
@@ -2525,9 +2523,7 @@ def functorFromData : GrothendieckContra' F' ⥤ T :=
 variable (H : GrothendieckContra' F' ⥤ T)
 
 /--
-Extract bundled data from a functor `GrothendieckContra' F' ⥤ T`.
-
-The key insight is:
+Extract bundled data from a functor `GrothendieckContra' F' ⥤ T`:
 - `fib' c := ι c ⋙ H` extracts the fiber functors
 - `hom' f := ιNatTrans f ▷ H` constructs the natural transformations using
   the canonical natural transformation for base morphisms
