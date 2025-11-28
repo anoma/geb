@@ -4161,6 +4161,21 @@ abbrev FunctorBetweenContraBaseHomEqId
     (F'.map (baseFib.map (𝟙 c))).obj ((fibFib c).obj x)
 
 /--
+Derive the identity equality from functor laws.
+-/
+lemma functorBetweenContraBaseHomEqIdProof
+    (baseFib : FunctorBetweenContraBaseFib (C := C) (D := D))
+    (fibFib : FunctorBetweenContraFibFib G' F' baseFib) :
+    FunctorBetweenContraBaseHomEqId G' F' baseFib fibFib := by
+  intro c x
+  simp only [baseFib.map_id]
+  have hG : G'.map (𝟙 c) = 𝟙 (G'.obj c) := G'.map_id c
+  have hF : F'.map (𝟙 (baseFib.obj c)) = 𝟙 (F'.obj (baseFib.obj c)) :=
+    F'.map_id (baseFib.obj c)
+  simp only [hG, hF]
+  rfl
+
+/--
 The equality proof for composite morphisms in the contravariant Grothendieck.
 For `f : c ⟶ c'`, `g : c' ⟶ c''`, `x'' : G'.obj c''`:
 - The composition path ends at
@@ -4175,6 +4190,19 @@ abbrev FunctorBetweenContraBaseHomEqComp
     (F'.map (baseFib.map f)).obj
       ((F'.map (baseFib.map g)).obj ((fibFib c'').obj x'')) =
     (F'.map (baseFib.map (f ≫ g))).obj ((fibFib c'').obj x'')
+
+/--
+Derive the composition equality from functor laws.
+For contravariant functors, F'.map_comp g f = F'.map f ⋙ F'.map g.
+-/
+lemma functorBetweenContraBaseHomEqCompProof
+    (baseFib : FunctorBetweenContraBaseFib (C := C) (D := D))
+    (fibFib : FunctorBetweenContraFibFib G' F' baseFib) :
+    FunctorBetweenContraBaseHomEqComp G' F' baseFib fibFib := by
+  intro c c' c'' f g x''
+  simp only [baseFib.map_comp]
+  exact (congrFun (congrArg Functor.obj
+    (F'.map_comp (baseFib.map g) (baseFib.map f))) ((fibFib c'').obj x'')).symm
 
 /--
 The equality proof relating `(G'.map f).obj ((G'.map g).obj x'')` to the
@@ -4196,17 +4224,29 @@ abbrev FunctorBetweenContraGMapCompEq
     (fibFib c).obj ((G'.map (@CategoryStruct.comp C _ c c' c'' f g)).obj x'')
 
 /--
-The identity coherence: `fibHomCrossApp (𝟙 c) x = eqToHom (baseHomEqId c x)`.
+Derive the G'.map_comp equality from functor laws.
+For contravariant functors, G'.map_comp g f = G'.map f ⋙ G'.map g.
+-/
+lemma functorBetweenContraGMapCompEqProof
+    (baseFib : FunctorBetweenContraBaseFib (C := C) (D := D))
+    (fibFib : FunctorBetweenContraFibFib G' F' baseFib) :
+    FunctorBetweenContraGMapCompEq G' F' baseFib fibFib := by
+  intro c c' c'' f g x''
+  exact congrArg (fibFib c).obj
+    (congrFun (congrArg Functor.obj (G'.map_comp g f)) x'').symm
+
+/--
+The identity coherence: `fibHomCrossApp (𝟙 c) x` equals the derived eqToHom.
 For `𝟙 c` and `x : G'.obj c`, the cross-fiber morphism `fibHomCrossApp (𝟙 c) x`
 should be the identity (via `eqToHom`).
 -/
 abbrev FunctorBetweenContraBaseHomId
     (baseFib : FunctorBetweenContraBaseFib (C := C) (D := D))
     (fibFib : FunctorBetweenContraFibFib G' F' baseFib)
-    (fibHomCrossApp : FunctorBetweenContraFibHomCrossApp G' F' baseFib fibFib)
-    (baseHomEqId : FunctorBetweenContraBaseHomEqId G' F' baseFib fibFib) :=
+    (fibHomCrossApp : FunctorBetweenContraFibHomCrossApp G' F' baseFib fibFib) :=
   ∀ (c : C) (x : G'.obj c),
-    fibHomCrossApp (𝟙 c) x = eqToHom (baseHomEqId c x)
+    fibHomCrossApp (𝟙 c) x =
+      eqToHom (functorBetweenContraBaseHomEqIdProof G' F' baseFib fibFib c x)
 
 /--
 The composition coherence for the contravariant case.
@@ -4220,15 +4260,13 @@ We use explicit C-composition to avoid type inference issues.
 abbrev FunctorBetweenContraBaseHomComp
     (baseFib : FunctorBetweenContraBaseFib (C := C) (D := D))
     (fibFib : FunctorBetweenContraFibFib G' F' baseFib)
-    (fibHomCrossApp : FunctorBetweenContraFibHomCrossApp G' F' baseFib fibFib)
-    (baseHomEqComp : FunctorBetweenContraBaseHomEqComp G' F' baseFib fibFib)
-    (gMapCompEq : FunctorBetweenContraGMapCompEq G' F' baseFib fibFib) :=
+    (fibHomCrossApp : FunctorBetweenContraFibHomCrossApp G' F' baseFib fibFib) :=
   ∀ {c c' c'' : C} (f : c ⟶ c') (g : c' ⟶ c'') (x'' : G'.obj c''),
-    eqToHom (gMapCompEq f g x'') ≫
+    eqToHom (functorBetweenContraGMapCompEqProof G' F' baseFib fibFib f g x'') ≫
       fibHomCrossApp (@CategoryStruct.comp C _ c c' c'' f g) x'' =
     fibHomCrossApp f ((G'.map g).obj x'') ≫
     (F'.map (baseFib.map f)).map (fibHomCrossApp g x'') ≫
-    eqToHom (baseHomEqComp f g x'')
+    eqToHom (functorBetweenContraBaseHomEqCompProof G' F' baseFib fibFib f g x'')
 
 /--
 Bundled data for a functor between contravariant Grothendieck constructions
@@ -4243,17 +4281,10 @@ structure FunctorBetweenContraData where
   fibHomCrossApp : FunctorBetweenContraFibHomCrossApp G' F' baseFib fibFib
   /-- Naturality for cross-fiber morphisms -/
   fibHomCrossNat : FunctorBetweenContraFibHomCrossNat G' F' baseFib fibFib fibHomCrossApp
-  /-- Equality proof for identity -/
-  baseHomEqId : FunctorBetweenContraBaseHomEqId G' F' baseFib fibFib
-  /-- Equality proof for composition -/
-  baseHomEqComp : FunctorBetweenContraBaseHomEqComp G' F' baseFib fibFib
-  /-- Equality proof for G'.map_comp -/
-  gMapCompEq : FunctorBetweenContraGMapCompEq G' F' baseFib fibFib
   /-- Identity coherence for cross-fiber morphisms -/
-  baseHomId : FunctorBetweenContraBaseHomId G' F' baseFib fibFib fibHomCrossApp baseHomEqId
+  baseHomId : FunctorBetweenContraBaseHomId G' F' baseFib fibFib fibHomCrossApp
   /-- Composition coherence for cross-fiber morphisms -/
   baseHomComp : FunctorBetweenContraBaseHomComp G' F' baseFib fibFib fibHomCrossApp
-    baseHomEqComp gMapCompEq
 
 end FunctorBetweenContra
 
