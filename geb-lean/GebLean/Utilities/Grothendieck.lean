@@ -876,6 +876,26 @@ theorem ofFunctorFrom_functorFromData_fib :
     rw [h, Functor.map_comp, ← Category.assoc, eqToHom_map]
     simp
 
+/--
+Round-trip: the natural transformations from extracted data equal the original
+natural transformations at each component.
+
+The two natural transformations have different types because their fiber functors
+differ propositionally. This theorem states that the `.app` components are equal
+up to `eqToHom` coercions.
+-/
+theorem ofFunctorFrom_functorFromData_hom_app {c c' : C} (f : c ⟶ c') (x : F.obj c) :
+    ((ofFunctorFrom (functorFromData F data)).hom f).app x =
+    eqToHom (congrFun (congrArg Functor.obj
+      (congrFun (ofFunctorFrom_functorFromData_fib data) c)) x) ≫
+    (data.hom f).app x ≫
+    eqToHom (congrFun (congrArg Functor.obj
+      (congrFun (ofFunctorFrom_functorFromData_fib data) c')) ((F.map f).obj x)).symm := by
+  simp only [ofFunctorFrom, Functor.whiskerRight_app, functorFromData,
+    Grothendieck.ιNatTrans, Grothendieck.ι_obj, Grothendieck.functorFrom_map]
+  simp only [Functor.map_id, Category.id_comp, Category.comp_id, eqToHom_refl]
+  convert Category.comp_id ((data.hom f).app x) using 2
+
 end FunctorFromData
 
 end Grothendieck
