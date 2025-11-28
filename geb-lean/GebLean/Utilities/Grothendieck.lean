@@ -3777,4 +3777,508 @@ end FunctorToDataCategory
 
 end GrothendieckContra'
 
+/-!
+## Functors Between Grothendieck Constructions (Covariant Case)
+
+This section defines bundled data for functors between two covariant Grothendieck
+constructions `Grothendieck G ⥤ Grothendieck F` where `G : C ⥤ Cat` and
+`F : D ⥤ Cat`.
+
+A functor between Grothendieck constructions is characterized by:
+- A base functor `baseFib : C ⥤ D`
+- For each `c : C`, a functor `fibFib c : G.obj c ⥤ F.obj (baseFib.obj c)`
+- Coherent fiber morphisms relating these across base morphisms
+-/
+
+section FunctorBetween
+
+universe vC vD uC uD
+
+variable {C : Type uC} [Category.{vC} C] (G : C ⥤ Cat.{vC, uC})
+variable {D : Type uD} [Category.{vD} D] (F : D ⥤ Cat.{vD, uD})
+
+/--
+The base-fiber functor: assigns to each `c : C` a base object in `D`.
+-/
+abbrev FunctorBetweenBaseFib := C ⥤ D
+
+/--
+The fiber-fiber functor: for each `c : C`, a functor from `G.obj c` to
+`F.obj (baseFib.obj c)`.
+-/
+abbrev FunctorBetweenFibFib (baseFib : FunctorBetweenBaseFib (C := C) (D := D)) :=
+  ∀ c, G.obj c ⥤ F.obj (baseFib.obj c)
+
+/--
+The cross-fiber morphism component: for each `f : c ⟶ c'` and `x : G.obj c`,
+a morphism from the transported source fiber to the destination fiber.
+
+For `f : c ⟶ c'` and `x : G.obj c`, the fiber morphism in `Grothendieck F`
+goes from `(F.map (baseFib.map f)).obj ((fibFib c).obj x)` in the transported
+source fiber to `(fibFib c').obj ((G.map f).obj x)` in the destination fiber.
+-/
+abbrev FunctorBetweenFibHomCrossApp (baseFib : FunctorBetweenBaseFib (C := C) (D := D))
+    (fibFib : FunctorBetweenFibFib G F baseFib) :=
+  ∀ {c c' : C} (f : c ⟶ c') (x : G.obj c),
+    (F.map (baseFib.map f)).obj ((fibFib c).obj x) ⟶ (fibFib c').obj ((G.map f).obj x)
+
+/--
+The naturality condition for cross-fiber morphisms: for each `f : c ⟶ c'` and
+`g : x ⟶ y` in `G.obj c`, the appropriate square commutes.
+-/
+abbrev FunctorBetweenFibHomCrossNat (baseFib : FunctorBetweenBaseFib (C := C) (D := D))
+    (fibFib : FunctorBetweenFibFib G F baseFib)
+    (fibHomCrossApp : FunctorBetweenFibHomCrossApp G F baseFib fibFib) :=
+  ∀ {c c' : C} (f : c ⟶ c') {x y : G.obj c} (g : x ⟶ y),
+    (F.map (baseFib.map f)).map ((fibFib c).map g) ≫ fibHomCrossApp f y =
+    fibHomCrossApp f x ≫ (fibFib c').map ((G.map f).map g)
+
+/--
+The equality proof for identity morphisms in the target Grothendieck.
+States that `(F.map (baseFib.map (𝟙 c))).obj ((fibFib c).obj x)` equals
+`(fibFib c).obj ((G.map (𝟙 c)).obj x)`.
+-/
+abbrev FunctorBetweenBaseHomEqId (baseFib : FunctorBetweenBaseFib (C := C) (D := D))
+    (fibFib : FunctorBetweenFibFib G F baseFib) :=
+  ∀ (c : C) (x : G.obj c),
+    (F.map (baseFib.map (𝟙 c))).obj ((fibFib c).obj x) =
+      (fibFib c).obj ((G.map (𝟙 c)).obj x)
+
+/--
+The equality proof for composite morphisms in the target Grothendieck.
+States that the result of applying the composite is equal to applying
+the morphisms sequentially.
+-/
+abbrev FunctorBetweenBaseHomEqComp (baseFib : FunctorBetweenBaseFib (C := C) (D := D))
+    (fibFib : FunctorBetweenFibFib G F baseFib) :=
+  ∀ {c c' c'' : C} (f : c ⟶ c') (g : c' ⟶ c'') (x : G.obj c),
+    (F.map (baseFib.map (f ≫ g))).obj ((fibFib c).obj x) =
+    (F.map (baseFib.map g)).obj
+      ((F.map (baseFib.map f)).obj ((fibFib c).obj x))
+
+/--
+The identity coherence: `fibHomCrossApp (𝟙 c) x = eqToHom (baseHomEqId c x)`.
+-/
+abbrev FunctorBetweenBaseHomId (baseFib : FunctorBetweenBaseFib (C := C) (D := D))
+    (fibFib : FunctorBetweenFibFib G F baseFib)
+    (fibHomCrossApp : FunctorBetweenFibHomCrossApp G F baseFib fibFib)
+    (baseHomEqId : FunctorBetweenBaseHomEqId G F baseFib fibFib) :=
+  ∀ (c : C) (x : G.obj c),
+    fibHomCrossApp (𝟙 c) x = eqToHom (baseHomEqId c x)
+
+/--
+The equality proof relating `(G.map g).obj ((G.map f).obj x)` to `(G.map (f ≫ g)).obj x`.
+This comes from `G.map_comp`.
+-/
+abbrev FunctorBetweenGMapCompEq (baseFib : FunctorBetweenBaseFib (C := C) (D := D))
+    (fibFib : FunctorBetweenFibFib G F baseFib) :=
+  ∀ {c c' c'' : C} (f : c ⟶ c') (g : c' ⟶ c'') (x : G.obj c),
+    (fibFib c'').obj ((G.map g).obj ((G.map f).obj x)) =
+    (fibFib c'').obj ((G.map (f ≫ g)).obj x)
+
+/--
+The composition coherence: `fibHomCrossApp (f ≫ g) x` decomposes correctly.
+-/
+abbrev FunctorBetweenBaseHomComp (baseFib : FunctorBetweenBaseFib (C := C) (D := D))
+    (fibFib : FunctorBetweenFibFib G F baseFib)
+    (fibHomCrossApp : FunctorBetweenFibHomCrossApp G F baseFib fibFib)
+    (baseHomEqComp : FunctorBetweenBaseHomEqComp G F baseFib fibFib)
+    (gMapCompEq : FunctorBetweenGMapCompEq G F baseFib fibFib) :=
+  ∀ {c c' c'' : C} (f : c ⟶ c') (g : c' ⟶ c'') (x : G.obj c),
+    fibHomCrossApp (f ≫ g) x =
+    eqToHom (baseHomEqComp f g x) ≫
+    (F.map (baseFib.map g)).map (fibHomCrossApp f x) ≫
+    fibHomCrossApp g ((G.map f).obj x) ≫
+    eqToHom (gMapCompEq f g x)
+
+/--
+Bundled data for a functor between covariant Grothendieck constructions
+`Grothendieck G ⥤ Grothendieck F`.
+
+A functor `H : Grothendieck G ⥤ Grothendieck F` maps:
+- Objects: `H.obj (c, x) = (baseFib.obj c, (fibFib c).obj x)`
+- Morphisms: `H.map (f, φ) = (baseFib.map f, fibHomCrossApp f x ≫ (fibFib c').map φ)`
+
+The coherence conditions ensure functoriality.
+-/
+structure FunctorBetweenData where
+  /-- The base functor `C ⥤ D` -/
+  baseFib : FunctorBetweenBaseFib (C := C) (D := D)
+  /-- Fiber functors: for each `c : C`, a functor `G.obj c ⥤ F.obj (baseFib.obj c)` -/
+  fibFib : FunctorBetweenFibFib G F baseFib
+  /-- Cross-fiber morphisms: for each `f : c ⟶ c'` and `x : G.obj c` -/
+  fibHomCrossApp : FunctorBetweenFibHomCrossApp G F baseFib fibFib
+  /-- Naturality for cross-fiber morphisms -/
+  fibHomCrossNat : FunctorBetweenFibHomCrossNat G F baseFib fibFib fibHomCrossApp
+  /-- Equality proof for identity -/
+  baseHomEqId : FunctorBetweenBaseHomEqId G F baseFib fibFib
+  /-- Equality proof for composition -/
+  baseHomEqComp : FunctorBetweenBaseHomEqComp G F baseFib fibFib
+  /-- Equality proof for G.map_comp -/
+  gMapCompEq : FunctorBetweenGMapCompEq G F baseFib fibFib
+  /-- Identity coherence for cross-fiber morphisms -/
+  baseHomId : FunctorBetweenBaseHomId G F baseFib fibFib fibHomCrossApp baseHomEqId
+  /-- Composition coherence for cross-fiber morphisms -/
+  baseHomComp : FunctorBetweenBaseHomComp G F baseFib fibFib fibHomCrossApp baseHomEqComp
+    gMapCompEq
+
+end FunctorBetween
+
+/-!
+## Natural Transformations Between Functors of Grothendieck Constructions (Covariant)
+
+For natural transformations `α : H ⟶ K` where `H K : Grothendieck G ⥤ Grothendieck F`,
+we require the base functors to be equal (otherwise the codomain objects live in
+different fibers). The natural transformation consists of fiber natural transformations
+satisfying a coherence condition with the cross-fiber morphisms.
+-/
+
+section NatTransBetween
+
+universe vC vD uC uD
+
+variable {C : Type uC} [Category.{vC} C] (G : C ⥤ Cat.{vC, uC})
+variable {D : Type uD} [Category.{vD} D] (F : D ⥤ Cat.{vD, uD})
+variable (baseFib : FunctorBetweenBaseFib (C := C) (D := D))
+variable (dataG dataH : FunctorBetweenData G F)
+
+/--
+For a natural transformation between functors with the same base, we need the
+base functors to be equal.
+-/
+abbrev NatTransBetweenBaseFibEq :=
+  dataG.baseFib = baseFib ∧ dataH.baseFib = baseFib
+
+/--
+The fiber natural transformation component: for each `c : C`, a natural
+transformation `dataG.fibFib c ⟶ dataH.fibFib c`.
+Since both fibFib functors go from `G.obj c` to `F.obj (baseFib.obj c)` when
+the base functors are equal, this is well-typed (up to transport).
+-/
+abbrev NatTransBetweenFibNatApp
+    (fibFibG : FunctorBetweenFibFib G F baseFib)
+    (fibFibH : FunctorBetweenFibFib G F baseFib) :=
+  ∀ (c : C) (x : G.obj c), (fibFibG c).obj x ⟶ (fibFibH c).obj x
+
+/--
+The naturality condition for fiber natural transformations within a single fiber.
+For each `g : x ⟶ y` in `G.obj c`:
+```
+fibFibG c x --fibNatApp c x--> fibFibH c x
+    |                              |
+(fibFibG c).map g            (fibFibH c).map g
+    |                              |
+    v                              v
+fibFibG c y --fibNatApp c y--> fibFibH c y
+```
+-/
+abbrev NatTransBetweenFibNatNat
+    (fibFibG fibFibH : FunctorBetweenFibFib G F baseFib)
+    (fibNatApp : NatTransBetweenFibNatApp G F baseFib fibFibG fibFibH) :=
+  ∀ (c : C) {x y : G.obj c} (g : x ⟶ y),
+    (fibFibG c).map g ≫ fibNatApp c y = fibNatApp c x ≫ (fibFibH c).map g
+
+/--
+The coherence condition relating fiber natural transformations to cross-fiber
+morphisms. For each `f : c ⟶ c'` and `x : G.obj c`:
+```
+(F.map (baseFib.map f)).obj (fibFibG c x) --fibHomCrossAppG f x-->
+                                               fibFibG c' ((G.map f).obj x)
+           |                                              |
+(F.map (baseFib.map f)).map (fibNatApp c x)         fibNatApp c' ((G.map f).obj x)
+           |                                              |
+           v                                              v
+(F.map (baseFib.map f)).obj (fibFibH c x) --fibHomCrossAppH f x-->
+                                               fibFibH c' ((G.map f).obj x)
+```
+-/
+abbrev NatTransBetweenCoherence
+    (fibFibG fibFibH : FunctorBetweenFibFib G F baseFib)
+    (fibNatApp : NatTransBetweenFibNatApp G F baseFib fibFibG fibFibH)
+    (fibHomCrossAppG : FunctorBetweenFibHomCrossApp G F baseFib fibFibG)
+    (fibHomCrossAppH : FunctorBetweenFibHomCrossApp G F baseFib fibFibH) :=
+  ∀ {c c' : C} (f : c ⟶ c') (x : G.obj c),
+    (F.map (baseFib.map f)).map (fibNatApp c x) ≫ fibHomCrossAppH f x =
+    fibHomCrossAppG f x ≫ fibNatApp c' ((G.map f).obj x)
+
+/--
+Bundled data for a natural transformation between functors
+`Grothendieck G ⥤ Grothendieck F` that share the same base functor.
+
+This structure represents a natural transformation `α : H ⟶ K` where
+both `H` and `K` have the same base functor `baseFib : C ⥤ D`.
+-/
+structure NatTransBetweenData
+    (fibFibG fibFibH : FunctorBetweenFibFib G F baseFib)
+    (fibHomCrossAppG : FunctorBetweenFibHomCrossApp G F baseFib fibFibG)
+    (fibHomCrossAppH : FunctorBetweenFibHomCrossApp G F baseFib fibFibH) where
+  /-- Component morphisms: for each `c` and `x`, a morphism between fibers -/
+  fibNatApp : NatTransBetweenFibNatApp G F baseFib fibFibG fibFibH
+  /-- Naturality within each fiber -/
+  fibNatNat : NatTransBetweenFibNatNat G F baseFib fibFibG fibFibH fibNatApp
+  /-- Coherence with cross-fiber morphisms -/
+  coherence : NatTransBetweenCoherence G F baseFib fibFibG fibFibH fibNatApp
+    fibHomCrossAppG fibHomCrossAppH
+
+end NatTransBetween
+
+/-!
+## Functors Between Grothendieck Constructions (Contravariant Case)
+
+This section defines bundled data for functors between two contravariant Grothendieck
+constructions `GrothendieckContra' G' ⥤ GrothendieckContra' F'` where
+`G' : Cᵒᵖ' ⥤ Cat` and `F' : Dᵒᵖ' ⥤ Cat`.
+-/
+
+section FunctorBetweenContra
+
+universe vC vD uC uD
+
+variable {C : Type uC} [Category.{vC} C] (G' : Cᵒᵖ' ⥤ Cat.{vC, uC})
+variable {D : Type uD} [Category.{vD} D] (F' : Dᵒᵖ' ⥤ Cat.{vD, uD})
+
+/--
+The base-fiber functor for contravariant case: assigns to each `c : C` a base
+object in `D`.
+-/
+abbrev FunctorBetweenContraBaseFib := C ⥤ D
+
+/--
+The fiber-fiber functor for contravariant case: for each `c : C`, a functor from
+`G'.obj c` to `F'.obj (baseFib.obj c)`.
+-/
+abbrev FunctorBetweenContraFibFib
+    (baseFib : FunctorBetweenContraBaseFib (C := C) (D := D)) :=
+  ∀ c, G'.obj c ⥤ F'.obj (baseFib.obj c)
+
+/--
+The cross-fiber morphism component for contravariant case: for each `f : c ⟶ c'`
+and `x' : G'.obj c'`, a morphism relating the transported fibers.
+
+For `G' : Cᵒᵖ' ⥤ Cat`, we have `G'.map f : G'.obj c' ⥤ G'.obj c` (reversed).
+So for `f : c ⟶ c'` and `x' : G'.obj c'`:
+- `(G'.map f).obj x' : G'.obj c`
+- `(fibFib c).obj ((G'.map f).obj x') : F'.obj (baseFib.obj c)`
+- `(F'.map (baseFib.map f)).obj ((fibFib c').obj x') : F'.obj (baseFib.obj c)`
+-/
+abbrev FunctorBetweenContraFibHomCrossApp
+    (baseFib : FunctorBetweenContraBaseFib (C := C) (D := D))
+    (fibFib : FunctorBetweenContraFibFib G' F' baseFib) :=
+  ∀ {c c' : C} (f : c ⟶ c') (x' : G'.obj c'),
+    (fibFib c).obj ((G'.map f).obj x') ⟶
+    (F'.map (baseFib.map f)).obj ((fibFib c').obj x')
+
+/--
+The naturality condition for cross-fiber morphisms in the contravariant case.
+For `f : c ⟶ c'` and `g : x' ⟶ y'` in `G'.obj c'`:
+- `(G'.map f).map g : (G'.map f).obj x' ⟶ (G'.map f).obj y'`
+-/
+abbrev FunctorBetweenContraFibHomCrossNat
+    (baseFib : FunctorBetweenContraBaseFib (C := C) (D := D))
+    (fibFib : FunctorBetweenContraFibFib G' F' baseFib)
+    (fibHomCrossApp : FunctorBetweenContraFibHomCrossApp G' F' baseFib fibFib) :=
+  ∀ {c c' : C} (f : c ⟶ c') {x' y' : G'.obj c'} (g : x' ⟶ y'),
+    (fibFib c).map ((G'.map f).map g) ≫ fibHomCrossApp f y' =
+    fibHomCrossApp f x' ≫ (F'.map (baseFib.map f)).map ((fibFib c').map g)
+
+/--
+The equality proof for identity morphisms in the contravariant Grothendieck.
+For `𝟙 c` and `x : G'.obj c`, the cross-fiber morphism has type:
+`(fibFib c).obj ((G'.map (𝟙 c)).obj x) ⟶ (F'.map (baseFib.map (𝟙 c))).obj ((fibFib c).obj x)`
+Both sides should equal `(fibFib c).obj x` by functor identity laws.
+-/
+abbrev FunctorBetweenContraBaseHomEqId
+    (baseFib : FunctorBetweenContraBaseFib (C := C) (D := D))
+    (fibFib : FunctorBetweenContraFibFib G' F' baseFib) :=
+  ∀ (c : C) (x : G'.obj c),
+    (fibFib c).obj ((G'.map (𝟙 c)).obj x) =
+    (F'.map (baseFib.map (𝟙 c))).obj ((fibFib c).obj x)
+
+/--
+The equality proof for composite morphisms in the contravariant Grothendieck.
+For `f : c ⟶ c'`, `g : c' ⟶ c''`, `x'' : G'.obj c''`:
+- The composition path ends at
+  `(F'.map (baseFib.map f)).obj ((F'.map (baseFib.map g)).obj ((fibFib c'').obj x''))`
+- The composite path uses `(F'.map (baseFib.map (f ≫ g))).obj ((fibFib c'').obj x'')`
+These are equal by `F'.map_comp` for contravariant functors.
+-/
+abbrev FunctorBetweenContraBaseHomEqComp
+    (baseFib : FunctorBetweenContraBaseFib (C := C) (D := D))
+    (fibFib : FunctorBetweenContraFibFib G' F' baseFib) :=
+  ∀ {c c' c'' : C} (f : c ⟶ c') (g : c' ⟶ c'') (x'' : G'.obj c''),
+    (F'.map (baseFib.map f)).obj
+      ((F'.map (baseFib.map g)).obj ((fibFib c'').obj x'')) =
+    (F'.map (baseFib.map (f ≫ g))).obj ((fibFib c'').obj x'')
+
+/--
+The equality proof relating `(G'.map f).obj ((G'.map g).obj x'')` to the
+composite map applied to `x''` for the contravariant case.
+For contravariant functors with `G' : Cᵒᵖ' ⥤ Cat`, and C-morphisms `f : c ⟶ c'`
+and `g : c' ⟶ c''`:
+- `G'.map f : G'.obj c' ⥤ G'.obj c`
+- `G'.map g : G'.obj c'' ⥤ G'.obj c'`
+- `G'.map_comp` gives `G'.map (g ≫_{Cᵒᵖ'} f) = G'.map g ⋙ G'.map f`
+- Since `Cᵒᵖ'` reverses composition, `g ≫_{Cᵒᵖ'} f = f ≫_C g` when viewed
+  as C-morphisms
+We use explicit C-composition to avoid type inference issues.
+-/
+abbrev FunctorBetweenContraGMapCompEq
+    (baseFib : FunctorBetweenContraBaseFib (C := C) (D := D))
+    (fibFib : FunctorBetweenContraFibFib G' F' baseFib) :=
+  ∀ {c c' c'' : C} (f : c ⟶ c') (g : c' ⟶ c'') (x'' : G'.obj c''),
+    (fibFib c).obj ((G'.map f).obj ((G'.map g).obj x'')) =
+    (fibFib c).obj ((G'.map (@CategoryStruct.comp C _ c c' c'' f g)).obj x'')
+
+/--
+The identity coherence: `fibHomCrossApp (𝟙 c) x = eqToHom (baseHomEqId c x)`.
+For `𝟙 c` and `x : G'.obj c`, the cross-fiber morphism `fibHomCrossApp (𝟙 c) x`
+should be the identity (via `eqToHom`).
+-/
+abbrev FunctorBetweenContraBaseHomId
+    (baseFib : FunctorBetweenContraBaseFib (C := C) (D := D))
+    (fibFib : FunctorBetweenContraFibFib G' F' baseFib)
+    (fibHomCrossApp : FunctorBetweenContraFibHomCrossApp G' F' baseFib fibFib)
+    (baseHomEqId : FunctorBetweenContraBaseHomEqId G' F' baseFib fibFib) :=
+  ∀ (c : C) (x : G'.obj c),
+    fibHomCrossApp (𝟙 c) x = eqToHom (baseHomEqId c x)
+
+/--
+The composition coherence for the contravariant case.
+For `f : c ⟶ c'`, `g : c' ⟶ c''`, `x'' : G'.obj c''`:
+- The stepwise path goes through:
+  1. `fibHomCrossApp f ((G'.map g).obj x'')` to get to `(F'.map (baseFib.map f)).obj (...)`
+  2. `(F'.map (baseFib.map f)).map (fibHomCrossApp g x'')` to apply the second cross-fiber
+  3. `eqToHom` to relate endpoints
+We use explicit C-composition to avoid type inference issues.
+-/
+abbrev FunctorBetweenContraBaseHomComp
+    (baseFib : FunctorBetweenContraBaseFib (C := C) (D := D))
+    (fibFib : FunctorBetweenContraFibFib G' F' baseFib)
+    (fibHomCrossApp : FunctorBetweenContraFibHomCrossApp G' F' baseFib fibFib)
+    (baseHomEqComp : FunctorBetweenContraBaseHomEqComp G' F' baseFib fibFib)
+    (gMapCompEq : FunctorBetweenContraGMapCompEq G' F' baseFib fibFib) :=
+  ∀ {c c' c'' : C} (f : c ⟶ c') (g : c' ⟶ c'') (x'' : G'.obj c''),
+    eqToHom (gMapCompEq f g x'') ≫
+      fibHomCrossApp (@CategoryStruct.comp C _ c c' c'' f g) x'' =
+    fibHomCrossApp f ((G'.map g).obj x'') ≫
+    (F'.map (baseFib.map f)).map (fibHomCrossApp g x'') ≫
+    eqToHom (baseHomEqComp f g x'')
+
+/--
+Bundled data for a functor between contravariant Grothendieck constructions
+`GrothendieckContra' G' ⥤ GrothendieckContra' F'`.
+-/
+structure FunctorBetweenContraData where
+  /-- The base functor `C ⥤ D` -/
+  baseFib : FunctorBetweenContraBaseFib (C := C) (D := D)
+  /-- Fiber functors: for each `c : C`, a functor `G'.obj c ⥤ F'.obj (baseFib.obj c)` -/
+  fibFib : FunctorBetweenContraFibFib G' F' baseFib
+  /-- Cross-fiber morphisms -/
+  fibHomCrossApp : FunctorBetweenContraFibHomCrossApp G' F' baseFib fibFib
+  /-- Naturality for cross-fiber morphisms -/
+  fibHomCrossNat : FunctorBetweenContraFibHomCrossNat G' F' baseFib fibFib fibHomCrossApp
+  /-- Equality proof for identity -/
+  baseHomEqId : FunctorBetweenContraBaseHomEqId G' F' baseFib fibFib
+  /-- Equality proof for composition -/
+  baseHomEqComp : FunctorBetweenContraBaseHomEqComp G' F' baseFib fibFib
+  /-- Equality proof for G'.map_comp -/
+  gMapCompEq : FunctorBetweenContraGMapCompEq G' F' baseFib fibFib
+  /-- Identity coherence for cross-fiber morphisms -/
+  baseHomId : FunctorBetweenContraBaseHomId G' F' baseFib fibFib fibHomCrossApp baseHomEqId
+  /-- Composition coherence for cross-fiber morphisms -/
+  baseHomComp : FunctorBetweenContraBaseHomComp G' F' baseFib fibFib fibHomCrossApp
+    baseHomEqComp gMapCompEq
+
+end FunctorBetweenContra
+
+/-!
+## Natural Transformations Between Functors on Contravariant Grothendieck
+Constructions
+
+This section defines bundled data for natural transformations between functors
+`GrothendieckContra' G' ⥤ GrothendieckContra' F'` that share the same base
+functor.
+-/
+
+section NatTransBetweenContra
+
+universe vC vD uC uD
+
+variable {C : Type uC} [Category.{vC} C] (G' : Cᵒᵖ' ⥤ Cat.{vC, uC})
+variable {D : Type uD} [Category.{vD} D] (F' : Dᵒᵖ' ⥤ Cat.{vD, uD})
+variable (baseFib : FunctorBetweenContraBaseFib (C := C) (D := D))
+
+/--
+The component morphisms of a natural transformation between functors on
+contravariant Grothendieck constructions. For each `c : C` and `x : G'.obj c`,
+a morphism from `fibFibG c x` to `fibFibH c x` in `F'.obj (baseFib.obj c)`.
+-/
+abbrev NatTransBetweenContraFibNatApp
+    (fibFibG fibFibH : FunctorBetweenContraFibFib G' F' baseFib) :=
+  ∀ (c : C) (x : G'.obj c), (fibFibG c).obj x ⟶ (fibFibH c).obj x
+
+/--
+The naturality condition for the fiber components. For each `c : C` and
+morphism `g : x ⟶ y` in `G'.obj c`:
+```
+fibFibG c x --fibNatApp c x--> fibFibH c x
+    |                              |
+(fibFibG c).map g           (fibFibH c).map g
+    |                              |
+    v                              v
+fibFibG c y --fibNatApp c y--> fibFibH c y
+```
+-/
+abbrev NatTransBetweenContraFibNatNat
+    (fibFibG fibFibH : FunctorBetweenContraFibFib G' F' baseFib)
+    (fibNatApp : NatTransBetweenContraFibNatApp G' F' baseFib fibFibG fibFibH) :=
+  ∀ (c : C) {x y : G'.obj c} (g : x ⟶ y),
+    (fibFibG c).map g ≫ fibNatApp c y = fibNatApp c x ≫ (fibFibH c).map g
+
+/--
+The coherence condition relating fiber natural transformations to cross-fiber
+morphisms. For each `f : c ⟶ c'` and `x' : G'.obj c'`:
+```
+(fibFibG c).obj ((G'.map f).obj x') --fibHomCrossAppG f x'-->
+                           (F'.map (baseFib.map f)).obj ((fibFibG c').obj x')
+           |                                              |
+fibNatApp c ((G'.map f).obj x')    (F'.map (baseFib.map f)).map (fibNatApp c' x')
+           |                                              |
+           v                                              v
+(fibFibH c).obj ((G'.map f).obj x') --fibHomCrossAppH f x'-->
+                           (F'.map (baseFib.map f)).obj ((fibFibH c').obj x')
+```
+-/
+abbrev NatTransBetweenContraCoherence
+    (fibFibG fibFibH : FunctorBetweenContraFibFib G' F' baseFib)
+    (fibNatApp : NatTransBetweenContraFibNatApp G' F' baseFib fibFibG fibFibH)
+    (fibHomCrossAppG : FunctorBetweenContraFibHomCrossApp G' F' baseFib fibFibG)
+    (fibHomCrossAppH : FunctorBetweenContraFibHomCrossApp G' F' baseFib fibFibH) :=
+  ∀ {c c' : C} (f : c ⟶ c') (x' : G'.obj c'),
+    fibHomCrossAppG f x' ≫ (F'.map (baseFib.map f)).map (fibNatApp c' x') =
+    fibNatApp c ((G'.map f).obj x') ≫ fibHomCrossAppH f x'
+
+/--
+Bundled data for a natural transformation between functors
+`GrothendieckContra' G' ⥤ GrothendieckContra' F'` that share the same base
+functor.
+
+This structure represents a natural transformation `α : H ⟶ K` where
+both `H` and `K` have the same base functor `baseFib : C ⥤ D`.
+-/
+structure NatTransBetweenContraData
+    (fibFibG fibFibH : FunctorBetweenContraFibFib G' F' baseFib)
+    (fibHomCrossAppG : FunctorBetweenContraFibHomCrossApp G' F' baseFib fibFibG)
+    (fibHomCrossAppH : FunctorBetweenContraFibHomCrossApp G' F' baseFib fibFibH)
+    where
+  /-- Component morphisms: for each `c` and `x`, a morphism between fibers -/
+  fibNatApp : NatTransBetweenContraFibNatApp G' F' baseFib fibFibG fibFibH
+  /-- Naturality within each fiber -/
+  fibNatNat : NatTransBetweenContraFibNatNat G' F' baseFib fibFibG fibFibH fibNatApp
+  /-- Coherence with cross-fiber morphisms -/
+  coherence : NatTransBetweenContraCoherence G' F' baseFib fibFibG fibFibH fibNatApp
+    fibHomCrossAppG fibHomCrossAppH
+
+end NatTransBetweenContra
+
 end GebLean
