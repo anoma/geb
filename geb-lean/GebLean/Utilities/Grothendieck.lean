@@ -898,6 +898,181 @@ theorem ofFunctorFrom_functorFromData_hom_app {c c' : C} (f : c ⟶ c') (x : F.o
 
 end FunctorFromData
 
+section FunctorFromDataCategory
+
+variable {E : Type*} [Category E]
+variable (dataG dataH : FunctorFromData F (E := E))
+
+/--
+The fiber natural transformations for `NatTransFromData`.
+For each `c : C`, a natural transformation `dataG.fib c ⟶ dataH.fib c`.
+-/
+abbrev NatTransFromFib :=
+  ∀ c, dataG.fib c ⟶ dataH.fib c
+
+/--
+The coherence condition for `NatTransFromData`.
+For each `f : c ⟶ c'`, the following square commutes:
+
+```
+dataG.fib c --fibNat c--> dataH.fib c
+    |                         |
+dataG.hom f               dataH.hom f
+    |                         |
+    v                         v
+F.map f ⋙ dataG.fib c' --> F.map f ⋙ dataH.fib c'
+          (F.map f ◁ fibNat c')
+```
+-/
+abbrev NatTransFromCoherence (fibNat : NatTransFromFib F dataG dataH) :=
+  ∀ {c c' : C} (f : c ⟶ c'),
+    dataG.hom f ≫ Functor.whiskerLeft (F.map f) (fibNat c') = fibNat c ≫ dataH.hom f
+
+/--
+The data for a natural transformation between functors from the Grothendieck
+construction.
+
+This bundles together:
+- Fiber natural transformations for each base object
+- Coherence condition ensuring compatibility with the `hom` structure
+-/
+@[ext]
+structure NatTransFromData where
+  /-- Fiber natural transformations: for each `c`, `dataG.fib c ⟶ dataH.fib c` -/
+  fibNat : NatTransFromFib F dataG dataH
+  /-- Coherence: `dataG.hom f ≫ (F.map f ◁ fibNat c') = fibNat c ≫ dataH.hom f` -/
+  coherence : NatTransFromCoherence F dataG dataH fibNat
+
+variable (natData : NatTransFromData F dataG dataH)
+
+/--
+Construct a natural transformation between functors from the Grothendieck
+construction from bundled data.
+-/
+def natTransFrom : functorFromData F dataG ⟶ functorFromData F dataH where
+  app X := (natData.fibNat X.base).app X.fiber
+  naturality {X Y} f := by
+    simp only [functorFromData, Grothendieck.functorFrom_map]
+    have h := congrFun (congrArg NatTrans.app (natData.coherence f.base)) X.fiber
+    simp only [NatTrans.comp_app, Functor.whiskerLeft_app] at h
+    rw [Category.assoc, (natData.fibNat Y.base).naturality f.fiber]
+    rw [← Category.assoc, ← Category.assoc, h, Category.assoc]
+
+variable {dataG dataH}
+variable (α : functorFromData F dataG ⟶ functorFromData F dataH)
+
+/--
+Extract the fiber natural transformations from a natural transformation
+between functors from Grothendieck. Uses `eqToHom` to cast between
+`Grothendieck.ι F c ⋙ functorFromData F data` and `data.fib c`.
+-/
+def ofNatTransFromFibNat : NatTransFromFib F dataG dataH := fun c =>
+  eqToHom (congrFun (ofFunctorFrom_functorFromData_fib dataG) c).symm ≫
+  Functor.whiskerLeft (Grothendieck.ι F c) α ≫
+  eqToHom (congrFun (ofFunctorFrom_functorFromData_fib dataH) c)
+
+/--
+Extract `NatTransFromData` from a natural transformation between functors
+from the Grothendieck construction.
+-/
+def ofNatTransFrom : NatTransFromData F dataG dataH where
+  fibNat := ofNatTransFromFibNat F α
+  coherence {c c'} f := by
+    ext x
+    simp only [ofNatTransFromFibNat, NatTrans.comp_app, Functor.whiskerLeft_app, eqToHom_app]
+    have nat := α.naturality ((Grothendieck.ιNatTrans (F := F) f).app x)
+    simp only [functorFromData, Grothendieck.functorFrom_map,
+      Grothendieck.ιNatTrans, Grothendieck.ι_obj, Functor.comp_obj] at nat
+    simp only [Functor.map_id, Category.comp_id] at nat
+    simp only [eqToHom_refl', Category.id_comp, Category.comp_id, Grothendieck.ι_obj]
+    exact nat
+
+variable (dataG dataH) in
+/--
+Converting a natural transformation to data and back gives the original.
+-/
+theorem natTransFrom_ofNatTransFrom :
+    natTransFrom F dataG dataH (ofNatTransFrom F α) = α := by
+  ext X
+  simp only [natTransFrom, ofNatTransFrom, ofNatTransFromFibNat,
+    NatTrans.comp_app, Functor.whiskerLeft_app, eqToHom_app]
+  simp only [eqToHom_refl', Category.id_comp, Category.comp_id, Grothendieck.ι_obj]
+
+variable (dataG dataH) in
+/--
+Converting data to a natural transformation and back gives the original.
+-/
+theorem ofNatTransFrom_natTransFrom :
+    ofNatTransFrom F (natTransFrom F dataG dataH natData) = natData := by
+  ext c x
+  simp only [ofNatTransFrom, ofNatTransFromFibNat,
+    NatTrans.comp_app, Functor.whiskerLeft_app, eqToHom_app, natTransFrom]
+  simp only [eqToHom_refl', Category.id_comp, Category.comp_id, Grothendieck.ι_obj]
+
+/--
+Equivalence between `NatTransFromData` and natural transformations between
+functors from Grothendieck categories.
+-/
+def natTransFromEquiv :
+    NatTransFromData F dataG dataH ≃
+    (functorFromData F dataG ⟶ functorFromData F dataH) where
+  toFun := natTransFrom F dataG dataH
+  invFun := ofNatTransFrom F
+  left_inv := ofNatTransFrom_natTransFrom F dataG dataH
+  right_inv := natTransFrom_ofNatTransFrom F dataG dataH
+
+variable (data : FunctorFromData F (E := E))
+
+/--
+The identity `NatTransFromData` on a `FunctorFromData`.
+-/
+def NatTransFromData.id : NatTransFromData F data data where
+  fibNat c := 𝟙 (data.fib c)
+  coherence {c c'} f := by
+    ext x
+    simp only [NatTrans.comp_app, Functor.whiskerLeft_app, NatTrans.id_app, Category.id_comp]
+    exact Category.comp_id _
+
+variable (dataK : FunctorFromData F (E := E))
+
+/--
+Composition of `NatTransFromData` values.
+-/
+def NatTransFromData.comp (natDataGH : NatTransFromData F dataG dataH)
+    (natDataHK : NatTransFromData F dataH dataK) :
+    NatTransFromData F dataG dataK where
+  fibNat c := natDataGH.fibNat c ≫ natDataHK.fibNat c
+  coherence {c c'} f := by
+    ext x
+    simp only [NatTrans.comp_app, Functor.whiskerLeft_app]
+    have hGH := congrFun (congrArg NatTrans.app (natDataGH.coherence f)) x
+    have hHK := congrFun (congrArg NatTrans.app (natDataHK.coherence f)) x
+    simp only [NatTrans.comp_app, Functor.whiskerLeft_app] at hGH hHK
+    rw [← Category.assoc, hGH, Category.assoc, hHK, ← Category.assoc]
+
+/--
+`natTransFrom` preserves identity.
+-/
+theorem natTransFrom_id :
+    natTransFrom F data data (NatTransFromData.id F data) = 𝟙 (functorFromData F data) := by
+  ext X
+  simp only [natTransFrom, NatTransFromData.id, NatTrans.id_app, functorFromData,
+    Grothendieck.functorFrom_obj]
+
+variable (natDataGH : NatTransFromData F dataG dataH)
+variable (natDataHK : NatTransFromData F dataH dataK)
+
+/--
+`natTransFrom` preserves composition.
+-/
+theorem natTransFrom_comp :
+    natTransFrom F dataG dataK (NatTransFromData.comp F dataK natDataGH natDataHK) =
+    natTransFrom F dataG dataH natDataGH ≫ natTransFrom F dataH dataK natDataHK := by
+  ext X
+  simp only [natTransFrom, NatTransFromData.comp, NatTrans.comp_app]
+
+end FunctorFromDataCategory
+
 end Grothendieck
 
 end Covariant
@@ -2655,6 +2830,181 @@ theorem ofFunctorFrom_functorFromData_hom_app {c d : C} (f : c ⟶ d) (x : F'.ob
     ιNatTrans, ι_obj]
   simp only [Functor.map_id, Category.id_comp]
   simp only [eqToHom_refl', Category.id_comp, Category.comp_id]
+
+section FunctorFromDataCategory
+
+variable (dataG dataH : FunctorFromData (F' := F') (T := T))
+
+/--
+The fiber natural transformations for `NatTransFromData` (contravariant case).
+For each `c : C`, a natural transformation `dataG.fib' c ⟶ dataH.fib' c`.
+-/
+abbrev NatTransFromDataFib :=
+  ∀ c, dataG.fib' c ⟶ dataH.fib' c
+
+/--
+The coherence condition for `NatTransFromData` (contravariant case).
+For each `f : c ⟶ d`, the following square commutes:
+
+```
+F'.map f ⋙ dataG.fib' c --F'.map f ◁ fibNat c--> F'.map f ⋙ dataH.fib' c
+            |                                            |
+       dataG.hom' f                                 dataH.hom' f
+            |                                            |
+            v                                            v
+      dataG.fib' d ------fibNat d---------------> dataH.fib' d
+```
+-/
+abbrev NatTransFromDataCoherence (fibNat : NatTransFromDataFib (F' := F') dataG dataH) :=
+  ∀ {c d : C} (f : c ⟶ d),
+    Functor.whiskerLeft (F'.map f) (fibNat c) ≫ dataH.hom' f = dataG.hom' f ≫ fibNat d
+
+/--
+The data for a natural transformation between functors from the contravariant
+Grothendieck construction.
+
+This bundles together:
+- Fiber natural transformations for each base object
+- Coherence condition ensuring compatibility with the `hom'` structure
+-/
+@[ext]
+structure NatTransFromData where
+  /-- Fiber natural transformations: for each `c`, `dataG.fib' c ⟶ dataH.fib' c` -/
+  fibNat : NatTransFromDataFib (F' := F') dataG dataH
+  /-- Coherence: `(F'.map f ◁ fibNat c) ≫ dataH.hom' f = dataG.hom' f ≫ fibNat d` -/
+  coherence : NatTransFromDataCoherence (F' := F') dataG dataH fibNat
+
+variable (natData : NatTransFromData (F' := F') dataG dataH)
+
+/--
+Construct a natural transformation between functors from the contravariant
+Grothendieck construction from bundled data.
+-/
+def natTransFromData : functorFromData dataG ⟶ functorFromData dataH where
+  app X := (natData.fibNat X.base).app X.fiber
+  naturality {X Y} f := by
+    simp only [functorFromData, functorFrom]
+    have h := congrFun (congrArg NatTrans.app (natData.coherence f.base)) Y.fiber
+    simp only [NatTrans.comp_app, Functor.whiskerLeft_app] at h
+    rw [Category.assoc, ← h, ← Category.assoc, ← Category.assoc,
+      (natData.fibNat X.base).naturality f.fiber]
+
+variable {dataG dataH}
+variable (α : functorFromData dataG ⟶ functorFromData dataH)
+
+/--
+Extract the fiber natural transformations from a natural transformation
+between functors from the contravariant Grothendieck construction.
+Uses `eqToHom` to cast between `ι c ⋙ functorFromData data` and `data.fib' c`.
+-/
+def ofNatTransFromDataFibNat : NatTransFromDataFib (F' := F') dataG dataH := fun c =>
+  eqToHom (congrFun (ofFunctorFrom_functorFromData_fib dataG) c).symm ≫
+  Functor.whiskerLeft (ι (F' := F') c) α ≫
+  eqToHom (congrFun (ofFunctorFrom_functorFromData_fib dataH) c)
+
+/--
+Extract `NatTransFromData` from a natural transformation between functors
+from the contravariant Grothendieck construction.
+-/
+def ofNatTransFromData : NatTransFromData (F' := F') dataG dataH where
+  fibNat := ofNatTransFromDataFibNat (F' := F') α
+  coherence {c d} f := by
+    ext x
+    simp only [ofNatTransFromDataFibNat, NatTrans.comp_app, Functor.whiskerLeft_app, eqToHom_app]
+    have nat := α.naturality ((ιNatTrans (F' := F') f).app x)
+    simp only [functorFromData, functorFrom,
+      ιNatTrans, ι_obj, Functor.comp_obj] at nat
+    simp only [Functor.map_id, Category.id_comp] at nat
+    simp only [eqToHom_refl', Category.id_comp, Category.comp_id, ι_obj]
+    exact nat.symm
+
+variable (dataG dataH) in
+/--
+Converting a natural transformation to data and back gives the original
+(contravariant case).
+-/
+theorem natTransFromData_ofNatTransFromData :
+    natTransFromData dataG dataH (ofNatTransFromData (F' := F') α) = α := by
+  ext X
+  simp only [natTransFromData, ofNatTransFromData, ofNatTransFromDataFibNat,
+    NatTrans.comp_app, Functor.whiskerLeft_app, eqToHom_app]
+  simp only [eqToHom_refl', Category.id_comp, Category.comp_id, ι_obj]
+
+variable (dataG dataH) in
+/--
+Converting data to a natural transformation and back gives the original
+(contravariant case).
+-/
+theorem ofNatTransFromData_natTransFromData :
+    ofNatTransFromData (F' := F') (natTransFromData dataG dataH natData) = natData := by
+  ext c x
+  simp only [ofNatTransFromData, ofNatTransFromDataFibNat,
+    NatTrans.comp_app, Functor.whiskerLeft_app, eqToHom_app, natTransFromData]
+  simp only [eqToHom_refl', Category.id_comp, Category.comp_id, ι_obj]
+
+/--
+Equivalence between `NatTransFromData` and natural transformations between
+functors from contravariant Grothendieck categories.
+-/
+def natTransFromDataEquiv :
+    NatTransFromData (F' := F') dataG dataH ≃
+    (functorFromData dataG ⟶ functorFromData dataH) where
+  toFun := natTransFromData dataG dataH
+  invFun := ofNatTransFromData (F' := F')
+  left_inv := ofNatTransFromData_natTransFromData dataG dataH
+  right_inv := natTransFromData_ofNatTransFromData dataG dataH
+
+variable (data : FunctorFromData (F' := F') (T := T))
+
+/--
+The identity `NatTransFromData` on a `FunctorFromData` (contravariant case).
+-/
+def NatTransFromData.id : NatTransFromData (F' := F') data data where
+  fibNat c := 𝟙 (data.fib' c)
+  coherence {c d} f := by
+    ext x
+    simp only [NatTrans.comp_app, Functor.whiskerLeft_app, NatTrans.id_app, Category.comp_id]
+    exact Category.id_comp _
+
+variable (dataK : FunctorFromData (F' := F') (T := T))
+
+/--
+Composition of `NatTransFromData` values (contravariant case).
+-/
+def NatTransFromData.comp (natDataGH : NatTransFromData (F' := F') dataG dataH)
+    (natDataHK : NatTransFromData (F' := F') dataH dataK) :
+    NatTransFromData (F' := F') dataG dataK where
+  fibNat c := natDataGH.fibNat c ≫ natDataHK.fibNat c
+  coherence {c d} f := by
+    ext x
+    simp only [NatTrans.comp_app, Functor.whiskerLeft_app]
+    have hGH := congrFun (congrArg NatTrans.app (natDataGH.coherence f)) x
+    have hHK := congrFun (congrArg NatTrans.app (natDataHK.coherence f)) x
+    simp only [NatTrans.comp_app, Functor.whiskerLeft_app] at hGH hHK
+    rw [Category.assoc, hHK, ← Category.assoc, hGH, Category.assoc]
+
+/--
+`natTransFromData` preserves identity (contravariant case).
+-/
+theorem natTransFromData_id :
+    natTransFromData data data (NatTransFromData.id (F' := F') data) =
+    𝟙 (functorFromData data) := by
+  ext X
+  simp only [natTransFromData, NatTransFromData.id, NatTrans.id_app, functorFromData, functorFrom]
+
+variable (natDataGH : NatTransFromData (F' := F') dataG dataH)
+variable (natDataHK : NatTransFromData (F' := F') dataH dataK)
+
+/--
+`natTransFromData` preserves composition (contravariant case).
+-/
+theorem natTransFromData_comp :
+    natTransFromData dataG dataK (NatTransFromData.comp (F' := F') dataK natDataGH natDataHK) =
+    natTransFromData dataG dataH natDataGH ≫ natTransFromData dataH dataK natDataHK := by
+  ext X
+  simp only [natTransFromData, NatTransFromData.comp, NatTrans.comp_app]
+
+end FunctorFromDataCategory
 
 end FunctorFrom
 
