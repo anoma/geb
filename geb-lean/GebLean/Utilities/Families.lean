@@ -779,17 +779,17 @@ end ProdContravarRepHelpers
 
 section LayeredConstructions
 
-universe w1 w2
+universe w₁ w₂
 
 variable (C : Type u) [Category.{v} C]
 
 /--
 The free coproduct completion of the free product completion of `C`, with
-flexible universe levels for the outer index types (`w1`) and inner index
-types (`w2`).
+flexible universe levels for the outer index types (`w₁`) and inner index
+types (`w₂`).
 
-Objects are `(I, (X_i, F_i)_{i ∈ I})` where `I : Type w1` and for each
-`i ∈ I`, `X_i : Type w2` and `F_i : X_i → C` is a family.
+Objects are `(I, (X_i, F_i)_{i ∈ I})` where `I : Type w₁` and for each
+`i ∈ I`, `X_i : Type w₂` and `F_i : X_i → C` is a family.
 
 Morphisms `(I, (X_i, F_i)) → (J, (Y_j, G_j))` consist of:
 - `reindexOuter : I → J`
@@ -798,17 +798,17 @@ Morphisms `(I, (X_i, F_i)) → (J, (Y_j, G_j))` consist of:
   `fiberMor_{i,k} : F_i(reindexInner_i(k)) → G_{reindexOuter(i)}(k)`
 -/
 @[simp]
-def FreeCoprodProdCat.{u', v', w1', w2'} (C' : Type u') [Category.{v'} C'] : Cat :=
-  FreeCoprodCompletionCat.{max (w2' + 1) u' w2', max w2' v', w1'}
-    (FreeProdCompletionCat.{u', v', w2'} C')
+def FreeCoprodProdCat.{u', v', w₁', w₂'} (C' : Type u') [Category.{v'} C'] : Cat :=
+  FreeCoprodCompletionCat.{max (w₂' + 1) u' w₂', max w₂' v', w₁'}
+    (FreeProdCompletionCat.{u', v', w₂'} C')
 
 /--
 The coproduct of covariant representables construction applied twice, with
-flexible universe levels for the outer index types (`w1`) and inner index
-types (`w2`).
+flexible universe levels for the outer index types (`w₁`) and inner index
+types (`w₂`).
 
-Objects are `(I, (X_i, F_i)_{i ∈ I})` where `I : Type w1` and for each
-`i ∈ I`, `X_i : Type w2` and `F_i : X_i → C` is a family.
+Objects are `(I, (X_i, F_i)_{i ∈ I})` where `I : Type w₁` and for each
+`i ∈ I`, `X_i : Type w₂` and `F_i : X_i → C` is a family.
 
 Morphisms `(I, (X_i, F_i)) → (J, (Y_j, G_j))` consist of:
 - `reindexOuter : I → J`
@@ -819,9 +819,9 @@ Morphisms `(I, (X_i, F_i)) → (J, (Y_j, G_j))` consist of:
 This has the same morphism structure as `FreeCoprodProdCat`.
 -/
 @[simp]
-def CoprodCovarRepSquaredCat.{u', v', w1', w2'} (C' : Type u') [Category.{v'} C'] : Cat :=
-  CoprodCovarRepCat.{max (w2' + 1) u' w2', max w2' v', w1'}
-    (CoprodCovarRepCat.{u', v', w2'} C')
+def CoprodCovarRepSquaredCat.{u', v', w₁', w₂'} (C' : Type u') [Category.{v'} C'] : Cat :=
+  CoprodCovarRepCat.{max (w₂' + 1) u' w₂', max w₂' v', w₁'}
+    (CoprodCovarRepCat.{u', v', w₂'} C')
 
 end LayeredConstructions
 
@@ -829,7 +829,7 @@ end LayeredConstructions
 
 section FreeCoprodProdHelpers
 
-universe w1 w2
+universe w₁ w₂
 
 variable {C : Type u} [Category.{v} C]
 
@@ -837,42 +837,42 @@ variable {C : Type u} [Category.{v} C]
 Construct an object of `FreeCoprodProdCat C` from an outer index type,
 an inner index type family, and a family of families of objects.
 -/
-def fcpObjMk {I : Type w1} {X : I → Type w2} (F : ∀ i, X i → C) :
-    FreeCoprodProdCat.{u, v, w1, w2} C :=
+def fcpObjMk {I : Type w₁} {X : I → Type w₂} (F : ∀ i, X i → C) :
+    FreeCoprodProdCat.{u, v, w₁, w₂} C :=
   ⟨I, fun i => ⟨X i, F i⟩⟩
 
 /--
 Extract the outer index type from an object of `FreeCoprodProdCat C`.
 -/
-def fcpOuterIndex (x : FreeCoprodProdCat.{u, v, w1, w2} C) : Type w1 :=
+def fcpOuterIndex (x : FreeCoprodProdCat.{u, v, w₁, w₂} C) : Type w₁ :=
   x.base
 
 /--
 Extract the inner index type at outer index `i` from an object of
 `FreeCoprodProdCat C`.
 -/
-def fcpInnerIndex (x : FreeCoprodProdCat.{u, v, w1, w2} C) (i : fcpOuterIndex x) :
-    Type w2 :=
+def fcpInnerIndex (x : FreeCoprodProdCat.{u, v, w₁, w₂} C) (i : fcpOuterIndex x) :
+    Type w₂ :=
   (x.fiber i).base
 
 /--
 Extract the family of objects at outer index `i` and inner index `k` from
 an object of `FreeCoprodProdCat C`.
 -/
-def fcpFamily (x : FreeCoprodProdCat.{u, v, w1, w2} C) (i : fcpOuterIndex x)
+def fcpFamily (x : FreeCoprodProdCat.{u, v, w₁, w₂} C) (i : fcpOuterIndex x)
     (k : fcpInnerIndex x i) : C :=
   (x.fiber i).fiber k
 
 @[simp]
-lemma fcpObjMk_outerIndex {I : Type w1} {X : I → Type w2}
+lemma fcpObjMk_outerIndex {I : Type w₁} {X : I → Type w₂}
     (F : ∀ i, X i → C) : fcpOuterIndex (fcpObjMk F) = I := rfl
 
 @[simp]
-lemma fcpObjMk_innerIndex {I : Type w1} {X : I → Type w2}
+lemma fcpObjMk_innerIndex {I : Type w₁} {X : I → Type w₂}
     (F : ∀ i, X i → C) (i : I) : fcpInnerIndex (fcpObjMk F) i = X i := rfl
 
 @[simp]
-lemma fcpObjMk_family {I : Type w1} {X : I → Type w2}
+lemma fcpObjMk_family {I : Type w₁} {X : I → Type w₂}
     (F : ∀ i, X i → C) (i : I) (k : X i) : fcpFamily (fcpObjMk F) i k = F i k :=
   rfl
 
@@ -884,7 +884,7 @@ A morphism `(I, (X_i, F_i)) → (J, (Y_j, G_j))` consists of:
 - `reindexInner : ∀ i, Y_{reindexOuter(i)} ⟶ X_i` (contravariant in `Type`)
 - `fiberMor : ∀ i k, F_i(reindexInner_i(k)) ⟶ G_{reindexOuter(i)}(k)` (in `C`)
 -/
-def fcpHomMk {x y : FreeCoprodProdCat.{u, v, w1, w2} C}
+def fcpHomMk {x y : FreeCoprodProdCat.{u, v, w₁, w₂} C}
     (reindexOuter : fcpOuterIndex x ⟶ fcpOuterIndex y)
     (reindexInner : ∀ i, fcpInnerIndex y (reindexOuter i) ⟶ fcpInnerIndex x i)
     (fiberMor : ∀ i k, fcpFamily x i (reindexInner i k) ⟶
@@ -894,7 +894,7 @@ def fcpHomMk {x y : FreeCoprodProdCat.{u, v, w1, w2} C}
 /--
 Extract the outer reindexing function from a morphism in `FreeCoprodProdCat C`.
 -/
-def fcpReindexOuter {x y : FreeCoprodProdCat.{u, v, w1, w2} C} (f : x ⟶ y) :
+def fcpReindexOuter {x y : FreeCoprodProdCat.{u, v, w₁, w₂} C} (f : x ⟶ y) :
     fcpOuterIndex x ⟶ fcpOuterIndex y :=
   f.base
 
@@ -902,7 +902,7 @@ def fcpReindexOuter {x y : FreeCoprodProdCat.{u, v, w1, w2} C} (f : x ⟶ y) :
 Extract the inner reindexing function at outer index `i` from a morphism in
 `FreeCoprodProdCat C`.
 -/
-def fcpReindexInner {x y : FreeCoprodProdCat.{u, v, w1, w2} C} (f : x ⟶ y)
+def fcpReindexInner {x y : FreeCoprodProdCat.{u, v, w₁, w₂} C} (f : x ⟶ y)
     (i : fcpOuterIndex x) :
     fcpInnerIndex y (fcpReindexOuter f i) ⟶ fcpInnerIndex x i :=
   (f.fiber i).base
@@ -911,14 +911,14 @@ def fcpReindexInner {x y : FreeCoprodProdCat.{u, v, w1, w2} C} (f : x ⟶ y)
 Extract the fiber morphism at outer index `i` and inner index `k` from a
 morphism in `FreeCoprodProdCat C`.
 -/
-def fcpFiberMor {x y : FreeCoprodProdCat.{u, v, w1, w2} C} (f : x ⟶ y)
+def fcpFiberMor {x y : FreeCoprodProdCat.{u, v, w₁, w₂} C} (f : x ⟶ y)
     (i : fcpOuterIndex x) (k : fcpInnerIndex y (fcpReindexOuter f i)) :
     fcpFamily x i (fcpReindexInner f i k) ⟶
     fcpFamily y (fcpReindexOuter f i) k :=
   (f.fiber i).fiber k
 
 @[simp]
-lemma fcpHomMk_reindexOuter {x y : FreeCoprodProdCat.{u, v, w1, w2} C}
+lemma fcpHomMk_reindexOuter {x y : FreeCoprodProdCat.{u, v, w₁, w₂} C}
     (reindexOuter : fcpOuterIndex x ⟶ fcpOuterIndex y)
     (reindexInner : ∀ i, fcpInnerIndex y (reindexOuter i) ⟶ fcpInnerIndex x i)
     (fiberMor : ∀ i k, fcpFamily x i (reindexInner i k) ⟶
@@ -927,7 +927,7 @@ lemma fcpHomMk_reindexOuter {x y : FreeCoprodProdCat.{u, v, w1, w2} C}
       reindexOuter := rfl
 
 @[simp]
-lemma fcpHomMk_reindexInner {x y : FreeCoprodProdCat.{u, v, w1, w2} C}
+lemma fcpHomMk_reindexInner {x y : FreeCoprodProdCat.{u, v, w₁, w₂} C}
     (reindexOuter : fcpOuterIndex x ⟶ fcpOuterIndex y)
     (reindexInner : ∀ i, fcpInnerIndex y (reindexOuter i) ⟶ fcpInnerIndex x i)
     (fiberMor : ∀ i k, fcpFamily x i (reindexInner i k) ⟶
@@ -936,7 +936,7 @@ lemma fcpHomMk_reindexInner {x y : FreeCoprodProdCat.{u, v, w1, w2} C}
       reindexInner i := rfl
 
 @[simp]
-lemma fcpHomMk_fiberMor {x y : FreeCoprodProdCat.{u, v, w1, w2} C}
+lemma fcpHomMk_fiberMor {x y : FreeCoprodProdCat.{u, v, w₁, w₂} C}
     (reindexOuter : fcpOuterIndex x ⟶ fcpOuterIndex y)
     (reindexInner : ∀ i, fcpInnerIndex y (reindexOuter i) ⟶ fcpInnerIndex x i)
     (fiberMor : ∀ i k, fcpFamily x i (reindexInner i k) ⟶
@@ -949,14 +949,14 @@ lemma fcpHomMk_fiberMor {x y : FreeCoprodProdCat.{u, v, w1, w2} C}
 The identity morphism in `FreeCoprodProdCat C` has identity outer reindexing.
 -/
 @[simp]
-lemma fcpId_reindexOuter (x : FreeCoprodProdCat.{u, v, w1, w2} C) :
+lemma fcpId_reindexOuter (x : FreeCoprodProdCat.{u, v, w₁, w₂} C) :
     fcpReindexOuter (𝟙 x) = 𝟙 (fcpOuterIndex x) := rfl
 
 /--
 The identity morphism in `FreeCoprodProdCat C` has identity inner reindexing.
 -/
 @[simp]
-lemma fcpId_reindexInner (x : FreeCoprodProdCat.{u, v, w1, w2} C)
+lemma fcpId_reindexInner (x : FreeCoprodProdCat.{u, v, w₁, w₂} C)
     (i : fcpOuterIndex x) :
     fcpReindexInner (𝟙 x) i = 𝟙 (fcpInnerIndex x i) := rfl
 
@@ -964,7 +964,7 @@ lemma fcpId_reindexInner (x : FreeCoprodProdCat.{u, v, w1, w2} C)
 The identity morphism in `FreeCoprodProdCat C` has identity fiber morphisms.
 -/
 @[simp]
-lemma fcpId_fiberMor (x : FreeCoprodProdCat.{u, v, w1, w2} C) (i : fcpOuterIndex x)
+lemma fcpId_fiberMor (x : FreeCoprodProdCat.{u, v, w₁, w₂} C) (i : fcpOuterIndex x)
     (k : fcpInnerIndex x i) :
     fcpFiberMor (𝟙 x) i k = 𝟙 (fcpFamily x i k) := rfl
 
@@ -973,7 +973,7 @@ Composition in `FreeCoprodProdCat C`: the outer reindexing composes
 covariantly.
 -/
 @[simp]
-lemma fcpComp_reindexOuter {x y z : FreeCoprodProdCat.{u, v, w1, w2} C}
+lemma fcpComp_reindexOuter {x y z : FreeCoprodProdCat.{u, v, w₁, w₂} C}
     (f : x ⟶ y) (g : y ⟶ z) :
     fcpReindexOuter (f ≫ g) = fcpReindexOuter f ≫ fcpReindexOuter g := rfl
 
@@ -982,7 +982,7 @@ Composition in `FreeCoprodProdCat C`: the inner reindexing composes
 contravariantly.
 -/
 @[simp]
-lemma fcpComp_reindexInner {x y z : FreeCoprodProdCat.{u, v, w1, w2} C}
+lemma fcpComp_reindexInner {x y z : FreeCoprodProdCat.{u, v, w₁, w₂} C}
     (f : x ⟶ y) (g : y ⟶ z) (i : fcpOuterIndex x) :
     fcpReindexInner (f ≫ g) i =
       fcpReindexInner g (fcpReindexOuter f i) ≫ fcpReindexInner f i := rfl
@@ -999,7 +999,7 @@ This uses `GrothendieckContra'.comp_fiber` for the outer layer and
 `Grothendieck.comp_fiber` for the inner layer.
 -/
 @[simp]
-lemma fcpComp_fiberMor {x y z : FreeCoprodProdCat.{u, v, w1, w2} C}
+lemma fcpComp_fiberMor {x y z : FreeCoprodProdCat.{u, v, w₁, w₂} C}
     (f : x ⟶ y) (g : y ⟶ z) (i : fcpOuterIndex x)
     (k : fcpInnerIndex z (fcpReindexOuter g (fcpReindexOuter f i))) :
     fcpFiberMor (f ≫ g) i k =
@@ -1019,7 +1019,7 @@ end FreeCoprodProdHelpers
 
 section CoprodCovarRepSquaredHelpers
 
-universe w1 w2
+universe w₁ w₂
 
 variable {C : Type u} [Category.{v} C]
 
@@ -1027,42 +1027,42 @@ variable {C : Type u} [Category.{v} C]
 Construct an object of `CoprodCovarRepSquaredCat C` from an outer index type,
 an inner index type family, and a family of families of objects.
 -/
-def ccrsObjMk {I : Type w1} {X : I → Type w2} (F : ∀ i, X i → C) :
-    CoprodCovarRepSquaredCat.{u, v, w1, w2} C :=
+def ccrsObjMk {I : Type w₁} {X : I → Type w₂} (F : ∀ i, X i → C) :
+    CoprodCovarRepSquaredCat.{u, v, w₁, w₂} C :=
   ⟨I, fun i => ⟨X i, F i⟩⟩
 
 /--
 Extract the outer index type from an object of `CoprodCovarRepSquaredCat C`.
 -/
-def ccrsOuterIndex (x : CoprodCovarRepSquaredCat.{u, v, w1, w2} C) : Type w1 :=
+def ccrsOuterIndex (x : CoprodCovarRepSquaredCat.{u, v, w₁, w₂} C) : Type w₁ :=
   x.base
 
 /--
 Extract the inner index type at outer index `i` from an object of
 `CoprodCovarRepSquaredCat C`.
 -/
-def ccrsInnerIndex (x : CoprodCovarRepSquaredCat.{u, v, w1, w2} C)
-    (i : ccrsOuterIndex x) : Type w2 :=
+def ccrsInnerIndex (x : CoprodCovarRepSquaredCat.{u, v, w₁, w₂} C)
+    (i : ccrsOuterIndex x) : Type w₂ :=
   (x.fiber i).base
 
 /--
 Extract the family of objects at outer index `i` and inner index `k` from
 an object of `CoprodCovarRepSquaredCat C`.
 -/
-def ccrsFamily (x : CoprodCovarRepSquaredCat.{u, v, w1, w2} C)
+def ccrsFamily (x : CoprodCovarRepSquaredCat.{u, v, w₁, w₂} C)
     (i : ccrsOuterIndex x) (k : ccrsInnerIndex x i) : C :=
   (x.fiber i).fiber k
 
 @[simp]
-lemma ccrsObjMk_outerIndex {I : Type w1} {X : I → Type w2}
+lemma ccrsObjMk_outerIndex {I : Type w₁} {X : I → Type w₂}
     (F : ∀ i, X i → C) : ccrsOuterIndex (ccrsObjMk F) = I := rfl
 
 @[simp]
-lemma ccrsObjMk_innerIndex {I : Type w1} {X : I → Type w2}
+lemma ccrsObjMk_innerIndex {I : Type w₁} {X : I → Type w₂}
     (F : ∀ i, X i → C) (i : I) : ccrsInnerIndex (ccrsObjMk F) i = X i := rfl
 
 @[simp]
-lemma ccrsObjMk_family {I : Type w1} {X : I → Type w2}
+lemma ccrsObjMk_family {I : Type w₁} {X : I → Type w₂}
     (F : ∀ i, X i → C) (i : I) (k : X i) : ccrsFamily (ccrsObjMk F) i k = F i k :=
   rfl
 
@@ -1077,7 +1077,7 @@ A morphism `(I, (X_i, F_i)) → (J, (Y_j, G_j))` consists of:
 Note: Outer reindexing is covariant, inner reindexing is contravariant,
 but fiber morphisms are covariant (source to target).
 -/
-def ccrsHomMk {x y : CoprodCovarRepSquaredCat.{u, v, w1, w2} C}
+def ccrsHomMk {x y : CoprodCovarRepSquaredCat.{u, v, w₁, w₂} C}
     (reindexOuter : ccrsOuterIndex x ⟶ ccrsOuterIndex y)
     (reindexInner : ∀ i, ccrsInnerIndex y (reindexOuter i) ⟶ ccrsInnerIndex x i)
     (fiberMor : ∀ i k, ccrsFamily x i (reindexInner i k) ⟶
@@ -1088,7 +1088,7 @@ def ccrsHomMk {x y : CoprodCovarRepSquaredCat.{u, v, w1, w2} C}
 Extract the outer reindexing function from a morphism in
 `CoprodCovarRepSquaredCat C`.
 -/
-def ccrsReindexOuter {x y : CoprodCovarRepSquaredCat.{u, v, w1, w2} C}
+def ccrsReindexOuter {x y : CoprodCovarRepSquaredCat.{u, v, w₁, w₂} C}
     (f : x ⟶ y) : ccrsOuterIndex x ⟶ ccrsOuterIndex y :=
   f.base
 
@@ -1096,7 +1096,7 @@ def ccrsReindexOuter {x y : CoprodCovarRepSquaredCat.{u, v, w1, w2} C}
 Extract the inner reindexing function at outer index `i` from a morphism in
 `CoprodCovarRepSquaredCat C`. Note: inner reindexing is contravariant.
 -/
-def ccrsReindexInner {x y : CoprodCovarRepSquaredCat.{u, v, w1, w2} C}
+def ccrsReindexInner {x y : CoprodCovarRepSquaredCat.{u, v, w₁, w₂} C}
     (f : x ⟶ y) (i : ccrsOuterIndex x) :
     ccrsInnerIndex y (ccrsReindexOuter f i) ⟶ ccrsInnerIndex x i :=
   (f.fiber i).base
@@ -1106,7 +1106,7 @@ Extract the fiber morphism at outer index `i` and inner index `k` from a
 morphism in `CoprodCovarRepSquaredCat C`. Fiber morphisms are covariant
 (source to target).
 -/
-def ccrsFiberMor {x y : CoprodCovarRepSquaredCat.{u, v, w1, w2} C}
+def ccrsFiberMor {x y : CoprodCovarRepSquaredCat.{u, v, w₁, w₂} C}
     (f : x ⟶ y) (i : ccrsOuterIndex x)
     (k : ccrsInnerIndex y (ccrsReindexOuter f i)) :
     ccrsFamily x i (ccrsReindexInner f i k) ⟶
@@ -1114,7 +1114,7 @@ def ccrsFiberMor {x y : CoprodCovarRepSquaredCat.{u, v, w1, w2} C}
   (f.fiber i).fiber k
 
 @[simp]
-lemma ccrsHomMk_reindexOuter {x y : CoprodCovarRepSquaredCat.{u, v, w1, w2} C}
+lemma ccrsHomMk_reindexOuter {x y : CoprodCovarRepSquaredCat.{u, v, w₁, w₂} C}
     (reindexOuter : ccrsOuterIndex x ⟶ ccrsOuterIndex y)
     (reindexInner : ∀ i, ccrsInnerIndex y (reindexOuter i) ⟶ ccrsInnerIndex x i)
     (fiberMor : ∀ i k, ccrsFamily x i (reindexInner i k) ⟶
@@ -1123,7 +1123,7 @@ lemma ccrsHomMk_reindexOuter {x y : CoprodCovarRepSquaredCat.{u, v, w1, w2} C}
       reindexOuter := rfl
 
 @[simp]
-lemma ccrsHomMk_reindexInner {x y : CoprodCovarRepSquaredCat.{u, v, w1, w2} C}
+lemma ccrsHomMk_reindexInner {x y : CoprodCovarRepSquaredCat.{u, v, w₁, w₂} C}
     (reindexOuter : ccrsOuterIndex x ⟶ ccrsOuterIndex y)
     (reindexInner : ∀ i, ccrsInnerIndex y (reindexOuter i) ⟶ ccrsInnerIndex x i)
     (fiberMor : ∀ i k, ccrsFamily x i (reindexInner i k) ⟶
@@ -1132,7 +1132,7 @@ lemma ccrsHomMk_reindexInner {x y : CoprodCovarRepSquaredCat.{u, v, w1, w2} C}
       reindexInner i := rfl
 
 @[simp]
-lemma ccrsHomMk_fiberMor {x y : CoprodCovarRepSquaredCat.{u, v, w1, w2} C}
+lemma ccrsHomMk_fiberMor {x y : CoprodCovarRepSquaredCat.{u, v, w₁, w₂} C}
     (reindexOuter : ccrsOuterIndex x ⟶ ccrsOuterIndex y)
     (reindexInner : ∀ i, ccrsInnerIndex y (reindexOuter i) ⟶ ccrsInnerIndex x i)
     (fiberMor : ∀ i k, ccrsFamily x i (reindexInner i k) ⟶
@@ -1146,7 +1146,7 @@ The identity morphism in `CoprodCovarRepSquaredCat C` has identity outer
 reindexing.
 -/
 @[simp]
-lemma ccrsId_reindexOuter (x : CoprodCovarRepSquaredCat.{u, v, w1, w2} C) :
+lemma ccrsId_reindexOuter (x : CoprodCovarRepSquaredCat.{u, v, w₁, w₂} C) :
     ccrsReindexOuter (𝟙 x) = 𝟙 (ccrsOuterIndex x) := rfl
 
 /--
@@ -1154,7 +1154,7 @@ The identity morphism in `CoprodCovarRepSquaredCat C` has identity inner
 reindexing.
 -/
 @[simp]
-lemma ccrsId_reindexInner (x : CoprodCovarRepSquaredCat.{u, v, w1, w2} C)
+lemma ccrsId_reindexInner (x : CoprodCovarRepSquaredCat.{u, v, w₁, w₂} C)
     (i : ccrsOuterIndex x) :
     ccrsReindexInner (𝟙 x) i = 𝟙 (ccrsInnerIndex x i) := rfl
 
@@ -1163,7 +1163,7 @@ The identity morphism in `CoprodCovarRepSquaredCat C` has identity fiber
 morphisms.
 -/
 @[simp]
-lemma ccrsId_fiberMor (x : CoprodCovarRepSquaredCat.{u, v, w1, w2} C)
+lemma ccrsId_fiberMor (x : CoprodCovarRepSquaredCat.{u, v, w₁, w₂} C)
     (i : ccrsOuterIndex x) (k : ccrsInnerIndex x i) :
     ccrsFiberMor (𝟙 x) i k = 𝟙 (ccrsFamily x i k) := rfl
 
@@ -1172,7 +1172,7 @@ Composition in `CoprodCovarRepSquaredCat C`: the outer reindexing composes
 covariantly.
 -/
 @[simp]
-lemma ccrsComp_reindexOuter {x y z : CoprodCovarRepSquaredCat.{u, v, w1, w2} C}
+lemma ccrsComp_reindexOuter {x y z : CoprodCovarRepSquaredCat.{u, v, w₁, w₂} C}
     (f : x ⟶ y) (g : y ⟶ z) :
     ccrsReindexOuter (f ≫ g) = ccrsReindexOuter f ≫ ccrsReindexOuter g := rfl
 
@@ -1181,7 +1181,7 @@ Composition in `CoprodCovarRepSquaredCat C`: the inner reindexing composes
 contravariantly.
 -/
 @[simp]
-lemma ccrsComp_reindexInner {x y z : CoprodCovarRepSquaredCat.{u, v, w1, w2} C}
+lemma ccrsComp_reindexInner {x y z : CoprodCovarRepSquaredCat.{u, v, w₁, w₂} C}
     (f : x ⟶ y) (g : y ⟶ z) (i : ccrsOuterIndex x) :
     ccrsReindexInner (f ≫ g) i =
       ccrsReindexInner g (ccrsReindexOuter f i) ≫ ccrsReindexInner f i := rfl
@@ -1194,7 +1194,7 @@ Composition in `CoprodCovarRepSquaredCat C`: the fiber morphism at outer index
 This uses `ccrComp_fiberMor` for both the outer and inner layers.
 -/
 @[simp]
-lemma ccrsComp_fiberMor {x y z : CoprodCovarRepSquaredCat.{u, v, w1, w2} C}
+lemma ccrsComp_fiberMor {x y z : CoprodCovarRepSquaredCat.{u, v, w₁, w₂} C}
     (f : x ⟶ y) (g : y ⟶ z) (i : ccrsOuterIndex x)
     (k : ccrsInnerIndex z (ccrsReindexOuter g (ccrsReindexOuter f i))) :
     ccrsFiberMor (f ≫ g) i k =
@@ -1214,7 +1214,7 @@ end CoprodCovarRepSquaredHelpers
 
 section LayeredIsomorphism
 
-universe w1 w2
+universe w₁ w₂
 
 variable {C : Type u} [Category.{v} C]
 
@@ -1222,15 +1222,15 @@ variable {C : Type u} [Category.{v} C]
 Convert an object of `FreeCoprodProdCat C` to an object of
 `CoprodCovarRepSquaredCat C`.
 -/
-def fcpToCcrsObj (x : FreeCoprodProdCat.{u, v, w1, w2} C) :
-    CoprodCovarRepSquaredCat.{u, v, w1, w2} C :=
+def fcpToCcrsObj (x : FreeCoprodProdCat.{u, v, w₁, w₂} C) :
+    CoprodCovarRepSquaredCat.{u, v, w₁, w₂} C :=
   ⟨fcpOuterIndex x, fun i => ⟨fcpInnerIndex x i, fcpFamily x i⟩⟩
 
 /--
 Convert a morphism in `FreeCoprodProdCat C` to a morphism in
 `CoprodCovarRepSquaredCat C`.
 -/
-def fcpToCcrsMor {x y : FreeCoprodProdCat.{u, v, w1, w2} C} (f : x ⟶ y) :
+def fcpToCcrsMor {x y : FreeCoprodProdCat.{u, v, w₁, w₂} C} (f : x ⟶ y) :
     fcpToCcrsObj x ⟶ fcpToCcrsObj y :=
   ⟨fcpReindexOuter f, fun i => ⟨fcpReindexInner f i, fcpFiberMor f i⟩⟩
 
@@ -1238,39 +1238,39 @@ def fcpToCcrsMor {x y : FreeCoprodProdCat.{u, v, w1, w2} C} (f : x ⟶ y) :
 Convert an object of `CoprodCovarRepSquaredCat C` to an object of
 `FreeCoprodProdCat C`.
 -/
-def ccrsToFcpObj (x : CoprodCovarRepSquaredCat.{u, v, w1, w2} C) :
-    FreeCoprodProdCat.{u, v, w1, w2} C :=
+def ccrsToFcpObj (x : CoprodCovarRepSquaredCat.{u, v, w₁, w₂} C) :
+    FreeCoprodProdCat.{u, v, w₁, w₂} C :=
   ⟨ccrsOuterIndex x, fun i => ⟨ccrsInnerIndex x i, ccrsFamily x i⟩⟩
 
 /--
 Convert a morphism in `CoprodCovarRepSquaredCat C` to a morphism in
 `FreeCoprodProdCat C`.
 -/
-def ccrsToFcpMor {x y : CoprodCovarRepSquaredCat.{u, v, w1, w2} C} (f : x ⟶ y) :
+def ccrsToFcpMor {x y : CoprodCovarRepSquaredCat.{u, v, w₁, w₂} C} (f : x ⟶ y) :
     ccrsToFcpObj x ⟶ ccrsToFcpObj y :=
   ⟨ccrsReindexOuter f, fun i => ⟨ccrsReindexInner f i, ccrsFiberMor f i⟩⟩
 
 @[simp]
 lemma fcpToCcrsObj_ccrsToFcpObj
-    (x : CoprodCovarRepSquaredCat.{u, v, w1, w2} C) :
+    (x : CoprodCovarRepSquaredCat.{u, v, w₁, w₂} C) :
     fcpToCcrsObj (ccrsToFcpObj x) = x := rfl
 
 @[simp]
-lemma ccrsToFcpObj_fcpToCcrsObj (x : FreeCoprodProdCat.{u, v, w1, w2} C) :
+lemma ccrsToFcpObj_fcpToCcrsObj (x : FreeCoprodProdCat.{u, v, w₁, w₂} C) :
     ccrsToFcpObj (fcpToCcrsObj x) = x := rfl
 
 @[simp]
 lemma fcpToCcrsMor_ccrsToFcpMor
-    {x y : CoprodCovarRepSquaredCat.{u, v, w1, w2} C} (f : x ⟶ y) :
+    {x y : CoprodCovarRepSquaredCat.{u, v, w₁, w₂} C} (f : x ⟶ y) :
     fcpToCcrsMor (ccrsToFcpMor f) = f := rfl
 
 @[simp]
 lemma ccrsToFcpMor_fcpToCcrsMor
-    {x y : FreeCoprodProdCat.{u, v, w1, w2} C} (f : x ⟶ y) :
+    {x y : FreeCoprodProdCat.{u, v, w₁, w₂} C} (f : x ⟶ y) :
     ccrsToFcpMor (fcpToCcrsMor f) = f := rfl
 
 @[simp]
-lemma ccrsToFcpMor_comp {x y z : CoprodCovarRepSquaredCat.{u, v, w1, w2} C}
+lemma ccrsToFcpMor_comp {x y z : CoprodCovarRepSquaredCat.{u, v, w₁, w₂} C}
     (f : x ⟶ y) (g : y ⟶ z) :
     ccrsToFcpMor (f ≫ g) = ccrsToFcpMor f ≫ ccrsToFcpMor g := by
   simp only [ccrsToFcpMor, ccrsReindexOuter, ccrsReindexInner]
@@ -1289,7 +1289,7 @@ lemma ccrsToFcpMor_comp {x y z : CoprodCovarRepSquaredCat.{u, v, w1, w2} C}
       rw [h_ccrs, h_fcp]
 
 @[simp]
-lemma fcpToCcrsMor_comp {x y z : FreeCoprodProdCat.{u, v, w1, w2} C}
+lemma fcpToCcrsMor_comp {x y z : FreeCoprodProdCat.{u, v, w₁, w₂} C}
     (f : x ⟶ y) (g : y ⟶ z) :
     fcpToCcrsMor (f ≫ g) = fcpToCcrsMor f ≫ fcpToCcrsMor g := by
   have h : f ≫ g = ccrsToFcpMor (fcpToCcrsMor f ≫ fcpToCcrsMor g) := by
@@ -1303,7 +1303,7 @@ The forward functor from `FreeCoprodProdCat C` to `CoprodCovarRepSquaredCat C`.
 -/
 @[simp]
 def fcpToCcrs :
-    FreeCoprodProdCat.{u, v, w1, w2} C ⥤ CoprodCovarRepSquaredCat.{u, v, w1, w2} C where
+    FreeCoprodProdCat.{u, v, w₁, w₂} C ⥤ CoprodCovarRepSquaredCat.{u, v, w₁, w₂} C where
   obj := fcpToCcrsObj
   map := fcpToCcrsMor
   map_comp := fcpToCcrsMor_comp
@@ -1313,7 +1313,7 @@ The backward functor from `CoprodCovarRepSquaredCat C` to `FreeCoprodProdCat C`.
 -/
 @[simp]
 def ccrsToFcp :
-    CoprodCovarRepSquaredCat.{u, v, w1, w2} C ⥤ FreeCoprodProdCat.{u, v, w1, w2} C where
+    CoprodCovarRepSquaredCat.{u, v, w₁, w₂} C ⥤ FreeCoprodProdCat.{u, v, w₁, w₂} C where
   obj := ccrsToFcpObj
   map := ccrsToFcpMor
   map_comp := ccrsToFcpMor_comp
@@ -1322,7 +1322,7 @@ def ccrsToFcp :
 `FreeCoprodProdCat C` and `CoprodCovarRepSquaredCat C` are isomorphic categories.
 -/
 def fcpCcrsIso :
-    FreeCoprodProdCat.{u, v, w1, w2} C ≅Cat CoprodCovarRepSquaredCat.{u, v, w1, w2} C where
+    FreeCoprodProdCat.{u, v, w₁, w₂} C ≅Cat CoprodCovarRepSquaredCat.{u, v, w₁, w₂} C where
   hom := fcpToCcrs C
   inv := ccrsToFcp C
 
@@ -1330,7 +1330,7 @@ def fcpCcrsIso :
 `FreeCoprodProdCat C` and `CoprodCovarRepSquaredCat C` are equivalent categories.
 -/
 def fcpCcrsEquiv :
-    FreeCoprodProdCat.{u, v, w1, w2} C ≌ CoprodCovarRepSquaredCat.{u, v, w1, w2} C :=
+    FreeCoprodProdCat.{u, v, w₁, w₂} C ≌ CoprodCovarRepSquaredCat.{u, v, w₁, w₂} C :=
   Cat.equivOfIso (fcpCcrsIso C)
 
 end LayeredIsomorphism
