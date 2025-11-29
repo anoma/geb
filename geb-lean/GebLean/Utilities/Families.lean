@@ -60,7 +60,7 @@ def FamilyCat.{u, v, w} (C : Type u) [CInst : Category.{v, u} C] (X : Type w) :
 
 end FamilyCat
 
-universe u v w v₂ u₂
+universe u v v₂
 
 /-! ## Functoriality in the indexing type -/
 
