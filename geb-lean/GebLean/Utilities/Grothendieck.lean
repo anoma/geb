@@ -349,6 +349,45 @@ variable (F : C ⥤ Cat.{v₂, u₂})
 
 namespace Grothendieck
 
+/--
+For functors valued in `Grothendieck E`, the fiber of `(eqToHom h).app X`
+equals an `eqToHom` at the fiber level.
+-/
+@[simp]
+theorem eqToHom_app_fiber {E : Type*} [Category E] {H : E ⥤ Cat}
+    {F G : C ⥤ Grothendieck H} (h : F = G) (X : C) :
+    ((eqToHom h).app X).fiber = eqToHom (by subst h; simp) := by
+  subst h
+  rfl
+
+/--
+The base component of `eqToHom` between Grothendieck objects is `eqToHom` of the
+induced equality on bases.
+-/
+@[simp]
+theorem base_eqToHom {X Y : Grothendieck F} (h : X = Y) :
+    (eqToHom h).base = eqToHom (congrArg Grothendieck.base h) := by
+  subst h
+  rfl
+
+/--
+The fiber component of `eqToHom` between Grothendieck objects.
+-/
+@[simp]
+theorem fiber_eqToHom {X Y : Grothendieck F} (h : X = Y) :
+    (eqToHom h).fiber = eqToHom (by subst h; simp) := by
+  subst h
+  rfl
+
+/--
+When two Grothendieck objects have the same base (definitionally), the base
+component of `eqToHom` is the identity.
+-/
+theorem base_eqToHom_same_base {c : C} {x y : F.obj c}
+    (h : (⟨c, x⟩ : Grothendieck F) = ⟨c, y⟩) :
+    (eqToHom h).base = 𝟙 c := by
+  simp only [base_eqToHom, eqToHom_refl]
+
 section FunctorTo
 
 /-! ### Client-Facing Types
@@ -3988,6 +4027,255 @@ structure FunctorBetweenData where
   /-- Composition coherence for cross-fiber morphisms -/
   baseHomComp : FunctorBetweenBaseHomComp G F baseFib fibFib fibHomCrossApp
 
+variable (data : FunctorBetweenData G F)
+
+/-! ### Inner construction: fiber functors using FunctorTo
+
+For each `c : C`, we build a functor `G.obj c ⥤ Grothendieck F` using
+`FunctorTo`. The base functor is constant at `baseFib.obj c`, so the
+coherence conditions become trivial.
+-/
+
+/--
+The constant base functor for the inner FunctorTo construction.
+For each `c : C`, this is the constant functor from `G.obj c` to `D`
+at `baseFib.obj c`.
+-/
+def functorBetweenInnerBaseFunc (c : C) : G.obj c ⥤ D :=
+  (Functor.const (G.obj c)).obj (data.baseFib.obj c)
+
+/--
+The fiber objects for the inner FunctorTo construction.
+For `x : G.obj c`, this is `(fibFib c).obj x`.
+-/
+def functorBetweenInnerFib (c : C) (x : G.obj c) :
+    F.obj ((functorBetweenInnerBaseFunc G F data c).obj x) :=
+  (data.fibFib c).obj x
+
+/--
+The equality proof for `functorBetweenInnerHom`. Since the base functor is constant
+(mapping everything to `𝟙`), `F.map (𝟙 d)` acts as the identity on objects.
+-/
+lemma functorBetweenInnerHom_eq (c : C) (x : G.obj c) :
+    (F.map ((functorBetweenInnerBaseFunc G F data c).map (𝟙 x))).obj
+      (functorBetweenInnerFib G F data c x) =
+    functorBetweenInnerFib G F data c x := by
+  simp only [functorBetweenInnerBaseFunc, functorBetweenInnerFib, Functor.const_obj_map]
+  exact congrFun (congrArg Functor.obj (F.map_id _)) _
+
+/--
+The fiber morphisms for the inner FunctorTo construction.
+Since the base functor is constant, the transport is trivial and
+the fiber morphism is just `(fibFib c).map φ`.
+-/
+def functorBetweenInnerHom (c : C) {x y : G.obj c} (φ : x ⟶ y) :
+    (F.map ((functorBetweenInnerBaseFunc G F data c).map φ)).obj
+      (functorBetweenInnerFib G F data c x) ⟶
+    functorBetweenInnerFib G F data c y :=
+  eqToHom (functorBetweenInnerHom_eq G F data c x) ≫
+    (data.fibFib c).map φ
+
+/--
+Identity coherence for the inner FunctorTo. Trivial since the base is constant.
+-/
+theorem functorBetweenInnerHom_id (c : C) (x : G.obj c) :
+    functorBetweenInnerHom G F data c (𝟙 x) =
+      eqToHom (Grothendieck.functorToEqIdProof F
+        (functorBetweenInnerBaseFunc G F data c)
+        (functorBetweenInnerFib G F data c) x) := by
+  simp only [functorBetweenInnerHom, functorBetweenInnerBaseFunc,
+    functorBetweenInnerFib, Functor.const_obj_obj, Functor.const_obj_map,
+    (data.fibFib c).map_id, Category.comp_id]
+
+/--
+When `H : A = 𝟭 C`, then `A.map f = f` (with appropriate `eqToHom` casts).
+-/
+lemma functor_map_of_eq_id {E : Type*} [Category E] {A : E ⥤ E}
+    (H : A = 𝟭 E) {x y : E} (f : x ⟶ y) :
+    A.map f = eqToHom (congrFun (congrArg Functor.obj H) x) ≫ f ≫
+      eqToHom (congrFun (congrArg Functor.obj H) y).symm := by
+  subst H
+  simp
+
+/--
+Composition coherence for the inner FunctorTo.
+-/
+theorem functorBetweenInnerHom_comp (c : C) {x y z : G.obj c}
+    (φ : x ⟶ y) (ψ : y ⟶ z) :
+    functorBetweenInnerHom G F data c (φ ≫ ψ) =
+      eqToHom (Grothendieck.functorToEqCompProof F
+        (functorBetweenInnerBaseFunc G F data c)
+        (functorBetweenInnerFib G F data c) φ ψ) ≫
+      (F.map ((functorBetweenInnerBaseFunc G F data c).map ψ)).map
+        (functorBetweenInnerHom G F data c φ) ≫
+      functorBetweenInnerHom G F data c ψ := by
+  simp only [functorBetweenInnerHom, functorBetweenInnerBaseFunc, functorBetweenInnerFib,
+    Functor.const_obj_obj, Functor.const_obj_map, (data.fibFib c).map_comp]
+  have hFid : F.map (𝟙 (data.baseFib.obj c)) = 𝟭 (F.obj (data.baseFib.obj c)) := F.map_id _
+  rw [functor_map_of_eq_id hFid]
+  cat_disch
+
+/--
+The proof term from `functorBetweenInnerHom` can be expressed explicitly.
+Since the base functor is constant, `(F.map (𝟙 d)).obj x = x`.
+-/
+lemma functorBetweenInnerHom_proof (c : C) (x : G.obj c) :
+    (F.map ((functorBetweenInnerBaseFunc G F data c).map (𝟙 x))).obj
+      (functorBetweenInnerFib G F data c x) =
+    functorBetweenInnerFib G F data c x := by
+  simp only [functorBetweenInnerBaseFunc, Functor.const_obj_map]
+  have hFid : F.map (𝟙 (data.baseFib.obj c)) = 𝟭 (F.obj (data.baseFib.obj c)) := F.map_id _
+  simp only [hFid, Functor.id_obj]
+
+/--
+The `eqToHom` from `functorBetweenInnerHom_eq` is identity on objects after applying `F.map_id`.
+This is because `(F.map (𝟙 d)).obj x = (𝟭 _).obj x = x`.
+-/
+@[simp]
+lemma eqToHom_functorBetweenInnerHom_eq (c : C) (x : G.obj c) :
+    eqToHom (functorBetweenInnerHom_eq G F data c x) =
+    eqToHom (congrFun (congrArg Functor.obj (F.map_id (data.baseFib.obj c))) _) := by
+  simp only [functorBetweenInnerBaseFunc, functorBetweenInnerFib, Functor.const_obj_map]
+
+/--
+Mapping `eqToHom (functorBetweenInnerHom_eq ...)` through `(F.map g).map` yields an `eqToHom`.
+-/
+lemma functor_map_eqToHom_functorBetweenInnerHom_eq {c : C} (x : G.obj c)
+    {d : D} (g : data.baseFib.obj c ⟶ d) :
+    (F.map g).map (eqToHom (functorBetweenInnerHom_eq G F data c x)) =
+    eqToHom (congrArg (F.map g).obj (functorBetweenInnerHom_eq G F data c x)) := by
+  exact functor_map_eqToHom (F.map g) (functorBetweenInnerHom_eq G F data c x)
+
+/--
+The equality `functorBetweenInnerHom_eq` becomes reflexive after applying `(F.map g).obj`.
+-/
+lemma functorBetweenInnerHom_eq_transport {c : C} (x : G.obj c)
+    {d : D} (g : data.baseFib.obj c ⟶ d) :
+    (F.map g).obj ((F.map (𝟙 (data.baseFib.obj c))).obj ((data.fibFib c).obj x)) =
+    (F.map g).obj ((data.fibFib c).obj x) := by
+  rw [F.map_id]
+  rfl
+
+/--
+Transport of `functorBetweenInnerHom` through `(F.map g).map` relates to
+the underlying `(data.fibFib c).map φ` via `eqToHom`.
+-/
+lemma functorBetweenInnerHom_transport {c : C} {x y : G.obj c} (φ : x ⟶ y)
+    {d : D} (g : data.baseFib.obj c ⟶ d) :
+    (F.map g).map (functorBetweenInnerHom G F data c φ) =
+    eqToHom (functorBetweenInnerHom_eq_transport G F data x g) ≫
+      (F.map g).map ((data.fibFib c).map φ) := by
+  simp only [functorBetweenInnerHom, Functor.map_comp]
+  rw [functor_map_eqToHom_functorBetweenInnerHom_eq]
+
+/--
+The inner FunctorToData for each `c : C`.
+-/
+def functorBetweenInnerToData (c : C) :
+    Grothendieck.FunctorToData (C := D) (D := G.obj c) F where
+  baseFunc := functorBetweenInnerBaseFunc G F data c
+  fib := functorBetweenInnerFib G F data c
+  hom := functorBetweenInnerHom G F data c
+  hom_id := functorBetweenInnerHom_id G F data c
+  hom_comp := functorBetweenInnerHom_comp G F data c
+
+/--
+The fiber functor for the outer FunctorFrom construction.
+For each `c : C`, this gives a functor `G.obj c ⥤ Grothendieck F`.
+-/
+def functorBetweenFibFunc (c : C) : G.obj c ⥤ Grothendieck F :=
+  Grothendieck.functorTo F (functorBetweenInnerToData G F data c)
+
+/-! ### Outer construction: using FunctorFrom
+
+Now we build the natural transformations between fiber functors and
+prove the coherence conditions for FunctorFrom.
+-/
+
+/--
+The natural transformation component for the outer FunctorFrom construction.
+For `f : c ⟶ c'` and `x : G.obj c`, this is the morphism
+`(functorBetweenFibFunc c).obj x ⟶ (functorBetweenFibFunc c').obj ((G.map f).obj x)`
+in `Grothendieck F`.
+-/
+def functorBetweenHomNatApp {c c' : C} (f : c ⟶ c') (x : G.obj c) :
+    (functorBetweenFibFunc G F data c).obj x ⟶
+    (functorBetweenFibFunc G F data c').obj ((G.map f).obj x) :=
+  ⟨data.baseFib.map f, data.fibHomCrossApp f x⟩
+
+/--
+Naturality of `functorBetweenHomNatApp`: for `φ : x ⟶ y` in `G.obj c`,
+the square commutes.
+-/
+theorem functorBetweenHomNat_naturality {c c' : C} (f : c ⟶ c')
+    {x y : G.obj c} (φ : x ⟶ y) :
+    (functorBetweenFibFunc G F data c).map φ ≫
+      functorBetweenHomNatApp G F data f y =
+    functorBetweenHomNatApp G F data f x ≫
+      (functorBetweenFibFunc G F data c').map ((G.map f).map φ) := by
+  refine Grothendieck.ext _ _ ?_ ?_
+  · simp only [functorBetweenFibFunc, functorBetweenHomNatApp,
+      Grothendieck.functorTo, Grothendieck.comp_base,
+      functorBetweenInnerToData, functorBetweenInnerBaseFunc,
+      Functor.const_obj_map]
+    simp
+  · simp only [functorBetweenFibFunc, functorBetweenHomNatApp,
+      Grothendieck.functorTo, Grothendieck.comp_fiber,
+      functorBetweenInnerToData, functorBetweenInnerBaseFunc,
+      functorBetweenInnerFib, Functor.const_obj_obj, Functor.const_obj_map,
+      functorBetweenInnerHom]
+    simp only [Functor.map_comp, functor_map_eqToHom_functorBetweenInnerHom_eq]
+    have hFmapId : F.map (𝟙 (data.baseFib.obj c')) = 𝟭 _ := F.map_id _
+    rw [functor_map_of_eq_id hFmapId]
+    have hNat := data.fibHomCrossNat f φ
+    cat_disch
+
+/--
+The natural transformation `functorBetweenFibFunc c ⟶ G.map f ⋙ functorBetweenFibFunc c'`
+for the outer FunctorFrom construction.
+-/
+def functorBetweenHomNat {c c' : C} (f : c ⟶ c') :
+    functorBetweenFibFunc G F data c ⟶
+    G.map f ⋙ functorBetweenFibFunc G F data c' where
+  app := functorBetweenHomNatApp G F data f
+  naturality _ _ φ := functorBetweenHomNat_naturality G F data f φ
+
+/--
+Identity coherence for the outer FunctorFrom construction.
+-/
+theorem functorBetweenHomNat_id (c : C) :
+    functorBetweenHomNat G F data (𝟙 c) =
+      eqToHom (by simp only [Functor.map_id]; rfl) := by
+  ext x
+  refine Grothendieck.ext _ _ ?_ ?_
+  · simp only [functorBetweenHomNat, functorBetweenHomNatApp, data.baseFib.map_id, eqToHom_app,
+      functorBetweenFibFunc, Grothendieck.functorTo, functorBetweenInnerToData,
+      functorBetweenInnerBaseFunc, Functor.const_obj_obj]
+    simp
+  · simp only [functorBetweenHomNat, functorBetweenHomNatApp,
+      functorBetweenFibFunc, Grothendieck.functorTo, functorBetweenInnerToData,
+      functorBetweenInnerFib]
+    simp_rw [data.baseHomId c x]
+    simp only [eqToHom_trans, Grothendieck.eqToHom_app_fiber]
+
+/--
+When a functor maps the base of an eqToHom between Grothendieck objects with
+the same base, the result is the identity functor.
+-/
+lemma map_base_eqToHom_same_base {d : D} {x y : F.obj d}
+    (h : (⟨d, x⟩ : Grothendieck F) = ⟨d, y⟩) :
+    F.map (eqToHom h).base = 𝟭 (F.obj d) := by
+  simp only [Grothendieck.base_eqToHom, eqToHom_refl, F.map_id, Cat.id_eq_id]
+
+/--
+Composing a morphism with the base of an eqToHom between same-base Grothendieck
+objects gives the original morphism.
+-/
+lemma comp_base_eqToHom_same_base {d d' : D} {x y : F.obj d}
+    (f : d' ⟶ d) (h : (⟨d, x⟩ : Grothendieck F) = ⟨d, y⟩) :
+    f ≫ (eqToHom h).base = f := by
+  simp only [Grothendieck.base_eqToHom, eqToHom_refl, Category.comp_id]
+
 end FunctorBetween
 
 /-!
@@ -4214,7 +4502,6 @@ and `g : c' ⟶ c''`:
 - `G'.map_comp` gives `G'.map (g ≫_{Cᵒᵖ'} f) = G'.map g ⋙ G'.map f`
 - Since `Cᵒᵖ'` reverses composition, `g ≫_{Cᵒᵖ'} f = f ≫_C g` when viewed
   as C-morphisms
-We use explicit C-composition to avoid type inference issues.
 -/
 abbrev FunctorBetweenContraGMapCompEq
     (baseFib : FunctorBetweenContraBaseFib (C := C) (D := D))
@@ -4255,7 +4542,6 @@ For `f : c ⟶ c'`, `g : c' ⟶ c''`, `x'' : G'.obj c''`:
   1. `fibHomCrossApp f ((G'.map g).obj x'')` to get to `(F'.map (baseFib.map f)).obj (...)`
   2. `(F'.map (baseFib.map f)).map (fibHomCrossApp g x'')` to apply the second cross-fiber
   3. `eqToHom` to relate endpoints
-We use explicit C-composition to avoid type inference issues.
 -/
 abbrev FunctorBetweenContraBaseHomComp
     (baseFib : FunctorBetweenContraBaseFib (C := C) (D := D))
