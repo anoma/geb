@@ -44,23 +44,22 @@ namespace GebLean
 
 open CategoryTheory
 
-universe u v w v₂ u₂
-
 /-! ## The family category -/
 
 section FamilyCat
-
-variable (C : Type u) [Category.{v} C]
 
 /--
 For an index type `X`, the product category of `C` indexed by `X`. Objects are
 functions `X → C`, and morphisms are families of morphisms indexed by `X`.
 -/
 @[simp]
-def FamilyCat (X : Type u) : Cat.{max u v, u} :=
-  Cat.of (∀ _ : X, C)
+def FamilyCat.{u, v, w} (C : Type u) [CInst : Category.{v, u} C] (X : Type w) :
+  Cat.{max v w, max u w} :=
+    Cat.of.{max w v, max u w} (∀ _ : X, C)
 
 end FamilyCat
+
+universe u v w v₂ u₂
 
 /-! ## Functoriality in the indexing type -/
 
@@ -210,16 +209,17 @@ end FamilyBifunctorOp
 
 section LargeFamilyFunctor
 
-variable (C : Type u) [Category.{v} C]
+variable (C : Type u) [CInst : Category.{v, u} C]
 
 /--
 The large family category: for an index type `X : Type (u+1)`, the product
 category of `C` indexed by `X`. This uses a larger universe for the index
 type to enable forming Grothendieck constructions.
 -/
+
 @[simp]
 def LargeFamilyCat (X : Type (u + 1)) : Cat.{max (u + 1) v, u + 1} :=
-  Cat.of (∀ _ : X, C)
+  FamilyCat.{u, v, u + 1} C (CInst := CInst) X
 
 /--
 Reindexing functor for large families.
