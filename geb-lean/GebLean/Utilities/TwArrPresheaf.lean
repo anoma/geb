@@ -178,6 +178,141 @@ def TwArrCopresheaf.sliceGrothendieckHom (F : TwArrCopresheaf C) {y y' : C}
   base := h
   fiber := F.sliceNatTrans C h
 
+/--
+The fiber function for the slice Grothendieck functor (contravariant case).
+-/
+def TwArrCopresheaf.sliceGrothendieckFib (F : TwArrCopresheaf C) :
+    GrothendieckContra'.FunctorToFib (F' := overOpCopresheafFunctor C) (𝟭 C) :=
+  fun y => F.slicePresheaf C y
+
+/--
+The morphism function for the slice Grothendieck functor (contravariant case).
+For `h : y ⟶ y'` in `C`, produces the fiber morphism.
+-/
+def TwArrCopresheaf.sliceGrothendieckHomFiber (F : TwArrCopresheaf C) :
+    GrothendieckContra'.FunctorToHom (𝟭 C) (F.sliceGrothendieckFib C) :=
+  fun h => F.sliceNatTrans C h
+
+private lemma TwArrCopresheaf.twObjMk'_comp_id {y : C} (f : Over y) :
+    twObjMk' (f.hom ≫ 𝟙 y) = twObjMk' f.hom := by
+  unfold twObjMk'
+  congr 1
+  exact Category.comp_id f.hom
+
+private lemma twHomMk'_id_id_eq_eqToHom' {dom cod : C} (arr arr' : dom ⟶ cod)
+    (h : arr = arr') (comm : 𝟙 dom ≫ arr ≫ 𝟙 cod = arr') :
+    twHomMk'
+      (x := twObjMk' arr)
+      (y := twObjMk' arr')
+      (𝟙 dom) (𝟙 cod) (by simp only [twObjMk'_arr]; exact comm) =
+    eqToHom (congrArg twObjMk' h) := by
+  subst h
+  simp only [eqToHom_refl']
+  apply twHom'_ext
+  · simp only [twHomMk'_domArr]
+    rfl
+  · simp only [twHomMk'_codArr]
+    rfl
+
+private lemma TwArrCopresheaf.sliceNatTrans_id_app_is_id
+    (F : TwArrCopresheaf C) (y : C) (f : Over y) :
+    (F.sliceNatTrans C (@CategoryStruct.id C _ y)).app f =
+    eqToHom (congrArg F.obj (twObjMk'_comp_id C f).symm) := by
+  simp only [sliceNatTrans]
+  have harr : f.hom ≫ 𝟙 y = f.hom := Category.comp_id f.hom
+  have hcomm : 𝟙 f.left ≫ f.hom ≫ 𝟙 y = f.hom ≫ 𝟙 y := Category.id_comp _
+  have hmor : twHomMk'
+      (x := twObjMk' f.hom)
+      (y := twObjMk' (f.hom ≫ 𝟙 y))
+      (𝟙 f.left) (𝟙 y) (by simp only [twObjMk'_arr]; exact Category.id_comp _) =
+      eqToHom (twObjMk'_comp_id C f).symm := by
+    have h := twHomMk'_id_id_eq_eqToHom' C f.hom (f.hom ≫ 𝟙 y) harr.symm hcomm
+    exact h
+  rw [hmor, eqToHom_map]
+
+/--
+Identity coherence for sliceGrothendieckHomFiber (contravariant case).
+-/
+lemma TwArrCopresheaf.sliceGrothendieck_hom_id (F : TwArrCopresheaf C) :
+    GrothendieckContra'.FunctorToHomId (overOpCopresheafFunctor C) (𝟭 C)
+      (F.sliceGrothendieckFib C) (F.sliceGrothendieckHomFiber C) := by
+  intro y
+  apply NatTrans.ext
+  funext f
+  simp only [sliceGrothendieckHomFiber, Functor.id_obj, Functor.id_map]
+  have h := sliceNatTrans_id_app_is_id C F y f
+  simp only [sliceNatTrans] at h ⊢
+  rw [eqToHom_app]
+  refine Eq.trans h ?_
+  congr 1
+
+/--
+Composition coherence for sliceGrothendieckHomFiber (contravariant case).
+-/
+lemma TwArrCopresheaf.sliceGrothendieck_hom_comp (F : TwArrCopresheaf C) :
+    GrothendieckContra'.FunctorToHomComp (overOpCopresheafFunctor C) (𝟭 C)
+      (F.sliceGrothendieckFib C) (F.sliceGrothendieckHomFiber C) := by
+  intro y y' y'' g h
+  apply NatTrans.ext
+  funext f
+  simp only [sliceGrothendieckHomFiber, Functor.id_obj, Functor.id_map]
+  simp only [sliceNatTrans]
+  rw [NatTrans.comp_app, NatTrans.comp_app]
+  simp only [overOpCopresheafFunctor, copresheafConstruction,
+    copresheafConstructionMap, Functor.op', Functor.comp_map,
+    Functor.whiskeringLeft, overOpMapFunctor, Functor.comp_obj,
+    Functor.whiskerLeft_app]
+  rw [eqToHom_app]
+  funext x
+  simp only [types_comp_apply]
+  have hassoc : f.hom ≫ g ≫ h = (f.hom ≫ g) ≫ h := (Category.assoc _ _ _).symm
+  have htgt_type : twObjMk' (f.hom ≫ g ≫ h) = twObjMk' ((f.hom ≫ g) ≫ h) :=
+    congrArg twObjMk' hassoc
+  conv_rhs =>
+    rw [← types_comp_apply (F.map _) (F.map _)]
+    rw [← types_comp_apply _ (eqToHom _)]
+    rw [← functor_map_eqToHom (p := htgt_type.symm)]
+    rw [← F.map_comp, ← F.map_comp]
+  refine congrFun (congrArg F.map ?_) x
+  apply CategoryOfElements.ext
+  simp only [twHomMk', CategoryOfElements.homMk]
+  rw [CategoryOfElements.comp_val, CategoryOfElements.comp_val]
+  rw [CategoryOfElements.eqToHom_val]
+  have hfst_rfl : congrArg Sigma.fst htgt_type = rfl := proof_irrel _ _
+  rw [hfst_rfl, eqToHom_refl, prod_id]
+  simp only [twObjMk', functorOp'Obj]
+  have hleft_eq :
+      (((Cat.postCompOpFunctor'.obj (Over.mapFunctor C)).map g).obj f).left = f.left := rfl
+  apply Prod.ext
+  · simp only [CategoryOp'Inst, prod_comp]
+    change 𝟙 f.left = 𝟙 f.left ≫ 𝟙 f.left ≫ 𝟙 f.left
+    simp only [Category.comp_id]
+  · simp only [prod_comp, Category.comp_id]
+
+/--
+Bundled data for constructing a functor from `C` into the contravariant
+Grothendieck construction over `overOpCopresheafFunctor` (for TwArrCopresheaf).
+-/
+def TwArrCopresheaf.sliceGrothendieckData (F : TwArrCopresheaf C) :
+    GrothendieckContra'.FunctorToData (E := C) (overOpCopresheafFunctor C) where
+  baseFunc := 𝟭 C
+  fib := F.sliceGrothendieckFib C
+  hom := fun h => F.sliceGrothendieckHomFiber C h
+  hom_id := F.sliceGrothendieck_hom_id C
+  hom_comp := fun g h => F.sliceGrothendieck_hom_comp C g h
+
+/--
+The slice construction for a `TwArrCopresheaf` assembles into a functor from
+`C` to the contravariant Grothendieck construction over `overOpCopresheafFunctor`.
+
+For each object `y : C`, we get `(y, F.slicePresheaf y)` in the
+Grothendieck construction. For each morphism `h : y ⟶ y'` in `C`, we get a
+Grothendieck morphism from `(y, F.slicePresheaf y)` to `(y', F.slicePresheaf y')`.
+-/
+def TwArrCopresheaf.sliceGrothendieckFunctor (F : TwArrCopresheaf C) :
+    C ⥤ GrothendieckContra' (overOpCopresheafFunctor C) :=
+  GrothendieckContra'.functorTo (F.sliceGrothendieckData C)
+
 end TwArrCopresheaf
 
 section TwArrPresheaf
@@ -595,6 +730,141 @@ def TwArrOpCopresheaf.sliceGrothendieckHom (F : TwArrOpCopresheaf C) {x x' : C}
   base := h
   fiber := F.sliceNatTrans C h
 
+/--
+The fiber function for the slice Grothendieck functor (contravariant case).
+-/
+def TwArrOpCopresheaf.sliceGrothendieckFib (F : TwArrOpCopresheaf C) :
+    GrothendieckContra'.FunctorToFib (F' := overOpCopresheafFunctor C) (𝟭 C) :=
+  fun x => F.slicePresheaf C x
+
+/--
+The morphism function for the slice Grothendieck functor (contravariant case).
+For `h : x ⟶ x'` in `C`, produces the fiber morphism.
+-/
+def TwArrOpCopresheaf.sliceGrothendieckHomFiber (F : TwArrOpCopresheaf C) :
+    GrothendieckContra'.FunctorToHom (𝟭 C) (F.sliceGrothendieckFib C) :=
+  fun h => F.sliceNatTrans C h
+
+private lemma TwArrOpCopresheaf.twOpObjMk'_id_comp {x : C} (f : Over x) :
+    twOpObjMk' f.hom = twOpObjMk' (f.hom ≫ 𝟙 x) := by
+  unfold twOpObjMk'
+  congr 1
+  exact (Category.comp_id f.hom).symm
+
+private lemma twOpHomMk'_id_id_eq_eqToHom' {dom cod : C} (arr arr' : cod ⟶ dom)
+    (h : arr = arr') (comm : 𝟙 cod ≫ arr ≫ 𝟙 dom = arr') :
+    twOpHomMk'
+      (x := twOpObjMk' arr)
+      (y := twOpObjMk' arr')
+      (𝟙 dom) (𝟙 cod) (by simp only [twOpObjMk'_arr]; exact comm) =
+    eqToHom (congrArg twOpObjMk' h) := by
+  subst h
+  simp only [eqToHom_refl']
+  apply twOpHom'_ext
+  · simp only [twOpHomMk'_domArr]
+    rfl
+  · simp only [twOpHomMk'_codArr]
+    rfl
+
+private lemma TwArrOpCopresheaf.sliceNatTrans_id_app_is_id
+    (F : TwArrOpCopresheaf C) (x : C) (f : Over x) :
+    (F.sliceNatTrans C (@CategoryStruct.id C _ x)).app f =
+    eqToHom (congrArg F.obj (twOpObjMk'_id_comp C f)) := by
+  simp only [sliceNatTrans]
+  have harr : f.hom = f.hom ≫ 𝟙 x := (Category.comp_id f.hom).symm
+  have hcomm : 𝟙 f.left ≫ f.hom ≫ 𝟙 x = f.hom ≫ 𝟙 x := Category.id_comp _
+  have hmor : twOpHomMk'
+      (x := twOpObjMk' f.hom)
+      (y := twOpObjMk' (f.hom ≫ 𝟙 x))
+      (𝟙 x) (𝟙 f.left) (by simp only [twOpObjMk'_arr]; exact Category.id_comp _) =
+      eqToHom (twOpObjMk'_id_comp C f) := by
+    have h := twOpHomMk'_id_id_eq_eqToHom' C f.hom (f.hom ≫ 𝟙 x) harr hcomm
+    exact h
+  rw [hmor, eqToHom_map]
+
+/--
+Identity coherence for sliceGrothendieckHomFiber (contravariant case).
+-/
+lemma TwArrOpCopresheaf.sliceGrothendieck_hom_id (F : TwArrOpCopresheaf C) :
+    GrothendieckContra'.FunctorToHomId (overOpCopresheafFunctor C) (𝟭 C)
+      (F.sliceGrothendieckFib C) (F.sliceGrothendieckHomFiber C) := by
+  intro x
+  apply NatTrans.ext
+  funext f
+  simp only [sliceGrothendieckHomFiber, Functor.id_obj, Functor.id_map]
+  have h := sliceNatTrans_id_app_is_id C F x f
+  simp only [sliceNatTrans] at h ⊢
+  rw [eqToHom_app]
+  refine Eq.trans h ?_
+  congr 1
+
+/--
+Composition coherence for sliceGrothendieckHomFiber (contravariant case).
+-/
+lemma TwArrOpCopresheaf.sliceGrothendieck_hom_comp (F : TwArrOpCopresheaf C) :
+    GrothendieckContra'.FunctorToHomComp (overOpCopresheafFunctor C) (𝟭 C)
+      (F.sliceGrothendieckFib C) (F.sliceGrothendieckHomFiber C) := by
+  intro x x' x'' g h
+  apply NatTrans.ext
+  funext f
+  simp only [sliceGrothendieckHomFiber, Functor.id_obj, Functor.id_map]
+  simp only [sliceNatTrans]
+  rw [NatTrans.comp_app, NatTrans.comp_app]
+  simp only [overOpCopresheafFunctor, copresheafConstruction,
+    copresheafConstructionMap, Functor.op', Functor.comp_map,
+    Functor.whiskeringLeft, overOpMapFunctor, Functor.comp_obj,
+    Functor.whiskerLeft_app]
+  rw [eqToHom_app]
+  funext a
+  simp only [types_comp_apply]
+  have hassoc : f.hom ≫ g ≫ h = (f.hom ≫ g) ≫ h := (Category.assoc _ _ _).symm
+  have htgt_type : twOpObjMk' (f.hom ≫ g ≫ h) = twOpObjMk' ((f.hom ≫ g) ≫ h) :=
+    congrArg twOpObjMk' hassoc
+  conv_rhs =>
+    rw [← types_comp_apply (F.map _) (F.map _)]
+    rw [← types_comp_apply _ (eqToHom _)]
+    rw [← functor_map_eqToHom (p := htgt_type.symm)]
+    rw [← F.map_comp, ← F.map_comp]
+  refine congrFun (congrArg F.map ?_) a
+  apply CategoryOfElements.ext
+  simp only [twOpHomMk', CategoryOfElements.homMk]
+  rw [CategoryOfElements.comp_val, CategoryOfElements.comp_val]
+  rw [CategoryOfElements.eqToHom_val]
+  have hfst_rfl : congrArg Sigma.fst htgt_type = rfl := proof_irrel _ _
+  rw [hfst_rfl, eqToHom_refl, prod_id]
+  simp only [twOpObjMk', functorOp'Obj]
+  have hleft_eq :
+      (((Cat.postCompOpFunctor'.obj (Over.mapFunctor C)).map g).obj f).left = f.left := rfl
+  apply Prod.ext
+  · simp only [prod_comp, Category.comp_id]
+  · simp only [CategoryOp'Inst, prod_comp]
+    change 𝟙 f.left = 𝟙 f.left ≫ 𝟙 f.left ≫ 𝟙 f.left
+    simp only [Category.comp_id]
+
+/--
+Bundled data for constructing a functor from `C` into the contravariant
+Grothendieck construction over `overOpCopresheafFunctor` (for TwArrOpCopresheaf).
+-/
+def TwArrOpCopresheaf.sliceGrothendieckData (F : TwArrOpCopresheaf C) :
+    GrothendieckContra'.FunctorToData (E := C) (overOpCopresheafFunctor C) where
+  baseFunc := 𝟭 C
+  fib := F.sliceGrothendieckFib C
+  hom := fun h => F.sliceGrothendieckHomFiber C h
+  hom_id := F.sliceGrothendieck_hom_id C
+  hom_comp := fun g h => F.sliceGrothendieck_hom_comp C g h
+
+/--
+The slice construction for a `TwArrOpCopresheaf` assembles into a functor from
+`C` to the contravariant Grothendieck construction over `overOpCopresheafFunctor`.
+
+For each object `x : C`, we get `(x, F.slicePresheaf x)` in the Grothendieck
+construction. For each morphism `h : x ⟶ x'` in `C`, we get a Grothendieck
+morphism from `(x, F.slicePresheaf x)` to `(x', F.slicePresheaf x')`.
+-/
+def TwArrOpCopresheaf.sliceGrothendieckFunctor (F : TwArrOpCopresheaf C) :
+    C ⥤ GrothendieckContra' (overOpCopresheafFunctor C) :=
+  GrothendieckContra'.functorTo (F.sliceGrothendieckData C)
+
 end TwArrOpCopresheaf
 
 section TwArrOpPresheaf
@@ -726,6 +996,141 @@ def TwArrOpPresheaf.sliceGrothendieckHom (F : TwArrOpPresheaf C) {x x' : Cᵒᵖ
     F.sliceGrothendieckObj C x ⟶ F.sliceGrothendieckObj C x' where
   base := h
   fiber := F.sliceNatTrans C (h : @Quiver.Hom C _ x' x)
+
+/--
+The fiber function for the slice Grothendieck functor.
+-/
+def TwArrOpPresheaf.sliceGrothendieckFib (F : TwArrOpPresheaf C) :
+    Grothendieck.FunctorToFib (overCopresheafFunctor C) (𝟭 Cᵒᵖ') :=
+  fun x => F.sliceCopresheaf C x
+
+/--
+The morphism function for the slice Grothendieck functor.
+For `h : x ⟶ x'` in `Cᵒᵖ'`, produces the fiber morphism.
+-/
+def TwArrOpPresheaf.sliceGrothendieckHomFiber (F : TwArrOpPresheaf C) :
+    Grothendieck.FunctorToHom (overCopresheafFunctor C) (𝟭 Cᵒᵖ')
+      (F.sliceGrothendieckFib C) :=
+  fun h => F.sliceNatTrans C h
+
+private lemma TwArrOpPresheaf.coTwObjMk'_comp_id {x : C} (f : Over x) :
+    coTwObjMk' (f.hom ≫ 𝟙 x) = coTwObjMk' f.hom := by
+  unfold coTwObjMk'
+  congr 1
+  exact Category.comp_id f.hom
+
+private lemma coTwHomMk'_id_id_eq_eqToHom {cod dom : C} (arr arr' : cod ⟶ dom)
+    (h : arr = arr') (comm : 𝟙 cod ≫ arr' ≫ 𝟙 dom = arr) :
+    coTwHomMk'
+      (x := coTwObjMk' arr)
+      (y := coTwObjMk' arr')
+      (𝟙 dom) (𝟙 cod) (by simp only [coTwObjMk'_arr]; exact comm) =
+    eqToHom (congrArg coTwObjMk' h) := by
+  subst h
+  simp only [eqToHom_refl']
+  apply coTwHom'_ext
+  · simp only [coTwHomMk'_domArr]
+    rfl
+  · simp only [coTwHomMk'_codArr]
+    rfl
+
+private lemma TwArrOpPresheaf.sliceNatTrans_id_app_is_id
+    (F : TwArrOpPresheaf C) (x : C) (f : Over x) :
+    (F.sliceNatTrans C (@CategoryStruct.id C _ x)).app f =
+    eqToHom (congrArg F.obj (coTwObjMk'_comp_id C f)) := by
+  simp only [sliceNatTrans]
+  have harr : f.hom ≫ 𝟙 x = f.hom := Category.comp_id f.hom
+  have hcomm : 𝟙 f.left ≫ f.hom ≫ 𝟙 x = f.hom ≫ 𝟙 x := Category.id_comp _
+  have hmor : coTwHomMk'
+      (x := coTwObjMk' (f.hom ≫ 𝟙 x))
+      (y := coTwObjMk' f.hom)
+      (𝟙 x) (𝟙 f.left) (by simp only [coTwObjMk'_arr]; exact Category.id_comp _) =
+      eqToHom (coTwObjMk'_comp_id C f) := by
+    have h := coTwHomMk'_id_id_eq_eqToHom C (f.hom ≫ 𝟙 x) f.hom harr hcomm
+    exact h
+  rw [hmor, eqToHom_map]
+
+/--
+Identity coherence for sliceGrothendieckHomFiber.
+-/
+lemma TwArrOpPresheaf.sliceGrothendieck_hom_id (F : TwArrOpPresheaf C) :
+    Grothendieck.FunctorToHomId (overCopresheafFunctor C) (𝟭 Cᵒᵖ')
+      (F.sliceGrothendieckFib C) (F.sliceGrothendieckHomFiber C) := by
+  intro x
+  apply NatTrans.ext
+  funext f
+  simp only [sliceGrothendieckHomFiber, Functor.id_obj, Functor.id_map]
+  have h := sliceNatTrans_id_app_is_id C F x f
+  simp only [sliceNatTrans] at h ⊢
+  rw [eqToHom_app]
+  refine Eq.trans h ?_
+  congr 1
+
+/--
+Composition coherence for sliceGrothendieckHomFiber.
+-/
+lemma TwArrOpPresheaf.sliceGrothendieck_hom_comp (F : TwArrOpPresheaf C) :
+    Grothendieck.FunctorToHomComp (overCopresheafFunctor C) (𝟭 Cᵒᵖ')
+      (F.sliceGrothendieckFib C) (F.sliceGrothendieckHomFiber C) := by
+  intro x x' x'' g h
+  apply NatTrans.ext
+  funext f
+  simp only [sliceGrothendieckHomFiber, sliceNatTrans, Functor.id_obj, Functor.id_map]
+  rw [NatTrans.comp_app, NatTrans.comp_app]
+  simp only [overCopresheafFunctor, copresheafConstruction,
+    copresheafConstructionMap, Functor.op', Functor.comp_map,
+    Functor.whiskeringLeft, Over.mapFunctor, Functor.comp_obj,
+    Functor.whiskerLeft_app]
+  rw [eqToHom_app]
+  funext a
+  simp only [types_comp_apply]
+  rw [← types_comp_apply (F.map _) (F.map _)]
+  rw [← F.map_comp]
+  have hassoc : f.hom ≫ h ≫ g = (f.hom ≫ h) ≫ g := (Category.assoc _ _ _).symm
+  have hsrc_type : coTwObjMk' (f.hom ≫ h ≫ g) = coTwObjMk' ((f.hom ≫ h) ≫ g) :=
+    congrArg coTwObjMk' hassoc
+  conv_rhs => rw [← types_comp_apply (eqToHom _) (F.map _)]
+  conv_rhs => rw [← functor_map_eqToHom (p := hsrc_type), ← F.map_comp]
+  refine congrFun (congrArg F.map ?_) a
+  apply CategoryOfElementsContra'.hom_ext
+  simp only [coTwHomMk', CategoryOfElements.homMk]
+  rw [CategoryOfElementsContra'.comp_val, CategoryOfElementsContra'.comp_val]
+  rw [CategoryOfElementsContra'.eqToHom_val]
+  have hfst_rfl : (congrArg Sigma.fst hsrc_type).symm = rfl := by
+    apply proof_irrel
+  rw [hfst_rfl, eqToHom_refl]
+  simp only [Category.comp_id]
+  unfold functorOp'Obj at *
+  simp only [Over.map_obj_left]
+  apply Prod.ext
+  · simp only [CategoryOp'Inst, prod_comp]
+    exact (Category.id_comp _).symm
+  · rfl
+
+/--
+Bundled data for constructing a functor from `Cᵒᵖ'` into the Grothendieck
+construction over `overCopresheafFunctor`.
+-/
+def TwArrOpPresheaf.sliceGrothendieckData (F : TwArrOpPresheaf C) :
+    Grothendieck.FunctorToData (D := Cᵒᵖ') (overCopresheafFunctor C) where
+  baseFunc := 𝟭 Cᵒᵖ'
+  fib := F.sliceGrothendieckFib C
+  hom := fun h => F.sliceGrothendieckHomFiber C h
+  hom_id := F.sliceGrothendieck_hom_id C
+  hom_comp := fun g h => F.sliceGrothendieck_hom_comp C g h
+
+/--
+The slice construction for a `TwArrOpPresheaf` assembles into a functor from
+`Cᵒᵖ'` to the Grothendieck construction over `overCopresheafFunctor`.
+
+For each object `x : Cᵒᵖ'`, we get `(x, F.sliceCopresheaf x)` in the
+Grothendieck construction. For each morphism `h : x ⟶ x'` in `Cᵒᵖ'` (which is
+`h : x' ⟶ x` in C), we get a Grothendieck morphism from
+`(x, F.sliceCopresheaf x)` to `(x', F.sliceCopresheaf x')`.
+-/
+def TwArrOpPresheaf.sliceGrothendieckFunctor (F : TwArrOpPresheaf C) :
+    Cᵒᵖ' ⥤ Grothendieck (overCopresheafFunctor C) :=
+  Grothendieck.functorTo (overCopresheafFunctor C) (F.sliceGrothendieckData C)
 
 end TwArrOpPresheaf
 
