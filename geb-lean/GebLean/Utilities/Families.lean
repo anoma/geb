@@ -268,4 +268,344 @@ def ProdContravarRepCat : Cat.{max (u + 1) v, u + 2} :=
 
 end GrothendieckCompletions
 
+/-! ## Free coproduct completion helpers -/
+
+section FreeCoprodCompletionHelpers
+
+variable {C : Type u} [Category.{v} C]
+
+/--
+Construct an object of `FreeCoprodCompletionCat C` from an index type and
+a family of objects.
+-/
+def fcObjMk {X : Type (u + 1)} (F : X → C) : FreeCoprodCompletionCat C :=
+  ⟨X, F⟩
+
+/--
+Extract the index type from an object of `FreeCoprodCompletionCat C`.
+-/
+def fcIndex (x : FreeCoprodCompletionCat C) : Type (u + 1) := x.base
+
+/--
+Extract the family of objects from an object of `FreeCoprodCompletionCat C`.
+-/
+def fcFamily (x : FreeCoprodCompletionCat C) : fcIndex x → C := x.fiber
+
+@[simp]
+lemma fcObjMk_index {X : Type (u + 1)} (F : X → C) :
+    fcIndex (fcObjMk F) = X := rfl
+
+@[simp]
+lemma fcObjMk_family {X : Type (u + 1)} (F : X → C) :
+    fcFamily (fcObjMk F) = F := rfl
+
+/--
+Construct a morphism in `FreeCoprodCompletionCat C` from a reindexing function
+and a family of fiber morphisms.
+
+A morphism `(X, F) → (Y, G)` consists of:
+- `reindex : X → Y` (function between index types)
+- `fiberMor : ∀ x, F(x) → G(reindex(x))` (family of morphisms in `C`)
+-/
+def fcHomMk {x y : FreeCoprodCompletionCat C}
+    (reindex : fcIndex x → fcIndex y)
+    (fiberMor : ∀ i : fcIndex x, fcFamily x i ⟶ fcFamily y (reindex i)) :
+    x ⟶ y :=
+  ⟨reindex, fiberMor⟩
+
+/--
+Extract the reindexing function from a morphism in `FreeCoprodCompletionCat C`.
+-/
+def fcReindex {x y : FreeCoprodCompletionCat C} (f : x ⟶ y) :
+    fcIndex x → fcIndex y :=
+  f.base
+
+/--
+Extract the fiber morphism at index `i` from a morphism in
+`FreeCoprodCompletionCat C`.
+-/
+def fcFiberMor {x y : FreeCoprodCompletionCat C} (f : x ⟶ y)
+    (i : fcIndex x) : fcFamily x i ⟶ fcFamily y (fcReindex f i) :=
+  f.fiber i
+
+@[simp]
+lemma fcHomMk_reindex {x y : FreeCoprodCompletionCat C}
+    (reindex : fcIndex x → fcIndex y)
+    (fiberMor : ∀ i : fcIndex x, fcFamily x i ⟶ fcFamily y (reindex i)) :
+    fcReindex (fcHomMk reindex fiberMor) = reindex := rfl
+
+@[simp]
+lemma fcHomMk_fiberMor {x y : FreeCoprodCompletionCat C}
+    (reindex : fcIndex x → fcIndex y)
+    (fiberMor : ∀ i : fcIndex x, fcFamily x i ⟶ fcFamily y (reindex i))
+    (i : fcIndex x) :
+    fcFiberMor (fcHomMk reindex fiberMor) i = fiberMor i := rfl
+
+@[ext (iff := false)]
+lemma fcHom_ext {x y : FreeCoprodCompletionCat C} (f g : x ⟶ y)
+    (hbase : f.base = g.base)
+    (hfiber : f.fiber ≫ eqToHom (by rw [hbase]) = g.fiber) : f = g :=
+  GrothendieckContra'.ext f g hbase hfiber
+
+end FreeCoprodCompletionHelpers
+
+/-! ## Free product completion helpers -/
+
+section FreeProdCompletionHelpers
+
+variable {C : Type u} [Category.{v} C]
+
+/--
+Construct an object of `FreeProdCompletionCat C` from an index type and
+a family of objects.
+-/
+def fpObjMk {X : Type (u + 1)} (F : X → C) : FreeProdCompletionCat C :=
+  ⟨X, F⟩
+
+/--
+Extract the index type from an object of `FreeProdCompletionCat C`.
+-/
+def fpIndex (x : FreeProdCompletionCat C) : Type (u + 1) := x.base
+
+/--
+Extract the family of objects from an object of `FreeProdCompletionCat C`.
+-/
+def fpFamily (x : FreeProdCompletionCat C) : fpIndex x → C := x.fiber
+
+@[simp]
+lemma fpObjMk_index {X : Type (u + 1)} (F : X → C) :
+    fpIndex (fpObjMk F) = X := rfl
+
+@[simp]
+lemma fpObjMk_family {X : Type (u + 1)} (F : X → C) :
+    fpFamily (fpObjMk F) = F := rfl
+
+/--
+Construct a morphism in `FreeProdCompletionCat C` from a reindexing function
+and a family of fiber morphisms.
+
+A morphism `(X, F) → (Y, G)` consists of:
+- `reindex : Y → X` (function between index types, note: opposite direction)
+- `fiberMor : ∀ j, G(reindex(j)) → F(j)` (family of morphisms in `C`,
+  going from target family to source family)
+-/
+def fpHomMk {x y : FreeProdCompletionCat C}
+    (reindex : fpIndex y → fpIndex x)
+    (fiberMor : ∀ j : fpIndex y, fpFamily x (reindex j) ⟶ fpFamily y j) :
+    x ⟶ y :=
+  ⟨reindex, fiberMor⟩
+
+/--
+Extract the reindexing function from a morphism in `FreeProdCompletionCat C`.
+Note: For a morphism `(X, F) → (Y, G)`, this is a function `Y → X`.
+-/
+def fpReindex {x y : FreeProdCompletionCat C} (f : x ⟶ y) :
+    fpIndex y → fpIndex x :=
+  f.base
+
+/--
+Extract the fiber morphism at index `j` from a morphism in
+`FreeProdCompletionCat C`. For a morphism `f : (X, F) → (Y, G)`, this is
+`F(reindex j) → G(j)`.
+-/
+def fpFiberMor {x y : FreeProdCompletionCat C} (f : x ⟶ y)
+    (j : fpIndex y) : fpFamily x (fpReindex f j) ⟶ fpFamily y j :=
+  f.fiber j
+
+@[simp]
+lemma fpHomMk_reindex {x y : FreeProdCompletionCat C}
+    (reindex : fpIndex y → fpIndex x)
+    (fiberMor : ∀ j : fpIndex y, fpFamily x (reindex j) ⟶ fpFamily y j) :
+    fpReindex (fpHomMk reindex fiberMor) = reindex := rfl
+
+@[simp]
+lemma fpHomMk_fiberMor {x y : FreeProdCompletionCat C}
+    (reindex : fpIndex y → fpIndex x)
+    (fiberMor : ∀ j : fpIndex y, fpFamily x (reindex j) ⟶ fpFamily y j)
+    (j : fpIndex y) :
+    fpFiberMor (fpHomMk reindex fiberMor) j = fiberMor j := rfl
+
+@[ext (iff := false)]
+lemma fpHom_ext {x y : FreeProdCompletionCat C} (f g : x ⟶ y)
+    (hbase : f.base = g.base)
+    (hfiber : eqToHom (by rw [hbase]) ≫ f.fiber = g.fiber) : f = g :=
+  Grothendieck.ext f g hbase hfiber
+
+end FreeProdCompletionHelpers
+
+/-! ## Coproduct of covariant representables helpers -/
+
+section CoprodCovarRepHelpers
+
+variable {C : Type u} [Category.{v} C]
+
+/--
+Construct an object of `CoprodCovarRepCat C` from an index type and
+a family of objects from `C`. Internally, objects are stored as families
+in `Cᵒᵖ'`, but this helper hides that detail.
+-/
+def ccrObjMk {X : Type (u + 1)} (F : X → C) : CoprodCovarRepCat C :=
+  ⟨X, F⟩
+
+/--
+Extract the index type from an object of `CoprodCovarRepCat C`.
+-/
+def ccrIndex (x : CoprodCovarRepCat C) : Type (u + 1) := x.base
+
+/--
+Extract the family of objects from an object of `CoprodCovarRepCat C`.
+Returns objects in `C` (not `Cᵒᵖ'`).
+-/
+def ccrFamily (x : CoprodCovarRepCat C) : ccrIndex x → C := x.fiber
+
+@[simp]
+lemma ccrObjMk_index {X : Type (u + 1)} (F : X → C) :
+    ccrIndex (ccrObjMk F) = X := rfl
+
+@[simp]
+lemma ccrObjMk_family {X : Type (u + 1)} (F : X → C) :
+    ccrFamily (ccrObjMk F) = F := rfl
+
+/--
+Construct a morphism in `CoprodCovarRepCat C` from a reindexing function
+and a family of fiber morphisms.
+
+A morphism `(X, F) → (Y, G)` consists of:
+- `reindex : X → Y` (function between index types)
+- `fiberMor : ∀ i, G(reindex(i)) → F(i)` (family of morphisms in `C`)
+
+Note: The fiber morphisms go from target to source, which is opposite to
+`FreeCoprodCompletionCat`.
+-/
+def ccrHomMk {x y : CoprodCovarRepCat C}
+    (reindex : ccrIndex x → ccrIndex y)
+    (fiberMor : ∀ i : ccrIndex x, ccrFamily y (reindex i) ⟶ ccrFamily x i) :
+    x ⟶ y :=
+  ⟨reindex, fiberMor⟩
+
+/--
+Extract the reindexing function from a morphism in `CoprodCovarRepCat C`.
+-/
+def ccrReindex {x y : CoprodCovarRepCat C} (f : x ⟶ y) :
+    ccrIndex x → ccrIndex y :=
+  f.base
+
+/--
+Extract the fiber morphism at index `i` from a morphism in
+`CoprodCovarRepCat C`. For a morphism `f : (X, F) → (Y, G)`, this returns
+`G(reindex i) → F(i)` in `C`.
+-/
+def ccrFiberMor {x y : CoprodCovarRepCat C} (f : x ⟶ y)
+    (i : ccrIndex x) : ccrFamily y (ccrReindex f i) ⟶ ccrFamily x i :=
+  f.fiber i
+
+@[simp]
+lemma ccrHomMk_reindex {x y : CoprodCovarRepCat C}
+    (reindex : ccrIndex x → ccrIndex y)
+    (fiberMor : ∀ i : ccrIndex x, ccrFamily y (reindex i) ⟶ ccrFamily x i) :
+    ccrReindex (ccrHomMk reindex fiberMor) = reindex := rfl
+
+@[simp]
+lemma ccrHomMk_fiberMor {x y : CoprodCovarRepCat C}
+    (reindex : ccrIndex x → ccrIndex y)
+    (fiberMor : ∀ i : ccrIndex x, ccrFamily y (reindex i) ⟶ ccrFamily x i)
+    (i : ccrIndex x) :
+    ccrFiberMor (ccrHomMk reindex fiberMor) i = fiberMor i := rfl
+
+@[ext (iff := false)]
+lemma ccrHom_ext {x y : CoprodCovarRepCat C} (f g : x ⟶ y)
+    (hbase : f.base = g.base)
+    (hfiber : f.fiber ≫ eqToHom (by rw [hbase]) = g.fiber) : f = g :=
+  GrothendieckContra'.ext f g hbase hfiber
+
+end CoprodCovarRepHelpers
+
+/-! ## Product of contravariant representables helpers -/
+
+section ProdContravarRepHelpers
+
+variable {C : Type u} [Category.{v} C]
+
+/--
+Construct an object of `ProdContravarRepCat C` from an index type and
+a family of objects from `C`. Internally, objects are stored as families
+in `Cᵒᵖ'`, but this helper hides that detail.
+-/
+def pcrObjMk {X : Type (u + 1)} (F : X → C) : ProdContravarRepCat C :=
+  ⟨X, F⟩
+
+/--
+Extract the index type from an object of `ProdContravarRepCat C`.
+-/
+def pcrIndex (x : ProdContravarRepCat C) : Type (u + 1) := x.base
+
+/--
+Extract the family of objects from an object of `ProdContravarRepCat C`.
+Returns objects in `C` (not `Cᵒᵖ'`).
+-/
+def pcrFamily (x : ProdContravarRepCat C) : pcrIndex x → C := x.fiber
+
+@[simp]
+lemma pcrObjMk_index {X : Type (u + 1)} (F : X → C) :
+    pcrIndex (pcrObjMk F) = X := rfl
+
+@[simp]
+lemma pcrObjMk_family {X : Type (u + 1)} (F : X → C) :
+    pcrFamily (pcrObjMk F) = F := rfl
+
+/--
+Construct a morphism in `ProdContravarRepCat C` from a reindexing function
+and a family of fiber morphisms.
+
+A morphism `(X, F) → (Y, G)` consists of:
+- `reindex : Y → X` (function between index types, note: opposite direction)
+- `fiberMor : ∀ j, G(j) → F(reindex(j))` (family of morphisms in `C`)
+
+Note: The reindexing goes from target to source index, and the fiber morphisms
+go from target family to source family.
+-/
+def pcrHomMk {x y : ProdContravarRepCat C}
+    (reindex : pcrIndex y → pcrIndex x)
+    (fiberMor : ∀ j : pcrIndex y, pcrFamily y j ⟶ pcrFamily x (reindex j)) :
+    x ⟶ y :=
+  ⟨reindex, fiberMor⟩
+
+/--
+Extract the reindexing function from a morphism in `ProdContravarRepCat C`.
+Note: For a morphism `(X, F) → (Y, G)`, this is a function `Y → X`.
+-/
+def pcrReindex {x y : ProdContravarRepCat C} (f : x ⟶ y) :
+    pcrIndex y → pcrIndex x :=
+  f.base
+
+/--
+Extract the fiber morphism at index `j` from a morphism in
+`ProdContravarRepCat C`. For a morphism `f : (X, F) → (Y, G)`, this returns
+`G(j) → F(reindex j)` in `C`.
+-/
+def pcrFiberMor {x y : ProdContravarRepCat C} (f : x ⟶ y)
+    (j : pcrIndex y) : pcrFamily y j ⟶ pcrFamily x (pcrReindex f j) :=
+  f.fiber j
+
+@[simp]
+lemma pcrHomMk_reindex {x y : ProdContravarRepCat C}
+    (reindex : pcrIndex y → pcrIndex x)
+    (fiberMor : ∀ j : pcrIndex y, pcrFamily y j ⟶ pcrFamily x (reindex j)) :
+    pcrReindex (pcrHomMk reindex fiberMor) = reindex := rfl
+
+@[simp]
+lemma pcrHomMk_fiberMor {x y : ProdContravarRepCat C}
+    (reindex : pcrIndex y → pcrIndex x)
+    (fiberMor : ∀ j : pcrIndex y, pcrFamily y j ⟶ pcrFamily x (reindex j))
+    (j : pcrIndex y) :
+    pcrFiberMor (pcrHomMk reindex fiberMor) j = fiberMor j := rfl
+
+@[ext (iff := false)]
+lemma pcrHom_ext {x y : ProdContravarRepCat C} (f g : x ⟶ y)
+    (hbase : f.base = g.base)
+    (hfiber : eqToHom (by rw [hbase]) ≫ f.fiber = g.fiber) : f = g :=
+  Grothendieck.ext f g hbase hfiber
+
+end ProdContravarRepHelpers
+
 end GebLean
