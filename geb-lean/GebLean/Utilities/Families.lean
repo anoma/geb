@@ -21,6 +21,8 @@ oppositization), we obtain four different completions of a category:
    Grothendieck construction on `familyFunctor`. Objects are pairs `(X, F)`
    where `X` is a type and `F : X → C`. Morphisms `(X, F) → (Y, G)` consist of
    `f : X → Y` and `F(x) → G(f(x))`. This freely adjoins coproducts to `C`.
+   This category may also be viewed das the category of coproducts of
+   contravariant representables (sometimes called "Dirichlet functors").
 
 2. **Free product completion** (`FreeProdCompletionCat`): The covariant
    Grothendieck construction on `familyFunctor`. Morphisms go in the opposite
@@ -28,8 +30,10 @@ oppositization), we obtain four different completions of a category:
 
 3. **Coproducts of covariant representables** (`CoprodCovarRepCat`): The
    contravariant Grothendieck construction on `familyFunctor ⋙ opFunctor'`.
-   Objects are `X`-indexed families of objects from `Cᵒᵖ'`. This is related to
-   polynomial functors.
+   Objects are `X`-indexed families of objects from `Cᵒᵖ'`. This produces
+   the category coproducts of covariant representables, which are a form
+   of polynomial functors (for some categories, including `Type`, these
+   comprise _all_ polynomial functors).
 
 4. **Products of contravariant representables** (`ProdContravarRepCat`): The
    covariant Grothendieck construction on `familyFunctor ⋙ opFunctor'`.
