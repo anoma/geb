@@ -139,4 +139,41 @@ theorem familyPostcomp_natural (F : C ⥤ D) {X Y : Type u} (f : X → Y) :
 
 end FunctorialityInCategory
 
+/-! ## The family bifunctor -/
+
+section FamilyBifunctor
+
+/--
+A functor `F : C ⥤ D` induces a natural transformation from `familyFunctor C`
+to `familyFunctor D`, with components given by `familyPostcomp F X`.
+-/
+@[simp]
+def familyNatTrans {C D : Type u} [Category.{v} C] [Category.{v} D] (F : C ⥤ D) :
+    familyFunctor C ⟶ familyFunctor D where
+  app X := familyPostcomp F X
+  naturality _ _ f := (familyPostcomp_natural F f).symm
+
+@[simp]
+theorem familyNatTrans_id (C : Type u) [Category.{v} C] :
+    familyNatTrans (𝟭 C) = 𝟙 (familyFunctor C) := rfl
+
+@[simp]
+theorem familyNatTrans_comp {C D E : Type u} [Category.{v} C] [Category.{v} D]
+    [Category.{v} E] (F : C ⥤ D) (G : D ⥤ E) :
+    familyNatTrans (F ⋙ G) = familyNatTrans F ≫ familyNatTrans G := rfl
+
+/--
+The family bifunctor `familyBifunctor : Cat ⥤ (Type uᵒᵖ' ⥤ Cat)` sends a
+category `C` to the family functor `familyFunctor C`, and a functor `F : C ⥤ D`
+to the natural transformation `familyNatTrans F`.
+-/
+@[simp]
+def familyBifunctor : Cat.{v, u} ⥤ (Type uᵒᵖ' ⥤ Cat.{max u v, u}) where
+  obj C := familyFunctor C
+  map F := familyNatTrans F
+  map_id C := familyNatTrans_id C
+  map_comp F G := familyNatTrans_comp F G
+
+end FamilyBifunctor
+
 end GebLean
