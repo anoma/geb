@@ -14,24 +14,25 @@ a type `X` to the product category `∀ x : X, C`, which is the category of
 `X`-indexed families of objects from `C`.
 
 By applying the Grothendieck construction (covariant or contravariant) to
-`familyFunctor` or `familyFunctorOp` (which post-composes with oppositization),
-we obtain four different completions of a category:
+`familyFunctor` or `familyFunctor ⋙ opFunctor'` (which post-composes with
+oppositization), we obtain four different completions of a category:
 
-1. **Free coproduct completion** (`freeCoprodCompletion`): The contravariant
+1. **Free coproduct completion** (`FreeCoprodCompletionCat`): The contravariant
    Grothendieck construction on `familyFunctor`. Objects are pairs `(X, F)`
-   where `X` is a type and `F : X → C`. This freely adjoins coproducts to `C`.
+   where `X` is a type and `F : X → C`. Morphisms `(X, F) → (Y, G)` consist of
+   `f : X → Y` and `F(x) → G(f(x))`. This freely adjoins coproducts to `C`.
 
-2. **Free product completion** (`freeProdCompletion`): The covariant
-   Grothendieck construction on `familyFunctor`. This freely adjoins products
-   to `C`.
+2. **Free product completion** (`FreeProdCompletionCat`): The covariant
+   Grothendieck construction on `familyFunctor`. Morphisms go in the opposite
+   direction for the fiber component. This freely adjoins products to `C`.
 
-3. **Coproducts of covariant representables** (`coprodCovarRep`): The
-   contravariant Grothendieck construction on `familyFunctorOp`. Objects are
-   `X`-indexed families of objects from `Cᵒᵖ'`. This is related to polynomial
-   functors in their simplest form.
+3. **Coproducts of covariant representables** (`CoprodCovarRepCat`): The
+   contravariant Grothendieck construction on `familyFunctor ⋙ opFunctor'`.
+   Objects are `X`-indexed families of objects from `Cᵒᵖ'`. This is related to
+   polynomial functors.
 
-4. **Products of contravariant representables** (`prodContravarRep`): The
-   covariant Grothendieck construction on `familyFunctorOp`.
+4. **Products of contravariant representables** (`ProdContravarRepCat`): The
+   covariant Grothendieck construction on `familyFunctor ⋙ opFunctor'`.
 
 ## References
 
@@ -72,31 +73,36 @@ For a function `f : X → Y`, the induced functor between family categories
 sends a `Y`-indexed family to an `X`-indexed family by precomposition.
 -/
 @[simp]
-def familyMap {X Y : Type u} (f : X → Y) : FamilyCat C Y ⥤ FamilyCat C X where
+def familyMap.{u', v', w'} {C' : Type u'} [Category.{v'} C'] {X Y : Type w'}
+    (f : X → Y) : FamilyCat C' Y ⥤ FamilyCat C' X where
   obj F x := F (f x)
   map φ x := φ (f x)
 
 @[simp]
-theorem familyMap_id (X : Type u) : familyMap C (𝟙 X) = 𝟙 (FamilyCat C X) := rfl
+theorem familyMap_id.{u', v', w'} {C' : Type u'} [Category.{v'} C'] (X : Type w') :
+    familyMap (C' := C') (𝟙 X) = 𝟙 (FamilyCat C' X) := rfl
 
 @[simp]
-theorem familyMap_comp {X Y Z : Type u} (f : X → Y) (g : Y → Z) :
-    familyMap C (g ∘ f) = familyMap C g ⋙ familyMap C f := rfl
+theorem familyMap_comp.{u', v', w'} {C' : Type u'} [Category.{v'} C']
+    {X Y Z : Type w'} (f : X → Y) (g : Y → Z) :
+    familyMap (C' := C') (g ∘ f) = familyMap (C' := C') g ⋙ familyMap (C' := C') f :=
+  rfl
 
 /--
 The family functor `familyFunctor C : Typeᵒᵖ' ⥤ Cat` sends a type `X` to the
 product category of `C` indexed by `X`. This is the functor whose Grothendieck
 construction yields the free coproduct completion of `C`.
 
-For a function `f : X → Y` (viewed as a morphism `Y → X` in `Typeᵒᵖ'`), the
-induced functor is given by precomposition: an `X`-indexed family is sent to
-a `Y`-indexed family by `(F : X → C) ↦ (F ∘ f : Y → C)`.
+For a function `f : X → Y` (viewed as a morphism `X → Y` in `Typeᵒᵖ'`), the
+induced functor is given by precomposition: a `Y`-indexed family is sent to
+an `X`-indexed family by `(G : Y → C) ↦ (G ∘ f : X → C)`.
 -/
 @[simp]
-def familyFunctor : Type uᵒᵖ' ⥤ Cat.{max u v, u} where
-  obj X := FamilyCat C X
-  map f := familyMap C f
-  map_id X := familyMap_id C X
+def familyFunctor.{u', v', w'} (C' : Type u') [Category.{v'} C'] :
+    Type w'ᵒᵖ' ⥤ Cat.{max w' v', max u' w'} where
+  obj X := FamilyCat C' X
+  map f := familyMap (C' := C') f
+  map_id X := familyMap_id X
   map_comp _ _ := rfl
 
 end FunctorialityInIndex
@@ -140,7 +146,7 @@ the following square commutes:
 ```
   FamilyCat C Y --familyPostcomp F Y--> FamilyCat D Y
        |                                     |
-  familyMap C f                         familyMap D f
+  familyMap f                           familyMap f
        |                                     |
        v                                     v
   FamilyCat C X --familyPostcomp F X--> FamilyCat D X
@@ -148,7 +154,8 @@ the following square commutes:
 -/
 @[simp]
 theorem familyPostcomp_natural (F : C ⥤ D) {X Y : Type u} (f : X → Y) :
-    familyMap C f ⋙ familyPostcomp F X = familyPostcomp F Y ⋙ familyMap D f := rfl
+    familyMap (C' := C) f ⋙ familyPostcomp F X =
+    familyPostcomp F Y ⋙ familyMap (C' := D) f := rfl
 
 end FunctorialityInCategory
 
@@ -205,44 +212,6 @@ def familyBifunctorOp : Cat.{v, u} ⥤ (Type uᵒᵖ' ⥤ Cat.{max u v, u}) :=
 
 end FamilyBifunctorOp
 
-/-! ## Large family functors for Grothendieck completions -/
-
-section LargeFamilyFunctor
-
-variable (C : Type u) [CInst : Category.{v, u} C]
-
-/--
-The large family category: for an index type `X : Type (u+1)`, the product
-category of `C` indexed by `X`. This uses a larger universe for the index
-type to enable forming Grothendieck constructions.
--/
-
-@[simp]
-def LargeFamilyCat (X : Type (u + 1)) : Cat.{max (u + 1) v, u + 1} :=
-  FamilyCat.{u, v, u + 1} C (CInst := CInst) X
-
-/--
-Reindexing functor for large families.
--/
-@[simp]
-def largeFamilyMap {X Y : Type (u + 1)} (f : X → Y) :
-    LargeFamilyCat C Y ⥤ LargeFamilyCat C X where
-  obj F x := F (f x)
-  map φ x := φ (f x)
-
-/--
-The large family functor `largeFamilyFunctor C : Type (u+1)ᵒᵖ' ⥤ Cat` sends a
-type `X : Type (u+1)` to the product category of `C` indexed by `X`.
--/
-@[simp]
-def largeFamilyFunctor : Type (u + 1)ᵒᵖ' ⥤ Cat.{max (u + 1) v, u + 1} where
-  obj X := LargeFamilyCat C X
-  map f := largeFamilyMap C f
-  map_id _ := rfl
-  map_comp _ _ := rfl
-
-end LargeFamilyFunctor
-
 /-! ## Grothendieck completions -/
 
 section GrothendieckCompletions
@@ -252,48 +221,46 @@ variable (C : Type u) [Category.{v} C]
 /--
 The free coproduct completion of a category `C`. Objects are pairs `(X, F)`
 where `X : Type (u+1)` and `F : X → C` is an `X`-indexed family of objects
-from `C`. Morphisms `(X, F) → (Y, G)` consist of a function `f : Y → X` and a
-family of morphisms `F(f(y)) → G(y)`.
+from `C`. Morphisms `(X, F) → (Y, G)` consist of a function `f : X → Y` and a
+family of morphisms `F(x) → G(f(x))`.
 
-This is the contravariant Grothendieck construction applied to
-`largeFamilyFunctor`.
+This is the contravariant Grothendieck construction applied to `familyFunctor`.
 -/
 @[simp]
 def FreeCoprodCompletionCat : Cat.{max (u + 1) v, u + 2} :=
-  Cat.of (GrothendieckContra' (largeFamilyFunctor C))
+  Cat.of (GrothendieckContra' (familyFunctor.{u, v, u + 1} C))
 
 /--
 The free product completion of a category `C`. Objects are pairs `(X, F)`
 where `X : Type (u+1)` and `F : X → C`. Morphisms `(X, F) → (Y, G)` consist
-of a function `f : X → Y` and a family of morphisms `F(x) → G(f(x))`.
+of a function `f : X → Y` and a family of morphisms `G(f(x)) → F(x)`.
 
-This is the covariant Grothendieck construction applied to
-`largeFamilyFunctor`.
+This is the covariant Grothendieck construction applied to `familyFunctor`.
 -/
 @[simp]
 def FreeProdCompletionCat : Cat.{max (u + 1) v, u + 2} :=
-  Cat.of (Grothendieck (largeFamilyFunctor C))
+  Cat.of (Grothendieck (familyFunctor.{u, v, u + 1} C))
 
 /--
 The category of coproducts of covariant representables for `C`. Objects are
 pairs `(X, F)` where `X : Type (u+1)` and `F : X → Cᵒᵖ'` is an `X`-indexed
 family of objects from the opposite category.
 
-This is the contravariant Grothendieck construction applied to
-`largeFamilyFunctor` post-composed with oppositization.
--/
-@[simp]
-def CoprodCovarRepCat : Cat.{max (u + 1) v, u + 2} :=
-  Cat.of (GrothendieckContra' (largeFamilyFunctor C ⋙ Cat.opFunctor'))
-
-/--
-The category of products of contravariant representables for `C`. This is the
-covariant Grothendieck construction applied to `largeFamilyFunctor`
+This is the contravariant Grothendieck construction applied to `familyFunctor`
 post-composed with oppositization.
 -/
 @[simp]
+def CoprodCovarRepCat : Cat.{max (u + 1) v, u + 2} :=
+  Cat.of (GrothendieckContra' (familyFunctor.{u, v, u + 1} C ⋙ Cat.opFunctor'))
+
+/--
+The category of products of contravariant representables for `C`. This is the
+covariant Grothendieck construction applied to `familyFunctor` post-composed
+with oppositization.
+-/
+@[simp]
 def ProdContravarRepCat : Cat.{max (u + 1) v, u + 2} :=
-  Cat.of (Grothendieck (largeFamilyFunctor C ⋙ Cat.opFunctor'))
+  Cat.of (Grothendieck (familyFunctor.{u, v, u + 1} C ⋙ Cat.opFunctor'))
 
 end GrothendieckCompletions
 
