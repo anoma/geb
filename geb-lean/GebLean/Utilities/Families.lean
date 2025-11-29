@@ -21,7 +21,7 @@ oppositization), we obtain four different completions of a category:
    Grothendieck construction on `familyFunctor`. Objects are pairs `(X, F)`
    where `X` is a type and `F : X → C`. Morphisms `(X, F) → (Y, G)` consist of
    `f : X → Y` and `F(x) → G(f(x))`. This freely adjoins coproducts to `C`.
-   This category may also be viewed das the category of coproducts of
+   This category may also be viewed as the category of coproducts of
    contravariant representables (sometimes called "Dirichlet functors").
 
 2. **Free product completion** (`FreeProdCompletionCat`): The covariant
