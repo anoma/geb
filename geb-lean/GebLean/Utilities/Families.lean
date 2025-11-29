@@ -1,6 +1,7 @@
 import Mathlib.CategoryTheory.Category.Cat
 import Mathlib.CategoryTheory.Pi.Basic
 import Mathlib.CategoryTheory.Grothendieck
+import Mathlib.CategoryTheory.Whiskering
 import GebLean.Utilities.Opposites
 
 /-!
@@ -175,5 +176,21 @@ def familyBifunctor : Cat.{v, u} ⥤ (Type uᵒᵖ' ⥤ Cat.{max u v, u}) where
   map_comp F G := familyNatTrans_comp F G
 
 end FamilyBifunctor
+
+/-! ## The opposite family bifunctor -/
+
+section FamilyBifunctorOp
+
+/--
+The opposite family bifunctor `familyBifunctorOp : Cat ⥤ (Type uᵒᵖ' ⥤ Cat)` is
+`familyBifunctor` post-composed with the oppositization functor `opFunctor'`.
+It sends a category `C` to the functor that maps a type `X` to the opposite
+of the family category `(∀ _ : X, C)ᵒᵖ'`.
+-/
+@[simp]
+def familyBifunctorOp : Cat.{v, u} ⥤ (Type uᵒᵖ' ⥤ Cat.{max u v, u}) :=
+  familyBifunctor ⋙ (Functor.whiskeringRight _ _ _).obj Cat.opFunctor'
+
+end FamilyBifunctorOp
 
 end GebLean
