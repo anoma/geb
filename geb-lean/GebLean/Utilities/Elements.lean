@@ -543,6 +543,17 @@ instance (F : Cᵒᵖ' ⥤ Type w) :
     (elementsContraToElementsContra' F).ReflectsIsomorphisms :=
   inferInstanceAs (elementsContraEquiv F).inverse.ReflectsIsomorphisms
 
+section CovariantCategoryOfElements
+
+variable {D : Type u} [Category.{v} D]
+
+@[simp]
+theorem CategoryOfElements.eqToHom_val {F : D ⥤ Type w} {p q : F.Elements}
+    (h : p = q) : (eqToHom h).val = eqToHom (congrArg Sigma.fst h) := by
+  cases h; rfl
+
+end CovariantCategoryOfElements
+
 namespace CategoryOfElementsContra'
 
 /--
