@@ -130,3 +130,10 @@ lemma coe_subtype_sigma_transport_coe {α : Type*} {β : α → Type*}
   exact coe_subtype_sigma_transport_fst_refl P h w.val pf
 
 end GebLean
+
+/--
+Tactic to split an equality goal `A = C` into two subgoals `A = B` and `B = C`
+where `B` is explicitly provided. Uses `Eq.trans` to combine the results.
+-/
+macro "intermediate_eq" b:term : tactic =>
+  `(tactic| refine Eq.trans (b := $b) ?_ ?_)
