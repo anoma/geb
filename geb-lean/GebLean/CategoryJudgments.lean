@@ -1,7 +1,6 @@
 import Mathlib.CategoryTheory.Category.Basic
 import Mathlib.CategoryTheory.FinCategory.Basic
 import Mathlib.CategoryTheory.Types.Basic
-import GebLean.Utilities
 import GebLean.AcyclicCat
 
 /-!

@@ -1,7 +1,7 @@
 import Mathlib.CategoryTheory.Category.Basic
 import Mathlib.CategoryTheory.Types.Basic
 import GebLean.CategoryJudgments
-import GebLean.Utilities
+import GebLean.Utilities.Sigma
 
 /-!
 # Dependent Category Judgments

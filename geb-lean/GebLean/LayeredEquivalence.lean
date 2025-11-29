@@ -4,7 +4,6 @@ import Mathlib.CategoryTheory.Equivalence
 import Mathlib.CategoryTheory.Functor.Category
 import Mathlib.CategoryTheory.Grothendieck
 import Mathlib.CategoryTheory.Comma.Over.Basic
-import GebLean.Utilities
 import GebLean.Semicategory
 
 /-!

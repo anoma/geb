@@ -1,5 +1,4 @@
 import GebLean.AcyclicCat
-import GebLean.Utilities
 import Mathlib.Data.Fintype.Basic
 import Mathlib.CategoryTheory.Category.Basic
 import Mathlib.CategoryTheory.Limits.Shapes.Equalizers
