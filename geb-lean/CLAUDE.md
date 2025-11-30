@@ -79,13 +79,12 @@ When making changes to Lean code:
     or performing just one proof step at a time and then re-checking the goal
     with an underscore.  Once you have everything working, you can go back
     and combine some or all steps into single tactics insofar as possible.
-12. **Use `Write`, not shell commands, for experiments**: Instead of using
-    `bash` commands to generate temporary files to check types and do other
-    such experiments, do the experiments by doing things that don't require
-    explicit user permission every time.  You have permission to create
-    files, so you can make a `.lean` however you normally do that and then
-    compile it with a `lake` command yourself instead of using a `bash`
-    script.  Running scripts requires the user to grant permission every time.
+12. **Use `Write`, never shell commands, for experiments**: Never ask to use
+    `bash` commands to generate temporary files to write experimental code --
+    instead, do the experiments by editing the files in our own codebase
+    (you can either use existing files or create new ones, as you prefer).
+    That way you can just use your normal edit permissions without having
+    to request shell command access.
 13. **Test within our own codebase**:  Do not create temporary test
     files in places such as `/tmp` to test code fragments. Instead, place the
     code fragments directly in our own codebase, optionally in temporary
