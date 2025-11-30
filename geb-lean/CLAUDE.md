@@ -227,6 +227,7 @@ might want to examine external libraries for ideas.
 - [Tabled Typeclass Resolution](https://arxiv.org/pdf/2001.04301)
 - [Use and abuse of instance parameters in the Lean mathematical library](https://arxiv.org/pdf/2202.01629.pdf)
 - [Lean projects and build process](https://leanprover-community.github.io/install/project.html)
+- [A Beginner's Guide to Theorem Proving in Lean 4](https://emallson.net/blog/a-beginners-companion-to-theorem-proving-in-lean/)
 
 ### General mathematics
 
