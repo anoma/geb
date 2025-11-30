@@ -3,6 +3,7 @@ import GebLean.Utilities.Grothendieck
 import GebLean.Utilities.Presheaf
 import GebLean.Utilities.Slice
 import GebLean.Utilities.TwistedArrow
+import Mathlib.CategoryTheory.EqToHom
 
 /-!
 # Functor categories on twisted arrow categories
@@ -31,7 +32,7 @@ namespace GebLean
 
 open CategoryTheory
 
-variable (C : Type u) [Category.{v} C]
+variable (C : Type u) [CInst : Category.{v} C]
 
 section TwArrCopresheaf
 
@@ -313,6 +314,229 @@ def TwArrCopresheaf.sliceGrothendieckFunctor (F : TwArrCopresheaf C) :
     C ⥤ GrothendieckContra' (overOpCopresheafFunctor C) :=
   GrothendieckContra'.functorTo (F.sliceGrothendieckData C)
 
+/-! ### Reverse Construction: From Grothendieck Data to TwArrCopresheaf
+
+Given data for a functor into the contravariant Grothendieck construction over
+`overOpCopresheafFunctor C` with identity base functor, we construct a
+twisted-arrow copresheaf.
+-/
+
+/--
+The fiber type for a slice Grothendieck section: assigns to each `y : C` a
+presheaf on `(Over y)ᵒᵖ'`.
+-/
+abbrev SliceGrothendieckFib :=
+  GrothendieckContra'.FunctorToFib (F' := overOpCopresheafFunctor C) (𝟭 C)
+
+/--
+The morphism type for a slice Grothendieck section: assigns to each morphism
+`h : y ⟶ y'` a natural transformation between the fibers.
+-/
+abbrev SliceGrothendieckHom (fib : SliceGrothendieckFib C) :=
+  GrothendieckContra'.FunctorToHom (𝟭 C) fib
+
+/--
+Object map for the twisted-arrow copresheaf induced by slice Grothendieck data.
+Given a twisted arrow `(f : x ⟶ y)`, we evaluate the fiber presheaf at `y`
+on the over-object `Over.mk f`.
+-/
+def sliceGrothendieckFibObj (fib : SliceGrothendieckFib C)
+    (tw : TwistedArrow' C) : Type v :=
+  (fib (twCod' tw)).obj (Over.mk (twArr' tw))
+
+/--
+The Over morphism induced by a domain arrow in a twisted arrow morphism.
+Given `domArr : x' ⟶ x` and arrows `f : x ⟶ y`, `f' : x' ⟶ y` with
+`domArr ≫ f = f'`, we get a morphism in `Over y` from `Over.mk f'` to
+`Over.mk f`.
+-/
+def overHomFromDomArr {y x x' : C} {f : x ⟶ y} {f' : x' ⟶ y}
+    (domArr : x' ⟶ x) (hcomm : domArr ≫ f = f') :
+    Over.mk f' ⟶ Over.mk f :=
+  Over.homMk domArr hcomm
+
+/--
+Two `overHomFromDomArr` morphisms with the same underlying arrow are equal,
+regardless of the commutativity proof used.
+-/
+lemma overHomFromDomArr_proof_irrel {y x x' : C} {f : x ⟶ y} {f' : x' ⟶ y}
+    (domArr : x' ⟶ x) (hcomm hcomm' : domArr ≫ f = f') :
+    overHomFromDomArr C domArr hcomm = overHomFromDomArr C domArr hcomm' := by
+  apply CommaMorphism.ext <;> rfl
+
+/--
+When `domArr = 𝟙 x`, the `overHomFromDomArr` is the identity morphism.
+-/
+@[simp]
+lemma overHomFromDomArr_id {y x : C} {f : x ⟶ y} (hcomm : 𝟙 x ≫ f = f) :
+    overHomFromDomArr C (𝟙 x) hcomm = 𝟙 (Over.mk f) := by
+  apply CommaMorphism.ext <;> rfl
+
+/--
+The `overHomFromDomArr` with identity domain arrow is `eqToHom` of a
+commutativity-derived equality between the target Over objects.
+-/
+lemma overHomFromDomArr_id_eq_eqToHom {y x : C} {f : x ⟶ y} {g : x ⟶ y}
+    (hcomm : 𝟙 x ≫ g = f) :
+    overHomFromDomArr C (𝟙 x) hcomm = eqToHom (by simp [Category.id_comp] at hcomm
+                                                  exact congrArg Over.mk hcomm.symm) := by
+  simp only [Category.id_comp] at hcomm
+  cases hcomm
+  simp only [overHomFromDomArr, Over.homMk, Over.mk, eqToHom_refl]
+  rfl
+
+/--
+Morphism map for the twisted-arrow copresheaf induced by slice Grothendieck data.
+
+Given a twisted arrow morphism with domain arrow `domArr` and codomain arrow
+`codArr`, we compose:
+1. The fiber morphism from `hom codArr` (changing which slice we're over)
+2. The presheaf functoriality via `domArr` (moving within the target slice)
+-/
+def sliceGrothendieckFibMap (fib : SliceGrothendieckFib C)
+    (hom : SliceGrothendieckHom C fib)
+    {tw tw' : TwistedArrow' C} (m : tw ⟶ tw') :
+    sliceGrothendieckFibObj C fib tw → sliceGrothendieckFibObj C fib tw' := by
+  intro a
+  let domArr := twDomArr' m
+  let codArr := twCodArr' m
+  let y := twCod' tw
+  let y' := twCod' tw'
+  let f := twArr' tw
+  let f' := twArr' tw'
+  have hcommTw : domArr ≫ f ≫ codArr = f' := twHomComm' m
+  let step1 : (fib y').obj ((Over.map codArr).obj (Over.mk f)) :=
+    (hom codArr).app (Over.mk f) a
+  have hOverMap : (Over.map codArr).obj (Over.mk f) = Over.mk (f ≫ codArr) := rfl
+  let step1' : (fib y').obj (Over.mk (f ≫ codArr)) := hOverMap ▸ step1
+  have hcommOver : domArr ≫ (f ≫ codArr) = f' := hcommTw
+  let overMor : Over.mk f' ⟶ Over.mk (f ≫ codArr) :=
+    overHomFromDomArr C domArr hcommOver
+  exact (fib y').map overMor step1'
+
+/--
+When applying F.map to an eqToHom morphism, composed with an eqToHom in the
+target type, the result equals the original value if the composed proofs
+yield a reflexive equality.
+-/
+lemma eqToHomMapEqToHomApp {D : Type*} [Category D] (F : D ⥤ Type v)
+    {X Y : D} (p : Y = X) (q : F.obj X = F.obj Y) (a : F.obj X) :
+    F.map (eqToHom p) (eqToHom q a) = a := by
+  cases p
+  simp only [eqToHom_refl, Functor.map_id, types_id_apply]
+
+/--
+Variant of `eqToHomMapEqToHomApp` where the equality proof for the morphism
+uses `.symm`. This handles the case where the morphism `eqToHom p.symm` goes
+in the opposite direction.
+-/
+lemma eqToHomMapEqToHomApp' {D : Type*} [Category D] (F : D ⥤ Type v)
+    {X Y : D} (p : X = Y) (q : F.obj X = F.obj Y) (a : F.obj X) :
+    F.map (eqToHom p.symm) (eqToHom q a) = a := by
+  cases p
+  simp only [eqToHom_refl, Functor.map_id, types_id_apply]
+
+/--
+Variant where the element is from `F.obj Y` and we use the symmetric equality.
+For `p : X = Y`, `q : F.obj X = F.obj Y`, and `a : F.obj Y`,
+we have `F.map (eqToHom p) (eqToHom q.symm a) = a`.
+-/
+lemma eqToHomMapEqToHomApp'' {D : Type*} [Category D] (F : D ⥤ Type v)
+    {X Y : D} (p : X = Y) (q : F.obj X = F.obj Y) (a : F.obj Y) :
+    F.map (eqToHom p) (eqToHom q.symm a) = a := by
+  cases p
+  simp only [eqToHom_refl, Functor.map_id, types_id_apply]
+
+/--
+When applying F.map to an eqToHom morphism and an arbitrary eqToHom on
+elements, if the element types are equal, the result equals the original.
+This handles cases where the equality proofs are complex but the underlying
+types are definitionally equal.
+-/
+lemma eqToHomMapEqToHomAppRefl {D : Type*} [Category D] (F : D ⥤ Type v)
+    {X : D} (p : X = X) (q : F.obj X = F.obj X) (a : F.obj X) :
+    F.map (eqToHom p) (eqToHom q a) = a := by
+  simp only [eqToHom_refl, Functor.map_id, types_id_apply]
+
+/--
+Generalized version that handles arbitrary proof terms by using proof
+irrelevance. Given an object `X` of type `T`, a function `f : T → D`,
+and proofs that `f X = X'` and `f X = X''`, we can show that
+`F.map (eqToHom p) (eqToHom q a) = a` where the proofs `p` and `q` might
+be arbitrary (not rfl).
+
+This is needed when `X'` and `X''` are definitionally equal after some
+propositional reductions (like `comp_id`) but the proofs inside `eqToHom`
+are not definitionally `rfl`.
+-/
+lemma eqToHomMapEqToHomApp_of_eq {D : Type*} [Category D] (F : D ⥤ Type v)
+    {X Y : D} (p : Y = X) (q : F.obj X = F.obj Y) (a : F.obj X)
+    (hXY : X = Y) : F.map (eqToHom p) (eqToHom q a) = a := by
+  subst hXY
+  simp only [eqToHom_refl, Functor.map_id, types_id_apply]
+
+/--
+Variant that doesn't require `subst` to succeed. Uses proof irrelevance
+to handle cases where both sides of the equality are complex expressions.
+-/
+lemma eqToHomMapEqToHomApp_of_heq {D : Type*} [Category D] (F : D ⥤ Type v)
+    {X Y : D} (p : Y = X) (q : F.obj X = F.obj Y) (a : F.obj X)
+    (hXY : HEq X Y) : F.map (eqToHom p) (eqToHom q a) = a := by
+  cases eq_of_heq hXY
+  simp only [eqToHom_refl, Functor.map_id, types_id_apply]
+
+/--
+Most flexible variant: when the eqToHom proofs come from an expression that
+can be proven equal by some auxiliary proof `h`, use this lemma.
+This uses explicit type casting to make the proof term substitution work.
+-/
+lemma eqToHomMapEqToHomApp_of_cast {D : Type*} [Category D] (F : D ⥤ Type v)
+    {X Y : D} (p : Y = X) (q : F.obj X = F.obj Y) (a : F.obj X)
+    (h : X = Y) : F.map (eqToHom p) (eqToHom q a) = a := by
+  cases h
+  simp only [eqToHom_refl, Functor.map_id, types_id_apply]
+
+/--
+Variant where we transport from `F.obj X` through `F.obj Y` back to `F.obj X`.
+For `p : X = Y`, `q : F.obj X = F.obj Y`, and `a : F.obj X`,
+we have `F.map (eqToHom p.symm) (cast q a) = a`.
+The type cast `q` transports from `F.obj X` to `F.obj Y`.
+-/
+lemma eqToHomMapCastSymm {D : Type*} [Category D] (F : D ⥤ Type v)
+    {X Y : D} (p : X = Y) (q : F.obj X = F.obj Y) (a : F.obj X) :
+    F.map (eqToHom p.symm) (cast q a) = a := by
+  cases p
+  simp only [eqToHom_refl, Functor.map_id, types_id_apply, cast_eq]
+
+/--
+General lemma: applying F.map to an eqToHom and eqToHom on elements
+gives a round-trip result.
+Given `p : Y = X`, we have a morphism `eqToHom p : Y ⟶ X` in D.
+Applying F gives `F.map (eqToHom p) : F.obj Y → F.obj X`.
+Given `q : F.obj X = F.obj Y`, we have `eqToHom q : F.obj X → F.obj Y`.
+So the composition is: a : F.obj X → eqToHom q a : F.obj Y
+                            → F.map (eqToHom p) (eqToHom q a) : F.obj X
+
+This equals a when q = (congrArg F.obj p).symm.
+-/
+lemma eqToHomMapEqToHomAppRoundTrip {D : Type*} [Category D] (F : D ⥤ Type v)
+    {X Y : D} (p : Y = X) (a : F.obj X) :
+    F.map (eqToHom p) (eqToHom (congrArg F.obj p).symm a) = a := by
+  cases p
+  simp only [eqToHom_refl, Functor.map_id, types_id_apply]
+
+/--
+Symmetric version of round-trip lemma.
+Given `p : X = Y`, the map `F.map (eqToHom p.symm) : F.obj X → F.obj Y`
+applied to `eqToHom (congrArg F.obj p) a` (where `a : F.obj Y`)
+gives back `a`.
+-/
+lemma eqToHomMapEqToHomAppRoundTrip' {D : Type*} [Category D] (F : D ⥤ Type v)
+    {X Y : D} (p : X = Y) (a : F.obj Y) :
+    F.map (eqToHom p) (eqToHom (congrArg F.obj p.symm) a) = a := by
+  cases p
+  simp only [eqToHom_refl, Functor.map_id, types_id_apply]
+
 end TwArrCopresheaf
 
 section TwArrPresheaf
@@ -584,6 +808,86 @@ Grothendieck construction. For each morphism `h : y ⟶ y'` in `Cᵒᵖ'` (which
 def TwArrPresheaf.sliceGrothendieckFunctor (F : TwArrPresheaf C) :
     Cᵒᵖ' ⥤ Grothendieck (overCopresheafFunctor C) :=
   Grothendieck.functorTo (overCopresheafFunctor C) (F.sliceGrothendieckData C)
+
+/-! ### Reverse Construction: From Grothendieck Data to TwArrPresheaf
+
+Given data for a functor into the (covariant) Grothendieck construction over
+`overCopresheafFunctor C` with identity base functor on `Cᵒᵖ'`, we construct an
+opposite-twisted-arrow presheaf.
+-/
+
+/--
+The fiber type for a slice Grothendieck section: assigns to each `y : C` a
+copresheaf on `Over y`.
+-/
+abbrev SliceGrothendieckFibPresheaf :=
+  Grothendieck.FunctorToFib (overCopresheafFunctor C) (𝟭 Cᵒᵖ')
+
+/--
+The morphism type for a slice Grothendieck section: assigns to each morphism
+`h : y ⟶ y'` in `Cᵒᵖ'` (i.e., `h : y' ⟶ y` in C) a natural transformation
+between the fibers.
+-/
+abbrev SliceGrothendieckHomPresheaf (fib : SliceGrothendieckFibPresheaf C) :=
+  Grothendieck.FunctorToHom (overCopresheafFunctor C) (𝟭 Cᵒᵖ') fib
+
+/--
+Object map for the opposite-twisted-arrow presheaf induced by slice
+Grothendieck data. Given an opposite twisted arrow `(f : x ⟶ y)`, we evaluate
+the fiber copresheaf at `y` on the over-object `Over.mk f`.
+
+Note: `fib` takes objects of `Cᵒᵖ'` which have the same carrier as `C`, so
+`fib (opTwCod' tw)` works by treating `opTwCod' tw : C` as an object of `Cᵒᵖ'`.
+-/
+def sliceGrothendieckFibObjPresheaf (fib : SliceGrothendieckFibPresheaf C)
+    (tw : OpTwistedArrow' C) : Type v :=
+  let y : C := opTwCod' tw
+  (fib y).obj (Over.mk (opTwArr' tw))
+
+/--
+The Over morphism induced by a domain arrow in an opposite twisted arrow
+morphism. Given `domArr : x ⟶ x'` and arrows `f : x ⟶ y`, `f' : x' ⟶ y` with
+`domArr ≫ f' = f`, we get a morphism in `Over y` from `Over.mk f` to
+`Over.mk f'`.
+-/
+def overHomFromDomArrPresheaf {y : C} {x x' : C} {f : x ⟶ y} {f' : x' ⟶ y}
+    (domArr : x ⟶ x') (hcomm : domArr ≫ f' = f) :
+    Over.mk f ⟶ Over.mk f' :=
+  Over.homMk domArr hcomm
+
+/--
+Morphism map for the opposite-twisted-arrow presheaf induced by slice
+Grothendieck data.
+
+Given an opposite twisted arrow morphism `m : tw ⟶ tw'` with:
+- `domArr : opTwDom' tw ⟶ opTwDom' tw'` (domain arrow, going forward)
+- `codArr : opTwCod' tw' ⟶ opTwCod' tw` (codomain arrow, going backward in C,
+  which is forward in Cᵒᵖ' from `opTwCod' tw` to `opTwCod' tw'`)
+
+We compose:
+1. The fiber morphism from `hom codArr` (changing which slice we're over)
+2. The copresheaf functoriality via `domArr` (moving within the target slice)
+-/
+def sliceGrothendieckFibMapPresheaf (fib : SliceGrothendieckFibPresheaf C)
+    (hom : SliceGrothendieckHomPresheaf C fib)
+    {tw tw' : OpTwistedArrow' C} (m : tw ⟶ tw') :
+    sliceGrothendieckFibObjPresheaf C fib tw →
+      sliceGrothendieckFibObjPresheaf C fib tw' := by
+  intro a
+  let domArr := opTwDomArr' m
+  let codArrC : (opTwCod' tw' : C) ⟶ (opTwCod' tw : C) := opTwCodArr' m
+  let y : C := opTwCod' tw
+  let y' : C := opTwCod' tw'
+  let f := opTwArr' tw
+  let f' := opTwArr' tw'
+  have hcommTw : domArr ≫ f' ≫ codArrC = f := opTwHomComm' m
+  have hcommOver : domArr ≫ (f' ≫ codArrC) = f := hcommTw
+  let overMor : Over.mk f ⟶ Over.mk (f' ≫ codArrC) :=
+    overHomFromDomArrPresheaf C domArr hcommOver
+  let step1 : (fib y).obj (Over.mk (f' ≫ codArrC)) := (fib y).map overMor a
+  have hOverMap : (Over.map codArrC).obj (Over.mk f') = Over.mk (f' ≫ codArrC) := rfl
+  let step1' : (fib y).obj ((Over.map codArrC).obj (Over.mk f')) := hOverMap ▸ step1
+  exact (hom codArrC).app (Over.mk f') step1'
 
 end TwArrPresheaf
 
@@ -865,6 +1169,87 @@ def TwArrOpCopresheaf.sliceGrothendieckFunctor (F : TwArrOpCopresheaf C) :
     C ⥤ GrothendieckContra' (overOpCopresheafFunctor C) :=
   GrothendieckContra'.functorTo (F.sliceGrothendieckData C)
 
+/-! ### Reverse Construction: From Grothendieck Data to TwArrOpCopresheaf
+
+Given data for a functor into the contravariant Grothendieck construction over
+`overOpCopresheafFunctor C` with identity base functor, we construct an
+opposite-variant twisted-arrow copresheaf.
+-/
+
+/--
+The fiber type for a slice Grothendieck section (TwArrOpCopresheaf variant):
+assigns to each `x : C` a presheaf on `(Over x)ᵒᵖ'`.
+-/
+abbrev SliceGrothendieckFibOpCopresheaf :=
+  GrothendieckContra'.FunctorToFib (F' := overOpCopresheafFunctor C) (𝟭 C)
+
+/--
+The morphism type for a slice Grothendieck section (TwArrOpCopresheaf variant):
+assigns to each morphism `h : x ⟶ x'` a natural transformation between the
+fibers.
+-/
+abbrev SliceGrothendieckHomOpCopresheaf
+    (fib : SliceGrothendieckFibOpCopresheaf C) :=
+  GrothendieckContra'.FunctorToHom (𝟭 C) fib
+
+/--
+Object map for the opposite-variant twisted-arrow copresheaf induced by slice
+Grothendieck data. Given a twisted arrow of `Cᵒᵖ'` (i.e., `f : y ⟶ x`), we
+evaluate the fiber presheaf at `x` on the over-object `Over.mk f`.
+-/
+def sliceGrothendieckFibObjOpCopresheaf
+    (fib : SliceGrothendieckFibOpCopresheaf C) (tw : TwistedArrowOp' C) :
+    Type v :=
+  let x : C := twOpDom' tw
+  (fib x).obj (Over.mk (twOpArr' tw))
+
+/--
+The Over morphism induced by a codomain arrow in an opposite-variant twisted
+arrow morphism. Given `codArr : y' ⟶ y` and arrows `f : y ⟶ x`, `f' : y' ⟶ x`
+with `codArr ≫ f = f'`, we get a morphism in `(Over x)ᵒᵖ'` from `Over.mk f`
+to `Over.mk f'`.
+-/
+def overHomFromCodArrOpCopresheaf {x y y' : C} {f : y ⟶ x} {f' : y' ⟶ x}
+    (codArr : y' ⟶ y) (hcomm : codArr ≫ f = f') :
+    @Quiver.Hom (Over x)ᵒᵖ' _ (Over.mk f) (Over.mk f') :=
+  Over.homMk codArr hcomm
+
+/--
+Morphism map for the opposite-variant twisted-arrow copresheaf induced by
+slice Grothendieck data.
+
+Given a twisted arrow op morphism `m : tw ⟶ tw'` with:
+- `domArr : twOpDom' tw ⟶ twOpDom' tw'` (domain arrow, forward)
+- `codArr : twOpCod' tw' ⟶ twOpCod' tw` (codomain arrow, backward)
+
+We compose:
+1. The fiber morphism from `hom domArr` (changing which slice we're over)
+2. The presheaf functoriality via `codArr` (moving within the target slice,
+   contravariantly)
+-/
+def sliceGrothendieckFibMapOpCopresheaf
+    (fib : SliceGrothendieckFibOpCopresheaf C)
+    (hom : SliceGrothendieckHomOpCopresheaf C fib)
+    {tw tw' : TwistedArrowOp' C} (m : tw ⟶ tw') :
+    sliceGrothendieckFibObjOpCopresheaf C fib tw →
+      sliceGrothendieckFibObjOpCopresheaf C fib tw' := by
+  intro a
+  let domArr := twOpDomArr' m
+  let codArr := twOpCodArr' m
+  let x : C := twOpDom' tw
+  let x' : C := twOpDom' tw'
+  let f := twOpArr' tw
+  let f' := twOpArr' tw'
+  have hcommTw : codArr ≫ f ≫ domArr = f' := twOpHomComm' m
+  let step1 : (fib x').obj ((Over.map domArr).obj (Over.mk f)) :=
+    (hom domArr).app (Over.mk f) a
+  have hOverMap : (Over.map domArr).obj (Over.mk f) = Over.mk (f ≫ domArr) := rfl
+  let step1' : (fib x').obj (Over.mk (f ≫ domArr)) := hOverMap ▸ step1
+  have hcommOver : codArr ≫ (f ≫ domArr) = f' := hcommTw
+  let overMor : @Quiver.Hom (Over x')ᵒᵖ' _ (Over.mk (f ≫ domArr)) (Over.mk f') :=
+    overHomFromCodArrOpCopresheaf C codArr hcommOver
+  exact (fib x').map overMor step1'
+
 end TwArrOpCopresheaf
 
 section TwArrOpPresheaf
@@ -1131,6 +1516,80 @@ Grothendieck construction. For each morphism `h : x ⟶ x'` in `Cᵒᵖ'` (which
 def TwArrOpPresheaf.sliceGrothendieckFunctor (F : TwArrOpPresheaf C) :
     Cᵒᵖ' ⥤ Grothendieck (overCopresheafFunctor C) :=
   Grothendieck.functorTo (overCopresheafFunctor C) (F.sliceGrothendieckData C)
+
+/--
+Fiber data for the slice Grothendieck construction over `overCopresheafFunctor`.
+This assigns to each `x : Cᵒᵖ'` an `OverCopresheaf C x = (Over x ⥤ Type v)`.
+-/
+abbrev SliceGrothendieckFibOpPresheaf :=
+  Grothendieck.FunctorToFib (overCopresheafFunctor C) (𝟭 Cᵒᵖ')
+
+/--
+Morphism data for the slice Grothendieck construction.
+For each `h : x ⟶ x'` in `Cᵒᵖ'` (which is `h : x' ⟶ x` in C), provides a
+natural transformation `(fib x').obj ∘ Over.map h ⟹ (fib x).obj`.
+-/
+abbrev SliceGrothendieckHomOpPresheaf (fib : SliceGrothendieckFibOpPresheaf C) :=
+  Grothendieck.FunctorToHom (overCopresheafFunctor C) (𝟭 Cᵒᵖ') fib
+
+/--
+Object map for the co-twisted-arrow presheaf induced by slice Grothendieck data.
+
+For a co-twisted arrow `tw = (cod, dom, f : cod ⟶ dom)`, the object is
+`(fib dom).obj (Over.mk f)` where `f : cod ⟶ dom` is viewed as an object
+of `Over dom`.
+-/
+def sliceGrothendieckFibObjOpPresheaf (fib : SliceGrothendieckFibOpPresheaf C)
+    (tw : CoTwistedArrow C) : Type v :=
+  let x : C := coTwDom' tw
+  (fib x).obj (Over.mk (coTwArr' tw))
+
+/--
+Helper for constructing Over morphisms from the codomain arrow component.
+Given `codArr : cod ⟶ cod'` and commutativity `codArr ≫ arr' = arr ≫ domArr⁻¹`,
+we can construct an Over morphism from `Over.mk arr` to `Over.mk (codArr ≫ arr')`
+over `dom`.
+-/
+def overHomFromCodArrOpPresheaf {cod cod' dom : C}
+    (arr : cod ⟶ dom) (arr' : cod' ⟶ dom)
+    (codArr : cod ⟶ cod') (comm : codArr ≫ arr' = arr) :
+    Over.mk arr ⟶ Over.mk arr' :=
+  Over.homMk codArr (by
+    simp only [Over.mk_left, Over.mk_hom]
+    exact comm)
+
+/--
+Morphism map for the co-twisted-arrow presheaf induced by slice Grothendieck
+data.
+
+For a morphism `m : tw ⟶ tw'` with `domArr : dom' ⟶ dom` and
+`codArr : cod ⟶ cod'` satisfying `codArr ≫ arr' ≫ domArr = arr`:
+
+1. Apply `(fib dom).map` with the Over morphism from `codArr`
+2. Apply `(hom domArr).app` to transport along the base morphism
+
+Maps from `(fib dom).obj (Over.mk arr)` to `(fib dom').obj (Over.mk arr')`.
+-/
+def sliceGrothendieckFibMapOpPresheaf (fib : SliceGrothendieckFibOpPresheaf C)
+    (hom : SliceGrothendieckHomOpPresheaf C fib)
+    {tw tw' : CoTwistedArrow C} (m : tw ⟶ tw') :
+    sliceGrothendieckFibObjOpPresheaf C fib tw →
+      sliceGrothendieckFibObjOpPresheaf C fib tw' := by
+  intro a
+  let domArr := coTwDomArr' m
+  let codArr := coTwCodArr' m
+  let dom : C := coTwDom' tw
+  let dom' : C := coTwDom' tw'
+  let f := coTwArr' tw
+  let f' := coTwArr' tw'
+  have hcommTw : codArr ≫ f' ≫ domArr = f := coTwHomComm' m
+  have hcommOver : codArr ≫ (f' ≫ domArr) = f := hcommTw
+  let overMor : Over.mk f ⟶ Over.mk (f' ≫ domArr) :=
+    overHomFromCodArrOpPresheaf C f (f' ≫ domArr) codArr hcommOver
+  let step1 : (fib dom).obj (Over.mk (f' ≫ domArr)) := (fib dom).map overMor a
+  have hOverMap : (Over.map domArr).obj (Over.mk f') = Over.mk (f' ≫ domArr) := rfl
+  let step1' : (fib dom).obj ((Over.map domArr).obj (Over.mk f')) := hOverMap ▸ step1
+  exact (hom domArr).app (Over.mk f') step1'
 
 end TwArrOpPresheaf
 
