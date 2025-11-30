@@ -66,6 +66,69 @@ abbrev Under.rightOp' {A B : Under X} (f : @Quiver.Hom (Under X)ᵒᵖ' _ A B) :
 
 end OverUnderAccessors
 
+/-! ### Over morphism helpers for Type-valued slice categories
+
+When working with `Over X` where `X : Type u`, morphisms are functions between
+the left components that commute with the structure maps. These helpers provide
+convenient ways to construct and destruct such morphisms.
+-/
+
+section OverTypeHelpers
+
+variable {X : Type u}
+
+/--
+Extract the underlying function from an `Over X` morphism.
+For `f : A ⟶ B` in `Over X`, this gives `f.left : A.left → B.left`.
+-/
+def overMorFn {A B : Over X} (f : A ⟶ B) : A.left → B.left := f.left
+
+/--
+The commutativity condition for an `Over X` morphism at a specific point.
+For `f : A ⟶ B` in `Over X` and `a : A.left`, we have `B.hom (f.left a) = A.hom a`.
+-/
+lemma overMor_w {A B : Over X} (f : A ⟶ B) (a : A.left) :
+    B.hom (f.left a) = A.hom a :=
+  congrFun (Over.w f) a
+
+/--
+Round-trip: extracting the function from `Over.homMk` gives the original function.
+-/
+@[simp]
+lemma overMorFn_homMk {A B : Over X} (fn : A.left → B.left)
+    (h : B.hom ∘ fn = A.hom) : overMorFn (Over.homMk fn h) = fn := rfl
+
+/--
+Round-trip: the commutativity condition from `Over.homMk` holds pointwise.
+-/
+@[simp]
+lemma overMor_w_homMk {A B : Over X} (fn : A.left → B.left)
+    (h : B.hom ∘ fn = A.hom) (a : A.left) :
+    overMor_w (Over.homMk fn h) a = congrFun h a := rfl
+
+/--
+Identity morphism in `Over X` has identity function.
+-/
+@[simp]
+lemma overMorFn_id (A : Over X) : overMorFn (𝟙 A) = id := rfl
+
+/--
+Composition in `Over X` corresponds to function composition.
+-/
+@[simp]
+lemma overMorFn_comp {A B C : Over X} (f : A ⟶ B) (g : B ⟶ C) :
+    overMorFn (f ≫ g) = overMorFn g ∘ overMorFn f := rfl
+
+/--
+Extensionality for `Over X` morphisms: two morphisms are equal iff their
+underlying functions are equal.
+-/
+lemma overMor_ext {A B : Over X} (f g : A ⟶ B)
+    (h : overMorFn f = overMorFn g) : f = g :=
+  Over.OverMorphism.ext h
+
+end OverTypeHelpers
+
 section UnderOverEquivalence
 
 variable {D : Type u} [Category.{v} D] (X : D)
