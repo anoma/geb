@@ -316,6 +316,16 @@ lemma functor_map_eqToHom (F : C ⥤ D) {X Y : C} (p : X = Y) :
   simp
 
 /--
+A functor maps `eqToHom` of a symmetric equality to `eqToHom` of the symmetric
+transported equality.
+-/
+@[simp]
+lemma functor_map_eqToHom_symm (F : C ⥤ D) {X Y : C} (p : Y = X) :
+    F.map (eqToHom p.symm) = eqToHom (congrArg F.obj p).symm := by
+  cases p
+  simp
+
+/--
 From HEq of morphisms with the same target, derive an equation with eqToHom.
 This is useful for converting HEq hypotheses into equations that tactics like
 `cat_disch` can use.
