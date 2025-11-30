@@ -1,6 +1,10 @@
 import Mathlib.Data.Sigma.Basic
+import Mathlib.CategoryTheory.Category.Basic
+import Mathlib.CategoryTheory.Comma.Over.Basic
 
 namespace GebLean
+
+open CategoryTheory
 
 def typeEq_eq.{u} {α β : Sort u} (h : α = β) (a : α) (b : β) : Prop :=
   match h with | rfl => a = b
@@ -128,6 +132,140 @@ lemma coe_subtype_sigma_transport_coe {α : Type*} {β : α → Type*}
     (@Eq.rec (Σ y, β y) ⟨x, a⟩ (fun s _ => {y : β s.fst // P s y})
       ⟨w.val, pf⟩ ⟨x, b⟩ h).val = w.val := by
   exact coe_subtype_sigma_transport_fst_refl P h w.val pf
+
+/--
+Sigma equality when first components are equal and second components are related
+via the equality.
+-/
+lemma sigma_ext_fst {α : Type*} {β : α → Type*} {a₁ a₂ : α} {b₁ : β a₁} {b₂ : β a₂}
+    (ha : a₁ = a₂) (hb : ha ▸ b₁ = b₂) : (⟨a₁, b₁⟩ : Sigma β) = ⟨a₂, b₂⟩ := by
+  cases ha
+  simp at hb
+  rw [hb]
+
+/--
+Sigma transport `.snd` extraction: transporting a sigma along an equality in
+an outer parameter and then extracting `.snd` gives a heterogeneously equal
+value.
+-/
+lemma sigma_transport_snd_heq {α : Type*} {I : Type*} {β : α → I → Type*}
+    {a₁ a₂ : α} (h : a₁ = a₂) {i : I} {b : β a₁ i} :
+    (h ▸ (⟨i, b⟩ : (i : I) × β a₁ i) : (i : I) × β a₂ i).snd ≍ b := by
+  cases h
+  rfl
+
+/--
+Sigma transport when the first component is independent of the transported
+parameter: the first component is preserved.
+-/
+lemma sigma_transport_fst_indep {α : Type*} {I : Type*} {β : α → I → Type*}
+    {a₁ a₂ : α} (h : a₁ = a₂) {i : I} {b : β a₁ i} :
+    (h ▸ (⟨i, b⟩ : (i : I) × β a₁ i) : (i : I) × β a₂ i).fst = i := by
+  cases h
+  rfl
+
+/--
+HEq of sigmas when indexed types depend on an outer parameter that changes.
+Given `h : a₁ = a₂`, sigmas `⟨i₁, b₁⟩ : (i : I) × β a₁ i` and
+`⟨i₂, b₂⟩ : (i : I) × β a₂ i` are heterogeneously equal if their first
+components are equal (`i₁ = i₂`) and second components are HEq.
+-/
+lemma sigma_heq_of_fst_eq_snd_heq {α : Type*} {I : Type*} {β : α → I → Type*}
+    {a₁ a₂ : α} (h : a₁ = a₂)
+    {i₁ i₂ : I} (hi : i₁ = i₂)
+    {b₁ : β a₁ i₁} {b₂ : β a₂ i₂} (hb : b₁ ≍ b₂) :
+    (⟨i₁, b₁⟩ : (i : I) × β a₁ i) ≍ (⟨i₂, b₂⟩ : (i : I) × β a₂ i) := by
+  cases h
+  cases hi
+  cases hb
+  rfl
+
+lemma over_cast_left {X : Type*} {S1 S2 T : Over X}
+    (hsrc : S1 = S2) (f : S1 ⟶ T) (p : S2.left) :
+    (cast (congrArg (fun s => s ⟶ T) hsrc) f).left p =
+      f.left (cast (congrArg (fun s : Over X => s.left) hsrc.symm) p) := by
+  cases hsrc
+  rfl
+
+/--
+If two sigma values (over possibly different families on the same base type)
+are heterogeneously equal, and the families are propositionally equal,
+the first components are equal.
+-/
+lemma sigma_fst_heq_eq.{u, w} {α : Type u} {β₁ β₂ : α → Type w}
+    {s₁ : Sigma β₁} {s₂ : Sigma β₂}
+    (hβ : β₁ = β₂)
+    (h : s₁ ≍ s₂) : s₁.fst = s₂.fst := by
+  cases hβ
+  exact congrArg Sigma.fst (eq_of_heq h)
+
+/--
+If two sigma values over the same family are equal, their first components
+are equal.
+-/
+lemma sigma_fst_of_eq {α : Type*} {β : α → Type*}
+    {s₁ s₂ : Sigma β}
+    (h : s₁ = s₂) : s₁.fst = s₂.fst := by
+  cases h
+  rfl
+
+/--
+If two sigma values over the same family are equal, their second components
+are heterogeneously equal.
+-/
+lemma sigma_snd_heq_of_eq {α : Type*} {β : α → Type*}
+    {s₁ s₂ : Sigma β}
+    (h : s₁ = s₂) : s₁.snd ≍ s₂.snd := by
+  cases h
+  rfl
+
+/--
+Two sigma values are heterogeneously equal if their first components are equal
+and their second components are heterogeneously equal.
+-/
+lemma sigma_mk_heq {A : Type*} {f : A → Type*}
+    {a1 a2 : A} (ha : a1 = a2)
+    {b1 : f a1} {b2 : f a2} (hb : b1 ≍ b2) :
+    (⟨a1, b1⟩ : Sigma f) ≍ (⟨a2, b2⟩ : Sigma f) := by
+  cases ha
+  cases hb
+  rfl
+
+/--
+Two subtype values with the same underlying value are heterogeneously equal
+when the predicates are propositionally equal.
+-/
+lemma subtype_heq_of_val_eq {A : Type*} {P1 P2 : A → Prop}
+    {x1 : Subtype P1} {x2 : Subtype P2}
+    (hP : P1 = P2) (hval : x1.val = x2.val) : x1 ≍ x2 := by
+  cases hP
+  exact heq_of_eq (Subtype.ext hval)
+
+/--
+For subtypes indexed by a family, if the indices are equal and the underlying
+values are equal, the subtypes are heterogeneously equal.
+-/
+lemma subtype_heq_of_index_eq {A : Type*} {I : Type*} {P : I → A → Prop}
+    {i1 i2 : I} (hi : i1 = i2)
+    {x1 : {a // P i1 a}} {x2 : {a // P i2 a}}
+    (hval : x1.val = x2.val) : x1 ≍ x2 := by
+  cases hi
+  exact heq_of_eq (Subtype.ext hval)
+
+/--
+Two sigma values indexed by a parameter are HEq if the parameter indices are
+equal, the first components are HEq, and the second components are HEq.
+This handles the case where the sigma type itself depends on an outer parameter.
+-/
+lemma sigma_heq_of_param_eq {I : Type*} {A : I → Type*} {B : (i : I) → A i → Type*}
+    {i1 i2 : I} (hi : i1 = i2)
+    {a1 : A i1} {a2 : A i2} (ha : a1 ≍ a2)
+    {b1 : B i1 a1} {b2 : B i2 a2} (hb : b1 ≍ b2) :
+    (⟨a1, b1⟩ : Sigma (B i1)) ≍ (⟨a2, b2⟩ : Sigma (B i2)) := by
+  cases hi
+  cases ha
+  cases hb
+  rfl
 
 end GebLean
 
