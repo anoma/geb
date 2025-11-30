@@ -156,6 +156,20 @@ lemma twHom'_ext {x y : TwistedArrow' C} (f g : x ⟶ y)
   congr
   exact Prod.ext hdom hcod
 
+@[simp]
+lemma twDomArr'_id (tw : TwistedArrow' C) : twDomArr' (𝟙 tw) = 𝟙 (twDom' tw) := rfl
+
+@[simp]
+lemma twCodArr'_id (tw : TwistedArrow' C) : twCodArr' (𝟙 tw) = 𝟙 (twCod' tw) := rfl
+
+@[simp]
+lemma twDomArr'_comp {x y z : TwistedArrow' C} (f : x ⟶ y) (g : y ⟶ z) :
+    twDomArr' (f ≫ g) = twDomArr' g ≫ twDomArr' f := rfl
+
+@[simp]
+lemma twCodArr'_comp {x y z : TwistedArrow' C} (f : x ⟶ y) (g : y ⟶ z) :
+    twCodArr' (f ≫ g) = twCodArr' f ≫ twCodArr' g := rfl
+
 end TwistedArrow'Helpers
 
 /--
