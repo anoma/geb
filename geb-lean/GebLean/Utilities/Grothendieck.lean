@@ -4887,7 +4887,7 @@ def LaxNatTransData.comp {G H K : C ⥤ Cat.{vC, uC}}
           simp only [← Category.assoc, hβ]
         _ = β.laxApp f ((α.app c).obj x) ≫
             (β.app c').map ((H.map f).map ((α.app c).map φ) ≫ α.laxApp f y) := by
-          simp only [← Functor.map_comp]
+          rw [← Functor.map_comp]
         _ = β.laxApp f ((α.app c).obj x) ≫
             (β.app c').map (α.laxApp f x ≫ (α.app c').map ((G.map f).map φ)) := by
           simp only [hα]
@@ -4898,7 +4898,6 @@ def LaxNatTransData.comp {G H K : C ⥤ Cat.{vC, uC}}
   laxId c x := by
     simp only [Functor.comp_obj, α.laxId, eqToHom_map, β.laxId, eqToHom_trans]
   laxComp {c c' c''} f g x := by
-    simp only [Functor.comp_obj]
     simp only [α.laxComp f g x, β.laxComp f g ((α.app c).obj x)]
     simp only [Functor.map_comp, (β.app c'').map_comp, eqToHom_map, Category.assoc,
       eqToHom_trans_assoc]
@@ -4917,6 +4916,84 @@ def LaxNatTransData.comp {G H K : C ⥤ Cat.{vC, uC}}
     exact hβ.symm
 
 end LaxNatTrans
+
+/-!
+## The Category of Cat-Valued Functors with Lax Natural Transformations
+
+This section defines `LaxFunctorCat`, a wrapper type around `C ⥤ Cat` where
+morphisms are lax natural transformations rather than natural transformations.
+-/
+
+section LaxFunctorCat
+
+universe vC uC
+
+variable (C : Type uC) [Category.{vC} C]
+
+/--
+A wrapper type for `C ⥤ Cat` where morphisms are lax natural transformations.
+
+This is needed because mathlib already defines a category structure on `C ⥤ Cat`
+using natural transformations as morphisms. By wrapping the functor in a new
+type, we can define a different category structure using lax natural
+transformations.
+-/
+@[ext]
+structure LaxFunctorCat where
+  /-- The underlying functor to Cat. -/
+  toFunctor : C ⥤ Cat.{vC, uC}
+
+variable {C}
+
+/-- Coercion from `LaxFunctorCat` to functor. -/
+instance : CoeOut (LaxFunctorCat C) (C ⥤ Cat.{vC, uC}) where
+  coe := LaxFunctorCat.toFunctor
+
+/-- Wrap a functor as a `LaxFunctorCat`. -/
+abbrev LaxFunctorCat.of (F : C ⥤ Cat.{vC, uC}) : LaxFunctorCat C := ⟨F⟩
+
+/-- Associativity of lax natural transformation composition. -/
+theorem LaxNatTransData.comp_assoc {G H K L : C ⥤ Cat.{vC, uC}}
+    (α : LaxNatTransData G H) (β : LaxNatTransData H K)
+    (γ : LaxNatTransData K L) :
+    (α.comp β).comp γ = α.comp (β.comp γ) := by
+  cases α; cases β; cases γ
+  simp only [LaxNatTransData.comp, Functor.assoc]
+  congr 1
+  funext c x
+  simp only [Functor.comp_obj, Functor.comp_map, Category.assoc, Functor.map_comp]
+
+/-- Left identity for lax natural transformation composition. -/
+theorem LaxNatTransData.id_comp {G H : C ⥤ Cat.{vC, uC}}
+    (α : LaxNatTransData G H) :
+    (LaxNatTransData.id G).comp α = α := by
+  cases α with | mk app laxApp _ _ _ =>
+  simp only [LaxNatTransData.comp, LaxNatTransData.id]
+  congr 1
+  funext c f g y
+  simp only [Functor.id_obj, eqToHom_refl, Functor.map_id, Category.comp_id]
+
+/-- Right identity for lax natural transformation composition. -/
+theorem LaxNatTransData.comp_id {G H : C ⥤ Cat.{vC, uC}}
+    (α : LaxNatTransData G H) :
+    α.comp (LaxNatTransData.id H) = α := by
+  cases α with | mk app laxApp _ _ _ =>
+  simp only [LaxNatTransData.comp, LaxNatTransData.id]
+  congr 1
+  funext c f g y
+  simp [Functor.id_obj, Functor.id_map]
+
+/-- The category structure on `LaxFunctorCat C` with lax natural transformations
+as morphisms. -/
+instance : Category (LaxFunctorCat C) where
+  Hom G H := LaxNatTransData G.toFunctor H.toFunctor
+  id G := LaxNatTransData.id G.toFunctor
+  comp := LaxNatTransData.comp
+  id_comp := LaxNatTransData.id_comp
+  comp_id := LaxNatTransData.comp_id
+  assoc := LaxNatTransData.comp_assoc
+
+end LaxFunctorCat
 
 open CategoryTheory
 
