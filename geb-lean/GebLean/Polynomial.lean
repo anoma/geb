@@ -1,5 +1,6 @@
 import Mathlib.CategoryTheory.Comma.Over.Basic
 import Mathlib.CategoryTheory.Category.Cat
+import Mathlib.CategoryTheory.Pi.Basic
 import GebLean.Utilities.Equalities
 import GebLean.Utilities.Families
 import GebLean.Utilities.Slice
@@ -1310,5 +1311,1381 @@ def WTypeDiagram.comp_eval_fiberEquiv (g : WTypeDiagram Y Z) (f : WTypeDiagram X
         rfl
 
 end WTypeCompositionInterpretation
+
+/-! ## W-Type Diagram Morphisms
+
+Morphisms between W-type diagrams use the category-theoretic formulation with
+explicit pullbacks and commutative diagrams. A morphism `f : P → Q` consists of:
+
+1. A map `onPos : P.B → Q.B` on positions
+2. A map `onDir : Pullback → P.E` on directions, where the pullback is the
+   categorical pullback of `Q.p` along `onPos`
+3. Three commutativity conditions forming commutative diagrams
+
+This matches the standard 2-category of polynomial functors from ncatlab.
+-/
+
+section WTypeDiagramMorphisms
+
+variable {X Y : Type u}
+
+/--
+The pullback type for W-type diagram morphisms.
+
+Given `P, Q : WTypeDiagram X Y` and `onPos : P.B → Q.B`, the pullback is:
+```
+Pullback --pbProj1--> Q.E
+   |                   |
+pbProj2              Q.p
+   |                   |
+   v                   v
+ P.B ----onPos----> Q.B
+```
+
+An element of the pullback is a pair `(q_e, p_b)` where `q_e : Q.E` and
+`p_b : P.B` such that `Q.p q_e = onPos p_b`.
+-/
+def WTypePullback (P Q : WTypeDiagram X Y) (onPos : P.B → Q.B) : Type u :=
+  { pair : Q.E × P.B // Q.p pair.1 = onPos pair.2 }
+
+/--
+First projection from the pullback: extracts the Q.E component.
+-/
+def WTypePullback.proj1 {P Q : WTypeDiagram X Y} {onPos : P.B → Q.B}
+    (pb : WTypePullback P Q onPos) : Q.E :=
+  pb.val.1
+
+/--
+Second projection from the pullback: extracts the P.B component.
+-/
+def WTypePullback.proj2 {P Q : WTypeDiagram X Y} {onPos : P.B → Q.B}
+    (pb : WTypePullback P Q onPos) : P.B :=
+  pb.val.2
+
+/--
+The commutativity condition for pullback elements.
+-/
+lemma WTypePullback.comm {P Q : WTypeDiagram X Y} {onPos : P.B → Q.B}
+    (pb : WTypePullback P Q onPos) : Q.p pb.proj1 = onPos pb.proj2 :=
+  pb.property
+
+/--
+Construct a pullback element from components and a proof of commutativity.
+-/
+def WTypePullback.mk {P Q : WTypeDiagram X Y} {onPos : P.B → Q.B}
+    (qe : Q.E) (pb : P.B) (h : Q.p qe = onPos pb) : WTypePullback P Q onPos :=
+  ⟨(qe, pb), h⟩
+
+@[simp]
+lemma WTypePullback.mk_proj1 {P Q : WTypeDiagram X Y} {onPos : P.B → Q.B}
+    (qe : Q.E) (pb : P.B) (h : Q.p qe = onPos pb) :
+    (WTypePullback.mk qe pb h).proj1 = qe := rfl
+
+@[simp]
+lemma WTypePullback.mk_proj2 {P Q : WTypeDiagram X Y} {onPos : P.B → Q.B}
+    (qe : Q.E) (pb : P.B) (h : Q.p qe = onPos pb) :
+    (WTypePullback.mk qe pb h).proj2 = pb := rfl
+
+/--
+Extensionality for pullback elements.
+-/
+@[ext]
+lemma WTypePullback.ext {P Q : WTypeDiagram X Y} {onPos : P.B → Q.B}
+    {pb1 pb2 : WTypePullback P Q onPos}
+    (h1 : pb1.proj1 = pb2.proj1) (h2 : pb1.proj2 = pb2.proj2) : pb1 = pb2 := by
+  obtain ⟨⟨qe1, b1⟩, _⟩ := pb1
+  obtain ⟨⟨qe2, b2⟩, _⟩ := pb2
+  simp only [proj1] at h1
+  simp only [proj2] at h2
+  cases h1
+  cases h2
+  rfl
+
+/--
+Transport on `WTypePullback` preserves the underlying pair value.
+-/
+lemma WTypePullback.transport_val {P Q : WTypeDiagram X Y}
+    {onPos1 onPos2 : P.B → Q.B} (h : onPos1 = onPos2)
+    (pb : WTypePullback P Q onPos1) : (h ▸ pb).val = pb.val := by
+  cases h
+  rfl
+
+/--
+Transport on `WTypePullback` preserves proj1.
+-/
+lemma WTypePullback.transport_proj1 {P Q : WTypeDiagram X Y}
+    {onPos1 onPos2 : P.B → Q.B} (h : onPos1 = onPos2)
+    (pb : WTypePullback P Q onPos1) : (h ▸ pb).proj1 = pb.proj1 := by
+  cases h
+  rfl
+
+/--
+Transport on `WTypePullback` preserves proj2.
+-/
+lemma WTypePullback.transport_proj2 {P Q : WTypeDiagram X Y}
+    {onPos1 onPos2 : P.B → Q.B} (h : onPos1 = onPos2)
+    (pb : WTypePullback P Q onPos1) : (h ▸ pb).proj2 = pb.proj2 := by
+  cases h
+  rfl
+
+/--
+A morphism between W-type diagrams.
+
+Given `P, Q : WTypeDiagram X Y`, a morphism `P → Q` consists of:
+- `onPos : P.B → Q.B` - a map on positions (base types)
+- `onDir : WTypePullback P Q onPos → P.E` - a map from the pullback to P's directions
+
+With three commutativity conditions:
+
+1. Position-target commutativity (triangle):
+```
+    P.B --onPos--> Q.B
+     \            /
+  P.t \          / Q.t
+       \        /
+        v      v
+           Y
+```
+That is, `Q.t (onPos b) = P.t b` for all `b : P.B`.
+
+2. Direction-projection commutativity:
+```
+P.p ∘ onDir = proj2
+```
+The direction map followed by P.p equals the pullback's second projection.
+
+3. Source/assignment commutativity:
+```
+   Pullback --proj1--> Q.E
+      |                 |
+   onDir             Q.s
+      |                 |
+      v                 v
+    P.E ----P.s------> X
+```
+That is, `P.s (onDir pb) = Q.s (pb.proj1)` for all pullback elements.
+-/
+structure WTypeDiagramHom (P Q : WTypeDiagram X Y) where
+  /-- Map on positions (base types) -/
+  onPos : P.B → Q.B
+  /-- Map on directions from the pullback to P's directions -/
+  onDir : WTypePullback P Q onPos → P.E
+  /-- Position map preserves target: Q.t ∘ onPos = P.t -/
+  commPos : ∀ b : P.B, Q.t (onPos b) = P.t b
+  /-- Direction map respects projection: P.p ∘ onDir = proj2 -/
+  commDir : ∀ pb : WTypePullback P Q onPos, P.p (onDir pb) = pb.proj2
+  /-- Direction map preserves source: P.s ∘ onDir = Q.s ∘ proj1 -/
+  commAssign : ∀ pb : WTypePullback P Q onPos, P.s (onDir pb) = Q.s pb.proj1
+
+/--
+Extensionality for W-type diagram morphisms.
+
+Two morphisms are equal if their position maps and direction maps are equal.
+The commutativity proofs are propositional and thus irrelevant.
+-/
+@[ext (iff := false)]
+lemma WTypeDiagramHom.ext {P Q : WTypeDiagram X Y} {f g : WTypeDiagramHom P Q}
+    (hPos : f.onPos = g.onPos)
+    (hDir : ∀ pb : WTypePullback P Q f.onPos,
+      f.onDir pb = g.onDir (hPos ▸ pb)) : f = g := by
+  obtain ⟨fPos, fDir, _, _, _⟩ := f
+  obtain ⟨gPos, gDir, _, _, _⟩ := g
+  cases hPos
+  have hDir' : fDir = gDir := funext hDir
+  cases hDir'
+  rfl
+
+/--
+The identity morphism on a W-type diagram.
+
+For `P : WTypeDiagram X Y`, the identity has:
+- `onPos = id` (identity on positions)
+- `onDir pb = pb.proj1` (the direction is just the Q.E component of the pullback,
+  which equals P.E when Q = P and onPos = id)
+
+The pullback for the identity is `{(e, b) : P.E × P.B | P.p e = b}`, which is
+equivalent to `P.E` via the first projection.
+-/
+def WTypeDiagramHom.id (P : WTypeDiagram X Y) : WTypeDiagramHom P P where
+  onPos := _root_.id
+  onDir := fun pb => pb.proj1
+  commPos := fun _ => rfl
+  commDir := fun pb => pb.comm
+  commAssign := fun _ => rfl
+
+/--
+Composition of W-type diagram morphisms.
+
+For `f : P → Q` and `g : Q → R`, the composition `g ∘ f : P → R` has:
+- `onPos = g.onPos ∘ f.onPos`
+- `onDir` works by threading through both pullbacks:
+  1. Given `pb : WTypePullback P R (g.onPos ∘ f.onPos)` with
+     `R.p pb.proj1 = g.onPos (f.onPos pb.proj2)`
+  2. Form `pb_g : WTypePullback Q R g.onPos` as `(pb.proj1, f.onPos pb.proj2)`
+  3. Apply `g.onDir pb_g` to get a `Q.E` element
+  4. By `g.commDir`, this satisfies `Q.p (g.onDir pb_g) = f.onPos pb.proj2`
+  5. Form `pb_f : WTypePullback P Q f.onPos` as `(g.onDir pb_g, pb.proj2)`
+  6. Apply `f.onDir pb_f` to get the final `P.E` element
+-/
+def WTypeDiagramHom.comp {P Q R : WTypeDiagram X Y}
+    (g : WTypeDiagramHom Q R) (f : WTypeDiagramHom P Q) : WTypeDiagramHom P R where
+  onPos := g.onPos ∘ f.onPos
+  onDir := fun pb =>
+    let pb_g : WTypePullback Q R g.onPos := WTypePullback.mk pb.proj1 (f.onPos pb.proj2) pb.comm
+    let qe := g.onDir pb_g
+    let pb_f : WTypePullback P Q f.onPos := WTypePullback.mk qe pb.proj2 (g.commDir pb_g)
+    f.onDir pb_f
+  commPos := fun b => by
+    simp only [Function.comp_apply]
+    rw [g.commPos, f.commPos]
+  commDir := fun pb => by
+    simp only
+    exact f.commDir _
+  commAssign := fun pb => by
+    simp only
+    let pb_g : WTypePullback Q R g.onPos :=
+      WTypePullback.mk pb.proj1 (f.onPos pb.proj2) pb.comm
+    let pb_f : WTypePullback P Q f.onPos :=
+      WTypePullback.mk (g.onDir pb_g) pb.proj2 (g.commDir pb_g)
+    calc P.s (f.onDir pb_f) = Q.s pb_f.proj1 := f.commAssign pb_f
+      _ = Q.s (g.onDir pb_g) := rfl
+      _ = R.s pb_g.proj1 := g.commAssign pb_g
+      _ = R.s pb.proj1 := rfl
+
+/--
+Left identity law: `id.comp f = f`.
+-/
+lemma WTypeDiagramHom.id_comp {P Q : WTypeDiagram X Y} (f : WTypeDiagramHom P Q) :
+    WTypeDiagramHom.comp (WTypeDiagramHom.id Q) f = f := by
+  apply WTypeDiagramHom.ext (hPos := rfl)
+  intro pb
+  simp only [comp, WTypeDiagramHom.id, WTypePullback.mk_proj1]
+
+/--
+Right identity law: `f.comp id = f`.
+-/
+lemma WTypeDiagramHom.comp_id {P Q : WTypeDiagram X Y} (f : WTypeDiagramHom P Q) :
+    WTypeDiagramHom.comp f (WTypeDiagramHom.id P) = f := by
+  apply WTypeDiagramHom.ext (hPos := rfl)
+  intro pb
+  simp only [comp, WTypeDiagramHom.id]
+
+/--
+Associativity: `(h.comp g).comp f = h.comp (g.comp f)`.
+-/
+lemma WTypeDiagramHom.comp_assoc {P Q R S : WTypeDiagram X Y}
+    (h : WTypeDiagramHom R S) (g : WTypeDiagramHom Q R) (f : WTypeDiagramHom P Q) :
+    WTypeDiagramHom.comp (WTypeDiagramHom.comp h g) f =
+    WTypeDiagramHom.comp h (WTypeDiagramHom.comp g f) := by
+  apply WTypeDiagramHom.ext (hPos := rfl)
+  intro pb
+  simp only [comp]
+
+/--
+Category instance for W-type diagrams.
+
+Objects are W-type diagrams `X ← E → B → Y`, and morphisms are `WTypeDiagramHom`
+structures with explicit pullbacks and commutative diagrams.
+-/
+instance WTypeDiagramCategory : Category (WTypeDiagram X Y) where
+  Hom := WTypeDiagramHom
+  id := WTypeDiagramHom.id
+  comp := fun f g => WTypeDiagramHom.comp g f
+  id_comp := WTypeDiagramHom.comp_id
+  comp_id := WTypeDiagramHom.id_comp
+  assoc := fun f g h => (WTypeDiagramHom.comp_assoc h g f).symm
+
+end WTypeDiagramMorphisms
+
+/-! ## W-Type Diagram Category as a Cat
+
+We package the category of W-type diagrams as a `Cat` for consistency with
+`PolyFunctorCat` and `PolyFunctorBetweenCat`.
+-/
+
+section WTypeDiagramCatDef
+
+variable (X Y : Type u)
+
+/--
+The category of W-type diagrams `X ← E → B → Y`.
+
+Objects are `WTypeDiagram X Y` structures and morphisms are `WTypeDiagramHom`
+with explicit pullbacks and three commutativity conditions.
+
+This is equivalent to (and will be shown equivalent to) `PolyFunctorBetweenCat X Y`.
+-/
+abbrev WTypeDiagramCat : Cat := Cat.of (WTypeDiagram X Y)
+
+end WTypeDiagramCatDef
+
+/-! ## Functor: WTypeDiagramCat → PolyFunctorBetweenCat
+
+We define a functor from W-type diagrams to Y-indexed families of polynomial
+functors (the Grothendieck representation).
+
+Given `W : WTypeDiagram X Y`:
+- At each `y : Y`, the polynomial functor has:
+  - Index type: `{b : W.B // W.t b = y}` (positions mapping to y)
+  - Family: `b ↦ W.fiberOver b.val` (the fiber at each position)
+-/
+
+section WTypeToPolyBetween
+
+variable {X Y : Type u}
+
+/--
+Convert a W-type diagram to a Grothendieck-style polynomial functor.
+
+Given `W : WTypeDiagram X Y`, for each `y : Y` we get a polynomial functor
+`Over X → Type` with:
+- Index type: positions in W that map to y (i.e., `{b : W.B // W.t b = y}`)
+- At each such position b, the representable is `W.fiberOver b`
+-/
+def wTypeToPolyBetweenObj (W : WTypeDiagram X Y) : PolyFunctorBetweenCat X Y :=
+  fun y => ccrObjMk (fun (b : { b : W.B // W.t b = y }) => W.fiberOver X Y b.val)
+
+/--
+The reindexing function for the morphism mapping.
+
+Given `f : WTypeDiagramHom P Q` and a position in P at y, produce the
+corresponding position in Q at y.
+-/
+def wTypeToPolyBetweenReindex {P Q : WTypeDiagram X Y} (f : WTypeDiagramHom P Q)
+    (y : Y) (b : { b : P.B // P.t b = y }) : { b : Q.B // Q.t b = y } :=
+  ⟨f.onPos b.val, (f.commPos b.val).trans b.property⟩
+
+/--
+The fiber morphism for the morphism mapping.
+
+Given `f : WTypeDiagramHom P Q` and a position `b` in P at y, produce a
+morphism from `Q.fiberOver (f.onPos b)` to `P.fiberOver b` in `Over X`.
+
+This uses the pullback structure: given `e : Q.E` with `Q.p e = f.onPos b`,
+we form a pullback element and apply `f.onDir` to get an element of P.E
+in the fiber over b.
+-/
+def wTypeToPolyBetweenFiberMor {P Q : WTypeDiagram X Y} (f : WTypeDiagramHom P Q)
+    (y : Y) (b : { b : P.B // P.t b = y }) :
+    Q.fiberOver X Y (f.onPos b.val) ⟶ P.fiberOver X Y b.val :=
+  Over.homMk
+    (fun (e : WTypeDiagram.fiber X Y Q (f.onPos b.val)) =>
+      let pb : WTypePullback P Q f.onPos := WTypePullback.mk e.val b.val e.property
+      ⟨f.onDir pb, f.commDir pb⟩)
+    (by
+      funext e
+      simp only [WTypeDiagram.fiberOver, Over.mk_hom]
+      exact f.commAssign _)
+
+/--
+Convert a W-type diagram morphism to a PolyFunctorBetweenCat morphism.
+
+Given `f : WTypeDiagramHom P Q`, at each `y : Y` we get a morphism between
+the polynomial functors:
+- Reindexing: `b ↦ f.onPos b`
+- Fiber morphism: uses `f.onDir` via the pullback
+-/
+def wTypeToPolyBetweenMap {P Q : WTypeDiagram X Y} (f : WTypeDiagramHom P Q) :
+    wTypeToPolyBetweenObj P ⟶ wTypeToPolyBetweenObj Q :=
+  fun y => ccrHomMk
+    (wTypeToPolyBetweenReindex f y)
+    (fun b => wTypeToPolyBetweenFiberMor f y b)
+
+/--
+The W-type to PolyBetween mapping preserves identity morphisms.
+-/
+lemma wTypeToPolyBetweenMap_id (P : WTypeDiagram X Y) :
+    wTypeToPolyBetweenMap (WTypeDiagramHom.id P) = 𝟙 (wTypeToPolyBetweenObj P) := by
+  funext y
+  rfl
+
+/--
+The W-type to PolyBetween mapping preserves composition.
+-/
+lemma wTypeToPolyBetweenMap_comp {P Q R : WTypeDiagram X Y}
+    (f : WTypeDiagramHom P Q) (g : WTypeDiagramHom Q R) :
+    wTypeToPolyBetweenMap (WTypeDiagramHom.comp g f) =
+    wTypeToPolyBetweenMap f ≫ wTypeToPolyBetweenMap g := by
+  funext y
+  rfl
+
+/--
+The functor from W-type diagrams to Grothendieck-style polynomial functors.
+-/
+def wTypeToPolyBetween : WTypeDiagram X Y ⥤ PolyFunctorBetweenCat X Y where
+  obj := wTypeToPolyBetweenObj
+  map := wTypeToPolyBetweenMap
+  map_id := wTypeToPolyBetweenMap_id
+  map_comp f g := wTypeToPolyBetweenMap_comp f g
+
+end WTypeToPolyBetween
+
+/-! ## Functor: PolyFunctorBetweenCat → WTypeDiagramCat
+
+We define a functor from Y-indexed families of polynomial functors
+(the Grothendieck representation) to W-type diagrams.
+
+Given `P : PolyFunctorBetweenCat X Y`:
+- `B = Σ y, ccrIndex (P y)` (all positions across all y)
+- `E = Σ (y : Y) (i : ccrIndex (P y)), (ccrFamily (P y) i).left`
+- `p`, `s`, `t` are the natural projection and structure maps
+-/
+
+section PolyBetweenToWType
+
+variable {X Y : Type u}
+
+/--
+Convert a Grothendieck-style polynomial functor to a W-type diagram.
+
+Given `P : PolyFunctorBetweenCat X Y`, we construct:
+- `B = Σ y, ccrIndex (P y)` - positions are pairs of (target y, index at y)
+- `E` - directions are triples (y, index, fiber element)
+- `p` - projects out the position (y, index)
+- `s` - source comes from the Over structure of each fiber
+- `t` - target is the first component y
+-/
+def polyBetweenToWTypeObj (P : PolyFunctorBetweenCat X Y) : WTypeDiagram X Y where
+  B := Σ y : Y, ccrIndex (P y)
+  E := Σ (y : Y) (i : ccrIndex (P y)), (ccrFamily (P y) i).left
+  p := fun ⟨y, i, _⟩ => ⟨y, i⟩
+  s := fun ⟨y, i, e⟩ => (ccrFamily (P y) i).hom e
+  t := fun ⟨y, _⟩ => y
+
+/--
+The fiber of `polyBetweenToWTypeObj P` at position `(y, i)` is the left component
+of `ccrFamily (P y) i`.
+-/
+lemma polyBetweenToWTypeObj_fiber (P : PolyFunctorBetweenCat X Y)
+    (yi : (polyBetweenToWTypeObj P).B) :
+    WTypeDiagram.fiber X Y (polyBetweenToWTypeObj P) yi =
+      { e : Σ (y : Y) (i : ccrIndex (P y)), (ccrFamily (P y) i).left //
+        (⟨e.1, e.2.1⟩ : Σ y, ccrIndex (P y)) = yi } := rfl
+
+/--
+Equivalence between the fiber at `(y, i)` and the left component of
+`ccrFamily (P y) i`.
+-/
+def polyBetweenToWTypeObj_fiber_equiv (P : PolyFunctorBetweenCat X Y)
+    (y : Y) (i : ccrIndex (P y)) :
+    WTypeDiagram.fiber X Y (polyBetweenToWTypeObj P) ⟨y, i⟩ ≃
+      (ccrFamily (P y) i).left where
+  toFun := fun ⟨⟨y', i', e⟩, h⟩ =>
+    match y', i', e, h with
+    | _, _, e, rfl => e
+  invFun := fun e => ⟨⟨y, i, e⟩, rfl⟩
+  left_inv := fun ⟨⟨y', i', e⟩, h⟩ => by
+    match y', i', e, h with
+    | _, _, _, rfl => rfl
+  right_inv := fun _ => rfl
+
+/--
+The reindexing function for the morphism mapping.
+
+Given `f : P ⟶ Q` in `PolyFunctorBetweenCat X Y` and a position `(y, i)` in the
+W-type for P, produce the corresponding position in the W-type for Q.
+-/
+def polyBetweenToWTypeReindex {P Q : PolyFunctorBetweenCat X Y} (f : P ⟶ Q)
+    (yi : (polyBetweenToWTypeObj P).B) : (polyBetweenToWTypeObj Q).B :=
+  ⟨yi.1, ccrReindex (f yi.1) yi.2⟩
+
+/--
+Helper to extract the fiber element with correct type from a pullback.
+
+Uses pattern matching to handle the sigma equality.
+-/
+def polyBetweenToWTypeMap_fiberCast {P Q : PolyFunctorBetweenCat X Y}
+    (f : P ⟶ Q) (pb : WTypePullback (polyBetweenToWTypeObj P)
+      (polyBetweenToWTypeObj Q) (polyBetweenToWTypeReindex f)) :
+    (ccrFamily (Q pb.proj2.1) (ccrReindex (f pb.proj2.1) pb.proj2.2)).left :=
+  match pb.proj1, pb.proj2, pb.comm with
+  | ⟨y, i, e⟩, ⟨y', i'⟩, h =>
+    match y, i, e, y', i', h with
+    | _, _, e, _, _, rfl => e
+
+/--
+Helper lemma: the fiber cast equals the original element when the pullback commutes.
+-/
+lemma polyBetweenToWTypeMap_fiberCast_eq {P Q : PolyFunctorBetweenCat X Y}
+    (f : P ⟶ Q) (y : Y) (i' : ccrIndex (P y))
+    (e : (ccrFamily (Q y) (ccrReindex (f y) i')).left) :
+    polyBetweenToWTypeMap_fiberCast f
+      ⟨(⟨y, ccrReindex (f y) i', e⟩, ⟨y, i'⟩), rfl⟩ = e := rfl
+
+/--
+Helper: the `onDir` computation result for a PolyBetweenToWType morphism.
+
+Given `f : P ⟶ Q` and position `(y, i')` in P, with fiber element `e` from Q's
+fiber over `ccrReindex (f y) i'`, returns `(y, i', (ccrFiberMor (f y) i').left e)`.
+-/
+def polyBetweenToWTypeMap_onDir {P Q : PolyFunctorBetweenCat X Y}
+    (f : P ⟶ Q) (y : Y) (i' : ccrIndex (P y))
+    (e : (ccrFamily (Q y) (ccrReindex (f y) i')).left) :
+    (polyBetweenToWTypeObj P).E :=
+  ⟨y, i', (ccrFiberMor (f y) i').left e⟩
+
+/--
+Convert a PolyFunctorBetweenCat morphism to a WTypeDiagramHom.
+
+Given `f : P ⟶ Q`, we construct:
+- `onPos ⟨y, i⟩ = ⟨y, ccrReindex (f y) i⟩`
+- `onDir` uses the fiber morphism `ccrFiberMor (f y) i`
+-/
+def polyBetweenToWTypeMap {P Q : PolyFunctorBetweenCat X Y} (f : P ⟶ Q) :
+    WTypeDiagramHom (polyBetweenToWTypeObj P) (polyBetweenToWTypeObj Q) where
+  onPos := polyBetweenToWTypeReindex f
+  onDir := fun pb =>
+    ⟨pb.proj2.1, pb.proj2.2,
+     (ccrFiberMor (f pb.proj2.1) pb.proj2.2).left (polyBetweenToWTypeMap_fiberCast f pb)⟩
+  commPos := fun ⟨_, _⟩ => rfl
+  commDir := fun _ => rfl
+  commAssign := fun pb => by
+    obtain ⟨⟨⟨y, i, e⟩, ⟨y', i'⟩⟩, h⟩ := pb
+    simp only [polyBetweenToWTypeObj, polyBetweenToWTypeReindex, WTypePullback.proj1,
+               WTypePullback.proj2] at h ⊢
+    obtain ⟨rfl, hi⟩ := Sigma.mk.inj h
+    have hi' : i = ccrReindex (f y) i' := eq_of_heq hi
+    subst hi'
+    conv_lhs => rw [show polyBetweenToWTypeMap_fiberCast f
+      ⟨(⟨y, ccrReindex (f y) i', e⟩, ⟨y, i'⟩), h⟩ = e from rfl]
+    have hw := congrFun (Over.w (ccrFiberMor (f y) i')) e
+    simp only [ccrFamily, ccrFiberMor, CategoryStruct.comp, Function.comp_apply] at hw ⊢
+    exact hw
+
+/--
+The PolyBetween to W-type mapping preserves identity morphisms.
+-/
+lemma polyBetweenToWTypeMap_id (P : PolyFunctorBetweenCat X Y) :
+    polyBetweenToWTypeMap (𝟙 P) = WTypeDiagramHom.id (polyBetweenToWTypeObj P) := by
+  have hPos : (polyBetweenToWTypeMap (𝟙 P)).onPos =
+      (WTypeDiagramHom.id (polyBetweenToWTypeObj P)).onPos := by
+    funext ⟨y, i⟩
+    simp only [polyBetweenToWTypeMap, WTypeDiagramHom.id, polyBetweenToWTypeReindex, ccrReindex]
+    rfl
+  apply WTypeDiagramHom.ext hPos
+  intro pb
+  obtain ⟨⟨⟨y, i, e⟩, ⟨y', i'⟩⟩, h⟩ := pb
+  simp only [polyBetweenToWTypeMap, WTypeDiagramHom.id, WTypePullback.proj1, WTypePullback.proj2,
+             polyBetweenToWTypeObj, polyBetweenToWTypeReindex] at h ⊢
+  obtain ⟨rfl, hi⟩ := Sigma.mk.inj h
+  have hi' : i = ccrReindex ((𝟙 P) y) i' := eq_of_heq hi
+  simp only [ccrReindex] at hi'
+  subst hi'
+  conv_lhs => rw [show polyBetweenToWTypeMap_fiberCast (𝟙 P)
+    ⟨(⟨y, i, e⟩, ⟨y, i⟩), h⟩ = e from rfl]
+  simp only [ccrFiberMor]
+  rfl
+
+/--
+The PolyBetween to W-type mapping preserves composition.
+-/
+lemma polyBetweenToWTypeMap_comp {P Q R : PolyFunctorBetweenCat X Y}
+    (f : P ⟶ Q) (g : Q ⟶ R) :
+    polyBetweenToWTypeMap (f ≫ g) =
+    WTypeDiagramHom.comp (polyBetweenToWTypeMap g) (polyBetweenToWTypeMap f) := by
+  have hPos : (polyBetweenToWTypeMap (f ≫ g)).onPos =
+      (WTypeDiagramHom.comp (polyBetweenToWTypeMap g) (polyBetweenToWTypeMap f)).onPos := by
+    funext ⟨y, i⟩
+    simp only [polyBetweenToWTypeMap, WTypeDiagramHom.comp, polyBetweenToWTypeReindex,
+               ccrReindex, Function.comp_apply]
+    rfl
+  apply WTypeDiagramHom.ext hPos
+  intro pb
+  obtain ⟨⟨⟨y, i, e⟩, ⟨y', i'⟩⟩, h⟩ := pb
+  simp only [polyBetweenToWTypeMap, WTypeDiagramHom.comp, WTypePullback.proj1, WTypePullback.proj2,
+             WTypePullback.mk, polyBetweenToWTypeObj, polyBetweenToWTypeReindex] at h ⊢
+  obtain ⟨rfl, hi⟩ := Sigma.mk.inj h
+  have hi' : i = ccrReindex ((f ≫ g) y) i' := eq_of_heq hi
+  simp only [ccrReindex] at hi'
+  subst hi'
+  conv_lhs => rw [show polyBetweenToWTypeMap_fiberCast (f ≫ g)
+    ⟨(⟨y, ((f ≫ g) y).base i', e⟩, ⟨y, i'⟩), h⟩ = e from rfl]
+  simp only [ccrFiberMor, ccrFamily]
+  have hcomp := ccrComp_fiberMor (f y) (g y) i'
+  simp only [ccrFiberMor, ccrReindex] at hcomp
+  have heq : ((f ≫ g) y).fiber i' = (f y ≫ g y).fiber i' := rfl
+  rw [heq, hcomp]
+  simp only [CategoryStruct.comp, Function.comp_apply, ccrReindex]
+  rfl
+
+/--
+The functor from Grothendieck-style polynomial functors to W-type diagrams.
+-/
+def polyBetweenToWType : PolyFunctorBetweenCat X Y ⥤ WTypeDiagram X Y where
+  obj := polyBetweenToWTypeObj
+  map := polyBetweenToWTypeMap
+  map_id := polyBetweenToWTypeMap_id
+  map_comp := polyBetweenToWTypeMap_comp
+
+end PolyBetweenToWType
+
+/-! ## Equivalence between W-type diagrams and Grothendieck-style polynomial functors -/
+
+section WTypePolyBetweenEquiv
+
+variable {X Y : Type u}
+
+/--
+The composite `polyBetweenToWType ∘ wTypeToPolyBetween` applied to a W-type diagram W
+produces a W-type diagram with:
+- `B = Σ y, { b : W.B // W.t b = y }` which is equivalent to `W.B`
+- The equivalence is `⟨y, ⟨b, h⟩⟩ ↔ b`
+
+This defines the forward direction of the base type equivalence.
+-/
+def unitBase_toFun (W : WTypeDiagram X Y) :
+    (polyBetweenToWType.obj (wTypeToPolyBetween.obj W)).B → W.B :=
+  fun ⟨_, ⟨b, _⟩⟩ => b
+
+/--
+Inverse of `unitBase_toFun`.
+-/
+def unitBase_invFun (W : WTypeDiagram X Y) :
+    W.B → (polyBetweenToWType.obj (wTypeToPolyBetween.obj W)).B :=
+  fun b => ⟨W.t b, ⟨b, rfl⟩⟩
+
+/--
+The base type equivalence for the unit isomorphism.
+-/
+def unitBase_equiv (W : WTypeDiagram X Y) :
+    (polyBetweenToWType.obj (wTypeToPolyBetween.obj W)).B ≃ W.B where
+  toFun := unitBase_toFun W
+  invFun := unitBase_invFun W
+  left_inv := fun ⟨y, ⟨b, h⟩⟩ => by
+    simp only [unitBase_toFun, unitBase_invFun]
+    subst h
+    rfl
+  right_inv := fun _ => rfl
+
+/--
+The `onPos` map for the unit isomorphism component.
+-/
+def unitHom_onPos (W : WTypeDiagram X Y) :
+    (polyBetweenToWType.obj (wTypeToPolyBetween.obj W)).B → W.B :=
+  unitBase_toFun W
+
+/--
+The target preservation for the unit isomorphism.
+-/
+lemma unitHom_commPos (W : WTypeDiagram X Y) (pos : _) :
+    W.t (unitHom_onPos W pos) =
+    (polyBetweenToWType.obj (wTypeToPolyBetween.obj W)).t pos := by
+  obtain ⟨y, ⟨b, h⟩⟩ := pos
+  simp only [unitHom_onPos, unitBase_toFun, polyBetweenToWType, polyBetweenToWTypeObj]
+  exact h
+
+/--
+The direction map for the unit morphism.
+
+Given a pullback element `pb`, we need to produce an element of `G(F(W)).E`.
+The pullback element contains `pb.proj1 : W.E` and `pb.proj2 : G(F(W)).B`.
+Since `W.p pb.proj1 = unitHom_onPos W pb.proj2`, the element `pb.proj1` lies
+in the W-fiber over the appropriate position, which we can translate to
+the `G(F(W))` fiber structure.
+-/
+def unitHom_onDir (W : WTypeDiagram X Y)
+    (pb : WTypePullback (polyBetweenToWType.obj (wTypeToPolyBetween.obj W)) W
+      (unitHom_onPos W)) :
+    (polyBetweenToWType.obj (wTypeToPolyBetween.obj W)).E :=
+  match pb.proj1, pb.proj2, pb.comm with
+  | e, ⟨y, ⟨b, h⟩⟩, pe => ⟨y, ⟨b, h⟩, ⟨e, pe⟩⟩
+
+/--
+The direction map respects the projection.
+-/
+lemma unitHom_commDir (W : WTypeDiagram X Y)
+    (pb : WTypePullback (polyBetweenToWType.obj (wTypeToPolyBetween.obj W)) W
+      (unitHom_onPos W)) :
+    (polyBetweenToWType.obj (wTypeToPolyBetween.obj W)).p (unitHom_onDir W pb) =
+    pb.proj2 := by
+  obtain ⟨⟨e, ⟨y, ⟨b, h⟩⟩⟩, pe⟩ := pb
+  simp only [unitHom_onDir, polyBetweenToWType, polyBetweenToWTypeObj, WTypePullback.proj2]
+
+/--
+The direction map preserves source/assignment.
+-/
+lemma unitHom_commAssign (W : WTypeDiagram X Y)
+    (pb : WTypePullback (polyBetweenToWType.obj (wTypeToPolyBetween.obj W)) W
+      (unitHom_onPos W)) :
+    (polyBetweenToWType.obj (wTypeToPolyBetween.obj W)).s (unitHom_onDir W pb) =
+    W.s pb.proj1 := by
+  obtain ⟨⟨e, ⟨y, ⟨b, h⟩⟩⟩, pe⟩ := pb
+  simp only [unitHom_onDir, polyBetweenToWType, polyBetweenToWTypeObj,
+             wTypeToPolyBetween, wTypeToPolyBetweenObj, WTypePullback.proj1,
+             WTypeDiagram.fiberOver, ccrObjMk_family, Over.mk_left, Over.mk_hom]
+  rfl
+
+/--
+The unit morphism component: G(F(W)) → W.
+-/
+def unitHom (W : WTypeDiagram X Y) :
+    WTypeDiagramHom (polyBetweenToWType.obj (wTypeToPolyBetween.obj W)) W where
+  onPos := unitHom_onPos W
+  onDir := unitHom_onDir W
+  commPos := unitHom_commPos W
+  commDir := unitHom_commDir W
+  commAssign := unitHom_commAssign W
+
+/--
+The inverse of unit: W → G(F(W)).
+-/
+def unitInv_onPos (W : WTypeDiagram X Y) :
+    W.B → (polyBetweenToWType.obj (wTypeToPolyBetween.obj W)).B :=
+  unitBase_invFun W
+
+lemma unitInv_commPos (W : WTypeDiagram X Y) (b : W.B) :
+    (polyBetweenToWType.obj (wTypeToPolyBetween.obj W)).t (unitInv_onPos W b) = W.t b := by
+  simp only [unitInv_onPos, unitBase_invFun, polyBetweenToWType, polyBetweenToWTypeObj]
+
+def unitInv_onDir (W : WTypeDiagram X Y)
+    (pb : WTypePullback W (polyBetweenToWType.obj (wTypeToPolyBetween.obj W))
+      (unitInv_onPos W)) :
+    W.E :=
+  match pb.proj1, pb.proj2, pb.comm with
+  | ⟨_, ⟨_, _⟩, ⟨e, _⟩⟩, _, _ => e
+
+lemma unitInv_commDir (W : WTypeDiagram X Y)
+    (pb : WTypePullback W (polyBetweenToWType.obj (wTypeToPolyBetween.obj W))
+      (unitInv_onPos W)) :
+    W.p (unitInv_onDir W pb) = pb.proj2 := by
+  obtain ⟨⟨⟨y, ⟨b, h⟩, ⟨e, pe⟩⟩, b'⟩, hcomm⟩ := pb
+  simp only [unitInv_onDir, WTypePullback.proj2, unitInv_onPos, unitBase_invFun,
+             polyBetweenToWType, polyBetweenToWTypeObj] at hcomm ⊢
+  have hb : b = b' := by
+    have h1 := congrArg (·.2.val) hcomm
+    simp only at h1
+    exact h1
+  subst hb
+  exact pe
+
+lemma unitInv_commAssign (W : WTypeDiagram X Y)
+    (pb : WTypePullback W (polyBetweenToWType.obj (wTypeToPolyBetween.obj W))
+      (unitInv_onPos W)) :
+    W.s (unitInv_onDir W pb) =
+    (polyBetweenToWType.obj (wTypeToPolyBetween.obj W)).s pb.proj1 := by
+  obtain ⟨⟨⟨y, ⟨b, h⟩, ⟨e, pe⟩⟩, b'⟩, hcomm⟩ := pb
+  simp only [unitInv_onDir, polyBetweenToWType, polyBetweenToWTypeObj,
+             wTypeToPolyBetween, wTypeToPolyBetweenObj, WTypePullback.proj1,
+             WTypeDiagram.fiberOver, ccrObjMk_family, Over.mk_left, Over.mk_hom]
+
+/--
+The inverse unit morphism component: W → G(F(W)).
+-/
+def unitInv (W : WTypeDiagram X Y) :
+    WTypeDiagramHom W (polyBetweenToWType.obj (wTypeToPolyBetween.obj W)) where
+  onPos := unitInv_onPos W
+  onDir := unitInv_onDir W
+  commPos := unitInv_commPos W
+  commDir := unitInv_commDir W
+  commAssign := unitInv_commAssign W
+
+/--
+Proof that unitInv ≫ unitHom = id (composition W → G(F(W)) → W equals identity on W).
+-/
+lemma unitInv_unitHom (W : WTypeDiagram X Y) :
+    WTypeDiagramHom.comp (unitHom W) (unitInv W) = WTypeDiagramHom.id W := by
+  have hPos : (WTypeDiagramHom.comp (unitHom W) (unitInv W)).onPos =
+              (WTypeDiagramHom.id W).onPos := by
+    funext b
+    simp only [WTypeDiagramHom.comp, WTypeDiagramHom.id, unitHom, unitHom_onPos, unitInv,
+               unitInv_onPos]
+    exact (unitBase_equiv W).right_inv b
+  apply WTypeDiagramHom.ext hPos
+  intro pb
+  simp only [WTypeDiagramHom.id]
+  obtain ⟨⟨e, b⟩, he⟩ := pb
+  simp only [WTypeDiagramHom.comp, unitHom, unitHom_onDir, unitInv,
+             unitInv_onDir, unitInv_onPos, unitBase_invFun, WTypePullback.proj1,
+             WTypePullback.proj2, polyBetweenToWType, polyBetweenToWTypeObj,
+             unitHom_onPos, unitBase_toFun]
+  rfl
+
+/--
+Proof that unitHom ≫ unitInv = id (composition G(F(W)) → W → G(F(W)) equals identity).
+-/
+lemma unitHom_unitInv (W : WTypeDiagram X Y) :
+    WTypeDiagramHom.comp (unitInv W) (unitHom W) =
+    WTypeDiagramHom.id (polyBetweenToWType.obj (wTypeToPolyBetween.obj W)) := by
+  have hPos : (WTypeDiagramHom.comp (unitInv W) (unitHom W)).onPos =
+              (WTypeDiagramHom.id _).onPos := by
+    funext x
+    simp only [WTypeDiagramHom.comp, WTypeDiagramHom.id, unitHom, unitHom_onPos, unitInv,
+               unitInv_onPos]
+    exact (unitBase_equiv W).left_inv x
+  apply WTypeDiagramHom.ext hPos
+  intro pb
+  simp only [WTypeDiagramHom.id, WTypePullback.transport_proj1]
+  obtain ⟨⟨⟨y, ⟨b, h⟩, ⟨e, pe⟩⟩, ⟨y', ⟨b', h'⟩⟩⟩, hcomm⟩ := pb
+  simp only [WTypeDiagramHom.comp, unitHom, unitHom_onDir, unitInv,
+             unitInv_onDir, unitInv_onPos, unitBase_invFun, WTypePullback.proj1,
+             WTypePullback.proj2, polyBetweenToWType, polyBetweenToWTypeObj,
+             unitHom_onPos, unitBase_toFun, wTypeToPolyBetween, wTypeToPolyBetweenObj,
+             WTypeDiagram.fiberOver, ccrObjMk_family, Over.mk_left, Over.mk_hom,
+             Function.comp_apply] at hcomm ⊢
+  have hy : y = W.t b' := congrArg (·.1) hcomm
+  have hb : b = b' := congrArg (·.2.val) hcomm
+  subst hy hb h'
+  rfl
+
+/--
+The index type of `F(G(P))(y)` where F is wTypeToPolyBetween and G is
+polyBetweenToWType. This is `{ b : (Σ y', ccrIndex (P y')) // b.1 = y }`.
+-/
+def counitIndexType (P : PolyFunctorBetweenCat X Y) (y : Y) : Type u :=
+  { b : (polyBetweenToWType.obj P).B // (polyBetweenToWType.obj P).t b = y }
+
+/--
+Forward direction of counit index equivalence: from `F(G(P))(y)` index to `P(y)`
+index. Maps `⟨⟨y, i⟩, rfl⟩` to `i`.
+-/
+def counitIndex_toFun (P : PolyFunctorBetweenCat X Y) (y : Y)
+    (b : counitIndexType P y) : ccrIndex (P y) :=
+  match b.val, b.property with
+  | ⟨y', i⟩, h =>
+    match y', i, h with
+    | _, i, rfl => i
+
+/--
+Backward direction of counit index equivalence: from `P(y)` index to `F(G(P))(y)`
+index. Maps `i` to `⟨⟨y, i⟩, rfl⟩`.
+-/
+def counitIndex_invFun (P : PolyFunctorBetweenCat X Y) (y : Y)
+    (i : ccrIndex (P y)) : counitIndexType P y :=
+  ⟨⟨y, i⟩, rfl⟩
+
+/--
+The counit index equivalence: `counitIndexType P y ≃ ccrIndex (P y)`.
+-/
+def counitIndex_equiv (P : PolyFunctorBetweenCat X Y) (y : Y) :
+    counitIndexType P y ≃ ccrIndex (P y) where
+  toFun := counitIndex_toFun P y
+  invFun := counitIndex_invFun P y
+  left_inv := fun ⟨⟨y', i⟩, h⟩ => by
+    simp only [counitIndex_toFun, counitIndex_invFun]
+    match y', i, h with
+    | _, _, rfl => rfl
+  right_inv := fun i => by
+    simp only [counitIndex_invFun, counitIndex_toFun]
+
+/--
+The fiber map underlying the counit fiber morphism.
+-/
+def counitFiberMap (P : PolyFunctorBetweenCat X Y) (y : Y) (i : ccrIndex (P y)) :
+    (ccrFamily (P y) i).left →
+      (ccrFamily (wTypeToPolyBetween.obj (polyBetweenToWType.obj P) y)
+        (counitIndex_invFun P y i)).left :=
+  (polyBetweenToWTypeObj_fiber_equiv P y i).symm.toFun
+
+lemma counitFiberMap_comm (P : PolyFunctorBetweenCat X Y) (y : Y) (i : ccrIndex (P y)) :
+    (ccrFamily (P y) i).hom =
+      (ccrFamily (wTypeToPolyBetween.obj (polyBetweenToWType.obj P) y)
+        (counitIndex_invFun P y i)).hom ∘ counitFiberMap P y i := by
+  funext e
+  simp only [Function.comp_apply, counitFiberMap, polyBetweenToWTypeObj_fiber_equiv,
+             polyBetweenToWType, polyBetweenToWTypeObj, WTypeDiagram.fiberOver, Over.mk_hom,
+             wTypeToPolyBetween, wTypeToPolyBetweenObj, ccrObjMk_family, Over.mk_left,
+             counitIndex_invFun]
+  rfl
+
+/--
+The fiber morphism for the counit. For each `b : counitIndexType P y`, produces
+a morphism in `Over X` from `ccrFamily (P y) (counitIndex_toFun P y b)` to
+`ccrFamily (wTypeToPolyBetween.obj (polyBetweenToWType.obj P) y) b`.
+-/
+def counitFiberMor (P : PolyFunctorBetweenCat X Y) (y : Y)
+    (b : counitIndexType P y) :
+    ccrFamily (P y) (counitIndex_toFun P y b) ⟶
+      ccrFamily (wTypeToPolyBetween.obj (polyBetweenToWType.obj P) y) b := by
+  obtain ⟨⟨y', i⟩, h⟩ := b
+  simp only [counitIndex_toFun] at h ⊢
+  subst h
+  exact Over.homMk (counitFiberMap P y' i) (counitFiberMap_comm P y' i)
+
+/--
+The counit morphism component at y: F(G(P))(y) -> P(y) in CoprodCovarRepCat.
+-/
+def counitHom_component (P : PolyFunctorBetweenCat X Y) (y : Y) :
+    wTypeToPolyBetween.obj (polyBetweenToWType.obj P) y ⟶ P y :=
+  ccrHomMk (counitIndex_toFun P y) (counitFiberMor P y)
+
+/--
+The counit morphism: F(G(P)) -> P in PolyFunctorBetweenCat.
+-/
+def counitHom (P : PolyFunctorBetweenCat X Y) :
+    wTypeToPolyBetween.obj (polyBetweenToWType.obj P) ⟶ P :=
+  counitHom_component P
+
+/--
+The inverse fiber map for the counit inverse.
+-/
+def counitInvFiberMap (P : PolyFunctorBetweenCat X Y) (y : Y) (i : ccrIndex (P y)) :
+    (ccrFamily (wTypeToPolyBetween.obj (polyBetweenToWType.obj P) y)
+      (counitIndex_invFun P y i)).left → (ccrFamily (P y) i).left :=
+  (polyBetweenToWTypeObj_fiber_equiv P y i).toFun
+
+lemma counitInvFiberMap_comm (P : PolyFunctorBetweenCat X Y) (y : Y) (i : ccrIndex (P y)) :
+    counitInvFiberMap P y i ≫
+      (ccrFamily (P y) i).hom =
+      (ccrFamily (wTypeToPolyBetween.obj (polyBetweenToWType.obj P) y)
+        (counitIndex_invFun P y i)).hom := by
+  funext e
+  simp only [CategoryStruct.comp, Function.comp_apply, counitInvFiberMap,
+             polyBetweenToWTypeObj_fiber_equiv, polyBetweenToWType, polyBetweenToWTypeObj,
+             WTypeDiagram.fiberOver, Over.mk_hom, wTypeToPolyBetween, wTypeToPolyBetweenObj,
+             ccrObjMk_family, Over.mk_left, counitIndex_invFun]
+  obtain ⟨⟨y', i', e'⟩, h⟩ := e
+  cases h
+  rfl
+
+/--
+The inverse fiber morphism for the counit inverse.
+-/
+def counitInvFiberMor (P : PolyFunctorBetweenCat X Y) (y : Y)
+    (i : ccrIndex (P y)) :
+    ccrFamily (wTypeToPolyBetween.obj (polyBetweenToWType.obj P) y)
+      (counitIndex_invFun P y i) ⟶ ccrFamily (P y) i :=
+  Over.homMk (counitInvFiberMap P y i) (counitInvFiberMap_comm P y i)
+
+/--
+The counit inverse morphism component at y: P(y) -> F(G(P))(y) in CoprodCovarRepCat.
+-/
+def counitInv_component (P : PolyFunctorBetweenCat X Y) (y : Y) :
+    P y ⟶ wTypeToPolyBetween.obj (polyBetweenToWType.obj P) y :=
+  ccrHomMk (counitIndex_invFun P y) (counitInvFiberMor P y)
+
+/--
+The counit inverse morphism: P -> F(G(P)) in PolyFunctorBetweenCat.
+-/
+def counitInv (P : PolyFunctorBetweenCat X Y) :
+    P ⟶ wTypeToPolyBetween.obj (polyBetweenToWType.obj P) :=
+  counitInv_component P
+
+/--
+Proof that counitInv ≫ counitHom = id (composition P → F(G(P)) → P equals identity).
+-/
+lemma counitInv_counitHom (P : PolyFunctorBetweenCat X Y) :
+    counitInv P ≫ counitHom P = 𝟙 P := by
+  funext y
+  apply ccrHom_ext (hbase := rfl)
+  simp only [eqToHom_refl, Category.comp_id]
+
+private lemma counitHom_counitInv_base (P : PolyFunctorBetweenCat X Y) (y : Y) :
+    ((counitHom P ≫ counitInv P) y).base =
+      (𝟙 (wTypeToPolyBetween.obj (polyBetweenToWType.obj P)) y).base := by
+  funext ⟨⟨y', i⟩, h⟩
+  subst h
+  rfl
+
+private lemma counitInvFiberMap_counitFiberMap (P : PolyFunctorBetweenCat X Y)
+    (y : Y) (i : ccrIndex (P y)) :
+    counitInvFiberMap P y i ∘ counitFiberMap P y i = id := by
+  funext e
+  simp only [Function.comp_apply, id_eq, counitFiberMap, counitInvFiberMap]
+  exact (polyBetweenToWTypeObj_fiber_equiv P y i).right_inv e
+
+private lemma counitFiberMap_counitInvFiberMap (P : PolyFunctorBetweenCat X Y)
+    (y : Y) (i : ccrIndex (P y)) :
+    counitFiberMap P y i ∘ counitInvFiberMap P y i = id := by
+  funext e
+  simp only [Function.comp_apply, id_eq, counitFiberMap, counitInvFiberMap]
+  exact (polyBetweenToWTypeObj_fiber_equiv P y i).left_inv e
+
+/--
+The counit index after round-trip F(G(P)) -> P -> F(G(P)) at `⟨y', i⟩` equals `⟨y', i⟩`.
+-/
+private lemma counitIndex_roundtrip (P : PolyFunctorBetweenCat X Y) (y' : Y)
+    (i : ccrIndex (P y')) :
+    counitIndex_invFun P y' (counitIndex_toFun P y' ⟨⟨y', i⟩, rfl⟩) = ⟨⟨y', i⟩, rfl⟩ := by
+  simp only [counitIndex_toFun, counitIndex_invFun]
+
+/--
+For `⟨⟨y', i⟩, rfl⟩ : counitIndexType P y'`, the family at this index equals the family
+at the `counitIndex_invFun P y' i` index.
+-/
+private lemma counitFamily_eq (P : PolyFunctorBetweenCat X Y) (y' : Y)
+    (i : ccrIndex (P y')) :
+    ccrFamily (wTypeToPolyBetween.obj (polyBetweenToWType.obj P) y')
+      ⟨⟨y', i⟩, rfl⟩ =
+    ccrFamily (wTypeToPolyBetween.obj (polyBetweenToWType.obj P) y')
+      (counitIndex_invFun P y' i) := rfl
+
+/--
+Abbreviation for the W-type-based polynomial functor category object F(G(P)).
+-/
+private abbrev FGP (P : PolyFunctorBetweenCat X Y) :=
+  wTypeToPolyBetween.obj (polyBetweenToWType.obj P)
+
+/--
+The type of elements in the fiber at index `⟨⟨y', i⟩, rfl⟩` for FGP.
+-/
+private abbrev FGPFiberElemType (P : PolyFunctorBetweenCat X Y) (y' : Y)
+    (i : ccrIndex (P y')) :=
+  (((familyFunctor (Over X) ⋙ Cat.opFunctor').map (𝟙 (FGP P) y').base).obj
+      (FGP P y').fiber ⟨⟨y', i⟩, rfl⟩).left
+
+/--
+Step 1a: The composition base at `⟨⟨y', i⟩, rfl⟩` maps to `⟨⟨y', i⟩, rfl⟩`.
+Specifically, `counitIndex_invFun (counitIndex_toFun ⟨⟨y', i⟩, rfl⟩) = ⟨⟨y', i⟩, rfl⟩`.
+-/
+private lemma counitHom_counitInv_base_at_idx (P : PolyFunctorBetweenCat X Y)
+    (y' : Y) (i : ccrIndex (P y')) :
+    ((counitHom P ≫ counitInv P) y').base ⟨⟨y', i⟩, rfl⟩ = ⟨⟨y', i⟩, rfl⟩ := rfl
+
+/--
+Step 1b: The counit reindex at `⟨⟨y', i⟩, rfl⟩` gives `i`.
+-/
+private lemma counitHom_reindex_at_idx (P : PolyFunctorBetweenCat X Y)
+    (y' : Y) (i : ccrIndex (P y')) :
+    (counitHom P y').base ⟨⟨y', i⟩, rfl⟩ = i := rfl
+
+/--
+The counit reindex using `ccrReindex` at `⟨⟨y', i⟩, rfl⟩` gives `i`.
+-/
+private lemma counitHom_ccrReindex_at_idx (P : PolyFunctorBetweenCat X Y)
+    (y' : Y) (i : ccrIndex (P y')) :
+    ccrReindex (counitHom P y') ⟨⟨y', i⟩, rfl⟩ = i := rfl
+
+/--
+The fiber morphism of counitHom at index `⟨⟨y', i⟩, rfl⟩` equals `counitFiberMor`.
+-/
+private lemma counitHom_fiberMor_at_idx (P : PolyFunctorBetweenCat X Y)
+    (y' : Y) (i : ccrIndex (P y')) :
+    ccrFiberMor (counitHom P y') ⟨⟨y', i⟩, rfl⟩ =
+      counitFiberMor P y' ⟨⟨y', i⟩, rfl⟩ := by
+  simp only [counitHom, counitHom_component, ccrHomMk_fiberMor]
+
+/--
+The fiber morphism of counitInv at index `i` equals `counitInvFiberMor`.
+-/
+private lemma counitInv_fiberMor_at_idx (P : PolyFunctorBetweenCat X Y)
+    (y' : Y) (i : ccrIndex (P y')) :
+    ccrFiberMor (counitInv P y') i = counitInvFiberMor P y' i := by
+  simp only [counitInv, counitInv_component, ccrHomMk_fiberMor]
+
+/--
+The composed fiber morphism at index `⟨⟨y', i⟩, rfl⟩` decomposes into
+`counitInvFiberMor ≫ counitFiberMor`.
+-/
+private lemma comp_fiberMor_at_idx (P : PolyFunctorBetweenCat X Y)
+    (y' : Y) (i : ccrIndex (P y')) :
+    ccrFiberMor ((counitHom P ≫ counitInv P) y') ⟨⟨y', i⟩, rfl⟩ =
+      counitInvFiberMor P y' i ≫ counitFiberMor P y' ⟨⟨y', i⟩, rfl⟩ := by
+  -- In FamilyCat, (f ≫ g) y' = f y' ≫ g y' definitionally
+  change ccrFiberMor (counitHom P y' ≫ counitInv P y') ⟨⟨y', i⟩, rfl⟩ = _
+  simp only [ccrComp_fiberMor, counitHom_ccrReindex_at_idx, counitInv_fiberMor_at_idx,
+      counitHom_fiberMor_at_idx]
+
+/--
+The `.left` of `counitFiberMor` at `⟨⟨y', i⟩, rfl⟩` equals `counitFiberMap`.
+-/
+private lemma counitFiberMor_left_at_idx (P : PolyFunctorBetweenCat X Y)
+    (y' : Y) (i : ccrIndex (P y')) :
+    (counitFiberMor P y' ⟨⟨y', i⟩, rfl⟩).left = counitFiberMap P y' i := rfl
+
+/--
+The `.left` of `counitInvFiberMor` equals `counitInvFiberMap`.
+-/
+private lemma counitInvFiberMor_left (P : PolyFunctorBetweenCat X Y)
+    (y' : Y) (i : ccrIndex (P y')) :
+    (counitInvFiberMor P y' i).left = counitInvFiberMap P y' i := by
+  simp only [counitInvFiberMor, Over.homMk_left]
+
+/--
+For Over morphisms, composition of `.left` equals `.left` of composition.
+-/
+private lemma Over_comp_left {X : Type*} {A B C : Over X}
+    (f : A ⟶ B) (g : B ⟶ C) :
+    (f ≫ g).left = g.left ∘ f.left := rfl
+
+/--
+The `.left` of the composed fiber morphism equals `counitFiberMap ∘ counitInvFiberMap`.
+The composition order is reversed because `.left` of `f ≫ g` in Over is `g.left ∘ f.left`.
+-/
+private lemma comp_fiberMor_left_at_idx (P : PolyFunctorBetweenCat X Y)
+    (y' : Y) (i : ccrIndex (P y')) :
+    (ccrFiberMor ((counitHom P ≫ counitInv P) y') ⟨⟨y', i⟩, rfl⟩).left =
+      counitFiberMap P y' i ∘ counitInvFiberMap P y' i := by
+  rw [comp_fiberMor_at_idx]
+  simp only [Over_comp_left, counitInvFiberMor_left, counitFiberMor_left_at_idx]
+
+/--
+The `.left` of the composed fiber morphism is the identity function.
+-/
+private lemma comp_fiberMor_left_is_id (P : PolyFunctorBetweenCat X Y)
+    (y' : Y) (i : ccrIndex (P y')) :
+    (ccrFiberMor ((counitHom P ≫ counitInv P) y') ⟨⟨y', i⟩, rfl⟩).left = id := by
+  rw [comp_fiberMor_left_at_idx, counitFiberMap_counitInvFiberMap]
+
+/--
+Sub-lemma 1a: The composition in FamilyCat at y' equals pointwise composition.
+-/
+private lemma counitHom_counitInv_comp_at_y (P : PolyFunctorBetweenCat X Y) (y' : Y) :
+    (counitHom P ≫ counitInv P) y' =
+      counitHom_component P y' ≫ counitInv_component P y' := rfl
+
+/--
+Sub-lemma: In the Pi category, (f ≫ g) idx = (f idx) ≫ (g idx).
+This is definitional for the Pi category.
+-/
+private lemma pi_comp_apply {A : Type*} {B : A → Type*} [∀ a, Category (B a)]
+    {f g h : ∀ a, B a} (η : f ⟶ g) (θ : g ⟶ h) (a : A) :
+    (η ≫ θ) a = η a ≫ θ a := rfl
+
+/--
+The `.fiber` field of a morphism equals `ccrFiberMor` applied pointwise.
+-/
+private lemma fiber_eq_ccrFiberMor {x y : CoprodCovarRepCat (Over X)}
+    (f : x ⟶ y) (i : ccrIndex x) :
+    f.fiber i = ccrFiberMor f i := rfl
+
+/--
+The composition `.fiber ≫ eqToHom` at index equals composition in Over.
+-/
+private lemma fiber_comp_eqToHom_at_idx {x y : CoprodCovarRepCat (Over X)}
+    (f : x ⟶ y) {h : f.base = f.base} :
+    (f.fiber ≫ eqToHom (by rw [h])) = f.fiber := by
+  simp only [eqToHom_refl, Category.comp_id]
+
+/--
+In the Pi category, composition at an index is pointwise.
+-/
+private lemma pi_comp_at_idx {I : Type*} {C : I → Type*} [∀ i, Category (C i)]
+    {x y z : ∀ i, C i} (f : x ⟶ y) (g : y ⟶ z) (i : I) :
+    (f ≫ g) i = f i ≫ g i := rfl
+
+/--
+eqToHom in the Pi category at an index equals eqToHom of the component equality.
+This is `CategoryTheory.Functor.eqToHom_proj` specialized.
+-/
+private lemma pi_eqToHom_at_idx {I : Type*} {C : I → Type*} [∀ i, Category (C i)]
+    {x y : ∀ i, C i} (h : x = y) (i : I) :
+    (eqToHom h : x ⟶ y) i = eqToHom (congrFun h i) :=
+  CategoryTheory.Functor.eqToHom_proj h i
+
+/--
+When composing with eqToHom in a Pi category, and the component equality is
+reflexive (same object on both sides), the composition at that index equals
+the original morphism at that index followed by identity.
+-/
+private lemma pi_fiber_comp_eqToHom_at_idx {I : Type*} {C : I → Type*}
+    [∀ i, Category (C i)] {x y z : ∀ i, C i}
+    (f : x ⟶ y) (h : y = z) (i : I) :
+    (f ≫ eqToHom h) i = f i ≫ eqToHom (congrFun h i) := by
+  simp only [pi_comp_at_idx, pi_eqToHom_at_idx]
+
+/--
+Identity in FamilyCat at a component equals identity in the fiber category.
+-/
+private lemma family_id_component (P : PolyFunctorBetweenCat X Y) (y' : Y) :
+    (𝟙 (FGP P) y') = GrothendieckContra'.id (FGP P y') := rfl
+
+/--
+The fiber-level equality proof generated by rewriting with base equality.
+-/
+private def counitHom_counitInv_fiber_eq_proof (P : PolyFunctorBetweenCat X Y) (y' : Y) :
+    ((familyFunctor (Over X) ⋙ Cat.opFunctor').map
+        ((counitHom P ≫ counitInv P) y').base).obj (FGP P y').fiber =
+      ((familyFunctor (Over X) ⋙ Cat.opFunctor').map
+        (𝟙 (FGP P) y').base).obj (FGP P y').fiber := by
+  rw [counitHom_counitInv_base P y']
+
+/--
+Step 1: The LHS composition fiber applied to `e` equals `e`.
+This is the computation showing that counitFiberMap ∘ counitInvFiberMap = id.
+-/
+private lemma eqToHom_Over_left {B : Type*} {A₁ A₂ : Over B}
+    (h : A₁ = A₂) (x : A₁.left) :
+    (eqToHom h).left x = h ▸ x := by
+  subst h
+  rfl
+
+/--
+The fiber of `(counitHom P ≫ counitInv P) y'` at index `⟨⟨y', i⟩, rfl⟩` equals the
+composition of the inverse and forward fiber morphisms.
+-/
+private lemma comp_fiber_at_idx (P : PolyFunctorBetweenCat X Y)
+    (y' : Y) (i : ccrIndex (P y')) :
+    ((counitHom P ≫ counitInv P) y').fiber ⟨⟨y', i⟩, rfl⟩ =
+      counitInvFiberMor P y' i ≫ counitFiberMor P y' ⟨⟨y', i⟩, rfl⟩ :=
+  comp_fiberMor_at_idx P y' i
+
+/--
+The source and target of the fiber equality at index `⟨⟨y', i⟩, rfl⟩` are
+definitionally equal (both are `(FGP P y').fiber ⟨⟨y', i⟩, rfl⟩`).
+-/
+private lemma fiber_eq_proof_at_idx_source_eq_target (P : PolyFunctorBetweenCat X Y)
+    (y' : Y) (i : ccrIndex (P y')) :
+    ((familyFunctor (Over X) ⋙ Cat.opFunctor').map
+        ((counitHom P ≫ counitInv P) y').base).obj (FGP P y').fiber ⟨⟨y', i⟩, rfl⟩ =
+    ((familyFunctor (Over X) ⋙ Cat.opFunctor').map
+        (𝟙 (FGP P) y').base).obj (FGP P y').fiber ⟨⟨y', i⟩, rfl⟩ :=
+  rfl
+
+/--
+The `.fiber` at the specific index has `.left = id`.
+This factors out the computation of `(counitHom ≫ counitInv).fiber idx` without
+dealing with the `eqToHom` composition.
+-/
+private lemma comp_fiber_at_idx_left_is_id (P : PolyFunctorBetweenCat X Y)
+    (y' : Y) (i : ccrIndex (P y')) :
+    (((counitHom P ≫ counitInv P) y').fiber ⟨⟨y', i⟩, rfl⟩).left = id := by
+  rw [fiber_eq_ccrFiberMor]
+  exact comp_fiberMor_left_is_id P y' i
+
+/--
+For a reflexive equality proof `p : A = A` on objects in `Over X`, the `.left` component
+of `eqToHom p` acts as identity. This follows from proof irrelevance: any proof of `A = A`
+is propositionally equal to `rfl`, and `eqToHom rfl = 𝟙`.
+-/
+private lemma eqToHom_reflexive_left_eq_id {B : Type*} {A : Over B}
+    (p : A = A) : (eqToHom p).left = id := by
+  have p_is_rfl : p = rfl := Subsingleton.elim _ _
+  subst p_is_rfl
+  rfl
+
+/--
+In a pi category (or CategoryOp' of a pi category), eqToHom of a function equality
+evaluated at an index equals eqToHom of the pointwise equality.
+-/
+private lemma eqToHom_pi_apply {I : Type*} {C : Type*} [Category C] {F G : I → C}
+    (h : F = G) (i : I) : (eqToHom h) i = eqToHom (congrFun h i) := by
+  subst h
+  rfl
+
+/--
+In a `Cat.of (CategoryOp' (I → C))` category, eqToHom of a function equality
+evaluated at an index. In CategoryOp', morphisms go in the opposite direction,
+so eqToHom h at i gives eqToHom of the symmetric pointwise equality.
+-/
+private lemma eqToHom_catOp_pi_apply {I : Type*} {C : Type*} [Category C]
+    {F G : (Cat.of (CategoryOp' (I → C))).α}
+    (h : F = G) (i : I) :
+    ((eqToHom h : F ⟶ G) i : G i ⟶ F i) =
+      (eqToHom (congrFun h i).symm : G i ⟶ F i) := by
+  subst h
+  rfl
+
+/--
+Evaluating `eqToHom` on a function equality at an index in `CategoryOp'` gives
+`eqToHom` of the pointwise equality (with direction reversed).
+When applied to an index where types are definitionally equal, this reduces to identity.
+-/
+private lemma eqToHom_catOp_pi_at_idx {I : Type*} {C : Type*} [Category C]
+    {F G : I → C} (h : F = G) (i : I) :
+    (eqToHom (C := CategoryOp' (I → C)) h) i =
+      (eqToHom (congrFun h i).symm : G i ⟶ F i) :=
+  Eq.recOn (motive := fun G' (h' : F = G') =>
+    (eqToHom (C := CategoryOp' (I → C)) h') i =
+      (eqToHom (congrFun h' i).symm : G' i ⟶ F i)) h rfl
+
+/--
+When the source and target at a particular index are definitionally equal,
+the `eqToHom` at that index has `.left = id`.
+-/
+private lemma eqToHom_at_idx_left_eq_id (P : PolyFunctorBetweenCat X Y)
+    (y' : Y) (i : ccrIndex (P y'))
+    (h : ((familyFunctor (Over X) ⋙ Cat.opFunctor').map
+            ((counitHom P ≫ counitInv P) y').base).obj (FGP P y').fiber =
+         ((familyFunctor (Over X) ⋙ Cat.opFunctor').map
+            (𝟙 (FGP P) y').base).obj (FGP P y').fiber) :
+    ((eqToHom h) ⟨⟨y', i⟩, rfl⟩).left = id := by
+  let idx : ccrIndex (FGP P y') := ⟨⟨y', i⟩, rfl⟩
+  change ((eqToHom h) idx).left = id
+  -- At idx, both functions evaluate to the same type definitionally
+  -- So congrFun h idx : F idx = G idx is propositionally rfl
+  have h_at_idx_eq : congrFun h idx = rfl := Subsingleton.elim _ _
+  -- Therefore (congrFun h idx).symm = rfl, and eqToHom rfl = 𝟙
+  have h_symm_eq : (congrFun h idx).symm = rfl := by rw [h_at_idx_eq]
+  -- Show the result using the helper lemma
+  rw [eqToHom_catOp_pi_at_idx h idx, h_symm_eq]
+  rfl
+
+/--
+The composed fiber with eqToHom at the specific index has `.left = id`.
+This is because in the opposite of a pi category, the composition is reversed,
+and the eqToHom at this index is the identity (since the types are definitionally equal).
+-/
+private lemma comp_fiber_eqToHom_at_idx_left_is_id (P : PolyFunctorBetweenCat X Y)
+    (y' : Y) (i : ccrIndex (P y')) :
+    ((((counitHom P ≫ counitInv P) y').fiber ≫
+        eqToHom (counitHom_counitInv_fiber_eq_proof P y')) ⟨⟨y', i⟩, rfl⟩).left = id := by
+  let idx : ccrIndex (FGP P y') := ⟨⟨y', i⟩, rfl⟩
+  let h := counitHom_counitInv_fiber_eq_proof P y'
+  have comp_eq : (((counitHom P ≫ counitInv P) y').fiber ≫ eqToHom h) idx =
+      (eqToHom h) idx ≫ ((counitHom P ≫ counitInv P) y').fiber idx := rfl
+  rw [comp_eq]
+  rw [Over_comp_left]
+  have fiber_left_id : (((counitHom P ≫ counitInv P) y').fiber idx).left = id :=
+    comp_fiber_at_idx_left_is_id P y' i
+  rw [fiber_left_id]
+  simp only [Function.id_comp]
+  exact eqToHom_at_idx_left_eq_id P y' i h
+
+private lemma counitHom_counitInv_lhs_step (P : PolyFunctorBetweenCat X Y)
+    (y' : Y) (i : ccrIndex (P y')) (e : FGPFiberElemType P y' i) :
+    ((((counitHom P ≫ counitInv P) y').fiber ≫
+        eqToHom (counitHom_counitInv_fiber_eq_proof P y')) ⟨⟨y', i⟩, rfl⟩).left e =
+      e := by
+  rw [congrFun (comp_fiber_eqToHom_at_idx_left_is_id P y' i) e]
+  rfl
+
+/--
+The identity fiber in FamilyCat at y' is an eqToHom.
+-/
+private lemma id_fiber_is_eqToHom (P : PolyFunctorBetweenCat X Y) (y' : Y) :
+    (𝟙 (FGP P) y').fiber = eqToHom (GrothendieckContra'.id_base_eq (FGP P y')).symm := rfl
+
+/--
+Step 2a: Show identity fiber at index equals eqToHom applied at that index.
+-/
+private lemma counitHom_counitInv_rhs_step_a (P : PolyFunctorBetweenCat X Y)
+    (y' : Y) (i : ccrIndex (P y')) :
+    (𝟙 (FGP P) y').fiber ⟨⟨y', i⟩, rfl⟩ =
+      eqToHom (GrothendieckContra'.id_base_eq (FGP P y')).symm ⟨⟨y', i⟩, rfl⟩ := rfl
+
+/--
+Step 2b: Show eqToHom at index applied to `.left` and `e` equals `e`.
+The proof uses the fact that `id_base_eq` is definitionally `rfl` due to
+how the functor map of identity works.
+-/
+private lemma counitHom_counitInv_rhs_step_b (P : PolyFunctorBetweenCat X Y)
+    (y' : Y) (i : ccrIndex (P y')) (e : FGPFiberElemType P y' i) :
+    (eqToHom (GrothendieckContra'.id_base_eq (FGP P y')).symm ⟨⟨y', i⟩, rfl⟩).left e = e := by
+  -- The id_base_eq proof is definitionally rfl, making the eqToHom trivial
+  -- The goal reduces to showing identity Over morphism .left applied to e equals e
+  -- Over.id_left: (𝟙 U).left = 𝟙 U.left
+  -- In Type, 𝟙 is id, so (𝟙 U.left) e = e is rfl
+  rfl
+
+private lemma counitHom_counitInv_rhs_step (P : PolyFunctorBetweenCat X Y)
+    (y' : Y) (i : ccrIndex (P y')) (e : FGPFiberElemType P y' i) :
+    ((𝟙 (FGP P) y').fiber ⟨⟨y', i⟩, rfl⟩).left e = e :=
+  counitHom_counitInv_rhs_step_b P y' i e
+
+/--
+The main fiber equality, composed from the two steps.
+-/
+private lemma counitHom_counitInv_fiber_eq (P : PolyFunctorBetweenCat X Y)
+    (y' : Y) (i : ccrIndex (P y')) (e : FGPFiberElemType P y' i) :
+    ((((counitHom P ≫ counitInv P) y').fiber ≫
+        eqToHom (by rw [counitHom_counitInv_base P y'])) ⟨⟨y', i⟩, rfl⟩).left e =
+      ((𝟙 (FGP P) y').fiber ⟨⟨y', i⟩, rfl⟩).left e :=
+  (counitHom_counitInv_lhs_step P y' i e).trans
+    (counitHom_counitInv_rhs_step P y' i e).symm
+
+lemma counitHom_counitInv (P : PolyFunctorBetweenCat X Y) :
+    counitHom P ≫ counitInv P =
+      𝟙 (wTypeToPolyBetween.obj (polyBetweenToWType.obj P)) := by
+  funext y
+  fapply GrothendieckContra'.ext
+  case w_base => exact counitHom_counitInv_base P y
+  case w_fiber =>
+    funext ⟨⟨y', i⟩, h⟩
+    subst h
+    ext e
+    dsimp only [polyBetweenToWType, polyBetweenToWTypeObj] at e ⊢
+    exact counitHom_counitInv_fiber_eq P y' i e
+
+end WTypePolyBetweenEquiv
 
 end GebLean
