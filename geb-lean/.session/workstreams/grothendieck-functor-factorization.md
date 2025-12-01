@@ -201,8 +201,15 @@ All of the above applies to `GrothendieckContra'` with the following changes:
 
 ### Phase 3: Contravariant versions
 
-- [ ] Mirror Phase 1 for `GrothendieckContra'`
-- [ ] Mirror Phase 2 for `GrothendieckContra'` with oplax transformations
+- [x] Define `SectionDataContra F'` for sections of contravariant Grothendieck
+- [x] Prove contravariant `FunctorToContraData` factorization via sections
+      via `FunctorToContraData.toFunctorViaPreContra`
+- [x] Define `OplaxNatTransData G' F'` for oplax natural transformations between
+      contravariant Cat-valued functors
+- [x] Define `OplaxNatTransData.id` and `OplaxNatTransData.comp` for composition
+- [x] Prove composition laws (`comp_assoc`, `id_comp`, `comp_id`)
+- [x] Define `OplaxFunctorCat C` wrapper type with category instance for
+      oplax morphisms
 
 ### Phase 4: Integration and documentation
 

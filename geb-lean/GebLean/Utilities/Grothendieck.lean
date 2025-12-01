@@ -3800,6 +3800,200 @@ def functorToEquiv :
 
 end FunctorTo
 
+/-!
+## Sections of Contravariant Grothendieck Constructions
+
+A section of the forgetful functor `forget F' : GrothendieckContra' F' ⥤ C`
+is a functor `s : C ⥤ GrothendieckContra' F'` such that `s ⋙ forget F' = 𝟭 C`.
+
+Such sections correspond to choosing:
+- For each `c : C`, an object in the fiber `F'.obj c`
+- For each morphism `f : c ⟶ c'`, a compatible fiber morphism
+
+In the contravariant case, fiber morphisms go FROM source TO transported target:
+`hom f : fib c ⟶ (F'.map f).obj (fib c')`
+-/
+
+section SectionDataContra
+
+variable {C : Type u} [Category.{v} C]
+variable (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂})
+
+/--
+The type of fiber functions for a section of `forget F' : GrothendieckContra' F' ⥤ C`.
+-/
+abbrev SectionFibContra := ∀ c, F'.obj c
+
+variable {F'}
+
+/--
+The type of morphism functions for a contravariant section.
+In the contravariant case, morphisms go from source fiber to transported target fiber.
+-/
+abbrev SectionHomContra (fib : SectionFibContra F') :=
+  ∀ {c c' : C} (f : c ⟶ c'), fib c ⟶ (F'.map f).obj (fib c')
+
+/--
+The identity coherence condition for contravariant sections.
+-/
+abbrev SectionHomIdContra (fib : SectionFibContra F') (hom : SectionHomContra fib) :=
+  ∀ c, hom (𝟙 c) = eqToHom (functorToEqIdProof F' (𝟭 C) fib c)
+
+/--
+The composition coherence condition for contravariant sections.
+-/
+abbrev SectionHomCompContra (fib : SectionFibContra F') (hom : SectionHomContra fib) :=
+  ∀ {c c' c'' : C} (f : c ⟶ c') (g : c' ⟶ c''),
+    hom (f ≫ g) =
+      hom f ≫ (F'.map f).map (hom g) ≫
+        eqToHom (functorToEqCompProof F' (𝟭 C) fib f g)
+
+variable (F')
+
+/--
+The data for a section of `forget F' : GrothendieckContra' F' ⥤ C`.
+
+A section assigns to each object in `C` a fiber element in `F'.obj c`, to each
+morphism a compatible fiber morphism, with identity and composition coherence.
+
+Given a section `s : SectionDataContra F'`, the functor
+`s.toFunctor : C ⥤ GrothendieckContra' F'` satisfies `s.toFunctor ⋙ forget F' = 𝟭 C`.
+-/
+structure SectionDataContra where
+  /-- Fiber objects for each `c : C` -/
+  fib : SectionFibContra F'
+  /-- Fiber morphisms for each morphism in `C` -/
+  hom : SectionHomContra fib
+  /-- Identity coherence -/
+  hom_id : SectionHomIdContra fib hom
+  /-- Composition coherence -/
+  hom_comp : SectionHomCompContra fib hom
+
+variable {F'}
+variable (sec : SectionDataContra F')
+
+/--
+Construct a functor `C ⥤ GrothendieckContra' F'` from section data.
+
+This functor is a section of `forget F'`: it satisfies
+`toFunctor ⋙ forget F' = 𝟭 C`.
+-/
+def SectionDataContra.toFunctor : C ⥤ GrothendieckContra' F' where
+  obj c := ⟨c, sec.fib c⟩
+  map {c c'} f := ⟨f, sec.hom f⟩
+  map_id c := ext _ _ rfl (by
+    simp only [sec.hom_id]
+    cat_disch)
+  map_comp {c c' c''} f g := ext _ _ rfl (by
+    simp only [sec.hom_comp]
+    cat_disch)
+
+/--
+The section functor composed with forget equals the identity.
+-/
+theorem SectionDataContra.toFunctor_comp_forget :
+    sec.toFunctor ⋙ forget F' = 𝟭 C := rfl
+
+variable {D : Type u₁} [Category.{v₁} D]
+variable (F')
+
+/--
+The factorization of contravariant `FunctorToData F'` via sections and `pre`.
+
+A `FunctorToData F' (E := D)` decomposes into:
+- A base functor `baseFunc : D ⥤ C`
+- Section data for `functorOp'Obj baseFunc ⋙ F'`
+
+The original functor is recovered as `sec.toFunctor ⋙ pre F' baseFunc`.
+-/
+def FunctorToData.toSigmaSectionDataContra (data : FunctorToData F' (E := D)) :
+    Σ (baseFunc : D ⥤ C), SectionDataContra (functorOp'Obj baseFunc ⋙ F') :=
+  ⟨data.baseFunc, {
+    fib := data.fib
+    hom := data.hom
+    hom_id := data.hom_id
+    hom_comp := data.hom_comp
+  }⟩
+
+/--
+Reconstruct contravariant `FunctorToData F'` from a base functor and section data.
+-/
+def FunctorToData.ofSigmaSectionDataContra
+    (data : Σ (baseFunc : D ⥤ C), SectionDataContra (functorOp'Obj baseFunc ⋙ F')) :
+    FunctorToData F' (E := D) :=
+  { baseFunc := data.1
+    fib := data.2.fib
+    hom := data.2.hom
+    hom_id := data.2.hom_id
+    hom_comp := data.2.hom_comp }
+
+/--
+Round-trip: `ofSigmaSectionDataContra (toSigmaSectionDataContra data) = data`
+-/
+theorem FunctorToData.ofSigmaSectionDataContra_toSigmaSectionDataContra
+    (data : FunctorToData F' (E := D)) :
+    FunctorToData.ofSigmaSectionDataContra F'
+      (FunctorToData.toSigmaSectionDataContra F' data) = data := rfl
+
+/--
+Round-trip: `toSigmaSectionDataContra (ofSigmaSectionDataContra data) = data`
+-/
+theorem FunctorToData.toSigmaSectionDataContra_ofSigmaSectionDataContra
+    (data : Σ (baseFunc : D ⥤ C), SectionDataContra (functorOp'Obj baseFunc ⋙ F')) :
+    FunctorToData.toSigmaSectionDataContra F'
+      (FunctorToData.ofSigmaSectionDataContra F' data) = data := rfl
+
+/--
+Equivalence between contravariant `FunctorToData F'` and
+`Σ (baseFunc : D ⥤ C), SectionDataContra (functorOp'Obj baseFunc ⋙ F')`.
+
+This establishes that functors into the contravariant Grothendieck construction
+decompose into a choice of base functor plus section data for the pulled-back
+construction.
+-/
+def FunctorToData.equivSigmaSectionDataContra :
+    FunctorToData F' (E := D) ≃
+      Σ (baseFunc : D ⥤ C), SectionDataContra (functorOp'Obj baseFunc ⋙ F') where
+  toFun := FunctorToData.toSigmaSectionDataContra F'
+  invFun := FunctorToData.ofSigmaSectionDataContra F'
+  left_inv := FunctorToData.ofSigmaSectionDataContra_toSigmaSectionDataContra F'
+  right_inv := FunctorToData.toSigmaSectionDataContra_ofSigmaSectionDataContra F'
+
+/--
+Construct the functor `D ⥤ GrothendieckContra' F'` via the section-pre factorization.
+
+Given a base functor and section data, this constructs the functor as:
+`sec.toFunctor ⋙ pre F' baseFunc`
+
+This makes explicit that functors into contravariant Grothendieck constructions
+factor through the pullback construction via `pre`.
+-/
+def FunctorToData.toFunctorViaPreContra
+    (baseFunc : D ⥤ C) (sec : SectionDataContra (functorOp'Obj baseFunc ⋙ F')) :
+    D ⥤ GrothendieckContra' F' :=
+  sec.toFunctor ⋙ pre F' baseFunc
+
+/--
+The two ways of constructing a functor from contravariant `FunctorToData` agree.
+
+`functorTo data = sec.toFunctor ⋙ pre F' baseFunc`
+
+where `sec` is the section data extracted from `data`.
+-/
+theorem FunctorToData.functorTo_eq_toFunctorViaPreContra (data : FunctorToData F' (E := D)) :
+    functorTo data =
+      FunctorToData.toFunctorViaPreContra F' data.baseFunc
+        (FunctorToData.toSigmaSectionDataContra F' data).2 := by
+  refine Functor.ext ?h_obj ?h_map
+  case h_obj => intro d; rfl
+  case h_map =>
+    intro d d' f
+    simp only [toFunctorViaPreContra, Functor.comp_map,
+      SectionDataContra.toFunctor, pre_map, toSigmaSectionDataContra, functorTo,
+      eqToHom_refl, Category.id_comp, Category.comp_id]
+
+end SectionDataContra
+
 section NatTransTo
 
 variable {E : Type*} [Category E]
@@ -5304,5 +5498,304 @@ def FunctorBetweenData.equivSigmaLaxNatTrans :
   right_inv _ := rfl
 
 end FunctorBetweenDecomposition
+
+/-!
+## Oplax Natural Transformations for Contravariant Cat-Valued Functors
+
+This section defines oplax natural transformations between contravariant
+Cat-valued functors `G' F' : Cᵒᵖ' ⥤ Cat`.
+
+For contravariant functors, oplax natural transformations have component
+functors `app c : G'.obj c ⥤ F'.obj c` and oplax morphisms:
+
+```
+oplaxApp f x' : (app c).obj ((G'.map f).obj x') ⟶ (F'.map f).obj ((app c').obj x')
+```
+
+for `f : c ⟶ c'` and `x' : G'.obj c'`.
+
+Note: For covariant functors, "lax" has morphisms going from F-transported to
+G-transported. For contravariant functors, the analogous direction is what we
+call "oplax" here, reflecting the reversal of morphism direction.
+-/
+
+section OplaxNatTrans
+
+universe vC uC
+
+variable {C : Type uC} [Category.{vC} C]
+variable (G' F' : Cᵒᵖ' ⥤ Cat.{vC, uC})
+
+/--
+Component functors for an oplax natural transformation between contravariant
+Cat-valued functors.
+-/
+abbrev OplaxNatTransApp :=
+  ∀ c : C, G'.obj c ⥤ F'.obj c
+
+variable {G' F'}
+variable (app : OplaxNatTransApp G' F')
+
+/--
+Oplax morphisms: for each `f : c ⟶ c'` and `x' : G'.obj c'`, a morphism
+relating the transported fibers.
+
+For contravariant `G' : Cᵒᵖ' ⥤ Cat`, we have `G'.map f : G'.obj c' ⥤ G'.obj c`.
+So `(G'.map f).obj x' : G'.obj c` and thus `(app c).obj ((G'.map f).obj x')` is
+in `F'.obj c`.
+
+Similarly, `(F'.map f).obj ((app c').obj x')` is in `F'.obj c`.
+
+The oplax morphism goes from the app-then-G-transport to the F-transport-then-app.
+-/
+abbrev OplaxNatTransOplaxApp :=
+  ∀ {c c' : C} (f : c ⟶ c') (x' : G'.obj c'),
+    (app c).obj ((G'.map f).obj x') ⟶ (F'.map f).obj ((app c').obj x')
+
+variable (oplaxApp : OplaxNatTransOplaxApp app)
+
+/--
+Naturality of oplax morphisms.
+For `f : c ⟶ c'` and `φ : x' ⟶ y'` in `G'.obj c'`:
+- Both sides have codomain `(F'.map f).obj ((app c').obj y')`
+-/
+abbrev OplaxNatTransOplaxNat :=
+  ∀ {c c' : C} (f : c ⟶ c') {x' y' : G'.obj c'} (φ : x' ⟶ y'),
+    (app c).map ((G'.map f).map φ) ≫ oplaxApp f y' =
+    oplaxApp f x' ≫ (F'.map f).map ((app c').map φ)
+
+/--
+Equality proof for identity oplax coherence.
+-/
+abbrev OplaxNatTransIdEq :=
+  ∀ (c : C) (x : G'.obj c),
+    (app c).obj ((G'.map (𝟙 c)).obj x) = (F'.map (𝟙 c)).obj ((app c).obj x)
+
+/--
+Derive the identity equality from functor laws.
+-/
+lemma oplaxNatTransIdEqProof : OplaxNatTransIdEq app := by
+  intro c x
+  have hG : G'.map (𝟙 c) = 𝟙 (G'.obj c) := G'.map_id c
+  have hF : F'.map (𝟙 c) = 𝟙 (F'.obj c) := F'.map_id c
+  simp only [hG, hF, Cat.id_eq_id, Functor.id_obj]
+
+/--
+Identity coherence: `oplaxApp (𝟙 c) x` equals the canonical eqToHom.
+-/
+abbrev OplaxNatTransOplaxId :=
+  ∀ (c : C) (x : G'.obj c),
+    oplaxApp (𝟙 c) x = eqToHom (oplaxNatTransIdEqProof app c x)
+
+/--
+Equality proof for composition oplax coherence (left side).
+For C-composition `f ≫_C g` applied through G'.
+Note: `G'.map_comp g f` (with Cᵒᵖ' morphisms) gives
+`G'.map (f ≫_C g) = G'.map g ⋙ G'.map f`.
+-/
+abbrev OplaxNatTransCompEqLeft :=
+  ∀ {c c' c'' : C} (f : c ⟶ c') (g : c' ⟶ c'') (x'' : G'.obj c''),
+    (app c).obj ((G'.map (@CategoryStruct.comp C _ c c' c'' f g)).obj x'') =
+    (app c).obj ((G'.map f).obj ((G'.map g).obj x''))
+
+/--
+Derive the left composition equality from functor laws.
+-/
+lemma oplaxNatTransCompEqLeftProof : OplaxNatTransCompEqLeft app := by
+  intro c c' c'' f g x''
+  exact congrArg (app c).obj (congrFun (congrArg Functor.obj (G'.map_comp g f)) x'')
+
+/--
+Equality proof for composition oplax coherence (right side).
+For C-composition `f ≫_C g` applied through F'.
+-/
+abbrev OplaxNatTransCompEqRight :=
+  ∀ {c c' c'' : C} (f : c ⟶ c') (g : c' ⟶ c'') (x'' : G'.obj c''),
+    (F'.map f).obj ((F'.map g).obj ((app c'').obj x'')) =
+    (F'.map (@CategoryStruct.comp C _ c c' c'' f g)).obj ((app c'').obj x'')
+
+/--
+Derive the right composition equality from functor laws.
+-/
+lemma oplaxNatTransCompEqRightProof : OplaxNatTransCompEqRight app := by
+  intro c c' c'' f g x''
+  exact (congrFun (congrArg Functor.obj (F'.map_comp g f)) ((app c'').obj x'')).symm
+
+/--
+Composition coherence: `oplaxApp (f ≫_C g) x''` decomposes stepwise.
+Uses explicit C-composition `f ≫_C g` for `f : c ⟶ c'` and `g : c' ⟶ c''`.
+-/
+abbrev OplaxNatTransOplaxComp :=
+  ∀ {c c' c'' : C} (f : c ⟶ c') (g : c' ⟶ c'') (x'' : G'.obj c''),
+    oplaxApp (@CategoryStruct.comp C _ c c' c'' f g) x'' =
+    eqToHom (oplaxNatTransCompEqLeftProof app f g x'') ≫
+    oplaxApp f ((G'.map g).obj x'') ≫
+    (F'.map f).map (oplaxApp g x'') ≫
+    eqToHom (oplaxNatTransCompEqRightProof app f g x'')
+
+/--
+Bundled data for an oplax natural transformation `G' ⟹ F'` between contravariant
+Cat-valued functors `G' F' : Cᵒᵖ' ⥤ Cat`.
+
+An oplax natural transformation consists of:
+- Component functors for each object
+- Oplax morphisms for each morphism
+- Naturality and coherence conditions
+
+These correspond to functors `GrothendieckContra' G' ⥤ GrothendieckContra' F'`
+that are identity on the base category.
+-/
+structure OplaxNatTransData (G' F' : Cᵒᵖ' ⥤ Cat.{vC, uC}) where
+  /-- Component functors: for each `c`, a functor `G'.obj c ⥤ F'.obj c` -/
+  app : OplaxNatTransApp G' F'
+  /-- Oplax morphisms: for each `f` and `x'`, a morphism between fibers -/
+  oplaxApp : OplaxNatTransOplaxApp app
+  /-- Naturality of oplax morphisms -/
+  oplaxNat : OplaxNatTransOplaxNat app oplaxApp
+  /-- Identity coherence -/
+  oplaxId : OplaxNatTransOplaxId app oplaxApp
+  /-- Composition coherence -/
+  oplaxComp : OplaxNatTransOplaxComp app oplaxApp
+
+/--
+Identity oplax natural transformation.
+-/
+def OplaxNatTransData.id (G' : Cᵒᵖ' ⥤ Cat.{vC, uC}) : OplaxNatTransData G' G' where
+  app c := 𝟭 (G'.obj c)
+  oplaxApp f x' := eqToHom (by simp only [Functor.id_obj])
+  oplaxNat f φ := by simp
+  oplaxId c x := rfl
+  oplaxComp f g x'' := by simp
+
+/--
+Composition of oplax natural transformations.
+
+Given `α : G' ⟹ H'` and `β : H' ⟹ K'`, their composition `α ⋙ β : G' ⟹ K'` has:
+- Component functors: `(α ⋙ β).app c = α.app c ⋙ β.app c`
+- Oplax: `(β.app c).map (α.oplaxApp f x') ≫ β.oplaxApp f ((α.app c').obj x')`
+-/
+def OplaxNatTransData.comp {G' H' K' : Cᵒᵖ' ⥤ Cat.{vC, uC}}
+    (α : OplaxNatTransData G' H') (β : OplaxNatTransData H' K') :
+    OplaxNatTransData G' K' where
+  app c := α.app c ⋙ β.app c
+  oplaxApp {c c'} f x' :=
+    (β.app c).map (α.oplaxApp f x') ≫ β.oplaxApp f ((α.app c').obj x')
+  oplaxNat {c c'} f {x' y'} φ := by
+    simp only [Functor.comp_obj, Functor.comp_map]
+    have hα : (α.app c).map ((G'.map f).map φ) ≫ α.oplaxApp f y' =
+        α.oplaxApp f x' ≫ (H'.map f).map ((α.app c').map φ) := α.oplaxNat f φ
+    have hβ : (β.app c).map ((H'.map f).map ((α.app c').map φ)) ≫
+            β.oplaxApp f ((α.app c').obj y') =
+        β.oplaxApp f ((α.app c').obj x') ≫
+            (K'.map f).map ((β.app c').map ((α.app c').map φ)) :=
+        β.oplaxNat f ((α.app c').map φ)
+    calc
+      _ = ((β.app c).map ((α.app c).map ((G'.map f).map φ)) ≫
+          (β.app c).map (α.oplaxApp f y')) ≫ β.oplaxApp f ((α.app c').obj y') := by
+        simp only [Category.assoc]
+      _ = (β.app c).map ((α.app c).map ((G'.map f).map φ) ≫ α.oplaxApp f y') ≫
+          β.oplaxApp f ((α.app c').obj y') := by rw [← (β.app c).map_comp]
+      _ = (β.app c).map (α.oplaxApp f x' ≫ (H'.map f).map ((α.app c').map φ)) ≫
+          β.oplaxApp f ((α.app c').obj y') := by rw [hα]
+      _ = ((β.app c).map (α.oplaxApp f x') ≫
+          (β.app c).map ((H'.map f).map ((α.app c').map φ))) ≫
+          β.oplaxApp f ((α.app c').obj y') := by rw [(β.app c).map_comp]
+      _ = (β.app c).map (α.oplaxApp f x') ≫
+          (β.app c).map ((H'.map f).map ((α.app c').map φ)) ≫
+          β.oplaxApp f ((α.app c').obj y') := by simp only [Category.assoc]
+      _ = (β.app c).map (α.oplaxApp f x') ≫
+          (β.oplaxApp f ((α.app c').obj x') ≫
+          (K'.map f).map ((β.app c').map ((α.app c').map φ))) := by rw [hβ]
+      _ = _ := by simp only [Category.assoc]
+  oplaxId c x := by
+    simp only [Functor.comp_obj, α.oplaxId, eqToHom_map, β.oplaxId, eqToHom_trans]
+  oplaxComp {c c' c''} f g x'' := by
+    simp only [α.oplaxComp f g x'', β.oplaxComp f g ((α.app c'').obj x'')]
+    simp only [Functor.map_comp, eqToHom_map, Category.assoc, eqToHom_trans_assoc]
+    congr 1
+    simp only [← Category.assoc]
+    congr 1
+    simp only [Category.assoc, eqToHom_refl, Category.id_comp]
+    simp only [← Category.assoc]
+    congr 1
+    simp only [Category.assoc]
+    congr 1
+    exact β.oplaxNat f (α.oplaxApp g x'')
+
+end OplaxNatTrans
+
+/-!
+## The Category of Contravariant Cat-Valued Functors with Oplax Natural Transformations
+
+This section defines `OplaxFunctorCat`, a wrapper type around `Cᵒᵖ' ⥤ Cat` where
+morphisms are oplax natural transformations rather than natural transformations.
+-/
+
+section OplaxFunctorCat
+
+universe vC uC
+
+variable (C : Type uC) [Category.{vC} C]
+
+/--
+A wrapper type for `Cᵒᵖ' ⥤ Cat` where morphisms are oplax natural transformations.
+-/
+@[ext]
+structure OplaxFunctorCat where
+  /-- The underlying functor to Cat. -/
+  toFunctor : Cᵒᵖ' ⥤ Cat.{vC, uC}
+
+variable {C}
+
+/-- Coercion from `OplaxFunctorCat` to functor. -/
+instance : CoeOut (OplaxFunctorCat C) (Cᵒᵖ' ⥤ Cat.{vC, uC}) where
+  coe := OplaxFunctorCat.toFunctor
+
+/-- Wrap a functor as an `OplaxFunctorCat`. -/
+abbrev OplaxFunctorCat.of (F' : Cᵒᵖ' ⥤ Cat.{vC, uC}) : OplaxFunctorCat C := ⟨F'⟩
+
+/-- Associativity of oplax natural transformation composition. -/
+theorem OplaxNatTransData.comp_assoc {G' H' K' L' : Cᵒᵖ' ⥤ Cat.{vC, uC}}
+    (α : OplaxNatTransData G' H') (β : OplaxNatTransData H' K')
+    (γ : OplaxNatTransData K' L') :
+    (α.comp β).comp γ = α.comp (β.comp γ) := by
+  cases α; cases β; cases γ
+  simp only [OplaxNatTransData.comp, Functor.assoc]
+  congr 1
+  funext c x'
+  simp only [Functor.comp_obj, Functor.comp_map, Category.assoc, Functor.map_comp]
+
+/-- Left identity for oplax natural transformation composition. -/
+theorem OplaxNatTransData.id_comp {G' H' : Cᵒᵖ' ⥤ Cat.{vC, uC}}
+    (α : OplaxNatTransData G' H') :
+    (OplaxNatTransData.id G').comp α = α := by
+  cases α with | mk app oplaxApp _ _ _ =>
+  simp only [OplaxNatTransData.comp, OplaxNatTransData.id]
+  congr 1
+  funext c f g y'
+  simp only [Functor.id_obj, eqToHom_refl, Functor.map_id]
+  exact Category.id_comp _
+
+/-- Right identity for oplax natural transformation composition. -/
+theorem OplaxNatTransData.comp_id {G' H' : Cᵒᵖ' ⥤ Cat.{vC, uC}}
+    (α : OplaxNatTransData G' H') :
+    α.comp (OplaxNatTransData.id H') = α := by
+  cases α with | mk app oplaxApp _ _ _ =>
+  simp only [OplaxNatTransData.comp, OplaxNatTransData.id]
+  congr 1
+  funext c f g y'
+  simp [Functor.id_obj, Functor.id_map]
+
+/-- The category structure on `OplaxFunctorCat C` with oplax natural transformations
+as morphisms. -/
+instance : Category (OplaxFunctorCat C) where
+  Hom G' H' := OplaxNatTransData G'.toFunctor H'.toFunctor
+  id G' := OplaxNatTransData.id G'.toFunctor
+  comp := OplaxNatTransData.comp
+  id_comp := OplaxNatTransData.id_comp
+  comp_id := OplaxNatTransData.comp_id
+  assoc := OplaxNatTransData.comp_assoc
+
+end OplaxFunctorCat
 
 end GebLean
