@@ -303,16 +303,34 @@ def TwArrCopresheaf.sliceGrothendieckData (F : TwArrCopresheaf C) :
   hom_comp := fun g h => F.sliceGrothendieck_hom_comp C g h
 
 /--
+Alternative section data representation using `SectionDataContra`.
+
+Since `sliceGrothendieckData` has `baseFunc = 𝟭 C`, the data can equivalently
+be viewed as section data for `overOpCopresheafFunctor C`. This provides a
+cleaner mathematical interpretation: the functor is a section of the forgetful
+functor `GrothendieckContra' (overOpCopresheafFunctor C) ⥤ C`.
+-/
+def TwArrCopresheaf.sliceSectionData (F : TwArrCopresheaf C) :
+    GrothendieckContra'.SectionDataContra (overOpCopresheafFunctor C) where
+  fib := F.sliceGrothendieckFib C
+  hom := fun h => F.sliceGrothendieckHomFiber C h
+  hom_id := F.sliceGrothendieck_hom_id C
+  hom_comp := fun g h => F.sliceGrothendieck_hom_comp C g h
+
+/--
 The slice construction for a `TwArrCopresheaf` assembles into a functor from
 `C` to the contravariant Grothendieck construction over `overOpCopresheafFunctor`.
 
 For each object `y : C`, we get `(y, F.slicePresheaf y)` in the
 Grothendieck construction. For each morphism `h : y ⟶ y'` in `C`, we get a
 Grothendieck morphism from `(y, F.slicePresheaf y)` to `(y', F.slicePresheaf y')`.
+
+This functor is a section of the forgetful functor:
+`sliceGrothendieckFunctor ⋙ GrothendieckContra'.forget = 𝟭 C`.
 -/
 def TwArrCopresheaf.sliceGrothendieckFunctor (F : TwArrCopresheaf C) :
     C ⥤ GrothendieckContra' (overOpCopresheafFunctor C) :=
-  GrothendieckContra'.functorTo (F.sliceGrothendieckData C)
+  (F.sliceSectionData C).toFunctor
 
 /-! ### Reverse Construction: From Grothendieck Data to TwArrCopresheaf
 
@@ -324,6 +342,9 @@ twisted-arrow copresheaf.
 /--
 The fiber type for a slice Grothendieck section: assigns to each `y : C` a
 presheaf on `(Over y)ᵒᵖ'`.
+
+Since the base functor is `𝟭 C`, this is equivalent to
+`SectionFibContra (overOpCopresheafFunctor C)`.
 -/
 abbrev SliceGrothendieckFib :=
   GrothendieckContra'.FunctorToFib (F' := overOpCopresheafFunctor C) (𝟭 C)
@@ -331,6 +352,8 @@ abbrev SliceGrothendieckFib :=
 /--
 The morphism type for a slice Grothendieck section: assigns to each morphism
 `h : y ⟶ y'` a natural transformation between the fibers.
+
+Since the base functor is `𝟭 C`, this is equivalent to `SectionHomContra fib`.
 -/
 abbrev SliceGrothendieckHom (fib : SliceGrothendieckFib C) :=
   GrothendieckContra'.FunctorToHom (𝟭 C) fib
@@ -674,6 +697,19 @@ def TwArrPresheaf.sliceGrothendieckData (F : TwArrPresheaf C) :
   hom_comp := fun g h => F.sliceGrothendieck_hom_comp C g h
 
 /--
+Alternative section data representation using `SectionData`.
+
+Since `sliceGrothendieckData` has `baseFunc = 𝟭 Cᵒᵖ'`, the data can equivalently
+be viewed as section data for `overCopresheafFunctor C`.
+-/
+def TwArrPresheaf.sliceSectionData (F : TwArrPresheaf C) :
+    Grothendieck.SectionData (overCopresheafFunctor C) where
+  fib := F.sliceGrothendieckFib C
+  hom := fun h => F.sliceGrothendieckHomFiber C h
+  hom_id := F.sliceGrothendieck_hom_id C
+  hom_comp := fun g h => F.sliceGrothendieck_hom_comp C g h
+
+/--
 The slice construction for a `TwArrPresheaf` assembles into a functor from
 `Cᵒᵖ'` to the Grothendieck construction over `overCopresheafFunctor`.
 
@@ -681,10 +717,13 @@ For each object `y : Cᵒᵖ'`, we get `(y, F.sliceCopresheaf y)` in the
 Grothendieck construction. For each morphism `h : y ⟶ y'` in `Cᵒᵖ'` (which is
 `h : y' ⟶ y` in C), we get a Grothendieck morphism from
 `(y, F.sliceCopresheaf y)` to `(y', F.sliceCopresheaf y')`.
+
+This functor is a section of the forgetful functor:
+`sliceGrothendieckFunctor ⋙ Grothendieck.forget = 𝟭 Cᵒᵖ'`.
 -/
 def TwArrPresheaf.sliceGrothendieckFunctor (F : TwArrPresheaf C) :
     Cᵒᵖ' ⥤ Grothendieck (overCopresheafFunctor C) :=
-  Grothendieck.functorTo (overCopresheafFunctor C) (F.sliceGrothendieckData C)
+  (F.sliceSectionData C).toFunctor
 
 /-! ### Reverse Construction: From Grothendieck Data to TwArrPresheaf
 
@@ -1035,16 +1074,32 @@ def TwArrOpCopresheaf.sliceGrothendieckData (F : TwArrOpCopresheaf C) :
   hom_comp := fun g h => F.sliceGrothendieck_hom_comp C g h
 
 /--
+Alternative section data representation using `SectionDataContra`.
+
+Since `sliceGrothendieckData` has `baseFunc = 𝟭 C`, the data can equivalently
+be viewed as section data for `overOpCopresheafFunctor C`.
+-/
+def TwArrOpCopresheaf.sliceSectionData (F : TwArrOpCopresheaf C) :
+    GrothendieckContra'.SectionDataContra (overOpCopresheafFunctor C) where
+  fib := F.sliceGrothendieckFib C
+  hom := fun h => F.sliceGrothendieckHomFiber C h
+  hom_id := F.sliceGrothendieck_hom_id C
+  hom_comp := fun g h => F.sliceGrothendieck_hom_comp C g h
+
+/--
 The slice construction for a `TwArrOpCopresheaf` assembles into a functor from
 `C` to the contravariant Grothendieck construction over `overOpCopresheafFunctor`.
 
 For each object `x : C`, we get `(x, F.slicePresheaf x)` in the Grothendieck
 construction. For each morphism `h : x ⟶ x'` in `C`, we get a Grothendieck
 morphism from `(x, F.slicePresheaf x)` to `(x', F.slicePresheaf x')`.
+
+This functor is a section of the forgetful functor:
+`sliceGrothendieckFunctor ⋙ GrothendieckContra'.forget = 𝟭 C`.
 -/
 def TwArrOpCopresheaf.sliceGrothendieckFunctor (F : TwArrOpCopresheaf C) :
     C ⥤ GrothendieckContra' (overOpCopresheafFunctor C) :=
-  GrothendieckContra'.functorTo (F.sliceGrothendieckData C)
+  (F.sliceSectionData C).toFunctor
 
 /-! ### Reverse Construction: From Grothendieck Data to TwArrOpCopresheaf
 
@@ -1382,6 +1437,19 @@ def TwArrOpPresheaf.sliceGrothendieckData (F : TwArrOpPresheaf C) :
   hom_comp := fun g h => F.sliceGrothendieck_hom_comp C g h
 
 /--
+Alternative section data representation using `SectionData`.
+
+Since `sliceGrothendieckData` has `baseFunc = 𝟭 Cᵒᵖ'`, the data can equivalently
+be viewed as section data for `overCopresheafFunctor C`.
+-/
+def TwArrOpPresheaf.sliceSectionData (F : TwArrOpPresheaf C) :
+    Grothendieck.SectionData (overCopresheafFunctor C) where
+  fib := F.sliceGrothendieckFib C
+  hom := fun h => F.sliceGrothendieckHomFiber C h
+  hom_id := F.sliceGrothendieck_hom_id C
+  hom_comp := fun g h => F.sliceGrothendieck_hom_comp C g h
+
+/--
 The slice construction for a `TwArrOpPresheaf` assembles into a functor from
 `Cᵒᵖ'` to the Grothendieck construction over `overCopresheafFunctor`.
 
@@ -1389,10 +1457,13 @@ For each object `x : Cᵒᵖ'`, we get `(x, F.sliceCopresheaf x)` in the
 Grothendieck construction. For each morphism `h : x ⟶ x'` in `Cᵒᵖ'` (which is
 `h : x' ⟶ x` in C), we get a Grothendieck morphism from
 `(x, F.sliceCopresheaf x)` to `(x', F.sliceCopresheaf x')`.
+
+This functor is a section of the forgetful functor:
+`sliceGrothendieckFunctor ⋙ Grothendieck.forget = 𝟭 Cᵒᵖ'`.
 -/
 def TwArrOpPresheaf.sliceGrothendieckFunctor (F : TwArrOpPresheaf C) :
     Cᵒᵖ' ⥤ Grothendieck (overCopresheafFunctor C) :=
-  Grothendieck.functorTo (overCopresheafFunctor C) (F.sliceGrothendieckData C)
+  (F.sliceSectionData C).toFunctor
 
 /--
 Fiber data for the slice Grothendieck construction over `overCopresheafFunctor`.
