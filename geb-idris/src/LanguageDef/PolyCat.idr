@@ -368,6 +368,83 @@ public export
 pfProductArena : PolyFunc -> PolyFunc -> PolyFunc
 pfProductArena p q = (pfProductPos p q ** pfProductDir p q)
 
+--------------------------------------------------------------
+---- Eliminators and introductions for coproduct/product ----
+--------------------------------------------------------------
+
+-- Eliminator for InterpPolyFunc of a coproduct arena.
+-- Given handlers for the left and right cases, dispatches appropriately.
+public export
+elimInterpPfCoproduct :
+  (p, q : PolyFunc) -> (x : Type) -> (r : Type) ->
+  (leftCase : (i : pfPos p) -> (pfDir {p} i -> x) -> r) ->
+  (rightCase : (j : pfPos q) -> (pfDir {p=q} j -> x) -> r) ->
+  InterpPolyFunc (pfCoproductArena p q) x -> r
+elimInterpPfCoproduct (ppos ** pdir) (qpos ** qdir) x r leftCase rightCase
+  (Left i ** dirFn) = leftCase i dirFn
+elimInterpPfCoproduct (ppos ** pdir) (qpos ** qdir) x r leftCase rightCase
+  (Right j ** dirFn) = rightCase j dirFn
+
+-- Eliminator for InterpPolyFunc of a product arena.
+-- The direction type is Either (pdir i) (qdir j), so we need a handler that
+-- receives both positions and the combined direction function.
+public export
+elimInterpPfProduct :
+  (p, q : PolyFunc) -> (x : Type) -> (r : Type) ->
+  (handler :
+    (i : pfPos p) -> (j : pfPos q) ->
+    (Either (pfDir {p} i) (pfDir {p=q} j) -> x) -> r) ->
+  InterpPolyFunc (pfProductArena p q) x -> r
+elimInterpPfProduct (ppos ** pdir) (qpos ** qdir) x r handler
+  ((i, j) ** dirFn) = handler i j dirFn
+
+-- Specialized eliminator for InterpPolyFunc of (pfProductArena PFIdentityArena q).
+-- The left position is Unit, so we ignore it. The left direction is also Unit,
+-- so `dirFn (Left ())` gives us an x directly.
+public export
+elimInterpPfProductId :
+  (q : PolyFunc) -> (x : Type) -> (r : Type) ->
+  (handler :
+    (j : pfPos q) ->
+    (getX : x) ->                        -- dirFn (Left ())
+    (recurse : pfDir {p=q} j -> x) ->    -- \d => dirFn (Right d)
+    r) ->
+  InterpPolyFunc (pfProductArena PFIdentityArena q) x -> r
+elimInterpPfProductId (qpos ** qdir) x r handler (((), j) ** dirFn) =
+  handler j (dirFn (Left ())) (\d => dirFn (Right d))
+
+-- Introduce a Left element in a coproduct arena interpretation.
+public export
+introInterpPfCoproductLeft :
+  (p, q : PolyFunc) -> (x : Type) ->
+  (i : pfPos p) -> (pfDir {p} i -> x) ->
+  InterpPolyFunc (pfCoproductArena p q) x
+introInterpPfCoproductLeft (ppos ** pdir) (qpos ** qdir) x i dirFn =
+  (Left i ** dirFn)
+
+-- Introduce a Right element in a coproduct arena interpretation.
+public export
+introInterpPfCoproductRight :
+  (p, q : PolyFunc) -> (x : Type) ->
+  (j : pfPos q) -> (pfDir {p=q} j -> x) ->
+  InterpPolyFunc (pfCoproductArena p q) x
+introInterpPfCoproductRight (ppos ** pdir) (qpos ** qdir) x j dirFn =
+  (Right j ** dirFn)
+
+-- Introduce an element in (pfProductArena PFIdentityArena q).
+-- Given a position in q, a direct x value, and a function for recursive dirs.
+public export
+introInterpPfProductId :
+  (q : PolyFunc) -> (x : Type) ->
+  (j : pfPos q) ->
+  (getX : x) ->
+  (recurse : pfDir {p=q} j -> x) ->
+  InterpPolyFunc (pfProductArena PFIdentityArena q) x
+introInterpPfProductId (qpos ** qdir) x j getX recurse =
+  (((), j) ** \d => case d of Left () => getX; Right rd => recurse rd)
+
+--------------------------------------------------------------
+
 public export
 pfDoubleArena : PolyFunc -> PolyFunc
 pfDoubleArena p = pfCoproductArena p p
