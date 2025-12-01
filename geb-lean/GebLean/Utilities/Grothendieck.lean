@@ -570,6 +570,185 @@ def functorToEquiv : (D ⥤ Grothendieck F) ≃ FunctorToData F (D := D) where
 
 end FunctorTo
 
+/-!
+## Sections of Grothendieck Constructions
+
+A section of the forgetful functor `forget (G ⋙ F) : Grothendieck (G ⋙ F) ⥤ D`
+is a functor `s : D ⥤ Grothendieck (G ⋙ F)` such that `s ⋙ forget (G ⋙ F) = 𝟭 D`.
+
+Such sections correspond to choosing:
+- For each `d : D`, an object in the fiber `F.obj (G.obj d)`
+- For each morphism `g : d ⟶ d'`, a compatible fiber morphism
+
+This is equivalent to `FunctorToData` with a fixed base functor.
+-/
+
+section SectionData
+
+variable {C : Type u} [Category.{v} C]
+variable (F : C ⥤ Cat.{v₂, u₂})
+
+/--
+The type of fiber functions for a section of `forget F : Grothendieck F ⥤ C`.
+-/
+abbrev SectionFib := ∀ c, F.obj c
+
+variable {F}
+
+/--
+The type of morphism functions for a section.
+-/
+abbrev SectionHom (fib : SectionFib F) :=
+  ∀ {c c' : C} (f : c ⟶ c'), (F.map f).obj (fib c) ⟶ fib c'
+
+/--
+The identity coherence condition for sections.
+-/
+abbrev SectionHomId (fib : SectionFib F) (hom : SectionHom fib) :=
+  ∀ c, hom (𝟙 c) = eqToHom (functorToEqIdProof F (𝟭 C) fib c)
+
+/--
+The composition coherence condition for sections.
+-/
+abbrev SectionHomComp (fib : SectionFib F) (hom : SectionHom fib) :=
+  ∀ {c c' c'' : C} (f : c ⟶ c') (g : c' ⟶ c''),
+    hom (f ≫ g) = eqToHom (functorToEqCompProof F (𝟭 C) fib f g) ≫
+      (F.map g).map (hom f) ≫ hom g
+
+variable (F)
+
+/--
+The data for a section of `forget F : Grothendieck F ⥤ C`.
+
+A section assigns to each object in `C` a fiber element in `F.obj c`, to each
+morphism a compatible fiber morphism, with identity and composition coherence.
+
+Given a section `s : SectionData F`, the functor `s.toFunctor : C ⥤ Grothendieck F`
+satisfies `s.toFunctor ⋙ forget F = 𝟭 C`.
+-/
+structure SectionData where
+  /-- Fiber objects for each `c : C` -/
+  fib : SectionFib F
+  /-- Fiber morphisms for each morphism in `C` -/
+  hom : SectionHom fib
+  /-- Identity coherence -/
+  hom_id : SectionHomId fib hom
+  /-- Composition coherence -/
+  hom_comp : SectionHomComp fib hom
+
+variable {F}
+variable (sec : SectionData F)
+
+/--
+Construct a functor `C ⥤ Grothendieck F` from section data.
+
+This functor is a section of `forget F`: it satisfies
+`toFunctor ⋙ forget F = 𝟭 C`.
+-/
+def SectionData.toFunctor : C ⥤ Grothendieck F where
+  obj c := ⟨c, sec.fib c⟩
+  map {c c'} f := ⟨f, sec.hom f⟩
+  map_id c := Grothendieck.ext _ _ rfl (by
+    simp only [Grothendieck.id_fiber, sec.hom_id, eqToHom_trans])
+  map_comp {c c' c''} f g := Grothendieck.ext _ _ rfl (by
+    simp only [Grothendieck.comp_fiber, sec.hom_comp]
+    cat_disch)
+
+/--
+The section functor composed with forget equals the identity.
+-/
+theorem SectionData.toFunctor_comp_forget :
+    sec.toFunctor ⋙ Grothendieck.forget F = 𝟭 C := rfl
+
+variable {D : Type u₁} [Category.{v₁} D]
+variable (F)
+
+/--
+The factorization of `FunctorToData F` via sections and `pre`.
+
+A `FunctorToData F (D := D)` decomposes into:
+- A base functor `baseFunc : D ⥤ C`
+- Section data for `baseFunc ⋙ F`
+
+The original functor is recovered as `sec.toFunctor ⋙ pre F baseFunc`.
+-/
+def FunctorToData.toSigmaSectionData (data : FunctorToData F (D := D)) :
+    Σ (baseFunc : D ⥤ C), SectionData (baseFunc ⋙ F) :=
+  ⟨data.baseFunc, {
+    fib := data.fib
+    hom := data.hom
+    hom_id := data.hom_id
+    hom_comp := data.hom_comp
+  }⟩
+
+/--
+Reconstruct `FunctorToData F` from a base functor and section data.
+-/
+def FunctorToData.ofSigmaSectionData
+    (data : Σ (baseFunc : D ⥤ C), SectionData (baseFunc ⋙ F)) :
+    FunctorToData F (D := D) :=
+  { baseFunc := data.1
+    fib := data.2.fib
+    hom := data.2.hom
+    hom_id := data.2.hom_id
+    hom_comp := data.2.hom_comp }
+
+/--
+Round-trip: `ofSigmaSectionData (toSigmaSectionData data) = data`
+-/
+theorem FunctorToData.ofSigmaSectionData_toSigmaSectionData
+    (data : FunctorToData F (D := D)) :
+    FunctorToData.ofSigmaSectionData F (FunctorToData.toSigmaSectionData F data) =
+      data := rfl
+
+/--
+Round-trip: `toSigmaSectionData (ofSigmaSectionData data) = data`
+-/
+theorem FunctorToData.toSigmaSectionData_ofSigmaSectionData
+    (data : Σ (baseFunc : D ⥤ C), SectionData (baseFunc ⋙ F)) :
+    FunctorToData.toSigmaSectionData F (FunctorToData.ofSigmaSectionData F data) =
+      data := rfl
+
+/--
+Equivalence between `FunctorToData F` and `Σ (baseFunc : D ⥤ C), SectionData (baseFunc ⋙ F)`.
+
+This establishes that functors into the Grothendieck construction decompose
+into a choice of base functor plus section data for the pulled-back construction.
+-/
+def FunctorToData.equivSigmaSectionData :
+    FunctorToData F (D := D) ≃ Σ (baseFunc : D ⥤ C), SectionData (baseFunc ⋙ F) where
+  toFun := FunctorToData.toSigmaSectionData F
+  invFun := FunctorToData.ofSigmaSectionData F
+  left_inv := FunctorToData.ofSigmaSectionData_toSigmaSectionData F
+  right_inv := FunctorToData.toSigmaSectionData_ofSigmaSectionData F
+
+/--
+Construct the functor `D ⥤ Grothendieck F` via the section-pre factorization.
+
+Given a base functor and section data, this constructs the functor as:
+`sec.toFunctor ⋙ pre F baseFunc`
+
+This makes explicit that functors into Grothendieck constructions factor through
+the pullback construction via `pre`.
+-/
+def FunctorToData.toFunctorViaPre
+    (baseFunc : D ⥤ C) (sec : SectionData (baseFunc ⋙ F)) : D ⥤ Grothendieck F :=
+  sec.toFunctor ⋙ Grothendieck.pre F baseFunc
+
+/--
+The two ways of constructing a functor from `FunctorToData` agree.
+
+`functorTo F data = sec.toFunctor ⋙ pre F baseFunc`
+
+where `sec` is the section data extracted from `data`.
+-/
+theorem FunctorToData.functorTo_eq_toFunctorViaPre (data : FunctorToData F (D := D)) :
+    functorTo F data =
+      FunctorToData.toFunctorViaPre F data.baseFunc
+        (FunctorToData.toSigmaSectionData F data).2 := rfl
+
+end SectionData
+
 section NatTransTo
 
 /--
@@ -4879,22 +5058,8 @@ def LaxNatTransData.comp {G H K : C ⥤ Cat.{vC, uC}}
     have hβ : (K.map f).map ((β.app c).map ((α.app c).map φ)) ≫ β.laxApp f ((α.app c).obj y) =
         β.laxApp f ((α.app c).obj x) ≫ (β.app c').map ((H.map f).map ((α.app c).map φ)) :=
         β.laxNat f ((α.app c).map φ)
-    calc (K.map f).map ((β.app c).map ((α.app c).map φ)) ≫
-           β.laxApp f ((α.app c).obj y) ≫ (β.app c').map (α.laxApp f y)
-        _ = β.laxApp f ((α.app c).obj x) ≫
-            (β.app c').map ((H.map f).map ((α.app c).map φ)) ≫
-            (β.app c').map (α.laxApp f y) := by
-          simp only [← Category.assoc, hβ]
-        _ = β.laxApp f ((α.app c).obj x) ≫
-            (β.app c').map ((H.map f).map ((α.app c).map φ) ≫ α.laxApp f y) := by
-          rw [← Functor.map_comp]
-        _ = β.laxApp f ((α.app c).obj x) ≫
-            (β.app c').map (α.laxApp f x ≫ (α.app c').map ((G.map f).map φ)) := by
-          simp only [hα]
-        _ = β.laxApp f ((α.app c).obj x) ≫
-            (β.app c').map (α.laxApp f x) ≫
-            (β.app c').map ((α.app c').map ((G.map f).map φ)) := by
-          simp only [Functor.map_comp]
+    rw [← Category.assoc ((K.map f).map _) _ _, hβ, Category.assoc, ← Functor.map_comp,
+        hα, Functor.map_comp]
   laxId c x := by
     simp only [Functor.comp_obj, α.laxId, eqToHom_map, β.laxId, eqToHom_trans]
   laxComp {c c' c''} f g x := by
@@ -4992,6 +5157,69 @@ instance : Category (LaxFunctorCat C) where
   id_comp := LaxNatTransData.id_comp
   comp_id := LaxNatTransData.comp_id
   assoc := LaxNatTransData.comp_assoc
+
+/--
+Convert a natural transformation to a lax natural transformation.
+
+A natural transformation `α : F ⟹ G` satisfies the strict naturality condition
+`α.app c ⋙ G.map f = F.map f ⋙ α.app c'`. This implies that the laxity morphisms
+are all identities (up to `eqToHom`).
+-/
+def LaxNatTransData.ofNatTrans {G H : C ⥤ Cat.{vC, uC}} (α : NatTrans G H) :
+    LaxNatTransData G H where
+  app c := α.app c
+  laxApp {c c'} f x := eqToHom (by
+    simp only [← Functor.comp_obj]
+    exact (congrArg (·.obj x) (α.naturality f)).symm)
+  laxNat {c c'} f {x y} φ := by
+    have nat := α.naturality f
+    have h := Functor.congr_hom nat.symm φ
+    change (H.map f).map ((α.app c).map φ) ≫ _ = _ ≫ (α.app c').map ((G.map f).map φ)
+    conv_lhs => rw [show (H.map f).map ((α.app c).map φ) =
+        (α.app c ≫ H.map f).map φ from rfl]
+    rw [h]
+    conv_lhs => rw [show (G.map f ≫ α.app c').map φ =
+        (α.app c').map ((G.map f).map φ) from rfl]
+    simp only [Category.assoc, eqToHom_trans, eqToHom_refl, Category.comp_id]
+  laxId c x := by
+    simp
+  laxComp {c c' c''} f g x := by
+    simp
+
+/--
+The embedding of natural transformations into lax natural transformations
+respects identity.
+-/
+theorem LaxNatTransData.ofNatTrans_id (G : C ⥤ Cat.{vC, uC}) :
+    LaxNatTransData.ofNatTrans (𝟙 G) = LaxNatTransData.id G := by
+  simp only [LaxNatTransData.ofNatTrans, LaxNatTransData.id, NatTrans.id_app]
+  congr 1
+
+/--
+The embedding of natural transformations into lax natural transformations
+respects composition.
+-/
+theorem LaxNatTransData.ofNatTrans_comp {G H K : C ⥤ Cat.{vC, uC}}
+    (α : NatTrans G H) (β : NatTrans H K) :
+    LaxNatTransData.ofNatTrans (α ≫ β : G ⟶ K) =
+      (LaxNatTransData.ofNatTrans α).comp (LaxNatTransData.ofNatTrans β) := by
+  simp only [LaxNatTransData.ofNatTrans, LaxNatTransData.comp, NatTrans.comp_app]
+  congr 1
+  funext c f x
+  simp [Functor.comp_obj]
+
+/--
+The functor embedding the natural transformation category into the lax natural
+transformation category.
+
+This is faithful: natural transformations embed as lax natural transformations
+where all laxity morphisms are identities (via `eqToHom`).
+-/
+def natToLaxFunctor : (C ⥤ Cat.{vC, uC}) ⥤ LaxFunctorCat C where
+  obj F := LaxFunctorCat.of F
+  map α := LaxNatTransData.ofNatTrans α
+  map_id G := LaxNatTransData.ofNatTrans_id G
+  map_comp α β := LaxNatTransData.ofNatTrans_comp α β
 
 end LaxFunctorCat
 

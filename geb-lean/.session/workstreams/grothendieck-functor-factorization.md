@@ -49,21 +49,38 @@ constrained class of functors. They are determined by:
 
 This is equivalent to the fiber data in `FunctorToData`.
 
-**Proposed new structure:**
+**Implemented structure:**
 
 ```lean
-structure SectionData (G : D ⥤ C) (F : C ⥤ Cat) where
-  fib : ∀ d, F.obj (G.obj d)
-  hom : ∀ {d d'} (g : d ⟶ d'), (F.map (G.map g)).obj (fib d) ⟶ fib d'
-  hom_id : ∀ d, hom (𝟙 d) = eqToHom ...
-  hom_comp : ∀ g h, hom (g ≫ h) = ...
+structure SectionData (F : C ⥤ Cat) where
+  fib : ∀ c, F.obj c
+  hom : ∀ {c c'} (f : c ⟶ c'), (F.map f).obj (fib c) ⟶ fib c'
+  hom_id : ∀ c, hom (𝟙 c) = eqToHom ...
+  hom_comp : ∀ f g, hom (f ≫ g) = ...
 ```
 
-**Equivalence to establish:**
+This is the intrinsic notion of a section of `forget F : Grothendieck F ⥤ C`,
+independent of any incoming functor.
+
+**Equivalence (implemented):**
 
 ```lean
-(E ⥤ Grothendieck F) ≃ Σ (baseFunc : E ⥤ C), SectionData baseFunc F
+FunctorToData F (D := D) ≃ Σ (baseFunc : D ⥤ C), SectionData (baseFunc ⋙ F)
 ```
+
+**Explicit factorization via `pre` (implemented):**
+
+```lean
+def FunctorToData.toFunctorViaPre
+    (baseFunc : D ⥤ C) (sec : SectionData (baseFunc ⋙ F)) : D ⥤ Grothendieck F :=
+  sec.toFunctor ⋙ Grothendieck.pre F baseFunc
+
+theorem FunctorToData.functorTo_eq_toFunctorViaPre (data : FunctorToData F (D := D)) :
+    functorTo F data = FunctorToData.toFunctorViaPre F data.baseFunc
+        (FunctorToData.toSigmaSectionData F data).2
+```
+
+This makes `pre` central to the factorization.
 
 ### FunctorFrom: Functors FROM Grothendieck Constructions
 
@@ -159,14 +176,14 @@ All of the above applies to `GrothendieckContra'` with the following changes:
 
 ### Phase 1: Covariant FunctorTo refactoring
 
-- [ ] Define `SectionData G F` for sections of `forget (G ⋙ F)`
-- [ ] Prove that `SectionData baseFunc F` is equivalent to the fiber part
-      of `FunctorToData`
-- [ ] Construct `sectionToFunctorTo : SectionData G F → (D ⥤ Grothendieck F)`
-      using composition with `pre`
-- [ ] Prove the equivalence `(D ⥤ Grothendieck F) ≃ Σ baseFunc, SectionData
-      baseFunc F`
-- [ ] Document the factorization interpretation
+- [x] Define `SectionData F` for sections of `forget F : Grothendieck F ⥤ C`
+      (intrinsic definition, no incoming functor parameter)
+- [x] Prove `FunctorToData F ≃ Σ (baseFunc : D ⥤ C), SectionData (baseFunc ⋙ F)`
+      via `FunctorToData.equivSigmaSectionData`
+- [x] Construct `SectionData.toFunctor : SectionData F → (C ⥤ Grothendieck F)`
+- [x] Define `FunctorToData.toFunctorViaPre` showing explicit factorization
+      via `sec.toFunctor ⋙ pre F baseFunc`
+- [x] Prove `functorTo F data = toFunctorViaPre F baseFunc sec`
 
 ### Phase 2: Covariant FunctorBetween refactoring
 
@@ -177,6 +194,9 @@ All of the above applies to `GrothendieckContra'` with the following changes:
 - [x] Define `LaxNatTransData.id` and `LaxNatTransData.comp` for composition
 - [x] Prove that `FunctorBetweenData G F` decomposes as base functor plus
       lax natural transformation via `FunctorBetweenData.equivSigmaLaxNatTrans`
+- [x] Define `LaxFunctorCat C` wrapper type with category instance for
+      lax morphisms
+- [x] Implement embedding `natToLaxFunctor : (C ⥤ Cat) ⥤ LaxFunctorCat C`
 - [ ] Show that the decomposition commutes with `pre`
 
 ### Phase 3: Contravariant versions
