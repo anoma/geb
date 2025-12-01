@@ -339,3 +339,56 @@ morphisms go in the opposite direction:
 - A morphism `f : a → b` in the base category
 - Becomes a morphism from `F(b) → F(a)` in the contravariant image
 - Pay careful attention to argument order when calling morphism mappings
+
+## Session Continuity
+
+For long-running or complex work that may span multiple sessions, use the
+`.session` directory to preserve context:
+
+### When to Use Session Documentation
+
+- Working on multi-phase implementations
+- Complex mathematical analysis requiring deep thought
+- Design work that needs to be preserved across compactions
+- Any task where losing context would require significant re-exploration
+
+### How to Use
+
+1. Create documentation in `.session/<topic-name>.md`
+2. Include:
+   - Overview of the problem/task
+   - Analysis and conclusions reached
+   - Implementation plan with phases
+   - Status checkboxes for tracking progress
+   - Key lemmas or code patterns identified
+
+### File Format
+
+```markdown
+# Topic Name
+
+## Overview
+Brief description of the work.
+
+## Analysis
+Detailed analysis, including any "ultrathink" reasoning.
+
+## Implementation Plan
+### Phase 1: ...
+### Phase 2: ...
+
+## Key Insights
+- Important discoveries
+- Code patterns to use
+
+## Status
+- [x] Completed items
+- [ ] Pending items
+```
+
+### Benefits
+
+- Survives context window compactions
+- Can be resumed in new sessions
+- Provides documentation for future reference
+- Enables incremental progress on complex tasks
