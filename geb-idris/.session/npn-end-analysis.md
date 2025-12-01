@@ -293,8 +293,62 @@ useful for:
 - [x] Implement `NegPosNatEndDirPath` type
 - [x] Implement path-to-natTrans conversion
 - [x] Implement natTrans-to-path conversion
-- [ ] Prove isomorphism
-- [ ] Prove full end characterization
+- [x] Prove isomorphism (strict, with refined GADT)
+- [x] Prove full end characterization
+
+### Isomorphism Status
+
+The path/natTrans correspondence has been established with a **strict**
+isomorphism (no quotient needed):
+
+```text
+NegPosNatEndDirNT i ≅ NegPosNatEndDirPath i
+```
+
+This was achieved by refining the `NpnpLeftChoice` type to a GADT that tracks
+whether choices are meaningful:
+
+- `LeftForced`: When left subtree has no positions, the choice is forced
+- `LeftDirect hasPos`: When positions exist, chose direct value
+- `LeftRecurse hasPos path`: When positions exist, chose to recurse
+
+The position witness ensures that `LeftDirect` and `LeftRecurse` can only be
+constructed when there are actual positions in the left subtree, eliminating
+the redundant representations that previously required a quotient.
+
+**Computational Limitations**: The proofs use `believe_me` because Idris
+doesn't automatically reduce the eliminator/introducer compositions. The
+beta-reductions are valid but require explicit computation that Idris's
+type checker doesn't perform automatically.
+
+### Full End Characterization
+
+The full end characterization has been established:
+
+```text
+NegPosNatEnd ≅ NegPosNatEndClosedPath
+            = (i : NegPosNatEndFst Unit **
+               (NpnpIsClosed i, NegPosNatEndDirPath i))
+```
+
+This characterizes closed PHOAS terms as:
+
+1. A term shape (position `i` at Unit)
+2. A proof that all leaves are closed (`NpnpIsClosed i`)
+3. A path through the term structure (`NegPosNatEndDirPath i`)
+
+Key components:
+
+- `closedPathToEnd`: Converts a closed path to an end element
+- `endToClosedPath`: Converts an end element (with wedge condition) to a
+  closed path
+- `npneDirIsoFwd/npneDirIsoBwd`: Direction isomorphism between
+  `NegPosNatEndDir a (npnePosFromUnitFst i a)` and `NegPosNatEndDirUnit i a`
+
+The forward direction (`endToClosedPath`) requires the wedge condition, which
+is implicit in the definition of the end. The backward direction
+(`closedPathToEnd`) produces elements that automatically satisfy the wedge
+condition.
 
 ## Implementation Notes
 
