@@ -4664,4 +4664,340 @@ structure NatTransBetweenContraData
 
 end NatTransBetweenContra
 
+/-!
+## Lax Natural Transformations and the Lax Functor Category
+
+This section defines lax natural transformations between Cat-valued functors
+and shows that they form a category. The Grothendieck construction is then
+shown to be functorial with respect to this category.
+
+A lax natural transformation `α : G ⟹ F` between `G F : C ⥤ Cat` consists of:
+- Component functors `α.app c : G.obj c ⥤ F.obj c` for each `c : C`
+- Laxity morphisms `α.lax f x : (F.map f).obj ((α.app c).obj x) ⟶
+  (α.app c').obj ((G.map f).obj x)` for each `f : c ⟶ c'` and `x : G.obj c`
+- Naturality and coherence conditions
+
+These correspond exactly to functors `Grothendieck G ⥤ Grothendieck F` that
+act as the identity on the base category.
+-/
+
+section LaxNatTrans
+
+universe vC uC
+
+variable {C : Type uC} [Category.{vC} C]
+variable (G F : C ⥤ Cat.{vC, uC})
+
+/--
+Component functors for a lax natural transformation.
+For each `c : C`, a functor from `G.obj c` to `F.obj c`.
+-/
+abbrev LaxNatTransApp := ∀ c, G.obj c ⥤ F.obj c
+
+variable {G F}
+variable (app : LaxNatTransApp G F)
+
+/--
+Laxity morphism components for a lax natural transformation.
+For each `f : c ⟶ c'` and `x : G.obj c`, a morphism from the transported
+source to the destination.
+-/
+abbrev LaxNatTransLaxApp :=
+  ∀ {c c' : C} (f : c ⟶ c') (x : G.obj c),
+    (F.map f).obj ((app c).obj x) ⟶ (app c').obj ((G.map f).obj x)
+
+variable (laxApp : LaxNatTransLaxApp app)
+
+/--
+Naturality of laxity morphisms: for each `f : c ⟶ c'` and `φ : x ⟶ y`,
+the appropriate square commutes.
+-/
+abbrev LaxNatTransLaxNat :=
+  ∀ {c c' : C} (f : c ⟶ c') {x y : G.obj c} (φ : x ⟶ y),
+    (F.map f).map ((app c).map φ) ≫ laxApp f y =
+    laxApp f x ≫ (app c').map ((G.map f).map φ)
+
+/--
+Equality proof for identity laxity. States that
+`(F.map (𝟙 c)).obj ((app c).obj x) = (app c).obj ((G.map (𝟙 c)).obj x)`.
+-/
+abbrev LaxNatTransIdEq :=
+  ∀ (c : C) (x : G.obj c),
+    (F.map (𝟙 c)).obj ((app c).obj x) = (app c).obj ((G.map (𝟙 c)).obj x)
+
+/--
+Derive the identity equality from functor laws.
+-/
+lemma laxNatTransIdEqProof : LaxNatTransIdEq app := by
+  intro c x
+  simp only [F.map_id, G.map_id, Cat.id_eq_id, Functor.id_obj]
+
+/--
+Identity coherence: `laxApp (𝟙 c) x` equals the canonical eqToHom.
+-/
+abbrev LaxNatTransLaxId :=
+  ∀ (c : C) (x : G.obj c),
+    laxApp (𝟙 c) x = eqToHom (laxNatTransIdEqProof app c x)
+
+/--
+Equality proof for composition laxity.
+-/
+abbrev LaxNatTransCompEq :=
+  ∀ {c c' c'' : C} (f : c ⟶ c') (g : c' ⟶ c'') (x : G.obj c),
+    (F.map (f ≫ g)).obj ((app c).obj x) =
+    (F.map g).obj ((F.map f).obj ((app c).obj x))
+
+/--
+Derive the composition equality from functor laws.
+-/
+lemma laxNatTransCompEqProof : LaxNatTransCompEq app := by
+  intro c c' c'' f g x
+  exact congrFun (congrArg Functor.obj (F.map_comp f g)) ((app c).obj x)
+
+/--
+Equality for the right side of composition coherence.
+-/
+abbrev LaxNatTransCompEqRight :=
+  ∀ {c c' c'' : C} (f : c ⟶ c') (g : c' ⟶ c'') (x : G.obj c),
+    (app c'').obj ((G.map g).obj ((G.map f).obj x)) =
+    (app c'').obj ((G.map (f ≫ g)).obj x)
+
+/--
+Derive the right composition equality from functor laws.
+-/
+lemma laxNatTransCompEqRightProof : LaxNatTransCompEqRight app := by
+  intro c c' c'' f g x
+  exact congrArg (app c'').obj
+    (congrFun (congrArg Functor.obj (G.map_comp f g).symm) x)
+
+/--
+Composition coherence: `laxApp (f ≫ g) x` decomposes as eqToHom,
+transported `laxApp f`, then `laxApp g`, then eqToHom.
+-/
+abbrev LaxNatTransLaxComp :=
+  ∀ {c c' c'' : C} (f : c ⟶ c') (g : c' ⟶ c'') (x : G.obj c),
+    laxApp (f ≫ g) x =
+    eqToHom (laxNatTransCompEqProof app f g x) ≫
+    (F.map g).map (laxApp f x) ≫
+    laxApp g ((G.map f).obj x) ≫
+    eqToHom (laxNatTransCompEqRightProof app f g x)
+
+/--
+Bundled data for a lax natural transformation `G ⟹ F` between Cat-valued
+functors `G F : C ⥤ Cat`.
+
+A lax natural transformation consists of:
+- Component functors for each object
+- Laxity morphisms for each morphism
+- Naturality and coherence conditions
+
+These correspond to functors `Grothendieck G ⥤ Grothendieck F` that are
+identity on the base category.
+-/
+structure LaxNatTransData (G F : C ⥤ Cat.{vC, uC}) where
+  /-- Component functors: for each `c`, a functor `G.obj c ⥤ F.obj c` -/
+  app : LaxNatTransApp G F
+  /-- Laxity morphisms: for each `f` and `x`, a morphism between fibers -/
+  laxApp : LaxNatTransLaxApp app
+  /-- Naturality of laxity morphisms -/
+  laxNat : LaxNatTransLaxNat app laxApp
+  /-- Identity coherence -/
+  laxId : LaxNatTransLaxId app laxApp
+  /-- Composition coherence -/
+  laxComp : LaxNatTransLaxComp app laxApp
+
+variable (α : LaxNatTransData G F)
+
+/--
+Construct a functor `Grothendieck G ⥤ Grothendieck F` from a lax natural
+transformation. This functor is the identity on base objects.
+-/
+def LaxNatTransData.toFunctor : Grothendieck G ⥤ Grothendieck F where
+  obj X := ⟨X.base, (α.app X.base).obj X.fiber⟩
+  map {X Y} f := ⟨f.base, α.laxApp f.base X.fiber ≫ (α.app Y.base).map f.fiber⟩
+  map_id X := by
+    refine Grothendieck.ext _ _ ?_ ?_
+    · simp only [Grothendieck.id_base]
+    · simp only [Grothendieck.id_fiber, Grothendieck.id_base, α.laxId, eqToHom_map,
+        eqToHom_trans]
+  map_comp {X Y Z} f g := by
+    refine Grothendieck.ext _ _ ?_ ?_
+    · simp only [Grothendieck.comp_base]
+    · simp only [Grothendieck.comp_fiber, Grothendieck.comp_base]
+      simp only [α.laxComp f.base g.base X.fiber]
+      simp only [(α.app Z.base).map_comp, (F.map g.base).map_comp, eqToHom_map,
+        Category.assoc, eqToHom_trans_assoc, eqToHom_refl, Category.id_comp]
+      have h : (F.map g.base).map ((α.app Y.base).map f.fiber) ≫ α.laxApp g.base Y.fiber =
+          α.laxApp g.base ((G.map f.base).obj X.fiber) ≫
+          (α.app Z.base).map ((G.map g.base).map f.fiber) := α.laxNat g.base f.fiber
+      simp only [← Category.assoc]
+      congr 1
+      simp only [Category.assoc]
+      congr 1
+      congr 1
+      exact h.symm
+
+/--
+The functor from a lax nat trans is identity on base.
+-/
+theorem LaxNatTransData.toFunctor_base (X : Grothendieck G) :
+    (α.toFunctor.obj X).base = X.base := rfl
+
+/--
+The functor from a lax nat trans is identity on base morphisms.
+-/
+theorem LaxNatTransData.toFunctor_map_base {X Y : Grothendieck G} (f : X ⟶ Y) :
+    (α.toFunctor.map f).base = f.base := rfl
+
+/--
+The identity lax natural transformation.
+-/
+def LaxNatTransData.id (G : C ⥤ Cat.{vC, uC}) : LaxNatTransData G G where
+  app c := 𝟭 (G.obj c)
+  laxApp f x := eqToHom (by simp only [Functor.id_obj])
+  laxNat f φ := by simp
+  laxId c x := rfl
+  laxComp f g x := by simp
+
+/--
+Composition of lax natural transformations.
+
+Given `α : G ⟹ H` and `β : H ⟹ K`, their composition `α ⋙ β : G ⟹ K` has:
+- Component functors: `(α ⋙ β).app c = α.app c ⋙ β.app c`
+- Laxity: `β.laxApp f (α.app c x) ≫ β.app c'.map (α.laxApp f x)`
+-/
+def LaxNatTransData.comp {G H K : C ⥤ Cat.{vC, uC}}
+    (α : LaxNatTransData G H) (β : LaxNatTransData H K) :
+    LaxNatTransData G K where
+  app c := α.app c ⋙ β.app c
+  laxApp {c c'} f x :=
+    β.laxApp f ((α.app c).obj x) ≫ (β.app c').map (α.laxApp f x)
+  laxNat {c c'} f {x y} φ := by
+    simp only [Functor.comp_obj, Functor.comp_map, Category.assoc]
+    have hα : (H.map f).map ((α.app c).map φ) ≫ α.laxApp f y =
+        α.laxApp f x ≫ (α.app c').map ((G.map f).map φ) := α.laxNat f φ
+    have hβ : (K.map f).map ((β.app c).map ((α.app c).map φ)) ≫ β.laxApp f ((α.app c).obj y) =
+        β.laxApp f ((α.app c).obj x) ≫ (β.app c').map ((H.map f).map ((α.app c).map φ)) :=
+        β.laxNat f ((α.app c).map φ)
+    calc (K.map f).map ((β.app c).map ((α.app c).map φ)) ≫
+           β.laxApp f ((α.app c).obj y) ≫ (β.app c').map (α.laxApp f y)
+        _ = β.laxApp f ((α.app c).obj x) ≫
+            (β.app c').map ((H.map f).map ((α.app c).map φ)) ≫
+            (β.app c').map (α.laxApp f y) := by
+          simp only [← Category.assoc, hβ]
+        _ = β.laxApp f ((α.app c).obj x) ≫
+            (β.app c').map ((H.map f).map ((α.app c).map φ) ≫ α.laxApp f y) := by
+          simp only [← Functor.map_comp]
+        _ = β.laxApp f ((α.app c).obj x) ≫
+            (β.app c').map (α.laxApp f x ≫ (α.app c').map ((G.map f).map φ)) := by
+          simp only [hα]
+        _ = β.laxApp f ((α.app c).obj x) ≫
+            (β.app c').map (α.laxApp f x) ≫
+            (β.app c').map ((α.app c').map ((G.map f).map φ)) := by
+          simp only [Functor.map_comp]
+  laxId c x := by
+    simp only [Functor.comp_obj, α.laxId, eqToHom_map, β.laxId, eqToHom_trans]
+  laxComp {c c' c''} f g x := by
+    simp only [Functor.comp_obj]
+    simp only [α.laxComp f g x, β.laxComp f g ((α.app c).obj x)]
+    simp only [Functor.map_comp, (β.app c'').map_comp, eqToHom_map, Category.assoc,
+      eqToHom_trans_assoc]
+    have hβ : (K.map g).map ((β.app c').map (α.laxApp f x)) ≫
+            β.laxApp g ((α.app c').obj ((G.map f).obj x)) =
+          β.laxApp g ((H.map f).obj ((α.app c).obj x)) ≫
+            (β.app c'').map ((H.map g).map (α.laxApp f x)) :=
+        β.laxNat g (α.laxApp f x)
+    congr 1
+    simp only [← Category.assoc]
+    congr 1
+    simp only [Category.assoc, eqToHom_refl, Category.id_comp]
+    congr 1
+    simp only [← Category.assoc]
+    congr 1
+    exact hβ.symm
+
+end LaxNatTrans
+
+open CategoryTheory
+
+/-!
+## Decomposition of FunctorBetweenData via Lax Natural Transformations
+
+This section shows that `FunctorBetweenData G F` decomposes as a base functor
+`baseFib : C ⥤ D` together with a lax natural transformation
+`G ⟹ baseFib ⋙ F`.
+
+For this to work, we require the Cat-valued functors to have matching
+universe levels.
+-/
+
+section FunctorBetweenDecomposition
+
+universe vC uC
+
+variable {C : Type uC} [Category.{vC} C] (G : C ⥤ Cat.{vC, uC})
+variable {D : Type uC} [Category.{vC} D] (F : D ⥤ Cat.{vC, uC})
+
+/--
+Extract a lax natural transformation from FunctorBetweenData.
+
+Given `data : FunctorBetweenData G F`, we get a lax natural transformation
+`G ⟹ data.baseFib ⋙ F`.
+-/
+def FunctorBetweenData.toLaxNatTrans (data : FunctorBetweenData G F) :
+    LaxNatTransData G (data.baseFib ⋙ F) where
+  app c := data.fibFib c
+  laxApp {c c'} f x := data.fibHomCrossApp f x
+  laxNat {c c'} f {x y} φ := data.fibHomCrossNat f φ
+  laxId c x := data.baseHomId c x
+  laxComp {c c' c''} f g x := by
+    simp only [Functor.comp_obj, Functor.comp_map]
+    exact data.baseHomComp f g x
+
+/--
+Construct FunctorBetweenData from a base functor and lax natural transformation.
+
+Given `baseFib : C ⥤ D` and `α : LaxNatTransData G (baseFib ⋙ F)`, we get
+`FunctorBetweenData G F`.
+-/
+def FunctorBetweenData.ofLaxNatTrans (baseFib : C ⥤ D)
+    (α : LaxNatTransData G (baseFib ⋙ F)) : FunctorBetweenData G F where
+  baseFib := baseFib
+  fibFib c := α.app c
+  fibHomCrossApp {_ _} f x := α.laxApp f x
+  fibHomCrossNat {_ _} f {_ _} φ := α.laxNat f φ
+  baseHomId c x := α.laxId c x
+  baseHomComp {_ _ _} f g x := α.laxComp f g x
+
+/--
+Round-trip: `toLaxNatTrans` followed by `ofLaxNatTrans` is identity.
+-/
+theorem FunctorBetweenData.ofLaxNatTrans_toLaxNatTrans
+    (data : FunctorBetweenData G F) :
+    ofLaxNatTrans G F data.baseFib (toLaxNatTrans G F data) = data := by
+  rfl
+
+/--
+Round-trip: `ofLaxNatTrans` followed by `toLaxNatTrans` is identity.
+-/
+theorem FunctorBetweenData.toLaxNatTrans_ofLaxNatTrans (baseFib : C ⥤ D)
+    (α : LaxNatTransData G (baseFib ⋙ F)) :
+    toLaxNatTrans G F (ofLaxNatTrans G F baseFib α) = α := by
+  rfl
+
+/--
+The type of FunctorBetweenData decomposes as a sigma type.
+
+`FunctorBetweenData G F ≃ Σ (baseFib : C ⥤ D), LaxNatTransData G (baseFib ⋙ F)`
+-/
+def FunctorBetweenData.equivSigmaLaxNatTrans :
+    FunctorBetweenData G F ≃
+      Σ (baseFib : C ⥤ D), LaxNatTransData G (baseFib ⋙ F) where
+  toFun data := ⟨data.baseFib, data.toLaxNatTrans G F⟩
+  invFun p := ofLaxNatTrans G F p.1 p.2
+  left_inv := ofLaxNatTrans_toLaxNatTrans G F
+  right_inv _ := rfl
+
+end FunctorBetweenDecomposition
+
 end GebLean

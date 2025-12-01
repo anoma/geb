@@ -50,3 +50,32 @@ same data.
 **Alternatives considered**: Could have tried to make the two representations
 definitionally equal via type synonyms, but the sigma-type packaging makes this
 impractical. An explicit equivalence is cleaner.
+
+### 2025-11-30 Grothendieck Functor Factorization Strategy
+
+**Decision**: Factor functors into/between Grothendieck constructions via
+the `pre` functor and related structures (sections, lax natural
+transformations).
+
+**Rationale**:
+
+1. **FunctorTo factorization**: A functor `E ⥤ Grothendieck F` factors as
+   a choice of base functor `E ⥤ C` plus a section of the pulled-back
+   Grothendieck construction. This separates "which base point" from
+   "which fiber element" and leverages mathlib's `pre` functor.
+
+2. **FunctorFrom**: No factorization recommended. The current structure
+   (fiber functors + coherent natural transformations) is already atomic.
+   There is no dual "pushforward" operation to `pre`.
+
+3. **FunctorBetween factorization**: A functor `Grothendieck G ⥤ Grothendieck F`
+   factors as a base functor `C ⥤ D` plus a lax natural transformation
+   `G ⟹ baseFib ⋙ F`. The lax transformation captures the "same base"
+   case, and composition with `pre` handles the base change.
+
+**Alternatives considered**:
+
+- Keeping current monolithic structures: simpler but less modular
+- Different factorization orderings: the chosen order (base first, then
+  fiber data) aligns with the mathematical interpretation and leverages
+  existing `pre` infrastructure
