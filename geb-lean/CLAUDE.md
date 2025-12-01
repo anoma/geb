@@ -133,9 +133,16 @@ When making changes to Lean code:
   something is "complex" or "complicated"; readers can decide what they
   consider complex.  Never call code "difficult" or refer to any aspect of
   it as a "challenge"; that is also for readers to decide.
-- Do not use all-caps words unless they're acronyms.
-- Don't write "TODO" comments or summaries of completed or future work in the
-  code itself; track to-dos/future work below in `CLAUDE.md` if necessary
+- Never use all-caps words unless they're acronyms.
+- Never write "TODO" comments or summaries of completed or future work in the
+  code itself; track to-dos/future work in the `.session/` directory.
+  Never write anything else in the code that relates to past states of
+  the code, to currently-in-progress work or problems, or future work;
+  all that too must be restricted to the `.session/` directory only.
+  Comments and variables in the code itself should all be in forms which
+  would be suitable for a complete, released project.  Never write that
+  code is going to "try" something; we should never commit code until it
+  has passed the stage of being "tried" and is confirmed to work.
 - Don't write comments which state in natural language what the
   code following them does.  We can assume that readers of our code
   are coders and can understand the code itself.  Comments can sometimes

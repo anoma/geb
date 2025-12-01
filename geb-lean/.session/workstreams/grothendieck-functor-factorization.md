@@ -75,7 +75,8 @@ def FunctorToData.toFunctorViaPre
     (baseFunc : D ⥤ C) (sec : SectionData (baseFunc ⋙ F)) : D ⥤ Grothendieck F :=
   sec.toFunctor ⋙ Grothendieck.pre F baseFunc
 
-theorem FunctorToData.functorTo_eq_toFunctorViaPre (data : FunctorToData F (D := D)) :
+theorem FunctorToData.functorTo_eq_toFunctorViaPre
+  (data : FunctorToData F (D := D)) :
     functorTo F data = FunctorToData.toFunctorViaPre F data.baseFunc
         (FunctorToData.toSigmaSectionData F data).2
 ```
