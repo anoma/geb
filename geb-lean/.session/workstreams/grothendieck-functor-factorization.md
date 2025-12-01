@@ -2,7 +2,7 @@
 
 ## Status
 
-Active
+Nearly Complete (Phases 1-3 done, Phase 4 integration work optional)
 
 ## Context
 
@@ -197,7 +197,8 @@ All of the above applies to `GrothendieckContra'` with the following changes:
 - [x] Define `LaxFunctorCat C` wrapper type with category instance for
       lax morphisms
 - [x] Implement embedding `natToLaxFunctor : (C ⥤ Cat) ⥤ LaxFunctorCat C`
-- [ ] Show that the decomposition commutes with `pre`
+- [x] Show that the decomposition commutes with `pre` (covariant)
+      via `FunctorBetweenData.toFunctorViaPre`
 
 ### Phase 3: Contravariant versions
 
@@ -210,12 +211,20 @@ All of the above applies to `GrothendieckContra'` with the following changes:
 - [x] Prove composition laws (`comp_assoc`, `id_comp`, `comp_id`)
 - [x] Define `OplaxFunctorCat C` wrapper type with category instance for
       oplax morphisms
+- [x] Show that the decomposition commutes with `pre` (contravariant)
+      via `FunctorBetweenContraData.toFunctorViaPre`
 
 ### Phase 4: Integration and documentation
 
 - [ ] Update existing code to use factorized forms where appropriate
-- [ ] Add examples demonstrating the factorization
-- [ ] Document the mathematical interpretation
+      (Potential candidates: `TwArrPresheaf.lean` constructions using identity
+      base functor could use `SectionDataContra` directly)
+- [x] Add examples demonstrating the factorization
+      (Theorems `toFunctorViaPre_obj`, `toFunctorViaPre_map` show definitional
+      equalities; `toFunctorViaPre_eq_functorBetweenFibFunc_obj` shows
+      relationship to fiber functors)
+- [x] Document the mathematical interpretation
+      (See Mathematical Background section in this document)
 
 ## Mathematical Background
 

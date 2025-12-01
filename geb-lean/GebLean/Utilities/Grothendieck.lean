@@ -5497,6 +5497,44 @@ def FunctorBetweenData.equivSigmaLaxNatTrans :
   left_inv := ofLaxNatTrans_toLaxNatTrans G F
   right_inv _ := rfl
 
+/--
+Construct the functor `Grothendieck G ⥤ Grothendieck F` via the lax-nat-trans-pre
+factorization.
+
+Given `data : FunctorBetweenData G F`, this constructs the functor as:
+`(data.toLaxNatTrans G F).toFunctor ⋙ Grothendieck.pre F data.baseFib`
+
+This makes explicit that functors between Grothendieck constructions factor through
+the pullback construction via `pre`.
+-/
+def FunctorBetweenData.toFunctorViaPre (data : FunctorBetweenData G F) :
+    Grothendieck G ⥤ Grothendieck F :=
+  (data.toLaxNatTrans G F).toFunctor ⋙ Grothendieck.pre F data.baseFib
+
+/--
+The object map of `toFunctorViaPre`.
+-/
+theorem FunctorBetweenData.toFunctorViaPre_obj (data : FunctorBetweenData G F)
+    (X : Grothendieck G) :
+    (data.toFunctorViaPre).obj X = ⟨data.baseFib.obj X.base, (data.fibFib X.base).obj X.fiber⟩ :=
+  rfl
+
+/--
+The morphism map of `toFunctorViaPre`.
+-/
+theorem FunctorBetweenData.toFunctorViaPre_map (data : FunctorBetweenData G F)
+    {X Y : Grothendieck G} (f : X ⟶ Y) :
+    (data.toFunctorViaPre).map f =
+      ⟨data.baseFib.map f.base,
+       data.fibHomCrossApp f.base X.fiber ≫ (data.fibFib Y.base).map f.fiber⟩ := rfl
+
+/--
+The factored functor agrees with `functorBetweenFibFunc` on objects within fibers.
+-/
+theorem FunctorBetweenData.toFunctorViaPre_eq_functorBetweenFibFunc_obj
+    (data : FunctorBetweenData G F) (c : C) (x : G.obj c) :
+    (data.toFunctorViaPre).obj ⟨c, x⟩ = (functorBetweenFibFunc G F data c).obj x := rfl
+
 end FunctorBetweenDecomposition
 
 /-!
@@ -5722,7 +5760,129 @@ def OplaxNatTransData.comp {G' H' K' : Cᵒᵖ' ⥤ Cat.{vC, uC}}
     congr 1
     exact β.oplaxNat f (α.oplaxApp g x'')
 
+/--
+Construct a functor `GrothendieckContra' G' ⥤ GrothendieckContra' F'` from an oplax
+natural transformation. This functor is the identity on base objects.
+-/
+def OplaxNatTransData.toFunctor (α : OplaxNatTransData G' F') :
+    GrothendieckContra' G' ⥤ GrothendieckContra' F' where
+  obj X := ⟨X.base, (α.app X.base).obj X.fiber⟩
+  map {X Y} f := ⟨f.base, (α.app X.base).map f.fiber ≫ α.oplaxApp f.base Y.fiber⟩
+  map_id X := by
+    refine GrothendieckContra'.ext _ _ ?_ ?_
+    · rfl
+    · change ((α.app X.base).map (GrothendieckContra'.id (F' := G') X).fiber ≫
+        α.oplaxApp (GrothendieckContra'.id (F' := G') X).base X.fiber) ≫ eqToHom _ =
+        (GrothendieckContra'.id (F' := F') ⟨X.base, (α.app X.base).obj X.fiber⟩).fiber
+      simp only [GrothendieckContra'.id_fiber, GrothendieckContra'.id_base,
+        α.oplaxId, eqToHom_map, eqToHom_trans]
+  map_comp {X Y Z} f g := by
+    refine GrothendieckContra'.ext _ _ ?_ ?_
+    · rfl
+    · change ((α.app X.base).map (GrothendieckContra'.comp f g).fiber ≫
+        α.oplaxApp (GrothendieckContra'.comp f g).base Z.fiber) ≫ eqToHom _ =
+        (GrothendieckContra'.comp
+          (⟨f.base, (α.app X.base).map f.fiber ≫ α.oplaxApp f.base Y.fiber⟩ :
+            GrothendieckContra'.Hom
+              ⟨X.base, (α.app X.base).obj X.fiber⟩ ⟨Y.base, (α.app Y.base).obj Y.fiber⟩)
+          (⟨g.base, (α.app Y.base).map g.fiber ≫ α.oplaxApp g.base Z.fiber⟩ :
+            GrothendieckContra'.Hom
+              ⟨Y.base, (α.app Y.base).obj Y.fiber⟩ ⟨Z.base, (α.app Z.base).obj Z.fiber⟩)).fiber
+      simp only [GrothendieckContra'.comp_fiber, GrothendieckContra'.comp_base]
+      simp only [α.oplaxComp f.base g.base Z.fiber]
+      simp only [(α.app X.base).map_comp, (F'.map f.base).map_comp, eqToHom_map,
+        Category.assoc, eqToHom_trans_assoc, eqToHom_refl, Category.id_comp]
+      slice_lhs 2 3 => rw [α.oplaxNat f.base g.fiber]
+      simp only [Category.assoc, Category.comp_id]
+
+/--
+The functor from an oplax nat trans is identity on base.
+-/
+@[simp]
+theorem OplaxNatTransData.toFunctor_obj_base (α : OplaxNatTransData G' F')
+    (X : GrothendieckContra' G') :
+    (α.toFunctor.obj X).base = X.base := by
+  unfold OplaxNatTransData.toFunctor
+  rfl
+
+/--
+The functor from an oplax nat trans is identity on base morphisms.
+-/
+@[simp]
+theorem OplaxNatTransData.toFunctor_map_base (α : OplaxNatTransData G' F')
+    {X Y : GrothendieckContra' G'} (f : X ⟶ Y) :
+    (α.toFunctor.map f).base = f.base := by
+  unfold OplaxNatTransData.toFunctor
+  rfl
+
 end OplaxNatTrans
+
+/-!
+## Contravariant FunctorBetween Decomposition via Pre
+
+This section shows that `FunctorBetweenContraData` decomposes via oplax natural
+transformations and the `pre` functor.
+-/
+
+section FunctorBetweenContraDecomposition
+
+universe vC' uC'
+
+variable {C : Type uC'} [Category.{vC'} C] (G' : Cᵒᵖ' ⥤ Cat.{vC', uC'})
+variable {D : Type uC'} [Category.{vC'} D] (F' : Dᵒᵖ' ⥤ Cat.{vC', uC'})
+
+/--
+Convert a `FunctorBetweenContraData` to an `OplaxNatTransData` for the composite
+functor `functorOp'Obj baseFib ⋙ F'`.
+
+This shows that functor data between contravariant Grothendieck constructions
+decomposes into a base functor and an oplax natural transformation.
+-/
+def FunctorBetweenContraData.toOplaxNatTrans (data : FunctorBetweenContraData G' F') :
+    OplaxNatTransData G' (functorOp'Obj data.baseFib ⋙ F') where
+  app c := data.fibFib c
+  oplaxApp {c c'} f x' := data.fibHomCrossApp f x'
+  oplaxNat {c c'} f {x' y'} φ := data.fibHomCrossNat f φ
+  oplaxId c x := data.baseHomId c x
+  oplaxComp {c c' c''} f g x'' := by
+    simp only [Functor.comp_obj, Functor.comp_map]
+    have h := data.baseHomComp f g x''
+    simp only [functorOp'Obj] at h ⊢
+    rw [← h]
+    simp only [eqToHom_trans_assoc, eqToHom_refl, Category.id_comp]
+
+/--
+Construct the functor `GrothendieckContra' G' ⥤ GrothendieckContra' F'` via the
+oplax-pre factorization.
+
+Given `FunctorBetweenContraData G' F'`, we factor the functor as:
+`toOplaxNatTrans.toFunctor ⋙ GrothendieckContra'.pre F' baseFib`
+
+This makes the `pre` functor central to the decomposition of functors between
+contravariant Grothendieck constructions.
+-/
+def FunctorBetweenContraData.toFunctorViaPre (data : FunctorBetweenContraData G' F') :
+    GrothendieckContra' G' ⥤ GrothendieckContra' F' :=
+  (data.toOplaxNatTrans G' F').toFunctor ⋙ GrothendieckContra'.pre F' data.baseFib
+
+/--
+The object map of `toFunctorViaPre`.
+-/
+theorem FunctorBetweenContraData.toFunctorViaPre_obj (data : FunctorBetweenContraData G' F')
+    (X : GrothendieckContra' G') :
+    (data.toFunctorViaPre G' F').obj X =
+      ⟨data.baseFib.obj X.base, (data.fibFib X.base).obj X.fiber⟩ := rfl
+
+/--
+The morphism map of `toFunctorViaPre`.
+-/
+theorem FunctorBetweenContraData.toFunctorViaPre_map (data : FunctorBetweenContraData G' F')
+    {X Y : GrothendieckContra' G'} (f : X ⟶ Y) :
+    (data.toFunctorViaPre G' F').map f =
+      ⟨data.baseFib.map f.base,
+       (data.fibFib X.base).map f.fiber ≫ data.fibHomCrossApp f.base Y.fiber⟩ := rfl
+
+end FunctorBetweenContraDecomposition
 
 /-!
 ## The Category of Contravariant Cat-Valued Functors with Oplax Natural Transformations
