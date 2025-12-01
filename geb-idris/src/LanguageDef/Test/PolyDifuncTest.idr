@@ -619,6 +619,487 @@ public export
 NegPosNatEndUnit : Type
 NegPosNatEndUnit = DPair (NegPosNatEndFst Unit) NegPosNatEndDirNT
 
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+---- Path characterization of natural transformations to `id` ----
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+
+-- The direction type at FZ position for NegPosMaybePP Unit (isomorphic to Void)
+public export
+NPNPPdirFZ : Type
+NPNPPdirFZ = NegPosMaybePPdir Unit FZ
+
+-- The direction type at FS FZ position for NegPosMaybePP Unit
+public export
+NPNPPdirFSFZ : Type
+NPNPPdirFSFZ = NegPosMaybePPdir Unit (FS FZ)
+
+-- The two canonical elements of the direction type at FS FZ
+public export
+NpnppDirLeft : NPNPPdirFSFZ
+NpnppDirLeft = (Left () ** \_ => ())
+
+public export
+NpnppDirRight : NPNPPdirFSFZ
+NpnppDirRight = (Right () ** voidF Unit)
+
+-- Type aliases for the recursive polynomial functors at FS FZ nodes
+public export
+NpnppRecLeftPF : (dm : NPNPPdirFSFZ -> NegPosNatEndFst Unit) -> PolyFunc
+NpnppRecLeftPF dm = NegPosNatEndDirUnitPF (dm NpnppDirLeft)
+
+public export
+NpnppRecRightPF : (dm : NPNPPdirFSFZ -> NegPosNatEndFst Unit) -> PolyFunc
+NpnppRecRightPF dm = NegPosNatEndDirUnitPF (dm NpnppDirRight)
+
+-- The full polynomial for the FS FZ case
+public export
+NpnppNodePF : (dm : NPNPPdirFSFZ -> NegPosNatEndFst Unit) -> PolyFunc
+NpnppNodePF dm = pfCoproductArena
+  (pfProductArena PFIdentityArena (NpnppRecLeftPF dm))
+  (NpnppRecRightPF dm)
+
+----------------------------------------------------------------------
+----------------------------------------------------------------------
+---- Combinator library for polynomial functor interpretation ----
+----------------------------------------------------------------------
+----------------------------------------------------------------------
+
+-- Instead of pattern matching on complex dependent types, we build
+-- eliminators that encapsulate the case analysis and provide properly-typed
+-- components to handlers. This is the "point-free" or combinator style.
+
+-- Eliminator for InterpPolyFunc of a coproduct arena.
+-- Given handlers for the left and right cases, dispatches appropriately.
+public export
+elimInterpPfCoproduct :
+  (p, q : PolyFunc) -> (x : Type) -> (r : Type) ->
+  (leftCase : (i : pfPos p) -> (pfDir {p} i -> x) -> r) ->
+  (rightCase : (j : pfPos q) -> (pfDir {p=q} j -> x) -> r) ->
+  InterpPolyFunc (pfCoproductArena p q) x -> r
+elimInterpPfCoproduct (ppos ** pdir) (qpos ** qdir) x r leftCase rightCase
+  (Left i ** dirFn) = leftCase i dirFn
+elimInterpPfCoproduct (ppos ** pdir) (qpos ** qdir) x r leftCase rightCase
+  (Right j ** dirFn) = rightCase j dirFn
+
+-- Eliminator for InterpPolyFunc of a product arena.
+-- The direction type is Either (pdir i) (qdir j), so we need handlers for
+-- when the caller provides a left direction vs a right direction.
+public export
+elimInterpPfProduct :
+  (p, q : PolyFunc) -> (x : Type) -> (r : Type) ->
+  (handler :
+    (i : pfPos p) -> (j : pfPos q) ->
+    (Either (pfDir {p} i) (pfDir {p=q} j) -> x) -> r) ->
+  InterpPolyFunc (pfProductArena p q) x -> r
+elimInterpPfProduct (ppos ** pdir) (qpos ** qdir) x r handler
+  ((i, j) ** dirFn) = handler i j dirFn
+
+-- Specialized eliminator for InterpPolyFunc of (pfProductArena PFIdentityArena q).
+-- The left position is Unit, so we ignore it. The left direction is also Unit,
+-- so `dirFn (Left ())` gives us an x directly.
+public export
+elimInterpPfProductId :
+  (q : PolyFunc) -> (x : Type) -> (r : Type) ->
+  (handler :
+    (j : pfPos q) ->
+    (getX : x) ->                        -- dirFn (Left ())
+    (recurse : pfDir {p=q} j -> x) ->    -- \d => dirFn (Right d)
+    r) ->
+  InterpPolyFunc (pfProductArena PFIdentityArena q) x -> r
+elimInterpPfProductId (qpos ** qdir) x r handler (((), j) ** dirFn) =
+  handler j (dirFn (Left ())) (\d => dirFn (Right d))
+
+-- Eliminator for the node polynomial functor interpretation.
+-- Combines the coproduct and product eliminators for our specific case.
+public export
+elimNpnppNodeInterp :
+  (dm : NPNPPdirFSFZ -> NegPosNatEndFst Unit) ->
+  (x : Type) -> (r : Type) ->
+  -- Handler for Left case: we get the recursive position, a direct x,
+  -- and a way to recurse into the left subtree
+  (leftCase :
+    (recLeftPos : pfPos (NpnppRecLeftPF dm)) ->
+    (getX : x) ->
+    (recurseLeft : pfDir {p=NpnppRecLeftPF dm} recLeftPos -> x) ->
+    r) ->
+  -- Handler for Right case: we get the recursive position and direction fn
+  (rightCase :
+    (recRightPos : pfPos (NpnppRecRightPF dm)) ->
+    (recurseRight : pfDir {p=NpnppRecRightPF dm} recRightPos -> x) ->
+    r) ->
+  InterpPolyFunc (NpnppNodePF dm) x -> r
+elimNpnppNodeInterp dm x r leftCase rightCase =
+  elimInterpPfCoproduct
+    (pfProductArena PFIdentityArena (NpnppRecLeftPF dm))
+    (NpnppRecRightPF dm)
+    x r
+    (\leftPos, dirFn =>
+      elimInterpPfProductId (NpnppRecLeftPF dm) x r
+        (\recLeftPos, getX, recurseLeft => leftCase recLeftPos getX recurseLeft)
+        (leftPos ** dirFn))
+    rightCase
+
+-- Introduction forms (constructors) for polynomial functor interpretations.
+-- These are the duals of the eliminators.
+
+-- Introduce a Left element in a coproduct arena interpretation.
+public export
+introInterpPfCoproductLeft :
+  (p, q : PolyFunc) -> (x : Type) ->
+  (i : pfPos p) -> (pfDir {p} i -> x) ->
+  InterpPolyFunc (pfCoproductArena p q) x
+introInterpPfCoproductLeft (ppos ** pdir) (qpos ** qdir) x i dirFn =
+  (Left i ** dirFn)
+
+-- Introduce a Right element in a coproduct arena interpretation.
+public export
+introInterpPfCoproductRight :
+  (p, q : PolyFunc) -> (x : Type) ->
+  (j : pfPos q) -> (pfDir {p=q} j -> x) ->
+  InterpPolyFunc (pfCoproductArena p q) x
+introInterpPfCoproductRight (ppos ** pdir) (qpos ** qdir) x j dirFn =
+  (Right j ** dirFn)
+
+-- Introduce an element in (pfProductArena PFIdentityArena q).
+-- Given a position in q, a direct x value, and a function for recursive dirs.
+public export
+introInterpPfProductId :
+  (q : PolyFunc) -> (x : Type) ->
+  (j : pfPos q) ->
+  (getX : x) ->
+  (recurse : pfDir {p=q} j -> x) ->
+  InterpPolyFunc (pfProductArena PFIdentityArena q) x
+introInterpPfProductId (qpos ** qdir) x j getX recurse =
+  (((), j) ** \d => case d of Left () => getX; Right rd => recurse rd)
+
+-- Introduction forms for the node polynomial functor.
+public export
+introNpnppNodeLeft :
+  (dm : NPNPPdirFSFZ -> NegPosNatEndFst Unit) ->
+  (x : Type) ->
+  (recLeftPos : pfPos (NpnppRecLeftPF dm)) ->
+  (getX : x) ->
+  (recurseLeft : pfDir {p=NpnppRecLeftPF dm} recLeftPos -> x) ->
+  InterpPolyFunc (NpnppNodePF dm) x
+introNpnppNodeLeft dm x recLeftPos getX recurseLeft =
+  introInterpPfCoproductLeft
+    (pfProductArena PFIdentityArena (NpnppRecLeftPF dm))
+    (NpnppRecRightPF dm)
+    x
+    ((), recLeftPos)
+    (\d => case d of Left () => getX; Right rd => recurseLeft rd)
+
+public export
+introNpnppNodeRight :
+  (dm : NPNPPdirFSFZ -> NegPosNatEndFst Unit) ->
+  (x : Type) ->
+  (recRightPos : pfPos (NpnppRecRightPF dm)) ->
+  (recurseRight : pfDir {p=NpnppRecRightPF dm} recRightPos -> x) ->
+  InterpPolyFunc (NpnppNodePF dm) x
+introNpnppNodeRight dm x recRightPos recurseRight =
+  introInterpPfCoproductRight
+    (pfProductArena PFIdentityArena (NpnppRecLeftPF dm))
+    (NpnppRecRightPF dm)
+    x
+    recRightPos
+    recurseRight
+
+-- A predicate asserting that a position has no PFVar nodes anywhere.
+-- A closed term is one where all leaves are PFCom FZ (closed leaves), not
+-- PFVar (open variable leaves).
+--
+-- Structure:
+-- - PFVar: No constructor - open terms are not closed
+-- - PFCom FZ: Closed (leaf with no variables)
+-- - PFCom (FS FZ): Closed if both children are closed
+public export
+data NpnpIsClosed : NegPosNatEndFst Unit -> Type where
+  IsClosedLeaf :
+    (dm : NPNPPdirFZ -> NegPosNatEndFst Unit) ->
+    NpnpIsClosed (InPFM (PFCom FZ) dm)
+  IsClosedNode :
+    (dm : NPNPPdirFSFZ -> NegPosNatEndFst Unit) ->
+    (leftClosed : NpnpIsClosed (dm NpnppDirLeft)) ->
+    (rightClosed : NpnpIsClosed (dm NpnppDirRight)) ->
+    NpnpIsClosed (InPFM (PFCom (FS FZ)) dm)
+
+-- A path through a term tree to a variable occurrence.  This is an
+-- inductive characterization of natural transformations from
+-- `NegPosNatEndDirUnit i` to the identity functor.
+--
+-- The structure mirrors `NegPosNatEndDirUnitPF`:
+-- - At a variable leaf (PFVar): there is exactly one path (PathVar)
+-- - At an FZ node: there is exactly one path (PathLeaf) - the trivial one
+-- - At an FS FZ node: we need a choice for the left branch and a path for
+--   the right branch
+--
+-- Note: Natural transformations from a coproduct to `id` require handling
+-- BOTH branches, so at each node we need:
+-- 1. For the left branch: either stop and extract `x`, or recurse
+-- 2. For the right branch: always recurse
+public export
+data NegPosNatEndDirPath : NegPosNatEndFst Unit -> Type where
+  -- At a variable leaf, there is exactly one path: extract the variable.
+  PathVar :
+    (dm : Void -> NegPosNatEndFst Unit) ->
+    NegPosNatEndDirPath (InPFM (PFVar ()) dm)
+  -- At an FZ node (zero/leaf), there is exactly one path: the trivial one.
+  -- (A nat trans from `const Void` to `id` is the absurd function.)
+  PathLeaf :
+    (dm : NPNPPdirFZ -> NegPosNatEndFst Unit) ->
+    NegPosNatEndDirPath (InPFM (PFCom FZ) dm)
+  -- At an FS FZ node, we need both a choice for left and a path for right.
+  PathNode :
+    (dm : NPNPPdirFSFZ -> NegPosNatEndFst Unit) ->
+    (leftChoice : Either () (NegPosNatEndDirPath (dm NpnppDirLeft))) ->
+    (rightPath : NegPosNatEndDirPath (dm NpnppDirRight)) ->
+    NegPosNatEndDirPath (InPFM (PFCom (FS FZ)) dm)
+
+-- Convert a path to the corresponding natural transformation.
+-- This is the forward direction of the isomorphism.
+--
+-- For each case, we need to understand the structure of
+-- `NegPosNatEndDirUnit i x`:
+-- - PFVar: No constructor in NpnpIsClosed, so this case is impossible
+-- - PFCom FZ: `InterpPolyFunc PFInitialArena x = Void`
+-- - PFCom (FS FZ): `InterpPolyFunc (pfCoproductArena ... recR) x`
+--                = (i : Either ((), posL) posR ** dirFn i -> x)
+--   where for Left ((), posL): dirFn = Either Unit (dirL posL) -> x
+--         for Right posR: dirFn = dirR posR -> x
+--
+-- We use the combinator-style eliminators to handle the complex dependent
+-- types without pattern matching.
+--
+-- Note: We require an NpnpIsClosed proof to ensure the term is closed.
+-- The PFVar case (open variable) is impossible for closed terms.
+public export
+closedPathToNatTrans : (i : NegPosNatEndFst Unit) ->
+  NpnpIsClosed i -> NegPosNatEndDirPath i -> NegPosNatEndDirNT i
+-- PFVar case is impossible - no NpnpIsClosed constructor for it
+closedPathToNatTrans (InPFM (PFVar ()) dm) closed (PathVar _) x _ impossible
+-- For leaf (FZ): the direction type is Void, so we use absurd.
+closedPathToNatTrans (InPFM (PFCom FZ) dm) (IsClosedLeaf _) (PathLeaf _) x
+    (ev ** _) =
+  void ev
+-- For node (FS FZ): use the combinator-style eliminator.
+closedPathToNatTrans (InPFM (PFCom (FS FZ)) dm)
+    (IsClosedNode _ leftCl rightCl) (PathNode _ lc rp) x dir =
+  elimNpnppNodeInterp dm x x
+    (\recLeftPos, getX, recurseLeft =>
+      case lc of
+        Left () => getX
+        Right leftPath =>
+          closedPathToNatTrans (dm NpnppDirLeft) leftCl leftPath x
+            (recLeftPos ** recurseLeft))
+    (\recRightPos, recurseRight =>
+      closedPathToNatTrans (dm NpnppDirRight) rightCl rp x
+        (recRightPos ** recurseRight))
+    dir
+
+-- The position type for the FS FZ case polynomial functor.
+-- This is an explicit type alias to help with unification.
+public export
+NpnppNodePos : (dm : NPNPPdirFSFZ -> NegPosNatEndFst Unit) -> Type
+NpnppNodePos dm = pfPos (NpnppNodePF dm)
+
+-- The left and right component polynomials of NpnppNodePF
+public export
+NpnppNodeLeftPF : (dm : NPNPPdirFSFZ -> NegPosNatEndFst Unit) -> PolyFunc
+NpnppNodeLeftPF dm = pfProductArena PFIdentityArena (NpnppRecLeftPF dm)
+
+-- Convert a right position to the node position type.
+-- Uses the polyInjR API which pattern-matches on both polynomials,
+-- forcing the type reduction that makes Left/Right work.
+public export
+npnppPosFromRight :
+  (dm : NPNPPdirFSFZ -> NegPosNatEndFst Unit) ->
+  pfPos (NpnppRecRightPF dm) ->
+  pfPos (NegPosNatEndDirUnitPF (InPFM (PFCom (FS FZ)) dm))
+npnppPosFromRight dm posR =
+  polyInjROnPos (NpnppNodeLeftPF dm) (NpnppRecRightPF dm) posR
+
+-- Convert a left position to the node position type.
+-- The left component is (Unit, pfPos (NpnppRecLeftPF dm)).
+public export
+npnppPosFromLeft :
+  (dm : NPNPPdirFSFZ -> NegPosNatEndFst Unit) ->
+  pfPos (NpnppRecLeftPF dm) ->
+  pfPos (NegPosNatEndDirUnitPF (InPFM (PFCom (FS FZ)) dm))
+npnppPosFromLeft dm posL =
+  polyInjLOnPos (NpnppNodeLeftPF dm) (NpnppRecRightPF dm) ((), posL)
+
+-- Try to extract an arbitrary position from a polynomial functor.
+-- Returns Nothing if the position type is Void.
+public export
+anyPositionNPNE : (i : NegPosNatEndFst Unit) ->
+  Maybe (pfPos (NegPosNatEndDirUnitPF i))
+anyPositionNPNE (InPFM (PFVar ()) dm) = Just ()
+anyPositionNPNE (InPFM (PFCom FZ) dm) = Nothing
+anyPositionNPNE (InPFM (PFCom (FS FZ)) dm) =
+  case anyPositionNPNE (dm NpnppDirRight) of
+    Just posR => Just (npnppPosFromRight dm posR)
+    Nothing => case anyPositionNPNE (dm NpnppDirLeft) of
+      Just posL => Just (npnppPosFromLeft dm posL)
+      Nothing => Nothing
+
+-- Helper: extract a nat trans for the right subtree from a node nat trans.
+-- This is straightforward because the right case doesn't need a "dummy" value.
+public export
+extractRightNatTrans :
+  (dm : NPNPPdirFSFZ -> NegPosNatEndFst Unit) ->
+  NegPosNatEndDirNT (InPFM (PFCom (FS FZ)) dm) ->
+  NegPosNatEndDirNT (dm NpnppDirRight)
+extractRightNatTrans dm eta x rightDir =
+  eta x (introNpnppNodeRight dm x (DPair.fst rightDir) (DPair.snd rightDir))
+
+-- Probe whether a nat trans uses the direct value or recurses.
+-- Returns True if it uses direct value, False if it recurses.
+-- Requires a position to construct a test element.
+public export
+probeUsesDirectValue :
+  (dm : NPNPPdirFSFZ -> NegPosNatEndFst Unit) ->
+  (pos : pfPos (NpnppRecLeftPF dm)) ->
+  NegPosNatEndDirNT (InPFM (PFCom (FS FZ)) dm) ->
+  Bool
+probeUsesDirectValue dm pos eta =
+  -- Apply eta at type Bool with getX=True and recurseLeft=const False
+  -- If eta uses direct value, returns True; if it recurses, returns False
+  eta Bool (introNpnppNodeLeft dm Bool pos True (const False))
+
+-- A "prober" knows how to probe whether a nat trans uses direct value.
+-- This abstracts the probing mechanism so we can pass it through recursion.
+public export
+Prober : NegPosNatEndFst Unit -> Type
+Prober i = (pos : pfPos (NegPosNatEndDirUnitPF i)) -> Bool
+
+mutual
+  -- Compute path using a prober instead of a nat trans directly.
+  -- This allows us to work with the recursive structure without needing
+  -- to extract nat trans values.
+  public export
+  natTransToPathViaProber :
+    (i : NegPosNatEndFst Unit) ->
+    Prober i ->
+    NegPosNatEndDirPath i
+  natTransToPathViaProber (InPFM (PFVar ()) dm) _ = PathVar dm
+  natTransToPathViaProber (InPFM (PFCom FZ) dm) _ = PathLeaf dm
+  natTransToPathViaProber (InPFM (PFCom (FS FZ)) dm) prober =
+    PathNode dm
+      (determineLeftChoiceViaProber dm prober)
+      (natTransToPathViaProber (dm NpnppDirRight) (rightProber dm prober))
+
+  -- Determine left choice using a prober.
+  public export
+  determineLeftChoiceViaProber :
+    (dm : NPNPPdirFSFZ -> NegPosNatEndFst Unit) ->
+    Prober (InPFM (PFCom (FS FZ)) dm) ->
+    Either () (NegPosNatEndDirPath (dm NpnppDirLeft))
+  determineLeftChoiceViaProber dm prober =
+    case anyPositionNPNE (dm NpnppDirLeft) of
+      Nothing => Left ()
+      Just pos =>
+        -- Probe using a left position
+        if prober (npnppPosFromLeft dm pos)
+          then Left ()
+          else Right (natTransToPathViaProber (dm NpnppDirLeft)
+                       (leftProber dm prober))
+
+  -- Create a prober for the left subtree from a node prober.
+  -- The left prober embeds positions in the left subtree into the outer
+  -- node structure and probes there.
+  public export
+  leftProber :
+    (dm : NPNPPdirFSFZ -> NegPosNatEndFst Unit) ->
+    Prober (InPFM (PFCom (FS FZ)) dm) ->
+    Prober (dm NpnppDirLeft)
+  leftProber dm prober pos = prober (npnppPosFromLeft dm pos)
+
+  -- Create a prober for the right subtree from a node prober.
+  public export
+  rightProber :
+    (dm : NPNPPdirFSFZ -> NegPosNatEndFst Unit) ->
+    Prober (InPFM (PFCom (FS FZ)) dm) ->
+    Prober (dm NpnppDirRight)
+  rightProber dm prober pos = prober (npnppPosFromRight dm pos)
+
+-- Eliminator for positions in the node polynomial functor.
+-- This dispatches on whether the position is Left or Right.
+public export
+elimNpnppNodePos :
+  (dm : NPNPPdirFSFZ -> NegPosNatEndFst Unit) ->
+  (r : Type) ->
+  (leftCase : pfPos (NpnppRecLeftPF dm) -> r) ->
+  (rightCase : pfPos (NpnppRecRightPF dm) -> r) ->
+  pfPos (NpnppNodePF dm) -> r
+elimNpnppNodePos dm r leftCase rightCase =
+  elimInterpPfCoproduct
+    (pfProductArena PFIdentityArena (NpnppRecLeftPF dm))
+    (NpnppRecRightPF dm)
+    Unit r
+    (\prodPos, _ => leftCase (snd prodPos))
+    (\rightPos, _ => rightCase rightPos)
+    . (\pos => (pos ** const ()))
+
+-- Convert a nat trans to a prober.
+-- The prober checks whether applying the nat trans at Bool returns True
+-- (direct value) or False (recurse).
+--
+-- For a given position `pos`, we construct a test element where:
+-- - At the position we're probing, getX = True and recurse = const False
+-- - This way, if eta returns True, it used the direct value
+-- - If eta returns False, it recursed
+public export
+natTransToProber :
+  (i : NegPosNatEndFst Unit) ->
+  NegPosNatEndDirNT i ->
+  Prober i
+natTransToProber (InPFM (PFVar ()) dm) eta pos = True  -- No recursion possible
+natTransToProber (InPFM (PFCom FZ) dm) eta pos = void pos
+natTransToProber (InPFM (PFCom (FS FZ)) dm) eta pos =
+  -- Dispatch on whether pos is a left or right position
+  elimNpnppNodePos dm Bool
+    -- Left case: construct test with getX=True, recurse=const False
+    (\recLeftPos =>
+      eta Bool (introNpnppNodeLeft dm Bool recLeftPos True (const False)))
+    -- Right case: right always recurses (no direct value), return False
+    (\recRightPos =>
+      eta Bool (introNpnppNodeRight dm Bool recRightPos (const False)))
+    pos
+
+-- Determine the left choice for natTransToPath.
+-- Returns Left () if the nat trans uses direct value, Right path otherwise.
+-- NOTE: This function is now superseded by determineLeftChoiceViaProber
+-- but kept for reference/backwards compatibility.
+public export
+determineLeftChoice :
+  (dm : NPNPPdirFSFZ -> NegPosNatEndFst Unit) ->
+  NegPosNatEndDirNT (InPFM (PFCom (FS FZ)) dm) ->
+  Either () (NegPosNatEndDirPath (dm NpnppDirLeft))
+determineLeftChoice dm eta =
+  let prober = natTransToProber (InPFM (PFCom (FS FZ)) dm) eta
+  in case anyPositionNPNE (dm NpnppDirLeft) of
+       -- No position in left recursive polynomial => must use direct value
+       Nothing => Left ()
+       -- Have a position => probe to determine
+       Just pos =>
+         if prober (npnppPosFromLeft dm pos)
+           then Left ()
+           else Right (natTransToPathViaProber (dm NpnppDirLeft)
+                        (leftProber dm prober))
+
+-- Convert a natural transformation to the corresponding path.
+-- This is the inverse direction of closedPathToNatTrans.
+--
+-- The key insight is that we convert the nat trans to a prober, then
+-- use the prober-based path computation. This avoids needing to extract
+-- sub-nat-trans values which would require dummy values.
+public export
+natTransToPath : (i : NegPosNatEndFst Unit) ->
+  NegPosNatEndDirNT i -> NegPosNatEndDirPath i
+natTransToPath i eta = natTransToPathViaProber i (natTransToProber i eta)
+
 public export
 NPNEAlgProf : Type -> ProfunctorSig
 NPNEAlgProf a b c = InterpNegPosMaybePP a b -> c
