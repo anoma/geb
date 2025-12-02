@@ -16,6 +16,10 @@ to pick up context from previous sessions:
 
 Before ending a session or when significant progress is made, update the
 relevant files in `.session/` so future sessions can continue the work.
+Once a project is complete, we should remove all of its references from
+`.session/`; that directory is meant to inform us of what we're working
+on, not to be permanent documentation.  (Anything that documents code
+should be a comment in the code itself.)
 
 ## Project Notes
 
@@ -143,6 +147,10 @@ When making changes to Lean code:
   would be suitable for a complete, released project.  Never write that
   code is going to "try" something; we should never commit code until it
   has passed the stage of being "tried" and is confirmed to work.
+  Note that `.session/` is for tracking work in progress, not for
+  documenting the code itself, so it should be treated as temporary:
+  any content that we intend to be part of the lasting, released code
+  should be in the code itself, not in `.session/`.
 - Don't write comments which state in natural language what the
   code following them does.  We can assume that readers of our code
   are coders and can understand the code itself.  Comments can sometimes
