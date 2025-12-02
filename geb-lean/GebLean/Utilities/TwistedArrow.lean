@@ -833,28 +833,99 @@ def twArrEquivGrothendieckUnder : TwistedArrow' C ≌ Grothendieck (Under.mapFun
 /-!
 ### Alternative Grothendieck Characterizations
 
-The arrow `f : x ⟶ y` in a twisted arrow object can be viewed in two ways:
-1. As an element of `Under x` (coslice under domain)
-2. As an element of `Over y` (slice over codomain)
+There are 16 possible Grothendieck constructions formed by varying:
+1. Grothendieck variance: covariant (`Grothendieck`) vs contravariant
+   (`GrothendieckContra'`)
+2. Map functor: `Under.mapFunctor` vs `Over.mapFunctor`
+3. Domain category: `C` vs `Cᵒᵖ'`
+4. Fiber oppositization: plain vs post-composed with oppositization functor
+
+These 16 constructions produce 8 distinct categories with 2:1 redundancy.
+Four are twisted arrow categories (where domArr and codArr go in opposite
+directions) and four are arrow categories (where they go in the same direction).
+
+#### The Eight Target Categories
+
+Categories formed from arrows in C with commutative square morphisms are
+classified by three binary choices: object arrow direction, domArr direction,
+and codArr direction.
+
+Twisted categories (domArr and codArr go in opposite directions):
+- `TwistedArrow' C`: objects dom→cod, domArr backward, codArr forward
+- `OpTwistedArrow' C`: objects dom→cod, domArr forward, codArr backward
+- `TwistedArrowOp' C`: objects cod→dom, domArr forward, codArr backward
+- `CoTwistedArrow C`: objects cod→dom, domArr backward, codArr forward
+
+Arrow categories (domArr and codArr go in the same direction):
+- `Arr(C)`: objects dom→cod, both forward
+- `Arr(C)ᵒᵖ`: objects dom→cod, both backward
+- `Arr(Cᵒᵖ)`: objects cod→dom, both forward
+- `Arr(Cᵒᵖ)ᵒᵖ`: objects cod→dom, both backward
+
+#### The Sixteen Grothendieck Constructions
+
+Using abbreviations: Gr = covariant Grothendieck, GrC' = GrothendieckContra',
+U = Under.mapFunctor, O = Over.mapFunctor, op = fiber oppositization.
+
+Group 1 — Covariant Grothendieck with Under:
+- Gr(U(C)): `TwistedArrow' C` (proven as `twArrEquivGrothendieckUnder`)
+- Gr(U(C) ⋙ op): `OpTwistedArrow' C`
+- Gr(U(Cᵒᵖ')): `Arr(Cᵒᵖ)`
+- Gr(U(Cᵒᵖ') ⋙ op): `TwistedArrowOp' C`
+
+Group 2 — Covariant Grothendieck with Over:
+- Gr(O(C)): `Arr(C)`
+- Gr(O(C) ⋙ op): related to `TwistedArrow'(Cᵒᵖ')ᵒᵖ`
+- Gr(O(Cᵒᵖ')): `Arr(C)ᵒᵖ`
+- Gr(O(Cᵒᵖ') ⋙ op): `CoTwistedArrow C`
+
+Group 3 — Contravariant Grothendieck with Under:
+- GrC'(U(C)): `Arr(C)`
+- GrC'(U(C) ⋙ op): related to `TwistedArrow' C`
+- GrC'(U(Cᵒᵖ')): `CoTwistedArrow C`
+- GrC'(U(Cᵒᵖ') ⋙ op): `Arr(C)ᵒᵖ`
+
+Group 4 — Contravariant Grothendieck with Over:
+- GrC'(O(C)): `TwistedArrow' C`
+- GrC'(O(C) ⋙ op): `OpTwistedArrow' C`
+- GrC'(O(Cᵒᵖ')): `TwistedArrowOp' C`
+- GrC'(O(Cᵒᵖ') ⋙ op): `Arr(Cᵒᵖ)`
+
+#### Patterns
+
+Under vs Over with covariant Grothendieck:
+- `Gr(Under.mapFunctor -)`: Base morphisms go backward (via Cᵒᵖ indexing),
+  producing twisted categories
+- `Gr(Over.mapFunctor -)`: Base morphisms go forward, producing arrow categories
+
+GrothendieckContra' reverses this pattern:
+- `GrC'(Under.mapFunctor -)`: Base morphisms go forward, producing arrow
+  categories
+- `GrC'(Over.mapFunctor -)`: Base morphisms go backward (via type adaptation),
+  producing twisted categories
+
+Fiber oppositization swaps twisted ↔ arrow within each group by reversing
+codArr direction.
+
+Applying mapFunctor to Cᵒᵖ' instead of C swaps the object arrow direction.
+
+#### Proven Equivalences
 
 The Under-based equivalence `TwistedArrow' C ≌ Grothendieck (Under.mapFunctor C)`
-is proven above.
+is proven above as `twArrEquivGrothendieckUnder`. This works because:
+- `Under.mapFunctor : Cᵒᵖ ⥤ Cat` indexes by domain (contravariantly)
+- The contravariant indexing makes base morphisms go backwards in C
+- Combined with forwards fiber morphisms, this gives the twisted pattern
 
-The Over-based equivalence would be `TwistedArrow' C ≌ Grothendieck (overOpMapFunctor C)`
-where `overOpMapFunctor : C ⥤ Cat` sends `y` to `(Over y)ᵒᵖ'`. The opposite fibers
-account for the backwards direction of `domArr` in twisted arrow morphisms.
-
-The remaining twisted arrow variants can be expressed as Grothendieck constructions
-through the following relationships:
-
+The remaining twisted arrow variants follow from existing isomorphisms:
 - `OpTwistedArrow' C ≅ (TwistedArrow' C)ᵒᵖ'`
-  (already proven as `opTwistedArrowIsoTwistedArrowOp'`)
+  (proven as `opTwistedArrowIsoTwistedArrowOp'`)
 - `TwistedArrowOp' C = TwistedArrow' Cᵒᵖ'`
-  (definitional equality via `twistedArrowOpEqTwistedArrowOfOp'`)
+  (definitional via `twistedArrowOpEqTwistedArrowOfOp'`)
 - `CoTwistedArrow C ≅ (TwistedArrowOp' C)ᵒᵖ'`
-  (already proven as `coTwistedArrowIsoTwistedArrowOpOp'`)
+  (proven as `coTwistedArrowIsoTwistedArrowOpOp'`)
 
-These relationships, combined with the Under-based equivalence, give:
+These combine to give:
 - `OpTwistedArrow' C ≌ (Grothendieck (Under.mapFunctor C))ᵒᵖ'`
 - `TwistedArrowOp' C ≌ Grothendieck (Under.mapFunctor Cᵒᵖ')`
 - `CoTwistedArrow C ≌ (Grothendieck (Under.mapFunctor Cᵒᵖ'))ᵒᵖ'`
