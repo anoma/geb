@@ -1,5 +1,7 @@
 import GebLean.Utilities.Elements
 import GebLean.Utilities.Profunctors
+import Mathlib.CategoryTheory.Comma.Over.Basic
+import Mathlib.CategoryTheory.Grothendieck
 
 /-!
 # Twisted arrow categories
@@ -155,6 +157,11 @@ lemma twHom'_ext {x y : TwistedArrow' C} (f g : x ⟶ y)
   cases f; cases g
   congr
   exact Prod.ext hdom hcod
+
+@[simp]
+lemma twHomMk'_eta {x y : TwistedArrow' C} (f : x ⟶ y) :
+    twHomMk' (twDomArr' f) (twCodArr' f) (twHomComm' f) = f := by
+  apply twHom'_ext <;> simp only [twHomMk'_domArr, twHomMk'_codArr]
 
 @[simp]
 lemma twDomArr'_id (tw : TwistedArrow' C) : twDomArr' (𝟙 tw) = 𝟙 (twDom' tw) := rfl
@@ -658,6 +665,170 @@ theorem opTwistedArrowOfOpEqCoTwistedArrow :
     OpTwistedArrow' (Cᵒᵖ') = CoTwistedArrow C := rfl
 
 end TwistedArrowIsomorphisms
+
+section TwistedArrowAsGrothendieck
+
+/-!
+## Twisted Arrow Categories as Grothendieck Constructions
+
+This section establishes that twisted arrow categories can be expressed as
+Grothendieck constructions over Under/Over categories.
+
+The equivalences are:
+- `TwistedArrow' C ≅ Grothendieck (Under.mapFunctor C)`
+
+where `Under.mapFunctor : Cᵒᵖ ⥤ Cat` maps `op x` to `Under x`.
+
+This formulation enables cleaner functor constructions by leveraging the
+existing `FunctorFromData` infrastructure.
+-/
+
+variable {C : Type u} [Category.{v} C]
+
+/--
+Object map for the functor from `TwistedArrow' C` to
+`Grothendieck (Under.mapFunctor C)`.
+
+A twisted arrow `(x, y, f : x ⟶ y)` maps to `(op x, (y, f) ∈ Under x)`.
+-/
+def twArrToGrothendieckUnderObj (tw : TwistedArrow' C) :
+    Grothendieck (Under.mapFunctor C) :=
+  ⟨Opposite.op (twDom' tw), Under.mk (twArr' tw)⟩
+
+/--
+Commutativity proof for the morphism map to Grothendieck.
+The form matches what `Under.homMk` expects: `(domArr ≫ f) ≫ codArr = f'`.
+-/
+lemma twArrToGrothendieckUnder_comm {tw tw' : TwistedArrow' C} (m : tw ⟶ tw') :
+    (twDomArr' m ≫ twArr' tw) ≫ twCodArr' m = twArr' tw' := by
+  rw [Category.assoc]
+  exact twHomComm' m
+
+/--
+The fiber morphism for the Grothendieck construction, as an Under morphism.
+-/
+def twArrToGrothendieckUnderFiber {tw tw' : TwistedArrow' C} (m : tw ⟶ tw') :
+    (Under.map (twDomArr' m)).obj (Under.mk (twArr' tw)) ⟶ Under.mk (twArr' tw') :=
+  Under.homMk (twCodArr' m) (by
+    simp only [Under.map_obj_hom, Under.mk_hom]
+    exact twArrToGrothendieckUnder_comm m)
+
+/--
+Morphism map for the functor from `TwistedArrow' C` to
+`Grothendieck (Under.mapFunctor C)`.
+-/
+def twArrToGrothendieckUnderMap {tw tw' : TwistedArrow' C} (m : tw ⟶ tw') :
+    twArrToGrothendieckUnderObj tw ⟶ twArrToGrothendieckUnderObj tw' :=
+  ⟨(twDomArr' m).op, twArrToGrothendieckUnderFiber m⟩
+
+/--
+Functor from `TwistedArrow' C` to `Grothendieck (Under.mapFunctor C)`.
+-/
+def twArrToGrothendieckUnder : TwistedArrow' C ⥤ Grothendieck (Under.mapFunctor C) where
+  obj := twArrToGrothendieckUnderObj
+  map := twArrToGrothendieckUnderMap
+  map_id tw := by
+    simp only [twArrToGrothendieckUnderMap, twArrToGrothendieckUnderFiber, twDomArr'_id,
+      twCodArr'_id]
+    fapply Grothendieck.ext
+    · rfl
+    · simp only [eqToHom_refl, Category.id_comp, Grothendieck.id_fiber]
+      apply CommaMorphism.ext
+      · rfl
+      · simp only [Under.homMk_right]
+        rw [Under.eqToHom_right, eqToHom_refl]
+        rfl
+  map_comp {tw tw' tw''} m m' := by
+    simp only [twArrToGrothendieckUnderMap, twArrToGrothendieckUnderFiber, twDomArr'_comp,
+      twCodArr'_comp]
+    fapply Grothendieck.ext
+    · simp only [Grothendieck.comp_base, op_comp]
+    · simp only [Grothendieck.comp_fiber, Under.mapFunctor_map]
+      apply CommaMorphism.ext
+      · rfl
+      · rw [Comma.comp_right, Comma.comp_right, Comma.comp_right]
+        rw [Under.eqToHom_right, Under.eqToHom_right]
+        simp only [Under.homMk_right, eqToHom_refl, Category.id_comp]
+        congr 1
+
+/--
+Object map for the functor from `Grothendieck (Under.mapFunctor C)` to
+`TwistedArrow' C`.
+-/
+def grothendieckUnderToTwArrObj (g : Grothendieck (Under.mapFunctor C)) :
+    TwistedArrow' C :=
+  twObjMk' g.fiber.hom
+
+/--
+Morphism map for the functor from `Grothendieck (Under.mapFunctor C)` to
+`TwistedArrow' C`.
+-/
+def grothendieckUnderToTwArrMap {g g' : Grothendieck (Under.mapFunctor C)}
+    (m : g ⟶ g') : grothendieckUnderToTwArrObj g ⟶ grothendieckUnderToTwArrObj g' := by
+  refine twHomMk' m.base.unop m.fiber.right ?_
+  simp only [grothendieckUnderToTwArrObj, twObjMk'_arr]
+  have h := Under.w m.fiber
+  simp only [Under.mapFunctor_map, Under.map_obj_hom] at h
+  rw [← Category.assoc]
+  exact h
+
+/--
+Functor from `Grothendieck (Under.mapFunctor C)` to `TwistedArrow' C`.
+-/
+def grothendieckUnderToTwArr : Grothendieck (Under.mapFunctor C) ⥤ TwistedArrow' C where
+  obj := grothendieckUnderToTwArrObj
+  map := grothendieckUnderToTwArrMap
+  map_id g := by
+    apply twHom'_ext
+    · simp only [grothendieckUnderToTwArrMap, twHomMk'_domArr, Grothendieck.id_base]
+      rfl
+    · simp only [grothendieckUnderToTwArrMap, twHomMk'_codArr, Grothendieck.id_fiber,
+        twCodArr'_id]
+      rw [Under.eqToHom_right]
+      rfl
+  map_comp {g g' g''} m m' := by
+    apply twHom'_ext
+    · simp only [grothendieckUnderToTwArrMap, twHomMk'_domArr, Grothendieck.comp_base,
+        unop_comp, twDomArr'_comp]
+    · simp only [grothendieckUnderToTwArrMap, twHomMk'_codArr, Grothendieck.comp_fiber,
+        Under.mapFunctor_map, twCodArr'_comp]
+      rw [Comma.comp_right, Comma.comp_right]
+      rw [Under.eqToHom_right]
+      simp only [eqToHom_refl, Category.id_comp]
+      congr 1
+
+/--
+The equivalence between `TwistedArrow' C` and `Grothendieck (Under.mapFunctor C)`.
+
+This establishes that twisted arrow categories ARE Grothendieck constructions
+over the Under functor, enabling the use of `FunctorFromData` infrastructure.
+-/
+def twArrEquivGrothendieckUnder : TwistedArrow' C ≌ Grothendieck (Under.mapFunctor C) where
+  functor := twArrToGrothendieckUnder
+  inverse := grothendieckUnderToTwArr
+  unitIso := NatIso.ofComponents
+    (fun tw => Iso.refl tw)
+    (fun {tw tw'} m => by simp [grothendieckUnderToTwArr, grothendieckUnderToTwArrObj,
+          grothendieckUnderToTwArrMap, twArrToGrothendieckUnder, twArrToGrothendieckUnderObj,
+          twArrToGrothendieckUnderMap, twArrToGrothendieckUnderFiber])
+  counitIso := NatIso.ofComponents
+    (fun g => Iso.refl g)
+    (fun {g g'} m => by
+      fapply Grothendieck.ext
+      · simp only [Functor.comp_map, Functor.id_map, Grothendieck.comp_base, Grothendieck.id_base,
+          Iso.refl_hom, twArrToGrothendieckUnder, grothendieckUnderToTwArr,
+          twArrToGrothendieckUnderMap, grothendieckUnderToTwArrMap, twHomMk'_domArr,
+          Quiver.Hom.op_unop]
+        rw [@Category.comp_id _ _ _ _ m.base, @Category.id_comp _ _ _ _ m.base]
+      · simp only [Functor.comp_map, Functor.id_map, Grothendieck.comp_fiber, Grothendieck.id_fiber,
+          Iso.refl_hom, Under.mapFunctor_map]
+        simp only [twArrToGrothendieckUnder, grothendieckUnderToTwArr, twArrToGrothendieckUnderMap,
+          twArrToGrothendieckUnderFiber, grothendieckUnderToTwArrMap, twHomMk'_codArr]
+        apply CommaMorphism.ext
+        · simp only [eq_iff_true_of_subsingleton]
+        · simp_all)
+
+end TwistedArrowAsGrothendieck
 
 end TwistedArrowCategories
 
