@@ -192,5 +192,5 @@ Building on the decidable validator we created:
 - **Naming conventions**: Use `F2F` prefix for types, `f2f` prefix for functions
 - **Proof techniques**: See CLAUDE.md for general patterns (functional
   extensionality, UIP, hole-driven development)
-- **Key insight**: Morphism mappings must be finitely representable (tables or
+- **Finite representability**: Morphism mappings must be finitely representable (tables or
   constructive patterns) to maintain decidable type checking

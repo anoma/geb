@@ -63,6 +63,7 @@ modules =
     , LanguageDef.ProgFinSet
     , LanguageDef.GebTopos
     , LanguageDef.PolyCat
+    , LanguageDef.PolyProfEnd
     , LanguageDef.Atom
     , LanguageDef.RefinedADT
     , LanguageDef.PolyIndTypes

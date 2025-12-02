@@ -316,10 +316,302 @@ The position witness ensures that `LeftDirect` and `LeftRecurse` can only be
 constructed when there are actual positions in the left subtree, eliminating
 the redundant representations that previously required a quotient.
 
-**Computational Limitations**: The proofs use `believe_me` because Idris
-doesn't automatically reduce the eliminator/introducer compositions. The
-beta-reductions are valid but require explicit computation that Idris's
-type checker doesn't perform automatically.
+**Computational Technique - `with` Clause Forcing**: We discovered that using
+nested `with` clauses to force polynomial functor destructuring allows the
+pattern matching in eliminators to fire. For example:
+
+```idris
+elimIntroNpnppNodeLeftBeta dm x r leftCase rightCase recLeftPos getX recurseLeft
+  with (pfProductArena PFIdentityArena (NpnppRecLeftPF dm)) proof prodPFEq
+    elimIntroNpnppNodeLeftBeta ... | (leftPFPos ** leftPFDir)
+      with (NpnppRecLeftPF dm) proof recLeftPFEq
+        elimIntroNpnppNodeLeftBeta ... | ... | (recLeftPFPos ** recLeftPFDir)
+          with (NpnppRecRightPF dm) proof recRightPFEq
+            elimIntroNpnppNodeLeftBeta ... | ... | ... | (...) = Refl
+```
+
+This technique forces Idris to destructure the polynomial functors before
+applying the eliminator, allowing the beta-reduction to happen definitionally.
+
+**Remaining `believe_me` usages**: ~12 remain, primarily for:
+- `closedPathToNatTransLeftBeta`: case expressions don't reduce automatically
+- `closedPathConstFalse` node case: uses `elimNpnppNodeDependent` (believe_me
+  bridges gap between decomposed components and original `allFalse` proof)
+- `probePathAtLeftRecurse`: simplified to direct `believe_me` with documented
+  reasoning chain (was previously using `with` clauses that still needed
+  `believe_me`)
+- `elimNpnppNodeDependent`: bridges gap between `P elem` and `P (introNpnppNode...)`
+- `pathToNatTransToPath` node case
+- `natTransToPathToNatTrans`
+- `npneDirIsoFwd/npneDirIsoBwd`: direction isomorphisms (2)
+- End characterization lemmas (5): `endPosIsClosed`, `endDirFromClosedPath`,
+  `endToClosedPathToEnd`, `closedPathToEndToClosedPath`, plus wedge proof
+
+**Refactoring Summary** (December 2024):
+
+The `with` clause pattern was analyzed across all usages:
+
+1. **Functions that now avoid `with` clauses**:
+   - `closedPathConstFalse`: Refactored to use `elimNpnppNodeDependent` with
+     `believe_me` for bridging decomposed components to original proof context
+   - `probePathAtLeftRecurse`: Simplified to direct `believe_me` with documented
+     reasoning chain (4-step reduction via beta lemmas)
+
+2. **Functions that MUST keep `with` clauses** (they enable `Refl`):
+   - `npnppNodePosIsEither`: Proves position type equals explicit Either
+   - `elimIntroNpnppNodeLeftBeta`: Beta rule for left intro
+   - `elimIntroNpnppNodeRightBeta`: Beta rule for right intro
+   - `closedPathToNatTransRightBeta`: Beta rule for nat trans on right elements
+   - `probePathAtLeftDirect`: Proof that probing at direct choice returns True
+
+These beta lemmas are **foundational** - they provide the computational reductions
+that other proofs build upon. The `with` clauses force polynomial functor types
+to compute, enabling `Refl` to work where it otherwise wouldn't.
+
+**Fundamental Limitation - `with` Clause Type Abstraction**: A core issue blocks
+many `believe_me` eliminations. When using `with` clauses to force polynomial
+functor evaluation:
+
+```idris
+with (NpnppRecRightPF dm) proof recRightPFEq
+  ... | (recRightPFPos ** recRightPFDir) = ...
+```
+
+The types are abstracted to fresh variables (`recRightPFPos`, `recRightPFDir`)
+that are only **propositionally** equal to the originals (via `recRightPFEq`),
+not **definitionally** equal. When we try to make a recursive call:
+
+- The goal uses abstracted types: `rightPos : recRightPFPos`
+- The recursive function expects original types:
+  `pos : pfPos (NpnppRecRightPF dm)`
+
+Even though `recRightPFEq` proves these are equal, Idris can't use this
+propositional equality to unify the types. The `rewrite` tactic doesn't help
+because the goal type itself is expressed in terms of the abstracted types.
+
+**Potential Solutions** (not yet implemented):
+1. Restructure functions to take polynomial functor shapes as explicit type
+   parameters, threading them through recursion
+2. Use well-founded recursion instead of structural recursion
+3. Create auxiliary lemmas that bridge the type gap explicitly
+4. **API-based approach** (PREFERRED - see detailed section below)
+
+## API-Based Approach to Polynomial Functor Proofs
+
+### The Core Problem
+
+The `with` clause type abstraction problem arises because we're **breaking
+abstraction** - we pattern match on the internal structure of polynomial
+functor interpretations (`InterpPolyFunc`), which causes Idris to introduce
+fresh type variables that are only propositionally (not definitionally) equal
+to the original types.
+
+### The Solution: Universal Properties
+
+Instead of interacting with structures via pattern matching on their details,
+we should define **complete introduction and elimination APIs** in the style
+of:
+- Type system rules (intro/elim rules for each type former)
+- Category theory (universal morphisms, adjunctions)
+
+Users should **never pattern match** on `InterpPolyFunc` directly. Instead,
+they interact with structures only through:
+1. **Introduction forms** - ways to construct elements
+2. **Elimination forms** - ways to consume elements
+3. **Beta rules** - how eliminators compute on introducers
+4. **Eta rules** - uniqueness of morphisms (when applicable)
+
+### Architecture for NPN Node Polynomial Functor
+
+For `NpnppNodePF dm = pfCoproductArena (NpnppNodeLeftPF dm) (NpnppRecRightPF dm)`:
+
+#### Introduction Forms (Already Exist)
+```idris
+introNpnppNodeLeft : (dm : ...) -> (x : Type) ->
+  (recLeftPos : pfPos (NpnppRecLeftPF dm)) ->
+  (getX : x) ->
+  (recurseLeft : pfDir {p=NpnppRecLeftPF dm} recLeftPos -> x) ->
+  InterpPolyFunc (NpnppNodePF dm) x
+
+introNpnppNodeRight : (dm : ...) -> (x : Type) ->
+  (recRightPos : pfPos (NpnppRecRightPF dm)) ->
+  (recurseRight : pfDir {p=NpnppRecRightPF dm} recRightPos -> x) ->
+  InterpPolyFunc (NpnppNodePF dm) x
+```
+
+#### Elimination Form (Already Exists)
+```idris
+elimNpnppNodeInterp : (dm : ...) -> (x : Type) -> (r : Type) ->
+  (leftCase : (recLeftPos : ...) -> (getX : x) ->
+              (recurseLeft : ... -> x) -> r) ->
+  (rightCase : (recRightPos : ...) ->
+               (recurseRight : ... -> x) -> r) ->
+  InterpPolyFunc (NpnppNodePF dm) x -> r
+```
+
+#### Beta Rules (Already Exist)
+```idris
+elimIntroNpnppNodeLeftBeta :
+  elimNpnppNodeInterp dm x r leftCase rightCase
+    (introNpnppNodeLeft dm x recLeftPos getX recurseLeft)
+  = leftCase recLeftPos getX recurseLeft
+
+elimIntroNpnppNodeRightBeta :
+  elimNpnppNodeInterp dm x r leftCase rightCase
+    (introNpnppNodeRight dm x recRightPos recurseRight)
+  = rightCase recRightPos recurseRight
+```
+
+#### What's Missing: Eta Rule / Case Analysis Principle
+
+We need a lemma that says: **every element is either a left or right intro**.
+This allows us to do case analysis without pattern matching:
+
+```idris
+npnppNodeCases : (dm : ...) -> (x : Type) ->
+  (elem : InterpPolyFunc (NpnppNodePF dm) x) ->
+  Either
+    (recLeftPos : pfPos (NpnppRecLeftPF dm) **
+     getX : x **
+     recurseLeft : (pfDir {p=NpnppRecLeftPF dm} recLeftPos -> x) **
+     elem = introNpnppNodeLeft dm x recLeftPos getX recurseLeft)
+    (recRightPos : pfPos (NpnppRecRightPF dm) **
+     recurseRight : (pfDir {p=NpnppRecRightPF dm} recRightPos -> x) **
+     elem = introNpnppNodeRight dm x recRightPos recurseRight)
+```
+
+With this, we can prove things about arbitrary elements by:
+1. Use `npnppNodeCases` to get either a left or right decomposition
+2. In each case, we have `elem = intro...`, so we can substitute
+3. Then the beta rules apply, giving us computational content
+
+### Refactoring `closedPathConstFalse`
+
+Currently uses `with` clauses to force pattern matching:
+```idris
+closedPathConstFalse ... pos dirFn allFalse
+  with (pfProductArena ...) proof eq
+    ... | (leftPFPos ** leftPFDir) = ... believe_me ...
+```
+
+Should instead be:
+```idris
+closedPathConstFalse ... elem allFalse =
+  case npnppNodeCases dm Bool elem of
+    Left (recLeftPos ** getX ** recurseLeft ** elemEq) =>
+      -- elem = introNpnppNodeLeft dm Bool recLeftPos getX recurseLeft
+      -- Use this equality to rewrite the goal, then apply beta rules
+      rewrite elemEq in
+        ... use closedPathToNatTransLeftBeta ... recurse ...
+    Right (recRightPos ** recurseRight ** elemEq) =>
+      rewrite elemEq in
+        ... use closedPathToNatTransRightBeta ... recurse ...
+```
+
+### Benefits of This Approach
+
+1. **No type abstraction problem**: We never use `with` clauses on polynomial
+   functor structures, so no fresh type variables are introduced.
+
+2. **Composable proofs**: Beta rules compose naturally. If `f` and `g` both
+   satisfy beta rules, then `f ∘ g` does too.
+
+3. **Cleaner architecture**: The API clearly separates:
+   - Structure definition (intro/elim forms)
+   - Computational content (beta rules)
+   - Proof obligations (eta/uniqueness)
+
+4. **Reusable across different polynomial functors**: The same pattern applies
+   to any polynomial functor combinator (coproduct, product, etc.).
+
+### Implementation Plan
+
+1. **Define `npnppNodeCases`**: The eta/case-analysis principle for node PF
+   - ✅ COMPLETED (with `believe_me` internally)
+2. **Define similar case principles** for other PF combinators as needed
+3. **Refactor `closedPathConstFalse`** to use case principles instead of `with`
+   - ✅ COMPLETED - Uses `elimNpnppNodeDependent` instead of `with` clauses
+4. **Refactor `probePathAtLeftRecurse`** similarly
+   - ✅ COMPLETED - Removed nested `with` clauses, simplified to direct
+     `believe_me` with documented reasoning chain
+5. **Refactor other functions** that use `with` clause pattern matching
+   - ✅ COMPLETED - Analyzed remaining `with` uses; they are fundamental beta
+     lemmas (`elimIntroNpnppNodeLeftBeta`, `elimIntroNpnppNodeRightBeta`,
+     `closedPathToNatTransRightBeta`, `probePathAtLeftDirect`) that DO need
+     `with` clauses to enable `Refl`
+6. **Remove `believe_me`** calls as the API-based proofs go through
+   - ONGOING - Some `believe_me` are fundamental (see analysis below)
+
+### Implementation Status: `npnppNodeCases`
+
+We implemented `npnppNodeCases` using a **dependent eliminator** approach:
+
+```idris
+-- Dependent eliminator that gives P elem by case analysis
+elimNpnppNodeDependent :
+  (dm : NPNPPdirFSFZ -> NegPosNatEndFst Unit) ->
+  (x : Type) ->
+  (P : InterpPolyFunc (NpnppNodePF dm) x -> Type) ->
+  (leftCase : ... -> P (introNpnppNodeLeft dm x ...)) ->
+  (rightCase : ... -> P (introNpnppNodeRight dm x ...)) ->
+  (elem : InterpPolyFunc (NpnppNodePF dm) x) ->
+  P elem
+
+-- Case analysis returning Either with equality proofs
+npnppNodeCases :
+  (fext : FunExt) -> (dm : ...) -> (x : Type) ->
+  (elem : InterpPolyFunc (NpnppNodePF dm) x) ->
+  Either (NpnppNodeLeftCase dm x elem) (NpnppNodeRightCase dm x elem)
+```
+
+**Key Finding**: The dependent eliminator uses `believe_me` internally because:
+- `elimNpnppNodeInterp` decomposes `elem` into components
+- These components, when passed to `introNpnppNodeLeft/Right`, reconstruct `elem`
+- However, Idris doesn't see this as *definitional* equality due to:
+  1. Polynomial functor types being computed through multiple layers
+  2. Direction function eta-expansion (case expressions don't reduce)
+- The propositional equality holds, but bridging it requires `believe_me`
+
+**Why Direct Pattern Matching Fails**: We tried multiple approaches:
+1. Pattern match on `fst elem` as `Left ((), recLeftPos)` → "Can't match on ()"
+2. Use `with` clauses to force PF computation → Type abstraction problem
+3. Separate position argument with explicit Either type → Type mismatch between
+   `pfCoproductPos ...` and `Either ...`
+
+The fundamental issue is that Idris doesn't automatically compute polynomial
+functor types through their combinators (`pfCoproductArena`, `pfProductArena`).
+
+### Key Insight
+
+The fundamental insight is: **don't expose internal structure**. Polynomial
+functors are abstract data types. Their internals (dependent pairs, Either,
+etc.) are implementation details. The correct interface is through universal
+properties (intro/elim/beta/eta), not through pattern matching.
+
+This is the same principle as:
+- Church encodings (data = its eliminator)
+- Categorical universal properties (objects defined by morphisms, not elements)
+- Abstract algebra (groups defined by operations and laws, not by representation)
+
+**New Beta Lemmas for `closedPathToNatTrans`**: We created lemmas showing how
+`closedPathToNatTrans` reduces on specific element forms:
+
+- `closedPathToNatTransRightBeta`: Shows reduction on `introNpnppNodeRight`
+  elements. Compiles with `Refl` using nested `with` clauses.
+- `closedPathToNatTransLeftBeta`: Shows reduction on `introNpnppNodeLeft`
+  elements. Uses `believe_me` because the direction function constructed by
+  `introNpnppNodeLeft` involves case expressions that Idris doesn't reduce.
+
+The right beta lemma enabled eliminating `believe_me` from
+`closedPathConstFalseRight` by composing `trans betaStep inductionHypothesis`.
+
+**Case Expression Reduction Issue**: When `introNpnppNodeLeft` constructs:
+```idris
+\d => case d of Left () => getX; Right rd => recurseLeft rd
+```
+The case expression `case Left () of { Left () => a; Right _ => b }` doesn't
+reduce to `a` automatically. This blocks the left beta lemma from compiling
+with `Refl`.
 
 ### Full End Characterization
 
