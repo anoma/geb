@@ -1,5 +1,7 @@
 import GebLean.Utilities.Elements
 import GebLean.Utilities.Profunctors
+import GebLean.Utilities.Grothendieck
+import GebLean.Utilities.Slice
 import Mathlib.CategoryTheory.Comma.Over.Basic
 import Mathlib.CategoryTheory.Grothendieck
 
@@ -827,6 +829,66 @@ def twArrEquivGrothendieckUnder : TwistedArrow' C ≌ Grothendieck (Under.mapFun
         apply CommaMorphism.ext
         · simp only [eq_iff_true_of_subsingleton]
         · simp_all)
+
+/-!
+### Alternative Grothendieck Characterizations
+
+The arrow `f : x ⟶ y` in a twisted arrow object can be viewed in two ways:
+1. As an element of `Under x` (coslice under domain)
+2. As an element of `Over y` (slice over codomain)
+
+The Under-based equivalence `TwistedArrow' C ≌ Grothendieck (Under.mapFunctor C)`
+is proven above.
+
+The Over-based equivalence would be `TwistedArrow' C ≌ Grothendieck (overOpMapFunctor C)`
+where `overOpMapFunctor : C ⥤ Cat` sends `y` to `(Over y)ᵒᵖ'`. The opposite fibers
+account for the backwards direction of `domArr` in twisted arrow morphisms.
+
+The remaining twisted arrow variants can be expressed as Grothendieck constructions
+through the following relationships:
+
+- `OpTwistedArrow' C ≅ (TwistedArrow' C)ᵒᵖ'`
+  (already proven as `opTwistedArrowIsoTwistedArrowOp'`)
+- `TwistedArrowOp' C = TwistedArrow' Cᵒᵖ'`
+  (definitional equality via `twistedArrowOpEqTwistedArrowOfOp'`)
+- `CoTwistedArrow C ≅ (TwistedArrowOp' C)ᵒᵖ'`
+  (already proven as `coTwistedArrowIsoTwistedArrowOpOp'`)
+
+These relationships, combined with the Under-based equivalence, give:
+- `OpTwistedArrow' C ≌ (Grothendieck (Under.mapFunctor C))ᵒᵖ'`
+- `TwistedArrowOp' C ≌ Grothendieck (Under.mapFunctor Cᵒᵖ')`
+- `CoTwistedArrow C ≌ (Grothendieck (Under.mapFunctor Cᵒᵖ'))ᵒᵖ'`
+-/
+
+/--
+Equivalence between `OpTwistedArrow' C` and the opposite of the Grothendieck
+construction of `Under.mapFunctor`.
+
+This combines:
+- `opTwistedArrowIsoTwistedArrowOp' : OpTwistedArrow' C ≅Cat (TwistedArrow' C)ᵒᵖ'`
+- `Equivalence.op' twArrEquivGrothendieckUnder`
+-/
+def opTwArrEquivGrothendieckUnderOp' :
+    OpTwistedArrow' C ≌ (Grothendieck (Under.mapFunctor C))ᵒᵖ' :=
+  (Cat.equivOfIso opTwistedArrowIsoTwistedArrowOp').trans
+    (Equivalence.op' twArrEquivGrothendieckUnder)
+
+/-!
+### Remaining Twisted Arrow Variants
+
+The equivalences for `TwistedArrowOp' C` and `CoTwistedArrow C` follow from:
+
+- `TwistedArrowOp' C = TwistedArrow' Cᵒᵖ'` (definitional equality, but different
+  category instances in Lean's typeclass system)
+- `CoTwistedArrow C ≅Cat (TwistedArrowOp' C)ᵒᵖ'`
+
+Combined with `twArrEquivGrothendieckUnder`, these give:
+- `TwistedArrowOp' C ≌ Grothendieck (Under.mapFunctor Cᵒᵖ')`
+- `CoTwistedArrow C ≌ (Grothendieck (Under.mapFunctor Cᵒᵖ'))ᵒᵖ'`
+
+Direct Lean implementations would require working around typeclass instance
+differences between `TwistedArrowOp' C` and `TwistedArrow' Cᵒᵖ'`.
+-/
 
 end TwistedArrowAsGrothendieck
 
