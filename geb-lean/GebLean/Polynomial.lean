@@ -1812,6 +1812,56 @@ lemma polyBetweenToWTypeMap_fiberCast_eq {P Q : PolyFunctorBetweenCat X Y}
     polyBetweenToWTypeMap_fiberCast f
       ⟨(⟨y, ccrReindex (f y) i', e⟩, ⟨y, i'⟩), rfl⟩ = e := rfl
 
+lemma polyBetweenToWTypeMap_fiberCast_eq' {P Q : PolyFunctorBetweenCat X Y}
+    (f : P ⟶ Q) (y : Y) (i' : ccrIndex (P y))
+    (e : (ccrFamily (Q y) (ccrReindex (f y) i')).left)
+    (h : (polyBetweenToWTypeObj Q).p ⟨y, ccrReindex (f y) i', e⟩ =
+         polyBetweenToWTypeReindex f ⟨y, i'⟩) :
+    polyBetweenToWTypeMap_fiberCast f
+      ⟨(⟨y, ccrReindex (f y) i', e⟩, ⟨y, i'⟩), h⟩ = e := by
+  have hrfl : h = rfl := Subsingleton.elim _ _
+  subst hrfl
+  rfl
+
+/--
+General lemma: `polyBetweenToWTypeMap_fiberCast` extracts the fiber element from proj1.
+
+The result's underlying element equals `pb.proj1.2.2` (the innermost component)
+after accounting for the type differences induced by the pullback commutativity.
+-/
+lemma polyBetweenToWTypeMap_fiberCast_proj1 {P Q : PolyFunctorBetweenCat X Y}
+    (f : P ⟶ Q) (pb : WTypePullback (polyBetweenToWTypeObj P)
+      (polyBetweenToWTypeObj Q) (polyBetweenToWTypeReindex f)) :
+    HEq (polyBetweenToWTypeMap_fiberCast f pb) pb.proj1.2.2 := by
+  obtain ⟨⟨⟨y, i, e⟩, ⟨y', i'⟩⟩, h⟩ := pb
+  simp only [polyBetweenToWTypeObj, polyBetweenToWTypeReindex, WTypePullback.proj1,
+             WTypePullback.proj2] at h ⊢
+  obtain ⟨rfl, hi⟩ := Sigma.mk.inj h
+  have hi' : i = ccrReindex (f y) i' := eq_of_heq hi
+  subst hi'
+  rfl
+
+/--
+For `wTypeToPolyBetween.map f`, the underlying element of `polyBetweenToWTypeMap_fiberCast`
+equals the val of `pb.proj1.2.2`.
+
+This is the specialized version needed for unitInv_naturality.
+-/
+lemma polyBetweenToWTypeMap_fiberCast_val_wType {W W' : WTypeDiagram X Y}
+    (f : WTypeDiagramHom W W')
+    (pb : WTypePullback (polyBetweenToWTypeObj (wTypeToPolyBetweenObj W))
+      (polyBetweenToWTypeObj (wTypeToPolyBetweenObj W'))
+      (polyBetweenToWTypeReindex (wTypeToPolyBetween.map f))) :
+    (polyBetweenToWTypeMap_fiberCast (wTypeToPolyBetween.map f) pb).val =
+      pb.proj1.2.2.val := by
+  obtain ⟨⟨⟨y, i, e⟩, ⟨y', i'⟩⟩, hcomm⟩ := pb
+  simp only [polyBetweenToWTypeObj, polyBetweenToWTypeReindex, wTypeToPolyBetween,
+             wTypeToPolyBetweenMap, WTypePullback.proj1, WTypePullback.proj2] at hcomm ⊢
+  obtain ⟨rfl, hi⟩ := Sigma.mk.inj hcomm
+  have hi' : i = wTypeToPolyBetweenReindex f y i' := eq_of_heq hi
+  subst hi'
+  rfl
+
 /--
 Helper: the `onDir` computation result for a PolyBetweenToWType morphism.
 
@@ -2067,6 +2117,27 @@ lemma unitInv_commAssign (W : WTypeDiagram X Y)
   simp only [unitInv_onDir, polyBetweenToWType, polyBetweenToWTypeObj,
              wTypeToPolyBetween, wTypeToPolyBetweenObj, WTypePullback.proj1,
              WTypeDiagram.fiberOver, ccrObjMk_family, Over.mk_left, Over.mk_hom]
+
+/--
+The `unitInv_onDir` function extracts the `W.E` component from the pullback's first
+projection. This lemma makes the extraction explicit.
+-/
+lemma unitInv_onDir_eq (W : WTypeDiagram X Y)
+    (pb : WTypePullback W (polyBetweenToWType.obj (wTypeToPolyBetween.obj W))
+      (unitInv_onPos W)) :
+    unitInv_onDir W pb = pb.proj1.2.snd.val := by
+  obtain ⟨⟨⟨y, ⟨b, h⟩, ⟨e, pe⟩⟩, b'⟩, hcomm⟩ := pb
+  rfl
+
+/--
+Version of `unitInv_onDir_eq` for transported pullbacks.
+-/
+lemma unitInv_onDir_transport_eq (W : WTypeDiagram X Y)
+    {onPos' : W.B → (polyBetweenToWType.obj (wTypeToPolyBetween.obj W)).B}
+    (pb : WTypePullback W (polyBetweenToWType.obj (wTypeToPolyBetween.obj W)) onPos')
+    (h : onPos' = unitInv_onPos W) :
+    unitInv_onDir W (h ▸ pb) = (h ▸ pb).proj1.2.snd.val :=
+  unitInv_onDir_eq W (h ▸ pb)
 
 /--
 The inverse unit morphism component: W → G(F(W)).
@@ -2685,6 +2756,290 @@ lemma counitHom_counitInv (P : PolyFunctorBetweenCat X Y) :
     ext e
     dsimp only [polyBetweenToWType, polyBetweenToWTypeObj] at e ⊢
     exact counitHom_counitInv_fiber_eq P y' i e
+
+/-! ### Triangle Identity
+
+The triangle identity for the equivalence: F(η_W) ≫ ε_{FW} = id_{FW}
+where F = wTypeToPolyBetween, G = polyBetweenToWType, η = unit, ε = counit.
+-/
+
+/--
+The base component of the triangle identity composition equals identity base.
+-/
+private lemma functor_unitIso_comp_base (W : WTypeDiagram X Y) (y : Y) :
+    ((wTypeToPolyBetween.map (unitInv W) ≫
+      counitHom (wTypeToPolyBetween.obj W)) y).base =
+    (𝟙 (wTypeToPolyBetween.obj W) y).base := by
+  funext ⟨b, hb⟩
+  subst hb
+  rfl
+
+/--
+Type alias for the fiber element type at index ⟨b, rfl⟩ in F(W)(W.t b).
+-/
+private abbrev FWFiberElemType (W : WTypeDiagram X Y) (b : W.B) : Type u :=
+  ((wTypeToPolyBetweenObj W (W.t b)).fiber ⟨b, rfl⟩).left
+
+/--
+The fiber equality for the triangle identity at index ⟨b, rfl⟩.
+The proof shows that the composition F(unitInv W) ≫ counitHom(F(W)) acts as
+identity on fibers.
+-/
+private lemma functor_unitIso_comp_fiber_eq_goal (W : WTypeDiagram X Y) (b : W.B) :
+    ((familyFunctor (Over X) ⋙ Cat.opFunctor').map
+        (𝟙 (wTypeToPolyBetween.obj W) (W.t b)).base).obj
+      (wTypeToPolyBetween.obj W (W.t b)).fiber =
+    (wTypeToPolyBetweenObj W (W.t b)).fiber := by
+  dsimp only [wTypeToPolyBetween, Functor.comp_map]
+  rfl
+
+private lemma triangle_comp_fiber_left_is_id (W : WTypeDiagram X Y) (b : W.B) :
+    (((wTypeToPolyBetween.map (unitInv W) ≫
+        counitHom (wTypeToPolyBetween.obj W)) (W.t b)).fiber ⟨b, rfl⟩).left = id := by
+  dsimp only [wTypeToPolyBetween, wTypeToPolyBetweenMap, wTypeToPolyBetweenObj,
+              unitInv, counitHom, counitHom_component, counitFiberMor, counitFiberMap,
+              ccrHomMk, ccrObjMk, ccrHomMk_fiberMor, ccrFiberMor, ccrComp_fiberMor,
+              WTypeDiagram.fiberOver, Over.homMk_left, Function.comp_apply,
+              wTypeToPolyBetweenFiberMor, wTypeToPolyBetweenReindex,
+              unitInv_onPos, unitInv_onDir, unitBase_invFun,
+              polyBetweenToWType, polyBetweenToWTypeObj,
+              counitIndex_toFun, polyBetweenToWTypeObj_fiber_equiv,
+              Over_comp_left]
+  rfl
+
+private lemma triangle_eqToHom_left_is_id (W : WTypeDiagram X Y) (b : W.B)
+    (h : ((familyFunctor (Over X) ⋙ Cat.opFunctor').map
+            ((wTypeToPolyBetween.map (unitInv W) ≫
+              counitHom (wTypeToPolyBetween.obj W)) (W.t b)).base).obj
+          (wTypeToPolyBetween.obj W (W.t b)).fiber =
+        ((familyFunctor (Over X) ⋙ Cat.opFunctor').map
+            (𝟙 (wTypeToPolyBetween.obj W) (W.t b)).base).obj
+          (wTypeToPolyBetween.obj W (W.t b)).fiber) :
+    ((eqToHom h) ⟨b, rfl⟩).left = id := by
+  let idx : ccrIndex (wTypeToPolyBetween.obj W (W.t b)) := ⟨b, rfl⟩
+  have h_at_idx_eq : congrFun h idx = rfl := Subsingleton.elim _ _
+  have h_symm_eq : (congrFun h idx).symm = rfl := by rw [h_at_idx_eq]
+  rw [eqToHom_catOp_pi_at_idx h idx, h_symm_eq]
+  rfl
+
+private lemma triangle_comp_fiber_eqToHom_at_idx_left_is_id (W : WTypeDiagram X Y)
+    (b : W.B)
+    (h : ((familyFunctor (Over X) ⋙ Cat.opFunctor').map
+            ((wTypeToPolyBetween.map (unitInv W) ≫
+              counitHom (wTypeToPolyBetween.obj W)) (W.t b)).base).obj
+          (wTypeToPolyBetween.obj W (W.t b)).fiber =
+        ((familyFunctor (Over X) ⋙ Cat.opFunctor').map
+            (𝟙 (wTypeToPolyBetween.obj W) (W.t b)).base).obj
+          (wTypeToPolyBetween.obj W (W.t b)).fiber) :
+    ((((wTypeToPolyBetween.map (unitInv W) ≫
+        counitHom (wTypeToPolyBetween.obj W)) (W.t b)).fiber ≫
+      eqToHom h) ⟨b, rfl⟩).left = id := by
+  let idx : ccrIndex (wTypeToPolyBetween.obj W (W.t b)) := ⟨b, rfl⟩
+  have comp_eq : (((wTypeToPolyBetween.map (unitInv W) ≫
+      counitHom (wTypeToPolyBetween.obj W)) (W.t b)).fiber ≫ eqToHom h) idx =
+      (eqToHom h) idx ≫ ((wTypeToPolyBetween.map (unitInv W) ≫
+        counitHom (wTypeToPolyBetween.obj W)) (W.t b)).fiber idx := rfl
+  rw [comp_eq]
+  rw [Over_comp_left]
+  have fiber_left_id : (((wTypeToPolyBetween.map (unitInv W) ≫
+      counitHom (wTypeToPolyBetween.obj W)) (W.t b)).fiber idx).left = id :=
+    triangle_comp_fiber_left_is_id W b
+  rw [fiber_left_id]
+  simp only [Function.id_comp]
+  exact triangle_eqToHom_left_is_id W b h
+
+private def triangle_fiber_eq_proof (W : WTypeDiagram X Y) (b : W.B) :
+    ((familyFunctor (Over X) ⋙ Cat.opFunctor').map
+        ((wTypeToPolyBetween.map (unitInv W) ≫
+          counitHom (wTypeToPolyBetween.obj W)) (W.t b)).base).obj
+      (wTypeToPolyBetween.obj W (W.t b)).fiber =
+    ((familyFunctor (Over X) ⋙ Cat.opFunctor').map
+        (𝟙 (wTypeToPolyBetween.obj W) (W.t b)).base).obj
+      (wTypeToPolyBetween.obj W (W.t b)).fiber := by
+  rw [functor_unitIso_comp_base W (W.t b)]
+
+private lemma functor_unitIso_comp_fiber_eq (W : WTypeDiagram X Y) (b : W.B)
+    (e : FWFiberElemType W b) :
+    ((((wTypeToPolyBetween.map (unitInv W) ≫
+        counitHom (wTypeToPolyBetween.obj W)) (W.t b)).fiber ≫
+      eqToHom (triangle_fiber_eq_proof W b)) ⟨b, rfl⟩).left e =
+    ((𝟙 (wTypeToPolyBetween.obj W) (W.t b)).fiber ⟨b, rfl⟩).left e := by
+  rw [congrFun (triangle_comp_fiber_eqToHom_at_idx_left_is_id W b (triangle_fiber_eq_proof W b)) e]
+  rfl
+
+/--
+The triangle identity: applying F to the unit, then the counit, gives identity.
+F(unitInv W) ≫ counitHom (F W) = id (F W)
+-/
+lemma functor_unitIso_comp (W : WTypeDiagram X Y) :
+    wTypeToPolyBetween.map (unitInv W) ≫ counitHom (wTypeToPolyBetween.obj W) =
+      𝟙 (wTypeToPolyBetween.obj W) := by
+  funext y
+  fapply GrothendieckContra'.ext
+  case w_base =>
+    funext ⟨b, hb⟩
+    subst hb
+    rfl
+  case w_fiber =>
+    funext ⟨b, hb⟩
+    subst hb
+    apply Over.OverMorphism.ext
+    funext e
+    exact functor_unitIso_comp_fiber_eq W b e
+
+/-! ### Unit Naturality
+
+Proof that unitInv is natural: for f : W ⟶ W', f ≫ unitInv W' = unitInv W ≫ G(F(f)).
+-/
+
+/--
+The unit morphism is natural.
+-/
+lemma unitInv_naturality {W W' : WTypeDiagram X Y} (f : WTypeDiagramHom W W') :
+    WTypeDiagramHom.comp (unitInv W') f =
+      WTypeDiagramHom.comp (polyBetweenToWType.map (wTypeToPolyBetween.map f)) (unitInv W) := by
+  have hPos : ((unitInv W').comp f).onPos =
+      ((polyBetweenToWType.map (wTypeToPolyBetween.map f)).comp (unitInv W)).onPos := by
+    funext b
+    simp only [WTypeDiagramHom.comp, unitInv, unitInv_onPos, unitBase_invFun,
+               polyBetweenToWType, polyBetweenToWTypeMap,
+               wTypeToPolyBetween, wTypeToPolyBetweenMap]
+    apply Sigma.ext
+    · simp only [polyBetweenToWTypeObj, wTypeToPolyBetweenObj, WTypeDiagram.fiberOver]
+      exact f.commPos b
+    · apply subtype_heq_of_val_eq
+      · simp only [polyBetweenToWTypeObj, wTypeToPolyBetweenObj, WTypeDiagram.fiberOver]
+        dsimp only [unitBase_invFun, polyBetweenToWTypeReindex, wTypeToPolyBetweenMap,
+                    Function.comp_apply]
+        exact congrArg (fun y => (fun b' => W'.t b' = y)) (f.commPos b)
+      · rfl
+  have hDir : ∀ pb, ((unitInv W').comp f).onDir pb =
+      ((polyBetweenToWType.map (wTypeToPolyBetween.map f)).comp (unitInv W)).onDir (hPos ▸ pb) := by
+    intro pb
+    obtain ⟨⟨qe, b⟩, hcomm⟩ := pb
+    obtain ⟨y, ⟨⟨b', hb'⟩, ⟨e', pe'⟩⟩⟩ := qe
+    dsimp at hcomm
+    obtain ⟨hy, heq⟩ := Sigma.mk.inj hcomm
+    subst hy
+    have hb'_eq : b' = f.onPos b := congrArg Subtype.val (eq_of_heq heq)
+    subst hb'_eq
+    let pb' : WTypePullback W (polyBetweenToWType.obj (wTypeToPolyBetween.obj W'))
+                ((unitInv W').comp f).onPos :=
+      ⟨(⟨W'.t (f.onPos b), ⟨⟨f.onPos b, hb'⟩, ⟨e', pe'⟩⟩⟩, b), hcomm⟩
+    have hval : (hPos ▸ pb').val = pb'.val := by
+      simp only [WTypePullback]
+      exact Eq.rec (motive := fun _ h =>
+        (h ▸ pb').val = pb'.val) rfl hPos
+    have hproj1 : (hPos ▸ pb').val.1 = pb'.val.1 := congrArg (·.1) hval
+    have hproj2 : (hPos ▸ pb').val.2 = pb'.val.2 := congrArg (·.2) hval
+    simp only [WTypeDiagramHom.comp, unitInv, unitInv_onDir,
+               polyBetweenToWType, polyBetweenToWTypeMap,
+               WTypePullback.proj1, WTypePullback.proj2]
+    congr 1
+    apply Subtype.ext
+    apply Prod.ext
+    · simp only [WTypePullback.mk, unitInv_onPos, unitBase_invFun]
+      rw [polyBetweenToWTypeMap_fiberCast_val_wType, WTypePullback.proj1, hproj1]
+    · simp only [WTypePullback.mk, unitInv_onPos, unitBase_invFun]
+      exact hproj2.symm
+  exact WTypeDiagramHom.ext hPos hDir
+
+/-! ### Counit Naturality
+
+Proof that counitHom is natural: for g : P ⟶ P', F(G(g)) ≫ counitHom P' = counitHom P ≫ g.
+-/
+
+/--
+The counit morphism is natural.
+-/
+lemma counitHom_naturality {P P' : PolyFunctorBetweenCat X Y} (g : P ⟶ P') :
+    wTypeToPolyBetween.map (polyBetweenToWType.map g) ≫ counitHom P' = counitHom P ≫ g := by
+  funext y
+  fapply GrothendieckContra'.ext
+  case w_base =>
+    funext ⟨⟨y', i⟩, h⟩
+    subst h
+    rfl
+  case w_fiber =>
+    funext ⟨⟨y', i⟩, h⟩
+    subst h
+    apply Over.OverMorphism.ext
+    funext e
+    let idx : ccrIndex (wTypeToPolyBetween.obj (polyBetweenToWType.obj P)
+                ((polyBetweenToWType.obj P).t ⟨y', i⟩)) := ⟨⟨y', i⟩, rfl⟩
+    have h_base_eq : ((wTypeToPolyBetween.map (polyBetweenToWType.map g) ≫
+          counitHom P') ((polyBetweenToWType.obj P).t ⟨y', i⟩)).base =
+        ((counitHom P ≫ g) ((polyBetweenToWType.obj P).t ⟨y', i⟩)).base := by
+      funext ⟨⟨y'', j⟩, heq⟩
+      dsimp only [polyBetweenToWType, polyBetweenToWTypeObj, WTypeDiagram.t] at heq
+      subst heq
+      dsimp only [wTypeToPolyBetween, counitHom, counitIndex_toFun]
+      rfl
+    have h_fiber_eq : ((familyFunctor (Over X) ⋙ Cat.opFunctor').map
+            ((wTypeToPolyBetween.map (polyBetweenToWType.map g) ≫
+              counitHom P') ((polyBetweenToWType.obj P).t ⟨y', i⟩)).base).obj
+          (P' ((polyBetweenToWType.obj P).t ⟨y', i⟩)).fiber =
+        ((familyFunctor (Over X) ⋙ Cat.opFunctor').map
+            ((counitHom P ≫ g) ((polyBetweenToWType.obj P).t ⟨y', i⟩)).base).obj
+          (P' ((polyBetweenToWType.obj P).t ⟨y', i⟩)).fiber :=
+      congrArg (fun f => ((familyFunctor (Over X) ⋙ Cat.opFunctor').map f).obj
+        (P' ((polyBetweenToWType.obj P).t ⟨y', i⟩)).fiber) h_base_eq
+    have h_at_idx : congrFun h_fiber_eq idx = rfl := Subsingleton.elim _ _
+    have h_symm : (congrFun h_fiber_eq idx).symm = rfl := by rw [h_at_idx]
+    have eqToHom_is_id : ((eqToHom h_fiber_eq) idx).left = id := by
+      rw [eqToHom_catOp_pi_at_idx h_fiber_eq idx, h_symm]
+      rfl
+    have lhs_unfold : ((((wTypeToPolyBetween.map (polyBetweenToWType.map g) ≫
+          counitHom P') ((polyBetweenToWType.obj P).t ⟨y', i⟩)).fiber ≫
+        eqToHom h_fiber_eq) idx) =
+        (eqToHom h_fiber_eq idx) ≫
+        ((wTypeToPolyBetween.map (polyBetweenToWType.map g) ≫
+          counitHom P') ((polyBetweenToWType.obj P).t ⟨y', i⟩)).fiber idx := rfl
+    rw [lhs_unfold, Over_comp_left, eqToHom_is_id]
+    simp only [Function.comp_apply, id]
+    dsimp only [wTypeToPolyBetween, wTypeToPolyBetweenMap, wTypeToPolyBetweenObj,
+                wTypeToPolyBetweenFiberMor, wTypeToPolyBetweenReindex,
+                polyBetweenToWType, polyBetweenToWTypeMap, polyBetweenToWTypeObj,
+                polyBetweenToWTypeReindex, polyBetweenToWTypeMap_fiberCast,
+                counitHom, counitHom_component, counitFiberMap, counitFiberMor,
+                ccrHomMk, ccrHomMk_fiberMor, ccrFiberMor, ccrComp_fiberMor,
+                GrothendieckContra'.comp_base, GrothendieckContra'.comp_fiber,
+                CategoryStruct.comp, Function.comp_apply, Over_comp_left,
+                WTypeDiagram.fiberOver, Over.homMk_left,
+                counitIndex_invFun, counitIndex_toFun, idx]
+    rfl
+
+/-! ### The Categorical Equivalence
+
+Package all components into an equivalence of categories.
+-/
+
+/--
+The unit natural isomorphism: 𝟭 (WTypeDiagramCat X Y) ≅ wTypeToPolyBetween ⋙ polyBetweenToWType.
+-/
+def unitNatIso : 𝟭 (WTypeDiagramCat X Y) ≅ wTypeToPolyBetween ⋙ polyBetweenToWType :=
+  NatIso.ofComponents
+    (fun W => ⟨unitInv W, unitHom W, unitInv_unitHom W, unitHom_unitInv W⟩)
+    (fun f => unitInv_naturality f)
+
+/--
+The counit natural isomorphism:
+`polyBetweenToWType ⋙ wTypeToPolyBetween ≅ 𝟭 (PolyFunctorBetweenCat X Y)`.
+-/
+def counitNatIso : polyBetweenToWType ⋙ wTypeToPolyBetween ≅ 𝟭 (PolyFunctorBetweenCat X Y) :=
+  NatIso.ofComponents
+    (fun P => ⟨counitHom P, counitInv P, counitHom_counitInv P, counitInv_counitHom P⟩)
+    (fun g => counitHom_naturality g)
+
+/--
+The equivalence between W-type diagrams and Grothendieck-style polynomial functors.
+-/
+def wTypePolyBetweenEquiv : WTypeDiagramCat X Y ≌ PolyFunctorBetweenCat X Y where
+  functor := wTypeToPolyBetween
+  inverse := polyBetweenToWType
+  unitIso := unitNatIso
+  counitIso := counitNatIso
+  functor_unitIso_comp W := functor_unitIso_comp W
 
 end WTypePolyBetweenEquiv
 
