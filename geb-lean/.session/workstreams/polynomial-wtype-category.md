@@ -13,13 +13,15 @@ equivalence with the Grothendieck-based `PolyFunctorBetweenCat`.
 The `Polynomial.lean` module currently has two representations of polynomial
 functors `Over X -> Over Y`:
 
-1. **Grothendieck-based**: `PolyFunctorBetweenCat X Y = FamilyCat (PolyFunctorCat X) Y`
+1. **Grothendieck-based**:
+   `PolyFunctorBetweenCat X Y = FamilyCat (PolyFunctorCat X) Y`
    - Objects: Y-indexed families of polynomial functors `Over X -> Type`
    - Each `P(y)` is `(I_y, F_y)` with `I_y : Type` and `F_y : I_y -> Over X`
    - Morphisms: families of `CoprodCovarRepCat` morphisms at each y
 
 2. **W-type based**: `WTypeDiagram X Y`
-   - Objects: diagrams `X <- E -> B -> Y` with `p : E -> B`, `s : E -> X`, `t : B -> Y`
+   - Objects: diagrams `X <- E -> B -> Y` with `p : E -> B`, `s : E -> X`,
+     `t : B -> Y`
    - B is the base type (all positions), partitioned by t into Y-fibers
    - Currently has identity, composition, and evaluation, but NO morphism structure
 
@@ -122,35 +124,41 @@ matches the contravariant structure of `CoprodCovarRepCat`.
 
 ### Equivalence Functors
 
-**F : WTypeDiagramCat -> PolyFunctorBetweenCat**
+#### F : WTypeDiagramCat -> PolyFunctorBetweenCat
 
 On objects: Given `W : WTypeDiagram X Y`, produce `P : PolyFunctorBetweenCat X Y`:
+
 - For each `y : Y`, `P(y)` has index type `{b : W.B // W.t b = y}`
 - Family at `b` is `W.fiberOver b.val`
 
 On morphisms: Given `f : W_P -> W_Q`:
+
 - Reindexing at y: `<b_P, h> |-> <f.onBase b_P, f.target_comm ...>`
 - Fiber morphism: `Over.homMk (f.onFiber b_P) (source_comm proof)`
 
-**G : PolyFunctorBetweenCat -> WTypeDiagramCat**
+#### G : PolyFunctorBetweenCat -> WTypeDiagramCat
 
 On objects: Given `P : PolyFunctorBetweenCat X Y`, produce `W : WTypeDiagram X Y`:
+
 - `W.B = Sigma y, ccrIndex (P y)` (sigma over all positions)
 - `W.E = Sigma (y : Y) (i : ccrIndex (P y)), (ccrFamily (P y) i).left`
 - `W.p`, `W.s`, `W.t` defined by projections and structure maps
 
 On morphisms: Given `f : P -> Q` (family of morphisms):
+
 - `onBase <y, i> = <y, ccrReindex (f y) i>`
 - `onFiber` uses `ccrFiberMor (f y) i`
 
 ### Equivalence Proof Sketch
 
 **Unit (G . F ~ id on WTypeDiagramCat)**:
+
 - `G(F(W)).B = Sigma y, {b : W.B // W.t b = y}` which is equivalent to `W.B`
 - The isomorphism is `<y, <b, h>> <-> b` (with `h` reconstructible from `W.t b`)
 - Similar equivalences for E, with compatible structure maps
 
 **Counit (F . G ~ id on PolyFunctorBetweenCat)**:
+
 - `F(G(P))(y)` has index `{<y', i> : Sigma y, ccrIndex (P y) // y' = y}`
 - This is equivalent to `ccrIndex (P y)` via `<y, i, rfl> <-> i`
 - Families correspond directly
@@ -158,6 +166,7 @@ On morphisms: Given `f : P -> Q` (family of morphisms):
 ## Tasks
 
 ### Phase 1: W-Type Diagram Morphisms (COMPLETED)
+
 - [x] Define `WTypePullback` type (categorical pullback of Q.p along onPos)
 - [x] Define `WTypeDiagramHom` structure with three commutativity conditions
 - [x] Define `WTypeDiagramHom.id`
@@ -168,14 +177,18 @@ On morphisms: Given `f : P -> Q` (family of morphisms):
 - [x] Define `WTypeDiagramCat X Y` as a `Cat`
 
 ### Phase 2: Functors (COMPLETED)
-- [x] Define `wTypeToPolyBetweenObj : WTypeDiagram X Y -> PolyFunctorBetweenCat X Y`
+
+- [x] Define `wTypeToPolyBetweenObj`:
+  `WTypeDiagram X Y -> PolyFunctorBetweenCat X Y`
 - [x] Define `wTypeToPolyBetweenMap` on morphisms
 - [x] Prove `wTypeToPolyBetween` preserves id and composition
-- [x] Define `polyBetweenToWTypeObj : PolyFunctorBetweenCat X Y -> WTypeDiagram X Y`
+- [x] Define `polyBetweenToWTypeObj`:
+  `PolyFunctorBetweenCat X Y -> WTypeDiagram X Y`
 - [x] Define `polyBetweenToWTypeMap` on morphisms
 - [x] Prove `polyBetweenToWType` preserves id and composition
 
 ### Phase 3: Equivalence (COMPLETED)
+
 - [x] Define unit component isomorphism for each W-type diagram
   - `unitHom : G(F(W)) -> W` and `unitInv : W -> G(F(W))`
   - `unitInv_unitHom` and `unitHom_unitInv` proved (isomorphism conditions)
@@ -185,10 +198,13 @@ On morphisms: Given `f : P -> Q` (family of morphisms):
   - `counitInv_counitHom` and `counitHom_counitInv` proved (isomorphism conditions)
 - [x] Prove counit naturality (`counitHom_naturality`)
 - [x] Prove triangle identities (`functor_unitIso_comp`)
-- [x] Package as `wTypePolyBetweenEquiv : WTypeDiagramCat X Y ≌ PolyFunctorBetweenCat X Y`
+- [x] Package as `wTypePolyBetweenEquiv`:
+  `WTypeDiagramCat X Y ≌ PolyFunctorBetweenCat X Y`
 
 ### Phase 4: Natural Transformation Correspondence (optional extension)
-- [ ] Define induced natural transformation from WTypeDiagramHom to NatTrans on eval
+
+- [ ] Define induced natural transformation from WTypeDiagramHom to NatTrans
+  on eval
 - [ ] Prove this correspondence is functorial
 - [ ] Show the correspondence is an isomorphism of hom-sets
 
@@ -197,7 +213,9 @@ On morphisms: Given `f : P -> Q` (family of morphisms):
 ### Contravariance Pattern
 
 The fiber maps go from target to source (`Q.fiber -> P.fiber`) because:
-- `CoprodCovarRepCat` uses the Grothendieck construction on `familyFunctor . opFunctor'`
+
+- `CoprodCovarRepCat` uses the Grothendieck construction on
+  `familyFunctor . opFunctor'`
 - This makes fiber morphisms contravariant (like presheaf morphisms)
 - Matches the polynomial functor semantics: to evaluate P at input A, we compose
   A's structure with the "arity" map that goes backwards from Q to P
@@ -229,6 +247,6 @@ placement.
 
 ## References
 
-- ncatlab: polynomial functor (https://ncatlab.org/nlab/show/polynomial+functor)
+- [ncatlab: polynomial functor](https://ncatlab.org/nlab/show/polynomial+functor)
 - Gambino-Kock: Polynomial functors and polynomial monads
 - Current codebase: `GebLean/Polynomial.lean`, `GebLean/Utilities/Families.lean`
