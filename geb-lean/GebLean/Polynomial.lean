@@ -330,109 +330,6 @@ lemma polyEvalMk_eta {P : PolyFunctorCat X} {A : Over X} (x : polyEval X P A) :
 
 end PolynomialFunctorsToType
 
-/-! ## Polynomial Functors Over X → Over Y
-
-A polynomial functor `Over X → Over Y` can be viewed as a `Y`-indexed family
-of polynomial functors `Over X → Type`. Using the equivalence
-`FamilyCat Type Y ≃ Over Y`, we can represent such functors as objects of
-`FreeProdCompletionCat (PolyFunctorCat X)` indexed by `Y`.
-
-Alternatively, a polynomial functor `Over X → Over Y` is given by a W-type
-diagram `X ← E → B → Y`, which consists of:
-- A type `B` (the base)
-- A family `E : B → Type` (the fibers, giving `E → B`)
-- A map `s : E → X` (the source map, making each `E(b)` an object over `X`)
-- A map `t : B → Y` (the target map)
-
-The polynomial functor is then:
-`A ↦ Σ_{b : B} Π_{e : E(b)} Hom_{Over X}(s(e), A)` (composed with `t`)
--/
-
-section PolynomialFunctorsBetweenSlices
-
-variable (X Y : Type u)
-
-/--
-A W-type diagram from `X` to `Y` consists of a span `X ← E → B` together with
-a map `B → Y`. This represents a polynomial functor `Over X → Over Y`.
-
-Concretely:
-- `B` is the base type (positions/shapes)
-- `p : E → B` is the projection (arities/fiber structure)
-- `s : E → X` is the source map (each position comes from `Over X`)
-- `t : B → Y` is the target map (each position goes to `Over Y`)
--/
-structure WTypeDiagram where
-  /-- The base type (positions/shapes) -/
-  B : Type u
-  /-- The total space of fibers (arities) -/
-  E : Type u
-  /-- The projection from E to B -/
-  p : E → B
-  /-- The source map: each fiber element comes from a point over X -/
-  s : E → X
-  /-- The target map: each position maps to Y -/
-  t : B → Y
-
-/--
-The fiber of a W-type diagram at a base point.
--/
-def WTypeDiagram.fiber (W : WTypeDiagram X Y) (b : W.B) : Type u :=
-  { e : W.E // W.p e = b }
-
-/--
-The source map restricted to a fiber, giving an object of `Over X`.
--/
-def WTypeDiagram.fiberOver (W : WTypeDiagram X Y) (b : W.B) : Over X :=
-  Over.mk (fun (x : WTypeDiagram.fiber X Y W b) => W.s x.val)
-
-/--
-Convert a W-type diagram to a polynomial functor (as an object of
-`CoprodCovarRepCat (Over X)`).
--/
-def WTypeDiagram.toPolyFunctor (W : WTypeDiagram X Y) : PolyFunctorCat X :=
-  ccrObjMk W.fiberOver
-
-/--
-Evaluate a W-type diagram at an object of `Over X`, producing a family over `Y`.
-For `A : Over X` and `W : WTypeDiagram X Y`, this computes:
-`y ↦ Σ_{b : t⁻¹(y)} Π_{e : p⁻¹(b)} Hom_{Over X}(fiberOver(b), A)`
--/
-def WTypeDiagram.evalFamily (W : WTypeDiagram X Y) (A : Over X) : Y → Type u :=
-  fun y => Σ (b : { b : W.B // W.t b = y }),
-    (WTypeDiagram.fiberOver X Y W b.val ⟶ A)
-
-/--
-Evaluate a W-type diagram at an object of `Over X`, producing an object of `Over Y`.
-This uses the Family-Slice equivalence.
--/
-def WTypeDiagram.eval (W : WTypeDiagram X Y) (A : Over X) : Over Y :=
-  (familySliceForward Y).obj (W.evalFamily X Y A)
-
-/--
-Construct a W-type diagram from a polynomial functor and a target map.
-Given `P : PolyFunctorCat X` with index type `I` and a map `t : I → Y`,
-we get a W-type diagram.
--/
-def polyFunctorToWType (P : PolyFunctorCat X) (t : ccrIndex P → Y) :
-    WTypeDiagram X Y where
-  B := ccrIndex P
-  E := Σ i : ccrIndex P, (ccrFamily P i).left
-  p := Sigma.fst
-  s := fun ⟨i, e⟩ => (ccrFamily P i).hom e
-  t := t
-
-/--
-The fiber of a polynomial-to-W-type diagram at index `i` is the domain of the
-`i`-th representable.
--/
-lemma polyFunctorToWType_fiber (P : PolyFunctorCat X) (t : ccrIndex P → Y)
-    (i : ccrIndex P) :
-    WTypeDiagram.fiber X Y (polyFunctorToWType X Y P t) i =
-      { x : Σ j : ccrIndex P, (ccrFamily P j).left // x.1 = i } := rfl
-
-end PolynomialFunctorsBetweenSlices
-
 /-! ## Polynomial Functors Between Slices via FamilyCat
 
 A polynomial functor `Over X → Over Y` is represented as a `Y`-indexed
@@ -821,71 +718,6 @@ lemma polyBetweenCompFamily_hom (g : PolyFunctorBetweenCat Y Z)
 
 end PolyBetweenComposition
 
-/-! ## W-type Identity and Composition
-
-For W-type diagrams, we define identity and composition operations.
--/
-
-section WTypeIdentityComposition
-
-variable (X : Type u)
-
-/--
-The identity W-type diagram for `Over X → Over X`.
-
-- `B = X` (positions are points of `X`)
-- `E = X` (arities/directions are also points of `X`)
-- `p = id` (fiber over `x` contains just `x`)
-- `s = id` (source is the point itself)
-- `t = id` (target is the point itself)
--/
-def WTypeDiagram.identity : WTypeDiagram X X where
-  B := X
-  E := X
-  p := id
-  s := id
-  t := id
-
-variable {X Y Z : Type u}
-
-/--
-The base type (positions) for a composition of W-type diagrams.
-
-Given `g : WTypeDiagram Y Z` and `f : WTypeDiagram X Y`, a position in the
-composition at `z : Z` is a position `bg` of `g` mapping to `z`, together with
-a choice of position in `f` for each direction in the fiber of `g` at `bg`.
--/
-def WTypeDiagram.compB (g : WTypeDiagram Y Z) (f : WTypeDiagram X Y) : Type u :=
-  Σ (bg : g.B), (eg : WTypeDiagram.fiber Y Z g bg) → { bf : f.B // f.t bf = g.s eg.val }
-
-/--
-The arity type (directions) for a composition of W-type diagrams.
-
-An element consists of a position in the composition, a direction in `g`, and
-a direction in the corresponding `f` fiber.
--/
-def WTypeDiagram.compE (g : WTypeDiagram Y Z) (f : WTypeDiagram X Y) : Type u :=
-  Σ (b : g.compB f), Σ (eg : WTypeDiagram.fiber Y Z g b.1),
-    WTypeDiagram.fiber X Y f (b.2 eg).val
-
-/--
-Composition of W-type diagrams.
-
-Given `g : WTypeDiagram Y Z` and `f : WTypeDiagram X Y`, their composition
-is a W-type diagram `X ← E' → B' → Z` where:
-- `B'` is pairs of a `g`-position and a family of `f`-positions
-- `E'` consists of pairs of directions from both diagrams
--/
-def WTypeDiagram.comp (g : WTypeDiagram Y Z) (f : WTypeDiagram X Y) :
-    WTypeDiagram X Z where
-  B := g.compB f
-  E := g.compE f
-  p := fun ⟨b, _⟩ => b
-  s := fun ⟨_, ⟨_, ef⟩⟩ => f.s ef.val
-  t := fun ⟨bg, _⟩ => g.t bg
-
-end WTypeIdentityComposition
-
 /-! ## Identity Interpretation
 
 We show that evaluating the identity polynomial functor produces a result
@@ -1063,6 +895,169 @@ def polyBetweenComp_eval_fiberEquiv (g : PolyFunctorBetweenCat Y Z)
       exact mor_to_pbe_fiber_heq_raw h eg
 
 end CompositionInterpretation
+
+/-! ## W-Type Diagrams
+
+A polynomial functor `Over X → Over Y` can alternatively be represented by a
+W-type diagram `X ← E → B → Y`, which consists of:
+- A type `B` (the base)
+- A family `E : B → Type` (the fibers, giving `E → B`)
+- A map `s : E → X` (the source map, making each `E(b)` an object over `X`)
+- A map `t : B → Y` (the target map)
+
+The polynomial functor is then:
+`A ↦ Σ_{b : B} Π_{e : E(b)} Hom_{Over X}(s(e), A)` (composed with `t`)
+-/
+
+section WTypeDiagramDefs
+
+variable (X Y : Type u)
+
+/--
+A W-type diagram from `X` to `Y` consists of a span `X ← E → B` together with
+a map `B → Y`. This represents a polynomial functor `Over X → Over Y`.
+
+Concretely:
+- `B` is the base type (positions/shapes)
+- `p : E → B` is the projection (arities/fiber structure)
+- `s : E → X` is the source map (each position comes from `Over X`)
+- `t : B → Y` is the target map (each position goes to `Over Y`)
+-/
+structure WTypeDiagram where
+  /-- The base type (positions/shapes) -/
+  B : Type u
+  /-- The total space of fibers (arities) -/
+  E : Type u
+  /-- The projection from E to B -/
+  p : E → B
+  /-- The source map: each fiber element comes from a point over X -/
+  s : E → X
+  /-- The target map: each position maps to Y -/
+  t : B → Y
+
+/--
+The fiber of a W-type diagram at a base point.
+-/
+def WTypeDiagram.fiber (W : WTypeDiagram X Y) (b : W.B) : Type u :=
+  { e : W.E // W.p e = b }
+
+/--
+The source map restricted to a fiber, giving an object of `Over X`.
+-/
+def WTypeDiagram.fiberOver (W : WTypeDiagram X Y) (b : W.B) : Over X :=
+  Over.mk (fun (x : WTypeDiagram.fiber X Y W b) => W.s x.val)
+
+/--
+Convert a W-type diagram to a polynomial functor (as an object of
+`CoprodCovarRepCat (Over X)`).
+-/
+def WTypeDiagram.toPolyFunctor (W : WTypeDiagram X Y) : PolyFunctorCat X :=
+  ccrObjMk W.fiberOver
+
+/--
+Evaluate a W-type diagram at an object of `Over X`, producing a family over `Y`.
+For `A : Over X` and `W : WTypeDiagram X Y`, this computes:
+`y ↦ Σ_{b : t⁻¹(y)} Π_{e : p⁻¹(b)} Hom_{Over X}(fiberOver(b), A)`
+-/
+def WTypeDiagram.evalFamily (W : WTypeDiagram X Y) (A : Over X) : Y → Type u :=
+  fun y => Σ (b : { b : W.B // W.t b = y }),
+    (WTypeDiagram.fiberOver X Y W b.val ⟶ A)
+
+/--
+Evaluate a W-type diagram at an object of `Over X`, producing an object of `Over Y`.
+This uses the Family-Slice equivalence.
+-/
+def WTypeDiagram.eval (W : WTypeDiagram X Y) (A : Over X) : Over Y :=
+  (familySliceForward Y).obj (W.evalFamily X Y A)
+
+/--
+Construct a W-type diagram from a polynomial functor and a target map.
+Given `P : PolyFunctorCat X` with index type `I` and a map `t : I → Y`,
+we get a W-type diagram.
+-/
+def polyFunctorToWType (P : PolyFunctorCat X) (t : ccrIndex P → Y) :
+    WTypeDiagram X Y where
+  B := ccrIndex P
+  E := Σ i : ccrIndex P, (ccrFamily P i).left
+  p := Sigma.fst
+  s := fun ⟨i, e⟩ => (ccrFamily P i).hom e
+  t := t
+
+/--
+The fiber of a polynomial-to-W-type diagram at index `i` is the domain of the
+`i`-th representable.
+-/
+lemma polyFunctorToWType_fiber (P : PolyFunctorCat X) (t : ccrIndex P → Y)
+    (i : ccrIndex P) :
+    WTypeDiagram.fiber X Y (polyFunctorToWType X Y P t) i =
+      { x : Σ j : ccrIndex P, (ccrFamily P j).left // x.1 = i } := rfl
+
+end WTypeDiagramDefs
+
+/-! ## W-type Identity and Composition
+
+For W-type diagrams, we define identity and composition operations.
+-/
+
+section WTypeIdentityComposition
+
+variable (X : Type u)
+
+/--
+The identity W-type diagram for `Over X → Over X`.
+
+- `B = X` (positions are points of `X`)
+- `E = X` (arities/directions are also points of `X`)
+- `p = id` (fiber over `x` contains just `x`)
+- `s = id` (source is the point itself)
+- `t = id` (target is the point itself)
+-/
+def WTypeDiagram.identity : WTypeDiagram X X where
+  B := X
+  E := X
+  p := id
+  s := id
+  t := id
+
+variable {X Y Z : Type u}
+
+/--
+The base type (positions) for a composition of W-type diagrams.
+
+Given `g : WTypeDiagram Y Z` and `f : WTypeDiagram X Y`, a position in the
+composition at `z : Z` is a position `bg` of `g` mapping to `z`, together with
+a choice of position in `f` for each direction in the fiber of `g` at `bg`.
+-/
+def WTypeDiagram.compB (g : WTypeDiagram Y Z) (f : WTypeDiagram X Y) : Type u :=
+  Σ (bg : g.B), (eg : WTypeDiagram.fiber Y Z g bg) → { bf : f.B // f.t bf = g.s eg.val }
+
+/--
+The arity type (directions) for a composition of W-type diagrams.
+
+An element consists of a position in the composition, a direction in `g`, and
+a direction in the corresponding `f` fiber.
+-/
+def WTypeDiagram.compE (g : WTypeDiagram Y Z) (f : WTypeDiagram X Y) : Type u :=
+  Σ (b : g.compB f), Σ (eg : WTypeDiagram.fiber Y Z g b.1),
+    WTypeDiagram.fiber X Y f (b.2 eg).val
+
+/--
+Composition of W-type diagrams.
+
+Given `g : WTypeDiagram Y Z` and `f : WTypeDiagram X Y`, their composition
+is a W-type diagram `X ← E' → B' → Z` where:
+- `B'` is pairs of a `g`-position and a family of `f`-positions
+- `E'` consists of pairs of directions from both diagrams
+-/
+def WTypeDiagram.comp (g : WTypeDiagram Y Z) (f : WTypeDiagram X Y) :
+    WTypeDiagram X Z where
+  B := g.compB f
+  E := g.compE f
+  p := fun ⟨b, _⟩ => b
+  s := fun ⟨_, ⟨_, ef⟩⟩ => f.s ef.val
+  t := fun ⟨bg, _⟩ => g.t bg
+
+end WTypeIdentityComposition
 
 /-! ## W-Type Composition Interpretation
 
