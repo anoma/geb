@@ -59,7 +59,7 @@ with the above.
 | Aspect | Families | Twisted Arrow |
 |--------|----------|---------------|
 | Base category | `Type` | `C` itself |
-| Functor | `familyFunctor C : Type^op' ⥤ Cat` | `Under.mapFunctor C : C^op ⥤ Cat` |
+| Functor | `familyFunctor C : Type^op' ⥤ Cat` | `Under.mapFunctor : C^op ⥤ Cat`|
 | Fiber at b | `(b → C)` (product category) | `Under b` (coslice category) |
 | Binary choices | 2 (4 constructions) | 4 (16 constructions) |
 
@@ -72,7 +72,8 @@ The existing `LaxNatTransData` and `OplaxNatTransData` in `Grothendieck.lean`
 provide infrastructure for morphisms between Cat-valued functors with the
 same domain:
 
-- `LaxNatTransData G F` for `G F : C ⥤ Cat` gives `Grothendieck G ⥤ Grothendieck F`
+- `LaxNatTransData G F` for `G F : C ⥤ Cat` gives
+  `Grothendieck G ⥤ Grothendieck F`
 - `OplaxNatTransData G' F'` for `G' F' : C^op' ⥤ Cat` gives
   `GrothendieckContra' G' ⥤ GrothendieckContra' F'`
 - `FunctorBetweenData` and `FunctorBetweenContraData` generalize these to
