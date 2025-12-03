@@ -41,7 +41,7 @@ namespace GebLean
 
 open CategoryTheory
 
-universe u
+universe u u'
 
 /-! ## Family-Slice Equivalence
 
@@ -254,14 +254,14 @@ This section defines evaluation for arbitrary domain categories. The existing
 
 section GeneralPolynomialFunctors
 
-variable {D : Type u} [Category.{u} D]
+variable {D : Type u'} [Category.{u} D]
 
 /--
 Evaluation of a polynomial functor at an object of `D`.
 Given a polynomial `P = (I, F)` where `F : I → D` and an object `A : D`,
 the evaluation `P(A) = Σ_{i : I} Hom_D(F(i), A)` is a type.
 -/
-def ccrEval (P : CoprodCovarRepCat D) (A : D) : Type u :=
+def ccrEval (P : CoprodCovarRepCat D) (A : D) : Type _ :=
   Σ i : ccrIndex P, (ccrFamily P i ⟶ A)
 
 /--
@@ -330,7 +330,7 @@ to convert to `Over Y`.
 
 section GeneralPolynomialFunctorsToOver
 
-variable {D : Type u} [Category.{u} D]
+variable {D : Type u'} [Category.{u} D]
 variable (Y : Type u)
 
 /--
@@ -515,30 +515,35 @@ abbrev PolyFunctorCat : Cat := CoprodCovarRepCat (Over X)
 Evaluation of a polynomial functor at an object of `Over X`.
 Given a polynomial `P = (I, F)` and an object `A : Over X`, the evaluation
 `P(A) = Σ_{i : I} Hom_{Over X}(F(i), A)` is a type.
+
+This is the specialization of `ccrEval` to `D = Over X`.
 -/
 def polyEval (P : PolyFunctorCat X) (A : Over X) : Type u :=
-  Σ i : ccrIndex P, (ccrFamily P i ⟶ A)
+  ccrEval P A
 
 /--
 Extract the index from an element of a polynomial evaluation.
+Specialization of `ccrEvalIndex`.
 -/
 def polyEvalIndex {P : PolyFunctorCat X} {A : Over X} (x : polyEval X P A) :
     ccrIndex P :=
-  x.1
+  ccrEvalIndex x
 
 /--
 Extract the morphism from an element of a polynomial evaluation.
+Specialization of `ccrEvalMor`.
 -/
 def polyEvalMor {P : PolyFunctorCat X} {A : Over X} (x : polyEval X P A) :
     ccrFamily P (polyEvalIndex X x) ⟶ A :=
-  x.2
+  ccrEvalMor x
 
 /--
 Construct an element of a polynomial evaluation from an index and a morphism.
+Specialization of `ccrEvalMk`.
 -/
 def polyEvalMk {P : PolyFunctorCat X} {A : Over X}
     (i : ccrIndex P) (f : ccrFamily P i ⟶ A) : polyEval X P A :=
-  ⟨i, f⟩
+  ccrEvalMk i f
 
 @[simp]
 lemma polyEvalMk_index {P : PolyFunctorCat X} {A : Over X}
@@ -552,17 +557,12 @@ lemma polyEvalMk_mor {P : PolyFunctorCat X} {A : Over X}
 
 /--
 Extensionality for polynomial evaluations.
+Specialization of `ccrEval_ext`.
 -/
 lemma polyEval_ext {P : PolyFunctorCat X} {A : Over X} (x y : polyEval X P A)
     (hi : polyEvalIndex X x = polyEvalIndex X y)
-    (hm : polyEvalMor X x ≍ polyEvalMor X y) : x = y := by
-  obtain ⟨ix, mx⟩ := x
-  obtain ⟨iy, my⟩ := y
-  simp only [polyEvalIndex] at hi
-  cases hi
-  simp only [polyEvalMor] at hm
-  cases eq_of_heq hm
-  rfl
+    (hm : polyEvalMor X x ≍ polyEvalMor X y) : x = y :=
+  ccrEval_ext x y hi hm
 
 /--
 Round-trip: constructing and then extracting gives the original.
@@ -601,51 +601,56 @@ variable (X : Type u) (Y : Type u)
 The category of polynomial functors `Over X → Over Y`.
 
 An object is a `Y`-indexed family of polynomial functors `Over X → Type`.
-This is an object of `FamilyCat (PolyFunctorCat X) Y`.
+This is the specialization of `PolyToOverCat` to `D = Over X`.
 
 For each `y : Y`, we have a polynomial functor `P(y) : Over X → Type`, which
 is an object of `CoprodCovarRepCat (Over X)`, i.e., a pair `(I_y, F_y)` where
 `I_y` is a type of positions and `F_y : I_y → Over X` gives the representables.
 -/
 abbrev PolyFunctorBetweenCat : Cat :=
-  FamilyCat (PolyFunctorCat X) Y
+  PolyToOverCat (D := Over X) Y
 
 /--
 Extract the polynomial functor at a specific codomain point.
+Specialization of `polyToOverAt`.
 -/
 def polyBetweenAt (P : PolyFunctorBetweenCat X Y) (y : Y) : PolyFunctorCat X :=
-  P y
+  polyToOverAt Y P y
 
 /--
 The index type (positions) at a specific codomain point.
+Specialization of `polyToOverIndex`.
 -/
 def polyBetweenIndex (P : PolyFunctorBetweenCat X Y) (y : Y) : Type u :=
-  ccrIndex (P y)
+  polyToOverIndex Y P y
 
 /--
 The family of representables at a specific codomain point and position.
+Specialization of `polyToOverFamily`.
 -/
 def polyBetweenFamily (P : PolyFunctorBetweenCat X Y) (y : Y)
     (i : polyBetweenIndex X Y P y) : Over X :=
-  ccrFamily (P y) i
+  polyToOverFamily Y P y i
 
 /--
 Evaluate a polynomial functor `Over X → Over Y` at an object `A : Over X`,
 producing a family `Y → Type`.
+Specialization of `polyToOverEvalFamily`.
 
 For each `y : Y`, we evaluate the polynomial `P(y)` at `A`:
 `P(A)(y) = Σ (i : positions at y), Hom_{Over X}(F_y(i), A)`
 -/
 def polyBetweenEvalFamily (P : PolyFunctorBetweenCat X Y) (A : Over X) :
     Y → Type u :=
-  fun y => polyEval X (P y) A
+  polyToOverEvalFamily Y P A
 
 /--
 Evaluate a polynomial functor at an object of `Over X`, producing an object
 of `Over Y` via the family-slice equivalence.
+Specialization of `polyToOverEval`.
 -/
 def polyBetweenEval (P : PolyFunctorBetweenCat X Y) (A : Over X) : Over Y :=
-  (familySliceForward Y).obj (polyBetweenEvalFamily X Y P A)
+  polyToOverEval Y P A
 
 /-! #### polyBetweenEvalFamily helpers
 
@@ -656,26 +661,29 @@ to the structure of `polyBetweenEval P A` as an `Over Y` object.
 
 /--
 Extract the index from an element of `polyBetweenEvalFamily`.
+Specialization of `ptoefIndex`.
 -/
 def pbefIndex {X Y : Type u} {P : PolyFunctorBetweenCat X Y} {A : Over X} {y : Y}
     (x : polyBetweenEvalFamily X Y P A y) : ccrIndex (P y) :=
-  polyEvalIndex X x
+  ptoefIndex Y x
 
 /--
 Extract the morphism from an element of `polyBetweenEvalFamily`.
+Specialization of `ptoefMor`.
 -/
 def pbefMor {X Y : Type u} {P : PolyFunctorBetweenCat X Y} {A : Over X} {y : Y}
     (x : polyBetweenEvalFamily X Y P A y) :
     ccrFamily (P y) (pbefIndex x) ⟶ A :=
-  polyEvalMor X x
+  ptoefMor Y x
 
 /--
 Construct an element of `polyBetweenEvalFamily` from an index and morphism.
+Specialization of `ptoefMk`.
 -/
 def pbefMk {X Y : Type u} {P : PolyFunctorBetweenCat X Y} {A : Over X} {y : Y}
     (i : ccrIndex (P y)) (f : ccrFamily (P y) i ⟶ A) :
     polyBetweenEvalFamily X Y P A y :=
-  polyEvalMk X i f
+  ptoefMk Y i f
 
 @[simp]
 lemma pbefMk_index {X Y : Type u} {P : PolyFunctorBetweenCat X Y} {A : Over X}
@@ -725,26 +733,29 @@ def pbeLeft {X Y : Type u} {P : PolyFunctorBetweenCat X Y} {A : Over X}
 
 /--
 Extract the Y-coordinate from an element of `(polyBetweenEval P A).left`.
+Specialization of `ptoeLeftY`.
 -/
 def pbeLeftY {X Y : Type u} {P : PolyFunctorBetweenCat X Y} {A : Over X}
     (e : (polyBetweenEval X Y P A).left) : Y :=
-  e.fst
+  ptoeLeftY Y e
 
 /--
 Extract the fiber element from an element of `(polyBetweenEval P A).left`.
+Specialization of `ptoeLeftFiber`.
 -/
 def pbeLeftFiber {X Y : Type u} {P : PolyFunctorBetweenCat X Y} {A : Over X}
     (e : (polyBetweenEval X Y P A).left) :
     polyBetweenEvalFamily X Y P A (pbeLeftY e) :=
-  e.snd
+  ptoeLeftFiber Y e
 
 /--
 Construct an element of `(polyBetweenEval P A).left` from components.
+Specialization of `ptoeLeftMk`.
 -/
 def pbeLeftMk {X Y : Type u} {P : PolyFunctorBetweenCat X Y} {A : Over X}
     (y : Y) (x : polyBetweenEvalFamily X Y P A y) :
     (polyBetweenEval X Y P A).left :=
-  ⟨y, x⟩
+  ptoeLeftMk Y y x
 
 @[simp]
 lemma pbeLeftMk_y {X Y : Type u} {P : PolyFunctorBetweenCat X Y} {A : Over X}
@@ -834,7 +845,7 @@ lemma mor_to_pbe_fiber_index_homMk_rfl {X Y : Type u} {P : PolyFunctorBetweenCat
       (Over.homMk (fun b => pbeLeftMk (B.hom b) (fn b))
         (funext (fun _ => rfl))) b = pbefIndex (fn b) := by
   simp only [mor_to_pbe_fiber_index, mor_to_pbe_fiber, pbefIndex,
-             polyEvalIndex, pbeLeftMk, pbeLeftFiber]
+             ptoefIndex, pbeLeftMk, pbeLeftFiber]
   rfl
 
 /--
@@ -848,7 +859,7 @@ lemma mor_to_pbe_fiber_mor_homMk_rfl {X Y : Type u} {P : PolyFunctorBetweenCat X
       (Over.homMk (fun b => pbeLeftMk (B.hom b) (fn b))
         (funext (fun _ => rfl))) b = pbefMor (fn b) := by
   simp only [mor_to_pbe_fiber_mor, mor_to_pbe_fiber, pbefMor,
-             polyEvalMor, pbeLeftMk, pbeLeftFiber]
+             ptoefMor, pbeLeftMk, pbeLeftFiber]
   rfl
 
 end PolyFunctorBetween
@@ -995,8 +1006,8 @@ def polyBetweenId_eval_fiberEquiv (A : Over X) (x : X) :
     ⟨PUnit.unit, Over.homMk (fun _ => a) (by funext _; exact ha)⟩
   left_inv := fun ⟨i, f⟩ => by
     cases i
-    simp only [polyBetweenEvalFamily, polyEval, polyBetweenId, ccrObjMk, ccrIndex, ccrFamily]
-    ext; rfl
+    simp only [polyBetweenEvalFamily, polyBetweenId, ccrObjMk, ccrIndex, ccrFamily]
+    apply Sigma.ext <;> rfl
   right_inv := fun ⟨a, ha⟩ => rfl
 
 /--
@@ -1010,8 +1021,7 @@ def polyBetweenId_eval_leftEquiv (A : Over X) :
     Over.homMk (fun _ => a) (by funext _; rfl)⟩⟩
   left_inv := fun ⟨x, ⟨i, f⟩⟩ => by
     cases i
-    simp only [polyBetweenEval, polyBetweenEvalFamily, polyEval, polyBetweenId,
-               ccrObjMk, ccrIndex, ccrFamily, familySliceForward, familySliceForwardObj]
+    simp only [polyBetweenEval, polyBetweenId, ccrObjMk, ccrIndex, ccrFamily]
     have hw : A.hom (f.left PUnit.unit) = x := congrFun (Over.w f) PUnit.unit
     refine Sigma.ext hw ?_
     simp only
@@ -1102,7 +1112,7 @@ def polyBetweenComp_eval_fiberEquiv (g : PolyFunctorBetweenCat Y Z)
     obtain ⟨⟨ig, pf⟩, mor⟩ := x
     simp only [polyBetweenComp_eval_fiberEquiv_toFun,
                polyBetweenComp_eval_fiberEquiv_invFun,
-               pbefIndex, pbefMor, polyEvalIndex, polyEvalMor]
+               pbefIndex, pbefMor, ptoefIndex, ptoefMor]
     -- The goal reduces to showing the constructed sigma equals the original
     -- The inner `mor_to_pbe_fiber_index` on the constructed `Over.homMk` reduces
     -- because the Y-coordinate proof is `funext (fun _ => rfl)`
@@ -1111,7 +1121,8 @@ def polyBetweenComp_eval_fiberEquiv (g : PolyFunctorBetweenCat Y Z)
     obtain ⟨ig, h⟩ := x
     simp only [polyBetweenComp_eval_fiberEquiv_toFun,
                polyBetweenComp_eval_fiberEquiv_invFun,
-               pbefIndex, pbefMor, polyEvalIndex, polyEvalMor]
+               pbefIndex, pbefMor, ptoefIndex, ptoefMor,
+               ccrEvalIndex, ccrEvalMor]
     congr 1
     apply Over.OverMorphism.ext
     funext eg

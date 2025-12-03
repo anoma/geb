@@ -2,7 +2,7 @@
 
 ## Status
 
-Completed (Phase 1). Phases 3-4 are optional extensions.
+Completed (Phase 1-3). Phase 4 is an optional extension.
 
 ## Context
 
@@ -166,13 +166,19 @@ requirements. The existing `polyBetweenComp` stays specialized to `Over X`.
 
 - [x] Document constraints in this file
 
-### Phase 3 (OPTIONAL)
+### Phase 3 (COMPLETED)
 
-The existing definitions are already expressed in terms of the general
-patterns. Refactoring as explicit specializations is optional.
+Specialized definitions have been refactored as explicit specializations of the
+generalized forms.
 
-- [ ] Optionally refactor `PolyFunctorCat` as `PolyToOverCat (Over X) Y`
-- [ ] Build and test
+- [x] Refactor `PolyFunctorBetweenCat` as `PolyToOverCat (D := Over X) Y`
+- [x] Refactor `polyBetweenEvalFamily` and `polyBetweenEval` to use
+  `polyToOverEvalFamily` and `polyToOverEval`
+- [x] Refactor `pbefIndex`, `pbefMor`, `pbefMk` to use `ptoefIndex`, `ptoefMor`,
+  `ptoefMk`
+- [x] Refactor `pbeLeftY`, `pbeLeftFiber`, `pbeLeftMk` to use `ptoeLeftY`,
+  `ptoeLeftFiber`, `ptoeLeftMk`
+- [x] Build and test
 
 ### Phase 4 (OPTIONAL)
 
