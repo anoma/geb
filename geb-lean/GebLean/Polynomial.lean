@@ -238,6 +238,249 @@ def familySliceEquiv : FamilyCat (Type u) Y ≌ Over Y where
 
 end FamilySliceEquivalence
 
+/-! ## General Polynomial Functors
+
+A polynomial functor from an arbitrary category `D` to `Type` is given by an
+object of `CoprodCovarRepCat D`. An object `(I, F)` where `I : Type` and
+`F : I → D` represents the polynomial functor:
+
+```
+A ↦ Σ_{i : I} Hom_D(F(i), A)
+```
+
+This section defines evaluation for arbitrary domain categories. The existing
+`PolyFunctorCat X` is the specialization to `D = Over X`.
+-/
+
+section GeneralPolynomialFunctors
+
+variable {D : Type u} [Category.{u} D]
+
+/--
+Evaluation of a polynomial functor at an object of `D`.
+Given a polynomial `P = (I, F)` where `F : I → D` and an object `A : D`,
+the evaluation `P(A) = Σ_{i : I} Hom_D(F(i), A)` is a type.
+-/
+def ccrEval (P : CoprodCovarRepCat D) (A : D) : Type u :=
+  Σ i : ccrIndex P, (ccrFamily P i ⟶ A)
+
+/--
+Extract the index from an element of a polynomial evaluation.
+-/
+def ccrEvalIndex {P : CoprodCovarRepCat D} {A : D} (x : ccrEval P A) :
+    ccrIndex P :=
+  x.1
+
+/--
+Extract the morphism from an element of a polynomial evaluation.
+-/
+def ccrEvalMor {P : CoprodCovarRepCat D} {A : D} (x : ccrEval P A) :
+    ccrFamily P (ccrEvalIndex x) ⟶ A :=
+  x.2
+
+/--
+Construct an element of a polynomial evaluation from an index and a morphism.
+-/
+def ccrEvalMk {P : CoprodCovarRepCat D} {A : D}
+    (i : ccrIndex P) (f : ccrFamily P i ⟶ A) : ccrEval P A :=
+  ⟨i, f⟩
+
+@[simp]
+lemma ccrEvalMk_index {P : CoprodCovarRepCat D} {A : D}
+    (i : ccrIndex P) (f : ccrFamily P i ⟶ A) :
+    ccrEvalIndex (ccrEvalMk i f) = i := rfl
+
+@[simp]
+lemma ccrEvalMk_mor {P : CoprodCovarRepCat D} {A : D}
+    (i : ccrIndex P) (f : ccrFamily P i ⟶ A) :
+    ccrEvalMor (ccrEvalMk i f) = f := rfl
+
+/--
+Extensionality for polynomial evaluations.
+-/
+lemma ccrEval_ext {P : CoprodCovarRepCat D} {A : D} (x y : ccrEval P A)
+    (hi : ccrEvalIndex x = ccrEvalIndex y)
+    (hm : ccrEvalMor x ≍ ccrEvalMor y) : x = y := by
+  obtain ⟨ix, mx⟩ := x
+  obtain ⟨iy, my⟩ := y
+  simp only [ccrEvalIndex] at hi
+  cases hi
+  simp only [ccrEvalMor] at hm
+  cases eq_of_heq hm
+  rfl
+
+@[simp]
+lemma ccrEvalMk_eta {P : CoprodCovarRepCat D} {A : D} (x : ccrEval P A) :
+    ccrEvalMk (ccrEvalIndex x) (ccrEvalMor x) = x := rfl
+
+end GeneralPolynomialFunctors
+
+/-! ## General Polynomial Functors to Over Categories
+
+A polynomial functor from an arbitrary category `D` to `Over Y` is a
+`Y`-indexed family of polynomial functors `D → Type`. Since each
+`D → Type` polynomial functor is an object of `CoprodCovarRepCat D`,
+a polynomial functor `D → Over Y` is an object of
+`FamilyCat (CoprodCovarRepCat D) Y`.
+
+Evaluation: For `P : FamilyCat (CoprodCovarRepCat D) Y` and `A : D`,
+we compute the family `y ↦ ccrEval (P y) A` and use `familySliceForward`
+to convert to `Over Y`.
+-/
+
+section GeneralPolynomialFunctorsToOver
+
+variable {D : Type u} [Category.{u} D]
+variable (Y : Type u)
+
+/--
+The category of polynomial functors `D → Over Y`.
+
+Objects are `Y`-indexed families of polynomial functors `D → Type`.
+For each `y : Y`, we have a polynomial functor `P(y) : D → Type`, which
+is an object of `CoprodCovarRepCat D`, i.e., a pair `(I_y, F_y)` where
+`I_y` is a type of positions and `F_y : I_y → D` gives the representables.
+-/
+abbrev PolyToOverCat : Cat := FamilyCat (CoprodCovarRepCat D) Y
+
+/--
+Extract the polynomial functor at a specific codomain point.
+-/
+def polyToOverAt (P : PolyToOverCat (D := D) Y) (y : Y) : CoprodCovarRepCat D :=
+  P y
+
+/--
+The index type (positions) at a specific codomain point.
+-/
+def polyToOverIndex (P : PolyToOverCat (D := D) Y) (y : Y) : Type u :=
+  ccrIndex (P y)
+
+/--
+The family of representables at a specific codomain point and position.
+-/
+def polyToOverFamily (P : PolyToOverCat (D := D) Y) (y : Y)
+    (i : polyToOverIndex Y P y) : D :=
+  ccrFamily (P y) i
+
+/--
+Evaluate a polynomial functor `D → Over Y` at an object `A : D`,
+producing a family `Y → Type`.
+
+For each `y : Y`, we evaluate the polynomial `P(y)` at `A`:
+`P(A)(y) = Σ (i : positions at y), Hom_D(F_y(i), A)`
+-/
+def polyToOverEvalFamily (P : PolyToOverCat (D := D) Y) (A : D) : Y → Type u :=
+  fun y => ccrEval (P y) A
+
+/--
+Evaluate a polynomial functor at an object of `D`, producing an object
+of `Over Y` via the family-slice equivalence.
+-/
+def polyToOverEval (P : PolyToOverCat (D := D) Y) (A : D) : Over Y :=
+  (familySliceForward Y).obj (polyToOverEvalFamily Y P A)
+
+/-! ### polyToOverEvalFamily helpers -/
+
+/--
+Extract the index from an element of `polyToOverEvalFamily`.
+-/
+def ptoefIndex {P : PolyToOverCat (D := D) Y} {A : D} {y : Y}
+    (x : polyToOverEvalFamily Y P A y) : ccrIndex (P y) :=
+  ccrEvalIndex x
+
+/--
+Extract the morphism from an element of `polyToOverEvalFamily`.
+-/
+def ptoefMor {P : PolyToOverCat (D := D) Y} {A : D} {y : Y}
+    (x : polyToOverEvalFamily Y P A y) :
+    ccrFamily (P y) (ccrEvalIndex x) ⟶ A :=
+  ccrEvalMor x
+
+/--
+Construct an element of `polyToOverEvalFamily` from an index and morphism.
+-/
+def ptoefMk {P : PolyToOverCat (D := D) Y} {A : D} {y : Y}
+    (i : ccrIndex (P y)) (f : ccrFamily (P y) i ⟶ A) :
+    polyToOverEvalFamily Y P A y :=
+  ccrEvalMk i f
+
+@[simp]
+lemma ptoefMk_index {P : PolyToOverCat (D := D) Y} {A : D}
+    {y : Y} (i : ccrIndex (P y)) (f : ccrFamily (P y) i ⟶ A) :
+    ccrEvalIndex (ptoefMk Y i f) = i := rfl
+
+@[simp]
+lemma ptoefMk_mor {P : PolyToOverCat (D := D) Y} {A : D}
+    {y : Y} (i : ccrIndex (P y)) (f : ccrFamily (P y) i ⟶ A) :
+    ccrEvalMor (ptoefMk Y i f) = f := rfl
+
+@[simp]
+lemma ptoefMk_eta {P : PolyToOverCat (D := D) Y} {A : D}
+    {y : Y} (x : polyToOverEvalFamily Y P A y) :
+    ptoefMk Y (ccrEvalIndex x) (ccrEvalMor x) = x := rfl
+
+/-! ### polyToOverEval structure -/
+
+/--
+The left component of `polyToOverEval` is the sigma type over the family.
+-/
+lemma polyToOverEval_left (P : PolyToOverCat (D := D) Y) (A : D) :
+    (polyToOverEval Y P A).left = Σ y, polyToOverEvalFamily Y P A y := rfl
+
+/--
+The structure map of `polyToOverEval` is the first projection.
+-/
+lemma polyToOverEval_hom (P : PolyToOverCat (D := D) Y) (A : D) :
+    (polyToOverEval Y P A).hom = Sigma.fst := rfl
+
+/--
+Extract the Y-coordinate from an element of `(polyToOverEval Y P A).left`.
+-/
+def ptoeLeftY {P : PolyToOverCat (D := D) Y} {A : D}
+    (e : (polyToOverEval Y P A).left) : Y :=
+  e.fst
+
+/--
+Extract the fiber element from an element of `(polyToOverEval Y P A).left`.
+-/
+def ptoeLeftFiber {P : PolyToOverCat (D := D) Y} {A : D}
+    (e : (polyToOverEval Y P A).left) :
+    polyToOverEvalFamily Y P A e.fst :=
+  e.snd
+
+/--
+Construct an element of `(polyToOverEval Y P A).left` from components.
+-/
+def ptoeLeftMk {P : PolyToOverCat (D := D) Y} {A : D}
+    (y : Y) (x : polyToOverEvalFamily Y P A y) :
+    (polyToOverEval Y P A).left :=
+  ⟨y, x⟩
+
+@[simp]
+lemma ptoeLeftMk_y {P : PolyToOverCat (D := D) Y} {A : D}
+    (y : Y) (x : polyToOverEvalFamily Y P A y) :
+    (ptoeLeftMk Y y x).fst = y := rfl
+
+@[simp]
+lemma ptoeLeftMk_fiber {P : PolyToOverCat (D := D) Y} {A : D}
+    (y : Y) (x : polyToOverEvalFamily Y P A y) :
+    (ptoeLeftMk Y y x).snd = x := rfl
+
+@[simp]
+lemma ptoeLeftMk_eta {P : PolyToOverCat (D := D) Y} {A : D}
+    (e : (polyToOverEval Y P A).left) :
+    ptoeLeftMk Y e.fst e.snd = e := rfl
+
+/--
+The structure map applied to a left element gives the Y-coordinate.
+-/
+@[simp]
+lemma polyToOverEval_hom_ptoeLeftMk {P : PolyToOverCat (D := D) Y} {A : D}
+    (y : Y) (x : polyToOverEvalFamily Y P A y) :
+    (polyToOverEval Y P A).hom (ptoeLeftMk Y y x) = y := rfl
+
+end GeneralPolynomialFunctorsToOver
+
 /-! ## Polynomial Functors Over X → Type
 
 A polynomial functor `Over X → Type` is given by an object of
