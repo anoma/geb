@@ -1,4 +1,5 @@
 import Mathlib.CategoryTheory.Category.Cat
+import Mathlib.CategoryTheory.Comma.Over.Basic
 import Mathlib.CategoryTheory.Equivalence
 import Mathlib.Combinatorics.Quiver.ReflQuiver
 
@@ -474,6 +475,85 @@ lemma eqToHomMapEqToHomAppRoundTrip' {E : Type*} [Category E] (F : E ⥤ Type v)
   simp only [eqToHom_refl, Functor.map_id, types_id_apply]
 
 end EqToHom
+
+section Over
+
+/--
+For Over morphisms, composition of `.left` equals `.left` of composition.
+-/
+lemma Over_comp_left {X : Type*} {A B C : Over X} (f : A ⟶ B) (g : B ⟶ C) :
+    (f ≫ g).left = g.left ∘ f.left := rfl
+
+/--
+For an equality proof in `Over X`, the `.left` component of `eqToHom` equals
+the transport function.
+-/
+lemma eqToHom_Over_left {X : Type*} {A₁ A₂ : Over X} (h : A₁ = A₂)
+    (x : A₁.left) :
+    (eqToHom h).left x = h ▸ x := by
+  subst h
+  rfl
+
+/--
+For a reflexive equality proof `p : A = A` on objects in `Over X`, the `.left`
+component of `eqToHom p` acts as identity. This follows from proof irrelevance:
+any proof of `A = A` is propositionally equal to `rfl`, and `eqToHom rfl = 𝟙`.
+-/
+lemma eqToHom_reflexive_left_eq_id {X : Type*} {A : Over X} (p : A = A) :
+    (eqToHom p).left = id := by
+  have p_is_rfl : p = rfl := Subsingleton.elim _ _
+  subst p_is_rfl
+  rfl
+
+end Over
+
+section PiCategory
+
+universe w
+
+variable {I : Type*} {C : I → Type*} [∀ i, Category (C i)]
+
+/--
+In the Pi category, `(f ≫ g) a = (f a) ≫ (g a)`.
+This is definitional for the Pi category.
+-/
+lemma pi_comp_apply {f g h : ∀ a, C a} (η : f ⟶ g) (θ : g ⟶ h) (a : I) :
+    (η ≫ θ) a = η a ≫ θ a := rfl
+
+/--
+In the Pi category, composition at an index is pointwise.
+-/
+lemma pi_comp_at_idx {x y z : ∀ i, C i} (f : x ⟶ y) (g : y ⟶ z) (i : I) :
+    (f ≫ g) i = f i ≫ g i := rfl
+
+/--
+`eqToHom` in the Pi category at an index equals `eqToHom` of the component
+equality. This is `CategoryTheory.Functor.eqToHom_proj` specialized.
+-/
+lemma pi_eqToHom_at_idx {x y : ∀ i, C i} (h : x = y) (i : I) :
+    (eqToHom h : x ⟶ y) i = eqToHom (congrFun h i) :=
+  CategoryTheory.Functor.eqToHom_proj h i
+
+/--
+When composing with `eqToHom` in a Pi category, the composition at an index
+equals the original morphism at that index followed by `eqToHom` of the
+pointwise equality.
+-/
+lemma pi_fiber_comp_eqToHom_at_idx {x y z : ∀ i, C i}
+    (f : x ⟶ y) (h : y = z) (i : I) :
+    (f ≫ eqToHom h) i = f i ≫ eqToHom (congrFun h i) := by
+  simp only [pi_comp_at_idx, pi_eqToHom_at_idx]
+
+/--
+In a pi category, `eqToHom` of a function equality evaluated at an index equals
+`eqToHom` of the pointwise equality.
+-/
+lemma eqToHom_pi_apply {D : Type w} [Category D] {F G : I → D}
+    (h : F = G) (i : I) : (eqToHom h) i = eqToHom (congrFun h i) := by
+  subst h
+  rfl
+
+end PiCategory
 
 end GebLean
 

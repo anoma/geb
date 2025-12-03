@@ -657,4 +657,37 @@ end MathlibExt
 
 end Functor
 
+section CategoryOpPi
+
+universe w
+
+variable {I : Type*} {C : Type w} [Category C]
+
+/--
+In a `Cat.of (CategoryOp' (I → C))` category, `eqToHom` of a function equality
+evaluated at an index. In `CategoryOp'`, morphisms go in the opposite direction,
+so `eqToHom h` at `i` gives `eqToHom` of the symmetric pointwise equality.
+-/
+lemma eqToHom_catOp_pi_apply {F G : (Cat.of (CategoryOp' (I → C))).α}
+    (h : F = G) (i : I) :
+    ((eqToHom h : F ⟶ G) i : G i ⟶ F i) =
+      (eqToHom (congrFun h i).symm : G i ⟶ F i) := by
+  subst h
+  rfl
+
+/--
+Evaluating `eqToHom` on a function equality at an index in `CategoryOp'` gives
+`eqToHom` of the pointwise equality (with direction reversed).
+When applied to an index where types are definitionally equal, this reduces to
+identity.
+-/
+lemma eqToHom_catOp_pi_at_idx {F G : I → C} (h : F = G) (i : I) :
+    (eqToHom (C := CategoryOp' (I → C)) h) i =
+      (eqToHom (congrFun h i).symm : G i ⟶ F i) :=
+  Eq.recOn (motive := fun G' (h' : F = G') =>
+    (eqToHom (C := CategoryOp' (I → C)) h') i =
+      (eqToHom (congrFun h' i).symm : G' i ⟶ F i)) h rfl
+
+end CategoryOpPi
+
 end GebLean
