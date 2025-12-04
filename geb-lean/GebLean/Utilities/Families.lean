@@ -482,6 +482,141 @@ lemma coprodData_over_ι_left {I : Type w} (F : I → Over X) (i : I) (a : (F i)
 
 end CoprodDataOver
 
+/-! ### CoprodData instance from HasCoproducts
+
+For any category with `HasCoproducts`, we can extract the computational part
+(coproduct object and injections) to obtain a `CoprodData` instance. This is
+noncomputable because `HasCoproducts` involves choice.
+-/
+
+section CoprodDataFromHasCoproducts
+
+open Limits
+
+universe w
+
+variable (D : Type*) [Category D] [HasCoproducts.{w} D]
+
+/--
+Noncomputable `CoprodData` instance derived from `HasCoproducts`.
+Extracts the coproduct object and injection morphisms from the categorical
+coproduct structure.
+-/
+noncomputable instance coprodDataOfHasCoproducts : CoprodData.{w} D where
+  coprod F := ∐ F
+  ι F i := Sigma.ι F i
+
+end CoprodDataFromHasCoproducts
+
+/-! ## Product Data Typeclass
+
+The `ProdData` typeclass provides product structure (object and projections)
+without requiring the universal property. This is the dual of `CoprodData`.
+-/
+
+section ProdData
+
+universe w
+
+/--
+Product data for a category: provides the product object and projection
+morphisms without requiring the universal property.
+
+This is the dual of `CoprodData`. It allows definitions using products to be
+computable when a computable instance is available.
+-/
+class ProdData (D : Type*) [Category D] where
+  /-- The product object for a family `F : I → D`. -/
+  prod : {I : Type w} → (I → D) → D
+  /-- The projection morphism from the product to `F i`. -/
+  π : {I : Type w} → (F : I → D) → (i : I) → prod F ⟶ F i
+
+variable {D : Type*} [Category D] [ProdData.{w} D]
+
+/-- Notation for the product object from `ProdData`. -/
+notation "∏' " F:60 => ProdData.prod F
+
+/-- The projection from the product to component `i`. -/
+abbrev ProdData.proj {I : Type w} (F : I → D) (i : I) : ∏' F ⟶ F i :=
+  ProdData.π F i
+
+end ProdData
+
+/-! ### ProdData instance for Over X
+
+For `Over X`, products are fiber products: the product of `(A_i, h_i)` is
+the subtype of `∀ i, A_i` where all morphisms agree on their target in `X`.
+This is the wide pullback over `X`. This instance is computable.
+-/
+
+section ProdDataOver
+
+universe w
+
+variable {X : Type w}
+
+/--
+The underlying type of the product in `Over X`: pairs `(x, f)` where `x : X`
+and `f : ∀ i, A_i` such that all `h_i (f i) = x`.
+-/
+def overProdLeft {I : Type w} (F : I → Over X) : Type w :=
+  { p : (Σ _ : X, ∀ i, (F i).left) // ∀ i, (F i).hom (p.2 i) = p.1 }
+
+/--
+The morphism to `X` for the product: projection to the common target.
+-/
+def overProdHom {I : Type w} (F : I → Over X) : overProdLeft F → X :=
+  fun p => p.val.1
+
+/--
+Computable product data for `Over X`. The product of a family of arrows
+over `X` is the fiber product: pairs `(x, f)` where `x : X` and `f : ∀ i, A_i`
+such that all `h_i (f i) = x`.
+-/
+instance : ProdData.{w} (Over X) where
+  prod F := Over.mk (overProdHom F)
+  π _ i := Over.homMk (fun p => p.val.2 i) (funext fun p => p.property i)
+
+/--
+The product object in `Over X` is the fiber product over X.
+-/
+lemma prodData_over_left {I : Type w} (F : I → Over X) :
+    (∏' F).left = overProdLeft F := rfl
+
+/--
+The projection from the product in `Over X` extracts the i-th component.
+-/
+lemma prodData_over_π_left {I : Type w} (F : I → Over X) (i : I)
+    (p : (∏' F).left) : (ProdData.proj F i).left p = p.val.2 i := rfl
+
+end ProdDataOver
+
+/-! ### ProdData instance from HasProducts
+
+For any category with `HasProducts`, we can extract the computational part
+(product object and projections) to obtain a `ProdData` instance. This is
+noncomputable because `HasProducts` involves choice.
+-/
+
+section ProdDataFromHasProducts
+
+open Limits
+
+universe w
+
+variable (D : Type*) [Category D] [HasProducts.{w} D]
+
+/--
+Noncomputable `ProdData` instance derived from `HasProducts`.
+Extracts the product object and projection morphisms from the categorical
+product structure.
+-/
+noncomputable instance prodDataOfHasProducts : ProdData.{w} D where
+  prod F := ∏ᶜ F
+  π F i := Pi.π F i
+
+end ProdDataFromHasProducts
+
 /-! ## Coproducts in FreeCoprodCompletionCat
 
 The free coproduct completion has all small coproducts. Given a family
@@ -1566,5 +1701,147 @@ def fcpCcrsEquiv :
   Cat.equivOfIso (fcpCcrsIso C)
 
 end LayeredIsomorphism
+
+/-! ## Products in FreeProdCompletionCat
+
+The free product completion has all small products. Given a family
+`F : I → FreeProdCompletionCat C`, the product is:
+- Index type: `Σ i, fpIndex (F i)`
+- Family: `fun ⟨i, x⟩ => fpFamily (F i) x`
+
+This has the same formula as coproducts in `FreeCoprodCompletionCat C`.
+-/
+
+section FreeProdCompletionProducts
+
+open Limits
+
+universe w
+
+variable {C : Type u} [Category.{v} C]
+
+/--
+The product object in `FreeProdCompletionCat C` for a family indexed by `I`.
+Both `I` and the index types of the family elements must be at universe `w`.
+-/
+def fpProdObj {I : Type w} (F : I → FreeProdCompletionCat.{u, v, w} C) :
+    FreeProdCompletionCat.{u, v, w} C :=
+  fpObjMk (fun (p : Σ i, fpIndex (F i)) => fpFamily (F p.1) p.2)
+
+/--
+The projection morphism from the product to component `i`.
+-/
+def fpProdπ {I : Type w} (F : I → FreeProdCompletionCat.{u, v, w} C) (i : I) :
+    fpProdObj F ⟶ F i :=
+  fpHomMk (fun x => ⟨i, x⟩) (fun _ => 𝟙 _)
+
+/--
+The universal morphism to the product given morphisms to each component.
+-/
+def fpProdLift {I : Type w} {F : I → FreeProdCompletionCat.{u, v, w} C}
+    {P : FreeProdCompletionCat.{u, v, w} C}
+    (f : ∀ i, P ⟶ F i) : P ⟶ fpProdObj F :=
+  fpHomMk
+    (fun ⟨i, x⟩ => fpReindex (f i) x)
+    (fun ⟨i, x⟩ => fpFiberMor (f i) x)
+
+@[simp]
+lemma fpProdLift_π {I : Type w} {F : I → FreeProdCompletionCat.{u, v, w} C}
+    {P : FreeProdCompletionCat.{u, v, w} C}
+    (f : ∀ i, P ⟶ F i) (i : I) :
+    fpProdLift f ≫ fpProdπ F i = f i := by
+  refine Grothendieck.ext _ _ ?_ ?_
+  · -- w_base: show base components are equal
+    rfl
+  · -- w_fiber: show fiber components equal with eqToHom
+    simp only [eqToHom_refl, Category.id_comp]
+    funext x
+    change (Grothendieck.comp (fpProdLift f) (fpProdπ F i)).fiber x = (f i).fiber x
+    unfold Grothendieck.comp
+    simp only [fpProdLift, fpProdπ, fpHomMk, eqToHom_refl, Category.id_comp]
+    change (fpFiberMor (f i) x ≫ 𝟙 (fpFamily (F i) x)) = (f i).fiber x
+    simp only [Category.comp_id]
+    rfl
+
+/-- From composition g ≫ fpProdπ F i, the fiber at x simplifies to g.fiber ⟨i, x⟩. -/
+private lemma fpProdπ_comp_fiber_eq {I : Type w}
+    {F : I → FreeProdCompletionCat.{u, v, w} C}
+    {P : FreeProdCompletionCat.{u, v, w} C}
+    (g : P ⟶ fpProdObj F) (i : I) (x : fpIndex (F i)) :
+    (g ≫ fpProdπ F i).fiber x = g.fiber ⟨i, x⟩ := by
+  change (Grothendieck.comp g (fpProdπ F i)).fiber x = g.fiber ⟨i, x⟩
+  unfold Grothendieck.comp
+  simp only [fpProdπ, fpHomMk, eqToHom_refl, Category.id_comp]
+  dsimp only [familyFunctor, familyMap]
+  -- Goal: ((fun x ↦ g.fiber ⟨i, x⟩) ≫ fun x ↦ 𝟙 _) x = g.fiber ⟨i, x⟩
+  -- Pi category composition: (α ≫ β) x = α x ≫ β x
+  change (g.fiber ⟨i, x⟩ ≫ 𝟙 _) = g.fiber ⟨i, x⟩
+  simp only [Category.comp_id]
+
+lemma fpProdLift_unique {I : Type w} {F : I → FreeProdCompletionCat.{u, v, w} C}
+    {P : FreeProdCompletionCat.{u, v, w} C}
+    (f : ∀ i, P ⟶ F i) (g : P ⟶ fpProdObj F)
+    (hg : ∀ i, g ≫ fpProdπ F i = f i) : g = fpProdLift f := by
+  -- First establish base equality: g.base = (fpProdLift f).base
+  have hbase : g.base = (fpProdLift f).base := by
+    funext ⟨i, x⟩
+    -- From hg i: g ≫ fpProdπ F i = f i, extract base equality at x
+    have hi := congrArg Grothendieck.Hom.base (hg i)
+    change (Grothendieck.comp g (fpProdπ F i)).base = (f i).base at hi
+    unfold Grothendieck.comp at hi
+    simp only [fpProdπ, fpHomMk, fpProdLift, fpReindex] at hi ⊢
+    exact congrFun hi x
+  refine Grothendieck.ext _ _ hbase ?_
+  funext ⟨i, x⟩
+  have hfibx := congrFun (Grothendieck.congr (hg i)) x
+  rw [fpProdπ_comp_fiber_eq g i x] at hfibx
+  simp only [fpProdLift, fpHomMk, fpFiberMor]
+  simp_all
+
+open CategoryTheory.Limits in
+/-- The fan for products in the free product completion. -/
+def fpFan {I : Type w} (F : I → FreeProdCompletionCat.{u, v, w} C) :
+    Fan F :=
+  Fan.mk (fpProdObj F) (fpProdπ F)
+
+open CategoryTheory.Limits in
+/-- The product fan is a limit in the free product completion. -/
+def fpIsLimitFan {I : Type w} (F : I → FreeProdCompletionCat.{u, v, w} C) :
+    IsLimit (fpFan F) :=
+  mkFanLimit (fpFan F)
+    (fun t => fpProdLift t.proj)
+    (fun t i => fpProdLift_π t.proj i)
+    (fun t m hm => fpProdLift_unique t.proj m hm)
+
+open CategoryTheory.Limits in
+instance : HasProducts.{w} (FreeProdCompletionCat.{u, v, w} C) :=
+  hasProducts_of_limit_fans fpFan fpIsLimitFan
+
+end FreeProdCompletionProducts
+
+/-! ## Products in ProdContravarRepCat
+
+Since `ProdContravarRepCat C = FreeProdCompletionCat (C^op')` definitionally,
+products in `ProdContravarRepCat` follow directly.
+-/
+
+section ProdContravarRepProducts
+
+open Limits
+
+universe w
+
+variable {C : Type u} [Category.{v} C]
+
+/--
+`ProdContravarRepCat C` has all small products, inherited from
+`FreeProdCompletionCat (C^op')`.
+-/
+instance : HasProducts.{w} (ProdContravarRepCat.{u, v, w} C) :=
+  hasProducts_of_limit_fans
+    (fun F => fpFan (C := Cᵒᵖ') F)
+    (fun F => fpIsLimitFan (C := Cᵒᵖ') F)
+
+end ProdContravarRepProducts
 
 end GebLean

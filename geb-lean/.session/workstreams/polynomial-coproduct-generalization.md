@@ -109,6 +109,12 @@ proves by `rfl` that the specialized and generalized versions are definitionally
 Mirror the `HasCoproducts` implementation for `FreeCoprodCompletionCat` to implement
 `HasProducts` for `FreeProdCompletionCat` (and `ProdContravarRepCat`).
 
+**Approach**: Use `ProdData` typeclass (parallel to `CoprodData`) to separate
+product structure from universal property proofs, enabling computable definitions.
+
+- [ ] Define `ProdData` typeclass (parallel to `CoprodData`)
+- [ ] Define computable `ProdData` instance for `Over X`
+- [ ] Define (noncomputable) `ProdData` instance from `HasProducts`
 - [ ] Define product structure on `FreeProdCompletionCat C`
 - [ ] Prove `HasProducts (FreeProdCompletionCat C)` instance
 - [ ] Prove `ProdContravarRepCat C = FreeProdCompletionCat (C^op')` via `rfl`
