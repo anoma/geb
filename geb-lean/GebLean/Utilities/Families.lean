@@ -399,6 +399,89 @@ lemma fcComp_fiberMor {x y z : FreeCoprodCompletionCat.{u, v, w} C}
 
 end FreeCoprodCompletionHelpers
 
+/-! ## Coproduct Data Typeclass
+
+The `CoprodData` typeclass provides coproduct structure (object and injections)
+without requiring the universal property. This separates computation from proof:
+
+- **Computation**: Definitions using `CoprodData` are computable because they
+  only require the coproduct object and injection morphisms as data.
+- **Proof**: Proofs about coproducts can separately require `HasCoproducts` to
+  access the universal property (uniqueness, factorization).
+
+For categories like `Type` and `Over X` for `X : Type`, we provide a
+computable instance using direct sigma type construction.
+-/
+
+section CoprodData
+
+universe w
+
+/--
+Coproduct data for a category: provides the coproduct object and injection
+morphisms without requiring the universal property.
+
+This allows definitions using coproducts to be computable when a computable
+instance is available (e.g., for `Over X`), while proofs can separately use
+`HasCoproducts` for the universal property.
+-/
+class CoprodData (D : Type*) [Category D] where
+  /-- The coproduct object for a family `F : I → D`. -/
+  coprod : {I : Type w} → (I → D) → D
+  /-- The injection morphism from `F i` into the coproduct. -/
+  ι : {I : Type w} → (F : I → D) → (i : I) → F i ⟶ coprod F
+
+variable {D : Type*} [Category D] [CoprodData.{w} D]
+
+/-- Notation for the coproduct object from `CoprodData`. -/
+notation "∐' " F:60 => CoprodData.coprod F
+
+/-- The injection into the coproduct from component `i`. -/
+abbrev CoprodData.inj {I : Type w} (F : I → D) (i : I) : F i ⟶ ∐' F :=
+  CoprodData.ι F i
+
+end CoprodData
+
+/-! ### CoprodData instance for Over X
+
+For `Over X`, coproducts are sigma types: the coproduct of `(A_i, h_i)` is
+`(Σ i, A_i, copairing)`. This instance is computable.
+-/
+
+section CoprodDataOver
+
+universe w
+
+variable {X : Type w}
+
+/--
+Computable coproduct data for `Over X`. The coproduct of a family of arrows
+over `X` is the sigma type of their domains with the copairing morphism.
+-/
+instance : CoprodData.{w} (Over X) where
+  coprod F := Over.mk (fun (p : Σ i, (F i).left) => (F p.1).hom p.2)
+  ι _ i := Over.homMk (fun a => ⟨i, a⟩) rfl
+
+/--
+The coproduct object in `Over X` is the sigma type of the domains.
+-/
+lemma coprodData_over_left {I : Type w} (F : I → Over X) :
+    (∐' F).left = Σ i, (F i).left := rfl
+
+/--
+The coproduct morphism in `Over X` is the copairing of the family morphisms.
+-/
+lemma coprodData_over_hom {I : Type w} (F : I → Over X) (p : (∐' F).left) :
+    (∐' F).hom p = (F p.1).hom p.2 := rfl
+
+/--
+The injection into the coproduct in `Over X` pairs the index with the element.
+-/
+lemma coprodData_over_ι_left {I : Type w} (F : I → Over X) (i : I) (a : (F i).left) :
+    (CoprodData.inj F i).left a = ⟨i, a⟩ := rfl
+
+end CoprodDataOver
+
 /-! ## Coproducts in FreeCoprodCompletionCat
 
 The free coproduct completion has all small coproducts. Given a family

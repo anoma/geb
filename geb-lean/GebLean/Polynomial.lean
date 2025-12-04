@@ -578,9 +578,7 @@ For `f : PolyToOverCat D Y` and `g : PolyToOverCat (Over Y) Z`:
 
 section GeneralizedComposition
 
-open Limits
-
-variable {D : Type u'} [Category.{u} D] [HasCoproducts D]
+variable {D : Type u'} [Category.{u} D] [CoprodData.{u} D]
 variable {Y Z : Type u}
 
 /--
@@ -596,23 +594,29 @@ def polyToOverCompIndex (g : PolyToOverCat (D := Over Y) Z)
     ∀ (eg : (ccrFamily (g z) ig).left), ccrIndex (f ((ccrFamily (g z) ig).hom eg))
 
 /--
-The family of representables for composition, defined using categorical coproducts.
+The family of representables for composition, defined using `CoprodData`.
 
 At position `(ig, pf)`, the composed representable is the coproduct over
 g-directions of the f-representables at the selected positions.
+
+This definition is computable when `CoprodData D` has a computable instance
+(e.g., for `D = Over X`). The use of `CoprodData` instead of `HasCoproducts`
+separates the coproduct structure from the universal property proofs.
 -/
-noncomputable def polyToOverCompFamily (g : PolyToOverCat (D := Over Y) Z)
+def polyToOverCompFamily (g : PolyToOverCat (D := Over Y) Z)
     (f : PolyToOverCat (D := D) Y) (z : Z)
     (p : polyToOverCompIndex g f z) : D :=
-  ∐ (fun (eg : (ccrFamily (g z) p.1).left) =>
+  ∐' (fun (eg : (ccrFamily (g z) p.1).left) =>
     ccrFamily (f ((ccrFamily (g z) p.1).hom eg)) (p.2 eg))
 
 /--
-Composition of polynomial functors with general domain `D` having coproducts.
+Composition of polynomial functors with general domain `D` having coproduct data.
 
 Given `f : D → Over Y` and `g : Over Y → Over Z`, produces `f ≫ g : D → Over Z`.
+
+This definition is computable when `CoprodData D` has a computable instance.
 -/
-noncomputable def polyToOverComp (g : PolyToOverCat (D := Over Y) Z)
+def polyToOverComp (g : PolyToOverCat (D := Over Y) Z)
     (f : PolyToOverCat (D := D) Y) : PolyToOverCat (D := D) Z :=
   fun z => ccrObjMk (polyToOverCompFamily g f z)
 
@@ -1119,6 +1123,15 @@ lemma polyBetweenCompFamily_is_sigma (g : PolyFunctorBetweenCat Y Z)
     (polyBetweenCompFamily g f z p).left =
     Σ (eg : (ccrFamily (g z) p.1).left),
       (ccrFamily (f ((ccrFamily (g z) p.1).hom eg)) (p.2 eg)).left := rfl
+
+/--
+`polyBetweenCompFamily` is the specialization of `polyToOverCompFamily` to
+`D = Over X`. This is definitionally true because `CoprodData (Over X)` uses
+the same sigma type construction as `polyBetweenCompFamily`.
+-/
+lemma polyBetweenCompFamily_eq_polyToOverCompFamily (g : PolyFunctorBetweenCat Y Z)
+    (f : PolyFunctorBetweenCat X Y) (z : Z) (p : polyBetweenCompIndex g f z) :
+    polyBetweenCompFamily g f z p = polyToOverCompFamily g f z p := rfl
 
 /--
 Composition of polynomial functors `Over X → Over Y` and `Over Y → Over Z`.

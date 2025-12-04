@@ -81,31 +81,28 @@ composition, except for those depending specifically on properties of `Over X`.
 - [ ] Refactor each to use the generalized composition where possible
 - [ ] Keep specialized versions only where `Over X`-specific properties are needed
 
-### Phase 6: Remove `noncomputable` from Composition Definitions
+### Phase 6: Remove `noncomputable` from Composition Definitions (COMPLETED)
 
 The *definition* of composition only needs the signature/structure of coproducts
 (types and morphisms), not the proof of the universal property. Only proofs about
 composition need the universal property, and proofs don't require `noncomputable`.
 
-**Approach**: Define a `CoprodData` typeclass that provides:
+**Implementation**: Defined `CoprodData` typeclass in `Families.lean` that provides:
 - `coprod : {I : Type*} → (I → D) → D` — the coproduct object
 - `ι : (F : I → D) → (i : I) → F i ⟶ coprod F` — injection morphisms
 
-But does NOT require the universal property (uniqueness, factorization proofs).
+For `Over X`, the instance uses direct sigma type construction (computable).
+Notation `∐' F` is provided for `CoprodData.coprod F`.
 
-Then `polyToOverCompFamily` uses `CoprodData.coprod` instead of `∐`:
-- For `Over X`: provide computable instance using sigma type construction
-- For general `D` with `HasCoproducts`: derive (noncomputable) instance from `∐`
+**Result**: `polyToOverCompFamily` and `polyToOverComp` are now computable
+(no `noncomputable` markers). The lemma `polyBetweenCompFamily_eq_polyToOverCompFamily`
+proves by `rfl` that the specialized and generalized versions are definitionally equal.
 
-This separates:
-- Computation (definition using `CoprodData`) — computable
-- Proofs about composition — can use `HasCoproducts` for universal property
-
-- [ ] Define `CoprodData` typeclass with coprod object and injections
-- [ ] Define instance for `Over X` using direct sigma construction
-- [ ] Redefine `polyToOverCompFamily` using `CoprodData.coprod`
-- [ ] Remove `noncomputable` markers
-- [ ] Verify proofs still work (they may need explicit `HasCoproducts` assumptions)
+- [x] Define `CoprodData` typeclass with coprod object and injections
+- [x] Define instance for `Over X` using direct sigma construction
+- [x] Redefine `polyToOverCompFamily` using `CoprodData.coprod` (`∐'`)
+- [x] Remove `noncomputable` markers
+- [x] Verify specialization: `polyBetweenCompFamily = polyToOverCompFamily` by `rfl`
 
 ### Phase 7: Implement HasProducts for Free Product Completion
 
