@@ -3,6 +3,7 @@ import Mathlib.CategoryTheory.Comma.Over.Basic
 import Mathlib.CategoryTheory.Pi.Basic
 import Mathlib.CategoryTheory.Grothendieck
 import Mathlib.CategoryTheory.Whiskering
+import Mathlib.CategoryTheory.Limits.Shapes.Products
 import GebLean.Utilities.Opposites
 import GebLean.Utilities.Grothendieck
 
@@ -398,6 +399,129 @@ lemma fcComp_fiberMor {x y z : FreeCoprodCompletionCat.{u, v, w} C}
 
 end FreeCoprodCompletionHelpers
 
+/-! ## Coproducts in FreeCoprodCompletionCat
+
+The free coproduct completion has all small coproducts. Given a family
+`F : I → FreeCoprodCompletionCat C`, the coproduct is:
+- Index type: `Σ i, fcIndex (F i)`
+- Family: `fun ⟨i, x⟩ => fcFamily (F i) x`
+-/
+
+section FreeCoprodCompletionCoproducts
+
+open Limits
+
+universe w
+
+variable {C : Type u} [Category.{v} C]
+
+/--
+The coproduct object in `FreeCoprodCompletionCat C` for a family indexed by `I`.
+Both `I` and the index types of the family elements must be at universe `w`.
+-/
+def fcCoprodObj {I : Type w} (F : I → FreeCoprodCompletionCat.{u, v, w} C) :
+    FreeCoprodCompletionCat.{u, v, w} C :=
+  fcObjMk (fun (p : Σ i, fcIndex (F i)) => fcFamily (F p.1) p.2)
+
+/--
+The injection morphism into the coproduct from component `i`.
+-/
+def fcCoprodι {I : Type w} (F : I → FreeCoprodCompletionCat.{u, v, w} C) (i : I) :
+    F i ⟶ fcCoprodObj F :=
+  fcHomMk (fun x => ⟨i, x⟩) (fun _ => 𝟙 _)
+
+/--
+The universal morphism from the coproduct given morphisms from each component.
+-/
+def fcCoprodDesc {I : Type w} {F : I → FreeCoprodCompletionCat.{u, v, w} C}
+    {P : FreeCoprodCompletionCat.{u, v, w} C}
+    (f : ∀ i, F i ⟶ P) : fcCoprodObj F ⟶ P :=
+  fcHomMk
+    (fun ⟨i, x⟩ => fcReindex (f i) x)
+    (fun ⟨i, x⟩ => fcFiberMor (f i) x)
+
+@[simp]
+lemma fcCoprodι_desc {I : Type w} {F : I → FreeCoprodCompletionCat.{u, v, w} C}
+    {P : FreeCoprodCompletionCat.{u, v, w} C}
+    (f : ∀ i, F i ⟶ P) (i : I) :
+    fcCoprodι F i ≫ fcCoprodDesc f = f i := by
+  refine GrothendieckContra'.ext _ _ ?_ ?_
+  · -- w_base: show base components are equal
+    rfl
+  · -- w_fiber: show fiber components equal with eqToHom
+    simp only [eqToHom_refl, Category.comp_id]
+    funext x
+    change (GrothendieckContra'.comp (fcCoprodι F i) (fcCoprodDesc f)).fiber x = (f i).fiber x
+    unfold GrothendieckContra'.comp
+    simp only [fcCoprodι, fcCoprodDesc, fcHomMk, eqToHom_refl, Category.comp_id]
+    dsimp only [familyFunctor, familyMap, fcFiberMor]
+    change (𝟙 (fcFamily (F i) x) ≫ (f i).fiber x) = (f i).fiber x
+    simp only [Category.id_comp]
+
+/-- From composition fcCoprodι F i ≫ g, the fiber at x simplifies to g.fiber ⟨i, x⟩. -/
+private lemma fcCoprodι_comp_fiber_eq {I : Type w}
+    {F : I → FreeCoprodCompletionCat.{u, v, w} C}
+    {P : FreeCoprodCompletionCat.{u, v, w} C}
+    (g : fcCoprodObj F ⟶ P) (i : I) (x : fcIndex (F i)) :
+    (fcCoprodι F i ≫ g).fiber x = g.fiber ⟨i, x⟩ := by
+  -- Expand composition fiber definition
+  change (GrothendieckContra'.comp (fcCoprodι F i) g).fiber x = _
+  unfold GrothendieckContra'.comp
+  simp only [fcCoprodι, fcHomMk, eqToHom_refl, Category.comp_id]
+  dsimp only [familyFunctor, familyMap]
+  -- The goal should now be: 𝟙 _ ≫ g.fiber ⟨i, x⟩ = g.fiber ⟨i, x⟩
+  change (𝟙 (fcFamily (F i) x) ≫ g.fiber ⟨i, x⟩) = g.fiber ⟨i, x⟩
+  simp only [Category.id_comp]
+
+lemma fcCoprodDesc_unique {I : Type w} {F : I → FreeCoprodCompletionCat.{u, v, w} C}
+    {P : FreeCoprodCompletionCat.{u, v, w} C}
+    (f : ∀ i, F i ⟶ P) (g : fcCoprodObj F ⟶ P)
+    (hg : ∀ i, fcCoprodι F i ≫ g = f i) : g = fcCoprodDesc f := by
+  -- First establish base equality: g.base = (fcCoprodDesc f).base
+  have hbase : g.base = (fcCoprodDesc f).base := by
+    funext ⟨i, x⟩
+    -- From hg i: fcCoprodι F i ≫ g = f i, extract base equality at x
+    have hi := congrArg GrothendieckContra'.Hom.base (hg i)
+    -- hi: (fcCoprodι F i ≫ g).base = (f i).base
+    unfold GrothendieckContra'.comp at hi
+    simp only [fcCoprodι, fcHomMk, fcCoprodDesc, fcReindex] at hi ⊢
+    -- hi: (fun x => ⟨i, x⟩) ≫ g.base = (f i).base
+    -- Goal: g.base ⟨i, x⟩ = (f i).base x
+    have hix := congrFun hi x
+    -- hix: ((fun x => ⟨i, x⟩) ≫ g.base) x = (f i).base x
+    -- i.e., g.base ⟨i, x⟩ = (f i).base x
+    exact hix
+  refine GrothendieckContra'.ext _ _ hbase ?_
+  funext ⟨i, x⟩
+  have hfibx := congrFun (GrothendieckContra'.congr (hg i)) x
+  rw [fcCoprodι_comp_fiber_eq g i x] at hfibx
+  change g.fiber ⟨i, x⟩ ≫ _ = _
+  rw [hfibx]
+  change ((f i).fiber x ≫ _) ≫ _ = (f i).fiber x
+  simp only [Category.assoc]
+  simp_all
+
+open CategoryTheory.Limits in
+/-- The cofan for coproducts in the free coproduct completion. -/
+def fcCofan {I : Type w} (F : I → FreeCoprodCompletionCat.{u, v, w} C) :
+    Cofan F :=
+  Cofan.mk (fcCoprodObj F) (fcCoprodι F)
+
+open CategoryTheory.Limits in
+/-- The coproduct cofan is a colimit in the free coproduct completion. -/
+def fcIsColimitCofan {I : Type w} (F : I → FreeCoprodCompletionCat.{u, v, w} C) :
+    IsColimit (fcCofan F) :=
+  mkCofanColimit (fcCofan F)
+    (fun t => fcCoprodDesc t.inj)
+    (fun t i => fcCoprodι_desc t.inj i)
+    (fun t m hm => fcCoprodDesc_unique t.inj m hm)
+
+open CategoryTheory.Limits in
+instance : HasCoproducts.{w} (FreeCoprodCompletionCat.{u, v, w} C) :=
+  hasCoproducts_of_colimit_cofans fcCofan fcIsColimitCofan
+
+end FreeCoprodCompletionCoproducts
+
 /-! ## Free product completion helpers -/
 
 section FreeProdCompletionHelpers
@@ -646,6 +770,31 @@ lemma ccrComp_fiberMor {x y z : CoprodCovarRepCat.{u, v, w} C}
   rfl
 
 end CoprodCovarRepHelpers
+
+/-! ## Equivalence between CoprodCovarRepCat and FreeCoprodCompletionCat
+
+`CoprodCovarRepCat C` is equivalent to `FreeCoprodCompletionCat (C^op')`.
+This follows from the isomorphism `FamilyCat (C^op') X ≅ (FamilyCat C X)^op'`.
+-/
+
+section CoprodCovarRepEquiv
+
+universe w
+
+variable {C : Type u} [Category.{v} C]
+
+def ccrFcOpEq :
+  CoprodCovarRepCat.{u, v, w} C = FreeCoprodCompletionCat.{u, v, w} Cᵒᵖ' :=
+    rfl
+
+open CategoryTheory.Limits CategoryTheory.Adjunction in
+instance hasCoproducts_CoprodCovarRepCat :
+  HasCoproducts.{w} (CoprodCovarRepCat.{u, v, w} C) :=
+    hasCoproducts_of_colimit_cofans
+      (fcCofan (C := Cᵒᵖ'))
+      (fcIsColimitCofan (C := Cᵒᵖ'))
+
+end CoprodCovarRepEquiv
 
 /-! ## Product of contravariant representables helpers -/
 

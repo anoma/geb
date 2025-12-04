@@ -1,6 +1,8 @@
 import Mathlib.CategoryTheory.Comma.Over.Basic
 import Mathlib.CategoryTheory.Category.Cat
 import Mathlib.CategoryTheory.Pi.Basic
+import Mathlib.CategoryTheory.Limits.Shapes.Products
+import Mathlib.CategoryTheory.Limits.Over
 import GebLean.Utilities.Equalities
 import GebLean.Utilities.Families
 import GebLean.Utilities.Slice
@@ -561,6 +563,60 @@ lemma mor_to_ptoe_fiber_mor_homMk_rfl {P : PolyToOverCat (D := D) Y} {A : D}
   rfl
 
 end GeneralPolynomialFunctorsToOver
+
+/-! ## Generalized Polynomial Functor Composition
+
+Composition of polynomial functors can be generalized to domain categories `D`
+that have all small coproducts. The composed representable is constructed as
+a coproduct over the directions of `g`.
+
+For `f : PolyToOverCat D Y` and `g : PolyToOverCat (Over Y) Z`:
+- The composed index at `z` is `ccrEval (g z) (index object of f)`
+- The composed representable at position `(ig, pf)` is:
+  `∐ (eg : g-directions at ig), (f-representable at pf(eg))`
+-/
+
+section GeneralizedComposition
+
+open Limits
+
+variable {D : Type u'} [Category.{u} D] [HasCoproducts D]
+variable {Y Z : Type u}
+
+/--
+The index type for composition of general polynomial functors.
+
+Given `f : PolyToOverCat D Y` and `g : PolyToOverCat (Over Y) Z`, at `z : Z`,
+positions are pairs of a g-position and a function assigning f-positions
+to each g-direction.
+-/
+def polyToOverCompIndex (g : PolyToOverCat (D := Over Y) Z)
+    (f : PolyToOverCat (D := D) Y) (z : Z) : Type _ :=
+  Σ (ig : ccrIndex (g z)),
+    ∀ (eg : (ccrFamily (g z) ig).left), ccrIndex (f ((ccrFamily (g z) ig).hom eg))
+
+/--
+The family of representables for composition, defined using categorical coproducts.
+
+At position `(ig, pf)`, the composed representable is the coproduct over
+g-directions of the f-representables at the selected positions.
+-/
+noncomputable def polyToOverCompFamily (g : PolyToOverCat (D := Over Y) Z)
+    (f : PolyToOverCat (D := D) Y) (z : Z)
+    (p : polyToOverCompIndex g f z) : D :=
+  ∐ (fun (eg : (ccrFamily (g z) p.1).left) =>
+    ccrFamily (f ((ccrFamily (g z) p.1).hom eg)) (p.2 eg))
+
+/--
+Composition of polynomial functors with general domain `D` having coproducts.
+
+Given `f : D → Over Y` and `g : Over Y → Over Z`, produces `f ≫ g : D → Over Z`.
+-/
+noncomputable def polyToOverComp (g : PolyToOverCat (D := Over Y) Z)
+    (f : PolyToOverCat (D := D) Y) : PolyToOverCat (D := D) Z :=
+  fun z => ccrObjMk (polyToOverCompFamily g f z)
+
+end GeneralizedComposition
 
 /-! ## Polynomial Functors Over X → Type
 
