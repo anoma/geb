@@ -2,7 +2,7 @@
 
 ## Status
 
-Active - Coproduct instances proven, refactoring to use generalized composition
+Completed - All phases investigated/completed. Phase 8 found code already well-factored.
 
 ## Context
 
@@ -104,7 +104,7 @@ proves by `rfl` that the specialized and generalized versions are definitionally
 - [x] Remove `noncomputable` markers
 - [x] Verify specialization: `polyBetweenCompFamily = polyToOverCompFamily` by `rfl`
 
-### Phase 7: Implement HasProducts for Free Product Completion
+### Phase 7: Implement HasProducts for Free Product Completion (COMPLETED)
 
 Mirror the `HasCoproducts` implementation for `FreeCoprodCompletionCat` to implement
 `HasProducts` for `FreeProdCompletionCat` (and `ProdContravarRepCat`).
@@ -112,24 +112,50 @@ Mirror the `HasCoproducts` implementation for `FreeCoprodCompletionCat` to imple
 **Approach**: Use `ProdData` typeclass (parallel to `CoprodData`) to separate
 product structure from universal property proofs, enabling computable definitions.
 
-- [ ] Define `ProdData` typeclass (parallel to `CoprodData`)
-- [ ] Define computable `ProdData` instance for `Over X`
-- [ ] Define (noncomputable) `ProdData` instance from `HasProducts`
-- [ ] Define product structure on `FreeProdCompletionCat C`
-- [ ] Prove `HasProducts (FreeProdCompletionCat C)` instance
-- [ ] Prove `ProdContravarRepCat C = FreeProdCompletionCat (C^op')` via `rfl`
-- [ ] Derive `HasProducts (ProdContravarRepCat C)`
+- [x] Define `ProdData` typeclass (parallel to `CoprodData`)
+- [x] Define computable `ProdData` instance for `Over X` (using fiber products)
+- [x] Remove noncomputable `ProdData` instance from `HasProducts` (project is a compiler)
+- [x] Define product structure on `FreeProdCompletionCat C`
+- [x] Prove `HasProducts (FreeProdCompletionCat C)` instance
+- [x] Define `fpProdData : ProdData (FreeProdCompletionCat C)`
+- [x] Derive `HasProducts (ProdContravarRepCat C)`
+- [x] Define `pcrProdData : ProdData (ProdContravarRepCat C)`
 
-### Phase 8: Code Factoring via Type-Level Polynomial Functors
+Additional instances (products distribute over coproducts):
+- [x] Define `fcCoprodData : CoprodData (FreeCoprodCompletionCat C)`
+- [x] Define `ccrCoprodData : CoprodData (CoprodCovarRepCat C)`
+- [x] Define `fcProdData : ProdData (FreeCoprodCompletionCat C)` (requires `ProdData C`)
+- [x] Define `ccrProdData : ProdData (CoprodCovarRepCat C)` (requires `ProdData C^op'`)
+- [x] Define `fcpCoprodData : CoprodData (FreeCoprodProdCat C)`
+- [x] Define `fcpProdDataMatching : ProdData (FreeCoprodProdCat C)` (when w₁ = w₂)
+- [x] Define `ccrsCoprodData : CoprodData (CoprodCovarRepSquaredCat C)`
+- [x] Define `ccrsProdDataMatching : ProdData (CoprodCovarRepSquaredCat C)` (when w₁ = w₂)
+
+**Note**: The `ProdData` instances for `FreeCoprodProdCat` and `CoprodCovarRepSquaredCat`
+require matching universe levels (`w₁ = w₂`) because `fcProdData` requires `ProdData.{w}`
+on the underlying category where `w` is the same universe as the coproduct index.
+
+### Phase 8: Code Factoring via Type-Level Polynomial Functors (INVESTIGATED)
 
 `Over X` for `X : Type` is equivalent to `FamilyCat Type X`. This means polynomial
 functors to `Over X` are equivalently families of polynomial functors to `Type`.
 
-- [ ] Investigate current overlap between `PolynomialFunctorsToType` and `Over X` versions
-- [ ] Define composition for `PolynomialFunctorsToType` (post-composing with `Type → Type`)
-- [ ] Note: `Type → Type` functors are equivalently `CoprodCovarRep Type`
-- [ ] Factor composition for `Over Y` codomain in terms of `Type` codomain composition
-- [ ] Identify and eliminate code duplication
+**Investigation findings:**
+
+The code is already well-factored:
+- `PolyToOverCat D Y = FamilyCat (CoprodCovarRepCat D) Y` - already a family of polynomials
+- `polyToOverEvalFamily` = `fun y => ccrEval (P y) A` - pointwise evaluation at Type level
+- `polyToOverEval` = `familySliceForward.obj (polyToOverEvalFamily Y P A)` - uses equivalence
+- Specialized definitions (`polyBetweenEval`, etc.) are defined in terms of general versions
+
+**Remaining optional tasks:**
+
+- [ ] Define composition for `CoprodCovarRepCat Type` (polynomials `Type → Type`)
+  - Note: This would be `(f ; g)(A) = g(f(A))` where `g` acts on `Type` itself
+  - Requires treating `Type u` as a category (with functions as morphisms)
+  - Different from `polyToOverComp` which requires `Over Y` domain for indexing
+- [ ] Prove that `CoprodCovarRepCat Type` corresponds to polynomial endofunctors on `Type`
+- [ ] Factor `Over Y` composition in terms of `Type → Type` composition (if useful)
 
 ## Notes
 

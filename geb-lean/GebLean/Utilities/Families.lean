@@ -482,32 +482,6 @@ lemma coprodData_over_ι_left {I : Type w} (F : I → Over X) (i : I) (a : (F i)
 
 end CoprodDataOver
 
-/-! ### CoprodData instance from HasCoproducts
-
-For any category with `HasCoproducts`, we can extract the computational part
-(coproduct object and injections) to obtain a `CoprodData` instance. This is
-noncomputable because `HasCoproducts` involves choice.
--/
-
-section CoprodDataFromHasCoproducts
-
-open Limits
-
-universe w
-
-variable (D : Type*) [Category D] [HasCoproducts.{w} D]
-
-/--
-Noncomputable `CoprodData` instance derived from `HasCoproducts`.
-Extracts the coproduct object and injection morphisms from the categorical
-coproduct structure.
--/
-noncomputable instance coprodDataOfHasCoproducts : CoprodData.{w} D where
-  coprod F := ∐ F
-  ι F i := Sigma.ι F i
-
-end CoprodDataFromHasCoproducts
-
 /-! ## Product Data Typeclass
 
 The `ProdData` typeclass provides product structure (object and projections)
@@ -590,32 +564,6 @@ lemma prodData_over_π_left {I : Type w} (F : I → Over X) (i : I)
     (p : (∏' F).left) : (ProdData.proj F i).left p = p.val.2 i := rfl
 
 end ProdDataOver
-
-/-! ### ProdData instance from HasProducts
-
-For any category with `HasProducts`, we can extract the computational part
-(product object and projections) to obtain a `ProdData` instance. This is
-noncomputable because `HasProducts` involves choice.
--/
-
-section ProdDataFromHasProducts
-
-open Limits
-
-universe w
-
-variable (D : Type*) [Category D] [HasProducts.{w} D]
-
-/--
-Noncomputable `ProdData` instance derived from `HasProducts`.
-Extracts the product object and projection morphisms from the categorical
-product structure.
--/
-noncomputable instance prodDataOfHasProducts : ProdData.{w} D where
-  prod F := ∏ᶜ F
-  π F i := Pi.π F i
-
-end ProdDataFromHasProducts
 
 /-! ## Coproducts in FreeCoprodCompletionCat
 
@@ -738,7 +686,83 @@ open CategoryTheory.Limits in
 instance : HasCoproducts.{w} (FreeCoprodCompletionCat.{u, v, w} C) :=
   hasCoproducts_of_colimit_cofans fcCofan fcIsColimitCofan
 
+/--
+`CoprodData` instance for `FreeCoprodCompletionCat C` using the coproduct
+construction.
+-/
+instance fcCoprodData : CoprodData.{w} (FreeCoprodCompletionCat.{u, v, w} C) where
+  coprod := fcCoprodObj
+  ι := fcCoprodι
+
 end FreeCoprodCompletionCoproducts
+
+/-! ## Products in FreeCoprodCompletionCat (distributed over coproducts)
+
+When the underlying category `C` has `ProdData`, the free coproduct completion
+also has products, with products distributing over coproducts.
+
+Given a family `F : I → FreeCoprodCompletionCat C` where each `F i = (X_i, G_i)`:
+- The product has index type `∀ i, X_i` (choosing an index from each component)
+- For each `p : ∀ i, X_i`, the object is `∏' (fun i => G_i (p i))` in `C`
+
+The projection `π_j : prod F ⟶ F j` has:
+- Base: `p ↦ p j` (extract the j-th component)
+- Fiber at `p`: `∏' (fun i => G_i (p i)) ⟶ G_j (p j)` via `ProdData.proj`
+-/
+
+section FreeCoprodCompletionProducts
+
+universe w
+
+variable {C : Type u} [Category.{v} C] [ProdData.{w} C]
+
+/--
+The product object in `FreeCoprodCompletionCat C` for a family indexed by `I`,
+when `C` has `ProdData`. Products distribute over coproducts.
+-/
+def fcProdObj {I : Type w} (F : I → FreeCoprodCompletionCat.{u, v, w} C) :
+    FreeCoprodCompletionCat.{u, v, w} C :=
+  fcObjMk (fun (p : ∀ i, fcIndex (F i)) => ∏' (fun i => fcFamily (F i) (p i)))
+
+/--
+The projection morphism from the product to component `j` in
+`FreeCoprodCompletionCat C`. The base extracts the j-th index, and the fiber
+uses the product projection in `C`.
+-/
+def fcProdπ {I : Type w} (F : I → FreeCoprodCompletionCat.{u, v, w} C) (j : I) :
+    fcProdObj F ⟶ F j :=
+  fcHomMk (fun p => p j) (fun p => ProdData.proj (fun i => fcFamily (F i) (p i)) j)
+
+/--
+`ProdData` instance for `FreeCoprodCompletionCat C` when `C` has `ProdData`.
+Products distribute over coproducts.
+-/
+instance fcProdData : ProdData.{w} (FreeCoprodCompletionCat.{u, v, w} C) where
+  prod := fcProdObj
+  π := fcProdπ
+
+end FreeCoprodCompletionProducts
+
+/-! ## Products in CoprodCovarRepCat (distributed over coproducts)
+
+Since `CoprodCovarRepCat C = FreeCoprodCompletionCat (C^op')`, products in
+`CoprodCovarRepCat` follow when `C^op'` has `ProdData`.
+-/
+
+section CoprodCovarRepProducts
+
+universe w
+
+variable {C : Type u} [Category.{v} C] [ProdData.{w} Cᵒᵖ']
+
+/--
+`ProdData` instance for `CoprodCovarRepCat C` when `C^op'` has `ProdData`.
+-/
+instance ccrProdData : ProdData.{w} (CoprodCovarRepCat.{u, v, w} C) where
+  prod F := fcProdObj (C := Cᵒᵖ') F
+  π F j := fcProdπ (C := Cᵒᵖ') F j
+
+end CoprodCovarRepProducts
 
 /-! ## Free product completion helpers -/
 
@@ -1011,6 +1035,14 @@ instance hasCoproducts_CoprodCovarRepCat :
     hasCoproducts_of_colimit_cofans
       (fcCofan (C := Cᵒᵖ'))
       (fcIsColimitCofan (C := Cᵒᵖ'))
+
+/--
+`CoprodData` instance for `CoprodCovarRepCat C`, inherited from
+`FreeCoprodCompletionCat (C^op')`.
+-/
+instance ccrCoprodData : CoprodData.{w} (CoprodCovarRepCat.{u, v, w} C) where
+  coprod F := fcCoprodObj (C := Cᵒᵖ') F
+  ι F i := fcCoprodι (C := Cᵒᵖ') F i
 
 end CoprodCovarRepEquiv
 
@@ -1817,6 +1849,13 @@ open CategoryTheory.Limits in
 instance : HasProducts.{w} (FreeProdCompletionCat.{u, v, w} C) :=
   hasProducts_of_limit_fans fpFan fpIsLimitFan
 
+/--
+`ProdData` instance for `FreeProdCompletionCat C` using the product construction.
+-/
+instance fpProdData : ProdData.{w} (FreeProdCompletionCat.{u, v, w} C) where
+  prod := fpProdObj
+  π := fpProdπ
+
 end FreeProdCompletionProducts
 
 /-! ## Products in ProdContravarRepCat
@@ -1842,6 +1881,105 @@ instance : HasProducts.{w} (ProdContravarRepCat.{u, v, w} C) :=
     (fun F => fpFan (C := Cᵒᵖ') F)
     (fun F => fpIsLimitFan (C := Cᵒᵖ') F)
 
+/--
+`ProdData` instance for `ProdContravarRepCat C`, inherited from
+`FreeProdCompletionCat (C^op')`.
+-/
+instance pcrProdData : ProdData.{w} (ProdContravarRepCat.{u, v, w} C) where
+  prod F := fpProdObj (C := Cᵒᵖ') F
+  π F j := fpProdπ (C := Cᵒᵖ') F j
+
 end ProdContravarRepProducts
+
+/-! ## CoprodData and ProdData for FreeCoprodProdCat
+
+`FreeCoprodProdCat C = FreeCoprodCompletionCat (FreeProdCompletionCat C)` has:
+- `CoprodData` from the outer `FreeCoprodCompletionCat` (at any universe `w₁`)
+- `ProdData` from products distributing over coproducts (when universes match)
+
+The `ProdData` instance requires `w₁ = w₂` because `fcProdData` requires
+`ProdData.{w}` on the underlying category at the same universe as the
+coproduct index type.
+-/
+
+section FreeCoprodProdData
+
+universe w₁ w₂
+
+variable {C : Type u} [Category.{v} C]
+
+/--
+`CoprodData` instance for `FreeCoprodProdCat C`. The outer free coproduct
+completion provides coproducts.
+-/
+instance fcpCoprodData : CoprodData.{w₁} (FreeCoprodProdCat.{u, v, w₁, w₂} C) :=
+  fcCoprodData
+
+end FreeCoprodProdData
+
+/-! ## ProdData for FreeCoprodProdCat with matching universes
+
+When the outer and inner index universes match (`w = w₁ = w₂`), products
+distribute over coproducts and we get `ProdData.{w}`.
+-/
+
+section FreeCoprodProdDataMatching
+
+universe w
+
+variable {C : Type u} [Category.{v} C]
+
+/--
+`ProdData` instance for `FreeCoprodProdCat C` when both index universes are `w`.
+Products from the inner free product completion distribute over the outer
+coproducts.
+-/
+instance fcpProdDataMatching : ProdData.{w} (FreeCoprodProdCat.{u, v, w, w} C) :=
+  fcProdData
+
+end FreeCoprodProdDataMatching
+
+/-! ## CoprodData and ProdData for CoprodCovarRepSquaredCat
+
+`CoprodCovarRepSquaredCat C = CoprodCovarRepCat (CoprodCovarRepCat C)` has:
+- `CoprodData` from the outer `CoprodCovarRepCat` (at any universe `w₁`)
+- `ProdData` when universes match (via the equivalence with `FreeCoprodProdCat`)
+-/
+
+section CoprodCovarRepSquaredData
+
+universe w₁ w₂
+
+variable {C : Type u} [Category.{v} C]
+
+/--
+`CoprodData` instance for `CoprodCovarRepSquaredCat C`. The outer free coproduct
+completion provides coproducts.
+-/
+instance ccrsCoprodData :
+    CoprodData.{w₁} (CoprodCovarRepSquaredCat.{u, v, w₁, w₂} C) :=
+  ccrCoprodData
+
+end CoprodCovarRepSquaredData
+
+/-! ## ProdData for CoprodCovarRepSquaredCat with matching universes -/
+
+section CoprodCovarRepSquaredDataMatching
+
+universe w
+
+variable {C : Type u} [Category.{v} C]
+
+/--
+`ProdData` instance for `CoprodCovarRepSquaredCat C` when both index universes
+are `w`. Uses the isomorphism with `FreeCoprodProdCat C`.
+-/
+instance ccrsProdDataMatching :
+    ProdData.{w} (CoprodCovarRepSquaredCat.{u, v, w, w} C) where
+  prod F := fcpToCcrsObj (∏' (ccrsToFcpObj ∘ F))
+  π F j := fcpToCcrsObj_ccrsToFcpObj (F j) ▸
+    fcpToCcrsMor (ProdData.proj (ccrsToFcpObj ∘ F) j)
+
+end CoprodCovarRepSquaredDataMatching
 
 end GebLean
