@@ -706,6 +706,13 @@ def polyBetweenIndex (P : PolyFunctorBetweenCat X Y) (y : Y) : Type u :=
   polyToOverIndex Y P y
 
 /--
+The object in `Over Y` whose fiber at `y` is the index type of `P` at `y`.
+This is the family of positions viewed as a single object over `Y`.
+-/
+def polyBetweenIndexObj (P : PolyFunctorBetweenCat X Y) : Over Y :=
+  (familySliceForward Y).obj (polyBetweenIndex X Y P)
+
+/--
 The family of representables at a specific codomain point and position.
 Specialization of `polyToOverFamily`.
 -/
@@ -989,13 +996,41 @@ variable {X Y Z : Type u}
 /--
 The position type for the composition of polynomial functors at `z : Z`.
 
-This is `g(z)` evaluated at the family of position types from `f`.
-Positions are: `Σ (i : positions of g at z), ∀ (e : fiber of g at i), positions of f at s(e)`
+This is equivalent to `ccrEval (g z) (polyBetweenIndexObj X Y f)` (see
+`polyBetweenCompIndexEquiv`), but we use the sigma/forall form for
+definitional convenience.
 -/
 def polyBetweenCompIndex (g : PolyFunctorBetweenCat Y Z)
     (f : PolyFunctorBetweenCat X Y) (z : Z) : Type _ :=
   Σ (ig : ccrIndex (g z)),
     ∀ (e : (ccrFamily (g z) ig).left), ccrIndex (f ((ccrFamily (g z) ig).hom e))
+
+/--
+The equivalence between `polyBetweenCompIndex` and the `ccrEval` formulation.
+
+The sigma/forall form is isomorphic to `ccrEval (g z) (polyBetweenIndexObj f)`,
+where a forall giving indices is equivalent to an `Over.Hom` into the index
+object.
+-/
+def polyBetweenCompIndexEquiv (g : PolyFunctorBetweenCat Y Z)
+    (f : PolyFunctorBetweenCat X Y) (z : Z) :
+    polyBetweenCompIndex g f z ≃ ccrEval (g z) (polyBetweenIndexObj X Y f) where
+  toFun := fun ⟨ig, pf⟩ =>
+    ⟨ig, Over.homMk (fun e => ⟨(ccrFamily (g z) ig).hom e, pf e⟩) rfl⟩
+  invFun := fun ⟨ig, mor⟩ => ⟨ig, fun e =>
+    have h : (ccrFamily (g z) ig).hom e = (mor.left e).fst :=
+      (congrFun (Over.w mor) e).symm
+    h ▸ (mor.left e).snd⟩
+  left_inv := fun ⟨_, _⟩ => rfl
+  right_inv := fun ⟨ig, mor⟩ => by
+    simp only [ccrEval]
+    congr 1
+    apply Over.OverMorphism.ext
+    funext e
+    have h : (ccrFamily (g z) ig).hom e = (mor.left e).fst :=
+      (congrFun (Over.w mor) e).symm
+    apply Sigma.ext h
+    exact eqRec_heq _ _
 
 /--
 The representable for the composition at a given composed position.
