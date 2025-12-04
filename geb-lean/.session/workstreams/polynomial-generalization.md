@@ -178,6 +178,7 @@ generalized forms.
   `ptoefMk`
 - [x] Refactor `pbeLeftY`, `pbeLeftFiber`, `pbeLeftMk` to use `ptoeLeftY`,
   `ptoeLeftFiber`, `ptoeLeftMk`
+- [x] Refactor `mor_to_pbe_*` functions to use `mor_to_ptoe_*` generalizations
 - [x] Build and test
 
 ### Phase 4 (OPTIONAL)
@@ -208,12 +209,15 @@ structure:
 
 ### Universe Levels
 
-The generalized definitions may require additional universe polymorphism.
-Currently everything uses `universe u`. We may need:
+The implementation uses `universe u u'` where:
 
-```lean
-universe u v -- u for objects, v for morphisms
-```
+- `u` is the morphism universe level (required by `familySliceForward Y`)
+- `u'` is the object universe level for the domain category `D`
+
+The generalized definitions use `{D : Type u'} [Category.{u} D]` allowing `D`
+to live at any universe level while constraining morphisms to level `u`. This
+is required because `familySliceForward Y` needs `Y : Type u` and the family
+to produce `Type u` values.
 
 ### Naming Convention
 

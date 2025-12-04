@@ -479,6 +479,87 @@ lemma polyToOverEval_hom_ptoeLeftMk {P : PolyToOverCat (D := D) Y} {A : D}
     (y : Y) (x : polyToOverEvalFamily Y P A y) :
     (polyToOverEval Y P A).hom (ptoeLeftMk Y y x) = y := rfl
 
+/-! ### Morphisms into polyToOverEval
+
+When we have a morphism `h : B ⟶ polyToOverEval Y P A` in `Over Y`, the
+commutativity condition ensures that `h.left b` has Y-coordinate `B.hom b`.
+This allows us to extract the fiber element at the appropriate type.
+-/
+
+/--
+For a morphism into `polyToOverEval`, the Y-coordinate of the image equals
+the structure map of the source.
+-/
+lemma mor_to_ptoe_y {P : PolyToOverCat (D := D) Y} {A : D}
+    {B : Over Y} (h : B ⟶ polyToOverEval Y P A) (b : B.left) :
+    ptoeLeftY Y (h.left b) = B.hom b :=
+  congrFun (Over.w h) b
+
+/--
+Given a morphism `h : B ⟶ polyToOverEval Y P A` and `b : B.left`, we can
+extract the fiber element at `B.hom b`. This uses the commutativity condition
+to transport from `ptoeLeftY (h.left b)` to `B.hom b`.
+-/
+def mor_to_ptoe_fiber {P : PolyToOverCat (D := D) Y} {A : D}
+    {B : Over Y} (h : B ⟶ polyToOverEval Y P A) (b : B.left) :
+    polyToOverEvalFamily Y P A (B.hom b) :=
+  (mor_to_ptoe_y Y h b) ▸ ptoeLeftFiber Y (h.left b)
+
+/--
+The fiber element from a morphism: extract the index.
+-/
+def mor_to_ptoe_fiber_index {P : PolyToOverCat (D := D) Y} {A : D}
+    {B : Over Y} (h : B ⟶ polyToOverEval Y P A) (b : B.left) :
+    ccrIndex (P (B.hom b)) :=
+  ptoefIndex Y (mor_to_ptoe_fiber Y h b)
+
+/--
+The fiber element from a morphism: extract the inner morphism.
+-/
+def mor_to_ptoe_fiber_mor {P : PolyToOverCat (D := D) Y} {A : D}
+    {B : Over Y} (h : B ⟶ polyToOverEval Y P A) (b : B.left) :
+    ccrFamily (P (B.hom b)) (mor_to_ptoe_fiber_index Y h b) ⟶ A :=
+  ptoefMor Y (mor_to_ptoe_fiber Y h b)
+
+/--
+Heterogeneous equality between `mor_to_ptoe_fiber` and the raw fiber.
+-/
+lemma mor_to_ptoe_fiber_heq_raw {P : PolyToOverCat (D := D) Y} {A : D}
+    {B : Over Y} (h : B ⟶ polyToOverEval Y P A) (b : B.left) :
+    mor_to_ptoe_fiber Y h b ≍ ptoeLeftFiber Y (h.left b) := by
+  simp only [mor_to_ptoe_fiber]
+  exact eqRec_heq (mor_to_ptoe_y Y h b) (ptoeLeftFiber Y (h.left b))
+
+/--
+When the morphism `h` is constructed via `Over.homMk` and the fiber function
+produces elements with the correct Y-coordinate (i.e., `w` is
+`funext (fun _ => rfl)`), `mor_to_ptoe_fiber_index` reduces definitionally.
+-/
+lemma mor_to_ptoe_fiber_index_homMk_rfl {P : PolyToOverCat (D := D) Y} {A : D}
+    {B : Over Y}
+    (fn : (b : B.left) → polyToOverEvalFamily Y P A (B.hom b))
+    (b : B.left) :
+    mor_to_ptoe_fiber_index Y
+      (Over.homMk (fun b => ptoeLeftMk Y (B.hom b) (fn b))
+        (funext (fun _ => rfl))) b = ptoefIndex Y (fn b) := by
+  simp only [mor_to_ptoe_fiber_index, mor_to_ptoe_fiber, ptoefIndex,
+             ptoeLeftMk, ptoeLeftFiber]
+  rfl
+
+/--
+The analogous lemma for `mor_to_ptoe_fiber_mor`.
+-/
+lemma mor_to_ptoe_fiber_mor_homMk_rfl {P : PolyToOverCat (D := D) Y} {A : D}
+    {B : Over Y}
+    (fn : (b : B.left) → polyToOverEvalFamily Y P A (B.hom b))
+    (b : B.left) :
+    mor_to_ptoe_fiber_mor Y
+      (Over.homMk (fun b => ptoeLeftMk Y (B.hom b) (fn b))
+        (funext (fun _ => rfl))) b = ptoefMor Y (fn b) := by
+  simp only [mor_to_ptoe_fiber_mor, mor_to_ptoe_fiber, ptoefMor,
+             ptoeLeftMk, ptoeLeftFiber]
+  rfl
+
 end GeneralPolynomialFunctorsToOver
 
 /-! ## Polynomial Functors Over X → Type
@@ -791,51 +872,56 @@ This allows us to extract the fiber element at the appropriate type.
 /--
 For a morphism into `polyBetweenEval`, the Y-coordinate of the image equals
 the structure map of the source.
+Specialization of `mor_to_ptoe_y`.
 -/
 lemma mor_to_pbe_y {X Y : Type u} {P : PolyFunctorBetweenCat X Y} {A : Over X}
     {B : Over Y} (h : B ⟶ polyBetweenEval X Y P A) (b : B.left) :
     pbeLeftY (h.left b) = B.hom b :=
-  congrFun (Over.w h) b
+  mor_to_ptoe_y Y h b
 
 /--
 Given a morphism `h : B ⟶ polyBetweenEval X Y P A` and `b : B.left`, we can
 extract the fiber element at `B.hom b`. This uses the commutativity condition
 to transport from `pbeLeftY (h.left b)` to `B.hom b`.
+Specialization of `mor_to_ptoe_fiber`.
 -/
 def mor_to_pbe_fiber {X Y : Type u} {P : PolyFunctorBetweenCat X Y} {A : Over X}
     {B : Over Y} (h : B ⟶ polyBetweenEval X Y P A) (b : B.left) :
     polyBetweenEvalFamily X Y P A (B.hom b) :=
-  (mor_to_pbe_y h b) ▸ pbeLeftFiber (h.left b)
+  mor_to_ptoe_fiber Y h b
 
 /--
 The fiber element from a morphism: extract the index.
+Specialization of `mor_to_ptoe_fiber_index`.
 -/
 def mor_to_pbe_fiber_index {X Y : Type u} {P : PolyFunctorBetweenCat X Y}
     {A : Over X} {B : Over Y} (h : B ⟶ polyBetweenEval X Y P A) (b : B.left) :
     ccrIndex (P (B.hom b)) :=
-  pbefIndex (mor_to_pbe_fiber h b)
+  mor_to_ptoe_fiber_index Y h b
 
 /--
 The fiber element from a morphism: extract the inner morphism.
+Specialization of `mor_to_ptoe_fiber_mor`.
 -/
 def mor_to_pbe_fiber_mor {X Y : Type u} {P : PolyFunctorBetweenCat X Y}
     {A : Over X} {B : Over Y} (h : B ⟶ polyBetweenEval X Y P A) (b : B.left) :
     ccrFamily (P (B.hom b)) (mor_to_pbe_fiber_index h b) ⟶ A :=
-  pbefMor (mor_to_pbe_fiber h b)
+  mor_to_ptoe_fiber_mor Y h b
 
 /--
 Heterogeneous equality between `mor_to_pbe_fiber` and the raw fiber.
+Specialization of `mor_to_ptoe_fiber_heq_raw`.
 -/
 lemma mor_to_pbe_fiber_heq_raw {X Y : Type u} {P : PolyFunctorBetweenCat X Y}
     {A : Over X} {B : Over Y} (h : B ⟶ polyBetweenEval X Y P A) (b : B.left) :
-    mor_to_pbe_fiber h b ≍ pbeLeftFiber (h.left b) := by
-  simp only [mor_to_pbe_fiber]
-  exact eqRec_heq (mor_to_pbe_y h b) (pbeLeftFiber (h.left b))
+    mor_to_pbe_fiber h b ≍ pbeLeftFiber (h.left b) :=
+  mor_to_ptoe_fiber_heq_raw Y h b
 
 /--
 When the morphism `h` is constructed via `Over.homMk` and the fiber function
 produces elements with the correct Y-coordinate (i.e., `w` is `funext (fun _ => rfl)`),
 `mor_to_pbe_fiber_index` reduces definitionally.
+Specialization of `mor_to_ptoe_fiber_index_homMk_rfl`.
 -/
 lemma mor_to_pbe_fiber_index_homMk_rfl {X Y : Type u} {P : PolyFunctorBetweenCat X Y}
     {A : Over X} {B : Over Y}
@@ -843,13 +929,12 @@ lemma mor_to_pbe_fiber_index_homMk_rfl {X Y : Type u} {P : PolyFunctorBetweenCat
     (b : B.left) :
     mor_to_pbe_fiber_index
       (Over.homMk (fun b => pbeLeftMk (B.hom b) (fn b))
-        (funext (fun _ => rfl))) b = pbefIndex (fn b) := by
-  simp only [mor_to_pbe_fiber_index, mor_to_pbe_fiber, pbefIndex,
-             ptoefIndex, pbeLeftMk, pbeLeftFiber]
-  rfl
+        (funext (fun _ => rfl))) b = pbefIndex (fn b) :=
+  mor_to_ptoe_fiber_index_homMk_rfl Y fn b
 
 /--
 The analogous lemma for `mor_to_pbe_fiber_mor`.
+Specialization of `mor_to_ptoe_fiber_mor_homMk_rfl`.
 -/
 lemma mor_to_pbe_fiber_mor_homMk_rfl {X Y : Type u} {P : PolyFunctorBetweenCat X Y}
     {A : Over X} {B : Over Y}
@@ -857,10 +942,8 @@ lemma mor_to_pbe_fiber_mor_homMk_rfl {X Y : Type u} {P : PolyFunctorBetweenCat X
     (b : B.left) :
     mor_to_pbe_fiber_mor
       (Over.homMk (fun b => pbeLeftMk (B.hom b) (fn b))
-        (funext (fun _ => rfl))) b = pbefMor (fn b) := by
-  simp only [mor_to_pbe_fiber_mor, mor_to_pbe_fiber, pbefMor,
-             ptoefMor, pbeLeftMk, pbeLeftFiber]
-  rfl
+        (funext (fun _ => rfl))) b = pbefMor (fn b) :=
+  mor_to_ptoe_fiber_mor_homMk_rfl Y fn b
 
 end PolyFunctorBetween
 
