@@ -135,6 +135,24 @@ Additional instances (products distribute over coproducts):
 require matching universe levels (`w₁ = w₂`) because `fcProdData` requires `ProdData.{w}`
 on the underlying category where `w` is the same universe as the coproduct index.
 
+**Universe constraint investigation**: The matching universe constraint `w₁ = w₂` is
+fundamental. Products indexed by `J : Type w` create Pi types `∀ j, fcpOuterIndex (F j)`
+at universe `max w w₁`. For the result to stay in the same category, we need
+`max w w₁ = w₁`, which combined with the inner product constraint gives `w = w₁ = w₂`.
+
+### Phase 7b: Distributivity of Products over Coproducts (COMPLETED)
+
+Implemented computable isomorphism `A × (∐ᵢ Fᵢ) ≅ ∐ᵢ (A × Fᵢ)` in `FreeCoprodCompletionCat`.
+
+- [x] Define index types `distLhsIndex`/`distRhsIndex` and conversion functions
+- [x] Define family functions `distLhsFamily`/`distRhsFamily` (using `ULift Bool` for universe)
+- [x] Define objects `distLhsObj`/`distRhsObj` and morphisms `distToRhs`/`distToLhs`
+- [x] Prove round-trip lemmas `distToRhs_toRhs` and `distToLhs_toLhs`
+- [x] Define isomorphism `distIso : distLhsObj A F ≅ distRhsObj A F`
+
+**Note**: Uses `ULift.{w} Bool` instead of `Bool` for the binary product index to
+match the `ProdData.{w} C` universe level.
+
 ### Phase 8: Code Factoring via Type-Level Polynomial Functors (INVESTIGATED)
 
 `Over X` for `X : Type` is equivalent to `FamilyCat Type X`. This means polynomial

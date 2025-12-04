@@ -743,6 +743,209 @@ instance fcProdData : ProdData.{w} (FreeCoprodCompletionCat.{u, v, w} C) where
 
 end FreeCoprodCompletionProducts
 
+/-! ## Distributivity: Products distribute over coproducts
+
+In `FreeCoprodCompletionCat C`, products distribute over coproducts. Given:
+- `A : FreeCoprodCompletionCat C` (a single object)
+- `F : I → FreeCoprodCompletionCat C` (a family of objects)
+
+The distributivity isomorphism is:
+  `A × (∐ᵢ Fᵢ) ≅ ∐ᵢ (A × Fᵢ)`
+
+Concretely:
+- LHS index: `fcIndex A × (Σ i, fcIndex (F i))` ≅ `Σ (a, i, x) : ...`
+- RHS index: `Σ i, fcIndex A × fcIndex (F i)` ≅ `Σ (i, a, x) : ...`
+
+The isomorphism swaps the order of `a` and `i`.
+-/
+
+section DistributivityIndex
+
+universe w
+
+variable {C : Type u} [Category.{v} C]
+
+/--
+The index type for `A × (∐ᵢ Fᵢ)` in `FreeCoprodCompletionCat C`.
+This is `fcIndex A × (Σ i, fcIndex (F i))`.
+-/
+def distLhsIndex (A : FreeCoprodCompletionCat.{u, v, w} C)
+    {I : Type w} (F : I → FreeCoprodCompletionCat.{u, v, w} C) : Type w :=
+  fcIndex A × (Σ i, fcIndex (F i))
+
+/--
+The index type for `∐ᵢ (A × Fᵢ)` in `FreeCoprodCompletionCat C`.
+This is `Σ i, fcIndex A × fcIndex (F i)`.
+-/
+def distRhsIndex (A : FreeCoprodCompletionCat.{u, v, w} C)
+    {I : Type w} (F : I → FreeCoprodCompletionCat.{u, v, w} C) : Type w :=
+  Σ i, fcIndex A × fcIndex (F i)
+
+/--
+Convert from LHS index to RHS index: `(a, ⟨i, x⟩) ↦ ⟨i, (a, x)⟩`.
+-/
+def distIndexToRhs {A : FreeCoprodCompletionCat.{u, v, w} C}
+    {I : Type w} {F : I → FreeCoprodCompletionCat.{u, v, w} C}
+    (p : distLhsIndex A F) : distRhsIndex A F :=
+  ⟨p.2.1, (p.1, p.2.2)⟩
+
+/--
+Convert from RHS index to LHS index: `⟨i, (a, x)⟩ ↦ (a, ⟨i, x⟩)`.
+-/
+def distIndexToLhs {A : FreeCoprodCompletionCat.{u, v, w} C}
+    {I : Type w} {F : I → FreeCoprodCompletionCat.{u, v, w} C}
+    (p : distRhsIndex A F) : distLhsIndex A F :=
+  (p.2.1, ⟨p.1, p.2.2⟩)
+
+@[simp]
+lemma distIndexToRhs_toLhs {A : FreeCoprodCompletionCat.{u, v, w} C}
+    {I : Type w} {F : I → FreeCoprodCompletionCat.{u, v, w} C}
+    (p : distRhsIndex A F) : distIndexToRhs (distIndexToLhs p) = p := rfl
+
+@[simp]
+lemma distIndexToLhs_toRhs {A : FreeCoprodCompletionCat.{u, v, w} C}
+    {I : Type w} {F : I → FreeCoprodCompletionCat.{u, v, w} C}
+    (p : distLhsIndex A F) : distIndexToLhs (distIndexToRhs p) = p := rfl
+
+end DistributivityIndex
+
+/-! ## Distributivity: Products distribute over coproducts
+
+In `FreeCoprodCompletionCat C`, products distribute over coproducts. Given:
+- `A : FreeCoprodCompletionCat C` (a single object)
+- `F : I → FreeCoprodCompletionCat C` (a family of objects)
+
+The distributivity isomorphism is:
+  `A × (∐ᵢ Fᵢ) ≅ ∐ᵢ (A × Fᵢ)`
+
+The isomorphism swaps the order of indices: `(a, ⟨i, x⟩) ↔ ⟨i, (a, x)⟩`.
+-/
+
+section Distributivity
+
+universe w
+
+variable {C : Type u} [Category.{v} C] [ProdData.{w} C]
+
+/--
+The family value at an LHS index.
+At `(a, ⟨i, x⟩)`, this is `∏' [fcFamily A a, fcFamily (F i) x]` in `C`.
+Uses `ULift.{w} Bool` to lift the index to universe `w`.
+-/
+def distLhsFamily (A : FreeCoprodCompletionCat.{u, v, w} C)
+    {I : Type w} (F : I → FreeCoprodCompletionCat.{u, v, w} C)
+    (p : distLhsIndex A F) : C :=
+  ∏' (fun b : ULift.{w} Bool =>
+    if b.down then fcFamily A p.1 else fcFamily (F p.2.1) p.2.2)
+
+/--
+The family value at an RHS index.
+At `⟨i, (a, x)⟩`, this is `∏' [fcFamily A a, fcFamily (F i) x]` in `C`.
+Uses `ULift.{w} Bool` to lift the index to universe `w`.
+-/
+def distRhsFamily (A : FreeCoprodCompletionCat.{u, v, w} C)
+    {I : Type w} (F : I → FreeCoprodCompletionCat.{u, v, w} C)
+    (p : distRhsIndex A F) : C :=
+  ∏' (fun b : ULift.{w} Bool =>
+    if b.down then fcFamily A p.2.1 else fcFamily (F p.1) p.2.2)
+
+/--
+The LHS and RHS families agree at corresponding indices.
+-/
+lemma distFamily_eq (A : FreeCoprodCompletionCat.{u, v, w} C)
+    {I : Type w} (F : I → FreeCoprodCompletionCat.{u, v, w} C)
+    (p : distLhsIndex A F) :
+    distLhsFamily A F p = distRhsFamily A F (distIndexToRhs p) := rfl
+
+/--
+The LHS object: `A × (∐ᵢ Fᵢ)` as a binary product.
+-/
+def distLhsObj (A : FreeCoprodCompletionCat.{u, v, w} C)
+    {I : Type w} (F : I → FreeCoprodCompletionCat.{u, v, w} C) :
+    FreeCoprodCompletionCat.{u, v, w} C :=
+  fcObjMk (distLhsFamily A F)
+
+/--
+The RHS object: `∐ᵢ (A × Fᵢ)`.
+-/
+def distRhsObj (A : FreeCoprodCompletionCat.{u, v, w} C)
+    {I : Type w} (F : I → FreeCoprodCompletionCat.{u, v, w} C) :
+    FreeCoprodCompletionCat.{u, v, w} C :=
+  fcObjMk (distRhsFamily A F)
+
+/--
+The forward direction of distributivity: `A × (∐ᵢ Fᵢ) → ∐ᵢ (A × Fᵢ)`.
+Reindexes from `(a, ⟨i, x⟩)` to `⟨i, (a, x)⟩` with identity fiber morphisms.
+-/
+def distToRhs (A : FreeCoprodCompletionCat.{u, v, w} C)
+    {I : Type w} (F : I → FreeCoprodCompletionCat.{u, v, w} C) :
+    distLhsObj A F ⟶ distRhsObj A F :=
+  fcHomMk distIndexToRhs (fun _ => 𝟙 _)
+
+/--
+The backward direction of distributivity: `∐ᵢ (A × Fᵢ) → A × (∐ᵢ Fᵢ)`.
+Reindexes from `⟨i, (a, x)⟩` to `(a, ⟨i, x⟩)` with identity fiber morphisms.
+-/
+def distToLhs (A : FreeCoprodCompletionCat.{u, v, w} C)
+    {I : Type w} (F : I → FreeCoprodCompletionCat.{u, v, w} C) :
+    distRhsObj A F ⟶ distLhsObj A F :=
+  fcHomMk distIndexToLhs (fun _ => 𝟙 _)
+
+/--
+The distributivity morphisms compose to the identity (forward then back).
+-/
+@[simp]
+lemma distToRhs_toRhs (A : FreeCoprodCompletionCat.{u, v, w} C)
+    {I : Type w} (F : I → FreeCoprodCompletionCat.{u, v, w} C) :
+    distToRhs A F ≫ distToLhs A F = 𝟙 (distLhsObj A F) := by
+  refine GrothendieckContra'.ext _ _ ?_ ?_
+  · rfl
+  · simp only [eqToHom_refl, Category.comp_id]
+    funext p
+    change (GrothendieckContra'.comp (distToRhs A F) (distToLhs A F)).fiber p =
+      (GrothendieckContra'.id (distLhsObj A F)).fiber p
+    unfold GrothendieckContra'.comp GrothendieckContra'.id
+    simp only [distToRhs, distToLhs, fcHomMk, eqToHom_refl, Category.comp_id]
+    dsimp only [familyFunctor, familyMap]
+    change (𝟙 (fcFamily (distLhsObj A F) p) ≫
+      𝟙 (fcFamily (distRhsObj A F) (distIndexToRhs p))) = _
+    simp only [Category.id_comp]
+    rfl
+
+/--
+The distributivity morphisms compose to the identity (back then forward).
+-/
+@[simp]
+lemma distToLhs_toLhs (A : FreeCoprodCompletionCat.{u, v, w} C)
+    {I : Type w} (F : I → FreeCoprodCompletionCat.{u, v, w} C) :
+    distToLhs A F ≫ distToRhs A F = 𝟙 (distRhsObj A F) := by
+  refine GrothendieckContra'.ext _ _ ?_ ?_
+  · rfl
+  · simp only [eqToHom_refl, Category.comp_id]
+    funext p
+    change (GrothendieckContra'.comp (distToLhs A F) (distToRhs A F)).fiber p =
+      (GrothendieckContra'.id (distRhsObj A F)).fiber p
+    unfold GrothendieckContra'.comp GrothendieckContra'.id
+    simp only [distToRhs, distToLhs, fcHomMk, eqToHom_refl, Category.comp_id]
+    dsimp only [familyFunctor, familyMap]
+    change (𝟙 (fcFamily (distRhsObj A F) p) ≫
+      𝟙 (fcFamily (distLhsObj A F) (distIndexToLhs p))) = _
+    simp only [Category.id_comp]
+    rfl
+
+/--
+The distributivity isomorphism: `A × (∐ᵢ Fᵢ) ≅ ∐ᵢ (A × Fᵢ)`.
+-/
+def distIso (A : FreeCoprodCompletionCat.{u, v, w} C)
+    {I : Type w} (F : I → FreeCoprodCompletionCat.{u, v, w} C) :
+    distLhsObj A F ≅ distRhsObj A F where
+  hom := distToRhs A F
+  inv := distToLhs A F
+  hom_inv_id := distToRhs_toRhs A F
+  inv_hom_id := distToLhs_toLhs A F
+
+end Distributivity
+
 /-! ## Products in CoprodCovarRepCat (distributed over coproducts)
 
 Since `CoprodCovarRepCat C = FreeCoprodCompletionCat (C^op')`, products in
@@ -1919,8 +2122,11 @@ end FreeCoprodProdData
 
 /-! ## ProdData for FreeCoprodProdCat with matching universes
 
-When the outer and inner index universes match (`w = w₁ = w₂`), products
-distribute over coproducts and we get `ProdData.{w}`.
+Products in `FreeCoprodProdCat` distribute over coproducts. The universe
+constraint `w₁ = w₂` is fundamental: products indexed by `J : Type w` create
+Pi types `∀ j, fcpOuterIndex (F j)` at universe `max w w₁`. For the result
+to stay in the same `FreeCoprodProdCat.{u, v, w₁, w₂}`, we need `max w w₁ = w₁`,
+which combined with the inner product universe constraint gives `w = w₁ = w₂`.
 -/
 
 section FreeCoprodProdDataMatching
@@ -1932,7 +2138,8 @@ variable {C : Type u} [Category.{v} C]
 /--
 `ProdData` instance for `FreeCoprodProdCat C` when both index universes are `w`.
 Products from the inner free product completion distribute over the outer
-coproducts.
+coproducts. The matching universe constraint is fundamental due to how
+Pi types affect universe levels.
 -/
 instance fcpProdDataMatching : ProdData.{w} (FreeCoprodProdCat.{u, v, w, w} C) :=
   fcProdData
