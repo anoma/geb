@@ -2,7 +2,7 @@
 
 ## Status
 
-Active - Coproduct instances proven, composition generalization pending
+Active - Coproduct instances proven, refactoring to use generalized composition
 
 ## Context
 
@@ -67,12 +67,66 @@ coproducts. The forgetful functor `forget X : Over X ⥤ Type` creates colimits.
 - [x] Prove `HasCoproducts (FreeCoprodCompletionCat C)` instance
 - [ ] Instantiate polynomial composition with `FreeCoprodCompletionCat`
 
-### Phase 4: CoprodCovarRepCat Equivalence (COMPLETED)
+### Phase 4: CoprodCovarRepCat Definitional Equality (COMPLETED)
 
-- [x] State the equivalence `CoprodCovarRepCat C ≌ FreeCoprodCompletionCat (C^op')`
-- [x] Prove the equivalence (identity functors suffice)
-- [x] Derive coproduct completeness for `CoprodCovarRepCat`
-- [ ] Instantiate polynomial composition
+- [x] Prove `CoprodCovarRepCat C = FreeCoprodCompletionCat (C^op')` via `rfl`
+- [x] Derive coproduct completeness for `CoprodCovarRepCat` by reusing `fcCofan`/`fcIsColimitCofan`
+
+### Phase 5: Refactor Existing Code to Use Generalized Composition (IN PROGRESS)
+
+Turn existing uses of polynomial composition into specializations of the generalized
+composition, except for those depending specifically on properties of `Over X`.
+
+- [ ] Identify all current uses of polynomial composition in `Polynomial.lean`
+- [ ] Refactor each to use the generalized composition where possible
+- [ ] Keep specialized versions only where `Over X`-specific properties are needed
+
+### Phase 6: Remove `noncomputable` from Composition Definitions
+
+The *definition* of composition only needs the signature/structure of coproducts
+(types and morphisms), not the proof of the universal property. Only proofs about
+composition need the universal property, and proofs don't require `noncomputable`.
+
+**Approach**: Define a `CoprodData` typeclass that provides:
+- `coprod : {I : Type*} → (I → D) → D` — the coproduct object
+- `ι : (F : I → D) → (i : I) → F i ⟶ coprod F` — injection morphisms
+
+But does NOT require the universal property (uniqueness, factorization proofs).
+
+Then `polyToOverCompFamily` uses `CoprodData.coprod` instead of `∐`:
+- For `Over X`: provide computable instance using sigma type construction
+- For general `D` with `HasCoproducts`: derive (noncomputable) instance from `∐`
+
+This separates:
+- Computation (definition using `CoprodData`) — computable
+- Proofs about composition — can use `HasCoproducts` for universal property
+
+- [ ] Define `CoprodData` typeclass with coprod object and injections
+- [ ] Define instance for `Over X` using direct sigma construction
+- [ ] Redefine `polyToOverCompFamily` using `CoprodData.coprod`
+- [ ] Remove `noncomputable` markers
+- [ ] Verify proofs still work (they may need explicit `HasCoproducts` assumptions)
+
+### Phase 7: Implement HasProducts for Free Product Completion
+
+Mirror the `HasCoproducts` implementation for `FreeCoprodCompletionCat` to implement
+`HasProducts` for `FreeProdCompletionCat` (and `ProdContravarRepCat`).
+
+- [ ] Define product structure on `FreeProdCompletionCat C`
+- [ ] Prove `HasProducts (FreeProdCompletionCat C)` instance
+- [ ] Prove `ProdContravarRepCat C = FreeProdCompletionCat (C^op')` via `rfl`
+- [ ] Derive `HasProducts (ProdContravarRepCat C)`
+
+### Phase 8: Code Factoring via Type-Level Polynomial Functors
+
+`Over X` for `X : Type` is equivalent to `FamilyCat Type X`. This means polynomial
+functors to `Over X` are equivalently families of polynomial functors to `Type`.
+
+- [ ] Investigate current overlap between `PolynomialFunctorsToType` and `Over X` versions
+- [ ] Define composition for `PolynomialFunctorsToType` (post-composing with `Type → Type`)
+- [ ] Note: `Type → Type` functors are equivalently `CoprodCovarRep Type`
+- [ ] Factor composition for `Over Y` codomain in terms of `Type` codomain composition
+- [ ] Identify and eliminate code duplication
 
 ## Notes
 

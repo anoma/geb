@@ -1062,6 +1062,13 @@ def polyBetweenCompIndex (g : PolyFunctorBetweenCat Y Z)
     ∀ (e : (ccrFamily (g z) ig).left), ccrIndex (f ((ccrFamily (g z) ig).hom e))
 
 /--
+`polyBetweenCompIndex` is the specialization of `polyToOverCompIndex` to `D = Over X`.
+-/
+lemma polyBetweenCompIndex_eq_polyToOverCompIndex (g : PolyFunctorBetweenCat Y Z)
+    (f : PolyFunctorBetweenCat X Y) (z : Z) :
+    polyBetweenCompIndex g f z = polyToOverCompIndex g f z := rfl
+
+/--
 The equivalence between `polyBetweenCompIndex` and the `ccrEval` formulation.
 
 The sigma/forall form is isomorphic to `ccrEval (g z) (polyBetweenIndexObj f)`,
@@ -1100,6 +1107,18 @@ def polyBetweenCompFamily (g : PolyFunctorBetweenCat Y Z)
   Over.mk (fun (e : Σ (eg : (ccrFamily (g z) p.1).left),
                       (ccrFamily (f ((ccrFamily (g z) p.1).hom eg)) (p.2 eg)).left) =>
     (ccrFamily (f ((ccrFamily (g z) p.1).hom e.1)) (p.2 e.1)).hom e.2)
+
+/--
+`polyBetweenCompFamily` provides the computable construction of the composed
+representable for `Over X`. It constructs the sigma type directly rather than
+using the categorical coproduct `∐`. This is the explicit form of the coproduct
+in `Over X`: the coproduct of `(A_i, h_i)` is `(Σ i, A_i, copairing)`.
+-/
+lemma polyBetweenCompFamily_is_sigma (g : PolyFunctorBetweenCat Y Z)
+    (f : PolyFunctorBetweenCat X Y) (z : Z) (p : polyBetweenCompIndex g f z) :
+    (polyBetweenCompFamily g f z p).left =
+    Σ (eg : (ccrFamily (g z) p.1).left),
+      (ccrFamily (f ((ccrFamily (g z) p.1).hom eg)) (p.2 eg)).left := rfl
 
 /--
 Composition of polynomial functors `Over X → Over Y` and `Over Y → Over Z`.
