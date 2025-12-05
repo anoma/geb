@@ -5071,9 +5071,30 @@ variable {G F}
 variable (app : LaxNatTransApp G F)
 
 /--
-Laxity morphism components for a lax natural transformation.
-For each `f : c ⟶ c'` and `x : G.obj c`, a morphism from the transported
-source to the destination.
+Laxity morphism components for a lax natural transformation `α : G ⟹ F`.
+
+Given a morphism `f : c ⟶ c'` in `C` and an element `x` in the fiber `G.obj c`,
+there are two ways to obtain an element of `F.obj c'`:
+
+1. **Apply α first, then transport via F**: Apply the component functor
+   `app c : G.obj c ⥤ F.obj c` to get `(app c).obj x` in `F.obj c`, then
+   transport along f using F to get `(F.map f).obj ((app c).obj x)` in
+   `F.obj c'`.
+
+2. **Transport via G first, then apply α**: Transport x along f using G
+   to get `(G.map f).obj x` in `G.obj c'`, then apply the component functor
+   `app c' : G.obj c' ⥤ F.obj c'` to get `(app c').obj ((G.map f).obj x)`
+   in `F.obj c'`.
+
+The laxity morphism goes from (1) to (2):
+
+  `(F.map f).obj ((app c).obj x) ⟶ (app c').obj ((G.map f).obj x)`
+
+This matches the nLab convention for lax natural transformations: for
+`α : F ⇒ G`, the 2-cell `α_f : G(f) ∘ α_A ⇒ α_B ∘ F(f)` goes from the
+"target-functor-then-transport" composite to the "transport-then-target-functor"
+composite. (Our notation `G ⟹ F` reverses the roles of F and G relative
+to nLab's `F ⇒ G`.)
 -/
 abbrev LaxNatTransLaxApp :=
   ∀ {c c' : C} (f : c ⟶ c') (x : G.obj c),
