@@ -5836,7 +5836,7 @@ def OplaxNatTransData.toFunctor (α : OplaxNatTransData G' F') :
             GrothendieckContra'.Hom
               ⟨Y.base, (α.app Y.base).obj Y.fiber⟩ ⟨Z.base, (α.app Z.base).obj Z.fiber⟩)).fiber
       simp only [GrothendieckContra'.comp_fiber, GrothendieckContra'.comp_base]
-      -- With new convention: oplaxComp takes f : c' ⟶ c and g : c'' ⟶ c' with composition g ≫ f.
+      -- OplaxComp takes f : c' ⟶ c and g : c'' ⟶ c' with composition g ≫ f.
       -- Here f.base : X.base ⟶ Y.base and g.base : Y.base ⟶ Z.base, so f.base ≫ g.base.
       -- We apply oplaxComp with arguments swapped: g.base plays role of f, f.base plays role of g.
       simp only [α.oplaxComp g.base f.base Z.fiber]
@@ -5889,9 +5889,9 @@ This shows that functor data between contravariant Grothendieck constructions
 decomposes into a base functor and an oplax natural transformation.
 
 Note: `FunctorBetweenContraData` uses composition `f ≫ g` for `f : c ⟶ c'` and
-`g : c' ⟶ c''`, while `OplaxNatTransData` (with the new convention) uses
-composition `g ≫ f` for `f : c' ⟶ c` and `g : c'' ⟶ c'`. We adapt by swapping
-the arguments when converting.
+`g : c' ⟶ c''`, while `OplaxNatTransData` uses composition `g ≫ f` for
+`f : c' ⟶ c` and `g : c'' ⟶ c'`. We adapt by swapping the arguments when
+converting.
 -/
 def FunctorBetweenContraData.toOplaxNatTrans (data : FunctorBetweenContraData G' F') :
     OplaxNatTransData G' (functorOp'Obj data.baseFib ⋙ F') where
@@ -5900,7 +5900,7 @@ def FunctorBetweenContraData.toOplaxNatTrans (data : FunctorBetweenContraData G'
   oplaxNat {c c'} f {x y} φ := data.fibHomCrossNat f φ
   oplaxId c x := data.baseHomId c x
   oplaxComp {c c' c''} f g x := by
-    -- New OplaxComp: f : c' ⟶ c, g : c'' ⟶ c', x : G'.obj c, composition g ≫ f : c'' ⟶ c
+    -- OplaxComp: f : c' ⟶ c, g : c'' ⟶ c', x : G'.obj c, composition g ≫ f : c'' ⟶ c
     -- data.baseHomComp expects: f' : c ⟶ c', g' : c' ⟶ c'', composition f' ≫ g'
     -- We use data.baseHomComp g f x to match: g : c'' ⟶ c', f : c' ⟶ c, composition g ≫ f
     simp only [Functor.comp_obj, Functor.comp_map]
