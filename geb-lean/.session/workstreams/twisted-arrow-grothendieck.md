@@ -29,7 +29,7 @@ with the above.
 - [ ] Prove relationship between GrC' variants and twisted/arrow categories
 - [ ] Document which pairs of constructions give equivalent categories
 
-### Phase 2: FunctorFromData Infrastructure
+### Phase 2: FunctorFromData Infrastructure (Optional)
 
 - [ ] Define `FunctorFromContraFibData` for functors with contravariant fibers
 - [ ] Show this generalizes the existing `FunctorFromData`
@@ -37,9 +37,15 @@ with the above.
 
 ### Phase 3: Presheaf Constructions
 
-- [ ] Express `TwArrCopresheaf` slice data as `FunctorFromContraFibData`
-- [ ] Factor the functor construction through the equivalence
-- [ ] Verify the functor laws follow from the general construction
+Completed via `SectionData`/`SectionDataContra` approach in `TwArrPresheaf.lean`:
+
+- [x] `TwArrCopresheaf.sliceGrothendieckFunctor : C ⥤ GrothendieckContra' ...`
+- [x] `TwArrPresheaf.sliceGrothendieckFunctor : Cᵒᵖ' ⥤ Grothendieck ...`
+- [x] `TwArrOpCopresheaf.sliceGrothendieckFunctor : C ⥤ GrothendieckContra' ...`
+- [x] `TwArrOpPresheaf.sliceGrothendieckFunctor : Cᵒᵖ' ⥤ Grothendieck ...`
+
+The original plan to use `FunctorFromContraFibData` was superseded by using the
+existing `SectionData.toFunctor` and `SectionDataContra.toFunctor` infrastructure.
 
 ## Open Questions
 
