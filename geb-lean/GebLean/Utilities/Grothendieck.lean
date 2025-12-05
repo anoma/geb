@@ -5596,32 +5596,55 @@ variable {G' F'}
 variable (app : OplaxNatTransApp G' F')
 
 /--
-Oplax morphisms: for each `f : c ⟶ c'` and `x' : G'.obj c'`, a morphism
-relating the transported fibers.
+Oplax morphism components for an oplax natural transformation `α : G' ⟹ F'`
+between contravariant Cat-valued functors `G' F' : Cᵒᵖ' ⥤ Cat`.
 
-For contravariant `G' : Cᵒᵖ' ⥤ Cat`, we have `G'.map f : G'.obj c' ⥤ G'.obj c`.
-So `(G'.map f).obj x' : G'.obj c` and thus `(app c).obj ((G'.map f).obj x')` is
-in `F'.obj c`.
+Given a morphism `f : c' ⟶ c` in `C` and an element `x` in the fiber `G'.obj c`,
+there are two ways to obtain an element of `F'.obj c'`.
 
-Similarly, `(F'.map f).obj ((app c').obj x')` is in `F'.obj c`.
+Note on contravariance: For `G' : Cᵒᵖ' ⥤ Cat`, the morphism `f : c' ⟶ c` in `C`
+corresponds to a morphism from `c` to `c'` in `Cᵒᵖ'`. Thus `G'.map f` acts as
+a functor `G'.obj c ⥤ G'.obj c'` (going from `c` to `c'` in the fiber categories).
+Similarly, `F'.map f : F'.obj c ⥤ F'.obj c'`. This convention makes `c` the
+"source" and `c'` the "target" from the functor's perspective, matching the
+natural direction of transport.
 
-The oplax morphism goes from the app-then-G-transport to the F-transport-then-app.
+1. **Transport via G' first, then apply α**: Transport x along f using G'
+   to get `(G'.map f).obj x` in `G'.obj c'`, then apply the component functor
+   `app c' : G'.obj c' ⥤ F'.obj c'` to get `(app c').obj ((G'.map f).obj x)` in
+   `F'.obj c'`.
+
+2. **Apply α first, then transport via F'**: Apply the component functor
+   `app c : G'.obj c ⥤ F'.obj c` to get `(app c).obj x` in `F'.obj c`,
+   then transport along f using F' to get `(F'.map f).obj ((app c).obj x)`
+   in `F'.obj c'`.
+
+The oplax morphism goes from (1) to (2):
+
+  `(app c').obj ((G'.map f).obj x) ⟶ (F'.map f).obj ((app c).obj x)`
+
+This is consistent with nLab's convention: if we view G', F' as covariant
+functors on Cᵒᵖ, then a lax transformation would have the arrow going in the
+opposite direction. Since "oplax" means reversing the 2-cell direction from
+"lax", our oplax for contravariant functors has the direction shown above:
+from (G'-transport-then-α) to (α-then-F'-transport).
 -/
 abbrev OplaxNatTransOplaxApp :=
-  ∀ {c c' : C} (f : c ⟶ c') (x' : G'.obj c'),
-    (app c).obj ((G'.map f).obj x') ⟶ (F'.map f).obj ((app c').obj x')
+  ∀ {c c' : C} (f : c' ⟶ c) (x : G'.obj c),
+    (app c').obj ((G'.map f).obj x) ⟶ (F'.map f).obj ((app c).obj x)
 
 variable (oplaxApp : OplaxNatTransOplaxApp app)
 
 /--
 Naturality of oplax morphisms.
-For `f : c ⟶ c'` and `φ : x' ⟶ y'` in `G'.obj c'`:
-- Both sides have codomain `(F'.map f).obj ((app c').obj y')`
+For `f : c' ⟶ c` and `φ : x ⟶ y` in `G'.obj c`, both sides of the equation
+have domain `(app c').obj ((G'.map f).obj x)` and codomain
+`(F'.map f).obj ((app c).obj y)`.
 -/
 abbrev OplaxNatTransOplaxNat :=
-  ∀ {c c' : C} (f : c ⟶ c') {x' y' : G'.obj c'} (φ : x' ⟶ y'),
-    (app c).map ((G'.map f).map φ) ≫ oplaxApp f y' =
-    oplaxApp f x' ≫ (F'.map f).map ((app c').map φ)
+  ∀ {c c' : C} (f : c' ⟶ c) {x y : G'.obj c} (φ : x ⟶ y),
+    (app c').map ((G'.map f).map φ) ≫ oplaxApp f y =
+    oplaxApp f x ≫ (F'.map f).map ((app c).map φ)
 
 /--
 Equality proof for identity oplax coherence.
@@ -5648,49 +5671,51 @@ abbrev OplaxNatTransOplaxId :=
 
 /--
 Equality proof for composition oplax coherence (left side).
-For C-composition `f ≫_C g` applied through G'.
-Note: `G'.map_comp g f` (with Cᵒᵖ' morphisms) gives
-`G'.map (f ≫_C g) = G'.map g ⋙ G'.map f`.
+For `f : c' ⟶ c` and `g : c'' ⟶ c'` in C, the C-composition is `g ≫ f : c'' ⟶ c`.
+By contravariant functoriality: `G'.map (g ≫ f) = G'.map f ⋙ G'.map g`.
 -/
 abbrev OplaxNatTransCompEqLeft :=
-  ∀ {c c' c'' : C} (f : c ⟶ c') (g : c' ⟶ c'') (x'' : G'.obj c''),
-    (app c).obj ((G'.map (@CategoryStruct.comp C _ c c' c'' f g)).obj x'') =
-    (app c).obj ((G'.map f).obj ((G'.map g).obj x''))
+  ∀ {c c' c'' : C} (f : c' ⟶ c) (g : c'' ⟶ c') (x : G'.obj c),
+    (app c'').obj ((G'.map (@CategoryStruct.comp C _ c'' c' c g f)).obj x) =
+    (app c'').obj ((G'.map g).obj ((G'.map f).obj x))
 
 /--
 Derive the left composition equality from functor laws.
 -/
 lemma oplaxNatTransCompEqLeftProof : OplaxNatTransCompEqLeft app := by
-  intro c c' c'' f g x''
-  exact congrArg (app c).obj (congrFun (congrArg Functor.obj (G'.map_comp g f)) x'')
+  intro c c' c'' f g x
+  exact congrArg (app c'').obj (congrFun (congrArg Functor.obj (G'.map_comp f g)) x)
 
 /--
 Equality proof for composition oplax coherence (right side).
-For C-composition `f ≫_C g` applied through F'.
+For `f : c' ⟶ c` and `g : c'' ⟶ c'` in C, the C-composition is `g ≫ f : c'' ⟶ c`.
+By contravariant functoriality: `F'.map (g ≫ f) = F'.map f ⋙ F'.map g`.
 -/
 abbrev OplaxNatTransCompEqRight :=
-  ∀ {c c' c'' : C} (f : c ⟶ c') (g : c' ⟶ c'') (x'' : G'.obj c''),
-    (F'.map f).obj ((F'.map g).obj ((app c'').obj x'')) =
-    (F'.map (@CategoryStruct.comp C _ c c' c'' f g)).obj ((app c'').obj x'')
+  ∀ {c c' c'' : C} (f : c' ⟶ c) (g : c'' ⟶ c') (x : G'.obj c),
+    (F'.map g).obj ((F'.map f).obj ((app c).obj x)) =
+    (F'.map (@CategoryStruct.comp C _ c'' c' c g f)).obj ((app c).obj x)
 
 /--
 Derive the right composition equality from functor laws.
 -/
 lemma oplaxNatTransCompEqRightProof : OplaxNatTransCompEqRight app := by
-  intro c c' c'' f g x''
-  exact (congrFun (congrArg Functor.obj (F'.map_comp g f)) ((app c'').obj x'')).symm
+  intro c c' c'' f g x
+  exact (congrFun (congrArg Functor.obj (F'.map_comp f g)) ((app c).obj x)).symm
 
 /--
-Composition coherence: `oplaxApp (f ≫_C g) x''` decomposes stepwise.
-Uses explicit C-composition `f ≫_C g` for `f : c ⟶ c'` and `g : c' ⟶ c''`.
+Composition coherence: `oplaxApp (g ≫ f) x` decomposes stepwise.
+For `f : c' ⟶ c` and `g : c'' ⟶ c'` in C, the composed morphism is `g ≫ f : c'' ⟶ c`.
+The decomposition first applies the `f` step (c ⟶ c' in Cᵒᵖ'), then the `g` step
+(c' ⟶ c'' in Cᵒᵖ').
 -/
 abbrev OplaxNatTransOplaxComp :=
-  ∀ {c c' c'' : C} (f : c ⟶ c') (g : c' ⟶ c'') (x'' : G'.obj c''),
-    oplaxApp (@CategoryStruct.comp C _ c c' c'' f g) x'' =
-    eqToHom (oplaxNatTransCompEqLeftProof app f g x'') ≫
-    oplaxApp f ((G'.map g).obj x'') ≫
-    (F'.map f).map (oplaxApp g x'') ≫
-    eqToHom (oplaxNatTransCompEqRightProof app f g x'')
+  ∀ {c c' c'' : C} (f : c' ⟶ c) (g : c'' ⟶ c') (x : G'.obj c),
+    oplaxApp (@CategoryStruct.comp C _ c'' c' c g f) x =
+    eqToHom (oplaxNatTransCompEqLeftProof app f g x) ≫
+    oplaxApp g ((G'.map f).obj x) ≫
+    (F'.map g).map (oplaxApp f x) ≫
+    eqToHom (oplaxNatTransCompEqRightProof app f g x)
 
 /--
 Bundled data for an oplax natural transformation `G' ⟹ F'` between contravariant
@@ -5721,55 +5746,56 @@ Identity oplax natural transformation.
 -/
 def OplaxNatTransData.id (G' : Cᵒᵖ' ⥤ Cat.{vC, uC}) : OplaxNatTransData G' G' where
   app c := 𝟭 (G'.obj c)
-  oplaxApp f x' := eqToHom (by simp only [Functor.id_obj])
+  oplaxApp f x := eqToHom (by simp only [Functor.id_obj])
   oplaxNat f φ := by simp
   oplaxId c x := rfl
-  oplaxComp f g x'' := by simp
+  oplaxComp f g x := by simp
 
 /--
 Composition of oplax natural transformations.
 
 Given `α : G' ⟹ H'` and `β : H' ⟹ K'`, their composition `α ⋙ β : G' ⟹ K'` has:
 - Component functors: `(α ⋙ β).app c = α.app c ⋙ β.app c`
-- Oplax: `(β.app c).map (α.oplaxApp f x') ≫ β.oplaxApp f ((α.app c').obj x')`
+- Oplax: For `f : c' ⟶ c` and `x : G'.obj c`,
+  `(β.app c').map (α.oplaxApp f x) ≫ β.oplaxApp f ((α.app c).obj x)`
 -/
 def OplaxNatTransData.comp {G' H' K' : Cᵒᵖ' ⥤ Cat.{vC, uC}}
     (α : OplaxNatTransData G' H') (β : OplaxNatTransData H' K') :
     OplaxNatTransData G' K' where
   app c := α.app c ⋙ β.app c
-  oplaxApp {c c'} f x' :=
-    (β.app c).map (α.oplaxApp f x') ≫ β.oplaxApp f ((α.app c').obj x')
-  oplaxNat {c c'} f {x' y'} φ := by
+  oplaxApp {c c'} f x :=
+    (β.app c').map (α.oplaxApp f x) ≫ β.oplaxApp f ((α.app c).obj x)
+  oplaxNat {c c'} f {x y} φ := by
     simp only [Functor.comp_obj, Functor.comp_map]
-    have hα : (α.app c).map ((G'.map f).map φ) ≫ α.oplaxApp f y' =
-        α.oplaxApp f x' ≫ (H'.map f).map ((α.app c').map φ) := α.oplaxNat f φ
-    have hβ : (β.app c).map ((H'.map f).map ((α.app c').map φ)) ≫
-            β.oplaxApp f ((α.app c').obj y') =
-        β.oplaxApp f ((α.app c').obj x') ≫
-            (K'.map f).map ((β.app c').map ((α.app c').map φ)) :=
-        β.oplaxNat f ((α.app c').map φ)
+    have hα : (α.app c').map ((G'.map f).map φ) ≫ α.oplaxApp f y =
+        α.oplaxApp f x ≫ (H'.map f).map ((α.app c).map φ) := α.oplaxNat f φ
+    have hβ : (β.app c').map ((H'.map f).map ((α.app c).map φ)) ≫
+            β.oplaxApp f ((α.app c).obj y) =
+        β.oplaxApp f ((α.app c).obj x) ≫
+            (K'.map f).map ((β.app c).map ((α.app c).map φ)) :=
+        β.oplaxNat f ((α.app c).map φ)
     calc
-      _ = ((β.app c).map ((α.app c).map ((G'.map f).map φ)) ≫
-          (β.app c).map (α.oplaxApp f y')) ≫ β.oplaxApp f ((α.app c').obj y') := by
+      _ = ((β.app c').map ((α.app c').map ((G'.map f).map φ)) ≫
+          (β.app c').map (α.oplaxApp f y)) ≫ β.oplaxApp f ((α.app c).obj y) := by
         simp only [Category.assoc]
-      _ = (β.app c).map ((α.app c).map ((G'.map f).map φ) ≫ α.oplaxApp f y') ≫
-          β.oplaxApp f ((α.app c').obj y') := by rw [← (β.app c).map_comp]
-      _ = (β.app c).map (α.oplaxApp f x' ≫ (H'.map f).map ((α.app c').map φ)) ≫
-          β.oplaxApp f ((α.app c').obj y') := by rw [hα]
-      _ = ((β.app c).map (α.oplaxApp f x') ≫
-          (β.app c).map ((H'.map f).map ((α.app c').map φ))) ≫
-          β.oplaxApp f ((α.app c').obj y') := by rw [(β.app c).map_comp]
-      _ = (β.app c).map (α.oplaxApp f x') ≫
-          (β.app c).map ((H'.map f).map ((α.app c').map φ)) ≫
-          β.oplaxApp f ((α.app c').obj y') := by simp only [Category.assoc]
-      _ = (β.app c).map (α.oplaxApp f x') ≫
-          (β.oplaxApp f ((α.app c').obj x') ≫
-          (K'.map f).map ((β.app c').map ((α.app c').map φ))) := by rw [hβ]
+      _ = (β.app c').map ((α.app c').map ((G'.map f).map φ) ≫ α.oplaxApp f y) ≫
+          β.oplaxApp f ((α.app c).obj y) := by rw [← (β.app c').map_comp]
+      _ = (β.app c').map (α.oplaxApp f x ≫ (H'.map f).map ((α.app c).map φ)) ≫
+          β.oplaxApp f ((α.app c).obj y) := by rw [hα]
+      _ = ((β.app c').map (α.oplaxApp f x) ≫
+          (β.app c').map ((H'.map f).map ((α.app c).map φ))) ≫
+          β.oplaxApp f ((α.app c).obj y) := by rw [(β.app c').map_comp]
+      _ = (β.app c').map (α.oplaxApp f x) ≫
+          (β.app c').map ((H'.map f).map ((α.app c).map φ)) ≫
+          β.oplaxApp f ((α.app c).obj y) := by simp only [Category.assoc]
+      _ = (β.app c').map (α.oplaxApp f x) ≫
+          (β.oplaxApp f ((α.app c).obj x) ≫
+          (K'.map f).map ((β.app c).map ((α.app c).map φ))) := by rw [hβ]
       _ = _ := by simp only [Category.assoc]
   oplaxId c x := by
     simp only [Functor.comp_obj, α.oplaxId, eqToHom_map, β.oplaxId, eqToHom_trans]
-  oplaxComp {c c' c''} f g x'' := by
-    simp only [α.oplaxComp f g x'', β.oplaxComp f g ((α.app c'').obj x'')]
+  oplaxComp {c c' c''} f g x := by
+    simp only [α.oplaxComp f g x, β.oplaxComp f g ((α.app c).obj x)]
     simp only [Functor.map_comp, eqToHom_map, Category.assoc, eqToHom_trans_assoc]
     congr 1
     simp only [← Category.assoc]
@@ -5779,7 +5805,7 @@ def OplaxNatTransData.comp {G' H' K' : Cᵒᵖ' ⥤ Cat.{vC, uC}}
     congr 1
     simp only [Category.assoc]
     congr 1
-    exact β.oplaxNat f (α.oplaxApp g x'')
+    exact β.oplaxNat g (α.oplaxApp f x)
 
 /--
 Construct a functor `GrothendieckContra' G' ⥤ GrothendieckContra' F'` from an oplax
@@ -5810,7 +5836,10 @@ def OplaxNatTransData.toFunctor (α : OplaxNatTransData G' F') :
             GrothendieckContra'.Hom
               ⟨Y.base, (α.app Y.base).obj Y.fiber⟩ ⟨Z.base, (α.app Z.base).obj Z.fiber⟩)).fiber
       simp only [GrothendieckContra'.comp_fiber, GrothendieckContra'.comp_base]
-      simp only [α.oplaxComp f.base g.base Z.fiber]
+      -- With new convention: oplaxComp takes f : c' ⟶ c and g : c'' ⟶ c' with composition g ≫ f.
+      -- Here f.base : X.base ⟶ Y.base and g.base : Y.base ⟶ Z.base, so f.base ≫ g.base.
+      -- We apply oplaxComp with arguments swapped: g.base plays role of f, f.base plays role of g.
+      simp only [α.oplaxComp g.base f.base Z.fiber]
       simp only [(α.app X.base).map_comp, (F'.map f.base).map_comp, eqToHom_map,
         Category.assoc, eqToHom_trans_assoc, eqToHom_refl, Category.id_comp]
       slice_lhs 2 3 => rw [α.oplaxNat f.base g.fiber]
@@ -5858,16 +5887,24 @@ functor `functorOp'Obj baseFib ⋙ F'`.
 
 This shows that functor data between contravariant Grothendieck constructions
 decomposes into a base functor and an oplax natural transformation.
+
+Note: `FunctorBetweenContraData` uses composition `f ≫ g` for `f : c ⟶ c'` and
+`g : c' ⟶ c''`, while `OplaxNatTransData` (with the new convention) uses
+composition `g ≫ f` for `f : c' ⟶ c` and `g : c'' ⟶ c'`. We adapt by swapping
+the arguments when converting.
 -/
 def FunctorBetweenContraData.toOplaxNatTrans (data : FunctorBetweenContraData G' F') :
     OplaxNatTransData G' (functorOp'Obj data.baseFib ⋙ F') where
   app c := data.fibFib c
-  oplaxApp {c c'} f x' := data.fibHomCrossApp f x'
-  oplaxNat {c c'} f {x' y'} φ := data.fibHomCrossNat f φ
+  oplaxApp {c c'} f x := data.fibHomCrossApp f x
+  oplaxNat {c c'} f {x y} φ := data.fibHomCrossNat f φ
   oplaxId c x := data.baseHomId c x
-  oplaxComp {c c' c''} f g x'' := by
+  oplaxComp {c c' c''} f g x := by
+    -- New OplaxComp: f : c' ⟶ c, g : c'' ⟶ c', x : G'.obj c, composition g ≫ f : c'' ⟶ c
+    -- data.baseHomComp expects: f' : c ⟶ c', g' : c' ⟶ c'', composition f' ≫ g'
+    -- We use data.baseHomComp g f x to match: g : c'' ⟶ c', f : c' ⟶ c, composition g ≫ f
     simp only [Functor.comp_obj, Functor.comp_map]
-    have h := data.baseHomComp f g x''
+    have h := data.baseHomComp g f x
     simp only [functorOp'Obj] at h ⊢
     rw [← h]
     simp only [eqToHom_trans_assoc, eqToHom_refl, Category.id_comp]
