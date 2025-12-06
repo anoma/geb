@@ -3,6 +3,7 @@ import GebLean.Utilities.Profunctors
 import GebLean.Utilities.Grothendieck
 import GebLean.Utilities.Slice
 import Mathlib.CategoryTheory.Comma.Over.Basic
+import Mathlib.CategoryTheory.Comma.Arrow
 import Mathlib.CategoryTheory.Grothendieck
 
 /-!
@@ -666,6 +667,211 @@ Both are defined as `ElementsContra'` of `homPreOp'`.
 theorem opTwistedArrowOfOpEqCoTwistedArrow :
     OpTwistedArrow' (Cᵒᵖ') = CoTwistedArrow C := rfl
 
+section TwistedArrowSelfDuality
+
+/-!
+### Self-Duality of Twisted Arrow Categories
+
+The twisted arrow category satisfies a self-duality property:
+`TwistedArrow' C ≅ TwistedArrowOp' C` (equivalently, `Tw(C) ≅ Tw(C^op')`).
+
+The isomorphism works by viewing an arrow `f : a → b` in `C` as the same
+arrow `f : b → a` in `C^op'`:
+- Objects: `(dom, cod, arr : dom → cod)` ↦ `(cod, dom, arr)` where `arr` is
+  viewed as going from `cod` to `dom` in the opposite category
+- Morphisms: `(α : c → a, β : b → d)` ↦ `(β, α)` (swap components)
+
+The commutativity condition `α ≫ f ≫ β = g` transforms correctly under this
+swap.
+
+This self-duality reduces the four twisted arrow variants to two fundamental
+categories (up to isomorphism):
+- `TwistedArrow' C ≅ TwistedArrowOp' C`
+- `OpTwistedArrow' C ≅ CoTwistedArrow C`
+-/
+
+/--
+Functor from `TwistedArrow' C` to `TwistedArrowOp' C`.
+
+Objects `(dom, cod, arr : dom → cod)` map to `(cod, dom, arr)` where `arr` is
+now viewed as going from `cod` to `dom` (the opposite direction).
+Morphisms `(domArr, codArr)` map to `(codArr, domArr)` (swapped components).
+-/
+def twistedArrowToTwistedArrowOp' : TwistedArrow' C ⥤ TwistedArrowOp' C where
+  obj tw := twOpObjMk' (twArr' tw)
+  map {x y} f :=
+    twOpHomMk'
+      (x := twOpObjMk' (twArr' x))
+      (y := twOpObjMk' (twArr' y))
+      (by simp only [twOpObjMk'_dom, twCod']; exact twCodArr' f)
+      (by simp only [twOpObjMk'_cod, twDom']; exact twDomArr' f)
+      (twHomComm' f)
+  map_id tw := by apply twOpHom'_ext <;> rfl
+  map_comp {x y z} f g := by apply twOpHom'_ext <;> rfl
+
+/--
+Functor from `TwistedArrowOp' C` to `TwistedArrow' C`.
+
+Objects `(dom, cod, arr : cod → dom)` map to `(cod, dom, arr)` where `arr` is
+now viewed as going from `cod` to `dom` (the original direction).
+Morphisms `(domArr, codArr)` map to `(codArr, domArr)` (swapped components).
+-/
+def twistedArrowOp'ToTwistedArrow : TwistedArrowOp' C ⥤ TwistedArrow' C where
+  obj tw := twObjMk' (twOpArr' tw)
+  map {x y} f :=
+    twHomMk'
+      (x := twObjMk' (twOpArr' x))
+      (y := twObjMk' (twOpArr' y))
+      (by simp only [twObjMk'_dom, twOpCod']; exact twOpCodArr' f)
+      (by simp only [twObjMk'_cod, twOpDom']; exact twOpDomArr' f)
+      (twOpHomComm' f)
+  map_id tw := by apply twHom'_ext <;> rfl
+  map_comp {x y z} f g := by apply twHom'_ext <;> rfl
+
+/--
+Round-trip on objects: `TwistedArrow' → TwistedArrowOp' → TwistedArrow'`
+returns the same object.
+-/
+theorem twistedArrowRoundTrip_obj (tw : TwistedArrow' C) :
+    twistedArrowOp'ToTwistedArrow.obj (twistedArrowToTwistedArrowOp'.obj tw) = tw := by
+  simp only [twistedArrowToTwistedArrowOp', twistedArrowOp'ToTwistedArrow,
+    twObjMk', twOpObjMk', twArr', twOpArr', twOpCod', twOpDom', twCod', twDom']
+  rfl
+
+/--
+Round-trip on objects: `TwistedArrowOp' → TwistedArrow' → TwistedArrowOp'`
+returns the same object.
+-/
+theorem twistedArrowOp'RoundTrip_obj (tw : TwistedArrowOp' C) :
+    twistedArrowToTwistedArrowOp'.obj (twistedArrowOp'ToTwistedArrow.obj tw) = tw := by
+  simp only [twistedArrowToTwistedArrowOp', twistedArrowOp'ToTwistedArrow,
+    twObjMk', twOpObjMk', twArr', twOpArr', twOpCod', twOpDom', twCod', twDom']
+  rfl
+
+/--
+`TwistedArrow' C` is isomorphic to `TwistedArrowOp' C`.
+
+This is the self-duality property: the twisted arrow category of `C` is
+isomorphic to the twisted arrow category of `C^op'`.
+-/
+def twistedArrowIsoTwistedArrowOp' : TwistedArrow' C ≅Cat TwistedArrowOp' C where
+  hom := twistedArrowToTwistedArrowOp'
+  inv := twistedArrowOp'ToTwistedArrow
+  hom_inv_id := by
+    fapply Functor.ext
+    · exact twistedArrowRoundTrip_obj
+    · intros tw tw' f
+      apply twHom'_ext
+      · unfold twistedArrowToTwistedArrowOp' twistedArrowOp'ToTwistedArrow
+        simp only [eqToHom_refl, Category.id_comp, Category.comp_id]
+        rfl
+      · unfold twistedArrowToTwistedArrowOp' twistedArrowOp'ToTwistedArrow
+        simp only [eqToHom_refl, Category.id_comp, Category.comp_id]
+        rfl
+  inv_hom_id := by
+    fapply Functor.ext
+    · exact twistedArrowOp'RoundTrip_obj
+    · intros tw tw' f
+      apply twOpHom'_ext
+      · unfold twistedArrowToTwistedArrowOp' twistedArrowOp'ToTwistedArrow
+        simp only [eqToHom_refl, Category.id_comp, Category.comp_id]
+        rfl
+      · unfold twistedArrowToTwistedArrowOp' twistedArrowOp'ToTwistedArrow
+        simp only [eqToHom_refl, Category.id_comp, Category.comp_id]
+        rfl
+
+/--
+Functor from `OpTwistedArrow' C` to `CoTwistedArrow C`.
+
+This combines the isomorphisms:
+- `OpTwistedArrow' C ≅ (TwistedArrow' C)^op'`
+- `TwistedArrow' C ≅ TwistedArrowOp' C`
+- `(TwistedArrowOp' C)^op' ≅ CoTwistedArrow C`
+
+Objects are preserved as the same underlying arrow in `C`.
+Morphisms swap components.
+-/
+def opTwistedArrowToCoTwistedArrow : OpTwistedArrow' C ⥤ CoTwistedArrow C where
+  obj tw := coTwObjMk' (opTwArr' tw)
+  map {x y} f :=
+    coTwHomMk'
+      (x := coTwObjMk' (opTwArr' x))
+      (y := coTwObjMk' (opTwArr' y))
+      (by simp only [coTwObjMk'_dom, opTwCod']; exact opTwCodArr' f)
+      (by simp only [coTwObjMk'_cod, opTwDom']; exact opTwDomArr' f)
+      (opTwHomComm' f)
+  map_id tw := by apply coTwHom'_ext <;> rfl
+  map_comp {x y z} f g := by apply coTwHom'_ext <;> rfl
+
+/--
+Functor from `CoTwistedArrow C` to `OpTwistedArrow' C`.
+-/
+def coTwistedArrowToOpTwistedArrow : CoTwistedArrow C ⥤ OpTwistedArrow' C where
+  obj tw := opTwObjMk' (coTwArr' tw)
+  map {x y} f :=
+    opTwHomMk'
+      (x := opTwObjMk' (coTwArr' x))
+      (y := opTwObjMk' (coTwArr' y))
+      (by simp only [opTwObjMk'_dom, coTwCod']; exact coTwCodArr' f)
+      (by simp only [opTwObjMk'_cod, coTwDom']; exact coTwDomArr' f)
+      (coTwHomComm' f)
+  map_id tw := by apply opTwHom'_ext <;> rfl
+  map_comp {x y z} f g := by apply opTwHom'_ext <;> rfl
+
+/--
+Round-trip on objects: `OpTwistedArrow' → CoTwistedArrow → OpTwistedArrow'`
+returns the same object.
+-/
+theorem opTwistedArrowRoundTrip_obj (tw : OpTwistedArrow' C) :
+    coTwistedArrowToOpTwistedArrow.obj (opTwistedArrowToCoTwistedArrow.obj tw) = tw := by
+  simp only [opTwistedArrowToCoTwistedArrow, coTwistedArrowToOpTwistedArrow,
+    opTwObjMk', coTwObjMk', opTwArr', coTwArr', opTwDom', opTwCod', coTwDom', coTwCod']
+  rfl
+
+/--
+Round-trip on objects: `CoTwistedArrow → OpTwistedArrow' → CoTwistedArrow`
+returns the same object.
+-/
+theorem coTwistedArrowRoundTrip_obj (tw : CoTwistedArrow C) :
+    opTwistedArrowToCoTwistedArrow.obj (coTwistedArrowToOpTwistedArrow.obj tw) = tw := by
+  simp only [opTwistedArrowToCoTwistedArrow, coTwistedArrowToOpTwistedArrow,
+    opTwObjMk', coTwObjMk', opTwArr', coTwArr', opTwDom', opTwCod', coTwDom', coTwCod']
+  rfl
+
+/--
+`OpTwistedArrow' C` is isomorphic to `CoTwistedArrow C`.
+
+This shows that the opposite of the twisted arrow category is isomorphic to
+the co-twisted arrow category (opposite of twisted arrow of opposite).
+-/
+def opTwistedArrowIsoCoTwistedArrow : OpTwistedArrow' C ≅Cat CoTwistedArrow C where
+  hom := opTwistedArrowToCoTwistedArrow
+  inv := coTwistedArrowToOpTwistedArrow
+  hom_inv_id := by
+    fapply Functor.ext
+    · exact opTwistedArrowRoundTrip_obj
+    · intros tw tw' f
+      apply opTwHom'_ext
+      · unfold opTwistedArrowToCoTwistedArrow coTwistedArrowToOpTwistedArrow
+        simp only [eqToHom_refl, Category.id_comp, Category.comp_id]
+        rfl
+      · unfold opTwistedArrowToCoTwistedArrow coTwistedArrowToOpTwistedArrow
+        simp only [eqToHom_refl, Category.id_comp, Category.comp_id]
+        rfl
+  inv_hom_id := by
+    fapply Functor.ext
+    · exact coTwistedArrowRoundTrip_obj
+    · intros tw tw' f
+      apply coTwHom'_ext
+      · unfold opTwistedArrowToCoTwistedArrow coTwistedArrowToOpTwistedArrow
+        simp only [eqToHom_refl, Category.id_comp, Category.comp_id]
+        rfl
+      · unfold opTwistedArrowToCoTwistedArrow coTwistedArrowToOpTwistedArrow
+        simp only [eqToHom_refl, Category.id_comp, Category.comp_id]
+        rfl
+
+end TwistedArrowSelfDuality
+
 end TwistedArrowIsomorphisms
 
 section TwistedArrowAsGrothendieck
@@ -862,6 +1068,28 @@ Arrow categories (domArr and codArr go in the same direction):
 - `Arr(Cᵒᵖ)`: objects cod→dom, both forward
 - `Arr(Cᵒᵖ)ᵒᵖ`: objects cod→dom, both backward
 
+#### Redundancy via Self-Duality
+
+The eight categories above reduce to four fundamental categories (up to
+isomorphism) via self-duality isomorphisms.
+
+Twisted arrow self-duality (reduces 4 twisted to 2):
+- `TwistedArrow' C ≅ TwistedArrowOp' C` (proven as
+  `twistedArrowIsoTwistedArrowOp'`)
+- `OpTwistedArrow' C ≅ CoTwistedArrow C` (proven as
+  `opTwistedArrowIsoCoTwistedArrow`)
+
+Arrow self-duality (reduces 4 arrow to 2):
+- `Arrow C ≅ (ArrowOp' C)ᵒᵖ'` (proven as `arrowIsoArrowOpOp'`)
+
+These isomorphisms swap domain and codomain while reinterpreting the arrow
+as going in the opposite direction, and swap the morphism components
+`(domArr, codArr) ↦ (codArr, domArr)`.
+
+The resulting four fundamental categories are:
+- Two twisted variants: `TwistedArrow' C` and `OpTwistedArrow' C`
+- Two arrow variants: `Arrow C` and `(Arrow C)ᵒᵖ'`
+
 #### The Sixteen Grothendieck Constructions
 
 Using abbreviations: Gr = covariant Grothendieck, GrC' = GrothendieckContra',
@@ -962,6 +1190,154 @@ differences between `TwistedArrowOp' C` and `TwistedArrow' Cᵒᵖ'`.
 -/
 
 end TwistedArrowAsGrothendieck
+
+/-!
+## Arrow Categories
+
+Arrow categories are similar to twisted arrow categories, but morphisms go in
+the same direction on both domain and codomain (rather than opposite directions).
+
+For a category C:
+- Objects: morphisms `f : a → b` in C
+- Morphisms from `(a, b, f)` to `(c, d, g)`: pairs `(α : a → c, β : b → d)` with
+  `α ≫ g = f ≫ β` (a commutative square)
+
+We use mathlib's `Arrow C = Comma (𝟭 C) (𝟭 C)` and define:
+- `ArrowOp' C`: the arrow category of `Cᵒᵖ'`, i.e., `Arrow Cᵒᵖ'`
+
+A duality result is that `Arrow C ≅ (ArrowOp' C)ᵒᵖ'`, which reduces the four
+arrow category variants to two fundamental categories.
+-/
+
+section ArrowCategories
+
+/-!
+### Arrow Categories using Mathlib's Arrow
+
+This section establishes the self-duality of arrow categories using mathlib's
+`Arrow` type. We show that `Arrow C ≅ (Arrow Cᵒᵖ')ᵒᵖ'`.
+
+Mathlib defines `Arrow C = Comma (𝟭 C) (𝟭 C)`, where objects are morphisms in
+C and morphisms are commutative squares.
+-/
+
+variable (C : Type u) [Category.{v} C]
+
+/--
+The arrow category of `Cᵒᵖ'`. This is mathlib's Arrow applied to our
+alternative opposite category construction.
+-/
+abbrev ArrowOp' : Type (max u v) := Arrow Cᵒᵖ'
+
+instance instCategoryArrowOp' : Category (ArrowOp' C) := inferInstance
+
+section ArrowCategorySelfDuality
+
+/-!
+### Self-Duality of Arrow Categories
+
+Arrow categories satisfy a duality: `Arrow C ≅ (ArrowOp' C)ᵒᵖ'`.
+
+The isomorphism swaps domain and codomain labels while keeping the same
+underlying arrow, and swaps the morphism components.
+
+This reduces the four arrow category variants to two fundamental categories.
+Combined with the twisted arrow self-duality, this shows that of the eight
+categories formed from arrows with commutative square morphisms, only four
+are fundamentally distinct.
+-/
+
+variable {C}
+
+/--
+Functor from `Arrow C` to `(ArrowOp' C)ᵒᵖ'`.
+
+Objects `f : X ⟶ Y` map to `f` viewed as `Y ⟶ X` in `Cᵒᵖ'`.
+Morphisms with components `(left, right)` swap to `(right, left)`.
+-/
+def arrowToArrowOpOp' : Arrow C ⥤ (ArrowOp' C)ᵒᵖ' where
+  obj arr := Arrow.mk arr.hom
+  map {x y} f :=
+    Arrow.homMk f.right f.left (f.w.symm)
+  map_id _ := by
+    apply Arrow.hom_ext <;> rfl
+  map_comp _ _ := by
+    apply Arrow.hom_ext <;> rfl
+
+/--
+Functor from `(ArrowOp' C)ᵒᵖ'` to `Arrow C`.
+
+Objects `f : Y ⟶ X` in `Cᵒᵖ'` (i.e., `X ⟶ Y` in C) map to `f` as `X ⟶ Y`.
+Morphisms swap components back.
+-/
+def arrowOpOp'ToArrow : (ArrowOp' C)ᵒᵖ' ⥤ Arrow C where
+  obj arr := Arrow.mk arr.hom
+  map {x y} f :=
+    Arrow.homMk f.right f.left (f.w.symm)
+  map_id _ := by
+    apply Arrow.hom_ext <;> rfl
+  map_comp _ _ := by
+    apply Arrow.hom_ext <;> rfl
+
+/--
+Round-trip on objects: `Arrow → (ArrowOp')ᵒᵖ' → Arrow` returns the same object.
+-/
+theorem arrowRoundTrip_obj (arr : Arrow C) :
+    arrowOpOp'ToArrow.obj (arrowToArrowOpOp'.obj arr) = arr := by
+  simp only [arrowToArrowOpOp', arrowOpOp'ToArrow]
+  cases arr
+  rfl
+
+/--
+Round-trip on objects: `(ArrowOp')ᵒᵖ' → Arrow → (ArrowOp')ᵒᵖ'` returns the
+same object.
+-/
+theorem arrowOpOp'RoundTrip_obj (arr : ArrowOp' C) :
+    arrowToArrowOpOp'.obj (arrowOpOp'ToArrow.obj arr) = arr := by
+  simp only [arrowToArrowOpOp', arrowOpOp'ToArrow]
+  cases arr
+  rfl
+
+/--
+Category isomorphism between `Arrow C` and `(ArrowOp' C)ᵒᵖ'`.
+
+This establishes that the arrow category is self-dual up to taking the
+opposite of the arrow category on the opposite category.
+-/
+def arrowIsoArrowOpOp' : Arrow C ≅Cat (ArrowOp' C)ᵒᵖ' where
+  hom := arrowToArrowOpOp'
+  inv := arrowOpOp'ToArrow
+  hom_inv_id := by
+    fapply Functor.ext
+    · exact arrowRoundTrip_obj
+    · intros x y f
+      apply Arrow.hom_ext <;>
+        dsimp [arrowToArrowOpOp', arrowOpOp'ToArrow] <;>
+        simp only [Category.id_comp, Category.comp_id]
+  inv_hom_id := by
+    fapply Functor.ext
+    · exact arrowOpOp'RoundTrip_obj
+    · intros x y f
+      change (arrowOpOp'ToArrow ⋙ arrowToArrowOpOp').map f = _
+      rw [Functor.comp_map]
+      dsimp only [arrowToArrowOpOp', arrowOpOp'ToArrow]
+      simp only [Arrow.homMk_left, Arrow.homMk_right]
+      unfold ArrowOp' CategoryOp'
+      simp
+      cases x
+      cases y
+      unfold Arrow.mk
+      apply CommaMorphism.ext
+      · simp only [Arrow.homMk_left]
+        change f.left = (𝟙 _ ≫ f ≫ 𝟙 _).left
+        simp only [Category.id_comp, Category.comp_id]
+      · simp only [Arrow.homMk_right]
+        change f.right = (𝟙 _ ≫ f ≫ 𝟙 _).right
+        simp only [Category.id_comp, Category.comp_id]
+
+end ArrowCategorySelfDuality
+
+end ArrowCategories
 
 end TwistedArrowCategories
 
