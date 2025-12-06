@@ -188,13 +188,18 @@ Thus we can transport fibre morphisms:
 * `φ` transported along `(idₐ, h')` becomes a morphism in `F(w₃)`,
 * `ψ` transported along `(g, id_{b''})` becomes a morphism in `F(w₃)`.
 
-The **composite** in `E(F)` is then defined to be
+The **composite fibre morphism** in `E(F)` is then defined to be
 
 ```text
-F(idₐ, h')(φ) ∘ F(g, id_{b''})(ψ)
+F(g, id_{b''})(ψ) ∘ F(idₐ, h')(φ)
 ```
 
-which is a morphism in the category `F(w₃)`.
+which is a morphism in the category `F(w₃)` from `F(idₐ, h' ∘ h)(e)` to
+`F(g' ∘ g, id_{b''})(e'')`.
+
+(Note: Using standard right-to-left composition notation where `g ∘ f` means
+"first f, then g". In diagrammatic notation, this would be written
+`F(idₐ, h')(φ) ; F(g, id_{b''})(ψ)`.)
 
 Associativity follows from:
 
@@ -281,11 +286,74 @@ E : Fun(Tw(C), Cat) → Cat/Arr(C).
 
 ---
 
-If you'd like, I can also prepare:
+## 10. Code References
 
-* a dual version landing in `Cat/Arr(C)ᵒᵖ` or `Cat/Tw(C)`,
-* a version for enriched categories,
-* a graphical summary using commutative diagrams,
-* a Lean-style formalization layout.
+The following references link the mathematical concepts in this document to
+their implementations in Lean code.
 
-Just let me know!
+### 10.1 Arrow Category
+
+* **Mathlib definition**: `CategoryTheory.Arrow` is defined as
+  `Comma (𝟭 C) (𝟭 C)` in [Mathlib.CategoryTheory.Comma.Arrow][arr]
+* **Project usage**: `GebLean/Utilities/TwistedArrow.lean` imports and uses
+  `Arrow` from mathlib; see also `ArrowOp' C := Arrow Cᵒᵖ'` (line 1226)
+* **Self-duality**: `arrowIsoArrowOpOp' : Arrow C ≅Cat (ArrowOp' C)ᵒᵖ'`
+  (lines 1301-1336 of `TwistedArrow.lean`)
+
+### 10.2 Twisted Arrow Category
+
+* **Mathlib definition**: `CategoryTheory.TwistedArrow` in
+  [Mathlib.CategoryTheory.Comma.StructuredArrow.Basic][tw]
+* **Project definitions**: `GebLean/Utilities/TwistedArrow.lean`
+  * `TwistedArrow'` (lines 48-54): Objects are arrows, morphisms are twisted
+    factorizations
+  * `TwistedArrowOp'` (lines 185-195): `TwistedArrow' Cᵒᵖ'`
+  * `twObjMk'`, `twHomMk'`: Constructors for objects and morphisms
+  * `twDomArr'`, `twCodArr'`: Extract components from twisted morphisms
+* **Self-duality**:
+  `twistedArrowIsoTwistedArrowOp' : TwistedArrow' C ≅Cat TwistedArrowOp' C`
+  (lines 751-781)
+* **Grothendieck equivalence**:
+  `twArrEquivGrothendieckUnder : TwistedArrow' C ≌ Grothendieck ...`
+  (lines 1008-1037)
+
+[arr]: https://leanprover-community.github.io/mathlib4_docs/Mathlib/CategoryTheory/Comma/Arrow.html
+[tw]: https://leanprover-community.github.io/mathlib4_docs/Mathlib/CategoryTheory/Comma/StructuredArrow/Basic.html
+
+### 10.3 Grothendieck Construction
+
+* **Mathlib definition**: `CategoryTheory.Grothendieck` for `F : C ⥤ Cat` in
+  [Mathlib.CategoryTheory.Grothendieck](https://leanprover-community.github.io/mathlib4_docs/Mathlib/CategoryTheory/Grothendieck.html)
+* **Project extensions**: `GebLean/Utilities/Grothendieck.lean`
+  * `GrothendieckContra'`: Contravariant version for `F' : Cᵒᵖ' ⥤ Cat`
+  * `Grothendieck.FunctorToData`, `FunctorFromData`: Characterize functors
+    to/from Grothendieck categories
+  * `LaxNatTransData`, `OplaxNatTransData`: Lax/oplax natural transformations
+    between Grothendieck constructions
+
+### 10.4 Profunctors
+
+* **Project definitions**: `GebLean/Utilities/Profunctors.lean`
+  * `opProdSym C := Cᵒᵖ × C`: The standard profunctor domain
+  * `hom' : opProdSym' C ⥤ Type v`: Hom functor using `ᵒᵖ'`
+  * Various profunctor variants for different opposite conventions
+
+### 10.5 Implementation Strategy
+
+To implement this twisted Grothendieck construction in the project:
+
+1. **Define `E(F)` objects**: Pairs `(f, e)` where `f : Arrow C` and
+   `e : F.obj (corresponding Tw(C) object)`
+
+2. **Define `E(F)` morphisms**: Use `Arrow.homMk` for the base square and
+   construct the fiber morphism in `F(w)` where `w` is the common diagonal
+
+3. **Leverage existing infrastructure**:
+   * Use `Grothendieck.FunctorFromData` pattern for the projection to `Arr(C)`
+   * The twisted-arrow to Grothendieck equivalence `twArrEquivGrothendieckUnder`
+     shows how to handle the fiber structure
+   * The arrow self-duality `arrowIsoArrowOpOp'` may help with dual constructions
+
+4. **Key lemmas needed**:
+   * Composition of Tw(C) morphisms: `(u, v) ; (u', v') = (u ∘ u', v' ∘ v)`
+   * Transport along Tw(C) morphisms preserves composition

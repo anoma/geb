@@ -187,3 +187,83 @@ where `f_!` is the cocartesian (lax) action in the `C`-coordinate and
 `g*` is the cartesian (oplax) action in the `D`-coordinate.
 
 [1]: https://arxiv.org/pdf/2011.03027 "arXiv:2011.03027v1 [math.AT] 5 Nov 2020"
+
+---
+
+## Code References
+
+The following references link the mathematical concepts in this document to
+their implementations in Lean code.
+
+### Grothendieck Construction
+
+* **Mathlib definition**: `CategoryTheory.Grothendieck` for covariant
+  `F : C ⥤ Cat` in
+  [Mathlib.CategoryTheory.Grothendieck](https://leanprover-community.github.io/mathlib4_docs/Mathlib/CategoryTheory/Grothendieck.html)
+* **Project extensions**: `GebLean/Utilities/Grothendieck.lean`
+  * `GrothendieckContra'`: Contravariant Grothendieck for `F' : Cᵒᵖ' ⥤ Cat`
+    (lines 1500-1628)
+  * `grothendieckContraIso`: Isomorphism between mathlib's covariant form
+    (with opposite) and our contravariant form (lines 1886-1900)
+  * `Grothendieck.pre`: Precomposition with functors (lines 2643-2674)
+  * `Grothendieck.map`: Functoriality on natural transformations
+    (lines 2308-2333)
+
+### Product Categories and Opposite Conventions
+
+* **Project definitions**: `GebLean/Utilities/Profunctors.lean`
+  * `opProd C D := Cᵒᵖ × D`: The standard profunctor domain
+  * `opProdEquiv`: Equivalence between mathlib `ᵒᵖ` and project `ᵒᵖ'`
+    (lines 35-37)
+  * `opProdSymSelfDual`: Self-duality `(Cᵒᵖ × C)ᵒᵖ ≌ (Cᵒᵖ × C)` (lines 63-69)
+
+### Lax and Oplax Natural Transformations
+
+The two-sided construction involves both lax (cocartesian) and oplax
+(cartesian) structure. These are formalized in `GebLean/Utilities/Grothendieck.lean`:
+
+* `LaxNatTransData` (lines 5064-5201): Data for lax natural transformations
+  between functors `C ⥤ Cat`, including:
+  * `laxApp`: Component functors
+  * `laxNat`: Naturality with 2-cells going the "lax" direction
+* `OplaxNatTransData` (lines 5588-5742): Dual structure for oplax
+  transformations
+* `LaxNatTransData.toFunctor`: Converts lax nat trans to functor between
+  Grothendieck categories (lines 5205-5232)
+* `OplaxNatTransData.toFunctor`: Converts oplax nat trans to functor between
+  contravariant Grothendieck categories (lines 5810-5846)
+
+### Implementation Strategy for Two-Sided Construction
+
+To implement `TwoSided(A, B, Ψ)` for `Ψ : Aᵒᵖ × B ⥤ Cat`:
+
+1. **Option 1 - Direct definition**:
+   * Define objects as sigma type: `Σ (a : A) (b : B), Ψ.obj (a, b)`
+   * Define morphisms with fiber morphism in `Ψ.obj (a, b')`
+   * Use `eqToHom` for functoriality coherence
+
+2. **Option 2 - Iterated Grothendieck**:
+   * First apply contravariant Grothendieck in `A`:
+     `GrothendieckContra' (curry Ψ : Aᵒᵖ' ⥤ (B ⥤ Cat))`
+   * Then apply covariant Grothendieck in `B` to fibers
+   * Use `Grothendieck.pre` to compose
+
+3. **Key infrastructure**:
+   * `Functor.curry` / `Functor.uncurry` for product category functors
+   * `GrothendieckContra'.FunctorFromData` for universal property
+   * The commutation `a*(d!(X)) = d!(a*(X))` follows from `Ψ` being a functor
+     on the product category
+
+### Relation to Twisted Grothendieck
+
+The twisted Grothendieck construction (see `twisted-grothendieck-construction.md`)
+generalizes the two-sided construction by:
+
+* Using `Tw(C)` as the indexing category instead of `Aᵒᵖ × B`
+* Projecting to `Arr(C)` instead of `A × B`
+* Allowing dependence on the arrow itself, not just its endpoints
+
+The twisted-arrow to Grothendieck equivalence
+`twArrEquivGrothendieckUnder : TwistedArrow' C ≌ Grothendieck (Under.mapFunctor C)`
+in `TwistedArrow.lean` (lines 1008-1037) shows a concrete case of this
+relationship.
