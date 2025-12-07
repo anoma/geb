@@ -1,4 +1,4 @@
-# A Grothendieck-Style Construction for Functors `Tw(C) → Cat` Landing in `Cat/Arr(C)`
+# The Connected Grothendieck Construction: Functors `Tw(C) → Cat` Landing in `Cat/Arr(C)`
 
 This note summarizes a functorial construction that assigns to every functor
 `F : Tw(C) → Cat` a category `E(F)` equipped with a functor `E(F) → Arr(C)`.
@@ -340,7 +340,7 @@ their implementations in Lean code.
 
 ### 10.5 Implementation Strategy
 
-To implement this twisted Grothendieck construction in the project:
+To implement this connected Grothendieck construction in the project:
 
 1. **Define `E(F)` objects**: Pairs `(f, e)` where `f : Arrow C` and
    `e : F.obj (corresponding Tw(C) object)`

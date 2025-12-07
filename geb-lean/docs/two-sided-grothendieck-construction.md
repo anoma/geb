@@ -254,9 +254,9 @@ To implement `TwoSided(A, B, Ψ)` for `Ψ : Aᵒᵖ × B ⥤ Cat`:
    * The commutation `a*(d!(X)) = d!(a*(X))` follows from `Ψ` being a functor
      on the product category
 
-### Relation to Twisted Grothendieck
+### Relation to Connected Grothendieck
 
-The twisted Grothendieck construction (see `twisted-grothendieck-construction.md`)
+The connected Grothendieck construction (see `twisted-grothendieck-construction.md`)
 generalizes the two-sided construction by:
 
 * Using `Tw(C)` as the indexing category instead of `Aᵒᵖ × B`
