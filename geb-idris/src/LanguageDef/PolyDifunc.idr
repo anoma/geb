@@ -398,6 +398,14 @@ InterpPDP (polyPos ** contraPos ** contraDir ** covarPos ** covarDir) j z =
     InterpPolyFunc (covarPos i (fst el) ** covarDir i (fst el)) z)
 
 public export
+InterpPDPtw : PolyDiProf -> TwArrCoprSig
+InterpPDPtw
+  (polyPos ** contraPos ** contraDir ** covarPos ** covarDir) j z mjz =
+    (i : polyPos **
+     (el : InterpPolyFunc (contraPos i ** contraDir i) j) ->
+      InterpPolyFunc (covarPos i (fst el) ** covarDir i (fst el)) z)
+
+public export
 InterpPDPdimap : (pdp : PolyDiProf) -> (s, t, a, b : Type) ->
   (a -> s) -> (t -> b) -> InterpPDP pdp s t -> InterpPDP pdp a b
 InterpPDPdimap (polyPos ** contraPos ** contraDir ** covarPos ** covarDir)
