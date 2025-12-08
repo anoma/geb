@@ -3168,6 +3168,42 @@ EndoHomParaToNatComplete : FunExt ->
 EndoHomParaToNatComplete fext gamma cond x =
   EndoHomParaToNatCompleteN fext gamma cond (EndoHomParaToNat gamma) Refl x
 
+------------------------------------------------------------
+---- Dinatural numbers from twisted-arrow-op presheaves ----
+------------------------------------------------------------
+
+public export
+0 HomProfPreshfOp : TwArrPreshfOpSig
+HomProfPreshfOp = TwArrPreshfOpEmbedProf HomProf
+
+public export
+0 HomProfPreshfOpDimap : TwArrPreshfOpDimapSig HomProfPreshfOp
+HomProfPreshfOpDimap =
+  TwArrPreshfOpEmbedProfMap HomProf $
+    MkProfunctor $ \mca, mbd => HomProfDimap _ _ _ _ mca mbd
+
+public export
+0 EndoHomTwArrPreshfOpNatSig : Type
+EndoHomTwArrPreshfOpNatSig =
+  TwArrPreshfOpNatTrans HomProfPreshfOp HomProfPreshfOp
+
+public export
+0 EndoHomTwArrPreshfOpNatCond : EndoHomTwArrPreshfOpNatSig -> Type
+EndoHomTwArrPreshfOpNatCond =
+  TwArrPreshfOpNaturality HomProfPreshfOpDimap HomProfPreshfOpDimap
+
+public export
+iterNnt : Nat -> (x, y : Type) -> (x -> y) -> (y -> x) -> (x -> y)
+iterNnt n x y g f = g . iterNpnt n x (f . g)
+
+public export
+iterNntF : (x, y : Type) -> (x -> y) -> (y -> x) -> Nat -> (x -> y)
+iterNntF x y g f n = iterNnt n x y g f
+
+public export
+EndoHomTwArrPreshfOpNatFromNat : Nat -> EndoHomTwArrPreshfOpNatSig
+EndoHomTwArrPreshfOpNatFromNat n x y = flip $ iterNnt n x y
+
 ---------------------------------------------------------------------------
 ---- Categories of diagonal elements and functors from natural numbers ----
 ---------------------------------------------------------------------------
