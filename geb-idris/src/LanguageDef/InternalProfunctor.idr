@@ -3204,34 +3204,6 @@ public export
 EndoHomTwArrPreshfOpNatFromNat : Nat -> EndoHomTwArrPreshfOpNatSig
 EndoHomTwArrPreshfOpNatFromNat n x y = flip $ iterNnt n x y
 
------------------------------------------------------------------
----- Dinatural numbers (not) from twisted-arrow copresheaves ----
------------------------------------------------------------------
-
-public export
-0 HomProfCopr : TwArrCoprSig
-HomProfCopr = TwArrCoprEmbedProf HomProf
-
-public export
-0 HomProfCoprDimap : TwArrCoprDimapSig HomProfCopr
-HomProfCoprDimap =
-  TwArrCoprEmbedDimap HomProf $
-    MkProfunctor $ \mca, mbd => HomProfDimap _ _ _ _ mca mbd
-
-public export
-0 EndoHomTwArrCoprNatSig : Type
-EndoHomTwArrCoprNatSig =
-  TwArrCoprNatTrans HomProfCopr HomProfCopr
-
-public export
-0 EndoHomTwArrCoprNatCond : EndoHomTwArrCoprNatSig -> Type
-EndoHomTwArrCoprNatCond =
-  TwArrCoprNaturality HomProfCoprDimap HomProfCoprDimap
-
-public export
-EndoHomTwArrCoprNatFromNat : Nat -> EndoHomTwArrCoprNatSig
-EndoHomTwArrCoprNatFromNat n x y g f = ?EndoHomTwArrCoprNatFromNat_hole
-
 ---------------------------------------------------------------------------
 ---- Categories of diagonal elements and functors from natural numbers ----
 ---------------------------------------------------------------------------
