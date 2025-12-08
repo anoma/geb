@@ -398,9 +398,17 @@ InterpPDP (polyPos ** contraPos ** contraDir ** covarPos ** covarDir) j z =
     InterpPolyFunc (covarPos i (fst el) ** covarDir i (fst el)) z)
 
 public export
-InterpPDPtw : PolyDiProf -> TwArrCoprSig
-InterpPDPtw
+InterpPDPtwCopr : PolyDiProf -> TwArrCoprSig
+InterpPDPtwCopr
   (polyPos ** contraPos ** contraDir ** covarPos ** covarDir) j z mjz =
+    (i : polyPos **
+     (el : InterpPolyFunc (contraPos i ** contraDir i) j) ->
+      InterpPolyFunc (covarPos i (fst el) ** covarDir i (fst el)) z)
+
+public export
+InterpPDPtwPreshfOp : PolyDiProf -> TwArrPreshfOpSig
+InterpPDPtwPreshfOp
+  (polyPos ** contraPos ** contraDir ** covarPos ** covarDir) j z mzj =
     (i : polyPos **
      (el : InterpPolyFunc (contraPos i ** contraDir i) j) ->
       InterpPolyFunc (covarPos i (fst el) ** covarDir i (fst el)) z)
@@ -410,6 +418,26 @@ InterpPDPdimap : (pdp : PolyDiProf) -> (s, t, a, b : Type) ->
   (a -> s) -> (t -> b) -> InterpPDP pdp s t -> InterpPDP pdp a b
 InterpPDPdimap (polyPos ** contraPos ** contraDir ** covarPos ** covarDir)
   s t a b mas mtb (ipoly ** dialg) =
+    (ipoly ** \ic =>
+      let idm = dialg (fst ic ** mas . snd ic) in
+      (fst idm ** mtb . snd idm))
+
+public export
+InterpPDPtwCoprDimap : (pdp : PolyDiProf) ->
+  TwArrCoprDimapSig (InterpPDPtwCopr pdp)
+InterpPDPtwCoprDimap
+  (polyPos ** contraPos ** contraDir ** covarPos ** covarDir)
+  s t a b mst mas mtb (ipoly ** dialg) =
+    (ipoly ** \ic =>
+      let idm = dialg (fst ic ** mas . snd ic) in
+      (fst idm ** mtb . snd idm))
+
+public export
+InterpPDPtwPreshfOpDimap : (pdp : PolyDiProf) ->
+  TwArrPreshfOpDimapSig (InterpPDPtwPreshfOp pdp)
+InterpPDPtwPreshfOpDimap
+  (polyPos ** contraPos ** contraDir ** covarPos ** covarDir)
+  s t a b mba mas mtb (ipoly ** dialg) =
     (ipoly ** \ic =>
       let idm = dialg (fst ic ** mas . snd ic) in
       (fst idm ** mtb . snd idm))
