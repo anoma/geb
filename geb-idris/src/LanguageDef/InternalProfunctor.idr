@@ -3193,7 +3193,7 @@ HomDiagToNatFuncMap x mxx 0 n LTEZero =
 HomDiagToNatFuncMap x mxx (S m) (S n) (LTESucc mmn) =
   mxx . HomDiagToNatFuncMap x mxx m n mmn
 
--- The morphism-family component of the moprhism-map component of
+-- The morphism-family component of the morphism-map component of
 -- `HomDiagToNatFunc`.
 public export
 HomDiagToNatFuncMor : (x, y : Type) -> (mxx : x -> x) -> (myy : y -> y) ->
@@ -3201,7 +3201,7 @@ HomDiagToNatFuncMor : (x, y : Type) -> (mxx : x -> x) -> (myy : y -> y) ->
   (n : Nat) -> HomDiagToNatFunc x mxx n -> HomDiagToNatFunc y myy n
 HomDiagToNatFuncMor x y mxx myy mxy comm n = mxy
 
--- The naturality-condition component of the moprhism-map component of
+-- The naturality-condition component of the morphism-map component of
 -- `HomDiagToNatFunc`.
 public export
 HomDiagToNatFuncMorIsNat : (x, y : Type) -> (mxx : x -> x) -> (myy : y -> y) ->
