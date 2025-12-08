@@ -3192,11 +3192,11 @@ EndoHomTwArrPreshfOpNatCond =
 
 public export
 iterNnt : Nat -> (x, y : Type) -> (x -> y) -> (y -> x) -> (x -> y)
-iterNnt n x y g f = g . iterNpnt n x (f . g)
+iterNnt n x y mxy myx = mxy . iterNpnt n x (myx . mxy)
 
 public export
 iterNntF : (x, y : Type) -> (x -> y) -> (y -> x) -> Nat -> (x -> y)
-iterNntF x y g f n = iterNnt n x y g f
+iterNntF x y mxy myx n = iterNnt n x y mxy myx
 
 public export
 EndoHomTwArrPreshfOpNatFromNat : Nat -> EndoHomTwArrPreshfOpNatSig
