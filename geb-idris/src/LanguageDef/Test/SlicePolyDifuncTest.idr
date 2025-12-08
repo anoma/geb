@@ -36,7 +36,10 @@ EndoHomTwArrPreshfOpToParaCond : FunExt ->
   EndoHomParaCond (EndoHomTwArrPreshfOpToPara gamma)
 EndoHomTwArrPreshfOpToParaCond fext gamma cond i0 i1 i2 d0 d1 i2dcomm =
   funExt $ \ei0 =>
-    ?EndoHomTwArrPreshfOpToParaCond_hole
+    sym $
+      let commapp = fcong {x=ei0} i2dcomm in
+      let condapp = cond i0 i0 i1 i1 id (const ei0) i2 id in
+      ?EndoHomTwArrPreshfOpToParaCond_hole
 
 public export
 EndoHomTwArrPreshfOpToNatEqIterSym : FunExt ->
