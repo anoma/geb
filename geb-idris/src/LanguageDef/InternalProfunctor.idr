@@ -3217,7 +3217,7 @@ EndoHomTwArrPreshfOpFromNatCond fext (S n) s t a b mba mas mtb mst =
 
 public export
 EndoHomTwArrPreshfOpToNat : EndoHomTwArrPreshfOpNatSig -> Nat
-EndoHomTwArrPreshfOpToNat gamma = gamma Nat Nat id S Z
+EndoHomTwArrPreshfOpToNat gamma = gamma Nat Nat S id Z
 
 ---------------------------------------------------------------------------
 ---- Categories of diagonal elements and functors from natural numbers ----
