@@ -3152,12 +3152,11 @@ EndoHomParaToNat : EndoHomParaSig -> Nat
 EndoHomParaToNat gamma = gamma Nat S Z
 
 public export
-EndoHomParaToNatCompleteN : FunExt ->
+EndoHomParaToNatEqIter : FunExt ->
   (gamma : EndoHomParaSig) -> EndoHomParaCond gamma ->
-  (n : Nat) -> EndoHomParaToNat gamma = n ->
   (x : Type) -> (f : x -> x) ->
-  ExtEq (gamma x f) (EndoHomParaFromNat (EndoHomParaToNat gamma) x f)
-EndoHomParaToNatCompleteN fext gamma cond n neq x f ex =
+  ExtEq (gamma x f) (iterNpnt (gamma Nat S 0) x f)
+EndoHomParaToNatEqIter fext gamma cond x f ex =
   fcong {x=Z} $ cond Nat x (flip (iterNf x f) ex) S f Refl
 
 public export
@@ -3165,8 +3164,7 @@ EndoHomParaToNatComplete : FunExt ->
   (gamma : EndoHomParaSig) -> EndoHomParaCond gamma ->
   (x : Type) -> (f : x -> x) ->
   ExtEq (gamma x f) (EndoHomParaFromNat (EndoHomParaToNat gamma) x f)
-EndoHomParaToNatComplete fext gamma cond x =
-  EndoHomParaToNatCompleteN fext gamma cond (EndoHomParaToNat gamma) Refl x
+EndoHomParaToNatComplete = EndoHomParaToNatEqIter
 
 ------------------------------------------------------------
 ---- Dinatural numbers from twisted-arrow-op presheaves ----
@@ -3203,6 +3201,23 @@ iterNntF x y g f n = iterNnt n x y g f
 public export
 EndoHomTwArrPreshfOpNatFromNat : Nat -> EndoHomTwArrPreshfOpNatSig
 EndoHomTwArrPreshfOpNatFromNat n x y = flip $ iterNnt n x y
+
+public export
+EndoHomTwArrPreshfOpFromNatCond : FunExt ->
+  (n : Nat) -> EndoHomTwArrPreshfOpNatCond (EndoHomTwArrPreshfOpNatFromNat n)
+EndoHomTwArrPreshfOpFromNatCond fext Z s t a b mba mas mtb mst =
+  Refl
+EndoHomTwArrPreshfOpFromNatCond fext (S n) s t a b mba mas mtb mst =
+  funExt $ \ea =>
+    rewrite
+      fcong {x=ea}
+        (EndoHomTwArrPreshfOpFromNatCond fext n s t a b mba mas mtb mst)
+    in
+    Refl
+
+public export
+EndoHomTwArrPreshfOpToNat : EndoHomTwArrPreshfOpNatSig -> Nat
+EndoHomTwArrPreshfOpToNat gamma = gamma Nat Nat id S Z
 
 ---------------------------------------------------------------------------
 ---- Categories of diagonal elements and functors from natural numbers ----
