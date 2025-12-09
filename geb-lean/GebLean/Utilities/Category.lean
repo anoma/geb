@@ -971,6 +971,64 @@ instance category : Category.{w, w + 1} BundledCategoryData.{w} :=
 /-- The category of bundled category data as a `Cat` object. -/
 def toCat : Cat.{w, w + 1} := Cat.of BundledCategoryData.{w}
 
+/-- Convert a `BundledCategoryData` to a `Cat` object. This uses `CategoryOfData`
+    to get a `Category` instance from the bundled data. -/
+def toCatObj (C : BundledCategoryData.{w}) : Cat.{w, w} :=
+  @Cat.of C.Obj (CategoryOfData C.data)
+
+/-- Convert a `Cat` object to a `BundledCategoryData`. This uses
+    `categoryDataOfCategory` to extract the category data. -/
+def ofCatObj (C : Cat.{w, w}) : BundledCategoryData.{w} :=
+  ⟨C, homSetOfQuiver C, categoryDataOfCategory C⟩
+
+/-- Round-trip from `BundledCategoryData` to `Cat` and back is the identity
+    on objects. -/
+theorem ofCatObj_toCatObj (C : BundledCategoryData.{w}) :
+    ofCatObj (toCatObj C) = C := rfl
+
+/-- Round-trip from `Cat` to `BundledCategoryData` and back is the identity
+    on objects. -/
+theorem toCatObj_ofCatObj (C : Cat.{w, w}) :
+    toCatObj (ofCatObj C) = C := rfl
+
+/-- The functor from `BundledCategoryData` to `Cat`. -/
+def functorToCat : BundledCategoryData.{w} ⥤ Cat.{w, w} where
+  obj := toCatObj
+  map := fun {C D} F => @FunctorOfData C.Obj D.Obj C.Hom D.Hom C.data D.data F
+  map_id := fun _ => rfl
+  map_comp := fun _ _ => rfl
+
+/-- The functor from `Cat` to `BundledCategoryData`. -/
+def functorFromCat : Cat.{w, w} ⥤ BundledCategoryData.{w} where
+  obj := ofCatObj
+  map := fun {C D} (F : C ⥤ D) =>
+    @functorDataOfFunctor C D C.str D.str F
+  map_id := fun _ => rfl
+  map_comp := fun _ _ => rfl
+
+/-- The composition `functorToCat ⋙ functorFromCat` is the identity functor
+    on `BundledCategoryData`. -/
+theorem functorToCat_comp_functorFromCat :
+    functorToCat.{w} ⋙ functorFromCat = 𝟭 BundledCategoryData.{w} := rfl
+
+/-- The composition `functorFromCat ⋙ functorToCat` is the identity functor
+    on `Cat`. -/
+theorem functorFromCat_comp_functorToCat :
+    functorFromCat.{w} ⋙ functorToCat = 𝟭 Cat.{w, w} := rfl
+
+/-- The isomorphism in `Cat` between `BundledCategoryData.toCat` and
+    `Cat.of Cat`. -/
+def isoCat : toCat.{w} ≅ Cat.of Cat.{w, w} where
+  hom := functorToCat
+  inv := functorFromCat
+  hom_inv_id := functorToCat_comp_functorFromCat
+  inv_hom_id := functorFromCat_comp_functorToCat
+
+/-- The equivalence between `BundledCategoryData` and `Cat`, derived from
+    the isomorphism. -/
+def equivCat : BundledCategoryData.{w} ≌ Cat.{w, w} :=
+  Cat.equivOfIso isoCat
+
 end BundledCategoryData
 
 end CategoryDataCat
