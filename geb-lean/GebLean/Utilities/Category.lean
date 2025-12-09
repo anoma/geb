@@ -10,6 +10,8 @@ Convenience notation and helpers for working with categories.
 
 ## Main definitions
 
+### Category structures without typeclasses
+
 * `HomSet`: The data of a quiver (the Hom type family)
 * `homSetOfQuiver`: Extract a `HomSet` from a `Quiver` typeclass instance
 * `CompositionalStruct`: Composition of morphisms
@@ -26,7 +28,28 @@ Convenience notation and helpers for working with categories.
   typeclass
 * `CategoryLaws`: Category laws (associativity and identity laws)
 * `CategoryData`: Category data (operations and laws)
+* `CategoryOfData`: Build a `Category` instance from `CategoryData`
 * `categoryDataOfCategory`: Extract `CategoryData` from a `Category` typeclass
+* `HomSetEquiv`: Equivalence between hom-sets over an equivalence of objects
+* `CategoryData.ofEquiv`: Transport `CategoryData` across an equivalence
+* `CategoryOpsCompatible`: Compatibility of `CategoryOps` with transported data
+* `CategoryLaws.ofCompatible`: Derive laws for compatible operations
+* `CategoryData.ofCompatible`: Build `CategoryData` from compatible operations
+
+### Functor structures without typeclasses
+
+* `ObjMap`: Object map of a functor
+* `MorphMap`: Morphism map of a functor
+* `FunctorOps`: Functor operations (object and morphism maps)
+* `PreservesId`: Law that functor preserves identity
+* `PreservesComp`: Law that functor preserves composition
+* `FunctorLaws`: Functor laws (preserves identity and composition)
+* `FunctorData`: Functor data (operations and laws)
+* `FunctorOfData`: Build a `CategoryTheory.Functor` from `FunctorData`
+* `functorDataOfFunctor`: Extract `FunctorData` from a `Functor`
+
+### Miscellaneous
+
 * `≅Cat`: Notation for isomorphisms between categories without explicit
   `Cat.of`
 -/
@@ -303,6 +326,121 @@ def CategoryData.ofCompatible {U : Type u} {V : Type u} (e : U ≃ V)
     CategoryData U hs where
   toCategoryOps := ops
   laws := CategoryLaws.ofCompatible e he data ops compat
+
+/-! ## Functor Data
+
+Structures for representing functors without typeclasses. -/
+
+universe v₁ u₁ v₂' u₂'
+
+/-- The object map of a functor. -/
+abbrev ObjMap (C : Type u) (D : Type u₁) := C → D
+
+/-- The morphism map of a functor, given an object map. -/
+abbrev MorphMap {C : Type u} {D : Type u₁}
+    (hsC : HomSet.{v, u} C) (hsD : HomSet.{v₁, u₁} D)
+    (obj : ObjMap C D) :=
+  ∀ {a b : C}, hsC a b → hsD (obj a) (obj b)
+
+/-- Functor operations: object map and morphism map. -/
+structure FunctorOps {C : Type u} {D : Type u₁}
+    (hsC : HomSet.{v, u} C) (hsD : HomSet.{v₁, u₁} D) where
+  /-- The object map -/
+  obj : ObjMap C D
+  /-- The morphism map -/
+  map : MorphMap hsC hsD obj
+
+/-- Law that the functor preserves identity morphisms. -/
+abbrev PreservesId {C : Type u} {D : Type u₁}
+    {hsC : HomSet.{v, u} C} {hsD : HomSet.{v₁, u₁} D}
+    (opsC : CategoryOps hsC) (opsD : CategoryOps hsD)
+    (fops : FunctorOps hsC hsD) : Prop :=
+  ∀ (a : C), fops.map (opsC.id a) = opsD.id (fops.obj a)
+
+/-- Law that the functor preserves composition. -/
+abbrev PreservesComp {C : Type u} {D : Type u₁}
+    {hsC : HomSet.{v, u} C} {hsD : HomSet.{v₁, u₁} D}
+    (opsC : CategoryOps hsC) (opsD : CategoryOps hsD)
+    (fops : FunctorOps hsC hsD) : Prop :=
+  ∀ {a b c : C} (f : hsC a b) (g : hsC b c),
+    fops.map (opsC.comp f g) = opsD.comp (fops.map f) (fops.map g)
+
+/-- Functor laws: preserves identity and composition. -/
+structure FunctorLaws {C : Type u} {D : Type u₁}
+    {hsC : HomSet.{v, u} C} {hsD : HomSet.{v₁, u₁} D}
+    (opsC : CategoryOps hsC) (opsD : CategoryOps hsD)
+    (fops : FunctorOps hsC hsD) : Prop where
+  /-- Preserves identity morphisms -/
+  map_id : PreservesId opsC opsD fops
+  /-- Preserves composition -/
+  map_comp : PreservesComp opsC opsD fops
+
+/-- Functor data: operations and laws. -/
+structure FunctorData {C : Type u} {D : Type u₁}
+    {hsC : HomSet.{v, u} C} {hsD : HomSet.{v₁, u₁} D}
+    (dataC : CategoryData C hsC) (dataD : CategoryData D hsD)
+    extends FunctorOps hsC hsD where
+  /-- Functor laws -/
+  laws : FunctorLaws dataC.toCategoryOps dataD.toCategoryOps toFunctorOps
+
+namespace FunctorData
+
+variable {C : Type u} {D : Type u₁}
+variable {hsC : HomSet.{v, u} C} {hsD : HomSet.{v₁, u₁} D}
+variable {dataC : CategoryData C hsC} {dataD : CategoryData D hsD}
+
+/-- Preserves identity from functor data. -/
+@[reducible] def map_id (fd : FunctorData dataC dataD) :
+    PreservesId dataC.toCategoryOps dataD.toCategoryOps fd.toFunctorOps :=
+  fd.laws.map_id
+
+/-- Preserves composition from functor data. -/
+@[reducible] def map_comp (fd : FunctorData dataC dataD) :
+    PreservesComp dataC.toCategoryOps dataD.toCategoryOps fd.toFunctorOps :=
+  fd.laws.map_comp
+
+end FunctorData
+
+/-- Build a `CategoryTheory.Functor` from `FunctorData`.
+    Note: This only works when the HomSets are in Type (not general Sort). -/
+def FunctorOfData {C : Type u} {D : Type u₁}
+    {hsC : HomSet.{v + 1, u} C} {hsD : HomSet.{v₁ + 1, u₁} D}
+    {dataC : CategoryData C hsC} {dataD : CategoryData D hsD}
+    (fd : FunctorData dataC dataD) :
+    @CategoryTheory.Functor C (CategoryOfData hsC dataC) D
+      (CategoryOfData hsD dataD) :=
+  @CategoryTheory.Functor.mk C (CategoryOfData hsC dataC) D
+    (CategoryOfData hsD dataD)
+    fd.obj fd.map fd.laws.map_id fd.laws.map_comp
+
+/-- Extract `FunctorData` from a `CategoryTheory.Functor`. -/
+abbrev functorDataOfFunctor {C : Type u} {D : Type u₁}
+    [Category.{v, u} C] [Category.{v₁, u₁} D]
+    (F : C ⥤ D) :
+    FunctorData (categoryDataOfCategory C) (categoryDataOfCategory D) where
+  obj := F.obj
+  map := F.map
+  laws := {
+    map_id := F.map_id
+    map_comp := F.map_comp
+  }
+
+/-- Round-trip from `FunctorData` to `CategoryTheory.Functor` and back yields
+    the original data. -/
+theorem functorDataOfFunctor_of_FunctorOfData {C : Type u} {D : Type u₁}
+    {hsC : HomSet.{v + 1, u} C} {hsD : HomSet.{v₁ + 1, u₁} D}
+    {dataC : CategoryData C hsC} {dataD : CategoryData D hsD}
+    (fd : FunctorData dataC dataD) :
+    @functorDataOfFunctor C D (CategoryOfData hsC dataC)
+      (CategoryOfData hsD dataD) (FunctorOfData fd) = fd := rfl
+
+/-- Round-trip from `CategoryTheory.Functor` to `FunctorData` and back yields
+    the original functor instance (as `Functor` structures). -/
+theorem FunctorOfData_of_functorDataOfFunctor {C : Type u} {D : Type u₁}
+    [Category.{v, u} C] [Category.{v₁, u₁} D] (F : C ⥤ D) :
+    @FunctorOfData C D (homSetOfQuiver C) (homSetOfQuiver D)
+      (categoryDataOfCategory C) (categoryDataOfCategory D)
+      (functorDataOfFunctor F) = F := rfl
 
 section EqToHom
 
