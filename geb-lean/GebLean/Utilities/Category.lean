@@ -883,23 +883,25 @@ morphisms are `FunctorData` structures between them. -/
 
 section CategoryDataCat
 
-universe w
+universe v' u'
 
 /-- A bundled category data: a type, a hom-set, and category data on them.
-    The hom-sets are required to be in `Type w` (not `Sort`) so that we can
-    later form a `Category` instance using `CategoryOfData`. -/
+    The hom-sets are required to be in `Type v'` (not `Sort`) so that we can
+    later form a `Category` instance using `CategoryOfData`. This structure
+    has two universe parameters to match `Cat.{v', u'}`. -/
 structure BundledCategoryData where
   /-- The underlying type of objects -/
-  Obj : Type w
-  /-- The hom-set (in Type w, not Sort) -/
-  Hom : HomSet.{w + 1, w} Obj
+  Obj : Type u'
+  /-- The hom-set (in Type v') -/
+  Hom : HomSet.{v' + 1, u'} Obj
   /-- The category data -/
   data : CategoryData Obj Hom
 
 namespace BundledCategoryData
 
 /-- Identity functor data for a bundled category. -/
-def idFunctorData (C : BundledCategoryData.{w}) : FunctorData C.data C.data where
+def idFunctorData (C : BundledCategoryData.{v', u'}) :
+    FunctorData C.data C.data where
   obj := id
   map := id
   laws := {
@@ -908,7 +910,7 @@ def idFunctorData (C : BundledCategoryData.{w}) : FunctorData C.data C.data wher
   }
 
 /-- Composition of functor data. -/
-def compFunctorData {C D E : BundledCategoryData.{w}}
+def compFunctorData {C D E : BundledCategoryData.{v', u'}}
     (F : FunctorData C.data D.data) (G : FunctorData D.data E.data) :
     FunctorData C.data E.data where
   obj := G.obj ∘ F.obj
@@ -923,7 +925,7 @@ def compFunctorData {C D E : BundledCategoryData.{w}}
   }
 
 /-- Associativity of functor composition. -/
-theorem compFunctorData_assoc {A B C D : BundledCategoryData.{w}}
+theorem compFunctorData_assoc {A B C D : BundledCategoryData.{v', u'}}
     (F : FunctorData A.data B.data)
     (G : FunctorData B.data C.data)
     (H : FunctorData C.data D.data) :
@@ -931,28 +933,28 @@ theorem compFunctorData_assoc {A B C D : BundledCategoryData.{w}}
     compFunctorData F (compFunctorData G H) := rfl
 
 /-- Left identity for functor composition. -/
-theorem idFunctorData_comp {C D : BundledCategoryData.{w}}
+theorem idFunctorData_comp {C D : BundledCategoryData.{v', u'}}
     (F : FunctorData C.data D.data) :
     compFunctorData (idFunctorData C) F = F := rfl
 
 /-- Right identity for functor composition. -/
-theorem comp_idFunctorData {C D : BundledCategoryData.{w}}
+theorem comp_idFunctorData {C D : BundledCategoryData.{v', u'}}
     (F : FunctorData C.data D.data) :
     compFunctorData F (idFunctorData D) = F := rfl
 
 /-- The hom-set for the category of bundled category data: functors between
-    the underlying categories. The hom-types are in `Type w` since `FunctorData`
-    between categories with objects in `Type w` lives in `Type w`. -/
-def homSet : HomSet.{w + 1, w + 1} BundledCategoryData.{w} :=
+    the underlying categories. -/
+def homSet : HomSet.{max v' u' + 1, max (v' + 1) (u' + 1)}
+    BundledCategoryData.{v', u'} :=
   fun C D => FunctorData C.data D.data
 
 /-- Category operations for bundled category data. -/
-def categoryOps : CategoryOps homSet where
+def categoryOps : CategoryOps homSet.{v', u'} where
   id := idFunctorData
   comp := compFunctorData
 
 /-- Category laws for bundled category data. -/
-def categoryLaws : CategoryLaws homSet categoryOps where
+def categoryLaws : CategoryLaws homSet.{v', u'} categoryOps where
   assoc := compFunctorData_assoc
   id_laws := {
     id_comp := idFunctorData_comp
@@ -960,46 +962,48 @@ def categoryLaws : CategoryLaws homSet categoryOps where
   }
 
 /-- Category data for the category of bundled category data. -/
-def categoryData : CategoryData BundledCategoryData.{w} homSet where
+def categoryData : CategoryData BundledCategoryData.{v', u'} homSet where
   toCategoryOps := categoryOps
   laws := categoryLaws
 
 /-- The category instance on bundled category data. -/
-instance category : Category.{w, w + 1} BundledCategoryData.{w} :=
+instance category : Category.{max v' u', max (v' + 1) (u' + 1)}
+    BundledCategoryData.{v', u'} :=
   CategoryOfData categoryData
 
 /-- The category of bundled category data as a `Cat` object. -/
-def toCat : Cat.{w, w + 1} := Cat.of BundledCategoryData.{w}
+def toCat : Cat.{max v' u', max (v' + 1) (u' + 1)} :=
+  Cat.of BundledCategoryData.{v', u'}
 
 /-- Convert a `BundledCategoryData` to a `Cat` object. This uses `CategoryOfData`
     to get a `Category` instance from the bundled data. -/
-def toCatObj (C : BundledCategoryData.{w}) : Cat.{w, w} :=
+def toCatObj (C : BundledCategoryData.{v', u'}) : Cat.{v', u'} :=
   @Cat.of C.Obj (CategoryOfData C.data)
 
 /-- Convert a `Cat` object to a `BundledCategoryData`. This uses
     `categoryDataOfCategory` to extract the category data. -/
-def ofCatObj (C : Cat.{w, w}) : BundledCategoryData.{w} :=
+def ofCatObj (C : Cat.{v', u'}) : BundledCategoryData.{v', u'} :=
   ⟨C, homSetOfQuiver C, categoryDataOfCategory C⟩
 
 /-- Round-trip from `BundledCategoryData` to `Cat` and back is the identity
     on objects. -/
-theorem ofCatObj_toCatObj (C : BundledCategoryData.{w}) :
+theorem ofCatObj_toCatObj (C : BundledCategoryData.{v', u'}) :
     ofCatObj (toCatObj C) = C := rfl
 
 /-- Round-trip from `Cat` to `BundledCategoryData` and back is the identity
     on objects. -/
-theorem toCatObj_ofCatObj (C : Cat.{w, w}) :
+theorem toCatObj_ofCatObj (C : Cat.{v', u'}) :
     toCatObj (ofCatObj C) = C := rfl
 
 /-- The functor from `BundledCategoryData` to `Cat`. -/
-def functorToCat : BundledCategoryData.{w} ⥤ Cat.{w, w} where
+def functorToCat : BundledCategoryData.{v', u'} ⥤ Cat.{v', u'} where
   obj := toCatObj
   map := fun {C D} F => @FunctorOfData C.Obj D.Obj C.Hom D.Hom C.data D.data F
   map_id := fun _ => rfl
   map_comp := fun _ _ => rfl
 
 /-- The functor from `Cat` to `BundledCategoryData`. -/
-def functorFromCat : Cat.{w, w} ⥤ BundledCategoryData.{w} where
+def functorFromCat : Cat.{v', u'} ⥤ BundledCategoryData.{v', u'} where
   obj := ofCatObj
   map := fun {C D} (F : C ⥤ D) =>
     @functorDataOfFunctor C D C.str D.str F
@@ -1009,16 +1013,17 @@ def functorFromCat : Cat.{w, w} ⥤ BundledCategoryData.{w} where
 /-- The composition `functorToCat ⋙ functorFromCat` is the identity functor
     on `BundledCategoryData`. -/
 theorem functorToCat_comp_functorFromCat :
-    functorToCat.{w} ⋙ functorFromCat = 𝟭 BundledCategoryData.{w} := rfl
+    functorToCat.{v', u'} ⋙ functorFromCat = 𝟭 BundledCategoryData.{v', u'} :=
+  rfl
 
 /-- The composition `functorFromCat ⋙ functorToCat` is the identity functor
     on `Cat`. -/
 theorem functorFromCat_comp_functorToCat :
-    functorFromCat.{w} ⋙ functorToCat = 𝟭 Cat.{w, w} := rfl
+    functorFromCat.{v', u'} ⋙ functorToCat = 𝟭 Cat.{v', u'} := rfl
 
 /-- The isomorphism in `Cat` between `BundledCategoryData.toCat` and
     `Cat.of Cat`. -/
-def isoCat : toCat.{w} ≅ Cat.of Cat.{w, w} where
+def isoCat : toCat.{v', u'} ≅ Cat.of Cat.{v', u'} where
   hom := functorToCat
   inv := functorFromCat
   hom_inv_id := functorToCat_comp_functorFromCat
@@ -1026,7 +1031,7 @@ def isoCat : toCat.{w} ≅ Cat.of Cat.{w, w} where
 
 /-- The equivalence between `BundledCategoryData` and `Cat`, derived from
     the isomorphism. -/
-def equivCat : BundledCategoryData.{w} ≌ Cat.{w, w} :=
+def equivCat : BundledCategoryData.{v', u'} ≌ Cat.{v', u'} :=
   Cat.equivOfIso isoCat
 
 end BundledCategoryData
