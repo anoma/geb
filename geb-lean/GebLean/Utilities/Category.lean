@@ -132,6 +132,36 @@ structure CategoryOps {U : Type u} (hs : HomSet.{v, u} U) where
   /-- Identity morphisms -/
   id : IdentityStruct hs
 
+namespace CategoryOps
+
+variable {U : Type u} {hs : HomSet.{v, u} U} (ops : CategoryOps hs)
+
+/-- Composition as a term, for use in proofs and constructions.
+    Equivalent to `ops.comp f g`. -/
+abbrev seq {a b c : U} (f : hs a b) (g : hs b c) : hs a c := ops.comp f g
+
+/-- Identity as a term, for use in proofs and constructions.
+    Equivalent to `ops.id a`. -/
+abbrev ident (a : U) : hs a a := ops.id a
+
+end CategoryOps
+
+/-- Scoped notation for composition with explicit `CategoryOps` or `CategoryData`.
+    Write `f ≫[ops] g` for `ops.comp f g`. This mirrors mathlib's `≫` notation
+    but works with our explicit structures rather than typeclass instances.
+    For mathlib notation, use `letI := CategoryOfData data` to bring a
+    `Category` instance into scope. -/
+scoped syntax:80 term " ≫[" term "] " term : term
+macro_rules | `($f ≫[$ops] $g) => `(($ops).comp $f $g)
+
+/-- Scoped notation for identity with explicit `CategoryOps` or `CategoryData`.
+    Write `𝟙[ops] a` for `ops.id a`. This mirrors mathlib's `𝟙` notation
+    but works with our explicit structures rather than typeclass instances.
+    For mathlib notation, use `letI := CategoryOfData data` to bring a
+    `Category` instance into scope. -/
+scoped syntax:max "𝟙[" term "] " term : term
+macro_rules | `(𝟙[$ops] $a) => `(($ops).id $a)
+
 /-- Build a `CategoryStruct` typeclass instance from category operations.
     Note: This only works when the HomSet is in Type (not general Sort). -/
 instance {U : Type u} (hs : HomSet.{v + 1, u} U)
@@ -179,7 +209,7 @@ end CategoryData
 
 /-- Build a `Category` typeclass instance from category data.
     Note: This only works when the HomSet is in Type (not general Sort). -/
-instance CategoryOfData {U : Type u} {hs : HomSet.{v + 1, u} U}
+def CategoryOfData {U : Type u} {hs : HomSet.{v + 1, u} U}
     (data : CategoryData U hs) : Category.{v, u} U where
   Hom := hs
   id := data.id
@@ -187,6 +217,21 @@ instance CategoryOfData {U : Type u} {hs : HomSet.{v + 1, u} U}
   id_comp := data.laws.id_laws.id_comp
   comp_id := data.laws.id_laws.comp_id
   assoc := data.laws.assoc
+
+/-- Typeclass for types that have `CategoryData`. The `HomSet` is an output
+    parameter, meaning it is determined by the type `U`. This allows automatic
+    inference of `Category` instances from `CategoryData`. -/
+class HasCategoryData (U : Type u) (hs : outParam (HomSet.{v, u} U)) where
+  /-- The category data for this type -/
+  data : CategoryData U hs
+
+/-- Automatic `Category` instance from `HasCategoryData`. When a type has
+    `HasCategoryData`, mathlib's category notation (`⟶`, `≫`, `𝟙`) is
+    available. -/
+instance (priority := low) instCategoryOfHasCategoryData
+    {U : Type u} {hs : HomSet.{v + 1, u} U} [hcd : HasCategoryData U hs] :
+    Category.{v, u} U :=
+  CategoryOfData hcd.data
 
 /-- Extract the `CategoryData` from a `Category` typeclass instance. -/
 abbrev categoryDataOfCategory (U : Type u) [Category.{v, u} U] :
