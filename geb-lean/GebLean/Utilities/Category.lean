@@ -231,6 +231,79 @@ def CategoryData.ofEquiv {U : Type u} {V : Type u} (e : U ≃ V)
     }
   }
 
+/-- Compatibility between `CategoryOps` and what `CategoryData.ofEquiv` would
+    compute. This asserts that the given operations agree with the transported
+    operations. -/
+structure CategoryOpsCompatible {U : Type u} {V : Type u} (e : U ≃ V)
+    {hs : HomSet.{v, u} U} {hs' : HomSet.{v, u} V}
+    (he : HomSetEquiv e hs hs') (data : CategoryData V hs')
+    (ops : CategoryOps hs) : Prop where
+  /-- Identity agrees with transported identity -/
+  id_eq : ∀ (a : U), ops.id a = he.invFun (data.id (e a))
+  /-- Composition agrees with transported composition -/
+  comp_eq : ∀ {a b c : U} (f : hs a b) (g : hs b c),
+    ops.comp f g = he.invFun (data.comp (he.toFun f) (he.toFun g))
+
+/-- Given `CategoryOps` compatible with a transported `CategoryData`, derive the
+    `CategoryLaws` for the given ops. -/
+def CategoryLaws.ofCompatible {U : Type u} {V : Type u} (e : U ≃ V)
+    {hs : HomSet.{v, u} U} {hs' : HomSet.{v, u} V}
+    (he : HomSetEquiv e hs hs') (data : CategoryData V hs')
+    (ops : CategoryOps hs) (compat : CategoryOpsCompatible e he data ops) :
+    CategoryLaws hs ops where
+  assoc := fun f g h => by
+    calc ops.comp (ops.comp f g) h
+        = he.invFun (data.comp (he.toFun (ops.comp f g)) (he.toFun h)) :=
+          compat.comp_eq _ _
+      _ = he.invFun (data.comp (he.toFun (he.invFun (data.comp (he.toFun f)
+            (he.toFun g)))) (he.toFun h)) := by rw [compat.comp_eq f g]
+      _ = he.invFun (data.comp (data.comp (he.toFun f) (he.toFun g))
+            (he.toFun h)) := by rw [he.right_inv]
+      _ = he.invFun (data.comp (he.toFun f) (data.comp (he.toFun g)
+            (he.toFun h))) :=
+          congrArg he.invFun (data.assoc (he.toFun f) (he.toFun g) (he.toFun h))
+      _ = he.invFun (data.comp (he.toFun f) (he.toFun (he.invFun
+            (data.comp (he.toFun g) (he.toFun h))))) := by rw [he.right_inv]
+      _ = he.invFun (data.comp (he.toFun f) (he.toFun (ops.comp g h))) := by
+          rw [compat.comp_eq g h]
+      _ = ops.comp f (ops.comp g h) := (compat.comp_eq _ _).symm
+  id_laws := {
+    id_comp := fun f => by
+      calc ops.comp (ops.id _) f
+          = he.invFun (data.comp (he.toFun (ops.id _)) (he.toFun f)) :=
+            compat.comp_eq _ _
+        _ = he.invFun (data.comp (he.toFun (he.invFun (data.id (e _))))
+              (he.toFun f)) := by rw [compat.id_eq]
+        _ = he.invFun (data.comp (data.id (e _)) (he.toFun f)) := by
+            rw [he.right_inv]
+        _ = he.invFun (he.toFun f) := by
+            have h := data.laws.id_laws.id_comp (he.toFun f); simp only [h]
+        _ = f := he.left_inv f
+    comp_id := fun f => by
+      calc ops.comp f (ops.id _)
+          = he.invFun (data.comp (he.toFun f) (he.toFun (ops.id _))) :=
+            compat.comp_eq _ _
+        _ = he.invFun (data.comp (he.toFun f) (he.toFun (he.invFun
+              (data.id (e _))))) := by rw [compat.id_eq]
+        _ = he.invFun (data.comp (he.toFun f) (data.id (e _))) := by
+            rw [he.right_inv]
+        _ = he.invFun (he.toFun f) := by
+            have h := data.laws.id_laws.comp_id (he.toFun f); simp only [h]
+        _ = f := he.left_inv f
+  }
+
+/-- Given `CategoryOps` compatible with a transported `CategoryData`, derive a
+    `CategoryData` with the given ops. This allows using more convenient forms
+    of identity and composition while inheriting the laws from the transported
+    category. -/
+def CategoryData.ofCompatible {U : Type u} {V : Type u} (e : U ≃ V)
+    {hs : HomSet.{v, u} U} {hs' : HomSet.{v, u} V}
+    (he : HomSetEquiv e hs hs') (data : CategoryData V hs')
+    (ops : CategoryOps hs) (compat : CategoryOpsCompatible e he data ops) :
+    CategoryData U hs where
+  toCategoryOps := ops
+  laws := CategoryLaws.ofCompatible e he data ops compat
+
 section EqToHom
 
 universe v₂ u₂
