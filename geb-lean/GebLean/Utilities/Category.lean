@@ -178,6 +178,18 @@ abbrev categoryDataOfCategory (U : Type u) [Category.{v, u} U] :
     }
   }
 
+/-- Round-trip from `CategoryData` to `Category` and back yields the original
+    data. -/
+theorem categoryDataOfCategory_of_CategoryOfData {U : Type u}
+    (hs : HomSet.{v + 1, u} U) (data : CategoryData U hs) :
+    @categoryDataOfCategory U (CategoryOfData hs data) = data := rfl
+
+/-- Round-trip from `Category` to `CategoryData` and back yields the original
+    category instance (as `Category` structures). -/
+theorem CategoryOfData_of_categoryDataOfCategory (U : Type u)
+    [cat : Category.{v, u} U] :
+    CategoryOfData (homSetOfQuiver U) (categoryDataOfCategory U) = cat := rfl
+
 section EqToHom
 
 universe v₂ u₂
