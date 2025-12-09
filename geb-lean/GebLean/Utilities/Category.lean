@@ -876,6 +876,105 @@ lemma eqToHom_pi_apply {D : Type w} [Category D] {F G : I → D}
 
 end PiCategory
 
+/-! ## The Category of CategoryData
+
+We define the category whose objects are `CategoryData` structures and whose
+morphisms are `FunctorData` structures between them. -/
+
+section CategoryDataCat
+
+universe w
+
+/-- A bundled category data: a type, a hom-set, and category data on them.
+    The hom-sets are required to be in `Type w` (not `Sort`) so that we can
+    later form a `Category` instance using `CategoryOfData`. -/
+structure BundledCategoryData where
+  /-- The underlying type of objects -/
+  Obj : Type w
+  /-- The hom-set (in Type w, not Sort) -/
+  Hom : HomSet.{w + 1, w} Obj
+  /-- The category data -/
+  data : CategoryData Obj Hom
+
+namespace BundledCategoryData
+
+/-- Identity functor data for a bundled category. -/
+def idFunctorData (C : BundledCategoryData.{w}) : FunctorData C.data C.data where
+  obj := id
+  map := id
+  laws := {
+    map_id := fun _ => rfl
+    map_comp := fun _ _ => rfl
+  }
+
+/-- Composition of functor data. -/
+def compFunctorData {C D E : BundledCategoryData.{w}}
+    (F : FunctorData C.data D.data) (G : FunctorData D.data E.data) :
+    FunctorData C.data E.data where
+  obj := G.obj ∘ F.obj
+  map := G.map ∘ F.map
+  laws := {
+    map_id := fun a => by
+      simp only [Function.comp_apply]
+      rw [F.laws.map_id, G.laws.map_id]
+    map_comp := fun f g => by
+      simp only [Function.comp_apply]
+      rw [F.laws.map_comp, G.laws.map_comp]
+  }
+
+/-- Associativity of functor composition. -/
+theorem compFunctorData_assoc {A B C D : BundledCategoryData.{w}}
+    (F : FunctorData A.data B.data)
+    (G : FunctorData B.data C.data)
+    (H : FunctorData C.data D.data) :
+    compFunctorData (compFunctorData F G) H =
+    compFunctorData F (compFunctorData G H) := rfl
+
+/-- Left identity for functor composition. -/
+theorem idFunctorData_comp {C D : BundledCategoryData.{w}}
+    (F : FunctorData C.data D.data) :
+    compFunctorData (idFunctorData C) F = F := rfl
+
+/-- Right identity for functor composition. -/
+theorem comp_idFunctorData {C D : BundledCategoryData.{w}}
+    (F : FunctorData C.data D.data) :
+    compFunctorData F (idFunctorData D) = F := rfl
+
+/-- The hom-set for the category of bundled category data: functors between
+    the underlying categories. The hom-types are in `Type w` since `FunctorData`
+    between categories with objects in `Type w` lives in `Type w`. -/
+def homSet : HomSet.{w + 1, w + 1} BundledCategoryData.{w} :=
+  fun C D => FunctorData C.data D.data
+
+/-- Category operations for bundled category data. -/
+def categoryOps : CategoryOps homSet where
+  id := idFunctorData
+  comp := compFunctorData
+
+/-- Category laws for bundled category data. -/
+def categoryLaws : CategoryLaws homSet categoryOps where
+  assoc := compFunctorData_assoc
+  id_laws := {
+    id_comp := idFunctorData_comp
+    comp_id := comp_idFunctorData
+  }
+
+/-- Category data for the category of bundled category data. -/
+def categoryData : CategoryData BundledCategoryData.{w} homSet where
+  toCategoryOps := categoryOps
+  laws := categoryLaws
+
+/-- The category instance on bundled category data. -/
+instance category : Category.{w, w + 1} BundledCategoryData.{w} :=
+  CategoryOfData categoryData
+
+/-- The category of bundled category data as a `Cat` object. -/
+def toCat : Cat.{w, w + 1} := Cat.of BundledCategoryData.{w}
+
+end BundledCategoryData
+
+end CategoryDataCat
+
 end GebLean
 
 namespace CategoryTheory
