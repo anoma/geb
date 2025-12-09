@@ -544,6 +544,339 @@ def FunctorData.ofCompatible {C : Type u} {D : Type u₁}
   toFunctorOps := fops2
   laws := FunctorLaws.ofCompatible laws1 compat
 
+/-! ## Natural Transformation Data
+
+Structures for representing natural transformations without typeclasses. -/
+
+/-- The components of a natural transformation: for each object X in C,
+    a morphism from F(X) to G(X) in D. -/
+abbrev NatTransApp {C : Type u} {D : Type u₁}
+    {hsC : HomSet.{v, u} C} {hsD : HomSet.{v₁, u₁} D}
+    (F G : FunctorOps hsC hsD) :=
+  ∀ (X : C), hsD (F.obj X) (G.obj X)
+
+/-- The naturality condition: for any morphism f : X ⟶ Y in C,
+    the square F(f) ≫ α_Y = α_X ≫ G(f) commutes. -/
+abbrev Naturality {C : Type u} {D : Type u₁}
+    {hsC : HomSet.{v, u} C} {hsD : HomSet.{v₁, u₁} D}
+    {opsD : CategoryOps hsD}
+    (F G : FunctorOps hsC hsD) (app : NatTransApp F G) : Prop :=
+  ∀ {X Y : C} (f : hsC X Y),
+    opsD.comp (F.map f) (app Y) = opsD.comp (app X) (G.map f)
+
+/-- Natural transformation operations: the component maps. -/
+structure NatTransOps {C : Type u} {D : Type u₁}
+    {hsC : HomSet.{v, u} C} {hsD : HomSet.{v₁, u₁} D}
+    (F G : FunctorOps hsC hsD) where
+  /-- The component at each object -/
+  app : NatTransApp F G
+
+/-- Natural transformation laws: the naturality condition. -/
+structure NatTransLaws {C : Type u} {D : Type u₁}
+    {hsC : HomSet.{v, u} C} {hsD : HomSet.{v₁, u₁} D}
+    {opsD : CategoryOps hsD}
+    (F G : FunctorOps hsC hsD) (ntops : NatTransOps F G) : Prop where
+  /-- The naturality square commutes -/
+  naturality : Naturality (opsD := opsD) F G ntops.app
+
+/-- Natural transformation data: components and naturality. -/
+@[ext]
+structure NatTransData {C : Type u} {D : Type u₁}
+    {hsC : HomSet.{v, u} C} {hsD : HomSet.{v₁, u₁} D}
+    {dataC : CategoryData C hsC} {dataD : CategoryData D hsD}
+    (F G : FunctorData dataC dataD) extends NatTransOps F.toFunctorOps G.toFunctorOps where
+  /-- Natural transformation laws -/
+  laws : NatTransLaws (opsD := dataD.toCategoryOps) F.toFunctorOps G.toFunctorOps toNatTransOps
+
+namespace NatTransData
+
+variable {C : Type u} {D : Type u₁}
+variable {hsC : HomSet.{v, u} C} {hsD : HomSet.{v₁, u₁} D}
+variable {dataC : CategoryData C hsC} {dataD : CategoryData D hsD}
+
+/-- Naturality from natural transformation data. -/
+@[reducible] def naturality {F G : FunctorData dataC dataD}
+    (α : NatTransData F G) :
+    Naturality (opsD := dataD.toCategoryOps) F.toFunctorOps G.toFunctorOps α.app :=
+  α.laws.naturality
+
+end NatTransData
+
+/-- Build a `CategoryTheory.NatTrans` from `NatTransData`.
+    Note: This only works when the HomSets are in Type (not general Sort). -/
+def NatTransOfData {C : Type u} {D : Type u₁}
+    {hsC : HomSet.{v + 1, u} C} {hsD : HomSet.{v₁ + 1, u₁} D}
+    {dataC : CategoryData C hsC} {dataD : CategoryData D hsD}
+    {F G : FunctorData dataC dataD}
+    (α : NatTransData F G) :
+    @CategoryTheory.NatTrans C (CategoryOfData dataC) D (CategoryOfData dataD)
+      (FunctorOfData F) (FunctorOfData G) :=
+  letI : Category C := CategoryOfData dataC
+  letI : Category D := CategoryOfData dataD
+  { app := α.app
+    naturality := fun {_ _} f => α.laws.naturality f }
+
+/-- Extract `NatTransData` from a `CategoryTheory.NatTrans` when the Category
+    instances are explicitly provided via `CategoryOfData`. -/
+def natTransDataOfNatTrans' {C : Type u} {D : Type u₁}
+    {hsC : HomSet.{v + 1, u} C} {hsD : HomSet.{v₁ + 1, u₁} D}
+    {dataC : CategoryData C hsC} {dataD : CategoryData D hsD}
+    {F G : FunctorData dataC dataD}
+    (α : @CategoryTheory.NatTrans C (CategoryOfData dataC) D (CategoryOfData dataD)
+      (FunctorOfData F) (FunctorOfData G)) :
+    NatTransData F G :=
+  letI : Category C := CategoryOfData dataC
+  letI : Category D := CategoryOfData dataD
+  { app := α.app
+    laws := { naturality := fun {_ _} f => α.naturality f } }
+
+/-- Extract `NatTransData` from a `CategoryTheory.NatTrans`. -/
+def natTransDataOfNatTrans {C : Type u} {D : Type u₁}
+    [catC : Category.{v, u} C] [catD : Category.{v₁, u₁} D]
+    {F G : C ⥤ D} (α : F ⟶ G) :
+    NatTransData (functorDataOfFunctor F) (functorDataOfFunctor G) where
+  app := α.app
+  laws := { naturality := fun {_ _} f => α.naturality f }
+
+/-- Round-trip from `NatTransData` to `NatTrans` and back yields the original
+    data. -/
+theorem natTransDataOfNatTrans'_of_NatTransOfData {C : Type u} {D : Type u₁}
+    {hsC : HomSet.{v + 1, u} C} {hsD : HomSet.{v₁ + 1, u₁} D}
+    {dataC : CategoryData C hsC} {dataD : CategoryData D hsD}
+    {F G : FunctorData dataC dataD} (α : NatTransData F G) :
+    natTransDataOfNatTrans' (NatTransOfData α) = α := by
+  ext X
+  rfl
+
+/-- Round-trip from `NatTrans` to `NatTransData` and back yields the original
+    natural transformation. -/
+theorem NatTransOfData_of_natTransDataOfNatTrans' {C : Type u} {D : Type u₁}
+    {hsC : HomSet.{v + 1, u} C} {hsD : HomSet.{v₁ + 1, u₁} D}
+    {dataC : CategoryData C hsC} {dataD : CategoryData D hsD}
+    {F G : FunctorData dataC dataD}
+    (α : @CategoryTheory.NatTrans C (CategoryOfData dataC) D (CategoryOfData dataD)
+      (FunctorOfData F) (FunctorOfData G)) :
+    NatTransOfData (natTransDataOfNatTrans' α) = α := by
+  letI : Category C := CategoryOfData dataC
+  letI : Category D := CategoryOfData dataD
+  ext X
+  rfl
+
+/-! ### Identity and Composition of Natural Transformations -/
+
+/-- Identity natural transformation data. -/
+def NatTransData.id {C : Type u} {D : Type u₁}
+    {hsC : HomSet.{v, u} C} {hsD : HomSet.{v₁, u₁} D}
+    {dataC : CategoryData C hsC} {dataD : CategoryData D hsD}
+    (F : FunctorData dataC dataD) : NatTransData F F where
+  app := fun X => dataD.id (F.obj X)
+  laws := {
+    naturality := fun f => by
+      simp only [dataD.laws.id_laws.id_comp, dataD.laws.id_laws.comp_id]
+  }
+
+/-- Vertical composition of natural transformation data. -/
+def NatTransData.vcomp {C : Type u} {D : Type u₁}
+    {hsC : HomSet.{v, u} C} {hsD : HomSet.{v₁, u₁} D}
+    {dataC : CategoryData C hsC} {dataD : CategoryData D hsD}
+    {F G H : FunctorData dataC dataD}
+    (α : NatTransData F G) (β : NatTransData G H) : NatTransData F H where
+  app := fun X => dataD.comp (α.app X) (β.app X)
+  laws := {
+    naturality := fun {X Y} f => by
+      calc dataD.comp (F.map f) (dataD.comp (α.app Y) (β.app Y))
+          = dataD.comp (dataD.comp (F.map f) (α.app Y)) (β.app Y) :=
+            (dataD.assoc (F.map f) (α.app Y) (β.app Y)).symm
+        _ = dataD.comp (dataD.comp (α.app X) (G.map f)) (β.app Y) := by
+            rw [α.naturality f]
+        _ = dataD.comp (α.app X) (dataD.comp (G.map f) (β.app Y)) :=
+            dataD.assoc (α.app X) (G.map f) (β.app Y)
+        _ = dataD.comp (α.app X) (dataD.comp (β.app X) (H.map f)) := by
+            rw [β.naturality f]
+        _ = dataD.comp (dataD.comp (α.app X) (β.app X)) (H.map f) :=
+            (dataD.assoc (α.app X) (β.app X) (H.map f)).symm
+  }
+
+/-- Associativity of vertical composition. -/
+theorem NatTransData.vcomp_assoc {C : Type u} {D : Type u₁}
+    {hsC : HomSet.{v, u} C} {hsD : HomSet.{v₁, u₁} D}
+    {dataC : CategoryData C hsC} {dataD : CategoryData D hsD}
+    {F G H K : FunctorData dataC dataD}
+    (α : NatTransData F G) (β : NatTransData G H) (γ : NatTransData H K) :
+    (α.vcomp β).vcomp γ = α.vcomp (β.vcomp γ) := by
+  ext X
+  exact dataD.assoc (α.app X) (β.app X) (γ.app X)
+
+/-- Left identity for vertical composition. -/
+theorem NatTransData.id_vcomp {C : Type u} {D : Type u₁}
+    {hsC : HomSet.{v, u} C} {hsD : HomSet.{v₁, u₁} D}
+    {dataC : CategoryData C hsC} {dataD : CategoryData D hsD}
+    {F G : FunctorData dataC dataD} (α : NatTransData F G) :
+    (NatTransData.id F).vcomp α = α := by
+  ext X
+  exact dataD.laws.id_laws.id_comp (α.app X)
+
+/-- Right identity for vertical composition. -/
+theorem NatTransData.vcomp_id {C : Type u} {D : Type u₁}
+    {hsC : HomSet.{v, u} C} {hsD : HomSet.{v₁, u₁} D}
+    {dataC : CategoryData C hsC} {dataD : CategoryData D hsD}
+    {F G : FunctorData dataC dataD} (α : NatTransData F G) :
+    α.vcomp (NatTransData.id G) = α := by
+  ext X
+  exact dataD.laws.id_laws.comp_id (α.app X)
+
+/-! ### Functor Category Data
+
+We define the category structure on `FunctorData` with `NatTransData` as morphisms.
+This requires the hom-sets of the source and target categories to be in `Type`
+(not general `Sort`), so that `FunctorData` and `NatTransData` are also in `Type`. -/
+
+/-- The hom-set for the functor category: natural transformations between
+    functors. When `hsC : HomSet.{v + 1, u}` and `hsD : HomSet.{v₁ + 1, u₁}`,
+    we have `FunctorData dataC dataD : Type (max (max (max u u₁) v) v₁)` and
+    `NatTransData F G : Type (max u v₁)`. -/
+abbrev FunctorHomSet {C : Type u} {D : Type u₁}
+    {hsC : HomSet.{v + 1, u} C} {hsD : HomSet.{v₁ + 1, u₁} D}
+    (dataC : CategoryData C hsC) (dataD : CategoryData D hsD) :
+    HomSet.{max u v₁ + 1, max (max (max u u₁) v) v₁}
+      (FunctorData dataC dataD) :=
+  NatTransData
+
+/-- Category operations for the functor category. -/
+def functorCategoryOps {C : Type u} {D : Type u₁}
+    {hsC : HomSet.{v + 1, u} C} {hsD : HomSet.{v₁ + 1, u₁} D}
+    (dataC : CategoryData C hsC) (dataD : CategoryData D hsD) :
+    CategoryOps (FunctorHomSet dataC dataD) where
+  comp := NatTransData.vcomp
+  id := NatTransData.id
+
+/-- Category laws for the functor category. -/
+def functorCategoryLaws {C : Type u} {D : Type u₁}
+    {hsC : HomSet.{v + 1, u} C} {hsD : HomSet.{v₁ + 1, u₁} D}
+    (dataC : CategoryData C hsC) (dataD : CategoryData D hsD) :
+    CategoryLaws (FunctorHomSet dataC dataD) (functorCategoryOps dataC dataD) where
+  assoc := NatTransData.vcomp_assoc
+  id_laws := {
+    id_comp := NatTransData.id_vcomp
+    comp_id := NatTransData.vcomp_id
+  }
+
+/-- Category data for the functor category. -/
+def functorCategoryData {C : Type u} {D : Type u₁}
+    {hsC : HomSet.{v + 1, u} C} {hsD : HomSet.{v₁ + 1, u₁} D}
+    (dataC : CategoryData C hsC) (dataD : CategoryData D hsD) :
+    CategoryData (FunctorData dataC dataD) (FunctorHomSet dataC dataD) where
+  toCategoryOps := functorCategoryOps dataC dataD
+  laws := functorCategoryLaws dataC dataD
+
+/-! ### Isomorphism with Mathlib's Functor Category
+
+We establish that `functorCategoryData` is isomorphic to mathlib's functor category
+when both are instantiated from the same `CategoryData`. -/
+
+/-- The functor from our functor category data to mathlib's functor category.
+    Maps `FunctorData` to `Functor` and `NatTransData` to `NatTrans`. -/
+def functorCategoryToMathlib {C : Type u} {D : Type u₁}
+    {hsC : HomSet.{v + 1, u} C} {hsD : HomSet.{v₁ + 1, u₁} D}
+    (dataC : CategoryData C hsC) (dataD : CategoryData D hsD) :
+    @CategoryTheory.Functor
+      (FunctorData dataC dataD) (CategoryOfData (functorCategoryData dataC dataD))
+      (@CategoryTheory.Functor C (CategoryOfData dataC) D (CategoryOfData dataD))
+      (@CategoryTheory.Functor.category C (CategoryOfData dataC) D (CategoryOfData dataD)) :=
+  letI : Category (FunctorData dataC dataD) :=
+    CategoryOfData (functorCategoryData dataC dataD)
+  { obj := FunctorOfData
+    map := fun α => NatTransOfData α
+    map_id := fun _ => rfl
+    map_comp := fun _ _ => rfl }
+
+/-- The functor from mathlib's functor category to our functor category data.
+    Maps `Functor` to `FunctorData` and `NatTrans` to `NatTransData`. -/
+def mathlibToFunctorCategory {C : Type u} {D : Type u₁}
+    {hsC : HomSet.{v + 1, u} C} {hsD : HomSet.{v₁ + 1, u₁} D}
+    (dataC : CategoryData C hsC) (dataD : CategoryData D hsD) :
+    @CategoryTheory.Functor
+      (@CategoryTheory.Functor C (CategoryOfData dataC) D (CategoryOfData dataD))
+      (@CategoryTheory.Functor.category C (CategoryOfData dataC) D (CategoryOfData dataD))
+      (FunctorData dataC dataD) (CategoryOfData (functorCategoryData dataC dataD)) :=
+  letI : Category (FunctorData dataC dataD) :=
+    CategoryOfData (functorCategoryData dataC dataD)
+  letI catC : Category C := CategoryOfData dataC
+  letI catD : Category D := CategoryOfData dataD
+  { obj := fun F => @functorDataOfFunctor C D catC catD F
+    map := fun α => natTransDataOfNatTrans' α
+    map_id := fun _ => rfl
+    map_comp := fun _ _ => rfl }
+
+/-- Round-trip: going to mathlib and back is the identity on objects. -/
+theorem mathlibToFunctorCategory_obj_functorCategoryToMathlib_obj
+    {C : Type u} {D : Type u₁}
+    {hsC : HomSet.{v + 1, u} C} {hsD : HomSet.{v₁ + 1, u₁} D}
+    (dataC : CategoryData C hsC) (dataD : CategoryData D hsD)
+    (F : FunctorData dataC dataD) :
+    letI : Category (FunctorData dataC dataD) :=
+      CategoryOfData (functorCategoryData dataC dataD)
+    (mathlibToFunctorCategory dataC dataD).obj
+      ((functorCategoryToMathlib dataC dataD).obj F) = F := rfl
+
+/-- Round-trip: going from mathlib and back is the identity on objects. -/
+theorem functorCategoryToMathlib_obj_mathlibToFunctorCategory_obj
+    {C : Type u} {D : Type u₁}
+    {hsC : HomSet.{v + 1, u} C} {hsD : HomSet.{v₁ + 1, u₁} D}
+    (dataC : CategoryData C hsC) (dataD : CategoryData D hsD)
+    (F : @CategoryTheory.Functor C (CategoryOfData dataC) D (CategoryOfData dataD)) :
+    letI : Category (FunctorData dataC dataD) :=
+      CategoryOfData (functorCategoryData dataC dataD)
+    (functorCategoryToMathlib dataC dataD).obj
+      ((mathlibToFunctorCategory dataC dataD).obj F) = F := rfl
+
+/-- The composition `functorCategoryToMathlib ⋙ mathlibToFunctorCategory` is
+    the identity functor. -/
+theorem functorCategoryToMathlib_comp_mathlibToFunctorCategory
+    {C : Type u} {D : Type u₁}
+    {hsC : HomSet.{v + 1, u} C} {hsD : HomSet.{v₁ + 1, u₁} D}
+    (dataC : CategoryData C hsC) (dataD : CategoryData D hsD) :
+    @CategoryTheory.Functor.comp _ (CategoryOfData (functorCategoryData dataC dataD))
+      _
+      (@CategoryTheory.Functor.category C (CategoryOfData dataC) D (CategoryOfData dataD))
+      _ (CategoryOfData (functorCategoryData dataC dataD))
+      (functorCategoryToMathlib dataC dataD)
+      (mathlibToFunctorCategory dataC dataD) =
+    @CategoryTheory.Functor.id _ (CategoryOfData (functorCategoryData dataC dataD)) := rfl
+
+/-- The composition `mathlibToFunctorCategory ⋙ functorCategoryToMathlib` is
+    the identity functor. -/
+theorem mathlibToFunctorCategory_comp_functorCategoryToMathlib
+    {C : Type u} {D : Type u₁}
+    {hsC : HomSet.{v + 1, u} C} {hsD : HomSet.{v₁ + 1, u₁} D}
+    (dataC : CategoryData C hsC) (dataD : CategoryData D hsD) :
+    @CategoryTheory.Functor.comp
+      _
+      (@CategoryTheory.Functor.category C (CategoryOfData dataC) D (CategoryOfData dataD))
+      _ (CategoryOfData (functorCategoryData dataC dataD))
+      _
+      (@CategoryTheory.Functor.category C (CategoryOfData dataC) D (CategoryOfData dataD))
+      (mathlibToFunctorCategory dataC dataD)
+      (functorCategoryToMathlib dataC dataD) =
+    @CategoryTheory.Functor.id _
+      (@CategoryTheory.Functor.category C (CategoryOfData dataC) D (CategoryOfData dataD)) := rfl
+
+/-- The isomorphism between our functor category and mathlib's functor category. -/
+def functorCategoryIsoMathlib {C : Type u} {D : Type u₁}
+    {hsC : HomSet.{v + 1, u} C} {hsD : HomSet.{v₁ + 1, u₁} D}
+    (dataC : CategoryData C hsC) (dataD : CategoryData D hsD) :
+    @CategoryTheory.Iso Cat
+      Cat.category
+      (@Cat.of (FunctorData dataC dataD)
+        (CategoryOfData (functorCategoryData dataC dataD)))
+      (@Cat.of (@CategoryTheory.Functor C (CategoryOfData dataC) D (CategoryOfData dataD))
+        (@CategoryTheory.Functor.category C (CategoryOfData dataC) D (CategoryOfData dataD)))
+        where
+  hom := functorCategoryToMathlib dataC dataD
+  inv := mathlibToFunctorCategory dataC dataD
+  hom_inv_id := functorCategoryToMathlib_comp_mathlibToFunctorCategory dataC dataD
+  inv_hom_id := mathlibToFunctorCategory_comp_functorCategoryToMathlib dataC dataD
+
 section EqToHom
 
 universe v₂ u₂
