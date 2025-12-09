@@ -190,6 +190,47 @@ theorem CategoryOfData_of_categoryDataOfCategory (U : Type u)
     [cat : Category.{v, u} U] :
     CategoryOfData (homSetOfQuiver U) (categoryDataOfCategory U) = cat := rfl
 
+/-- Data for an isomorphism between hom-sets over an equivalence of object
+    types. Given an equivalence `e : U ≃ V` between object types, this
+    structure provides bijections between `hs a b` and `hs' (e a) (e b)` for
+    each pair of objects. -/
+structure HomSetEquiv {U : Type u} {V : Type u} (e : U ≃ V)
+    (hs : HomSet.{v, u} U) (hs' : HomSet.{v, u} V) where
+  /-- Forward map on morphisms -/
+  toFun : ∀ {a b : U}, hs a b → hs' (e a) (e b)
+  /-- Inverse map on morphisms -/
+  invFun : ∀ {a b : U}, hs' (e a) (e b) → hs a b
+  /-- Left inverse -/
+  left_inv : ∀ {a b : U} (f : hs a b), invFun (toFun f) = f
+  /-- Right inverse -/
+  right_inv : ∀ {a b : U} (f : hs' (e a) (e b)), toFun (invFun f) = f
+
+/-- Transport `CategoryData` across an equivalence of object types and a
+    compatible equivalence of hom-sets. -/
+def CategoryData.ofEquiv {U : Type u} {V : Type u} (e : U ≃ V)
+    {hs : HomSet.{v, u} U} {hs' : HomSet.{v, u} V}
+    (he : HomSetEquiv e hs hs') (data : CategoryData V hs') :
+    CategoryData U hs where
+  comp := fun f g => he.invFun (data.comp (he.toFun f) (he.toFun g))
+  id := fun a => he.invFun (data.id (e a))
+  laws := {
+    assoc := fun f g h => by
+      simp only [he.right_inv]
+      exact congrArg he.invFun (data.assoc (he.toFun f) (he.toFun g) (he.toFun h))
+    id_laws := {
+      id_comp := fun f => by
+        simp only [he.right_inv]
+        have h := data.laws.id_laws.id_comp (he.toFun f)
+        simp only [h]
+        exact he.left_inv f
+      comp_id := fun f => by
+        simp only [he.right_inv]
+        have h := data.laws.id_laws.comp_id (he.toFun f)
+        simp only [h]
+        exact he.left_inv f
+    }
+  }
+
 section EqToHom
 
 universe v₂ u₂
