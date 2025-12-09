@@ -156,7 +156,7 @@ end CategoryData
 
 /-- Build a `Category` typeclass instance from category data.
     Note: This only works when the HomSet is in Type (not general Sort). -/
-instance {U : Type u} (hs : HomSet.{v + 1, u} U)
+instance CategoryOfData {U : Type u} (hs : HomSet.{v + 1, u} U)
     (data : CategoryData U hs) : Category.{v, u} U where
   Hom := hs
   id := data.id
