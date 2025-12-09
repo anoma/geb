@@ -52,14 +52,30 @@ structure ConnGrothendieckObj where
   fiber : F.obj arrow
 
 /--
-The common diagonal arrow `w = f ≫ codArr = domArr ≫ f'` in the arrow square.
-Given twisted arrows `tw` and `tw'` with a commuting square
-`twArr' tw ≫ codArr = domArr ≫ twArr' tw'`, this is the diagonal.
+The diagonal arrow `w = f ≫ codArr` in the arrow square, constructed from the
+source arrow and the codomain morphism.
 -/
-def connGrothendieckDiag (tw : TwistedArrow' C)
+def connGrothendieckDiagCod (tw : TwistedArrow' C)
     {b' : C} (codArr : twCod' tw ⟶ b') :
     TwistedArrow' C :=
   twObjMk' (twArr' tw ≫ codArr)
+
+/--
+The diagonal arrow `w = domArr ≫ f'` in the arrow square, constructed from the
+domain morphism and the target arrow.
+-/
+def connGrothendieckDiagDom (tw' : TwistedArrow' C)
+    {a : C} (domArr : a ⟶ twDom' tw') :
+    TwistedArrow' C :=
+  twObjMk' (domArr ≫ twArr' tw')
+
+/--
+Alias for `connGrothendieckDiagCod`, the standard choice for the diagonal.
+-/
+abbrev connGrothendieckDiag (tw : TwistedArrow' C)
+    {b' : C} (codArr : twCod' tw ⟶ b') :
+    TwistedArrow' C :=
+  connGrothendieckDiagCod C tw codArr
 
 /--
 The twisted arrow morphism `(id, codArr) : tw → w` where `w = twArr' tw ≫ codArr`.
@@ -67,8 +83,8 @@ This transports along the codomain direction.
 -/
 def connGrothendieckTwMorphCod (tw : TwistedArrow' C)
     {b' : C} (codArr : twCod' tw ⟶ b') :
-    tw ⟶ connGrothendieckDiag C tw codArr :=
-  twHomMk' (𝟙 _) codArr (by simp only [connGrothendieckDiag, twObjMk'_arr,
+    tw ⟶ connGrothendieckDiagCod C tw codArr :=
+  twHomMk' (𝟙 _) codArr (by simp only [connGrothendieckDiagCod, twObjMk'_arr,
     Category.id_comp])
 
 /--
@@ -77,8 +93,9 @@ This transports along the domain direction.
 -/
 def connGrothendieckTwMorphDom (tw' : TwistedArrow' C)
     {a : C} (domArr : a ⟶ twDom' tw') :
-    tw' ⟶ twObjMk' (domArr ≫ twArr' tw') :=
-  twHomMk' domArr (𝟙 _) (by simp only [twObjMk'_arr, Category.comp_id])
+    tw' ⟶ connGrothendieckDiagDom C tw' domArr :=
+  twHomMk' domArr (𝟙 _) (by simp only [connGrothendieckDiagDom, twObjMk'_arr,
+    Category.comp_id])
 
 /--
 The fiber category over the diagonal of a commuting square.
@@ -118,7 +135,8 @@ structure ConnGrothendieckHom (x y : ConnGrothendieckObj C F) where
       (connGrothendieckFiberCat C F x codArr).str.toQuiver
       ((F.map (connGrothendieckTwMorphCod C x.arrow codArr)).obj x.fiber)
       (cast (by
-        simp only [connGrothendieckFiberCat, connGrothendieckDiag, square_comm])
+        simp only [connGrothendieckFiberCat, connGrothendieckDiag,
+          connGrothendieckDiagCod, connGrothendieckDiagDom, square_comm])
         ((F.map (connGrothendieckTwMorphDom C y.arrow domArr)).obj y.fiber))
 
 /--
