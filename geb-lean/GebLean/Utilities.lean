@@ -1,4 +1,5 @@
 import GebLean.Utilities.Category
+import GebLean.Utilities.ConnectedGrothendieck
 import GebLean.Utilities.Equalities
 import GebLean.Utilities.Families
 import GebLean.Utilities.Fintype
