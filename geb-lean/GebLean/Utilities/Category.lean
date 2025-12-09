@@ -254,78 +254,79 @@ def CategoryData.ofEquiv {U : Type u} {V : Type u} (e : U ≃ V)
     }
   }
 
-/-- Compatibility between `CategoryOps` and what `CategoryData.ofEquiv` would
-    compute. This asserts that the given operations agree with the transported
-    operations. -/
+/-- Compatibility between two `CategoryOps` across an equivalence of object
+    types and hom-sets. This asserts that the operations on `U` agree with
+    the transported operations from `V`. -/
 structure CategoryOpsCompatible {U : Type u} {V : Type u} (e : U ≃ V)
     {hs : HomSet.{v, u} U} {hs' : HomSet.{v, u} V}
-    (he : HomSetEquiv e hs hs') (data : CategoryData V hs')
-    (ops : CategoryOps hs) : Prop where
+    (he : HomSetEquiv e hs hs') (opsV : CategoryOps hs')
+    (opsU : CategoryOps hs) : Prop where
   /-- Identity agrees with transported identity -/
-  id_eq : ∀ (a : U), ops.id a = he.invFun (data.id (e a))
+  id_eq : ∀ (a : U), opsU.id a = he.invFun (opsV.id (e a))
   /-- Composition agrees with transported composition -/
   comp_eq : ∀ {a b c : U} (f : hs a b) (g : hs b c),
-    ops.comp f g = he.invFun (data.comp (he.toFun f) (he.toFun g))
+    opsU.comp f g = he.invFun (opsV.comp (he.toFun f) (he.toFun g))
 
-/-- Given `CategoryOps` compatible with a transported `CategoryData`, derive the
-    `CategoryLaws` for the given ops. -/
+/-- Given `CategoryOps` compatible with another `CategoryOps` that has laws,
+    derive the `CategoryLaws` for the compatible ops. -/
 def CategoryLaws.ofCompatible {U : Type u} {V : Type u} {e : U ≃ V}
     {hs : HomSet.{v, u} U} {hs' : HomSet.{v, u} V}
-    {he : HomSetEquiv e hs hs'} {data : CategoryData V hs'}
-    {ops : CategoryOps hs} (compat : CategoryOpsCompatible e he data ops) :
-    CategoryLaws hs ops where
+    {he : HomSetEquiv e hs hs'} {opsV : CategoryOps hs'}
+    (lawsV : CategoryLaws hs' opsV)
+    {opsU : CategoryOps hs} (compat : CategoryOpsCompatible e he opsV opsU) :
+    CategoryLaws hs opsU where
   assoc := fun f g h => by
-    calc ops.comp (ops.comp f g) h
-        = he.invFun (data.comp (he.toFun (ops.comp f g)) (he.toFun h)) :=
+    calc opsU.comp (opsU.comp f g) h
+        = he.invFun (opsV.comp (he.toFun (opsU.comp f g)) (he.toFun h)) :=
           compat.comp_eq _ _
-      _ = he.invFun (data.comp (he.toFun (he.invFun (data.comp (he.toFun f)
+      _ = he.invFun (opsV.comp (he.toFun (he.invFun (opsV.comp (he.toFun f)
             (he.toFun g)))) (he.toFun h)) := by rw [compat.comp_eq f g]
-      _ = he.invFun (data.comp (data.comp (he.toFun f) (he.toFun g))
+      _ = he.invFun (opsV.comp (opsV.comp (he.toFun f) (he.toFun g))
             (he.toFun h)) := by rw [he.right_inv]
-      _ = he.invFun (data.comp (he.toFun f) (data.comp (he.toFun g)
+      _ = he.invFun (opsV.comp (he.toFun f) (opsV.comp (he.toFun g)
             (he.toFun h))) :=
-          congrArg he.invFun (data.assoc (he.toFun f) (he.toFun g) (he.toFun h))
-      _ = he.invFun (data.comp (he.toFun f) (he.toFun (he.invFun
-            (data.comp (he.toFun g) (he.toFun h))))) := by rw [he.right_inv]
-      _ = he.invFun (data.comp (he.toFun f) (he.toFun (ops.comp g h))) := by
+          congrArg he.invFun (lawsV.assoc (he.toFun f) (he.toFun g) (he.toFun h))
+      _ = he.invFun (opsV.comp (he.toFun f) (he.toFun (he.invFun
+            (opsV.comp (he.toFun g) (he.toFun h))))) := by rw [he.right_inv]
+      _ = he.invFun (opsV.comp (he.toFun f) (he.toFun (opsU.comp g h))) := by
           rw [compat.comp_eq g h]
-      _ = ops.comp f (ops.comp g h) := (compat.comp_eq _ _).symm
+      _ = opsU.comp f (opsU.comp g h) := (compat.comp_eq _ _).symm
   id_laws := {
     id_comp := fun f => by
-      calc ops.comp (ops.id _) f
-          = he.invFun (data.comp (he.toFun (ops.id _)) (he.toFun f)) :=
+      calc opsU.comp (opsU.id _) f
+          = he.invFun (opsV.comp (he.toFun (opsU.id _)) (he.toFun f)) :=
             compat.comp_eq _ _
-        _ = he.invFun (data.comp (he.toFun (he.invFun (data.id (e _))))
+        _ = he.invFun (opsV.comp (he.toFun (he.invFun (opsV.id (e _))))
               (he.toFun f)) := by rw [compat.id_eq]
-        _ = he.invFun (data.comp (data.id (e _)) (he.toFun f)) := by
+        _ = he.invFun (opsV.comp (opsV.id (e _)) (he.toFun f)) := by
             rw [he.right_inv]
         _ = he.invFun (he.toFun f) := by
-            have h := data.laws.id_laws.id_comp (he.toFun f); simp only [h]
+            have h := lawsV.id_laws.id_comp (he.toFun f); simp only [h]
         _ = f := he.left_inv f
     comp_id := fun f => by
-      calc ops.comp f (ops.id _)
-          = he.invFun (data.comp (he.toFun f) (he.toFun (ops.id _))) :=
+      calc opsU.comp f (opsU.id _)
+          = he.invFun (opsV.comp (he.toFun f) (he.toFun (opsU.id _))) :=
             compat.comp_eq _ _
-        _ = he.invFun (data.comp (he.toFun f) (he.toFun (he.invFun
-              (data.id (e _))))) := by rw [compat.id_eq]
-        _ = he.invFun (data.comp (he.toFun f) (data.id (e _))) := by
+        _ = he.invFun (opsV.comp (he.toFun f) (he.toFun (he.invFun
+              (opsV.id (e _))))) := by rw [compat.id_eq]
+        _ = he.invFun (opsV.comp (he.toFun f) (opsV.id (e _))) := by
             rw [he.right_inv]
         _ = he.invFun (he.toFun f) := by
-            have h := data.laws.id_laws.comp_id (he.toFun f); simp only [h]
+            have h := lawsV.id_laws.comp_id (he.toFun f); simp only [h]
         _ = f := he.left_inv f
   }
 
-/-- Given `CategoryOps` compatible with a transported `CategoryData`, derive a
-    `CategoryData` with the given ops. This allows using more convenient forms
-    of identity and composition while inheriting the laws from the transported
-    category. -/
+/-- Given `CategoryOps` compatible with another that has laws, derive a
+    `CategoryData` with the compatible ops. This allows using more convenient
+    forms of identity and composition while inheriting the laws. -/
 def CategoryData.ofCompatible {U : Type u} {V : Type u} {e : U ≃ V}
     {hs : HomSet.{v, u} U} {hs' : HomSet.{v, u} V}
-    {he : HomSetEquiv e hs hs'} {data : CategoryData V hs'}
-    {ops : CategoryOps hs} (compat : CategoryOpsCompatible e he data ops) :
+    {he : HomSetEquiv e hs hs'} {opsV : CategoryOps hs'}
+    (lawsV : CategoryLaws hs' opsV)
+    {opsU : CategoryOps hs} (compat : CategoryOpsCompatible e he opsV opsU) :
     CategoryData U hs where
-  toCategoryOps := ops
-  laws := CategoryLaws.ofCompatible compat
+  toCategoryOps := opsU
+  laws := CategoryLaws.ofCompatible lawsV compat
 
 /-! ## Functor Data
 
@@ -440,60 +441,63 @@ theorem FunctorOfData_of_functorDataOfFunctor {C : Type u} {D : Type u₁}
     [Category.{v, u} C] [Category.{v₁, u₁} D] (F : C ⥤ D) :
     FunctorOfData (functorDataOfFunctor F) = F := rfl
 
-/-- Compatibility between `FunctorOps` and the ops of a given `FunctorData`
-    when the object maps are the same. The morphism maps are then required
-    to agree pointwise. -/
+/-- Compatibility between two `FunctorOps` when the object maps are the same.
+    The morphism maps are then required to agree pointwise. -/
 structure FunctorOpsCompatible {C : Type u} {D : Type u₁}
     {hsC : HomSet.{v, u} C} {hsD : HomSet.{v₁, u₁} D}
-    {dataC : CategoryData C hsC} {dataD : CategoryData D hsD}
-    (fd : FunctorData dataC dataD) (ops : FunctorOps hsC hsD) : Prop where
+    (fops1 fops2 : FunctorOps hsC hsD) : Prop where
   /-- Object map agrees -/
-  obj_eq : ops.obj = fd.obj
+  obj_eq : fops2.obj = fops1.obj
   /-- Morphism map agrees (with type cast due to object equality) -/
   map_eq : ∀ {a b : C} (f : hsC a b),
-    ops.map f = cast (by rw [obj_eq]) (fd.map f)
+    fops2.map f = cast (by rw [obj_eq]) (fops1.map f)
 
-/-- Given `FunctorOps` compatible with a `FunctorData`, derive the
-    `FunctorLaws` for the given ops using the object map as an explicit
+/-- Given `FunctorOps` compatible with another that has laws, derive the
+    `FunctorLaws` for the compatible ops using the object map as an explicit
     parameter to enable substitution. -/
 def FunctorLaws.ofCompatibleAux {C : Type u} {D : Type u₁}
     {hsC : HomSet.{v, u} C} {hsD : HomSet.{v₁, u₁} D}
-    {dataC : CategoryData C hsC} {dataD : CategoryData D hsD}
-    (fd : FunctorData dataC dataD)
+    {opsC : CategoryOps hsC} {opsD : CategoryOps hsD}
+    (fops1 : FunctorOps hsC hsD)
+    (laws1 : FunctorLaws opsC opsD fops1)
     (objMap : ObjMap C D)
     (morphMap : MorphMap hsC hsD objMap)
-    (hobj : objMap = fd.obj)
+    (hobj : objMap = fops1.obj)
     (hmap : ∀ {a b : C} (f : hsC a b),
-      morphMap f = cast (by rw [hobj]) (fd.map f)) :
-    FunctorLaws dataC.toCategoryOps dataD.toCategoryOps ⟨objMap, morphMap⟩ := by
+      morphMap f = cast (by rw [hobj]) (fops1.map f)) :
+    FunctorLaws opsC opsD ⟨objMap, morphMap⟩ := by
   subst hobj
   exact {
-    map_id := fun a => by simp only [hmap, cast_eq, fd.laws.map_id]
-    map_comp := fun f g => by simp only [hmap, cast_eq, fd.laws.map_comp]
+    map_id := fun a => by simp only [hmap, cast_eq, laws1.map_id]
+    map_comp := fun f g => by simp only [hmap, cast_eq, laws1.map_comp]
   }
 
-/-- Given `FunctorOps` compatible with a `FunctorData`, derive the
-    `FunctorLaws` for the given ops. -/
+/-- Given `FunctorOps` compatible with another that has laws, derive the
+    `FunctorLaws` for the compatible ops. -/
 def FunctorLaws.ofCompatible {C : Type u} {D : Type u₁}
     {hsC : HomSet.{v, u} C} {hsD : HomSet.{v₁, u₁} D}
-    {dataC : CategoryData C hsC} {dataD : CategoryData D hsD}
-    {fd : FunctorData dataC dataD} {ops : FunctorOps hsC hsD}
-    (compat : FunctorOpsCompatible fd ops) :
-    FunctorLaws dataC.toCategoryOps dataD.toCategoryOps ops :=
-  FunctorLaws.ofCompatibleAux fd ops.obj ops.map compat.obj_eq compat.map_eq
+    {opsC : CategoryOps hsC} {opsD : CategoryOps hsD}
+    {fops1 : FunctorOps hsC hsD}
+    (laws1 : FunctorLaws opsC opsD fops1)
+    {fops2 : FunctorOps hsC hsD}
+    (compat : FunctorOpsCompatible fops1 fops2) :
+    FunctorLaws opsC opsD fops2 :=
+  FunctorLaws.ofCompatibleAux fops1 laws1 fops2.obj fops2.map
+    compat.obj_eq compat.map_eq
 
-/-- Given `FunctorOps` compatible with a `FunctorData`, derive a new
-    `FunctorData` with the given ops. This allows using more convenient forms
-    of the object and morphism maps while inheriting the laws from the original
-    functor data. -/
+/-- Given `FunctorOps` compatible with another that has laws, derive a new
+    `FunctorData` with the compatible ops. This allows using more convenient
+    forms of the object and morphism maps while inheriting the laws. -/
 def FunctorData.ofCompatible {C : Type u} {D : Type u₁}
     {hsC : HomSet.{v, u} C} {hsD : HomSet.{v₁, u₁} D}
     {dataC : CategoryData C hsC} {dataD : CategoryData D hsD}
-    {fd : FunctorData dataC dataD} {ops : FunctorOps hsC hsD}
-    (compat : FunctorOpsCompatible fd ops) :
+    {fops1 : FunctorOps hsC hsD}
+    (laws1 : FunctorLaws dataC.toCategoryOps dataD.toCategoryOps fops1)
+    {fops2 : FunctorOps hsC hsD}
+    (compat : FunctorOpsCompatible fops1 fops2) :
     FunctorData dataC dataD where
-  toFunctorOps := ops
-  laws := FunctorLaws.ofCompatible compat
+  toFunctorOps := fops2
+  laws := FunctorLaws.ofCompatible laws1 compat
 
 section EqToHom
 
