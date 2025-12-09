@@ -442,6 +442,61 @@ theorem FunctorOfData_of_functorDataOfFunctor {C : Type u} {D : Type u₁}
       (categoryDataOfCategory C) (categoryDataOfCategory D)
       (functorDataOfFunctor F) = F := rfl
 
+/-- Compatibility between `FunctorOps` and the ops of a given `FunctorData`
+    when the object maps are the same. The morphism maps are then required
+    to agree pointwise. -/
+structure FunctorOpsCompatible {C : Type u} {D : Type u₁}
+    {hsC : HomSet.{v, u} C} {hsD : HomSet.{v₁, u₁} D}
+    {dataC : CategoryData C hsC} {dataD : CategoryData D hsD}
+    (fd : FunctorData dataC dataD) (ops : FunctorOps hsC hsD) : Prop where
+  /-- Object map agrees -/
+  obj_eq : ops.obj = fd.obj
+  /-- Morphism map agrees (with type cast due to object equality) -/
+  map_eq : ∀ {a b : C} (f : hsC a b),
+    ops.map f = cast (by rw [obj_eq]) (fd.map f)
+
+/-- Given `FunctorOps` compatible with a `FunctorData`, derive the
+    `FunctorLaws` for the given ops using the object map as an explicit
+    parameter to enable substitution. -/
+def FunctorLaws.ofCompatibleAux {C : Type u} {D : Type u₁}
+    {hsC : HomSet.{v, u} C} {hsD : HomSet.{v₁, u₁} D}
+    {dataC : CategoryData C hsC} {dataD : CategoryData D hsD}
+    (fd : FunctorData dataC dataD)
+    (objMap : ObjMap C D)
+    (morphMap : MorphMap hsC hsD objMap)
+    (hobj : objMap = fd.obj)
+    (hmap : ∀ {a b : C} (f : hsC a b),
+      morphMap f = cast (by rw [hobj]) (fd.map f)) :
+    FunctorLaws dataC.toCategoryOps dataD.toCategoryOps ⟨objMap, morphMap⟩ := by
+  subst hobj
+  exact {
+    map_id := fun a => by simp only [hmap, cast_eq, fd.laws.map_id]
+    map_comp := fun f g => by simp only [hmap, cast_eq, fd.laws.map_comp]
+  }
+
+/-- Given `FunctorOps` compatible with a `FunctorData`, derive the
+    `FunctorLaws` for the given ops. -/
+def FunctorLaws.ofCompatible {C : Type u} {D : Type u₁}
+    {hsC : HomSet.{v, u} C} {hsD : HomSet.{v₁, u₁} D}
+    {dataC : CategoryData C hsC} {dataD : CategoryData D hsD}
+    (fd : FunctorData dataC dataD) (ops : FunctorOps hsC hsD)
+    (compat : FunctorOpsCompatible fd ops) :
+    FunctorLaws dataC.toCategoryOps dataD.toCategoryOps ops :=
+  FunctorLaws.ofCompatibleAux fd ops.obj ops.map compat.obj_eq compat.map_eq
+
+/-- Given `FunctorOps` compatible with a `FunctorData`, derive a new
+    `FunctorData` with the given ops. This allows using more convenient forms
+    of the object and morphism maps while inheriting the laws from the original
+    functor data. -/
+def FunctorData.ofCompatible {C : Type u} {D : Type u₁}
+    {hsC : HomSet.{v, u} C} {hsD : HomSet.{v₁, u₁} D}
+    {dataC : CategoryData C hsC} {dataD : CategoryData D hsD}
+    (fd : FunctorData dataC dataD) (ops : FunctorOps hsC hsD)
+    (compat : FunctorOpsCompatible fd ops) :
+    FunctorData dataC dataD where
+  toFunctorOps := ops
+  laws := FunctorLaws.ofCompatible fd ops compat
+
 section EqToHom
 
 universe v₂ u₂
