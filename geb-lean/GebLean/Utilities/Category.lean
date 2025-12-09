@@ -179,7 +179,7 @@ end CategoryData
 
 /-- Build a `Category` typeclass instance from category data.
     Note: This only works when the HomSet is in Type (not general Sort). -/
-instance CategoryOfData {U : Type u} (hs : HomSet.{v + 1, u} U)
+instance CategoryOfData {U : Type u} {hs : HomSet.{v + 1, u} U}
     (data : CategoryData U hs) : Category.{v, u} U where
   Hom := hs
   id := data.id
@@ -204,14 +204,14 @@ abbrev categoryDataOfCategory (U : Type u) [Category.{v, u} U] :
 /-- Round-trip from `CategoryData` to `Category` and back yields the original
     data. -/
 theorem categoryDataOfCategory_of_CategoryOfData {U : Type u}
-    (hs : HomSet.{v + 1, u} U) (data : CategoryData U hs) :
-    @categoryDataOfCategory U (CategoryOfData hs data) = data := rfl
+    {hs : HomSet.{v + 1, u} U} (data : CategoryData U hs) :
+    @categoryDataOfCategory U (CategoryOfData data) = data := rfl
 
 /-- Round-trip from `Category` to `CategoryData` and back yields the original
     category instance (as `Category` structures). -/
 theorem CategoryOfData_of_categoryDataOfCategory (U : Type u)
     [cat : Category.{v, u} U] :
-    CategoryOfData (homSetOfQuiver U) (categoryDataOfCategory U) = cat := rfl
+    CategoryOfData (categoryDataOfCategory U) = cat := rfl
 
 /-- Data for an isomorphism between hom-sets over an equivalence of object
     types. Given an equivalence `e : U ≃ V` between object types, this
@@ -269,10 +269,10 @@ structure CategoryOpsCompatible {U : Type u} {V : Type u} (e : U ≃ V)
 
 /-- Given `CategoryOps` compatible with a transported `CategoryData`, derive the
     `CategoryLaws` for the given ops. -/
-def CategoryLaws.ofCompatible {U : Type u} {V : Type u} (e : U ≃ V)
+def CategoryLaws.ofCompatible {U : Type u} {V : Type u} {e : U ≃ V}
     {hs : HomSet.{v, u} U} {hs' : HomSet.{v, u} V}
-    (he : HomSetEquiv e hs hs') (data : CategoryData V hs')
-    (ops : CategoryOps hs) (compat : CategoryOpsCompatible e he data ops) :
+    {he : HomSetEquiv e hs hs'} {data : CategoryData V hs'}
+    {ops : CategoryOps hs} (compat : CategoryOpsCompatible e he data ops) :
     CategoryLaws hs ops where
   assoc := fun f g h => by
     calc ops.comp (ops.comp f g) h
@@ -319,13 +319,13 @@ def CategoryLaws.ofCompatible {U : Type u} {V : Type u} (e : U ≃ V)
     `CategoryData` with the given ops. This allows using more convenient forms
     of identity and composition while inheriting the laws from the transported
     category. -/
-def CategoryData.ofCompatible {U : Type u} {V : Type u} (e : U ≃ V)
+def CategoryData.ofCompatible {U : Type u} {V : Type u} {e : U ≃ V}
     {hs : HomSet.{v, u} U} {hs' : HomSet.{v, u} V}
-    (he : HomSetEquiv e hs hs') (data : CategoryData V hs')
-    (ops : CategoryOps hs) (compat : CategoryOpsCompatible e he data ops) :
+    {he : HomSetEquiv e hs hs'} {data : CategoryData V hs'}
+    {ops : CategoryOps hs} (compat : CategoryOpsCompatible e he data ops) :
     CategoryData U hs where
   toCategoryOps := ops
-  laws := CategoryLaws.ofCompatible e he data ops compat
+  laws := CategoryLaws.ofCompatible compat
 
 /-! ## Functor Data
 
@@ -407,10 +407,10 @@ def FunctorOfData {C : Type u} {D : Type u₁}
     {hsC : HomSet.{v + 1, u} C} {hsD : HomSet.{v₁ + 1, u₁} D}
     {dataC : CategoryData C hsC} {dataD : CategoryData D hsD}
     (fd : FunctorData dataC dataD) :
-    @CategoryTheory.Functor C (CategoryOfData hsC dataC) D
-      (CategoryOfData hsD dataD) :=
-  @CategoryTheory.Functor.mk C (CategoryOfData hsC dataC) D
-    (CategoryOfData hsD dataD)
+    @CategoryTheory.Functor C (CategoryOfData dataC) D
+      (CategoryOfData dataD) :=
+  @CategoryTheory.Functor.mk C (CategoryOfData dataC) D
+    (CategoryOfData dataD)
     fd.obj fd.map fd.laws.map_id fd.laws.map_comp
 
 /-- Extract `FunctorData` from a `CategoryTheory.Functor`. -/
@@ -431,16 +431,14 @@ theorem functorDataOfFunctor_of_FunctorOfData {C : Type u} {D : Type u₁}
     {hsC : HomSet.{v + 1, u} C} {hsD : HomSet.{v₁ + 1, u₁} D}
     {dataC : CategoryData C hsC} {dataD : CategoryData D hsD}
     (fd : FunctorData dataC dataD) :
-    @functorDataOfFunctor C D (CategoryOfData hsC dataC)
-      (CategoryOfData hsD dataD) (FunctorOfData fd) = fd := rfl
+    @functorDataOfFunctor C D (CategoryOfData dataC)
+      (CategoryOfData dataD) (FunctorOfData fd) = fd := rfl
 
 /-- Round-trip from `CategoryTheory.Functor` to `FunctorData` and back yields
     the original functor instance (as `Functor` structures). -/
 theorem FunctorOfData_of_functorDataOfFunctor {C : Type u} {D : Type u₁}
     [Category.{v, u} C] [Category.{v₁, u₁} D] (F : C ⥤ D) :
-    @FunctorOfData C D (homSetOfQuiver C) (homSetOfQuiver D)
-      (categoryDataOfCategory C) (categoryDataOfCategory D)
-      (functorDataOfFunctor F) = F := rfl
+    FunctorOfData (functorDataOfFunctor F) = F := rfl
 
 /-- Compatibility between `FunctorOps` and the ops of a given `FunctorData`
     when the object maps are the same. The morphism maps are then required
@@ -479,7 +477,7 @@ def FunctorLaws.ofCompatibleAux {C : Type u} {D : Type u₁}
 def FunctorLaws.ofCompatible {C : Type u} {D : Type u₁}
     {hsC : HomSet.{v, u} C} {hsD : HomSet.{v₁, u₁} D}
     {dataC : CategoryData C hsC} {dataD : CategoryData D hsD}
-    (fd : FunctorData dataC dataD) (ops : FunctorOps hsC hsD)
+    {fd : FunctorData dataC dataD} {ops : FunctorOps hsC hsD}
     (compat : FunctorOpsCompatible fd ops) :
     FunctorLaws dataC.toCategoryOps dataD.toCategoryOps ops :=
   FunctorLaws.ofCompatibleAux fd ops.obj ops.map compat.obj_eq compat.map_eq
@@ -491,11 +489,11 @@ def FunctorLaws.ofCompatible {C : Type u} {D : Type u₁}
 def FunctorData.ofCompatible {C : Type u} {D : Type u₁}
     {hsC : HomSet.{v, u} C} {hsD : HomSet.{v₁, u₁} D}
     {dataC : CategoryData C hsC} {dataD : CategoryData D hsD}
-    (fd : FunctorData dataC dataD) (ops : FunctorOps hsC hsD)
+    {fd : FunctorData dataC dataD} {ops : FunctorOps hsC hsD}
     (compat : FunctorOpsCompatible fd ops) :
     FunctorData dataC dataD where
   toFunctorOps := ops
-  laws := FunctorLaws.ofCompatible fd ops compat
+  laws := FunctorLaws.ofCompatible compat
 
 section EqToHom
 
