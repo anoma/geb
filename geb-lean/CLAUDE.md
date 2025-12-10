@@ -469,17 +469,20 @@ applicable to that structure, such as `Inhabited`, `DecidableEq`, and
   proofs by proof irrelevance. This pattern applies when working with dependent
   types where the predicate depends on other variables that have been changed
   via equality proofs.
-- There is one technique which has been particularly valuable in
-  `Elements.lean`, particularly in the proof of equivalence of a slice
-  over a presheaf with a presheaf over its category of elements:  when
-  you're trying to prove an equality theorem and differences in dependent
-  types are making it difficult, factor out the equality into a named lemma
-  with the most general type that you can figure out that will allow you to
-  dispatch the main theorem and which you're pretty sure is generally true.
-  Once you have the type signature compiling, use `exact` in the main
-  theorem to make sure that proving the lemma really would allow you to
-  prove the theorem, and then try to prove the lemma.  This allows future
-  similar code to reuse the work you're doing now -- you can find many
-  examples of lemmas that have already been factored out in our
-  `Utilities/Equalities.lean` -- and generalizing the type signature also
-  often abstracts out confusing specifics and makes the goal easier to prove.
+- When a proof gets difficult, you should always use the factoring-out-lemmas
+  technique.  Figure out what a good _intermediate_ goal would be -- either
+  a step you can take forward (something you can prove), or a step you can
+  take backward (something that if you _could_ prove it, then you could
+  prove the goal).  Factor out two lemmas:  one that what you can currently
+  prove implies the intermediate goal, and one that the intermediate goal
+  implies the overall goal.  Implement both as underscores at first.
+  Dispatch the overall goal by combining the two lemmas with transitivity
+  to confirm that they really do go together to form the overall proof.
+  Then prove each lemma separately.  Now that they're smaller, tactics
+  might work.  If tactics still aren't working, repeat the process
+  recursively, breaking down the lemmas themselves into further lemmas,
+  until finally you get to a point where they're all small enough that
+  tactics can complete them (or you might even be able to write the proof
+  term manually yourself).  You can find many lemmas in our `Utilities`
+  files such as `Equalities.lean`, `Opposites.lean`, and `Category.lean`
+  which might help you with the smaller lemmas and common rewrites.
