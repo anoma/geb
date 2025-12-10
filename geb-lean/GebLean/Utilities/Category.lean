@@ -373,6 +373,64 @@ def CategoryData.ofCompatible {U : Type u} {V : Type u} {e : U ≃ V}
   toCategoryOps := opsU
   laws := CategoryLaws.ofCompatible lawsV compat
 
+/-! ### Mathlib Category Transfer Utilities
+
+These utilities compose our typeclass-free transfer mechanisms with mathlib's
+`Category` typeclass, allowing direct transfer of category laws across
+compatible operations. -/
+
+/-- Given a `Category` instance on V and compatible `CategoryOps` on U,
+    derive a new `Category` instance on U. This composes:
+    1. `categoryDataOfCategory` to extract our data structure from V
+    2. `CategoryData.ofCompatible` to transfer the laws to U
+    3. `CategoryOfData` to build a new `Category` instance on U -/
+def categoryOfCompatible {U : Type u} {V : Type u} (e : U ≃ V)
+    {hsU : HomSet.{v + 1, u} U}
+    [catV : Category.{v, u} V]
+    (he : HomSetEquiv e hsU (homSetOfQuiver V))
+    (opsU : CategoryOps hsU)
+    (compat : CategoryOpsCompatible e he (categoryDataOfCategory V).toCategoryOps
+      opsU) :
+    Category.{v, u} U :=
+  CategoryOfData (CategoryData.ofCompatible (categoryDataOfCategory V).laws
+    compat)
+
+/-- Compatibility structure for `CategoryOps` with a mathlib `Category`.
+    A simplified version of `CategoryOpsCompatible` for the common case where
+    we have a `Category` instance on V and want compatible ops on U. -/
+structure CategoryOpsCompatibleWithCategory {U : Type u} {V : Type u}
+    (e : U ≃ V) {hsU : HomSet.{v + 1, u} U} [Category.{v, u} V]
+    (he : HomSetEquiv e hsU (homSetOfQuiver V))
+    (opsU : CategoryOps hsU) : Prop where
+  /-- Identity agrees with transported identity -/
+  id_eq : ∀ (a : U), opsU.id a = he.invFun (𝟙 (e a))
+  /-- Composition agrees with transported composition -/
+  comp_eq : ∀ {a b c : U} (f : hsU a b) (g : hsU b c),
+    opsU.comp f g = he.invFun (he.toFun f ≫ he.toFun g)
+
+/-- Convert `CategoryOpsCompatibleWithCategory` to `CategoryOpsCompatible`. -/
+def CategoryOpsCompatibleWithCategory.toCategoryOpsCompatible
+    {U : Type u} {V : Type u} {e : U ≃ V}
+    {hsU : HomSet.{v + 1, u} U} [Category.{v, u} V]
+    {he : HomSetEquiv e hsU (homSetOfQuiver V)}
+    {opsU : CategoryOps hsU}
+    (compat : CategoryOpsCompatibleWithCategory e he opsU) :
+    CategoryOpsCompatible e he (categoryDataOfCategory V).toCategoryOps opsU :=
+  { id_eq := compat.id_eq
+    comp_eq := compat.comp_eq }
+
+/-- Given a `Category` instance on V and compatible ops on U (expressed via
+    `CategoryOpsCompatibleWithCategory`), derive a new `Category` instance
+    on U. -/
+def categoryOfCompatibleWithCategory {U : Type u} {V : Type u} (e : U ≃ V)
+    {hsU : HomSet.{v + 1, u} U}
+    [catV : Category.{v, u} V]
+    (he : HomSetEquiv e hsU (homSetOfQuiver V))
+    (opsU : CategoryOps hsU)
+    (compat : CategoryOpsCompatibleWithCategory e he opsU) :
+    Category.{v, u} U :=
+  categoryOfCompatible e he opsU compat.toCategoryOpsCompatible
+
 /-! ## Functor Data
 
 Structures for representing functors without typeclasses. -/
@@ -585,6 +643,65 @@ def FunctorData.ofCompatible {C : Type u} {D : Type u₁}
   toFunctorOps := fops2
   laws := FunctorLaws.ofCompatible laws1 compat
 
+/-! ### Mathlib Functor Transfer Utilities
+
+These utilities compose our typeclass-free transfer mechanisms with mathlib's
+`Functor` typeclass, allowing direct transfer of functor laws across
+compatible operations. -/
+
+/-- Given a `CategoryTheory.Functor` F : C ⥤ D and compatible `FunctorOps`,
+    derive a new `CategoryTheory.Functor` instance with those ops. This
+    composes:
+    1. `functorDataOfFunctor` to extract our data structure from F
+    2. `FunctorData.ofCompatible` to transfer the laws to the new ops
+    3. `FunctorOfData` to build a new `Functor` instance -/
+def functorOfCompatible
+    {C : Type u} {D : Type u₁}
+    [Category.{v, u} C] [Category.{v₁, u₁} D]
+    (F : C ⥤ D)
+    (fops : FunctorOps (homSetOfQuiver C) (homSetOfQuiver D))
+    (compat : FunctorOpsCompatible (functorDataOfFunctor F).toFunctorOps
+      fops) :
+    C ⥤ D :=
+  FunctorOfData (FunctorData.ofCompatible (functorDataOfFunctor F).laws compat)
+
+/-- Compatibility structure for `FunctorOps` with a mathlib `Functor`.
+    A simplified version of `FunctorOpsCompatible` for the common case where
+    we have a `Functor` F : C ⥤ D and want compatible ops. -/
+structure FunctorOpsCompatibleWithFunctor
+    {C : Type u} {D : Type u₁}
+    [Category.{v, u} C] [Category.{v₁, u₁} D]
+    (F : C ⥤ D)
+    (fops : FunctorOps (homSetOfQuiver C) (homSetOfQuiver D)) : Prop where
+  /-- Object map agrees with F.obj -/
+  obj_eq : fops.obj = F.obj
+  /-- Morphism map agrees with F.map (with type cast due to object equality) -/
+  map_eq : ∀ {a b : C} (f : a ⟶ b),
+    fops.map f = cast (by rw [obj_eq]) (F.map f)
+
+/-- Convert `FunctorOpsCompatibleWithFunctor` to `FunctorOpsCompatible`. -/
+def FunctorOpsCompatibleWithFunctor.toFunctorOpsCompatible
+    {C : Type u} {D : Type u₁}
+    [Category.{v, u} C] [Category.{v₁, u₁} D]
+    {F : C ⥤ D}
+    {fops : FunctorOps (homSetOfQuiver C) (homSetOfQuiver D)}
+    (compat : FunctorOpsCompatibleWithFunctor F fops) :
+    FunctorOpsCompatible (functorDataOfFunctor F).toFunctorOps fops :=
+  { obj_eq := compat.obj_eq
+    map_eq := compat.map_eq }
+
+/-- Given a `Functor` F : C ⥤ D and compatible ops (expressed via
+    `FunctorOpsCompatibleWithFunctor`), derive a new `Functor` instance
+    with those ops. -/
+def functorOfCompatibleWithFunctor
+    {C : Type u} {D : Type u₁}
+    [Category.{v, u} C] [Category.{v₁, u₁} D]
+    (F : C ⥤ D)
+    (fops : FunctorOps (homSetOfQuiver C) (homSetOfQuiver D))
+    (compat : FunctorOpsCompatibleWithFunctor F fops) :
+    C ⥤ D :=
+  functorOfCompatible F fops compat.toFunctorOpsCompatible
+
 /-! ## Natural Transformation Data
 
 Structures for representing natural transformations without typeclasses. -/
@@ -752,6 +869,66 @@ theorem NatTransOfData_of_natTransDataOfNatTrans' {C : Type u} {D : Type u₁}
   letI : Category D := CategoryOfData dataD
   ext X
   rfl
+
+/-! ### Mathlib NatTrans Transfer Utilities
+
+These utilities compose our typeclass-free transfer mechanisms with mathlib's
+`NatTrans` type, allowing direct transfer of naturality laws across
+compatible app functions. -/
+
+/-- Given a `CategoryTheory.NatTrans` α : F ⟶ G and compatible `NatTransApp`,
+    derive a new `CategoryTheory.NatTrans` with that app. This composes:
+    1. `natTransDataOfNatTrans` to extract our data structure from α
+    2. `NatTransData.ofCompatible` to transfer the laws to the new app
+    3. `NatTransOfData` to build a new `NatTrans` -/
+def natTransOfCompatible
+    {C : Type u} {D : Type u₁}
+    [Category.{v, u} C] [Category.{v₁, u₁} D]
+    {F G : C ⥤ D} (α : F ⟶ G)
+    (app : NatTransApp (functorDataOfFunctor F).toFunctorOps
+      (functorDataOfFunctor G).toFunctorOps)
+    (compat : NatTransAppCompatible (natTransDataOfNatTrans α).app app) :
+    F ⟶ G :=
+  { app := app
+    naturality := fun {_ _} f =>
+      (NatTransLaws.ofCompatible (natTransDataOfNatTrans α).laws compat).naturality
+        f }
+
+/-- Compatibility structure for `NatTransApp` with a mathlib `NatTrans`.
+    A simplified version of `NatTransAppCompatible` for the common case where
+    we have a `NatTrans` α : F ⟶ G and want a compatible app. -/
+structure NatTransAppCompatibleWithNatTrans
+    {C : Type u} {D : Type u₁}
+    [Category.{v, u} C] [Category.{v₁, u₁} D]
+    {F G : C ⥤ D} (α : F ⟶ G)
+    (app : NatTransApp (functorDataOfFunctor F).toFunctorOps
+      (functorDataOfFunctor G).toFunctorOps) : Prop where
+  /-- Components agree pointwise -/
+  app_eq : ∀ (X : C), app X = α.app X
+
+/-- Convert `NatTransAppCompatibleWithNatTrans` to `NatTransAppCompatible`. -/
+def NatTransAppCompatibleWithNatTrans.toNatTransAppCompatible
+    {C : Type u} {D : Type u₁}
+    [Category.{v, u} C] [Category.{v₁, u₁} D]
+    {F G : C ⥤ D} {α : F ⟶ G}
+    {app : NatTransApp (functorDataOfFunctor F).toFunctorOps
+      (functorDataOfFunctor G).toFunctorOps}
+    (compat : NatTransAppCompatibleWithNatTrans α app) :
+    NatTransAppCompatible (natTransDataOfNatTrans α).app app :=
+  { app_eq := compat.app_eq }
+
+/-- Given a `NatTrans` α : F ⟶ G and compatible app (expressed via
+    `NatTransAppCompatibleWithNatTrans`), derive a new `NatTrans` instance
+    with that app. -/
+def natTransOfCompatibleWithNatTrans
+    {C : Type u} {D : Type u₁}
+    [Category.{v, u} C] [Category.{v₁, u₁} D]
+    {F G : C ⥤ D} (α : F ⟶ G)
+    (app : NatTransApp (functorDataOfFunctor F).toFunctorOps
+      (functorDataOfFunctor G).toFunctorOps)
+    (compat : NatTransAppCompatibleWithNatTrans α app) :
+    F ⟶ G :=
+  natTransOfCompatible α app compat.toNatTransAppCompatible
 
 /-! ### Identity and Composition of Natural Transformations -/
 
