@@ -377,7 +377,7 @@ def CategoryData.ofCompatible {U : Type u} {V : Type u} {e : U ≃ V}
 
 Structures for representing functors without typeclasses. -/
 
-universe v₁ u₁ v₂' u₂'
+universe v₁ u₁ v₂ u₂ v₂' u₂'
 
 /-- The object map of a functor. -/
 abbrev ObjMap (C : Type u) (D : Type u₁) := C → D
@@ -446,6 +446,47 @@ variable {dataC : CategoryData C hsC} {dataD : CategoryData D hsD}
   fd.laws.map_comp
 
 end FunctorData
+
+/-! ### Functor Composition -/
+
+/-- Composition of functor operations. -/
+def FunctorOps.comp {C : Type u} {D : Type u₁} {E : Type u₂}
+    {hsC : HomSet.{v, u} C} {hsD : HomSet.{v₁, u₁} D} {hsE : HomSet.{v₂, u₂} E}
+    (F : FunctorOps hsC hsD) (G : FunctorOps hsD hsE) : FunctorOps hsC hsE where
+  obj := fun X => G.obj (F.obj X)
+  map := fun f => G.map (F.map f)
+
+/-- Identity functor operations. -/
+def FunctorOps.id {C : Type u} {hsC : HomSet.{v, u} C} : FunctorOps hsC hsC where
+  obj := fun X => X
+  map := fun f => f
+
+/-- Composition of functor data. -/
+def FunctorData.comp {C : Type u} {D : Type u₁} {E : Type u₂}
+    {hsC : HomSet.{v, u} C} {hsD : HomSet.{v₁, u₁} D} {hsE : HomSet.{v₂, u₂} E}
+    {dataC : CategoryData C hsC} {dataD : CategoryData D hsD}
+    {dataE : CategoryData E hsE}
+    (F : FunctorData dataC dataD) (G : FunctorData dataD dataE) :
+    FunctorData dataC dataE where
+  toFunctorOps := F.toFunctorOps.comp G.toFunctorOps
+  laws := {
+    map_id := fun a => by
+      change G.map (F.map (dataC.id a)) = dataE.id (G.obj (F.obj a))
+      rw [F.map_id, G.map_id]
+    map_comp := fun f g => by
+      change G.map (F.map (dataC.comp f g)) =
+           dataE.comp (G.map (F.map f)) (G.map (F.map g))
+      rw [F.map_comp, G.map_comp]
+  }
+
+/-- Identity functor data. -/
+def FunctorData.idFunctor {C : Type u} {hsC : HomSet.{v, u} C}
+    (dataC : CategoryData C hsC) : FunctorData dataC dataC where
+  toFunctorOps := FunctorOps.id
+  laws := {
+    map_id := fun _ => rfl
+    map_comp := fun _ _ => rfl
+  }
 
 /-- Build a `CategoryTheory.Functor` from `FunctorData`.
     Note: This only works when the HomSets are in Type (not general Sort). -/
@@ -602,6 +643,56 @@ variable {dataC : CategoryData C hsC} {dataD : CategoryData D hsD}
 
 end NatTransData
 
+/-- Compatibility between two `NatTransApp`s: they agree pointwise. -/
+structure NatTransAppCompatible {C : Type u} {D : Type u₁}
+    {hsC : HomSet.{v, u} C} {hsD : HomSet.{v₁, u₁} D}
+    {F G : FunctorOps hsC hsD}
+    (app1 app2 : NatTransApp F G) : Prop where
+  /-- Components agree at each object -/
+  app_eq : ∀ (X : C), app2 X = app1 X
+
+/-- Given a `NatTransApp` compatible with another that has naturality laws,
+    derive the `NatTransLaws` for the compatible app. -/
+def NatTransLaws.ofCompatible {C : Type u} {D : Type u₁}
+    {hsC : HomSet.{v, u} C} {hsD : HomSet.{v₁, u₁} D}
+    {opsD : CategoryOps hsD}
+    {F G : FunctorOps hsC hsD}
+    {ntops1 : NatTransOps F G}
+    (laws1 : NatTransLaws (opsD := opsD) F G ntops1)
+    {ntops2 : NatTransOps F G}
+    (compat : NatTransAppCompatible ntops1.app ntops2.app) :
+    NatTransLaws (opsD := opsD) F G ntops2 where
+  naturality := fun {X Y} f => by
+    simp only [compat.app_eq]
+    exact laws1.naturality f
+
+/-- Given a `NatTransOps` compatible with another that has laws, derive a new
+    `NatTransData` with the compatible ops. -/
+def NatTransData.ofCompatible {C : Type u} {D : Type u₁}
+    {hsC : HomSet.{v, u} C} {hsD : HomSet.{v₁, u₁} D}
+    {dataC : CategoryData C hsC} {dataD : CategoryData D hsD}
+    {F G : FunctorData dataC dataD}
+    {ntops1 : NatTransOps F.toFunctorOps G.toFunctorOps}
+    (laws1 : NatTransLaws (opsD := dataD.toCategoryOps)
+      F.toFunctorOps G.toFunctorOps ntops1)
+    {ntops2 : NatTransOps F.toFunctorOps G.toFunctorOps}
+    (compat : NatTransAppCompatible ntops1.app ntops2.app) :
+    NatTransData F G where
+  toNatTransOps := ntops2
+  laws := NatTransLaws.ofCompatible laws1 compat
+
+/-- Given a `NatTransData` and a compatible `NatTransApp`, produce a new
+    `NatTransData` with the new app but the same naturality property. -/
+def NatTransData.withCompatibleApp {C : Type u} {D : Type u₁}
+    {hsC : HomSet.{v, u} C} {hsD : HomSet.{v₁, u₁} D}
+    {dataC : CategoryData C hsC} {dataD : CategoryData D hsD}
+    {F G : FunctorData dataC dataD}
+    (α : NatTransData F G)
+    (app : NatTransApp F.toFunctorOps G.toFunctorOps)
+    (compat : NatTransAppCompatible α.app app) :
+    NatTransData F G :=
+  NatTransData.ofCompatible α.laws compat
+
 /-- Build a `CategoryTheory.NatTrans` from `NatTransData`.
     Note: This only works when the HomSets are in Type (not general Sort). -/
 def NatTransOfData {C : Type u} {D : Type u₁}
@@ -724,6 +815,83 @@ theorem NatTransData.vcomp_id {C : Type u} {D : Type u₁}
     α.vcomp (NatTransData.id G) = α := by
   ext X
   exact dataD.laws.id_laws.comp_id (α.app X)
+
+/-! ### Whiskering and Horizontal Composition -/
+
+/-- Left whiskering: given a functor `H : B → C` and a natural transformation
+    `α : F ⟹ G` between functors `F G : C → D`, produce a natural
+    transformation `H ◁ α : F ∘ H ⟹ G ∘ H`. -/
+def NatTransData.whiskerLeft {B : Type u₂} {C : Type u} {D : Type u₁}
+    {hsB : HomSet.{v₂, u₂} B} {hsC : HomSet.{v, u} C} {hsD : HomSet.{v₁, u₁} D}
+    {dataB : CategoryData B hsB} {dataC : CategoryData C hsC}
+    {dataD : CategoryData D hsD}
+    (H : FunctorData dataB dataC)
+    {F G : FunctorData dataC dataD}
+    (α : NatTransData F G) :
+    NatTransData (H.comp F) (H.comp G) where
+  app := fun X => α.app (H.obj X)
+  laws := {
+    naturality := fun {_ _} f => α.laws.naturality (H.map f)
+  }
+
+/-- Right whiskering: given a natural transformation `α : F ⟹ G` between
+    functors `F G : C → D` and a functor `H : D → E`, produce a natural
+    transformation `α ▷ H : H ∘ F ⟹ H ∘ G`. -/
+def NatTransData.whiskerRight {C : Type u} {D : Type u₁} {E : Type u₂}
+    {hsC : HomSet.{v, u} C} {hsD : HomSet.{v₁, u₁} D} {hsE : HomSet.{v₂, u₂} E}
+    {dataC : CategoryData C hsC} {dataD : CategoryData D hsD}
+    {dataE : CategoryData E hsE}
+    {F G : FunctorData dataC dataD}
+    (α : NatTransData F G)
+    (H : FunctorData dataD dataE) :
+    NatTransData (F.comp H) (G.comp H) where
+  app := fun X => H.map (α.app X)
+  laws := {
+    naturality := fun {X Y} f => by
+      calc dataE.comp (H.map (F.map f)) (H.map (α.app Y))
+          = H.map (dataD.comp (F.map f) (α.app Y)) := (H.map_comp _ _).symm
+        _ = H.map (dataD.comp (α.app X) (G.map f)) := by rw [α.naturality f]
+        _ = dataE.comp (H.map (α.app X)) (H.map (G.map f)) := H.map_comp _ _
+  }
+
+/-- Horizontal composition of natural transformations: given
+    `α : F ⟹ G` between functors `F G : C → D` and
+    `β : H ⟹ K` between functors `H K : D → E`, produce
+    `α ⊗ β : H ∘ F ⟹ K ∘ G`. -/
+def NatTransData.hcomp {C : Type u} {D : Type u₁} {E : Type u₂}
+    {hsC : HomSet.{v, u} C} {hsD : HomSet.{v₁, u₁} D} {hsE : HomSet.{v₂, u₂} E}
+    {dataC : CategoryData C hsC} {dataD : CategoryData D hsD}
+    {dataE : CategoryData E hsE}
+    {F G : FunctorData dataC dataD}
+    {H K : FunctorData dataD dataE}
+    (α : NatTransData F G) (β : NatTransData H K) :
+    NatTransData (F.comp H) (G.comp K) :=
+  (α.whiskerRight H).vcomp (β.whiskerLeft G)
+
+/-- Alternative formulation of horizontal composition using the other order
+    of whiskering. The two are equal by the interchange law. -/
+def NatTransData.hcomp' {C : Type u} {D : Type u₁} {E : Type u₂}
+    {hsC : HomSet.{v, u} C} {hsD : HomSet.{v₁, u₁} D} {hsE : HomSet.{v₂, u₂} E}
+    {dataC : CategoryData C hsC} {dataD : CategoryData D hsD}
+    {dataE : CategoryData E hsE}
+    {F G : FunctorData dataC dataD}
+    {H K : FunctorData dataD dataE}
+    (α : NatTransData F G) (β : NatTransData H K) :
+    NatTransData (F.comp H) (G.comp K) :=
+  (β.whiskerLeft F).vcomp (α.whiskerRight K)
+
+/-- The interchange law: horizontal composition can be computed in either
+    order (whiskering α right then β left, or β left then α right). -/
+theorem NatTransData.hcomp_eq_hcomp' {C : Type u} {D : Type u₁} {E : Type u₂}
+    {hsC : HomSet.{v, u} C} {hsD : HomSet.{v₁, u₁} D} {hsE : HomSet.{v₂, u₂} E}
+    {dataC : CategoryData C hsC} {dataD : CategoryData D hsD}
+    {dataE : CategoryData E hsE}
+    {F G : FunctorData dataC dataD}
+    {H K : FunctorData dataD dataE}
+    (α : NatTransData F G) (β : NatTransData H K) :
+    α.hcomp β = α.hcomp' β := by
+  ext X
+  exact β.naturality (α.app X)
 
 /-! ### Functor Category Data
 
@@ -878,8 +1046,6 @@ def functorCategoryIsoMathlib {C : Type u} {D : Type u₁}
   inv_hom_id := mathlibToFunctorCategory_comp_functorCategoryToMathlib dataC dataD
 
 section EqToHom
-
-universe v₂ u₂
 
 variable {C : Type u} [Category.{v, u} C]
 variable {D : Type u₂} [Category.{v₂, u₂} D]
