@@ -173,6 +173,16 @@ lemma twDomArr'_id (tw : TwistedArrow' C) : twDomArr' (𝟙 tw) = 𝟙 (twDom' t
 lemma twCodArr'_id (tw : TwistedArrow' C) : twCodArr' (𝟙 tw) = 𝟙 (twCod' tw) := rfl
 
 @[simp]
+lemma twDomArr'_eqToHom {x y : TwistedArrow' C} (h : x = y) :
+    twDomArr' (eqToHom h) = eqToHom (congrArg twDom' h).symm := by
+  cases h; rfl
+
+@[simp]
+lemma twCodArr'_eqToHom {x y : TwistedArrow' C} (h : x = y) :
+    twCodArr' (eqToHom h) = eqToHom (congrArg twCod' h) := by
+  cases h; rfl
+
+@[simp]
 lemma twDomArr'_comp {x y z : TwistedArrow' C} (f : x ⟶ y) (g : y ⟶ z) :
     twDomArr' (f ≫ g) = twDomArr' g ≫ twDomArr' f := rfl
 
