@@ -530,6 +530,14 @@ theorem connGrothendieckHom_ext {x y : ConnGrothendieckObj C F}
   exact eq_of_heq hFiber
 
 /--
+Category operations for the connected Grothendieck construction.
+-/
+def connGrothendieckCategoryOps :
+    CategoryOps (connGrothendieckHomSet C F) where
+  id := connGrothendieckId C F
+  comp := connGrothendieckComp C F
+
+/--
 When the first morphism is identity, `connGrothendieckW1` equals `x.arrow`.
 -/
 lemma connGrothendieckW1_id (x : ConnGrothendieckObj C F) :
@@ -1180,14 +1188,6 @@ lemma connGrothendieckTwMorphCod_map_comp_tgt (tw : TwistedArrow' C)
         ((F.map (connGrothendieckTwMorphCod C tw a)).obj tgt)) =
     (F.map (connGrothendieckTwMorphCod C tw (a ≫ b))).obj tgt :=
   connGrothendieckTwMorphCod_map_comp_src C F tw a b tgt
-
-/--
-Category operations for the connected Grothendieck construction.
--/
-def connGrothendieckCategoryOps :
-    CategoryOps (connGrothendieckHomSet C F) where
-  comp := connGrothendieckComp C F
-  id := connGrothendieckId C F
 
 end ConnectedGrothendieckCategory
 
