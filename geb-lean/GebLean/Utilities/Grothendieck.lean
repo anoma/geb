@@ -1681,7 +1681,9 @@ theorem conj_eqToHom_fiber_heq {W X Y Z : GrothendieckContra' F'}
     (eqToHom h ≫ f ≫ eqToHom h').fiber ≍ f.fiber := by
   subst h h'
   simp only [eqToHom_refl]
-  rw [Category.comp_id, Category.id_comp]
+  convert HEq.refl f.fiber using 2
+  · simp only [Category.id_comp, Category.comp_id]
+  · simp only [Category.id_comp, Category.comp_id]
 
 lemma eqToHom_eq {X Y : GrothendieckContra' F'} (hF : X = Y) :
     eqToHom hF = { base := eqToHom (by subst hF; rfl)

@@ -2,9 +2,7 @@
 
 ## Status
 
-In Progress - morphism correspondence between `ConnectedGrothendieckContra` and
-`ConnGrothendieckHom` established in one direction; reverse direction and inverse
-proofs remaining.
+In Progress - projection functor defined; universal properties remaining.
 
 ## Context
 
@@ -59,11 +57,21 @@ associativity for free.
 6. Object equivalence
    - `connGrothendieckContraObjEquiv : ConnectedGrothendieckContra C F ≃ ConnGrothendieckObj C F`
 
-7. Morphism correspondence (one direction)
+7. Morphism correspondence (both directions)
    - `connGrothendieckContraHomToHom` converts morphisms from
      `ConnectedGrothendieckContra` to `ConnGrothendieckHom`
+   - `connGrothendieckHomToContraHom` converts morphisms from
+     `ConnGrothendieckHom` to `ConnectedGrothendieckContra`
    - Key lemmas: `overOpToTwistedArrow_map_eq_twMorphDom_comp_eqToHom`,
-     `twDom'_diagDom_eq_diagCod`, `twCod'_diagDom_eq_diagCod`
+     `twDom'_diagDom_eq_diagCod`, `twCod'_diagDom_eq_diagCod`,
+     `connGrothendieckHomToContra_source_eq`, `overOpToTwArr_map_innerBase_eq`
+
+8. Projection functor to Arrow category
+   - `connGrothendieckContraProjection : ConnectedGrothendieckContra C F -> Arrow C`
+   - Maps objects `(b, (ov, e))` to the arrow `ov.hom : ov.left -> b`
+   - Maps morphisms `(domArr, codArr, fiberMorph)` to `(domArr, codArr)`
+   - Helper lemmas: `grothendieckContra'_comp_base_left`,
+     `fiberFunctorContra_map_base_left`, `grothendieckContra'_eqToHom_base_left`
 
 ### Helper Lemmas
 
@@ -84,14 +92,7 @@ associativity for free.
 
 ### Remaining Work
 
-1. Implement reverse morphism conversion (`ConnGrothendieckHom` to
-   `ConnectedGrothendieckContra` morphism)
-
-2. Prove morphism conversions are inverses
-
-3. Define the projection functor to the Arrow category
-
-4. Prove universal properties
+1. Prove universal properties
 
 ## References
 

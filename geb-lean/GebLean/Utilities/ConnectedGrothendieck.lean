@@ -2401,8 +2401,7 @@ Convert a `ConnGrothendieckObj` to an object of `ConnectedGrothendieckContra`.
 def connGrothendieckObjToContraObj (x : ConnGrothendieckObj C F) :
     ConnectedGrothendieckContra C F :=
   ⟨twCod' x.arrow,
-   ⟨Over.mk (twArr' x.arrow),
-    (eqToHom (congrArg F.obj (twObjMk'_twArr' x.arrow).symm)).obj x.fiber⟩⟩
+   ⟨Over.mk (twArr' x.arrow), x.fiber⟩⟩
 
 /--
 The round-trip from `ConnectedGrothendieckContra` to `ConnGrothendieckObj` and back.
@@ -2422,7 +2421,7 @@ theorem connGrothendieckObj_contraRoundtrip (x : ConnGrothendieckObj C F) :
   · simp only [Over.mk_hom]
     exact twObjMk'_twArr' x.arrow
   · simp only [Over.mk_hom]
-    exact eqToHom_obj_heq _ _ _ _
+    rfl
 
 /--
 The type of objects in `ConnectedGrothendieckContra` is equivalent to `ConnGrothendieckObj`.
@@ -2557,6 +2556,13 @@ theorem fiberTransportTwMorph_eq_connGrothendieckTwMorphCod
     {x : ConnectedGrothendieckContra C F} {b : C} (β : x.base ⟶ b) :
     fiberTransportTwMorph C β x.fiber.base =
     connGrothendieckTwMorphCod C (twObjMk' x.fiber.base.hom) β := by
+  simp only [fiberTransportTwMorph, connGrothendieckTwMorphCod, connGrothendieckDiagCod]
+  rfl
+
+theorem fiberTransportTwMorph_eq_connGrothendieckTwMorphCod'
+    {b b' : C} (ov : Over b) (β : b ⟶ b') :
+    fiberTransportTwMorph C β ov =
+    connGrothendieckTwMorphCod C (twObjMk' ov.hom) β := by
   simp only [fiberTransportTwMorph, connGrothendieckTwMorphCod, connGrothendieckDiagCod]
   rfl
 
@@ -2731,6 +2737,184 @@ def connGrothendieckContraHomToHom {x y : ConnectedGrothendieckContra C F}
     -- Now the goal matches f.fiber.fiber exactly
     exact f.fiber.fiber
 
+/--
+The inner base morphism for converting `ConnGrothendieckHom` to
+`ConnectedGrothendieckContra` morphism.
+
+Given `domArr : twDom' x.arrow ⟶ twDom' y.arrow` satisfying the square
+condition, we construct an `Over.OverMorphism` from
+`Over.mk (twArr' x.arrow ≫ codArr)` to `Over.mk (twArr' y.arrow)` in `Over b'`
+where `b' = twCod' y.arrow`.
+-/
+def connGrothendieckHomToContraInnerBase {x y : ConnGrothendieckObj C F}
+    (f : ConnGrothendieckHom C F x y) :
+    Over.mk (twArr' x.arrow ≫ f.codArr) ⟶ Over.mk (twArr' y.arrow) :=
+  Over.homMk f.domArr (by simp only [Over.mk_hom]; exact f.square_comm.symm)
+
+/--
+The transported source object in the inner fiber for the reverse conversion.
+-/
+def connGrothendieckHomToContraTransportedSource {x y : ConnGrothendieckObj C F}
+    (f : ConnGrothendieckHom C F x y) :
+    innerFiberContra C F (twCod' y.arrow) :=
+  (innerFiberContraTransition C F f.codArr).obj
+    ⟨Over.mk (twArr' x.arrow),
+     (eqToHom (congrArg F.obj (twObjMk'_twArr' x.arrow).symm)).obj x.fiber⟩
+
+/--
+The base of the transported source equals `Over.mk (twArr' x.arrow ≫ f.codArr)`.
+-/
+theorem connGrothendieckHomToContraTransportedSource_base {x y : ConnGrothendieckObj C F}
+    (f : ConnGrothendieckHom C F x y) :
+    (connGrothendieckHomToContraTransportedSource C F f).base =
+    Over.mk (twArr' x.arrow ≫ f.codArr) := by
+  simp only [connGrothendieckHomToContraTransportedSource, innerFiberContraTransition,
+    innerFiberContraTransitionObj]
+  rfl
+
+/--
+The source fiber of the reverse conversion equals the fiberMorph source (up to eqToHom).
+
+The source is `(fiberTransport f.codArr ...).obj ((eqToHom ...).obj x.fiber)`,
+which equals `(F.map (connGrothendieckTwMorphCod ...)).obj x.fiber` up to eqToHom.
+-/
+theorem connGrothendieckHomToContra_source_eq {x y : ConnGrothendieckObj C F}
+    (f : ConnGrothendieckHom C F x y) :
+    (((fiberFunctorContra C F).map f.codArr).obj
+      (connGrothendieckObjToContraObj C F x).fiber).fiber =
+    (F.map (connGrothendieckTwMorphCod C x.arrow f.codArr)).obj x.fiber := by
+  simp only [fiberFunctorContra, connGrothendieckObjToContraObj,
+    innerFiberContraTransition, innerFiberContraTransitionObj]
+  simp only [fiberTransport, fiberTransportTwMorph, connGrothendieckTwMorphCod, Over.mk_hom]
+  rfl
+
+/--
+The target twisted arrow morphism for the reverse conversion.
+
+`overOpToTwistedArrow.map innerBase` goes from `y.arrow` to `DiagCod x.arrow f.codArr`,
+while `connGrothendieckTwMorphDom` goes from `y.arrow` to `DiagDom y.arrow f.domArr`.
+By the diagonal equality, these targets are equal.
+-/
+theorem overOpToTwArr_map_innerBase_eq {x y : ConnGrothendieckObj C F}
+    (f : ConnGrothendieckHom C F x y) :
+    (overOpToTwistedArrow C (twCod' y.arrow)).map (connGrothendieckHomToContraInnerBase C F f) =
+    connGrothendieckTwMorphDom C y.arrow f.domArr ≫
+    eqToHom (connGrothendieckDiagEq C F x y f.domArr f.codArr f.square_comm) := by
+  apply twHom'_ext
+  · simp only [twDomArr'_comp, twDomArr'_eqToHom, connGrothendieckTwMorphDom, twHomMk'_domArr,
+      overOpToTwistedArrow, connGrothendieckHomToContraInnerBase, Over.homMk_left, id]
+    simp only [connGrothendieckDiagDom, twObjMk'_dom, eqToHom_refl, Category.id_comp]
+  · simp only [twCodArr'_comp, twCodArr'_eqToHom, connGrothendieckTwMorphDom, twHomMk'_codArr,
+      overOpToTwistedArrow, connGrothendieckHomToContraInnerBase, id]
+    simp only [connGrothendieckDiagDom, twObjMk'_cod, eqToHom_refl, Category.comp_id]
+
+/--
+Convert a `ConnGrothendieckHom` to a morphism in `ConnectedGrothendieckContra`.
+-/
+def connGrothendieckHomToContraHom {x y : ConnGrothendieckObj C F}
+    (f : ConnGrothendieckHom C F x y) :
+    connGrothendieckObjToContraObj C F x ⟶ connGrothendieckObjToContraObj C F y := by
+  refine ⟨f.codArr, ?_⟩
+  refine ⟨?innerBase, ?innerFiber⟩
+  case innerBase =>
+    exact connGrothendieckHomToContraInnerBase C F f
+  case innerFiber =>
+    -- Unfold definitions but keep overOpToTwistedArrow and
+    -- connGrothendieckHomToContraInnerBase folded for the rewrite
+    simp only [fiberFunctorContra, connGrothendieckObjToContraObj,
+      innerFiberContraTransition, innerFiberContraTransitionObj,
+      fiberTransport, restrictToFiber, Functor.comp_obj, Functor.comp_map]
+    -- Rewrite source using fiberTransportTwMorph = connGrothendieckTwMorphCod
+    rw [fiberTransportTwMorph_eq_connGrothendieckTwMorphCod']
+    -- Rewrite target using overOpToTwArr_map = TwMorphDom ≫ eqToHom
+    rw [overOpToTwArr_map_innerBase_eq]
+    -- Now simplify twObjMk'_twArr' to get x.arrow from
+    -- twObjMk' (Over.mk (twArr' x.arrow)).hom
+    simp only [Over.mk_hom, twObjMk'_twArr']
+    exact f.fiberMorph
+
+/--
+Round-trip: converting a `ConnGrothendieckHom` to `ConnectedGrothendieckContra` morphism
+and back gives the original morphism (up to the object round-trip equality).
+-/
+theorem connGrothendieckHom_roundtrip {x y : ConnGrothendieckObj C F}
+    (f : ConnGrothendieckHom C F x y) :
+    HEq (connGrothendieckContraHomToHom C F (connGrothendieckHomToContraHom C F f)) f := by
+  -- The LHS is a ConnGrothendieckHom between (roundtrip x) and (roundtrip y)
+  -- The RHS is a ConnGrothendieckHom between x and y
+  -- These are HEq by the roundtrip equalities
+  have hx : connGrothendieckContraObjToObj C F (connGrothendieckObjToContraObj C F x) = x :=
+    connGrothendieckObj_contraRoundtrip C F x
+  have hy : connGrothendieckContraObjToObj C F (connGrothendieckObjToContraObj C F y) = y :=
+    connGrothendieckObj_contraRoundtrip C F y
+  cases hx
+  cases hy
+  apply heq_of_eq
+  -- Unfold the conversions
+  simp only [connGrothendieckContraHomToHom, connGrothendieckHomToContraHom,
+    connGrothendieckHomToContraInnerBase, Over.homMk_left]
+  -- Decompose f and prove by structure equality
+  obtain ⟨domArr, codArr, square_comm, fiberMorph⟩ := f
+  -- Goal now: {domArr, codArr, ⋯, id (...)} = {domArr, codArr, square_comm, fiberMorph}
+  -- domArr, codArr match; square_comm is proof irrelevant
+  -- fiberMorph has a chain of Eq.mpr from the convert tactic
+  congr 1
+  -- Simplify the id wrappers first
+  simp only [id_eq]
+  -- Use eq_of_heq and cast_heq to show the mpr transports are HEq to identity
+  -- Each Eq.mpr h x is equivalent to cast h.symm x which is HEq to x
+  apply eq_of_heq
+  refine HEq.trans (cast_heq _ _) ?_
+  exact cast_heq _ _
+
+/--
+Round-trip: converting a `ConnectedGrothendieckContra` morphism to `ConnGrothendieckHom`
+and back gives the original morphism (up to the object round-trip equality).
+-/
+theorem connGrothendieckContraHom_roundtrip {x y : ConnectedGrothendieckContra C F}
+    (f : x ⟶ y) :
+    HEq (connGrothendieckHomToContraHom C F (connGrothendieckContraHomToHom C F f)) f := by
+  have hx : connGrothendieckObjToContraObj C F (connGrothendieckContraObjToObj C F x) = x :=
+    connGrothendieckContraObj_roundtrip C F x
+  have hy : connGrothendieckObjToContraObj C F (connGrothendieckContraObjToObj C F y) = y :=
+    connGrothendieckContraObj_roundtrip C F y
+  cases hx
+  cases hy
+  apply heq_of_eq
+  -- Unfold the conversions
+  simp only [connGrothendieckHomToContraHom, connGrothendieckContraHomToHom,
+    connGrothendieckHomToContraInnerBase]
+  -- Use Grothendieck.ext - need to be careful about goal ordering
+  refine Grothendieck.ext _ _ ?_ ?_
+  · -- Base equality - trivial
+    rfl
+  · -- Fiber morphism equality
+    -- Need to show eqToHom ≫ constructed_morphism = f.fiber
+    -- The eqToHom is rfl since the base components are definitionally equal
+    simp only [eqToHom_refl, Category.id_comp]
+    -- Now goal is the constructed morphism = f.fiber
+    refine GrothendieckContra'.ext _ _ ?_ ?_
+    · -- Inner base
+      ext
+      rfl
+    · -- Inner fiber: need to show m.fiber ≫ eqToHom _ = f.fiber.fiber
+      -- Since bases match, the eqToHom should be rfl
+      simp only [eqToHom_refl, Category.comp_id]
+      -- Goal: id (Eq.mpr ... (Eq.mpr ... f.fiber.fiber)) = f.fiber.fiber
+      -- First strip id wrappers
+      simp only [id_eq]
+      -- Goal is now: mpr (mpr (mpr (mpr f.fiber.fiber))) = f.fiber.fiber
+      -- Local helper: Eq.mpr h b ≍ b
+      have mpr_heq : ∀ {α β : Sort _} (h : α = β) (b : β), h.mpr b ≍ b := by
+        intros α β h b
+        subst h
+        rfl
+      apply eq_of_heq
+      refine HEq.trans (mpr_heq _ _) ?_
+      refine HEq.trans (mpr_heq _ _) ?_
+      refine HEq.trans (mpr_heq _ _) ?_
+      exact mpr_heq _ _
+
 end MorphismEquivalence
 
 end ConnectedGrothendieckContraMorphisms
@@ -2855,5 +3039,184 @@ theorem connGrothendieckMorphSquareComm {x y : ConnectedGrothendieck' C F}
 end MorphismComponents
 
 end NestedGrothendieckApproach
+
+section ProjectionFunctor
+
+/-!
+## Projection Functor to Arrow Category
+
+The connected Grothendieck construction comes equipped with a projection functor
+`π_F : E(F) → Arr(C)` that forgets the fiber data.
+
+On objects: `(f : a → b, e)` maps to `f` viewed as an arrow.
+On morphisms: `(domArr, codArr, φ)` maps to `(domArr, codArr)`.
+-/
+
+variable (C : Type u) [Category.{v} C]
+variable (F : TwistedArrow' C ⥤ Cat.{v, u})
+
+/--
+Convert a `ConnectedGrothendieckContra` object to an `Arrow` object.
+
+An object of `ConnectedGrothendieckContra` has:
+- `x.base : C` (the codomain of the underlying arrow)
+- `x.fiber.base : (Over x.base)ᵒᵖ'` (whose `.hom` is the arrow itself)
+
+The underlying arrow is `x.fiber.base.hom : x.fiber.base.left ⟶ x.base`.
+-/
+def connGrothendieckContraObjToArrow (x : ConnectedGrothendieckContra C F) :
+    Arrow C :=
+  Arrow.mk x.fiber.base.hom
+
+/--
+For identity morphisms, the domain arrow component is identity.
+-/
+theorem connGrothendieckContraHomDomArr_id (x : ConnectedGrothendieckContra C F) :
+    connGrothendieckContraHomDomArr C F (𝟙 x) = 𝟙 x.fiber.base.left := by
+  unfold connGrothendieckContraHomDomArr
+  rw [Grothendieck.id_fiber]
+  rw [GrothendieckContra'.base_eqToHom]
+  rw [Over.eqToHom_left]
+  rfl
+
+/--
+For identity morphisms, the codomain arrow component is identity.
+-/
+theorem connGrothendieckContraHomCodArr_id (x : ConnectedGrothendieckContra C F) :
+    connGrothendieckContraHomCodArr C F (𝟙 x) = 𝟙 x.base :=
+  rfl
+
+/--
+For morphisms in `GrothendieckContra'`, composition of `.base.left` equals
+`.left` of `.base` composition.
+-/
+lemma grothendieckContra'_comp_base_left {b : C}
+    {x y z : GrothendieckContra' (restrictToFiber C F b)}
+    (f : x ⟶ y) (g : y ⟶ z) :
+    (f ≫ g).base.left = f.base.left ≫ g.base.left :=
+  rfl
+
+/--
+The transition functor preserves `.base.left`: applying `(fiberFunctorContra C F).map β`
+to a morphism `f` gives a morphism whose `.base.left` equals `f.base.left`.
+-/
+lemma fiberFunctorContra_map_base_left {b d : C} (β : b ⟶ d)
+    {x y : innerFiberContra C F b} (f : x ⟶ y) :
+    (((fiberFunctorContra C F).map β).map f).base.left = f.base.left := by
+  simp only [fiberFunctorContra, innerFiberContraTransition,
+             innerFiberContraTransitionHom_base]
+  rfl
+
+/--
+For `eqToHom` in `GrothendieckContra'`, the `.base.left` is `eqToHom` in `C`.
+-/
+lemma grothendieckContra'_eqToHom_base_left {b : C}
+    {x y : GrothendieckContra' (restrictToFiber C F b)} (h : x = y) :
+    (eqToHom h).base.left = eqToHom (by subst h; rfl) := by
+  subst h
+  rfl
+
+/--
+The domain arrow composition: `(f ≫ g).domArr = f.domArr ≫ g.domArr`.
+-/
+theorem connGrothendieckContraHomDomArr_comp
+    {x y z : ConnectedGrothendieckContra C F}
+    (f : x ⟶ y) (g : y ⟶ z) :
+    connGrothendieckContraHomDomArr C F (f ≫ g) =
+      connGrothendieckContraHomDomArr C F f ≫
+        connGrothendieckContraHomDomArr C F g := by
+  simp only [connGrothendieckContraHomDomArr]
+  change (f ≫ g).fiber.base.left = f.fiber.base.left ≫ g.fiber.base.left
+  rw [Grothendieck.comp_fiber]
+  rw [grothendieckContra'_comp_base_left, grothendieckContra'_comp_base_left]
+  rw [grothendieckContra'_eqToHom_base_left, eqToHom_refl, Category.id_comp]
+  rw [fiberFunctorContra_map_base_left]
+
+/--
+The codomain arrow composition: `(f ≫ g).codArr = f.codArr ≫ g.codArr`.
+-/
+theorem connGrothendieckContraHomCodArr_comp
+    {x y z : ConnectedGrothendieckContra C F}
+    (f : x ⟶ y) (g : y ⟶ z) :
+    connGrothendieckContraHomCodArr C F (f ≫ g) =
+      connGrothendieckContraHomCodArr C F f ≫
+        connGrothendieckContraHomCodArr C F g :=
+  rfl
+
+/--
+The projection functor from `ConnectedGrothendieckContra` to the arrow category.
+
+This functor forgets the fiber data:
+- On objects: extracts the underlying arrow from the nested Grothendieck structure
+- On morphisms: extracts `(domArr, codArr)` forming a commutative square
+-/
+def connGrothendieckContraProjection :
+    ConnectedGrothendieckContra C F ⥤ Arrow C where
+  obj x := connGrothendieckContraObjToArrow C F x
+  map {x y} f := Arrow.homMk
+    (connGrothendieckContraHomDomArr C F f)
+    (connGrothendieckContraHomCodArr C F f)
+    (connGrothendieckContraMorphSquareComm C F f).symm
+  map_id x := by
+    apply Arrow.hom_ext
+    · simp only [Arrow.homMk_left, Arrow.id_left, connGrothendieckContraHomDomArr_id,
+        connGrothendieckContraObjToArrow, Arrow.mk_left]
+      rfl
+    · simp only [Arrow.homMk_right, Arrow.id_right, connGrothendieckContraHomCodArr_id,
+        connGrothendieckContraObjToArrow, Arrow.mk_right]
+      rfl
+  map_comp {x y z} f g := by
+    apply Arrow.hom_ext
+    · simp only [Arrow.comp_left, Arrow.homMk_left, connGrothendieckContraHomDomArr_comp]
+    · simp only [Arrow.comp_right, Arrow.homMk_right, connGrothendieckContraHomCodArr_comp]
+
+/--
+The projection preserves domain extraction.
+-/
+@[simp]
+lemma connGrothendieckContraProjection_obj_left
+    (x : ConnectedGrothendieckContra C F) :
+    ((connGrothendieckContraProjection C F).obj x).left = x.fiber.base.left :=
+  rfl
+
+/--
+The projection preserves codomain extraction.
+-/
+@[simp]
+lemma connGrothendieckContraProjection_obj_right
+    (x : ConnectedGrothendieckContra C F) :
+    ((connGrothendieckContraProjection C F).obj x).right = x.base :=
+  rfl
+
+/--
+The projection preserves the underlying arrow.
+-/
+@[simp]
+lemma connGrothendieckContraProjection_obj_hom
+    (x : ConnectedGrothendieckContra C F) :
+    ((connGrothendieckContraProjection C F).obj x).hom = x.fiber.base.hom :=
+  rfl
+
+/--
+The projection preserves the left morphism component (domain arrow).
+-/
+@[simp]
+lemma connGrothendieckContraProjection_map_left
+    {x y : ConnectedGrothendieckContra C F} (f : x ⟶ y) :
+    ((connGrothendieckContraProjection C F).map f).left =
+      connGrothendieckContraHomDomArr C F f :=
+  rfl
+
+/--
+The projection preserves the right morphism component (codomain arrow).
+-/
+@[simp]
+lemma connGrothendieckContraProjection_map_right
+    {x y : ConnectedGrothendieckContra C F} (f : x ⟶ y) :
+    ((connGrothendieckContraProjection C F).map f).right =
+      connGrothendieckContraHomCodArr C F f :=
+  rfl
+
+end ProjectionFunctor
 
 end GebLean
