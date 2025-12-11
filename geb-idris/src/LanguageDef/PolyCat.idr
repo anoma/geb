@@ -2540,7 +2540,7 @@ pfCataInId fext (pos ** dir) (InPFM i dm) =
 public export
 pfCataInIdRefl : FunExt -> (p : PolyFunc) -> (alg : PFAlg p (PolyFuncMu p)) ->
   (alg = InPFM) -> ExtEq (pfCata {p} alg) Prelude.id
-pfCataInIdRefl fext p alg algeq = rewrite algeq in pfCataInId fext p
+pfCataInIdRefl fext p InPFM Refl = pfCataInId fext p
 
 public export
 InPFMdp : {p : PolyFunc} -> Algebra (InterpPolyFunc p) (PolyFuncMu p)

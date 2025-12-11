@@ -500,9 +500,10 @@ public export
   npnWedgeRightFst el a b mab = fst (el a)
 npnWedgeRightFstId fext el a b mab =
   pfCataInIdRefl fext _ _
-    (funExt $ \i => funExt $ \d => case i of
-      PFVar ev => cong (InPFM (PFVar ev)) $ funExt $ \ev' => void ev'
-      PFCom ec => cong (InPFM (PFCom ec)) $ funExt $ \(j ** dm) => Refl)
+    (funExt $ \i => funExt $ \d =>
+      assert_total $ case i of
+        PFVar ev => cong (InPFM (PFVar ev)) $ funExt $ \ev' => void ev'
+        PFCom ec => cong (InPFM (PFCom ec)) $ funExt $ \(j ** dm) => Refl)
     (fst $ el a)
 
 -- Given a position of the free monad evaluated with `Unit` as the type
