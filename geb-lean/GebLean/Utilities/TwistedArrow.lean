@@ -92,6 +92,12 @@ lemma twObjMk'_arr {dom cod : C} (arr : dom ⟶ cod) :
     twArr' (twObjMk' arr) = arr := rfl
 
 /--
+Reconstructing a twisted arrow object from its components gives the original.
+-/
+@[simp]
+lemma twObjMk'_twArr' (x : TwistedArrow' C) : twObjMk' (twArr' x) = x := rfl
+
+/--
 Construct a morphism in `TwistedArrow' C` from morphisms on domains and
 codomains.
 

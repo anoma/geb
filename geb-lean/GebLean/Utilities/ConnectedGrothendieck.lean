@@ -2,6 +2,7 @@ import GebLean.Utilities.Category
 import GebLean.Utilities.TwistedArrow
 import GebLean.Utilities.TwArrPresheaf
 import GebLean.Utilities.Grothendieck
+import GebLean.Utilities.Opposites
 
 /-!
 # The connected Grothendieck construction
@@ -45,6 +46,7 @@ An object of the connected Grothendieck construction `E(F)` consists of:
 - An arrow `f : a ⟶ b` in `C` (represented as an object of `TwistedArrow' C`)
 - An object `fiber` in the category `F(f)`
 -/
+@[ext]
 structure ConnGrothendieckObj where
   /-- The underlying arrow in `C`, as a twisted arrow object -/
   arrow : TwistedArrow' C
@@ -1806,15 +1808,137 @@ def fiberFunctor : C ⥤ Cat where
 The connected Grothendieck construction as a nested Grothendieck construction.
 For a functor `F : TwistedArrow C ⥤ Cat`, this defines:
 ```
-ConnectedGrothendieck' F = Grothendieck (fiberFunctor C F)
+ConnectedGrothendieck' F = Grothendieck (fiberFunctor C F ⋙ Cat.opFunctor')
 ```
 where `fiberFunctor C F : C ⥤ Cat` assigns to each `b : C` the Grothendieck
 construction of `F` restricted to the fiber over `b`.
+
+The post-composition with `Cat.opFunctor'` makes the domain arrows of
+the morphisms of the overall construction covariant.
 -/
-def ConnectedGrothendieck' : Type _ := Grothendieck (fiberFunctor C F)
+def ConnectedGrothendieck' : Type _ := Grothendieck (fiberFunctor C F ⋙ Cat.opFunctor')
 
 instance : Category (ConnectedGrothendieck' C F) :=
-  inferInstanceAs (Category (Grothendieck (fiberFunctor C F)))
+  inferInstanceAs (Category (Grothendieck (fiberFunctor C F ⋙ Cat.opFunctor')))
+
+/--
+Convert an object of `ConnectedGrothendieck'` to `ConnGrothendieckObj`.
+
+An object of `ConnectedGrothendieck'` is a nested Grothendieck pair:
+- Outer: `⟨b, x⟩` where `b : C` and `x : Grothendieck (restrictToFiber C F b)`
+- Inner: `x = ⟨ov, fiber⟩` where `ov : (Over b)ᵒᵖ'` and
+  `fiber : F.obj (twObjMk' ov.hom)`
+
+This corresponds to `ConnGrothendieckObj` with `arrow = twObjMk' ov.hom`.
+-/
+def connGrothendieckObjOfNested (x : ConnectedGrothendieck' C F) :
+    ConnGrothendieckObj C F where
+  arrow := twObjMk' x.fiber.base.hom
+  fiber := x.fiber.fiber
+
+/--
+Convert a `ConnGrothendieckObj` to an object of `ConnectedGrothendieck'`.
+
+Given `arrow : TwistedArrow' C` with `arrow = twObjMk' f` for `f : a ⟶ b`,
+we construct the nested Grothendieck pair:
+- Outer base: `b = twCod' arrow`
+- Inner base: `Over.mk f : Over b` (viewed in `(Over b)ᵒᵖ'`)
+- Fiber: transported from `F.obj arrow` to `F.obj (twObjMk' (Over.mk f).hom)`
+-/
+def connGrothendieckObjToNested (x : ConnGrothendieckObj C F) :
+    ConnectedGrothendieck' C F :=
+  ⟨twCod' x.arrow,
+   ⟨Over.mk (twArr' x.arrow),
+    (eqToHom (congrArg F.obj (twObjMk'_twArr' x.arrow).symm)).obj x.fiber⟩⟩
+
+/--
+The round-trip from nested to direct and back is the identity.
+-/
+theorem connGrothendieckObj_nested_roundtrip (x : ConnectedGrothendieck' C F) :
+    connGrothendieckObjToNested C F (connGrothendieckObjOfNested C F x) = x := by
+  simp only [connGrothendieckObjOfNested, connGrothendieckObjToNested]
+  rfl
+
+/--
+The round-trip from direct to nested and back is the identity.
+-/
+theorem connGrothendieckObj_direct_roundtrip (x : ConnGrothendieckObj C F) :
+    connGrothendieckObjOfNested C F (connGrothendieckObjToNested C F x) = x := by
+  simp only [connGrothendieckObjToNested, connGrothendieckObjOfNested]
+  ext
+  · -- Arrow: twObjMk' (Over.mk (twArr' x.arrow)).hom = x.arrow
+    simp only [Over.mk_hom]
+    exact twObjMk'_twArr' x.arrow
+  · -- Fiber: (eqToHom _).obj x.fiber ≍ x.fiber
+    simp only [Over.mk_hom]
+    exact eqToHom_obj_heq _ _ _ _
+
+/--
+The type of objects in `ConnectedGrothendieck'` is equivalent to
+`ConnGrothendieckObj`.
+-/
+def connGrothendieckObjEquiv :
+    ConnectedGrothendieck' C F ≃ ConnGrothendieckObj C F where
+  toFun := connGrothendieckObjOfNested C F
+  invFun := connGrothendieckObjToNested C F
+  left_inv := connGrothendieckObj_nested_roundtrip C F
+  right_inv := connGrothendieckObj_direct_roundtrip C F
+
+section MorphismComponents
+
+/-!
+## Morphism Components
+
+Morphisms in the connected Grothendieck construction have covariant domain and
+codomain arrows:
+- `domArr : a ⟶ a'`
+- `codArr : b ⟶ b'`
+- Square: `f ≫ codArr = domArr ≫ f'`
+
+The `Cat.opFunctor'` post-composition in `ConnectedGrothendieck'` ensures that
+the nested Grothendieck construction produces morphisms with these covariant
+arrows. The functions below extract the corresponding components.
+-/
+
+/--
+Extract the domain arrow from a morphism in `ConnectedGrothendieck'`.
+
+For a morphism `f : x ⟶ y` in `ConnectedGrothendieck'`:
+- The outer fiber `f.fiber` is a morphism in `(Grothendieck ...)ᵒᵖ'`
+- This corresponds to a `Grothendieck.Hom` from `y.fiber` to `transported(x.fiber)`
+- The inner base `f.fiber.base` is in `(Over y.base)ᵒᵖ'`
+- As an `Over.OverMorphism`, it goes from `transported(x.fiber).base` to `y.fiber.base`
+- So `f.fiber.base.left : x.fiber.base.left ⟶ y.fiber.base.left`
+-/
+def connGrothendieckHomDomArr {x y : ConnectedGrothendieck' C F}
+    (f : x ⟶ y) : x.fiber.base.left ⟶ y.fiber.base.left :=
+  f.fiber.base.left
+
+/--
+Extract the codomain arrow from a morphism in `ConnectedGrothendieck'`.
+
+This is simply the outer base morphism `f.base : x.base ⟶ y.base`.
+-/
+def connGrothendieckHomCodArr {x y : ConnectedGrothendieck' C F}
+    (f : x ⟶ y) : x.base ⟶ y.base :=
+  f.base
+
+/--
+The commuting square condition for morphisms in `ConnectedGrothendieck'`.
+
+For a morphism `f : x ⟶ y`, the `Over.w` condition on the inner morphism gives:
+  `x.fiber.base.hom ≫ codArr = domArr ≫ y.fiber.base.hom`
+
+This matches `ConnGrothendieckHom.square_comm`.
+-/
+theorem connGrothendieckMorphSquareComm {x y : ConnectedGrothendieck' C F}
+    (f : x ⟶ y) :
+    x.fiber.base.hom ≫ connGrothendieckHomCodArr C F f =
+      connGrothendieckHomDomArr C F f ≫ y.fiber.base.hom := by
+  simp only [connGrothendieckHomDomArr, connGrothendieckHomCodArr]
+  exact (Over.w f.fiber.base).symm
+
+end MorphismComponents
 
 end NestedGrothendieckApproach
 
