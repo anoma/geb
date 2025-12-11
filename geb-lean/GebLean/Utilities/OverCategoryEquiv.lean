@@ -373,6 +373,48 @@ def OverFunctorData.toFunctorData {Q₁ Q₂ : OverQuiver.{u}}
       exact hcomp
   }
 
+/-! ### Round-trip isomorphisms for FunctorData -/
+
+/-- The object map is preserved under the round-trip
+    FunctorData → OverFunctorData → FunctorData. -/
+theorem FunctorData.roundtrip_obj_eq (fd : FunctorData dataC dataD) :
+    fd.toOverFunctorData.toFunctorData.obj = fd.obj := rfl
+
+/-- The morphism map is preserved under the round-trip
+    FunctorData → OverFunctorData → FunctorData (up to fiber equivalence).
+    Given a morphism in the fiber, the round-trip functor maps it to a morphism
+    whose underlying sigma element matches the original functor's action. -/
+theorem FunctorData.roundtrip_map_val_eq (fd : FunctorData dataC dataD)
+    {a b : U} (f : hsC.toOverQuiver.toHomSet a b) :
+    (fd.toOverFunctorData.toFunctorData.map f).val =
+      ⟨fd.obj a, fd.obj b, fd.map (hsC.fiber_equiv a b f)⟩ := by
+  simp only [FunctorData.toOverFunctorData, OverFunctorData.toFunctorData,
+    OverFunctorData.toFunctorOps, OverFunctorData.extractMap,
+    FunctorOps.toOverQuiverMorphism, FunctorOps.toArrowHom,
+    OverQuiverMorphism.morFn, HomSet.fiber_equiv]
+  obtain ⟨⟨a', b', g⟩, ⟨ha, hb⟩⟩ := f
+  subst ha hb
+  rfl
+
+/-- The object function is preserved under the round-trip
+    OverFunctorData → FunctorData → OverFunctorData. -/
+theorem OverFunctorData.roundtrip_objFn_eq
+    {Q₁ Q₂ : OverQuiver.{u}}
+    {C₁ : OverCategoryData Q₁} {C₂ : OverCategoryData Q₂}
+    (F : OverFunctorData C₁ C₂) :
+    F.toFunctorData.toOverFunctorData.objFn = F.objFn := rfl
+
+/-- The morphism function is preserved under the round-trip
+    OverFunctorData → FunctorData → OverFunctorData (on fiber elements).
+    The underlying morphism value is preserved. -/
+theorem OverFunctorData.roundtrip_morFn_val_eq
+    {Q₁ Q₂ : OverQuiver.{u}}
+    {C₁ : OverCategoryData Q₁} {C₂ : OverCategoryData Q₂}
+    (F : OverFunctorData C₁ C₂)
+    {a b : Q₁.Obj} (f : Q₁.toHomSet a b) :
+    let f' : Q₁.toHomSet.SigmaMor := ⟨a, b, f⟩
+    (F.toFunctorData.toOverFunctorData.morFn f').2.2.val = F.morFn f.val := rfl
+
 end FunctorEquiv
 
 /-! ## Phase 4: Natural transformation equivalences -/
@@ -446,6 +488,36 @@ def OverNatTransData.toNatTransData {Q₁ Q₂ : OverQuiver.{u}}
       cases htgt
       exact hnat.symm
   }
+
+/-! ### Round-trip isomorphisms for NatTransData -/
+
+/-- The component is preserved under the round-trip
+    NatTransData → OverNatTransData → NatTransData (up to fiber equivalence).
+    The round-trip nat trans applies it to a fiber element
+    whose underlying sigma element matches the original component. -/
+theorem NatTransData.roundtrip_app_val_eq (α : NatTransData F G)
+    (a : U) :
+    (α.toOverNatTransData.toNatTransData.app a).val =
+      ⟨F.obj a, G.obj a, α.app a⟩ := rfl
+
+/-- The NatTransApp is preserved under the round-trip
+    NatTransData → OverNatTransData → NatTransData. -/
+theorem NatTransData.roundtrip_app_component_eq (α : NatTransData F G)
+    (a : U) :
+    α.toOverNatTransData.toNatTransData.app a =
+      ⟨⟨F.obj a, G.obj a, α.app a⟩, rfl, rfl⟩ := rfl
+
+/-- The component is preserved under the round-trip
+    OverNatTransData → NatTransData → OverNatTransData (on objects).
+    The underlying morphism value is preserved. -/
+theorem OverNatTransData.roundtrip_app_val_eq
+    {Q₁ Q₂ : OverQuiver.{u}}
+    {C₁ : OverCategoryData Q₁} {C₂ : OverCategoryData Q₂}
+    {F G : OverFunctorData C₁ C₂}
+    (η : OverNatTransData F G)
+    (a : Q₁.Obj) :
+    (η.toNatTransData.toOverNatTransData.componentHom.left a).2.2.val =
+      η.component a := rfl
 
 end NatTransEquiv
 

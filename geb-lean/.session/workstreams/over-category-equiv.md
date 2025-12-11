@@ -136,3 +136,18 @@ All four phases have been implemented in `GebLean/Utilities/OverCategoryEquiv.le
 - `NatTransData.toOverNatTransData`: Convert NatTransData to OverNatTransData
 - `OverNatTransData.extractApp`: Extract component to fiber HomSets
 - `OverNatTransData.toNatTransData`: Convert OverNatTransData to NatTransData
+
+### Round-trip isomorphisms
+The round-trip conversions preserve the underlying data, expressed via the
+fiber equivalences:
+
+**FunctorData round-trips:**
+- `FunctorData.roundtrip_obj_eq`: Object map preserved
+- `FunctorData.roundtrip_map_val_eq`: Morphism map preserved (up to fiber equiv)
+- `OverFunctorData.roundtrip_objFn_eq`: Object function preserved
+- `OverFunctorData.roundtrip_morFn_val_eq`: Morphism function preserved
+
+**NatTransData round-trips:**
+- `NatTransData.roundtrip_app_val_eq`: Component preserved (underlying sigma)
+- `NatTransData.roundtrip_app_component_eq`: Full component preserved
+- `OverNatTransData.roundtrip_app_val_eq`: Component preserved
