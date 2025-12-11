@@ -114,6 +114,18 @@ def OverQuiver.sigma_equiv :
     subst ha hb
     rfl
 
+/-- Direct round-trip from HomSet back to itself, using the fiber equivalence.
+    This avoids the universe bump: HomSet.{v+1, u} → OverQuiver → HomSet.{v+1, u}.
+    The intermediate OverQuiver has morphisms in Type (max u v), but the
+    equivalence projects back to the original Type v. -/
+def HomSet.roundtrip (a b : U) : hs a b ≃ hs a b :=
+  (hs.fiber_equiv a b).symm.trans (hs.fiber_equiv a b)
+
+/-- The round-trip is the identity equivalence. -/
+theorem HomSet.roundtrip_eq_refl (a b : U) :
+    hs.roundtrip a b = Equiv.refl (hs a b) := by
+  simp only [roundtrip, Equiv.symm_trans_self]
+
 end QuiverEquiv
 
 /-! ## Phase 2: Category-level equivalences -/
@@ -454,8 +466,9 @@ When `v ≥ u`, we have `max v u = v`, so the round-trip preserves universe leve
 - `BundledOverCategoryData.{v, u}` → `BundledCategoryData.{v, u}` (always)
 - `BundledCategoryData.{v, u}` → `BundledOverCategoryData.{v, u}` (when v ≥ u)
 
-The constraint `v ≥ u` is natural: it says morphism types are at least as large
-as object types, which holds for most categories of interest. -/
+However, for round-trips starting from BundledCategoryData, we can use the
+fiber equivalence `HomSet.fiber_equiv` to project back to the original
+universe level without any constraint. -/
 
 section BundledEquiv
 
@@ -479,6 +492,23 @@ def BundledCategoryData.toBundledOverCategoryData
     BundledOverCategoryData.{max v u, u} where
   quiver := C.Hom.toOverQuiver
   data := C.data.toOverCategoryData
+
+/-- Round-trip BundledCategoryData → BundledOverCategoryData → BundledCategoryData,
+    using fiber_equiv to project back to the original universe level.
+    This works for any universe parameters {v, u} without constraints. -/
+def BundledCategoryData.roundtripHomSet (C : BundledCategoryData.{v, u}) :
+    HomSet.{v + 1, u} C.Obj :=
+  fun a b => C.Hom a b
+
+/-- The round-trip HomSet equals the original. -/
+theorem BundledCategoryData.roundtripHomSet_eq (C : BundledCategoryData.{v, u}) :
+    C.roundtripHomSet = C.Hom := rfl
+
+/-- The round-trip via fiber_equiv gives an equivalence at each hom-set. -/
+def BundledCategoryData.roundtripEquiv (C : BundledCategoryData.{v, u})
+    (a b : C.Obj) :
+    C.toBundledOverCategoryData.toBundledCategoryData.Hom a b ≃ C.Hom a b :=
+  C.Hom.fiber_equiv a b
 
 end BundledEquiv
 
