@@ -35,22 +35,19 @@ namespace GebLean
 
 open CategoryTheory
 
-universe u
+universe v u
 
-/-! ## Phase 1: Quiver-level equivalences
-
-We work in a single universe `u` for simplicity. The object type and morphism
-types are all in `Type u`. -/
+/-! ## Phase 1: Quiver-level equivalences -/
 
 section QuiverEquiv
 
-variable {U : Type u} (hs : HomSet.{u + 1, u} U)
+variable {U : Type u} (hs : HomSet.{v + 1, u} U)
 
 /-! ### From HomSet to OverQuiver -/
 
 /-- The sigma type bundling all morphisms from a HomSet into a single type.
     This is the total space of the morphism family. -/
-abbrev HomSet.SigmaMor : Type u := Σ (a b : U), hs a b
+abbrev HomSet.SigmaMor : Type (max u v) := Σ (a b : U), hs a b
 
 /-- The endpoint projection from the sigma type to pairs of objects. -/
 def HomSet.sigmaEndpoints : hs.SigmaMor → U × U :=
@@ -59,7 +56,7 @@ def HomSet.sigmaEndpoints : hs.SigmaMor → U × U :=
 /-- Bundle morphisms from a HomSet into an OverQuiver.
     The morphism type is the sigma of all hom-sets, with explicit
     source and target projections. -/
-def HomSet.toOverQuiver : OverQuiver.{u, u} where
+def HomSet.toOverQuiver : OverQuiver.{max u v, u} where
   Obj := U
   MorType := hs.SigmaMor
   src := fun ⟨a, _, _⟩ => a
@@ -78,11 +75,11 @@ theorem HomSet.toOverQuiver_tgt (m : hs.SigmaMor) :
 
 /-! ### From OverQuiver to HomSet -/
 
-variable (Q : OverQuiver.{u, u})
+variable (Q : OverQuiver.{v, u})
 
 /-- Extract fibers from an OverQuiver as a HomSet.
     The hom-set from `a` to `b` is the fiber of the endpoint map over `(a, b)`. -/
-def OverQuiver.toHomSet : HomSet.{u + 1, u} Q.Obj :=
+def OverQuiver.toHomSet : HomSet.{v + 1, u} Q.Obj :=
   fun a b => { f : Q.MorType // Q.src f = a ∧ Q.tgt f = b }
 
 /-- A morphism in the fiber with its source proof. -/
@@ -123,17 +120,17 @@ end QuiverEquiv
 
 section CategoryEquiv
 
-variable {U : Type u} {hs : HomSet.{u + 1, u} U}
+variable {U : Type u} {hs : HomSet.{v + 1, u} U}
 
 /-! ### From CategoryData to OverCategoryData -/
 
 /-- Helper: extract the composability equation in explicit form. -/
-theorem HomSet.compPair_mid_eq (hs : HomSet.{u + 1, u} U)
+theorem HomSet.compPair_mid_eq (hs : HomSet.{v + 1, u} U)
     (p : hs.toOverQuiver.ComposablePairsType) :
     p.val.1.2.1 = p.val.2.1 := p.property
 
 /-- Helper lemma for sigma equality. -/
-theorem HomSet.sigma_eq {U : Type u} {hs : HomSet.{u + 1, u} U}
+theorem HomSet.sigma_eq {U : Type u} {hs : HomSet.{v + 1, u} U}
     {a₁ a₂ b₁ b₂ : U} {f₁ : hs a₁ b₁} {f₂ : hs a₂ b₂}
     (ha : a₁ = a₂) (hb : b₁ = b₂) (hf : ha ▸ hb ▸ f₁ = f₂) :
     (⟨a₁, b₁, f₁⟩ : hs.SigmaMor) = ⟨a₂, b₂, f₂⟩ := by
@@ -179,14 +176,14 @@ def CategoryData.toOverCategoryData (data : CategoryData U hs) :
 /-! ### From OverCategoryData to CategoryData -/
 
 /-- Extract identity morphism from an OverCategoryData. -/
-def OverCategoryData.extractId {Q : OverQuiver.{u, u}}
+def OverCategoryData.extractId {Q : OverQuiver.{v, u}}
     (data : OverCategoryData Q) (a : Q.Obj) : Q.toHomSet a a :=
   ⟨data.idFn a, data.id_src a, data.id_tgt a⟩
 
 /-- Extract composition from an OverCategoryData.
     Given morphisms f : a → b and g : b → c in the fiber HomSet,
     produce their composite f ≫ g : a → c. -/
-def OverCategoryData.extractComp {Q : OverQuiver.{u, u}}
+def OverCategoryData.extractComp {Q : OverQuiver.{v, u}}
     (data : OverCategoryData Q) {a b c : Q.Obj}
     (f : Q.toHomSet a b) (g : Q.toHomSet b c) : Q.toHomSet a c :=
   let fval := f.val
@@ -197,13 +194,13 @@ def OverCategoryData.extractComp {Q : OverQuiver.{u, u}}
    (data.comp_tgt ⟨(fval, gval), composable⟩).trans g.property.2⟩
 
 /-- Convert OverCategoryData to CategoryOps on the fiber HomSet. -/
-def OverCategoryData.toCategoryOps {Q : OverQuiver.{u, u}}
+def OverCategoryData.toCategoryOps {Q : OverQuiver.{v, u}}
     (data : OverCategoryData Q) : CategoryOps Q.toHomSet where
   comp := fun f g => data.extractComp f g
   id := fun a => data.extractId a
 
 /-- Convert OverCategoryData to CategoryData on the fiber HomSet. -/
-def OverCategoryData.toCategoryData {Q : OverQuiver.{u, u}}
+def OverCategoryData.toCategoryData {Q : OverQuiver.{v, u}}
     (data : OverCategoryData Q) : CategoryData Q.Obj Q.toHomSet where
   toCategoryOps := data.toCategoryOps
   laws := {
@@ -237,7 +234,7 @@ end CategoryEquiv
 section FunctorEquiv
 
 variable {U : Type u} {V : Type u}
-variable {hsC : HomSet.{u + 1, u} U} {hsD : HomSet.{u + 1, u} V}
+variable {hsC : HomSet.{v + 1, u} U} {hsD : HomSet.{v + 1, u} V}
 variable {dataC : CategoryData U hsC} {dataD : CategoryData V hsD}
 
 /-! ### From FunctorData to OverFunctorData -/
@@ -272,13 +269,13 @@ def FunctorData.toOverFunctorData (fd : FunctorData dataC dataD) :
 /-! ### From OverFunctorData to FunctorData -/
 
 /-- Extract the object map from an OverFunctorData. -/
-def OverFunctorData.extractObj {Q₁ Q₂ : OverQuiver.{u, u}}
+def OverFunctorData.extractObj {Q₁ Q₂ : OverQuiver.{v, u}}
     {C₁ : OverCategoryData Q₁} {C₂ : OverCategoryData Q₂}
     (F : OverFunctorData C₁ C₂) : Q₁.Obj → Q₂.Obj :=
   F.objFn
 
 /-- Extract the morphism map from an OverFunctorData to fiber HomSets. -/
-def OverFunctorData.extractMap {Q₁ Q₂ : OverQuiver.{u, u}}
+def OverFunctorData.extractMap {Q₁ Q₂ : OverQuiver.{v, u}}
     {C₁ : OverCategoryData Q₁} {C₂ : OverCategoryData Q₂}
     (F : OverFunctorData C₁ C₂) {a b : Q₁.Obj}
     (f : Q₁.toHomSet a b) : Q₂.toHomSet (F.objFn a) (F.objFn b) :=
@@ -287,14 +284,14 @@ def OverFunctorData.extractMap {Q₁ Q₂ : OverQuiver.{u, u}}
    (F.tgt_comm f.val).trans (congrArg F.objFn f.property.2)⟩
 
 /-- Convert OverFunctorData to FunctorOps on fiber HomSets. -/
-def OverFunctorData.toFunctorOps {Q₁ Q₂ : OverQuiver.{u, u}}
+def OverFunctorData.toFunctorOps {Q₁ Q₂ : OverQuiver.{v, u}}
     {C₁ : OverCategoryData Q₁} {C₂ : OverCategoryData Q₂}
     (F : OverFunctorData C₁ C₂) : FunctorOps Q₁.toHomSet Q₂.toHomSet where
   obj := F.extractObj
   map := fun f => F.extractMap f
 
 /-- Convert OverFunctorData to FunctorData on fiber HomSets. -/
-def OverFunctorData.toFunctorData {Q₁ Q₂ : OverQuiver.{u, u}}
+def OverFunctorData.toFunctorData {Q₁ Q₂ : OverQuiver.{v, u}}
     {C₁ : OverCategoryData Q₁} {C₂ : OverCategoryData Q₂}
     (F : OverFunctorData C₁ C₂) :
     FunctorData C₁.toCategoryData C₂.toCategoryData where
@@ -337,7 +334,7 @@ theorem FunctorData.roundtrip_map_val_eq (fd : FunctorData dataC dataD)
 /-- The object function is preserved under the round-trip
     OverFunctorData → FunctorData → OverFunctorData. -/
 theorem OverFunctorData.roundtrip_objFn_eq
-    {Q₁ Q₂ : OverQuiver.{u, u}}
+    {Q₁ Q₂ : OverQuiver.{v, u}}
     {C₁ : OverCategoryData Q₁} {C₂ : OverCategoryData Q₂}
     (F : OverFunctorData C₁ C₂) :
     F.toFunctorData.toOverFunctorData.objFn = F.objFn := rfl
@@ -346,7 +343,7 @@ theorem OverFunctorData.roundtrip_objFn_eq
     OverFunctorData → FunctorData → OverFunctorData (on fiber elements).
     The underlying morphism value is preserved. -/
 theorem OverFunctorData.roundtrip_morFn_val_eq
-    {Q₁ Q₂ : OverQuiver.{u, u}}
+    {Q₁ Q₂ : OverQuiver.{v, u}}
     {C₁ : OverCategoryData Q₁} {C₂ : OverCategoryData Q₂}
     (F : OverFunctorData C₁ C₂)
     {a b : Q₁.Obj} (f : Q₁.toHomSet a b) :
@@ -360,7 +357,7 @@ end FunctorEquiv
 section NatTransEquiv
 
 variable {U : Type u} {V : Type u}
-variable {hsC : HomSet.{u + 1, u} U} {hsD : HomSet.{u + 1, u} V}
+variable {hsC : HomSet.{v + 1, u} U} {hsD : HomSet.{v + 1, u} V}
 variable {dataC : CategoryData U hsC} {dataD : CategoryData V hsD}
 variable {F G : FunctorData dataC dataD}
 
@@ -380,7 +377,7 @@ def NatTransData.toOverNatTransData (α : NatTransData F G) :
 /-! ### From OverNatTransData to NatTransData -/
 
 /-- Extract the component from an OverNatTransData to fiber HomSets. -/
-def OverNatTransData.extractApp {Q₁ Q₂ : OverQuiver.{u, u}}
+def OverNatTransData.extractApp {Q₁ Q₂ : OverQuiver.{v, u}}
     {C₁ : OverCategoryData Q₁} {C₂ : OverCategoryData Q₂}
     {F G : OverFunctorData C₁ C₂}
     (η : OverNatTransData F G) (a : Q₁.Obj) :
@@ -388,7 +385,7 @@ def OverNatTransData.extractApp {Q₁ Q₂ : OverQuiver.{u, u}}
   ⟨η.component a, η.comp_src a, η.comp_tgt a⟩
 
 /-- Convert OverNatTransData to NatTransData on fiber HomSets. -/
-def OverNatTransData.toNatTransData {Q₁ Q₂ : OverQuiver.{u, u}}
+def OverNatTransData.toNatTransData {Q₁ Q₂ : OverQuiver.{v, u}}
     {C₁ : OverCategoryData Q₁} {C₂ : OverCategoryData Q₂}
     {F G : OverFunctorData C₁ C₂}
     (η : OverNatTransData F G) :
@@ -429,7 +426,7 @@ theorem NatTransData.roundtrip_app_component_eq (α : NatTransData F G)
     OverNatTransData → NatTransData → OverNatTransData (on objects).
     The underlying morphism value is preserved. -/
 theorem OverNatTransData.roundtrip_component_eq
-    {Q₁ Q₂ : OverQuiver.{u, u}}
+    {Q₁ Q₂ : OverQuiver.{v, u}}
     {C₁ : OverCategoryData Q₁} {C₂ : OverCategoryData Q₂}
     {F G : OverFunctorData C₁ C₂}
     (η : OverNatTransData F G)
@@ -442,39 +439,138 @@ end NatTransEquiv
 /-! ## Bundled Category Equivalences
 
 Conversions between BundledOverCategoryData and BundledCategoryData,
-establishing equivalences between the two representations. -/
+establishing equivalences between the two representations.
+
+Universe level behavior:
+- `OverQuiver.{v, u}` has `MorType : Type v` and `Obj : Type u`
+- `OverQuiver.toHomSet` produces `HomSet.{v + 1, u}` (fibers are subtypes)
+- `HomSet.{w, u}` has `hs a b : Type (w - 1)` for morphisms
+- `HomSet.toOverQuiver` produces `OverQuiver.{max (w - 1) u, u}`
+
+For clean round-trips, we work in the case `v = u` where universe levels align. -/
 
 section BundledEquiv
 
-/-- Convert a BundledOverCategoryData to a BundledCategoryData. -/
+/-- Convert a BundledOverCategoryData to a BundledCategoryData.
+    An OverQuiver.{v, u} produces a HomSet.{v + 1, u} via toHomSet, which
+    corresponds to BundledCategoryData.{v, u} (since Hom : HomSet.{v + 1, u}). -/
 def BundledOverCategoryData.toBundledCategoryData
-    (C : BundledOverCategoryData.{u, u}) :
-    BundledCategoryData.{u, u} where
+    (C : BundledOverCategoryData.{v, u}) :
+    BundledCategoryData.{v, u} where
   Obj := C.quiver.Obj
   Hom := C.quiver.toHomSet
   data := C.data.toCategoryData
 
 /-- Convert a BundledCategoryData to a BundledOverCategoryData.
-    Note: This requires the HomSet to be in Type u (not Sort). -/
+    A BundledCategoryData.{v, u} has HomSet.{v + 1, u} with morphisms in Type v.
+    The sigma type SigmaMor lives in Type (max v u), giving
+    OverQuiver.{max v u, u}. -/
 def BundledCategoryData.toBundledOverCategoryData
-    (C : BundledCategoryData.{u, u}) :
-    BundledOverCategoryData.{u, u} where
+    (C : BundledCategoryData.{v, u}) :
+    BundledOverCategoryData.{max v u, u} where
   quiver := C.Hom.toOverQuiver
   data := C.data.toOverCategoryData
 
-/-- Round-trip BundledCategoryData → BundledOverCategoryData →
-    BundledCategoryData preserves the object type. -/
-theorem BundledCategoryData.roundtrip_Obj_eq
-    (C : BundledCategoryData.{u, u}) :
-    C.toBundledOverCategoryData.toBundledCategoryData.Obj = C.Obj := rfl
-
-/-- Round-trip BundledOverCategoryData → BundledCategoryData →
-    BundledOverCategoryData preserves the object type. -/
-theorem BundledOverCategoryData.roundtrip_Obj_eq
-    (C : BundledOverCategoryData.{u, u}) :
-    C.toBundledCategoryData.toBundledOverCategoryData.quiver.Obj =
-      C.quiver.Obj := rfl
-
 end BundledEquiv
+
+/-! ## Categorical Equivalence
+
+We now establish that the conversion functors between BundledOverCategoryData
+and BundledCategoryData form a categorical equivalence. Due to universe level
+constraints, we work in the case where v = u for clean round-trips. -/
+
+section CategoricalEquiv
+
+/-! ### Functoriality of the conversions
+
+The conversions toBundledCategoryData and toBundledOverCategoryData are
+functorial: they map functors to functors and preserve identity and
+composition. -/
+
+/-- The conversion `toBundledCategoryData` maps OverFunctorData to FunctorData.
+    This gives the morphism part of the functor. -/
+def toBundledCategoryData_map {C D : BundledOverCategoryData.{u, u}}
+    (F : OverFunctorData C.data D.data) :
+    FunctorData C.toBundledCategoryData.data D.toBundledCategoryData.data :=
+  F.toFunctorData
+
+/-- The conversion toBundledCategoryData preserves identity functors. -/
+theorem toBundledCategoryData_map_id (C : BundledOverCategoryData.{u, u}) :
+    toBundledCategoryData_map (OverFunctorData.id C.data) =
+      BundledCategoryData.idFunctorData C.toBundledCategoryData := by
+  simp only [toBundledCategoryData_map, OverFunctorData.toFunctorData,
+    OverFunctorData.toFunctorOps, OverFunctorData.extractObj,
+    OverFunctorData.extractMap, OverFunctorData.id,
+    OverQuiverMorphism.id, BundledCategoryData.idFunctorData]
+  rfl
+
+/-- The conversion toBundledCategoryData preserves functor composition. -/
+theorem toBundledCategoryData_map_comp {C D E : BundledOverCategoryData.{u, u}}
+    (F : OverFunctorData C.data D.data) (G : OverFunctorData D.data E.data) :
+    toBundledCategoryData_map (F.comp G) =
+      (toBundledCategoryData_map F).comp (toBundledCategoryData_map G) := by
+  simp only [toBundledCategoryData_map, OverFunctorData.toFunctorData,
+    OverFunctorData.toFunctorOps, OverFunctorData.extractObj,
+    OverFunctorData.extractMap, OverFunctorData.comp,
+    OverQuiverMorphism.comp, FunctorData.comp, FunctorOps.comp]
+  rfl
+
+/-- FunctorData for the conversion functor from BundledOverCategoryData to
+    BundledCategoryData. -/
+def toBundledCategoryDataFunctorData :
+    FunctorData BundledOverCategoryData.categoryData.{u, u}
+      BundledCategoryData.categoryData.{u, u} where
+  toFunctorOps := {
+    obj := BundledOverCategoryData.toBundledCategoryData
+    map := toBundledCategoryData_map
+  }
+  laws := {
+    map_id := toBundledCategoryData_map_id
+    map_comp := fun F G => toBundledCategoryData_map_comp F G
+  }
+
+/-- The conversion `toBundledOverCategoryData` maps FunctorData to
+    OverFunctorData. This gives the morphism part of the functor. -/
+def toBundledOverCategoryData_map {C D : BundledCategoryData.{u, u}}
+    (F : FunctorData C.data D.data) :
+    OverFunctorData C.toBundledOverCategoryData.data
+      D.toBundledOverCategoryData.data :=
+  F.toOverFunctorData
+
+/-- The conversion toBundledOverCategoryData preserves identity functors. -/
+theorem toBundledOverCategoryData_map_id (C : BundledCategoryData.{u, u}) :
+    toBundledOverCategoryData_map (BundledCategoryData.idFunctorData C) =
+      OverFunctorData.id C.toBundledOverCategoryData.data := by
+  simp only [toBundledOverCategoryData_map, FunctorData.toOverFunctorData,
+    FunctorOps.toOverQuiverMorphism, BundledCategoryData.idFunctorData,
+    OverFunctorData.id, OverQuiverMorphism.id]
+  rfl
+
+/-- The conversion toBundledOverCategoryData preserves functor composition. -/
+theorem toBundledOverCategoryData_map_comp {C D E : BundledCategoryData.{u, u}}
+    (F : FunctorData C.data D.data) (G : FunctorData D.data E.data) :
+    toBundledOverCategoryData_map (F.comp G) =
+      (toBundledOverCategoryData_map F).comp
+        (toBundledOverCategoryData_map G) := by
+  simp only [toBundledOverCategoryData_map, FunctorData.toOverFunctorData,
+    FunctorOps.toOverQuiverMorphism, FunctorData.comp, FunctorOps.comp,
+    OverFunctorData.comp, OverQuiverMorphism.comp]
+  rfl
+
+/-- FunctorData for the conversion functor from BundledCategoryData to
+    BundledOverCategoryData. -/
+def toBundledOverCategoryDataFunctorData :
+    FunctorData BundledCategoryData.categoryData.{u, u}
+      BundledOverCategoryData.categoryData.{u, u} where
+  toFunctorOps := {
+    obj := BundledCategoryData.toBundledOverCategoryData
+    map := toBundledOverCategoryData_map
+  }
+  laws := {
+    map_id := toBundledOverCategoryData_map_id
+    map_comp := fun F G => toBundledOverCategoryData_map_comp F G
+  }
+
+end CategoricalEquiv
 
 end GebLean

@@ -198,4 +198,47 @@ Analogous to `BundledCategoryData`:
 - [x] 5a: OverNatTransData operations
 - [x] 5b: OverFunctor category structure
 - [x] 5c: BundledOverCategoryData and its category
-- [x] 5d: Categorical equivalences
+- [x] 5d: Categorical equivalences (partial - see Phase 6)
+
+## Phase 6: Universe Generalization and Full Categorical Equivalence
+
+### 6a. Universe Generalization
+
+The structures now use two independent universe parameters:
+- `OverQuiver.{v, u}` has `Obj : Type u` and `MorType : Type v`
+- `OverCategoryData`, `OverFunctorData`, `OverNatTransData` all work with
+  `OverQuiver.{v, u}`
+- `BundledOverCategoryData.{v, u}` bundles `OverQuiver.{v, u}` with category data
+
+Universe level behavior for conversions:
+- `OverQuiver.{v, u}.toHomSet` produces `HomSet.{v + 1, u}`
+- `HomSet.{v + 1, u}.toOverQuiver` produces `OverQuiver.{max v u, u}`
+- `BundledOverCategoryData.{v, u}.toBundledCategoryData` produces
+  `BundledCategoryData.{v, u}`
+- `BundledCategoryData.{v, u}.toBundledOverCategoryData` produces
+  `BundledOverCategoryData.{max v u, u}`
+
+For clean round-trips, we work with `v = u`.
+
+### 6b. Conversion Functors
+
+The conversions are functorial:
+
+**BundledOverCategoryData → BundledCategoryData:**
+- `toBundledCategoryData_map`: Maps OverFunctorData to FunctorData
+- `toBundledCategoryData_map_id`: Preserves identity
+- `toBundledCategoryData_map_comp`: Preserves composition
+- `toBundledCategoryDataFunctorData`: The functor (for `{u, u}`)
+
+**BundledCategoryData → BundledOverCategoryData:**
+- `toBundledOverCategoryData_map`: Maps FunctorData to OverFunctorData
+- `toBundledOverCategoryData_map_id`: Preserves identity
+- `toBundledOverCategoryData_map_comp`: Preserves composition
+- `toBundledOverCategoryDataFunctorData`: The functor (for `{u, u}`)
+
+### Status (Phase 6)
+
+- [x] 6a: Universe generalization
+- [x] 6b: Conversion functors
+- [ ] 6c: Natural isomorphisms for round-trips
+- [ ] 6d: Full categorical equivalence proof
