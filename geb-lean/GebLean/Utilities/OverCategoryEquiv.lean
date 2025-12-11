@@ -521,4 +521,42 @@ theorem OverNatTransData.roundtrip_app_val_eq
 
 end NatTransEquiv
 
+/-! ## Bundled Category Equivalences
+
+Conversions between BundledOverCategoryData and BundledCategoryData,
+establishing equivalences between the two representations. -/
+
+section BundledEquiv
+
+/-- Convert a BundledOverCategoryData to a BundledCategoryData. -/
+def BundledOverCategoryData.toBundledCategoryData
+    (C : BundledOverCategoryData.{u}) :
+    BundledCategoryData.{u, u} where
+  Obj := C.quiver.Obj
+  Hom := C.quiver.toHomSet
+  data := C.data.toCategoryData
+
+/-- Convert a BundledCategoryData to a BundledOverCategoryData.
+    Note: This requires the HomSet to be in Type u (not Sort). -/
+def BundledCategoryData.toBundledOverCategoryData
+    (C : BundledCategoryData.{u, u}) :
+    BundledOverCategoryData.{u} where
+  quiver := C.Hom.toOverQuiver
+  data := C.data.toOverCategoryData
+
+/-- Round-trip BundledCategoryData → BundledOverCategoryData →
+    BundledCategoryData preserves the object type. -/
+theorem BundledCategoryData.roundtrip_Obj_eq
+    (C : BundledCategoryData.{u, u}) :
+    C.toBundledOverCategoryData.toBundledCategoryData.Obj = C.Obj := rfl
+
+/-- Round-trip BundledOverCategoryData → BundledCategoryData →
+    BundledOverCategoryData preserves the object type. -/
+theorem BundledOverCategoryData.roundtrip_Obj_eq
+    (C : BundledOverCategoryData.{u}) :
+    C.toBundledCategoryData.toBundledOverCategoryData.quiver.Obj =
+      C.quiver.Obj := rfl
+
+end BundledEquiv
+
 end GebLean

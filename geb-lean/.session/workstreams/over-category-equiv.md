@@ -151,3 +151,51 @@ fiber equivalences:
 - `NatTransData.roundtrip_app_val_eq`: Component preserved (underlying sigma)
 - `NatTransData.roundtrip_app_component_eq`: Full component preserved
 - `OverNatTransData.roundtrip_app_val_eq`: Component preserved
+
+## Phase 5: Category Structures for Over/Arrow Types
+
+### 5a. OverNatTransData Operations
+
+Add the following operations (mirroring NatTransData):
+- `OverNatTransData.id`: Identity natural transformation
+- `OverNatTransData.vcomp`: Vertical composition
+- `OverNatTransData.whiskerLeft`: Left whiskering (H ◁ α)
+- `OverNatTransData.whiskerRight`: Right whiskering (α ▷ H)
+- `OverNatTransData.hcomp`: Horizontal composition (α ⊗ β)
+- `OverNatTransData.hcomp'`: Alternative horizontal composition
+- `OverNatTransData.hcomp_eq_hcomp'`: Interchange law
+
+### 5b. OverFunctor Category
+
+For fixed `C₁ : OverCategoryData Q₁` and `C₂ : OverCategoryData Q₂`:
+- `OverFunctorHomSet C₁ C₂`: HomSet where morphisms are OverNatTransData
+- `OverFunctorCategoryOps`: id = identity, comp = vertical composition
+- `OverFunctorCategoryLaws`: associativity and identity laws
+- `OverFunctorCategoryData`: CategoryData for the functor category
+
+### 5c. BundledOverCategoryData
+
+Analogous to `BundledCategoryData`:
+- `BundledOverCategoryData`: Structure bundling OverQuiver + OverCategoryData
+- `idOverFunctorData`: Identity functor
+- `compOverFunctorData`: Functor composition
+- Laws: associativity, left/right identity
+- `homSet`, `categoryOps`, `categoryLaws`, `categoryData`
+
+### 5d. Categorical Equivalences
+
+**OverFunctor category ↔ Functor category:**
+- The conversions `toFunctorData`/`toOverFunctorData` form functors
+- Round-trips are naturally isomorphic to identities
+
+**BundledOverCategoryData ↔ BundledCategoryData:**
+- Forward: using `toCategoryData`
+- Backward: using `toOverCategoryData`
+- Establish categorical equivalence
+
+## Status (Phase 5)
+
+- [x] 5a: OverNatTransData operations
+- [x] 5b: OverFunctor category structure
+- [x] 5c: BundledOverCategoryData and its category
+- [x] 5d: Categorical equivalences

@@ -2036,6 +2036,7 @@ theorem OverFunctorData.componentHom_tgt {Q₁ Q₂ : OverQuiver.{uOver}}
 
 /-- Natural transformation data between two OverFunctors.
     The component is encoded as an Over morphism, absorbing endpoint constraints. -/
+@[ext]
 structure OverNatTransData {Q₁ Q₂ : OverQuiver.{uOver}}
     {C₁ : OverCategoryData Q₁} {C₂ : OverCategoryData Q₂}
     (F G : OverFunctorData C₁ C₂) where
@@ -2072,7 +2073,354 @@ theorem comp_tgt (η : OverNatTransData F G) (a : Q₁.Obj) :
 
 end OverNatTransData
 
+/-! ### OverFunctorData Composition -/
+
+/-- Composition of OverFunctorData. -/
+def OverFunctorData.comp {Q₁ Q₂ Q₃ : OverQuiver.{uOver}}
+    {C₁ : OverCategoryData Q₁} {C₂ : OverCategoryData Q₂} {C₃ : OverCategoryData Q₃}
+    (F : OverFunctorData C₁ C₂) (G : OverFunctorData C₂ C₃) :
+    OverFunctorData C₁ C₃ where
+  toOverQuiverMorphism := F.toOverQuiverMorphism.comp G.toOverQuiverMorphism
+  map_id := fun a => by
+    change G.morFn (F.morFn (C₁.idFn a)) = C₃.idFn (G.objFn (F.objFn a))
+    rw [F.map_id, G.map_id]
+  map_comp := fun p => by
+    change G.morFn (F.morFn (C₁.compFn p)) =
+      C₃.compFn ⟨(G.morFn (F.morFn p.val.1), G.morFn (F.morFn p.val.2)), _⟩
+    rw [F.map_comp, G.map_comp]
+
+/-- Identity OverFunctorData. -/
+def OverFunctorData.id {Q : OverQuiver.{uOver}} (C : OverCategoryData Q) :
+    OverFunctorData C C where
+  toOverQuiverMorphism := OverQuiverMorphism.id Q
+  map_id := fun _ => rfl
+  map_comp := fun _ => rfl
+
+/-! ### OverNatTransData Operations -/
+
+namespace OverNatTransData
+
+variable {Q₁ Q₂ Q₃ : OverQuiver.{uOver}}
+variable {C₁ : OverCategoryData Q₁} {C₂ : OverCategoryData Q₂}
+variable {C₃ : OverCategoryData Q₃}
+
+/-- The componentOver type for identity natural transformation. -/
+def idComponentOver (F : OverFunctorData C₁ C₂) : Over (Q₂.Obj × Q₂.Obj) :=
+  Over.mk (fun a : Q₁.Obj => (F.objFn a, F.objFn a))
+
+/-- The identity natural transformation. -/
+def id (F : OverFunctorData C₁ C₂) : OverNatTransData F F where
+  componentHom := Over.homMk (fun a => C₂.idFn (F.objFn a)) (by
+    funext a
+    simp only [types_comp_apply, OverFunctorData.componentOver]
+    exact Prod.ext (C₂.id_src (F.objFn a)) (C₂.id_tgt (F.objFn a)))
+  naturality := fun f => by
+    simp only [Over.homMk_left]
+    have hsrc := F.src_comm f
+    have htgt := F.tgt_comm f
+    have h1 : C₂.compFn ⟨(C₂.idFn (Q₂.src (F.morFn f)), F.morFn f), _⟩ = F.morFn f :=
+      C₂.id_comp (F.morFn f)
+    have h2 : C₂.compFn ⟨(F.morFn f, C₂.idFn (Q₂.tgt (F.morFn f))), _⟩ = F.morFn f :=
+      C₂.comp_id (F.morFn f)
+    simp only [hsrc, htgt] at h1 h2
+    convert h1.trans h2.symm using 2
+
+/-- Vertical composition of natural transformations. -/
+def vcomp {F G H : OverFunctorData C₁ C₂}
+    (α : OverNatTransData F G) (β : OverNatTransData G H) :
+    OverNatTransData F H where
+  componentHom := Over.homMk
+    (fun a => C₂.compFn ⟨(α.component a, β.component a),
+      (α.comp_tgt a).trans (β.comp_src a).symm⟩)
+    (by
+      funext a
+      simp only [types_comp_apply, OverFunctorData.componentOver, OverCategoryOps.compFn]
+      exact Prod.ext ((C₂.comp_src _).trans (α.comp_src a))
+                     ((C₂.comp_tgt _).trans (β.comp_tgt a)))
+  naturality := fun f => by
+    simp only [Over.homMk_left, component]
+    have hα := α.naturality f
+    have hβ := β.naturality f
+    have comp_αβ_src : Q₂.Composable (α.componentHom.left (Q₁.src f))
+        (β.componentHom.left (Q₁.src f)) :=
+      (α.comp_tgt (Q₁.src f)).trans (β.comp_src (Q₁.src f)).symm
+    have comp_αβ_tgt : Q₂.Composable (α.componentHom.left (Q₁.tgt f))
+        (β.componentHom.left (Q₁.tgt f)) :=
+      (α.comp_tgt (Q₁.tgt f)).trans (β.comp_src (Q₁.tgt f)).symm
+    have comp_βH : Q₂.Composable (β.componentHom.left (Q₁.src f)) (H.morFn f) :=
+      (β.comp_tgt (Q₁.src f)).trans (H.src_comm f).symm
+    have comp_αGf : Q₂.Composable (α.componentHom.left (Q₁.src f)) (G.morFn f) :=
+      (α.comp_tgt (Q₁.src f)).trans (G.src_comm f).symm
+    have comp_Gfβ : Q₂.Composable (G.morFn f) (β.componentHom.left (Q₁.tgt f)) :=
+      (G.tgt_comm f).trans (β.comp_src (Q₁.tgt f)).symm
+    have comp_Ffα : Q₂.Composable (F.morFn f) (α.componentHom.left (Q₁.tgt f)) :=
+      (F.tgt_comm f).trans (α.comp_src (Q₁.tgt f)).symm
+    have assoc1 := C₂.assoc ⟨(α.componentHom.left (Q₁.src f),
+      β.componentHom.left (Q₁.src f), H.morFn f), comp_αβ_src, comp_βH⟩
+    have assoc2 := C₂.assoc ⟨(α.componentHom.left (Q₁.src f),
+      G.morFn f, β.componentHom.left (Q₁.tgt f)), comp_αGf, comp_Gfβ⟩
+    have assoc3 := C₂.assoc ⟨(F.morFn f, α.componentHom.left (Q₁.tgt f),
+      β.componentHom.left (Q₁.tgt f)), comp_Ffα, comp_αβ_tgt⟩
+    simp only at assoc1 assoc2 assoc3
+    have step1 : C₂.compFn ⟨(C₂.compFn ⟨(α.componentHom.left (Q₁.src f),
+        β.componentHom.left (Q₁.src f)), comp_αβ_src⟩, H.morFn f), _⟩ =
+        C₂.compFn ⟨(α.componentHom.left (Q₁.src f),
+        C₂.compFn ⟨(β.componentHom.left (Q₁.src f), H.morFn f), comp_βH⟩), _⟩ := assoc1
+    have step2 : C₂.compFn ⟨(β.componentHom.left (Q₁.src f), H.morFn f), comp_βH⟩ =
+        C₂.compFn ⟨(G.morFn f, β.componentHom.left (Q₁.tgt f)), comp_Gfβ⟩ := hβ
+    have step3 : C₂.compFn ⟨(α.componentHom.left (Q₁.src f),
+        C₂.compFn ⟨(G.morFn f, β.componentHom.left (Q₁.tgt f)), comp_Gfβ⟩), _⟩ =
+        C₂.compFn ⟨(C₂.compFn ⟨(α.componentHom.left (Q₁.src f), G.morFn f), comp_αGf⟩,
+        β.componentHom.left (Q₁.tgt f)), _⟩ := assoc2.symm
+    have step4 : C₂.compFn ⟨(α.componentHom.left (Q₁.src f), G.morFn f), comp_αGf⟩ =
+        C₂.compFn ⟨(F.morFn f, α.componentHom.left (Q₁.tgt f)), comp_Ffα⟩ := hα
+    have step5 : C₂.compFn ⟨(C₂.compFn ⟨(F.morFn f, α.componentHom.left (Q₁.tgt f)), comp_Ffα⟩,
+        β.componentHom.left (Q₁.tgt f)), _⟩ =
+        C₂.compFn ⟨(F.morFn f, C₂.compFn ⟨(α.componentHom.left (Q₁.tgt f),
+        β.componentHom.left (Q₁.tgt f)), comp_αβ_tgt⟩), _⟩ := assoc3
+    calc C₂.compFn ⟨(C₂.compFn ⟨(α.componentHom.left (Q₁.src f),
+            β.componentHom.left (Q₁.src f)), _⟩, H.morFn f), _⟩
+        = C₂.compFn ⟨(α.componentHom.left (Q₁.src f),
+            C₂.compFn ⟨(β.componentHom.left (Q₁.src f), H.morFn f), _⟩), _⟩ := step1
+      _ = C₂.compFn ⟨(α.componentHom.left (Q₁.src f),
+            C₂.compFn ⟨(G.morFn f, β.componentHom.left (Q₁.tgt f)), _⟩), _⟩ := by
+          simp only [step2]
+      _ = C₂.compFn ⟨(C₂.compFn ⟨(α.componentHom.left (Q₁.src f), G.morFn f), _⟩,
+            β.componentHom.left (Q₁.tgt f)), _⟩ := step3
+      _ = C₂.compFn ⟨(C₂.compFn ⟨(F.morFn f, α.componentHom.left (Q₁.tgt f)), _⟩,
+            β.componentHom.left (Q₁.tgt f)), _⟩ := by simp only [step4]
+      _ = C₂.compFn ⟨(F.morFn f, C₂.compFn ⟨(α.componentHom.left (Q₁.tgt f),
+            β.componentHom.left (Q₁.tgt f)), _⟩), _⟩ := step5
+
+/-- Left whiskering: given H : C₀ → C₁ and α : F ⟹ G for F G : C₁ → C₂,
+    produce H ◁ α : F ∘ H ⟹ G ∘ H. -/
+def whiskerLeft {Q₀ : OverQuiver.{uOver}} {C₀ : OverCategoryData Q₀}
+    (H : OverFunctorData C₀ C₁)
+    {F G : OverFunctorData C₁ C₂}
+    (α : OverNatTransData F G) :
+    OverNatTransData (H.comp F) (H.comp G) where
+  componentHom := Over.homMk (fun a => α.component (H.objFn a)) (by
+    funext a
+    simp only [types_comp_apply, OverFunctorData.componentOver, OverFunctorData.comp]
+    exact Prod.ext (α.comp_src (H.objFn a)) (α.comp_tgt (H.objFn a)))
+  naturality := fun f => by
+    simp only [OverFunctorData.comp, OverQuiverMorphism.comp, OverQuiverMorphism.morFn,
+      Over.homMk_left, component]
+    have h := α.naturality (H.morFn f)
+    have hsrc : Q₁.src (H.morFn f) = H.objFn (Q₀.src f) := H.src_comm f
+    have htgt : Q₁.tgt (H.morFn f) = H.objFn (Q₀.tgt f) := H.tgt_comm f
+    simp only [hsrc, htgt] at h
+    exact h
+
+/-- Right whiskering: given α : F ⟹ G for F G : C₁ → C₂ and H : C₂ → C₃,
+    produce α ▷ H : H ∘ F ⟹ H ∘ G. -/
+def whiskerRight {F G : OverFunctorData C₁ C₂}
+    (α : OverNatTransData F G)
+    (H : OverFunctorData C₂ C₃) :
+    OverNatTransData (F.comp H) (G.comp H) where
+  componentHom := Over.homMk (fun a => H.morFn (α.component a)) (by
+    funext a
+    simp only [types_comp_apply, OverFunctorData.componentOver, OverFunctorData.comp]
+    exact Prod.ext ((H.src_comm _).trans (congrArg H.objFn (α.comp_src a)))
+                   ((H.tgt_comm _).trans (congrArg H.objFn (α.comp_tgt a))))
+  naturality := fun f => by
+    simp only [OverFunctorData.comp, OverQuiverMorphism.comp, OverQuiverMorphism.morFn,
+      Over.homMk_left, component]
+    have h := α.naturality f
+    have comp_αG : Q₂.Composable (α.componentHom.left (Q₁.src f)) (G.morFn f) :=
+      (α.comp_tgt (Q₁.src f)).trans (G.src_comm f).symm
+    have comp_Fα : Q₂.Composable (F.morFn f) (α.componentHom.left (Q₁.tgt f)) :=
+      (F.tgt_comm f).trans (α.comp_src (Q₁.tgt f)).symm
+    have hcomp1 := (H.map_comp ⟨(α.componentHom.left (Q₁.src f), G.morFn f), comp_αG⟩).symm
+    have hcomp2 := H.map_comp ⟨(F.morFn f, α.componentHom.left (Q₁.tgt f)), comp_Fα⟩
+    calc C₃.compFn ⟨(H.morFn (α.componentHom.left (Q₁.src f)), H.morFn (G.morFn f)), _⟩
+        = H.morFn (C₂.compFn ⟨(α.componentHom.left (Q₁.src f), G.morFn f), _⟩) := hcomp1
+      _ = H.morFn (C₂.compFn ⟨(F.morFn f, α.componentHom.left (Q₁.tgt f)), _⟩) := by rw [← h]
+      _ = C₃.compFn ⟨(H.morFn (F.morFn f), H.morFn (α.componentHom.left (Q₁.tgt f))), _⟩ :=
+          hcomp2
+
+/-- Horizontal composition of natural transformations. -/
+def hcomp {F G : OverFunctorData C₁ C₂}
+    {H K : OverFunctorData C₂ C₃}
+    (α : OverNatTransData F G) (β : OverNatTransData H K) :
+    OverNatTransData (F.comp H) (G.comp K) :=
+  (α.whiskerRight H).vcomp (β.whiskerLeft G)
+
+/-- Alternative horizontal composition using the other order of whiskering. -/
+def hcomp' {F G : OverFunctorData C₁ C₂}
+    {H K : OverFunctorData C₂ C₃}
+    (α : OverNatTransData F G) (β : OverNatTransData H K) :
+    OverNatTransData (F.comp H) (G.comp K) :=
+  (β.whiskerLeft F).vcomp (α.whiskerRight K)
+
+/-- The interchange law: horizontal composition can be computed in either order. -/
+theorem hcomp_eq_hcomp' {F G : OverFunctorData C₁ C₂}
+    {H K : OverFunctorData C₂ C₃}
+    (α : OverNatTransData F G) (β : OverNatTransData H K) :
+    α.hcomp β = α.hcomp' β := by
+  ext a
+  simp only [hcomp, hcomp', vcomp, whiskerLeft, whiskerRight, component, Over.homMk_left]
+  have hnat := β.naturality (α.componentHom.left a)
+  have hsrc : Q₂.src (α.componentHom.left a) = F.objFn a := α.comp_src a
+  have htgt : Q₂.tgt (α.componentHom.left a) = G.objFn a := α.comp_tgt a
+  simp only [hsrc, htgt] at hnat
+  exact hnat.symm
+
+end OverNatTransData
+
+/-! ### OverNatTransData Category Laws -/
+
+/-- Associativity of vertical composition. -/
+theorem OverNatTransData.vcomp_assoc {Q₁ Q₂ : OverQuiver.{uOver}}
+    {C₁ : OverCategoryData Q₁} {C₂ : OverCategoryData Q₂}
+    {F G H K : OverFunctorData C₁ C₂}
+    (α : OverNatTransData F G) (β : OverNatTransData G H)
+    (γ : OverNatTransData H K) :
+    (α.vcomp β).vcomp γ = α.vcomp (β.vcomp γ) := by
+  ext a
+  simp only [OverNatTransData.vcomp, OverNatTransData.component, Over.homMk_left]
+  have comp_αβ : Q₂.Composable (α.componentHom.left a) (β.componentHom.left a) :=
+    (α.comp_tgt a).trans (β.comp_src a).symm
+  have comp_βγ : Q₂.Composable (β.componentHom.left a) (γ.componentHom.left a) :=
+    (β.comp_tgt a).trans (γ.comp_src a).symm
+  exact C₂.assoc ⟨(α.componentHom.left a, β.componentHom.left a, γ.componentHom.left a),
+    comp_αβ, comp_βγ⟩
+
+/-- Left identity for vertical composition. -/
+theorem OverNatTransData.id_vcomp {Q₁ Q₂ : OverQuiver.{uOver}}
+    {C₁ : OverCategoryData Q₁} {C₂ : OverCategoryData Q₂}
+    {F G : OverFunctorData C₁ C₂}
+    (α : OverNatTransData F G) :
+    (OverNatTransData.id F).vcomp α = α := by
+  ext a
+  simp only [OverNatTransData.vcomp, OverNatTransData.id, OverNatTransData.component,
+    Over.homMk_left]
+  have hsrc : Q₂.src (α.componentHom.left a) = F.objFn a := α.comp_src a
+  have h := C₂.id_comp (α.componentHom.left a)
+  simp only [hsrc] at h
+  convert h using 2
+
+/-- Right identity for vertical composition. -/
+theorem OverNatTransData.vcomp_id {Q₁ Q₂ : OverQuiver.{uOver}}
+    {C₁ : OverCategoryData Q₁} {C₂ : OverCategoryData Q₂}
+    {F G : OverFunctorData C₁ C₂}
+    (α : OverNatTransData F G) :
+    α.vcomp (OverNatTransData.id G) = α := by
+  ext a
+  simp only [OverNatTransData.vcomp, OverNatTransData.id, OverNatTransData.component,
+    Over.homMk_left]
+  have htgt : Q₂.tgt (α.componentHom.left a) = G.objFn a := α.comp_tgt a
+  have h := C₂.comp_id (α.componentHom.left a)
+  simp only [htgt] at h
+  convert h using 2
+
+/-! ### OverFunctor Category Structure
+
+The category of functors between two fixed OverCategoryData, where morphisms
+are natural transformations. -/
+
+/-- The HomSet for the functor category: natural transformations. -/
+def OverFunctorHomSet {Q₁ Q₂ : OverQuiver.{uOver}}
+    (C₁ : OverCategoryData Q₁) (C₂ : OverCategoryData Q₂) :
+    HomSet.{uOver + 1} (OverFunctorData C₁ C₂) :=
+  fun F G => OverNatTransData F G
+
+/-- Category operations for the functor category. -/
+def OverFunctorCategoryOps {Q₁ Q₂ : OverQuiver.{uOver}}
+    (C₁ : OverCategoryData Q₁) (C₂ : OverCategoryData Q₂) :
+    CategoryOps (OverFunctorHomSet C₁ C₂) where
+  id := OverNatTransData.id
+  comp := fun α β => α.vcomp β
+
+/-- Category laws for the functor category. -/
+def OverFunctorCategoryLaws {Q₁ Q₂ : OverQuiver.{uOver}}
+    (C₁ : OverCategoryData Q₁) (C₂ : OverCategoryData Q₂) :
+    CategoryLaws (OverFunctorHomSet C₁ C₂) (OverFunctorCategoryOps C₁ C₂) where
+  assoc := fun α β γ => OverNatTransData.vcomp_assoc α β γ
+  id_laws := {
+    id_comp := fun α => OverNatTransData.id_vcomp α
+    comp_id := fun α => OverNatTransData.vcomp_id α
+  }
+
+/-- Category data for the functor category. -/
+def OverFunctorCategoryData {Q₁ Q₂ : OverQuiver.{uOver}}
+    (C₁ : OverCategoryData Q₁) (C₂ : OverCategoryData Q₂) :
+    CategoryData (OverFunctorData C₁ C₂) (OverFunctorHomSet C₁ C₂) where
+  toCategoryOps := OverFunctorCategoryOps C₁ C₂
+  laws := OverFunctorCategoryLaws C₁ C₂
+
 end OverCategoryData
+
+/-! ### BundledOverCategoryData
+
+A bundled category data using Over-based morphisms: an OverQuiver together
+with OverCategoryData on it. This parallels BundledCategoryData. -/
+
+universe uBOver
+
+/-- A bundled Over-based category: an OverQuiver together with
+    OverCategoryData on it. -/
+structure BundledOverCategoryData where
+  /-- The underlying OverQuiver -/
+  quiver : OverQuiver.{uBOver}
+  /-- The category data on the quiver -/
+  data : OverCategoryData quiver
+
+namespace BundledOverCategoryData
+
+/-- Identity functor data for a bundled Over-category. -/
+def idOverFunctorData (C : BundledOverCategoryData.{uBOver}) :
+    OverFunctorData C.data C.data :=
+  OverFunctorData.id C.data
+
+/-- Composition of OverFunctorData between bundled Over-categories. -/
+def compOverFunctorData {C D E : BundledOverCategoryData.{uBOver}}
+    (F : OverFunctorData C.data D.data) (G : OverFunctorData D.data E.data) :
+    OverFunctorData C.data E.data :=
+  F.comp G
+
+/-- Associativity of OverFunctor composition. -/
+theorem compOverFunctorData_assoc {A B C D : BundledOverCategoryData.{uBOver}}
+    (F : OverFunctorData A.data B.data)
+    (G : OverFunctorData B.data C.data)
+    (H : OverFunctorData C.data D.data) :
+    compOverFunctorData (compOverFunctorData F G) H =
+    compOverFunctorData F (compOverFunctorData G H) := rfl
+
+/-- Left identity for OverFunctor composition. -/
+theorem idOverFunctorData_comp {C D : BundledOverCategoryData.{uBOver}}
+    (F : OverFunctorData C.data D.data) :
+    compOverFunctorData (idOverFunctorData C) F = F := rfl
+
+/-- Right identity for OverFunctor composition. -/
+theorem comp_idOverFunctorData {C D : BundledOverCategoryData.{uBOver}}
+    (F : OverFunctorData C.data D.data) :
+    compOverFunctorData F (idOverFunctorData D) = F := rfl
+
+/-- The hom-set for the category of BundledOverCategoryData: OverFunctorData
+    between the underlying categories. -/
+def homSet : HomSet.{uBOver + 1} BundledOverCategoryData.{uBOver} :=
+  fun C D => OverFunctorData C.data D.data
+
+/-- Category operations for BundledOverCategoryData. -/
+def categoryOps : CategoryOps homSet.{uBOver} where
+  id := idOverFunctorData
+  comp := compOverFunctorData
+
+/-- Category laws for BundledOverCategoryData. -/
+def categoryLaws : CategoryLaws homSet.{uBOver} categoryOps.{uBOver} where
+  assoc := compOverFunctorData_assoc
+  id_laws := {
+    id_comp := idOverFunctorData_comp
+    comp_id := comp_idOverFunctorData
+  }
+
+/-- Category data for the category of BundledOverCategoryData. -/
+def categoryData : CategoryData BundledOverCategoryData.{uBOver} homSet where
+  toCategoryOps := categoryOps
+  laws := categoryLaws
+
+end BundledOverCategoryData
 
 end GebLean
 
