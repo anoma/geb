@@ -2,7 +2,10 @@
 
 ## Status
 
-In progress - `fiberFunctorContra` complete, further development available
+Blocked - morphism correspondence between `ConnectedGrothendieckContra` and
+`ConnGrothendieckHom` cannot be established with current definitions due to
+fundamental type mismatch in fiber transport morphisms (see Morphism Direction
+Analysis section)
 
 ## Context
 
@@ -75,21 +78,67 @@ associativity for free.
 
 11. `ConnectedGrothendieckContra` (NEW)
     - `ConnectedGrothendieckContra F = Grothendieck (fiberFunctorContra C F)`
-    - All three morphism directions are correct:
-      - domArr: covariant (x → y)
-      - codArr: covariant (x → y)
-      - fiberMorph: covariant (x-related → y-related)
+    - domArr and codArr have correct directions
+    - fiberMorph direction: BLOCKED - see analysis below
 
 ### Morphism Direction Analysis
 
-Previous constructions had direction mismatches. The solution uses
-`GrothendieckContra'` for the inner fiber layer:
+Attempt to establish morphism correspondence between `ConnectedGrothendieckContra`
+and `ConnGrothendieckHom` revealed a fundamental type mismatch in the domain
+arrow components of the fiber transport morphisms.
 
-- `GrothendieckContra'` morphisms have `.fiber : Fx ⟶ (F.map f.base).obj Fy`
-- This gives the correct covariant direction for fiberMorph
-- Combined with the outer Grothendieck construction, all directions match
+**In `ConnGrothendieckHom.fiberMorph`:**
 
-### Key Helper Lemmas
+- Source: `(F.map (connGrothendieckTwMorphCod)).obj x.fiber` (transport via `(𝟙, codArr)`)
+- Target: `(F.map (connGrothendieckTwMorphDom ≫ eqToHom)).obj y.fiber`
+  (transport via `(domArr, 𝟙)` then `eqToHom` from DiagDom to DiagCod)
+
+**In `ConnectedGrothendieckContra` morphism `f`:**
+
+- Source: `(fiberTransportTwMorph).obj x.fiber.fiber` = `(F.map TwMorphCod).obj ...`
+  (MATCHES the direct construction)
+- Target: `(F.map (overOpToTwistedArrow.map f.fiber.base)).obj y.fiber.fiber`
+
+**Root cause of the type mismatch:**
+
+The two twisted arrow morphisms to DiagCod have different domain arrow types:
+
+1. `overOpToTwistedArrow.map f.fiber.base`:
+   - `twDomArr' = f.fiber.base.left : y.fiber.base.left ⟶ x.fiber.base.left`
+
+2. `connGrothendieckTwMorphDom ≫ eqToHom`:
+   - `twDomArr' = eqToHom (...) ≫ f.fiber.base.left : x.fiber.base.left ⟶ x.fiber.base.left`
+
+These have fundamentally different source objects for the domain arrow:
+`y.fiber.base.left` vs `x.fiber.base.left`. This is not an issue of morphism
+direction within a fixed type; the types themselves differ.
+
+**Why this happens:**
+
+- `connGrothendieckTwMorphDom` transports through DiagDom first, then uses
+  `eqToHom` to reach DiagCod
+- `overOpToTwistedArrow.map` goes directly to DiagCod
+- The `eqToHom` component introduces an additional type coercion on the domain
+  arrow that changes its source object
+
+**Consequence:**
+
+The morphisms `overOpToTwistedArrow.map f.fiber.base` and
+`connGrothendieckTwMorphDom ≫ eqToHom` cannot be proven equal because they have
+different component types. Therefore, `f.fiber.fiber` from
+`ConnectedGrothendieckContra` cannot be used to construct
+`ConnGrothendieckHom.fiberMorph`.
+
+**Possible resolutions:**
+
+1. Modify `ConnGrothendieckHom.fiberMorph` to use `overOpToTwistedArrow.map`
+   instead of `connGrothendieckTwMorphDom ≫ eqToHom`
+2. Define the inner fiber of `ConnectedGrothendieckContra` using a different
+   structure that produces the expected morphism transport
+3. Accept that the two constructions define different (but possibly equivalent)
+   category structures requiring a non-trivial equivalence functor
+
+### Helper Lemmas
 
 - `eqToHom_obj_heq` - in Cat, `(eqToHom h).obj x =~ x`
 - `Grothendieck.eqToHom_base'` - `.base` of eqToHom is eqToHom
