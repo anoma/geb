@@ -2,7 +2,7 @@
 
 ## Status
 
-In Progress - Category structure defined, associativity proof has a sorry
+Complete - nested Grothendieck approach implemented
 
 ## Context
 
@@ -17,32 +17,94 @@ specification.
 
 File: `GebLean/Utilities/ConnectedGrothendieck.lean`
 
-### Completed
+### Approach: Nested Grothendieck Construction
+
+The connected Grothendieck construction decomposes as two nested standard
+Grothendieck constructions:
+
+```text
+E(F) = Grothendieck (fiberFunctor F)
+where fiberFunctor F : C -> Cat is defined by
+      fiberFunctor F b = Grothendieck (restrictToFiber F b)
+```
+
+This leverages mathlib's existing Grothendieck construction to get
+associativity for free.
+
+### Completed (Nested Approach)
+
+1. Fiber inclusion functor `overOpToTwistedArrow b`
+   - Type: `(Over b)^op -> TwistedArrow' C`
+   - Maps `(f : a -> b)` to `f` as a twisted arrow
+   - Maps morphisms `alpha : f -> g` in `(Over b)^op` to `(alpha, id b)`
+
+2. Restriction functor `restrictToFiber F b = overOpToTwistedArrow b >> F`
+   - Restricts `F : Tw(C) -> Cat` to the fiber over `b`
+
+3. Fiber transport twisted arrow morphism `fiberTransportTwMorph beta ov`
+   - Type: `twObjMk' ov.hom -> twObjMk' (ov.hom >> beta)`
+   - The twisted arrow morphism `(id, beta)`
+   - Used to transport fiber elements along base morphisms
+
+4. Fiber transport functor `fiberTransport beta ov`
+   - Transports elements from fiber over `b` to fiber over `d` for `beta : b -> d`
+
+5. `fiberFunctorTransition beta : Grothendieck (restrictToFiber F b) ->
+   Grothendieck (restrictToFiber F d)`
+   - Complete functor with object and morphism maps
+   - Preserves identity: `fiberFunctorTransitionHom_id`
+   - Preserves composition: `fiberFunctorTransitionHom_comp`
+
+6. Helper lemmas for identity and composition:
+   - `twObjMk'_comp_id` - twisted arrow equality for identity
+   - `fiberTransportTwMorph_id` - transport morphism is eqToHom for identity
+   - `fiberTransport_id` - transport functor is eqToHom for identity
+   - `fiberTransport_comp` - transport functor composition law
+   - `fiberFunctorTransitionObj_id` - object-level identity law
+   - `fiberFunctorTransitionObj_comp` - object-level composition law
+
+7. `fiberFunctorTransition_id` - functor-level identity law
+   - `fiberFunctorTransition C F (id b) = id (Grothendieck (restrictToFiber C F b))`
+
+8. `fiberFunctorTransition_comp` - functor-level composition law
+   - `fiberFunctorTransition C F (beta >> gamma) =
+      fiberFunctorTransition C F beta >> fiberFunctorTransition C F gamma`
+
+9. `fiberFunctor : C -> Cat` - the fiber functor
+   - `fiberFunctor.obj b = Grothendieck (restrictToFiber C F b)`
+   - `fiberFunctor.map beta = fiberFunctorTransition C F beta`
+
+10. `ConnectedGrothendieck' F = Grothendieck (fiberFunctor C F)`
+    - The connected Grothendieck construction as a category
+
+### Key Helper Lemmas
+
+- `eqToHom_obj_heq` - in Cat, `(eqToHom h).obj x =~ x` (uses `cases h; rfl`)
+- `Grothendieck.eqToHom_base'` - `.base` of eqToHom is eqToHom
+- `Cat.eqToHom_map_heq` - `(eqToHom h).map f =~ f`
+- `Cat.functor_map_heq_of_eq_eqToHom` - when functor equals eqToHom
+- `Cat.functor_map_heq_of_eq_comp_comp_eqToHom` - when functor equals composition
+- `Functor.map_eqToHom_comp_heq` - `G.map (eqToHom h >> f) =~ G.map f`
+
+### Direct Approach (preserved for reference)
 
 1. Object type `ConnGrothendieckObj` - pairs (arrow, fiber element)
 2. Morphism type `ConnGrothendieckHom` - arrow squares with fiber morphisms
-3. Diagonal constructions `W1`, `W2`, `W3`, `W4` for composition
-4. Transport morphisms `morphW1W3`, `morphW2W3` for fiber transport
-5. Transport morphisms `morphW1W4`, `morphW2W4` for triple composition
-6. Composition operation `connGrothendieckComp`
-7. Identity operation `connGrothendieckId`
-8. Extensionality lemma `connGrothendieckHom_ext`
-9. Left identity proof `connGrothendieckId_comp`
-10. Right identity proof `connGrothendieckComp_id`
-11. Helper lemmas for identity laws using HEq peeling technique
-12. Coherence lemmas for associativity:
-    - `connGrothendieckMorphW1W3_comp_left` - LHS path for f.fiberMorph
-    - `connGrothendieckMorphW1W3_comp_right` - RHS path for f.fiberMorph
-    - `connGrothendieckMorphW2W3_comp_left` - LHS path for h.fiberMorph
-    - `connGrothendieckMorphW2W3_comp_right` - RHS path for h.fiberMorph
-    - `connGrothendieckMorphMiddle_coherence` - middle coherence for g.fiberMorph
-13. Projection functor `connGrothendieckProjection : E(F) => Arrow C`
-14. Object over Arrow C: `connGrothendieckOver : Over (Cat.of (Arrow C))`
+3. Composition operation `connGrothendieckComp`
+4. Identity operation `connGrothendieckId`
+5. Left identity proof `connGrothendieckId_comp`
+6. Right identity proof `connGrothendieckComp_id`
+7. Coherence lemmas for associativity (partial)
+8. Projection to Arrow category
 
-### Remaining
+### Remaining Work
 
-1. Associativity proof (could be called `connGrothendieckComp_assoc`)
-2. Use of associativity proof to provide `CategoryData`
+1. Establish equivalence between `ConnectedGrothendieck'` and the direct
+   construction (if needed)
+
+2. Define the projection functor to the Arrow category
+
+3. Prove universal properties
 
 ## References
 

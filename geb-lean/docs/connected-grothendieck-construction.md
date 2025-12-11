@@ -338,22 +338,117 @@ their implementations in Lean code.
   * `hom' : opProdSym' C ⥤ Type v`: Hom functor using `ᵒᵖ'`
   * Various profunctor variants for different opposite conventions
 
-### 10.5 Implementation Strategy
+### 10.5 Implementation Strategy: Nested Grothendieck Construction
 
-To implement this connected Grothendieck construction in the project:
+The connected Grothendieck construction can be implemented as a composition of
+two standard Grothendieck constructions, leveraging existing mathlib
+infrastructure and avoiding manual associativity proofs.
 
-1. **Define `E(F)` objects**: Pairs `(f, e)` where `f : Arrow C` and
-   `e : F.obj (corresponding Tw(C) object)`
+#### 10.5.1 Tw(C) as a Grothendieck Opfibration
 
-2. **Define `E(F)` morphisms**: Use `Arrow.homMk` for the base square and
-   construct the fiber morphism in `F(w)` where `w` is the common diagonal
+The twisted arrow category `Tw(C)` is a Grothendieck opfibration over `C` via
+the codomain functor `cod : Tw(C) → C` sending `f : a → b` to `b`.
 
-3. **Leverage existing infrastructure**:
-   * Use `Grothendieck.FunctorFromData` pattern for the projection to `Arr(C)`
-   * The twisted-arrow to Grothendieck equivalence `twArrEquivGrothendieckUnder`
-     shows how to handle the fiber structure
-   * The arrow self-duality `arrowIsoArrowOpOp'` may help with dual constructions
+The fiber over `b ∈ C` consists of arrows with codomain `b`:
 
-4. **Key lemmas needed**:
-   * Composition of Tw(C) morphisms: `(u, v) ; (u', v') = (u ∘ u', v' ∘ v)`
-   * Transport along Tw(C) morphisms preserves composition
+* **Objects**: morphisms `f : a → b` in `C`
+* **Morphisms** from `f : a → b` to `g : c → b`: pairs `(α, id_b)` where
+  `α : c → a` satisfies `f ∘ α = g`
+
+This is precisely `(Over b)^op`:
+
+* In `Over b`, morphisms `f → g` are `α : a → c` with `g ∘ α = f`
+* In `(Over b)^op`, morphisms `f → g` are `α : c → a` with `f ∘ α = g` ✓
+
+#### 10.5.2 Decomposition into Two Grothendieck Constructions
+
+Given `F : Tw(C) → Cat`, the connected Grothendieck construction `E(F)`
+decomposes as:
+
+```text
+E(F) = ∫_C H
+
+where H : C → Cat is defined by H(b) = ∫_{(Over b)^op} G_b
+and G_b = ι_b ⋙ F : (Over b)^op → Cat
+```
+
+1. *Fiber inclusion functor*: For each `b ∈ C`, define the inclusion
+   `ι_b : (Over b)^op → Tw(C)`:
+   * On objects: `(f : a → b) ↦ f` (as a twisted arrow)
+   * On morphisms: `α : f → g` in `(Over b)^op` (i.e., `α : c → a` with
+     `f ∘ α = g`) maps to `(α, id_b) : f → g` in `Tw(C)`
+
+2. *Restricted functor on each fiber*: Define `G_b = ι_b ⋙ F : (Over b)^op → Cat`.
+   This restricts `F` to the fiber over `b`.
+
+3. *Inner Grothendieck construction*: Apply the standard Grothendieck
+   construction to `G_b`:
+   * Objects of `∫ G_b`: pairs `(f : a → b, x)` where `x ∈ F(f)`
+   * Morphisms `(f, x) → (g, y)`: `α : c → a` with `f ∘ α = g`, plus
+     `φ : F(α, id_b)(x) → y`
+
+   This captures the "horizontal" morphisms (those along the fiber).
+
+4. *Fiber functor H : C → Cat*: Define `H : C → Cat` where:
+   * `H.obj b = Cat.of (∫ G_b)`
+   * For `β : b → d` in `C`, define `H.map β : ∫ G_b → ∫ G_d`:
+     * On objects: `(f : a → b, x) ↦ (β ∘ f : a → d, F(id_a, β)(x))`
+     * On morphisms: `(α, φ) ↦ (α, F(id, β)(φ))`
+
+   The well-definedness of `H.map β` on morphisms follows from the identity:
+
+   ```text
+   F(α, id_d) ∘ F(id_a, β) = F(α, β) = F(id_c, β) ∘ F(α, id_b)
+   ```
+
+   Functoriality of `H` (i.e., `H(β₂ ∘ β₁) = H(β₂) ∘ H(β₁)`) follows from
+   functoriality of `F`.
+
+5. *Outer Grothendieck construction*: Apply the standard Grothendieck
+   construction to `H`:
+   * Objects of `∫_C H`: `(b, (f : a → b, x))` ≅ `(f : a → b, x ∈ F(f))`
+   * Morphisms `(f, x) → (g, y)`:
+     * `β : b → d` in `C`
+     * A morphism `H(β)(f, x) → (g, y)` in `H(d)`, which is:
+       * `α : c → a` with `(β ∘ f) ∘ α = g`
+       * `φ : F(α, id_d)(F(id, β)(x)) → y`, i.e., `φ : F(α, β)(x) → y`
+
+   This exactly matches the specification of `E(F)`.
+
+#### 10.5.3 Implementation Steps in Lean
+
+1. **Define `overOpToTwistedArrow b : (Over b)^op ⥤ TwistedArrow' C`**
+
+   The fiber inclusion functor.
+
+2. **Define `restrictToFiber F b = overOpToTwistedArrow b ⋙ F`**
+
+   Restriction of `F` to the fiber over `b`.
+
+3. **Use mathlib's `Grothendieck (restrictToFiber F b)`**
+
+   The inner Grothendieck construction on each fiber.
+
+4. **Define `fiberFunctor F : C ⥤ Cat`**
+
+   Assembles the fiber Grothendieck constructions into a functor.
+   Requires defining the transition functors `H(β)` for `β : b → d`.
+
+5. **Define `ConnectedGrothendieck F = Grothendieck (fiberFunctor F)`**
+
+   The outer Grothendieck construction.
+
+6. **Define the projection `ConnectedGrothendieck F ⥤ Arrow C`**
+
+   Sends `(f, x)` to `f` viewed as an arrow.
+
+#### 10.5.4 Advantages of This Approach
+
+* **Associativity for free**: Both Grothendieck constructions inherit
+  associativity from mathlib's existing proofs.
+* **Identity laws for free**: Similarly inherited from mathlib.
+* **Cleaner code**: The structure of the construction is explicit in the
+  types.
+* **Reusable components**: The fiber inclusion and transition functors may
+  be useful elsewhere.
+* **Maintainability**: Less custom proof machinery to maintain.

@@ -235,24 +235,25 @@ The two-sided construction involves both lax (cocartesian) and oplax
 
 ### Implementation Strategy for Two-Sided Construction
 
-To implement `TwoSided(A, B, Ψ)` for `Ψ : Aᵒᵖ × B ⥤ Cat`:
+Two potential ways to implement `TwoSided(A, B, Ψ)` for `Ψ : Aᵒᵖ × B ⥤ Cat`:
 
-1. **Option 1 - Direct definition**:
+1. **1 - Direct definition**:
    * Define objects as sigma type: `Σ (a : A) (b : B), Ψ.obj (a, b)`
    * Define morphisms with fiber morphism in `Ψ.obj (a, b')`
    * Use `eqToHom` for functoriality coherence
 
-2. **Option 2 - Iterated Grothendieck**:
+2. **2 - Iterated Grothendieck**:
    * First apply contravariant Grothendieck in `A`:
      `GrothendieckContra' (curry Ψ : Aᵒᵖ' ⥤ (B ⥤ Cat))`
    * Then apply covariant Grothendieck in `B` to fibers
    * Use `Grothendieck.pre` to compose
 
-3. **Key infrastructure**:
-   * `Functor.curry` / `Functor.uncurry` for product category functors
-   * `GrothendieckContra'.FunctorFromData` for universal property
-   * The commutation `a*(d!(X)) = d!(a*(X))` follows from `Ψ` being a functor
-     on the product category
+Required infrastructure:
+
+* `Functor.curry` / `Functor.uncurry` for product category functors
+* `GrothendieckContra'.FunctorFromData` for universal property
+* The commutation `a*(d!(X)) = d!(a*(X))` follows from `Ψ` being a functor
+  on the product category
 
 ### Relation to Connected Grothendieck
 
