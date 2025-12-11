@@ -87,7 +87,7 @@ This round-trip is an equivalence:
 
 The full chain will be:
 
-```
+```text
 OverCategoryData ↔ CategoryData ↔ Category (mathlib)
 ```
 
@@ -113,7 +113,8 @@ Existing round-trip theorems:
 
 All four phases have been implemented in `GebLean/Utilities/OverCategoryEquiv.lean`.
 
-### Phase 1: Quiver-level equivalences
+### Quiver-level equivalences (Phase 1)
+
 - `HomSet.SigmaMor`: The sigma type bundling all morphisms from a HomSet
 - `HomSet.toOverQuiver`: Bundle morphisms into an OverQuiver
 - `OverQuiver.toHomSet`: Extract fibers as a HomSet
@@ -121,33 +122,39 @@ All four phases have been implemented in `GebLean/Utilities/OverCategoryEquiv.le
 - `OverQuiver.sigma_equiv`: Round-trip equivalence OverQuiver → HomSet → OverQuiver
 
 ### Phase 2: Category-level equivalences
+
 - `CategoryData.toOverCategoryData`: Convert CategoryData to OverCategoryData
 - `OverCategoryData.toCategoryData`: Convert OverCategoryData to CategoryData
 
 ### Phase 3: Functor-level equivalences
+
 - `FunctorOps.toArrowHom`: Arrow morphism for a functor between bundled OverQuivers
 - `FunctorOps.toOverQuiverMorphism`: Convert FunctorOps to OverQuiverMorphism
 - `FunctorData.toOverFunctorData`: Convert FunctorData to OverFunctorData
 - `OverFunctorData.toFunctorOps`: Convert OverFunctorData to FunctorOps
 - `OverFunctorData.toFunctorData`: Convert OverFunctorData to FunctorData
 
-### Phase 4: Natural transformation equivalences
+### Natural transformation equivalences (Phase 4)
+
 - `NatTransData.toComponentHom`: Component as Over morphism
 - `NatTransData.toOverNatTransData`: Convert NatTransData to OverNatTransData
 - `OverNatTransData.extractApp`: Extract component to fiber HomSets
 - `OverNatTransData.toNatTransData`: Convert OverNatTransData to NatTransData
 
 ### Round-trip isomorphisms
+
 The round-trip conversions preserve the underlying data, expressed via the
 fiber equivalences:
 
 **FunctorData round-trips:**
+
 - `FunctorData.roundtrip_obj_eq`: Object map preserved
 - `FunctorData.roundtrip_map_val_eq`: Morphism map preserved (up to fiber equiv)
 - `OverFunctorData.roundtrip_objFn_eq`: Object function preserved
 - `OverFunctorData.roundtrip_morFn_val_eq`: Morphism function preserved
 
 **NatTransData round-trips:**
+
 - `NatTransData.roundtrip_app_val_eq`: Component preserved (underlying sigma)
 - `NatTransData.roundtrip_app_component_eq`: Full component preserved
 - `OverNatTransData.roundtrip_app_val_eq`: Component preserved
@@ -157,6 +164,7 @@ fiber equivalences:
 ### 5a. OverNatTransData Operations
 
 Add the following operations (mirroring NatTransData):
+
 - `OverNatTransData.id`: Identity natural transformation
 - `OverNatTransData.vcomp`: Vertical composition
 - `OverNatTransData.whiskerLeft`: Left whiskering (H ◁ α)
@@ -168,6 +176,7 @@ Add the following operations (mirroring NatTransData):
 ### 5b. OverFunctor Category
 
 For fixed `C₁ : OverCategoryData Q₁` and `C₂ : OverCategoryData Q₂`:
+
 - `OverFunctorHomSet C₁ C₂`: HomSet where morphisms are OverNatTransData
 - `OverFunctorCategoryOps`: id = identity, comp = vertical composition
 - `OverFunctorCategoryLaws`: associativity and identity laws
@@ -176,6 +185,7 @@ For fixed `C₁ : OverCategoryData Q₁` and `C₂ : OverCategoryData Q₂`:
 ### 5c. BundledOverCategoryData
 
 Analogous to `BundledCategoryData`:
+
 - `BundledOverCategoryData`: Structure bundling OverQuiver + OverCategoryData
 - `idOverFunctorData`: Identity functor
 - `compOverFunctorData`: Functor composition
@@ -185,10 +195,12 @@ Analogous to `BundledCategoryData`:
 ### 5d. Categorical Equivalences
 
 **OverFunctor category ↔ Functor category:**
+
 - The conversions `toFunctorData`/`toOverFunctorData` form functors
 - Round-trips are naturally isomorphic to identities
 
 **BundledOverCategoryData ↔ BundledCategoryData:**
+
 - Forward: using `toCategoryData`
 - Backward: using `toOverCategoryData`
 - Establish categorical equivalence
@@ -205,12 +217,14 @@ Analogous to `BundledCategoryData`:
 ### 6a. Universe Generalization
 
 The structures now use two independent universe parameters:
+
 - `OverQuiver.{v, u}` has `Obj : Type u` and `MorType : Type v`
 - `OverCategoryData`, `OverFunctorData`, `OverNatTransData` all work with
   `OverQuiver.{v, u}`
 - `BundledOverCategoryData.{v, u}` bundles `OverQuiver.{v, u}` with category data
 
 Universe level behavior for conversions:
+
 - `OverQuiver.{v, u}.toHomSet` produces `HomSet.{v + 1, u}`
 - `HomSet.{v + 1, u}.toOverQuiver` produces `OverQuiver.{max v u, u}`
 - `BundledOverCategoryData.{v, u}.toBundledCategoryData` produces
@@ -226,6 +240,7 @@ directions of the equivalence operate at universe `{v, u}`.
 The conversions are functorial with general universe parameters:
 
 **BundledOverCategoryData → BundledCategoryData:**
+
 - `toBundledCategoryData_map`: Maps OverFunctorData to FunctorData
 - `toBundledCategoryData_map_id`: Preserves identity
 - `toBundledCategoryData_map_comp`: Preserves composition
@@ -234,6 +249,7 @@ The conversions are functorial with general universe parameters:
     BundledCategoryData.categoryData.{v, u}`
 
 **BundledCategoryData → BundledOverCategoryData:**
+
 - `toBundledOverCategoryData_map`: Maps FunctorData to OverFunctorData
 - `toBundledOverCategoryData_map_id`: Preserves identity
 - `toBundledOverCategoryData_map_comp`: Preserves composition
