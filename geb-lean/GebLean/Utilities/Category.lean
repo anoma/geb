@@ -1,4 +1,5 @@
 import Mathlib.CategoryTheory.Category.Cat
+import Mathlib.CategoryTheory.Comma.Arrow
 import Mathlib.CategoryTheory.Comma.Over.Basic
 import Mathlib.CategoryTheory.Equivalence
 import Mathlib.Combinatorics.Quiver.ReflQuiver
@@ -1758,6 +1759,320 @@ def equivCat : BundledCategoryData.{v', u'} ≌ Cat.{v', u'} :=
 end BundledCategoryData
 
 end CategoryDataCat
+
+/-! ## Over-Based Category Structures
+
+Category structures using the Over/Arrow encoding, where morphisms are bundled
+as an object over `Obj × Obj` rather than as a dependent type family. This
+encoding has the property that all proof constraints become morphism conditions
+in Over categories, making them proof-irrelevant.
+
+For example, instead of `Hom : Obj → Obj → Type`, we have:
+
+- `Mor : Type` with `(src, tgt) : Mor → Obj × Obj`
+- This makes `Mor` an object of `Over (Obj × Obj)` in the category `Type`
+
+Operations like identity and composition become morphisms in `Over (Obj × Obj)`,
+which automatically bundle the computational content with the proof that
+endpoints are preserved.
+-/
+
+section OverCategoryData
+
+universe uOver
+
+/-- The underlying quiver of an Over-style category: objects, morphisms,
+    and the projection to endpoints. The morphisms form an object of
+    `Over (Obj × Obj)` in the category `Type`. -/
+structure OverQuiver where
+  /-- The type of objects -/
+  Obj : Type uOver
+  /-- The morphisms as an object over Obj × Obj.
+      The `left` field is the type of morphisms, and `hom` gives
+      `(src, tgt) : Mor → Obj × Obj`. -/
+  Mor : Over (Obj × Obj)
+
+namespace OverQuiver
+
+variable (Q : OverQuiver.{uOver})
+
+/-- The type of morphisms in an OverQuiver. -/
+abbrev MorType : Type uOver := Q.Mor.left
+
+/-- Source of a morphism. -/
+abbrev src : Q.MorType → Q.Obj := Prod.fst ∘ Q.Mor.hom
+
+/-- Target of a morphism. -/
+abbrev tgt : Q.MorType → Q.Obj := Prod.snd ∘ Q.Mor.hom
+
+/-- The diagonal map, as an object over Obj × Obj.
+    This is the domain for the identity morphism. -/
+def diag : Over (Q.Obj × Q.Obj) :=
+  Over.mk (fun a : Q.Obj => (a, a))
+
+/-- The condition for two morphisms to be composable: target of first equals
+    source of second. -/
+def Composable (f g : Q.MorType) : Prop := Q.tgt f = Q.src g
+
+/-- The type of composable pairs. -/
+abbrev ComposablePairsType : Type uOver :=
+  { p : Q.MorType × Q.MorType // Q.Composable p.1 p.2 }
+
+/-- Composable pairs of morphisms: the pullback where tgt of first = src of
+    second. This is an object over Obj × Obj via (src fst, tgt snd). -/
+def ComposablePairs : Over (Q.Obj × Q.Obj) :=
+  Over.mk (Y := Q.ComposablePairsType)
+    (fun (p : Q.ComposablePairsType) => (Q.src p.val.1, Q.tgt p.val.2))
+
+/-- First projection from composable pairs. -/
+def compPairFst (p : Q.ComposablePairsType) : Q.MorType := p.val.1
+
+/-- Second projection from composable pairs. -/
+def compPairSnd (p : Q.ComposablePairsType) : Q.MorType := p.val.2
+
+/-- The composability condition for a pair. -/
+theorem compPairCond (p : Q.ComposablePairsType) :
+    Q.Composable (Q.compPairFst p) (Q.compPairSnd p) :=
+  p.property
+
+/-- The condition for three morphisms to be composable. -/
+def Composable₃ (f g h : Q.MorType) : Prop :=
+  Q.Composable f g ∧ Q.Composable g h
+
+/-- The type of composable triples. -/
+abbrev ComposableTriplesType : Type uOver :=
+  { t : Q.MorType × Q.MorType × Q.MorType // Q.Composable₃ t.1 t.2.1 t.2.2 }
+
+/-- Composable triples of morphisms. -/
+def ComposableTriples : Over (Q.Obj × Q.Obj) :=
+  Over.mk (Y := Q.ComposableTriplesType)
+    (fun (t : Q.ComposableTriplesType) => (Q.src t.val.1, Q.tgt t.val.2.2))
+
+end OverQuiver
+
+/-- Category operations on an OverQuiver, expressed as Over morphisms.
+    The identity and composition are morphisms in `Over (Obj × Obj)`, which
+    automatically bundles the endpoint constraints. -/
+structure OverCategoryOps (Q : OverQuiver.{uOver}) where
+  /-- Identity morphism, as an Over morphism from the diagonal.
+      This packages both `id : Obj → MorType` and the proof that
+      `src (id a) = a` and `tgt (id a) = a`. -/
+  id : Q.diag ⟶ Q.Mor
+  /-- Composition morphism, as an Over morphism from composable pairs.
+      This packages both `comp : ComposablePairsType → MorType` and the proof
+      that `src (comp p) = src p.fst` and `tgt (comp p) = tgt p.snd`. -/
+  comp : Q.ComposablePairs ⟶ Q.Mor
+
+namespace OverCategoryOps
+
+variable {Q : OverQuiver.{uOver}} (ops : OverCategoryOps Q)
+
+/-- The identity function extracted from the Over morphism. -/
+def idFn : Q.Obj → Q.MorType := ops.id.left
+
+/-- The composition function extracted from the Over morphism.
+    Note: `Q.ComposablePairs.left = Q.ComposablePairsType` by definition. -/
+def compFn : Q.ComposablePairsType → Q.MorType := ops.comp.left
+
+/-- Source of identity is the object itself. -/
+theorem id_src (a : Q.Obj) : Q.src (ops.idFn a) = a := by
+  have h := congrFun ops.id.w a
+  simp only [OverQuiver.diag] at h
+  exact congrArg Prod.fst h
+
+/-- Target of identity is the object itself. -/
+theorem id_tgt (a : Q.Obj) : Q.tgt (ops.idFn a) = a := by
+  have h := congrFun ops.id.w a
+  simp only [OverQuiver.diag] at h
+  exact congrArg Prod.snd h
+
+/-- Source of composition is source of first morphism. -/
+theorem comp_src (p : Q.ComposablePairsType) :
+    Q.src (ops.compFn p) = Q.src (Q.compPairFst p) := by
+  have h := congrFun ops.comp.w p
+  simp only [types_comp_apply, Functor.id_map] at h
+  simp only [Functor.fromPUnit, Functor.const_obj_map, types_id_apply] at h
+  simp only [OverQuiver.ComposablePairs, Over.mk_hom] at h
+  simp only [OverQuiver.src, OverQuiver.compPairFst, Function.comp_apply, compFn]
+  simp only [congrArg Prod.fst h]
+  rfl
+
+/-- Target of composition is target of second morphism. -/
+theorem comp_tgt (p : Q.ComposablePairsType) :
+    Q.tgt (ops.compFn p) = Q.tgt (Q.compPairSnd p) := by
+  have h := congrFun ops.comp.w p
+  simp only [types_comp_apply, Functor.id_map] at h
+  simp only [Functor.fromPUnit, Functor.const_obj_map, types_id_apply] at h
+  simp only [OverQuiver.ComposablePairs, Over.mk_hom] at h
+  simp only [OverQuiver.tgt, OverQuiver.compPairSnd, Function.comp_apply, compFn]
+  simp only [congrArg Prod.snd h]
+  rfl
+
+end OverCategoryOps
+
+/-- Full category data on an OverQuiver, including operations and laws.
+    The laws are expressed as equations between Over morphisms. -/
+structure OverCategoryData (Q : OverQuiver.{uOver}) extends OverCategoryOps Q where
+  /-- Left identity: comp (id (src f), f) = f -/
+  id_comp : ∀ (f : Q.MorType),
+    toOverCategoryOps.compFn ⟨(toOverCategoryOps.idFn (Q.src f), f),
+      toOverCategoryOps.id_tgt (Q.src f)⟩ = f
+  /-- Right identity: comp (f, id (tgt f)) = f -/
+  comp_id : ∀ (f : Q.MorType),
+    toOverCategoryOps.compFn ⟨(f, toOverCategoryOps.idFn (Q.tgt f)),
+      (toOverCategoryOps.id_src (Q.tgt f)).symm⟩ = f
+  /-- Associativity: comp (comp (f, g), h) = comp (f, comp (g, h)) -/
+  assoc : ∀ (t : Q.ComposableTriplesType),
+    let fg := toOverCategoryOps.compFn ⟨(t.val.1, t.val.2.1), t.property.1⟩
+    let gh := toOverCategoryOps.compFn ⟨(t.val.2.1, t.val.2.2), t.property.2⟩
+    toOverCategoryOps.compFn ⟨(fg, t.val.2.2),
+      (toOverCategoryOps.comp_tgt ⟨(t.val.1, t.val.2.1), t.property.1⟩).trans
+        t.property.2⟩ =
+    toOverCategoryOps.compFn ⟨(t.val.1, gh),
+      t.property.1.trans
+        (toOverCategoryOps.comp_src ⟨(t.val.2.1, t.val.2.2), t.property.2⟩).symm⟩
+
+/-- View an OverQuiver's morphism projection as an Arrow in Type. -/
+def OverQuiver.toArrow (Q : OverQuiver.{uOver}) : Arrow (Type uOver) :=
+  Arrow.mk Q.Mor.hom
+
+/-- A quiver morphism as an Arrow morphism.
+    The commutativity condition bundles both source and target preservation. -/
+structure OverQuiverMorphism (Q₁ Q₂ : OverQuiver.{uOver}) where
+  /-- The function on objects. -/
+  objFn : Q₁.Obj → Q₂.Obj
+  /-- The Arrow morphism bundling morFn and the commutativity condition. -/
+  arrowHom : Q₁.toArrow ⟶ Q₂.toArrow
+  /-- The right component of the Arrow morphism is the product map. -/
+  right_eq : arrowHom.right = Prod.map objFn objFn
+
+namespace OverQuiverMorphism
+
+variable {Q₁ Q₂ : OverQuiver.{uOver}}
+
+/-- The function on morphisms, extracted from the Arrow morphism. -/
+def morFn (F : OverQuiverMorphism Q₁ Q₂) : Q₁.MorType → Q₂.MorType :=
+  F.arrowHom.left
+
+/-- The morphism map respects sources. -/
+theorem src_comm (F : OverQuiverMorphism Q₁ Q₂) (f : Q₁.MorType) :
+    Q₂.src (F.morFn f) = F.objFn (Q₁.src f) := by
+  have h := congrFun F.arrowHom.w f
+  simp only [types_comp_apply, OverQuiver.toArrow, Arrow.mk_hom] at h
+  simp only [OverQuiver.src, Function.comp_apply]
+  rw [F.right_eq] at h
+  exact congrArg Prod.fst h
+
+/-- The morphism map respects targets. -/
+theorem tgt_comm (F : OverQuiverMorphism Q₁ Q₂) (f : Q₁.MorType) :
+    Q₂.tgt (F.morFn f) = F.objFn (Q₁.tgt f) := by
+  have h := congrFun F.arrowHom.w f
+  simp only [types_comp_apply, OverQuiver.toArrow, Arrow.mk_hom] at h
+  simp only [OverQuiver.tgt, Function.comp_apply]
+  rw [F.right_eq] at h
+  exact congrArg Prod.snd h
+
+/-- The identity quiver morphism. -/
+def id (Q : OverQuiver.{uOver}) : OverQuiverMorphism Q Q where
+  objFn := _root_.id
+  arrowHom := 𝟙 Q.toArrow
+  right_eq := rfl
+
+/-- Composition of quiver morphisms. -/
+def comp (F : OverQuiverMorphism Q₁ Q₂) {Q₃ : OverQuiver.{uOver}}
+    (G : OverQuiverMorphism Q₂ Q₃) : OverQuiverMorphism Q₁ Q₃ where
+  objFn := G.objFn ∘ F.objFn
+  arrowHom := F.arrowHom ≫ G.arrowHom
+  right_eq := by
+    change G.arrowHom.right ∘ F.arrowHom.right = Prod.map (G.objFn ∘ F.objFn) _
+    rw [F.right_eq, G.right_eq]
+    rfl
+
+end OverQuiverMorphism
+
+/-- Functor data for OverCategories, as a quiver morphism that preserves
+    identity and composition. -/
+structure OverFunctorData {Q₁ Q₂ : OverQuiver.{uOver}}
+    (C₁ : OverCategoryData Q₁) (C₂ : OverCategoryData Q₂) extends
+    OverQuiverMorphism Q₁ Q₂ where
+  /-- Preservation of identity. -/
+  map_id : ∀ (a : Q₁.Obj),
+    toOverQuiverMorphism.morFn (C₁.idFn a) = C₂.idFn (toOverQuiverMorphism.objFn a)
+  /-- Preservation of composition. -/
+  map_comp : ∀ (p : Q₁.ComposablePairsType),
+    toOverQuiverMorphism.morFn (C₁.compFn p) =
+      C₂.compFn ⟨(toOverQuiverMorphism.morFn p.val.1,
+                  toOverQuiverMorphism.morFn p.val.2),
+        (toOverQuiverMorphism.tgt_comm p.val.1).trans
+          ((congrArg toOverQuiverMorphism.objFn p.property).trans
+            (toOverQuiverMorphism.src_comm p.val.2).symm)⟩
+
+/-- The Over object representing the domain of natural transformation components.
+    For functors F, G : C₁ → C₂, this pairs F(a) with G(a) for each object a. -/
+def OverFunctorData.componentOver {Q₁ Q₂ : OverQuiver.{uOver}}
+    {C₁ : OverCategoryData Q₁} {C₂ : OverCategoryData Q₂}
+    (F G : OverFunctorData C₁ C₂) : Over (Q₂.Obj × Q₂.Obj) :=
+  Over.mk (fun a => (F.objFn a, G.objFn a))
+
+/-- Helper to extract the source constraint from a componentHom. -/
+theorem OverFunctorData.componentHom_src {Q₁ Q₂ : OverQuiver.{uOver}}
+    {C₁ : OverCategoryData Q₁} {C₂ : OverCategoryData Q₂}
+    {F G : OverFunctorData C₁ C₂}
+    (h : OverFunctorData.componentOver F G ⟶ Q₂.Mor) (a : Q₁.Obj) :
+    Q₂.src (h.left a) = F.objFn a := by
+  have hw := congrFun h.w a
+  simp only [types_comp_apply, Over.coe_hom, OverFunctorData.componentOver] at hw
+  exact congrArg Prod.fst hw
+
+/-- Helper to extract the target constraint from a componentHom. -/
+theorem OverFunctorData.componentHom_tgt {Q₁ Q₂ : OverQuiver.{uOver}}
+    {C₁ : OverCategoryData Q₁} {C₂ : OverCategoryData Q₂}
+    {F G : OverFunctorData C₁ C₂}
+    (h : OverFunctorData.componentOver F G ⟶ Q₂.Mor) (a : Q₁.Obj) :
+    Q₂.tgt (h.left a) = G.objFn a := by
+  have hw := congrFun h.w a
+  simp only [types_comp_apply, Over.coe_hom, OverFunctorData.componentOver] at hw
+  exact congrArg Prod.snd hw
+
+/-- Natural transformation data between two OverFunctors.
+    The component is encoded as an Over morphism, absorbing endpoint constraints. -/
+structure OverNatTransData {Q₁ Q₂ : OverQuiver.{uOver}}
+    {C₁ : OverCategoryData Q₁} {C₂ : OverCategoryData Q₂}
+    (F G : OverFunctorData C₁ C₂) where
+  /-- The component as an Over morphism, bundling the endpoint constraints. -/
+  componentHom : OverFunctorData.componentOver F G ⟶ Q₂.Mor
+  /-- Naturality: G(f) ∘ η_a = η_b ∘ F(f). -/
+  naturality : ∀ (f : Q₁.MorType),
+    C₂.compFn ⟨(componentHom.left (Q₁.src f), G.morFn f),
+      (OverFunctorData.componentHom_tgt componentHom (Q₁.src f)).trans
+        (G.src_comm f).symm⟩ =
+    C₂.compFn ⟨(F.morFn f, componentHom.left (Q₁.tgt f)),
+      (F.tgt_comm f).trans
+        (OverFunctorData.componentHom_src componentHom (Q₁.tgt f)).symm⟩
+
+namespace OverNatTransData
+
+variable {Q₁ Q₂ : OverQuiver.{uOver}}
+variable {C₁ : OverCategoryData Q₁} {C₂ : OverCategoryData Q₂}
+variable {F G : OverFunctorData C₁ C₂}
+
+/-- The component morphism at each object. -/
+def component (η : OverNatTransData F G) (a : Q₁.Obj) : Q₂.MorType :=
+  η.componentHom.left a
+
+/-- Source of component is F(a). -/
+theorem comp_src (η : OverNatTransData F G) (a : Q₁.Obj) :
+    Q₂.src (η.component a) = F.objFn a :=
+  OverFunctorData.componentHom_src η.componentHom a
+
+/-- Target of component is G(a). -/
+theorem comp_tgt (η : OverNatTransData F G) (a : Q₁.Obj) :
+    Q₂.tgt (η.component a) = G.objFn a :=
+  OverFunctorData.componentHom_tgt η.componentHom a
+
+end OverNatTransData
+
+end OverCategoryData
 
 end GebLean
 
