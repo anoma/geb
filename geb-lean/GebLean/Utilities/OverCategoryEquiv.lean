@@ -444,16 +444,25 @@ establishing equivalences between the two representations.
 Universe level behavior:
 - `OverQuiver.{v, u}` has `MorType : Type v` and `Obj : Type u`
 - `OverQuiver.toHomSet` produces `HomSet.{v + 1, u}` (fibers are subtypes)
-- `HomSet.{w, u}` has `hs a b : Type (w - 1)` for morphisms
-- `HomSet.toOverQuiver` produces `OverQuiver.{max (w - 1) u, u}`
+- `HomSet.{v + 1, u}` has morphisms `hs a b : Type v`
+- `HomSet.toOverQuiver` produces `OverQuiver.{max v u, u}`
 
-For clean round-trips, we work in the case `v = u` where universe levels align. -/
+The sigma construction `Σ (a b : U), hs a b` lives in `Type (max u v)` because
+it bundles indices from `Type u` with fibers from `Type v`.
+
+When `v ≥ u`, we have `max v u = v`, so the round-trip preserves universe levels:
+- `BundledOverCategoryData.{v, u}` → `BundledCategoryData.{v, u}` (always)
+- `BundledCategoryData.{v, u}` → `BundledOverCategoryData.{v, u}` (when v ≥ u)
+
+The constraint `v ≥ u` is natural: it says morphism types are at least as large
+as object types, which holds for most categories of interest. -/
 
 section BundledEquiv
 
 /-- Convert a BundledOverCategoryData to a BundledCategoryData.
     An OverQuiver.{v, u} produces a HomSet.{v + 1, u} via toHomSet, which
-    corresponds to BundledCategoryData.{v, u} (since Hom : HomSet.{v + 1, u}). -/
+    corresponds to BundledCategoryData.{v, u} (since Hom : HomSet.{v + 1, u}).
+    This direction always preserves universe levels. -/
 def BundledOverCategoryData.toBundledCategoryData
     (C : BundledOverCategoryData.{v, u}) :
     BundledCategoryData.{v, u} where
@@ -464,7 +473,7 @@ def BundledOverCategoryData.toBundledCategoryData
 /-- Convert a BundledCategoryData to a BundledOverCategoryData.
     A BundledCategoryData.{v, u} has HomSet.{v + 1, u} with morphisms in Type v.
     The sigma type SigmaMor lives in Type (max v u), giving
-    OverQuiver.{max v u, u}. -/
+    OverQuiver.{max v u, u}. When v ≥ u, this equals OverQuiver.{v, u}. -/
 def BundledCategoryData.toBundledOverCategoryData
     (C : BundledCategoryData.{v, u}) :
     BundledOverCategoryData.{max v u, u} where
@@ -476,26 +485,33 @@ end BundledEquiv
 /-! ## Categorical Equivalence
 
 We now establish that the conversion functors between BundledOverCategoryData
-and BundledCategoryData form a categorical equivalence. Due to universe level
-constraints, we work in the case where v = u for clean round-trips. -/
+and BundledCategoryData form a categorical equivalence.
+
+The conversions work with general universe parameters {v, u}. The point is:
+- `BundledOverCategoryData.{v, u} → BundledCategoryData.{v, u}` always works
+- `BundledCategoryData.{v, u} → BundledOverCategoryData.{max v u, u}` gives
+  the sigma-bundled version
+
+When `v ≥ u`, we have `max v u = v`, so both directions preserve universe
+levels, giving a clean categorical equivalence in `Cat.{v, u}`. -/
 
 section CategoricalEquiv
 
-/-! ### Functoriality of the conversions
+/-! ### Functoriality of toBundledCategoryData
 
-The conversions toBundledCategoryData and toBundledOverCategoryData are
-functorial: they map functors to functors and preserve identity and
-composition. -/
+The conversion toBundledCategoryData is functorial: it maps functors to
+functors and preserves identity and composition. This direction always
+preserves universe levels. -/
 
 /-- The conversion `toBundledCategoryData` maps OverFunctorData to FunctorData.
     This gives the morphism part of the functor. -/
-def toBundledCategoryData_map {C D : BundledOverCategoryData.{u, u}}
+def toBundledCategoryData_map {C D : BundledOverCategoryData.{v, u}}
     (F : OverFunctorData C.data D.data) :
     FunctorData C.toBundledCategoryData.data D.toBundledCategoryData.data :=
   F.toFunctorData
 
 /-- The conversion toBundledCategoryData preserves identity functors. -/
-theorem toBundledCategoryData_map_id (C : BundledOverCategoryData.{u, u}) :
+theorem toBundledCategoryData_map_id (C : BundledOverCategoryData.{v, u}) :
     toBundledCategoryData_map (OverFunctorData.id C.data) =
       BundledCategoryData.idFunctorData C.toBundledCategoryData := by
   simp only [toBundledCategoryData_map, OverFunctorData.toFunctorData,
@@ -505,7 +521,7 @@ theorem toBundledCategoryData_map_id (C : BundledOverCategoryData.{u, u}) :
   rfl
 
 /-- The conversion toBundledCategoryData preserves functor composition. -/
-theorem toBundledCategoryData_map_comp {C D E : BundledOverCategoryData.{u, u}}
+theorem toBundledCategoryData_map_comp {C D E : BundledOverCategoryData.{v, u}}
     (F : OverFunctorData C.data D.data) (G : OverFunctorData D.data E.data) :
     toBundledCategoryData_map (F.comp G) =
       (toBundledCategoryData_map F).comp (toBundledCategoryData_map G) := by
@@ -516,10 +532,10 @@ theorem toBundledCategoryData_map_comp {C D E : BundledOverCategoryData.{u, u}}
   rfl
 
 /-- FunctorData for the conversion functor from BundledOverCategoryData to
-    BundledCategoryData. -/
+    BundledCategoryData. Works for all universe parameters {v, u}. -/
 def toBundledCategoryDataFunctorData :
-    FunctorData BundledOverCategoryData.categoryData.{u, u}
-      BundledCategoryData.categoryData.{u, u} where
+    FunctorData BundledOverCategoryData.categoryData.{v, u}
+      BundledCategoryData.categoryData.{v, u} where
   toFunctorOps := {
     obj := BundledOverCategoryData.toBundledCategoryData
     map := toBundledCategoryData_map
@@ -529,16 +545,22 @@ def toBundledCategoryDataFunctorData :
     map_comp := fun F G => toBundledCategoryData_map_comp F G
   }
 
+/-! ### Functoriality of toBundledOverCategoryData
+
+The conversion toBundledOverCategoryData is functorial. The target universe
+is `max v u` due to the sigma construction bundling objects and morphisms.
+When `v ≥ u`, this equals `v`, preserving universe levels. -/
+
 /-- The conversion `toBundledOverCategoryData` maps FunctorData to
     OverFunctorData. This gives the morphism part of the functor. -/
-def toBundledOverCategoryData_map {C D : BundledCategoryData.{u, u}}
+def toBundledOverCategoryData_map {C D : BundledCategoryData.{v, u}}
     (F : FunctorData C.data D.data) :
     OverFunctorData C.toBundledOverCategoryData.data
       D.toBundledOverCategoryData.data :=
   F.toOverFunctorData
 
 /-- The conversion toBundledOverCategoryData preserves identity functors. -/
-theorem toBundledOverCategoryData_map_id (C : BundledCategoryData.{u, u}) :
+theorem toBundledOverCategoryData_map_id (C : BundledCategoryData.{v, u}) :
     toBundledOverCategoryData_map (BundledCategoryData.idFunctorData C) =
       OverFunctorData.id C.toBundledOverCategoryData.data := by
   simp only [toBundledOverCategoryData_map, FunctorData.toOverFunctorData,
@@ -547,7 +569,7 @@ theorem toBundledOverCategoryData_map_id (C : BundledCategoryData.{u, u}) :
   rfl
 
 /-- The conversion toBundledOverCategoryData preserves functor composition. -/
-theorem toBundledOverCategoryData_map_comp {C D E : BundledCategoryData.{u, u}}
+theorem toBundledOverCategoryData_map_comp {C D E : BundledCategoryData.{v, u}}
     (F : FunctorData C.data D.data) (G : FunctorData D.data E.data) :
     toBundledOverCategoryData_map (F.comp G) =
       (toBundledOverCategoryData_map F).comp
@@ -558,10 +580,11 @@ theorem toBundledOverCategoryData_map_comp {C D E : BundledCategoryData.{u, u}}
   rfl
 
 /-- FunctorData for the conversion functor from BundledCategoryData to
-    BundledOverCategoryData. -/
+    BundledOverCategoryData. The target universe is `max v u` due to the
+    sigma construction; when `v ≥ u`, this equals `v`. -/
 def toBundledOverCategoryDataFunctorData :
-    FunctorData BundledCategoryData.categoryData.{u, u}
-      BundledOverCategoryData.categoryData.{u, u} where
+    FunctorData BundledCategoryData.categoryData.{v, u}
+      BundledOverCategoryData.categoryData.{max v u, u} where
   toFunctorOps := {
     obj := BundledCategoryData.toBundledOverCategoryData
     map := toBundledOverCategoryData_map

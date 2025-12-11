@@ -218,27 +218,33 @@ Universe level behavior for conversions:
 - `BundledCategoryData.{v, u}.toBundledOverCategoryData` produces
   `BundledOverCategoryData.{max v u, u}`
 
-For clean round-trips, we work with `v = u`.
+For clean round-trips, we work with `v ≥ u`. When `v ≥ u`, `max v u = v`, so both
+directions of the equivalence operate at universe `{v, u}`.
 
 ### 6b. Conversion Functors
 
-The conversions are functorial:
+The conversions are functorial with general universe parameters:
 
 **BundledOverCategoryData → BundledCategoryData:**
 - `toBundledCategoryData_map`: Maps OverFunctorData to FunctorData
 - `toBundledCategoryData_map_id`: Preserves identity
 - `toBundledCategoryData_map_comp`: Preserves composition
-- `toBundledCategoryDataFunctorData`: The functor (for `{u, u}`)
+- `toBundledCategoryDataFunctorData`: The functor for general `{v, u}`
+  - Type: `FunctorData BundledOverCategoryData.categoryData.{v, u}
+    BundledCategoryData.categoryData.{v, u}`
 
 **BundledCategoryData → BundledOverCategoryData:**
 - `toBundledOverCategoryData_map`: Maps FunctorData to OverFunctorData
 - `toBundledOverCategoryData_map_id`: Preserves identity
 - `toBundledOverCategoryData_map_comp`: Preserves composition
-- `toBundledOverCategoryDataFunctorData`: The functor (for `{u, u}`)
+- `toBundledOverCategoryDataFunctorData`: The functor for general `{v, u}`
+  - Type: `FunctorData BundledCategoryData.categoryData.{v, u}
+    BundledOverCategoryData.categoryData.{max v u, u}`
+  - When `v ≥ u`: `max v u = v`, giving same universes on both sides
 
 ### Status (Phase 6)
 
 - [x] 6a: Universe generalization
-- [x] 6b: Conversion functors
+- [x] 6b: Conversion functors (generalized to `{v, u}`)
 - [ ] 6c: Natural isomorphisms for round-trips
 - [ ] 6d: Full categorical equivalence proof
