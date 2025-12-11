@@ -744,6 +744,17 @@ lemma Functor.map_eqToHom_comp_heq {C D : Type*} [Category C] [Category D]
   exact HEq.rfl
 
 /--
+When the target objects are propositionally equal, `G.map (f ≫ eqToHom h)` is
+HEq to `G.map f`.
+-/
+lemma Functor.map_comp_eqToHom_heq {C D : Type*} [Category C] [Category D]
+    (G : C ⥤ D) {x y y' : C} (f : x ⟶ y) (h : y = y') :
+    G.map (f ≫ eqToHom h) ≍ G.map f := by
+  cases h
+  simp only [eqToHom_refl, Category.comp_id]
+  exact HEq.rfl
+
+/--
 Two morphisms in propositionally equal fiber categories are HEq iff they are
 equal after transport via eqToHom functors. This is used when the categories
 are `F.obj tw₁` and `F.obj tw₂` where `tw₁ = tw₂`.
@@ -1326,6 +1337,32 @@ def restrictToFiber (b : C) : (Over b)ᵒᵖ' ⥤ Cat.{v, u} :=
   overOpToTwistedArrow C b ⋙ F
 
 /--
+The restriction of `F : Tw(C) → Cat` to the fiber over `b`, with oppositized
+fiber categories. This ensures that morphisms in `Grothendieck (restrictToFiberOp b)`
+have the correct covariant direction for the connected Grothendieck construction.
+-/
+def restrictToFiberOp (b : C) : (Over b)ᵒᵖ' ⥤ Cat.{v, u} :=
+  restrictToFiber C F b ⋙ Cat.opFunctor'
+
+/--
+The inner fiber category using `GrothendieckContra'`.
+
+This uses the contravariant Grothendieck construction over `(Over b)ᵒᵖ'`, which
+produces morphisms where:
+- `f.base : x.base ⟶ y.base` in `Over b` (covariant)
+- `f.base.left : x.base.left ⟶ y.base.left` (covariant - this is domArr!)
+- `f.fiber : x.fiber ⟶ transported(y.fiber)` (covariant - this is fiberMorph!)
+
+The connected Grothendieck construction uses one contravariant and
+one covariant construction.
+-/
+def innerFiberContra (b : C) : Type _ :=
+  GrothendieckContra' (restrictToFiber C F b)
+
+instance innerFiberContraCategory (b : C) : Category (innerFiberContra C F b) :=
+  GrothendieckContra'.GrothendieckContraInst'
+
+/--
 The twisted arrow morphism from `twObjMk' ov.hom` to `twObjMk' (ov.hom ≫ β)`,
 used to transport fiber elements along a base morphism `β : b ⟶ d`.
 -/
@@ -1349,6 +1386,15 @@ of `F.obj (twObjMk' (ov.hom ≫ β))`.
 def fiberTransport {b d : C} (β : b ⟶ d) (ov : Over b) :
     (restrictToFiber C F b).obj ov ⥤ (restrictToFiber C F d).obj ((Over.map β).obj ov) :=
   F.map (fiberTransportTwMorph C β ov)
+
+/--
+The functor that transports fiber elements along a base morphism `β : b ⟶ d`,
+for the oppositized fiber categories. This is the result of applying
+`Cat.opFunctor'.map` to `fiberTransport`.
+-/
+def fiberTransportOp {b d : C} (β : b ⟶ d) (ov : Over b) :
+    (restrictToFiberOp C F b).obj ov ⥤ (restrictToFiberOp C F d).obj ((Over.map β).obj ov) :=
+  Cat.opFunctor'.map (fiberTransport C F β ov)
 
 /--
 The object mapping for the transition functor between fibers.
@@ -1407,6 +1453,96 @@ theorem fiberTransport_functor_naturality {b d : C} (β : b ⟶ d)
           rw [← F.map_comp]
     _ = F.map (fiberTransportTwMorph C β ov) ⋙
           F.map ((overOpToTwistedArrow C d).map ((Over.map β).map α)) := rfl
+
+/--
+Functor-level naturality for oppositized fiber transport.
+-/
+theorem fiberTransportOp_functor_naturality {b d : C} (β : b ⟶ d)
+    {ov ov' : (Over b)ᵒᵖ'} (α : ov ⟶ ov') :
+    (restrictToFiberOp C F b).map α ⋙ fiberTransportOp C F β ov' =
+    fiberTransportOp C F β ov ⋙ (restrictToFiberOp C F d).map ((Over.map β).map α) := by
+  have h := fiberTransport_functor_naturality C F β α
+  simp only [restrictToFiberOp, fiberTransportOp, Functor.comp_map, Cat.opFunctor']
+  exact congrArg Functor.op' h
+
+/--
+The object mapping for the transition functor between oppositized fibers.
+Given `x : Grothendieck (restrictToFiberOp F b)`, produces an object in
+`Grothendieck (restrictToFiberOp F d)`.
+-/
+def fiberFunctorTransitionObjOp {b d : C} (β : b ⟶ d)
+    (x : Grothendieck (restrictToFiberOp C F b)) :
+    Grothendieck (restrictToFiberOp C F d) :=
+  ⟨(Over.map β).obj x.base, (fiberTransportOp C F β x.base).obj x.fiber⟩
+
+/--
+The morphism mapping for the transition functor between oppositized fiber
+Grothendieck constructions.
+-/
+def fiberFunctorTransitionHomOp {b d : C} (β : b ⟶ d)
+    {x y : Grothendieck (restrictToFiberOp C F b)} (f : x ⟶ y) :
+    fiberFunctorTransitionObjOp C F β x ⟶ fiberFunctorTransitionObjOp C F β y := by
+  refine ⟨(Over.map β).map f.base, ?_⟩
+  have nat_eq := fiberTransportOp_functor_naturality C F β f.base
+  have fiber_eq : ((restrictToFiberOp C F d).map ((Over.map β).map f.base) |>.obj
+        ((fiberTransportOp C F β x.base).obj x.fiber)) =
+      ((fiberTransportOp C F β y.base).obj
+        ((restrictToFiberOp C F b).map f.base |>.obj x.fiber)) :=
+    congrArg (fun G => G.obj x.fiber) nat_eq.symm
+  exact eqToHom fiber_eq ≫
+        (fiberTransportOp C F β y.base).map f.fiber
+
+/--
+The oppositized transition functor preserves identity morphisms.
+-/
+theorem fiberFunctorTransitionHomOp_id {b d : C} (β : b ⟶ d)
+    (x : Grothendieck (restrictToFiberOp C F b)) :
+    fiberFunctorTransitionHomOp C F β (𝟙 x) =
+    𝟙 (fiberFunctorTransitionObjOp C F β x) := by
+  apply Grothendieck.ext
+  case w_fiber =>
+    simp only [fiberFunctorTransitionHomOp, fiberFunctorTransitionObjOp,
+               Grothendieck.id_fiber, Grothendieck.id_base]
+    simp only [fiberTransportOp, eqToHom_map, eqToHom_trans]
+  case w_base =>
+    simp only [fiberFunctorTransitionHomOp, fiberFunctorTransitionObjOp,
+               Grothendieck.id_base]
+    exact (Over.map β).map_id x.base
+
+/--
+The oppositized transition functor preserves composition.
+-/
+theorem fiberFunctorTransitionHomOp_comp {b d : C} (β : b ⟶ d)
+    {x y z : Grothendieck (restrictToFiberOp C F b)}
+    (f : x ⟶ y) (g : y ⟶ z) :
+    fiberFunctorTransitionHomOp C F β (f ≫ g) =
+    fiberFunctorTransitionHomOp C F β f ≫ fiberFunctorTransitionHomOp C F β g := by
+  apply Grothendieck.ext
+  case w_fiber =>
+    simp only [fiberFunctorTransitionHomOp, fiberFunctorTransitionObjOp,
+               Grothendieck.comp_fiber, Grothendieck.comp_base, fiberTransportOp]
+    simp only [Functor.map_comp, eqToHom_map]
+    simp only [Category.assoc, eqToHom_trans_assoc]
+    have nat_eq := fiberTransportOp_functor_naturality C F β g.base
+    simp only [restrictToFiberOp, Functor.comp_map, fiberTransportOp] at nat_eq ⊢
+    have mor_eq := Functor.congr_hom nat_eq f.fiber
+    simp only [Functor.comp_map] at mor_eq
+    rw [mor_eq]
+    simp only [Category.assoc, eqToHom_trans_assoc]
+  case w_base =>
+    simp only [fiberFunctorTransitionHomOp, Grothendieck.comp_base]
+    rfl
+
+/--
+The transition functor from `Grothendieck (restrictToFiberOp F b)` to
+`Grothendieck (restrictToFiberOp F d)` induced by `β : b ⟶ d`.
+-/
+def fiberFunctorTransitionOp {b d : C} (β : b ⟶ d) :
+    Grothendieck (restrictToFiberOp C F b) ⥤ Grothendieck (restrictToFiberOp C F d) where
+  obj := fiberFunctorTransitionObjOp C F β
+  map := fiberFunctorTransitionHomOp C F β
+  map_id := fiberFunctorTransitionHomOp_id C F β
+  map_comp := fiberFunctorTransitionHomOp_comp C F β
 
 /--
 The morphism mapping for the transition functor between fiber Grothendieck
@@ -1666,6 +1802,82 @@ theorem fiberFunctorTransition_id {b : C} :
       exact Cat.eqToHom_map_heq _ _
 
 /--
+The fiber category equality for the oppositized identity transport.
+-/
+lemma fiberTransportOp_id_cat_eq {b : C} (ov : Over b) :
+    (restrictToFiberOp C F b).obj ((Over.map (𝟙 b)).obj ov) =
+    (restrictToFiberOp C F b).obj ov := by
+  simp only [restrictToFiberOp, Functor.comp_obj, Cat.opFunctor']
+  congr 1
+  exact fiberTransport_id_cat_eq C F ov
+
+/--
+When `β = 𝟙 b`, the oppositized fiber transport functor is `eqToHom` in Cat.
+-/
+lemma fiberTransportOp_id {b : C} (ov : Over b) :
+    fiberTransportOp C F (𝟙 b) ov =
+    eqToHom (fiberTransportOp_id_cat_eq C F ov).symm := by
+  simp only [fiberTransportOp, fiberTransport_id, Cat.opFunctor', eqToHom_map]
+
+/--
+The object equality for oppositized `fiberFunctorTransitionObjOp` with identity.
+-/
+lemma fiberFunctorTransitionObjOp_id_base {b : C}
+    (x : Grothendieck (restrictToFiberOp C F b)) :
+    ((Over.map (𝟙 b)).obj x.base) = x.base := by
+  have h := Over.mapId_eq b
+  exact congrFun (congrArg Functor.obj h) x.base
+
+/--
+When `β = 𝟙 b`, `fiberFunctorTransitionObjOp` returns an object equal to input.
+-/
+lemma fiberFunctorTransitionObjOp_id {b : C}
+    (x : Grothendieck (restrictToFiberOp C F b)) :
+    fiberFunctorTransitionObjOp C F (𝟙 b) x = x := by
+  rw [Grothendieck.mk.injEq]
+  constructor
+  · exact fiberFunctorTransitionObjOp_id_base C F x
+  · simp only [fiberFunctorTransitionObjOp]
+    rw [fiberTransportOp_id]
+    exact eqToHom_obj_heq _ _ _ _
+
+/--
+When `β = 𝟙 b`, `fiberFunctorTransitionOp C F (𝟙 b)` equals the identity functor.
+-/
+theorem fiberFunctorTransitionOp_id {b : C} :
+    fiberFunctorTransitionOp C F (𝟙 b) =
+    𝟭 (Grothendieck (restrictToFiberOp C F b)) := by
+  apply Functor.ext
+  case h_obj => exact fiberFunctorTransitionObjOp_id C F
+  case h_map =>
+    intro x y f
+    simp only [Functor.id_map]
+    apply Grothendieck.ext
+    case w_base =>
+      simp only [fiberFunctorTransitionOp, fiberFunctorTransitionHomOp,
+                 Grothendieck.comp_base, Grothendieck.eqToHom_base']
+      rw [Functor.congr_hom (Over.mapId_eq b) f.base, Functor.id_map]
+      apply eq_of_heq
+      apply HEq.trans (eqToHom_comp_heq _ _)
+      apply HEq.trans (comp_eqToHom_heq _ _)
+      apply HEq.trans (comp_eqToHom_heq _ _).symm
+      exact (eqToHom_comp_heq _ _).symm
+    case w_fiber =>
+      apply eq_of_heq
+      simp only [fiberFunctorTransitionOp, fiberFunctorTransitionHomOp,
+                 Grothendieck.comp_fiber, Grothendieck.fiber_eqToHom,
+                 eqToHom_trans_assoc, eqToHom_comp_heq_iff, heq_eqToHom_comp_iff]
+      apply HEq.trans
+      · exact Cat.functor_map_heq_of_eq_eqToHom _ _
+              (fiberTransportOp_id C F y.base) f.fiber
+      apply HEq.symm
+      simp only [Grothendieck.comp_base, eqToHom_map, eqToHom_trans_assoc]
+      apply HEq.trans (eqToHom_comp_heq _ _)
+      apply HEq.trans (comp_eqToHom_heq _ _)
+      rw [Grothendieck.eqToHom_base', eqToHom_map]
+      exact Cat.eqToHom_map_heq _ _
+
+/--
 The twisted arrow morphism for `β ≫ γ` equals the composition of the twisted
 arrow morphisms for `β` and `γ`, up to the path equality.
 -/
@@ -1794,6 +2006,80 @@ theorem fiberFunctorTransition_comp {b d e : C} (β : b ⟶ d) (γ : d ⟶ e) :
       exact Functor.map_eqToHom_comp_heq _ _ _
 
 /--
+The object mapping for oppositized `fiberFunctorTransitionOp (β ≫ γ)` equals
+the composition of object mappings.
+-/
+lemma fiberFunctorTransitionObjOp_comp {b d e : C} (β : b ⟶ d) (γ : d ⟶ e)
+    (x : Grothendieck (restrictToFiberOp C F b)) :
+    fiberFunctorTransitionObjOp C F (β ≫ γ) x =
+    fiberFunctorTransitionObjOp C F γ (fiberFunctorTransitionObjOp C F β x) := by
+  simp only [fiberFunctorTransitionObjOp, fiberTransportOp]
+  congr 1
+  · exact congrArg (·.obj x.base) (Over.mapComp_eq β γ)
+  · simp only [fiberTransport_comp, Cat.opFunctor']
+    exact eqToHom_obj_heq _ _ _ _
+
+/--
+The oppositized transition functor respects composition.
+-/
+theorem fiberFunctorTransitionOp_comp {b d e : C} (β : b ⟶ d) (γ : d ⟶ e) :
+    fiberFunctorTransitionOp C F (β ≫ γ) =
+    fiberFunctorTransitionOp C F β ⋙ fiberFunctorTransitionOp C F γ := by
+  apply Functor.ext
+  case h_obj => exact fiberFunctorTransitionObjOp_comp C F β γ
+  case h_map =>
+    intro x y f
+    apply Grothendieck.ext
+    case w_base =>
+      simp only [fiberFunctorTransitionOp, fiberFunctorTransitionHomOp,
+                 Functor.comp_map, Grothendieck.comp_base, Grothendieck.eqToHom_base']
+      rw [Functor.congr_hom (Over.mapComp_eq β γ) f.base, Functor.comp_map]
+      apply eq_of_heq
+      apply HEq.trans (eqToHom_comp_heq _ _)
+      apply HEq.trans (comp_eqToHom_heq _ _)
+      apply HEq.symm
+      apply HEq.trans (eqToHom_comp_heq _ _)
+      exact comp_eqToHom_heq _ _
+    case w_fiber =>
+      apply eq_of_heq
+      simp only [fiberFunctorTransitionOp, Functor.comp_map, fiberFunctorTransitionHomOp,
+                 Grothendieck.comp_fiber, Grothendieck.fiber_eqToHom,
+                 eqToHom_trans_assoc, eqToHom_comp_heq_iff, heq_eqToHom_comp_iff]
+      simp only [Grothendieck.comp_base, eqToHom_map]
+      simp only [fiberFunctorTransitionObjOp, fiberTransportOp]
+      have h := fiberTransport_comp C F β γ y.base
+      have hOp : Cat.opFunctor'.map (fiberTransport C F (β ≫ γ) y.base) =
+          Cat.opFunctor'.map (fiberTransport C F β y.base) ⋙
+          Cat.opFunctor'.map (fiberTransport C F γ ((Over.map β).obj y.base)) ⋙
+          eqToHom (congrArg Cat.opFunctor'.obj (congrArg F.obj
+            (congrArg (twObjMk' ·) (Category.assoc y.base.hom β γ)))) := by
+        simp only [h, Cat.opFunctor', Functor.op'_comp, Cat.Functor.op'_eqToHom]
+      apply HEq.trans
+      · exact Cat.functor_map_heq_of_eq_comp_comp_eqToHom
+          (Cat.opFunctor'.map (fiberTransport C F (β ≫ γ) y.base))
+          (Cat.opFunctor'.map (fiberTransport C F β y.base))
+          (Cat.opFunctor'.map (fiberTransport C F γ ((Over.map β).obj y.base)))
+          _ hOp f.fiber
+      apply HEq.symm
+      apply HEq.trans (eqToHom_comp_heq _ _)
+      apply HEq.trans (eqToHom_comp_heq _ _)
+      apply HEq.trans (comp_eqToHom_heq _ _)
+      rw [Grothendieck.eqToHom_base', eqToHom_map]
+      apply HEq.trans (Cat.eqToHom_map_heq _ _)
+      apply HEq.trans (eqToHom_comp_heq _ _)
+      exact Functor.map_eqToHom_comp_heq _ _ _
+
+/--
+The oppositized fiber functor `fiberFunctorOp F : C ⥤ Cat` assigns to each
+object `b : C` the Grothendieck construction of `restrictToFiberOp` over `b`.
+-/
+def fiberFunctorOp : C ⥤ Cat where
+  obj b := Cat.of (Grothendieck (restrictToFiberOp C F b))
+  map β := fiberFunctorTransitionOp C F β
+  map_id _ := fiberFunctorTransitionOp_id C F
+  map_comp β γ := fiberFunctorTransitionOp_comp C F β γ
+
+/--
 The fiber functor `fiberFunctor F : C ⥤ Cat` assigns to each object `b : C`
 the Grothendieck construction of `F` restricted to the fiber over `b`.
 Morphisms `β : b ⟶ d` are sent to the transition functors.
@@ -1803,6 +2089,27 @@ def fiberFunctor : C ⥤ Cat where
   map β := fiberFunctorTransition C F β
   map_id _ := fiberFunctorTransition_id C F
   map_comp β γ := fiberFunctorTransition_comp C F β γ
+
+/--
+The connected Grothendieck construction using oppositized inner fibers.
+
+For a functor `F : TwistedArrow C ⥤ Cat`, this defines:
+```
+ConnectedGrothendieckOp F = Grothendieck (fiberFunctorOp C F)
+```
+where `fiberFunctorOp C F : C ⥤ Cat` assigns to each `b : C` the Grothendieck
+construction of `restrictToFiberOp`, which oppositizes the fiber categories
+at the inner level.
+
+This construction differs from `ConnectedGrothendieck'` by applying the
+oppositization to the fiber categories BEFORE the inner Grothendieck construction,
+rather than AFTER. This results in fiber morphisms going in the same direction as
+`ConnGrothendieckHom.fiberMorph`.
+-/
+def ConnectedGrothendieckOp : Type _ := Grothendieck (fiberFunctorOp C F)
+
+instance : Category (ConnectedGrothendieckOp C F) :=
+  inferInstanceAs (Category (Grothendieck (fiberFunctorOp C F)))
 
 /--
 The connected Grothendieck construction as a nested Grothendieck construction.
@@ -1820,6 +2127,314 @@ def ConnectedGrothendieck' : Type _ := Grothendieck (fiberFunctor C F ⋙ Cat.op
 
 instance : Category (ConnectedGrothendieck' C F) :=
   inferInstanceAs (Category (Grothendieck (fiberFunctor C F ⋙ Cat.opFunctor')))
+
+/--
+The object mapping for the transition functor for `innerFiberContra`.
+Given `x : innerFiberContra F b`, produces an object in `innerFiberContra F d`.
+-/
+def innerFiberContraTransitionObj {b d : C} (β : b ⟶ d)
+    (x : innerFiberContra C F b) : innerFiberContra C F d :=
+  ⟨(Over.map β).obj x.base, (fiberTransport C F β x.base).obj x.fiber⟩
+
+/--
+The fiber coherence equation for `innerFiberContraTransitionHom`.
+-/
+theorem innerFiberContraTransition_fiber_eq {b d : C} (β : b ⟶ d)
+    {x y : innerFiberContra C F b} (f : x ⟶ y) :
+    (fiberTransport C F β x.base).obj
+      ((restrictToFiber C F b).map f.base |>.obj y.fiber) =
+    ((restrictToFiber C F d).map ((Over.map β).map f.base)).obj
+      ((fiberTransport C F β y.base).obj y.fiber) :=
+  congrFun (congrArg Functor.obj
+    (fiberTransport_functor_naturality C F β (ov := y.base) (ov' := x.base) f.base)) y.fiber
+
+/--
+The morphism mapping for the transition functor for `innerFiberContra`.
+-/
+def innerFiberContraTransitionHom {b d : C} (β : b ⟶ d)
+    {x y : innerFiberContra C F b} (f : x ⟶ y) :
+    innerFiberContraTransitionObj C F β x ⟶ innerFiberContraTransitionObj C F β y :=
+  ⟨(Over.map β).map f.base,
+   (fiberTransport C F β x.base).map f.fiber ≫
+     eqToHom (innerFiberContraTransition_fiber_eq C F β f)⟩
+
+@[simp]
+theorem innerFiberContraTransitionHom_base {b d : C} (β : b ⟶ d)
+    {x y : innerFiberContra C F b} (f : x ⟶ y) :
+    (innerFiberContraTransitionHom C F β f).base = (Over.map β).map f.base := rfl
+
+@[simp]
+theorem innerFiberContraTransitionHom_fiber {b d : C} (β : b ⟶ d)
+    {x y : innerFiberContra C F b} (f : x ⟶ y) :
+    (innerFiberContraTransitionHom C F β f).fiber =
+    (fiberTransport C F β x.base).map f.fiber ≫
+      eqToHom (innerFiberContraTransition_fiber_eq C F β f) := rfl
+
+/--
+The transition functor for `innerFiberContra` along a base morphism `β : b ⟶ d`.
+-/
+def innerFiberContraTransition {b d : C} (β : b ⟶ d) :
+    innerFiberContra C F b ⥤ innerFiberContra C F d where
+  obj := innerFiberContraTransitionObj C F β
+  map := innerFiberContraTransitionHom C F β
+  map_id x := by
+    refine GrothendieckContra'.ext _ _ ?_ ?_
+    · simp only [innerFiberContraTransitionHom]
+      exact (Over.map β).map_id x.base
+    · change ((fiberTransport C F β x.base).map
+               (GrothendieckContra'.id x).fiber ≫ _) ≫ eqToHom _ =
+             (GrothendieckContra'.id (innerFiberContraTransitionObj C F β x)).fiber
+      simp only [GrothendieckContra'.id]
+      simp only [eqToHom_map, eqToHom_trans]
+  map_comp {x y z} f g := by
+    refine GrothendieckContra'.ext _ _ ?_ ?_
+    · simp only [innerFiberContraTransitionHom_base]
+      exact (Over.map β).map_comp f.base g.base
+    · change ((fiberTransport C F β x.base).map (GrothendieckContra'.comp f g).fiber ≫ _) ≫
+             eqToHom _ =
+           (GrothendieckContra'.comp
+             (innerFiberContraTransitionHom C F β f)
+             (innerFiberContraTransitionHom C F β g)).fiber
+      rw [GrothendieckContra'.comp_fiber, GrothendieckContra'.comp_fiber]
+      simp only [innerFiberContraTransitionHom_fiber, innerFiberContraTransitionHom_base,
+                 innerFiberContraTransitionObj, Functor.map_comp, Category.assoc,
+                 eqToHom_map, eqToHom_trans_assoc]
+      have nat_eq := fiberTransport_functor_naturality C F β
+        (ov := y.base) (ov' := x.base) f.base
+      have mor_eq := Functor.congr_hom nat_eq g.fiber
+      simp only [Functor.comp_map] at mor_eq
+      rw [mor_eq]
+      simp only [Category.assoc, eqToHom_trans]
+
+/--
+Functoriality of `innerFiberContraTransition` with respect to identity morphisms.
+-/
+theorem innerFiberContraTransitionObj_id_base {b : C} (x : innerFiberContra C F b) :
+    (innerFiberContraTransitionObj C F (𝟙 b) x).base = x.base :=
+  congrFun (congrArg Functor.obj (Over.mapId_eq b)) x.base
+
+theorem innerFiberContraTransitionObj_id_fiber {b : C} (x : innerFiberContra C F b) :
+    (innerFiberContraTransitionObj C F (𝟙 b) x).fiber ≍ x.fiber := by
+  unfold innerFiberContraTransitionObj
+  simp only
+  rw [fiberTransport_id]
+  exact eqToHom_obj_heq _ _ (fiberTransport_id_cat_eq C F x.base).symm x.fiber
+
+theorem innerFiberContraTransitionObj_id {b : C} (x : innerFiberContra C F b) :
+    innerFiberContraTransitionObj C F (𝟙 b) x = x := by
+  have h_base := innerFiberContraTransitionObj_id_base C F x
+  have h_fiber := innerFiberContraTransitionObj_id_fiber C F x
+  exact GrothendieckContra'.obj_ext _ _ h_base h_fiber
+
+theorem innerFiberContraTransition_id (b : C) :
+    innerFiberContraTransition C F (𝟙 b) = 𝟭 (innerFiberContra C F b) := by
+  fapply Functor.ext
+  · exact innerFiberContraTransitionObj_id C F
+  · intro x y f
+    refine GrothendieckContra'.ext _ _ ?w_base ?w_fiber
+    case w_base =>
+      simp only [innerFiberContraTransition, innerFiberContraTransitionHom, Functor.id_map]
+      rw [Functor.congr_hom (Over.mapId_eq b) f.base, Functor.id_map]
+      simp only [innerFiberContraCategory, GrothendieckContra'.GrothendieckContraInst',
+                 GrothendieckContra'.comp_base]
+      conv_rhs => rw [GrothendieckContra'.base_eqToHom, GrothendieckContra'.base_eqToHom]
+    case w_fiber =>
+      -- LHS.fiber ≫ eqToHom _ = RHS.fiber (from GrothendieckContra'.ext)
+      simp only [innerFiberContraTransition, innerFiberContraTransitionHom, Functor.id_map]
+      -- Goal: ((fiberTransport C F (𝟙 b) x.base).map f.fiber ≫ eqToHom _) ≫ eqToHom _ =
+      --   (eqToHom _ ≫ f ≫ eqToHom _).fiber
+      apply eq_of_heq
+      -- Strip the two trailing eqToHom from LHS
+      apply HEq.trans (comp_eqToHom_heq _ _)
+      apply HEq.trans (comp_eqToHom_heq _ _)
+      -- Goal: (fiberTransport C F (𝟙 b) x.base).map f.fiber ≍ RHS.fiber
+      have hMap := Cat.functor_map_heq_of_eq_eqToHom
+        (fiberTransport_id_cat_eq C F x.base).symm
+        (fiberTransport C F (𝟙 b) x.base)
+        (fiberTransport_id C F x.base)
+        f.fiber
+      apply HEq.trans hMap
+      -- Goal: f.fiber ≍ (eqToHom _ ≫ f ≫ eqToHom _).fiber
+      apply HEq.symm
+      -- Goal: (eqToHom _ ≫ f ≫ eqToHom _).fiber ≍ f.fiber
+      -- Use the lemma that (eqToHom _ ≫ f ≫ eqToHom _).fiber ≍ f.fiber
+      exact GrothendieckContra'.conj_eqToHom_fiber_heq _ f _
+
+/--
+Functoriality of `innerFiberContraTransition` with respect to composition.
+-/
+theorem innerFiberContraTransitionObj_comp {b d e : C} (β : b ⟶ d) (γ : d ⟶ e)
+    (x : innerFiberContra C F b) :
+    innerFiberContraTransitionObj C F (β ≫ γ) x =
+    innerFiberContraTransitionObj C F γ (innerFiberContraTransitionObj C F β x) := by
+  apply GrothendieckContra'.obj_ext
+  · -- base field: (Over.map (β ≫ γ)).obj = (Over.map γ).obj ∘ (Over.map β).obj
+    exact congrArg (·.obj x.base) (Over.mapComp_eq β γ)
+  · -- fiber field: uses fiberTransport_comp
+    simp only [innerFiberContraTransitionObj, fiberTransport_comp, Functor.comp_obj]
+    exact eqToHom_obj_heq _ _ _ _
+
+theorem innerFiberContraTransition_comp {b d e : C} (β : b ⟶ d) (γ : d ⟶ e) :
+    innerFiberContraTransition C F (β ≫ γ) =
+    innerFiberContraTransition C F β ⋙ innerFiberContraTransition C F γ := by
+  fapply Functor.ext
+  · exact innerFiberContraTransitionObj_comp C F β γ
+  · intro x y f
+    refine GrothendieckContra'.ext _ _ ?w_base ?w_fiber
+    case w_base =>
+      unfold innerFiberContraTransition innerFiberContraTransitionHom
+      simp only [Functor.comp_map]
+      rw [Functor.congr_hom (Over.mapComp_eq β γ) f.base, Functor.comp_map]
+      simp only [innerFiberContraCategory, GrothendieckContra'.GrothendieckContraInst',
+                 GrothendieckContra'.comp_base]
+      conv_rhs => rw [GrothendieckContra'.base_eqToHom, GrothendieckContra'.base_eqToHom]
+    case w_fiber =>
+      unfold innerFiberContraTransition innerFiberContraTransitionHom
+      simp only [Functor.comp_map]
+      apply eq_of_heq
+      -- Strip trailing eqToHoms from LHS
+      apply HEq.trans (comp_eqToHom_heq _ _)
+      apply HEq.trans (comp_eqToHom_heq _ _)
+      -- LHS: (fiberTransport C F (β ≫ γ) x.base).map f.fiber
+      -- Use fiberTransport_comp to decompose this
+      apply HEq.trans
+      · exact Cat.functor_map_heq_of_eq_comp_comp_eqToHom
+          (fiberTransport C F (β ≫ γ) x.base)
+          (fiberTransport C F β x.base)
+          (fiberTransport C F γ ((Over.map β).obj x.base))
+          _ (fiberTransport_comp C F β γ x.base) f.fiber
+      -- LHS: (fiberTransport γ).map ((fiberTransport β).map f.fiber)
+      -- RHS: (eqToHom ≫ middle_morph ≫ eqToHom).fiber
+      apply HEq.symm
+      apply HEq.trans (GrothendieckContra'.conj_eqToHom_fiber_heq _ _ _)
+      -- RHS is now middle_morph.fiber
+      -- middle_morph = { base := ..., fiber := (fiberTransport γ).map (...) ≫ eqToHom }
+      -- .fiber extracts this fiber field
+      simp only [innerFiberContraTransitionObj]
+      -- Strip trailing eqToHom from RHS fiber
+      apply HEq.trans (comp_eqToHom_heq _ _)
+      -- RHS: (fiberTransport γ).map ((fiberTransport β).map f.fiber ≫ eqToHom)
+      -- Use Functor.map_comp_eqToHom_heq to strip the eqToHom inside
+      exact Functor.map_comp_eqToHom_heq _ _ _
+
+/--
+The contravariant fiber functor using `GrothendieckContra'` for the inner layer.
+For each `b : C`, this assigns the category `innerFiberContra C F b`.
+-/
+def fiberFunctorContra : C ⥤ Cat where
+  obj b := Cat.of (innerFiberContra C F b)
+  map β := innerFiberContraTransition C F β
+  map_id b := innerFiberContraTransition_id C F b
+  map_comp β γ := innerFiberContraTransition_comp C F β γ
+
+/--
+The connected Grothendieck construction using `GrothendieckContra'` for the inner layer.
+
+This construction produces morphisms with:
+- domArr: covariant (x → y)
+- codArr: covariant (x.base → y.base)
+- fiberMorph: covariant (x.fiber → transported(y.fiber))
+
+All three directions match the target `ConnGrothendieckHom` structure.
+-/
+def ConnectedGrothendieckContra : Type _ := Grothendieck (fiberFunctorContra C F)
+
+instance : Category (ConnectedGrothendieckContra C F) :=
+  inferInstanceAs (Category (Grothendieck (fiberFunctorContra C F)))
+
+section ConnectedGrothendieckContraMorphisms
+
+/-!
+## Morphism Components for `ConnectedGrothendieckContra`
+
+This section verifies that all three morphism directions are correct:
+- domArr: covariant (x → y)
+- codArr: covariant (x → y)
+- fiberMorph: covariant (x-related → y-related)
+-/
+
+/--
+Extract the codomain arrow from a morphism in `ConnectedGrothendieckContra`.
+
+For `f : x ⟶ y`, this is `f.base : x.base ⟶ y.base` in `C`.
+-/
+def connGrothendieckContraHomCodArr {x y : ConnectedGrothendieckContra C F}
+    (f : x ⟶ y) : x.base ⟶ y.base :=
+  f.base
+
+/--
+Extract the domain arrow from a morphism in `ConnectedGrothendieckContra`.
+
+For `f : x ⟶ y`:
+- `f.fiber` is a morphism in `innerFiberContra C F y.base`
+- `f.fiber.base` is a morphism in `Over y.base`
+- `f.fiber.base.left` is a morphism `x.fiber.base.left ⟶ y.fiber.base.left` in `C`
+-/
+def connGrothendieckContraHomDomArr {x y : ConnectedGrothendieckContra C F}
+    (f : x ⟶ y) : x.fiber.base.left ⟶ y.fiber.base.left :=
+  f.fiber.base.left
+
+/--
+The commuting square condition for morphisms in `ConnectedGrothendieckContra`.
+
+For `f : x ⟶ y`, we have:
+  `x.fiber.base.hom ≫ codArr = domArr ≫ y.fiber.base.hom`
+-/
+theorem connGrothendieckContraMorphSquareComm {x y : ConnectedGrothendieckContra C F}
+    (f : x ⟶ y) :
+    x.fiber.base.hom ≫ connGrothendieckContraHomCodArr C F f =
+      connGrothendieckContraHomDomArr C F f ≫ y.fiber.base.hom := by
+  simp only [connGrothendieckContraHomDomArr, connGrothendieckContraHomCodArr]
+  exact (Over.w f.fiber.base).symm
+
+/--
+Convert an object of `ConnectedGrothendieckContra` to `ConnGrothendieckObj`.
+-/
+def connGrothendieckContraObjToObj (x : ConnectedGrothendieckContra C F) :
+    ConnGrothendieckObj C F where
+  arrow := twObjMk' x.fiber.base.hom
+  fiber := x.fiber.fiber
+
+/--
+Convert a `ConnGrothendieckObj` to an object of `ConnectedGrothendieckContra`.
+-/
+def connGrothendieckObjToContraObj (x : ConnGrothendieckObj C F) :
+    ConnectedGrothendieckContra C F :=
+  ⟨twCod' x.arrow,
+   ⟨Over.mk (twArr' x.arrow),
+    (eqToHom (congrArg F.obj (twObjMk'_twArr' x.arrow).symm)).obj x.fiber⟩⟩
+
+/--
+The round-trip from `ConnectedGrothendieckContra` to `ConnGrothendieckObj` and back.
+-/
+theorem connGrothendieckContraObj_roundtrip (x : ConnectedGrothendieckContra C F) :
+    connGrothendieckObjToContraObj C F (connGrothendieckContraObjToObj C F x) = x := by
+  simp only [connGrothendieckContraObjToObj, connGrothendieckObjToContraObj]
+  rfl
+
+/--
+The round-trip from `ConnGrothendieckObj` to `ConnectedGrothendieckContra` and back.
+-/
+theorem connGrothendieckObj_contraRoundtrip (x : ConnGrothendieckObj C F) :
+    connGrothendieckContraObjToObj C F (connGrothendieckObjToContraObj C F x) = x := by
+  simp only [connGrothendieckObjToContraObj, connGrothendieckContraObjToObj]
+  ext
+  · simp only [Over.mk_hom]
+    exact twObjMk'_twArr' x.arrow
+  · simp only [Over.mk_hom]
+    exact eqToHom_obj_heq _ _ _ _
+
+/--
+The type of objects in `ConnectedGrothendieckContra` is equivalent to `ConnGrothendieckObj`.
+-/
+def connGrothendieckContraObjEquiv :
+    ConnectedGrothendieckContra C F ≃ ConnGrothendieckObj C F where
+  toFun := connGrothendieckContraObjToObj C F
+  invFun := connGrothendieckObjToContraObj C F
+  left_inv := connGrothendieckContraObj_roundtrip C F
+  right_inv := connGrothendieckObj_contraRoundtrip C F
+
+end ConnectedGrothendieckContraMorphisms
 
 /--
 Convert an object of `ConnectedGrothendieck'` to `ConnGrothendieckObj`.

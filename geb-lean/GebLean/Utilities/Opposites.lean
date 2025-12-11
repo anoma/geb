@@ -498,6 +498,15 @@ def opFunctor' : Cat.{v, u} ⥤ Cat.{v, u} where
   map := _root_.GebLean.Functor.op'
 
 /--
+`Functor.op'` maps `eqToHom` functors to `eqToHom` functors.
+-/
+@[simp]
+theorem Functor.op'_eqToHom {C D : Cat.{v, u}} (h : C = D) :
+    _root_.GebLean.Functor.op' (eqToHom h) = eqToHom (congrArg opFunctorObj' h) := by
+  cases h
+  rfl
+
+/--
 The double application of `Cat.opFunctor'` is equal to the identity functor
 on `Cat`. Unlike mathlib's `opFunctor` which is only involutive up to natural
 isomorphism, our `opFunctor'` is involutive on the nose because

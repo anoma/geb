@@ -1518,6 +1518,16 @@ namespace GrothendieckContra'
 
 variable {F'}
 
+@[ext (iff := false)]
+theorem obj_ext (X Y : GrothendieckContra' F') (w_base : X.base = Y.base)
+    (w_fiber : X.fiber ≍ Y.fiber) : X = Y := by
+  cases X; cases Y
+  simp only at w_base
+  subst w_base
+  simp only [heq_eq_eq] at w_fiber
+  subst w_fiber
+  rfl
+
 /-- A morphism in the contravariant Grothendieck category `F' : Cᵒᵖ' ⥤ Cat` consists of
 `base : X.base ⟶ Y.base` and `f.fiber : X.fiber ⟶ (F'.map base).obj Y.fiber`.
 -/
@@ -1665,6 +1675,13 @@ theorem fiber_eqToHom {X Y : GrothendieckContra' F'} (h : X = Y) :
     (eqToHom h).fiber = eqToHom (by subst h; exact (id_fiber_cod_eq X).symm) := by
   subst h
   rfl
+
+theorem conj_eqToHom_fiber_heq {W X Y Z : GrothendieckContra' F'}
+    (h : W = X) (f : X ⟶ Y) (h' : Y = Z) :
+    (eqToHom h ≫ f ≫ eqToHom h').fiber ≍ f.fiber := by
+  subst h h'
+  simp only [eqToHom_refl]
+  rw [Category.id_comp, Category.comp_id]
 
 lemma eqToHom_eq {X Y : GrothendieckContra' F'} (hF : X = Y) :
     eqToHom hF = { base := eqToHom (by subst hF; rfl)
