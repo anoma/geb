@@ -2091,27 +2091,6 @@ def fiberFunctor : C ⥤ Cat where
   map_comp β γ := fiberFunctorTransition_comp C F β γ
 
 /--
-The connected Grothendieck construction using oppositized inner fibers.
-
-For a functor `F : TwistedArrow C ⥤ Cat`, this defines:
-```
-ConnectedGrothendieckOp F = Grothendieck (fiberFunctorOp C F)
-```
-where `fiberFunctorOp C F : C ⥤ Cat` assigns to each `b : C` the Grothendieck
-construction of `restrictToFiberOp`, which oppositizes the fiber categories
-at the inner level.
-
-This construction differs from `ConnectedGrothendieck'` by applying the
-oppositization to the fiber categories BEFORE the inner Grothendieck construction,
-rather than AFTER. This results in fiber morphisms going in the same direction as
-`ConnGrothendieckHom.fiberMorph`.
--/
-def ConnectedGrothendieckOp : Type _ := Grothendieck (fiberFunctorOp C F)
-
-instance : Category (ConnectedGrothendieckOp C F) :=
-  inferInstanceAs (Category (Grothendieck (fiberFunctorOp C F)))
-
-/--
 The object mapping for the transition functor for `innerFiberContra`.
 Given `x : innerFiberContra F b`, produces an object in `innerFiberContra F d`.
 -/
