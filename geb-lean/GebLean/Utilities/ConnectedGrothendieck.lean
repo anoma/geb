@@ -3062,4 +3062,61 @@ lemma connGrothendieckContraProjection_map_right
 
 end ProjectionFunctor
 
+/-!
+## Presheaf Connected Grothendieck Construction
+
+This section defines the connected Grothendieck construction for presheaves
+on twisted arrows: functors `G : Tw(C)^op' ⥤ Cat`.
+
+The direct presheaf construction `GrothendieckContra' G` gives:
+- Objects: `(tw : TwistedArrow' C, e : G(tw))`
+- Morphisms: tw-morphisms with fiber morphisms going `e₁ → G(α)(e₂)`
+
+However, this does not naturally project to `Arrow C` because TwistedArrow
+morphisms have mixed variance (contravariant on domains, covariant on codomains).
+
+A nested construction analogous to the copresheaf case would need to handle the
+interaction between Under.map and twisted arrow morphisms carefully.
+-/
+
+section PresheafConnectedGrothendieck
+
+variable {C : Type u} [Category.{v} C]
+variable (C)
+variable (G : (TwistedArrow' C)ᵒᵖ' ⥤ Cat.{v, u})
+
+/-!
+### Direct Construction
+
+The direct presheaf construction as `GrothendieckContra' G`.
+-/
+
+/--
+The connected Grothendieck construction for a presheaf `G : Tw(C)^op' ⥤ Cat`.
+
+Objects are pairs `(tw, e)` where `tw : TwistedArrow' C` and `e : G(tw)`.
+Morphisms from `(tw₁, e₁)` to `(tw₂, e₂)` consist of:
+- A morphism `α : tw₁ → tw₂` in `TwistedArrow' C`
+- A fiber morphism `e₁ → G(α)(e₂)` in `G(tw₁)`
+
+Note: This construction does not naturally project to `Arrow C` due to the
+mixed variance of TwistedArrow morphisms.
+-/
+abbrev ConnectedGrothendieckPresheaf : Type _ :=
+  GrothendieckContra' G
+
+instance : Category (ConnectedGrothendieckPresheaf C G) :=
+  inferInstance
+
+/--
+Extract the underlying arrow from an object of `ConnectedGrothendieckPresheaf`.
+This is an object-level extraction, not a functor, due to the mixed variance
+of TwistedArrow morphisms.
+-/
+def connGrothendieckPresheafObjArrow (x : ConnectedGrothendieckPresheaf C G) :
+    Arrow C :=
+  Arrow.mk (twArr' x.base)
+
+end PresheafConnectedGrothendieck
+
 end GebLean

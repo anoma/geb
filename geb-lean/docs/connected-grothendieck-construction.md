@@ -452,3 +452,121 @@ and G_b = ι_b ⋙ F : (Over b)^op → Cat
 * **Reusable components**: The fiber inclusion and transition functors may
   be useful elsewhere.
 * **Maintainability**: Less custom proof machinery to maintain.
+
+---
+
+## 11. The Presheaf Variant: Functors `Tw(C)^op → Cat`
+
+The construction above uses a covariant functor `F : Tw(C) → Cat` (a copresheaf
+on twisted arrows). There is a dual construction for presheaves on twisted
+arrows.
+
+### 11.1 Input Data
+
+A **presheaf on twisted arrows** is a functor `G : Tw(C)^op → Cat`. This
+assigns to each arrow `f : a → b` in `C` a category `G(f)`, with functorial
+transport in the opposite direction from copresheaves.
+
+### 11.2 Formulation via `Tw(C^op)`
+
+The twisted arrow category `Tw(C)` is self-dual: there is an equivalence
+`Tw(C^op) ≃ Tw(C)` (implemented as `twistedArrowIsoTwistedArrowOp'`). This
+equivalence swaps domain and codomain.
+
+A presheaf on `Tw(C)` (functor `Tw(C)^op → Cat`) can equivalently be viewed as:
+
+* A presheaf on `Tw(C^op)` (functor `Tw(C^op)^op → Cat`)
+* A copresheaf on `Tw(C^op)` composed with the opposite functor
+
+This formulation is parallel to the two-sided Grothendieck construction, with
+the connecting morphism in the opposite direction.
+
+### 11.3 Objects
+
+An object of the presheaf connected Grothendieck construction `E^op(G)` is:
+
+```text
+(f : b → a, e)
+```
+
+where `f : b → a` is an arrow in `C` (note: opposite direction from the
+copresheaf case) and `e` is an object of `G(f)`.
+
+### 11.4 Morphisms
+
+A morphism from `(f : b → a, e)` to `(f' : b' → a', e')` consists of:
+
+1. A commutative square:
+
+   ```text
+   b  ──g──▶  b'
+   │         │
+   f         f'
+   ▼         ▼
+   a  ──h──▶  a'
+   ```
+
+   where `g : b → b'` and `h : a → a'` satisfy `h ∘ f = f' ∘ g`.
+
+2. A fiber morphism in `G(w)` where `w = h ∘ f = f' ∘ g`:
+
+   ```text
+   φ : G(id_b, h)(e) → G(g, id_{a'})(e')
+   ```
+
+The fiber morphism structure is the same as for copresheaves (pushforward of
+source to pullback of target), with the difference being that `G` is
+contravariant on `Tw(C)`.
+
+### 11.5 Nested Grothendieck Decomposition
+
+The presheaf construction decomposes as two nested Grothendieck constructions
+with opposite variance from the copresheaf case:
+
+```text
+E^op(G) = GrothendieckContra' (fiberFunctorPresheaf G)
+
+where fiberFunctorPresheaf G : C^op → Cat is defined by
+      fiberFunctorPresheaf G b = Grothendieck (restrictToFiberPresheaf G b)
+```
+
+Compared to the copresheaf decomposition:
+
+| Layer | Copresheaf | Presheaf |
+|-------|------------|----------|
+| Outer | Grothendieck (covariant on C) | GrothendieckContra' (contravariant) |
+| Inner | GrothendieckContra' (contravariant) | Grothendieck (covariant) |
+
+### 11.6 Using Over Categories
+
+The inner fiber for the presheaf construction can be formulated using:
+
+* `Under b` in `C`: arrows `f : b → a` with domain `b`
+* Equivalently: `Over b` in `C^op`
+
+The equivalence `Under(c) ≃ Over(c^op)^op` allows either formulation. Using
+`Over` (in `C^op`) corresponds to the standard presentation of dependent types.
+
+### 11.7 Code Reuse
+
+The presheaf construction can reuse existing infrastructure:
+
+* The existing `fiberFunctor` (which uses regular `Grothendieck` for inner)
+  may serve as the inner functor, since presheaf uses "covariant inner"
+* The `GrothendieckContra'` construction provides the outer layer
+* Transition functors and transport mechanisms parallel the copresheaf case
+
+### 11.8 Relationship to Two-Sided Grothendieck
+
+The two-sided Grothendieck construction for `F : C^op × D → Cat` uses:
+
+* Covariant Grothendieck on `D` (for each `c`, apply to `F_c : D → Cat`)
+* Contravariant Grothendieck on the result (to flip `C^op` to `C`)
+
+The connected Grothendieck constructions follow the same pattern:
+
+* Copresheaf: `F : Tw(C) → Cat` - covariant outer, contravariant inner
+* Presheaf: `G : Tw(C)^op → Cat` - contravariant outer, covariant inner
+
+The presheaf construction is the dual, with connecting morphisms in the
+opposite direction, analogous to how two-sided handles the variance flip.
