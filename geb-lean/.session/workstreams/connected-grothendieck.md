@@ -55,7 +55,8 @@ associativity for free.
    - All morphism directions correct (domArr, codArr, fiberMorph)
 
 6. Object equivalence
-   - `connGrothendieckContraObjEquiv : ConnectedGrothendieckContra C F ≃ ConnGrothendieckObj C F`
+   - `connGrothendieckContraObjEquiv :`
+     `ConnectedGrothendieckContra C F ≃ ConnGrothendieckObj C F`
 
 7. Morphism correspondence (both directions)
    - `connGrothendieckContraHomToHom` converts morphisms from
@@ -67,7 +68,8 @@ associativity for free.
      `connGrothendieckHomToContra_source_eq`, `overOpToTwArr_map_innerBase_eq`
 
 8. Projection functor to Arrow category
-   - `connGrothendieckContraProjection : ConnectedGrothendieckContra C F -> Arrow C`
+   - `connGrothendieckContraProjection :`
+     `ConnectedGrothendieckContra C F -> Arrow C`
    - Maps objects `(b, (ov, e))` to the arrow `ov.hom : ov.left -> b`
    - Maps morphisms `(domArr, codArr, fiberMorph)` to `(domArr, codArr)`
    - Helper lemmas: `grothendieckContra'_comp_base_left`,
