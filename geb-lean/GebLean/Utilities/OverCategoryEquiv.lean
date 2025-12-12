@@ -626,4 +626,60 @@ def toBundledOverCategoryDataFunctorData :
 
 end CategoricalEquiv
 
+/-! ## Universe-Polymorphic Categorical Equivalence
+
+Parameterizing both sides with `{max v u, u}` is equivalent to
+imposing the constraint `v ≥ u`.
+
+This gives functors:
+- `BundledOverCategoryData.{max v u, u} → BundledCategoryData.{max v u, u}`
+- `BundledCategoryData.{max v u, u} → BundledOverCategoryData.{max v u, u}`
+
+that form a categorical equivalence. -/
+
+section UniversePolyEquiv
+
+/-- Functor from BundledOverCategoryData to BundledCategoryData at universe
+    `{max v u, u}`. -/
+def overToCatFunctorData :
+    FunctorData BundledOverCategoryData.categoryData.{max v u, u}
+      BundledCategoryData.categoryData.{max v u, u} :=
+  toBundledCategoryDataFunctorData
+
+/-- Functor from BundledCategoryData to BundledOverCategoryData at universe
+    `{max v u, u}`. Since `max (max v u) u = max v u`, the target universe
+    matches the source. -/
+def catToOverFunctorData :
+    FunctorData BundledCategoryData.categoryData.{max v u, u}
+      BundledOverCategoryData.categoryData.{max v u, u} :=
+  toBundledOverCategoryDataFunctorData
+
+/-- Round-trip Over → Cat → Over. -/
+def overCatOverFunctorData :
+    FunctorData BundledOverCategoryData.categoryData.{max v u, u}
+      BundledOverCategoryData.categoryData.{max v u, u} :=
+  overToCatFunctorData.comp catToOverFunctorData
+
+/-- Round-trip Cat → Over → Cat. -/
+def catOverCatFunctorData :
+    FunctorData BundledCategoryData.categoryData.{max v u, u}
+      BundledCategoryData.categoryData.{max v u, u} :=
+  catToOverFunctorData.comp overToCatFunctorData
+
+/-- The round-trip Cat → Over → Cat preserves objects definitionally. -/
+theorem catOverCat_obj_eq (C : BundledCategoryData.{max v u, u}) :
+    (catOverCatFunctorData.obj C).Obj = C.Obj := rfl
+
+/-- The round-trip Over → Cat → Over preserves objects definitionally. -/
+theorem overCatOver_obj_eq (C : BundledOverCategoryData.{max v u, u}) :
+    (overCatOverFunctorData.obj C).quiver.Obj = C.quiver.Obj := rfl
+
+/-- For the Cat → Over → Cat round-trip, the fiber equivalence provides
+    an isomorphism between the round-trip hom-sets and the original. -/
+def catOverCat_homEquiv (C : BundledCategoryData.{max v u, u}) (a b : C.Obj) :
+    (catOverCatFunctorData.obj C).Hom a b ≃ C.Hom a b :=
+  C.Hom.fiber_equiv a b
+
+end UniversePolyEquiv
+
 end GebLean

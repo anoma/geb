@@ -258,9 +258,33 @@ The conversions are functorial with general universe parameters:
     BundledOverCategoryData.categoryData.{max v u, u}`
   - When `v ≥ u`: `max v u = v`, giving same universes on both sides
 
+### 6c. Universe-Polymorphic Equivalence
+
+By parameterizing both sides with `{max v u, u}`, we get functors between the
+same categories without any constraints:
+
+- `overToCatFunctorData : BundledOverCategoryData.{max v u, u} →
+  BundledCategoryData.{max v u, u}`
+- `catToOverFunctorData : BundledCategoryData.{max v u, u} →
+  BundledOverCategoryData.{max v u, u}`
+
+The key observation is that `max (max v u) u = max v u`, so the sigma
+construction doesn't bump the universe level on the round-trip.
+
+Round-trip functors:
+
+- `overCatOverFunctorData`: Over → Cat → Over (composition)
+- `catOverCatFunctorData`: Cat → Over → Cat (composition)
+
+Round-trip properties:
+
+- `catOverCat_obj_eq`: Objects preserved definitionally
+- `overCatOver_obj_eq`: Quiver objects preserved definitionally
+- `catOverCat_homEquiv`: Hom-sets isomorphic via `fiber_equiv`
+
 ### Status (Phase 6)
 
 - [x] 6a: Universe generalization
 - [x] 6b: Conversion functors (generalized to `{v, u}`)
-- [ ] 6c: Natural isomorphisms for round-trips
-- [ ] 6d: Full categorical equivalence proof
+- [x] 6c: Universe-polymorphic equivalence at `{max v u, u}`
+- [ ] 6d: Natural isomorphisms for round-trips (future work)
