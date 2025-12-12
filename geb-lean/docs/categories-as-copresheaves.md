@@ -381,9 +381,86 @@ However, Cat is **locally finitely presentable** and can be characterized as
 the category of models of a finite limit sketch, which is a well-behaved
 class of categories.
 
+## Implementation Design Decisions
+
+This section documents design decisions for the Lean implementation in
+`GebLean/CatJudgmentAdjunction.lean`.
+
+### Copresheaf representation
+
+We use `CategoryJudgments.FunctorData` and `CategoryJudgments.NatTransData`
+for internal representations. These provide a minimal specification of what's
+required to specify a copresheaf or natural transformation, trimming redundant
+equalities and minimizing the data we need to provide.
+
+When we need to import properties from mathlib (such as universal properties
+of presheaves or topos structure), we use the isomorphism of categories
+`functorDataIsoCat` to exchange between `CategoryJudgments.FunctorData` and
+mathlib's functor category.
+
+### Free category (paths) representation
+
+Mathlib's `CategoryTheory.Paths` provides the free category construction, but
+it uses dependent types for specifying composability. To maintain consistency
+with our equational approach (as in `OverQuiver`/`OverCategoryData`), we define
+an equational version of paths:
+
+- Paths are lists of morphisms with equational composability constraints
+- We provide an equivalence with mathlib's `Paths` at the boundaries
+
+This mirrors the pattern we established for categories, functors, and natural
+transformations in `OverCategoryEquiv.lean`.
+
+### Quotient structure
+
+We factor the construction by creating an intermediate structure representing
+explicit quotients of paths:
+
+- `PathQuotient`: A quiver together with a setoid on paths specifying which
+  paths should be identified
+- Conversion from `PathQuotient` to `OverCategoryData` where the quotients
+  are absorbed into the morphism type
+
+This separation allows us to:
+
+1. Work with the quotient relations abstractly before committing to a
+   particular representation
+2. Prove properties about the quotient at the path level
+3. Convert to `OverCategoryData` only when needed for interaction with
+   other structures
+
+### Category representation
+
+We use the Over formulation (`OverCategoryData`) for the result category L(F)
+because:
+
+- It uses equalities rather than dependent types
+- This closely matches the notion of copresheaves over `CategoryJudgments`
+- It provides a cleaner interface for the adjunction
+
+### Implementation phases
+
+Phase 1 (current goal): Get the functors in place
+
+- Define the embedding Φ : `OverCategoryData → FunctorData`
+- Define equational paths and their quotient structure
+- Define the reflection L : `FunctorData → OverCategoryData`
+
+Phase 2 (future): Prove round-trip properties
+
+- Prove L(Φ(C)) ≅ C (counit is isomorphism)
+- This proof may be involved, so we pause after Phase 1 to plan the approach
+
+Phase 3 (future): Full adjunction
+
+- Prove the adjunction L ⊣ Φ
+- Construct the natural isomorphism between hom-sets
+
 ## References
 
 - `GebLean/CategoryJudgments.lean` - Definition of the CategoryJudgments
   category
 - `GebLean/Utilities/OverCategoryEquiv.lean` - Over-based category structures
   and their equivalence to dependent formulations
+- `GebLean/CatJudgmentAdjunction.lean` - Implementation of the adjunction
+  (in progress)
