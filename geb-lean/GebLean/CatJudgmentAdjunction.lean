@@ -272,6 +272,30 @@ theorem FreeMorEquiv.cong_right {a b c : D.quiver.Obj}
   | symm _ ih => exact FreeMorEquiv.symm ih
   | trans _ _ ih1 ih2 => exact FreeMorEquiv.trans ih1 ih2
 
+/-- Cast preserves FreeMorEquiv: if f ~ g at indices (a, b), then
+    cast f ~ cast g at indices (a', b'). -/
+theorem FreeMorEquiv.cast {a b a' b' : D.quiver.Obj}
+    {f g : FreeMor D.quiver a b}
+    (ha : a = a') (hb : b = b')
+    (eq : FreeMorEquiv D f g) :
+    FreeMorEquiv D
+      (cast (congrArg₂ (FreeMor D.quiver) ha hb) f)
+      (cast (congrArg₂ (FreeMor D.quiver) ha hb) g) := by
+  subst ha hb
+  simp only [congrArg₂, cast_eq]
+  exact eq
+
+/-- Casts distribute over FreeMor.comp: casting the components gives the same result
+    as casting the composite. -/
+theorem FreeMor.cast_comp {a a' b b' c c' : D.quiver.Obj}
+    (ha : a = a') (hb : b = b') (hc : c = c')
+    (g : FreeMor D.quiver b c) (f : FreeMor D.quiver a b) :
+    (cast (congrArg₂ (FreeMor D.quiver) hb hc) g).comp
+      (cast (congrArg₂ (FreeMor D.quiver) ha hb) f) =
+    cast (congrArg₂ (FreeMor D.quiver) ha hc) (g.comp f) := by
+  subst ha hb hc
+  rfl
+
 /-- The setoid on free morphisms induced by FreeMorEquiv. -/
 def freeMorSetoid (a b : D.quiver.Obj) : Setoid (FreeMor D.quiver a b) where
   r := FreeMorEquiv D
@@ -780,15 +804,201 @@ The relationship between L and Φ:
 
 section RoundTrip
 
-/-- For a category C, the quotient of free morphisms on its underlying quiver
-    is isomorphic to C itself. The embedding var : Q.MorType → FreeMor Q
-    composed with the quotient gives an isomorphism. -/
-def roundtripEmbed {Q : OverQuiver.{u, u}} (C : OverCategoryData Q)
-    {a b : Q.Obj} (f : Q.MorType) (hf_src : Q.src f = a) (hf_tgt : Q.tgt f = b) :
-    let D := C.toJudgmentFunctorData.toCategoryQuotientData
-    D.QuotMor a b :=
-  let D := C.toJudgmentFunctorData.toCategoryQuotientData
-  D.quotMor (hf_src ▸ hf_tgt ▸ .var f)
+variable {Q : OverQuiver.{u, u}} (C : OverCategoryData Q)
+
+/-- The morphism type over objects a, b in the quiver. -/
+abbrev MorOver' (Q : OverQuiver.{u, u}) (a b : Q.Obj) :=
+  { f : Q.MorType // Q.src f = a ∧ Q.tgt f = b }
+
+/-- The counit induces a function on the quotient. -/
+def counitEvalQuot {a b : Q.Obj} :
+    (derivedQuotientData C).QuotMor a b → MorOver' Q a b :=
+  Quotient.lift
+    (fun m => ⟨counitEval C m, counitEvalAux_src C m, counitEvalAux_tgt C m⟩)
+    (fun _ _ h => Subtype.ext (counitEval_respects C h))
+
+/-- Embedding a morphism into the quotient of free morphisms. -/
+def embedQuot {a b : Q.Obj} (f : MorOver' Q a b) :
+    (derivedQuotientData C).QuotMor a b :=
+  let m : FreeMor Q (Q.src f.val) (Q.tgt f.val) := .var f.val
+  let m' : FreeMor Q a b := cast (by rw [f.property.1, f.property.2]) m
+  (derivedQuotientData C).quotMor m'
+
+/-- The counit evaluation of an embedded variable is the original morphism. -/
+theorem counitEval_embed {a b : Q.Obj} (f : MorOver' Q a b) :
+    counitEvalQuot C (embedQuot C f) = f := by
+  simp only [counitEvalQuot, embedQuot, CategoryQuotientData.quotMor]
+  rw [Quotient.lift_mk]
+  simp only [counitEval_var C f.val f.property.1 f.property.2]
+
+/-- Source of counitEval as a direct equality. -/
+theorem counitEval_src {a b : Q.Obj} (m : FreeMor Q a b) :
+    Q.src (counitEval C m) = a := counitEvalAux_src C m
+
+/-- Target of counitEval as a direct equality. -/
+theorem counitEval_tgt {a b : Q.Obj} (m : FreeMor Q a b) :
+    Q.tgt (counitEval C m) = b := counitEvalAux_tgt C m
+
+/-- Auxiliary: [var (counitEval m)] ~ m as FreeMor equivalence.
+    This is the substance of the round-trip proof. -/
+theorem var_counitEval_equiv {a b : Q.Obj} (fm : FreeMor Q a b) :
+    (derivedQuotientData C).FreeMorEquiv
+      (cast (congrArg₂ (FreeMor Q) (counitEval_src C fm) (counitEval_tgt C fm))
+        (FreeMor.var (counitEval C fm)))
+      fm := by
+  induction fm with
+  | var f =>
+    exact .refl _
+  | id x =>
+    let D := derivedQuotientData C
+    -- id_witness x gives: [var (C.idFn x)] ~ id (D.idObj x)
+    -- D.idObj x = Q.src (C.idFn x)
+    -- We need: [var (C.idFn x)] ~ id x
+    -- So we need to show id (Q.src (C.idFn x)) = id x via the cast
+    -- Since C.id_src x : Q.src (C.idFn x) = x, we have FreeMor.id (D.idObj x) = FreeMor.id x
+    have idObj_eq : D.idObj x = x := C.id_src x
+    -- The LHS of id_witness is:
+    --   cast (by rw [D.id_src x, D.id_tgt x]) (FreeMor.var (D.idMor x))
+    -- D.id_src x = rfl (definitionally)
+    -- D.id_tgt x proves Q.tgt (C.idFn x) = D.idObj x = Q.src (C.idFn x)
+    -- So LHS is: cast (by rfl; exact (C.id_tgt x).trans (C.id_src x).symm) (var (C.idFn x))
+    --
+    -- Our goal is: (cast _ (var (C.idFn x))) ~ (id x)
+    -- The cast proof in our goal uses C.id_src and C.id_tgt directly
+    --
+    -- id_witness gives: lhs_witness ~ FreeMor.id (D.idObj x) = FreeMor.id (Q.src (C.idFn x))
+    -- We need: our_lhs ~ FreeMor.id x
+    --
+    -- Strategy: both LHS terms are the same (after unfolding), and we rewrite the RHS
+    have h_id_witness := CategoryQuotientData.FreeMorEquivGen.id_witness (D := D) x
+    -- h_id_witness : D.FreeMorEquivGen
+    --   (cast _ (FreeMor.var (D.idMor x)))
+    --   (FreeMor.id (D.idObj x))
+    -- Now we need to convert FreeMor.id (D.idObj x) to FreeMor.id x
+    -- Since D.idObj x = x (by idObj_eq), we can cast the RHS
+    have h' : D.FreeMorEquivGen
+        (cast (congrArg₂ (FreeMor Q) (C.id_src x) (C.id_tgt x)) (FreeMor.var (C.idFn x)))
+        (FreeMor.id x) := by
+      convert h_id_witness using 2 <;> simp only [idObj_eq]
+    exact .rel h'
+  | @comp a b c g f ihg ihf =>
+    let D := derivedQuotientData C
+    let fVal := counitEval C f
+    let gVal := counitEval C g
+    have srcf_eq : Q.src fVal = a := counitEval_src C f
+    have tgtf_eq : Q.tgt fVal = b := counitEval_tgt C f
+    have srcg_eq : Q.src gVal = b := counitEval_src C g
+    have tgtg_eq : Q.tgt gVal = c := counitEval_tgt C g
+    have composable : Q.tgt fVal = Q.src gVal := tgtf_eq.trans srcg_eq.symm
+    let hpair : Q.ComposablePairsType := ⟨(fVal, gVal), composable⟩
+    have pair_eq : counitEval C (FreeMor.comp g f) = C.compFn hpair := counitEval_comp C g f
+    -- Work at "natural" indices (Q.src fVal, Q.tgt fVal) and (Q.src gVal, Q.tgt gVal)
+    -- Define casted versions of f and g at natural indices
+    let f_nat : FreeMor Q (Q.src fVal) (Q.tgt fVal) :=
+      cast (congrArg₂ (FreeMor Q) srcf_eq.symm tgtf_eq.symm) f
+    let g_nat : FreeMor Q (Q.src gVal) (Q.tgt gVal) :=
+      cast (congrArg₂ (FreeMor Q) srcg_eq.symm tgtg_eq.symm) g
+    -- Transform ihf: cast (srcf_eq, tgtf_eq) (var fVal) ~ f
+    -- to: var fVal ~ f_nat
+    have ihf_nat : D.FreeMorEquiv (.var fVal) f_nat := by
+      have h := CategoryQuotientData.FreeMorEquiv.cast (D := D) srcf_eq.symm tgtf_eq.symm ihf
+      simp only [cast_cast] at h
+      convert h using 2
+    -- Transform ihg: cast (srcg_eq, tgtg_eq) (var gVal) ~ g
+    -- to: var gVal ~ g_nat
+    have ihg_nat : D.FreeMorEquiv (.var gVal) g_nat := by
+      have h := CategoryQuotientData.FreeMorEquiv.cast (D := D) srcg_eq.symm tgtg_eq.symm ihg
+      simp only [cast_cast] at h
+      convert h using 2
+    -- comp_witness: comp (cast composable.symm (var gVal)) (var fVal)
+    --             ~ cast (comp_dom, comp_cod) (var compComposite)
+    -- This is at type FreeMor Q (Q.src fVal) (Q.tgt gVal)
+    have h_cw := CategoryQuotientData.FreeMorEquivGen.comp_witness (D := D) hpair
+    have step1 := CategoryQuotientData.FreeMorEquiv.symm (.rel h_cw)
+    -- step1: cast _ (var compComposite) ~ comp (cast _ (var gVal)) (var fVal)
+    -- Need to relate (cast _ (var gVal)) to g_nat cast to (Q.tgt fVal, Q.tgt gVal)
+    let g_shifted : FreeMor Q (Q.tgt fVal) (Q.tgt gVal) :=
+      cast (congrArg₂ (FreeMor Q) composable.symm rfl) (.var gVal)
+    let g_nat_shifted : FreeMor Q (Q.tgt fVal) (Q.tgt gVal) :=
+      cast (congrArg₂ (FreeMor Q) composable.symm rfl) g_nat
+    -- Show: g_shifted ~ g_nat_shifted
+    have ihg_shifted : D.FreeMorEquiv g_shifted g_nat_shifted :=
+      CategoryQuotientData.FreeMorEquiv.cast (D := D) composable.symm rfl ihg_nat
+    -- comp_respects: comp g_shifted (var fVal) ~ comp g_nat_shifted f_nat
+    have step2 : D.FreeMorEquiv (.comp g_shifted (.var fVal)) (.comp g_nat_shifted f_nat) :=
+      CategoryQuotientData.comp_respects D ihf_nat ihg_shifted
+    -- Combine step1 and step2
+    have step3 : D.FreeMorEquiv
+        (cast (congrArg₂ (FreeMor Q) (D.comp_dom hpair) (D.comp_cod hpair))
+          (.var (D.compComposite hpair)))
+        (.comp g_nat_shifted f_nat) :=
+      CategoryQuotientData.FreeMorEquiv.trans step1 step2
+    -- Show comp g_nat_shifted f_nat ~ comp g f via equivalence relation
+    -- We prove this by relating g_nat_shifted to g and f_nat to f
+    -- g_nat = cast ... g, g_nat_shifted = cast ... g_nat = cast ... (cast ... g)
+    -- The double cast on g simplifies when we use FreeMorEquiv.cast
+    --
+    -- Alternative approach: prove comp g_nat_shifted f_nat ~ comp g f directly
+    -- by relating both to intermediate terms
+    --
+    -- First relate g_nat_shifted to g via casting
+    -- g_nat_shifted : FreeMor Q (Q.tgt fVal) (Q.tgt gVal)
+    -- We need to show g_nat_shifted ~ cast ... g at type FreeMor Q (Q.tgt fVal) (Q.tgt gVal)
+    -- where the cast goes from (b, c) to (Q.tgt fVal, Q.tgt gVal)
+    let g_casted : FreeMor Q (Q.tgt fVal) (Q.tgt gVal) :=
+      cast (congrArg₂ (FreeMor Q) tgtf_eq.symm tgtg_eq.symm) g
+    -- Show g_nat_shifted = g_casted (both are casts of g to the same type)
+    have g_shifted_eq_casted : g_nat_shifted = g_casted := by
+      simp only [g_nat_shifted, g_nat, g_casted]
+      rw [cast_cast]
+    -- Now we can use g_shifted_eq_casted
+    have step4 : D.FreeMorEquiv (.comp g_nat_shifted f_nat) (.comp g_casted f_nat) := by
+      rw [g_shifted_eq_casted]
+      exact .refl _
+    -- Show comp g_casted f_nat = cast ... (comp g f) at FreeMor Q (Q.src fVal) (Q.tgt gVal)
+    -- g_casted : FreeMor Q (Q.tgt fVal) (Q.tgt gVal) = cast (tgtf_eq.symm, tgtg_eq.symm) g
+    -- f_nat : FreeMor Q (Q.src fVal) (Q.tgt fVal) = cast (srcf_eq.symm, tgtf_eq.symm) f
+    -- comp g_casted f_nat : FreeMor Q (Q.src fVal) (Q.tgt gVal)
+    -- We want this to equal cast (srcf_eq.symm, tgtg_eq.symm) (comp g f)
+    have comp_casted_eq : FreeMor.comp g_casted f_nat =
+        cast (congrArg₂ (FreeMor Q) srcf_eq.symm tgtg_eq.symm) (.comp g f) := by
+      simp only [g_casted, f_nat]
+      exact CategoryQuotientData.FreeMor.cast_comp (D := D)
+        srcf_eq.symm tgtf_eq.symm tgtg_eq.symm g f
+    have step5 : D.FreeMorEquiv (.comp g_casted f_nat)
+        (cast (congrArg₂ (FreeMor Q) srcf_eq.symm tgtg_eq.symm) (.comp g f)) := by
+      rw [comp_casted_eq]
+      exact .refl _
+    have step6 : D.FreeMorEquiv (.comp g_nat_shifted f_nat)
+        (cast (congrArg₂ (FreeMor Q) srcf_eq.symm tgtg_eq.symm) (.comp g f)) :=
+      CategoryQuotientData.FreeMorEquiv.trans step4 step5
+    have step7 : D.FreeMorEquiv
+        (cast (congrArg₂ (FreeMor Q) (D.comp_dom hpair) (D.comp_cod hpair))
+          (.var (D.compComposite hpair)))
+        (cast (congrArg₂ (FreeMor Q) srcf_eq.symm tgtg_eq.symm) (.comp g f)) :=
+      CategoryQuotientData.FreeMorEquiv.trans step3 step6
+    -- Cast to final indices (a, c)
+    have step8 := CategoryQuotientData.FreeMorEquiv.cast (D := D) srcf_eq tgtg_eq step7
+    simp only [cast_cast] at step8
+    convert step8 using 2
+    · exact pair_eq ▸ HEq.rfl
+
+/-- Embedding the counit evaluation gives back the original quotient element.
+    This requires showing that [var (counitEval m)] ~ m. -/
+theorem embed_counitEval {a b : Q.Obj} (m : (derivedQuotientData C).QuotMor a b) :
+    embedQuot C (counitEvalQuot C m) = m := by
+  induction m using Quotient.ind with
+  | _ fm =>
+    simp only [counitEvalQuot, embedQuot, CategoryQuotientData.quotMor, Quotient.lift_mk]
+    exact Quotient.sound (var_counitEval_equiv C fm)
+
+/-- The isomorphism between the quotient morphisms and the original morphisms. -/
+def roundtripEquiv {a b : Q.Obj} :
+    (derivedQuotientData C).QuotMor a b ≃ MorOver' Q a b where
+  toFun := counitEvalQuot C
+  invFun := embedQuot C
+  left_inv := embed_counitEval C
+  right_inv := counitEval_embed C
 
 end RoundTrip
 
