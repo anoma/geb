@@ -136,7 +136,9 @@ When making changes to Lean code:
   think it were important, we wouldn't be writing it).  Never opine that
   something is "complex" or "complicated"; readers can decide what they
   consider complex.  Never call code "difficult" or refer to any aspect of
-  it as a "challenge"; that is also for readers to decide.
+  it as a "challenge"; that is also for readers to decide.  Never write
+  conversationally in code -- never use "yes" or "wait" or "hmm" or anything
+  else that conveys a thought process.
 - Never use all-caps words unless they're acronyms.
 - Never write "TODO" comments or summaries of completed or future work in the
   code itself; track to-dos/future work in the `.session/` directory.
