@@ -107,9 +107,21 @@ associativity for free.
     - Maps objects to their underlying twisted arrow
     - Maps morphisms to their `twMorph` component
 
+10. Alternative Connected Grothendieck Construction (domain-indexed)
+    - `underToTwistedArrow : Under a ⥤ TwistedArrow' C` - inclusion functor
+    - `restrictToDomainFiber C F a = underToTwistedArrow C a ⋙ F`
+    - `innerFiberAlt C F a = Grothendieck (restrictToDomainFiber C F a)`
+    - `domainFiberTransport C F α` - transport functor for `α : c ⟶ a`
+    - `innerFiberAltTransition C F α` - transition functor
+    - `innerFiberAltTransition_id` and `innerFiberAltTransition_comp`
+    - `domainFiberFunctor C F : Cᵒᵖ' ⥤ Cat` - the domain fiber functor
+    - `ConnectedGrothendieckAlt = GrothendieckContra' (domainFiberFunctor C F)`
+
 ### Remaining Work
 
 1. Prove universal properties for copresheaf construction
+2. Establish equivalence between `ConnectedGrothendieckContra` and
+   `ConnectedGrothendieckAlt`
 
 ### Investigated and Resolved
 

@@ -2846,7 +2846,6 @@ theorem connGrothendieckContraHom_roundtrip {x y : ConnectedGrothendieckContra C
   -- Unfold the conversions
   simp only [connGrothendieckHomToContraHom, connGrothendieckContraHomToHom,
     connGrothendieckHomToContraInnerBase]
-  -- Use Grothendieck.ext - need to be careful about goal ordering
   refine Grothendieck.ext _ _ ?_ ?_
   · -- Base equality - trivial
     rfl
@@ -3366,5 +3365,571 @@ base morphisms. For `twMorph : X.tw ⟶ Y.tw`:
 This is the natural structure for presheaves on twisted arrows, and it projects
 to `TwistedArrow' C` rather than `Arrow C`.
 -/
+
+/-!
+## Alternative Connected Grothendieck Construction
+
+The connected Grothendieck construction can be defined in two equivalent ways:
+
+1. **Codomain-based (existing)**: Covariant outer Grothendieck over contravariant
+   inner Grothendieck on `(Over b)^op`. This is `ConnectedGrothendieckContra`.
+
+2. **Domain-based (alternative)**: Contravariant outer Grothendieck over covariant
+   inner Grothendieck on `Under a`. This is `ConnectedGrothendieckAlt`.
+
+Both constructions yield equivalent categories, validating the symmetry of the
+connected Grothendieck construction.
+-/
+
+section AlternativeConstruction
+
+variable (C : Type u) [Category.{v} C]
+variable (F : TwistedArrow' C ⥤ Cat.{v, u})
+
+/-!
+### Fiber inclusion by domain
+
+For each object `a : C`, we define a functor `Under a ⥤ TwistedArrow' C` that
+includes arrows out of `a` as twisted arrows.
+-/
+
+/--
+The functor from `Under a` to `TwistedArrow' C` that includes arrows out of `a`.
+
+On objects: `(f : a ⟶ b)` maps to `f` viewed as a twisted arrow.
+On morphisms: `α : f → g` in `Under a` (i.e., `α : b → c` with `g = f ≫ α`)
+  maps to `(𝟙 a, α) : f → g` in `TwistedArrow' C`.
+-/
+def underToTwistedArrow (a : C) : Under a ⥤ TwistedArrow' C where
+  obj un := twObjMk' un.hom
+  map {un un'} α :=
+    twHomMk'
+      (x := twObjMk' un.hom)
+      (y := twObjMk' un'.hom)
+      (by simp only [twObjMk'_dom]; exact 𝟙 a)
+      (by simp only [twObjMk'_cod]; exact α.right)
+      (by
+        simp only [twObjMk'_arr]
+        change id (𝟙 a) ≫ un.hom ≫ id α.right = un'.hom
+        simp only [id, Category.id_comp]
+        exact Under.w α)
+  map_id un := by
+    apply twHom'_ext <;> rfl
+  map_comp {un un' un''} α β := by
+    apply twHom'_ext
+    · simp only [twHomMk'_domArr, twDomArr'_comp]
+      exact (Category.id_comp (𝟙 a)).symm
+    · rfl
+
+/--
+The restriction of `F : TwistedArrow' C ⥤ Cat` to the fiber over domain `a`.
+-/
+def restrictToDomainFiber (a : C) : Under a ⥤ Cat.{v, u} :=
+  underToTwistedArrow C a ⋙ F
+
+/-!
+### Domain fiber transport
+
+For `α : c ⟶ a` in `C`, we get a functor `Under a ⥤ Under c` by precomposition.
+This induces transport between the corresponding Grothendieck categories.
+-/
+
+/--
+The twisted arrow morphism for domain fiber transport.
+Given `α : c ⟶ a` and `un : Under a` (an arrow `f : a ⟶ b`),
+this is the morphism `f → (α ≫ f)` in `TwistedArrow' C`.
+
+The domain arrow is `α : c ⟶ a` going from the target domain to the source domain
+(backwards, as required by `twHomMk'`), and the codomain arrow is `𝟙 b`.
+-/
+def domainFiberTransportTwMorph {a c : C} (α : c ⟶ a) (un : Under a) :
+    (underToTwistedArrow C a).obj un ⟶
+    (underToTwistedArrow C c).obj ((Under.map α).obj un) :=
+  twHomMk'
+    (x := twObjMk' un.hom)
+    (y := twObjMk' (α ≫ un.hom))
+    α
+    (𝟙 _)
+    (by simp only [twObjMk'_arr, Category.comp_id])
+
+/--
+The transport functor for domain fibers. Given `α : c ⟶ a`, this transports
+elements from the fiber over `a` to the fiber over `c`.
+-/
+def domainFiberTransport {a c : C} (α : c ⟶ a) (un : Under a) :
+    F.obj ((underToTwistedArrow C a).obj un) ⥤
+    F.obj ((underToTwistedArrow C c).obj ((Under.map α).obj un)) :=
+  F.map (domainFiberTransportTwMorph C α un)
+
+/--
+Naturality of domain fiber transport at the twisted arrow level.
+-/
+theorem domainFiberTransport_naturality {a c : C} (α : c ⟶ a)
+    {un un' : Under a} (β : un ⟶ un') :
+    (underToTwistedArrow C a).map β ≫ domainFiberTransportTwMorph C α un' =
+    domainFiberTransportTwMorph C α un ≫ (underToTwistedArrow C c).map ((Under.map α).map β) := by
+  apply twHom'_ext
+  · simp only [twDomArr'_comp, twHomMk'_domArr, underToTwistedArrow,
+               domainFiberTransportTwMorph, twHomMk'_domArr, id, Under.map_map_right]
+    trans α
+    · exact Category.comp_id α
+    · exact (Category.id_comp α).symm
+  · simp only [twCodArr'_comp, twHomMk'_codArr, underToTwistedArrow,
+               domainFiberTransportTwMorph, twHomMk'_codArr, id, Under.map_map_right]
+    trans β.right
+    · exact Category.comp_id β.right
+    · exact (Category.id_comp β.right).symm
+
+/--
+Functor-level naturality: domain fiber transport composed with restriction mapping
+equals restriction mapping followed by domain fiber transport.
+-/
+theorem domainFiberTransport_functor_naturality {a c : C} (α : c ⟶ a)
+    {un un' : Under a} (β : un ⟶ un') :
+    (restrictToDomainFiber C F a).map β ⋙ domainFiberTransport C F α un' =
+    domainFiberTransport C F α un ⋙ (restrictToDomainFiber C F c).map ((Under.map α).map β) := by
+  simp only [restrictToDomainFiber, domainFiberTransport, Functor.comp_map]
+  have h := domainFiberTransport_naturality C α β
+  calc F.map ((underToTwistedArrow C a).map β) ⋙ F.map (domainFiberTransportTwMorph C α un')
+      = F.map ((underToTwistedArrow C a).map β) ≫ F.map (domainFiberTransportTwMorph C α un') := rfl
+    _ = F.map ((underToTwistedArrow C a).map β ≫ domainFiberTransportTwMorph C α un') := by
+          rw [F.map_comp]
+    _ = F.map (domainFiberTransportTwMorph C α un ≫
+          (underToTwistedArrow C c).map ((Under.map α).map β)) := by
+          rw [h]
+    _ = F.map (domainFiberTransportTwMorph C α un) ≫
+          F.map ((underToTwistedArrow C c).map ((Under.map α).map β)) := by
+          rw [← F.map_comp]
+    _ = F.map (domainFiberTransportTwMorph C α un) ⋙
+          F.map ((underToTwistedArrow C c).map ((Under.map α).map β)) := rfl
+
+/-!
+### Inner fiber category (covariant Grothendieck)
+
+The inner layer uses the standard covariant Grothendieck construction on `Under a`.
+-/
+
+/--
+The inner fiber category for the alternative construction.
+For each `a : C`, this is `Grothendieck (restrictToDomainFiber C F a)`.
+-/
+def innerFiberAlt (a : C) : Type _ := Grothendieck (restrictToDomainFiber C F a)
+
+instance innerFiberAltCategory (a : C) : Category (innerFiberAlt C F a) :=
+  inferInstanceAs (Category (Grothendieck (restrictToDomainFiber C F a)))
+
+/--
+Transport an object from `innerFiberAlt C F a` to `innerFiberAlt C F c` via `α : c ⟶ a`.
+-/
+def innerFiberAltTransitionObj {a c : C} (α : c ⟶ a)
+    (x : innerFiberAlt C F a) : innerFiberAlt C F c :=
+  ⟨(Under.map α).obj x.base,
+   (domainFiberTransport C F α x.base).obj x.fiber⟩
+
+/--
+The fiber coherence equation for `innerFiberAltTransitionHom`.
+-/
+theorem innerFiberAltTransition_fiber_eq {a c : C} (α : c ⟶ a)
+    {x y : innerFiberAlt C F a} (f : x ⟶ y) :
+    ((restrictToDomainFiber C F c).map ((Under.map α).map f.base)).obj
+      ((domainFiberTransport C F α x.base).obj x.fiber) =
+    (domainFiberTransport C F α y.base).obj
+      ((restrictToDomainFiber C F a).map f.base |>.obj x.fiber) :=
+  congrFun (congrArg Functor.obj
+    (domainFiberTransport_functor_naturality C F α
+      (un := x.base) (un' := y.base) f.base).symm) x.fiber
+
+/--
+Transport a morphism from `innerFiberAlt C F a` to `innerFiberAlt C F c` via `α : c ⟶ a`.
+-/
+def innerFiberAltTransitionHom {a c : C} (α : c ⟶ a)
+    {x y : innerFiberAlt C F a} (f : x ⟶ y) :
+    innerFiberAltTransitionObj C F α x ⟶ innerFiberAltTransitionObj C F α y :=
+  ⟨(Under.map α).map f.base,
+   eqToHom (innerFiberAltTransition_fiber_eq C F α f) ≫
+     (domainFiberTransport C F α y.base).map f.fiber⟩
+
+@[simp]
+theorem innerFiberAltTransitionHom_base {a c : C} (α : c ⟶ a)
+    {x y : innerFiberAlt C F a} (f : x ⟶ y) :
+    (innerFiberAltTransitionHom C F α f).base = (Under.map α).map f.base := rfl
+
+@[simp]
+theorem innerFiberAltTransitionHom_fiber {a c : C} (α : c ⟶ a)
+    {x y : innerFiberAlt C F a} (f : x ⟶ y) :
+    (innerFiberAltTransitionHom C F α f).fiber =
+    eqToHom (innerFiberAltTransition_fiber_eq C F α f) ≫
+      (domainFiberTransport C F α y.base).map f.fiber := rfl
+
+/--
+The transition functor for inner fibers via `α : c ⟶ a`.
+-/
+def innerFiberAltTransition {a c : C} (α : c ⟶ a) :
+    innerFiberAlt C F a ⥤ innerFiberAlt C F c where
+  obj := innerFiberAltTransitionObj C F α
+  map := innerFiberAltTransitionHom C F α
+  map_id x := by
+    refine Grothendieck.ext _ _ ?w_base ?w_fiber
+    case w_base =>
+      simp only [innerFiberAltTransitionHom]
+      exact (Under.map α).map_id x.base
+    case w_fiber =>
+      rw [innerFiberAltTransitionHom_fiber, Grothendieck.id_fiber, Grothendieck.id_fiber]
+      simp only [eqToHom_map, eqToHom_trans]
+  map_comp {x y z} f g := by
+    refine Grothendieck.ext _ _ ?w_base ?w_fiber
+    case w_base =>
+      simp only [innerFiberAltTransitionHom_base]
+      exact (Under.map α).map_comp f.base g.base
+    case w_fiber =>
+      rw [innerFiberAltTransitionHom_fiber, Grothendieck.comp_fiber, Grothendieck.comp_fiber]
+      simp only [innerFiberAltTransitionHom_fiber, innerFiberAltTransitionHom_base,
+                 innerFiberAltTransitionObj, Functor.map_comp, eqToHom_map, eqToHom_trans_assoc,
+                 Category.assoc]
+      have nat_eq := domainFiberTransport_functor_naturality C F α
+        (un := y.base) (un' := z.base) g.base
+      have mor_eq := Functor.congr_hom nat_eq f.fiber
+      simp only [Functor.comp_map] at mor_eq
+      rw [mor_eq]
+      simp only [Category.assoc, eqToHom_trans_assoc]
+
+/-!
+### Identity and Composition Laws for `innerFiberAltTransition`
+-/
+
+/--
+The twisted arrow object for `(Under.map (𝟙 a)).obj un` equals that for `un`.
+-/
+lemma underToTwArr_map_id_obj_eq {a : C} (un : Under a) :
+    (underToTwistedArrow C a).obj ((Under.map (𝟙 a)).obj un) =
+    (underToTwistedArrow C a).obj un := by
+  simp only [underToTwistedArrow, Under.map_obj_right, Under.map_obj_hom, Category.id_comp]
+
+/--
+The codomain of `domainFiberTransport C F (𝟙 a) un` equals the domain.
+-/
+lemma domainFiberTransport_id_cat_eq {a : C} (un : Under a) :
+    (restrictToDomainFiber C F a).obj ((Under.map (𝟙 a)).obj un) =
+    (restrictToDomainFiber C F a).obj un := by
+  simp only [restrictToDomainFiber, Functor.comp_obj]
+  exact congrArg F.obj (underToTwArr_map_id_obj_eq C un)
+
+/--
+The twisted arrow morphism for domain fiber transport with identity is `eqToHom`.
+-/
+lemma underToTwArr_map_id_dom_eq {a : C} (un : Under a) :
+    twDom' ((underToTwistedArrow C a).obj ((Under.map (𝟙 a)).obj un)) =
+    twDom' ((underToTwistedArrow C a).obj un) := rfl
+
+lemma underToTwArr_map_id_cod_eq {a : C} (un : Under a) :
+    twCod' ((underToTwistedArrow C a).obj ((Under.map (𝟙 a)).obj un)) =
+    twCod' ((underToTwistedArrow C a).obj un) := rfl
+
+lemma domainFiberTransportTwMorph_id {a : C} (un : Under a) :
+    domainFiberTransportTwMorph C (𝟙 a) un =
+    eqToHom (underToTwArr_map_id_obj_eq C un).symm := by
+  apply twHom'_ext
+  · simp only [domainFiberTransportTwMorph, twHomMk'_domArr, twDomArr'_eqToHom]
+    rfl
+  · simp only [domainFiberTransportTwMorph, twHomMk'_codArr, twCodArr'_eqToHom]
+    rfl
+
+/--
+When `α = 𝟙 a`, the domain fiber transport functor is `eqToHom` in Cat.
+-/
+lemma domainFiberTransport_id {a : C} (un : Under a) :
+    domainFiberTransport C F (𝟙 a) un =
+    eqToHom (domainFiberTransport_id_cat_eq C F un).symm := by
+  simp only [domainFiberTransport, domainFiberTransportTwMorph_id, eqToHom_map]
+
+/--
+The object equality for `innerFiberAltTransitionObj` with identity.
+-/
+lemma innerFiberAltTransitionObj_id_base {a : C} (x : innerFiberAlt C F a) :
+    ((Under.map (𝟙 a)).obj x.base) = x.base := by
+  have h := Under.mapId_eq a
+  exact congrFun (congrArg Functor.obj h) x.base
+
+/--
+The fiber equality for `innerFiberAltTransitionObj` with identity.
+-/
+lemma innerFiberAltTransitionObj_id_fiber {a : C} (x : innerFiberAlt C F a) :
+    (innerFiberAltTransitionObj C F (𝟙 a) x).fiber ≍ x.fiber := by
+  simp only [innerFiberAltTransitionObj]
+  rw [domainFiberTransport_id]
+  exact eqToHom_obj_heq _ _ _ x.fiber
+
+/--
+The full object equality for `innerFiberAltTransitionObj` with identity.
+-/
+lemma innerFiberAltTransitionObj_id {a : C} (x : innerFiberAlt C F a) :
+    innerFiberAltTransitionObj C F (𝟙 a) x = x := by
+  have h_base := innerFiberAltTransitionObj_id_base C F x
+  have h_fiber := innerFiberAltTransitionObj_id_fiber C F x
+  exact Grothendieck.obj_ext _ _ _ h_base h_fiber
+
+/--
+The LHS of the fiber identity law for `innerFiberAltTransition`.
+Shows that `(domainFiberTransport C F (𝟙 a) y.base).map f.fiber` is HEq to `f.fiber`.
+-/
+lemma innerFiberAltTransition_id_fiber_lhs {a : C}
+    {x y : innerFiberAlt C F a} (f : x ⟶ y) :
+    (domainFiberTransport C F (𝟙 a) y.base).map f.fiber ≍ f.fiber :=
+  Cat.functor_map_heq_of_eq_eqToHom _ _ (domainFiberTransport_id C F y.base) f.fiber
+
+/--
+Identity law for `innerFiberAltTransition`.
+-/
+theorem innerFiberAltTransition_id (a : C) :
+    innerFiberAltTransition C F (𝟙 a) = 𝟭 (innerFiberAlt C F a) := by
+  apply Functor.ext
+  case h_obj => exact innerFiberAltTransitionObj_id C F
+  case h_map =>
+    intro x y f
+    simp only [Functor.id_map]
+    apply Grothendieck.ext
+    case w_base =>
+      dsimp only [innerFiberAltTransition]
+      rw [innerFiberAltTransitionHom_base]
+      rw [Grothendieck.comp_base, Grothendieck.comp_base]
+      rw [Grothendieck.eqToHom_base', Grothendieck.eqToHom_base']
+      rw [Functor.congr_hom (Under.mapId_eq a) f.base, Functor.id_map]
+    case w_fiber =>
+      apply eq_of_heq
+      simp only [innerFiberAltTransition, innerFiberAltTransitionHom_fiber,
+                 eqToHom_trans_assoc, eqToHom_comp_heq_iff]
+      apply HEq.trans (innerFiberAltTransition_id_fiber_lhs C F f)
+      apply HEq.symm
+      exact Grothendieck.conj_eqToHom_fiber_heq
+        (F := restrictToDomainFiber C F a) _ _ _
+
+/--
+The twisted arrow object for composition of `Under.map`.
+-/
+lemma underToTwArr_mapComp_obj_eq {a c e : C} (α : c ⟶ a) (γ : e ⟶ c) (un : Under a) :
+    (underToTwistedArrow C e).obj ((Under.map (γ ≫ α)).obj un) =
+    (underToTwistedArrow C e).obj ((Under.map γ).obj ((Under.map α).obj un)) := by
+  simp only [underToTwistedArrow, Under.map_obj_right, Under.map_obj_hom, Category.assoc]
+
+/--
+The twisted arrow morphism for domain fiber transport composes.
+-/
+lemma domainFiberTransportTwMorph_comp {a c e : C} (α : c ⟶ a) (γ : e ⟶ c) (un : Under a) :
+    domainFiberTransportTwMorph C (γ ≫ α) un =
+      domainFiberTransportTwMorph C α un ≫
+      domainFiberTransportTwMorph C γ ((Under.map α).obj un) ≫
+      eqToHom (underToTwArr_mapComp_obj_eq C α γ un).symm := by
+  apply twHom'_ext
+  · simp only [domainFiberTransportTwMorph, twHomMk'_domArr, twDomArr'_comp,
+               twDomArr'_eqToHom, Category.assoc, eqToHom_refl]
+    simp only [underToTwistedArrow, twObjMk'_dom, Under.map_obj_hom, Category.id_comp]
+  · simp only [domainFiberTransportTwMorph, twHomMk'_codArr, twCodArr'_comp,
+               twCodArr'_eqToHom, Under.map_obj_right, eqToHom_refl,
+               underToTwistedArrow, twObjMk'_cod, Category.id_comp]
+
+/--
+The category equality for composing domain fiber transports.
+-/
+lemma domainFiberTransport_comp_cat_eq {a c e : C} (α : c ⟶ a) (γ : e ⟶ c) (un : Under a) :
+    (restrictToDomainFiber C F e).obj ((Under.map (γ ≫ α)).obj un) =
+    (restrictToDomainFiber C F e).obj ((Under.map γ).obj ((Under.map α).obj un)) := by
+  simp only [restrictToDomainFiber, Functor.comp_obj]
+  exact congrArg F.obj (underToTwArr_mapComp_obj_eq C α γ un)
+
+/--
+The domain fiber transport for a composition decomposes.
+-/
+lemma domainFiberTransport_comp {a c e : C} (α : c ⟶ a) (γ : e ⟶ c) (un : Under a) :
+    domainFiberTransport C F (γ ≫ α) un =
+      domainFiberTransport C F α un ≫
+      domainFiberTransport C F γ ((Under.map α).obj un) ≫
+      eqToHom (domainFiberTransport_comp_cat_eq C F α γ un).symm := by
+  simp only [domainFiberTransport, domainFiberTransportTwMorph_comp, F.map_comp, eqToHom_map]
+
+/--
+The base equality for `innerFiberAltTransitionObj` with composition.
+-/
+lemma innerFiberAltTransitionObj_comp_base {a c e : C} (α : c ⟶ a) (γ : e ⟶ c)
+    (x : innerFiberAlt C F a) :
+    (innerFiberAltTransitionObj C F (γ ≫ α) x).base =
+    ((Under.map γ).obj ((Under.map α).obj x.base)) := by
+  simp only [innerFiberAltTransitionObj]
+  have h := Under.mapComp_eq γ α
+  exact congrFun (congrArg Functor.obj h) x.base
+
+/--
+The fiber equality for `innerFiberAltTransitionObj` with composition.
+-/
+lemma innerFiberAltTransitionObj_comp_fiber {a c e : C} (α : c ⟶ a) (γ : e ⟶ c)
+    (x : innerFiberAlt C F a) :
+    (innerFiberAltTransitionObj C F (γ ≫ α) x).fiber ≍
+    (innerFiberAltTransitionObj C F γ (innerFiberAltTransitionObj C F α x)).fiber := by
+  simp only [innerFiberAltTransitionObj]
+  rw [domainFiberTransport_comp]
+  exact eqToHom_obj_heq _ _ _ _
+
+/--
+The full object equality for `innerFiberAltTransitionObj` with composition.
+-/
+lemma innerFiberAltTransitionObj_comp {a c e : C} (α : c ⟶ a) (γ : e ⟶ c)
+    (x : innerFiberAlt C F a) :
+    innerFiberAltTransitionObj C F (γ ≫ α) x =
+    innerFiberAltTransitionObj C F γ (innerFiberAltTransitionObj C F α x) := by
+  simp only [innerFiberAltTransitionObj]
+  congr 1
+  · exact congrArg (·.obj x.base) (Under.mapComp_eq γ α)
+  · simp only [domainFiberTransport_comp]
+    exact eqToHom_obj_heq _ _ _ _
+
+/--
+The RHS base component in the composition law.
+-/
+lemma innerFiberAltTransition_comp_base_rhs_base {a c e : C} (α : c ⟶ a) (γ : e ⟶ c)
+    {x y : innerFiberAlt C F a} (f : x ⟶ y) :
+    (innerFiberAltTransitionHom C F γ (innerFiberAltTransitionHom C F α f)).base =
+    (Under.map γ).map ((Under.map α).map f.base) := by
+  simp only [innerFiberAltTransitionHom_base]
+
+/--
+The RHS of the base composition law.
+Shows that the RHS is HEq to `(Under.map γ).map ((Under.map α).map f.base)`.
+-/
+lemma innerFiberAltTransition_comp_base_rhs {a c e : C} (α : c ⟶ a) (γ : e ⟶ c)
+    {x y : innerFiberAlt C F a} (f : x ⟶ y)
+    (h : (innerFiberAltTransitionObj C F (γ ≫ α) x) =
+         (innerFiberAltTransitionObj C F γ (innerFiberAltTransitionObj C F α x)))
+    (h' : (innerFiberAltTransitionObj C F (γ ≫ α) y) =
+          (innerFiberAltTransitionObj C F γ (innerFiberAltTransitionObj C F α y))) :
+    (eqToHom h ≫
+      innerFiberAltTransitionHom C F γ (innerFiberAltTransitionHom C F α f) ≫
+      eqToHom h'.symm).base ≍
+    (Under.map γ).map ((Under.map α).map f.base) := by
+  rw [Grothendieck.comp_base, Grothendieck.comp_base]
+  rw [Grothendieck.eqToHom_base', Grothendieck.eqToHom_base']
+  rw [innerFiberAltTransition_comp_base_rhs_base]
+  apply HEq.trans (eqToHom_comp_heq _ _)
+  exact comp_eqToHom_heq _ _
+
+/--
+The LHS of the fiber composition law.
+Using `domainFiberTransport_comp`, the LHS simplifies to a composition of transports.
+-/
+lemma innerFiberAltTransition_comp_fiber_lhs {a c e : C} (α : c ⟶ a) (γ : e ⟶ c)
+    {x y : innerFiberAlt C F a} (f : x ⟶ y) :
+    (domainFiberTransport C F (γ ≫ α) y.base).map f.fiber ≍
+    (domainFiberTransport C F γ ((Under.map α).obj y.base)).map
+      ((domainFiberTransport C F α y.base).map f.fiber) := by
+  exact Cat.functor_map_heq_of_eq_comp_comp_eqToHom
+    (domainFiberTransport C F (γ ≫ α) y.base)
+    (domainFiberTransport C F α y.base)
+    (domainFiberTransport C F γ ((Under.map α).obj y.base))
+    _ (domainFiberTransport_comp C F α γ y.base) f.fiber
+
+/--
+The RHS of the fiber composition law.
+Shows the RHS is HEq to the composition of transports.
+-/
+lemma innerFiberAltTransition_comp_fiber_rhs {a c e : C} (α : c ⟶ a) (γ : e ⟶ c)
+    {x y : innerFiberAlt C F a} (f : x ⟶ y)
+    (h : (innerFiberAltTransitionObj C F (γ ≫ α) x) =
+         (innerFiberAltTransitionObj C F γ (innerFiberAltTransitionObj C F α x)))
+    (h' : (innerFiberAltTransitionObj C F (γ ≫ α) y) =
+          (innerFiberAltTransitionObj C F γ (innerFiberAltTransitionObj C F α y))) :
+    (eqToHom h ≫
+      innerFiberAltTransitionHom C F γ (innerFiberAltTransitionHom C F α f) ≫
+      eqToHom h'.symm).fiber ≍
+    (domainFiberTransport C F γ ((Under.map α).obj y.base)).map
+      ((domainFiberTransport C F α y.base).map f.fiber) := by
+  apply HEq.trans (Grothendieck.conj_eqToHom_fiber_heq
+    (F := restrictToDomainFiber C F e) h _ h'.symm)
+  simp only [innerFiberAltTransitionHom_fiber]
+  apply HEq.trans (eqToHom_comp_heq _ _)
+  apply HEq.trans (Functor.map_eqToHom_comp_heq _ _ _)
+  rfl
+
+/--
+Composition law for `innerFiberAltTransition`.
+-/
+theorem innerFiberAltTransition_comp {a c e : C} (α : c ⟶ a) (γ : e ⟶ c) :
+    innerFiberAltTransition C F (γ ≫ α) =
+    innerFiberAltTransition C F α ⋙ innerFiberAltTransition C F γ := by
+  apply Functor.ext
+  case h_obj => exact innerFiberAltTransitionObj_comp C F α γ
+  case h_map =>
+    intro x y f
+    apply Grothendieck.ext
+    case w_base =>
+      dsimp only [innerFiberAltTransition, Functor.comp_map]
+      simp only [innerFiberAltTransitionHom_base]
+      rw [Functor.congr_hom (Under.mapComp_eq γ α) f.base]
+      simp only [Functor.comp_map]
+      apply eq_of_heq
+      apply HEq.trans (eqToHom_comp_heq _ _)
+      apply HEq.trans (comp_eqToHom_heq _ _)
+      exact (innerFiberAltTransition_comp_base_rhs C F α γ f
+        (innerFiberAltTransitionObj_comp C F α γ x)
+        (innerFiberAltTransitionObj_comp C F α γ y)).symm
+    case w_fiber =>
+      dsimp only [innerFiberAltTransition, Functor.comp_map]
+      apply eq_of_heq
+      simp only [innerFiberAltTransitionHom_fiber,
+                 eqToHom_trans_assoc, eqToHom_comp_heq_iff]
+      apply HEq.trans (innerFiberAltTransition_comp_fiber_lhs C F α γ f)
+      exact (innerFiberAltTransition_comp_fiber_rhs C F α γ f
+        (innerFiberAltTransitionObj_comp C F α γ x)
+        (innerFiberAltTransitionObj_comp C F α γ y)).symm
+
+/-!
+### The Domain Fiber Functor
+
+The domain fiber functor `domainFiberFunctor : Cᵒᵖ' ⥤ Cat` assigns to each object
+`a : Cᵒᵖ'` (equivalently `a : C`) the category `innerFiberAlt C F a`, and to each
+morphism `α : a ⟶ b` in `Cᵒᵖ'` (which is `α : b ⟶ a` in `C`) the transition functor
+`innerFiberAltTransition C F α`.
+-/
+
+/--
+The domain fiber functor from `Cᵒᵖ'` to `Cat`.
+
+For an object `a : Cᵒᵖ'`, this assigns `innerFiberAlt C F a`.
+For a morphism `α : a ⟶ b` in `Cᵒᵖ'` (which is `α : b ⟶ a` in `C`),
+this assigns `innerFiberAltTransition C F α`.
+-/
+def domainFiberFunctor : Cᵒᵖ' ⥤ Cat where
+  obj a := Cat.of (innerFiberAlt C F a)
+  map α := innerFiberAltTransition C F α
+  map_id a := innerFiberAltTransition_id C F a
+  map_comp α β := innerFiberAltTransition_comp C F α β
+
+/-!
+### The Alternative Connected Grothendieck Construction
+
+The alternative connected Grothendieck construction is defined as
+`GrothendieckContra' (domainFiberFunctor C F)`.
+
+This is the dual of `ConnectedGrothendieckContra`, using `Under a` (domain-indexed
+fibers) instead of `(Over b)^op` (codomain-indexed fibers).
+-/
+
+/--
+The alternative connected Grothendieck construction.
+
+This is defined as `GrothendieckContra' (domainFiberFunctor C F)`, where
+`domainFiberFunctor C F : Cᵒᵖ' ⥤ Cat` assigns domain-indexed fiber categories.
+
+An object is a pair `(a, e)` where `a : C` (viewed in `Cᵒᵖ'`) and
+`e : innerFiberAlt C F a = Grothendieck (restrictToDomainFiber C F a)`.
+
+A morphism from `(a, e)` to `(a', e')` consists of:
+- `base : a ⟶ a'` in `Cᵒᵖ'` (equivalently `a' ⟶ a` in `C`)
+- `fiber : e ⟶ (domainFiberFunctor.map base).obj e'`
+-/
+def ConnectedGrothendieckAlt : Type _ :=
+  GrothendieckContra' (domainFiberFunctor C F)
+
+instance : Category (ConnectedGrothendieckAlt C F) :=
+  inferInstanceAs (Category (GrothendieckContra' (domainFiberFunctor C F)))
+
+end AlternativeConstruction
 
 end GebLean
