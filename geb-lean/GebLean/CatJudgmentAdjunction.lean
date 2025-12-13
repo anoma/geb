@@ -573,6 +573,204 @@ def counitEval {Q : OverQuiver.{u, u}} (C : OverCategoryData Q)
 
 end AdjunctionStructure
 
+/-! ## Counit Respects Equivalence
+
+For the round-trip L(Φ(C)) → C to be well-defined, we need to show that
+`counitEval` respects the equivalence relation on free morphisms. -/
+
+section CounitRespects
+
+variable {Q : OverQuiver.{u, u}} (C : OverCategoryData Q)
+
+/-- Abbreviation for the CategoryQuotientData derived from C. -/
+abbrev derivedQuotientData : CategoryQuotientData.{u, u} :=
+  C.toJudgmentFunctorData.toCategoryQuotientData
+
+/-- Source of counitEvalAux matches FreeMor source. -/
+theorem counitEvalAux_src {a b : Q.Obj} (m : FreeMor Q a b) :
+    Q.src (counitEvalAux C m).val = a :=
+  (counitEvalAux C m).property.1
+
+/-- Target of counitEvalAux matches FreeMor target. -/
+theorem counitEvalAux_tgt {a b : Q.Obj} (m : FreeMor Q a b) :
+    Q.tgt (counitEvalAux C m).val = b :=
+  (counitEvalAux C m).property.2
+
+/-- counitEval of a composition. -/
+theorem counitEval_comp {a b c : Q.Obj}
+    (g : FreeMor Q b c) (f : FreeMor Q a b) :
+    counitEval C (FreeMor.comp g f) =
+    C.compFn ⟨(counitEval C f, counitEval C g),
+      (counitEvalAux C f).property.2.trans (counitEvalAux C g).property.1.symm⟩ := by
+  conv_lhs => unfold counitEval counitEvalAux
+  conv_rhs => unfold counitEval
+  let ⟨fVal, fSrc, fTgt⟩ := counitEvalAux C f
+  let ⟨gVal, gSrc, gTgt⟩ := counitEvalAux C g
+  rfl
+
+/-- counitEval of identity. -/
+theorem counitEval_id {a : Q.Obj} :
+    counitEval C (FreeMor.id a) = C.idFn a := by
+  simp only [counitEval, counitEvalAux]
+
+/-- Left identity: counitEval (comp (id b) f) = counitEval f -/
+theorem counitEval_id_left {a b : Q.Obj} (f : FreeMor Q a b) :
+    counitEval C (FreeMor.comp (FreeMor.id b) f) = counitEval C f := by
+  simp only [counitEval_comp, counitEval_id]
+  have h_tgt : Q.tgt (counitEval C f) = b := counitEvalAux_tgt C f
+  have h := C.comp_id (counitEval C f)
+  convert h using 1
+  simp only [h_tgt]
+
+/-- Right identity: counitEval (comp f (id a)) = counitEval f -/
+theorem counitEval_id_right {a b : Q.Obj} (f : FreeMor Q a b) :
+    counitEval C (FreeMor.comp f (FreeMor.id a)) = counitEval C f := by
+  simp only [counitEval_comp, counitEval_id]
+  have h_src : Q.src (counitEval C f) = a := counitEvalAux_src C f
+  have h := C.id_comp (counitEval C f)
+  convert h using 1
+  simp only [h_src]
+
+/-- Associativity: counitEval (comp h (comp g f)) =
+    counitEval (comp (comp h g) f) -/
+theorem counitEval_assoc {a b c d : Q.Obj}
+    (h : FreeMor Q c d) (g : FreeMor Q b c) (f : FreeMor Q a b) :
+    counitEval C (FreeMor.comp h (FreeMor.comp g f)) =
+    counitEval C (FreeMor.comp (FreeMor.comp h g) f) := by
+  simp only [counitEval_comp]
+  let fVal := counitEval C f
+  let gVal := counitEval C g
+  let hVal := counitEval C h
+  have h_fg : Q.tgt fVal = Q.src gVal :=
+    (counitEvalAux_tgt C f).trans (counitEvalAux_src C g).symm
+  have h_gh : Q.tgt gVal = Q.src hVal :=
+    (counitEvalAux_tgt C g).trans (counitEvalAux_src C h).symm
+  let t : Q.ComposableTriplesType := ⟨(fVal, gVal, hVal), h_fg, h_gh⟩
+  have assoc_law := C.assoc t
+  convert assoc_law using 1
+
+/-- Congruence left: if counitEval f = counitEval g, then
+    counitEval (comp h f) = counitEval (comp h g). -/
+theorem counitEval_cong_left {a b c : Q.Obj}
+    {f g : FreeMor Q a b} (h : FreeMor Q b c)
+    (heq : counitEval C f = counitEval C g) :
+    counitEval C (FreeMor.comp h f) = counitEval C (FreeMor.comp h g) := by
+  simp only [counitEval_comp]
+  congr 1
+  ext
+  · exact heq
+  · rfl
+
+/-- Congruence right: if counitEval f = counitEval g, then
+    counitEval (comp f k) = counitEval (comp g k). -/
+theorem counitEval_cong_right {a b c : Q.Obj}
+    {f g : FreeMor Q b c} (k : FreeMor Q a b)
+    (heq : counitEval C f = counitEval C g) :
+    counitEval C (FreeMor.comp f k) = counitEval C (FreeMor.comp g k) := by
+  simp only [counitEval_comp]
+  congr 1
+  ext
+  · rfl
+  · exact heq
+
+/-- counitEval respects cast on FreeMor. -/
+theorem counitEval_cast {a b a' b' : Q.Obj}
+    (ha : a = a') (hb : b = b') (m : FreeMor Q a b) :
+    counitEval C (cast (by rw [ha, hb]) m) = counitEval C m := by
+  subst ha hb
+  rfl
+
+/-- counitEval of a variable. -/
+theorem counitEval_var {a b : Q.Obj} (f : Q.MorType)
+    (hsrc : Q.src f = a) (htgt : Q.tgt f = b) :
+    counitEval C (cast (by rw [hsrc, htgt]) (FreeMor.var f)) = f := by
+  subst hsrc htgt
+  rfl
+
+/-- The derivedQuotientData idObj is just the identity on Q.Obj. -/
+theorem derivedQuotientData_idObj (i : Q.Obj) :
+    (derivedQuotientData C).idObj i = i :=
+  C.id_src i
+
+/-- The derivedQuotientData idMor is just C.idFn. -/
+theorem derivedQuotientData_idMor (i : Q.Obj) :
+    (derivedQuotientData C).idMor i = C.idFn i :=
+  rfl
+
+/-- The derivedQuotientData compRight is the first component of the pair. -/
+theorem derivedQuotientData_compRight (c : Q.ComposablePairsType) :
+    (derivedQuotientData C).compRight c = c.val.1 :=
+  rfl
+
+/-- The derivedQuotientData compLeft is the second component of the pair. -/
+theorem derivedQuotientData_compLeft (c : Q.ComposablePairsType) :
+    (derivedQuotientData C).compLeft c = c.val.2 :=
+  rfl
+
+/-- The derivedQuotientData compComposite is the composition. -/
+theorem derivedQuotientData_compComposite (c : Q.ComposablePairsType) :
+    (derivedQuotientData C).compComposite c = C.compFn c :=
+  rfl
+
+/-- The quiver of derivedQuotientData is definitionally equal to Q. -/
+theorem derivedQuotientData_quiver : (derivedQuotientData C).quiver = Q := rfl
+
+/-- counitEval of a variable (without cast). -/
+theorem counitEval_var_eq (f : Q.MorType) :
+    counitEval C (FreeMor.var f) = f := rfl
+
+/-- counitEvalAux commutes with cast on index equality. -/
+theorem counitEvalAux_cast_idx {a b a' b' : Q.Obj}
+    (ha : a = a') (hb : b = b') (m : FreeMor Q a b) :
+    (counitEvalAux C (cast (by rw [ha, hb]) m)).val = (counitEvalAux C m).val := by
+  subst ha hb
+  rfl
+
+/-- counitEval commutes with cast on index equality. -/
+theorem counitEval_cast_idx {a b a' b' : Q.Obj}
+    (ha : a = a') (hb : b = b') (m : FreeMor Q a b) :
+    counitEval C (cast (by rw [ha, hb]) m) = counitEval C m := by
+  subst ha hb
+  rfl
+
+/-- Helper: counitEval respects the generating relations. -/
+theorem counitEval_respects_gen {a b : Q.Obj}
+    {f g : FreeMor Q a b}
+    (r : CategoryQuotientData.FreeMorEquivGen (derivedQuotientData C) f g) :
+    counitEval C f = counitEval C g := by
+  match r with
+  | .id_left f' => exact counitEval_id_left C f'
+  | .id_right f' => exact counitEval_id_right C f'
+  | .assoc h' g' f' => exact counitEval_assoc C h' g' f'
+  | .id_witness i =>
+    have htgt : Q.tgt (C.idFn i) = Q.src (C.idFn i) :=
+      (C.id_tgt i).trans (C.id_src i).symm
+    simp only [CategoryJudgments.FunctorData.toCategoryQuotientData,
+      OverCategoryData.toJudgmentFunctorData,
+      counitEval_var C (C.idFn i) rfl htgt, counitEval_id, C.id_src i]
+  | .comp_witness c =>
+    simp only [CategoryJudgments.FunctorData.toCategoryQuotientData,
+      OverCategoryData.toJudgmentFunctorData,
+      counitEval_comp, counitEval_var_eq,
+      counitEval_var C c.val.2 c.property.symm rfl,
+      counitEval_var C (C.compFn c) (C.comp_src c) (C.comp_tgt c)]
+    rfl
+  | .cong_left h' hfg => exact counitEval_cong_left C h' (counitEval_respects_gen hfg)
+  | .cong_right k hfg => exact counitEval_cong_right C k (counitEval_respects_gen hfg)
+
+/-- counitEval respects the full equivalence relation. -/
+theorem counitEval_respects {a b : Q.Obj}
+    {f g : FreeMor Q a b}
+    (h : CategoryQuotientData.FreeMorEquiv (derivedQuotientData C) f g) :
+    counitEval C f = counitEval C g :=
+  match h with
+  | .rel hr => counitEval_respects_gen C hr
+  | .refl _ => rfl
+  | .symm h' => (counitEval_respects h').symm
+  | .trans h1 h2 => (counitEval_respects h1).trans (counitEval_respects h2)
+
+end CounitRespects
+
 /-! ## Round-trip Properties
 
 The relationship between L and Φ:
