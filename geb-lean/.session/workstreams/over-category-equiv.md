@@ -354,11 +354,19 @@ dependencies in proving congruence properties.
 - `OverFunctorData.toJudgmentNatTrans`: Functor action of Phi on morphisms
 - `FreeMor.mapQuiver`: Mapping free morphisms through quiver morphisms
 
-### 7g. Adjunction Components (in progress)
+### 7g. Adjunction Components
 
 - `unitComponent`: Unit η_F sends `f : F.morC` to `[var f]` in the quotient
 - `counitEvalAux` and `counitEval`: Counit ε_C evaluates free morphisms in C
-- `roundtripEmbed`: Embeds morphisms of C into the quotient L(Φ(C))
+- `embedQuot`: Embeds morphisms of C into the quotient L(Φ(C))
+- `counitEvalQuot`: Quotient-level counit evaluation
+
+### 7h. Round-trip Isomorphism L(Φ(C)) ≅ C
+
+- `counitEval_embed`: `counitEvalQuot (embedQuot f) = f`
+- `var_counitEval_equiv`: `[var (counitEval fm)] ~ fm` (the proof)
+- `embed_counitEval`: `embedQuot (counitEvalQuot m) = m`
+- `roundtripEquiv`: The full equivalence `QuotMor a b ≃ MorOver' Q a b`
 
 ### Status (Phase 7)
 
@@ -368,6 +376,6 @@ dependencies in proving congruence properties.
 - [x] 7d: Embedding Phi (`toJudgmentFunctorData`)
 - [x] 7e: Reflection L (`toOverCategoryData`)
 - [~] 7f: Functoriality of Phi and L (partial: `toJudgmentNatTrans`, `mapQuiver`)
-- [~] 7g: Round-trip components (`unitComponent`, `counitEval`, `roundtripEmbed`)
-- [ ] 7h: Prove round-trip isomorphism L(Φ(C)) ≅ C
+- [x] 7g: Round-trip components (`unitComponent`, `counitEval`, `embedQuot`)
+- [x] 7h: Round-trip isomorphism L(Φ(C)) ≅ C (`roundtripEquiv`)
 - [ ] 7i: Full adjunction L ⊣ Φ
