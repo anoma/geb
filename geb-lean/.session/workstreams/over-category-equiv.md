@@ -349,6 +349,17 @@ dependencies in proving congruence properties.
   data from copresheaf, using identity and composition witnesses
 - `CategoryJudgments.FunctorData.toOverCategoryData`: Full conversion to category
 
+### 7f. Functoriality (in progress)
+
+- `OverFunctorData.toJudgmentNatTrans`: Functor action of Phi on morphisms
+- `FreeMor.mapQuiver`: Mapping free morphisms through quiver morphisms
+
+### 7g. Adjunction Components (in progress)
+
+- `unitComponent`: Unit η_F sends `f : F.morC` to `[var f]` in the quotient
+- `counitEvalAux` and `counitEval`: Counit ε_C evaluates free morphisms in C
+- `roundtripEmbed`: Embeds morphisms of C into the quotient L(Φ(C))
+
 ### Status (Phase 7)
 
 - [x] 7a: Free morphisms (`FreeMor`)
@@ -356,6 +367,7 @@ dependencies in proving congruence properties.
 - [x] 7c: Category quotient (`CategoryQuotientData`, `toOverCategoryData`)
 - [x] 7d: Embedding Phi (`toJudgmentFunctorData`)
 - [x] 7e: Reflection L (`toOverCategoryData`)
-- [ ] 7f: Functoriality of Phi and L
-- [ ] 7g: Round-trip L(Phi(C)) isomorphic to C
-- [ ] 7h: Full adjunction L -| Phi
+- [~] 7f: Functoriality of Phi and L (partial: `toJudgmentNatTrans`, `mapQuiver`)
+- [~] 7g: Round-trip components (`unitComponent`, `counitEval`, `roundtripEmbed`)
+- [ ] 7h: Prove round-trip isomorphism L(Φ(C)) ≅ C
+- [ ] 7i: Full adjunction L ⊣ Φ

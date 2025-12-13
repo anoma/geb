@@ -474,4 +474,124 @@ def CategoryJudgments.FunctorData.toOverCategoryData
 
 end ReflectionL
 
+/-! ## Functoriality
+
+The conversions Phi and L extend to functors between the appropriate categories.
+-/
+
+section Functoriality
+
+variable {Q₁ Q₂ : OverQuiver.{u, u}}
+variable {C₁ : OverCategoryData Q₁} {C₂ : OverCategoryData Q₂}
+
+/-- A functor between categories induces a natural transformation between the
+    corresponding copresheaves. This is the functorial action of Phi on
+    morphisms. -/
+def OverFunctorData.toJudgmentNatTrans (F : OverFunctorData C₁ C₂) :
+    CategoryJudgments.NatTransData
+      C₁.toJudgmentFunctorData
+      C₂.toJudgmentFunctorData where
+  appObj := F.objFn
+  appMor := F.morFn
+  appId := F.objFn
+  appComp := fun p =>
+    let composableProof : Q₂.tgt (F.morFn p.val.1) = Q₂.src (F.morFn p.val.2) :=
+      (F.tgt_comm p.val.1).trans
+        ((congrArg F.objFn p.property).trans (F.src_comm p.val.2).symm)
+    ⟨(F.morFn p.val.1, F.morFn p.val.2), composableProof⟩
+  naturality_dom := by funext f; exact (F.src_comm f).symm
+  naturality_cod := by funext f; exact (F.tgt_comm f).symm
+  naturality_idMor := by funext a; exact F.map_id a
+  naturality_left := by funext _; rfl
+  naturality_right := by funext _; rfl
+  naturality_composite := by funext p; exact F.map_comp p
+
+end Functoriality
+
+/-! ## Free morphism mapping
+
+When we have a quiver morphism, we can lift it to map free morphisms. -/
+
+section FreeMorMapping
+
+variable {Q₁ Q₂ : OverQuiver.{v, u}}
+
+/-- Map a free morphism through a quiver morphism (extended version).
+    This is the functor from FreeMor Q₁ to FreeMor Q₂ induced by a
+    quiver morphism. -/
+def FreeMor.mapQuiver (F : OverQuiverMorphism Q₁ Q₂)
+    {a b : Q₁.Obj} (m : FreeMor Q₁ a b) :
+    FreeMor Q₂ (F.objFn a) (F.objFn b) :=
+  match m with
+  | .var f => F.src_comm f ▸ F.tgt_comm f ▸ .var (F.morFn f)
+  | .id _ => .id _
+  | .comp g f => .comp (mapQuiver F g) (mapQuiver F f)
+
+end FreeMorMapping
+
+/-! ## Adjunction Structure
+
+The adjunction L ⊣ Φ between Cat and [CategoryJudgments, Type].
+
+The unit η : Id → Φ ∘ L takes a copresheaf F to its quotient category's
+copresheaf representation.
+
+The counit ε : L ∘ Φ → Id evaluates free morphisms in a category.
+-/
+
+section AdjunctionStructure
+
+/-- The unit of the adjunction sends a morphism in a copresheaf to its
+    equivalence class in the free category.
+    η_F : F → Φ(L(F)) sends each morphism f to [var f]. -/
+def unitComponent (F : CategoryJudgments.FunctorData (Type u))
+    (f : F.morC) :
+    F.toCategoryQuotientData.QuotMor (F.dom f) (F.cod f) :=
+  F.toCategoryQuotientData.quotMor (FreeMor.var (Q := F.toQuiver) f)
+
+/-- For a category C, the counit evaluates free morphisms, returning
+    a morphism in the bundled sigma type. -/
+def counitEvalAux {Q : OverQuiver.{u, u}} (C : OverCategoryData Q)
+    {a b : Q.Obj} (m : FreeMor Q a b) :
+    { f : Q.MorType // Q.src f = a ∧ Q.tgt f = b } :=
+  match m with
+  | .var f => ⟨f, rfl, rfl⟩
+  | .id x => ⟨C.idFn x, C.id_src x, C.id_tgt x⟩
+  | .comp g f =>
+    let ⟨fVal, fSrc, fTgt⟩ := counitEvalAux C f
+    let ⟨gVal, gSrc, gTgt⟩ := counitEvalAux C g
+    let composable : Q.tgt fVal = Q.src gVal := by rw [fTgt, gSrc]
+    let comp := C.compFn ⟨(fVal, gVal), composable⟩
+    ⟨comp, by rw [C.comp_src]; exact fSrc, by rw [C.comp_tgt]; exact gTgt⟩
+
+/-- For a category C, the counit evaluates free morphisms.
+    ε_C : L(Φ(C)) → C sends [var f] to f, [id a] to id a, and
+    [comp g f] to g ∘ f. -/
+def counitEval {Q : OverQuiver.{u, u}} (C : OverCategoryData Q)
+    {a b : Q.Obj} (m : FreeMor Q a b) : Q.MorType :=
+  (counitEvalAux C m).val
+
+end AdjunctionStructure
+
+/-! ## Round-trip Properties
+
+The relationship between L and Φ:
+- L(Φ(C)) ≃ C for any category C
+- Φ(L(F)) contains F as a subcategory for any copresheaf F
+-/
+
+section RoundTrip
+
+/-- For a category C, the quotient of free morphisms on its underlying quiver
+    is isomorphic to C itself. The embedding var : Q.MorType → FreeMor Q
+    composed with the quotient gives an isomorphism. -/
+def roundtripEmbed {Q : OverQuiver.{u, u}} (C : OverCategoryData Q)
+    {a b : Q.Obj} (f : Q.MorType) (hf_src : Q.src f = a) (hf_tgt : Q.tgt f = b) :
+    let D := C.toJudgmentFunctorData.toCategoryQuotientData
+    D.QuotMor a b :=
+  let D := C.toJudgmentFunctorData.toCategoryQuotientData
+  D.quotMor (hf_src ▸ hf_tgt ▸ .var f)
+
+end RoundTrip
+
 end GebLean
