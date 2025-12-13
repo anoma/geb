@@ -288,3 +288,74 @@ Round-trip properties:
 - [x] 6b: Conversion functors (generalized to `{v, u}`)
 - [x] 6c: Universe-polymorphic equivalence at `{max v u, u}`
 - [ ] 6d: Natural isomorphisms for round-trips (future work)
+
+## Phase 7: Category-Copresheaf Adjunction
+
+This phase implements the adjunction between:
+
+- **Cat**: The category of small categories (via `OverCategoryData`)
+- **[J, Type]**: The category of copresheaves on CategoryJudgments
+  (via `CategoryJudgments.FunctorData`)
+
+### 7a. Free Morphisms (FreeMor)
+
+File: `GebLean/CatJudgmentAdjunction.lean`
+
+The approach uses free morphisms as binary trees (inspired by Idris-2
+`DiagramCat.idr`) rather than paths (linear lists). This avoids circular
+dependencies in proving congruence properties.
+
+- `FreeMor Q a b`: Free morphisms in a quiver, represented as binary trees:
+  - `var f`: Inject a base morphism from the quiver
+  - `id a`: Identity morphism at object a
+  - `comp g f`: Composition g . f (f first, then g)
+- `FreeMor.size`: Size of a free morphism (number of constructors)
+- `FreeMor.map`: Map a free morphism through a quiver morphism
+
+### 7b. Equivalence Relations (FreeMorEquiv)
+
+- `FreeMorEquivGen`: Generating relations including:
+  - Category axioms: `id_left`, `id_right`, `assoc`
+  - Copresheaf relations: `id_witness`, `comp_witness`
+  - Congruence: `cong_left`, `cong_right`
+- `FreeMorEquiv`: Equivalence closure (refl, symm, trans)
+- `FreeMorEquiv.cong_left`, `cong_right`: Congruence propagates through closure
+- `freeMorSetoid`: Setoid on free morphisms
+
+### 7c. Category Quotient Data
+
+- `CategoryQuotientData`: Data for quotienting free morphisms to form a category
+  - `quiver`: The underlying quiver
+  - `IdWitness`, `idObj`, `idMor`: Identity witnesses
+  - `CompWitness`, `compRight`, `compLeft`, `compComposite`: Composition witnesses
+- `QuotMor`: Quotient type of free morphisms
+- `quotQuiver`: OverQuiver for the quotient category
+- `quotComp`, `quotId`: Composition and identity on quotients
+- `quotComp_id_left`, `quotComp_id_right`, `quotComp_assoc`: Category laws
+- `quotCategoryOps`: Operations structure
+- `toOverCategoryData`: Full OverCategoryData from CategoryQuotientData
+
+### 7d. Embedding Functor Phi
+
+- `OverCategoryData.toJudgmentFunctorData`: Convert a category to a copresheaf
+  - Objects, morphisms, identities map directly
+  - Composition type is `Q.ComposablePairsType`
+  - Proofs follow from category data properties
+
+### 7e. Reflection Functor L
+
+- `CategoryJudgments.FunctorData.toQuiver`: Extract quiver from copresheaf
+- `CategoryJudgments.FunctorData.toCategoryQuotientData`: Construct quotient
+  data from copresheaf, using identity and composition witnesses
+- `CategoryJudgments.FunctorData.toOverCategoryData`: Full conversion to category
+
+### Status (Phase 7)
+
+- [x] 7a: Free morphisms (`FreeMor`)
+- [x] 7b: Equivalence relations (`FreeMorEquivGen`, `FreeMorEquiv`)
+- [x] 7c: Category quotient (`CategoryQuotientData`, `toOverCategoryData`)
+- [x] 7d: Embedding Phi (`toJudgmentFunctorData`)
+- [x] 7e: Reflection L (`toOverCategoryData`)
+- [ ] 7f: Functoriality of Phi and L
+- [ ] 7g: Round-trip L(Phi(C)) isomorphic to C
+- [ ] 7h: Full adjunction L -| Phi
