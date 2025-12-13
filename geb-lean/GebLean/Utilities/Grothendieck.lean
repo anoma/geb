@@ -349,6 +349,16 @@ variable (F : C ⥤ Cat.{v₂, u₂})
 
 namespace Grothendieck
 
+@[ext (iff := false)]
+theorem obj_ext (X Y : Grothendieck F) (w_base : X.base = Y.base)
+    (w_fiber : X.fiber ≍ Y.fiber) : X = Y := by
+  cases X; cases Y
+  simp only at w_base
+  subst w_base
+  simp only [heq_eq_eq] at w_fiber
+  subst w_fiber
+  rfl
+
 /--
 For functors valued in `Grothendieck E`, the fiber of `(eqToHom h).app X`
 equals an `eqToHom` at the fiber level.
@@ -387,6 +397,13 @@ theorem base_eqToHom_same_base {c : C} {x y : F.obj c}
     (h : (⟨c, x⟩ : Grothendieck F) = ⟨c, y⟩) :
     (eqToHom h).base = 𝟙 c := by
   simp only [base_eqToHom, eqToHom_refl]
+
+theorem conj_eqToHom_fiber_heq {W X Y Z : Grothendieck F}
+    (h : W = X) (f : X ⟶ Y) (h' : Y = Z) :
+    (eqToHom h ≫ f ≫ eqToHom h').fiber ≍ f.fiber := by
+  subst h h'
+  simp only [eqToHom_refl]
+  rw [show (𝟙 W ≫ f ≫ 𝟙 Y) = f by simp]
 
 section FunctorTo
 
@@ -1680,8 +1697,8 @@ theorem conj_eqToHom_fiber_heq {W X Y Z : GrothendieckContra' F'}
     (h : W = X) (f : X ⟶ Y) (h' : Y = Z) :
     (eqToHom h ≫ f ≫ eqToHom h').fiber ≍ f.fiber := by
   subst h h'
-  have heq : eqToHom (rfl : W = W) ≫ f ≫ eqToHom (rfl : Y = Y) = f := by simp
-  rw [heq]
+  simp only [eqToHom_refl]
+  rw [show (𝟙 W ≫ f ≫ 𝟙 Y) = f by simp]
 
 lemma eqToHom_eq {X Y : GrothendieckContra' F'} (hF : X = Y) :
     eqToHom hF = { base := eqToHom (by subst hF; rfl)
