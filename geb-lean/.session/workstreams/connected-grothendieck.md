@@ -2,8 +2,9 @@
 
 ## Status
 
-In Progress - copresheaf projection functor defined; presheaf construction
-implemented (direct approach); universal properties remaining.
+Copresheaf construction complete with projection functor to `Arrow C`.
+Presheaf construction complete with category instance and projection functor to
+`TwistedArrow' C` (not `Arrow C`).
 
 ## Context
 
@@ -76,6 +77,13 @@ associativity for free.
    - Helper lemmas: `grothendieckContra'_comp_base_left`,
      `fiberFunctorContra_map_base_left`, `grothendieckContra'_eqToHom_base_left`
 
+9. Presheaf Connected Grothendieck Construction (direct definition)
+   - `ConnGrothendieckPresheafObj C G` for `G : (TwistedArrow' C)^op' -> Cat`
+   - `ConnGrothendieckPresheafHom C G X Y` with `twMorph` and `fiberMorph`
+   - Category instance `connGrothendieckPresheafCategory`
+   - Identity, composition, and all category laws proved
+   - Uses `cat_disch` tactic for handling dependent type issues in proofs
+
 ### Helper Lemmas
 
 - `Over.map_obj_left` - `Over.map` preserves the `left` component
@@ -93,67 +101,65 @@ associativity for free.
 3. Composition and identity operations
 4. Identity laws proved
 
-### Remaining Work for Copresheaf Construction
+5. Projection functor for presheaf construction
+    - `connGrothendieckPresheafProjection`:
+      `ConnectedGrothendieckPresheaf C G ⥤ TwistedArrow' C`
+    - Maps objects to their underlying twisted arrow
+    - Maps morphisms to their `twMorph` component
 
-1. Prove universal properties
+### Remaining Work
 
-### Presheaf Construction (Implemented)
+1. Prove universal properties for copresheaf construction
 
-The presheaf connected Grothendieck construction for `G : Tw(C)^op' → Cat`.
+### Investigated and Resolved
 
-#### Design Decision: Direct vs Nested Construction
+- **Projection from presheaf construction to `Arrow C`**: Investigated thoroughly.
+  The presheaf construction projects to `TwistedArrow' C`, not `Arrow C`, due to
+  the diagonal construction asymmetry (see below).
 
-The presheaf construction uses a direct approach rather than nested:
+### Projection Asymmetry: Copresheaf vs Presheaf
 
-```text
-ConnectedGrothendieckPresheaf G = GrothendieckContra' G
-```
+The copresheaf and presheaf constructions project to different categories:
 
-where G : (TwistedArrow' C)^op' → Cat.
+- **Copresheaf** `F : Tw(C) → Cat` projects to `Arrow C`
+- **Presheaf** `G : Tw(C)^op → Cat` projects to `TwistedArrow' C`
 
-This is simpler than the nested approach because:
+The asymmetry arises from how the diagonal construction interacts with functor
+variance:
 
-1. `GrothendieckContra' G` directly gives the correct object/morphism structure
-2. Objects: `(tw : TwistedArrow' C, e : G(tw))`
-3. Morphisms: `(α : tw₁ → tw₂, g : e₁ → G(α)(e₂))`
+1. **Diagonal construction**: Given an Arrow morphism `(g, h)`, form a diagonal
+   twisted arrow `w = h ∘ f = f' ∘ g` and TwistedArrow morphisms from the
+   component arrows `f`, `f'` to this composite `w`.
 
-A nested construction (analogous to copresheaf) would require a contravariant
-outer layer `fiberFunctorPresheaf : C^op' → Cat`, but defining transitions
-is problematic: for β : b → d, Over.map goes b → d, but a contravariant
-functor needs transitions from innerFiber(d) → innerFiber(b).
+2. **Covariant case**: `F.map (f → w) : F(f) → F(w)` transports fibers INTO
+   `F(w)`. Both fiber elements end up in `F(w)` where they can be compared.
 
-#### Projection to Arrow C
+3. **Contravariant case**: `G.map (f → w) : G(w) → G(f)` transports OUT of
+   `G(w)`. We cannot use this to get fibers into a common category.
 
-Unlike the copresheaf case, the presheaf construction does NOT naturally
-project to Arrow C as a functor. This is because TwistedArrow morphisms have
-mixed variance:
+The presheaf construction instead uses TwistedArrow morphisms directly as base
+morphisms. For `twMorph : f → f'`:
 
-- Domain component: contravariant (twDomArr' : dom(tw₂) → dom(tw₁))
-- Codomain component: covariant (twCodArr' : cod(tw₁) → cod(tw₂))
+- `G.map twMorph : G(f') → G(f)` transports `e'` into `G(f)`
+- The fiber morphism `e → G(twMorph)(e')` lives in `G(f)`
 
-Arrow C morphisms require both components to be covariant. The copresheaf
-avoids this via its nested structure where the arrow comes from Over categories.
+This naturally projects to `TwistedArrow' C` rather than `Arrow C`.
 
-#### Implemented Components
+See `docs/connected-grothendieck-construction.md` Section 11.9 and
+`GebLean/Utilities/ConnectedGrothendieck.lean` lines 3329-3368 for details.
 
-1. `overToTwistedArrowOp b : Over b ⥤ (TwistedArrow' C)^op'`
-   - Uses `Functor.op' (overOpToTwistedArrow C b)`
-   - Maps `ov` to `twObjMk' ov.hom` (viewed in opposite category)
+### Presheaf Construction Notes
 
-2. `restrictToFiberPresheaf G b : Over b ⥤ Cat`
-   - Composition `overToTwistedArrowOp b ⋙ G`
+The presheaf construction uses a direct definition approach rather than
+the nested approach via `C^op`. This is because the morphism directions
+in `TwistedArrowOp' C` and `(TwistedArrow' C)^op'` don't align in a way
+that makes the nested approach simple.
 
-3. `innerFiberPresheaf G b = Grothendieck (restrictToFiberPresheaf G b)`
-   - Uses regular Grothendieck (covariant on Over b)
+Key insight for category laws:
 
-4. `fiberTransportPresheaf β ov : G(tw(Over.map β ov)) ⥤ G(tw(ov))`
-   - Opposite direction from copresheaf (G is contravariant)
-   - Uses `G.map (fiberTransportTwMorph C β ov)`
-
-5. `ConnectedGrothendieckPresheaf G = GrothendieckContra' G`
-   - Direct definition, not nested
-
-6. `connGrothendieckPresheafObjArrow` - extracts underlying arrow from object
+- Use `@CategoryStruct.comp (TwistedArrow' C)` for explicit composition
+- `G.map_comp g.twMorph f.twMorph` (reversed order for opposite category)
+- `cat_disch` handles dependent type issues in fiber morphism proofs
 
 ## References
 

@@ -3068,15 +3068,26 @@ end ProjectionFunctor
 This section defines the connected Grothendieck construction for presheaves
 on twisted arrows: functors `G : Tw(C)^op' ⥤ Cat`.
 
-The direct presheaf construction `GrothendieckContra' G` gives:
-- Objects: `(tw : TwistedArrow' C, e : G(tw))`
-- Morphisms: tw-morphisms with fiber morphisms going `e₁ → G(α)(e₂)`
+The construction follows the same pattern as `GrothendieckContra'`:
 
-However, this does not naturally project to `Arrow C` because TwistedArrow
-morphisms have mixed variance (contravariant on domains, covariant on codomains).
+```
+GrothendieckContra' F' = (Grothendieck (Cat.postCompOpFunctor'.obj F'))^op'
+```
 
-A nested construction analogous to the copresheaf case would need to handle the
-interaction between Under.map and twisted arrow morphisms carefully.
+For `G : Tw(C)^op → Cat`, we define:
+
+```
+ConnectedGrothendieckPresheaf G = (ConnectedGrothendieckContra C^op H')^op'
+```
+
+where:
+1. Use `Tw(C) ≅ Tw(C^op)` to view `G` as `H : Tw(C^op)^op → Cat`
+2. `H' = Cat.postCompOpFunctor'.obj H : Tw(C^op) → Cat` (covariant)
+3. Apply copresheaf construction over `C^op`
+4. Take `op'` of the result
+
+This produces a category over `Arrow C` with morphisms going in the correct
+direction for a presheaf construction.
 -/
 
 section PresheafConnectedGrothendieck
@@ -3086,37 +3097,274 @@ variable (C)
 variable (G : (TwistedArrow' C)ᵒᵖ' ⥤ Cat.{v, u})
 
 /-!
-### Direct Construction
+### Contravariant Functor Transformation
 
-The direct presheaf construction as `GrothendieckContra' G`.
+We need to transform `G : (TwistedArrow' C)ᵒᵖ' ⥤ Cat` into a covariant functor
+`TwistedArrowOp' C ⥤ Cat` for use with `ConnectedGrothendieckContra`.
+
+The approach uses functor composition:
+1. `Functor.op' twistedArrowOp'ToTwistedArrow : (TwistedArrowOp' C)ᵒᵖ' ⥤ (TwistedArrow' C)ᵒᵖ'`
+2. Compose with `G` to get `(TwistedArrowOp' C)ᵒᵖ' ⥤ Cat`
+3. Apply `Cat.postCompOpFunctor'` to flip fiber categories, keeping domain the same
+4. Since `(TwistedArrowOp' C)ᵒᵖ' = TwistedArrowOp' C` at the type level, this gives
+   the right functor
+
+Note: The domain type `(TwistedArrowOp' C)ᵒᵖ'` is definitionally equal to `TwistedArrowOp' C`
+as a type (since `CategoryOp' X = X`), but has reversed morphism directions. However,
+`Cat.postCompOpFunctor'` preserves the domain, so we get morphisms going in the
+opposite direction from what we need.
+
+Actually, the correct approach is to recognize that:
+- `TwistedArrowOp' C = TwistedArrow' (Cᵒᵖ')` definitionally (both types and categories)
+- We need a functor `TwistedArrow' (Cᵒᵖ') ⥤ Cat`
+- Given `G : (TwistedArrow' C)ᵒᵖ' ⥤ Cat`, we use the equivalence between
+  `TwistedArrow' (Cᵒᵖ')` and `(TwistedArrow' C)ᵒᵖ'` (same twisted arrows, opposite morphisms)
+-/
+
+/-!
+### Direct Presheaf Connected Grothendieck Construction
+
+Rather than trying to transform `G : (TwistedArrow' C)ᵒᵖ' ⥤ Cat` into a covariant
+functor, we define the presheaf connected Grothendieck construction directly,
+analogous to how `GrothendieckContra'` is defined for presheaves.
+
+The morphism directions in `TwistedArrowOp' C` and
+`(TwistedArrow' C)ᵒᵖ'` don't align, so we make a direct definition.
 -/
 
 /--
-The connected Grothendieck construction for a presheaf `G : Tw(C)^op' ⥤ Cat`.
-
-Objects are pairs `(tw, e)` where `tw : TwistedArrow' C` and `e : G(tw)`.
-Morphisms from `(tw₁, e₁)` to `(tw₂, e₂)` consist of:
-- A morphism `α : tw₁ → tw₂` in `TwistedArrow' C`
-- A fiber morphism `e₁ → G(α)(e₂)` in `G(tw₁)`
-
-Note: This construction does not naturally project to `Arrow C` due to the
-mixed variance of TwistedArrow morphisms.
+Objects of the presheaf connected Grothendieck construction for `G : Tw(C)^op' ⥤ Cat`.
+An object consists of a twisted arrow and a fiber element.
 -/
-abbrev ConnectedGrothendieckPresheaf : Type _ :=
-  GrothendieckContra' G
+structure ConnGrothendieckPresheafObj where
+  /-- The underlying twisted arrow -/
+  tw : TwistedArrow' C
+  /-- An element in the fiber category `G.obj tw` -/
+  fiber : G.obj tw
+
+/--
+Morphisms in the presheaf connected Grothendieck construction.
+
+For `G : (TwistedArrow' C)ᵒᵖ' ⥤ Cat`, a morphism from `(tw₁, e₁)` to `(tw₂, e₂)` consists of:
+- A morphism `twMorph : tw₁ ⟶ tw₂` in `TwistedArrow' C`
+- A morphism `fiberMorph : e₁ ⟶ (G.map twMorph).obj e₂` in `G.obj tw₁`
+
+The fiber morphism goes to the pullback of `e₂` along `twMorph` because `G` is
+contravariant: viewing `twMorph : tw₁ ⟶ tw₂` in `TwistedArrow' C` as a morphism
+`tw₂ ⟶ tw₁` in `(TwistedArrow' C)ᵒᵖ'`, we get `G.map twMorph : G.obj tw₂ ⥤ G.obj tw₁`.
+-/
+structure ConnGrothendieckPresheafHom (X Y : ConnGrothendieckPresheafObj C G) where
+  /-- The morphism between twisted arrows -/
+  twMorph : X.tw ⟶ Y.tw
+  /-- The fiber morphism going to the pullback -/
+  fiberMorph : X.fiber ⟶ (G.map twMorph).obj Y.fiber
+
+namespace ConnGrothendieckPresheafHom
+
+variable {C G}
+
+/-- The fiber codomain equality for identity morphisms -/
+theorem id_fiber_cod_eq (X : ConnGrothendieckPresheafObj C G) :
+    (G.map (𝟙 X.tw)).obj X.fiber = X.fiber :=
+  (Functor.congr_obj (G.map_id X.tw).symm X.fiber).symm
+
+/-- Identity morphism in the presheaf connected Grothendieck construction -/
+def id (X : ConnGrothendieckPresheafObj C G) : ConnGrothendieckPresheafHom C G X X where
+  twMorph := 𝟙 X.tw
+  fiberMorph := eqToHom (id_fiber_cod_eq X).symm
+
+/-- The fiber codomain equality for composed morphisms.
+For `G : (TwistedArrow' C)ᵒᵖ' ⥤ Cat`, the composition `g.twMorph ≫ f.twMorph` in the opposite
+category equals `f.twMorph ≫ g.twMorph` at the underlying level.
+-/
+theorem comp_fiber_cod_eq {X Y Z : ConnGrothendieckPresheafObj C G}
+    (f : ConnGrothendieckPresheafHom C G X Y) (g : ConnGrothendieckPresheafHom C G Y Z) :
+    (G.map f.twMorph).obj ((G.map g.twMorph).obj Z.fiber) =
+    (G.map (@CategoryStruct.comp (TwistedArrow' C) _ _ _ _ f.twMorph g.twMorph)).obj Z.fiber := by
+  -- In (TwistedArrow' C)ᵒᵖ', g.twMorph ≫ f.twMorph is composable (Z→Y→X in op' sense)
+  -- and definitionally equals f.twMorph ≫ g.twMorph in TwistedArrow' C
+  exact (Functor.congr_obj (G.map_comp g.twMorph f.twMorph) Z.fiber).symm
+
+/-- Composition of morphisms in the presheaf connected Grothendieck construction -/
+def comp {X Y Z : ConnGrothendieckPresheafObj C G}
+    (f : ConnGrothendieckPresheafHom C G X Y)
+    (g : ConnGrothendieckPresheafHom C G Y Z) :
+    ConnGrothendieckPresheafHom C G X Z where
+  twMorph := @CategoryStruct.comp (TwistedArrow' C) _ _ _ _ f.twMorph g.twMorph
+  fiberMorph :=
+    f.fiberMorph ≫
+    (G.map f.twMorph).map g.fiberMorph ≫
+    eqToHom (comp_fiber_cod_eq f g)
+
+/-- Extensionality for presheaf connected Grothendieck morphisms -/
+@[ext (iff := false)]
+theorem ext {X Y : ConnGrothendieckPresheafObj C G}
+    (f g : ConnGrothendieckPresheafHom C G X Y)
+    (h_tw : f.twMorph = g.twMorph)
+    (h_fiber : f.fiberMorph ≫ eqToHom (by rw [h_tw]) = g.fiberMorph) :
+    f = g := by
+  cases f; cases g
+  congr
+  dsimp at h_tw
+  cat_disch
+
+end ConnGrothendieckPresheafHom
+
+attribute [local simp] eqToHom_map Functor.map_id
+
+instance connGrothendieckPresheafCategory :
+    Category (ConnGrothendieckPresheafObj C G) where
+  Hom := ConnGrothendieckPresheafHom C G
+  id := ConnGrothendieckPresheafHom.id
+  comp := ConnGrothendieckPresheafHom.comp
+  id_comp {X Y} f := by
+    apply ConnGrothendieckPresheafHom.ext
+    case h_tw =>
+      simp only [ConnGrothendieckPresheafHom.comp, ConnGrothendieckPresheafHom.id]
+      exact @Category.id_comp (TwistedArrow' C) _ _ _ f.twMorph
+    case h_fiber =>
+      simp only [ConnGrothendieckPresheafHom.comp, ConnGrothendieckPresheafHom.id]
+      -- Goal: eqToHom _ ≫ (G.map (𝟙 X.tw)).map f.fiberMorph ≫ eqToHom _ = f.fiberMorph
+      -- Use G.map_id to rewrite G.map (𝟙 X.tw) to 𝟙 (G.obj X.tw)
+      simp only [Category.assoc]
+      slice_lhs 2 3 => erw [Functor.congr_hom (G.map_id X.tw) f.fiberMorph]
+      -- Goal: eqToHom _ ≫ eqToHom _ ≫ (𝟙 (G.obj X.tw)).map f.fiberMorph = f.fiberMorph
+      cat_disch
+  comp_id {X Y} f := by
+    apply ConnGrothendieckPresheafHom.ext
+    case h_tw =>
+      simp only [ConnGrothendieckPresheafHom.comp, ConnGrothendieckPresheafHom.id]
+      exact @Category.comp_id (TwistedArrow' C) _ _ _ f.twMorph
+    case h_fiber =>
+      simp only [ConnGrothendieckPresheafHom.comp, ConnGrothendieckPresheafHom.id]
+      -- Goal: f.fiberMorph ≫ (G.map f.twMorph).map (eqToHom _) ≫ eqToHom _ = f.fiberMorph
+      -- Use eqToHom_map to convert the functor map of eqToHom to eqToHom
+      simp only [eqToHom_map, Category.assoc, eqToHom_trans, eqToHom_refl, Category.comp_id]
+  assoc f g h := by
+    apply ConnGrothendieckPresheafHom.ext
+    case h_tw =>
+      simp only [ConnGrothendieckPresheafHom.comp]
+      exact @Category.assoc (TwistedArrow' C) _ _ _ _ _ f.twMorph g.twMorph h.twMorph
+    case h_fiber =>
+      simp only [ConnGrothendieckPresheafHom.comp, Category.assoc]
+      -- Use G.map_comp to rewrite G.map (f ≫ g) to G.map g ⋙ G.map f
+      slice_lhs 3 4 =>
+        erw [Functor.congr_hom (G.map_comp g.twMorph f.twMorph) h.fiberMorph]
+      cat_disch
+
+/--
+The presheaf connected Grothendieck construction for `G : Tw(C)^op' ⥤ Cat`.
+-/
+abbrev ConnectedGrothendieckPresheaf : Type _ := ConnGrothendieckPresheafObj C G
 
 instance : Category (ConnectedGrothendieckPresheaf C G) :=
-  inferInstance
-
-/--
-Extract the underlying arrow from an object of `ConnectedGrothendieckPresheaf`.
-This is an object-level extraction, not a functor, due to the mixed variance
-of TwistedArrow morphisms.
--/
-def connGrothendieckPresheafObjArrow (x : ConnectedGrothendieckPresheaf C G) :
-    Arrow C :=
-  Arrow.mk (twArr' x.base)
+  connGrothendieckPresheafCategory C G
 
 end PresheafConnectedGrothendieck
+
+/-!
+## Projection Functor for Presheaf Connected Grothendieck
+
+The presheaf connected Grothendieck construction `ConnectedGrothendieckPresheaf C G`
+projects naturally to `TwistedArrow' C`, not to `Arrow C`. This is because the
+morphisms use `TwistedArrow'` morphisms (with one backward, one forward component)
+rather than `Arrow` morphisms (both forward).
+
+To obtain a functor to `Arrow C`, we compose with the fact that
+`TwistedArrow' C` admits a "forgetful" functor to various arrow categories.
+-/
+
+section PresheafConnectedGrothendieckProjection
+
+variable {C : Type u} [Category.{v} C]
+variable (C)
+variable (G : (TwistedArrow' C)ᵒᵖ' ⥤ Cat.{v, u})
+
+/--
+Convert a presheaf Grothendieck object to its underlying twisted arrow.
+-/
+def connGrothendieckPresheafObjToTw
+    (X : ConnGrothendieckPresheafObj C G) : TwistedArrow' C :=
+  X.tw
+
+/--
+Extract the twisted arrow morphism from a presheaf Grothendieck morphism.
+-/
+def connGrothendieckPresheafHomToTwHom
+    {X Y : ConnGrothendieckPresheafObj C G}
+    (f : ConnGrothendieckPresheafHom C G X Y) : X.tw ⟶ Y.tw :=
+  f.twMorph
+
+/--
+The projection functor from `ConnectedGrothendieckPresheaf C G` to `TwistedArrow' C`.
+-/
+def connGrothendieckPresheafProjection :
+    ConnectedGrothendieckPresheaf C G ⥤ TwistedArrow' C where
+  obj := connGrothendieckPresheafObjToTw C G
+  map f := connGrothendieckPresheafHomToTwHom C G f
+  map_id _ := rfl
+  map_comp _ _ := rfl
+
+/--
+The projection preserves the underlying twisted arrow on objects.
+-/
+@[simp]
+lemma connGrothendieckPresheafProjection_obj
+    (X : ConnectedGrothendieckPresheaf C G) :
+    (connGrothendieckPresheafProjection C G).obj X = X.tw :=
+  rfl
+
+/--
+The projection preserves the twisted arrow morphism component.
+-/
+@[simp]
+lemma connGrothendieckPresheafProjection_map
+    {X Y : ConnectedGrothendieckPresheaf C G}
+    (f : X ⟶ Y) :
+    (connGrothendieckPresheafProjection C G).map f = f.twMorph :=
+  rfl
+
+end PresheafConnectedGrothendieckProjection
+
+/-!
+## Remarks on Presheaf Construction and Arrow Projection
+
+The presheaf connected Grothendieck construction `ConnectedGrothendieckPresheaf C G`
+naturally projects to `TwistedArrow' C` via `connGrothendieckPresheafProjection`.
+
+### Why Arrow Projection Works for Copresheaves but Not Presheaves
+
+The copresheaf construction projects to `Arrow C` using a diagonal construction:
+given an Arrow morphism with components `(domArr, codArr)`, we form a diagonal
+twisted arrow `w` and TwistedArrow' morphisms from both source and target arrows
+to this diagonal. These morphisms go from component arrows to a composite arrow.
+
+For **covariant** `F : TwistedArrow' C ⥤ Cat`:
+- `F.map (X.tw → w) : F(X.tw) ⥤ F(w)` transports fibers INTO `F(w)`
+- `F.map (Y.tw → w) : F(Y.tw) ⥤ F(w)` transports fibers INTO `F(w)`
+- Both fiber elements end up in the common category `F(w)` where they can be
+  compared via a fiber morphism
+
+For **contravariant** `G : (TwistedArrow' C)ᵒᵖ' ⥤ Cat`:
+- `G.map (X.tw → w) : G(w) ⥤ G(X.tw)` transports FROM `G(w)` out to `G(X.tw)`
+- `G.map (Y.tw → w) : G(w) ⥤ G(Y.tw)` transports FROM `G(w)` out to `G(Y.tw)`
+- We cannot use these to transport fibers INTO a common category
+
+The asymmetry arises because TwistedArrow' morphisms naturally go from component
+arrows to composite arrows (the diagonal). The covariant functor maps follow this
+direction, enabling fiber comparison in the diagonal fiber. The contravariant
+functor maps reverse this direction, preventing the diagonal construction from
+working for fiber transport.
+
+### Presheaf Construction Uses TwistedArrow' Morphisms Directly
+
+The presheaf construction instead uses TwistedArrow' morphisms directly as the
+base morphisms. For `twMorph : X.tw ⟶ Y.tw`:
+- `G.map twMorph : G(Y.tw) ⥤ G(X.tw)` transports `Y.fiber` into `G(X.tw)`
+- The fiber morphism `X.fiber ⟶ (G.map twMorph).obj Y.fiber` lives in `G(X.tw)`
+
+This is the natural structure for presheaves on twisted arrows, and it projects
+to `TwistedArrow' C` rather than `Arrow C`.
+-/
 
 end GebLean

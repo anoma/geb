@@ -570,3 +570,88 @@ The connected Grothendieck constructions follow the same pattern:
 
 The presheaf construction is the dual, with connecting morphisms in the
 opposite direction, analogous to how two-sided handles the variance flip.
+
+### 11.9 Projection Asymmetry: Arrow vs TwistedArrow
+
+The copresheaf and presheaf constructions project to different categories:
+
+* **Copresheaf** `F : Tw(C) → Cat` projects to `Arr(C)`
+* **Presheaf** `G : Tw(C)^op → Cat` projects to `Tw(C)`
+
+This asymmetry arises from the diagonal construction used for fiber transport.
+
+#### 11.9.1 The Diagonal Construction
+
+Given an Arrow morphism `(g, h) : f → f'` with commuting square
+`h ∘ f = f' ∘ g`, the **diagonal** is:
+
+```text
+w = h ∘ f = f' ∘ g : a → b'
+```
+
+There are canonical TwistedArrow morphisms from the component arrows to this
+composite:
+
+```text
+(id_a, h) : f → w      (component arrow f to composite w)
+(g, id_{b'}) : f' → w  (component arrow f' to composite w)
+```
+
+These morphisms go FROM component arrows TO the composite diagonal.
+
+#### 11.9.2 Fiber Transport Direction
+
+For **covariant** `F : Tw(C) → Cat`:
+
+```text
+F(id_a, h) : F(f) → F(w)   transports INTO F(w)
+F(g, id_{b'}) : F(f') → F(w)   transports INTO F(w)
+```
+
+Both fiber elements can be transported INTO the common category `F(w)`, where
+they can be compared via a fiber morphism. This enables the diagonal
+construction to work, and the resulting category projects to `Arr(C)`.
+
+For **contravariant** `G : Tw(C)^op → Cat`:
+
+```text
+G(id_a, h) : G(w) → G(f)   transports OUT OF G(w)
+G(g, id_{b'}) : G(w) → G(f')   transports OUT OF G(w)
+```
+
+The functors go OUT of `G(w)`, not into it. We cannot use these to transport
+fiber elements into a common category for comparison.
+
+#### 11.9.3 Presheaf Uses TwistedArrow Morphisms Directly
+
+Since the diagonal construction fails for presheaves, the presheaf connected
+Grothendieck construction uses TwistedArrow morphisms directly as the base
+morphisms:
+
+```text
+Morphism from (f, e) to (f', e'):
+  - twMorph : f → f' in Tw(C)
+  - fiberMorph : e → G(twMorph)(e') in G(f)
+```
+
+For `twMorph : f → f'` in `Tw(C)`:
+
+```text
+G(twMorph) : G(f') → G(f)   transports e' into G(f)
+```
+
+The fiber morphism `e → G(twMorph)(e')` lives in `G(f)`, the source fiber.
+
+This construction naturally projects to `Tw(C)`, not `Arr(C)`, because the
+morphisms ARE TwistedArrow morphisms rather than Arrow morphisms mediated by
+diagonals.
+
+#### 11.9.4 Implementation Status
+
+* `ConnectedGrothendieckContra C F` for copresheaves projects to `Arrow C`
+  via `connGrothendieckContraProjection`
+* `ConnectedGrothendieckPresheaf C G` for presheaves projects to
+  `TwistedArrow' C` via `connGrothendieckPresheafProjection`
+
+See `GebLean/Utilities/ConnectedGrothendieck.lean` lines 3329-3368 for detailed
+documentation of this asymmetry.

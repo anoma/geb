@@ -1680,8 +1680,7 @@ theorem conj_eqToHom_fiber_heq {W X Y Z : GrothendieckContra' F'}
     (h : W = X) (f : X ⟶ Y) (h' : Y = Z) :
     (eqToHom h ≫ f ≫ eqToHom h').fiber ≍ f.fiber := by
   subst h h'
-  simp only [eqToHom_refl]
-  have heq : 𝟙 W ≫ f ≫ 𝟙 Y = f := by simp
+  have heq : eqToHom (rfl : W = W) ≫ f ≫ eqToHom (rfl : Y = Y) = f := by simp
   rw [heq]
 
 lemma eqToHom_eq {X Y : GrothendieckContra' F'} (hF : X = Y) :
