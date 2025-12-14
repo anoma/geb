@@ -4502,6 +4502,199 @@ def connGrothendieckHomToAltFiberBase {x y : ConnGrothendieckObj C F}
     Under.mk (twArr' x.arrow) ⟶ connGrothendieckHomToAltFiberTargetBase C F m :=
   Under.homMk m.codArr m.square_comm
 
+/--
+The source fiber element for `connGrothendieckHomToAltHom`.
+This is the fiber of `connGrothendieckObjToAltObj C F x`.
+-/
+abbrev connGrothendieckHomToAltFiberSrcObj {x : ConnGrothendieckObj C F} :
+    (restrictToDomainFiber C F (twDom' x.arrow)).obj (Under.mk (twArr' x.arrow)) :=
+  (eqToHom (congrArg F.obj (underToTwArr_mk_twArr_eq C x.arrow))).obj x.fiber
+
+/--
+The target fiber element after transition for `connGrothendieckHomToAltHom`.
+-/
+abbrev connGrothendieckHomToAltFiberTgtObj {x y : ConnGrothendieckObj C F}
+    (m : ConnGrothendieckHom C F x y) :
+    (restrictToDomainFiber C F (twDom' x.arrow)).obj
+      (connGrothendieckHomToAltFiberTargetBase C F m) :=
+  (innerFiberAltTransitionObj C F m.domArr
+    ⟨Under.mk (twArr' y.arrow), connGrothendieckHomToAltFiberSrcObj C F⟩).fiber
+
+/--
+The source category for the fiber morphism in `connGrothendieckHomToAltHom`.
+-/
+abbrev connGrothendieckHomToAltFiberCat {x y : ConnGrothendieckObj C F}
+    (m : ConnGrothendieckHom C F x y) : Cat :=
+  (restrictToDomainFiber C F (twDom' x.arrow)).obj
+    (connGrothendieckHomToAltFiberTargetBase C F m)
+
+/--
+The source object of the fiber morphism (after transport via the Under morphism).
+-/
+abbrev connGrothendieckHomToAltFiberMorphSrc {x y : ConnGrothendieckObj C F}
+    (m : ConnGrothendieckHom C F x y) :
+    connGrothendieckHomToAltFiberCat C F m :=
+  ((restrictToDomainFiber C F (twDom' x.arrow)).map
+    (connGrothendieckHomToAltFiberBase C F m)).obj
+    (connGrothendieckHomToAltFiberSrcObj C F)
+
+/--
+The target object of the fiber morphism.
+-/
+abbrev connGrothendieckHomToAltFiberMorphTgt {x y : ConnGrothendieckObj C F}
+    (m : ConnGrothendieckHom C F x y) :
+    connGrothendieckHomToAltFiberCat C F m :=
+  connGrothendieckHomToAltFiberTgtObj C F m
+
+/--
+The category equality for the fiber morphism source.
+-/
+theorem connGrothendieckHomToAltFiberMorphSrc_cat_eq {x y : ConnGrothendieckObj C F}
+    (m : ConnGrothendieckHom C F x y) :
+    connGrothendieckHomToAltFiberCat C F m =
+    F.obj (connGrothendieckDiagCod C x.arrow m.codArr) := by
+  simp only [connGrothendieckHomToAltFiberCat, connGrothendieckHomToAltFiberTargetBase]
+  simp only [restrictToDomainFiber, Functor.comp_obj]
+  simp only [underToTwistedArrow_map_obj_eq, Under.mk_hom]
+  simp only [connGrothendieckDiagCod]
+  congr 1
+  have hw := Under.w (connGrothendieckHomToAltFiberBase C F m)
+  simp only [Under.map_obj_hom, Under.mk_hom] at hw
+  exact congrArg twObjMk' hw.symm
+
+/--
+The source of `fiberMorph_transported` after transport.
+-/
+abbrev connGrothendieckHomToAltFiberMorphTransportedSrc {x y : ConnGrothendieckObj C F}
+    (m : ConnGrothendieckHom C F x y) :
+    connGrothendieckHomToAltFiberCat C F m :=
+  let cat_eq := connGrothendieckHomToAltFiberMorphSrc_cat_eq C F m
+  (eqToHom cat_eq.symm).obj ((F.map (connGrothendieckTwMorphCod C x.arrow m.codArr)).obj x.fiber)
+
+/--
+The target of `fiberMorph_transported` after transport.
+-/
+abbrev connGrothendieckHomToAltFiberMorphTransportedTgt {x y : ConnGrothendieckObj C F}
+    (m : ConnGrothendieckHom C F x y) :
+    connGrothendieckHomToAltFiberCat C F m :=
+  let cat_eq := connGrothendieckHomToAltFiberMorphSrc_cat_eq C F m
+  (eqToHom cat_eq.symm).obj ((F.map (connGrothendieckTwMorphDom C y.arrow m.domArr ≫
+    eqToHom (connGrothendieckDiagEq C F x y m.domArr m.codArr m.square_comm))).obj y.fiber)
+
+/--
+The underlying Under morphism map equals `connGrothendieckTwMorphCod` composed with eqToHom.
+-/
+theorem connGrothendieckHomToAltFiberBase_twArr_eq {x y : ConnGrothendieckObj C F}
+    (m : ConnGrothendieckHom C F x y) :
+    (underToTwistedArrow C (twDom' x.arrow)).map (connGrothendieckHomToAltFiberBase C F m) =
+    connGrothendieckTwMorphCod C x.arrow m.codArr ≫
+      eqToHom (by
+        simp only [connGrothendieckDiagCod, underToTwistedArrow, Under.map_obj_hom, Under.mk_hom]
+        simp only [connGrothendieckHomToAltFiberTargetBase]
+        congr 1
+        exact m.square_comm) := by
+  apply twHom'_ext
+  · simp only [underToTwistedArrow, twHomMk'_domArr, twDomArr'_comp, twDomArr'_eqToHom,
+      connGrothendieckTwMorphCod, connGrothendieckDiagCod, Under.map_obj_hom,
+      twObjMk'_dom, id, Category.comp_id, connGrothendieckHomToAltFiberBase,
+      connGrothendieckHomToAltFiberTargetBase, Under.mk_hom, eqToHom_refl]
+    rfl
+  · simp only [underToTwistedArrow, twHomMk'_codArr, twCodArr'_comp, twCodArr'_eqToHom,
+      connGrothendieckTwMorphCod, connGrothendieckDiagCod, Under.map_obj_hom,
+      twObjMk'_cod, id, eqToHom_refl, Category.comp_id, connGrothendieckHomToAltFiberBase,
+      connGrothendieckHomToAltFiberTargetBase, Under.mk_hom]
+    rfl
+
+/--
+Source equality for fiber morphism.
+-/
+theorem connGrothendieckHomToAltFiberMorphSrc_eq {x y : ConnGrothendieckObj C F}
+    (m : ConnGrothendieckHom C F x y) :
+    connGrothendieckHomToAltFiberMorphSrc C F m =
+    connGrothendieckHomToAltFiberMorphTransportedSrc C F m := by
+  simp only [connGrothendieckHomToAltFiberMorphSrc,
+    connGrothendieckHomToAltFiberMorphTransportedSrc]
+  simp only [connGrothendieckHomToAltFiberSrcObj]
+  simp only [restrictToDomainFiber, Functor.comp_obj, Functor.comp_map]
+  rw [connGrothendieckHomToAltFiberBase_twArr_eq]
+  simp only [Functor.map_comp, eqToHom_map, Cat.comp_obj]
+  rfl
+
+/--
+The fiber transport commutes with functor application up to eqToHom.
+
+This lemma handles the case where applying `eqToHom` before vs after a functor
+gives equivalent results when the proof terms compose appropriately.
+-/
+lemma fiberMorphTgt_functor_eqToHom_comm {x y : ConnGrothendieckObj C F}
+    (m : ConnGrothendieckHom C F x y) :
+    (F.map (connGrothendieckTwMorphDom C y.arrow m.domArr)).obj
+      ((eqToHom (congrArg F.obj (underToTwArr_mk_twArr_eq C y.arrow))).obj y.fiber) =
+    (eqToHom (connGrothendieckHomToAltFiberMorphSrc_cat_eq C F m).symm).obj
+      ((eqToHom (congrArg F.obj
+        (connGrothendieckDiagEq C F x y m.domArr m.codArr m.square_comm))).obj
+        ((F.map (connGrothendieckTwMorphDom C y.arrow m.domArr)).obj y.fiber)) := by
+  -- underToTwArr_mk_twArr_eq is proved via twObjMk'_twArr' which is rfl
+  simp only [underToTwistedArrow, Under.mk_hom,
+    twObjMk'_twArr', eqToHom_refl, Cat.id_obj]
+  -- Now goal: F.map(...).obj y.fiber = eqToHom.obj (eqToHom.obj (F.map(...).obj y.fiber))
+  -- The two eqToHom's compose to identity since their proofs are inverses
+  -- Use Cat.comp_obj to combine them
+  conv_rhs =>
+    rw [← Cat.comp_obj]
+  simp only [eqToHom_trans, eqToHom_refl, Cat.id_obj]
+
+/--
+Target equality for fiber morphism.
+-/
+theorem connGrothendieckHomToAltFiberMorphTgt_eq {x y : ConnGrothendieckObj C F}
+    (m : ConnGrothendieckHom C F x y) :
+    connGrothendieckHomToAltFiberMorphTgt C F m =
+    connGrothendieckHomToAltFiberMorphTransportedTgt C F m := by
+  simp only [connGrothendieckHomToAltFiberMorphTgt,
+    connGrothendieckHomToAltFiberMorphTransportedTgt]
+  simp only [connGrothendieckHomToAltFiberTgtObj, connGrothendieckHomToAltFiberSrcObj]
+  simp only [innerFiberAltTransitionObj, domainFiberTransport]
+  simp only [domainFiberTransportTwMorph, twObjMk'_twArr', Under.mk_hom]
+  have h := domainFiberTransportTwMorph_eq_connGrothendieckTwMorphDom C m.domArr
+    (Under.mk (twArr' y.arrow))
+  simp only [domainFiberTransportTwMorph, twObjMk'_twArr', Under.mk_hom] at h
+  rw [h]
+  simp only [Functor.map_comp, Cat.comp_obj, eqToHom_map]
+  exact fiberMorphTgt_functor_eqToHom_comm C F m
+
+/--
+The fiber morphism for `connGrothendieckHomToAltHom`.
+
+This transports `m.fiberMorph` through the appropriate `eqToHom`s.
+-/
+def connGrothendieckHomToAltFiberMorph {x y : ConnGrothendieckObj C F}
+    (m : ConnGrothendieckHom C F x y) :
+    connGrothendieckHomToAltFiberMorphSrc C F m ⟶
+    connGrothendieckHomToAltFiberMorphTgt C F m := by
+  let cat_eq := connGrothendieckHomToAltFiberMorphSrc_cat_eq C F m
+  let fiberMorph_transported := (eqToHom cat_eq.symm).map m.fiberMorph
+  let src_eq := connGrothendieckHomToAltFiberMorphSrc_eq C F m
+  let tgt_eq := connGrothendieckHomToAltFiberMorphTgt_eq C F m
+  exact eqToHom src_eq ≫ fiberMorph_transported ≫ eqToHom tgt_eq.symm
+
+/--
+Convert a `ConnGrothendieckHom` to a morphism in `ConnectedGrothendieckAlt`.
+
+For a morphism `m : x ⟶ y` in `ConnGrothendieckHom`:
+- `base = m.domArr`
+- `fiber.base = Under.homMk m.codArr m.square_comm`
+- `fiber.fiber` from `m.fiberMorph` with appropriate transport
+-/
+def connGrothendieckHomToAltHom {x y : ConnGrothendieckObj C F}
+    (m : ConnGrothendieckHom C F x y) :
+    connGrothendieckObjToAltObj C F x ⟶ connGrothendieckObjToAltObj C F y where
+  base := m.domArr
+  fiber := {
+    base := connGrothendieckHomToAltFiberBase C F m
+    fiber := connGrothendieckHomToAltFiberMorph C F m
+  }
+
 end ReverseConversion
 
 end MorphismConversion
