@@ -108,8 +108,7 @@ def HomSet.fiber_equiv (a b : U) :
 theorem HomSet.fiber_equiv_rfl (a b : U) (f : hs a b) :
     hs.fiber_equiv a b ⟨⟨a, b, f⟩, ⟨rfl, rfl⟩⟩ = f := rfl
 
-/-- Round-trip from OverQuiver morphism through fiber_equiv returns the original.
-    This is the key lemma for proving triangle identities involving fiber_equiv. -/
+/-- Round-trip from OverQuiver morphism through fiber_equiv returns the original. -/
 @[simp]
 theorem OverQuiver.fiber_equiv_roundtrip_val (m : Q.MorType) :
     (Q.toHomSet.fiber_equiv (Q.src m) (Q.tgt m)
