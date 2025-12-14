@@ -223,6 +223,26 @@ def OverCategoryData.extractComp {Q : OverQuiver.{v, u}}
    (data.comp_src ⟨(fval, gval), composable⟩).trans f.property.1,
    (data.comp_tgt ⟨(fval, gval), composable⟩).trans g.property.2⟩
 
+/-- The extractComp from a converted CategoryData produces the expected element
+    with rfl proofs when the input morphisms have rfl proofs. -/
+theorem OverCategoryData.extractComp_toOverCategoryData (data : CategoryData U hs)
+    {a b c : U} (f : hs a b) (g : hs b c) :
+    OverCategoryData.extractComp data.toOverCategoryData
+      ⟨⟨a, b, f⟩, ⟨rfl, rfl⟩⟩ ⟨⟨b, c, g⟩, ⟨rfl, rfl⟩⟩ =
+        ⟨⟨a, c, data.comp f g⟩, ⟨rfl, rfl⟩⟩ := rfl
+
+/-- fiber_equiv applied to extractComp (from round-trip) returns the original
+    composition. -/
+@[simp]
+theorem HomSet.fiber_equiv_extractComp (data : CategoryData U hs)
+    {a b c : U} (f : hs a b) (g : hs b c) :
+    hs.fiber_equiv a c
+      (OverCategoryData.extractComp data.toOverCategoryData
+        ⟨⟨a, b, f⟩, ⟨rfl, rfl⟩⟩ ⟨⟨b, c, g⟩, ⟨rfl, rfl⟩⟩) =
+      data.comp f g := by
+  rw [OverCategoryData.extractComp_toOverCategoryData]
+  rfl
+
 /-- Helper lemma for nested sigma equality with subtypes.
     Given equal source/target proofs and the same underlying morphism value,
     prove equality of sigma types containing HomSet fibers. -/

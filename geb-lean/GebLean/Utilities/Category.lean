@@ -506,6 +506,21 @@ variable {dataC : CategoryData C hsC} {dataD : CategoryData D hsD}
 
 end FunctorData
 
+/-- Extensionality for FunctorData: two functors are equal if their operations
+    are equal. -/
+@[ext (iff := false)]
+theorem FunctorData.ext' {C : Type u} {D : Type u₁}
+    {hsC : HomSet.{v, u} C} {hsD : HomSet.{v₁, u₁} D}
+    {dataC : CategoryData C hsC} {dataD : CategoryData D hsD}
+    {F G : FunctorData dataC dataD}
+    (h : F.toFunctorOps = G.toFunctorOps) :
+    F = G := by
+  cases F
+  cases G
+  simp only at h
+  subst h
+  rfl
+
 /-! ### Functor Composition -/
 
 /-- Composition of functor operations. -/
