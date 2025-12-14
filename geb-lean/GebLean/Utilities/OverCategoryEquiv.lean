@@ -470,6 +470,20 @@ theorem FunctorData.roundtrip_map_fiber_equiv (fd : FunctorData dataC dataD)
     OverFunctorData.toFunctorOps, OverFunctorData.extractMap,
     FunctorOps.toOverQuiverMorphism]
 
+/-- The symmetric version of roundtrip_map_fiber_equiv: applying fiber_equiv.symm
+    to fd.map f equals the roundtrip map applied to fiber_equiv.symm f.
+    This is the inverse naturality of fiber_equiv with respect to functors. -/
+@[simp]
+theorem FunctorData.roundtrip_map_fiber_equiv_symm (fd : FunctorData dataC dataD)
+    {a b : U} (f : hsC a b) :
+    (hsD.fiber_equiv (fd.obj a) (fd.obj b)).symm (fd.map f) =
+      fd.toOverFunctorData.toFunctorData.map ((hsC.fiber_equiv a b).symm f) := by
+  simp only [HomSet.fiber_equiv,
+    FunctorData.toOverFunctorData, OverFunctorData.toFunctorData,
+    OverFunctorData.toFunctorOps, OverFunctorData.extractMap,
+    FunctorOps.toOverQuiverMorphism]
+  rfl
+
 /-- The object function is preserved under the round-trip
     OverFunctorData → FunctorData → OverFunctorData. -/
 theorem OverFunctorData.roundtrip_objFn_eq
