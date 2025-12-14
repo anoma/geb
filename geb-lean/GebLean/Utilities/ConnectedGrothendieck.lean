@@ -4468,6 +4468,42 @@ def connGrothendieckAltHomToHom {x y : ConnectedGrothendieckAlt C F}
   fiberMorph := connGrothendieckAltHomFiberMorph C F f
     (connGrothendieckAltMorphSquareComm C F f)
 
+section ReverseConversion
+
+/-!
+### Reverse Morphism Conversion
+
+We define the reverse conversion from `ConnGrothendieckHom` to Alt morphisms.
+-/
+
+/--
+The base component for `connGrothendieckHomToAltHom`.
+This is simply `m.domArr`.
+-/
+def connGrothendieckHomToAltBase {x y : ConnGrothendieckObj C F}
+    (m : ConnGrothendieckHom C F x y) :
+    twDom' x.arrow ⟶ twDom' y.arrow :=
+  m.domArr
+
+/--
+The target Under object after transition for `connGrothendieckHomToAltHom`.
+This is `(Under.map m.domArr).obj (Under.mk (twArr' y.arrow))`.
+-/
+abbrev connGrothendieckHomToAltFiberTargetBase {x y : ConnGrothendieckObj C F}
+    (m : ConnGrothendieckHom C F x y) : Under (twDom' x.arrow) :=
+  (Under.map m.domArr).obj (Under.mk (twArr' y.arrow))
+
+/--
+The Under morphism for the fiber component of `connGrothendieckHomToAltHom`.
+Uses `m.codArr` with the commutativity from `m.square_comm`.
+-/
+def connGrothendieckHomToAltFiberBase {x y : ConnGrothendieckObj C F}
+    (m : ConnGrothendieckHom C F x y) :
+    Under.mk (twArr' x.arrow) ⟶ connGrothendieckHomToAltFiberTargetBase C F m :=
+  Under.homMk m.codArr m.square_comm
+
+end ReverseConversion
+
 end MorphismConversion
 
 end MorphismEquivalence
