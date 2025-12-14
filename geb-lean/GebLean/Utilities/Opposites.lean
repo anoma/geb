@@ -529,8 +529,8 @@ def opFunctor'Involutive : opFunctor'.{v, u} ⋙ opFunctor'.{v, u} ≅ 𝟭 _ :=
 /--
 The isomorphism `Cat ≌ Cat` associating each category with its opposite
 category using `op'`. Both the unit and counit are derived from the equality
-`opFunctor'_comp_self_eq_id`, showing that this isomorphism is actually an
-equality (strict involution) rather than just an equivalence.
+`opFunctor'_comp_self_eq_id`, showing that this isomorphism is an
+equality (strict involution), not only an equivalence.
 -/
 @[simp]
 def opCatIso' : Cat.{v, u} ≅Cat Cat.{v, u} where
