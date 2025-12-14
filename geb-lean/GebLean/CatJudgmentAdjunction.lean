@@ -3285,4 +3285,138 @@ def catCopresheafFullAdjunction :
 
 end LeftSideExtension
 
+/-! ## Reflectivity of the Adjunction
+
+We prove that the adjunction L ⊣ Φ is reflective by showing that the counit
+is a natural isomorphism. This follows from the `roundtripEquiv` which
+establishes that the counit component at each category C is a bijection
+on morphisms.
+
+A reflective adjunction means the right adjoint Φ is fully faithful.
+Mathlib provides `fullyFaithfulROfIsIsoCounit` which derives full faithfulness
+from the counit being an isomorphism.
+-/
+
+section Reflectivity
+
+universe uRefl
+
+variable {Q : OverQuiver.{uRefl, uRefl}} (C : OverCategoryData Q)
+
+/-- The inverse of the counit quiver morphism: embed each morphism of C as
+    a variable in the quotient category L(Φ(C)). -/
+def counitQuiverMor_inv : OverQuiverMorphism Q (derivedQuotientData C).quotQuiver where
+  objFn := id
+  morFn := fun f => ⟨Q.src f, Q.tgt f, (derivedQuotientData C).quotMor (.var f)⟩
+  src_comm := fun _ => rfl
+  tgt_comm := fun _ => rfl
+
+/-- The inverse of the counit preserves identity. -/
+theorem counitInv_map_id (a : Q.Obj) :
+    (counitQuiverMor_inv C).morFn (C.idFn a) =
+    (derivedQuotientData C).toOverCategoryData.idFn ((counitQuiverMor_inv C).objFn a) := by
+  simp only [counitQuiverMor_inv, CategoryQuotientData.toOverCategoryData,
+    CategoryQuotientData.quotCategoryOps, CategoryQuotientData.quotIdFn, id]
+  -- Goal: ⟨src(idFn a), tgt(idFn a), [var(idFn a)]⟩ = ⟨a, a, [id a]⟩
+  let D := derivedQuotientData C
+  have idObj_eq : D.idObj a = a := derivedQuotientData_idObj C a
+  have h_id_witness := CategoryQuotientData.FreeMorEquivGen.id_witness (D := D) a
+  have h_equiv : D.FreeMorEquivGen
+      (cast (congrArg₂ (FreeMor Q) (C.id_src a) (C.id_tgt a)) (FreeMor.var (C.idFn a)))
+      (FreeMor.id a) := by
+    convert h_id_witness using 2 <;> simp only [idObj_eq]
+  refine Sigma.ext (C.id_src a) ?_
+  apply D.quotMorSigma_heq (C.id_src a) (C.id_tgt a)
+  rw [D.quotMor_cast (C.id_src a) (C.id_tgt a)]
+  simp only [CategoryQuotientData.quotMor, CategoryQuotientData.quotId]
+  exact Quotient.sound (CategoryQuotientData.FreeMorEquiv.rel h_equiv)
+
+/-- The inverse of the counit preserves composition. -/
+theorem counitInv_map_comp (p : Q.ComposablePairsType) :
+    (counitQuiverMor_inv C).morFn (C.compFn p) =
+    (derivedQuotientData C).toOverCategoryData.compFn
+      ⟨((counitQuiverMor_inv C).morFn p.val.1, (counitQuiverMor_inv C).morFn p.val.2),
+        by simp only [counitQuiverMor_inv, CategoryQuotientData.quotQuiver]; exact p.property⟩ := by
+  rcases p with ⟨⟨f, g⟩, h_comp⟩
+  simp only [counitQuiverMor_inv, CategoryQuotientData.toOverCategoryData,
+    CategoryQuotientData.quotCategoryOps, CategoryQuotientData.quotCompFn,
+    CategoryQuotientData.quotComp, CategoryQuotientData.quotQuiver]
+  let D := derivedQuotientData C
+  have h_wit := CategoryQuotientData.FreeMorEquivGen.comp_witness (D := D) ⟨(f, g), h_comp⟩
+  refine Sigma.ext (C.comp_src ⟨(f, g), h_comp⟩) ?_
+  apply D.quotMorSigma_heq (C.comp_src ⟨(f, g), h_comp⟩) (C.comp_tgt ⟨(f, g), h_comp⟩)
+  rw [D.quotMor_cast (C.comp_src ⟨(f, g), h_comp⟩) (C.comp_tgt ⟨(f, g), h_comp⟩)]
+  simp only [CategoryQuotientData.quotMor]
+  -- Transport lemma: h ▸ ⟦f⟧ = ⟦h ▸ f⟧
+  have h_transport_eq : ∀ {a b b' : D.quiver.Obj} (h : b = b') (fm : FreeMor D.quiver a b),
+      (h ▸ (⟦fm⟧ : Quotient (D.freeMorSetoid a b))) =
+      (⟦h ▸ fm⟧ : Quotient (D.freeMorSetoid a b')) := by
+    intro a b b' h fm
+    cases h
+    rfl
+  conv_rhs => arg 4; rw [h_transport_eq]
+  rw [Quotient.lift₂_mk]
+  apply Quotient.sound
+  apply CategoryQuotientData.FreeMorEquiv.symm
+  -- Move transport from right operand to left operand
+  have h_comp_move : ∀ {Q' : OverQuiver} {a b b' c : Q'.Obj} (h : b = b')
+      (gm : FreeMor Q' b' c) (fm : FreeMor Q' a b),
+      gm.comp (h ▸ fm) = (cast (congrArg₂ (FreeMor Q') h.symm rfl) gm).comp fm := by
+    intro Q' a b b' c h gm fm
+    cases h
+    rfl
+  rw [h_comp_move]
+  convert CategoryQuotientData.FreeMorEquiv.rel h_wit
+
+/-- The inverse of the counit functor data. -/
+def counitFunctorData_inv :
+    OverFunctorData C (derivedQuotientData C).toOverCategoryData where
+  toOverQuiverMorphism := counitQuiverMor_inv C
+  map_id := counitInv_map_id C
+  map_comp := counitInv_map_comp C
+
+/-- The composition ε ∘ ε⁻¹ = id on morphisms. -/
+theorem counit_comp_inv_mor (f : Q.MorType) :
+    (counitFunctorData C).morFn ((counitFunctorData_inv C).morFn f) = f := by
+  simp only [counitFunctorData, counitQuiverMor, counitFunctorData_inv,
+    counitQuiverMor_inv, counitEvalQuot, CategoryQuotientData.quotMor,
+    Quotient.lift_mk, counitEval, counitEvalAux]
+
+/-- The composition ε⁻¹ ∘ ε = id on morphisms.
+    This uses the round-trip equivalence embed_counitEval. -/
+theorem inv_comp_counit_mor (m : (derivedQuotientData C).quotQuiver.MorType) :
+    (counitFunctorData_inv C).morFn ((counitFunctorData C).morFn m) = m := by
+  rcases m with ⟨a, b, qm⟩
+  simp only [counitFunctorData, counitQuiverMor, counitFunctorData_inv,
+    counitQuiverMor_inv, CategoryQuotientData.quotQuiver]
+  simp only [counitEvalQuot]
+  induction qm using Quotient.ind with
+  | _ fm =>
+    simp only [Quotient.lift_mk]
+    have h_src : Q.src (counitEval C fm) = a := counitEvalAux_src C fm
+    have h_tgt : Q.tgt (counitEval C fm) = b := counitEvalAux_tgt C fm
+    have h_equiv := var_counitEval_equiv C fm
+    let D := derivedQuotientData C
+    refine Sigma.ext h_src ?_
+    apply D.quotMorSigma_heq h_src h_tgt
+    rw [D.quotMor_cast h_src h_tgt]
+    exact Quotient.sound h_equiv
+
+/-- The composition ε ∘ ε⁻¹ = id as functors. -/
+theorem counit_comp_inv_eq_id :
+    (counitFunctorData_inv C).comp (counitFunctorData C) = OverFunctorData.id C := by
+  apply OverFunctorData.ext <;> funext
+  · rfl
+  · exact counit_comp_inv_mor C _
+
+/-- The composition ε⁻¹ ∘ ε = id as functors. -/
+theorem inv_comp_counit_eq_id :
+    (counitFunctorData C).comp (counitFunctorData_inv C) =
+    OverFunctorData.id (derivedQuotientData C).toOverCategoryData := by
+  apply OverFunctorData.ext <;> funext
+  · rfl
+  · exact inv_comp_counit_mor C _
+
+end Reflectivity
+
 end GebLean
