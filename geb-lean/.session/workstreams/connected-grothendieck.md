@@ -6,6 +6,60 @@ Copresheaf construction complete with projection functor to `Arrow C`.
 Presheaf construction complete with category instance and projection functor to
 `TwistedArrow' C` (not `Arrow C`).
 
+### Current Task: Alt Projection Functor
+
+Object equivalence between `ConnectedGrothendieckAlt` and `ConnGrothendieckObj`
+is complete via `connGrothendieckAltObjEquiv`.
+
+### Analysis: Why Alt Projects to TwistedArrow', Not Arrow
+
+Investigation of morphism correspondence revealed that Alt morphisms have a
+fundamentally different structure than Contra morphisms and `ConnGrothendieckHom`:
+
+**Alt morphism structure** (`f : x ⟶ y` in `ConnectedGrothendieckAlt`):
+
+- `f.base : x.base ⟶ y.base` in `Cᵒᵖ'` (= `y.base ⟶ x.base` in C)
+- `f.fiber.base.right : x.fiber.base.right ⟶ y.fiber.base.right`
+
+This gives "mixed direction" components:
+
+- Domain change: `y.base ⟶ x.base` (backwards)
+- Codomain change: `x.right ⟶ y.right` (forwards)
+
+This matches `TwistedArrow' C` morphism structure, NOT `Arrow C` structure.
+`ConnGrothendieckHom` uses Arrow squares (both directions forward).
+
+**Why a "FiberContra" approach fails**: For a covariant functor `F : C ⥤ Cat`
+with `base : X.base ⟶ Y.base`, we have `F.map base : F.obj X.base ⥤ F.obj Y.base`.
+The functor `(F.map base).obj` can only accept objects from `F.obj X.base`, not
+from `F.obj Y.base`. Thus a fiber morphism `X.fiber ⟶ (F.map base).obj Y.fiber`
+is type-invalid since `Y.fiber : F.obj Y.base`.
+
+The `GrothendieckContra'` construction achieves fiber reversal by using a
+contravariant functor `F' : Cᵒᵖ' ⥤ Cat`, where `base : X.base ⟶ Y.base` in
+`Cᵒᵖ'` means `Y.base ⟶ X.base` in C, giving `F'.map base : F'.obj Y.base ⥤
+F'.obj X.base`. This allows `(F'.map base).obj Y.fiber : F'.obj X.base`.
+
+**Structural determination**: The projection category is determined by the
+nesting structure:
+
+- Codomain-indexed (`GrothendieckContra'` inner, `Grothendieck` outer) → Arrow C
+- Domain-indexed (`Grothendieck` inner, `GrothendieckContra'` outer) →
+  TwistedArrow' C
+
+This is structurally fixed and cannot be changed without altering the indexing.
+
+**Current status**:
+
+- Object-level conversion `connGrothendieckAltObjToTwArr` is defined
+- Full projection functor would require reconciling the opposite direction issue
+  in morphisms, which may require going through `(TwistedArrow' C)ᵒᵖ'` instead
+
+**Remaining for full equivalence**:
+
+1. Investigate whether Alt projects to `(TwistedArrow' C)ᵒᵖ'` instead
+2. Establish direct Alt ≃ Contra category equivalence
+
 ## Context
 
 The connected Grothendieck construction defines a functor
@@ -117,11 +171,24 @@ associativity for free.
     - `domainFiberFunctor C F : Cᵒᵖ' ⥤ Cat` - the domain fiber functor
     - `ConnectedGrothendieckAlt = GrothendieckContra' (domainFiberFunctor C F)`
 
+11. Object equivalence for Alt construction
+    - `connGrothendieckAltObjToObj` - maps Alt objects to ConnGrothendieckObj
+    - `connGrothendieckObjToAltObj` - maps ConnGrothendieckObj to Alt objects
+    - `underToTwArr_mk_twArr_eq` - helper lemma for roundtrip proofs
+    - `connGrothendieckAltObj_roundtrip` - roundtrip proof Alt → Obj → Alt
+    - `connGrothendieckObj_altRoundtrip` - roundtrip proof Obj → Alt → Obj
+    - `connGrothendieckAltObjEquiv : ConnectedGrothendieckAlt C F ≃ ConnGrothendieckObj C F`
+
+12. Object-level conversion to TwistedArrow' C
+    - `connGrothendieckAltObjToTwArr` - extracts underlying twisted arrow from Alt object
+
 ### Remaining Work
 
 1. Prove universal properties for copresheaf construction
-2. Establish equivalence between `ConnectedGrothendieckContra` and
-   `ConnectedGrothendieckAlt`
+2. Establish full equivalence between `ConnectedGrothendieckContra` and
+   `ConnectedGrothendieckAlt`:
+   - Define morphism correspondence for Alt construction
+   - Compose equivalences to get Alt ≃ Contra
 
 ### Investigated and Resolved
 

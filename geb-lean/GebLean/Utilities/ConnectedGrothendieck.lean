@@ -3930,6 +3930,176 @@ def ConnectedGrothendieckAlt : Type _ :=
 instance : Category (ConnectedGrothendieckAlt C F) :=
   inferInstanceAs (Category (GrothendieckContra' (domainFiberFunctor C F)))
 
+/-!
+### Object and Morphism Equivalence
+
+We establish that `ConnectedGrothendieckAlt` has the same objects and morphisms
+as `ConnGrothendieckObj` and `ConnGrothendieckHom`, following the pattern used
+for `ConnectedGrothendieckContra`.
+-/
+
+section ObjectEquivalence
+
+/--
+Convert an object of `ConnectedGrothendieckAlt` to `ConnGrothendieckObj`.
+
+An object of `ConnectedGrothendieckAlt` is `(a, e)` where:
+- `a : Cᵒᵖ'` (viewed as `a : C`)
+- `e : innerFiberAlt C F a = Grothendieck (restrictToDomainFiber C F a)`
+  which consists of `(un : Under a, fiber : F.obj (twObjMk' un.hom))`
+
+This maps to `ConnGrothendieckObj`:
+- `arrow = twObjMk' un.hom` (the twisted arrow from `a` to `un.right`)
+- `fiber = e.fiber`
+-/
+def connGrothendieckAltObjToObj (x : ConnectedGrothendieckAlt C F) :
+    ConnGrothendieckObj C F where
+  arrow := (underToTwistedArrow C x.base).obj x.fiber.base
+  fiber := x.fiber.fiber
+
+/--
+The equality between `(underToTwistedArrow C (twDom' arrow)).obj (Under.mk (twArr' arrow))`
+and `arrow`.
+-/
+lemma underToTwArr_mk_twArr_eq (arrow : TwistedArrow' C) :
+    (underToTwistedArrow C (twDom' arrow)).obj (Under.mk (twArr' arrow)) = arrow := by
+  simp only [underToTwistedArrow, Under.mk_hom]
+  exact twObjMk'_twArr' arrow
+
+/--
+Convert a `ConnGrothendieckObj` to an object of `ConnectedGrothendieckAlt`.
+
+Given `(arrow, fiber)` in `ConnGrothendieckObj`:
+- `base = twDom' arrow` (the domain of the arrow, viewed in `Cᵒᵖ'`)
+- `fiber.base = Under.mk (twArr' arrow)` (the arrow as an object of `Under (twDom' arrow)`)
+- `fiber.fiber` needs to be transported via the equality
+  `(underToTwistedArrow C (twDom' arrow)).obj (Under.mk (twArr' arrow)) = arrow`
+-/
+def connGrothendieckObjToAltObj (x : ConnGrothendieckObj C F) :
+    ConnectedGrothendieckAlt C F :=
+  ⟨twDom' x.arrow,
+   ⟨Under.mk (twArr' x.arrow),
+    (eqToHom (congrArg F.obj (underToTwArr_mk_twArr_eq C x.arrow))).obj x.fiber⟩⟩
+
+/--
+The round-trip from `ConnectedGrothendieckAlt` to `ConnGrothendieckObj` and back.
+-/
+theorem connGrothendieckAltObj_roundtrip (x : ConnectedGrothendieckAlt C F) :
+    connGrothendieckObjToAltObj C F (connGrothendieckAltObjToObj C F x) = x := by
+  unfold connGrothendieckAltObjToObj connGrothendieckObjToAltObj
+  apply GrothendieckContra'.obj_ext
+  · -- base equality: (Functor.fromPUnit x.base).obj x.fiber.base.left = x.base
+    simp only [underToTwistedArrow, twObjMk'_dom]
+    rfl
+  · -- fiber HEq: inner Grothendieck objects are HEq
+    simp only [heq_eq_eq, underToTwistedArrow, twObjMk'_arr, twObjMk'_dom]
+    -- underToTwArr_mk_twArr_eq (twObjMk' x.fiber.base.hom) is rfl after simplification
+    rfl
+
+/--
+The round-trip from `ConnGrothendieckObj` to `ConnectedGrothendieckAlt` and back.
+-/
+theorem connGrothendieckObj_altRoundtrip (x : ConnGrothendieckObj C F) :
+    connGrothendieckAltObjToObj C F (connGrothendieckObjToAltObj C F x) = x := by
+  simp only [connGrothendieckObjToAltObj, connGrothendieckAltObjToObj]
+  apply ConnGrothendieckObj.ext
+  · simp only [underToTwistedArrow, Under.mk_hom]
+    exact twObjMk'_twArr' x.arrow
+  · simp only [underToTwistedArrow, Under.mk_hom]
+    exact eqToHom_obj_heq (F.obj _) (F.obj x.arrow)
+      (congrArg F.obj (underToTwArr_mk_twArr_eq C x.arrow)) x.fiber
+
+/--
+The type of objects in `ConnectedGrothendieckAlt` is equivalent to `ConnGrothendieckObj`.
+-/
+def connGrothendieckAltObjEquiv :
+    ConnectedGrothendieckAlt C F ≃ ConnGrothendieckObj C F where
+  toFun := connGrothendieckAltObjToObj C F
+  invFun := connGrothendieckObjToAltObj C F
+  left_inv := connGrothendieckAltObj_roundtrip C F
+  right_inv := connGrothendieckObj_altRoundtrip C F
+
+end ObjectEquivalence
+
+section MorphismEquivalence
+
+/-!
+### Morphism Equivalence
+
+We establish that morphisms in `ConnectedGrothendieckAlt` correspond to
+`ConnGrothendieckHom` between the corresponding objects.
+
+A morphism `f : x ⟶ y` in `ConnectedGrothendieckAlt` consists of:
+- `f.base : x.base ⟶ y.base` in `Cᵒᵖ'` (equivalently `y.base ⟶ x.base` in C)
+- `f.fiber : x.fiber ⟶ (innerFiberAltTransition f.base).obj y.fiber`
+
+The fiber morphism `f.fiber` is a Grothendieck morphism with:
+- `f.fiber.base : x.fiber.base ⟶ ((Under.map f.base).obj y.fiber.base)`
+- `f.fiber.fiber` in the appropriate fiber category
+-/
+
+/-!
+### Analysis of Alt Morphism Structure
+
+The Alt construction has a fundamentally different morphism structure than
+both Contra and the standard `ConnGrothendieckHom` type.
+
+For an Alt morphism `f : x ⟶ y` in `ConnectedGrothendieckAlt C F`:
+- `f.base : x.base ⟶ y.base` in `Cᵒᵖ'` (equivalent to `y.base ⟶ x.base` in `C`)
+- `f.fiber.base.right : x.fiber.base.right ⟶ y.fiber.base.right`
+
+This gives a "mixed direction" structure:
+- Domain change: `y.base ⟶ x.base` (backwards relative to source/target)
+- Codomain change: `x.right ⟶ y.right` (forwards relative to source/target)
+
+This matches the structure of `TwistedArrow' C` morphisms:
+- A morphism in `TwistedArrow' C` from `(a ⟶ b)` to `(a' ⟶ b')` has
+  `left : a' ⟶ a` and `right : b ⟶ b'`
+
+In contrast, `ConnGrothendieckHom` (used for Contra) corresponds to `Arrow C`
+morphisms, where both components go in the same direction:
+- `domArr : a ⟶ a'` and `codArr : b ⟶ b'`
+
+Establishing Alt ≃ Contra requires either:
+1. A direct functor construction between the two categories
+2. Using the presheaf/TwistedArrow morphism structure for Alt
+
+The object equivalence `connGrothendieckAltObjEquiv` is complete.
+-/
+
+/-!
+### Projection to Underlying Twisted Arrow
+
+The Alt construction has an underlying twisted arrow for each object, given by
+composing through `underToTwistedArrow`. However, the morphism structure of Alt
+does not directly match TwistedArrow' C morphisms due to the opposite category
+construction in the outer layer.
+
+For an Alt object `x`:
+- `x.base : C` is the codomain of the underlying arrow
+- `x.fiber.base : Under x.base` gives the arrow via `.hom : x.fiber.base.left ⟶ x.base`
+
+The underlying twisted arrow is `twObjMk' x.fiber.base.hom`.
+-/
+
+variable (C : Type u) [Category.{v} C]
+variable (F : TwistedArrow' C ⥤ Cat.{v, u})
+
+/--
+Convert an `ConnectedGrothendieckAlt` object to a `TwistedArrow' C` object.
+
+An object `x : ConnectedGrothendieckAlt C F` has:
+- `x.base : C` (the codomain of the underlying arrow)
+- `x.fiber.base : Under x.base` (whose hom gives the arrow)
+
+The twisted arrow is `twObjMk' x.fiber.base.hom`.
+-/
+def connGrothendieckAltObjToTwArr (x : ConnectedGrothendieckAlt C F) :
+    TwistedArrow' C :=
+  (underToTwistedArrow C x.base).obj x.fiber.base
+
+end MorphismEquivalence
+
 end AlternativeConstruction
 
 end GebLean
