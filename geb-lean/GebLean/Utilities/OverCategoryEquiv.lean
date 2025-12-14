@@ -736,6 +736,14 @@ theorem toBundledOverCategoryData_map_comp {C D E : BundledCategoryData.{v, u}}
     OverFunctorData.comp, OverQuiverMorphism.comp]
   rfl
 
+/-- The round-trip through toBundledOverCategoryData and toBundledCategoryData
+    gives the toOverFunctorData.toFunctorData round-trip. -/
+@[simp]
+theorem toBundledCategoryData_toBundledOverCategoryData_map
+    {C D : BundledCategoryData.{v, u}} (F : FunctorData C.data D.data) :
+    toBundledCategoryData_map (toBundledOverCategoryData_map F) =
+      F.toOverFunctorData.toFunctorData := rfl
+
 /-- FunctorData for the conversion functor from BundledCategoryData to
     BundledOverCategoryData. The target universe is `max v u` due to the
     sigma construction; when `v ≥ u`, this equals `v`. -/
