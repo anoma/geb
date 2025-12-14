@@ -455,6 +455,18 @@ structure FunctorOps {C : Type u} {D : Type u₁}
   /-- The morphism map -/
   map : MorphMap hsC hsD obj
 
+/-- Extensionality for FunctorOps when object maps are definitionally equal.
+    This simpler version generates a goal without cast when the object maps
+    are defeq. Use `apply FunctorOps.ext_map rfl` to invoke. -/
+theorem FunctorOps.ext_map {C : Type u} {D : Type u₁}
+    {hsC : HomSet.{v, u} C} {hsD : HomSet.{v₁, u₁} D}
+    {objF : ObjMap C D} {mapF mapG : MorphMap hsC hsD objF}
+    (hmap : ∀ {a b : C} (f : hsC a b), mapF f = mapG f) :
+    (⟨objF, mapF⟩ : FunctorOps hsC hsD) = ⟨objF, mapG⟩ := by
+  congr 1
+  funext a b f
+  exact hmap f
+
 /-- Extensionality for FunctorOps: two functor ops are equal if their object
     maps are equal and their morphism maps agree on each morphism. -/
 @[ext (iff := false)]
