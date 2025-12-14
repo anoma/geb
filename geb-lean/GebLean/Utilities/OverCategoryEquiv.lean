@@ -262,6 +262,21 @@ theorem HomSet.val_eqRec' {Q : OverQuiver.{v, u}}
   cases hb
   rfl
 
+/-- Helper for proving sigma-of-sigma equality with morphism equality.
+    Given proofs that the first two components are equal and the morphism values
+    are equal, constructs the full sigma equality. -/
+theorem OverQuiver.sigma_homset_eq' {Q : OverQuiver.{v, u}}
+    {a₁ a₂ b₁ b₂ : Q.Obj} {f₁ f₂ : Q.MorType}
+    (hf : f₁ = f₂)
+    (ha₁ : Q.src f₁ = a₁) (ha₂ : Q.src f₂ = a₂) (ha : a₁ = a₂)
+    (hb₁ : Q.tgt f₁ = b₁) (hb₂ : Q.tgt f₂ = b₂) (hb : b₁ = b₂) :
+    (⟨a₁, b₁, ⟨f₁, ha₁, hb₁⟩⟩ : Σ (a b : Q.Obj), Q.toHomSet a b) =
+      ⟨a₂, b₂, ⟨f₂, ha₂, hb₂⟩⟩ := by
+  cases hf
+  cases ha
+  cases hb
+  rfl
+
 /-- Convert OverCategoryData to CategoryOps on the fiber HomSet. -/
 def OverCategoryData.toCategoryOps {Q : OverQuiver.{v, u}}
     (data : OverCategoryData Q) : CategoryOps Q.toHomSet where
