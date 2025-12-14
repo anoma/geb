@@ -3503,6 +3503,58 @@ theorem domainFiberTransport_functor_naturality {a c : C} (α : c ⟶ a)
     _ = F.map (domainFiberTransportTwMorph C α un) ⋙
           F.map ((underToTwistedArrow C c).map ((Under.map α).map β)) := rfl
 
+/--
+`domainFiberTransportTwMorph C α un` equals `connGrothendieckTwMorphDom C (twObjMk' un.hom) α`.
+
+Both morphisms have:
+- Source: `twObjMk' un.hom`
+- Target: `twObjMk' (α ≫ un.hom)`
+- left = α, right = 𝟙
+-/
+theorem domainFiberTransportTwMorph_eq_connGrothendieckTwMorphDom
+    {a c : C} (α : c ⟶ a) (un : Under a) :
+    domainFiberTransportTwMorph C α un =
+    connGrothendieckTwMorphDom C (twObjMk' un.hom) α := by
+  simp only [domainFiberTransportTwMorph, connGrothendieckTwMorphDom, connGrothendieckDiagDom]
+
+/--
+The target of `(Under.map α).obj un` as a twisted arrow.
+For `α : c ⟶ a` and `un : Under a`, `(Under.map α).obj un` has hom = `α ≫ un.hom`.
+-/
+theorem underToTwistedArrow_map_obj_eq {a c : C} (α : c ⟶ a) (un : Under a) :
+    (underToTwistedArrow C c).obj ((Under.map α).obj un) =
+    twObjMk' (α ≫ un.hom) := by
+  simp only [underToTwistedArrow, Under.map_obj_hom]
+
+/--
+`underToTwistedArrow.map` relates to `connGrothendieckTwMorphCod` via the square equality.
+
+For `β : un ⟶ (Under.map α).obj un'` in `Under a` (where `α : a ⟶ b` and `un' : Under b`),
+`Under.w β` gives: `un.hom = β.right ≫ (α ≫ un'.hom)`
+
+Both morphisms have left = 𝟙, right = β.right.
+The target equality `un.hom ≫ β.right = α ≫ un'.hom` follows from Under.w and associativity.
+-/
+theorem underToTwistedArrow_map_eq_connGrothendieckTwMorphCod
+    {a b : C} (α : a ⟶ b) {un : Under a} {un' : Under b}
+    (β : un ⟶ (Under.map α).obj un') :
+    (underToTwistedArrow C a).map β =
+    connGrothendieckTwMorphCod C (twObjMk' un.hom) β.right ≫
+      eqToHom (by
+        simp only [connGrothendieckDiagCod, underToTwistedArrow, Under.map_obj_hom]
+        congr 1
+        have hw := Under.w β
+        simp only [Under.map_obj_hom] at hw
+        exact hw) := by
+  apply twHom'_ext
+  · simp only [underToTwistedArrow, twHomMk'_domArr, twDomArr'_comp, twDomArr'_eqToHom,
+               connGrothendieckTwMorphCod, connGrothendieckDiagCod, Under.map_obj_hom,
+               twObjMk'_dom, id, Category.comp_id]
+    rfl
+  · simp only [underToTwistedArrow, twHomMk'_codArr, twCodArr'_comp, twCodArr'_eqToHom,
+               connGrothendieckTwMorphCod, connGrothendieckDiagCod, Under.map_obj_hom,
+               twObjMk'_cod, id, eqToHom_refl, Category.comp_id]
+
 /-!
 ### Inner fiber category (covariant Grothendieck)
 
@@ -4047,66 +4099,6 @@ The fiber morphism `f.fiber` is a Grothendieck morphism with:
 - `f.fiber.fiber` in the appropriate fiber category
 -/
 
-/-!
-### Analysis of Alt Morphism Structure
-
-The Alt construction has a fundamentally different morphism structure than
-both Contra and the standard `ConnGrothendieckHom` type.
-
-For an Alt morphism `f : x ⟶ y` in `ConnectedGrothendieckAlt C F`:
-- `f.base : x.base ⟶ y.base` in `Cᵒᵖ'` (equivalent to `y.base ⟶ x.base` in `C`)
-- `f.fiber.base.right : x.fiber.base.right ⟶ y.fiber.base.right`
-
-This gives a "mixed direction" structure:
-- Domain change: `y.base ⟶ x.base` (backwards relative to source/target)
-- Codomain change: `x.right ⟶ y.right` (forwards relative to source/target)
-
-This matches the structure of `TwistedArrow' C` morphisms:
-- A morphism in `TwistedArrow' C` from `(a ⟶ b)` to `(a' ⟶ b')` has
-  `left : a' ⟶ a` and `right : b ⟶ b'`
-
-In contrast, `ConnGrothendieckHom` (used for Contra) corresponds to `Arrow C`
-morphisms, where both components go in the same direction:
-- `domArr : a ⟶ a'` and `codArr : b ⟶ b'`
-
-Establishing Alt ≃ Contra requires either:
-1. A direct functor construction between the two categories
-2. Using the presheaf/TwistedArrow morphism structure for Alt
-
-The object equivalence `connGrothendieckAltObjEquiv` is complete.
--/
-
-/-!
-### Projection to Underlying Twisted Arrow
-
-The Alt construction has an underlying twisted arrow for each object, given by
-composing through `underToTwistedArrow`. However, the morphism structure of Alt
-does not directly match TwistedArrow' C morphisms due to the opposite category
-construction in the outer layer.
-
-For an Alt object `x`:
-- `x.base : C` is the codomain of the underlying arrow
-- `x.fiber.base : Under x.base` gives the arrow via `.hom : x.fiber.base.left ⟶ x.base`
-
-The underlying twisted arrow is `twObjMk' x.fiber.base.hom`.
--/
-
-variable (C : Type u) [Category.{v} C]
-variable (F : TwistedArrow' C ⥤ Cat.{v, u})
-
-/--
-Convert an `ConnectedGrothendieckAlt` object to a `TwistedArrow' C` object.
-
-An object `x : ConnectedGrothendieckAlt C F` has:
-- `x.base : C` (the codomain of the underlying arrow)
-- `x.fiber.base : Under x.base` (whose hom gives the arrow)
-
-The twisted arrow is `twObjMk' x.fiber.base.hom`.
--/
-def connGrothendieckAltObjToTwArr (x : ConnectedGrothendieckAlt C F) :
-    TwistedArrow' C :=
-  (underToTwistedArrow C x.base).obj x.fiber.base
-
 section ProjectionToArrow
 
 /-!
@@ -4291,6 +4283,192 @@ lemma connGrothendieckAltProjection_obj_hom
   rfl
 
 end ProjectionToArrow
+
+section MorphismConversion
+
+/-!
+### Morphism Conversion
+
+We establish that morphisms in `ConnectedGrothendieckAlt` correspond to
+`ConnGrothendieckHom` between the corresponding objects.
+-/
+
+/--
+The source category for the fiber morphism in `connGrothendieckAltHomToHom`.
+This is the category `F.obj (connGrothendieckDiagCod ...)`.
+-/
+abbrev connGrothendieckAltHomFiberSrcCat {x y : ConnectedGrothendieckAlt C F}
+    (f : x ⟶ y) : Cat :=
+  F.obj (connGrothendieckDiagCod C (twObjMk' x.fiber.base.hom) f.fiber.base.right)
+
+/--
+The target category for the fiber morphism in `connGrothendieckAltHomToHom`.
+This is the category containing the goal target.
+-/
+abbrev connGrothendieckAltHomFiberTgtCat {x y : ConnectedGrothendieckAlt C F}
+    (f : x ⟶ y) : Cat :=
+  F.obj (connGrothendieckDiagDom C (twObjMk' y.fiber.base.hom) f.base)
+
+/--
+The source category for `f.fiber.fiber`, which differs from the goal source
+category by an `eqToHom` composition.
+-/
+abbrev connGrothendieckAltFiberFiberSrcCat {x y : ConnectedGrothendieckAlt C F}
+    (f : x ⟶ y) : Cat :=
+  (restrictToDomainFiber C F x.base).obj
+    (((domainFiberFunctor C F).map f.base).obj y.fiber).base
+
+/--
+The underlying arrow equality from `Under.w`.
+-/
+theorem connGrothendieckAltHomFiberArrowEq {x y : ConnectedGrothendieckAlt C F}
+    (f : x ⟶ y) :
+    x.fiber.base.hom ≫ f.fiber.base.right = f.base ≫ y.fiber.base.hom := by
+  have hw := Under.w f.fiber.base
+  exact hw
+
+/--
+The equality between the goal source category and `f.fiber.fiber` source category.
+-/
+theorem connGrothendieckAltHomFiberSrcCat_eq {x y : ConnectedGrothendieckAlt C F}
+    (f : x ⟶ y) :
+    connGrothendieckAltHomFiberSrcCat C F f =
+    connGrothendieckAltFiberFiberSrcCat C F f := by
+  simp only [connGrothendieckAltHomFiberSrcCat, connGrothendieckAltFiberFiberSrcCat]
+  simp only [restrictToDomainFiber, Functor.comp_obj, underToTwistedArrow]
+  simp only [domainFiberFunctor, innerFiberAltTransition,
+    innerFiberAltTransitionObj, Under.map_obj_hom]
+  simp only [connGrothendieckDiagCod, twObjMk'_arr]
+  exact congrArg F.obj (congrArg twObjMk' (connGrothendieckAltHomFiberArrowEq C F f))
+
+/--
+The target category for `f.fiber.fiber`.
+This is the same as `connGrothendieckAltFiberFiberSrcCat` because both source and target
+of a Grothendieck morphism live in the same category.
+-/
+abbrev connGrothendieckAltFiberFiberTgtCat {x y : ConnectedGrothendieckAlt C F}
+    (f : x ⟶ y) : Cat :=
+  connGrothendieckAltFiberFiberSrcCat C F f
+
+/--
+The source object for the fiber morphism goal lives in `connGrothendieckAltHomFiberSrcCat`.
+-/
+def connGrothendieckAltHomFiberSrc {x y : ConnectedGrothendieckAlt C F}
+    (f : x ⟶ y) : connGrothendieckAltHomFiberSrcCat C F f :=
+  (F.map (connGrothendieckTwMorphCod C (twObjMk' x.fiber.base.hom)
+    f.fiber.base.right)).obj x.fiber.fiber
+
+/--
+The source object for `f.fiber.fiber` lives in `connGrothendieckAltFiberFiberSrcCat`.
+-/
+def connGrothendieckAltFiberFiberSrc {x y : ConnectedGrothendieckAlt C F}
+    (f : x ⟶ y) : connGrothendieckAltFiberFiberSrcCat C F f :=
+  ((restrictToDomainFiber C F x.base).map f.fiber.base).obj x.fiber.fiber
+
+/--
+The target object for `f.fiber.fiber` lives in `connGrothendieckAltFiberFiberTgtCat`.
+-/
+def connGrothendieckAltFiberFiberTgt {x y : ConnectedGrothendieckAlt C F}
+    (f : x ⟶ y) : connGrothendieckAltFiberFiberTgtCat C F f :=
+  (innerFiberAltTransitionObj C F f.base y.fiber).fiber
+
+/--
+The target object for the fiber morphism goal lives in `connGrothendieckAltHomFiberSrcCat`.
+(After the eqToHom composition, the target is in the same category as the source.)
+-/
+def connGrothendieckAltHomFiberTgt {x y : ConnectedGrothendieckAlt C F}
+    (f : x ⟶ y)
+    (h_sq : x.fiber.base.hom ≫ f.fiber.base.right = f.base ≫ y.fiber.base.hom) :
+    connGrothendieckAltHomFiberSrcCat C F f :=
+  (F.map (connGrothendieckTwMorphDom C (twObjMk' y.fiber.base.hom) f.base ≫
+    eqToHom (connGrothendieckDiagEq C F
+      (connGrothendieckAltObjToObj C F x)
+      (connGrothendieckAltObjToObj C F y)
+      f.base f.fiber.base.right (by
+        simp only [connGrothendieckAltObjToObj, underToTwistedArrow, twObjMk'_arr]
+        exact h_sq)))).obj y.fiber.fiber
+
+/--
+The source objects are equal after transport via the category equality.
+-/
+theorem connGrothendieckAltHomFiberSrc_eq {x y : ConnectedGrothendieckAlt C F}
+    (f : x ⟶ y) :
+    (eqToHom (connGrothendieckAltHomFiberSrcCat_eq C F f)).obj
+      (connGrothendieckAltHomFiberSrc C F f) =
+    connGrothendieckAltFiberFiberSrc C F f := by
+  simp only [connGrothendieckAltHomFiberSrc, connGrothendieckAltFiberFiberSrc]
+  simp only [restrictToDomainFiber, Functor.comp_obj, Functor.comp_map]
+  rw [underToTwistedArrow_map_eq_connGrothendieckTwMorphCod C f.base f.fiber.base]
+  simp only [Functor.map_comp, eqToHom_map]
+  rfl
+
+/--
+In Cat, composing `eqToHom h` with `eqToHom h.symm` on objects gives identity.
+-/
+lemma eqToHom_comp_symm_obj (A B : Cat) (h : A = B) (x : A.α) :
+    (eqToHom h.symm).obj ((eqToHom h).obj x) = x := by
+  cases h
+  rfl
+
+/--
+In Cat, composing `eqToHom h.symm` with `eqToHom h` on objects gives identity.
+-/
+lemma eqToHom_symm_comp_obj (A B : Cat) (h : A = B) (y : B.α) :
+    (eqToHom h).obj ((eqToHom h.symm).obj y) = y := by
+  cases h
+  rfl
+
+/--
+The fiber morphism for `connGrothendieckAltHomToHom`.
+
+This constructs a morphism by casting `f.fiber.fiber` using the type equalities
+that follow from the commutativity square.
+-/
+def connGrothendieckAltHomFiberMorph {x y : ConnectedGrothendieckAlt C F}
+    (f : x ⟶ y)
+    (h_sq : x.fiber.base.hom ≫ f.fiber.base.right = f.base ≫ y.fiber.base.hom) :
+    connGrothendieckAltHomFiberSrc C F f ⟶
+    connGrothendieckAltHomFiberTgt C F f h_sq := by
+  let cat_eq := connGrothendieckAltHomFiberSrcCat_eq C F f
+  let transported := (eqToHom cat_eq.symm).map f.fiber.fiber
+  have src_eq : (eqToHom cat_eq.symm).obj (connGrothendieckAltFiberFiberSrc C F f) =
+      connGrothendieckAltHomFiberSrc C F f := by
+    have h := connGrothendieckAltHomFiberSrc_eq C F f
+    rw [← h]
+    exact eqToHom_comp_symm_obj _ _ cat_eq _
+  have tgt_eq : (eqToHom cat_eq.symm).obj (connGrothendieckAltFiberFiberTgt C F f) =
+      connGrothendieckAltHomFiberTgt C F f h_sq := by
+    simp only [connGrothendieckAltFiberFiberTgt, connGrothendieckAltHomFiberTgt]
+    simp only [innerFiberAltTransitionObj, domainFiberTransport]
+    rw [domainFiberTransportTwMorph_eq_connGrothendieckTwMorphDom C f.base y.fiber.base]
+    simp only [Functor.map_comp, eqToHom_map, Cat.comp_obj]
+  exact eqToHom src_eq.symm ≫ transported ≫ eqToHom tgt_eq
+
+/--
+Convert a morphism in `ConnectedGrothendieckAlt` to a `ConnGrothendieckHom`.
+
+For a morphism `f : x ⟶ y`:
+- `domArr = f.base` (the base component)
+- `codArr = f.fiber.base.right` (the codomain direction from the fiber)
+- `square_comm` from `connGrothendieckAltMorphSquareComm`
+- `fiberMorph` from `f.fiber.fiber` with appropriate transport
+-/
+def connGrothendieckAltHomToHom {x y : ConnectedGrothendieckAlt C F}
+    (f : x ⟶ y) :
+    ConnGrothendieckHom C F
+      (connGrothendieckAltObjToObj C F x)
+      (connGrothendieckAltObjToObj C F y) where
+  domArr := connGrothendieckAltHomDomArr C F f
+  codArr := connGrothendieckAltHomCodArr C F f
+  square_comm := by
+    simp only [connGrothendieckAltObjToObj, connGrothendieckAltHomDomArr,
+      connGrothendieckAltHomCodArr]
+    simp only [underToTwistedArrow, twObjMk'_arr]
+    exact connGrothendieckAltMorphSquareComm C F f
+  fiberMorph := connGrothendieckAltHomFiberMorph C F f
+    (connGrothendieckAltMorphSquareComm C F f)
+
+end MorphismConversion
 
 end MorphismEquivalence
 
