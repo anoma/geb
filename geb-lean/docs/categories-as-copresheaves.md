@@ -523,7 +523,7 @@ Phase 4 (future): Full adjunction
 The adjunction L ⊣ Φ relates to several constructions in the literature.
 
 **Category presentations.** The construction of categories by generators and
-relations is classical (Mac Lane, Mitchell). Given a graph G and relations R,
+relations is standard (Mac Lane, Mitchell). Given a graph G and relations R,
 one forms F(G)/R where F(G) is the free category on G. The adjunction L ⊣ Φ
 is a type-theoretic reformulation: the copresheaf F on CategoryJudgments
 bundles the graph and relation data into a single structure, with identity
