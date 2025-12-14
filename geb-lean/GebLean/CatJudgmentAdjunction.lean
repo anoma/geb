@@ -1752,8 +1752,6 @@ def unitNatTrans : CategoryJudgments.NatTransData F (phiOfL F) where
           (D.id_src i) (D.id_tgt i))
         (FreeMor.var (D.idMor i))) = D.quotMor (FreeMor.id (D.idObj i)) :=
       Quotient.sound (CategoryQuotientData.FreeMorEquiv.rel h_wit)
-    -- Use Quotient.recOnSubsingleton to relate the quotients
-    -- Actually, let's use a simpler approach with HEq transitivity
     -- We need: quotMor(var(idMor)) ≍ quotMor(id(idObj))
     -- where LHS : QuotMor dom cod and RHS : QuotMor dom dom
     -- Strategy: use the fact that after casting LHS to type QuotMor dom dom,
