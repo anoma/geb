@@ -205,6 +205,63 @@ def OverCategoryData.extractComp {Q : OverQuiver.{v, u}}
    (data.comp_src ⟨(fval, gval), composable⟩).trans f.property.1,
    (data.comp_tgt ⟨(fval, gval), composable⟩).trans g.property.2⟩
 
+/-- Helper lemma for nested sigma equality with subtypes.
+    Given equal source/target proofs and the same underlying morphism value,
+    prove equality of sigma types containing HomSet fibers. -/
+theorem OverQuiver.sigma_homset_eq {Q : OverQuiver.{v, u}}
+    {a₁ a₂ b₁ b₂ : Q.Obj} (f : Q.MorType)
+    (ha : Q.src f = a₁) (ha' : a₁ = a₂)
+    (hb : Q.tgt f = b₁) (hb' : b₁ = b₂) :
+    (⟨a₁, b₁, ⟨f, ha, hb⟩⟩ : Σ (a b : Q.Obj), Q.toHomSet a b) =
+      ⟨a₂, b₂, ⟨f, ha.trans ha', hb.trans hb'⟩⟩ := by
+  cases ha'
+  cases hb'
+  rfl
+
+/-- sigma_equiv applied to an identity morphism equals the extracted identity.
+    This handles the proof term difference: sigma_equiv uses rfl proofs while
+    extractId uses id_src/id_tgt proofs. -/
+theorem OverQuiver.sigma_equiv_id {Q : OverQuiver.{v, u}}
+    (data : OverCategoryData Q) (a : Q.Obj) :
+    Q.sigma_equiv (data.idFn a) =
+      ⟨a, a, OverCategoryData.extractId data a⟩ := by
+  unfold sigma_equiv OverCategoryData.extractId
+  exact sigma_homset_eq (data.idFn a) rfl (data.id_src a) rfl (data.id_tgt a)
+
+/-- sigma_equiv applied to a composition produces a triple with comp_src/comp_tgt proofs.
+    The inner subtype contains the composed morphism with transitivity proofs. -/
+theorem OverQuiver.sigma_equiv_comp {Q : OverQuiver.{v, u}}
+    (data : OverCategoryData Q) (p : Q.ComposablePairsType) :
+    Q.sigma_equiv (data.compFn p) =
+      ⟨Q.src p.val.1, Q.tgt p.val.2,
+        ⟨data.compFn p,
+         (data.comp_src p).trans rfl,
+         (data.comp_tgt p).trans rfl⟩⟩ := by
+  unfold sigma_equiv
+  have hsrc := data.comp_src p
+  have htgt := data.comp_tgt p
+  exact sigma_homset_eq (data.compFn p) rfl hsrc rfl htgt
+
+/-- compFn only depends on the morphism pair, not the composability proof. -/
+theorem OverCategoryData.compFn_congr {Q : OverQuiver.{v, u}}
+    (data : OverCategoryData Q)
+    {f g : Q.MorType} (h1 h2 : Q.Composable f g) :
+    data.compFn ⟨(f, g), h1⟩ = data.compFn ⟨(f, g), h2⟩ := rfl
+
+/-- Transport on a HomSet subtype preserves the underlying morphism value. -/
+theorem HomSet.val_eqRec {Q : OverQuiver.{v, u}}
+    {a b a' : Q.Obj} (ha : a = a') (f : Q.toHomSet a b) :
+    (ha ▸ f : Q.toHomSet a' b).val = f.val := by
+  cases ha
+  rfl
+
+/-- Transport on a HomSet subtype (second index) preserves the underlying morphism value. -/
+theorem HomSet.val_eqRec' {Q : OverQuiver.{v, u}}
+    {a b b' : Q.Obj} (hb : b = b') (f : Q.toHomSet a b) :
+    (hb ▸ f : Q.toHomSet a b').val = f.val := by
+  cases hb
+  rfl
+
 /-- Convert OverCategoryData to CategoryOps on the fiber HomSet. -/
 def OverCategoryData.toCategoryOps {Q : OverQuiver.{v, u}}
     (data : OverCategoryData Q) : CategoryOps Q.toHomSet where
