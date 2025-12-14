@@ -103,6 +103,11 @@ def HomSet.fiber_equiv (a b : U) :
     rfl
   right_inv := fun _ => rfl
 
+/-- fiber_equiv applied to an element with rfl proofs returns the underlying morphism. -/
+@[simp]
+theorem HomSet.fiber_equiv_rfl (a b : U) (f : hs a b) :
+    hs.fiber_equiv a b ⟨⟨a, b, f⟩, ⟨rfl, rfl⟩⟩ = f := rfl
+
 /-- The sigma of fibers is equivalent to the original morphism type.
     This is the round-trip OverQuiver → HomSet → OverQuiver. -/
 def OverQuiver.sigma_equiv :
@@ -191,6 +196,19 @@ def CategoryData.toOverCategoryData (data : CategoryData U hs) :
 def OverCategoryData.extractId {Q : OverQuiver.{v, u}}
     (data : OverCategoryData Q) (a : Q.Obj) : Q.toHomSet a a :=
   ⟨data.idFn a, data.id_src a, data.id_tgt a⟩
+
+/-- The extractId from a converted CategoryData equals the wrapped identity. -/
+theorem OverCategoryData.extractId_toOverCategoryData (data : CategoryData U hs) (a : U) :
+    OverCategoryData.extractId data.toOverCategoryData a =
+      ⟨⟨a, a, data.id a⟩, ⟨rfl, rfl⟩⟩ := rfl
+
+/-- fiber_equiv applied to extractId (from round-trip) returns the original identity. -/
+@[simp]
+theorem HomSet.fiber_equiv_extractId (data : CategoryData U hs) (a : U) :
+    hs.fiber_equiv a a (OverCategoryData.extractId data.toOverCategoryData a) =
+      data.id a := by
+  rw [OverCategoryData.extractId_toOverCategoryData]
+  rfl
 
 /-- Extract composition from an OverCategoryData.
     Given morphisms f : a → b and g : b → c in the fiber HomSet,
