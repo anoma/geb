@@ -65,12 +65,13 @@ has been fully constructed and verified.
    - Use `CategoryTheory.Adjunction` from mathlib
    - L preserves identity: `toOverFunctorData_id` (done)
    - L preserves composition: `toOverFunctorData_comp` (done)
-   - Remaining work requires substantial infrastructure:
+   - Remaining work:
      - Define `instance : Category (CategoryJudgments.FunctorData (Type u))`
-       with `NatTransData` as morphisms (straightforward)
-     - Define `instance : Category BundledOverCategoryData` - requires
-       heterogeneous functor notion between categories with different
-       underlying quivers (current `OverFunctorData` requires same quiver)
+       with `NatTransData` as morphisms
+     - Define `instance : Category BundledOverCategoryData` with
+       `OverFunctorData` as morphisms (OverFunctorData supports different
+       quivers via `{Q₁ Q₂ : OverQuiver}` parameters)
+     - Prove composition and identity laws for these Category instances
      - Define mathlib `Functor` for L and Φ using these instances
      - Define mathlib `NatTrans` for unit and counit
      - Construct `Adjunction.mkOfUnitCounit` from triangle identities
