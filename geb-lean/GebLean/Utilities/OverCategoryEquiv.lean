@@ -108,6 +108,13 @@ def HomSet.fiber_equiv (a b : U) :
 theorem HomSet.fiber_equiv_rfl (a b : U) (f : hs a b) :
     hs.fiber_equiv a b ⟨⟨a, b, f⟩, ⟨rfl, rfl⟩⟩ = f := rfl
 
+/-- Round-trip from OverQuiver morphism through fiber_equiv returns the original.
+    This is the key lemma for proving triangle identities involving fiber_equiv. -/
+@[simp]
+theorem OverQuiver.fiber_equiv_roundtrip_val (m : Q.MorType) :
+    (Q.toHomSet.fiber_equiv (Q.src m) (Q.tgt m)
+      ⟨⟨Q.src m, Q.tgt m, ⟨m, rfl, rfl⟩⟩, ⟨rfl, rfl⟩⟩).val = m := rfl
+
 /-- The sigma of fibers is equivalent to the original morphism type.
     This is the round-trip OverQuiver → HomSet → OverQuiver. -/
 def OverQuiver.sigma_equiv :
@@ -118,6 +125,18 @@ def OverQuiver.sigma_equiv :
   right_inv := fun ⟨a, b, ⟨f, ha, hb⟩⟩ => by
     subst ha hb
     rfl
+
+/-- Applying sigma_equiv to a morphism gives the sigma of source, target, and fiber. -/
+@[simp]
+theorem OverQuiver.sigma_equiv_apply (m : Q.MorType) :
+    Q.sigma_equiv m = ⟨Q.src m, Q.tgt m, ⟨m, rfl, rfl⟩⟩ := rfl
+
+/-- fiber_equiv composed with sigma_equiv returns the original morphism.
+    This is the primary lemma for triangle identity proofs. -/
+@[simp]
+theorem OverQuiver.fiber_equiv_sigma_equiv_val (m : Q.MorType) :
+    (Q.toHomSet.fiber_equiv (Q.src m) (Q.tgt m)
+      ⟨Q.sigma_equiv m, ⟨rfl, rfl⟩⟩).val = m := rfl
 
 /-- Direct round-trip from HomSet back to itself, using the fiber equivalence.
     This avoids the universe bump: HomSet.{v+1, u} → OverQuiver → HomSet.{v+1, u}.
