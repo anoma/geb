@@ -164,9 +164,7 @@ theorem path_increases_for_nonempty {V : Type u} [inst : AcyclicQuiver V]
 
 Acyclic structures naturally live at the semicategory level, not the category
 level. The reason is that identity morphisms violate the `edgesIncrease`
-condition since `a < a` is false (irreflexive).
-
-### The correct approach
+condition since `a < a` is false (irreflexive). Thus the construction goes:
 
 1. **Free semicategory**: Non-nil paths in an acyclic quiver form an acyclic
    semicategory. The `path_increases_for_nonempty` theorem shows that
@@ -182,19 +180,6 @@ condition since `a < a` is false (irreflexive).
 
 4. **Quotient preserves acyclicity**: Quotienting by relations preserves
    acyclicity because it only identifies morphisms, never creates new ones.
-
-### Implementation plan
-
-The instance below is incorrect because we cannot make `Paths V` an
-`AcyclicQuiver` (identity morphisms exist). Instead, we should:
-
-1. Define what it means for a semicategory to be acyclic
-2. Prove the free semicategory on an acyclic quiver is acyclic
-3. Show that adjoining identities preserves this property
-4. Prove the quotient preserves acyclicity
-
-Note: `Paths V` is definitionally equal to `V`, so objects inherit the
-partial order from the generator quiver.
 -/
 
 /-- The category presented by an acyclic presentation inherits order on objects.
