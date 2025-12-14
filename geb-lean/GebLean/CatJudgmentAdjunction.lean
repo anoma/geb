@@ -2308,4 +2308,526 @@ theorem adjunction_triangles_hold :
 
 end AdjunctionStructure
 
+/-! ## Mathlib Category Instance for BundledOverCategoryData
+
+We define a mathlib `Category` instance for `BundledOverCategoryData` using
+`OverFunctorData` as morphisms. This allows us to use mathlib's adjunction
+machinery.
+-/
+
+section MathlibCategoryInstance
+
+/-- Mathlib Category instance for BundledOverCategoryData.
+    Morphisms are OverFunctorData between the underlying categories. -/
+instance : Category BundledOverCategoryData.{u, u} where
+  Hom := fun C D => OverFunctorData C.data D.data
+  id := fun C => OverFunctorData.id C.data
+  comp := fun F G => F.comp G
+  id_comp := fun _ => rfl
+  comp_id := fun _ => rfl
+  assoc := fun _ _ _ => rfl
+
+end MathlibCategoryInstance
+
+/-! ## Mathlib Functors L and Φ
+
+We define mathlib `Functor` instances for L and Φ using the existing
+`toOverFunctorData` and `toJudgmentNatTrans` conversions.
+-/
+
+section MathlibFunctors
+
+universe uMF
+
+/-- The L functor from copresheaves to categories, as a mathlib Functor.
+    On objects: FunctorData F ↦ bundleOverCategory F.toOverCategoryData
+    On morphisms: NatTransData α ↦ α.toOverFunctorData -/
+def LFunctor : Functor (CategoryJudgments.FunctorData (Type uMF))
+    BundledOverCategoryData.{uMF, uMF} where
+  obj := LFunctorObj
+  map := fun α => α.toOverFunctorData
+  map_id := fun _ => toOverFunctorData_id
+  map_comp := fun α β => toOverFunctorData_comp α β
+
+/-- Φ preserves identity: Φ(id_C) = id_{Φ(C)}. -/
+theorem toJudgmentNatTrans_id {C : BundledOverCategoryData.{uMF, uMF}} :
+    (OverFunctorData.id C.data).toJudgmentNatTrans =
+    CategoryJudgments.NatTransData.id C.data.toJudgmentFunctorData := by
+  simp only [OverFunctorData.toJudgmentNatTrans, OverFunctorData.id,
+    OverQuiverMorphism.id, CategoryJudgments.NatTransData.id]
+  rfl
+
+/-- Φ preserves composition: Φ(G ∘ F) = Φ(G) ∘ Φ(F). -/
+theorem toJudgmentNatTrans_comp {C D E : BundledOverCategoryData.{uMF, uMF}}
+    (F : OverFunctorData C.data D.data) (G : OverFunctorData D.data E.data) :
+    (F.comp G).toJudgmentNatTrans =
+    F.toJudgmentNatTrans.comp G.toJudgmentNatTrans := by
+  simp only [OverFunctorData.toJudgmentNatTrans, OverFunctorData.comp,
+    OverQuiverMorphism.comp, CategoryJudgments.NatTransData.comp,
+    Function.comp_apply]
+  rfl
+
+/-- The Φ functor from categories to copresheaves, as a mathlib Functor.
+    On objects: BundledOverCategoryData C ↦ C.data.toJudgmentFunctorData
+    On morphisms: OverFunctorData F ↦ F.toJudgmentNatTrans -/
+def PhiFunctor : Functor BundledOverCategoryData.{uMF, uMF}
+    (CategoryJudgments.FunctorData (Type uMF)) where
+  obj := PhiFunctorObj
+  map := fun F => F.toJudgmentNatTrans
+  map_id := fun _ => toJudgmentNatTrans_id
+  map_comp := fun F G => toJudgmentNatTrans_comp F G
+
+end MathlibFunctors
+
+/-! ## Mathlib Natural Transformations for Unit and Counit
+
+We define the unit η : 𝟭 → L ⋙ Φ and counit ε : Φ ⋙ L → 𝟭 as mathlib NatTrans.
+-/
+
+section MathlibNatTrans
+
+universe uNT
+
+/-- Helper: the composition Φ ⋙ L equals derivedQuotientData on objects. -/
+theorem phiLComp_obj_eq (C : BundledOverCategoryData.{uNT, uNT}) :
+    (PhiFunctor ⋙ LFunctor).obj C =
+    bundleOverCategory (derivedQuotientData C.data).toOverCategoryData := rfl
+
+/-- Unit naturality: α ≫ η_G = η_F ≫ Φ(L(α)). -/
+theorem unitNT_naturality {F G : CategoryJudgments.FunctorData (Type uNT)}
+    (α : CategoryJudgments.NatTransData F G) :
+    (unitNatTrans F).comp (α.toOverFunctorData.toJudgmentNatTrans) =
+    α.comp (unitNatTrans G) := by
+  apply CategoryJudgments.NatTransData.ext
+  · -- appObj: id ≫ α.appObj = α.appObj ≫ id (both = α.appObj)
+    simp only [CategoryJudgments.NatTransData.comp, unitNatTrans, unitAppObj,
+      Category.id_comp, Category.comp_id]
+    rfl
+  · -- appMor: the non-trivial case
+    simp only [CategoryJudgments.NatTransData.comp, unitNatTrans, unitAppObj,
+      Category.id_comp, Category.comp_id]
+    funext f
+    -- LHS: (unitAppMor F ≫ α.toQuotQuiverMor.morFn) f
+    -- RHS: (α.appMor ≫ unitAppMor G) f
+    simp only [CategoryStruct.comp,
+      CategoryJudgments.NatTransData.toOverFunctorData,
+      OverFunctorData.toJudgmentNatTrans,
+      CategoryJudgments.NatTransData.toQuotQuiverMor,
+      CategoryJudgments.FunctorData.toCategoryQuotientData,
+      CategoryQuotientData.bundleQuotMor,
+      CategoryJudgments.NatTransData.toCategoryQuotientMorphism,
+      CategoryQuotientMorphism.quotMapMor,
+      CategoryQuotientData.quotMor,
+      CategoryJudgments.FunctorData.toQuiver]
+    -- Need to show nested sigma equality
+    -- LHS: ⟨α.appObj (F.dom f), α.appObj (F.cod f), quotMapMor (quotMor (var f))⟩
+    -- RHS: ⟨G.dom (α.appMor f), G.cod (α.appMor f), quotMor (var (α.appMor f))⟩
+    simp only [Function.comp_apply, unitAppMor, unitComponent]
+    -- Use naturality to establish the two index equalities
+    have h_dom : α.appObj (F.dom f) = G.dom (α.appMor f) := congrFun α.naturality_dom f
+    have h_cod : α.appObj (F.cod f) = G.cod (α.appMor f) := congrFun α.naturality_cod f
+    -- The QuotMor equality after transport
+    -- LHS quotMapMor result is at type QuotMor (α.appObj (F.dom f)) (α.appObj (F.cod f))
+    -- RHS quotMor result is at type QuotMor (G.dom (α.appMor f)) (G.cod (α.appMor f))
+    -- These become equal after cast by h_dom, h_cod
+    have h_qm : cast (congrArg₂ G.toCategoryQuotientData.QuotMor h_dom h_cod)
+        (α.toCategoryQuotientMorphism.quotMapMor
+          (F.toCategoryQuotientData.quotMor (FreeMor.var (Q := F.toQuiver) f))) =
+        (G.toCategoryQuotientData.quotMor (FreeMor.var (Q := G.toQuiver) (α.appMor f))) := by
+      -- First unfold quotMapMor, but keep quotMor for the rewrite to work
+      simp only [CategoryQuotientMorphism.quotMapMor]
+      -- Now LHS is: cast _ (Quotient.lift ... (quotMor (var f)))
+      -- Unfold inner quotMor so lift_mk applies
+      simp only [CategoryQuotientData.quotMor, Quotient.lift_mk]
+      -- Now: cast _ ⟦mapQuiver (var f)⟧ = ⟦var (α.appMor f)⟧
+      simp only [FreeMor.mapQuiver_var]
+      -- Now: cast _ ⟦src_comm ▸ tgt_comm ▸ var (α.appMor f)⟧ = ⟦var (α.appMor f)⟧
+      -- Convert back to quotMor for the rewrite
+      change cast _ (G.toCategoryQuotientData.quotMor _) =
+           G.toCategoryQuotientData.quotMor (FreeMor.var (α.appMor f))
+      rw [G.toCategoryQuotientData.quotMor_cast h_dom h_cod]
+      congr 1
+      simp only [CategoryJudgments.NatTransData.toCategoryQuotientMorphism]
+      -- Goal: cast _ (h_dom.symm ▸ h_cod.symm ▸ var (α.appMor f)) = var (α.appMor f)
+      -- Convert ▸ to cast using subst_subst_eq_cast
+      rw [subst_subst_eq_cast h_dom.symm h_cod.symm]
+      -- Now: cast _ (cast (congrArg₂ _ h_dom.symm h_cod.symm) (var (α.appMor f)))
+      --    = var (α.appMor f)
+      simp only [cast_cast, cast_eq]
+    -- Build the nested sigma equality using quotMorSigma_heq for inner sigma,
+    -- then Sigma.ext for outer sigma
+    refine Sigma.ext h_dom ?_
+    exact G.toCategoryQuotientData.quotMorSigma_heq h_dom h_cod _ _ h_qm
+  · -- appId: unitAppId ≫ α.appObj = α.appId ≫ unitAppId
+    simp only [CategoryJudgments.NatTransData.comp, unitNatTrans, unitAppObj,
+      Category.id_comp, Category.comp_id]
+    funext i
+    simp only [CategoryJudgments.NatTransData.toOverFunctorData,
+      OverFunctorData.toJudgmentNatTrans,
+      CategoryJudgments.NatTransData.toQuotQuiverMor]
+    -- Goal: α.appObj (F.idObj i) = G.idObj (α.appId i)
+    -- This is the pointwise version of naturality_idObj:
+    -- (F.idMor ≫ F.dom) ≫ α.appObj = α.appId ≫ (G.idMor ≫ G.dom)
+    have h := congrFun α.naturality_idObj i
+    simp only [CategoryStruct.comp, Function.comp_apply] at h
+    exact h
+  · -- appComp: show that transforming via α commutes with unitAppComp
+    simp only [CategoryJudgments.NatTransData.comp, unitNatTrans, unitAppObj,
+      Category.id_comp, Category.comp_id]
+    funext c
+    -- LHS: apply unitAppComp F to c, then transform via α's toQuotQuiverMor
+    -- RHS: apply α.appComp to c, then apply unitAppComp G
+    -- Use Subtype.ext to reduce to equality of underlying pairs
+    apply Subtype.ext
+    -- Unfold the composition and unitAppComp to expose the pair structure
+    simp only [CategoryStruct.comp, Function.comp_apply]
+    -- Now need equality of pairs (f₁, g₁) = (f₂, g₂)
+    apply Prod.ext
+    · -- First component: right morphism
+      -- Unfold unitAppComp on both sides to expose the structure
+      simp only [unitAppComp, unitAppMor, unitComponent]
+      simp only [CategoryJudgments.NatTransData.toOverFunctorData,
+        OverFunctorData.toJudgmentNatTrans,
+        CategoryJudgments.NatTransData.toQuotQuiverMor,
+        CategoryJudgments.FunctorData.toCategoryQuotientData,
+        CategoryQuotientData.bundleQuotMor,
+        CategoryJudgments.NatTransData.toCategoryQuotientMorphism,
+        CategoryQuotientMorphism.quotMapMor]
+      -- Use naturality_right: G.right ∘ α.appComp = α.appMor ∘ F.right
+      have h_right : α.appMor (F.right c) = G.right (α.appComp c) :=
+        congrFun α.naturality_right c
+      -- Object equalities combining naturality_dom/cod with h_right
+      have h_dom : α.appObj (F.dom (F.right c)) = G.dom (G.right (α.appComp c)) := by
+        have h1 := congrFun α.naturality_dom (F.right c)
+        simp only [CategoryStruct.comp, Function.comp_apply] at h1
+        rw [h1, h_right]
+      have h_cod : α.appObj (F.cod (F.right c)) = G.cod (G.right (α.appComp c)) := by
+        have h1 := congrFun α.naturality_cod (F.right c)
+        simp only [CategoryStruct.comp, Function.comp_apply] at h1
+        rw [h1, h_right]
+      -- The QuotMor equality
+      -- Use naturality to get equalities in terms of α.appMor (F.right c)
+      have h_dom' : α.appObj (F.dom (F.right c)) = G.dom (α.appMor (F.right c)) :=
+        congrFun α.naturality_dom (F.right c)
+      have h_cod' : α.appObj (F.cod (F.right c)) = G.cod (α.appMor (F.right c)) :=
+        congrFun α.naturality_cod (F.right c)
+      -- First prove the equality in terms of α.appMor (F.right c)
+      have h_qm' : cast (congrArg₂ G.toCategoryQuotientData.QuotMor h_dom' h_cod')
+          (α.toCategoryQuotientMorphism.quotMapMor
+            (F.toCategoryQuotientData.quotMor
+              (FreeMor.var (Q := F.toCategoryQuotientData.quiver) (F.right c)))) =
+          (G.toCategoryQuotientData.quotMor
+            (FreeMor.var (Q := G.toCategoryQuotientData.quiver) (α.appMor (F.right c)))) := by
+        simp only [CategoryQuotientMorphism.quotMapMor]
+        simp only [CategoryQuotientData.quotMor, Quotient.lift_mk]
+        simp only [FreeMor.mapQuiver_var]
+        change cast _ (G.toCategoryQuotientData.quotMor _) =
+             G.toCategoryQuotientData.quotMor
+               (FreeMor.var (Q := G.toCategoryQuotientData.quiver) (α.appMor (F.right c)))
+        rw [G.toCategoryQuotientData.quotMor_cast h_dom' h_cod']
+        congr 1
+        simp only [CategoryJudgments.NatTransData.toCategoryQuotientMorphism,
+          CategoryJudgments.FunctorData.toCategoryQuotientData]
+        rw [subst_subst_eq_cast h_dom'.symm h_cod'.symm]
+        simp only [cast_cast, cast_eq]
+      -- Now convert h_qm' to h_qm using h_right
+      have h_qm : cast (congrArg₂ G.toCategoryQuotientData.QuotMor h_dom h_cod)
+          (α.toCategoryQuotientMorphism.quotMapMor
+            (F.toCategoryQuotientData.quotMor
+              (FreeMor.var (Q := F.toCategoryQuotientData.quiver) (F.right c)))) =
+          (G.toCategoryQuotientData.quotMor
+            (FreeMor.var (Q := G.toCategoryQuotientData.quiver) (G.right (α.appComp c)))) := by
+        -- h_dom' uses (α.appMor (F.right c)), h_dom uses (G.right (α.appComp c))
+        -- h_right : α.appMor (F.right c) = G.right (α.appComp c), so
+        -- G.dom (α.appMor (F.right c)) = G.dom (G.right (α.appComp c))
+        have h_dom_rel : G.dom (α.appMor (F.right c)) = G.dom (G.right (α.appComp c)) :=
+          congrArg G.dom h_right
+        have h_cod_rel : G.cod (α.appMor (F.right c)) = G.cod (G.right (α.appComp c)) :=
+          congrArg G.cod h_right
+        -- h_dom = h_dom' ▸ h_dom_rel (transitivity via h_dom_rel)
+        have h_dom_eq : h_dom = h_dom'.trans h_dom_rel := rfl
+        have h_cod_eq : h_cod = h_cod'.trans h_cod_rel := rfl
+        -- Since h_dom and h_cod factor through h_dom'/h_cod', the casts are equal
+        have h_cast_eq : congrArg₂ G.toCategoryQuotientData.QuotMor h_dom h_cod =
+            congrArg₂ G.toCategoryQuotientData.QuotMor (h_dom'.trans h_dom_rel)
+              (h_cod'.trans h_cod_rel) := by
+          rw [h_dom_eq, h_cod_eq]
+        rw [h_cast_eq]
+        -- Now need: cast (congrArg₂ _ (h_dom'.trans h_dom_rel) (h_cod'.trans h_cod_rel)) (...) =
+        --           quotMor (var (G.right (α.appComp c)))
+        -- Use cast transitivity: cast (trans) = cast ∘ cast
+        have cast_trans : cast (congrArg₂ G.toCategoryQuotientData.QuotMor
+            (h_dom'.trans h_dom_rel) (h_cod'.trans h_cod_rel))
+              (α.toCategoryQuotientMorphism.quotMapMor
+                (F.toCategoryQuotientData.quotMor
+                  (FreeMor.var (Q := F.toCategoryQuotientData.quiver) (F.right c)))) =
+            cast (congrArg₂ G.toCategoryQuotientData.QuotMor h_dom_rel h_cod_rel)
+              (cast (congrArg₂ G.toCategoryQuotientData.QuotMor h_dom' h_cod')
+                (α.toCategoryQuotientMorphism.quotMapMor
+                  (F.toCategoryQuotientData.quotMor
+                    (FreeMor.var (Q := F.toCategoryQuotientData.quiver) (F.right c))))) := by
+          simp only [cast_cast]
+        rw [cast_trans, h_qm']
+        -- Now: cast (congrArg₂ _ h_dom_rel h_cod_rel)
+        --        (quotMor (var (α.appMor (F.right c)))) = quotMor (var (G.right (α.appComp c)))
+        rw [G.toCategoryQuotientData.quotMor_cast h_dom_rel h_cod_rel]
+        -- Now: quotMor (cast _ (var (α.appMor (F.right c)))) = quotMor (var (G.right ...))
+        -- Use congruence on quotMor to get to FreeMor equality
+        congr 1
+        -- Goal: cast _ (var (α.appMor (F.right c))) = var (G.right (α.appComp c))
+        -- Given h_right : α.appMor (F.right c) = G.right (α.appComp c), we transport
+        -- Since h_dom_rel = congrArg G.dom h_right and h_cod_rel = congrArg G.cod h_right,
+        -- the cast proof from FreeMor.var aligns with h_right
+        have var_transport : ∀ (m₁ m₂ : G.morC) (h : m₁ = m₂),
+            cast (congrArg₂ (FreeMor G.toQuiver)
+              (congrArg G.dom h) (congrArg G.cod h))
+              (FreeMor.var (Q := G.toQuiver) m₁) =
+            FreeMor.var (Q := G.toQuiver) m₂ := by
+          intro m₁ m₂ h
+          cases h
+          rfl
+        -- Now apply, but G.toCategoryQuotientData.quiver = G.toQuiver
+        simp only [CategoryJudgments.FunctorData.toCategoryQuotientData]
+        exact var_transport _ _ h_right
+      refine Sigma.ext h_dom ?_
+      exact G.toCategoryQuotientData.quotMorSigma_heq h_dom h_cod _ _ h_qm
+    · -- Second component: left morphism (same pattern as right)
+      simp only [unitAppComp, unitAppMor, unitComponent]
+      simp only [CategoryJudgments.NatTransData.toOverFunctorData,
+        OverFunctorData.toJudgmentNatTrans,
+        CategoryJudgments.NatTransData.toQuotQuiverMor,
+        CategoryJudgments.FunctorData.toCategoryQuotientData,
+        CategoryQuotientData.bundleQuotMor,
+        CategoryJudgments.NatTransData.toCategoryQuotientMorphism,
+        CategoryQuotientMorphism.quotMapMor]
+      -- Use naturality_left: G.left ∘ α.appComp = α.appMor ∘ F.left
+      have h_left : α.appMor (F.left c) = G.left (α.appComp c) :=
+        congrFun α.naturality_left c
+      -- Object equalities combining naturality_dom/cod with h_left
+      have h_dom : α.appObj (F.dom (F.left c)) = G.dom (G.left (α.appComp c)) := by
+        have h1 := congrFun α.naturality_dom (F.left c)
+        simp only [CategoryStruct.comp, Function.comp_apply] at h1
+        rw [h1, h_left]
+      have h_cod : α.appObj (F.cod (F.left c)) = G.cod (G.left (α.appComp c)) := by
+        have h1 := congrFun α.naturality_cod (F.left c)
+        simp only [CategoryStruct.comp, Function.comp_apply] at h1
+        rw [h1, h_left]
+      -- The QuotMor equality
+      -- Use naturality to get equalities in terms of α.appMor (F.left c)
+      have h_dom' : α.appObj (F.dom (F.left c)) = G.dom (α.appMor (F.left c)) :=
+        congrFun α.naturality_dom (F.left c)
+      have h_cod' : α.appObj (F.cod (F.left c)) = G.cod (α.appMor (F.left c)) :=
+        congrFun α.naturality_cod (F.left c)
+      -- First prove the equality in terms of α.appMor (F.left c)
+      have h_qm' : cast (congrArg₂ G.toCategoryQuotientData.QuotMor h_dom' h_cod')
+          (α.toCategoryQuotientMorphism.quotMapMor
+            (F.toCategoryQuotientData.quotMor
+              (FreeMor.var (Q := F.toCategoryQuotientData.quiver) (F.left c)))) =
+          (G.toCategoryQuotientData.quotMor
+            (FreeMor.var (Q := G.toCategoryQuotientData.quiver) (α.appMor (F.left c)))) := by
+        simp only [CategoryQuotientMorphism.quotMapMor]
+        simp only [CategoryQuotientData.quotMor, Quotient.lift_mk]
+        simp only [FreeMor.mapQuiver_var]
+        change cast _ (G.toCategoryQuotientData.quotMor _) =
+             G.toCategoryQuotientData.quotMor
+               (FreeMor.var (Q := G.toCategoryQuotientData.quiver) (α.appMor (F.left c)))
+        rw [G.toCategoryQuotientData.quotMor_cast h_dom' h_cod']
+        congr 1
+        simp only [CategoryJudgments.NatTransData.toCategoryQuotientMorphism,
+          CategoryJudgments.FunctorData.toCategoryQuotientData]
+        rw [subst_subst_eq_cast h_dom'.symm h_cod'.symm]
+        simp only [cast_cast, cast_eq]
+      -- Now convert h_qm' to h_qm using h_left
+      have h_qm : cast (congrArg₂ G.toCategoryQuotientData.QuotMor h_dom h_cod)
+          (α.toCategoryQuotientMorphism.quotMapMor
+            (F.toCategoryQuotientData.quotMor
+              (FreeMor.var (Q := F.toCategoryQuotientData.quiver) (F.left c)))) =
+          (G.toCategoryQuotientData.quotMor
+            (FreeMor.var (Q := G.toCategoryQuotientData.quiver) (G.left (α.appComp c)))) := by
+        have h_dom_rel : G.dom (α.appMor (F.left c)) = G.dom (G.left (α.appComp c)) :=
+          congrArg G.dom h_left
+        have h_cod_rel : G.cod (α.appMor (F.left c)) = G.cod (G.left (α.appComp c)) :=
+          congrArg G.cod h_left
+        have h_dom_eq : h_dom = h_dom'.trans h_dom_rel := rfl
+        have h_cod_eq : h_cod = h_cod'.trans h_cod_rel := rfl
+        have h_cast_eq : congrArg₂ G.toCategoryQuotientData.QuotMor h_dom h_cod =
+            congrArg₂ G.toCategoryQuotientData.QuotMor (h_dom'.trans h_dom_rel)
+              (h_cod'.trans h_cod_rel) := by
+          rw [h_dom_eq, h_cod_eq]
+        rw [h_cast_eq]
+        have cast_trans : cast (congrArg₂ G.toCategoryQuotientData.QuotMor
+            (h_dom'.trans h_dom_rel) (h_cod'.trans h_cod_rel))
+              (α.toCategoryQuotientMorphism.quotMapMor
+                (F.toCategoryQuotientData.quotMor
+                  (FreeMor.var (Q := F.toCategoryQuotientData.quiver) (F.left c)))) =
+            cast (congrArg₂ G.toCategoryQuotientData.QuotMor h_dom_rel h_cod_rel)
+              (cast (congrArg₂ G.toCategoryQuotientData.QuotMor h_dom' h_cod')
+                (α.toCategoryQuotientMorphism.quotMapMor
+                  (F.toCategoryQuotientData.quotMor
+                    (FreeMor.var (Q := F.toCategoryQuotientData.quiver) (F.left c))))) := by
+          simp only [cast_cast]
+        rw [cast_trans, h_qm']
+        rw [G.toCategoryQuotientData.quotMor_cast h_dom_rel h_cod_rel]
+        congr 1
+        have var_transport : ∀ (m₁ m₂ : G.morC) (h : m₁ = m₂),
+            cast (congrArg₂ (FreeMor G.toQuiver)
+              (congrArg G.dom h) (congrArg G.cod h))
+              (FreeMor.var (Q := G.toQuiver) m₁) =
+            FreeMor.var (Q := G.toQuiver) m₂ := by
+          intro m₁ m₂ h
+          cases h
+          rfl
+        simp only [CategoryJudgments.FunctorData.toCategoryQuotientData]
+        exact var_transport _ _ h_left
+      refine Sigma.ext h_dom ?_
+      exact G.toCategoryQuotientData.quotMorSigma_heq h_dom h_cod _ _ h_qm
+
+/-- The unit natural transformation η : 𝟭 → L ⋙ Φ.
+    For each copresheaf F, η_F : F → Φ(L(F)) embeds F into its quotient. -/
+def unitNT : NatTrans (Functor.id (CategoryJudgments.FunctorData (Type uNT)))
+    (LFunctor ⋙ PhiFunctor) where
+  app := fun F => unitNatTrans F
+  naturality := fun {F G} α => by
+    simp only [Functor.comp_map, Functor.id_map, LFunctor, PhiFunctor]
+    exact (unitNT_naturality α).symm
+
+/-- Counit naturality: inducedQuotFunctor ≫ ε_D = ε_C ≫ F. -/
+theorem counitNT_naturality {C D : BundledOverCategoryData.{uNT, uNT}}
+    (F : OverFunctorData C.data D.data) :
+    (inducedQuotFunctor F).comp (counitFunctorData D.data) =
+    (counitFunctorData C.data).comp F := by
+  simp only [OverFunctorData.comp, OverQuiverMorphism.comp]
+  ext
+  · exact (counitFunctor_natural_obj F _).symm
+  · exact (counitFunctor_natural_mor F _).symm
+
+/-- The counit natural transformation ε : Φ ⋙ L → 𝟭.
+    For each category C, ε_C : L(Φ(C)) → C evaluates quotient morphisms. -/
+def counitNT : NatTrans (PhiFunctor ⋙ LFunctor)
+    (Functor.id BundledOverCategoryData.{uNT, uNT}) where
+  app := fun C => counitFunctorData C.data
+  naturality := fun {C D} F => by
+    simp only [Functor.comp_map, Functor.id_map, PhiFunctor, LFunctor]
+    exact counitNT_naturality F
+
+end MathlibNatTrans
+
+/-! ## Mathlib Adjunction L ⊣ Φ
+
+We construct the full mathlib Adjunction using the unit and counit natural
+transformations together with the triangle identities.
+-/
+
+section MathlibAdjunction
+
+open CategoryTheory
+
+universe uAdj
+
+/-- The core unit-counit data for the adjunction L ⊣ Φ.
+    The triangle identities are proven using the existing component-wise proofs. -/
+def adjunctionCoreUnitCounit :
+    Adjunction.CoreUnitCounit LFunctor.{uAdj} PhiFunctor.{uAdj} where
+  unit := unitNT
+  counit := counitNT
+  left_triangle := by
+    ext F
+    simp only [NatTrans.comp_app, Functor.whiskerRight_app, Functor.associator_hom_app,
+      Functor.whiskerLeft_app, Functor.comp_obj, Functor.id_obj]
+    simp only [LFunctor, PhiFunctor, unitNT, counitNT]
+    simp only [Category.id_comp]
+    -- Goal: L(η_F) ≫ ε_{L(F)} = 𝟙_{L(F)}
+    -- Use OverFunctorData extensionality explicitly
+    apply OverFunctorData.ext
+    · -- objFn: both map objects to themselves
+      funext a
+      exact triangle1_obj F a
+    · -- morFn: L(η_F) embeds then ε evaluates back to original
+      funext ⟨a, b, qm⟩
+      -- First unfold the categorical composition and identity
+      simp only [NatTrans.id_app', CategoryStruct.id, CategoryStruct.comp]
+      simp only [OverFunctorData.comp, OverQuiverMorphism.comp, Function.comp_apply,
+        OverFunctorData.id, OverQuiverMorphism.id, id]
+      -- Unfold the unit and counit structures
+      simp only [unitNatTrans, counitFunctorData, counitQuiverMor,
+        CategoryJudgments.NatTransData.toOverFunctorData,
+        CategoryJudgments.NatTransData.toQuotQuiverMor,
+        CategoryJudgments.NatTransData.toCategoryQuotientMorphism,
+        CategoryQuotientMorphism.quotMapMor, CategoryQuotientData.quotMor,
+        CategoryJudgments.FunctorData.toCategoryQuotientData,
+        CategoryJudgments.FunctorData.toQuiver,
+        CategoryQuotientData.bundleQuotMor, LFunctorObj, bundleOverCategory]
+      -- Induct on the quotient representative
+      induction qm using Quotient.inductionOn with
+      | h fm =>
+        erw [Quotient.lift_mk]
+        simp only [counitEvalQuot, counitEval]
+        erw [Quotient.lift_mk]
+        -- Now show counitEvalAux (mapQuiver fm) = bundle ⟦fm⟧
+        induction fm with
+        | var f =>
+          simp only [FreeMor.mapQuiver, counitEvalAux, unitAppMor, unitComponent,
+            CategoryJudgments.FunctorData.toCategoryQuotientData,
+            CategoryJudgments.FunctorData.toQuiver,
+            CategoryQuotientData.quotMor]
+        | id x =>
+          simp only [FreeMor.mapQuiver, counitEvalAux, unitAppObj,
+            CategoryJudgments.FunctorData.toCategoryQuotientData,
+            CategoryJudgments.FunctorData.toOverCategoryData,
+            CategoryQuotientData.toOverCategoryData,
+            CategoryQuotientData.quotCategoryOps,
+            CategoryTheory.CategoryStruct.id]
+          rfl
+        | comp g f ihg ihf =>
+          -- The comp case: use congrArg to rewrite the match results
+          simp only [FreeMor.mapQuiver, counitEvalAux,
+            CategoryJudgments.FunctorData.toCategoryQuotientData,
+            CategoryJudgments.FunctorData.toOverCategoryData,
+            CategoryQuotientData.toOverCategoryData,
+            CategoryQuotientData.quotCategoryOps,
+            CategoryQuotientData.quotCompFn,
+            CategoryQuotientData.quotComp] at ihf ihg ⊢
+          -- Try aesop for automated reasoning
+          aesop
+  right_triangle := by
+    ext C
+    simp only [NatTrans.comp_app, Functor.whiskerLeft_app, Functor.associator_inv_app,
+      Functor.whiskerRight_app, Functor.comp_obj, Functor.id_obj]
+    simp only [LFunctor, PhiFunctor, unitNT, counitNT]
+    simp only [Category.id_comp]
+    -- Goal: η_{Φ(C)} ≫ Φ(ε_C) = 𝟙_{Φ(C)}
+    -- Use NatTransData extensionality
+    apply CategoryJudgments.NatTransData.ext
+    · -- appObj: both are identity on objects
+      simp only [CategoryJudgments.NatTransData.comp, unitNatTrans, unitAppObj,
+        OverFunctorData.toJudgmentNatTrans, counitFunctorData, counitQuiverMor,
+        CategoryStruct.comp]
+      rfl
+    · -- appMor: use second triangle identity
+      simp only [CategoryJudgments.NatTransData.comp, unitNatTrans,
+        OverFunctorData.toJudgmentNatTrans, counitFunctorData,
+        CategoryStruct.comp]
+      funext f
+      exact triangle2_mor C.data f
+    · -- appId: use second triangle identity
+      simp only [CategoryJudgments.NatTransData.comp, unitNatTrans,
+        OverFunctorData.toJudgmentNatTrans, counitFunctorData,
+        CategoryStruct.comp]
+      funext i
+      exact triangle2_id C.data i
+    · -- appComp: use second triangle identity
+      simp only [CategoryJudgments.NatTransData.comp, unitNatTrans,
+        OverFunctorData.toJudgmentNatTrans, counitFunctorData,
+        CategoryStruct.comp]
+      funext c
+      exact triangle2_comp C.data c
+
+/-- The mathlib adjunction L ⊣ Φ between copresheaves and categories.
+    This is the full adjunction constructed from the unit-counit data. -/
+def catCopresheafMathlibAdjunction :
+    LFunctor.{uAdj} ⊣ PhiFunctor.{uAdj} :=
+  Adjunction.mkOfUnitCounit adjunctionCoreUnitCounit
+
+end MathlibAdjunction
+
 end GebLean

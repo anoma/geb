@@ -59,22 +59,23 @@ has been fully constructed and verified.
    - `toOverFunctorData_comp` - L preserves composition:
      `(α.comp β).toOverFunctorData = α.toOverFunctorData.comp β.toOverFunctorData`
 
+1. **Mathlib Adjunction** - Done
+   - `instance : Category (CategoryJudgments.FunctorData (Type u))` with
+     NatTransData as morphisms (id, comp, id_comp, comp_id, assoc)
+   - `instance : Category BundledOverCategoryData` with OverFunctorData as
+     morphisms
+   - `LFunctor : Functor (FunctorData (Type u)) BundledOverCategoryData`
+   - `PhiFunctor : Functor BundledOverCategoryData (FunctorData (Type u))`
+   - `unitNT : NatTrans (Functor.id) (LFunctor ⋙ PhiFunctor)` with naturality
+   - `counitNT : NatTrans (PhiFunctor ⋙ LFunctor) (Functor.id)` with naturality
+   - `adjunctionCoreUnitCounit : Adjunction.CoreUnitCounit LFunctor PhiFunctor`
+     with triangle identities proven via `aesop` for comp case
+   - `catCopresheafMathlibAdjunction : LFunctor ⊣ PhiFunctor` constructed via
+     `Adjunction.mkOfUnitCounit`
+
 ## Future Enhancements
 
-1. **Connect to mathlib's Adjunction type**
-   - Use `CategoryTheory.Adjunction` from mathlib
-   - L preserves identity: `toOverFunctorData_id` (done)
-   - L preserves composition: `toOverFunctorData_comp` (done)
-   - Remaining work:
-     - Define `instance : Category (CategoryJudgments.FunctorData (Type u))`
-       with `NatTransData` as morphisms
-     - Define `instance : Category BundledOverCategoryData` with
-       `OverFunctorData` as morphisms (OverFunctorData supports different
-       quivers via `{Q₁ Q₂ : OverQuiver}` parameters)
-     - Prove composition and identity laws for these Category instances
-     - Define mathlib `Functor` for L and Φ using these instances
-     - Define mathlib `NatTrans` for unit and counit
-     - Construct `Adjunction.mkOfUnitCounit` from triangle identities
+None at this time. The mathlib adjunction L ⊣ Φ is complete.
 
 ## Key Files
 
@@ -101,6 +102,12 @@ has been fully constructed and verified.
 - `CategoryQuotientMorphism.id` - Identity CategoryQuotientMorphism
 - `toOverFunctorData_id` - L preserves identity
 - `toOverFunctorData_comp` - L preserves composition
+- `LFunctor` - Mathlib Functor from copresheaves to categories
+- `PhiFunctor` - Mathlib Functor from categories to copresheaves
+- `unitNT` - Mathlib NatTrans for the unit η
+- `counitNT` - Mathlib NatTrans for the counit ε
+- `adjunctionCoreUnitCounit` - CoreUnitCounit data with triangle proofs
+- `catCopresheafMathlibAdjunction` - The full mathlib Adjunction L ⊣ Φ
 
 ## Technical Notes
 
