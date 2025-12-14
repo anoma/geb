@@ -513,7 +513,8 @@ Phase 5 (complete): Reflectivity
 
 - Counit is an isomorphism at the `OverFunctorData` level
 - This establishes that the adjunction L ⊣ Φ is reflective
-- Connection to mathlib's `fullyFaithfulROfIsIsoCounit` in progress
+- `adjunctionCounit_isIso` provides the mathlib `IsIso` instance for the counit
+- `catCopresheafCounitNatIso` gives the natural isomorphism form
 
 ## References
 
@@ -522,7 +523,6 @@ Phase 5 (complete): Reflectivity
 - `GebLean/Utilities/OverCategoryEquiv.lean` - Over-based category structures
   and their equivalence to dependent formulations
 - `GebLean/CatJudgmentAdjunction.lean` - Implementation of the adjunction
-  (in progress)
 
 ## Mathematical Context
 

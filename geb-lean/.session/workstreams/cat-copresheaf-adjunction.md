@@ -1,40 +1,47 @@
 # Cat-Copresheaf Adjunction Workstream
 
-## Status: In Progress - Universe Polymorphism and Mathlib Integration
+## Status: Complete
 
 The adjunction L ⊣ Φ between categories and copresheaves on CategoryJudgments
-has been fully constructed and verified. Current work focuses on improving
-universe polymorphism and connecting to mathlib's reflective adjunction
+has been fully constructed, verified, and connected to mathlib's categorical
 infrastructure.
 
-## Current Work
-
-### Task 4: Improve Universe Polymorphism (In Progress)
-
-The current implementation uses `{uLeft, uLeft}` (requiring v = u), but this is
-more restrictive than necessary. Following the pattern of `overCatOverFunctorData`
-and `catOverCatFunctorData`, we can use `{max v u, u}` which only requires v >= u.
-
-Approach:
-
-1. Change universe parameters from `{uLeft, uLeft}` to `{max v u, u}`
-2. Update `LFunctor`, `PhiFunctor`, and related definitions
-3. Propagate changes through the adjunction and equivalence definitions
-4. Verify the build passes with the more general universe levels
-
-### Task 5: Connect to Mathlib's Reflective Adjunction (In Progress)
-
-Build infrastructure to use mathlib's `fullyFaithfulROfIsIsoCounit` theorem,
-which derives full faithfulness from the counit being an isomorphism.
-
-Approach:
-
-1. Lift `OverFunctorData` isomorphisms to mathlib's `Iso` type
-2. Show that `counitFunctorData` becomes an `Iso` in `BundledOverCategoryData`
-3. Apply `fullyFaithfulROfIsIsoCounit` to derive full faithfulness of Φ
-4. This provides a fully mathlib-verified proof of reflectivity
-
 ## Completed Tasks
+
+### Task 5: Connect to Mathlib's Reflective Adjunction (Complete)
+
+Connected the counit isomorphism to mathlib's standard formulations:
+
+1. `counitComponentIso` - lifts `OverFunctorData` isomorphism to mathlib `Iso`
+2. `adjunctionCounit_app_isIso` - instance showing each counit component is `IsIso`
+3. `adjunctionCounit_isIso` - instance showing the full counit natural transformation
+   is `IsIso`
+4. `catCopresheafCounitNatIso` - the natural isomorphism form of the counit
+
+Note: Mathlib's `Adjunction.fullyFaithfulROfIsIsoCounit` is noncomputable, so we
+don't directly apply it to maintain our computational requirement. However, the
+`IsIso` instances establish the same mathematical content, and the theorem can
+be applied in contexts where noncomputability is acceptable.
+
+### Task 4: Universe Polymorphism Analysis (Complete)
+
+Investigation revealed that the copresheaf adjunction chain is intrinsically
+constrained to `{u, u}` because:
+
+1. The copresheaf is valued in `Type u`
+2. `FunctorData.toOverCategoryData` produces `OverCategoryData.{u, u}`
+3. This propagates through `LFunctor`, `PhiFunctor`, and all compositions
+
+Changes made:
+
+- Generalized the `Category` instance for `BundledOverCategoryData` from `.{u, u}`
+  to `.{v, u}` (useful for other applications of `BundledOverCategoryData`)
+- The `{max v u, u}` pattern from `OverCategoryEquiv.lean` applies to the
+  equivalence `BundledOverCategoryData ≌ BundledCategoryData` independently
+  of the copresheaf chain
+
+The full adjunction `LFunctorFull ⊣ PhiFunctorFull` uses `Cat.{u, u}` on the
+category side, matching the `Type u` copresheaf values.
 
 ### Task 1: Comment Audit (Complete)
 
