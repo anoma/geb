@@ -2892,4 +2892,397 @@ def catCopresheafExtAdjunction :
 
 end ExtendedAdjunction
 
+/-! ## Left-Side Extension: BundledOverCategoryData to Cat
+
+We extend the adjunction on the left side by composing with an equivalence
+between `BundledOverCategoryData` and mathlib's `Cat`. This is done by:
+1. Building a functor `BundledOverCategoryData ⥤ Cat` via `BundledCategoryData`
+2. Building the inverse functor `Cat ⥤ BundledOverCategoryData`
+3. Proving they form an equivalence
+4. Composing with the adjunction from ExtendedAdjunction
+-/
+
+section LeftSideExtension
+
+universe uLeft
+
+open BundledCategoryData (toCatObj ofCatObj functorToCat functorFromCat equivCat)
+
+/-- The functor from BundledOverCategoryData to BundledCategoryData. -/
+def overToBundledCatFunctor :
+    BundledOverCategoryData.{uLeft, uLeft} ⥤ BundledCategoryData.{uLeft, uLeft} where
+  obj := fun C => C.toBundledCategoryData
+  map := toBundledCategoryData_map
+  map_id := toBundledCategoryData_map_id
+  map_comp := fun F G => toBundledCategoryData_map_comp F G
+
+/-- The functor from BundledCategoryData to BundledOverCategoryData. -/
+def bundledCatToOverFunctor :
+    BundledCategoryData.{uLeft, uLeft} ⥤ BundledOverCategoryData.{uLeft, uLeft} where
+  obj := fun C => C.toBundledOverCategoryData
+  map := toBundledOverCategoryData_map
+  map_id := toBundledOverCategoryData_map_id
+  map_comp := fun F G => toBundledOverCategoryData_map_comp F G
+
+/-! ### Building the equivalence BundledOverCategoryData ≌ BundledCategoryData
+
+The round-trips `Over → BundledCat → Over` and `BundledCat → Over → BundledCat`
+are NOT definitionally the identity due to the different morphism type encodings
+(sigma types vs fiber types). However, they are naturally isomorphic to identity
+via the equivalences `OverQuiver.sigma_equiv` and `HomSet.fiber_equiv`. -/
+
+/-- The unit isomorphism component: an OverFunctorData from C to the round-trip
+    C.toBundledCategoryData.toBundledOverCategoryData.
+    Uses the sigma equivalence to map morphisms. -/
+def overBundledCatUnit_app (C : BundledOverCategoryData.{uLeft, uLeft}) :
+    C ⟶ (overToBundledCatFunctor ⋙ bundledCatToOverFunctor).obj C where
+  toOverQuiverMorphism := {
+    objFn := id
+    morFn := fun f => C.quiver.sigma_equiv.toFun f
+    src_comm := fun f => by
+      simp only [Functor.comp_obj, overToBundledCatFunctor, bundledCatToOverFunctor,
+        BundledOverCategoryData.toBundledCategoryData,
+        BundledCategoryData.toBundledOverCategoryData,
+        OverQuiver.sigma_equiv, HomSet.toOverQuiver, id_eq]
+    tgt_comm := fun f => by
+      simp only [Functor.comp_obj, overToBundledCatFunctor, bundledCatToOverFunctor,
+        BundledOverCategoryData.toBundledCategoryData,
+        BundledCategoryData.toBundledOverCategoryData,
+        OverQuiver.sigma_equiv, HomSet.toOverQuiver, id_eq]
+  }
+  map_id := fun a => by
+    simp only [Functor.comp_obj, overToBundledCatFunctor, bundledCatToOverFunctor,
+      BundledOverCategoryData.toBundledCategoryData,
+      BundledCategoryData.toBundledOverCategoryData,
+      HomSet.toOverQuiver, CategoryData.toOverCategoryData, id_eq,
+      OverCategoryData.toCategoryOps, CategoryData.toOverCategoryOps,
+      OverCategoryData.toCategoryData]
+    exact OverQuiver.sigma_equiv_id C.data a
+  map_comp := fun p => by
+    simp only [Functor.comp_obj, overToBundledCatFunctor, bundledCatToOverFunctor,
+      BundledOverCategoryData.toBundledCategoryData,
+      BundledCategoryData.toBundledOverCategoryData,
+      HomSet.toOverQuiver, CategoryData.toOverCategoryOps,
+      OverCategoryData.toCategoryData, CategoryData.toOverCategoryData,
+      OverQuiver.sigma_equiv, OverCategoryData.toCategoryOps,
+      OverCategoryData.extractComp]
+    -- Both sides have compFn applied to pairs with the same underlying morphisms
+    obtain ⟨⟨f, g⟩, hcomp⟩ := p
+    simp only [Subtype.coe_mk]
+    -- The transported g value equals g
+    have hg_val : (hcomp.symm ▸ (⟨g, rfl, rfl⟩ :
+        C.quiver.toHomSet (C.quiver.src g) (C.quiver.tgt g)) :
+        C.quiver.toHomSet (C.quiver.tgt f) (C.quiver.tgt g)).val = g :=
+      HomSet.val_eqRec hcomp.symm ⟨g, rfl, rfl⟩
+    -- Use simp_all to apply the rewrite so both sides use the same compFn
+    simp_all only
+    -- Now use sigma_homset_eq with the composition (same morphism on both sides)
+    apply OverQuiver.sigma_homset_eq
+    · exact rfl -- src proof on LHS
+    · exact C.data.comp_src ⟨(f, g), hcomp⟩ -- LHS a₁ = RHS a₂
+    · exact rfl -- tgt proof on LHS
+    · exact C.data.comp_tgt ⟨(f, g), hcomp⟩ -- LHS b₁ = RHS b₂
+
+/-- The inverse of the unit: an OverFunctorData from the round-trip back to C.
+    Uses the inverse of the sigma equivalence. -/
+def overBundledCatUnit_inv (C : BundledOverCategoryData.{uLeft, uLeft}) :
+    (overToBundledCatFunctor ⋙ bundledCatToOverFunctor).obj C ⟶ C where
+  toOverQuiverMorphism := {
+    objFn := id
+    morFn := fun f => C.quiver.sigma_equiv.invFun f
+    src_comm := fun f => by
+      simp only [Functor.comp_obj, overToBundledCatFunctor, bundledCatToOverFunctor,
+        BundledOverCategoryData.toBundledCategoryData,
+        BundledCategoryData.toBundledOverCategoryData,
+        OverQuiver.sigma_equiv, HomSet.toOverQuiver, id_eq]
+      obtain ⟨a, b, ⟨g, ha, hb⟩⟩ := f
+      exact ha
+    tgt_comm := fun f => by
+      simp only [Functor.comp_obj, overToBundledCatFunctor, bundledCatToOverFunctor,
+        BundledOverCategoryData.toBundledCategoryData,
+        BundledCategoryData.toBundledOverCategoryData,
+        OverQuiver.sigma_equiv, HomSet.toOverQuiver, id_eq]
+      obtain ⟨a, b, ⟨g, ha, hb⟩⟩ := f
+      exact hb
+  }
+  map_id := fun a => by
+    simp only [Functor.comp_obj, overToBundledCatFunctor, bundledCatToOverFunctor,
+      BundledOverCategoryData.toBundledCategoryData,
+      BundledCategoryData.toBundledOverCategoryData,
+      OverQuiver.sigma_equiv, HomSet.toOverQuiver,
+      CategoryData.toOverCategoryOps,
+      OverCategoryData.toCategoryData, CategoryData.toOverCategoryData]
+    rfl
+  map_comp := fun p => by
+    simp only [Functor.comp_obj, overToBundledCatFunctor, bundledCatToOverFunctor,
+      BundledOverCategoryData.toBundledCategoryData,
+      BundledCategoryData.toBundledOverCategoryData,
+      OverQuiver.sigma_equiv, HomSet.toOverQuiver,
+      OverCategoryData.toCategoryData, CategoryData.toOverCategoryData,
+      OverCategoryData.toCategoryOps, OverCategoryData.extractComp]
+    obtain ⟨⟨f, g⟩, hcomp⟩ := p
+    -- Decompose f and g to access their components
+    obtain ⟨a_f, b_f, ⟨m_f, ha_f, hb_f⟩⟩ := f
+    obtain ⟨a_g, b_g, ⟨m_g, ha_g, hb_g⟩⟩ := g
+    -- hcomp gives b_f = a_g (composability: target of f = source of g)
+    -- Substitute to eliminate the transport
+    cases hcomp
+    -- Now both sides are definitionally equal
+    rfl
+
+/-- The unit isomorphism for the Over ≌ BundledCat equivalence. -/
+def overBundledCatUnitIso :
+    𝟭 BundledOverCategoryData.{uLeft, uLeft} ≅
+      overToBundledCatFunctor ⋙ bundledCatToOverFunctor where
+  hom := { app := overBundledCatUnit_app
+           naturality := fun C D F => by
+             apply OverFunctorData.ext
+             · rfl
+             · funext f
+               -- Both sides compute to ⟨F.objFn (src f), F.objFn (tgt f), F.morFn f⟩
+               -- LHS = sigma_embed(F.morFn f) = ⟨D.src(F.morFn f), D.tgt(F.morFn f), F.morFn f⟩
+               --     = ⟨F.objFn(C.src f), F.objFn(C.tgt f), F.morFn f⟩ by src_comm/tgt_comm
+               -- RHS = F_roundtrip(sigma_embed f) = F_roundtrip⟨C.src f, C.tgt f, f⟩
+               --     = ⟨F.objFn(C.src f), F.objFn(C.tgt f), F.morFn f⟩
+               simp only [CategoryStruct.comp, OverFunctorData.comp,
+                 OverQuiverMorphism.comp, overBundledCatUnit_app,
+                 OverQuiver.sigma_equiv, Function.comp_apply]
+               -- Use sigma_homset_eq to equate the nested sigma types
+               apply OverQuiver.sigma_homset_eq
+               · rfl
+               · exact F.toOverQuiverMorphism.src_comm f
+               · rfl
+               · exact F.toOverQuiverMorphism.tgt_comm f }
+  inv := { app := overBundledCatUnit_inv
+           naturality := fun C D F => by
+             apply OverFunctorData.ext
+             · rfl
+             · funext f
+               simp only [CategoryStruct.comp, OverFunctorData.comp,
+                 OverQuiverMorphism.comp, overBundledCatUnit_inv,
+                 OverQuiver.sigma_equiv, Function.comp_apply,
+                 Equiv.invFun_as_coe]
+               -- Destructure f to access its components
+               obtain ⟨a, b, ⟨g, ha, hb⟩⟩ := f
+               rfl }
+  hom_inv_id := by
+    ext C : 2
+    simp only [NatTrans.comp_app, NatTrans.id_app, Functor.id_obj]
+    apply OverFunctorData.ext
+    · rfl
+    · funext f
+      simp only [CategoryStruct.comp, CategoryStruct.id, overBundledCatUnit_app,
+        overBundledCatUnit_inv, OverFunctorData.comp, OverQuiverMorphism.comp,
+        OverFunctorData.id, OverQuiverMorphism.id, OverQuiver.sigma_equiv,
+        Function.comp_apply, Equiv.invFun_as_coe, Equiv.toFun_as_coe,
+        Equiv.symm_apply_apply, id_eq]
+  inv_hom_id := by
+    ext C : 2
+    simp only [NatTrans.comp_app, NatTrans.id_app, Functor.comp_obj]
+    apply OverFunctorData.ext
+    · rfl
+    · funext f
+      simp only [CategoryStruct.comp, CategoryStruct.id, overBundledCatUnit_app,
+        overBundledCatUnit_inv, OverFunctorData.comp, OverQuiverMorphism.comp,
+        OverFunctorData.id, OverQuiverMorphism.id, OverQuiver.sigma_equiv,
+        Function.comp_apply, Equiv.invFun_as_coe, Equiv.toFun_as_coe,
+        Equiv.apply_symm_apply, id_eq]
+
+/-- The counit isomorphism component: a FunctorData from the round-trip
+    C.toBundledOverCategoryData.toBundledCategoryData back to C.
+    Uses the fiber equivalence to map morphisms. -/
+def overBundledCatCounit_app (C : BundledCategoryData.{uLeft, uLeft}) :
+    (bundledCatToOverFunctor ⋙ overToBundledCatFunctor).obj C ⟶ C where
+  toFunctorOps := {
+    obj := id
+    map := fun f => C.roundtripEquiv _ _ f
+  }
+  laws := {
+    map_id := fun a => by
+      simp only [Functor.comp_obj, bundledCatToOverFunctor, overToBundledCatFunctor,
+        BundledCategoryData.toBundledOverCategoryData,
+        BundledOverCategoryData.toBundledCategoryData,
+        BundledCategoryData.roundtripEquiv,
+        OverCategoryData.toCategoryData, OverCategoryData.toCategoryOps]
+      exact HomSet.fiber_equiv_extractId C.data a
+    map_comp := fun f g => by
+      simp only [Functor.comp_obj, bundledCatToOverFunctor, overToBundledCatFunctor,
+        BundledCategoryData.toBundledOverCategoryData,
+        BundledOverCategoryData.toBundledCategoryData,
+        BundledCategoryData.roundtripEquiv,
+        OverCategoryData.toCategoryData, OverCategoryData.toCategoryOps]
+      rcases f with ⟨⟨a_f, b_f, m_f⟩, haf, hbf⟩
+      rcases g with ⟨⟨a_g, b_g, m_g⟩, hag, hbg⟩
+      cases haf
+      cases hbf
+      cases hag
+      cases hbg
+      exact HomSet.fiber_equiv_extractComp C.data m_f m_g
+  }
+
+/-- The inverse of the counit: a FunctorData from C to the round-trip. -/
+def overBundledCatCounit_inv (C : BundledCategoryData.{uLeft, uLeft}) :
+    C ⟶ (bundledCatToOverFunctor ⋙ overToBundledCatFunctor).obj C where
+  toFunctorOps := {
+    obj := id
+    map := fun f => (C.roundtripEquiv _ _).symm f
+  }
+  laws := {
+    map_id := fun a => by
+      simp only [Functor.comp_obj, bundledCatToOverFunctor, overToBundledCatFunctor,
+        BundledCategoryData.toBundledOverCategoryData,
+        BundledOverCategoryData.toBundledCategoryData,
+        BundledCategoryData.roundtripEquiv, HomSet.fiber_equiv,
+        OverCategoryData.toCategoryData, CategoryData.toOverCategoryData,
+        CategoryData.toOverCategoryOps]
+      rfl
+    map_comp := fun f g => by
+      simp only [Functor.comp_obj, bundledCatToOverFunctor, overToBundledCatFunctor,
+        BundledCategoryData.toBundledOverCategoryData,
+        BundledOverCategoryData.toBundledCategoryData,
+        BundledCategoryData.roundtripEquiv, HomSet.fiber_equiv,
+        OverCategoryData.toCategoryData, CategoryData.toOverCategoryData,
+        CategoryData.toOverCategoryOps]
+      rfl
+  }
+
+/-- The counit isomorphism for the Over ≌ BundledCat equivalence. -/
+def overBundledCatCounitIso :
+    bundledCatToOverFunctor ⋙ overToBundledCatFunctor ≅
+      𝟭 BundledCategoryData.{uLeft, uLeft} where
+  hom := { app := overBundledCatCounit_app
+           naturality := fun C D F => by
+             apply FunctorData.ext'
+             apply FunctorOps.ext_map
+             intro a b f
+             rcases f with ⟨⟨a', b', m⟩, ⟨ha, hb⟩⟩
+             subst ha hb
+             dsimp only [Functor.comp_map, bundledCatToOverFunctor,
+               overToBundledCatFunctor]
+             simp only [Function.comp_apply, overBundledCatCounit_app,
+               BundledCategoryData.toBundledOverCategoryData,
+               BundledOverCategoryData.toBundledCategoryData,
+               toBundledCategoryData_toBundledOverCategoryData_map,
+               BundledCategoryData.roundtripEquiv, Functor.id_map, id_eq,
+               HomSet.toOverQuiver_src, HomSet.toOverQuiver_tgt,
+               FunctorData.roundtrip_obj_eq, FunctorData.roundtrip_map_fiber_equiv] }
+  inv := { app := overBundledCatCounit_inv
+           naturality := fun C D F => by
+             apply FunctorData.ext'
+             apply FunctorOps.ext_map
+             intro a b f
+             dsimp only [Functor.comp_map, bundledCatToOverFunctor,
+               overToBundledCatFunctor]
+             simp only [Function.comp_apply, overBundledCatCounit_inv,
+               BundledCategoryData.toBundledOverCategoryData,
+               BundledOverCategoryData.toBundledCategoryData,
+               toBundledCategoryData_toBundledOverCategoryData_map,
+               BundledCategoryData.roundtripEquiv, Functor.id_map, id_eq,
+               FunctorData.roundtrip_obj_eq,
+               FunctorData.roundtrip_map_fiber_equiv_symm]
+             rfl }
+  hom_inv_id := by
+    ext C : 2
+    simp only [NatTrans.comp_app, NatTrans.id_app, Functor.comp_obj]
+    apply FunctorData.ext'
+    apply FunctorOps.ext_map
+    intro a b f
+    rcases f with ⟨⟨a', b', m⟩, ⟨ha, hb⟩⟩
+    subst ha hb
+    simp only [Function.comp_apply, overBundledCatCounit_app, overBundledCatCounit_inv,
+      BundledCategoryData.roundtripEquiv, id_eq, Equiv.symm_apply_apply]
+  inv_hom_id := by
+    ext C : 2
+    simp only [NatTrans.comp_app, NatTrans.id_app, Functor.id_obj]
+    apply FunctorData.ext'
+    apply FunctorOps.ext_map
+    intro a b f
+    simp only [Function.comp_apply, overBundledCatCounit_app, overBundledCatCounit_inv,
+      BundledCategoryData.roundtripEquiv, id_eq, Equiv.apply_symm_apply]
+
+/-- The triangle identity for the equivalence: composing the unit with the
+    counit gives the identity on the functor side. -/
+theorem overBundledCat_functor_unitIso_comp (X : BundledOverCategoryData.{uLeft, uLeft}) :
+    overToBundledCatFunctor.map (overBundledCatUnitIso.hom.app X) ≫
+        overBundledCatCounitIso.hom.app (overToBundledCatFunctor.obj X) =
+      𝟙 (overToBundledCatFunctor.obj X) := by
+  apply FunctorData.ext'
+  apply FunctorOps.ext_map
+  intro a b f
+  rcases f with ⟨m, ⟨ha, hb⟩⟩
+  cases ha
+  cases hb
+  apply Subtype.ext
+  simp only [Functor.id_obj, Function.comp_apply, overToBundledCatFunctor,
+    overBundledCatUnitIso, overBundledCatCounitIso, overBundledCatCounit_app,
+    overBundledCatUnit_app, BundledOverCategoryData.toBundledCategoryData,
+    OverFunctorData.toFunctorData, OverFunctorData.toFunctorOps,
+    OverFunctorData.extractMap, OverFunctorData.extractObj,
+    BundledCategoryData.toBundledOverCategoryData, BundledCategoryData.roundtripEquiv,
+    toBundledCategoryData_map, Equiv.toFun_as_coe, id_eq]
+  convert OverQuiver.fiber_equiv_sigma_equiv_val X.quiver m
+
+/-- The equivalence between BundledOverCategoryData and BundledCategoryData.
+    This uses the sigma and fiber equivalences to build the natural isomorphisms
+    for the unit and counit. -/
+def overBundledCatEquiv :
+    BundledOverCategoryData.{uLeft, uLeft} ≌ BundledCategoryData.{uLeft, uLeft} where
+  functor := overToBundledCatFunctor
+  inverse := bundledCatToOverFunctor
+  unitIso := overBundledCatUnitIso
+  counitIso := overBundledCatCounitIso
+  functor_unitIso_comp := overBundledCat_functor_unitIso_comp
+
+/-- The equivalence between BundledOverCategoryData and Cat.
+    This is the composition of overBundledCatEquiv and equivCat. -/
+def overCatEquiv :
+    BundledOverCategoryData.{uLeft, uLeft} ≌ Cat.{uLeft, uLeft} :=
+  overBundledCatEquiv.trans equivCat
+
+/-- The functor from BundledOverCategoryData to Cat (from the equivalence). -/
+def overToCatFunctor :
+    BundledOverCategoryData.{uLeft, uLeft} ⥤ Cat.{uLeft, uLeft} :=
+  overCatEquiv.functor
+
+/-- The functor from Cat to BundledOverCategoryData (from the equivalence). -/
+def catToOverFunctor :
+    Cat.{uLeft, uLeft} ⥤ BundledOverCategoryData.{uLeft, uLeft} :=
+  overCatEquiv.inverse
+
+/-- The adjunction overToCatFunctor ⊣ catToOverFunctor, derived from the
+    equivalence overCatEquiv. -/
+def overCatAdjunction :
+    overToCatFunctor.{uLeft} ⊣ catToOverFunctor.{uLeft} :=
+  overCatEquiv.toAdjunction
+
+/-- The fully extended L functor: from mathlib copresheaves to Cat.
+    L'' = LFunctorExt ⋙ overToCatFunctor :
+    (Obj ⥤ Type u) ⥤ Cat -/
+def LFunctorFull :
+    (CategoryJudgments.Obj ⥤ Type uLeft) ⥤ Cat.{uLeft, uLeft} :=
+  LFunctorExt ⋙ overToCatFunctor
+
+/-- The fully extended Φ functor: from Cat to mathlib copresheaves.
+    Φ'' = catToOverFunctor ⋙ PhiFunctorExt :
+    Cat ⥤ (Obj ⥤ Type u) -/
+def PhiFunctorFull :
+    Cat.{uLeft, uLeft} ⥤ (CategoryJudgments.Obj ⥤ Type uLeft) :=
+  catToOverFunctor ⋙ PhiFunctorExt
+
+/-- The fully extended adjunction L'' ⊣ Φ'' where:
+    - The copresheaf side uses mathlib's functor category (Obj ⥤ Type u)
+    - The category side uses mathlib's Cat
+
+    This is constructed by composing:
+    - catCopresheafExtAdjunction : LFunctorExt ⊣ PhiFunctorExt
+    - overCatAdjunction : overToCatFunctor ⊣ catToOverFunctor
+
+    Using Adjunction.comp, we get:
+    (LFunctorExt ⋙ overToCatFunctor) ⊣ (catToOverFunctor ⋙ PhiFunctorExt) -/
+def catCopresheafFullAdjunction :
+    LFunctorFull.{uLeft} ⊣ PhiFunctorFull.{uLeft} :=
+  catCopresheafExtAdjunction.comp overCatAdjunction
+
+end LeftSideExtension
+
 end GebLean
