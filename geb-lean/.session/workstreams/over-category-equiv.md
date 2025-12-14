@@ -379,3 +379,118 @@ dependencies in proving congruence properties.
 - [x] 7g: Round-trip components (`unitComponent`, `counitEval`, `embedQuot`)
 - [x] 7h: Round-trip isomorphism L(Φ(C)) ≅ C (`roundtripEquiv`)
 - [ ] 7i: Full adjunction L ⊣ Φ
+
+## Phase 8: Full Adjunction L ⊣ Φ with Mathlib Integration
+
+This phase completes the adjunction between:
+
+- **L** (Reflection): Copresheaves → Categories (via free category quotient)
+- **Φ** (Embedding): Categories → Copresheaves (via `toJudgmentFunctorData`)
+
+The adjunction will be expressed using mathlib's `CategoryTheory.Adjunction` type.
+
+### 8a. Functoriality Prerequisites
+
+Before building the adjunction, we need `FreeMor.mapQuiver` to respect the
+equivalence relation, so that L acts functorially on morphisms of copresheaves.
+
+- `FreeMor.mapQuiver_respects_equiv`: If `f ~ g` then
+  `mapQuiver F f ~ mapQuiver F g`
+- `mapQuiver_id`: `mapQuiver id = id`
+- `mapQuiver_comp`: `mapQuiver (F ∘ G) = mapQuiver F ∘ mapQuiver G`
+
+### 8b. Universe Generalization
+
+The current code uses `{u, u}` for both object and morphism universes. For full
+generality, we should support `{v, u}` where objects live in `Type u` and
+morphisms in `Type v`. This affects:
+
+- `CategoryQuotientData`
+- `FreeMor`, `FreeMorEquiv`, `FreeMorEquivGen`
+- `derivedQuotientData`, `counitEval`, `roundtripEquiv`
+- All adjunction components
+
+### 8c. Unit Natural Transformation
+
+The unit η : Id → Φ ∘ L sends a copresheaf F to Φ(L(F)).
+
+For each copresheaf F:
+
+- η_F : F → Φ(L(F)) is a natural transformation of copresheaves
+- On morphisms: `f : F.morC` maps to `[var f]` in the quotient (already: `unitComponent`)
+- Naturality: For any copresheaf morphism `α : F → G`, we need
+  `Φ(L(α)) ∘ η_F = η_G ∘ α`
+
+Components needed:
+
+- `unitNatTransData`: The unit as `CategoryJudgments.NatTransData`
+- `unit_naturality`: Naturality proof
+
+### 8d. Counit Natural Transformation
+
+The counit ε : L ∘ Φ → Id evaluates free morphisms in a category.
+
+For each category C:
+
+- ε_C : L(Φ(C)) → C is a functor
+- On objects: identity (L(Φ(C)) has same objects as C)
+- On morphisms: `counitEval` (already implemented)
+- Functoriality: preserves id and composition (already: `counitEval_id`,
+  `counitEval_comp`)
+
+Components needed:
+
+- `counitFunctorData`: The counit as `OverFunctorData`
+- `counit_naturality`: For any functor `F : C → D`, we need
+  `F ∘ ε_C = ε_D ∘ L(Φ(F))`
+
+### 8e. Triangle Identities
+
+The adjunction requires two triangle identities:
+
+1. **(εL) ∘ (Lη) = id_L**: For any copresheaf F,
+   `ε_{L(F)} ∘ L(η_F) = id_{L(F)}`
+
+2. **(Φε) ∘ (ηΦ) = id_Φ**: For any category C,
+   `Φ(ε_C) ∘ η_{Φ(C)} = id_{Φ(C)}`
+
+The second identity follows from `roundtripEquiv` (L(Φ(C)) ≅ C).
+
+### 8f. Mathlib Integration
+
+Final step: translate our constructions to mathlib's types.
+
+**Functors needed:**
+
+- `LFunctor : CopresheafCat ⥤ Cat` (reflection functor L)
+- `PhiFunctor : Cat ⥤ CopresheafCat` (embedding functor Φ)
+
+**Using existing infrastructure:**
+
+- `CategoryOfData` to create `Category` instances
+- `FunctorOfData` to create mathlib `Functor`s
+- `NatTransOfData` to create mathlib `NatTrans`
+
+**Adjunction construction:**
+
+- Use `Adjunction.mk` with unit, counit, and triangle identity proofs
+- Alternative: `Adjunction.mkOfHomEquiv` if hom-set approach is cleaner
+
+### 8g. Verification
+
+The adjunction L ⊣ Φ implies:
+
+- `Hom_{Cat}(L(F), C) ≃ Hom_{Copresh}(F, Φ(C))` naturally in F and C
+- L is left adjoint to Φ
+- Φ is right adjoint to L
+- L preserves colimits, Φ preserves limits
+
+### Status (Phase 8)
+
+- [ ] 8a: `FreeMor.mapQuiver` respects equivalence
+- [ ] 8b: Universe generalization to `{v, u}`
+- [ ] 8c: Unit natural transformation
+- [ ] 8d: Counit natural transformation (functor structure)
+- [ ] 8e: Triangle identities
+- [ ] 8f: Mathlib `Adjunction` construction
+- [ ] 8g: Verification of adjunction properties

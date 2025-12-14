@@ -444,6 +444,40 @@ def toOverCategoryData : OverCategoryData D.quotQuiver where
   comp_id := D.quot_comp_id
   assoc := D.quot_assoc
 
+/-- Casting a QuotMor equals taking the quotMor of a casted FreeMor.
+    This lemma captures that the quotient construction commutes with
+    type transport along index equalities. -/
+theorem quotMor_cast {a b a' b' : D.quiver.Obj}
+    (ha : a = a') (hb : b = b') (f : FreeMor D.quiver a b) :
+    cast (congrArg₂ D.QuotMor ha hb) (D.quotMor f) =
+    D.quotMor (cast (congrArg₂ (FreeMor D.quiver) ha hb) f) := by
+  subst ha hb
+  rfl
+
+/-- HEq of nested sigma types for quotient morphisms.
+    Given equalities on indices and an equality of the underlying QuotMor
+    at the target indices, we get HEq of nested sigma elements. -/
+theorem quotMorSigma_heq {a a' b b' : D.quiver.Obj}
+    (ha : a = a') (hb : b = b')
+    (q : D.QuotMor a b) (q' : D.QuotMor a' b')
+    (hq : cast (congrArg₂ D.QuotMor ha hb) q = q') :
+    HEq (⟨b, q⟩ : Σ c : D.quiver.Obj, D.QuotMor a c)
+        (⟨b', q'⟩ : Σ c : D.quiver.Obj, D.QuotMor a' c) := by
+  subst ha hb
+  simp only [cast_eq] at hq
+  subst hq
+  rfl
+
+/-- Transport on QuotMor via index equality.
+    When we transport a QuotMor via an equality h : b = b', we get
+    the quotMor of the transported FreeMor. -/
+theorem quotMor_subst_tgt {a b b' : D.quiver.Obj} (h : b = b')
+    (f : FreeMor D.quiver a b) :
+    h ▸ D.quotMor f = D.quotMor (h ▸ f) := by
+  subst h
+  rfl
+
+
 end CategoryQuotientData
 
 /-! ## Reflection Functor L: FunctorData -> OverCategoryData
@@ -552,6 +586,465 @@ def FreeMor.mapQuiver (F : OverQuiverMorphism Q₁ Q₂)
   | .comp g f => .comp (mapQuiver F g) (mapQuiver F f)
 
 end FreeMorMapping
+
+/-! ## Morphisms between CategoryQuotientData
+
+For L to be functorial, we need to show that morphisms between copresheaves
+(NatTransData) induce well-defined functors between quotient categories.
+A NatTransData preserves the witness structure needed for the equivalence
+relation. -/
+
+section QuotientMorphisms
+
+variable {D₁ D₂ : CategoryQuotientData.{v, u}}
+
+/-- A morphism between CategoryQuotientData structures that is compatible with
+    the id and comp witnesses. This is the structure induced by a NatTransData
+    between the corresponding copresheaves. -/
+structure CategoryQuotientMorphism (D₁ D₂ : CategoryQuotientData.{v, u}) where
+  /-- The underlying quiver morphism. -/
+  quiverMor : OverQuiverMorphism D₁.quiver D₂.quiver
+  /-- Map on identity witnesses. -/
+  idWitMap : D₁.IdWitness → D₂.IdWitness
+  /-- Map on composition witnesses. -/
+  compWitMap : D₁.CompWitness → D₂.CompWitness
+  /-- Identity objects are preserved. -/
+  idObj_comm : ∀ i, quiverMor.objFn (D₁.idObj i) = D₂.idObj (idWitMap i)
+  /-- Identity morphisms are preserved. -/
+  idMor_comm : ∀ i, quiverMor.morFn (D₁.idMor i) = D₂.idMor (idWitMap i)
+  /-- Right components of composition are preserved. -/
+  compRight_comm : ∀ c, quiverMor.morFn (D₁.compRight c) = D₂.compRight (compWitMap c)
+  /-- Left components of composition are preserved. -/
+  compLeft_comm : ∀ c, quiverMor.morFn (D₁.compLeft c) = D₂.compLeft (compWitMap c)
+  /-- Composite morphisms are preserved. -/
+  compComposite_comm :
+    ∀ c, quiverMor.morFn (D₁.compComposite c) = D₂.compComposite (compWitMap c)
+
+variable (F : CategoryQuotientMorphism D₁ D₂)
+
+/-- Helper: mapQuiver of a var is a transported var.
+    mapQuiver F (var m) = h₁ ▸ h₂ ▸ var (F.morFn m)
+    where h₁, h₂ are the source/target preservation proofs. -/
+theorem FreeMor.mapQuiver_var (m : D₁.quiver.MorType) :
+    FreeMor.mapQuiver F.quiverMor (.var m) =
+      F.quiverMor.src_comm m ▸ F.quiverMor.tgt_comm m ▸ .var (F.quiverMor.morFn m) := rfl
+
+/-- mapQuiver commutes with cast on the FreeMor type. -/
+theorem FreeMor.mapQuiver_cast {a a' b b' : D₁.quiver.Obj}
+    (ha : a = a') (hb : b = b')
+    (m : FreeMor D₁.quiver a b) :
+    FreeMor.mapQuiver F.quiverMor
+      (cast (congrArg₂ (FreeMor D₁.quiver) ha hb) m) =
+    cast (congrArg₂ (FreeMor D₂.quiver)
+      (congrArg F.quiverMor.objFn ha)
+      (congrArg F.quiverMor.objFn hb))
+      (FreeMor.mapQuiver F.quiverMor m) := by
+  subst ha hb
+  simp only [congrArg₂, cast_eq]
+
+/-- Two substs (▸) equal one cast for two-argument types. -/
+theorem subst_subst_eq_cast {A : Type*} {F : A → A → Type*}
+    {a a' b b' : A} (ha : a = a') (hb : b = b') (x : F a b) :
+    ha ▸ hb ▸ x = cast (congrArg₂ F ha hb) x := by
+  subst ha hb
+  rfl
+
+/-- Cast of a substed var equals cast of the var when the final types are the same. -/
+theorem cast_subst_var {Q : OverQuiver.{v, u}} {m₁ m₂ : Q.MorType}
+    {a b : Q.Obj} (hm : m₁ = m₂)
+    (h₁ : Q.src m₁ = a) (h₁' : Q.tgt m₁ = b)
+    (h₂ : Q.src m₂ = a) (h₂' : Q.tgt m₂ = b) :
+    cast (congrArg₂ (FreeMor Q) h₁ h₁')
+      (hm.symm.rec (motive := fun m _ => FreeMor Q (Q.src m) (Q.tgt m))
+        (FreeMor.var m₂)) =
+    cast (congrArg₂ (FreeMor Q) h₂ h₂') (FreeMor.var m₂) := by
+  subst hm
+  rfl
+
+/-- If two morphisms are equal, their vars under cast are equal. -/
+theorem FreeMor.cast_var_eq {Q : OverQuiver.{v, u}} {a b : Q.Obj}
+    {m₁ m₂ : Q.MorType} (hm : m₁ = m₂)
+    (h₁ : Q.src m₁ = a) (h₁' : Q.tgt m₁ = b)
+    (h₂ : Q.src m₂ = a) (h₂' : Q.tgt m₂ = b) :
+    cast (congrArg₂ (FreeMor Q) h₁ h₁') (.var m₁) =
+    cast (congrArg₂ (FreeMor Q) h₂ h₂') (.var m₂) := by
+  subst hm
+  rfl
+
+/-- FreeMor.id x equals FreeMor.id y when x = y. -/
+theorem FreeMor.id_eq {Q : OverQuiver.{v, u}} {x y : Q.Obj} (h : x = y) :
+    (FreeMor.id x : FreeMor Q x x) =
+    cast (congrArg₂ (FreeMor Q) h.symm h.symm) (FreeMor.id y) := by
+  subst h
+  rfl
+
+/-- Equality of compositions when components are equal under appropriate casts.
+    This handles the case where we need to show
+    (cast _ g).comp (cast _ f) = cast _ (g'.comp f')
+    when g and f are equal to g' and f' under casts. -/
+theorem FreeMor.comp_cast_eq {Q : OverQuiver.{v, u}}
+    {a a' b b' c c' : Q.Obj}
+    {g : FreeMor Q b c} {f : FreeMor Q a b}
+    {g' : FreeMor Q b' c'} {f' : FreeMor Q a' b'}
+    (ha : a' = a) (hb : b' = b) (hc : c' = c)
+    (hg : cast (congrArg₂ (FreeMor Q) hb hc) g' = g)
+    (hf : cast (congrArg₂ (FreeMor Q) ha hb) f' = f) :
+    g.comp f = cast (congrArg₂ (FreeMor Q) ha hc) (g'.comp f') := by
+  subst ha hb hc
+  simp only [congrArg₂, cast_eq] at hg hf ⊢
+  subst hg hf
+  rfl
+
+/-- Composition of casted morphisms can be expressed as a cast of composition
+    when all the indices properly align. -/
+theorem FreeMor.comp_cast_outer {Q : OverQuiver.{v, u}}
+    {a a' b₁ b₂ c c' : Q.Obj}
+    (ha : a = a') (hb_g : b₁ = b₂) (hc : c = c')
+    (g : FreeMor Q b₁ c) (f : FreeMor Q a b₁) :
+    (cast (congrArg₂ (FreeMor Q) hb_g hc) g).comp (cast (congrArg₂ (FreeMor Q) ha hb_g) f) =
+    cast (congrArg₂ (FreeMor Q) ha hc) (g.comp f) := by
+  subst ha hb_g hc
+  simp only [congrArg₂, cast_eq]
+
+/-- When composing casted morphisms, if the two casts share a middle index
+    (via a composability proof), the composition equals a cast of a composition
+    where one morphism is cast and one uses its natural index.
+    This handles: (cast _ g).comp (cast _ f) = cast _ ((cast _ g).comp f)
+    when tgt f = src g. -/
+theorem FreeMor.comp_cast_eq_cast_comp_partial {Q : OverQuiver.{v, u}}
+    {af bf bg a' b' : Q.Obj}
+    (ha : af = a') (hb : bg = b')
+    (g : FreeMor Q bf bg) (f : FreeMor Q af bf) :
+    (cast (congrArg₂ (FreeMor Q) rfl hb) g).comp (cast (congrArg₂ (FreeMor Q) ha rfl) f) =
+    cast (congrArg₂ (FreeMor Q) ha hb) (g.comp f) := by
+  subst ha hb
+  simp only [congrArg₂, cast_eq]
+
+
+/-- mapQuiver of a casted var. When we map a casted variable through F,
+    the result is a cast of var applied to the mapped morphism. -/
+theorem FreeMor.mapQuiver_cast_var
+    (m : D₁.quiver.MorType)
+    {a' b' : D₁.quiver.Obj} (ha : D₁.quiver.src m = a') (hb : D₁.quiver.tgt m = b') :
+    FreeMor.mapQuiver F.quiverMor
+      (cast (congrArg₂ (FreeMor D₁.quiver) ha hb) (.var m)) =
+    cast (congrArg₂ (FreeMor D₂.quiver)
+      ((F.quiverMor.src_comm m).trans (congrArg F.quiverMor.objFn ha))
+      ((F.quiverMor.tgt_comm m).trans (congrArg F.quiverMor.objFn hb)))
+      (.var (F.quiverMor.morFn m)) := by
+  subst ha hb
+  simp only [congrArg₂, cast_eq]
+  -- After subst: congrArg _ rfl = rfl, so both trans _ rfl simplify
+  -- LHS: mapQuiver F.quiverMor (.var m) = src_comm ▸ tgt_comm ▸ .var (...)
+  -- RHS: cast (congrArg₂ ... src_comm.trans rfl tgt_comm.trans rfl) (.var (...))
+  --    = cast (congrArg₂ ... src_comm tgt_comm) (.var (...)) by trans_refl
+  -- By subst_subst_eq_cast, src_comm ▸ tgt_comm ▸ x = cast (congrArg₂ ...) x
+  rw [mapQuiver_var, subst_subst_eq_cast]
+
+/-- mapQuiver preserves identity morphisms in FreeMor. -/
+theorem FreeMor.mapQuiver_id (F : CategoryQuotientMorphism D₁ D₂)
+    (a : D₁.quiver.Obj) :
+    FreeMor.mapQuiver F.quiverMor (.id a) = .id (F.quiverMor.objFn a) := rfl
+
+/-- mapQuiver preserves composition in FreeMor. -/
+theorem FreeMor.mapQuiver_comp (F : CategoryQuotientMorphism D₁ D₂)
+    {a b c : D₁.quiver.Obj}
+    (g : FreeMor D₁.quiver b c) (f : FreeMor D₁.quiver a b) :
+    FreeMor.mapQuiver F.quiverMor (.comp g f) =
+      .comp (FreeMor.mapQuiver F.quiverMor g) (FreeMor.mapQuiver F.quiverMor f) := rfl
+
+/-- mapQuiver respects the generating equivalence relation.
+    If f ~gen g in D₁, then mapQuiver F f ~gen mapQuiver F g in D₂. -/
+theorem FreeMor.mapQuiver_respects_gen
+    {a b : D₁.quiver.Obj}
+    {f g : FreeMor D₁.quiver a b}
+    (h : D₁.FreeMorEquivGen f g) :
+    D₂.FreeMorEquiv
+      (FreeMor.mapQuiver F.quiverMor f)
+      (FreeMor.mapQuiver F.quiverMor g) := by
+  induction h with
+  | id_left fm =>
+    simp only [mapQuiver]
+    exact .rel (.id_left _)
+  | id_right fm =>
+    simp only [mapQuiver]
+    exact .rel (.id_right _)
+  | assoc h' g' f' =>
+    simp only [mapQuiver]
+    exact .rel (.assoc _ _ _)
+  | id_witness i =>
+    -- Goal: mapQuiver (cast _ (var (D₁.idMor i))) ~ id (F.objFn (D₁.idObj i))
+    simp only [mapQuiver]
+    -- The D₂ witness gives: cast _ (var idMor') ~ id (idObj')
+    have h_wit := CategoryQuotientData.FreeMorEquivGen.id_witness (D := D₂) (F.idWitMap i)
+    -- We'll build the proof by showing our LHS equals a cast of the D₂ witness LHS,
+    -- and our RHS equals a cast of the D₂ witness RHS.
+    -- Then use FreeMorEquiv.cast to transport the equivalence.
+    -- Equalities:
+    -- F.idMor_comm i : F.quiverMor.morFn (D₁.idMor i) = D₂.idMor (F.idWitMap i)
+    -- F.idObj_comm i : F.quiverMor.objFn (D₁.idObj i) = D₂.idObj (F.idWitMap i)
+    -- Use the preservation properties to build the cast proofs:
+    -- Our LHS has cast proof based on (src_comm m).trans (congrArg _ (id_src i))
+    -- D₂ witness has cast proof based on D₂.id_src and D₂.id_tgt
+    -- We transport through F.idObj_comm i
+    have h_wit' := CategoryQuotientData.FreeMorEquiv.cast (D := D₂)
+      (F.idObj_comm i).symm (F.idObj_comm i).symm (.rel h_wit)
+    -- h_wit' : FreeMorEquiv
+    --   (cast (F.idObj_comm i).symm ... (cast ... (var (D₂.idMor ...))))
+    --   (cast (F.idObj_comm i).symm ... (id (D₂.idObj ...)))
+    -- Now we need to show our actual goal terms match h_wit''s terms
+    -- LHS term: mapQuiver_cast_var gives us cast _ (var (F.morFn (D₁.idMor i)))
+    --         = cast _ (var (D₂.idMor (F.idWitMap i))) by F.idMor_comm
+    -- RHS term: id (F.objFn (D₁.idObj i))
+    --         = id (D₂.idObj ...) by F.idObj_comm, which cast _ simplifies to
+    convert h_wit' using 1
+    · -- LHS: mapQuiver (cast _ (var idMor_D₁)) = cast _ (cast _ (var idMor_D₂))
+      rw [mapQuiver_cast_var F (D₁.idMor i) (D₁.id_src i) (D₁.id_tgt i)]
+      -- Goal: cast _ (var (F.morFn idMor)) = cast _ (cast _ (var idMor'))
+      simp only [cast_cast]
+      -- Goal: cast _ (var (F.morFn idMor)) = cast _ (var idMor')
+      -- Build the cast proofs needed for cast_var_eq:
+      -- For m₁ = F.morFn (D₁.idMor i):
+      --   h₁: D₂.src (F.morFn ...) = F.objFn (D₁.idObj i)
+      --     = (src_comm (D₁.idMor i)).trans (congrArg objFn (D₁.id_src i))
+      --   h₁': D₂.tgt (F.morFn ...) = F.objFn (D₁.idObj i)
+      --     = (tgt_comm (D₁.idMor i)).trans (congrArg objFn (D₁.id_tgt i))
+      -- For m₂ = D₂.idMor (F.idWitMap i):
+      --   h₂: D₂.src (D₂.idMor ...) = F.objFn (D₁.idObj i)
+      --     = (D₂.id_src (F.idWitMap i)).trans (F.idObj_comm i).symm
+      --   h₂': D₂.tgt (D₂.idMor ...) = F.objFn (D₁.idObj i)
+      --     = (D₂.id_tgt (F.idWitMap i)).trans (F.idObj_comm i).symm
+      exact cast_var_eq (F.idMor_comm i)
+        ((F.quiverMor.src_comm (D₁.idMor i)).trans (congrArg F.quiverMor.objFn (D₁.id_src i)))
+        ((F.quiverMor.tgt_comm (D₁.idMor i)).trans (congrArg F.quiverMor.objFn (D₁.id_tgt i)))
+        ((D₂.id_src (F.idWitMap i)).trans (F.idObj_comm i).symm)
+        ((D₂.id_tgt (F.idWitMap i)).trans (F.idObj_comm i).symm)
+    · -- RHS: id (F.objFn (D₁.idObj i)) = cast _ (id (D₂.idObj ...))
+      -- F.idObj_comm i : F.objFn (D₁.idObj i) = D₂.idObj (F.idWitMap i)
+      -- Use id_eq to show the ids are equal under cast
+      exact id_eq (F.idObj_comm i)
+  | comp_witness c =>
+    have h_wit := CategoryQuotientData.FreeMorEquivGen.comp_witness (D := D₂) (F.compWitMap c)
+    -- h_wit has type at D₂.quiver.src/tgt of D₂ witness morphisms
+    -- Our goal is at F.quiverMor.objFn applied to D₁ witness objects
+    simp only [mapQuiver]
+    -- Goal: (mapQuiver (cast _ (var L))).comp (mapQuiver (var R)) ~ mapQuiver (cast _ (var C))
+    -- The goal type is at (F.objFn (D₁.src compRight), F.objFn (D₁.tgt compLeft))
+    -- The h_wit type is at (D₂.src compRight', D₂.tgt compLeft')
+    -- where compRight' = D₂.compRight (F.compWitMap c), etc.
+    -- We use the preservation commutation:
+    -- F.objFn (D₁.src compRight) = D₂.src (F.morFn compRight) = D₂.src compRight' by compRight_comm
+    -- Cast proofs from (F.objFn D₁.xxx) to (D₂.xxx')
+    -- Build cast proofs: FreeMorEquiv.cast needs ha : a = a', hb : b = b'
+    -- where the original equiv is at (a, b) and we cast to (a', b')
+    -- h_wit is at (D₂.src compRight', D₂.tgt compLeft')
+    -- Our goal is at (F.objFn (D₁.src compRight), F.objFn (D₁.tgt compLeft))
+    -- So we need ha : D₂.src compRight' = F.objFn (D₁.src compRight)
+    have ha : D₂.quiver.src (D₂.compRight (F.compWitMap c)) =
+        F.quiverMor.objFn (D₁.quiver.src (D₁.compRight c)) :=
+      (congrArg D₂.quiver.src (F.compRight_comm c)).symm.trans
+        (F.quiverMor.src_comm (D₁.compRight c))
+    have hb : D₂.quiver.tgt (D₂.compLeft (F.compWitMap c)) =
+        F.quiverMor.objFn (D₁.quiver.tgt (D₁.compLeft c)) :=
+      (congrArg D₂.quiver.tgt (F.compLeft_comm c)).symm.trans
+        (F.quiverMor.tgt_comm (D₁.compLeft c))
+    have h_wit' := CategoryQuotientData.FreeMorEquiv.cast (D := D₂) ha hb (.rel h_wit)
+    convert h_wit' using 1
+    · -- LHS: composition equality
+      -- Expand the mapQuiver terms
+      rw [mapQuiver_cast_var F (D₁.compLeft c) (D₁.comp_match c).symm rfl]
+      simp only [subst_subst_eq_cast]
+      -- Goal: (cast A (var g₁)).comp (cast B (var f₁)) = cast C ((cast D (var g₂)).comp (var f₂))
+      -- where g₁ = g₂ and f₁ = f₂ by _comm lemmas
+      -- Try native_decide or decide for this goal
+      have h := F.compLeft_comm c
+      have h' := F.compRight_comm c
+      -- Try congrArg₂ with FreeMor.comp directly
+      -- Goal: (cast _ (var g₁)).comp (cast _ (var f₁)) = cast _ ((cast _ (var g₂)).comp (var f₂))
+      -- where g₁ = g₂ (by h) and f₁ = f₂ (by h')
+      -- Use Eq.rec to transport var through the equality
+      have var_eq_L : FreeMor.var (F.quiverMor.morFn (D₁.compLeft c)) =
+          h ▸ FreeMor.var (D₂.compLeft (F.compWitMap c)) :=
+        h.symm.rec rfl
+      have var_eq_R : FreeMor.var (F.quiverMor.morFn (D₁.compRight c)) =
+          h' ▸ FreeMor.var (D₂.compRight (F.compWitMap c)) :=
+        h'.symm.rec rfl
+      simp only [var_eq_L, var_eq_R]
+      -- Now both sides have the same vars; the casts use proof irrelevance
+      -- Use cast_subst_var to get the vars into the same form
+      rw [cast_subst_var h _ _ _ _, cast_subst_var h' _ _ _ _]
+      -- 8 proof obligations for the cast_subst_var arguments, plus main composition goal
+      -- Main goal: (cast _ g).comp (cast _ f) = cast _ ((cast _ g).comp f)
+      on_goal 1 => grind
+      all_goals first
+          | exact F.quiverMor.src_comm _
+          | exact F.quiverMor.tgt_comm _
+          | exact ha
+          | exact hb
+          | exact (D₂.comp_match _).symm
+          | exact (D₂.comp_match _).trans
+              ((congrArg D₂.quiver.tgt (F.compRight_comm c).symm).trans
+                (F.quiverMor.tgt_comm _))
+          | exact ((congrArg D₂.quiver.src (F.compLeft_comm c).symm).trans
+                (F.quiverMor.src_comm _)).trans (congrArg _ (D₁.comp_match c).symm)
+          | exact (congrArg D₂.quiver.tgt (F.compRight_comm c).symm).trans
+              (F.quiverMor.tgt_comm _)
+          | exact (F.quiverMor.src_comm _).trans
+              (congrArg _ (D₁.comp_match c).symm)
+    · -- RHS: composite equality
+      rw [mapQuiver_cast_var F (D₁.compComposite c) (D₁.comp_dom c) (D₁.comp_cod c)]
+      simp only [cast_cast]
+      -- Need source/target preservation proofs for mapQuiver of composite
+      have hsrc : D₂.quiver.src (F.quiverMor.morFn (D₁.compComposite c)) =
+          F.quiverMor.objFn (D₁.quiver.src (D₁.compRight c)) :=
+        (F.quiverMor.src_comm _).trans (congrArg _ (D₁.comp_dom c))
+      have htgt : D₂.quiver.tgt (F.quiverMor.morFn (D₁.compComposite c)) =
+          F.quiverMor.objFn (D₁.quiver.tgt (D₁.compLeft c)) :=
+        (F.quiverMor.tgt_comm _).trans (congrArg _ (D₁.comp_cod c))
+      -- Proofs for the D₂ version (via compComposite_comm)
+      have hsrc' : D₂.quiver.src (D₂.compComposite (F.compWitMap c)) =
+          F.quiverMor.objFn (D₁.quiver.src (D₁.compRight c)) :=
+        (congrArg D₂.quiver.src (F.compComposite_comm c).symm).trans hsrc
+      have htgt' : D₂.quiver.tgt (D₂.compComposite (F.compWitMap c)) =
+          F.quiverMor.objFn (D₁.quiver.tgt (D₁.compLeft c)) :=
+        (congrArg D₂.quiver.tgt (F.compComposite_comm c).symm).trans htgt
+      exact cast_var_eq (F.compComposite_comm c) hsrc htgt hsrc' htgt'
+  | cong_left h' _ ih =>
+    simp only [mapQuiver]
+    exact CategoryQuotientData.FreeMorEquiv.cong_left D₂
+      (mapQuiver F.quiverMor h') ih
+  | cong_right k _ ih =>
+    simp only [mapQuiver]
+    exact CategoryQuotientData.FreeMorEquiv.cong_right D₂
+      (mapQuiver F.quiverMor k) ih
+
+/-- mapQuiver respects the full equivalence relation.
+    If f ~ g in D₁, then mapQuiver F f ~ mapQuiver F g in D₂. -/
+theorem FreeMor.mapQuiver_respects_equiv
+    {a b : D₁.quiver.Obj}
+    {f g : FreeMor D₁.quiver a b}
+    (h : D₁.FreeMorEquiv f g) :
+    D₂.FreeMorEquiv
+      (FreeMor.mapQuiver F.quiverMor f)
+      (FreeMor.mapQuiver F.quiverMor g) := by
+  induction h with
+  | rel hr => exact mapQuiver_respects_gen F hr
+  | refl _ => exact .refl _
+  | symm _ ih => exact .symm ih
+  | trans _ _ ih1 ih2 => exact .trans ih1 ih2
+
+/-- mapQuiver descends to the quotient. -/
+def CategoryQuotientMorphism.quotMapMor
+    {a b : D₁.quiver.Obj} (m : D₁.QuotMor a b) :
+    D₂.QuotMor (F.quiverMor.objFn a) (F.quiverMor.objFn b) :=
+  Quotient.lift
+    (fun fm => D₂.quotMor (FreeMor.mapQuiver F.quiverMor fm))
+    (fun _ _ h => Quotient.sound (FreeMor.mapQuiver_respects_equiv F h))
+    m
+
+/-- quotMapMor preserves identity. -/
+theorem CategoryQuotientMorphism.quotMapMor_id (a : D₁.quiver.Obj) :
+    F.quotMapMor (D₁.quotId a) = D₂.quotId (F.quiverMor.objFn a) := rfl
+
+/-- quotMapMor preserves composition. -/
+theorem CategoryQuotientMorphism.quotMapMor_comp
+    {a b c : D₁.quiver.Obj}
+    (g : D₁.QuotMor b c) (f : D₁.QuotMor a b) :
+    F.quotMapMor (D₁.quotComp g f) = D₂.quotComp (F.quotMapMor g) (F.quotMapMor f) := by
+  induction g using Quotient.ind with
+  | _ g' =>
+    induction f using Quotient.ind with
+    | _ f' => rfl
+
+end QuotientMorphisms
+
+/-! ## L Functor on Morphisms
+
+Given a natural transformation α : F → G between copresheaves, we construct
+a functor L(α) : L(F) → L(G) between the corresponding quotient categories. -/
+
+section LFunctorMorphisms
+
+variable {F G : CategoryJudgments.FunctorData (Type u)}
+
+/-- Build a CategoryQuotientMorphism from a NatTransData. -/
+def CategoryJudgments.NatTransData.toCategoryQuotientMorphism
+    (α : CategoryJudgments.NatTransData F G) :
+    CategoryQuotientMorphism F.toCategoryQuotientData G.toCategoryQuotientData where
+  quiverMor := {
+    objFn := α.appObj
+    morFn := α.appMor
+    src_comm := fun f => by
+      have h := congrFun α.naturality_dom f
+      exact h.symm
+    tgt_comm := fun f => by
+      have h := congrFun α.naturality_cod f
+      exact h.symm
+  }
+  idWitMap := α.appId
+  compWitMap := α.appComp
+  idObj_comm := fun i => by
+    simp only [CategoryJudgments.FunctorData.toCategoryQuotientData]
+    have h : α.appMor (F.idMor i) = G.idMor (α.appId i) :=
+      congrFun α.naturality_idMor i
+    have hdom : α.appObj (F.dom (F.idMor i)) = G.dom (α.appMor (F.idMor i)) :=
+      congrFun α.naturality_dom (F.idMor i)
+    calc α.appObj (F.dom (F.idMor i)) = G.dom (α.appMor (F.idMor i)) := hdom
+      _ = G.dom (G.idMor (α.appId i)) := congrArg G.dom h
+  idMor_comm := fun i => congrFun α.naturality_idMor i
+  compRight_comm := fun c => congrFun α.naturality_right c
+  compLeft_comm := fun c => congrFun α.naturality_left c
+  compComposite_comm := fun c => congrFun α.naturality_composite c
+
+/-- The quiver morphism on quotient quivers induced by a NatTransData. -/
+def CategoryJudgments.NatTransData.toQuotQuiverMor
+    (α : CategoryJudgments.NatTransData F G) :
+    OverQuiverMorphism
+      F.toCategoryQuotientData.quotQuiver
+      G.toCategoryQuotientData.quotQuiver where
+  objFn := α.appObj
+  morFn := fun m =>
+    G.toCategoryQuotientData.bundleQuotMor
+      (α.toCategoryQuotientMorphism.quotMapMor m.2.2)
+  src_comm := fun m => by
+    simp only [CategoryQuotientData.quotQuiver, CategoryQuotientData.bundleQuotMor]
+    rfl
+  tgt_comm := fun m => by
+    simp only [CategoryQuotientData.quotQuiver, CategoryQuotientData.bundleQuotMor]
+    rfl
+
+/-- The L functor acts on morphisms: NatTransData to OverFunctorData. -/
+def CategoryJudgments.NatTransData.toOverFunctorData
+    (α : CategoryJudgments.NatTransData F G) :
+    OverFunctorData F.toOverCategoryData G.toOverCategoryData where
+  toOverQuiverMorphism := α.toQuotQuiverMor
+  map_id := fun a => by
+    simp only [toQuotQuiverMor, CategoryJudgments.FunctorData.toOverCategoryData,
+      CategoryQuotientData.toOverCategoryData, CategoryQuotientData.bundleQuotMor]
+    rfl
+  map_comp := fun p => by
+    -- We proceed by cases on p, using the composability proof directly.
+    rcases p with ⟨⟨⟨g_src, g_tgt, g_qm⟩, ⟨f_src, f_tgt, f_qm⟩⟩, hcomp⟩
+    -- hcomp : Composable g f, which is definitionally g_tgt = f_src
+    -- Convert hcomp to an explicit equality for pattern matching.
+    have heq : g_tgt = f_src := hcomp
+    -- We unfold definitions and simplify.
+    simp only [toQuotQuiverMor, CategoryJudgments.FunctorData.toOverCategoryData,
+      CategoryQuotientData.toOverCategoryData, CategoryQuotientData.quotCategoryOps,
+      CategoryQuotientData.quotCompFn, CategoryQuotientData.bundleQuotMor,
+      CategoryQuotientData.quotQuiver]
+    -- Both sides are now sigma types ⟨src, ⟨tgt, qm⟩⟩
+    -- The src and tgt components agree definitionally.
+    -- For the qm component, we need quotMapMor_comp plus transport handling.
+    -- Use cases on the equality to reduce to the rfl case.
+    cases heq
+    -- After cases, f_src = g_tgt, so transports become trivial.
+    simp only [CategoryQuotientMorphism.quotMapMor_comp]
+    -- Now we need: quotMapMor (hcomp ▸ g_qm) = quotMapMor g_qm
+    -- Since hcomp is now definitionally rfl, the transport is trivial.
+    rfl
+
+end LFunctorMorphisms
 
 /-! ## Adjunction Structure
 
@@ -1001,5 +1494,655 @@ def roundtripEquiv {a b : Q.Obj} :
   right_inv := counitEval_embed C
 
 end RoundTrip
+
+/-! ## Unit Natural Transformation
+
+The unit η : Id → Φ ∘ L sends a copresheaf F to the quotient category's
+copresheaf. For each morphism f in F, it maps to [var f] in the quotient. -/
+
+section UnitNatTrans
+
+variable (F : CategoryJudgments.FunctorData (Type u))
+
+/-- The quotient category L(F) viewed as an OverCategoryData. -/
+abbrev quotCatData := F.toOverCategoryData
+
+/-- The copresheaf Φ(L(F)) corresponding to the quotient category. -/
+abbrev phiOfL := F.toOverCategoryData.toJudgmentFunctorData
+
+/-- The morphism component of the unit: embed f as ⟨dom f, cod f, [var f]⟩. -/
+def unitAppMor : F.morC → (phiOfL F).morC :=
+  fun f => ⟨F.dom f, F.cod f, unitComponent F f⟩
+
+/-- The identity component of the unit: map identity witness to the object it
+    provides identity for. F.idC is the set of identity witnesses, and
+    (phiOfL F).idC = quotQuiver.Obj = F.objC.
+    The map extracts the object: i ↦ dom(idMor i). -/
+def unitAppId : F.idC → (phiOfL F).idC := fun i => F.dom (F.idMor i)
+
+/-- The composition component of the unit: embed composable pairs.
+    A composable pair (g, f) in F maps to a composable pair
+    ([var g], [var f]) in the quotient category. -/
+def unitAppComp : F.compC → (phiOfL F).compC :=
+  fun c =>
+    let f := F.right c
+    let g := F.left c
+    let fQuot : (phiOfL F).morC := unitAppMor F f
+    let gQuot : (phiOfL F).morC := unitAppMor F g
+    -- Need to show they are composable: cod fQuot = dom gQuot
+    -- cod fQuot = F.cod f, dom gQuot = F.dom g
+    -- F.h_comp_match says F.cod (F.right c) = F.dom (F.left c)
+    let composable : (phiOfL F).cod fQuot = (phiOfL F).dom gQuot := by
+      simp only [OverCategoryData.toJudgmentFunctorData]
+      exact congrFun F.h_comp_match c
+    ⟨(fQuot, gQuot), composable⟩
+
+/-- The object component of the unit: identity on objects.
+    F.objC = (phiOfL F).objC since both equal the object type. -/
+def unitAppObj : F.objC ⟶ (phiOfL F).objC := 𝟙 F.objC
+
+/-- The unit natural transformation η_F : F → Φ(L(F)).
+    This embeds F's data into the free category on F then extracts back. -/
+def unitNatTrans : CategoryJudgments.NatTransData F (phiOfL F) where
+  appObj := unitAppObj F
+  appMor := unitAppMor F
+  appId := unitAppId F
+  appComp := unitAppComp F
+  naturality_dom := by
+    ext m
+    simp only [CategoryStruct.comp, unitAppObj]
+    rfl
+  naturality_cod := by
+    ext m
+    simp only [CategoryStruct.comp, unitAppObj]
+    rfl
+  naturality_idMor := by
+    ext i
+    change unitAppMor F (F.idMor i) = (phiOfL F).idMor (unitAppId F i)
+    simp only [unitAppMor, unitAppId,
+      OverCategoryData.toJudgmentFunctorData,
+      CategoryJudgments.FunctorData.toOverCategoryData,
+      CategoryQuotientData.toOverCategoryData,
+      CategoryQuotientData.quotCategoryOps,
+      CategoryQuotientData.quotIdFn,
+      unitComponent, CategoryQuotientData.quotId,
+      CategoryJudgments.FunctorData.toCategoryQuotientData]
+    -- Goal: ⟨dom, ⟨cod, [var (idMor i)]⟩⟩ = ⟨dom, ⟨dom, [id dom]⟩⟩
+    -- h_id_endo gives: dom (idMor i) = cod (idMor i)
+    -- So h_id_endo.symm : cod (idMor i) = dom (idMor i)
+    have h_endo : F.dom (F.idMor i) = F.cod (F.idMor i) := congrFun F.h_id_endo i
+    -- For outer sigma: first components are both dom (idMor i), so rfl
+    refine Sigma.ext rfl ?_
+    -- Now HEq of inner sigmas, which have the same type Σ b, QuotMor (dom _) b
+    refine heq_of_eq ?_
+    -- For inner sigma: first components are cod vs dom, use h_endo.symm
+    refine Sigma.ext h_endo.symm ?_
+    -- Now HEq of quotient types: QuotMor dom cod vs QuotMor dom dom
+    -- LHS: quotMor (var (idMor i)) at type QuotMor dom cod
+    -- RHS: quotMor (id dom) at type QuotMor dom dom
+    let D := F.toCategoryQuotientData
+    -- Use id_witness which relates cast(var) ~ id at the FreeMor level
+    have h_wit := CategoryQuotientData.FreeMorEquivGen.id_witness (D := D) i
+    -- h_wit : FreeMorEquivGen (cast _ (var (D.idMor i))) (id (D.idObj i))
+    -- Quotient.sound gives: quotMor(cast(var)) = quotMor(id)
+    have h_quot_eq : D.quotMor (cast (congrArg₂ (FreeMor D.quiver)
+          (D.id_src i) (D.id_tgt i))
+        (FreeMor.var (D.idMor i))) = D.quotMor (FreeMor.id (D.idObj i)) :=
+      Quotient.sound (CategoryQuotientData.FreeMorEquiv.rel h_wit)
+    -- Use Quotient.recOnSubsingleton to relate the quotients
+    -- Actually, let's use a simpler approach with HEq transitivity
+    -- We need: quotMor(var(idMor)) ≍ quotMor(id(idObj))
+    -- where LHS : QuotMor dom cod and RHS : QuotMor dom dom
+    -- Strategy: use the fact that after casting LHS to type QuotMor dom dom,
+    -- it equals RHS, and cast preserves HEq
+    -- Use the equivalence: x ≍ y ↔ ∃ h : A = B, cast h x = y
+    apply HEq.trans (cast_heq (congrArg₂ D.QuotMor (D.id_src i) (D.id_tgt i)) _).symm
+    -- Goal: cast _ (quotMor (var (idMor i))) ≍ quotMor (id (idObj i))
+    apply heq_of_eq
+    -- Goal: cast _ (quotMor (var (idMor i))) = quotMor (id (idObj i))
+    -- Unfold the .snd.snd projections
+    simp only []
+    -- Restate goal in terms of D instead of the expanded structure
+    change cast (congrArg₂ D.QuotMor (D.id_src i) (D.id_tgt i))
+        (D.quotMor (FreeMor.var (D.idMor i))) =
+      D.quotMor (FreeMor.id (D.idObj i))
+    -- Use quotMor_cast lemma to show cast on QuotMor = quotMor of cast
+    rw [D.quotMor_cast (D.id_src i) (D.id_tgt i)]
+    -- Now both sides are quotMor of something, use h_quot_eq
+    exact h_quot_eq
+  naturality_left := by
+    ext c
+    simp only [CategoryStruct.comp, OverCategoryData.toJudgmentFunctorData]
+    rfl
+  naturality_right := by
+    ext c
+    simp only [CategoryStruct.comp, OverCategoryData.toJudgmentFunctorData]
+    rfl
+  naturality_composite := by
+    ext c
+    change unitAppMor F (F.composite c) = F.toOverCategoryData.compFn (unitAppComp F c)
+    simp only [unitAppMor, unitAppComp,
+      OverCategoryData.toJudgmentFunctorData,
+      CategoryJudgments.FunctorData.toOverCategoryData,
+      CategoryQuotientData.toOverCategoryData,
+      CategoryQuotientData.quotCategoryOps,
+      CategoryQuotientData.quotCompFn,
+      unitComponent]
+    -- Goal: ⟨dom(composite c), ⟨cod(composite c), [var (composite c)]⟩⟩ =
+    --       ⟨dom(right c), ⟨cod(left c), [left c] ∘ [right c]⟩⟩
+    -- comp_witness gives: (cast _ (var left)).comp (var right) ~ cast _ (var composite)
+    let D := F.toCategoryQuotientData
+    have h_wit := CategoryQuotientData.FreeMorEquivGen.comp_witness (D := D) c
+    have hquot := Quotient.sound (s := D.freeMorSetoid _ _)
+      (CategoryQuotientData.FreeMorEquiv.rel h_wit)
+    -- Need to prove nested sigma equality where indices differ
+    -- LHS: ⟨dom composite, ⟨cod composite, quotMor (var composite)⟩⟩
+    -- RHS: ⟨dom right, ⟨cod left, quotComp (quotMor left) (cast _ (quotMor right))⟩⟩
+    have h_dom : F.dom (F.composite c) = F.dom (F.right c) := congrFun F.h_comp_dom c
+    have h_cod : F.cod (F.composite c) = F.cod (F.left c) := congrFun F.h_comp_cod c
+    -- hquot relates quotients at (dom right, cod left)
+    -- Build the equality term directly
+    refine Sigma.ext h_dom ?_
+    -- Goal: HEq of ⟨cod composite, quotMor (var composite)⟩
+    --       vs ⟨cod left, quotComp (quotMor left) (cast _ (quotMor right))⟩
+    -- Use the helper lemma quotMorSigma_heq
+    apply D.quotMorSigma_heq h_dom h_cod
+    -- Now need: cast (congrArg₂ QuotMor h_dom h_cod) (quotMor (var composite))
+    --         = quotComp (quotMor left) (cast _ (quotMor right))
+    rw [D.quotMor_cast h_dom h_cod]
+    -- Now need: quotMor (cast _ (var composite))
+    --         = quotComp (quotMor left) (cast _ (quotMor right))
+    -- Use hquot which says the composition equals cast _ (var composite)
+    -- hquot : ⟦(cast _ (var left)).comp (var right)⟧ = ⟦cast _ (var composite)⟧
+    -- quotComp lifts comp on FreeMor through quotMor
+    -- The RHS has quotComp with a transported argument.
+    -- The transport uses comp_match : cod(right) = dom(left).
+    -- We'll unfold to ⟦...⟧ level and use Quotient.sound.
+    --
+    -- Step 1: Unfold quotMor and quotComp to get to ⟦...⟧ level
+    simp only [CategoryQuotientData.quotMor, CategoryQuotientData.quotComp]
+    -- Now goal: ⟦cast _ (var composite)⟧ = Quotient.lift₂ ... ⟦var left⟧ (⋯ ▸ ⟦var right⟧)
+    --
+    -- Step 2: Simplify Quotient.lift₂ by eliminating the transport
+    -- The transport ⋯ ▸ uses congrFun F.h_comp_match c = D.comp_match c
+    -- We can generalize it, substitute, and use Quotient.lift₂_mk.
+    --
+    -- First, let's prove that h ▸ ⟦f⟧ = ⟦h ▸ f⟧ for the specific indices
+    -- Using the general lemma for transport commuting with quotient formation:
+    -- h ▸ ⟦f⟧ = ⟦h ▸ f⟧ holds by cases on h
+    have h_transport_eq : ∀ {a b b' : D.quiver.Obj} (h : b = b') (f : FreeMor D.quiver a b),
+        (h ▸ (⟦f⟧ : Quotient (D.freeMorSetoid a b))) =
+        (⟦h ▸ f⟧ : Quotient (D.freeMorSetoid a b')) := by
+      intro a b b' h f
+      cases h
+      rfl
+    conv_rhs => arg 4; rw [h_transport_eq]
+    -- Now goal: ⟦cast _ (var composite)⟧ = Quotient.lift₂ ... ⟦var left⟧ ⟦_ ▸ var right⟧
+    rw [Quotient.lift₂_mk]
+    -- Now goal: ⟦cast _ (var composite)⟧ = ⟦(var left).comp (_ ▸ var right)⟧
+    --
+    -- Step 3: Use Quotient.sound
+    apply Quotient.sound
+    apply CategoryQuotientData.FreeMorEquiv.symm
+    -- Goal: FreeMorEquiv ((var left).comp (_ ▸ var right)) (cast _ (var composite))
+    --
+    -- Step 4: The LHS and RHS are both FreeMorEquiv to (cast _ (var composite))
+    -- We need to show they're equivalent.
+    -- h_wit : FreeMorEquivGen ((cast _ (var left)).comp (var right)) (cast _ (var composite))
+    -- Goal: FreeMorEquiv ((var left).comp (_ ▸ var right)) (cast _ (var composite))
+    -- (var left).comp (h ▸ var right) = (cast h.symm (var left)).comp (var right)
+    -- Both involve the same comp_match equality, just represented differently.
+    -- Prove a general lemma about transport in FreeMor.comp.
+    have h_comp_move : ∀ {Q : OverQuiver} {a b b' c : Q.Obj} (h : b = b')
+        (g : FreeMor Q b' c) (f : FreeMor Q a b),
+        g.comp (h ▸ f) = (cast (congrArg₂ (FreeMor Q) h.symm rfl) g).comp f := by
+      intro Q a b b' c h g f
+      cases h
+      rfl
+    rw [h_comp_move]
+    exact CategoryQuotientData.FreeMorEquiv.rel h_wit
+
+end UnitNatTrans
+
+/-! ## Counit Natural Transformation
+
+The counit ε : L ∘ Φ → Id evaluates quotient morphisms back in the original
+category. For a category C, ε_C : L(Φ(C)) → C maps quotient classes of
+free morphisms to their evaluations. -/
+
+section CounitNatTrans
+
+variable {Q : OverQuiver.{u, u}} (C : OverCategoryData Q)
+
+/-- The counit as a quiver morphism from the quotient quiver to the original
+    quiver. Objects are identity, morphisms are evaluated via counitEvalQuot. -/
+def counitQuiverMor : OverQuiverMorphism (derivedQuotientData C).quotQuiver Q
+    where
+  objFn := id
+  morFn := fun ⟨a, b, qm⟩ => (counitEvalQuot C qm).val
+  src_comm := fun ⟨a, b, qm⟩ => by
+    simp only [CategoryQuotientData.quotQuiver, id]
+    exact (counitEvalQuot C qm).property.1
+  tgt_comm := fun ⟨a, b, qm⟩ => by
+    simp only [CategoryQuotientData.quotQuiver, id]
+    exact (counitEvalQuot C qm).property.2
+
+/-- Helper: counitEvalQuot on quotId gives idFn. -/
+theorem counitEvalQuot_quotId (a : Q.Obj) :
+    counitEvalQuot C ((derivedQuotientData C).quotId a) =
+    ⟨C.idFn a, C.id_src a, C.id_tgt a⟩ := by
+  simp only [counitEvalQuot, CategoryQuotientData.quotId, CategoryQuotientData.quotMor,
+    Quotient.lift_mk, counitEval_id]
+
+/-- Helper: counitEvalQuot on quotComp gives compFn. -/
+theorem counitEvalQuot_quotComp {a b c : Q.Obj}
+    (g : (derivedQuotientData C).QuotMor b c)
+    (f : (derivedQuotientData C).QuotMor a b) :
+    counitEvalQuot C ((derivedQuotientData C).quotComp g f) =
+    ⟨C.compFn ⟨((counitEvalQuot C f).val, (counitEvalQuot C g).val),
+      (counitEvalQuot C f).property.2.trans (counitEvalQuot C g).property.1.symm⟩,
+      (C.comp_src _).trans (counitEvalQuot C f).property.1,
+      (C.comp_tgt _).trans (counitEvalQuot C g).property.2⟩ := by
+  induction f using Quotient.ind with
+  | _ fm =>
+    induction g using Quotient.ind with
+    | _ gm =>
+      simp only [counitEvalQuot, CategoryQuotientData.quotComp,
+        CategoryQuotientData.quotMor, Quotient.lift_mk, counitEval_comp]
+
+/-- The counit preserves identity:
+    counitEvalQuot (quotId a) = idFn a. -/
+theorem counit_map_id (a : Q.Obj) :
+    (counitQuiverMor C).morFn ((derivedQuotientData C).toOverCategoryData.idFn a) =
+    C.idFn ((counitQuiverMor C).objFn a) := by
+  simp only [counitQuiverMor, CategoryQuotientData.toOverCategoryData,
+    CategoryQuotientData.quotCategoryOps, CategoryQuotientData.quotIdFn, id]
+  exact congrArg Subtype.val (counitEvalQuot_quotId C a)
+
+/-- The counit preserves composition:
+    counitEvalQuot (quotComp g f) = compFn (counitEvalQuot f, counitEvalQuot g). -/
+theorem counit_map_comp (p : (derivedQuotientData C).quotQuiver.ComposablePairsType) :
+    (counitQuiverMor C).morFn ((derivedQuotientData C).toOverCategoryData.compFn p) =
+    C.compFn ⟨((counitQuiverMor C).morFn p.val.1, (counitQuiverMor C).morFn p.val.2),
+      ((counitQuiverMor C).tgt_comm p.val.1).trans
+        ((congrArg (counitQuiverMor C).objFn p.property).trans
+          ((counitQuiverMor C).src_comm p.val.2).symm)⟩ := by
+  obtain ⟨⟨⟨a, b, qf⟩, ⟨b', c, qg⟩⟩, h_composable⟩ := p
+  simp only [CategoryQuotientData.quotQuiver] at h_composable
+  simp only [counitQuiverMor, CategoryQuotientData.toOverCategoryData,
+    CategoryQuotientData.quotCategoryOps, CategoryQuotientData.quotCompFn,
+    CategoryQuotientData.quotQuiver]
+  have h_eq : b = b' := h_composable
+  subst h_eq
+  have h_eval := counitEvalQuot_quotComp C qg qf
+  exact congrArg Subtype.val h_eval
+
+/-- The counit as a functor from L(Φ(C)) to C.
+    For a category C, ε_C : L(Φ(C)) → C evaluates quotient morphisms. -/
+def counitFunctorData :
+    OverFunctorData (derivedQuotientData C).toOverCategoryData C where
+  toOverQuiverMorphism := counitQuiverMor C
+  map_id := counit_map_id C
+  map_comp := counit_map_comp C
+
+end CounitNatTrans
+
+/-! ## Counit Naturality
+
+The counit is natural: for any functor F : C → D, we have F ∘ ε_C = ε_D ∘ L(Φ(F)).
+We prove this at the FreeMor level first, then lift to quotients. -/
+
+section CounitNaturality
+
+variable {Q₁ Q₂ : OverQuiver.{u, u}}
+variable {C : OverCategoryData Q₁} {D : OverCategoryData Q₂}
+variable (F : OverFunctorData C D)
+
+/-- Helper: counitEval on a transported var gives back the morphism. -/
+theorem counitEval_var_transport' {Q : OverQuiver.{u, u}} (C' : OverCategoryData Q)
+    {a b : Q.Obj} (f : Q.MorType) (hsrc : Q.src f = a) (htgt : Q.tgt f = b) :
+    counitEval C' (hsrc ▸ htgt ▸ FreeMor.var f) = f := by
+  subst hsrc htgt
+  rfl
+
+/-- Naturality of counitEval at the FreeMor level:
+    F.morFn (counitEval C m) = counitEval D (mapQuiver F m). -/
+theorem counitEval_natural {a b : Q₁.Obj} (m : FreeMor Q₁ a b) :
+    F.morFn (counitEval C m) =
+    counitEval D (FreeMor.mapQuiver F.toOverQuiverMorphism m) := by
+  induction m with
+  | var f =>
+    simp only [counitEval, counitEvalAux, FreeMor.mapQuiver]
+    -- Goal: F.morFn f = counitEval D (F.src_comm f ▸ F.tgt_comm f ▸ var (F.morFn f))
+    symm
+    exact counitEval_var_transport' D (F.morFn f) (F.src_comm f) (F.tgt_comm f)
+  | id x =>
+    simp only [counitEval, counitEvalAux, FreeMor.mapQuiver]
+    exact F.map_id x
+  | comp g f ihg ihf =>
+    -- Rewrite using counitEval_comp on both sides
+    rw [FreeMor.mapQuiver, counitEval_comp C g f, counitEval_comp D]
+    -- Now we need F.morFn (C.compFn ⟨(counitEval C f, counitEval C g), ...⟩) =
+    --             D.compFn ⟨(counitEval D (mapQuiver F f), counitEval D (mapQuiver F g)), ...⟩
+    -- Use F.map_comp
+    have hcomp : Q₁.tgt (counitEval C f) = Q₁.src (counitEval C g) :=
+      (counitEvalAux C f).property.2.trans (counitEvalAux C g).property.1.symm
+    have map_comp_eq := F.map_comp ⟨(counitEval C f, counitEval C g), hcomp⟩
+    rw [map_comp_eq]
+    -- Now both sides are D.compFn, so we need to show the pairs are equal
+    congr 1
+    ext
+    · exact ihf
+    · exact ihg
+
+/-- The CategoryQuotientMorphism induced by a functor F : C → D. -/
+def inducedCategoryQuotientMorphism :
+    CategoryQuotientMorphism (derivedQuotientData C) (derivedQuotientData D) where
+  quiverMor := F.toOverQuiverMorphism
+  idWitMap := F.objFn
+  compWitMap := fun p =>
+    ⟨(F.morFn p.val.1, F.morFn p.val.2),
+      (F.tgt_comm p.val.1).trans
+        ((congrArg F.objFn p.property).trans (F.src_comm p.val.2).symm)⟩
+  idObj_comm := fun i => by
+    -- Goal: F.objFn (D₁.idObj i) = D₂.idObj (F.objFn i)
+    -- D₁.idObj i = Q₁.src (C.idFn i)
+    -- D₂.idObj (F.objFn i) = Q₂.src (D.idFn (F.objFn i))
+    simp only [CategoryJudgments.FunctorData.toCategoryQuotientData,
+      OverCategoryData.toJudgmentFunctorData]
+    -- F.objFn (Q₁.src (C.idFn i)) = Q₂.src (D.idFn (F.objFn i))
+    rw [congrArg F.objFn (C.id_src i)]
+    rw [D.id_src (F.objFn i)]
+  idMor_comm := fun i => F.map_id i
+  compRight_comm := fun _ => rfl
+  compLeft_comm := fun _ => rfl
+  compComposite_comm := fun c => F.map_comp c
+
+/-- The induced functor L(Φ(F)) on quotient categories maps quotient morphisms
+    via mapQuiver. -/
+def inducedQuotFunctor_morFn {a b : Q₁.Obj}
+    (qm : (derivedQuotientData C).QuotMor a b) :
+    (derivedQuotientData D).QuotMor (F.objFn a) (F.objFn b) :=
+  (inducedCategoryQuotientMorphism F).quotMapMor qm
+
+/-- Naturality of counitEvalQuot at the quotient level. -/
+theorem counitEvalQuot_natural {a b : Q₁.Obj}
+    (qm : (derivedQuotientData C).QuotMor a b) :
+    F.morFn (counitEvalQuot C qm).val =
+    (counitEvalQuot D (inducedQuotFunctor_morFn F qm)).val := by
+  induction qm using Quotient.ind with
+  | _ fm =>
+    simp only [counitEvalQuot, Quotient.lift_mk, inducedQuotFunctor_morFn,
+      CategoryQuotientMorphism.quotMapMor, CategoryQuotientData.quotMor]
+    exact counitEval_natural F fm
+
+/-- The induced quiver morphism L(Φ(F)) on quotient quivers. -/
+def inducedQuiverMor :
+    OverQuiverMorphism (derivedQuotientData C).quotQuiver
+      (derivedQuotientData D).quotQuiver where
+  objFn := F.objFn
+  morFn := fun ⟨a, b, qm⟩ => ⟨F.objFn a, F.objFn b, inducedQuotFunctor_morFn F qm⟩
+  src_comm := fun ⟨_, _, _⟩ => rfl
+  tgt_comm := fun ⟨_, _, _⟩ => rfl
+
+/-- The induced functor L(Φ(F)) : L(Φ(C)) → L(Φ(D)). -/
+def inducedQuotFunctor :
+    OverFunctorData (derivedQuotientData C).toOverCategoryData
+      (derivedQuotientData D).toOverCategoryData where
+  toOverQuiverMorphism := inducedQuiverMor F
+  map_id := fun a => rfl
+  map_comp := fun ⟨⟨f, g⟩, h_composable⟩ => by
+    obtain ⟨a, b, qf⟩ := f
+    obtain ⟨b', c, qg⟩ := g
+    simp only [CategoryQuotientData.quotQuiver] at h_composable
+    cases h_composable
+    simp only [inducedQuiverMor, CategoryQuotientData.toOverCategoryData,
+      CategoryQuotientData.quotCategoryOps, CategoryQuotientData.quotCompFn,
+      CategoryQuotientData.quotQuiver, inducedQuotFunctor_morFn,
+      CategoryQuotientMorphism.quotMapMor_comp]
+
+/-- Naturality of counit on objects: F and L(Φ(F)) agree on objects. -/
+theorem counitFunctor_natural_obj (a : (derivedQuotientData C).quotQuiver.Obj) :
+    F.objFn ((counitFunctorData C).toOverQuiverMorphism.objFn a) =
+    (counitFunctorData D).toOverQuiverMorphism.objFn
+      ((inducedQuotFunctor F).toOverQuiverMorphism.objFn a) := by
+  simp only [counitFunctorData, counitQuiverMor,
+    inducedQuotFunctor, inducedQuiverMor, id]
+
+/-- Naturality of counit on morphisms: F ∘ ε_C = ε_D ∘ L(Φ(F)) on morphisms. -/
+theorem counitFunctor_natural_mor
+    (m : (derivedQuotientData C).quotQuiver.MorType) :
+    F.morFn ((counitFunctorData C).toOverQuiverMorphism.morFn m) =
+    (counitFunctorData D).toOverQuiverMorphism.morFn
+      ((inducedQuotFunctor F).toOverQuiverMorphism.morFn m) := by
+  obtain ⟨a, b, qm⟩ := m
+  simp only [counitFunctorData, counitQuiverMor,
+    inducedQuotFunctor, inducedQuiverMor, inducedQuotFunctor_morFn]
+  exact counitEvalQuot_natural F qm
+
+end CounitNaturality
+
+/-! ## Triangle Identities
+
+The adjunction L ⊣ Φ requires two triangle identities:
+1. (εL) ∘ (Lη) = id_L : For any copresheaf F, ε_{L(F)} ∘ L(η_F) = id_{L(F)}
+2. (Φε) ∘ (ηΦ) = id_Φ : For any category C, Φ(ε_C) ∘ η_{Φ(C)} = id_{Φ(C)}
+
+We prove these at the component level. -/
+
+section TriangleIdentities
+
+/-! ### Second Triangle Identity: (Φε) ∘ (ηΦ) = id_Φ
+
+For any category C, the composite Φ(C) → Φ(L(Φ(C))) → Φ(C) is identity. -/
+
+variable {Q : OverQuiver.{u, u}} (C : OverCategoryData Q)
+
+/-- The second triangle identity on morphisms:
+    Φ(ε_C) ∘ η_{Φ(C)} = id on morphisms.
+    This follows from counitEval_embed: counitEvalQuot(embedQuot f) = f. -/
+theorem triangle2_mor (f : Q.MorType) :
+    (counitFunctorData C).morFn
+      ((unitNatTrans C.toJudgmentFunctorData).appMor f) = f := by
+  simp only [unitNatTrans, unitAppMor, counitFunctorData, counitQuiverMor,
+    unitComponent, CategoryQuotientData.quotMor, counitEvalQuot, Quotient.lift_mk,
+    counitEval, counitEvalAux]
+
+/-- The second triangle identity on identity witnesses:
+    Φ(ε_C) ∘ η_{Φ(C)} = id on identity witnesses.
+    Since idC = Q.Obj and unitAppId sends i to Q.src (C.idFn i),
+    and the counit on objects is id, we need C.id_src. -/
+theorem triangle2_id (i : C.toJudgmentFunctorData.idC) :
+    (counitFunctorData C).toOverQuiverMorphism.objFn
+      ((unitNatTrans C.toJudgmentFunctorData).appId i) =
+    i := by
+  simp only [unitNatTrans, unitAppId, counitFunctorData, counitQuiverMor, id,
+    OverCategoryData.toJudgmentFunctorData]
+  exact C.id_src i
+
+/-- The second triangle identity on composition witnesses. -/
+theorem triangle2_comp (c : C.toJudgmentFunctorData.compC) :
+    let η := unitNatTrans C.toJudgmentFunctorData
+    let Φε := (counitFunctorData C).toJudgmentNatTrans
+    Φε.appComp (η.appComp c) =
+    c := by
+  obtain ⟨⟨f, g⟩, h_comp⟩ := c
+  simp only [unitNatTrans, unitAppComp, counitFunctorData,
+    OverFunctorData.toJudgmentNatTrans, counitQuiverMor,
+    OverCategoryData.toJudgmentFunctorData, unitAppMor, unitComponent,
+    CategoryQuotientData.quotMor]
+  -- Goal: ⟨(counitEvalQuot [var f].val, counitEvalQuot [var g].val), _⟩ = ⟨(f, g), h_comp⟩
+  -- Show both components equal using that counitEvalQuot [var m] = m
+  let D := derivedQuotientData C
+  have hf : (counitEvalQuot C (D.quotMor (FreeMor.var f))).val = f := by
+    unfold counitEvalQuot CategoryQuotientData.quotMor
+    rw [Quotient.lift_mk]
+    rfl
+  have hg : (counitEvalQuot C (D.quotMor (FreeMor.var g))).val = g := by
+    unfold counitEvalQuot CategoryQuotientData.quotMor
+    rw [Quotient.lift_mk]
+    rfl
+  -- Now rewrite using hf and hg
+  ext
+  · exact hf
+  · exact hg
+
+/-! ### First Triangle Identity: (εL) ∘ (Lη) = id_L
+
+For any copresheaf F, the composite L(F) → L(Φ(L(F))) → L(F) is identity.
+
+The functor L(η_F) embeds each quotient morphism qm in L(F) as a variable
+quotMor (var qm) in L(Φ(L(F))). The counit ε_{L(F)} evaluates this back to qm.
+-/
+
+variable (F : CategoryJudgments.FunctorData (Type u))
+
+/-- The category L(F) constructed from a copresheaf F. -/
+abbrev categoryL : OverCategoryData F.toCategoryQuotientData.quotQuiver :=
+  F.toOverCategoryData
+
+/-- The double quotient data L(Φ(L(F))) for the first triangle identity.
+    This is the CategoryQuotientData derived from L(F) viewed as a category. -/
+abbrev derivedFromL : CategoryQuotientData.{u, u} :=
+  derivedQuotientData (categoryL F)
+
+/-- The morphism type of L(F)'s quiver is bundled QuotMor. -/
+abbrev bundledQuotMorType : Type u :=
+  F.toCategoryQuotientData.quotQuiver.MorType
+
+/-- Bundle a QuotMor as a morphism of the L(F) quiver. -/
+def bundleQuotMorL {a b : F.objC}
+    (qm : F.toCategoryQuotientData.QuotMor a b) : bundledQuotMorType F :=
+  ⟨a, b, qm⟩
+
+/-- Embed a morphism of L(F) as a variable in the free category over Φ(L(F)).
+    This is the morphism component of L(η_F). -/
+def embedMorAsVar {a b : F.objC}
+    (qm : F.toCategoryQuotientData.QuotMor a b) :
+    (derivedFromL F).QuotMor a b :=
+  (derivedFromL F).quotMor (FreeMor.var (bundleQuotMorL F qm))
+
+/-- The first triangle identity on objects:
+    Both L(η_F) and ε_{L(F)} act as identity on objects, so their composition
+    is identity. -/
+theorem triangle1_obj (a : F.objC) :
+    (counitFunctorData (categoryL F)).toOverQuiverMorphism.objFn a = a := by
+  simp only [counitFunctorData, counitQuiverMor, id]
+
+/-- The first triangle identity on morphisms:
+    ε_{L(F)} ∘ L(η_F) = id on morphisms.
+    For any quotient morphism qm in L(F), embedding it as a variable and then
+    evaluating via ε gives back qm. -/
+theorem triangle1_mor {a b : F.objC}
+    (qm : F.toCategoryQuotientData.QuotMor a b) :
+    counitEvalQuot (categoryL F) (embedMorAsVar F qm) =
+    ⟨bundleQuotMorL F qm, rfl, rfl⟩ := by
+  simp only [embedMorAsVar, counitEvalQuot, CategoryQuotientData.quotMor,
+    Quotient.lift_mk, counitEval, counitEvalAux, bundleQuotMorL]
+
+/-- The first triangle identity: for any QuotMor, ε ∘ L(η) returns the
+    original bundled morphism's underlying value. -/
+theorem triangle1_mor_val {a b : F.objC}
+    (qm : F.toCategoryQuotientData.QuotMor a b) :
+    (counitEvalQuot (categoryL F) (embedMorAsVar F qm)).val =
+    bundleQuotMorL F qm := by
+  rw [triangle1_mor F qm]
+
+end TriangleIdentities
+
+/-! ## Adjunction Structure
+
+We formalize the adjunction L ⊣ Φ by bundling the functors, natural
+transformations, and triangle identities into a single structure.
+
+The adjunction relates:
+- Categories (BundledOverCategoryData) via Φ to copresheaves (FunctorData Type)
+- Copresheaves via L back to categories
+
+The unit η : id → Φ ∘ L and counit ε : L ∘ Φ → id satisfy:
+- (Φε) ∘ (ηΦ) = id_Φ (second triangle, proven for categories)
+- (εL) ∘ (Lη) = id_L (first triangle, proven for copresheaves)
+-/
+
+section AdjunctionStructure
+
+/-- Bundle an OverCategoryData with its quiver. -/
+def bundleOverCategory {Q : OverQuiver.{u, u}} (C : OverCategoryData Q) :
+    BundledOverCategoryData.{u, u} where
+  quiver := Q
+  data := C
+
+/-- The L functor on objects: copresheaf to bundled category. -/
+def LFunctorObj (F : CategoryJudgments.FunctorData (Type u)) :
+    BundledOverCategoryData.{u, u} :=
+  bundleOverCategory F.toOverCategoryData
+
+/-- The Φ functor on objects: bundled category to copresheaf. -/
+def PhiFunctorObj (C : BundledOverCategoryData.{u, u}) :
+    CategoryJudgments.FunctorData (Type u) :=
+  C.data.toJudgmentFunctorData
+
+/-- The unit natural transformation component at F : F → Φ(L(F)). -/
+def unitNatTransComponent (F : CategoryJudgments.FunctorData (Type u)) :
+    CategoryJudgments.NatTransData F (PhiFunctorObj (LFunctorObj F)) :=
+  unitNatTrans F
+
+/-- The counit functor component at C : L(Φ(C)) → C.
+    Note: This requires the quivers to match, which they do definitionally
+    when C comes from bundleOverCategory. -/
+def counitComponent {Q : OverQuiver.{u, u}} (C : OverCategoryData Q) :
+    OverFunctorData (derivedQuotientData C).toOverCategoryData C :=
+  counitFunctorData C
+
+/-- The adjunction data bundling L, Φ, unit, counit, and triangle identities.
+    This structure captures the mathematical content of the adjunction L ⊣ Φ. -/
+structure CatCopresheafAdjunctionData where
+  /-- The L functor maps copresheaves to categories. -/
+  L_obj : CategoryJudgments.FunctorData (Type u) → BundledOverCategoryData.{u, u}
+  /-- The Φ functor maps categories to copresheaves. -/
+  Phi_obj : BundledOverCategoryData.{u, u} → CategoryJudgments.FunctorData (Type u)
+  /-- Unit: F → Φ(L(F)) for each copresheaf F. -/
+  unit : (F : CategoryJudgments.FunctorData (Type u)) →
+    CategoryJudgments.NatTransData F (Phi_obj (L_obj F))
+  /-- Counit component: L(Φ(C)) → C for categories in the image of L. -/
+  counit_on_L : (F : CategoryJudgments.FunctorData (Type u)) →
+    OverFunctorData
+      (derivedQuotientData (L_obj F).data).toOverCategoryData
+      (L_obj F).data
+  /-- Second triangle: Φ(ε_C) ∘ η_{Φ(C)} = id on morphisms. -/
+  triangle2_mor_eq : ∀ {Q : OverQuiver.{u, u}} (C : OverCategoryData Q)
+    (f : Q.MorType),
+    (counitFunctorData C).morFn
+      ((unitNatTrans C.toJudgmentFunctorData).appMor f) = f
+  /-- First triangle: ε_{L(F)} ∘ L(η_F) = id on morphisms.
+      Given a QuotMor qm in L(F), embedding as variable and evaluating
+      returns the bundled morphism. -/
+  triangle1_mor_eq : ∀ (F : CategoryJudgments.FunctorData (Type u))
+    {a b : F.objC} (qm : F.toCategoryQuotientData.QuotMor a b),
+    counitEvalQuot (categoryL F) (embedMorAsVar F qm) =
+    ⟨bundleQuotMorL F qm, rfl, rfl⟩
+
+/-- The canonical Cat-Copresheaf adjunction data. -/
+def catCopresheafAdjunction : CatCopresheafAdjunctionData.{u} where
+  L_obj := LFunctorObj
+  Phi_obj := PhiFunctorObj
+  unit := unitNatTransComponent
+  counit_on_L := fun F => counitFunctorData (categoryL F)
+  triangle2_mor_eq := fun C f => triangle2_mor C f
+  triangle1_mor_eq := fun F {_} {_} qm => triangle1_mor F qm
+
+/-- Verification: The adjunction data is well-formed and the triangles hold. -/
+theorem adjunction_triangles_hold :
+    (∀ {Q : OverQuiver.{u, u}} (C : OverCategoryData Q) (f : Q.MorType),
+      (counitFunctorData C).morFn
+        ((unitNatTrans C.toJudgmentFunctorData).appMor f) = f) ∧
+    (∀ (F : CategoryJudgments.FunctorData (Type u))
+      {a b : F.objC} (qm : F.toCategoryQuotientData.QuotMor a b),
+      counitEvalQuot (categoryL F) (embedMorAsVar F qm) =
+      ⟨bundleQuotMorL F qm, rfl, rfl⟩) :=
+  ⟨fun C f => catCopresheafAdjunction.triangle2_mor_eq C f,
+   fun F {_} {_} qm => catCopresheafAdjunction.triangle1_mor_eq F qm⟩
+
+end AdjunctionStructure
 
 end GebLean
