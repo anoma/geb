@@ -1871,6 +1871,7 @@ structure OverCategoryData (Q : OverQuiver.{vOver, uOver})
 
 /-- A quiver morphism with explicit proof obligations for source and
     target preservation. -/
+@[ext]
 structure OverQuiverMorphism (Q₁ Q₂ : OverQuiver.{vOver, uOver}) where
   /-- The function on objects. -/
   objFn : Q₁.Obj → Q₂.Obj
@@ -1908,6 +1909,7 @@ end OverQuiverMorphism
 
 /-- Functor data for OverCategories, as a quiver morphism that preserves
     identity and composition. -/
+@[ext]
 structure OverFunctorData {Q₁ Q₂ : OverQuiver.{vOver, uOver}}
     (C₁ : OverCategoryData Q₁) (C₂ : OverCategoryData Q₂) extends
     OverQuiverMorphism Q₁ Q₂ where

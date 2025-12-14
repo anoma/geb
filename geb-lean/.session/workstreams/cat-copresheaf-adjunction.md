@@ -47,13 +47,33 @@ has been fully constructed and verified.
      OverFunctorData
    - Pattern: `have heq := hcomp` then `cases heq` to handle composability
      proofs without creating duplicate hypothesis names
+1. **L functor functoriality** - Done
+   - `CategoryQuotientMorphism.id` - Identity morphism on CategoryQuotientData
+   - `FreeMor.mapQuiver_overQuiverId` - mapQuiver with identity is identity
+   - `CategoryQuotientMorphism.quotMapMor_id_self` - quotMapMor with id is id
+   - `toOverFunctorData_id` - L preserves identity:
+     `(NatTransData.id F).toOverFunctorData = OverFunctorData.id F.toOverCategoryData`
+   - `FreeMor.mapQuiver_cast_overQuiv` - mapQuiver commutes with cast
+   - `FreeMor.mapQuiver_quiverComp` - mapQuiver respects composition
+   - `CategoryQuotientMorphism.quotMapMor_quiverComp` - quotMapMor respects comp
+   - `toOverFunctorData_comp` - L preserves composition:
+     `(α.comp β).toOverFunctorData = α.toOverFunctorData.comp β.toOverFunctorData`
 
 ## Future Enhancements
 
 1. **Connect to mathlib's Adjunction type**
    - Use `CategoryTheory.Adjunction` from mathlib
-   - Requires building mathlib Functors from L and Φ
-   - Need to prove L preserves identity and composition
+   - L preserves identity: `toOverFunctorData_id` (done)
+   - L preserves composition: `toOverFunctorData_comp` (done)
+   - Remaining work requires substantial infrastructure:
+     - Define `instance : Category (CategoryJudgments.FunctorData (Type u))`
+       with `NatTransData` as morphisms (straightforward)
+     - Define `instance : Category BundledOverCategoryData` - requires
+       heterogeneous functor notion between categories with different
+       underlying quivers (current `OverFunctorData` requires same quiver)
+     - Define mathlib `Functor` for L and Φ using these instances
+     - Define mathlib `NatTrans` for unit and counit
+     - Construct `Adjunction.mkOfUnitCounit` from triangle identities
 
 ## Key Files
 
@@ -77,6 +97,9 @@ has been fully constructed and verified.
 - `inducedQuotFunctor F` - The induced functor L(Φ(F)) from F : C → D
 - `NatTransData.toOverFunctorData` - L functor on morphisms: α : F → G maps
   to OverFunctorData L(F) → L(G)
+- `CategoryQuotientMorphism.id` - Identity CategoryQuotientMorphism
+- `toOverFunctorData_id` - L preserves identity
+- `toOverFunctorData_comp` - L preserves composition
 
 ## Technical Notes
 

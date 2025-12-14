@@ -620,6 +620,18 @@ structure CategoryQuotientMorphism (D₁ D₂ : CategoryQuotientData.{v, u}) whe
   compComposite_comm :
     ∀ c, quiverMor.morFn (D₁.compComposite c) = D₂.compComposite (compWitMap c)
 
+/-- Identity CategoryQuotientMorphism. -/
+def CategoryQuotientMorphism.id (D : CategoryQuotientData) :
+    CategoryQuotientMorphism D D where
+  quiverMor := OverQuiverMorphism.id D.quiver
+  idWitMap := _root_.id
+  compWitMap := _root_.id
+  idObj_comm := fun _ => rfl
+  idMor_comm := fun _ => rfl
+  compRight_comm := fun _ => rfl
+  compLeft_comm := fun _ => rfl
+  compComposite_comm := fun _ => rfl
+
 variable (F : CategoryQuotientMorphism D₁ D₂)
 
 /-- Helper: mapQuiver of a var is a transported var.
@@ -1043,6 +1055,157 @@ def CategoryJudgments.NatTransData.toOverFunctorData
     -- Now we need: quotMapMor (hcomp ▸ g_qm) = quotMapMor g_qm
     -- Since hcomp is now definitionally rfl, the transport is trivial.
     rfl
+
+/-- FreeMor.mapQuiver with identity OverQuiverMorphism is identity. -/
+theorem FreeMor.mapQuiver_overQuiverId {Q : OverQuiver} {a b : Q.Obj}
+    (fm : FreeMor Q a b) :
+    FreeMor.mapQuiver (OverQuiverMorphism.id Q) fm = fm := by
+  induction fm with
+  | var f => rfl
+  | id x => rfl
+  | comp g f ihg ihf =>
+    simp only [FreeMor.mapQuiver] at ihg ihf ⊢
+    rw [ihg, ihf]
+
+/-- quotMapMor with identity CategoryQuotientMorphism is identity. -/
+theorem CategoryQuotientMorphism.quotMapMor_id_self
+    {D : CategoryQuotientData} {a b : D.quiver.Obj}
+    (qm : D.QuotMor a b) :
+    CategoryQuotientMorphism.quotMapMor
+      (CategoryQuotientMorphism.id D) qm = qm := by
+  induction qm using Quotient.ind with
+  | _ fm =>
+    simp only [CategoryQuotientMorphism.quotMapMor, CategoryQuotientMorphism.id,
+      CategoryQuotientData.quotMor]
+    exact congrArg Quotient.mk'' (FreeMor.mapQuiver_overQuiverId fm)
+
+/-- L preserves identity: L(id_F) = id_{L(F)}. -/
+theorem toOverFunctorData_id :
+    (CategoryJudgments.NatTransData.id F).toOverFunctorData =
+    OverFunctorData.id F.toOverCategoryData := by
+  -- First, show that the objFn components are equal.
+  -- NatTransData.id uses 𝟙 which for Type is definitionally id.
+  have h_obj : (CategoryJudgments.NatTransData.id F).toOverFunctorData.objFn =
+               (OverFunctorData.id F.toOverCategoryData).objFn := rfl
+  -- Next, show morFn components are equal.
+  have h_mor : (CategoryJudgments.NatTransData.id F).toOverFunctorData.morFn =
+               (OverFunctorData.id F.toOverCategoryData).morFn := by
+    funext m
+    simp only [CategoryJudgments.NatTransData.toOverFunctorData,
+      CategoryJudgments.NatTransData.toQuotQuiverMor,
+      CategoryJudgments.NatTransData.id, OverFunctorData.id,
+      OverQuiverMorphism.id,
+      CategoryJudgments.NatTransData.toCategoryQuotientMorphism,
+      CategoryQuotientData.bundleQuotMor]
+    congr 1
+    congr 1
+    exact CategoryQuotientMorphism.quotMapMor_id_self m.2.2
+  -- Use ext to reduce to component equality.
+  ext x
+  · exact congrFun h_obj x
+  · exact congrFun h_mor x
+
+/-- mapQuiver on OverQuiverMorphism commutes with cast. -/
+theorem FreeMor.mapQuiver_cast_overQuiv {Q₁ Q₂ : OverQuiver}
+    (F : OverQuiverMorphism Q₁ Q₂)
+    {a a' b b' : Q₁.Obj} (ha : a = a') (hb : b = b')
+    (m : FreeMor Q₁ a b) :
+    FreeMor.mapQuiver F (cast (congrArg₂ (FreeMor Q₁) ha hb) m) =
+    cast (congrArg₂ (FreeMor Q₂) (congrArg F.objFn ha) (congrArg F.objFn hb))
+      (FreeMor.mapQuiver F m) := by
+  subst ha hb
+  simp only [congrArg₂, cast_eq]
+
+/-- FreeMor.mapQuiver respects composition of OverQuiverMorphisms. -/
+theorem FreeMor.mapQuiver_quiverComp {Q₁ Q₂ Q₃ : OverQuiver}
+    (F : OverQuiverMorphism Q₁ Q₂) (G : OverQuiverMorphism Q₂ Q₃)
+    {a b : Q₁.Obj} (fm : FreeMor Q₁ a b) :
+    FreeMor.mapQuiver (F.comp G) fm =
+      FreeMor.mapQuiver G (FreeMor.mapQuiver F fm) := by
+  induction fm with
+  | var f =>
+    -- Both sides are transported .var (G.morFn (F.morFn f)) values.
+    -- Convert all transports to casts and use cast_eq (proof irrelevance).
+    simp only [FreeMor.mapQuiver, OverQuiverMorphism.comp,
+      subst_subst_eq_cast, Function.comp_apply]
+    -- LHS: cast _ (var (G.morFn (F.morFn f)))
+    -- RHS: mapQuiver G (cast _ (var (F.morFn f)))
+    -- Apply mapQuiver_cast_overQuiv with explicit src/tgt proofs.
+    rw [FreeMor.mapQuiver_cast_overQuiv G (F.src_comm f) (F.tgt_comm f)]
+    simp only [FreeMor.mapQuiver, subst_subst_eq_cast]
+    simp only [cast_cast]
+  | id x => rfl
+  | comp g f ihg ihf =>
+    simp only [FreeMor.mapQuiver] at ihg ihf ⊢
+    rw [ihg, ihf]
+
+/-- quotMapMor respects composition of CategoryQuotientMorphisms (via quiverMor comp). -/
+theorem CategoryQuotientMorphism.quotMapMor_quiverComp
+    {D₁ D₂ D₃ : CategoryQuotientData}
+    (F : CategoryQuotientMorphism D₁ D₂) (G : CategoryQuotientMorphism D₂ D₃)
+    {a b : D₁.quiver.Obj} (qm : D₁.QuotMor a b) :
+    CategoryQuotientMorphism.quotMapMor
+      ⟨F.quiverMor.comp G.quiverMor, G.idWitMap ∘ F.idWitMap,
+        G.compWitMap ∘ F.compWitMap, fun i => by
+          simp only [OverQuiverMorphism.comp, Function.comp_apply]
+          rw [F.idObj_comm, G.idObj_comm],
+        fun i => by
+          simp only [OverQuiverMorphism.comp, Function.comp_apply]
+          rw [F.idMor_comm, G.idMor_comm],
+        fun c => by
+          simp only [OverQuiverMorphism.comp, Function.comp_apply]
+          rw [F.compRight_comm, G.compRight_comm],
+        fun c => by
+          simp only [OverQuiverMorphism.comp, Function.comp_apply]
+          rw [F.compLeft_comm, G.compLeft_comm],
+        fun c => by
+          simp only [OverQuiverMorphism.comp, Function.comp_apply]
+          rw [F.compComposite_comm, G.compComposite_comm]⟩ qm =
+    G.quotMapMor (F.quotMapMor qm) := by
+  induction qm using Quotient.ind with
+  | _ fm =>
+    simp only [CategoryQuotientMorphism.quotMapMor, CategoryQuotientData.quotMor]
+    exact congrArg Quotient.mk'' (FreeMor.mapQuiver_quiverComp F.quiverMor G.quiverMor fm)
+
+variable {H : CategoryJudgments.FunctorData (Type u)}
+
+/-- L preserves composition: L(α ∘ β) = L(α) ∘ L(β). -/
+theorem toOverFunctorData_comp (α : CategoryJudgments.NatTransData F G)
+    (β : CategoryJudgments.NatTransData G H) :
+    (α.comp β).toOverFunctorData =
+    α.toOverFunctorData.comp β.toOverFunctorData := by
+  -- First, show that the objFn components are equal.
+  -- (α.comp β).appObj = β.appObj ∘ α.appObj = (α.comp β).toOverFunctorData.objFn
+  -- and α.toOverFunctorData.comp β.toOverFunctorData has objFn = β.objFn ∘ α.objFn
+  have h_obj : (α.comp β).toOverFunctorData.objFn =
+               (α.toOverFunctorData.comp β.toOverFunctorData).objFn := rfl
+  -- Next, show morFn components are equal.
+  have h_mor : (α.comp β).toOverFunctorData.morFn =
+               (α.toOverFunctorData.comp β.toOverFunctorData).morFn := by
+    funext m
+    simp only [CategoryJudgments.NatTransData.toOverFunctorData,
+      CategoryJudgments.NatTransData.toQuotQuiverMor,
+      CategoryJudgments.NatTransData.comp, OverFunctorData.comp,
+      OverQuiverMorphism.comp,
+      CategoryJudgments.NatTransData.toCategoryQuotientMorphism,
+      CategoryQuotientData.bundleQuotMor, Function.comp_apply]
+    congr 1
+    congr 1
+    -- Need to show quotMapMor of (α.comp β) equals composition of quotMapMors
+    --   (α.comp β).toCategoryQuotientMorphism.quiverMor =
+    --   α.toCategoryQuotientMorphism.quiverMor.comp β.toCategoryQuotientMorphism.quiverMor
+    -- and quotMapMor respects this composition.
+    induction m.2.2 using Quotient.ind with
+    | _ fm =>
+      simp only [CategoryQuotientMorphism.quotMapMor, CategoryQuotientData.quotMor]
+      exact congrArg Quotient.mk''
+        (FreeMor.mapQuiver_quiverComp
+          α.toCategoryQuotientMorphism.quiverMor
+          β.toCategoryQuotientMorphism.quiverMor fm)
+  -- Use ext to reduce to component equality.
+  ext x
+  · exact congrFun h_obj x
+  · exact congrFun h_mor x
 
 end LFunctorMorphisms
 
