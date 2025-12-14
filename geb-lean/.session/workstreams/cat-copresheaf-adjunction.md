@@ -1,9 +1,52 @@
 # Cat-Copresheaf Adjunction Workstream
 
-## Status: Complete
+## Status: In Progress - Extending to Mathlib Types
 
 The adjunction L ⊣ Φ between categories and copresheaves on CategoryJudgments
-has been fully constructed and verified.
+has been fully constructed and verified. Current work: extending to mathlib
+types by composing with categorical equivalences.
+
+## Current Work: Extending to Mathlib Types
+
+### Goal
+
+Port the adjunction `catCopresheafMathlibAdjunction : LFunctor ⊣ PhiFunctor`
+from our internal types to mathlib's standard types by composing with
+categorical equivalences on both sides:
+
+- **Left side** (category of categories):
+  `BundledOverCategoryData` → `BundledCategoryData` → `Cat`
+- **Right side** (copresheaf category):
+  `FunctorData (Type u)` → `(CategoryJudgments.Obj ⥤ Type u)`
+
+### Right-Side Extension (Phase 1 - Complete)
+
+The equivalence `functorDataEquivCat : FunctorData C ≌ (Obj ⥤ C)` is already
+complete in `CategoryJudgments.lean`. The extension was implemented by:
+
+1. Using `Equivalence.symm.toAdjunction` to get `E.inverse ⊣ E.functor`
+2. Composing with `catCopresheafMathlibAdjunction` using `Adjunction.comp`
+3. Result: `(E.inverse ⋙ LFunctor) ⊣ (PhiFunctor ⋙ E.functor)`
+
+Where:
+- `E.inverse = functorToFunctorData : (Obj ⥤ Type u) ⥤ FunctorData (Type u)`
+- `E.functor = functorDataToFunctor : FunctorData (Type u) ⥤ (Obj ⥤ Type u)`
+
+New definitions in `CatJudgmentAdjunction.lean`:
+- `copresheafEquiv` - the equivalence `FunctorData (Type u) ≌ (Obj ⥤ Type u)`
+- `copresheafEquivAdjunction` - forward adjunction from the equivalence
+- `copresheafEquivSymmAdjunction` - reversed adjunction from the equivalence
+- `LFunctorExt` - extended L functor: `(Obj ⥤ Type u) ⥤ BundledOverCategoryData`
+- `PhiFunctorExt` - extended Φ functor: `BundledOverCategoryData ⥤ (Obj ⥤ Type u)`
+- `catCopresheafExtAdjunction` - the extended adjunction `LFunctorExt ⊣ PhiFunctorExt`
+
+### Left-Side Extension (Phase 2 - Future)
+
+Need to establish the equivalence chain:
+1. `BundledOverCategoryData ≌ BundledCategoryData` (partial work exists)
+2. `BundledCategoryData ≌ Cat` (complete: `equivCat` in `Category.lean`)
+
+Then compose with the Phase 1 result.
 
 ## Completed
 

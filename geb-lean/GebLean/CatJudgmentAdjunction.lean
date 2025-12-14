@@ -2828,4 +2828,68 @@ def catCopresheafMathlibAdjunction :
 
 end MathlibAdjunction
 
+/-! ## Extended Adjunction with Mathlib Copresheaf Category
+
+We extend the adjunction `catCopresheafMathlibAdjunction` by composing with
+the categorical equivalence `functorDataEquivCat` on the right side. This
+gives an adjunction where the copresheaf side uses mathlib's standard functor
+category `(CategoryJudgments.Obj ⥤ Type u)` instead of our internal
+`FunctorData (Type u)`.
+-/
+
+section ExtendedAdjunction
+
+universe uExt
+
+/-- The equivalence between our FunctorData and the mathlib functor category,
+    specialized to Type. -/
+abbrev copresheafEquiv :
+    CategoryJudgments.FunctorData (Type uExt) ≌
+    (CategoryJudgments.Obj ⥤ Type uExt) :=
+  CategoryJudgments.functorDataEquivCat
+
+/-- The adjunction from the equivalence:
+    functorDataToFunctor ⊣ functorToFunctorData.
+    This is the "forward" direction E.toAdjunction. -/
+def copresheafEquivAdjunction :
+    CategoryJudgments.functorDataToFunctor (C := Type uExt) ⊣
+    CategoryJudgments.functorToFunctorData :=
+  copresheafEquiv.toAdjunction
+
+/-- The reversed equivalence gives the adjunction in the other direction:
+    functorToFunctorData ⊣ functorDataToFunctor. -/
+def copresheafEquivSymmAdjunction :
+    CategoryJudgments.functorToFunctorData ⊣
+    CategoryJudgments.functorDataToFunctor (C := Type uExt) :=
+  copresheafEquiv.symm.toAdjunction
+
+/-- The extended L functor: from mathlib copresheaves to categories.
+    L' = functorToFunctorData ⋙ LFunctor :
+    (Obj ⥤ Type u) ⥤ BundledOverCategoryData -/
+def LFunctorExt :
+    (CategoryJudgments.Obj ⥤ Type uExt) ⥤ BundledOverCategoryData.{uExt, uExt} :=
+  CategoryJudgments.functorToFunctorData ⋙ LFunctor
+
+/-- The extended Φ functor: from categories to mathlib copresheaves.
+    Φ' = PhiFunctor ⋙ functorDataToFunctor :
+    BundledOverCategoryData ⥤ (Obj ⥤ Type u) -/
+def PhiFunctorExt :
+    BundledOverCategoryData.{uExt, uExt} ⥤ (CategoryJudgments.Obj ⥤ Type uExt) :=
+  PhiFunctor ⋙ CategoryJudgments.functorDataToFunctor
+
+/-- The extended adjunction L' ⊣ Φ' where the copresheaf side uses mathlib's
+    functor category.
+
+    This is constructed by composing:
+    - copresheafEquivSymmAdjunction : functorToFunctorData ⊣ functorDataToFunctor
+    - catCopresheafMathlibAdjunction : LFunctor ⊣ PhiFunctor
+
+    Using Adjunction.comp, we get:
+    (functorToFunctorData ⋙ LFunctor) ⊣ (PhiFunctor ⋙ functorDataToFunctor) -/
+def catCopresheafExtAdjunction :
+    LFunctorExt.{uExt} ⊣ PhiFunctorExt.{uExt} :=
+  copresheafEquivSymmAdjunction.comp catCopresheafMathlibAdjunction
+
+end ExtendedAdjunction
+
 end GebLean
