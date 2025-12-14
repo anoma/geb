@@ -8,6 +8,20 @@ infrastructure.
 
 ## Completed Tasks
 
+### Task 6: Direct Proof of PhiFunctor Fully Faithful (Complete)
+
+Proved computationally that `PhiFunctor` is fully faithful, without using
+mathlib's noncomputable `Adjunction.fullyFaithfulROfIsIsoCounit`:
+
+1. `phiPreimage` - constructs preimages as `ε_X⁻¹ ≫ L(f) ≫ ε_Y`
+2. `adjunctionUnit_app_isIso` - proves unit at `Φ(Z)` is an isomorphism using
+   triangle identity
+3. `phi_map_counit_inv_eq_unit` - shows `Φ(ε⁻¹) = η`
+4. `phi_map_counit_eq_unit_inv` - shows `Φ(ε) = inv(η)`
+5. `phi_map_preimage` - proves `Φ(preimage f) = f` using unit naturality
+6. `phi_preimage_map` - proves `preimage(Φ(g)) = g` using counit naturality
+7. `phiFunctorFullyFaithful : PhiFunctor.FullyFaithful` - the final structure
+
 ### Task 5: Connect to Mathlib's Reflective Adjunction (Complete)
 
 Connected the counit isomorphism to mathlib's standard formulations:
@@ -128,6 +142,11 @@ New definitions in `CatJudgmentAdjunction.lean`:
    - `counitFunctorData_inv` - inverse of the counit functor
    - `counit_comp_inv_eq_id` and `inv_comp_counit_eq_id` - round-trip identities
    - Counit is an isomorphism at OverFunctorData level
+
+6. **Fully Faithful Right Adjoint** - Done
+   - `phiPreimage` - constructs preimages using counit isomorphism
+   - `phi_map_preimage` and `phi_preimage_map` - round-trip properties
+   - `phiFunctorFullyFaithful : PhiFunctor.FullyFaithful` - computational proof
 
 ## Key Files
 

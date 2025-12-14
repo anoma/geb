@@ -3450,15 +3450,148 @@ instance adjunctionCounit_isIso : IsIso catCopresheafMathlibAdjunction.{uMR}.cou
 
 /-- The natural isomorphism form of the counit. This shows that the counit is
     invertible, which is the standard characterization of a reflective adjunction.
-
-    By mathlib's `Adjunction.fullyFaithfulROfIsIsoCounit`, this implies that Φ is
-    fully faithful. That theorem is noncomputable in mathlib, but the isomorphism
-    structure is fully computational here. -/
+-/
 def catCopresheafCounitNatIso : (PhiFunctor ⋙ LFunctor) ≅ (Functor.id BundledOverCategoryData) :=
   NatIso.ofComponents counitComponentIso (fun {X Y} f => by
     simp only [Functor.id_obj, Functor.comp_obj, Functor.id_map, Functor.comp_map,
       counitComponentIso, LFunctor, PhiFunctor]
     exact counitNT_naturality f)
+
+/-! ### Full Faithfulness of Φ
+
+We prove that Φ (PhiFunctor) is fully faithful by constructing an explicit
+preimage for morphisms. Given f : Φ(X) → Φ(Y), the preimage is:
+
+  preimage(f) = ε_X⁻¹ ≫ L(f) ≫ ε_Y
+
+where ε is the counit isomorphism. This is essentially the standard proof
+that when the counit of an adjunction is an isomorphism, the right adjoint
+is fully faithful, but done computationally. -/
+
+/-- The preimage of a morphism f : Φ(X) → Φ(Y) under Φ.
+    This is constructed as ε_X⁻¹ ≫ L(f) ≫ ε_Y where ε is the counit. -/
+def phiPreimage {X Y : BundledOverCategoryData.{uMR, uMR}}
+    (f : PhiFunctor.obj X ⟶ PhiFunctor.obj Y) : X ⟶ Y :=
+  (counitComponentIso X).inv ≫ LFunctor.map f ≫ (counitComponentIso Y).hom
+
+/-- The unit of the adjunction at Φ(Z) is an isomorphism.
+    This follows from the triangle identity: η_{Φ(Z)} ≫ Φ(ε_Z) = id,
+    combined with the fact that ε_Z is an isomorphism. -/
+instance adjunctionUnit_app_isIso (Z : BundledOverCategoryData.{uMR, uMR}) :
+    IsIso (catCopresheafMathlibAdjunction.unit.app (PhiFunctor.obj Z)) := by
+  -- The counit ε_Z is an isomorphism, so Φ(ε_Z) is also an iso
+  have h_phi_counit_iso : IsIso (PhiFunctor.map (counitComponentIso Z).hom) :=
+    Functor.map_isIso PhiFunctor (counitComponentIso Z).hom
+  -- The triangle identity says η_{Φ(Z)} ≫ Φ(ε_Z) = id
+  have triangle := catCopresheafMathlibAdjunction.right_triangle_components Z
+  -- Rewrite to get the IsIso instance for the composition
+  have h_comp_eq_id : catCopresheafMathlibAdjunction.unit.app (PhiFunctor.obj Z) ≫
+      PhiFunctor.map (catCopresheafMathlibAdjunction.counit.app Z) = 𝟙 _ := triangle
+  have h_comp_iso : IsIso (catCopresheafMathlibAdjunction.unit.app (PhiFunctor.obj Z) ≫
+      PhiFunctor.map (catCopresheafMathlibAdjunction.counit.app Z)) := by
+    rw [h_comp_eq_id]; infer_instance
+  exact IsIso.of_isIso_comp_right
+    (catCopresheafMathlibAdjunction.unit.app (PhiFunctor.obj Z))
+    (PhiFunctor.map (catCopresheafMathlibAdjunction.counit.app Z))
+
+/-- Φ(ε⁻¹) = η: the image of the counit inverse under Φ equals the unit. -/
+theorem phi_map_counit_inv_eq_unit (Z : BundledOverCategoryData.{uMR, uMR}) :
+    PhiFunctor.map (counitComponentIso Z).inv =
+    catCopresheafMathlibAdjunction.unit.app (PhiFunctor.obj Z) := by
+  -- η ≫ Φ(ε) = id from the triangle identity
+  -- Φ(ε⁻¹) ≫ Φ(ε) = id from Φ preserving isos
+  -- Since Φ(ε) is an iso with unique inverse, η = inv(Φ(ε)) = Φ(ε⁻¹)
+  have h_phi_counit_iso : IsIso (PhiFunctor.map (counitComponentIso Z).hom) :=
+    Functor.map_isIso PhiFunctor (counitComponentIso Z).hom
+  have triangle := catCopresheafMathlibAdjunction.right_triangle_components Z
+  -- Φ(ε⁻¹) = inv(Φ(ε)) since Φ preserves isos
+  have h_phi_inv : PhiFunctor.map (counitComponentIso Z).inv =
+      inv (PhiFunctor.map (counitComponentIso Z).hom) := by
+    symm
+    apply IsIso.inv_eq_of_hom_inv_id
+    simp only [← CategoryTheory.Functor.map_comp, Iso.hom_inv_id,
+      CategoryTheory.Functor.map_id]
+  -- η = inv(Φ(ε)) from the triangle
+  have h_unit_eq_inv : catCopresheafMathlibAdjunction.unit.app (PhiFunctor.obj Z) =
+      inv (PhiFunctor.map (counitComponentIso Z).hom) := by
+    -- counitComponentIso.hom = adjunction.counit.app definitionally
+    exact IsIso.eq_inv_of_inv_hom_id triangle
+  rw [h_phi_inv, h_unit_eq_inv]
+
+/-- Φ(ε) = inv(η): the image of the counit under Φ equals the inverse of the unit. -/
+theorem phi_map_counit_eq_unit_inv (Z : BundledOverCategoryData.{uMR, uMR}) :
+    PhiFunctor.map (counitComponentIso Z).hom =
+    inv (catCopresheafMathlibAdjunction.unit.app (PhiFunctor.obj Z)) := by
+  -- From phi_map_counit_inv_eq_unit: Φ(ε⁻¹) = η
+  -- So Φ(ε) = inv(Φ(ε⁻¹)) = inv(η)
+  have h := phi_map_counit_inv_eq_unit Z
+  -- Φ(ε) is the inverse of Φ(ε⁻¹)
+  -- inv_eq_of_inv_hom_id: g ≫ f = 𝟙 → inv f = g
+  -- So we need Φ(ε) ≫ Φ(ε⁻¹) = 𝟙 to get inv(Φ(ε⁻¹)) = Φ(ε)
+  have h_phi_hom_is_inv : PhiFunctor.map (counitComponentIso Z).hom =
+      inv (PhiFunctor.map (counitComponentIso Z).inv) := by
+    symm
+    apply IsIso.inv_eq_of_inv_hom_id
+    simp only [← CategoryTheory.Functor.map_comp, Iso.hom_inv_id,
+      CategoryTheory.Functor.map_id]
+  -- Using h: Φ(ε⁻¹) = η, so inv(Φ(ε⁻¹)) = inv(η)
+  calc PhiFunctor.map (counitComponentIso Z).hom
+      = inv (PhiFunctor.map (counitComponentIso Z).inv) := h_phi_hom_is_inv
+    _ = inv (catCopresheafMathlibAdjunction.unit.app (PhiFunctor.obj Z)) := by
+          congr 1
+
+/-- Φ applied to the preimage gives back the original morphism. -/
+theorem phi_map_preimage {X Y : BundledOverCategoryData.{uMR, uMR}}
+    (f : PhiFunctor.obj X ⟶ PhiFunctor.obj Y) :
+    PhiFunctor.map (phiPreimage f) = f := by
+  simp only [phiPreimage]
+  simp only [Functor.map_comp]
+  -- Use the relationships: Φ(ε⁻¹) = η and Φ(ε) = inv(η)
+  rw [phi_map_counit_inv_eq_unit X, phi_map_counit_eq_unit_inv Y]
+  -- Now: η_X ≫ Φ(L(f)) ≫ inv(η_Y) = f
+  -- Using naturality of η: f ≫ η_Y = η_X ≫ Φ(L(f))
+  have h_nat := catCopresheafMathlibAdjunction.unit.naturality f
+  simp only [Functor.id_obj, Functor.id_map, Functor.comp_obj, Functor.comp_map] at h_nat
+  -- h_nat : f ≫ η_Y = η_X ≫ Φ(L(f))
+  -- Rewrite LHS using h_nat.symm: η_X ≫ Φ(L(f)) = f ≫ η_Y
+  calc catCopresheafMathlibAdjunction.unit.app (PhiFunctor.obj X) ≫
+        PhiFunctor.map (LFunctor.map f) ≫
+        inv (catCopresheafMathlibAdjunction.unit.app (PhiFunctor.obj Y))
+      = (catCopresheafMathlibAdjunction.unit.app (PhiFunctor.obj X) ≫
+          PhiFunctor.map (LFunctor.map f)) ≫
+        inv (catCopresheafMathlibAdjunction.unit.app (PhiFunctor.obj Y)) := by
+          simp only [Category.assoc]
+    _ = (f ≫ catCopresheafMathlibAdjunction.unit.app (PhiFunctor.obj Y)) ≫
+        inv (catCopresheafMathlibAdjunction.unit.app (PhiFunctor.obj Y)) := by
+          rw [← h_nat]
+    _ = f := by simp only [Category.assoc, IsIso.hom_inv_id, Category.comp_id]
+
+/-- The preimage of Φ(g) is g. -/
+theorem phi_preimage_map {X Y : BundledOverCategoryData.{uMR, uMR}}
+    (g : X ⟶ Y) : phiPreimage (PhiFunctor.map g) = g := by
+  simp only [phiPreimage]
+  -- Use naturality of the counit natural transformation
+  -- counitNT.naturality g says: (PhiFunctor ⋙ LFunctor).map g ≫ ε_Y = ε_X ≫ g
+  have h_nat := counitNT.naturality g
+  simp only [Functor.comp_map, Functor.id_map] at h_nat
+  -- h_nat : LFunctor.map (PhiFunctor.map g) ≫ counitNT.app Y = counitNT.app X ≫ g
+  -- counitNT.app Z = counitComponentIso.hom by definition
+  -- ε_X⁻¹ ≫ L(Φ(g)) ≫ ε_Y = ε_X⁻¹ ≫ (ε_X ≫ g) = g
+  have h_app_eq : ∀ (Z : BundledOverCategoryData.{uMR, uMR}),
+      counitNT.app Z = (counitComponentIso Z).hom := fun _ => rfl
+  rw [h_app_eq X, h_app_eq Y] at h_nat
+  calc (counitComponentIso X).inv ≫ LFunctor.map (PhiFunctor.map g) ≫
+        (counitComponentIso Y).hom
+      = (counitComponentIso X).inv ≫ ((counitComponentIso X).hom ≫ g) := by rw [← h_nat]
+    _ = g := by simp only [Iso.inv_hom_id_assoc]
+
+/-- Φ (PhiFunctor) is fully faithful.
+    This is a computational proof that the right adjoint of a reflective adjunction
+    is fully faithful. -/
+def phiFunctorFullyFaithful : PhiFunctor.{uMR}.FullyFaithful where
+  preimage := phiPreimage
+  map_preimage := phi_map_preimage
+  preimage_map := phi_preimage_map
 
 end MathlibReflectivity
 
