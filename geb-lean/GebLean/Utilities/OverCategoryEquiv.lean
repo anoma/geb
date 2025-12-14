@@ -453,6 +453,23 @@ theorem FunctorData.roundtrip_map_val_eq (fd : FunctorData dataC dataD)
   subst ha hb
   rfl
 
+/-- The roundtrip functor's map commutes with fiber_equiv: applying fiber_equiv
+    to the result of the roundtrip map equals applying the original functor's
+    map to the fiber_equiv of the input. This is the naturality of fiber_equiv
+    with respect to functors. -/
+@[simp]
+theorem FunctorData.roundtrip_map_fiber_equiv (fd : FunctorData dataC dataD)
+    {a b : U} (f : hsC.toOverQuiver.toHomSet a b) :
+    hsD.fiber_equiv (fd.obj a) (fd.obj b)
+      (fd.toOverFunctorData.toFunctorData.map f) =
+      fd.map (hsC.fiber_equiv a b f) := by
+  rcases f with ⟨⟨a', b', g⟩, ⟨rfl, rfl⟩⟩
+  simp only [HomSet.toOverQuiver_src, HomSet.toOverQuiver_tgt,
+    HomSet.fiber_equiv_rfl,
+    FunctorData.toOverFunctorData, OverFunctorData.toFunctorData,
+    OverFunctorData.toFunctorOps, OverFunctorData.extractMap,
+    FunctorOps.toOverQuiverMorphism]
+
 /-- The object function is preserved under the round-trip
     OverFunctorData → FunctorData → OverFunctorData. -/
 theorem OverFunctorData.roundtrip_objFn_eq
