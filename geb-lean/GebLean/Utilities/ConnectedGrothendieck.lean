@@ -2899,6 +2899,372 @@ lemma connGrothendieckContraProjection_map_right
 
 end ProjectionFunctor
 
+section Functoriality
+
+/-!
+## Functoriality of Connected Grothendieck Construction
+
+A natural transformation `α : F ⟶ G` between functors `F G : Tw(C) ⥤ Cat`
+induces a functor between the corresponding connected Grothendieck categories.
+This makes the connected Grothendieck construction into a functor
+
+```
+(TwistedArrow' C ⥤ Cat) ⥤ Over (Cat.of (Arrow C))
+```
+-/
+
+variable {F G H : TwistedArrow' C ⥤ Cat.{v, u}}
+
+/--
+A natural transformation `α : F ⟶ G` induces a natural transformation between
+the restricted fiber functors.
+-/
+def restrictToFiberNatTrans (α : F ⟶ G) (b : C) :
+    restrictToFiber C F b ⟶ restrictToFiber C G b :=
+  Functor.whiskerLeft (overOpToTwistedArrow C b) α
+
+@[simp]
+theorem restrictToFiberNatTrans_id (b : C) :
+    restrictToFiberNatTrans C (𝟙 F) b = 𝟙 (restrictToFiber C F b) := by
+  simp only [restrictToFiberNatTrans, Functor.whiskerLeft_id', restrictToFiber]
+
+@[simp]
+theorem restrictToFiberNatTrans_comp (α : F ⟶ G) (β : G ⟶ H) (b : C) :
+    restrictToFiberNatTrans C (α ≫ β) b =
+      restrictToFiberNatTrans C α b ≫ restrictToFiberNatTrans C β b := by
+  simp only [restrictToFiberNatTrans, Functor.whiskerLeft_comp]
+
+/--
+A natural transformation `α : F ⟶ G` induces a functor between the inner
+fiber categories for each `b : C`.
+-/
+def innerFiberContraMap (α : F ⟶ G) (b : C) :
+    innerFiberContra C F b ⥤ innerFiberContra C G b :=
+  GrothendieckContra'.map (restrictToFiberNatTrans C α b)
+
+@[simp]
+theorem innerFiberContraMap_id (b : C) :
+    innerFiberContraMap C (𝟙 F) b = 𝟙 (Cat.of (innerFiberContra C F b)) := by
+  simp only [innerFiberContraMap, restrictToFiberNatTrans_id,
+    GrothendieckContra'.map_id_eq, innerFiberContra]
+
+@[simp]
+theorem innerFiberContraMap_comp (α : F ⟶ G) (β : G ⟶ H) (b : C) :
+    innerFiberContraMap C (α ≫ β) b =
+      innerFiberContraMap C α b ⋙ innerFiberContraMap C β b := by
+  simp only [innerFiberContraMap, restrictToFiberNatTrans_comp,
+    GrothendieckContra'.map_comp_eq]
+
+@[simp]
+theorem innerFiberContraMap_obj (α : F ⟶ G) (b : C)
+    (x : innerFiberContra C F b) :
+    (innerFiberContraMap C α b).obj x =
+      ⟨x.base, (α.app ((overOpToTwistedArrow C b).obj x.base)).obj x.fiber⟩ := by
+  simp only [innerFiberContraMap, restrictToFiberNatTrans]
+  rfl
+
+/--
+The inner fiber map preserves the base component of objects.
+-/
+@[simp]
+theorem innerFiberContraMap_obj_base (α : F ⟶ G) (b : C)
+    (x : innerFiberContra C F b) :
+    ((innerFiberContraMap C α b).obj x).base = x.base :=
+  rfl
+
+/--
+The inner fiber map preserves base morphisms.
+-/
+theorem innerFiberContraMap_map_base (α : F ⟶ G) (b : C)
+    {x y : innerFiberContra C F b} (f : x ⟶ y) :
+    ((innerFiberContraMap C α b).map f).base = f.base :=
+  rfl
+
+/--
+Naturality of `innerFiberContraMap` with respect to base morphisms `β : b ⟶ d`.
+This shows that the square commutes on objects.
+-/
+theorem innerFiberContraMap_natural_obj (α : F ⟶ G) {b d : C} (β : b ⟶ d)
+    (x : innerFiberContra C F b) :
+    (innerFiberContraMap C α d).obj ((innerFiberContraTransition C F β).obj x) =
+    (innerFiberContraTransition C G β).obj ((innerFiberContraMap C α b).obj x) := by
+  have h := Functor.congr_obj (α.naturality (fiberTransportTwMorph C β x.base)) x.fiber
+  simp only [Cat.comp_obj] at h
+  apply GrothendieckContra'.obj_ext
+  · rfl
+  · simp only [innerFiberContraMap, innerFiberContraTransition,
+      innerFiberContraTransitionObj, GrothendieckContra'.map_obj, restrictToFiberNatTrans,
+      Functor.whiskerLeft_app, fiberTransport, overOpToTwistedArrow, Over.map_obj_hom]
+    exact heq_of_eq h
+
+/--
+The natural transformation between fiber functors induced by `α : F ⟶ G`.
+-/
+@[simp]
+theorem innerFiberContraTransition_map_base {b d : C} (β : b ⟶ d)
+    {x y : innerFiberContra C F b} (f : x ⟶ y) :
+    ((innerFiberContraTransition C F β).map f).base = (Over.map β).map f.base :=
+  rfl
+
+-- Helper lemma for LHS of fiberFunctorContraNatTrans naturality
+theorem fiberFunctorContra_map_map_base {b d : C} (β : b ⟶ d)
+    {x y : innerFiberContra C F b} (f : x ⟶ y) :
+    (((fiberFunctorContra C F).map β).map f).base = (Over.map β).map f.base :=
+  rfl
+
+-- Helper lemma for RHS of fiberFunctorContraNatTrans naturality
+-- Shows that eqToHom compositions don't change the base result
+theorem fiberFunctorContraNatTrans_rhs_base_eq (α : F ⟶ G) {b d : C} (β : b ⟶ d)
+    {X Y : innerFiberContra C F b} (f : X ⟶ Y)
+    (hX : (innerFiberContraMap C α d).obj
+      ((innerFiberContraTransition C F β).obj X) =
+      (innerFiberContraTransition C G β).obj
+      ((innerFiberContraMap C α b).obj X))
+    (hY : (innerFiberContraMap C α d).obj
+      ((innerFiberContraTransition C F β).obj Y) =
+      (innerFiberContraTransition C G β).obj
+      ((innerFiberContraMap C α b).obj Y)) :
+    (eqToHom hX ≫ ((fiberFunctorContra C G).map β).map
+      ((innerFiberContraMap C α b).map f) ≫ eqToHom hY.symm).base =
+    (Over.map β).map f.base := by
+  -- Unfold category structure and apply comp_base
+  simp only [innerFiberContraCategory, GrothendieckContra'.GrothendieckContraInst',
+             GrothendieckContra'.comp_base]
+  -- Apply base_eqToHom to the eqToHom terms
+  conv_lhs => rw [GrothendieckContra'.base_eqToHom, GrothendieckContra'.base_eqToHom]
+  -- Unfold fiberFunctorContra to innerFiberContraTransition
+  simp only [fiberFunctorContra, innerFiberContraTransition_map_base,
+             innerFiberContraMap_map_base]
+  -- The eqToHom terms should cancel
+  simp only [eqToHom_refl, Category.id_comp, Category.comp_id]
+
+/--
+Naturality of a natural transformation `α : F ⟶ G` with respect to fiber transport.
+This says that `α` commutes with the fiber transport functors.
+-/
+theorem alpha_fiberTransport_naturality (α : F ⟶ G) {b d : C} (β : b ⟶ d)
+    (ov : (Over b)ᵒᵖ') :
+    α.app ((overOpToTwistedArrow C b).obj ov) ⋙ fiberTransport C G β ov =
+    fiberTransport C F β ov ⋙ α.app ((overOpToTwistedArrow C d).obj ((Over.map β).obj ov)) := by
+  simp only [fiberTransport]
+  have nat := α.naturality (fiberTransportTwMorph C β ov)
+  exact nat.symm
+
+/--
+For eqToHom between equal functors, the app component is eqToHom at the object
+level.
+-/
+theorem eqToHom_functor_app' {A B : Type*} [Category A] [Category B]
+    {F₁ F₂ : A ⥤ B} (h : F₁ = F₂) (x : A) :
+    (eqToHom h).app x = eqToHom (congrArg (·.obj x) h) := by
+  subst h
+  rfl
+
+/--
+Core naturality of `innerFiberContraMap` with respect to transition functors
+at the fiber level.
+-/
+theorem innerFiberContraMap_naturality_fiber (α : F ⟶ G) {b d : C} (β : b ⟶ d)
+    {X Y : innerFiberContra C F b} (f : X ⟶ Y) :
+    ((innerFiberContraMap C α d).map ((innerFiberContraTransition C F β).map f)).fiber ≍
+    ((innerFiberContraTransition C G β).map ((innerFiberContraMap C α b).map f)).fiber := by
+  -- Unfold innerFiberContraMap using GrothendieckContra'.map_map
+  simp only [innerFiberContraMap]
+  erw [GrothendieckContra'.map_map, GrothendieckContra'.map_map]
+  -- Unfold innerFiberContraTransition using innerFiberContraTransitionHom_fiber
+  simp only [innerFiberContraTransition, innerFiberContraTransitionHom_fiber]
+  -- restrictToFiberNatTrans is just whiskerLeft, so app = α.app
+  simp only [restrictToFiberNatTrans, Functor.whiskerLeft_app]
+  -- GrothendieckContra'.map preserves the base
+  simp only [GrothendieckContra'.map_obj]
+  -- innerFiberContraTransitionObj.base = (Over.map β).obj X.base
+  simp only [innerFiberContraTransitionObj]
+  -- Both sides simplify to the same core, differing only in eqToHom transport
+  simp only [Functor.map_comp, eqToHom_map, Category.assoc]
+  -- Use naturality of α
+  have alpha_nat := alpha_fiberTransport_naturality C α β X.base
+  have alpha_nat_mor := Functor.congr_hom alpha_nat f.fiber
+  simp only [Functor.comp_map] at alpha_nat_mor
+  -- Rewrite RHS using alpha_nat_mor
+  conv_rhs => rw [alpha_nat_mor]
+  simp only [Category.assoc]
+  -- Convert (eqToHom h).app to eqToHom on LHS
+  rw [eqToHom_functor_app']
+  -- Collapse adjacent eqToHom on LHS
+  simp only [eqToHom_trans]
+  -- Convert (eqToHom h).app on RHS to eqToHom
+  conv_rhs => rw [eqToHom_functor_app']
+  -- Convert F.map (eqToHom h) to eqToHom on RHS
+  simp only [functor_map_eqToHom]
+  -- Collapse adjacent eqToHom on RHS
+  simp only [eqToHom_trans]
+  -- Goal: core ≫ eqToHom ⋯ ≍ eqToHom ⋯ ≫ core ≫ eqToHom ⋯
+  -- Strip leading eqToHom from RHS
+  apply HEq.symm
+  apply HEq.trans (eqToHom_comp_heq _ _)
+  -- Goal: core ≫ eqToHom ⋯ ≍ core ≫ eqToHom ⋯
+  apply HEq.symm
+  -- Both sides have form core ≫ eqToHom _
+  -- Use transitivity: core ≫ eqToHom h1 ≍ core ≍ core ≫ eqToHom h2
+  apply HEq.trans (comp_eqToHom_heq _ _)
+  exact (comp_eqToHom_heq _ _).symm
+
+def fiberFunctorContraNatTrans (α : F ⟶ G) :
+    fiberFunctorContra C F ⟶ fiberFunctorContra C G where
+  app b := innerFiberContraMap C α b
+  naturality {b d} β := by
+    fapply Functor.ext
+    · intro x
+      exact innerFiberContraMap_natural_obj C α β x
+    · intro X Y f
+      apply GrothendieckContra'.ext
+      case w_base =>
+        -- Simplify using Cat.comp_map
+        simp only [Cat.comp_map, innerFiberContraMap_map_base]
+        -- LHS = (Over.map β).map f.base by fiberFunctorContra_map_map_base
+        -- RHS = (Over.map β).map f.base by fiberFunctorContraNatTrans_rhs_base_eq
+        rw [fiberFunctorContra_map_map_base]
+        rw [fiberFunctorContraNatTrans_rhs_base_eq C α β f
+            (innerFiberContraMap_natural_obj C α β X)
+            (innerFiberContraMap_natural_obj C α β Y)]
+      case w_fiber =>
+        -- Use Cat.comp_map to simplify functor compositions
+        simp only [Cat.comp_map]
+        -- Use heterogeneous equality approach
+        apply eq_of_heq
+        apply HEq.trans (comp_eqToHom_heq _ _)
+        -- Use naturality lemma
+        apply HEq.trans (innerFiberContraMap_naturality_fiber C α β f)
+        -- Handle the conjugation with eqToHom
+        exact (GrothendieckContra'.conj_eqToHom_fiber_heq _ _ _).symm
+
+@[simp]
+theorem fiberFunctorContraNatTrans_id :
+    fiberFunctorContraNatTrans C (𝟙 F) = 𝟙 (fiberFunctorContra C F) := by
+  ext b
+  simp only [fiberFunctorContraNatTrans, innerFiberContraMap_id, NatTrans.id_app,
+    fiberFunctorContra, innerFiberContra]
+
+@[simp]
+theorem fiberFunctorContraNatTrans_comp (α : F ⟶ G) (β : G ⟶ H) :
+    fiberFunctorContraNatTrans C (α ≫ β) =
+      fiberFunctorContraNatTrans C α ≫ fiberFunctorContraNatTrans C β := by
+  ext b
+  simp only [fiberFunctorContraNatTrans, innerFiberContraMap_comp, NatTrans.comp_app,
+    Cat.comp_eq_comp]
+
+/--
+A natural transformation `α : F ⟶ G` induces a functor between the
+connected Grothendieck categories.
+-/
+def connGrothendieckContraMap (α : F ⟶ G) :
+    ConnectedGrothendieckContra C F ⥤ ConnectedGrothendieckContra C G :=
+  Grothendieck.map (fiberFunctorContraNatTrans C α)
+
+@[simp]
+theorem connGrothendieckContraMap_obj (α : F ⟶ G)
+    (x : ConnectedGrothendieckContra C F) :
+    (connGrothendieckContraMap C α).obj x =
+      ⟨x.base, (innerFiberContraMap C α x.base).obj x.fiber⟩ :=
+  rfl
+
+@[simp]
+theorem connGrothendieckContraMap_map_base (α : F ⟶ G)
+    {x y : ConnectedGrothendieckContra C F} (f : x ⟶ y) :
+    ((connGrothendieckContraMap C α).map f).base = f.base :=
+  rfl
+
+/--
+For eqToHom between equal functors, the app component is eqToHom at the object level.
+-/
+theorem eqToHom_functor_app {A B : Type*} [Category A] [Category B]
+    {F₁ F₂ : A ⥤ B} (h : F₁ = F₂) (x : A) :
+    (eqToHom h).app x = eqToHom (congrArg (·.obj x) h) := by
+  subst h
+  rfl
+
+/--
+The map functor preserves the left component of the fiber's base.
+-/
+@[simp]
+theorem connGrothendieckContraMap_map_fiber_base_left (α : F ⟶ G)
+    {X Y : ConnectedGrothendieckContra C F} (f : X ⟶ Y) :
+    ((connGrothendieckContraMap C α).map f).fiber.base.left = f.fiber.base.left := by
+  -- Unfold the map definition
+  simp only [connGrothendieckContraMap, Grothendieck.map_map, fiberFunctorContraNatTrans]
+  -- fiber = (eqToHom nat.symm).app X.fiber ≫ (innerFiberContraMap C α Y.base).map f.fiber
+  erw [GrothendieckContra'.comp_base]
+  simp only [innerFiberContraMap_map_base]
+  -- Goal: (((eqToHom ⋯).app X.fiber).base ≫ f.fiber.base).left = f.fiber.base.left
+  -- The eqToHom arises from naturality of fiberFunctorContraNatTrans
+  rw [eqToHom_functor_app]
+  -- Now: ((eqToHom _).base ≫ f.fiber.base).left = f.fiber.base.left
+  erw [GrothendieckContra'.base_eqToHom]
+  -- Now: (eqToHom _ ≫ f.fiber.base).left = f.fiber.base.left
+  simp only [eqToHom_refl, Category.id_comp]
+
+/--
+The map functor commutes with the projection to `Arrow C`.
+-/
+theorem connGrothendieckContraMap_comp_projection (α : F ⟶ G) :
+    connGrothendieckContraMap C α ⋙ connGrothendieckContraProjection C G =
+    connGrothendieckContraProjection C F := by
+  fapply Functor.ext
+  · intro x
+    simp only [Functor.comp_obj, connGrothendieckContraProjection,
+      connGrothendieckContraMap_obj, connGrothendieckContraObjToArrow,
+      innerFiberContraMap_obj_base]
+  · intro X Y f
+    apply Arrow.hom_ext
+    · -- Left component: show fiber.base.left is preserved
+      simp only [Functor.comp_map, connGrothendieckContraProjection, Arrow.homMk_left,
+        connGrothendieckContraHomDomArr, eqToHom_refl, Category.id_comp, Category.comp_id,
+        connGrothendieckContraMap_map_fiber_base_left]
+    · simp only [Functor.comp_map, connGrothendieckContraProjection, Arrow.homMk_right,
+        connGrothendieckContraHomCodArr, connGrothendieckContraMap_map_base,
+        eqToHom_refl, Category.id_comp, Category.comp_id]
+
+/--
+The identity natural transformation maps to the identity functor.
+-/
+@[simp]
+theorem connGrothendieckContraMap_id :
+    connGrothendieckContraMap C (𝟙 F) =
+      𝟙 (Cat.of (ConnectedGrothendieckContra C F)) := by
+  simp only [connGrothendieckContraMap, fiberFunctorContraNatTrans_id,
+    Grothendieck.map_id_eq, ConnectedGrothendieckContra]
+
+/--
+Composition of natural transformations maps to composition of functors.
+-/
+@[simp]
+theorem connGrothendieckContraMap_comp (α : F ⟶ G) (β : G ⟶ H) :
+    connGrothendieckContraMap C (α ≫ β) =
+      connGrothendieckContraMap C α ⋙ connGrothendieckContraMap C β := by
+  simp only [connGrothendieckContraMap, fiberFunctorContraNatTrans_comp,
+    Grothendieck.map_comp_eq]
+
+/--
+The connected Grothendieck construction as a functor to the over category
+`Over (Cat.of (Arrow C))`.
+-/
+def connGrothendieckContraFunctor :
+    (TwistedArrow' C ⥤ Cat.{v, u}) ⥤ Over (Cat.of (Arrow C)) where
+  obj F' := Over.mk (Y := Cat.of (ConnectedGrothendieckContra C F'))
+    (connGrothendieckContraProjection C F')
+  map {F' G'} α := Over.homMk (connGrothendieckContraMap C α)
+    (connGrothendieckContraMap_comp_projection C α)
+  map_id F' := by
+    apply Over.OverMorphism.ext
+    simp only [Over.mk_left]
+    exact connGrothendieckContraMap_id C
+  map_comp {F' G' H'} α β := by
+    apply Over.OverMorphism.ext
+    simp only [Over.mk_left]
+    exact connGrothendieckContraMap_comp C α β
+
+end Functoriality
+
 /-!
 ## Presheaf Connected Grothendieck Construction
 
@@ -3765,6 +4131,45 @@ def domainFiberFunctor : Cᵒᵖ' ⥤ Cat where
 @[simp]
 theorem domainFiberFunctor_map {a c : Cᵒᵖ'} (α : a ⟶ c) :
     (domainFiberFunctor C F).map α = innerFiberAltTransition C F α := rfl
+
+/-!
+### Functoriality of the Alternative Construction
+
+Natural transformations `α : F ⟶ G` induce functors between the alternative
+connected Grothendieck categories.
+-/
+
+variable {G H : TwistedArrow' C ⥤ Cat.{v, u}}
+
+def restrictToDomainFiberNatTrans (α : F ⟶ G) (a : C) :
+    restrictToDomainFiber C F a ⟶ restrictToDomainFiber C G a :=
+  Functor.whiskerLeft (underToTwistedArrow C a) α
+
+@[simp]
+theorem restrictToDomainFiberNatTrans_id (a : C) :
+    restrictToDomainFiberNatTrans C (𝟙 F) a = 𝟙 (restrictToDomainFiber C F a) := by
+  simp only [restrictToDomainFiberNatTrans, Functor.whiskerLeft_id', restrictToDomainFiber]
+
+@[simp]
+theorem restrictToDomainFiberNatTrans_comp (α : F ⟶ G) (β : G ⟶ H) (a : C) :
+    restrictToDomainFiberNatTrans C (α ≫ β) a =
+      restrictToDomainFiberNatTrans C α a ≫ restrictToDomainFiberNatTrans C β a := by
+  simp only [restrictToDomainFiberNatTrans, Functor.whiskerLeft_comp]
+
+def innerFiberAltMap (α : F ⟶ G) (a : C) :
+    innerFiberAlt C F a ⥤ innerFiberAlt C G a :=
+  Grothendieck.map (restrictToDomainFiberNatTrans C α a)
+
+@[simp]
+theorem innerFiberAltMap_id (a : C) :
+    innerFiberAltMap C (𝟙 F) a = 𝟙 (Cat.of (innerFiberAlt C F a)) := by
+  simp only [innerFiberAltMap, restrictToDomainFiberNatTrans_id,
+    Grothendieck.map_id_eq, innerFiberAlt]
+
+@[simp]
+theorem innerFiberAltMap_comp (α : F ⟶ G) (β : G ⟶ H) (a : C) :
+    innerFiberAltMap C (α ≫ β) a = innerFiberAltMap C α a ⋙ innerFiberAltMap C β a := by
+  simp only [innerFiberAltMap, restrictToDomainFiberNatTrans_comp, Grothendieck.map_comp_eq]
 
 /-!
 ### The Alternative Connected Grothendieck Construction
