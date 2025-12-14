@@ -455,6 +455,25 @@ structure FunctorOps {C : Type u} {D : Type u₁}
   /-- The morphism map -/
   map : MorphMap hsC hsD obj
 
+/-- Extensionality for FunctorOps: two functor ops are equal if their object
+    maps are equal and their morphism maps agree on each morphism. -/
+@[ext (iff := false)]
+theorem FunctorOps.ext {C : Type u} {D : Type u₁}
+    {hsC : HomSet.{v, u} C} {hsD : HomSet.{v₁, u₁} D}
+    {F G : FunctorOps hsC hsD}
+    (hobj : F.obj = G.obj)
+    (hmap : ∀ {a b : C} (f : hsC a b),
+      F.map f = cast (by rw [hobj]) (G.map f)) :
+    F = G := by
+  obtain ⟨objF, mapF⟩ := F
+  obtain ⟨objG, mapG⟩ := G
+  simp only at hobj
+  subst hobj
+  congr 1
+  funext a b f
+  simp only [cast_eq] at hmap
+  exact hmap f
+
 /-- Law that the functor preserves identity morphisms. -/
 abbrev PreservesId {C : Type u} {D : Type u₁}
     {hsC : HomSet.{v, u} C} {hsD : HomSet.{v₁, u₁} D}
