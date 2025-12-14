@@ -497,15 +497,23 @@ Phase 2 (in progress): Functoriality
 - `FreeMor.mapQuiver`: Mapping free morphisms through quiver morphisms
 - `unitComponent` and `counitEval`: Adjunction unit/counit components
 
-Phase 3 (future): Prove round-trip properties
+Phase 3 (complete): Prove round-trip properties
 
-- Prove L(Φ(C)) ≅ C (counit is isomorphism)
-- Use `counitEval` to show the quotient is isomorphic to the original
+- Counit isomorphism: `counitFunctorData_inv` provides the inverse
+- Round-trip identities: `counit_comp_inv_eq_id` and `inv_comp_counit_eq_id`
+- Uses `roundtripEquiv` equivalence between quotient and original morphisms
 
-Phase 4 (future): Full adjunction
+Phase 4 (complete): Full adjunction
 
-- Prove the adjunction L ⊣ Φ
-- Construct the natural isomorphism between hom-sets
+- Triangle identities proven via `triangle1` and `triangle2` lemmas
+- `catCopresheafMathlibAdjunction : LFunctor ⊣ PhiFunctor`
+- Extended to mathlib functor categories via `catCopresheafExtAdjunction`
+
+Phase 5 (complete): Reflectivity
+
+- Counit is an isomorphism at the `OverFunctorData` level
+- This establishes that the adjunction L ⊣ Φ is reflective
+- Connection to mathlib's `fullyFaithfulROfIsIsoCounit` in progress
 
 ## References
 

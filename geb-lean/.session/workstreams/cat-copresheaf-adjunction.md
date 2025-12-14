@@ -1,55 +1,63 @@
 # Cat-Copresheaf Adjunction Workstream
 
-## Status: Core Complete - All Tasks Done
+## Status: In Progress - Universe Polymorphism and Mathlib Integration
 
 The adjunction L ⊣ Φ between categories and copresheaves on CategoryJudgments
-has been fully constructed and verified. The equivalence
-`overBundledCatEquiv : BundledOverCategoryData ≌ BundledCategoryData` is
-complete, establishing the left-side extension. Current work focuses on
-code cleanup, universe polymorphism, and proving reflectivity.
+has been fully constructed and verified. Current work focuses on improving
+universe polymorphism and connecting to mathlib's reflective adjunction
+infrastructure.
 
 ## Current Work
+
+### Task 4: Improve Universe Polymorphism (In Progress)
+
+The current implementation uses `{uLeft, uLeft}` (requiring v = u), but this is
+more restrictive than necessary. Following the pattern of `overCatOverFunctorData`
+and `catOverCatFunctorData`, we can use `{max v u, u}` which only requires v >= u.
+
+Approach:
+
+1. Change universe parameters from `{uLeft, uLeft}` to `{max v u, u}`
+2. Update `LFunctor`, `PhiFunctor`, and related definitions
+3. Propagate changes through the adjunction and equivalence definitions
+4. Verify the build passes with the more general universe levels
+
+### Task 5: Connect to Mathlib's Reflective Adjunction (In Progress)
+
+Build infrastructure to use mathlib's `fullyFaithfulROfIsIsoCounit` theorem,
+which derives full faithfulness from the counit being an isomorphism.
+
+Approach:
+
+1. Lift `OverFunctorData` isomorphisms to mathlib's `Iso` type
+2. Show that `counitFunctorData` becomes an `Iso` in `BundledOverCategoryData`
+3. Apply `fullyFaithfulROfIsIsoCounit` to derive full faithfulness of Φ
+4. This provides a fully mathlib-verified proof of reflectivity
+
+## Completed Tasks
 
 ### Task 1: Comment Audit (Complete)
 
 All three files (`Category.lean`, `OverCategoryEquiv.lean`,
-`CatJudgmentAdjunction.lean`) were audited. No style violations found - the
-comments are appropriate mathematical docstrings and section headers.
+`CatJudgmentAdjunction.lean`) were audited. No style violations found.
 
-### Task 2: Universe Level Polymorphism (Analyzed - Deferred)
+### Task 2: Universe Level Analysis (Complete)
 
-Analysis revealed the constraint is fundamental:
+Analysis revealed the constraint comes from sigma type construction:
 
 1. `BundledCategoryData.toBundledOverCategoryData` outputs
    `BundledOverCategoryData.{max v u, u}` due to sigma type construction
-2. For a round-trip equivalence, we need `max v u = v`, requiring `v ≥ u`
-3. The simplest satisfying case is `v = u`, hence `{uLeft, uLeft}`
-4. The copresheaf side `FunctorData (Type u)` is inherently single-universe
+2. For a round-trip equivalence, we need `max v u = v`, requiring `v >= u`
+3. The current `{uLeft, uLeft}` is the simplest case, but `{max v u, u}` works
 
-Full generalization would require restructuring `FunctorData` and
-`CategoryJudgments` with additional universe parameters - a substantial change
-affecting the entire codebase. The current single-universe implementation is
-mathematically complete and covers the standard case where morphism and object
-universes match.
-
-### Task 3: Prove Reflectivity (Core Complete)
+### Task 3: Prove Reflectivity Core (Complete)
 
 The counit ε is proven to be an isomorphism at the `OverFunctorData` level:
 
-New definitions in `CatJudgmentAdjunction.lean` (Reflectivity section):
-
-- `counitQuiverMor_inv` - inverse quiver morphism: embeds each morphism as a
-  variable in the quotient category
+- `counitQuiverMor_inv` - inverse quiver morphism
 - `counitFunctorData_inv` - inverse functor data (preserves id and comp)
 - `counit_comp_inv_eq_id` - proves ε⁻¹ ∘ ε = id as OverFunctorData
 - `inv_comp_counit_eq_id` - proves ε ∘ ε⁻¹ = id as OverFunctorData
-
-This establishes that the counit component at each category C is an isomorphism,
-which is the core mathematical content for reflectivity.
-
-Connecting this to mathlib's `fullyFaithfulROfIsIsoCounit` theorem would require
-additional infrastructure to lift `OverFunctorData` isomorphisms to mathlib's
-`Iso` type. This is deferred for now as the mathematical content is complete.
 
 ## Phase 2 - Left-Side Extension (Complete)
 
@@ -137,6 +145,7 @@ Do NOT use `simp at hcomp` as this creates a duplicate hypothesis.
 ### fiber_equiv Round-Trip
 
 When proving round-trip properties through `fiber_equiv` and `sigma_equiv`:
+
 - Use `convert` instead of `exact` to handle proof irrelevance
 - The lemma `OverQuiver.fiber_equiv_sigma_equiv_val` handles the composition
 
