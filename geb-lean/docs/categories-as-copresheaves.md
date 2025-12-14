@@ -515,3 +515,76 @@ Phase 4 (future): Full adjunction
   and their equivalence to dependent formulations
 - `GebLean/CatJudgmentAdjunction.lean` - Implementation of the adjunction
   (in progress)
+
+## Mathematical Context
+
+### Related Constructions
+
+The adjunction L ⊣ Φ relates to several constructions in the literature.
+
+**Category presentations.** The construction of categories by generators and
+relations is classical (Mac Lane, Mitchell). Given a graph G and relations R,
+one forms F(G)/R where F(G) is the free category on G. The adjunction L ⊣ Φ
+is a type-theoretic reformulation: the copresheaf F on CategoryJudgments
+bundles the graph and relation data into a single structure, with identity
+and composition witnesses as first-class components.
+
+**Essentially algebraic theories.** The category Cat of small categories is
+locally finitely presentable (Adámek-Rosický). Categories are models of a
+finitary essentially algebraic theory, and Gabriel-Ulmer duality relates
+such theories to their model categories. The adjunction L ⊣ Φ provides a
+computational presentation of this relationship: CategoryJudgments encodes
+the signature, FunctorData encodes presentations with explicit witnesses,
+L constructs the semantic category, and Φ extracts the presentation.
+
+**Nerve-realization.** The nerve-realization adjunction N ⊣ τ₁ relates
+categories to simplicial sets. The nerve encodes a category as a presheaf
+on the simplex category Δ, where face maps encode composition and
+degeneracies encode identities. The adjunction L ⊣ Φ uses explicit judgment
+types (Obj, Mor, Id, Comp) rather than positional encoding, making the
+construction more directly expressible in dependent type theory.
+
+**Computads.** Computads (Street, Batanin) generalize category presentations
+to higher dimensions by treating relations as 2-cells. CategoryJudgments can
+be viewed as a 1-truncated computad where the identity and composition
+witnesses play the role of generating 2-cells that are then quotiented.
+
+**Type-theoretic categories.** FunctorData corresponds to the standard
+type-theoretic representation of categories: a type of objects, a dependent
+type of morphisms, identity and composition operations, with equations.
+The adjunction formalizes the syntax-semantics relationship between such
+presentations and actual categories, connecting to categorical semantics
+of dependent type theory and Categories with Families.
+
+### Potential Applications
+
+**Categorical programming.** FunctorData can serve as source-level
+representations of categories, with L as a compiler to semantic categories
+and Φ as extraction of presentations. This parallels the use of polynomial
+functors for data types in systems such as Geb.
+
+**Coherence theorems.** The counit ε : L(Φ(C)) → C provides a canonicalization
+map, and the unit η : F → Φ(L(F)) provides a quotient map. The triangle
+identities establish coherence conditions. This structure may be applicable
+to proving coherence theorems for monoidal categories, bicategories, and
+related structures.
+
+**Higher category presentations.** CategoryJudgments can be extended with
+additional judgment types for 2-cells and higher coherences, providing a
+systematic approach to presenting 2-categories and (∞,1)-categories via
+dependent type-theoretic signatures.
+
+**Proof assistant infrastructure.** FunctorData is naturally type-checkable,
+making it suitable as a user-facing interface for defining categories in
+proof assistants. The functor L constructs the verified mathematical object
+from the presentation.
+
+**Computational category theory.** Categories can be computed via their
+presentations. The quotient construction (QuotMor) provides a representation
+suitable for algorithmic manipulation, potentially enabling implementation
+of categorical constructions such as limits, colimits, and adjunctions on
+presentations.
+
+**Categorical databases.** Related to functorial data migration (Spivak),
+schemas can be presented as copresheaves, with L giving the free category
+on the schema and Φ extracting the schema from a category of instances.
