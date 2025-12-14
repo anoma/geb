@@ -3593,6 +3593,11 @@ def innerFiberAltTransition {a c : C} (α : c ⟶ a) :
       rw [mor_eq]
       simp only [Category.assoc, eqToHom_trans_assoc]
 
+@[simp]
+theorem innerFiberAltTransition_map {a c : C} (α : c ⟶ a)
+    {x y : innerFiberAlt C F a} (f : x ⟶ y) :
+    (innerFiberAltTransition C F α).map f = innerFiberAltTransitionHom C F α f := rfl
+
 /-!
 ### Identity and Composition Laws for `innerFiberAltTransition`
 -/
@@ -3901,6 +3906,10 @@ def domainFiberFunctor : Cᵒᵖ' ⥤ Cat where
   map_id a := innerFiberAltTransition_id C F a
   map_comp α β := innerFiberAltTransition_comp C F α β
 
+@[simp]
+theorem domainFiberFunctor_map {a c : Cᵒᵖ'} (α : a ⟶ c) :
+    (domainFiberFunctor C F).map α = innerFiberAltTransition C F α := rfl
+
 /-!
 ### The Alternative Connected Grothendieck Construction
 
@@ -4097,6 +4106,191 @@ The twisted arrow is `twObjMk' x.fiber.base.hom`.
 def connGrothendieckAltObjToTwArr (x : ConnectedGrothendieckAlt C F) :
     TwistedArrow' C :=
   (underToTwistedArrow C x.base).obj x.fiber.base
+
+section ProjectionToArrow
+
+/-!
+### Projection to Arrow Category
+
+We define a projection functor from `ConnectedGrothendieckAlt` to `Arrow C`.
+
+For an Alt object `x`:
+- `x.base : C` is the domain of the underlying arrow
+- `x.fiber.base : Under x.base` with `x.fiber.base.hom : x.base → x.fiber.base.right`
+- The underlying arrow is `x.fiber.base.hom`
+
+For an Alt morphism `f : x ⟶ y`:
+- `f.base : x.base ⟶ y.base` in C (domain direction, forward)
+- `f.fiber.base.right : x.fiber.base.right ⟶ (transported y.fiber).base.right`
+  where transported preserves `.right`, so this is `x.cod ⟶ y.cod` (forward)
+-/
+
+/--
+Convert an Alt object to an Arrow object.
+-/
+def connGrothendieckAltObjToArrow (x : ConnectedGrothendieckAlt C F) :
+    Arrow C :=
+  Arrow.mk x.fiber.base.hom
+
+/--
+Extract the domain arrow from an Alt morphism.
+-/
+def connGrothendieckAltHomDomArr {x y : ConnectedGrothendieckAlt C F}
+    (f : x ⟶ y) : x.base ⟶ y.base :=
+  f.base
+
+/--
+Extract the codomain arrow from an Alt morphism.
+
+For `f : x ⟶ y`, the fiber morphism `f.fiber` is in `innerFiberAlt C F x.base`.
+Its base component is an Under morphism, and `.right` gives the codomain direction.
+-/
+def connGrothendieckAltHomCodArr {x y : ConnectedGrothendieckAlt C F}
+    (f : x ⟶ y) : x.fiber.base.right ⟶ y.fiber.base.right :=
+  f.fiber.base.right
+
+/--
+The commuting square condition for Alt morphisms.
+-/
+theorem connGrothendieckAltMorphSquareComm {x y : ConnectedGrothendieckAlt C F}
+    (f : x ⟶ y) :
+    x.fiber.base.hom ≫ connGrothendieckAltHomCodArr C F f =
+      connGrothendieckAltHomDomArr C F f ≫ y.fiber.base.hom := by
+  simp only [connGrothendieckAltHomDomArr, connGrothendieckAltHomCodArr]
+  -- f.fiber.base is an Under x.base morphism from x.fiber.base to the transported y.fiber.base
+  -- The target is ((domainFiberFunctor C F).map f.base).obj y.fiber).base
+  --             = (innerFiberAltTransitionObj C F f.base y.fiber).base
+  --             = (Under.map f.base).obj y.fiber.base
+  -- which has .hom = f.base ≫ y.fiber.base.hom and .right = y.fiber.base.right
+
+  -- Under.w for f.fiber.base : x.fiber.base ⟶ (Under.map f.base).obj y.fiber.base gives:
+  -- x.fiber.base.hom ≫ f.fiber.base.right = ((Under.map f.base).obj y.fiber.base).hom
+  --                                       = f.base ≫ y.fiber.base.hom
+
+  -- This is exactly the Arrow square condition!
+  have h_under_w := Under.w f.fiber.base
+  -- h_under_w : x.fiber.base.hom ≫ f.fiber.base.right =
+  --             (((domainFiberFunctor C F).map f.base).obj y.fiber).base.hom
+  simp only [domainFiberFunctor, innerFiberAltTransition, innerFiberAltTransitionObj,
+             Under.map_obj_hom] at h_under_w
+  exact h_under_w
+
+/--
+Identity morphisms preserve the domain arrow component.
+-/
+@[simp]
+theorem connGrothendieckAltHomDomArr_id (x : ConnectedGrothendieckAlt C F) :
+    connGrothendieckAltHomDomArr C F (𝟙 x) = 𝟙 x.base := by
+  simp only [connGrothendieckAltHomDomArr]
+  rfl
+
+/--
+Identity morphisms preserve the codomain arrow component.
+-/
+@[simp]
+theorem connGrothendieckAltHomCodArr_id (x : ConnectedGrothendieckAlt C F) :
+    connGrothendieckAltHomCodArr C F (𝟙 x) = 𝟙 x.fiber.base.right := by
+  simp only [connGrothendieckAltHomCodArr]
+  -- 𝟙 x is definitionally GrothendieckContra'.id x via the category instance
+  change (GrothendieckContra'.id x).fiber.base.right = 𝟙 x.fiber.base.right
+  rw [GrothendieckContra'.id_fiber, Grothendieck.base_eqToHom, Under.eqToHom_right]
+  rfl
+
+/--
+Composition preserves the domain arrow component.
+-/
+@[simp]
+theorem connGrothendieckAltHomDomArr_comp {x y z : ConnectedGrothendieckAlt C F}
+    (f : x ⟶ y) (g : y ⟶ z) :
+    connGrothendieckAltHomDomArr C F (f ≫ g) =
+      connGrothendieckAltHomDomArr C F f ≫ connGrothendieckAltHomDomArr C F g := by
+  simp only [connGrothendieckAltHomDomArr]
+  rfl
+
+/--
+Composition preserves the codomain arrow component.
+-/
+@[simp]
+theorem connGrothendieckAltHomCodArr_comp {x y z : ConnectedGrothendieckAlt C F}
+    (f : x ⟶ y) (g : y ⟶ z) :
+    connGrothendieckAltHomCodArr C F (f ≫ g) =
+      connGrothendieckAltHomCodArr C F f ≫ connGrothendieckAltHomCodArr C F g := by
+  simp only [connGrothendieckAltHomCodArr]
+  -- f ≫ g is definitionally GrothendieckContra'.comp f g via the category instance
+  change (GrothendieckContra'.comp f g).fiber.base.right =
+    f.fiber.base.right ≫ g.fiber.base.right
+  -- Expand fiber of composition
+  rw [GrothendieckContra'.comp_fiber]
+  -- Simplify the functor application to innerFiberAltTransitionHom
+  simp only [domainFiberFunctor_map, innerFiberAltTransition_map]
+  -- Now we have (f.fiber ≫ innerFiberAltTransitionHom(g.fiber) ≫ eqToHom).base.right
+  -- First extract .base from the Grothendieck composition
+  rw [Grothendieck.comp_base, Grothendieck.comp_base]
+  -- Then extract .right from the Under composition
+  rw [Comma.comp_right, Comma.comp_right]
+  -- transport(g.fiber).base = (Under.map f.base).map g.fiber.base
+  rw [innerFiberAltTransitionHom_base]
+  -- ((Under.map f.base).map g.fiber.base).right = g.fiber.base.right
+  rw [Under.map_map_right]
+  -- eqToHom.right = eqToHom
+  rw [Grothendieck.base_eqToHom, Under.eqToHom_right]
+  simp only [eqToHom_refl, Category.comp_id]
+
+/--
+The projection functor from `ConnectedGrothendieckAlt` to the arrow category.
+
+This functor forgets the fiber data:
+- On objects: extracts the underlying arrow from the Alt structure
+- On morphisms: extracts `(domArr, codArr)` forming a commutative square
+-/
+def connGrothendieckAltProjection :
+    ConnectedGrothendieckAlt C F ⥤ Arrow C where
+  obj x := connGrothendieckAltObjToArrow C F x
+  map {x y} f := Arrow.homMk
+    (connGrothendieckAltHomDomArr C F f)
+    (connGrothendieckAltHomCodArr C F f)
+    (connGrothendieckAltMorphSquareComm C F f).symm
+  map_id x := by
+    apply Arrow.hom_ext
+    · simp only [Arrow.homMk_left, Arrow.id_left, connGrothendieckAltHomDomArr_id,
+        connGrothendieckAltObjToArrow, Arrow.mk_left]
+      rfl
+    · simp only [Arrow.homMk_right, Arrow.id_right, connGrothendieckAltHomCodArr_id,
+        connGrothendieckAltObjToArrow, Arrow.mk_right]
+      rfl
+  map_comp {x y z} f g := by
+    apply Arrow.hom_ext
+    · simp only [Arrow.comp_left, Arrow.homMk_left, connGrothendieckAltHomDomArr_comp]
+    · simp only [Arrow.comp_right, Arrow.homMk_right, connGrothendieckAltHomCodArr_comp]
+
+/--
+The projection preserves domain extraction.
+-/
+@[simp]
+lemma connGrothendieckAltProjection_obj_left
+    (x : ConnectedGrothendieckAlt C F) :
+    ((connGrothendieckAltProjection C F).obj x).left = x.base :=
+  rfl
+
+/--
+The projection preserves codomain extraction.
+-/
+@[simp]
+lemma connGrothendieckAltProjection_obj_right
+    (x : ConnectedGrothendieckAlt C F) :
+    ((connGrothendieckAltProjection C F).obj x).right = x.fiber.base.right :=
+  rfl
+
+/--
+The projection preserves the underlying arrow.
+-/
+@[simp]
+lemma connGrothendieckAltProjection_obj_hom
+    (x : ConnectedGrothendieckAlt C F) :
+    ((connGrothendieckAltProjection C F).obj x).hom = x.fiber.base.hom :=
+  rfl
+
+end ProjectionToArrow
 
 end MorphismEquivalence
 
