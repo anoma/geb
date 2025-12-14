@@ -29,10 +29,12 @@ complete in `CategoryJudgments.lean`. The extension was implemented by:
 3. Result: `(E.inverse ⋙ LFunctor) ⊣ (PhiFunctor ⋙ E.functor)`
 
 Where:
+
 - `E.inverse = functorToFunctorData : (Obj ⥤ Type u) ⥤ FunctorData (Type u)`
 - `E.functor = functorDataToFunctor : FunctorData (Type u) ⥤ (Obj ⥤ Type u)`
 
 New definitions in `CatJudgmentAdjunction.lean`:
+
 - `copresheafEquiv` - the equivalence `FunctorData (Type u) ≌ (Obj ⥤ Type u)`
 - `copresheafEquivAdjunction` - forward adjunction from the equivalence
 - `copresheafEquivSymmAdjunction` - reversed adjunction from the equivalence
@@ -43,6 +45,7 @@ New definitions in `CatJudgmentAdjunction.lean`:
 ### Left-Side Extension (Phase 2 - Future)
 
 Need to establish the equivalence chain:
+
 1. `BundledOverCategoryData ≌ BundledCategoryData` (partial work exists)
 2. `BundledCategoryData ≌ Cat` (complete: `equivCat` in `Category.lean`)
 
