@@ -142,6 +142,19 @@ associativity for free.
       - `innerFiberAltTransitionHom_base` - base of transition is Under.map
       - `Under.map_map_right` - mathlib lemma preserving right component
 
+13. Morphism equivalence between Alt and ConnGrothendieckHom
+    - `connGrothendieckAltHomToHom` - converts Alt morphisms to ConnGrothendieckHom
+    - `connGrothendieckHomToAltHom` - converts ConnGrothendieckHom to Alt morphisms
+    - Helper functions for conversion:
+      - `connGrothendieckAltHomDomArr`, `connGrothendieckAltHomCodArr` - extract arrow components
+      - `connGrothendieckAltHomFiberMorph` - extracts fiber morphism with eqToHom transport
+      - `connGrothendieckHomToAltFiberBase` - constructs Under morphism via `Under.homMk`
+      - `connGrothendieckHomToAltFiberMorph` - constructs fiber morphism with eqToHom transport
+    - Roundtrip theorems:
+      - `connGrothendieckHom_altRoundtrip` - Hom -> Alt -> Hom = Hom
+      - `connGrothendieckAltHom_roundtrip` - Alt -> Hom -> Alt = Alt (up to HEq)
+    - Helper lemma: `connGrothendieckHom_altFiberMorphRoundtrip` for fiber morphism roundtrip
+
 ### Helper Lemmas
 
 - `Over.map_obj_left` - `Over.map` preserves the `left` component
@@ -170,8 +183,8 @@ associativity for free.
 1. Prove universal properties for copresheaf construction
 2. Establish full equivalence between `ConnectedGrothendieckContra` and
    `ConnectedGrothendieckAlt`:
-   - Define morphism correspondence for Alt construction
-   - Compose equivalences to get Alt = Contra
+   - Morphism correspondence for Alt construction is complete (item 13 above)
+   - Compose equivalences to get Alt = Contra (remaining)
 
 ### Investigated and Resolved
 

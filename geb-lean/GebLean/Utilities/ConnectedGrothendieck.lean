@@ -4695,6 +4695,120 @@ def connGrothendieckHomToAltHom {x y : ConnGrothendieckObj C F}
     fiber := connGrothendieckHomToAltFiberMorph C F m
   }
 
+/--
+Helper lemma for the fiber morphism roundtrip.
+The composition of eqToHom transports in the roundtrip gives back the original fiber morphism.
+-/
+lemma connGrothendieckHom_altFiberMorphRoundtrip {x y : ConnGrothendieckObj C F}
+    (f : ConnGrothendieckHom C F x y) :
+    connGrothendieckAltHomFiberMorph C F (connGrothendieckHomToAltHom C F f)
+      (connGrothendieckAltMorphSquareComm C F (connGrothendieckHomToAltHom C F f)) =
+    f.fiberMorph := by
+  simp only [connGrothendieckAltHomFiberMorph, connGrothendieckHomToAltHom,
+    connGrothendieckHomToAltFiberMorph]
+  -- Goal is: eqToHom ≫ (eqToHom).map (eqToHom ≫ (eqToHom).map f.fiberMorph ≫ eqToHom) ≫ eqToHom
+  --          = f.fiberMorph
+  -- Use HEq reasoning with comp_eqToHom_heq and eqToHom_comp_heq to peel eqToHoms
+  -- and Cat.eqToHom_map_heq to handle the functor applications
+  apply eq_of_heq
+  -- Left-associate to get trailing eqToHom in form (... ≫ eqToHom)
+  conv_lhs => rw [← Category.assoc]
+  -- Peel off trailing eqToHom
+  apply HEq.trans (comp_eqToHom_heq _ _)
+  -- Now: eqToHom ≫ (eqToHom).map (...) ≍ f.fiberMorph
+  -- Peel off leading eqToHom
+  apply HEq.trans
+  · apply eqToHom_comp_heq
+  -- Now: (eqToHom).map (eqToHom ≫ (eqToHom).map f.fiberMorph ≫ eqToHom) ≍ f.fiberMorph
+  -- Use Cat.eqToHom_map_heq to strip the outer (eqToHom).map
+  apply HEq.trans (Cat.eqToHom_map_heq _ _)
+  -- Now: eqToHom ≫ (eqToHom).map f.fiberMorph ≫ eqToHom ≍ f.fiberMorph
+  -- Reassociate and peel trailing eqToHom
+  conv_lhs => rw [← Category.assoc]
+  apply HEq.trans (comp_eqToHom_heq _ _)
+  -- Now: eqToHom ≫ (eqToHom).map f.fiberMorph ≍ f.fiberMorph
+  -- Peel off leading eqToHom
+  apply HEq.trans
+  · apply eqToHom_comp_heq
+  -- Now: (eqToHom).map f.fiberMorph ≍ f.fiberMorph
+  exact Cat.eqToHom_map_heq _ _
+
+/--
+Round-trip: converting a `ConnGrothendieckHom` to `ConnectedGrothendieckAlt` morphism
+and back gives the original morphism (up to the object round-trip equality).
+-/
+theorem connGrothendieckHom_altRoundtrip {x y : ConnGrothendieckObj C F}
+    (f : ConnGrothendieckHom C F x y) :
+    HEq (connGrothendieckAltHomToHom C F (connGrothendieckHomToAltHom C F f)) f := by
+  have hx : connGrothendieckAltObjToObj C F (connGrothendieckObjToAltObj C F x) = x :=
+    connGrothendieckObj_altRoundtrip C F x
+  have hy : connGrothendieckAltObjToObj C F (connGrothendieckObjToAltObj C F y) = y :=
+    connGrothendieckObj_altRoundtrip C F y
+  cases hx
+  cases hy
+  apply heq_of_eq
+  -- Unfold the conversions
+  simp only [connGrothendieckAltHomToHom, connGrothendieckHomToAltHom]
+  simp only [connGrothendieckAltHomDomArr, connGrothendieckAltHomCodArr]
+  simp only [connGrothendieckHomToAltFiberBase, Under.homMk_right]
+  -- Decompose f and prove by structure equality
+  obtain ⟨domArr, codArr, square_comm, fiberMorph⟩ := f
+  -- Goal: {domArr, codArr, _, fiberMorph'} = {domArr, codArr, square_comm, fiberMorph}
+  -- Use structure equality - first three components should match directly
+  congr 1
+  -- The fiber morphism roundtrip involves multiple eqToHom operations that cancel
+  exact connGrothendieckHom_altFiberMorphRoundtrip C F _
+
+/--
+Round-trip: converting a `ConnectedGrothendieckAlt` morphism to `ConnGrothendieckHom`
+and back gives the original morphism (up to the object round-trip equality).
+-/
+theorem connGrothendieckAltHom_roundtrip {x y : ConnectedGrothendieckAlt C F}
+    (f : x ⟶ y) :
+    HEq (connGrothendieckHomToAltHom C F (connGrothendieckAltHomToHom C F f)) f := by
+  have hx : connGrothendieckObjToAltObj C F (connGrothendieckAltObjToObj C F x) = x :=
+    connGrothendieckAltObj_roundtrip C F x
+  have hy : connGrothendieckObjToAltObj C F (connGrothendieckAltObjToObj C F y) = y :=
+    connGrothendieckAltObj_roundtrip C F y
+  cases hx
+  cases hy
+  apply heq_of_eq
+  -- Unfold the conversions
+  simp only [connGrothendieckHomToAltHom, connGrothendieckAltHomToHom]
+  simp only [connGrothendieckAltHomDomArr, connGrothendieckAltHomCodArr]
+  -- Show the base component matches (domArr = f.base)
+  -- GrothendieckContra' morphism extensionality
+  refine GrothendieckContra'.ext _ _ rfl ?_
+  -- fiber component: Grothendieck morphism equality
+  -- Need to show the fiber part with eqToHom
+  simp only [eqToHom_refl, Category.comp_id]
+  apply Grothendieck.ext
+  · -- fiber.fiber: chain of eqToHom simplifies to f.fiber.fiber
+    simp only [connGrothendieckAltHomFiberMorph, connGrothendieckHomToAltFiberMorph]
+    apply eq_of_heq
+    -- Peel off the leading eqToHom from Grothendieck.ext
+    apply HEq.trans
+    · apply eqToHom_comp_heq
+    -- Now: eqToHom ≫ (eqToHom).map fM ≫ eqToHom ≍ f.fiber.fiber
+    -- where fM = eqToHom ≫ (eqToHom).map f.fiber.fiber ≫ eqToHom
+    conv_lhs => rw [← Category.assoc]
+    apply HEq.trans (comp_eqToHom_heq _ _)
+    apply HEq.trans
+    · apply eqToHom_comp_heq
+    apply HEq.trans (Cat.eqToHom_map_heq _ _)
+    -- Now: eqToHom ≫ (eqToHom).map f.fiber.fiber ≫ eqToHom ≍ f.fiber.fiber
+    conv_lhs => rw [← Category.assoc]
+    apply HEq.trans (comp_eqToHom_heq _ _)
+    apply HEq.trans
+    · apply eqToHom_comp_heq
+    exact Cat.eqToHom_map_heq _ _
+  · -- fiber.base: connGrothendieckHomToAltFiberBase = f.fiber.base
+    simp only [connGrothendieckHomToAltFiberBase]
+    -- Under.homMk (codArr) (...) where codArr = f.fiber.base.right
+    -- Need to show Under.homMk f.fiber.base.right _ = f.fiber.base
+    apply Under.UnderMorphism.ext
+    simp only [Under.homMk_right]
+
 end ReverseConversion
 
 end MorphismConversion
