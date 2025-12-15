@@ -155,6 +155,21 @@ associativity for free.
       - `connGrothendieckAltHom_roundtrip` - Alt -> Hom -> Alt = Alt (up to HEq)
     - Helper lemma: `connGrothendieckHom_altFiberMorphRoundtrip` for fiber morphism roundtrip
 
+14. Functoriality for Alt construction
+    - `restrictToDomainFiberNatTrans` - whiskered natural transformation
+    - `restrictToDomainFiberNatTrans_id` and `restrictToDomainFiberNatTrans_comp`
+    - `innerFiberAltMap` - induced functor on inner fibers via `Grothendieck.map`
+    - `innerFiberAltMap_id` and `innerFiberAltMap_comp`
+    - `innerFiberAltMap_obj_base` and `innerFiberAltMap_map_base` - base preservation
+    - Naturality lemmas:
+      - `alpha_domainFiberTransport_naturality`
+      - `innerFiberAltMap_natural_obj`
+      - `innerFiberAltMap_naturality_fiber`
+    - `domainFiberFunctorNatTrans` - natural transformation between domain fiber functors
+    - `domainFiberFunctorNatTrans_id` and `domainFiberFunctorNatTrans_comp`
+    - `connGrothendieckAltMap` - induced functor via `GrothendieckContra'.map`
+    - `connGrothendieckAltMap_id` and `connGrothendieckAltMap_comp`
+
 ### Helper Lemmas
 
 - `Over.map_obj_left` - `Over.map` preserves the `left` component

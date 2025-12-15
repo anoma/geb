@@ -4132,6 +4132,8 @@ def domainFiberFunctor : Cᵒᵖ' ⥤ Cat where
 theorem domainFiberFunctor_map {a c : Cᵒᵖ'} (α : a ⟶ c) :
     (domainFiberFunctor C F).map α = innerFiberAltTransition C F α := rfl
 
+section AltFunctoriality
+
 /-!
 ### Functoriality of the Alternative Construction
 
@@ -4139,7 +4141,7 @@ Natural transformations `α : F ⟶ G` induce functors between the alternative
 connected Grothendieck categories.
 -/
 
-variable {G H : TwistedArrow' C ⥤ Cat.{v, u}}
+variable {F} {G H : TwistedArrow' C ⥤ Cat.{v, u}}
 
 def restrictToDomainFiberNatTrans (α : F ⟶ G) (a : C) :
     restrictToDomainFiber C F a ⟶ restrictToDomainFiber C G a :=
@@ -4170,6 +4172,133 @@ theorem innerFiberAltMap_id (a : C) :
 theorem innerFiberAltMap_comp (α : F ⟶ G) (β : G ⟶ H) (a : C) :
     innerFiberAltMap C (α ≫ β) a = innerFiberAltMap C α a ⋙ innerFiberAltMap C β a := by
   simp only [innerFiberAltMap, restrictToDomainFiberNatTrans_comp, Grothendieck.map_comp_eq]
+
+/--
+Naturality of a natural transformation `α : F ⟶ G` with respect to domain fiber transport.
+-/
+theorem alpha_domainFiberTransport_naturality (α : F ⟶ G) {a c : C} (γ : c ⟶ a)
+    (un : Under a) :
+    α.app ((underToTwistedArrow C a).obj un) ⋙ domainFiberTransport C G γ un =
+    domainFiberTransport C F γ un ⋙
+      α.app ((underToTwistedArrow C c).obj ((Under.map γ).obj un)) := by
+  simp only [domainFiberTransport]
+  have nat := α.naturality (domainFiberTransportTwMorph C γ un)
+  exact nat.symm
+
+/--
+Objects are naturally equal after composing `innerFiberAltMap` and
+`innerFiberAltTransition`.
+-/
+theorem innerFiberAltMap_natural_obj (α : F ⟶ G) {a c : C} (γ : c ⟶ a)
+    (x : innerFiberAlt C F a) :
+    (innerFiberAltMap C α c).obj ((innerFiberAltTransition C F γ).obj x) =
+    (innerFiberAltTransition C G γ).obj ((innerFiberAltMap C α a).obj x) := by
+  simp only [innerFiberAltMap, innerFiberAltTransition, innerFiberAltTransitionObj]
+  simp only [Grothendieck.map_obj]
+  simp only [restrictToDomainFiberNatTrans, Functor.whiskerLeft_app]
+  have nat := alpha_domainFiberTransport_naturality C α γ x.base
+  exact congrArg (Grothendieck.mk _) (congrFun (congrArg Functor.obj nat.symm) x.fiber)
+
+@[simp]
+theorem innerFiberAltMap_map_base (α : F ⟶ G) {a : C}
+    {x y : innerFiberAlt C F a} (f : x ⟶ y) :
+    ((innerFiberAltMap C α a).map f).base = f.base := by
+  simp only [innerFiberAltMap, Grothendieck.map_map]
+
+@[simp]
+theorem innerFiberAltTransition_map_base {a c : C} (γ : c ⟶ a)
+    {x y : innerFiberAlt C F a} (f : x ⟶ y) :
+    ((innerFiberAltTransition C F γ).map f).base = (Under.map γ).map f.base :=
+  rfl
+
+theorem domainFiberFunctor_map_map_base {a c : C} (γ : c ⟶ a)
+    {x y : innerFiberAlt C F a} (f : x ⟶ y) :
+    (((domainFiberFunctor C F).map γ).map f).base = (Under.map γ).map f.base :=
+  rfl
+
+theorem domainFiberFunctorNatTrans_rhs_base_eq (α : F ⟶ G) {a c : C} (γ : c ⟶ a)
+    {X Y : innerFiberAlt C F a} (f : X ⟶ Y)
+    (hX : (innerFiberAltMap C α c).obj
+      ((innerFiberAltTransition C F γ).obj X) =
+      (innerFiberAltTransition C G γ).obj
+      ((innerFiberAltMap C α a).obj X))
+    (hY : (innerFiberAltMap C α c).obj
+      ((innerFiberAltTransition C F γ).obj Y) =
+      (innerFiberAltTransition C G γ).obj
+      ((innerFiberAltMap C α a).obj Y)) :
+    (eqToHom hX ≫ ((domainFiberFunctor C G).map γ).map
+      ((innerFiberAltMap C α a).map f) ≫ eqToHom hY.symm).base =
+    (Under.map γ).map f.base := by
+  rw [Grothendieck.comp_base, Grothendieck.comp_base]
+  rw [Grothendieck.base_eqToHom, Grothendieck.base_eqToHom]
+  simp only [domainFiberFunctor, innerFiberAltTransition_map_base,
+             innerFiberAltMap_map_base]
+  simp only [eqToHom_refl, Category.id_comp, Category.comp_id]
+
+/--
+Core naturality of `innerFiberAltMap` with respect to transition functors
+at the fiber level.
+-/
+theorem innerFiberAltMap_naturality_fiber (α : F ⟶ G) {a c : C} (γ : c ⟶ a)
+    {X Y : innerFiberAlt C F a} (f : X ⟶ Y) :
+    ((innerFiberAltMap C α c).map ((innerFiberAltTransition C F γ).map f)).fiber ≍
+    ((innerFiberAltTransition C G γ).map ((innerFiberAltMap C α a).map f)).fiber := by
+  simp only [innerFiberAltMap]
+  erw [Grothendieck.map_map, Grothendieck.map_map]
+  simp only [innerFiberAltTransition, innerFiberAltTransitionHom_fiber]
+  simp only [restrictToDomainFiberNatTrans, Functor.whiskerLeft_app]
+  simp only [Grothendieck.map_obj]
+  simp only [innerFiberAltTransitionObj]
+  simp only [Functor.map_comp, eqToHom_map]
+  have alpha_nat := alpha_domainFiberTransport_naturality C α γ Y.base
+  have alpha_nat_mor := Functor.congr_hom alpha_nat f.fiber
+  simp only [Functor.comp_map] at alpha_nat_mor
+  conv_rhs => rw [alpha_nat_mor]
+  rw [eqToHom_functor_app']
+  conv_rhs => rw [eqToHom_functor_app']
+  simp only [functor_map_eqToHom]
+  cat_disch
+
+def domainFiberFunctorNatTrans (α : F ⟶ G) :
+    domainFiberFunctor C F ⟶ domainFiberFunctor C G where
+  app a := innerFiberAltMap C α a
+  naturality {a c} γ := by
+    fapply Functor.ext
+    · intro x
+      exact innerFiberAltMap_natural_obj C α γ x
+    · intro X Y f
+      apply Grothendieck.ext
+      case w_base =>
+        simp only [Cat.comp_map, innerFiberAltMap_map_base]
+        rw [domainFiberFunctor_map_map_base]
+        rw [domainFiberFunctorNatTrans_rhs_base_eq C α γ f
+            (innerFiberAltMap_natural_obj C α γ X)
+            (innerFiberAltMap_natural_obj C α γ Y)]
+      case w_fiber =>
+        simp only [Cat.comp_map]
+        apply eq_of_heq
+        apply HEq.trans (eqToHom_comp_heq _ _)
+        apply HEq.trans (innerFiberAltMap_naturality_fiber C α γ f)
+        apply HEq.symm
+        exact Grothendieck.conj_eqToHom_fiber_heq
+          (F := restrictToDomainFiber C G c) _ _ _
+
+@[simp]
+theorem domainFiberFunctorNatTrans_id :
+    domainFiberFunctorNatTrans C (𝟙 F) = 𝟙 (domainFiberFunctor C F) := by
+  ext a
+  simp only [domainFiberFunctorNatTrans, innerFiberAltMap_id, NatTrans.id_app,
+    domainFiberFunctor, innerFiberAlt]
+
+@[simp]
+theorem domainFiberFunctorNatTrans_comp (α : F ⟶ G) (β : G ⟶ H) :
+    domainFiberFunctorNatTrans C (α ≫ β) =
+      domainFiberFunctorNatTrans C α ≫ domainFiberFunctorNatTrans C β := by
+  ext a
+  simp only [domainFiberFunctorNatTrans, innerFiberAltMap_comp, NatTrans.comp_app,
+    Cat.comp_eq_comp]
+
+end AltFunctoriality
 
 /-!
 ### The Alternative Connected Grothendieck Construction
@@ -4978,6 +5107,49 @@ end ReverseConversion
 end MorphismConversion
 
 end MorphismEquivalence
+
+section AltFunctorMap
+
+variable {F} {G H : TwistedArrow' C ⥤ Cat.{v, u}}
+
+/--
+A natural transformation `α : F ⟶ G` induces a functor between the corresponding
+alternative connected Grothendieck constructions.
+
+This is defined using `GrothendieckContra'.map` with `domainFiberFunctorNatTrans`.
+-/
+def connGrothendieckAltMap (α : F ⟶ G) :
+    ConnectedGrothendieckAlt C F ⥤ ConnectedGrothendieckAlt C G :=
+  GrothendieckContra'.map (domainFiberFunctorNatTrans C α)
+
+@[simp]
+theorem connGrothendieckAltMap_obj (α : F ⟶ G)
+    (x : ConnectedGrothendieckAlt C F) :
+    (connGrothendieckAltMap C α).obj x =
+      ⟨x.base, (innerFiberAltMap C α x.base).obj x.fiber⟩ :=
+  rfl
+
+@[simp]
+theorem connGrothendieckAltMap_map_base (α : F ⟶ G)
+    {x y : ConnectedGrothendieckAlt C F} (f : x ⟶ y) :
+    ((connGrothendieckAltMap C α).map f).base = f.base :=
+  rfl
+
+@[simp]
+theorem connGrothendieckAltMap_id :
+    connGrothendieckAltMap C (𝟙 F) =
+      𝟙 (Cat.of (ConnectedGrothendieckAlt C F)) := by
+  simp only [connGrothendieckAltMap, domainFiberFunctorNatTrans_id,
+    GrothendieckContra'.map_id_eq, ConnectedGrothendieckAlt]
+
+@[simp]
+theorem connGrothendieckAltMap_comp (α : F ⟶ G) (β : G ⟶ H) :
+    connGrothendieckAltMap C (α ≫ β) =
+      connGrothendieckAltMap C α ⋙ connGrothendieckAltMap C β := by
+  simp only [connGrothendieckAltMap, domainFiberFunctorNatTrans_comp,
+    GrothendieckContra'.map_comp_eq]
+
+end AltFunctorMap
 
 end AlternativeConstruction
 
