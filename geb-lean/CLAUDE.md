@@ -141,6 +141,9 @@ When making changes to Lean code:
   - careful
   - important
   - difficult
+  - blocked
+  - incomplete
+  - future
 - There are standard Lean style guidelines at
   [Lean Library Style Guidelines](https://leanprover-community.github.io/contribute/style.html)
 - **Line length**: Keep lines to 80 characters or less
