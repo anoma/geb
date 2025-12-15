@@ -117,6 +117,30 @@ When making changes to Lean code:
 
 ## Code Style
 
+- Never use any of the following words, or any variations on them, except
+  where they are standard technical terms from mathematics or computer
+  science / software engineering (for example, you may say "key" in the
+  phrase "key/value store"):
+  - fundamental
+  - actually
+  - key
+  - insight
+  - core
+  - advanced
+  - complex
+  - complicated
+  - simple
+  - advantage
+  - benefit
+  - important
+  - challenge
+  - yes
+  - wait
+  - hmm
+  - sorry
+  - careful
+  - important
+  - difficult
 - There are standard Lean style guidelines at
   [Lean Library Style Guidelines](https://leanprover-community.github.io/contribute/style.html)
 - **Line length**: Keep lines to 80 characters or less
