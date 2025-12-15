@@ -5778,6 +5778,66 @@ lemma functorToConnGrothendieckTransportBase {d d' : D} (g : d ⟶ d') :
   · simp only [Under.map_obj_hom, Under.mk_hom, eqToHom_refl, Category.comp_id]
     exact (data.arrFun.map g).w
 
+/--
+The inner Under morphism for the inner Grothendieck morphism.
+
+This maps from `arrowToUnder (arrFun.obj d)` to `Under.mk (arrowDiagonal ...)`.
+The `right` component is the codomain direction of the Arrow morphism.
+-/
+def functorToConnGrothendieckInnerUnderMorph {d d' : D} (g : d ⟶ d') :
+    arrowToUnder (data.arrFun.obj d) ⟶ Under.mk (arrowDiagonal (data.arrFun.map g)) :=
+  Under.homMk (data.arrFun.map g).right rfl
+
+/--
+The twisted arrow morphism corresponding to the inner Under morphism.
+
+This maps the Under morphism to `twMorphToDiagonalLeft`, which goes from the source
+arrow to the diagonal (with identity domain component and `arrMor.right` codomain component).
+-/
+lemma functorToConnGrothendieckInnerUnderTwMorph {d d' : D} (g : d ⟶ d') :
+    (underToTwistedArrow C (data.arrFun.obj d).left).map
+      (functorToConnGrothendieckInnerUnderMorph data g) =
+    twMorphToDiagonalLeft (data.arrFun.map g) := by
+  apply twHom'_ext
+  · simp only [underToTwistedArrow, twHomMk'_domArr, twMorphToDiagonalLeft]
+    rfl
+  · simp only [underToTwistedArrow, twHomMk'_codArr, twMorphToDiagonalLeft,
+      functorToConnGrothendieckInnerUnderMorph, Under.homMk_right]
+    rfl
+
+/--
+The category equality for the diagonal fiber type.
+-/
+lemma functorToConnGrothendieckDiagonalFiberEq {d d' : D} (g : d ⟶ d') :
+    (restrictToDomainFiber C F (data.arrFun.obj d).left).obj
+      (Under.mk (arrowDiagonal (data.arrFun.map g))) =
+    F.obj (arrowDiagonalTwisted (data.arrFun.map g)) :=
+  rfl
+
+/--
+The functor from source arrow category to diagonal category via the restrict functor.
+The restrict functor map equals the source transport functor.
+-/
+lemma functorToConnGrothendieckMapEq {d d' : D} (g : d ⟶ d') :
+    (restrictToDomainFiber C F (data.arrFun.obj d).left).map
+      (functorToConnGrothendieckInnerUnderMorph data g) =
+    functorToConnGrothendieckSrcTransport (arrFun := data.arrFun) g := by
+  simp only [restrictToDomainFiber, Functor.comp_map, functorToConnGrothendieckSrcTransport,
+    functorToConnGrothendieckInnerUnderTwMorph]
+
+/--
+The source object's fiber for the inner Grothendieck morphism equals the
+SrcTransport applied to the original fiber (with the arrowToUnder_fiber_eq transport).
+-/
+lemma functorToConnGrothendieckInnerFiberSrcEq {d d' : D} (g : d ⟶ d') :
+    ((restrictToDomainFiber C F (data.arrFun.obj d).left).map
+      (functorToConnGrothendieckInnerUnderMorph data g)).obj
+    ((eqToHom (arrowToUnder_fiber_eq F (data.arrFun.obj d)).symm).obj (data.fib d)) =
+    (eqToHom (functorToConnGrothendieckDiagonalFiberEq data g).symm).obj
+      ((functorToConnGrothendieckSrcTransport (arrFun := data.arrFun) g).obj (data.fib d)) := by
+  simp only [functorToConnGrothendieckMapEq, functorToConnGrothendieckDiagonalFiberEq,
+    eqToHom_refl, Cat.id_obj]
+
 end FunctorToConnGrothendieck
 
 end FunctorCharacterization

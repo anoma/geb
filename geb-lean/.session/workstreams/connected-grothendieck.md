@@ -236,22 +236,55 @@ See `docs/connected-grothendieck-functor-characterization.md` for full theory.
 - `arrowDiagonal_id`, `arrowDiagonalTwisted_id` - identity lemmas
 - `twMorphToDiagonalLeft_id`, `twMorphToDiagonalRight_id` - identity lemmas
 - `arrowDiagonal_comp`, `arrowDiagonal_comp'` - composition lemmas
+- `twMorphDiagonalToComp`, `twMorphDiagonalFromComp` - transport from
+  individual diagonals to composite diagonal
 
-1. **FunctorToConnGrothendieckData** (Structure Implemented) - characterizes
+**Composition Coherence Helpers** (Implemented):
+
+- `functorToConnGrothendieckCompTargetRaw` - composition target using explicit
+  Arrow composition (avoids propositional vs definitional equality issues)
+- `functorToConnGrothendieckTransportGToGHRaw`,
+  `functorToConnGrothendieckTransportHToGHRaw` - raw transport functors
+- `functorToConnGrothendieckTwMorphCoherence` - twisted arrow morphism
+  coherence for composition
+- `functorToConnGrothendieckTransportCoherence` - fiber transport coherence
+  for composition
+
+1. **FunctorToConnGrothendieckData** (Structure Complete) - characterizes
    `D ⥤ ConnectedGrothendieckAlt C F`
    - `arrFun : D ⥤ Arrow C` - arrow functor
    - `fib : FunctorToConnGrothendieckFib F arrFun` - fiber objects
    - `hom : FunctorToConnGrothendieckHom fib` - fiber morphisms via diagonal
    - `hom_id` - identity coherence (HEq)
-   - Remaining: composition coherence, construction function, round-trip theorems
+   - `hom_comp` - composition coherence using raw transport helpers
 
-2. **FunctorFromConnGrothendieckData** (Pending) - characterizes
+2. **functorToConnGrothendieck Construction** (In Progress):
+   - Object construction complete:
+     - `arrowToUnder` - converts Arrow to Under object
+     - `arrowToUnder_fiber_eq` - fiber category equality
+     - `functorToConnGrothendieckInnerFiber` - constructs inner fiber object
+     - `functorToConnGrothendieckObj` - constructs ConnectedGrothendieckAlt object
+     - `functorToConnGrothendieckObjMap` - object mapping for the functor
+   - Morphism construction in progress:
+     - `functorToConnGrothendieckMapBase` - base component of morphism
+     - `Under.obj_eq'` - helper for Under object equality
+     - `functorToConnGrothendieckTransportBase` - transport base lemma
+     - `functorToConnGrothendieckInnerUnderMorph` - inner Under morphism
+     - `functorToConnGrothendieckInnerUnderTwMorph` - corresponds to
+       `twMorphToDiagonalLeft`
+     - `functorToConnGrothendieckDiagonalFiberEq` - diagonal fiber category eq
+     - `functorToConnGrothendieckMapEq` - restrict functor map = SrcTransport
+     - `functorToConnGrothendieckInnerFiberSrcEq` - source fiber equality
+   - Remaining: construct inner fiber morphism from `data.hom g`, combine into
+     full Grothendieck morphism, prove map_id and map_comp
+
+3. **FunctorFromConnGrothendieckData** (Pending) - characterizes
    `ConnectedGrothendieckAlt C F ⥤ E`
    - Specializes `GrothendieckContra'.FunctorFromData`
    - Fiber functors for each domain fiber
    - Natural transformations along domain morphisms
 
-3. **FunctorBetween (same C)** - already complete via natural transformations
+4. **FunctorBetween (same C)** - already complete via natural transformations
    - `connGrothendieckAltMap` and `connGrothendieckAltFunctor` provide this
 
 ### Investigated and Resolved
