@@ -218,6 +218,42 @@ associativity for free.
    - Morphism correspondence for Alt construction is complete (item 13 above)
    - Compose equivalences to get Alt = Contra (remaining)
 
+### Functor Characterization (In Progress)
+
+Characterizing functors to/from/between connected Grothendieck constructions,
+analogous to `FunctorToData`, `FunctorFromData`, `FunctorBetweenData` in
+`Grothendieck.lean`.
+
+See `docs/connected-grothendieck-functor-characterization.md` for full theory.
+
+**Diagonal Construction Helpers** (Implemented):
+
+- `arrowDiagonal` - extracts diagonal from Arrow morphism
+- `arrowToTwisted` - converts Arrow to TwistedArrow
+- `arrowDiagonalTwisted` - diagonal as TwistedArrow
+- `twMorphToDiagonalLeft`, `twMorphToDiagonalRight` - canonical TwistedArrow
+  morphisms to diagonal
+- `arrowDiagonal_id`, `arrowDiagonalTwisted_id` - identity lemmas
+- `twMorphToDiagonalLeft_id`, `twMorphToDiagonalRight_id` - identity lemmas
+- `arrowDiagonal_comp`, `arrowDiagonal_comp'` - composition lemmas
+
+1. **FunctorToConnGrothendieckData** (Structure Implemented) - characterizes
+   `D ⥤ ConnectedGrothendieckAlt C F`
+   - `arrFun : D ⥤ Arrow C` - arrow functor
+   - `fib : FunctorToConnGrothendieckFib F arrFun` - fiber objects
+   - `hom : FunctorToConnGrothendieckHom fib` - fiber morphisms via diagonal
+   - `hom_id` - identity coherence (HEq)
+   - Remaining: composition coherence, construction function, round-trip theorems
+
+2. **FunctorFromConnGrothendieckData** (Pending) - characterizes
+   `ConnectedGrothendieckAlt C F ⥤ E`
+   - Specializes `GrothendieckContra'.FunctorFromData`
+   - Fiber functors for each domain fiber
+   - Natural transformations along domain morphisms
+
+3. **FunctorBetween (same C)** - already complete via natural transformations
+   - `connGrothendieckAltMap` and `connGrothendieckAltFunctor` provide this
+
 ### Investigated and Resolved
 
 - **Alt projection category**: Initially hypothesized that Alt projects to

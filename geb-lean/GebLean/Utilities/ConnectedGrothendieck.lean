@@ -5241,4 +5241,545 @@ end AltFunctorMap
 
 end AlternativeConstruction
 
+/-!
+## Functor Characterization for Connected Grothendieck
+
+This section provides introduction and elimination rules for functors
+to, from, and between connected Grothendieck constructions, analogous to
+`FunctorToData`, `FunctorFromData`, and `FunctorBetweenData` in
+`Grothendieck.lean`.
+
+The connected Grothendieck construction projects to `Arrow C`, so functors
+are characterized relative to this projection via the "diagonal construction".
+-/
+
+section FunctorCharacterization
+
+variable {C : Type u} [Category.{v} C]
+
+/-!
+### The Diagonal Construction
+
+Given an Arrow morphism `(left, right) : arr ⟶ arr'`, the diagonal is the
+arrow `arr.hom ≫ right = left ≫ arr'.hom`. There are canonical TwistedArrow
+morphisms from both the source and target arrows to this diagonal.
+-/
+
+section DiagonalConstruction
+
+variable {arr arr' : Arrow C} (arrMor : arr ⟶ arr')
+
+/--
+The diagonal arrow from an Arrow morphism.
+Given `arr.hom : arr.left ⟶ arr.right` and `arr'.hom : arr'.left ⟶ arr'.right`
+with `arrMor.left : arr.left ⟶ arr'.left` and
+`arrMor.right : arr.right ⟶ arr'.right`,
+the diagonal is `arr.hom ≫ arrMor.right : arr.left ⟶ arr'.right`.
+-/
+def arrowDiagonal : arr.left ⟶ arr'.right :=
+  arr.hom ≫ arrMor.right
+
+/--
+The diagonal equals the other composite via the Arrow square.
+-/
+lemma arrowDiagonal_eq :
+    arrowDiagonal arrMor = arrMor.left ≫ arr'.hom := arrMor.w.symm
+
+/--
+Convert an Arrow to its corresponding TwistedArrow.
+-/
+def arrowToTwisted (arr : Arrow C) : TwistedArrow' C :=
+  twObjMk' arr.hom
+
+@[simp]
+lemma arrowToTwisted_dom (arr : Arrow C) :
+    twDom' (arrowToTwisted arr) = arr.left := rfl
+
+@[simp]
+lemma arrowToTwisted_cod (arr : Arrow C) :
+    twCod' (arrowToTwisted arr) = arr.right := rfl
+
+@[simp]
+lemma arrowToTwisted_arr (arr : Arrow C) :
+    twArr' (arrowToTwisted arr) = arr.hom := rfl
+
+/--
+The diagonal as a TwistedArrow object.
+-/
+def arrowDiagonalTwisted : TwistedArrow' C :=
+  twObjMk' (arrowDiagonal arrMor)
+
+@[simp]
+lemma arrowDiagonalTwisted_dom :
+    twDom' (arrowDiagonalTwisted arrMor) = arr.left := rfl
+
+@[simp]
+lemma arrowDiagonalTwisted_cod :
+    twCod' (arrowDiagonalTwisted arrMor) = arr'.right := rfl
+
+@[simp]
+lemma arrowDiagonalTwisted_arr :
+    twArr' (arrowDiagonalTwisted arrMor) = arrowDiagonal arrMor := rfl
+
+/--
+Canonical TwistedArrow morphism from the source arrow to the diagonal.
+Domain component is identity, codomain component is `arrMor.right`.
+-/
+def twMorphToDiagonalLeft :
+    arrowToTwisted arr ⟶ arrowDiagonalTwisted arrMor :=
+  twHomMk' (𝟙 arr.left) arrMor.right (by simp [arrowDiagonal])
+
+/--
+Canonical TwistedArrow morphism from the target arrow to the diagonal.
+Domain component is `arrMor.left`, codomain component is identity.
+-/
+def twMorphToDiagonalRight :
+    arrowToTwisted arr' ⟶ arrowDiagonalTwisted arrMor :=
+  twHomMk' arrMor.left (𝟙 arr'.right) (by
+    simp only [arrowToTwisted_arr, arrowDiagonalTwisted_arr, arrowDiagonal_eq]
+    simp)
+
+lemma twMorphToDiagonalLeft_domArr :
+    twDomArr' (twMorphToDiagonalLeft arrMor) = 𝟙 arr.left := by
+  simp only [twMorphToDiagonalLeft, twHomMk'_domArr]
+
+lemma twMorphToDiagonalLeft_codArr :
+    twCodArr' (twMorphToDiagonalLeft arrMor) = arrMor.right := by
+  simp only [twMorphToDiagonalLeft, twHomMk'_codArr]
+
+lemma twMorphToDiagonalRight_domArr :
+    twDomArr' (twMorphToDiagonalRight arrMor) = arrMor.left := by
+  simp only [twMorphToDiagonalRight, twHomMk'_domArr]
+
+lemma twMorphToDiagonalRight_codArr :
+    twCodArr' (twMorphToDiagonalRight arrMor) = 𝟙 arr'.right := by
+  simp only [twMorphToDiagonalRight, twHomMk'_codArr]
+
+end DiagonalConstruction
+
+/-!
+### Identity lemmas for diagonal construction
+
+These lemmas show how the diagonal construction behaves on identity morphisms.
+-/
+
+/--
+The diagonal for the identity Arrow morphism is the original arrow.
+-/
+lemma arrowDiagonal_id (arr : Arrow C) :
+    arrowDiagonal (𝟙 arr) = arr.hom := by
+  simp only [arrowDiagonal, Arrow.id_right]
+  simp
+
+/--
+The diagonal TwistedArrow for identity equals the original.
+-/
+lemma arrowDiagonalTwisted_id (arr : Arrow C) :
+    arrowDiagonalTwisted (𝟙 arr) = arrowToTwisted arr := by
+  simp only [arrowDiagonalTwisted, arrowToTwisted, arrowDiagonal_id]
+
+/--
+The twisted arrow morphism to diagonal left for identity is an identity
+(cast via eqToHom).
+-/
+lemma twMorphToDiagonalLeft_id (arr : Arrow C) :
+    twMorphToDiagonalLeft (𝟙 arr) =
+    eqToHom (arrowDiagonalTwisted_id arr).symm := by
+  apply twHom'_ext
+  · simp only [twMorphToDiagonalLeft_domArr, twDomArr'_eqToHom,
+      arrowToTwisted_dom, arrowDiagonalTwisted_dom, eqToHom_refl]
+  · simp only [twMorphToDiagonalLeft_codArr, Arrow.id_right, twCodArr'_eqToHom,
+      arrowToTwisted_cod, arrowDiagonalTwisted_cod, eqToHom_refl]
+
+/--
+The twisted arrow morphism to diagonal right for identity is an identity
+(cast via eqToHom).
+-/
+lemma twMorphToDiagonalRight_id (arr : Arrow C) :
+    twMorphToDiagonalRight (𝟙 arr) =
+    eqToHom (arrowDiagonalTwisted_id arr).symm := by
+  apply twHom'_ext
+  · simp only [twMorphToDiagonalRight_domArr, Arrow.id_left, twDomArr'_eqToHom,
+      arrowToTwisted_dom, arrowDiagonalTwisted_dom, eqToHom_refl]
+  · simp only [twMorphToDiagonalRight_codArr, twCodArr'_eqToHom,
+      arrowToTwisted_cod, arrowDiagonalTwisted_cod, eqToHom_refl]
+
+/-!
+### Composition lemmas for diagonal construction
+
+These lemmas show how the diagonal construction behaves on composed morphisms.
+-/
+
+section DiagonalComposition
+
+variable {arr₁ arr₂ arr₃ : Arrow C} (f : arr₁ ⟶ arr₂) (g : arr₂ ⟶ arr₃)
+
+/--
+The diagonal of a composition decomposes via the right component.
+-/
+lemma arrowDiagonal_comp :
+    arrowDiagonal (f ≫ g) = arrowDiagonal f ≫ g.right := by
+  simp only [arrowDiagonal, Arrow.comp_right, Category.assoc]
+
+/--
+Alternative decomposition of diagonal composition via the left component.
+-/
+lemma arrowDiagonal_comp' :
+    arrowDiagonal (f ≫ g) = f.left ≫ arrowDiagonal g := by
+  simp only [arrowDiagonal, Arrow.comp_right]
+  have h := f.w
+  simp only [Functor.id_map] at h
+  rw [← Category.assoc, h.symm, Category.assoc]
+
+end DiagonalComposition
+
+/-!
+### Transport morphisms for composition
+
+These morphisms transport from the diagonal of `g` or `h` to the diagonal of
+`g ≫ h`, enabling the composition coherence condition.
+-/
+
+section DiagonalCompositionTransport
+
+variable {arr₁ arr₂ arr₃ : Arrow C} (f : arr₁ ⟶ arr₂) (g : arr₂ ⟶ arr₃)
+
+/--
+Transport from the diagonal of `f` to the diagonal of `f ≫ g`.
+Domain is identity, codomain is `g.right`.
+-/
+def twMorphDiagonalToComp :
+    arrowDiagonalTwisted f ⟶ arrowDiagonalTwisted (f ≫ g) :=
+  twHomMk' (𝟙 arr₁.left) g.right (by
+    simp only [arrowDiagonalTwisted_arr, arrowDiagonal_comp]
+    aesop_cat)
+
+@[simp]
+lemma twMorphDiagonalToComp_domArr :
+    twDomArr' (twMorphDiagonalToComp f g) = 𝟙 arr₁.left := rfl
+
+@[simp]
+lemma twMorphDiagonalToComp_codArr :
+    twCodArr' (twMorphDiagonalToComp f g) = g.right := rfl
+
+/--
+Transport from the diagonal of `g` to the diagonal of `f ≫ g`.
+Domain is `f.left`, codomain is identity.
+-/
+def twMorphDiagonalFromComp :
+    arrowDiagonalTwisted g ⟶ arrowDiagonalTwisted (f ≫ g) :=
+  twHomMk' f.left (𝟙 arr₃.right) (by
+    simp only [arrowDiagonalTwisted_arr, arrowDiagonal_comp']
+    aesop_cat)
+
+@[simp]
+lemma twMorphDiagonalFromComp_domArr :
+    twDomArr' (twMorphDiagonalFromComp f g) = f.left := rfl
+
+@[simp]
+lemma twMorphDiagonalFromComp_codArr :
+    twCodArr' (twMorphDiagonalFromComp f g) = 𝟙 arr₃.right := rfl
+
+end DiagonalCompositionTransport
+
+/-!
+### FunctorToConnGrothendieckData
+
+Data specifying a functor `D ⥤ ConnectedGrothendieckAlt C F`. This is analogous
+to `Grothendieck.FunctorToData` but uses the diagonal construction for fiber
+morphisms.
+-/
+
+section FunctorToConnGrothendieck
+
+universe u₃ v₃
+
+variable {D : Type u₃} [Category.{v₃} D]
+variable (F : TwistedArrow' C ⥤ Cat.{v, u})
+
+/--
+Fiber objects: for each `d : D`, an object in `F.obj (arrowToTwisted (arrFun.obj d))`.
+-/
+abbrev FunctorToConnGrothendieckFib (arrFun : D ⥤ Arrow C) :=
+  (d : D) → (F.obj (arrowToTwisted (arrFun.obj d)))
+
+variable {F}
+variable {arrFun : D ⥤ Arrow C}
+variable (fib : FunctorToConnGrothendieckFib F arrFun)
+
+/--
+The target TwistedArrow for a morphism in D via the diagonal construction.
+-/
+abbrev functorToConnGrothendieckTarget {d d' : D} (g : d ⟶ d') :
+    TwistedArrow' C :=
+  arrowDiagonalTwisted (arrFun.map g)
+
+/--
+Transport the source fiber element to the diagonal.
+-/
+abbrev functorToConnGrothendieckSrcTransport {d d' : D} (g : d ⟶ d') :
+    (F.obj (arrowToTwisted (arrFun.obj d))) ⥤
+    (F.obj (functorToConnGrothendieckTarget (arrFun := arrFun) g)) :=
+  F.map (twMorphToDiagonalLeft (arrFun.map g))
+
+/--
+Transport the target fiber element to the diagonal.
+-/
+abbrev functorToConnGrothendieckTgtTransport {d d' : D} (g : d ⟶ d') :
+    (F.obj (arrowToTwisted (arrFun.obj d'))) ⥤
+    (F.obj (functorToConnGrothendieckTarget (arrFun := arrFun) g)) :=
+  F.map (twMorphToDiagonalRight (arrFun.map g))
+
+/--
+Fiber morphisms via the diagonal: for each `g : d ⟶ d'`, a morphism in the
+diagonal fiber from the transported source fiber to the transported target fiber.
+-/
+abbrev FunctorToConnGrothendieckHom :=
+  {d d' : D} → (g : d ⟶ d') →
+    (functorToConnGrothendieckSrcTransport (arrFun := arrFun) g).obj (fib d) ⟶
+    (functorToConnGrothendieckTgtTransport (arrFun := arrFun) g).obj (fib d')
+
+variable (hom : FunctorToConnGrothendieckHom fib)
+
+/--
+For identity morphisms, the diagonal target equals the original twisted arrow.
+-/
+lemma functorToConnGrothendieckTarget_id (d : D) :
+    functorToConnGrothendieckTarget (arrFun := arrFun) (𝟙 d) =
+    arrowToTwisted (arrFun.obj d) := by
+  simp only [functorToConnGrothendieckTarget, Functor.map_id, arrowDiagonalTwisted_id]
+
+/--
+The fiber category for the diagonal at identity.
+-/
+abbrev functorToConnGrothendieckDiagFib (d : D) :=
+  F.obj (functorToConnGrothendieckTarget (arrFun := arrFun) (𝟙 d))
+
+/--
+The source fiber category equals the diagonal fiber category for identity.
+-/
+lemma functorToConnGrothendieckSrcFib_eq_diagFib (d : D) :
+    F.obj (arrowToTwisted (arrFun.obj d)) =
+    functorToConnGrothendieckDiagFib (F := F) (arrFun := arrFun) d := by
+  simp only [functorToConnGrothendieckDiagFib, functorToConnGrothendieckTarget_id]
+
+/--
+Identity coherence: `hom (𝟙 d)` should be an identity (up to transport via eqToHom).
+We state this as heterogeneous equality since the source and target live in
+types that may differ syntactically but are propositionally equal.
+-/
+abbrev FunctorToConnGrothendieckHomId := (d : D) →
+  HEq (hom (𝟙 d)) (𝟙 (fib d))
+
+/--
+The target for composition using raw Arrow composition (before applying Functor.map_comp).
+-/
+abbrev functorToConnGrothendieckCompTargetRaw {d d' d'' : D}
+    (g : d ⟶ d') (h : d' ⟶ d'') : TwistedArrow' C :=
+  arrowDiagonalTwisted (arrFun.map g ≫ arrFun.map h)
+
+/--
+The composition target equals the raw target via Functor.map_comp.
+-/
+lemma functorToConnGrothendieckCompTargetRaw_eq {d d' d'' : D}
+    (g : d ⟶ d') (h : d' ⟶ d'') :
+    functorToConnGrothendieckCompTargetRaw (arrFun := arrFun) g h =
+    functorToConnGrothendieckTarget (arrFun := arrFun) (g ≫ h) := by
+  simp only [functorToConnGrothendieckCompTargetRaw, functorToConnGrothendieckTarget,
+    Functor.map_comp]
+
+/--
+Transport from diagonal of g to the raw composite diagonal.
+-/
+abbrev functorToConnGrothendieckTransportGToGHRaw {d d' d'' : D}
+    (g : d ⟶ d') (h : d' ⟶ d'') :
+    F.obj (functorToConnGrothendieckTarget (arrFun := arrFun) g) ⥤
+    F.obj (functorToConnGrothendieckCompTargetRaw (arrFun := arrFun) g h) :=
+  F.map (twMorphDiagonalToComp (arrFun.map g) (arrFun.map h))
+
+/--
+Transport from diagonal of h to the raw composite diagonal.
+-/
+abbrev functorToConnGrothendieckTransportHToGHRaw {d d' d'' : D}
+    (g : d ⟶ d') (h : d' ⟶ d'') :
+    F.obj (functorToConnGrothendieckTarget (arrFun := arrFun) h) ⥤
+    F.obj (functorToConnGrothendieckCompTargetRaw (arrFun := arrFun) g h) :=
+  F.map (twMorphDiagonalFromComp (arrFun.map g) (arrFun.map h))
+
+/--
+The two TwistedArrow morphism paths from `arrowToTwisted (arrFun.obj d')` to the
+raw composite diagonal coincide.
+-/
+lemma functorToConnGrothendieckTwMorphCoherence {d d' d'' : D}
+    (g : d ⟶ d') (h : d' ⟶ d'') :
+    twMorphToDiagonalRight (arrFun.map g) ≫
+      twMorphDiagonalToComp (arrFun.map g) (arrFun.map h) =
+    twMorphToDiagonalLeft (arrFun.map h) ≫
+      twMorphDiagonalFromComp (arrFun.map g) (arrFun.map h) := by
+  apply twHom'_ext
+  · simp only [twDomArr'_comp, twMorphToDiagonalRight_domArr, twMorphDiagonalToComp_domArr,
+      twMorphToDiagonalLeft_domArr, twMorphDiagonalFromComp_domArr]
+    simp_all
+  · simp only [twCodArr'_comp, twMorphToDiagonalRight_codArr, twMorphDiagonalToComp_codArr,
+      twMorphToDiagonalLeft_codArr, twMorphDiagonalFromComp_codArr]
+    simp_all
+
+/--
+Coherence lemma: the two transport paths to the raw diagonal coincide at `fib d'`.
+-/
+lemma functorToConnGrothendieckTransportCoherence {d d' d'' : D}
+    (g : d ⟶ d') (h : d' ⟶ d'') :
+    (functorToConnGrothendieckTransportGToGHRaw (F := F) (arrFun := arrFun) g h).obj
+      ((functorToConnGrothendieckTgtTransport (arrFun := arrFun) g).obj (fib d')) =
+    (functorToConnGrothendieckTransportHToGHRaw (F := F) (arrFun := arrFun) g h).obj
+      ((functorToConnGrothendieckSrcTransport (arrFun := arrFun) h).obj (fib d')) := by
+  simp only [functorToConnGrothendieckTransportGToGHRaw,
+    functorToConnGrothendieckTransportHToGHRaw, functorToConnGrothendieckTgtTransport,
+    functorToConnGrothendieckSrcTransport]
+  simp only [← Functor.comp_obj]
+  have eq := functorToConnGrothendieckTwMorphCoherence (arrFun := arrFun) g h
+  rw [show F.map (twMorphToDiagonalRight (arrFun.map g)) ⋙
+        F.map (twMorphDiagonalToComp (arrFun.map g) (arrFun.map h)) =
+      F.map (twMorphToDiagonalRight (arrFun.map g) ≫
+        twMorphDiagonalToComp (arrFun.map g) (arrFun.map h)) from (F.map_comp _ _).symm]
+  rw [show F.map (twMorphToDiagonalLeft (arrFun.map h)) ⋙
+        F.map (twMorphDiagonalFromComp (arrFun.map g) (arrFun.map h)) =
+      F.map (twMorphToDiagonalLeft (arrFun.map h) ≫
+        twMorphDiagonalFromComp (arrFun.map g) (arrFun.map h)) from (F.map_comp _ _).symm]
+  rw [eq]
+
+/--
+Data specifying a functor `D ⥤ ConnectedGrothendieckAlt C F`.
+
+This is analogous to `Grothendieck.FunctorToData` but adapted for the connected
+Grothendieck construction which uses the diagonal construction for fiber morphisms.
+-/
+structure FunctorToConnGrothendieckData where
+  /-- The arrow functor from `D` to `Arrow C` -/
+  arrFun : D ⥤ Arrow C
+  /-- Fiber objects: for each `d : D`, an object in the fiber over the
+      corresponding twisted arrow -/
+  fib : FunctorToConnGrothendieckFib F arrFun
+  /-- Fiber morphisms via the diagonal: for each `g : d ⟶ d'`, a morphism
+      between transported fiber elements in the diagonal fiber -/
+  hom : FunctorToConnGrothendieckHom fib
+  /-- Identity coherence: `hom (𝟙 d) ≅ 𝟙 (fib d)` (heterogeneous equality) -/
+  hom_id : (d : D) → HEq (hom (𝟙 d)) (𝟙 (fib d))
+  /-- Composition coherence: `hom (g ≫ h)` equals transported composition -/
+  hom_comp : {d d' d'' : D} → (g : d ⟶ d') → (h : d' ⟶ d'') →
+    HEq (hom (g ≫ h))
+      ((functorToConnGrothendieckTransportGToGHRaw (F := F) (arrFun := arrFun) g h).map
+          (hom g) ≫
+        eqToHom (functorToConnGrothendieckTransportCoherence fib g h) ≫
+        (functorToConnGrothendieckTransportHToGHRaw (F := F) (arrFun := arrFun) g h).map
+          (hom h))
+
+/-!
+### Object Construction
+
+Given `FunctorToConnGrothendieckData`, we construct the object mapping for
+the functor `D ⥤ ConnectedGrothendieckAlt C F`.
+-/
+
+/--
+The Under object for a given arrow.
+For `arr : Arrow C`, the Under object representing `arr.hom : arr.left ⟶ arr.right`.
+-/
+abbrev arrowToUnder (arr : Arrow C) : Under arr.left :=
+  Under.mk arr.hom
+
+variable (F) in
+/--
+Type equality: the fiber category over `arrowToUnder arr` equals the fiber category
+at `arrowToTwisted arr`.
+-/
+lemma arrowToUnder_fiber_eq (arr : Arrow C) :
+    (restrictToDomainFiber C F arr.left).obj (arrowToUnder arr) =
+    F.obj (arrowToTwisted arr) := by
+  simp only [arrowToUnder, restrictToDomainFiber, Functor.comp_obj,
+    underToTwistedArrow, arrowToTwisted]
+  rfl
+
+variable (F) in
+/--
+Construct an inner fiber object from an arrow and a fiber element.
+-/
+def functorToConnGrothendieckInnerFiber (arr : Arrow C)
+    (e : F.obj (arrowToTwisted arr)) :
+    innerFiberAlt C F arr.left :=
+  ⟨arrowToUnder arr,
+   (eqToHom (arrowToUnder_fiber_eq F arr).symm).obj e⟩
+
+variable (F) in
+/--
+Construct an object of `ConnectedGrothendieckAlt` from an arrow and fiber element.
+-/
+def functorToConnGrothendieckObj (arr : Arrow C)
+    (e : F.obj (arrowToTwisted arr)) :
+    ConnectedGrothendieckAlt C F :=
+  ⟨arr.left, functorToConnGrothendieckInnerFiber F arr e⟩
+
+variable (data : @FunctorToConnGrothendieckData C _ D _ F)
+
+/--
+The object mapping for `functorToConnGrothendieck`.
+-/
+abbrev functorToConnGrothendieckObjMap (d : D) :
+    ConnectedGrothendieckAlt C F :=
+  functorToConnGrothendieckObj F (data.arrFun.obj d) (data.fib d)
+
+/-!
+### Morphism Construction
+
+The morphism construction is more complex because it involves the diagonal
+construction. Given `g : d ⟶ d'` in `D`:
+
+1. Base morphism: `(data.arrFun.map g).left` gives the domain direction
+2. Fiber morphism: Uses `data.hom g` to construct the inner Grothendieck morphism
+
+The fiber morphism construction requires transporting through several equality
+steps to match the types expected by `GrothendieckContra'.Hom`.
+-/
+
+/--
+Base component of the morphism for `functorToConnGrothendieck`.
+-/
+abbrev functorToConnGrothendieckMapBase {d d' : D} (g : d ⟶ d') :
+    (data.arrFun.obj d).left ⟶ (data.arrFun.obj d').left :=
+  (data.arrFun.map g).left
+
+/--
+Helper lemma for Under object equality.
+Two Under objects are equal if they have the same right and hom components.
+-/
+lemma Under.obj_eq' {X : C} (A B : Under X)
+    (h_right : A.right = B.right)
+    (h_hom : A.hom ≫ eqToHom h_right = B.hom) : A = B := by
+  rcases A with ⟨⟨⟨⟩⟩, rA, homA⟩
+  rcases B with ⟨⟨⟨⟩⟩, rB, homB⟩
+  simp only at h_right h_hom
+  subst h_right
+  simp only [eqToHom_refl, Category.comp_id] at h_hom
+  subst h_hom
+  rfl
+
+/--
+Type equality for the source object's fiber base after transport.
+
+When we transport `target.fiber` by `mapBase g`, the result's base is related to
+the source by the Arrow morphism structure.
+-/
+lemma functorToConnGrothendieckTransportBase {d d' : D} (g : d ⟶ d') :
+    (Under.map (data.arrFun.map g).left).obj (arrowToUnder (data.arrFun.obj d')) =
+    Under.mk (arrowDiagonal (data.arrFun.map g)) := by
+  simp only [arrowToUnder, arrowDiagonal]
+  fapply Under.obj_eq'
+  · rfl
+  · simp only [Under.map_obj_hom, Under.mk_hom, eqToHom_refl, Category.comp_id]
+    exact (data.arrFun.map g).w
+
+end FunctorToConnGrothendieck
+
+end FunctorCharacterization
+
 end GebLean
