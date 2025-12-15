@@ -1476,8 +1476,6 @@ lemma eqToHomMapEqToHomApp'' {E : Type*} [Category E] (F : E ⥤ Type v)
 /--
 When applying F.map to an eqToHom morphism and an arbitrary eqToHom on
 elements, if the element types are equal, the result equals the original.
-This handles cases where the equality proofs are complex but the underlying
-types are definitionally equal.
 -/
 lemma eqToHomMapEqToHomAppRefl {E : Type*} [Category E] (F : E ⥤ Type v)
     {X : E} (p : X = X) (q : F.obj X = F.obj X) (a : F.obj X) :
@@ -1502,8 +1500,7 @@ lemma eqToHomMapEqToHomApp_of_eq {E : Type*} [Category E] (F : E ⥤ Type v)
   simp only [eqToHom_refl, Functor.map_id, types_id_apply]
 
 /--
-Variant that doesn't require `subst` to succeed. Uses proof irrelevance
-to handle cases where both sides of the equality are complex expressions.
+Heterogeneous variant of previous lemma.
 -/
 lemma eqToHomMapEqToHomApp_of_heq {E : Type*} [Category E] (F : E ⥤ Type v)
     {X Y : E} (p : Y = X) (q : F.obj X = F.obj Y) (a : F.obj X)

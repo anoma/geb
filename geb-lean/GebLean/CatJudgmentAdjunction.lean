@@ -2,6 +2,8 @@ import GebLean.CategoryJudgments
 import GebLean.Utilities.Category
 import GebLean.Utilities.OverCategoryEquiv
 import Mathlib.CategoryTheory.Adjunction.FullyFaithful
+import Mathlib.CategoryTheory.Adjunction.Limits
+import Mathlib.CategoryTheory.Adjunction.Reflective
 
 /-!
 # Category-Copresheaf Adjunction
@@ -3593,6 +3595,1723 @@ def phiFunctorFullyFaithful : PhiFunctor.{uMR}.FullyFaithful where
   map_preimage := phi_map_preimage
   preimage_map := phi_preimage_map
 
+/-- PhiFunctor is full (has preimages for all morphisms in its image). -/
+instance phiFunctor_full : PhiFunctor.{uMR}.Full :=
+  phiFunctorFullyFaithful.full
+
+/-- PhiFunctor is faithful (injective on hom-sets). -/
+instance phiFunctor_faithful : PhiFunctor.{uMR}.Faithful :=
+  phiFunctorFullyFaithful.faithful
+
+/-- PhiFunctor is a right adjoint. This enables mathlib's automatic derivation
+    of limit preservation. -/
+instance phiFunctor_isRightAdjoint : PhiFunctor.{uMR}.IsRightAdjoint where
+  exists_leftAdjoint := ⟨LFunctor, ⟨catCopresheafMathlibAdjunction⟩⟩
+
+/-- LFunctor is a left adjoint. This enables mathlib's automatic derivation
+    of colimit preservation. -/
+instance lFunctor_isLeftAdjoint : LFunctor.{uMR}.IsLeftAdjoint where
+  exists_rightAdjoint := ⟨PhiFunctor, ⟨catCopresheafMathlibAdjunction⟩⟩
+
+/-- PhiFunctor is reflective: it is a fully faithful right adjoint.
+    This is the standard characterization of the inclusion of a reflective
+    subcategory. -/
+instance phiFunctor_reflective : Reflective PhiFunctor.{uMR} where
+  L := LFunctor
+  adj := catCopresheafMathlibAdjunction
+
 end MathlibReflectivity
+
+/-! ## Limit and Colimit Preservation
+
+The following instances are automatically derived from the adjunction:
+- PhiFunctor preserves all limits (from being a right adjoint)
+- LFunctor preserves all colimits (from being a left adjoint)
+
+These are provided by mathlib's `Functor.instPreservesLimitsOfSizeOfIsRightAdjoint`
+and `Functor.instPreservesColimitsOfSizeOfIsLeftAdjoint` instances.
+-/
+
+section PreservationInstances
+
+universe uPI
+
+/-- PhiFunctor preserves limits of any shape J. This is automatically derived
+    from `phiFunctor_isRightAdjoint`. -/
+example (J : Type uPI) [Category J] :
+    Limits.PreservesLimitsOfShape J PhiFunctor.{uPI} := inferInstance
+
+/-- LFunctor preserves colimits of any shape J. This is automatically derived
+    from `lFunctor_isLeftAdjoint`. -/
+example (J : Type uPI) [Category J] :
+    Limits.PreservesColimitsOfShape J LFunctor.{uPI} := inferInstance
+
+/-! ### Conjectured Additional Preservation Properties
+
+The following preservation properties are conjectured based on the structure
+of the adjunction, but proving them requires more detailed analysis:
+
+1. **LFunctor preserves binary products**: For a left adjoint, this is not
+   automatic but may follow from the specific structure of our adjunction.
+   Binary products in the copresheaf category are computed pointwise, and
+   L(F × G) should be isomorphic to L(F) × L(G) because:
+   - Objects: (F × G)(Obj) = F(Obj) × G(Obj) ≅ L(F).Obj × L(G).Obj
+   - Morphisms: Built componentwise from the product copresheaf
+
+2. **PhiFunctor preserves binary coproducts**: For a right adjoint, this is
+   not automatic but may follow from the specific structure of our adjunction.
+   The coproduct of categories is their disjoint union, and
+   Φ(C ⊔ D) should be isomorphic to Φ(C) ⊔ Φ(D) because both have:
+   - Objects: disjoint union of objects
+   - Morphisms: disjoint union of morphisms (no cross-morphisms)
+
+3. **Exponential preservation**: Per nLab Theorem 4.1, if L preserves products,
+   then Φ preserves exponentials, making the subcategory of categories
+   cartesian closed.
+
+These properties would need to be proven by constructing explicit isomorphisms
+between the limit/colimit objects. -/
+
+end PreservationInstances
+
+/-! ## Binary Coproduct of Categories
+
+We define the binary coproduct (disjoint union) of categories represented
+as OverCategoryData, and show that PhiFunctor preserves this coproduct. -/
+
+section BinaryCoproduct
+
+universe uCoprod
+
+variable (Q₁ Q₂ : OverQuiver.{uCoprod, uCoprod})
+
+/-- The binary coproduct of two OverQuivers is their disjoint union. -/
+def OverQuiver.sum : OverQuiver.{uCoprod, uCoprod} where
+  Obj := Q₁.Obj ⊕ Q₂.Obj
+  MorType := Q₁.MorType ⊕ Q₂.MorType
+  src := Sum.map Q₁.src Q₂.src
+  tgt := Sum.map Q₁.tgt Q₂.tgt
+
+/-- In the sum quiver, composability is impossible across components because
+    Sum.inl _ ≠ Sum.inr _. -/
+theorem sum_composable_inl_inr_false {m₁ : Q₁.MorType} {m₂ : Q₂.MorType} :
+    ¬(Q₁.sum Q₂).Composable (Sum.inl m₁) (Sum.inr m₂) := by
+  simp [OverQuiver.sum, OverQuiver.Composable]
+
+/-- In the sum quiver, composability is impossible across components. -/
+theorem sum_composable_inr_inl_false {m₁ : Q₂.MorType} {m₂ : Q₁.MorType} :
+    ¬(Q₁.sum Q₂).Composable (Sum.inr m₁) (Sum.inl m₂) := by
+  simp [OverQuiver.sum, OverQuiver.Composable]
+
+variable {Q₁ Q₂} (C₁ : OverCategoryData Q₁) (C₂ : OverCategoryData Q₂)
+
+/-- Helper to compose morphisms in the sum category. -/
+def sumCompFn (p : (Q₁.sum Q₂).ComposablePairsType) : Q₁.MorType ⊕ Q₂.MorType :=
+  match hm₁ : p.val.1, hm₂ : p.val.2 with
+  | Sum.inl m₁, Sum.inl m₂ =>
+    Sum.inl (C₁.compFn ⟨(m₁, m₂), by
+      have hp := p.property
+      simp only [OverQuiver.sum, OverQuiver.Composable, hm₁, hm₂,
+        Sum.map_inl] at hp
+      exact Sum.inl.inj hp⟩)
+  | Sum.inr m₁, Sum.inr m₂ =>
+    Sum.inr (C₂.compFn ⟨(m₁, m₂), by
+      have hp := p.property
+      simp only [OverQuiver.sum, OverQuiver.Composable, hm₁, hm₂,
+        Sum.map_inr] at hp
+      exact Sum.inr.inj hp⟩)
+  | Sum.inl m₁, Sum.inr m₂ => absurd p.property (by
+      simp [OverQuiver.sum, OverQuiver.Composable, hm₁, hm₂])
+  | Sum.inr m₁, Sum.inl m₂ => absurd p.property (by
+      simp [OverQuiver.sum, OverQuiver.Composable, hm₁, hm₂])
+
+theorem sumCompFn_inl_inl' (m₁ m₂ : Q₁.MorType)
+    (hp : (Q₁.sum Q₂).Composable (Sum.inl m₁) (Sum.inl m₂)) :
+    sumCompFn C₁ C₂ ⟨(Sum.inl m₁, Sum.inl m₂), hp⟩ =
+    Sum.inl (C₁.compFn ⟨(m₁, m₂), Sum.inl.inj hp⟩) := rfl
+
+theorem sumCompFn_inr_inr' (m₁ m₂ : Q₂.MorType)
+    (hp : (Q₁.sum Q₂).Composable (Sum.inr m₁) (Sum.inr m₂)) :
+    sumCompFn C₁ C₂ ⟨(Sum.inr m₁, Sum.inr m₂), hp⟩ =
+    Sum.inr (C₂.compFn ⟨(m₁, m₂), Sum.inr.inj hp⟩) := rfl
+
+/-- The binary coproduct of two OverCategoryData is their disjoint union. -/
+def OverCategoryData.sum : OverCategoryData (Q₁.sum Q₂) where
+  idFn := Sum.elim (Sum.inl ∘ C₁.idFn) (Sum.inr ∘ C₂.idFn)
+  compFn := sumCompFn C₁ C₂
+  id_src a := by
+    cases a <;> simp only [OverQuiver.sum, Sum.elim_inl, Sum.elim_inr,
+      Function.comp_apply, Sum.map_inl, Sum.map_inr, C₁.id_src, C₂.id_src]
+  id_tgt a := by
+    cases a <;> simp only [OverQuiver.sum, Sum.elim_inl, Sum.elim_inr,
+      Function.comp_apply, Sum.map_inl, Sum.map_inr, C₁.id_tgt, C₂.id_tgt]
+  comp_src p := by
+    rcases p with ⟨⟨m₁, m₂⟩, hp⟩
+    cases m₁ with
+    | inl m₁ =>
+      cases m₂ with
+      | inl m₂ =>
+        simp only [OverQuiver.sum, OverQuiver.compPairFst]
+        rw [sumCompFn_inl_inl' C₁ C₂ m₁ m₂ hp]
+        simp only [Sum.map_inl, C₁.comp_src, OverQuiver.compPairFst]
+      | inr m₂ => exact absurd hp (sum_composable_inl_inr_false Q₁ Q₂)
+    | inr m₁ =>
+      cases m₂ with
+      | inl m₂ => exact absurd hp (sum_composable_inr_inl_false Q₁ Q₂)
+      | inr m₂ =>
+        simp only [OverQuiver.sum, OverQuiver.compPairFst]
+        rw [sumCompFn_inr_inr' C₁ C₂ m₁ m₂ hp]
+        simp only [Sum.map_inr, C₂.comp_src, OverQuiver.compPairFst]
+  comp_tgt p := by
+    rcases p with ⟨⟨m₁, m₂⟩, hp⟩
+    cases m₁ with
+    | inl m₁ =>
+      cases m₂ with
+      | inl m₂ =>
+        simp only [OverQuiver.sum, OverQuiver.compPairSnd]
+        rw [sumCompFn_inl_inl' C₁ C₂ m₁ m₂ hp]
+        simp only [Sum.map_inl, C₁.comp_tgt, OverQuiver.compPairSnd]
+      | inr m₂ => exact absurd hp (sum_composable_inl_inr_false Q₁ Q₂)
+    | inr m₁ =>
+      cases m₂ with
+      | inl m₂ => exact absurd hp (sum_composable_inr_inl_false Q₁ Q₂)
+      | inr m₂ =>
+        simp only [OverQuiver.sum, OverQuiver.compPairSnd]
+        rw [sumCompFn_inr_inr' C₁ C₂ m₁ m₂ hp]
+        simp only [Sum.map_inr, C₂.comp_tgt, OverQuiver.compPairSnd]
+  id_comp f := by
+    cases f with
+    | inl f₁ =>
+      simp only [OverQuiver.sum, Sum.map_inl, Sum.elim_inl, Function.comp_apply]
+      have hp : (Q₁.sum Q₂).Composable (Sum.inl (C₁.idFn (Q₁.src f₁)))
+          (Sum.inl f₁) := by
+        simp only [OverQuiver.sum, OverQuiver.Composable, Sum.map_inl,
+          C₁.id_tgt]
+      rw [sumCompFn_inl_inl' C₁ C₂ (C₁.idFn (Q₁.src f₁)) f₁ hp]
+      simp only [C₁.id_comp]
+    | inr f₂ =>
+      simp only [OverQuiver.sum, Sum.map_inr, Sum.elim_inr, Function.comp_apply]
+      have hp : (Q₁.sum Q₂).Composable (Sum.inr (C₂.idFn (Q₂.src f₂)))
+          (Sum.inr f₂) := by
+        simp only [OverQuiver.sum, OverQuiver.Composable, Sum.map_inr,
+          C₂.id_tgt]
+      rw [sumCompFn_inr_inr' C₁ C₂ (C₂.idFn (Q₂.src f₂)) f₂ hp]
+      simp only [C₂.id_comp]
+  comp_id f := by
+    cases f with
+    | inl f₁ =>
+      simp only [OverQuiver.sum, Sum.map_inl, Sum.elim_inl, Function.comp_apply]
+      have hp : (Q₁.sum Q₂).Composable (Sum.inl f₁)
+          (Sum.inl (C₁.idFn (Q₁.tgt f₁))) := by
+        simp only [OverQuiver.sum, OverQuiver.Composable, Sum.map_inl,
+          C₁.id_src]
+      rw [sumCompFn_inl_inl' C₁ C₂ f₁ (C₁.idFn (Q₁.tgt f₁)) hp]
+      simp only [C₁.comp_id]
+    | inr f₂ =>
+      simp only [OverQuiver.sum, Sum.map_inr, Sum.elim_inr, Function.comp_apply]
+      have hp : (Q₁.sum Q₂).Composable (Sum.inr f₂)
+          (Sum.inr (C₂.idFn (Q₂.tgt f₂))) := by
+        simp only [OverQuiver.sum, OverQuiver.Composable, Sum.map_inr,
+          C₂.id_src]
+      rw [sumCompFn_inr_inr' C₁ C₂ f₂ (C₂.idFn (Q₂.tgt f₂)) hp]
+      simp only [C₂.comp_id]
+  assoc t := by
+    rcases t with ⟨⟨f, g, h⟩, ⟨hfg, hgh⟩⟩
+    cases f with
+    | inl f₁ =>
+      cases g with
+      | inl g₁ =>
+        cases h with
+        | inl h₁ =>
+          simp only [OverQuiver.sum]
+          have hfg' : Q₁.Composable f₁ g₁ := Sum.inl.inj hfg
+          have hgh' : Q₁.Composable g₁ h₁ := Sum.inl.inj hgh
+          have hcomp_fg_h : (Q₁.sum Q₂).Composable
+              (Sum.inl (C₁.compFn ⟨(f₁, g₁), hfg'⟩)) (Sum.inl h₁) := by
+            simp only [OverQuiver.sum, OverQuiver.Composable, Sum.map_inl,
+              Sum.inl.injEq, C₁.comp_tgt, OverQuiver.compPairSnd]
+            exact hgh'
+          have hcomp_f_gh : (Q₁.sum Q₂).Composable (Sum.inl f₁)
+              (Sum.inl (C₁.compFn ⟨(g₁, h₁), hgh'⟩)) := by
+            simp only [OverQuiver.sum, OverQuiver.Composable, Sum.map_inl,
+              Sum.inl.injEq, C₁.comp_src, OverQuiver.compPairFst]
+            exact hfg'
+          change sumCompFn C₁ C₂ ⟨(sumCompFn C₁ C₂ ⟨(Sum.inl f₁, Sum.inl g₁), hfg⟩,
+            Sum.inl h₁), _⟩ = sumCompFn C₁ C₂ ⟨(Sum.inl f₁,
+            sumCompFn C₁ C₂ ⟨(Sum.inl g₁, Sum.inl h₁), hgh⟩), _⟩
+          simp only [sumCompFn_inl_inl' C₁ C₂ f₁ g₁ hfg,
+            sumCompFn_inl_inl' C₁ C₂ g₁ h₁ hgh,
+            sumCompFn_inl_inl' C₁ C₂ (C₁.compFn ⟨(f₁, g₁), hfg'⟩) h₁ hcomp_fg_h,
+            sumCompFn_inl_inl' C₁ C₂ f₁ (C₁.compFn ⟨(g₁, h₁), hgh'⟩) hcomp_f_gh,
+            Sum.inl.injEq]
+          exact C₁.assoc ⟨(f₁, g₁, h₁), ⟨hfg', hgh'⟩⟩
+        | inr h₂ =>
+          have hgh' : (Q₁.sum Q₂).Composable (Sum.inl g₁) (Sum.inr h₂) := hgh
+          exact absurd hgh' (sum_composable_inl_inr_false Q₁ Q₂)
+      | inr g₂ =>
+        have hfg' : (Q₁.sum Q₂).Composable (Sum.inl f₁) (Sum.inr g₂) := hfg
+        exact absurd hfg' (sum_composable_inl_inr_false Q₁ Q₂)
+    | inr f₂ =>
+      cases g with
+      | inl g₁ =>
+        have hfg' : (Q₁.sum Q₂).Composable (Sum.inr f₂) (Sum.inl g₁) := hfg
+        exact absurd hfg' (sum_composable_inr_inl_false Q₁ Q₂)
+      | inr g₂ =>
+        cases h with
+        | inl h₁ =>
+          have hgh' : (Q₁.sum Q₂).Composable (Sum.inr g₂) (Sum.inl h₁) := hgh
+          exact absurd hgh' (sum_composable_inr_inl_false Q₁ Q₂)
+        | inr h₂ =>
+          simp only [OverQuiver.sum]
+          have hfg' : Q₂.Composable f₂ g₂ := Sum.inr.inj hfg
+          have hgh' : Q₂.Composable g₂ h₂ := Sum.inr.inj hgh
+          have hcomp_fg_h : (Q₁.sum Q₂).Composable
+              (Sum.inr (C₂.compFn ⟨(f₂, g₂), hfg'⟩)) (Sum.inr h₂) := by
+            simp only [OverQuiver.sum, OverQuiver.Composable, Sum.map_inr,
+              Sum.inr.injEq, C₂.comp_tgt, OverQuiver.compPairSnd]
+            exact hgh'
+          have hcomp_f_gh : (Q₁.sum Q₂).Composable (Sum.inr f₂)
+              (Sum.inr (C₂.compFn ⟨(g₂, h₂), hgh'⟩)) := by
+            simp only [OverQuiver.sum, OverQuiver.Composable, Sum.map_inr,
+              Sum.inr.injEq, C₂.comp_src, OverQuiver.compPairFst]
+            exact hfg'
+          change sumCompFn C₁ C₂ ⟨(sumCompFn C₁ C₂ ⟨(Sum.inr f₂, Sum.inr g₂), hfg⟩,
+            Sum.inr h₂), _⟩ = sumCompFn C₁ C₂ ⟨(Sum.inr f₂,
+            sumCompFn C₁ C₂ ⟨(Sum.inr g₂, Sum.inr h₂), hgh⟩), _⟩
+          simp only [sumCompFn_inr_inr' C₁ C₂ f₂ g₂ hfg,
+            sumCompFn_inr_inr' C₁ C₂ g₂ h₂ hgh,
+            sumCompFn_inr_inr' C₁ C₂ (C₂.compFn ⟨(f₂, g₂), hfg'⟩) h₂ hcomp_fg_h,
+            sumCompFn_inr_inr' C₁ C₂ f₂ (C₂.compFn ⟨(g₂, h₂), hgh'⟩) hcomp_f_gh,
+            Sum.inr.injEq]
+          exact C₂.assoc ⟨(f₂, g₂, h₂), ⟨hfg', hgh'⟩⟩
+
+/-- The equivalence between composable pairs in the sum quiver and the sum of
+    composable pairs from each component. This underlies
+    coproduct preservation. -/
+def sumComposablePairsEquiv :
+    (Q₁.sum Q₂).ComposablePairsType ≃
+    Q₁.ComposablePairsType ⊕ Q₂.ComposablePairsType where
+  toFun p :=
+    match hm₁ : p.val.1, hm₂ : p.val.2 with
+    | Sum.inl m₁, Sum.inl m₂ =>
+      Sum.inl ⟨(m₁, m₂), by
+        have hp := p.property
+        simp only [OverQuiver.sum, OverQuiver.Composable, hm₁, hm₂,
+          Sum.map_inl] at hp
+        exact Sum.inl.inj hp⟩
+    | Sum.inr m₁, Sum.inr m₂ =>
+      Sum.inr ⟨(m₁, m₂), by
+        have hp := p.property
+        simp only [OverQuiver.sum, OverQuiver.Composable, hm₁, hm₂,
+          Sum.map_inr] at hp
+        exact Sum.inr.inj hp⟩
+    | Sum.inl m₁, Sum.inr m₂ => absurd p.property (by
+        simp [OverQuiver.sum, OverQuiver.Composable, hm₁, hm₂])
+    | Sum.inr m₁, Sum.inl m₂ => absurd p.property (by
+        simp [OverQuiver.sum, OverQuiver.Composable, hm₁, hm₂])
+  invFun := Sum.elim
+    (fun p => ⟨(Sum.inl p.val.1, Sum.inl p.val.2), by
+      simp only [OverQuiver.sum, OverQuiver.Composable, Sum.map_inl,
+        Sum.inl.injEq]
+      exact p.property⟩)
+    (fun p => ⟨(Sum.inr p.val.1, Sum.inr p.val.2), by
+      simp only [OverQuiver.sum, OverQuiver.Composable, Sum.map_inr,
+        Sum.inr.injEq]
+      exact p.property⟩)
+  left_inv p := by
+    rcases p with ⟨⟨m₁, m₂⟩, hp⟩
+    cases m₁ with
+    | inl m₁ =>
+      cases m₂ with
+      | inl m₂ => simp only [Sum.elim_inl]
+      | inr m₂ => exact absurd hp (sum_composable_inl_inr_false Q₁ Q₂)
+    | inr m₁ =>
+      cases m₂ with
+      | inl m₂ => exact absurd hp (sum_composable_inr_inl_false Q₁ Q₂)
+      | inr m₂ => simp only [Sum.elim_inr]
+  right_inv x := by
+    cases x with
+    | inl p => simp only [Sum.elim_inl]
+    | inr p => simp only [Sum.elim_inr]
+
+/-- The binary coproduct of two FunctorData (Type u) is their pointwise sum. -/
+def FunctorData.sum (F₁ F₂ : CategoryJudgments.FunctorData (Type u)) :
+    CategoryJudgments.FunctorData (Type u) where
+  objC := F₁.objC ⊕ F₂.objC
+  morC := F₁.morC ⊕ F₂.morC
+  idC := F₁.idC ⊕ F₂.idC
+  compC := F₁.compC ⊕ F₂.compC
+  dom := Sum.map F₁.dom F₂.dom
+  cod := Sum.map F₁.cod F₂.cod
+  idMor := Sum.map F₁.idMor F₂.idMor
+  left := Sum.map F₁.left F₂.left
+  right := Sum.map F₁.right F₂.right
+  composite := Sum.map F₁.composite F₂.composite
+  h_id_endo := by
+    funext a
+    cases a with
+    | inl a =>
+      simp only [types_comp_apply, Sum.map_inl]
+      exact congrArg Sum.inl (congrFun F₁.h_id_endo a)
+    | inr a =>
+      simp only [types_comp_apply, Sum.map_inr]
+      exact congrArg Sum.inr (congrFun F₂.h_id_endo a)
+  h_comp_match := by
+    funext p
+    cases p with
+    | inl p =>
+      simp only [types_comp_apply, Sum.map_inl]
+      exact congrArg Sum.inl (congrFun F₁.h_comp_match p)
+    | inr p =>
+      simp only [types_comp_apply, Sum.map_inr]
+      exact congrArg Sum.inr (congrFun F₂.h_comp_match p)
+  h_comp_dom := by
+    funext p
+    cases p with
+    | inl p =>
+      simp only [types_comp_apply, Sum.map_inl]
+      exact congrArg Sum.inl (congrFun F₁.h_comp_dom p)
+    | inr p =>
+      simp only [types_comp_apply, Sum.map_inr]
+      exact congrArg Sum.inr (congrFun F₂.h_comp_dom p)
+  h_comp_cod := by
+    funext p
+    cases p with
+    | inl p =>
+      simp only [types_comp_apply, Sum.map_inl]
+      exact congrArg Sum.inl (congrFun F₁.h_comp_cod p)
+    | inr p =>
+      simp only [types_comp_apply, Sum.map_inr]
+      exact congrArg Sum.inr (congrFun F₂.h_comp_cod p)
+
+/-- The isomorphism between Φ(C₁.sum C₂) and Φ(C₁).sum Φ(C₂) on the compC
+    component, using the composable pairs equivalence. -/
+def phiSumCompIso :
+    (C₁.sum C₂).toJudgmentFunctorData.compC ≃
+    (FunctorData.sum C₁.toJudgmentFunctorData C₂.toJudgmentFunctorData).compC :=
+  sumComposablePairsEquiv (Q₁ := Q₁) (Q₂ := Q₂)
+
+/-- Φ preserves binary coproducts: Φ(C₁ ⊕ C₂) ≅ Φ(C₁) ⊕ Φ(C₂).
+    The isomorphism is the identity on objects, morphisms, and identities,
+    and uses the composable pairs equivalence on the compC component. -/
+def phiFunctorPreservesCoproduct :
+    CategoryJudgments.NatTransData
+      (C₁.sum C₂).toJudgmentFunctorData
+      (FunctorData.sum C₁.toJudgmentFunctorData C₂.toJudgmentFunctorData) where
+  appObj := id
+  appMor := id
+  appId := id
+  appComp := phiSumCompIso C₁ C₂
+  naturality_dom := rfl
+  naturality_cod := rfl
+  naturality_idMor := by
+    funext a
+    cases a <;> simp [OverCategoryData.sum, FunctorData.sum,
+      OverCategoryData.toJudgmentFunctorData]
+  naturality_left := by
+    funext p
+    rcases p with ⟨⟨m₁, m₂⟩, hp⟩
+    cases m₁ with
+    | inl m₁ =>
+      cases m₂ with
+      | inl m₂ => simp [phiSumCompIso, sumComposablePairsEquiv,
+          OverCategoryData.toJudgmentFunctorData, FunctorData.sum]
+      | inr m₂ => exact absurd hp (sum_composable_inl_inr_false Q₁ Q₂)
+    | inr m₁ =>
+      cases m₂ with
+      | inl m₂ => exact absurd hp (sum_composable_inr_inl_false Q₁ Q₂)
+      | inr m₂ => simp [phiSumCompIso, sumComposablePairsEquiv,
+          OverCategoryData.toJudgmentFunctorData, FunctorData.sum]
+  naturality_right := by
+    funext p
+    rcases p with ⟨⟨m₁, m₂⟩, hp⟩
+    cases m₁ with
+    | inl m₁ =>
+      cases m₂ with
+      | inl m₂ => simp [phiSumCompIso, sumComposablePairsEquiv,
+          OverCategoryData.toJudgmentFunctorData, FunctorData.sum]
+      | inr m₂ => exact absurd hp (sum_composable_inl_inr_false Q₁ Q₂)
+    | inr m₁ =>
+      cases m₂ with
+      | inl m₂ => exact absurd hp (sum_composable_inr_inl_false Q₁ Q₂)
+      | inr m₂ => simp [phiSumCompIso, sumComposablePairsEquiv,
+          OverCategoryData.toJudgmentFunctorData, FunctorData.sum]
+  naturality_composite := by
+    funext p
+    rcases p with ⟨⟨m₁, m₂⟩, hp⟩
+    cases m₁ with
+    | inl m₁ =>
+      cases m₂ with
+      | inl m₂ => rfl
+      | inr m₂ => exact absurd hp (sum_composable_inl_inr_false Q₁ Q₂)
+    | inr m₁ =>
+      cases m₂ with
+      | inl m₂ => exact absurd hp (sum_composable_inr_inl_false Q₁ Q₂)
+      | inr m₂ => rfl
+
+/-- The inverse natural transformation: Φ(C₁) ⊕ Φ(C₂) → Φ(C₁ ⊕ C₂). -/
+def phiFunctorPreservesCoproductInv :
+    CategoryJudgments.NatTransData
+      (FunctorData.sum C₁.toJudgmentFunctorData C₂.toJudgmentFunctorData)
+      (C₁.sum C₂).toJudgmentFunctorData where
+  appObj := id
+  appMor := id
+  appId := id
+  appComp := (phiSumCompIso C₁ C₂).symm
+  naturality_dom := rfl
+  naturality_cod := rfl
+  naturality_idMor := by
+    funext a
+    cases a <;> simp [OverCategoryData.sum, FunctorData.sum,
+      OverCategoryData.toJudgmentFunctorData]
+  naturality_left := by funext p; cases p <;> rfl
+  naturality_right := by funext p; cases p <;> rfl
+  naturality_composite := by funext p; cases p <;> rfl
+
+/-- The composite of the forward and inverse is the identity. -/
+theorem phiFunctorPreservesCoproduct_comp_inv :
+    CategoryJudgments.NatTransData.comp
+      (phiFunctorPreservesCoproduct C₁ C₂)
+      (phiFunctorPreservesCoproductInv C₁ C₂) =
+    CategoryJudgments.NatTransData.id _ := by
+  ext <;> simp [CategoryJudgments.NatTransData.comp,
+    CategoryJudgments.NatTransData.id, phiFunctorPreservesCoproduct,
+    phiFunctorPreservesCoproductInv, phiSumCompIso]
+
+/-- The composite of the inverse and forward is the identity. -/
+theorem phiFunctorPreservesCoproduct_inv_comp :
+    CategoryJudgments.NatTransData.comp
+      (phiFunctorPreservesCoproductInv C₁ C₂)
+      (phiFunctorPreservesCoproduct C₁ C₂) =
+    CategoryJudgments.NatTransData.id _ := by
+  ext
+  · rfl
+  · rfl
+  · rfl
+  · rename_i a
+    simp only [CategoryJudgments.NatTransData.comp,
+      CategoryJudgments.NatTransData.id, phiFunctorPreservesCoproduct,
+      phiFunctorPreservesCoproductInv, phiSumCompIso, types_comp_apply]
+    exact sumComposablePairsEquiv.apply_symm_apply a
+
+end BinaryCoproduct
+
+/-!
+## Binary Products
+
+Binary products for categories and copresheaves. The product of categories
+has pairs of objects and pairs of morphisms, with componentwise composition.
+We prove that LFunctor preserves binary products.
+-/
+
+section BinaryProduct
+
+universe uProd
+
+variable (Q₁ Q₂ : OverQuiver.{uProd, uProd})
+
+/-- The binary product of two OverQuivers has pairs of objects and morphisms. -/
+def OverQuiver.prod : OverQuiver.{uProd, uProd} where
+  Obj := Q₁.Obj × Q₂.Obj
+  MorType := Q₁.MorType × Q₂.MorType
+  src := fun p => (Q₁.src p.1, Q₂.src p.2)
+  tgt := fun p => (Q₁.tgt p.1, Q₂.tgt p.2)
+
+/-- Composability in a product quiver requires both components to be composable. -/
+theorem prod_composable_iff {m₁ m₂ : (Q₁.prod Q₂).MorType} :
+    (Q₁.prod Q₂).Composable m₁ m₂ ↔
+      Q₁.Composable m₁.1 m₂.1 ∧ Q₂.Composable m₁.2 m₂.2 := by
+  simp only [OverQuiver.Composable, OverQuiver.prod, Prod.ext_iff]
+
+variable {Q₁ Q₂} (C₁ : OverCategoryData Q₁) (C₂ : OverCategoryData Q₂)
+
+/-- The binary product of two OverCategoryData structures with componentwise ops. -/
+def OverCategoryData.prod : OverCategoryData (Q₁.prod Q₂) where
+  idFn := fun p => (C₁.idFn p.1, C₂.idFn p.2)
+  compFn := fun ⟨p, hp⟩ =>
+    let hp' := prod_composable_iff Q₁ Q₂ |>.mp hp
+    (C₁.compFn ⟨(p.1.1, p.2.1), hp'.1⟩, C₂.compFn ⟨(p.1.2, p.2.2), hp'.2⟩)
+  id_src := by
+    intro p
+    simp only [OverQuiver.prod]
+    ext
+    · exact C₁.id_src p.1
+    · exact C₂.id_src p.2
+  id_tgt := by
+    intro p
+    simp only [OverQuiver.prod]
+    ext
+    · exact C₁.id_tgt p.1
+    · exact C₂.id_tgt p.2
+  comp_src := by
+    intro ⟨p, hp⟩
+    simp only [OverQuiver.prod, OverQuiver.compPairFst]
+    ext
+    · exact C₁.comp_src ⟨(p.1.1, p.2.1), _⟩
+    · exact C₂.comp_src ⟨(p.1.2, p.2.2), _⟩
+  comp_tgt := by
+    intro ⟨p, hp⟩
+    simp only [OverQuiver.prod, OverQuiver.compPairSnd]
+    ext
+    · exact C₁.comp_tgt ⟨(p.1.1, p.2.1), _⟩
+    · exact C₂.comp_tgt ⟨(p.1.2, p.2.2), _⟩
+  id_comp := by
+    intro f
+    simp only [OverQuiver.prod]
+    simp only [Prod.ext_iff]
+    refine ⟨?_, ?_⟩
+    · exact C₁.id_comp f.1
+    · exact C₂.id_comp f.2
+  comp_id := by
+    intro f
+    simp only [OverQuiver.prod]
+    simp only [Prod.ext_iff]
+    refine ⟨?_, ?_⟩
+    · exact C₁.comp_id f.1
+    · exact C₂.comp_id f.2
+  assoc := by
+    intro t
+    let ⟨⟨f, g, h⟩, hfg, hgh⟩ := t
+    simp only [OverQuiver.prod, OverQuiver.Composable, Prod.ext_iff] at hfg hgh
+    have ⟨hfg1, hfg2⟩ := hfg
+    have ⟨hgh1, hgh2⟩ := hgh
+    have hax1 := C₁.assoc ⟨⟨f.1, g.1, h.1⟩, hfg1, hgh1⟩
+    have hax2 := C₂.assoc ⟨⟨f.2, g.2, h.2⟩, hfg2, hgh2⟩
+    simp only [OverQuiver.prod]
+    ext
+    · convert hax1 using 2
+    · convert hax2 using 2
+
+/-- The binary product of two FunctorData structures is computed pointwise. -/
+def FunctorData.prod (F₁ F₂ : CategoryJudgments.FunctorData (Type u)) :
+    CategoryJudgments.FunctorData (Type u) where
+  objC := F₁.objC × F₂.objC
+  morC := F₁.morC × F₂.morC
+  idC := F₁.idC × F₂.idC
+  compC := F₁.compC × F₂.compC
+  dom := Prod.map F₁.dom F₂.dom
+  cod := Prod.map F₁.cod F₂.cod
+  idMor := Prod.map F₁.idMor F₂.idMor
+  left := Prod.map F₁.left F₂.left
+  right := Prod.map F₁.right F₂.right
+  composite := Prod.map F₁.composite F₂.composite
+  h_id_endo := by
+    funext ⟨a₁, a₂⟩
+    simp only [types_comp_apply, Prod.map_apply]
+    exact Prod.ext (congrFun F₁.h_id_endo a₁) (congrFun F₂.h_id_endo a₂)
+  h_comp_match := by
+    funext ⟨c₁, c₂⟩
+    simp only [types_comp_apply, Prod.map_apply]
+    exact Prod.ext (congrFun F₁.h_comp_match c₁) (congrFun F₂.h_comp_match c₂)
+  h_comp_dom := by
+    funext ⟨c₁, c₂⟩
+    simp only [types_comp_apply, Prod.map_apply]
+    exact Prod.ext (congrFun F₁.h_comp_dom c₁) (congrFun F₂.h_comp_dom c₂)
+  h_comp_cod := by
+    funext ⟨c₁, c₂⟩
+    simp only [types_comp_apply, Prod.map_apply]
+    exact Prod.ext (congrFun F₁.h_comp_cod c₁) (congrFun F₂.h_comp_cod c₂)
+
+variable (F₁ F₂ : CategoryJudgments.FunctorData (Type uProd))
+
+/-- Abbreviation for the product copresheaf's CategoryQuotientData. -/
+abbrev prodQuotData : CategoryQuotientData.{uProd, uProd} :=
+  (FunctorData.prod F₁ F₂).toCategoryQuotientData
+
+/-- Abbreviation for F₁'s CategoryQuotientData. -/
+abbrev quotData₁ : CategoryQuotientData.{uProd, uProd} :=
+  F₁.toCategoryQuotientData
+
+/-- Abbreviation for F₂'s CategoryQuotientData. -/
+abbrev quotData₂ : CategoryQuotientData.{uProd, uProd} :=
+  F₂.toCategoryQuotientData
+
+/-- The product quiver's source projects to the first component's source. -/
+theorem prodQuiver_src_fst (f₁ : F₁.morC) (f₂ : F₂.morC) :
+    ((prodQuotData F₁ F₂).quiver.src (f₁, f₂)).1 = (quotData₁ F₁).quiver.src f₁ := rfl
+
+/-- The product quiver's target projects to the first component's target. -/
+theorem prodQuiver_tgt_fst (f₁ : F₁.morC) (f₂ : F₂.morC) :
+    ((prodQuotData F₁ F₂).quiver.tgt (f₁, f₂)).1 = (quotData₁ F₁).quiver.tgt f₁ := rfl
+
+/-- The product quiver's source projects to the second component's source. -/
+theorem prodQuiver_src_snd (f₁ : F₁.morC) (f₂ : F₂.morC) :
+    ((prodQuotData F₁ F₂).quiver.src (f₁, f₂)).2 = (quotData₂ F₂).quiver.src f₂ := rfl
+
+/-- The product quiver's target projects to the second component's target. -/
+theorem prodQuiver_tgt_snd (f₁ : F₁.morC) (f₂ : F₂.morC) :
+    ((prodQuotData F₁ F₂).quiver.tgt (f₁, f₂)).2 = (quotData₂ F₂).quiver.tgt f₂ := rfl
+
+/-- The product's idObj projects to the first component's idObj. -/
+theorem prodQuotData_idObj_fst (i₁ : F₁.idC) (i₂ : F₂.idC) :
+    ((prodQuotData F₁ F₂).idObj (i₁, i₂)).1 = (quotData₁ F₁).idObj i₁ := rfl
+
+/-- The product's idObj projects to the second component's idObj. -/
+theorem prodQuotData_idObj_snd (i₁ : F₁.idC) (i₂ : F₂.idC) :
+    ((prodQuotData F₁ F₂).idObj (i₁, i₂)).2 = (quotData₂ F₂).idObj i₂ := rfl
+
+/-- The product's idMor projects to the first component's idMor. -/
+theorem prodQuotData_idMor_fst (i₁ : F₁.idC) (i₂ : F₂.idC) :
+    ((prodQuotData F₁ F₂).idMor (i₁, i₂)).1 = (quotData₁ F₁).idMor i₁ := rfl
+
+/-- The product's idMor projects to the second component's idMor. -/
+theorem prodQuotData_idMor_snd (i₁ : F₁.idC) (i₂ : F₂.idC) :
+    ((prodQuotData F₁ F₂).idMor (i₁, i₂)).2 = (quotData₂ F₂).idMor i₂ := rfl
+
+/-- The id_src proof for product projects to component id_src (first component). -/
+theorem prodQuotData_id_src_fst (i₁ : F₁.idC) (i₂ : F₂.idC) :
+    (Prod.ext_iff.mp ((prodQuotData F₁ F₂).id_src (i₁, i₂))).1 =
+    (quotData₁ F₁).id_src i₁ := rfl
+
+/-- The id_tgt proof for product projects to component id_tgt (first component). -/
+theorem prodQuotData_id_tgt_fst (i₁ : F₁.idC) (i₂ : F₂.idC) :
+    (Prod.ext_iff.mp ((prodQuotData F₁ F₂).id_tgt (i₁, i₂))).1 =
+    (quotData₁ F₁).id_tgt i₁ := by
+  simp only [CategoryJudgments.FunctorData.toCategoryQuotientData,
+    FunctorData.prod, Prod.map_apply]
+
+/-- The product's compLeft projects to the first component's compLeft. -/
+theorem prodQuotData_compLeft_fst (c₁ : F₁.compC) (c₂ : F₂.compC) :
+    ((prodQuotData F₁ F₂).compLeft (c₁, c₂)).1 = (quotData₁ F₁).compLeft c₁ := rfl
+
+/-- The product's compRight projects to the first component's compRight. -/
+theorem prodQuotData_compRight_fst (c₁ : F₁.compC) (c₂ : F₂.compC) :
+    ((prodQuotData F₁ F₂).compRight (c₁, c₂)).1 = (quotData₁ F₁).compRight c₁ := rfl
+
+/-- The product's compComposite projects to the first component's compComposite. -/
+theorem prodQuotData_compComposite_fst (c₁ : F₁.compC) (c₂ : F₂.compC) :
+    ((prodQuotData F₁ F₂).compComposite (c₁, c₂)).1 =
+    (quotData₁ F₁).compComposite c₁ := rfl
+
+/-- The product's comp_match projects to the first component's comp_match. -/
+theorem prodQuotData_comp_match_fst (c₁ : F₁.compC) (c₂ : F₂.compC) :
+    (Prod.ext_iff.mp ((prodQuotData F₁ F₂).comp_match (c₁, c₂))).1 =
+    (quotData₁ F₁).comp_match c₁ := by
+  simp only [CategoryJudgments.FunctorData.toCategoryQuotientData,
+    FunctorData.prod, Prod.map_apply]
+
+/-- Project a free morphism in the product quiver to the first component. -/
+def freeMorProj₁ {a b : (prodQuotData F₁ F₂).quiver.Obj}
+    (m : FreeMor (prodQuotData F₁ F₂).quiver a b) :
+    FreeMor (quotData₁ F₁).quiver a.1 b.1 :=
+  match m with
+  | .var (f₁, f₂) =>
+    (prodQuiver_src_fst F₁ F₂ f₁ f₂) ▸ (prodQuiver_tgt_fst F₁ F₂ f₁ f₂) ▸
+      FreeMor.var (Q := (quotData₁ F₁).quiver) f₁
+  | .id _ => .id _
+  | .comp g f => .comp (freeMorProj₁ g) (freeMorProj₁ f)
+
+/-- Project a free morphism in the product quiver to the second component. -/
+def freeMorProj₂ {a b : (prodQuotData F₁ F₂).quiver.Obj}
+    (m : FreeMor (prodQuotData F₁ F₂).quiver a b) :
+    FreeMor (quotData₂ F₂).quiver a.2 b.2 :=
+  match m with
+  | .var (f₁, f₂) =>
+    (prodQuiver_src_snd F₁ F₂ f₁ f₂) ▸ (prodQuiver_tgt_snd F₁ F₂ f₁ f₂) ▸
+      FreeMor.var (Q := (quotData₂ F₂).quiver) f₂
+  | .id _ => .id _
+  | .comp g f => .comp (freeMorProj₂ g) (freeMorProj₂ f)
+
+/-- Helper: freeMorProj₂ on id case. -/
+@[simp]
+theorem freeMorProj₂_id (a : (prodQuotData F₁ F₂).quiver.Obj) :
+    freeMorProj₂ F₁ F₂ (FreeMor.id a) = FreeMor.id (Q := (quotData₂ F₂).quiver) a.2 :=
+  rfl
+
+/-- Since prodQuiver_src_snd and prodQuiver_tgt_snd are rfl, freeMorProj₂ on var simplifies. -/
+@[simp]
+theorem freeMorProj₂_var_simple (f₁ : F₁.morC) (f₂ : F₂.morC) :
+    freeMorProj₂ F₁ F₂ (FreeMor.var (f₁, f₂)) =
+    FreeMor.var (Q := (quotData₂ F₂).quiver) f₂ := rfl
+
+/-- HEq congruence for freeMorProj₂: projecting HEq-related morphisms gives HEq results. -/
+theorem freeMorProj₂_heq {a₁ b₁ a₂ b₂ : (prodQuotData F₁ F₂).quiver.Obj}
+    {m₁ : FreeMor (prodQuotData F₁ F₂).quiver a₁ b₁}
+    {m₂ : FreeMor (prodQuotData F₁ F₂).quiver a₂ b₂}
+    (ha : a₁ = a₂) (hb : b₁ = b₂) (hm : HEq m₁ m₂) :
+    HEq (freeMorProj₂ F₁ F₂ m₁) (freeMorProj₂ F₁ F₂ m₂) := by
+  cases ha
+  cases hb
+  cases eq_of_heq hm
+  rfl
+
+/-- Helper: freeMorProj₂ applied to cast of var equals cast of var projection.
+    This shows that projection commutes with cast for var terms in the id_witness case. -/
+theorem freeMorProj₂_cast_id_var (i₁ : F₁.idC) (i₂ : F₂.idC) :
+    HEq
+      (freeMorProj₂ F₁ F₂
+        (cast (by rw [(prodQuotData F₁ F₂).id_src (i₁, i₂),
+                      (prodQuotData F₁ F₂).id_tgt (i₁, i₂)])
+          (FreeMor.var ((prodQuotData F₁ F₂).idMor (i₁, i₂)))))
+      (cast (by rw [(quotData₂ F₂).id_src i₂, (quotData₂ F₂).id_tgt i₂])
+        (FreeMor.var ((quotData₂ F₂).idMor i₂))) := by
+  have h_lhs_cast : HEq
+      (cast (by rw [(prodQuotData F₁ F₂).id_src (i₁, i₂),
+                    (prodQuotData F₁ F₂).id_tgt (i₁, i₂)])
+        (FreeMor.var ((prodQuotData F₁ F₂).idMor (i₁, i₂))))
+      (FreeMor.var ((prodQuotData F₁ F₂).idMor (i₁, i₂))) := cast_heq _ _
+  have h_proj_heq : HEq
+      (freeMorProj₂ F₁ F₂
+        (cast (by rw [(prodQuotData F₁ F₂).id_src (i₁, i₂),
+                      (prodQuotData F₁ F₂).id_tgt (i₁, i₂)])
+          (FreeMor.var ((prodQuotData F₁ F₂).idMor (i₁, i₂)))))
+      (freeMorProj₂ F₁ F₂ (FreeMor.var ((prodQuotData F₁ F₂).idMor (i₁, i₂)))) :=
+    freeMorProj₂_heq F₁ F₂
+      ((prodQuotData F₁ F₂).id_src (i₁, i₂)).symm
+      ((prodQuotData F₁ F₂).id_tgt (i₁, i₂)).symm
+      h_lhs_cast
+  have h_rhs_cast : HEq
+      (cast (by rw [(quotData₂ F₂).id_src i₂, (quotData₂ F₂).id_tgt i₂])
+        (FreeMor.var ((quotData₂ F₂).idMor i₂)))
+      (FreeMor.var (Q := (quotData₂ F₂).quiver) ((quotData₂ F₂).idMor i₂)) :=
+    cast_heq _ _
+  exact h_proj_heq.trans h_rhs_cast.symm
+
+/-- Step A for id_witness on proj₂: The LHS (cast var) projects to something equiv to id. -/
+theorem freeMorProj₂_id_witness_stepA (i : (prodQuotData F₁ F₂).IdWitness) :
+    CategoryQuotientData.FreeMorEquiv (quotData₂ F₂)
+      (freeMorProj₂ F₁ F₂
+        (cast (by rw [(prodQuotData F₁ F₂).id_src i, (prodQuotData F₁ F₂).id_tgt i])
+          (FreeMor.var ((prodQuotData F₁ F₂).idMor i))))
+      (FreeMor.id (Q := (quotData₂ F₂).quiver) (((prodQuotData F₁ F₂).idObj i).2)) := by
+  rcases i with ⟨i₁, i₂⟩
+  convert CategoryQuotientData.FreeMorEquiv.rel
+    (@CategoryQuotientData.FreeMorEquivGen.id_witness (quotData₂ F₂) i₂) using 2
+  exact eq_of_heq (freeMorProj₂_cast_id_var F₁ F₂ i₁ i₂)
+
+/-- Step B for id_witness on proj₂: FreeMor.id projects to itself. -/
+theorem freeMorProj₂_id_witness_stepB (i : (prodQuotData F₁ F₂).IdWitness) :
+    CategoryQuotientData.FreeMorEquiv (quotData₂ F₂)
+      (FreeMor.id (Q := (quotData₂ F₂).quiver) (((prodQuotData F₁ F₂).idObj i).2))
+      (freeMorProj₂ F₁ F₂ (FreeMor.id ((prodQuotData F₁ F₂).idObj i))) := by
+  simp only [freeMorProj₂_id]
+  exact CategoryQuotientData.FreeMorEquiv.refl _
+
+/-- Full proof for id_witness case on proj₂. -/
+theorem freeMorProj₂_respects_id_witness (i : (prodQuotData F₁ F₂).IdWitness) :
+    CategoryQuotientData.FreeMorEquiv (quotData₂ F₂)
+      (freeMorProj₂ F₁ F₂
+        (cast (by rw [(prodQuotData F₁ F₂).id_src i, (prodQuotData F₁ F₂).id_tgt i])
+          (FreeMor.var ((prodQuotData F₁ F₂).idMor i))))
+      (freeMorProj₂ F₁ F₂ (FreeMor.id ((prodQuotData F₁ F₂).idObj i))) :=
+  CategoryQuotientData.FreeMorEquiv.trans
+    (freeMorProj₂_id_witness_stepA F₁ F₂ i)
+    (freeMorProj₂_id_witness_stepB F₁ F₂ i)
+
+/-- Helper: freeMorProj₁ on id case. -/
+@[simp]
+theorem freeMorProj₁_id (a : (prodQuotData F₁ F₂).quiver.Obj) :
+    freeMorProj₁ F₁ F₂ (FreeMor.id a) = FreeMor.id (Q := (quotData₁ F₁).quiver) a.1 :=
+  rfl
+
+/-- Helper: freeMorProj₁ on var case. -/
+theorem freeMorProj₁_var (f₁ : F₁.morC) (f₂ : F₂.morC) :
+    freeMorProj₁ F₁ F₂ (FreeMor.var (f₁, f₂)) =
+    (prodQuiver_src_fst F₁ F₂ f₁ f₂) ▸ (prodQuiver_tgt_fst F₁ F₂ f₁ f₂) ▸
+      FreeMor.var (Q := (quotData₁ F₁).quiver) f₁ := rfl
+
+/-- Since prodQuiver_src_fst and prodQuiver_tgt_fst are rfl, freeMorProj₁ on var simplifies. -/
+@[simp]
+theorem freeMorProj₁_var_simple (f₁ : F₁.morC) (f₂ : F₂.morC) :
+    freeMorProj₁ F₁ F₂ (FreeMor.var (f₁, f₂)) =
+    FreeMor.var (Q := (quotData₁ F₁).quiver) f₁ := rfl
+
+/-- freeMorProj₁ commutes with transport operations on var terms. -/
+theorem freeMorProj₁_cast_var
+    {a b : (prodQuotData F₁ F₂).quiver.Obj}
+    (f₁ : F₁.morC) (f₂ : F₂.morC)
+    (hsrc : (prodQuotData F₁ F₂).quiver.src (f₁, f₂) = a)
+    (htgt : (prodQuotData F₁ F₂).quiver.tgt (f₁, f₂) = b) :
+    freeMorProj₁ F₁ F₂
+      (hsrc ▸ htgt ▸ FreeMor.var (Q := (prodQuotData F₁ F₂).quiver) (f₁, f₂)) =
+    (congrArg Prod.fst hsrc) ▸ (congrArg Prod.fst htgt) ▸
+      FreeMor.var (Q := (quotData₁ F₁).quiver) f₁ := by
+  cases hsrc
+  cases htgt
+  rfl
+
+-- Factored lemmas for id_witness and comp_witness cases.
+-- Following the factoring-into-lemmas technique: define lemmas with underscores,
+-- use them in the main proof to verify they fit, then fill in proofs.
+-- The lemma types are crafted to match the exact goal types from the main proof.
+
+/-- The product's idObj first component equals the component's idObj.
+    This is definitionally equal but we state it explicitly for clarity. -/
+theorem prodQuotData_idObj_fst_eq (i : (prodQuotData F₁ F₂).IdWitness) :
+    ((prodQuotData F₁ F₂).idObj i).1 = (quotData₁ F₁).idObj i.1 := rfl
+
+/-- HEq congruence for freeMorProj₁: projecting HEq-related morphisms gives HEq results. -/
+theorem freeMorProj₁_heq {a₁ b₁ a₂ b₂ : (prodQuotData F₁ F₂).quiver.Obj}
+    {m₁ : FreeMor (prodQuotData F₁ F₂).quiver a₁ b₁}
+    {m₂ : FreeMor (prodQuotData F₁ F₂).quiver a₂ b₂}
+    (ha : a₁ = a₂) (hb : b₁ = b₂) (hm : HEq m₁ m₂) :
+    HEq (freeMorProj₁ F₁ F₂ m₁) (freeMorProj₁ F₁ F₂ m₂) := by
+  cases ha
+  cases hb
+  cases eq_of_heq hm
+  rfl
+
+/-- Helper: freeMorProj₁ applied to cast of var equals cast of var projection.
+    This shows that projection commutes with cast for var terms in the id_witness case. -/
+theorem freeMorProj₁_cast_id_var (i₁ : F₁.idC) (i₂ : F₂.idC) :
+    HEq
+      (freeMorProj₁ F₁ F₂
+        (cast (by rw [(prodQuotData F₁ F₂).id_src (i₁, i₂),
+                      (prodQuotData F₁ F₂).id_tgt (i₁, i₂)])
+          (FreeMor.var ((prodQuotData F₁ F₂).idMor (i₁, i₂)))))
+      (cast (by rw [(quotData₁ F₁).id_src i₁, (quotData₁ F₁).id_tgt i₁])
+        (FreeMor.var ((quotData₁ F₁).idMor i₁))) := by
+  -- Strategy: Both sides are HEq to FreeMor.var ((quotData₁ F₁).idMor i₁).
+  -- Use cast_heq to relate cast terms to their uncast forms, then show the
+  -- uncast forms are equal (freeMorProj₁ (var (m₁,m₂)) = var m₁).
+
+  -- Step 1: LHS cast is HEq to its uncast form
+  have h_lhs_cast : HEq
+      (cast (by rw [(prodQuotData F₁ F₂).id_src (i₁, i₂),
+                    (prodQuotData F₁ F₂).id_tgt (i₁, i₂)])
+        (FreeMor.var ((prodQuotData F₁ F₂).idMor (i₁, i₂))))
+      (FreeMor.var ((prodQuotData F₁ F₂).idMor (i₁, i₂))) := cast_heq _ _
+
+  -- Step 2: Apply freeMorProj₁_heq to get HEq between freeMorProj₁ applications
+  -- Note: need .symm since id_src says src = idObj, but we need idObj = src
+  have h_proj_heq : HEq
+      (freeMorProj₁ F₁ F₂
+        (cast (by rw [(prodQuotData F₁ F₂).id_src (i₁, i₂),
+                      (prodQuotData F₁ F₂).id_tgt (i₁, i₂)])
+          (FreeMor.var ((prodQuotData F₁ F₂).idMor (i₁, i₂)))))
+      (freeMorProj₁ F₁ F₂ (FreeMor.var ((prodQuotData F₁ F₂).idMor (i₁, i₂)))) :=
+    freeMorProj₁_heq F₁ F₂
+      ((prodQuotData F₁ F₂).id_src (i₁, i₂)).symm
+      ((prodQuotData F₁ F₂).id_tgt (i₁, i₂)).symm
+      h_lhs_cast
+
+  -- Step 3: freeMorProj₁ (var (m₁, m₂)) = var m₁ by freeMorProj₁_var_simple
+  -- So h_proj_heq gives: LHS HEq var (idMor i₁)
+
+  -- Step 4: RHS cast is HEq to var (idMor i₁)
+  have h_rhs_cast : HEq
+      (cast (by rw [(quotData₁ F₁).id_src i₁, (quotData₁ F₁).id_tgt i₁])
+        (FreeMor.var ((quotData₁ F₁).idMor i₁)))
+      (FreeMor.var (Q := (quotData₁ F₁).quiver) ((quotData₁ F₁).idMor i₁)) :=
+    cast_heq _ _
+
+  -- Step 5: Combine: LHS HEq var m₁ HEq RHS
+  exact h_proj_heq.trans h_rhs_cast.symm
+
+/-- Step A for id_witness: The LHS (cast var) projects to something equiv to id.
+    The proof works by showing both sides are FreeMorEquiv to the uncast var form. -/
+theorem freeMorProj₁_id_witness_stepA (i : (prodQuotData F₁ F₂).IdWitness) :
+    CategoryQuotientData.FreeMorEquiv (quotData₁ F₁)
+      (freeMorProj₁ F₁ F₂
+        (cast (by rw [(prodQuotData F₁ F₂).id_src i, (prodQuotData F₁ F₂).id_tgt i])
+          (FreeMor.var ((prodQuotData F₁ F₂).idMor i))))
+      (FreeMor.id (Q := (quotData₁ F₁).quiver) (((prodQuotData F₁ F₂).idObj i).1)) := by
+  rcases i with ⟨i₁, i₂⟩
+  -- Use convert to match against the component's id_witness generator.
+  convert CategoryQuotientData.FreeMorEquiv.rel
+    (@CategoryQuotientData.FreeMorEquivGen.id_witness (quotData₁ F₁) i₁) using 2
+  -- Use the helper lemma with eq_of_heq since the types are equal
+  exact eq_of_heq (freeMorProj₁_cast_id_var F₁ F₂ i₁ i₂)
+
+/-- Step B for id_witness: FreeMor.id projects to itself via id_witness symmetry.
+    Since stepA shows LHS ~ FreeMor.id and RHS = FreeMor.id, we use refl. -/
+theorem freeMorProj₁_id_witness_stepB (i : (prodQuotData F₁ F₂).IdWitness) :
+    CategoryQuotientData.FreeMorEquiv (quotData₁ F₁)
+      (FreeMor.id (Q := (quotData₁ F₁).quiver) (((prodQuotData F₁ F₂).idObj i).1))
+      (freeMorProj₁ F₁ F₂ (FreeMor.id ((prodQuotData F₁ F₂).idObj i))) := by
+  -- RHS = FreeMor.id ((prodQuotData F₁ F₂).idObj i).1 by definition of freeMorProj₁
+  simp only [freeMorProj₁_id]
+  -- Now both sides are FreeMor.id at the same index, so use refl.
+  exact CategoryQuotientData.FreeMorEquiv.refl _
+
+/-- Full proof for id_witness case via transitivity of stepA and stepB. -/
+theorem freeMorProj₁_respects_id_witness (i : (prodQuotData F₁ F₂).IdWitness) :
+    CategoryQuotientData.FreeMorEquiv (quotData₁ F₁)
+      (freeMorProj₁ F₁ F₂
+        (cast (by rw [(prodQuotData F₁ F₂).id_src i, (prodQuotData F₁ F₂).id_tgt i])
+          (FreeMor.var ((prodQuotData F₁ F₂).idMor i))))
+      (freeMorProj₁ F₁ F₂ (FreeMor.id ((prodQuotData F₁ F₂).idObj i))) :=
+  CategoryQuotientData.FreeMorEquiv.trans
+    (freeMorProj₁_id_witness_stepA F₁ F₂ i)
+    (freeMorProj₁_id_witness_stepB F₁ F₂ i)
+
+/-- freeMorProj₁ of a cast-comp term reduces to a comp of projections.
+    Both projections are FreeMorEquiv to the component's comp_witness form.
+    Strategy: use freeMorProj₁_heq with cast_heq to relate through the uncast forms. -/
+theorem freeMorProj₁_comp_left_heq (c₁ : F₁.compC) (c₂ : F₂.compC) :
+    HEq
+      (freeMorProj₁ F₁ F₂ (FreeMor.var ((prodQuotData F₁ F₂).compLeft (c₁, c₂))))
+      (FreeMor.var (Q := (quotData₁ F₁).quiver) ((quotData₁ F₁).compLeft c₁)) :=
+  HEq.refl _
+
+/-- freeMorProj₁ of compRight var is HEq to the component's compRight var. -/
+theorem freeMorProj₁_comp_right_heq (c₁ : F₁.compC) (c₂ : F₂.compC) :
+    HEq
+      (freeMorProj₁ F₁ F₂ (FreeMor.var ((prodQuotData F₁ F₂).compRight (c₁, c₂))))
+      (FreeMor.var (Q := (quotData₁ F₁).quiver) ((quotData₁ F₁).compRight c₁)) :=
+  HEq.refl _
+
+/-- freeMorProj₁ of compComposite var is HEq to the component's compComposite var. -/
+theorem freeMorProj₁_comp_composite_heq (c₁ : F₁.compC) (c₂ : F₂.compC) :
+    HEq
+      (freeMorProj₁ F₁ F₂ (FreeMor.var ((prodQuotData F₁ F₂).compComposite (c₁, c₂))))
+      (FreeMor.var (Q := (quotData₁ F₁).quiver) ((quotData₁ F₁).compComposite c₁)) :=
+  HEq.refl _
+
+/-- The cast proof for comp_match on the product.
+    comp_match c : tgt compRight = src compLeft.
+    We need to cast var compLeft from source at (src compLeft) to source at (tgt compRight)
+    so it can compose with var compRight (which has target at tgt compRight). -/
+def prodCompMatchCast (c₁ : F₁.compC) (c₂ : F₂.compC) :
+    FreeMor (prodQuotData F₁ F₂).quiver
+      ((prodQuotData F₁ F₂).quiver.src ((prodQuotData F₁ F₂).compLeft (c₁, c₂)))
+      ((prodQuotData F₁ F₂).quiver.tgt ((prodQuotData F₁ F₂).compLeft (c₁, c₂))) =
+    FreeMor (prodQuotData F₁ F₂).quiver
+      ((prodQuotData F₁ F₂).quiver.tgt ((prodQuotData F₁ F₂).compRight (c₁, c₂)))
+      ((prodQuotData F₁ F₂).quiver.tgt ((prodQuotData F₁ F₂).compLeft (c₁, c₂))) :=
+  congrArg
+    (fun x => FreeMor (prodQuotData F₁ F₂).quiver x
+      ((prodQuotData F₁ F₂).quiver.tgt ((prodQuotData F₁ F₂).compLeft (c₁, c₂))))
+    ((prodQuotData F₁ F₂).comp_match (c₁, c₂)).symm
+
+/-- The cast proof for comp_dom/comp_cod on the product.
+    comp_dom c : src compComposite = src compRight.
+    comp_cod c : tgt compComposite = tgt compLeft. -/
+def prodCompDomCodCast (c₁ : F₁.compC) (c₂ : F₂.compC) :
+    FreeMor (prodQuotData F₁ F₂).quiver
+      ((prodQuotData F₁ F₂).quiver.src ((prodQuotData F₁ F₂).compComposite (c₁, c₂)))
+      ((prodQuotData F₁ F₂).quiver.tgt ((prodQuotData F₁ F₂).compComposite (c₁, c₂))) =
+    FreeMor (prodQuotData F₁ F₂).quiver
+      ((prodQuotData F₁ F₂).quiver.src ((prodQuotData F₁ F₂).compRight (c₁, c₂)))
+      ((prodQuotData F₁ F₂).quiver.tgt ((prodQuotData F₁ F₂).compLeft (c₁, c₂))) :=
+  congrArg₂
+    (FreeMor (prodQuotData F₁ F₂).quiver)
+    ((prodQuotData F₁ F₂).comp_dom (c₁, c₂))
+    ((prodQuotData F₁ F₂).comp_cod (c₁, c₂))
+
+/-- Helper: freeMorProj₁ applied to cast of compLeft var equals cast of compLeft projection.
+    This shows projection commutes with cast for compLeft in comp_witness case. -/
+theorem freeMorProj₁_cast_compLeft_var (c₁ : F₁.compC) (c₂ : F₂.compC) :
+    HEq
+      (freeMorProj₁ F₁ F₂
+        (cast (prodCompMatchCast F₁ F₂ c₁ c₂)
+          (FreeMor.var ((prodQuotData F₁ F₂).compLeft (c₁, c₂)))))
+      (cast (by rw [← (quotData₁ F₁).comp_match c₁])
+        (FreeMor.var ((quotData₁ F₁).compLeft c₁))) := by
+  -- Strategy: Both sides are HEq to FreeMor.var ((quotData₁ F₁).compLeft c₁).
+  -- Use cast_heq to relate cast terms to their uncast forms.
+  have h_lhs_cast : HEq
+      (cast (prodCompMatchCast F₁ F₂ c₁ c₂)
+        (FreeMor.var ((prodQuotData F₁ F₂).compLeft (c₁, c₂))))
+      (FreeMor.var ((prodQuotData F₁ F₂).compLeft (c₁, c₂))) := cast_heq _ _
+  have h_proj_heq : HEq
+      (freeMorProj₁ F₁ F₂
+        (cast (prodCompMatchCast F₁ F₂ c₁ c₂)
+          (FreeMor.var ((prodQuotData F₁ F₂).compLeft (c₁, c₂)))))
+      (freeMorProj₁ F₁ F₂ (FreeMor.var ((prodQuotData F₁ F₂).compLeft (c₁, c₂)))) :=
+    freeMorProj₁_heq F₁ F₂
+      ((prodQuotData F₁ F₂).comp_match (c₁, c₂))
+      rfl
+      h_lhs_cast
+  have h_rhs_cast : HEq
+      (cast (by rw [← (quotData₁ F₁).comp_match c₁])
+        (FreeMor.var ((quotData₁ F₁).compLeft c₁)))
+      (FreeMor.var (Q := (quotData₁ F₁).quiver) ((quotData₁ F₁).compLeft c₁)) :=
+    cast_heq _ _
+  exact h_proj_heq.trans h_rhs_cast.symm
+
+/-- Helper: freeMorProj₁ applied to cast of compComposite var equals cast projection. -/
+theorem freeMorProj₁_cast_compComposite_var (c₁ : F₁.compC) (c₂ : F₂.compC) :
+    HEq
+      (freeMorProj₁ F₁ F₂
+        (cast (prodCompDomCodCast F₁ F₂ c₁ c₂)
+          (FreeMor.var ((prodQuotData F₁ F₂).compComposite (c₁, c₂)))))
+      (cast (by rw [(quotData₁ F₁).comp_dom c₁, (quotData₁ F₁).comp_cod c₁])
+        (FreeMor.var ((quotData₁ F₁).compComposite c₁))) := by
+  have h_lhs_cast : HEq
+      (cast (prodCompDomCodCast F₁ F₂ c₁ c₂)
+        (FreeMor.var ((prodQuotData F₁ F₂).compComposite (c₁, c₂))))
+      (FreeMor.var ((prodQuotData F₁ F₂).compComposite (c₁, c₂))) := cast_heq _ _
+  have h_proj_heq : HEq
+      (freeMorProj₁ F₁ F₂
+        (cast (prodCompDomCodCast F₁ F₂ c₁ c₂)
+          (FreeMor.var ((prodQuotData F₁ F₂).compComposite (c₁, c₂)))))
+      (freeMorProj₁ F₁ F₂ (FreeMor.var ((prodQuotData F₁ F₂).compComposite (c₁, c₂)))) :=
+    freeMorProj₁_heq F₁ F₂
+      ((prodQuotData F₁ F₂).comp_dom (c₁, c₂)).symm
+      ((prodQuotData F₁ F₂).comp_cod (c₁, c₂)).symm
+      h_lhs_cast
+  have h_rhs_cast : HEq
+      (cast (by rw [(quotData₁ F₁).comp_dom c₁, (quotData₁ F₁).comp_cod c₁])
+        (FreeMor.var ((quotData₁ F₁).compComposite c₁)))
+      (FreeMor.var (Q := (quotData₁ F₁).quiver) ((quotData₁ F₁).compComposite c₁)) :=
+    cast_heq _ _
+  exact h_proj_heq.trans h_rhs_cast.symm
+
+/-- The first projection respects comp_witness: projects product comp_witness to
+    component comp_witness. Uses HEq reasoning through casts similar to id_witness. -/
+theorem freeMorProj₁_respects_comp_witness (c₁ : F₁.compC) (c₂ : F₂.compC) :
+    CategoryQuotientData.FreeMorEquiv (quotData₁ F₁)
+      (freeMorProj₁ F₁ F₂
+        (FreeMor.comp
+          (cast (prodCompMatchCast F₁ F₂ c₁ c₂)
+            (FreeMor.var ((prodQuotData F₁ F₂).compLeft (c₁, c₂))))
+          (FreeMor.var ((prodQuotData F₁ F₂).compRight (c₁, c₂)))))
+      (freeMorProj₁ F₁ F₂
+        (cast (prodCompDomCodCast F₁ F₂ c₁ c₂)
+          (FreeMor.var ((prodQuotData F₁ F₂).compComposite (c₁, c₂))))) := by
+  -- freeMorProj₁ distributes over comp
+  simp only [freeMorProj₁]
+  -- Use convert to match the component's comp_witness generator
+  convert CategoryQuotientData.FreeMorEquiv.rel
+    (@CategoryQuotientData.FreeMorEquivGen.comp_witness (quotData₁ F₁) c₁) using 2
+  · -- LHS: show projected composition matches comp_witness LHS
+    -- freeMorProj₁ (cast ... (var compLeft)) HEq cast ... (var compLeft_c₁)
+    -- freeMorProj₁ (var compRight) = var compRight_c₁ definitionally
+    exact eq_of_heq (freeMorProj₁_cast_compLeft_var F₁ F₂ c₁ c₂)
+  · -- RHS: show projected composite matches comp_witness RHS
+    exact eq_of_heq (freeMorProj₁_cast_compComposite_var F₁ F₂ c₁ c₂)
+
+/-- Helper: freeMorProj₂ applied to cast of compLeft var equals cast of projection. -/
+theorem freeMorProj₂_cast_compLeft_var (c₁ : F₁.compC) (c₂ : F₂.compC) :
+    HEq
+      (freeMorProj₂ F₁ F₂
+        (cast (prodCompMatchCast F₁ F₂ c₁ c₂)
+          (FreeMor.var ((prodQuotData F₁ F₂).compLeft (c₁, c₂)))))
+      (cast (by rw [← (quotData₂ F₂).comp_match c₂])
+        (FreeMor.var ((quotData₂ F₂).compLeft c₂))) := by
+  have h_lhs_cast : HEq
+      (cast (prodCompMatchCast F₁ F₂ c₁ c₂)
+        (FreeMor.var ((prodQuotData F₁ F₂).compLeft (c₁, c₂))))
+      (FreeMor.var ((prodQuotData F₁ F₂).compLeft (c₁, c₂))) := cast_heq _ _
+  have h_proj_heq : HEq
+      (freeMorProj₂ F₁ F₂
+        (cast (prodCompMatchCast F₁ F₂ c₁ c₂)
+          (FreeMor.var ((prodQuotData F₁ F₂).compLeft (c₁, c₂)))))
+      (freeMorProj₂ F₁ F₂ (FreeMor.var ((prodQuotData F₁ F₂).compLeft (c₁, c₂)))) :=
+    freeMorProj₂_heq F₁ F₂
+      ((prodQuotData F₁ F₂).comp_match (c₁, c₂))
+      rfl
+      h_lhs_cast
+  have h_rhs_cast : HEq
+      (cast (by rw [← (quotData₂ F₂).comp_match c₂])
+        (FreeMor.var ((quotData₂ F₂).compLeft c₂)))
+      (FreeMor.var (Q := (quotData₂ F₂).quiver) ((quotData₂ F₂).compLeft c₂)) :=
+    cast_heq _ _
+  exact h_proj_heq.trans h_rhs_cast.symm
+
+/-- Helper: freeMorProj₂ applied to cast of compComposite var equals cast projection. -/
+theorem freeMorProj₂_cast_compComposite_var (c₁ : F₁.compC) (c₂ : F₂.compC) :
+    HEq
+      (freeMorProj₂ F₁ F₂
+        (cast (prodCompDomCodCast F₁ F₂ c₁ c₂)
+          (FreeMor.var ((prodQuotData F₁ F₂).compComposite (c₁, c₂)))))
+      (cast (by rw [(quotData₂ F₂).comp_dom c₂, (quotData₂ F₂).comp_cod c₂])
+        (FreeMor.var ((quotData₂ F₂).compComposite c₂))) := by
+  have h_lhs_cast : HEq
+      (cast (prodCompDomCodCast F₁ F₂ c₁ c₂)
+        (FreeMor.var ((prodQuotData F₁ F₂).compComposite (c₁, c₂))))
+      (FreeMor.var ((prodQuotData F₁ F₂).compComposite (c₁, c₂))) := cast_heq _ _
+  have h_proj_heq : HEq
+      (freeMorProj₂ F₁ F₂
+        (cast (prodCompDomCodCast F₁ F₂ c₁ c₂)
+          (FreeMor.var ((prodQuotData F₁ F₂).compComposite (c₁, c₂)))))
+      (freeMorProj₂ F₁ F₂ (FreeMor.var ((prodQuotData F₁ F₂).compComposite (c₁, c₂)))) :=
+    freeMorProj₂_heq F₁ F₂
+      ((prodQuotData F₁ F₂).comp_dom (c₁, c₂)).symm
+      ((prodQuotData F₁ F₂).comp_cod (c₁, c₂)).symm
+      h_lhs_cast
+  have h_rhs_cast : HEq
+      (cast (by rw [(quotData₂ F₂).comp_dom c₂, (quotData₂ F₂).comp_cod c₂])
+        (FreeMor.var ((quotData₂ F₂).compComposite c₂)))
+      (FreeMor.var (Q := (quotData₂ F₂).quiver) ((quotData₂ F₂).compComposite c₂)) :=
+    cast_heq _ _
+  exact h_proj_heq.trans h_rhs_cast.symm
+
+/-- The second projection respects comp_witness: projects product comp_witness to
+    component comp_witness. -/
+theorem freeMorProj₂_respects_comp_witness (c₁ : F₁.compC) (c₂ : F₂.compC) :
+    CategoryQuotientData.FreeMorEquiv (quotData₂ F₂)
+      (freeMorProj₂ F₁ F₂
+        (FreeMor.comp
+          (cast (prodCompMatchCast F₁ F₂ c₁ c₂)
+            (FreeMor.var ((prodQuotData F₁ F₂).compLeft (c₁, c₂))))
+          (FreeMor.var ((prodQuotData F₁ F₂).compRight (c₁, c₂)))))
+      (freeMorProj₂ F₁ F₂
+        (cast (prodCompDomCodCast F₁ F₂ c₁ c₂)
+          (FreeMor.var ((prodQuotData F₁ F₂).compComposite (c₁, c₂))))) := by
+  simp only [freeMorProj₂]
+  convert CategoryQuotientData.FreeMorEquiv.rel
+    (@CategoryQuotientData.FreeMorEquivGen.comp_witness (quotData₂ F₂) c₂) using 2
+  · exact eq_of_heq (freeMorProj₂_cast_compLeft_var F₁ F₂ c₁ c₂)
+  · exact eq_of_heq (freeMorProj₂_cast_compComposite_var F₁ F₂ c₁ c₂)
+
+/-- The first projection respects the equivalence relation generators. -/
+theorem freeMorProj₁_respects_gen {a b : (prodQuotData F₁ F₂).quiver.Obj}
+    {m₁ m₂ : FreeMor (prodQuotData F₁ F₂).quiver a b}
+    (h : CategoryQuotientData.FreeMorEquivGen (prodQuotData F₁ F₂) m₁ m₂) :
+    CategoryQuotientData.FreeMorEquiv (quotData₁ F₁)
+      (freeMorProj₁ F₁ F₂ m₁) (freeMorProj₁ F₁ F₂ m₂) := by
+  induction h with
+  | id_left f =>
+    exact CategoryQuotientData.FreeMorEquiv.rel
+      (CategoryQuotientData.FreeMorEquivGen.id_left _)
+  | id_right f =>
+    exact CategoryQuotientData.FreeMorEquiv.rel
+      (CategoryQuotientData.FreeMorEquivGen.id_right _)
+  | assoc h g f =>
+    exact CategoryQuotientData.FreeMorEquiv.rel
+      (CategoryQuotientData.FreeMorEquivGen.assoc _ _ _)
+  | id_witness i =>
+    exact freeMorProj₁_respects_id_witness F₁ F₂ i
+  | comp_witness c =>
+    exact freeMorProj₁_respects_comp_witness F₁ F₂ c.1 c.2
+  | cong_left h hfg ih =>
+    exact CategoryQuotientData.FreeMorEquiv.cong_left
+      (D := quotData₁ F₁) (freeMorProj₁ F₁ F₂ h) ih
+  | cong_right k hfg ih =>
+    exact CategoryQuotientData.FreeMorEquiv.cong_right
+      (D := quotData₁ F₁) (freeMorProj₁ F₁ F₂ k) ih
+
+/-- The first projection respects the full equivalence relation. -/
+theorem freeMorProj₁_respects_equiv {a b : (prodQuotData F₁ F₂).quiver.Obj}
+    {m₁ m₂ : FreeMor (prodQuotData F₁ F₂).quiver a b}
+    (h : CategoryQuotientData.FreeMorEquiv (prodQuotData F₁ F₂) m₁ m₂) :
+    CategoryQuotientData.FreeMorEquiv (quotData₁ F₁)
+      (freeMorProj₁ F₁ F₂ m₁) (freeMorProj₁ F₁ F₂ m₂) := by
+  induction h with
+  | rel hgen => exact freeMorProj₁_respects_gen F₁ F₂ hgen
+  | refl m => exact CategoryQuotientData.FreeMorEquiv.refl _
+  | symm _ ih => exact CategoryQuotientData.FreeMorEquiv.symm ih
+  | trans _ _ ih1 ih2 => exact CategoryQuotientData.FreeMorEquiv.trans ih1 ih2
+
+/-- freeMorProj₂ respects generators (symmetric to freeMorProj₁).
+    Note: Returns FreeMorEquiv since the witness cases need additional work. -/
+theorem freeMorProj₂_respects_gen {a b : (prodQuotData F₁ F₂).quiver.Obj}
+    {m₁ m₂ : FreeMor (prodQuotData F₁ F₂).quiver a b}
+    (h : (prodQuotData F₁ F₂).FreeMorEquivGen m₁ m₂) :
+    CategoryQuotientData.FreeMorEquiv (quotData₂ F₂)
+      (freeMorProj₂ F₁ F₂ m₁) (freeMorProj₂ F₁ F₂ m₂) := by
+  induction h with
+  | id_left f =>
+    exact CategoryQuotientData.FreeMorEquiv.rel
+      (CategoryQuotientData.FreeMorEquivGen.id_left _)
+  | id_right f =>
+    exact CategoryQuotientData.FreeMorEquiv.rel
+      (CategoryQuotientData.FreeMorEquivGen.id_right _)
+  | assoc h g f =>
+    exact CategoryQuotientData.FreeMorEquiv.rel
+      (CategoryQuotientData.FreeMorEquivGen.assoc _ _ _)
+  | id_witness i =>
+    exact freeMorProj₂_respects_id_witness F₁ F₂ i
+  | comp_witness c =>
+    exact freeMorProj₂_respects_comp_witness F₁ F₂ c.1 c.2
+  | cong_left h _ ih =>
+    exact CategoryQuotientData.FreeMorEquiv.cong_left
+      (D := quotData₂ F₂) (freeMorProj₂ F₁ F₂ h) ih
+  | cong_right k _ ih =>
+    exact CategoryQuotientData.FreeMorEquiv.cong_right
+      (D := quotData₂ F₂) (freeMorProj₂ F₁ F₂ k) ih
+
+/-- freeMorProj₂ respects equivalence (symmetric to freeMorProj₁). -/
+theorem freeMorProj₂_respects_equiv {a b : (prodQuotData F₁ F₂).quiver.Obj}
+    {m₁ m₂ : FreeMor (prodQuotData F₁ F₂).quiver a b}
+    (h : CategoryQuotientData.FreeMorEquiv (prodQuotData F₁ F₂) m₁ m₂) :
+    CategoryQuotientData.FreeMorEquiv (quotData₂ F₂)
+      (freeMorProj₂ F₁ F₂ m₁) (freeMorProj₂ F₁ F₂ m₂) := by
+  induction h with
+  | rel hgen => exact freeMorProj₂_respects_gen F₁ F₂ hgen
+  | refl m => exact CategoryQuotientData.FreeMorEquiv.refl _
+  | symm _ ih => exact CategoryQuotientData.FreeMorEquiv.symm ih
+  | trans _ _ ih1 ih2 => exact CategoryQuotientData.FreeMorEquiv.trans ih1 ih2
+
+/-- Quotient-level projection to first component. -/
+def quotMorProj₁ {a b : (prodQuotData F₁ F₂).quiver.Obj}
+    (q : (prodQuotData F₁ F₂).QuotMor a b) :
+    (quotData₁ F₁).QuotMor a.1 b.1 :=
+  Quotient.lift
+    (fun m => (quotData₁ F₁).quotMor (freeMorProj₁ F₁ F₂ m))
+    (fun _ _ h => Quotient.sound (freeMorProj₁_respects_equiv F₁ F₂ h))
+    q
+
+/-- Quotient-level projection to second component. -/
+def quotMorProj₂ {a b : (prodQuotData F₁ F₂).quiver.Obj}
+    (q : (prodQuotData F₁ F₂).QuotMor a b) :
+    (quotData₂ F₂).QuotMor a.2 b.2 :=
+  Quotient.lift
+    (fun m => (quotData₂ F₂).quotMor (freeMorProj₂ F₁ F₂ m))
+    (fun _ _ h => Quotient.sound (freeMorProj₂_respects_equiv F₁ F₂ h))
+    q
+
+/-!
+### Backward Pairing Map: L(F₁) × L(F₂) → L(F₁ × F₂)
+
+We now define the inverse direction: given morphisms in `L(F₁)` and `L(F₂)`,
+we construct a morphism in `L(F₁ × F₂)` by pairing free morphisms.
+-/
+
+/-- For well-formed FunctorData (coming from categories), every object has an
+    identity morphism. This type captures that property, providing a way to
+    find identity witnesses for arbitrary objects. -/
+structure HasAllIdentities (D : CategoryQuotientData.{v, u}) where
+  findIdWitness : D.quiver.Obj → D.IdWitness
+  findIdWitness_spec : ∀ a, D.idObj (findIdWitness a) = a
+
+/-- If both components have all identities, so does the product. -/
+def prodHasAllIdentities
+    (hid₁ : HasAllIdentities (quotData₁ F₁))
+    (hid₂ : HasAllIdentities (quotData₂ F₂)) :
+    HasAllIdentities (prodQuotData F₁ F₂) where
+  findIdWitness := fun (a₁, a₂) => (hid₁.findIdWitness a₁, hid₂.findIdWitness a₂)
+  findIdWitness_spec := fun (a₁, a₂) =>
+    Prod.ext (hid₁.findIdWitness_spec a₁) (hid₂.findIdWitness_spec a₂)
+
+/-- Embed a FreeMor from component 1 into the product, with identity in
+    component 2. For a morphism m₁ : a₁ → b₁ and fixed a₂, produces a
+    morphism (a₁, a₂) → (b₁, a₂) in the product. -/
+def freeMorLeftEmbed
+    (hid₂ : HasAllIdentities (quotData₂ F₂))
+    {a₁ b₁ : (quotData₁ F₁).quiver.Obj}
+    (m₁ : FreeMor (quotData₁ F₁).quiver a₁ b₁)
+    (a₂ : (quotData₂ F₂).quiver.Obj) :
+    FreeMor (prodQuotData F₁ F₂).quiver (a₁, a₂) (b₁, a₂) :=
+  match m₁ with
+  | .var f₁ =>
+    let i₂ := hid₂.findIdWitness a₂
+    let idMor₂ := (quotData₂ F₂).idMor i₂
+    let h_src := ((quotData₂ F₂).id_src i₂).trans (hid₂.findIdWitness_spec a₂)
+    let h_tgt := ((quotData₂ F₂).id_tgt i₂).trans (hid₂.findIdWitness_spec a₂)
+    have h_type : FreeMor (prodQuotData F₁ F₂).quiver
+        ((quotData₁ F₁).quiver.src f₁, (quotData₂ F₂).quiver.src idMor₂)
+        ((quotData₁ F₁).quiver.tgt f₁, (quotData₂ F₂).quiver.tgt idMor₂) =
+      FreeMor (prodQuotData F₁ F₂).quiver
+        ((quotData₁ F₁).quiver.src f₁, a₂)
+        ((quotData₁ F₁).quiver.tgt f₁, a₂) := by rw [h_src, h_tgt]
+    cast h_type (FreeMor.var (Q := (prodQuotData F₁ F₂).quiver) (f₁, idMor₂))
+  | .id a => FreeMor.id (Q := (prodQuotData F₁ F₂).quiver) (a, a₂)
+  | .comp g₁ f₁ =>
+    .comp (freeMorLeftEmbed hid₂ g₁ a₂) (freeMorLeftEmbed hid₂ f₁ a₂)
+
+/-- Embed a FreeMor from component 2 into the product, with identity in
+    component 1. For a morphism m₂ : a₂ → b₂ and fixed b₁, produces a
+    morphism (b₁, a₂) → (b₁, b₂) in the product. -/
+def freeMorRightEmbed
+    (hid₁ : HasAllIdentities (quotData₁ F₁))
+    (b₁ : (quotData₁ F₁).quiver.Obj)
+    {a₂ b₂ : (quotData₂ F₂).quiver.Obj}
+    (m₂ : FreeMor (quotData₂ F₂).quiver a₂ b₂) :
+    FreeMor (prodQuotData F₁ F₂).quiver (b₁, a₂) (b₁, b₂) :=
+  match m₂ with
+  | .var f₂ =>
+    let i₁ := hid₁.findIdWitness b₁
+    let idMor₁ := (quotData₁ F₁).idMor i₁
+    let h_src := ((quotData₁ F₁).id_src i₁).trans (hid₁.findIdWitness_spec b₁)
+    let h_tgt := ((quotData₁ F₁).id_tgt i₁).trans (hid₁.findIdWitness_spec b₁)
+    have h_type : FreeMor (prodQuotData F₁ F₂).quiver
+        ((quotData₁ F₁).quiver.src idMor₁, (quotData₂ F₂).quiver.src f₂)
+        ((quotData₁ F₁).quiver.tgt idMor₁, (quotData₂ F₂).quiver.tgt f₂) =
+      FreeMor (prodQuotData F₁ F₂).quiver
+        (b₁, (quotData₂ F₂).quiver.src f₂)
+        (b₁, (quotData₂ F₂).quiver.tgt f₂) := by rw [h_src, h_tgt]
+    cast h_type (FreeMor.var (Q := (prodQuotData F₁ F₂).quiver) (idMor₁, f₂))
+  | .id a => FreeMor.id (Q := (prodQuotData F₁ F₂).quiver) (b₁, a)
+  | .comp g₂ f₂ =>
+    .comp (freeMorRightEmbed hid₁ b₁ g₂) (freeMorRightEmbed hid₁ b₁ f₂)
+
+/-- Pair two free morphisms into a free morphism in the product quiver.
+    Defined compositionally as: first embed m₁ with identity in component 2,
+    then compose with m₂ embedded with identity in component 1. -/
+def freeMorPairComp
+    (hid₁ : HasAllIdentities (quotData₁ F₁))
+    (hid₂ : HasAllIdentities (quotData₂ F₂))
+    {a₁ b₁ : (quotData₁ F₁).quiver.Obj}
+    {a₂ b₂ : (quotData₂ F₂).quiver.Obj}
+    (m₁ : FreeMor (quotData₁ F₁).quiver a₁ b₁)
+    (m₂ : FreeMor (quotData₂ F₂).quiver a₂ b₂) :
+    FreeMor (prodQuotData F₁ F₂).quiver (a₁, a₂) (b₁, b₂) :=
+  .comp (freeMorRightEmbed (F₁ := F₁) (F₂ := F₂) hid₁ b₁ m₂)
+        (freeMorLeftEmbed (F₁ := F₁) (F₂ := F₂) hid₂ m₁ a₂)
+
+end BinaryProduct
+
+/-!
+## Terminal and Initial Objects
+
+Terminal object for categories (one object, only identity morphism) and
+initial object for categories (empty category). We prove that L preserves
+terminal objects and Φ preserves initial objects.
+-/
+
+section TerminalAndInitial
+
+universe uTerm
+
+/-- The terminal quiver has one object and one morphism (the identity). -/
+def OverQuiver.terminal : OverQuiver.{uTerm, uTerm} where
+  Obj := PUnit.{uTerm + 1}
+  MorType := PUnit.{uTerm + 1}
+  src := fun _ => PUnit.unit
+  tgt := fun _ => PUnit.unit
+
+/-- The terminal category has one object and only the identity morphism. -/
+def OverCategoryData.terminal : OverCategoryData OverQuiver.terminal where
+  idFn := fun _ => PUnit.unit
+  compFn := fun _ => PUnit.unit
+  id_src := fun _ => rfl
+  id_tgt := fun _ => rfl
+  comp_src := fun _ => rfl
+  comp_tgt := fun _ => rfl
+  id_comp := fun _ => rfl
+  comp_id := fun _ => rfl
+  assoc := fun _ => rfl
+
+/-- The initial quiver has no objects and no morphisms. -/
+def OverQuiver.initial : OverQuiver.{uTerm, uTerm} where
+  Obj := PEmpty.{uTerm + 1}
+  MorType := PEmpty.{uTerm + 1}
+  src := PEmpty.elim
+  tgt := PEmpty.elim
+
+/-- The initial category is the empty category. -/
+def OverCategoryData.initial : OverCategoryData OverQuiver.initial where
+  idFn := PEmpty.elim
+  compFn := fun ⟨p, _⟩ => p.1.elim
+  id_src := fun a => a.elim
+  id_tgt := fun a => a.elim
+  comp_src := fun ⟨p, _⟩ => p.1.elim
+  comp_tgt := fun ⟨p, _⟩ => p.1.elim
+  id_comp := fun a => a.elim
+  comp_id := fun a => a.elim
+  assoc := fun ⟨⟨f, _, _⟩, _, _⟩ => f.elim
+
+/-- The terminal copresheaf maps everything to PUnit. -/
+def FunctorData.terminal : CategoryJudgments.FunctorData (Type uTerm) where
+  objC := PUnit.{uTerm + 1}
+  morC := PUnit.{uTerm + 1}
+  idC := PUnit.{uTerm + 1}
+  compC := PUnit.{uTerm + 1}
+  dom := fun _ => PUnit.unit
+  cod := fun _ => PUnit.unit
+  idMor := fun _ => PUnit.unit
+  left := fun _ => PUnit.unit
+  right := fun _ => PUnit.unit
+  composite := fun _ => PUnit.unit
+  h_id_endo := rfl
+  h_comp_match := rfl
+  h_comp_dom := rfl
+  h_comp_cod := rfl
+
+/-- The initial copresheaf maps everything to PEmpty. -/
+def FunctorData.initial : CategoryJudgments.FunctorData (Type uTerm) where
+  objC := PEmpty.{uTerm + 1}
+  morC := PEmpty.{uTerm + 1}
+  idC := PEmpty.{uTerm + 1}
+  compC := PEmpty.{uTerm + 1}
+  dom := PEmpty.elim
+  cod := PEmpty.elim
+  idMor := PEmpty.elim
+  left := PEmpty.elim
+  right := PEmpty.elim
+  composite := PEmpty.elim
+  h_id_endo := funext (fun x => x.elim)
+  h_comp_match := funext (fun x => x.elim)
+  h_comp_dom := funext (fun x => x.elim)
+  h_comp_cod := funext (fun x => x.elim)
+
+/-- Φ applied to the initial category. -/
+def phiOfInitial : CategoryJudgments.FunctorData (Type uTerm) :=
+  OverCategoryData.initial.toJudgmentFunctorData
+
+/-- Map from initial composable pairs to PEmpty. -/
+def initialCompCMap : OverQuiver.initial.ComposablePairsType → PEmpty.{uTerm + 1} :=
+  fun ⟨p, _⟩ => p.1.elim
+
+/-- Inverse map from PEmpty to initial composable pairs. -/
+def initialCompCMapInv : PEmpty.{uTerm + 1} → OverQuiver.initial.ComposablePairsType :=
+  PEmpty.elim
+
+/-- Φ(initial category) ≅ initial copresheaf. This shows Φ preserves the
+    initial object. -/
+def phiFunctorPreservesInitial :
+    CategoryJudgments.NatTransData phiOfInitial FunctorData.initial where
+  appObj := id
+  appMor := id
+  appId := id
+  appComp := initialCompCMap
+  naturality_dom := funext (fun x => x.elim)
+  naturality_cod := funext (fun x => x.elim)
+  naturality_idMor := funext (fun x => x.elim)
+  naturality_left := funext (fun ⟨p, _⟩ => p.1.elim)
+  naturality_right := funext (fun ⟨p, _⟩ => p.1.elim)
+  naturality_composite := funext (fun ⟨p, _⟩ => p.1.elim)
+
+/-- The inverse natural transformation for Φ preserves initial. -/
+def phiFunctorPreservesInitialInv :
+    CategoryJudgments.NatTransData FunctorData.initial phiOfInitial where
+  appObj := id
+  appMor := id
+  appId := id
+  appComp := initialCompCMapInv
+  naturality_dom := funext (fun x => x.elim)
+  naturality_cod := funext (fun x => x.elim)
+  naturality_idMor := funext (fun x => x.elim)
+  naturality_left := funext (fun x => x.elim)
+  naturality_right := funext (fun x => x.elim)
+  naturality_composite := funext (fun x => x.elim)
+
+/-- Round-trip identity: forward then backward is identity. -/
+theorem phiFunctorPreservesInitial_comp_inv :
+    phiFunctorPreservesInitial.comp phiFunctorPreservesInitialInv =
+    CategoryJudgments.NatTransData.id phiOfInitial := by
+  ext
+  · rfl
+  · rfl
+  · rfl
+  · rename_i a
+    exact a.1.1.elim
+
+/-- Round-trip identity: backward then forward is identity. -/
+theorem phiFunctorPreservesInitial_inv_comp :
+    phiFunctorPreservesInitialInv.comp phiFunctorPreservesInitial =
+    CategoryJudgments.NatTransData.id FunctorData.initial := by
+  ext
+  · rfl
+  · rfl
+  · rfl
+  · rename_i x
+    exact x.elim
+
+/-- L applied to the terminal copresheaf. -/
+def lOfTerminal : BundledOverCategoryData.{uTerm, uTerm} :=
+  LFunctorObj FunctorData.terminal
+
+/-- The bundled terminal category. -/
+def bundledTerminal : BundledOverCategoryData.{uTerm, uTerm} :=
+  bundleOverCategory OverCategoryData.terminal
+
+/-- The quiver of L(terminal). -/
+def lOfTerminalQuiver : OverQuiver.{uTerm, uTerm} :=
+  lOfTerminal.quiver
+
+/-- The morphism map for the functor from L(terminal) to terminal. -/
+def lToTerminalMorFn : lOfTerminalQuiver.MorType → OverQuiver.terminal.MorType :=
+  fun _ => PUnit.unit
+
+/-- The functor from L(terminal) to the terminal category (quiver level). -/
+def lToTerminalQuiver : OverQuiverMorphism lOfTerminalQuiver OverQuiver.terminal where
+  objFn := fun _ => PUnit.unit
+  morFn := lToTerminalMorFn
+  src_comm := fun _ => rfl
+  tgt_comm := fun _ => rfl
+
+/-- The functor from L(terminal) to terminal preserves identity. -/
+theorem lToTerminal_map_id (a : lOfTerminalQuiver.Obj) :
+    lToTerminalQuiver.morFn (lOfTerminal.data.idFn a) =
+    OverCategoryData.terminal.idFn (lToTerminalQuiver.objFn a) := rfl
+
+/-- Composability is trivial in the terminal quiver. -/
+theorem terminal_composable (f g : OverQuiver.terminal.MorType) :
+    OverQuiver.terminal.Composable f g := rfl
+
+/-- The functor from L(terminal) to terminal preserves composition. -/
+theorem lToTerminal_map_comp (p : lOfTerminalQuiver.ComposablePairsType) :
+    lToTerminalQuiver.morFn (lOfTerminal.data.compFn p) =
+    OverCategoryData.terminal.compFn
+      ⟨(lToTerminalQuiver.morFn p.val.1, lToTerminalQuiver.morFn p.val.2),
+        terminal_composable _ _⟩ := rfl
+
+/-- The functor from L(terminal) to the terminal category.
+    This is one half of the isomorphism L(terminal) ≅ terminal. -/
+def lToTerminalFunctor : OverFunctorData lOfTerminal.data OverCategoryData.terminal where
+  toOverQuiverMorphism := lToTerminalQuiver
+  map_id := lToTerminal_map_id
+  map_comp := lToTerminal_map_comp
+
+/-- The CategoryQuotientData for the terminal copresheaf. -/
+def terminalQuotData : CategoryQuotientData.{uTerm, uTerm} :=
+  FunctorData.terminal.toCategoryQuotientData
+
+/-- The quiver for the terminal copresheaf (abbreviation for clarity). -/
+abbrev terminalQuiver : OverQuiver.{uTerm, uTerm} := terminalQuotData.quiver
+
+/-- In the terminal copresheaf, var(idMor i) is equivalent to id(idObj i).
+    The id_witness rule directly gives us this equivalence. -/
+theorem terminal_var_equiv_id_at_idObj (i : terminalQuotData.IdWitness) :
+    CategoryQuotientData.FreeMorEquiv terminalQuotData
+      (cast (congrArg₂ (FreeMor terminalQuiver)
+        (terminalQuotData.id_src i) (terminalQuotData.id_tgt i))
+        (FreeMor.var (terminalQuotData.idMor i)))
+      (FreeMor.id (terminalQuotData.idObj i)) :=
+  CategoryQuotientData.FreeMorEquiv.rel
+    (CategoryQuotientData.FreeMorEquivGen.id_witness i)
+
+/-- In the terminal copresheaf, FreeMor.var PUnit.unit is equivalent to
+    FreeMor.id PUnit.unit. Since id_src = id_tgt = rfl for terminal,
+    the cast is trivial. -/
+theorem terminal_var_equiv_id :
+    let Q := terminalQuiver
+    CategoryQuotientData.FreeMorEquiv terminalQuotData
+      (FreeMor.var (Q := Q) PUnit.unit) (FreeMor.id (Q := Q) PUnit.unit) := by
+  have h := terminal_var_equiv_id_at_idObj PUnit.unit
+  simp only [terminalQuotData, CategoryJudgments.FunctorData.toCategoryQuotientData,
+    FunctorData.terminal, cast_eq] at h
+  exact h
+
+/-- Helper: all free morphisms in the terminal quiver are equivalent to identity,
+    with generalized source and target (which must be PUnit.unit). -/
+theorem terminal_freemor_equiv_id_aux
+    {a b : terminalQuiver.Obj}
+    (m : FreeMor terminalQuiver a b) :
+    CategoryQuotientData.FreeMorEquiv terminalQuotData
+      m (FreeMor.id (Q := terminalQuiver) a) := by
+  induction m with
+  | var f =>
+    match f with
+    | .unit =>
+      have h := terminal_var_equiv_id
+      simp only [terminalQuiver, terminalQuotData,
+        CategoryJudgments.FunctorData.toCategoryQuotientData,
+        CategoryJudgments.FunctorData.toQuiver, FunctorData.terminal] at h ⊢
+      exact h
+  | id a =>
+    exact CategoryQuotientData.FreeMorEquiv.refl _
+  | comp g f ih_g ih_f =>
+    -- comp g f ~ comp (id _) f by right congruence with ih_g
+    have step1 := CategoryQuotientData.FreeMorEquiv.cong_right terminalQuotData f ih_g
+    -- comp (id _) f ~ f by id_left
+    have step2 := CategoryQuotientData.FreeMorEquiv.rel
+      (CategoryQuotientData.FreeMorEquivGen.id_left (D := terminalQuotData) f)
+    -- Combine: comp g f ~ comp (id _) f ~ f ~ id _
+    exact CategoryQuotientData.FreeMorEquiv.trans step1
+      (CategoryQuotientData.FreeMorEquiv.trans step2 ih_f)
+
+/-- All free morphisms in the terminal quiver (from PUnit.unit to PUnit.unit)
+    are equivalent to the identity morphism FreeMor.id PUnit.unit. -/
+theorem terminal_freemor_equiv_id
+    (m : FreeMor terminalQuiver PUnit.unit PUnit.unit) :
+    CategoryQuotientData.FreeMorEquiv terminalQuotData
+      m (FreeMor.id (Q := terminalQuiver) PUnit.unit) :=
+  terminal_freemor_equiv_id_aux m
+
+/-- All quotient morphisms in L(terminal) from PUnit.unit to PUnit.unit are equal
+    to the quotient identity. -/
+theorem terminal_quotmor_eq_id
+    (qm : terminalQuotData.QuotMor PUnit.unit PUnit.unit) :
+    qm = terminalQuotData.quotId PUnit.unit := by
+  induction qm using Quotient.ind with
+  | _ m =>
+    apply Quotient.sound
+    exact terminal_freemor_equiv_id m
+
+/-- The quotient morphism type in L(terminal) is a subsingleton. -/
+instance terminalQuotMorSubsingleton :
+    Subsingleton (terminalQuotData.QuotMor PUnit.unit PUnit.unit) where
+  allEq := fun q1 q2 => by
+    rw [terminal_quotmor_eq_id q1, terminal_quotmor_eq_id q2]
+
+/-- The object function for the functor from terminal to L(terminal). -/
+def terminalToL_objFn : OverQuiver.terminal.Obj → lOfTerminalQuiver.Obj :=
+  fun _ => PUnit.unit
+
+/-- The morphism function for the functor from terminal to L(terminal).
+    Since L(terminal) has only one morphism (up to equality), we map to the
+    identity. -/
+def terminalToL_morFn : OverQuiver.terminal.MorType → lOfTerminalQuiver.MorType :=
+  fun _ => ⟨PUnit.unit, PUnit.unit, terminalQuotData.quotId PUnit.unit⟩
+
+/-- The quiver morphism from terminal to L(terminal). -/
+def terminalToLQuiver : OverQuiverMorphism OverQuiver.terminal lOfTerminalQuiver where
+  objFn := terminalToL_objFn
+  morFn := terminalToL_morFn
+  src_comm := fun _ => rfl
+  tgt_comm := fun _ => rfl
+
+/-- The functor from terminal to L(terminal) preserves identity. -/
+theorem terminalToL_map_id (a : OverQuiver.terminal.Obj) :
+    terminalToLQuiver.morFn (OverCategoryData.terminal.idFn a) =
+    lOfTerminal.data.idFn (terminalToLQuiver.objFn a) := by
+  cases a
+  simp only [terminalToLQuiver, terminalToL_morFn, terminalToL_objFn,
+    OverCategoryData.terminal, lOfTerminal, LFunctorObj, bundleOverCategory,
+    CategoryJudgments.FunctorData.toOverCategoryData,
+    CategoryQuotientData.toOverCategoryData,
+    CategoryJudgments.FunctorData.toCategoryQuotientData]
+  rfl
+
+/-- Composability proof for the terminal-to-L morphism mapping. -/
+theorem terminalToL_composable (p : OverQuiver.terminal.ComposablePairsType) :
+    lOfTerminalQuiver.Composable
+      (terminalToLQuiver.morFn p.val.1)
+      (terminalToLQuiver.morFn p.val.2) := rfl
+
+/-- Composition of quotient identities is identity. -/
+theorem terminal_quotComp_id_id :
+    terminalQuotData.quotComp
+      (terminalQuotData.quotId PUnit.unit)
+      (terminalQuotData.quotId PUnit.unit) =
+    terminalQuotData.quotId PUnit.unit := by
+  rw [CategoryQuotientData.quotComp_id_left]
+
+/-- The functor from terminal to L(terminal) preserves composition. -/
+theorem terminalToL_map_comp (p : OverQuiver.terminal.ComposablePairsType) :
+    terminalToLQuiver.morFn (OverCategoryData.terminal.compFn p) =
+    lOfTerminal.data.compFn
+      ⟨(terminalToLQuiver.morFn p.val.1, terminalToLQuiver.morFn p.val.2),
+        terminalToL_composable p⟩ := by
+  simp only [terminalToLQuiver, terminalToL_morFn, OverCategoryData.terminal,
+    lOfTerminal, LFunctorObj, bundleOverCategory,
+    CategoryJudgments.FunctorData.toOverCategoryData,
+    CategoryQuotientData.toOverCategoryData,
+    CategoryJudgments.FunctorData.toCategoryQuotientData]
+  -- Goal is now equality of bundled sigma types
+  refine Sigma.ext rfl ?_
+  refine heq_of_eq ?_
+  refine Sigma.ext rfl ?_
+  refine heq_of_eq ?_
+  exact terminal_quotComp_id_id.symm
+
+/-- The functor from terminal to L(terminal).
+    This is the other half of the isomorphism L(terminal) ≅ terminal. -/
+def terminalToLFunctor : OverFunctorData OverCategoryData.terminal lOfTerminal.data where
+  toOverQuiverMorphism := terminalToLQuiver
+  map_id := terminalToL_map_id
+  map_comp := terminalToL_map_comp
+
+/-- Round-trip: L(terminal) → terminal → L(terminal) is identity. -/
+theorem lTerminal_roundtrip_LtoL :
+    OverFunctorData.comp lToTerminalFunctor terminalToLFunctor =
+    OverFunctorData.id lOfTerminal.data := by
+  ext
+  case objFn.h a =>
+    match a with
+    | .unit => rfl
+  case morFn.h m =>
+    simp only [OverFunctorData.comp, OverQuiverMorphism.comp, OverFunctorData.id,
+      OverQuiverMorphism.id, lToTerminalFunctor, lToTerminalQuiver,
+      terminalToLFunctor, terminalToLQuiver]
+    -- Goal: ⟨PUnit.unit, PUnit.unit, quotId PUnit.unit⟩ = m
+    rcases m with ⟨a, b, qm⟩
+    match a, b with
+    | .unit, .unit =>
+      -- Goal: ⟨PUnit.unit, PUnit.unit, quotId PUnit.unit⟩ = ⟨PUnit.unit, PUnit.unit, qm⟩
+      refine Sigma.ext rfl ?_
+      refine heq_of_eq ?_
+      refine Sigma.ext rfl ?_
+      refine heq_of_eq ?_
+      exact (terminal_quotmor_eq_id qm).symm
+
+/-- Round-trip: terminal → L(terminal) → terminal is identity. -/
+theorem lTerminal_roundtrip_termTerm :
+    OverFunctorData.comp terminalToLFunctor lToTerminalFunctor =
+    OverFunctorData.id OverCategoryData.terminal := by
+  ext
+  case objFn.h a =>
+    match a with
+    | .unit => rfl
+  case morFn.h m =>
+    match m with
+    | .unit => rfl
+
+end TerminalAndInitial
 
 end GebLean
