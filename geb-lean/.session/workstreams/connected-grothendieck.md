@@ -5,13 +5,18 @@
 Both Connected Grothendieck constructions (Contra and Alt) project to `Arrow C`.
 Presheaf construction projects to `TwistedArrow' C`.
 
-### Completed: Alt Projection Functor
+### Completed: Alt Functor to Over Category
 
 Object equivalence between `ConnectedGrothendieckAlt` and `ConnGrothendieckObj`
 is complete via `connGrothendieckAltObjEquiv`.
 
-Full projection functor `connGrothendieckAltProjection : ConnectedGrothendieckAlt C F
- -> Arrow C` is now complete with all category laws proved.
+Full projection functor `connGrothendieckAltProjection` from
+`ConnectedGrothendieckAlt C F` to `Arrow C` is complete with all category
+laws proved.
+
+Full functoriality is complete: `connGrothendieckAltFunctor` provides a functor
+`(TwistedArrow' C ⥤ Cat) ⥤ Over (Cat.of (Arrow C))` with all identity
+and composition laws proved.
 
 ### Corrected Analysis: Alt DOES Project to Arrow C
 
@@ -128,7 +133,8 @@ associativity for free.
     - `underToTwArr_mk_twArr_eq` - helper lemma for roundtrip proofs
     - `connGrothendieckAltObj_roundtrip` - roundtrip proof Alt -> Obj -> Alt
     - `connGrothendieckObj_altRoundtrip` - roundtrip proof Obj -> Alt -> Obj
-    - `connGrothendieckAltObjEquiv : ConnectedGrothendieckAlt C F = ConnGrothendieckObj C F`
+    - `connGrothendieckAltObjEquiv` - type equality
+      `ConnectedGrothendieckAlt C F = ConnGrothendieckObj C F`
 
 12. Projection functor to Arrow category (Alt)
     - `connGrothendieckAltProjection : ConnectedGrothendieckAlt C F -> Arrow C`
@@ -146,14 +152,19 @@ associativity for free.
     - `connGrothendieckAltHomToHom` - converts Alt morphisms to ConnGrothendieckHom
     - `connGrothendieckHomToAltHom` - converts ConnGrothendieckHom to Alt morphisms
     - Helper functions for conversion:
-      - `connGrothendieckAltHomDomArr`, `connGrothendieckAltHomCodArr` - extract arrow components
-      - `connGrothendieckAltHomFiberMorph` - extracts fiber morphism with eqToHom transport
-      - `connGrothendieckHomToAltFiberBase` - constructs Under morphism via `Under.homMk`
-      - `connGrothendieckHomToAltFiberMorph` - constructs fiber morphism with eqToHom transport
+      - `connGrothendieckAltHomDomArr`, `connGrothendieckAltHomCodArr` -
+        extract arrow components
+      - `connGrothendieckAltHomFiberMorph` - extracts fiber morphism with
+        eqToHom transport
+      - `connGrothendieckHomToAltFiberBase` - constructs Under morphism
+        via `Under.homMk`
+      - `connGrothendieckHomToAltFiberMorph` - constructs fiber morphism
+        with eqToHom transport
     - Roundtrip theorems:
       - `connGrothendieckHom_altRoundtrip` - Hom -> Alt -> Hom = Hom
       - `connGrothendieckAltHom_roundtrip` - Alt -> Hom -> Alt = Alt (up to HEq)
-    - Helper lemma: `connGrothendieckHom_altFiberMorphRoundtrip` for fiber morphism roundtrip
+    - Helper lemma: `connGrothendieckHom_altFiberMorphRoundtrip` for fiber
+      morphism roundtrip
 
 14. Functoriality for Alt construction
     - `restrictToDomainFiberNatTrans` - whiskered natural transformation
@@ -165,10 +176,16 @@ associativity for free.
       - `alpha_domainFiberTransport_naturality`
       - `innerFiberAltMap_natural_obj`
       - `innerFiberAltMap_naturality_fiber`
-    - `domainFiberFunctorNatTrans` - natural transformation between domain fiber functors
+    - `domainFiberFunctorNatTrans` - natural transformation between domain
+      fiber functors
     - `domainFiberFunctorNatTrans_id` and `domainFiberFunctorNatTrans_comp`
     - `connGrothendieckAltMap` - induced functor via `GrothendieckContra'.map`
     - `connGrothendieckAltMap_id` and `connGrothendieckAltMap_comp`
+    - `connGrothendieckAltMap_obj`, `connGrothendieckAltMap_map_base` - simp lemmas
+    - `connGrothendieckAltMap_map_fiber_base_right` - fiber base right preservation
+    - `connGrothendieckAltMap_map_fiber_base` - fiber base preservation via Under.ext
+    - `connGrothendieckAltMap_comp_projection` - map commutes with projection
+    - `connGrothendieckAltFunctor` - full functor to `Over (Cat.of (Arrow C))`
 
 ### Helper Lemmas
 

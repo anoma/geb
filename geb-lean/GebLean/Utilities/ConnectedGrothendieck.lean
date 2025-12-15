@@ -4173,6 +4173,11 @@ theorem innerFiberAltMap_comp (α : F ⟶ G) (β : G ⟶ H) (a : C) :
     innerFiberAltMap C (α ≫ β) a = innerFiberAltMap C α a ⋙ innerFiberAltMap C β a := by
   simp only [innerFiberAltMap, restrictToDomainFiberNatTrans_comp, Grothendieck.map_comp_eq]
 
+@[simp]
+theorem innerFiberAltMap_obj_base (α : F ⟶ G) {a : C} (x : innerFiberAlt C F a) :
+    ((innerFiberAltMap C α a).obj x).base = x.base := by
+  simp only [innerFiberAltMap, Grothendieck.map_obj]
+
 /--
 Naturality of a natural transformation `α : F ⟶ G` with respect to domain fiber transport.
 -/
@@ -4282,6 +4287,10 @@ def domainFiberFunctorNatTrans (α : F ⟶ G) :
         apply HEq.symm
         exact Grothendieck.conj_eqToHom_fiber_heq
           (F := restrictToDomainFiber C G c) _ _ _
+
+@[simp]
+theorem domainFiberFunctorNatTrans_app (α : F ⟶ G) (a : C) :
+    (domainFiberFunctorNatTrans C α).app a = innerFiberAltMap C α a := rfl
 
 @[simp]
 theorem domainFiberFunctorNatTrans_id :
@@ -5148,6 +5157,85 @@ theorem connGrothendieckAltMap_comp (α : F ⟶ G) (β : G ⟶ H) :
       connGrothendieckAltMap C α ⋙ connGrothendieckAltMap C β := by
   simp only [connGrothendieckAltMap, domainFiberFunctorNatTrans_comp,
     GrothendieckContra'.map_comp_eq]
+
+/--
+The map functor preserves the base of the fiber (the Under object).
+-/
+@[simp]
+theorem connGrothendieckAltMap_obj_fiber_base (α : F ⟶ G)
+    (x : ConnectedGrothendieckAlt C F) :
+    ((connGrothendieckAltMap C α).obj x).fiber.base = x.fiber.base := by
+  simp only [connGrothendieckAltMap_obj, innerFiberAltMap_obj_base]
+
+/--
+The map preserves the right component of the fiber's base in morphisms.
+-/
+theorem connGrothendieckAltMap_map_fiber_base_right (α : F ⟶ G)
+    {x y : ConnectedGrothendieckAlt C F} (f : x ⟶ y) :
+    ((connGrothendieckAltMap C α).map f).fiber.base.right = f.fiber.base.right := by
+  change ((GrothendieckContra'.map (domainFiberFunctorNatTrans C α)).map f).fiber.base.right =
+    f.fiber.base.right
+  erw [GrothendieckContra'.map_map]
+  change ((innerFiberAltMap C α x.base).map f.fiber ≫
+    (eqToHom ((domainFiberFunctorNatTrans C α).naturality f.base)).app y.fiber).base.right =
+    f.fiber.base.right
+  rw [Grothendieck.comp_base, Comma.comp_right]
+  rw [innerFiberAltMap_map_base]
+  rw [eqToHom_app, Grothendieck.base_eqToHom, Under.eqToHom_right]
+  simp only [eqToHom_refl, Category.comp_id]
+
+/--
+The map functor preserves the base of the fiber in morphisms.
+-/
+@[simp]
+theorem connGrothendieckAltMap_map_fiber_base (α : F ⟶ G)
+    {x y : ConnectedGrothendieckAlt C F} (f : x ⟶ y) :
+    ((connGrothendieckAltMap C α).map f).fiber.base = f.fiber.base := by
+  apply Under.UnderMorphism.ext
+  exact connGrothendieckAltMap_map_fiber_base_right C α f
+
+/--
+The Alt map functor commutes with the projection to `Arrow C`.
+-/
+theorem connGrothendieckAltMap_comp_projection (α : F ⟶ G) :
+    connGrothendieckAltMap C α ⋙ connGrothendieckAltProjection C G =
+    connGrothendieckAltProjection C F := by
+  fapply Functor.ext
+  · intro x
+    simp only [Functor.comp_obj, connGrothendieckAltProjection,
+      connGrothendieckAltMap_obj, connGrothendieckAltObjToArrow]
+    rw [innerFiberAltMap_obj_base]
+  · intro X Y f
+    apply Arrow.hom_ext
+    · simp only [Functor.comp_map, connGrothendieckAltProjection, Arrow.homMk_left,
+        connGrothendieckAltHomDomArr, eqToHom_refl, Category.id_comp, Category.comp_id,
+        connGrothendieckAltMap_map_base]
+    · simp only [Functor.comp_map, connGrothendieckAltProjection, Arrow.homMk_right,
+        connGrothendieckAltHomCodArr, eqToHom_refl, Category.id_comp, Category.comp_id,
+        connGrothendieckAltMap_map_base, connGrothendieckAltMap_map_fiber_base_right]
+
+/--
+The alternative connected Grothendieck construction as a functor to the over category
+`Over (Cat.of (Arrow C))`.
+
+For each `F : TwistedArrow' C ⥤ Cat`, we get `ConnectedGrothendieckAlt C F` with
+a projection to `Arrow C`. Natural transformations `α : F ⟶ G` induce functors
+that commute with the projections.
+-/
+def connGrothendieckAltFunctor :
+    (TwistedArrow' C ⥤ Cat.{v, u}) ⥤ Over (Cat.of (Arrow C)) where
+  obj F' := Over.mk (Y := Cat.of (ConnectedGrothendieckAlt C F'))
+    (connGrothendieckAltProjection C F')
+  map {F' G'} α := Over.homMk (connGrothendieckAltMap C α)
+    (connGrothendieckAltMap_comp_projection C α)
+  map_id F' := by
+    apply Over.OverMorphism.ext
+    simp only [Over.mk_left]
+    exact connGrothendieckAltMap_id C
+  map_comp {F' G' H'} α β := by
+    apply Over.OverMorphism.ext
+    simp only [Over.mk_left]
+    exact connGrothendieckAltMap_comp C α β
 
 end AltFunctorMap
 
