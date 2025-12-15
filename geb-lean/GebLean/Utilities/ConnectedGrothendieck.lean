@@ -5728,6 +5728,23 @@ abbrev functorToConnGrothendieckObjMap (d : D) :
     ConnectedGrothendieckAlt C F :=
   functorToConnGrothendieckObj F (data.arrFun.obj d) (data.fib d)
 
+@[simp]
+lemma functorToConnGrothendieckObjMap_base (d : D) :
+    (functorToConnGrothendieckObjMap data d).base = (data.arrFun.obj d).left :=
+  rfl
+
+@[simp]
+lemma functorToConnGrothendieckObjMap_fiber_base (d : D) :
+    (functorToConnGrothendieckObjMap data d).fiber.base =
+    arrowToUnder (data.arrFun.obj d) :=
+  rfl
+
+@[simp]
+lemma functorToConnGrothendieckObjMap_fiber_fiber (d : D) :
+    (functorToConnGrothendieckObjMap data d).fiber.fiber =
+    (eqToHom (arrowToUnder_fiber_eq F (data.arrFun.obj d))).obj (data.fib d) :=
+  rfl
+
 /-!
 ### Morphism Construction
 
@@ -5837,6 +5854,215 @@ lemma functorToConnGrothendieckInnerFiberSrcEq {d d' : D} (g : d ⟶ d') :
       ((functorToConnGrothendieckSrcTransport (arrFun := data.arrFun) g).obj (data.fib d)) := by
   simp only [functorToConnGrothendieckMapEq, functorToConnGrothendieckDiagonalFiberEq,
     eqToHom_refl, Cat.id_obj]
+
+/--
+The Under to TwistedArrow transformation on arrowToUnder gives arrowToTwisted.
+This is definitional equality (both expand to `twObjMk' arr.hom`).
+-/
+lemma underToTwistedArrow_arrowToUnder (arr : Arrow C) :
+    (underToTwistedArrow C arr.left).obj (arrowToUnder arr) = arrowToTwisted arr := rfl
+
+/--
+The twisted arrow target of domain fiber transport equals the diagonal twisted arrow.
+
+Using `functorToConnGrothendieckTransportBase`, the Under object
+`(Under.map arrMor.left).obj (arrowToUnder arr')` equals `Under.mk (arrowDiagonal arrMor)`.
+Applying `underToTwistedArrow` yields the diagonal twisted arrow.
+-/
+lemma functorToConnGrothendieckDomainTransportTargetTw {d d' : D} (g : d ⟶ d') :
+    (underToTwistedArrow C (data.arrFun.obj d).left).obj
+      ((Under.map (data.arrFun.map g).left).obj (arrowToUnder (data.arrFun.obj d'))) =
+    arrowDiagonalTwisted (data.arrFun.map g) := by
+  simp only [underToTwistedArrow, Under.map_obj_hom, arrowToUnder, Under.mk_hom,
+    arrowDiagonalTwisted, arrowDiagonal]
+  congr 1
+  exact (data.arrFun.map g).w
+
+/--
+The domain fiber transport twisted arrow morphism equals `twMorphToDiagonalRight`
+(after rewriting the target via the equality lemma; the source is definitionally equal).
+-/
+lemma functorToConnGrothendieckDomainTransportTwEq {d d' : D} (g : d ⟶ d') :
+    domainFiberTransportTwMorph C (data.arrFun.map g).left
+      (arrowToUnder (data.arrFun.obj d')) =
+    twMorphToDiagonalRight (data.arrFun.map g) ≫
+    eqToHom (functorToConnGrothendieckDomainTransportTargetTw data g).symm := by
+  apply twHom'_ext
+  · simp only [domainFiberTransportTwMorph, twHomMk'_domArr, twDomArr'_comp,
+      twDomArr'_eqToHom, twMorphToDiagonalRight, twHomMk'_domArr]
+    simp only [underToTwistedArrow, Under.map_obj_hom, arrowToUnder, Under.mk_hom,
+      arrowDiagonalTwisted, arrowDiagonal, twObjMk'_dom, Functor.fromPUnit]
+    convert (Category.id_comp _).symm using 2
+  · simp only [domainFiberTransportTwMorph, twHomMk'_codArr, twCodArr'_comp,
+      twCodArr'_eqToHom, twMorphToDiagonalRight, twHomMk'_codArr]
+    simp only [underToTwistedArrow, Under.map_obj_hom, arrowToUnder, Under.mk_hom, Under.mk_right,
+      arrowDiagonalTwisted, arrowDiagonal, twObjMk'_cod, Functor.id_obj]
+    convert (Category.comp_id _).symm using 2
+
+/--
+The domain fiber transport functor equals the target transport functor
+(up to the appropriate eqToHom conversion from the target equality).
+-/
+lemma functorToConnGrothendieckDomainTransportFunctorEq {d d' : D} (g : d ⟶ d') :
+    domainFiberTransport C F (data.arrFun.map g).left (arrowToUnder (data.arrFun.obj d')) =
+    functorToConnGrothendieckTgtTransport (arrFun := data.arrFun) g ≫
+    eqToHom (congrArg F.obj (functorToConnGrothendieckDomainTransportTargetTw data g)).symm := by
+  simp only [domainFiberTransport, functorToConnGrothendieckTgtTransport]
+  rw [functorToConnGrothendieckDomainTransportTwEq]
+  simp only [Functor.map_comp, eqToHom_map]
+
+/-!
+### Relating Transport Constructions
+
+The transport functors `twMorphToDiagonalLeft/Right` used in `FunctorToConnGrothendieckData`
+are the same as `connGrothendieckTwMorphCod/Dom` used in `ConnGrothendieckHom`, when applied
+to arrows from `arrowToTwisted`.
+-/
+
+variable {arr arr' : Arrow C} (arrMor : arr ⟶ arr')
+
+/--
+The diagonal codomain coincides with the diagonal twisted arrow.
+-/
+lemma connGrothendieckDiagCod_eq_arrowDiagonalTwisted :
+    connGrothendieckDiagCod C (arrowToTwisted arr) arrMor.right =
+    arrowDiagonalTwisted arrMor := by
+  simp only [connGrothendieckDiagCod, arrowToTwisted, twObjMk'_arr, twObjMk'_cod,
+    arrowDiagonalTwisted, arrowDiagonal]
+
+/--
+The diagonal domain coincides with the diagonal twisted arrow.
+-/
+lemma connGrothendieckDiagDom_eq_arrowDiagonalTwisted :
+    connGrothendieckDiagDom C (arrowToTwisted arr') arrMor.left =
+    arrowDiagonalTwisted arrMor := by
+  simp only [connGrothendieckDiagDom, arrowToTwisted, twObjMk'_arr, twObjMk'_dom,
+    arrowDiagonalTwisted, arrowDiagonal]
+  congr 1
+  exact arrMor.w
+
+/-!
+### ConnGrothendieckObj Construction
+
+We construct `ConnGrothendieckObj` from Arrows and fibers to use the existing
+morphism conversion machinery.
+-/
+
+/--
+Convert an Arrow and fiber element to a `ConnGrothendieckObj`.
+-/
+def arrowToConnGrothendieckObj (arr : Arrow C)
+    (e : F.obj (arrowToTwisted arr)) : ConnGrothendieckObj C F :=
+  ⟨arrowToTwisted arr, e⟩
+
+/--
+The source `ConnGrothendieckObj` for `data.arrFun.obj d` and `data.fib d`.
+-/
+abbrev functorToConnGrothendieckSrcObj (d : D) : ConnGrothendieckObj C F :=
+  arrowToConnGrothendieckObj (data.arrFun.obj d) (data.fib d)
+
+/--
+The target `ConnGrothendieckObj` for `data.arrFun.obj d'` and `data.fib d'`.
+-/
+abbrev functorToConnGrothendieckTgtObj (d' : D) : ConnGrothendieckObj C F :=
+  arrowToConnGrothendieckObj (data.arrFun.obj d') (data.fib d')
+
+/--
+The `connGrothendieckObjToAltObj` applied to source equals `functorToConnGrothendieckObjMap`.
+-/
+lemma functorToConnGrothendieckSrcObj_toAlt (d : D) :
+    connGrothendieckObjToAltObj C F (functorToConnGrothendieckSrcObj data d) =
+    functorToConnGrothendieckObjMap data d := by
+  simp only [arrowToConnGrothendieckObj,
+    connGrothendieckObjToAltObj, functorToConnGrothendieckObjMap, functorToConnGrothendieckObj,
+    functorToConnGrothendieckInnerFiber, arrowToTwisted, arrowToUnder]
+  congr 1
+
+/--
+The base morphism in `C` for the `GrothendieckContra'` morphism construction.
+-/
+abbrev functorToConnGrothendieckAltBase {d d' : D} (g : d ⟶ d') :
+    (functorToConnGrothendieckObjMap data d).base ⟶
+    (functorToConnGrothendieckObjMap data d').base :=
+  (data.arrFun.map g).left
+
+/--
+The target fiber transported to source domain category.
+-/
+abbrev functorToConnGrothendieckTransportedTgt {d d' : D} (g : d ⟶ d') :
+    (domainFiberFunctor C F).obj (functorToConnGrothendieckObjMap data d).base :=
+  ((domainFiberFunctor C F).map (functorToConnGrothendieckAltBase data g)).obj
+    (functorToConnGrothendieckObjMap data d').fiber
+
+/--
+The hom of the transported Under target equals the diagonal.
+-/
+lemma functorToConnGrothendieckInnerBaseTgt_hom_eq {d d' : D} (g : d ⟶ d') :
+    ((Under.map (data.arrFun.map g).left).obj (arrowToUnder (data.arrFun.obj d'))).hom =
+    arrowDiagonal (data.arrFun.map g) := by
+  simp only [Under.map_obj_hom, arrowToUnder, Under.mk_hom, arrowDiagonal_eq]
+
+/--
+The base component of the inner Grothendieck morphism.
+This is an Under morphism from `arrowToUnder (data.arrFun.obj d)` to the
+transported target Under object.
+-/
+def functorToConnGrothendieckInnerBase {d d' : D} (g : d ⟶ d') :
+    arrowToUnder (data.arrFun.obj d) ⟶
+    (Under.map (data.arrFun.map g).left).obj (arrowToUnder (data.arrFun.obj d')) :=
+  Under.homMk (data.arrFun.map g).right (by
+    simp only [Under.map_obj_hom, arrowToUnder, Under.mk_hom]
+    exact (data.arrFun.map g).w.symm)
+
+/--
+The twisted arrow morphism from applying underToTwistedArrow to innerBase equals
+twMorphToDiagonalLeft followed by an eqToHom for the target.
+-/
+lemma functorToConnGrothendieckInnerBaseTwMorph {d d' : D} (g : d ⟶ d') :
+    (underToTwistedArrow C (data.arrFun.obj d).left).map (functorToConnGrothendieckInnerBase data g)
+    = twMorphToDiagonalLeft (data.arrFun.map g) ≫
+      eqToHom (functorToConnGrothendieckDomainTransportTargetTw data g).symm := by
+  apply twHom'_ext
+  · simp only [underToTwistedArrow, twHomMk'_domArr, functorToConnGrothendieckInnerBase,
+      twDomArr'_comp, twDomArr'_eqToHom, twMorphToDiagonalLeft, id_eq, eqToHom_refl,
+      Category.id_comp]
+  · simp only [underToTwistedArrow, twHomMk'_codArr, functorToConnGrothendieckInnerBase,
+      Under.homMk_right, twCodArr'_comp, twCodArr'_eqToHom, twMorphToDiagonalLeft, id_eq,
+      eqToHom_refl, Category.comp_id]
+
+/--
+The restrictToDomainFiber map of innerBase equals SrcTransport followed by eqToHom.
+-/
+lemma functorToConnGrothendieckInnerBaseMapEq {d d' : D} (g : d ⟶ d') :
+    (restrictToDomainFiber C F (data.arrFun.obj d).left).map
+      (functorToConnGrothendieckInnerBase data g) =
+    functorToConnGrothendieckSrcTransport (arrFun := data.arrFun) g ≫
+    eqToHom (congrArg F.obj (functorToConnGrothendieckDomainTransportTargetTw data g)).symm := by
+  simp only [restrictToDomainFiber, Functor.comp_map]
+  rw [functorToConnGrothendieckInnerBaseTwMorph]
+  simp only [Functor.map_comp, eqToHom_map, functorToConnGrothendieckSrcTransport]
+
+/--
+The fiber morphism for the `GrothendieckContra'` morphism construction.
+This is a morphism in the inner Grothendieck category from the source fiber to
+the transported target fiber.
+-/
+def functorToConnGrothendieckAltFiber {d d' : D} (g : d ⟶ d') :
+    (functorToConnGrothendieckObjMap data d).fiber ⟶
+    functorToConnGrothendieckTransportedTgt data g := by
+  simp only [functorToConnGrothendieckTransportedTgt, domainFiberFunctor_map,
+    innerFiberAltTransition, innerFiberAltTransitionObj]
+  refine ⟨functorToConnGrothendieckInnerBase data g, ?_⟩
+  simp only [restrictToDomainFiber, Functor.comp_map,
+    functorToConnGrothendieckObjMap_base]
+  rw [functorToConnGrothendieckInnerBaseTwMorph]
+  simp only [Functor.map_comp, Functor.comp_obj, domainFiberTransport,
+    functorToConnGrothendieckAltBase, functorToConnGrothendieckObjMap_fiber_base]
+  rw [functorToConnGrothendieckDomainTransportTwEq]
+  simp only [Functor.map_comp, eqToHom_map,
+    functorToConnGrothendieckObjMap_fiber_fiber]
+  exact (eqToHom (congrArg F.obj
+    (functorToConnGrothendieckDomainTransportTargetTw data g).symm)).map (data.hom g)
 
 end FunctorToConnGrothendieck
 
