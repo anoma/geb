@@ -8,6 +8,7 @@ testDriver = "test"
 pp.unicode.fun = true # pretty-prints `fun a ↦ b`
 pp.proofs = false
 pp.showLetValues = false
+pp.universes = true
 autoImplicit = false
 relaxedAutoImplicit = false
 weak.linter.mathlibStandardSet = true
