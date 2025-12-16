@@ -5879,6 +5879,16 @@ lemma functorToConnGrothendieckDomainTransportTargetTw {d d' : D} (g : d ⟶ d')
   exact (data.arrFun.map g).w
 
 /--
+For identity, the domain transport target twisted arrow equals the original.
+-/
+lemma functorToConnGrothendieckDomainTransportTargetTw_id (d : D) :
+    (underToTwistedArrow C (data.arrFun.obj d).left).obj
+      ((Under.map (data.arrFun.map (𝟙 d)).left).obj (arrowToUnder (data.arrFun.obj d))) =
+    arrowToTwisted (data.arrFun.obj d) := by
+  rw [functorToConnGrothendieckDomainTransportTargetTw]
+  simp only [Functor.map_id, arrowDiagonalTwisted_id]
+
+/--
 The domain fiber transport twisted arrow morphism equals `twMorphToDiagonalRight`
 (after rewriting the target via the equality lemma; the source is definitionally equal).
 -/
@@ -6015,6 +6025,33 @@ def functorToConnGrothendieckInnerBase {d d' : D} (g : d ⟶ d') :
     exact (data.arrFun.map g).w.symm)
 
 /--
+The target of innerBase composition via Under.map equals the direct target.
+-/
+lemma functorToConnGrothendieckInnerBase_comp_tgt_eq {d d' d'' : D}
+    (g : d ⟶ d') (h : d' ⟶ d'') :
+    (Under.map (data.arrFun.map g).left).obj
+      ((Under.map (data.arrFun.map h).left).obj (arrowToUnder (data.arrFun.obj d''))) =
+    (Under.map (data.arrFun.map (g ≫ h)).left).obj (arrowToUnder (data.arrFun.obj d'')) := by
+  simp only [Functor.map_comp, Arrow.comp_left]
+  exact congrArg (·.obj (arrowToUnder (data.arrFun.obj d'')))
+    (Under.mapComp_eq (data.arrFun.map g).left (data.arrFun.map h).left).symm
+
+/--
+The composition property for `functorToConnGrothendieckInnerBase`. The innerBase of a
+composition equals the composition of innerBases, up to eqToHom for Under.map.
+-/
+lemma functorToConnGrothendieckInnerBase_comp {d d' d'' : D} (g : d ⟶ d') (h : d' ⟶ d'') :
+    functorToConnGrothendieckInnerBase data (g ≫ h) =
+    functorToConnGrothendieckInnerBase data g ≫
+      (Under.map (data.arrFun.map g).left).map (functorToConnGrothendieckInnerBase data h) ≫
+      eqToHom (functorToConnGrothendieckInnerBase_comp_tgt_eq data g h) := by
+  apply Under.UnderMorphism.ext
+  rw [Comma.comp_right, Comma.comp_right]
+  rw [Under.eqToHom_right, Under.map_map_right]
+  simp only [functorToConnGrothendieckInnerBase, Under.homMk_right, Functor.map_comp,
+    Arrow.comp_right, eqToHom_refl, Category.comp_id]
+
+/--
 The twisted arrow morphism from applying underToTwistedArrow to innerBase equals
 twMorphToDiagonalLeft followed by an eqToHom for the target.
 -/
@@ -6063,6 +6100,516 @@ def functorToConnGrothendieckAltFiber {d d' : D} (g : d ⟶ d') :
     functorToConnGrothendieckObjMap_fiber_fiber]
   exact (eqToHom (congrArg F.obj
     (functorToConnGrothendieckDomainTransportTargetTw data g).symm)).map (data.hom g)
+
+/--
+The base component of `functorToConnGrothendieckAltFiber` is `functorToConnGrothendieckInnerBase`.
+-/
+@[simp]
+lemma functorToConnGrothendieckAltFiber_base {d d' : D} (g : d ⟶ d') :
+    (functorToConnGrothendieckAltFiber data g).base =
+    functorToConnGrothendieckInnerBase data g := rfl
+
+/--
+The fiber of `functorToConnGrothendieckAltFiber` is HEq to `data.hom`.
+This follows because the fiber is `(eqToHom ...).map (data.hom g)`.
+-/
+lemma functorToConnGrothendieckAltFiber_fiber_heq {d d' : D} (g : d ⟶ d') :
+    (functorToConnGrothendieckAltFiber data g).fiber ≍ data.hom g := by
+  simp only [functorToConnGrothendieckAltFiber]
+  apply HEq.trans (cast_heq _ _)
+  apply HEq.trans (cast_heq _ _)
+  apply HEq.trans (cast_heq _ _)
+  apply HEq.trans (cast_heq _ _)
+  exact Cat.eqToHom_map_heq _ _
+
+/--
+The morphism map for `functorToConnGrothendieck`.
+-/
+def functorToConnGrothendieckMapHom {d d' : D} (g : d ⟶ d') :
+    functorToConnGrothendieckObjMap data d ⟶
+    functorToConnGrothendieckObjMap data d' :=
+  ⟨functorToConnGrothendieckAltBase data g, functorToConnGrothendieckAltFiber data g⟩
+
+/-!
+### Identity lemmas (factored step-by-step)
+
+These lemmas establish what happens to each component when we apply the identity
+morphism `𝟙 d` in `D`.
+-/
+
+/--
+Step 1: The base component of the identity map is the identity.
+-/
+lemma functorToConnGrothendieckAltBase_id (d : D) :
+    functorToConnGrothendieckAltBase data (𝟙 d) = 𝟙 (data.arrFun.obj d).left := by
+  simp only [functorToConnGrothendieckAltBase, Functor.map_id, Arrow.id_left]
+
+/--
+Step 2: The transported target when g = 𝟙 d equals the source fiber.
+-/
+lemma functorToConnGrothendieckTransportedTgt_id (d : D) :
+    functorToConnGrothendieckTransportedTgt data (𝟙 d) =
+    (functorToConnGrothendieckObjMap data d).fiber := by
+  simp only [functorToConnGrothendieckTransportedTgt, functorToConnGrothendieckAltBase_id,
+    domainFiberFunctor_map, innerFiberAltTransition]
+  exact innerFiberAltTransitionObj_id C F _
+
+/--
+Step 3: The diagonal twisted arrow for the identity Arrow morphism.
+-/
+lemma functorToConnGrothendieck_arrowDiagonalTwisted_id (d : D) :
+    arrowDiagonalTwisted (data.arrFun.map (𝟙 d)) = arrowToTwisted (data.arrFun.obj d) := by
+  simp only [Functor.map_id, arrowDiagonalTwisted_id]
+
+/--
+Step 4: The transported target Under object when g = 𝟙 d.
+-/
+lemma functorToConnGrothendieckInnerBase_tgt_eq_id (d : D) :
+    (Under.map (data.arrFun.map (𝟙 d)).left).obj (arrowToUnder (data.arrFun.obj d)) =
+    arrowToUnder (data.arrFun.obj d) := by
+  simp only [Functor.map_id, Arrow.id_left]
+  have h := Under.mapId_eq (data.arrFun.obj d).left
+  exact congrFun (congrArg Functor.obj h) (arrowToUnder (data.arrFun.obj d))
+
+/--
+Step 5: The inner base morphism when g = 𝟙 d equals eqToHom of a refl equality.
+-/
+lemma functorToConnGrothendieckInnerBase_id (d : D) :
+    functorToConnGrothendieckInnerBase data (𝟙 d) =
+    eqToHom (functorToConnGrothendieckInnerBase_tgt_eq_id data d).symm := by
+  simp only [functorToConnGrothendieckInnerBase, Functor.map_id, Arrow.id_right]
+  apply Under.UnderMorphism.ext
+  simp only [Under.eqToHom_right, Under.homMk_right]
+  rfl
+
+/--
+Step 6: The base component of `functorToConnGrothendieckAltFiber data (𝟙 d)` equals
+an eqToHom.
+-/
+lemma functorToConnGrothendieckAltFiber_id_base (d : D) :
+    (functorToConnGrothendieckAltFiber data (𝟙 d)).base =
+    eqToHom (functorToConnGrothendieckInnerBase_tgt_eq_id data d).symm := by
+  simp only [functorToConnGrothendieckAltFiber]
+  exact functorToConnGrothendieckInnerBase_id data d
+
+/--
+Step 7: The fiber component of `functorToConnGrothendieckAltFiber data (𝟙 d)` is HEq to
+an identity morphism.
+-/
+lemma functorToConnGrothendieckAltFiber_id_fiber_heq (d : D) :
+    (functorToConnGrothendieckAltFiber data (𝟙 d)).fiber ≍
+    𝟙 ((functorToConnGrothendieckObjMap data d).fiber.fiber) := by
+  simp only [functorToConnGrothendieckAltFiber]
+  apply HEq.trans (cast_heq _ _)
+  apply HEq.trans (cast_heq _ _)
+  apply HEq.trans (cast_heq _ _)
+  apply HEq.trans (cast_heq _ _)
+  apply HEq.trans (Cat.eqToHom_map_heq _ _)
+  exact data.hom_id d
+
+/--
+Step 8: The functor `(restrictToDomainFiber C F a).map (eqToHom h).base` equals
+`eqToHom` of an appropriate equality.
+-/
+lemma restrictToDomainFiber_map_grothendieck_eqToHom_base (a : C)
+    {x y : Grothendieck (restrictToDomainFiber C F a)} (h : x = y) :
+    (restrictToDomainFiber C F a).map (eqToHom h).base =
+    eqToHom (congrArg (restrictToDomainFiber C F a).obj (congrArg Grothendieck.base h)) := by
+  rw [Grothendieck.eqToHom_base', eqToHom_map]
+
+/--
+For any proof `h : X = Y`, we have `eqToHom h ≍ 𝟙 X` as a heterogeneous equality.
+-/
+lemma eqToHom_heq_id {E : Type*} [Category E] {X Y : E} (h : X = Y) : eqToHom h ≍ 𝟙 X := by
+  cases h
+  rfl
+
+/--
+Symmetric version: for any proof `h : X = Y`, we have `eqToHom h ≍ 𝟙 Y`.
+-/
+lemma eqToHom_heq_id' {E : Type*} [Category E] {X Y : E} (h : X = Y) : eqToHom h ≍ 𝟙 Y := by
+  cases h
+  rfl
+
+/--
+For Grothendieck categories, the fiber of eqToHom is HEq to identity.
+-/
+lemma Grothendieck.eqToHom_fiber_heq_id {C : Type*} [Category C] {P : C ⥤ Cat}
+    {X Y : Grothendieck P} (h : X = Y) :
+    (eqToHom h).fiber ≍ 𝟙 X.fiber := by
+  subst h
+  -- After subst, goal is (eqToHom rfl).fiber ≍ 𝟙 X.fiber
+  -- eqToHom rfl = 𝟙 X (definitionally)
+  simp only [eqToHom_refl]
+  -- Now goal is Hom.fiber (𝟙 X) ≍ 𝟙 X.fiber
+  rw [CategoryTheory.Grothendieck.id_fiber]
+  -- Now goal is eqToHom (...) ≍ 𝟙 X.fiber
+  exact eqToHom_heq_id' (by simp)
+
+/--
+If `f ≍ 𝟙 W` for some object `W`, and the composition `f ≫ g` is well-typed, then
+`f ≫ g ≍ g` (where `g` on the RHS is appropriately typed via transport).
+
+This handles the case where `f : X ⟶ Y` with `X = W` and `Y = W` (propositionally), so
+`f` is essentially an identity morphism up to transport.
+-/
+lemma comp_heq_of_heq_id {E : Type*} [Category E]
+    {X Y Z W : E} (f : X ⟶ Y) (g : Y ⟶ Z)
+    (hXW : X = W) (hYW : Y = W) (hf : f ≍ 𝟙 W) :
+    (f ≫ g) ≍ g := by
+  cases hXW
+  cases hYW
+  have hfeq : f = 𝟙 X := eq_of_heq hf
+  rw [hfeq, Category.id_comp]
+
+/--
+Variant that derives domain/codomain equalities from HEq to identity on codomain.
+-/
+lemma comp_heq_of_heq_id' {E : Type*} [Category E]
+    {X Y Z W : E} (f : X ⟶ Y) (g : Y ⟶ Z)
+    (hXY : X = Y) (hYW : Y = W) (hf : f ≍ 𝟙 W) :
+    (f ≫ g) ≍ g := by
+  subst hXY hYW
+  have hfeq : f = 𝟙 X := eq_of_heq hf
+  rw [hfeq, Category.id_comp]
+
+/--
+The transported target for the identity equals the fiber image under identity.
+-/
+lemma functorToConnGrothendieck_transportedTgt_id_eq (d : D) :
+    functorToConnGrothendieckTransportedTgt data (𝟙 d) =
+    ((domainFiberFunctor C F).map
+      (GrothendieckContra'.id (functorToConnGrothendieckObjMap data d)).base).obj
+      (functorToConnGrothendieckObjMap data d).fiber := by
+  simp only [functorToConnGrothendieckTransportedTgt, functorToConnGrothendieckAltBase,
+    Functor.map_id, Arrow.id_left, GrothendieckContra'.id,
+    functorToConnGrothendieckObjMap_base]
+
+/--
+The transported target for composition equals the fiber image under composition.
+-/
+lemma functorToConnGrothendieck_transportedTgt_comp_eq {d d' d'' : D}
+    (g : d ⟶ d') (h : d' ⟶ d'') :
+    functorToConnGrothendieckTransportedTgt data (g ≫ h) =
+    ((domainFiberFunctor C F).map
+      (GrothendieckContra'.comp
+        ⟨functorToConnGrothendieckAltBase data g, functorToConnGrothendieckAltFiber data g⟩
+        ⟨functorToConnGrothendieckAltBase data h, functorToConnGrothendieckAltFiber data h⟩
+      ).base).obj (functorToConnGrothendieckObjMap data d'').fiber := by
+  simp only [functorToConnGrothendieckTransportedTgt, functorToConnGrothendieckAltBase,
+    Functor.map_comp, Arrow.comp_left, GrothendieckContra'.comp_base]
+
+/--
+The base component of the map_id fiber case: the base of the LHS equals the base of the RHS.
+-/
+lemma functorToConnGrothendieck_map_id_fiber_base (d : D) :
+    (functorToConnGrothendieckAltFiber data (𝟙 d) ≫
+      eqToHom (functorToConnGrothendieck_transportedTgt_id_eq data d)).base =
+    ((GrothendieckContra'.id (functorToConnGrothendieckObjMap data d)).fiber).base := by
+  rw [GrothendieckContra'.id_fiber]
+  rw [Grothendieck.comp_base]
+  rw [Grothendieck.base_eqToHom]
+  rw [functorToConnGrothendieckAltFiber_id_base]
+  rw [Grothendieck.base_eqToHom]
+  rw [eqToHom_trans]
+
+/--
+The fiber component of the map_id fiber case (Grothendieck.ext form).
+-/
+lemma functorToConnGrothendieck_map_id_fiber_fiber (d : D) :
+    eqToHom (by rw [functorToConnGrothendieck_map_id_fiber_base data d]) ≫
+      (functorToConnGrothendieckAltFiber data (𝟙 d) ≫
+        eqToHom (functorToConnGrothendieck_transportedTgt_id_eq data d)).fiber =
+    ((GrothendieckContra'.id (functorToConnGrothendieckObjMap data d)).fiber).fiber := by
+  simp only [GrothendieckContra'.id_fiber]
+  rw [Grothendieck.comp_fiber]
+  simp only [eqToHom_trans_assoc]
+  have hIdFiber := functorToConnGrothendieckAltFiber_id_fiber_heq data d
+  apply eq_of_heq
+  -- Remove the leading eqToHom
+  apply HEq.trans (eqToHom_comp_heq _ _)
+  -- Now goal is (F.map (eqToHom).base).map fiber ≫ (eqToHom).fiber ≍ (eqToHom).fiber
+  -- Use the fact that F.map (eqToHom).base = eqToHom
+  have hFunEq := restrictToDomainFiber_map_grothendieck_eqToHom_base
+    (functorToConnGrothendieckObjMap data d).base
+    (functorToConnGrothendieck_transportedTgt_id_eq data d)
+  -- Use Cat.functor_map_heq_of_eq_eqToHom to show G.map fiber ≍ fiber
+  have hMapFiber := Cat.functor_map_heq_of_eq_eqToHom _ _ hFunEq
+    (functorToConnGrothendieckAltFiber data (𝟙 d)).fiber
+  -- Both G.map fiber and fiber are HEq to 𝟙
+  have hGmapId : ((restrictToDomainFiber C F
+      (functorToConnGrothendieckObjMap data d).base).map
+      (eqToHom (functorToConnGrothendieck_transportedTgt_id_eq data d)).base).map
+      (functorToConnGrothendieckAltFiber data (𝟙 d)).fiber ≍
+      𝟙 (functorToConnGrothendieckObjMap data d).fiber.fiber := by
+    exact HEq.trans hMapFiber hIdFiber
+  -- Goal: G.map fiber ≫ (eqToHom h).fiber ≍ (eqToHom h).fiber
+  -- The (eqToHom h).fiber is itself an eqToHom by Grothendieck.fiber_eqToHom
+  -- First rewrite the fiber in the composition using that fact
+  rw [Grothendieck.fiber_eqToHom]
+  -- Now goal: G.map fiber ≫ eqToHom (...) ≍ (eqToHom h').fiber
+  -- where h' = functorToConnGrothendieck_transportedTgt_id_eq data d
+  -- LHS: by comp_eqToHom_heq, G.map fiber ≫ eqToHom h ≍ G.map fiber
+  apply HEq.trans (comp_eqToHom_heq _ _)
+  -- Now goal: G.map fiber ≍ (eqToHom h').fiber
+  -- Use hGmapId: G.map fiber ≍ 𝟙 W
+  apply HEq.trans hGmapId
+  -- Now goal: 𝟙 W ≍ (eqToHom h').fiber
+  -- Use the new helper: (eqToHom h).fiber ≍ 𝟙 X.fiber
+  apply HEq.symm
+  exact Grothendieck.eqToHom_fiber_heq_id _
+
+/--
+The fiber case of map_id: proves that the fiber component of
+`functorToConnGrothendieckMapHom data (𝟙 d)` composed with the appropriate eqToHom
+equals the fiber of `GrothendieckContra'.id`.
+-/
+lemma functorToConnGrothendieck_map_id_fiber (d : D) :
+    functorToConnGrothendieckAltFiber data (𝟙 d) ≫
+      eqToHom (functorToConnGrothendieck_transportedTgt_id_eq data d) =
+    (GrothendieckContra'.id (functorToConnGrothendieckObjMap data d)).fiber := by
+  apply Grothendieck.ext
+  case w_base => exact functorToConnGrothendieck_map_id_fiber_base data d
+  case w_fiber => exact functorToConnGrothendieck_map_id_fiber_fiber data d
+
+/--
+The base component of the transported target for composition equals the iterated
+transition.
+-/
+lemma functorToConnGrothendieck_transportedTgt_comp_base_eq {d d' d'' : D}
+    (g : d ⟶ d') (h : d' ⟶ d'') :
+    (functorToConnGrothendieckTransportedTgt data (g ≫ h)).base =
+    ((innerFiberAltTransition C F (functorToConnGrothendieckAltBase data g)).obj
+        ((innerFiberAltTransition C F (functorToConnGrothendieckAltBase data h)).obj
+          (functorToConnGrothendieckObjMap data d'').fiber)).base := by
+  simp only [functorToConnGrothendieckTransportedTgt, domainFiberFunctor_map,
+    innerFiberAltTransition, innerFiberAltTransitionObj, functorToConnGrothendieckAltBase,
+    Functor.map_comp, Arrow.comp_left]
+  -- Now LHS is (Under.map (f ≫ g)).obj x.base, RHS is (Under.map f).obj ((Under.map g).obj x.base)
+  exact congrArg (·.obj (functorToConnGrothendieckObjMap data d'').fiber.base)
+    (Under.mapComp_eq (data.arrFun.map g).left (data.arrFun.map h).left)
+
+/--
+The base component of the map_comp fiber case.
+-/
+lemma functorToConnGrothendieck_map_comp_fiber_base {d d' d'' : D}
+    (g : d ⟶ d') (h : d' ⟶ d'') :
+    (functorToConnGrothendieckAltFiber data (g ≫ h) ≫
+      eqToHom (functorToConnGrothendieck_transportedTgt_comp_eq data g h)).base =
+    (GrothendieckContra'.comp
+      ⟨functorToConnGrothendieckAltBase data g, functorToConnGrothendieckAltFiber data g⟩
+      ⟨functorToConnGrothendieckAltBase data h,
+        functorToConnGrothendieckAltFiber data h⟩).fiber.base := by
+  simp only [GrothendieckContra'.comp_fiber, functorToConnGrothendieckAltFiber,
+    innerFiberAltTransition_map, domainFiberFunctor_map]
+  apply Under.UnderMorphism.ext
+  -- Simplify id and unfold composition
+  simp only [id_eq]
+  rw [Grothendieck.comp_base, Comma.comp_right]
+  rw [Grothendieck.comp_base, Comma.comp_right]
+  rw [Grothendieck.comp_base, Comma.comp_right]
+  -- Simplify record accessors and transition base
+  dsimp only []
+  simp only [innerFiberAltTransitionHom_base, functorToConnGrothendieckInnerBase,
+    Under.homMk_right, Under.map_map_right, Functor.map_comp, Arrow.comp_right,
+    Category.assoc]
+  -- The two sides differ only in the eqToHom proof terms
+  -- Use Grothendieck.eqToHom_base' to simplify (eqToHom _).base to eqToHom _
+  rw [Grothendieck.eqToHom_base', Grothendieck.eqToHom_base']
+  -- Now use Under.eqToHom_right to simplify .right
+  rw [Under.eqToHom_right, Under.eqToHom_right]
+
+/--
+The fiber component of `functorToConnGrothendieckAltFiber data (g ≫ h)` is HEq to
+a transported composition via `data.hom_comp`.
+-/
+lemma functorToConnGrothendieckAltFiber_comp_fiber_heq {d d' d'' : D}
+    (g : d ⟶ d') (h : d' ⟶ d'') :
+    (functorToConnGrothendieckAltFiber data (g ≫ h)).fiber ≍
+    ((functorToConnGrothendieckTransportGToGHRaw (F := F)
+        (arrFun := data.arrFun) g h).map (data.hom g) ≫
+      eqToHom (functorToConnGrothendieckTransportCoherence data.fib g h) ≫
+      (functorToConnGrothendieckTransportHToGHRaw (F := F)
+        (arrFun := data.arrFun) g h).map (data.hom h)) := by
+  simp only [functorToConnGrothendieckAltFiber]
+  apply HEq.trans (cast_heq _ _)
+  apply HEq.trans (cast_heq _ _)
+  apply HEq.trans (cast_heq _ _)
+  apply HEq.trans (cast_heq _ _)
+  apply HEq.trans (Cat.eqToHom_map_heq _ _)
+  exact data.hom_comp g h
+
+/--
+Coherence HEq: the transport construction for composition is HEq to the fiber of
+the inner Grothendieck composition.
+-/
+lemma functorToConnGrothendieck_map_comp_fiber_fiber_transport_heq {d d' d'' : D}
+    (g : d ⟶ d') (h : d' ⟶ d'') :
+    let f : GrothendieckContra'.Hom _ _ :=
+      ⟨functorToConnGrothendieckAltBase data g, functorToConnGrothendieckAltFiber data g⟩
+    let k : GrothendieckContra'.Hom _ _ :=
+      ⟨functorToConnGrothendieckAltBase data h, functorToConnGrothendieckAltFiber data h⟩
+    (functorToConnGrothendieckTransportGToGHRaw (F := F) (arrFun := data.arrFun) g h).map
+        (data.hom g) ≫
+      eqToHom (functorToConnGrothendieckTransportCoherence data.fib g h) ≫
+      (functorToConnGrothendieckTransportHToGHRaw (F := F) (arrFun := data.arrFun) g h).map
+        (data.hom h) ≍
+    (f.fiber ≫
+        ((domainFiberFunctor C F).map f.base).map k.fiber ≫
+          eqToHom (GrothendieckContra'.comp_fiber_cod_eq f k)).fiber := by
+  intro f k
+  -- The goal compares: LHS (transport construction) ≍ RHS (Grothendieck composition).fiber
+  -- First expand transport functors on LHS
+  simp only [functorToConnGrothendieckTransportGToGHRaw, functorToConnGrothendieckTransportHToGHRaw]
+  -- Now expand the RHS .fiber using Grothendieck.comp_fiber
+  rw [Grothendieck.comp_fiber, Grothendieck.comp_fiber]
+  -- The goal relates F.map (diagonal morphisms) to the Grothendieck structure
+  -- This is complex - let's try to simplify with simp and see the structure
+  -- RHS has the form: eqToHom ≫ ... ≫ eqToHom ≫ ... ≫ (eqToHom).fiber
+  -- Use HEq.trans with eqToHom_comp_heq to peel off the leading eqToHom
+  apply HEq.symm
+  apply HEq.trans (eqToHom_comp_heq _ _)
+  apply HEq.symm
+  -- Goal: LHS (transport construction) ≍ RHS (Grothendieck fiber)
+  -- The transport construction uses data.hom g and data.hom h explicitly
+  -- The Grothendieck structure uses f.fiber.fiber and (... k.fiber).fiber
+  -- These are HEq to data.hom g and data.hom h respectively
+  have hFiberG := functorToConnGrothendieckAltFiber_fiber_heq data g
+  have hFiberH := functorToConnGrothendieckAltFiber_fiber_heq data h
+  -- This coherence proof requires showing that the diagonal transport construction
+  -- (LHS: F.map(twMorphDiagonalToComp).map(data.hom g) ≫ eqToHom ≫ ...)
+  -- equals the Grothendieck composition fiber structure
+  -- (RHS: F.map(underToTwistedArrow.map ...).map(f.fiber.fiber) ≫ ...)
+  -- The key facts are:
+  -- - hFiberG: f.fiber.fiber ≍ data.hom g
+  -- - hFiberH: k.fiber.fiber ≍ data.hom h
+  -- The twisted arrow morphisms are related via domainFiberTransport_naturality
+  -- and functorToConnGrothendieckInnerBaseTwMorph
+  simp only [restrictToDomainFiber, Functor.comp_map, domainFiberFunctor_map,
+    innerFiberAltTransition_map, innerFiberAltTransitionHom_fiber]
+  -- The goal is a complex HEq between diagonal transport (LHS) and
+  -- Grothendieck composition fiber (RHS).
+  -- Key relationships:
+  -- - hFiberG: f.fiber.fiber ≍ data.hom g
+  -- - hFiberH: k.fiber.fiber ≍ data.hom h
+  -- LHS: F.map(twMorphDiagonalToComp).map(data.hom g) ≫ eqToHom ≫
+  --      F.map(twMorphDiagonalFromComp).map(data.hom h)
+  -- RHS: Complex structure using f.fiber.fiber ≍ data.hom g, k.fiber.fiber ≍ data.hom h
+  -- This is a complex coherence proof about two constructions of the same composition.
+  -- Both sides compute the fiber morphism for f ≫ k in ConnectedGrothendieckAlt:
+  -- - LHS: Explicit diagonal construction using twMorphDiagonalToComp/FromComp
+  -- - RHS: Standard Grothendieck composition via innerFiberAltTransitionHom
+  -- First simplify the RHS by expanding definitions
+  simp only [Grothendieck.comp_base, innerFiberAltTransitionHom_base,
+    Functor.map_comp, Category.assoc]
+  -- Expand the inner fiber transition structure
+  simp only [innerFiberAltTransition, innerFiberAltTransitionObj,
+    innerFiberAltTransitionHom, domainFiberTransport, restrictToDomainFiber,
+    Functor.comp_obj, Functor.comp_map]
+  -- Expand the base definitions
+  simp only [functorToConnGrothendieckObjMap_fiber_base]
+  -- The proof requires relating two constructions of composition:
+  -- 1. Diagonal construction (LHS): explicit twMorphDiagonalToComp/FromComp
+  -- 2. Grothendieck composition (RHS): via innerFiberAltTransitionHom structure
+  -- Use domainFiberTransport_naturality: for β : un ⟶ un', α : c ⟶ a,
+  --   (underToTwistedArrow C a).map β ≫ domainFiberTransportTwMorph C α un' =
+  --   domainFiberTransportTwMorph C α un ≫ (underToTwistedArrow C c).map ((Under.map α).map β)
+  -- This relates (underToTwistedArrow C ...).map ((Under.map f.base).map k.fiber.base) to
+  -- a composition involving domainFiberTransportTwMorph.
+  -- Combined with functorToConnGrothendieckInnerBaseTwMorph (innerBase → twMorphToDiagonalLeft)
+  -- and functorToConnGrothendieckDomainTransportTwEq (transport → twMorphToDiagonalRight)
+  -- and functorToConnGrothendieckTwMorphCoherence (twMorphToDiagonalRight ≫ toComp = ... FromComp)
+  -- we get the relationship between the RHS twisted arrow morphisms and diagonal morphisms.
+  -- Key facts available:
+  -- - hFiberG : f.fiber.fiber ≍ data.hom g
+  -- - hFiberH : k.fiber.fiber ≍ data.hom h
+  -- The proof uses these HEqs to relate the arguments of the functor applications.
+  sorry
+
+/--
+The fiber component of the map_comp fiber case (Grothendieck.ext form).
+-/
+lemma functorToConnGrothendieck_map_comp_fiber_fiber {d d' d'' : D}
+    (g : d ⟶ d') (h : d' ⟶ d'') :
+    eqToHom (by rw [functorToConnGrothendieck_map_comp_fiber_base data g h]) ≫
+      (functorToConnGrothendieckAltFiber data (g ≫ h) ≫
+        eqToHom (functorToConnGrothendieck_transportedTgt_comp_eq data g h)).fiber =
+    ((GrothendieckContra'.comp
+      ⟨functorToConnGrothendieckAltBase data g, functorToConnGrothendieckAltFiber data g⟩
+      ⟨functorToConnGrothendieckAltBase data h,
+        functorToConnGrothendieckAltFiber data h⟩).fiber).fiber := by
+  simp only [GrothendieckContra'.comp_fiber]
+  rw [Grothendieck.comp_fiber]
+  simp only [eqToHom_trans_assoc]
+  apply eq_of_heq
+  apply HEq.trans (eqToHom_comp_heq _ _)
+  -- Goal: (G.map eqToHom.base).map fiber_gh ≫ (eqToHom).fiber ≍ (f ≫ G.map g ≫ eqToHom).fiber
+  -- Use the HEq for the fiber of the composed morphism
+  have hFiberGH := functorToConnGrothendieckAltFiber_comp_fiber_heq data g h
+  -- Rewrite (eqToHom).fiber using Grothendieck.fiber_eqToHom
+  rw [Grothendieck.fiber_eqToHom]
+  -- Goal: (G.map eqToHom.base).map fiber_gh ≫ eqToHom ≍ (f ≫ (H.map).map g ≫ eqToHom).fiber
+  -- Use comp_eqToHom_heq to eliminate the eqToHom on LHS
+  apply HEq.trans (comp_eqToHom_heq _ _)
+  -- Goal: (G.map eqToHom.base).map fiber_gh ≍ (f ≫ (H.map).map g ≫ eqToHom).fiber
+  -- Show that (G.map eqToHom.base) = eqToHom for some equality
+  have hFunEq := restrictToDomainFiber_map_grothendieck_eqToHom_base
+    (functorToConnGrothendieckObjMap data d).base
+    (functorToConnGrothendieck_transportedTgt_comp_eq data g h)
+  -- Use Cat.functor_map_heq_of_eq_eqToHom: (eqToHom h).map f ≍ f
+  have hMapFiber := Cat.functor_map_heq_of_eq_eqToHom _ _ hFunEq
+    (functorToConnGrothendieckAltFiber data (g ≫ h)).fiber
+  -- LHS: (G.map eqToHom.base).map fiberGH.fiber ≍ fiberGH.fiber
+  apply HEq.trans hMapFiber
+  -- Goal: (altFiber (g≫h)).fiber ≍ (altFiber g ≫ ...).fiber
+  -- Use hFiberGH to expand LHS
+  apply HEq.trans hFiberGH
+  -- Goal: transport_g.map (hom g) ≫ eqToHom ≫ transport_h.map (hom h) ≍ (altFiber g ≫ ...).fiber
+  -- This is a complex coherence - factor out into helper lemma
+  exact functorToConnGrothendieck_map_comp_fiber_fiber_transport_heq data g h
+
+lemma functorToConnGrothendieck_map_comp_fiber {d d' d'' : D}
+    (g : d ⟶ d') (h : d' ⟶ d'') :
+    functorToConnGrothendieckAltFiber data (g ≫ h) ≫
+      eqToHom (functorToConnGrothendieck_transportedTgt_comp_eq data g h) =
+    (GrothendieckContra'.comp
+      ⟨functorToConnGrothendieckAltBase data g, functorToConnGrothendieckAltFiber data g⟩
+      ⟨functorToConnGrothendieckAltBase data h,
+        functorToConnGrothendieckAltFiber data h⟩).fiber := by
+  apply Grothendieck.ext
+  case w_base => exact functorToConnGrothendieck_map_comp_fiber_base data g h
+  case w_fiber => exact functorToConnGrothendieck_map_comp_fiber_fiber data g h
+
+/--
+The functor from `D` to `ConnectedGrothendieckAlt C F` constructed from the
+characterization data.
+
+The functor laws require the coherence conditions `data.hom_id` and `data.hom_comp`
+from `FunctorToConnGrothendieckData`. The proofs involve relating the fiber morphism
+construction (which uses `data.hom`) to the identity and composition in
+`GrothendieckContra'`.
+-/
+def functorToConnGrothendieck : D ⥤ ConnectedGrothendieckAlt C F where
+  obj d := functorToConnGrothendieckObjMap data d
+  map g := functorToConnGrothendieckMapHom data g
+  map_id d := by
+    apply GrothendieckContra'.ext
+    case w_base =>
+      simp only [functorToConnGrothendieckMapHom, functorToConnGrothendieckAltBase,
+        Functor.map_id, Arrow.id_left]
+      rfl
+    case w_fiber =>
+      simp only [functorToConnGrothendieckMapHom]
+      exact functorToConnGrothendieck_map_id_fiber data d
+  map_comp {d d' d''} g h := by
+    apply GrothendieckContra'.ext
+    case w_base =>
+      simp only [functorToConnGrothendieckMapHom, functorToConnGrothendieckAltBase,
+        Functor.map_comp, Arrow.comp_left]
+      rfl
+    case w_fiber =>
+      simp only [functorToConnGrothendieckMapHom]
+      exact functorToConnGrothendieck_map_comp_fiber data g h
 
 end FunctorToConnGrothendieck
 

@@ -265,18 +265,65 @@ See `docs/connected-grothendieck-functor-characterization.md` for full theory.
      - `functorToConnGrothendieckInnerFiber` - constructs inner fiber object
      - `functorToConnGrothendieckObj` - constructs ConnectedGrothendieckAlt object
      - `functorToConnGrothendieckObjMap` - object mapping for the functor
-   - Morphism construction in progress:
-     - `functorToConnGrothendieckMapBase` - base component of morphism
-     - `Under.obj_eq'` - helper for Under object equality
-     - `functorToConnGrothendieckTransportBase` - transport base lemma
-     - `functorToConnGrothendieckInnerUnderMorph` - inner Under morphism
-     - `functorToConnGrothendieckInnerUnderTwMorph` - corresponds to
-       `twMorphToDiagonalLeft`
-     - `functorToConnGrothendieckDiagonalFiberEq` - diagonal fiber category eq
-     - `functorToConnGrothendieckMapEq` - restrict functor map = SrcTransport
-     - `functorToConnGrothendieckInnerFiberSrcEq` - source fiber equality
-   - Remaining: construct inner fiber morphism from `data.hom g`, combine into
-     full Grothendieck morphism, prove map_id and map_comp
+   - Morphism construction complete:
+     - `functorToConnGrothendieckAltBase` - base component of Alt morphism
+     - `functorToConnGrothendieckInnerBase` - inner Under morphism
+     - `functorToConnGrothendieckAltFiber` - full inner fiber morphism
+     - `functorToConnGrothendieckMapHom` - full morphism construction
+   - Functor laws:
+     - `map_id` proof COMPLETE - uses helper lemmas:
+       - `functorToConnGrothendieckAltBase_id`
+       - `functorToConnGrothendieckTransportedTgt_id`
+       - `functorToConnGrothendieckInnerBase_tgt_eq_id`
+       - `functorToConnGrothendieckInnerBase_id`
+       - `functorToConnGrothendieckAltFiber_id_base`
+       - `functorToConnGrothendieckAltFiber_id_fiber_heq`
+       - `restrictToDomainFiber_map_grothendieck_eqToHom_base`
+       - `eqToHom_heq_id`
+     - `map_comp` proof MOSTLY COMPLETE (sorry remains):
+       - Base case COMPLETE - uses `Under.UnderMorphism.ext` and simp lemmas
+       - Fiber case structure COMPLETE:
+         - `functorToConnGrothendieck_map_comp_fiber_base` - base equality proved
+         - `functorToConnGrothendieck_transportedTgt_comp_base_eq` - helper for
+           transported target composition
+         - `functorToConnGrothendieck_map_comp_fiber_fiber` - fiber equality
+           using HEq transitivity chain
+         - `functorToConnGrothendieckAltFiber_comp_fiber_heq` - relates altFiber
+           composition to transported `data.hom g` and `data.hom h`
+       - REMAINING SORRY in `functorToConnGrothendieck_map_comp_fiber_fiber_transport_heq`:
+         Final HEq relating diagonal transport functors to Grothendieck composition.
+         **Goal structure**: Show that
+         `F.map(twMorphDiagonalToComp).map(data.hom g) ≫ eqToHom ≫
+          F.map(twMorphDiagonalFromComp).map(data.hom h)`
+         is HEq to the fiber of Grothendieck composition using
+         `f.fiber.fiber` (≍ `data.hom g`) and `k.fiber.fiber` (≍ `data.hom h`).
+         **Key lemmas available**:
+         - `functorToConnGrothendieckInnerBaseTwMorph` (line 6058): relates
+           `underToTwistedArrow.map(innerBase g)` to `twMorphToDiagonalLeft`
+         - `domainFiberTransport_naturality` (line 3637): naturality square
+           `uTT.map(β) ≫ domFibTwMorph(α, un') =
+            domFibTwMorph(α, un) ≫ uTT.map((Under.map α).map β)`
+           This relates `uTT.map((Under.map f.base).map k.fiber.base)` to
+           a composition involving `domainFiberTransportTwMorph`
+         - `functorToConnGrothendieckDomainTransportTwEq` (line 5895): relates
+           domainFiberTransportTwMorph to `twMorphToDiagonalRight ≫ eqToHom`
+         - `functorToConnGrothendieckTwMorphCoherence` (line 5613): diagonal
+           coherence `twMorphToDiagonalRight ≫ toComp = twMorphToDiagonalLeft ≫ fromComp`
+         - `functorToConnGrothendieckAltFiber_fiber_heq` (line 6116): shows
+           `f.fiber.fiber ≍ data.hom g`
+         **Proof strategy**:
+         1. Use `domainFiberTransport_naturality` to relate the RHS first
+            twisted arrow morphism `uTT.map((Under.map f.base).map k.fiber.base)`
+            to a composition involving `domainFiberTransportTwMorph`
+         2. Apply `functorToConnGrothendieckDomainTransportTwEq` to replace
+            domainFiberTransportTwMorph with `twMorphToDiagonalRight`
+         3. Apply `functorToConnGrothendieckInnerBaseTwMorph` to replace
+            `uTT.map(innerBase)` with `twMorphToDiagonalLeft`
+         4. Use `functorToConnGrothendieckTwMorphCoherence` to relate the
+            diagonal paths to `twMorphDiagonalToComp/FromComp`
+         5. Use fiber HEq lemmas to match argument types
+         The structure is correct (builds with sorry) - just needs the coherence
+         proof completed by applying these lemmas in sequence.
 
 3. **FunctorFromConnGrothendieckData** (Pending) - characterizes
    `ConnectedGrothendieckAlt C F ⥤ E`

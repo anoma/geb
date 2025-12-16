@@ -161,7 +161,7 @@ Components:
 2. **Fiber transformation** compatible with the arrow functor
 3. **Diagonal compatibility**
 
-This is more complex and requires `GrothendieckContra'.FunctorBetweenData`
+This requires `GrothendieckContra'.FunctorBetweenData`
 specialized to the domain fiber functors.
 
 ## Implementation Notes
