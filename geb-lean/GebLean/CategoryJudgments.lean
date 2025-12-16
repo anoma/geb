@@ -42,7 +42,7 @@ namespace GebLean
 namespace CategoryJudgments
 
 /-- The objects of the category judgment category -/
-inductive Obj : Type where
+inductive Obj.{u} : Type u where
   | obj  : Obj  -- represents the type of objects
   | mor  : Obj  -- represents the type of morphisms
   | id   : Obj  -- represents identity judgments
@@ -51,7 +51,7 @@ inductive Obj : Type where
 
 /-- The non-identity morphisms of the category judgment category.
     These form a semicategory, and identities will be adjoined. -/
-inductive SemiHom : Obj → Obj → Type where
+inductive SemiHom.{u, v, w} : Obj.{u} → Obj.{v} → Type w where
   -- Morphisms from Mor to Obj (domain and codomain)
   | dom : SemiHom Obj.mor Obj.obj
   | cod : SemiHom Obj.mor Obj.obj
@@ -103,8 +103,8 @@ theorem SemiHom.assoc : ∀ {W X Y Z : Obj} (f : SemiHom W X) (g : SemiHom X Y)
   cases f <;> cases g <;> cases h
 
 /-- Quiver instance for CategoryJudgments.Obj -/
-instance : Quiver Obj where
-  Hom := SemiHom
+instance QuiverI.{u, w} : Quiver.{w + 1, u} Obj.{u} where
+  Hom := SemiHom.{u, u, w}
 
 /-- Semicategory structure on CategoryJudgments.Obj -/
 instance instSemicategoryStructObj : Quiver.SemicategoryStruct Obj where
@@ -120,7 +120,7 @@ instance instSemicategoryStructObj : Quiver.SemicategoryStruct Obj where
     - comp → mor (left, right, composite)
     Note that comp and id have no edges between them, so they are incomparable.
     The ordering is: {comp, id} < mor < obj -/
-instance instPartialOrderObj : PartialOrder Obj where
+instance instPartialOrderObj.{u} : PartialOrder.{u} Obj.{u} where
   le a b := match a, b with
     | Obj.obj, Obj.obj => True
     | Obj.obj, _ => False
@@ -147,7 +147,7 @@ instance instPartialOrderObj : PartialOrder Obj where
     cases a <;> cases b <;> decide
 
 /-- AcyclicQuiver instance for CategoryJudgments.Obj -/
-instance : AcyclicQuiver Obj where
+instance AcyclicQuiverI.{u} : AcyclicQuiver.{u} Obj.{u} where
   toQuiver := inferInstance
   toPartialOrder := instPartialOrderObj
   edgesIncrease := fun {a b} f => by cases a <;> cases b <;> cases f <;> trivial
@@ -245,7 +245,7 @@ section FunctorDataCategory
 
 /-- Data required to construct a functor from CategoryJudgments to C. -/
 @[ext]
-structure FunctorData (C : Type*) [Category C] where
+structure FunctorData.{u, v} (C : Type u) [Category.{v, u} C] : Type (max u v) where
   objC : C
   morC : C
   idC : C
@@ -267,8 +267,8 @@ structure FunctorData (C : Type*) [Category C] where
     right, composite); the remaining 4 conditions (intermediate, compositeDom,
     compositeCod, idObj) are derivable. -/
 @[ext]
-structure NatTransData {C : Type*} [Category C]
-    (F G : FunctorData C) where
+structure NatTransData.{u, v} {C : Type u} [Category.{v, u} C]
+    (F G : FunctorData.{u, v} C) where
   appObj : F.objC ⟶ G.objC
   appMor : F.morC ⟶ G.morC
   appId : F.idC ⟶ G.idC
@@ -321,7 +321,8 @@ def NatTransData.comp {F G H : FunctorData C}
       β.naturality_composite, ← Category.assoc]
 
 /-- FunctorData with NatTransData forms a category. -/
-instance : Category (FunctorData C) where
+instance CategoryI.{u_2} :
+    Category.{u_2, max u_2 u_1} (FunctorData.{u_1, u_2} C) where
   Hom := NatTransData
   id := NatTransData.id
   comp := NatTransData.comp
@@ -492,7 +493,8 @@ theorem functorToData_mkFunctor (data : FunctorData C) :
   rfl
 
 /-- The equivalence between functors from Obj to C and FunctorData C. -/
-def functorDataEquiv : FunctorData C ≃ (Obj ⥤ C) where
+def functorDataEquiv.{u_2} :
+    FunctorData.{u_1, u_2} C ≃ Functor Obj C where
   toFun := mkFunctor
   invFun := functorToData
   left_inv := functorToData_mkFunctor
@@ -661,8 +663,8 @@ def functorDataEquivCat : FunctorData C ≌ (Obj ⥤ C) :=
 
 /-- Two FunctorData structures are equivalent if their corresponding functors
     are naturally isomorphic. -/
-def FunctorData.Equiv (data₁ data₂ : FunctorData C) : Prop :=
-  Nonempty (mkFunctor data₁ ≅ mkFunctor data₂)
+def FunctorData.Equiv.{v} (data₁ data₂ : FunctorData.{u_1, v} C) : Prop :=
+  Nonempty (mkFunctor.{u_1, v, v} data₁ ≅ mkFunctor.{u_1, v, v} data₂)
 
 /-- Natural isomorphism on functors induces an equivalence relation on
     FunctorData via mkFunctor. -/
