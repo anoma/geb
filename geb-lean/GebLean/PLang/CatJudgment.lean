@@ -30,7 +30,7 @@ def ObjMorIdMor.{u, v, w} (omi : ObjMorIdObj.{u + 1, v + 1, w + 1}) :
   Type (max u v w) :=
     ObjMorMor.{u, v} omi.1 × IdProj.{u + 1, v + 1, w + 1} omi.1 omi.2
 
-def ObjMorIdCopr.{u, v, w} : Type (max u v w + 1) :=
+def ObjMorIdObjMor.{u, v, w} : Type (max u v w + 1) :=
   Σ (omi : ObjMorIdObj.{u + 1, v + 1, w + 1}), ObjMorIdMor.{u, v, w} omi
 
 end PLang
