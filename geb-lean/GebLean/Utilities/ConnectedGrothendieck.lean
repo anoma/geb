@@ -5748,8 +5748,7 @@ lemma functorToConnGrothendieckObjMap_fiber_fiber (d : D) :
 /-!
 ### Morphism Construction
 
-The morphism construction is more complex because it involves the diagonal
-construction. Given `g : d ⟶ d'` in `D`:
+Given `g : d ⟶ d'` in `D`:
 
 1. Base morphism: `(data.arrFun.map g).left` gives the domain direction
 2. Fiber morphism: Uses `data.hom g` to construct the inner Grothendieck morphism
