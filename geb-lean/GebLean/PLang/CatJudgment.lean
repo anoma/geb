@@ -37,7 +37,20 @@ def ObjMorIdObjMorEndo.{u, v, w} (omim : ObjMorIdObjMor.{u, v, w} ) : Prop :=
   omim.2.1.1 ∘ omim.2.2 = omim.2.1.2 ∘ omim.2.2
 
 def ObjMorIdCopr.{u, v, w} : Type (max u v w + 1) :=
-  Σ (omi : ObjMorIdObj.{u + 1, v + 1, w + 1}), ObjMorIdMor.{u, v, w} omi
+  {omim : ObjMorIdObjMor.{u, v, w} // ObjMorIdObjMorEndo.{u, v, w} omim}
+
+def CompProj.{u, v, w} (om : ObjMorObj.{u, v}) (i : Sort w) : Sort (imax w v) :=
+  i → om.2
+
+def ObjMorCompObj.{u, v, w} : Type (max u v w) :=
+  ObjMorObj.{u, v} × Sort w
+
+def ObjMorCompMor.{u, v, w} (omi : ObjMorIdObj.{u + 1, v + 1, w + 1}) :
+  Type (max u v w) :=
+    ObjMorMor.{u, v} omi.1 ×
+    (CompProj.{u + 1, v + 1, w + 1} omi.1 omi.2 × -- .1 = left
+     CompProj.{u + 1, v + 1, w + 1} omi.1 omi.2 × -- .2 = right
+     CompProj.{u + 1, v + 1, w + 1} omi.1 omi.2)  -- .3 = composite
 
 end PLang
 
