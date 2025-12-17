@@ -34,11 +34,11 @@ def ObjMorMor.{u, v} (om : ObjMorObj.{u + 1, v + 1}) : Type (max u v) :=
   ObjMorProj.{u + 1, v + 1} om × ObjMorProj.{u + 1, v + 1} om
 
 /-- Access the domain function from an ObjMorMor pair. -/
-abbrev ObjMorMor.dom.{u, v} (om : ObjMorObj.{u + 1, v + 1})
+abbrev ObjMorMor.dom.{u, v} {om : ObjMorObj.{u + 1, v + 1}}
     (omm : ObjMorMor.{u, v} om) : ObjMorProj om := omm.1
 
 /-- Access the codomain function from an ObjMorMor pair. -/
-abbrev ObjMorMor.cod.{u, v} (om : ObjMorObj.{u + 1, v + 1})
+abbrev ObjMorMor.cod.{u, v} {om : ObjMorObj.{u + 1, v + 1}}
     (omm : ObjMorMor.{u, v} om) : ObjMorProj om := omm.2
 
 /-- A quiver copresheaf: object type, morphism type, domain and codomain
@@ -63,11 +63,11 @@ abbrev ObjMorCopr.domCod.{u, v} (omc : ObjMorCopr.{u, v}) :
 
 /-- Access the domain function from a quiver copresheaf. -/
 abbrev ObjMorCopr.dom.{u, v} (omc : ObjMorCopr.{u, v}) : omc.mor → omc.obj :=
-  (ObjMorMor.dom omc.objMor omc.domCod)
+  ObjMorMor.dom omc.domCod
 
 /-- Access the codomain function from a quiver copresheaf. -/
 abbrev ObjMorCopr.cod.{u, v} (omc : ObjMorCopr.{u, v}) : omc.mor → omc.obj :=
-  (ObjMorMor.cod omc.objMor omc.domCod)
+  ObjMorMor.cod omc.domCod
 
 /-- A triple consisting of an object-morphism pair and an identity witness type.
     The identity witness type represents "proofs" that a morphism is an identity. -/
@@ -102,21 +102,21 @@ def ObjMorIdMor.{u, v, w} (omi : ObjMorIdObj.{u + 1, v + 1, w + 1}) :
     ObjMorMor.{u, v} omi.objMor × IdProj.{u + 1, v + 1, w + 1} omi
 
 /-- Access the domain/codomain pair from identity morphism data. -/
-abbrev ObjMorIdMor.domCod.{u, v, w} (omi : ObjMorIdObj.{u + 1, v + 1, w + 1})
+abbrev ObjMorIdMor.domCod.{u, v, w} {omi : ObjMorIdObj.{u + 1, v + 1, w + 1}}
     (omim : ObjMorIdMor.{u, v, w} omi) : ObjMorMor.{u, v} omi.objMor := omim.1
 
 /-- Access the domain function from identity morphism data. -/
-abbrev ObjMorIdMor.dom.{u, v, w} (omi : ObjMorIdObj.{u + 1, v + 1, w + 1})
+abbrev ObjMorIdMor.dom.{u, v, w} {omi : ObjMorIdObj.{u + 1, v + 1, w + 1}}
     (omim : ObjMorIdMor.{u, v, w} omi) : ObjMorProj omi.objMor :=
-  (ObjMorMor.dom omi.objMor (ObjMorIdMor.domCod omi omim))
+  ObjMorMor.dom omim.domCod
 
 /-- Access the codomain function from identity morphism data. -/
-abbrev ObjMorIdMor.cod.{u, v, w} (omi : ObjMorIdObj.{u + 1, v + 1, w + 1})
+abbrev ObjMorIdMor.cod.{u, v, w} {omi : ObjMorIdObj.{u + 1, v + 1, w + 1}}
     (omim : ObjMorIdMor.{u, v, w} omi) : ObjMorProj omi.objMor :=
-  (ObjMorMor.cod omi.objMor (ObjMorIdMor.domCod omi omim))
+  ObjMorMor.cod omim.domCod
 
 /-- Access the identity morphism assignment function. -/
-abbrev ObjMorIdMor.idMor.{u, v, w} (omi : ObjMorIdObj.{u + 1, v + 1, w + 1})
+abbrev ObjMorIdMor.idMor.{u, v, w} {omi : ObjMorIdObj.{u + 1, v + 1, w + 1}}
     (omim : ObjMorIdMor.{u, v, w} omi) : IdProj omi := omim.2
 
 /-- Bundled identity data: object type, morphism type, identity witness type,
@@ -147,15 +147,15 @@ abbrev ObjMorIdObjMor.idType.{u, v, w} (omim : ObjMorIdObjMor.{u, v, w}) :
 
 /-- Access the domain function from bundled identity data. -/
 abbrev ObjMorIdObjMor.dom.{u, v, w} (omim : ObjMorIdObjMor.{u, v, w}) :
-    omim.mor → omim.obj := (ObjMorIdMor.dom omim.objMorIdObj omim.objMorIdMor)
+    omim.mor → omim.obj := ObjMorIdMor.dom omim.objMorIdMor
 
 /-- Access the codomain function from bundled identity data. -/
 abbrev ObjMorIdObjMor.cod.{u, v, w} (omim : ObjMorIdObjMor.{u, v, w}) :
-    omim.mor → omim.obj := (ObjMorIdMor.cod omim.objMorIdObj omim.objMorIdMor)
+    omim.mor → omim.obj := ObjMorIdMor.cod omim.objMorIdMor
 
 /-- Access the identity morphism function from bundled identity data. -/
 abbrev ObjMorIdObjMor.idMor.{u, v, w} (omim : ObjMorIdObjMor.{u, v, w}) :
-    omim.idType → omim.mor := (ObjMorIdMor.idMor omim.objMorIdObj omim.objMorIdMor)
+    omim.idType → omim.mor := ObjMorIdMor.idMor omim.objMorIdMor
 
 /-- The condition that identity morphisms are endomorphisms: for each identity
     witness, the domain and codomain of the identity morphism are equal. -/
@@ -211,15 +211,15 @@ def ObjMorCompProj.{u, v, w} (omi : ObjMorCompObj.{u + 1, v + 1, w + 1}) :
     CompProj.{u + 1, v + 1, w + 1} omi
 
 /-- Access the left morphism projection (the morphism being post-composed). -/
-abbrev ObjMorCompProj.left.{u, v, w} (omi : ObjMorCompObj.{u + 1, v + 1, w + 1})
+abbrev ObjMorCompProj.left.{u, v, w} {omi : ObjMorCompObj.{u + 1, v + 1, w + 1}}
     (ocp : ObjMorCompProj.{u, v, w} omi) : CompProj omi := ocp.1
 
 /-- Access the right morphism projection (the morphism being pre-composed). -/
-abbrev ObjMorCompProj.right.{u, v, w} (omi : ObjMorCompObj.{u + 1, v + 1, w + 1})
+abbrev ObjMorCompProj.right.{u, v, w} {omi : ObjMorCompObj.{u + 1, v + 1, w + 1}}
     (ocp : ObjMorCompProj.{u, v, w} omi) : CompProj omi := ocp.2.1
 
 /-- Access the composite morphism projection. -/
-abbrev ObjMorCompProj.composite.{u, v, w} (omi : ObjMorCompObj.{u + 1, v + 1, w + 1})
+abbrev ObjMorCompProj.composite.{u, v, w} {omi : ObjMorCompObj.{u + 1, v + 1, w + 1}}
     (ocp : ObjMorCompProj.{u, v, w} omi) : CompProj omi := ocp.2.2
 
 /-- The morphism data for a composition structure: domain/codomain functions
@@ -229,37 +229,37 @@ def ObjMorCompMor.{u, v, w} (omi : ObjMorCompObj.{u + 1, v + 1, w + 1}) :
     ObjMorMor.{u, v} omi.objMor × ObjMorCompProj.{u, v, w} omi
 
 /-- Access the domain/codomain pair from composition morphism data. -/
-abbrev ObjMorCompMor.domCod.{u, v, w} (omi : ObjMorCompObj.{u + 1, v + 1, w + 1})
+abbrev ObjMorCompMor.domCod.{u, v, w} {omi : ObjMorCompObj.{u + 1, v + 1, w + 1}}
     (ocm : ObjMorCompMor.{u, v, w} omi) : ObjMorMor.{u, v} omi.objMor := ocm.1
 
 /-- Access the domain function from composition morphism data. -/
-abbrev ObjMorCompMor.dom.{u, v, w} (omi : ObjMorCompObj.{u + 1, v + 1, w + 1})
+abbrev ObjMorCompMor.dom.{u, v, w} {omi : ObjMorCompObj.{u + 1, v + 1, w + 1}}
     (ocm : ObjMorCompMor.{u, v, w} omi) : ObjMorProj omi.objMor :=
-  (ObjMorMor.dom omi.objMor (ObjMorCompMor.domCod omi ocm))
+  ObjMorMor.dom ocm.domCod
 
 /-- Access the codomain function from composition morphism data. -/
-abbrev ObjMorCompMor.cod.{u, v, w} (omi : ObjMorCompObj.{u + 1, v + 1, w + 1})
+abbrev ObjMorCompMor.cod.{u, v, w} {omi : ObjMorCompObj.{u + 1, v + 1, w + 1}}
     (ocm : ObjMorCompMor.{u, v, w} omi) : ObjMorProj omi.objMor :=
-  (ObjMorMor.cod omi.objMor (ObjMorCompMor.domCod omi ocm))
+  ObjMorMor.cod ocm.domCod
 
 /-- Access the composition projections from composition morphism data. -/
-abbrev ObjMorCompMor.compProj.{u, v, w} (omi : ObjMorCompObj.{u + 1, v + 1, w + 1})
+abbrev ObjMorCompMor.compProj.{u, v, w} {omi : ObjMorCompObj.{u + 1, v + 1, w + 1}}
     (ocm : ObjMorCompMor.{u, v, w} omi) : ObjMorCompProj.{u, v, w} omi := ocm.2
 
 /-- Access the left morphism projection from composition morphism data. -/
-abbrev ObjMorCompMor.left.{u, v, w} (omi : ObjMorCompObj.{u + 1, v + 1, w + 1})
+abbrev ObjMorCompMor.left.{u, v, w} {omi : ObjMorCompObj.{u + 1, v + 1, w + 1}}
     (ocm : ObjMorCompMor.{u, v, w} omi) : CompProj omi :=
-  (ObjMorCompProj.left omi (ObjMorCompMor.compProj omi ocm))
+  ObjMorCompProj.left ocm.compProj
 
 /-- Access the right morphism projection from composition morphism data. -/
-abbrev ObjMorCompMor.right.{u, v, w} (omi : ObjMorCompObj.{u + 1, v + 1, w + 1})
+abbrev ObjMorCompMor.right.{u, v, w} {omi : ObjMorCompObj.{u + 1, v + 1, w + 1}}
     (ocm : ObjMorCompMor.{u, v, w} omi) : CompProj omi :=
-  (ObjMorCompProj.right omi (ObjMorCompMor.compProj omi ocm))
+  ObjMorCompProj.right ocm.compProj
 
 /-- Access the composite morphism projection from composition morphism data. -/
-abbrev ObjMorCompMor.composite.{u, v, w} (omi : ObjMorCompObj.{u + 1, v + 1, w + 1})
+abbrev ObjMorCompMor.composite.{u, v, w} {omi : ObjMorCompObj.{u + 1, v + 1, w + 1}}
     (ocm : ObjMorCompMor.{u, v, w} omi) : CompProj omi :=
-  (ObjMorCompProj.composite omi (ObjMorCompMor.compProj omi ocm))
+  ObjMorCompProj.composite ocm.compProj
 
 /-- Bundled composition data: object type, morphism type, composition witness type,
     domain/codomain functions, and left/right/composite projections.
@@ -290,27 +290,27 @@ abbrev ObjMorCompObjMor.compType.{u, v, w} (omcm : ObjMorCompObjMor.{u, v, w}) :
 /-- Access the domain function from bundled composition data. -/
 abbrev ObjMorCompObjMor.dom.{u, v, w} (omcm : ObjMorCompObjMor.{u, v, w}) :
     omcm.mor → omcm.obj :=
-  (ObjMorCompMor.dom omcm.objMorCompObj omcm.objMorCompMor)
+  ObjMorCompMor.dom omcm.objMorCompMor
 
 /-- Access the codomain function from bundled composition data. -/
 abbrev ObjMorCompObjMor.cod.{u, v, w} (omcm : ObjMorCompObjMor.{u, v, w}) :
     omcm.mor → omcm.obj :=
-  (ObjMorCompMor.cod omcm.objMorCompObj omcm.objMorCompMor)
+  ObjMorCompMor.cod omcm.objMorCompMor
 
 /-- Access the left morphism projection from bundled composition data. -/
 abbrev ObjMorCompObjMor.left.{u, v, w} (omcm : ObjMorCompObjMor.{u, v, w}) :
     omcm.compType → omcm.mor :=
-  (ObjMorCompMor.left omcm.objMorCompObj omcm.objMorCompMor)
+  ObjMorCompMor.left omcm.objMorCompMor
 
 /-- Access the right morphism projection from bundled composition data. -/
 abbrev ObjMorCompObjMor.right.{u, v, w} (omcm : ObjMorCompObjMor.{u, v, w}) :
     omcm.compType → omcm.mor :=
-  (ObjMorCompMor.right omcm.objMorCompObj omcm.objMorCompMor)
+  ObjMorCompMor.right omcm.objMorCompMor
 
 /-- Access the composite morphism projection from bundled composition data. -/
 abbrev ObjMorCompObjMor.composite.{u, v, w} (omcm : ObjMorCompObjMor.{u, v, w}) :
     omcm.compType → omcm.mor :=
-  (ObjMorCompMor.composite omcm.objMorCompObj omcm.objMorCompMor)
+  ObjMorCompMor.composite omcm.objMorCompMor
 
 /-- The composability condition: the codomain of the right morphism equals
     the domain of the left morphism. -/
@@ -397,28 +397,28 @@ def CatJudgMor.{u, v, w, x} (cjo : CatJudgObj.{u + 1, v + 1, w + 1, x + 1}) :
   ObjMorCompProj.{u, v, x} (cjo.objMor, cjo.compType)
 
 /-- Access the domain/codomain pair from category judgment morphism data. -/
-abbrev CatJudgMor.domCod.{u, v, w, x} (cjo : CatJudgObj.{u + 1, v + 1, w + 1, x + 1})
+abbrev CatJudgMor.domCod.{u, v, w, x} {cjo : CatJudgObj.{u + 1, v + 1, w + 1, x + 1}}
     (cjm : CatJudgMor.{u, v, w, x} cjo) : ObjMorMor.{u, v} cjo.objMor := cjm.1
 
 /-- Access the identity and composition data pair from category judgment
     morphism data. -/
 abbrev CatJudgMor.idMorCompProj.{u, v, w, x}
-    (cjo : CatJudgObj.{u + 1, v + 1, w + 1, x + 1})
+    {cjo : CatJudgObj.{u + 1, v + 1, w + 1, x + 1}}
     (cjm : CatJudgMor.{u, v, w, x} cjo) :
     IdProj.{u + 1, v + 1, w + 1} (cjo.objMor, cjo.idType) ×
     ObjMorCompProj.{u, v, x} (cjo.objMor, cjo.compType) := cjm.2
 
 /-- Access the identity morphism projection from category judgment morphism data. -/
-abbrev CatJudgMor.idMor.{u, v, w, x} (cjo : CatJudgObj.{u + 1, v + 1, w + 1, x + 1})
+abbrev CatJudgMor.idMor.{u, v, w, x} {cjo : CatJudgObj.{u + 1, v + 1, w + 1, x + 1}}
     (cjm : CatJudgMor.{u, v, w, x} cjo) :
     IdProj.{u + 1, v + 1, w + 1} (cjo.objMor, cjo.idType) :=
-  (CatJudgMor.idMorCompProj cjo cjm).1
+  cjm.idMorCompProj.1
 
 /-- Access the composition projections from category judgment morphism data. -/
-abbrev CatJudgMor.compProj.{u, v, w, x} (cjo : CatJudgObj.{u + 1, v + 1, w + 1, x + 1})
+abbrev CatJudgMor.compProj.{u, v, w, x} {cjo : CatJudgObj.{u + 1, v + 1, w + 1, x + 1}}
     (cjm : CatJudgMor.{u, v, w, x} cjo) :
     ObjMorCompProj.{u, v, x} (cjo.objMor, cjo.compType) :=
-  (CatJudgMor.idMorCompProj cjo cjm).2
+  cjm.idMorCompProj.2
 
 /-- Bundled category judgment data: all object types and all morphism functions.
     This is the full data before imposing conditions. -/
@@ -452,47 +452,47 @@ abbrev CatJudgObjMor.catJudgMor.{u, v, w, x} (cjom : CatJudgObjMor.{u, v, w, x})
 /-- Access the domain/codomain pair from bundled category judgment data. -/
 abbrev CatJudgObjMor.domCod.{u, v, w, x} (cjom : CatJudgObjMor.{u, v, w, x}) :
     ObjMorMor.{u, v} cjom.catJudgObj.objMor :=
-  (CatJudgMor.domCod cjom.catJudgObj cjom.catJudgMor)
+  CatJudgMor.domCod cjom.catJudgMor
 
 /-- Access the domain function from bundled category judgment data. -/
 abbrev CatJudgObjMor.dom.{u, v, w, x} (cjom : CatJudgObjMor.{u, v, w, x}) :
-    cjom.mor → cjom.obj := (ObjMorMor.dom cjom.catJudgObj.objMor cjom.domCod)
+    cjom.mor → cjom.obj := ObjMorMor.dom cjom.domCod
 
 /-- Access the codomain function from bundled category judgment data. -/
 abbrev CatJudgObjMor.cod.{u, v, w, x} (cjom : CatJudgObjMor.{u, v, w, x}) :
-    cjom.mor → cjom.obj := (ObjMorMor.cod cjom.catJudgObj.objMor cjom.domCod)
+    cjom.mor → cjom.obj := ObjMorMor.cod cjom.domCod
 
 /-- Access the identity morphism function from bundled category judgment data. -/
 abbrev CatJudgObjMor.idMor.{u, v, w, x} (cjom : CatJudgObjMor.{u, v, w, x}) :
     cjom.idType → cjom.mor :=
-  (CatJudgMor.idMor cjom.catJudgObj cjom.catJudgMor)
+  CatJudgMor.idMor cjom.catJudgMor
 
 /-- Access the composition projections from bundled category judgment data. -/
 abbrev CatJudgObjMor.compProj.{u, v, w, x} (cjom : CatJudgObjMor.{u, v, w, x}) :
     ObjMorCompProj.{u, v, x} (cjom.catJudgObj.objMor, cjom.catJudgObj.compType) :=
-  (CatJudgMor.compProj cjom.catJudgObj cjom.catJudgMor)
+  CatJudgMor.compProj cjom.catJudgMor
 
 /-- Access the left morphism projection from bundled category judgment data. -/
 abbrev CatJudgObjMor.left.{u, v, w, x} (cjom : CatJudgObjMor.{u, v, w, x}) :
     cjom.compType → cjom.mor :=
-  (ObjMorCompProj.left (cjom.catJudgObj.objMor, cjom.catJudgObj.compType) cjom.compProj)
+  ObjMorCompProj.left cjom.compProj
 
 /-- Access the right morphism projection from bundled category judgment data. -/
 abbrev CatJudgObjMor.right.{u, v, w, x} (cjom : CatJudgObjMor.{u, v, w, x}) :
     cjom.compType → cjom.mor :=
-  (ObjMorCompProj.right (cjom.catJudgObj.objMor, cjom.catJudgObj.compType) cjom.compProj)
+  ObjMorCompProj.right cjom.compProj
 
 /-- Access the composite morphism projection from bundled category judgment data. -/
 abbrev CatJudgObjMor.composite.{u, v, w, x} (cjom : CatJudgObjMor.{u, v, w, x}) :
     cjom.compType → cjom.mor :=
-  (ObjMorCompProj.composite (cjom.catJudgObj.objMor, cjom.catJudgObj.compType) cjom.compProj)
+  ObjMorCompProj.composite cjom.compProj
 
 /-- The combined conditions for a category judgment: identity endomorphism and
     all composition conditions must hold. -/
 def CatJudgObjMorCond.{u, v, w, x} (cjom : CatJudgObjMor.{u, v, w, x}) : Prop :=
   ObjMorIdObjMorEndo.{u, v, w}
     ⟨ ⟨cjom.catJudgObj.objMor, cjom.catJudgObj.idType⟩,
-      ⟨cjom.domCod, (CatJudgMor.idMor cjom.catJudgObj cjom.catJudgMor)⟩ ⟩ ∧
+      ⟨cjom.domCod, CatJudgMor.idMor cjom.catJudgMor⟩ ⟩ ∧
   ObjMorCompObjMorCond.{u, v, x}
     ⟨ ⟨cjom.catJudgObj.objMor, cjom.catJudgObj.compType⟩,
       ⟨cjom.domCod, cjom.compProj⟩ ⟩
@@ -513,7 +513,7 @@ abbrev CatJudgCopr.condProof.{u, v, w, x} (cjc : CatJudgCopr.{u, v, w, x}) :
 abbrev CatJudgCopr.endoProof.{u, v, w, x} (cjc : CatJudgCopr.{u, v, w, x}) :
     ObjMorIdObjMorEndo.{u, v, w}
       ⟨ ⟨cjc.data.catJudgObj.objMor, cjc.data.catJudgObj.idType⟩,
-        ⟨cjc.data.domCod, (CatJudgMor.idMor cjc.data.catJudgObj cjc.data.catJudgMor)⟩ ⟩ :=
+        ⟨cjc.data.domCod, CatJudgMor.idMor cjc.data.catJudgMor⟩ ⟩ :=
   cjc.condProof.1
 
 /-- Access the composition conditions proof from a category judgment copresheaf. -/
