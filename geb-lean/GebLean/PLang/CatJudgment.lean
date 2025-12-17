@@ -1,3 +1,5 @@
+import Mathlib.CategoryTheory.Category.Basic
+
 /-!
 # Categorical Judgments for PLang
 
@@ -1130,6 +1132,220 @@ abbrev CatJudgNatTrans.compositeProof.{u₁, v₁, w₁, x₁, u₂, v₂, w₂,
   α.naturalityProof.compositeProof
 
 end Mor
+
+/-! # Category Instances
+
+This namespace provides `Category` instances for the various copresheaf types,
+building incrementally from the simplest (`ObjCopr`/`ObjMap`) to the most
+comprehensive (`CatJudgCopr`/`CatJudgNatTrans`).
+-/
+namespace Cat
+
+/-! ## ObjCopr category (equivalent to Type) -/
+
+/-- Identity morphism for `ObjCopr`. -/
+def ObjMap.id.{u} (F : Obj.ObjCopr.{u}) : Mor.ObjMap.{u, u} F F := _root_.id
+
+/-- Composition of morphisms for `ObjCopr` (diagrammatic order: f then g). -/
+def ObjMap.comp.{u₁, u₂, u₃} {F : Obj.ObjCopr.{u₁}} {G : Obj.ObjCopr.{u₂}}
+    {H : Obj.ObjCopr.{u₃}}
+    (f : Mor.ObjMap.{u₁, u₂} F G) (g : Mor.ObjMap.{u₂, u₃} G H) :
+    Mor.ObjMap.{u₁, u₃} F H :=
+  g ∘ f
+
+/-- Left identity law for `ObjMap`: `id ≫ f = f`. -/
+theorem ObjMap.id_comp.{u₁, u₂} {F : Obj.ObjCopr.{u₁}} {G : Obj.ObjCopr.{u₂}}
+    (f : Mor.ObjMap.{u₁, u₂} F G) :
+    ObjMap.comp (ObjMap.id F) f = f := rfl
+
+/-- Right identity law for `ObjMap`: `f ≫ id = f`. -/
+theorem ObjMap.comp_id.{u₁, u₂} {F : Obj.ObjCopr.{u₁}} {G : Obj.ObjCopr.{u₂}}
+    (f : Mor.ObjMap.{u₁, u₂} F G) :
+    ObjMap.comp f (ObjMap.id G) = f := rfl
+
+/-- Associativity law for `ObjMap`: `(f ≫ g) ≫ h = f ≫ (g ≫ h)`. -/
+theorem ObjMap.comp_assoc.{u₁, u₂, u₃, u₄}
+    {F : Obj.ObjCopr.{u₁}} {G : Obj.ObjCopr.{u₂}}
+    {H : Obj.ObjCopr.{u₃}} {K : Obj.ObjCopr.{u₄}}
+    (f : Mor.ObjMap.{u₁, u₂} F G) (g : Mor.ObjMap.{u₂, u₃} G H)
+    (h : Mor.ObjMap.{u₃, u₄} H K) :
+    ObjMap.comp (ObjMap.comp f g) h = ObjMap.comp f (ObjMap.comp g h) := rfl
+
+/-- Category instance for `ObjCopr` with morphisms `ObjMap`.
+    This is a large category: objects in `Type u`, morphisms in `Type u`. -/
+instance ObjCopr.category.{u} :
+    CategoryTheory.LargeCategory.{u} (Obj.ObjCopr.{u + 1}) where
+  Hom := Mor.ObjMap
+  id := ObjMap.id
+  comp := ObjMap.comp
+  id_comp := ObjMap.id_comp
+  comp_id := ObjMap.comp_id
+  assoc := ObjMap.comp_assoc
+
+/-! ## ObjMorCopr category (quivers) -/
+
+/-- Identity morphism for `ObjMorCopr`: identity on both objects and morphisms. -/
+def ObjMorCoprMap.id.{u, v} (F : Obj.ObjMorCopr.{u, v}) :
+    Mor.ObjMorCoprMap.{u, v, u, v} F F :=
+  ⟨(ObjMap.id F.obj, _root_.id), rfl, rfl⟩
+
+/-- Composition of morphisms for `ObjMorCopr` (diagrammatic order: f then g). -/
+def ObjMorCoprMap.comp.{u₁, v₁, u₂, v₂, u₃, v₃}
+    {F : Obj.ObjMorCopr.{u₁, v₁}} {G : Obj.ObjMorCopr.{u₂, v₂}}
+    {H : Obj.ObjMorCopr.{u₃, v₃}}
+    (f : Mor.ObjMorCoprMap.{u₁, v₁, u₂, v₂} F G)
+    (g : Mor.ObjMorCoprMap.{u₂, v₂, u₃, v₃} G H) :
+    Mor.ObjMorCoprMap.{u₁, v₁, u₃, v₃} F H :=
+  ⟨(ObjMap.comp f.map.objMap g.map.objMap,
+    ObjMap.comp f.map.morMap g.map.morMap),
+   by rw [Mor.NaturalityDom, ObjMap.comp, ObjMap.comp, Function.comp_assoc,
+        f.naturalityProof.domProof, ← Function.comp_assoc,
+        g.naturalityProof.domProof, Function.comp_assoc],
+   by rw [Mor.NaturalityCod, ObjMap.comp, ObjMap.comp, Function.comp_assoc,
+        f.naturalityProof.codProof, ← Function.comp_assoc,
+        g.naturalityProof.codProof, Function.comp_assoc]⟩
+
+/-- Left identity law for `ObjMorCoprMap`: `id ≫ f = f`. -/
+theorem ObjMorCoprMap.id_comp.{u₁, v₁, u₂, v₂}
+    {F : Obj.ObjMorCopr.{u₁, v₁}} {G : Obj.ObjMorCopr.{u₂, v₂}}
+    (f : Mor.ObjMorCoprMap.{u₁, v₁, u₂, v₂} F G) :
+    ObjMorCoprMap.comp (ObjMorCoprMap.id F) f = f := by
+  apply Subtype.ext; apply Prod.ext <;> rfl
+
+/-- Right identity law for `ObjMorCoprMap`: `f ≫ id = f`. -/
+theorem ObjMorCoprMap.comp_id.{u₁, v₁, u₂, v₂}
+    {F : Obj.ObjMorCopr.{u₁, v₁}} {G : Obj.ObjMorCopr.{u₂, v₂}}
+    (f : Mor.ObjMorCoprMap.{u₁, v₁, u₂, v₂} F G) :
+    ObjMorCoprMap.comp f (ObjMorCoprMap.id G) = f := by
+  apply Subtype.ext; apply Prod.ext <;> rfl
+
+/-- Associativity law for `ObjMorCoprMap`: `(f ≫ g) ≫ h = f ≫ (g ≫ h)`. -/
+theorem ObjMorCoprMap.comp_assoc.{u₁, v₁, u₂, v₂, u₃, v₃, u₄, v₄}
+    {F : Obj.ObjMorCopr.{u₁, v₁}} {G : Obj.ObjMorCopr.{u₂, v₂}}
+    {H : Obj.ObjMorCopr.{u₃, v₃}} {K : Obj.ObjMorCopr.{u₄, v₄}}
+    (f : Mor.ObjMorCoprMap.{u₁, v₁, u₂, v₂} F G)
+    (g : Mor.ObjMorCoprMap.{u₂, v₂, u₃, v₃} G H)
+    (h : Mor.ObjMorCoprMap.{u₃, v₃, u₄, v₄} H K) :
+    ObjMorCoprMap.comp (ObjMorCoprMap.comp f g) h =
+    ObjMorCoprMap.comp f (ObjMorCoprMap.comp g h) := by
+  apply Subtype.ext; apply Prod.ext <;> rfl
+
+/-- Category instance for `ObjMorCopr` with morphisms `ObjMorCoprMap`.
+    Objects are in `Type (max u v + 1)`, morphisms in `Type (max u v)`. -/
+instance ObjMorCopr.category.{u, v} :
+    CategoryTheory.LargeCategory.{(max u v) + 1}
+      (Obj.ObjMorCopr.{u + 1, v + 1}) where
+  Hom := Mor.ObjMorCoprMap
+  id := ObjMorCoprMap.id
+  comp := ObjMorCoprMap.comp
+  id_comp := ObjMorCoprMap.id_comp
+  comp_id := ObjMorCoprMap.comp_id
+  assoc := ObjMorCoprMap.comp_assoc
+
+/-! ## CatJudgCopr category (category judgments) -/
+
+/-- Identity mapping for `CatJudgMap`: identity on all components. -/
+def CatJudgMap.id.{u, v, w, x} (F : Obj.CatJudgCopr.{u, v, w, x}) :
+    Mor.CatJudgMap.{u, v, w, x, u, v, w, x} F F :=
+  ((_root_.id, _root_.id), (_root_.id, _root_.id))
+
+/-- Composition of `CatJudgMap` (diagrammatic order: f then g). -/
+def CatJudgMap.comp.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂, u₃, v₃, w₃, x₃}
+    {F : Obj.CatJudgCopr.{u₁, v₁, w₁, x₁}} {G : Obj.CatJudgCopr.{u₂, v₂, w₂, x₂}}
+    {H : Obj.CatJudgCopr.{u₃, v₃, w₃, x₃}}
+    (f : Mor.CatJudgMap.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂} F G)
+    (g : Mor.CatJudgMap.{u₂, v₂, w₂, x₂, u₃, v₃, w₃, x₃} G H) :
+    Mor.CatJudgMap.{u₁, v₁, w₁, x₁, u₃, v₃, w₃, x₃} F H :=
+  ((ObjMap.comp f.objMorMap.objMap g.objMorMap.objMap,
+    ObjMap.comp f.objMorMap.morMap g.objMorMap.morMap),
+   (ObjMap.comp f.idMap g.idMap,
+    ObjMap.comp f.compMap g.compMap))
+
+/-- Identity natural transformation for `CatJudgCopr`. -/
+def CatJudgNatTrans.id.{u, v, w, x} (F : Obj.CatJudgCopr.{u, v, w, x}) :
+    Mor.CatJudgNatTrans.{u, v, w, x, u, v, w, x} F F :=
+  ⟨CatJudgMap.id F, ⟨⟨rfl, rfl⟩, rfl, ⟨rfl, rfl, rfl⟩⟩⟩
+
+/-- Composition of natural transformations for `CatJudgCopr`
+    (diagrammatic order: f then g). -/
+def CatJudgNatTrans.comp.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂, u₃, v₃, w₃, x₃}
+    {F : Obj.CatJudgCopr.{u₁, v₁, w₁, x₁}} {G : Obj.CatJudgCopr.{u₂, v₂, w₂, x₂}}
+    {H : Obj.CatJudgCopr.{u₃, v₃, w₃, x₃}}
+    (f : Mor.CatJudgNatTrans.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂} F G)
+    (g : Mor.CatJudgNatTrans.{u₂, v₂, w₂, x₂, u₃, v₃, w₃, x₃} G H) :
+    Mor.CatJudgNatTrans.{u₁, v₁, w₁, x₁, u₃, v₃, w₃, x₃} F H :=
+  ⟨CatJudgMap.comp f.map g.map,
+   ⟨⟨by simp only [Mor.CatJudgNaturalityDom, CatJudgMap.comp, Mor.CatJudgMap.objMap,
+          Mor.ObjMorMap.objMap, Mor.CatJudgMap.morMap, Mor.ObjMorMap.morMap,
+          ObjMap.comp]
+        rw [Function.comp_assoc, f.domProof, ← Function.comp_assoc,
+            g.domProof, Function.comp_assoc],
+     by simp only [Mor.CatJudgNaturalityCod, CatJudgMap.comp, Mor.CatJudgMap.objMap,
+          Mor.ObjMorMap.objMap, Mor.CatJudgMap.morMap, Mor.ObjMorMap.morMap,
+          ObjMap.comp]
+        rw [Function.comp_assoc, f.codProof, ← Function.comp_assoc,
+            g.codProof, Function.comp_assoc]⟩,
+    by simp only [Mor.CatJudgNaturalityIdMor, CatJudgMap.comp, Mor.CatJudgMap.morMap,
+         Mor.ObjMorMap.morMap, Mor.CatJudgMap.idMap, Mor.CatJudgMap.idCompMap,
+         ObjMap.comp]
+       rw [Function.comp_assoc, f.idMorProof, ← Function.comp_assoc,
+           g.idMorProof, Function.comp_assoc],
+    ⟨by simp only [Mor.CatJudgNaturalityLeft, CatJudgMap.comp, Mor.CatJudgMap.morMap,
+          Mor.ObjMorMap.morMap, Mor.CatJudgMap.compMap, Mor.CatJudgMap.idCompMap,
+          ObjMap.comp]
+        rw [Function.comp_assoc, f.leftProof, ← Function.comp_assoc,
+            g.leftProof, Function.comp_assoc],
+     by simp only [Mor.CatJudgNaturalityRight, CatJudgMap.comp, Mor.CatJudgMap.morMap,
+          Mor.ObjMorMap.morMap, Mor.CatJudgMap.compMap, Mor.CatJudgMap.idCompMap,
+          ObjMap.comp]
+        rw [Function.comp_assoc, f.rightProof, ← Function.comp_assoc,
+            g.rightProof, Function.comp_assoc],
+     by simp only [Mor.CatJudgNaturalityComposite, CatJudgMap.comp,
+          Mor.CatJudgMap.morMap, Mor.ObjMorMap.morMap, Mor.CatJudgMap.compMap,
+          Mor.CatJudgMap.idCompMap, ObjMap.comp]
+        rw [Function.comp_assoc, f.compositeProof, ← Function.comp_assoc,
+            g.compositeProof, Function.comp_assoc]⟩⟩⟩
+
+/-- Left identity law for `CatJudgNatTrans`: `id ≫ f = f`. -/
+theorem CatJudgNatTrans.id_comp.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂}
+    {F : Obj.CatJudgCopr.{u₁, v₁, w₁, x₁}} {G : Obj.CatJudgCopr.{u₂, v₂, w₂, x₂}}
+    (f : Mor.CatJudgNatTrans.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂} F G) :
+    CatJudgNatTrans.comp (CatJudgNatTrans.id F) f = f := by
+  apply Subtype.ext; rfl
+
+/-- Right identity law for `CatJudgNatTrans`: `f ≫ id = f`. -/
+theorem CatJudgNatTrans.comp_id.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂}
+    {F : Obj.CatJudgCopr.{u₁, v₁, w₁, x₁}} {G : Obj.CatJudgCopr.{u₂, v₂, w₂, x₂}}
+    (f : Mor.CatJudgNatTrans.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂} F G) :
+    CatJudgNatTrans.comp f (CatJudgNatTrans.id G) = f := by
+  apply Subtype.ext; rfl
+
+/-- Associativity law for `CatJudgNatTrans`: `(f ≫ g) ≫ h = f ≫ (g ≫ h)`. -/
+theorem CatJudgNatTrans.comp_assoc.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂,
+    u₃, v₃, w₃, x₃, u₄, v₄, w₄, x₄}
+    {F : Obj.CatJudgCopr.{u₁, v₁, w₁, x₁}} {G : Obj.CatJudgCopr.{u₂, v₂, w₂, x₂}}
+    {H : Obj.CatJudgCopr.{u₃, v₃, w₃, x₃}} {K : Obj.CatJudgCopr.{u₄, v₄, w₄, x₄}}
+    (f : Mor.CatJudgNatTrans.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂} F G)
+    (g : Mor.CatJudgNatTrans.{u₂, v₂, w₂, x₂, u₃, v₃, w₃, x₃} G H)
+    (h : Mor.CatJudgNatTrans.{u₃, v₃, w₃, x₃, u₄, v₄, w₄, x₄} H K) :
+    CatJudgNatTrans.comp (CatJudgNatTrans.comp f g) h =
+    CatJudgNatTrans.comp f (CatJudgNatTrans.comp g h) := by
+  apply Subtype.ext; rfl
+
+/-- Category instance for `CatJudgCopr` with morphisms `CatJudgNatTrans`.
+    Objects are in `Type ((max u v w x) + 2)`,
+    morphisms in `Type ((max u v w x) + 1)`. -/
+instance CatJudgCopr.category.{u, v, w, x} :
+    CategoryTheory.LargeCategory.{(max u v w x) + 1}
+      (Obj.CatJudgCopr.{u + 1, v + 1, w + 1, x + 1}) where
+  Hom := Mor.CatJudgNatTrans
+  id := CatJudgNatTrans.id
+  comp := CatJudgNatTrans.comp
+  id_comp := CatJudgNatTrans.id_comp
+  comp_id := CatJudgNatTrans.comp_id
+  assoc := CatJudgNatTrans.comp_assoc
+
+end Cat
 
 end PLang
 
