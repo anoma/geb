@@ -91,6 +91,9 @@ def CatJudgObjMorCond.{u, v, w, x} (cjom : CatJudgObjMor.{u, v, w, x}) : Prop :=
   ObjMorIdObjMorEndo.{u, v, w} ⟨ ⟨cjom.1.1, cjom.1.2.1⟩, ⟨cjom.2.1, cjom.2.2.1⟩⟩ ∧
   ObjMorCompObjMorCond.{u, v, x} ⟨ ⟨cjom.1.1, cjom.1.2.2⟩, ⟨cjom.2.1, cjom.2.2.2⟩⟩
 
+def CatJudgCopr.{u, v, w, x} : Type (max u v w x + 1) :=
+  {cjom : CatJudgObjMor.{u, v, w, x} // CatJudgObjMorCond.{u, v, w, x} cjom}
+
 end PLang
 
 end GebLean
