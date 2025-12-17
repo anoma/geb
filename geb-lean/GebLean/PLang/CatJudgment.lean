@@ -661,17 +661,20 @@ def MorMap.{u₁, v₁, u₂, v₂} (F : Obj.ObjMorObj.{u₁, v₁})
 /-- Object and morphism mappings bundled together. -/
 def ObjMorMap.{u₁, v₁, u₂, v₂} (F : Obj.ObjMorObj.{u₁ + 1, v₁ + 1})
     (G : Obj.ObjMorObj.{u₂ + 1, v₂ + 1}) : Type (max u₁ v₁ u₂ v₂) :=
-  (F.obj → G.obj) × (F.mor → G.mor)
+  ObjMap.{u₁ + 1, u₂ + 1} F.obj G.obj ×
+  MorMap.{u₁ + 1, v₁ + 1, u₂ + 1, v₂ + 1} F G
 
 /-- Access the object mapping. -/
 abbrev ObjMorMap.objMap.{u₁, v₁, u₂, v₂}
     {F : Obj.ObjMorObj.{u₁ + 1, v₁ + 1}} {G : Obj.ObjMorObj.{u₂ + 1, v₂ + 1}}
-    (m : ObjMorMap.{u₁, v₁, u₂, v₂} F G) : F.obj → G.obj := m.1
+    (m : ObjMorMap.{u₁, v₁, u₂, v₂} F G) : ObjMap.{u₁ + 1, u₂ + 1} F.obj G.obj :=
+  m.1
 
 /-- Access the morphism mapping. -/
 abbrev ObjMorMap.morMap.{u₁, v₁, u₂, v₂}
     {F : Obj.ObjMorObj.{u₁ + 1, v₁ + 1}} {G : Obj.ObjMorObj.{u₂ + 1, v₂ + 1}}
-    (m : ObjMorMap.{u₁, v₁, u₂, v₂} F G) : F.mor → G.mor := m.2
+    (m : ObjMorMap.{u₁, v₁, u₂, v₂} F G) :
+    MorMap.{u₁ + 1, v₁ + 1, u₂ + 1, v₂ + 1} F G := m.2
 
 /-! ## Quiver-level naturality (ObjMorCopr) -/
 
@@ -734,7 +737,8 @@ def ObjMorIdMap.{u₁, v₁, w₁, u₂, v₂, w₂}
     (F : Obj.ObjMorIdObj.{u₁ + 1, v₁ + 1, w₁ + 1})
     (G : Obj.ObjMorIdObj.{u₂ + 1, v₂ + 1, w₂ + 1}) :
     Type (max u₁ v₁ w₁ u₂ v₂ w₂) :=
-  ObjMorMap.{u₁, v₁, u₂, v₂} F.objMor G.objMor × (F.idType → G.idType)
+  ObjMorMap.{u₁, v₁, u₂, v₂} F.objMor G.objMor ×
+  IdMap.{u₁ + 1, v₁ + 1, w₁ + 1, u₂ + 1, v₂ + 1, w₂ + 1} F G
 
 /-- Access the object-morphism mapping. -/
 abbrev ObjMorIdMap.objMorMap.{u₁, v₁, w₁, u₂, v₂, w₂}
@@ -747,7 +751,8 @@ abbrev ObjMorIdMap.objMorMap.{u₁, v₁, w₁, u₂, v₂, w₂}
 abbrev ObjMorIdMap.idMap.{u₁, v₁, w₁, u₂, v₂, w₂}
     {F : Obj.ObjMorIdObj.{u₁ + 1, v₁ + 1, w₁ + 1}}
     {G : Obj.ObjMorIdObj.{u₂ + 1, v₂ + 1, w₂ + 1}}
-    (m : ObjMorIdMap.{u₁, v₁, w₁, u₂, v₂, w₂} F G) : F.idType → G.idType := m.2
+    (m : ObjMorIdMap.{u₁, v₁, w₁, u₂, v₂, w₂} F G) :
+    IdMap.{u₁ + 1, v₁ + 1, w₁ + 1, u₂ + 1, v₂ + 1, w₂ + 1} F G := m.2
 
 /-! ## Identity copresheaf-level naturality (ObjMorIdObjMor) -/
 
@@ -772,7 +777,8 @@ def ObjMorCompMap.{u₁, v₁, x₁, u₂, v₂, x₂}
     (F : Obj.ObjMorCompObj.{u₁ + 1, v₁ + 1, x₁ + 1})
     (G : Obj.ObjMorCompObj.{u₂ + 1, v₂ + 1, x₂ + 1}) :
     Type (max u₁ v₁ x₁ u₂ v₂ x₂) :=
-  ObjMorMap.{u₁, v₁, u₂, v₂} F.objMor G.objMor × (F.compType → G.compType)
+  ObjMorMap.{u₁, v₁, u₂, v₂} F.objMor G.objMor ×
+  CompMap.{u₁ + 1, v₁ + 1, x₁ + 1, u₂ + 1, v₂ + 1, x₂ + 1} F G
 
 /-- Access the object-morphism mapping. -/
 abbrev ObjMorCompMap.objMorMap.{u₁, v₁, x₁, u₂, v₂, x₂}
@@ -786,7 +792,7 @@ abbrev ObjMorCompMap.compMap.{u₁, v₁, x₁, u₂, v₂, x₂}
     {F : Obj.ObjMorCompObj.{u₁ + 1, v₁ + 1, x₁ + 1}}
     {G : Obj.ObjMorCompObj.{u₂ + 1, v₂ + 1, x₂ + 1}}
     (m : ObjMorCompMap.{u₁, v₁, x₁, u₂, v₂, x₂} F G) :
-    F.compType → G.compType := m.2
+    CompMap.{u₁ + 1, v₁ + 1, x₁ + 1, u₂ + 1, v₂ + 1, x₂ + 1} F G := m.2
 
 /-! ## Composition copresheaf-level naturality (ObjMorCompObjMor) -/
 
@@ -851,8 +857,9 @@ abbrev NaturalityLRC.compositeProof.{u₁, v₁, x₁, u₂, v₂, x₂}
 def CatJudgMap.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂}
     (F : Obj.CatJudgCopr.{u₁, v₁, w₁, x₁}) (G : Obj.CatJudgCopr.{u₂, v₂, w₂, x₂}) :
     Type (max u₁ v₁ w₁ x₁ u₂ v₂ w₂ x₂) :=
-  ObjMorMap.{u₁, v₁, u₂, v₂} F.data.catJudgObj.objMor G.data.catJudgObj.objMor ×
-  (F.idType → G.idType) × (F.compType → G.compType)
+  ObjMorMap F.data.catJudgObj.objMor G.data.catJudgObj.objMor ×
+  IdMap F.data.catJudgObj.toObjMorIdObj G.data.catJudgObj.toObjMorIdObj ×
+  CompMap F.data.catJudgObj.toObjMorCompObj G.data.catJudgObj.toObjMorCompObj
 
 /-- Access the object-morphism mapping. -/
 abbrev CatJudgMap.objMorMap.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂}
@@ -865,17 +872,23 @@ abbrev CatJudgMap.objMorMap.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂}
 abbrev CatJudgMap.idCompMap.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂}
     {F : Obj.CatJudgCopr.{u₁, v₁, w₁, x₁}} {G : Obj.CatJudgCopr.{u₂, v₂, w₂, x₂}}
     (m : CatJudgMap F G) :
-    (F.idType → G.idType) × (F.compType → G.compType) := m.2
+    IdMap F.data.catJudgObj.toObjMorIdObj G.data.catJudgObj.toObjMorIdObj ×
+    CompMap F.data.catJudgObj.toObjMorCompObj G.data.catJudgObj.toObjMorCompObj :=
+  m.2
 
 /-- Access the identity witness mapping. -/
 abbrev CatJudgMap.idMap.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂}
     {F : Obj.CatJudgCopr.{u₁, v₁, w₁, x₁}} {G : Obj.CatJudgCopr.{u₂, v₂, w₂, x₂}}
-    (m : CatJudgMap F G) : F.idType → G.idType := m.idCompMap.1
+    (m : CatJudgMap F G) :
+    IdMap F.data.catJudgObj.toObjMorIdObj G.data.catJudgObj.toObjMorIdObj :=
+  m.idCompMap.1
 
 /-- Access the composition witness mapping. -/
 abbrev CatJudgMap.compMap.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂}
     {F : Obj.CatJudgCopr.{u₁, v₁, w₁, x₁}} {G : Obj.CatJudgCopr.{u₂, v₂, w₂, x₂}}
-    (m : CatJudgMap F G) : F.compType → G.compType := m.idCompMap.2
+    (m : CatJudgMap F G) :
+    CompMap F.data.catJudgObj.toObjMorCompObj G.data.catJudgObj.toObjMorCompObj :=
+  m.idCompMap.2
 
 /-- Access the object mapping. -/
 abbrev CatJudgMap.objMap.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂}
