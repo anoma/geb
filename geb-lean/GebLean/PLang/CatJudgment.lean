@@ -710,7 +710,8 @@ abbrev NaturalityDomCod.codProof.{u₁, v₁, u₂, v₂}
 
 /-- A quiver morphism: object-morphism mapping with naturality. -/
 def ObjMorCoprMap.{u₁, v₁, u₂, v₂}
-    (F : Obj.ObjMorCopr.{u₁, v₁}) (G : Obj.ObjMorCopr.{u₂, v₂}) :=
+    (F : Obj.ObjMorCopr.{u₁, v₁}) (G : Obj.ObjMorCopr.{u₂, v₂}) :
+    Type (max u₁ v₁ u₂ v₂) :=
   {m : ObjMorMap.{u₁, v₁, u₂, v₂} F.objMor G.objMor // NaturalityDomCod m}
 
 /-- Access the underlying mapping from a quiver morphism. -/
@@ -1052,7 +1053,8 @@ abbrev CatJudgNaturalityAll.compositeProof.{u₁, v₁, w₁, x₁, u₂, v₂, 
 /-- A natural transformation between category-judgment copresheaves:
     all component mappings satisfying all naturality conditions. -/
 def CatJudgNatTrans.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂}
-    (F : Obj.CatJudgCopr.{u₁, v₁, w₁, x₁}) (G : Obj.CatJudgCopr.{u₂, v₂, w₂, x₂}) :=
+    (F : Obj.CatJudgCopr.{u₁, v₁, w₁, x₁}) (G : Obj.CatJudgCopr.{u₂, v₂, w₂, x₂}) :
+    Type (max u₁ v₁ w₁ x₁ u₂ v₂ w₂ x₂) :=
   {m : CatJudgMap F G // CatJudgNaturalityAll m}
 
 /-- Access the underlying mapping data from a natural transformation. -/
