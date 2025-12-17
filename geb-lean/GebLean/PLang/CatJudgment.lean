@@ -646,6 +646,246 @@ end Obj
 
 namespace Mor
 
+/-- The application functions on objects and morphisms for a natural
+    transformation between category-judgment copresheaves. -/
+def AppObjMor (F G : Obj.CatJudgCopr) :=
+  (F.obj → G.obj) × (F.mor → G.mor)
+
+/-- Access the object application function. -/
+abbrev AppObjMor.appObj {F G : Obj.CatJudgCopr} (a : AppObjMor F G) :
+    F.obj → G.obj := a.1
+
+/-- Access the morphism application function. -/
+abbrev AppObjMor.appMor {F G : Obj.CatJudgCopr} (a : AppObjMor F G) :
+    F.mor → G.mor := a.2
+
+/-- The application functions on identity and composition witnesses. -/
+def AppIdComp (F G : Obj.CatJudgCopr) :=
+  (F.idType → G.idType) × (F.compType → G.compType)
+
+/-- Access the identity witness application function. -/
+abbrev AppIdComp.appId {F G : Obj.CatJudgCopr} (a : AppIdComp F G) :
+    F.idType → G.idType := a.1
+
+/-- Access the composition witness application function. -/
+abbrev AppIdComp.appComp {F G : Obj.CatJudgCopr} (a : AppIdComp F G) :
+    F.compType → G.compType := a.2
+
+/-- All four application functions bundled together. -/
+def AppAll (F G : Obj.CatJudgCopr) := AppObjMor F G × AppIdComp F G
+
+/-- Access the object-morphism application pair. -/
+abbrev AppAll.appObjMor {F G : Obj.CatJudgCopr} (a : AppAll F G) :
+    AppObjMor F G := a.1
+
+/-- Access the identity-composition application pair. -/
+abbrev AppAll.appIdComp {F G : Obj.CatJudgCopr} (a : AppAll F G) :
+    AppIdComp F G := a.2
+
+/-- Access the object application function. -/
+abbrev AppAll.appObj {F G : Obj.CatJudgCopr} (a : AppAll F G) :
+    F.obj → G.obj := a.appObjMor.appObj
+
+/-- Access the morphism application function. -/
+abbrev AppAll.appMor {F G : Obj.CatJudgCopr} (a : AppAll F G) :
+    F.mor → G.mor := a.appObjMor.appMor
+
+/-- Access the identity witness application function. -/
+abbrev AppAll.appId {F G : Obj.CatJudgCopr} (a : AppAll F G) :
+    F.idType → G.idType := a.appIdComp.appId
+
+/-- Access the composition witness application function. -/
+abbrev AppAll.appComp {F G : Obj.CatJudgCopr} (a : AppAll F G) :
+    F.compType → G.compType := a.appIdComp.appComp
+
+/-- Naturality condition for the domain function:
+    `appObj ∘ F.dom = G.dom ∘ appMor`. -/
+def NaturalityDom {F G : Obj.CatJudgCopr} (a : AppObjMor F G) : Prop :=
+  a.appObj ∘ F.dom = G.dom ∘ a.appMor
+
+/-- Naturality condition for the codomain function:
+    `appObj ∘ F.cod = G.cod ∘ appMor`. -/
+def NaturalityCod {F G : Obj.CatJudgCopr} (a : AppObjMor F G) : Prop :=
+  a.appObj ∘ F.cod = G.cod ∘ a.appMor
+
+/-- Combined naturality conditions for domain and codomain. -/
+def NaturalityDomCod {F G : Obj.CatJudgCopr} (a : AppObjMor F G) : Prop :=
+  NaturalityDom a ∧ NaturalityCod a
+
+/-- Access the domain naturality proof. -/
+abbrev NaturalityDomCod.domProof {F G : Obj.CatJudgCopr} {a : AppObjMor F G}
+    (n : NaturalityDomCod a) : NaturalityDom a := n.1
+
+/-- Access the codomain naturality proof. -/
+abbrev NaturalityDomCod.codProof {F G : Obj.CatJudgCopr} {a : AppObjMor F G}
+    (n : NaturalityDomCod a) : NaturalityCod a := n.2
+
+/-- Naturality condition for the identity morphism function:
+    `appMor ∘ F.idMor = G.idMor ∘ appId`. -/
+def NaturalityIdMor {F G : Obj.CatJudgCopr} (aom : AppObjMor F G)
+    (aic : AppIdComp F G) : Prop :=
+  aom.appMor ∘ F.idMor = G.idMor ∘ aic.appId
+
+/-- Naturality condition for the left morphism projection:
+    `appMor ∘ F.left = G.left ∘ appComp`. -/
+def NaturalityLeft {F G : Obj.CatJudgCopr} (aom : AppObjMor F G)
+    (aic : AppIdComp F G) : Prop :=
+  aom.appMor ∘ F.left = G.left ∘ aic.appComp
+
+/-- Naturality condition for the right morphism projection:
+    `appMor ∘ F.right = G.right ∘ appComp`. -/
+def NaturalityRight {F G : Obj.CatJudgCopr} (aom : AppObjMor F G)
+    (aic : AppIdComp F G) : Prop :=
+  aom.appMor ∘ F.right = G.right ∘ aic.appComp
+
+/-- Naturality condition for the composite morphism projection:
+    `appMor ∘ F.composite = G.composite ∘ appComp`. -/
+def NaturalityComposite {F G : Obj.CatJudgCopr} (aom : AppObjMor F G)
+    (aic : AppIdComp F G) : Prop :=
+  aom.appMor ∘ F.composite = G.composite ∘ aic.appComp
+
+/-- Combined naturality conditions for left, right, and composite. -/
+def NaturalityLRC {F G : Obj.CatJudgCopr} (aom : AppObjMor F G)
+    (aic : AppIdComp F G) : Prop :=
+  NaturalityLeft aom aic ∧ NaturalityRight aom aic ∧ NaturalityComposite aom aic
+
+/-- Access the left naturality proof. -/
+abbrev NaturalityLRC.leftProof {F G : Obj.CatJudgCopr} {aom : AppObjMor F G}
+    {aic : AppIdComp F G} (n : NaturalityLRC aom aic) :
+    NaturalityLeft aom aic := n.1
+
+/-- Access the right and composite naturality proofs. -/
+abbrev NaturalityLRC.rightCompositeProof {F G : Obj.CatJudgCopr}
+    {aom : AppObjMor F G} {aic : AppIdComp F G} (n : NaturalityLRC aom aic) :
+    NaturalityRight aom aic ∧ NaturalityComposite aom aic := n.2
+
+/-- Access the right naturality proof. -/
+abbrev NaturalityLRC.rightProof {F G : Obj.CatJudgCopr} {aom : AppObjMor F G}
+    {aic : AppIdComp F G} (n : NaturalityLRC aom aic) :
+    NaturalityRight aom aic := n.rightCompositeProof.1
+
+/-- Access the composite naturality proof. -/
+abbrev NaturalityLRC.compositeProof {F G : Obj.CatJudgCopr}
+    {aom : AppObjMor F G} {aic : AppIdComp F G} (n : NaturalityLRC aom aic) :
+    NaturalityComposite aom aic := n.rightCompositeProof.2
+
+/-- All naturality conditions for a natural transformation. -/
+def NaturalityAll {F G : Obj.CatJudgCopr} (a : AppAll F G) : Prop :=
+  NaturalityDomCod a.appObjMor ∧
+  NaturalityIdMor a.appObjMor a.appIdComp ∧
+  NaturalityLRC a.appObjMor a.appIdComp
+
+/-- Access the domain/codomain naturality proofs. -/
+abbrev NaturalityAll.domCodProof {F G : Obj.CatJudgCopr} {a : AppAll F G}
+    (n : NaturalityAll a) : NaturalityDomCod a.appObjMor := n.1
+
+/-- Access the identity and composition naturality proofs. -/
+abbrev NaturalityAll.idCompProof {F G : Obj.CatJudgCopr} {a : AppAll F G}
+    (n : NaturalityAll a) :
+    NaturalityIdMor a.appObjMor a.appIdComp ∧
+    NaturalityLRC a.appObjMor a.appIdComp := n.2
+
+/-- Access the identity morphism naturality proof. -/
+abbrev NaturalityAll.idMorProof {F G : Obj.CatJudgCopr} {a : AppAll F G}
+    (n : NaturalityAll a) : NaturalityIdMor a.appObjMor a.appIdComp :=
+  n.idCompProof.1
+
+/-- Access the left/right/composite naturality proofs. -/
+abbrev NaturalityAll.lrcProof {F G : Obj.CatJudgCopr} {a : AppAll F G}
+    (n : NaturalityAll a) : NaturalityLRC a.appObjMor a.appIdComp :=
+  n.idCompProof.2
+
+/-- Access the domain naturality proof. -/
+abbrev NaturalityAll.domProof {F G : Obj.CatJudgCopr} {a : AppAll F G}
+    (n : NaturalityAll a) : NaturalityDom a.appObjMor :=
+  n.domCodProof.domProof
+
+/-- Access the codomain naturality proof. -/
+abbrev NaturalityAll.codProof {F G : Obj.CatJudgCopr} {a : AppAll F G}
+    (n : NaturalityAll a) : NaturalityCod a.appObjMor :=
+  n.domCodProof.codProof
+
+/-- Access the left naturality proof. -/
+abbrev NaturalityAll.leftProof {F G : Obj.CatJudgCopr} {a : AppAll F G}
+    (n : NaturalityAll a) : NaturalityLeft a.appObjMor a.appIdComp :=
+  n.lrcProof.leftProof
+
+/-- Access the right naturality proof. -/
+abbrev NaturalityAll.rightProof {F G : Obj.CatJudgCopr} {a : AppAll F G}
+    (n : NaturalityAll a) : NaturalityRight a.appObjMor a.appIdComp :=
+  n.lrcProof.rightProof
+
+/-- Access the composite naturality proof. -/
+abbrev NaturalityAll.compositeProof {F G : Obj.CatJudgCopr} {a : AppAll F G}
+    (n : NaturalityAll a) : NaturalityComposite a.appObjMor a.appIdComp :=
+  n.lrcProof.compositeProof
+
+/-- A natural transformation between category-judgment copresheaves:
+    application functions satisfying all naturality conditions. -/
+def CatJudgNatTrans (F G : Obj.CatJudgCopr) :=
+  {a : AppAll F G // NaturalityAll a}
+
+/-- Access the underlying application data from a natural transformation. -/
+abbrev CatJudgNatTrans.data {F G : Obj.CatJudgCopr}
+    (α : CatJudgNatTrans F G) : AppAll F G := α.val
+
+/-- Access the naturality proof from a natural transformation. -/
+abbrev CatJudgNatTrans.naturalityProof {F G : Obj.CatJudgCopr}
+    (α : CatJudgNatTrans F G) : NaturalityAll α.data := α.property
+
+/-- Access the object application function from a natural transformation. -/
+abbrev CatJudgNatTrans.appObj {F G : Obj.CatJudgCopr}
+    (α : CatJudgNatTrans F G) : F.obj → G.obj := α.data.appObj
+
+/-- Access the morphism application function from a natural transformation. -/
+abbrev CatJudgNatTrans.appMor {F G : Obj.CatJudgCopr}
+    (α : CatJudgNatTrans F G) : F.mor → G.mor := α.data.appMor
+
+/-- Access the identity witness application function from a natural
+    transformation. -/
+abbrev CatJudgNatTrans.appId {F G : Obj.CatJudgCopr}
+    (α : CatJudgNatTrans F G) : F.idType → G.idType := α.data.appId
+
+/-- Access the composition witness application function from a natural
+    transformation. -/
+abbrev CatJudgNatTrans.appComp {F G : Obj.CatJudgCopr}
+    (α : CatJudgNatTrans F G) : F.compType → G.compType := α.data.appComp
+
+/-- Access the domain naturality proof from a natural transformation. -/
+abbrev CatJudgNatTrans.domProof {F G : Obj.CatJudgCopr}
+    (α : CatJudgNatTrans F G) : NaturalityDom α.data.appObjMor :=
+  α.naturalityProof.domProof
+
+/-- Access the codomain naturality proof from a natural transformation. -/
+abbrev CatJudgNatTrans.codProof {F G : Obj.CatJudgCopr}
+    (α : CatJudgNatTrans F G) : NaturalityCod α.data.appObjMor :=
+  α.naturalityProof.codProof
+
+/-- Access the identity morphism naturality proof from a natural
+    transformation. -/
+abbrev CatJudgNatTrans.idMorProof {F G : Obj.CatJudgCopr}
+    (α : CatJudgNatTrans F G) :
+    NaturalityIdMor α.data.appObjMor α.data.appIdComp :=
+  α.naturalityProof.idMorProof
+
+/-- Access the left naturality proof from a natural transformation. -/
+abbrev CatJudgNatTrans.leftProof {F G : Obj.CatJudgCopr}
+    (α : CatJudgNatTrans F G) :
+    NaturalityLeft α.data.appObjMor α.data.appIdComp :=
+  α.naturalityProof.leftProof
+
+/-- Access the right naturality proof from a natural transformation. -/
+abbrev CatJudgNatTrans.rightProof {F G : Obj.CatJudgCopr}
+    (α : CatJudgNatTrans F G) :
+    NaturalityRight α.data.appObjMor α.data.appIdComp :=
+  α.naturalityProof.rightProof
+
+/-- Access the composite naturality proof from a natural transformation. -/
+abbrev CatJudgNatTrans.compositeProof {F G : Obj.CatJudgCopr}
+    (α : CatJudgNatTrans F G) :
+    NaturalityComposite α.data.appObjMor α.data.appIdComp :=
+  α.naturalityProof.compositeProof
+
 end Mor
 
 end PLang
