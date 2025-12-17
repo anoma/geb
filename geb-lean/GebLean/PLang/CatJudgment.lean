@@ -1,4 +1,5 @@
 import Mathlib.CategoryTheory.Category.Basic
+import Mathlib.CategoryTheory.Functor.Basic
 
 /-!
 # Categorical Judgments for PLang
@@ -1344,6 +1345,82 @@ instance CatJudgCopr.category.{u, v, w, x} :
   id_comp := CatJudgNatTrans.id_comp
   comp_id := CatJudgNatTrans.comp_id
   assoc := CatJudgNatTrans.comp_assoc
+
+/-! ## Forgetful functors -/
+
+/-- Object mapping for the forgetful functor from `ObjMorCopr` to `ObjCopr`.
+    Maps to `ObjCopr.{u + 1}` since `ObjMorCopr.{u, v}.obj : Type u = Sort (u + 1)`. -/
+def forgetObjMorToObj.obj.{u, v} (F : Obj.ObjMorCopr.{u + 1, v + 1}) :
+    Obj.ObjCopr.{u + 2} :=
+  F.obj
+
+/-- Morphism mapping for the forgetful functor from `ObjMorCopr` to `ObjCopr`. -/
+def forgetObjMorToObj.map.{u, v}
+    {F G : Obj.ObjMorCopr.{u + 1, v + 1}}
+    (f : Mor.ObjMorCoprMap.{u + 1, v + 1, u + 1, v + 1} F G) :
+    Mor.ObjMap.{u + 2, u + 2} (forgetObjMorToObj.obj F) (forgetObjMorToObj.obj G) :=
+  f.map.objMap
+
+/-- The forgetful functor from `ObjMorCopr` to `ObjCopr`:
+    forgets the morphism structure, keeping only the object type. -/
+def forgetObjMorToObj.{u, v} :
+    _root_.CategoryTheory.Functor
+      (Obj.ObjMorCopr.{u + 1, v + 1})
+      (Obj.ObjCopr.{u + 2}) where
+  obj := forgetObjMorToObj.obj
+  map := forgetObjMorToObj.map
+  map_id := fun _ => rfl
+  map_comp := fun _ _ => rfl
+
+/-- Object mapping for the forgetful functor from `CatJudgCopr` to `ObjMorCopr`. -/
+def forgetCatJudgToObjMor.obj.{u, v, w, x}
+    (F : Obj.CatJudgCopr.{u + 1, v + 1, w + 1, x + 1}) :
+    Obj.ObjMorCopr.{u + 1, v + 1} :=
+  ⟨F.data.catJudgObj.objMor, F.data.catJudgMor.domCod⟩
+
+/-- Morphism mapping for the forgetful functor from `CatJudgCopr` to `ObjMorCopr`. -/
+def forgetCatJudgToObjMor.map.{u, v, w, x}
+    {F G : Obj.CatJudgCopr.{u + 1, v + 1, w + 1, x + 1}}
+    (f : Mor.CatJudgNatTrans.{u + 1, v + 1, w + 1, x + 1, u + 1, v + 1, w + 1, x + 1} F G) :
+    Mor.ObjMorCoprMap.{u + 1, v + 1, u + 1, v + 1}
+      (forgetCatJudgToObjMor.obj F) (forgetCatJudgToObjMor.obj G) :=
+  ⟨f.map.objMorMap, f.domProof, f.codProof⟩
+
+/-- The forgetful functor from `CatJudgCopr` to `ObjMorCopr`:
+    forgets identity and composition structure, keeping objects and morphisms. -/
+def forgetCatJudgToObjMor.{u, v, w, x} :
+    _root_.CategoryTheory.Functor
+      (Obj.CatJudgCopr.{u + 1, v + 1, w + 1, x + 1})
+      (Obj.ObjMorCopr.{u + 1, v + 1}) where
+  obj := forgetCatJudgToObjMor.obj
+  map := forgetCatJudgToObjMor.map
+  map_id := fun _ => by apply Subtype.ext; rfl
+  map_comp := fun _ _ => by apply Subtype.ext; rfl
+
+/-- Object mapping for the forgetful functor from `CatJudgCopr` to `ObjCopr`.
+    Maps to `ObjCopr.{u + 2}` since `CatJudgCopr.{u+1, v+1, w+1, x+1}.obj : Type (u+1)`. -/
+def forgetCatJudgToObj.obj.{u, v, w, x}
+    (F : Obj.CatJudgCopr.{u + 1, v + 1, w + 1, x + 1}) :
+    Obj.ObjCopr.{u + 2} :=
+  F.obj
+
+/-- Morphism mapping for the forgetful functor from `CatJudgCopr` to `ObjCopr`. -/
+def forgetCatJudgToObj.map.{u, v, w, x}
+    {F G : Obj.CatJudgCopr.{u + 1, v + 1, w + 1, x + 1}}
+    (f : Mor.CatJudgNatTrans.{u + 1, v + 1, w + 1, x + 1, u + 1, v + 1, w + 1, x + 1} F G) :
+    Mor.ObjMap.{u + 2, u + 2} (forgetCatJudgToObj.obj F) (forgetCatJudgToObj.obj G) :=
+  f.objMap
+
+/-- The forgetful functor from `CatJudgCopr` to `ObjCopr`:
+    forgets all structure except the object type. -/
+def forgetCatJudgToObj.{u, v, w, x} :
+    _root_.CategoryTheory.Functor
+      (Obj.CatJudgCopr.{u + 1, v + 1, w + 1, x + 1})
+      (Obj.ObjCopr.{u + 2}) where
+  obj := forgetCatJudgToObj.obj
+  map := forgetCatJudgToObj.map
+  map_id := fun _ => rfl
+  map_comp := fun _ _ => rfl
 
 end Cat
 
