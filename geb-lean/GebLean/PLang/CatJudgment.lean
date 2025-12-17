@@ -49,8 +49,20 @@ def ObjMorCompMor.{u, v, w} (omi : ObjMorIdObj.{u + 1, v + 1, w + 1}) :
   Type (max u v w) :=
     ObjMorMor.{u, v} omi.1 ×
     (CompProj.{u + 1, v + 1, w + 1} omi.1 omi.2 × -- .1 = left
-     CompProj.{u + 1, v + 1, w + 1} omi.1 omi.2 × -- .2 = right
-     CompProj.{u + 1, v + 1, w + 1} omi.1 omi.2)  -- .3 = composite
+     CompProj.{u + 1, v + 1, w + 1} omi.1 omi.2 × -- .2.1 = right
+     CompProj.{u + 1, v + 1, w + 1} omi.1 omi.2)  -- .2.2 = composite
+
+def ObjMorCompObjMor.{u, v, w} : Type (max u v w + 1) :=
+  Σ (omc : ObjMorCompObj.{u + 1, v + 1, w + 1}), ObjMorCompMor.{u, v, w} omc
+
+def ObjMorCompObjMorMatch.{u, v, w} (omcm : ObjMorCompObjMor.{u, v, w} ) : Prop :=
+  omcm.2.1.2 ∘ omcm.2.2.2.1 = omcm.2.1.1 ∘ omcm.2.2.1
+
+def ObjMorCompObjMorCompDom.{u, v, w} (omcm : ObjMorCompObjMor.{u, v, w} ) : Prop :=
+  omcm.2.1.1 ∘ omcm.2.2.2.2 = omcm.2.1.1 ∘ omcm.2.2.2.1
+
+def ObjMorCompObjMorCompCod.{u, v, w} (omcm : ObjMorCompObjMor.{u, v, w} ) : Prop :=
+  omcm.2.1.2 ∘ omcm.2.2.2.2 = omcm.2.1.2 ∘ omcm.2.2.1
 
 end PLang
 
