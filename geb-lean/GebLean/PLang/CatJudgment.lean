@@ -33,7 +33,7 @@ def ObjMorIdMor.{u, v, w} (omi : ObjMorIdObj.{u + 1, v + 1, w + 1}) :
 def ObjMorIdObjMor.{u, v, w} : Type (max u v w + 1) :=
   Σ (omi : ObjMorIdObj.{u + 1, v + 1, w + 1}), ObjMorIdMor.{u, v, w} omi
 
-def ObjMorIdObjMorEndo.{u, v, w} (omim : ObjMorIdObjMor.{u, v, w} ) : Prop :=
+def ObjMorIdObjMorEndo.{u, v, w} (omim : ObjMorIdObjMor.{u, v, w}) : Prop :=
   omim.2.1.1 ∘ omim.2.2 = omim.2.1.2 ∘ omim.2.2
 
 def ObjMorIdCopr.{u, v, w} : Type (max u v w + 1) :=

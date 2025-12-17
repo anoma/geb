@@ -702,16 +702,16 @@ variable {C : Type*} [Category C]
 abbrev JudgmentFunctors (C : Type*) [Category C] := Obj ⥤ C
 
 /-- The category of copresheaves on CategoryJudgments (functors to Type). -/
-abbrev JudgmentCopresheaves.{u} := Obj ⥤ Type u
+abbrev JudgmentCopresheaves.{v, u} : Type (max v (u + 1)) := Obj ⥤ Type u
 
 /-- Construct an object in the functor category from FunctorData. -/
 abbrev mkJudgmentFunctor (data : FunctorData C) : JudgmentFunctors C :=
   mkFunctor data
 
 /-- Construct an object in the copresheaf category from CopresheafData. -/
-abbrev mkJudgmentCopresheaf.{u} (data : CopresheafData.{u}) :
-    JudgmentCopresheaves.{u} :=
-  mkCopresheaf data
+abbrev mkJudgmentCopresheaf.{v, u} (data : CopresheafData.{u}) :
+    JudgmentCopresheaves.{v, u} :=
+  mkCopresheaf.{u, v} data
 
 end CategoryCopresheafCorrespondence
 
