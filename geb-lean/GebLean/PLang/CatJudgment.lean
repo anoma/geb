@@ -649,14 +649,14 @@ namespace Mor
 /-! ## Object-level mappings -/
 
 /-- A mapping between object types. -/
-def ObjMap.{u₁, u₂} (F : Obj.ObjCopr.{u₁ + 1}) (G : Obj.ObjCopr.{u₂ + 1}) :
-    Type (max u₁ u₂) := F → G
+def ObjMap.{u₁, u₂} (F : Obj.ObjCopr.{u₁}) (G : Obj.ObjCopr.{u₂}) :
+    Sort (imax u₁ u₂) := F → G
 
 /-! ## Object-morphism-level mappings -/
 
 /-- A mapping between morphism types. -/
-def MorMap.{u₁, v₁, u₂, v₂} (F : Obj.ObjMorObj.{u₁ + 1, v₁ + 1})
-    (G : Obj.ObjMorObj.{u₂ + 1, v₂ + 1}) : Type (max v₁ v₂) := F.mor → G.mor
+def MorMap.{u₁, v₁, u₂, v₂} (F : Obj.ObjMorObj.{u₁, v₁})
+    (G : Obj.ObjMorObj.{u₂, v₂}) : Sort (imax v₁ v₂) := F.mor → G.mor
 
 /-- Object and morphism mappings bundled together. -/
 def ObjMorMap.{u₁, v₁, u₂, v₂} (F : Obj.ObjMorObj.{u₁ + 1, v₁ + 1})
