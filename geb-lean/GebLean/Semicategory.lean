@@ -184,14 +184,14 @@ open CategoryTheory
 /-- Morphisms in the category obtained by adjoining identities to a
     semicategory. A morphism is either an identity or a morphism
     from the underlying semicategory. -/
-inductive AdjoinedIdHom.{w, x} {V : Type w} [Semicategory.{w, x} V] :
-    V → V → Type (max w x) where
+inductive AdjoinedIdHom {V : Type u} [Semicategory.{u, u} V] :
+    V → V → Type u where
   | id (a : V) : AdjoinedIdHom a a
   | hom {a b : V} (f : a ⟶ b) : AdjoinedIdHom a b
 
 namespace AdjoinedIdHom
 
-variable {V : Type u} [Semicategory.{u, v} V]
+variable {V : Type u} [Semicategory.{u, u} V]
 
 /-- Compose two morphisms with adjoined identities. -/
 def comp {a b c : V} : AdjoinedIdHom a b → AdjoinedIdHom b c →
@@ -306,8 +306,8 @@ end AdjoinedIdHom
 
 /-- The category structure obtained by adjoining identities to a
     semicategory. -/
-instance adjoinedIdCategory {V : Type u} [Semicategory.{u, v} V] :
-    Category.{max u v, u} V where
+instance adjoinedIdCategory {V : Type u} [Semicategory.{u, u} V] :
+    Category V where
   Hom := AdjoinedIdHom
   id a := AdjoinedIdHom.id a
   comp := AdjoinedIdHom.comp
