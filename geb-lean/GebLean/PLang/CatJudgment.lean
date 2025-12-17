@@ -334,6 +334,28 @@ def ObjMorCompObjMorCond.{u, v, w} (omcm : ObjMorCompObjMor.{u, v, w}) : Prop :=
   ObjMorCompObjMorCompDom.{u, v, w} omcm ∧
   ObjMorCompObjMorCompCod.{u, v, w} omcm
 
+/-- Access the composability proof from composition conditions. -/
+abbrev ObjMorCompObjMorCond.matchProof.{u, v, w} {omcm : ObjMorCompObjMor.{u, v, w}}
+    (cond : ObjMorCompObjMorCond.{u, v, w} omcm) : ObjMorCompObjMorMatch omcm :=
+  cond.1
+
+/-- Access the domain and codomain preservation proofs from composition
+    conditions. -/
+abbrev ObjMorCompObjMorCond.domCodProof.{u, v, w} {omcm : ObjMorCompObjMor.{u, v, w}}
+    (cond : ObjMorCompObjMorCond.{u, v, w} omcm) :
+    ObjMorCompObjMorCompDom omcm ∧ ObjMorCompObjMorCompCod omcm :=
+  cond.2
+
+/-- Access the domain preservation proof from composition conditions. -/
+abbrev ObjMorCompObjMorCond.domProof.{u, v, w} {omcm : ObjMorCompObjMor.{u, v, w}}
+    (cond : ObjMorCompObjMorCond.{u, v, w} omcm) : ObjMorCompObjMorCompDom omcm :=
+  cond.domCodProof.1
+
+/-- Access the codomain preservation proof from composition conditions. -/
+abbrev ObjMorCompObjMorCond.codProof.{u, v, w} {omcm : ObjMorCompObjMor.{u, v, w}}
+    (cond : ObjMorCompObjMorCond.{u, v, w} omcm) : ObjMorCompObjMorCompCod omcm :=
+  cond.domCodProof.2
+
 /-- A quiver with composition structure satisfying all composition conditions.
     This is a subtype ensuring the composition data is well-formed. -/
 def ObjMorCompCopr.{u, v, w} : Type (max u v w + 1) :=
@@ -349,15 +371,15 @@ abbrev ObjMorCompCopr.condProof.{u, v, w} (omcc : ObjMorCompCopr.{u, v, w}) :
 
 /-- Access the composability proof from a composition copresheaf. -/
 abbrev ObjMorCompCopr.matchProof.{u, v, w} (omcc : ObjMorCompCopr.{u, v, w}) :
-    ObjMorCompObjMorMatch omcc.data := omcc.condProof.1
+    ObjMorCompObjMorMatch omcc.data := omcc.condProof.matchProof
 
 /-- Access the domain preservation proof from a composition copresheaf. -/
 abbrev ObjMorCompCopr.domProof.{u, v, w} (omcc : ObjMorCompCopr.{u, v, w}) :
-    ObjMorCompObjMorCompDom omcc.data := omcc.condProof.2.1
+    ObjMorCompObjMorCompDom omcc.data := omcc.condProof.domProof
 
 /-- Access the codomain preservation proof from a composition copresheaf. -/
 abbrev ObjMorCompCopr.codProof.{u, v, w} (omcc : ObjMorCompCopr.{u, v, w}) :
-    ObjMorCompObjMorCompCod omcc.data := omcc.condProof.2.2
+    ObjMorCompObjMorCompCod omcc.data := omcc.condProof.codProof
 
 /-- The object types for a full category judgment: object type, morphism type,
     identity witness type, and composition witness type. -/
@@ -497,6 +519,22 @@ def CatJudgObjMorCond.{u, v, w, x} (cjom : CatJudgObjMor.{u, v, w, x}) : Prop :=
     ⟨ ⟨cjom.catJudgObj.objMor, cjom.catJudgObj.compType⟩,
       ⟨cjom.domCod, cjom.compProj⟩ ⟩
 
+/-- Access the identity endomorphism proof from category judgment conditions. -/
+abbrev CatJudgObjMorCond.endoProof.{u, v, w, x} {cjom : CatJudgObjMor.{u, v, w, x}}
+    (cond : CatJudgObjMorCond.{u, v, w, x} cjom) :
+    ObjMorIdObjMorEndo.{u, v, w}
+      ⟨ ⟨cjom.catJudgObj.objMor, cjom.catJudgObj.idType⟩,
+        ⟨cjom.domCod, CatJudgMor.idMor cjom.catJudgMor⟩ ⟩ :=
+  cond.1
+
+/-- Access the composition conditions proof from category judgment conditions. -/
+abbrev CatJudgObjMorCond.compCondProof.{u, v, w, x} {cjom : CatJudgObjMor.{u, v, w, x}}
+    (cond : CatJudgObjMorCond.{u, v, w, x} cjom) :
+    ObjMorCompObjMorCond.{u, v, x}
+      ⟨ ⟨cjom.catJudgObj.objMor, cjom.catJudgObj.compType⟩,
+        ⟨cjom.domCod, cjom.compProj⟩ ⟩ :=
+  cond.2
+
 /-- A full category-judgment copresheaf: all data satisfying all conditions. -/
 def CatJudgCopr.{u, v, w, x} : Type (max u v w x + 1) :=
   {cjom : CatJudgObjMor.{u, v, w, x} // CatJudgObjMorCond.{u, v, w, x} cjom}
@@ -514,35 +552,35 @@ abbrev CatJudgCopr.endoProof.{u, v, w, x} (cjc : CatJudgCopr.{u, v, w, x}) :
     ObjMorIdObjMorEndo.{u, v, w}
       ⟨ ⟨cjc.data.catJudgObj.objMor, cjc.data.catJudgObj.idType⟩,
         ⟨cjc.data.domCod, CatJudgMor.idMor cjc.data.catJudgMor⟩ ⟩ :=
-  cjc.condProof.1
+  cjc.condProof.endoProof
 
 /-- Access the composition conditions proof from a category judgment copresheaf. -/
 abbrev CatJudgCopr.compCondProof.{u, v, w, x} (cjc : CatJudgCopr.{u, v, w, x}) :
     ObjMorCompObjMorCond.{u, v, x}
       ⟨ ⟨cjc.data.catJudgObj.objMor, cjc.data.catJudgObj.compType⟩,
         ⟨cjc.data.domCod, cjc.data.compProj⟩ ⟩ :=
-  cjc.condProof.2
+  cjc.condProof.compCondProof
 
 /-- Access the composability proof from a category judgment copresheaf. -/
 abbrev CatJudgCopr.compMatchProof.{u, v, w, x} (cjc : CatJudgCopr.{u, v, w, x}) :
     ObjMorCompObjMorMatch.{u, v, x}
       ⟨ ⟨cjc.data.catJudgObj.objMor, cjc.data.catJudgObj.compType⟩,
         ⟨cjc.data.domCod, cjc.data.compProj⟩ ⟩ :=
-  cjc.compCondProof.1
+  cjc.compCondProof.matchProof
 
 /-- Access the domain preservation proof from a category judgment copresheaf. -/
 abbrev CatJudgCopr.compDomProof.{u, v, w, x} (cjc : CatJudgCopr.{u, v, w, x}) :
     ObjMorCompObjMorCompDom.{u, v, x}
       ⟨ ⟨cjc.data.catJudgObj.objMor, cjc.data.catJudgObj.compType⟩,
         ⟨cjc.data.domCod, cjc.data.compProj⟩ ⟩ :=
-  cjc.compCondProof.2.1
+  cjc.compCondProof.domProof
 
 /-- Access the codomain preservation proof from a category judgment copresheaf. -/
 abbrev CatJudgCopr.compCodProof.{u, v, w, x} (cjc : CatJudgCopr.{u, v, w, x}) :
     ObjMorCompObjMorCompCod.{u, v, x}
       ⟨ ⟨cjc.data.catJudgObj.objMor, cjc.data.catJudgObj.compType⟩,
         ⟨cjc.data.domCod, cjc.data.compProj⟩ ⟩ :=
-  cjc.compCondProof.2.2
+  cjc.compCondProof.codProof
 
 /-- Access the object type from a category judgment copresheaf. -/
 abbrev CatJudgCopr.obj.{u, v, w, x} (cjc : CatJudgCopr.{u, v, w, x}) :
