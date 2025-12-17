@@ -649,391 +649,462 @@ namespace Mor
 /-! ## Object-level mappings -/
 
 /-- A mapping between object types. -/
-def ObjMap.{u} (F G : Obj.ObjCopr.{u + 1}) : Type u := F → G
+def ObjMap.{u₁, u₂} (F : Obj.ObjCopr.{u₁ + 1}) (G : Obj.ObjCopr.{u₂ + 1}) :
+    Type (max u₁ u₂) := F → G
 
 /-! ## Object-morphism-level mappings -/
 
 /-- A mapping between morphism types. -/
-def MorMap.{u, v} (F G : Obj.ObjMorObj.{u + 1, v + 1}) : Type v := F.mor → G.mor
+def MorMap.{u₁, v₁, u₂, v₂} (F : Obj.ObjMorObj.{u₁ + 1, v₁ + 1})
+    (G : Obj.ObjMorObj.{u₂ + 1, v₂ + 1}) : Type (max v₁ v₂) := F.mor → G.mor
 
 /-- Object and morphism mappings bundled together. -/
-def ObjMorMap.{u, v} (F G : Obj.ObjMorObj.{u + 1, v + 1}) :
-    Type (max u v) :=
+def ObjMorMap.{u₁, v₁, u₂, v₂} (F : Obj.ObjMorObj.{u₁ + 1, v₁ + 1})
+    (G : Obj.ObjMorObj.{u₂ + 1, v₂ + 1}) : Type (max u₁ v₁ u₂ v₂) :=
   (F.obj → G.obj) × (F.mor → G.mor)
 
 /-- Access the object mapping. -/
-abbrev ObjMorMap.objMap.{u, v} {F G : Obj.ObjMorObj.{u + 1, v + 1}}
-    (m : ObjMorMap.{u, v} F G) : F.obj → G.obj := m.1
+abbrev ObjMorMap.objMap.{u₁, v₁, u₂, v₂}
+    {F : Obj.ObjMorObj.{u₁ + 1, v₁ + 1}} {G : Obj.ObjMorObj.{u₂ + 1, v₂ + 1}}
+    (m : ObjMorMap.{u₁, v₁, u₂, v₂} F G) : F.obj → G.obj := m.1
 
 /-- Access the morphism mapping. -/
-abbrev ObjMorMap.morMap.{u, v} {F G : Obj.ObjMorObj.{u + 1, v + 1}}
-    (m : ObjMorMap.{u, v} F G) : F.mor → G.mor := m.2
+abbrev ObjMorMap.morMap.{u₁, v₁, u₂, v₂}
+    {F : Obj.ObjMorObj.{u₁ + 1, v₁ + 1}} {G : Obj.ObjMorObj.{u₂ + 1, v₂ + 1}}
+    (m : ObjMorMap.{u₁, v₁, u₂, v₂} F G) : F.mor → G.mor := m.2
 
 /-! ## Quiver-level naturality (ObjMorCopr) -/
 
 /-- Naturality condition for domain: `objMap ∘ F.dom = G.dom ∘ morMap`. -/
-def NaturalityDom.{u, v} {F G : Obj.ObjMorCopr.{u, v}}
-    (m : ObjMorMap.{u, v} F.objMor G.objMor) : Prop :=
+def NaturalityDom.{u₁, v₁, u₂, v₂}
+    {F : Obj.ObjMorCopr.{u₁, v₁}} {G : Obj.ObjMorCopr.{u₂, v₂}}
+    (m : ObjMorMap.{u₁, v₁, u₂, v₂} F.objMor G.objMor) : Prop :=
   m.objMap ∘ F.dom = G.dom ∘ m.morMap
 
 /-- Naturality condition for codomain: `objMap ∘ F.cod = G.cod ∘ morMap`. -/
-def NaturalityCod.{u, v} {F G : Obj.ObjMorCopr.{u, v}}
-    (m : ObjMorMap.{u, v} F.objMor G.objMor) : Prop :=
+def NaturalityCod.{u₁, v₁, u₂, v₂}
+    {F : Obj.ObjMorCopr.{u₁, v₁}} {G : Obj.ObjMorCopr.{u₂, v₂}}
+    (m : ObjMorMap.{u₁, v₁, u₂, v₂} F.objMor G.objMor) : Prop :=
   m.objMap ∘ F.cod = G.cod ∘ m.morMap
 
 /-- Combined naturality conditions for domain and codomain. -/
-def NaturalityDomCod.{u, v} {F G : Obj.ObjMorCopr.{u, v}}
-    (m : ObjMorMap.{u, v} F.objMor G.objMor) : Prop :=
+def NaturalityDomCod.{u₁, v₁, u₂, v₂}
+    {F : Obj.ObjMorCopr.{u₁, v₁}} {G : Obj.ObjMorCopr.{u₂, v₂}}
+    (m : ObjMorMap.{u₁, v₁, u₂, v₂} F.objMor G.objMor) : Prop :=
   NaturalityDom m ∧ NaturalityCod m
 
 /-- Access the domain naturality proof. -/
-abbrev NaturalityDomCod.domProof.{u, v} {F G : Obj.ObjMorCopr.{u, v}}
-    {m : ObjMorMap.{u, v} F.objMor G.objMor} (n : NaturalityDomCod m) :
-    NaturalityDom m := n.1
+abbrev NaturalityDomCod.domProof.{u₁, v₁, u₂, v₂}
+    {F : Obj.ObjMorCopr.{u₁, v₁}} {G : Obj.ObjMorCopr.{u₂, v₂}}
+    {m : ObjMorMap.{u₁, v₁, u₂, v₂} F.objMor G.objMor}
+    (n : NaturalityDomCod m) : NaturalityDom m := n.1
 
 /-- Access the codomain naturality proof. -/
-abbrev NaturalityDomCod.codProof.{u, v} {F G : Obj.ObjMorCopr.{u, v}}
-    {m : ObjMorMap.{u, v} F.objMor G.objMor} (n : NaturalityDomCod m) :
-    NaturalityCod m := n.2
+abbrev NaturalityDomCod.codProof.{u₁, v₁, u₂, v₂}
+    {F : Obj.ObjMorCopr.{u₁, v₁}} {G : Obj.ObjMorCopr.{u₂, v₂}}
+    {m : ObjMorMap.{u₁, v₁, u₂, v₂} F.objMor G.objMor}
+    (n : NaturalityDomCod m) : NaturalityCod m := n.2
 
 /-- A quiver morphism: object-morphism mapping with naturality. -/
-def ObjMorCoprMap.{u, v} (F G : Obj.ObjMorCopr.{u, v}) :=
-  {m : ObjMorMap.{u, v} F.objMor G.objMor // NaturalityDomCod m}
+def ObjMorCoprMap.{u₁, v₁, u₂, v₂}
+    (F : Obj.ObjMorCopr.{u₁, v₁}) (G : Obj.ObjMorCopr.{u₂, v₂}) :=
+  {m : ObjMorMap.{u₁, v₁, u₂, v₂} F.objMor G.objMor // NaturalityDomCod m}
 
 /-- Access the underlying mapping from a quiver morphism. -/
-abbrev ObjMorCoprMap.map.{u, v} {F G : Obj.ObjMorCopr.{u, v}}
-    (m : ObjMorCoprMap.{u, v} F G) : ObjMorMap F.objMor G.objMor := m.val
+abbrev ObjMorCoprMap.map.{u₁, v₁, u₂, v₂}
+    {F : Obj.ObjMorCopr.{u₁, v₁}} {G : Obj.ObjMorCopr.{u₂, v₂}}
+    (m : ObjMorCoprMap.{u₁, v₁, u₂, v₂} F G) : ObjMorMap F.objMor G.objMor :=
+  m.val
 
 /-- Access the naturality proof from a quiver morphism. -/
-abbrev ObjMorCoprMap.naturalityProof.{u, v} {F G : Obj.ObjMorCopr.{u, v}}
+abbrev ObjMorCoprMap.naturalityProof.{u₁, v₁, u₂, v₂}
+    {F : Obj.ObjMorCopr.{u₁, v₁}} {G : Obj.ObjMorCopr.{u₂, v₂}}
     (m : ObjMorCoprMap F G) : NaturalityDomCod m.map := m.property
 
 /-! ## Identity-level mappings (ObjMorIdObj) -/
 
 /-- A mapping between identity witness types. -/
-def IdMap.{u, v, w} (F G : Obj.ObjMorIdObj.{u + 1, v + 1, w + 1}) : Type w :=
+def IdMap.{u₁, v₁, w₁, u₂, v₂, w₂}
+    (F : Obj.ObjMorIdObj.{u₁ + 1, v₁ + 1, w₁ + 1})
+    (G : Obj.ObjMorIdObj.{u₂ + 1, v₂ + 1, w₂ + 1}) : Type (max w₁ w₂) :=
   F.idType → G.idType
 
 /-- Object-morphism mapping extended with identity witness mapping. -/
-def ObjMorIdMap.{u, v, w} (F G : Obj.ObjMorIdObj.{u + 1, v + 1, w + 1}) :
-    Type (max u v w) :=
-  ObjMorMap.{u, v} F.objMor G.objMor × (F.idType → G.idType)
+def ObjMorIdMap.{u₁, v₁, w₁, u₂, v₂, w₂}
+    (F : Obj.ObjMorIdObj.{u₁ + 1, v₁ + 1, w₁ + 1})
+    (G : Obj.ObjMorIdObj.{u₂ + 1, v₂ + 1, w₂ + 1}) :
+    Type (max u₁ v₁ w₁ u₂ v₂ w₂) :=
+  ObjMorMap.{u₁, v₁, u₂, v₂} F.objMor G.objMor × (F.idType → G.idType)
 
 /-- Access the object-morphism mapping. -/
-abbrev ObjMorIdMap.objMorMap.{u, v, w}
-    {F G : Obj.ObjMorIdObj.{u + 1, v + 1, w + 1}} (m : ObjMorIdMap.{u, v, w} F G) :
-    ObjMorMap.{u, v} F.objMor G.objMor := m.1
+abbrev ObjMorIdMap.objMorMap.{u₁, v₁, w₁, u₂, v₂, w₂}
+    {F : Obj.ObjMorIdObj.{u₁ + 1, v₁ + 1, w₁ + 1}}
+    {G : Obj.ObjMorIdObj.{u₂ + 1, v₂ + 1, w₂ + 1}}
+    (m : ObjMorIdMap.{u₁, v₁, w₁, u₂, v₂, w₂} F G) :
+    ObjMorMap.{u₁, v₁, u₂, v₂} F.objMor G.objMor := m.1
 
 /-- Access the identity witness mapping. -/
-abbrev ObjMorIdMap.idMap.{u, v, w}
-    {F G : Obj.ObjMorIdObj.{u + 1, v + 1, w + 1}} (m : ObjMorIdMap.{u, v, w} F G) :
-    F.idType → G.idType := m.2
+abbrev ObjMorIdMap.idMap.{u₁, v₁, w₁, u₂, v₂, w₂}
+    {F : Obj.ObjMorIdObj.{u₁ + 1, v₁ + 1, w₁ + 1}}
+    {G : Obj.ObjMorIdObj.{u₂ + 1, v₂ + 1, w₂ + 1}}
+    (m : ObjMorIdMap.{u₁, v₁, w₁, u₂, v₂, w₂} F G) : F.idType → G.idType := m.2
 
 /-! ## Identity copresheaf-level naturality (ObjMorIdObjMor) -/
 
 /-- Naturality condition for identity morphism:
     `morMap ∘ F.idMor = G.idMor ∘ idMap`. -/
-def NaturalityIdMor.{u, v, w} {F G : Obj.ObjMorIdObjMor.{u, v, w}}
-    (m : ObjMorIdMap.{u, v, w} F.objMorIdObj G.objMorIdObj) : Prop :=
+def NaturalityIdMor.{u₁, v₁, w₁, u₂, v₂, w₂}
+    {F : Obj.ObjMorIdObjMor.{u₁, v₁, w₁}} {G : Obj.ObjMorIdObjMor.{u₂, v₂, w₂}}
+    (m : ObjMorIdMap.{u₁, v₁, w₁, u₂, v₂, w₂} F.objMorIdObj G.objMorIdObj) :
+    Prop :=
   m.objMorMap.morMap ∘ F.idMor = G.idMor ∘ m.idMap
 
 /-! ## Composition-level mappings (ObjMorCompObj) -/
 
 /-- A mapping between composition witness types. -/
-def CompMap.{u, v, x} (F G : Obj.ObjMorCompObj.{u + 1, v + 1, x + 1}) : Type x :=
+def CompMap.{u₁, v₁, x₁, u₂, v₂, x₂}
+    (F : Obj.ObjMorCompObj.{u₁ + 1, v₁ + 1, x₁ + 1})
+    (G : Obj.ObjMorCompObj.{u₂ + 1, v₂ + 1, x₂ + 1}) : Type (max x₁ x₂) :=
   F.compType → G.compType
 
 /-- Object-morphism mapping extended with composition witness mapping. -/
-def ObjMorCompMap.{u, v, x} (F G : Obj.ObjMorCompObj.{u + 1, v + 1, x + 1}) :
-    Type (max u v x) :=
-  ObjMorMap.{u, v} F.objMor G.objMor × (F.compType → G.compType)
+def ObjMorCompMap.{u₁, v₁, x₁, u₂, v₂, x₂}
+    (F : Obj.ObjMorCompObj.{u₁ + 1, v₁ + 1, x₁ + 1})
+    (G : Obj.ObjMorCompObj.{u₂ + 1, v₂ + 1, x₂ + 1}) :
+    Type (max u₁ v₁ x₁ u₂ v₂ x₂) :=
+  ObjMorMap.{u₁, v₁, u₂, v₂} F.objMor G.objMor × (F.compType → G.compType)
 
 /-- Access the object-morphism mapping. -/
-abbrev ObjMorCompMap.objMorMap.{u, v, x}
-    {F G : Obj.ObjMorCompObj.{u + 1, v + 1, x + 1}}
-    (m : ObjMorCompMap.{u, v, x} F G) : ObjMorMap.{u, v} F.objMor G.objMor := m.1
+abbrev ObjMorCompMap.objMorMap.{u₁, v₁, x₁, u₂, v₂, x₂}
+    {F : Obj.ObjMorCompObj.{u₁ + 1, v₁ + 1, x₁ + 1}}
+    {G : Obj.ObjMorCompObj.{u₂ + 1, v₂ + 1, x₂ + 1}}
+    (m : ObjMorCompMap.{u₁, v₁, x₁, u₂, v₂, x₂} F G) :
+    ObjMorMap.{u₁, v₁, u₂, v₂} F.objMor G.objMor := m.1
 
 /-- Access the composition witness mapping. -/
-abbrev ObjMorCompMap.compMap.{u, v, x}
-    {F G : Obj.ObjMorCompObj.{u + 1, v + 1, x + 1}} (m : ObjMorCompMap.{u, v, x} F G) :
+abbrev ObjMorCompMap.compMap.{u₁, v₁, x₁, u₂, v₂, x₂}
+    {F : Obj.ObjMorCompObj.{u₁ + 1, v₁ + 1, x₁ + 1}}
+    {G : Obj.ObjMorCompObj.{u₂ + 1, v₂ + 1, x₂ + 1}}
+    (m : ObjMorCompMap.{u₁, v₁, x₁, u₂, v₂, x₂} F G) :
     F.compType → G.compType := m.2
 
 /-! ## Composition copresheaf-level naturality (ObjMorCompObjMor) -/
 
 /-- Naturality condition for left projection:
     `morMap ∘ F.left = G.left ∘ compMap`. -/
-def NaturalityLeft.{u, v, x} {F G : Obj.ObjMorCompObjMor.{u, v, x}}
-    (m : ObjMorCompMap.{u, v, x} F.objMorCompObj G.objMorCompObj) : Prop :=
+def NaturalityLeft.{u₁, v₁, x₁, u₂, v₂, x₂}
+    {F : Obj.ObjMorCompObjMor.{u₁, v₁, x₁}} {G : Obj.ObjMorCompObjMor.{u₂, v₂, x₂}}
+    (m : ObjMorCompMap.{u₁, v₁, x₁, u₂, v₂, x₂}
+      F.objMorCompObj G.objMorCompObj) : Prop :=
   m.objMorMap.morMap ∘ F.left = G.left ∘ m.compMap
 
 /-- Naturality condition for right projection:
     `morMap ∘ F.right = G.right ∘ compMap`. -/
-def NaturalityRight.{u, v, x} {F G : Obj.ObjMorCompObjMor.{u, v, x}}
-    (m : ObjMorCompMap.{u, v, x} F.objMorCompObj G.objMorCompObj) : Prop :=
+def NaturalityRight.{u₁, v₁, x₁, u₂, v₂, x₂}
+    {F : Obj.ObjMorCompObjMor.{u₁, v₁, x₁}} {G : Obj.ObjMorCompObjMor.{u₂, v₂, x₂}}
+    (m : ObjMorCompMap.{u₁, v₁, x₁, u₂, v₂, x₂}
+      F.objMorCompObj G.objMorCompObj) : Prop :=
   m.objMorMap.morMap ∘ F.right = G.right ∘ m.compMap
 
 /-- Naturality condition for composite projection:
     `morMap ∘ F.composite = G.composite ∘ compMap`. -/
-def NaturalityComposite.{u, v, x} {F G : Obj.ObjMorCompObjMor.{u, v, x}}
-    (m : ObjMorCompMap.{u, v, x} F.objMorCompObj G.objMorCompObj) : Prop :=
+def NaturalityComposite.{u₁, v₁, x₁, u₂, v₂, x₂}
+    {F : Obj.ObjMorCompObjMor.{u₁, v₁, x₁}} {G : Obj.ObjMorCompObjMor.{u₂, v₂, x₂}}
+    (m : ObjMorCompMap.{u₁, v₁, x₁, u₂, v₂, x₂}
+      F.objMorCompObj G.objMorCompObj) : Prop :=
   m.objMorMap.morMap ∘ F.composite = G.composite ∘ m.compMap
 
 /-- Combined naturality for left, right, and composite. -/
-def NaturalityLRC.{u, v, x} {F G : Obj.ObjMorCompObjMor.{u, v, x}}
-    (m : ObjMorCompMap.{u, v, x} F.objMorCompObj G.objMorCompObj) : Prop :=
+def NaturalityLRC.{u₁, v₁, x₁, u₂, v₂, x₂}
+    {F : Obj.ObjMorCompObjMor.{u₁, v₁, x₁}} {G : Obj.ObjMorCompObjMor.{u₂, v₂, x₂}}
+    (m : ObjMorCompMap.{u₁, v₁, x₁, u₂, v₂, x₂}
+      F.objMorCompObj G.objMorCompObj) : Prop :=
   NaturalityLeft m ∧ NaturalityRight m ∧ NaturalityComposite m
 
 /-- Access the left naturality proof. -/
-abbrev NaturalityLRC.leftProof.{u, v, x} {F G : Obj.ObjMorCompObjMor.{u, v, x}}
-    {m : ObjMorCompMap.{u, v, x} F.objMorCompObj G.objMorCompObj}
+abbrev NaturalityLRC.leftProof.{u₁, v₁, x₁, u₂, v₂, x₂}
+    {F : Obj.ObjMorCompObjMor.{u₁, v₁, x₁}} {G : Obj.ObjMorCompObjMor.{u₂, v₂, x₂}}
+    {m : ObjMorCompMap.{u₁, v₁, x₁, u₂, v₂, x₂} F.objMorCompObj G.objMorCompObj}
     (n : NaturalityLRC m) : NaturalityLeft m := n.1
 
 /-- Access the right and composite naturality proofs. -/
-abbrev NaturalityLRC.rightCompositeProof.{u, v, x}
-    {F G : Obj.ObjMorCompObjMor.{u, v, x}}
-    {m : ObjMorCompMap.{u, v, x} F.objMorCompObj G.objMorCompObj}
+abbrev NaturalityLRC.rightCompositeProof.{u₁, v₁, x₁, u₂, v₂, x₂}
+    {F : Obj.ObjMorCompObjMor.{u₁, v₁, x₁}} {G : Obj.ObjMorCompObjMor.{u₂, v₂, x₂}}
+    {m : ObjMorCompMap.{u₁, v₁, x₁, u₂, v₂, x₂} F.objMorCompObj G.objMorCompObj}
     (n : NaturalityLRC m) : NaturalityRight m ∧ NaturalityComposite m := n.2
 
 /-- Access the right naturality proof. -/
-abbrev NaturalityLRC.rightProof.{u, v, x} {F G : Obj.ObjMorCompObjMor.{u, v, x}}
-    {m : ObjMorCompMap.{u, v, x} F.objMorCompObj G.objMorCompObj}
+abbrev NaturalityLRC.rightProof.{u₁, v₁, x₁, u₂, v₂, x₂}
+    {F : Obj.ObjMorCompObjMor.{u₁, v₁, x₁}} {G : Obj.ObjMorCompObjMor.{u₂, v₂, x₂}}
+    {m : ObjMorCompMap.{u₁, v₁, x₁, u₂, v₂, x₂} F.objMorCompObj G.objMorCompObj}
     (n : NaturalityLRC m) : NaturalityRight m := n.rightCompositeProof.1
 
 /-- Access the composite naturality proof. -/
-abbrev NaturalityLRC.compositeProof.{u, v, x}
-    {F G : Obj.ObjMorCompObjMor.{u, v, x}}
-    {m : ObjMorCompMap.{u, v, x} F.objMorCompObj G.objMorCompObj}
+abbrev NaturalityLRC.compositeProof.{u₁, v₁, x₁, u₂, v₂, x₂}
+    {F : Obj.ObjMorCompObjMor.{u₁, v₁, x₁}} {G : Obj.ObjMorCompObjMor.{u₂, v₂, x₂}}
+    {m : ObjMorCompMap.{u₁, v₁, x₁, u₂, v₂, x₂} F.objMorCompObj G.objMorCompObj}
     (n : NaturalityLRC m) : NaturalityComposite m := n.rightCompositeProof.2
 
 /-! ## Full category judgment mappings (CatJudgCopr) -/
 
 /-- All four component mappings for a category judgment morphism. -/
-def CatJudgMap.{u, v, w, x} (F G : Obj.CatJudgCopr.{u, v, w, x}) :
-    Type (max u v w x) :=
-  ObjMorMap.{u, v} F.data.catJudgObj.objMor G.data.catJudgObj.objMor ×
+def CatJudgMap.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂}
+    (F : Obj.CatJudgCopr.{u₁, v₁, w₁, x₁}) (G : Obj.CatJudgCopr.{u₂, v₂, w₂, x₂}) :
+    Type (max u₁ v₁ w₁ x₁ u₂ v₂ w₂ x₂) :=
+  ObjMorMap.{u₁, v₁, u₂, v₂} F.data.catJudgObj.objMor G.data.catJudgObj.objMor ×
   (F.idType → G.idType) × (F.compType → G.compType)
 
 /-- Access the object-morphism mapping. -/
-abbrev CatJudgMap.objMorMap.{u, v, w, x} {F G : Obj.CatJudgCopr.{u, v, w, x}}
+abbrev CatJudgMap.objMorMap.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂}
+    {F : Obj.CatJudgCopr.{u₁, v₁, w₁, x₁}} {G : Obj.CatJudgCopr.{u₂, v₂, w₂, x₂}}
     (m : CatJudgMap F G) :
-    ObjMorMap.{u, v} F.data.catJudgObj.objMor G.data.catJudgObj.objMor := m.1
+    ObjMorMap.{u₁, v₁, u₂, v₂} F.data.catJudgObj.objMor G.data.catJudgObj.objMor :=
+  m.1
 
 /-- Access the identity and composition mappings. -/
-abbrev CatJudgMap.idCompMap.{u, v, w, x} {F G : Obj.CatJudgCopr.{u, v, w, x}}
+abbrev CatJudgMap.idCompMap.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂}
+    {F : Obj.CatJudgCopr.{u₁, v₁, w₁, x₁}} {G : Obj.CatJudgCopr.{u₂, v₂, w₂, x₂}}
     (m : CatJudgMap F G) :
     (F.idType → G.idType) × (F.compType → G.compType) := m.2
 
 /-- Access the identity witness mapping. -/
-abbrev CatJudgMap.idMap.{u, v, w, x} {F G : Obj.CatJudgCopr.{u, v, w, x}}
+abbrev CatJudgMap.idMap.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂}
+    {F : Obj.CatJudgCopr.{u₁, v₁, w₁, x₁}} {G : Obj.CatJudgCopr.{u₂, v₂, w₂, x₂}}
     (m : CatJudgMap F G) : F.idType → G.idType := m.idCompMap.1
 
 /-- Access the composition witness mapping. -/
-abbrev CatJudgMap.compMap.{u, v, w, x} {F G : Obj.CatJudgCopr.{u, v, w, x}}
+abbrev CatJudgMap.compMap.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂}
+    {F : Obj.CatJudgCopr.{u₁, v₁, w₁, x₁}} {G : Obj.CatJudgCopr.{u₂, v₂, w₂, x₂}}
     (m : CatJudgMap F G) : F.compType → G.compType := m.idCompMap.2
 
 /-- Access the object mapping. -/
-abbrev CatJudgMap.objMap.{u, v, w, x} {F G : Obj.CatJudgCopr.{u, v, w, x}}
+abbrev CatJudgMap.objMap.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂}
+    {F : Obj.CatJudgCopr.{u₁, v₁, w₁, x₁}} {G : Obj.CatJudgCopr.{u₂, v₂, w₂, x₂}}
     (m : CatJudgMap F G) : F.obj → G.obj := m.objMorMap.objMap
 
 /-- Access the morphism mapping. -/
-abbrev CatJudgMap.morMap.{u, v, w, x} {F G : Obj.CatJudgCopr.{u, v, w, x}}
+abbrev CatJudgMap.morMap.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂}
+    {F : Obj.CatJudgCopr.{u₁, v₁, w₁, x₁}} {G : Obj.CatJudgCopr.{u₂, v₂, w₂, x₂}}
     (m : CatJudgMap F G) : F.mor → G.mor := m.objMorMap.morMap
 
 /-! ## Naturality conditions for full category judgment morphisms -/
 
 /-- Naturality condition for domain at the CatJudgCopr level. -/
-def CatJudgNaturalityDom.{u, v, w, x} {F G : Obj.CatJudgCopr.{u, v, w, x}}
+def CatJudgNaturalityDom.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂}
+    {F : Obj.CatJudgCopr.{u₁, v₁, w₁, x₁}} {G : Obj.CatJudgCopr.{u₂, v₂, w₂, x₂}}
     (m : CatJudgMap F G) : Prop :=
   m.objMap ∘ F.dom = G.dom ∘ m.morMap
 
 /-- Naturality condition for codomain at the CatJudgCopr level. -/
-def CatJudgNaturalityCod.{u, v, w, x} {F G : Obj.CatJudgCopr.{u, v, w, x}}
+def CatJudgNaturalityCod.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂}
+    {F : Obj.CatJudgCopr.{u₁, v₁, w₁, x₁}} {G : Obj.CatJudgCopr.{u₂, v₂, w₂, x₂}}
     (m : CatJudgMap F G) : Prop :=
   m.objMap ∘ F.cod = G.cod ∘ m.morMap
 
 /-- Naturality condition for identity morphism at the CatJudgCopr level. -/
-def CatJudgNaturalityIdMor.{u, v, w, x} {F G : Obj.CatJudgCopr.{u, v, w, x}}
+def CatJudgNaturalityIdMor.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂}
+    {F : Obj.CatJudgCopr.{u₁, v₁, w₁, x₁}} {G : Obj.CatJudgCopr.{u₂, v₂, w₂, x₂}}
     (m : CatJudgMap F G) : Prop :=
   m.morMap ∘ F.idMor = G.idMor ∘ m.idMap
 
 /-- Naturality condition for left projection at the CatJudgCopr level. -/
-def CatJudgNaturalityLeft.{u, v, w, x} {F G : Obj.CatJudgCopr.{u, v, w, x}}
+def CatJudgNaturalityLeft.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂}
+    {F : Obj.CatJudgCopr.{u₁, v₁, w₁, x₁}} {G : Obj.CatJudgCopr.{u₂, v₂, w₂, x₂}}
     (m : CatJudgMap F G) : Prop :=
   m.morMap ∘ F.left = G.left ∘ m.compMap
 
 /-- Naturality condition for right projection at the CatJudgCopr level. -/
-def CatJudgNaturalityRight.{u, v, w, x} {F G : Obj.CatJudgCopr.{u, v, w, x}}
+def CatJudgNaturalityRight.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂}
+    {F : Obj.CatJudgCopr.{u₁, v₁, w₁, x₁}} {G : Obj.CatJudgCopr.{u₂, v₂, w₂, x₂}}
     (m : CatJudgMap F G) : Prop :=
   m.morMap ∘ F.right = G.right ∘ m.compMap
 
 /-- Naturality condition for composite at the CatJudgCopr level. -/
-def CatJudgNaturalityComposite.{u, v, w, x}
-    {F G : Obj.CatJudgCopr.{u, v, w, x}} (m : CatJudgMap F G) : Prop :=
+def CatJudgNaturalityComposite.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂}
+    {F : Obj.CatJudgCopr.{u₁, v₁, w₁, x₁}} {G : Obj.CatJudgCopr.{u₂, v₂, w₂, x₂}}
+    (m : CatJudgMap F G) : Prop :=
   m.morMap ∘ F.composite = G.composite ∘ m.compMap
 
 /-- Combined naturality for domain and codomain. -/
-def CatJudgNaturalityDomCod.{u, v, w, x} {F G : Obj.CatJudgCopr.{u, v, w, x}}
+def CatJudgNaturalityDomCod.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂}
+    {F : Obj.CatJudgCopr.{u₁, v₁, w₁, x₁}} {G : Obj.CatJudgCopr.{u₂, v₂, w₂, x₂}}
     (m : CatJudgMap F G) : Prop :=
   CatJudgNaturalityDom m ∧ CatJudgNaturalityCod m
 
 /-- Access the domain naturality proof. -/
-abbrev CatJudgNaturalityDomCod.domProof.{u, v, w, x}
-    {F G : Obj.CatJudgCopr.{u, v, w, x}} {m : CatJudgMap F G}
-    (n : CatJudgNaturalityDomCod m) : CatJudgNaturalityDom m := n.1
+abbrev CatJudgNaturalityDomCod.domProof.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂}
+    {F : Obj.CatJudgCopr.{u₁, v₁, w₁, x₁}} {G : Obj.CatJudgCopr.{u₂, v₂, w₂, x₂}}
+    {m : CatJudgMap F G} (n : CatJudgNaturalityDomCod m) :
+    CatJudgNaturalityDom m := n.1
 
 /-- Access the codomain naturality proof. -/
-abbrev CatJudgNaturalityDomCod.codProof.{u, v, w, x}
-    {F G : Obj.CatJudgCopr.{u, v, w, x}} {m : CatJudgMap F G}
-    (n : CatJudgNaturalityDomCod m) : CatJudgNaturalityCod m := n.2
+abbrev CatJudgNaturalityDomCod.codProof.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂}
+    {F : Obj.CatJudgCopr.{u₁, v₁, w₁, x₁}} {G : Obj.CatJudgCopr.{u₂, v₂, w₂, x₂}}
+    {m : CatJudgMap F G} (n : CatJudgNaturalityDomCod m) :
+    CatJudgNaturalityCod m := n.2
 
 /-- Combined naturality for left, right, and composite. -/
-def CatJudgNaturalityLRC.{u, v, w, x} {F G : Obj.CatJudgCopr.{u, v, w, x}}
+def CatJudgNaturalityLRC.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂}
+    {F : Obj.CatJudgCopr.{u₁, v₁, w₁, x₁}} {G : Obj.CatJudgCopr.{u₂, v₂, w₂, x₂}}
     (m : CatJudgMap F G) : Prop :=
   CatJudgNaturalityLeft m ∧ CatJudgNaturalityRight m ∧
   CatJudgNaturalityComposite m
 
 /-- Access the left naturality proof. -/
-abbrev CatJudgNaturalityLRC.leftProof.{u, v, w, x}
-    {F G : Obj.CatJudgCopr.{u, v, w, x}} {m : CatJudgMap F G}
-    (n : CatJudgNaturalityLRC m) : CatJudgNaturalityLeft m := n.1
+abbrev CatJudgNaturalityLRC.leftProof.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂}
+    {F : Obj.CatJudgCopr.{u₁, v₁, w₁, x₁}} {G : Obj.CatJudgCopr.{u₂, v₂, w₂, x₂}}
+    {m : CatJudgMap F G} (n : CatJudgNaturalityLRC m) :
+    CatJudgNaturalityLeft m := n.1
 
 /-- Access the right and composite naturality proofs. -/
-abbrev CatJudgNaturalityLRC.rightCompositeProof.{u, v, w, x}
-    {F G : Obj.CatJudgCopr.{u, v, w, x}} {m : CatJudgMap F G}
-    (n : CatJudgNaturalityLRC m) :
+abbrev CatJudgNaturalityLRC.rightCompositeProof.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂}
+    {F : Obj.CatJudgCopr.{u₁, v₁, w₁, x₁}} {G : Obj.CatJudgCopr.{u₂, v₂, w₂, x₂}}
+    {m : CatJudgMap F G} (n : CatJudgNaturalityLRC m) :
     CatJudgNaturalityRight m ∧ CatJudgNaturalityComposite m := n.2
 
 /-- Access the right naturality proof. -/
-abbrev CatJudgNaturalityLRC.rightProof.{u, v, w, x}
-    {F G : Obj.CatJudgCopr.{u, v, w, x}} {m : CatJudgMap F G}
-    (n : CatJudgNaturalityLRC m) : CatJudgNaturalityRight m :=
-  n.rightCompositeProof.1
+abbrev CatJudgNaturalityLRC.rightProof.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂}
+    {F : Obj.CatJudgCopr.{u₁, v₁, w₁, x₁}} {G : Obj.CatJudgCopr.{u₂, v₂, w₂, x₂}}
+    {m : CatJudgMap F G} (n : CatJudgNaturalityLRC m) :
+    CatJudgNaturalityRight m := n.rightCompositeProof.1
 
 /-- Access the composite naturality proof. -/
-abbrev CatJudgNaturalityLRC.compositeProof.{u, v, w, x}
-    {F G : Obj.CatJudgCopr.{u, v, w, x}} {m : CatJudgMap F G}
-    (n : CatJudgNaturalityLRC m) : CatJudgNaturalityComposite m :=
+abbrev CatJudgNaturalityLRC.compositeProof.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂}
+    {F : Obj.CatJudgCopr.{u₁, v₁, w₁, x₁}} {G : Obj.CatJudgCopr.{u₂, v₂, w₂, x₂}}
+    {m : CatJudgMap F G} (n : CatJudgNaturalityLRC m) :
+    CatJudgNaturalityComposite m :=
   n.rightCompositeProof.2
 
 /-- All naturality conditions for a category judgment morphism. -/
-def CatJudgNaturalityAll.{u, v, w, x} {F G : Obj.CatJudgCopr.{u, v, w, x}}
+def CatJudgNaturalityAll.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂}
+    {F : Obj.CatJudgCopr.{u₁, v₁, w₁, x₁}} {G : Obj.CatJudgCopr.{u₂, v₂, w₂, x₂}}
     (m : CatJudgMap F G) : Prop :=
   CatJudgNaturalityDomCod m ∧ CatJudgNaturalityIdMor m ∧ CatJudgNaturalityLRC m
 
 /-- Access the dom/cod naturality proofs. -/
-abbrev CatJudgNaturalityAll.domCodProof.{u, v, w, x}
-    {F G : Obj.CatJudgCopr.{u, v, w, x}} {m : CatJudgMap F G}
-    (n : CatJudgNaturalityAll m) : CatJudgNaturalityDomCod m := n.1
+abbrev CatJudgNaturalityAll.domCodProof.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂}
+    {F : Obj.CatJudgCopr.{u₁, v₁, w₁, x₁}} {G : Obj.CatJudgCopr.{u₂, v₂, w₂, x₂}}
+    {m : CatJudgMap F G} (n : CatJudgNaturalityAll m) :
+    CatJudgNaturalityDomCod m := n.1
 
 /-- Access the identity and composition naturality proofs. -/
-abbrev CatJudgNaturalityAll.idCompProof.{u, v, w, x}
-    {F G : Obj.CatJudgCopr.{u, v, w, x}} {m : CatJudgMap F G}
-    (n : CatJudgNaturalityAll m) :
+abbrev CatJudgNaturalityAll.idCompProof.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂}
+    {F : Obj.CatJudgCopr.{u₁, v₁, w₁, x₁}} {G : Obj.CatJudgCopr.{u₂, v₂, w₂, x₂}}
+    {m : CatJudgMap F G} (n : CatJudgNaturalityAll m) :
     CatJudgNaturalityIdMor m ∧ CatJudgNaturalityLRC m := n.2
 
 /-- Access the identity morphism naturality proof. -/
-abbrev CatJudgNaturalityAll.idMorProof.{u, v, w, x}
-    {F G : Obj.CatJudgCopr.{u, v, w, x}} {m : CatJudgMap F G}
-    (n : CatJudgNaturalityAll m) : CatJudgNaturalityIdMor m := n.idCompProof.1
+abbrev CatJudgNaturalityAll.idMorProof.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂}
+    {F : Obj.CatJudgCopr.{u₁, v₁, w₁, x₁}} {G : Obj.CatJudgCopr.{u₂, v₂, w₂, x₂}}
+    {m : CatJudgMap F G} (n : CatJudgNaturalityAll m) :
+    CatJudgNaturalityIdMor m := n.idCompProof.1
 
 /-- Access the LRC naturality proofs. -/
-abbrev CatJudgNaturalityAll.lrcProof.{u, v, w, x}
-    {F G : Obj.CatJudgCopr.{u, v, w, x}} {m : CatJudgMap F G}
-    (n : CatJudgNaturalityAll m) : CatJudgNaturalityLRC m := n.idCompProof.2
+abbrev CatJudgNaturalityAll.lrcProof.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂}
+    {F : Obj.CatJudgCopr.{u₁, v₁, w₁, x₁}} {G : Obj.CatJudgCopr.{u₂, v₂, w₂, x₂}}
+    {m : CatJudgMap F G} (n : CatJudgNaturalityAll m) :
+    CatJudgNaturalityLRC m := n.idCompProof.2
 
 /-- Access the domain naturality proof. -/
-abbrev CatJudgNaturalityAll.domProof.{u, v, w, x}
-    {F G : Obj.CatJudgCopr.{u, v, w, x}} {m : CatJudgMap F G}
-    (n : CatJudgNaturalityAll m) : CatJudgNaturalityDom m :=
-  n.domCodProof.domProof
+abbrev CatJudgNaturalityAll.domProof.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂}
+    {F : Obj.CatJudgCopr.{u₁, v₁, w₁, x₁}} {G : Obj.CatJudgCopr.{u₂, v₂, w₂, x₂}}
+    {m : CatJudgMap F G} (n : CatJudgNaturalityAll m) :
+    CatJudgNaturalityDom m := n.domCodProof.domProof
 
 /-- Access the codomain naturality proof. -/
-abbrev CatJudgNaturalityAll.codProof.{u, v, w, x}
-    {F G : Obj.CatJudgCopr.{u, v, w, x}} {m : CatJudgMap F G}
-    (n : CatJudgNaturalityAll m) : CatJudgNaturalityCod m :=
-  n.domCodProof.codProof
+abbrev CatJudgNaturalityAll.codProof.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂}
+    {F : Obj.CatJudgCopr.{u₁, v₁, w₁, x₁}} {G : Obj.CatJudgCopr.{u₂, v₂, w₂, x₂}}
+    {m : CatJudgMap F G} (n : CatJudgNaturalityAll m) :
+    CatJudgNaturalityCod m := n.domCodProof.codProof
 
 /-- Access the left naturality proof. -/
-abbrev CatJudgNaturalityAll.leftProof.{u, v, w, x}
-    {F G : Obj.CatJudgCopr.{u, v, w, x}} {m : CatJudgMap F G}
-    (n : CatJudgNaturalityAll m) : CatJudgNaturalityLeft m :=
-  n.lrcProof.leftProof
+abbrev CatJudgNaturalityAll.leftProof.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂}
+    {F : Obj.CatJudgCopr.{u₁, v₁, w₁, x₁}} {G : Obj.CatJudgCopr.{u₂, v₂, w₂, x₂}}
+    {m : CatJudgMap F G} (n : CatJudgNaturalityAll m) :
+    CatJudgNaturalityLeft m := n.lrcProof.leftProof
 
 /-- Access the right naturality proof. -/
-abbrev CatJudgNaturalityAll.rightProof.{u, v, w, x}
-    {F G : Obj.CatJudgCopr.{u, v, w, x}} {m : CatJudgMap F G}
-    (n : CatJudgNaturalityAll m) : CatJudgNaturalityRight m :=
-  n.lrcProof.rightProof
+abbrev CatJudgNaturalityAll.rightProof.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂}
+    {F : Obj.CatJudgCopr.{u₁, v₁, w₁, x₁}} {G : Obj.CatJudgCopr.{u₂, v₂, w₂, x₂}}
+    {m : CatJudgMap F G} (n : CatJudgNaturalityAll m) :
+    CatJudgNaturalityRight m := n.lrcProof.rightProof
 
 /-- Access the composite naturality proof. -/
-abbrev CatJudgNaturalityAll.compositeProof.{u, v, w, x}
-    {F G : Obj.CatJudgCopr.{u, v, w, x}} {m : CatJudgMap F G}
-    (n : CatJudgNaturalityAll m) : CatJudgNaturalityComposite m :=
-  n.lrcProof.compositeProof
+abbrev CatJudgNaturalityAll.compositeProof.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂}
+    {F : Obj.CatJudgCopr.{u₁, v₁, w₁, x₁}} {G : Obj.CatJudgCopr.{u₂, v₂, w₂, x₂}}
+    {m : CatJudgMap F G} (n : CatJudgNaturalityAll m) :
+    CatJudgNaturalityComposite m := n.lrcProof.compositeProof
 
 /-- A natural transformation between category-judgment copresheaves:
     all component mappings satisfying all naturality conditions. -/
-def CatJudgNatTrans.{u, v, w, x} (F G : Obj.CatJudgCopr.{u, v, w, x}) :=
+def CatJudgNatTrans.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂}
+    (F : Obj.CatJudgCopr.{u₁, v₁, w₁, x₁}) (G : Obj.CatJudgCopr.{u₂, v₂, w₂, x₂}) :=
   {m : CatJudgMap F G // CatJudgNaturalityAll m}
 
 /-- Access the underlying mapping data from a natural transformation. -/
-abbrev CatJudgNatTrans.map.{u, v, w, x} {F G : Obj.CatJudgCopr.{u, v, w, x}}
+abbrev CatJudgNatTrans.map.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂}
+    {F : Obj.CatJudgCopr.{u₁, v₁, w₁, x₁}} {G : Obj.CatJudgCopr.{u₂, v₂, w₂, x₂}}
     (α : CatJudgNatTrans F G) : CatJudgMap F G := α.val
 
 /-- Access the naturality proof from a natural transformation. -/
-abbrev CatJudgNatTrans.naturalityProof.{u, v, w, x}
-    {F G : Obj.CatJudgCopr.{u, v, w, x}} (α : CatJudgNatTrans F G) :
-    CatJudgNaturalityAll α.map := α.property
+abbrev CatJudgNatTrans.naturalityProof.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂}
+    {F : Obj.CatJudgCopr.{u₁, v₁, w₁, x₁}} {G : Obj.CatJudgCopr.{u₂, v₂, w₂, x₂}}
+    (α : CatJudgNatTrans F G) : CatJudgNaturalityAll α.map := α.property
 
 /-- Access the object mapping from a natural transformation. -/
-abbrev CatJudgNatTrans.objMap.{u, v, w, x}
-    {F G : Obj.CatJudgCopr.{u, v, w, x}} (α : CatJudgNatTrans F G) :
-    F.obj → G.obj := α.map.objMap
+abbrev CatJudgNatTrans.objMap.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂}
+    {F : Obj.CatJudgCopr.{u₁, v₁, w₁, x₁}} {G : Obj.CatJudgCopr.{u₂, v₂, w₂, x₂}}
+    (α : CatJudgNatTrans F G) : F.obj → G.obj := α.map.objMap
 
 /-- Access the morphism mapping from a natural transformation. -/
-abbrev CatJudgNatTrans.morMap.{u, v, w, x}
-    {F G : Obj.CatJudgCopr.{u, v, w, x}} (α : CatJudgNatTrans F G) :
-    F.mor → G.mor := α.map.morMap
+abbrev CatJudgNatTrans.morMap.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂}
+    {F : Obj.CatJudgCopr.{u₁, v₁, w₁, x₁}} {G : Obj.CatJudgCopr.{u₂, v₂, w₂, x₂}}
+    (α : CatJudgNatTrans F G) : F.mor → G.mor := α.map.morMap
 
 /-- Access the identity witness mapping from a natural transformation. -/
-abbrev CatJudgNatTrans.idMap.{u, v, w, x}
-    {F G : Obj.CatJudgCopr.{u, v, w, x}} (α : CatJudgNatTrans F G) :
-    F.idType → G.idType := α.map.idMap
+abbrev CatJudgNatTrans.idMap.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂}
+    {F : Obj.CatJudgCopr.{u₁, v₁, w₁, x₁}} {G : Obj.CatJudgCopr.{u₂, v₂, w₂, x₂}}
+    (α : CatJudgNatTrans F G) : F.idType → G.idType := α.map.idMap
 
 /-- Access the composition witness mapping from a natural transformation. -/
-abbrev CatJudgNatTrans.compMap.{u, v, w, x}
-    {F G : Obj.CatJudgCopr.{u, v, w, x}} (α : CatJudgNatTrans F G) :
-    F.compType → G.compType := α.map.compMap
+abbrev CatJudgNatTrans.compMap.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂}
+    {F : Obj.CatJudgCopr.{u₁, v₁, w₁, x₁}} {G : Obj.CatJudgCopr.{u₂, v₂, w₂, x₂}}
+    (α : CatJudgNatTrans F G) : F.compType → G.compType := α.map.compMap
 
 /-- Access the domain naturality proof from a natural transformation. -/
-abbrev CatJudgNatTrans.domProof.{u, v, w, x}
-    {F G : Obj.CatJudgCopr.{u, v, w, x}} (α : CatJudgNatTrans F G) :
-    CatJudgNaturalityDom α.map := α.naturalityProof.domProof
+abbrev CatJudgNatTrans.domProof.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂}
+    {F : Obj.CatJudgCopr.{u₁, v₁, w₁, x₁}} {G : Obj.CatJudgCopr.{u₂, v₂, w₂, x₂}}
+    (α : CatJudgNatTrans F G) : CatJudgNaturalityDom α.map :=
+  α.naturalityProof.domProof
 
 /-- Access the codomain naturality proof from a natural transformation. -/
-abbrev CatJudgNatTrans.codProof.{u, v, w, x}
-    {F G : Obj.CatJudgCopr.{u, v, w, x}} (α : CatJudgNatTrans F G) :
-    CatJudgNaturalityCod α.map := α.naturalityProof.codProof
+abbrev CatJudgNatTrans.codProof.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂}
+    {F : Obj.CatJudgCopr.{u₁, v₁, w₁, x₁}} {G : Obj.CatJudgCopr.{u₂, v₂, w₂, x₂}}
+    (α : CatJudgNatTrans F G) : CatJudgNaturalityCod α.map :=
+  α.naturalityProof.codProof
 
 /-- Access the identity morphism naturality proof from a natural
     transformation. -/
-abbrev CatJudgNatTrans.idMorProof.{u, v, w, x}
-    {F G : Obj.CatJudgCopr.{u, v, w, x}} (α : CatJudgNatTrans F G) :
-    CatJudgNaturalityIdMor α.map := α.naturalityProof.idMorProof
+abbrev CatJudgNatTrans.idMorProof.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂}
+    {F : Obj.CatJudgCopr.{u₁, v₁, w₁, x₁}} {G : Obj.CatJudgCopr.{u₂, v₂, w₂, x₂}}
+    (α : CatJudgNatTrans F G) : CatJudgNaturalityIdMor α.map :=
+  α.naturalityProof.idMorProof
 
 /-- Access the left naturality proof from a natural transformation. -/
-abbrev CatJudgNatTrans.leftProof.{u, v, w, x}
-    {F G : Obj.CatJudgCopr.{u, v, w, x}} (α : CatJudgNatTrans F G) :
-    CatJudgNaturalityLeft α.map := α.naturalityProof.leftProof
+abbrev CatJudgNatTrans.leftProof.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂}
+    {F : Obj.CatJudgCopr.{u₁, v₁, w₁, x₁}} {G : Obj.CatJudgCopr.{u₂, v₂, w₂, x₂}}
+    (α : CatJudgNatTrans F G) : CatJudgNaturalityLeft α.map :=
+  α.naturalityProof.leftProof
 
 /-- Access the right naturality proof from a natural transformation. -/
-abbrev CatJudgNatTrans.rightProof.{u, v, w, x}
-    {F G : Obj.CatJudgCopr.{u, v, w, x}} (α : CatJudgNatTrans F G) :
-    CatJudgNaturalityRight α.map := α.naturalityProof.rightProof
+abbrev CatJudgNatTrans.rightProof.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂}
+    {F : Obj.CatJudgCopr.{u₁, v₁, w₁, x₁}} {G : Obj.CatJudgCopr.{u₂, v₂, w₂, x₂}}
+    (α : CatJudgNatTrans F G) : CatJudgNaturalityRight α.map :=
+  α.naturalityProof.rightProof
 
 /-- Access the composite naturality proof from a natural transformation. -/
-abbrev CatJudgNatTrans.compositeProof.{u, v, w, x}
-    {F G : Obj.CatJudgCopr.{u, v, w, x}}
+abbrev CatJudgNatTrans.compositeProof.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂}
+    {F : Obj.CatJudgCopr.{u₁, v₁, w₁, x₁}} {G : Obj.CatJudgCopr.{u₂, v₂, w₂, x₂}}
     (α : CatJudgNatTrans F G) : CatJudgNaturalityComposite α.map :=
   α.naturalityProof.compositeProof
 
