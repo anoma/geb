@@ -55,14 +55,22 @@ def ObjMorCompMor.{u, v, w} (omi : ObjMorIdObj.{u + 1, v + 1, w + 1}) :
 def ObjMorCompObjMor.{u, v, w} : Type (max u v w + 1) :=
   Σ (omc : ObjMorCompObj.{u + 1, v + 1, w + 1}), ObjMorCompMor.{u, v, w} omc
 
-def ObjMorCompObjMorMatch.{u, v, w} (omcm : ObjMorCompObjMor.{u, v, w} ) : Prop :=
+def ObjMorCompObjMorMatch.{u, v, w} (omcm : ObjMorCompObjMor.{u, v, w}) : Prop :=
   omcm.2.1.2 ∘ omcm.2.2.2.1 = omcm.2.1.1 ∘ omcm.2.2.1
 
-def ObjMorCompObjMorCompDom.{u, v, w} (omcm : ObjMorCompObjMor.{u, v, w} ) : Prop :=
+def ObjMorCompObjMorCompDom.{u, v, w} (omcm : ObjMorCompObjMor.{u, v, w}) : Prop :=
   omcm.2.1.1 ∘ omcm.2.2.2.2 = omcm.2.1.1 ∘ omcm.2.2.2.1
 
-def ObjMorCompObjMorCompCod.{u, v, w} (omcm : ObjMorCompObjMor.{u, v, w} ) : Prop :=
+def ObjMorCompObjMorCompCod.{u, v, w} (omcm : ObjMorCompObjMor.{u, v, w}) : Prop :=
   omcm.2.1.2 ∘ omcm.2.2.2.2 = omcm.2.1.2 ∘ omcm.2.2.1
+
+def ObjMorCompObjMorCond.{u, v, w} (omcm : ObjMorCompObjMor.{u, v, w}) : Prop :=
+  ObjMorCompObjMorMatch.{u, v, w} omcm ∧
+  ObjMorCompObjMorCompDom.{u, v, w} omcm ∧
+  ObjMorCompObjMorCompCod.{u, v, w} omcm
+
+def ObjMorCompCopr.{u, v, w} : Type (max u v w + 1) :=
+  {omim : ObjMorCompObjMor.{u, v, w} // ObjMorCompObjMorCond.{u, v, w} omim}
 
 end PLang
 
