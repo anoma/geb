@@ -20,15 +20,15 @@ def ObjMorMor.{u, v} (om : ObjMorObj.{u + 1, v + 1}) : Type (max u v) :=
 def ObjMorCopr.{u, v} : Type (max u v + 1) :=
   Σ (o : ObjMorObj.{u + 1, v + 1}), ObjMorMor.{u, v} o
 
-def IdProj.{u, v, w} (om : ObjMorObj.{u, v}) (i : Sort w) : Sort (imax w v) :=
-  i → om.2
-
 def ObjMorIdObj.{u, v, w} : Type (max u v w) :=
   ObjMorObj.{u, v} × Sort w
 
+def IdProj.{u, v, w} (omi : ObjMorIdObj.{u, v, w}) : Sort (imax w v) :=
+  omi.2 → omi.1.2
+
 def ObjMorIdMor.{u, v, w} (omi : ObjMorIdObj.{u + 1, v + 1, w + 1}) :
   Type (max u v w) :=
-    ObjMorMor.{u, v} omi.1 × IdProj.{u + 1, v + 1, w + 1} omi.1 omi.2
+    ObjMorMor.{u, v} omi.1 × IdProj.{u + 1, v + 1, w + 1} omi
 
 def ObjMorIdObjMor.{u, v, w} : Type (max u v w + 1) :=
   Σ (omi : ObjMorIdObj.{u + 1, v + 1, w + 1}), ObjMorIdMor.{u, v, w} omi
@@ -39,18 +39,18 @@ def ObjMorIdObjMorEndo.{u, v, w} (omim : ObjMorIdObjMor.{u, v, w} ) : Prop :=
 def ObjMorIdCopr.{u, v, w} : Type (max u v w + 1) :=
   {omim : ObjMorIdObjMor.{u, v, w} // ObjMorIdObjMorEndo.{u, v, w} omim}
 
-def CompProj.{u, v, w} (om : ObjMorObj.{u, v}) (i : Sort w) : Sort (imax w v) :=
-  i → om.2
-
 def ObjMorCompObj.{u, v, w} : Type (max u v w) :=
   ObjMorObj.{u, v} × Sort w
 
-def ObjMorCompMor.{u, v, w} (omi : ObjMorIdObj.{u + 1, v + 1, w + 1}) :
+def CompProj.{u, v, w} (om : ObjMorCompObj.{u, v, w}) : Sort (imax w v) :=
+  om.2 → om.1.2
+
+def ObjMorCompMor.{u, v, w} (omi : ObjMorCompObj.{u + 1, v + 1, w + 1}) :
   Type (max u v w) :=
     ObjMorMor.{u, v} omi.1 ×
-    (CompProj.{u + 1, v + 1, w + 1} omi.1 omi.2 × -- .1 = left
-     CompProj.{u + 1, v + 1, w + 1} omi.1 omi.2 × -- .2.1 = right
-     CompProj.{u + 1, v + 1, w + 1} omi.1 omi.2)  -- .2.2 = composite
+    (CompProj.{u + 1, v + 1, w + 1} omi × -- .1 = left
+     CompProj.{u + 1, v + 1, w + 1} omi × -- .2.1 = right
+     CompProj.{u + 1, v + 1, w + 1} omi)  -- .2.2 = composite
 
 def ObjMorCompObjMor.{u, v, w} : Type (max u v w + 1) :=
   Σ (omc : ObjMorCompObj.{u + 1, v + 1, w + 1}), ObjMorCompMor.{u, v, w} omc
@@ -71,6 +71,15 @@ def ObjMorCompObjMorCond.{u, v, w} (omcm : ObjMorCompObjMor.{u, v, w}) : Prop :=
 
 def ObjMorCompCopr.{u, v, w} : Type (max u v w + 1) :=
   {omim : ObjMorCompObjMor.{u, v, w} // ObjMorCompObjMorCond.{u, v, w} omim}
+
+def CatJudgObj.{u, v, w, x} : Type (max u v w x) :=
+  ObjMorObj.{u, v} × (Sort w × Sort x)
+
+def CatJudgMor.{u, v, w, x} (cjo : CatJudgObj.{u + 1, v + 1, w + 1, x + 1}) :
+    Type (max u v w x) :=
+  ObjMorMor.{u, v} cjo.1 ×
+  IdProj.{u + 1, v + 1, w + 1} (cjo.1, cjo.2.1) ×
+  ObjMorCompMor.{u, v, x} (cjo.1, cjo.2.2)
 
 end PLang
 
