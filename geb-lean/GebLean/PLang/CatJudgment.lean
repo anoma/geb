@@ -521,17 +521,31 @@ abbrev CatJudgObjMor.composite.{u, v, w, x} (cjom : CatJudgObjMor.{u, v, w, x}) 
     cjom.compType → cjom.mor :=
   ObjMorCompProj.composite cjom.compProj
 
+/-- Construct an ObjMorIdMor from bundled category judgment data by
+    extracting the domain/codomain and identity morphism function. -/
+abbrev CatJudgObjMor.toObjMorIdMor.{u, v, w, x}
+    (cjom : CatJudgObjMor.{u, v, w, x}) :
+    ObjMorIdMor.{u, v, w} cjom.catJudgObj.toObjMorIdObj :=
+  (cjom.domCod, CatJudgMor.idMor cjom.catJudgMor)
+
+/-- Construct an ObjMorCompMor from bundled category judgment data by
+    extracting the domain/codomain and composition projections. -/
+abbrev CatJudgObjMor.toObjMorCompMor.{u, v, w, x}
+    (cjom : CatJudgObjMor.{u, v, w, x}) :
+    ObjMorCompMor.{u, v, x} cjom.catJudgObj.toObjMorCompObj :=
+  (cjom.domCod, cjom.compProj)
+
 /-- Construct an ObjMorIdObjMor from bundled category judgment data by
     extracting the identity-related components. -/
 abbrev CatJudgObjMor.toObjMorIdObjMor.{u, v, w, x}
     (cjom : CatJudgObjMor.{u, v, w, x}) : ObjMorIdObjMor.{u, v, w} :=
-  ⟨cjom.catJudgObj.toObjMorIdObj, ⟨cjom.domCod, CatJudgMor.idMor cjom.catJudgMor⟩⟩
+  ⟨cjom.catJudgObj.toObjMorIdObj, cjom.toObjMorIdMor⟩
 
 /-- Construct an ObjMorCompObjMor from bundled category judgment data by
     extracting the composition-related components. -/
 abbrev CatJudgObjMor.toObjMorCompObjMor.{u, v, w, x}
     (cjom : CatJudgObjMor.{u, v, w, x}) : ObjMorCompObjMor.{u, v, x} :=
-  ⟨cjom.catJudgObj.toObjMorCompObj, ⟨cjom.domCod, cjom.compProj⟩⟩
+  ⟨cjom.catJudgObj.toObjMorCompObj, cjom.toObjMorCompMor⟩
 
 /-- The combined conditions for a category judgment: identity endomorphism and
     all composition conditions must hold. -/
