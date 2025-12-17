@@ -8,6 +8,8 @@ namespace GebLean
 
 namespace PLang
 
+namespace Obj
+
 def ObjCopr.{u} : Type u := Sort u
 
 def ObjMorObj.{u, v} : Type (max u v) := ObjCopr.{u} × Sort v
@@ -93,6 +95,12 @@ def CatJudgObjMorCond.{u, v, w, x} (cjom : CatJudgObjMor.{u, v, w, x}) : Prop :=
 
 def CatJudgCopr.{u, v, w, x} : Type (max u v w x + 1) :=
   {cjom : CatJudgObjMor.{u, v, w, x} // CatJudgObjMorCond.{u, v, w, x} cjom}
+
+end Obj
+
+namespace Mor
+
+end Mor
 
 end PLang
 
