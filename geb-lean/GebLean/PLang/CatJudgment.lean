@@ -893,12 +893,13 @@ abbrev CatJudgMap.compMap.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂}
 /-- Access the object mapping. -/
 abbrev CatJudgMap.objMap.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂}
     {F : Obj.CatJudgCopr.{u₁, v₁, w₁, x₁}} {G : Obj.CatJudgCopr.{u₂, v₂, w₂, x₂}}
-    (m : CatJudgMap F G) : F.obj → G.obj := m.objMorMap.objMap
+    (m : CatJudgMap F G) : ObjMap F.obj G.obj := m.objMorMap.objMap
 
 /-- Access the morphism mapping. -/
 abbrev CatJudgMap.morMap.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂}
     {F : Obj.CatJudgCopr.{u₁, v₁, w₁, x₁}} {G : Obj.CatJudgCopr.{u₂, v₂, w₂, x₂}}
-    (m : CatJudgMap F G) : F.mor → G.mor := m.objMorMap.morMap
+    (m : CatJudgMap F G) :
+    MorMap F.data.catJudgObj.objMor G.data.catJudgObj.objMor := m.objMorMap.morMap
 
 /-! ## Naturality conditions for full category judgment morphisms -/
 
@@ -1067,22 +1068,27 @@ abbrev CatJudgNatTrans.naturalityProof.{u₁, v₁, w₁, x₁, u₂, v₂, w₂
 /-- Access the object mapping from a natural transformation. -/
 abbrev CatJudgNatTrans.objMap.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂}
     {F : Obj.CatJudgCopr.{u₁, v₁, w₁, x₁}} {G : Obj.CatJudgCopr.{u₂, v₂, w₂, x₂}}
-    (α : CatJudgNatTrans F G) : F.obj → G.obj := α.map.objMap
+    (α : CatJudgNatTrans F G) : ObjMap F.obj G.obj := α.map.objMap
 
 /-- Access the morphism mapping from a natural transformation. -/
 abbrev CatJudgNatTrans.morMap.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂}
     {F : Obj.CatJudgCopr.{u₁, v₁, w₁, x₁}} {G : Obj.CatJudgCopr.{u₂, v₂, w₂, x₂}}
-    (α : CatJudgNatTrans F G) : F.mor → G.mor := α.map.morMap
+    (α : CatJudgNatTrans F G) :
+    MorMap F.data.catJudgObj.objMor G.data.catJudgObj.objMor := α.map.morMap
 
 /-- Access the identity witness mapping from a natural transformation. -/
 abbrev CatJudgNatTrans.idMap.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂}
     {F : Obj.CatJudgCopr.{u₁, v₁, w₁, x₁}} {G : Obj.CatJudgCopr.{u₂, v₂, w₂, x₂}}
-    (α : CatJudgNatTrans F G) : F.idType → G.idType := α.map.idMap
+    (α : CatJudgNatTrans F G) :
+    IdMap F.data.catJudgObj.toObjMorIdObj G.data.catJudgObj.toObjMorIdObj :=
+  α.map.idMap
 
 /-- Access the composition witness mapping from a natural transformation. -/
 abbrev CatJudgNatTrans.compMap.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂}
     {F : Obj.CatJudgCopr.{u₁, v₁, w₁, x₁}} {G : Obj.CatJudgCopr.{u₂, v₂, w₂, x₂}}
-    (α : CatJudgNatTrans F G) : F.compType → G.compType := α.map.compMap
+    (α : CatJudgNatTrans F G) :
+    CompMap F.data.catJudgObj.toObjMorCompObj G.data.catJudgObj.toObjMorCompObj :=
+  α.map.compMap
 
 /-- Access the domain naturality proof from a natural transformation. -/
 abbrev CatJudgNatTrans.domProof.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂}
