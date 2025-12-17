@@ -376,13 +376,17 @@ abbrev CatJudgObj.obj.{u, v, w, x} (cjo : CatJudgObj.{u, v, w, x}) :
 abbrev CatJudgObj.mor.{u, v, w, x} (cjo : CatJudgObj.{u, v, w, x}) :
     Sort v := cjo.objMor.mor
 
+/-- Access the identity and composition type pair from a category judgment object. -/
+abbrev CatJudgObj.idCompTypes.{u, v, w, x} (cjo : CatJudgObj.{u, v, w, x}) :
+    Sort w × Sort x := cjo.2
+
 /-- Access the identity witness type from a category judgment object. -/
 abbrev CatJudgObj.idType.{u, v, w, x} (cjo : CatJudgObj.{u, v, w, x}) :
-    Sort w := cjo.2.1
+    Sort w := cjo.idCompTypes.1
 
 /-- Access the composition witness type from a category judgment object. -/
 abbrev CatJudgObj.compType.{u, v, w, x} (cjo : CatJudgObj.{u, v, w, x}) :
-    Sort x := cjo.2.2
+    Sort x := cjo.idCompTypes.2
 
 /-- The morphism data for a full category judgment: domain/codomain functions,
     identity morphism assignment, and composition projections. -/
@@ -396,15 +400,25 @@ def CatJudgMor.{u, v, w, x} (cjo : CatJudgObj.{u + 1, v + 1, w + 1, x + 1}) :
 abbrev CatJudgMor.domCod.{u, v, w, x} (cjo : CatJudgObj.{u + 1, v + 1, w + 1, x + 1})
     (cjm : CatJudgMor.{u, v, w, x} cjo) : ObjMorMor.{u, v} cjo.objMor := cjm.1
 
+/-- Access the identity and composition data pair from category judgment
+    morphism data. -/
+abbrev CatJudgMor.idMorCompProj.{u, v, w, x}
+    (cjo : CatJudgObj.{u + 1, v + 1, w + 1, x + 1})
+    (cjm : CatJudgMor.{u, v, w, x} cjo) :
+    IdProj.{u + 1, v + 1, w + 1} (cjo.objMor, cjo.idType) ×
+    ObjMorCompProj.{u, v, x} (cjo.objMor, cjo.compType) := cjm.2
+
 /-- Access the identity morphism projection from category judgment morphism data. -/
 abbrev CatJudgMor.idMor.{u, v, w, x} (cjo : CatJudgObj.{u + 1, v + 1, w + 1, x + 1})
     (cjm : CatJudgMor.{u, v, w, x} cjo) :
-    IdProj.{u + 1, v + 1, w + 1} (cjo.objMor, cjo.idType) := cjm.2.1
+    IdProj.{u + 1, v + 1, w + 1} (cjo.objMor, cjo.idType) :=
+  (CatJudgMor.idMorCompProj cjo cjm).1
 
 /-- Access the composition projections from category judgment morphism data. -/
 abbrev CatJudgMor.compProj.{u, v, w, x} (cjo : CatJudgObj.{u + 1, v + 1, w + 1, x + 1})
     (cjm : CatJudgMor.{u, v, w, x} cjo) :
-    ObjMorCompProj.{u, v, x} (cjo.objMor, cjo.compType) := cjm.2.2
+    ObjMorCompProj.{u, v, x} (cjo.objMor, cjo.compType) :=
+  (CatJudgMor.idMorCompProj cjo cjm).2
 
 /-- Bundled category judgment data: all object types and all morphism functions.
     This is the full data before imposing conditions. -/
@@ -494,6 +508,41 @@ abbrev CatJudgCopr.data.{u, v, w, x} (cjc : CatJudgCopr.{u, v, w, x}) :
 /-- Access the conditions proof from a category judgment copresheaf. -/
 abbrev CatJudgCopr.condProof.{u, v, w, x} (cjc : CatJudgCopr.{u, v, w, x}) :
     CatJudgObjMorCond cjc.data := cjc.property
+
+/-- Access the identity endomorphism proof from a category judgment copresheaf. -/
+abbrev CatJudgCopr.endoProof.{u, v, w, x} (cjc : CatJudgCopr.{u, v, w, x}) :
+    ObjMorIdObjMorEndo.{u, v, w}
+      ⟨ ⟨cjc.data.catJudgObj.objMor, cjc.data.catJudgObj.idType⟩,
+        ⟨cjc.data.domCod, (CatJudgMor.idMor cjc.data.catJudgObj cjc.data.catJudgMor)⟩ ⟩ :=
+  cjc.condProof.1
+
+/-- Access the composition conditions proof from a category judgment copresheaf. -/
+abbrev CatJudgCopr.compCondProof.{u, v, w, x} (cjc : CatJudgCopr.{u, v, w, x}) :
+    ObjMorCompObjMorCond.{u, v, x}
+      ⟨ ⟨cjc.data.catJudgObj.objMor, cjc.data.catJudgObj.compType⟩,
+        ⟨cjc.data.domCod, cjc.data.compProj⟩ ⟩ :=
+  cjc.condProof.2
+
+/-- Access the composability proof from a category judgment copresheaf. -/
+abbrev CatJudgCopr.compMatchProof.{u, v, w, x} (cjc : CatJudgCopr.{u, v, w, x}) :
+    ObjMorCompObjMorMatch.{u, v, x}
+      ⟨ ⟨cjc.data.catJudgObj.objMor, cjc.data.catJudgObj.compType⟩,
+        ⟨cjc.data.domCod, cjc.data.compProj⟩ ⟩ :=
+  cjc.compCondProof.1
+
+/-- Access the domain preservation proof from a category judgment copresheaf. -/
+abbrev CatJudgCopr.compDomProof.{u, v, w, x} (cjc : CatJudgCopr.{u, v, w, x}) :
+    ObjMorCompObjMorCompDom.{u, v, x}
+      ⟨ ⟨cjc.data.catJudgObj.objMor, cjc.data.catJudgObj.compType⟩,
+        ⟨cjc.data.domCod, cjc.data.compProj⟩ ⟩ :=
+  cjc.compCondProof.2.1
+
+/-- Access the codomain preservation proof from a category judgment copresheaf. -/
+abbrev CatJudgCopr.compCodProof.{u, v, w, x} (cjc : CatJudgCopr.{u, v, w, x}) :
+    ObjMorCompObjMorCompCod.{u, v, x}
+      ⟨ ⟨cjc.data.catJudgObj.objMor, cjc.data.catJudgObj.compType⟩,
+        ⟨cjc.data.domCod, cjc.data.compProj⟩ ⟩ :=
+  cjc.compCondProof.2.2
 
 /-- Access the object type from a category judgment copresheaf. -/
 abbrev CatJudgCopr.obj.{u, v, w, x} (cjc : CatJudgCopr.{u, v, w, x}) :
