@@ -725,8 +725,8 @@ abbrev ObjMorCoprMap.naturalityProof.{u₁, v₁, u₂, v₂}
 
 /-- A mapping between identity witness types. -/
 def IdMap.{u₁, v₁, w₁, u₂, v₂, w₂}
-    (F : Obj.ObjMorIdObj.{u₁ + 1, v₁ + 1, w₁ + 1})
-    (G : Obj.ObjMorIdObj.{u₂ + 1, v₂ + 1, w₂ + 1}) : Type (max w₁ w₂) :=
+    (F : Obj.ObjMorIdObj.{u₁, v₁, w₁})
+    (G : Obj.ObjMorIdObj.{u₂, v₂, w₂}) : Sort (imax w₁ w₂) :=
   F.idType → G.idType
 
 /-- Object-morphism mapping extended with identity witness mapping. -/
@@ -763,8 +763,8 @@ def NaturalityIdMor.{u₁, v₁, w₁, u₂, v₂, w₂}
 
 /-- A mapping between composition witness types. -/
 def CompMap.{u₁, v₁, x₁, u₂, v₂, x₂}
-    (F : Obj.ObjMorCompObj.{u₁ + 1, v₁ + 1, x₁ + 1})
-    (G : Obj.ObjMorCompObj.{u₂ + 1, v₂ + 1, x₂ + 1}) : Type (max x₁ x₂) :=
+    (F : Obj.ObjMorCompObj.{u₁, v₁, x₁})
+    (G : Obj.ObjMorCompObj.{u₂, v₂, x₂}) : Sort (imax x₁ x₂) :=
   F.compType → G.compType
 
 /-- Object-morphism mapping extended with composition witness mapping. -/
