@@ -1267,36 +1267,6 @@ opfibration over `C` via the codomain functor, with fiber `(Over b)^op`.
 variable (F : TwistedArrow' C ⥤ Cat.{v, u})
 
 /--
-The fiber inclusion functor from `(Over b)^op` to `TwistedArrow' C`.
-
-On objects: `(f : a → b) ↦ f` (viewed as a twisted arrow `a → b`)
-On morphisms: `α : f → g` in `(Over b)^op` (i.e., `α : c → a` with `f ∘ α = g`)
-  maps to `(α, 𝟙 b) : f → g` in `Tw(C)`
--/
-def overOpToTwistedArrow (b : C) : (Over b)ᵒᵖ' ⥤ TwistedArrow' C where
-  obj ov := twObjMk' ov.hom
-  map {ov ov'} α :=
-    twHomMk'
-      (x := twObjMk' ov.hom)
-      (y := twObjMk' ov'.hom)
-      (by simp only [twObjMk'_dom]; exact α.left)
-      (by simp only [twObjMk'_cod]; exact 𝟙 b)
-      (by
-        simp only [twObjMk'_arr]
-        change id α.left ≫ ov.hom ≫ id (𝟙 b) = ov'.hom
-        simp only [id]
-        have h : ov.hom ≫ 𝟙 b = ov.hom := Category.comp_id ov.hom
-        rw [h]
-        exact Over.w α)
-  map_id ov := by
-    apply twHom'_ext <;> rfl
-  map_comp {ov ov' ov''} α β := by
-    apply twHom'_ext
-    · rfl
-    · simp only [twHomMk'_codArr, twCodArr'_comp]
-      exact (Category.id_comp (𝟙 b)).symm
-
-/--
 The restriction of `F : Tw(C) → Cat` to the fiber over `b`.
 -/
 def restrictToFiber (b : C) : (Over b)ᵒᵖ' ⥤ Cat.{v, u} :=
