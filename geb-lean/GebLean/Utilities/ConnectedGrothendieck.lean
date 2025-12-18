@@ -1299,22 +1299,6 @@ instance innerFiberContraCategory (b : C) : Category (innerFiberContra C F b) :=
   GrothendieckContra'.GrothendieckContraInst'
 
 /--
-The twisted arrow morphism from `twObjMk' ov.hom` to `twObjMk' (ov.hom ≫ β)`,
-used to transport fiber elements along a base morphism `β : b ⟶ d`.
--/
-def fiberTransportTwMorph {b d : C} (β : b ⟶ d) (ov : Over b) :
-    twObjMk' ov.hom ⟶ twObjMk' (ov.hom ≫ β) :=
-  twHomMk'
-    (x := twObjMk' ov.hom)
-    (y := twObjMk' (ov.hom ≫ β))
-    (by simp only [twObjMk'_dom]; exact 𝟙 ov.left)
-    (by simp only [twObjMk'_cod]; exact β)
-    (by
-      simp only [twObjMk'_arr]
-      change id (𝟙 ov.left) ≫ ov.hom ≫ id β = ov.hom ≫ β
-      simp only [id, Category.id_comp])
-
-/--
 The functor that transports fiber elements along a base morphism `β : b ⟶ d`.
 For `ov : Over b` and `x : F.obj (twObjMk' ov.hom)`, this produces an element
 of `F.obj (twObjMk' (ov.hom ≫ β))`.
@@ -1341,31 +1325,6 @@ def fiberFunctorTransitionObj {b d : C} (β : b ⟶ d)
     (x : Grothendieck (restrictToFiber C F b)) :
     Grothendieck (restrictToFiber C F d) :=
   ⟨(Over.map β).obj x.base, (fiberTransport C F β x.base).obj x.fiber⟩
-
-/--
-Coherence lemma: the twisted arrow morphism corresponding to `fiberTransport`
-composed with the image of a base morphism under `overOpToTwistedArrow d`
-equals the image of the base morphism under `overOpToTwistedArrow b`
-composed with `fiberTransportTwMorph`.
-
-In the opposite category `(Over b)ᵒᵖ'`, a morphism `α : ov ⟶ ov'` corresponds
-to a morphism `ov' ⟶ ov` in `Over b`, so the functors map it in reverse.
--/
-theorem fiberTransport_naturality {b d : C} (β : b ⟶ d)
-    {ov ov' : (Over b)ᵒᵖ'} (α : ov ⟶ ov') :
-    (overOpToTwistedArrow C b).map α ≫ fiberTransportTwMorph C β ov' =
-    fiberTransportTwMorph C β ov ≫ (overOpToTwistedArrow C d).map ((Over.map β).map α) := by
-  apply twHom'_ext
-  · simp only [twDomArr'_comp, twHomMk'_domArr, overOpToTwistedArrow,
-               fiberTransportTwMorph, twHomMk'_domArr, id, Over.map_map_left]
-    trans α.left
-    · exact Category.id_comp α.left
-    · exact (Category.comp_id α.left).symm
-  · simp only [twCodArr'_comp, twHomMk'_codArr, overOpToTwistedArrow,
-               fiberTransportTwMorph, twHomMk'_codArr, id]
-    trans β
-    · exact Category.id_comp β
-    · exact (Category.comp_id β).symm
 
 /--
 Functor-level naturality: fiber transport composed with restriction mapping
@@ -1565,19 +1524,6 @@ lemma twObjMk'_comp_id {b : C} (ov : Over b) :
     twObjMk' (ov.hom ≫ 𝟙 b) = twObjMk' ov.hom := by
   congr 1
   exact Category.comp_id ov.hom
-
-/--
-When `β = 𝟙 b`, the fiber transport twisted arrow morphism is `eqToHom`.
--/
-lemma fiberTransportTwMorph_id {b : C} (ov : Over b) :
-    fiberTransportTwMorph C (𝟙 b) ov =
-    eqToHom (twObjMk'_comp_id C ov).symm := by
-  apply twHom'_ext
-  · simp only [fiberTransportTwMorph, twHomMk'_domArr, twDomArr'_eqToHom,
-               twObjMk'_dom, eqToHom_refl, id, Functor.id_obj]
-  · simp only [fiberTransportTwMorph, twHomMk'_codArr, twCodArr'_eqToHom,
-               twObjMk'_cod, eqToHom_refl, id]
-    rfl
 
 /--
 The fiber category equality for the identity transport.
@@ -1784,24 +1730,6 @@ theorem fiberFunctorTransitionOp_id {b : C} :
       apply HEq.trans (comp_eqToHom_heq _ _)
       rw [Grothendieck.eqToHom_base', eqToHom_map]
       exact Cat.eqToHom_map_heq _ _
-
-/--
-The twisted arrow morphism for `β ≫ γ` equals the composition of the twisted
-arrow morphisms for `β` and `γ`, up to the path equality.
--/
-lemma fiberTransportTwMorph_comp {b d e : C} (β : b ⟶ d) (γ : d ⟶ e) (ov : Over b) :
-    fiberTransportTwMorph C (β ≫ γ) ov =
-    fiberTransportTwMorph C β ov ≫
-      fiberTransportTwMorph C γ ((Over.map β).obj ov) ≫
-      eqToHom (congrArg (twObjMk' ·) (Category.assoc ov.hom β γ)) := by
-  apply twHom'_ext
-  · simp only [fiberTransportTwMorph, twDomArr'_comp, twHomMk'_domArr,
-               twDomArr'_eqToHom, id, Over.map_obj_left]
-    rw [eqToHom_refl, Category.id_comp]
-    exact (Category.id_comp (𝟙 ov.left)).symm
-  · simp only [fiberTransportTwMorph, twCodArr'_comp, twHomMk'_codArr,
-               twCodArr'_eqToHom, id, Over.map_obj_hom]
-    simp only [eqToHom_refl, Category.comp_id]
 
 /--
 The fiber transport for `β ≫ γ` equals the composition of fiber transports, up to eqToHom.

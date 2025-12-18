@@ -1236,6 +1236,142 @@ def overOpToTwistedArrow (C : Type u) [Category C] (b : C) :
     · simp only [twHomMk'_codArr, twCodArr'_comp]
       exact (Category.id_comp (𝟙 b)).symm
 
+/--
+The twisted arrow morphism from `twObjMk' ov.hom` to `twObjMk' (ov.hom ≫ β)`,
+used to transport fiber elements along a base morphism `β : b ⟶ d`.
+-/
+def fiberTransportTwMorph (C : Type u) [Category C] {b d : C}
+    (β : b ⟶ d) (ov : Over b) :
+    twObjMk' ov.hom ⟶ twObjMk' (ov.hom ≫ β) :=
+  twHomMk'
+    (x := twObjMk' ov.hom)
+    (y := twObjMk' (ov.hom ≫ β))
+    (by simp only [twObjMk'_dom]; exact 𝟙 ov.left)
+    (by simp only [twObjMk'_cod]; exact β)
+    (by
+      simp only [twObjMk'_arr]
+      change id (𝟙 ov.left) ≫ ov.hom ≫ id β = ov.hom ≫ β
+      simp only [id, Category.id_comp])
+
+/--
+Coherence lemma: the twisted arrow morphism corresponding to `fiberTransport`
+composed with the image of a base morphism under `overOpToTwistedArrow d`
+equals the image of the base morphism under `overOpToTwistedArrow b`
+composed with `fiberTransportTwMorph`.
+
+In the opposite category `(Over b)ᵒᵖ'`, a morphism `α : ov ⟶ ov'` corresponds
+to a morphism `ov' ⟶ ov` in `Over b`, so the functors map it in reverse.
+-/
+theorem fiberTransport_naturality (C : Type u) [Category C] {b d : C}
+    (β : b ⟶ d)
+    {ov ov' : (Over b)ᵒᵖ'} (α : ov ⟶ ov') :
+    (overOpToTwistedArrow C b).map α ≫ fiberTransportTwMorph C β ov' =
+    fiberTransportTwMorph C β ov ≫ (overOpToTwistedArrow C d).map ((Over.map β).map α) := by
+  apply twHom'_ext
+  · simp only [twDomArr'_comp, twHomMk'_domArr, overOpToTwistedArrow,
+               fiberTransportTwMorph, twHomMk'_domArr, id, Over.map_map_left]
+    trans α.left
+    · exact Category.id_comp α.left
+    · exact (Category.comp_id α.left).symm
+  · simp only [twCodArr'_comp, twHomMk'_codArr, overOpToTwistedArrow,
+               fiberTransportTwMorph, twHomMk'_codArr, id]
+    trans β
+    · exact Category.id_comp β
+    · exact (Category.comp_id β).symm
+
+section OverOpToTwistedArrowLax
+
+/-!
+### Lax Natural Transformation Structure
+
+The family of functors `overOpToTwistedArrow C b` indexed by `b : C`, together
+with the transport morphisms `fiberTransportTwMorph`, forms a lax natural
+transformation from `overOpMapFunctor C` to the constant functor at
+`TwistedArrow' C`.
+
+The components are:
+- Component functors: `overOpToTwistedArrow C b : (Over b)ᵒᵖ' ⥤ TwistedArrow' C`
+- Laxity morphisms: `fiberTransportTwMorph C β ov` for `β : b ⟶ d`
+- Naturality: `fiberTransport_naturality`
+- Identity coherence: `fiberTransportTwMorph_id`
+- Composition coherence: `fiberTransportTwMorph_comp`
+
+The `LaxNatTransData` structure in `Grothendieck.lean` has flexible universe
+parameters allowing `Cat.{vF, uF}` for arbitrary fiber category universes.
+-/
+
+variable (C : Type u) [Category.{v} C]
+
+/--
+The constant functor sending every object to `TwistedArrow' C` and every
+morphism to the identity functor.
+-/
+def constTwistedArrowFunctor : C ⥤ Cat.{v, max u v} where
+  obj _ := Cat.of (TwistedArrow' C)
+  map _ := 𝟙 (Cat.of (TwistedArrow' C))
+  map_id _ := rfl
+  map_comp _ _ := (Category.comp_id _).symm
+
+/--
+Identity coherence for `fiberTransportTwMorph`: when `β = 𝟙 b`, the transport
+morphism is the identity (up to the equality `ov.hom = ov.hom ≫ 𝟙 b`).
+-/
+lemma fiberTransportTwMorph_id (b : C) (ov : Over b) :
+    fiberTransportTwMorph C (𝟙 b) ov =
+    eqToHom (congrArg (twObjMk' (C := C)) (Category.comp_id ov.hom).symm) := by
+  apply twHom'_ext
+  · simp only [fiberTransportTwMorph, twHomMk'_domArr, id, twDomArr'_eqToHom,
+      twObjMk'_dom]
+    rfl
+  · simp only [fiberTransportTwMorph, twHomMk'_codArr, id, twCodArr'_eqToHom,
+      twObjMk'_cod]
+    rfl
+
+/--
+Composition coherence for `fiberTransportTwMorph`: the transport along `β ≫ γ`
+decomposes into transport along `β` followed by transport along `γ`.
+
+The target functor is constant so `(F.map γ).map` acts as identity.
+-/
+lemma fiberTransportTwMorph_comp {b d e : C} (β : b ⟶ d) (γ : d ⟶ e)
+    (ov : Over b) :
+    fiberTransportTwMorph C (β ≫ γ) ov =
+    fiberTransportTwMorph C β ov ≫
+      fiberTransportTwMorph C γ ((Over.map β).obj ov) ≫
+      eqToHom (congrArg (twObjMk' (C := C)) (Category.assoc ov.hom β γ)) := by
+  apply twHom'_ext
+  · simp only [twDomArr'_comp, fiberTransportTwMorph, twHomMk'_domArr, id,
+      twDomArr'_eqToHom, Over.map_obj_left, twObjMk'_dom, eqToHom_refl',
+      Functor.id_obj, Category.id_comp]
+  · simp only [twCodArr'_comp, fiberTransportTwMorph, twHomMk'_codArr, id,
+      twCodArr'_eqToHom, Over.map_obj_hom, twObjMk'_cod, eqToHom_refl',
+      Category.comp_id]
+
+/--
+The lax natural transformation from `overOpMapFunctor C` to `constTwistedArrowFunctor C`.
+
+This uses the standard `LaxNatTransData` structure from `Grothendieck.lean`,
+demonstrating that `overOpToTwistedArrow` forms a proper lax natural transformation.
+-/
+def overOpToTwistedArrowLax :
+    LaxNatTransData (overOpMapFunctor C) (constTwistedArrowFunctor C) where
+  app := overOpToTwistedArrow C
+  laxApp := fiberTransportTwMorph C
+  laxNat := fiberTransport_naturality C
+  laxId := fiberTransportTwMorph_id C
+  laxComp := fun {b d e} β γ ov => by
+    simp only [constTwistedArrowFunctor, Cat.id_eq_id, Functor.id_map, Functor.id_obj]
+    conv_rhs =>
+      arg 1
+      simp only [eqToHom_refl']
+    simp only [Category.id_comp]
+    change fiberTransportTwMorph C (β ≫ γ) ov =
+      fiberTransportTwMorph C β ov ≫
+        fiberTransportTwMorph C γ ((Over.map β).obj ov) ≫ eqToHom _
+    rw [fiberTransportTwMorph_comp]
+
+end OverOpToTwistedArrowLax
+
 end TwistedArrowAsGrothendieck
 
 /-!

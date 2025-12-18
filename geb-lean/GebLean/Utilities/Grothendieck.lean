@@ -5092,10 +5092,10 @@ act as the identity on the base category.
 
 section LaxNatTrans
 
-universe vC uC
+universe vC uC vF uF
 
 variable {C : Type uC} [Category.{vC} C]
-variable (G F : C ⥤ Cat.{vC, uC})
+variable (G F : C ⥤ Cat.{vF, uF})
 
 /--
 Component functors for a lax natural transformation.
@@ -5224,7 +5224,7 @@ A lax natural transformation consists of:
 These correspond to functors `Grothendieck G ⥤ Grothendieck F` that are
 identity on the base category.
 -/
-structure LaxNatTransData (G F : C ⥤ Cat.{vC, uC}) where
+structure LaxNatTransData (G F : C ⥤ Cat.{vF, uF}) where
   /-- Component functors: for each `c`, a functor `G.obj c ⥤ F.obj c` -/
   app : LaxNatTransApp G F
   /-- Laxity morphisms: for each `f` and `x`, a morphism between fibers -/
