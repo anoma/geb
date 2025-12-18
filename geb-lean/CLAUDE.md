@@ -43,6 +43,9 @@ When making changes to Lean code:
 1. **Build first**: Always run `lake build` after making edits. If adding
    dependencies, update `lakefile.toml`, run `lake update`, and commit the
    updated `lake-manifest.json`.  Also always run `lake test`.
+   Never use `lake clean` -- Lake is good at figuring out dependencies;
+   `lake clean` would just undo the mathlib build and make the next
+   build take a huge amount of time rebuilding mathlib needlessly.
 2. **Iterate on errors**: If the build fails, fix errors yourself and rebuild
    before proposing a change.
 3. **No warnings or sorry**: Code must build **without any warnings**,
