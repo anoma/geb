@@ -315,6 +315,43 @@ lemma ccrEval_ext {P : CoprodCovarRepCat D} {A : D} (x y : ccrEval P A)
 lemma ccrEvalMk_eta {P : CoprodCovarRepCat D} {A : D} (x : ccrEval P A) :
     ccrEvalMk (ccrEvalIndex x) (ccrEvalMor x) = x := rfl
 
+/--
+The action of a polynomial functor on morphisms.
+Given `f : A ⟶ B`, maps `⟨i, h⟩ : ccrEval P A` to `⟨i, h ≫ f⟩ : ccrEval P B`.
+-/
+def ccrEvalMap {P : CoprodCovarRepCat D} {A B : D} (f : A ⟶ B) :
+    ccrEval P A → ccrEval P B :=
+  fun ⟨i, h⟩ => ⟨i, h ≫ f⟩
+
+@[simp]
+lemma ccrEvalMap_index {P : CoprodCovarRepCat D} {A B : D} (f : A ⟶ B)
+    (x : ccrEval P A) : ccrEvalIndex (ccrEvalMap f x) = ccrEvalIndex x := rfl
+
+@[simp]
+lemma ccrEvalMap_mor {P : CoprodCovarRepCat D} {A B : D} (f : A ⟶ B)
+    (x : ccrEval P A) : ccrEvalMor (ccrEvalMap f x) = ccrEvalMor x ≫ f := rfl
+
+@[simp]
+lemma ccrEvalMap_id {P : CoprodCovarRepCat D} {A : D} :
+    ccrEvalMap (𝟙 A) = (id : ccrEval P A → ccrEval P A) := by
+  funext ⟨i, h⟩
+  simp only [ccrEvalMap, Category.comp_id, id_eq]
+
+@[simp]
+lemma ccrEvalMap_comp {P : CoprodCovarRepCat D} {A B C : D} (f : A ⟶ B) (g : B ⟶ C) :
+    ccrEvalMap (f ≫ g) = ccrEvalMap g ∘ ccrEvalMap (P := P) f := by
+  funext ⟨i, h⟩
+  simp only [ccrEvalMap, Category.assoc, Function.comp_apply]
+
+/--
+A polynomial functor `P : CoprodCovarRepCat D` gives a functor `D ⥤ Type`.
+-/
+def ccrToFunctor (P : CoprodCovarRepCat D) : D ⥤ Type _ where
+  obj := ccrEval P
+  map := ccrEvalMap
+  map_id := fun _ => ccrEvalMap_id
+  map_comp := fun f g => ccrEvalMap_comp f g
+
 end GeneralPolynomialFunctors
 
 /-! ## General Polynomial Functors to Over Categories
@@ -420,6 +457,67 @@ lemma ptoefMk_mor {P : PolyToOverCat (D := D) Y} {A : D}
 lemma ptoefMk_eta {P : PolyToOverCat (D := D) Y} {A : D}
     {y : Y} (x : polyToOverEvalFamily Y P A y) :
     ptoefMk Y (ccrEvalIndex x) (ccrEvalMor x) = x := rfl
+
+/-! ### polyToOverEval functoriality -/
+
+/--
+The action on morphisms for `polyToOverEvalFamily`.
+Given `f : A ⟶ B`, produces a fiber-wise map.
+-/
+def polyToOverEvalFamilyMap (P : PolyToOverCat (D := D) Y) {A B : D} (f : A ⟶ B) :
+    polyToOverEvalFamily Y P A ⟶ polyToOverEvalFamily Y P B :=
+  fun _ => ccrEvalMap f
+
+/--
+The action on morphisms for `polyToOverEval`.
+Given `f : A ⟶ B`, produces a morphism in `Over Y`.
+-/
+def polyToOverEvalMap (P : PolyToOverCat (D := D) Y) {A B : D} (f : A ⟶ B) :
+    polyToOverEval Y P A ⟶ polyToOverEval Y P B :=
+  (familySliceForward Y).map (polyToOverEvalFamilyMap Y P f)
+
+@[simp]
+lemma polyToOverEvalMap_left (P : PolyToOverCat (D := D) Y) {A B : D}
+    (f : A ⟶ B) (x : (polyToOverEval Y P A).left) :
+    (polyToOverEvalMap Y P f).left x = ⟨x.fst, ccrEvalMap f x.snd⟩ := rfl
+
+@[simp]
+lemma polyToOverEvalFamilyMap_id (P : PolyToOverCat (D := D) Y) (A : D) :
+    polyToOverEvalFamilyMap Y P (𝟙 A) = 𝟙 (polyToOverEvalFamily Y P A) := by
+  funext _
+  exact ccrEvalMap_id
+
+@[simp]
+lemma polyToOverEvalMap_id (P : PolyToOverCat (D := D) Y) (A : D) :
+    polyToOverEvalMap Y P (𝟙 A) = 𝟙 (polyToOverEval Y P A) := by
+  simp only [polyToOverEvalMap, polyToOverEvalFamilyMap_id,
+    CategoryTheory.Functor.map_id]
+  rfl
+
+@[simp]
+lemma polyToOverEvalFamilyMap_comp (P : PolyToOverCat (D := D) Y)
+    {A B C : D} (f : A ⟶ B) (g : B ⟶ C) :
+    polyToOverEvalFamilyMap Y P (f ≫ g) =
+      polyToOverEvalFamilyMap Y P f ≫ polyToOverEvalFamilyMap Y P g := by
+  funext _
+  exact ccrEvalMap_comp f g
+
+@[simp]
+lemma polyToOverEvalMap_comp (P : PolyToOverCat (D := D) Y)
+    {A B C : D} (f : A ⟶ B) (g : B ⟶ C) :
+    polyToOverEvalMap Y P (f ≫ g) =
+      polyToOverEvalMap Y P f ≫ polyToOverEvalMap Y P g := by
+  simp only [polyToOverEvalMap, polyToOverEvalFamilyMap_comp,
+    CategoryTheory.Functor.map_comp]
+
+/--
+A polynomial functor `P : PolyToOverCat D Y` gives a functor `D ⥤ Over Y`.
+-/
+def polyToOverFunctor (P : PolyToOverCat (D := D) Y) : D ⥤ Over Y where
+  obj := polyToOverEval Y P
+  map := polyToOverEvalMap Y P
+  map_id := fun A => polyToOverEvalMap_id Y P A
+  map_comp := fun f g => polyToOverEvalMap_comp Y P f g
 
 /-! ### polyToOverEval structure -/
 
@@ -713,6 +811,42 @@ lemma polyEvalMk_eta {P : PolyFunctorCat X} {A : Over X} (x : polyEval X P A) :
     polyEvalMk X (polyEvalIndex X x) (polyEvalMor X x) = x := rfl
 
 /--
+The action of a polynomial functor on morphisms.
+Specialization of `ccrEvalMap` to `D = Over X`.
+-/
+def polyEvalMap {P : PolyFunctorCat X} {A B : Over X} (f : A ⟶ B) :
+    polyEval X P A → polyEval X P B :=
+  ccrEvalMap f
+
+@[simp]
+lemma polyEvalMap_index {P : PolyFunctorCat X} {A B : Over X} (f : A ⟶ B)
+    (x : polyEval X P A) :
+    polyEvalIndex X (polyEvalMap X f x) = polyEvalIndex X x := rfl
+
+@[simp]
+lemma polyEvalMap_mor {P : PolyFunctorCat X} {A B : Over X} (f : A ⟶ B)
+    (x : polyEval X P A) :
+    polyEvalMor X (polyEvalMap X f x) = polyEvalMor X x ≫ f := rfl
+
+@[simp]
+lemma polyEvalMap_id {P : PolyFunctorCat X} {A : Over X} :
+    polyEvalMap X (𝟙 A) = (id : polyEval X P A → polyEval X P A) :=
+  ccrEvalMap_id
+
+@[simp]
+lemma polyEvalMap_comp {P : PolyFunctorCat X} {A B C : Over X}
+    (f : A ⟶ B) (g : B ⟶ C) :
+    polyEvalMap X (f ≫ g) = polyEvalMap X g ∘ polyEvalMap (P := P) X f :=
+  ccrEvalMap_comp f g
+
+/--
+A polynomial functor `P : PolyFunctorCat X` gives a functor `Over X ⥤ Type u`.
+Specialization of `ccrToFunctor` to `D = Over X`.
+-/
+def polyEvalFunctor (P : PolyFunctorCat X) : Over X ⥤ Type u :=
+  ccrToFunctor P
+
+/--
 The composition `.fiber ≫ eqToHom` at index equals composition in Over.
 -/
 private lemma fiber_comp_eqToHom_at_idx {x y : CoprodCovarRepCat (Over X)}
@@ -847,6 +981,62 @@ lemma pbefMk_mor {X Y : Type u} {P : PolyFunctorBetweenCat X Y} {A : Over X}
 lemma pbefMk_eta {X Y : Type u} {P : PolyFunctorBetweenCat X Y} {A : Over X}
     {y : Y} (x : polyBetweenEvalFamily X Y P A y) :
     pbefMk (pbefIndex x) (pbefMor x) = x := rfl
+
+/-! #### polyBetweenEval functoriality -/
+
+/--
+The action on morphisms for `polyBetweenEvalFamily`.
+Specialization of `polyToOverEvalFamilyMap`.
+-/
+def polyBetweenEvalFamilyMap (P : PolyFunctorBetweenCat X Y) {A B : Over X}
+    (f : A ⟶ B) : polyBetweenEvalFamily X Y P A ⟶ polyBetweenEvalFamily X Y P B :=
+  polyToOverEvalFamilyMap Y P f
+
+/--
+The action on morphisms for `polyBetweenEval`.
+Specialization of `polyToOverEvalMap`.
+-/
+def polyBetweenEvalMap (P : PolyFunctorBetweenCat X Y) {A B : Over X} (f : A ⟶ B) :
+    polyBetweenEval X Y P A ⟶ polyBetweenEval X Y P B :=
+  polyToOverEvalMap Y P f
+
+@[simp]
+lemma polyBetweenEvalMap_left (P : PolyFunctorBetweenCat X Y) {A B : Over X}
+    (f : A ⟶ B) (x : (polyBetweenEval X Y P A).left) :
+    (polyBetweenEvalMap X Y P f).left x = ⟨x.fst, ccrEvalMap f x.snd⟩ :=
+  polyToOverEvalMap_left Y P f x
+
+@[simp]
+lemma polyBetweenEvalFamilyMap_id (P : PolyFunctorBetweenCat X Y) (A : Over X) :
+    polyBetweenEvalFamilyMap X Y P (𝟙 A) = 𝟙 (polyBetweenEvalFamily X Y P A) :=
+  polyToOverEvalFamilyMap_id Y P A
+
+@[simp]
+lemma polyBetweenEvalMap_id (P : PolyFunctorBetweenCat X Y) (A : Over X) :
+    polyBetweenEvalMap X Y P (𝟙 A) = 𝟙 (polyBetweenEval X Y P A) :=
+  polyToOverEvalMap_id Y P A
+
+@[simp]
+lemma polyBetweenEvalFamilyMap_comp (P : PolyFunctorBetweenCat X Y)
+    {A B C : Over X} (f : A ⟶ B) (g : B ⟶ C) :
+    polyBetweenEvalFamilyMap X Y P (f ≫ g) =
+      polyBetweenEvalFamilyMap X Y P f ≫ polyBetweenEvalFamilyMap X Y P g :=
+  polyToOverEvalFamilyMap_comp Y P f g
+
+@[simp]
+lemma polyBetweenEvalMap_comp (P : PolyFunctorBetweenCat X Y)
+    {A B C : Over X} (f : A ⟶ B) (g : B ⟶ C) :
+    polyBetweenEvalMap X Y P (f ≫ g) =
+      polyBetweenEvalMap X Y P f ≫ polyBetweenEvalMap X Y P g :=
+  polyToOverEvalMap_comp Y P f g
+
+/--
+A polynomial functor `P : PolyFunctorBetweenCat X Y` gives a functor
+`Over X ⥤ Over Y`.
+Specialization of `polyToOverFunctor`.
+-/
+def polyBetweenEvalFunctor (P : PolyFunctorBetweenCat X Y) : Over X ⥤ Over Y :=
+  polyToOverFunctor Y P
 
 /-! #### polyBetweenEval structure
 
@@ -1437,6 +1627,64 @@ This uses the Family-Slice equivalence.
 -/
 def WTypeDiagram.eval (W : WTypeDiagram X Y) (A : Over X) : Over Y :=
   (familySliceForward Y).obj (W.evalFamily X Y A)
+
+/--
+The action on morphisms for `WTypeDiagram.evalFamily`.
+Given `f : A ⟶ B`, produces a fiber-wise map.
+-/
+def WTypeDiagram.evalFamilyMap (W : WTypeDiagram X Y) {A B : Over X} (f : A ⟶ B) :
+    W.evalFamily X Y A ⟶ W.evalFamily X Y B :=
+  fun _ ⟨b, h⟩ => ⟨b, h ≫ f⟩
+
+/--
+The action on morphisms for `WTypeDiagram.eval`.
+Given `f : A ⟶ B`, produces a morphism in `Over Y`.
+-/
+def WTypeDiagram.evalMap (W : WTypeDiagram X Y) {A B : Over X} (f : A ⟶ B) :
+    W.eval X Y A ⟶ W.eval X Y B :=
+  (familySliceForward Y).map (W.evalFamilyMap X Y f)
+
+@[simp]
+lemma WTypeDiagram.evalMap_left (W : WTypeDiagram X Y) {A B : Over X}
+    (f : A ⟶ B) (x : (W.eval X Y A).left) :
+    (W.evalMap X Y f).left x = ⟨x.fst, ⟨x.snd.fst, x.snd.snd ≫ f⟩⟩ := rfl
+
+@[simp]
+lemma WTypeDiagram.evalFamilyMap_id (W : WTypeDiagram X Y) (A : Over X) :
+    W.evalFamilyMap X Y (𝟙 A) = 𝟙 (W.evalFamily X Y A) := by
+  funext _ ⟨b, h⟩
+  simp only [evalFamilyMap, Category.comp_id]
+  rfl
+
+@[simp]
+lemma WTypeDiagram.evalMap_id (W : WTypeDiagram X Y) (A : Over X) :
+    W.evalMap X Y (𝟙 A) = 𝟙 (W.eval X Y A) := by
+  simp only [evalMap, evalFamilyMap_id, CategoryTheory.Functor.map_id]
+  rfl
+
+@[simp]
+lemma WTypeDiagram.evalFamilyMap_comp (W : WTypeDiagram X Y)
+    {A B C : Over X} (f : A ⟶ B) (g : B ⟶ C) :
+    W.evalFamilyMap X Y (f ≫ g) =
+      W.evalFamilyMap X Y f ≫ W.evalFamilyMap X Y g := by
+  funext _ ⟨b, h⟩
+  simp only [evalFamilyMap]
+  rfl
+
+@[simp]
+lemma WTypeDiagram.evalMap_comp (W : WTypeDiagram X Y)
+    {A B C : Over X} (f : A ⟶ B) (g : B ⟶ C) :
+    W.evalMap X Y (f ≫ g) = W.evalMap X Y f ≫ W.evalMap X Y g := by
+  simp only [evalMap, evalFamilyMap_comp, CategoryTheory.Functor.map_comp]
+
+/--
+A W-type diagram `W : WTypeDiagram X Y` gives a functor `Over X ⥤ Over Y`.
+-/
+def WTypeDiagram.evalFunctor (W : WTypeDiagram X Y) : Over X ⥤ Over Y where
+  obj := W.eval X Y
+  map := W.evalMap X Y
+  map_id := fun A => W.evalMap_id X Y A
+  map_comp := fun f g => W.evalMap_comp X Y f g
 
 /--
 Construct a W-type diagram from a polynomial functor and a target map.

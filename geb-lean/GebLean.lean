@@ -8,6 +8,7 @@ import GebLean.DepCategoryJudgments
 import GebLean.FiniteQuiver
 import GebLean.LayeredEquivalence
 import GebLean.PLang
+import GebLean.PolyAlg
 import GebLean.Polynomial
 import GebLean.Semicategory
 import GebLean.Utilities
