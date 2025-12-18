@@ -1,4 +1,5 @@
 import GebLean.PLang.CatJudgment
+import GebLean.PLang.CatJudgGrothendieck
 
 /-!
 # PLang Index
