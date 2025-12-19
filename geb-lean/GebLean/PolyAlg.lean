@@ -1762,9 +1762,6 @@ lemma coalg_hom_children_heq_core (P : PolyEndo X) (α : PolyCoalg P)
         ccrFamily (P (α.str.left a).fst) i ⟶ polyCofixCarrier P) =
         (Σ i : ccrIndex (P (f.f.left a).fst),
         ccrFamily (P (f.f.left a).fst) i ⟶ polyCofixCarrier P))
-    (_hidx : (cast hSigmaType
-        ⟨(α.str.left a).snd.fst, (α.str.left a).snd.snd ≫ f.f⟩).fst =
-        (f.f.left a).snd.head)
     (hmor_heq : HEq (cast hSigmaType
         ⟨(α.str.left a).snd.fst, (α.str.left a).snd.snd ≫ f.f⟩).snd
         (polyCofixChildrenMor (f.f.left a).snd.head (f.f.left a).snd.children)) :
@@ -1857,9 +1854,9 @@ lemma coalg_hom_children_heq (P : PolyEndo X) (α : PolyCoalg P)
         polyCofixChildrenMor (f.f.left a).snd.head (f.f.left a).snd.children⟩ :=
     eq_of_heq ((cast_heq hSigmaType _).trans hsnd_heq)
   rw [Sigma.ext_iff] at hsnd_eq
-  obtain ⟨hidx, hmor_heq⟩ := hsnd_eq
-  simp only at hidx hmor_heq
-  exact coalg_hom_children_heq_core P α f a e1 e2 he hSigmaType hidx hmor_heq
+  obtain ⟨_, hmor_heq⟩ := hsnd_eq
+  simp only at hmor_heq
+  exact coalg_hom_children_heq_core P α f a e1 e2 he hSigmaType hmor_heq
 
 /--
 The successor approximation for uniqueness proof.
