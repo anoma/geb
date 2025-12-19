@@ -3113,6 +3113,342 @@ def polyCofreeGetRoot (A : Over X) (P : PolyEndo X) {x : X}
     (m : PolyCofreeM A P x) : { a : A.left // A.hom a = x } :=
   m.head.1
 
+/--
+Helper: transport in polyBetweenFamily preserves the fiber projection.
+-/
+lemma polyBetweenFamily_hom_transport {Y : Type u} {P' : PolyEndo Y} {y : Y}
+    {i j : polyBetweenIndex Y Y P' y}
+    (h : i = j) (e : (polyBetweenFamily Y Y P' y i).left) :
+    (polyBetweenFamily Y Y P' y i).hom e =
+    (polyBetweenFamily Y Y P' y j).hom (h ▸ e) := by
+  subst h
+  rfl
+
+/--
+The fiber of a shape position equals the fiber of the corresponding M-type
+position under `polyCofreeShapePosToMPos`.
+-/
+lemma polyCofreeShapePosToMPos_fiber (A : Over X) (P : PolyEndo X) {x : X}
+    (m : PolyCofreeM A P x)
+    (e_shape : (polyBetweenFamily X X P x (polyCofreeToShape A P m).head.2).left)
+    :
+    (polyBetweenFamily X X P x (polyCofreeToShape A P m).head.2).hom e_shape =
+    (polyBetweenFamily X X P x m.head.2).hom
+      (polyCofreeShapePosToMPos A P m e_shape) := by
+  simp only [polyCofreeShapePosToMPos]
+  exact polyBetweenFamily_hom_transport (polyCofreeToShape_head_index A P m)
+    e_shape
+
+/--
+HEq version of shape position to M-type position conversion.
+-/
+lemma polyCofreeShapePosToMPos_heq (A : Over X) (P : PolyEndo X) {x : X}
+    (m : PolyCofreeM A P x)
+    (e_shape : (polyBetweenFamily X X P x (polyCofreeToShape A P m).head.2).left)
+    :
+    HEq e_shape (polyCofreeShapePosToMPos A P m e_shape) := by
+  simp only [polyCofreeShapePosToMPos]
+  exact (eqRec_heq (φ := fun i => (polyBetweenFamily X X P x i).left)
+    (polyCofreeToShape_head_index A P m) e_shape).symm
+
+/--
+Helper: HEq for PolyCofixApprox.continue when the fiber values are equal.
+-/
+lemma polyCofixApprox_continue_heq {P : PolyEndo X} {y1 y2 : X} (h : y1 = y2) :
+    HEq (PolyCofixApprox.continue (P := P) y1)
+        (PolyCofixApprox.continue (P := P) y2) := by
+  subst h
+  rfl
+
+/--
+For an `.intro` approximation, extracting children then converting to shape
+is HEq to converting to shape then extracting children.
+
+This lemma avoids the `generalize` issue by having the approximation as an
+explicit parameter that can be directly pattern matched.
+-/
+lemma polyCofreeApproxToShape_childApproxAt_succ_aux_heq
+    (A : Over X) (P : PolyEndo X) {n : Nat} {x : X}
+    (head_m : polyBetweenIndex X X (polyScale A P) x)
+    (head_shape : polyBetweenIndex X X (polyScale (overTerminal X) P) x)
+    (hhead_P : head_shape.2 = head_m.2)
+    (a : PolyCofixApprox (polyScale A P) (n + 2) x)
+    (heq_m : a.getIndex = head_m)
+    (heq_shape : (polyCofreeApproxToShape A P a).getIndex = head_shape)
+    (e_shape : (polyBetweenFamily X X (polyScale (overTerminal X) P) x
+      head_shape).left)
+    (e_m : (polyBetweenFamily X X (polyScale A P) x head_m).left)
+    (he : HEq e_shape e_m)
+    (hfiber : (polyBetweenFamily X X (polyScale (overTerminal X) P) x
+        head_shape).hom e_shape =
+      (polyBetweenFamily X X (polyScale A P) x head_m).hom e_m) :
+    HEq (PolyCofix.childApproxAt_succ_aux head_shape
+        (polyCofreeApproxToShape A P a) heq_shape e_shape)
+      (polyCofreeApproxToShape A P
+        (PolyCofix.childApproxAt_succ_aux head_m a heq_m e_m)) := by
+  cases a with
+  | intro _ idx children =>
+    simp only [PolyCofix.childApproxAt_succ_aux]
+    have hidx_shape_eq : (⟨⟨x, rfl⟩, idx.2⟩ : polyBetweenIndex X X
+        (polyScale (overTerminal X) P) x) = head_shape := by
+      simp only [PolyCofixApprox.getIndex] at heq_shape
+      exact heq_shape
+    have hidx_m_eq : idx = head_m := heq_m
+    subst hidx_m_eq hidx_shape_eq
+    simp only [eqRec_eq_cast]
+    cases he
+    rfl
+
+/--
+The shape of a child equals the child of the shape (via HEq for fibers).
+
+This relates navigating children in shape-space vs M-type-space.
+-/
+theorem polyCofreeToShape_children_heq (A : Over X) (P : PolyEndo X) {x : X}
+    (m : PolyCofreeM A P x)
+    (e_shape : (polyBetweenFamily X X P x (polyCofreeToShape A P m).head.2).left)
+    :
+    HEq ((polyCofreeToShape A P m).children e_shape)
+        (polyCofreeToShape A P
+          (m.children (polyCofreeShapePosToMPos A P m e_shape))) := by
+  apply PolyCofix.heq_of_approx_heq (polyCofreeShapePosToMPos_fiber A P m e_shape)
+  intro n
+  simp only [PolyCofix.children, polyCofreeToShape]
+  cases n with
+  | zero =>
+    simp only [PolyCofix.childApproxAt, PolyCofix.childApproxAt_zero,
+      polyCofreeApproxToShape]
+    exact polyCofixApprox_continue_heq
+      (polyCofreeShapePosToMPos_fiber A P m e_shape)
+  | succ n =>
+    simp only [PolyCofix.childApproxAt, PolyCofix.childApproxAt_succ]
+    have heq_shape_proof :
+        (polyCofreeApproxToShape A P (m.approx (n + 2))).getIndex =
+          (polyCofreeToShape A P m).head := by
+      simp only [PolyCofix.head, polyCofreeToShape]
+      have h1 := polyCofreeApproxToShape_index A P (m.approx (n + 2))
+      have h2 := polyCofreeApproxToShape_index A P (m.approx 1)
+      have h3 := m.index_eq_head (n + 1)
+      have h4 : (m.approx (n + 2)).getIndex.2 = (m.approx 1).getIndex.2 := by
+        rw [congrArg Prod.snd h3]
+        rfl
+      apply Prod.ext
+      · apply Subtype.ext
+        simp only [overTerminal, Over.mk_left, Over.mk_hom]
+        have ha := (polyCofreeApproxToShape A P (m.approx (n + 2))).getIndex.1.2
+        have hb := (polyCofreeApproxToShape A P (m.approx 1)).getIndex.1.2
+        exact ha.trans hb.symm
+      · exact h1.trans (h4.trans h2.symm)
+    exact polyCofreeApproxToShape_childApproxAt_succ_aux_heq A P
+      m.head (polyCofreeToShape A P m).head
+      (polyCofreeToShape_head_index A P m)
+      (m.approx (n + 2))
+      (m.index_eq_head (n + 1))
+      heq_shape_proof
+      e_shape
+      (polyCofreeShapePosToMPos A P m e_shape)
+      (polyCofreeShapePosToMPos_heq A P m e_shape)
+      (polyCofreeShapePosToMPos_fiber A P m e_shape)
+
+
+/-! ### M-type Based Positions
+
+To avoid dependent type transport issues, we define positions directly on M-types
+rather than on shapes. This makes annotation extraction straightforward, and we
+then connect back to shape-based positions for the polynomial evaluation form.
+-/
+
+/--
+Annotation positions directly on an M-type at depth n.
+At depth 0: the root position.
+At depth n+1: a child index paired with a position in that child.
+
+The child index type uses the P family at `m.head.2`, which equals the
+`polyScale A P` family at `m.head` by definition of `polyScale`.
+-/
+def PolyCofreeAnnotPosAtM (A : Over X) (P : PolyEndo X) {x : X}
+    (m : PolyCofreeM A P x) : Nat → Type u
+  | 0 => PUnit
+  | n + 1 =>
+    Σ (e : (polyBetweenFamily X X (polyScale A P) x m.head).left),
+      PolyCofreeAnnotPosAtM A P (m.children e) n
+
+/--
+The fiber at an M-type position at depth n.
+-/
+def PolyCofreeAnnotFiberAtM (A : Over X) (P : PolyEndo X) {x : X}
+    (m : PolyCofreeM A P x) : (n : Nat) → PolyCofreeAnnotPosAtM A P m n → X
+  | 0, _ => x
+  | n + 1, ⟨e, pos⟩ => PolyCofreeAnnotFiberAtM A P (m.children e) n pos
+
+/--
+Extract the annotation at an M-type position directly.
+This is straightforward structural recursion on the position depth.
+-/
+def polyCofreeGetAnnotAtM (A : Over X) (P : PolyEndo X) {x : X}
+    (m : PolyCofreeM A P x)
+    (n : Nat) (pos : PolyCofreeAnnotPosAtM A P m n) :
+    { a : A.left // A.hom a = PolyCofreeAnnotFiberAtM A P m n pos } :=
+  match n with
+  | 0 => m.head.1
+  | n + 1 =>
+    let ⟨e, pos'⟩ := pos
+    polyCofreeGetAnnotAtM A P (m.children e) n pos'
+
+/--
+The child family for `polyScale A P` equals the P family at the second component.
+-/
+lemma polyScaleFamily_eq_P_family (A : Over X) (P : PolyEndo X) {x : X}
+    (m : PolyCofreeM A P x) :
+    polyBetweenFamily X X (polyScale A P) x m.head =
+    polyBetweenFamily X X P x m.head.2 := rfl
+
+/--
+Given fiber equality and HEq of shapes, derive equality of shapes after transport.
+-/
+lemma polyCofreeShape_eq_of_heq_fiber {P : PolyEndo X} {y1 y2 : X}
+    (hfiber : y1 = y2)
+    (s1 : PolyCofreeShape P y1) (s2 : PolyCofreeShape P y2)
+    (heq : HEq s1 s2) : hfiber ▸ s1 = s2 := by
+  subst hfiber
+  exact eq_of_heq heq
+
+/--
+Convert a position type along shape equality (same fiber).
+-/
+lemma polyCofreeAnnotPosAt_cast {P : PolyEndo X} {y : X}
+    {s1 s2 : PolyCofreeShape P y} (h : s1 = s2) (n : Nat) :
+    PolyCofreeAnnotPosAt P s1 n = PolyCofreeAnnotPosAt P s2 n := by
+  subst h
+  rfl
+
+/--
+Convert a position type along fiber equality and shape HEq.
+-/
+lemma polyCofreeAnnotPosAt_cast_fiber {P : PolyEndo X} {y1 y2 : X}
+    (hfiber : y1 = y2)
+    {s1 : PolyCofreeShape P y1} {s2 : PolyCofreeShape P y2}
+    (hshape : HEq s1 s2) (n : Nat) :
+    PolyCofreeAnnotPosAt P s1 n = PolyCofreeAnnotPosAt P s2 n := by
+  subst hfiber
+  exact polyCofreeAnnotPosAt_cast (eq_of_heq hshape) n
+
+/--
+Transport lemma for PolyCofreeAnnotFiberAt: the fiber value is preserved
+when transporting along fiber equality and shape HEq.
+-/
+lemma polyCofreeAnnotFiberAt_transport {P : PolyEndo X} {y1 y2 : X}
+    (hfiber : y1 = y2)
+    {s1 : PolyCofreeShape P y1} {s2 : PolyCofreeShape P y2}
+    (hshape : HEq s1 s2)
+    (n : Nat) (pos : PolyCofreeAnnotPosAt P s1 n) :
+    PolyCofreeAnnotFiberAt P s1 n pos =
+    PolyCofreeAnnotFiberAt P s2 n
+      (cast (polyCofreeAnnotPosAt_cast_fiber hfiber hshape n) pos) := by
+  subst hfiber
+  have hshape_eq := eq_of_heq hshape
+  subst hshape_eq
+  rfl
+
+/--
+The shape equality for children: after fiber transport.
+-/
+lemma polyCofreeToShape_children_eq (A : Over X) (P : PolyEndo X) {x : X}
+    (m : PolyCofreeM A P x)
+    (e_shape : (polyBetweenFamily X X P x (polyCofreeToShape A P m).head.2).left)
+    :
+    let e_m := polyCofreeShapePosToMPos A P m e_shape
+    let hfiber := polyCofreeShapePosToMPos_fiber A P m e_shape
+    hfiber ▸ (polyCofreeToShape A P m).children e_shape =
+    polyCofreeToShape A P (m.children e_m) :=
+  polyCofreeShape_eq_of_heq_fiber
+    (polyCofreeShapePosToMPos_fiber A P m e_shape)
+    _ _
+    (polyCofreeToShape_children_heq A P m e_shape)
+
+/--
+Convert a shape position to an M-type position at depth n.
+Uses the equality `(polyCofreeToShape A P m).head.2 = m.head.2` to cast elements.
+-/
+def polyCofreeShapePosToMPosAt (A : Over X) (P : PolyEndo X) {x : X}
+    (m : PolyCofreeM A P x)
+    (n : Nat) (pos : PolyCofreeAnnotPosAt P (polyCofreeToShape A P m) n) :
+    PolyCofreeAnnotPosAtM A P m n :=
+  match n with
+  | 0 => PUnit.unit
+  | n + 1 =>
+    let ⟨e_shape, pos'⟩ := pos
+    let e_m := polyCofreeShapePosToMPos A P m e_shape
+    let hfiber := polyCofreeShapePosToMPos_fiber A P m e_shape
+    let hshape_heq := polyCofreeToShape_children_heq A P m e_shape
+    let pos'_transported : PolyCofreeAnnotPosAt P
+        (polyCofreeToShape A P (m.children e_m)) n :=
+      cast (polyCofreeAnnotPosAt_cast_fiber hfiber hshape_heq n) pos'
+    ⟨e_m, polyCofreeShapePosToMPosAt A P (m.children e_m) n pos'_transported⟩
+
+/--
+The fiber at a shape position equals the fiber at the corresponding M-type position.
+-/
+lemma polyCofreeAnnotFiber_eq (A : Over X) (P : PolyEndo X) {x : X}
+    (m : PolyCofreeM A P x)
+    (n : Nat) (pos : PolyCofreeAnnotPosAt P (polyCofreeToShape A P m) n) :
+    PolyCofreeAnnotFiberAt P (polyCofreeToShape A P m) n pos =
+    PolyCofreeAnnotFiberAtM A P m n (polyCofreeShapePosToMPosAt A P m n pos) := by
+  induction n generalizing x m with
+  | zero => rfl
+  | succ n ih =>
+    obtain ⟨e_shape, pos'⟩ := pos
+    simp only [PolyCofreeAnnotFiberAt, PolyCofreeAnnotFiberAtM,
+      polyCofreeShapePosToMPosAt]
+    let e_m := polyCofreeShapePosToMPos A P m e_shape
+    let hfiber := polyCofreeShapePosToMPos_fiber A P m e_shape
+    let hshape_heq := polyCofreeToShape_children_heq A P m e_shape
+    have h1 : PolyCofreeAnnotFiberAt P ((polyCofreeToShape A P m).children e_shape)
+        n pos' =
+        PolyCofreeAnnotFiberAt P (polyCofreeToShape A P (m.children e_m)) n
+          (cast (polyCofreeAnnotPosAt_cast_fiber hfiber hshape_heq n) pos') :=
+      polyCofreeAnnotFiberAt_transport hfiber hshape_heq n pos'
+    rw [h1]
+    exact ih (m.children e_m)
+      (cast (polyCofreeAnnotPosAt_cast_fiber hfiber hshape_heq n) pos')
+
+/--
+Extract the annotation at a depth-n position from a cofree comonad value.
+
+Uses M-type based positions internally for clean recursion, then converts
+the fiber proof using the fiber equality lemma.
+-/
+def polyCofreeGetAnnotAt (A : Over X) (P : PolyEndo X) {x : X}
+    (m : PolyCofreeM A P x)
+    (n : Nat) (pos : PolyCofreeAnnotPosAt P (polyCofreeToShape A P m) n) :
+    { a : A.left // A.hom a = PolyCofreeAnnotFiberAt P
+        (polyCofreeToShape A P m) n pos } :=
+  let pos_m := polyCofreeShapePosToMPosAt A P m n pos
+  let result := polyCofreeGetAnnotAtM A P m n pos_m
+  ⟨result.val, by
+    rw [polyCofreeAnnotFiber_eq A P m n pos]
+    exact result.property⟩
+
+/--
+Extract the annotation at any position from a cofree comonad value.
+-/
+def polyCofreeGetAnnot (A : Over X) (P : PolyEndo X) {x : X}
+    (m : PolyCofreeM A P x)
+    (pos : PolyCofreeAnnotPos P (polyCofreeToShape A P m)) :
+    { a : A.left // A.hom a = PolyCofreeAnnotFiber P
+        (polyCofreeToShape A P m) pos } :=
+  polyCofreeGetAnnotAt A P m pos.1 pos.2
+
+/--
+Convert a cofree comonad value to its polynomial evaluation form.
+
+The forward direction of the equivalence `PolyCofreeM A P ≃ PolyCofreePolyEval A P`.
+-/
+def polyCofreeM_to_polyCofreePolyEval (A : Over X) (P : PolyEndo X) {x : X}
+    (m : PolyCofreeM A P x) : PolyCofreePolyEval A P x :=
+  ⟨polyCofreeToShape A P m,
+    ⟨fun pos => (polyCofreeGetAnnot A P m pos).val,
+      fun pos => (polyCofreeGetAnnot A P m pos).property⟩⟩
 
 end FreeMonadCofreeComonad
 

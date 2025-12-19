@@ -186,7 +186,7 @@ The proofs use helper lemmas for working with dependent types:
 
 ## In Progress
 
-### Polynomial Representation of Cofree Comonad (Partial)
+### Polynomial Representation of Cofree Comonad (In Progress)
 
 The cofree comonad polynomial representation has the following infrastructure:
 
@@ -201,10 +201,41 @@ The cofree comonad polynomial representation has the following infrastructure:
 9. **polyCofreeShapePosToMPos** - Convert shape positions to M-type positions
 10. **polyCofreeGetRoot** - Extract root annotation
 
-The full equivalence `PolyCofreeM A P ≃ PolyCofreePolyEval A P` remains to be
-proven. The challenge is navigating positions in M-type structure: the shape
-of a child is not definitionally equal to the child of the shape, requiring
-careful type transport.
+#### Proof Strategy for `PolyCofreeM A P ≃ PolyCofreePolyEval A P`
+
+**Phase 1: Transport lemma**
+- `polyCofreeToShape_children` - Relate `(toShape m).children e_shape` to
+  `toShape (m.children e_m)` where `e_m = polyCofreeShapePosToMPos A P m e_shape`
+- This lemma bridges shape-space navigation with M-type-space navigation
+
+**Phase 2: Forward direction (extract shape + annotations)**
+- `polyCofreeToAnnotDataAt` - Extract annotation at position of depth n
+- `polyCofreeToAnnotData` - Extract annotation function on all positions
+- `polyCofreeM_to_polyCofreePolyEval` - Forward map combining shape and data
+
+**Phase 3: Backward direction (build M-type from shape + data)**
+- `polyCofreeFromShapeAndDataApprox` - Build M-type approximations from shape
+  and annotation data
+- `polyCofreeFromShapeAndDataApprox_consistent` - Prove consistency
+- `polyCofreeFromShapeAndData` - Assemble into M-type
+- `polyCofreePolyEval_to_polyCofreeM` - Backward map wrapper
+
+**Phase 4: Roundtrip proofs**
+
+For left inverse (`polyCofreeM_roundtrip`):
+- Use M-type extensionality (two M-types are equal iff approximations agree)
+- By induction on approximation depth, show reconstructed approximations match
+- Alternatively, use terminal coalgebra universal property: if both directions
+  are coalgebra homomorphisms, composition is a coalgebra endomorphism on the
+  terminal coalgebra, which must be the identity
+
+For right inverse (`polyCofreePolyEval_roundtrip`):
+- By M-type induction on the shape, show shape and annotation data are preserved
+- Shape preservation: `polyCofreeFromShapeAndData_toShape`
+- Data preservation: annotation function equals original
+
+**Phase 5: Final equivalence**
+- `polyCofreeEquivPolyEval` - Combine forward/backward with roundtrip proofs
 
 ### Free ⊣ Forget Adjunction (Partial)
 
