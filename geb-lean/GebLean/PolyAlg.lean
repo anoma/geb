@@ -1473,14 +1473,14 @@ lemma polyCofixUnfold_coalg_comm_mor_heq (P : PolyEndo X) (α : PolyCoalg P)
       apply PolyCofix.ext
       intro n
       show (hfiber1 ▸ child1).approx n = child2.approx n
-      induction n with
+      cases n with
       | zero =>
         rw [PolyCofix.approx_cast hfiber1 child1 0]
         have h1 : child1.approx 0 = PolyCofixApprox.continue _ := rfl
         have h2 : child2.approx 0 = PolyCofixApprox.continue _ := rfl
         rw [h1, h2]
         exact PolyCofixApprox.continue_cast hfiber1
-      | succ n ih =>
+      | succ n =>
         rw [PolyCofix.approx_cast hfiber1 child1 (n + 1)]
         have h1 : child1.approx (n + 1) =
             polyCofixUnfoldApprox P α (n + 1) _ ⟨(α.str.left a).snd.snd.left e1, rfl⟩ := rfl
