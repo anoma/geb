@@ -228,7 +228,7 @@ Remaining work:
 - Triangle identities
 - Construct the `Adjunction` instance
 
-### Forget ⊣ Cofree Adjunction (Not Started)
+### Forget ⊣ Cofree Adjunction (In Progress)
 
 For coalgebras:
 
@@ -237,6 +237,28 @@ For coalgebras:
 - Bijection: `Hom_Over(Forget(β), A) ≅ Hom_Coalg(β, Cofree(A))`
 - The bijection sends f to the anamorphism computing annotations from
   f at each step
+
+Implemented:
+
+1. **polyCofreeCoalg A P** - Cofree P-coalgebra on A (carrier = M-type with
+   A-annotations)
+2. **polyCofreeCoalgMap A B P f** - Coalgebra homomorphism for morphism f
+3. **polyCofreeFunctor P** - Cofree functor `Over X ⥤ PolyCoalg P`
+4. **polyCoalgForgetFunctor P** - Forgetful functor `PolyCoalg P ⥤ Over X`
+5. **polyCofreeCounit A P** - Counit morphism `Cofree(A) → A` (extracts root)
+6. **polyCofreeCounit_naturality** - Naturality of counit
+7. **polyCofreeCounitNat P** - Counit as natural transformation
+8. **polyCoalgUnitApprox P β n x s** - Approximations for unit anamorphism
+9. **polyCoalgUnitApprox_consistent** - Successive approximations agree
+10. **polyCoalgUnitAt P β x s** - M-type for unit construction
+11. **polyCoalgUnit P β** - Unit morphism `β.V → Cofree(β.V)` in Over X
+
+Remaining work:
+
+- Prove unit is coalgebra homomorphism (structure maps commute)
+- Unit naturality (natural transformation `𝟭 ⟶ Forget ⋙ Cofree`)
+- Triangle identities
+- Construct the `Adjunction` instance
 
 ## Future Directions
 

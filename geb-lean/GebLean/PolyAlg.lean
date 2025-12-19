@@ -4052,6 +4052,102 @@ def polyCofreeCounit (A : Over X) (P : PolyEndo X) :
     polyCofreeCarrier A P ⟶ A :=
   Over.homMk (polyCofreeCounitLeft A P) (polyCofreeCounit_comm A P)
 
+/--
+The counit is natural: extracting root then mapping equals mapping then extracting.
+-/
+lemma polyCofreeCounit_naturality (A B : Over X) (P : PolyEndo X) (f : A ⟶ B) :
+    polyCofreeMap A B P f ≫ polyCofreeCounit B P =
+    polyCofreeCounit A P ≫ f := by
+  apply Over.OverMorphism.ext
+  funext ⟨x, m⟩
+  simp only [Over.comp_left, polyCofreeMap, Over.homMk_left, polyCofreeCounit,
+    polyCofreeCounitLeft, types_comp_apply, polyCofreeMapLeft]
+  simp only [polyCofreeExtract, polyCofreeMapAt, PolyCofix.head]
+  rw [polyCofreeMapApprox_getIndex]
+
+/--
+The counit as a natural transformation.
+-/
+def polyCofreeCounitNat (P : PolyEndo X) :
+    polyCofreeFunctor P ⋙ polyCoalgForgetFunctor P ⟶ 𝟭 (Over X) where
+  app := fun A => polyCofreeCounit A P
+  naturality := fun A B f => polyCofreeCounit_naturality A B P f
+
+/--
+Build approximations for the unit anamorphism.
+Given a coalgebra β and a state s, unfolds s into an M-type where each node is
+annotated by the state at that point.
+-/
+def polyCoalgUnitApprox (P : PolyEndo X) (β : PolyCoalg P) (n : Nat) (x : X)
+    (s : { a : β.V.left // β.V.hom a = x }) :
+    PolyCofixApprox (polyScale β.V P) n x :=
+  match n with
+  | 0 => .continue x
+  | n + 1 =>
+    let strResult := β.str.left s.val
+    have hx : strResult.1 = x := by
+      have h := congrFun (Over.w β.str) s.val
+      simp only at h
+      rw [s.property] at h
+      exact h
+    let elem : polyBetweenEvalFamily X X P β.V strResult.1 := strResult.2
+    let pIdx := elem.1
+    let childMor := elem.2
+    let sAtFiber : { a : β.V.left // β.V.hom a = strResult.1 } :=
+      ⟨s.val, hx.symm ▸ s.property⟩
+    hx ▸ .intro strResult.1 ⟨sAtFiber, pIdx⟩ (fun e =>
+      let childVal := childMor.left e
+      have hChild : β.V.hom childVal =
+          (polyBetweenFamily X X P strResult.1 pIdx).hom e :=
+        congrFun (Over.w childMor) e
+      polyCoalgUnitApprox P β n _ ⟨childVal, hChild⟩)
+
+/--
+Successive approximations agree.
+-/
+lemma polyCoalgUnitApprox_consistent (P : PolyEndo X) (β : PolyCoalg P) (n : Nat)
+    (x : X) (s : { a : β.V.left // β.V.hom a = x }) :
+    PolyCofixAgree (polyScale β.V P)
+      (polyCoalgUnitApprox P β n x s)
+      (polyCoalgUnitApprox P β (n + 1) x s) := by
+  induction n generalizing x s with
+  | zero =>
+    simp only [polyCoalgUnitApprox]
+    exact PolyCofixAgree.continue _ _
+  | succ n ih =>
+    simp only [polyCoalgUnitApprox]
+    apply PolyCofixAgree.transport
+    exact PolyCofixAgree.intro _ _ (fun e => ih _ _)
+
+/--
+Build the M-type for a state in the unit construction.
+-/
+def polyCoalgUnitAt (P : PolyEndo X) (β : PolyCoalg P) (x : X)
+    (s : { a : β.V.left // β.V.hom a = x }) :
+    PolyCofreeM β.V P x where
+  approx n := polyCoalgUnitApprox P β n x s
+  consistent n := polyCoalgUnitApprox_consistent P β n x s
+
+/--
+The left component of the unit morphism.
+-/
+def polyCoalgUnitLeft (P : PolyEndo X) (β : PolyCoalg P) :
+    β.V.left → (polyCofreeCarrier β.V P).left :=
+  fun a => ⟨β.V.hom a, polyCoalgUnitAt P β (β.V.hom a) ⟨a, rfl⟩⟩
+
+/--
+The unit commutes with projection to X.
+-/
+lemma polyCoalgUnit_comm (P : PolyEndo X) (β : PolyCoalg P) :
+    polyCoalgUnitLeft P β ≫ (polyCofreeCarrier β.V P).hom = β.V.hom := rfl
+
+/--
+The unit morphism: β.V → Cofree(β.V) in Over X.
+-/
+def polyCoalgUnit (P : PolyEndo X) (β : PolyCoalg P) :
+    β.V ⟶ polyCofreeCarrier β.V P :=
+  Over.homMk (polyCoalgUnitLeft P β) (polyCoalgUnit_comm P β)
+
 end Adjunctions
 
 end GebLean
