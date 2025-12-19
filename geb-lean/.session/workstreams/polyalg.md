@@ -1,11 +1,12 @@
-# Polynomial Endofunctor Algebras
+# Polynomial Endofunctor Algebras and Coalgebras
 
 Status: Completed
 
 ## Objective
 
-Formalize algebras of polynomial endofunctors on slice categories `Over X`,
-including the construction of initial algebras (W-types).
+Formalize algebras and coalgebras of polynomial endofunctors on slice
+categories `Over X`, including the construction of initial algebras (W-types)
+and terminal coalgebras (M-types).
 
 ## Completed Work
 
@@ -42,6 +43,32 @@ The main result establishes `PolyFix P` as the initial algebra:
 8. **polyFixAlg_isInitial** - The IsInitial instance via
    `IsInitial.ofUniqueHom`
 
+### Coalgebras
+
+Using mathlib's `Endofunctor.Coalgebra` for structure:
+
+- **PolyCoalg P** - Coalgebras of polynomial endofunctor P
+- Category instance inherited from mathlib
+- Forgetful functor to `Over X`
+
+### Terminal Coalgebra (M-types)
+
+The construction of M-types as consistent sequences of approximations:
+
+1. **PolyCofix_Approx P n x** - Finite approximations of M-type trees at depth n
+2. **PolyCofix_Agree P** - Agreement relation between successive approximations
+3. **PolyCofix P x** - M-type as consistent chain of approximations
+4. **PolyCofix.ext** - Extensionality: M-types are equal iff all approximations
+   agree
+5. **polyCofixCarrier** - The carrier as an object of `Over X`
+6. **polyCofixStr** - The structure map `PolyCofix -> P(PolyCofix)`
+7. **polyCofixCoalg** - The coalgebra structure
+8. **polyCofixUnfold** - Anamorphism from any coalgebra to PolyCofix
+9. **polyCofixUnfoldHom** - The unfold as a coalgebra homomorphism
+10. **polyCofixUnfoldHom_unique** - Uniqueness via approximation induction
+11. **polyCofixCoalg_isTerminal** - The IsTerminal instance via
+    `IsTerminal.ofUniqueHom`
+
 ## Technical Approach
 
 ### Type Transport
@@ -73,25 +100,40 @@ def polyFixFoldAtWithProof (P : PolyEndo X) (α : PolyAlg P) (x : X) :
 This approach avoids issues with dependent elimination that arise from using
 `induction` tactics directly.
 
-### Homomorphism Proofs
+### M-type Uniqueness
 
-The algebra homomorphism condition required:
+The uniqueness proof for coalgebra homomorphisms to the terminal coalgebra
+required:
 
-- Helper lemma `polyEndoFunctor_map_at` to characterize functor action
-- Transport lemma `polyFixFoldAtWithProof_transport` for independence of
-  proof paths
-- Morphism composition lemma `fold_comp_morphism_eq`
+- Induction on approximation depth
+- Helper lemmas for relating coalgebra structure to M-type structure:
+  - `coalg_hom_fiber_eq` - Fiber equality preservation
+  - `coalg_hom_index_heq` - Index HEq preservation
+  - `coalg_hom_children_heq_core` - Children HEq through morphism composition
+- Helper lemmas for heterogeneous equality:
+  - `over_mor_left_heq` - HEq for Over morphism applications
+  - `cast_sigma_snd_heq` - HEq for sigma snd after casting
+  - `sigma_snd_heq_of_eq` - HEq extraction from sigma equality
 
 ## Dependencies
 
 - `GebLean.Polynomial` for `polyBetweenIndex`, `polyBetweenFamily`,
   `polyBetweenEvalFunctor`, `familySliceForward`
-- `Mathlib.CategoryTheory.Endofunctor.Algebra` for `Endofunctor.Algebra`
+- `Mathlib.CategoryTheory.Endofunctor.Algebra` for `Endofunctor.Algebra` and
+  `Endofunctor.Coalgebra`
 - `Mathlib.CategoryTheory.Limits.Shapes.IsTerminal` for `IsInitial.ofUniqueHom`
+  and `IsTerminal.ofUniqueHom`
+
+## References
+
+1. Abbott, Altenkirch, Ghani (2005). "Containers: Constructing strictly
+   positive types" - Proposition 4.1 gives M-type construction from W-types
+2. Avigad, Carneiro, Hudon (2019). "Data Types as Quotients of Polynomial
+   Functors" - Section on M-types with Lean-specific implementation
+3. mathlib `Mathlib.Data.PFunctor.Univariate.M` - `CofixA`, `Agree`, `M`
 
 ## Future Directions
 
 - Lambek's Lemma: show that the structure map is an isomorphism for
-  initial algebras
-- Coalgebras and terminal coalgebras (M-types)
+  initial algebras and terminal coalgebras
 - Connection to QPF (quotients of polynomial functors)
