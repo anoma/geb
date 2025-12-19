@@ -2106,4 +2106,590 @@ def polyCofixCoalg_isTerminal (P : PolyEndo X) :
 
 end PolyCofixTerminal
 
+/-! ## Free Monad and Cofree Comonad
+
+The free monad on a polynomial endofunctor P is defined using the initial
+algebra of the "translate" functor `A + P(-)`, and the cofree comonad is
+defined using the terminal coalgebra of the "scale" functor `A × P(-)`.
+
+These constructions give adjunctions:
+- Free ⊣ Forget : Alg(P) → Over X
+- Forget ⊣ Cofree : Coalg(P) → Over X
+-/
+
+section FreeMonadCofreeComonad
+
+variable {X : Type u}
+
+/-! ### The Translate Polynomial (Coproduct)
+
+Given `A : Over X` and `P : PolyEndo X`, the translate polynomial
+`polyTranslate A P` represents the functor `Y ↦ A + P(Y)`.
+
+At each fiber `x : X`:
+- Positions: `{ a : A.left | A.hom a = x } + polyBetweenIndex P x`
+- Directions at `inl a` (leaf): empty (no children)
+- Directions at `inr p` (node): `polyBetweenFamily P x p`
+-/
+
+/--
+The initial object in `Over X`, representing the empty family.
+This is used for leaves in the free monad construction.
+-/
+def overEmpty (X : Type u) : Over X :=
+  Over.mk (f := fun e : PEmpty => PEmpty.elim e)
+
+/--
+The index type for the translate polynomial at a fiber.
+Elements are either leaves (from A) or nodes (from P).
+-/
+def polyTranslateIndex (A : Over X) (P : PolyEndo X) (x : X) : Type u :=
+  { a : A.left // A.hom a = x } ⊕ polyBetweenIndex X X P x
+
+/--
+The family function for the translate polynomial.
+Leaves have no children (empty family), nodes have children from P.
+-/
+def polyTranslateFamily (A : Over X) (P : PolyEndo X) (x : X)
+    (i : polyTranslateIndex A P x) : Over X :=
+  match i with
+  | Sum.inl _ => overEmpty X
+  | Sum.inr p => polyBetweenFamily X X P x p
+
+/--
+The translate polynomial at a specific fiber.
+-/
+def polyTranslateAt (A : Over X) (P : PolyEndo X) (x : X) :
+    CoprodCovarRepCat (Over X) :=
+  ccrObjMk (polyTranslateFamily A P x)
+
+/--
+The translate polynomial functor `A + P(-)` as a polynomial endofunctor.
+-/
+def polyTranslate (A : Over X) (P : PolyEndo X) : PolyEndo X :=
+  fun x => polyTranslateAt A P x
+
+/-! ### The Scale Polynomial (Product)
+
+Given `A : Over X` and `P : PolyEndo X`, the scale polynomial
+`polyScale A P` represents the functor `Y ↦ A × P(Y)`.
+
+At each fiber `x : X`:
+- Positions: `{ a : A.left | A.hom a = x } × polyBetweenIndex P x`
+- Directions at `(a, p)`: `polyBetweenFamily P x p`
+-/
+
+/--
+The index type for the scale polynomial at a fiber.
+Elements are pairs of labels (from A) and nodes (from P).
+-/
+def polyScaleIndex (A : Over X) (P : PolyEndo X) (x : X) : Type u :=
+  { a : A.left // A.hom a = x } × polyBetweenIndex X X P x
+
+/--
+The family function for the scale polynomial.
+Each position has children from P (the label doesn't affect children).
+-/
+def polyScaleFamily (A : Over X) (P : PolyEndo X) (x : X)
+    (i : polyScaleIndex A P x) : Over X :=
+  polyBetweenFamily X X P x i.2
+
+/--
+The scale polynomial at a specific fiber.
+-/
+def polyScaleAt (A : Over X) (P : PolyEndo X) (x : X) :
+    CoprodCovarRepCat (Over X) :=
+  ccrObjMk (polyScaleFamily A P x)
+
+/--
+The scale polynomial functor `A × P(-)` as a polynomial endofunctor.
+-/
+def polyScale (A : Over X) (P : PolyEndo X) : PolyEndo X :=
+  fun x => polyScaleAt A P x
+
+/-! ### Free Monad
+
+The free monad on P is the endofunctor `A ↦ PolyFix (polyTranslate A P)`.
+This gives trees with A-labeled leaves and P-shaped internal nodes.
+-/
+
+/--
+The free monad carrier: W-type of the translate polynomial.
+`PolyFreeM A P x` is the type of P-branching trees with A-leaves, at fiber x.
+-/
+abbrev PolyFreeM (A : Over X) (P : PolyEndo X) (x : X) : Type u :=
+  PolyFix (polyTranslate A P) x
+
+/--
+The free monad carrier as an object of `Over X`.
+-/
+def polyFreeMCarrier (A : Over X) (P : PolyEndo X) : Over X :=
+  polyFixCarrier (polyTranslate A P)
+
+/-! ### Cofree Comonad
+
+The cofree comonad on P is the endofunctor `A ↦ PolyCofix (polyScale A P)`.
+This gives M-type trees with A-annotations at each node.
+-/
+
+/--
+The cofree comonad carrier: M-type of the scale polynomial.
+`PolyCofreeM A P x` is the type of P-branching streams with A-annotations.
+-/
+abbrev PolyCofreeM (A : Over X) (P : PolyEndo X) (x : X) : Type u :=
+  PolyCofix (polyScale A P) x
+
+/--
+The cofree comonad carrier as an object of `Over X`.
+-/
+def polyCofreeCarrier (A : Over X) (P : PolyEndo X) : Over X :=
+  polyCofixCarrier (polyScale A P)
+
+/-! ### Relating W-types and M-types to Free/Cofree
+
+The W-type `PolyFix P` is the free monad applied to the empty object.
+The M-type `PolyCofix P` is the cofree comonad applied to the terminal object.
+-/
+
+/--
+The empty object in `Over X` (initial object).
+-/
+def overInitial (X : Type u) : Over X := overEmpty X
+
+/--
+The terminal object in `Over X` is `X` itself with the identity morphism.
+-/
+def overTerminal (X : Type u) : Over X :=
+  Over.mk (f := @id X)
+
+/-! ### Index Equivalences
+
+When A is the initial object (empty), the translate polynomial index reduces
+to just the P index. When A is the terminal object, the scale polynomial
+index has exactly one label component per fiber.
+-/
+
+/--
+The fiber of the initial object is empty (there are no elements to map).
+-/
+instance overInitialFiberIsEmpty (x : X) :
+    IsEmpty { a : (overInitial X).left // (overInitial X).hom a = x } :=
+  ⟨fun ⟨e, _⟩ => PEmpty.elim e⟩
+
+/--
+The fiber of the initial object over any x is empty.
+-/
+def overInitialFiberEmpty (x : X) :
+    { a : (overInitial X).left // (overInitial X).hom a = x } ≃ PEmpty :=
+  Equiv.equivPEmpty _
+
+/--
+The fiber of the terminal object over x is a singleton (exactly x).
+-/
+def overTerminalFiberUnique (x : X) :
+    { a : (overTerminal X).left // (overTerminal X).hom a = x } ≃ PUnit := {
+  toFun := fun _ => PUnit.unit
+  invFun := fun _ => ⟨x, rfl⟩
+  left_inv := fun ⟨a, h⟩ => by simp only [Subtype.mk.injEq]; exact h.symm
+  right_inv := fun _ => rfl
+}
+
+/--
+The translate index with initial A reduces to the P index.
+-/
+def polyTranslateIndexInitialEquiv (P : PolyEndo X) (x : X) :
+    polyTranslateIndex (overInitial X) P x ≃ polyBetweenIndex X X P x := {
+  toFun := fun i => match i with
+    | Sum.inl ⟨e, _⟩ => PEmpty.elim e
+    | Sum.inr p => p
+  invFun := Sum.inr
+  left_inv := fun i => match i with
+    | Sum.inl ⟨e, _⟩ => PEmpty.elim e
+    | Sum.inr _ => rfl
+  right_inv := fun _ => rfl
+}
+
+/--
+The scale index with terminal A has a unique label component per fiber.
+-/
+def polyScaleIndexTerminalEquiv (P : PolyEndo X) (x : X) :
+    polyScaleIndex (overTerminal X) P x ≃
+    polyBetweenIndex X X P x := {
+  toFun := fun ⟨_, p⟩ => p
+  invFun := fun p => ⟨⟨x, rfl⟩, p⟩
+  left_inv := fun ⟨⟨a, h⟩, p⟩ => by
+    apply Prod.ext
+    · exact Subtype.ext h.symm
+    · rfl
+  right_inv := fun _ => rfl
+}
+
+/--
+The translate family with initial A preserves the P family at node positions.
+-/
+lemma polyTranslateFamilyInitial_eq (P : PolyEndo X) (x : X)
+    (p : polyBetweenIndex X X P x) :
+    polyTranslateFamily (overInitial X) P x (Sum.inr p) =
+    polyBetweenFamily X X P x p := rfl
+
+/--
+The scale family with terminal A preserves the P family.
+-/
+lemma polyScaleFamilyTerminal_eq (P : PolyEndo X) (x : X)
+    (p : polyBetweenIndex X X P x) :
+    polyScaleFamily (overTerminal X) P x ⟨⟨x, rfl⟩, p⟩ =
+    polyBetweenFamily X X P x p := rfl
+
+/-! ### Type Equivalences
+
+The W-type and M-type are instances of free monad and cofree comonad
+applied to initial and terminal objects respectively.
+-/
+
+/--
+Convert a W-type tree to a free monad tree with empty labels.
+Maps each node with index i to a node with index Sum.inr i.
+-/
+def polyFixToPolyFreeM (P : PolyEndo X) (x : X) :
+    PolyFix P x → PolyFreeM (overInitial X) P x
+  | PolyFix.mk _ i children =>
+    PolyFix.mk x (Sum.inr i) (fun e => polyFixToPolyFreeM P _ (children e))
+
+/--
+Convert a free monad tree with empty labels to a W-type tree.
+The Sum.inl case is impossible since the label type is empty.
+-/
+def polyFreeMToPolyFix (P : PolyEndo X) (x : X) :
+    PolyFreeM (overInitial X) P x → PolyFix P x
+  | PolyFix.mk _ i children =>
+    match i with
+    | Sum.inl ⟨e, _⟩ => PEmpty.elim e
+    | Sum.inr p => PolyFix.mk x p (fun e => polyFreeMToPolyFix P _ (children e))
+
+/--
+Round-trip from PolyFix through PolyFreeM returns the original tree.
+-/
+theorem polyFreeMToPolyFix_polyFixToPolyFreeM (P : PolyEndo X) (x : X)
+    (t : PolyFix P x) :
+    polyFreeMToPolyFix P x (polyFixToPolyFreeM P x t) = t := by
+  induction t with
+  | mk y i children ih =>
+    simp only [polyFixToPolyFreeM, polyFreeMToPolyFix]
+    congr 1
+    funext e
+    exact ih e
+
+/--
+Round-trip from PolyFreeM through PolyFix returns the original tree.
+-/
+theorem polyFixToPolyFreeM_polyFreeMToPolyFix (P : PolyEndo X) (x : X)
+    (t : PolyFreeM (overInitial X) P x) :
+    polyFixToPolyFreeM P x (polyFreeMToPolyFix P x t) = t := by
+  induction t with
+  | mk y i children ih =>
+    match i with
+    | Sum.inl ⟨e, _⟩ => exact PEmpty.elim e
+    | Sum.inr p =>
+      simp only [polyFreeMToPolyFix, polyFixToPolyFreeM]
+      congr 1
+      funext e
+      exact ih e
+
+/--
+The W-type `PolyFix P` is equivalent to the free monad on P applied to
+the initial object. When there are no leaf labels (A is empty), trees are
+just nodes with P-shaped children.
+-/
+def polyFixEquivPolyFreeM (P : PolyEndo X) (x : X) :
+    PolyFix P x ≃ PolyFreeM (overInitial X) P x := {
+  toFun := polyFixToPolyFreeM P x
+  invFun := polyFreeMToPolyFix P x
+  left_inv := polyFreeMToPolyFix_polyFixToPolyFreeM P x
+  right_inv := polyFixToPolyFreeM_polyFreeMToPolyFix P x
+}
+
+/-! ### M-type and Cofree Comonad Equivalence
+
+The M-type `PolyCofix P` is equivalent to the cofree comonad on P applied to
+the terminal object.
+-/
+
+/--
+Convert an M-type approximation to a cofree comonad approximation.
+-/
+def polyCofixApproxToPolyCofreeM (P : PolyEndo X) {n : Nat} {x : X} :
+    PolyCofixApprox P n x →
+    PolyCofixApprox (polyScale (overTerminal X) P) n x
+  | PolyCofixApprox.continue y => PolyCofixApprox.continue y
+  | PolyCofixApprox.intro y i children =>
+    PolyCofixApprox.intro y ⟨⟨y, rfl⟩, i⟩
+      (fun e => polyCofixApproxToPolyCofreeM P (children e))
+
+/--
+Convert a cofree comonad approximation to an M-type approximation.
+-/
+def polyCofreeApproxToPolyCofix (P : PolyEndo X) {n : Nat} {x : X} :
+    PolyCofixApprox (polyScale (overTerminal X) P) n x →
+    PolyCofixApprox P n x
+  | PolyCofixApprox.continue y => PolyCofixApprox.continue y
+  | PolyCofixApprox.intro y ⟨_, i⟩ children =>
+    PolyCofixApprox.intro y i
+      (fun e => polyCofreeApproxToPolyCofix P (children e))
+
+/--
+The approximation conversion preserves the agreement relation.
+-/
+theorem polyCofixApproxToPolyCofreeM_agree (P : PolyEndo X) {n : Nat} {x : X}
+    {a : PolyCofixApprox P n x} {b : PolyCofixApprox P (n + 1) x}
+    (h : PolyCofixAgree P a b) :
+    PolyCofixAgree (polyScale (overTerminal X) P)
+      (polyCofixApproxToPolyCofreeM P a)
+      (polyCofixApproxToPolyCofreeM P b) := by
+  induction h with
+  | «continue» x' y' =>
+    exact PolyCofixAgree.continue x' (polyCofixApproxToPolyCofreeM P y')
+  | intro f f' child_agree ih' =>
+    exact PolyCofixAgree.intro _ _ ih'
+
+/--
+Convert an M-type to a cofree comonad value.
+-/
+def polyCofixToPolyCofreeM (P : PolyEndo X) (x : X) :
+    PolyCofix P x → PolyCofreeM (overTerminal X) P x := fun m => {
+  approx := fun n => polyCofixApproxToPolyCofreeM P (m.approx n)
+  consistent := fun n => polyCofixApproxToPolyCofreeM_agree P (m.consistent n)
+}
+
+/--
+The inverse approximation conversion preserves the agreement relation.
+-/
+theorem polyCofreeApproxToPolyCofix_agree (P : PolyEndo X) {n : Nat} {x : X}
+    {a : PolyCofixApprox (polyScale (overTerminal X) P) n x}
+    {b : PolyCofixApprox (polyScale (overTerminal X) P) (n + 1) x}
+    (h : PolyCofixAgree (polyScale (overTerminal X) P) a b) :
+    PolyCofixAgree P
+      (polyCofreeApproxToPolyCofix P a)
+      (polyCofreeApproxToPolyCofix P b) := by
+  induction h with
+  | «continue» x' y' =>
+    exact PolyCofixAgree.continue x' (polyCofreeApproxToPolyCofix P y')
+  | intro f f' child_agree ih' =>
+    exact PolyCofixAgree.intro _ _ ih'
+
+/--
+Convert a cofree comonad value to an M-type.
+-/
+def polyCofreeToPolyCofix (P : PolyEndo X) (x : X) :
+    PolyCofreeM (overTerminal X) P x → PolyCofix P x := fun m => {
+  approx := fun n => polyCofreeApproxToPolyCofix P (m.approx n)
+  consistent := fun n => polyCofreeApproxToPolyCofix_agree P (m.consistent n)
+}
+
+/--
+Round-trip from PolyCofix through PolyCofreeM returns the original at each
+approximation level.
+-/
+theorem polyCofreeApprox_roundtrip_l (P : PolyEndo X) {n : Nat} {x : X}
+    (a : PolyCofixApprox P n x) :
+    polyCofreeApproxToPolyCofix P (polyCofixApproxToPolyCofreeM P a) = a := by
+  induction a with
+  | «continue» y => rfl
+  | intro y i children ih =>
+    simp only [polyCofixApproxToPolyCofreeM, polyCofreeApproxToPolyCofix]
+    congr 1
+    funext e
+    exact ih e
+
+/--
+Round-trip from PolyCofreeM through PolyCofix returns the original at each
+approximation level.
+-/
+theorem polyCofreeApprox_roundtrip_r (P : PolyEndo X) {n : Nat} {x : X}
+    (a : PolyCofixApprox (polyScale (overTerminal X) P) n x) :
+    polyCofixApproxToPolyCofreeM P (polyCofreeApproxToPolyCofix P a) = a := by
+  induction a with
+  | «continue» y => rfl
+  | intro y idx children ih =>
+    obtain ⟨⟨labelVal, labelProof⟩, pIdx⟩ := idx
+    simp only [polyCofreeApproxToPolyCofix, polyCofixApproxToPolyCofreeM]
+    congr 1
+    · apply Prod.ext
+      · exact Subtype.ext labelProof.symm
+      · rfl
+    · funext e
+      exact ih e
+
+/--
+Round-trip from PolyCofix through PolyCofreeM returns the original.
+-/
+theorem polyCofix_roundtrip_l (P : PolyEndo X) (x : X) (m : PolyCofix P x) :
+    polyCofreeToPolyCofix P x (polyCofixToPolyCofreeM P x m) = m := by
+  apply PolyCofix.ext
+  intro n
+  exact polyCofreeApprox_roundtrip_l P (m.approx n)
+
+/--
+Round-trip from PolyCofreeM through PolyCofix returns the original.
+-/
+theorem polyCofix_roundtrip_r (P : PolyEndo X) (x : X)
+    (m : PolyCofreeM (overTerminal X) P x) :
+    polyCofixToPolyCofreeM P x (polyCofreeToPolyCofix P x m) = m := by
+  apply PolyCofix.ext
+  intro n
+  exact polyCofreeApprox_roundtrip_r P (m.approx n)
+
+/--
+The M-type `PolyCofix P` is equivalent to the cofree comonad on P applied to
+the terminal object. When there's exactly one label per fiber, streams are
+just nodes with P-shaped children.
+-/
+def polyCofixEquivPolyCofreeM (P : PolyEndo X) (x : X) :
+    PolyCofix P x ≃ PolyCofreeM (overTerminal X) P x := {
+  toFun := polyCofixToPolyCofreeM P x
+  invFun := polyCofreeToPolyCofix P x
+  left_inv := polyCofix_roundtrip_l P x
+  right_inv := polyCofix_roundtrip_r P x
+}
+
+/-! ### Monad Structure on Free Monad
+
+The free monad `PolyFreeM A P` has a monad structure where:
+- `pure` embeds an A-value as a leaf
+- `bind` substitutes at leaves
+-/
+
+/--
+The pure operation for the free monad: embed an A-value as a leaf.
+Given an element of A at fiber x, create a leaf node in the free monad.
+-/
+def polyFreeMPure (A : Over X) (P : PolyEndo X) {x : X}
+    (a : { v : A.left // A.hom v = x }) : PolyFreeM A P x :=
+  PolyFix.mk x (Sum.inl a) (fun e => PEmpty.elim e)
+
+/--
+The bind operation for the free monad: substitute at leaves.
+Recursively traverses the tree, replacing leaves with subtrees computed by f.
+-/
+def polyFreeMBind (A B : Over X) (P : PolyEndo X) {x : X}
+    (t : PolyFreeM A P x)
+    (f : ∀ y, { a : A.left // A.hom a = y } → PolyFreeM B P y) :
+    PolyFreeM B P x :=
+  match t with
+  | PolyFix.mk _ (Sum.inl a) _ => f x a
+  | PolyFix.mk _ (Sum.inr p) children =>
+    PolyFix.mk x (Sum.inr p) fun e =>
+      polyFreeMBind A B P (children e) f
+
+/--
+Left identity: bind (pure a) f = f a
+-/
+theorem polyFreeM_pure_bind (A B : Over X) (P : PolyEndo X) {x : X}
+    (a : { v : A.left // A.hom v = x })
+    (f : ∀ y, { a : A.left // A.hom a = y } → PolyFreeM B P y) :
+    polyFreeMBind A B P (polyFreeMPure A P a) f = f x a := rfl
+
+/--
+Right identity: bind t pure = t
+-/
+theorem polyFreeM_bind_pure (A : Over X) (P : PolyEndo X) {x : X}
+    (t : PolyFreeM A P x) :
+    polyFreeMBind A A P t (fun _ a => polyFreeMPure A P a) = t := by
+  induction t with
+  | mk y idx children ih =>
+    match idx with
+    | Sum.inl a =>
+      simp only [polyFreeMBind, polyFreeMPure]
+      congr 1
+      funext e
+      exact PEmpty.elim e
+    | Sum.inr p =>
+      simp only [polyFreeMBind]
+      congr 1
+      funext e
+      exact ih e
+
+/--
+Associativity: bind (bind t f) g = bind t (fun a => bind (f a) g)
+-/
+theorem polyFreeM_bind_assoc (A B C : Over X) (P : PolyEndo X) {x : X}
+    (t : PolyFreeM A P x)
+    (f : ∀ y, { a : A.left // A.hom a = y } → PolyFreeM B P y)
+    (g : ∀ y, { b : B.left // B.hom b = y } → PolyFreeM C P y) :
+    polyFreeMBind B C P (polyFreeMBind A B P t f) g =
+    polyFreeMBind A C P t (fun y a => polyFreeMBind B C P (f y a) g) := by
+  induction t with
+  | mk y idx children ih =>
+    match idx with
+    | Sum.inl a => rfl
+    | Sum.inr p =>
+      simp only [polyFreeMBind]
+      congr 1
+      funext e
+      exact ih e
+
+/-! ### Comonad Structure on Cofree Comonad
+
+The cofree comonad `PolyCofreeM A P` has a comonad structure where:
+- `extract` extracts the A-annotation at the root
+- `extend` recomputes annotations throughout the tree
+-/
+
+/--
+Extract the A-annotation at the root of a cofree comonad tree.
+-/
+def polyCofreeExtract (A : Over X) (P : PolyEndo X) {x : X}
+    (m : PolyCofreeM A P x) : { a : A.left // A.hom a = x } :=
+  let head := m.head
+  head.1
+
+/--
+The head of a cofree comonad tree gives both the label and the P-index.
+-/
+def polyCofreeHead (A : Over X) (P : PolyEndo X) {x : X}
+    (m : PolyCofreeM A P x) : polyScaleIndex A P x :=
+  m.head
+
+/--
+Helper for building the approximation at depth n for extend.
+-/
+def polyCofreeExtendApprox (A B : Over X) (P : PolyEndo X) (n : Nat)
+    (f : ∀ y, PolyCofreeM A P y → { b : B.left // B.hom b = y })
+    (x : X) (m : PolyCofreeM A P x) :
+    PolyCofixApprox (polyScale B P) n x :=
+  match n with
+  | 0 => PolyCofixApprox.continue x
+  | n + 1 =>
+    let head := m.head
+    let newLabel : { b : B.left // B.hom b = x } := f x m
+    PolyCofixApprox.intro x ⟨newLabel, head.2⟩ fun e =>
+      polyCofreeExtendApprox A B P n f _ (m.children e)
+
+/--
+Helper for proving consistency for extend.
+-/
+def polyCofreeExtendAgree (A B : Over X) (P : PolyEndo X) (n : Nat)
+    (f : ∀ y, PolyCofreeM A P y → { b : B.left // B.hom b = y })
+    (x : X) (m : PolyCofreeM A P x) :
+    PolyCofixAgree (polyScale B P)
+      (polyCofreeExtendApprox A B P n f x m)
+      (polyCofreeExtendApprox A B P (n + 1) f x m) :=
+  match n with
+  | 0 => PolyCofixAgree.continue x _
+  | n + 1 =>
+    PolyCofixAgree.intro _ _ fun e =>
+      polyCofreeExtendAgree A B P n f _ (m.children e)
+
+/--
+Extend (duplicate) operation for the cofree comonad.
+At each node, the new annotation is computed by applying f to the subtree.
+-/
+def polyCofreeExtend (A B : Over X) (P : PolyEndo X) {x : X}
+    (f : ∀ y, PolyCofreeM A P y → { b : B.left // B.hom b = y })
+    (m : PolyCofreeM A P x) : PolyCofreeM B P x := {
+  approx := fun n => polyCofreeExtendApprox A B P n f x m
+  consistent := fun n => polyCofreeExtendAgree A B P n f x m
+}
+
+end FreeMonadCofreeComonad
+
 end GebLean

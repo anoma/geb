@@ -132,8 +132,40 @@ required:
    Functors" - Section on M-types with Lean-specific implementation
 3. mathlib `Mathlib.Data.PFunctor.Univariate.M` - `CofixA`, `Agree`, `M`
 
+### Free Monad and Cofree Comonad
+
+Extended the polynomial endofunctor framework to define free monads and
+cofree comonads:
+
+1. **polyTranslate A P** - Coproduct polynomial `Y ↦ A + P(Y)`, representing
+   "leaves from A or nodes from P"
+2. **polyScale A P** - Product polynomial `Y ↦ A × P(Y)`, representing
+   "label from A paired with node from P"
+3. **PolyFreeM A P** - Free monad carrier as `PolyFix (polyTranslate A P)`,
+   giving trees with A-labeled leaves
+4. **PolyCofreeM A P** - Cofree comonad carrier as `PolyCofix (polyScale A P)`,
+   giving streams with A-annotations
+5. **polyFixEquivPolyFreeM** - Equivalence `PolyFix P ≃ PolyFreeM Empty P`
+6. **polyCofixEquivPolyCofreeM** - Equivalence `PolyCofix P ≃ PolyCofreeM
+   Terminal P`
+
+Monad structure on PolyFreeM:
+
+- **polyFreeMPure** - Creates a leaf
+- **polyFreeMBind** - Substitutes at leaves
+- **polyFreeM_pure_bind** - Left identity law
+- **polyFreeM_bind_pure** - Right identity law
+- **polyFreeM_bind_assoc** - Associativity
+
+Comonad structure on PolyCofreeM:
+
+- **polyCofreeExtract** - Extracts the root annotation
+- **polyCofreeExtend** - Recomputes annotations via a function on subtrees
+
 ## Future Directions
 
+- Free ⊣ Forget adjunction for algebras
+- Forget ⊣ Cofree adjunction for coalgebras
 - Lambek's Lemma: show that the structure map is an isomorphism for
   initial algebras and terminal coalgebras
 - Connection to QPF (quotients of polynomial functors)
