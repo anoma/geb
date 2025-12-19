@@ -444,4 +444,4046 @@ def polyFixAlg_isInitial (P : PolyEndo X) :
 
 end PolyFixAlgebra
 
+/-! ## Coalgebras of Polynomial Endofunctors
+
+The dual of an algebra: a coalgebra of a polynomial endofunctor `P : Over X →
+Over X` consists of:
+- A carrier object `A : Over X`
+- A structure map `str : A → P(A)` (as a morphism in `Over X`)
+
+We use mathlib's `Endofunctor.Coalgebra` to get the category structure.
+-/
+
+section PolyCoalgebra
+
+variable {X : Type u}
+
+/--
+A coalgebra of a polynomial endofunctor `P` on `Over X`.
+
+This is mathlib's `Endofunctor.Coalgebra` applied to the functor represented
+by `P`. The carrier is an object `A : Over X`, and the structure map is a
+morphism `carrier ⟶ P(carrier)` in `Over X`.
+-/
+abbrev PolyCoalg (P : PolyEndo X) := Endofunctor.Coalgebra (polyEndoFunctor X P)
+
+/--
+A coalgebra of a W-type endofunctor `W` on `Over X`.
+-/
+abbrev WTypeCoalg (W : WTypeEndo X) :=
+  Endofunctor.Coalgebra (wTypeEndoFunctor X W)
+
+/--
+The category of coalgebras for a polynomial endofunctor.
+This is inherited automatically from mathlib's `Endofunctor.Coalgebra`.
+-/
+instance (P : PolyEndo X) : Category (PolyCoalg P) :=
+  Endofunctor.Coalgebra.instCategory (polyEndoFunctor X P)
+
+/--
+The category of coalgebras for a W-type endofunctor.
+-/
+instance (W : WTypeEndo X) : Category (WTypeCoalg W) :=
+  Endofunctor.Coalgebra.instCategory (wTypeEndoFunctor X W)
+
+/--
+The forgetful functor from polynomial coalgebras to `Over X`.
+-/
+def PolyCoalg.forget (P : PolyEndo X) : PolyCoalg P ⥤ Over X :=
+  Endofunctor.Coalgebra.forget (polyEndoFunctor X P)
+
+/--
+The forgetful functor from W-type coalgebras to `Over X`.
+-/
+def WTypeCoalg.forget (W : WTypeEndo X) : WTypeCoalg W ⥤ Over X :=
+  Endofunctor.Coalgebra.forget (wTypeEndoFunctor X W)
+
+end PolyCoalgebra
+
+/-! ## Cofixed Points of Polynomial Endofunctors (M-types)
+
+For a polynomial endofunctor `P` on `Over X`, we define `PolyCofix P` as the
+terminal coalgebra carrier, representing potentially infinite trees.
+
+The construction follows mathlib's approach: define approximations at each
+depth level, then take the limit of consistent sequences.
+-/
+
+section PolyCofixApprox
+
+variable {X : Type u}
+
+/--
+Approximations of the cofixed point at depth `n`.
+
+At depth 0, we have no information (just a placeholder).
+At depth `n + 1`, we have an index and children at depth `n`.
+-/
+inductive PolyCofixApprox (P : PolyEndo X) : Nat → X → Type u where
+  | continue : (x : X) → PolyCofixApprox P 0 x
+  | intro {n : Nat} (x : X) (i : polyBetweenIndex X X P x)
+      (children : ∀ (e : (polyBetweenFamily X X P x i).left),
+        PolyCofixApprox P n ((polyBetweenFamily X X P x i).hom e)) :
+      PolyCofixApprox P (n + 1) x
+
+/--
+Extract the index from a non-zero depth approximation.
+-/
+def PolyCofixApprox.getIndex {P : PolyEndo X} {n : Nat} {x : X}
+    (a : PolyCofixApprox P (n + 1) x) : polyBetweenIndex X X P x :=
+  match a with
+  | .intro _ i _ => i
+
+/--
+Extract the children function from a non-zero depth approximation.
+-/
+def PolyCofixApprox.getChildren {P : PolyEndo X} {n : Nat} {x : X}
+    (a : PolyCofixApprox P (n + 1) x) :
+    ∀ (e : (polyBetweenFamily X X P x a.getIndex).left),
+      PolyCofixApprox P n ((polyBetweenFamily X X P x a.getIndex).hom e) :=
+  match a with
+  | .intro _ _ f => f
+
+/--
+Agreement relation between successive approximations.
+
+Two approximations agree if they have the same "shape" at their shared depth:
+- Any depth-0 approximation agrees with any depth-1 approximation.
+- Two intro nodes agree if they have the same index and all children agree.
+-/
+inductive PolyCofixAgree (P : PolyEndo X) :
+    {n : Nat} → {x : X} →
+    PolyCofixApprox P n x → PolyCofixApprox P (n + 1) x → Prop where
+  | continue (x : X) (y : PolyCofixApprox P 1 x) :
+      PolyCofixAgree P (.continue x) y
+  | intro {n : Nat} {x : X} {i : polyBetweenIndex X X P x}
+      (f : ∀ e, PolyCofixApprox P n ((polyBetweenFamily X X P x i).hom e))
+      (f' : ∀ e, PolyCofixApprox P (n + 1) ((polyBetweenFamily X X P x i).hom e))
+      (h : ∀ e, PolyCofixAgree P (f e) (f' e)) :
+      PolyCofixAgree P (.intro x i f) (.intro x i f')
+
+lemma PolyCofixApprox.continue_cast {P : PolyEndo X} {x y : X} (h : x = y) :
+    h ▸ PolyCofixApprox.continue (P := P) x = PolyCofixApprox.continue y := by
+  subst h
+  rfl
+
+/--
+Two `.continue` values in the same polynomial functor are HEq when their fibers are equal.
+-/
+lemma PolyCofixApprox.continue_heq {P : PolyEndo X} {x y : X} (h : x = y) :
+    HEq (PolyCofixApprox.continue (P := P) x) (PolyCofixApprox.continue (P := P) y) := by
+  subst h
+  exact HEq.rfl
+
+lemma PolyCofixApprox.intro_cast_heq {P : PolyEndo X} {n : Nat} {x y : X}
+    (hxy : x = y)
+    (i : polyBetweenIndex X X P x)
+    (j : polyBetweenIndex X X P y)
+    (hij : HEq i j)
+    (f : ∀ e, PolyCofixApprox P n ((polyBetweenFamily X X P x i).hom e))
+    (g : ∀ e, PolyCofixApprox P n ((polyBetweenFamily X X P y j).hom e))
+    (hfg : HEq f g) :
+    hxy ▸ PolyCofixApprox.intro x i f = PolyCofixApprox.intro y j g := by
+  subst hxy
+  have hi : i = j := eq_of_heq hij
+  subst hi
+  have hf : f = g := eq_of_heq hfg
+  subst hf
+  rfl
+
+lemma PolyCofixApprox.approx_zero_eq_continue {P : PolyEndo X} {x : X}
+    (a : PolyCofixApprox P 0 x) : a = PolyCofixApprox.continue x := by
+  match a with
+  | .continue _ => rfl
+
+end PolyCofixApprox
+
+/-! ### The M-type as Consistent Sequences -/
+
+section PolyCofix
+
+variable {X : Type u}
+
+/--
+The cofixed point (M-type) of a polynomial endofunctor at a fiber.
+
+An element consists of:
+- A sequence of approximations at each depth level
+- A proof that successive approximations agree
+-/
+structure PolyCofix (P : PolyEndo X) (x : X) where
+  approx : ∀ n, PolyCofixApprox P n x
+  consistent : ∀ n, PolyCofixAgree P (approx n) (approx (n + 1))
+
+/--
+Get the head (index) of a cofixed point element.
+
+For any M-type element, we can look at depth 1 to get the index.
+-/
+def PolyCofix.head {P : PolyEndo X} {x : X} (m : PolyCofix P x) :
+    polyBetweenIndex X X P x :=
+  (m.approx 1).getIndex
+
+/--
+Agreement implies the indices match.
+
+When two approximations agree at depth n and n+1, if both are intro nodes,
+they must have the same index.
+-/
+lemma PolyCofixAgree.index_eq {P : PolyEndo X} {n : Nat} {x : X}
+    {a : PolyCofixApprox P (n + 1) x} {b : PolyCofixApprox P (n + 2) x}
+    (h : PolyCofixAgree P a b) :
+    a.getIndex = b.getIndex := by
+  cases h with
+  | intro f f' hch => rfl
+
+/--
+The index at depth n+1 equals the head (index at depth 1) for any consistent
+sequence.
+-/
+lemma PolyCofix.index_eq_head {P : PolyEndo X} {x : X} (m : PolyCofix P x)
+    (n : Nat) : (m.approx (n + 1)).getIndex = m.head := by
+  induction n with
+  | zero => rfl
+  | succ n ih =>
+    have h := (m.consistent (n + 1)).index_eq
+    rw [← ih, h]
+
+/--
+Extract the children at depth 0 (always continue).
+-/
+def PolyCofix.childApproxAt_zero {P : PolyEndo X} {x : X}
+    (_m : PolyCofix P x) (y : X) :
+    PolyCofixApprox P 0 y :=
+  .continue y
+
+/--
+Extract the children at depth n+1 from an approximation at depth n+2.
+
+Given an approximation `.intro x i children` at depth n+2, the index `i` may differ
+from the head `head` (which is the index at depth 1), but they are propositionally
+equal. This function extracts children and casts to the target type.
+-/
+def PolyCofix.childApproxAt_succ_aux {P : PolyEndo X} {x : X} {n : Nat}
+    (head : polyBetweenIndex X X P x)
+    (a : PolyCofixApprox P (n + 2) x)
+    (heq : a.getIndex = head)
+    (e : (polyBetweenFamily X X P x head).left) :
+    PolyCofixApprox P (n + 1) ((polyBetweenFamily X X P x head).hom e) :=
+  match a with
+  | .intro _ i children =>
+    Eq.recOn (motive := fun j _ =>
+        (e : (polyBetweenFamily X X P x j).left) →
+          PolyCofixApprox P (n + 1) ((polyBetweenFamily X X P x j).hom e))
+      (heq : i = head) children e
+
+/--
+Extract the children at depth n+1.
+-/
+def PolyCofix.childApproxAt_succ {P : PolyEndo X} {x : X}
+    (m : PolyCofix P x) (e : (polyBetweenFamily X X P x m.head).left) (n : Nat) :
+    PolyCofixApprox P (n + 1) ((polyBetweenFamily X X P x m.head).hom e) :=
+  childApproxAt_succ_aux m.head (m.approx (n + 2)) (m.index_eq_head (n + 1)) e
+
+/--
+Extract the children at a specific depth level.
+-/
+def PolyCofix.childApproxAt {P : PolyEndo X} {x : X} (m : PolyCofix P x)
+    (e : (polyBetweenFamily X X P x m.head).left) (n : Nat) :
+    PolyCofixApprox P n ((polyBetweenFamily X X P x m.head).hom e) :=
+  match n with
+  | 0 => m.childApproxAt_zero _
+  | n + 1 => m.childApproxAt_succ e n
+
+/--
+Helper to extract the agree relation on children given the parent agree.
+-/
+lemma PolyCofixAgree.children_agree {P : PolyEndo X} {n : Nat} {x : X}
+    {i : polyBetweenIndex X X P x}
+    {f : ∀ e, PolyCofixApprox P (n + 1) ((polyBetweenFamily X X P x i).hom e)}
+    {f' : ∀ e, PolyCofixApprox P (n + 2) ((polyBetweenFamily X X P x i).hom e)}
+    (h : PolyCofixAgree P (.intro x i f) (.intro x i f'))
+    (e : (polyBetweenFamily X X P x i).left) :
+    PolyCofixAgree P (f e) (f' e) := by
+  cases h with
+  | intro _ _ hch => exact hch e
+
+/--
+The child approximations form a consistent sequence at depth 0.
+-/
+lemma PolyCofix.childApprox_consistent_zero {P : PolyEndo X} {x : X}
+    (m : PolyCofix P x) (e : (polyBetweenFamily X X P x m.head).left) :
+    PolyCofixAgree P (m.childApproxAt e 0) (m.childApproxAt e 1) := by
+  simp only [childApproxAt, childApproxAt_zero, childApproxAt_succ]
+  exact .continue _ _
+
+/--
+Auxiliary lemma: when the approximation is an intro node with the same index as head,
+`childApproxAt_succ_aux` simplifies to the children function.
+-/
+lemma PolyCofix.childApproxAt_succ_aux_intro {P : PolyEndo X} {x : X} {n : Nat}
+    (head : polyBetweenIndex X X P x)
+    (f : ∀ e, PolyCofixApprox P (n + 1) ((polyBetweenFamily X X P x head).hom e))
+    (e : (polyBetweenFamily X X P x head).left) :
+    childApproxAt_succ_aux head (.intro x head f) rfl e = f e := rfl
+
+/--
+Extracting children from a transported `.intro` node.
+
+When the approximation is `hxy ▸ .intro x i f` in fiber `y`, extracting children at
+position `e` in the transported family gives the original children function applied
+to the corresponding position in the original family, then transported.
+-/
+lemma PolyCofix.childApproxAt_succ_aux_cast {P : PolyEndo X} {x y : X} {n : Nat}
+    (hxy : x = y)
+    (i : polyBetweenIndex X X P x)
+    (f : ∀ e, PolyCofixApprox P (n + 1) ((polyBetweenFamily X X P x i).hom e))
+    (heq : (hxy ▸ PolyCofixApprox.intro x i f).getIndex = hxy ▸ i)
+    (e : (polyBetweenFamily X X P y (hxy ▸ i)).left)
+    (e' : (polyBetweenFamily X X P x i).left)
+    (he : HEq e' e)
+    (hfib : (polyBetweenFamily X X P x i).hom e' =
+        (polyBetweenFamily X X P y (hxy ▸ i)).hom e) :
+    childApproxAt_succ_aux (hxy ▸ i) (hxy ▸ .intro x i f) heq e =
+      hfib ▸ f e' := by
+  subst hxy
+  have he' : e' = e := eq_of_heq he
+  subst he'
+  rfl
+
+/--
+The result of `childApproxAt_succ_aux` is independent of the specific equality proof.
+-/
+lemma PolyCofix.childApproxAt_succ_aux_proof_irrel {P : PolyEndo X} {x : X} {n : Nat}
+    (head : polyBetweenIndex X X P x)
+    (a : PolyCofixApprox P (n + 2) x)
+    (heq1 heq2 : a.getIndex = head)
+    (e : (polyBetweenFamily X X P x head).left) :
+    childApproxAt_succ_aux head a heq1 e = childApproxAt_succ_aux head a heq2 e := by
+  congr 1
+
+/--
+`childApproxAt_succ_aux` preserves heterogeneous equality when all arguments are HEq.
+-/
+lemma PolyCofix.childApproxAt_succ_aux_heq {P : PolyEndo X} {x1 x2 : X} {n : Nat}
+    (hx : x1 = x2)
+    (head1 : polyBetweenIndex X X P x1)
+    (head2 : polyBetweenIndex X X P x2)
+    (hhead : HEq head1 head2)
+    (a1 : PolyCofixApprox P (n + 2) x1)
+    (a2 : PolyCofixApprox P (n + 2) x2)
+    (ha : HEq a1 a2)
+    (heq1 : a1.getIndex = head1)
+    (heq2 : a2.getIndex = head2)
+    (e1 : (polyBetweenFamily X X P x1 head1).left)
+    (e2 : (polyBetweenFamily X X P x2 head2).left)
+    (he : HEq e1 e2) :
+    HEq (childApproxAt_succ_aux head1 a1 heq1 e1)
+        (childApproxAt_succ_aux head2 a2 heq2 e2) := by
+  subst hx
+  cases hhead
+  cases ha
+  cases he
+  exact HEq.rfl
+
+/--
+Helper for proving child consistency. When two approximations agree at the intro
+level, and we know the indices equal the head, we can extract the child agreement.
+-/
+lemma PolyCofix.childApprox_consistent_aux {P : PolyEndo X} {x : X} {n : Nat}
+    (head : polyBetweenIndex X X P x)
+    (i : polyBetweenIndex X X P x)
+    (f : ∀ e, PolyCofixApprox P (n + 1) ((polyBetweenFamily X X P x i).hom e))
+    (g : ∀ e, PolyCofixApprox P (n + 2) ((polyBetweenFamily X X P x i).hom e))
+    (hch : ∀ e, PolyCofixAgree P (f e) (g e))
+    (hi : i = head)
+    (e : (polyBetweenFamily X X P x head).left) :
+    PolyCofixAgree P
+      (childApproxAt_succ_aux head (.intro x i f) hi e)
+      (childApproxAt_succ_aux head (.intro x i g) hi e) := by
+  subst hi
+  simp only [childApproxAt_succ_aux]
+  exact hch e
+
+/--
+The child approximations form a consistent sequence at successor depth.
+
+We prove this by using the fact that successive approximations agree, which means
+they're both intro nodes with the same index.
+-/
+lemma PolyCofix.childApprox_consistent_succ {P : PolyEndo X} {x : X}
+    (m : PolyCofix P x) (e : (polyBetweenFamily X X P x m.head).left) (n : Nat) :
+    PolyCofixAgree P (m.childApproxAt e (n + 1)) (m.childApproxAt e (n + 2)) := by
+  simp only [childApproxAt, childApproxAt_succ]
+  have hcons := m.consistent (n + 2)
+  have heq1 : (m.approx (n + 2)).getIndex = m.head := m.index_eq_head (n + 1)
+  have heq2 : (m.approx (n + 3)).getIndex = m.head := m.index_eq_head (n + 2)
+  conv_lhs => rw [childApproxAt_succ_aux_proof_irrel m.head (m.approx (n + 2))
+    (m.index_eq_head (n + 1)) heq1 e]
+  conv_rhs => rw [childApproxAt_succ_aux_proof_irrel m.head (m.approx (n + 3))
+    (m.index_eq_head (n + 2)) heq2 e]
+  generalize ha : m.approx (n + 2) = a at hcons heq1
+  generalize hb : m.approx (n + 3) = b at hcons heq2
+  match a, b, hcons with
+  | .intro _ i f, .intro _ _ g, .intro _ _ hch =>
+    exact childApprox_consistent_aux m.head i f g hch heq1 e
+
+/--
+The child approximations form a consistent sequence.
+-/
+lemma PolyCofix.childApprox_consistent {P : PolyEndo X} {x : X}
+    (m : PolyCofix P x) (e : (polyBetweenFamily X X P x m.head).left) (n : Nat) :
+    PolyCofixAgree P (m.childApproxAt e n) (m.childApproxAt e (n + 1)) :=
+  match n with
+  | 0 => m.childApprox_consistent_zero e
+  | n + 1 => m.childApprox_consistent_succ e n
+
+/--
+The children of a cofixed point element form cofixed points themselves.
+
+For each position `e` in the family, we extract the subtree by taking the
+children at each depth level.
+-/
+def PolyCofix.children {P : PolyEndo X} {x : X} (m : PolyCofix P x)
+    (e : (polyBetweenFamily X X P x m.head).left) :
+    PolyCofix P ((polyBetweenFamily X X P x m.head).hom e) where
+  approx := m.childApproxAt e
+  consistent := m.childApprox_consistent e
+
+/--
+Two cofixed points are equal if their approximations are equal at all depths.
+-/
+@[ext]
+lemma PolyCofix.ext {P : PolyEndo X} {x : X} {m₁ m₂ : PolyCofix P x}
+    (h : ∀ n, m₁.approx n = m₂.approx n) : m₁ = m₂ := by
+  cases m₁
+  cases m₂
+  simp only [mk.injEq]
+  funext n
+  exact h n
+
+lemma PolyCofix.approx_cast {P : PolyEndo X} {x y : X}
+    (h : x = y) (m : PolyCofix P x) (n : Nat) :
+    (h ▸ m).approx n = h ▸ (m.approx n) := by
+  subst h
+  rfl
+
+/--
+HEq of PolyCofix elements implies HEq of their approximations.
+
+Note: The fiber equality `hx` must be provided explicitly since HEq alone does
+not allow extracting the fiber equality in dependent type contexts.
+-/
+lemma PolyCofix.approx_heq {P : PolyEndo X} {x1 x2 : X}
+    (hx : x1 = x2)
+    {m1 : PolyCofix P x1} {m2 : PolyCofix P x2}
+    (hm : HEq m1 m2) (n : Nat) :
+    HEq (m1.approx n) (m2.approx n) := by
+  subst hx
+  rw [eq_of_heq hm]
+
+/--
+Two PolyCofix values are HEq if their fibers are equal and all approximations are HEq.
+-/
+lemma PolyCofix.heq_of_approx_heq {P : PolyEndo X} {x1 x2 : X}
+    (hx : x1 = x2)
+    {m1 : PolyCofix P x1} {m2 : PolyCofix P x2}
+    (happrox : ∀ n, HEq (m1.approx n) (m2.approx n)) :
+    HEq m1 m2 := by
+  subst hx
+  apply heq_of_eq
+  apply PolyCofix.ext
+  intro n
+  exact eq_of_heq (happrox n)
+
+end PolyCofix
+
+/-! ### PolyCofix as Coalgebra Carrier -/
+
+section PolyCofixCoalg
+
+variable {X : Type u}
+
+/--
+The carrier of the terminal coalgebra: `PolyCofix P` viewed as an object of `Over X`.
+-/
+def polyCofixCarrier (P : PolyEndo X) : Over X :=
+  (familySliceForward X).obj (PolyCofix P)
+
+/--
+Build a morphism from the family at index `i` to `polyCofixCarrier P` from
+a function that assigns a cofixed point to each fiber element.
+-/
+def polyCofixChildrenMor {P : PolyEndo X} {x : X} (i : polyBetweenIndex X X P x)
+    (children : ∀ (e : (polyBetweenFamily X X P x i).left),
+      PolyCofix P ((polyBetweenFamily X X P x i).hom e)) :
+    polyBetweenFamily X X P x i ⟶ polyCofixCarrier P :=
+  Over.homMk
+    (fun e => ⟨(polyBetweenFamily X X P x i).hom e, children e⟩)
+    rfl
+
+/--
+Evaluating `polyCofixChildrenMor` at a point gives the corresponding child.
+-/
+lemma polyCofixChildrenMor_snd {P : PolyEndo X} {x : X} (i : polyBetweenIndex X X P x)
+    (children : ∀ (e : (polyBetweenFamily X X P x i).left),
+      PolyCofix P ((polyBetweenFamily X X P x i).hom e))
+    (e : (polyBetweenFamily X X P x i).left) :
+    ((polyCofixChildrenMor i children).left e).snd = children e := rfl
+
+/--
+The destructor for `PolyCofix`: extracts the head and children as an element of `P(PolyCofix P)`.
+
+For a cofixed point element `m`, this returns:
+- The index `m.head`
+- A morphism from the corresponding family to `polyCofixCarrier P` via `m.children`
+-/
+def polyCofixDestFamily (P : PolyEndo X) (x : X) (m : PolyCofix P x) :
+    polyBetweenEvalFamily X X P (polyCofixCarrier P) x :=
+  ⟨m.head, polyCofixChildrenMor m.head m.children⟩
+
+/--
+The underlying function of the destructor.
+-/
+def polyCofixDestLeft (P : PolyEndo X) :
+    (polyCofixCarrier P).left → ((polyEndoFunctor X P).obj (polyCofixCarrier P)).left :=
+  fun ⟨x, m⟩ => ⟨x, polyCofixDestFamily P x m⟩
+
+/--
+The destructor commutes with projections to X.
+-/
+lemma polyCofixDest_comm (P : PolyEndo X) :
+    polyCofixDestLeft P ≫ ((polyEndoFunctor X P).obj (polyCofixCarrier P)).hom =
+    (polyCofixCarrier P).hom := rfl
+
+/--
+The destructor for the terminal coalgebra.
+-/
+def polyCofixDest (P : PolyEndo X) :
+    polyCofixCarrier P ⟶ (polyEndoFunctor X P).obj (polyCofixCarrier P) :=
+  Over.homMk (polyCofixDestLeft P) (polyCofixDest_comm P)
+
+end PolyCofixCoalg
+
+/-! ### Constructor for PolyCofix -/
+
+section PolyCofixMk
+
+variable {X : Type u}
+
+/--
+Extract a child cofixed point from a morphism to `polyCofixCarrier P`.
+-/
+def polyCofixChildAt {P : PolyEndo X} {x : X} (i : polyBetweenIndex X X P x)
+    (h : polyBetweenFamily X X P x i ⟶ polyCofixCarrier P)
+    (e : (polyBetweenFamily X X P x i).left) :
+    PolyCofix P ((polyBetweenFamily X X P x i).hom e) :=
+  let result := h.left e
+  have heq : result.1 = (polyBetweenFamily X X P x i).hom e :=
+    congrFun (Over.w h) e
+  heq ▸ result.2
+
+/--
+Build approximation at depth 0 for the constructor.
+-/
+def polyCofixMkApprox_zero (P : PolyEndo X) (x : X)
+    (_elem : polyBetweenEvalFamily X X P (polyCofixCarrier P) x) :
+    PolyCofixApprox P 0 x :=
+  .continue x
+
+/--
+Build approximation at depth n+1 for the constructor.
+-/
+def polyCofixMkApprox_succ (P : PolyEndo X) (x : X)
+    (elem : polyBetweenEvalFamily X X P (polyCofixCarrier P) x) (n : Nat) :
+    PolyCofixApprox P (n + 1) x :=
+  .intro x elem.1 (fun e => (polyCofixChildAt elem.1 elem.2 e).approx n)
+
+/--
+Build approximation at depth n for the constructor.
+-/
+def polyCofixMkApprox (P : PolyEndo X) (x : X)
+    (elem : polyBetweenEvalFamily X X P (polyCofixCarrier P) x) (n : Nat) :
+    PolyCofixApprox P n x :=
+  match n with
+  | 0 => polyCofixMkApprox_zero P x elem
+  | n + 1 => polyCofixMkApprox_succ P x elem n
+
+/--
+The approximations built by the constructor agree at depth 0.
+-/
+lemma polyCofixMkApprox_consistent_zero (P : PolyEndo X) (x : X)
+    (elem : polyBetweenEvalFamily X X P (polyCofixCarrier P) x) :
+    PolyCofixAgree P (polyCofixMkApprox P x elem 0) (polyCofixMkApprox P x elem 1) := by
+  simp only [polyCofixMkApprox, polyCofixMkApprox_zero, polyCofixMkApprox_succ]
+  exact .continue _ _
+
+/--
+The approximations built by the constructor agree at successor depth.
+-/
+lemma polyCofixMkApprox_consistent_succ (P : PolyEndo X) (x : X)
+    (elem : polyBetweenEvalFamily X X P (polyCofixCarrier P) x) (n : Nat) :
+    PolyCofixAgree P
+      (polyCofixMkApprox P x elem (n + 1))
+      (polyCofixMkApprox P x elem (n + 2)) := by
+  simp only [polyCofixMkApprox, polyCofixMkApprox_succ]
+  apply PolyCofixAgree.intro
+  intro e
+  exact (polyCofixChildAt elem.1 elem.2 e).consistent n
+
+/--
+The approximations built by the constructor form a consistent sequence.
+-/
+lemma polyCofixMkApprox_consistent (P : PolyEndo X) (x : X)
+    (elem : polyBetweenEvalFamily X X P (polyCofixCarrier P) x) (n : Nat) :
+    PolyCofixAgree P (polyCofixMkApprox P x elem n) (polyCofixMkApprox P x elem (n + 1)) :=
+  match n with
+  | 0 => polyCofixMkApprox_consistent_zero P x elem
+  | n + 1 => polyCofixMkApprox_consistent_succ P x elem n
+
+/--
+The constructor for `PolyCofix`: builds a cofixed point from an element of `P(PolyCofix P)`.
+
+This is the inverse of `polyCofixDest`.
+-/
+def polyCofixMkFamily (P : PolyEndo X) (x : X)
+    (elem : polyBetweenEvalFamily X X P (polyCofixCarrier P) x) : PolyCofix P x where
+  approx := polyCofixMkApprox P x elem
+  consistent := polyCofixMkApprox_consistent P x elem
+
+/--
+The underlying function of the constructor.
+-/
+def polyCofixMkLeft (P : PolyEndo X) :
+    ((polyEndoFunctor X P).obj (polyCofixCarrier P)).left → (polyCofixCarrier P).left :=
+  fun ⟨x, elem⟩ => ⟨x, polyCofixMkFamily P x elem⟩
+
+/--
+The constructor commutes with projections to X.
+-/
+lemma polyCofixMk_comm (P : PolyEndo X) :
+    polyCofixMkLeft P ≫ (polyCofixCarrier P).hom =
+    ((polyEndoFunctor X P).obj (polyCofixCarrier P)).hom := rfl
+
+/--
+The constructor for the terminal coalgebra.
+-/
+def polyCofixMk (P : PolyEndo X) :
+    (polyEndoFunctor X P).obj (polyCofixCarrier P) ⟶ polyCofixCarrier P :=
+  Over.homMk (polyCofixMkLeft P) (polyCofixMk_comm P)
+
+end PolyCofixMk
+
+/-! ### Terminal Coalgebra Structure -/
+
+section PolyCofixTerminal
+
+variable {X : Type u}
+
+/--
+The terminal coalgebra of a polynomial endofunctor.
+
+The carrier is `polyCofixCarrier P` (the M-type) and the structure map is
+`polyCofixDest P` (the destructor).
+-/
+def polyCofixCoalg (P : PolyEndo X) : PolyCoalg P where
+  V := polyCofixCarrier P
+  str := polyCofixDest P
+
+/-! ### Anamorphism (Unfold) -/
+
+/--
+Build the approximation at depth n for the anamorphism from a coalgebra element.
+
+This is the cofree construction: at each depth, we apply the coalgebra structure
+map to get the index and children, then recursively build approximations for
+the children.
+-/
+def polyCofixUnfoldApprox (P : PolyEndo X) (α : PolyCoalg P) (n : Nat) (x : X)
+    (a : {y : α.V.left // α.V.hom y = x}) : PolyCofixApprox P n x :=
+  match n with
+  | 0 => .continue x
+  | n + 1 =>
+    let strResult := α.str.left a.val
+    have hx : strResult.1 = x := by
+      have h := congrFun (Over.w α.str) a.val
+      simp only at h
+      rw [a.property] at h
+      exact h
+    let elem : polyBetweenEvalFamily X X P α.V strResult.1 := strResult.2
+    let childMor := elem.2
+    hx ▸ .intro strResult.1 elem.1 (fun e =>
+      let childVal := childMor.left e
+      have hChild : α.V.hom childVal =
+          (polyBetweenFamily X X P strResult.1 elem.1).hom e :=
+        congrFun (Over.w childMor) e
+      polyCofixUnfoldApprox P α n _ ⟨childVal, hChild⟩)
+
+/--
+Agreement is preserved under transport by equal indices.
+-/
+lemma PolyCofixAgree.transport {P : PolyEndo X} {n : Nat} {x y : X}
+    {a : PolyCofixApprox P n x} {b : PolyCofixApprox P (n + 1) x}
+    (h : PolyCofixAgree P a b) (heq : x = y) :
+    PolyCofixAgree P (heq ▸ a) (heq ▸ b) := by
+  subst heq
+  exact h
+
+/--
+The approximations built by the anamorphism agree at successive depths.
+-/
+lemma polyCofixUnfoldApprox_consistent (P : PolyEndo X) (α : PolyCoalg P) (n : Nat)
+    (x : X) (a : {y : α.V.left // α.V.hom y = x}) :
+    PolyCofixAgree P
+      (polyCofixUnfoldApprox P α n x a)
+      (polyCofixUnfoldApprox P α (n + 1) x a) := by
+  match n with
+  | 0 =>
+    simp only [polyCofixUnfoldApprox]
+    exact .continue _ _
+  | n + 1 =>
+    simp only [polyCofixUnfoldApprox]
+    apply PolyCofixAgree.transport
+    apply PolyCofixAgree.intro
+    intro e
+    exact polyCofixUnfoldApprox_consistent P α n _ _
+
+/--
+`polyCofixUnfoldApprox` is proof-independent: it depends only on the underlying
+element, not on the specific proof of fiber membership.
+-/
+lemma polyCofixUnfoldApprox_proof_irrel (P : PolyEndo X) (α : PolyCoalg P) (n : Nat)
+    (x : X) (a : α.V.left) (h1 h2 : α.V.hom a = x) :
+    polyCofixUnfoldApprox P α n x ⟨a, h1⟩ = polyCofixUnfoldApprox P α n x ⟨a, h2⟩ := by
+  congr 1
+
+/--
+`polyCofixUnfoldApprox` result can be transported between equal fiber proofs.
+-/
+lemma polyCofixUnfoldApprox_cast (P : PolyEndo X) (α : PolyCoalg P) (n : Nat)
+    (x y : X) (a : α.V.left) (hx : α.V.hom a = x) (hxy : x = y) :
+    hxy ▸ polyCofixUnfoldApprox P α n x ⟨a, hx⟩ =
+      polyCofixUnfoldApprox P α n y ⟨a, hxy ▸ hx⟩ := by
+  subst hxy
+  rfl
+
+/--
+The anamorphism from a coalgebra to the terminal coalgebra, at a fiber element.
+
+Given a coalgebra element at fiber x, this produces a cofixed point at x
+by iteratively unfolding using the coalgebra structure map.
+-/
+def polyCofixUnfoldAt (P : PolyEndo X) (α : PolyCoalg P) (x : X)
+    (a : {y : α.V.left // α.V.hom y = x}) : PolyCofix P x where
+  approx n := polyCofixUnfoldApprox P α n x a
+  consistent n := polyCofixUnfoldApprox_consistent P α n x a
+
+/--
+The underlying function of the anamorphism.
+-/
+def polyCofixUnfoldLeft (P : PolyEndo X) (α : PolyCoalg P) :
+    α.V.left → (polyCofixCarrier P).left :=
+  fun a => ⟨α.V.hom a, polyCofixUnfoldAt P α (α.V.hom a) ⟨a, rfl⟩⟩
+
+/--
+The anamorphism commutes with projections to X.
+-/
+lemma polyCofixUnfold_comm (P : PolyEndo X) (α : PolyCoalg P) :
+    polyCofixUnfoldLeft P α ≫ (polyCofixCarrier P).hom = α.V.hom := rfl
+
+/--
+The anamorphism from a coalgebra to the terminal coalgebra.
+
+This is the unique coalgebra homomorphism from any coalgebra to `polyCofixCoalg P`.
+-/
+def polyCofixUnfold (P : PolyEndo X) (α : PolyCoalg P) :
+    α.V ⟶ polyCofixCarrier P :=
+  Over.homMk (polyCofixUnfoldLeft P α) (polyCofixUnfold_comm P α)
+
+/-! ### Coalgebra Homomorphism Property -/
+
+/--
+Intermediate type for the coalgebra homomorphism proof.
+This is the type of elements in `(polyEndoFunctor X P).obj (polyCofixCarrier P)`.
+-/
+abbrev PolyEndoFunctorObjLeft (P : PolyEndo X) :=
+  (Σ x : X, polyBetweenEvalFamily X X P (polyCofixCarrier P) x)
+
+/--
+The LHS of the coalgebra homomorphism at point `a`:
+applying `α.str` then the functor map of `unfold`.
+-/
+def polyCofixUnfold_coalg_comm_lhs (P : PolyEndo X) (α : PolyCoalg P)
+    (a : α.V.left) : PolyEndoFunctorObjLeft P :=
+  let strResult := α.str.left a
+  ⟨strResult.1, strResult.2.1, strResult.2.2 ≫ polyCofixUnfold P α⟩
+
+/--
+The RHS of the coalgebra homomorphism at point `a`:
+applying `unfold` then `dest`.
+-/
+def polyCofixUnfold_coalg_comm_rhs (P : PolyEndo X) (α : PolyCoalg P)
+    (a : α.V.left) : PolyEndoFunctorObjLeft P :=
+  let m := polyCofixUnfoldAt P α (α.V.hom a) ⟨a, rfl⟩
+  ⟨α.V.hom a, m.head, polyCofixChildrenMor m.head m.children⟩
+
+/--
+The first projection of LHS equals `(α.str.left a).1`.
+-/
+lemma polyCofixUnfold_coalg_comm_lhs_fst (P : PolyEndo X) (α : PolyCoalg P)
+    (a : α.V.left) :
+    (polyCofixUnfold_coalg_comm_lhs P α a).1 = (α.str.left a).1 := rfl
+
+/--
+The first projection of RHS equals `α.V.hom a`.
+-/
+lemma polyCofixUnfold_coalg_comm_rhs_fst (P : PolyEndo X) (α : PolyCoalg P)
+    (a : α.V.left) :
+    (polyCofixUnfold_coalg_comm_rhs P α a).1 = α.V.hom a := rfl
+
+/--
+The structure map commutes with projection: `(α.str.left a).1 = α.V.hom a`.
+-/
+lemma polyCofixUnfold_coalg_comm_fst_eq (P : PolyEndo X) (α : PolyCoalg P)
+    (a : α.V.left) : (α.str.left a).1 = α.V.hom a :=
+  congrFun (Over.w α.str) a
+
+/--
+First components of LHS and RHS are equal.
+-/
+lemma polyCofixUnfold_coalg_comm_fst (P : PolyEndo X) (α : PolyCoalg P)
+    (a : α.V.left) :
+    (polyCofixUnfold_coalg_comm_lhs P α a).1 =
+    (polyCofixUnfold_coalg_comm_rhs P α a).1 :=
+  polyCofixUnfold_coalg_comm_fst_eq P α a
+
+/--
+Index extraction from transported approximation.
+-/
+lemma PolyCofixApprox.getIndex_cast {P : PolyEndo X} {n : Nat} {x y : X}
+    (i : polyBetweenIndex X X P x)
+    (f : ∀ e, PolyCofixApprox P n ((polyBetweenFamily X X P x i).hom e))
+    (heq : x = y) :
+    (heq ▸ PolyCofixApprox.intro x i f).getIndex = heq ▸ i := by
+  subst heq
+  rfl
+
+/--
+The head of `polyCofixUnfoldAt` equals the transported index from the structure map.
+-/
+lemma polyCofixUnfoldAt_head_eq (P : PolyEndo X) (α : PolyCoalg P) (x : X)
+    (a : {y : α.V.left // α.V.hom y = x}) :
+    (polyCofixUnfoldAt P α x a).head =
+    let hx : (α.str.left a.val).1 = x := by
+      have h := congrFun (Over.w α.str) a.val
+      simp only at h
+      rw [a.property] at h
+      exact h
+    hx ▸ (α.str.left a.val).2.1 := by
+  simp only [PolyCofix.head, polyCofixUnfoldAt]
+  simp only [polyCofixUnfoldApprox]
+  exact PolyCofixApprox.getIndex_cast _ _ _
+
+/--
+Specialized version: head of `polyCofixUnfoldAt` at `(α.V.hom a)` with `⟨a, rfl⟩`.
+-/
+lemma polyCofixUnfoldAt_head_rfl (P : PolyEndo X) (α : PolyCoalg P)
+    (a : α.V.left) :
+    (polyCofixUnfoldAt P α (α.V.hom a) ⟨a, rfl⟩).head =
+    (polyCofixUnfold_coalg_comm_fst_eq P α a) ▸ (α.str.left a).2.1 := by
+  rw [polyCofixUnfoldAt_head_eq]
+
+/--
+Helper: when two indices in different fibers are related by transport, and
+morphisms from those indices agree appropriately, the full sigma types are HEq.
+-/
+lemma polyBetweenEvalFamily_heq {P : PolyEndo X} {x y : X}
+    (heq : x = y)
+    (i : polyBetweenIndex X X P x)
+    (mor : polyBetweenFamily X X P x i ⟶ polyCofixCarrier P)
+    (j : polyBetweenIndex X X P y)
+    (mor' : polyBetweenFamily X X P y j ⟶ polyCofixCarrier P)
+    (hi : HEq i j)
+    (hmor : HEq mor mor') :
+    HEq (⟨i, mor⟩ : polyBetweenEvalFamily X X P (polyCofixCarrier P) x)
+        (⟨j, mor'⟩ : polyBetweenEvalFamily X X P (polyCofixCarrier P) y) := by
+  subst heq
+  simp only [heq_eq_eq] at hi hmor
+  subst hi hmor
+  rfl
+
+/--
+General lemma: `x` is heterogeneously equal to its transport by any equality proof.
+-/
+lemma heq_eqRec {α : Type*} {a b : α} {motive : α → Sort*}
+    (h : a = b) (x : motive a) : HEq x (h ▸ x) := by
+  subst h
+  rfl
+
+/--
+The index component of the anamorphism commutation.
+
+The structure map index `(α.str.left a).2.1` is HEq to the head of the unfolded
+M-type. We prove this by showing both equal a common transported value.
+-/
+lemma polyCofixUnfold_coalg_comm_index_heq (P : PolyEndo X) (α : PolyCoalg P)
+    (a : α.V.left) :
+    HEq (α.str.left a).2.1
+        (polyCofixUnfoldAt P α (α.V.hom a) ⟨a, rfl⟩).head := by
+  have hfst : (α.str.left a).1 = α.V.hom a := polyCofixUnfold_coalg_comm_fst_eq P α a
+  have hhead := polyCofixUnfoldAt_head_rfl P α a
+  have step1 : HEq (α.str.left a).2.1 (hfst ▸ (α.str.left a).2.1) :=
+    heq_eqRec (motive := fun x => polyBetweenIndex X X P x) hfst (α.str.left a).2.1
+  have step2 : hfst ▸ (α.str.left a).2.1 =
+      (polyCofixUnfoldAt P α (α.V.hom a) ⟨a, rfl⟩).head := hhead.symm
+  exact step1.trans (heq_of_eq step2)
+
+/--
+Two morphisms with HEq source/target are HEq when their left components are equal.
+-/
+lemma polyBetweenFamily_mor_heq {P : PolyEndo X} {x y : X} {C : Over X}
+    (hxy : x = y)
+    (i : polyBetweenIndex X X P x)
+    (j : polyBetweenIndex X X P y)
+    (hi : HEq i j)
+    (f : polyBetweenFamily X X P x i ⟶ C)
+    (g : polyBetweenFamily X X P y j ⟶ C)
+    (hfg : HEq f.left g.left) :
+    HEq f g := by
+  subst hxy
+  simp only [heq_eq_eq] at hi
+  subst hi
+  simp only [heq_eq_eq] at hfg
+  exact heq_of_eq (Over.OverMorphism.ext hfg)
+
+/--
+HEq of polyBetweenFamily when base and index are related by equality/HEq.
+-/
+lemma polyBetweenFamily_heq {P : PolyEndo X} {x y : X}
+    (hxy : x = y)
+    (i : polyBetweenIndex X X P x)
+    (j : polyBetweenIndex X X P y)
+    (hij : HEq i j) :
+    HEq (polyBetweenFamily X X P x i) (polyBetweenFamily X X P y j) := by
+  subst hxy
+  simp only [heq_eq_eq] at hij
+  subst hij
+  rfl
+
+/--
+HEq of left types of polyBetweenFamily when indices are HEq.
+-/
+lemma polyBetweenFamily_left_heq {P : PolyEndo X} {x y : X}
+    (hxy : x = y)
+    (i : polyBetweenIndex X X P x)
+    (j : polyBetweenIndex X X P y)
+    (hij : HEq i j) :
+    HEq (polyBetweenFamily X X P x i).left (polyBetweenFamily X X P y j).left := by
+  have h := polyBetweenFamily_heq hxy i j hij
+  have heq : polyBetweenFamily X X P x i = polyBetweenFamily X X P y j := eq_of_heq h
+  rw [heq]
+
+/--
+Functions with equal domains and codomains are HEq when values at corresponding inputs are HEq.
+-/
+lemma funext_heq {α β : Type u} {γ δ : Type u}
+    (hαβ : α = β) (hγδ : γ = δ)
+    (f : α → γ) (g : β → δ)
+    (h : ∀ (a : α) (b : β), HEq a b → HEq (f a) (g b)) :
+    HEq f g := by
+  subst hαβ hγδ
+  apply heq_of_eq
+  funext x
+  have := h x x HEq.rfl
+  simp only [heq_eq_eq] at this
+  exact this
+
+/--
+Dependent functions with equal domains and pointwise HEq return types are HEq
+when values at corresponding inputs are HEq.
+-/
+lemma funext_heq_dep {α β : Type u}
+    {γ : α → Type u} {δ : β → Type u}
+    (hαβ : α = β)
+    (hγδ : ∀ (a : α) (b : β), HEq a b → γ a = δ b)
+    (f : (a : α) → γ a) (g : (b : β) → δ b)
+    (h : ∀ (a : α) (b : β), HEq a b → HEq (f a) (g b)) :
+    HEq f g := by
+  subst hαβ
+  have hγδ' : γ = δ := funext (fun x => hγδ x x HEq.rfl)
+  subst hγδ'
+  apply heq_of_eq
+  funext x
+  have hx := h x x HEq.rfl
+  simp only [heq_eq_eq] at hx
+  exact hx
+
+/--
+The fiber values match when applying the child morphism.
+
+This shows that `α.V.hom` applied to a child element equals the family's hom.
+-/
+lemma polyCofixUnfold_child_fiber_eq (P : PolyEndo X) (α : PolyCoalg P)
+    (a : α.V.left)
+    (e1 : (polyBetweenFamily X X P (α.str.left a).fst (α.str.left a).snd.fst).left) :
+    α.V.hom ((α.str.left a).snd.snd.left e1) =
+      (polyBetweenFamily X X P (α.str.left a).fst (α.str.left a).snd.fst).hom e1 :=
+  congrFun (Over.w (α.str.left a).snd.snd) e1
+
+/--
+Helper: if two Over Type objects are equal and elements are HEq, then their hom values are equal.
+-/
+lemma overType_hom_heq {X : Type u} {f g : Over X}
+    (hfg : f = g)
+    (e1 : f.left) (e2 : g.left) (he : HEq e1 e2) :
+    f.hom e1 = g.hom e2 := by
+  cases hfg
+  simp only [heq_eq_eq] at he
+  rw [he]
+
+/--
+The fiber equality for comparing LHS and RHS of the coalgebra commutation at children.
+-/
+lemma polyCofixUnfold_coalg_comm_child_fst_eq (P : PolyEndo X) (α : PolyCoalg P)
+    (a : α.V.left) :
+    let _hfst := polyCofixUnfold_coalg_comm_fst_eq P α a
+    let m := polyCofixUnfoldAt P α (α.V.hom a) ⟨a, rfl⟩
+    let _hindexHeq := polyCofixUnfold_coalg_comm_index_heq P α a
+    ∀ (e1 : (polyBetweenFamily X X P (α.str.left a).fst (α.str.left a).snd.fst).left)
+      (e2 : (polyBetweenFamily X X P (α.V.hom a) m.head).left)
+      (_he : HEq e1 e2),
+    α.V.hom ((α.str.left a).snd.snd.left e1) =
+      (polyBetweenFamily X X P (α.V.hom a) m.head).hom e2 := by
+  intro hfst m hindexHeq e1 e2 he
+  have step1 := polyCofixUnfold_child_fiber_eq P α a e1
+  have hfamilyHeq := polyBetweenFamily_heq hfst _ _ hindexHeq
+  have hfamilyEq : polyBetweenFamily X X P (α.str.left a).fst (α.str.left a).snd.fst =
+      polyBetweenFamily X X P (α.V.hom a) m.head := eq_of_heq hfamilyHeq
+  rw [step1]
+  exact overType_hom_heq hfamilyEq e1 e2 he
+
+lemma polyCofixUnfold_coalg_comm_mor_heq (P : PolyEndo X) (α : PolyCoalg P)
+    (a : α.V.left) :
+    HEq ((α.str.left a).2.2 ≫ polyCofixUnfold P α)
+        (polyCofixChildrenMor
+          (polyCofixUnfoldAt P α (α.V.hom a) ⟨a, rfl⟩).head
+          (polyCofixUnfoldAt P α (α.V.hom a) ⟨a, rfl⟩).children) := by
+  have hfst : (α.str.left a).1 = α.V.hom a := polyCofixUnfold_coalg_comm_fst_eq P α a
+  have hindexHeq := polyCofixUnfold_coalg_comm_index_heq P α a
+  have hhead := polyCofixUnfoldAt_head_rfl P α a
+  apply polyBetweenFamily_mor_heq hfst _ _ hindexHeq
+  simp only [Over.comp_left, polyCofixUnfold, Over.homMk_left]
+  simp only [polyCofixChildrenMor, Over.homMk_left]
+  have hdomHeq := polyBetweenFamily_left_heq hfst _ _ hindexHeq
+  apply funext_heq (eq_of_heq hdomHeq) rfl
+  intro e1 e2 he
+  simp only [types_comp_apply, polyCofixUnfoldLeft]
+  apply heq_of_eq
+  rw [Sigma.mk.inj_iff]
+  constructor
+  · exact polyCofixUnfold_coalg_comm_child_fst_eq P α a e1 e2 he
+  · have hfst_eq := polyCofixUnfold_coalg_comm_child_fst_eq P α a e1 e2 he
+    let parent := polyCofixUnfoldAt P α (α.V.hom a) ⟨a, rfl⟩
+    let child1 := polyCofixUnfoldAt P α
+      (α.V.hom ((α.str.left a).snd.snd.left e1))
+      ⟨(α.str.left a).snd.snd.left e1, rfl⟩
+    let child2 := parent.children e2
+    have hfiber1 : α.V.hom ((α.str.left a).snd.snd.left e1) =
+        (polyBetweenFamily X X P (α.V.hom a) parent.head).hom e2 := hfst_eq
+    have step1 : HEq child1 (hfiber1 ▸ child1) := heq_eqRec hfiber1 child1
+    have step2 : hfiber1 ▸ child1 = child2 := by
+      apply PolyCofix.ext
+      intro n
+      show (hfiber1 ▸ child1).approx n = child2.approx n
+      cases n with
+      | zero =>
+        rw [PolyCofix.approx_cast hfiber1 child1 0]
+        have h1 : child1.approx 0 = PolyCofixApprox.continue _ := rfl
+        have h2 : child2.approx 0 = PolyCofixApprox.continue _ := rfl
+        rw [h1, h2]
+        exact PolyCofixApprox.continue_cast hfiber1
+      | succ n =>
+        rw [PolyCofix.approx_cast hfiber1 child1 (n + 1)]
+        have h1 : child1.approx (n + 1) =
+            polyCofixUnfoldApprox P α (n + 1) _ ⟨(α.str.left a).snd.snd.left e1, rfl⟩ := rfl
+        have h2 : child2.approx (n + 1) = parent.childApproxAt e2 (n + 1) := rfl
+        rw [h1, h2]
+        simp only [PolyCofix.childApproxAt, PolyCofix.childApproxAt_succ]
+        let strResult := α.str.left a
+        let childMor := strResult.2.2
+        let hx : strResult.1 = α.V.hom a := hfst
+        let childrenFun : ∀ (e : (polyBetweenFamily X X P strResult.1 strResult.2.1).left),
+            PolyCofixApprox P (n + 1) ((polyBetweenFamily X X P strResult.1 strResult.2.1).hom e) :=
+          fun e =>
+            let childVal := childMor.left e
+            let hChild : α.V.hom childVal =
+                (polyBetweenFamily X X P strResult.1 strResult.2.1).hom e :=
+              congrFun (Over.w childMor) e
+            polyCofixUnfoldApprox P α (n + 1) _ ⟨childVal, hChild⟩
+        have happrox_form : parent.approx (n + 2) =
+            hx ▸ PolyCofixApprox.intro strResult.1 strResult.2.1 childrenFun := rfl
+        have hidx_eq : (hx ▸ PolyCofixApprox.intro strResult.1 strResult.2.1 childrenFun).getIndex
+            = hx ▸ strResult.2.1 :=
+          PolyCofixApprox.getIndex_cast strResult.2.1 childrenFun hx
+        have hhead_eq : parent.head = hx ▸ strResult.2.1 := hhead
+        have hidx_eq' : (hx ▸ PolyCofixApprox.intro strResult.1 strResult.2.1 childrenFun).getIndex
+            = hx ▸ strResult.2.1 := hidx_eq
+        have hfamilyEq2 : polyBetweenFamily X X P (α.V.hom a) parent.head =
+            polyBetweenFamily X X P (α.V.hom a) (hx ▸ strResult.2.1) := by
+          rw [hhead_eq]
+        let e2' : (polyBetweenFamily X X P (α.V.hom a) (hx ▸ strResult.2.1)).left :=
+          hfamilyEq2 ▸ e2
+        have he2_heq : HEq e2 e2' := heq_eqRec hfamilyEq2 e2
+        have hfamilyEq1 : polyBetweenFamily X X P strResult.1 strResult.2.1 =
+            polyBetweenFamily X X P (α.V.hom a) (hx ▸ strResult.2.1) := by
+          have hfamilyHeq := polyBetweenFamily_heq hx _ _
+            (heq_eqRec (motive := fun y => polyBetweenIndex X X P y) hx strResult.2.1)
+          exact eq_of_heq hfamilyHeq
+        have he1e2' : HEq e1 e2' := he.trans he2_heq
+        have hfib' : (polyBetweenFamily X X P strResult.1 strResult.2.1).hom e1 =
+            (polyBetweenFamily X X P (α.V.hom a) (hx ▸ strResult.2.1)).hom e2' :=
+          overType_hom_heq hfamilyEq1 e1 e2' he1e2'
+        have hcastResult : PolyCofix.childApproxAt_succ_aux (hx ▸ strResult.2.1)
+            (hx ▸ PolyCofixApprox.intro strResult.1 strResult.2.1 childrenFun) hidx_eq' e2' =
+            hfib' ▸ childrenFun e1 :=
+          PolyCofix.childApproxAt_succ_aux_cast hx strResult.2.1 childrenFun hidx_eq' e2' e1
+            he1e2' hfib'
+        have hRhsFib : (polyBetweenFamily X X P (α.V.hom a) parent.head).hom e2 =
+            (polyBetweenFamily X X P (α.V.hom a) (hx ▸ strResult.2.1)).hom e2' :=
+          overType_hom_heq hfamilyEq2 e2 e2' he2_heq
+        have hRhsChildApprox_heq : HEq
+            (PolyCofix.childApproxAt_succ_aux parent.head (parent.approx (n + 2))
+              (parent.index_eq_head (n + 1)) e2)
+            (PolyCofix.childApproxAt_succ_aux (hx ▸ strResult.2.1)
+              (hx ▸ PolyCofixApprox.intro strResult.1 strResult.2.1 childrenFun)
+              hidx_eq' e2') := by
+          have hhead_heq : HEq parent.head (hx ▸ strResult.2.1) :=
+            heq_of_eq hhead_eq
+          have happrox_heq : HEq (parent.approx (n + 2))
+              (hx ▸ PolyCofixApprox.intro strResult.1 strResult.2.1 childrenFun) :=
+            heq_of_eq happrox_form
+          exact PolyCofix.childApproxAt_succ_aux_heq rfl _ _ hhead_heq _ _ happrox_heq _ _
+            _ _ he2_heq
+        let rhs' := PolyCofix.childApproxAt_succ_aux (hx ▸ strResult.2.1)
+              (hx ▸ PolyCofixApprox.intro strResult.1 strResult.2.1 childrenFun) hidx_eq' e2'
+        have hRhs'_heq : HEq rhs' (hRhsFib.symm ▸ rhs') := heq_eqRec hRhsFib.symm rhs'
+        have hRhsForm : PolyCofix.childApproxAt_succ_aux parent.head (parent.approx (n + 2))
+            (parent.index_eq_head (n + 1)) e2 =
+            hRhsFib.symm ▸ PolyCofix.childApproxAt_succ_aux (hx ▸ strResult.2.1)
+              (hx ▸ PolyCofixApprox.intro strResult.1 strResult.2.1 childrenFun)
+              hidx_eq' e2' := by
+          apply eq_of_heq
+          exact hRhsChildApprox_heq.trans hRhs'_heq
+        rw [hRhsForm, hcastResult]
+        let hChildProof : α.V.hom (childMor.left e1) =
+            (polyBetweenFamily X X P strResult.1 strResult.2.1).hom e1 :=
+          congrFun (Over.w childMor) e1
+        have hChildrenFunEq : childrenFun e1 =
+            hChildProof ▸ polyCofixUnfoldApprox P α (n + 1) (α.V.hom (childMor.left e1))
+              ⟨childMor.left e1, rfl⟩ := by
+          simp only [childrenFun]
+          have hCast := polyCofixUnfoldApprox_cast P α (n + 1) (α.V.hom (childMor.left e1))
+            ((polyBetweenFamily X X P strResult.1 strResult.2.1).hom e1) (childMor.left e1)
+            rfl hChildProof
+          rw [hCast]
+        rw [hChildrenFunEq]
+        apply eq_of_heq
+        let lhsVal := polyCofixUnfoldApprox P α (n + 1) (α.V.hom (childMor.left e1))
+              ⟨childMor.left e1, rfl⟩
+        have hLhsHeq : HEq (hfiber1 ▸ lhsVal) lhsVal := (heq_eqRec hfiber1 lhsVal).symm
+        have hRhsHeq : HEq (hRhsFib.symm ▸ (hfib' ▸ (hChildProof ▸ lhsVal))) lhsVal := by
+          have h1 : HEq (hChildProof ▸ lhsVal) lhsVal := (heq_eqRec hChildProof lhsVal).symm
+          have h2 : HEq (hfib' ▸ (hChildProof ▸ lhsVal)) lhsVal :=
+            HEq.trans (heq_eqRec hfib' _).symm h1
+          exact HEq.trans (heq_eqRec hRhsFib.symm _).symm h2
+        exact hLhsHeq.trans hRhsHeq.symm
+    exact step1.trans (heq_of_eq step2)
+
+/--
+Second component (the index and morphism pair) of LHS and RHS are heterogeneously equal.
+
+The strategy: we show both sides represent the same data after accounting for
+the fiber transport. The LHS index is `(α.str.left a).2.1` in fiber
+`(α.str.left a).1`, while the RHS index is the transported version in fiber
+`α.V.hom a`.
+-/
+lemma polyCofixUnfold_coalg_comm_snd (P : PolyEndo X) (α : PolyCoalg P)
+    (a : α.V.left) :
+    HEq (polyCofixUnfold_coalg_comm_lhs P α a).2
+        (polyCofixUnfold_coalg_comm_rhs P α a).2 := by
+  simp only [polyCofixUnfold_coalg_comm_lhs, polyCofixUnfold_coalg_comm_rhs]
+  have hfst : (α.str.left a).1 = α.V.hom a := polyCofixUnfold_coalg_comm_fst_eq P α a
+  apply polyBetweenEvalFamily_heq hfst
+  · exact polyCofixUnfold_coalg_comm_index_heq P α a
+  · exact polyCofixUnfold_coalg_comm_mor_heq P α a
+
+/--
+LHS equals RHS.
+-/
+lemma polyCofixUnfold_coalg_comm_eq (P : PolyEndo X) (α : PolyCoalg P)
+    (a : α.V.left) :
+    polyCofixUnfold_coalg_comm_lhs P α a = polyCofixUnfold_coalg_comm_rhs P α a :=
+  Sigma.ext_iff.mpr ⟨polyCofixUnfold_coalg_comm_fst P α a,
+    polyCofixUnfold_coalg_comm_snd P α a⟩
+
+lemma polyCofixUnfold_coalg_comm (P : PolyEndo X) (α : PolyCoalg P) :
+    α.str ≫ (polyEndoFunctor X P).map (polyCofixUnfold P α) =
+    polyCofixUnfold P α ≫ polyCofixDest P := by
+  apply Over.OverMorphism.ext
+  funext a
+  simp only [types_comp_apply, Over.comp_left]
+  simp only [polyCofixUnfold, polyCofixUnfoldLeft, Over.homMk_left]
+  simp only [polyCofixDest, polyCofixDestLeft, polyCofixDestFamily, Over.homMk_left]
+  simp only [polyEndoFunctor, polyBetweenEvalFunctor, polyToOverFunctor,
+    polyToOverEvalMap, familySliceForward, familySliceForwardMap,
+    polyToOverEvalFamilyMap, ccrEvalMap, Over.homMk_left]
+  exact polyCofixUnfold_coalg_comm_eq P α a
+
+/--
+The anamorphism as a coalgebra homomorphism.
+-/
+def polyCofixUnfoldHom (P : PolyEndo X) (α : PolyCoalg P) :
+    α ⟶ polyCofixCoalg P :=
+  Endofunctor.Coalgebra.Hom.mk
+    (polyCofixUnfold P α)
+    (polyCofixUnfold_coalg_comm P α)
+
+/-! ### Uniqueness -/
+
+/--
+The coalgebra homomorphism property evaluated at a point.
+
+For any coalgebra homomorphism `f : α ⟶ polyCofixCoalg P` and element `a`,
+applying the functor map to `α.str(a)` equals the destruct of `f(a)`.
+-/
+lemma coalg_hom_at (P : PolyEndo X) (α : PolyCoalg P)
+    (f : α ⟶ polyCofixCoalg P) (a : α.V.left) :
+    ((polyEndoFunctor X P).map f.f).left (α.str.left a) =
+    (polyCofixDest P).left (f.f.left a) := by
+  have hComm := f.h
+  have hCommAt := congrFun (congrArg (·.left) hComm) a
+  simp only [types_comp_apply, Over.comp_left] at hCommAt
+  exact hCommAt
+
+/--
+The fiber of the homomorphism output matches the coalgebra structure fiber.
+-/
+lemma coalg_hom_fiber_eq (P : PolyEndo X) (α : PolyCoalg P)
+    (f : α ⟶ polyCofixCoalg P) (a : α.V.left) :
+    (f.f.left a).fst = (α.str.left a).fst := by
+  have h := coalg_hom_at P α f a
+  simp only [polyEndoFunctor, polyBetweenEvalFunctor, polyToOverFunctor,
+    polyToOverEvalMap, familySliceForward, familySliceForwardMap,
+    polyToOverEvalFamilyMap, ccrEvalMap, Over.homMk_left] at h
+  simp only [polyCofixDest, polyCofixDestLeft, polyCofixDestFamily,
+    Over.homMk_left] at h
+  exact (congrArg (·.fst) h).symm
+
+/--
+Step 1 for coalg_hom_index_heq: Normalize the homomorphism equation to expose
+the sigma structure on both sides.
+-/
+lemma coalg_hom_at_normalized (P : PolyEndo X) (α : PolyCoalg P)
+    (f : α ⟶ polyCofixCoalg P) (a : α.V.left) :
+    (⟨(α.str.left a).fst,
+      ⟨(α.str.left a).snd.fst, (α.str.left a).snd.snd ≫ f.f⟩⟩ :
+      Σ y : X, Σ i : ccrIndex (P y), ccrFamily (P y) i ⟶ polyCofixCarrier P) =
+    ⟨(f.f.left a).fst,
+      ⟨(f.f.left a).snd.head,
+        polyCofixChildrenMor (f.f.left a).snd.head (f.f.left a).snd.children⟩⟩ := by
+  have h := coalg_hom_at P α f a
+  simp only [polyEndoFunctor, polyBetweenEvalFunctor, polyToOverFunctor,
+    polyToOverEvalMap, familySliceForward, familySliceForwardMap,
+    polyToOverEvalFamilyMap, ccrEvalMap, Over.homMk_left] at h
+  simp only [polyCofixDest, polyCofixDestLeft, polyCofixDestFamily,
+    Over.homMk_left] at h
+  exact h
+
+/--
+Step 2 for coalg_hom_index_heq: From the normalized equation, extract the HEq
+of indices after accounting for fiber equality.
+-/
+lemma coalg_hom_index_heq_from_normalized (P : PolyEndo X) (α : PolyCoalg P)
+    (f : α ⟶ polyCofixCoalg P) (a : α.V.left)
+    (h : (⟨(α.str.left a).fst,
+      ⟨(α.str.left a).snd.fst, (α.str.left a).snd.snd ≫ f.f⟩⟩ :
+      Σ y : X, Σ i : ccrIndex (P y), ccrFamily (P y) i ⟶ polyCofixCarrier P) =
+    ⟨(f.f.left a).fst,
+      ⟨(f.f.left a).snd.head,
+        polyCofixChildrenMor (f.f.left a).snd.head (f.f.left a).snd.children⟩⟩) :
+    HEq (f.f.left a).snd.head (α.str.left a).snd.fst := by
+  rw [Sigma.ext_iff] at h
+  obtain ⟨hfst', hsnd_heq⟩ := h
+  simp only at hfst' hsnd_heq
+  have htype : (Σ i : ccrIndex (P (α.str.left a).fst),
+      ccrFamily (P (α.str.left a).fst) i ⟶ polyCofixCarrier P) =
+      (Σ i : ccrIndex (P (f.f.left a).fst),
+      ccrFamily (P (f.f.left a).fst) i ⟶ polyCofixCarrier P) :=
+    congrArg (fun y => Σ i : ccrIndex (P y), ccrFamily (P y) i ⟶ polyCofixCarrier P) hfst'
+  have hsnd_eq := eq_of_heq ((cast_heq htype _).trans hsnd_heq)
+  rw [Sigma.ext_iff] at hsnd_eq
+  obtain ⟨hidx, _⟩ := hsnd_eq
+  have hIdxType : ccrIndex (P (α.str.left a).fst) = ccrIndex (P (f.f.left a).fst) :=
+    congrArg (fun y => ccrIndex (P y)) hfst'
+  have hcast_idx : (cast htype ⟨(α.str.left a).snd.fst, (α.str.left a).snd.snd ≫ f.f⟩).fst =
+      cast hIdxType (α.str.left a).snd.fst :=
+    hfst'.rec (motive := fun y h' =>
+      (cast (congrArg (fun y => Σ i : ccrIndex (P y), ccrFamily (P y) i ⟶ polyCofixCarrier P) h')
+        ⟨(α.str.left a).snd.fst, (α.str.left a).snd.snd ≫ f.f⟩).fst =
+      cast (congrArg (fun y => ccrIndex (P y)) h') (α.str.left a).snd.fst) rfl
+  rw [hcast_idx] at hidx
+  exact (heq_of_eq hidx.symm).trans (cast_heq hIdxType _)
+
+/--
+The index (head) of the homomorphism output matches the coalgebra structure index.
+
+The HEq version is used because the types depend on the fiber equality.
+-/
+lemma coalg_hom_index_heq (P : PolyEndo X) (α : PolyCoalg P)
+    (f : α ⟶ polyCofixCoalg P) (a : α.V.left) :
+    HEq (f.f.left a).snd.head (α.str.left a).snd.fst :=
+  coalg_hom_index_heq_from_normalized P α f a (coalg_hom_at_normalized P α f a)
+
+/--
+The index (head) of the homomorphism output matches the coalgebra structure index.
+-/
+lemma coalg_hom_index_eq (P : PolyEndo X) (α : PolyCoalg P)
+    (f : α ⟶ polyCofixCoalg P) (a : α.V.left) :
+    (f.f.left a).snd.head = (coalg_hom_fiber_eq P α f a) ▸ (α.str.left a).snd.fst :=
+  eq_of_heq ((coalg_hom_index_heq P α f a).trans (heq_eqRec_iff_heq.mpr HEq.rfl))
+
+lemma cast_sigma_snd_heq {I : Type*} {F : I → Type*} {G : ∀ i, F i → Type*}
+    {i j : I} (h : i = j) (s : Σ f : F i, G i f) :
+    HEq s.snd (cast (congrArg (fun x => Σ f : F x, G x f) h) s).snd := by
+  subst h
+  rfl
+
+lemma over_mor_left_heq {X : Type u} {A B C : Over X}
+    (f : A ⟶ C) (g : B ⟶ C)
+    (hAB : A = B)
+    (hfg : HEq f g)
+    (a : A.left) (b : B.left) (hab : HEq a b) :
+    HEq (f.left a) (g.left b) := by
+  subst hAB
+  simp only [heq_eq_eq] at hfg hab
+  rw [hfg, hab]
+
+/--
+Relate children evaluation through HEq morphisms.
+
+Given a coalgebra morphism and the normalized form of the coalgebra hom equation,
+this relates the children of the M-type result to applying the hom to children
+from the coalgebra structure.
+-/
+lemma coalg_hom_children_heq_core (P : PolyEndo X) (α : PolyCoalg P)
+    (f : α ⟶ polyCofixCoalg P) (a : α.V.left)
+    (e1 : (polyBetweenFamily X X P (f.f.left a).fst (f.f.left a).snd.head).left)
+    (e2 : (polyBetweenFamily X X P (α.str.left a).fst (α.str.left a).snd.fst).left)
+    (he : HEq e1 e2)
+    (hSigmaType : (Σ i : ccrIndex (P (α.str.left a).fst),
+        ccrFamily (P (α.str.left a).fst) i ⟶ polyCofixCarrier P) =
+        (Σ i : ccrIndex (P (f.f.left a).fst),
+        ccrFamily (P (f.f.left a).fst) i ⟶ polyCofixCarrier P))
+    (hmor_heq : HEq (cast hSigmaType
+        ⟨(α.str.left a).snd.fst, (α.str.left a).snd.snd ≫ f.f⟩).snd
+        (polyCofixChildrenMor (f.f.left a).snd.head (f.f.left a).snd.children)) :
+    HEq ((f.f.left a).snd.children e1)
+        (f.f.left ((α.str.left a).snd.snd.left e2)).snd := by
+  have hFibEq' : (f.f.left a).fst = (α.str.left a).fst := coalg_hom_fiber_eq P α f a
+  have hIdxHeq : HEq (f.f.left a).snd.head (α.str.left a).snd.fst :=
+    coalg_hom_index_heq P α f a
+  have hDomEq : (polyBetweenFamily X X P (f.f.left a).fst (f.f.left a).snd.head).left =
+      (polyBetweenFamily X X P (α.str.left a).fst (α.str.left a).snd.fst).left :=
+    eq_of_heq (polyBetweenFamily_left_heq hFibEq' _ _ hIdxHeq)
+  have he2Cast : e2 = cast hDomEq e1 := by
+    apply eq_of_heq
+    exact he.symm.trans (cast_heq hDomEq e1).symm
+  rw [he2Cast]
+  have hLhs : (f.f.left a).snd.children e1 =
+      ((polyCofixChildrenMor (f.f.left a).snd.head
+        (f.f.left a).snd.children).left e1).snd := (polyCofixChildrenMor_snd _ _ e1).symm
+  rw [hLhs]
+  have hFamEq := polyBetweenFamily_heq hFibEq' _ _ hIdxHeq
+  have hFamEq' : polyBetweenFamily X X P (f.f.left a).fst (f.f.left a).snd.head =
+      polyBetweenFamily X X P (α.str.left a).fst (α.str.left a).snd.fst :=
+    eq_of_heq hFamEq
+  have hIdxEq : (f.f.left a).snd.head = hFibEq' ▸ (α.str.left a).snd.fst :=
+    eq_of_heq (hIdxHeq.trans (heq_eqRec_iff_heq.mpr HEq.rfl))
+  have hE1Cast : HEq e1 (cast hDomEq e1) := (cast_heq hDomEq e1).symm
+  have hLhs2 : ((polyCofixChildrenMor (f.f.left a).snd.head
+      (f.f.left a).snd.children).left e1).snd = (f.f.left a).snd.children e1 :=
+    polyCofixChildrenMor_snd _ _ e1
+  rw [hLhs2]
+  have hCompEval : (f.f.left ((α.str.left a).snd.snd.left (cast hDomEq e1))) =
+      ((α.str.left a).snd.snd ≫ f.f).left (cast hDomEq e1) := rfl
+  rw [hCompEval]
+  have hMorHeq2 : HEq ((α.str.left a).snd.snd ≫ f.f)
+      (polyCofixChildrenMor (f.f.left a).snd.head (f.f.left a).snd.children) := by
+    apply HEq.trans _ hmor_heq
+    have hSigmaTypeFromFib : hSigmaType = congrArg (fun x =>
+        Σ i : ccrIndex (P x), ccrFamily (P x) i ⟶ polyCofixCarrier P) hFibEq'.symm := rfl
+    rw [hSigmaTypeFromFib]
+    exact cast_sigma_snd_heq (F := fun x => ccrIndex (P x))
+      (G := fun x i => ccrFamily (P x) i ⟶ polyCofixCarrier P)
+      hFibEq'.symm ⟨(α.str.left a).snd.fst, (α.str.left a).snd.snd ≫ f.f⟩
+  have hE1HeqCast : HEq e1 (cast hDomEq e1) := (cast_heq hDomEq e1).symm
+  have hLhsChildren : (f.f.left a).snd.children e1 =
+      ((polyCofixChildrenMor (f.f.left a).snd.head
+        (f.f.left a).snd.children).left e1).snd :=
+    (polyCofixChildrenMor_snd _ _ e1).symm
+  rw [hLhsChildren]
+  have hApplyHeq : HEq (((α.str.left a).snd.snd ≫ f.f).left (cast hDomEq e1))
+      ((polyCofixChildrenMor (f.f.left a).snd.head
+        (f.f.left a).snd.children).left e1) := by
+    exact over_mor_left_heq _ _ hFamEq'.symm hMorHeq2 _ _ (cast_heq hDomEq e1)
+  have hApplyEq : (((α.str.left a).snd.snd ≫ f.f).left (cast hDomEq e1)) =
+      ((polyCofixChildrenMor (f.f.left a).snd.head
+        (f.f.left a).snd.children).left e1) := eq_of_heq hApplyHeq
+  have hSndHeq : HEq (((α.str.left a).snd.snd ≫ f.f).left (cast hDomEq e1)).snd
+      ((polyCofixChildrenMor (f.f.left a).snd.head
+        (f.f.left a).snd.children).left e1).snd := sigma_snd_heq_of_eq hApplyEq
+  exact hSndHeq.symm
+
+/--
+The children morphism relationship for coalgebra homomorphisms.
+
+For a coalgebra homomorphism `f`, the children of `(f.f.left a).snd` are
+related to applying `f.f` to the children elements from the coalgebra structure.
+-/
+lemma coalg_hom_children_heq (P : PolyEndo X) (α : PolyCoalg P)
+    (f : α ⟶ polyCofixCoalg P) (a : α.V.left)
+    (e1 : (polyBetweenFamily X X P (f.f.left a).fst (f.f.left a).snd.head).left)
+    (e2 : (polyBetweenFamily X X P (α.str.left a).fst (α.str.left a).snd.fst).left)
+    (he : HEq e1 e2) :
+    HEq ((f.f.left a).snd.children e1)
+        (f.f.left ((α.str.left a).snd.snd.left e2)).snd := by
+  have hFibEq := coalg_hom_fiber_eq P α f a
+  have hIdxHeq := coalg_hom_index_heq P α f a
+  have hIdxEq : (f.f.left a).snd.head = hFibEq ▸ (α.str.left a).snd.fst :=
+    eq_of_heq (hIdxHeq.trans (heq_eqRec_iff_heq.mpr HEq.rfl))
+  have hNorm := coalg_hom_at_normalized P α f a
+  rw [Sigma.ext_iff] at hNorm
+  obtain ⟨hfst, hsnd_heq⟩ := hNorm
+  simp only at hfst hsnd_heq
+  have hSigmaType : (Σ i : ccrIndex (P (α.str.left a).fst),
+      ccrFamily (P (α.str.left a).fst) i ⟶ polyCofixCarrier P) =
+      (Σ i : ccrIndex (P (f.f.left a).fst),
+      ccrFamily (P (f.f.left a).fst) i ⟶ polyCofixCarrier P) :=
+    congrArg (fun y => Σ i : ccrIndex (P y), ccrFamily (P y) i ⟶ polyCofixCarrier P) hfst
+  have hsnd_eq : cast hSigmaType
+      ⟨(α.str.left a).snd.fst, (α.str.left a).snd.snd ≫ f.f⟩ =
+      ⟨(f.f.left a).snd.head,
+        polyCofixChildrenMor (f.f.left a).snd.head (f.f.left a).snd.children⟩ :=
+    eq_of_heq ((cast_heq hSigmaType _).trans hsnd_heq)
+  rw [Sigma.ext_iff] at hsnd_eq
+  obtain ⟨_, hmor_heq⟩ := hsnd_eq
+  simp only at hmor_heq
+  exact coalg_hom_children_heq_core P α f a e1 e2 he hSigmaType hmor_heq
+
+/--
+The successor approximation for uniqueness proof.
+
+This lemma relates the (n+1)-th approximation of a homomorphism output to
+the corresponding `polyCofixUnfoldApprox` construction.
+-/
+lemma polyCofixUnfold_unique_approx_succ (P : PolyEndo X) (α : PolyCoalg P)
+    (f : α ⟶ polyCofixCoalg P) (n : Nat) (x : X) (a : {y : α.V.left // α.V.hom y = x})
+    (ih : ∀ (x' : X) (a' : {y : α.V.left // α.V.hom y = x'}),
+      let hfst' : (f.f.left a'.val).1 = x' := by
+        have := congrFun (Over.w f.f) a'.val
+        simp only at this
+        rw [a'.property] at this
+        exact this
+      hfst' ▸ (f.f.left a'.val).2.approx n = polyCofixUnfoldApprox P α n x' a') :
+    let hfst : (f.f.left a.val).1 = x := by
+      have := congrFun (Over.w f.f) a.val
+      simp only at this
+      rw [a.property] at this
+      exact this
+    hfst ▸ (f.f.left a.val).2.approx (n + 1) = polyCofixUnfoldApprox P α (n + 1) x a := by
+  intro hfst
+  simp only [polyCofixUnfoldApprox]
+  let strResult := α.str.left a.val
+  have hStrFst : strResult.1 = x := by
+    have h := congrFun (Over.w α.str) a.val
+    simp only at h
+    rw [a.property] at h
+    exact h
+  let mFib := (f.f.left a.val).fst
+  let m := (f.f.left a.val).snd
+  have hFiberEq : mFib = strResult.1 := coalg_hom_fiber_eq P α f a.val
+  have hHeadHeq : HEq m.head strResult.2.1 := coalg_hom_index_heq P α f a.val
+  match happ : m.approx (n + 1) with
+  | .intro _ mIdx mChildren =>
+    have hIdxEqHead : mIdx = m.head := by
+      have h := m.index_eq_head n
+      simp only [PolyCofixApprox.getIndex] at h
+      rw [happ] at h
+      exact h
+    have hIdxHeq : HEq mIdx strResult.2.1 := hIdxEqHead ▸ hHeadHeq
+    apply eq_of_heq
+    let lhsPreTrans := PolyCofixApprox.intro (f.f.left a.val).fst mIdx mChildren
+    let rhsPreTrans := PolyCofixApprox.intro strResult.fst strResult.snd.fst
+      (fun e => polyCofixUnfoldApprox P α n
+        ((polyBetweenFamily X X P strResult.fst strResult.snd.fst).hom e)
+        ⟨strResult.snd.snd.left e, congrFun (Over.w strResult.snd.snd) e⟩)
+    have hLhsHeq : HEq (hfst ▸ lhsPreTrans) lhsPreTrans :=
+      (heq_eqRec hfst lhsPreTrans).symm
+    have hRhsHeq : HEq (hStrFst ▸ rhsPreTrans) rhsPreTrans :=
+      (heq_eqRec hStrFst rhsPreTrans).symm
+    have hPreTransHeq : HEq lhsPreTrans rhsPreTrans := by
+      have hFibEq' : (f.f.left a.val).fst = strResult.fst := hFiberEq
+      have hTransport : HEq lhsPreTrans (hFibEq' ▸ lhsPreTrans) := heq_eqRec hFibEq' _
+      have hTransportedEq : hFibEq' ▸ lhsPreTrans = rhsPreTrans := by
+        have hIdxEq : hFibEq' ▸ mIdx = strResult.snd.fst := eq_of_heq (
+          (heq_eqRec hFibEq' mIdx).symm.trans hIdxHeq)
+        let rhsChildren := fun e =>
+          polyCofixUnfoldApprox P α n
+            ((polyBetweenFamily X X P strResult.fst strResult.snd.fst).hom e)
+            ⟨strResult.snd.snd.left e, congrFun (Over.w strResult.snd.snd) e⟩
+        apply PolyCofixApprox.intro_cast_heq hFibEq' mIdx strResult.snd.fst
+          hIdxHeq mChildren rhsChildren
+        have hFamEq : polyBetweenFamily X X P (f.f.left a.val).fst mIdx =
+            polyBetweenFamily X X P strResult.fst strResult.snd.fst :=
+          eq_of_heq (polyBetweenFamily_heq hFibEq' mIdx strResult.snd.fst hIdxHeq)
+        have hDomEq : (polyBetweenFamily X X P (f.f.left a.val).fst mIdx).left =
+            (polyBetweenFamily X X P strResult.fst strResult.snd.fst).left :=
+          congrArg (·.left) hFamEq
+        have hCodomEq : ∀ (e1 : (polyBetweenFamily X X P (f.f.left a.val).fst mIdx).left)
+            (e2 : (polyBetweenFamily X X P strResult.fst strResult.snd.fst).left),
+            HEq e1 e2 →
+            (polyBetweenFamily X X P (f.f.left a.val).fst mIdx).hom e1 =
+            (polyBetweenFamily X X P strResult.fst strResult.snd.fst).hom e2 := by
+          intro e1 e2 he
+          generalize hg1 :
+            polyBetweenFamily X X P (f.f.left a.val).fst mIdx = fam1 at e1 ⊢
+          generalize hg2 :
+            polyBetweenFamily X X P strResult.fst strResult.snd.fst = fam2 at e2 ⊢
+          have hfam : fam1 = fam2 := hg1 ▸ hg2 ▸ hFamEq
+          subst hfam
+          simp only [heq_eq_eq] at he
+          rw [he]
+        have hCodTypeEq :
+            ∀ (e1 : (polyBetweenFamily X X P (f.f.left a.val).fst mIdx).left)
+              (e2 : (polyBetweenFamily X X P strResult.fst strResult.snd.fst).left),
+              HEq e1 e2 →
+              PolyCofixApprox P n
+                ((polyBetweenFamily X X P (f.f.left a.val).fst mIdx).hom e1) =
+              PolyCofixApprox P n
+                ((polyBetweenFamily X X P strResult.fst strResult.snd.fst).hom e2) :=
+          fun e1 e2 he => congrArg (PolyCofixApprox P n) (hCodomEq e1 e2 he)
+        have hChildrenHeq : HEq mChildren rhsChildren := by
+          apply funext_heq_dep hDomEq hCodTypeEq
+          intro e1 e2 he
+          have hFibEq : (polyBetweenFamily X X P (f.f.left a.val).fst mIdx).hom e1 =
+              (polyBetweenFamily X X P strResult.fst strResult.snd.fst).hom e2 :=
+            hCodomEq e1 e2 he
+          let childE1 : (polyBetweenFamily X X P strResult.fst
+              strResult.snd.fst).left := cast hDomEq e1
+          have hChildE1Heq : HEq e1 childE1 := (cast_heq hDomEq e1).symm
+          have hChildE1E2 : childE1 = e2 := by
+            have he' := eq_of_heq (hChildE1Heq.symm.trans he)
+            exact he'
+          let childVal := strResult.snd.snd.left e2
+          have hChildProof : α.V.hom childVal =
+              (polyBetweenFamily X X P strResult.fst strResult.snd.fst).hom e2 :=
+            congrFun (Over.w strResult.snd.snd) e2
+          let childSubtype : { y // α.V.hom y =
+              (polyBetweenFamily X X P strResult.fst strResult.snd.fst).hom e2 } :=
+            ⟨childVal, hChildProof⟩
+          have hIhApplied := ih
+            ((polyBetweenFamily X X P strResult.fst strResult.snd.fst).hom e2)
+            childSubtype
+          have rhsUnfold : rhsChildren e2 = polyCofixUnfoldApprox P α n
+              ((polyBetweenFamily X X P strResult.fst strResult.snd.fst).hom e2)
+              childSubtype := rfl
+          rw [rhsUnfold]
+          have hIhApplied' := heq_of_eq hIhApplied
+          let hfst'Ih : (f.f.left childSubtype.val).fst =
+              (polyBetweenFamily X X P strResult.fst strResult.snd.fst).hom e2 := by
+            have := congrFun (Over.w f.f) childSubtype.val
+            simp only at this
+            rw [childSubtype.property] at this
+            exact this
+          have hTransportTarget : HEq ((f.f.left childSubtype.val).snd.approx n)
+              (hfst'Ih ▸ (f.f.left childSubtype.val).snd.approx n) :=
+            heq_eqRec hfst'Ih ((f.f.left childSubtype.val).snd.approx n)
+          have hCoalgChildRel : HEq (mChildren e1)
+              ((f.f.left childSubtype.val).snd.approx n) := by
+            have hIdxAtM : mIdx = m.head := hIdxEqHead
+            have hFamAtMIdx : polyBetweenFamily X X P (f.f.left a.val).fst mIdx =
+                polyBetweenFamily X X P (f.f.left a.val).fst m.head :=
+              congrArg (polyBetweenFamily X X P (f.f.left a.val).fst) hIdxAtM
+            let hE1AtHead : (polyBetweenFamily X X P (f.f.left a.val).fst m.head).left :=
+              cast (congrArg (·.left) hFamAtMIdx) e1
+            have hE1HeE2 : HEq hE1AtHead e2 :=
+              (cast_heq (congrArg (·.left) hFamAtMIdx) e1).trans he
+            have hCoalgChild := coalg_hom_children_heq P α f a.val hE1AtHead e2 hE1HeE2
+            have hMChildApprox : HEq ((m.children hE1AtHead).approx n)
+                ((f.f.left childSubtype.val).snd.approx n) := by
+              have hLhsFib : (polyBetweenFamily X X P (f.f.left a.val).fst
+                  m.head).hom hE1AtHead =
+                  (polyBetweenFamily X X P strResult.fst strResult.snd.fst).hom e2 := by
+                have hHomEq1 : (polyBetweenFamily X X P (f.f.left a.val).fst m.head).hom
+                    hE1AtHead = (polyBetweenFamily X X P (f.f.left a.val).fst mIdx).hom
+                    e1 := by
+                  subst hIdxAtM
+                  rfl
+                rw [hHomEq1]
+                exact hCodomEq e1 e2 he
+              have hRhsFib : (f.f.left childSubtype.val).fst =
+                  (polyBetweenFamily X X P strResult.fst strResult.snd.fst).hom e2 := by
+                have hOverW : (polyCofixCarrier P).hom (f.f.left childSubtype.val) =
+                    α.V.hom childSubtype.val :=
+                  congrFun (Over.w f.f) childSubtype.val
+                have hFstEq : (polyCofixCarrier P).hom (f.f.left childSubtype.val) =
+                    (f.f.left childSubtype.val).fst := rfl
+                rw [← hFstEq, hOverW, childSubtype.property]
+              have hFibEq : (polyBetweenFamily X X P (f.f.left a.val).fst m.head).hom
+                  hE1AtHead = (f.f.left childSubtype.val).fst :=
+                hLhsFib.trans hRhsFib.symm
+              exact PolyCofix.approx_heq hFibEq hCoalgChild n
+            have hMChildrenRel : HEq (mChildren e1)
+                ((m.children hE1AtHead).approx n) := by
+              subst hIdxAtM
+              simp only [PolyCofix.children, PolyCofix.childApproxAt]
+              cases n with
+              | zero =>
+                have hL : mChildren e1 = .continue _ :=
+                  PolyCofixApprox.approx_zero_eq_continue _
+                simp only [PolyCofix.childApproxAt_zero, hL]
+                exact HEq.rfl
+              | succ k =>
+                simp only [PolyCofix.childApproxAt_succ]
+                have heq : (m.approx (k + 2)).getIndex = m.head := m.index_eq_head (k + 1)
+                rw [PolyCofix.childApproxAt_succ_aux_proof_irrel m.head (m.approx (k + 2))
+                  (m.index_eq_head (k + 1)) heq hE1AtHead]
+                generalize ha : m.approx (k + 2) = a at happ heq
+                subst happ
+                rw [PolyCofix.childApproxAt_succ_aux_proof_irrel m.head
+                  (.intro (f.f.left ↑a).fst m.head mChildren) heq rfl hE1AtHead]
+                simp only [PolyCofix.childApproxAt_succ_aux_intro]
+                exact HEq.rfl
+            exact hMChildrenRel.trans hMChildApprox
+          exact hCoalgChildRel.trans (hTransportTarget.trans hIhApplied')
+        exact hChildrenHeq
+      exact hTransport.trans (heq_of_eq hTransportedEq)
+    exact hLhsHeq.trans (hPreTransHeq.trans hRhsHeq.symm)
+
+/--
+Any coalgebra homomorphism to the terminal coalgebra produces the same
+approximations as the anamorphism at each depth.
+-/
+lemma polyCofixUnfold_unique_approx (P : PolyEndo X) (α : PolyCoalg P)
+    (f : α ⟶ polyCofixCoalg P) (n : Nat) (x : X) (a : {y : α.V.left // α.V.hom y = x}) :
+    let hfst : (f.f.left a.val).1 = x := by
+      have := congrFun (Over.w f.f) a.val
+      simp only at this
+      rw [a.property] at this
+      exact this
+    hfst ▸ (f.f.left a.val).2.approx n = polyCofixUnfoldApprox P α n x a := by
+  intro hfst
+  induction n generalizing x a with
+  | zero =>
+    simp only [polyCofixUnfoldApprox]
+    rw [PolyCofixApprox.approx_zero_eq_continue ((f.f.left a.val).2.approx 0)]
+    exact PolyCofixApprox.continue_cast hfst
+  | succ n ih =>
+    exact polyCofixUnfold_unique_approx_succ P α f n x a ih
+
+/--
+Uniqueness: any coalgebra homomorphism to the terminal coalgebra equals the anamorphism.
+-/
+lemma polyCofixUnfoldHom_unique (P : PolyEndo X) (α : PolyCoalg P)
+    (f : α ⟶ polyCofixCoalg P) : f = polyCofixUnfoldHom P α := by
+  apply Endofunctor.Coalgebra.Hom.ext
+  apply Over.OverMorphism.ext
+  funext a
+  simp only [polyCofixUnfoldHom, polyCofixUnfold, polyCofixUnfoldLeft, Over.homMk_left]
+  apply Sigma.ext
+  · exact congrFun (Over.w f.f) a
+  · have hfst : (f.f.left a).fst = α.V.hom a := congrFun (Over.w f.f) a
+    have hm_heq : (f.f.left a).snd ≍ (hfst ▸ (f.f.left a).snd) := heq_eqRec hfst _
+    apply hm_heq.trans
+    apply heq_of_eq
+    apply PolyCofix.ext
+    intro n
+    have := polyCofixUnfold_unique_approx P α f n (α.V.hom a) ⟨a, rfl⟩
+    rw [PolyCofix.approx_cast hfst (f.f.left a).snd n]
+    exact this
+
+/-! ### Terminal Coalgebra -/
+
+/--
+The terminal coalgebra of a polynomial endofunctor.
+
+This shows that `polyCofixCoalg P` is terminal in the category of P-coalgebras,
+providing the universal property of M-types.
+-/
+def polyCofixCoalg_isTerminal (P : PolyEndo X) :
+    CategoryTheory.Limits.IsTerminal (polyCofixCoalg P) :=
+  CategoryTheory.Limits.IsTerminal.ofUniqueHom
+    (polyCofixUnfoldHom P)
+    (fun α m => polyCofixUnfoldHom_unique P α m)
+
+end PolyCofixTerminal
+
+/-! ## Free Monad and Cofree Comonad
+
+The free monad on a polynomial endofunctor P is defined using the initial
+algebra of the "translate" functor `A + P(-)`, and the cofree comonad is
+defined using the terminal coalgebra of the "scale" functor `A × P(-)`.
+
+These constructions give adjunctions:
+- Free ⊣ Forget : Alg(P) → Over X
+- Forget ⊣ Cofree : Coalg(P) → Over X
+-/
+
+section FreeMonadCofreeComonad
+
+variable {X : Type u}
+
+/-! ### The Translate Polynomial (Coproduct)
+
+Given `A : Over X` and `P : PolyEndo X`, the translate polynomial
+`polyTranslate A P` represents the functor `Y ↦ A + P(Y)`.
+
+At each fiber `x : X`:
+- Positions: `{ a : A.left | A.hom a = x } + polyBetweenIndex P x`
+- Directions at `inl a` (leaf): empty (no children)
+- Directions at `inr p` (node): `polyBetweenFamily P x p`
+-/
+
+/--
+The initial object in `Over X`, representing the empty family.
+This is used for leaves in the free monad construction.
+-/
+def overEmpty (X : Type u) : Over X :=
+  Over.mk (f := fun e : PEmpty => PEmpty.elim e)
+
+/--
+The index type for the translate polynomial at a fiber.
+Elements are either leaves (from A) or nodes (from P).
+-/
+def polyTranslateIndex (A : Over X) (P : PolyEndo X) (x : X) : Type u :=
+  { a : A.left // A.hom a = x } ⊕ polyBetweenIndex X X P x
+
+/--
+The family function for the translate polynomial.
+Leaves have no children (empty family), nodes have children from P.
+-/
+def polyTranslateFamily (A : Over X) (P : PolyEndo X) (x : X)
+    (i : polyTranslateIndex A P x) : Over X :=
+  match i with
+  | Sum.inl _ => overEmpty X
+  | Sum.inr p => polyBetweenFamily X X P x p
+
+/--
+The translate polynomial at a specific fiber.
+-/
+def polyTranslateAt (A : Over X) (P : PolyEndo X) (x : X) :
+    CoprodCovarRepCat (Over X) :=
+  ccrObjMk (polyTranslateFamily A P x)
+
+/--
+The translate polynomial functor `A + P(-)` as a polynomial endofunctor.
+-/
+def polyTranslate (A : Over X) (P : PolyEndo X) : PolyEndo X :=
+  fun x => polyTranslateAt A P x
+
+/-! ### The Scale Polynomial (Product)
+
+Given `A : Over X` and `P : PolyEndo X`, the scale polynomial
+`polyScale A P` represents the functor `Y ↦ A × P(Y)`.
+
+At each fiber `x : X`:
+- Positions: `{ a : A.left | A.hom a = x } × polyBetweenIndex P x`
+- Directions at `(a, p)`: `polyBetweenFamily P x p`
+-/
+
+/--
+The index type for the scale polynomial at a fiber.
+Elements are pairs of labels (from A) and nodes (from P).
+-/
+def polyScaleIndex (A : Over X) (P : PolyEndo X) (x : X) : Type u :=
+  { a : A.left // A.hom a = x } × polyBetweenIndex X X P x
+
+/--
+The family function for the scale polynomial.
+Each position has children from P (the label doesn't affect children).
+-/
+def polyScaleFamily (A : Over X) (P : PolyEndo X) (x : X)
+    (i : polyScaleIndex A P x) : Over X :=
+  polyBetweenFamily X X P x i.2
+
+/--
+The scale polynomial at a specific fiber.
+-/
+def polyScaleAt (A : Over X) (P : PolyEndo X) (x : X) :
+    CoprodCovarRepCat (Over X) :=
+  ccrObjMk (polyScaleFamily A P x)
+
+/--
+The scale polynomial functor `A × P(-)` as a polynomial endofunctor.
+-/
+def polyScale (A : Over X) (P : PolyEndo X) : PolyEndo X :=
+  fun x => polyScaleAt A P x
+
+/-! ### Free Monad
+
+The free monad on P is the endofunctor `A ↦ PolyFix (polyTranslate A P)`.
+This gives trees with A-labeled leaves and P-shaped internal nodes.
+-/
+
+/--
+The free monad carrier: W-type of the translate polynomial.
+`PolyFreeM A P x` is the type of P-branching trees with A-leaves, at fiber x.
+-/
+abbrev PolyFreeM (A : Over X) (P : PolyEndo X) (x : X) : Type u :=
+  PolyFix (polyTranslate A P) x
+
+/--
+The free monad carrier as an object of `Over X`.
+-/
+def polyFreeMCarrier (A : Over X) (P : PolyEndo X) : Over X :=
+  polyFixCarrier (polyTranslate A P)
+
+/-! ### Cofree Comonad
+
+The cofree comonad on P is the endofunctor `A ↦ PolyCofix (polyScale A P)`.
+This gives M-type trees with A-annotations at each node.
+-/
+
+/--
+The cofree comonad carrier: M-type of the scale polynomial.
+`PolyCofreeM A P x` is the type of P-branching streams with A-annotations.
+-/
+abbrev PolyCofreeM (A : Over X) (P : PolyEndo X) (x : X) : Type u :=
+  PolyCofix (polyScale A P) x
+
+/--
+The cofree comonad carrier as an object of `Over X`.
+-/
+def polyCofreeCarrier (A : Over X) (P : PolyEndo X) : Over X :=
+  polyCofixCarrier (polyScale A P)
+
+/-! ### Relating W-types and M-types to Free/Cofree
+
+The W-type `PolyFix P` is the free monad applied to the empty object.
+The M-type `PolyCofix P` is the cofree comonad applied to the terminal object.
+-/
+
+/--
+The empty object in `Over X` (initial object).
+-/
+def overInitial (X : Type u) : Over X := overEmpty X
+
+/--
+The terminal object in `Over X` is `X` itself with the identity morphism.
+-/
+def overTerminal (X : Type u) : Over X :=
+  Over.mk (f := @id X)
+
+/-! ### Index Equivalences
+
+When A is the initial object (empty), the translate polynomial index reduces
+to just the P index. When A is the terminal object, the scale polynomial
+index has exactly one label component per fiber.
+-/
+
+/--
+The fiber of the initial object is empty (there are no elements to map).
+-/
+instance overInitialFiberIsEmpty (x : X) :
+    IsEmpty { a : (overInitial X).left // (overInitial X).hom a = x } :=
+  ⟨fun ⟨e, _⟩ => PEmpty.elim e⟩
+
+/--
+The fiber of the initial object over any x is empty.
+-/
+def overInitialFiberEmpty (x : X) :
+    { a : (overInitial X).left // (overInitial X).hom a = x } ≃ PEmpty :=
+  Equiv.equivPEmpty _
+
+/--
+The fiber of the terminal object over x is a singleton (exactly x).
+-/
+def overTerminalFiberUnique (x : X) :
+    { a : (overTerminal X).left // (overTerminal X).hom a = x } ≃ PUnit := {
+  toFun := fun _ => PUnit.unit
+  invFun := fun _ => ⟨x, rfl⟩
+  left_inv := fun ⟨a, h⟩ => by simp only [Subtype.mk.injEq]; exact h.symm
+  right_inv := fun _ => rfl
+}
+
+/--
+The translate index with initial A reduces to the P index.
+-/
+def polyTranslateIndexInitialEquiv (P : PolyEndo X) (x : X) :
+    polyTranslateIndex (overInitial X) P x ≃ polyBetweenIndex X X P x := {
+  toFun := fun i => match i with
+    | Sum.inl ⟨e, _⟩ => PEmpty.elim e
+    | Sum.inr p => p
+  invFun := Sum.inr
+  left_inv := fun i => match i with
+    | Sum.inl ⟨e, _⟩ => PEmpty.elim e
+    | Sum.inr _ => rfl
+  right_inv := fun _ => rfl
+}
+
+/--
+The scale index with terminal A has a unique label component per fiber.
+-/
+def polyScaleIndexTerminalEquiv (P : PolyEndo X) (x : X) :
+    polyScaleIndex (overTerminal X) P x ≃
+    polyBetweenIndex X X P x := {
+  toFun := fun ⟨_, p⟩ => p
+  invFun := fun p => ⟨⟨x, rfl⟩, p⟩
+  left_inv := fun ⟨⟨a, h⟩, p⟩ => by
+    apply Prod.ext
+    · exact Subtype.ext h.symm
+    · rfl
+  right_inv := fun _ => rfl
+}
+
+/--
+The translate family with initial A preserves the P family at node positions.
+-/
+lemma polyTranslateFamilyInitial_eq (P : PolyEndo X) (x : X)
+    (p : polyBetweenIndex X X P x) :
+    polyTranslateFamily (overInitial X) P x (Sum.inr p) =
+    polyBetweenFamily X X P x p := rfl
+
+/--
+The scale family with terminal A preserves the P family.
+-/
+lemma polyScaleFamilyTerminal_eq (P : PolyEndo X) (x : X)
+    (p : polyBetweenIndex X X P x) :
+    polyScaleFamily (overTerminal X) P x ⟨⟨x, rfl⟩, p⟩ =
+    polyBetweenFamily X X P x p := rfl
+
+/-! ### Type Equivalences
+
+The W-type and M-type are instances of free monad and cofree comonad
+applied to initial and terminal objects respectively.
+-/
+
+/--
+Convert a W-type tree to a free monad tree with empty labels.
+Maps each node with index i to a node with index Sum.inr i.
+-/
+def polyFixToPolyFreeM (P : PolyEndo X) (x : X) :
+    PolyFix P x → PolyFreeM (overInitial X) P x
+  | PolyFix.mk _ i children =>
+    PolyFix.mk x (Sum.inr i) (fun e => polyFixToPolyFreeM P _ (children e))
+
+/--
+Convert a free monad tree with empty labels to a W-type tree.
+The Sum.inl case is impossible since the label type is empty.
+-/
+def polyFreeMToPolyFix (P : PolyEndo X) (x : X) :
+    PolyFreeM (overInitial X) P x → PolyFix P x
+  | PolyFix.mk _ i children =>
+    match i with
+    | Sum.inl ⟨e, _⟩ => PEmpty.elim e
+    | Sum.inr p => PolyFix.mk x p (fun e => polyFreeMToPolyFix P _ (children e))
+
+/--
+Round-trip from PolyFix through PolyFreeM returns the original tree.
+-/
+theorem polyFreeMToPolyFix_polyFixToPolyFreeM (P : PolyEndo X) (x : X)
+    (t : PolyFix P x) :
+    polyFreeMToPolyFix P x (polyFixToPolyFreeM P x t) = t := by
+  induction t with
+  | mk y i children ih =>
+    simp only [polyFixToPolyFreeM, polyFreeMToPolyFix]
+    congr 1
+    funext e
+    exact ih e
+
+/--
+Round-trip from PolyFreeM through PolyFix returns the original tree.
+-/
+theorem polyFixToPolyFreeM_polyFreeMToPolyFix (P : PolyEndo X) (x : X)
+    (t : PolyFreeM (overInitial X) P x) :
+    polyFixToPolyFreeM P x (polyFreeMToPolyFix P x t) = t := by
+  induction t with
+  | mk y i children ih =>
+    match i with
+    | Sum.inl ⟨e, _⟩ => exact PEmpty.elim e
+    | Sum.inr p =>
+      simp only [polyFreeMToPolyFix, polyFixToPolyFreeM]
+      congr 1
+      funext e
+      exact ih e
+
+/--
+The W-type `PolyFix P` is equivalent to the free monad on P applied to
+the initial object. When there are no leaf labels (A is empty), trees are
+just nodes with P-shaped children.
+-/
+def polyFixEquivPolyFreeM (P : PolyEndo X) (x : X) :
+    PolyFix P x ≃ PolyFreeM (overInitial X) P x := {
+  toFun := polyFixToPolyFreeM P x
+  invFun := polyFreeMToPolyFix P x
+  left_inv := polyFreeMToPolyFix_polyFixToPolyFreeM P x
+  right_inv := polyFixToPolyFreeM_polyFreeMToPolyFix P x
+}
+
+/-! ### M-type and Cofree Comonad Equivalence
+
+The M-type `PolyCofix P` is equivalent to the cofree comonad on P applied to
+the terminal object.
+-/
+
+/--
+Convert an M-type approximation to a cofree comonad approximation.
+-/
+def polyCofixApproxToPolyCofreeM (P : PolyEndo X) {n : Nat} {x : X} :
+    PolyCofixApprox P n x →
+    PolyCofixApprox (polyScale (overTerminal X) P) n x
+  | PolyCofixApprox.continue y => PolyCofixApprox.continue y
+  | PolyCofixApprox.intro y i children =>
+    PolyCofixApprox.intro y ⟨⟨y, rfl⟩, i⟩
+      (fun e => polyCofixApproxToPolyCofreeM P (children e))
+
+/--
+Convert a cofree comonad approximation to an M-type approximation.
+-/
+def polyCofreeApproxToPolyCofix (P : PolyEndo X) {n : Nat} {x : X} :
+    PolyCofixApprox (polyScale (overTerminal X) P) n x →
+    PolyCofixApprox P n x
+  | PolyCofixApprox.continue y => PolyCofixApprox.continue y
+  | PolyCofixApprox.intro y ⟨_, i⟩ children =>
+    PolyCofixApprox.intro y i
+      (fun e => polyCofreeApproxToPolyCofix P (children e))
+
+/--
+The approximation conversion preserves the agreement relation.
+-/
+theorem polyCofixApproxToPolyCofreeM_agree (P : PolyEndo X) {n : Nat} {x : X}
+    {a : PolyCofixApprox P n x} {b : PolyCofixApprox P (n + 1) x}
+    (h : PolyCofixAgree P a b) :
+    PolyCofixAgree (polyScale (overTerminal X) P)
+      (polyCofixApproxToPolyCofreeM P a)
+      (polyCofixApproxToPolyCofreeM P b) := by
+  induction h with
+  | «continue» x' y' =>
+    exact PolyCofixAgree.continue x' (polyCofixApproxToPolyCofreeM P y')
+  | intro f f' child_agree ih' =>
+    exact PolyCofixAgree.intro _ _ ih'
+
+/--
+Convert an M-type to a cofree comonad value.
+-/
+def polyCofixToPolyCofreeM (P : PolyEndo X) (x : X) :
+    PolyCofix P x → PolyCofreeM (overTerminal X) P x := fun m => {
+  approx := fun n => polyCofixApproxToPolyCofreeM P (m.approx n)
+  consistent := fun n => polyCofixApproxToPolyCofreeM_agree P (m.consistent n)
+}
+
+/--
+The inverse approximation conversion preserves the agreement relation.
+-/
+theorem polyCofreeApproxToPolyCofix_agree (P : PolyEndo X) {n : Nat} {x : X}
+    {a : PolyCofixApprox (polyScale (overTerminal X) P) n x}
+    {b : PolyCofixApprox (polyScale (overTerminal X) P) (n + 1) x}
+    (h : PolyCofixAgree (polyScale (overTerminal X) P) a b) :
+    PolyCofixAgree P
+      (polyCofreeApproxToPolyCofix P a)
+      (polyCofreeApproxToPolyCofix P b) := by
+  induction h with
+  | «continue» x' y' =>
+    exact PolyCofixAgree.continue x' (polyCofreeApproxToPolyCofix P y')
+  | intro f f' child_agree ih' =>
+    exact PolyCofixAgree.intro _ _ ih'
+
+/--
+Convert a cofree comonad value to an M-type.
+-/
+def polyCofreeToPolyCofix (P : PolyEndo X) (x : X) :
+    PolyCofreeM (overTerminal X) P x → PolyCofix P x := fun m => {
+  approx := fun n => polyCofreeApproxToPolyCofix P (m.approx n)
+  consistent := fun n => polyCofreeApproxToPolyCofix_agree P (m.consistent n)
+}
+
+/--
+Round-trip from PolyCofix through PolyCofreeM returns the original at each
+approximation level.
+-/
+theorem polyCofreeApprox_roundtrip_l (P : PolyEndo X) {n : Nat} {x : X}
+    (a : PolyCofixApprox P n x) :
+    polyCofreeApproxToPolyCofix P (polyCofixApproxToPolyCofreeM P a) = a := by
+  induction a with
+  | «continue» y => rfl
+  | intro y i children ih =>
+    simp only [polyCofixApproxToPolyCofreeM, polyCofreeApproxToPolyCofix]
+    congr 1
+    funext e
+    exact ih e
+
+/--
+Round-trip from PolyCofreeM through PolyCofix returns the original at each
+approximation level.
+-/
+theorem polyCofreeApprox_roundtrip_r (P : PolyEndo X) {n : Nat} {x : X}
+    (a : PolyCofixApprox (polyScale (overTerminal X) P) n x) :
+    polyCofixApproxToPolyCofreeM P (polyCofreeApproxToPolyCofix P a) = a := by
+  induction a with
+  | «continue» y => rfl
+  | intro y idx children ih =>
+    obtain ⟨⟨labelVal, labelProof⟩, pIdx⟩ := idx
+    simp only [polyCofreeApproxToPolyCofix, polyCofixApproxToPolyCofreeM]
+    congr 1
+    · apply Prod.ext
+      · exact Subtype.ext labelProof.symm
+      · rfl
+    · funext e
+      exact ih e
+
+/--
+Round-trip from PolyCofix through PolyCofreeM returns the original.
+-/
+theorem polyCofix_roundtrip_l (P : PolyEndo X) (x : X) (m : PolyCofix P x) :
+    polyCofreeToPolyCofix P x (polyCofixToPolyCofreeM P x m) = m := by
+  apply PolyCofix.ext
+  intro n
+  exact polyCofreeApprox_roundtrip_l P (m.approx n)
+
+/--
+Round-trip from PolyCofreeM through PolyCofix returns the original.
+-/
+theorem polyCofix_roundtrip_r (P : PolyEndo X) (x : X)
+    (m : PolyCofreeM (overTerminal X) P x) :
+    polyCofixToPolyCofreeM P x (polyCofreeToPolyCofix P x m) = m := by
+  apply PolyCofix.ext
+  intro n
+  exact polyCofreeApprox_roundtrip_r P (m.approx n)
+
+/--
+The M-type `PolyCofix P` is equivalent to the cofree comonad on P applied to
+the terminal object. When there's exactly one label per fiber, streams are
+just nodes with P-shaped children.
+-/
+def polyCofixEquivPolyCofreeM (P : PolyEndo X) (x : X) :
+    PolyCofix P x ≃ PolyCofreeM (overTerminal X) P x := {
+  toFun := polyCofixToPolyCofreeM P x
+  invFun := polyCofreeToPolyCofix P x
+  left_inv := polyCofix_roundtrip_l P x
+  right_inv := polyCofix_roundtrip_r P x
+}
+
+/-! ### Monad Structure on Free Monad
+
+The free monad `PolyFreeM A P` has a monad structure where:
+- `pure` embeds an A-value as a leaf
+- `bind` substitutes at leaves
+-/
+
+/--
+The pure operation for the free monad: embed an A-value as a leaf.
+Given an element of A at fiber x, create a leaf node in the free monad.
+-/
+def polyFreeMPure (A : Over X) (P : PolyEndo X) {x : X}
+    (a : { v : A.left // A.hom v = x }) : PolyFreeM A P x :=
+  PolyFix.mk x (Sum.inl a) (fun e => PEmpty.elim e)
+
+/--
+Two `polyFreeMPure` values with the same underlying element are HEq across fibers.
+-/
+lemma polyFreeMPure_fiber_heq (A : Over X) (P : PolyEndo X) {x y : X}
+    (hfib : x = y) (a : A.left) (hx : A.hom a = x) (hy : A.hom a = y) :
+    HEq (polyFreeMPure A P ⟨a, hx⟩ : PolyFreeM A P x)
+        (polyFreeMPure A P ⟨a, hy⟩ : PolyFreeM A P y) := by
+  subst hfib
+  rfl
+
+/--
+The bind operation for the free monad: substitute at leaves.
+Recursively traverses the tree, replacing leaves with subtrees computed by f.
+-/
+def polyFreeMBind (A B : Over X) (P : PolyEndo X) {x : X}
+    (t : PolyFreeM A P x)
+    (f : ∀ y, { a : A.left // A.hom a = y } → PolyFreeM B P y) :
+    PolyFreeM B P x :=
+  match t with
+  | PolyFix.mk _ (Sum.inl a) _ => f x a
+  | PolyFix.mk _ (Sum.inr p) children =>
+    PolyFix.mk x (Sum.inr p) fun e =>
+      polyFreeMBind A B P (children e) f
+
+/--
+Left identity: bind (pure a) f = f a
+-/
+theorem polyFreeM_pure_bind (A B : Over X) (P : PolyEndo X) {x : X}
+    (a : { v : A.left // A.hom v = x })
+    (f : ∀ y, { a : A.left // A.hom a = y } → PolyFreeM B P y) :
+    polyFreeMBind A B P (polyFreeMPure A P a) f = f x a := rfl
+
+/--
+Right identity: bind t pure = t
+-/
+theorem polyFreeM_bind_pure (A : Over X) (P : PolyEndo X) {x : X}
+    (t : PolyFreeM A P x) :
+    polyFreeMBind A A P t (fun _ a => polyFreeMPure A P a) = t := by
+  induction t with
+  | mk y idx children ih =>
+    match idx with
+    | Sum.inl a =>
+      simp only [polyFreeMBind, polyFreeMPure]
+      congr 1
+      funext e
+      exact PEmpty.elim e
+    | Sum.inr p =>
+      simp only [polyFreeMBind]
+      congr 1
+      funext e
+      exact ih e
+
+/--
+Associativity: bind (bind t f) g = bind t (fun a => bind (f a) g)
+-/
+theorem polyFreeM_bind_assoc (A B C : Over X) (P : PolyEndo X) {x : X}
+    (t : PolyFreeM A P x)
+    (f : ∀ y, { a : A.left // A.hom a = y } → PolyFreeM B P y)
+    (g : ∀ y, { b : B.left // B.hom b = y } → PolyFreeM C P y) :
+    polyFreeMBind B C P (polyFreeMBind A B P t f) g =
+    polyFreeMBind A C P t (fun y a => polyFreeMBind B C P (f y a) g) := by
+  induction t with
+  | mk y idx children ih =>
+    match idx with
+    | Sum.inl a => rfl
+    | Sum.inr p =>
+      simp only [polyFreeMBind]
+      congr 1
+      funext e
+      exact ih e
+
+/-! ### Comonad Structure on Cofree Comonad
+
+The cofree comonad `PolyCofreeM A P` has a comonad structure where:
+- `extract` extracts the A-annotation at the root
+- `extend` recomputes annotations throughout the tree
+-/
+
+/--
+Extract the A-annotation at the root of a cofree comonad tree.
+-/
+def polyCofreeExtract (A : Over X) (P : PolyEndo X) {x : X}
+    (m : PolyCofreeM A P x) : { a : A.left // A.hom a = x } :=
+  let head := m.head
+  head.1
+
+/--
+The head of a cofree comonad tree gives both the label and the P-index.
+-/
+def polyCofreeHead (A : Over X) (P : PolyEndo X) {x : X}
+    (m : PolyCofreeM A P x) : polyScaleIndex A P x :=
+  m.head
+
+/--
+Helper for building the approximation at depth n for extend.
+-/
+def polyCofreeExtendApprox (A B : Over X) (P : PolyEndo X) (n : Nat)
+    (f : ∀ y, PolyCofreeM A P y → { b : B.left // B.hom b = y })
+    (x : X) (m : PolyCofreeM A P x) :
+    PolyCofixApprox (polyScale B P) n x :=
+  match n with
+  | 0 => PolyCofixApprox.continue x
+  | n + 1 =>
+    let head := m.head
+    let newLabel : { b : B.left // B.hom b = x } := f x m
+    PolyCofixApprox.intro x ⟨newLabel, head.2⟩ fun e =>
+      polyCofreeExtendApprox A B P n f _ (m.children e)
+
+/--
+Helper for proving consistency for extend.
+-/
+def polyCofreeExtendAgree (A B : Over X) (P : PolyEndo X) (n : Nat)
+    (f : ∀ y, PolyCofreeM A P y → { b : B.left // B.hom b = y })
+    (x : X) (m : PolyCofreeM A P x) :
+    PolyCofixAgree (polyScale B P)
+      (polyCofreeExtendApprox A B P n f x m)
+      (polyCofreeExtendApprox A B P (n + 1) f x m) :=
+  match n with
+  | 0 => PolyCofixAgree.continue x _
+  | n + 1 =>
+    PolyCofixAgree.intro _ _ fun e =>
+      polyCofreeExtendAgree A B P n f _ (m.children e)
+
+/--
+Extend (duplicate) operation for the cofree comonad.
+At each node, the new annotation is computed by applying f to the subtree.
+-/
+def polyCofreeExtend (A B : Over X) (P : PolyEndo X) {x : X}
+    (f : ∀ y, PolyCofreeM A P y → { b : B.left // B.hom b = y })
+    (m : PolyCofreeM A P x) : PolyCofreeM B P x := {
+  approx := fun n => polyCofreeExtendApprox A B P n f x m
+  consistent := fun n => polyCofreeExtendAgree A B P n f x m
+}
+
+/-! ### Polynomial Representation of Free Monad
+
+The free monad functor `A ↦ PolyFreeM A P` is itself a polynomial functor.
+To represent it as a `PolyEndo X`:
+- Positions at x = tree shapes = `PolyFreeM (overTerminal X) P x`
+- Directions at position t = leaf positions in the tree t
+-/
+
+/--
+Tree shapes for the free monad: trees with trivially-labeled leaves.
+These are the positions of the free monad viewed as a polynomial functor.
+-/
+abbrev PolyFreeMShape (P : PolyEndo X) (x : X) : Type u :=
+  PolyFreeM (overTerminal X) P x
+
+/--
+Leaf positions in a tree shape. For each tree shape, this gives the type
+of "holes" where leaf data from A would be placed.
+
+At a leaf node: exactly one position (the leaf itself)
+At an internal node: the sum of leaf positions in all children
+-/
+def PolyFreeMLeafPos (P : PolyEndo X) {x : X} :
+    PolyFreeMShape P x → Type u
+  | PolyFix.mk _ (Sum.inl _) _ => PUnit
+  | PolyFix.mk _ (Sum.inr p) children =>
+    Σ (e : (polyBetweenFamily X X P x p).left),
+      PolyFreeMLeafPos P (children e)
+
+/--
+The fiber of a leaf position. Given a tree shape and a leaf position in it,
+returns the fiber at which that leaf lives.
+-/
+def PolyFreeMLeafFiber (P : PolyEndo X) {x : X}
+    (t : PolyFreeMShape P x) : PolyFreeMLeafPos P t → X :=
+  match t with
+  | PolyFix.mk y (Sum.inl _) _ => fun _ => y
+  | PolyFix.mk _ (Sum.inr _) children => fun pos =>
+    let ⟨e, pos'⟩ := pos
+    PolyFreeMLeafFiber P (children e) pos'
+
+/--
+The family for the free monad polynomial at each position.
+Maps each tree shape to the Over X object representing its leaf positions.
+-/
+def polyFreeMFamily (P : PolyEndo X) (x : X)
+    (shape : PolyFreeMShape P x) : Over X :=
+  Over.mk (f := PolyFreeMLeafFiber P shape)
+
+/--
+The free monad functor represented as a polynomial endofunctor.
+-/
+def polyFreeMPoly (P : PolyEndo X) : PolyEndo X := fun x =>
+  ccrObjMk (polyFreeMFamily P x)
+
+/--
+Build a free monad tree from a shape and leaf data.
+Given a tree shape and a function assigning A-values to each leaf position,
+constructs the corresponding element of PolyFreeM A P.
+-/
+def polyFreeMFromShape (A : Over X) (P : PolyEndo X) {x : X}
+    (shape : PolyFreeMShape P x)
+    (leafData : (pos : PolyFreeMLeafPos P shape) →
+      { a : A.left // A.hom a = PolyFreeMLeafFiber P shape pos }) :
+    PolyFreeM A P x :=
+  match shape with
+  | PolyFix.mk y (Sum.inl _) _ =>
+    let aVal := leafData PUnit.unit
+    PolyFix.mk y (Sum.inl aVal) (fun e => PEmpty.elim e)
+  | PolyFix.mk y (Sum.inr p) children =>
+    PolyFix.mk y (Sum.inr p) fun e =>
+      polyFreeMFromShape A P (children e) fun pos =>
+        leafData ⟨e, pos⟩
+
+/--
+Extract the shape from a free monad tree.
+Replaces all leaf labels with trivial labels.
+-/
+def polyFreeMToShape (A : Over X) (P : PolyEndo X) {x : X}
+    (t : PolyFreeM A P x) : PolyFreeMShape P x :=
+  match t with
+  | PolyFix.mk y (Sum.inl _) _ =>
+    PolyFix.mk y (Sum.inl ⟨y, rfl⟩) (fun e => PEmpty.elim e)
+  | PolyFix.mk y (Sum.inr p) children =>
+    PolyFix.mk y (Sum.inr p) fun e =>
+      polyFreeMToShape A P (children e)
+
+/--
+Extract the leaf data from a free monad tree.
+Given a tree, returns a function mapping each leaf position to its label.
+-/
+def polyFreeMLeafData (A : Over X) (P : PolyEndo X) {x : X}
+    (t : PolyFreeM A P x) :
+    (pos : PolyFreeMLeafPos P (polyFreeMToShape A P t)) →
+    { a : A.left // A.hom a = PolyFreeMLeafFiber P (polyFreeMToShape A P t) pos
+    } :=
+  match t with
+  | PolyFix.mk _ (Sum.inl a) _ => fun _ => a
+  | PolyFix.mk _ (Sum.inr _) children => fun ⟨e, pos⟩ =>
+    polyFreeMLeafData A P (children e) pos
+
+/--
+Roundtrip: extracting shape from a tree built from shape and data gives back
+the original shape.
+-/
+theorem polyFreeMFromShape_toShape (A : Over X) (P : PolyEndo X) {x : X}
+    (shape : PolyFreeMShape P x)
+    (leafData : (pos : PolyFreeMLeafPos P shape) →
+      { a : A.left // A.hom a = PolyFreeMLeafFiber P shape pos }) :
+    polyFreeMToShape A P (polyFreeMFromShape A P shape leafData) = shape := by
+  induction shape with
+  | mk y idx children ih =>
+    cases idx with
+    | inl label =>
+      simp only [polyFreeMFromShape, polyFreeMToShape]
+      congr 1
+      · congr 1
+        exact Subtype.ext label.property.symm
+      · funext e
+        exact PEmpty.elim e
+    | inr p =>
+      simp only [polyFreeMFromShape, polyFreeMToShape]
+      congr 1
+      funext e
+      exact ih e _
+
+/--
+Roundtrip: building a tree from shape and data, then extracting, gives back
+the original tree.
+-/
+theorem polyFreeM_roundtrip (A : Over X) (P : PolyEndo X) {x : X}
+    (t : PolyFreeM A P x) :
+    polyFreeMFromShape A P (polyFreeMToShape A P t)
+      (polyFreeMLeafData A P t) = t := by
+  induction t with
+  | mk y idx children ih =>
+    cases idx with
+    | inl a =>
+      simp only [polyFreeMToShape, polyFreeMFromShape, polyFreeMLeafData]
+      congr 1
+      funext e
+      exact PEmpty.elim e
+    | inr p =>
+      simp only [polyFreeMToShape, polyFreeMFromShape]
+      congr 1
+      funext e
+      exact ih e
+
+
+/--
+The type of the evaluation of the free monad polynomial at A.
+-/
+def PolyFreeMPolyEval (A : Over X) (P : PolyEndo X) (x : X) : Type u :=
+  Σ (shape : PolyFreeMShape P x),
+    { f : (pos : PolyFreeMLeafPos P shape) → A.left //
+      ∀ pos, A.hom (f pos) = PolyFreeMLeafFiber P shape pos }
+
+/--
+Convert from polynomial evaluation to free monad.
+-/
+def polyFreeMPolyEval_to_polyFreeM (A : Over X) (P : PolyEndo X) {x : X}
+    (eval : PolyFreeMPolyEval A P x) : PolyFreeM A P x :=
+  polyFreeMFromShape A P eval.fst fun pos =>
+    ⟨eval.snd.val pos, eval.snd.property pos⟩
+
+/--
+Convert from free monad to polynomial evaluation.
+-/
+def polyFreeM_to_polyFreeMPolyEval (A : Over X) (P : PolyEndo X) {x : X}
+    (t : PolyFreeM A P x) : PolyFreeMPolyEval A P x :=
+  ⟨polyFreeMToShape A P t,
+   ⟨fun pos => (polyFreeMLeafData A P t pos).val,
+    fun pos => (polyFreeMLeafData A P t pos).property⟩⟩
+
+/--
+Right inverse helper: the sigma pair roundtrip equality for the polynomial
+evaluation type. This is proven by induction on the shape.
+-/
+theorem polyFreeMPolyEval_roundtrip (A : Over X) (P : PolyEndo X) {x : X}
+    (shape : PolyFreeMShape P x)
+    (f : PolyFreeMLeafPos P shape → A.left)
+    (hf : ∀ pos, A.hom (f pos) = PolyFreeMLeafFiber P shape pos) :
+    polyFreeM_to_polyFreeMPolyEval A P
+      (polyFreeMFromShape A P shape (fun pos => ⟨f pos, hf pos⟩)) =
+    ⟨shape, ⟨f, hf⟩⟩ := by
+  induction shape with
+  | mk y idx children ih =>
+    cases idx with
+    | inl _ =>
+      simp only [polyFreeMFromShape, polyFreeM_to_polyFreeMPolyEval,
+        polyFreeMToShape, polyFreeMLeafData]
+      have hfst := polyFreeMFromShape_toShape A P
+        (PolyFix.mk y (Sum.inl _) children) (fun pos => ⟨f pos, hf pos⟩)
+      simp only [polyFreeMFromShape, polyFreeMToShape] at hfst
+      apply Sigma.ext hfst
+      apply heq_of_eq
+      apply Subtype.ext
+      funext pos
+      cases pos
+      rfl
+    | inr p =>
+      have ih_applied : ∀ e, polyFreeM_to_polyFreeMPolyEval A P
+          (polyFreeMFromShape A P (children e) (fun pos => ⟨f ⟨e, pos⟩, hf ⟨e, pos⟩⟩)) =
+          ⟨children e, ⟨fun pos' => f ⟨e, pos'⟩, fun pos' => hf ⟨e, pos'⟩⟩⟩ :=
+        fun e => ih e (fun pos' => f ⟨e, pos'⟩) (fun pos' => hf ⟨e, pos'⟩)
+      simp only [polyFreeMFromShape, polyFreeM_to_polyFreeMPolyEval,
+        polyFreeMToShape, polyFreeMLeafData]
+      simp only [polyFreeM_to_polyFreeMPolyEval] at ih_applied
+      have hfst := polyFreeMFromShape_toShape A P
+        (PolyFix.mk y (Sum.inr p) children) (fun pos => ⟨f pos, hf pos⟩)
+      simp only [polyFreeMFromShape, polyFreeMToShape] at hfst
+      apply Sigma.ext hfst
+      dsimp only []
+      refine @subtype_fun_heq' (PolyFreeMShape P y) A.left
+        (PolyFreeMLeafPos P)
+        (fun shape g => ∀ pos, A.hom (g pos) = PolyFreeMLeafFiber P shape pos)
+        _ _ hfst _ _ ?_
+      intro ⟨e, pos_inner⟩
+      simp only [PolyFreeMLeafPos]
+      -- Use sigma_subtype_fun_app_eq' to extract function value equality from ih_applied
+      have hdata_e := sigma_subtype_fun_app_eq' _ _ (ih_applied e) pos_inner
+      simp only at hdata_e
+      rw [hdata_e]
+      -- Now prove f ⟨e, cast ... pos_inner⟩ = f (cast ... ⟨e, pos_inner⟩)
+      -- Use sigma_cast_eq_mk to decompose the sigma cast
+      have hcast_decompose :
+          cast (congrArg (PolyFreeMLeafPos P) hfst) ⟨e, pos_inner⟩ =
+          ⟨e, cast (congrArg (PolyFreeMLeafPos P)
+            (congrArg Sigma.fst (ih_applied e))) pos_inner⟩ := by
+        simp only [PolyFreeMLeafPos]
+        exact sigma_cast_eq_mk (fun e' => congrArg (PolyFreeMLeafPos P)
+          (congrArg Sigma.fst (ih_applied e')))
+      rw [hcast_decompose]
+
+/--
+The bijection between free monad and polynomial evaluation.
+
+The forward direction extracts the tree shape and leaf data.
+The backward direction reconstructs the tree from shape and leaf data.
+
+The left inverse is proven via `polyFreeM_roundtrip`.
+The right inverse is proven via `polyFreeMPolyEval_roundtrip`.
+-/
+def polyFreeMEquivPolyEval (A : Over X) (P : PolyEndo X) (x : X) :
+    PolyFreeM A P x ≃ PolyFreeMPolyEval A P x where
+  toFun := polyFreeM_to_polyFreeMPolyEval A P
+  invFun := polyFreeMPolyEval_to_polyFreeM A P
+  left_inv t := polyFreeM_roundtrip A P t
+  right_inv := by
+    intro ⟨shape, ⟨f, hf⟩⟩
+    exact polyFreeMPolyEval_roundtrip A P shape f hf
+
+/-! ### Polynomial Representation of Cofree Comonad
+
+The cofree comonad `A ↦ PolyCofreeM A P` is a polynomial functor. Its positions
+(shapes) are M-type structures with trivial annotations, and its directions are
+the annotation positions within each shape.
+-/
+
+/--
+Shape of the cofree comonad: streams with trivial (terminal) annotations.
+This represents the "structure" of the stream without the annotation data.
+-/
+abbrev PolyCofreeShape (P : PolyEndo X) (x : X) : Type u :=
+  PolyCofreeM (overTerminal X) P x
+
+/--
+A path segment in a cofree comonad shape consists of the fiber and the
+child index taken.
+-/
+structure PolyCofreePathSeg (P : PolyEndo X) where
+  fiber : X
+  idx : polyBetweenIndex X X P fiber
+  childIdx : (polyBetweenFamily X X P fiber idx).left
+
+/--
+Annotation positions in a cofree comonad shape at depth n.
+At depth 0, there's just the root position.
+At depth n+1, we have a path segment followed by a position at depth n.
+-/
+def PolyCofreeAnnotPosAt (P : PolyEndo X) {x : X}
+    (s : PolyCofreeShape P x) : Nat → Type u
+  | 0 => PUnit
+  | n + 1 =>
+    Σ (e : (polyBetweenFamily X X P x s.head.2).left),
+      PolyCofreeAnnotPosAt P (s.children e) n
+
+/--
+Annotation positions in a cofree comonad shape: either the root or a position
+at some depth.
+-/
+def PolyCofreeAnnotPos (P : PolyEndo X) {x : X}
+    (s : PolyCofreeShape P x) : Type u :=
+  Σ n : Nat, PolyCofreeAnnotPosAt P s n
+
+/--
+Helper to get the fiber of a position at depth n.
+-/
+def PolyCofreeAnnotFiberAt (P : PolyEndo X) {x : X}
+    (s : PolyCofreeShape P x) : (n : Nat) → PolyCofreeAnnotPosAt P s n → X
+  | 0, _ => x
+  | n + 1, ⟨e, pos⟩ => PolyCofreeAnnotFiberAt P (s.children e) n pos
+
+/--
+The fiber at each annotation position in a cofree comonad shape.
+-/
+def PolyCofreeAnnotFiber (P : PolyEndo X) {x : X}
+    (s : PolyCofreeShape P x) (pos : PolyCofreeAnnotPos P s) : X :=
+  PolyCofreeAnnotFiberAt P s pos.1 pos.2
+
+/--
+The cofree comonad polynomial evaluation type: a shape together with
+annotation data for each position in that shape.
+-/
+def PolyCofreePolyEval (A : Over X) (P : PolyEndo X) (x : X) : Type u :=
+  Σ (shape : PolyCofreeShape P x),
+    { f : (pos : PolyCofreeAnnotPos P shape) → A.left //
+      ∀ pos, A.hom (f pos) = PolyCofreeAnnotFiber P shape pos }
+
+/--
+Convert a cofree comonad approximation to a shape approximation by forgetting
+annotations.
+-/
+def polyCofreeApproxToShape (A : Over X) (P : PolyEndo X) {n : Nat} {x : X} :
+    PolyCofixApprox (polyScale A P) n x →
+    PolyCofixApprox (polyScale (overTerminal X) P) n x
+  | PolyCofixApprox.continue y => PolyCofixApprox.continue y
+  | PolyCofixApprox.intro y ⟨_, i⟩ children =>
+    PolyCofixApprox.intro y ⟨⟨y, rfl⟩, i⟩
+      (fun e => polyCofreeApproxToShape A P (children e))
+
+/--
+The approximation-to-shape conversion preserves the agreement relation.
+-/
+theorem polyCofreeApproxToShape_agree (A : Over X) (P : PolyEndo X)
+    {n : Nat} {x : X}
+    {a : PolyCofixApprox (polyScale A P) n x}
+    {b : PolyCofixApprox (polyScale A P) (n + 1) x}
+    (h : PolyCofixAgree (polyScale A P) a b) :
+    PolyCofixAgree (polyScale (overTerminal X) P)
+      (polyCofreeApproxToShape A P a)
+      (polyCofreeApproxToShape A P b) := by
+  induction h with
+  | «continue» x' y' =>
+    exact PolyCofixAgree.continue x' (polyCofreeApproxToShape A P y')
+  | intro f f' child_agree ih' =>
+    exact PolyCofixAgree.intro _ _ ih'
+
+/--
+Extract the shape from a cofree comonad value.
+-/
+def polyCofreeToShape (A : Over X) (P : PolyEndo X) {x : X}
+    (m : PolyCofreeM A P x) : PolyCofreeShape P x := {
+  approx := fun n => polyCofreeApproxToShape A P (m.approx n)
+  consistent := fun n => polyCofreeApproxToShape_agree A P (m.consistent n)
+}
+
+/--
+The approximation-to-shape conversion preserves the polynomial index.
+-/
+lemma polyCofreeApproxToShape_index (A : Over X) (P : PolyEndo X)
+    {n : Nat} {x : X} (a : PolyCofixApprox (polyScale A P) (n + 1) x) :
+    (polyCofreeApproxToShape A P a).getIndex.2 = a.getIndex.2 := by
+  cases a with
+  | intro y i children => rfl
+
+/--
+The shape extraction preserves the head's polynomial index.
+-/
+lemma polyCofreeToShape_head_index (A : Over X) (P : PolyEndo X) {x : X}
+    (m : PolyCofreeM A P x) :
+    (polyCofreeToShape A P m).head.2 = m.head.2 := by
+  simp only [PolyCofix.head, polyCofreeToShape]
+  exact polyCofreeApproxToShape_index A P (m.approx 1)
+
+/--
+Cast a position element using the head index equality.
+-/
+def polyCofreeShapePosToMPos (A : Over X) (P : PolyEndo X) {x : X}
+    (m : PolyCofreeM A P x)
+    (e : (polyBetweenFamily X X P x (polyCofreeToShape A P m).head.2).left) :
+    (polyBetweenFamily X X P x m.head.2).left :=
+  (polyCofreeToShape_head_index A P m) ▸ e
+
+/--
+Extract the root annotation from a cofree comonad value.
+-/
+def polyCofreeGetRoot (A : Over X) (P : PolyEndo X) {x : X}
+    (m : PolyCofreeM A P x) : { a : A.left // A.hom a = x } :=
+  m.head.1
+
+/--
+Helper: transport in polyBetweenFamily preserves the fiber projection.
+-/
+lemma polyBetweenFamily_hom_transport {Y : Type u} {P' : PolyEndo Y} {y : Y}
+    {i j : polyBetweenIndex Y Y P' y}
+    (h : i = j) (e : (polyBetweenFamily Y Y P' y i).left) :
+    (polyBetweenFamily Y Y P' y i).hom e =
+    (polyBetweenFamily Y Y P' y j).hom (h ▸ e) := by
+  subst h
+  rfl
+
+/--
+The fiber of a shape position equals the fiber of the corresponding M-type
+position under `polyCofreeShapePosToMPos`.
+-/
+lemma polyCofreeShapePosToMPos_fiber (A : Over X) (P : PolyEndo X) {x : X}
+    (m : PolyCofreeM A P x)
+    (e_shape : (polyBetweenFamily X X P x (polyCofreeToShape A P m).head.2).left)
+    :
+    (polyBetweenFamily X X P x (polyCofreeToShape A P m).head.2).hom e_shape =
+    (polyBetweenFamily X X P x m.head.2).hom
+      (polyCofreeShapePosToMPos A P m e_shape) := by
+  simp only [polyCofreeShapePosToMPos]
+  exact polyBetweenFamily_hom_transport (polyCofreeToShape_head_index A P m)
+    e_shape
+
+/--
+HEq version of shape position to M-type position conversion.
+-/
+lemma polyCofreeShapePosToMPos_heq (A : Over X) (P : PolyEndo X) {x : X}
+    (m : PolyCofreeM A P x)
+    (e_shape : (polyBetweenFamily X X P x (polyCofreeToShape A P m).head.2).left)
+    :
+    HEq e_shape (polyCofreeShapePosToMPos A P m e_shape) := by
+  simp only [polyCofreeShapePosToMPos]
+  exact (eqRec_heq (φ := fun i => (polyBetweenFamily X X P x i).left)
+    (polyCofreeToShape_head_index A P m) e_shape).symm
+
+/--
+Helper: HEq for PolyCofixApprox.continue when the fiber values are equal.
+-/
+lemma polyCofixApprox_continue_heq {P : PolyEndo X} {y1 y2 : X} (h : y1 = y2) :
+    HEq (PolyCofixApprox.continue (P := P) y1)
+        (PolyCofixApprox.continue (P := P) y2) := by
+  subst h
+  rfl
+
+/--
+For an `.intro` approximation, extracting children then converting to shape
+is HEq to converting to shape then extracting children.
+
+This lemma avoids the `generalize` issue by having the approximation as an
+explicit parameter that can be directly pattern matched.
+-/
+lemma polyCofreeApproxToShape_childApproxAt_succ_aux_heq
+    (A : Over X) (P : PolyEndo X) {n : Nat} {x : X}
+    (head_m : polyBetweenIndex X X (polyScale A P) x)
+    (head_shape : polyBetweenIndex X X (polyScale (overTerminal X) P) x)
+    (hhead_P : head_shape.2 = head_m.2)
+    (a : PolyCofixApprox (polyScale A P) (n + 2) x)
+    (heq_m : a.getIndex = head_m)
+    (heq_shape : (polyCofreeApproxToShape A P a).getIndex = head_shape)
+    (e_shape : (polyBetweenFamily X X (polyScale (overTerminal X) P) x
+      head_shape).left)
+    (e_m : (polyBetweenFamily X X (polyScale A P) x head_m).left)
+    (he : HEq e_shape e_m)
+    (hfiber : (polyBetweenFamily X X (polyScale (overTerminal X) P) x
+        head_shape).hom e_shape =
+      (polyBetweenFamily X X (polyScale A P) x head_m).hom e_m) :
+    HEq (PolyCofix.childApproxAt_succ_aux head_shape
+        (polyCofreeApproxToShape A P a) heq_shape e_shape)
+      (polyCofreeApproxToShape A P
+        (PolyCofix.childApproxAt_succ_aux head_m a heq_m e_m)) := by
+  cases a with
+  | intro _ idx children =>
+    simp only [PolyCofix.childApproxAt_succ_aux]
+    have hidx_shape_eq : (⟨⟨x, rfl⟩, idx.2⟩ : polyBetweenIndex X X
+        (polyScale (overTerminal X) P) x) = head_shape := by
+      simp only [PolyCofixApprox.getIndex] at heq_shape
+      exact heq_shape
+    have hidx_m_eq : idx = head_m := heq_m
+    subst hidx_m_eq hidx_shape_eq
+    simp only [eqRec_eq_cast]
+    cases he
+    rfl
+
+/--
+The shape of a child equals the child of the shape (via HEq for fibers).
+
+This relates navigating children in shape-space vs M-type-space.
+-/
+theorem polyCofreeToShape_children_heq (A : Over X) (P : PolyEndo X) {x : X}
+    (m : PolyCofreeM A P x)
+    (e_shape : (polyBetweenFamily X X P x (polyCofreeToShape A P m).head.2).left)
+    :
+    HEq ((polyCofreeToShape A P m).children e_shape)
+        (polyCofreeToShape A P
+          (m.children (polyCofreeShapePosToMPos A P m e_shape))) := by
+  apply PolyCofix.heq_of_approx_heq (polyCofreeShapePosToMPos_fiber A P m e_shape)
+  intro n
+  simp only [PolyCofix.children, polyCofreeToShape]
+  cases n with
+  | zero =>
+    simp only [PolyCofix.childApproxAt, PolyCofix.childApproxAt_zero,
+      polyCofreeApproxToShape]
+    exact polyCofixApprox_continue_heq
+      (polyCofreeShapePosToMPos_fiber A P m e_shape)
+  | succ n =>
+    simp only [PolyCofix.childApproxAt, PolyCofix.childApproxAt_succ]
+    have heq_shape_proof :
+        (polyCofreeApproxToShape A P (m.approx (n + 2))).getIndex =
+          (polyCofreeToShape A P m).head := by
+      simp only [PolyCofix.head, polyCofreeToShape]
+      have h1 := polyCofreeApproxToShape_index A P (m.approx (n + 2))
+      have h2 := polyCofreeApproxToShape_index A P (m.approx 1)
+      have h3 := m.index_eq_head (n + 1)
+      have h4 : (m.approx (n + 2)).getIndex.2 = (m.approx 1).getIndex.2 := by
+        rw [congrArg Prod.snd h3]
+        rfl
+      apply Prod.ext
+      · apply Subtype.ext
+        simp only [overTerminal, Over.mk_left, Over.mk_hom]
+        have ha := (polyCofreeApproxToShape A P (m.approx (n + 2))).getIndex.1.2
+        have hb := (polyCofreeApproxToShape A P (m.approx 1)).getIndex.1.2
+        exact ha.trans hb.symm
+      · exact h1.trans (h4.trans h2.symm)
+    exact polyCofreeApproxToShape_childApproxAt_succ_aux_heq A P
+      m.head (polyCofreeToShape A P m).head
+      (polyCofreeToShape_head_index A P m)
+      (m.approx (n + 2))
+      (m.index_eq_head (n + 1))
+      heq_shape_proof
+      e_shape
+      (polyCofreeShapePosToMPos A P m e_shape)
+      (polyCofreeShapePosToMPos_heq A P m e_shape)
+      (polyCofreeShapePosToMPos_fiber A P m e_shape)
+
+
+/-! ### M-type Based Positions
+
+To avoid dependent type transport issues, we define positions directly on M-types
+rather than on shapes. This makes annotation extraction straightforward, and we
+then connect back to shape-based positions for the polynomial evaluation form.
+-/
+
+/--
+Annotation positions directly on an M-type at depth n.
+At depth 0: the root position.
+At depth n+1: a child index paired with a position in that child.
+
+The child index type uses the P family at `m.head.2`, which equals the
+`polyScale A P` family at `m.head` by definition of `polyScale`.
+-/
+def PolyCofreeAnnotPosAtM (A : Over X) (P : PolyEndo X) {x : X}
+    (m : PolyCofreeM A P x) : Nat → Type u
+  | 0 => PUnit
+  | n + 1 =>
+    Σ (e : (polyBetweenFamily X X (polyScale A P) x m.head).left),
+      PolyCofreeAnnotPosAtM A P (m.children e) n
+
+/--
+The fiber at an M-type position at depth n.
+-/
+def PolyCofreeAnnotFiberAtM (A : Over X) (P : PolyEndo X) {x : X}
+    (m : PolyCofreeM A P x) : (n : Nat) → PolyCofreeAnnotPosAtM A P m n → X
+  | 0, _ => x
+  | n + 1, ⟨e, pos⟩ => PolyCofreeAnnotFiberAtM A P (m.children e) n pos
+
+/--
+Extract the annotation at an M-type position directly.
+This is straightforward structural recursion on the position depth.
+-/
+def polyCofreeGetAnnotAtM (A : Over X) (P : PolyEndo X) {x : X}
+    (m : PolyCofreeM A P x)
+    (n : Nat) (pos : PolyCofreeAnnotPosAtM A P m n) :
+    { a : A.left // A.hom a = PolyCofreeAnnotFiberAtM A P m n pos } :=
+  match n with
+  | 0 => m.head.1
+  | n + 1 =>
+    let ⟨e, pos'⟩ := pos
+    polyCofreeGetAnnotAtM A P (m.children e) n pos'
+
+/--
+The child family for `polyScale A P` equals the P family at the second component.
+-/
+lemma polyScaleFamily_eq_P_family (A : Over X) (P : PolyEndo X) {x : X}
+    (m : PolyCofreeM A P x) :
+    polyBetweenFamily X X (polyScale A P) x m.head =
+    polyBetweenFamily X X P x m.head.2 := rfl
+
+/--
+Given fiber equality and HEq of shapes, derive equality of shapes after transport.
+-/
+lemma polyCofreeShape_eq_of_heq_fiber {P : PolyEndo X} {y1 y2 : X}
+    (hfiber : y1 = y2)
+    (s1 : PolyCofreeShape P y1) (s2 : PolyCofreeShape P y2)
+    (heq : HEq s1 s2) : hfiber ▸ s1 = s2 := by
+  subst hfiber
+  exact eq_of_heq heq
+
+/--
+Convert a position type along shape equality (same fiber).
+-/
+lemma polyCofreeAnnotPosAt_cast {P : PolyEndo X} {y : X}
+    {s1 s2 : PolyCofreeShape P y} (h : s1 = s2) (n : Nat) :
+    PolyCofreeAnnotPosAt P s1 n = PolyCofreeAnnotPosAt P s2 n := by
+  subst h
+  rfl
+
+/--
+Convert a position type along fiber equality and shape HEq.
+-/
+lemma polyCofreeAnnotPosAt_cast_fiber {P : PolyEndo X} {y1 y2 : X}
+    (hfiber : y1 = y2)
+    {s1 : PolyCofreeShape P y1} {s2 : PolyCofreeShape P y2}
+    (hshape : HEq s1 s2) (n : Nat) :
+    PolyCofreeAnnotPosAt P s1 n = PolyCofreeAnnotPosAt P s2 n := by
+  subst hfiber
+  exact polyCofreeAnnotPosAt_cast (eq_of_heq hshape) n
+
+/--
+Transport lemma for PolyCofreeAnnotFiberAt: the fiber value is preserved
+when transporting along fiber equality and shape HEq.
+-/
+lemma polyCofreeAnnotFiberAt_transport {P : PolyEndo X} {y1 y2 : X}
+    (hfiber : y1 = y2)
+    {s1 : PolyCofreeShape P y1} {s2 : PolyCofreeShape P y2}
+    (hshape : HEq s1 s2)
+    (n : Nat) (pos : PolyCofreeAnnotPosAt P s1 n) :
+    PolyCofreeAnnotFiberAt P s1 n pos =
+    PolyCofreeAnnotFiberAt P s2 n
+      (cast (polyCofreeAnnotPosAt_cast_fiber hfiber hshape n) pos) := by
+  subst hfiber
+  have hshape_eq := eq_of_heq hshape
+  subst hshape_eq
+  rfl
+
+/--
+The shape equality for children: after fiber transport.
+-/
+lemma polyCofreeToShape_children_eq (A : Over X) (P : PolyEndo X) {x : X}
+    (m : PolyCofreeM A P x)
+    (e_shape : (polyBetweenFamily X X P x (polyCofreeToShape A P m).head.2).left)
+    :
+    let e_m := polyCofreeShapePosToMPos A P m e_shape
+    let hfiber := polyCofreeShapePosToMPos_fiber A P m e_shape
+    hfiber ▸ (polyCofreeToShape A P m).children e_shape =
+    polyCofreeToShape A P (m.children e_m) :=
+  polyCofreeShape_eq_of_heq_fiber
+    (polyCofreeShapePosToMPos_fiber A P m e_shape)
+    _ _
+    (polyCofreeToShape_children_heq A P m e_shape)
+
+/--
+Convert a shape position to an M-type position at depth n.
+Uses the equality `(polyCofreeToShape A P m).head.2 = m.head.2` to cast elements.
+-/
+def polyCofreeShapePosToMPosAt (A : Over X) (P : PolyEndo X) {x : X}
+    (m : PolyCofreeM A P x)
+    (n : Nat) (pos : PolyCofreeAnnotPosAt P (polyCofreeToShape A P m) n) :
+    PolyCofreeAnnotPosAtM A P m n :=
+  match n with
+  | 0 => PUnit.unit
+  | n + 1 =>
+    let ⟨e_shape, pos'⟩ := pos
+    let e_m := polyCofreeShapePosToMPos A P m e_shape
+    let hfiber := polyCofreeShapePosToMPos_fiber A P m e_shape
+    let hshape_heq := polyCofreeToShape_children_heq A P m e_shape
+    let pos'_transported : PolyCofreeAnnotPosAt P
+        (polyCofreeToShape A P (m.children e_m)) n :=
+      cast (polyCofreeAnnotPosAt_cast_fiber hfiber hshape_heq n) pos'
+    ⟨e_m, polyCofreeShapePosToMPosAt A P (m.children e_m) n pos'_transported⟩
+
+/--
+The fiber at a shape position equals the fiber at the corresponding M-type position.
+-/
+lemma polyCofreeAnnotFiber_eq (A : Over X) (P : PolyEndo X) {x : X}
+    (m : PolyCofreeM A P x)
+    (n : Nat) (pos : PolyCofreeAnnotPosAt P (polyCofreeToShape A P m) n) :
+    PolyCofreeAnnotFiberAt P (polyCofreeToShape A P m) n pos =
+    PolyCofreeAnnotFiberAtM A P m n (polyCofreeShapePosToMPosAt A P m n pos) := by
+  induction n generalizing x m with
+  | zero => rfl
+  | succ n ih =>
+    obtain ⟨e_shape, pos'⟩ := pos
+    simp only [PolyCofreeAnnotFiberAt, PolyCofreeAnnotFiberAtM,
+      polyCofreeShapePosToMPosAt]
+    let e_m := polyCofreeShapePosToMPos A P m e_shape
+    let hfiber := polyCofreeShapePosToMPos_fiber A P m e_shape
+    let hshape_heq := polyCofreeToShape_children_heq A P m e_shape
+    have h1 : PolyCofreeAnnotFiberAt P ((polyCofreeToShape A P m).children e_shape)
+        n pos' =
+        PolyCofreeAnnotFiberAt P (polyCofreeToShape A P (m.children e_m)) n
+          (cast (polyCofreeAnnotPosAt_cast_fiber hfiber hshape_heq n) pos') :=
+      polyCofreeAnnotFiberAt_transport hfiber hshape_heq n pos'
+    rw [h1]
+    exact ih (m.children e_m)
+      (cast (polyCofreeAnnotPosAt_cast_fiber hfiber hshape_heq n) pos')
+
+/--
+Extract the annotation at a depth-n position from a cofree comonad value.
+
+Uses M-type based positions internally for clean recursion, then converts
+the fiber proof using the fiber equality lemma.
+-/
+def polyCofreeGetAnnotAt (A : Over X) (P : PolyEndo X) {x : X}
+    (m : PolyCofreeM A P x)
+    (n : Nat) (pos : PolyCofreeAnnotPosAt P (polyCofreeToShape A P m) n) :
+    { a : A.left // A.hom a = PolyCofreeAnnotFiberAt P
+        (polyCofreeToShape A P m) n pos } :=
+  let pos_m := polyCofreeShapePosToMPosAt A P m n pos
+  let result := polyCofreeGetAnnotAtM A P m n pos_m
+  ⟨result.val, by
+    rw [polyCofreeAnnotFiber_eq A P m n pos]
+    exact result.property⟩
+
+/--
+Extract the annotation at any position from a cofree comonad value.
+-/
+def polyCofreeGetAnnot (A : Over X) (P : PolyEndo X) {x : X}
+    (m : PolyCofreeM A P x)
+    (pos : PolyCofreeAnnotPos P (polyCofreeToShape A P m)) :
+    { a : A.left // A.hom a = PolyCofreeAnnotFiber P
+        (polyCofreeToShape A P m) pos } :=
+  polyCofreeGetAnnotAt A P m pos.1 pos.2
+
+/--
+Convert a cofree comonad value to its polynomial evaluation form.
+
+The forward direction of the equivalence `PolyCofreeM A P ≃ PolyCofreePolyEval A P`.
+-/
+def polyCofreeM_to_polyCofreePolyEval (A : Over X) (P : PolyEndo X) {x : X}
+    (m : PolyCofreeM A P x) : PolyCofreePolyEval A P x :=
+  ⟨polyCofreeToShape A P m,
+    ⟨fun pos => (polyCofreeGetAnnot A P m pos).val,
+      fun pos => (polyCofreeGetAnnot A P m pos).property⟩⟩
+
+end FreeMonadCofreeComonad
+
+/-! ## Free and Cofree Adjunctions
+
+The free P-algebra functor is left adjoint to the forgetful functor.
+The cofree P-coalgebra functor is right adjoint to the forgetful functor.
+-/
+
+section Adjunctions
+
+variable {X : Type u}
+
+/-! ### Free Algebra Structure
+
+For an object `A : Over X`, the free P-algebra on A has:
+- Carrier: `PolyFreeM A P` (P-branching trees with A-labeled leaves)
+- Structure map: fold a P-node with tree children into a tree with node index
+-/
+
+/--
+Given an element of the polynomial P evaluated at the free monad carrier,
+construct the corresponding element of the free monad.
+
+The input is a P-index `i` together with a morphism from the family at `i`
+to `polyFreeMCarrier A P`. The output is a PolyFreeM node with index `Sum.inr i`
+and children extracted from the morphism.
+-/
+def polyFreeMStrFamily (A : Over X) (P : PolyEndo X) (x : X)
+    (elem : polyBetweenEvalFamily X X P (polyFreeMCarrier A P) x) :
+    PolyFreeM A P x :=
+  let i := pbefIndex elem
+  let childMor := pbefMor elem
+  PolyFix.mk x (Sum.inr i) (fun e =>
+    let child := childMor.left e
+    let fiber_eq : child.1 = (polyBetweenFamily X X P x i).hom e :=
+      congrFun (Over.w childMor) e
+    fiber_eq ▸ child.2)
+
+/--
+The left component of the structure map for the free algebra.
+-/
+def polyFreeMStrLeft (A : Over X) (P : PolyEndo X) :
+    ((polyEndoFunctor X P).obj (polyFreeMCarrier A P)).left →
+    (polyFreeMCarrier A P).left :=
+  fun ⟨x, elem⟩ => ⟨x, polyFreeMStrFamily A P x elem⟩
+
+/--
+The structure map commutes with the fiber projections.
+-/
+lemma polyFreeMStr_comm (A : Over X) (P : PolyEndo X) :
+    polyFreeMStrLeft A P ≫ (polyFreeMCarrier A P).hom =
+    ((polyEndoFunctor X P).obj (polyFreeMCarrier A P)).hom := rfl
+
+/--
+The structure map for the free P-algebra on A.
+
+This takes a P-shaped structure with `PolyFreeM A P` children and produces
+a `PolyFreeM A P` node by wrapping with the `Sum.inr` index.
+-/
+def polyFreeMStr (A : Over X) (P : PolyEndo X) :
+    (polyEndoFunctor X P).obj (polyFreeMCarrier A P) ⟶ polyFreeMCarrier A P :=
+  Over.homMk (polyFreeMStrLeft A P) (polyFreeMStr_comm A P)
+
+/--
+The free P-algebra on an object A : Over X.
+
+The carrier is `polyFreeMCarrier A P` (trees with A-leaves).
+The structure map folds a P-node into a tree.
+-/
+def polyFreeAlg (A : Over X) (P : PolyEndo X) : PolyAlg P where
+  a := polyFreeMCarrier A P
+  str := polyFreeMStr A P
+
+/-! ### Free Functor on Morphisms
+
+Given `f : A ⟶ B` in `Over X`, we get an algebra homomorphism from the free
+algebra on A to the free algebra on B by mapping leaves: each A-leaf is
+replaced by the corresponding B-leaf via f.
+-/
+
+/--
+The fiber proof for mapping a leaf: if `a` is in fiber over `y` in A,
+then `f.left a` is in fiber over `y` in B.
+-/
+lemma polyFreeMap_fiber_eq (A B : Over X) (f : A ⟶ B) {y : X}
+    (a : { v : A.left // A.hom v = y }) : B.hom (f.left a.val) = y := by
+  have hw := Over.w f
+  calc B.hom (f.left a.val) = (f.left ≫ B.hom) a.val := rfl
+    _ = A.hom a.val := congrFun hw a.val
+    _ = y := a.property
+
+def polyFreeMapAt (A B : Over X) (P : PolyEndo X) (f : A ⟶ B) (x : X)
+    (t : PolyFreeM A P x) : PolyFreeM B P x :=
+  polyFreeMBind A B P t (fun _ a =>
+    polyFreeMPure B P ⟨f.left a.val, polyFreeMap_fiber_eq A B f a⟩)
+
+/--
+The free functor map on the left component of carriers.
+-/
+def polyFreeMapLeft (A B : Over X) (P : PolyEndo X) (f : A ⟶ B) :
+    (polyFreeMCarrier A P).left → (polyFreeMCarrier B P).left :=
+  fun ⟨x, t⟩ => ⟨x, polyFreeMapAt A B P f x t⟩
+
+/--
+The free functor map commutes with fiber projections.
+-/
+lemma polyFreeMap_comm (A B : Over X) (P : PolyEndo X) (f : A ⟶ B) :
+    polyFreeMapLeft A B P f ≫ (polyFreeMCarrier B P).hom =
+    (polyFreeMCarrier A P).hom := rfl
+
+/--
+The free functor map as a morphism in `Over X`.
+-/
+def polyFreeMap (A B : Over X) (P : PolyEndo X) (f : A ⟶ B) :
+    polyFreeMCarrier A P ⟶ polyFreeMCarrier B P :=
+  Over.homMk (polyFreeMapLeft A B P f) (polyFreeMap_comm A B P f)
+
+/--
+Transport of a PolyFreeM value commutes with polyFreeMapAt.
+
+When we transport a tree to a different fiber and then apply the map,
+it's the same as first applying the map and then transporting.
+-/
+lemma polyFreeMapAt_transport (A B : Over X) (P : PolyEndo X) (f : A ⟶ B)
+    {x y : X} (hxy : x = y) (t : PolyFreeM A P x) :
+    polyFreeMapAt A B P f y (hxy ▸ t) = hxy ▸ polyFreeMapAt A B P f x t := by
+  subst hxy
+  rfl
+
+/--
+Transport commutes with polyFreeMBind when the bind function respects fibers.
+-/
+lemma polyFreeMBind_transport (A B : Over X) (P : PolyEndo X)
+    {x y : X} (hxy : x = y) (t : PolyFreeM A P x)
+    (g : ∀ z, { a : A.left // A.hom a = z } → PolyFreeM B P z) :
+    hxy ▸ polyFreeMBind A B P t g = polyFreeMBind A B P (hxy ▸ t) g := by
+  subst hxy
+  rfl
+
+/--
+Matching a sigma to apply a function to its second component and then
+extracting snd gives the same as applying the function directly to snd.
+-/
+lemma sigma_match_snd {I : Type*} {F G : I → Type*}
+    (f : ∀ i, F i → G i) (p : Σ i, F i) :
+    (match p with | ⟨i, x⟩ => ⟨i, f i x⟩ : Σ i, G i).snd = f p.fst p.snd := rfl
+
+/--
+The effect of mapping a tree through polyFreeMapAt.
+
+When we apply the map to a tree in a fiber y, and then transport to fiber x
+(where y = x by the Over morphism), it equals applying polyFreeMBind
+to the transported tree.
+-/
+lemma polyFreeMapAt_as_bind (A B : Over X) (P : PolyEndo X) (f : A ⟶ B)
+    {x y : X} (hxy : y = x) (t : PolyFreeM A P y) :
+    hxy ▸ polyFreeMapAt A B P f y t =
+    polyFreeMBind A B P (hxy ▸ t)
+      (fun _ a => polyFreeMPure B P ⟨f.left a.val, polyFreeMap_fiber_eq A B f a⟩) := by
+  subst hxy
+  rfl
+
+lemma polyFreeMapHom_comm (A B : Over X) (P : PolyEndo X) (f : A ⟶ B) :
+    (polyEndoFunctor X P).map (polyFreeMap A B P f) ≫ polyFreeMStr B P =
+    polyFreeMStr A P ≫ polyFreeMap A B P f := by
+  apply Over.OverMorphism.ext
+  funext ⟨x, elem⟩
+  simp only [Over.comp_left, polyFreeMStr, Over.homMk_left, polyFreeMap,
+    polyEndoFunctor, polyBetweenEvalFunctor, polyToOverFunctor,
+    polyToOverEvalMap, familySliceForward, familySliceForwardMap,
+    polyToOverEvalFamilyMap, ccrEvalMap]
+  -- Do not unfold polyFreeMapAt here - keep it for the lemma to match
+  unfold polyFreeMStrLeft polyFreeMapLeft polyFreeMStrFamily
+  simp only [types_comp_apply]
+  obtain ⟨i, h⟩ := elem
+  simp only [pbefIndex, pbefMor, ptoefIndex, ptoefMor, ccrEvalIndex, ccrEvalMor]
+  simp only [Over.comp_left, Over.homMk_left]
+  -- Use congr to break down to children equality
+  congr 1
+  -- Goal: equality of PolyFix.mk x (Sum.inr i) children
+  congr 1
+  -- Goal: equality of children functions
+  funext e
+  -- LHS: transport ▸ ((h.left ≫ map) e).snd = transport ▸ polyFreeMapAt (h.left e).snd
+  -- RHS: polyFreeMBind (transport ▸ (h.left e).snd) bind_fn
+  simp only [types_comp_apply]
+  -- Unfold polyFreeMapAt to expose polyFreeMBind
+  unfold polyFreeMapAt
+  -- Use polyFreeMBind_transport in reverse on RHS to move transport outside
+  rw [← polyFreeMBind_transport]
+  -- Now both have transport after polyFreeMBind
+  rfl
+
+/--
+The free functor map as an algebra homomorphism.
+-/
+def polyFreeAlgMap (A B : Over X) (P : PolyEndo X) (f : A ⟶ B) :
+    polyFreeAlg A P ⟶ polyFreeAlg B P where
+  f := polyFreeMap A B P f
+  h := polyFreeMapHom_comm A B P f
+
+/--
+Mapping by the identity morphism is the identity on trees.
+-/
+lemma polyFreeMapAt_id (A : Over X) (P : PolyEndo X) (x : X) (t : PolyFreeM A P x) :
+    polyFreeMapAt A A P (𝟙 A) x t = t := by
+  unfold polyFreeMapAt
+  simp only [Over.id_left]
+  convert polyFreeM_bind_pure A P t using 2
+
+/--
+The free functor map preserves identity morphisms in Over X.
+-/
+lemma polyFreeMap_id (A : Over X) (P : PolyEndo X) :
+    polyFreeMap A A P (𝟙 A) = 𝟙 (polyFreeMCarrier A P) := by
+  apply Over.OverMorphism.ext
+  funext ⟨x, t⟩
+  simp only [polyFreeMap, Over.homMk_left, polyFreeMapLeft, Over.id_left,
+    polyFreeMapAt_id, types_id_apply]
+
+/--
+Mapping by a composition equals the composition of maps.
+-/
+lemma polyFreeMapAt_comp (A B C : Over X) (P : PolyEndo X)
+    (f : A ⟶ B) (g : B ⟶ C) (x : X) (t : PolyFreeM A P x) :
+    polyFreeMapAt A C P (f ≫ g) x t =
+    polyFreeMapAt B C P g x (polyFreeMapAt A B P f x t) := by
+  unfold polyFreeMapAt
+  rw [polyFreeM_bind_assoc]
+  simp only [polyFreeM_pure_bind, Over.comp_left, types_comp_apply]
+
+/--
+The free functor map preserves composition in Over X.
+-/
+lemma polyFreeMap_comp (A B C : Over X) (P : PolyEndo X) (f : A ⟶ B) (g : B ⟶ C) :
+    polyFreeMap A C P (f ≫ g) = polyFreeMap A B P f ≫ polyFreeMap B C P g := by
+  apply Over.OverMorphism.ext
+  funext ⟨x, t⟩
+  simp only [polyFreeMap, Over.homMk_left, polyFreeMapLeft, Over.comp_left,
+    polyFreeMapAt_comp, types_comp_apply]
+
+/--
+The free functor on algebra homomorphisms preserves identity.
+-/
+lemma polyFreeAlgMap_id (A : Over X) (P : PolyEndo X) :
+    polyFreeAlgMap A A P (𝟙 A) = 𝟙 (polyFreeAlg A P) := by
+  apply Endofunctor.Algebra.Hom.ext
+  exact polyFreeMap_id A P
+
+/--
+The free functor on algebra homomorphisms preserves composition.
+-/
+lemma polyFreeAlgMap_comp (A B C : Over X) (P : PolyEndo X)
+    (f : A ⟶ B) (g : B ⟶ C) :
+    polyFreeAlgMap A C P (f ≫ g) = polyFreeAlgMap A B P f ≫ polyFreeAlgMap B C P g := by
+  apply Endofunctor.Algebra.Hom.ext
+  exact polyFreeMap_comp A B C P f g
+
+/--
+The free functor from Over X to PolyAlg P.
+
+This sends an object A to the free P-algebra on A (carrier = trees with A-leaves),
+and a morphism f : A ⟶ B to the algebra homomorphism that maps leaves via f.
+-/
+def polyFreeFunctor (P : PolyEndo X) : Over X ⥤ PolyAlg P where
+  obj := fun A => polyFreeAlg A P
+  map := fun f => polyFreeAlgMap _ _ P f
+  map_id := fun A => polyFreeAlgMap_id A P
+  map_comp := fun f g => polyFreeAlgMap_comp _ _ _ P f g
+
+/--
+The forgetful functor from P-algebras to Over X.
+This is just mathlib's Endofunctor.Algebra.forget applied to polyEndoFunctor.
+-/
+abbrev polyForgetFunctor (P : PolyEndo X) : PolyAlg P ⥤ Over X :=
+  Endofunctor.Algebra.forget (polyEndoFunctor X P)
+
+/-! ### Unit: Embedding as Leaves
+
+The unit of the adjunction embeds an element of A as a leaf in the free algebra.
+-/
+
+/--
+The left component of the unit: embeds elements of A.left as leaves.
+-/
+def polyFreeUnitLeft (A : Over X) (P : PolyEndo X) :
+    A.left → (polyFreeMCarrier A P).left :=
+  fun a => ⟨A.hom a, polyFreeMPure A P ⟨a, rfl⟩⟩
+
+/--
+The unit morphism preserves fiber projections.
+-/
+lemma polyFreeUnit_comm (A : Over X) (P : PolyEndo X) :
+    polyFreeUnitLeft A P ≫ (polyFreeMCarrier A P).hom = A.hom := rfl
+
+/--
+The unit of the Free ⊣ Forget adjunction at object A.
+
+This embeds elements of A as single-leaf trees in the free algebra.
+-/
+def polyFreeUnit (A : Over X) (P : PolyEndo X) :
+    A ⟶ (polyForgetFunctor P).obj (polyFreeAlg A P) :=
+  Over.homMk (polyFreeUnitLeft A P) (polyFreeUnit_comm A P)
+
+/--
+The unit is natural in A.
+-/
+lemma polyFreeUnit_naturality (A B : Over X) (P : PolyEndo X) (f : A ⟶ B) :
+    f ≫ polyFreeUnit B P =
+    polyFreeUnit A P ≫ (polyForgetFunctor P).map (polyFreeAlgMap A B P f) := by
+  apply Over.OverMorphism.ext
+  funext a
+  simp only [Over.comp_left, polyFreeUnit, Over.homMk_left, polyFreeUnitLeft,
+    polyForgetFunctor, Endofunctor.Algebra.forget_map, polyFreeAlgMap,
+    polyFreeMap, polyFreeMapLeft, types_comp_apply]
+  simp only [polyFreeMapAt]
+  have hfib : B.hom (f.left a) = A.hom a := congrFun (Over.w f) a
+  simp only [polyFreeMBind, polyFreeMPure]
+  apply Sigma.ext hfib
+  exact polyFreeMPure_fiber_heq B P hfib (f.left a) rfl hfib
+
+/--
+The unit as a natural transformation from the identity to Forget ∘ Free.
+-/
+def polyFreeUnitNat (P : PolyEndo X) :
+    𝟭 (Over X) ⟶ polyFreeFunctor P ⋙ polyForgetFunctor P where
+  app := fun A => polyFreeUnit A P
+  naturality := fun A B f => polyFreeUnit_naturality A B P f
+
+/-! #### Counit: Fold from Free Algebra to Target Algebra
+
+The counit of the Free ⊣ Forget adjunction, at each algebra α,
+is a homomorphism from Free(Forget(α)) to α. This is the fold
+that interprets the free algebra structure using α's operations.
+-/
+
+/--
+Fold a free monad value with fiber proof into an algebra value with fiber proof.
+At leaves, returns the leaf value. At nodes, recursively folds children
+and applies the algebra structure map.
+-/
+def polyFreeCounitFoldAt (P : PolyEndo X) (α : PolyAlg P) (x : X) :
+    (t : PolyFreeM α.a P x) → { v : α.a.left // α.a.hom v = x }
+  | PolyFix.mk _ (Sum.inl a) _ => a
+  | PolyFix.mk _ (Sum.inr p) children =>
+    let fam := polyBetweenFamily X X P x p
+    let childrenFolded : fam ⟶ α.a := Over.homMk
+      (fun e => (polyFreeCounitFoldAt P α (fam.hom e) (children e)).val)
+      (by funext e; exact (polyFreeCounitFoldAt P α (fam.hom e) (children e)).property)
+    let node := (⟨x, ⟨p, childrenFolded⟩⟩ : ((polyBetweenEvalFunctor X X P).obj α.a).left)
+    let result := α.str.left node
+    have hfib : α.a.hom result = x := congrFun (Over.w α.str) node
+    ⟨result, hfib⟩
+
+/--
+Transporting a tree to a different fiber and then folding gives the same
+underlying value as folding at the original fiber.
+-/
+lemma polyFreeCounitFoldAt_cast (P : PolyEndo X) (α : PolyAlg P) {x y : X}
+    (eq : x = y) (t : PolyFreeM α.a P x) :
+    (polyFreeCounitFoldAt P α y (eq ▸ t)).val =
+    (polyFreeCounitFoldAt P α x t).val := by
+  subst eq
+  rfl
+
+/--
+The left component of the counit fold morphism.
+-/
+def polyFreeCounitFoldLeft (P : PolyEndo X) (α : PolyAlg P) :
+    (polyFreeMCarrier α.a P).left → α.a.left :=
+  fun ⟨x, t⟩ => (polyFreeCounitFoldAt P α x t).val
+
+/--
+The counit fold preserves fibers.
+-/
+lemma polyFreeCounitFoldLeft_fiber (P : PolyEndo X) (α : PolyAlg P)
+    (t : (polyFreeMCarrier α.a P).left) :
+    α.a.hom (polyFreeCounitFoldLeft P α t) = (polyFreeMCarrier α.a P).hom t :=
+  (polyFreeCounitFoldAt P α t.1 t.2).property
+
+/--
+The counit fold as a morphism in Over X from Free(Forget(α)) to α.
+-/
+def polyFreeCounitFold (P : PolyEndo X) (α : PolyAlg P) :
+    (polyFreeAlg α.a P).a ⟶ α.a :=
+  Over.homMk (polyFreeCounitFoldLeft P α)
+    (by funext ⟨x, t⟩; exact polyFreeCounitFoldLeft_fiber P α ⟨x, t⟩)
+
+/--
+The counit fold commutes with the algebra structure maps.
+-/
+lemma polyFreeCounitFold_comm (P : PolyEndo X) (α : PolyAlg P) :
+    (polyEndoFunctor X P).map (polyFreeCounitFold P α) ≫ α.str =
+    (polyFreeAlg α.a P).str ≫ polyFreeCounitFold P α := by
+  apply Over.OverMorphism.ext
+  funext ⟨x, ⟨p, h⟩⟩
+  simp only [Over.comp_left, polyEndoFunctor, polyBetweenEvalFunctor, types_comp_apply]
+  simp only [polyFreeCounitFold, Over.homMk_left, polyFreeCounitFoldLeft]
+  simp only [polyFreeAlg, polyFreeMStr, Over.homMk_left, polyFreeMStrLeft]
+  simp only [polyToOverFunctor, polyToOverEvalMap_left, ccrEvalMap]
+  simp only [polyFreeCounitFoldAt, polyFreeMStrFamily]
+  simp only [pbefIndex, pbefMor, ptoefIndex, ptoefMor]
+  simp only [ccrEvalIndex, ccrEvalMor]
+  apply congrArg
+  ext1
+  · rfl
+  · simp only [heq_eq_eq]
+    apply congrArg
+    apply Over.OverMorphism.ext
+    funext e
+    simp only [Over.homMk_left, Over.comp_left, types_comp_apply]
+    simp only [polyFreeCounitFoldLeft]
+    have hfib : (h.left e).fst = (polyBetweenFamily X X P x p).hom e :=
+      congrFun (Over.w h) e
+    rw [polyFreeCounitFoldAt_cast P α hfib (h.left e).snd]
+    rfl
+
+/--
+The counit as an algebra homomorphism from Free(Forget(α)) to α.
+-/
+def polyFreeCounitHom (P : PolyEndo X) (α : PolyAlg P) :
+    polyFreeAlg α.a P ⟶ α :=
+  Endofunctor.Algebra.Hom.mk (polyFreeCounitFold P α) (polyFreeCounitFold_comm P α)
+
+/-! ### Cofree Coalgebra Structure
+
+For an object `A : Over X`, the cofree P-coalgebra on A has:
+- Carrier: `PolyCofreeM A P` (M-type streams with A-annotations at each node)
+- Structure map: exposes the P-index from the head and the children
+-/
+
+/--
+Build the children morphism for the cofree coalgebra structure map.
+Maps each direction to the corresponding child M-type.
+-/
+def polyCofreeChildrenMor (A : Over X) (P : PolyEndo X) {x : X}
+    (m : PolyCofreeM A P x) :
+    polyBetweenFamily X X P x m.head.2 ⟶ polyCofreeCarrier A P :=
+  Over.homMk
+    (fun e => ⟨(polyBetweenFamily X X P x m.head.2).hom e, m.children e⟩)
+    rfl
+
+/--
+The destructor family for the cofree coalgebra: extracts the P-index and children.
+This forgets the A-annotation at the root and exposes only the P-structure.
+-/
+def polyCofreeStrFamily (A : Over X) (P : PolyEndo X) (x : X)
+    (m : PolyCofreeM A P x) :
+    polyBetweenEvalFamily X X P (polyCofreeCarrier A P) x :=
+  ⟨m.head.2, polyCofreeChildrenMor A P m⟩
+
+/--
+The underlying function of the cofree coalgebra structure map.
+-/
+def polyCofreeStrLeft (A : Over X) (P : PolyEndo X) :
+    (polyCofreeCarrier A P).left →
+    ((polyEndoFunctor X P).obj (polyCofreeCarrier A P)).left :=
+  fun ⟨x, m⟩ => ⟨x, polyCofreeStrFamily A P x m⟩
+
+/--
+The cofree coalgebra structure map commutes with projections to X.
+-/
+lemma polyCofreeStr_comm (A : Over X) (P : PolyEndo X) :
+    polyCofreeStrLeft A P ≫
+    ((polyEndoFunctor X P).obj (polyCofreeCarrier A P)).hom =
+    (polyCofreeCarrier A P).hom := rfl
+
+/--
+The structure map for the cofree P-coalgebra on A.
+This exposes the P-structure while forgetting the A-annotation at the root.
+-/
+def polyCofreeStr (A : Over X) (P : PolyEndo X) :
+    polyCofreeCarrier A P ⟶ (polyEndoFunctor X P).obj (polyCofreeCarrier A P) :=
+  Over.homMk (polyCofreeStrLeft A P) (polyCofreeStr_comm A P)
+
+/--
+The cofree P-coalgebra on an object A : Over X.
+
+The carrier is `polyCofreeCarrier A P` (M-type streams with A-annotations).
+The structure map exposes the P-shaped children while forgetting the root annotation.
+-/
+def polyCofreeCoalg (A : Over X) (P : PolyEndo X) : PolyCoalg P where
+  V := polyCofreeCarrier A P
+  str := polyCofreeStr A P
+
+/-! ### Cofree Functor on Morphisms
+
+Given `f : A ⟶ B` in `Over X`, we get a coalgebra homomorphism from the cofree
+coalgebra on A to the cofree coalgebra on B by mapping annotations: each
+A-annotation is transformed to a B-annotation via f.
+-/
+
+/--
+The fiber proof for mapping an annotation: if `a` is in fiber over `y` in A,
+then `f.left a` is in fiber over `y` in B.
+-/
+lemma polyCofreeMap_fiber_eq (A B : Over X) (f : A ⟶ B) {y : X}
+    (a : { v : A.left // A.hom v = y }) : B.hom (f.left a.val) = y := by
+  have hw := Over.w f
+  calc B.hom (f.left a.val) = (f.left ≫ B.hom) a.val := rfl
+    _ = A.hom a.val := congrFun hw a.val
+    _ = y := a.property
+
+/--
+Map annotations in an approximation from A to B via f.
+-/
+def polyCofreeMapApprox (A B : Over X) (P : PolyEndo X) (f : A ⟶ B)
+    {n : Nat} {x : X} :
+    PolyCofixApprox (polyScale A P) n x →
+    PolyCofixApprox (polyScale B P) n x
+  | PolyCofixApprox.continue y => PolyCofixApprox.continue y
+  | PolyCofixApprox.intro y ⟨aVal, pIdx⟩ children =>
+    let bVal : { v : B.left // B.hom v = y } :=
+      ⟨f.left aVal.val, polyCofreeMap_fiber_eq A B f aVal⟩
+    PolyCofixApprox.intro y ⟨bVal, pIdx⟩
+      (fun e => polyCofreeMapApprox A B P f (children e))
+
+/--
+The approximation map preserves the agreement relation.
+-/
+theorem polyCofreeMapApprox_agree (A B : Over X) (P : PolyEndo X) (f : A ⟶ B)
+    {n : Nat} {x : X}
+    {a : PolyCofixApprox (polyScale A P) n x}
+    {b : PolyCofixApprox (polyScale A P) (n + 1) x}
+    (h : PolyCofixAgree (polyScale A P) a b) :
+    PolyCofixAgree (polyScale B P)
+      (polyCofreeMapApprox A B P f a)
+      (polyCofreeMapApprox A B P f b) := by
+  induction h with
+  | «continue» x' y' =>
+    exact PolyCofixAgree.continue x' (polyCofreeMapApprox A B P f y')
+  | intro childA childB child_agree ih' =>
+    exact PolyCofixAgree.intro _ _ ih'
+
+/--
+Map annotations in a cofree comonad value from A to B via f.
+-/
+def polyCofreeMapAt (A B : Over X) (P : PolyEndo X) (f : A ⟶ B) {x : X}
+    (m : PolyCofreeM A P x) : PolyCofreeM B P x where
+  approx := fun n => polyCofreeMapApprox A B P f (m.approx n)
+  consistent := fun n => polyCofreeMapApprox_agree A B P f (m.consistent n)
+
+/--
+The cofree functor map on the left component of carriers.
+-/
+def polyCofreeMapLeft (A B : Over X) (P : PolyEndo X) (f : A ⟶ B) :
+    (polyCofreeCarrier A P).left → (polyCofreeCarrier B P).left :=
+  fun ⟨x, m⟩ => ⟨x, polyCofreeMapAt A B P f m⟩
+
+/--
+The cofree functor map commutes with fiber projections.
+-/
+lemma polyCofreeMap_comm (A B : Over X) (P : PolyEndo X) (f : A ⟶ B) :
+    polyCofreeMapLeft A B P f ≫ (polyCofreeCarrier B P).hom =
+    (polyCofreeCarrier A P).hom := rfl
+
+/--
+The cofree functor map as a morphism in `Over X`.
+-/
+def polyCofreeMap (A B : Over X) (P : PolyEndo X) (f : A ⟶ B) :
+    polyCofreeCarrier A P ⟶ polyCofreeCarrier B P :=
+  Over.homMk (polyCofreeMapLeft A B P f) (polyCofreeMap_comm A B P f)
+
+/--
+The head of a mapped cofree value preserves the P-index.
+-/
+lemma polyCofreeMapApprox_index_snd (A B : Over X) (P : PolyEndo X) (f : A ⟶ B)
+    {n : Nat} {x : X} (a : PolyCofixApprox (polyScale A P) (n + 1) x) :
+    (polyCofreeMapApprox A B P f a).getIndex.2 = a.getIndex.2 := by
+  cases a with
+  | intro y i children => rfl
+
+/--
+The index of a mapped approximation has the expected form.
+-/
+lemma polyCofreeMapApprox_getIndex (A B : Over X) (P : PolyEndo X) (f : A ⟶ B)
+    {n : Nat} {x : X} (a : PolyCofixApprox (polyScale A P) (n + 1) x) :
+    (polyCofreeMapApprox A B P f a).getIndex =
+    ⟨⟨f.left a.getIndex.1.val, polyCofreeMap_fiber_eq A B f a.getIndex.1⟩, a.getIndex.2⟩ := by
+  cases a with
+  | intro y i children => rfl
+
+/--
+The head of a mapped cofree value preserves the P-index.
+-/
+lemma polyCofreeMapAt_head_snd (A B : Over X) (P : PolyEndo X) (f : A ⟶ B)
+    {x : X} (m : PolyCofreeM A P x) :
+    (polyCofreeMapAt A B P f m).head.2 = m.head.2 := by
+  simp only [PolyCofix.head, polyCofreeMapAt]
+  exact polyCofreeMapApprox_index_snd A B P f (m.approx 1)
+
+/--
+Mapping commutes with `childApproxAt_succ_aux` for `.intro` nodes.
+
+When we have an `.intro y idx children` approximation for `polyScale A P`, mapping
+the result of `childApproxAt_succ_aux` equals applying `childApproxAt_succ_aux` to
+the mapped approximation (with appropriately transported index and element).
+
+The types work out because:
+- `polyBetweenIndex X X (polyScale A P) x = polyScaleIndex A P x`
+- `polyBetweenFamily X X (polyScale A P) x head = polyBetweenFamily X X P x head.2`
+- Mapping preserves the P-index (`head.2`), so the element domain is unchanged
+-/
+lemma polyCofreeMapApprox_childApproxAt_succ_aux_eq (A B : Over X) (P : PolyEndo X)
+    (f : A ⟶ B) {n : Nat} {x : X}
+    (idx : polyBetweenIndex X X (polyScale A P) x)
+    (children : ∀ e : (polyBetweenFamily X X (polyScale A P) x idx).left,
+      PolyCofixApprox (polyScale A P) (n + 1)
+        ((polyBetweenFamily X X (polyScale A P) x idx).hom e))
+    (e : (polyBetweenFamily X X (polyScale A P) x idx).left) :
+    let mappedIdx : polyBetweenIndex X X (polyScale B P) x :=
+      ⟨⟨f.left idx.1.val, polyCofreeMap_fiber_eq A B f idx.1⟩, idx.2⟩
+    polyCofreeMapApprox A B P f
+      (PolyCofix.childApproxAt_succ_aux idx (.intro x idx children) rfl e) =
+    PolyCofix.childApproxAt_succ_aux mappedIdx
+      (polyCofreeMapApprox A B P f (.intro x idx children)) rfl e := rfl
+
+/--
+Mapping commutes with child approximation extraction at depth 0.
+Both sides are `.continue` values, so HEq follows from fiber equality.
+-/
+lemma polyCofreeMapApprox_childApproxAt_zero_heq (A B : Over X) (P : PolyEndo X) (f : A ⟶ B)
+    {x : X} (m : PolyCofreeM A P x)
+    (e1 : (polyBetweenFamily X X (polyScale A P) x m.head).left)
+    (e2 : (polyBetweenFamily X X (polyScale B P) x (polyCofreeMapAt A B P f m).head).left)
+    (hfibEq : (polyBetweenFamily X X (polyScale A P) x m.head).hom e1 =
+              (polyBetweenFamily X X (polyScale B P) x
+                (polyCofreeMapAt A B P f m).head).hom e2) :
+    HEq (polyCofreeMapApprox A B P f (m.childApproxAt e1 0))
+        ((polyCofreeMapAt A B P f m).childApproxAt e2 0) := by
+  simp only [PolyCofix.childApproxAt, PolyCofix.childApproxAt_zero]
+  exact PolyCofixApprox.continue_heq hfibEq
+
+/--
+Mapping commutes with child approximation extraction at depth k+1.
+This is the inductive step for `polyCofreeMapAt_children_heq`.
+-/
+lemma polyCofreeMapApprox_childApproxAt_succ_heq (A B : Over X) (P : PolyEndo X) (f : A ⟶ B)
+    {x : X} (m : PolyCofreeM A P x)
+    (e1 : (polyBetweenFamily X X P x m.head.2).left)
+    (e2 : (polyBetweenFamily X X P x (polyCofreeMapAt A B P f m).head.2).left)
+    (he : HEq e1 e2)
+    (_hfibEq : (polyBetweenFamily X X P x m.head.2).hom e1 =
+              (polyBetweenFamily X X P x (polyCofreeMapAt A B P f m).head.2).hom e2)
+    (k : Nat)
+    (_ih : HEq (polyCofreeMapApprox A B P f ((m.children e1).approx k))
+              (((polyCofreeMapAt A B P f m).children e2).approx k)) :
+    HEq (polyCofreeMapApprox A B P f ((m.children e1).approx (k + 1)))
+        (((polyCofreeMapAt A B P f m).children e2).approx (k + 1)) := by
+  simp only [PolyCofix.children, polyCofreeMapAt, PolyCofix.childApproxAt,
+    PolyCofix.childApproxAt_succ] at _ih
+  have hidx := polyCofreeMapAt_head_snd A B P f m
+  have heq1 : (m.approx (k + 2)).getIndex = m.head := m.index_eq_head (k + 1)
+  match hm : m.approx (k + 2) with
+  | .intro _ idx childFun =>
+    rw [hm, PolyCofixApprox.getIndex] at heq1
+    subst heq1
+    simp only [PolyCofix.children, polyCofreeMapAt, PolyCofix.childApproxAt,
+      PolyCofix.childApproxAt_succ, hm]
+    let mappedIdx : polyBetweenIndex X X (polyScale B P) x :=
+      ⟨⟨f.left m.head.1.val, polyCofreeMap_fiber_eq A B f m.head.1⟩, m.head.2⟩
+    have hMappedHead : (polyCofreeMapAt A B P f m).head = mappedIdx := by
+      simp only [polyCofreeMapAt, PolyCofix.head]
+      exact polyCofreeMapApprox_getIndex A B P f (m.approx 1)
+    have hRhsApprox : (polyCofreeMapAt A B P f m).approx (k + 2) =
+        polyCofreeMapApprox A B P f (.intro x m.head childFun) := by
+      simp only [polyCofreeMapAt, hm]
+    have hhead_heq : HEq (polyCofreeMapAt A B P f m).head mappedIdx := heq_of_eq hMappedHead
+    have happrox_heq : HEq ((polyCofreeMapAt A B P f m).approx (k + 2))
+        (polyCofreeMapApprox A B P f (.intro x m.head childFun)) := heq_of_eq hRhsApprox
+    have he1_heq : HEq e1 e1 := HEq.rfl
+    have he2_heq : HEq e2 e2 := HEq.rfl
+    have hLhsIndexProof : (.intro x m.head childFun :
+        PolyCofixApprox (polyScale A P) (k + 2) x).getIndex = m.head := rfl
+    have hLhsForm : PolyCofix.childApproxAt_succ_aux m.head (.intro x m.head childFun)
+        hLhsIndexProof e1 = childFun e1 :=
+      PolyCofix.childApproxAt_succ_aux_intro m.head childFun e1
+    rw [hLhsForm]
+    let mapped : PolyCofreeM B P x :=
+      { approx := fun n => polyCofreeMapApprox A B P f (m.approx n),
+        consistent := fun n => polyCofreeMapApprox_agree A B P f (m.consistent n) }
+    have hMappedEq : mapped = polyCofreeMapAt A B P f m := rfl
+    have hMappedApproxForm : polyCofreeMapApprox A B P f (.intro x m.head childFun) =
+        .intro x mappedIdx (fun e => polyCofreeMapApprox A B P f (childFun e)) := rfl
+    have hMappedHeadEq : mapped.head = mappedIdx := by
+      simp only [PolyCofix.head]
+      exact polyCofreeMapApprox_getIndex A B P f (m.approx 1)
+    have hMappedApproxEq : mapped.approx (k + 2) =
+        polyCofreeMapApprox A B P f (.intro x m.head childFun) :=
+      congrArg (polyCofreeMapApprox A B P f) hm
+    have hMappedIdxProof : (polyCofreeMapApprox A B P f (.intro x m.head childFun)
+        ).getIndex = mappedIdx := rfl
+    have hMappedIdxProof2 : (mapped.approx (k + 2)).getIndex = mapped.head :=
+      mapped.index_eq_head (k + 1)
+    have hheadHeq : HEq mapped.head mappedIdx := heq_of_eq hMappedHeadEq
+    have happroxHeq : HEq (mapped.approx (k + 2))
+        (PolyCofixApprox.intro x mappedIdx (fun e => polyCofreeMapApprox A B P f (childFun e))) :=
+      heq_of_eq (hMappedApproxEq.trans hMappedApproxForm)
+    have hE2Heq : HEq e2 e1 := he.symm
+    have hRhsAux : HEq (PolyCofix.childApproxAt_succ_aux mapped.head (mapped.approx (k + 2))
+        hMappedIdxProof2 e2)
+        (PolyCofix.childApproxAt_succ_aux mappedIdx
+          (.intro x mappedIdx (fun e => polyCofreeMapApprox A B P f (childFun e)))
+          rfl e1) :=
+      PolyCofix.childApproxAt_succ_aux_heq rfl _ _ hheadHeq _ _
+        happroxHeq _ _ _ _ hE2Heq
+    have hRhsSimp : PolyCofix.childApproxAt_succ_aux mappedIdx
+        (.intro x mappedIdx (fun e => polyCofreeMapApprox A B P f (childFun e))) rfl e1 =
+        polyCofreeMapApprox A B P f (childFun e1) :=
+      PolyCofix.childApproxAt_succ_aux_intro mappedIdx
+        (fun e => polyCofreeMapApprox A B P f (childFun e)) e1
+    convert (hRhsAux.trans (heq_of_eq hRhsSimp)).symm using 2
+    exact hMappedApproxEq.symm
+
+/--
+Mapping commutes with children extraction under appropriate HEq conditions.
+-/
+lemma polyCofreeMapAt_children_heq (A B : Over X) (P : PolyEndo X) (f : A ⟶ B)
+    {x : X} (m : PolyCofreeM A P x)
+    (e1 : (polyBetweenFamily X X P x m.head.2).left)
+    (e2 : (polyBetweenFamily X X P x (polyCofreeMapAt A B P f m).head.2).left)
+    (he : HEq e1 e2) :
+    HEq (polyCofreeMapAt A B P f (m.children e1))
+        ((polyCofreeMapAt A B P f m).children e2) := by
+  have hfibEq := overType_hom_heq
+    (congrArg (polyBetweenFamily X X P x) (polyCofreeMapAt_head_snd A B P f m).symm)
+    e1 e2 he
+  apply PolyCofix.heq_of_approx_heq hfibEq
+  intro n
+  simp only [PolyCofix.children, polyCofreeMapAt]
+  induction n with
+  | zero =>
+    simp only [PolyCofix.childApproxAt, PolyCofix.childApproxAt_zero]
+    have lhs_eq : polyCofreeMapApprox A B P f
+        (PolyCofixApprox.continue ((polyBetweenFamily X X (polyScale A P) x m.head).hom e1)) =
+        PolyCofixApprox.continue ((polyBetweenFamily X X (polyScale A P) x m.head).hom e1) :=
+      rfl
+    rw [lhs_eq]
+    exact PolyCofixApprox.continue_heq hfibEq
+  | succ k ih =>
+    exact polyCofreeMapApprox_childApproxAt_succ_heq A B P f m e1 e2 he hfibEq k ih
+
+lemma polyCofreeChildrenMor_map_heq (A B : Over X) (P : PolyEndo X) (f : A ⟶ B)
+    {x : X} (m : PolyCofreeM A P x) :
+    HEq (polyCofreeChildrenMor A P m ≫
+          Over.homMk (polyCofreeMapLeft A B P f) (polyCofreeMap_comm A B P f))
+        (polyCofreeChildrenMor B P (polyCofreeMapAt A B P f m)) := by
+  have hidx : m.head.2 = (polyCofreeMapAt A B P f m).head.2 :=
+    (polyCofreeMapAt_head_snd A B P f m).symm
+  apply polyBetweenFamily_mor_heq rfl _ _ (heq_of_eq hidx)
+  simp only [Over.comp_left, polyCofreeChildrenMor, Over.homMk_left, polyCofreeMapAt]
+  have hdomEq := congrArg (fun i => (polyBetweenFamily X X P x i).left) hidx
+  apply funext_heq hdomEq rfl
+  intro e1 e2 he
+  simp only [types_comp_apply, polyCofreeMapLeft]
+  have hfibEq := overType_hom_heq (congrArg (polyBetweenFamily X X P x) hidx) e1 e2 he
+  apply heq_of_eq
+  refine Sigma.ext hfibEq ?_
+  exact polyCofreeMapAt_children_heq A B P f m e1 e2 he
+
+/--
+The cofree map commutes with coalgebra structure maps.
+(Equation is: str_A ≫ F.map f = f ≫ str_B)
+
+Proof strategy: After unfolding definitions, we need to show equality of nested sigmas:
+  ⟨x, ⟨m.head.2, childrenMor ≫ map⟩⟩ = ⟨x, ⟨mapped.head.2, mapped_childrenMor⟩⟩
+We prove this by:
+1. First components are both x (rfl)
+2. P-indices are equal (polyCofreeMapAt_head_snd)
+3. Children morphisms are HEq (polyCofreeChildrenMor_map_heq)
+-/
+lemma polyCofreeMapHom_comm (A B : Over X) (P : PolyEndo X) (f : A ⟶ B) :
+    polyCofreeStr A P ≫ (polyEndoFunctor X P).map (polyCofreeMap A B P f) =
+    polyCofreeMap A B P f ≫ polyCofreeStr B P := by
+  apply Over.OverMorphism.ext
+  funext ⟨x, m⟩
+  simp only [Over.comp_left, polyCofreeMap, Over.homMk_left, polyCofreeStr]
+  simp only [polyEndoFunctor, polyBetweenEvalFunctor, polyToOverFunctor,
+    polyToOverEvalMap, familySliceForward, familySliceForwardMap,
+    polyToOverEvalFamilyMap, ccrEvalMap, Over.homMk_left, types_comp_apply]
+  simp only [polyCofreeStrLeft, polyCofreeStrFamily, polyCofreeMapLeft]
+  have hidx := (polyCofreeMapAt_head_snd A B P f m).symm
+  have hfam : polyBetweenFamily X X P x m.head.2 =
+      polyBetweenFamily X X P x (polyCofreeMapAt A B P f m).head.2 :=
+    congrArg (polyBetweenFamily X X P x) hidx
+  refine Sigma.ext rfl ?_
+  refine heq_of_eq ?_
+  refine Sigma.ext hidx ?_
+  dsimp only []
+  exact polyCofreeChildrenMor_map_heq A B P f m
+
+/--
+The cofree functor map as a coalgebra homomorphism.
+-/
+def polyCofreeCoalgMap (A B : Over X) (P : PolyEndo X) (f : A ⟶ B) :
+    polyCofreeCoalg A P ⟶ polyCofreeCoalg B P :=
+  Endofunctor.Coalgebra.Hom.mk
+    (polyCofreeMap A B P f)
+    (polyCofreeMapHom_comm A B P f)
+
+/--
+Mapping by the identity morphism is the identity on approximations.
+-/
+lemma polyCofreeMapApprox_id (A : Over X) (P : PolyEndo X) {n : Nat} {x : X}
+    (a : PolyCofixApprox (polyScale A P) n x) :
+    polyCofreeMapApprox A A P (𝟙 A) a = a := by
+  induction a with
+  | «continue» y => rfl
+  | intro y idx children ih =>
+    obtain ⟨⟨aVal, aProof⟩, pIdx⟩ := idx
+    simp only [polyCofreeMapApprox, Over.id_left]
+    congr 1
+    funext e
+    exact ih e
+
+/--
+Mapping by identity is identity on cofree values.
+-/
+lemma polyCofreeMapAt_id (A : Over X) (P : PolyEndo X) {x : X}
+    (m : PolyCofreeM A P x) :
+    polyCofreeMapAt A A P (𝟙 A) m = m := by
+  apply PolyCofix.ext
+  intro n
+  simp only [polyCofreeMapAt]
+  exact polyCofreeMapApprox_id A P (m.approx n)
+
+/--
+The cofree functor map preserves identity morphisms.
+-/
+lemma polyCofreeMap_id (A : Over X) (P : PolyEndo X) :
+    polyCofreeMap A A P (𝟙 A) = 𝟙 (polyCofreeCarrier A P) := by
+  apply Over.OverMorphism.ext
+  funext ⟨x, m⟩
+  simp only [polyCofreeMap, Over.homMk_left, polyCofreeMapLeft, Over.id_left,
+    polyCofreeMapAt_id, types_id_apply]
+
+/--
+Mapping by composition on approximations.
+-/
+lemma polyCofreeMapApprox_comp (A B C : Over X) (P : PolyEndo X)
+    (f : A ⟶ B) (g : B ⟶ C) {n : Nat} {x : X}
+    (a : PolyCofixApprox (polyScale A P) n x) :
+    polyCofreeMapApprox A C P (f ≫ g) a =
+    polyCofreeMapApprox B C P g (polyCofreeMapApprox A B P f a) := by
+  induction a with
+  | «continue» y => rfl
+  | intro y idx children ih =>
+    obtain ⟨⟨aVal, aProof⟩, pIdx⟩ := idx
+    simp only [polyCofreeMapApprox, Over.comp_left]
+    congr 1
+    funext e
+    exact ih e
+
+/--
+Mapping by composition equals composition of maps.
+-/
+lemma polyCofreeMapAt_comp (A B C : Over X) (P : PolyEndo X)
+    (f : A ⟶ B) (g : B ⟶ C) {x : X} (m : PolyCofreeM A P x) :
+    polyCofreeMapAt A C P (f ≫ g) m =
+    polyCofreeMapAt B C P g (polyCofreeMapAt A B P f m) := by
+  apply PolyCofix.ext
+  intro n
+  simp only [polyCofreeMapAt]
+  exact polyCofreeMapApprox_comp A B C P f g (m.approx n)
+
+/--
+The cofree functor map preserves composition.
+-/
+lemma polyCofreeMap_comp (A B C : Over X) (P : PolyEndo X)
+    (f : A ⟶ B) (g : B ⟶ C) :
+    polyCofreeMap A C P (f ≫ g) =
+    polyCofreeMap A B P f ≫ polyCofreeMap B C P g := by
+  apply Over.OverMorphism.ext
+  funext ⟨x, m⟩
+  simp only [polyCofreeMap, Over.homMk_left, polyCofreeMapLeft, Over.comp_left,
+    types_comp_apply, polyCofreeMapAt_comp]
+
+/--
+The cofree functor on coalgebra homomorphisms preserves identity.
+-/
+lemma polyCofreeCoalgMap_id (A : Over X) (P : PolyEndo X) :
+    polyCofreeCoalgMap A A P (𝟙 A) = 𝟙 (polyCofreeCoalg A P) := by
+  apply Endofunctor.Coalgebra.Hom.ext
+  exact polyCofreeMap_id A P
+
+/--
+The cofree functor on coalgebra homomorphisms preserves composition.
+-/
+lemma polyCofreeCoalgMap_comp (A B C : Over X) (P : PolyEndo X)
+    (f : A ⟶ B) (g : B ⟶ C) :
+    polyCofreeCoalgMap A C P (f ≫ g) =
+    polyCofreeCoalgMap A B P f ≫ polyCofreeCoalgMap B C P g := by
+  apply Endofunctor.Coalgebra.Hom.ext
+  exact polyCofreeMap_comp A B C P f g
+
+/--
+The cofree functor from Over X to PolyCoalg P.
+
+This sends an object A to the cofree P-coalgebra on A (carrier = M-type streams
+with A-annotations), and a morphism f : A ⟶ B to the coalgebra homomorphism
+that maps annotations via f.
+-/
+def polyCofreeFunctor (P : PolyEndo X) : Over X ⥤ PolyCoalg P where
+  obj := fun A => polyCofreeCoalg A P
+  map := fun f => polyCofreeCoalgMap _ _ P f
+  map_id := fun A => polyCofreeCoalgMap_id A P
+  map_comp := fun f g => polyCofreeCoalgMap_comp _ _ _ P f g
+
+/--
+The forgetful functor from P-coalgebras to Over X.
+-/
+abbrev polyCoalgForgetFunctor (P : PolyEndo X) : PolyCoalg P ⥤ Over X :=
+  Endofunctor.Coalgebra.forget (polyEndoFunctor X P)
+
+/--
+The left component of the counit: extracts root annotation from cofree carrier.
+-/
+def polyCofreeCounitLeft (A : Over X) (P : PolyEndo X) :
+    (polyCofreeCarrier A P).left → A.left :=
+  fun ⟨_, m⟩ => (polyCofreeExtract A P m).val
+
+/--
+The counit commutes with projection to X.
+-/
+lemma polyCofreeCounit_comm (A : Over X) (P : PolyEndo X) :
+    polyCofreeCounitLeft A P ≫ A.hom = (polyCofreeCarrier A P).hom := by
+  funext ⟨x, m⟩
+  simp only [types_comp_apply, polyCofreeCounitLeft, polyCofreeCarrier]
+  exact (polyCofreeExtract A P m).property
+
+/--
+The counit morphism: Cofree(A) → A in Over X.
+Extracts the root A-annotation from a cofree coalgebra element.
+-/
+def polyCofreeCounit (A : Over X) (P : PolyEndo X) :
+    polyCofreeCarrier A P ⟶ A :=
+  Over.homMk (polyCofreeCounitLeft A P) (polyCofreeCounit_comm A P)
+
+/--
+The counit is natural: extracting root then mapping equals mapping then extracting.
+-/
+lemma polyCofreeCounit_naturality (A B : Over X) (P : PolyEndo X) (f : A ⟶ B) :
+    polyCofreeMap A B P f ≫ polyCofreeCounit B P =
+    polyCofreeCounit A P ≫ f := by
+  apply Over.OverMorphism.ext
+  funext ⟨x, m⟩
+  simp only [Over.comp_left, polyCofreeMap, Over.homMk_left, polyCofreeCounit,
+    polyCofreeCounitLeft, types_comp_apply, polyCofreeMapLeft]
+  simp only [polyCofreeExtract, polyCofreeMapAt, PolyCofix.head]
+  rw [polyCofreeMapApprox_getIndex]
+
+/--
+The counit as a natural transformation.
+-/
+def polyCofreeCounitNat (P : PolyEndo X) :
+    polyCofreeFunctor P ⋙ polyCoalgForgetFunctor P ⟶ 𝟭 (Over X) where
+  app := fun A => polyCofreeCounit A P
+  naturality := fun A B f => polyCofreeCounit_naturality A B P f
+
+/--
+Build approximations for the unit anamorphism.
+Given a coalgebra β and a state s, unfolds s into an M-type where each node is
+annotated by the state at that point.
+-/
+def polyCoalgUnitApprox (P : PolyEndo X) (β : PolyCoalg P) (n : Nat) (x : X)
+    (s : { a : β.V.left // β.V.hom a = x }) :
+    PolyCofixApprox (polyScale β.V P) n x :=
+  match n with
+  | 0 => .continue x
+  | n + 1 =>
+    let strResult := β.str.left s.val
+    have hx : strResult.1 = x := by
+      have h := congrFun (Over.w β.str) s.val
+      simp only at h
+      rw [s.property] at h
+      exact h
+    let elem : polyBetweenEvalFamily X X P β.V strResult.1 := strResult.2
+    let pIdx := elem.1
+    let childMor := elem.2
+    let sAtFiber : { a : β.V.left // β.V.hom a = strResult.1 } :=
+      ⟨s.val, hx.symm ▸ s.property⟩
+    hx ▸ .intro strResult.1 ⟨sAtFiber, pIdx⟩ (fun e =>
+      let childVal := childMor.left e
+      have hChild : β.V.hom childVal =
+          (polyBetweenFamily X X P strResult.1 pIdx).hom e :=
+        congrFun (Over.w childMor) e
+      polyCoalgUnitApprox P β n _ ⟨childVal, hChild⟩)
+
+/--
+Successive approximations agree.
+-/
+lemma polyCoalgUnitApprox_consistent (P : PolyEndo X) (β : PolyCoalg P) (n : Nat)
+    (x : X) (s : { a : β.V.left // β.V.hom a = x }) :
+    PolyCofixAgree (polyScale β.V P)
+      (polyCoalgUnitApprox P β n x s)
+      (polyCoalgUnitApprox P β (n + 1) x s) := by
+  induction n generalizing x s with
+  | zero =>
+    simp only [polyCoalgUnitApprox]
+    exact PolyCofixAgree.continue _ _
+  | succ n ih =>
+    simp only [polyCoalgUnitApprox]
+    apply PolyCofixAgree.transport
+    exact PolyCofixAgree.intro _ _ (fun e => ih _ _)
+
+/--
+Build the M-type for a state in the unit construction.
+-/
+def polyCoalgUnitAt (P : PolyEndo X) (β : PolyCoalg P) (x : X)
+    (s : { a : β.V.left // β.V.hom a = x }) :
+    PolyCofreeM β.V P x where
+  approx n := polyCoalgUnitApprox P β n x s
+  consistent n := polyCoalgUnitApprox_consistent P β n x s
+
+/--
+The left component of the unit morphism.
+-/
+def polyCoalgUnitLeft (P : PolyEndo X) (β : PolyCoalg P) :
+    β.V.left → (polyCofreeCarrier β.V P).left :=
+  fun a => ⟨β.V.hom a, polyCoalgUnitAt P β (β.V.hom a) ⟨a, rfl⟩⟩
+
+/--
+The unit commutes with projection to X.
+-/
+lemma polyCoalgUnit_comm (P : PolyEndo X) (β : PolyCoalg P) :
+    polyCoalgUnitLeft P β ≫ (polyCofreeCarrier β.V P).hom = β.V.hom := rfl
+
+/--
+The unit morphism: β.V → Cofree(β.V) in Over X.
+-/
+def polyCoalgUnit (P : PolyEndo X) (β : PolyCoalg P) :
+    β.V ⟶ polyCofreeCarrier β.V P :=
+  Over.homMk (polyCoalgUnitLeft P β) (polyCoalgUnit_comm P β)
+
+end Adjunctions
+
 end GebLean
