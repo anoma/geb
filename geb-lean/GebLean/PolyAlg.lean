@@ -2567,6 +2567,16 @@ def polyFreeMPure (A : Over X) (P : PolyEndo X) {x : X}
   PolyFix.mk x (Sum.inl a) (fun e => PEmpty.elim e)
 
 /--
+Two `polyFreeMPure` values with the same underlying element are HEq across fibers.
+-/
+lemma polyFreeMPure_fiber_heq (A : Over X) (P : PolyEndo X) {x y : X}
+    (hfib : x = y) (a : A.left) (hx : A.hom a = x) (hy : A.hom a = y) :
+    HEq (polyFreeMPure A P ⟨a, hx⟩ : PolyFreeM A P x)
+        (polyFreeMPure A P ⟨a, hy⟩ : PolyFreeM A P y) := by
+  subst hfib
+  rfl
+
+/--
 The bind operation for the free monad: substitute at leaves.
 Recursively traverses the tree, replacing leaves with subtrees computed by f.
 -/
@@ -2942,6 +2952,570 @@ def polyFreeMEquivPolyEval (A : Over X) (P : PolyEndo X) (x : X) :
     intro ⟨shape, ⟨f, hf⟩⟩
     exact polyFreeMPolyEval_roundtrip A P shape f hf
 
+/-! ### Polynomial Representation of Cofree Comonad
+
+The cofree comonad `A ↦ PolyCofreeM A P` is a polynomial functor. Its positions
+(shapes) are M-type structures with trivial annotations, and its directions are
+the annotation positions within each shape.
+-/
+
+/--
+Shape of the cofree comonad: streams with trivial (terminal) annotations.
+This represents the "structure" of the stream without the annotation data.
+-/
+abbrev PolyCofreeShape (P : PolyEndo X) (x : X) : Type u :=
+  PolyCofreeM (overTerminal X) P x
+
+/--
+A path segment in a cofree comonad shape consists of the fiber and the
+child index taken.
+-/
+structure PolyCofreePathSeg (P : PolyEndo X) where
+  fiber : X
+  idx : polyBetweenIndex X X P fiber
+  childIdx : (polyBetweenFamily X X P fiber idx).left
+
+/--
+Annotation positions in a cofree comonad shape at depth n.
+At depth 0, there's just the root position.
+At depth n+1, we have a path segment followed by a position at depth n.
+-/
+def PolyCofreeAnnotPosAt (P : PolyEndo X) {x : X}
+    (s : PolyCofreeShape P x) : Nat → Type u
+  | 0 => PUnit
+  | n + 1 =>
+    Σ (e : (polyBetweenFamily X X P x s.head.2).left),
+      PolyCofreeAnnotPosAt P (s.children e) n
+
+/--
+Annotation positions in a cofree comonad shape: either the root or a position
+at some depth.
+-/
+def PolyCofreeAnnotPos (P : PolyEndo X) {x : X}
+    (s : PolyCofreeShape P x) : Type u :=
+  Σ n : Nat, PolyCofreeAnnotPosAt P s n
+
+/--
+Helper to get the fiber of a position at depth n.
+-/
+def PolyCofreeAnnotFiberAt (P : PolyEndo X) {x : X}
+    (s : PolyCofreeShape P x) : (n : Nat) → PolyCofreeAnnotPosAt P s n → X
+  | 0, _ => x
+  | n + 1, ⟨e, pos⟩ => PolyCofreeAnnotFiberAt P (s.children e) n pos
+
+/--
+The fiber at each annotation position in a cofree comonad shape.
+-/
+def PolyCofreeAnnotFiber (P : PolyEndo X) {x : X}
+    (s : PolyCofreeShape P x) (pos : PolyCofreeAnnotPos P s) : X :=
+  PolyCofreeAnnotFiberAt P s pos.1 pos.2
+
+/--
+The cofree comonad polynomial evaluation type: a shape together with
+annotation data for each position in that shape.
+-/
+def PolyCofreePolyEval (A : Over X) (P : PolyEndo X) (x : X) : Type u :=
+  Σ (shape : PolyCofreeShape P x),
+    { f : (pos : PolyCofreeAnnotPos P shape) → A.left //
+      ∀ pos, A.hom (f pos) = PolyCofreeAnnotFiber P shape pos }
+
+/--
+Convert a cofree comonad approximation to a shape approximation by forgetting
+annotations.
+-/
+def polyCofreeApproxToShape (A : Over X) (P : PolyEndo X) {n : Nat} {x : X} :
+    PolyCofixApprox (polyScale A P) n x →
+    PolyCofixApprox (polyScale (overTerminal X) P) n x
+  | PolyCofixApprox.continue y => PolyCofixApprox.continue y
+  | PolyCofixApprox.intro y ⟨_, i⟩ children =>
+    PolyCofixApprox.intro y ⟨⟨y, rfl⟩, i⟩
+      (fun e => polyCofreeApproxToShape A P (children e))
+
+/--
+The approximation-to-shape conversion preserves the agreement relation.
+-/
+theorem polyCofreeApproxToShape_agree (A : Over X) (P : PolyEndo X)
+    {n : Nat} {x : X}
+    {a : PolyCofixApprox (polyScale A P) n x}
+    {b : PolyCofixApprox (polyScale A P) (n + 1) x}
+    (h : PolyCofixAgree (polyScale A P) a b) :
+    PolyCofixAgree (polyScale (overTerminal X) P)
+      (polyCofreeApproxToShape A P a)
+      (polyCofreeApproxToShape A P b) := by
+  induction h with
+  | «continue» x' y' =>
+    exact PolyCofixAgree.continue x' (polyCofreeApproxToShape A P y')
+  | intro f f' child_agree ih' =>
+    exact PolyCofixAgree.intro _ _ ih'
+
+/--
+Extract the shape from a cofree comonad value.
+-/
+def polyCofreeToShape (A : Over X) (P : PolyEndo X) {x : X}
+    (m : PolyCofreeM A P x) : PolyCofreeShape P x := {
+  approx := fun n => polyCofreeApproxToShape A P (m.approx n)
+  consistent := fun n => polyCofreeApproxToShape_agree A P (m.consistent n)
+}
+
+/--
+The approximation-to-shape conversion preserves the polynomial index.
+-/
+lemma polyCofreeApproxToShape_index (A : Over X) (P : PolyEndo X)
+    {n : Nat} {x : X} (a : PolyCofixApprox (polyScale A P) (n + 1) x) :
+    (polyCofreeApproxToShape A P a).getIndex.2 = a.getIndex.2 := by
+  cases a with
+  | intro y i children => rfl
+
+/--
+The shape extraction preserves the head's polynomial index.
+-/
+lemma polyCofreeToShape_head_index (A : Over X) (P : PolyEndo X) {x : X}
+    (m : PolyCofreeM A P x) :
+    (polyCofreeToShape A P m).head.2 = m.head.2 := by
+  simp only [PolyCofix.head, polyCofreeToShape]
+  exact polyCofreeApproxToShape_index A P (m.approx 1)
+
+/--
+Cast a position element using the head index equality.
+-/
+def polyCofreeShapePosToMPos (A : Over X) (P : PolyEndo X) {x : X}
+    (m : PolyCofreeM A P x)
+    (e : (polyBetweenFamily X X P x (polyCofreeToShape A P m).head.2).left) :
+    (polyBetweenFamily X X P x m.head.2).left :=
+  (polyCofreeToShape_head_index A P m) ▸ e
+
+/--
+Extract the root annotation from a cofree comonad value.
+-/
+def polyCofreeGetRoot (A : Over X) (P : PolyEndo X) {x : X}
+    (m : PolyCofreeM A P x) : { a : A.left // A.hom a = x } :=
+  m.head.1
+
+
 end FreeMonadCofreeComonad
+
+/-! ## Free and Cofree Adjunctions
+
+The free P-algebra functor is left adjoint to the forgetful functor.
+The cofree P-coalgebra functor is right adjoint to the forgetful functor.
+-/
+
+section Adjunctions
+
+variable {X : Type u}
+
+/-! ### Free Algebra Structure
+
+For an object `A : Over X`, the free P-algebra on A has:
+- Carrier: `PolyFreeM A P` (P-branching trees with A-labeled leaves)
+- Structure map: fold a P-node with tree children into a tree with node index
+-/
+
+/--
+Given an element of the polynomial P evaluated at the free monad carrier,
+construct the corresponding element of the free monad.
+
+The input is a P-index `i` together with a morphism from the family at `i`
+to `polyFreeMCarrier A P`. The output is a PolyFreeM node with index `Sum.inr i`
+and children extracted from the morphism.
+-/
+def polyFreeMStrFamily (A : Over X) (P : PolyEndo X) (x : X)
+    (elem : polyBetweenEvalFamily X X P (polyFreeMCarrier A P) x) :
+    PolyFreeM A P x :=
+  let i := pbefIndex elem
+  let childMor := pbefMor elem
+  PolyFix.mk x (Sum.inr i) (fun e =>
+    let child := childMor.left e
+    let fiber_eq : child.1 = (polyBetweenFamily X X P x i).hom e :=
+      congrFun (Over.w childMor) e
+    fiber_eq ▸ child.2)
+
+/--
+The left component of the structure map for the free algebra.
+-/
+def polyFreeMStrLeft (A : Over X) (P : PolyEndo X) :
+    ((polyEndoFunctor X P).obj (polyFreeMCarrier A P)).left →
+    (polyFreeMCarrier A P).left :=
+  fun ⟨x, elem⟩ => ⟨x, polyFreeMStrFamily A P x elem⟩
+
+/--
+The structure map commutes with the fiber projections.
+-/
+lemma polyFreeMStr_comm (A : Over X) (P : PolyEndo X) :
+    polyFreeMStrLeft A P ≫ (polyFreeMCarrier A P).hom =
+    ((polyEndoFunctor X P).obj (polyFreeMCarrier A P)).hom := rfl
+
+/--
+The structure map for the free P-algebra on A.
+
+This takes a P-shaped structure with `PolyFreeM A P` children and produces
+a `PolyFreeM A P` node by wrapping with the `Sum.inr` index.
+-/
+def polyFreeMStr (A : Over X) (P : PolyEndo X) :
+    (polyEndoFunctor X P).obj (polyFreeMCarrier A P) ⟶ polyFreeMCarrier A P :=
+  Over.homMk (polyFreeMStrLeft A P) (polyFreeMStr_comm A P)
+
+/--
+The free P-algebra on an object A : Over X.
+
+The carrier is `polyFreeMCarrier A P` (trees with A-leaves).
+The structure map folds a P-node into a tree.
+-/
+def polyFreeAlg (A : Over X) (P : PolyEndo X) : PolyAlg P where
+  a := polyFreeMCarrier A P
+  str := polyFreeMStr A P
+
+/-! ### Free Functor on Morphisms
+
+Given `f : A ⟶ B` in `Over X`, we get an algebra homomorphism from the free
+algebra on A to the free algebra on B by mapping leaves: each A-leaf is
+replaced by the corresponding B-leaf via f.
+-/
+
+/--
+The fiber proof for mapping a leaf: if `a` is in fiber over `y` in A,
+then `f.left a` is in fiber over `y` in B.
+-/
+lemma polyFreeMap_fiber_eq (A B : Over X) (f : A ⟶ B) {y : X}
+    (a : { v : A.left // A.hom v = y }) : B.hom (f.left a.val) = y := by
+  have hw := Over.w f
+  calc B.hom (f.left a.val) = (f.left ≫ B.hom) a.val := rfl
+    _ = A.hom a.val := congrFun hw a.val
+    _ = y := a.property
+
+def polyFreeMapAt (A B : Over X) (P : PolyEndo X) (f : A ⟶ B) (x : X)
+    (t : PolyFreeM A P x) : PolyFreeM B P x :=
+  polyFreeMBind A B P t (fun _ a =>
+    polyFreeMPure B P ⟨f.left a.val, polyFreeMap_fiber_eq A B f a⟩)
+
+/--
+The free functor map on the left component of carriers.
+-/
+def polyFreeMapLeft (A B : Over X) (P : PolyEndo X) (f : A ⟶ B) :
+    (polyFreeMCarrier A P).left → (polyFreeMCarrier B P).left :=
+  fun ⟨x, t⟩ => ⟨x, polyFreeMapAt A B P f x t⟩
+
+/--
+The free functor map commutes with fiber projections.
+-/
+lemma polyFreeMap_comm (A B : Over X) (P : PolyEndo X) (f : A ⟶ B) :
+    polyFreeMapLeft A B P f ≫ (polyFreeMCarrier B P).hom =
+    (polyFreeMCarrier A P).hom := rfl
+
+/--
+The free functor map as a morphism in `Over X`.
+-/
+def polyFreeMap (A B : Over X) (P : PolyEndo X) (f : A ⟶ B) :
+    polyFreeMCarrier A P ⟶ polyFreeMCarrier B P :=
+  Over.homMk (polyFreeMapLeft A B P f) (polyFreeMap_comm A B P f)
+
+/--
+Transport of a PolyFreeM value commutes with polyFreeMapAt.
+
+When we transport a tree to a different fiber and then apply the map,
+it's the same as first applying the map and then transporting.
+-/
+lemma polyFreeMapAt_transport (A B : Over X) (P : PolyEndo X) (f : A ⟶ B)
+    {x y : X} (hxy : x = y) (t : PolyFreeM A P x) :
+    polyFreeMapAt A B P f y (hxy ▸ t) = hxy ▸ polyFreeMapAt A B P f x t := by
+  subst hxy
+  rfl
+
+/--
+Transport commutes with polyFreeMBind when the bind function respects fibers.
+-/
+lemma polyFreeMBind_transport (A B : Over X) (P : PolyEndo X)
+    {x y : X} (hxy : x = y) (t : PolyFreeM A P x)
+    (g : ∀ z, { a : A.left // A.hom a = z } → PolyFreeM B P z) :
+    hxy ▸ polyFreeMBind A B P t g = polyFreeMBind A B P (hxy ▸ t) g := by
+  subst hxy
+  rfl
+
+/--
+Matching a sigma to apply a function to its second component and then
+extracting snd gives the same as applying the function directly to snd.
+-/
+lemma sigma_match_snd {I : Type*} {F G : I → Type*}
+    (f : ∀ i, F i → G i) (p : Σ i, F i) :
+    (match p with | ⟨i, x⟩ => ⟨i, f i x⟩ : Σ i, G i).snd = f p.fst p.snd := rfl
+
+/--
+The effect of mapping a tree through polyFreeMapAt.
+
+When we apply the map to a tree in a fiber y, and then transport to fiber x
+(where y = x by the Over morphism), it equals applying polyFreeMBind
+to the transported tree.
+-/
+lemma polyFreeMapAt_as_bind (A B : Over X) (P : PolyEndo X) (f : A ⟶ B)
+    {x y : X} (hxy : y = x) (t : PolyFreeM A P y) :
+    hxy ▸ polyFreeMapAt A B P f y t =
+    polyFreeMBind A B P (hxy ▸ t)
+      (fun _ a => polyFreeMPure B P ⟨f.left a.val, polyFreeMap_fiber_eq A B f a⟩) := by
+  subst hxy
+  rfl
+
+lemma polyFreeMapHom_comm (A B : Over X) (P : PolyEndo X) (f : A ⟶ B) :
+    (polyEndoFunctor X P).map (polyFreeMap A B P f) ≫ polyFreeMStr B P =
+    polyFreeMStr A P ≫ polyFreeMap A B P f := by
+  apply Over.OverMorphism.ext
+  funext ⟨x, elem⟩
+  simp only [Over.comp_left, polyFreeMStr, Over.homMk_left, polyFreeMap,
+    polyEndoFunctor, polyBetweenEvalFunctor, polyToOverFunctor,
+    polyToOverEvalMap, familySliceForward, familySliceForwardMap,
+    polyToOverEvalFamilyMap, ccrEvalMap]
+  -- Do not unfold polyFreeMapAt here - keep it for the lemma to match
+  unfold polyFreeMStrLeft polyFreeMapLeft polyFreeMStrFamily
+  simp only [types_comp_apply]
+  obtain ⟨i, h⟩ := elem
+  simp only [pbefIndex, pbefMor, ptoefIndex, ptoefMor, ccrEvalIndex, ccrEvalMor]
+  simp only [Over.comp_left, Over.homMk_left]
+  -- Use congr to break down to children equality
+  congr 1
+  -- Goal: equality of PolyFix.mk x (Sum.inr i) children
+  congr 1
+  -- Goal: equality of children functions
+  funext e
+  -- LHS: transport ▸ ((h.left ≫ map) e).snd = transport ▸ polyFreeMapAt (h.left e).snd
+  -- RHS: polyFreeMBind (transport ▸ (h.left e).snd) bind_fn
+  simp only [types_comp_apply]
+  -- Unfold polyFreeMapAt to expose polyFreeMBind
+  unfold polyFreeMapAt
+  -- Use polyFreeMBind_transport in reverse on RHS to move transport outside
+  rw [← polyFreeMBind_transport]
+  -- Now both have transport after polyFreeMBind
+  rfl
+
+/--
+The free functor map as an algebra homomorphism.
+-/
+def polyFreeAlgMap (A B : Over X) (P : PolyEndo X) (f : A ⟶ B) :
+    polyFreeAlg A P ⟶ polyFreeAlg B P where
+  f := polyFreeMap A B P f
+  h := polyFreeMapHom_comm A B P f
+
+/--
+Mapping by the identity morphism is the identity on trees.
+-/
+lemma polyFreeMapAt_id (A : Over X) (P : PolyEndo X) (x : X) (t : PolyFreeM A P x) :
+    polyFreeMapAt A A P (𝟙 A) x t = t := by
+  unfold polyFreeMapAt
+  simp only [Over.id_left]
+  convert polyFreeM_bind_pure A P t using 2
+
+/--
+The free functor map preserves identity morphisms in Over X.
+-/
+lemma polyFreeMap_id (A : Over X) (P : PolyEndo X) :
+    polyFreeMap A A P (𝟙 A) = 𝟙 (polyFreeMCarrier A P) := by
+  apply Over.OverMorphism.ext
+  funext ⟨x, t⟩
+  simp only [polyFreeMap, Over.homMk_left, polyFreeMapLeft, Over.id_left,
+    polyFreeMapAt_id, types_id_apply]
+
+/--
+Mapping by a composition equals the composition of maps.
+-/
+lemma polyFreeMapAt_comp (A B C : Over X) (P : PolyEndo X)
+    (f : A ⟶ B) (g : B ⟶ C) (x : X) (t : PolyFreeM A P x) :
+    polyFreeMapAt A C P (f ≫ g) x t =
+    polyFreeMapAt B C P g x (polyFreeMapAt A B P f x t) := by
+  unfold polyFreeMapAt
+  rw [polyFreeM_bind_assoc]
+  simp only [polyFreeM_pure_bind, Over.comp_left, types_comp_apply]
+
+/--
+The free functor map preserves composition in Over X.
+-/
+lemma polyFreeMap_comp (A B C : Over X) (P : PolyEndo X) (f : A ⟶ B) (g : B ⟶ C) :
+    polyFreeMap A C P (f ≫ g) = polyFreeMap A B P f ≫ polyFreeMap B C P g := by
+  apply Over.OverMorphism.ext
+  funext ⟨x, t⟩
+  simp only [polyFreeMap, Over.homMk_left, polyFreeMapLeft, Over.comp_left,
+    polyFreeMapAt_comp, types_comp_apply]
+
+/--
+The free functor on algebra homomorphisms preserves identity.
+-/
+lemma polyFreeAlgMap_id (A : Over X) (P : PolyEndo X) :
+    polyFreeAlgMap A A P (𝟙 A) = 𝟙 (polyFreeAlg A P) := by
+  apply Endofunctor.Algebra.Hom.ext
+  exact polyFreeMap_id A P
+
+/--
+The free functor on algebra homomorphisms preserves composition.
+-/
+lemma polyFreeAlgMap_comp (A B C : Over X) (P : PolyEndo X)
+    (f : A ⟶ B) (g : B ⟶ C) :
+    polyFreeAlgMap A C P (f ≫ g) = polyFreeAlgMap A B P f ≫ polyFreeAlgMap B C P g := by
+  apply Endofunctor.Algebra.Hom.ext
+  exact polyFreeMap_comp A B C P f g
+
+/--
+The free functor from Over X to PolyAlg P.
+
+This sends an object A to the free P-algebra on A (carrier = trees with A-leaves),
+and a morphism f : A ⟶ B to the algebra homomorphism that maps leaves via f.
+-/
+def polyFreeFunctor (P : PolyEndo X) : Over X ⥤ PolyAlg P where
+  obj := fun A => polyFreeAlg A P
+  map := fun f => polyFreeAlgMap _ _ P f
+  map_id := fun A => polyFreeAlgMap_id A P
+  map_comp := fun f g => polyFreeAlgMap_comp _ _ _ P f g
+
+/--
+The forgetful functor from P-algebras to Over X.
+This is just mathlib's Endofunctor.Algebra.forget applied to polyEndoFunctor.
+-/
+abbrev polyForgetFunctor (P : PolyEndo X) : PolyAlg P ⥤ Over X :=
+  Endofunctor.Algebra.forget (polyEndoFunctor X P)
+
+/-! ### Unit: Embedding as Leaves
+
+The unit of the adjunction embeds an element of A as a leaf in the free algebra.
+-/
+
+/--
+The left component of the unit: embeds elements of A.left as leaves.
+-/
+def polyFreeUnitLeft (A : Over X) (P : PolyEndo X) :
+    A.left → (polyFreeMCarrier A P).left :=
+  fun a => ⟨A.hom a, polyFreeMPure A P ⟨a, rfl⟩⟩
+
+/--
+The unit morphism preserves fiber projections.
+-/
+lemma polyFreeUnit_comm (A : Over X) (P : PolyEndo X) :
+    polyFreeUnitLeft A P ≫ (polyFreeMCarrier A P).hom = A.hom := rfl
+
+/--
+The unit of the Free ⊣ Forget adjunction at object A.
+
+This embeds elements of A as single-leaf trees in the free algebra.
+-/
+def polyFreeUnit (A : Over X) (P : PolyEndo X) :
+    A ⟶ (polyForgetFunctor P).obj (polyFreeAlg A P) :=
+  Over.homMk (polyFreeUnitLeft A P) (polyFreeUnit_comm A P)
+
+/--
+The unit is natural in A.
+-/
+lemma polyFreeUnit_naturality (A B : Over X) (P : PolyEndo X) (f : A ⟶ B) :
+    f ≫ polyFreeUnit B P =
+    polyFreeUnit A P ≫ (polyForgetFunctor P).map (polyFreeAlgMap A B P f) := by
+  apply Over.OverMorphism.ext
+  funext a
+  simp only [Over.comp_left, polyFreeUnit, Over.homMk_left, polyFreeUnitLeft,
+    polyForgetFunctor, Endofunctor.Algebra.forget_map, polyFreeAlgMap,
+    polyFreeMap, polyFreeMapLeft, types_comp_apply]
+  simp only [polyFreeMapAt]
+  have hfib : B.hom (f.left a) = A.hom a := congrFun (Over.w f) a
+  simp only [polyFreeMBind, polyFreeMPure]
+  apply Sigma.ext hfib
+  exact polyFreeMPure_fiber_heq B P hfib (f.left a) rfl hfib
+
+/--
+The unit as a natural transformation from the identity to Forget ∘ Free.
+-/
+def polyFreeUnitNat (P : PolyEndo X) :
+    𝟭 (Over X) ⟶ polyFreeFunctor P ⋙ polyForgetFunctor P where
+  app := fun A => polyFreeUnit A P
+  naturality := fun A B f => polyFreeUnit_naturality A B P f
+
+/-! #### Counit: Fold from Free Algebra to Target Algebra
+
+The counit of the Free ⊣ Forget adjunction, at each algebra α,
+is a homomorphism from Free(Forget(α)) to α. This is the fold
+that interprets the free algebra structure using α's operations.
+-/
+
+/--
+Fold a free monad value with fiber proof into an algebra value with fiber proof.
+At leaves, returns the leaf value. At nodes, recursively folds children
+and applies the algebra structure map.
+-/
+def polyFreeCounitFoldAt (P : PolyEndo X) (α : PolyAlg P) (x : X) :
+    (t : PolyFreeM α.a P x) → { v : α.a.left // α.a.hom v = x }
+  | PolyFix.mk _ (Sum.inl a) _ => a
+  | PolyFix.mk _ (Sum.inr p) children =>
+    let fam := polyBetweenFamily X X P x p
+    let childrenFolded : fam ⟶ α.a := Over.homMk
+      (fun e => (polyFreeCounitFoldAt P α (fam.hom e) (children e)).val)
+      (by funext e; exact (polyFreeCounitFoldAt P α (fam.hom e) (children e)).property)
+    let node := (⟨x, ⟨p, childrenFolded⟩⟩ : ((polyBetweenEvalFunctor X X P).obj α.a).left)
+    let result := α.str.left node
+    have hfib : α.a.hom result = x := congrFun (Over.w α.str) node
+    ⟨result, hfib⟩
+
+/--
+Transporting a tree to a different fiber and then folding gives the same
+underlying value as folding at the original fiber.
+-/
+lemma polyFreeCounitFoldAt_cast (P : PolyEndo X) (α : PolyAlg P) {x y : X}
+    (eq : x = y) (t : PolyFreeM α.a P x) :
+    (polyFreeCounitFoldAt P α y (eq ▸ t)).val =
+    (polyFreeCounitFoldAt P α x t).val := by
+  subst eq
+  rfl
+
+/--
+The left component of the counit fold morphism.
+-/
+def polyFreeCounitFoldLeft (P : PolyEndo X) (α : PolyAlg P) :
+    (polyFreeMCarrier α.a P).left → α.a.left :=
+  fun ⟨x, t⟩ => (polyFreeCounitFoldAt P α x t).val
+
+/--
+The counit fold preserves fibers.
+-/
+lemma polyFreeCounitFoldLeft_fiber (P : PolyEndo X) (α : PolyAlg P)
+    (t : (polyFreeMCarrier α.a P).left) :
+    α.a.hom (polyFreeCounitFoldLeft P α t) = (polyFreeMCarrier α.a P).hom t :=
+  (polyFreeCounitFoldAt P α t.1 t.2).property
+
+/--
+The counit fold as a morphism in Over X from Free(Forget(α)) to α.
+-/
+def polyFreeCounitFold (P : PolyEndo X) (α : PolyAlg P) :
+    (polyFreeAlg α.a P).a ⟶ α.a :=
+  Over.homMk (polyFreeCounitFoldLeft P α)
+    (by funext ⟨x, t⟩; exact polyFreeCounitFoldLeft_fiber P α ⟨x, t⟩)
+
+/--
+The counit fold commutes with the algebra structure maps.
+-/
+lemma polyFreeCounitFold_comm (P : PolyEndo X) (α : PolyAlg P) :
+    (polyEndoFunctor X P).map (polyFreeCounitFold P α) ≫ α.str =
+    (polyFreeAlg α.a P).str ≫ polyFreeCounitFold P α := by
+  apply Over.OverMorphism.ext
+  funext ⟨x, ⟨p, h⟩⟩
+  simp only [Over.comp_left, polyEndoFunctor, polyBetweenEvalFunctor, types_comp_apply]
+  simp only [polyFreeCounitFold, Over.homMk_left, polyFreeCounitFoldLeft]
+  simp only [polyFreeAlg, polyFreeMStr, Over.homMk_left, polyFreeMStrLeft]
+  simp only [polyToOverFunctor, polyToOverEvalMap_left, ccrEvalMap]
+  simp only [polyFreeCounitFoldAt, polyFreeMStrFamily]
+  simp only [pbefIndex, pbefMor, ptoefIndex, ptoefMor]
+  simp only [ccrEvalIndex, ccrEvalMor]
+  apply congrArg
+  ext1
+  · rfl
+  · simp only [heq_eq_eq]
+    apply congrArg
+    apply Over.OverMorphism.ext
+    funext e
+    simp only [Over.homMk_left, Over.comp_left, types_comp_apply]
+    simp only [polyFreeCounitFoldLeft]
+    have hfib : (h.left e).fst = (polyBetweenFamily X X P x p).hom e :=
+      congrFun (Over.w h) e
+    rw [polyFreeCounitFoldAt_cast P α hfib (h.left e).snd]
+    rfl
+
+/--
+The counit as an algebra homomorphism from Free(Forget(α)) to α.
+-/
+def polyFreeCounitHom (P : PolyEndo X) (α : PolyAlg P) :
+    polyFreeAlg α.a P ⟶ α :=
+  Endofunctor.Algebra.Hom.mk (polyFreeCounitFold P α) (polyFreeCounitFold_comm P α)
+
+end Adjunctions
 
 end GebLean

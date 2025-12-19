@@ -179,37 +179,64 @@ The free monad functor `A ↦ PolyFreeM A P` is itself a polynomial functor on
 9. **polyFreeMEquivPolyEval** - The full equivalence
 
 The proofs use helper lemmas for working with dependent types:
+
 - `sigma_subtype_fun_app_eq` - Extract function values from sigma equalities
 - `sigma_cast_eq_mk` - Decompose sigma casts into component casts
 - `subtype_fun_heq'` - HEq of subtypes of function types
 
 ## In Progress
 
-### Polynomial Representation of Cofree Comonad
+### Polynomial Representation of Cofree Comonad (Partial)
 
-The cofree comonad functor `A ↦ PolyCofreeM A P` should similarly be shown to
-be polynomial on `Over X`:
+The cofree comonad polynomial representation has the following infrastructure:
 
-1. **Positions** = stream shapes: `PolyCofreeM (overTerminal X) P x`
-2. **Directions** = annotation positions in each shape
-3. **Proof of correctness**: equivalence between polynomial evaluation and
-   PolyCofreeM
+1. **PolyCofreeShape P x** - Shapes as M-types with unit annotations
+2. **PolyCofreeAnnotPosAt P s n** - Positions at depth n in a shape
+3. **PolyCofreeAnnotPos P s** - All positions in a shape (sigma of depth)
+4. **PolyCofreeAnnotFiber P s pos** - Fiber at each position
+5. **PolyCofreePolyEval A P x** - The polynomial evaluation type
+6. **polyCofreeApproxToShape** - Convert approximations to shape approximations
+7. **polyCofreeToShape** - Extract shape from a cofree comonad value
+8. **polyCofreeToShape_head_index** - Head index is preserved
+9. **polyCofreeShapePosToMPos** - Convert shape positions to M-type positions
+10. **polyCofreeGetRoot** - Extract root annotation
 
-### Adjunctions
+The full equivalence `PolyCofreeM A P ≃ PolyCofreePolyEval A P` remains to be
+proven. The challenge is navigating positions in M-type structure: the shape
+of a child is not definitionally equal to the child of the shape, requiring
+careful type transport.
 
-1. **Free ⊣ Forget** for algebras:
-   - Free: `Over X → Alg(P)` sends A to the free P-algebra on A
-   - Forget: `Alg(P) → Over X` extracts the carrier
-   - Bijection: `Hom_Alg(Free(A), α) ≅ Hom_Over(A, Forget(α))`
-   - The bijection sends f to its restriction to leaves, with inverse
-     given by the fold
+### Free ⊣ Forget Adjunction (Partial)
 
-2. **Forget ⊣ Cofree** for coalgebras:
-   - Cofree: `Over X → Coalg(P)` sends A to the cofree P-coalgebra on A
-   - Forget: `Coalg(P) → Over X` extracts the carrier
-   - Bijection: `Hom_Over(Forget(β), A) ≅ Hom_Coalg(β, Cofree(A))`
-   - The bijection sends f to the anamorphism computing annotations from
-     f at each step
+The Free ⊣ Forget adjunction has the following implemented:
+
+1. **polyFreeAlg A P** - Free P-algebra on A (carrier = trees with A-leaves)
+2. **polyFreeAlgMap** - Functorial action: maps leaves via morphism in Over X
+3. **polyFreeFunctor P** - Free functor `Over X ⥤ PolyAlg P`
+4. **polyForgetFunctor P** - Forgetful functor `PolyAlg P ⥤ Over X`
+5. **polyFreeUnit A P** - Unit morphism: embeds A into Free(A)
+6. **polyFreeUnitNat P** - Unit as natural transformation `𝟭 ⟶ Free ⋙ Forget`
+7. **polyFreeCounitFoldAt** - Fold function with fiber proofs
+8. **polyFreeCounitFoldAt_cast** - Transport lemma for folding
+9. **polyFreeCounitFold P α** - Counit morphism from Free(Forget(α)) to α
+10. **polyFreeCounitFold_comm** - Commutativity for algebra homomorphism
+11. **polyFreeCounitHom P α** - Counit as algebra homomorphism
+
+Remaining work:
+
+- Counit naturality (natural transformation `Free ⋙ Forget ⟶ 𝟭`)
+- Triangle identities
+- Construct the `Adjunction` instance
+
+### Forget ⊣ Cofree Adjunction (Not Started)
+
+For coalgebras:
+
+- Cofree: `Over X → Coalg(P)` sends A to the cofree P-coalgebra on A
+- Forget: `Coalg(P) → Over X` extracts the carrier
+- Bijection: `Hom_Over(Forget(β), A) ≅ Hom_Coalg(β, Cofree(A))`
+- The bijection sends f to the anamorphism computing annotations from
+  f at each step
 
 ## Future Directions
 
