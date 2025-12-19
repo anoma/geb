@@ -389,12 +389,11 @@ Key insight for category laws:
 - `G.map_comp g.twMorph f.twMorph` (reversed order for opposite category)
 - `cat_disch` handles dependent type issues in fiber morphism proofs
 
-### Lax/Oplax Whiskering Infrastructure (In Progress)
+### Lax/Oplax Whiskering Infrastructure
 
 The `fiberFunctorContra` construction derives its functoriality from the lax
 natural transformation structure of `overOpToTwistedArrowLax`. This relationship
-is currently implicit. We are making it explicit by defining general whiskering
-operations on lax/oplax natural transformations.
+is currently implicit.
 
 **Research completed**:
 
@@ -404,7 +403,7 @@ operations on lax/oplax natural transformations.
   in general, but for functors to Cat with constant targets, a specialized
   construction works
 
-**Planned operations for `LaxNatTransData`**:
+**Implemented operations for `LaxNatTransData`**:
 
 1. `LaxNatTransData.whiskerLeft H` - precomposition with `H : D ⥤ C`
    - Type: `LaxNatTransData G F → LaxNatTransData (H ⋙ G) (H ⋙ F)`
@@ -415,26 +414,34 @@ operations on lax/oplax natural transformations.
    - Produces: `C ⥤ Cat` where fibers are `Grothendieck (α.app b ⋙ H)`
    - The lax coherence (`laxId`, `laxComp`) provides `map_id`, `map_comp`
 
-3. `LaxNatTransData.grothendieckContraFunctor` - contravariant version
-   - Same but produces `GrothendieckContra'` fibers
-
-**Dual operations for `OplaxNatTransData`**:
+**Implemented operations for `OplaxNatTransData`**:
 
 1. `OplaxNatTransData.whiskerLeft` - precomposition for oplax
-2. `OplaxNatTransData.grothendieckContraFunctor` - contravariant with oplax coherence
 
 **Universe levels relaxed**:
 
 - `LaxNatTransData` now uses `Cat.{vF, uF}` (separate from base category universes)
 - `OplaxNatTransData` updated to match (uses `Cat.{vF, uF}`)
 
-**Application**: Once complete, `fiberFunctorContra` can be expressed as:
+**Contravariant Grothendieck Functor - Constraints**:
 
-```lean
-fiberFunctorContra C F = overOpToTwistedArrowLax.grothendieckContraFunctor F
-```
+A general `LaxNatTransData.grothendieckContraFunctor` is not implemented because
+`GrothendieckContra' F'` requires `F' : Xᵒᵖ' ⥤ Cat`, meaning the fiber functor
+must have an opposite category as its domain. This requires either:
 
-making explicit that its functoriality derives from lax coherence.
+1. The source functor `G` must map each object to an opposite category
+   (i.e., `G.obj c = Cat.of (GBase c)ᵒᵖ'` for some family `GBase`)
+2. Explicit casts between `↑(G.obj c)` and the opposite category type
+
+For `overOpMapFunctor C`, this works because `(overOpMapFunctor C).obj y =
+Cat.of ((Over y)ᵒᵖ')` definitionally. However, expressing this in the general
+`LaxNatTransData` framework requires complex cast management.
+
+**Current approach**: The `fiberFunctorContra` in ConnectedGrothendieck.lean is
+defined directly using `innerFiberContra` and `innerFiberContraTransition`,
+which provides the same functionality without the general abstraction. The
+functoriality derives from the same lax coherence structure, just specialized
+to the connected Grothendieck construction.
 
 ## References
 
