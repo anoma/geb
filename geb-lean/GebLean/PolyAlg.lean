@@ -2690,6 +2690,258 @@ def polyCofreeExtend (A B : Over X) (P : PolyEndo X) {x : X}
   consistent := fun n => polyCofreeExtendAgree A B P n f x m
 }
 
+/-! ### Polynomial Representation of Free Monad
+
+The free monad functor `A ↦ PolyFreeM A P` is itself a polynomial functor.
+To represent it as a `PolyEndo X`:
+- Positions at x = tree shapes = `PolyFreeM (overTerminal X) P x`
+- Directions at position t = leaf positions in the tree t
+-/
+
+/--
+Tree shapes for the free monad: trees with trivially-labeled leaves.
+These are the positions of the free monad viewed as a polynomial functor.
+-/
+abbrev PolyFreeMShape (P : PolyEndo X) (x : X) : Type u :=
+  PolyFreeM (overTerminal X) P x
+
+/--
+Leaf positions in a tree shape. For each tree shape, this gives the type
+of "holes" where leaf data from A would be placed.
+
+At a leaf node: exactly one position (the leaf itself)
+At an internal node: the sum of leaf positions in all children
+-/
+def PolyFreeMLeafPos (P : PolyEndo X) {x : X} :
+    PolyFreeMShape P x → Type u
+  | PolyFix.mk _ (Sum.inl _) _ => PUnit
+  | PolyFix.mk _ (Sum.inr p) children =>
+    Σ (e : (polyBetweenFamily X X P x p).left),
+      PolyFreeMLeafPos P (children e)
+
+/--
+The fiber of a leaf position. Given a tree shape and a leaf position in it,
+returns the fiber at which that leaf lives.
+-/
+def PolyFreeMLeafFiber (P : PolyEndo X) {x : X}
+    (t : PolyFreeMShape P x) : PolyFreeMLeafPos P t → X :=
+  match t with
+  | PolyFix.mk y (Sum.inl _) _ => fun _ => y
+  | PolyFix.mk _ (Sum.inr _) children => fun pos =>
+    let ⟨e, pos'⟩ := pos
+    PolyFreeMLeafFiber P (children e) pos'
+
+/--
+The family for the free monad polynomial at each position.
+Maps each tree shape to the Over X object representing its leaf positions.
+-/
+def polyFreeMFamily (P : PolyEndo X) (x : X)
+    (shape : PolyFreeMShape P x) : Over X :=
+  Over.mk (f := PolyFreeMLeafFiber P shape)
+
+/--
+The free monad functor represented as a polynomial endofunctor.
+-/
+def polyFreeMPoly (P : PolyEndo X) : PolyEndo X := fun x =>
+  ccrObjMk (polyFreeMFamily P x)
+
+/--
+Build a free monad tree from a shape and leaf data.
+Given a tree shape and a function assigning A-values to each leaf position,
+constructs the corresponding element of PolyFreeM A P.
+-/
+def polyFreeMFromShape (A : Over X) (P : PolyEndo X) {x : X}
+    (shape : PolyFreeMShape P x)
+    (leafData : (pos : PolyFreeMLeafPos P shape) →
+      { a : A.left // A.hom a = PolyFreeMLeafFiber P shape pos }) :
+    PolyFreeM A P x :=
+  match shape with
+  | PolyFix.mk y (Sum.inl _) _ =>
+    let aVal := leafData PUnit.unit
+    PolyFix.mk y (Sum.inl aVal) (fun e => PEmpty.elim e)
+  | PolyFix.mk y (Sum.inr p) children =>
+    PolyFix.mk y (Sum.inr p) fun e =>
+      polyFreeMFromShape A P (children e) fun pos =>
+        leafData ⟨e, pos⟩
+
+/--
+Extract the shape from a free monad tree.
+Replaces all leaf labels with trivial labels.
+-/
+def polyFreeMToShape (A : Over X) (P : PolyEndo X) {x : X}
+    (t : PolyFreeM A P x) : PolyFreeMShape P x :=
+  match t with
+  | PolyFix.mk y (Sum.inl _) _ =>
+    PolyFix.mk y (Sum.inl ⟨y, rfl⟩) (fun e => PEmpty.elim e)
+  | PolyFix.mk y (Sum.inr p) children =>
+    PolyFix.mk y (Sum.inr p) fun e =>
+      polyFreeMToShape A P (children e)
+
+/--
+Extract the leaf data from a free monad tree.
+Given a tree, returns a function mapping each leaf position to its label.
+-/
+def polyFreeMLeafData (A : Over X) (P : PolyEndo X) {x : X}
+    (t : PolyFreeM A P x) :
+    (pos : PolyFreeMLeafPos P (polyFreeMToShape A P t)) →
+    { a : A.left // A.hom a = PolyFreeMLeafFiber P (polyFreeMToShape A P t) pos
+    } :=
+  match t with
+  | PolyFix.mk _ (Sum.inl a) _ => fun _ => a
+  | PolyFix.mk _ (Sum.inr _) children => fun ⟨e, pos⟩ =>
+    polyFreeMLeafData A P (children e) pos
+
+/--
+Roundtrip: extracting shape from a tree built from shape and data gives back
+the original shape.
+-/
+theorem polyFreeMFromShape_toShape (A : Over X) (P : PolyEndo X) {x : X}
+    (shape : PolyFreeMShape P x)
+    (leafData : (pos : PolyFreeMLeafPos P shape) →
+      { a : A.left // A.hom a = PolyFreeMLeafFiber P shape pos }) :
+    polyFreeMToShape A P (polyFreeMFromShape A P shape leafData) = shape := by
+  induction shape with
+  | mk y idx children ih =>
+    cases idx with
+    | inl label =>
+      simp only [polyFreeMFromShape, polyFreeMToShape]
+      congr 1
+      · congr 1
+        exact Subtype.ext label.property.symm
+      · funext e
+        exact PEmpty.elim e
+    | inr p =>
+      simp only [polyFreeMFromShape, polyFreeMToShape]
+      congr 1
+      funext e
+      exact ih e _
+
+/--
+Roundtrip: building a tree from shape and data, then extracting, gives back
+the original tree.
+-/
+theorem polyFreeM_roundtrip (A : Over X) (P : PolyEndo X) {x : X}
+    (t : PolyFreeM A P x) :
+    polyFreeMFromShape A P (polyFreeMToShape A P t)
+      (polyFreeMLeafData A P t) = t := by
+  induction t with
+  | mk y idx children ih =>
+    cases idx with
+    | inl a =>
+      simp only [polyFreeMToShape, polyFreeMFromShape, polyFreeMLeafData]
+      congr 1
+      funext e
+      exact PEmpty.elim e
+    | inr p =>
+      simp only [polyFreeMToShape, polyFreeMFromShape]
+      congr 1
+      funext e
+      exact ih e
+
+
+/--
+The type of the evaluation of the free monad polynomial at A.
+-/
+def PolyFreeMPolyEval (A : Over X) (P : PolyEndo X) (x : X) : Type u :=
+  Σ (shape : PolyFreeMShape P x),
+    { f : (pos : PolyFreeMLeafPos P shape) → A.left //
+      ∀ pos, A.hom (f pos) = PolyFreeMLeafFiber P shape pos }
+
+/--
+Convert from polynomial evaluation to free monad.
+-/
+def polyFreeMPolyEval_to_polyFreeM (A : Over X) (P : PolyEndo X) {x : X}
+    (eval : PolyFreeMPolyEval A P x) : PolyFreeM A P x :=
+  polyFreeMFromShape A P eval.fst fun pos =>
+    ⟨eval.snd.val pos, eval.snd.property pos⟩
+
+/--
+Convert from free monad to polynomial evaluation.
+-/
+def polyFreeM_to_polyFreeMPolyEval (A : Over X) (P : PolyEndo X) {x : X}
+    (t : PolyFreeM A P x) : PolyFreeMPolyEval A P x :=
+  ⟨polyFreeMToShape A P t,
+   ⟨fun pos => (polyFreeMLeafData A P t pos).val,
+    fun pos => (polyFreeMLeafData A P t pos).property⟩⟩
+
+/--
+Right inverse helper: the sigma pair roundtrip equality for the polynomial
+evaluation type. This is proven by induction on the shape.
+-/
+theorem polyFreeMPolyEval_roundtrip (A : Over X) (P : PolyEndo X) {x : X}
+    (shape : PolyFreeMShape P x)
+    (f : PolyFreeMLeafPos P shape → A.left)
+    (hf : ∀ pos, A.hom (f pos) = PolyFreeMLeafFiber P shape pos) :
+    polyFreeM_to_polyFreeMPolyEval A P
+      (polyFreeMFromShape A P shape (fun pos => ⟨f pos, hf pos⟩)) =
+    ⟨shape, ⟨f, hf⟩⟩ := by
+  induction shape with
+  | mk y idx children ih =>
+    cases idx with
+    | inl _ =>
+      simp only [polyFreeMFromShape, polyFreeM_to_polyFreeMPolyEval,
+        polyFreeMToShape, polyFreeMLeafData]
+      have hfst := polyFreeMFromShape_toShape A P
+        (PolyFix.mk y (Sum.inl _) children) (fun pos => ⟨f pos, hf pos⟩)
+      simp only [polyFreeMFromShape, polyFreeMToShape] at hfst
+      apply Sigma.ext hfst
+      apply heq_of_eq
+      apply Subtype.ext
+      funext pos
+      cases pos
+      rfl
+    | inr p =>
+      have ih_applied : ∀ e, polyFreeM_to_polyFreeMPolyEval A P
+          (polyFreeMFromShape A P (children e) (fun pos => ⟨f ⟨e, pos⟩, hf ⟨e, pos⟩⟩)) =
+          ⟨children e, ⟨fun pos' => f ⟨e, pos'⟩, fun pos' => hf ⟨e, pos'⟩⟩⟩ :=
+        fun e => ih e (fun pos' => f ⟨e, pos'⟩) (fun pos' => hf ⟨e, pos'⟩)
+      simp only [polyFreeMFromShape, polyFreeM_to_polyFreeMPolyEval,
+        polyFreeMToShape, polyFreeMLeafData]
+      simp only [polyFreeM_to_polyFreeMPolyEval] at ih_applied
+      have hfst := polyFreeMFromShape_toShape A P
+        (PolyFix.mk y (Sum.inr p) children) (fun pos => ⟨f pos, hf pos⟩)
+      simp only [polyFreeMFromShape, polyFreeMToShape] at hfst
+      apply Sigma.ext hfst
+      dsimp only []
+      refine @subtype_fun_heq' (PolyFreeMShape P y) A.left
+        (PolyFreeMLeafPos P)
+        (fun shape g => ∀ pos, A.hom (g pos) = PolyFreeMLeafFiber P shape pos)
+        _ _ hfst _ _ ?_
+      intro ⟨e, pos_inner⟩
+      simp only [PolyFreeMLeafPos]
+      -- Use sigma_subtype_fun_app_eq' to extract function value equality from ih_applied
+      have hdata_e := sigma_subtype_fun_app_eq' _ _ (ih_applied e) pos_inner
+      simp only at hdata_e
+      rw [hdata_e]
+      -- Now prove f ⟨e, cast ... pos_inner⟩ = f (cast ... ⟨e, pos_inner⟩)
+      -- Use sigma_cast_eq_mk to decompose the sigma cast
+      have hcast_decompose :
+          cast (congrArg (PolyFreeMLeafPos P) hfst) ⟨e, pos_inner⟩ =
+          ⟨e, cast (congrArg (PolyFreeMLeafPos P)
+            (congrArg Sigma.fst (ih_applied e))) pos_inner⟩ := by
+        simp only [PolyFreeMLeafPos]
+        exact sigma_cast_eq_mk (fun e' => congrArg (PolyFreeMLeafPos P)
+          (congrArg Sigma.fst (ih_applied e')))
+      rw [hcast_decompose]
+
+/--
+The bijection between free monad and polynomial evaluation.
+
+The forward direction extracts the tree shape and leaf data.
+The backward direction reconstructs the tree from shape and leaf data.
+
+The left inverse is proven via `polyFreeM_roundtrip`.
+The right inverse is proven via `polyFreeMPolyEval_roundtrip`.
+-/
+def polyFreeMEquivPolyEval (A : Over X) (P : PolyEndo X) (x : X) :
+    PolyFreeM A P x ≃ PolyFreeMPolyEval A P x where
+  toFun := polyFreeM_to_polyFreeMPolyEval A P
+  invFun := polyFreeMPolyEval_to_polyFreeM A P
+  left_inv t := polyFreeM_roundtrip A P t
+  right_inv := by
+    intro ⟨shape, ⟨f, hf⟩⟩
+    exact polyFreeMPolyEval_roundtrip A P shape f hf
+
 end FreeMonadCofreeComonad
 
 end GebLean

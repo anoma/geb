@@ -162,10 +162,57 @@ Comonad structure on PolyCofreeM:
 - **polyCofreeExtract** - Extracts the root annotation
 - **polyCofreeExtend** - Recomputes annotations via a function on subtrees
 
+### Polynomial Representation of Free Monad (Completed)
+
+The free monad functor `A ↦ PolyFreeM A P` is itself a polynomial functor on
+`Over X`. Implemented as:
+
+1. **PolyFreeMShape P x** - Tree shapes as `PolyFreeM (overTerminal X) P x`
+2. **PolyFreeMLeafPos P shape** - Leaf positions as directions in each shape
+3. **PolyFreeMLeafFiber P shape pos** - Fiber at each leaf position
+4. **PolyFreeMPolyEval A P x** - Sigma type of shape and leaf data function
+5. **polyFreeM_to_polyFreeMPolyEval** - Forward direction: extract shape and
+   leaf data
+6. **polyFreeMPolyEval_to_polyFreeM** - Backward direction: reconstruct tree
+7. **polyFreeM_roundtrip** - Left inverse (start from tree)
+8. **polyFreeMPolyEval_roundtrip** - Right inverse (start from polynomial eval)
+9. **polyFreeMEquivPolyEval** - The full equivalence
+
+The proofs use helper lemmas for working with dependent types:
+- `sigma_subtype_fun_app_eq` - Extract function values from sigma equalities
+- `sigma_cast_eq_mk` - Decompose sigma casts into component casts
+- `subtype_fun_heq'` - HEq of subtypes of function types
+
+## In Progress
+
+### Polynomial Representation of Cofree Comonad
+
+The cofree comonad functor `A ↦ PolyCofreeM A P` should similarly be shown to
+be polynomial on `Over X`:
+
+1. **Positions** = stream shapes: `PolyCofreeM (overTerminal X) P x`
+2. **Directions** = annotation positions in each shape
+3. **Proof of correctness**: equivalence between polynomial evaluation and
+   PolyCofreeM
+
+### Adjunctions
+
+1. **Free ⊣ Forget** for algebras:
+   - Free: `Over X → Alg(P)` sends A to the free P-algebra on A
+   - Forget: `Alg(P) → Over X` extracts the carrier
+   - Bijection: `Hom_Alg(Free(A), α) ≅ Hom_Over(A, Forget(α))`
+   - The bijection sends f to its restriction to leaves, with inverse
+     given by the fold
+
+2. **Forget ⊣ Cofree** for coalgebras:
+   - Cofree: `Over X → Coalg(P)` sends A to the cofree P-coalgebra on A
+   - Forget: `Coalg(P) → Over X` extracts the carrier
+   - Bijection: `Hom_Over(Forget(β), A) ≅ Hom_Coalg(β, Cofree(A))`
+   - The bijection sends f to the anamorphism computing annotations from
+     f at each step
+
 ## Future Directions
 
-- Free ⊣ Forget adjunction for algebras
-- Forget ⊣ Cofree adjunction for coalgebras
 - Lambek's Lemma: show that the structure map is an isomorphism for
   initial algebras and terminal coalgebras
 - Connection to QPF (quotients of polynomial functors)

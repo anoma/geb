@@ -267,6 +267,142 @@ lemma sigma_heq_of_param_eq {I : Type*} {A : I → Type*} {B : (i : I) → A i �
   cases hb
   rfl
 
+/--
+Sigma equality for subtypes of function types where the domain depends on the
+first component. Given equality of indices and pointwise equality of function
+values (with appropriate casting), we get equality of the full sigma-subtype
+structure.
+-/
+lemma sigma_subtype_fun_eq {I : Type*} {A : Type*}
+    {F : I → Type*}
+    {P : (i : I) → (F i → A) → Prop}
+    {i1 i2 : I} (hi : i1 = i2)
+    {f1 : F i1 → A} {f2 : F i2 → A}
+    (hP1 : P i1 f1) (hP2 : P i2 f2)
+    (hf : ∀ p : F i1, f1 p = f2 (cast (congrArg F hi) p)) :
+    (⟨i1, ⟨f1, hP1⟩⟩ : Σ i, { f : F i → A // P i f }) =
+    ⟨i2, ⟨f2, hP2⟩⟩ := by
+  cases hi
+  simp only [cast_eq] at hf
+  congr 1
+  exact Subtype.ext (funext hf)
+
+/--
+HEq of subtypes of function types where the domain depends on an index.
+Given equality of indices and pointwise equality of function values
+(with appropriate casting), we get HEq of the subtypes.
+-/
+lemma subtype_fun_heq {I : Type*} {A : Type*}
+    {F : I → Type*}
+    {P : (i : I) → (F i → A) → Prop}
+    {i1 i2 : I} (hi : i1 = i2)
+    {f1 : F i1 → A} {f2 : F i2 → A}
+    (hP1 : P i1 f1) (hP2 : P i2 f2)
+    (hf : ∀ p : F i1, f1 p = f2 (cast (congrArg F hi) p)) :
+    (⟨f1, hP1⟩ : { f : F i1 → A // P i1 f }) ≍
+    (⟨f2, hP2⟩ : { f : F i2 → A // P i2 f }) := by
+  cases hi
+  simp only [cast_eq] at hf
+  exact heq_of_eq (Subtype.ext (funext hf))
+
+/--
+Variant of `subtype_fun_heq` that takes subtypes as explicit arguments.
+-/
+lemma subtype_fun_heq' {I : Type*} {A : Type*}
+    {F : I → Type*}
+    {P : (i : I) → (F i → A) → Prop}
+    {i1 i2 : I} (hi : i1 = i2)
+    (s1 : { f : F i1 → A // P i1 f })
+    (s2 : { f : F i2 → A // P i2 f })
+    (hf : ∀ p : F i1, s1.val p = s2.val (cast (congrArg F hi) p)) :
+    s1 ≍ s2 := by
+  cases hi
+  simp only [cast_eq] at hf
+  exact heq_of_eq (Subtype.ext (funext hf))
+
+/--
+For sigma types indexed by the same type I, when we have an equality of the
+fiber families (F = G), casting a sigma value preserves the first component.
+-/
+lemma sigma_cast_fst.{u, v} {I : Type u} {F : I → Type v}
+    {G : I → Type v}
+    (hFG : F = G)
+    (s : Σ i, F i) :
+    (cast (congrArg Sigma hFG) s).fst = s.fst := by
+  cases hFG
+  rfl
+
+/--
+For sigma types over the same index type, when we have pointwise equality of
+families (F i = G i for all i), a sigma value ⟨i, x⟩ casts to ⟨i, cast ... x⟩.
+-/
+lemma sigma_cast_eq_mk.{u, v} {I : Type u} {F : I → Type v}
+    {G : I → Type v}
+    (hFG : ∀ i, F i = G i)
+    {i : I} {x : F i} :
+    cast (congrArg Sigma (funext hFG)) ⟨i, x⟩ = ⟨i, cast (hFG i) x⟩ := by
+  cases (funext hFG : F = G)
+  simp only [cast_eq]
+
+/--
+When the sigma type depends on an outer index, casting along an equality of
+indices preserves the first component of the sigma.
+-/
+lemma sigma_cast_fst_of_outer {I : Type*} {S : I → Type*}
+    {F : (i : I) → S i → Type*}
+    {i1 i2 : I} (hi : i1 = i2)
+    {s : S i1} {x : F i1 s} :
+    (cast (congrArg (fun i => Σ s : S i, F i s) hi) ⟨s, x⟩).fst ≍ s := by
+  cases hi
+  rfl
+
+/--
+Heterogeneous equality version of sigma cast equality: when casting a sigma
+along an equality of indices, the components are HEq to the originals.
+-/
+lemma sigma_cast_snd_heq {I : Type*} {S : I → Type*}
+    {F : (i : I) → S i → Type*}
+    {i1 i2 : I} (hi : i1 = i2)
+    {s : S i1} {x : F i1 s} :
+    (cast (congrArg (fun i => Σ s : S i, F i s) hi) ⟨s, x⟩).snd ≍ x := by
+  cases hi
+  rfl
+
+/--
+Given equality of sigmas where snd is a subtype of a function type, extract
+equality of function values at corresponding points. The function domain depends
+on the first component.
+-/
+lemma sigma_subtype_fun_app_eq {I : Type*} {A : Type*}
+    {F : I → Type*}
+    {P : (i : I) → (F i → A) → Prop}
+    {i1 i2 : I}
+    {f1 : F i1 → A} {hP1 : P i1 f1}
+    {f2 : F i2 → A} {hP2 : P i2 f2}
+    (heq : (⟨i1, ⟨f1, hP1⟩⟩ : Σ i, { f : F i → A // P i f }) =
+           ⟨i2, ⟨f2, hP2⟩⟩)
+    (x : F i1) :
+    f1 x = f2 (cast (congrArg F (congrArg Sigma.fst heq)) x) := by
+  have hfst : i1 = i2 := congrArg Sigma.fst heq
+  cases hfst
+  simp only [cast_eq]
+  simp only [Sigma.mk.injEq] at heq
+  have hsnd := eq_of_heq heq.2
+  exact congrFun (congrArg Subtype.val hsnd) x
+
+/--
+Variant of sigma_subtype_fun_app_eq that takes sigma values directly.
+-/
+lemma sigma_subtype_fun_app_eq' {I : Type*} {A : Type*}
+    {F : I → Type*}
+    {P : (i : I) → (F i → A) → Prop}
+    (s1 s2 : Σ i, { f : F i → A // P i f })
+    (heq : s1 = s2)
+    (x : F s1.fst) :
+    s1.snd.val x = s2.snd.val (cast (congrArg F (congrArg Sigma.fst heq)) x) := by
+  cases heq
+  rfl
+
 end GebLean
 
 /--
