@@ -1,6 +1,6 @@
 # Bicategorical Structure Under the Adjunction
 
-## Status: Research Complete - Analysis Provided
+## Status: Active Research - Currying Approach Under Investigation
 
 ## Context
 
@@ -194,9 +194,90 @@ In a Cat-valued setting:
 - Stephen Lack, "A 2-Categories Companion" (IMA notes)
 - arXiv:2002.06055, "2-Dimensional Categories"
 
+## New Insight: Cat-Valued Copresheaves via Currying
+
+### The Key Observation
+
+Since we have the adjunction L ⊣ Φ : Cat ⇆ [J, Type], we can construct Cat-valued
+copresheaves by composing with L:
+
+1. A [J, Type]-valued copresheaf on C is: F : C → [J, Type]
+2. Post-composing with L gives: L ∘ F : C → Cat (a Cat-valued copresheaf)
+
+### The Currying Equivalence
+
+By the exponential law in Cat:
+
+```text
+[C, [J, Type]] ≅ [C × J, Type]
+```
+
+A copresheaf on C valued in [J, Type] is equivalent to a copresheaf on C × J
+valued in Type.
+
+### Combined Construction
+
+Cat-valued copresheaves on C can be obtained from Type-valued copresheaves on
+C × J:
+
+1. Start with G : C × J → Type (copresheaf on the product)
+2. Curry to get G̃ : C → [J, Type]
+3. Post-compose with L to get L ∘ G̃ : C → Cat
+
+### Application to 2-Categorical Embedding
+
+For the 2-categorical embedding Φ' : Cat → [J, Cat], we could construct:
+
+1. Define Ψ : Cat → [J, [J, Type]] ≅ [J × J, Type]
+2. Apply L pointwise: Φ' = L_* ∘ Ψ : Cat → [J, Cat]
+
+where L_* denotes post-composition with L.
+
+### What Ψ Should Be
+
+The question becomes: what copresheaf on J × J captures the 2-categorical structure?
+
+For a category C, we need Ψ(C) : J × J → Type such that:
+
+- Ψ(C)(Obj, Obj), Ψ(C)(Obj, Mor), etc. encode the data
+- After applying L pointwise, we get Φ'(C) : J → Cat with the right properties
+
+One approach: Ψ(C)(j₁, j₂) could encode "morphisms in C from j₁-data to j₂-data"
+in some sense.
+
+### Why This Helps
+
+The product J × J has 16 objects (pairs from {Obj, Mor, Id, Comp}²). This provides
+enough room to encode:
+
+- The basic category structure (diagonal entries)
+- The "hom" structure needed for 2-cells (off-diagonal entries)
+
+### Concrete Proposal
+
+Define Ψ(C) : J × J → Type by:
+
+- Ψ(C)(Obj, Obj) = Obj_C (objects)
+- Ψ(C)(Mor, Mor) = Mor_C (morphisms)
+- Ψ(C)(Obj, Mor) = Mor_C (morphisms viewed as "arrows from objects to morphisms")
+- Other entries encode composition and identity structure
+
+The exact definition requires careful analysis to ensure L_* ∘ Ψ produces the
+correct Cat-valued structure.
+
+### Verification Needed
+
+1. Does this construction give the right Φ'(C)(j) for each j ∈ J?
+2. Do functors F : C → D induce natural transformations Φ'(C) → Φ'(D)?
+3. Do natural transformations α : F ⇒ G induce modifications?
+4. Is the construction compatible with the existing L ⊣ Φ adjunction?
+
 ## Future Work
 
 1. Define Cat-valued copresheaves on CategoryJudgments
 2. Extend the adjunction to a 2-adjunction L' |- Phi'
 3. Verify that modifications correspond to natural transformations
 4. Investigate whether the reflectivity extends to the 2-categorical level
+5. Work out the explicit form of Ψ : Cat → [J × J, Type]
+6. Verify the currying/L-composition construction produces the correct structure
+7. Determine if [J × J, Type] is the natural home for understanding 2-cells
