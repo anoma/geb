@@ -5282,7 +5282,7 @@ theorem LaxNatTransData.toFunctor_map_base {X Y : Grothendieck G} (f : X ⟶ Y) 
 /--
 The identity lax natural transformation.
 -/
-def LaxNatTransData.id (G : C ⥤ Cat.{vC, uC}) : LaxNatTransData G G where
+def LaxNatTransData.id (G : C ⥤ Cat.{vF, uF}) : LaxNatTransData G G where
   app c := 𝟭 (G.obj c)
   laxApp f x := eqToHom (by simp only [Functor.id_obj])
   laxNat f φ := by simp
@@ -5296,7 +5296,7 @@ Given `α : G ⟹ H` and `β : H ⟹ K`, their composition `α ⋙ β : G ⟹ K`
 - Component functors: `(α ⋙ β).app c = α.app c ⋙ β.app c`
 - Laxity: `β.laxApp f (α.app c x) ≫ β.app c'.map (α.laxApp f x)`
 -/
-def LaxNatTransData.comp {G H K : C ⥤ Cat.{vC, uC}}
+def LaxNatTransData.comp {G H K : C ⥤ Cat.{vF, uF}}
     (α : LaxNatTransData G H) (β : LaxNatTransData H K) :
     LaxNatTransData G K where
   app c := α.app c ⋙ β.app c
@@ -5330,6 +5330,444 @@ def LaxNatTransData.comp {G H K : C ⥤ Cat.{vC, uC}}
     simp only [← Category.assoc]
     congr 1
     exact hβ.symm
+
+/-!
+### Whiskering Operations for Lax Natural Transformations
+
+These operations compose lax natural transformations with functors, analogous
+to `whiskerLeft` and `whiskerRight` for ordinary natural transformations.
+-/
+
+variable {D : Type uC} [Category.{vC} D]
+
+/--
+Left whiskering: precompose a lax natural transformation with a functor.
+
+Given `H : D ⥤ C` and `α : LaxNatTransData G F` where `G F : C ⥤ Cat`,
+produces `LaxNatTransData (H ⋙ G) (H ⋙ F)`.
+
+The component at `d : D` is `α.app (H.obj d)`, and the laxity morphism for
+`f : d ⟶ d'` is `α.laxApp (H.map f)`.
+-/
+def LaxNatTransData.whiskerLeft (H : D ⥤ C) (α : LaxNatTransData G F) :
+    LaxNatTransData (H ⋙ G) (H ⋙ F) where
+  app d := α.app (H.obj d)
+  laxApp f x := α.laxApp (H.map f) x
+  laxNat {d d'} f {x y} φ := α.laxNat (H.map f) φ
+  laxId d x := by
+    simp only [Functor.comp_obj, Functor.comp_map]
+    convert α.laxId (H.obj d) x using 2 <;> simp [H.map_id]
+  laxComp {d d' d''} f g x := by
+    simp only [Functor.comp_obj, Functor.comp_map]
+    have h := α.laxComp (H.map f) (H.map g) x
+    simp only at h ⊢
+    grind
+
+/--
+Left whiskering respects identity lax natural transformations.
+-/
+theorem LaxNatTransData.whiskerLeft_id (H : D ⥤ C) :
+    (LaxNatTransData.id G).whiskerLeft H = LaxNatTransData.id (H ⋙ G) := by
+  simp only [whiskerLeft, LaxNatTransData.id]
+  congr
+
+/--
+Left whiskering respects composition of lax natural transformations.
+-/
+theorem LaxNatTransData.whiskerLeft_comp (H : D ⥤ C)
+    {K : C ⥤ Cat.{vF, uF}}
+    (α : LaxNatTransData G F) (β : LaxNatTransData F K) :
+    (α.comp β).whiskerLeft H = (α.whiskerLeft H).comp (β.whiskerLeft H) := rfl
+
+/-!
+### Grothendieck Functor from Lax Natural Transformation to Constant Target
+
+Given a lax natural transformation `α : LaxNatTransData G ((Functor.const C).obj D)` where
+the target is a constant functor at `D : Cat`, and a functor `H : ↑D ⥤ Cat`, we construct
+a functor `C ⥤ Cat` whose fiber at `c` is `Grothendieck (α.app c ⋙ H)`.
+
+The construction uses:
+- `α.laxApp f x` to transport fiber elements along `f : c ⟶ c'`
+- `α.laxNat f φ` for naturality of the transition functor
+- `α.laxId` and `α.laxComp` for the functor identity and composition laws
+-/
+
+variable (D : Cat.{vF, uF})
+variable (α : LaxNatTransData G ((Functor.const C).obj D))
+variable (H : ↑D ⥤ Cat.{vF, uF})
+
+/--
+Applying `eqToHom h : A ⥤ B` in `Cat` to an object `x : A` gives heterogeneous
+equality with the original object. This uses `cases` to eliminate the equality.
+-/
+lemma eqToHom_obj_heq (A B : Cat) (h : A = B) (x : A.α) :
+    HEq ((eqToHom h).obj x) x := by
+  cases h
+  rfl
+
+/--
+For a functor `eqToHom h : C ⥤ D` in `Cat` where `h : C = D`, applying it to
+a morphism gives something HEq to the original morphism.
+-/
+lemma eqToHom_map_heq' {C D : Cat} (h : C = D) {x y : C} (f : x ⟶ y) :
+    (eqToHom h).map f ≍ f := by
+  subst h
+  rfl
+
+/--
+Version of `eqToHom_map_heq'` where the functor is only propositionally equal
+to `eqToHom`.
+-/
+lemma functor_map_heq_of_eq_eqToHom' {C D : Cat} (h : C = D)
+    (G : C ⥤ D) (hG : G = eqToHom h) {x y : C} (f : x ⟶ y) :
+    G.map f ≍ f := by
+  subst hG
+  exact eqToHom_map_heq' h f
+
+/--
+When `G.map (𝟙 c) = 𝟭 (G.obj c)` (via functor identity law and Cat.id_eq_id),
+the `.map` of `G.map (𝟙 c)` is HEq to identity on morphisms.
+-/
+lemma functor_map_id_heq {C : Type*} [Category C] (G : C ⥤ Cat) (c : C)
+    {X Y : (G.obj c).α} (f : X ⟶ Y) :
+    HEq ((G.map (𝟙 c)).map f) f := by
+  have hG : G.map (𝟙 c) = eqToHom rfl := by
+    rw [G.map_id, Cat.id_eq_id]
+    rfl
+  exact functor_map_heq_of_eq_eqToHom' rfl (G.map (𝟙 c)) hG f
+
+/--
+When `G.map (f ≫ g) = G.map f ⋙ G.map g` (functor composition law), the `.map`
+of `G.map (f ≫ g)` on a morphism `h` is HEq to composing the maps.
+-/
+lemma functor_map_comp_heq {C : Type*} [Category C] (G : C ⥤ Cat) {c c' c'' : C}
+    (f : c ⟶ c') (g : c' ⟶ c'') {X Y : (G.obj c).α} (h : X ⟶ Y) :
+    HEq ((G.map (f ≫ g)).map h) ((G.map g).map ((G.map f).map h)) := by
+  rw [G.map_comp]
+  rfl
+
+/--
+When two functors `F G : C ⥤ D` are equal, their maps on a morphism are HEq.
+-/
+lemma functor_eq_map_heq {C : Type*} [Category C] {D : Type*} [Category D]
+    {F G : C ⥤ D} (h : F = G) {X Y : C} (f : X ⟶ Y) :
+    HEq (F.map f) (G.map f) := by
+  cases h
+  rfl
+
+/--
+Lifting HEq through function application.
+
+If `f : α → β` and `g : α' → β'` are HEq (via source/target equalities), then
+`f x` and `g y` are HEq when x and y are HEq.
+-/
+lemma function_app_heq.{uα, uβ} {α α' : Type uα} {β β' : Type uβ}
+    {f : α → β} {g : α' → β'}
+    (hαα' : α = α') (hββ' : β = β') (hfg : HEq f g) {x : α} {y : α'} (hxy : HEq x y) :
+    HEq (f x) (g y) := by
+  cases hαα'
+  cases hββ'
+  cases hfg
+  cases hxy
+  rfl
+
+/--
+Lifting HEq through functor map.
+
+If morphisms `f` and `g` are HEq and the domain/codomain equalities hold,
+applying `F.map` to both preserves HEq.
+-/
+lemma functor_map_arg_heq {C D : Type*} [Category C] [Category D]
+    (F : C ⥤ D) {X Y X' Y' : C} {f : X ⟶ Y} {g : X' ⟶ Y'}
+    (hX : X = X') (hY : Y = Y') (hfg : HEq f g) :
+    HEq (F.map f) (F.map g) := by
+  cases hX
+  cases hY
+  cases hfg
+  rfl
+
+/--
+Simplified lax morphism for constant target.
+
+When `F = (Functor.const C).obj D`, we have `F.map f = 𝟙 D`, so
+`α.laxApp f x : (α.app c).obj x ⟶ (α.app c').obj ((G.map f).obj x)` in `↑D`.
+-/
+abbrev LaxNatTransData.laxAppConst {c c' : C} (f : c ⟶ c') (x : G.obj c) :
+    (α.app c).obj x ⟶ (α.app c').obj ((G.map f).obj x) :=
+  α.laxApp f x
+
+/--
+Object map for the Grothendieck transition functor.
+Maps `(x, e) : Grothendieck (α.app c ⋙ H)` to `Grothendieck (α.app c' ⋙ H)`.
+-/
+def LaxNatTransData.grothendieckTransitionObj {c c' : C} (f : c ⟶ c')
+    (X : Grothendieck (α.app c ⋙ H)) : Grothendieck (α.app c' ⋙ H) :=
+  ⟨(G.map f).obj X.base, (H.map (α.laxAppConst D f X.base)).obj X.fiber⟩
+
+/--
+Fiber coherence equation for the Grothendieck transition morphism.
+
+Uses the lax naturality condition to show that applying the transition morphism
+and then the base map is equal to applying the base map and then the transition.
+-/
+theorem LaxNatTransData.grothendieckTransition_fiber_eq {c c' : C} (f : c ⟶ c')
+    {X Y : Grothendieck (α.app c ⋙ H)} (g : X ⟶ Y) :
+    ((α.app c' ⋙ H).map ((G.map f).map g.base)).obj
+      ((H.map (α.laxAppConst D f X.base)).obj X.fiber) =
+    (H.map (α.laxAppConst D f Y.base)).obj
+      (((α.app c ⋙ H).map g.base).obj X.fiber) := by
+  simp only [Functor.comp_obj, Functor.comp_map]
+  have laxNat := α.laxNat f g.base
+  simp only [Functor.const_obj_obj, Functor.const_obj_map, Cat.id_eq_id,
+    Functor.id_map] at laxNat
+  have h := congrArg (H.map ·) laxNat
+  simp only [H.map_comp] at h
+  have h' := congrFun (congrArg (·.obj) h) X.fiber
+  exact h'.symm
+
+/--
+Morphism map for the Grothendieck transition functor.
+-/
+def LaxNatTransData.grothendieckTransitionHom {c c' : C} (f : c ⟶ c')
+    {X Y : Grothendieck (α.app c ⋙ H)} (g : X ⟶ Y) :
+    α.grothendieckTransitionObj D H f X ⟶ α.grothendieckTransitionObj D H f Y where
+  base := (G.map f).map g.base
+  fiber :=
+    eqToHom (α.grothendieckTransition_fiber_eq D H f g) ≫
+    (H.map (α.laxAppConst D f Y.base)).map g.fiber
+
+/--
+The transition functor for the Grothendieck construction along `f : c ⟶ c'`.
+-/
+def LaxNatTransData.grothendieckTransition {c c' : C} (f : c ⟶ c') :
+    Grothendieck (α.app c ⋙ H) ⥤ Grothendieck (α.app c' ⋙ H) where
+  obj := α.grothendieckTransitionObj D H f
+  map := α.grothendieckTransitionHom D H f
+  map_id X := by
+    refine Grothendieck.ext _ _ ?_ ?_
+    · simp only [grothendieckTransitionHom, grothendieckTransitionObj, Grothendieck.id_base,
+        Functor.map_id]
+    · simp only [grothendieckTransitionHom, grothendieckTransitionObj, Grothendieck.id_fiber,
+        Functor.comp_obj, eqToHom_map, eqToHom_trans]
+  map_comp {X Y Z} g h := by
+    refine Grothendieck.ext _ _ ?_ ?_
+    · simp only [grothendieckTransitionHom, grothendieckTransitionObj, Grothendieck.comp_base,
+        Functor.map_comp]
+    · simp only [grothendieckTransitionHom, grothendieckTransitionObj,
+          Grothendieck.comp_fiber, Functor.comp_obj, Functor.comp_map,
+          Functor.map_comp, eqToHom_map, eqToHom_trans_assoc,
+          Category.assoc, laxAppConst]
+      -- Use lax naturality to relate the two paths for g.fiber
+      have laxNat := α.laxNat f h.base
+      simp only [Functor.const_obj_obj, Functor.const_obj_map, Cat.id_eq_id] at laxNat
+      -- The two functor compositions are equal by lax naturality
+      -- In Cat, ⋙ is the same as ≫ (composition of morphisms)
+      have hFunEq : H.map ((α.app c).map h.base) ⋙ H.map (α.laxApp f Z.base) =
+                    H.map (α.laxApp f Y.base) ⋙ H.map ((α.app c').map ((G.map f).map h.base)) := by
+        change H.map ((α.app c).map h.base) ≫ H.map (α.laxApp f Z.base) =
+               H.map (α.laxApp f Y.base) ≫ H.map ((α.app c').map ((G.map f).map h.base))
+        rw [← H.map_comp, ← H.map_comp]
+        -- laxNat has (𝟭 ↑D).map which is id on morphisms
+        simp only [Functor.id_map] at laxNat
+        exact congrArg H.map laxNat
+      -- Use naturality of eqToHom hFunEq to relate the two functor maps
+      have hNat := (eqToHom hFunEq).naturality g.fiber
+      simp only [eqToHom_app, Functor.comp_obj, Functor.comp_map] at hNat
+      -- hNat: F2.map (F1.map g.fiber) ≫ eqToHom _ = eqToHom _ ≫ G2.map (G1.map g.fiber)
+      -- hNat relates the two paths for g.fiber modulo eqToHom
+      -- Insert identity as (... ≫ 𝟙) then rewrite 𝟙 to eqToHom ≫ eqToHom.symm
+      rw [← Category.comp_id ((H.map (α.laxApp f Z.base)).map
+            ((H.map ((α.app c).map h.base)).map g.fiber))]
+      -- The object equality at codomain of g.fiber
+      -- (F ⋙ G).obj X is defeq to G.obj (F.obj X)
+      have hObjEq :
+          (H.map (α.laxApp f Z.base)).obj ((H.map ((α.app c).map h.base)).obj Y.fiber) =
+          (H.map ((α.app c').map ((G.map f).map h.base))).obj
+            ((H.map (α.laxApp f Y.base)).obj Y.fiber) := by
+        simp only [← Functor.comp_obj]
+        exact Functor.congr_obj hFunEq Y.fiber
+      rw [show (𝟙 _ : _ ⟶ (H.map (α.laxApp f Z.base)).obj
+            ((H.map ((α.app c).map h.base)).obj Y.fiber)) =
+          eqToHom hObjEq ≫ eqToHom hObjEq.symm
+          by simp only [eqToHom_trans, eqToHom_refl]]
+      simp only [Category.assoc]
+      -- Now match hNat's eqToHom with our hObjEq
+      -- hNat: F.map ≫ eqToHom(congr_obj) = eqToHom(congr_obj) ≫ G.map
+      -- We need to show the eqToHom proofs are equal
+      -- Domain equality for the domain of g.fiber
+      have hObjEq_dom :
+          (H.map (α.laxApp f Z.base)).obj
+            ((H.map ((α.app c).map h.base)).obj (((α.app c ⋙ H).map g.base).obj X.fiber)) =
+          (H.map ((α.app c').map ((G.map f).map h.base))).obj
+            ((H.map (α.laxApp f Y.base)).obj (((α.app c ⋙ H).map g.base).obj X.fiber)) := by
+        simp only [← Functor.comp_obj]
+        exact Functor.congr_obj hFunEq (((α.app c ⋙ H).map g.base).obj X.fiber)
+      have hNat' : (H.map (α.laxApp f Z.base)).map ((H.map ((α.app c).map h.base)).map g.fiber) ≫
+          eqToHom hObjEq =
+          eqToHom hObjEq_dom ≫
+          (H.map ((α.app c').map ((G.map f).map h.base))).map
+            ((H.map (α.laxApp f Y.base)).map g.fiber) := by
+        simp only [← Functor.comp_obj, ← Functor.comp_map]
+        exact hNat
+      -- Reassociate to match hNat' pattern
+      rw [← Category.assoc ((H.map (α.laxApp f Z.base)).map
+            ((H.map ((α.app c).map h.base)).map g.fiber)) (eqToHom hObjEq)]
+      rw [hNat']
+      -- Simplify eqToHom chains
+      simp only [Category.assoc, eqToHom_trans_assoc]
+
+/--
+Object equality for `grothendieckFunctor.map_comp`.
+
+The transition functor for a composite morphism `f ≫ g` agrees on objects with
+the composition of individual transition functors.
+-/
+lemma LaxNatTransData.grothendieckFunctor_map_comp_obj {c c' c'' : C}
+    (f : c ⟶ c') (g : c' ⟶ c'')
+    (X : Grothendieck (α.app c ⋙ H)) :
+    (α.grothendieckTransition D H (f ≫ g)).obj X =
+    (α.grothendieckTransition D H g).obj
+      ((α.grothendieckTransition D H f).obj X) := by
+  simp only [grothendieckTransition, grothendieckTransitionObj]
+  rw [Grothendieck.mk.injEq]
+  constructor
+  · simp only [G.map_comp]; rfl
+  · simp only [laxAppConst]
+    have h := α.laxComp f g X.base
+    simp only [Functor.const_obj_obj, Functor.const_obj_map, Cat.id_eq_id] at h
+    rw [h, H.map_comp, H.map_comp, H.map_comp, eqToHom_map, eqToHom_map]
+    simp only [Functor.id_map, Functor.comp_obj]
+    apply HEq.trans (eqToHom_obj_heq _ _ _ _)
+    apply heq_of_eq
+    rfl
+
+/--
+Morphism mapping equality for `grothendieckFunctor.map_comp`.
+
+The transition functor for a composite morphism `f ≫ g` agrees on morphisms
+(up to eqToHom conjugation) with the composition of individual transition
+functors.
+-/
+lemma LaxNatTransData.grothendieckFunctor_map_comp_map {c c' c'' : C}
+    (f : c ⟶ c') (g : c' ⟶ c'')
+    (X Y : Grothendieck (α.app c ⋙ H)) (h : X ⟶ Y) :
+    (α.grothendieckTransition D H (f ≫ g)).map h =
+    eqToHom (α.grothendieckFunctor_map_comp_obj D H f g X) ≫
+    (α.grothendieckTransition D H f ⋙ α.grothendieckTransition D H g).map h ≫
+    eqToHom (α.grothendieckFunctor_map_comp_obj D H f g Y).symm := by
+  simp only [grothendieckTransition, grothendieckTransitionHom, Functor.comp_map]
+  refine Grothendieck.ext _ _ ?_ ?_
+  · simp only [Grothendieck.comp_base, Grothendieck.base_eqToHom]
+    apply eq_of_heq
+    apply HEq.trans (functor_map_comp_heq G f g h.base)
+    apply HEq.symm
+    apply HEq.trans (eqToHom_comp_heq _ _)
+    exact comp_eqToHom_heq _ _
+  · simp only [laxAppConst, Grothendieck.comp_fiber, grothendieckTransitionObj,
+        Functor.comp_obj, Functor.comp_map, Functor.map_comp, eqToHom_map,
+        eqToHom_trans_assoc, Category.assoc]
+    have laxComp := α.laxComp f g Y.base
+    simp only [Functor.const_obj_obj, Functor.const_obj_map, Cat.id_eq_id,
+        Functor.id_map] at laxComp
+    have hFunEq : H.map (α.laxApp (f ≫ g) Y.base) =
+        H.map (eqToHom _ ≫ α.laxApp f Y.base ≫
+          α.laxApp g ((G.map f).obj Y.base) ≫ eqToHom _) :=
+      congrArg H.map laxComp
+    simp only [H.map_comp, eqToHom_map] at hFunEq
+    simp only [Grothendieck.comp_base,
+        Grothendieck.fiber_eqToHom,
+        Functor.comp_obj, Functor.comp_map,
+        eqToHom_map, eqToHom_trans_assoc]
+    apply eq_of_heq
+    apply HEq.trans (eqToHom_comp_heq _ _)
+    apply HEq.symm
+    apply HEq.trans (eqToHom_comp_heq _ _)
+    apply HEq.trans (comp_eqToHom_heq _ _)
+    apply HEq.symm
+    -- Goal: LHS ≍ RHS where
+    -- LHS = (H.map (α.laxApp (f ≫ g) Y.base)).map h.fiber
+    -- RHS = outer.map (g_fun.map (f_fun.map h.fiber))
+    -- with outer = H.map ((α.app c'').map (eqToHom _).base)
+    --
+    -- Use hFunEq to expand LHS
+    apply HEq.trans (functor_eq_map_heq hFunEq h.fiber)
+    -- Now: (eqToHom ≫ Hf ≫ Hg ≫ eqToHom).map h.fiber ≍ outer.map (...)
+    simp only [Functor.comp_map]
+    -- Expanded: outer_eq.map (Hg.map (Hf.map (inner_eq.map h.fiber)))
+    -- The inner eqToHom gives (inner_eq.map h.fiber) ≍ h.fiber
+    -- The outer eqToHom gives outer_eq.map x ≍ x
+    -- So LHS ≍ Hg.map (Hf.map h.fiber)
+    apply HEq.trans (eqToHom_map_heq' _ _)
+    -- Now: Hg.map (Hf.map (inner_eq.map h.fiber)) ≍ outer.map (Hg.map (Hf.map h.fiber))
+    -- Show the outers match by showing both reduce to Hg.map (Hf.map h.fiber)
+    -- First, show outer is eqToHom
+    have hOuterIsEqToHom : H.map ((α.app c'').map
+        (Grothendieck.Hom.base
+          (eqToHom (α.grothendieckFunctor_map_comp_obj D H f g Y).symm))) =
+        eqToHom (congrArg (fun x => H.obj ((α.app c'').obj x.base))
+          (α.grothendieckFunctor_map_comp_obj D H f g Y).symm) := by
+      simp only [Grothendieck.base_eqToHom, eqToHom_map]
+    -- Strip the outer eqToHom from RHS
+    apply HEq.symm
+    apply HEq.trans (functor_map_heq_of_eq_eqToHom' _ _ hOuterIsEqToHom _)
+    -- Now both sides are: Hg.map (Hf.map (some form of h.fiber))
+    -- Need to show inner_eq.map h.fiber vs h.fiber lift through Hf and Hg
+    apply HEq.symm
+    -- Goal: Hg.map (Hf.map h.fiber) ≍ Hg.map (Hf.map (eqToHom.map h.fiber))
+    -- Since both must typecheck as morphisms in the same category for Hf.map,
+    -- the eqToHom must be eqToHom rfl, so this is rfl
+    rfl
+
+/--
+The Grothendieck functor for a lax natural transformation `α : G ⟹ᵢₐₓ const D`
+composed with a functor `H : D ⥤ Cat`.
+
+This maps each object `c : C` to the Grothendieck category `Grothendieck (α.app c ⋙ H)`
+and each morphism `f : c ⟶ c'` to the transition functor `grothendieckTransition f`.
+-/
+def LaxNatTransData.grothendieckFunctor : C ⥤ Cat.{vF, uF} where
+  obj c := Cat.of (Grothendieck (α.app c ⋙ H))
+  map f := α.grothendieckTransition D H f
+  map_id c := by
+    simp only [Cat.id_eq_id]
+    apply Functor.ext
+    case h_obj =>
+      intro X
+      simp only [grothendieckTransition, grothendieckTransitionObj, Functor.id_obj]
+      rw [Grothendieck.mk.injEq]
+      refine ⟨?_, ?_⟩
+      · simp only [G.map_id, Cat.id_eq_id, Functor.id_obj]
+      · simp only [laxAppConst]
+        have h := α.laxId c X.base
+        simp only [Functor.const_obj_obj, Functor.const_obj_map, Cat.id_eq_id] at h
+        rw [h, eqToHom_map]
+        exact eqToHom_obj_heq _ _ _ _
+    case h_map =>
+      intro X Y f
+      simp only [grothendieckTransition, grothendieckTransitionHom, Functor.id_map]
+      refine Grothendieck.ext _ _ ?_ ?_
+      · apply eq_of_heq
+        apply HEq.trans (functor_map_id_heq G c f.base)
+        apply HEq.symm
+        simp only [Grothendieck.comp_base, Grothendieck.base_eqToHom]
+        apply HEq.trans (eqToHom_comp_heq _ _)
+        exact comp_eqToHom_heq _ _
+      · simp only [laxAppConst, grothendieckTransitionObj, Functor.comp_obj]
+        have hId := α.laxId c Y.base
+        simp only [Functor.const_obj_obj, Functor.const_obj_map, Cat.id_eq_id] at hId
+        apply eq_of_heq
+        apply HEq.trans (eqToHom_comp_heq _ _)
+        apply HEq.trans (eqToHom_comp_heq _ _)
+        have h1 : HEq ((H.map (α.laxApp (𝟙 c) Y.base)).map f.fiber) f.fiber := by
+          rw [hId, eqToHom_map]
+          exact eqToHom_map_heq' _ _
+        apply HEq.trans h1
+        exact HEq.symm (@Grothendieck.conj_eqToHom_fiber_heq _ _ (α.app c ⋙ H) _ _ _ _ _ _ _)
+  map_comp {c c' c''} f g := by
+    simp only [Cat.comp_eq_comp]
+    apply Functor.ext
+    case h_obj => exact α.grothendieckFunctor_map_comp_obj D H f g
+    case h_map => exact α.grothendieckFunctor_map_comp_map D H f g
 
 end LaxNatTrans
 
@@ -5616,10 +6054,10 @@ call "oplax" here, reflecting the reversal of morphism direction.
 
 section OplaxNatTrans
 
-universe vC uC
+universe vC uC vF uF
 
 variable {C : Type uC} [Category.{vC} C]
-variable (G' F' : Cᵒᵖ' ⥤ Cat.{vC, uC})
+variable (G' F' : Cᵒᵖ' ⥤ Cat.{vF, uF})
 
 /--
 Component functors for an oplax natural transformation between contravariant
@@ -5765,7 +6203,7 @@ An oplax natural transformation consists of:
 These correspond to functors `GrothendieckContra' G' ⥤ GrothendieckContra' F'`
 that are identity on the base category.
 -/
-structure OplaxNatTransData (G' F' : Cᵒᵖ' ⥤ Cat.{vC, uC}) where
+structure OplaxNatTransData (G' F' : Cᵒᵖ' ⥤ Cat.{vF, uF}) where
   /-- Component functors: for each `c`, a functor `G'.obj c ⥤ F'.obj c` -/
   app : OplaxNatTransApp G' F'
   /-- Oplax morphisms: for each `f` and `x'`, a morphism between fibers -/
@@ -5780,7 +6218,7 @@ structure OplaxNatTransData (G' F' : Cᵒᵖ' ⥤ Cat.{vC, uC}) where
 /--
 Identity oplax natural transformation.
 -/
-def OplaxNatTransData.id (G' : Cᵒᵖ' ⥤ Cat.{vC, uC}) : OplaxNatTransData G' G' where
+def OplaxNatTransData.id (G' : Cᵒᵖ' ⥤ Cat.{vF, uF}) : OplaxNatTransData G' G' where
   app c := 𝟭 (G'.obj c)
   oplaxApp f x := eqToHom (by simp only [Functor.id_obj])
   oplaxNat f φ := by simp
@@ -5795,7 +6233,7 @@ Given `α : G' ⟹ H'` and `β : H' ⟹ K'`, their composition `α ⋙ β : G' �
 - Oplax: For `f : c' ⟶ c` and `x : G'.obj c`,
   `(β.app c').map (α.oplaxApp f x) ≫ β.oplaxApp f ((α.app c).obj x)`
 -/
-def OplaxNatTransData.comp {G' H' K' : Cᵒᵖ' ⥤ Cat.{vC, uC}}
+def OplaxNatTransData.comp {G' H' K' : Cᵒᵖ' ⥤ Cat.{vF, uF}}
     (α : OplaxNatTransData G' H') (β : OplaxNatTransData H' K') :
     OplaxNatTransData G' K' where
   app c := α.app c ⋙ β.app c
@@ -5900,6 +6338,48 @@ theorem OplaxNatTransData.toFunctor_map_base (α : OplaxNatTransData G' F')
     (α.toFunctor.map f).base = f.base := by
   unfold OplaxNatTransData.toFunctor
   rfl
+
+variable {D : Type uC} [Category.{vC} D]
+
+/--
+Left whiskering: precompose an oplax natural transformation with a functor.
+
+Given `H : D ⥤ C` and `α : OplaxNatTransData G' F'` where `G' F' : Cᵒᵖ' ⥤ Cat`,
+produces `OplaxNatTransData (H.op' ⋙ G') (H.op' ⋙ F')`.
+
+The component at `d : D` is `α.app (H.obj d)`, and the oplax morphism for
+`f : d ⟶ d'` in `Dᵒᵖ'` is `α.oplaxApp (H.map f)` where `H.map f : H.obj d ⟶ H.obj d'`
+in `Cᵒᵖ'`.
+-/
+def OplaxNatTransData.whiskerLeft (H : D ⥤ C) (α : OplaxNatTransData G' F') :
+    OplaxNatTransData (Functor.op' H ⋙ G') (Functor.op' H ⋙ F') where
+  app d := α.app (H.obj d)
+  oplaxApp f x := α.oplaxApp (H.map f) x
+  oplaxNat {d d'} f {x y} φ := α.oplaxNat (H.map f) φ
+  oplaxId d x := by
+    simp only [Functor.comp_obj, Functor.comp_map, Functor.op']
+    convert α.oplaxId (H.obj d) x using 2 <;> simp [H.map_id]
+  oplaxComp {d d' d''} f g x := by
+    simp only [Functor.comp_obj, Functor.comp_map, Functor.op', functorOp'Obj]
+    have h := α.oplaxComp (H.map f) (H.map g) x
+    simp only at h ⊢
+    grind
+
+/--
+Left whiskering respects identity oplax natural transformations.
+-/
+theorem OplaxNatTransData.whiskerLeft_id (H : D ⥤ C) :
+    (OplaxNatTransData.id G').whiskerLeft H = OplaxNatTransData.id (Functor.op' H ⋙ G') := by
+  simp only [whiskerLeft, OplaxNatTransData.id, Functor.op']
+  congr
+
+/--
+Left whiskering respects composition of oplax natural transformations.
+-/
+theorem OplaxNatTransData.whiskerLeft_comp (H : D ⥤ C)
+    {K' : Cᵒᵖ' ⥤ Cat.{vF, uF}}
+    (α : OplaxNatTransData G' F') (β : OplaxNatTransData F' K') :
+    (α.comp β).whiskerLeft H = (α.whiskerLeft H).comp (β.whiskerLeft H) := rfl
 
 end OplaxNatTrans
 

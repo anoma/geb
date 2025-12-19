@@ -389,6 +389,53 @@ Key insight for category laws:
 - `G.map_comp g.twMorph f.twMorph` (reversed order for opposite category)
 - `cat_disch` handles dependent type issues in fiber morphism proofs
 
+### Lax/Oplax Whiskering Infrastructure (In Progress)
+
+The `fiberFunctorContra` construction derives its functoriality from the lax
+natural transformation structure of `overOpToTwistedArrowLax`. This relationship
+is currently implicit. We are making it explicit by defining general whiskering
+operations on lax/oplax natural transformations.
+
+**Research completed**:
+
+- nLab whiskering and lax natural transformation articles
+- mathlib4's `Whiskering.lean`, `Bicategory/Functor/Lax.lean`, `Grothendieck.lean`
+- Key insight: standard whiskering doesn't compose well with lax transformations
+  in general, but for functors to Cat with constant targets, a specialized
+  construction works
+
+**Planned operations for `LaxNatTransData`**:
+
+1. `LaxNatTransData.whiskerLeft H` - precomposition with `H : D ⥤ C`
+   - Type: `LaxNatTransData G F → LaxNatTransData (H ⋙ G) (H ⋙ F)`
+   - Straightforward composition of components
+
+2. `LaxNatTransData.grothendieckFunctor` - specialized whiskering to constant target
+   - Given: `α : LaxNatTransData G (constFunctor C (Cat.of D))` and `H : D ⥤ Cat`
+   - Produces: `C ⥤ Cat` where fibers are `Grothendieck (α.app b ⋙ H)`
+   - The lax coherence (`laxId`, `laxComp`) provides `map_id`, `map_comp`
+
+3. `LaxNatTransData.grothendieckContraFunctor` - contravariant version
+   - Same but produces `GrothendieckContra'` fibers
+
+**Dual operations for `OplaxNatTransData`**:
+
+1. `OplaxNatTransData.whiskerLeft` - precomposition for oplax
+2. `OplaxNatTransData.grothendieckContraFunctor` - contravariant with oplax coherence
+
+**Universe levels relaxed**:
+
+- `LaxNatTransData` now uses `Cat.{vF, uF}` (separate from base category universes)
+- `OplaxNatTransData` updated to match (uses `Cat.{vF, uF}`)
+
+**Application**: Once complete, `fiberFunctorContra` can be expressed as:
+
+```lean
+fiberFunctorContra C F = overOpToTwistedArrowLax.grothendieckContraFunctor F
+```
+
+making explicit that its functoriality derives from lax coherence.
+
 ## References
 
 - `docs/connected-grothendieck-construction.md` - Mathematical specification

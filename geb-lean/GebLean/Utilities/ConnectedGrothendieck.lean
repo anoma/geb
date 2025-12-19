@@ -1555,15 +1555,6 @@ lemma fiberFunctorTransitionObj_id_base {b : C}
   exact congrFun (congrArg Functor.obj h) x.base
 
 /--
-In the category Cat, applying `eqToHom` to an object produces heterogeneous
-equality with the original object. This uses `cases` to eliminate the equality.
--/
-lemma eqToHom_obj_heq (A B : Cat) (h : A = B) (x : A.α) :
-    HEq ((eqToHom h).obj x) x := by
-  cases h
-  rfl
-
-/--
 When `β = 𝟙 b`, `fiberFunctorTransitionObj` returns an object equal to its input.
 -/
 lemma fiberFunctorTransitionObj_id {b : C}
