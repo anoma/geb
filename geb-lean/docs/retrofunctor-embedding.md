@@ -19,8 +19,8 @@ Subject to:
 - Identity preservation: φ₁(a, id_{φ₀(a)}) = id_a
 - Composition preservation: φ₁(a, v ∘ u) = φ₁(a', v) ∘ φ₁(a, u)
 
-The key asymmetry is that objects go "forward" while morphisms go "backward"
-relative to the object assignment.
+There is asymmetry in that that objects go "forward" while morphisms go
+"backward" relative to the object assignment.
 
 ### The Category Cof
 
@@ -154,8 +154,6 @@ A similar "walking retrofunctor specification" would need to encode:
 - The object map between them
 - The dependent lifting structure
 - Preservation laws
-
-This is more complex than a single finite category.
 
 ## Possible Directions
 

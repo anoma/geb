@@ -29,7 +29,7 @@ The nerve-realization adjunction τ₁ ⊣ N relates Cat to simplicial sets:
 |----------|------------------|------------------|
 | Index category | Δ (infinite) | J (4 objects) |
 | Direction | Presheaves (contravariant) | Copresheaves (covariant) |
-| Reflective? | No (nerve not fully faithful) | Yes |
+| Reflective? | No (nerve not fully faithful) | Y |
 | Left adjoint | τ₁ (1-truncation) | L (quotient of free cat) |
 
 The nerve is not fully faithful because it fails to detect "extra"
@@ -39,7 +39,7 @@ is an isomorphism.
 ### Essentially Algebraic Theories
 
 Cat is well-known to be the category of models of an essentially algebraic
-theory (equivalently, a finite limit sketch). Key results:
+theory (equivalently, a finite limit sketch). Results include:
 
 - Gabriel-Ulmer duality relates finitary essentially algebraic theories to
   locally finitely presentable categories
@@ -97,8 +97,8 @@ via limits and colimits, the explicit construction of L and proof that
 
 Most categorical embeddings into diagram categories use **presheaves**
 (contravariant functors). The copresheaf direction is natural here because
-the maps (dom, cod, etc.) point from complex structure (morphisms) to
-simpler structure (objects).
+the maps (dom, cod, etc.) point from more rich structure (morphisms) to
+less (objects).
 
 ### 4. Direct Type-Theoretic Presentation
 
@@ -148,7 +148,7 @@ has not been identified in the existing literature.
   categories. Cambridge University Press.
 - Gabriel, P., & Ulmer, F. (1971). Lokal präsentierbare Kategorien.
   Springer LNM 221.
-- Kan, D. M. (1958). Functors involving c.s.s complexes. Trans. AMS, 87(2),
+- Kan, D. M. (1958). Functors involving c.s.s cplxs. Trans. AMS, 87(2),
   330-346.
 - Johnstone, P. T. (2002). Sketches of an Elephant, Vol. II. Oxford.
 - nLab: walking structure, essentially algebraic theory, nerve

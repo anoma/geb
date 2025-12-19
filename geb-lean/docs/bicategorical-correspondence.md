@@ -191,16 +191,16 @@ With functors between these induced by dom, cod, etc.
 
 ### Alternative: Non-Discrete Target
 
-Better approach for Φ'(C):
+Another approach for Φ'(C):
 
 - Φ'(C)(Obj) = category with one object per c ∈ C, with Aut(c) as morphisms
 - Φ'(C)(Mor) = similarly enriched with automorphisms
 
-This captures more structure but is more complex to define.
+This captures more structure but is more work to define.
 
 ## Constructing Cat-Valued Copresheaves via Currying
 
-### The Key Observation
+### `Cat`-valued copresheaves from reflector
 
 Given the adjunction L ⊣ Φ : Cat ⇆ [J, Type], Cat-valued copresheaves can be
 constructed by post-composing with L:
