@@ -3839,6 +3839,13 @@ def polyFreeCounitFold (P : PolyEndo X) (α : PolyAlg P) :
     (by funext ⟨x, t⟩; exact polyFreeCounitFoldLeft_fiber P α ⟨x, t⟩)
 
 /--
+Folding a pure tree returns the underlying value.
+-/
+lemma polyFreeCounitFoldAt_pure (P : PolyEndo X) (α : PolyAlg P) (x : X)
+    (a : { v : α.a.left // α.a.hom v = x }) :
+    polyFreeCounitFoldAt P α x (polyFreeMPure α.a P a) = a := rfl
+
+/--
 The counit fold commutes with the algebra structure maps.
 -/
 lemma polyFreeCounitFold_comm (P : PolyEndo X) (α : PolyAlg P) :
@@ -3873,6 +3880,66 @@ The counit as an algebra homomorphism from Free(Forget(α)) to α.
 def polyFreeCounitHom (P : PolyEndo X) (α : PolyAlg P) :
     polyFreeAlg α.a P ⟶ α :=
   Endofunctor.Algebra.Hom.mk (polyFreeCounitFold P α) (polyFreeCounitFold_comm P α)
+
+/--
+Naturality of the counit fold at each fiber: mapping by an algebra homomorphism
+then folding equals folding then applying the homomorphism.
+-/
+lemma polyFreeCounitFoldAt_natural (P : PolyEndo X) (α β : PolyAlg P)
+    (f : α ⟶ β) (x : X) (t : PolyFreeM α.a P x) :
+    (polyFreeCounitFoldAt P β x (polyFreeMapAt α.a β.a P f.f x t)).val =
+    f.f.left (polyFreeCounitFoldAt P α x t).val := by
+  induction t with
+  | mk y data children ih =>
+    cases data with
+    | inl a =>
+      simp only [polyFreeMapAt, polyFreeMBind, polyFreeCounitFoldAt, polyFreeMPure]
+    | inr p =>
+      simp only [polyFreeCounitFoldAt]
+      let fam := polyBetweenFamily X X P y p
+      let oldChildren : fam ⟶ α.a := Over.homMk
+        (fun e => (polyFreeCounitFoldAt P α (fam.hom e) (children e)).val)
+        (by funext e; exact (polyFreeCounitFoldAt P α (fam.hom e) (children e)).property)
+      let newChildren : fam ⟶ β.a := Over.homMk
+        (fun e => (polyFreeCounitFoldAt P β (fam.hom e)
+          (polyFreeMapAt α.a β.a P f.f (fam.hom e) (children e))).val)
+        (by funext e; exact (polyFreeCounitFoldAt P β (fam.hom e)
+          (polyFreeMapAt α.a β.a P f.f (fam.hom e) (children e))).property)
+      have hChildren : newChildren = oldChildren ≫ f.f := by
+        apply Over.OverMorphism.ext
+        funext e
+        simp only [Over.comp_left, types_comp_apply]
+        exact ih e
+      change β.str.left ⟨y, ⟨p, newChildren⟩⟩ = f.f.left (α.str.left ⟨y, ⟨p, oldChildren⟩⟩)
+      have hStr := congrFun (congrArg (·.left) f.h) ⟨y, ⟨p, oldChildren⟩⟩
+      simp only [Over.comp_left, types_comp_apply, polyEndoFunctor,
+        polyBetweenEvalFunctor, polyToOverFunctor, polyToOverEvalMap,
+        familySliceForward, familySliceForwardMap, polyToOverEvalFamilyMap,
+        ccrEvalMap, Over.homMk_left] at hStr
+      rw [hChildren]
+      exact hStr
+
+/--
+Naturality of the counit: mapping by an algebra homomorphism then applying the
+counit equals applying the counit then the homomorphism.
+-/
+lemma polyFreeCounitHom_natural (P : PolyEndo X) (α β : PolyAlg P) (f : α ⟶ β) :
+    polyFreeAlgMap α.a β.a P f.f ≫ polyFreeCounitHom P β =
+    polyFreeCounitHom P α ≫ f := by
+  apply Endofunctor.Algebra.Hom.ext
+  apply Over.OverMorphism.ext
+  funext ⟨x, t⟩
+  simp only [Endofunctor.Algebra.comp_f, polyFreeCounitHom, polyFreeAlgMap,
+    polyFreeCounitFold, polyFreeMap]
+  exact polyFreeCounitFoldAt_natural P α β f x t
+
+/--
+The counit as a natural transformation from Free ∘ Forget to the identity.
+-/
+def polyFreeCounitNat (P : PolyEndo X) :
+    polyForgetFunctor P ⋙ polyFreeFunctor P ⟶ 𝟭 (PolyAlg P) where
+  app := fun α => polyFreeCounitHom P α
+  naturality := fun _ _ f => polyFreeCounitHom_natural P _ _ f
 
 /-! ### Cofree Coalgebra Structure
 
