@@ -513,6 +513,28 @@ lemma sigma_cast_match_eq.{u, v, w} {A1 A2 : Type u} {P1 : A1 → Type v}
   cases hP'
   simp only [cast_eq]
 
+/--
+Transport over a product distributes to the second component.
+When both components of a product depend on a parameter `x`, transporting
+along `h : x₁ = x₂` gives: `(h ▸ (a, b)).2 = h ▸ b`.
+-/
+lemma prod_transport_snd {I : Type*} {A B : I → Type*}
+    {i₁ i₂ : I} (h : i₁ = i₂) {a : A i₁} {b : B i₁} :
+    (h ▸ (a, b) : A i₂ × B i₂).2 = h ▸ b := by
+  cases h
+  rfl
+
+/--
+Transport over a product distributes to the first component.
+When both components of a product depend on a parameter `x`, transporting
+along `h : x₁ = x₂` gives: `(h ▸ (a, b)).1 = h ▸ a`.
+-/
+lemma prod_transport_fst {I : Type*} {A B : I → Type*}
+    {i₁ i₂ : I} (h : i₁ = i₂) {a : A i₁} {b : B i₁} :
+    (h ▸ (a, b) : A i₂ × B i₂).1 = h ▸ a := by
+  cases h
+  rfl
+
 end GebLean
 
 /--
