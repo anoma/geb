@@ -5731,6 +5731,32 @@ lemma polyCoalgUnitApprox_consistent (P : PolyEndo X) (β : PolyCoalg P) (n : Na
     exact PolyCofixAgree.intro _ _ (fun e => ih _ _)
 
 /--
+Transporting `polyCoalgUnitApprox` along a fiber equality gives the same result
+as computing at the transported fiber point.
+-/
+lemma polyCoalgUnitApprox_cast (P : PolyEndo X) (β : PolyCoalg P) (n : Nat)
+    (x y : X) (hxy : x = y)
+    (s : { a : β.V.left // β.V.hom a = x }) :
+    hxy ▸ polyCoalgUnitApprox P β n x s =
+      polyCoalgUnitApprox P β n y ⟨s.val, s.property.trans hxy⟩ := by
+  subst hxy
+  rfl
+
+/--
+HEq version: `polyCoalgUnitApprox` applied to the same element at equal fiber
+points gives HEq results.
+-/
+lemma polyCoalgUnitApprox_heq (P : PolyEndo X) (β : PolyCoalg P) (n : Nat)
+    (x y : X) (hxy : x = y)
+    (s1 : { a : β.V.left // β.V.hom a = x })
+    (s2 : { a : β.V.left // β.V.hom a = y })
+    (hs : s1.val = s2.val) :
+    HEq (polyCoalgUnitApprox P β n x s1) (polyCoalgUnitApprox P β n y s2) := by
+  subst hxy
+  have heq : s1 = s2 := Subtype.ext hs
+  rw [heq]
+
+/--
 Build the M-type for a state in the unit construction.
 -/
 def polyCoalgUnitAt (P : PolyEndo X) (β : PolyCoalg P) (x : X)
@@ -5758,6 +5784,503 @@ The unit morphism: β.V → Cofree(β.V) in Over X.
 def polyCoalgUnit (P : PolyEndo X) (β : PolyCoalg P) :
     β.V ⟶ polyCofreeCarrier β.V P :=
   Over.homMk (polyCoalgUnitLeft P β) (polyCoalgUnit_comm P β)
+
+/--
+The type of elements in `(polyEndoFunctor X P).obj (polyCofreeCarrier A P)`.
+-/
+abbrev PolyEndoCofreeObjLeft (A : Over X) (P : PolyEndo X) :=
+  (Σ x : X, polyBetweenEvalFamily X X P (polyCofreeCarrier A P) x)
+
+/--
+The LHS of the unit coalgebra homomorphism at point `a`:
+applying `β.str` then the functor map of the unit.
+-/
+def polyCoalgUnit_coalg_comm_lhs (P : PolyEndo X) (β : PolyCoalg P)
+    (a : β.V.left) : PolyEndoCofreeObjLeft β.V P :=
+  let strResult := β.str.left a
+  ⟨strResult.1, strResult.2.1,
+    strResult.2.2 ≫ polyCoalgUnit P β⟩
+
+/--
+The RHS of the unit coalgebra homomorphism at point `a`:
+applying the unit then the cofree structure map.
+-/
+def polyCoalgUnit_coalg_comm_rhs (P : PolyEndo X) (β : PolyCoalg P)
+    (a : β.V.left) : PolyEndoCofreeObjLeft β.V P :=
+  let m := polyCoalgUnitAt P β (β.V.hom a) ⟨a, rfl⟩
+  ⟨β.V.hom a, m.head.2, polyCofreeChildrenMor β.V P m⟩
+
+/--
+First component of LHS equals `(β.str.left a).1`.
+-/
+lemma polyCoalgUnit_coalg_comm_lhs_fst (P : PolyEndo X) (β : PolyCoalg P)
+    (a : β.V.left) :
+    (polyCoalgUnit_coalg_comm_lhs P β a).1 = (β.str.left a).1 := rfl
+
+/--
+First component of RHS equals `β.V.hom a`.
+-/
+lemma polyCoalgUnit_coalg_comm_rhs_fst (P : PolyEndo X) (β : PolyCoalg P)
+    (a : β.V.left) :
+    (polyCoalgUnit_coalg_comm_rhs P β a).1 = β.V.hom a := rfl
+
+/--
+The structure map commutes with the projection.
+-/
+lemma polyCoalgUnit_coalg_comm_fst_eq (P : PolyEndo X) (β : PolyCoalg P)
+    (a : β.V.left) : (β.str.left a).1 = β.V.hom a :=
+  congrFun (Over.w β.str) a
+
+/--
+First components of LHS and RHS are equal.
+-/
+lemma polyCoalgUnit_coalg_comm_fst (P : PolyEndo X) (β : PolyCoalg P)
+    (a : β.V.left) :
+    (polyCoalgUnit_coalg_comm_lhs P β a).1 =
+    (polyCoalgUnit_coalg_comm_rhs P β a).1 :=
+  polyCoalgUnit_coalg_comm_fst_eq P β a
+
+/--
+The head of the unit M-type.
+-/
+lemma polyCoalgUnit_head (P : PolyEndo X) (β : PolyCoalg P) (a : β.V.left) :
+    let m := polyCoalgUnitAt P β (β.V.hom a) ⟨a, rfl⟩
+    let hx := polyCoalgUnit_coalg_comm_fst_eq P β a
+    m.head = hx ▸ ⟨⟨a, hx.symm ▸ rfl⟩, (β.str.left a).2.1⟩ := by
+  simp only [polyCoalgUnitAt, PolyCofix.head, polyCoalgUnitApprox]
+  exact PolyCofixApprox.getIndex_cast _ _ _
+
+/--
+Transport distributes to the second component of polyScale indices.
+-/
+lemma polyScaleIndex_transport_snd {A : Over X} {P : PolyEndo X} {x y : X}
+    (h : x = y) (s : { a : A.left // A.hom a = x }) (i : polyBetweenIndex X X P x) :
+    (h ▸ (s, i) : polyBetweenIndex X X (polyScale A P) y).2 = h ▸ i := by
+  subst h
+  rfl
+
+/--
+The second component of the unit M-type head equals the transported index.
+-/
+lemma polyCoalgUnit_head_snd (P : PolyEndo X) (β : PolyCoalg P) (a : β.V.left) :
+    (polyCoalgUnitAt P β (β.V.hom a) ⟨a, rfl⟩).head.2 =
+    (polyCoalgUnit_coalg_comm_fst_eq P β a) ▸ (β.str.left a).2.1 := by
+  have h := polyCoalgUnit_head P β a
+  simp only at h
+  rw [h]
+  exact polyScaleIndex_transport_snd _ _ _
+
+/--
+Transport a `polyBetweenFamily` index along an equality of fiber points.
+-/
+lemma polyBetweenFamily_transport {P : PolyEndo X} {y1 y2 : X}
+    (h : y1 = y2) (i : polyBetweenIndex X X P y1) :
+    polyBetweenFamily X X P y1 i = polyBetweenFamily X X P y2 (h ▸ i) := by
+  subst h
+  rfl
+
+/--
+The families on both sides of the coalgebra homomorphism equation are equal.
+-/
+lemma polyCoalgUnit_family_eq (P : PolyEndo X) (β : PolyCoalg P) (a : β.V.left) :
+    polyBetweenFamily X X P (β.str.left a).1 (β.str.left a).2.1 =
+    polyBetweenFamily X X P (β.V.hom a)
+      ((polyCoalgUnitAt P β (β.V.hom a) ⟨a, rfl⟩).head.2) := by
+  have hfst := polyCoalgUnit_coalg_comm_fst_eq P β a
+  have hsnd := polyCoalgUnit_head_snd P β a
+  simp only [hsnd]
+  exact polyBetweenFamily_transport hfst _
+
+/--
+HEq of elements in polyBetweenEvalFamily for cofree carriers when the fiber points are equal.
+-/
+lemma polyCofreeBetweenEvalFamily_heq {A : Over X} {P : PolyEndo X} {x y : X}
+    (heq : x = y)
+    (i : polyBetweenIndex X X P x)
+    (mor : polyBetweenFamily X X P x i ⟶ polyCofreeCarrier A P)
+    (j : polyBetweenIndex X X P y)
+    (mor' : polyBetweenFamily X X P y j ⟶ polyCofreeCarrier A P)
+    (hi : HEq i j)
+    (hmor : HEq mor mor') :
+    HEq (⟨i, mor⟩ : polyBetweenEvalFamily X X P (polyCofreeCarrier A P) x)
+        (⟨j, mor'⟩ : polyBetweenEvalFamily X X P (polyCofreeCarrier A P) y) := by
+  subst heq
+  simp only [heq_eq_eq] at hi hmor
+  subst hi hmor
+  rfl
+
+/--
+HEq of indices for the coalgebra homomorphism proof.
+-/
+lemma polyCoalgUnit_coalg_comm_index_heq (P : PolyEndo X) (β : PolyCoalg P)
+    (a : β.V.left) :
+    HEq (β.str.left a).2.1
+        (polyCoalgUnitAt P β (β.V.hom a) ⟨a, rfl⟩).head.2 := by
+  have hfst := polyCoalgUnit_coalg_comm_fst_eq P β a
+  have hsnd := polyCoalgUnit_head_snd P β a
+  have step1 : HEq (β.str.left a).2.1 (hfst ▸ (β.str.left a).2.1) :=
+    heq_eqRec (motive := fun x => polyBetweenIndex X X P x) hfst (β.str.left a).2.1
+  have step2 : hfst ▸ (β.str.left a).2.1 =
+      (polyCoalgUnitAt P β (β.V.hom a) ⟨a, rfl⟩).head.2 := hsnd.symm
+  exact step1.trans (heq_of_eq step2)
+
+/--
+The LHS transport is HEq to polyCoalgUnitApprox at the target fiber.
+-/
+lemma polyCoalgUnitAt_child_approx_lhs_heq (P : PolyEndo X) (β : PolyCoalg P)
+    (a : β.V.left) (n : Nat)
+    (e1 : (polyBetweenFamily X X P (β.str.left a).1 (β.str.left a).2.1).left)
+    (hchildFib : β.V.hom ((β.str.left a).2.2.left e1) =
+        (polyBetweenFamily X X P (β.str.left a).1 (β.str.left a).2.1).hom e1)
+    (e2 : (polyBetweenFamily X X P (β.V.hom a)
+        ((polyCoalgUnitAt P β (β.V.hom a) ⟨a, rfl⟩).head.2)).left)
+    (hfib : (polyBetweenFamily X X P (β.str.left a).1 (β.str.left a).2.1).hom e1 =
+        (polyBetweenFamily X X P (β.V.hom a)
+          ((polyCoalgUnitAt P β (β.V.hom a) ⟨a, rfl⟩).head.2)).hom e2) :
+    let childVal := (β.str.left a).2.2.left e1
+    let parentHead := (polyCoalgUnitAt P β (β.V.hom a) ⟨a, rfl⟩).head
+    let fiberPt := (polyBetweenFamily X X P (β.V.hom a) parentHead.2).hom e2
+    HEq ((hchildFib.trans hfib) ▸
+      polyCoalgUnitApprox P β (n + 1) (β.V.hom childVal) ⟨childVal, rfl⟩)
+    (polyCoalgUnitApprox P β (n + 1) fiberPt ⟨childVal, hchildFib.trans hfib⟩) := by
+  intro childVal parentHead fiberPt
+  apply heq_of_eq
+  exact polyCoalgUnitApprox_cast P β (n + 1) (β.V.hom childVal) fiberPt
+    (hchildFib.trans hfib) ⟨childVal, rfl⟩
+
+/--
+Extracting a child from `polyCoalgUnitApprox` at the original fiber gives
+`polyCoalgUnitApprox` at the child value.
+-/
+lemma polyCoalgUnitApprox_child_extract (P : PolyEndo X) (β : PolyCoalg P)
+    (a : β.V.left) (n : Nat)
+    (e : (polyBetweenFamily X X P (β.str.left a).1 (β.str.left a).2.1).left) :
+    let strResult := β.str.left a
+    let hx : β.V.hom a = strResult.1 := (polyCoalgUnit_coalg_comm_fst_eq P β a).symm
+    let origIdx : polyBetweenIndex X X (polyScale β.V P) strResult.1 :=
+      ⟨⟨a, hx⟩, strResult.2.1⟩
+    let childMor := strResult.2.2
+    let childVal := childMor.left e
+    let hChild : β.V.hom childVal =
+        (polyBetweenFamily X X P strResult.1 strResult.2.1).hom e :=
+      congrFun (Over.w childMor) e
+    let fibPt := (polyBetweenFamily X X P strResult.1 strResult.2.1).hom e
+    PolyCofix.childApproxAt_succ_aux origIdx
+      (polyCoalgUnitApprox P β (n + 2) strResult.1 ⟨a, hx⟩)
+      rfl e =
+    polyCoalgUnitApprox P β (n + 1) fibPt ⟨childVal, hChild⟩ := by
+  intro strResult hx origIdx childMor childVal hChild fibPt
+  simp only [polyCoalgUnitApprox, PolyCofix.childApproxAt_succ_aux]
+  rfl
+
+/--
+The extraction via childApproxAt_succ_aux is HEq to polyCoalgUnitApprox.
+-/
+lemma polyCoalgUnitAt_child_extract_heq (P : PolyEndo X) (β : PolyCoalg P)
+    (a : β.V.left) (n : Nat)
+    (e1 : (polyBetweenFamily X X P (β.str.left a).1 (β.str.left a).2.1).left)
+    (e2 : (polyBetweenFamily X X P (β.V.hom a)
+        ((polyCoalgUnitAt P β (β.V.hom a) ⟨a, rfl⟩).head.2)).left)
+    (he1e2 : e1 ≍ e2)
+    (hfib : (polyBetweenFamily X X P (β.str.left a).1 (β.str.left a).2.1).hom e1 =
+        (polyBetweenFamily X X P (β.V.hom a)
+          ((polyCoalgUnitAt P β (β.V.hom a) ⟨a, rfl⟩).head.2)).hom e2) :
+    let childVal := (β.str.left a).2.2.left e1
+    let parentHead := (polyCoalgUnitAt P β (β.V.hom a) ⟨a, rfl⟩).head
+    let fiberPt := (polyBetweenFamily X X P (β.V.hom a) parentHead.2).hom e2
+    HEq (PolyCofix.childApproxAt_succ_aux parentHead
+      (polyCoalgUnitApprox P β (n + 2) (β.V.hom a) ⟨a, rfl⟩)
+      ((polyCoalgUnitAt P β (β.V.hom a) ⟨a, rfl⟩).index_eq_head (n + 1)) e2)
+    (polyCoalgUnitApprox P β (n + 1) fiberPt
+      ⟨childVal, (congrFun (Over.w (β.str.left a).2.2) e1).trans hfib⟩) := by
+  intro childVal parentHead fiberPt
+  let strResult := β.str.left a
+  let hx : strResult.1 = β.V.hom a := polyCoalgUnit_coalg_comm_fst_eq P β a
+  let hxInv : β.V.hom a = strResult.1 := hx.symm
+  let origIdx : polyBetweenIndex X X (polyScale β.V P) strResult.1 :=
+    ⟨⟨a, hxInv⟩, strResult.2.1⟩
+  let childMor := strResult.2.2
+  let hChild : β.V.hom childVal =
+      (polyBetweenFamily X X P strResult.1 strResult.2.1).hom e1 :=
+    congrFun (Over.w childMor) e1
+  let fibPtOrig := (polyBetweenFamily X X P strResult.1 strResult.2.1).hom e1
+  have hfibPt : fibPtOrig = fiberPt := hfib
+  have hhelper := polyCoalgUnitApprox_child_extract P β a n e1
+  dsimp only at hhelper
+  have hhelper' : PolyCofix.childApproxAt_succ_aux origIdx
+      (polyCoalgUnitApprox P β (n + 2) strResult.1 ⟨a, hxInv⟩) rfl e1 =
+      polyCoalgUnitApprox P β (n + 1) fibPtOrig ⟨childVal, hChild⟩ := hhelper
+  have hparentHead : parentHead = hx ▸ origIdx := polyCoalgUnit_head P β a
+  have happrox_heq : HEq (polyCoalgUnitApprox P β (n + 2) strResult.1 ⟨a, hxInv⟩)
+      (polyCoalgUnitApprox P β (n + 2) (β.V.hom a) ⟨a, rfl⟩) :=
+    polyCoalgUnitApprox_heq P β (n + 2) strResult.1 (β.V.hom a) hx
+      ⟨a, hxInv⟩ ⟨a, rfl⟩ rfl
+  have horigIdx_heq : origIdx ≍ parentHead := by
+    rw [hparentHead]
+    exact heq_eqRec_iff_heq.mpr HEq.rfl
+  have hlhs_heq : HEq
+      (PolyCofix.childApproxAt_succ_aux origIdx
+        (polyCoalgUnitApprox P β (n + 2) strResult.1 ⟨a, hxInv⟩) rfl e1)
+      (PolyCofix.childApproxAt_succ_aux parentHead
+        (polyCoalgUnitApprox P β (n + 2) (β.V.hom a) ⟨a, rfl⟩)
+        ((polyCoalgUnitAt P β (β.V.hom a) ⟨a, rfl⟩).index_eq_head (n + 1)) e2) :=
+    PolyCofix.childApproxAt_succ_aux_heq hx origIdx parentHead
+      horigIdx_heq
+      (polyCoalgUnitApprox P β (n + 2) strResult.1 ⟨a, hxInv⟩)
+      (polyCoalgUnitApprox P β (n + 2) (β.V.hom a) ⟨a, rfl⟩)
+      happrox_heq rfl
+      ((polyCoalgUnitAt P β (β.V.hom a) ⟨a, rfl⟩).index_eq_head (n + 1))
+      e1 e2 he1e2
+  have hrhs_heq : HEq
+      (polyCoalgUnitApprox P β (n + 1) fibPtOrig ⟨childVal, hChild⟩)
+      (polyCoalgUnitApprox P β (n + 1) fiberPt
+        ⟨childVal, (congrFun (Over.w (β.str.left a).2.2) e1).trans hfib⟩) :=
+    polyCoalgUnitApprox_heq P β (n + 1) fibPtOrig fiberPt hfibPt
+      ⟨childVal, hChild⟩
+      ⟨childVal, (congrFun (Over.w (β.str.left a).2.2) e1).trans hfib⟩ rfl
+  have h1 : PolyCofix.childApproxAt_succ_aux origIdx
+      (polyCoalgUnitApprox P β (n + 2) strResult.1 ⟨a, hxInv⟩) rfl e1 ≍
+      polyCoalgUnitApprox P β (n + 1) fiberPt
+        ⟨childVal, (congrFun (Over.w (β.str.left a).2.2) e1).trans hfib⟩ :=
+    (heq_of_eq hhelper').trans hrhs_heq
+  exact hlhs_heq.symm.trans h1
+
+/--
+The RHS extraction via childApproxAt_succ_aux is HEq to polyCoalgUnitApprox.
+-/
+lemma polyCoalgUnitAt_child_approx_rhs_heq (P : PolyEndo X) (β : PolyCoalg P)
+    (a : β.V.left) (n : Nat)
+    (e1 : (polyBetweenFamily X X P (β.str.left a).1 (β.str.left a).2.1).left)
+    (hchildFib : β.V.hom ((β.str.left a).2.2.left e1) =
+        (polyBetweenFamily X X P (β.str.left a).1 (β.str.left a).2.1).hom e1)
+    (e2 : (polyBetweenFamily X X P (β.V.hom a)
+        ((polyCoalgUnitAt P β (β.V.hom a) ⟨a, rfl⟩).head.2)).left)
+    (he1e2 : e1 ≍ e2)
+    (hfib : (polyBetweenFamily X X P (β.str.left a).1 (β.str.left a).2.1).hom e1 =
+        (polyBetweenFamily X X P (β.V.hom a)
+          ((polyCoalgUnitAt P β (β.V.hom a) ⟨a, rfl⟩).head.2)).hom e2) :
+    let childVal := (β.str.left a).2.2.left e1
+    let parentHead := (polyCoalgUnitAt P β (β.V.hom a) ⟨a, rfl⟩).head
+    let fiberPt := (polyBetweenFamily X X P (β.V.hom a) parentHead.2).hom e2
+    HEq (PolyCofix.childApproxAt_succ_aux parentHead
+      (polyCoalgUnitApprox P β (n + 2) (β.V.hom a) ⟨a, rfl⟩)
+      ((polyCoalgUnitAt P β (β.V.hom a) ⟨a, rfl⟩).index_eq_head (n + 1)) e2)
+    (polyCoalgUnitApprox P β (n + 1) fiberPt ⟨childVal, hchildFib.trans hfib⟩) := by
+  intro childVal parentHead fiberPt
+  have hchildFib_eq : hchildFib = (congrFun (Over.w (β.str.left a).2.2) e1) :=
+    Subsingleton.elim _ _
+  rw [hchildFib_eq]
+  exact polyCoalgUnitAt_child_extract_heq P β a n e1 e2 he1e2 hfib
+
+/--
+The extraction via `childApproxAt_succ_aux` is HEq to the direct approximation.
+-/
+lemma polyCoalgUnitAt_child_approx_aux_heq (P : PolyEndo X) (β : PolyCoalg P)
+    (a : β.V.left) (n : Nat)
+    (e1 : (polyBetweenFamily X X P (β.str.left a).1 (β.str.left a).2.1).left)
+    (hchildFib : β.V.hom ((β.str.left a).2.2.left e1) =
+        (polyBetweenFamily X X P (β.str.left a).1 (β.str.left a).2.1).hom e1)
+    (e2 : (polyBetweenFamily X X P (β.V.hom a)
+        ((polyCoalgUnitAt P β (β.V.hom a) ⟨a, rfl⟩).head.2)).left)
+    (he1e2 : e1 ≍ e2)
+    (hfib : (polyBetweenFamily X X P (β.str.left a).1 (β.str.left a).2.1).hom e1 =
+        (polyBetweenFamily X X P (β.V.hom a)
+          ((polyCoalgUnitAt P β (β.V.hom a) ⟨a, rfl⟩).head.2)).hom e2) :
+    let childVal := (β.str.left a).2.2.left e1
+    let parentHead := (polyCoalgUnitAt P β (β.V.hom a) ⟨a, rfl⟩).head
+    HEq ((hchildFib.trans hfib) ▸
+      polyCoalgUnitApprox P β (n + 1) (β.V.hom childVal) ⟨childVal, rfl⟩)
+    (PolyCofix.childApproxAt_succ_aux parentHead
+      (polyCoalgUnitApprox P β (n + 2) (β.V.hom a) ⟨a, rfl⟩)
+      ((polyCoalgUnitAt P β (β.V.hom a) ⟨a, rfl⟩).index_eq_head (n + 1)) e2) := by
+  intro childVal parentHead
+  have hLHS := polyCoalgUnitAt_child_approx_lhs_heq P β a n e1 hchildFib e2 hfib
+  have hRHS := polyCoalgUnitAt_child_approx_rhs_heq P β a n e1 hchildFib e2 he1e2 hfib
+  exact hLHS.trans hRHS.symm
+
+/--
+The child approximation extracted via `childApproxAt_succ_aux` equals the direct
+approximation after transport.
+-/
+lemma polyCoalgUnitAt_child_approx_aux (P : PolyEndo X) (β : PolyCoalg P)
+    (a : β.V.left) (n : Nat)
+    (e1 : (polyBetweenFamily X X P (β.str.left a).1 (β.str.left a).2.1).left)
+    (hchildFib : β.V.hom ((β.str.left a).2.2.left e1) =
+        (polyBetweenFamily X X P (β.str.left a).1 (β.str.left a).2.1).hom e1)
+    (e2 : (polyBetweenFamily X X P (β.V.hom a)
+        ((polyCoalgUnitAt P β (β.V.hom a) ⟨a, rfl⟩).head.2)).left)
+    (he1e2 : e1 ≍ e2)
+    (hfib : (polyBetweenFamily X X P (β.str.left a).1 (β.str.left a).2.1).hom e1 =
+        (polyBetweenFamily X X P (β.V.hom a)
+          ((polyCoalgUnitAt P β (β.V.hom a) ⟨a, rfl⟩).head.2)).hom e2) :
+    (hchildFib.trans hfib) ▸
+      polyCoalgUnitApprox P β (n + 1)
+        (β.V.hom ((β.str.left a).2.2.left e1))
+        ⟨(β.str.left a).2.2.left e1, rfl⟩ =
+    PolyCofix.childApproxAt_succ_aux
+      (polyCoalgUnitAt P β (β.V.hom a) ⟨a, rfl⟩).head
+      (polyCoalgUnitApprox P β (n + 2) (β.V.hom a) ⟨a, rfl⟩)
+      ((polyCoalgUnitAt P β (β.V.hom a) ⟨a, rfl⟩).index_eq_head (n + 1))
+      e2 := by
+  apply eq_of_heq
+  exact polyCoalgUnitAt_child_approx_aux_heq P β a n e1 hchildFib e2 he1e2 hfib
+
+/--
+At level n+1, extracting a child from polyCoalgUnitApprox equals polyCoalgUnitApprox
+applied to the child element.
+-/
+lemma polyCoalgUnitAt_child_approx_eq (P : PolyEndo X) (β : PolyCoalg P)
+    (a : β.V.left)
+    (e1 : (polyBetweenFamily X X P (β.str.left a).1 (β.str.left a).2.1).left)
+    (hfibEq : β.V.hom ((β.str.left a).2.2.left e1) =
+      (polyBetweenFamily X X P (β.V.hom a)
+        ((polyCoalgUnitAt P β (β.V.hom a) ⟨a, rfl⟩).head.2)).hom
+        (cast (congrArg (fun F => F.left)
+          (polyCoalgUnit_family_eq P β a)) e1))
+    (n : Nat) :
+    hfibEq ▸ polyCoalgUnitApprox P β (n + 1)
+      (β.V.hom ((β.str.left a).2.2.left e1))
+      ⟨(β.str.left a).2.2.left e1, rfl⟩ =
+    PolyCofix.childApproxAt_succ_aux
+      (polyCoalgUnitAt P β (β.V.hom a) ⟨a, rfl⟩).head
+      (polyCoalgUnitApprox P β (n + 2) (β.V.hom a) ⟨a, rfl⟩)
+      ((polyCoalgUnitAt P β (β.V.hom a) ⟨a, rfl⟩).index_eq_head (n + 1))
+      (cast (congrArg (fun F => F.left) (polyCoalgUnit_family_eq P β a)) e1) := by
+  let childVal := (β.str.left a).2.2.left e1
+  let e2 := cast (congrArg (fun F => F.left) (polyCoalgUnit_family_eq P β a)) e1
+  have he1e2 : e1 ≍ e2 := (cast_heq _ e1).symm
+  let parentHead := (polyCoalgUnitAt P β (β.V.hom a) ⟨a, rfl⟩).head
+  have hchildFib : β.V.hom childVal =
+      (polyBetweenFamily X X P (β.str.left a).1 (β.str.left a).2.1).hom e1 :=
+    congrFun (Over.w (β.str.left a).2.2) e1
+  have hfib : (polyBetweenFamily X X P (β.str.left a).1 (β.str.left a).2.1).hom e1 =
+      (polyBetweenFamily X X P (β.V.hom a) parentHead.2).hom e2 := by
+    exact overType_hom_heq (polyCoalgUnit_family_eq P β a) e1 e2 he1e2
+  have hfibEq' : hchildFib.trans hfib = hfibEq := Subsingleton.elim _ _
+  rw [← hfibEq']
+  exact polyCoalgUnitAt_child_approx_aux P β a n e1 hchildFib e2 he1e2 hfib
+
+/--
+Children of polyCoalgUnitAt are polyCoalgUnitAt applied to child elements.
+This is the coinductive unfolding property.
+-/
+lemma polyCoalgUnitAt_children_heq (P : PolyEndo X) (β : PolyCoalg P)
+    (a : β.V.left)
+    (e1 : (polyBetweenFamily X X P (β.str.left a).1 (β.str.left a).2.1).left)
+    (hfibEq : β.V.hom ((β.str.left a).2.2.left e1) =
+      (polyBetweenFamily X X P (β.V.hom a)
+        ((polyCoalgUnitAt P β (β.V.hom a) ⟨a, rfl⟩).head.2)).hom
+        (cast (congrArg (fun F => F.left)
+          (polyCoalgUnit_family_eq P β a)) e1)) :
+    HEq (polyCoalgUnitAt P β (β.V.hom ((β.str.left a).2.2.left e1))
+          ⟨(β.str.left a).2.2.left e1, rfl⟩)
+        ((polyCoalgUnitAt P β (β.V.hom a) ⟨a, rfl⟩).children
+          (cast (congrArg (fun F => F.left)
+            (polyCoalgUnit_family_eq P β a)) e1)) := by
+  let childVal := (β.str.left a).2.2.left e1
+  have hTransport := heq_eqRec hfibEq
+    (polyCoalgUnitAt P β (β.V.hom childVal) ⟨childVal, rfl⟩)
+  apply hTransport.trans
+  apply heq_of_eq
+  apply PolyCofix.ext
+  intro n
+  simp only [PolyCofix.children, polyCoalgUnitAt]
+  rw [PolyCofix.approx_cast hfibEq]
+  match n with
+  | 0 =>
+    simp only [PolyCofix.childApproxAt, PolyCofix.childApproxAt_zero, polyCoalgUnitApprox]
+    rw [PolyCofixApprox.continue_cast hfibEq]
+    rfl
+  | n + 1 =>
+    simp only [PolyCofix.childApproxAt, PolyCofix.childApproxAt_succ]
+    exact polyCoalgUnitAt_child_approx_eq P β a e1 hfibEq n
+
+/--
+HEq of morphisms for the coalgebra homomorphism proof.
+-/
+lemma polyCoalgUnit_coalg_comm_mor_heq (P : PolyEndo X) (β : PolyCoalg P)
+    (a : β.V.left) :
+    HEq ((β.str.left a).2.2 ≫ polyCoalgUnit P β)
+        (polyCofreeChildrenMor β.V P (polyCoalgUnitAt P β (β.V.hom a) ⟨a, rfl⟩)) := by
+  have hfst := polyCoalgUnit_coalg_comm_fst_eq P β a
+  have hindexHeq := polyCoalgUnit_coalg_comm_index_heq P β a
+  apply polyBetweenFamily_mor_heq hfst _ _ hindexHeq
+  simp only [Over.comp_left, polyCoalgUnit, Over.homMk_left, polyCofreeChildrenMor]
+  have hfam := polyCoalgUnit_family_eq P β a
+  have hdomHeq := polyBetweenFamily_left_heq hfst _ _ hindexHeq
+  apply funext_heq (eq_of_heq hdomHeq) rfl
+  intro e1 e2 he
+  simp only [types_comp_apply, polyCoalgUnitLeft]
+  apply heq_of_eq
+  have hfib : (polyBetweenFamily X X P (β.str.left a).1 (β.str.left a).2.1).hom e1 =
+      (polyBetweenFamily X X P (β.V.hom a)
+        ((polyCoalgUnitAt P β (β.V.hom a) ⟨a, rfl⟩).head.2)).hom e2 := by
+    exact overType_hom_heq hfam e1 e2 he
+  have hdom_eq : (polyBetweenFamily X X P (β.str.left a).1 (β.str.left a).2.1).left =
+      (polyBetweenFamily X X P (β.V.hom a)
+        ((polyCoalgUnitAt P β (β.V.hom a) ⟨a, rfl⟩).head.2)).left :=
+    congrArg (fun F => F.left) hfam
+  have he2_eq : e2 = cast hdom_eq e1 := by
+    apply eq_of_heq
+    exact he.symm.trans (cast_heq hdom_eq e1).symm
+  let childVal := (β.str.left a).2.2.left e1
+  have hChildFib : β.V.hom childVal =
+      (polyBetweenFamily X X P (β.str.left a).1 (β.str.left a).2.1).hom e1 :=
+    congrFun (Over.w (β.str.left a).2.2) e1
+  rw [Sigma.mk.inj_iff]
+  constructor
+  · trans (polyBetweenFamily X X P (β.str.left a).1 (β.str.left a).2.1).hom e1
+    · exact hChildFib
+    · exact hfib
+  · subst he2_eq
+    have hfibEq := hChildFib.trans hfib
+    exact polyCoalgUnitAt_children_heq P β a e1 hfibEq
+
+/--
+Second components of LHS and RHS are heterogeneously equal.
+-/
+lemma polyCoalgUnit_coalg_comm_snd (P : PolyEndo X) (β : PolyCoalg P)
+    (a : β.V.left) :
+    HEq (polyCoalgUnit_coalg_comm_lhs P β a).2
+        (polyCoalgUnit_coalg_comm_rhs P β a).2 := by
+  simp only [polyCoalgUnit_coalg_comm_lhs, polyCoalgUnit_coalg_comm_rhs]
+  have hfst := polyCoalgUnit_coalg_comm_fst_eq P β a
+  apply polyCofreeBetweenEvalFamily_heq hfst
+  · exact polyCoalgUnit_coalg_comm_index_heq P β a
+  · exact polyCoalgUnit_coalg_comm_mor_heq P β a
+
+/--
+LHS and RHS are equal.
+-/
+lemma polyCoalgUnit_coalg_comm_eq (P : PolyEndo X) (β : PolyCoalg P)
+    (a : β.V.left) :
+    polyCoalgUnit_coalg_comm_lhs P β a = polyCoalgUnit_coalg_comm_rhs P β a :=
+  Sigma.ext_iff.mpr ⟨polyCoalgUnit_coalg_comm_fst P β a,
+    polyCoalgUnit_coalg_comm_snd P β a⟩
+
+/--
+The unit morphism commutes with coalgebra structure maps.
+-/
+lemma polyCoalgUnit_coalg_comm (P : PolyEndo X) (β : PolyCoalg P) :
+    β.str ≫ (polyEndoFunctor X P).map (polyCoalgUnit P β) =
+    polyCoalgUnit P β ≫ polyCofreeStr β.V P := by
+  apply Over.OverMorphism.ext
+  funext a
+  simp only [Over.comp_left, types_comp_apply]
+  dsimp only [polyCoalgUnit, Over.homMk_left, polyCoalgUnitLeft,
+    polyCofreeStr, polyCofreeStrLeft, polyCofreeStrFamily,
+    polyEndoFunctor, polyBetweenEvalFunctor, polyToOverFunctor,
+    polyToOverEvalMap, familySliceForward, familySliceForwardMap,
+    polyToOverEvalFamilyMap, ccrEvalMap]
+  exact polyCoalgUnit_coalg_comm_eq P β a
+
+/--
+The unit as a coalgebra homomorphism from β to Cofree(β.V).
+-/
+def polyCoalgUnitHom (P : PolyEndo X) (β : PolyCoalg P) :
+    β ⟶ polyCofreeCoalg β.V P where
+  f := polyCoalgUnit P β
+  h := polyCoalgUnit_coalg_comm P β
 
 end Adjunctions
 
