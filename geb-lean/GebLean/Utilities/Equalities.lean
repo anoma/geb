@@ -187,11 +187,6 @@ lemma over_cast_left {X : Type*} {S1 S2 T : Over X}
   cases hsrc
   rfl
 
-/--
-If two sigma values (over possibly different families on the same base type)
-are heterogeneously equal, and the families are propositionally equal,
-the first components are equal.
--/
 lemma sigma_fst_heq_eq.{u, w} {α : Type u} {β₁ β₂ : α → Type w}
     {s₁ : Sigma β₁} {s₂ : Sigma β₂}
     (hβ : β₁ = β₂)
@@ -266,6 +261,98 @@ lemma sigma_heq_of_param_eq {I : Type*} {A : I → Type*} {B : (i : I) → A i �
   cases ha
   cases hb
   rfl
+
+/--
+Extract first component equality from HEq of sigmas over families that depend on
+a shape parameter known to be equal. When shapes are equal, sigma types over
+the families are equal, so HEq implies Eq.
+-/
+lemma sigma_fst_eq_of_heq_via_shape_eq {Shape : Type*} {α : Type*}
+    {F : Shape → α → Type*}
+    {s₁ s₂ : Shape} (hs : s₁ = s₂)
+    {p₁ : Sigma (F s₁)} {p₂ : Sigma (F s₂)}
+    (hp : p₁ ≍ p₂) : p₁.fst = p₂.fst := by
+  subst hs
+  exact congrArg Sigma.fst (eq_of_heq hp)
+
+/--
+Extract second component HEq from HEq of sigmas over families that depend on
+a shape parameter known to be equal.
+-/
+lemma sigma_snd_heq_of_heq_via_shape_eq {Shape : Type*} {α : Type*}
+    {F : Shape → α → Type*}
+    {s₁ s₂ : Shape} (hs : s₁ = s₂)
+    {p₁ : Sigma (F s₁)} {p₂ : Sigma (F s₂)}
+    (hp : p₁ ≍ p₂) : p₁.snd ≍ p₂.snd := by
+  subst hs
+  exact sigma_snd_heq_of_eq (eq_of_heq hp)
+
+/--
+Combined extraction of both components from HEq of sigmas when shapes are known
+equal. First component is equal, second component is HEq.
+-/
+lemma sigma_components_of_heq_via_shape_eq {Shape : Type*} {α : Type*}
+    {F : Shape → α → Type*}
+    {s₁ s₂ : Shape} (hs : s₁ = s₂)
+    {p₁ : Sigma (F s₁)} {p₂ : Sigma (F s₂)}
+    (hp : p₁ ≍ p₂) : p₁.fst = p₂.fst ∧ p₁.snd ≍ p₂.snd := by
+  subst hs
+  exact ⟨congrArg Sigma.fst (eq_of_heq hp), sigma_snd_heq_of_eq (eq_of_heq hp)⟩
+
+/--
+When fibers and shapes are both known equal, sigma positions can be compared.
+This variant handles the case where shapes live in dependent types indexed by
+fibers.
+-/
+lemma sigma_fst_eq_of_heq_via_fiber_shape_eq {X : Type*} {Shape : X → Type*}
+    {α : Type*} {F : (x : X) → Shape x → α → Type*}
+    {x₁ x₂ : X} (hx : x₁ = x₂)
+    {s₁ : Shape x₁} {s₂ : Shape x₂} (hs : s₁ ≍ s₂)
+    {p₁ : Sigma (F x₁ s₁)} {p₂ : Sigma (F x₂ s₂)}
+    (hp : p₁ ≍ p₂) : p₁.fst = p₂.fst := by
+  subst hx
+  have hs_eq : s₁ = s₂ := eq_of_heq hs
+  subst hs_eq
+  exact congrArg Sigma.fst (eq_of_heq hp)
+
+/--
+Extract second component HEq when fibers and shapes are both known equal.
+-/
+lemma sigma_snd_heq_of_heq_via_fiber_shape_eq {X : Type*} {Shape : X → Type*}
+    {α : Type*} {F : (x : X) → Shape x → α → Type*}
+    {x₁ x₂ : X} (hx : x₁ = x₂)
+    {s₁ : Shape x₁} {s₂ : Shape x₂} (hs : s₁ ≍ s₂)
+    {p₁ : Sigma (F x₁ s₁)} {p₂ : Sigma (F x₂ s₂)}
+    (hp : p₁ ≍ p₂) : p₁.snd ≍ p₂.snd := by
+  subst hx
+  have hs_eq : s₁ = s₂ := eq_of_heq hs
+  subst hs_eq
+  exact sigma_snd_heq_of_eq (eq_of_heq hp)
+
+/--
+For sigma types `Σ x : α, β₁ x` and `Σ x : α, β₂ x` with the same index type `α`,
+if two values are HEq, their first components are equal.
+Requires that β₁ = β₂.
+-/
+lemma sigma_fst_eq_of_heq_same_index.{u, v} {α : Type u}
+    {β₁ β₂ : α → Type v}
+    {p₁ : Sigma β₁} {p₂ : Sigma β₂}
+    (hβ : β₁ = β₂)
+    (hp : p₁ ≍ p₂) : p₁.fst = p₂.fst := by
+  subst hβ
+  exact congrArg Sigma.fst (eq_of_heq hp)
+
+/--
+For sigma types with the same index type and equal families,
+extract snd HEq from sigma HEq.
+-/
+lemma sigma_snd_heq_of_heq_same_index.{u, v} {α : Type u}
+    {β₁ β₂ : α → Type v}
+    {p₁ : Sigma β₁} {p₂ : Sigma β₂}
+    (hβ : β₁ = β₂)
+    (hp : p₁ ≍ p₂) : p₁.snd ≍ p₂.snd := by
+  subst hβ
+  exact sigma_snd_heq_of_eq (eq_of_heq hp)
 
 /--
 Sigma equality for subtypes of function types where the domain depends on the
@@ -402,6 +489,29 @@ lemma sigma_subtype_fun_app_eq' {I : Type*} {A : Type*}
     s1.snd.val x = s2.snd.val (cast (congrArg F (congrArg Sigma.fst heq)) x) := by
   cases heq
   rfl
+
+/--
+For dependent sigma types, matching on a cast sigma gives the same result as
+applying the function to the cast components.
+
+When we have `⟨a, b⟩ : Σ x : A1, P1 x` and cast it to `Σ x : A2, P2 x`,
+matching and applying a function `f` gives the same result as applying `f`
+to the cast components directly.
+-/
+lemma sigma_cast_match_eq.{u, v, w} {A1 A2 : Type u} {P1 : A1 → Type v}
+    {P2 : A2 → Type v} {R : Type w}
+    (hA : A1 = A2) (hP : ∀ a1 : A1, P1 a1 = P2 (cast hA a1))
+    (a : A1) (b : P1 a)
+    (f : (x : A2) → P2 x → R)
+    (hsig : (Σ x : A1, P1 x) = (Σ x : A2, P2 x)) :
+    (match (cast hsig ⟨a, b⟩ : Σ x : A2, P2 x) with
+      | ⟨x, y⟩ => f x y) =
+    f (cast hA a) (cast (hP a) b) := by
+  cases hA
+  simp only [cast_eq] at hP
+  have hP' : P1 = P2 := funext hP
+  cases hP'
+  simp only [cast_eq]
 
 end GebLean
 
