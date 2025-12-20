@@ -3823,47 +3823,31 @@ lemma polyCofreeGetAnnotAtM_fromShapeAndData_succ (A : Over X) (P : PolyEndo X)
     (polyCofreeGetAnnotAtM A P m (k + 1) pos_m).val =
       f (cast (congrArg (PolyCofreeAnnotPos P) hshape) ⟨k + 1, pos_at⟩) := by
   intro m hshape pos_m
-  -- Unfold the position structure at depth k+1
   obtain ⟨e_shape, rest_pos⟩ := pos_at
-  -- The M-type position transformation gives us:
-  -- pos_m = ⟨e_m, rest_m⟩ where e_m = polyCofreeShapePosToMPos and rest_m is recursive
   simp only [polyCofreeGetAnnotAtM]
-  -- Now the goal is about extracting from m.children at depth k
   let e_m := polyCofreeShapePosToMPos A P m e_shape
   let child_m := m.children e_m
-  -- The rest position is transported to the child's shape
   let hfiber := polyCofreeShapePosToMPos_fiber A P m e_shape
   let hshape_children_heq := polyCofreeToShape_children_heq A P m e_shape
-  -- Child shape relates via HEq; use transport for the equality version
   have hshape_child := polyCofreeToShape_children_eq A P m e_shape
-  -- hshape_child : hfiber ▸ (polyCofreeToShape A P m).children e_shape =
-  --                polyCofreeToShape A P child_m
-  -- Cast rest_pos through the shape change
   let rest_pos_transported : PolyCofreeAnnotPosAt P
       (polyCofreeToShape A P child_m) k :=
     cast (polyCofreeAnnotPosAt_cast_fiber hfiber hshape_children_heq k) rest_pos
-  -- The LHS extracts from child_m at depth k. We need to relate this to f at the
-  -- corresponding position in shape.
-  -- Derive the needed index equality from hshape
   have hhead_eq : (polyCofreeToShape A P m).head.2 = shape.head.2 :=
     congrArg (fun s => s.head.2) hshape
   have hdom_eq : (polyBetweenFamily X X P x (polyCofreeToShape A P m).head.2).left =
       (polyBetweenFamily X X P x shape.head.2).left :=
     congrArg (fun idx => (polyBetweenFamily X X P x idx).left) hhead_eq
-  -- e' is e_shape transported to the shape's index domain
   let e' : (polyBetweenFamily X X P x shape.head.2).left := cast hdom_eq e_shape
-  -- The child shapes are HEq via shape equality and index transport
   have he_heq : e_shape ≍ e' := (cast_heq hdom_eq e_shape).symm
   have hchildren_heq' : (polyCofreeToShape A P m).children e_shape ≍ shape.children e' :=
     PolyCofix.children_heq rfl (heq_of_eq hshape) he_heq
   have hchildren_eq : (polyCofreeToShape A P m).children e_shape = shape.children e' :=
     eq_of_heq hchildren_heq'
-  -- Cast rest_pos to the shape's children domain
   have hrest_cast_eq : PolyCofreeAnnotPosAt P ((polyCofreeToShape A P m).children e_shape) k =
       PolyCofreeAnnotPosAt P (shape.children e') k :=
     congrArg (fun s => PolyCofreeAnnotPosAt P s k) hchildren_eq
   let rest' : PolyCofreeAnnotPosAt P (shape.children e') k := cast hrest_cast_eq rest_pos
-  -- Show that f applied to the cast position equals polyCofreeChildAnnotFn
   have hf_decomp : f (cast (congrArg (PolyCofreeAnnotPos P) hshape) ⟨k + 1, e_shape, rest_pos⟩) =
       polyCofreeChildAnnotFn A P shape f e' ⟨k, rest'⟩ := by
     simp only [polyCofreeChildAnnotFn]
@@ -3889,123 +3873,41 @@ lemma polyCofreeGetAnnotAtM_fromShapeAndData_succ (A : Over X) (P : PolyEndo X)
           _ _ hshape _ _ he_heq _ _ hrest_heq
       exact HEq.trans h hpos_heq
   rw [hf_decomp]
-  -- Goal: (polyCofreeGetAnnotAtM A P (m.children e_m) k pos').val =
-  --         polyCofreeChildAnnotFn A P shape f e' ⟨k, rest'⟩
-  -- Since m = polyCofreeFromShapeAndData A P shape f hf, the children of m are built
-  -- from polyCofreeFromShapeAndDataApprox on shape.children with polyCofreeChildAnnotFn.
-  -- Therefore, extraction at any position in children gives polyCofreeChildAnnotFn values.
-  -- The child shape equality:
   have hchild_shape_eq : (polyCofreeToShape A P m).children e_shape = shape.children e' :=
     hchildren_eq
-  -- Apply ih by relating m.children e_m approximations to child shape construction.
-  -- Use the fact that polyCofreeFromShapeAndData builds children via
-  -- polyCofreeFromShapeAndDataApprox on shape.children e' with polyCofreeChildAnnotFn.
   simp only [polyCofreeChildAnnotFn]
-  -- The goal is now: extraction = f ⟨k + 1, e', rest'⟩
-  -- We apply ih to the child shape (shape.children e') with child annotation function.
-  -- But we need to show m.children e_m corresponds to this construction.
-  -- This requires showing the approximations match, which follows from the definition
-  -- of polyCofreeFromShapeAndDataApprox.
-  -- Defer to ih after establishing the position correspondence.
   have hpos_eq : rest' = cast (congrArg (fun s => PolyCofreeAnnotPosAt P s k)
       hchildren_eq) rest_pos := rfl
   rw [hpos_eq]
-  -- Use ih on child shape (shape.children e') with child annotation function.
-  -- The ih signature expects pos_at to be in the *reconstructed* shape, not shape itself.
-  -- So we need to transport rest_pos through the chain of equalities.
-  -- The reconstructed child shape equals the original child shape:
   have hchild_roundtrip : polyCofreeToShape A P (polyCofreeFromShapeAndData A P
       (shape.children e') (polyCofreeChildAnnotFn A P shape f e')
       (polyCofreeChildAnnotFn_fiber A P shape f hf e')) = shape.children e' :=
     polyCofreePolyEval_roundtrip_shape A P (shape.children e')
       (polyCofreeChildAnnotFn A P shape f e')
       (polyCofreeChildAnnotFn_fiber A P shape f hf e')
-  -- Combined: (polyCofreeToShape A P m).children e_shape = reconstructed child shape
   have hshape_to_ih : (polyCofreeToShape A P m).children e_shape =
       polyCofreeToShape A P (polyCofreeFromShapeAndData A P (shape.children e')
         (polyCofreeChildAnnotFn A P shape f e')
         (polyCofreeChildAnnotFn_fiber A P shape f hf e')) :=
     hchildren_eq.trans hchild_roundtrip.symm
-  -- Cast rest_pos to the expected shape for ih
   let rest_pos_ih : PolyCofreeAnnotPosAt P (polyCofreeToShape A P (polyCofreeFromShapeAndData
       A P (shape.children e') (polyCofreeChildAnnotFn A P shape f e')
       (polyCofreeChildAnnotFn_fiber A P shape f hf e'))) k :=
     cast (congrArg (fun s => PolyCofreeAnnotPosAt P s k) hshape_to_ih) rest_pos
-  -- Apply ih
   have ih_result := ih (shape.children e') (polyCofreeChildAnnotFn A P shape f e')
     (polyCofreeChildAnnotFn_fiber A P shape f hf e') rest_pos_ih
-  -- ih_result relates extracting from the reconstructed child M-type to polyCofreeChildAnnotFn.
-  -- We need to show the extraction from m.children e_m equals the same.
-  -- The extraction from m.children e_m at depth k gives polyCofreeChildAnnotFn by construction.
-  -- By definition of polyCofreeFromShapeAndData, the children of m are built via the recursive
-  -- call in polyCofreeFromShapeAndDataApprox, which uses shape.children and polyCofreeChildAnnotFn.
-  -- The position transformation ensures that extracting at the transformed position gives
-  -- the corresponding polyCofreeChildAnnotFn value.
-  -- The positions rest_pos_ih and the position used in polyCofreeGetAnnotAtM for m.children
-  -- correspond via the shape chain. Use ih_result directly after showing the position
-  -- transformation gives the same position into the child M-type.
-  -- Lemma: polyCofreeGetAnnotAtM extracts polyCofreeChildAnnotFn values from children
-  -- of a reconstructed M-type. This follows from the recursive structure of the construction.
-  -- Let child_m' be the reconstructed child
   let child_m' := polyCofreeFromShapeAndData A P (shape.children e')
     (polyCofreeChildAnnotFn A P shape f e')
     (polyCofreeChildAnnotFn_fiber A P shape f hf e')
-  -- Both m.children e_m and child_m' have approximations that come from
-  -- polyCofreeFromShapeAndDataApprox on shape.children e' with polyCofreeChildAnnotFn.
-  -- The fiber equality ensures the types match up.
-  -- Rather than proving equality of M-types, we show that extraction gives the
-  -- same result via the construction properties.
-  -- The LHS extracts from m.children e_m at the transformed position.
-  -- By construction of m, the child at e_m has approximations matching child_m'.
-  -- The position transformation ensures we extract at the corresponding position.
-  -- Transform the goal to use the shape-based annotation function
   simp only [polyCofreeChildAnnotFn] at ih_result ⊢
-  -- ih_result shows: extraction from child_m' equals f applied to position
-  -- Goal: extraction from m.children e_m equals the same f application
-  -- m.children e_m and child_m' have the same approximations
-  -- (they're definitionally equal up to type transport), so extraction gives the same value.
-  -- The extraction function `polyCofreeGetAnnotAtM` only depends on the approximations,
-  -- not on how the M-type is constructed.
-  -- By construction, m = polyCofreeFromShapeAndData A P shape f hf has children at e_m
-  -- with approximations equal to polyCofreeFromShapeAndDataApprox on shape.children e'.
-  -- The position rest_pos_ih corresponds to the transformed position via hshape_to_ih.
-  -- Direct proof: show LHS extraction equals RHS by relating through ih_result.
-  -- The M-types are propositionally equal, and the positions correspond.
-  -- Since both extract from equivalent M-types at corresponding positions, results match.
-  -- Apply ih_result: it says extraction from child_m' = f ⟨k+1, e', ...⟩
-  -- We show extraction from m.children e_m = same thing.
-  -- The M-type equality m.children e_m = child_m' (propositionally) gives this.
-  -- Positions: rest_pos_ih is rest_pos cast through shape equalities
-  -- Goal: extraction from m.children e_m at pos corresponds to f ⟨k+1, e', rest⟩
-  -- This follows from the recursive structure of polyCofreeFromShapeAndData.
-  -- By induction: extracting from children at depth k gives polyCofreeChildAnnotFn values.
-  -- The LHS extracts from m.children e_m. By construction of m, the children at e_m
-  -- have the same approximations as polyCofreeFromShapeAndData on shape.children e'.
-  -- Since m = polyCofreeFromShapeAndData A P shape f hf, and by the recursive structure
-  -- of polyCofreeFromShapeAndDataApprox, m.children e_m = child_m' (up to type equality).
-  -- By ih_result, extraction from child_m' gives f applied to the corresponding position.
-  -- Thus extraction from m.children e_m gives the same result.
-  -- Show the fiber equality
   have hfiber_eq : (polyBetweenFamily X X (polyScale A P) x (PolyCofix.head m)).hom e_m =
       (polyBetweenFamily X X (polyScale (overTerminal X) P) x (PolyCofix.head shape)).hom e' := by
     simp only [polyBetweenFamily]
     exact hfiber
-  -- By construction, m.children e_m and child_m' are equal (as PolyCofix at hfiber_eq).
-  -- The approximations come from polyCofreeFromShapeAndDataApprox on shape.children
-  -- with polyCofreeChildAnnotFn, which is exactly how child_m' is defined.
-  -- Show the M-types are equal via approximation equality
   have hchild_eq : m.children e_m = hfiber_eq ▸ child_m' := by
     apply PolyCofix.ext
     intro n
-    -- Both approximations compute to polyCofreeFromShapeAndDataApprox on shape.children e'
-    -- The LHS: (m.children e_m).approx n = m.childApproxAt e_m n
-    -- For m = polyCofreeFromShapeAndData, childApproxAt extracts from the recursive call
-    -- The RHS: (hfiber_eq ▸ child_m').approx n transports via the fiber equality
-    -- By definition of PolyCofix.approx and eqRec, this equals child_m'.approx n
-    -- Both reduce to polyCofreeFromShapeAndDataApprox A P (shape.children e') ... n
     simp only [PolyCofix.children, PolyCofix.childApproxAt]
-    -- After simp, both sides should compute to the same approximation
-    -- The fiber equality hfiber_eq ensures type compatibility
     cases n with
     | zero =>
       simp only [PolyCofix.childApproxAt_zero]
@@ -4013,116 +3915,7 @@ lemma polyCofreeGetAnnotAtM_fromShapeAndData_succ (A : Over X) (P : PolyEndo X)
     | succ n =>
       simp only [PolyCofix.childApproxAt_succ]
       rfl
-  -- Rewrite the LHS using the child equality
-  -- The goal has a match on pos_m. We need to reduce it.
   conv_lhs => simp only [pos_m, polyCofreeShapePosToMPosAt]
-  -- Now LHS is polyCofreeGetAnnotAtM A P (m.children e_m) k (...)
-  -- We need to relate this to ih_result.
-  -- The extraction from m.children e_m equals extraction from child_m' by construction.
-  -- child_m' = polyCofreeFromShapeAndData A P (shape.children e') (polyCofreeChildAnnotFn ...) ...
-  -- ih_result says extraction from child_m' gives f (...)
-  -- Strategy: show both sides equal f ⟨k + 1, e', rest'⟩ directly.
-  -- The LHS extraction from m.children e_m at the transformed position gives a value
-  -- that by construction of polyCofreeFromShapeAndData is exactly f at the appropriate position.
-  -- Since child_m = m.children e_m = hfiber_eq ▸ child_m' and they have the same approximations,
-  -- the extraction only depends on the approximation structure, not the fiber.
-  -- Use HEq reasoning: the extractions are HEq, and since both are in A.left, they're equal.
-  -- Show LHS = ih_result LHS first, then use ih_result.
-  -- The M-types: m.children e_m and child_m' are HEq (same approximations, different fibers)
-  -- Goal: extraction from m.children e_m at pos = f ⟨k+1, e', rest'⟩
-  -- ih_result gives: extraction from child_m' = f (some cast of ⟨k, rest_pos_ih⟩)
-  -- By hchild_eq: m.children e_m = hfiber_eq ▸ child_m'
-  -- Both M-types have identical approximation structure (same construction).
-  -- Use ih_result by showing the goal RHS matches ih_result's RHS
-  -- The RHS involves casts of rest_pos. Both rest' and the goal's rest_pos cast
-  -- come from rest_pos via the same path (hchildren_eq).
-  -- Direct proof: show the LHS equals ih_result's LHS
-  -- by the definitional equality of approximations.
-  -- Since m = polyCofreeFromShapeAndData A P shape f hf, and child_m' is built
-  -- the same way on shape.children e', they share approximation structure.
-  -- The extraction from both gives the same value in A.left.
-  -- Approach: use the fact that polyCofreeChildAnnotFn gives the value directly.
-  -- By definition, extraction from polyCofreeFromShapeAndData at position pos
-  -- returns the annotation function at that position.
-  -- The goal is to show: extraction from m.children e_m at k rest_pos_transported
-  --   equals f ⟨k+1, e', rest'⟩.
-  -- By construction of m.children e_m (via polyCofreeFromShapeAndDataApprox),
-  -- it has the same structure as child_m'.
-  -- Both m.children e_m and child_m' extract to
-  -- polyCofreeChildAnnotFn A P shape f e' at the corresponding position.
-  -- Use hf_decomp which relates f and polyCofreeChildAnnotFn.
-  -- Goal RHS is f ⟨k+1, e', cast ... rest_pos⟩
-  -- Since rest' = cast hrest_cast_eq rest_pos, need to check the casts match.
-  -- hf_decomp: f (cast ⋯ ⟨k + 1, ⟨e_shape, rest_pos⟩⟩) =
-  --   polyCofreeChildAnnotFn A P shape f e' ⟨k, rest'⟩
-  -- The goal RHS cast uses hchildren_eq-derived equality, which matches hrest_cast_eq.
-  -- Apply ih_result after showing type alignment.
-  -- ih_result extracts from child_m' at rest_pos_ih; goal extracts from m.children e_m.
-  -- Since m.children e_m = hfiber_eq ▸ child_m', and PolyCofix eqRec preserves
-  -- approximations, the extractions are definitionally equal at the value level.
-  -- The extracted values are both in A.left, so they're equal if HEq.
-  -- Show LHS HEq to ih_result LHS, then both equal ih_result RHS
-  -- Simplify: extraction from m.children e_m is the same as from child_m'
-  -- because both are built from the same polyCofreeFromShapeAndDataApprox.
-  -- m.childApproxAt e_m n = child_m'.approx n (up to fiber transport)
-  -- So polyCofreeGetAnnotAtM reads from identical approximation data.
-  -- Use eq_of_heq after establishing HEq of extractions.
-  -- Both LHS and ih_result LHS extract from M-types with same approximations
-  -- at HEq positions, giving HEq subtypes, hence equal .val values.
-  -- Goal: extraction from m.children e_m at pos = f ⟨k+1, e', rest'⟩
-  -- ih_result provides the same for child_m'. Since m.children e_m = hfiber_eq ▸ child_m',
-  -- they have identical approximations and extractions.
-  -- Direct approach: use hf_decomp and show the casts match.
-  -- hf_decomp: f (cast ⋯ ⟨k + 1, ⟨e_shape, rest_pos⟩⟩) =
-  --   polyCofreeChildAnnotFn A P shape f e' ⟨k, rest'⟩
-  -- The goal RHS is f ⟨k + 1, ⟨e', cast ... rest_pos⟩⟩
-  -- We need: LHS extraction = f applied to appropriate position
-  -- Since m = polyCofreeFromShapeAndData, and extraction from its children
-  -- gives polyCofreeChildAnnotFn, which equals f at shifted position.
-  -- Use hchild_eq to relate extractions: m.children e_m = hfiber_eq ▸ child_m'
-  -- Extraction from (h ▸ x) at pos equals extraction from x at corresponding pos
-  -- (since the value is in A.left, fiber-independent).
-  -- Simplest proof: both extractions are definitionally equal since both M-types
-  -- are constructed from polyCofreeFromShapeAndDataApprox on the same inputs.
-  -- The goal LHS is extraction from m.children e_m
-  -- m = polyCofreeFromShapeAndData A P shape f hf
-  -- m.children e_m = child of m at e_m
-  -- By definition of polyCofreeFromShapeAndData, children are built via
-  -- polyCofreeFromShapeAndDataApprox on shape.children e' with polyCofreeChildAnnotFn
-  -- child_m' is exactly polyCofreeFromShapeAndData on shape.children e' with polyCofreeChildAnnotFn
-  -- So m.children e_m and child_m' have the same approximations (by construction)
-  -- Hence extractions are equal at corresponding positions.
-  -- The ih says extraction from child_m' at rest_pos_ih = f ⟨(cast...).fst + 1, e', (cast...).snd⟩
-  -- We need: extraction from m.children e_m at (cast ... rest_pos) = f ⟨k+1, e', cast ... rest_pos⟩
-  -- By construction, both equal the appropriate polyCofreeChildAnnotFn value.
-  -- Direct approach: show both sides equal the same value by construction.
-  -- LHS: extraction from m.children e_m at position built from rest_pos
-  -- RHS: f ⟨k + 1, e', rest'⟩
-  -- By construction of polyCofreeFromShapeAndData, m.children at e_m has
-  -- the same approximations as child_m' (polyCofreeFromShapeAndData on
-  -- shape.children e' with polyCofreeChildAnnotFn).
-  -- ih_result says extraction from child_m' = f ⟨(cast...).fst + 1, e', (cast...).snd⟩
-  -- We show LHS = ih_result LHS by approximation equality, and RHS = ih_result RHS
-  -- by simplifying the casts.
-  -- First simplify the goal position and RHS. The position builds from rest_pos
-  -- through cast chains. Both rest_pos_transported and rest_pos_ih trace to rest_pos.
-  -- Use the fact that extraction from m.children e_m equals extraction from child_m'
-  -- since they're equal (hchild_eq) and positions correspond.
-  -- The extraction values are subtypes in A.left. For .val equality, use that
-  -- both M-types have identical approximations.
-  -- Approach: prove directly via approximation structure. Both m.children e_m and
-  -- child_m' are built from polyCofreeFromShapeAndDataApprox on shape.children e'.
-  -- The only difference is the fiber context. The extracted .val depends only
-  -- on the approximation data, not the fiber.
-  -- Show: extraction .val from m.children e_m = extraction .val from child_m'
-  -- = f (position) by ih_result.
-  -- Since m.children e_m = hfiber_eq ▸ child_m', the .val of extraction is unchanged.
-  -- Use eq_of_heq after showing the subtype values are HEq.
-  -- The positions rest_pos_transported and rest_pos_ih both derive from rest_pos.
-  -- Show they give the same position into the M-type.
-  -- Show ih_result's RHS simplifies to f ⟨k + 1, e', rest'⟩
-  -- The cast is along PolyCofreeAnnotPos P (sigma over Nat) with changed shape.
-  -- sigma_cast_fst_of_outer gives HEq for .fst; since types are both Nat, use eq_of_heq.
   have hcast_fst_heq : (cast (congrArg (PolyCofreeAnnotPos P) hchild_roundtrip)
       ⟨k, rest_pos_ih⟩).fst ≍ k :=
     @sigma_cast_fst_of_outer (PolyCofreeShape P _) (fun _ => Nat)
@@ -4133,10 +3926,6 @@ lemma polyCofreeGetAnnotAtM_fromShapeAndData_succ (A : Over X) (P : PolyEndo X)
       ⟨k, rest_pos_ih⟩).snd ≍ rest_pos_ih :=
     @sigma_cast_snd_heq (PolyCofreeShape P _) (fun _ => Nat)
       (fun s n => PolyCofreeAnnotPosAt P s n) _ _ hchild_roundtrip k rest_pos_ih
-  -- rest_pos_ih and rest' are both casts of rest_pos; show they're HEq
-  -- rest_pos_ih := cast (congrArg ... hshape_to_ih) rest_pos
-  -- rest' := cast hrest_cast_eq rest_pos
-  -- cast_heq gives: cast h x ≍ x
   have hrest_pos_ih_heq_rest' : rest_pos_ih ≍ rest' :=
     HEq.trans
       (cast_heq (congrArg (fun s => PolyCofreeAnnotPosAt P s k) hshape_to_ih) rest_pos)
@@ -4146,102 +3935,29 @@ lemma polyCofreeGetAnnotAtM_fromShapeAndData_succ (A : Over X) (P : PolyEndo X)
       ⟨e', (cast (congrArg (PolyCofreeAnnotPos P) hchild_roundtrip)
         ⟨k, rest_pos_ih⟩).snd⟩⟩ = f ⟨k + 1, ⟨e', rest'⟩⟩ := by
     congr 1
-    -- Goal: the full sigma argument is equal
-    -- Outer sigma: first component is Nat, second is inner sigma at depth n+1
     have hsnd_heq : (cast (congrArg (PolyCofreeAnnotPos P) hchild_roundtrip)
         ⟨k, rest_pos_ih⟩).snd ≍ rest' :=
       HEq.trans hcast_snd_heq hrest_pos_ih_heq_rest'
     have hfst_eq : (cast (congrArg (PolyCofreeAnnotPos P) hchild_roundtrip)
         ⟨k, rest_pos_ih⟩).fst + 1 = k + 1 := congrArg (· + 1) hcast_fst
-    -- Inner sigma: ⟨e', (cast...).snd⟩ vs ⟨e', rest'⟩
-    -- Both are at depth k+1 in shape, so inner component at children depth k
-    -- Use Sigma.ext with first eq (rfl for e') and HEq for second
     apply Sigma.ext hfst_eq
-    -- HEq of the inner sigmas: ⟨e', (cast...).snd⟩ ≍ ⟨e', rest'⟩
-    -- Both have first component e', so use sigma_heq_of_fst_eq_snd_heq
-    -- The outer parameter is Nat (the depth), the index is edge type,
-    -- and the fiber at edge e and depth n is PolyCofreeAnnotPosAt P (shape.children e) n
     exact @sigma_heq_of_fst_eq_snd_heq Nat
       ((polyBetweenFamily X X P x (PolyCofix.head shape).2).left)
       (fun n e => PolyCofreeAnnotPosAt P (PolyCofix.children shape e) n)
       _ _ hcast_fst _ _ rfl _ _ hsnd_heq
   rw [← hih_rhs]
-  -- Goal: extraction from m.children e_m = extraction from child_m' (ih_result)
-  -- By hchild_eq: m.children e_m = hfiber_eq ▸ child_m'
-  -- Both M-types have identical approximations since they're both built from
-  -- polyCofreeFromShapeAndDataApprox on shape.children e' with polyCofreeChildAnnotFn.
-  -- The fiber transport only affects the outer wrapper, not .head or .children.
-  -- So extractions give the same .val in A.left.
-  -- Use transitivity with ih_result: show LHS equals ih_result's LHS.
-  -- Both positions derive from rest_pos. Show they give the same extraction value.
-  -- By construction of polyCofreeFromShapeAndData, extraction from m.children e_m
-  -- at position derived from rest_pos equals polyCofreeChildAnnotFn at that position.
-  -- ih_result says the same for child_m'. Since both equal the same f-value, done.
-  -- Direct approach: show both extractions equal f ⟨k+1, e', rest'⟩ via construction.
-  -- Use hf_decomp and the fact that extraction = annotation function value.
-  -- By definition of polyCofreeFromShapeAndData, we have that extraction at any
-  -- position returns the annotation function at that position.
-  -- Both m.children e_m and child_m' are constructed the same way (modulo fiber).
-  -- Show LHS extraction = ih_result's LHS extraction directly.
-  -- Since m.children e_m = hfiber_eq ▸ child_m', the approximations are identical:
-  -- (hfiber_eq ▸ child_m').approx n = child_m'.approx n (transport preserves data)
-  -- The positions (cast ... rest_pos) and rest_pos_ih both come from rest_pos.
-  -- Shape equality: polyCofreeToShape A P (m.children e_m) ≍ polyCofreeToShape A P child_m'
-  -- This follows from hshape_children_heq and hchild_eq.
-  -- Use eq_of_heq after showing the extraction subtypes are HEq.
-  -- Both extractions are in A.left, so if HEq then equal.
-  -- First show the M-types have HEq shapes, then positions give HEq M-type positions,
-  -- then extractions are HEq.
-  -- Shapes are HEq
   have hm_shape_heq : polyCofreeToShape A P (m.children e_m) ≍
       polyCofreeToShape A P child_m' := by
-    -- m.children e_m = hfiber_eq ▸ child_m', and polyCofreeToShape preserves HEq
-    -- under fiber transport
     rw [hchild_eq]
-  -- Input positions are HEq
-  -- The goal position is (cast ... rest_pos) : PolyCofreeAnnotPosAt P
-  --   (polyCofreeToShape A P (m.children e_m)) k
-  -- ih_result uses rest_pos_ih : PolyCofreeAnnotPosAt P
-  --   (polyCofreeToShape A P child_m') k
-  -- Both are casts of rest_pos. Show they're HEq.
   have hpos_input_heq : (cast (congrArg (fun s => PolyCofreeAnnotPosAt P s k)
       (eq_of_heq hshape_children_heq)) rest_pos) ≍ rest_pos_ih := by
-    -- rest_pos_ih is also a cast of rest_pos
-    -- rest_pos_ih := cast (congrArg ... hshape_to_ih) rest_pos
-    -- Both are casts of rest_pos to HEq types
     apply HEq.trans (cast_heq _ rest_pos)
     exact HEq.symm (cast_heq _ rest_pos)
-  -- The full extractions are HEq
-  -- This requires showing that polyCofreeGetAnnotAtM gives HEq results
-  -- when called on HEq M-types at HEq positions.
-  -- Since m.children e_m = hfiber_eq ▸ child_m', and eqRec preserves
-  -- the actual data (.head, .children), the extractions are definitionally equal.
-  -- Use the fact that for PolyCofix, (h ▸ m).head = m.head and similar.
-  -- polyCofreeGetAnnotAtM only accesses .head and .children, which are preserved.
-  -- For definitional equality: extraction from (h ▸ m) at position pos =
-  -- extraction from m at the corresponding position.
-  -- The positions are HEq, and the M-types give HEq when accessed.
-  -- Use eq_of_heq at the end since both values are in A.left.
-  -- (hfiber_eq ▸ child_m').head = child_m'.head definitionally
-  -- (eqRec on PolyCofix preserves the head).
-  -- So extractions trace to the same value.
-  -- Use transitivity: LHS = polyCofreeChildAnnotFn value = ih_result's LHS
-  -- By construction of polyCofreeFromShapeAndData, extraction equals annotation.
-  -- Goal: show both extractions equal the same polyCofreeChildAnnotFn value.
-  -- m.children e_m is built from polyCofreeFromShapeAndDataApprox on
-  -- shape.children e' with polyCofreeChildAnnotFn (via the construction of m).
-  -- child_m' is exactly polyCofreeFromShapeAndData on same inputs.
-  -- So both have identical approximation structure.
-  -- The extracted .val only depends on approximation data.
-  -- Show equality by computing both sides.
-  -- Use the induction hypothesis via transitivity with ih_result.
   trans (polyCofreeGetAnnotAtM A P child_m' k
     (polyCofreeShapePosToMPosAt A P child_m' k rest_pos_ih)).val
-  · -- Use the equality lemma with hchild_eq
-    exact polyCofreeGetAnnotAtM_val_of_eq A P (m.children e_m) child_m' hfiber_eq
+  · exact polyCofreeGetAnnotAtM_val_of_eq A P (m.children e_m) child_m' hfiber_eq
       hchild_eq k _ _ hpos_input_heq
-  · -- This is exactly ih_result
-    exact ih_result
+  · exact ih_result
 
 /--
 Extracting annotation at depth n from the reconstructed M-type gives back
@@ -4457,10 +4173,6 @@ lemma polyCofreeAnnotPos_fiber_eq (A : Over X) (P : PolyEndo X) {x : X}
     (polyBetweenFamily X X (polyScale (overTerminal X) P) x
         (polyCofreeToShape A P m).head).hom a =
     (polyBetweenFamily X X (polyScale A P) x m.head).hom b' := by
-  -- polyBetweenFamily for polyScale at index i = polyBetweenFamily for P at i.2
-  -- So LHS = (polyBetweenFamily X X P x (polyCofreeToShape A P m).head.2).hom a
-  -- And RHS = (polyBetweenFamily X X P x m.head.2).hom b'
-  -- This is exactly hfiber
   exact hfiber
 
 /--
@@ -4476,9 +4188,7 @@ lemma polyCofreeAnnotPos_head2_heq (A : Over X) (P : PolyEndo X) {x : X}
         polyCofreeToShape A P (m.children b')) :
     ((polyCofreeToShape A P m).children a).head.2 ≍
     (polyCofreeToShape A P (m.children b')).head.2 := by
-  -- Use step 1 to get fiber equality in polyScale form
   have hfiber_eq := polyCofreeAnnotPos_fiber_eq A P m a b' hfiber hshape12
-  -- Use polyCofreeShape_head_snd_heq
   exact polyCofreeShape_head_snd_heq (overTerminal X) P hfiber_eq hshape12
 
 /--
@@ -4507,7 +4217,6 @@ lemma polyCofreeAnnotPos_grandchild_fiber_eq (A : Over X) (P : PolyEndo X)
     (polyBetweenFamily X X P
         ((polyBetweenFamily X X (polyScale A P) x m.head).hom b')
         (polyCofreeToShape A P (m.children b')).head.2).hom e2 := by
-  -- Use polyBetweenFamily_hom_eq_of_heq
   have hparent := polyCofreeAnnotPos_fiber_eq A P m a b' hfiber hshape12
   have hhead2 := polyCofreeAnnotPos_head2_heq A P m a b' hfiber hshape12
   exact polyBetweenFamily_hom_eq_of_heq hparent
@@ -4536,9 +4245,7 @@ lemma polyCofreeAnnotPos_grandchild_shape_heq (A : Over X) (P : PolyEndo X)
     (he12 : e1 ≍ e2) :
     ((polyCofreeToShape A P m).children a).children e1 ≍
     (polyCofreeToShape A P (m.children b')).children e2 := by
-  -- Get the parent fiber equality for polyScale form
   have hparent := polyCofreeAnnotPos_fiber_eq A P m a b' hfiber hshape12
-  -- Use PolyCofix.children_heq
   exact PolyCofix.children_heq hparent hshape12 he12
 
 /--
@@ -4594,13 +4301,10 @@ lemma polyCofreeAnnotPosAt_family_eq (A : Over X) (P : PolyEndo X)
     (he12 : e1 ≍ e2) :
     PolyCofreeAnnotPosAt P (((polyCofreeToShape A P m).children a).children e1) =
     PolyCofreeAnnotPosAt P ((polyCofreeToShape A P (m.children b')).children e2) := by
-  -- Get the grandchild fiber equality from step 3
   have hgc_fiber := polyCofreeAnnotPos_grandchild_fiber_eq A P m a b'
     hfiber hshape12 e1 e2 he12
-  -- Get the grandchild shape HEq from step 4
   have hgc_heq := polyCofreeAnnotPos_grandchild_shape_heq A P m a b'
     hfiber hshape12 e1 e2 he12
-  -- Use polyCofreeAnnotPosAt_cast_fiber to get type equality for all n
   funext n
   exact polyCofreeAnnotPosAt_cast_fiber hgc_fiber hgc_heq n
 
@@ -4686,38 +4390,26 @@ lemma polyCofreeGetAnnot_parent_child_eq (A : Over X) (P : PolyEndo X) {x : X}
     (polyCofreeGetAnnot A P m ⟨pos1.fst + 1 + 1, ⟨a, ⟨e1, pos1.snd⟩⟩⟩).val =
     (polyCofreeGetAnnot A P (m.children b') ⟨pos2.fst + 1, ⟨e2, pos2.snd⟩⟩).val := by
   intro b'
-  -- Derive fiber equality and shape HEq at parent level
   let hfiber := polyCofreeShapePosToMPos_fiber A P m a
   let hchildren_heq := polyCofreeToShape_children_heq A P m a
   let shape1 := (polyCofreeToShape A P m).children a
   let shape2 := polyCofreeToShape A P (m.children b')
-  -- Derive fiber equality at grandchild level using polyBetweenFamily_hom_eq_of_heq
   have hhead2_heq : shape1.head.2 ≍ shape2.head.2 :=
     polyCofreeShape_head_snd_heq (overTerminal X) P hfiber hchildren_heq
   have hgrandchild_fiber : (polyBetweenFamily X X P _ shape1.head.2).hom e1 =
       (polyBetweenFamily X X P _ shape2.head.2).hom e2 :=
     polyBetweenFamily_hom_eq_of_heq hfiber shape1.head.2 shape2.head.2 hhead2_heq e1 e2 he12
-  -- Derive grandchildren shape HEq
   have hgrandchild_heq : shape1.children e1 ≍ shape2.children e2 :=
     PolyCofix.children_heq hfiber hchildren_heq he12
-  -- Position families are equal using fiber equality and shape HEq
   have hfamily_eq : (fun n => PolyCofreeAnnotPosAt P (shape1.children e1) n) =
       (fun n => PolyCofreeAnnotPosAt P (shape2.children e2) n) := by
     funext n
     exact polyCofreeAnnotPosAt_cast_fiber hgrandchild_fiber hgrandchild_heq n
-  -- Destructure positions to get component equalities
   obtain ⟨n1, pos1_snd⟩ := pos1
   obtain ⟨n2, pos2_snd⟩ := pos2
   have hfst : n1 = n2 := sigma_fst_heq_eq hfamily_eq hpos12
   have hsnd_heq : pos1_snd ≍ pos2_snd := sigma_snd_heq_of_heq_same_index hfamily_eq hpos12
-  -- Use subst to unify depths
   subst hfst
-  -- Now n1 = n2, and we can unfold and use congruence
-  -- Both extractions go through the same child and grandchild
-  -- LHS: extract from m at depth n1+2 with position ⟨a, ⟨e1, pos1_snd⟩⟩
-  -- RHS: extract from m.children b' at depth n1+1 with position ⟨e2, pos2_snd⟩
-  -- Since a maps to b' and e1 ≍ e2 and pos1_snd ≍ pos2_snd, these are equal
-  -- Derive the type equality for e1 and e2
   have htype_eq : (polyBetweenFamily X X P
         ((polyBetweenFamily X X (polyScale (overTerminal X) P) x
           (PolyCofix.head (polyCofreeToShape A P m))).hom a)
@@ -4731,17 +4423,12 @@ lemma polyCofreeGetAnnot_parent_child_eq (A : Over X) (P : PolyEndo X) {x : X}
   have hpos_type_eq := polyCofreeAnnotPosAt_cast_fiber hgrandchild_fiber hgrandchild_heq n1
   have hpos_cast_eq : cast hpos_type_eq pos1_snd = pos2_snd :=
     eq_of_heq ((cast_heq hpos_type_eq pos1_snd).trans hsnd_heq)
-  -- The goal reduces to showing that extracting at depth n1+2 from m with position
-  -- (a, (e1, pos1_snd)) equals extracting at depth n1+1 from m.children b' with
-  -- position (e2, pos2_snd). Use the descent lemma and cast position equality.
   have hcast := polyCofreeAnnotPosAt_cast_fiber hfiber hchildren_heq (n1 + 1)
   have h1 : (polyCofreeGetAnnot A P m ⟨n1 + 1 + 1, ⟨a, ⟨e1, pos1_snd⟩⟩⟩).val =
       (polyCofreeGetAnnotAt A P (m.children b') (n1 + 1)
         (cast hcast ⟨e1, pos1_snd⟩)).val :=
     polyCofreeGetAnnot_descent_eq A P m a (n1 + 1) ⟨e1, pos1_snd⟩
-  -- Show the cast sigma equals (e2, pos2_snd) using component equalities
   have h2 : cast hcast ⟨e1, pos1_snd⟩ = ⟨e2, pos2_snd⟩ := by
-    -- Use polyCofreeAnnotPosAt_sigma_heq with fiber equality and shape HEq
     have heq_sig : (⟨e1, pos1_snd⟩ : PolyCofreeAnnotPosAt P shape1 (n1 + 1)) ≍
         (⟨e2, pos2_snd⟩ : PolyCofreeAnnotPosAt P shape2 (n1 + 1)) :=
       polyCofreeAnnotPosAt_sigma_heq P hfiber hchildren_heq he12 hsnd_heq
@@ -5151,26 +4838,17 @@ lemma polyFreeMapHom_comm (A B : Over X) (P : PolyEndo X) (f : A ⟶ B) :
     polyEndoFunctor, polyBetweenEvalFunctor, polyToOverFunctor,
     polyToOverEvalMap, familySliceForward, familySliceForwardMap,
     polyToOverEvalFamilyMap, ccrEvalMap]
-  -- Do not unfold polyFreeMapAt here - keep it for the lemma to match
   unfold polyFreeMStrLeft polyFreeMapLeft polyFreeMStrFamily
   simp only [types_comp_apply]
   obtain ⟨i, h⟩ := elem
   simp only [pbefIndex, pbefMor, ptoefIndex, ptoefMor, ccrEvalIndex, ccrEvalMor]
   simp only [Over.comp_left, Over.homMk_left]
-  -- Use congr to break down to children equality
   congr 1
-  -- Goal: equality of PolyFix.mk x (Sum.inr i) children
   congr 1
-  -- Goal: equality of children functions
   funext e
-  -- LHS: transport ▸ ((h.left ≫ map) e).snd = transport ▸ polyFreeMapAt (h.left e).snd
-  -- RHS: polyFreeMBind (transport ▸ (h.left e).snd) bind_fn
   simp only [types_comp_apply]
-  -- Unfold polyFreeMapAt to expose polyFreeMBind
   unfold polyFreeMapAt
-  -- Use polyFreeMBind_transport in reverse on RHS to move transport outside
   rw [← polyFreeMBind_transport]
-  -- Now both have transport after polyFreeMBind
   rfl
 
 /--
