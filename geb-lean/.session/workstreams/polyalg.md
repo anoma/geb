@@ -1,6 +1,6 @@
 # Polynomial Endofunctor Algebras and Coalgebras
 
-Status: Completed
+Status: In Progress
 
 ## Objective
 
@@ -249,11 +249,24 @@ Components:
 10. **polyCoalgUnitAt P β x s** - M-type for unit construction
 11. **polyCoalgUnit P β** - Unit morphism `β.V → Cofree(β.V)` in Over X
 
-## Future Directions
+## Remaining Work
+
+### Adjunction Completion
+
+The unit and counit natural transformations are defined. Remaining:
+
+1. **polyCoalgUnitNat** - Unit for Forget ⊣ Cofree as natural transformation
+   (naturality proof needed for existing `polyCoalgUnit`)
+2. **Triangle identities** for Free ⊣ Forget
+3. **Triangle identities** for Forget ⊣ Cofree
+4. **Adjunction structures** - Construct `Adjunction` instances
+
+### Future Directions
 
 - Lambek's Lemma: show that the structure map is an isomorphism for
   initial algebras and terminal coalgebras
-- Connection to QPF (quotients of polynomial functors)
+
+See also: `.session/workstreams/qpf-connection.md` for QPF investigation
 
 ## Declaration Index
 
@@ -654,6 +667,8 @@ organized by category. Line numbers are approximate.
 | `polyFreeCounitFold` | Def | Counit morphism |
 | `polyFreeCounitFold_comm` | Lemma | Counit is alg hom |
 | `polyFreeCounitHom` | Def | Counit as alg hom |
+| `polyFreeCounitHom_natural` | Lemma | Counit naturality |
+| `polyFreeCounitNat` | Def | Counit as nat trans |
 
 ### Cofree Coalgebra Functor (Lines 5270-5737)
 
