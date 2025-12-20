@@ -1,4 +1,3 @@
-import GebLean.PLang.CatIndexedEAT
 import GebLean.PLang.CatJudgment
 import GebLean.PLang.CatJudgGrothendieck
 import GebLean.PLang.IndexedEAT
