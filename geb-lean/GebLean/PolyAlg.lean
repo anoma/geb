@@ -3076,6 +3076,13 @@ def polyFreeMPoly (P : PolyEndo X) : PolyEndo X := fun x =>
   ccrObjMk (polyFreeMFamily P x)
 
 /--
+The positions of the free monad polynomial at fiber `x` are exactly the tree
+shapes (free monad applied to the terminal object).
+-/
+lemma polyFreeMPoly_index (P : PolyEndo X) (x : X) :
+    polyBetweenIndex X X (polyFreeMPoly P) x = PolyFreeMShape P x := rfl
+
+/--
 Build a free monad tree from a shape and leaf data.
 Given a tree shape and a function assigning A-values to each leaf position,
 constructs the corresponding element of PolyFreeM A P.
@@ -3324,6 +3331,17 @@ def polyFreeMEquivPolyEval (A : Over X) (P : PolyEndo X) (x : X) :
     intro ⟨shape, mor⟩
     exact polyFreeMPolyEval_roundtrip A P shape mor
 
+/--
+Evaluating the free monad polynomial at the terminal object gives an
+equivalence with the shape type (positions of the polynomial).
+
+Since `PolyFreeMShape P x = PolyFreeM (overTerminal X) P x`, this is an
+instance of `polyFreeMEquivPolyEval` at the terminal object.
+-/
+def polyFreeMTerminalEvalEquiv (P : PolyEndo X) (x : X) :
+    PolyFreeMShape P x ≃ PolyFreeMPolyEval (overTerminal X) P x :=
+  polyFreeMEquivPolyEval (overTerminal X) P x
+
 /-! ### Polynomial Representation of Cofree Comonad
 
 The cofree comonad `A ↦ PolyCofreeM A P` is a polynomial functor. Its positions
@@ -3396,6 +3414,13 @@ The cofree comonad functor represented as a polynomial endofunctor.
 -/
 def polyCofreeMPoly (P : PolyEndo X) : PolyEndo X := fun x =>
   ccrObjMk (polyCofreeFamily P x)
+
+/--
+The positions of the cofree comonad polynomial at fiber `x` are exactly the
+stream shapes (cofree comonad applied to the terminal object).
+-/
+lemma polyCofreeMPoly_index (P : PolyEndo X) (x : X) :
+    polyBetweenIndex X X (polyCofreeMPoly P) x = PolyCofreeShape P x := rfl
 
 /--
 The cofree comonad polynomial evaluation type: standard polynomial evaluation
@@ -4935,6 +4960,17 @@ def polyCofreeEquiv (A : Over X) (P : PolyEndo X) (x : X) :
   invFun := polyCofreePolyEval_to_polyCofreeM A P
   left_inv := polyCofreeM_roundtrip A P
   right_inv := polyCofreePolyEval_roundtrip A P
+
+/--
+Evaluating the cofree comonad polynomial at the terminal object gives an
+equivalence with the shape type (positions of the polynomial).
+
+Since `PolyCofreeShape P x = PolyCofreeM (overTerminal X) P x`, this is an
+instance of `polyCofreeEquiv` at the terminal object.
+-/
+def polyCofreeTerminalEvalEquiv (P : PolyEndo X) (x : X) :
+    PolyCofreeShape P x ≃ PolyCofreePolyEval (overTerminal X) P x :=
+  polyCofreeEquiv (overTerminal X) P x
 
 end FreeMonadCofreeComonad
 
