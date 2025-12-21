@@ -20,6 +20,15 @@ as free constructions or have forgetful functors with adjoints.
 - Imports `GebLean/Polynomial.lean` (polynomial functor infrastructure)
 - Imported by `GebLean/PolyAlg.lean` (to enable code factoring using adjunctions)
 
+## Completed
+
+- [x] Position functor `ccrPosFunctor : CoprodCovarRepCat C ⥤ Type`
+- [x] Monomial functor `ccrMonomialFunctor c : Type ⥤ CoprodCovarRepCat C`
+- [x] Evaluation functor `ccrEvalFunctor : CoprodCovarRepCat D ⥤ (D ⥤ Type)`
+- [x] Prove `ccrEvalFunctor` is faithful
+- [x] Prove `ccrEvalFunctor` is full
+- [x] Construct `ccrEvalFunctorFullyFaithful` (explicit FullyFaithful instance)
+
 ## Tasks
 
 ### Adjunctions to Implement
