@@ -1,4 +1,5 @@
 import GebLean.Polynomial
+import GebLean.Utilities.Category
 
 /-!
 # Adjunctions Involving Polynomial Functors
@@ -243,6 +244,58 @@ lemma ccrEvalFunctor_obj (P : CoprodCovarRepCat.{u, v, w} D) :
 lemma ccrEvalFunctor_map {P Q : CoprodCovarRepCat.{u, v, w} D} (f : P ⟶ Q) :
     ccrEvalFunctor.map f = ccrToFunctorMap f :=
   rfl
+
+/-! ### Faithfulness
+
+The evaluation functor is faithful: distinct morphisms in `CoprodCovarRepCat D`
+induce distinct natural transformations.
+-/
+
+/--
+If two morphisms `f g : P ⟶ Q` in `CoprodCovarRepCat` induce the same natural
+transformation, then they have equal base components.
+-/
+lemma ccrToFunctorMap_injective_base {P Q : CoprodCovarRepCat.{u, v, w} D}
+    {f g : P ⟶ Q} (h : ccrToFunctorMap f = ccrToFunctorMap g) : f.base = g.base := by
+  funext i
+  have h_at : ccrToFunctorMapApp f (ccrFamily P i) (ccrEvalMk i (𝟙 _)) =
+      ccrToFunctorMapApp g (ccrFamily P i) (ccrEvalMk i (𝟙 _)) :=
+    congr_fun (congr_fun (congr_arg NatTrans.app h) (ccrFamily P i))
+      (ccrEvalMk i (𝟙 (ccrFamily P i)))
+  exact congrArg Sigma.fst h_at
+
+/--
+If two morphisms `f g : P ⟶ Q` in `CoprodCovarRepCat` induce the same natural
+transformation and have equal base components, then their fiber components
+are equal after composing with `eqToHom`.
+-/
+lemma ccrToFunctorMap_injective_fiber {P Q : CoprodCovarRepCat.{u, v, w} D}
+    {f g : P ⟶ Q} (h : ccrToFunctorMap f = ccrToFunctorMap g)
+    (hbase : f.base = g.base) :
+    f.fiber ≫ eqToHom (by rw [hbase]) = g.fiber := by
+  funext k
+  have h_at : ccrToFunctorMapApp f (ccrFamily P k) (ccrEvalMk k (𝟙 _)) =
+      ccrToFunctorMapApp g (ccrFamily P k) (ccrEvalMk k (𝟙 _)) :=
+    congr_fun (congr_fun (congr_arg NatTrans.app h) (ccrFamily P k))
+      (ccrEvalMk k (𝟙 (ccrFamily P k)))
+  simp only [ccrToFunctorMapApp, ccrEvalMk, ccrEvalIndex, ccrEvalMor,
+    Category.comp_id] at h_at
+  have h_snd := (Sigma.mk.inj h_at).2
+  simp only [ccrFiberMor] at h_snd
+  rw [piOp'_fiber_comp_eqToHom_at_idx]
+  exact (heq_iff_eqToHom_comp (f.fiber k) (g.fiber k) _).mp h_snd
+
+/--
+A morphism `f : P ⟶ Q` can be recovered from the natural transformation
+`ccrToFunctorMap f` by evaluating at the "universal elements" `⟨i, 𝟙⟩`.
+-/
+lemma ccrToFunctorMap_injective {P Q : CoprodCovarRepCat.{u, v, w} D}
+    {f g : P ⟶ Q} (h : ccrToFunctorMap f = ccrToFunctorMap g) : f = g :=
+  GrothendieckContra'.ext _ _ (ccrToFunctorMap_injective_base h)
+    (ccrToFunctorMap_injective_fiber h (ccrToFunctorMap_injective_base h))
+
+instance : Functor.Faithful (ccrEvalFunctor (D := D)) where
+  map_injective := ccrToFunctorMap_injective
 
 end EvaluationFunctor
 

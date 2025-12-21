@@ -64,6 +64,32 @@ def op_comp_eq {C : Type u} [CI : Category.{v, u} C] {X Y Z : Cᵒᵖ'}
   rfl
 
 /--
+Composition in the opposite of a Pi category, evaluated at an index, equals
+the reversed composition at that index.
+-/
+@[simp]
+lemma piOp'_comp_at_idx {I : Type*} {C : I → Type*} [∀ i, Category (C i)]
+    {X Y Z : (∀ i, C i)ᵒᵖ'}
+    (f : X ⟶ Y) (g : Y ⟶ Z) (i : I) :
+    (f ≫ g) i = g i ≫ f i :=
+  rfl
+
+/--
+Composition with `eqToHom` in the opposite of a Pi category at an index.
+In the opposite Pi category, composition is reversed, and `eqToHom` at an
+index uses the symmetric equality.
+-/
+@[simp]
+lemma piOp'_fiber_comp_eqToHom_at_idx {I : Type*} {C : I → Type*} [∀ i, Category (C i)]
+    {X Y Z : (∀ i, C i)ᵒᵖ'}
+    (f : X ⟶ Y) (h : Y = Z) (i : I) :
+    (f ≫ eqToHom h) i = eqToHom (congrFun h i).symm ≫ f i := by
+  simp only [piOp'_comp_at_idx]
+  congr 1
+  subst h
+  rfl
+
+/--
 Definitional equality: `op' (op' C) = C` in one direction.
 -/
 theorem op'_op'_eq (C : Type u) : (CategoryOp' (CategoryOp' C)) = C := rfl
