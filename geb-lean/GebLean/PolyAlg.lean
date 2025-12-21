@@ -2871,6 +2871,42 @@ def polyCofixEquivPolyCofreeM (P : PolyEndo X) (x : X) :
   right_inv := polyCofix_roundtrip_r P x
 }
 
+/-! ### Cofree Comonad at Initial Object
+
+The cofree comonad applied to the initial object is empty. This is because the
+scale polynomial `A × P(Y)` has empty positions when A is initial, and an
+M-type of a polynomial with empty positions cannot be inhabited.
+-/
+
+/--
+The scale index with initial A is empty (product with empty is empty).
+-/
+instance polyScaleIndexInitialIsEmpty (P : PolyEndo X) (x : X) :
+    IsEmpty (polyScaleIndex (overInitial X) P x) :=
+  ⟨fun ⟨⟨e, _⟩, _⟩ => PEmpty.elim e⟩
+
+/--
+Approximations of cofree comonad at initial object at depth 1 or greater are
+empty. This is because `PolyCofixApprox.intro` requires an index from the
+polynomial, but the scale polynomial with initial A has empty index.
+-/
+instance polyCofreeApproxInitialIsEmpty (P : PolyEndo X) (n : Nat) (x : X) :
+    IsEmpty (PolyCofixApprox (polyScale (overInitial X) P) (n + 1) x) :=
+  ⟨fun a => match a with
+    | PolyCofixApprox.intro _ ⟨⟨e, _⟩, _⟩ _ => PEmpty.elim e⟩
+
+/--
+The cofree comonad applied to the initial object is empty.
+
+An M-type element requires approximations at all depths. At depth 1, we need
+a `PolyCofixApprox` which must be `intro` (since `continue` is only for depth
+0). But `intro` requires an index from the scale polynomial, which is empty
+when A is initial. Therefore no M-type element can exist.
+-/
+instance polyCofreeMInitialIsEmpty (P : PolyEndo X) (x : X) :
+    IsEmpty (PolyCofreeM (overInitial X) P x) :=
+  ⟨fun m => IsEmpty.false (m.approx 1)⟩
+
 /-! ### Monad Structure on Free Monad
 
 The free monad `PolyFreeM A P` has a monad structure where:
@@ -3341,6 +3377,17 @@ instance of `polyFreeMEquivPolyEval` at the terminal object.
 def polyFreeMTerminalEvalEquiv (P : PolyEndo X) (x : X) :
     PolyFreeMShape P x ≃ PolyFreeMPolyEval (overTerminal X) P x :=
   polyFreeMEquivPolyEval (overTerminal X) P x
+
+/--
+Evaluating the free monad polynomial at the initial object gives an
+equivalence with the initial algebra (W-type).
+
+Since `PolyFreeM (overInitial X) P x ≃ PolyFix P x`, this composes
+`polyFixEquivPolyFreeM` with `polyFreeMEquivPolyEval`.
+-/
+def polyFreeMInitialEvalEquiv (P : PolyEndo X) (x : X) :
+    PolyFix P x ≃ PolyFreeMPolyEval (overInitial X) P x :=
+  (polyFixEquivPolyFreeM P x).trans (polyFreeMEquivPolyEval (overInitial X) P x)
 
 /-! ### Polynomial Representation of Cofree Comonad
 
@@ -4971,6 +5018,18 @@ instance of `polyCofreeEquiv` at the terminal object.
 def polyCofreeTerminalEvalEquiv (P : PolyEndo X) (x : X) :
     PolyCofreeShape P x ≃ PolyCofreePolyEval (overTerminal X) P x :=
   polyCofreeEquiv (overTerminal X) P x
+
+/--
+Evaluating the cofree comonad polynomial at the initial object gives an
+empty type.
+
+Since `PolyCofreeM (overInitial X) P x` is empty (there's no way to annotate
+nodes with elements of the empty type), the polynomial evaluation is also
+empty via `polyCofreeEquiv`.
+-/
+instance polyCofreeInitialEvalIsEmpty (P : PolyEndo X) (x : X) :
+    IsEmpty (PolyCofreePolyEval (overInitial X) P x) :=
+  (polyCofreeEquiv (overInitial X) P x).symm.isEmpty
 
 end FreeMonadCofreeComonad
 
