@@ -2,7 +2,7 @@
 
 ## Status
 
-Planning
+Active
 
 ## Context
 
@@ -246,11 +246,11 @@ GebLean/PolyPresentationEquiv.lean -- Equivalence proof
 
 ### Implementation
 
-- [ ] Define PolyPresentation structure
-- [ ] Define PolyPresentationHom with commutativity conditions
-- [ ] Prove category laws (composition, identity)
-- [ ] Define evaluation functor to coequalizers
-- [ ] Prove evaluation functor is functorial
+- [x] Define PolyPresentation structure (GebLean/PolyPresentation.lean)
+- [x] Define PolyPresentationHom with commutativity conditions
+- [x] Prove category laws (composition, identity)
+- [x] Define evaluation function to coequalizers (toCopresheaf, toCopresheafHom)
+- [ ] Prove evaluation functor is functorial (compose id/comp lemmas)
 - [ ] Prove faithfulness of evaluation
 - [ ] Prove fullness of evaluation
 - [ ] Prove essential surjectivity using density formula
@@ -258,9 +258,9 @@ GebLean/PolyPresentationEquiv.lean -- Equivalence proof
 
 ### Verification
 
-- [ ] Ensure all code is constructive (no classical axioms)
-- [ ] Ensure no sorry or noncomputable
-- [ ] Run lake build and lake test
+- [x] Ensure all code is constructive (no classical axioms)
+- [ ] Ensure no sorry or noncomputable (toCopresheaf uses noncomputable)
+- [x] Run lake build and lake test
 
 ## References
 

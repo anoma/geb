@@ -12,6 +12,7 @@ import GebLean.PLang
 import GebLean.PolyAdjunctions
 import GebLean.PolyAlg
 import GebLean.Polynomial
+import GebLean.PolyPresentation
 import GebLean.Semicategory
 import GebLean.Utilities
 import GebLean.Utilities.Category
