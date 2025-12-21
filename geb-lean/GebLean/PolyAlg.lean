@@ -2914,6 +2914,194 @@ def polyCofreeMInitialEquivPEmpty (P : PolyEndo X) (x : X) :
     PolyCofreeM (overInitial X) P x ≃ PEmpty :=
   Equiv.equivPEmpty _
 
+/-! ### Free Monad at Initial Algebra
+
+The free monad applied to the initial algebra (W-type) forms a
+section-retraction pair with the initial algebra. Specifically:
+
+- `polyFixToFreeMAtFix` embeds W-types into the free monad (as internal nodes)
+- `polyFreeMAtFixToPolyFix` flattens free monad trees to W-types
+
+The composition `flatten ∘ embed = id` holds (W-type is a retract), but
+`embed ∘ flatten ≠ id` in general. This is because `PolyFreeM (polyFixCarrier P)
+P` has two representations of the same "logical tree":
+
+1. A leaf containing a W-type tree `t`
+2. An internal node structure mirroring `t`'s shape
+
+Flattening both gives the same W-type, but re-embedding produces only the
+internal node form (2), not the leaf form (1). Thus the free monad at the
+initial algebra is strictly larger than the initial algebra itself, containing
+redundant representations.
+
+A quotient identifying leaves-containing-trees with their expanded internal
+node structures would yield a true equivalence.
+-/
+
+/--
+Embed a W-type tree into the free monad at the W-type carrier.
+Each internal node becomes an internal node in the free monad.
+-/
+def polyFixToFreeMAtFix (P : PolyEndo X) {x : X} :
+    PolyFix P x → PolyFreeM (polyFixCarrier P) P x
+  | PolyFix.mk y i children =>
+    PolyFix.mk y (Sum.inr i) fun e =>
+      polyFixToFreeMAtFix P (children e)
+
+/--
+Flatten a free monad tree with W-type leaves into a W-type tree.
+Leaves (containing W-type trees) are replaced with their contents.
+Internal nodes are preserved with flattened children.
+-/
+def polyFreeMAtFixToPolyFix (P : PolyEndo X) {x : X} :
+    PolyFreeM (polyFixCarrier P) P x → PolyFix P x
+  | PolyFix.mk y idx children =>
+    match idx with
+    | Sum.inl ⟨⟨_, tree⟩, hfib⟩ => hfib ▸ tree
+    | Sum.inr i => PolyFix.mk y i fun e =>
+        polyFreeMAtFixToPolyFix P (children e)
+
+/--
+Round-trip from PolyFix through PolyFreeM returns the original tree.
+This shows that `polyFreeMAtFixToPolyFix` is a left inverse of
+`polyFixToFreeMAtFix`, making `PolyFix P` a retract of
+`PolyFreeM (polyFixCarrier P) P`.
+-/
+theorem polyFreeMAtFix_leftInverse (P : PolyEndo X) {x : X}
+    (t : PolyFix P x) :
+    polyFreeMAtFixToPolyFix P (polyFixToFreeMAtFix P t) = t := by
+  induction t with
+  | mk y i children ih =>
+    simp only [polyFixToFreeMAtFix, polyFreeMAtFixToPolyFix]
+    congr 1
+    funext e
+    exact ih e
+
+/--
+`polyFreeMAtFixToPolyFix` is a left inverse of `polyFixToFreeMAtFix`.
+-/
+theorem polyFixToFreeMAtFix_hasLeftInverse (P : PolyEndo X) (x : X) :
+    Function.LeftInverse
+      (polyFreeMAtFixToPolyFix P (x := x))
+      (polyFixToFreeMAtFix P) :=
+  polyFreeMAtFix_leftInverse P
+
+/--
+The embedding from W-type into free monad at W-type carrier is injective.
+-/
+theorem polyFixToFreeMAtFix_injective (P : PolyEndo X) (x : X) :
+    Function.Injective (polyFixToFreeMAtFix P (x := x)) :=
+  (polyFixToFreeMAtFix_hasLeftInverse P x).injective
+
+/--
+The flattening map from free monad at W-type carrier to W-type is surjective.
+-/
+theorem polyFreeMAtFixToPolyFix_surjective (P : PolyEndo X) (x : X) :
+    Function.Surjective (polyFreeMAtFixToPolyFix P (x := x)) :=
+  (polyFixToFreeMAtFix_hasLeftInverse P x).surjective
+
+/-! ### Cofree Comonad at Terminal Coalgebra
+
+The cofree comonad applied to the terminal coalgebra (M-type) forms a
+section-retraction pair with the terminal coalgebra. Specifically:
+
+- `polyCofixToCofreeAtCofix` annotates each node with its subtree
+- `polyCofreeAtCofixToPolyCofix` extracts the root annotation
+
+The composition `extract ∘ annotate = id` holds (M-type is a retract), but
+`annotate ∘ extract ≠ id` in general. This is because
+`PolyCofreeM (polyCofixCarrier P) P` allows arbitrary M-type annotations at
+each node, not just the subtree rooted there.
+
+Extracting gives the root annotation (an M-type), but re-annotating creates
+a cofree comonad where each node's annotation IS its subtree. If the original
+had different annotations, we don't recover it.
+
+A quotient identifying different annotation choices that have the same
+root would yield a true equivalence.
+-/
+
+/--
+Build the approximation for annotating an M-type with its subtrees.
+At each node, the annotation is the M-type itself (the full subtree rooted at
+that position). We pass the M-type as an additional parameter.
+-/
+def polyCofixToCofreeAtCofixApprox (P : PolyEndo X) {n : Nat} {x : X}
+    (m : PolyCofix P x) :
+    PolyCofixApprox (polyScale (polyCofixCarrier P) P) n x :=
+  match n with
+  | 0 => PolyCofixApprox.continue x
+  | _ + 1 =>
+    PolyCofixApprox.intro x ⟨⟨⟨x, m⟩, rfl⟩, m.head⟩
+      (fun e => polyCofixToCofreeAtCofixApprox P (m.children e))
+
+/--
+The approximations for annotating an M-type with its subtrees are consistent.
+-/
+theorem polyCofixToCofreeAtCofixApprox_consistent (P : PolyEndo X) {n : Nat}
+    {x : X} (m : PolyCofix P x) :
+    PolyCofixAgree (polyScale (polyCofixCarrier P) P)
+      (polyCofixToCofreeAtCofixApprox P (n := n) m)
+      (polyCofixToCofreeAtCofixApprox P (n := n + 1) m) := by
+  cases n with
+  | zero =>
+    simp only [polyCofixToCofreeAtCofixApprox]
+    exact PolyCofixAgree.continue x _
+  | succ n =>
+    simp only [polyCofixToCofreeAtCofixApprox]
+    exact PolyCofixAgree.intro _ _
+      (fun e => polyCofixToCofreeAtCofixApprox_consistent P (m.children e))
+
+/--
+Embed an M-type into the cofree comonad at the M-type carrier.
+Each node is annotated with the subtree rooted at that node.
+-/
+def polyCofixToCofreeAtCofix (P : PolyEndo X) {x : X}
+    (m : PolyCofix P x) : PolyCofreeM (polyCofixCarrier P) P x where
+  approx := fun _ => polyCofixToCofreeAtCofixApprox P m
+  consistent := fun _ => polyCofixToCofreeAtCofixApprox_consistent P m
+
+/--
+Extract the root annotation from a cofree comonad at M-type carrier.
+This is the counit/extract operation of the comonad.
+-/
+def polyCofreeAtCofixToPolyCofix (P : PolyEndo X) {x : X}
+    (c : PolyCofreeM (polyCofixCarrier P) P x) : PolyCofix P x :=
+  c.head.1.property ▸ c.head.1.val.2
+
+/--
+Round-trip from PolyCofix through PolyCofreeM returns the original M-type.
+This shows that `polyCofreeAtCofixToPolyCofix` is a left inverse of
+`polyCofixToCofreeAtCofix`.
+-/
+theorem polyCofreeAtCofix_leftInverse (P : PolyEndo X) {x : X}
+    (m : PolyCofix P x) :
+    polyCofreeAtCofixToPolyCofix P (polyCofixToCofreeAtCofix P m) = m := rfl
+
+/--
+`polyCofreeAtCofixToPolyCofix` is a left inverse of `polyCofixToCofreeAtCofix`.
+This means PolyCofix P is a retract of PolyCofreeM (polyCofixCarrier P) P.
+-/
+theorem polyCofixToCofreeAtCofix_hasLeftInverse (P : PolyEndo X) (x : X) :
+    Function.LeftInverse
+      (polyCofreeAtCofixToPolyCofix P (x := x))
+      (polyCofixToCofreeAtCofix P) :=
+  polyCofreeAtCofix_leftInverse P
+
+/--
+The terminal coalgebra is injected into the cofree comonad at the coalgebra.
+-/
+theorem polyCofixToCofreeAtCofix_injective (P : PolyEndo X) (x : X) :
+    Function.Injective (polyCofixToCofreeAtCofix P (x := x)) :=
+  (polyCofixToCofreeAtCofix_hasLeftInverse P x).injective
+
+/--
+Extraction from the cofree comonad at the terminal coalgebra is surjective.
+-/
+theorem polyCofreeAtCofixToPolyCofix_surjective (P : PolyEndo X) (x : X) :
+    Function.Surjective (polyCofreeAtCofixToPolyCofix P (x := x)) :=
+  (polyCofixToCofreeAtCofix_hasLeftInverse P x).surjective
+
 /-! ### Monad Structure on Free Monad
 
 The free monad `PolyFreeM A P` has a monad structure where:
