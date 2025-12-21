@@ -468,6 +468,33 @@ def polyToOverEvalFamilyMap (P : PolyToOverCat (D := D) Y) {A B : D} (f : A ⟶ 
     polyToOverEvalFamily Y P A ⟶ polyToOverEvalFamily Y P B :=
   fun _ => ccrEvalMap f
 
+@[simp]
+lemma polyToOverEvalFamilyMap_id (P : PolyToOverCat (D := D) Y) (A : D) :
+    polyToOverEvalFamilyMap Y P (𝟙 A) = 𝟙 (polyToOverEvalFamily Y P A) := by
+  funext _
+  exact ccrEvalMap_id
+
+@[simp]
+lemma polyToOverEvalFamilyMap_comp (P : PolyToOverCat (D := D) Y)
+    {A B C : D} (f : A ⟶ B) (g : B ⟶ C) :
+    polyToOverEvalFamilyMap Y P (f ≫ g) =
+      polyToOverEvalFamilyMap Y P f ≫ polyToOverEvalFamilyMap Y P g := by
+  funext _
+  exact ccrEvalMap_comp f g
+
+/--
+A polynomial functor `P : PolyToOverCat D Y` gives a functor `D ⥤ FamilyCat (Type) Y`.
+
+This functor applies `ccrToFunctor (P y)` at each fiber `y : Y`, producing a
+`Y`-indexed family of types for each object `A : D`.
+-/
+def polyToOverFamilyFunctor (P : PolyToOverCat (D := D) Y) :
+    D ⥤ FamilyCat (Type u) Y where
+  obj := polyToOverEvalFamily Y P
+  map := polyToOverEvalFamilyMap Y P
+  map_id := fun A => polyToOverEvalFamilyMap_id Y P A
+  map_comp := fun f g => polyToOverEvalFamilyMap_comp Y P f g
+
 /--
 The action on morphisms for `polyToOverEval`.
 Given `f : A ⟶ B`, produces a morphism in `Over Y`.
@@ -482,25 +509,11 @@ lemma polyToOverEvalMap_left (P : PolyToOverCat (D := D) Y) {A B : D}
     (polyToOverEvalMap Y P f).left x = ⟨x.fst, ccrEvalMap f x.snd⟩ := rfl
 
 @[simp]
-lemma polyToOverEvalFamilyMap_id (P : PolyToOverCat (D := D) Y) (A : D) :
-    polyToOverEvalFamilyMap Y P (𝟙 A) = 𝟙 (polyToOverEvalFamily Y P A) := by
-  funext _
-  exact ccrEvalMap_id
-
-@[simp]
 lemma polyToOverEvalMap_id (P : PolyToOverCat (D := D) Y) (A : D) :
     polyToOverEvalMap Y P (𝟙 A) = 𝟙 (polyToOverEval Y P A) := by
   simp only [polyToOverEvalMap, polyToOverEvalFamilyMap_id,
     CategoryTheory.Functor.map_id]
   rfl
-
-@[simp]
-lemma polyToOverEvalFamilyMap_comp (P : PolyToOverCat (D := D) Y)
-    {A B C : D} (f : A ⟶ B) (g : B ⟶ C) :
-    polyToOverEvalFamilyMap Y P (f ≫ g) =
-      polyToOverEvalFamilyMap Y P f ≫ polyToOverEvalFamilyMap Y P g := by
-  funext _
-  exact ccrEvalMap_comp f g
 
 @[simp]
 lemma polyToOverEvalMap_comp (P : PolyToOverCat (D := D) Y)
@@ -518,6 +531,12 @@ def polyToOverFunctor (P : PolyToOverCat (D := D) Y) : D ⥤ Over Y where
   map := polyToOverEvalMap Y P
   map_id := fun A => polyToOverEvalMap_id Y P A
   map_comp := fun f g => polyToOverEvalMap_comp Y P f g
+
+/-- `polyToOverFunctor` factors through `polyToOverFamilyFunctor` and
+`familySliceForward`. -/
+lemma polyToOverFunctor_eq_comp (P : PolyToOverCat (D := D) Y) :
+    polyToOverFunctor Y P = polyToOverFamilyFunctor Y P ⋙ familySliceForward Y :=
+  rfl
 
 /-! ### polyToOverEval structure -/
 
