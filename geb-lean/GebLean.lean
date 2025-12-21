@@ -6,6 +6,7 @@ import GebLean.CategoryJudgments
 import GebLean.CategoryPresentation
 import GebLean.DepCategoryJudgments
 import GebLean.FiniteQuiver
+import GebLean.FreeCoequalizerCompletion
 import GebLean.LayeredEquivalence
 import GebLean.PLang
 import GebLean.PolyAlg
