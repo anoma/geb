@@ -297,6 +297,86 @@ lemma ccrToFunctorMap_injective {P Q : CoprodCovarRepCat.{u, v, w} D}
 instance : Functor.Faithful (ccrEvalFunctor (D := D)) where
   map_injective := ccrToFunctorMap_injective
 
+/-! ### Fullness
+
+The evaluation functor is full: every natural transformation between evaluation
+functors arises from a morphism in `CoprodCovarRepCat D`.
+
+The preimage is constructed by evaluating the natural transformation at the
+"universal elements" `⟨i, 𝟙⟩`.
+-/
+
+/--
+The base component of the preimage: for a natural transformation `η`, the
+reindexing function sends `i` to the index of `η (ccrFamily P i) ⟨i, 𝟙⟩`.
+-/
+def ccrToFunctorPreimageBase {P Q : CoprodCovarRepCat.{u, v, w} D}
+    (η : ccrToFunctor P ⟶ ccrToFunctor Q) : ccrIndex P → ccrIndex Q :=
+  fun i => ccrEvalIndex (η.app (ccrFamily P i) (ccrEvalMk i (𝟙 _)))
+
+/--
+The fiber component of the preimage: for a natural transformation `η`, the
+fiber morphism at `i` is the morphism component of `η (ccrFamily P i) ⟨i, 𝟙⟩`.
+-/
+def ccrToFunctorPreimageFiber {P Q : CoprodCovarRepCat.{u, v, w} D}
+    (η : ccrToFunctor P ⟶ ccrToFunctor Q) :
+    ∀ i, ccrFamily Q (ccrToFunctorPreimageBase η i) ⟶ ccrFamily P i :=
+  fun i => ccrEvalMor (η.app (ccrFamily P i) (ccrEvalMk i (𝟙 _)))
+
+/--
+The full preimage morphism constructed from a natural transformation.
+-/
+def ccrToFunctorPreimage {P Q : CoprodCovarRepCat.{u, v, w} D}
+    (η : ccrToFunctor P ⟶ ccrToFunctor Q) : P ⟶ Q :=
+  ccrHomMk (ccrToFunctorPreimageBase η) (ccrToFunctorPreimageFiber η)
+
+@[simp]
+lemma ccrToFunctorPreimage_reindex {P Q : CoprodCovarRepCat.{u, v, w} D}
+    (η : ccrToFunctor P ⟶ ccrToFunctor Q) :
+    ccrReindex (ccrToFunctorPreimage η) = ccrToFunctorPreimageBase η :=
+  rfl
+
+@[simp]
+lemma ccrToFunctorPreimage_fiberMor {P Q : CoprodCovarRepCat.{u, v, w} D}
+    (η : ccrToFunctor P ⟶ ccrToFunctor Q) (i : ccrIndex P) :
+    ccrFiberMor (ccrToFunctorPreimage η) i = ccrToFunctorPreimageFiber η i :=
+  rfl
+
+/--
+The preimage morphism maps to the given natural transformation.
+-/
+lemma ccrToFunctorMap_preimage {P Q : CoprodCovarRepCat.{u, v, w} D}
+    (η : ccrToFunctor P ⟶ ccrToFunctor Q) :
+    ccrToFunctorMap (ccrToFunctorPreimage η) = η := by
+  ext A ⟨i, h⟩
+  simp only [ccrToFunctorMap_app, ccrToFunctorMapApp, ccrToFunctorPreimage_reindex,
+    ccrToFunctorPreimage_fiberMor, ccrToFunctorPreimageBase, ccrToFunctorPreimageFiber,
+    ccrEvalIndex, ccrEvalMor, ccrEvalMk]
+  -- Use naturality: η.app A ∘ (ccrToFunctor P).map h = (ccrToFunctor Q).map h ∘ η.app _
+  have nat := congr_fun (η.naturality h) (ccrEvalMk i (𝟙 _))
+  simp only [types_comp_apply, ccrToFunctor, ccrEvalMap, ccrEvalMk,
+    Category.id_comp] at nat
+  exact nat.symm
+
+/--
+The evaluation functor is surjective on morphisms.
+-/
+lemma ccrToFunctorMap_surjective {P Q : CoprodCovarRepCat.{u, v, w} D} :
+    Function.Surjective (ccrToFunctorMap (P := P) (Q := Q)) :=
+  fun η => ⟨ccrToFunctorPreimage η, ccrToFunctorMap_preimage η⟩
+
+instance : Functor.Full (ccrEvalFunctor (D := D)) where
+  map_surjective := ccrToFunctorMap_surjective
+
+/--
+The evaluation functor is fully faithful, with explicit preimage construction.
+-/
+def ccrEvalFunctorFullyFaithful :
+    Functor.FullyFaithful (ccrEvalFunctor (D := D)) where
+  preimage := ccrToFunctorPreimage
+  map_preimage := ccrToFunctorMap_preimage
+  preimage_map f := ccrToFunctorMap_injective (ccrToFunctorMap_preimage (ccrToFunctorMap f))
+
 end EvaluationFunctor
 
 end GebLean
