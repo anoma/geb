@@ -732,6 +732,19 @@ lemma PolyCofixApprox.approx_zero_eq_continue {P : PolyEndo X} {x : X}
   match a with
   | .continue _ => rfl
 
+/--
+Congruence lemma for `PolyCofixApprox.intro`: two intro approximations at the
+same fiber are equal if their indices and children functions match.
+-/
+lemma PolyCofixApprox.intro_congr {P : PolyEndo X} {n : Nat} {x : X}
+    {i : polyBetweenIndex X X P x}
+    {f1 f2 : ∀ e, PolyCofixApprox P n ((polyBetweenFamily X X P x i).hom e)}
+    (hf : ∀ e, f1 e = f2 e) :
+    PolyCofixApprox.intro x i f1 = PolyCofixApprox.intro x i f2 := by
+  congr 1
+  funext e
+  exact hf e
+
 end PolyCofixApprox
 
 /-! ### The M-type as Consistent Sequences -/
@@ -6711,6 +6724,241 @@ def polyCoalgUnitNat (P : PolyEndo X) :
       Endofunctor.Coalgebra.forget_map, polyCofreeFunctor, polyCofreeCoalgMap,
       polyCoalgUnitHom]
     exact polyCoalgUnit_naturality P β γ g
+
+/-! ### Free ⊣ Forget Adjunction
+
+The free algebra functor is left adjoint to the forgetful functor.
+-/
+
+/--
+Left triangle identity for Free ⊣ Forget:
+Applying the unit then the counit (on the Forget side) is the identity.
+
+For α : PolyAlg P, we have:
+  polyFreeUnit α.a P ≫ Forget(polyFreeCounitHom P α) = 𝟙 α.a
+-/
+lemma polyFree_left_triangle (P : PolyEndo X) (α : PolyAlg P) :
+    polyFreeUnit α.a P ≫ (polyForgetFunctor P).map (polyFreeCounitHom P α) =
+    𝟙 α.a := by
+  apply Over.OverMorphism.ext
+  funext a
+  simp only [Over.comp_left, polyForgetFunctor, Endofunctor.Algebra.forget_map,
+    polyFreeCounitHom, polyFreeUnit, Over.homMk_left, polyFreeUnitLeft,
+    polyFreeCounitFold, polyFreeCounitFoldLeft, Over.id_left, types_id_apply,
+    types_comp_apply]
+  rfl
+
+/--
+Right triangle identity for Free ⊣ Forget:
+Applying the unit (on the Free side) then the counit is the identity.
+
+For A : Over X, we have:
+  Free(polyFreeUnit A P) ≫ polyFreeCounitHom P (polyFreeAlg A P) = 𝟙 (polyFreeAlg A P)
+-/
+lemma polyFree_right_triangle (P : PolyEndo X) (A : Over X) :
+    (polyFreeFunctor P).map (polyFreeUnit A P) ≫
+      polyFreeCounitHom P (polyFreeAlg A P) =
+    𝟙 (polyFreeAlg A P) := by
+  apply Endofunctor.Algebra.Hom.ext
+  apply Over.OverMorphism.ext
+  funext ⟨x, t⟩
+  simp only [Endofunctor.Algebra.comp_f, polyFreeFunctor, polyFreeAlgMap,
+    polyFreeCounitHom, polyFreeCounitFold, Endofunctor.Algebra.id_f, Over.id_left,
+    types_id_apply, polyFreeMap, Over.comp_left, Over.homMk_left, types_comp_apply,
+    polyFreeMapLeft, polyFreeCounitFoldLeft]
+  induction t with
+  | mk _ i children ih =>
+    cases i with
+    | inl a =>
+      unfold polyFreeMapAt polyFreeMBind
+      simp only [polyFreeUnit, Over.homMk_left, polyFreeUnitLeft,
+        polyFreeMPure, polyFreeCounitFoldAt]
+      obtain ⟨a_val, rfl⟩ := a
+      apply Sigma.ext
+      · rfl
+      · simp only [heq_eq_eq]
+        congr 1
+        funext e
+        exact PEmpty.elim e
+    | inr p =>
+      unfold polyFreeMapAt polyFreeMBind polyFreeCounitFoldAt
+      simp only [polyFreeAlg, polyFreeMStr, Over.homMk_left, polyFreeMStrLeft,
+        polyFreeMStrFamily, pbefIndex, pbefMor]
+      apply Sigma.ext
+      · rfl
+      · simp only [heq_eq_eq]
+        congr 1
+        funext e
+        have h := ih e
+        rw [Sigma.ext_iff] at h
+        obtain ⟨hfst, hsnd_heq⟩ := h
+        simp only at hsnd_heq
+        simp only [ptoefMor, ccrEvalMor, polyForgetFunctor, Over.homMk_left]
+        exact eq_of_heq ((heq_eqRec _ _).symm.trans hsnd_heq)
+
+/--
+The adjunction Free ⊣ Forget for P-algebras.
+
+For a polynomial endofunctor P on Over X:
+- The free algebra functor polyFreeFunctor P : Over X → PolyAlg P is left adjoint
+- The forgetful functor polyForgetFunctor P : PolyAlg P → Over X is right adjoint
+
+The unit η : Id → Forget ∘ Free embeds objects into their free algebras.
+The counit ε : Free ∘ Forget → Id folds free algebra trees using algebra structure.
+-/
+def polyFreeForgetAdjunction (P : PolyEndo X) :
+    polyFreeFunctor P ⊣ polyForgetFunctor P :=
+  Adjunction.mkOfUnitCounit {
+    unit := polyFreeUnitNat P
+    counit := polyFreeCounitNat P
+    left_triangle := by
+      ext A : 2
+      simp only [NatTrans.comp_app, Functor.comp_obj, Functor.id_obj,
+        NatTrans.id_app', Functor.whiskerRight_app, Functor.associator_hom_app,
+        Functor.whiskerLeft_app, Category.id_comp,
+        polyFreeUnitNat, polyFreeCounitNat]
+      exact polyFree_right_triangle P A
+    right_triangle := by
+      ext α : 2
+      simp only [NatTrans.comp_app, Functor.id_obj, Functor.comp_obj,
+        NatTrans.id_app', Functor.whiskerLeft_app, Functor.associator_inv_app,
+        Functor.whiskerRight_app, Category.id_comp,
+        polyFreeUnitNat, polyFreeCounitNat]
+      exact polyFree_left_triangle P α
+  }
+
+/--
+Left triangle identity for Forget ⊣ Cofree:
+Applying the unit then the counit (on the Forget side) is the identity.
+
+For β : PolyCoalg P, we have:
+  polyCoalgUnit P β ≫ polyCofreeCounit β.V P = 𝟙 β.V
+
+The unit embeds β.V elements into their cofree anamorphism trees,
+and the counit extracts the root annotation, recovering the original element.
+-/
+lemma polyCofree_left_triangle (P : PolyEndo X) (β : PolyCoalg P) :
+    polyCoalgUnit P β ≫ polyCofreeCounit β.V P = 𝟙 β.V := by
+  apply Over.OverMorphism.ext
+  funext a
+  simp only [Over.comp_left, polyCoalgUnit, Over.homMk_left, polyCoalgUnitLeft,
+    polyCofreeCounit, polyCofreeCounitLeft, types_comp_apply,
+    Over.id_left, types_id_apply]
+  simp only [polyCofreeExtract]
+  simp only [PolyCofix.head, polyCoalgUnitAt, polyCoalgUnitApprox]
+  have hx : (β.str.left a).fst = β.V.hom a := by
+    have h := congrFun (Over.w β.str) a
+    simp only at h
+    exact h
+  simp only [PolyCofixApprox.getIndex_cast _ _ hx]
+  simp only [polyBetweenIndex, polyToOverIndex, polyScale, polyScaleAt, ccrIndex,
+    ccrObjMk, polyScaleIndex]
+  exact @prod_fst_val_transport' β.V.left X (fun v x => β.V.hom v = x)
+    (fun x => (P x).base) _ _ hx a hx.symm (β.str.left a).snd.fst
+
+/--
+Right triangle identity for Forget ⊣ Cofree:
+Applying the unit (on the Cofree side) then the counit is the identity.
+
+For A : Over X, we have:
+  polyCoalgUnitHom P (polyCofreeCoalg A P) ≫
+    (polyCofreeFunctor P).map (polyCofreeCounit A P) = 𝟙 (polyCofreeCoalg A P)
+-/
+lemma polyCofree_right_triangle_approx (P : PolyEndo X) (A : Over X) (x : X)
+    (m : PolyCofreeM A P x) (n : Nat) :
+    polyCofreeMapApprox (polyCofreeCarrier A P) A P (polyCofreeCounit A P)
+      (polyCoalgUnitApprox P (polyCofreeCoalg A P) n x ⟨⟨x, m⟩, rfl⟩) =
+    m.approx n := by
+  induction n generalizing x m with
+  | zero =>
+    simp only [polyCofreeMapApprox, polyCoalgUnitApprox]
+    cases m.approx 0
+    rfl
+  | succ n ih =>
+    have hidx_eq : (m.approx (n + 1)).getIndex = m.head := m.index_eq_head n
+    generalize ha : m.approx (n + 1) = a at hidx_eq
+    match a, hidx_eq with
+    | .intro _ idx childFun, hidx_eq =>
+      subst hidx_eq
+      unfold polyCofreeMapApprox polyCoalgUnitApprox
+      simp only [polyCofreeCoalg, polyCofreeStr, Over.homMk_left, polyCofreeStrLeft,
+        polyCofreeStrFamily]
+      congr 1
+      funext e
+      simp only [polyCofreeCounit, Over.homMk_left, polyCofreeCounitLeft]
+      have hchildApprox : (m.children e).approx n = childFun e := by
+        simp only [PolyCofix.children, PolyCofix.childApproxAt]
+        cases n with
+        | zero =>
+          simp only [PolyCofix.childApproxAt_zero]
+          exact (PolyCofixApprox.approx_zero_eq_continue (childFun e)).symm
+        | succ k' =>
+          simp only [PolyCofix.childApproxAt_succ]
+          have heq1 : (m.approx (k' + 2)).getIndex = m.head := m.index_eq_head (k' + 1)
+          conv_lhs => rw [PolyCofix.childApproxAt_succ_aux_proof_irrel m.head
+            (m.approx (k' + 2)) (m.index_eq_head (k' + 1)) heq1 e]
+          generalize haa : m.approx (k' + 2) = aa at heq1
+          rw [ha] at haa
+          subst haa
+          conv_lhs => rw [PolyCofix.childApproxAt_succ_aux_proof_irrel m.head
+            (.intro x m.head childFun) heq1 rfl e]
+          exact PolyCofix.childApproxAt_succ_aux_intro m.head childFun e
+      have h_child := ih ((polyBetweenFamily X X (polyScale A P) x
+          (PolyCofix.head m)).hom e) (PolyCofix.children m e)
+      rw [← hchildApprox]
+      exact h_child
+
+lemma polyCofree_right_triangle (P : PolyEndo X) (A : Over X) :
+    polyCoalgUnitHom P (polyCofreeCoalg A P) ≫
+      (polyCofreeFunctor P).map (polyCofreeCounit A P) =
+    𝟙 (polyCofreeCoalg A P) := by
+  apply Endofunctor.Coalgebra.Hom.ext
+  apply Over.OverMorphism.ext
+  funext ⟨x, m⟩
+  simp only [Endofunctor.Coalgebra.comp_f, polyCoalgUnitHom, polyCofreeFunctor,
+    polyCofreeCoalgMap, Endofunctor.Coalgebra.id_f, Over.id_left,
+    types_id_apply, Over.comp_left, Over.homMk_left, types_comp_apply,
+    polyCoalgUnit, polyCoalgUnitLeft]
+  apply Sigma.ext
+  · rfl
+  · simp only [heq_eq_eq, polyCofreeMap, Over.homMk_left, polyCofreeMapLeft]
+    simp only [polyCofreeMapAt, polyCoalgUnitAt]
+    apply PolyCofix.ext
+    intro n
+    exact polyCofree_right_triangle_approx P A x m n
+
+/--
+The adjunction Forget ⊣ Cofree for P-coalgebras.
+
+For a polynomial endofunctor P on Over X:
+- The forgetful functor polyCoalgForgetFunctor P : PolyCoalg P → Over X is left adjoint
+- The cofree coalgebra functor polyCofreeFunctor P : Over X → PolyCoalg P is right adjoint
+
+The unit η : Id → Cofree ∘ Forget unfolds coalgebra elements into their anamorphism trees.
+The counit ε : Forget ∘ Cofree → Id extracts root annotations from cofree elements.
+-/
+def polyForgetCofreeAdjunction (P : PolyEndo X) :
+    polyCoalgForgetFunctor P ⊣ polyCofreeFunctor P :=
+  Adjunction.mkOfUnitCounit {
+    unit := polyCoalgUnitNat P
+    counit := polyCofreeCounitNat P
+    left_triangle := by
+      ext β : 2
+      simp only [NatTrans.comp_app, Functor.comp_obj, Functor.id_obj,
+        NatTrans.id_app', Functor.whiskerRight_app, Functor.associator_hom_app,
+        Functor.whiskerLeft_app, Category.id_comp,
+        polyCoalgUnitNat, polyCofreeCounitNat, polyCoalgForgetFunctor,
+        Endofunctor.Coalgebra.forget_map, polyCoalgUnitHom]
+      exact polyCofree_left_triangle P β
+    right_triangle := by
+      ext A : 2
+      simp only [NatTrans.comp_app, Functor.id_obj, Functor.comp_obj,
+        NatTrans.id_app', Functor.whiskerLeft_app, Functor.associator_inv_app,
+        Functor.whiskerRight_app, Category.id_comp,
+        polyCoalgUnitNat, polyCofreeCounitNat, polyCoalgForgetFunctor,
+        polyCofreeFunctor, polyCofreeCoalgMap]
+      exact polyCofree_right_triangle P A
+  }
 
 end Adjunctions
 

@@ -165,6 +165,26 @@ lemma sigma_transport_fst_indep {α : Type*} {I : Type*} {β : α → I → Type
   rfl
 
 /--
+When transporting a product `(subtype, other)` along an equality, the first
+component's coercion is preserved. This handles the pattern where the subtype
+has a predicate depending on the transported parameter.
+-/
+lemma prod_fst_val_transport {α : Type*} {T : Type*} {P : T → α → Prop}
+    {Q : T → Type*} {t1 t2 : T} (h : t1 = t2) (a : α) (ha : P t1 a) (b : Q t1) :
+    ↑(h ▸ (⟨a, ha⟩, b) : { v // P t2 v } × Q t2).1 = a := by
+  cases h
+  rfl
+
+/--
+Variant with predicate applied in reverse order: `P : α → T → Prop`.
+-/
+lemma prod_fst_val_transport' {α : Type*} {T : Type*} {P : α → T → Prop}
+    {Q : T → Type*} {t1 t2 : T} (h : t1 = t2) (a : α) (ha : P a t1) (b : Q t1) :
+    ↑(h ▸ (⟨a, ha⟩, b) : { v // P v t2 } × Q t2).1 = a := by
+  cases h
+  rfl
+
+/--
 HEq of sigmas when indexed types depend on an outer parameter that changes.
 Given `h : a₁ = a₂`, sigmas `⟨i₁, b₁⟩ : (i : I) × β a₁ i` and
 `⟨i₂, b₂⟩ : (i : I) × β a₂ i` are heterogeneously equal if their first
