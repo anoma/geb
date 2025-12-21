@@ -138,4 +138,112 @@ lemma ccrMonomialFunctor_map (c : C) {A B : Type w} (f : A → B) :
 
 end MonomialFunctor
 
+/-! ## Evaluation Functor
+
+The evaluation functor sends a polynomial `P : CoprodCovarRepCat D` to its
+evaluation functor `ccrToFunctor P : D ⥤ Type`. This exhibits `ccrToFunctor`
+as itself being functorial in `P`.
+
+For a morphism `f : P ⟶ Q`, the induced natural transformation maps
+`⟨i, h⟩ : ccrEval P A` to `⟨ccrReindex f i, ccrFiberMor f i ≫ h⟩ : ccrEval Q A`.
+-/
+
+section EvaluationFunctor
+
+variable {D : Type u} [Category.{v} D]
+
+/--
+The component of the natural transformation induced by `f : P ⟶ Q` at object
+`A : D`. Maps `⟨i, h⟩ : ccrEval P A` to `⟨ccrReindex f i, ccrFiberMor f i ≫ h⟩`.
+-/
+def ccrToFunctorMapApp {P Q : CoprodCovarRepCat.{u, v, w} D} (f : P ⟶ Q)
+    (A : D) : ccrEval P A → ccrEval Q A :=
+  fun x => ccrEvalMk (ccrReindex f (ccrEvalIndex x))
+    (ccrFiberMor f (ccrEvalIndex x) ≫ ccrEvalMor x)
+
+@[simp]
+lemma ccrToFunctorMapApp_index {P Q : CoprodCovarRepCat.{u, v, w} D}
+    (f : P ⟶ Q) (A : D) (x : ccrEval P A) :
+    ccrEvalIndex (ccrToFunctorMapApp f A x) = ccrReindex f (ccrEvalIndex x) :=
+  rfl
+
+@[simp]
+lemma ccrToFunctorMapApp_mor {P Q : CoprodCovarRepCat.{u, v, w} D}
+    (f : P ⟶ Q) (A : D) (x : ccrEval P A) :
+    ccrEvalMor (ccrToFunctorMapApp f A x) =
+      ccrFiberMor f (ccrEvalIndex x) ≫ ccrEvalMor x :=
+  rfl
+
+/--
+Naturality of `ccrToFunctorMapApp` in `A`: for morphisms `g : A ⟶ B` in `D`,
+the square commutes.
+-/
+lemma ccrToFunctorMapApp_natural {P Q : CoprodCovarRepCat.{u, v, w} D}
+    (f : P ⟶ Q) {A B : D} (g : A ⟶ B) :
+    (ccrToFunctor P).map g ≫ ccrToFunctorMapApp f B =
+      ccrToFunctorMapApp f A ≫ (ccrToFunctor Q).map g := by
+  funext ⟨i, h⟩
+  simp only [types_comp_apply, ccrToFunctor, ccrToFunctorMapApp, ccrEvalMap,
+    ccrEvalIndex, ccrEvalMor, ccrEvalMk, Category.assoc]
+
+/--
+The natural transformation from `ccrToFunctor P` to `ccrToFunctor Q` induced
+by a morphism `f : P ⟶ Q`.
+-/
+def ccrToFunctorMap {P Q : CoprodCovarRepCat.{u, v, w} D} (f : P ⟶ Q) :
+    ccrToFunctor P ⟶ ccrToFunctor Q where
+  app := ccrToFunctorMapApp f
+  naturality := fun _ _ g => ccrToFunctorMapApp_natural f g
+
+@[simp]
+lemma ccrToFunctorMap_app {P Q : CoprodCovarRepCat.{u, v, w} D}
+    (f : P ⟶ Q) (A : D) :
+    (ccrToFunctorMap f).app A = ccrToFunctorMapApp f A :=
+  rfl
+
+/--
+The identity morphism on `P` induces the identity natural transformation
+on `ccrToFunctor P`.
+-/
+lemma ccrToFunctorMap_id (P : CoprodCovarRepCat.{u, v, w} D) :
+    ccrToFunctorMap (𝟙 P) = 𝟙 (ccrToFunctor P) := by
+  ext A ⟨i, h⟩
+  simp only [ccrToFunctorMap_app, ccrToFunctorMapApp, NatTrans.id_app,
+    ccrEvalIndex, ccrEvalMor, ccrEvalMk, types_id_apply,
+    ccrId_reindex, ccrId_fiberMor, Category.id_comp]
+
+/--
+Composition of morphisms induces composition of natural transformations.
+-/
+lemma ccrToFunctorMap_comp {P Q R : CoprodCovarRepCat.{u, v, w} D}
+    (f : P ⟶ Q) (g : Q ⟶ R) :
+    ccrToFunctorMap (f ≫ g) = ccrToFunctorMap f ≫ ccrToFunctorMap g := by
+  ext A ⟨i, h⟩
+  simp only [ccrToFunctorMap_app, ccrToFunctorMapApp, NatTrans.comp_app,
+    ccrEvalIndex, ccrEvalMor, ccrEvalMk, types_comp_apply,
+    ccrComp_reindex, ccrComp_fiberMor, Category.assoc]
+
+/--
+The evaluation functor from `CoprodCovarRepCat D` to the functor category
+`D ⥤ Type`.
+
+This functor sends a polynomial `P` to its evaluation functor `ccrToFunctor P`,
+and a morphism `f : P ⟶ Q` to the natural transformation `ccrToFunctorMap f`.
+-/
+def ccrEvalFunctor : CoprodCovarRepCat.{u, v, w} D ⥤ (D ⥤ Type (max w v)) where
+  obj := ccrToFunctor
+  map := ccrToFunctorMap
+  map_id := ccrToFunctorMap_id
+  map_comp := fun f g => ccrToFunctorMap_comp f g
+
+lemma ccrEvalFunctor_obj (P : CoprodCovarRepCat.{u, v, w} D) :
+    ccrEvalFunctor.obj P = ccrToFunctor P :=
+  rfl
+
+lemma ccrEvalFunctor_map {P Q : CoprodCovarRepCat.{u, v, w} D} (f : P ⟶ Q) :
+    ccrEvalFunctor.map f = ccrToFunctorMap f :=
+  rfl
+
+end EvaluationFunctor
+
 end GebLean
