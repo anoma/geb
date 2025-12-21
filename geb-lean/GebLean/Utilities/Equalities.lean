@@ -248,6 +248,17 @@ lemma subtype_heq_of_index_eq {A : Type*} {I : Type*} {P : I → A → Prop}
   exact heq_of_eq (Subtype.ext hval)
 
 /--
+When two subtypes have the same underlying value but different predicates
+indexed by equal indices, they are heterogeneously equal.
+-/
+lemma subtype_heq_of_pred_index_eq {A : Type*} {I : Type*} {f : I → A → Prop}
+    {i j : I} (hij : i = j)
+    {v : A} (hi : f i v) (hj : f j v) :
+    HEq (⟨v, hi⟩ : { x // f i x }) (⟨v, hj⟩ : { x // f j x }) := by
+  subst hij
+  rfl
+
+/--
 Two sigma values indexed by a parameter are HEq if the parameter indices are
 equal, the first components are HEq, and the second components are HEq.
 This handles the case where the sigma type itself depends on an outer parameter.
@@ -456,6 +467,78 @@ lemma sigma_cast_snd_heq {I : Type*} {S : I → Type*}
   rfl
 
 /--
+For an arbitrary sigma value (not just constructor form), casting along an
+equality of indices gives a sigma whose fst is HEq to the original fst.
+-/
+lemma sigma_cast_fst_heq {I : Type*} {S : I → Type*}
+    {F : (i : I) → S i → Type*}
+    {i1 i2 : I} (hi : i1 = i2)
+    (p : Σ s : S i1, F i1 s) :
+    (cast (congrArg (fun i => Σ s : S i, F i s) hi) p).fst ≍ p.fst := by
+  cases hi
+  rfl
+
+/--
+For an arbitrary sigma value (not just constructor form), casting along an
+equality of indices gives a sigma whose snd is HEq to the original snd.
+-/
+lemma sigma_cast_snd_heq' {I : Type*} {S : I → Type*}
+    {F : (i : I) → S i → Type*}
+    {i1 i2 : I} (hi : i1 = i2)
+    (p : Σ s : S i1, F i1 s) :
+    (cast (congrArg (fun i => Σ s : S i, F i s) hi) p).snd ≍ p.snd := by
+  cases hi
+  rfl
+
+/--
+When two sigma types are equal and we have HEq between sigma values,
+we can extract HEq of components using type coercion.
+This version uses explicit proof that the sigma types are equal.
+-/
+lemma sigma_fst_heq_of_sigma_type_eq.{u, v} {A : Type u}
+    {F₁ F₂ : A → Type v}
+    (hF : F₁ = F₂)
+    {p1 : Σ a : A, F₁ a} {p2 : Σ a : A, F₂ a}
+    (hp : p1 ≍ p2) : p1.fst = p2.fst := by
+  cases hF
+  exact congrArg Sigma.fst (eq_of_heq hp)
+
+lemma sigma_snd_heq_of_sigma_type_eq.{u, v} {A : Type u}
+    {F₁ F₂ : A → Type v}
+    (hF : F₁ = F₂)
+    {p1 : Σ a : A, F₁ a} {p2 : Σ a : A, F₂ a}
+    (hp : p1 ≍ p2) : p1.snd ≍ p2.snd := by
+  cases hF
+  exact sigma_snd_heq_of_eq (eq_of_heq hp)
+
+/--
+For sigmas with different index types, HEq of sigmas implies HEq of first components.
+This uses the index equality and the structured cast lemmas.
+-/
+lemma sigma_fst_heq_of_heq_diff_base {I : Type*} {S : I → Type*}
+    {F : (i : I) → S i → Type*}
+    {i1 i2 : I} (hi : i1 = i2)
+    {p1 : Σ s : S i1, F i1 s} {p2 : Σ s : S i2, F i2 s}
+    (hp : p1 ≍ p2) : p1.fst ≍ p2.fst := by
+  have hTypeEq : (Σ s : S i1, F i1 s) = (Σ s : S i2, F i2 s) :=
+    congrArg (fun i => Σ s : S i, F i s) hi
+  have hEq : cast hTypeEq p1 = p2 := eq_of_heq ((cast_heq hTypeEq p1).trans hp)
+  exact (sigma_cast_fst_heq hi p1).symm.trans (heq_of_eq (congrArg (·.fst) hEq))
+
+/--
+For sigmas with different index types, HEq of sigmas implies HEq of second components.
+-/
+lemma sigma_snd_heq_of_heq_diff_base {I : Type*} {S : I → Type*}
+    {F : (i : I) → S i → Type*}
+    {i1 i2 : I} (hi : i1 = i2)
+    {p1 : Σ s : S i1, F i1 s} {p2 : Σ s : S i2, F i2 s}
+    (hp : p1 ≍ p2) : p1.snd ≍ p2.snd := by
+  have hTypeEq : (Σ s : S i1, F i1 s) = (Σ s : S i2, F i2 s) :=
+    congrArg (fun i => Σ s : S i, F i s) hi
+  have hEq : cast hTypeEq p1 = p2 := eq_of_heq ((cast_heq hTypeEq p1).trans hp)
+  exact (sigma_cast_snd_heq' hi p1).symm.trans (sigma_snd_heq_of_eq hEq)
+
+/--
 Given equality of sigmas where snd is a subtype of a function type, extract
 equality of function values at corresponding points. The function domain depends
 on the first component.
@@ -534,6 +617,7 @@ lemma prod_transport_fst {I : Type*} {A B : I → Type*}
     (h ▸ (a, b) : A i₂ × B i₂).1 = h ▸ a := by
   cases h
   rfl
+
 
 end GebLean
 
