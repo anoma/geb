@@ -2907,6 +2907,13 @@ instance polyCofreeMInitialIsEmpty (P : PolyEndo X) (x : X) :
     IsEmpty (PolyCofreeM (overInitial X) P x) :=
   ⟨fun m => IsEmpty.false (m.approx 1)⟩
 
+/--
+The cofree comonad applied to the initial object is equivalent to `PEmpty`.
+-/
+def polyCofreeMInitialEquivPEmpty (P : PolyEndo X) (x : X) :
+    PolyCofreeM (overInitial X) P x ≃ PEmpty :=
+  Equiv.equivPEmpty _
+
 /-! ### Monad Structure on Free Monad
 
 The free monad `PolyFreeM A P` has a monad structure where:
@@ -5030,6 +5037,14 @@ empty via `polyCofreeEquiv`.
 instance polyCofreeInitialEvalIsEmpty (P : PolyEndo X) (x : X) :
     IsEmpty (PolyCofreePolyEval (overInitial X) P x) :=
   (polyCofreeEquiv (overInitial X) P x).symm.isEmpty
+
+/--
+The cofree comonad polynomial evaluated at the initial object is equivalent
+to `PEmpty`.
+-/
+def polyCofreeInitialEvalEquivPEmpty (P : PolyEndo X) (x : X) :
+    PolyCofreePolyEval (overInitial X) P x ≃ PEmpty :=
+  Equiv.equivPEmpty _
 
 end FreeMonadCofreeComonad
 
