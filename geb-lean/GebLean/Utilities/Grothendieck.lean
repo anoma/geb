@@ -1677,6 +1677,32 @@ theorem comp_fiber {X Y Z : GrothendieckContra' F'} (f : Hom X Y) (g : Hom Y Z) 
       eqToHom (comp_fiber_cod_eq f g) :=
         rfl
 
+/-! ### Category-level lemmas
+
+These lemmas relate the category operations `𝟙` and `≫` to the underlying
+base and fiber components. They are definitionally equal to the `id_*` and
+`comp_*` lemmas above, but having explicit versions for category notation
+allows simp to apply them directly.
+-/
+
+@[simp]
+theorem cat_id_base (X : GrothendieckContra' F') :
+    (𝟙 X : X ⟶ X).base = 𝟙 X.base := rfl
+
+@[simp]
+theorem cat_id_fiber (X : GrothendieckContra' F') :
+    (𝟙 X : X ⟶ X).fiber = eqToHom (id_base_eq X).symm := rfl
+
+@[simp]
+theorem cat_comp_base {X Y Z : GrothendieckContra' F'} (f : X ⟶ Y) (g : Y ⟶ Z) :
+    (f ≫ g).base = f.base ≫ g.base := rfl
+
+@[simp]
+theorem cat_comp_fiber {X Y Z : GrothendieckContra' F'}
+    (f : X ⟶ Y) (g : Y ⟶ Z) :
+    (f ≫ g).fiber = f.fiber ≫ (F'.map f.base).map g.fiber ≫
+      eqToHom (comp_fiber_cod_eq f g) := rfl
+
 theorem congr {X Y : GrothendieckContra' F'} {f g : X ⟶ Y} (h : f = g) :
     f.fiber = g.fiber ≫ eqToHom (by subst h; rfl) := by
   subst h
@@ -1747,7 +1773,6 @@ theorem grothendieckContraIsoHomMapId
   refine GrothendieckContra'.ext _ _ h_base ?_
   rw [h_fiber]
   simp
-  rfl
 
 theorem grothendieckContraIsoHomMapComp_base_components
     {X Y Z : GrothendieckContra F'}
@@ -1758,7 +1783,6 @@ theorem grothendieckContraIsoHomMapComp_base_components
   simp only [grothendieckContraIsoHomMap, grothendieckContraIsoHomObj]
   rw [gcf_comp_base]
   simp
-  rfl
 
 theorem grothendieckContraIsoHomMapComp_fiber_eq
     {X Y Z : GrothendieckContra F'} (f : gcHom F' X Y) (g : gcHom F' Y Z) :
@@ -1823,11 +1847,10 @@ theorem grothendieckContraIsoInvMapId_fiber_components
     (grothendieckContraIsoInvMap (𝟙 X)).fiber =
     (gcId F' (grothendieckContraIsoInvObj X)).fiber := by
   cases X with | mk base fiber =>
-  simp
+  simp only
     [grothendieckContraIsoInvMap, grothendieckContraIsoInvObj,
-     Cat.opFunctorObj', Cat.of, Cat.str, Bundled.of]
-  exact Eq.trans (id_fiber _)
-    (by simp ; exact (Cat.eqToHom_postCompOp_eq F' base _ _).symm)
+     Cat.str, cat_id_fiber, gcf_id_fiber]
+  exact (Cat.eqToHom_postCompOp_eq F' base _ _).symm
 
 theorem grothendieckContraIsoInvMapId
     (X : GrothendieckContra' F') :

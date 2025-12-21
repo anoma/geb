@@ -253,12 +253,30 @@ def FreeProdCompletionCat.{u', v', w'} (C' : Type u') [Category.{v'} C'] :
     (familyFunctor.{u', v', w'} C'))
 
 /--
+The family functor post-composed with oppositization. This functor
+`familyFunctorOp C : Type^op ⥤ Cat` sends a type `X` to the opposite of
+the product category `(X → C)^op`.
+
+This is the functor whose contravariant Grothendieck construction yields
+`CoprodCovarRepCat C` and whose covariant Grothendieck construction yields
+`ProdContravarRepCat C`.
+-/
+def familyFunctorOp.{u', v', w'} (C' : Type u') [Category.{v'} C'] :
+    Type w'ᵒᵖ' ⥤ Cat.{max w' v', max u' w'} :=
+  familyFunctor.{u', v', w'} C' ⋙ Cat.opFunctor'
+
+@[simp]
+lemma familyFunctorOp_eq.{u', v', w'} (C' : Type u') [Category.{v'} C'] :
+    familyFunctorOp.{u', v', w'} C' = familyFunctor.{u', v', w'} C' ⋙ Cat.opFunctor' :=
+  rfl
+
+/--
 The category of coproducts of covariant representables for `C`. Objects are
 pairs `(X, F)` where `X : Type (u+1)` and `F : X → Cᵒᵖ'` is an `X`-indexed
 family of objects from the opposite category.
 
 This is the contravariant Grothendieck construction applied to `familyFunctor`
-post-composed with oppositization.
+post-composed with oppositization (i.e., `familyFunctorOp`).
 -/
 @[simp]
 def CoprodCovarRepCat.{u', v', w'} (C' : Type u') [Category.{v'} C'] :
@@ -269,7 +287,7 @@ def CoprodCovarRepCat.{u', v', w'} (C' : Type u') [Category.{v'} C'] :
 /--
 The category of products of contravariant representables for `C`. This is the
 covariant Grothendieck construction applied to `familyFunctor` post-composed
-with oppositization.
+with oppositization (i.e., `familyFunctorOp`).
 -/
 @[simp]
 def ProdContravarRepCat.{u', v', w'} (C' : Type u') [Category.{v'} C'] :
@@ -396,6 +414,29 @@ lemma fcComp_fiberMor {x y z : FreeCoprodCompletionCat.{u, v, w} C}
   unfold GrothendieckContra'.comp
   simp only [eqToHom_refl, Category.comp_id]
   rfl
+
+/--
+The identity morphism in `FreeCoprodCompletionCat C` expressed purely in terms
+of the underlying category. The reindexing is `id` and each fiber morphism is `𝟙`.
+-/
+@[simp]
+lemma fcId_mk (x : FreeCoprodCompletionCat.{u, v, w} C) :
+    𝟙 x = fcHomMk id (fun i => 𝟙 (fcFamily x i)) := rfl
+
+/--
+Composition in `FreeCoprodCompletionCat C` expressed purely in terms of the
+underlying category. The reindexing is function composition `g ∘ f`, and
+the fiber morphism at index `i` is `f.fiber i ≫ g.fiber (f.reindex i)`.
+-/
+@[simp]
+lemma fcComp_mk {x y z : FreeCoprodCompletionCat.{u, v, w} C}
+    (f : x ⟶ y) (g : y ⟶ z) :
+    f ≫ g = fcHomMk (fcReindex g ∘ fcReindex f)
+      (fun i => fcFiberMor f i ≫ fcFiberMor g (fcReindex f i)) := by
+  refine GrothendieckContra'.ext _ _ rfl ?_
+  simp only [fcHomMk, eqToHom_refl, Category.comp_id]
+  funext i
+  exact fcComp_fiberMor f g i
 
 end FreeCoprodCompletionHelpers
 
@@ -1214,6 +1255,29 @@ lemma ccrComp_fiberMor {x y z : CoprodCovarRepCat.{u, v, w} C}
   simp only [eqToHom_refl, Category.comp_id]
   rfl
 
+/--
+The identity morphism in `CoprodCovarRepCat C` expressed purely in terms of
+the underlying category. The reindexing is `id` and each fiber morphism is `𝟙`.
+-/
+@[simp]
+lemma ccrId_mk (x : CoprodCovarRepCat.{u, v, w} C) :
+    𝟙 x = ccrHomMk id (fun i => 𝟙 (ccrFamily x i)) := rfl
+
+/--
+Composition in `CoprodCovarRepCat C` expressed purely in terms of the
+underlying category. The reindexing is function composition `g ∘ f`, and
+the fiber morphism at index `i` is `g.fiber (f.reindex i) ≫ f.fiber i`.
+-/
+@[simp]
+lemma ccrComp_mk {x y z : CoprodCovarRepCat.{u, v, w} C}
+    (f : x ⟶ y) (g : y ⟶ z) :
+    f ≫ g = ccrHomMk (ccrReindex g ∘ ccrReindex f)
+      (fun i => ccrFiberMor g (ccrReindex f i) ≫ ccrFiberMor f i) := by
+  refine GrothendieckContra'.ext _ _ rfl ?_
+  simp only [ccrHomMk, eqToHom_refl, Category.comp_id]
+  funext i
+  exact ccrComp_fiberMor f g i
+
 end CoprodCovarRepHelpers
 
 /-! ## Equivalence between CoprodCovarRepCat and FreeCoprodCompletionCat
@@ -1374,6 +1438,21 @@ lemma pcrComp_fiberMor {x y z : ProdContravarRepCat.{u, v, w} C}
   unfold Grothendieck.comp
   simp only [eqToHom_refl, Category.id_comp]
   rfl
+
+/--
+Composition in `ProdContravarRepCat C` expressed purely in terms of the
+underlying category. The reindexing is `g.reindex ≫ f.reindex` and the fiber
+morphism at index `k` is `g.fiber k ≫ f.fiber (g.reindex k)`.
+-/
+@[simp]
+lemma pcrComp_mk {x y z : ProdContravarRepCat.{u, v, w} C}
+    (f : x ⟶ y) (g : y ⟶ z) :
+    f ≫ g = pcrHomMk (pcrReindex g ≫ pcrReindex f)
+      (fun k => pcrFiberMor g k ≫ pcrFiberMor f (pcrReindex g k)) := by
+  refine Grothendieck.ext _ _ rfl ?_
+  simp only [pcrHomMk, eqToHom_refl, Category.id_comp]
+  funext k
+  exact pcrComp_fiberMor f g k
 
 end ProdContravarRepHelpers
 
