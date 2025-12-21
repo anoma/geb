@@ -1,4 +1,4 @@
-import GebLean.Polynomial
+import GebLean.PolyAdjunctions
 import GebLean.Utilities.Equalities
 import Mathlib.CategoryTheory.Endofunctor.Algebra
 

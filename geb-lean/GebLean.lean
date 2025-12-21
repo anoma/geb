@@ -9,6 +9,7 @@ import GebLean.FiniteQuiver
 import GebLean.FreeCoequalizerCompletion
 import GebLean.LayeredEquivalence
 import GebLean.PLang
+import GebLean.PolyAdjunctions
 import GebLean.PolyAlg
 import GebLean.Polynomial
 import GebLean.Semicategory
