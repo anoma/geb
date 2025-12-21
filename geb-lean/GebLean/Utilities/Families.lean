@@ -1311,6 +1311,120 @@ instance ccrCoprodData : CoprodData.{w} (CoprodCovarRepCat.{u, v, w} C) where
   coprod F := fcCoprodObj (C := Cᵒᵖ') F
   ι F i := fcCoprodι (C := Cᵒᵖ') F i
 
+/-! ### Isomorphism between CoprodCovarRepCat (Cᵒᵖ) and FreeCoprodCompletionCat C
+
+We establish that `CoprodCovarRepCat (Cᵒᵖ) ≅Cat FreeCoprodCompletionCat C`.
+
+This allows working with polynomial functors on C by instead working with
+`FreeCoprodCompletionCat Cᵒᵖ` (contravariant Grothendieck construction on
+presheaves), which integrates with mathlib's presheaf machinery.
+-/
+
+/--
+Functor from `CoprodCovarRepCat (Cᵒᵖ)` to `FreeCoprodCompletionCat C`.
+
+Objects: `(X, F : X → Cᵒᵖ)` maps to `(X, fun x => (F x).unop : X → C)`.
+Morphisms: The fiber morphisms transpose via unop.
+-/
+def ccrOpToFc : CoprodCovarRepCat.{u, v, w} Cᵒᵖ ⥤ FreeCoprodCompletionCat.{u, v, w} C where
+  obj P := fcObjMk (fun x => (ccrFamily P x).unop)
+  map {P Q} f := fcHomMk (ccrReindex f)
+    (fun i => (ccrFiberMor f i).unop)
+  map_id P := by
+    refine fcHom_ext _ _ rfl ?_
+    simp only [eqToHom_refl, Category.comp_id]
+    funext i
+    simp only [fcHomMk, ccrId_fiberMor]
+    rfl
+  map_comp {P Q R} f g := by
+    simp only [fcComp_mk]
+    congr 1
+    funext i
+    dsimp only [fcHomMk, fcFiberMor, fcReindex]
+    simp only [ccrComp_fiberMor, unop_comp]
+
+/--
+Functor from `FreeCoprodCompletionCat C` to `CoprodCovarRepCat (Cᵒᵖ)`.
+
+Objects: `(X, G : X → C)` maps to `(X, fun x => op (G x) : X → Cᵒᵖ)`.
+Morphisms: The fiber morphisms transpose via op.
+-/
+def fcToCcrOp : FreeCoprodCompletionCat.{u, v, w} C ⥤ CoprodCovarRepCat.{u, v, w} Cᵒᵖ where
+  obj P := ccrObjMk (fun x => Opposite.op (fcFamily P x))
+  map {P Q} f := ccrHomMk (fcReindex f)
+    (fun i => (fcFiberMor f i).op)
+  map_id P := by
+    refine ccrHom_ext _ _ rfl ?_
+    simp only [eqToHom_refl, Category.comp_id]
+    funext i
+    simp only [ccrHomMk, fcId_fiberMor]
+    rfl
+  map_comp {P Q R} f g := by
+    simp only [ccrComp_mk]
+    congr 1
+    funext i
+    dsimp only [ccrHomMk, ccrFiberMor, ccrReindex]
+    simp only [fcComp_fiberMor, op_comp]
+
+@[simp]
+lemma ccrOpToFc_fcToCcrOp : ccrOpToFc ⋙ fcToCcrOp = 𝟭 (CoprodCovarRepCat.{u, v, w} Cᵒᵖ) := by
+  fapply Functor.ext
+  · intro P
+    simp only [Functor.comp_obj, Functor.id_obj, ccrOpToFc, fcToCcrOp]
+    simp only [ccrObjMk, fcObjMk, fcIndex, ccrIndex, fcFamily, ccrFamily]
+    simp only [Opposite.op_unop]
+    cases P
+    rfl
+  · intro P Q f
+    cases P
+    cases Q
+    simp only [Functor.comp_map, Functor.id_map, ccrOpToFc, fcToCcrOp, eqToHom_refl,
+      Category.id_comp, Category.comp_id]
+    refine ccrHom_ext _ _ rfl ?_
+    funext i
+    simp only [eqToHom_refl, Category.comp_id]
+    dsimp only [ccrHomMk, ccrFiberMor, ccrReindex, fcHomMk, fcFiberMor, fcReindex]
+    simp only [Quiver.Hom.op_unop]
+
+@[simp]
+lemma fcToCcrOp_ccrOpToFc : fcToCcrOp ⋙ ccrOpToFc = 𝟭 (FreeCoprodCompletionCat.{u, v, w} C) := by
+  fapply Functor.ext
+  · intro P
+    simp only [Functor.comp_obj, Functor.id_obj, fcToCcrOp, ccrOpToFc]
+    simp only [fcObjMk, ccrObjMk, ccrIndex, fcIndex, ccrFamily, fcFamily]
+    cases P
+    rfl
+  · intro P Q f
+    cases P
+    cases Q
+    simp only [Functor.comp_map, Functor.id_map, fcToCcrOp, ccrOpToFc, eqToHom_refl,
+      Category.id_comp, Category.comp_id]
+    refine fcHom_ext _ _ rfl ?_
+    funext i
+    simp only [eqToHom_refl, Category.comp_id]
+    dsimp only [fcHomMk, fcFiberMor, fcReindex, ccrHomMk, ccrFiberMor, ccrReindex]
+    simp only [Quiver.Hom.unop_op]
+
+/--
+Categorical isomorphism between `CoprodCovarRepCat (Cᵒᵖ)` and `FreeCoprodCompletionCat C`.
+
+This isomorphism allows polynomial functor constructions on C to be transported
+to/from the free coproduct completion, which has direct access to mathlib's
+presheaf machinery via the contravariant Grothendieck construction.
+-/
+def ccrOpIsoCat : CoprodCovarRepCat.{u, v, w} Cᵒᵖ ≅Cat FreeCoprodCompletionCat.{u, v, w} C where
+  hom := ccrOpToFc
+  inv := fcToCcrOp
+  hom_inv_id := ccrOpToFc_fcToCcrOp
+  inv_hom_id := fcToCcrOp_ccrOpToFc
+
+/--
+Categorical equivalence between `CoprodCovarRepCat (Cᵒᵖ)` and `FreeCoprodCompletionCat C`,
+derived from the categorical isomorphism.
+-/
+def ccrOpEquivFc : CoprodCovarRepCat.{u, v, w} Cᵒᵖ ≌ FreeCoprodCompletionCat.{u, v, w} C :=
+  Cat.equivOfIso ccrOpIsoCat
+
 end CoprodCovarRepEquiv
 
 /-! ## Product of contravariant representables helpers -/
