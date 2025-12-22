@@ -165,6 +165,110 @@ lemma sigma_transport_fst_indep {α : Type*} {I : Type*} {β : α → I → Type
   rfl
 
 /--
+Matching on a transported sigma and applying a function: the result is the
+function applied at the original first component and the transported second.
+This handles the pattern `match h ▸ ⟨i, b⟩ with | ⟨j, c⟩ => f j c`.
+-/
+lemma sigma_transport_match_eq {α : Type*} {I : Type*} {β : α → I → Type*}
+    {T : Type*} {a₁ a₂ : α} (h : a₁ = a₂) {i : I} {b : β a₁ i}
+    (f : (j : I) → β a₂ j → T) :
+    (match (h ▸ ⟨i, b⟩ : (j : I) × β a₂ j) with | ⟨j, c⟩ => f j c) =
+    f i (((congrArg (fun a => β a i) h) ▸ b : β a₂ i)) := by
+  cases h
+  rfl
+
+universe u_fg in
+/--
+When transporting a sigma `⟨i, b⟩ : (j : I) × F j` along an equality `h : F = G`
+between the fiber types, the first component (index) is preserved.
+-/
+lemma sigma_transport_fun_fst_eq {I : Type*} {F G : I → Type u_fg} (h : F = G)
+    (i : I) (b : F i) :
+    (h ▸ ⟨i, b⟩ : (j : I) × G j).fst = i := by
+  cases h
+  rfl
+
+universe u_fg2 in
+/--
+When transporting a sigma `⟨i, b⟩ : (j : I) × F j` along an equality `h : F = G`,
+the second component is heq to the transported `b`.
+-/
+lemma sigma_transport_fun_snd_heq {I : Type*} {F G : I → Type u_fg2} (h : F = G)
+    (i : I) (b : F i) :
+    HEq (h ▸ ⟨i, b⟩ : (j : I) × G j).snd ((congrFun h i) ▸ b : G i) := by
+  cases h
+  rfl
+
+universe u_fg3 in
+/--
+When transporting a sigma along an equality between function types,
+the match can be simplified to use the original index and transported fiber.
+This is a more directly applicable form of sigma_transport_match_eq.
+-/
+lemma sigma_transport_match_simple {I : Type*} {F G : I → Type u_fg3}
+    {T : Type*} (h : F = G) (i : I) (b : F i)
+    (g : (j : I) → G j → T) :
+    (match (h ▸ ⟨i, b⟩ : (j : I) × G j) with | ⟨j, c⟩ => g j c) =
+    g i ((congrFun h i) ▸ b) := by
+  cases h
+  rfl
+
+universe u_fg35 in
+/--
+Two transports along different proofs of the same type equality are equal.
+This follows from proof irrelevance: all proofs of `A = B` are equal.
+-/
+@[simp]
+lemma transport_proof_irrel {A : Sort u_fg35} {B : Sort u_fg35}
+    (h1 h2 : A = B) (x : A) : h1 ▸ x = h2 ▸ x := by
+  have : h1 = h2 := Subsingleton.elim h1 h2
+  subst this
+  rfl
+
+universe u_fg36 in
+/--
+Matching on a transported sigma equals applying the function at the original
+index with any transport of the fiber element. This combines
+`sigma_transport_match_simple` with proof irrelevance: if the LHS has a
+different transport proof than the RHS, they still give the same result.
+-/
+lemma sigma_transport_match_eq_transport {I : Type*} {F G : I → Type u_fg36}
+    {T : Type*} (i : I) (b : F i) (hSigma : F = G) (hElem : F i = G i)
+    (g : (j : I) → G j → T) :
+    (match (hSigma ▸ ⟨i, b⟩ : (j : I) × G j) with | ⟨j, c⟩ => g j c) =
+    g i (hElem ▸ b) := by
+  cases hSigma
+  cases hElem
+  rfl
+
+universe u_fg4 in
+/--
+HEq variant: matching on a transported sigma gives HEq to applying the
+function at the original index with the transported fiber element.
+-/
+lemma sigma_transport_match_heq {I : Type*} {F G : I → Type u_fg4}
+    (h : F = G) (i : I) (b : F i) (g : (j : I) → G j → Type*) :
+    HEq (match (h ▸ ⟨i, b⟩ : (j : I) × G j) with | ⟨j, c⟩ => g j c)
+        (g i ((congrFun h i) ▸ b)) := by
+  cases h
+  rfl
+
+universe u_fg45 in
+/--
+When applying a function to a transported element equals matching on a
+transported sigma, as long as both transports are along proofs of the same
+equality type. This combines sigma transport match with proof irrelevance.
+-/
+@[simp]
+lemma sigma_transport_match_eq_direct {I : Type*} {F G : I → Type u_fg45}
+    {R : Type*} (g : (i : I) → G i → R)
+    (i : I) (b : F i) (hElem : F i = G i) (hFun : F = G) :
+    g i (hElem ▸ b) =
+    (match (hFun ▸ ⟨i, b⟩ : (j : I) × G j) with | ⟨j, c⟩ => g j c) := by
+  have hProofIrrel : hElem = congrFun hFun i := Subsingleton.elim _ _
+  rw [hProofIrrel, sigma_transport_match_simple]
+
+/--
 When transporting a product `(subtype, other)` along an equality, the first
 component's coercion is preserved. This handles the pattern where the subtype
 has a predicate depending on the transported parameter.
@@ -638,6 +742,100 @@ lemma prod_transport_fst {I : Type*} {A B : I → Type*}
   cases h
   rfl
 
+/--
+Over morphisms with targets propositionally equal are heterogeneously equal
+if their left functions are HEq.
+-/
+lemma overHomHEqOfTargetEq {X : Type*} {S T1 T2 : Over X}
+    (hT : T1 = T2)
+    {f : S ⟶ T1} {g : S ⟶ T2}
+    (hfg : f.left ≍ g.left) :
+    f ≍ g := by
+  cases hT
+  have : f.left = g.left := eq_of_heq hfg
+  exact heq_of_eq (Over.OverMorphism.ext this)
+
+/--
+Extract `.left` HEq from HEq of Over morphisms with same source and target.
+-/
+lemma overMorphismLeftHEqOfHEq {X : Type*} {S T : Over X}
+    {m1 m2 : S ⟶ T}
+    (h : m1 ≍ m2) :
+    m1.left ≍ m2.left := by
+  have := eq_of_heq h
+  exact heq_of_eq (congrArg CommaMorphism.left this)
+
+/--
+Extract `.left` HEq from HEq of Over morphisms with propositionally equal
+sources and targets.
+-/
+lemma overMorphismLeftHEqOfHEq' {X : Type*} {S1 S2 T1 T2 : Over X}
+    (hS : S1 = S2) (hT : T1 = T2)
+    {m1 : S1 ⟶ T1} {m2 : S2 ⟶ T2}
+    (h : m1 ≍ m2) :
+    m1.left ≍ m2.left := by
+  cases hS
+  cases hT
+  exact overMorphismLeftHEqOfHEq h
+
+universe u' v' in
+/--
+Given HEq of functions with propositionally equal domains, extract pointwise
+equality after transport.
+-/
+lemma funHEqApply {A B : Type u'} {C : Type v'} (hAB : A = B) {f : A → C}
+    {g : B → C} (h : f ≍ g) (a : A) : f a = g (hAB ▸ a) := by
+  cases hAB
+  exact congrFun (eq_of_heq h) a
+
+/--
+For dependent sigma types where the first component is equal and second
+components are HEq, the overall sigmas are equal. This is a direct
+formulation useful when we have explicit shape equality.
+-/
+lemma sigma_eq_of_fst_eq_snd_heq {α : Type*} {β : α → Type*}
+    {a₁ a₂ : α} (ha : a₁ = a₂)
+    {b₁ : β a₁} {b₂ : β a₂} (hb : b₁ ≍ b₂) :
+    (⟨a₁, b₁⟩ : Sigma β) = ⟨a₂, b₂⟩ := by
+  cases ha
+  cases hb
+  rfl
+
+/--
+Over.homMk is HEq to Over.homMk composed with a morphism when the sources
+are propositionally equal and the left functions satisfy the corresponding
+pointwise relationship.
+-/
+lemma overHomMkHEqHomMkComp {X : Type*} {S1 S2 A B : Over X}
+    (hS : S1 = S2)
+    {g1 : S1.left → B.left} {h1 : g1 ≫ B.hom = S1.hom}
+    {g2 : S2.left → A.left} {h2 : g2 ≫ A.hom = S2.hom}
+    (f : A ⟶ B)
+    (hg : g1 ≍ (fun x => f.left (g2 (hS ▸ x)))) :
+    (Over.homMk g1 h1 : S1 ⟶ B) ≍ (Over.homMk g2 h2 : S2 ⟶ A) ≫ f := by
+  cases hS
+  have hleft : g1 = fun x => f.left (g2 x) := eq_of_heq hg
+  have : (Over.homMk g1 h1).left = (Over.homMk g2 h2 ≫ f).left := by
+    simp only [Over.homMk_left, Over.comp_left]
+    exact hleft
+  exact heq_of_eq (Over.OverMorphism.ext this)
+
+universe u_vts in
+/--
+Transport of values through sigma matches equals direct transport with proof
+irrelevance. Given any two proofs of element and function equalities (which
+may be different proof terms), applying `g` to a transported element equals
+matching on a transported sigma. This generalizes `sigma_transport_match_eq_direct`
+by allowing the proofs to come from arbitrary sources.
+-/
+@[simp]
+lemma val_transport_sigma_match_irrel {I : Type*} {F G : I → Type u_vts}
+    {R : Type*} (g : (i : I) → G i → R)
+    (i : I) (b : F i) (hElem : F i = G i) (hFun : F = G) :
+    g i (hElem ▸ b) =
+    (match (hFun ▸ ⟨i, b⟩ : (j : I) × G j) with | ⟨j, c⟩ => g j c) := by
+  have hProofIrrel : hElem = congrFun hFun i := Subsingleton.elim _ _
+  rw [hProofIrrel, sigma_transport_match_simple]
 
 end GebLean
 

@@ -1,4 +1,5 @@
 import GebLean.Polynomial
+import GebLean.Utilities.Equalities
 import Mathlib.CategoryTheory.Endofunctor.Algebra
 
 /-!
@@ -7259,5 +7260,286 @@ def polyForgetCofreeAdjunction (P : PolyEndo X) :
   }
 
 end Adjunctions
+
+/-! ## Free Monad Monad and Cofree Comonad Comonad
+
+The construction `P ↦ polyFreeMPoly P` (free monad) is itself a monad on the
+category of polynomial endofunctors. Dually, `P ↦ polyCofreeMPoly P` (cofree
+comonad) is a comonad on polynomial endofunctors.
+
+These structures arise from the adjunctions Free ⊣ Forget and Forget ⊣ Cofree.
+-/
+
+section FreeMonadMonad
+
+variable {X : Type u}
+
+/-! ### Unit of the Free Monad Monad
+
+The unit embeds each P-operation as a single-node tree in the free monad.
+For each position `i` of P at fiber x, we get a tree shape consisting of
+one internal node labeled `i` with leaves at all child positions.
+-/
+
+/--
+Build a leaf node in a tree shape at the given fiber.
+The leaf carries the fiber value itself (since overTerminal X has left = X).
+-/
+def polyFreeMShapeLeaf (P : PolyEndo X) (x : X) : PolyFreeMShape P x :=
+  PolyFix.mk x (Sum.inl ⟨x, rfl⟩) (fun e => PEmpty.elim e)
+
+/--
+The leaf positions in a leaf node are exactly PUnit (one position).
+-/
+lemma polyFreeMShapeLeaf_leafPos (P : PolyEndo X) (x : X) :
+    PolyFreeMLeafPos P (polyFreeMShapeLeaf P x) = PUnit := rfl
+
+/--
+Build a single-node tree shape from a P-position.
+The tree has one internal node labeled by the position, with leaves at all
+child positions.
+-/
+def polyFreeMShapeSingleNode (P : PolyEndo X) {x : X}
+    (i : polyBetweenIndex X X P x) : PolyFreeMShape P x :=
+  PolyFix.mk x (Sum.inr i) fun e =>
+    polyFreeMShapeLeaf P ((polyBetweenFamily X X P x i).hom e)
+
+/--
+The leaf positions in a single-node tree are a sigma of PUnits.
+-/
+lemma polyFreeMShapeSingleNode_leafPos (P : PolyEndo X) {x : X}
+    (i : polyBetweenIndex X X P x) :
+    PolyFreeMLeafPos P (polyFreeMShapeSingleNode P i) =
+    (Σ (e : (polyBetweenFamily X X P x i).left),
+      PolyFreeMLeafPos P (polyFreeMShapeLeaf P
+        ((polyBetweenFamily X X P x i).hom e))) := rfl
+
+/--
+Convert a child index and unit to a leaf position in a single-node tree.
+-/
+def polyFreeMShapeSingleNode_leafPos_mk (P : PolyEndo X) {x : X}
+    (i : polyBetweenIndex X X P x)
+    (e : (polyBetweenFamily X X P x i).left) :
+    PolyFreeMLeafPos P (polyFreeMShapeSingleNode P i) :=
+  ⟨e, PUnit.unit⟩
+
+/--
+Extract the child index from a leaf position in a single-node tree.
+-/
+def polyFreeMShapeSingleNode_leafPos_fst (P : PolyEndo X) {x : X}
+    (i : polyBetweenIndex X X P x)
+    (pos : PolyFreeMLeafPos P (polyFreeMShapeSingleNode P i)) :
+    (polyBetweenFamily X X P x i).left :=
+  pos.1
+
+/--
+The leaf positions in a single-node tree correspond exactly to the children
+of that node (since each child is a leaf with exactly one position).
+-/
+def polyFreeMShapeSingleNode_leafPos_equiv (P : PolyEndo X) {x : X}
+    (i : polyBetweenIndex X X P x) :
+    PolyFreeMLeafPos P (polyFreeMShapeSingleNode P i) ≃
+    (polyBetweenFamily X X P x i).left where
+  toFun := polyFreeMShapeSingleNode_leafPos_fst P i
+  invFun := polyFreeMShapeSingleNode_leafPos_mk P i
+  left_inv := fun pos => by
+    simp only [polyFreeMShapeSingleNode_leafPos_fst, polyFreeMShapeSingleNode_leafPos_mk]
+    cases pos.2
+    rfl
+  right_inv := fun _ => rfl
+
+/--
+The fiber of a leaf position in a single-node tree is the fiber of the
+corresponding child.
+-/
+lemma polyFreeMShapeSingleNode_leafFiber (P : PolyEndo X) {x : X}
+    (i : polyBetweenIndex X X P x)
+    (pos : PolyFreeMLeafPos P (polyFreeMShapeSingleNode P i)) :
+    PolyFreeMLeafFiber P (polyFreeMShapeSingleNode P i) pos =
+    (polyBetweenFamily X X P x i).hom
+      ((polyFreeMShapeSingleNode_leafPos_equiv P i).toFun pos) := by
+  simp only [polyFreeMShapeSingleNode_leafPos_equiv,
+    polyFreeMShapeSingleNode_leafPos_fst]
+  rfl
+
+/--
+The family at a single-node position equals the original P family.
+This is the isomorphism that makes the unit work.
+-/
+def polyFreeMShapeSingleNode_family_iso (P : PolyEndo X) {x : X}
+    (i : polyBetweenIndex X X P x) :
+    polyFreeMFamily P x (polyFreeMShapeSingleNode P i) ≅
+    polyBetweenFamily X X P x i :=
+  Over.isoMk
+    (Equiv.toIso (polyFreeMShapeSingleNode_leafPos_equiv P i))
+    (by
+      ext pos
+      simp only [types_comp_apply, Equiv.toIso_hom, polyFreeMFamily, Over.mk_hom]
+      exact polyFreeMShapeSingleNode_leafFiber P i pos)
+
+/--
+The left component of the free monad monad unit at a specific fiber.
+Maps each P-evaluation element to a polyFreeMPoly P evaluation by embedding
+as a single-node tree.
+-/
+def polyFreeMMonadUnitAtLeft (P : PolyEndo X) (A : Over X) (x : X)
+    (elem : polyBetweenEvalFamily X X P A x) :
+    polyBetweenEvalFamily X X (polyFreeMPoly P) A x :=
+  let i := pbefIndex elem
+  let mor := pbefMor elem
+  let treeShape := polyFreeMShapeSingleNode P i
+  let newMor : polyFreeMFamily P x treeShape ⟶ A :=
+    (polyFreeMShapeSingleNode_family_iso P i).hom ≫ mor
+  ⟨treeShape, newMor⟩
+
+/--
+The left component of the unit as a function on total spaces.
+-/
+def polyFreeMMonadUnitLeft (P : PolyEndo X) (A : Over X) :
+    ((polyEndoFunctor X P).obj A).left →
+    ((polyEndoFunctor X (polyFreeMPoly P)).obj A).left :=
+  fun ⟨x, elem⟩ => ⟨x, polyFreeMMonadUnitAtLeft P A x elem⟩
+
+/--
+The unit commutes with fiber projections.
+-/
+lemma polyFreeMMonadUnit_comm (P : PolyEndo X) (A : Over X) :
+    polyFreeMMonadUnitLeft P A ≫
+    ((polyEndoFunctor X (polyFreeMPoly P)).obj A).hom =
+    ((polyEndoFunctor X P).obj A).hom := rfl
+
+/--
+The unit of the free monad monad at a specific polynomial P.
+Maps P(A) → (polyFreeMPoly P)(A) naturally in A.
+-/
+def polyFreeMMonadUnit (P : PolyEndo X) :
+    polyEndoFunctor X P ⟶ polyEndoFunctor X (polyFreeMPoly P) where
+  app := fun A => Over.homMk (polyFreeMMonadUnitLeft P A)
+    (polyFreeMMonadUnit_comm P A)
+  naturality := fun A B f => by
+    apply Over.OverMorphism.ext
+    funext ⟨x, ⟨i, mor⟩⟩
+    simp only [types_comp_apply, Over.comp_left,
+      polyEndoFunctor, polyBetweenEvalFunctor, polyToOverFunctor,
+      polyToOverEvalMap, familySliceForward, familySliceForwardMap,
+      polyToOverEvalFamilyMap, ccrEvalMap, Over.homMk_left,
+      polyFreeMMonadUnitLeft, polyFreeMMonadUnitAtLeft,
+      pbefIndex, pbefMor, ptoefIndex, ptoefMor, ccrEvalIndex, ccrEvalMor,
+      Category.assoc]
+
+/--
+The shape is preserved by polyFreeMapAt: mapping only changes leaf values,
+not tree structure.
+-/
+theorem polyFreeMToShape_map (A B : Over X) (P : PolyEndo X) (f : A ⟶ B)
+    {x : X} (t : PolyFreeM A P x) :
+    polyFreeMToShape B P (polyFreeMapAt A B P f x t) = polyFreeMToShape A P t := by
+  induction t with
+  | mk y idx children ih =>
+    cases idx with
+    | inl a =>
+      simp only [polyFreeMapAt, polyFreeMBind, polyFreeMPure, polyFreeMToShape]
+    | inr p =>
+      simp only [polyFreeMapAt, polyFreeMBind, polyFreeMToShape]
+      congr 1
+      funext e
+      exact ih e
+
+/-! ### Multiplication of the Free Monad Monad
+
+The multiplication flattens trees-of-trees into trees. We first define a
+"graft" operation that substitutes subtrees at the leaves of a shape, then
+use this to define the join operation.
+-/
+
+/--
+Graft subtrees at the leaves of a tree shape.
+Given a shape `s` and a function `f` assigning a subtree to each leaf position,
+produce a tree by substituting each leaf with its corresponding subtree.
+-/
+def polyFreeMGraft (A : Over X) (P : PolyEndo X) {x : X}
+    (s : PolyFreeMShape P x)
+    (f : ∀ pos : PolyFreeMLeafPos P s, PolyFreeM A P (PolyFreeMLeafFiber P s pos)) :
+    PolyFreeM A P x :=
+  match s with
+  | PolyFix.mk _ (Sum.inl _) _ => f PUnit.unit
+  | PolyFix.mk _ (Sum.inr p) children =>
+    PolyFix.mk x (Sum.inr p) fun e =>
+      polyFreeMGraft A P (children e) fun pos => f ⟨e, pos⟩
+
+/--
+The join operation for the free monad monad.
+Flattens a tree over `polyFreeMPoly P` into a tree over P by grafting
+the inner P-tree structures at each node.
+-/
+def polyFreeMJoin (A : Over X) (P : PolyEndo X) {x : X} :
+    PolyFreeM A (polyFreeMPoly P) x → PolyFreeM A P x
+  | PolyFix.mk _ (Sum.inl a) _ => polyFreeMPure A P a
+  | PolyFix.mk _ (Sum.inr s) children =>
+    polyFreeMGraft A P s fun pos =>
+      polyFreeMJoin A P (children pos)
+
+/--
+Grafting commutes with bind: the bind distributes through a graft.
+-/
+theorem polyFreeMGraft_bind (A B : Over X) (P : PolyEndo X)
+    (g : ∀ y, { a : A.left // A.hom a = y } → PolyFreeM B P y) {x : X}
+    (s : PolyFreeMShape P x)
+    (h : ∀ pos : PolyFreeMLeafPos P s, PolyFreeM A P (PolyFreeMLeafFiber P s pos)) :
+    polyFreeMBind A B P (polyFreeMGraft A P s h) g =
+    polyFreeMGraft B P s (fun pos => polyFreeMBind A B P (h pos) g) := by
+  induction s with
+  | mk y idx children ih =>
+    cases idx with
+    | inl label =>
+      simp only [polyFreeMGraft]
+    | inr p =>
+      simp only [polyFreeMGraft, polyFreeMBind]
+      congr 1
+      funext e
+      exact ih e (fun pos => h ⟨e, pos⟩)
+
+/--
+Join is natural in A: polyFreeMapAt commutes with polyFreeMJoin.
+-/
+theorem polyFreeMJoin_natural (A B : Over X) (P : PolyEndo X) (f : A ⟶ B) {x : X}
+    (t : PolyFreeM A (polyFreeMPoly P) x) :
+    polyFreeMapAt A B P f x (polyFreeMJoin A P t) =
+    polyFreeMJoin B P (polyFreeMapAt A B (polyFreeMPoly P) f x t) := by
+  induction t with
+  | mk y idx children ih =>
+    cases idx with
+    | inl a =>
+      simp only [polyFreeMJoin, polyFreeMPure, polyFreeMapAt, polyFreeMBind]
+    | inr s =>
+      simp only [polyFreeMJoin, polyFreeMapAt, polyFreeMBind]
+      rw [polyFreeMGraft_bind]
+      congr 1
+      funext pos
+      exact ih pos
+
+/--
+polyFreeMFromShape with composed morphism equals polyFreeMapAt applied to the original.
+-/
+theorem polyFreeMFromShape_map (A B : Over X) (P : PolyEndo X) (f : A ⟶ B) {x : X}
+    (shape : PolyFreeMShape P x)
+    (leafData : (pos : PolyFreeMLeafPos P shape) →
+      { a : A.left // A.hom a = PolyFreeMLeafFiber P shape pos }) :
+    polyFreeMFromShape B P shape
+      (fun pos => ⟨f.left (leafData pos).val,
+        (congrFun (Over.w f) (leafData pos).val).trans (leafData pos).property⟩) =
+    polyFreeMapAt A B P f x (polyFreeMFromShape A P shape leafData) := by
+  induction shape with
+  | mk y idx children ih =>
+    cases idx with
+    | inl label =>
+      simp only [polyFreeMFromShape, polyFreeMapAt, polyFreeMBind, polyFreeMPure]
+    | inr p =>
+      simp only [polyFreeMFromShape, polyFreeMapAt, polyFreeMBind]
+      congr 1
+      funext e
+      exact ih e (fun pos => leafData ⟨e, pos⟩)
+
+end FreeMonadMonad
 
 end GebLean
