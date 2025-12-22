@@ -429,6 +429,84 @@ theorem PolyPresentation.Hom.toCopresheafHom_fac
     ccrToFunctorMap f.tgtHom ≫ Y.toCopresheafπ :=
   CoequalizerData.fac _ _ _ _
 
+/--
+The identity morphism on a presentation induces the identity on the coequalizer.
+-/
+theorem PolyPresentation.Hom.toCopresheafHom_id
+    (X : PolyPresentation.{u, v, w} D) :
+    (𝟙 X : X ⟶ X).toCopresheafHom = 𝟙 X.toCopresheaf := by
+  symm
+  apply CoequalizerData.uniq
+  simp only [id_tgtHom', ccrToFunctorMap_id, Category.id_comp]
+  rfl
+
+/--
+Composition of presentation morphisms induces composition on coequalizers.
+-/
+theorem PolyPresentation.Hom.toCopresheafHom_comp
+    {X Y Z : PolyPresentation.{u, v, w} D}
+    (f : X ⟶ Y) (g : Y ⟶ Z) :
+    (f ≫ g).toCopresheafHom = f.toCopresheafHom ≫ g.toCopresheafHom := by
+  symm
+  apply CoequalizerData.uniq
+  calc X.toCopresheafπ ≫ f.toCopresheafHom ≫ g.toCopresheafHom
+      = (X.toCopresheafπ ≫ f.toCopresheafHom) ≫ g.toCopresheafHom := by
+          rw [Category.assoc]
+    _ = (ccrToFunctorMap f.tgtHom ≫ Y.toCopresheafπ) ≫ g.toCopresheafHom := by
+          rw [toCopresheafHom_fac]
+    _ = ccrToFunctorMap f.tgtHom ≫ (Y.toCopresheafπ ≫ g.toCopresheafHom) := by
+          rw [Category.assoc]
+    _ = ccrToFunctorMap f.tgtHom ≫ (ccrToFunctorMap g.tgtHom ≫ Z.toCopresheafπ) := by
+          rw [toCopresheafHom_fac]
+    _ = (ccrToFunctorMap f.tgtHom ≫ ccrToFunctorMap g.tgtHom) ≫ Z.toCopresheafπ := by
+          rw [← Category.assoc]
+    _ = ccrToFunctorMap (f.tgtHom ≫ g.tgtHom) ≫ Z.toCopresheafπ := by
+          rw [← ccrToFunctorMap_comp]
+    _ = ccrToFunctorMap (f ≫ g).tgtHom ≫ Z.toCopresheafπ := rfl
+
+/--
+The evaluation functor from polynomial presentations to copresheaves.
+Maps a presentation (P, Q, α, β) to coeq(eval(α), eval(β)).
+-/
+@[simps]
+def polyPresentationEvalFunctor :
+    PolyPresentation.{u, v, w} D ⥤ (D ⥤ Type (max w v)) where
+  obj := PolyPresentation.toCopresheaf
+  map := PolyPresentation.Hom.toCopresheafHom
+  map_id := PolyPresentation.Hom.toCopresheafHom_id
+  map_comp := PolyPresentation.Hom.toCopresheafHom_comp
+
+/-! ## Properties of the Evaluation Functor
+
+The evaluation functor has some properties related to the full faithfulness
+of `ccrEvalFunctor`. The induced map on coequalizers is determined by the
+target component `tgtHom` of a presentation morphism.
+-/
+
+/--
+Two presentation morphisms with equal target components induce the same
+map on coequalizers.
+-/
+theorem PolyPresentation.Hom.toCopresheafHom_eq_of_tgtHom_eq
+    {X Y : PolyPresentation.{u, v, w} D}
+    (f g : X ⟶ Y) (h : f.tgtHom = g.tgtHom) :
+    f.toCopresheafHom = g.toCopresheafHom := by
+  apply CoequalizerData.uniq
+  have := toCopresheafHom_fac f
+  unfold toCopresheafπ at this ⊢
+  rw [this, h]
+
+/--
+If two presentation morphisms induce the same map on coequalizers, then their
+target components induce the same map after applying `ccrToFunctorMap`.
+-/
+theorem PolyPresentation.Hom.ccrToFunctorMap_tgtHom_eq_of_toCopresheafHom_eq
+    {X Y : PolyPresentation.{u, v, w} D}
+    (f g : X ⟶ Y) (h : f.toCopresheafHom = g.toCopresheafHom) :
+    ccrToFunctorMap f.tgtHom ≫ Y.toCopresheafπ =
+    ccrToFunctorMap g.tgtHom ≫ Y.toCopresheafπ := by
+  rw [← toCopresheafHom_fac f, ← toCopresheafHom_fac g, h]
+
 end Evaluation
 
 /-! ## Functor Category Representation
@@ -671,5 +749,267 @@ def polyPresentationFunctorCatEquiv :
         PolyPresentation.id_tgtHom', PolyPresentation.toParallelPair_obj_one]
 
 end FunctorCategoryEquiv
+
+/-! ## Quotient Category Structure
+
+The original `PolyPresentation.Hom` requires both `srcHom` and `tgtHom`, but
+the evaluation functor only depends on `tgtHom`. This makes the evaluation
+functor not faithful.
+
+We define a wrapper type `PolyPresentationQ` with a new morphism type where
+only `tgtHom` is data, with a propositional condition that it "respects
+coequalization". This condition says that composing with the target's
+coequalizer projection coequalizes the source's parallel pair.
+-/
+
+section QuotientCategory
+
+variable {D}
+
+/--
+The condition that a morphism `f : X.tgt ⟶ Y.tgt` between target polynomials
+"respects coequalization": when composed with Y's coequalizer projection,
+the result coequalizes X's parallel pair.
+
+This is equivalent to saying that `ccrToFunctorMap f ≫ Y.toCopresheafπ` factors
+through X's coequalizer.
+-/
+def PolyPresentation.RespectsCoequalization
+    (X Y : PolyPresentation.{u, v, w} D)
+    (f : X.tgt ⟶ Y.tgt) : Prop :=
+  ccrToFunctorMap X.fst ≫ ccrToFunctorMap f ≫ Y.toCopresheafπ =
+  ccrToFunctorMap X.snd ≫ ccrToFunctorMap f ≫ Y.toCopresheafπ
+
+namespace PolyPresentation.RespectsCoequalization
+
+variable {X Y Z : PolyPresentation.{u, v, w} D}
+
+/--
+The identity morphism respects coequalization.
+-/
+theorem id (X : PolyPresentation.{u, v, w} D) :
+    X.RespectsCoequalization X (𝟙 X.tgt) := by
+  unfold RespectsCoequalization
+  simp only [ccrToFunctorMap_id]
+  exact X.toCopresheaf_condition
+
+/--
+Composition preserves the respects coequalization property.
+-/
+theorem comp {f : X.tgt ⟶ Y.tgt} {g : Y.tgt ⟶ Z.tgt}
+    (hf : X.RespectsCoequalization Y f) (hg : Y.RespectsCoequalization Z g) :
+    X.RespectsCoequalization Z (f ≫ g) := by
+  unfold RespectsCoequalization at *
+  simp only [ccrToFunctorMap_comp]
+  -- The induced map from Y's coequalizer to Z's coequalizer
+  let induced := CoequalizerData.desc (ccrToFunctorMap Y.fst) (ccrToFunctorMap Y.snd)
+    (ccrToFunctorMap g ≫ Z.toCopresheafπ) hg
+  have fac : Y.toCopresheafπ ≫ induced = ccrToFunctorMap g ≫ Z.toCopresheafπ :=
+    CoequalizerData.fac _ _ _ _
+  calc ccrToFunctorMap X.fst ≫ ccrToFunctorMap f ≫ ccrToFunctorMap g ≫ Z.toCopresheafπ
+    _ = ccrToFunctorMap X.fst ≫ ccrToFunctorMap f ≫ (Y.toCopresheafπ ≫ induced) := by
+        simp only [fac]
+    _ = (ccrToFunctorMap X.fst ≫ ccrToFunctorMap f ≫ Y.toCopresheafπ) ≫ induced := by
+        simp only [Category.assoc]
+    _ = (ccrToFunctorMap X.snd ≫ ccrToFunctorMap f ≫ Y.toCopresheafπ) ≫ induced := by
+        rw [hf]
+    _ = ccrToFunctorMap X.snd ≫ ccrToFunctorMap f ≫ (Y.toCopresheafπ ≫ induced) := by
+        simp only [Category.assoc]
+    _ = ccrToFunctorMap X.snd ≫ ccrToFunctorMap f ≫ ccrToFunctorMap g ≫ Z.toCopresheafπ := by
+        simp only [fac]
+
+end PolyPresentation.RespectsCoequalization
+
+/--
+A wrapper type for polynomial presentations with the quotient category structure.
+
+This is the same underlying data as `PolyPresentation`, but with a different
+category structure where morphisms only track the target component.
+-/
+def PolyPresentationQ.{u', v', w'} (D' : Type u') [Category.{v'} D'] :=
+  PolyPresentation.{u', v', w'} D'
+
+variable (D) in
+/-- Coerce a polynomial presentation to the quotient category type. -/
+def PolyPresentation.toQ (X : PolyPresentation.{u, v, w} D) : PolyPresentationQ.{u, v, w} D := X
+
+variable (D) in
+/-- Coerce a quotient category object back to a polynomial presentation. -/
+def PolyPresentationQ.toPres (X : PolyPresentationQ.{u, v, w} D) : PolyPresentation.{u, v, w} D := X
+
+/--
+A morphism in the quotient category of polynomial presentations.
+
+Unlike `PolyPresentation.Hom`, this has only the target component `tgtHom`,
+with a propositional condition that it respects coequalization.
+-/
+structure PolyPresentationQ.Hom (X Y : PolyPresentationQ.{u, v, w} D) where
+  /-- The morphism on target polynomial functors -/
+  tgtHom : (PolyPresentationQ.toPres D X).tgt ⟶ (PolyPresentationQ.toPres D Y).tgt
+  /-- The morphism respects the coequalization structure -/
+  respects : (PolyPresentationQ.toPres D X).RespectsCoequalization
+    (PolyPresentationQ.toPres D Y) tgtHom
+
+namespace PolyPresentationQ.Hom
+
+variable {X Y Z : PolyPresentationQ.{u, v, w} D}
+
+/--
+Extensionality for quotient presentation morphisms: two morphisms are equal
+iff their `tgtHom` components are equal. The `respects` field is a proposition,
+so it's proof-irrelevant.
+-/
+@[ext]
+theorem ext (f g : PolyPresentationQ.Hom X Y) (h : f.tgtHom = g.tgtHom) :
+    f = g := by
+  cases f
+  cases g
+  simp only [mk.injEq]
+  exact h
+
+/-- The identity morphism in the quotient category. -/
+def id (X : PolyPresentationQ.{u, v, w} D) : PolyPresentationQ.Hom X X where
+  tgtHom := 𝟙 (PolyPresentationQ.toPres D X).tgt
+  respects := PolyPresentation.RespectsCoequalization.id (PolyPresentationQ.toPres D X)
+
+/-- Composition of morphisms in the quotient category. -/
+def comp (f : PolyPresentationQ.Hom X Y) (g : PolyPresentationQ.Hom Y Z) :
+    PolyPresentationQ.Hom X Z where
+  tgtHom := f.tgtHom ≫ g.tgtHom
+  respects := PolyPresentation.RespectsCoequalization.comp f.respects g.respects
+
+@[simp]
+theorem id_tgtHom (X : PolyPresentationQ.{u, v, w} D) :
+    (id X).tgtHom = 𝟙 (PolyPresentationQ.toPres D X).tgt := rfl
+
+@[simp]
+theorem comp_tgtHom (f : PolyPresentationQ.Hom X Y) (g : PolyPresentationQ.Hom Y Z) :
+    (comp f g).tgtHom = f.tgtHom ≫ g.tgtHom := rfl
+
+end PolyPresentationQ.Hom
+
+/-- The quotient category structure on polynomial presentations. -/
+instance PolyPresentationQ.category : Category (PolyPresentationQ.{u, v, w} D) where
+  Hom := PolyPresentationQ.Hom
+  id := PolyPresentationQ.Hom.id
+  comp := PolyPresentationQ.Hom.comp
+  id_comp f := by
+    apply PolyPresentationQ.Hom.ext
+    exact ccrHom_ext _ _ rfl (by simp)
+  comp_id f := by
+    apply PolyPresentationQ.Hom.ext
+    exact ccrHom_ext _ _ rfl (by simp)
+  assoc f g h := by
+    apply PolyPresentationQ.Hom.ext
+    exact ccrHom_ext _ _ rfl (by simp [Category.assoc])
+
+/-- Category identity tgtHom unfolds to CCR identity. -/
+@[simp]
+theorem PolyPresentationQ.Hom.id_tgtHom' (X : PolyPresentationQ.{u, v, w} D) :
+    (𝟙 X : X ⟶ X).tgtHom = 𝟙 (PolyPresentationQ.toPres D X).tgt := rfl
+
+/-! ### Evaluation Functor for PolyPresentationQ
+
+The evaluation functor maps each presentation to its coequalizer, and each
+morphism to the induced map on coequalizers.
+-/
+
+/--
+The induced map on coequalizers for a morphism in PolyPresentationQ.
+Since f.respects says that `ccrToFunctorMap f.tgtHom ≫ Y.toCopresheafπ`
+coequalizes X's parallel pair, the universal property gives a unique
+factorization through X's coequalizer.
+-/
+def PolyPresentationQ.Hom.toInducedMap
+    {X Y : PolyPresentationQ.{u, v, w} D} (f : X ⟶ Y) :
+    (toPres D X).toCopresheaf ⟶ (toPres D Y).toCopresheaf :=
+  CoequalizerData.desc
+    (ccrToFunctorMap (toPres D X).fst)
+    (ccrToFunctorMap (toPres D X).snd)
+    (ccrToFunctorMap f.tgtHom ≫ (toPres D Y).toCopresheafπ)
+    f.respects
+
+/--
+The factorization property: π ≫ toInducedMap = tgtHom ≫ π.
+-/
+theorem PolyPresentationQ.Hom.toInducedMap_fac
+    {X Y : PolyPresentationQ.{u, v, w} D} (f : X ⟶ Y) :
+    (toPres D X).toCopresheafπ ≫ f.toInducedMap =
+    ccrToFunctorMap f.tgtHom ≫ (toPres D Y).toCopresheafπ :=
+  CoequalizerData.fac _ _ _ _
+
+/--
+The identity morphism induces the identity on coequalizers.
+-/
+theorem PolyPresentationQ.Hom.toInducedMap_id
+    (X : PolyPresentationQ.{u, v, w} D) :
+    (𝟙 X : X ⟶ X).toInducedMap = 𝟙 (PolyPresentationQ.toPres D X).toCopresheaf := by
+  symm
+  apply CoequalizerData.uniq
+  simp only [id_tgtHom', ccrToFunctorMap_id, Category.id_comp]
+  rfl
+
+/--
+Composition of morphisms induces composition on coequalizers.
+-/
+theorem PolyPresentationQ.Hom.toInducedMap_comp
+    {X Y Z : PolyPresentationQ.{u, v, w} D}
+    (f : X ⟶ Y) (g : Y ⟶ Z) :
+    (f ≫ g).toInducedMap = f.toInducedMap ≫ g.toInducedMap := by
+  symm
+  apply CoequalizerData.uniq
+  calc (toPres D X).toCopresheafπ ≫ f.toInducedMap ≫ g.toInducedMap
+      = ((toPres D X).toCopresheafπ ≫ f.toInducedMap) ≫ g.toInducedMap := by
+          rw [Category.assoc]
+    _ = (ccrToFunctorMap f.tgtHom ≫ (toPres D Y).toCopresheafπ) ≫ g.toInducedMap := by
+          rw [toInducedMap_fac]
+    _ = ccrToFunctorMap f.tgtHom ≫ ((toPres D Y).toCopresheafπ ≫ g.toInducedMap) := by
+          rw [Category.assoc]
+    _ = ccrToFunctorMap f.tgtHom ≫
+          (ccrToFunctorMap g.tgtHom ≫ (toPres D Z).toCopresheafπ) := by
+          rw [toInducedMap_fac]
+    _ = (ccrToFunctorMap f.tgtHom ≫ ccrToFunctorMap g.tgtHom) ≫
+          (toPres D Z).toCopresheafπ := by
+          rw [← Category.assoc]
+    _ = ccrToFunctorMap (f.tgtHom ≫ g.tgtHom) ≫ (toPres D Z).toCopresheafπ := by
+          rw [← ccrToFunctorMap_comp]
+    _ = ccrToFunctorMap (f ≫ g).tgtHom ≫ (toPres D Z).toCopresheafπ := rfl
+
+/--
+The evaluation functor from the quotient category to copresheaves.
+Maps a presentation to its coequalizer and a morphism to the induced map.
+-/
+@[simps]
+def polyPresentationQEvalFunctor :
+    PolyPresentationQ.{u, v, w} D ⥤ (D ⥤ Type (max w v)) where
+  obj X := (PolyPresentationQ.toPres D X).toCopresheaf
+  map f := f.toInducedMap
+  map_id := PolyPresentationQ.Hom.toInducedMap_id
+  map_comp := PolyPresentationQ.Hom.toInducedMap_comp
+
+/-!
+### Non-Faithfulness of the Evaluation Functor
+
+The evaluation functor `polyPresentationQEvalFunctor` is NOT faithful in general.
+
+Given morphisms `f, g : X ⟶ Y` in `PolyPresentationQ`, if `f.toInducedMap = g.toInducedMap`,
+we can deduce that:
+  `ccrToFunctorMap f.tgtHom ≫ Y.toCopresheafπ = ccrToFunctorMap g.tgtHom ≫ Y.toCopresheafπ`
+
+To conclude `f.tgtHom = g.tgtHom`, we would need to cancel `Y.toCopresheafπ` on the right.
+However, coequalizer projections are epimorphisms (can be cancelled on the left), not
+monomorphisms (would need to be cancelled on the right). Two different morphisms into
+`ccrToFunctor Y.tgt` can compose to the same map when followed by `Y.toCopresheafπ` if
+their difference lies in the kernel of the coequalization.
+
+This means `PolyPresentationQ` is not the correct formulation for an equivalence with
+copresheaves. A proper equivalence would require either:
+1. Working with a localization or quotient that identifies morphisms inducing the same
+   map on coequalizers
+2. Using a different category structure where morphisms are defined as maps between
+   coequalizers rather than as `tgtHom` with a `respects` condition
+-/
+
+end QuotientCategory
 
 end GebLean

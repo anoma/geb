@@ -227,7 +227,7 @@ GebLean/PolyPresentation.lean     -- Main definitions
   - PolyPresentation D            -- Objects
   - PolyPresentationHom           -- Morphisms
   - PolyPresentationCat           -- Category instance
-  - polyPresentationFunctorCatEquiv -- Equivalence with WalkingParallelPair functor cat
+  - polyPresentationFunctorCatEquiv -- WalkingParallelPair equivalence
   - toCopresheaf, toCopresheafHom -- Evaluation to (D ⥤ Type)
 
 GebLean/PolyPresentationEquiv.lean -- Equivalence proof (planned)
@@ -258,11 +258,126 @@ functors. This provides access to mathlib's functor category machinery.
 - [x] Prove category laws (composition, identity)
 - [x] Define evaluation function to coequalizers (toCopresheaf, toCopresheafHom)
 - [x] Define functor category equivalence with WalkingParallelPair
-- [ ] Prove evaluation functor is functorial (compose id/comp lemmas)
-- [ ] Prove faithfulness of evaluation
-- [ ] Prove fullness of evaluation
+- [x] Prove evaluation functor is functorial (polyPresentationEvalFunctor)
+- [x] Define PolyPresentationQ with proof-irrelevant morphisms
+- [x] Prove PolyPresentationQ category laws
+- [x] Define polyPresentationQEvalFunctor
+- [x] Analyze faithfulness of PolyPresentationQ evaluation (result: NOT faithful)
+- [ ] Decide on approach for equivalence (localization vs direct definition)
 - [ ] Prove essential surjectivity using density formula
-- [ ] Construct the categorical equivalence
+- [ ] Construct canonical presentation from copresheaf (densityPresentation)
+
+### Analysis: Full Faithfulness
+
+The evaluation functor `polyPresentationEvalFunctor : PolyPresentation D ⥤ (D ⥤ Type)`
+is NOT fully faithful in general because:
+
+1. A presentation morphism `(srcHom, tgtHom)` induces a map on coequalizers
+   that depends only on `tgtHom` (by the universal property).
+
+2. Two different morphisms `(srcHom₁, tgtHom)` and `(srcHom₂, tgtHom)` with
+   the same target component will induce the same map on coequalizers.
+
+3. The theorem `toCopresheafHom_eq_of_tgtHom_eq` proves this: if `f.tgtHom = g.tgtHom`
+   then `f.toCopresheafHom = g.toCopresheafHom`.
+
+The evaluation functor IS essentially surjective (every copresheaf is isomorphic
+to some coequalizer of polynomials), which is the density formula.
+
+### Redesign: Proof-Irrelevant Morphisms (PolyPresentationQuot)
+
+The source component `srcHom` in presentation morphisms is "phantom data" - it's
+needed for the commutativity conditions but doesn't affect the induced map on
+coequalizers. This is analogous to proof irrelevance: the source data is like
+a proof witness that certain elements should be identified.
+
+The new design removes `srcHom` from morphisms, replacing commutativity with
+a "respects coequalization" condition:
+
+```text
+structure PolyPresentationQuot.Hom (X Y : PolyPresentation D) where
+  tgtHom : X.tgt ⟶ Y.tgt
+  respects : ccrToFunctorMap X.fst ≫ ccrToFunctorMap tgtHom ≫ Y.toCopresheafπ =
+             ccrToFunctorMap X.snd ≫ ccrToFunctorMap tgtHom ≫ Y.toCopresheafπ
+```
+
+This says: when we compose `tgtHom` with Y's projection to its coequalizer,
+the result coequalizes X's parallel pair. By the universal property, this
+means `ccrToFunctorMap tgtHom ≫ Y.toCopresheafπ` factors uniquely through
+X's coequalizer.
+
+The `respects` field is a proposition (equality of natural transformations),
+making it proof-irrelevant. Two morphisms are equal iff their `tgtHom`
+components are equal.
+
+Properties of this structure:
+
+1. **Identity**: The identity `id : X.tgt → X.tgt` satisfies respects because
+   `ccrToFunctorMap X.fst ≫ X.toCopresheafπ = ccrToFunctorMap X.snd ≫ X.toCopresheafπ`
+   is exactly X.toCopresheaf_condition.
+
+2. **Composition**: If f and g both satisfy respects, then f ≫ g does too.
+
+3. **Induced map**: Each morphism induces a unique map X.toCopresheaf → Y.toCopresheaf
+   via the universal property of coequalizers.
+
+### Analysis: PolyPresentationQ Evaluation Functor
+
+The evaluation functor
+`polyPresentationQEvalFunctor : PolyPresentationQ D ⥤ (D ⥤ Type)`
+is **NOT faithful** in general. This is because:
+
+1. From `f.toInducedMap = g.toInducedMap`, we can only deduce that
+   `ccrToFunctorMap f.tgtHom ≫ Y.toCopresheafπ = ccrToFunctorMap g.tgtHom ≫ Y.toCopresheafπ`
+
+2. To conclude `f.tgtHom = g.tgtHom`, we would need to cancel `Y.toCopresheafπ` on
+   the right. However, coequalizer projections are **epimorphisms** (can be
+   cancelled on the left for post-composition), not **monomorphisms** (would need
+   to be cancelled on the right for pre-composition).
+
+3. Two different morphisms into `ccrToFunctor Y.tgt` can compose to the same map
+   when followed by `Y.toCopresheafπ` if their difference lies in the kernel of
+   the coequalization.
+
+This means `PolyPresentationQ` is not the correct formulation for an equivalence
+with copresheaves.
+
+### Alternative Approaches
+
+To achieve an equivalence `PolyPresentation D ≃ (D ⥤ Type)`, we need either:
+
+1. **Localization**: Work with morphisms modulo an equivalence relation that
+   identifies morphisms inducing the same map on coequalizers. This essentially
+   means morphisms become maps `X.toCopresheaf → Y.toCopresheaf` that lift to
+   some `tgtHom`.
+
+2. **Direct definition**: Define morphisms of presentations as morphisms between
+   their coequalizers (natural transformations `X.toCopresheaf → Y.toCopresheaf`)
+   rather than as `tgtHom` data with a `respects` condition.
+
+3. **Bicategorical approach**: Treat presentations as a 2-category where 2-cells
+   connect different `tgtHom` values that induce the same map, then take the
+   homotopy category.
+
+### Density Presentation Strategy
+
+To construct a presentation for a copresheaf `F : D ⥤ Type`:
+
+1. Use `F.Elementsᵒᵖ` (opposite of category of elements) for indexing
+   - This resolves the direction mismatch between Elements morphisms and
+     CoprodCovarRepCat fiber morphisms
+
+2. Target polynomial Q:
+   - Index: `F.Elements` (objects of `F.Elementsᵒᵖ`)
+   - Family: `p ↦ p.fst` (the underlying object of D)
+
+3. Source polynomial P:
+   - Index: `Σ (p q : F.Elements), (q ⟶ p)` (morphisms in `F.Elementsᵒᵖ`)
+   - Family: `⟨p, q, f⟩ ↦ p.fst` (source object)
+
+4. Morphisms:
+   - α: source map, reindex `⟨p, q, f⟩ ↦ p`, fiber `𝟙`
+   - β: target map, reindex `⟨p, q, f⟩ ↦ q`, fiber `f.val : q.fst → p.fst`
 
 ### Verification
 
