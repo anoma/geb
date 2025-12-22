@@ -145,58 +145,40 @@ category (which is also a framed bicategory) of slice polynomial functors.
 - `GebLean.Utilities.Grothendieck` - Connected Grothendieck construction
 - `GebLean.Utilities.TwistedArrow` - Twisted arrow categories
 
-## Current Status (2025-12-21)
+## Current Status (2025-12-22)
 
-### Blocked: polyFreeMLeafData_map_inr proof
+### Cleanup Complete - Ready for Grothendieck Refactoring
 
-The proof chain for free monad monad multiplication naturality is blocked at
-`polyFreeMLeafData_map_inr` (line 7588 in PolyAlg.lean). The lemma needs to
-show that mapping preserves leaf data for internal nodes in trees.
+All incomplete code attempting low-level transport proofs has been removed from
+`GebLean/PolyAlg.lean`. The following definitions were removed:
 
-**Proof Structure:**
+- `polyFreeMMonadMulAtLeft`, `polyFreeMMonadMulLeft`, `polyFreeMMonadMul_comm`
+- `sigma_match_transport_val`
+- `polyFreeMLeafData_map_inr`
+- `polyFreeMLeafData_map`
+- `polyFreeM_to_polyFreeMPolyEval_map`
+- `polyFreeMMonadMul`
 
-1. `polyFreeMMonadMul` naturality (line 7739) - needs:
-2. `polyFreeM_to_polyFreeMPolyEval_map` (line 7686) - needs:
-3. `polyFreeMLeafData_map` (line 7666) - needs:
-4. `polyFreeMLeafData_map_inr` (line 7588) **← STUCK HERE**
+Build and tests pass successfully. The codebase is in a clean state.
 
-**The Problem:**
+### Path Forward: Grothendieck Approach
 
-After applying the induction hypothesis, we need to show:
+Instead of continuing with low-level transport manipulations, we will implement
+the free monad monad and cofree comonad comonad using the Grothendieck
+construction approach documented in:
 
-```lean
-(polyFreeMLeafData A P (children e) (transport1 ▸ childPos)).val =
-(match (transport2 ▸ ⟨e, childPos⟩) with | ⟨e', pos'⟩ =>
-  (polyFreeMLeafData A P (children e') pos').val)
-```
+- `docs/polynomial-functors-as-grothendieck.md` - Theoretical foundation
+- `.session/workstreams/grothendieck-refactoring.md` - Implementation plan
 
-where `transport1` and `transport2` are anonymous transports introduced by
-simplification. We need to show these equal our explicit transports by proof
-irrelevance, but attempts to use `sigma_transport_match_eq_transport` and
-related lemmas encounter:
+This approach will:
 
-- Universe level mismatches (u+1 vs u+2)
-- Anonymous transports that don't unify with explicit proofs
-- Complex dependent type equalities
+1. Recognize polynomial functors as double Grothendieck constructions
+2. Define generic functorFrom/functorTo/functorBetween for all polynomial
+   functors
+3. Eliminate all manual transport proofs
+4. Make naturality and functoriality automatic from categorical composition
 
-**Proposed Strategy:**
-
-1. **Factor into helper lemmas:**
-   - Lemma: Transport of `polyFreeMLeafData` with different proofs gives equal
-     results (by proof irrelevance)
-   - Lemma: Matching on transported sigma with anonymous vs explicit transport
-   - Lemma: Specific transport equality for `PolyFreeMLeafPos` types
-
-2. **Alternative approach:**
-   Consider reformulating the proof to avoid anonymous transports entirely:
-   - Use explicit `cast` instead of relying on simplification
-   - Work at a higher level of abstraction (sigma transport lemmas)
-   - Define intermediate types to make transports more manageable
-
-3. **If still blocked:**
-   Consider restructuring `polyFreeMLeafData_map` to not rely on this helper,
-   or reformulate the naturality proof of `polyFreeM_to_polyFreeMPolyEval_map`
-   to avoid the leaf data transformation entirely.
+See the implementation plan for the 6-phase refactoring strategy.
 
 ## References on polynomial functors
 
