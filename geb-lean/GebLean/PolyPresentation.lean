@@ -1,5 +1,6 @@
 import GebLean.PolyAdjunctions
 import GebLean.FreeCoequalizerCompletion
+import Mathlib.CategoryTheory.Limits.Shapes.Equalizers
 
 /-!
 # Polynomial Presentations
@@ -429,5 +430,246 @@ theorem PolyPresentation.Hom.toCopresheafHom_fac
   CoequalizerData.fac _ _ _ _
 
 end Evaluation
+
+/-! ## Functor Category Representation
+
+A polynomial presentation is equivalent to a functor from the walking parallel
+pair category to the category of polynomial functors. This provides access to
+mathlib's functor category machinery.
+-/
+
+section FunctorCategoryEquiv
+
+open Limits
+open WalkingParallelPair
+open WalkingParallelPairHom
+
+variable {D}
+
+/--
+Convert a polynomial presentation to a functor from WalkingParallelPair.
+-/
+def PolyPresentation.toParallelPair (X : PolyPresentation.{u, v, w} D) :
+    WalkingParallelPair ⥤ CoprodCovarRepCat.{u, v, w} D :=
+  parallelPair X.fst X.snd
+
+@[simp]
+theorem PolyPresentation.toParallelPair_obj_zero (X : PolyPresentation.{u, v, w} D) :
+    X.toParallelPair.obj zero = X.src := rfl
+
+@[simp]
+theorem PolyPresentation.toParallelPair_obj_one (X : PolyPresentation.{u, v, w} D) :
+    X.toParallelPair.obj one = X.tgt := rfl
+
+@[simp]
+theorem PolyPresentation.toParallelPair_map_left (X : PolyPresentation.{u, v, w} D) :
+    X.toParallelPair.map left = X.fst := rfl
+
+@[simp]
+theorem PolyPresentation.toParallelPair_map_right (X : PolyPresentation.{u, v, w} D) :
+    X.toParallelPair.map right = X.snd := rfl
+
+/--
+Convert a functor from WalkingParallelPair to a polynomial presentation.
+-/
+def PolyPresentation.ofParallelPair
+    (F : WalkingParallelPair ⥤ CoprodCovarRepCat.{u, v, w} D) :
+    PolyPresentation.{u, v, w} D where
+  src := F.obj zero
+  tgt := F.obj one
+  fst := F.map left
+  snd := F.map right
+
+@[simp]
+theorem PolyPresentation.ofParallelPair_src
+    (F : WalkingParallelPair ⥤ CoprodCovarRepCat.{u, v, w} D) :
+    (ofParallelPair F).src = F.obj zero := rfl
+
+@[simp]
+theorem PolyPresentation.ofParallelPair_tgt
+    (F : WalkingParallelPair ⥤ CoprodCovarRepCat.{u, v, w} D) :
+    (ofParallelPair F).tgt = F.obj one := rfl
+
+@[simp]
+theorem PolyPresentation.ofParallelPair_fst
+    (F : WalkingParallelPair ⥤ CoprodCovarRepCat.{u, v, w} D) :
+    (ofParallelPair F).fst = F.map left := rfl
+
+@[simp]
+theorem PolyPresentation.ofParallelPair_snd
+    (F : WalkingParallelPair ⥤ CoprodCovarRepCat.{u, v, w} D) :
+    (ofParallelPair F).snd = F.map right := rfl
+
+/--
+Round-trip: toParallelPair ∘ ofParallelPair = id on functors.
+-/
+theorem PolyPresentation.toParallelPair_ofParallelPair_eq
+    (F : WalkingParallelPair ⥤ CoprodCovarRepCat.{u, v, w} D) :
+    (ofParallelPair F).toParallelPair = F := by
+  have hobj : ∀ j, (ofParallelPair F).toParallelPair.obj j = F.obj j := by
+    intro j; cases j <;> rfl
+  have hmap : ∀ j k (f : j ⟶ k), (ofParallelPair F).toParallelPair.map f =
+      eqToHom (hobj j) ≫ F.map f ≫ eqToHom (hobj k).symm := by
+    intro j k f
+    cases f <;> simp [ofParallelPair, toParallelPair, parallelPair]
+  exact CategoryTheory.Functor.ext hobj hmap
+
+/--
+Round-trip: ofParallelPair ∘ toParallelPair = id on presentations.
+-/
+theorem PolyPresentation.ofParallelPair_toParallelPair
+    (X : PolyPresentation.{u, v, w} D) :
+    ofParallelPair X.toParallelPair = X := rfl
+
+/--
+Convert a morphism of polynomial presentations to a natural transformation.
+-/
+def PolyPresentation.Hom.toNatTrans {X Y : PolyPresentation.{u, v, w} D} (f : X ⟶ Y) :
+    X.toParallelPair ⟶ Y.toParallelPair :=
+  parallelPairHom X.fst X.snd Y.fst Y.snd f.srcHom f.tgtHom
+    (f.fst_comm.symm) (f.snd_comm.symm)
+
+@[simp]
+theorem PolyPresentation.Hom.toNatTrans_app_zero
+    {X Y : PolyPresentation.{u, v, w} D} (f : X ⟶ Y) :
+    f.toNatTrans.app zero = f.srcHom := rfl
+
+@[simp]
+theorem PolyPresentation.Hom.toNatTrans_app_one
+    {X Y : PolyPresentation.{u, v, w} D} (f : X ⟶ Y) :
+    f.toNatTrans.app one = f.tgtHom := rfl
+
+/--
+Convert a natural transformation between parallel pair functors to a morphism
+of polynomial presentations.
+-/
+def PolyPresentation.Hom.ofNatTrans
+    {F G : WalkingParallelPair ⥤ CoprodCovarRepCat.{u, v, w} D}
+    (η : F ⟶ G) : ofParallelPair F ⟶ ofParallelPair G where
+  srcHom := η.app zero
+  tgtHom := η.app one
+  fst_comm := (η.naturality left).symm
+  snd_comm := (η.naturality right).symm
+
+@[simp]
+theorem PolyPresentation.Hom.ofNatTrans_srcHom
+    {F G : WalkingParallelPair ⥤ CoprodCovarRepCat.{u, v, w} D}
+    (η : F ⟶ G) : (Hom.ofNatTrans η).srcHom = η.app zero := rfl
+
+@[simp]
+theorem PolyPresentation.Hom.ofNatTrans_tgtHom
+    {F G : WalkingParallelPair ⥤ CoprodCovarRepCat.{u, v, w} D}
+    (η : F ⟶ G) : (Hom.ofNatTrans η).tgtHom = η.app one := rfl
+
+/--
+Round-trip: toNatTrans ∘ ofNatTrans = id on natural transformations
+(up to the functor isomorphism).
+-/
+theorem PolyPresentation.Hom.toNatTrans_ofNatTrans
+    {X Y : PolyPresentation.{u, v, w} D} (f : X ⟶ Y) :
+    Hom.ofNatTrans f.toNatTrans = f :=
+  Hom.ext _ _ rfl rfl
+
+/--
+The functor from PolyPresentation to the functor category.
+-/
+@[simps]
+def polyPresentationToFunctorCat :
+    PolyPresentation.{u, v, w} D ⥤
+    (WalkingParallelPair ⥤ CoprodCovarRepCat.{u, v, w} D) where
+  obj := PolyPresentation.toParallelPair
+  map := PolyPresentation.Hom.toNatTrans
+  map_id X := by
+    apply NatTrans.ext
+    funext j
+    cases j
+    · exact ccrHom_ext _ _ rfl (by simp)
+    · exact ccrHom_ext _ _ rfl (by simp)
+  map_comp f g := by
+    apply NatTrans.ext
+    funext j
+    cases j
+    · exact ccrHom_ext _ _ rfl (by simp)
+    · exact ccrHom_ext _ _ rfl (by simp)
+
+/--
+The functor from the functor category to PolyPresentation.
+-/
+@[simps]
+def functorCatToPolyPresentation :
+    (WalkingParallelPair ⥤ CoprodCovarRepCat.{u, v, w} D) ⥤
+    PolyPresentation.{u, v, w} D where
+  obj := PolyPresentation.ofParallelPair
+  map := PolyPresentation.Hom.ofNatTrans
+  map_id _ := PolyPresentation.Hom.ext _ _ rfl rfl
+  map_comp _ _ := PolyPresentation.Hom.ext _ _ rfl rfl
+
+/--
+The unit of the equivalence: Id ≅ functorCatToPolyPresentation ⋙ polyPresentationToFunctorCat.
+-/
+def polyPresentationEquivUnit :
+    𝟭 (WalkingParallelPair ⥤ CoprodCovarRepCat.{u, v, w} D) ≅
+    functorCatToPolyPresentation ⋙ polyPresentationToFunctorCat :=
+  NatIso.ofComponents
+    (fun F => eqToIso (PolyPresentation.toParallelPair_ofParallelPair_eq F).symm)
+    (fun {F G} η => by
+      simp only [Functor.comp_obj, functorCatToPolyPresentation_obj,
+        polyPresentationToFunctorCat_obj, Functor.id_obj, eqToIso.hom,
+        Functor.comp_map, functorCatToPolyPresentation_map,
+        polyPresentationToFunctorCat_map, Functor.id_map]
+      apply NatTrans.ext
+      funext j
+      simp only [NatTrans.comp_app, eqToHom_app, PolyPresentation.Hom.toNatTrans]
+      cases j
+      · simp only [parallelPairHom_app_zero, PolyPresentation.Hom.ofNatTrans_srcHom,
+          eqToHom_refl, Category.id_comp, Category.comp_id]
+      · simp only [parallelPairHom_app_one, PolyPresentation.Hom.ofNatTrans_tgtHom,
+          eqToHom_refl, Category.id_comp, Category.comp_id])
+
+/--
+The counit of the equivalence: polyPresentationToFunctorCat ⋙ functorCatToPolyPresentation ≅ Id.
+-/
+def polyPresentationEquivCounit :
+    polyPresentationToFunctorCat ⋙ functorCatToPolyPresentation ≅
+    𝟭 (PolyPresentation.{u, v, w} D) :=
+  NatIso.ofComponents
+    (fun X => eqToIso (PolyPresentation.ofParallelPair_toParallelPair X))
+    (fun {X Y} f => by
+      simp only [Functor.comp_obj, polyPresentationToFunctorCat_obj,
+        functorCatToPolyPresentation_obj, Functor.id_obj, eqToIso.hom,
+        Functor.comp_map, polyPresentationToFunctorCat_map,
+        functorCatToPolyPresentation_map, Functor.id_map,
+        PolyPresentation.ofParallelPair_toParallelPair]
+      simp only [eqToHom_refl, Category.id_comp, Category.comp_id]
+      exact PolyPresentation.Hom.ext _ _ rfl rfl)
+
+/--
+The equivalence between polynomial presentations and the functor category.
+-/
+def polyPresentationFunctorCatEquiv :
+    PolyPresentation.{u, v, w} D ≌
+    (WalkingParallelPair ⥤ CoprodCovarRepCat.{u, v, w} D) where
+  functor := polyPresentationToFunctorCat
+  inverse := functorCatToPolyPresentation
+  unitIso := polyPresentationEquivCounit.symm
+  counitIso := polyPresentationEquivUnit.symm
+  functor_unitIso_comp X := by
+    simp only [polyPresentationEquivCounit, polyPresentationEquivUnit,
+      Iso.symm_hom, NatIso.ofComponents_inv_app,
+      polyPresentationToFunctorCat_obj, polyPresentationToFunctorCat_map,
+      functorCatToPolyPresentation_obj, eqToIso.inv, Functor.comp_obj,
+      Functor.id_obj]
+    apply NatTrans.ext
+    funext j
+    simp only [NatTrans.comp_app, eqToHom_app]
+    cases j
+    · simp only [PolyPresentation.Hom.toNatTrans, parallelPairHom_app_zero,
+        eqToHom_refl, Category.comp_id, NatTrans.id_app,
+        PolyPresentation.id_srcHom', PolyPresentation.toParallelPair_obj_zero]
+    · simp only [PolyPresentation.Hom.toNatTrans, parallelPairHom_app_one,
+        eqToHom_refl, Category.comp_id, NatTrans.id_app,
+        PolyPresentation.id_tgtHom', PolyPresentation.toParallelPair_obj_one]
+
+end FunctorCategoryEquiv
 
 end GebLean

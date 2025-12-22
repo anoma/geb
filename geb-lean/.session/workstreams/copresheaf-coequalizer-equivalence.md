@@ -227,13 +227,20 @@ GebLean/PolyPresentation.lean     -- Main definitions
   - PolyPresentation D            -- Objects
   - PolyPresentationHom           -- Morphisms
   - PolyPresentationCat           -- Category instance
-  - polyPresentationEvalFunctor   -- Evaluation to (D ⥤ Type)
+  - polyPresentationFunctorCatEquiv -- Equivalence with WalkingParallelPair functor cat
+  - toCopresheaf, toCopresheafHom -- Evaluation to (D ⥤ Type)
 
-GebLean/PolyPresentationEquiv.lean -- Equivalence proof
+GebLean/PolyPresentationEquiv.lean -- Equivalence proof (planned)
   - Essential surjectivity via density formula
   - Full faithfulness proof
   - Construction of the equivalence
 ```
+
+### Functor Category Representation
+
+The equivalence `PolyPresentation D ≌ (WalkingParallelPair ⥤ CoprodCovarRepCat D)`
+shows polynomial presentations are exactly parallel pair diagrams in polynomial
+functors. This provides access to mathlib's functor category machinery.
 
 ## Tasks
 
@@ -250,6 +257,7 @@ GebLean/PolyPresentationEquiv.lean -- Equivalence proof
 - [x] Define PolyPresentationHom with commutativity conditions
 - [x] Prove category laws (composition, identity)
 - [x] Define evaluation function to coequalizers (toCopresheaf, toCopresheafHom)
+- [x] Define functor category equivalence with WalkingParallelPair
 - [ ] Prove evaluation functor is functorial (compose id/comp lemmas)
 - [ ] Prove faithfulness of evaluation
 - [ ] Prove fullness of evaluation
