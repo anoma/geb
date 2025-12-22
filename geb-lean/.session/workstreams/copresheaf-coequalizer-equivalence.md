@@ -402,3 +402,109 @@ coding style and structure may serve as a reference.
 The approach here differs in that we are not freely adding coequalizers to
 a category, but rather using coequalizers of polynomial functors to
 characterize an already-existing category of copresheaves.
+
+## Localization Approach (Current Strategy)
+
+See `docs/polynomial-presentation-localization.md` for the detailed
+mathematical exposition.
+
+### Summary
+
+The evaluation functor `E : PolyPresentation D → (D ⥤ Type)` is essentially
+surjective but not faithful or full. We use localization to fix this:
+
+1. **Quotient morphisms** by the relation `f ≈ g iff f.toInducedMap = g.toInducedMap`
+2. **The density functor** `S : (D ⥤ Type) → PolyPresentationLoc D` uses the
+   category of elements to construct canonical presentations
+3. **The equivalence** comes from `E ∘ S ≅ Id` (density formula) and
+   `S ∘ E ≅ Id` (any presentation equivalent to its canonical version)
+
+### Implementation Phases
+
+#### Phase 1: Quotient Category (PolyPresentationLoc)
+
+**File**: `GebLean/PolyPresentation.lean` (extend existing)
+
+1. Define `PolyPresentationQ.Hom.Setoid X Y` where `f ≈ g iff f.toInducedMap = g.toInducedMap`
+2. Prove this is an equivalence relation (refl, symm, trans)
+3. Define `PolyPresentationLoc.Hom X Y := Quot setoid.r`
+4. Define composition using `Quot.lift₂` with well-definedness proof
+5. Prove category laws using `Quot.ind`
+6. Define evaluation functor `polyPresentationLocEvalFunctor`
+7. Prove faithfulness (automatic from construction)
+
+**Estimated definitions**:
+
+- `PolyPresentationQ.Hom.Setoid`
+- `PolyPresentationLoc` (type alias or wrapper)
+- `PolyPresentationLoc.Hom.mk`, `PolyPresentationLoc.Hom.comp`
+- `PolyPresentationLoc.category`
+- `polyPresentationLocEvalFunctor`
+- `polyPresentationLocEvalFunctor_faithful`
+
+#### Phase 2: Density Presentation Functor
+
+**File**: `GebLean/PolyPresentationEquiv.lean` (new file)
+
+1. Define `densityPresentation : (D ⥤ Type) → PolyPresentation D`:
+
+   - Target polynomial indexed by `F.Elements`
+   - Source polynomial indexed by morphisms in `F.Elementsᵒᵖ`
+   - Parallel morphisms: source and target maps
+
+2. Prove functoriality using category of elements functor
+
+3. Prove density isomorphism: `E(densityPresentation F) ≅ F`
+
+**Estimated definitions**:
+
+- `densityPresentation.tgt : (F : D ⥤ Type) → CoprodCovarRepCat D`
+- `densityPresentation.src : (F : D ⥤ Type) → CoprodCovarRepCat D`
+- `densityPresentation.fst`, `densityPresentation.snd`
+- `densityPresentation : (D ⥤ Type) → PolyPresentation D`
+- `densityPresentationFunctor : (D ⥤ Type) ⥤ PolyPresentationLoc D`
+- `densityIsomorphism : ∀ F, E(densityPresentation F) ≅ F`
+
+#### Phase 3: The Equivalence
+
+**File**: `GebLean/PolyPresentationEquiv.lean` (continue)
+
+1. Define comparison morphisms `X → densityPresentation(X.toCopresheaf)`
+2. Prove these become isomorphisms in `PolyPresentationLoc`
+3. Construct the unit natural isomorphism `S ∘ E ≅ Id`
+4. Combine with counit to form the equivalence
+
+**Estimated definitions**:
+
+- `comparisonMorphism : X ⟶ densityPresentation(E X)`
+- `comparisonMorphismInv` (in PolyPresentationLoc)
+- `polyPresentationLocEquiv : PolyPresentationLoc D ≌ (D ⥤ Type)`
+
+### Dependencies
+
+**From Mathlib**:
+
+- `CategoryTheory.Elements` - category of elements
+- `CategoryTheory.Limits.Presheaf` - colimit of representables
+- `Init.Prelude.Quot` - quotient types
+
+**From Codebase**:
+
+- `GebLean/Polynomial.lean` - CoprodCovarRepCat
+- `GebLean/PolyPresentation.lean` - PolyPresentation, PolyPresentationQ
+- `GebLean/Utilities/Elements.lean` - utilities for category of elements
+
+### Potential Challenges
+
+1. **Universe levels**: The category of elements may introduce universe
+   constraints that need careful handling
+
+2. **Noncomputability**: The density presentation construction may need
+   `noncomputable` due to the quotient in coequalizers
+
+3. **Comparison morphism existence**: Proving that arbitrary presentations
+   have comparison morphisms to canonical presentations requires careful
+   use of universal properties
+
+4. **Setoid equality in Quot**: Working with `Quot` requires using
+   `Quot.sound` and `Quot.ind` carefully for proofs
