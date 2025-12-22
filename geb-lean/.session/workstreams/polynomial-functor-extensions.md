@@ -1,6 +1,6 @@
 # Polynomial Functor Extensions
 
-Status: In Progress (Task 2 - Free Monad Monad / Cofree Comonad Comonad)
+Status: Planning - Ready for Grothendieck Refactoring
 
 ## Objective
 
