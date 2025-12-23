@@ -71,6 +71,7 @@ Grothendieck infrastructure.
 
 **Pattern to use**: The documented pattern for constructing functors into
 double Grothendieck:
+
 1. Define first-layer FunctorToData F
 2. Define second-layer FunctorToData G with baseFunc := first-layer functor
 3. Apply functorTo G
