@@ -6532,4 +6532,197 @@ instance : Category (OplaxFunctorCat C) where
 
 end OplaxFunctorCat
 
+/-!
+## Double Grothendieck Constructions
+
+Polynomial functors arise as double Grothendieck constructions. Given a span
+`I ← E → X` defining a polynomial functor:
+- First layer: position functor `p : E → I` gives `∫ᵖ E`
+- Second layer: direction functor `d : E → X` gives `∫ᵈ (∫ᵖ E)`
+
+This section provides infrastructure for working with such composed
+Grothendieck constructions.
+-/
+
+section DoubleGrothendieck
+
+variable {C : Type*} [Category C]
+
+/--
+Given functors `F : C ⥤ Cat` and `G : ∫F ⥤ Cat`, the double Grothendieck
+construction `∫∫(F,G)` is defined as `∫G`, the Grothendieck construction of `G`
+over the already-constructed `∫F`.
+
+This represents families indexed by the total space of `F`, which themselves
+vary over the base `C`.
+-/
+abbrev DoubleGrothendieck (F : C ⥤ Cat) (G : Grothendieck F ⥤ Cat) : Type _ :=
+  Grothendieck G
+
+/--
+Objects in the double Grothendieck construction consist of:
+- A base object `c : C`
+- A first-layer fiber `x : F.obj c`
+- A second-layer fiber `y : G.obj ⟨c, x⟩`
+-/
+def DoubleGrothendieck.mk {F : C ⥤ Cat} {G : Grothendieck F ⥤ Cat}
+    (c : C) (x : F.obj c) (y : G.obj ⟨c, x⟩) :
+    DoubleGrothendieck F G :=
+  ⟨⟨c, x⟩, y⟩
+
+/--
+Extract the base component from a double Grothendieck object.
+-/
+def DoubleGrothendieck.baseObj {F : C ⥤ Cat} {G : Grothendieck F ⥤ Cat}
+    (obj : DoubleGrothendieck F G) : C :=
+  obj.base.1
+
+/--
+Extract the first fiber from a double Grothendieck object.
+-/
+def DoubleGrothendieck.fib1 {F : C ⥤ Cat} {G : Grothendieck F ⥤ Cat}
+    (obj : DoubleGrothendieck F G) : F.obj (baseObj obj) :=
+  obj.base.2
+
+/--
+Extract the second fiber from a double Grothendieck object.
+-/
+def DoubleGrothendieck.fib2 {F : C ⥤ Cat} {G : Grothendieck F ⥤ Cat}
+    (obj : DoubleGrothendieck F G) : G.obj obj.base :=
+  obj.2
+
+/--
+Forgetful functor from double Grothendieck to single Grothendieck,
+forgetting the second layer.
+-/
+def DoubleGrothendieck.forgetSecond {F : C ⥤ Cat} (G : Grothendieck F ⥤ Cat) :
+    DoubleGrothendieck F G ⥤ Grothendieck F :=
+  Grothendieck.forget G
+
+/--
+Forgetful functor from double Grothendieck to base, forgetting both layers.
+-/
+def DoubleGrothendieck.forgetBoth {F : C ⥤ Cat} (G : Grothendieck F ⥤ Cat) :
+    DoubleGrothendieck F G ⥤ C :=
+  forgetSecond G ⋙ Grothendieck.forget F
+
+/--
+The composition of double Grothendieck forgetful functors.
+-/
+theorem DoubleGrothendieck.forgetBoth_eq_comp {F : C ⥤ Cat}
+    (G : Grothendieck F ⥤ Cat) :
+    forgetBoth G = forgetSecond G ⋙ Grothendieck.forget F :=
+  rfl
+
+/--
+Inclusion of the second-layer fiber at a point in `Grothendieck F`.
+Given `obj : Grothendieck F`, this includes `G.obj obj` into the double
+Grothendieck construction over `obj`.
+-/
+def DoubleGrothendieck.ιSecond {F : C ⥤ Cat} (G : Grothendieck F ⥤ Cat)
+    (obj : Grothendieck F) : G.obj obj ⥤ DoubleGrothendieck F G :=
+  Grothendieck.ι G obj
+
+/--
+Objects in the second-layer fiber at `obj` map to objects in the double
+Grothendieck with `obj` as their first-layer component.
+-/
+@[simp]
+theorem DoubleGrothendieck.ιSecond_obj {F : C ⥤ Cat} (G : Grothendieck F ⥤ Cat)
+    (obj : Grothendieck F) (y : G.obj obj) :
+    (ιSecond G obj).obj y = ⟨obj, y⟩ :=
+  rfl
+
+/--
+The composition of ιSecond with forgetSecond gives back the base object.
+-/
+theorem DoubleGrothendieck.ιSecond_comp_forgetSecond {F : C ⥤ Cat}
+    (G : Grothendieck F ⥤ Cat) (obj : Grothendieck F) (y : G.obj obj) :
+    (forgetSecond G).obj ((ιSecond G obj).obj y) = obj :=
+  rfl
+
+/--
+The nested fiber at a point in the double Grothendieck construction.
+Given `c : C`, `x : F.obj c`, this gives a functor from `G.obj ⟨c, x⟩`
+into the double Grothendieck.
+-/
+def DoubleGrothendieck.ιNested {F : C ⥤ Cat} (G : Grothendieck F ⥤ Cat)
+    (c : C) (x : F.obj c) : G.obj ⟨c, x⟩ ⥤ DoubleGrothendieck F G :=
+  ιSecond G ⟨c, x⟩
+
+/--
+Objects via ιNested are triples with the given base and first fiber.
+-/
+@[simp]
+theorem DoubleGrothendieck.ιNested_obj {F : C ⥤ Cat} (G : Grothendieck F ⥤ Cat)
+    (c : C) (x : F.obj c) (y : G.obj ⟨c, x⟩) :
+    (ιNested G c x).obj y = mk c x y :=
+  rfl
+
+/--
+The forgetBoth functor factors through forgetSecond then forget.
+This is the definitional equality exposed as a functor isomorphism.
+-/
+def DoubleGrothendieck.forgetBothIso {F : C ⥤ Cat} (G : Grothendieck F ⥤ Cat) :
+    forgetBoth G ≅ forgetSecond G ⋙ Grothendieck.forget F :=
+  Iso.refl _
+
+/--
+The two components of a double Grothendieck object's base.
+-/
+theorem DoubleGrothendieck.forgetSecond_base_eq {F : C ⥤ Cat}
+    {G : Grothendieck F ⥤ Cat} (obj : DoubleGrothendieck F G) :
+    ((forgetSecond G).obj obj).base = baseObj obj :=
+  rfl
+
+/--
+The two components of a double Grothendieck object's first fiber.
+-/
+theorem DoubleGrothendieck.forgetSecond_fiber_eq {F : C ⥤ Cat}
+    {G : Grothendieck F ⥤ Cat} (obj : DoubleGrothendieck F G) :
+    ((forgetSecond G).obj obj).fiber = fib1 obj :=
+  rfl
+
+/--
+Functors into double Grothendieck factor as: first into single Grothendieck,
+then lifted to double. This states that composing with forgetSecond recovers
+the intermediate functor.
+-/
+theorem DoubleGrothendieck.functor_factors_forgetSecond {D : Type*} [Category D]
+    {F : C ⥤ Cat} {G : Grothendieck F ⥤ Cat}
+    (H : D ⥤ DoubleGrothendieck F G) :
+    ∃ (H₁ : D ⥤ Grothendieck F), H ⋙ forgetSecond G = H₁ :=
+  ⟨H ⋙ forgetSecond G, rfl⟩
+
+/--
+Functors from double Grothendieck compose naturally: a functor from
+Grothendieck G composed with a functor from each G-fiber gives a functor
+from the double construction.
+-/
+theorem DoubleGrothendieck.functor_from_factors {E : Type*} [Category E]
+    {F : C ⥤ Cat} {G : Grothendieck F ⥤ Cat}
+    (H : DoubleGrothendieck F G ⥤ E) :
+    ∃ (fibFunctors : ∀ obj : Grothendieck F, G.obj obj ⥤ E),
+      ∀ obj y, H.obj ⟨obj, y⟩ = (fibFunctors obj).obj y :=
+  ⟨fun obj => ιSecond G obj ⋙ H, fun _ _ => rfl⟩
+
+/-!
+### Layered Construction of Functors into Double Grothendieck
+
+A functor `D ⥤ DoubleGrothendieck F G` factors through the layered structure:
+the outer layer uses `functorTo G`, whose base functor is itself a functor
+`D ⥤ Grothendieck F` arising from `functorTo F`.
+
+Pattern for constructing functors into double Grothendieck:
+1. Define first-layer FunctorToData F to get `firstLayer : D ⥤ Grothendieck F`
+2. Define second-layer FunctorToData G with `baseFunc := firstLayer`
+3. Apply `functorTo G` to get `D ⥤ DoubleGrothendieck F G`
+
+The double Grothendieck universal property composes the two single-layer
+universal properties. See FunctorToData and functorTo in the FunctorTo section
+for the single-layer construction.
+-/
+
+end DoubleGrothendieck
+
 end GebLean

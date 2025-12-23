@@ -1,6 +1,6 @@
 # Grothendieck Refactoring: High-Level Polynomial Functor API
 
-Status: Planning
+Status: Phase 1 In Progress (2025-12-23)
 
 ## Objective
 
@@ -30,6 +30,50 @@ foundation. Summary:
    naturality from scratch
 
 4. **No reuse**: Universal properties not exploited for composition
+
+## Current Status (2025-12-23 Session)
+
+### Completed This Session
+
+1. **Double Grothendieck Composition Lemmas** (Phase 1.1 continued):
+   - Added `ιSecond` and `ιNested` fiber inclusion functors
+   - Added `ιSecond_comp_forgetSecond` composition lemma
+   - Added `forgetBothIso` factorization isomorphism
+   - Added `forgetSecond_base_eq` and `forgetSecond_fiber_eq` extractors
+   - Added `functor_factors_forgetSecond` and `functor_from_factors` theorems
+   - Documented layered construction pattern for functors into double Grothendieck
+
+2. **Build Status**: Clean build, all tests passing, no warnings
+
+### Files Modified This Session
+
+- `GebLean/Utilities/Grothendieck.lean`: Extended DoubleGrothendieck section
+  (now lines 6535-6728)
+
+### What's Still Missing from Phase 1
+
+1. **functorBetween completion** (Phase 1.2):
+   - Need clean public API for `functorBetween` constructor
+   - Currently `toFunctorViaPre` exists but interface needs refinement
+
+2. **Generic functorFrom for double Grothendieck**:
+   - Dual to functorTo pattern already documented
+   - Should compose two single-layer FunctorFromData
+
+### Next Steps When Resuming
+
+**Immediate next task**: Proceed to Phase 1.2 (functorBetween completion) or
+move to Phase 2 (applying infrastructure to polynomial functors).
+
+**Location to continue**: Either `GebLean/Utilities/Grothendieck.lean` for
+functorBetween API, or `GebLean/PolyAdjunctions.lean` to apply the double
+Grothendieck infrastructure.
+
+**Pattern to use**: The documented pattern for constructing functors into
+double Grothendieck:
+1. Define first-layer FunctorToData F
+2. Define second-layer FunctorToData G with baseFunc := first-layer functor
+3. Apply functorTo G
 
 ## Implementation Plan
 
