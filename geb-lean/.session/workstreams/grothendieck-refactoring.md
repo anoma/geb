@@ -18,6 +18,40 @@ foundation. Summary:
 - All operations should go through these universal functors
 - Naturality and functoriality become automatic
 
+## Theoretical Foundation: Enriched Hom Unification
+
+See `docs/enriched-hom-unification.md` for the complete theory. Summary:
+
+All categorical constructions in this codebase derive from the Cat-enriched
+hom-bifunctor `[-, -] : Cat^op x Cat -> Cat`:
+
+```text
+[-, -] : Cat^op x Cat -> Cat
+    |
+    +-- [Discrete(X), D] = FamilyCat D X
+    |       |
+    |       +-- [Discrete(X), Type] = Over X   (familySliceEquiv)
+    |
+    +-- Grothendieck([-,-]) = Arr(Cat)
+    |       |
+    |       +-- Grothendieck(Hom_C) = TwArr(C)   (Set-enriched case)
+    |
+    +-- Double Grothendieck = Polynomial structure
+            |
+            +-- CoprodCovarRepCat(Over X) = PolyFunctorCat X
+```
+
+This means:
+
+1. **FamilyCat is the Cat-enriched hom** with discrete first argument
+2. **TwistedArrow is the Grothendieck** of the Set-enriched hom
+3. **Polynomial functors use double Grothendieck** of the Cat-enriched hom
+4. **Intro/elim rules are universal properties** of enriched hom
+
+The enrichment hierarchy (Set -> Cat -> [J, Type]) provides progressively
+richer structure, with our judgment-category adjunction transferring
+Cat-enriched operations to copresheaf-enriched operations
+
 ## Current Problems
 
 1. **Low-level proofs**: Operations like `polyFreeMap` require manual dependent
