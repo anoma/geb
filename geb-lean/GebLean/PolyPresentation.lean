@@ -1010,6 +1010,259 @@ copresheaves. A proper equivalence would require either:
    coequalizers rather than as `tgtHom` with a `respects` condition
 -/
 
+/-! ### Localized Category (PolyPresentationLoc)
+
+The localized category quotients morphisms by the relation "induces the same map
+on coequalizers". This makes the evaluation functor faithful by construction.
+
+The equivalence relation is: `f ≈ g iff f.toInducedMap = g.toInducedMap`.
+-/
+
+/--
+The equivalence relation on morphisms: two morphisms are equivalent iff they
+induce the same map on coequalizers.
+-/
+def PolyPresentationQ.Hom.equiv
+    {X Y : PolyPresentationQ.{u, v, w} D}
+    (f g : PolyPresentationQ.Hom X Y) : Prop :=
+  f.toInducedMap = g.toInducedMap
+
+/-- Reflexivity of the equivalence relation. -/
+theorem PolyPresentationQ.Hom.equiv_refl
+    {X Y : PolyPresentationQ.{u, v, w} D}
+    (f : PolyPresentationQ.Hom X Y) : f.equiv f :=
+  rfl
+
+/-- Symmetry of the equivalence relation. -/
+theorem PolyPresentationQ.Hom.equiv_symm
+    {X Y : PolyPresentationQ.{u, v, w} D}
+    {f g : PolyPresentationQ.Hom X Y}
+    (h : f.equiv g) : g.equiv f :=
+  h.symm
+
+/-- Transitivity of the equivalence relation. -/
+theorem PolyPresentationQ.Hom.equiv_trans
+    {X Y : PolyPresentationQ.{u, v, w} D}
+    {f g h : PolyPresentationQ.Hom X Y}
+    (hfg : f.equiv g) (hgh : g.equiv h) : f.equiv h :=
+  hfg.trans hgh
+
+/--
+The Setoid instance for morphisms in PolyPresentationQ.
+-/
+def PolyPresentationQ.Hom.setoidInst
+    (X Y : PolyPresentationQ.{u, v, w} D) :
+    Setoid (PolyPresentationQ.Hom X Y) where
+  r := equiv
+  iseqv := {
+    refl := equiv_refl
+    symm := equiv_symm
+    trans := equiv_trans
+  }
+
+/--
+Composition respects the equivalence relation: if f₁ ≈ f₂ and g₁ ≈ g₂,
+then (f₁ ≫ g₁) ≈ (f₂ ≫ g₂).
+-/
+theorem PolyPresentationQ.Hom.equiv_comp
+    {X Y Z : PolyPresentationQ.{u, v, w} D}
+    {f₁ f₂ : X ⟶ Y} {g₁ g₂ : Y ⟶ Z}
+    (hf : f₁.equiv f₂) (hg : g₁.equiv g₂) :
+    (f₁ ≫ g₁).equiv (f₂ ≫ g₂) := by
+  unfold equiv at *
+  simp only [PolyPresentationQ.Hom.toInducedMap_comp]
+  rw [hf, hg]
+
+/--
+The localized presentation category. Objects are the same as PolyPresentation,
+but morphisms are equivalence classes of PolyPresentationQ.Hom under the
+relation "induces same map on coequalizers".
+-/
+@[ext]
+structure PolyPresentationLoc.{u', v', w'} (D' : Type u') [Category.{v'} D'] where
+  /-- The underlying presentation -/
+  toPres : PolyPresentation.{u', v', w'} D'
+
+namespace PolyPresentationLoc
+
+variable {D : Type u} [Category.{v} D]
+
+/-- Convert a presentation to the localized category. -/
+def ofPres (X : PolyPresentation.{u, v, w} D) : PolyPresentationLoc.{u, v, w} D :=
+  ⟨X⟩
+
+/-- Helper: the PolyPresentationQ version of an object. -/
+abbrev toQ (X : PolyPresentationLoc.{u, v, w} D) : PolyPresentationQ.{u, v, w} D :=
+  X.toPres.toQ
+
+/--
+Morphisms in the localized category are equivalence classes of
+PolyPresentationQ.Hom under the "same induced map" relation.
+Uses `Quot` with the raw `equiv` relation rather than `Quotient` with a
+`Setoid` instance to avoid typeclass resolution issues.
+-/
+def Hom (X Y : PolyPresentationLoc.{u, v, w} D) : Type (max w v) :=
+  Quot (fun (f g : PolyPresentationQ.Hom X.toQ Y.toQ) => f.equiv g)
+
+/-- Create a morphism in the localized category from a PolyPresentationQ morphism. -/
+def Hom.mk' {X Y : PolyPresentationLoc.{u, v, w} D}
+    (f : PolyPresentationQ.Hom X.toQ Y.toQ) : Hom X Y :=
+  Quot.mk _ f
+
+/-- The equivalence relation used for localizing. -/
+abbrev Hom.rel (X Y : PolyPresentationLoc.{u, v, w} D) :
+    PolyPresentationQ.Hom X.toQ Y.toQ → PolyPresentationQ.Hom X.toQ Y.toQ → Prop :=
+  fun f g => f.equiv g
+
+/-- Composition of representatives. -/
+private def Hom.compRep {X Y Z : PolyPresentationLoc.{u, v, w} D}
+    (f : PolyPresentationQ.Hom X.toQ Y.toQ)
+    (g : PolyPresentationQ.Hom Y.toQ Z.toQ) : Hom X Z :=
+  Hom.mk' (X := X) (Y := Z) (PolyPresentationQ.Hom.comp f g)
+
+/-- Composition respects the relation in the second argument. -/
+private theorem Hom.compRep_resp_snd {X Y Z : PolyPresentationLoc.{u, v, w} D}
+    (f : PolyPresentationQ.Hom X.toQ Y.toQ)
+    (g₁ g₂ : PolyPresentationQ.Hom Y.toQ Z.toQ)
+    (hg : g₁.equiv g₂) :
+    Hom.compRep f g₁ = Hom.compRep f g₂ := by
+  unfold compRep mk'
+  apply Quot.sound
+  exact PolyPresentationQ.Hom.equiv_comp (PolyPresentationQ.Hom.equiv_refl f) hg
+
+/-- Lift composition over the second argument. -/
+private def Hom.compLift2 {X Y Z : PolyPresentationLoc.{u, v, w} D}
+    (f : PolyPresentationQ.Hom X.toQ Y.toQ) (g : Hom Y Z) : Hom X Z :=
+  Quot.lift (Hom.compRep f) (Hom.compRep_resp_snd f) g
+
+/-- Composition respects the relation in the first argument. -/
+private theorem Hom.compLift2_resp_fst {X Y Z : PolyPresentationLoc.{u, v, w} D}
+    (f₁ f₂ : PolyPresentationQ.Hom X.toQ Y.toQ) (hf : f₁.equiv f₂)
+    (g : Hom Y Z) :
+    Hom.compLift2 f₁ g = Hom.compLift2 f₂ g := by
+  induction g using Quot.ind with
+  | _ g' =>
+    unfold compLift2 compRep mk'
+    apply Quot.sound
+    exact PolyPresentationQ.Hom.equiv_comp hf (PolyPresentationQ.Hom.equiv_refl g')
+
+/-- Composition in the localized category. -/
+def Hom.comp' {X Y Z : PolyPresentationLoc.{u, v, w} D}
+    (f : Hom X Y) (g : Hom Y Z) : Hom X Z :=
+  Quot.lift (fun f' => Hom.compLift2 f' g) (fun f₁ f₂ hf => Hom.compLift2_resp_fst f₁ f₂ hf g) f
+
+/-- The identity morphism in the localized category. -/
+def Hom.id' (X : PolyPresentationLoc.{u, v, w} D) : Hom X X :=
+  Hom.mk' (PolyPresentationQ.Hom.id X.toQ)
+
+/-- Identity composed on the left. -/
+theorem Hom.id_comp' {X Y : PolyPresentationLoc.{u, v, w} D}
+    (f : Hom X Y) : (Hom.id' X).comp' f = f := by
+  induction f using Quot.ind with
+  | _ f' =>
+    unfold id' comp' compLift2 compRep mk'
+    apply Quot.sound
+    show ((PolyPresentationQ.Hom.id X.toQ).comp f').equiv f'
+    unfold PolyPresentationQ.Hom.equiv PolyPresentationQ.Hom.toInducedMap
+    simp only [PolyPresentationQ.Hom.comp_tgtHom, PolyPresentationQ.Hom.id_tgtHom,
+      Category.id_comp]
+
+/-- Identity composed on the right. -/
+theorem Hom.comp_id' {X Y : PolyPresentationLoc.{u, v, w} D}
+    (f : Hom X Y) : f.comp' (Hom.id' Y) = f := by
+  induction f using Quot.ind with
+  | _ f' =>
+    unfold id' comp' compLift2 compRep mk'
+    apply Quot.sound
+    show (f'.comp (PolyPresentationQ.Hom.id Y.toQ)).equiv f'
+    unfold PolyPresentationQ.Hom.equiv PolyPresentationQ.Hom.toInducedMap
+    simp only [PolyPresentationQ.Hom.comp_tgtHom, PolyPresentationQ.Hom.id_tgtHom,
+      Category.comp_id]
+
+/-- Associativity of composition. -/
+theorem Hom.comp_assoc' {W X Y Z : PolyPresentationLoc.{u, v, w} D}
+    (f : Hom W X) (g : Hom X Y) (h : Hom Y Z) :
+    (f.comp' g).comp' h = f.comp' (g.comp' h) := by
+  induction f using Quot.ind with
+  | _ f' =>
+    induction g using Quot.ind with
+    | _ g' =>
+      induction h using Quot.ind with
+      | _ h' =>
+        unfold comp' compLift2 compRep mk'
+        apply Quot.sound
+        show ((f'.comp g').comp h').equiv (f'.comp (g'.comp h'))
+        unfold PolyPresentationQ.Hom.equiv PolyPresentationQ.Hom.toInducedMap
+        simp only [PolyPresentationQ.Hom.comp_tgtHom, Category.assoc]
+
+/-- The localized category structure on polynomial presentations. -/
+instance category : Category (PolyPresentationLoc.{u, v, w} D) where
+  Hom := Hom
+  id := Hom.id'
+  comp := Hom.comp'
+  id_comp := Hom.id_comp'
+  comp_id := Hom.comp_id'
+  assoc := Hom.comp_assoc'
+
+/--
+The induced map on coequalizers for a morphism in the localized category.
+This is well-defined because equivalent morphisms induce the same map.
+-/
+def Hom.toInducedMap' {X Y : PolyPresentationLoc.{u, v, w} D} (f : Hom X Y) :
+    X.toPres.toCopresheaf ⟶ Y.toPres.toCopresheaf :=
+  Quot.lift
+    (fun (f' : PolyPresentationQ.Hom X.toQ Y.toQ) => f'.toInducedMap)
+    (fun _ _ h => h)
+    f
+
+/-- The identity morphism induces the identity map. -/
+theorem Hom.toInducedMap_id' (X : PolyPresentationLoc.{u, v, w} D) :
+    (Hom.id' X).toInducedMap' = 𝟙 X.toPres.toCopresheaf :=
+  PolyPresentationQ.Hom.toInducedMap_id X.toQ
+
+/-- Composition induces composition of maps. -/
+theorem Hom.toInducedMap_comp' {X Y Z : PolyPresentationLoc.{u, v, w} D}
+    (f : Hom X Y) (g : Hom Y Z) :
+    (f.comp' g).toInducedMap' = f.toInducedMap' ≫ g.toInducedMap' := by
+  induction f using Quot.ind with
+  | _ f' =>
+    induction g using Quot.ind with
+    | _ g' =>
+      unfold comp' compLift2 compRep mk' toInducedMap'
+      exact PolyPresentationQ.Hom.toInducedMap_comp f' g'
+
+end PolyPresentationLoc
+
+/--
+The evaluation functor from the localized category to copresheaves.
+This maps a presentation to its coequalizer and a morphism equivalence class
+to the induced map (which is the same for all representatives).
+-/
+def polyPresentationLocEvalFunctor :
+    PolyPresentationLoc.{u, v, w} D ⥤ (D ⥤ Type (max w v)) where
+  obj X := X.toPres.toCopresheaf
+  map f := PolyPresentationLoc.Hom.toInducedMap' f
+  map_id X := PolyPresentationLoc.Hom.toInducedMap_id' X
+  map_comp f g := PolyPresentationLoc.Hom.toInducedMap_comp' f g
+
+/--
+The evaluation functor on the localized category is faithful.
+This is automatic from the construction: two morphisms are equal iff their
+representatives are equivalent, which happens iff they induce the same map.
+-/
+theorem polyPresentationLocEvalFunctor_faithful :
+    Functor.Faithful (polyPresentationLocEvalFunctor (D := D)) where
+  map_injective {X Y} f g h := by
+    change (f : PolyPresentationLoc.Hom X Y) = g
+    induction f using Quot.ind with
+    | _ f' =>
+      induction g using Quot.ind with
+      | _ g' =>
+        apply Quot.sound
+        simp only [polyPresentationLocEvalFunctor,
+          PolyPresentationLoc.Hom.toInducedMap'] at h
+        exact h
+
 end QuotientCategory
 
 end GebLean
