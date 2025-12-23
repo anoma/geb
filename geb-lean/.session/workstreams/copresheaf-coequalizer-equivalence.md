@@ -511,7 +511,7 @@ surjective but not faithful or full. We use localization to fix this:
 
 ## Current Work In Progress (Session State)
 
-### Status: Phase 2 Complete - Ready for Phase 3
+### Status: Phase 3 In Progress
 
 **Last Updated**: 2025-12-23
 
@@ -545,8 +545,8 @@ The density presentation functor is fully implemented in
 
 5. **`densityPresentation F`** - The complete polynomial presentation
 
-6. **`densityIso F`** - Natural isomorphism `(densityPresentation F).toCopresheaf ≅ F`
-   proving the density formula
+6. **`densityIso F`** - Natural isomorphism
+   `(densityPresentation F).toCopresheaf ≅ F` proving the density formula
 
 7. **Functoriality**:
    - `densityElementsObj/Hom` - induced functor on categories of elements
@@ -567,17 +567,40 @@ morphisms in `F.Elementsᵒᵖ` (reversed direction). For a morphism
   for `CoprodCovarRepCat` (contravariant fiber maps)
 - This makes `densitySnd` have fiber `m.hom.val : m.src.fst → m.tgt.fst`
 
-### Next Steps: Phase 3 - The Equivalence
+### Phase 3 In Progress
 
-The final phase involves:
+The equivalence construction is partially complete:
 
-1. Define comparison morphisms `X → densityPresentation(E X)` in
-   `PolyPresentationLoc`
+1. **Comparison morphism** (`comparisonMorphism`) - DONE
+   - Maps each index `i` of `X.tgt` to element `(ccrFamily i, π⟨i, 𝟙⟩)`
+   - Respects condition proven via `densityCoeq_eq_of_toFunctor_eq` helper
 
-2. Prove these morphisms are isomorphisms by constructing inverses
+2. **Comparison induces isomorphism** (`comparisonMorphism_isIso`) - DONE
+   - Proved that `E(comparisonMorphism X) = (densityIso X.toCopresheaf).inv`
+   - This is an isomorphism in `(D ⥤ Type)`
 
-3. Construct the unit natural isomorphism `S ∘ E ≅ Id`
+3. **Naturality** (`comparisonMorphism_naturality`) - DONE
+   - Comparison morphism is natural in X
 
-4. Combine with counit `E ∘ S ≅ Id` (already have `densityIso`)
+4. **Counit** (`counitIso`) - DONE
+   - Natural isomorphism `E ∘ S ∘ E ≅ E` constructed from `densityIso`
 
-5. Assemble the equivalence `PolyPresentationLoc D ≌ (D ⥤ Type)`
+### Remaining Work
+
+To complete the equivalence, we need to show `comparisonMorphism X` is an
+isomorphism in `PolyPresentationLoc`. This requires either:
+
+1. **Direct inverse construction**: Build a `PolyPresentationQ.Hom` from
+   `densityPresentation(X.toCopresheaf)` to `X` that induces
+   `(densityIso X.toCopresheaf).hom`. This is difficult because the density
+   presentation is indexed by quotient elements.
+
+2. **Reflection of isomorphisms**: Show that the evaluation functor reflects
+   isomorphisms for morphisms whose induced map is an isomorphism. This
+   requires fullness of the evaluation functor.
+
+3. **Categorical equivalence machinery**: Use mathlib's equivalence-building
+   tools that may not require explicit inverses.
+
+The mathematical content is essentially complete - we have all the data for
+an adjoint equivalence, just need to assemble it properly.
