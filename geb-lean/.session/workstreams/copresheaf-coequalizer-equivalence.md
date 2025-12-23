@@ -511,15 +511,13 @@ surjective but not faithful or full. We use localization to fix this:
 
 ## Current Work In Progress (Session State)
 
-### Status: Phase 1 Complete - Ready for Phase 2
+### Status: Phase 2 Complete - Ready for Phase 3
 
 **Last Updated**: 2025-12-23
 
 ### Phase 1 Completed
 
-The `Quotient.sound` type mismatch issue has been resolved by switching from
-`Quotient` to `Quot`. The localized category `PolyPresentationLoc` is now
-fully implemented with:
+The localized category `PolyPresentationLoc` is implemented with:
 
 1. **`PolyPresentationLoc` structure** - wrapper for `PolyPresentation`
 2. **`Hom X Y`** - defined as `Quot` of equivalence classes under `equiv`
@@ -527,39 +525,59 @@ fully implemented with:
 4. **Evaluation functor** - `polyPresentationLocEvalFunctor`
 5. **Faithfulness proof** - `polyPresentationLocEvalFunctor_faithful`
 
-The key insight was that `Quot` works directly with relations via `Quot.sound`,
-while `Quotient` requires a `Setoid` typeclass instance for the `≈` notation.
+### Phase 2 Completed
+
+The density presentation functor is fully implemented in
+`GebLean/PolyPresentationEquiv.lean`:
+
+1. **`DensityMorphismIndex F`** - Index type for morphisms in `F.Elementsᵒᵖ`,
+   triples `(p, q, f : q ⟶ p)` in F.Elements
+
+2. **`densityTgt F`** - Target polynomial indexed by `F.Elements`,
+   family `(d, x) ↦ d`
+
+3. **`densitySrc F`** - Source polynomial indexed by `DensityMorphismIndex F`,
+   family `m ↦ m.tgt.fst`
+
+4. **`densityFst`, `densitySnd`** - Parallel morphisms:
+   - `densityFst`: maps `m` to `m.tgt` with identity fiber
+   - `densitySnd`: maps `m` to `m.src` with fiber `m.hom.val`
+
+5. **`densityPresentation F`** - The complete polynomial presentation
+
+6. **`densityIso F`** - Natural isomorphism `(densityPresentation F).toCopresheaf ≅ F`
+   proving the density formula
+
+7. **Functoriality**:
+   - `densityElementsObj/Hom` - induced functor on categories of elements
+   - `densityTgtMap`, `densitySrcMap` - induced morphisms on polynomials
+   - `densityPresentationMap` - induced morphism of presentations
+   - `densityPresentationMap_id`, `densityPresentationMap_comp` - functor laws
+
+8. **`densityPresentationFunctor D`** - The functor
+   `(D ⥤ Type) ⥤ PolyPresentationLoc D`
 
 ### Implementation Details
 
-The composition is implemented using nested `Quot.lift`:
+The direction handling for `CoprodCovarRepCat` was resolved by using
+morphisms in `F.Elementsᵒᵖ` (reversed direction). For a morphism
+`f : q → p` in F.Elements:
 
-```lean
-def Hom.comp' {X Y Z : PolyPresentationLoc D}
-    (f : Hom X Y) (g : Hom Y Z) : Hom X Z :=
-  Quot.lift
-    (fun f' => Quot.lift
-      (fun g' => Hom.mk' (PolyPresentationQ.Hom.comp f' g'))
-      (compRep_resp_snd f)
-      g)
-    (compLift2_resp_fst · · g)
-    f
-```
+- The fiber morphism `f.val : q.fst → p.fst` goes in the direction needed
+  for `CoprodCovarRepCat` (contravariant fiber maps)
+- This makes `densitySnd` have fiber `m.hom.val : m.src.fst → m.tgt.fst`
 
-### Next Steps: Phase 2 - Density Presentation
+### Next Steps: Phase 3 - The Equivalence
 
-The next phase involves:
+The final phase involves:
 
-1. Define `densityPresentation : (D ⥤ Type) → PolyPresentation D`
-   - Use `F.Elements` (category of elements) for indexing
-   - Target polynomial indexed by objects of `F.Elements`
-   - Source polynomial indexed by morphisms in `F.Elementsᵒᵖ`
-
-2. Prove functoriality of the density construction
-
-3. Prove density isomorphism: `E(densityPresentation F) ≅ F`
-
-4. Define comparison morphisms and prove they are isomorphisms in
+1. Define comparison morphisms `X → densityPresentation(E X)` in
    `PolyPresentationLoc`
 
-5. Construct the equivalence `PolyPresentationLoc D ≌ (D ⥤ Type)`
+2. Prove these morphisms are isomorphisms by constructing inverses
+
+3. Construct the unit natural isomorphism `S ∘ E ≅ Id`
+
+4. Combine with counit `E ∘ S ≅ Id` (already have `densityIso`)
+
+5. Assemble the equivalence `PolyPresentationLoc D ≌ (D ⥤ Type)`
