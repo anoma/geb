@@ -362,6 +362,183 @@ def JudgmentLevel.CatMorBundle.comp.{uJ}
     rw [h]; exact g.2.2
   ⟨f.src, g.tgt, Cat.CatJudgNatTrans.comp f.2.2 g'⟩
 
+/-! ### Identity Laws for Morphism Bundles -/
+
+/-- Left identity for obj-level composition. -/
+theorem JudgmentLevel.ObjMorBundle.id_comp.{uJ}
+    (f : ObjMorBundle.{uJ}) :
+    ObjMorBundle.comp (ObjMorBundle.identity f.src) f rfl = f := rfl
+
+/-- Right identity for obj-level composition. -/
+theorem JudgmentLevel.ObjMorBundle.comp_id.{uJ}
+    (f : ObjMorBundle.{uJ}) :
+    ObjMorBundle.comp f (ObjMorBundle.identity f.tgt) rfl = f := rfl
+
+/-- Left identity for quiv-level composition. -/
+theorem JudgmentLevel.QuivMorBundle.id_comp.{uJ}
+    (f : QuivMorBundle.{uJ}) :
+    QuivMorBundle.comp (QuivMorBundle.identity f.src) f rfl = f := rfl
+
+/-- Right identity for quiv-level composition. -/
+theorem JudgmentLevel.QuivMorBundle.comp_id.{uJ}
+    (f : QuivMorBundle.{uJ}) :
+    QuivMorBundle.comp f (QuivMorBundle.identity f.tgt) rfl = f := rfl
+
+/-- Left identity for cat-level composition. -/
+theorem JudgmentLevel.CatMorBundle.id_comp.{uJ}
+    (f : CatMorBundle.{uJ}) :
+    CatMorBundle.comp (CatMorBundle.identity f.src) f rfl = f := rfl
+
+/-- Right identity for cat-level composition. -/
+theorem JudgmentLevel.CatMorBundle.comp_id.{uJ}
+    (f : CatMorBundle.{uJ}) :
+    CatMorBundle.comp f (CatMorBundle.identity f.tgt) rfl = f := rfl
+
+/-! ### Associativity Laws for Morphism Bundles -/
+
+/-- Associativity for obj-level composition. -/
+theorem JudgmentLevel.ObjMorBundle.comp_assoc.{uJ}
+    (f g h : ObjMorBundle.{uJ})
+    (hfg : f.tgt = g.src) (hgh : g.tgt = h.src) :
+    ObjMorBundle.comp (ObjMorBundle.comp f g hfg) h hgh =
+    ObjMorBundle.comp f (ObjMorBundle.comp g h hgh) hfg := by
+  obtain ⟨srcF, tgtF, morF⟩ := f
+  obtain ⟨srcG, tgtG, morG⟩ := g
+  obtain ⟨srcH, tgtH, morH⟩ := h
+  simp only [ObjMorBundle.tgt, ObjMorBundle.src] at hfg hgh
+  subst hfg hgh
+  rfl
+
+/-- Associativity for quiv-level composition. -/
+theorem JudgmentLevel.QuivMorBundle.comp_assoc.{uJ}
+    (f g h : QuivMorBundle.{uJ})
+    (hfg : f.tgt = g.src) (hgh : g.tgt = h.src) :
+    QuivMorBundle.comp (QuivMorBundle.comp f g hfg) h hgh =
+    QuivMorBundle.comp f (QuivMorBundle.comp g h hgh) hfg := by
+  obtain ⟨srcF, tgtF, morF⟩ := f
+  obtain ⟨srcG, tgtG, morG⟩ := g
+  obtain ⟨srcH, tgtH, morH⟩ := h
+  simp only [QuivMorBundle.tgt, QuivMorBundle.src] at hfg hgh
+  subst hfg hgh
+  rfl
+
+/-- Associativity for cat-level composition. -/
+theorem JudgmentLevel.CatMorBundle.comp_assoc.{uJ}
+    (f g h : CatMorBundle.{uJ})
+    (hfg : f.tgt = g.src) (hgh : g.tgt = h.src) :
+    CatMorBundle.comp (CatMorBundle.comp f g hfg) h hgh =
+    CatMorBundle.comp f (CatMorBundle.comp g h hgh) hfg := by
+  obtain ⟨srcF, tgtF, morF⟩ := f
+  obtain ⟨srcG, tgtG, morG⟩ := g
+  obtain ⟨srcH, tgtH, morH⟩ := h
+  simp only [CatMorBundle.tgt, CatMorBundle.src] at hfg hgh
+  subst hfg hgh
+  rfl
+
+/-! ### Forgetful Maps Between Morphism Bundles -/
+
+/-- Forget from quiv-level bundle to obj-level bundle. -/
+def JudgmentLevel.forgetQuivBundleToObjBundle.{uJ}
+    (m : QuivMorBundle.{uJ}) : ObjMorBundle.{uJ} :=
+  ⟨Cat.forgetObjMorToObj.{uJ, uJ}.obj m.src,
+   Cat.forgetObjMorToObj.{uJ, uJ}.obj m.tgt,
+   Cat.forgetObjMorToObj.{uJ, uJ}.map m.2.2⟩
+
+/-- Forget from cat-level bundle to quiv-level bundle. -/
+def JudgmentLevel.forgetCatBundleToQuivBundle.{uJ}
+    (m : CatMorBundle.{uJ}) : QuivMorBundle.{uJ} :=
+  ⟨Cat.forgetCatJudgToObjMor.{uJ, uJ, uJ, uJ}.obj m.src,
+   Cat.forgetCatJudgToObjMor.{uJ, uJ, uJ, uJ}.obj m.tgt,
+   Cat.forgetCatJudgToObjMor.{uJ, uJ, uJ, uJ}.map m.2.2⟩
+
+/-- Forget from cat-level bundle to obj-level bundle. -/
+def JudgmentLevel.forgetCatBundleToObjBundle.{uJ}
+    (m : CatMorBundle.{uJ}) : ObjMorBundle.{uJ} :=
+  ⟨Cat.forgetCatJudgToObj.{uJ, uJ, uJ, uJ}.obj m.src,
+   Cat.forgetCatJudgToObj.{uJ, uJ, uJ, uJ}.obj m.tgt,
+   Cat.forgetCatJudgToObj.{uJ, uJ, uJ, uJ}.map m.2.2⟩
+
+/-- The composition of forgetful maps equals the direct forgetful map. -/
+theorem JudgmentLevel.forgetCatBundleToObjBundle_eq_comp.{uJ}
+    (m : CatMorBundle.{uJ}) :
+    forgetCatBundleToObjBundle m =
+    forgetQuivBundleToObjBundle (forgetCatBundleToQuivBundle m) := rfl
+
+/-! ### Morphism Bundle Copresheaf
+
+The morphism bundle copresheaf assigns to each judgment level the type
+of morphism bundles at that level. Morphisms in the judgment category
+induce forgetful maps between bundle types.
+-/
+
+/-- Map each judgment level to its morphism bundle type. -/
+def JudgmentLevel.toMorBundleType.{uJ} : JudgmentLevel → Type (uJ + 2)
+  | .obj => ObjMorBundle.{uJ}
+  | .quiv => QuivMorBundle.{uJ}
+  | .cat => CatMorBundle.{uJ}
+
+/-- The functorial action on morphisms: forgetful maps between bundle types. -/
+def JudgmentLevel.Hom.toMorBundleMap.{uJ} : {j₁ j₂ : JudgmentLevel} →
+    JudgmentLevel.Hom j₁ j₂ →
+    (JudgmentLevel.toMorBundleType.{uJ} j₁ → JudgmentLevel.toMorBundleType.{uJ} j₂)
+  | .obj, .obj, .id .obj => _root_.id
+  | .quiv, .quiv, .id .quiv => _root_.id
+  | .cat, .cat, .id .cat => _root_.id
+  | .quiv, .obj, .quivToObj => forgetQuivBundleToObjBundle
+  | .cat, .quiv, .catToQuiv => forgetCatBundleToQuivBundle
+  | .cat, .obj, .catToObj => forgetCatBundleToObjBundle
+
+/-- Identity morphisms map to identity functions. -/
+theorem JudgmentLevel.Hom.toMorBundleMap_id.{uJ} (j : JudgmentLevel) :
+    JudgmentLevel.Hom.toMorBundleMap.{uJ} (.id j) = _root_.id := by
+  cases j <;> rfl
+
+/-- Composition of morphisms maps to composition of forgetful maps. -/
+theorem JudgmentLevel.Hom.toMorBundleMap_comp.{uJ} : {j₁ j₂ j₃ : JudgmentLevel} →
+    (f : JudgmentLevel.Hom j₁ j₂) → (g : JudgmentLevel.Hom j₂ j₃) →
+    JudgmentLevel.Hom.toMorBundleMap.{uJ} (JudgmentLevel.Hom.comp f g) =
+    JudgmentLevel.Hom.toMorBundleMap.{uJ} g ∘ JudgmentLevel.Hom.toMorBundleMap.{uJ} f
+  | .obj, .obj, .obj, .id .obj, .id .obj => rfl
+  | .quiv, .quiv, .quiv, .id .quiv, .id .quiv => rfl
+  | .quiv, .quiv, .obj, .id .quiv, .quivToObj => rfl
+  | .quiv, .obj, .obj, .quivToObj, .id .obj => rfl
+  | .cat, .cat, .cat, .id .cat, .id .cat => rfl
+  | .cat, .cat, .quiv, .id .cat, .catToQuiv => rfl
+  | .cat, .cat, .obj, .id .cat, .catToObj => rfl
+  | .cat, .quiv, .quiv, .catToQuiv, .id .quiv => rfl
+  | .cat, .quiv, .obj, .catToQuiv, .quivToObj => rfl
+  | .cat, .obj, .obj, .catToObj, .id .obj => rfl
+
+/-- The morphism bundle copresheaf as a functor from JudgmentLevel to Type.
+    This assigns to each judgment level its morphism bundle type. -/
+def MorphismBundleCopresheaf.{uJ} : JudgmentLevel ⥤ Type (uJ + 2) where
+  obj := JudgmentLevel.toMorBundleType.{uJ}
+  map := JudgmentLevel.Hom.toMorBundleMap.{uJ}
+  map_id := JudgmentLevel.Hom.toMorBundleMap_id.{uJ}
+  map_comp := JudgmentLevel.Hom.toMorBundleMap_comp.{uJ}
+
+/-! ### Source and Target Natural Transformations
+
+For the internal category structure, we need source and target maps that
+are natural with respect to the forgetful functors.
+-/
+
+/-- Source projection for each level's bundle type. -/
+def JudgmentLevel.sourceProj.{uJ} :
+    (j : JudgmentLevel) → JudgmentLevel.toMorBundleType.{uJ} j →
+      JudgmentLevel.toCat.{uJ} j
+  | .obj => ObjMorBundle.src
+  | .quiv => QuivMorBundle.src
+  | .cat => CatMorBundle.src
+
+/-- Target projection for each level's bundle type. -/
+def JudgmentLevel.targetProj.{uJ} :
+    (j : JudgmentLevel) → JudgmentLevel.toMorBundleType.{uJ} j →
+      JudgmentLevel.toCat.{uJ} j
+  | .obj => ObjMorBundle.tgt
+  | .quiv => QuivMorBundle.tgt
+  | .cat => CatMorBundle.tgt
+
 end PLang
 
 end GebLean
