@@ -1,6 +1,6 @@
 # Copresheaf Self-Representation Workstream
 
-Status: Phase 4 Complete (2025-12-23)
+Status: Phase 5 Complete (2025-12-23)
 
 ## Objective
 
@@ -82,6 +82,30 @@ Also in `GebLean/PLang/JudgmentUniverse.lean`:
 
 9. **Source/target projections**: `sourceProj` and `targetProj` for each level
 
+### Phase 5: Currying Connection (Complete)
+
+Extended `GebLean/PLang/JudgmentUniverse.lean` with:
+
+1. **Uncurried evaluation**: `JudgmentSection.evalAt` evaluates a section
+   at each judgment level, giving the "uncurried" view of sections as
+   functions `J × Section → Object`.
+
+2. **Naturality theorems**:
+   - `evalAt_quivToObj`: evaluation respects quiv → obj forgetful functor
+   - `evalAt_catToQuiv`: evaluation respects cat → quiv forgetful functor
+   - `evalAt_catToObj`: evaluation respects cat → obj forgetful functor
+   - `evalAt_natural`: general naturality for all morphisms in JudgmentLevel
+
+3. **Type extraction**:
+   - `JudgmentSection.objType`: extract object type from section
+   - `JudgmentSection.morType`: extract morphism type from section
+
+4. **Product type**: `JudgmentProductType` as base for uncurried perspective
+
+5. **Documentation**: Connection to Mathlib's `CategoryTheory.Functor.currying`
+   explaining how the currying isomorphism `[A × B, C] ≅ [A, [B, C]]` relates
+   to the adjunction perspective.
+
 ## Research Findings
 
 ### Mathlib Infrastructure
@@ -98,6 +122,10 @@ Also in `GebLean/PLang/JudgmentUniverse.lean`:
    naturality), but not the CATEGORY of sections as functors `s : B -> E`
    with `π ∘ s = id`.
 
+4. **Currying equivalence**: `CategoryTheory.Functor.currying` provides
+   `Functor C (Functor D E) ≌ Functor (Prod C D) E` which connects
+   the curried and uncurried views of functors.
+
 ### Connection to Currying
 
 From `docs/cat-currying-natural-transformations.md`:
@@ -107,35 +135,28 @@ The isomorphism `[A × B, C] ≅ [A, [B, C]]` applies to the adjunction:
 - Right adjoint `U : Cat → [J, Type]` corresponds to `U' : Cat × J → Type`
 - This is a copresheaf on the product category Cat × J
 - Internalizing means expressing U' as a section of JudgmentUniverse
-
-## Remaining Phases
-
-### Phase 5: Adjunction via Currying
-
-Using `[Cat × J, Type] ≅ [Cat, [J, Type]]`:
-
-- The right adjoint U : Cat → [J, Type] corresponds to a copresheaf
-  U' : Cat × J → Type on the product category
-- U'(C, j) = the j-level data of category C
-- This connects self-representation to the adjunction
+- The `evalAt` function captures the uncurried evaluation
+- Naturality of `evalAt` is the functoriality condition for the second argument
 
 ## Success Criteria
 
-Completed:
+All completed:
 
 - [x] Judgment category J is formally defined
 - [x] JudgmentUniverse : J -> Cat is a well-defined functor
 - [x] Sections of JudgmentUniverse correspond to category specifications
 - [x] Internal category structure on [J, Type] is established
-
-Remaining:
-
-- [ ] Connection to CatJudgmentAdjunction via currying is documented
+- [x] Connection to CatJudgmentAdjunction via currying is documented
 
 ## File Summary
 
-- `GebLean/PLang/JudgmentUniverse.lean`: ~545 lines (Phases 1-4 complete)
+- `GebLean/PLang/JudgmentUniverse.lean`: ~674 lines (Phases 1-5 complete)
 
-Estimated remaining:
+## Future Work
 
-- Adjunction connection: ~200 lines
+Potential extensions (not currently planned):
+
+- Formal functor `CatJudgCopr ⥤ (JudgmentLevel ⥤ Type)` making the
+  currying connection explicit at the functor level
+- Connection between `JudgmentLevel` (level-based) and `CategoryJudgments.Obj`
+  (component-based) representations

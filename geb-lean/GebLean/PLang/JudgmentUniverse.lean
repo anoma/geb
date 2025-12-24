@@ -1,5 +1,7 @@
 import GebLean.PLang.CatJudgment
 import Mathlib.CategoryTheory.Category.Cat
+import Mathlib.CategoryTheory.Functor.Currying
+import Mathlib.CategoryTheory.Products.Basic
 
 /-!
 # The Judgment Universe
@@ -538,6 +540,134 @@ def JudgmentLevel.targetProj.{uJ} :
   | .obj => ObjMorBundle.tgt
   | .quiv => QuivMorBundle.tgt
   | .cat => CatMorBundle.tgt
+
+/-! ## Connection to Currying and the CatJudgment Adjunction
+
+The isomorphism [A × B, C] ≅ [A, [B, C]] (currying in Cat) connects the
+self-representation to an adjunction perspective:
+
+- A copresheaf F : J → Type corresponds to an "uncurried" function
+  F' : J × (data source) → Type
+- For the CatJudgment adjunction, the right adjoint U : Cat → [J, Type]
+  can be viewed as U' : Cat × J → Type where U'(C, j) = j-level data of C
+
+JudgmentSection captures this: a section assigns compatible data at each
+judgment level, determined by the cat-level data (the full specification).
+-/
+
+/-- Evaluate a JudgmentSection at a given judgment level to get the
+    corresponding object in that level's category. This is the uncurried
+    view of the section as a function J × Section → Object. -/
+def JudgmentSection.evalAt.{uJ} (s : JudgmentSection.{uJ}) :
+    (j : JudgmentLevel) → JudgmentLevel.toCat.{uJ} j
+  | .obj => s.objData
+  | .quiv => s.quivData
+  | .cat => s.catData
+
+/-- Evaluation respects the forgetful structure: evaluating at obj equals
+    applying the forgetful functor to the quiv-level evaluation. -/
+theorem JudgmentSection.evalAt_quivToObj.{uJ} (s : JudgmentSection.{uJ}) :
+    Cat.forgetObjMorToObj.{uJ, uJ}.obj (s.evalAt .quiv) = s.evalAt .obj :=
+  s.quiv_to_obj
+
+/-- Evaluation respects the forgetful structure: evaluating at quiv equals
+    applying the forgetful functor to the cat-level evaluation. -/
+theorem JudgmentSection.evalAt_catToQuiv.{uJ} (s : JudgmentSection.{uJ}) :
+    Cat.forgetCatJudgToObjMor.{uJ, uJ, uJ, uJ}.obj (s.evalAt .cat) =
+    s.evalAt .quiv :=
+  s.cat_to_quiv
+
+/-- Evaluation respects the forgetful structure: evaluating at obj equals
+    applying the composed forgetful functor to the cat-level evaluation. -/
+theorem JudgmentSection.evalAt_catToObj.{uJ} (s : JudgmentSection.{uJ}) :
+    Cat.forgetCatJudgToObj.{uJ, uJ, uJ, uJ}.obj (s.evalAt .cat) =
+    s.evalAt .obj := by
+  simp only [evalAt, Cat.forgetCatJudgToObj]
+  rw [← s.quiv_to_obj, ← s.cat_to_quiv]
+  rfl
+
+/-- For any JudgmentLevel morphism, evaluating at the source and applying
+    the forgetful functor equals evaluating at the target. This is the
+    naturality condition connecting the section to the uncurried view. -/
+theorem JudgmentSection.evalAt_natural.{uJ} (s : JudgmentSection.{uJ})
+    {j₁ j₂ : JudgmentLevel} (f : JudgmentLevel.Hom j₁ j₂) :
+    (JudgmentLevel.Hom.toCatHom.{uJ} f).obj (s.evalAt j₁) = s.evalAt j₂ := by
+  match j₁, j₂, f with
+  | .obj, .obj, .id .obj => rfl
+  | .quiv, .quiv, .id .quiv => rfl
+  | .cat, .cat, .id .cat => rfl
+  | .quiv, .obj, .quivToObj => exact s.evalAt_quivToObj
+  | .cat, .quiv, .catToQuiv => exact s.evalAt_catToQuiv
+  | .cat, .obj, .catToObj => exact s.evalAt_catToObj
+
+/-! ## Product Category and Uncurried Evaluation
+
+The currying isomorphism `[A × B, C] ≅ [A, [B, C]]` from
+`CategoryTheory.Functor.currying` connects our structures:
+
+- A functor `F : Cat → [JudgmentLevel, Type]` (sending a category to its
+  judgment copresheaf) corresponds to an uncurried functor
+  `F' : Cat × JudgmentLevel → Type`
+
+- The uncurried evaluation `F'(C, j) = F(C)(j)` extracts the j-level
+  data from category C
+
+The product `Cat × JudgmentLevel` is a category via
+`CategoryTheory.prod`, and evaluation at a judgment level provides
+the uncurried perspective.
+
+The type of pairs (CatJudgCopr, JudgmentLevel) with evaluation gives
+the uncurried data type at each point.
+-/
+
+/-- Extract the object type from a judgment section. This is the
+    "value" at the obj level. -/
+def JudgmentSection.objType.{uJ} (s : JudgmentSection.{uJ}) : Type (uJ + 1) :=
+  s.objData
+
+/-- Extract the morphism type from a judgment section. This is
+    derived from the quiv level data. -/
+def JudgmentSection.morType.{uJ} (s : JudgmentSection.{uJ}) : Type (uJ + 1) :=
+  s.quivData.mor
+
+/-- The product of CatJudgCopr with JudgmentLevel, as a base for
+    the uncurried functor perspective. -/
+abbrev JudgmentProductType.{uJ} : Type (uJ + 2) :=
+  Obj.CatJudgCopr.{uJ+1, uJ+1, uJ+1, uJ+1} × JudgmentLevel
+
+/-! ### Connection to the Currying Equivalence
+
+Mathlib provides `CategoryTheory.Functor.currying`:
+
+```
+currying : Functor C (Functor D E) ≌ Functor (Prod C D) E
+```
+
+For our setting with `C = Cat`, `D = JudgmentLevel`, `E = Type`:
+- A right adjoint `U : Cat → [JudgmentLevel, Type]` sending each category
+  to its judgment copresheaf
+- Uncurries to `U' : Cat × JudgmentLevel → Type` via
+  `Functor.uncurry.obj U`
+- The evaluation `U'(C, j)` gives the j-level data of category C
+
+The `JudgmentSection.evalAt` function captures this uncurried evaluation
+when restricted to sections (which are equivalent to CatJudgCopr objects).
+
+The naturality theorem `evalAt_natural` shows that evaluation respects
+the morphisms in JudgmentLevel, which is the functoriality condition
+for the uncurried functor in its second argument.
+-/
+
+/-- The category structure on JudgmentLevel paired with any category
+    follows from the Mathlib product instance. This allows forming
+    the product `C × JudgmentLevel` for any category C.
+
+    Note: `CategoryTheory.prod` provides the category instance on
+    `Prod C D` for any categories C and D. Since we have
+    `Category JudgmentLevel` above, `Prod C JudgmentLevel` is
+    automatically a category via this instance. -/
+example (C : Type*) [Category C] : Category (C × JudgmentLevel) :=
+  inferInstance
 
 end PLang
 
