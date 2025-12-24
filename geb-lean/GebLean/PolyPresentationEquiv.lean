@@ -51,7 +51,7 @@ to construct a canonical polynomial presentation whose coequalizer is F.
 
 section DensityPresentation
 
-variable (F : D ⥤ Type (max w v))
+variable (F : D ⥤ Type (max u w v))
 
 /-! ### Index Types
 
@@ -214,7 +214,7 @@ This is the content of the density formula (co-Yoneda lemma).
 
 section DensityIsomorphism
 
-variable (F : D ⥤ Type (max w v))
+variable (F : D ⥤ Type (max u w v))
 
 /-! ### The Forward Map
 
@@ -237,15 +237,12 @@ theorem densityToFunctorApp_coequalizes (A : D) :
     densityToFunctorApp F A ∘ (ccrToFunctorMap (densityFst F)).app A =
     densityToFunctorApp F A ∘ (ccrToFunctorMap (densitySnd F)).app A := by
   funext ⟨m, g⟩
-  simp only [Function.comp_apply, ccrToFunctorMap_app, ccrEvalMk_index,
-    ccrEvalMk_mor, densityToFunctorApp]
-  -- LHS: F.map (𝟙 m.tgt.fst ≫ g) m.tgt.snd = F.map g m.tgt.snd
-  -- RHS: F.map (m.hom.val ≫ g) m.src.snd
-  -- Since m.hom : m.src ⟶ m.tgt in F.Elements, we have
-  -- F.map m.hom.val m.src.snd = m.tgt.snd
-  simp only [densityFst_reindex, densityFst_fiberMor, Category.id_comp,
-    densitySnd_reindex, densitySnd_fiberMor, densitySrc_family]
-  rw [F.map_comp]
+  -- Goal: densityToFunctorApp F A ((ccrToFunctorMap fst) ⟨m, g⟩) =
+  --       densityToFunctorApp F A ((ccrToFunctorMap snd) ⟨m, g⟩)
+  -- LHS evaluates to F.map (𝟙 ≫ g) m.tgt.snd = F.map g m.tgt.snd
+  -- RHS evaluates to F.map (m.hom.val ≫ g) m.src.snd
+  change F.map (𝟙 m.tgt.fst ≫ g) m.tgt.snd = F.map (m.hom.val ≫ g) m.src.snd
+  rw [Category.id_comp, F.map_comp]
   simp only [types_comp_apply]
   rw [CategoryOfElements.map_snd m.hom]
 
@@ -260,9 +257,9 @@ def densityToFunctorNatTrans :
     { app := densityToFunctorApp F
       naturality := fun {A B} f => by
         ext ⟨p, g⟩
-        simp only [types_comp_apply, densityToFunctorApp]
-        rw [← F.map_comp]
-        rfl }
+        simp only [types_comp_apply]
+        dsimp only [densityToFunctorApp, ccrToFunctor, ccrEvalMap]
+        rw [F.map_comp, types_comp_apply] }
     (by
       ext A ⟨m, g⟩
       exact congrFun (densityToFunctorApp_coequalizes F A) ⟨m, g⟩)
@@ -285,64 +282,33 @@ def functorToDensityApp (A : D) :
 The inverse natural transformation from F to the coequalizer.
 -/
 def functorToDensityNatTrans :
-    F ⟶ (densityPresentation F).toCopresheaf :=
-  (densityPresentation F).toCopresheafπ.app _ ∘ functorToDensityApp F _
-    |> fun _ => {
-      app := fun A => (densityPresentation F).toCopresheafπ.app A ∘
-        functorToDensityApp F A
-      naturality := fun {A B} f => by
+    F ⟶ (densityPresentation F).toCopresheaf where
+  app := fun A => (densityPresentation F).toCopresheafπ.app A ∘
+    functorToDensityApp F A
+  naturality := fun {A B} f => by
         ext y
-        simp only [types_comp_apply, functorToDensityApp]
-        -- Need to show: π(⟨⟨B, F.map f y⟩, 𝟙 B⟩) = (coeq.map f)(π(⟨⟨A, y⟩, 𝟙 A⟩))
-        -- The coequalizer's map is defined via desc
-        have h : (densityPresentation F).toCopresheafπ.app B
-            (ccrEvalMap f ⟨⟨A, y⟩, 𝟙 A⟩) =
-          (ccrToFunctor (densityTgt F)).map f
-            ((densityPresentation F).toCopresheafπ.app A ⟨⟨A, y⟩, 𝟙 A⟩) := by
-          exact congrFun ((densityPresentation F).toCopresheafπ.naturality f)
+        simp only [types_comp_apply, Function.comp_apply]
+        unfold functorToDensityApp
+        have hnat := congrFun ((densityPresentation F).toCopresheafπ.naturality f)
             ⟨⟨A, y⟩, 𝟙 A⟩
-        simp only [ccrToFunctor_map, ccrEvalMap, ccrEvalMk_index, ccrEvalMk_mor,
-          PolyPresentation.toCopresheafπ, densityPresentation_tgt, densityTgt,
-          ccrObjMk_family] at h ⊢
-        -- LHS: π(⟨⟨B, F.map f y⟩, 𝟙 B⟩)
-        -- RHS: (coeq.map f)(π(⟨⟨A, y⟩, 𝟙 A⟩))
-        -- We need to show these are equal via the coequalizer relation
-        -- The morphism (⟨A, y⟩, ⟨B, F.map f y⟩, f') witnesses the equality
-        -- where f' is the Elements morphism induced by f
-        let elemMor : (⟨A, y⟩ : F.Elements) ⟶ ⟨B, F.map f y⟩ :=
-          ⟨f, rfl⟩
-        let mIdx : DensityMorphismIndex F := ⟨⟨B, F.map f y⟩, ⟨A, y⟩, elemMor⟩
-        have heq1 : (ccrToFunctorMap (densityFst F)).app B ⟨mIdx, 𝟙 B⟩ =
-            ⟨⟨B, F.map f y⟩, 𝟙 B⟩ := by
-          simp only [ccrToFunctorMap_app, ccrEvalMk, densityFst_reindex,
-            densityFst_fiberMor, Category.id_comp, mIdx]
-        have heq2 : (ccrToFunctorMap (densitySnd F)).app B ⟨mIdx, 𝟙 B⟩ =
-            ⟨⟨A, y⟩, f ≫ 𝟙 B⟩ := by
-          simp only [ccrToFunctorMap_app, ccrEvalMk, densitySnd_reindex,
-            densitySnd_fiberMor, mIdx, DensityMorphismIndex.src,
-            DensityMorphismIndex.hom, elemMor]
-        have hcond := congrFun
-          ((densityPresentation F).toCopresheaf_condition.symm)
-          (⟨mIdx, 𝟙 B⟩ : ccrEval (densitySrc F) B)
-        simp only [NatTrans.comp_app, types_comp_apply,
-          PolyPresentation.toCopresheafπ, densityPresentation_fst,
-          densityPresentation_snd] at hcond
-        rw [heq1, heq2] at hcond
-        simp only [Category.comp_id] at heq2
-        rw [Category.comp_id] at hcond
-        -- Now hcond : π(⟨⟨B, F.map f y⟩, 𝟙 B⟩) = π(⟨⟨A, y⟩, f⟩)
-        rw [hcond]
-        -- Goal: π(⟨⟨A, y⟩, f⟩) = (coeq.map f)(π(⟨⟨A, y⟩, 𝟙 A⟩))
-        -- The coequalizer's naturality says:
-        -- π_B ∘ ccrToFunctor.map f = coeq.map f ∘ π_A
-        -- At ⟨⟨A, y⟩, 𝟙 A⟩:
-        -- π_B(ccrToFunctor.map f ⟨⟨A, y⟩, 𝟙 A⟩) = coeq.map f (π_A ⟨⟨A, y⟩, 𝟙 A⟩)
-        -- ccrToFunctor.map f ⟨⟨A, y⟩, 𝟙 A⟩ = ⟨⟨A, y⟩, 𝟙 A ≫ f⟩ = ⟨⟨A, y⟩, f⟩
-        simp only [Category.id_comp] at h
-        rw [← h]
-        congr 1
-        simp only [ccrEvalMap, ccrEvalMk_index, ccrEvalMk_mor]
-        rfl }
+        simp only [types_comp_apply, ccrToFunctor, ccrEvalMap] at hnat
+        rw [← hnat]
+        let mIdx : DensityMorphismIndex F := ⟨⟨B, F.map f y⟩, ⟨A, y⟩, ⟨f, rfl⟩⟩
+        let x : ccrEval (densitySrc F) B := ⟨mIdx, 𝟙 B⟩
+        have hcond := congrFun (congrArg (·.app B)
+          (densityPresentation F).toCopresheaf_condition.symm) x
+        simp only [NatTrans.comp_app, types_comp_apply, ccrToFunctorMap_app,
+          ccrToFunctorMapApp, ccrEvalIndex, ccrEvalMor,
+          densityPresentation_fst, densityPresentation_snd,
+          densityFst_reindex, densityFst_fiberMor, densitySnd_reindex,
+          densitySnd_fiberMor, DensityMorphismIndex.tgt, DensityMorphismIndex.src,
+          DensityMorphismIndex.hom, x, mIdx] at hcond
+        convert hcond.symm using 2
+        · simp [ccrEvalMk, Category.id_comp]
+        · refine Sigma.ext rfl ?_
+          simp only [heq_eq_eq, ccrEvalMk]
+          calc 𝟙 A ≫ f = f := Category.id_comp f
+            _ = f ≫ 𝟙 B := (Category.comp_id f).symm
 
 /-! ### The Isomorphism -/
 
@@ -351,7 +317,8 @@ Round-trip: densityToFunctor ∘ functorToDensity = id.
 -/
 theorem densityToFunctor_functorToDensity (A : D) (y : F.obj A) :
     densityToFunctorApp F A (functorToDensityApp F A y) = y := by
-  simp only [densityToFunctorApp, functorToDensityApp, F.map_id, types_id_apply]
+  simp only [densityToFunctorApp, functorToDensityApp]
+  exact congrFun (F.map_id A) y
 
 /--
 Round-trip: functorToDensity ∘ densityToFunctor = id (up to quotient).
@@ -367,20 +334,25 @@ theorem functorToDensity_densityToFunctor (A : D)
   -- where p = (d, y) for some d : D and y : F.obj d
   -- Use the morphism g : d ⟶ A which gives an Elements morphism
   -- (d, y) ⟶ (A, F.map g y) via ⟨g, rfl⟩
-  obtain ⟨d, y⟩ := p
-  let elemMor : (⟨d, y⟩ : F.Elements) ⟶ ⟨A, F.map g y⟩ := ⟨g, rfl⟩
-  let mIdx : DensityMorphismIndex F := ⟨⟨A, F.map g y⟩, ⟨d, y⟩, elemMor⟩
+  let pElem : F.Elements := p
+  let elemMor : pElem ⟶ ⟨A, F.map g p.snd⟩ := ⟨g, rfl⟩
+  let mIdx : DensityMorphismIndex F := ⟨⟨A, F.map g p.snd⟩, pElem, elemMor⟩
   have heq1 : (ccrToFunctorMap (densityFst F)).app A ⟨mIdx, 𝟙 A⟩ =
-      ⟨⟨A, F.map g y⟩, 𝟙 A⟩ := by
-    simp only [ccrToFunctorMap_app, ccrEvalMk, densityFst_reindex,
-      densityFst_fiberMor, Category.id_comp]
+      ⟨⟨A, F.map g p.snd⟩, 𝟙 A⟩ := by
+    simp only [ccrToFunctorMap_app, ccrToFunctorMapApp, mIdx,
+      DensityMorphismIndex.tgt, densityFst_reindex, densityFst_fiberMor,
+      ccrEvalIndex, ccrEvalMor, ccrEvalMk]
+    refine Sigma.ext rfl ?_
+    simp only [heq_eq_eq]
+    exact Category.id_comp _
   have heq2 : (ccrToFunctorMap (densitySnd F)).app A ⟨mIdx, 𝟙 A⟩ =
-      ⟨⟨d, y⟩, g ≫ 𝟙 A⟩ := by
-    simp only [ccrToFunctorMap_app, ccrEvalMk, densitySnd_reindex,
-      densitySnd_fiberMor, mIdx, DensityMorphismIndex.src,
-      DensityMorphismIndex.hom, elemMor]
+      ⟨p, g ≫ 𝟙 A⟩ := by
+    simp only [ccrToFunctorMap_app, ccrToFunctorMapApp]
+    simp only [mIdx, DensityMorphismIndex.src, DensityMorphismIndex.hom,
+      densitySnd_reindex, densitySnd_fiberMor, ccrEvalIndex, ccrEvalMor,
+      ccrEvalMk, pElem, elemMor]
   have hcond := congrFun
-    ((densityPresentation F).toCopresheaf_condition.symm)
+    (congrArg (·.app A) (densityPresentation F).toCopresheaf_condition.symm)
     (⟨mIdx, 𝟙 A⟩ : ccrEval (densitySrc F) A)
   simp only [NatTrans.comp_app, types_comp_apply,
     PolyPresentation.toCopresheafπ, densityPresentation_fst,
@@ -396,32 +368,35 @@ def densityIso : (densityPresentation F).toCopresheaf ≅ F :=
   NatIso.ofComponents
     (fun A => {
       hom := CoequalizerData.desc _ _ (densityToFunctorApp F A)
-        (congrFun (densityToFunctorApp_coequalizes F A))
+        (densityToFunctorApp_coequalizes F A)
       inv := (densityPresentation F).toCopresheafπ.app A ∘
         functorToDensityApp F A
       hom_inv_id := by
-        apply CoequalizerData.uniq
-        ext ⟨p, g⟩
-        simp only [types_comp_apply, types_id_apply,
-          CoequalizerData.fac, functorToDensityApp,
-          PolyPresentation.toCopresheafπ]
+        ext x
+        revert x
+        apply Quot.ind
+        intro ⟨p, g⟩
+        simp only [types_comp_apply, types_id_apply, Function.comp_apply,
+          PolyPresentation.toCopresheaf, CoequalizerData.coeq, functorCoeq,
+          CoequalizerData.desc, typeCoeqDesc,
+          CoequalizerData.π, typeCoeqπ]
+        -- Goal: π(functorToDensityApp(densityToFunctorApp(p, g))) = π(p, g)
         exact functorToDensity_densityToFunctor F A ⟨p, g⟩
       inv_hom_id := by
         ext y
-        simp only [types_comp_apply, types_id_apply,
-          CoequalizerData.fac, functorToDensityApp]
+        simp only [types_comp_apply, types_id_apply]
         exact densityToFunctor_functorToDensity F A y })
     (fun {A B} f => by
       ext x
       revert x
       apply Quot.ind
       intro ⟨p, g⟩
-      simp only [types_comp_apply, NatIso.ofComponents_hom_app,
+      simp only [types_comp_apply,
         PolyPresentation.toCopresheaf, CoequalizerData.coeq,
-        functorCoeq, CoequalizerData.desc, functorCoeqDesc,
-        CoequalizerData.π, functorCoeqπ, typeCoeqπ, typeCoeqDesc,
-        densityToFunctorApp]
-      rw [← F.map_comp]
+        functorCoeq, CoequalizerData.desc,
+        CoequalizerData.π, typeCoeqπ, typeCoeqDesc,
+        densityToFunctorApp, ccrToFunctor, ccrEvalMap]
+      rw [F.map_comp]
       rfl)
 
 end DensityIsomorphism
@@ -435,7 +410,7 @@ in PolyPresentationLoc.
 
 section DensityFunctor
 
-variable {F G : D ⥤ Type (max w v)}
+variable {F G : D ⥤ Type (max u w v)}
 
 /-! ### Induced Map on Elements
 
@@ -458,9 +433,13 @@ def densityElementsHom (α : F ⟶ G) {p q : F.Elements} (f : p ⟶ q) :
     densityElementsObj α p ⟶ densityElementsObj α q :=
   ⟨f.val, by
     simp only [densityElementsObj]
-    rw [← α.naturality f.val]
-    simp only [types_comp_apply]
-    rw [CategoryOfElements.map_snd f]⟩
+    have nat := congrFun (α.naturality f.val).symm p.snd
+    simp only [types_comp_apply] at nat
+    rw [nat, CategoryOfElements.map_snd f]⟩
+
+@[simp]
+theorem densityElementsHom_val (α : F ⟶ G) {p q : F.Elements} (f : p ⟶ q) :
+    (densityElementsHom α f).val = f.val := rfl
 
 /--
 Map on morphism indices induced by a natural transformation.
@@ -515,31 +494,30 @@ theorem densitySrcMap_fiberMor (α : F ⟶ G) (m : DensityMorphismIndex F) :
 The induced maps commute with the first parallel morphism.
 -/
 theorem densityMap_fst_comm (α : F ⟶ G) :
-    densitySrcMap α ≫ densityFst G = densityFst F ≫ densityTgtMap α := by
-  apply ccrHomExt
-  · intro m
-    simp only [ccrHomComp_reindex, densitySrcMap_reindex, densityFst_reindex,
-      densityMorphismIndexMap, densityTgtMap_reindex, DensityMorphismIndex.tgt]
-  · intro m
-    simp only [ccrHomComp_fiberMor, densitySrcMap_reindex, densitySrcMap_fiberMor,
-      densityFst_fiberMor, Category.id_comp, densityMorphismIndexMap,
-      densityTgtMap_fiberMor, Category.comp_id, DensityMorphismIndex.tgt]
+    densitySrcMap α ≫ densityFst G = densityFst F ≫ densityTgtMap α := rfl
 
 /--
 The induced maps commute with the second parallel morphism.
 -/
 theorem densityMap_snd_comm (α : F ⟶ G) :
     densitySrcMap α ≫ densitySnd G = densitySnd F ≫ densityTgtMap α := by
-  apply ccrHomExt
-  · intro m
-    simp only [ccrHomComp_reindex, densitySrcMap_reindex, densitySnd_reindex,
-      densityMorphismIndexMap, densityElementsObj, densityTgtMap_reindex,
-      DensityMorphismIndex.src]
-  · intro m
-    simp only [ccrHomComp_fiberMor, densitySrcMap_reindex, densitySrcMap_fiberMor,
-      densitySnd_fiberMor, Category.id_comp, densityMorphismIndexMap,
-      densityElementsHom, densityTgtMap_fiberMor, Category.comp_id,
-      DensityMorphismIndex.hom]
+  refine ccrHom_ext _ _ ?hbase ?hfiber
+  case hbase => rfl
+  case hfiber =>
+    simp only [eqToHom_refl, Category.comp_id]
+    funext m
+    change (GrothendieckContra'.comp (densitySrcMap α) (densitySnd G)).fiber m =
+           (GrothendieckContra'.comp (densitySnd F) (densityTgtMap α)).fiber m
+    unfold GrothendieckContra'.comp
+    simp only [densitySrcMap, densitySnd, densityTgtMap, ccrHomMk,
+      densityMorphismIndexMap, eqToHom_refl, Category.comp_id]
+    rw [piOp'_comp_at_idx, piOp'_comp_at_idx]
+    dsimp only [Functor.comp_map, familyFunctor, familyMap, Cat.opFunctor',
+      Functor.op', functorOp'Obj, ccrFamily, DensityMorphismIndex.hom,
+      densityMorphismIndexMap, densityTgt, densitySrc, densityElementsObj,
+      DensityMorphismIndex.src, ccrObjMk, DensityMorphismIndex.tgt]
+    simp only [densityElementsHom_val, Category.comp_id]
+    exact (Category.id_comp _).symm
 
 /-! ### The Induced Morphism of Presentations -/
 
@@ -571,55 +549,65 @@ The identity natural transformation induces the identity morphism.
 theorem densityPresentationMap_id :
     densityPresentationMap (𝟙 F) = 𝟙 (densityPresentation F) := by
   apply PolyPresentation.Hom.ext
-  · apply ccrHomExt
-    · intro m
-      simp only [densityPresentationMap_srcHom, densitySrcMap_reindex,
-        densityMorphismIndexMap, densityElementsObj, densityElementsHom,
-        NatTrans.id_app, DensityMorphismIndex.tgt, DensityMorphismIndex.src,
-        DensityMorphismIndex.hom, PolyPresentation.id_srcHom']
+  · refine ccrHom_ext _ _ ?_ ?_
+    · ext m
+      simp only [densityPresentationMap_srcHom, PolyPresentation.id_srcHom']
       rfl
-    · intro m
-      simp only [densityPresentationMap_srcHom, densitySrcMap_fiberMor,
-        PolyPresentation.id_srcHom', ccrIdMk_fiberMor]
-  · apply ccrHomExt
-    · intro p
-      simp only [densityPresentationMap_tgtHom, densityTgtMap_reindex,
-        densityElementsObj, NatTrans.id_app, PolyPresentation.id_tgtHom']
+    · funext m
+      simp only [densityPresentationMap_srcHom, PolyPresentation.id_srcHom',
+        eqToHom_refl, Category.comp_id]
       rfl
-    · intro p
-      simp only [densityPresentationMap_tgtHom, densityTgtMap_fiberMor,
-        PolyPresentation.id_tgtHom', ccrIdMk_fiberMor]
+  · refine ccrHom_ext _ _ ?_ ?_
+    · ext p
+      simp only [densityPresentationMap_tgtHom, PolyPresentation.id_tgtHom']
+      rfl
+    · funext p
+      simp only [densityPresentationMap_tgtHom, PolyPresentation.id_tgtHom',
+        eqToHom_refl, Category.comp_id]
+      rfl
 
 variable {F}
 
 /--
 Composition of natural transformations induces composition of morphisms.
 -/
-theorem densityPresentationMap_comp {H : D ⥤ Type (max w v)} (α : F ⟶ G) (β : G ⟶ H) :
+theorem densityPresentationMap_comp {H : D ⥤ Type (max u w v)} (α : F ⟶ G) (β : G ⟶ H) :
     densityPresentationMap (α ≫ β) =
     densityPresentationMap α ≫ densityPresentationMap β := by
   apply PolyPresentation.Hom.ext
-  · apply ccrHomExt
-    · intro m
-      simp only [densityPresentationMap_srcHom, densitySrcMap_reindex,
-        densityMorphismIndexMap, densityElementsObj, densityElementsHom,
-        NatTrans.comp_app, PolyPresentation.comp_srcHom', ccrHomComp_reindex,
-        DensityMorphismIndex.tgt, DensityMorphismIndex.src, DensityMorphismIndex.hom]
+  · refine ccrHom_ext _ _ ?_ ?_
+    · ext m
+      simp only [densityPresentationMap_srcHom, PolyPresentation.comp_srcHom']
       rfl
-    · intro m
-      simp only [densityPresentationMap_srcHom, densitySrcMap_fiberMor,
-        PolyPresentation.comp_srcHom', ccrHomComp_fiberMor, densitySrcMap_reindex,
-        Category.id_comp]
-  · apply ccrHomExt
-    · intro p
-      simp only [densityPresentationMap_tgtHom, densityTgtMap_reindex,
-        densityElementsObj, NatTrans.comp_app, PolyPresentation.comp_tgtHom',
-        ccrHomComp_reindex]
+    · funext m
+      simp only [densityPresentationMap_srcHom, PolyPresentation.comp_srcHom',
+        eqToHom_refl, Category.comp_id]
+      change (densitySrcMap (α ≫ β)).fiber m =
+             (GrothendieckContra'.comp (densitySrcMap α) (densitySrcMap β)).fiber m
+      unfold GrothendieckContra'.comp
+      simp only [densitySrcMap, ccrHomMk, eqToHom_refl, Category.comp_id]
+      rw [piOp'_comp_at_idx]
+      dsimp only [Functor.comp_map, familyFunctor, familyMap, Cat.opFunctor',
+        Functor.op', functorOp'Obj, ccrFamily, densityMorphismIndexMap,
+        densitySrc, ccrObjMk, DensityMorphismIndex.src, DensityMorphismIndex.tgt,
+        densityElementsObj]
+      exact (Category.id_comp _).symm
+  · refine ccrHom_ext _ _ ?_ ?_
+    · ext p
+      simp only [densityPresentationMap_tgtHom, PolyPresentation.comp_tgtHom']
       rfl
-    · intro p
-      simp only [densityPresentationMap_tgtHom, densityTgtMap_fiberMor,
-        PolyPresentation.comp_tgtHom', ccrHomComp_fiberMor, densityTgtMap_reindex,
-        Category.id_comp]
+    · funext p
+      simp only [densityPresentationMap_tgtHom, PolyPresentation.comp_tgtHom',
+        eqToHom_refl, Category.comp_id]
+      change (densityTgtMap (α ≫ β)).fiber p =
+             (GrothendieckContra'.comp (densityTgtMap α) (densityTgtMap β)).fiber p
+      unfold GrothendieckContra'.comp
+      simp only [densityTgtMap, ccrHomMk, eqToHom_refl, Category.comp_id]
+      rw [piOp'_comp_at_idx]
+      dsimp only [Functor.comp_map, familyFunctor, familyMap, Cat.opFunctor',
+        Functor.op', functorOp'Obj, ccrFamily, densityElementsObj,
+        densityTgt, ccrObjMk]
+      exact (Category.id_comp _).symm
 
 end DensityFunctor
 
@@ -641,10 +629,12 @@ For a copresheaf F, we get densityPresentation F whose coequalizer is
 isomorphic to F via the density isomorphism.
 -/
 def densityPresentationFunctor :
-    (D ⥤ Type (max w v)) ⥤ PolyPresentationLoc.{u, v, max u w v} D where
+    (D ⥤ Type (max u w v)) ⥤ PolyPresentationLoc.{u, v, max u w v} D where
   obj F := PolyPresentationLoc.ofPres (densityPresentation F)
-  map α := PolyPresentationLoc.Hom.mk'
-    ((densityPresentationMap α).toQ)
+  map {F G} α :=
+    let m : PolyPresentation.Hom (densityPresentation F) (densityPresentation G) :=
+      densityPresentationMap α
+    PolyPresentationLoc.Hom.mk' m.toQHom
   map_id F := by
     apply Quot.sound
     unfold PolyPresentationQ.Hom.equiv
@@ -681,7 +671,7 @@ Each index i of X.tgt maps to an element of (X.toCopresheaf).Elements via the
 coequalizer projection.
 -/
 
-variable (X : PolyPresentation.{u, v, w} D)
+variable (X : PolyPresentation.{u, v, max u w v} D)
 
 /--
 Map an index of X.tgt to an element of (X.toCopresheaf).Elements.
@@ -712,7 +702,7 @@ theorem comparisonTgtHom_fiberMor (i : ccrIndex X.tgt) :
 Helper: elements with equal images under densityToFunctorApp are equal
 in the density coequalizer.
 -/
-theorem densityCoeq_eq_of_toFunctor_eq (F : D ⥤ Type (max w v)) (A : D)
+theorem densityCoeq_eq_of_toFunctor_eq (F : D ⥤ Type (max u w v)) (A : D)
     (x y : ccrEval (densityTgt F) A)
     (h : densityToFunctorApp F A x = densityToFunctorApp F A y) :
     (densityPresentation F).toCopresheafπ.app A x =
@@ -722,22 +712,35 @@ theorem densityCoeq_eq_of_toFunctor_eq (F : D ⥤ Type (max w v)) (A : D)
   -- So h implies π(x) = π(y)
   have hinj : Function.Injective ((densityIso F).hom.app A) := by
     intro a b hab
-    have : (densityIso F).inv.app A ((densityIso F).hom.app A a) =
-           (densityIso F).inv.app A ((densityIso F).hom.app A b) := by
-      rw [hab]
-    simp only [Iso.inv_hom_id_app, types_id_apply] at this
-    exact this
+    have h1 : (densityIso F).inv.app A ((densityIso F).hom.app A a) = a := by
+      have := congrFun (congrArg NatTrans.app (densityIso F).hom_inv_id) A
+      simp only [NatTrans.comp_app, NatTrans.id_app] at this
+      exact congrFun this a
+    have h2 : (densityIso F).inv.app A ((densityIso F).hom.app A b) = b := by
+      have := congrFun (congrArg NatTrans.app (densityIso F).hom_inv_id) A
+      simp only [NatTrans.comp_app, NatTrans.id_app] at this
+      exact congrFun this b
+    rw [← h1, ← h2, hab]
   apply hinj
   simp only [densityIso, NatIso.ofComponents_hom_app]
   -- The hom is defined via CoequalizerData.desc, which satisfies
   -- desc ∘ π = the original map (densityToFunctorApp)
+  -- Unfold toCopresheafπ to get the component-level π
+  -- functorCoequalizerData.π unfolds to functorCoeqπ which applies
+  -- the Type-level π at each component
+  simp only [PolyPresentation.toCopresheafπ, functorCoequalizerData, functorCoeqπ]
+  -- Now the goal has CoequalizerData.π (fst.app A) (snd.app A) applied to x and y
   have hfac := CoequalizerData.fac
-    (ccrToFunctorMap (densityPresentation F).fst)
-    (ccrToFunctorMap (densityPresentation F).snd)
+    ((ccrToFunctorMap (densityPresentation F).fst).app A)
+    ((ccrToFunctorMap (densityPresentation F).snd).app A)
     (densityToFunctorApp F A)
-    (congrFun (densityToFunctorApp_coequalizes F A))
-  simp only [types_comp_apply] at hfac
-  rw [hfac, hfac]
+    (densityToFunctorApp_coequalizes F A)
+  -- hfac : π ≫ desc = densityToFunctorApp F A
+  -- Apply pointwise: desc (π x) = densityToFunctorApp F A x
+  have h1 := congrFun hfac x
+  have h2 := congrFun hfac y
+  simp only [types_comp_apply] at h1 h2
+  rw [h1, h2]
   exact h
 
 /--
@@ -750,13 +753,12 @@ theorem comparisonTgtHom_respects :
       (densityPresentation X.toCopresheaf).toCopresheafπ := by
   ext A ⟨j, g⟩
   simp only [NatTrans.comp_app, types_comp_apply, ccrToFunctorMap_app,
-    ccrEvalMk, ccrHomComp_reindex, ccrHomComp_fiberMor,
-    comparisonTgtHom_reindex, comparisonTgtHom_fiberMor,
-    Category.id_comp, comparisonTgtReindex]
+    ccrToFunctorMapApp, ccrEvalMk, comparisonTgtHom_reindex,
+    comparisonTgtHom_fiberMor, Category.id_comp, comparisonTgtReindex]
   -- Apply the helper: show images under densityToFunctorApp are equal
   apply densityCoeq_eq_of_toFunctor_eq
   -- Now show densityToFunctorApp gives equal results
-  simp only [densityToFunctorApp]
+  simp only [densityToFunctorApp, ccrEvalMor, ccrEvalIndex]
   -- LHS: F.map (ccrFiberMor X.fst j ≫ g) (π⟨ccrReindex X.fst j, 𝟙⟩)
   -- RHS: F.map (ccrFiberMor X.snd j ≫ g) (π⟨ccrReindex X.snd j, 𝟙⟩)
   -- By naturality of π and the coequalizer condition for X
@@ -768,16 +770,16 @@ theorem comparisonTgtHom_respects :
       X.toCopresheafπ.app _ ⟨ccrReindex X.fst j, ccrFiberMor X.fst j⟩ := by
     have := congrFun (X.toCopresheafπ.naturality (ccrFiberMor X.fst j))
       ⟨ccrReindex X.fst j, 𝟙 _⟩
-    simp only [ccrToFunctor_map, ccrEvalMap, ccrEvalMk_index, ccrEvalMk_mor,
-      Category.id_comp, types_comp_apply] at this
+    simp only [ccrToFunctor, ccrEvalMap, Category.id_comp,
+      types_comp_apply] at this
     exact this.symm
   have hπ_nat_snd : X.toCopresheaf.map (ccrFiberMor X.snd j)
       (X.toCopresheafπ.app _ ⟨ccrReindex X.snd j, 𝟙 _⟩) =
       X.toCopresheafπ.app _ ⟨ccrReindex X.snd j, ccrFiberMor X.snd j⟩ := by
     have := congrFun (X.toCopresheafπ.naturality (ccrFiberMor X.snd j))
       ⟨ccrReindex X.snd j, 𝟙 _⟩
-    simp only [ccrToFunctor_map, ccrEvalMap, ccrEvalMk_index, ccrEvalMk_mor,
-      Category.id_comp, types_comp_apply] at this
+    simp only [ccrToFunctor, ccrEvalMap, Category.id_comp,
+      types_comp_apply] at this
     exact this.symm
   rw [hπ_nat_fst, hπ_nat_snd]
   -- Now use naturality again with g
@@ -785,14 +787,14 @@ theorem comparisonTgtHom_respects :
       ⟨ccrReindex X.fst j, ccrFiberMor X.fst j⟩
   have hπ_nat_snd' := congrFun (X.toCopresheafπ.naturality g)
       ⟨ccrReindex X.snd j, ccrFiberMor X.snd j⟩
-  simp only [ccrToFunctor_map, ccrEvalMap, ccrEvalMk_index, ccrEvalMk_mor,
-    types_comp_apply] at hπ_nat_fst' hπ_nat_snd'
-  rw [hπ_nat_fst', hπ_nat_snd']
+  simp only [ccrToFunctor, ccrEvalMap, types_comp_apply] at hπ_nat_fst' hπ_nat_snd'
+  rw [← hπ_nat_fst', ← hπ_nat_snd']
   -- Now the goal is: π⟨fstIdx, fstFiber ≫ g⟩ = π⟨sndIdx, sndFiber ≫ g⟩
   -- This is exactly X.toCopresheaf_condition at ⟨j, g⟩
-  have hX := congrFun (X.toCopresheaf_condition) (⟨j, g⟩ : ccrEval X.src A)
-  simp only [PolyPresentation.toCopresheafπ, NatTrans.comp_app, types_comp_apply,
-    ccrToFunctorMap_app, ccrEvalMk] at hX
+  have hXcomp := congrFun (congrArg NatTrans.app X.toCopresheaf_condition) A
+  have hX := congrFun hXcomp (⟨j, g⟩ : ccrEval X.src A)
+  simp only [NatTrans.comp_app, types_comp_apply, ccrToFunctorMap_app,
+    ccrToFunctorMapApp] at hX
   exact hX
 
 /--
@@ -810,30 +812,23 @@ inverse of the density isomorphism.
 -/
 theorem comparisonMorphismQ_toInducedMap :
     (comparisonMorphismQ X).toInducedMap = (densityIso X.toCopresheaf).inv := by
+  symm
   apply CoequalizerData.uniq
+  -- Goal: X.toCopresheafπ ≫ densityIso.inv =
+  --       ccrToFunctorMap tgtHom ≫ density.toCopresheafπ
   ext A ⟨i, g⟩
-  simp only [NatTrans.comp_app, types_comp_apply, PolyPresentationQ.Hom.toInducedMap,
-    CoequalizerData.fac, ccrToFunctorMap_app, ccrEvalMk, comparisonMorphismQ,
-    comparisonTgtHom_reindex, comparisonTgtHom_fiberMor, Category.id_comp,
-    comparisonTgtReindex, PolyPresentation.toCopresheafπ, densityIso,
-    NatIso.ofComponents_inv_app]
-  -- LHS: density_π (⟨(ccrFamily i, X.π⟨i, 𝟙⟩), g⟩)
-  -- RHS: X.π ∘ functorToDensityApp
-  -- The inverse of densityIso sends y to density_π(⟨(A, y), 𝟙⟩)
-  -- We want density_π(⟨(ccrFamily i, X.π⟨i, 𝟙⟩), g⟩) =
-  --        density_π(⟨(A, X.π⟨i, g⟩), 𝟙⟩)
-  -- Use naturality: X.π⟨i, 𝟙⟩ under map g gives X.π⟨i, g⟩
-  simp only [functorToDensityApp]
-  -- The density coequalizer relation identifies these elements
+  simp only [NatTrans.comp_app, types_comp_apply, densityIso,
+    NatIso.ofComponents_inv_app, Function.comp_apply,
+    ccrToFunctorMap_app, ccrToFunctorMapApp, comparisonMorphismQ,
+    comparisonTgtHom_reindex, comparisonTgtHom_fiberMor,
+    comparisonTgtReindex, functorToDensityApp]
   apply densityCoeq_eq_of_toFunctor_eq
-  simp only [densityToFunctorApp]
-  -- LHS: X.toCopresheaf.map g (X.π⟨i, 𝟙⟩)
-  -- RHS: X.toCopresheaf.map 𝟙 (X.π⟨i, g⟩) = X.π⟨i, g⟩
-  simp only [X.toCopresheaf.map_id, types_id_apply]
-  -- Use naturality of X.π
+  simp only [densityToFunctorApp, ccrEvalMk, ccrEvalIndex, ccrEvalMor, densityTgt_family]
+  rw [X.toCopresheaf.map_id]
+  simp only [types_id_apply]
   have hnat := congrFun (X.toCopresheafπ.naturality g) ⟨i, 𝟙 _⟩
-  simp only [ccrToFunctor_map, ccrEvalMap, ccrEvalMk_index, ccrEvalMk_mor,
-    Category.id_comp, types_comp_apply] at hnat
+  simp only [types_comp_apply, ccrToFunctor, ccrEvalMap, Category.id_comp] at hnat
+  rw [show 𝟙 (ccrFamily X.tgt i) ≫ g = g from Category.id_comp g]
   exact hnat
 
 /--
@@ -849,8 +844,11 @@ The comparison morphism induces an isomorphism on coequalizers.
 -/
 theorem comparisonMorphism_isIso :
     IsIso (polyPresentationLocEvalFunctor.map (comparisonMorphism X)) := by
-  simp only [polyPresentationLocEvalFunctor, comparisonMorphism,
-    PolyPresentationLoc.Hom.toInducedMap', comparisonMorphismQ_toInducedMap]
+  change IsIso (PolyPresentationLoc.Hom.toInducedMap' (comparisonMorphism X))
+  change IsIso (PolyPresentationLoc.Hom.toInducedMap'
+    (PolyPresentationLoc.Hom.mk' (comparisonMorphismQ X)))
+  change IsIso ((comparisonMorphismQ X).toInducedMap)
+  rw [comparisonMorphismQ_toInducedMap]
   infer_instance
 
 /-! ### Naturality of the Comparison
@@ -863,44 +861,75 @@ variable {X}
 /--
 The comparison morphism is natural: for f : X → Y, the square commutes.
 -/
-theorem comparisonMorphism_naturality {Y : PolyPresentation.{u, v, w} D}
+theorem comparisonMorphism_naturality {Y : PolyPresentation.{u, v, max u w v} D}
     (f : X ⟶ Y) :
+    let fQ : PolyPresentationQ.Hom X.toQ Y.toQ :=
+      ⟨f.tgtHom, PolyPresentation.Hom.respectsCoequalization f⟩
     comparisonMorphism X ≫
-      PolyPresentationLoc.Hom.mk' (densityPresentationMap
-        (polyPresentationLocEvalFunctor.map
-          (PolyPresentationLoc.Hom.mk' f.toQ))).toQ =
-    PolyPresentationLoc.Hom.mk' f.toQ ≫ comparisonMorphism Y := by
-  -- Both sides are in PolyPresentationLoc, so they're equal iff
-  -- they induce the same map on coequalizers
+      PolyPresentationLoc.Hom.mk' (PolyPresentation.Hom.toQHom
+        (densityPresentationMap
+          (polyPresentationLocEvalFunctor.map
+            (PolyPresentationLoc.Hom.mk' fQ)))) =
+    PolyPresentationLoc.Hom.mk' fQ ≫ comparisonMorphism Y := by
   apply Quot.sound
   unfold PolyPresentationQ.Hom.equiv
-  -- The induced maps:
-  -- LHS: (densityIso X.toCopresheaf).inv ≫ E(S(f.toCopresheafHom))
-  -- RHS: f.toCopresheafHom ≫ (densityIso Y.toCopresheaf).inv
-  -- By naturality of densityIso.inv, these are equal
-  simp only [PolyPresentationQ.Hom.toInducedMap_comp,
-    PolyPresentationLoc.Hom.comp', PolyPresentationLoc.Hom.compLift2,
-    PolyPresentationLoc.Hom.compRep, PolyPresentationLoc.Hom.mk',
-    PolyPresentationQ.Hom.toInducedMap, comparisonMorphism,
-    comparisonMorphismQ, comparisonMorphismQ_toInducedMap,
-    polyPresentationLocEvalFunctor]
-  -- Need to show the equality of composed maps
-  ext A
-  simp only [NatTrans.comp_app, types_comp_apply]
-  -- Use naturality of densityIso
-  have hnat := (densityIso (D := D)).inv.naturality
-    (PolyPresentation.toCopresheafHom f)
-  simp only [NatTrans.comp_app, types_comp_apply] at hnat
-  intro x
-  rw [← hnat]
+  simp only [comparisonMorphismQ, PolyPresentationQ.Hom.comp,
+    PolyPresentationQ.Hom.toInducedMap]
   congr 1
-  -- Show that densityPresentationMap(f.toCopresheafHom).toInducedMap
-  -- equals (densityIso Y).hom ≫ f.toCopresheafHom ≫ (densityIso X).inv
-  -- on the image of (densityIso X).inv
-  simp only [densityIso, NatIso.ofComponents_inv_app, NatIso.ofComponents_hom_app,
-    PolyPresentation.toCopresheafHom, PolyPresentationQ.Hom.toInducedMap]
-  -- This requires showing the density functor respects the induced maps
-  rfl
+  simp only [ccrToFunctorMap_comp, Category.assoc]
+  -- Goal: show both paths from ccrToFunctor X.tgt to density coequalizer are equal
+  ext A ⟨i, g⟩
+  simp only [NatTrans.comp_app, types_comp_apply, ccrToFunctorMap_app, ccrToFunctorMapApp]
+  -- Reduce to showing densityToFunctorApp gives same result on both elements
+  apply densityCoeq_eq_of_toFunctor_eq
+  simp only [densityToFunctorApp, ccrEvalMk, ccrEvalIndex, ccrEvalMor]
+  -- LHS: Y.toCopresheaf.map g (induced.app _ (π⟨i, 𝟙⟩))
+  -- RHS: Y.toCopresheaf.map (ccrFiberMor f.tgtHom i ≫ g) (π⟨ccrReindex f.tgtHom i, 𝟙⟩)
+  -- Use the factorization property of the induced map
+  let induced := (PolyPresentationLoc.Hom.mk'
+      (⟨f.tgtHom, PolyPresentation.Hom.respectsCoequalization f⟩ :
+       PolyPresentationQ.Hom X.toQ Y.toQ)).toInducedMap'
+  have hfac : X.toCopresheafπ ≫ induced = ccrToFunctorMap f.tgtHom ≫ Y.toCopresheafπ := by
+    apply PolyPresentationQ.Hom.toInducedMap_fac
+  -- Extract component at ccrFamily i
+  have hfac_pt : induced.app (ccrFamily X.tgt i)
+      (X.toCopresheafπ.app (ccrFamily X.tgt i) ⟨i, 𝟙 _⟩) =
+      Y.toCopresheafπ.app (ccrFamily X.tgt i)
+        ⟨ccrReindex f.tgtHom i, ccrFiberMor f.tgtHom i⟩ := by
+    have := congrFun (congrArg NatTrans.app hfac) (ccrFamily X.tgt i)
+    have h2 := congrFun this ⟨i, 𝟙 _⟩
+    simp only [NatTrans.comp_app, types_comp_apply, ccrToFunctorMap_app,
+      ccrToFunctorMapApp, ccrEvalMk, ccrEvalIndex, ccrEvalMor] at h2
+    rw [Category.comp_id] at h2
+    exact h2
+  -- The goal involves polyPresentationLocEvalFunctor which evaluates to toCopresheaf
+  -- Simplify functor application
+  simp only [polyPresentationLocEvalFunctor, PolyPresentationLoc.ofPres] at *
+  change Y.toCopresheaf.map (𝟙 _ ≫ 𝟙 _ ≫ g)
+      (induced.app (ccrFamily X.tgt i)
+        (X.toCopresheafπ.app (ccrFamily X.tgt i) ⟨i, 𝟙 _⟩)) =
+    Y.toCopresheaf.map (𝟙 _ ≫ ccrFiberMor f.tgtHom i ≫ g)
+      (Y.toCopresheafπ.app (ccrFamily Y.tgt (ccrReindex f.tgtHom i))
+        ⟨ccrReindex f.tgtHom i, 𝟙 _⟩)
+  -- Simplify identity compositions
+  simp only [Category.id_comp]
+  -- Apply factorization: induced.app _ (π⟨i, 𝟙⟩) = π⟨ccrReindex f.tgtHom i, ccrFiberMor f.tgtHom i⟩
+  rw [hfac_pt]
+  -- Use naturality of Y.toCopresheafπ to rewrite both sides
+  -- Naturality: F.map(g)(π(source)(⟨j, fiber⟩)) = π(A)(⟨j, fiber ≫ g⟩)
+  -- For LHS: F.map(g)(π(⟨j, fiber⟩)) → π(A)(⟨j, fiber ≫ g⟩)
+  have hπnat_lhs := congrFun (Y.toCopresheafπ.naturality g)
+      ⟨ccrReindex f.tgtHom i, ccrFiberMor f.tgtHom i⟩
+  simp only [ccrToFunctor, ccrEvalMap, types_comp_apply] at hπnat_lhs
+  -- For RHS: F.map(fiber ≫ g)(π(⟨j, 𝟙⟩)) → π(A)(⟨j, 𝟙 ≫ fiber ≫ g⟩) = π(A)(⟨j, fiber ≫ g⟩)
+  have hπnat_rhs := congrFun (Y.toCopresheafπ.naturality (ccrFiberMor f.tgtHom i ≫ g))
+      ⟨ccrReindex f.tgtHom i, 𝟙 _⟩
+  simp only [ccrToFunctor, ccrEvalMap, types_comp_apply, Category.id_comp] at hπnat_rhs
+  -- Both sides equal Y.toCopresheafπ.app A ⟨ccrReindex ..., ccrFiberMor ... ≫ g⟩
+  -- Use transitivity through the common term
+  trans Y.toCopresheafπ.app A ⟨ccrReindex f.tgtHom i, ccrFiberMor f.tgtHom i ≫ g⟩
+  · exact hπnat_lhs.symm
+  · exact hπnat_rhs
 
 /-! ### Counit Naturality
 
@@ -912,24 +941,83 @@ making it the counit of the adjunction.
 The counit of the adjunction: E ∘ S → Id.
 This is just the density isomorphism assembled into a natural isomorphism.
 -/
-def counitIso : polyPresentationLocEvalFunctor (D := D) ⋙
-    densityPresentationFunctor D ⋙ polyPresentationLocEvalFunctor ≅
-    polyPresentationLocEvalFunctor := by
+def counitIso :
+    polyPresentationLocEvalFunctor.{u, v, max u w v} (D := D) ⋙
+    densityPresentationFunctor.{u, v, w} D ⋙
+    polyPresentationLocEvalFunctor.{u, v, max u w v} ≅
+    polyPresentationLocEvalFunctor.{u, v, max u w v} := by
   refine NatIso.ofComponents (fun X => ?_) (fun f => ?_)
   · -- Component at X: (densityPresentation X.toCopresheaf).toCopresheaf ≅ X.toCopresheaf
     exact densityIso X.toPres.toCopresheaf
   · -- Naturality
-    simp only [Functor.comp_obj, Functor.comp_map, densityPresentationFunctor,
-      polyPresentationLocEvalFunctor, PolyPresentationLoc.Hom.toInducedMap']
     ext A x
-    revert x
-    apply Quot.ind
-    intro x'
-    simp only [NatTrans.comp_app, types_comp_apply]
-    -- Use naturality of densityIso
-    have hnat := (densityIso (D := D)).hom.naturality
-      (PolyPresentationLoc.Hom.toInducedMap' f)
-    exact congrFun (congrFun hnat A) (Quot.mk _ x')
+    simp only [Functor.comp_obj, Functor.comp_map,
+      NatTrans.comp_app, types_comp_apply]
+    simp only [densityPresentationFunctor, polyPresentationLocEvalFunctor,
+      densityIso, NatIso.ofComponents_hom_app]
+    induction f using Quot.ind with
+    | _ f' =>
+      revert x
+      apply Quot.ind
+      intro x'
+      -- Naturality: densityIso.hom ≫ induced = densityPresentationMap induced ≫ densityIso.hom
+      -- x' = ⟨(B, y), f⟩ where y : X.toCopresheaf.obj B and f : B → A
+      -- LHS: density(Y).hom (π(B, induced y), f) = Y.map f (induced y)
+      -- RHS: induced (density(X).hom (π(B, y), f)) = induced (X.map f y) = Y.map f (induced y)
+      -- Both equal by naturality of induced
+      obtain ⟨⟨B, y⟩, g⟩ := x'
+      -- First decompose y as Quot.mk to allow reduction
+      induction y using Quot.ind with
+      | mk y' =>
+        -- The goal is: densityIso(Y).hom ∘ (densityPresentationMap f'.toInducedMap).toInducedMap
+        --            = f'.toInducedMap ∘ densityIso(X).hom
+        -- Both sides reduce to: G.map g (α.app B y') = α.app A (F.map g y')
+        -- which is naturality of α = f'.toInducedMap
+        -- Reduce functorCoeqDesc and CoequalizerData.desc using dsimp
+        dsimp only [functorCoeqDesc, CoequalizerData.desc, CoequalizerData.π, typeCoeqπ,
+          densityPresentationFunctor, polyPresentationLocEvalFunctor,
+          PolyPresentationLoc.toPres, PolyPresentationLoc.ofPres]
+        -- Reduce typeCoeqDesc ... (Quot.mk ...) on RHS
+        simp only [typeCoeqDesc_mk]
+        -- Reduce toInducedMap' which is defined via Quot.lift
+        unfold PolyPresentationLoc.Hom.toInducedMap' PolyPresentationLoc.Hom.mk'
+        -- Reduce PolyPresentationQ.Hom.toInducedMap, PolyPresentation.Hom.toQHom
+        dsimp only [PolyPresentation.Hom.toQHom, PolyPresentationQ.Hom.toInducedMap,
+          functorCoeqDesc, CoequalizerData.desc, PolyPresentationQ.toPres,
+          PolyPresentationLoc.toQ, PolyPresentation.toQ]
+        simp only [typeCoeqDesc_mk]
+        -- Unfold densityToFunctorApp and densityPresentationMap
+        dsimp only [densityToFunctorApp, densityPresentationMap_tgtHom,
+          PolyPresentation.toCopresheaf, functorCoeq, CoequalizerData.π, typeCoeqπ,
+          PolyPresentation.toCopresheafπ, CoequalizerData.coeq, CoequalizerData.desc,
+          ccrToFunctorMap, densityTgtMap, ccrHomMk, ccrReindex, ccrFiberMor,
+          densityElementsObj, functorCoeqπ, NatTrans.comp_app, types_comp_apply,
+          ccrFamily, densityTgt, CategoryTheory.Functor.Elements]
+        simp only [typeCoeqDesc_mk]
+        -- Reduce densityToFunctorApp and ccrToFunctorMapApp
+        dsimp only [densityToFunctorApp, ccrToFunctorMapApp, densityElementsObj,
+          ccrObjMk, CategoryTheory.Functor.Elements]
+        simp only [typeCoeqDesc_mk]
+        -- Reduce ccrEvalMk, ccrEvalIndex, ccrEvalMor, ccrReindex to simplify the match
+        dsimp only [ccrEvalMk, ccrEvalIndex, ccrEvalMor, ccrReindex, ccrFiberMor]
+        -- Unfold densityElementsObj: densityElementsObj α ⟨d, x⟩ = ⟨d, α.app d x⟩
+        -- And densityTgt_family: ccrFamily (densityTgt F) ⟨d, x⟩ = d
+        dsimp only [densityElementsObj, densityTgt_family]
+        -- Reduce the inner typeCoeqDesc ... (Quot.mk ... y')
+        simp only [typeCoeqDesc_mk]
+        -- Reduce (f ≫ Quot.mk) y' to Quot.mk (f y')
+        dsimp only [types_comp_apply]
+        -- Reduce typeCoeqDesc ... (Quot.mk ... x) on both sides
+        simp only [typeCoeqDesc_mk]
+        -- Reduce function application (f ≫ g) x = g (f x)
+        dsimp only [types_comp_apply]
+        -- Both sides are Quot.mk with same relation, reduce to inner equality
+        apply congrArg
+        -- Reduce 𝟙 B ≫ g to g
+        have hg : 𝟙 B ≫ g = g := Category.id_comp g
+        rw [hg]
+        -- Apply naturality of ccrToFunctorMap f'.tgtHom
+        exact congrFun ((ccrToFunctorMap f'.tgtHom).naturality g).symm y'
 
 end Equivalence
 

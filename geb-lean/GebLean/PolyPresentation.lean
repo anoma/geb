@@ -821,6 +821,38 @@ theorem comp {f : X.tgt ⟶ Y.tgt} {g : Y.tgt ⟶ Z.tgt}
 end PolyPresentation.RespectsCoequalization
 
 /--
+Any morphism in `PolyPresentation.Hom` respects coequalization.
+This follows from the commutativity conditions `fst_comm` and `snd_comm`.
+-/
+theorem PolyPresentation.Hom.respectsCoequalization
+    {X Y : PolyPresentation.{u, v, w} D} (f : Hom X Y) :
+    X.RespectsCoequalization Y f.tgtHom := by
+  unfold PolyPresentation.RespectsCoequalization
+  calc ccrToFunctorMap X.fst ≫ ccrToFunctorMap f.tgtHom ≫ Y.toCopresheafπ
+      = (ccrToFunctorMap X.fst ≫ ccrToFunctorMap f.tgtHom) ≫ Y.toCopresheafπ := by
+          simp only [Category.assoc]
+    _ = ccrToFunctorMap (X.fst ≫ f.tgtHom) ≫ Y.toCopresheafπ := by
+          simp only [ccrToFunctorMap_comp]
+    _ = ccrToFunctorMap (f.srcHom ≫ Y.fst) ≫ Y.toCopresheafπ := by
+          rw [f.fst_comm]
+    _ = (ccrToFunctorMap f.srcHom ≫ ccrToFunctorMap Y.fst) ≫ Y.toCopresheafπ := by
+          simp only [ccrToFunctorMap_comp]
+    _ = ccrToFunctorMap f.srcHom ≫ (ccrToFunctorMap Y.fst ≫ Y.toCopresheafπ) := by
+          simp only [Category.assoc]
+    _ = ccrToFunctorMap f.srcHom ≫ (ccrToFunctorMap Y.snd ≫ Y.toCopresheafπ) := by
+          rw [Y.toCopresheaf_condition]
+    _ = (ccrToFunctorMap f.srcHom ≫ ccrToFunctorMap Y.snd) ≫ Y.toCopresheafπ := by
+          simp only [Category.assoc]
+    _ = ccrToFunctorMap (f.srcHom ≫ Y.snd) ≫ Y.toCopresheafπ := by
+          simp only [ccrToFunctorMap_comp]
+    _ = ccrToFunctorMap (X.snd ≫ f.tgtHom) ≫ Y.toCopresheafπ := by
+          rw [f.snd_comm]
+    _ = (ccrToFunctorMap X.snd ≫ ccrToFunctorMap f.tgtHom) ≫ Y.toCopresheafπ := by
+          simp only [ccrToFunctorMap_comp]
+    _ = ccrToFunctorMap X.snd ≫ ccrToFunctorMap f.tgtHom ≫ Y.toCopresheafπ := by
+          simp only [Category.assoc]
+
+/--
 A wrapper type for polynomial presentations with the quotient category structure.
 
 This is the same underlying data as `PolyPresentation`, but with a different
@@ -849,6 +881,17 @@ structure PolyPresentationQ.Hom (X Y : PolyPresentationQ.{u, v, w} D) where
   /-- The morphism respects the coequalization structure -/
   respects : (PolyPresentationQ.toPres D X).RespectsCoequalization
     (PolyPresentationQ.toPres D Y) tgtHom
+
+/--
+Convert a `PolyPresentation.Hom` to a `PolyPresentationQ.Hom`.
+This forgets the source component and uses the fact that any morphism
+of polynomial presentations respects coequalization.
+-/
+def PolyPresentation.Hom.toQHom {X Y : PolyPresentation.{u, v, w} D}
+    (f : PolyPresentation.Hom X Y) :
+    PolyPresentationQ.Hom X.toQ Y.toQ where
+  tgtHom := f.tgtHom
+  respects := f.respectsCoequalization
 
 namespace PolyPresentationQ.Hom
 
