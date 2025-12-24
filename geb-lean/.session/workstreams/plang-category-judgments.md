@@ -32,32 +32,27 @@ The PLang adjunction and PolyPresentation work connect via:
 - [x] Add docstrings to all definitions in CatJudgment.lean
 - [x] Add explicit accessors with natural-language names
 
-### Phase 2A: Embedding Functor Phi_PLang
+### Phase 2A: Embedding Functor Phi_PLang - COMPLETE
 
-- [ ] Define `catToCatJudgCopr`:
-      `(C : Type u) → [Category.{v} C] → CatJudgCopr.{u+1, v+1, u+1, max u v + 1}`
+- [x] Define `catToCatJudgCopr`:
+      `(C : Type u) → [Category.{v} C] → CatJudgCopr.{u, max u v, u, max u v}`
   - obj = C (objects of the category)
-  - mor = Σ (a b : C), (a ⟶ b) (morphisms bundled with endpoints)
+  - mor = BundledHom C = Σ (a b : C), (a ⟶ b)
   - idType = C (identity witnesses = objects)
-  - compType = Σ (a b c : C), (a ⟶ b) × (b ⟶ c) (composable pairs)
-  - Implement dom, cod extracting from sigma types
-  - Implement idMor = λ a => ⟨a, a, 𝟙 a⟩
-  - Implement left, right, composite for composable pairs
-  - Prove id_endo coherence condition
-  - Prove comp_match, comp_dom, comp_cod coherence conditions
+  - compType = ComposablePair C = Σ (a b c : C), (a ⟶ b) × (b ⟶ c)
+  - Implemented dom, cod, idMor, left, right, composite
+  - Proved id_endo, comp_match, comp_dom, comp_cod coherence conditions
 
-- [ ] Define `catFunToCatJudgNatTrans`:
+- [x] Define `functorToCatJudgNatTrans`:
       Given F : C ⥤ D, produce CatJudgNatTrans between their CatJudgCopr values
-  - objMap = F.obj
-  - morMap = Σ-map using F.map
-  - idMap = F.obj (identity witnesses map by functor on objects)
-  - compMap = Σ-map using F.obj and F.map
-  - Prove naturality conditions (dom, cod, idMor, left, right, composite)
+  - Uses functorMapBundledHom and functorMapComposablePair
+  - Proved all naturality conditions (dom, cod, idMor, left, right, composite)
 
-- [ ] Prove functoriality: map_id, map_comp
+- [x] Prove functoriality: functorToCatJudgNatTrans_id, functorToCatJudgNatTrans_comp
 
-- [ ] Define `PhiFunctor_PLang`:
-      `Cat.{v, u} ⥤ CatJudgCopr.{u+1, v+1, u+1, max u v + 1}`
+- [x] Define `PhiFunctor_PLang`:
+      `Cat.{v'+1, u'+1} ⥤ CatJudgCopr.{u'+1, max (u'+1) (v'+1), u'+1, max (u'+1) (v'+1)}`
+      (universe shift required for category structure on target)
 
 ### Phase 2B: Reflection Functor L_PLang
 

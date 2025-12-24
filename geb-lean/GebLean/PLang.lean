@@ -1,4 +1,5 @@
 import GebLean.PLang.CatJudgment
+import GebLean.PLang.CatJudgmentAdjunction
 import GebLean.PLang.CatJudgGrothendieck
 import GebLean.PLang.IndexedEAT
 import GebLean.PLang.JudgmentUniverse
