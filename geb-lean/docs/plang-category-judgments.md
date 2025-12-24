@@ -84,20 +84,124 @@ CatJudgCopr       -- combine identity and composition
 Each layer is a sigma type extending the previous, allowing operations to
 be defined at intermediate stages.
 
-## Relationship to the Adjunction
+## The Adjunction: Cat ⊣ CatJudgCopr
 
-The adjunction `L -| Phi` relates:
+The adjunction consists of two functors:
 
-- `Cat.{v, u}`: Small categories with morphisms at level `v` and objects
-  at level `u`
-- Copresheaves valued in `Type u`
+### Embedding Functor Phi: Cat → CatJudgCopr
 
-The PLang formulation, with its explicit universe parameters, provides a
-path toward a more general adjunction:
+Given a category C with `C : Type u` and `Category.{v} C`:
 
 ```text
-Cat.{v, u} <-> CatJudgCopr.{u, v, w, x}
+catToCatJudgCopr C : CatJudgCopr.{u+1, v+1, u+1, max u v + 1}
 ```
+
+The components are:
+
+| Component | Construction | Type |
+|-----------|--------------|------|
+| obj | C | Type u |
+| mor | Σ (a b : C), (a ⟶ b) | Type (max u v) |
+| idType | C | Type u |
+| compType | Σ (a b c : C), (a ⟶ b) × (b ⟶ c) | Type (max u v) |
+| dom | λ ⟨a, b, f⟩ => a | mor → obj |
+| cod | λ ⟨a, b, f⟩ => b | mor → obj |
+| idMor | λ a => ⟨a, a, 𝟙 a⟩ | obj → mor |
+| left | λ ⟨a, b, c, f, g⟩ => ⟨b, c, g⟩ | compType → mor |
+| right | λ ⟨a, b, c, f, g⟩ => ⟨a, b, f⟩ | compType → mor |
+| composite | λ ⟨a, b, c, f, g⟩ => ⟨a, c, f ≫ g⟩ | compType → mor |
+
+The coherence conditions (id_endo, comp_match, comp_dom, comp_cod) follow
+from the definitions.
+
+For a functor `F : C ⥤ D`, the induced morphism `catFunToCatJudgNatTrans F`
+maps components via:
+
+- objMap = F.obj
+- morMap = λ ⟨a, b, f⟩ => ⟨F.obj a, F.obj b, F.map f⟩
+- idMap = F.obj
+- compMap = λ ⟨a, b, c, f, g⟩ => ⟨F.obj a, F.obj b, F.obj c, F.map f, F.map g⟩
+
+### Reflection Functor L: CatJudgCopr → Cat
+
+Given a CatJudgCopr s, construct a category via quotienting:
+
+```text
+catJudgCoprToCat s : Cat.{max s.v s.w s.x, s.u}
+```
+
+The construction uses:
+
+1. Extract the underlying quiver from s (obj, mor, dom, cod)
+2. Build FreeMor trees representing formal compositions
+3. Quotient by FreeMorEquiv which equates:
+   - Identity laws: id ≫ f ~ f, f ≫ id ~ f
+   - Associativity: (f ≫ g) ≫ h ~ f ≫ (g ≫ h)
+   - Identity witnesses: var(idMor i) ~ id(idObj i)
+   - Composition witnesses: var(left c) ≫ var(right c) ~ var(composite c)
+
+The resulting category has:
+
+- Objects: s.obj
+- Morphisms a → b: Quot (FreeMorEquiv s between a and b)
+- Identity: class of FreeMor.id a
+- Composition: class of FreeMor.comp
+
+### Unit and Counit
+
+The unit η : id → Phi ∘ L sends each CatJudgCopr s to Phi(L(s)):
+
+- objMap: id (objects unchanged)
+- morMap: inject s.mor into FreeMor via FreeMor.var, then bundle
+- idMap, compMap: similarly inject through the quotienting process
+
+The counit ε : L ∘ Phi → id sends L(Phi(C)) to C:
+
+- Object map: id (objects are exactly C)
+- Morphism map: interpret FreeMor trees as actual morphisms in C
+  - FreeMor.var ⟨a, b, f⟩ ↦ f
+  - FreeMor.id a ↦ 𝟙 a
+  - FreeMor.comp g f ↦ (interpret f) ≫ (interpret g)
+
+This is well-defined on the quotient because C satisfies the category axioms
+and the identity/composition witnesses from Phi(C) exactly match C's structure.
+
+### Triangle Identities
+
+1. ε_{Phi C} ∘ Phi(η_C) = id_{Phi C}
+
+   Starting from Phi(C), applying η gives the unit transformation, then
+   applying ε reconstructs the original morphisms.
+
+2. L(ε_s) ∘ η_{L(s)} = id_{L(s)}
+
+   Starting from L(s), applying η injects into L(Phi(L(s))), then applying
+   L(ε) quotients back to L(s). The quotient identifies terms that were
+   equivalent in the first place.
+
+## Connection to PolyPresentation
+
+The PolyPresentation work provides an alternative characterization of
+copresheaves via the density formula:
+
+```text
+PolyPresentationLoc D ≃ (D ⥤ Type)
+```
+
+The relationship between these approaches:
+
+1. CatJudgCopr captures category-like data with explicit witnesses
+2. PolyPresentation captures copresheaves as coequalizers of polynomials
+3. The evaluation functor from CatJudgCopr connects to the copresheaf view
+
+For a CatJudgCopr s, evaluating at each judgment level gives:
+
+- evalAt objLevel s = s.obj : Type
+- evalAt morLevel s = s.mor : Type
+- etc.
+
+This evaluation should factor through the density formula, connecting
+the two characterizations.
 
 ## Planned Generalization
 
@@ -129,9 +233,13 @@ The PLang definitions use:
 - Subtypes (`{x // P x}`) for constrained structures
 - Sigma types for dependent bundling
 
-The file is under the `GebLean.PLang.Obj` namespace, with a placeholder
-`GebLean.PLang.Mor` namespace for morphisms between `CatJudgCopr` values.
+## Files
+
+- `GebLean/PLang/CatJudgment.lean`: Main definitions (complete)
+- `GebLean/PLang/CatJudgmentAdjunction.lean`: Adjunction port (planned)
+- `GebLean/CatJudgmentAdjunction.lean`: Original adjunction implementation
 
 ## References
 
 - `docs/categories-as-copresheaves.md`: Mathematical background
+- `docs/polynomial-presentation-localization.md`: PolyPresentation approach
