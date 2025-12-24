@@ -612,133 +612,152 @@ The mathematical content is essentially complete - we have:
 
 Just need to assemble these into a formal equivalence.
 
-### Fullness Approach: Detailed Implementation Plan
+### Constructivity Analysis
 
-The equivalence can be completed by proving the evaluation functor
-`E : PolyPresentationLoc D ⥤ (D ⥤ Type)` is fully faithful and essentially
-surjective. The remaining piece is fullness.
+Both direct inverse construction and fullness proofs require noncomputability
+for the same fundamental reason: the density presentation of X.toCopresheaf
+has indices that are quotient elements, and extracting representatives from
+quotients requires choice.
 
-#### Why Fullness Suffices
+#### The Fundamental Obstruction
 
-1. **Faithfulness**: Already established by quotient construction.
-2. **Essential surjectivity**: Already established via `densityIso`.
-3. **Fullness**: If proven, E is fully faithful + essentially surjective,
-   hence an equivalence.
+For the inverse morphism's `tgtHom : densityTgt(X.toCopresheaf) → X.tgt`:
 
-For fully faithful functors, `comparisonMorphism X` being an isomorphism
-at the E-level implies it is an isomorphism in the source category.
+- Index type of densityTgt is `X.toCopresheaf.Elements = Σ A, typeCoeq ...`
+- To define `base(A, y)` where `y = [⟨i, h⟩]`, we want to return `i`
+- The coequalizer relation identifies `[⟨ccrReindex X.fst j, ...⟩]` with
+  `[⟨ccrReindex X.snd j, ...⟩]`
+- These indices can DIFFER - index extraction is not quotient-compatible
+- Cannot use `Quot.lift`; only `Quot.out` (requiring choice) works
 
-#### Implementation Steps
+This obstruction applies to ALL approaches that require a function from
+quotient-indexed types.
 
-##### Step 1: Define the Inverse Morphism Type
+### Constructive Alternative: Setoid-Valued Copresheaves
 
-For `X : PolyPresentation D`, construct a morphism
-`densityPresentation(X.toCopresheaf) → X` in `PolyPresentationQ`.
+The quotient is the source of noncomputability. By keeping the setoid
+structure instead of quotienting, we obtain a fully constructive result.
+
+#### Overview
+
+Instead of:
 
 ```text
-inverseComparisonTgtHom : densityTgt(X.toCopresheaf) → X.tgt
-  base : (A, y) ↦ (index of representative of y)
-  fiber : (A, y) ↦ (fiber of representative of y, composed with type coercion)
+PolyPresentationLoc D ≃ (D ⥤ Type)  -- requires choice
 ```
 
-The index type of `densityTgt(X.toCopresheaf)` is `X.toCopresheaf.Elements`,
-which consists of pairs `(A, y)` where `y : typeCoeq ...` is a quotient element.
+We prove:
 
-##### Step 2: Extract Representatives
+```text
+PolyPresentationLoc D ≃ (D ⥤ Setoid)  -- fully constructive
+```
 
-For each `y : typeCoeq (ccrToFunctorMap X.fst).app A
-(ccrToFunctorMap X.snd).app A`, we need to find `⟨i, h⟩` with
-`Quot.mk _ ⟨i, h⟩ = y`.
+where Setoid is the category of setoids (types with equivalence relations)
+and setoid morphisms (functions respecting equivalences).
 
-This can be done using `Quot.out`:
+#### Implementation Plan
+
+##### Phase 1: Setoid Infrastructure
+
+**File**: `GebLean/Utilities/SetoidCat.lean` (new)
+
+1. Define `SetoidCat` - the category of setoids
+
+   ```lean
+   structure SetoidBundle where
+     carrier : Type*
+     rel : carrier → carrier → Prop
+     equiv : Equivalence rel
+   ```
+
+2. Define morphisms as functions respecting equivalences
+
+3. Prove category instance
+
+##### Phase 2: Setoid-Valued Coequalizer
+
+**File**: `GebLean/PolyPresentation.lean` (extend)
+
+1. Define `X.toSetoidCopresheaf : D ⥤ SetoidCat`:
+   - `obj A := (ccrEval X.tgt A, coequalizer equivalence)`
+   - Carrier is pre-quotient; equivalence tracked separately
+
+2. Define projection `X.toSetoidCopresheaf.obj A → X.toCopresheaf.obj A`:
+   - This is `Quot.mk` applied pointwise
+   - Respects setoid equivalence by definition
+
+##### Phase 3: Setoid Density Presentation
+
+**File**: `GebLean/PolyPresentationEquiv.lean` (extend)
+
+1. Define `SetoidElements F` for `F : D ⥤ SetoidCat`:
+   - Objects: `Σ A, (F.obj A).carrier` (pre-quotient elements)
+   - Morphisms: setoid-respecting maps
+
+2. Define `densityPresentationSetoid F : PolyPresentation D`:
+   - Target indexed by `SetoidElements F` objects
+   - Source indexed by `SetoidElements F` morphisms
+   - Same parallel morphism structure as before
+
+3. Define density isomorphism for Setoid-valued functors
+
+##### Phase 4: Constructive Inverse Morphism
+
+**File**: `GebLean/PolyPresentationEquiv.lean` (extend)
+
+For `X : PolyPresentation D`, construct inverse of comparisonMorphism:
 
 ```lean
-noncomputable def representative (y : typeCoeq f g) :
-    TypeCoeqSigma A f g :=
-  Quot.out y
+def inverseComparisonTgtHom (X : PolyPresentation D) :
+    densityTgtSetoid (X.toSetoidCopresheaf) ⟶ X.tgt where
+  base := fun ⟨A, ⟨i, h⟩⟩ => i  -- DIRECT ACCESS, no quotient extraction
+  fiber := fun ⟨A, ⟨i, h⟩⟩ => h
 ```
 
-The `Quot.out` function requires the type to be nonempty, which is
-satisfied when there exists at least one element in the quotient
-(which there always is for our coequalizer evaluations when A is inhabited).
+This is fully constructive because:
 
-##### Step 3: Define inverseComparisonMorphism
+- Index type is `Σ A, ccrEval X.tgt A = Σ A, Σ i, (ccrFamily X.tgt i → A)`
+- Elements are concrete pairs `⟨i, h⟩`, not quotients
+- `i` is directly accessible
 
-```lean
-noncomputable def inverseComparisonTgtHom (X : PolyPresentation D) :
-    densityTgt (X.toCopresheaf) ⟶ X.tgt where
-  base := fun ⟨A, y⟩ => (representative y).fst
-  fiber := fun ⟨A, y⟩ => eqToHom (...) ≫ (representative y).snd
+##### Phase 5: Assemble the Equivalence
+
+**File**: `GebLean/PolyPresentationEquiv.lean` (extend)
+
+1. Prove inverseComparisonMorphism is inverse to comparisonMorphism
+2. Prove comparisonMorphism is an isomorphism in PolyPresentationLoc
+3. Construct unit natural isomorphism `Id ≅ S ∘ E`
+4. Use `CategoryTheory.Equivalence.mk` to assemble
+
+#### Setoid Approach Dependencies
+
+**From Mathlib**:
+
+- `Data.Setoid.Basic` - setoid definitions
+- `CategoryTheory.Category.Basic` - category structure
+
+**From Codebase**:
+
+- Existing `PolyPresentation`, `PolyPresentationLoc`
+- Existing `densityPresentation` machinery (adapted)
+
+#### Relationship to Type-Valued Equivalence
+
+The Setoid equivalence relates to the Type equivalence via:
+
+```text
+PolyPresentationLoc D ≃ (D ⥤ Setoid) --(Q∘)--> (D ⥤ Type)
 ```
 
-##### Step 4: Prove Respects Condition
+where `Q : Setoid → Type` is the quotient functor. The composite is the
+original Type-valued equivalence, but Q's inverse requires choice. The
+noncomputability is isolated to this external step.
 
-Show that `inverseComparisonTgtHom` satisfies the respects condition for
-`PolyPresentationQ.Hom`, enabling the induced map to be defined.
+#### Advantages
 
-##### Step 5: Prove Induced Map Equals densityIso.hom
-
-Show that `E(inverseComparisonMorphism X) = (densityIso X.toCopresheaf).hom`.
-
-Combined with the existing `E(comparisonMorphism X) = (densityIso X.toCopresheaf).inv`,
-this proves the morphisms are inverse in `(D ⥤ Type)`.
-
-##### Step 6: Fullness Theorem
-
-Using faithfulness: if `E(f ≫ g) = id` and `E(g ≫ f) = id`, then
-`[f ≫ g] = [id]` and `[g ≫ f] = [id]` in `PolyPresentationLoc`.
-
-##### Step 7: Assemble the Equivalence
-
-Use mathlib's `CategoryTheory.Equivalence.mk` or `Functor.IsEquivalence.ofFullyFaithfullyEssSurj`.
-
-#### Constructivity Consideration
-
-The `representative` function above uses `Quot.out`, which is inherently
-noncomputable because it requires the axiom of choice to extract a witness
-from an existential.
-
-**Implication**: The `inverseComparisonMorphism` and subsequent fullness
-proof would need to be marked `noncomputable`.
-
-**Current Constraint**: The project guidelines in CLAUDE.md prohibit
-`noncomputable`. This creates a tension:
-
-1. **Mathematical validity**: The proof is mathematically valid; the
-   noncomputability is purely a Lean formalization artifact.
-
-2. **Options**:
-   - Accept `noncomputable` for this specific proof (requires user approval)
-   - Find an alternative formulation avoiding explicit representative extraction
-   - Use a weaker characterization of equivalence that does not require
-     explicit fullness proof
-
-#### Alternative: Abstract Fullness via Triangle Identity
-
-Instead of constructing the inverse morphism explicitly, we could:
-
-1. Prove that for faithful E, if `E(comparisonMorphism X)` is an isomorphism,
-   then `comparisonMorphism X` is an isomorphism in `PolyPresentationLoc`.
-
-2. This requires showing that `E` is "conservative" or "reflects
-   isomorphisms" for morphisms that become isomorphisms under E.
-
-3. For faithful functors, this follows from fullness (circular), but there
-   may be direct arguments using the quotient structure.
-
-This approach also likely requires choice/noncomputability at some point
-because it must exhibit an inverse morphism.
-
-#### Decision Required
-
-Before proceeding with implementation, a decision is needed:
-
-- **Option A**: Accept `noncomputable` for the equivalence proof components.
-  The mathematical result is valid; noncomputability is a formalization
-  artifact.
-
-- **Option B**: Investigate whether mathlib provides an abstract
-  characterization of equivalence that avoids explicit inverse construction.
-
-- **Option C**: Leave the equivalence as "essentially complete" with the
-  components we have, documenting that the formal assembly requires choice.
+1. Fully constructive - no choice, no noncomputable
+2. Mathematically natural - presentations inherently give setoid-valued
+   functors before any quotienting
+3. Reuses most existing code - just adds setoid layer
+4. Clear separation - noncomputability (if desired) is isolated to the
+   Q functor, external to presentation theory

@@ -206,103 +206,98 @@ where the second arrow factors through `PolyPresentationLoc D`.
 The localization quotients away the non-canonical choices in presentations,
 leaving only the represented copresheaf.
 
-## Proving the Equivalence via Fullness
+## Constructivity Analysis
 
-The equivalence can be established by proving that the evaluation functor
-`E : PolyPresentationLoc D ⥤ (D ⥤ Type)` is fully faithful and essentially
-surjective.
+The equivalence with Type-valued copresheaves encounters a fundamental
+constructivity obstruction. This section analyzes the issue and presents
+a constructive alternative.
 
-### Already Established
+### The Obstruction
 
-- **Faithfulness**: By construction of the quotient, `E([f]) = E([g])`
-  implies `[f] = [g]`.
-- **Essential surjectivity**: The density isomorphism shows every copresheaf
-  `F` is isomorphic to `E(S(F))`.
+For the inverse morphism `g : S(E(X)) → X`, we need
+`tgtHom : densityTgt(E(X)) → X.tgt`.
 
-### Fullness Proof Strategy
+The index type of `densityTgt(E(X))` is `E(X).Elements = Σ A, typeCoeq ...`,
+which contains quotient elements.
 
-To prove `E` is full, we show: for any natural transformation
-`α : E(X) → E(Y)`, there exists `f : X → Y` in `PolyPresentationLoc` with
-`E(f) = α`.
-
-#### Approach 1: Direct Construction
-
-Given `α : X.toCopresheaf → Y.toCopresheaf`, construct `tgtHom : X.tgt → Y.tgt`
-in `CoprodCovarRepCat` such that the induced map equals `α`.
-
-For each index `i : ccrIndex X.tgt`, consider the universal element
-`[⟨i, id⟩] ∈ X.toCopresheaf.obj (ccrFamily X.tgt i)`.
-
-Apply α to get `α_i := α.app (ccrFamily X.tgt i) [⟨i, id⟩]`, an element of
-`Y.toCopresheaf.obj (ccrFamily X.tgt i)`.
-
-By naturality of α, for any `f : ccrFamily X.tgt i → A`:
+To define `base(A, y)` where `y = [⟨i, h⟩]`, we want to extract `i`. But the
+coequalizer relation can identify elements with **different indices**:
 
 ```text
-α.app A [⟨i, f⟩] = Y.toCopresheaf.map f α_i
+[⟨ccrReindex X.fst j, ...⟩] ~ [⟨ccrReindex X.snd j, ...⟩]
 ```
 
-Since `α_i` is a quotient element, let `α_i = [⟨j_i, h_i⟩]` for some
-`j_i : ccrIndex Y.tgt` and `h_i : ccrFamily Y.tgt j_i → ccrFamily X.tgt i`.
+Since `ccrReindex X.fst j` and `ccrReindex X.snd j` can differ, index
+extraction is **not well-defined on equivalence classes**. We cannot use
+`Quot.lift`; only `Quot.out` (which requires choice) would work.
 
-Then:
+This obstruction applies equally to:
+
+- Direct inverse construction
+- Fullness proofs (which require constructing lifts)
+- Any approach requiring a function from quotient-indexed types
+
+### Constructive Alternative: Setoid-Valued Copresheaves
+
+The quotient is the source of noncomputability. By keeping the setoid
+structure instead of quotienting, we obtain a fully constructive result.
+
+#### Setoid-Valued Evaluation
+
+For a presentation X, define `X.toSetoidCopresheaf : D ⥤ Setoid`:
+
+- `obj A := (ccrEval X.tgt A, coequalizer equivalence)`
+- The carrier is the pre-quotient type
+- The equivalence is tracked separately
+
+#### Setoid Density Presentation
+
+For `F : D ⥤ Setoid`, define `densityPresentationSetoid F`:
+
+- Target indexed by `Σ A, (F.obj A).carrier` (pre-quotient elements)
+- Source indexed by morphisms respecting setoid equivalences
+- Parallel morphisms as before
+
+#### Constructive Inverse
+
+For `(A, y)` where `y : (X.toSetoidCopresheaf.obj A).carrier = ccrEval X.tgt A`:
+
+- `y = ⟨i, h⟩` for concrete `i : ccrIndex X.tgt` and `h`
+- `base(A, y) := i` (directly accessible)
+- `fiber(A, y) := h`
+
+No quotient extraction required.
+
+#### The Constructive Equivalence
 
 ```text
-α.app A [⟨i, f⟩] = [⟨j_i, h_i ≫ f⟩]
+PolyPresentationLoc D ≃ (D ⥤ Setoid)
 ```
 
-This determines `tgtHom` with `base i = j_i` and `fiber i = h_i`.
+This equivalence is fully constructive and mathematically natural:
+presentations inherently produce setoid-valued functors.
 
-#### Approach 2: Via Triangle Identities
+### Relationship to Type-Valued Copresheaves
 
-Using the adjunction-like structure:
+The categories relate via the quotient functor `Q : Setoid → Type`:
 
-1. `comparisonMorphism X : X → S(E(X))` satisfies
-   `E(comparisonMorphism X) = (densityIso E(X))^{-1}`
-2. This means `E(comparisonMorphism X) ≫ densityIso_{E(X)} = id` (first
-   triangle identity at E level)
-3. For faithful functors with this property, fullness follows from
-   constructing the inverse of comparisonMorphism
+```text
+PolyPresentationLoc D ≃ (D ⥤ Setoid) --Q∘--> (D ⥤ Type)
+```
 
-#### The Inverse Morphism
-
-To complete either approach, we need a morphism `g : S(E(X)) → X` with
-`E(g) = densityIso_{E(X)}`.
-
-Construction of `tgtHom : densityTgt(E(X)) → X.tgt`:
-
-- For each `(A, y) ∈ E(X).Elements` where `y : typeCoeq ...`, pick a
-  representative `⟨i, h⟩` of `y`
-- Set `base(A, y) = i` and `fiber(A, y) = h`
-
-This morphism induces `densityIso.hom` as the induced map.
-
-#### Constructivity Consideration
-
-The construction above requires extracting representatives from quotient
-elements. This can be done using `Quot.out`, which requires the quotient
-type to be nonempty (automatically satisfied for coproduct-covariant-rep
-evaluations) but is inherently noncomputable.
-
-Two options:
-
-1. **Accept noncomputable**: Mark the inverse morphism and subsequent
-   equivalence proof as `noncomputable`. The mathematical validity is
-   unchanged.
-
-2. **Alternative formulation**: Work with a different characterization
-   of the equivalence that avoids explicit representative extraction,
-   possibly using abstract properties of the adjunction.
+The composite is an equivalence, but `Q` requires choice for its inverse
+(selecting a setoid structure for a given type). The noncomputability is
+isolated to this final step, which is external to the presentation theory.
 
 ### Derived Properties
 
-Once fullness is established:
+With the Setoid approach:
 
-- **E is an equivalence**: Fully faithful + essentially surjective
-- **comparisonMorphism is an isomorphism**: E reflects isomorphisms (for
-  fully faithful functors, this is automatic)
-- **Adjunction**: The equivalence forms an adjoint equivalence with unit
-  `comparisonMorphism` and counit `densityIso`
+- **E is faithful**: By quotient construction
+- **E is essentially surjective**: Via density isomorphism
+- **E is full**: Constructively provable
+- **comparisonMorphism is an isomorphism**: Constructively provable
+- **Full equivalence**: Assembles without choice
 
 ## References
 
