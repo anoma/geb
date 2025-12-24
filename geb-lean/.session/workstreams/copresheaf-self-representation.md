@@ -1,6 +1,6 @@
 # Copresheaf Self-Representation Workstream
 
-Status: Research Complete, Implementation Ready (2025-12-23)
+Status: Phase 1-4 In Progress (2025-12-23)
 
 ## Objective
 
@@ -11,12 +11,61 @@ the CatJudgmentAdjunction to be formulated entirely in terms of copresheaves.
 
 See `docs/copresheaf-self-representation.md` for the theoretical foundation.
 
-## Research Findings (2025-12-23)
+## Completed Work (2025-12-23)
+
+### Phase 1-3: JudgmentUniverse Functor and Sections
+
+Implemented in `GebLean/PLang/JudgmentUniverse.lean`:
+
+1. **JudgmentLevel type**: Inductive type with constructors `obj`, `quiv`,
+   `cat` representing levels of categorical structure.
+
+2. **Judgment category structure**:
+   - `JudgmentLevel.Hom`: morphisms including `id`, `quivToObj`, `catToQuiv`,
+     `catToObj`
+   - Category instance on `JudgmentLevel`
+   - Composition and identity laws proved
+
+3. **JudgmentUniverse functor**: `JudgmentLevel ⥤ Cat` mapping:
+   - `obj` to `Cat.of ObjCopr`
+   - `quiv` to `Cat.of ObjMorCopr`
+   - `cat` to `Cat.of CatJudgCopr`
+   - Morphisms to forgetful functors
+   - Functoriality proved (map_id, map_comp)
+
+4. **JudgmentSection structure**: Compatible data at all levels with
+   coherence conditions via forgetful functors.
+
+5. **Equivalence**: `JudgmentSection.equivCatJudgCopr` proving sections
+   are equivalent to `CatJudgCopr` (most refined level determines all).
+
+### Phase 4: Internal Category Structure (Partial)
+
+Also in `GebLean/PLang/JudgmentUniverse.lean`:
+
+1. **Morphism bundles**: Types for bundled morphisms at each level:
+   - `ObjMorBundle`: pairs (X, Y, f : X -> Y) of types and functions
+   - `QuivMorBundle`: pairs with quiver homomorphisms
+   - `CatMorBundle`: pairs with category natural transformations
+
+2. **Source/target projections**: For each bundle type
+
+3. **Identity morphisms**: At each level using existing category structure
+
+4. **Composition**: At each level with explicit type transport
+
+Remaining for Phase 4:
+
+- Prove identity and associativity laws for the bundle operations
+- Show that morphism bundles form a category at each level
+- Define the morphism copresheaf as a functor
+
+## Research Findings
 
 ### Mathlib Infrastructure
 
 1. **Grothendieck construction**: Mathlib provides `Grothendieck F` for
-   functors `F : C ⥤ Cat`, with projection functor `Grothendieck.forget`.
+   functors `F : C -> Cat`, with projection functor `Grothendieck.forget`.
 
 2. **Category of elements**: `grothendieckTypeToCat` gives an equivalence
    `Grothendieck (G ⋙ typeToCat) ≃ G.Elements`. This is the "total space"
@@ -24,23 +73,8 @@ See `docs/copresheaf-self-representation.md` for the theoretical foundation.
 
 3. **No direct "sections of a fibration"**: Mathlib has `Functor.sections`
    which gives the SET of global sections (dependent functions satisfying
-   naturality), but not the CATEGORY of sections as functors `s : B ⥤ E`
+   naturality), but not the CATEGORY of sections as functors `s : B -> E`
    with `π ∘ s = id`.
-
-4. **Fibered categories**: `IsFibered` and cartesian lifts exist but focus
-   on the fibration structure, not sections.
-
-### Existing Code Analysis
-
-The `CatJudgment.lean` file ALREADY implements the structured universe:
-
-- `ObjCopr` = Type u (object level)
-- `ObjMorCopr` = Σ(o : ObjMorObj), ObjMorMor o (quiver level)
-- `CatJudgCopr` = full category signature with axioms
-
-The forgetful functors (`forgetCatJudgToObjMor`, etc.) define functoriality.
-This IS the JudgmentUniverse structure, just not yet organized as a functor
-to Cat.
 
 ### Connection to Currying
 
@@ -52,83 +86,15 @@ The isomorphism `[A × B, C] ≅ [A, [B, C]]` applies to the adjunction:
 - This is a copresheaf on the product category Cat × J
 - Internalizing means expressing U' as a section of JudgmentUniverse
 
-### Refined Understanding
+## Remaining Phases
 
-The self-representation works as follows:
+### Phase 4 Completion: Internal Category Structure
 
-1. **JudgmentUniverse : J → Cat** where J is the (implicit) judgment category
-   - At level j_Obj: Cat.of (Type u)
-   - At level j_Quiv: Cat.of ObjMorCopr
-   - At level j_Cat: Cat.of CatJudgCopr
+Complete the internal category [J, Type] within [J, Type (u+1)]:
 
-2. **Sections vs Elements distinction**:
-   - The category of elements ∫JudgmentUniverse has objects (j, x) where
-     x is a structure at level j
-   - A section s : J → ∫JudgmentUniverse picks compatible structures at
-     all levels (this corresponds to a complete category specification)
-
-3. **Copresheaves on J are NOT directly sections**: A general copresheaf
-   `F : J → Type u` assigns a type to each level. The JudgmentUniverse
-   structure is specifically for category-like copresheaves where the
-   types at different levels are related (objects, morphisms, etc.).
-
-## Revised Implementation Strategy
-
-Following the suggestion to specialize to the judgment category first:
-
-### Phase 1: Judgment Category Formalization
-
-Location: `GebLean/PLang/JudgmentCategory.lean` (new file)
-
-The judgment category J has:
-- Objects: judgment levels (j_Obj, j_Quiv, j_Cat, etc.)
-- Morphisms: refinement/forgetful relations
-
-Currently implicit in CatJudgment.lean; needs explicit definition.
-
-### Phase 2: JudgmentUniverse as Functor
-
-Location: `GebLean/PLang/JudgmentUniverse.lean` (new file)
-
-Organize existing types as a functor:
-
-```lean
-/-- The judgment universe functor to Cat. -/
-def JudgmentUniverse : JudgmentCat ⥤ Cat where
-  obj
-  | j_Obj => Cat.of ObjCopr
-  | j_Quiv => Cat.of ObjMorCopr
-  | j_Cat => Cat.of CatJudgCopr
-  map := existing forgetful functors
-```
-
-### Phase 3: Sections Category
-
-Location: `GebLean/PLang/JudgmentSections.lean` (new file)
-
-Define what it means to be a "section" of JudgmentUniverse:
-
-```lean
-/-- A section of the judgment universe assigns compatible structures
-    at each level. -/
-structure JudgmentSection where
-  objData : ObjCopr
-  quivData : ObjMorCopr
-  catData : CatJudgCopr
-  quiv_obj : forgetObjMorToObj.obj quivData = objData
-  cat_quiv : forgetCatJudgToObjMor.obj catData = quivData
-```
-
-This is isomorphic to `CatJudgCopr` (the most refined level determines all).
-
-### Phase 4: Internal Category Structure
-
-Build the internal category [J, Type] within [J, Type (u+1)]:
-
-- Object copresheaf: JudgmentUniverse itself (viewed as valued in Type (u+1))
-- Morphism copresheaf: natural transformations at each level
-- Source/target/identity/composition: derived from category structure on
-  each JudgmentUniverse(j)
+- Prove category laws for morphism bundles
+- Define morphism copresheaf as a functor J -> Type (u+1)
+- Establish internal category axioms
 
 ### Phase 5: Adjunction via Currying
 
@@ -139,43 +105,27 @@ Using `[Cat × J, Type] ≅ [Cat, [J, Type]]`:
 - U'(C, j) = the j-level data of category C
 - This connects self-representation to the adjunction
 
-## Open Questions (Refined)
-
-1. **Judgment category formalization**: Should J be an inductive type,
-   a finite category, or described implicitly via the existing types?
-
-2. **Section vs copresheaf distinction**: For the structured universe,
-   sections are NOT arbitrary copresheaves but specifically those with
-   compatible data across levels. How to capture this formally?
-
-3. **Universe polymorphism**: The existing code uses multiple universe
-   parameters (u, v, w, x). How to organize these for the functor structure?
-
-4. **Forgetful functor composition**: Need to verify the existing forgetful
-   functors compose correctly to form a functor from the judgment category.
-
 ## Success Criteria
 
-After completion:
+Completed:
 
-- Judgment category J is formally defined
-- JudgmentUniverse : J ⥤ Cat is a well-defined functor
-- Sections of JudgmentUniverse correspond to category specifications
-- Internal category structure on [J, Type] is established
-- Connection to CatJudgmentAdjunction via currying is documented
+- [x] Judgment category J is formally defined
+- [x] JudgmentUniverse : J -> Cat is a well-defined functor
+- [x] Sections of JudgmentUniverse correspond to category specifications
 
-## Estimated Scope (Revised)
+In progress:
 
-- `JudgmentCategory.lean`: ~150 lines (formalize J)
-- `JudgmentUniverse.lean`: ~300 lines (functor structure)
-- `JudgmentSections.lean`: ~200 lines (section definition)
-- `InternalCopresheafCat.lean`: ~400 lines (internal category)
+- [ ] Internal category structure on [J, Type] is established
 
-Total: ~1050 lines of new code
+Remaining:
 
-## Next Actions
+- [ ] Connection to CatJudgmentAdjunction via currying is documented
 
-1. **Immediate**: Formalize the judgment category J explicitly
-2. Organize existing forgetful functors as a single functor J → Cat
-3. Define sections and prove isomorphism with CatJudgCopr
-4. Build internal category structure
+## File Summary
+
+- `GebLean/PLang/JudgmentUniverse.lean`: ~365 lines (Phases 1-4 partial)
+
+Estimated remaining:
+
+- Complete internal category proofs: ~150 lines
+- Adjunction connection: ~200 lines

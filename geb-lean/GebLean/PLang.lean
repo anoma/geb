@@ -1,6 +1,7 @@
 import GebLean.PLang.CatJudgment
 import GebLean.PLang.CatJudgGrothendieck
 import GebLean.PLang.IndexedEAT
+import GebLean.PLang.JudgmentUniverse
 
 /-!
 # PLang Index
