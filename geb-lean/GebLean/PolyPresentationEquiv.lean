@@ -1021,4 +1021,612 @@ def counitIso :
 
 end Equivalence
 
+/-! ## Setoid-Valued Density Presentation
+
+The constructive alternative to the Type-valued equivalence uses Setoid-valued
+copresheaves. This avoids the noncomputability obstruction by keeping the
+pre-quotient structure.
+
+For F : D ⥤ SetoidBundle, the density presentation uses:
+- Target indexed by Σ A, (F.obj A).carrier (pre-quotient elements)
+- Source indexed by morphisms in the pre-quotient category of elements
+- Parallel morphisms as before
+
+The coequalizer of this presentation gives a setoid whose quotient is the
+colimit in Type.
+-/
+
+section SetoidDensityPresentation
+
+variable {D : Type u} [Category.{v} D]
+
+/-! ### Setoid Element Types
+
+The pre-quotient category of elements has objects (A, x) where x is in the
+carrier of F.obj A, and morphisms f : A → B such that (F.map f).toFun x is
+setoid-equivalent to y.
+-/
+
+/--
+Pre-quotient elements of a Setoid-valued functor.
+-/
+def SetoidElements (F : D ⥤ SetoidBundle.{max u v}) : Type (max u v) :=
+  Σ (A : D), (F.obj A).carrier
+
+/--
+Extract the object from a setoid element.
+-/
+def SetoidElements.obj {F : D ⥤ SetoidBundle.{max u v}}
+    (p : SetoidElements F) : D :=
+  p.fst
+
+/--
+Extract the carrier element from a setoid element.
+-/
+def SetoidElements.elem {F : D ⥤ SetoidBundle.{max u v}}
+    (p : SetoidElements F) : (F.obj p.obj).carrier :=
+  p.snd
+
+/--
+Morphisms between pre-quotient elements: f : A → B such that F.map(f)(x) ≈ y.
+-/
+structure SetoidElementsHom {F : D ⥤ SetoidBundle.{max u v}}
+    (p q : SetoidElements F) where
+  hom : p.obj ⟶ q.obj
+  compat : (F.obj q.obj).rel.r ((F.map hom).toFun p.elem) q.elem
+
+/--
+The morphism index type for the setoid density presentation.
+-/
+def SetoidMorphismIndex (F : D ⥤ SetoidBundle.{max u v}) : Type (max u v) :=
+  Σ (p q : SetoidElements F), SetoidElementsHom q p
+
+/--
+Extract the target element from a setoid morphism index.
+-/
+def SetoidMorphismIndex.tgt {F : D ⥤ SetoidBundle.{max u v}}
+    (m : SetoidMorphismIndex F) : SetoidElements F :=
+  m.fst
+
+/--
+Extract the source element from a setoid morphism index.
+-/
+def SetoidMorphismIndex.src {F : D ⥤ SetoidBundle.{max u v}}
+    (m : SetoidMorphismIndex F) : SetoidElements F :=
+  m.snd.fst
+
+/--
+Extract the morphism data from a setoid morphism index.
+-/
+def SetoidMorphismIndex.homData {F : D ⥤ SetoidBundle.{max u v}}
+    (m : SetoidMorphismIndex F) : SetoidElementsHom m.src m.tgt :=
+  m.snd.snd
+
+/-! ### Setoid Density Target Polynomial -/
+
+/--
+The target polynomial of the setoid density presentation.
+Indexed by pre-quotient elements, with family mapping (A, x) to A.
+-/
+def setoidDensityTgt (F : D ⥤ SetoidBundle.{max u v}) :
+    CoprodCovarRepCat.{u, v, max u v} D :=
+  ccrObjMk (fun (p : SetoidElements F) => p.obj)
+
+@[simp]
+theorem setoidDensityTgt_index (F : D ⥤ SetoidBundle.{max u v}) :
+    ccrIndex (setoidDensityTgt F) = SetoidElements F := rfl
+
+@[simp]
+theorem setoidDensityTgt_family (F : D ⥤ SetoidBundle.{max u v})
+    (p : SetoidElements F) :
+    ccrFamily (setoidDensityTgt F) p = p.obj := rfl
+
+/-! ### Setoid Density Source Polynomial -/
+
+/--
+The source polynomial of the setoid density presentation.
+Indexed by morphisms in the pre-quotient category of elements.
+-/
+def setoidDensitySrc (F : D ⥤ SetoidBundle.{max u v}) :
+    CoprodCovarRepCat.{u, v, max u v} D :=
+  ccrObjMk (fun (m : SetoidMorphismIndex F) => m.tgt.obj)
+
+@[simp]
+theorem setoidDensitySrc_index (F : D ⥤ SetoidBundle.{max u v}) :
+    ccrIndex (setoidDensitySrc F) = SetoidMorphismIndex F := rfl
+
+@[simp]
+theorem setoidDensitySrc_family (F : D ⥤ SetoidBundle.{max u v})
+    (m : SetoidMorphismIndex F) :
+    ccrFamily (setoidDensitySrc F) m = m.tgt.obj := rfl
+
+/-! ### Setoid Density Parallel Morphisms -/
+
+/--
+The first parallel morphism of the setoid density presentation.
+Maps morphism index m to the target element with identity fiber.
+-/
+def setoidDensityFst (F : D ⥤ SetoidBundle.{max u v}) :
+    setoidDensitySrc F ⟶ setoidDensityTgt F :=
+  ccrHomMk
+    (fun m => m.tgt)
+    (fun _ => 𝟙 _)
+
+@[simp]
+theorem setoidDensityFst_reindex (F : D ⥤ SetoidBundle.{max u v})
+    (m : SetoidMorphismIndex F) :
+    ccrReindex (setoidDensityFst F) m = m.tgt := rfl
+
+@[simp]
+theorem setoidDensityFst_fiberMor (F : D ⥤ SetoidBundle.{max u v})
+    (m : SetoidMorphismIndex F) :
+    ccrFiberMor (setoidDensityFst F) m = 𝟙 m.tgt.obj := rfl
+
+/--
+The second parallel morphism of the setoid density presentation.
+Maps morphism index m to the source element with the underlying morphism as fiber.
+-/
+def setoidDensitySnd (F : D ⥤ SetoidBundle.{max u v}) :
+    setoidDensitySrc F ⟶ setoidDensityTgt F :=
+  ccrHomMk
+    (fun m => m.src)
+    (fun m => m.homData.hom)
+
+@[simp]
+theorem setoidDensitySnd_reindex (F : D ⥤ SetoidBundle.{max u v})
+    (m : SetoidMorphismIndex F) :
+    ccrReindex (setoidDensitySnd F) m = m.src := rfl
+
+@[simp]
+theorem setoidDensitySnd_fiberMor (F : D ⥤ SetoidBundle.{max u v})
+    (m : SetoidMorphismIndex F) :
+    ccrFiberMor (setoidDensitySnd F) m = m.homData.hom := rfl
+
+/-! ### The Setoid Density Presentation -/
+
+/--
+The setoid density presentation of a Setoid-valued copresheaf F : D ⥤ SetoidBundle.
+
+This is the canonical polynomial presentation whose setoid coequalizer
+reconstructs F. The construction uses pre-quotient elements:
+- Target polynomial: indexed by (A, x) with x ∈ (F.obj A).carrier
+- Source polynomial: indexed by morphisms (q, p, f : q → p with compat)
+- fst: target map (identity fibers)
+- snd: source map (morphism fibers)
+-/
+def setoidDensityPresentation (F : D ⥤ SetoidBundle.{max u v}) :
+    PolyPresentation.{u, v, max u v} D where
+  src := setoidDensitySrc F
+  tgt := setoidDensityTgt F
+  fst := setoidDensityFst F
+  snd := setoidDensitySnd F
+
+@[simp]
+theorem setoidDensityPresentation_src (F : D ⥤ SetoidBundle.{max u v}) :
+    (setoidDensityPresentation F).src = setoidDensitySrc F := rfl
+
+@[simp]
+theorem setoidDensityPresentation_tgt (F : D ⥤ SetoidBundle.{max u v}) :
+    (setoidDensityPresentation F).tgt = setoidDensityTgt F := rfl
+
+@[simp]
+theorem setoidDensityPresentation_fst (F : D ⥤ SetoidBundle.{max u v}) :
+    (setoidDensityPresentation F).fst = setoidDensityFst F := rfl
+
+@[simp]
+theorem setoidDensityPresentation_snd (F : D ⥤ SetoidBundle.{max u v}) :
+    (setoidDensityPresentation F).snd = setoidDensitySnd F := rfl
+
+end SetoidDensityPresentation
+
+/-! ## Constructive Inverse for Setoid Equivalence
+
+For a polynomial presentation X, we construct an inverse morphism from
+setoidDensityPresentation(X.toSetoidCopresheaf) back to X.
+
+Elements of X.toSetoidCopresheaf.obj A are pairs ⟨i, h⟩ where
+i : ccrIndex X.tgt and h : ccrFamily X.tgt i ⟶ A.  We can directly
+extract the index i without quotient elimination.
+-/
+
+section SetoidConstructiveInverse
+
+variable {D : Type u} [Category.{v} D]
+variable (X : PolyPresentation.{u, v, max u v} D)
+
+/-! ### Element Structure for Setoid Copresheaves
+
+The elements of X.toSetoidCopresheaf are pairs (A, ⟨i, h⟩) where we have
+direct access to the index i and the morphism h.
+-/
+
+/--
+Extract the index from a setoid element of X.toSetoidCopresheaf.
+This is the constructive core: we directly access the index without
+quotient extraction.
+-/
+def setoidInverseTgtBase
+    (p : SetoidElements X.toSetoidCopresheaf) : ccrIndex X.tgt :=
+  p.elem.fst
+
+/--
+Extract the morphism from a setoid element of X.toSetoidCopresheaf.
+-/
+def setoidInverseTgtFiber
+    (p : SetoidElements X.toSetoidCopresheaf) :
+    ccrFamily X.tgt (setoidInverseTgtBase X p) ⟶ p.obj :=
+  p.elem.snd
+
+/--
+The morphism on target polynomials for the inverse.
+Maps (A, ⟨i, h⟩) to i with fiber h.
+-/
+def setoidInverseTgtHom :
+    setoidDensityTgt X.toSetoidCopresheaf ⟶ X.tgt :=
+  ccrHomMk
+    (setoidInverseTgtBase X)
+    (setoidInverseTgtFiber X)
+
+@[simp]
+theorem setoidInverseTgtHom_reindex
+    (p : SetoidElements X.toSetoidCopresheaf) :
+    ccrReindex (setoidInverseTgtHom X) p = setoidInverseTgtBase X p := rfl
+
+@[simp]
+theorem setoidInverseTgtHom_fiberMor
+    (p : SetoidElements X.toSetoidCopresheaf) :
+    ccrFiberMor (setoidInverseTgtHom X) p = setoidInverseTgtFiber X p := rfl
+
+/-! ### Respects Coequalization
+
+For a Q-morphism, we only need to show that the target polynomial map
+respects the coequalizer relation. We don't need a source polynomial map.
+-/
+
+/--
+The inverse target map respects the setoid coequalizer relation.
+
+Given (A, ⟨i, h⟩) and (A, ⟨j, g⟩) in the same equivalence class under
+the setoid density coequalizer, their images under setoidInverseTgtHom
+must be in the same equivalence class under X's coequalizer.
+-/
+theorem setoidInverseTgtHom_respects :
+    ccrToFunctorMap (setoidDensityFst X.toSetoidCopresheaf) ≫
+      ccrToFunctorMap (setoidInverseTgtHom X) ≫ X.toCopresheafπ =
+    ccrToFunctorMap (setoidDensitySnd X.toSetoidCopresheaf) ≫
+      ccrToFunctorMap (setoidInverseTgtHom X) ≫ X.toCopresheafπ := by
+  ext A ⟨m, g⟩
+  simp only [NatTrans.comp_app, types_comp_apply, ccrToFunctorMap_app,
+    ccrToFunctorMapApp]
+  -- m : SetoidMorphismIndex X.toSetoidCopresheaf
+  -- g : m.tgt.obj ⟶ A
+  -- LHS computes to: π(⟨m.tgt.elem.fst, m.tgt.elem.snd ≫ g⟩)
+  -- RHS computes to: π(⟨m.src.elem.fst, m.src.elem.snd ≫ m.homData.hom ≫ g⟩)
+  -- The compat condition gives us the setoid relation we need
+  -- The compat condition says:
+  -- (X.toSetoidCopresheaf.obj m.tgt.obj).rel.r
+  --   ((X.toSetoidCopresheaf.map m.homData.hom).toFun m.src.elem) m.tgt.elem
+  -- Unfold to see this is X.coeqSetoidAt relation
+  have compat : (X.coeqSetoidAt m.tgt.obj).r
+      (ccrEvalMap m.homData.hom m.src.elem) m.tgt.elem := by
+    have h := m.homData.compat
+    simp only [PolyPresentation.toSetoidCopresheaf, PolyPresentation.toSetoidBundleAt,
+      PolyPresentation.toSetoidCopresheafMap, PolyPresentation.toSetoidCopresheafMapFun] at h
+    exact h
+  -- Transport to object A using coeqSetoidAt_map
+  have transported := X.coeqSetoidAt_map g compat
+  -- transported : (X.coeqSetoidAt A).r
+  --   (ccrEvalMap g (ccrEvalMap m.homData.hom m.src.elem))
+  --   (ccrEvalMap g m.tgt.elem)
+  -- Unfold toCopresheafπ to get Quot.mk
+  unfold PolyPresentation.toCopresheafπ PolyPresentation.toCopresheaf
+  simp only [functorCoeqπ, CoequalizerData.π, typeCoeqπ, ccrToFunctorMap_app]
+  -- Apply Quot.eqvGen_sound - we need to show EqvGen of typeCoeqRel
+  -- The relations typeCoeqRel and coeqRelAt are definitionally equal
+  apply Quot.eqvGen_sound
+  -- Simplify both sides
+  simp only [setoidDensityFst_reindex, setoidDensityFst_fiberMor,
+    setoidDensitySnd_reindex, setoidDensitySnd_fiberMor,
+    setoidInverseTgtHom_reindex, setoidInverseTgtHom_fiberMor,
+    setoidInverseTgtBase, setoidInverseTgtFiber,
+    SetoidElements.obj, SetoidElements.elem,
+    SetoidMorphismIndex.tgt, SetoidMorphismIndex.src, SetoidMorphismIndex.homData,
+    ccrEvalIndex, ccrEvalMor, ccrEvalMk]
+  -- The goal has match expressions that need to be unfolded
+  -- First, establish how the relations match up
+  -- ccrToFunctorMapApp X.fst A = (ccrToFunctor X.fst).app A
+  -- typeCoeqRel f g y₁ y₂ = ∃ x, f x = y₁ ∧ g x = y₂
+  -- coeqRelAt A y₁ y₂ = ∃ x, ccrToFunctorMapApp X.fst A x = y₁ ∧
+  --                           ccrToFunctorMapApp X.snd A x = y₂
+  -- These are definitionally equal
+  -- Use Quot.eqvGen_sound via the coeqRelAt relation
+  simp only [PolyPresentation.coeqSetoidAt, Relation.EqvGen.setoid] at transported
+  simp only [ccrEvalMap] at transported
+  -- The goal is to show EqvGen of typeCoeqRel, but transported gives EqvGen of coeqRelAt
+  -- These relations are the same, so we need to bridge them
+  -- First simplify the match expressions by casing on the sigma pairs
+  rcases m with ⟨⟨tgt_obj, ⟨tgt_idx, tgt_mor⟩⟩, ⟨⟨src_obj, ⟨src_idx, src_mor⟩⟩, hom_data⟩⟩
+  simp only [SetoidMorphismIndex.tgt, SetoidMorphismIndex.src, SetoidMorphismIndex.homData,
+    SetoidElements.obj, SetoidElements.elem] at compat transported ⊢
+  -- Now the goal has concrete indices
+  -- Goal: EqvGen (typeCoeqRel ...) ⟨tgt_idx, tgt_mor ≫ 𝟙 tgt_obj ≫ g⟩
+  --                                ⟨src_idx, src_mor ≫ hom_data.hom ≫ g⟩
+  -- transported: EqvGen (coeqRelAt A) ⟨src_idx, (src_mor ≫ hom_data.hom) ≫ g⟩
+  --                                   ⟨tgt_idx, tgt_mor ≫ g⟩
+  -- Need to: 1) handle id_comp, 2) handle assoc, 3) swap LHS/RHS, 4) match relations
+  -- The types ccrFamily ... tgt_obj ⟶ A match with morphisms, so need tgt_obj to match
+  have goal_lhs_eq : (⟨tgt_idx, tgt_mor ≫ 𝟙 tgt_obj ≫ g⟩ : ccrEval X.tgt A) =
+      ⟨tgt_idx, tgt_mor ≫ g⟩ := by
+    simp only [Category.id_comp]
+  have goal_rhs_eq : (⟨src_idx, src_mor ≫ hom_data.hom ≫ g⟩ : ccrEval X.tgt A) =
+      ⟨src_idx, (src_mor ≫ hom_data.hom) ≫ g⟩ := by
+    simp only [Category.assoc]
+  rw [goal_lhs_eq, goal_rhs_eq]
+  -- Now goal matches transported.symm, just need to show relations are equal
+  -- coeqRelAt and typeCoeqRel are definitionally equal
+  exact transported.symm
+
+/-! ### The Setoid Inverse Q-Morphism
+
+Combining the target morphism with the respects theorem to form a Q-morphism.
+-/
+
+/--
+The constructive inverse as a Q-morphism from the setoid density presentation
+of X.toSetoidCopresheaf back to X.
+-/
+def setoidInverseQ :
+    PolyPresentationQ.Hom (setoidDensityPresentation X.toSetoidCopresheaf).toQ X.toQ where
+  tgtHom := setoidInverseTgtHom X
+  respects := setoidInverseTgtHom_respects X
+
+/-! ### Induced Map is Isomorphism
+
+The setoid inverse induces a map on Type-valued coequalizers. We show this
+map is an isomorphism by constructing its inverse from the density isomorphism.
+-/
+
+/--
+The induced map from the setoid inverse Q-morphism.
+This maps from the coequalizer of the setoid density presentation to X.toCopresheaf.
+-/
+def setoidInverseInducedMap :
+    (setoidDensityPresentation X.toSetoidCopresheaf).toCopresheaf ⟶ X.toCopresheaf :=
+  (setoidInverseQ X).toInducedMap
+
+/-! ### Forward Embedding
+
+The inverse of the setoid inverse map. Given an element (i, g) of X's target
+polynomial at A, we embed it as ((A, (i, g)), id_A) in the setoid density
+presentation.
+-/
+
+/--
+Forward embedding at pre-quotient level.
+Maps (i, g) to ((A, (i, g)), id_A) in the setoid density target.
+-/
+def setoidForwardApp (A : D) (p : ccrEval X.tgt A) :
+    ccrEval (setoidDensityTgt X.toSetoidCopresheaf) A :=
+  ⟨⟨A, p⟩, 𝟙 A⟩
+
+/--
+The forward embedding respects X's coequalizer relation.
+If p₁ and p₂ are related by the coequalizer relation, their images are also
+related in the setoid density presentation.
+-/
+theorem setoidForwardApp_respects (A : D) :
+    ∀ p₁ p₂ : ccrEval X.tgt A,
+      typeCoeqRel ((ccrToFunctorMap X.fst).app A) ((ccrToFunctorMap X.snd).app A)
+        p₁ p₂ →
+      typeCoeqRel
+        ((ccrToFunctorMap (setoidDensityPresentation X.toSetoidCopresheaf).fst).app A)
+        ((ccrToFunctorMap (setoidDensityPresentation X.toSetoidCopresheaf).snd).app A)
+        (setoidForwardApp X A p₁) (setoidForwardApp X A p₂) := by
+  intro ⟨i₁, g₁⟩ ⟨i₂, g₂⟩ ⟨j, hfst, hsnd⟩
+  let srcElem : SetoidElements X.toSetoidCopresheaf := ⟨A, ⟨i₂, g₂⟩⟩
+  let tgtElem : SetoidElements X.toSetoidCopresheaf := ⟨A, ⟨i₁, g₁⟩⟩
+  have base_rel : (X.toSetoidCopresheaf.obj A).rel.r ⟨i₁, g₁⟩ ⟨i₂, g₂⟩ :=
+    Relation.EqvGen.rel _ _ ⟨j, hfst, hsnd⟩
+  have sym_rel : (X.toSetoidCopresheaf.obj A).rel.r ⟨i₂, g₂⟩ ⟨i₁, g₁⟩ :=
+    Relation.EqvGen.symm _ _ base_rel
+  have map_id_eq : (X.toSetoidCopresheaf.map (𝟙 A)).toFun srcElem.elem = srcElem.elem := by
+    have h : X.toSetoidCopresheaf.map (𝟙 A) = 𝟙 _ := X.toSetoidCopresheaf.map_id A
+    rw [h]
+    rfl
+  have hom_compat : (X.toSetoidCopresheaf.obj tgtElem.obj).rel.r
+      ((X.toSetoidCopresheaf.map (𝟙 A)).toFun srcElem.elem) tgtElem.elem := by
+    rw [map_id_eq]
+    exact sym_rel
+  let homData : SetoidElementsHom srcElem tgtElem := ⟨𝟙 A, hom_compat⟩
+  let mIdx : SetoidMorphismIndex X.toSetoidCopresheaf := ⟨tgtElem, srcElem, homData⟩
+  let witness : ccrEval (setoidDensitySrc X.toSetoidCopresheaf) A := ⟨mIdx, 𝟙 A⟩
+  refine ⟨witness, ?_, ?_⟩
+  · simp only [ccrToFunctorMap_app, ccrToFunctorMapApp, setoidForwardApp,
+      setoidDensityPresentation, setoidDensityFst, ccrReindex, ccrFiberMor,
+      ccrHomMk, Category.id_comp, ccrEvalMk, SetoidMorphismIndex.tgt,
+      ccrEvalIndex, ccrEvalMor]
+    rfl
+  · simp only [ccrToFunctorMap_app, ccrToFunctorMapApp, setoidForwardApp,
+      setoidDensityPresentation, setoidDensitySnd, ccrReindex, ccrFiberMor,
+      ccrHomMk, ccrEvalMk, SetoidMorphismIndex.src, SetoidMorphismIndex.homData,
+      ccrEvalIndex, ccrEvalMor]
+    apply Sigma.ext
+    · rfl
+    · simp only [heq_eq_eq]
+      have h1 : witness.fst.snd.snd.hom = 𝟙 A := rfl
+      have h2 : witness.snd = 𝟙 A := rfl
+      rw [h1, h2]
+      exact Category.id_comp (𝟙 A)
+
+/--
+The forward embedding descends to the quotient.
+-/
+def setoidForwardQuotApp (A : D) :
+    X.toCopresheaf.obj A →
+    (setoidDensityPresentation X.toSetoidCopresheaf).toCopresheaf.obj A := by
+  apply Quot.lift (fun p => Quot.mk _ (setoidForwardApp X A p))
+  intro p₁ p₂ rel
+  apply Quot.sound
+  exact setoidForwardApp_respects X A p₁ p₂ rel
+
+/--
+The forward embedding is natural.
+-/
+theorem setoidForwardQuotApp_natural {A B : D} (f : A ⟶ B) :
+    X.toCopresheaf.map f ≫ setoidForwardQuotApp X B =
+    setoidForwardQuotApp X A ≫
+      (setoidDensityPresentation X.toSetoidCopresheaf).toCopresheaf.map f := by
+  ext x
+  revert x
+  apply Quot.ind
+  intro ⟨i, g⟩
+  simp only [types_comp_apply, PolyPresentation.toCopresheaf,
+    CoequalizerData.coeq, functorCoeq, ccrToFunctorMap_app]
+  unfold setoidForwardQuotApp
+  -- LHS: Quot.mk ((B, ⟨i, g ≫ f⟩), id_B)
+  -- RHS: Quot.mk ((A, ⟨i, g⟩), id_A ≫ f) = Quot.mk ((A, ⟨i, g⟩), f)
+  apply Quot.sound
+  -- Witness: morphism from (A, ⟨i,g⟩) to (B, ⟨i, g ≫ f⟩) with hom = f
+  let srcElem : SetoidElements X.toSetoidCopresheaf := ⟨A, ⟨i, g⟩⟩
+  let tgtElem : SetoidElements X.toSetoidCopresheaf := ⟨B, ⟨i, g ≫ f⟩⟩
+  have hom_compat : (X.toSetoidCopresheaf.obj B).rel.r
+      ((X.toSetoidCopresheaf.map f).toFun ⟨i, g⟩) ⟨i, g ≫ f⟩ := by
+    simp only [PolyPresentation.toSetoidCopresheaf, PolyPresentation.toSetoidBundleAt,
+      PolyPresentation.toSetoidCopresheafMap, PolyPresentation.toSetoidCopresheafMapFun,
+      ccrEvalMap]
+    exact Relation.EqvGen.refl _
+  let homData : SetoidElementsHom srcElem tgtElem := ⟨f, hom_compat⟩
+  let mIdx : SetoidMorphismIndex X.toSetoidCopresheaf := ⟨tgtElem, srcElem, homData⟩
+  let witness : ccrEval (setoidDensitySrc X.toSetoidCopresheaf) B := ⟨mIdx, 𝟙 B⟩
+  use witness
+  have hIdx : ccrEvalIndex witness = mIdx := rfl
+  have hMor : ccrEvalMor witness = 𝟙 B := rfl
+  have hHomData : SetoidMorphismIndex.homData mIdx = homData := rfl
+  have hHom : homData.hom = f := rfl
+  constructor
+  · simp only [ccrToFunctorMap_app, ccrToFunctorMapApp, setoidDensityPresentation,
+      setoidDensityFst, ccrReindex, ccrFiberMor, ccrHomMk, ccrEvalMk,
+      setoidForwardApp, ccrToFunctor, ccrEvalMap, Category.id_comp]
+    apply Sigma.ext
+    · rfl
+    · simp only [heq_eq_eq, hMor]
+  · simp only [ccrToFunctorMap_app, ccrToFunctorMapApp, setoidDensityPresentation,
+      setoidDensitySnd, ccrReindex, ccrFiberMor, ccrHomMk, ccrEvalMk,
+      setoidForwardApp, ccrToFunctor, ccrEvalMap]
+    apply Sigma.ext
+    · rfl
+    · simp only [heq_eq_eq, hMor]
+      change f ≫ 𝟙 B = 𝟙 A ≫ f
+      simp only [Category.comp_id, Category.id_comp]
+
+/--
+The forward embedding as a natural transformation.
+-/
+def setoidForwardMap :
+    X.toCopresheaf ⟶
+    (setoidDensityPresentation X.toSetoidCopresheaf).toCopresheaf where
+  app := setoidForwardQuotApp X
+  naturality := fun _ _ f => setoidForwardQuotApp_natural X f
+
+/-! ### Round-Trip Identities -/
+
+/--
+The composition setoidInverseInducedMap ≫ setoidForwardMap is the identity
+on the setoid density presentation's coequalizer.
+-/
+theorem setoidInverse_forward_id :
+    setoidInverseInducedMap X ≫ setoidForwardMap X = 𝟙 _ := by
+  ext A x
+  revert x
+  apply Quot.ind
+  intro ⟨⟨B, ⟨i, h⟩⟩, g⟩
+  simp only [NatTrans.id_app, NatTrans.comp_app, types_comp_apply, types_id_apply]
+  unfold setoidForwardMap setoidInverseInducedMap
+  simp only [PolyPresentationQ.Hom.toInducedMap,
+    PolyPresentation.toCopresheaf]
+  simp only [ccrToFunctorMap_app]
+  dsimp only [PolyPresentationQ.Hom.toInducedMap, setoidInverseQ,
+    CoequalizerData.desc, typeCoeqDesc, PolyPresentationQ.toPres,
+    PolyPresentation.toCopresheafπ, functorCoeqπ, functorCoeqDesc,
+    CoequalizerData.π, typeCoeqπ]
+  simp only [NatTrans.comp_app, types_comp_apply]
+  simp only [ccrToFunctorMap_app, ccrToFunctorMapApp, setoidInverseTgtHom_reindex,
+    setoidInverseTgtHom_fiberMor, setoidInverseTgtBase, setoidInverseTgtFiber,
+    SetoidElements.obj, SetoidElements.elem]
+  unfold setoidForwardQuotApp
+  simp only [setoidForwardApp]
+  dsimp only [ccrEvalIndex, ccrEvalMor, ccrEvalMk]
+  apply Quot.sound
+  unfold typeCoeqRel
+  let tgtElem : SetoidElements X.toSetoidCopresheaf := ⟨A, ⟨i, h ≫ g⟩⟩
+  let srcElem : SetoidElements X.toSetoidCopresheaf := ⟨B, ⟨i, h⟩⟩
+  have hom_compat : (X.toSetoidCopresheaf.obj A).rel.r
+      ((X.toSetoidCopresheaf.map g).toFun ⟨i, h⟩) ⟨i, h ≫ g⟩ := by
+    simp only [PolyPresentation.toSetoidCopresheaf, PolyPresentation.toSetoidBundleAt,
+      PolyPresentation.toSetoidCopresheafMap, PolyPresentation.toSetoidCopresheafMapFun,
+      ccrEvalMap]
+    exact Relation.EqvGen.refl _
+  let homData : SetoidElementsHom srcElem tgtElem := ⟨g, hom_compat⟩
+  let mIdx : SetoidMorphismIndex X.toSetoidCopresheaf := ⟨tgtElem, srcElem, homData⟩
+  let witness : ccrEval (setoidDensitySrc X.toSetoidCopresheaf) A := ⟨mIdx, 𝟙 A⟩
+  use witness
+  constructor
+  · dsimp only [setoidDensityFst, ccrHomMk, ccrEvalIndex, ccrEvalMor,
+      SetoidMorphismIndex.tgt, SetoidElements.obj, ccrToFunctorMap,
+      ccrToFunctorMapApp, setoidDensityPresentation, PolyPresentation.fst,
+      ccrReindex, ccrFiberMor, ccrEvalMk, witness, mIdx, tgtElem, ccrFamily,
+      setoidDensityTgt]
+    simp only [Category.id_comp]
+  · dsimp only [setoidDensitySnd, ccrHomMk, ccrEvalIndex, ccrEvalMor,
+      SetoidMorphismIndex.src, SetoidMorphismIndex.homData, SetoidElementsHom.hom,
+      SetoidElements.obj, ccrToFunctorMap, ccrToFunctorMapApp,
+      setoidDensityPresentation, PolyPresentation.snd, ccrReindex, ccrFiberMor,
+      ccrEvalMk, witness, mIdx, srcElem, homData, ccrFamily, setoidDensityTgt]
+    congr 1
+    exact Category.comp_id g
+
+/--
+The composition setoidForwardMap ≫ setoidInverseInducedMap is the identity
+on X.toCopresheaf.
+-/
+theorem setoidForward_inverse_id :
+    setoidForwardMap X ≫ setoidInverseInducedMap X = 𝟙 _ := by
+  ext A x
+  revert x
+  apply Quot.ind
+  intro ⟨i, g⟩
+  simp only [NatTrans.comp_app, types_comp_apply, NatTrans.id_app, types_id_apply]
+  unfold setoidForwardMap setoidForwardQuotApp setoidInverseInducedMap
+  dsimp only [setoidForwardApp, PolyPresentationQ.Hom.toInducedMap,
+    PolyPresentation.toCopresheaf, CoequalizerData.desc, typeCoeqDesc,
+    functorCoeqDesc]
+  simp only [NatTrans.comp_app, types_comp_apply]
+  dsimp only [ccrToFunctorMap_app, ccrToFunctorMapApp, ccrEvalMk, ccrHomMk,
+    setoidInverseQ, setoidInverseTgtHom, setoidInverseTgtBase, setoidInverseTgtFiber,
+    PolyPresentationQ.toPres, SetoidElements.obj, SetoidElements.elem,
+    ccrReindex, ccrFiberMor, ccrEvalIndex, ccrEvalMor,
+    PolyPresentation.toCopresheafπ, functorCoeqπ, CoequalizerData.π, typeCoeqπ,
+    PolyPresentation.toQ]
+  congr 1
+  exact Sigma.ext rfl (heq_of_eq (Category.comp_id g))
+
+/--
+The quotient of the setoid density target is isomorphic to X.toCopresheaf.
+-/
+def setoidInverseIso :
+    (setoidDensityPresentation X.toSetoidCopresheaf).toCopresheaf ≅ X.toCopresheaf :=
+  { hom := setoidInverseInducedMap X
+    inv := setoidForwardMap X
+    hom_inv_id := setoidInverse_forward_id X
+    inv_hom_id := setoidForward_inverse_id X }
+
+/--
+The induced map from the setoid inverse is an isomorphism.
+-/
+theorem setoidInverseInducedMap_isIso :
+    IsIso (setoidInverseInducedMap X) :=
+  (setoidInverseIso X).isIso_hom
+
+end SetoidConstructiveInverse
+
 end GebLean
