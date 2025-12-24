@@ -611,3 +611,134 @@ The mathematical content is essentially complete - we have:
 - Proof that Id → S ∘ E exists and induces an isomorphism under E
 
 Just need to assemble these into a formal equivalence.
+
+### Fullness Approach: Detailed Implementation Plan
+
+The equivalence can be completed by proving the evaluation functor
+`E : PolyPresentationLoc D ⥤ (D ⥤ Type)` is fully faithful and essentially
+surjective. The remaining piece is fullness.
+
+#### Why Fullness Suffices
+
+1. **Faithfulness**: Already established by quotient construction.
+2. **Essential surjectivity**: Already established via `densityIso`.
+3. **Fullness**: If proven, E is fully faithful + essentially surjective,
+   hence an equivalence.
+
+For fully faithful functors, `comparisonMorphism X` being an isomorphism
+at the E-level implies it is an isomorphism in the source category.
+
+#### Implementation Steps
+
+##### Step 1: Define the Inverse Morphism Type
+
+For `X : PolyPresentation D`, construct a morphism
+`densityPresentation(X.toCopresheaf) → X` in `PolyPresentationQ`.
+
+```text
+inverseComparisonTgtHom : densityTgt(X.toCopresheaf) → X.tgt
+  base : (A, y) ↦ (index of representative of y)
+  fiber : (A, y) ↦ (fiber of representative of y, composed with type coercion)
+```
+
+The index type of `densityTgt(X.toCopresheaf)` is `X.toCopresheaf.Elements`,
+which consists of pairs `(A, y)` where `y : typeCoeq ...` is a quotient element.
+
+##### Step 2: Extract Representatives
+
+For each `y : typeCoeq (ccrToFunctorMap X.fst).app A
+(ccrToFunctorMap X.snd).app A`, we need to find `⟨i, h⟩` with
+`Quot.mk _ ⟨i, h⟩ = y`.
+
+This can be done using `Quot.out`:
+
+```lean
+noncomputable def representative (y : typeCoeq f g) :
+    TypeCoeqSigma A f g :=
+  Quot.out y
+```
+
+The `Quot.out` function requires the type to be nonempty, which is
+satisfied when there exists at least one element in the quotient
+(which there always is for our coequalizer evaluations when A is inhabited).
+
+##### Step 3: Define inverseComparisonMorphism
+
+```lean
+noncomputable def inverseComparisonTgtHom (X : PolyPresentation D) :
+    densityTgt (X.toCopresheaf) ⟶ X.tgt where
+  base := fun ⟨A, y⟩ => (representative y).fst
+  fiber := fun ⟨A, y⟩ => eqToHom (...) ≫ (representative y).snd
+```
+
+##### Step 4: Prove Respects Condition
+
+Show that `inverseComparisonTgtHom` satisfies the respects condition for
+`PolyPresentationQ.Hom`, enabling the induced map to be defined.
+
+##### Step 5: Prove Induced Map Equals densityIso.hom
+
+Show that `E(inverseComparisonMorphism X) = (densityIso X.toCopresheaf).hom`.
+
+Combined with the existing `E(comparisonMorphism X) = (densityIso X.toCopresheaf).inv`,
+this proves the morphisms are inverse in `(D ⥤ Type)`.
+
+##### Step 6: Fullness Theorem
+
+Using faithfulness: if `E(f ≫ g) = id` and `E(g ≫ f) = id`, then
+`[f ≫ g] = [id]` and `[g ≫ f] = [id]` in `PolyPresentationLoc`.
+
+##### Step 7: Assemble the Equivalence
+
+Use mathlib's `CategoryTheory.Equivalence.mk` or `Functor.IsEquivalence.ofFullyFaithfullyEssSurj`.
+
+#### Constructivity Consideration
+
+The `representative` function above uses `Quot.out`, which is inherently
+noncomputable because it requires the axiom of choice to extract a witness
+from an existential.
+
+**Implication**: The `inverseComparisonMorphism` and subsequent fullness
+proof would need to be marked `noncomputable`.
+
+**Current Constraint**: The project guidelines in CLAUDE.md prohibit
+`noncomputable`. This creates a tension:
+
+1. **Mathematical validity**: The proof is mathematically valid; the
+   noncomputability is purely a Lean formalization artifact.
+
+2. **Options**:
+   - Accept `noncomputable` for this specific proof (requires user approval)
+   - Find an alternative formulation avoiding explicit representative extraction
+   - Use a weaker characterization of equivalence that does not require
+     explicit fullness proof
+
+#### Alternative: Abstract Fullness via Triangle Identity
+
+Instead of constructing the inverse morphism explicitly, we could:
+
+1. Prove that for faithful E, if `E(comparisonMorphism X)` is an isomorphism,
+   then `comparisonMorphism X` is an isomorphism in `PolyPresentationLoc`.
+
+2. This requires showing that `E` is "conservative" or "reflects
+   isomorphisms" for morphisms that become isomorphisms under E.
+
+3. For faithful functors, this follows from fullness (circular), but there
+   may be direct arguments using the quotient structure.
+
+This approach also likely requires choice/noncomputability at some point
+because it must exhibit an inverse morphism.
+
+#### Decision Required
+
+Before proceeding with implementation, a decision is needed:
+
+- **Option A**: Accept `noncomputable` for the equivalence proof components.
+  The mathematical result is valid; noncomputability is a formalization
+  artifact.
+
+- **Option B**: Investigate whether mathlib provides an abstract
+  characterization of equivalence that avoids explicit inverse construction.
+
+- **Option C**: Leave the equivalence as "essentially complete" with the
+  components we have, documenting that the formal assembly requires choice.
