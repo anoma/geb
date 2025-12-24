@@ -1,4 +1,7 @@
 import GebLean.PLang.CatJudgment
+import GebLean.Utilities.Category
+import GebLean.Utilities.OverCategoryEquiv
+import GebLean.CatJudgmentAdjunction
 import Mathlib.CategoryTheory.Category.Cat
 
 /-!
@@ -378,6 +381,374 @@ def PhiFunctor_PLang.{u', v'} : CategoryTheory.Cat.{v' + 1, u' + 1} ⥤
     exact functorToCatJudgNatTrans_comp X.α F G
 
 end PhiFunctor
+
+/-! ## Reflection: CatJudgCopr to Category
+
+We construct a category from a CatJudgCopr by:
+1. Extracting an OverQuiver from the obj/mor/dom/cod components
+2. Building CategoryQuotientData from the identity and composition witnesses
+3. Constructing FreeMor trees and quotienting by FreeMorEquiv
+
+The resulting category has:
+- Objects = s.obj
+- Morphisms a → b = Quot (FreeMorEquiv between a and b)
+- Identity and composition from FreeMor constructors -/
+
+section LFunctor
+
+universe u' v' w' x'
+
+/-! ### OverQuiver extraction
+
+Extract an OverQuiver from a CatJudgCopr using its object, morphism, domain,
+and codomain components. -/
+
+variable (s : Obj.CatJudgCopr.{u', v', w', x'})
+
+/-- Extract an OverQuiver from a CatJudgCopr.
+
+The quiver has:
+- Objects = s.obj
+- Morphisms = s.mor
+- src = s.dom
+- tgt = s.cod -/
+def catJudgCoprToOverQuiver : OverQuiver.{v', u'} where
+  Obj := s.obj
+  MorType := s.mor
+  src := s.dom
+  tgt := s.cod
+
+/-- The object that an identity witness is for.
+
+From the endoProof, we know dom ∘ idMor = cod ∘ idMor, so either gives
+the object. We use dom ∘ idMor. -/
+def catJudgCoprIdObj : s.idType → s.obj := s.dom ∘ s.idMor
+
+/-- The identity morphism is an endomorphism: its source equals the id object. -/
+theorem catJudgCoprIdSrc (i : s.idType) :
+    (catJudgCoprToOverQuiver s).src (s.idMor i) = catJudgCoprIdObj s i := by
+  rfl
+
+/-- The identity morphism is an endomorphism: its target equals the id object. -/
+theorem catJudgCoprIdTgt (i : s.idType) :
+    (catJudgCoprToOverQuiver s).tgt (s.idMor i) = catJudgCoprIdObj s i := by
+  unfold catJudgCoprToOverQuiver catJudgCoprIdObj
+  simp only [Function.comp_apply]
+  have h := s.endoProof
+  unfold Obj.ObjMorIdObjMorEndo at h
+  exact (congrFun h i).symm
+
+/-! ### Composition condition proofs
+
+Convert function equalities from CatJudgCopr to pointwise equalities needed
+by CategoryQuotientData. -/
+
+/-- Composable morphisms: target of right equals source of left.
+
+This is the pointwise version of compMatchProof. -/
+theorem catJudgCoprCompMatch (c : s.compType) :
+    (catJudgCoprToOverQuiver s).tgt (s.right c) =
+    (catJudgCoprToOverQuiver s).src (s.left c) := by
+  have h := s.compMatchProof
+  unfold Obj.ObjMorCompObjMorMatch at h
+  exact congrFun h c
+
+/-- Domain of composite equals domain of right morphism. -/
+theorem catJudgCoprCompDom (c : s.compType) :
+    (catJudgCoprToOverQuiver s).src (s.composite c) =
+    (catJudgCoprToOverQuiver s).src (s.right c) := by
+  have h := s.compDomProof
+  unfold Obj.ObjMorCompObjMorCompDom at h
+  exact congrFun h c
+
+/-- Codomain of composite equals codomain of left morphism. -/
+theorem catJudgCoprCompCod (c : s.compType) :
+    (catJudgCoprToOverQuiver s).tgt (s.composite c) =
+    (catJudgCoprToOverQuiver s).tgt (s.left c) := by
+  have h := s.compCodProof
+  unfold Obj.ObjMorCompObjMorCompCod at h
+  exact congrFun h c
+
+/-! ### CategoryQuotientData construction
+
+Package the CatJudgCopr as a CategoryQuotientData for use with FreeMor/FreeMorEquiv.
+
+Note: CategoryQuotientData.{v, u} requires IdWitness and CompWitness to have the
+same universe as objects. For a general CatJudgCopr.{u, v, w, x}, we restrict to
+the case where w = u and x = u (which holds for the output of catToCatJudgCopr). -/
+
+variable (t : Obj.CatJudgCopr.{u', v', u', u'})
+
+/-- Convert a compatible CatJudgCopr to CategoryQuotientData.
+
+This works for CatJudgCopr.{u, v, u, u} where the identity type and composition
+type match the object universe. This is the case for CatJudgCopr values produced
+by catToCatJudgCopr. -/
+def catJudgCoprToCategoryQuotientData' : GebLean.CategoryQuotientData.{v', u'} where
+  quiver := catJudgCoprToOverQuiver t
+  IdWitness := t.idType
+  idObj := catJudgCoprIdObj t
+  idMor := t.idMor
+  id_src := catJudgCoprIdSrc t
+  id_tgt := catJudgCoprIdTgt t
+  CompWitness := t.compType
+  compRight := t.right
+  compLeft := t.left
+  compComposite := t.composite
+  comp_match := catJudgCoprCompMatch t
+  comp_dom := catJudgCoprCompDom t
+  comp_cod := catJudgCoprCompCod t
+
+/-! ### Conversion to Category
+
+Using FreeMor quotient, convert a CatJudgCopr to a category object in Cat. -/
+
+/-- The OverCategoryData derived from a compatible CatJudgCopr.
+
+This uses FreeMor and FreeMorEquiv to quotient the free morphisms into
+a category. -/
+def catJudgCoprToOverCategoryData' :
+    OverCategoryData (catJudgCoprToCategoryQuotientData' t).quotQuiver :=
+  (catJudgCoprToCategoryQuotientData' t).toOverCategoryData
+
+/-- Bundle the OverCategoryData with its quiver. -/
+def catJudgCoprToBundledOverCategoryData' :
+    BundledOverCategoryData.{max v' u', u'} where
+  quiver := (catJudgCoprToCategoryQuotientData' t).quotQuiver
+  data := catJudgCoprToOverCategoryData' t
+
+/-- Convert a compatible CatJudgCopr to BundledCategoryData. -/
+def catJudgCoprToBundledCategoryData' : BundledCategoryData.{max v' u', u'} :=
+  (catJudgCoprToBundledOverCategoryData' t).toBundledCategoryData
+
+/-- Convert a compatible CatJudgCopr to a category (Cat object).
+
+This is the L functor on objects: CatJudgCopr.{u, v, u, u} → Cat.{max v u, u} -/
+def catJudgCoprToCat' : Cat.{max v' u', u'} :=
+  BundledCategoryData.toCatObj (catJudgCoprToBundledCategoryData' t)
+
+/-! ### Morphism Mapping for L Functor
+
+Given a CatJudgNatTrans, construct the induced functor between the
+corresponding categories. -/
+
+variable {t₁ t₂ : Obj.CatJudgCopr.{u', v', u', u'}}
+variable (f : Mor.CatJudgNatTrans t₁ t₂)
+
+/-- Build an OverQuiverMorphism from a CatJudgNatTrans.
+
+The quiver morphism uses objMap on objects and morMap on morphisms. -/
+def catJudgNatTransToOverQuiverMor :
+    OverQuiverMorphism (catJudgCoprToOverQuiver t₁) (catJudgCoprToOverQuiver t₂) where
+  objFn := f.objMap
+  morFn := f.morMap
+  src_comm := fun m => by
+    have h := f.domProof
+    unfold Mor.CatJudgNaturalityDom at h
+    exact (congrFun h m).symm
+  tgt_comm := fun m => by
+    have h := f.codProof
+    unfold Mor.CatJudgNaturalityCod at h
+    exact (congrFun h m).symm
+
+/-- Build a CategoryQuotientMorphism from a CatJudgNatTrans.
+
+This packages the object/morphism maps with identity and composition
+witness maps and their coherence proofs. -/
+def catJudgNatTransToCategoryQuotientMorphism :
+    GebLean.CategoryQuotientMorphism
+      (catJudgCoprToCategoryQuotientData' t₁)
+      (catJudgCoprToCategoryQuotientData' t₂) where
+  quiverMor := catJudgNatTransToOverQuiverMor f
+  idWitMap := f.idMap
+  compWitMap := f.compMap
+  idObj_comm := fun i => by
+    unfold catJudgCoprToCategoryQuotientData' catJudgCoprIdObj
+        catJudgNatTransToOverQuiverMor
+    simp only [Function.comp_apply]
+    have h := f.idMorProof
+    unfold Mor.CatJudgNaturalityIdMor at h
+    have heq := congrFun h i
+    simp only [Function.comp_apply] at heq
+    have hdom := f.domProof
+    unfold Mor.CatJudgNaturalityDom at hdom
+    rw [← heq]
+    exact congrFun hdom (t₁.idMor i)
+  idMor_comm := fun i => by
+    unfold catJudgCoprToCategoryQuotientData' catJudgNatTransToOverQuiverMor
+    simp only
+    have h := f.idMorProof
+    unfold Mor.CatJudgNaturalityIdMor at h
+    exact congrFun h i
+  compRight_comm := fun c => by
+    unfold catJudgCoprToCategoryQuotientData' catJudgNatTransToOverQuiverMor
+    simp only
+    have h := f.rightProof
+    unfold Mor.CatJudgNaturalityRight at h
+    exact congrFun h c
+  compLeft_comm := fun c => by
+    unfold catJudgCoprToCategoryQuotientData' catJudgNatTransToOverQuiverMor
+    simp only
+    have h := f.leftProof
+    unfold Mor.CatJudgNaturalityLeft at h
+    exact congrFun h c
+  compComposite_comm := fun c => by
+    unfold catJudgCoprToCategoryQuotientData' catJudgNatTransToOverQuiverMor
+    simp only
+    have h := f.compositeProof
+    unfold Mor.CatJudgNaturalityComposite at h
+    exact congrFun h c
+
+/-- Build an OverQuiverMorphism between the quotient quivers from a CatJudgNatTrans.
+
+This uses bundleQuotMor to wrap quotient morphisms with their source/target. -/
+def catJudgNatTransToQuotQuiverMor :
+    OverQuiverMorphism
+      (catJudgCoprToCategoryQuotientData' t₁).quotQuiver
+      (catJudgCoprToCategoryQuotientData' t₂).quotQuiver where
+  objFn := f.objMap
+  morFn := fun m =>
+    (catJudgCoprToCategoryQuotientData' t₂).bundleQuotMor
+      ((catJudgNatTransToCategoryQuotientMorphism f).quotMapMor m.2.2)
+  src_comm := fun _ => rfl
+  tgt_comm := fun _ => rfl
+
+/-- Build an OverFunctorData from a CatJudgNatTrans.
+
+This is the L functor on morphisms: CatJudgNatTrans → functor between Cat objects. -/
+def catJudgNatTransToOverFunctorData :
+    OverFunctorData
+      (catJudgCoprToOverCategoryData' t₁)
+      (catJudgCoprToOverCategoryData' t₂) where
+  toOverQuiverMorphism := catJudgNatTransToQuotQuiverMor f
+  map_id := fun a => by
+    simp only [catJudgNatTransToQuotQuiverMor, catJudgCoprToOverCategoryData',
+      CategoryQuotientData.toOverCategoryData, CategoryQuotientData.bundleQuotMor]
+    rfl
+  map_comp := fun p => by
+    rcases p with ⟨⟨⟨g_src, g_tgt, g_qm⟩, ⟨f_src, f_tgt, f_qm⟩⟩, hcomp⟩
+    have heq : g_tgt = f_src := hcomp
+    simp only [catJudgNatTransToQuotQuiverMor, catJudgCoprToOverCategoryData',
+      CategoryQuotientData.toOverCategoryData, CategoryQuotientData.quotCategoryOps,
+      CategoryQuotientData.quotCompFn, CategoryQuotientData.bundleQuotMor,
+      CategoryQuotientData.quotQuiver]
+    cases heq
+    simp only [CategoryQuotientMorphism.quotMapMor_comp]
+    rfl
+
+/-- Convert a CatJudgNatTrans to a FunctorData between the BundledCategoryData values. -/
+def catJudgNatTransToFunctorData :
+    FunctorData
+      (catJudgCoprToBundledCategoryData' t₁).data
+      (catJudgCoprToBundledCategoryData' t₂).data :=
+  toBundledCategoryData_map (catJudgNatTransToOverFunctorData f)
+
+/-- Convert a CatJudgNatTrans to a morphism in Cat. -/
+def catJudgNatTransToCatMor :
+    catJudgCoprToCat' t₁ ⟶ catJudgCoprToCat' t₂ :=
+  BundledCategoryData.functorToCat.map (catJudgNatTransToFunctorData f)
+
+/-! ### L Functor Functoriality -/
+
+/-- L preserves identity at the OverFunctorData level. -/
+theorem catJudgNatTransToOverFunctorData_id (t : Obj.CatJudgCopr.{u', v', u', u'}) :
+    catJudgNatTransToOverFunctorData (PLang.Cat.CatJudgNatTrans.id t) =
+    OverFunctorData.id (catJudgCoprToOverCategoryData' t) := by
+  apply OverFunctorData.ext
+  · rfl
+  · funext m
+    simp only [catJudgNatTransToOverFunctorData, catJudgNatTransToQuotQuiverMor,
+      catJudgNatTransToCategoryQuotientMorphism, catJudgCoprToOverCategoryData',
+      CategoryQuotientData.toOverCategoryData, CategoryQuotientData.bundleQuotMor,
+      PLang.Cat.CatJudgNatTrans.id, PLang.Cat.CatJudgMap.id,
+      OverFunctorData.id, OverQuiverMorphism.id]
+    congr 1
+    congr 1
+    exact CategoryQuotientMorphism.quotMapMor_id_self m.2.2
+
+/-- L preserves identity at the FunctorData level. -/
+theorem catJudgNatTransToFunctorData_id (t : Obj.CatJudgCopr.{u', v', u', u'}) :
+    catJudgNatTransToFunctorData (PLang.Cat.CatJudgNatTrans.id t) =
+    BundledCategoryData.idFunctorData (catJudgCoprToBundledCategoryData' t) := by
+  simp only [catJudgNatTransToFunctorData, toBundledCategoryData_map]
+  rw [catJudgNatTransToOverFunctorData_id]
+  rfl
+
+/-- L preserves identity: L(id) = id. -/
+theorem catJudgNatTransToCatMor_id (t : Obj.CatJudgCopr.{u', v', u', u'}) :
+    catJudgNatTransToCatMor (PLang.Cat.CatJudgNatTrans.id t) =
+    𝟙 (catJudgCoprToCat' t) := by
+  simp only [catJudgNatTransToCatMor]
+  rw [catJudgNatTransToFunctorData_id]
+  rfl
+
+/-- L preserves composition at the OverFunctorData level. -/
+theorem catJudgNatTransToOverFunctorData_comp
+    {t₁ t₂ t₃ : Obj.CatJudgCopr.{u', v', u', u'}}
+    (f : Mor.CatJudgNatTrans t₁ t₂)
+    (g : Mor.CatJudgNatTrans t₂ t₃) :
+    catJudgNatTransToOverFunctorData (PLang.Cat.CatJudgNatTrans.comp f g) =
+    (catJudgNatTransToOverFunctorData f).comp (catJudgNatTransToOverFunctorData g) := by
+  apply OverFunctorData.ext
+  · rfl
+  · funext m
+    simp only [catJudgNatTransToOverFunctorData, catJudgNatTransToQuotQuiverMor,
+      catJudgNatTransToCategoryQuotientMorphism,
+      PLang.Cat.CatJudgNatTrans.comp, PLang.Cat.CatJudgMap.comp,
+      Cat.ObjMap.comp, OverFunctorData.comp, OverQuiverMorphism.comp,
+      catJudgCoprToOverCategoryData', CategoryQuotientData.toOverCategoryData,
+      CategoryQuotientData.bundleQuotMor, Function.comp_apply]
+    congr 1
+    congr 1
+    induction m.2.2 using Quotient.ind with
+    | _ fm =>
+      simp only [CategoryQuotientMorphism.quotMapMor, CategoryQuotientData.quotMor]
+      exact congrArg Quotient.mk''
+        (FreeMor.mapQuiver_quiverComp
+          (catJudgNatTransToCategoryQuotientMorphism f).quiverMor
+          (catJudgNatTransToCategoryQuotientMorphism g).quiverMor fm)
+
+/-- L preserves composition at the FunctorData level. -/
+theorem catJudgNatTransToFunctorData_comp
+    {t₁ t₂ t₃ : Obj.CatJudgCopr.{u', v', u', u'}}
+    (f : Mor.CatJudgNatTrans t₁ t₂)
+    (g : Mor.CatJudgNatTrans t₂ t₃) :
+    catJudgNatTransToFunctorData (PLang.Cat.CatJudgNatTrans.comp f g) =
+    BundledCategoryData.compFunctorData
+      (catJudgNatTransToFunctorData f)
+      (catJudgNatTransToFunctorData g) := by
+  simp only [catJudgNatTransToFunctorData]
+  rw [catJudgNatTransToOverFunctorData_comp]
+  rfl
+
+/-- L preserves composition: L(f ≫ g) = L(f) ≫ L(g). -/
+theorem catJudgNatTransToCatMor_comp
+    {t₁ t₂ t₃ : Obj.CatJudgCopr.{u', v', u', u'}}
+    (f : Mor.CatJudgNatTrans t₁ t₂)
+    (g : Mor.CatJudgNatTrans t₂ t₃) :
+    catJudgNatTransToCatMor (PLang.Cat.CatJudgNatTrans.comp f g) =
+    catJudgNatTransToCatMor f ≫ catJudgNatTransToCatMor g := by
+  simp only [catJudgNatTransToCatMor]
+  rw [catJudgNatTransToFunctorData_comp]
+  rfl
+
+/-- The reflection functor L : CatJudgCopr → Cat.
+
+Sends a CatJudgCopr to the free category on its quiver, quotiented by
+identity and composition witness relations.
+
+Universe constraint: We use `{uL + 1, vL + 1, uL + 1, uL + 1}` to match the
+CategoryQuotientData requirement that `IdWitness` and `CompWitness` are
+both `Type uL`. The category instance on CatJudgCopr uses the same pattern. -/
+def LFunctor_PLang.{uL, vL} :
+    Obj.CatJudgCopr.{uL + 1, vL + 1, uL + 1, uL + 1} ⥤
+    CategoryTheory.Cat.{max (vL + 1) (uL + 1), uL + 1} where
+  obj := catJudgCoprToCat'
+  map := catJudgNatTransToCatMor
+  map_id t := catJudgNatTransToCatMor_id t
+  map_comp f g := catJudgNatTransToCatMor_comp f g
+
+end LFunctor
 
 end PLang
 

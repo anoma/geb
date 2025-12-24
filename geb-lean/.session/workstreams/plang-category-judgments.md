@@ -51,15 +51,16 @@ The PLang adjunction and PolyPresentation work connect via:
 - [x] Prove functoriality: functorToCatJudgNatTrans_id, functorToCatJudgNatTrans_comp
 
 - [x] Define `PhiFunctor_PLang`:
-      `Cat.{v'+1, u'+1} ⥤ CatJudgCopr.{u'+1, max (u'+1) (v'+1), u'+1, max (u'+1) (v'+1)}`
+      `Cat.{v'+1, u'+1} ⥤ CatJudgCopr.{u'+1, max (u'+1) (v'+1),
+       u'+1, max (u'+1) (v'+1)}`
       (universe shift required for category structure on target)
 
-### Phase 2B: Reflection Functor L_PLang
+### Phase 2B: Reflection Functor L_PLang - COMPLETE
 
-- [ ] Define `catJudgCoprToOverQuiver`:
+- [x] Define `catJudgCoprToOverQuiver`:
       Extract OverQuiver from CatJudgCopr (obj, mor, dom, cod)
 
-- [ ] Define `catJudgCoprToCategoryQuotientData`:
+- [x] Define `catJudgCoprToCategoryQuotientData`:
       Package CatJudgCopr into CategoryQuotientData format
   - quiver = catJudgCoprToOverQuiver s
   - IdWitness = s.idType
@@ -67,27 +68,31 @@ The PLang adjunction and PolyPresentation work connect via:
   - CompWitness = s.compType
   - compRight, compLeft, compComposite from s structure
 
-- [ ] Verify FreeMor/FreeMorEquiv work with CatJudgCopr-derived quivers
-  - FreeMor already parameterized by OverQuiver, should work
-  - FreeMorEquiv uses CategoryQuotientData, should work
-  - Check universe level compatibility
+- [x] Verify FreeMor/FreeMorEquiv work with CatJudgCopr-derived quivers
+  - FreeMor already parameterized by OverQuiver, works
+  - FreeMorEquiv uses CategoryQuotientData, works
+  - Universe restriction: w = x = u required for CategoryQuotientData
 
-- [ ] Define `catJudgCoprToCat`:
-      `CatJudgCopr.{u, v, w, x} → Cat.{max v w x, u}`
+- [x] Define `catJudgCoprToCat'`:
+      `CatJudgCopr.{u', v', u', u'} → Cat.{max v' u', u'}`
   - Objects = s.obj
   - Morphisms a b = Quot (FreeMorEquiv between a and b)
   - Identity, composition via FreeMor constructors lifted through Quot
   - Category laws from FreeMorEquiv properties
 
-- [ ] Define morphism mapping for L_PLang
-  - Given CatJudgNatTrans f : s → t
-  - Induce functor catJudgCoprToCat s ⥤ catJudgCoprToCat t
-  - Object map = f.objMap
-  - Morphism map = lift FreeMor.map through quotient
+- [x] Define morphism mapping for L_PLang
+  - `catJudgNatTransToQuotQuiverMor`: OverQuiverMorphism between quotient quivers
+  - `catJudgNatTransToOverFunctorData`: OverFunctorData with id/comp preservation
+  - `catJudgNatTransToFunctorData`: FunctorData via toBundledCategoryData_map
+  - `catJudgNatTransToCatMor`: morphism in Cat
 
-- [ ] Prove functoriality: map_id, map_comp
+- [x] Prove functoriality: map_id, map_comp (layered proofs)
+  - `catJudgNatTransToOverFunctorData_id/comp`
+  - `catJudgNatTransToFunctorData_id/comp`
+  - `catJudgNatTransToCatMor_id/comp`
 
-- [ ] Define `LFunctor_PLang : CatJudgCopr.{u, v, w, x} ⥤ Cat.{max v w x, u}`
+- [x] Define `LFunctor_PLang`:
+      `CatJudgCopr.{uL+1, vL+1, uL+1, uL+1} ⥤ Cat.{max (vL+1) (uL+1), uL+1}`
 
 ### Phase 2C: Prove Adjunction
 
