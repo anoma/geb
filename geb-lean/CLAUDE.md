@@ -229,7 +229,7 @@ When making changes to Lean code:
 - Keep the development constructive: never import or `open` `Classical`,
   and never use `classical` attribute in proofs.  Similarly, never use
   `noncomputable`.  Similarly, never use `axiom` -- our results should depend
-  only on Lean's native type theory.
+  only on Lean's native type theory.  Use `Setoid`, not `Quotient`/`Quot`.
 - When you write or modify a file that uses `universe` and/or `variable`
   declarations anywhere, check after you're done whether they're all
   necessary, or whether some are unused, in which case they should be removed.
