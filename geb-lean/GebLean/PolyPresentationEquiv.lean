@@ -1871,4 +1871,449 @@ def setoidComparisonIso :
 
 end SetoidConstructiveInverse
 
+/-! ## Setoid Counit Construction
+
+The counit of the equivalence: for F : D ⥤ SetoidBundle, we construct an
+isomorphism F ≅ (setoidDensityPresentation F).toSetoidCopresheaf.
+
+This is the other half of the equivalence, complementing the unit
+(setoidComparisonIso) which shows X ≅ setoidDensityPresentation(X.toSetoidCopresheaf)
+for presentations X.
+
+The construction proceeds by:
+1. Defining raw forward/inverse functions at the carrier level
+2. Proving they preserve the relevant equivalence relations
+3. Showing round-trip identities
+4. Assembling into a natural isomorphism
+-/
+
+section SetoidCounit
+
+variable {D : Type u} [Category.{v} D]
+variable (F : D ⥤ SetoidBundle.{max u v})
+
+/-! ### Computational Simp Lemmas
+
+These lemmas make the structure of setoidDensityPresentation F accessible
+for computation.
+-/
+
+@[simp]
+theorem setoidDensityPresentation_toSetoidBundleAt_carrier (A : D) :
+    ((setoidDensityPresentation F).toSetoidBundleAt A).carrier =
+    ccrEval (setoidDensityTgt F) A := rfl
+
+@[simp]
+theorem setoidDensityTgt_ccrEval (A : D) :
+    ccrEval (setoidDensityTgt F) A = Σ (p : SetoidElements F), (p.obj ⟶ A) := rfl
+
+/-! ### Raw Forward Function
+
+The forward function maps x : (F.obj A).carrier to the canonical element
+((A, x), 𝟙 A) in the density presentation.
+-/
+
+/--
+The forward embedding at the carrier level.
+Maps x : (F.obj A).carrier to ((A, x), 𝟙 A).
+-/
+def setoidCounitForwardRaw (A : D) (x : (F.obj A).carrier) :
+    ccrEval (setoidDensityTgt F) A :=
+  ⟨⟨A, x⟩, 𝟙 A⟩
+
+@[simp]
+theorem setoidCounitForwardRaw_fst (A : D) (x : (F.obj A).carrier) :
+    (setoidCounitForwardRaw F A x).fst = ⟨A, x⟩ := rfl
+
+@[simp]
+theorem setoidCounitForwardRaw_snd (A : D) (x : (F.obj A).carrier) :
+    (setoidCounitForwardRaw F A x).snd = 𝟙 A := rfl
+
+/-! ### Raw Inverse Function
+
+The inverse function maps ((B, y), g : B ⟶ A) to (F.map g).toFun y.
+This evaluates the functor F at the morphism g to transport y to A.
+-/
+
+/--
+The inverse function at the carrier level.
+Maps ((B, y), g) to (F.map g).toFun y.
+-/
+def setoidCounitInverseRaw (A : D) (x : ccrEval (setoidDensityTgt F) A) :
+    (F.obj A).carrier :=
+  (F.map x.snd).toFun x.fst.elem
+
+@[simp]
+theorem setoidCounitInverseRaw_apply (A : D) (B : D) (y : (F.obj B).carrier)
+    (g : B ⟶ A) :
+    setoidCounitInverseRaw F A ⟨⟨B, y⟩, g⟩ = (F.map g).toFun y := rfl
+
+/-! ### Forward Preserves Relation
+
+The forward function maps F's setoid relation to the coequalizer relation
+of the density presentation.
+-/
+
+/--
+Witness for setoidCounitForward preserving the relation.
+Given x ≈ y in F.obj A, we construct a witness that their images are related
+in the density coequalizer.
+
+The coequalizer relation requires fst(w) = x and snd(w) = y, so:
+- tgtElem = ⟨A, x⟩ (since fst maps to target)
+- srcElem = ⟨A, y⟩ (since snd maps to source)
+- homData goes from srcElem to tgtElem with compat: (F.map 𝟙)(y) ~ x
+-/
+def setoidCounitForward_witness (A : D) (x y : (F.obj A).carrier)
+    (h : (F.obj A).rel.r x y) :
+    ccrEval (setoidDensitySrc F) A :=
+  let srcElem : SetoidElements F := ⟨A, y⟩
+  let tgtElem : SetoidElements F := ⟨A, x⟩
+  have hSym : (F.obj A).rel.r y x := (F.obj A).rel.symm h
+  let mapIdCompat : (F.obj A).rel.r ((F.map (𝟙 A)).toFun y) x := by
+    have hMapId : F.map (𝟙 A) = 𝟙 (F.obj A) := F.map_id A
+    simp only [hMapId, SetoidCat, SetoidHom.id_apply]
+    exact hSym
+  let homData : SetoidElementsHom srcElem tgtElem := ⟨𝟙 A, mapIdCompat⟩
+  let mIdx : SetoidMorphismIndex F := ⟨tgtElem, srcElem, homData⟩
+  ⟨mIdx, 𝟙 A⟩
+
+/--
+The witness maps to the target (x's image) under fst.
+-/
+theorem setoidCounitForward_witness_fst (A : D) (x y : (F.obj A).carrier)
+    (h : (F.obj A).rel.r x y) :
+    (ccrToFunctorMap (setoidDensityFst F)).app A (setoidCounitForward_witness F A x y h) =
+    setoidCounitForwardRaw F A x := by
+  simp only [ccrToFunctorMap_app, ccrToFunctorMapApp, setoidCounitForward_witness,
+    setoidDensityFst, ccrHomMk, ccrReindex, ccrFiberMor, ccrEvalMk, ccrEvalIndex, ccrEvalMor,
+    SetoidMorphismIndex.tgt, setoidCounitForwardRaw, Category.id_comp]
+
+/--
+The witness maps to the source (y's image) under snd.
+-/
+theorem setoidCounitForward_witness_snd (A : D) (x y : (F.obj A).carrier)
+    (h : (F.obj A).rel.r x y) :
+    (ccrToFunctorMap (setoidDensitySnd F)).app A (setoidCounitForward_witness F A x y h) =
+    setoidCounitForwardRaw F A y := by
+  simp only [ccrToFunctorMap_app, ccrToFunctorMapApp, setoidCounitForward_witness,
+    setoidDensitySnd, ccrHomMk, ccrReindex, ccrFiberMor, ccrEvalMk, ccrEvalIndex, ccrEvalMor,
+    SetoidMorphismIndex.src, SetoidMorphismIndex.homData,
+    setoidCounitForwardRaw]
+  apply Sigma.ext
+  · rfl
+  · simp only [heq_eq_eq]
+    exact Category.id_comp (𝟙 A)
+
+/--
+The forward function preserves the setoid relation.
+If x ≈ y in F.obj A, then their images are related in the density coequalizer.
+-/
+theorem setoidCounitForwardRaw_map_rel (A : D) (x y : (F.obj A).carrier)
+    (h : (F.obj A).rel.r x y) :
+    (setoidDensityPresentation F).coeqSetoidAt A |>.r
+      (setoidCounitForwardRaw F A x) (setoidCounitForwardRaw F A y) := by
+  apply Relation.EqvGen.rel
+  use setoidCounitForward_witness F A x y h
+  constructor
+  · exact setoidCounitForward_witness_fst F A x y h
+  · exact setoidCounitForward_witness_snd F A x y h
+
+/-! ### Inverse Preserves Relation
+
+The inverse function maps the coequalizer relation of the density presentation
+to F's setoid relation.
+-/
+
+/--
+The inverse function preserves the base coequalizer relation (before EqvGen).
+Given a witness w in the source polynomial, the images of fst(w) and snd(w)
+under the inverse are related.
+-/
+theorem setoidCounitInverseRaw_preserves_base (A : D)
+    (w : ccrEval (setoidDensitySrc F) A) :
+    (F.obj A).rel.r
+      (setoidCounitInverseRaw F A ((ccrToFunctorMap (setoidDensityFst F)).app A w))
+      (setoidCounitInverseRaw F A ((ccrToFunctorMap (setoidDensitySnd F)).app A w)) := by
+  obtain ⟨⟨⟨tgtObj, tgtElem⟩, ⟨srcObj, srcElem⟩, homData⟩, g⟩ := w
+  simp only [ccrToFunctorMap_app, ccrToFunctorMapApp, setoidDensityFst, setoidDensitySnd,
+    ccrHomMk, ccrReindex, ccrFiberMor, ccrEvalMk, ccrEvalIndex, ccrEvalMor,
+    SetoidMorphismIndex.tgt, SetoidMorphismIndex.src, SetoidMorphismIndex.homData,
+    SetoidElements.elem, setoidCounitInverseRaw]
+  simp only [Category.id_comp]
+  have compat := homData.compat
+  have h := (F.map g).map_rel _ _ compat
+  simp only [SetoidElements.elem, SetoidElements.obj] at h
+  have heq : (F.map g).toFun ((F.map homData.hom).toFun srcElem) =
+             (F.map (homData.hom ≫ g)).toFun srcElem := by
+    have hcomp := F.map_comp homData.hom g
+    simp only [SetoidCat] at hcomp
+    exact congrFun (congrArg SetoidHom.toFun hcomp.symm) srcElem
+  rw [heq] at h
+  exact (F.obj A).rel.symm h
+
+/--
+The inverse function preserves the full equivalence relation (EqvGen of base).
+-/
+theorem setoidCounitInverseRaw_map_rel (A : D)
+    (x y : ccrEval (setoidDensityTgt F) A)
+    (h : (setoidDensityPresentation F).coeqSetoidAt A |>.r x y) :
+    (F.obj A).rel.r (setoidCounitInverseRaw F A x) (setoidCounitInverseRaw F A y) := by
+  induction h with
+  | rel _ _ hbase =>
+    obtain ⟨w, hw1, hw2⟩ := hbase
+    simp only [setoidDensityPresentation_fst, setoidDensityPresentation_snd] at hw1 hw2
+    have hpres := setoidCounitInverseRaw_preserves_base F A w
+    simp only [ccrToFunctorMap_app] at hpres
+    rw [hw1, hw2] at hpres
+    exact hpres
+  | refl _ =>
+    exact (F.obj A).rel.refl _
+  | symm _ _ _ ih =>
+    exact (F.obj A).rel.symm ih
+  | trans _ _ _ _ _ ih1 ih2 =>
+    exact (F.obj A).rel.trans ih1 ih2
+
+/-! ### Round-Trip Identities -/
+
+/--
+Round-trip: inverse ∘ forward = id on F.obj A.
+-/
+theorem setoidCounit_inverse_forward (A : D) (x : (F.obj A).carrier) :
+    setoidCounitInverseRaw F A (setoidCounitForwardRaw F A x) = x := by
+  simp only [setoidCounitForwardRaw, setoidCounitInverseRaw, SetoidElements.elem]
+  have h : F.map (𝟙 A) = 𝟙 (F.obj A) := F.map_id A
+  simp only [h, SetoidCat, SetoidHom.id_apply]
+
+/--
+Round-trip: forward ∘ inverse ≈ id on ccrEval (setoidDensityTgt F) A.
+The images are related via the coequalizer equivalence relation.
+-/
+theorem setoidCounit_forward_inverse (A : D)
+    (x : ccrEval (setoidDensityTgt F) A) :
+    (setoidDensityPresentation F).coeqSetoidAt A |>.r
+      (setoidCounitForwardRaw F A (setoidCounitInverseRaw F A x)) x := by
+  obtain ⟨⟨B, y⟩, g⟩ := x
+  simp only [setoidCounitInverseRaw, setoidCounitForwardRaw, SetoidElements.elem]
+  -- Goal: relate ⟨⟨A, (F.map g).toFun y⟩, 𝟙 A⟩ to ⟨⟨B, y⟩, g⟩
+  -- Use morphism g : B ⟶ A with compat witnessing F.map g y ≈ F.map g y
+  apply Relation.EqvGen.rel
+  let srcElem : SetoidElements F := ⟨B, y⟩
+  let tgtElem : SetoidElements F := ⟨A, (F.map g).toFun y⟩
+  have hcompat : (F.obj tgtElem.obj).rel.r ((F.map g).toFun srcElem.elem) tgtElem.elem := by
+    simp only [tgtElem, srcElem, SetoidElements.obj, SetoidElements.elem]
+    exact (F.obj A).rel.refl _
+  let homData : SetoidElementsHom srcElem tgtElem := ⟨g, hcompat⟩
+  let mIdx : SetoidMorphismIndex F := ⟨tgtElem, srcElem, homData⟩
+  let witness : ccrEval (setoidDensitySrc F) A := ⟨mIdx, 𝟙 A⟩
+  use witness
+  constructor
+  · simp only [setoidDensityPresentation_fst, ccrToFunctorMapApp, setoidDensityFst,
+      ccrHomMk, ccrReindex, ccrFiberMor, ccrEvalMk, ccrEvalIndex, ccrEvalMor,
+      SetoidMorphismIndex.tgt, witness, mIdx, tgtElem, setoidDensityTgt,
+      ccrObjMk_family, SetoidElements.obj]
+    apply Sigma.ext
+    · rfl
+    · simp only [heq_eq_eq]
+      exact Category.id_comp (𝟙 A)
+  · simp only [setoidDensityPresentation_snd, ccrToFunctorMapApp, setoidDensitySnd,
+      ccrHomMk, ccrReindex, ccrFiberMor, ccrEvalMk, ccrEvalIndex, ccrEvalMor,
+      SetoidMorphismIndex.src, SetoidMorphismIndex.homData, witness, mIdx,
+      srcElem, homData]
+    apply Sigma.ext
+    · rfl
+    · simp only [heq_eq_eq]
+      exact Category.comp_id g
+
+/-! ### Quotient-Level Isomorphism
+
+The raw functions are inverses up to the equivalence relation, not pointwise.
+To get an isomorphism, we work at the quotient level: the quotient of F.obj A
+(which is Quotient (F.obj A).rel) is isomorphic to the coequalizer of the
+density presentation at A.
+-/
+
+/--
+The forward map descends to quotients.
+Maps Quotient.mk x to the coequalizer class of ((A, x), 𝟙 A).
+-/
+def setoidCounitQuotientForward (A : D) :
+    Quotient (F.obj A).rel →
+    (setoidDensityPresentation F).toCopresheaf.obj A := by
+  apply Quotient.lift
+    (fun x => (setoidDensityPresentation F).toCopresheafπ.app A
+      (setoidCounitForwardRaw F A x))
+  intro x y hxy
+  apply Quot.eqvGen_sound
+  exact setoidCounitForwardRaw_map_rel F A x y hxy
+
+/--
+The inverse map descends to quotients.
+Maps the coequalizer class of ((B, y), g) to Quotient.mk ((F.map g).toFun y).
+-/
+def setoidCounitQuotientInverse (A : D) :
+    (setoidDensityPresentation F).toCopresheaf.obj A →
+    Quotient (F.obj A).rel := by
+  apply Quot.lift
+    (fun x => Quotient.mk (F.obj A).rel (setoidCounitInverseRaw F A x))
+  intro x y hxy
+  apply Quotient.sound
+  exact setoidCounitInverseRaw_map_rel F A x y (Relation.EqvGen.rel _ _ hxy)
+
+/--
+Round-trip: inverse ∘ forward = id at quotient level.
+-/
+theorem setoidCounitQuotient_inv_hom_id (A : D) :
+    setoidCounitQuotientInverse F A ∘ setoidCounitQuotientForward F A = id := by
+  funext x
+  induction x using Quotient.ind with
+  | _ x =>
+    simp only [Function.comp_apply, id_eq, setoidCounitQuotientForward,
+      setoidCounitQuotientInverse]
+    simp only [Quotient.lift_mk, PolyPresentation.toCopresheafπ, functorCoeqπ,
+      CoequalizerData.π, typeCoeqπ]
+    apply Quotient.sound
+    rw [setoidCounit_inverse_forward]
+    exact (F.obj A).rel.refl x
+
+/--
+Round-trip: forward ∘ inverse = id at quotient level.
+-/
+theorem setoidCounitQuotient_hom_inv_id (A : D) :
+    setoidCounitQuotientForward F A ∘ setoidCounitQuotientInverse F A = id := by
+  funext x
+  revert x
+  apply Quot.ind
+  intro ⟨⟨B, y⟩, g⟩
+  simp only [Function.comp_apply, id_eq, setoidCounitQuotientForward,
+    setoidCounitQuotientInverse]
+  simp only [PolyPresentation.toCopresheafπ, functorCoeqπ,
+    CoequalizerData.π, typeCoeqπ, Quotient.lift_mk]
+  apply Quot.eqvGen_sound
+  exact setoidCounit_forward_inverse F A ⟨⟨B, y⟩, g⟩
+
+/--
+The quotient-level isomorphism at each component A.
+-/
+def setoidCounitQuotientIso (A : D) :
+    Quotient (F.obj A).rel ≃ (setoidDensityPresentation F).toCopresheaf.obj A where
+  toFun := setoidCounitQuotientForward F A
+  invFun := setoidCounitQuotientInverse F A
+  left_inv := congrFun (setoidCounitQuotient_inv_hom_id F A)
+  right_inv := congrFun (setoidCounitQuotient_hom_inv_id F A)
+
+/-! ### Naturality
+
+The quotient-level maps form a natural transformation.
+-/
+
+/--
+The forward map is natural: for f : A ⟶ B, the diagram commutes.
+-/
+theorem setoidCounitQuotientForward_natural {A B : D} (f : A ⟶ B) :
+    (SetoidBundle.quotientFunctor.map (F.map f)) ≫
+      setoidCounitQuotientForward F B =
+    setoidCounitQuotientForward F A ≫
+      (setoidDensityPresentation F).toCopresheaf.map f := by
+  ext x
+  induction x using Quotient.ind with
+  | _ x =>
+    simp only [types_comp_apply, SetoidBundle.quotientFunctor,
+      setoidCounitQuotientForward, Quotient.map'_mk'']
+    simp only [Quotient.lift_mk]
+    -- LHS: π((B, (F.map f) x), 𝟙 B)
+    -- RHS: (density.map f)(π((A, x), 𝟙 A))
+    simp only [PolyPresentation.toCopresheaf, CoequalizerData.coeq, functorCoeq,
+      PolyPresentation.toCopresheafπ, functorCoeqπ, CoequalizerData.π, typeCoeqπ,
+      ccrToFunctorMap_app]
+    -- Use Quot.sound via a witness
+    apply Quot.sound
+    -- Witness: morphism f : A ⟶ B in elements with (F.map f)(x) ≈ (F.map f)(x)
+    let srcElem : SetoidElements F := ⟨A, x⟩
+    let tgtElem : SetoidElements F := ⟨B, (F.map f).toFun x⟩
+    have hcompat : (F.obj B).rel.r ((F.map f).toFun x) ((F.map f).toFun x) :=
+      (F.obj B).rel.refl _
+    let homData : SetoidElementsHom srcElem tgtElem := ⟨f, hcompat⟩
+    let mIdx : SetoidMorphismIndex F := ⟨tgtElem, srcElem, homData⟩
+    let witness : ccrEval (setoidDensitySrc F) B := ⟨mIdx, 𝟙 B⟩
+    use witness
+    constructor
+    · simp only [setoidDensityPresentation_fst, ccrToFunctorMapApp, setoidDensityFst,
+        ccrHomMk, ccrReindex, ccrFiberMor, ccrEvalMk, ccrEvalIndex, ccrEvalMor,
+        SetoidMorphismIndex.tgt, witness, mIdx, tgtElem, setoidCounitForwardRaw,
+        setoidDensityTgt, ccrObjMk_family, SetoidElements.obj]
+      apply Sigma.ext
+      · rfl
+      · simp only [heq_eq_eq]
+        exact Category.id_comp (𝟙 B)
+    · simp only [setoidDensityPresentation_snd, ccrToFunctorMapApp, setoidDensitySnd,
+        ccrHomMk, ccrReindex, ccrFiberMor, ccrEvalMk, ccrEvalIndex, ccrEvalMor,
+        SetoidMorphismIndex.src, SetoidMorphismIndex.homData,
+        witness, mIdx, srcElem, homData, setoidCounitForwardRaw, ccrToFunctor, ccrEvalMap]
+      apply Sigma.ext
+      · rfl
+      · simp only [heq_eq_eq]
+        calc f ≫ 𝟙 B = f := Category.comp_id f
+          _ = 𝟙 A ≫ f := (Category.id_comp f).symm
+
+/--
+The inverse map is natural: for f : A ⟶ B, the diagram commutes.
+-/
+theorem setoidCounitQuotientInverse_natural {A B : D} (f : A ⟶ B) :
+    (setoidDensityPresentation F).toCopresheaf.map f ≫
+      setoidCounitQuotientInverse F B =
+    setoidCounitQuotientInverse F A ≫
+      (SetoidBundle.quotientFunctor.map (F.map f)) := by
+  ext x
+  revert x
+  apply Quot.ind
+  intro ⟨⟨C, z⟩, g⟩
+  simp only [types_comp_apply, setoidCounitQuotientInverse,
+    PolyPresentation.toCopresheaf, CoequalizerData.coeq, functorCoeq,
+    ccrToFunctorMap_app]
+  simp only [SetoidBundle.quotientFunctor, Quotient.map'_mk'']
+  apply Quotient.sound
+  simp only [ccrToFunctor, ccrEvalMap, setoidCounitInverseRaw, SetoidElements.elem]
+  -- Goal: (F.obj B).rel.r ((F.map (g ≫ f)) z) ((F.map f) ((F.map g) z))
+  have hcomp : F.map (g ≫ f) = F.map g ≫ F.map f := F.map_comp g f
+  simp only [hcomp, SetoidCat, SetoidHom.comp_apply]
+  exact (F.obj B).rel.refl _
+
+/--
+The forward natural transformation from the quotient functor ⋙ F to the
+density presentation's coequalizer.
+-/
+def setoidCounitForwardNatTrans :
+    F ⋙ SetoidBundle.quotientFunctor ⟶
+    (setoidDensityPresentation F).toCopresheaf where
+  app := setoidCounitQuotientForward F
+  naturality := fun _ _ f => setoidCounitQuotientForward_natural F f
+
+/--
+The inverse natural transformation from the density presentation's coequalizer
+to the quotient functor applied to F.
+-/
+def setoidCounitInverseNatTrans :
+    (setoidDensityPresentation F).toCopresheaf ⟶
+    F ⋙ SetoidBundle.quotientFunctor where
+  app := setoidCounitQuotientInverse F
+  naturality := fun _ _ f => setoidCounitQuotientInverse_natural F f
+
+/-! ### The Counit Isomorphism -/
+
+/--
+The counit isomorphism: the quotient of F is naturally isomorphic to the
+coequalizer of the setoid density presentation.
+
+This completes the counit direction of the equivalence between polynomial
+presentations and Setoid-valued copresheaves.
+-/
+def setoidCounitIso :
+    F ⋙ SetoidBundle.quotientFunctor ≅ (setoidDensityPresentation F).toCopresheaf :=
+  NatIso.ofComponents
+    (fun A => (setoidCounitQuotientIso F A).toIso)
+    (fun f => setoidCounitQuotientForward_natural F f)
+
+end SetoidCounit
+
 end GebLean
