@@ -1627,6 +1627,248 @@ theorem setoidInverseInducedMap_isIso :
     IsIso (setoidInverseInducedMap X) :=
   (setoidInverseIso X).isIso_hom
 
+/-! ### Comparison Morphism (Setoid Version)
+
+We construct a morphism in PolyPresentationLoc from X to
+setoidDensityPresentation(X.toSetoidCopresheaf). Together with setoidInverseQ,
+this forms an isomorphism in PolyPresentationLoc.
+-/
+
+/--
+Map an index of X.tgt to a SetoidElement of X.toSetoidCopresheaf.
+We use the canonical element ⟨i, 𝟙⟩.
+-/
+def setoidComparisonTgtReindex (i : ccrIndex X.tgt) :
+    SetoidElements X.toSetoidCopresheaf :=
+  ⟨ccrFamily X.tgt i, ⟨i, 𝟙 _⟩⟩
+
+/--
+The morphism on target polynomials for the setoid comparison.
+Maps each index i to the element (ccrFamily i, ⟨i, 𝟙⟩).
+-/
+def setoidComparisonTgtHom :
+    X.tgt ⟶ setoidDensityTgt X.toSetoidCopresheaf :=
+  ccrHomMk
+    (setoidComparisonTgtReindex X)
+    (fun _ => 𝟙 _)
+
+@[simp]
+theorem setoidComparisonTgtHom_reindex (i : ccrIndex X.tgt) :
+    ccrReindex (setoidComparisonTgtHom X) i = setoidComparisonTgtReindex X i :=
+  rfl
+
+@[simp]
+theorem setoidComparisonTgtHom_fiberMor (i : ccrIndex X.tgt) :
+    ccrFiberMor (setoidComparisonTgtHom X) i = 𝟙 _ := rfl
+
+/--
+The comparison composed with densityπ, followed by the inverse, equals X.toCopresheafπ.
+This is a helper for the main factorization theorem.
+-/
+theorem setoidComparisonTgtHom_inverse_eq :
+    ccrToFunctorMap (setoidComparisonTgtHom X) ≫
+      (setoidDensityPresentation X.toSetoidCopresheaf).toCopresheafπ ≫
+      setoidInverseInducedMap X = X.toCopresheafπ := by
+  ext A ⟨i, h⟩
+  simp only [NatTrans.comp_app, types_comp_apply, ccrToFunctorMap_app,
+    ccrToFunctorMapApp, setoidComparisonTgtHom_reindex, setoidComparisonTgtHom_fiberMor,
+    ccrEvalMk, ccrEvalIndex, ccrEvalMor, Category.id_comp, setoidComparisonTgtReindex]
+  unfold PolyPresentation.toCopresheafπ PolyPresentation.toCopresheaf
+  simp only [functorCoeqπ, CoequalizerData.π, typeCoeqπ]
+  unfold setoidInverseInducedMap PolyPresentationQ.Hom.toInducedMap
+  simp only [PolyPresentation.toCopresheaf, CoequalizerData.desc, typeCoeqDesc,
+    functorCoeqDesc, NatTrans.comp_app, types_comp_apply]
+  simp only [ccrToFunctorMap_app, ccrToFunctorMapApp, ccrEvalMk]
+  unfold setoidInverseQ PolyPresentation.toQ PolyPresentationQ.toPres
+  simp only [setoidInverseTgtHom, ccrHomMk, ccrReindex, ccrFiberMor,
+    setoidInverseTgtBase, setoidInverseTgtFiber,
+    SetoidElements.elem, SetoidElements.obj, ccrEvalIndex, ccrEvalMor,
+    Category.id_comp]
+  unfold PolyPresentation.toCopresheafπ
+  simp only [functorCoeqπ, CoequalizerData.π, typeCoeqπ, ccrToFunctorMap_app]
+
+/--
+The factorization: comparison ≫ densityπ = X.toCopresheafπ ≫ setoidForwardMap.
+
+We prove this by showing both sides become equal after composing with
+setoidInverseInducedMap (which is an isomorphism), then cancelling.
+-/
+theorem setoidComparisonTgtHom_factor :
+    ccrToFunctorMap (setoidComparisonTgtHom X) ≫
+      (setoidDensityPresentation X.toSetoidCopresheaf).toCopresheafπ =
+      X.toCopresheafπ ≫ setoidForwardMap X := by
+  have h1 : ccrToFunctorMap (setoidComparisonTgtHom X) ≫
+      (setoidDensityPresentation X.toSetoidCopresheaf).toCopresheafπ ≫
+      setoidInverseInducedMap X = X.toCopresheafπ :=
+    setoidComparisonTgtHom_inverse_eq X
+  have hIso : IsIso (setoidInverseInducedMap X) := by
+    constructor
+    use setoidForwardMap X
+    constructor
+    · exact setoidInverse_forward_id X
+    · exact setoidForward_inverse_id X
+  calc ccrToFunctorMap (setoidComparisonTgtHom X) ≫
+        (setoidDensityPresentation X.toSetoidCopresheaf).toCopresheafπ
+    _ = (ccrToFunctorMap (setoidComparisonTgtHom X) ≫
+        (setoidDensityPresentation X.toSetoidCopresheaf).toCopresheafπ ≫
+        setoidInverseInducedMap X) ≫ inv (setoidInverseInducedMap X) := by
+          simp only [Category.assoc, IsIso.hom_inv_id, Category.comp_id]
+    _ = X.toCopresheafπ ≫ inv (setoidInverseInducedMap X) := by rw [h1]
+    _ = X.toCopresheafπ ≫ setoidForwardMap X := by
+          congr 1
+          symm
+          exact IsIso.eq_inv_of_hom_inv_id (setoidInverse_forward_id X)
+
+/--
+The comparison morphism respects the coequalizer structure.
+
+For elements ⟨j, g⟩ in X.src evaluated at A, the images under X.fst and X.snd
+followed by the comparison map project to the same element in the setoid
+density coequalizer.
+-/
+theorem setoidComparisonTgtHom_respects :
+    ccrToFunctorMap X.fst ≫ ccrToFunctorMap (setoidComparisonTgtHom X) ≫
+      (setoidDensityPresentation X.toSetoidCopresheaf).toCopresheafπ =
+    ccrToFunctorMap X.snd ≫ ccrToFunctorMap (setoidComparisonTgtHom X) ≫
+      (setoidDensityPresentation X.toSetoidCopresheaf).toCopresheafπ := by
+  simp only [setoidComparisonTgtHom_factor, ← Category.assoc]
+  rw [X.toCopresheaf_condition]
+
+/-! ### Comparison Morphism in PolyPresentationQ -/
+
+/--
+The comparison morphism from X to setoidDensityPresentation(X.toSetoidCopresheaf)
+in the quotient category PolyPresentationQ.
+-/
+def setoidComparisonQ :
+    PolyPresentation.toQ D X ⟶
+    PolyPresentation.toQ D (setoidDensityPresentation X.toSetoidCopresheaf) :=
+  ⟨setoidComparisonTgtHom X, setoidComparisonTgtHom_respects X⟩
+
+/--
+The induced map of setoidComparisonQ equals setoidForwardMap.
+This follows from uniqueness of the coequalizer factorization.
+-/
+theorem setoidComparisonQ_toInducedMap :
+    (setoidComparisonQ X).toInducedMap = setoidForwardMap X := by
+  symm
+  apply CoequalizerData.uniq
+  simp only [setoidComparisonQ, PolyPresentation.toQ, PolyPresentationQ.toPres]
+  exact (setoidComparisonTgtHom_factor X).symm
+
+/--
+The composition setoidComparisonQ ≫ setoidInverseQ is equivalent to the identity.
+This means they induce the same map on coequalizers.
+-/
+theorem setoidComparisonQ_inverseQ_equiv :
+    (setoidComparisonQ X ≫ setoidInverseQ X).equiv
+      (PolyPresentationQ.Hom.id X.toQ) := by
+  unfold PolyPresentationQ.Hom.equiv
+  calc (setoidComparisonQ X ≫ setoidInverseQ X).toInducedMap
+      = (setoidComparisonQ X).toInducedMap ≫
+          (setoidInverseQ X).toInducedMap := by
+        rw [PolyPresentationQ.Hom.toInducedMap_comp]
+    _ = setoidForwardMap X ≫ setoidInverseInducedMap X := by
+        rw [setoidComparisonQ_toInducedMap]; rfl
+    _ = 𝟙 X.toCopresheaf := setoidForward_inverse_id X
+    _ = PolyPresentationQ.Hom.toInducedMap (𝟙 X.toQ) := by
+        simp only [PolyPresentationQ.Hom.toInducedMap_id, PolyPresentation.toQ,
+          PolyPresentationQ.toPres]
+    _ = (PolyPresentationQ.Hom.id X.toQ).toInducedMap := rfl
+
+/--
+The composition setoidInverseQ ≫ setoidComparisonQ is equivalent to the identity.
+This means they induce the same map on coequalizers.
+-/
+theorem setoidInverseQ_comparisonQ_equiv :
+    (setoidInverseQ X ≫ setoidComparisonQ X).equiv
+      (PolyPresentationQ.Hom.id
+        (setoidDensityPresentation X.toSetoidCopresheaf).toQ) := by
+  unfold PolyPresentationQ.Hom.equiv
+  calc (setoidInverseQ X ≫ setoidComparisonQ X).toInducedMap
+      = (setoidInverseQ X).toInducedMap ≫
+          (setoidComparisonQ X).toInducedMap := by
+        rw [PolyPresentationQ.Hom.toInducedMap_comp]
+    _ = setoidInverseInducedMap X ≫ setoidForwardMap X := by
+        rw [setoidComparisonQ_toInducedMap]; rfl
+    _ = 𝟙 (setoidDensityPresentation X.toSetoidCopresheaf).toCopresheaf :=
+        setoidInverse_forward_id X
+    _ = PolyPresentationQ.Hom.toInducedMap
+          (𝟙 (setoidDensityPresentation X.toSetoidCopresheaf).toQ) := by
+        simp only [PolyPresentationQ.Hom.toInducedMap_id, PolyPresentation.toQ,
+          PolyPresentationQ.toPres]
+    _ = (PolyPresentationQ.Hom.id
+          (setoidDensityPresentation X.toSetoidCopresheaf).toQ).toInducedMap := rfl
+
+/-!
+### Localized Category Morphisms
+
+Now we lift the morphisms from PolyPresentationQ to PolyPresentationLoc, where
+equivalent morphisms become equal.
+-/
+
+/--
+The source object in the localized category.
+-/
+abbrev setoidComparisonSrc : PolyPresentationLoc D :=
+  PolyPresentationLoc.ofPres X
+
+/--
+The target object in the localized category.
+-/
+abbrev setoidComparisonTgt : PolyPresentationLoc D :=
+  PolyPresentationLoc.ofPres (setoidDensityPresentation X.toSetoidCopresheaf)
+
+/--
+The comparison morphism in the localized category PolyPresentationLoc.
+-/
+def setoidComparisonLoc :
+    setoidComparisonSrc X ⟶ setoidComparisonTgt X :=
+  PolyPresentationLoc.Hom.mk' (setoidComparisonQ X)
+
+/--
+The inverse morphism in the localized category PolyPresentationLoc.
+-/
+def setoidInverseLoc :
+    setoidComparisonTgt X ⟶ setoidComparisonSrc X :=
+  PolyPresentationLoc.Hom.mk' (setoidInverseQ X)
+
+/--
+The composition setoidComparisonLoc ≫ setoidInverseLoc equals the identity.
+This follows from the equivalence at the Q level.
+-/
+theorem setoidComparisonLoc_inverseLoc_id :
+    setoidComparisonLoc X ≫ setoidInverseLoc X = 𝟙 (setoidComparisonSrc X) := by
+  unfold setoidComparisonLoc setoidInverseLoc setoidComparisonSrc
+  unfold PolyPresentationLoc.Hom.mk'
+  simp only [PolyPresentationLoc.category, PolyPresentationLoc.Hom.comp',
+    PolyPresentationLoc.Hom.id']
+  apply Quot.sound
+  exact setoidComparisonQ_inverseQ_equiv X
+
+/--
+The composition setoidInverseLoc ≫ setoidComparisonLoc equals the identity.
+This follows from the equivalence at the Q level.
+-/
+theorem setoidInverseLoc_comparisonLoc_id :
+    setoidInverseLoc X ≫ setoidComparisonLoc X = 𝟙 (setoidComparisonTgt X) := by
+  unfold setoidInverseLoc setoidComparisonLoc setoidComparisonTgt
+  unfold PolyPresentationLoc.Hom.mk'
+  simp only [PolyPresentationLoc.category, PolyPresentationLoc.Hom.comp',
+    PolyPresentationLoc.Hom.id']
+  apply Quot.sound
+  exact setoidInverseQ_comparisonQ_equiv X
+
+/--
+The comparison morphism is an isomorphism in PolyPresentationLoc.
+-/
+def setoidComparisonIso :
+    setoidComparisonSrc X ≅ setoidComparisonTgt X where
+  hom := setoidComparisonLoc X
+  inv := setoidInverseLoc X
+  hom_inv_id := setoidComparisonLoc_inverseLoc_id X
+  inv_hom_id := setoidInverseLoc_comparisonLoc_id X
+
 end SetoidConstructiveInverse
 
 end GebLean
