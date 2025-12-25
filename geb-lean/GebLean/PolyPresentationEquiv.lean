@@ -2125,6 +2125,115 @@ theorem setoidCounit_forward_inverse (A : D)
     · simp only [heq_eq_eq]
       exact Category.comp_id g
 
+/-! ### Setoid-Level Morphisms
+
+The raw functions preserve equivalence relations and can be assembled into
+SetoidHom morphisms. The round-trip properties are:
+- inverse ∘ forward = id (exact equality)
+- forward ∘ inverse ~ id (equivalent, not equal)
+
+This gives us a "quasi-isomorphism" in SetoidCat: a pair of morphisms where
+one round-trip is exact and the other is up to equivalence.
+-/
+
+/--
+The forward SetoidHom from F.obj A to the setoid density presentation.
+-/
+def setoidCounitForwardHom (A : D) :
+    SetoidHom (F.obj A) ((setoidDensityPresentation F).toSetoidBundleAt A) where
+  toFun := setoidCounitForwardRaw F A
+  map_rel := fun _ _ h => setoidCounitForwardRaw_map_rel F A _ _ h
+
+/--
+The inverse SetoidHom from the setoid density presentation to F.obj A.
+-/
+def setoidCounitInverseHom (A : D) :
+    SetoidHom ((setoidDensityPresentation F).toSetoidBundleAt A) (F.obj A) where
+  toFun := setoidCounitInverseRaw F A
+  map_rel := fun _ _ h => setoidCounitInverseRaw_map_rel F A _ _ h
+
+/--
+The round-trip inverse ∘ forward equals identity (exact).
+-/
+theorem setoidCounitHom_inv_hom_id (A : D) :
+    (setoidCounitInverseHom F A).comp (setoidCounitForwardHom F A) =
+    SetoidHom.id (F.obj A) := by
+  ext x
+  exact setoidCounit_inverse_forward F A x
+
+/--
+The round-trip forward ∘ inverse is equivalent to identity.
+For all x, forward(inverse(x)) ~ x in the density setoid.
+-/
+theorem setoidCounitHom_hom_inv_rel (A : D)
+    (x : ((setoidDensityPresentation F).toSetoidBundleAt A).carrier) :
+    ((setoidDensityPresentation F).toSetoidBundleAt A).rel.r
+      ((setoidCounitForwardHom F A).comp (setoidCounitInverseHom F A) x) x :=
+  setoidCounit_forward_inverse F A x
+
+/--
+Naturality of the forward SetoidHom up to equivalence: for f : A ⟶ B,
+setoidCounitForwardHom B (F.map f x) ~ (setoidDensity F).map f (setoidCounitForwardHom A x)
+in the density setoid at B.
+
+The two sides represent the same abstract element of the copresheaf at B:
+- LHS: (F.map f).toFun x at B, accessed via identity
+- RHS: x at A, transported to B via f
+-/
+theorem setoidCounitForwardHom_natural_rel {A B : D} (f : A ⟶ B)
+    (x : (F.obj A).carrier) :
+    ((setoidDensityPresentation F).toSetoidBundleAt B).rel.r
+      ((setoidCounitForwardHom F B).comp (F.map f) x)
+      (((setoidDensityPresentation F).toSetoidCopresheafMap f).comp
+        (setoidCounitForwardHom F A) x) := by
+  simp only [SetoidHom.comp_apply, setoidCounitForwardHom, setoidCounitForwardRaw,
+    PolyPresentation.toSetoidCopresheafMap, PolyPresentation.toSetoidCopresheafMapFun,
+    ccrEvalMap]
+  apply Relation.EqvGen.rel
+  let srcElem : SetoidElements F := ⟨A, x⟩
+  let tgtElem : SetoidElements F := ⟨B, (F.map f).toFun x⟩
+  have hcompat : (F.obj tgtElem.obj).rel.r
+      ((F.map f).toFun srcElem.elem) tgtElem.elem := by
+    simp only [tgtElem, srcElem, SetoidElements.obj, SetoidElements.elem]
+    exact (F.obj B).rel.refl _
+  let homData : SetoidElementsHom srcElem tgtElem := ⟨f, hcompat⟩
+  let mIdx : SetoidMorphismIndex F := ⟨tgtElem, srcElem, homData⟩
+  let witness : ccrEval (setoidDensitySrc F) B := ⟨mIdx, 𝟙 B⟩
+  use witness
+  constructor
+  · simp only [setoidDensityPresentation_fst, ccrToFunctorMapApp, setoidDensityFst,
+      ccrHomMk, ccrReindex, ccrFiberMor, ccrEvalMk, ccrEvalIndex, ccrEvalMor,
+      SetoidMorphismIndex.tgt, witness, mIdx, tgtElem, setoidDensityTgt,
+      ccrObjMk_family, SetoidElements.obj]
+    apply Sigma.ext
+    · rfl
+    · simp only [heq_eq_eq]
+      exact Category.id_comp (𝟙 B)
+  · simp only [setoidDensityPresentation_snd, ccrToFunctorMapApp, setoidDensitySnd,
+      ccrHomMk, ccrReindex, ccrFiberMor, ccrEvalMk, ccrEvalIndex, ccrEvalMor,
+      SetoidMorphismIndex.src, SetoidMorphismIndex.homData, witness, mIdx,
+      srcElem, homData]
+    apply Sigma.ext
+    · rfl
+    · simp only [heq_eq_eq]
+      calc f ≫ 𝟙 B = f := Category.comp_id f
+        _ = 𝟙 A ≫ f := (Category.id_comp f).symm
+
+/--
+Naturality of the inverse SetoidHom (exact equality): for f : A ⟶ B,
+F.map f ∘ setoidCounitInverseHom A = setoidCounitInverseHom B ∘ (setoidDensity F).map f
+-/
+theorem setoidCounitInverseHom_natural {A B : D} (f : A ⟶ B) :
+    (F.map f).comp (setoidCounitInverseHom F A) =
+    (setoidCounitInverseHom F B).comp
+      ((setoidDensityPresentation F).toSetoidCopresheafMap f) := by
+  ext ⟨⟨C, z⟩, g⟩
+  simp only [SetoidHom.comp_apply, setoidCounitInverseHom, setoidCounitInverseRaw,
+    PolyPresentation.toSetoidCopresheafMap, PolyPresentation.toSetoidCopresheafMapFun,
+    ccrEvalMap, SetoidElements.elem]
+  have h : F.map (g ≫ f) = F.map g ≫ F.map f := F.map_comp g f
+  simp only [h, SetoidCat, SetoidHom.comp_apply]
+
 /-! ### Quotient-Level Isomorphism
 
 The raw functions are inverses up to the equivalence relation, not pointwise.
@@ -2710,5 +2819,111 @@ theorem unitMorphism_inducedMap_isIso :
 end UnitIsomorphism
 
 end EquivalenceAssembly
+
+/-! ## Setoid Equivalence Data
+
+We record the constructive data for the setoid equivalence between
+`PolyPresentationLoc D` and `D ⥤ SetoidBundle`.
+
+The full functor `PolyPresentationLoc → (D ⥤ SetoidBundle)` on morphisms is
+problematic: different representatives of the same morphism class give different
+(though related) natural transformations at the setoid level. The equivalence
+relation identifies morphisms with the same induced map on quotients, but the
+pre-quotient data (reindex, fiberMor) differs.
+
+What we CAN prove constructively:
+1. Object-level correspondences in both directions
+2. Counit isomorphism: X ≅ setoidDensityPresentation(X.toSetoidCopresheaf)
+   in PolyPresentationLoc
+3. Unit setoid natural isomorphism: F ↔ (setoidDensityPresentation F).toSetoidCopresheaf
+   with naturality up to setoid equivalence
+-/
+
+section SetoidEquivalenceData
+
+variable {D : Type u} [Category.{v} D]
+
+/--
+Object-level map from PolyPresentationLoc to setoid copresheaves.
+-/
+def polyPresentationLocToSetoidCopresheafObj
+    (X : PolyPresentationLoc.{u, v, max u v} D) :
+    D ⥤ SetoidBundle.{max u v} :=
+  X.toPres.toSetoidCopresheaf
+
+/--
+Object-level map from setoid copresheaves to PolyPresentationLoc.
+-/
+def setoidCopresheafToPolyPresentationLocObj
+    (F : D ⥤ SetoidBundle.{max u v}) :
+    PolyPresentationLoc.{u, v, max u v} D :=
+  PolyPresentationLoc.ofPres (setoidDensityPresentation F)
+
+/--
+The counit isomorphism: for each X in PolyPresentationLoc, we have
+X ≅ setoidDensityPresentation(X.toSetoidCopresheaf).
+This is the setoidComparisonIso.
+-/
+def setoidEquivCounitIsoComponent (X : PolyPresentationLoc.{u, v, max u v} D) :
+    setoidCopresheafToPolyPresentationLocObj
+      (polyPresentationLocToSetoidCopresheafObj X) ≅ X :=
+  (setoidComparisonIso X.toPres).symm
+
+/--
+The unit setoid natural isomorphism: for each F : D ⥤ SetoidBundle,
+we have a SetoidNatIso between F and the round-trip through PolyPresentationLoc.
+-/
+def setoidEquivUnitIsoComponent (F : D ⥤ SetoidBundle.{max u v}) :
+    SetoidNatIso F
+      (polyPresentationLocToSetoidCopresheafObj
+        (setoidCopresheafToPolyPresentationLocObj F)) where
+  hom := {
+    app := fun A => setoidCounitForwardHom F A
+    naturality_rel := fun f x => setoidCounitForwardHom_natural_rel F f x
+  }
+  inv := {
+    app := fun A => setoidCounitInverseHom F A
+    naturality_rel := fun {A B} f x => by
+      have h := setoidCounitInverseHom_natural (F := F) f
+      change (F.obj B).rel.r
+        ((setoidCounitInverseHom F B).toFun
+          (((setoidDensityPresentation F).toSetoidCopresheaf.map f).toFun x))
+        ((F.map f).toFun ((setoidCounitInverseHom F A).toFun x))
+      have h' : ((F.map f).comp (setoidCounitInverseHom F A)).toFun x =
+          ((setoidCounitInverseHom F B).comp
+            ((setoidDensityPresentation F).toSetoidCopresheafMap f)).toFun x := by
+        rw [h]
+      simp only [SetoidHom.comp_apply,
+        PolyPresentation.toSetoidCopresheaf] at h' ⊢
+      rw [← h']
+  }
+  inv_hom_id := fun A => setoidCounitHom_inv_hom_id F A
+  hom_inv_rel := fun A x => setoidCounitHom_hom_inv_rel F A x
+
+/-!
+### Summary of Constructive Content
+
+The setoid equivalence data establishes:
+
+1. **Object bijection**: PolyPresentationLoc objects correspond to setoid
+   copresheaves via `polyPresentationLocToSetoidCopresheafObj` and
+   `setoidCopresheafToPolyPresentationLocObj`.
+
+2. **Counit**: For each presentation X, we have an isomorphism
+   `setoidEquivCounitIsoComponent X : setoidDensity(X.toSetoidCopresheaf) ≅ X`
+   in PolyPresentationLoc. This is strict (a true isomorphism in the category).
+
+3. **Unit**: For each setoid copresheaf F, we have a SetoidNatIso
+   `setoidEquivUnitIsoComponent F : F ↔ setoidDensity(F).toSetoidCopresheaf`
+   where:
+   - The inverse direction (evaluating density elements) is exact
+   - The forward direction (embedding into density) satisfies naturality up to
+     the setoid equivalence relation
+
+This captures the constructive content of the equivalence without requiring
+choice principles to go from quotients to representatives.
+-/
+
+end SetoidEquivalenceData
 
 end GebLean
