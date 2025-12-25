@@ -541,6 +541,134 @@ def JudgmentLevel.targetProj.{uJ} :
   | .quiv => QuivMorBundle.tgt
   | .cat => CatMorBundle.tgt
 
+/-! ## Category of Judgment Sections
+
+Morphisms between judgment sections are morphisms at the cat level.
+Since lower levels are uniquely determined by the cat level, a morphism
+at the cat level determines compatible morphisms at all lower levels,
+so we define `JudgmentSectionHom` as `CatJudgNatTrans` on the cat data.
+-/
+
+/-- Morphisms between judgment sections: natural transformations at the
+    cat level. Since lower levels are determined by the cat level, this
+    is the complete morphism data. -/
+def JudgmentSectionHom.{uJ} (s t : JudgmentSection.{uJ}) : Type (uJ + 1) :=
+  Mor.CatJudgNatTrans.{uJ + 1, uJ + 1, uJ + 1, uJ + 1,
+                       uJ + 1, uJ + 1, uJ + 1, uJ + 1} s.catData t.catData
+
+/-- Identity morphism for judgment sections. -/
+def JudgmentSectionHom.id.{uJ} (s : JudgmentSection.{uJ}) :
+    JudgmentSectionHom s s :=
+  Cat.CatJudgNatTrans.id s.catData
+
+/-- Composition of judgment section morphisms. -/
+def JudgmentSectionHom.comp.{uJ} {s t u : JudgmentSection.{uJ}}
+    (f : JudgmentSectionHom s t) (g : JudgmentSectionHom t u) :
+    JudgmentSectionHom s u :=
+  Cat.CatJudgNatTrans.comp f g
+
+/-- Left identity law for judgment section morphisms. -/
+theorem JudgmentSectionHom.id_comp.{uJ} {s t : JudgmentSection.{uJ}}
+    (f : JudgmentSectionHom s t) :
+    JudgmentSectionHom.comp (JudgmentSectionHom.id s) f = f :=
+  Cat.CatJudgNatTrans.id_comp f
+
+/-- Right identity law for judgment section morphisms. -/
+theorem JudgmentSectionHom.comp_id.{uJ} {s t : JudgmentSection.{uJ}}
+    (f : JudgmentSectionHom s t) :
+    JudgmentSectionHom.comp f (JudgmentSectionHom.id t) = f :=
+  Cat.CatJudgNatTrans.comp_id f
+
+/-- Associativity of judgment section morphism composition. -/
+theorem JudgmentSectionHom.comp_assoc.{uJ}
+    {s t u v : JudgmentSection.{uJ}}
+    (f : JudgmentSectionHom s t) (g : JudgmentSectionHom t u)
+    (h : JudgmentSectionHom u v) :
+    JudgmentSectionHom.comp (JudgmentSectionHom.comp f g) h =
+    JudgmentSectionHom.comp f (JudgmentSectionHom.comp g h) :=
+  Cat.CatJudgNatTrans.comp_assoc f g h
+
+/-- Category instance for JudgmentSection. This inherits the category
+    structure from CatJudgCopr via the equivalence. -/
+instance JudgmentSection.category.{uJ} :
+    LargeCategory.{uJ + 1} (JudgmentSection.{uJ}) where
+  Hom := JudgmentSectionHom
+  id := JudgmentSectionHom.id
+  comp := fun f g => JudgmentSectionHom.comp f g
+  id_comp := JudgmentSectionHom.id_comp
+  comp_id := JudgmentSectionHom.comp_id
+  assoc := JudgmentSectionHom.comp_assoc
+
+/-! ## Categorical Equivalence with CatJudgCopr
+
+The type equivalence `JudgmentSection.equivCatJudgCopr` extends to a
+categorical equivalence. Since `JudgmentSectionHom` is defined as
+`CatJudgNatTrans` on the `catData` fields, the functors are nearly
+definitional.
+-/
+
+/-- The functor from JudgmentSection to CatJudgCopr.
+    On objects: extracts the cat-level data.
+    On morphisms: identity (same type by definition). -/
+def JudgmentSection.toCatJudgCoprFunctor.{uJ} :
+    JudgmentSection.{uJ} ⥤ Obj.CatJudgCopr.{uJ + 1, uJ + 1, uJ + 1, uJ + 1} where
+  obj := JudgmentSection.toCatJudgCopr
+  map := fun f => f
+  map_id := fun _ => rfl
+  map_comp := fun _ _ => rfl
+
+/-- The functor from CatJudgCopr to JudgmentSection.
+    On objects: constructs a section from cat-level data.
+    On morphisms: identity (since (ofCatJudgCopr c).catData = c). -/
+def JudgmentSection.ofCatJudgCoprFunctor.{uJ} :
+    Obj.CatJudgCopr.{uJ + 1, uJ + 1, uJ + 1, uJ + 1} ⥤ JudgmentSection.{uJ} where
+  obj := JudgmentSection.ofCatJudgCopr
+  map := fun f => f
+  map_id := fun _ => rfl
+  map_comp := fun _ _ => rfl
+
+/-- The composition `toCatJudgCoprFunctor ⋙ ofCatJudgCoprFunctor` is
+    naturally isomorphic to the identity on JudgmentSection. -/
+def JudgmentSection.unitIso.{uJ} :
+    𝟭 JudgmentSection.{uJ} ≅
+    toCatJudgCoprFunctor.{uJ} ⋙ ofCatJudgCoprFunctor.{uJ} :=
+  NatIso.ofComponents
+    (fun s => eqToIso (ofCatJudgCopr_toCatJudgCopr s).symm)
+    (fun {s t} f => by
+      simp only [Functor.id_obj, Functor.comp_obj, Functor.id_map,
+        Functor.comp_map, toCatJudgCoprFunctor, ofCatJudgCoprFunctor]
+      simp only [eqToIso]
+      rfl)
+
+/-- The composition `ofCatJudgCoprFunctor ⋙ toCatJudgCoprFunctor` is
+    naturally isomorphic to the identity on CatJudgCopr. -/
+def JudgmentSection.counitIso.{uJ} :
+    ofCatJudgCoprFunctor.{uJ} ⋙ toCatJudgCoprFunctor.{uJ} ≅
+    𝟭 (Obj.CatJudgCopr.{uJ + 1, uJ + 1, uJ + 1, uJ + 1}) :=
+  NatIso.ofComponents
+    (fun c => eqToIso (toCatJudgCopr_ofCatJudgCopr c))
+    (fun {c d} f => by
+      simp only [Functor.comp_obj, Functor.id_obj, Functor.comp_map,
+        Functor.id_map, ofCatJudgCoprFunctor, toCatJudgCoprFunctor]
+      simp only [eqToIso]
+      rfl)
+
+/-- The categorical equivalence between JudgmentSection and CatJudgCopr.
+    This lifts the type equivalence `equivCatJudgCopr` to categories. -/
+def JudgmentSection.catEquiv.{uJ} :
+    JudgmentSection.{uJ} ≌
+    Obj.CatJudgCopr.{uJ + 1, uJ + 1, uJ + 1, uJ + 1} where
+  functor := toCatJudgCoprFunctor
+  inverse := ofCatJudgCoprFunctor
+  unitIso := unitIso
+  counitIso := counitIso
+  functor_unitIso_comp := fun s => by
+    simp only [unitIso, counitIso, NatIso.ofComponents_hom_app,
+      toCatJudgCoprFunctor, eqToIso]
+    simp only [Functor.comp_obj, ofCatJudgCoprFunctor, toCatJudgCopr,
+      ofCatJudgCopr]
+    rfl
+
 /-! ## Connection to Currying and the CatJudgment Adjunction
 
 The isomorphism [A × B, C] ≅ [A, [B, C]] (currying in Cat) connects the
