@@ -108,9 +108,7 @@ theorem toPLang_compMatch {Q : OverQuiver.{u, u}} (C : OverCategoryData Q) :
     Obj.ObjMorCompObjMor.dom, Obj.ObjMorCompMor.dom, Obj.ObjMorMor.dom,
     Obj.ObjMorCompObjMor.left, Obj.ObjMorCompMor.left,
     Obj.ObjMorCompProj.left, Obj.CatJudgObjMor.catJudgObj,
-    Obj.CatJudgObj.toObjMorCompObj, Obj.CatJudgObjMor.catJudgMor,
-    Obj.CatJudgMor.domCod, Obj.CatJudgMor.compProj, Obj.CatJudgMor.idMorCompProj,
-    Obj.ObjMorCompObjMor.objMorCompMor, Obj.ObjMorCompObjMor.objMorCompObj]
+    Obj.CatJudgObj.toObjMorCompObj]
   exact p.property
 
 /-- Prove the domain preservation condition: dom ∘ composite = dom ∘ right.
@@ -128,9 +126,7 @@ theorem toPLang_compDom {Q : OverQuiver.{u, u}} (C : OverCategoryData Q) :
     Obj.ObjMorCompMor.composite, Obj.ObjMorCompProj.composite,
     Obj.ObjMorCompObjMor.right, Obj.ObjMorCompMor.right,
     Obj.ObjMorCompProj.right, Obj.CatJudgObjMor.catJudgObj,
-    Obj.CatJudgObj.toObjMorCompObj, Obj.CatJudgObjMor.catJudgMor,
-    Obj.CatJudgMor.domCod, Obj.CatJudgMor.compProj, Obj.CatJudgMor.idMorCompProj,
-    Obj.ObjMorCompObjMor.objMorCompMor, Obj.ObjMorCompObjMor.objMorCompObj]
+    Obj.CatJudgObj.toObjMorCompObj]
   exact C.comp_src p
 
 /-- Prove the codomain preservation condition: cod ∘ composite = cod ∘ left.
@@ -148,9 +144,7 @@ theorem toPLang_compCod {Q : OverQuiver.{u, u}} (C : OverCategoryData Q) :
     Obj.ObjMorCompMor.composite, Obj.ObjMorCompProj.composite,
     Obj.ObjMorCompObjMor.left, Obj.ObjMorCompMor.left,
     Obj.ObjMorCompProj.left, Obj.CatJudgObjMor.catJudgObj,
-    Obj.CatJudgObj.toObjMorCompObj, Obj.CatJudgObjMor.catJudgMor,
-    Obj.CatJudgMor.domCod, Obj.CatJudgMor.compProj, Obj.CatJudgMor.idMorCompProj,
-    Obj.ObjMorCompObjMor.objMorCompMor, Obj.ObjMorCompObjMor.objMorCompObj]
+    Obj.CatJudgObj.toObjMorCompObj]
   exact C.comp_tgt p
 
 /-- Prove all composition conditions. -/
@@ -207,8 +201,7 @@ theorem toPLang_dom (F : OverFunctorData C₁ C₂) :
   unfold toPLangCatJudgMap
   simp only [Obj.CatJudgCopr.dom, Obj.CatJudgObjMor.dom,
     toPLangCatJudgCopr, toPLangCatJudgObjMor,
-    toPLangCatJudgMor, toPLangCatJudgObj,
-    Obj.ObjMorIdMor.dom, Obj.ObjMorMor.dom]
+    toPLangCatJudgMor, toPLangCatJudgObj, Obj.ObjMorMor.dom]
   exact (F.src_comm f).symm
 
 /-- Prove the codomain naturality condition. -/
@@ -222,8 +215,7 @@ theorem toPLang_cod (F : OverFunctorData C₁ C₂) :
   unfold toPLangCatJudgMap
   simp only [Obj.CatJudgCopr.cod, Obj.CatJudgObjMor.cod,
     toPLangCatJudgCopr, toPLangCatJudgObjMor,
-    toPLangCatJudgMor, toPLangCatJudgObj,
-    Obj.ObjMorIdMor.cod, Obj.ObjMorMor.cod]
+    toPLangCatJudgMor, toPLangCatJudgObj, Obj.ObjMorMor.cod]
   exact (F.tgt_comm f).symm
 
 /-- Prove the identity morphism naturality condition. -/
@@ -252,8 +244,7 @@ theorem toPLang_left (F : OverFunctorData C₁ C₂) :
   unfold toPLangCatJudgMap
   simp only [Obj.CatJudgCopr.left, Obj.CatJudgObjMor.left,
     toPLangCatJudgCopr, toPLangCatJudgObjMor,
-    toPLangCatJudgMor, toPLangCatJudgObj,
-    Obj.ObjMorCompProj.left, Obj.CatJudgMor.compProj, Obj.CatJudgMor.idMorCompProj]
+    toPLangCatJudgMor, toPLangCatJudgObj, Obj.ObjMorCompProj.left]
 
 /-- Prove the right naturality condition. -/
 theorem toPLang_right (F : OverFunctorData C₁ C₂) :
@@ -266,9 +257,7 @@ theorem toPLang_right (F : OverFunctorData C₁ C₂) :
   unfold toPLangCatJudgMap
   simp only [Obj.CatJudgCopr.right, Obj.CatJudgObjMor.right,
     toPLangCatJudgCopr, toPLangCatJudgObjMor,
-    toPLangCatJudgMor, toPLangCatJudgObj,
-    Obj.ObjMorCompProj.right, Obj.CatJudgMor.compProj,
-    Obj.CatJudgMor.idMorCompProj]
+    toPLangCatJudgMor, toPLangCatJudgObj, Obj.ObjMorCompProj.right]
 
 /-- Prove the composite naturality condition. -/
 theorem toPLang_composite (F : OverFunctorData C₁ C₂) :
@@ -281,9 +270,7 @@ theorem toPLang_composite (F : OverFunctorData C₁ C₂) :
   unfold toPLangCatJudgMap
   simp only [Obj.CatJudgCopr.composite, Obj.CatJudgObjMor.composite,
     toPLangCatJudgCopr, toPLangCatJudgObjMor,
-    toPLangCatJudgMor, toPLangCatJudgObj,
-    Obj.ObjMorCompProj.composite, Obj.CatJudgMor.compProj,
-    Obj.CatJudgMor.idMorCompProj]
+    toPLangCatJudgMor, toPLangCatJudgObj, Obj.ObjMorCompProj.composite]
   exact F.map_comp p
 
 /-- Prove all naturality conditions for the CatJudgMap. -/
@@ -550,6 +537,25 @@ theorem quotComp_assoc {a b c d : D.quiver.Obj}
       induction f using Quotient.ind with
       | _ f =>
         exact Quotient.sound (FreeMorEquiv.rel (FreeMorEquivGen.assoc h g f))
+
+/-- Cast commutes with quotMor: casting a quotient element equals
+    the quotient of the casted underlying element. -/
+theorem quotMor_cast {a b c : D.quiver.Obj} (h : b = c)
+    (f : PFreeMor D.quiver a b) :
+    cast (congrArg (QuotMor D a) h) (quotMor D f) =
+    quotMor D (cast (congrArg (PFreeMor D.quiver a) h) f) := by
+  subst h
+  rfl
+
+/-- HEq for quotMor when targets differ by equality and underlying terms
+    are related via cast and FreeMorEquiv. -/
+theorem quotMor_heq_of_cast_equiv {a b c : D.quiver.Obj} (hbc : b = c)
+    (f : PFreeMor D.quiver a b) (g : PFreeMor D.quiver a c)
+    (hfg : FreeMorEquiv D (cast (congrArg (PFreeMor D.quiver a) hbc) f) g) :
+    HEq (quotMor D f) (quotMor D g) := by
+  subst hbc
+  simp only [cast_eq] at hfg
+  exact heq_of_eq (Quotient.sound hfg)
 
 /-- The OverQuiver for the quotient category. Objects are the same as the
     original quiver, but morphisms are bundled quotient morphisms. -/
