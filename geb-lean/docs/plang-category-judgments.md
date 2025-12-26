@@ -155,6 +155,10 @@ The unit η : id → Phi ∘ L sends each CatJudgCopr s to Phi(L(s)):
 - morMap: inject s.mor into FreeMor via FreeMor.var, then bundle
 - idMap, compMap: similarly inject through the quotienting process
 
+The unit is implemented via `unitCatJudgNatTrans` in `CatJudgmentAdjunction.lean`,
+with naturality proofs for all six conditions (dom, cod, idMor, left, right,
+composite).
+
 The counit ε : L ∘ Phi → id sends L(Phi(C)) to C:
 
 - Object map: id (objects are exactly C)
@@ -165,6 +169,12 @@ The counit ε : L ∘ Phi → id sends L(Phi(C)) to C:
 
 This is well-defined on the quotient because C satisfies the category axioms
 and the identity/composition witnesses from Phi(C) exactly match C's structure.
+
+The counit evaluation is implemented via:
+
+- `counitEvalAux`: evaluates FreeMor to BundledHom with source/target proofs
+- `counitEval`: extracts the morphism from the bundled result
+- `counitEval_resp`: proves evaluation respects FreeMorEquiv
 
 ### Triangle Identities
 
@@ -233,10 +243,26 @@ The PLang definitions use:
 - Subtypes (`{x // P x}`) for constrained structures
 - Sigma types for dependent bundling
 
+## Implementation Status
+
+### Completed
+
+- Embedding functor `PhiFunctor_PLang : Cat ⥤ CatJudgCopr`
+- Reflection functor `LFunctor_PLang : CatJudgCopr ⥤ Cat`
+- Unit transformation `unitCatJudgNatTrans` with all naturality proofs
+- Counit evaluation machinery (`counitEvalAux`, `counitEval`, `counitEval_resp`)
+
+### Remaining
+
+- `counitFunctorHom`: construct the functor L(Phi(C)) ⥤ C from evaluation
+- Counit naturality in C
+- Triangle identities
+- Final adjunction construction
+
 ## Files
 
 - `GebLean/PLang/CatJudgment.lean`: Main definitions (complete)
-- `GebLean/PLang/CatJudgmentAdjunction.lean`: Adjunction port (planned)
+- `GebLean/PLang/CatJudgmentAdjunction.lean`: Adjunction (in progress)
 - `GebLean/CatJudgmentAdjunction.lean`: Original adjunction implementation
 
 ## References

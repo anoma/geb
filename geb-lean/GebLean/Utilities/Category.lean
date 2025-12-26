@@ -1560,6 +1560,50 @@ lemma eqToHomMapEqToHomAppRoundTrip' {E : Type*} [Category E] (F : E ⥤ Type v)
   cases p
   simp only [eqToHom_refl, Functor.map_id, types_id_apply]
 
+/--
+Transport of a morphism in its domain equals composition with eqToHom.
+For `h : a = a'` and `m : a ⟶ b`, we have `h ▸ m = eqToHom h.symm ≫ m`.
+The `symm` appears because transport moves from `a` to `a'`, while
+`eqToHom` goes the opposite direction.
+-/
+@[simp]
+lemma transport_hom_dom_eq_eqToHom_comp {a a' b : C} (h : a = a') (m : a ⟶ b) :
+    h ▸ m = eqToHom h.symm ≫ m := by
+  subst h
+  simp only [eqToHom_refl, Category.id_comp]
+
+/--
+Transport of a morphism in its codomain equals composition with eqToHom.
+For `h : b = b'` and `m : a ⟶ b`, we have `h ▸ m = m ≫ eqToHom h`.
+-/
+@[simp]
+lemma transport_hom_cod_eq_comp_eqToHom {a b b' : C} (h : b = b') (m : a ⟶ b) :
+    (show a ⟶ b' from h ▸ m) = m ≫ eqToHom h := by
+  subst h
+  simp only [eqToHom_refl, Category.comp_id]
+
+/--
+Transport of a morphism in its domain (reverse direction) equals composition
+with eqToHom. For `h : a = b` and `m : b ⟶ c`, we have `h ▸ m = eqToHom h ≫ m`.
+This complements `transport_hom_dom_eq_eqToHom_comp` which handles the case
+where the morphism starts at the "from" side of the equality.
+-/
+@[simp]
+lemma transport_hom_dom_rev_eq_eqToHom_comp {a b c : C} (h : a = b) (m : b ⟶ c) :
+    (show a ⟶ c from h ▸ m) = eqToHom h ≫ m := by
+  subst h
+  simp only [eqToHom_refl, Category.id_comp]
+
+/--
+Transport of a morphism in its domain (reverse direction) equals composition
+with eqToHom. For `h : a = b` and `m : b ⟶ c`, we have `h ▸ m = eqToHom h ≫ m`.
+This version has the transport type inferred rather than using `show`.
+-/
+lemma transport_hom_dom_rev_eq_eqToHom_comp' {a b c : C} (h : a = b) (m : b ⟶ c) :
+    (h ▸ m : a ⟶ c) = eqToHom h ≫ m := by
+  subst h
+  simp only [eqToHom_refl, Category.id_comp]
+
 end EqToHom
 
 section Over

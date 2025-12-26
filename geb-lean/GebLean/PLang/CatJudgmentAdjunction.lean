@@ -1,5 +1,6 @@
 import GebLean.PLang.CatJudgment
 import GebLean.Utilities.Category
+import GebLean.Utilities.Equalities
 import GebLean.Utilities.OverCategoryEquiv
 import GebLean.CatJudgmentAdjunction
 import Mathlib.CategoryTheory.Category.Cat
@@ -59,6 +60,31 @@ def BundledHom.hom {C : Type u} [Category.{v} C] (m : BundledHom C) :
 /-- Construct a bundled morphism from domain, codomain, and morphism. -/
 def BundledHom.mk {C : Type u} [Category.{v} C] (a b : C) (f : a ⟶ b) :
     BundledHom C := ⟨a, b, f⟩
+
+/-- Extensionality for BundledHom with heterogeneous morphism equality.
+
+Given equality of domains, equality of codomains, and heterogeneous equality
+of morphisms (accounting for the type change), the bundled morphisms are equal. -/
+theorem BundledHom.ext {C : Type u} [Category.{v} C]
+    {a₁ a₂ b₁ b₂ : C} (f₁ : a₁ ⟶ b₁) (f₂ : a₂ ⟶ b₂)
+    (ha : a₁ = a₂) (hb : b₁ = b₂) (hf : f₁ ≍ f₂) :
+    BundledHom.mk a₁ b₁ f₁ = BundledHom.mk a₂ b₂ f₂ := by
+  cases ha
+  cases hb
+  cases eq_of_heq hf
+  rfl
+
+/-- From an equality of BundledHom values, extract the relationship between
+.hom components via eqToHom transports.
+
+Given `m₁ = m₂` for BundledHom values, the .hom of m₁ equals the .hom of m₂
+conjugated by eqToHom transports accounting for the domain/codomain differences. -/
+theorem BundledHom.hom_eq_of_eq {C : Type u} [Category.{v} C]
+    {m₁ m₂ : BundledHom C} (h : m₁ = m₂) :
+    m₁.hom = eqToHom (congrArg BundledHom.dom h) ≫ m₂.hom ≫
+      eqToHom (congrArg BundledHom.cod h).symm := by
+  cases h
+  simp only [eqToHom_refl, Category.id_comp, Category.comp_id]
 
 /-! ## Composable Pair Type
 
@@ -749,6 +775,825 @@ def LFunctor_PLang.{uL, vL} :
   map_comp f g := catJudgNatTransToCatMor_comp f g
 
 end LFunctor
+
+/-! ## Adjunction Structure
+
+The adjunction L ⊣ Φ between CatJudgCopr and Cat.
+
+Universe note: For the composition L ∘ Φ to be well-typed, we need Φ's output to
+match L's input. Φ produces `CatJudgCopr.{u+1, max (u+1) (v+1), u+1, max (u+1) (v+1)}`,
+but L requires `CatJudgCopr.{u+1, v+1, u+1, u+1}`. These match when `v ≤ u`.
+
+For simplicity, we work at a single universe level (u = v), matching the original
+adjunction's approach. -/
+
+section AdjunctionStructure
+
+open CategoryTheory
+
+universe uAdj
+
+/-! ### Unit: id → Phi ∘ L
+
+The unit η sends each CatJudgCopr s to Phi(L(s)). Since L(s) is built by quotienting
+FreeMor on s's quiver, Phi(L(s)) has:
+- Objects: s.obj (same as s)
+- Morphisms: bundled morphisms in the quotient category
+- Identity type: s.obj
+- Composition type: composable pairs in the quotient
+
+The unit embeds s's morphisms into the quotient via FreeMor.var. -/
+
+variable (s : Obj.CatJudgCopr.{uAdj + 1, uAdj + 1, uAdj + 1, uAdj + 1})
+
+/-- The CategoryQuotientData for s at aligned universes. -/
+abbrev adjCQD := catJudgCoprToCategoryQuotientData' s
+
+/-- The quotient quiver for a CatJudgCopr at aligned universes. -/
+abbrev adjQuotQuiver := (adjCQD s).quotQuiver
+
+/-- The quotient morphism type between two objects. -/
+abbrev adjQuotMor (a b : s.obj) := (adjCQD s).QuotMor a b
+
+/-- The OverQuiver underlying the quotient construction for s. -/
+abbrev adjBaseQuiver := catJudgCoprToOverQuiver s
+
+/-- Embed a morphism from s.mor into the quotient category.
+
+This sends f : s.mor to the equivalence class [var f] in L(s).
+We explicitly provide the FreeMor type arguments to help type inference. -/
+def unitMorEmbed (f : s.mor) : adjQuotMor s (s.dom f) (s.cod f) :=
+  (adjCQD s).quotMor (@FreeMor.var (adjBaseQuiver s) f)
+
+/-- The HomSet for morphisms in catJudgCoprToCat' s.
+
+This is the fiber of the quotient quiver at (a, b). -/
+abbrev adjHomSet (a b : s.obj) :=
+  (adjQuotQuiver s).toHomSet a b
+
+/-- Embed a quotient morphism into the HomSet.
+
+This wraps a QuotMor with source/target proofs to get an element of toHomSet. -/
+def embedQuotMorAsHom {a b : s.obj} (qm : adjQuotMor s a b) : adjHomSet s a b :=
+  ⟨(adjCQD s).bundleQuotMor qm, rfl, rfl⟩
+
+/-- The category instance on catJudgCoprToCat' s comes from CategoryOfData. -/
+abbrev adjCatInst : Category (catJudgCoprToCat' s) :=
+  CategoryOfData (catJudgCoprToBundledCategoryData' s).data
+
+/-- Embed a morphism from s.mor into the category L(s) as a morphism a ⟶ b.
+
+This sends f : s.mor to its equivalence class [var f] in the category. -/
+def unitMorAsHom (f : s.mor) :
+    @Quiver.Hom (catJudgCoprToCat' s)
+      (@CategoryStruct.toQuiver _ (adjCatInst s).toCategoryStruct)
+      (s.dom f) (s.cod f) :=
+  embedQuotMorAsHom s (unitMorEmbed s f)
+
+/-- The target CatJudgCopr for the unit: Phi(L(s)).
+
+This is the CatJudgCopr of the category L(s). For aligned universes, this
+matches the universe structure of s. -/
+abbrev unitTarget : Obj.CatJudgCopr.{uAdj + 1, uAdj + 1, uAdj + 1, uAdj + 1} :=
+  catToCatJudgCopr (catJudgCoprToCat' s)
+
+/-- The morphism component of the unit: s.mor → BundledHom (L(s)).
+
+This sends each morphism f to the bundled morphism (dom f, cod f, [var f]). -/
+def unitMorMap (f : s.mor) : BundledHom (catJudgCoprToCat' s) :=
+  ⟨s.dom f, s.cod f, unitMorAsHom s f⟩
+
+/-- The identity component of the unit: s.idType → (L(s)).α.
+
+Since L(s).α = s.obj and s.idType = s.obj (from id witnesses), this is
+essentially s.dom ∘ s.idMor which gives the object an identity is for. -/
+def unitIdMap (i : s.idType) : (catJudgCoprToCat' s).α :=
+  catJudgCoprIdObj s i
+
+/-- The composition component of the unit: s.compType → ComposablePair (L(s)).
+
+Given a composition witness c, we embed the right and left morphisms into
+L(s) to form a composable pair. The comp_match condition ensures the
+embedded morphisms are composable. -/
+def unitCompMap (c : s.compType) : ComposablePair (catJudgCoprToCat' s) := by
+  refine ⟨s.dom (s.right c), s.cod (s.right c), s.cod (s.left c), ?_, ?_⟩
+  · exact unitMorAsHom s (s.right c)
+  · have h : s.cod (s.right c) = s.dom (s.left c) :=
+      congrFun s.compMatchProof c
+    exact h ▸ unitMorAsHom s (s.left c)
+
+/-- The object map for the unit is the identity. -/
+def unitObjMap : s.obj → (unitTarget s).obj := id
+
+/-- The CatJudgMap for the unit: (objMap, morMap, idMap, compMap). -/
+def unitCatJudgMap : Mor.CatJudgMap s (unitTarget s) :=
+  ((unitObjMap s, unitMorMap s), (unitIdMap s, unitCompMap s))
+
+/-- Domain naturality for the unit.
+
+For any f : s.mor, we have:
+  unitObjMap (s.dom f) = (unitTarget s).dom (unitMorMap s f)
+
+Both sides equal s.dom f by definition. -/
+theorem unitNaturalityDom : Mor.CatJudgNaturalityDom (unitCatJudgMap s) := by
+  unfold Mor.CatJudgNaturalityDom unitCatJudgMap unitObjMap unitMorMap
+  unfold unitTarget catToCatJudgCopr catToCatJudgObjMor catToCatJudgMor
+  unfold catToCatJudgObj catToBundledDom BundledHom.dom
+  funext f
+  rfl
+
+/-- Codomain naturality for the unit.
+
+For any f : s.mor, we have:
+  unitObjMap (s.cod f) = (unitTarget s).cod (unitMorMap s f)
+
+Both sides equal s.cod f by definition. -/
+theorem unitNaturalityCod : Mor.CatJudgNaturalityCod (unitCatJudgMap s) := by
+  unfold Mor.CatJudgNaturalityCod unitCatJudgMap unitObjMap unitMorMap
+  unfold unitTarget catToCatJudgCopr catToCatJudgObjMor catToCatJudgMor
+  unfold catToCatJudgObj catToBundledCod BundledHom.cod
+  funext f
+  rfl
+
+/-- The endomorphism condition for identities, stated with standard accessors.
+    This converts from the ObjMorIdObjMorEndo form to the form using s.dom/cod/idMor. -/
+theorem unitIdEndo (i : s.idType) : s.cod (s.idMor i) = s.dom (s.idMor i) := by
+  have h := s.endoProof
+  unfold Obj.ObjMorIdObjMorEndo at h
+  have h' := congrFun h i
+  exact h'.symm
+
+/-- Identity naturality for the unit.
+
+For any i : s.idType, unitMorMap (s.idMor i) = (unitTarget s).idMor (unitIdMap i).
+
+The LHS is (dom, cod, [var (idMor i)]).
+The RHS is (a, a, 𝟙 a) where a = unitIdMap i.
+
+These are equal because:
+- dom = cod = a (identity is endomorphism)
+- [var (idMor i)] = 𝟙 a in the quotient (by FreeMorEquiv.id) -/
+theorem unitNaturalityIdMor : Mor.CatJudgNaturalityIdMor (unitCatJudgMap s) := by
+  unfold Mor.CatJudgNaturalityIdMor unitCatJudgMap unitMorMap unitIdMap
+  unfold unitTarget catToCatJudgCopr catToCatJudgObjMor catToCatJudgMor
+  unfold catToCatJudgObj catToIdMor BundledHom.mk unitObjMap
+  funext i
+  unfold catJudgCoprIdObj
+  simp only [Function.comp_apply]
+  have h_endo : s.cod (s.idMor i) = s.dom (s.idMor i) := unitIdEndo s i
+  let D := adjCQD s
+  have h_wit := CategoryQuotientData.FreeMorEquivGen.id_witness (D := D) i
+  have h_quot_eq : D.quotMor (cast (congrArg₂ (FreeMor D.quiver)
+        (D.id_src i) (D.id_tgt i))
+      (FreeMor.var (D.idMor i))) = D.quotMor (FreeMor.id (D.idObj i)) :=
+    Quotient.sound (CategoryQuotientData.FreeMorEquiv.rel h_wit)
+  simp only [unitMorAsHom, embedQuotMorAsHom, unitMorEmbed]
+  have h_goal : ∀ (a b : s.obj) (h : b = a)
+      (m1 : adjHomSet s a b) (m2 : adjHomSet s a a),
+      m1.val = m2.val →
+      HEq (Sigma.mk b m1 : Σ b, adjHomSet s a b) (Sigma.mk a m2) := by
+    intro a b h m1 m2 hval
+    subst h
+    congr 1
+    exact Subtype.ext hval
+  refine Sigma.ext rfl ?_
+  apply h_goal _ _ h_endo
+  simp only [adjQuotQuiver, CategoryQuotientData.bundleQuotMor]
+  refine Sigma.ext rfl ?_
+  apply heq_of_eq
+  refine Sigma.ext h_endo ?_
+  apply HEq.trans (cast_heq _ _).symm
+  · apply heq_of_eq
+    rw [D.quotMor_cast rfl h_endo]
+    exact h_quot_eq
+
+/-- Left naturality for the unit.
+
+For any c : s.compType, unitMorMap (s.left c) = (unitTarget s).left (unitCompMap c).
+
+Both sides are the left morphism of a composition witness, embedded into the quotient.
+The LHS is ⟨dom (left c), cod (left c), unitMorAsHom (left c)⟩.
+The RHS is ⟨cod (right c), cod (left c), cast ... (unitMorAsHom (left c))⟩.
+These are equal via comp_match: cod (right c) = dom (left c). -/
+theorem unitNaturalityLeft : Mor.CatJudgNaturalityLeft (unitCatJudgMap s) := by
+  unfold Mor.CatJudgNaturalityLeft unitCatJudgMap unitMorMap unitCompMap
+  unfold unitTarget catToCatJudgCopr catToCatJudgObjMor catToCatJudgMor
+  unfold catToCatJudgObj catToLeft ComposablePair.left BundledHom.mk
+  unfold Mor.CatJudgMap.morMap Mor.CatJudgMap.compMap Mor.CatJudgMap.objMorMap
+  unfold Mor.ObjMorMap.morMap
+  funext c
+  simp only [Function.comp_apply]
+  have h_match : s.cod (s.right c) = s.dom (s.left c) := congrFun s.compMatchProof c
+  simp only [unitMorAsHom, embedQuotMorAsHom, unitMorEmbed]
+  let D := adjCQD s
+  let C := catJudgCoprToCat' s
+  have h_bundled_eq : ∀ (a b : s.obj) (h : a = b)
+      (cod_val : s.obj) (m : adjHomSet s a cod_val),
+      (⟨a, ⟨cod_val, m⟩⟩ : BundledHom C) = ⟨b, ⟨cod_val, h ▸ m⟩⟩ := by
+    intro a b h cod_val m
+    subst h
+    rfl
+  exact h_bundled_eq (s.dom (s.left c)) (s.cod (s.right c)) h_match.symm
+    (s.cod (s.left c))
+    ⟨D.bundleQuotMor (D.quotMor (FreeMor.var (s.left c))), rfl, rfl⟩
+
+/-- Right naturality for the unit.
+
+For any c : s.compType, unitMorMap (s.right c) = (unitTarget s).right (unitCompMap c).
+
+Both sides are the right morphism of a composition witness, embedded into the quotient. -/
+theorem unitNaturalityRight : Mor.CatJudgNaturalityRight (unitCatJudgMap s) := by
+  unfold Mor.CatJudgNaturalityRight unitCatJudgMap unitMorMap unitCompMap
+  unfold unitTarget catToCatJudgCopr catToCatJudgObjMor catToCatJudgMor
+  unfold catToCatJudgObj catToRight ComposablePair.right
+  funext c
+  simp only [Function.comp_apply]
+  rfl
+
+/-- Composition in the adjoint category, explicitly computed.
+
+When we compose morphisms in the adjoint category where both are embedded
+quotMors, the result's underlying BundledQuotMor has the quotComp of the
+underlying QuotMors. Note: quotComp takes (g : b → c) then (f : a → b). -/
+theorem adjHomSet_comp_val_eq {a b c : s.obj}
+    (qm1 : (adjCQD s).QuotMor a b) (qm2 : (adjCQD s).QuotMor b c) :
+    (@CategoryStruct.comp (catJudgCoprToCat' s) (adjCatInst s).toCategoryStruct
+      a b c (embedQuotMorAsHom s qm1) (embedQuotMorAsHom s qm2)).val =
+    ⟨a, c, (adjCQD s).quotComp qm2 qm1⟩ := by
+  unfold adjCatInst catJudgCoprToCat' BundledCategoryData.toCatObj
+  simp only [CategoryOfData]
+  unfold catJudgCoprToBundledCategoryData'
+  simp only [BundledOverCategoryData.toBundledCategoryData]
+  unfold catJudgCoprToBundledOverCategoryData' catJudgCoprToOverCategoryData'
+  simp only [CategoryQuotientData.toOverCategoryData, OverCategoryData.toCategoryData,
+    OverCategoryData.toCategoryOps, OverCategoryData.extractComp]
+  simp only [CategoryQuotientData.quotCategoryOps, CategoryQuotientData.quotCompFn,
+    CategoryQuotientData.bundleQuotMor, CategoryQuotientData.quotQuiver,
+    embedQuotMorAsHom]
+
+/-- Transport swap for quotComp.
+
+For quotient composition, transporting the domain of the second argument is
+equivalent to transporting the codomain of the first argument (in the opposite
+direction). This follows from the FreeMor level fact that:
+  g.comp (h ▸ f) = (cast h.symm g).comp f -/
+theorem quotComp_transport_swap {D : CategoryQuotientData} {a b b' c : D.quiver.Obj}
+    (h : b' = b) (g : D.QuotMor b c) (f : D.QuotMor a b') :
+    D.quotComp g (h ▸ f) = D.quotComp (h.symm ▸ g) f := by
+  induction g using Quotient.inductionOn with
+  | h g_repr =>
+    induction f using Quotient.inductionOn with
+    | h f_repr =>
+      simp only [CategoryQuotientData.quotComp]
+      cases h
+      rfl
+
+/-- Transport along an equality preserves HEq with the original value.
+
+    For `h : a = b` and `x : P b`, we have `(h ▸ x) ≍ x`.
+    This is because transport only changes the type indexing, not the value. -/
+theorem transport_heq {α : Sort*} {a b : α} {P : α → Sort*}
+    (h : a = b) (x : P b) : HEq (h ▸ x) x := by
+  cases h
+  rfl
+
+/-- Transport in the first index of a two-indexed family preserves HEq.
+
+    For a two-indexed family `P : α → β → Sort*`, transporting in the first
+    index gives a value HEq to the original. -/
+theorem transport_heq_fst {α : Sort*} {a b : α} {β : Sort*} {y : β}
+    {P : α → β → Sort*} (h : a = b) (x : P b y) : HEq (h ▸ x) x := by
+  cases h
+  rfl
+
+/-- Transport in the second index of a two-indexed family preserves HEq.
+
+    For a two-indexed family `P : α → β → Sort*`, transporting in the second
+    index gives a value HEq to the original. When `h : a = b` and `v : P x a`,
+    we have `h ▸ v : P x b` and `(h ▸ v) ≍ v`. -/
+theorem transport_heq_snd {α : Sort*} {x : α} {β : Sort*} {a b : β}
+    {P : α → β → Sort*} (h : a = b) (v : P x a) : HEq (h ▸ v) v := by
+  cases h
+  rfl
+
+/-- HEq version of quotComp equality.
+
+    When the type parameters (a, b, c) are propositionally equal and the
+    arguments are HEq, the quotComp results are HEq. This handles the case
+    where casts/transports change the type indices but not the underlying
+    quotient values. -/
+theorem quotComp_heq {D : CategoryQuotientData}
+    {a a' b b' c c' : D.quiver.Obj}
+    (ha : a = a') (hb : b = b') (hc : c = c')
+    {g : D.QuotMor b c} {g' : D.QuotMor b' c'}
+    {f : D.QuotMor a b} {f' : D.QuotMor a' b'}
+    (hg : g ≍ g') (hf : f ≍ f') :
+    D.quotComp g f ≍ D.quotComp g' f' := by
+  cases ha; cases hb; cases hc
+  cases (eq_of_heq hg)
+  cases (eq_of_heq hf)
+  rfl
+
+/-- The codomain of a composition in the adjoint category equals the second
+    operand's codomain.
+
+    When composing `m ≫ (h ▸ n)` where `n : adjHomSet s b' c` is transported by
+    a predicate equality `h` to match the composability requirement, the result's
+    codomain (`.val.snd.fst`) equals `n.val.snd.fst = c`.
+
+    This follows from `quotCompFn` returning `⟨g.1, f.2.1, quotComp ...⟩` where
+    `f` is the second operand, and subtype transport preserving `.val`. -/
+theorem adjHomSet_comp_cod_eq {a b c : s.obj}
+    (m : adjHomSet s a b) (n : adjHomSet s b c) :
+    (@CategoryStruct.comp (catJudgCoprToCat' s) (adjCatInst s).toCategoryStruct
+      a b c m n).val.snd.fst = c := by
+  unfold adjCatInst catJudgCoprToCat' BundledCategoryData.toCatObj
+  simp only [CategoryOfData]
+  unfold catJudgCoprToBundledCategoryData'
+  simp only [BundledOverCategoryData.toBundledCategoryData]
+  unfold catJudgCoprToBundledOverCategoryData' catJudgCoprToOverCategoryData'
+  simp only [CategoryQuotientData.toOverCategoryData, OverCategoryData.toCategoryData,
+    OverCategoryData.toCategoryOps, OverCategoryData.extractComp]
+  simp only [CategoryQuotientData.quotCategoryOps, CategoryQuotientData.quotCompFn,
+    CategoryQuotientData.quotQuiver]
+  exact n.property.2
+
+/-- The QuotMor of a composition in the adjoint category.
+
+    The composition's `.val.snd.snd` (the QuotMor) equals
+    `quotComp n.snd.snd (composable ▸ m.snd.snd)` where `composable` is
+    the proof that `m.snd.fst = n.fst`. -/
+theorem adjHomSet_comp_quotMor_eq {a b c : s.obj}
+    (m : adjHomSet s a b) (n : adjHomSet s b c) :
+    let D := catJudgCoprToCategoryQuotientData' s
+    let composable : m.val.snd.fst = n.val.fst :=
+      m.property.2.trans n.property.1.symm
+    (@CategoryStruct.comp (catJudgCoprToCat' s) (adjCatInst s).toCategoryStruct
+      a b c m n).val.snd.snd =
+    D.quotComp n.val.snd.snd (composable ▸ m.val.snd.snd) := by
+  unfold adjCatInst catJudgCoprToCat' BundledCategoryData.toCatObj
+  simp only [CategoryOfData]
+  unfold catJudgCoprToBundledCategoryData'
+  simp only [BundledOverCategoryData.toBundledCategoryData]
+  unfold catJudgCoprToBundledOverCategoryData' catJudgCoprToOverCategoryData'
+  simp only [CategoryQuotientData.toOverCategoryData, OverCategoryData.toCategoryData,
+    OverCategoryData.toCategoryOps, OverCategoryData.extractComp]
+  simp only [CategoryQuotientData.quotCategoryOps, CategoryQuotientData.quotCompFn,
+    CategoryQuotientData.quotQuiver]
+
+/-- Subtype transport on adjHomSet preserves `.val`.
+
+    When transporting `m : adjHomSet s a b` along `h : a' = a`, the underlying
+    `BundledQuotMor` value is unchanged because transport only affects the proof
+    component, not the value.
+
+    Note: In Lean 4, `h ▸ m` where `h : a' = a` and `m : P a` gives `P a'`. -/
+theorem adjHomSet_transport_val_eq {a b a' : s.obj}
+    (h : a' = a) (m : adjHomSet s a b) :
+    ((h ▸ m) : adjHomSet s a' b).val = m.val := by
+  cases h
+  rfl
+
+/-- Subtype transport on adjHomSet preserves `.val` (codomain version). -/
+theorem adjHomSet_transport_cod_val_eq {a b b' : s.obj}
+    (h : b' = b) (m : adjHomSet s a b) :
+    ((h ▸ m) : adjHomSet s a b').val = m.val := by
+  cases h
+  rfl
+
+/-- Subtype transport on adjHomSet preserves the QuotMor component (HEq version).
+
+    Since the QuotMor type depends on domain/codomain, we get HEq, not Eq.
+    But combined with `adjHomSet_transport_val_eq`, we know the underlying
+    values are the same. -/
+theorem adjHomSet_transport_quotMor_heq {a b a' : s.obj}
+    (h : a' = a) (m : adjHomSet s a b) :
+    ((h ▸ m) : adjHomSet s a' b).val.snd.snd ≍ m.val.snd.snd := by
+  cases h
+  rfl
+
+/-- The quotient morphism for composite equals the quotComp of left and right.
+
+This is the essential equality at the quotient level, derived from comp_witness.
+
+The proof uses the fact that h_wit provides an equivalence between the
+composition of transported morphism variables and the transported composite. -/
+theorem unitCompositeQuotMorEq (c : s.compType) :
+    let D := adjCQD s
+    let h_match : s.cod (s.right c) = s.dom (s.left c) := congrFun s.compMatchProof c
+    let h_dom : s.dom (s.composite c) = s.dom (s.right c) := congrFun s.compDomProof c
+    let h_cod : s.cod (s.composite c) = s.cod (s.left c) := congrFun s.compCodProof c
+    let qm_left := D.quotMor (@FreeMor.var D.quiver (s.left c))
+    let qm_right := D.quotMor (@FreeMor.var D.quiver (s.right c))
+    let qm_comp := D.quotMor (@FreeMor.var D.quiver (s.composite c))
+    let qm_left_transported : D.QuotMor (s.cod (s.right c)) (s.cod (s.left c)) :=
+      h_match ▸ qm_left
+    (h_dom ▸ h_cod ▸ qm_comp : D.QuotMor (s.dom (s.right c)) (s.cod (s.left c))) =
+    D.quotComp qm_left_transported qm_right := by
+  simp only
+  let D := adjCQD s
+  have h_wit := CategoryQuotientData.FreeMorEquivGen.comp_witness (D := D) c
+  have h_dom := congrFun s.compDomProof c
+  have h_cod := congrFun s.compCodProof c
+  have h_match := congrFun s.compMatchProof c
+  apply eq_of_heq
+  simp only [eqRec_eq_cast]
+  apply heq_of_eq
+  rw [cast_cast]
+  rw [D.quotMor_cast h_dom h_cod]
+  simp only [CategoryQuotientData.quotMor, CategoryQuotientData.quotComp]
+  apply Eq.symm
+  have cast_quot_eq_quot_cast :
+      ∀ {a a' b : D.quiver.Obj} (h : a = a')
+        (f : FreeMor D.quiver a b)
+        (p : Quotient (D.freeMorSetoid a b) = Quotient (D.freeMorSetoid a' b)),
+        cast p (⟦f⟧ : Quotient (D.freeMorSetoid a b)) =
+        (⟦cast (congrArg₂ (FreeMor D.quiver) h rfl) f⟧ :
+          Quotient (D.freeMorSetoid a' b)) := by
+    intro a a' b h f p
+    subst h
+    rfl
+  simp only [Quotient.lift₂]
+  erw [cast_quot_eq_quot_cast h_match.symm (FreeMor.var (Q := D.quiver) (s.left c)) _]
+  erw [Quotient.lift_mk]
+  erw [Quotient.lift_mk]
+  apply Quotient.sound
+  exact CategoryQuotientData.FreeMorEquiv.rel h_wit
+
+/-- Composite naturality for the unit.
+
+For any c : s.compType, unitMorMap (s.composite c) =
+  (unitTarget s).composite (unitCompMap c).
+
+The LHS is [var (composite c)] in the quotient.
+The RHS is the composition of [var (left c)] and [var (right c)] in the quotient.
+
+These are equal by the comp_witness relation in FreeMorEquiv. -/
+theorem unitNaturalityComposite : Mor.CatJudgNaturalityComposite (unitCatJudgMap s) := by
+  unfold Mor.CatJudgNaturalityComposite unitCatJudgMap
+  funext c
+  simp only [Function.comp_apply]
+  let D := adjCQD s
+  have h_wit := CategoryQuotientData.FreeMorEquivGen.comp_witness (D := D) c
+  have h_dom : s.dom (s.composite c) = s.dom (s.right c) :=
+    congrFun s.compDomProof c
+  have h_cod : s.cod (s.composite c) = s.cod (s.left c) :=
+    congrFun s.compCodProof c
+  have h_match : s.cod (s.right c) = s.dom (s.left c) := congrFun s.compMatchProof c
+  unfold unitMorMap unitMorAsHom embedQuotMorAsHom unitMorEmbed
+  unfold unitTarget catToCatJudgCopr catToCatJudgObjMor catToCatJudgMor catToCatJudgObj
+  unfold catToComposite unitCompMap
+  unfold Mor.CatJudgMap.morMap Mor.CatJudgMap.compMap
+  unfold Mor.CatJudgMap.objMorMap Mor.CatJudgMap.idCompMap
+  unfold Mor.ObjMorMap.morMap
+  dsimp only [adjCQD]
+  conv_rhs =>
+    unfold Obj.CatJudgCopr.composite Obj.CatJudgCopr.data
+    unfold Obj.CatJudgObjMor.composite Obj.ObjMorCompProj.composite
+    unfold Obj.CatJudgObjMor.compProj Obj.CatJudgObjMor.catJudgMor Obj.CatJudgMor.compProj
+    simp only [ComposablePair.composite]
+  simp only [ComposablePair.src, ComposablePair.tgt, ComposablePair.fstMor, ComposablePair.sndMor]
+  simp only [unitMorAsHom, embedQuotMorAsHom, unitMorEmbed]
+  unfold catJudgCoprToCat' BundledCategoryData.toCatObj
+  simp only [CategoryOfData]
+  unfold catJudgCoprToBundledCategoryData'
+  simp only [BundledOverCategoryData.toBundledCategoryData]
+  unfold catJudgCoprToBundledOverCategoryData' catJudgCoprToOverCategoryData'
+  simp only [CategoryQuotientData.toOverCategoryData, OverCategoryData.toCategoryData,
+    OverCategoryData.toCategoryOps, OverCategoryData.extractComp]
+  simp only [CategoryQuotientData.quotCategoryOps, CategoryQuotientData.quotCompFn,
+    CategoryQuotientData.bundleQuotMor, CategoryQuotientData.quotQuiver]
+  simp only [catJudgCoprToCategoryQuotientData', catJudgCoprToOverQuiver]
+  simp only [BundledHom.mk]
+  let qm_right := D.quotMor (@FreeMor.var D.quiver (s.right c))
+  let qm_left := D.quotMor (@FreeMor.var D.quiver (s.left c))
+  let qm_left_transported : D.QuotMor (s.cod (s.right c)) (s.cod (s.left c)) :=
+    h_match ▸ qm_left
+  let qm_comp := D.quotMor (@FreeMor.var D.quiver (s.composite c))
+  have h_comp_val := adjHomSet_comp_val_eq s qm_right qm_left_transported
+  refine Sigma.ext h_dom ?_
+  refine @sigma_heq_of_fst_eq_snd_heq s.obj s.obj
+    (fun src cod => adjHomSet s src cod)
+    (s.dom (s.composite c)) (s.dom (s.right c)) h_dom
+    (s.cod (s.composite c)) (s.cod (s.left c)) h_cod
+    _ _ ?_
+  have h_pred : (fun f : (adjQuotQuiver s).MorType =>
+        f.1 = s.dom (s.composite c) ∧ f.2.1 = s.cod (s.composite c)) =
+      (fun f : (adjQuotQuiver s).MorType =>
+        f.1 = s.dom (s.right c) ∧ f.2.1 = s.cod (s.left c)) := by
+    funext f; rw [h_dom, h_cod]
+  apply subtype_heq_of_val_eq h_pred
+  dsimp only [adjCQD]
+  let m_right_val : (adjQuotQuiver s).MorType :=
+    ⟨s.dom (s.right c), s.cod (s.right c), qm_right⟩
+  let m_left_val : (adjQuotQuiver s).MorType :=
+    ⟨s.dom (s.left c), s.cod (s.left c), qm_left⟩
+  rw [Sigma.ext_iff]
+  constructor
+  · exact h_dom
+  · dsimp only [Sigma.snd]
+    have h_comp_move : ∀ {a b b' c : D.quiver.Obj} (h : b = b')
+        (g : FreeMor D.quiver b' c) (f : FreeMor D.quiver a b),
+        g.comp (h ▸ f) = (cast (congrArg₂ (FreeMor D.quiver) h.symm rfl) g).comp f := by
+      intro a b b' c h g f
+      cases h
+      rfl
+    let middle : (cod : s.obj) × D.QuotMor (s.dom (s.right c)) cod :=
+      ⟨s.cod (s.left c), D.quotComp qm_left_transported qm_right⟩
+    have h_lhs_middle : (⟨s.cod (s.composite c),
+        D.quotMor (@FreeMor.var D.quiver (s.composite c))⟩ :
+        (cod : s.obj) × D.QuotMor (s.dom (s.composite c)) cod) ≍ middle := by
+      refine @sigma_heq_of_fst_eq_snd_heq s.obj s.obj (fun src cod => D.QuotMor src cod)
+        (s.dom (s.composite c)) (s.dom (s.right c)) h_dom
+        (s.cod (s.composite c)) (s.cod (s.left c)) h_cod
+        (D.quotMor (@FreeMor.var D.quiver (s.composite c)))
+        (D.quotComp qm_left_transported qm_right) ?_
+      apply heq_of_cast_eq (congrArg₂ D.QuotMor h_dom h_cod)
+      rw [D.quotMor_cast h_dom h_cod]
+      simp only [CategoryQuotientData.quotMor, CategoryQuotientData.quotComp]
+      have h_transport_src : ∀ {a a' b : D.quiver.Obj} (h : a' = a)
+          (f : FreeMor D.quiver a b),
+          (h ▸ (⟦f⟧ : Quotient (D.freeMorSetoid a b))) =
+          (⟦h ▸ f⟧ : Quotient (D.freeMorSetoid a' b)) := by
+        intro a a' b h f
+        cases h
+        rfl
+      have h_qm_left_eq : qm_left_transported =
+          (⟦h_match ▸ @FreeMor.var D.quiver (s.left c)⟧ :
+            Quotient (D.freeMorSetoid (s.cod (s.right c)) (s.cod (s.left c)))) := by
+        simp only [qm_left_transported, qm_left, CategoryQuotientData.quotMor]
+        exact h_transport_src h_match (@FreeMor.var D.quiver (s.left c))
+      rw [h_qm_left_eq]
+      simp only [qm_right, CategoryQuotientData.quotMor]
+      rw [Quotient.lift₂_mk]
+      next =>
+        apply Quotient.sound
+        apply CategoryQuotientData.FreeMorEquiv.symm
+        convert CategoryQuotientData.FreeMorEquiv.rel h_wit using 2
+        · simp only [eqRec_eq_cast]
+          congr 1
+      next =>
+        intro a₁ a₂ b₁ b₂ h1 h2
+        apply Quotient.sound
+        exact CategoryQuotientData.comp_respects D h2 h1
+    apply HEq.trans h_lhs_middle
+    simp only [middle]
+    simp only [heq_eq_eq]
+    have h_middle_eq : middle = ⟨s.cod (s.left c), D.quotComp qm_left_transported qm_right⟩ := rfl
+    let m_right : adjHomSet s (s.dom (s.right c)) (s.cod (s.right c)) :=
+      embedQuotMorAsHom s qm_right
+    let m_left : adjHomSet s (s.dom (s.left c)) (s.cod (s.left c)) :=
+      embedQuotMorAsHom s qm_left
+    simp only [catJudgCoprToCategoryQuotientData',
+               CategoryQuotientData.quotComp, CategoryQuotientData.quotMor] at *
+    symm
+    unfold adjCatInst catJudgCoprToCat' BundledCategoryData.toCatObj at *
+    simp only [CategoryOfData] at *
+    unfold catJudgCoprToBundledCategoryData' at *
+    simp only [BundledOverCategoryData.toBundledCategoryData] at *
+    unfold catJudgCoprToBundledOverCategoryData' catJudgCoprToOverCategoryData' at *
+    simp only [CategoryQuotientData.toOverCategoryData, OverCategoryData.toCategoryData,
+      OverCategoryData.toCategoryOps, OverCategoryData.extractComp] at *
+    simp only [CategoryQuotientData.quotCategoryOps, CategoryQuotientData.quotCompFn,
+      CategoryQuotientData.bundleQuotMor, CategoryQuotientData.quotQuiver,
+      embedQuotMorAsHom] at *
+    let qm_right_transported : D.QuotMor (s.dom (s.right c)) (s.dom (s.left c)) :=
+      h_match ▸ qm_right
+    have h_quotComp_eq : D.quotComp qm_left qm_right_transported =
+        D.quotComp qm_left_transported qm_right := by
+      exact quotComp_transport_swap h_match qm_left qm_right
+    apply Sigma.ext
+    · exact @adjHomSet_comp_cod_eq s _ _ _ m_right _
+    · have h_comp_qm := @adjHomSet_comp_quotMor_eq s _ _ _ m_right
+        (h_match ▸ m_left)
+      simp only
+      change (@CategoryStruct.comp (catJudgCoprToCat' s) (adjCatInst s).toCategoryStruct
+              _ _ _ m_right (h_match ▸ m_left)).val.snd.snd ≍
+           D.quotComp qm_left_transported qm_right
+      simp only [h_comp_qm]
+      have h_val_eq := adjHomSet_transport_val_eq s h_match m_left
+      have hb : (h_match ▸ m_left).val.fst = s.cod (s.right c) := by
+        rw [h_val_eq]
+        exact h_match.symm
+      have hc : (h_match ▸ m_left).val.snd.fst = s.cod (s.left c) := by
+        rw [h_val_eq]
+        rfl
+      have hg : (h_match ▸ m_left).val.snd.snd ≍ qm_left_transported := by
+        have h1 := adjHomSet_transport_quotMor_heq s h_match m_left
+        have h2 : qm_left_transported ≍ qm_left := by
+          exact transport_heq_fst h_match qm_left
+        exact h1.trans h2.symm
+      refine quotComp_heq ?ha hb hc hg ?hf
+      case ha => rfl
+      case hf =>
+        have heq_mr : m_right.val.snd.snd = qm_right := rfl
+        rw [← heq_mr]
+        exact transport_heq_snd _ _
+
+/-- All naturality conditions for the unit. -/
+theorem unitNaturalityAll : Mor.CatJudgNaturalityAll (unitCatJudgMap s) :=
+  ⟨⟨unitNaturalityDom s, unitNaturalityCod s⟩,
+   unitNaturalityIdMor s,
+   ⟨unitNaturalityLeft s, unitNaturalityRight s, unitNaturalityComposite s⟩⟩
+
+/-- The unit natural transformation η : s → Phi(L(s)).
+    For each CatJudgCopr s, this embeds s into Phi(L(s)) by:
+    - objMap: identity (objects are unchanged)
+    - morMap: embed each f : s.mor as [var f] in the quotient category
+    - idMap, compMap: similarly embed via FreeMor.var -/
+def unitCatJudgNatTrans : Mor.CatJudgNatTrans s (unitTarget s) :=
+  ⟨unitCatJudgMap s, unitNaturalityAll s⟩
+
+/-! ### Counit: L ∘ Phi → id
+
+The counit ε sends each category C to L(Phi(C)). For any C, L(Phi(C)) has:
+- Objects: C (same as the original category)
+- Morphisms: quotients of FreeMor on the quiver from Phi(C)
+
+The counit interprets FreeMor trees as actual morphisms in C. -/
+
+/-- The CatJudgCopr for category C (at aligned universes). -/
+abbrev counitSource (C : Type (uAdj + 1)) [Category.{uAdj + 1} C] :
+    Obj.CatJudgCopr.{uAdj + 1, uAdj + 1, uAdj + 1, uAdj + 1} :=
+  catToCatJudgCopr C
+
+/-- The OverQuiver underlying Phi(C). -/
+abbrev counitQuiver (C : Type (uAdj + 1)) [Category.{uAdj + 1} C] :
+    OverQuiver.{uAdj + 1, uAdj + 1} :=
+  catJudgCoprToOverQuiver (counitSource C)
+
+/-- The CategoryQuotientData for Phi(C). -/
+abbrev counitCQD (C : Type (uAdj + 1)) [Category.{uAdj + 1} C] :
+    CategoryQuotientData.{uAdj + 1, uAdj + 1} :=
+  catJudgCoprToCategoryQuotientData' (counitSource C)
+
+/-- Evaluate a FreeMor from Phi(C) back to an actual morphism in C.
+
+This recursively interprets:
+- var f ↦ f (the bundled morphism)
+- id a ↦ BundledHom.mk a a (𝟙 a)
+- comp g f ↦ composition of evaluated morphisms
+
+Returns the morphism bundled with proofs that source/target match. -/
+def counitEvalAux (C : Type (uAdj + 1)) [Category.{uAdj + 1} C] :
+    {a b : C} → FreeMor (counitQuiver C) a b →
+    { f : BundledHom C // f.dom = a ∧ f.cod = b }
+  | _, _, .var f => ⟨f, rfl, rfl⟩
+  | a, _, .id _ => ⟨BundledHom.mk a a (𝟙 a), rfl, rfl⟩
+  | _, _, .comp g f =>
+    let ⟨fVal, fSrc, fTgt⟩ := counitEvalAux C f
+    let ⟨gVal, gSrc, gTgt⟩ := counitEvalAux C g
+    let composable : fVal.cod = gVal.dom := by rw [fTgt, gSrc]
+    let compHom := fVal.hom ≫ (composable ▸ gVal.hom)
+    ⟨BundledHom.mk fVal.dom gVal.cod compHom, fSrc, gTgt⟩
+
+/-- Evaluate a FreeMor to an actual morphism in C. -/
+def counitEval (C : Type (uAdj + 1)) [Category.{uAdj + 1} C]
+    {a b : C} (m : FreeMor (counitQuiver C) a b) : a ⟶ b :=
+  let h := counitEvalAux C m
+  let hsrc := h.property.1
+  let htgt := h.property.2
+  eqToHom hsrc.symm ≫ h.val.hom ≫ eqToHom htgt
+
+/-- Source of counitEvalAux matches FreeMor source. -/
+theorem counitEvalAux_src (C : Type (uAdj + 1)) [Category.{uAdj + 1} C]
+    {a b : C} (m : FreeMor (counitQuiver C) a b) :
+    (counitEvalAux C m).val.dom = a :=
+  (counitEvalAux C m).property.1
+
+/-- Target of counitEvalAux matches FreeMor target. -/
+theorem counitEvalAux_tgt (C : Type (uAdj + 1)) [Category.{uAdj + 1} C]
+    {a b : C} (m : FreeMor (counitQuiver C) a b) :
+    (counitEvalAux C m).val.cod = b :=
+  (counitEvalAux C m).property.2
+
+/-- counitEval of a variable is the underlying morphism. -/
+theorem counitEval_var (C : Type (uAdj + 1)) [Category.{uAdj + 1} C]
+    (f : BundledHom C) :
+    counitEval C (FreeMor.var (Q := counitQuiver C) f) = f.hom := by
+  simp only [counitEval, counitEvalAux, eqToHom_refl, Category.id_comp, Category.comp_id]
+
+/-- counitEval of identity is the identity morphism. -/
+theorem counitEval_id (C : Type (uAdj + 1)) [Category.{uAdj + 1} C] (a : C) :
+    counitEval C (FreeMor.id (Q := counitQuiver C) a) = 𝟙 a := by
+  simp only [counitEval, counitEvalAux, BundledHom.mk, BundledHom.hom, eqToHom_refl,
+    Category.id_comp, Category.comp_id]
+
+/-- The morphism from counitEvalAux equals the underlying hom transported.
+This lemma states that accessing the hom of counitEvalAux gives the
+morphism that goes between the actual source and target. -/
+theorem counitEvalAux_hom_eq (C : Type (uAdj + 1)) [Category.{uAdj + 1} C]
+    {a b : C} (m : FreeMor (counitQuiver C) a b) :
+    (counitEvalAux C m).val.hom =
+      eqToHom (counitEvalAux_src C m) ≫
+      (eqToHom (counitEvalAux_src C m).symm ≫ (counitEvalAux C m).val.hom ≫
+        eqToHom (counitEvalAux_tgt C m)) ≫
+      eqToHom (counitEvalAux_tgt C m).symm := by
+  simp only [eqToHom_trans_assoc, eqToHom_trans, eqToHom_refl,
+    Category.id_comp, Category.comp_id, Category.assoc]
+
+/-- The `.dom` of `counitEvalAux` for `comp` equals the `.dom` of f's evaluation. -/
+theorem counitEvalAux_comp_dom_eq (C : Type (uAdj + 1)) [Category.{uAdj + 1} C]
+    {a b c : C} (g : FreeMor (counitQuiver C) b c) (f : FreeMor (counitQuiver C) a b) :
+    (counitEvalAux C (FreeMor.comp g f)).val.dom = (counitEvalAux C f).val.dom := by
+  match hf : counitEvalAux C f, hg : counitEvalAux C g with
+  | ⟨fVal, fSrc, fTgt⟩, ⟨gVal, gSrc, gTgt⟩ =>
+    simp only [counitEvalAux, BundledHom.mk, BundledHom.dom, hf, hg]
+
+/-- The `.cod` of `counitEvalAux` for `comp` equals the `.cod` of g's evaluation. -/
+theorem counitEvalAux_comp_cod_eq (C : Type (uAdj + 1)) [Category.{uAdj + 1} C]
+    {a b c : C} (g : FreeMor (counitQuiver C) b c) (f : FreeMor (counitQuiver C) a b) :
+    (counitEvalAux C (FreeMor.comp g f)).val.cod = (counitEvalAux C g).val.cod := by
+  match hf : counitEvalAux C f, hg : counitEvalAux C g with
+  | ⟨fVal, fSrc, fTgt⟩, ⟨gVal, gSrc, gTgt⟩ =>
+    simp only [counitEvalAux, BundledHom.mk, BundledHom.cod]
+    rw [hf, hg]
+
+/-- The subtype value of counitEvalAux on comp relates to components. -/
+theorem counitEvalAux_comp_val (C : Type (uAdj + 1)) [Category.{uAdj + 1} C]
+    {a b c : C} (g : FreeMor (counitQuiver C) b c) (f : FreeMor (counitQuiver C) a b) :
+    (counitEvalAux C (FreeMor.comp g f)).val =
+    ⟨(counitEvalAux C f).val.dom, (counitEvalAux C g).val.cod,
+     (counitEvalAux C f).val.hom ≫
+      eqToHom ((counitEvalAux C f).property.2.trans (counitEvalAux C g).property.1.symm) ≫
+      (counitEvalAux C g).val.hom⟩ := by
+  match hf : counitEvalAux C f, hg : counitEvalAux C g with
+  | ⟨fVal, fSrc, fTgt⟩, ⟨gVal, gSrc, gTgt⟩ =>
+    simp only [counitEvalAux, BundledHom.mk, hf, hg]
+    congr 1
+    congr 1
+    have h_composable : fVal.cod = gVal.dom := fTgt.trans gSrc.symm
+    rw [transport_hom_dom_rev_eq_eqToHom_comp' h_composable]
+
+/-- counitEval respects composition: eval(g ∘ f) = eval(f) ≫ eval(g).
+
+The proof shows that evaluating a composed FreeMor gives the same result as
+composing the evaluations. Both sides evaluate to the underlying morphism
+composition in C, up to transport by equality proofs. -/
+theorem counitEval_comp (C : Type (uAdj + 1)) [Category.{uAdj + 1} C]
+    {a b c : C} (g : FreeMor (counitQuiver C) b c) (f : FreeMor (counitQuiver C) a b) :
+    counitEval C (FreeMor.comp g f) = counitEval C f ≫ counitEval C g := by
+  have hval := counitEvalAux_comp_val C g f
+  simp only [counitEval]
+  simp only [Category.assoc]
+  have hhom := BundledHom.hom_eq_of_eq hval
+  rw [hhom]
+  simp only [BundledHom.hom, BundledHom.dom, BundledHom.cod]
+  simp only [Category.assoc, eqToHom_trans, eqToHom_trans_assoc]
+
+/-- Congruence left for counitEval. -/
+theorem counitEval_cong_left (C : Type (uAdj + 1)) [Category.{uAdj + 1} C]
+    {a b c : C} {f g : FreeMor (counitQuiver C) a b} (h : FreeMor (counitQuiver C) b c)
+    (heq : counitEval C f = counitEval C g) :
+    counitEval C (FreeMor.comp h f) = counitEval C (FreeMor.comp h g) := by
+  simp only [counitEval_comp]
+  congr 1
+
+/-- Congruence right for counitEval. -/
+theorem counitEval_cong_right (C : Type (uAdj + 1)) [Category.{uAdj + 1} C]
+    {a b c : C} {f g : FreeMor (counitQuiver C) b c} (k : FreeMor (counitQuiver C) a b)
+    (heq : counitEval C f = counitEval C g) :
+    counitEval C (FreeMor.comp f k) = counitEval C (FreeMor.comp g k) := by
+  simp only [counitEval_comp]
+  rw [heq]
+
+/-- counitEval respects the generating relation FreeMorEquivGen. -/
+theorem counitEval_resp_gen (C : Type (uAdj + 1)) [Category.{uAdj + 1} C]
+    {a b : C} {f g : FreeMor (counitQuiver C) a b}
+    (h : CategoryQuotientData.FreeMorEquivGen (counitCQD C) f g) :
+    counitEval C f = counitEval C g := by
+  match h with
+  | .id_left f =>
+    simp only [counitEval_comp, counitEval_id, Category.comp_id]
+  | .id_right f =>
+    simp only [counitEval_comp, counitEval_id, Category.id_comp]
+  | .assoc h g f =>
+    simp only [counitEval_comp, Category.assoc]
+  | .id_witness i =>
+    simp only [cast_eq]
+    simp only [PLang.counitEval_var, PLang.counitEval_id]
+    rfl
+  | .comp_witness c =>
+    simp only [cast_eq]
+    simp only [PLang.counitEval_comp, PLang.counitEval_var]
+    rfl
+  | .cong_left h' hfg =>
+    exact counitEval_cong_left C h' (counitEval_resp_gen C hfg)
+  | .cong_right k hfg =>
+    exact counitEval_cong_right C k (counitEval_resp_gen C hfg)
+
+/-- counitEval respects the equivalence relation FreeMorEquiv. -/
+theorem counitEval_resp (C : Type (uAdj + 1)) [Category.{uAdj + 1} C]
+    {a b : C} {f g : FreeMor (counitQuiver C) a b}
+    (h : CategoryQuotientData.FreeMorEquiv (counitCQD C) f g) :
+    counitEval C f = counitEval C g :=
+  match h with
+  | .rel hr => counitEval_resp_gen C hr
+  | .refl _ => rfl
+  | .symm heq => (counitEval_resp C heq).symm
+  | .trans heq1 heq2 => (counitEval_resp C heq1).trans (counitEval_resp C heq2)
+
+end AdjunctionStructure
 
 end PLang
 

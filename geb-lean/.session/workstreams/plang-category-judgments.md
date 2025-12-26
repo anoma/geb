@@ -96,18 +96,21 @@ The PLang adjunction and PolyPresentation work connect via:
 
 ### Phase 2C: Prove Adjunction
 
-- [ ] Define unit: η : id → Phi ∘ L
-  - For each CatJudgCopr s, natural transformation s → Phi(L(s))
-  - objMap: s.obj → (L s).obj = id
-  - morMap: s.mor → bundled morphisms in L(s), via FreeMor.var
-  - idMap, compMap similarly
-  - Prove naturality
+- [x] Define unit components: unitObjMap, unitMorMap, unitIdMap, unitCompMap
+- [x] Prove unitNaturalityDom, unitNaturalityCod, unitNaturalityIdMor
+- [x] Prove unitNaturalityLeft, unitNaturalityRight
+- [x] Prove unitNaturalityComposite
+- [x] Define unitNaturalityAll, unitCatJudgNatTrans
 
-- [ ] Define counit: ε : L ∘ Phi → id
-  - For each category C, functor L(Phi(C)) ⥤ C
-  - Object map = id
-  - Morphism map: quotient of FreeMor → actual morphisms
-  - Prove functoriality (uses FreeMorEquiv respects category structure)
+- [-] Define counit: ε : L ∘ Phi → id (IN PROGRESS)
+  - [x] counitSource, counitQuiver, counitCQD abbreviations
+  - [x] counitEvalAux: evaluate FreeMor to BundledHom with proofs
+  - [x] counitEval: evaluate FreeMor to actual morphism in C
+  - [x] counitEval_var, counitEval_id: evaluation of primitives
+  - [x] counitEval_comp: evaluation respects composition
+  - [x] counitEval_resp_gen, counitEval_resp: evaluation respects FreeMorEquiv
+  - [ ] counitFunctorHom: the actual functor L(Phi(C)) ⥤ C
+  - [ ] counit naturality: natural in C
 
 - [ ] Prove triangle identities:
   - ε_Phi ∘ Phi_η = id (for all categories C)
