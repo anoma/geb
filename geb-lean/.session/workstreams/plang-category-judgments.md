@@ -156,7 +156,7 @@ For the reflection L:
 ### Structural Correspondence
 
 | CatJudgmentAdjunction.lean | PLang Port |
-|---------------------------|------------|
+| ------------------------- | ---------- |
 | OverCategoryData | Category C with Category.{v} C |
 | CategoryJudgments.FunctorData | CatJudgCopr.{u, v, w, x} |
 | CategoryQuotientData | Derived from CatJudgCopr |
