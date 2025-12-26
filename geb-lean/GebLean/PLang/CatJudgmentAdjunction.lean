@@ -1593,6 +1593,152 @@ theorem counitEval_resp (C : Type (uAdj + 1)) [Category.{uAdj + 1} C]
   | .symm heq => (counitEval_resp C heq).symm
   | .trans heq1 heq2 => (counitEval_resp C heq1).trans (counitEval_resp C heq2)
 
+/-! ### Counit Functor Construction
+
+The counit ε_C : L(Phi(C)) ⥤ C is constructed by lifting counitEval through
+the quotient. -/
+
+/-- The morphism map for the counit functor, lifted from counitEval. -/
+def counitFunctorMap (C : Type (uAdj + 1)) [Category.{uAdj + 1} C]
+    {a b : C} (qm : (counitCQD C).QuotMor a b) : (a ⟶ b) :=
+  Quotient.lift (counitEval C) (fun _ _ h => counitEval_resp C h) qm
+
+/-- counitFunctorMap sends the identity quotient to the identity morphism. -/
+theorem counitFunctorMap_id (C : Type (uAdj + 1)) [Category.{uAdj + 1} C]
+    (a : C) : counitFunctorMap C ((counitCQD C).quotId a) = 𝟙 a := by
+  simp only [counitFunctorMap, CategoryQuotientData.quotId,
+    CategoryQuotientData.quotMor]
+  simp only [Quotient.lift_mk]
+  exact counitEval_id C a
+
+/-- counitFunctorMap preserves composition. -/
+theorem counitFunctorMap_comp (C : Type (uAdj + 1)) [Category.{uAdj + 1} C]
+    {a b c : C} (qg : (counitCQD C).QuotMor b c) (qf : (counitCQD C).QuotMor a b) :
+    counitFunctorMap C ((counitCQD C).quotComp qg qf) =
+    counitFunctorMap C qf ≫ counitFunctorMap C qg := by
+  induction qf using Quotient.ind with
+  | _ f =>
+    induction qg using Quotient.ind with
+    | _ g =>
+      simp only [counitFunctorMap, CategoryQuotientData.quotComp,
+        CategoryQuotientData.quotMor]
+      simp only [Quotient.lift_mk]
+      exact counitEval_comp C g f
+
+/-- Extract the QuotMor from an adjHomSet element. -/
+def extractQuotMor (C : Type (uAdj + 1)) [Category.{uAdj + 1} C]
+    {a b : (counitSource C).obj}
+    (f : adjHomSet (counitSource C) a b) :
+    (counitCQD C).QuotMor a b :=
+  cast (congrArg₂ (counitCQD C).QuotMor f.property.1 f.property.2) f.val.2.2
+
+/-- The counit morphism map on HomSet elements. -/
+def counitHomMap (C : Type (uAdj + 1)) [Category.{uAdj + 1} C]
+    {a b : C} (f : adjHomSet (counitSource C) a b) : (a ⟶ b) :=
+  counitFunctorMap C (extractQuotMor C f)
+
+/-- The identity morphism in catJudgCoprToCat' has the form quotIdFn. -/
+theorem extractQuotMor_id (C : Type (uAdj + 1)) [Category.{uAdj + 1} C]
+    (a : (counitSource C).obj) :
+    extractQuotMor C (@CategoryStruct.id (catJudgCoprToCat' (counitSource C))
+      (adjCatInst (counitSource C)).toCategoryStruct a) =
+    (counitCQD C).quotId a := by
+  simp only [extractQuotMor]
+  unfold adjCatInst catJudgCoprToCat' BundledCategoryData.toCatObj
+  simp only [CategoryOfData, CategoryStruct.id]
+  unfold catJudgCoprToBundledCategoryData'
+  simp only [BundledOverCategoryData.toBundledCategoryData]
+  unfold catJudgCoprToBundledOverCategoryData' catJudgCoprToOverCategoryData'
+  simp only [CategoryQuotientData.toOverCategoryData, OverCategoryData.toCategoryData,
+    OverCategoryData.toCategoryOps]
+  simp only [CategoryQuotientData.quotCategoryOps, CategoryQuotientData.quotQuiver]
+  rfl
+
+/-- Composition in catJudgCoprToCat' relates to quotComp. -/
+theorem extractQuotMor_comp (C : Type (uAdj + 1)) [Category.{uAdj + 1} C]
+    {a b c : (counitSource C).obj}
+    (f : adjHomSet (counitSource C) a b)
+    (g : adjHomSet (counitSource C) b c) :
+    extractQuotMor C (@CategoryStruct.comp (catJudgCoprToCat' (counitSource C))
+      (adjCatInst (counitSource C)).toCategoryStruct a b c f g) =
+    (counitCQD C).quotComp (extractQuotMor C g) (extractQuotMor C f) := by
+  simp only [extractQuotMor]
+  unfold adjCatInst catJudgCoprToCat' BundledCategoryData.toCatObj at *
+  simp only [CategoryOfData, CategoryStruct.comp] at *
+  unfold catJudgCoprToBundledCategoryData' at *
+  simp only [BundledOverCategoryData.toBundledCategoryData] at *
+  unfold catJudgCoprToBundledOverCategoryData' catJudgCoprToOverCategoryData' at *
+  simp only [CategoryQuotientData.toOverCategoryData, OverCategoryData.toCategoryData,
+    OverCategoryData.toCategoryOps, OverCategoryData.extractComp] at *
+  simp only [CategoryQuotientData.quotCategoryOps, CategoryQuotientData.quotQuiver] at *
+  unfold CategoryQuotientData.quotCompFn counitCQD at *
+  simp only [CategoryQuotientData.quotComp]
+  rcases f with ⟨⟨fa, fb, fqm⟩, hfa, hfb⟩
+  rcases g with ⟨⟨ga, gb, gqm⟩, hga, hgb⟩
+  dsimp only at hfa hfb hga hgb ⊢
+  cases hfa
+  cases hfb
+  cases hgb
+  cases hga
+  rfl
+
+/-- The counit functor ε_C : L(Phi(C)) ⥤ C.
+
+This evaluates formal morphisms in the quotient category back to actual
+morphisms in C. The object map is identity (both categories have objects C). -/
+def counitFunctor (C : Type (uAdj + 1)) [Category.{uAdj + 1} C] :
+    catJudgCoprToCat' (counitSource C) ⥤ C where
+  obj := id
+  map := counitHomMap C
+  map_id := fun a => by
+    simp only [counitHomMap]
+    rw [extractQuotMor_id]
+    exact counitFunctorMap_id C a
+  map_comp := fun {a b c} f g => by
+    simp only [counitHomMap]
+    rw [extractQuotMor_comp]
+    exact counitFunctorMap_comp C (extractQuotMor C g) (extractQuotMor C f)
+
+/-! ### Counit Naturality
+
+The counit ε : L ∘ Phi → id is a natural transformation. For any functor F : C ⥤ D,
+the following diagram commutes:
+```
+L(Phi(C)) --ε_C--> C
+    |              |
+L(Phi(F))          F
+    |              |
+    v              v
+L(Phi(D)) --ε_D--> D
+```
+That is: F ∘ ε_C = ε_D ∘ L(Phi(F))
+-/
+
+/-- The target of L(Phi(C)) is the same as C's object type. -/
+abbrev LPhiObj (C : Type (uAdj + 1)) [Category.{uAdj + 1} C] :=
+  catJudgCoprToCat' (counitSource C)
+
+/-- The functor L(Phi(F)) induced by F : C ⥤ D. -/
+abbrev LPhiFunctor {C D : Type (uAdj + 1)} [Category.{uAdj + 1} C]
+    [Category.{uAdj + 1} D] (F : C ⥤ D) : LPhiObj C ⥤ LPhiObj D :=
+  catJudgNatTransToCatMor (functorToCatJudgNatTrans F)
+
+/-- counitEval commutes with functor application on FreeMor.var. -/
+theorem counitEval_var_functor_map {C D : Type (uAdj + 1)} [Category.{uAdj + 1} C]
+    [Category.{uAdj + 1} D] (F : C ⥤ D) (f : BundledHom C) :
+    F.map (counitEval C (FreeMor.var (Q := counitQuiver C) f)) =
+    counitEval D (FreeMor.var (Q := counitQuiver D) (functorMapBundledHom F f)) := by
+  simp only [counitEval_var, functorMapBundledHom, BundledHom.mk, BundledHom.hom]
+
+/-- counitEval commutes with functor application on FreeMor.id. -/
+theorem counitEval_id_functor_map {C D : Type (uAdj + 1)} [Category.{uAdj + 1} C]
+    [Category.{uAdj + 1} D] (F : C ⥤ D) (a : C) :
+    F.map (counitEval C (FreeMor.id (Q := counitQuiver C) a)) =
+    counitEval D (FreeMor.id (Q := counitQuiver D) (F.obj a)) := by
+  simp only [counitEval_id]
+  exact F.map_id a
+
+
 end AdjunctionStructure
 
 end PLang

@@ -109,8 +109,17 @@ The PLang adjunction and PolyPresentation work connect via:
   - [x] counitEval_var, counitEval_id: evaluation of primitives
   - [x] counitEval_comp: evaluation respects composition
   - [x] counitEval_resp_gen, counitEval_resp: evaluation respects FreeMorEquiv
-  - [ ] counitFunctorHom: the actual functor L(Phi(C)) ⥤ C
-  - [ ] counit naturality: natural in C
+  - [x] counitFunctorMap: lift counitEval through quotient
+  - [x] counitFunctorMap_id, counitFunctorMap_comp: functoriality
+  - [x] extractQuotMor, counitHomMap: helper functions for HomSet
+  - [x] extractQuotMor_id, extractQuotMor_comp: extract lemmas
+  - [x] counitFunctor: the actual functor L(Phi(C)) ⥤ C
+  - [x] LPhiObj, LPhiFunctor: helper abbreviations
+  - [x] counitEval_var_functor_map, counitEval_id_functor_map: basic naturality lemmas
+  - [ ] counit naturality: L(Phi(F)) ≫ ε_D = ε_C ≫ F for functors F : C ⥤ D
+    - Requires showing counitHomMap commutes with catJudgNatTransToCatMor
+    - Pattern: induction on FreeMor, use counitEval commutation lemmas
+  - [ ] counitNT_PLang: NatTrans from LFunctor_PLang ⋙ PhiFunctor_PLang to id
 
 - [ ] Prove triangle identities:
   - ε_Phi ∘ Phi_η = id (for all categories C)
