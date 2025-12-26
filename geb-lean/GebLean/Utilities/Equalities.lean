@@ -1171,6 +1171,22 @@ lemma val_transport_sigma_match_irrel {I : Type*} {F G : I → Type u_vts}
   rw [hProofIrrel, sigma_transport_match_simple]
 
 /--
+Transport of a sigma type where the first component type doesn't depend on
+the transported parameter. In this case, the first component is preserved
+and only the second component is transported.
+
+Given `β : α → I → Type*` where the first component `i : I` doesn't depend
+on the transported parameter `a`, transporting `⟨i, b⟩` by `h : a₁ = a₂`
+gives `⟨i, h ▸ b⟩`.
+-/
+@[simp]
+theorem sigma_subst_fst_stable {α : Type*} {I : Type*} {β : α → I → Type*}
+    {a₁ a₂ : α} (h : a₁ = a₂) (i : I) (b : β a₁ i) :
+    (h ▸ (⟨i, b⟩ : (j : I) × β a₁ j) : (j : I) × β a₂ j) = ⟨i, h ▸ b⟩ := by
+  subst h
+  rfl
+
+/--
 Equality of triple-nested sigma types when all three indices are equal
 and the innermost values (in a product) are HEq. The structure is:
   ⟨a₁, ⟨b₁, ⟨c₁, (d₁, e₁)⟩⟩⟩ = ⟨a₂, ⟨b₂, ⟨c₂, (d₂, e₂)⟩⟩⟩

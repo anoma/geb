@@ -1,5 +1,6 @@
 import GebLean.PLang.CatJudgment
 import GebLean.Utilities.Category
+import GebLean.Utilities.Equalities
 import Mathlib.CategoryTheory.Category.Cat
 
 /-!
@@ -369,6 +370,58 @@ def size : {a b : Q.Obj} → PFreeMor Q a b → Nat
   | _, _, id _ => 1
   | _, _, comp g f => 1 + g.size + f.size
 
+/-- Casting the target of the right morphism in a composition.
+    Composition with a target-cast right morphism can be rewritten by
+    moving the cast to the left morphism's source:
+    comp g (h ▸ f) = comp (h.symm ▸ g) f
+    where the cast on f changes its target from b to b', and the
+    cast on g changes its source from b' to b. -/
+theorem comp_cast_tgt_right {a b b' c : Q.Obj} (h : b = b')
+    (f : PFreeMor Q a b) (g : PFreeMor Q b' c) :
+    comp g (cast (congrArg (PFreeMor Q a) h) f) =
+    comp (cast (congrArg (fun x => PFreeMor Q x c) h.symm) g) f := by
+  subst h
+  rfl
+
+/-- Casting the target of the right morphism using ▸ notation.
+    This is equivalent to comp_cast_tgt_right but uses ▸ instead of cast. -/
+@[simp]
+theorem comp_subst_tgt_right {a b b' c : Q.Obj} (h : b = b')
+    (f : PFreeMor Q a b) (g : PFreeMor Q b' c) :
+    comp g (h ▸ f) = comp (h.symm ▸ g) f := by
+  subst h
+  rfl
+
+/-- Casting the source of the left morphism in a composition.
+    Composition with a source-cast left morphism can be rewritten by
+    moving the cast to the right morphism's target:
+    comp (h ▸ g) f = comp g (h.symm ▸ f)
+    where the cast on g changes its source from b to b', and the
+    cast on f changes its target from b' to b. -/
+theorem comp_cast_src_left {a b b' c : Q.Obj} (h : b = b')
+    (f : PFreeMor Q a b') (g : PFreeMor Q b c) :
+    comp (cast (congrArg (fun x => PFreeMor Q x c) h) g) f =
+    comp g (cast (congrArg (PFreeMor Q a) h.symm) f) := by
+  subst h
+  rfl
+
+/-- A subst on source equals a cast for PFreeMor.
+    h ▸ f = cast (congrArg (fun s => PFreeMor Q s b) h) f -/
+theorem subst_src_eq_cast {a a' b : Q.Obj} (h : a = a')
+    (f : PFreeMor Q a b) :
+    (h ▸ f : PFreeMor Q a' b) = cast (congrArg (fun s => PFreeMor Q s b) h) f := by
+  subst h
+  rfl
+
+/-- Subst of var equals cast of var when the proofs are compatible.
+    This handles converting between ▸ and cast for PFreeMor.var. -/
+theorem subst_var_eq_cast_var {m : Q.MorType} {a' : Q.Obj}
+    (h : Q.src m = a') :
+    (h ▸ var m : PFreeMor Q a' (Q.tgt m)) =
+    cast (congrArg (fun s => PFreeMor Q s (Q.tgt m)) h) (var m) := by
+  subst h
+  rfl
+
 end PFreeMor
 
 /-! ## Equivalence Relations on Free Morphisms
@@ -496,6 +549,11 @@ def QuotMor (a b : D.quiver.Obj) : Type u :=
 def quotMor {a b : D.quiver.Obj} (f : PFreeMor D.quiver a b) : QuotMor D a b :=
   Quotient.mk (freeMorSetoid D a b) f
 
+/-- The quotient notation equals quotMor. -/
+@[simp]
+theorem quotMk_eq_quotMor {a b : D.quiver.Obj} (f : PFreeMor D.quiver a b) :
+    (⟦f⟧ : QuotMor D a b) = quotMor D f := rfl
+
 /-- Composition respects the equivalence relation. -/
 theorem comp_respects {a b c : D.quiver.Obj}
     {f₁ f₂ : PFreeMor D.quiver a b} {g₁ g₂ : PFreeMor D.quiver b c}
@@ -556,6 +614,33 @@ theorem quotMor_heq_of_cast_equiv {a b c : D.quiver.Obj} (hbc : b = c)
   subst hbc
   simp only [cast_eq] at hfg
   exact heq_of_eq (Quotient.sound hfg)
+
+/-- HEq for quotMor when both source and target differ by equalities and
+    underlying terms are related via double cast and FreeMorEquiv.
+    This generalizes quotMor_heq_of_cast_equiv to handle changes in both
+    endpoints. -/
+theorem quotMor_heq_of_both_cast_equiv {a a' b b' : D.quiver.Obj}
+    (ha : a = a') (hb : b = b')
+    (f : PFreeMor D.quiver a b) (g : PFreeMor D.quiver a' b')
+    (hfg : FreeMorEquiv D (ha ▸ hb ▸ f) g) :
+    HEq (quotMor D f) (quotMor D g) := by
+  subst ha hb
+  exact heq_of_eq (Quotient.sound hfg)
+
+/-- Casting at the quotient level equals quotient of cast.
+    Version using ▸ notation. -/
+@[simp]
+theorem quotMor_subst_eq {a b c : D.quiver.Obj} (h : b = c)
+    (f : PFreeMor D.quiver a b) :
+    h ▸ (quotMor D f) = quotMor D (h ▸ f) := by
+  subst h
+  rfl
+
+/-- quotComp of quotMor values equals quotMor of composition. -/
+@[simp]
+theorem quotComp_quotMor {a b c : D.quiver.Obj}
+    (f : PFreeMor D.quiver a b) (g : PFreeMor D.quiver b c) :
+    quotComp D (quotMor D g) (quotMor D f) = quotMor D (PFreeMor.comp g f) := rfl
 
 /-- The OverQuiver for the quotient category. Objects are the same as the
     original quiver, but morphisms are bundled quotient morphisms. -/
@@ -753,6 +838,14 @@ theorem subst_subst_eq_cast {A : Type*} {G : A → A → Type*}
     {a a' b b' : A} (ha : a = a') (hb : b = b') (x : G a b) :
     ha ▸ hb ▸ x = cast (congrArg₂ G ha hb) x := by
   subst ha hb
+  rfl
+
+/-- A subst on target equals a cast for PFreeMor.
+    h ▸ f = cast (congrArg (PFreeMor Q a) h) f -/
+theorem subst_tgt_eq_cast {Q : OverQuiver.{u, u}} {a b b' : Q.Obj} (h : b = b')
+    (f : PFreeMor Q a b) :
+    (h ▸ f : PFreeMor Q a b') = cast (congrArg (PFreeMor Q a) h) f := by
+  subst h
   rfl
 
 /-- mapQuiver of a casted var. -/
@@ -999,6 +1092,207 @@ theorem quotMapMor_comp
     | _ f' => rfl
 
 end PLangQuotientMorphism
+
+/-! ## Unit of the Adjunction
+
+The unit η : Id → Φ ∘ L embeds the original copresheaf into the copresheaf
+of the free quotient category. On morphisms, this embeds quiver morphisms
+as generators (variables) in the free category. -/
+
+section UnitAdjunction
+
+variable (C : Obj.CatJudgCopr.{u, u, u, u})
+
+/-- The PLangQuotientData for C. -/
+abbrev unitQuotData : PLangQuotientData.{u} := toPLangQuotientData C
+
+/-- The quiver for the unit construction. This is the quiver extracted from C
+    with objects = C.obj, morphisms = C.mor, src = C.dom, tgt = C.cod. -/
+abbrev unitQuiver : OverQuiver.{u, u} := (unitQuotData C).quiver
+
+/-- The target CatJudgCopr for the unit: Φ(L(C)).
+    Objects are C.obj, morphisms are bundled quotient morphisms. -/
+abbrev unitTarget : Obj.CatJudgCopr.{u, u, u, u} :=
+  toPLangCatJudgCopr (reflectionL C)
+
+/-- Embed a C-morphism as a variable in the free morphism type. -/
+def unitVar (m : C.mor) : PFreeMor (unitQuiver C) (C.dom m) (C.cod m) :=
+  PFreeMor.var (Q := unitQuiver C) m
+
+/-- The object map for the unit is the identity. -/
+abbrev unitObjMap : C.obj → (unitTarget C).obj := id
+
+/-- The morphism map for the unit sends a morphism to its quotient class
+    as a variable in the free category. -/
+def unitMorMap (m : C.mor) : (unitTarget C).mor :=
+  ⟨C.dom m, C.cod m, (unitQuotData C).quotMor (unitVar C m)⟩
+
+/-- The identity witness map sends an identity witness to the corresponding
+    object (where the identity is located). -/
+abbrev unitIdMap : C.idType → (unitTarget C).idType := fun i => C.dom (C.idMor i)
+
+/-- The composition witness map constructs the composable pair of variables
+    from a composition witness. -/
+def unitCompMap (c : C.compType) : (unitTarget C).compType :=
+  let D := unitQuotData C
+  let rightMor : (unitTarget C).mor :=
+    ⟨C.dom (C.right c), C.cod (C.right c), D.quotMor (unitVar C (C.right c))⟩
+  let leftMor : (unitTarget C).mor :=
+    ⟨C.dom (C.left c), C.cod (C.left c), D.quotMor (unitVar C (C.left c))⟩
+  ⟨(rightMor, leftMor), D.compMatch c⟩
+
+/-- The CatJudgMap for the unit. -/
+def unitCatJudgMap : Mor.CatJudgMap C (unitTarget C) :=
+  ((unitObjMap C, unitMorMap C), (unitIdMap C, unitCompMap C))
+
+/-- Domain naturality for the unit. -/
+theorem unit_dom : Mor.CatJudgNaturalityDom (unitCatJudgMap C) := rfl
+
+/-- Codomain naturality for the unit. -/
+theorem unit_cod : Mor.CatJudgNaturalityCod (unitCatJudgMap C) := rfl
+
+/-- Identity morphism naturality for the unit: mapping the identity morphism
+    through unit equals the identity at the mapped object. -/
+theorem unit_idMor : Mor.CatJudgNaturalityIdMor (unitCatJudgMap C) := by
+  unfold Mor.CatJudgNaturalityIdMor
+  funext i
+  simp only [Function.comp_apply, Mor.CatJudgMap.morMap, Mor.CatJudgMap.idMap,
+    Mor.CatJudgMap.objMorMap, Mor.ObjMorMap.morMap, Mor.CatJudgMap.idCompMap]
+  simp only [unitCatJudgMap, unitMorMap, unitIdMap, unitTarget, unitObjMap]
+  simp only [Obj.CatJudgCopr.idMor, toPLangCatJudgCopr, toPLangCatJudgObjMor,
+    toPLangCatJudgMor, Obj.CatJudgObjMor.idMor, Obj.CatJudgMor.idMor,
+    Obj.CatJudgMor.idMorCompProj, reflectionL, PLangQuotientData.toOverCategoryData,
+    PLangQuotientData.quotCategoryOps, PLangQuotientData.quotIdFn,
+    PLangQuotientData.quotQuiver, PLangQuotientData.quotId]
+  -- Goal: ⟨dom, ⟨cod, quotMor (var m)⟩⟩ = ⟨dom, ⟨dom, quotMor (id dom)⟩⟩
+  -- where m = C.idMor i and cod = dom by C.endoProof
+  let D := toPLangQuotientData C
+  -- id_witness relates: cast (id_endo) (var (idMor i)) ~ id dom
+  have h_wit := PLangQuotientData.FreeMorEquivGen.id_witness (D := D) i
+  -- endoProof gives dom ∘ idMor = cod ∘ idMor, so for each i: dom = cod
+  have hendo : C.cod (C.idMor i) = C.dom (C.idMor i) := (D.idEndo i).symm
+  -- The quotient elements have HEq via quotMor_heq_of_cast_equiv
+  have hquot : HEq (D.quotMor (unitVar C (C.idMor i)))
+      (D.quotMor (PFreeMor.id (Q := D.quiver) (C.dom (C.idMor i)))) :=
+    PLangQuotientData.quotMor_heq_of_cast_equiv D hendo
+      (unitVar C (C.idMor i))
+      (PFreeMor.id (Q := D.quiver) (C.dom (C.idMor i)))
+      (.rel h_wit)
+  -- Build the sigma type equality using HEq
+  refine Sigma.ext rfl ?_
+  refine heq_of_eq (Sigma.ext hendo ?_)
+  exact hquot
+
+/-- Left projection naturality for the unit: mapping the left component
+    through unit equals the left component of the mapped composable pair. -/
+theorem unit_left : Mor.CatJudgNaturalityLeft (unitCatJudgMap C) := rfl
+
+/-- Right projection naturality for the unit: mapping the right component
+    through unit equals the right component of the mapped composable pair. -/
+theorem unit_right : Mor.CatJudgNaturalityRight (unitCatJudgMap C) := rfl
+
+/-- Composite naturality for the unit: mapping the composite morphism
+    through unit equals the composite in the target category.
+
+    Requires showing that:
+    1. Domain matches: dom(composite) = dom(right)
+    2. Codomain matches: cod(composite) = cod(left)
+    3. The quotient of the composite variable equals the quotient
+       composition of the left and right variables
+    The third point uses the comp_witness generating relation.
+
+    The main technical difficulty is handling the nested sigma types with
+    dependent casts. The comp_witness relation states that
+    comp(cast(var left), var right) ~ cast(var composite), which after
+    taking quotients gives the desired equality. -/
+theorem unit_composite : Mor.CatJudgNaturalityComposite (unitCatJudgMap C) := by
+  unfold Mor.CatJudgNaturalityComposite
+  funext c
+  simp only [Function.comp_apply, Mor.CatJudgMap.morMap,
+    Mor.CatJudgMap.objMorMap, Mor.ObjMorMap.morMap, Mor.CatJudgMap.compMap,
+    Mor.CatJudgMap.idCompMap]
+  simp only [unitCatJudgMap, unitMorMap, unitCompMap, unitTarget, unitObjMap]
+  let D := toPLangQuotientData C
+  have h_dom : C.dom (C.composite c) = C.dom (C.right c) :=
+    congrFun C.compDomProof c
+  have h_cod : C.cod (C.composite c) = C.cod (C.left c) :=
+    congrFun C.compCodProof c
+  simp only [Obj.CatJudgCopr.composite, Obj.CatJudgObjMor.composite,
+    Obj.ObjMorCompProj.composite, toPLangCatJudgCopr, toPLangCatJudgObjMor,
+    toPLangCatJudgMor, reflectionL, PLangQuotientData.toOverCategoryData,
+    PLangQuotientData.quotCategoryOps, PLangQuotientData.quotCompFn,
+    PLangQuotientData.quotQuiver, PLangQuotientData.quotMor]
+  have h_wit := PLangQuotientData.FreeMorEquivGen.comp_witness (D := D) c
+  have h_match : C.cod (C.right c) = C.dom (C.left c) := D.compMatch c
+  -- Goal: nested sigma equality
+  -- LHS: ⟨dom composite, ⟨cod composite, quotMor (var composite)⟩⟩
+  -- RHS: ⟨dom right, ⟨cod left, quotComp (quotMor left) (h_match ▸ quotMor right)⟩⟩
+  -- Outer Sigma.ext with h_dom
+  refine Sigma.ext h_dom ?_
+  -- Goal: inner sigma HEq
+  -- LHS type: (cod : C.obj) × QuotMor D (dom composite) cod
+  -- RHS type: (cod : C.obj) × QuotMor D (dom right) cod
+  -- Use sigma_heq_of_fst_eq_snd_heq with explicit type parameters
+  refine sigma_heq_of_fst_eq_snd_heq
+    (α := C.obj) (I := C.obj) (β := fun dom cod => D.QuotMor dom cod)
+    h_dom h_cod ?_
+  -- Goal: ⟦var composite⟧ ≍ quotComp ⟦left⟧ (h_match ▸ ⟦right⟧)
+  -- Convert quotient notation to quotMor
+  simp only [PLangQuotientData.quotMk_eq_quotMor, unitQuotData]
+  -- Now: quotMor (var composite) ≍ quotComp (quotMor left) (h_match ▸ quotMor right)
+  -- Replace `toPLangQuotientData C` with `D` to help pattern matching
+  change D.quotMor (unitVar C (C.composite c)) ≍
+         D.quotComp (D.quotMor (unitVar C (C.left c)))
+           (h_match ▸ D.quotMor (unitVar C (C.right c)))
+  -- First push transport inside quotMor using conv
+  -- In quotComp g f: arg 1 = quotComp, arg 2 = g, arg 3 = f
+  conv_rhs => arg 3; rw [PLangQuotientData.quotMor_subst_eq (D := D)]
+  -- Now: quotMor (var composite) ≍ quotComp (quotMor left) (quotMor (h_match ▸ right))
+  -- Apply quotComp_quotMor
+  rw [PLangQuotientData.quotComp_quotMor]
+  -- Now: quotMor (var composite) ≍ quotMor (comp left (h_match ▸ right))
+  -- Use quotMor_heq_of_both_cast_equiv with the comp_witness relation
+  apply PLangQuotientData.quotMor_heq_of_both_cast_equiv D h_dom h_cod
+  -- Need: FreeMorEquiv (h_dom ▸ h_cod ▸ var composite) (comp left (h_match ▸ right))
+  apply PLangQuotientData.FreeMorEquiv.symm
+  -- Need: FreeMorEquiv (comp left (h_match ▸ right)) (h_dom ▸ h_cod ▸ var composite)
+  -- Convert double subst on RHS to cast
+  rw [PLangQuotientMorphism.subst_subst_eq_cast h_dom h_cod]
+  -- Now RHS: cast (congrArg₂ ...) (var composite)
+  -- Apply the generator relation
+  apply PLangQuotientData.FreeMorEquiv.rel
+  -- Now need: FreeMorEquivGen (comp left (h_match ▸ right)) (cast ... (var composite))
+  -- comp_witness has: FreeMorEquivGen (comp (cast left) right) (cast var composite)
+  -- Need to convert our form to match comp_witness
+  -- The issue is: our form has `h_match ▸ right` but witness has `cast left`
+  -- These are morally equivalent up to rearrangement
+  simp only [unitVar]
+  -- Goal: FreeMorEquivGen (left.comp (h_match ▸ right)) (cast composite)
+  -- h_wit: FreeMorEquivGen ((cast left).comp right) (cast composite)
+  convert h_wit using 1
+  -- Subgoal: (left.comp (h_match ▸ right)) = ((cast left).comp right)
+  -- Use comp_subst_tgt_right to rewrite LHS to (h_match.symm ▸ left).comp right
+  rw [PFreeMor.comp_subst_tgt_right h_match]
+  -- Now goal: (h_match.symm ▸ left).comp right = (cast left).comp right
+  -- Split into component equalities
+  congr 1
+  -- Goal: ⋯ ▸ PFreeMor.var (C.left c) = cast ⋯ (PFreeMor.var (D.left c))
+  -- D.left = C.left definitionally, so both sides are transports of the same term
+  -- The ▸ is on source, so use subst_src_eq_cast
+  -- Annotate with D.quiver to get correct types
+  convert @PFreeMor.subst_src_eq_cast D.quiver _ _ _ h_match.symm (PFreeMor.var (D.left c))
+
+/-- All naturality conditions for the unit. -/
+theorem unitNaturalityAll : Mor.CatJudgNaturalityAll (unitCatJudgMap C) :=
+  ⟨⟨unit_dom C, unit_cod C⟩, unit_idMor C, ⟨unit_left C, unit_right C, unit_composite C⟩⟩
+
+/-- The unit natural transformation η : C → Φ(L(C)) for the L ⊣ Φ adjunction.
+    This embeds the original copresheaf into the copresheaf of the quotient
+    category, sending each morphism to its equivalence class as a variable. -/
+def unit : Mor.CatJudgNatTrans C (unitTarget C) :=
+  ⟨unitCatJudgMap C, unitNaturalityAll C⟩
+
+end UnitAdjunction
 
 end ReflectionL
 
