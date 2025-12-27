@@ -1682,6 +1682,164 @@ end CounitNaturality
 
 end CounitAdjunction
 
+/-! ## Triangle Identities
+
+For the adjunction L ⊣ Φ, the triangle identities are:
+1. For X : CatJudgCopr: ε_{L(X)} ∘ L(η_X) = id_{L(X)}
+2. For C : Cat: Φ(ε_C) ∘ η_{Φ(C)} = id_{Φ(C)}
+
+Here we prove the second identity: the composition of unit with Φ(counit)
+is the identity natural transformation on Φ(C). -/
+
+section TriangleIdentities
+
+variable {Q : OverQuiver.{u, u}} (C : OverCategoryData Q)
+
+/-- Abbreviation for Φ(C) as a CatJudgCopr. -/
+abbrev trianglePhiC : Obj.CatJudgCopr.{u, u, u, u} := toPLangCatJudgCopr C
+
+/-- The unit applied to Φ(C): η_{Φ(C)} : Φ(C) → Φ(L(Φ(C))). -/
+abbrev triangleUnitPhiC :
+    Mor.CatJudgNatTrans (trianglePhiC C) (unitTarget (trianglePhiC C)) :=
+  unit (trianglePhiC C)
+
+/-- Φ(L(Φ(C))) is definitionally equal to unitTarget (trianglePhiC C).
+    This expands the definitions to show they match. -/
+theorem phiLPhiC_eq_unitTarget :
+    toPLangCatJudgCopr (Counit.derivedQuotData C).toOverCategoryData =
+    unitTarget (trianglePhiC C) := rfl
+
+/-- The counit as a CatJudgNatTrans via the embedding functor Φ.
+    This is Φ(ε_C) : Φ(L(Φ(C))) → Φ(C).
+    Note: derivedQuotData C = toPLangQuotientData (trianglePhiC C). -/
+def phiCounit :
+    Mor.CatJudgNatTrans (unitTarget (trianglePhiC C)) (trianglePhiC C) :=
+  phiLPhiC_eq_unitTarget C ▸
+    toPLangCatJudgNatTrans (Counit.counitFunctorData C)
+
+/-- The composition η ≫ Φ(ε): the unit followed by the embedded counit.
+    This should equal id_{Φ(C)} by the triangle identity. -/
+def unitThenPhiCounit :
+    Mor.CatJudgNatTrans (trianglePhiC C) (trianglePhiC C) :=
+  Cat.CatJudgNatTrans.comp (triangleUnitPhiC C) (phiCounit C)
+
+/-- The idMap for the unit on Φ(C) is the identity. -/
+theorem unitIdMap_toPLang_eq_id :
+    unitIdMap (toPLangCatJudgCopr C) = id := by
+  funext i
+  simp only [unitIdMap, toPLangCatJudgCopr, toPLangCatJudgObjMor,
+    toPLangCatJudgMor, id]
+  exact C.id_src i
+
+/-- The right triangle identity: Φ(ε_C) ∘ η_{Φ(C)} = id_{Φ(C)}.
+    This states that applying unit then counit to Φ(C) gives the identity. -/
+theorem rightTriangle :
+    unitThenPhiCounit C = Cat.CatJudgNatTrans.id (trianglePhiC C) := by
+  unfold unitThenPhiCounit Cat.CatJudgNatTrans.comp Cat.CatJudgNatTrans.id
+  apply Subtype.ext
+  unfold Cat.CatJudgMap.comp Cat.CatJudgMap.id Cat.ObjMap.comp
+  unfold triangleUnitPhiC trianglePhiC phiCounit
+  unfold unit unitCatJudgMap toPLangCatJudgNatTrans toPLangCatJudgMap
+  simp only [Counit.counitFunctorData, Counit.counitQuiverMor, unitObjMap,
+    Mor.CatJudgMap.objMorMap]
+  -- We now have:
+  -- ((id ∘ id, counitMorFn ∘ unitMorFn), id ∘ unitIdMap, counitCompFn ∘ unitCompMap)
+  -- = ((id, id), id, id)
+  -- Split into components
+  apply Prod.ext
+  -- Goal 1 (fst): ObjMorMap equality ((objMap, morMap))
+  · apply Prod.ext
+    · rfl -- objMap = id ∘ id = id
+    · -- morMap: (counitMorFn ∘ unitMorFn) = id
+      simp only [Mor.ObjMorMap.morMap]
+      funext m
+      simp only [Function.comp_apply, unitMorMap, unitVar, PLangQuotientData.quotMor,
+        toPLangQuotientData, Counit.counitEvalQuot,
+        Quotient.lift_mk, Counit.counitEval, Counit.counitEvalAux,
+        toPLangCatJudgCopr, toPLangCatJudgObjMor, toPLangCatJudgMor, id]
+  -- Goal 2 (snd): (idMap, compMap) equality
+  · apply Prod.ext
+    · -- idMap: id ∘ unitIdMap = id
+      simp only [Mor.CatJudgMap.idMap, unitIdMap_toPLang_eq_id, Function.comp_id]
+    · -- compMap: show the composition map is identity
+      funext p
+      simp only [Function.comp_apply, Counit.counitEvalQuot, toPLangCatJudgCopr,
+        toPLangCatJudgObjMor, toPLangCatJudgMor, toPLangQuotientData]
+      rfl
+
+end TriangleIdentities
+
+/-! ## Left Triangle Identity
+
+For X : CatJudgCopr, the left triangle identity states:
+  ε_{L(X)} ∘ L(η_X) = id_{L(X)}
+
+This operates at the category level (OverFunctorData), not the copresheaf level. -/
+
+section LeftTriangle
+
+variable (X : Obj.CatJudgCopr.{u, u, u, u})
+
+/-- L(X): the quotient category from a CatJudgCopr. -/
+abbrev triangleLX : OverCategoryData (toPLangQuotientData X).quotQuiver :=
+  (toPLangQuotientData X).toOverCategoryData
+
+/-- The quiver of L(X). -/
+abbrev triangleLXQuiver : OverQuiver.{u, u} := (toPLangQuotientData X).quotQuiver
+
+/-- Φ(L(X)): embedding L(X) back to CatJudgCopr. -/
+abbrev trianglePhiLX : Obj.CatJudgCopr.{u, u, u, u} :=
+  toPLangCatJudgCopr (triangleLX X)
+
+/-- L(Φ(L(X))): applying L to Φ(L(X)).
+    This is the quotient of the free category on the morphisms of L(X). -/
+abbrev triangleLPhiLX :
+    OverCategoryData (toPLangQuotientData (trianglePhiLX X)).quotQuiver :=
+  (toPLangQuotientData (trianglePhiLX X)).toOverCategoryData
+
+/-- The unit η_X : X → Φ(L(X)) as a CatJudgNatTrans. -/
+abbrev unitX : Mor.CatJudgNatTrans X (unitTarget X) := unit X
+
+/-- Type of bundled morphisms in L(X). These become the "generators" in L(Φ(L(X))). -/
+abbrev bundledLXMor : Type u := triangleLXQuiver X |>.MorType
+
+/-- Bundle a quotient morphism as a morphism of L(X)'s quiver. -/
+def bundleQuotMorLX {a b : X.obj}
+    (qm : (toPLangQuotientData X).QuotMor a b) : bundledLXMor X :=
+  ⟨a, b, qm⟩
+
+/-- The quotient type of Φ(L(X)) = toPLangQuotientData (trianglePhiLX X). -/
+abbrev quotDataPhiLX : PLangQuotientData.{u} :=
+  toPLangQuotientData (trianglePhiLX X)
+
+/-- Embed a morphism of L(X) as a variable in the free category over Φ(L(X)).
+    This is the morphism component of L(η_X). -/
+def embedLXMorAsVar {a b : X.obj}
+    (qm : (toPLangQuotientData X).QuotMor a b) :
+    (quotDataPhiLX X).QuotMor a b :=
+  (quotDataPhiLX X).quotMor (PFreeMor.var (bundleQuotMorLX X qm))
+
+/-- The counit ε_{L(X)} : L(Φ(L(X))) → L(X) as an OverFunctorData.
+    This evaluates free morphisms over L(X) back into L(X). -/
+def counitAtLX :
+    OverFunctorData (triangleLPhiLX X) (triangleLX X) :=
+  Counit.counitFunctorData (triangleLX X)
+
+/-- The left triangle identity on objects: ε_{L(X)}.objFn = id. -/
+theorem leftTriangle_obj (a : X.obj) :
+    (counitAtLX X).objFn a = a := rfl
+
+/-- The left triangle identity on morphisms: for a quotient morphism qm in L(X),
+    embedding it as a variable and evaluating gives back the bundled qm. -/
+theorem leftTriangle_mor {a b : X.obj}
+    (qm : (toPLangQuotientData X).QuotMor a b) :
+    Counit.counitEvalQuot (triangleLX X) (embedLXMorAsVar X qm) =
+    bundleQuotMorLX X qm := by
+  simp only [embedLXMorAsVar, Counit.counitEvalQuot, PLangQuotientData.quotMor,
+    Quotient.lift_mk, Counit.counitEval, Counit.counitEvalAux, bundleQuotMorLX]
+
+end LeftTriangle
+
 end ReflectionL
 
 end GebLean
