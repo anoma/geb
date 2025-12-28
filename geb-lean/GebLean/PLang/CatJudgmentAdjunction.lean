@@ -850,6 +850,28 @@ def unitMorAsHom (f : s.mor) :
       (s.dom f) (s.cod f) :=
   embedQuotMorAsHom s (unitMorEmbed s f)
 
+/-- The .val of unitMorAsHom equals bundleQuotMor applied to the quotient class. -/
+theorem unitMorAsHom_val (f : s.mor) :
+    (unitMorAsHom s f).val = (adjCQD s).bundleQuotMor ((adjCQD s).quotMor (FreeMor.var f)) :=
+  rfl
+
+/-- The .snd.snd of unitMorAsHom.val is the quotient morphism. -/
+theorem unitMorAsHom_val_snd_snd (f : s.mor) :
+    (unitMorAsHom s f).val.snd.snd = (adjCQD s).quotMor (FreeMor.var f) :=
+  rfl
+
+/-- Transport on unitMorAsHom preserves the bundleQuotMor structure.
+
+When we transport unitMorAsHom along an equality of dom indices, the .val
+remains the same bundleQuotMor applied to the quotMor of the original morphism. -/
+theorem unitMorAsHom_transport_val
+    {a a' : s.obj} {b : s.obj} (h : a = a') (f : s.mor)
+    (hdom : s.dom f = a) (hcod : s.cod f = b) :
+    ((h ▸ (hdom ▸ hcod ▸ unitMorAsHom s f : adjHomSet s a b)) : adjHomSet s a' b).val =
+    (adjCQD s).bundleQuotMor ((adjCQD s).quotMor (FreeMor.var f)) := by
+  subst h hdom hcod
+  rfl
+
 /-- The target CatJudgCopr for the unit: Phi(L(s)).
 
 This is the CatJudgCopr of the category L(s). For aligned universes, this
@@ -1738,6 +1760,169 @@ theorem counitEval_id_functor_map {C D : Type (uAdj + 1)} [Category.{uAdj + 1} C
   simp only [counitEval_id]
   exact F.map_id a
 
+/-- Map a FreeMor in C to a FreeMor in D by applying F to each component.
+
+This is the morphism-level action of L(Phi(F)), transforming formal morphisms
+in C to formal morphisms in D. -/
+def freeMorMapPhi {C D : Type (uAdj + 1)} [Category.{uAdj + 1} C]
+    [Category.{uAdj + 1} D] (F : C ⥤ D) :
+    {a b : C} → FreeMor (counitQuiver C) a b →
+      FreeMor (counitQuiver D) (F.obj a) (F.obj b)
+  | _, _, .var f => FreeMor.var (Q := counitQuiver D) (functorMapBundledHom F f)
+  | a, _, .id _ => FreeMor.id (Q := counitQuiver D) (F.obj a)
+  | _, _, .comp g fm => FreeMor.comp (freeMorMapPhi F g) (freeMorMapPhi F fm)
+
+/-- counitEval commutes with freeMorMapPhi: evaluating after mapping equals
+mapping then evaluating. This is the main naturality lemma for counitEval. -/
+theorem counitEval_freeMorMapPhi {C D : Type (uAdj + 1)} [Category.{uAdj + 1} C]
+    [Category.{uAdj + 1} D] (F : C ⥤ D) :
+    {a b : C} → (m : FreeMor (counitQuiver C) a b) →
+      counitEval D (freeMorMapPhi F m) = F.map (counitEval C m)
+  | _, _, .var f => (counitEval_var_functor_map F f).symm
+  | a, _, .id _ => by simp only [freeMorMapPhi, counitEval_id, F.map_id]
+  | _, _, .comp g f => by
+    simp only [freeMorMapPhi, counitEval_comp]
+    rw [counitEval_freeMorMapPhi F f, counitEval_freeMorMapPhi F g]
+    exact (F.map_comp _ _).symm
+
+/-! ### Counit Naturality
+
+The counit ε : L ∘ Φ → Id is natural: for any functor F : C ⥤ D,
+  L(Φ(F)) ≫ ε_D = ε_C ≫ F
+
+We prove this by showing the morphism-level equality using counitEval_freeMorMapPhi,
+then lifting through the quotient. -/
+
+/-- The quiver morphism underlying functorToCatJudgNatTrans. -/
+abbrev functorToQuiverMor {C D : Type (uAdj + 1)} [Category.{uAdj + 1} C]
+    [Category.{uAdj + 1} D] (F : C ⥤ D) :
+    OverQuiverMorphism (counitQuiver C) (counitQuiver D) :=
+  catJudgNatTransToOverQuiverMor (functorToCatJudgNatTrans F)
+
+/-- freeMorMapPhi agrees with FreeMor.mapQuiver for the functor case. -/
+theorem freeMorMapPhi_eq_mapQuiver {C D : Type (uAdj + 1)} [Category.{uAdj + 1} C]
+    [Category.{uAdj + 1} D] (F : C ⥤ D) :
+    {a b : C} → (m : FreeMor (counitQuiver C) a b) →
+      freeMorMapPhi F m = FreeMor.mapQuiver (functorToQuiverMor F) m
+  | _, _, .var f => by
+    simp only [freeMorMapPhi, FreeMor.mapQuiver,
+      catJudgNatTransToOverQuiverMor, functorToCatJudgNatTrans,
+      functorToCatJudgMap]
+  | _, _, .id _ => rfl
+  | _, _, .comp g f => by
+    simp only [freeMorMapPhi, FreeMor.mapQuiver]
+    rw [freeMorMapPhi_eq_mapQuiver F f, freeMorMapPhi_eq_mapQuiver F g]
+
+/-- The functor L(Phi(F)) applied to counitFunctor maps. -/
+abbrev LPhiFunctor' (C D : Type (uAdj + 1)) [Category.{uAdj + 1} C]
+    [Category.{uAdj + 1} D] (F : C ⥤ D) :
+    (LPhiObj C) ⥤ (LPhiObj D) :=
+  catJudgNatTransToCatMor (functorToCatJudgNatTrans F)
+
+/-- The counit naturality at the morphism level for FreeMor. -/
+theorem counit_naturality_freeMor {C D : Type (uAdj + 1)} [Category.{uAdj + 1} C]
+    [Category.{uAdj + 1} D] (F : C ⥤ D) {a b : C}
+    (m : FreeMor (counitQuiver C) a b) :
+    counitEval D (FreeMor.mapQuiver (functorToQuiverMor F) m) =
+    F.map (counitEval C m) := by
+  rw [← freeMorMapPhi_eq_mapQuiver F m]
+  exact counitEval_freeMorMapPhi F m
+
+/-- The CategoryQuotientMorphism for a functor F between categories. -/
+abbrev functorToCategoryQuotientMorphism {C D : Type (uAdj + 1)}
+    [Category.{uAdj + 1} C] [Category.{uAdj + 1} D] (F : C ⥤ D) :
+    CategoryQuotientMorphism (counitCQD C) (counitCQD D) :=
+  catJudgNatTransToCategoryQuotientMorphism (functorToCatJudgNatTrans F)
+
+/-- Counit naturality at the quotient level: applying L(Phi(F)) then ε_D
+equals applying ε_C then F. -/
+theorem counit_naturality_quot {C D : Type (uAdj + 1)} [Category.{uAdj + 1} C]
+    [Category.{uAdj + 1} D] (F : C ⥤ D) {a b : C}
+    (qm : (counitCQD C).QuotMor a b) :
+    counitFunctorMap D ((functorToCategoryQuotientMorphism F).quotMapMor qm) =
+    F.map (counitFunctorMap C qm) := by
+  induction qm using Quotient.ind with
+  | _ m =>
+    simp only [CategoryQuotientMorphism.quotMapMor, CategoryQuotientData.quotMor,
+      counitFunctorMap, Quotient.lift_mk]
+    exact counit_naturality_freeMor F m
+
+/-- The composition L(Phi(F)) ≫ ε_D maps morphisms correctly on adjHomSet. -/
+theorem LPhiFunctor_counit_map {C D : Type (uAdj + 1)} [Category.{uAdj + 1} C]
+    [Category.{uAdj + 1} D] (F : C ⥤ D) {a b : C}
+    (m : adjHomSet (counitSource C) a b) :
+    (counitFunctor D).map ((LPhiFunctor' C D F).map m) =
+    F.map ((counitFunctor C).map m) := by
+  rcases m with ⟨⟨ma, mb, qm⟩, ha, hb⟩
+  subst ha hb
+  simp only [counitFunctor, counitHomMap, extractQuotMor, cast_eq, counitFunctorMap]
+  -- Unfold the functor layers
+  simp only [catJudgNatTransToCatMor, BundledCategoryData.functorToCat,
+    catJudgNatTransToFunctorData, toBundledCategoryData_map,
+    catJudgNatTransToOverFunctorData, catJudgNatTransToQuotQuiverMor,
+    catJudgCoprToOverCategoryData', CategoryQuotientData.toOverCategoryData,
+    catJudgNatTransToCategoryQuotientMorphism,
+    CategoryQuotientData.bundleQuotMor, CategoryQuotientData.quotQuiver]
+  exact counit_naturality_quot F qm
+
+/-- The composition Φ ⋙ L : Cat → Cat at matched universe levels. -/
+abbrev PhiL : CategoryTheory.Cat.{uAdj + 1, uAdj + 1} ⥤
+    CategoryTheory.Cat.{uAdj + 1, uAdj + 1} :=
+  PhiFunctor_PLang.{uAdj, uAdj} ⋙ LFunctor_PLang.{uAdj, uAdj}
+
+/-- The counit natural transformation ε : Φ ⋙ L → 𝟭 Cat.
+
+For each category C, the component ε_C : L(Φ(C)) ⥤ C evaluates the free
+category on C's quiver (with category axiom witnesses) back to C itself. -/
+def counitNT : PhiL.{uAdj} ⟶ 𝟭 (CategoryTheory.Cat.{uAdj + 1, uAdj + 1}) where
+  app := fun C => counitFunctor C.α
+  naturality := fun {C D} F => by
+    simp only [CategoryTheory.Cat.comp_eq_comp, CategoryTheory.Functor.id_obj,
+      CategoryTheory.Functor.id_map]
+    have h_obj : ∀ x, (PhiL.map F ⋙ counitFunctor ↑D).obj x =
+        (counitFunctor ↑C ⋙ F).obj x := fun _ => rfl
+    refine CategoryTheory.Functor.ext h_obj ?_
+    intro x y f
+    simp only [CategoryTheory.Functor.comp_obj, CategoryTheory.Functor.comp_map,
+      eqToHom_refl, Category.id_comp, Category.comp_id]
+    exact LPhiFunctor_counit_map F f
+
+/-! ### Unit Natural Transformation
+
+The unit η : 𝟭 CatJudgCopr → L ⋙ Φ embeds each CatJudgCopr into Φ(L(s)). -/
+
+/-- The composition L ⋙ Φ : CatJudgCopr → CatJudgCopr at matched universe levels. -/
+abbrev LPhi : Obj.CatJudgCopr.{uAdj + 1, uAdj + 1, uAdj + 1, uAdj + 1} ⥤
+    Obj.CatJudgCopr.{uAdj + 1, uAdj + 1, uAdj + 1, uAdj + 1} :=
+  LFunctor_PLang.{uAdj, uAdj} ⋙ PhiFunctor_PLang.{uAdj, uAdj}
+
+/-- LPhi.obj s equals unitTarget s. -/
+theorem LPhi_obj_eq_unitTarget (s : Obj.CatJudgCopr.{uAdj + 1, uAdj + 1, uAdj + 1, uAdj + 1}) :
+    LPhi.obj s = unitTarget s := rfl
+
+/-- Lemma for unit naturality: .fst equality for the left morphism component.
+
+Shows that unitMorAsHom values have equal .fst after bundleQuotMor and quotMapMor.
+Uses naturality of f to establish the domain equality. -/
+theorem unit_naturality_left_fst_eq
+    (s t : Obj.CatJudgCopr.{uAdj + 1, uAdj + 1, uAdj + 1, uAdj + 1})
+    (f : Mor.CatJudgNatTrans s t)
+    (c : s.data.catJudgObj.toObjMorCompObj.compType)
+    (h_left : f.morMap (s.left c) = t.left (f.compMap c))
+    (h_dom_l : f.objMap (s.dom (s.left c)) = t.dom (f.morMap (s.left c))) :
+    (unitMorAsHom t (t.left (f.compMap c))).val.fst =
+      ((catJudgCoprToCategoryQuotientData' t).bundleQuotMor
+        ((catJudgNatTransToCategoryQuotientMorphism f).quotMapMor
+          (unitMorAsHom s (s.left c)).val.snd.snd)).fst := by
+  -- LHS: t.dom (t.left (f.compMap c))
+  -- RHS: f.objMap (s.dom (s.left c))
+  -- By h_left and h_dom_l, these are equal
+  simp only [unitMorAsHom_val, CategoryQuotientData.bundleQuotMor,
+    catJudgNatTransToCategoryQuotientMorphism, CategoryQuotientMorphism.quotMapMor,
+    CategoryQuotientData.quotMor, Quotient.lift_mk]
+  -- Goal: t.dom (t.left (f.compMap c)) = f.objMap (s.dom (s.left c))
+  rw [← h_left]
+  exact h_dom_l.symm
 
 end AdjunctionStructure
 
