@@ -92,7 +92,7 @@ The adjunction consists of two functors:
 Given a category C with `C : Type u` and `Category.{v} C`:
 
 ```text
-catToCatJudgCopr C : CatJudgCopr.{u+1, v+1, u+1, max u v + 1}
+catToCatJudgCopr C.{v, u} : CatJudgCopr.{u, v, w, x}
 ```
 
 The components are:
@@ -126,7 +126,7 @@ maps components via:
 Given a CatJudgCopr s, construct a category via quotienting:
 
 ```text
-catJudgCoprToCat s : Cat.{max s.v s.w s.x, s.u}
+catJudgCoprToCat s.{u, v, w, x} : Cat.{v, u}
 ```
 
 The construction uses:

@@ -35,7 +35,7 @@ The PLang adjunction and PolyPresentation work connect via:
 ### Phase 2A: Embedding Functor Phi_PLang - COMPLETE
 
 - [x] Define `catToCatJudgCopr`:
-      `(C : Type u) → [Category.{v} C] → CatJudgCopr.{u, max u v, u, max u v}`
+      `(C : Type u) → [Category.{v} C] → CatJudgCopr.{u, v, w, x}`
   - obj = C (objects of the category)
   - mor = BundledHom C = Σ (a b : C), (a ⟶ b)
   - idType = C (identity witnesses = objects)
@@ -51,8 +51,7 @@ The PLang adjunction and PolyPresentation work connect via:
 - [x] Prove functoriality: functorToCatJudgNatTrans_id, functorToCatJudgNatTrans_comp
 
 - [x] Define `PhiFunctor_PLang`:
-      `Cat.{v'+1, u'+1} ⥤ CatJudgCopr.{u'+1, max (u'+1) (v'+1),
-       u'+1, max (u'+1) (v'+1)}`
+      `Cat.{v, u} ⥤ CatJudgCopr.{u, v, w, x}`
       (universe shift required for category structure on target)
 
 ### Phase 2B: Reflection Functor L_PLang - COMPLETE
@@ -74,7 +73,7 @@ The PLang adjunction and PolyPresentation work connect via:
   - Universe restriction: w = x = u required for CategoryQuotientData
 
 - [x] Define `catJudgCoprToCat'`:
-      `CatJudgCopr.{u', v', u', u'} → Cat.{max v' u', u'}`
+      `CatJudgCopr.{u', v', w', x'} → Cat.{v', u'}`
   - Objects = s.obj
   - Morphisms a b = Quot (FreeMorEquiv between a and b)
   - Identity, composition via FreeMor constructors lifted through Quot
@@ -92,7 +91,7 @@ The PLang adjunction and PolyPresentation work connect via:
   - `catJudgNatTransToCatMor_id/comp`
 
 - [x] Define `LFunctor_PLang`:
-      `CatJudgCopr.{uL+1, vL+1, uL+1, uL+1} ⥤ Cat.{max (vL+1) (uL+1), uL+1}`
+      `CatJudgCopr.{u, v, w, x} ⥤ Cat.{v,u}`
 
 ### Phase 2C: Prove Adjunction
 
