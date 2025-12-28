@@ -1307,6 +1307,15 @@ def CatJudgNatTrans.comp.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂, u₃, 
         rw [Function.comp_assoc, f.compositeProof, ← Function.comp_assoc,
             g.compositeProof, Function.comp_assoc]⟩⟩⟩
 
+/-- The underlying CatJudgMap of a composition. -/
+@[simp]
+theorem CatJudgNatTrans.comp_val.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂, u₃, v₃, w₃, x₃}
+    {F : Obj.CatJudgCopr.{u₁, v₁, w₁, x₁}} {G : Obj.CatJudgCopr.{u₂, v₂, w₂, x₂}}
+    {H : Obj.CatJudgCopr.{u₃, v₃, w₃, x₃}}
+    (f : Mor.CatJudgNatTrans.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂} F G)
+    (g : Mor.CatJudgNatTrans.{u₂, v₂, w₂, x₂, u₃, v₃, w₃, x₃} G H) :
+    (CatJudgNatTrans.comp f g).val = CatJudgMap.comp f.val g.val := rfl
+
 /-- Left identity law for `CatJudgNatTrans`: `id ≫ f = f`. -/
 theorem CatJudgNatTrans.id_comp.{u₁, v₁, w₁, x₁, u₂, v₂, w₂, x₂}
     {F : Obj.CatJudgCopr.{u₁, v₁, w₁, x₁}} {G : Obj.CatJudgCopr.{u₂, v₂, w₂, x₂}}
