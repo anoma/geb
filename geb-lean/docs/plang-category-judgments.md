@@ -7,16 +7,15 @@ in `GebLean/PLang/CatJudgment.lean`.
 
 The PLang module provides a formulation of category-judgment copresheaves that:
 
-1. Specializes the target category to `Type` (for universe `u`)
-2. Uses explicit universe parameters throughout
-3. Builds structures incrementally via sigma types
+1. Uses explicit and maximally flexible universe parameters throughout
+2. Builds structures incrementally
 
 ## Structure
 
 The table below shows the PLang definitions and their roles:
 
 | PLang Definition | Description |
-|------------------|-------------|
+| ---------------- | ----------- |
 | `ObjCopr.{u}` | Type of objects |
 | `ObjMorObj.{u,v}` | Objects and morphisms types |
 | `ObjMorProj` | Projection function type |
@@ -99,7 +98,7 @@ catToCatJudgCopr C : CatJudgCopr.{u+1, v+1, u+1, max u v + 1}
 The components are:
 
 | Component | Construction | Type |
-|-----------|--------------|------|
+| --------- | ------------ | ---- |
 | obj | C | Type u |
 | mor | Σ (a b : C), (a ⟶ b) | Type (max u v) |
 | idType | C | Type u |
