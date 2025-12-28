@@ -2470,8 +2470,8 @@ end ReflectionL
 
 This section constructs the adjunction L ⊣ Φ with independent universe levels.
 The goal is to define:
-- `Φ : Cat.{v, u} ⥤ CatJudgCopr.{u, v', w, x}` where v' = max u v
-- `L : CatJudgCopr.{u, v', w, x} ⥤ Cat.{v, u}`
+- `Φ : Cat.{v, u} ⥤ CatJudgCopr.{u, v, w, x}`
+- `L : CatJudgCopr.{u, v, w, x} ⥤ Cat.{v, u}`
 
 The generalization is `PLangQuotientDataFlex` which separates the four
 universe levels instead of using a single level for all components. -/
