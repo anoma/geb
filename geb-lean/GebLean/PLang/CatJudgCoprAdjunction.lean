@@ -1,7 +1,10 @@
 import GebLean.PLang.CatJudgment
+import GebLean.CatJudgmentAdjunction
 import GebLean.Utilities.Category
 import GebLean.Utilities.Equalities
 import Mathlib.CategoryTheory.Category.Cat
+import Mathlib.CategoryTheory.Adjunction.Basic
+import Mathlib.CategoryTheory.Adjunction.Reflective
 
 /-!
 # Category-Copresheaf Adjunction for PLang
@@ -287,6 +290,22 @@ def toPLangCatJudgNatTrans (F : OverFunctorData C₁ C₂) :
     Mor.CatJudgNatTrans (toPLangCatJudgCopr C₁) (toPLangCatJudgCopr C₂) :=
   ⟨toPLangCatJudgMap F, toPLang_naturality F⟩
 
+/-- Φ preserves identity: Φ(id_C) = id_{Φ(C)}. -/
+theorem toPLangCatJudgNatTrans_id {Q : OverQuiver.{u, u}} (C : OverCategoryData Q) :
+    toPLangCatJudgNatTrans (OverFunctorData.id C) =
+    Cat.CatJudgNatTrans.id (toPLangCatJudgCopr C) := by
+  apply Subtype.ext
+  rfl
+
+/-- Φ preserves composition: Φ(G ∘ F) = Φ(G) ∘ Φ(F). -/
+theorem toPLangCatJudgNatTrans_comp {Q₁ Q₂ Q₃ : OverQuiver.{u, u}}
+    {C₁ : OverCategoryData Q₁} {C₂ : OverCategoryData Q₂} {C₃ : OverCategoryData Q₃}
+    (F : OverFunctorData C₁ C₂) (G : OverFunctorData C₂ C₃) :
+    toPLangCatJudgNatTrans (F.comp G) =
+    Cat.CatJudgNatTrans.comp (toPLangCatJudgNatTrans F) (toPLangCatJudgNatTrans G) := by
+  apply Subtype.ext
+  rfl
+
 end PhiFunctoriality
 
 /-! ## Reflection Functor L: CatJudgCopr → OverCategoryData
@@ -554,6 +573,14 @@ def quotMor {a b : D.quiver.Obj} (f : PFreeMor D.quiver a b) : QuotMor D a b :=
 theorem quotMk_eq_quotMor {a b : D.quiver.Obj} (f : PFreeMor D.quiver a b) :
     (⟦f⟧ : QuotMor D a b) = quotMor D f := rfl
 
+/-- Quotient.lift applied to quotMor equals the function applied to the element. -/
+@[simp]
+theorem Quotient_lift_quotMor {a b : D.quiver.Obj}
+    {β : Sort*} (f : PFreeMor D.quiver a b → β)
+    (h : ∀ x y, FreeMorEquiv D x y → f x = f y)
+    (x : PFreeMor D.quiver a b) :
+    Quotient.lift f h (quotMor D x) = f x := rfl
+
 /-- Composition respects the equivalence relation. -/
 theorem comp_respects {a b c : D.quiver.Obj}
     {f₁ f₂ : PFreeMor D.quiver a b} {g₁ g₂ : PFreeMor D.quiver b c}
@@ -789,6 +816,46 @@ theorem mapQuiver_overQuiverId {Q : OverQuiver.{u, u}} {a b : Q.Obj}
   | comp g f ihg ihf =>
     simp only [mapQuiver] at ihg ihf ⊢
     rw [ihg, ihf]
+
+/-- mapQuiver applied to a casted var equals a cast of a var.
+    This is used for proving functoriality of mapQuiver. -/
+theorem mapQuiver_cast_var_overQuiver {Q₁ Q₂ : OverQuiver.{u, u}}
+    (F : OverQuiverMorphism Q₁ Q₂)
+    (m : Q₁.MorType)
+    {a' b' : Q₁.Obj} (ha : Q₁.src m = a') (hb : Q₁.tgt m = b') :
+    mapQuiver F (cast (congrArg₂ (PFreeMor Q₁) ha hb) (.var m)) =
+    cast (congrArg₂ (PFreeMor Q₂)
+      ((F.src_comm m).trans (congrArg F.objFn ha))
+      ((F.tgt_comm m).trans (congrArg F.objFn hb)))
+      (.var (F.morFn m)) := by
+  subst ha hb
+  simp only [congrArg₂, cast_eq, mapQuiver, subst_subst_eq_cast]
+
+/-- mapQuiver with composed OverQuiverMorphisms equals composition of
+    mapQuiver applications. -/
+theorem mapQuiver_quiverMorComp {Q₁ Q₂ Q₃ : OverQuiver.{u, u}}
+    (F : OverQuiverMorphism Q₁ Q₂) (G : OverQuiverMorphism Q₂ Q₃)
+    {a b : Q₁.Obj}
+    (fm : PFreeMor Q₁ a b) :
+    mapQuiver (F.comp G) fm = mapQuiver G (mapQuiver F fm) := by
+  induction fm with
+  | var f =>
+    simp only [mapQuiver, OverQuiverMorphism.comp, Function.comp_apply,
+      subst_subst_eq_cast]
+    rw [mapQuiver_cast_var_overQuiver G (F.morFn f) (F.src_comm f) (F.tgt_comm f)]
+  | id x => rfl
+  | comp g f ihg ihf =>
+    simp only [mapQuiver] at ihg ihf ⊢
+    rw [ihg, ihf]
+
+/-- Two OverQuiverMorphisms with the same functions are equal. -/
+theorem OverQuiverMorphism.eq_of_objFn_morFn {Q₁ Q₂ : OverQuiver.{u, u}}
+    (F G : OverQuiverMorphism Q₁ Q₂)
+    (hobjFn : F.objFn = G.objFn)
+    (hmorFn : F.morFn = G.morFn) : F = G := by
+  ext
+  · exact congrFun hobjFn _
+  · exact congrFun hmorFn _
 
 end PFreeMor
 
@@ -1092,6 +1159,213 @@ theorem quotMapMor_comp
     | _ f' => rfl
 
 end PLangQuotientMorphism
+
+/-! ## L Functor on Morphisms
+
+Given a CatJudgNatTrans between CatJudgCoprs, we construct the induced
+functor between the quotient categories. -/
+
+section LFunctorMorphisms
+
+universe uL
+
+variable {C₁ C₂ : Obj.CatJudgCopr.{uL + 1, uL + 1, uL + 1, uL + 1}}
+
+/-- Convert a CatJudgNatTrans to a PLangQuotientMorphism between the
+    corresponding quotient data. This provides L on morphisms. -/
+def toPLangQuotientMorphism (α : Mor.CatJudgNatTrans C₁ C₂) :
+    PLangQuotientMorphism (toPLangQuotientData C₁) (toPLangQuotientData C₂) where
+  quiverMor := {
+    objFn := α.objMap
+    morFn := α.morMap
+    -- domProof says: objMap ∘ C₁.dom = C₂.dom ∘ morMap
+    -- We need: C₂.dom (morMap m) = objMap (C₁.dom m)
+    src_comm := fun m => (congrFun α.domProof m).symm
+    tgt_comm := fun m => (congrFun α.codProof m).symm
+  }
+  idWitMap := α.idMap
+  compWitMap := α.compMap
+  idMor_comm := fun i => congrFun α.idMorProof i
+  compRight_comm := fun c => congrFun α.rightProof c
+  compLeft_comm := fun c => congrFun α.leftProof c
+  compComposite_comm := fun c => congrFun α.compositeProof c
+
+/-- The quiver morphism from the identity CatJudgNatTrans equals
+    the identity OverQuiverMorphism. -/
+theorem toPLangQuotientMorphism_id_quiverMor
+    (C : Obj.CatJudgCopr.{uL + 1, uL + 1, uL + 1, uL + 1}) :
+    (toPLangQuotientMorphism (Cat.CatJudgNatTrans.id C)).quiverMor =
+    OverQuiverMorphism.id (toPLangQuotientData C).quiver := by
+  ext <;> rfl
+
+/-- mapQuiver with the identity CatJudgNatTrans quiver morphism is identity. -/
+theorem mapQuiver_toPLangQuotientMorphism_id
+    (C : Obj.CatJudgCopr.{uL + 1, uL + 1, uL + 1, uL + 1})
+    {a b : (toPLangQuotientData C).quiver.Obj}
+    (fm : PFreeMor (toPLangQuotientData C).quiver a b) :
+    PFreeMor.mapQuiver (toPLangQuotientMorphism (Cat.CatJudgNatTrans.id C)).quiverMor
+      fm = fm := by
+  induction fm with
+  | var f =>
+    simp only [PFreeMor.mapQuiver, toPLangQuotientMorphism, Cat.CatJudgNatTrans.id,
+      Mor.CatJudgNatTrans.morMap, Cat.CatJudgMap.id, Mor.CatJudgMap.morMap,
+      Mor.ObjMorMap.morMap]
+    rfl
+  | id x => rfl
+  | comp g f ihg ihf =>
+    simp only [PFreeMor.mapQuiver]
+    rw [ihg, ihf]
+
+/-- The objMap of the identity CatJudgNatTrans is _root_.id. -/
+@[simp]
+theorem CatJudgNatTrans_id_objMap
+    (C : Obj.CatJudgCopr.{uL + 1, uL + 1, uL + 1, uL + 1}) :
+    (Cat.CatJudgNatTrans.id C).objMap = _root_.id := rfl
+
+/-- The morMap of the identity CatJudgNatTrans is _root_.id. -/
+@[simp]
+theorem CatJudgNatTrans_id_morMap
+    (C : Obj.CatJudgCopr.{uL + 1, uL + 1, uL + 1, uL + 1}) :
+    (Cat.CatJudgNatTrans.id C).morMap = _root_.id := rfl
+
+/-- Map a bundled quotient morphism through a PLangQuotientMorphism. -/
+def mapBundledQuotMor (α : Mor.CatJudgNatTrans C₁ C₂)
+    (m : (toPLangQuotientData C₁).quotQuiver.MorType) :
+    (toPLangQuotientData C₂).quotQuiver.MorType :=
+  let F := toPLangQuotientMorphism α
+  ⟨α.objMap m.1, α.objMap m.2.1, F.quotMapMor m.2.2⟩
+
+/-- Source preservation for bundled morphism mapping. -/
+theorem mapBundledQuotMor_src (α : Mor.CatJudgNatTrans C₁ C₂)
+    (m : (toPLangQuotientData C₁).quotQuiver.MorType) :
+    (toPLangQuotientData C₂).quotQuiver.src (mapBundledQuotMor α m) =
+    α.objMap ((toPLangQuotientData C₁).quotQuiver.src m) := rfl
+
+/-- Target preservation for bundled morphism mapping. -/
+theorem mapBundledQuotMor_tgt (α : Mor.CatJudgNatTrans C₁ C₂)
+    (m : (toPLangQuotientData C₁).quotQuiver.MorType) :
+    (toPLangQuotientData C₂).quotQuiver.tgt (mapBundledQuotMor α m) =
+    α.objMap ((toPLangQuotientData C₁).quotQuiver.tgt m) := rfl
+
+/-- The L functor on morphisms: given α : C₁ ⟶ C₂, produce
+    L(α) : L(C₁) ⟶ L(C₂) as an OverFunctorData. -/
+def reflectionL_map (α : Mor.CatJudgNatTrans C₁ C₂) :
+    OverFunctorData (reflectionL C₁) (reflectionL C₂) where
+  toOverQuiverMorphism := {
+    objFn := α.objMap
+    morFn := mapBundledQuotMor α
+    src_comm := mapBundledQuotMor_src α
+    tgt_comm := mapBundledQuotMor_tgt α
+  }
+  map_id := fun a => by
+    simp only [mapBundledQuotMor, toPLangQuotientMorphism]
+    rfl
+  map_comp := fun ⟨⟨⟨ag, bg, qg⟩, ⟨_, bf, qf⟩⟩, heq⟩ => by
+    cases heq
+    simp only [mapBundledQuotMor, toPLangQuotientMorphism]
+    congr 2
+    exact (toPLangQuotientMorphism α).quotMapMor_comp qf qg
+
+/-- The quiver morphism from identity CatJudgNatTrans has identity functions. -/
+theorem toPLangQuotientMorphism_id_objFn
+    (C : Obj.CatJudgCopr.{uL + 1, uL + 1, uL + 1, uL + 1}) :
+    (toPLangQuotientMorphism (Cat.CatJudgNatTrans.id C)).quiverMor.objFn =
+    _root_.id := rfl
+
+theorem toPLangQuotientMorphism_id_morFn
+    (C : Obj.CatJudgCopr.{uL + 1, uL + 1, uL + 1, uL + 1}) :
+    (toPLangQuotientMorphism (Cat.CatJudgNatTrans.id C)).quiverMor.morFn =
+    _root_.id := rfl
+
+/-- mapQuiver with identity quiver morphism is identity on PFreeMor. -/
+theorem mapQuiver_id_eq {Q : OverQuiver.{uL, uL}} {a b : Q.Obj}
+    (fm : PFreeMor Q a b) :
+    PFreeMor.mapQuiver (OverQuiverMorphism.id Q) fm = fm :=
+  PFreeMor.mapQuiver_overQuiverId fm
+
+/-- L preserves identity morphisms. -/
+theorem reflectionL_map_id
+    (C : Obj.CatJudgCopr.{uL + 1, uL + 1, uL + 1, uL + 1}) :
+    reflectionL_map (Cat.CatJudgNatTrans.id C) =
+    OverFunctorData.id (reflectionL C) := by
+  apply OverFunctorData.ext
+  · rfl
+  · funext m
+    obtain ⟨a, b, qm⟩ := m
+    induction qm using Quotient.ind with
+    | _ fm =>
+      simp only [reflectionL_map, mapBundledQuotMor, CatJudgNatTrans_id_objMap,
+        _root_.id, PLangQuotientMorphism.quotMapMor, Quotient.lift_mk,
+        mapQuiver_toPLangQuotientMorphism_id]
+      rfl
+
+/-- L preserves composition of morphisms. -/
+theorem reflectionL_map_comp
+    {C₁ C₂ C₃ : Obj.CatJudgCopr.{uL + 1, uL + 1, uL + 1, uL + 1}}
+    (α : Mor.CatJudgNatTrans C₁ C₂) (β : Mor.CatJudgNatTrans C₂ C₃) :
+    reflectionL_map (Cat.CatJudgNatTrans.comp α β) =
+    (reflectionL_map α).comp (reflectionL_map β) := by
+  apply OverFunctorData.ext
+  · rfl
+  · funext m
+    obtain ⟨a, b, qm⟩ := m
+    induction qm using Quotient.ind with
+    | _ fm =>
+      simp only [reflectionL_map, OverFunctorData.comp, mapBundledQuotMor,
+        toPLangQuotientMorphism, PLangQuotientMorphism.quotMapMor,
+        OverQuiverMorphism.comp, Quotient.lift_mk, Cat.CatJudgNatTrans.comp,
+        Function.comp_apply, PLangQuotientData.Quotient_lift_quotMor,
+        Mor.CatJudgNatTrans.objMap, Mor.CatJudgNatTrans.morMap,
+        Cat.CatJudgMap.comp, Mor.CatJudgMap.objMap, Mor.ObjMorMap.objMap,
+        Mor.CatJudgMap.morMap, Mor.ObjMorMap.morMap]
+      unfold Cat.ObjMap.comp
+      simp only [Function.comp_apply]
+      congr 1
+      congr 1
+      -- LHS: mapQuiver {objFn := β ∘ α, ...} fm
+      -- RHS: mapQuiver β (mapQuiver α fm)
+      -- Use mapQuiver_quiverMorComp to transform RHS into mapQuiver (α.comp β) fm
+      rw [← PFreeMor.mapQuiver_quiverMorComp]
+      -- After rewrite, congr finishes since structures are defeq by OverQuiverMorphism.comp
+      congr 1
+
+end LFunctorMorphisms
+
+/-! ## Mathlib Functor Instances
+
+Define L and Φ as mathlib Functors, then construct the adjunction. -/
+
+section MathlibFunctors
+
+universe uMF
+
+/-- Bundle an OverCategoryData with its quiver to form a BundledOverCategoryData.
+    Used for L on objects. -/
+def bundleQuotientCategory
+    (C : Obj.CatJudgCopr.{uMF + 1, uMF + 1, uMF + 1, uMF + 1}) :
+    BundledOverCategoryData.{uMF + 1, uMF + 1} where
+  quiver := (toPLangQuotientData C).quotQuiver
+  data := reflectionL C
+
+/-- The L functor from CatJudgCopr to BundledOverCategoryData. -/
+def LFunctorPLang :
+    CategoryTheory.Functor Obj.CatJudgCopr.{uMF + 1, uMF + 1, uMF + 1, uMF + 1}
+    BundledOverCategoryData.{uMF + 1, uMF + 1} where
+  obj := bundleQuotientCategory
+  map := fun α => reflectionL_map α
+  map_id := fun C => reflectionL_map_id C
+  map_comp := fun α β => reflectionL_map_comp α β
+
+/-- The Φ functor from BundledOverCategoryData to CatJudgCopr. -/
+def PhiFunctorPLang :
+    CategoryTheory.Functor BundledOverCategoryData.{uMF + 1, uMF + 1}
+    Obj.CatJudgCopr.{uMF + 1, uMF + 1, uMF + 1, uMF + 1} where
+  obj := fun C => toPLangCatJudgCopr C.data
+  map := fun F => toPLangCatJudgNatTrans F
+  map_id := fun C => toPLangCatJudgNatTrans_id C.data
+  map_comp := fun F G => toPLangCatJudgNatTrans_comp F G
+
+end MathlibFunctors
 
 /-! ## Unit of the Adjunction
 
@@ -2029,6 +2303,166 @@ theorem leftTriangle :
     exact h_mor m
 
 end LeftTriangle
+
+/-! ## Adjunction Bundle
+
+With both triangle identities proven, we can bundle the adjunction data
+L ⊣ Φ into a single structure. The adjunction L ⊣ Φ relates:
+
+- Φ : Cat → CatJudgCopr (embedding functor, via toPLangCatJudgCopr)
+- L : CatJudgCopr → Cat (reflection functor, via PLangQuotientData.toOverCategoryData)
+
+For any X : CatJudgCopr, we have:
+- Unit η_X : X → Φ(L(X))
+- Counit ε_{L(X)} : L(Φ(L(X))) → L(X)
+- Right triangle: Φ(ε_{L(X)}) ∘ η_{Φ(L(X))} = id_{Φ(L(X))}
+- Left triangle: ε_{L(X)} ∘ L(η_X) = id_{L(X)}
+-/
+
+section AdjunctionBundle
+
+variable (X : Obj.CatJudgCopr.{u, u, u, u})
+
+/-- The full adjunction data for L ⊣ Φ at a CatJudgCopr X.
+    This bundles both triangle identities at X. -/
+structure AdjunctionDataAt where
+  /-- The source CatJudgCopr. -/
+  source : Obj.CatJudgCopr.{u, u, u, u}
+  /-- The unit η_X : X → Φ(L(X)) at the copresheaf level. -/
+  unitNatTrans : Mor.CatJudgNatTrans source (unitTarget source)
+  /-- The right triangle: Φ(ε_{L(X)}) ∘ η_{Φ(L(X))} = id. -/
+  rightTriangleId :
+    unitThenPhiCounit (triangleLX source) = Cat.CatJudgNatTrans.id (trianglePhiLX source)
+  /-- L(η_X) : L(X) → L(Φ(L(X))) at the category level. -/
+  unitFunctor : OverFunctorData (triangleLX source) (triangleLPhiLX source)
+  /-- The counit ε_{L(X)} : L(Φ(L(X))) → L(X). -/
+  counitFunctor : OverFunctorData (triangleLPhiLX source) (triangleLX source)
+  /-- The left triangle: ε_{L(X)} ∘ L(η_X) = id_{L(X)}. -/
+  leftTriangleId : unitFunctor.comp counitFunctor =
+    OverFunctorData.id (triangleLX source)
+
+/-- Construct the adjunction data for any CatJudgCopr X. -/
+def mkAdjunctionDataAt : AdjunctionDataAt where
+  source := X
+  unitNatTrans := unit X
+  rightTriangleId := rightTriangle (triangleLX X)
+  unitFunctor := LUnitX X
+  counitFunctor := counitAtLX X
+  leftTriangleId := leftTriangle X
+
+/-- The L ⊣ Φ adjunction data at X. -/
+def adjunctionAt : AdjunctionDataAt :=
+  mkAdjunctionDataAt X
+
+end AdjunctionBundle
+
+/-! ## Mathlib Adjunction L ⊣ Φ
+
+We construct the mathlib adjunction using `Adjunction.mkOfUnitCounit`. This
+requires the unit and counit as natural transformations, plus the triangle
+identities expressed as equations of morphisms.
+
+For the unit: `𝟭 CatJudgCopr ⟶ LFunctorPLang ⋙ PhiFunctorPLang`
+For the counit: `PhiFunctorPLang ⋙ LFunctorPLang ⟶ 𝟭 BundledOverCategoryData`
+-/
+
+section MathlibAdjunctionPLang
+
+universe uAdj
+
+variable {X Y : Obj.CatJudgCopr.{uAdj + 1, uAdj + 1, uAdj + 1, uAdj + 1}}
+
+/-- The composition L ⋙ Φ applied to an object X. -/
+abbrev LPhiObj (X : Obj.CatJudgCopr.{uAdj + 1, uAdj + 1, uAdj + 1, uAdj + 1}) :
+    Obj.CatJudgCopr.{uAdj + 1, uAdj + 1, uAdj + 1, uAdj + 1} :=
+  (LFunctorPLang ⋙ PhiFunctorPLang).obj X
+
+/-- The target of the unit at X equals L ⋙ Φ applied to X. -/
+theorem unitTarget_eq_LPhiObj :
+    unitTarget X = LPhiObj X := rfl
+
+/-- The unit component at X, with type adjusted for the NatTrans. -/
+def unitApp (X : Obj.CatJudgCopr.{uAdj + 1, uAdj + 1, uAdj + 1, uAdj + 1}) :
+    X ⟶ (LFunctorPLang ⋙ PhiFunctorPLang).obj X :=
+  unit X
+
+/-- The unit morphism map is natural: embedding α(m) as a variable equals
+    applying (L ⋙ Φ)(α) to the embedded variable for m.
+
+    This is the morphism-level naturality: `unit_Y(α_m) = (L ⋙ Φ)(α)(unit_X(m))`. -/
+theorem unit_morMap_natural
+    {X Y : Obj.CatJudgCopr.{uAdj + 1, uAdj + 1, uAdj + 1, uAdj + 1}}
+    (α : Mor.CatJudgNatTrans X Y) (m : X.mor) :
+    unitMorMap Y (α.morMap m) = mapBundledQuotMor α (unitMorMap X m) := by
+  simp only [unitMorMap, mapBundledQuotMor, toPLangQuotientMorphism,
+    PLangQuotientMorphism.quotMapMor, Quotient.lift_mk, unitVar,
+    toPLangQuotientData, PLangQuotientData.quotMor, PFreeMor.mapQuiver]
+  have hdom : Y.dom (α.morMap m) = α.objMap (X.dom m) :=
+    (congrFun α.domProof m).symm
+  have hcod : Y.cod (α.morMap m) = α.objMap (X.cod m) :=
+    (congrFun α.codProof m).symm
+  let D := toPLangQuotientData Y
+  refine Sigma.ext hdom ?_
+  refine sigma_heq_of_fst_eq_snd_heq
+    (α := Y.obj) (I := Y.obj) (β := fun dom cod => D.QuotMor dom cod)
+    hdom hcod ?_
+  apply PLangQuotientData.quotMor_heq_of_both_cast_equiv D hdom hcod
+  apply PLangQuotientData.FreeMorEquiv.refl
+
+/-- Unit naturality: for any morphism α : X → Y, the unit components commute
+    with the induced morphism on L ⋙ Φ. -/
+theorem unit_naturality_PLang
+    {X Y : Obj.CatJudgCopr.{uAdj + 1, uAdj + 1, uAdj + 1, uAdj + 1}}
+    (α : X ⟶ Y) :
+    α ≫ unitApp Y = unitApp X ≫ (LFunctorPLang ⋙ PhiFunctorPLang).map α := by
+  apply Subtype.ext
+  simp only [unitApp, CategoryStruct.comp, Cat.CatJudgNatTrans.comp,
+    Cat.CatJudgMap.comp, Cat.ObjMap.comp, Functor.comp_obj, Functor.comp_map,
+    LFunctorPLang, PhiFunctorPLang, bundleQuotientCategory, reflectionL_map,
+    toPLangCatJudgNatTrans, unit, unitCatJudgMap]
+  apply Prod.ext
+  · apply Prod.ext
+    · rfl
+    · funext m
+      exact unit_morMap_natural α m
+  · apply Prod.ext
+    · -- idMap component: unitIdMap Y ∘ α.idMap = α.objMap ∘ unitIdMap X
+      funext i
+      simp only [Mor.CatJudgMap.idMap, Mor.CatJudgNatTrans.map, Function.comp_apply,
+        toPLangCatJudgMap, unitIdMap, Mor.CatJudgNatTrans.objMap]
+      change Y.dom (Y.idMor (α.idMap i)) = α.objMap (X.dom (X.idMor i))
+      have h : Y.idMor (α.idMap i) = α.morMap (X.idMor i) :=
+        (congrFun α.idMorProof i).symm
+      rw [h]
+      exact (congrFun α.domProof (X.idMor i)).symm
+    · -- compMap component
+      funext c
+      simp only [Mor.CatJudgMap.compMap, Mor.CatJudgNatTrans.map, Function.comp_apply,
+        toPLangCatJudgMap, unitCompMap, mapBundledQuotMor, Mor.CatJudgNatTrans.objMap]
+      apply Subtype.ext
+      simp only [Prod.ext_iff]
+      constructor
+      · change unitMorMap Y (Y.right (α.compMap c)) =
+          mapBundledQuotMor α (unitMorMap X (X.right c))
+        have h : Y.right (α.compMap c) = α.morMap (X.right c) :=
+          (congrFun α.rightProof c).symm
+        rw [h]
+        exact unit_morMap_natural α (X.right c)
+      · change unitMorMap Y (Y.left (α.compMap c)) =
+          mapBundledQuotMor α (unitMorMap X (X.left c))
+        have h : Y.left (α.compMap c) = α.morMap (X.left c) :=
+          (congrFun α.leftProof c).symm
+        rw [h]
+        exact unit_morMap_natural α (X.left c)
+
+/-- The unit as a natural transformation for the PLang adjunction. -/
+def unitNatTransPLang :
+    𝟭 Obj.CatJudgCopr.{uAdj + 1, uAdj + 1, uAdj + 1, uAdj + 1} ⟶
+    LFunctorPLang ⋙ PhiFunctorPLang where
+  app := unitApp
+  naturality := fun _ _ α => unit_naturality_PLang α
+
+end MathlibAdjunctionPLang
 
 end ReflectionL
 
