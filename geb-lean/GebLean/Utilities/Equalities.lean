@@ -361,6 +361,287 @@ lemma subtype_heq_of_val_eq {A : Type*} {P1 P2 : A → Prop}
   exact heq_of_eq (Subtype.ext hval)
 
 /--
+When transporting a subtype along a predicate equality, the coercion is
+preserved: `↑(hP ▸ ⟨v, pf⟩) = v`.
+-/
+@[simp]
+lemma subtype_transport_pred_coe {A : Type*} {P Q : A → Prop}
+    (hPQ : P = Q) (v : A) (pf : P v) :
+    (hPQ ▸ (⟨v, pf⟩ : Subtype P) : Subtype Q).val = v := by
+  cases hPQ
+  rfl
+
+/--
+When transporting any subtype along a predicate equality, the underlying value
+is preserved: `(hP ▸ x).val = x.val`.
+-/
+@[simp]
+lemma subtype_transport_pred_val {A : Type*} {P Q : A → Prop}
+    (hPQ : P = Q) (x : Subtype P) :
+    (hPQ ▸ x : Subtype Q).val = x.val := by
+  cases hPQ
+  rfl
+
+/--
+HEq version: transporting any subtype along a predicate equality gives a
+value whose `.val` is heterogeneously equal to the original.
+-/
+lemma subtype_transport_pred_val_heq {A : Type*} {P Q : A → Prop}
+    (hPQ : P = Q) (x : Subtype P) :
+    (hPQ ▸ x : Subtype Q).val ≍ x.val := by
+  cases hPQ
+  rfl
+
+/--
+Cast version: casting a subtype along a type equality derived from predicate
+equality preserves the underlying value. This is the `cast` form of
+`subtype_transport_pred_val`. The proof uses induction on the predicate
+equality component.
+-/
+@[simp]
+lemma subtype_cast_val {A : Type*} {P Q : A → Prop}
+    (hPQ : P = Q) (x : {a // P a}) :
+    (cast (congrArg Subtype hPQ) x).val = x.val := by
+  cases hPQ
+  rfl
+
+/--
+Cast version for sigma-valued subtypes: casting preserves `.val.fst`.
+-/
+@[simp]
+lemma subtype_cast_val_fst {A : Type*} {B : A → Type*}
+    {P Q : (Σ a, B a) → Prop}
+    (hPQ : P = Q) (x : {s // P s}) :
+    (cast (congrArg Subtype hPQ) x).val.fst = x.val.fst := by
+  cases hPQ
+  rfl
+
+/--
+Coercion version for sigma-valued subtypes after cast: casting preserves
+the first component when extracted via coercion.
+-/
+@[simp]
+lemma subtype_cast_coe_fst {A : Type*} {B : A → Type*}
+    {P Q : (Σ a, B a) → Prop}
+    (hPQ : P = Q) (x : {s // P s}) :
+    (↑(cast (congrArg Subtype hPQ) x) : Σ a, B a).fst = (↑x : Σ a, B a).fst := by
+  cases hPQ
+  rfl
+
+/--
+When transporting a subtype whose underlying value is a sigma type along a
+predicate equality, then taking `.val.fst`, we get the original `.fst`.
+-/
+@[simp]
+lemma subtype_transport_pred_val_fst {A : Type*} {B : A → Type*}
+    {P Q : (Σ a, B a) → Prop}
+    (hPQ : P = Q) (x : Subtype P) :
+    (hPQ ▸ x : Subtype Q).val.fst = x.val.fst := by
+  cases hPQ
+  rfl
+
+/--
+Same as `subtype_transport_pred_val_fst` but with explicit constructor.
+-/
+@[simp]
+lemma subtype_transport_pred_mk_fst {A : Type*} {B : A → Type*}
+    {P Q : (Σ a, B a) → Prop}
+    (hPQ : P = Q) (v : Σ a, B a) (p : P v) :
+    (hPQ ▸ ⟨v, p⟩ : Subtype Q).val.fst = v.fst := by
+  cases hPQ
+  rfl
+
+/--
+Transport of a subtype with explicit constructor, taking `.val.fst`.
+Same as `subtype_transport_pred_mk_fst` with the ⟨v, p⟩ pattern.
+-/
+@[simp]
+lemma subtype_transport_pred_mk_val_fst' {A : Type*} {B : A → Type*}
+    {P Q : (Σ a, B a) → Prop}
+    (hPQ : P = Q) (v : Σ a, B a) (p : P v) :
+    (hPQ ▸ ⟨v, p⟩ : Subtype Q).val.fst = v.fst := by
+  cases hPQ
+  rfl
+
+/--
+Coercion version: When transporting a subtype whose underlying value is a
+sigma type along a predicate equality, then taking the coercion and `.fst`,
+we get the original coercion's `.fst`.
+-/
+@[simp]
+lemma subtype_transport_pred_coe_fst {A : Type*} {B : A → Type*}
+    {P Q : (Σ a, B a) → Prop}
+    (hPQ : P = Q) (x : Subtype P) :
+    (↑(hPQ ▸ x : Subtype Q) : Σ a, B a).fst = (↑x : Σ a, B a).fst := by
+  cases hPQ
+  rfl
+
+/--
+Coercion version with explicit constructor: When transporting an explicit
+subtype constructor along a predicate equality, then taking the coercion and
+`.fst`, we get the original sigma's `.fst`.
+-/
+@[simp]
+lemma subtype_transport_pred_mk_coe_fst {A : Type*} {B : A → Type*}
+    {P Q : (Σ a, B a) → Prop}
+    (hPQ : P = Q) {v : Σ a, B a} (p : P v) :
+    (↑(hPQ ▸ (⟨v, p⟩ : Subtype P) : Subtype Q) : Σ a, B a).fst = v.fst := by
+  cases hPQ
+  rfl
+
+/--
+When transporting an explicit subtype constructor along a predicate equality,
+then taking `.val.fst`, we get the original sigma's `.fst`.
+-/
+@[simp]
+lemma subtype_transport_pred_mk_val_fst {A : Type*} {B : A → Type*}
+    {P Q : (Σ a, B a) → Prop}
+    (hPQ : P = Q) {v : Σ a, B a} (p : P v) :
+    (hPQ ▸ (⟨v, p⟩ : Subtype P) : Subtype Q).val.fst = v.fst := by
+  cases hPQ
+  rfl
+
+/--
+Transport version: When transporting an explicit subtype constructor along a
+predicate equality, the transported value is still in Subtype Q (not Subtype P),
+and taking `.val.fst` yields the original sigma's `.fst`.
+This version uses `.val` notation (definitionally equal to `↑`) to avoid
+needing explicit coercion target types.
+-/
+@[simp]
+lemma subtype_transport_pred_mk_coe_fst_bare {A : Type*} {B : A → Type*}
+    {P Q : (Σ a, B a) → Prop}
+    (hPQ : P = Q) {v : Σ a, B a} (p : P v) :
+    (hPQ ▸ (⟨v, p⟩ : Subtype P)).val.fst = v.fst := by
+  cases hPQ
+  rfl
+
+/--
+When transporting any subtype value along a predicate equality, then taking
+`.val.fst`, we get the original value's `.fst`. This version takes any
+Subtype value rather than requiring an explicit constructor.
+-/
+@[simp]
+lemma subtype_transport_pred_coe_fst' {A : Type*} {B : A → Type*}
+    {P Q : (Σ a, B a) → Prop}
+    (hPQ : P = Q) (x : Subtype P) :
+    (hPQ ▸ x).val.fst = x.val.fst := by
+  cases hPQ
+  rfl
+
+/--
+Version that uses `Subtype.val` coercion followed by `.fst`.
+When transporting a subtype along a predicate equality then taking the value's
+`.fst`, we get the original value's `.fst`.
+-/
+@[simp]
+lemma subtype_transport_pred_sigma_coe_fst {A : Type*} {B : A → Type*}
+    {P Q : (Σ a, B a) → Prop}
+    (hPQ : P = Q) (x : Subtype P) :
+    ((hPQ ▸ x : Subtype Q).val : Σ a, B a).fst = (x.val : Σ a, B a).fst := by
+  cases hPQ
+  rfl
+
+/--
+Version using coercion notation. When transporting a subtype along a
+predicate equality then taking the coerced value's `.fst`, we get the
+original coerced value's `.fst`.
+-/
+@[simp]
+lemma subtype_transport_pred_coe_sigma_fst {A : Type*} {B : A → Type*}
+    {P Q : (Σ a, B a) → Prop}
+    (hPQ : P = Q) (x : Subtype P) :
+    (↑(hPQ ▸ x : Subtype Q) : Σ a, B a).fst = (↑x : Σ a, B a).fst := by
+  cases hPQ
+  rfl
+
+/--
+Version for explicit constructor. When transporting an explicit subtype
+constructor along a predicate equality then taking coerced `.fst`, we get
+the original sigma's `.fst`.
+-/
+@[simp]
+lemma subtype_transport_pred_coe_mk_sigma_fst {A : Type*} {B : A → Type*}
+    {P Q : (Σ a, B a) → Prop}
+    (hPQ : P = Q) {v : Σ a, B a} (p : P v) :
+    (↑(hPQ ▸ (⟨v, p⟩ : Subtype P) : Subtype Q) : Σ a, B a).fst = v.fst := by
+  cases hPQ
+  rfl
+
+/--
+When transporting an explicit subtype constructor along a predicate equality,
+then taking `.val.snd`, we get HEq to the original sigma's `.snd`.
+-/
+lemma subtype_transport_pred_mk_val_snd_heq {A : Type*} {B : A → Type*}
+    {P Q : (Σ a, B a) → Prop}
+    (hPQ : P = Q) {v : Σ a, B a} (p : P v) :
+    (hPQ ▸ (⟨v, p⟩ : Subtype P) : Subtype Q).val.snd ≍ v.snd := by
+  cases hPQ
+  rfl
+
+/--
+When transporting a subtype whose underlying value is a sigma type along a
+predicate equality, then taking `.val.snd`, we get HEq to the original `.snd`.
+-/
+lemma subtype_transport_pred_val_snd_heq {A : Type*} {B : A → Type*}
+    {P Q : (Σ a, B a) → Prop}
+    (hPQ : P = Q) (x : Subtype P) :
+    (hPQ ▸ x : Subtype Q).val.snd ≍ x.val.snd := by
+  cases hPQ
+  rfl
+
+/--
+When transporting a subtype whose underlying value is a nested sigma type along
+a predicate equality, then taking `.val.snd.fst`, we get the original value.
+For non-dependent B, this is an equality.
+-/
+@[simp]
+lemma subtype_transport_pred_val_snd_fst {A : Type*} {B : Type*}
+    {C : A → B → Type*}
+    {P Q : (Σ (a : A), (Σ (b : B), C a b)) → Prop}
+    (hPQ : P = Q) (x : Subtype P) :
+    (hPQ ▸ x : Subtype Q).val.snd.fst = x.val.snd.fst := by
+  cases hPQ
+  rfl
+
+/--
+When transporting an explicit subtype constructor with nested sigma along a
+predicate equality, then taking `.val.snd.fst`, we get the original value.
+-/
+@[simp]
+lemma subtype_transport_pred_mk_val_snd_fst {A : Type*} {B : Type*}
+    {C : A → B → Type*}
+    {P Q : (Σ (a : A), (Σ (b : B), C a b)) → Prop}
+    (hPQ : P = Q) {v : Σ (a : A), (Σ (b : B), C a b)} (p : P v) :
+    (hPQ ▸ (⟨v, p⟩ : Subtype P) : Subtype Q).val.snd.fst = v.snd.fst := by
+  cases hPQ
+  rfl
+
+/--
+When transporting an explicit subtype constructor with nested sigma along a
+predicate equality, then taking `.val.snd.snd`, we get HEq to the original.
+-/
+lemma subtype_transport_pred_mk_val_snd_snd_heq {A : Type*} {B : Type*}
+    {C : A → B → Type*}
+    {P Q : (Σ (a : A), (Σ (b : B), C a b)) → Prop}
+    (hPQ : P = Q) {v : Σ (a : A), (Σ (b : B), C a b)} (p : P v) :
+    (hPQ ▸ (⟨v, p⟩ : Subtype P) : Subtype Q).val.snd.snd ≍ v.snd.snd := by
+  cases hPQ
+  rfl
+
+/--
+When transporting a subtype whose underlying value is a nested sigma type along
+a predicate equality, then taking `.val.snd.snd`, we get HEq to the original.
+-/
+lemma subtype_transport_pred_val_snd_snd_heq {A : Type*} {B : Type*}
+    {C : A → B → Type*}
+    {P Q : (Σ (a : A), (Σ (b : B), C a b)) → Prop}
+    (hPQ : P = Q) (x : Subtype P) :
+    (hPQ ▸ x : Subtype Q).val.snd.snd ≍ x.val.snd.snd := by
+  cases hPQ
+  rfl
+
+/--
 For subtypes indexed by a family, if the indices are equal and the underlying
 values are equal, the subtypes are heterogeneously equal.
 -/
@@ -421,6 +702,58 @@ lemma sigma_snd_heq_of_heq_via_shape_eq {Shape : Type*} {α : Type*}
     (hp : p₁ ≍ p₂) : p₁.snd ≍ p₂.snd := by
   subst hs
   exact sigma_snd_heq_of_eq (eq_of_heq hp)
+
+/--
+Fully-implicit version of transport lemma for sigma fst.
+Takes all arguments implicitly so that Lean can infer them from the goal.
+-/
+@[simp]
+lemma subtype_transport_pred_coe_sigma_fst' {A : Type*} {B : A → Type*}
+    {P Q : (Σ a, B a) → Prop}
+    {v : Σ a, B a} {p : P v}
+    {hPQ : P = Q} :
+    (↑(hPQ ▸ (⟨v, p⟩ : Subtype P) : Subtype Q) : Σ a, B a).fst = v.fst := by
+  cases hPQ
+  rfl
+
+/--
+Fully-implicit version: transport then `.val.snd.fst` equals original.
+-/
+@[simp]
+lemma subtype_transport_pred_val_snd_fst' {A : Type*} {B : Type*}
+    {C : A → B → Type*}
+    {P Q : (Σ (a : A), (Σ (b : B), C a b)) → Prop}
+    {v : Σ (a : A), (Σ (b : B), C a b)} {p : P v}
+    {hPQ : P = Q} :
+    (hPQ ▸ (⟨v, p⟩ : Subtype P) : Subtype Q).val.snd.fst = v.snd.fst := by
+  cases hPQ
+  rfl
+
+/--
+Fully-implicit version: transport then `.val.snd.snd` is HEq to original.
+-/
+lemma subtype_transport_pred_val_snd_snd_heq' {A : Type*} {B : Type*}
+    {C : A → B → Type*}
+    {P Q : (Σ (a : A), (Σ (b : B), C a b)) → Prop}
+    {v : Σ (a : A), (Σ (b : B), C a b)} {p : P v}
+    {hPQ : P = Q} :
+    (hPQ ▸ (⟨v, p⟩ : Subtype P) : Subtype Q).val.snd.snd ≍ v.snd.snd := by
+  cases hPQ
+  rfl
+
+/--
+Fully-implicit version: transport then `.val.snd.snd` equals original.
+Uses equality instead of HEq when the type is non-dependent on fst.
+-/
+@[simp]
+lemma subtype_transport_pred_val_snd_snd' {A : Type*} {B : Type*}
+    {C : Type*}
+    {P Q : (Σ (_a : A), (Σ (_b : B), C)) → Prop}
+    {v : Σ (_a : A), (Σ (_b : B), C)} {p : P v}
+    {hPQ : P = Q} :
+    (hPQ ▸ (⟨v, p⟩ : Subtype P) : Subtype Q).val.snd.snd = v.snd.snd := by
+  cases hPQ
+  rfl
 
 /--
 Combined extraction of both components from HEq of sigmas when shapes are known
@@ -836,6 +1169,55 @@ lemma val_transport_sigma_match_irrel {I : Type*} {F G : I → Type u_vts}
     (match (hFun ▸ ⟨i, b⟩ : (j : I) × G j) with | ⟨j, c⟩ => g j c) := by
   have hProofIrrel : hElem = congrFun hFun i := Subsingleton.elim _ _
   rw [hProofIrrel, sigma_transport_match_simple]
+
+/--
+Equality of triple-nested sigma types when all three indices are equal
+and the innermost values (in a product) are HEq. The structure is:
+  ⟨a₁, ⟨b₁, ⟨c₁, (d₁, e₁)⟩⟩⟩ = ⟨a₂, ⟨b₂, ⟨c₂, (d₂, e₂)⟩⟩⟩
+given ha : a₁ = a₂, hb : b₁ = b₂, hc : c₁ = c₂, and HEq of the pairs.
+-/
+lemma sigma_eq_triple_of_indices_eq
+    {A : Type*} {B : A → Type*} {C : (a : A) → B a → Type*}
+    {D E : (a : A) → (b : B a) → C a b → Type*}
+    {a₁ a₂ : A} (ha : a₁ = a₂)
+    {b₁ : B a₁} {b₂ : B a₂} (hb : b₁ ≍ b₂)
+    {c₁ : C a₁ b₁} {c₂ : C a₂ b₂} (hc : c₁ ≍ c₂)
+    {d₁ : D a₁ b₁ c₁} {d₂ : D a₂ b₂ c₂} (hd : d₁ ≍ d₂)
+    {e₁ : E a₁ b₁ c₁} {e₂ : E a₂ b₂ c₂} (he : e₁ ≍ e₂) :
+    (⟨a₁, ⟨b₁, ⟨c₁, (d₁, e₁)⟩⟩⟩ : Sigma (fun a => Sigma (fun b => Sigma (fun c =>
+      D a b c × E a b c)))) =
+    ⟨a₂, ⟨b₂, ⟨c₂, (d₂, e₂)⟩⟩⟩ := by
+  cases ha
+  cases hb
+  cases hc
+  cases hd
+  cases he
+  rfl
+
+/--
+Equality of triple-nested sigma types with non-uniform dependencies.
+This is for the case where:
+- D depends only on a and b (not c)
+- E depends only on b and c (not a)
+Structure: ⟨a₁, ⟨b₁, ⟨c₁, (d₁, e₁)⟩⟩⟩ = ⟨a₂, ⟨b₂, ⟨c₂, (d₂, e₂)⟩⟩⟩
+-/
+lemma sigma_eq_triple_of_indices_eq_nonuniform
+    {Obj : Type*}
+    {D : Obj → Obj → Type*}
+    {E : Obj → Obj → Type*}
+    {a₁ a₂ b₁ b₂ c₁ c₂ : Obj}
+    (ha : a₁ = a₂) (hb : b₁ = b₂) (hc : c₁ = c₂)
+    {d₁ : D a₁ b₁} {d₂ : D a₂ b₂} (hd : d₁ ≍ d₂)
+    {e₁ : E b₁ c₁} {e₂ : E b₂ c₂} (he : e₁ ≍ e₂) :
+    (⟨a₁, ⟨b₁, ⟨c₁, (d₁, e₁)⟩⟩⟩ : Sigma (fun a => Sigma (fun b => Sigma (fun c =>
+      D a b × E b c)))) =
+    ⟨a₂, ⟨b₂, ⟨c₂, (d₂, e₂)⟩⟩⟩ := by
+  cases ha
+  cases hb
+  cases hc
+  cases hd
+  cases he
+  rfl
 
 end GebLean
 
