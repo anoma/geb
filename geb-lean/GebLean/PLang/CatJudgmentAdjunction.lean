@@ -28,7 +28,7 @@ The adjunction consists of:
 
 ## References
 
-See `docs/plang-category-judgments.md` for mathematical background.
+See `docs/plang-category-judgments-old.md` for mathematical background.
 -/
 
 namespace GebLean
