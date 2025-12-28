@@ -2462,6 +2462,74 @@ def unitNatTransPLang :
   app := unitApp
   naturality := fun _ _ α => unit_naturality_PLang α
 
+/-! ### Counit Natural Transformation
+
+The counit ε : Φ ⋙ L → 𝟭 BundledOverCategoryData evaluates quotient morphisms
+in the free category back to the original category. -/
+
+/-- The counit component at B : BundledOverCategoryData.
+    This is an OverFunctorData from (Φ ⋙ L).obj B to B. -/
+def counitApp (B : BundledOverCategoryData.{uAdj + 1, uAdj + 1}) :
+    (PhiFunctorPLang ⋙ LFunctorPLang).obj B ⟶ B :=
+  Counit.counitFunctorData B.data
+
+/-- The counit is natural: for any F : B₁ → B₂ in BundledOverCategoryData,
+    ε_{B₂} ∘ (Φ ⋙ L)(F) = F ∘ ε_{B₁}. -/
+theorem counit_naturality_PLang
+    {B₁ B₂ : BundledOverCategoryData.{uAdj + 1, uAdj + 1}}
+    (F : B₁ ⟶ B₂) :
+    (PhiFunctorPLang ⋙ LFunctorPLang).map F ≫ counitApp B₂ =
+      counitApp B₁ ≫ F := by
+  apply OverFunctorData.ext
+  · ext a; rfl
+  · funext m
+    obtain ⟨a, b, qm⟩ := m
+    -- (F ≫ G).morFn = G.morFn ∘ F.morFn for OverFunctorData composition
+    -- LHS: counitApp B₂.morFn ((Φ ⋙ L).map F . morFn ⟨a,b,qm⟩)
+    -- RHS: F.morFn (counitApp B₁.morFn ⟨a,b,qm⟩)
+    change (counitApp B₂).morFn
+        ((LFunctorPLang.map (PhiFunctorPLang.map F)).morFn ⟨a, b, qm⟩) =
+      F.morFn ((counitApp B₁).morFn ⟨a, b, qm⟩)
+    -- Unfold the LFunctorPLang.map application
+    -- reflectionL_map.morFn = mapBundledQuotMor
+    -- mapBundledQuotMor (toPLangCatJudgNatTrans F) ⟨a,b,qm⟩ = ⟨F.objFn a, F.objFn b, quotMapMor qm⟩
+    simp only [LFunctorPLang, reflectionL_map, mapBundledQuotMor]
+    -- Unfold counitQuiverMor.morFn = counitEvalQuot
+    simp only [counitApp, Counit.counitFunctorData, Counit.counitQuiverMor]
+    -- Now: counitEvalQuot B₂.data (quotMapMor qm) = F.morFn (counitEvalQuot B₁.data qm)
+    -- Step 1: Show quotMapMor = pLangInducedQuotMorFn
+    have h_quot_eq : (toPLangQuotientMorphism (PhiFunctorPLang.map F)).quotMapMor qm =
+        pLangInducedQuotMorFn B₁.data B₂.data F qm := by
+      simp only [PhiFunctorPLang, PLangQuotientMorphism.quotMapMor, pLangInducedQuotMorFn,
+        toPLangQuotientMorphism, toPLangCatJudgNatTrans, toPLangCatJudgMap]
+      rfl
+    -- Step 2: Substitute to get pLangInducedQuotMorFn in goal
+    rw [h_quot_eq]
+    -- Step 3: Apply naturality (swapped)
+    exact (counitEvalQuot_naturality B₁.data B₂.data F qm).symm
+
+/-- The counit as a natural transformation for the PLang adjunction. -/
+def counitNatTransPLang :
+    PhiFunctorPLang ⋙ LFunctorPLang ⟶
+      𝟭 BundledOverCategoryData.{uAdj + 1, uAdj + 1} where
+  app := counitApp
+  naturality := fun _ _ F => counit_naturality_PLang F
+
+/-! ### Triangle Identities and Adjunction Construction -/
+
+/-- The right triangle identity for the PLang adjunction:
+    η_{Φ(C)} ≫ Φ(ε_C) = 𝟙_{Φ(C)}
+
+    This uses the existing `rightTriangle` theorem which operates at the
+    CatJudgNatTrans level. -/
+theorem rightTriangle_PLang
+    (C : BundledOverCategoryData.{uAdj + 1, uAdj + 1}) :
+    unitApp (PhiFunctorPLang.obj C) ≫ PhiFunctorPLang.map (counitApp C) =
+    𝟙 (PhiFunctorPLang.obj C) := by
+  simp only [PhiFunctorPLang, LFunctorPLang, unitApp, counitApp]
+  simp only [toPLangCatJudgCopr]
+  exact rightTriangle C.data
+
 end MathlibAdjunctionPLang
 
 end ReflectionL
