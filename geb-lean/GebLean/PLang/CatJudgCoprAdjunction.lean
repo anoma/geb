@@ -2466,4 +2466,347 @@ end MathlibAdjunctionPLang
 
 end ReflectionL
 
+/-! # Universe-Flexible Adjunction
+
+This section constructs the adjunction L ⊣ Φ with independent universe levels.
+The goal is to define:
+- `Φ : Cat.{v, u} ⥤ CatJudgCopr.{u, v', w, x}` where v' = max u v
+- `L : CatJudgCopr.{u, v', w, x} ⥤ Cat.{v, u}`
+
+The generalization is `PLangQuotientDataFlex` which separates the four
+universe levels instead of using a single level for all components. -/
+
+section FlexibleUniverseAdjunction
+
+universe uF vF wF xF
+
+/-! ## Generalized Quotient Data
+
+`PLangQuotientDataFlex` has four independent universe levels for:
+- Objects (uF)
+- Morphisms (vF)
+- Identity witnesses (wF)
+- Composition witnesses (xF) -/
+
+/-- Generalized quotient data with four independent universe levels.
+    This separates object, morphism, identity witness, and composition witness
+    universes. -/
+structure PLangQuotientDataFlex where
+  /-- The underlying quiver with objects at uF and morphisms at vF. -/
+  quiver : OverQuiver.{vF, uF}
+  /-- The type of identity witnesses. -/
+  IdWitness : Type wF
+  /-- The type of composition witnesses. -/
+  CompWitness : Type xF
+  /-- Get the identity morphism for a witness. -/
+  idMor : IdWitness → quiver.MorType
+  /-- Identity morphisms are endomorphisms. -/
+  idEndo : ∀ i, quiver.src (idMor i) = quiver.tgt (idMor i)
+  /-- Get the left morphism of a composition witness. -/
+  left : CompWitness → quiver.MorType
+  /-- Get the right morphism of a composition witness. -/
+  right : CompWitness → quiver.MorType
+  /-- Get the composite morphism. -/
+  composite : CompWitness → quiver.MorType
+  /-- Left and right are composable. -/
+  compMatch : ∀ c, quiver.tgt (right c) = quiver.src (left c)
+  /-- Domain of composite equals domain of right. -/
+  compDom : ∀ c, quiver.src (composite c) = quiver.src (right c)
+  /-- Codomain of composite equals codomain of left. -/
+  compCod : ∀ c, quiver.tgt (composite c) = quiver.tgt (left c)
+
+namespace PLangQuotientDataFlex
+
+/-- Convert a CatJudgCopr with flexible universe levels to quotient data. -/
+def ofCatJudgCopr (C : Obj.CatJudgCopr.{uF, vF, wF, xF}) :
+    PLangQuotientDataFlex.{uF, vF, wF, xF} where
+  quiver := {
+    Obj := C.obj
+    MorType := C.mor
+    src := C.dom
+    tgt := C.cod
+  }
+  IdWitness := C.idType
+  CompWitness := C.compType
+  idMor := C.idMor
+  idEndo := fun i => congrFun C.endoProof i
+  left := C.left
+  right := C.right
+  composite := C.composite
+  compMatch := fun c => congrFun C.compMatchProof c
+  compDom := fun c => congrFun C.compDomProof c
+  compCod := fun c => congrFun C.compCodProof c
+
+end PLangQuotientDataFlex
+
+/-! ## Free Morphisms with Flexible Universes
+
+Free morphisms over a quiver with independent object and morphism universes. -/
+
+/-- Free morphisms in a quiver with flexible universe levels.
+    Objects at universe uF, morphisms at universe vF. -/
+inductive PFreeMorFlex (Q : OverQuiver.{vF, uF}) : Q.Obj → Q.Obj → Type (max uF vF) where
+  /-- Inject a morphism from the base quiver. -/
+  | var (f : Q.MorType) : PFreeMorFlex Q (Q.src f) (Q.tgt f)
+  /-- Identity morphism at an object. -/
+  | id (a : Q.Obj) : PFreeMorFlex Q a a
+  /-- Composition: g . f (f first, then g). -/
+  | comp {a b c : Q.Obj} (g : PFreeMorFlex Q b c) (f : PFreeMorFlex Q a b) :
+      PFreeMorFlex Q a c
+
+namespace PFreeMorFlex
+
+variable {Q : OverQuiver.{vF, uF}}
+
+/-- The size of a free morphism (number of constructors). -/
+def size : {a b : Q.Obj} → PFreeMorFlex Q a b → Nat
+  | _, _, var _ => 1
+  | _, _, id _ => 1
+  | _, _, comp g f => 1 + g.size + f.size
+
+end PFreeMorFlex
+
+/-! ## Quotient Equivalence Relation
+
+The equivalence relation on free morphisms for the flexible-universe case. -/
+
+namespace PLangQuotientDataFlex
+
+variable (D : PLangQuotientDataFlex.{uF, vF, wF, xF})
+
+/-- The generators for the equivalence relation on free morphisms.
+    This includes:
+    - Category axioms (identity laws, associativity)
+    - Witness relations (identity and composition witnesses) -/
+inductive FreeMorEquivGenFlex : {a b : D.quiver.Obj} →
+    PFreeMorFlex D.quiver a b → PFreeMorFlex D.quiver a b → Prop where
+  /-- Left identity: id ∘ f ~ f -/
+  | id_left {a b : D.quiver.Obj} (f : PFreeMorFlex D.quiver a b) :
+      FreeMorEquivGenFlex (.comp (.id b) f) f
+  /-- Right identity: f ∘ id ~ f -/
+  | id_right {a b : D.quiver.Obj} (f : PFreeMorFlex D.quiver a b) :
+      FreeMorEquivGenFlex (.comp f (.id a)) f
+  /-- Associativity: (h ∘ g) ∘ f ~ h ∘ (g ∘ f) -/
+  | assoc {a b c d : D.quiver.Obj}
+      (h : PFreeMorFlex D.quiver c d)
+      (g : PFreeMorFlex D.quiver b c)
+      (f : PFreeMorFlex D.quiver a b) :
+      FreeMorEquivGenFlex (.comp (.comp h g) f) (.comp h (.comp g f))
+  /-- Identity witness: cast(var(idMor i)) ~ id (src (idMor i))
+      The variable morphism for an identity witness is equivalent to the
+      identity at that object. -/
+  | id_witness (i : D.IdWitness) :
+      FreeMorEquivGenFlex
+        (cast (by rw [D.idEndo i]) (PFreeMorFlex.var (D.idMor i)))
+        (PFreeMorFlex.id (D.quiver.src (D.idMor i)))
+  /-- Composition witness: comp (cast(var left)) (var right) ~ cast(var composite)
+      The composition of the left and right variable morphisms is equivalent
+      to the variable morphism for the composite. -/
+  | comp_witness (c : D.CompWitness) :
+      FreeMorEquivGenFlex
+        (PFreeMorFlex.comp
+          (cast (by rw [D.compMatch c]) (PFreeMorFlex.var (D.left c)))
+          (PFreeMorFlex.var (D.right c)))
+        (cast (by rw [D.compDom c, D.compCod c]) (PFreeMorFlex.var (D.composite c)))
+
+/-- The equivalence relation on free morphisms: reflexive-symmetric-transitive
+    closure of the generators, extended to congruence under composition. -/
+inductive FreeMorEquivFlex : {a b : D.quiver.Obj} →
+    PFreeMorFlex D.quiver a b → PFreeMorFlex D.quiver a b → Prop where
+  /-- Base case: from generators -/
+  | gen {a b : D.quiver.Obj} {f g : PFreeMorFlex D.quiver a b} :
+      D.FreeMorEquivGenFlex f g → FreeMorEquivFlex f g
+  /-- Reflexivity -/
+  | refl {a b : D.quiver.Obj} (f : PFreeMorFlex D.quiver a b) :
+      FreeMorEquivFlex f f
+  /-- Symmetry -/
+  | symm {a b : D.quiver.Obj} {f g : PFreeMorFlex D.quiver a b} :
+      FreeMorEquivFlex f g → FreeMorEquivFlex g f
+  /-- Transitivity -/
+  | trans {a b : D.quiver.Obj} {f g h : PFreeMorFlex D.quiver a b} :
+      FreeMorEquivFlex f g → FreeMorEquivFlex g h → FreeMorEquivFlex f h
+  /-- Left congruence: f ~ g implies h ∘ f ~ h ∘ g -/
+  | cong_left {a b c : D.quiver.Obj}
+      {f g : PFreeMorFlex D.quiver a b}
+      (h : PFreeMorFlex D.quiver b c) :
+      FreeMorEquivFlex f g → FreeMorEquivFlex (.comp h f) (.comp h g)
+  /-- Right congruence: f ~ g implies f ∘ h ~ g ∘ h -/
+  | cong_right {a b c : D.quiver.Obj}
+      {f g : PFreeMorFlex D.quiver b c}
+      (h : PFreeMorFlex D.quiver a b) :
+      FreeMorEquivFlex f g → FreeMorEquivFlex (.comp f h) (.comp g h)
+
+theorem FreeMorEquivFlex.isEquivalence {a b : D.quiver.Obj} :
+    Equivalence (FreeMorEquivFlex D (a := a) (b := b)) where
+  refl := FreeMorEquivFlex.refl
+  symm := FreeMorEquivFlex.symm
+  trans := FreeMorEquivFlex.trans
+
+/-- The setoid on free morphisms induced by the equivalence relation. -/
+def freeMorSetoidFlex (a b : D.quiver.Obj) :
+    Setoid (PFreeMorFlex D.quiver a b) where
+  r := FreeMorEquivFlex D
+  iseqv := FreeMorEquivFlex.isEquivalence D
+
+/-- Quotient morphisms: free morphisms modulo the equivalence relation. -/
+def QuotMorFlex (a b : D.quiver.Obj) : Type (max uF vF) :=
+  Quotient (D.freeMorSetoidFlex a b)
+
+/-- The quotient map from free morphisms to quotient morphisms. -/
+def quotMorFlex {a b : D.quiver.Obj} (f : PFreeMorFlex D.quiver a b) :
+    D.QuotMorFlex a b :=
+  Quotient.mk (D.freeMorSetoidFlex a b) f
+
+/-- Composition respects the equivalence relation. -/
+theorem comp_respects_flex {a b c : D.quiver.Obj}
+    {f₁ f₂ : PFreeMorFlex D.quiver a b}
+    {g₁ g₂ : PFreeMorFlex D.quiver b c}
+    (hf : FreeMorEquivFlex D f₁ f₂) (hg : FreeMorEquivFlex D g₁ g₂) :
+    FreeMorEquivFlex D (.comp g₁ f₁) (.comp g₂ f₂) :=
+  FreeMorEquivFlex.trans
+    (FreeMorEquivFlex.cong_left g₁ hf)
+    (FreeMorEquivFlex.cong_right f₂ hg)
+
+/-- Composition of quotient morphisms. -/
+def quotCompFlex {a b c : D.quiver.Obj} :
+    D.QuotMorFlex a b → D.QuotMorFlex b c → D.QuotMorFlex a c :=
+  Quotient.lift₂
+    (fun f g => D.quotMorFlex (.comp g f))
+    (fun _ _ _ _ hf hg => Quotient.sound (D.comp_respects_flex hf hg))
+
+/-- Identity quotient morphism. -/
+def quotIdFlex (a : D.quiver.Obj) : D.QuotMorFlex a a :=
+  D.quotMorFlex (.id a)
+
+/-- Left identity law for quotient morphisms. -/
+theorem quotCompFlex_id_left {a b : D.quiver.Obj} (f : D.QuotMorFlex a b) :
+    D.quotCompFlex f (D.quotIdFlex b) = f := by
+  induction f using Quotient.inductionOn with
+  | h fm =>
+    simp only [quotCompFlex, quotIdFlex, quotMorFlex, Quotient.lift₂_mk]
+    apply Quotient.sound
+    exact FreeMorEquivFlex.gen (FreeMorEquivGenFlex.id_left fm)
+
+/-- Right identity law for quotient morphisms. -/
+theorem quotCompFlex_id_right {a b : D.quiver.Obj} (f : D.QuotMorFlex a b) :
+    D.quotCompFlex (D.quotIdFlex a) f = f := by
+  induction f using Quotient.inductionOn with
+  | h fm =>
+    simp only [quotCompFlex, quotIdFlex, quotMorFlex, Quotient.lift₂_mk]
+    apply Quotient.sound
+    exact FreeMorEquivFlex.gen (FreeMorEquivGenFlex.id_right fm)
+
+/-- Associativity law for quotient morphisms.
+    Note: assoc generator gives (h ∘ g) ∘ f ~ h ∘ (g ∘ f), but quotCompFlex f g = ⟦g ∘ f⟧,
+    so the equation quotCompFlex (quotCompFlex f g) h = quotCompFlex f (quotCompFlex g h)
+    becomes ⟦h ∘ (g ∘ f)⟧ = ⟦(h ∘ g) ∘ f⟧, requiring the symmetric direction. -/
+theorem quotCompFlex_assoc {a b c d : D.quiver.Obj}
+    (f : D.QuotMorFlex a b) (g : D.QuotMorFlex b c) (h : D.QuotMorFlex c d) :
+    D.quotCompFlex (D.quotCompFlex f g) h =
+      D.quotCompFlex f (D.quotCompFlex g h) := by
+  induction f using Quotient.inductionOn with
+  | h fm =>
+    induction g using Quotient.inductionOn with
+    | h gm =>
+      induction h using Quotient.inductionOn with
+      | h hm =>
+        simp only [quotCompFlex, quotMorFlex, Quotient.lift₂_mk]
+        apply Quotient.sound
+        exact FreeMorEquivFlex.symm
+          (FreeMorEquivFlex.gen (FreeMorEquivGenFlex.assoc hm gm fm))
+
+/-- The quotient quiver with flexible universes. -/
+def quotQuiverFlex : OverQuiver.{max uF vF, uF} where
+  Obj := D.quiver.Obj
+  MorType := Σ (a b : D.quiver.Obj), D.QuotMorFlex a b
+  src := fun m => m.1
+  tgt := fun m => m.2.1
+
+/-- Bundle a quotient morphism with its source and target. -/
+def bundleQuotMorFlex {a b : D.quiver.Obj} (f : D.QuotMorFlex a b) :
+    D.quotQuiverFlex.MorType :=
+  ⟨a, b, f⟩
+
+/-- Identity function on the quotient quiver. -/
+def quotIdFnFlex : D.quotQuiverFlex.Obj → D.quotQuiverFlex.MorType :=
+  fun a => D.bundleQuotMorFlex (D.quotIdFlex a)
+
+/-- Composition function on the quotient quiver.
+    Given composable pair (m1, m2) where m1.tgt = m2.src, compose their morphisms. -/
+def quotCompFnFlex :
+    D.quotQuiverFlex.ComposablePairsType → D.quotQuiverFlex.MorType :=
+  fun p =>
+    let ⟨⟨m1, m2⟩, hcomp⟩ := p
+    -- m1 = ⟨a, b, f⟩ : src=a, tgt=b, mor=f : QuotMorFlex a b
+    -- m2 = ⟨c, d, g⟩ : src=c, tgt=d, mor=g : QuotMorFlex c d
+    -- hcomp : Composable m1 m2 = (tgt m1 = src m2) = (b = c)
+    let f := m1.2.2  -- f : QuotMorFlex m1.1 m1.2.1
+    let g := m2.2.2  -- g : QuotMorFlex m2.1 m2.2.1
+    -- Extract the equality from hcomp: m1.2.1 = m2.1
+    have heq : m1.2.1 = m2.1 := hcomp
+    -- Cast g to have source m1.2.1 instead of m2.1
+    -- g : QuotMorFlex m2.1 m2.2.1, need QuotMorFlex m1.2.1 m2.2.1
+    -- heq.symm : m2.1 = m1.2.1 lets us substitute
+    let g' : D.QuotMorFlex m1.2.1 m2.2.1 :=
+      cast (congrArg (D.QuotMorFlex · m2.2.1) heq.symm) g
+    -- Result: composition from m1.1 to m2.2.1
+    D.bundleQuotMorFlex (D.quotCompFlex f g')
+
+/-- Left identity: compFn (id, f) = f when tgt id = src f -/
+theorem quotCompFnFlex_id_comp {a b : D.quiver.Obj} (f : D.QuotMorFlex a b) :
+    D.quotCompFnFlex ⟨(D.bundleQuotMorFlex (D.quotIdFlex a),
+                       D.bundleQuotMorFlex f), rfl⟩ = D.bundleQuotMorFlex f := by
+  simp only [quotCompFnFlex, bundleQuotMorFlex, quotIdFlex]
+  -- Goal: ⟨a, ⟨b, quotCompFlex (quotMorFlex (id a)) (cast _ f)⟩⟩ = ⟨a, ⟨b, f⟩⟩
+  -- Cast from (a = a) is identity
+  simp only [cast_eq]
+  -- Goal: ⟨a, ⟨b, quotCompFlex (quotMorFlex (id a)) f⟩⟩ = ⟨a, ⟨b, f⟩⟩
+  congr 2
+  exact D.quotCompFlex_id_right f
+
+/-- Right identity: compFn (f, id) = f when tgt f = src id -/
+theorem quotCompFnFlex_comp_id {a b : D.quiver.Obj} (f : D.QuotMorFlex a b) :
+    D.quotCompFnFlex ⟨(D.bundleQuotMorFlex f,
+                       D.bundleQuotMorFlex (D.quotIdFlex b)), rfl⟩ = D.bundleQuotMorFlex f := by
+  simp only [quotCompFnFlex, bundleQuotMorFlex, quotIdFlex]
+  simp only [cast_eq]
+  congr 2
+  exact D.quotCompFlex_id_left f
+
+/-- The quotient forms an OverCategoryData. -/
+def toOverCategoryDataFlex : OverCategoryData D.quotQuiverFlex where
+  idFn := D.quotIdFnFlex
+  compFn := D.quotCompFnFlex
+  id_src := fun _ => rfl
+  id_tgt := fun _ => rfl
+  comp_src := fun _ => rfl
+  comp_tgt := fun _ => rfl
+  id_comp := fun f => by
+    obtain ⟨a, b, fm⟩ := f
+    exact D.quotCompFnFlex_id_comp fm
+  comp_id := fun f => by
+    obtain ⟨a, b, fm⟩ := f
+    exact D.quotCompFnFlex_comp_id fm
+  assoc := fun t => by
+    obtain ⟨⟨⟨a, b, fm⟩, ⟨b', c, gm⟩, ⟨c', d, hm⟩⟩, hcomp1, hcomp2⟩ := t
+    -- hcomp1 : b = b', hcomp2 : c = c'
+    simp only [quotQuiverFlex, OverQuiver.Composable] at hcomp1 hcomp2
+    subst hcomp1 hcomp2
+    simp only [quotCompFnFlex, bundleQuotMorFlex]
+    simp only [cast_eq]
+    congr 2
+    exact D.quotCompFlex_assoc fm gm hm
+
+end PLangQuotientDataFlex
+
+/-! ## Reflection Functor L with Flexible Universes -/
+
+/-- The reflection functor L on objects: takes a CatJudgCopr and produces
+    its quotient category as OverCategoryData. -/
+def reflectionLFlex (C : Obj.CatJudgCopr.{uF, vF, wF, xF}) :
+    OverCategoryData (PLangQuotientDataFlex.ofCatJudgCopr C).quotQuiverFlex :=
+  (PLangQuotientDataFlex.ofCatJudgCopr C).toOverCategoryDataFlex
+
+end FlexibleUniverseAdjunction
+
 end GebLean
