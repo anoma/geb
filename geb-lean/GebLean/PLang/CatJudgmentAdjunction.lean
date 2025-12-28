@@ -1873,7 +1873,7 @@ abbrev PhiL : CategoryTheory.Cat.{uAdj + 1, uAdj + 1} ⥤
 /-- The counit natural transformation ε : Φ ⋙ L → 𝟭 Cat.
 
 For each category C, the component ε_C : L(Φ(C)) ⥤ C evaluates the free
-category on C's quiver (with category axiom witnesses) back to C itself. -/
+category on C's quiver (with category condition witnesses) back to C itself. -/
 def counitNT : PhiL.{uAdj} ⟶ 𝟭 (CategoryTheory.Cat.{uAdj + 1, uAdj + 1}) where
   app := fun C => counitFunctor C.α
   naturality := fun {C D} F => by
