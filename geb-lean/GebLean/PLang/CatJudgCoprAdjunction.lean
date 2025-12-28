@@ -1838,6 +1838,196 @@ theorem leftTriangle_mor {a b : X.obj}
   simp only [embedLXMorAsVar, Counit.counitEvalQuot, PLangQuotientData.quotMor,
     Quotient.lift_mk, Counit.counitEval, Counit.counitEvalAux, bundleQuotMorLX]
 
+/-! ### Factored Lemmas for L(η_X) Construction
+
+These lemmas establish the structural properties needed to construct L(η_X)
+as an OverFunctorData. The approach factors the proof into small lemmas,
+each handling one type manipulation. -/
+
+/-- The identity morphism in quotDataPhiLX X is the bundled identity from L(X). -/
+theorem quotDataPhiLX_idMor (a : X.obj) :
+    (quotDataPhiLX X).idMor a =
+      bundleQuotMorLX X ((toPLangQuotientData X).quotId a) := rfl
+
+/-- The source of an identity morphism in quotDataPhiLX is the object itself. -/
+theorem quotDataPhiLX_idMor_src (a : X.obj) :
+    (quotDataPhiLX X).quiver.src ((quotDataPhiLX X).idMor a) = a := rfl
+
+/-- The target of an identity morphism in quotDataPhiLX is the object itself. -/
+theorem quotDataPhiLX_idMor_tgt (a : X.obj) :
+    (quotDataPhiLX X).quiver.tgt ((quotDataPhiLX X).idMor a) = a := rfl
+
+/-- The idEndo condition for quotDataPhiLX is reflexivity. -/
+theorem quotDataPhiLX_idEndo_eq (a : X.obj) :
+    (quotDataPhiLX X).idEndo a = rfl := by
+  rfl
+
+/-- Embedding the identity quotient morphism as a variable equals the formal
+    identity in the quotient category of Φ(L(X)).
+
+    This is the first main factored lemma, using id_witness. -/
+theorem embedLXMorAsVar_quotId (a : X.obj) :
+    embedLXMorAsVar X ((toPLangQuotientData X).quotId a) =
+      (quotDataPhiLX X).quotId a := by
+  unfold embedLXMorAsVar bundleQuotMorLX
+  unfold PLangQuotientData.quotId PLangQuotientData.quotMor
+  -- Goal: ⟦var ⟨a, a, ⟦id a⟧⟩⟧ = ⟦id a⟧
+  -- Need FreeMorEquiv (var ⟨a, a, ⟦id a⟧⟩) (id a)
+  apply Quotient.sound
+  -- id_witness gives: FreeMorEquivGen (cast (idEndo a) (var (idMor a))) (id (src (idMor a)))
+  apply PLangQuotientData.FreeMorEquiv.rel
+  -- Goal: FreeMorEquivGen (var ⟨a, a, ⟦id a⟧⟩) (id a)
+  -- id_witness provides exactly this direction (after showing cast is trivial)
+  have h := PLangQuotientData.FreeMorEquivGen.id_witness (D := quotDataPhiLX X) a
+  -- h : FreeMorEquivGen (cast (idEndo a) (var (idMor a))) (id (src (idMor a)))
+  -- idMor a = ⟨a, a, quotId a⟩, src (idMor a) = a
+  -- So h : FreeMorEquivGen (cast ... (var ⟨a, a, quotId a⟩)) (id a)
+  -- Need to show the cast is trivial (idEndo a = rfl)
+  simp only [quotDataPhiLX_idMor, bundleQuotMorLX] at h
+  convert h using 2
+
+/-- Helper: compMatch for quotDataPhiLX is reflexivity.
+    The tgt of the first morphism equals the src of the second, both being b. -/
+theorem quotDataPhiLX_compMatch {a b c : X.obj}
+    (qm₁ : (toPLangQuotientData X).QuotMor a b)
+    (qm₂ : (toPLangQuotientData X).QuotMor b c) :
+    (quotDataPhiLX X).compMatch
+      ⟨(bundleQuotMorLX X qm₁, bundleQuotMorLX X qm₂), rfl⟩ = rfl := rfl
+
+/-- Helper: compDom for quotDataPhiLX is reflexivity. -/
+theorem quotDataPhiLX_compDom {a b c : X.obj}
+    (qm₁ : (toPLangQuotientData X).QuotMor a b)
+    (qm₂ : (toPLangQuotientData X).QuotMor b c) :
+    (quotDataPhiLX X).compDom
+      ⟨(bundleQuotMorLX X qm₁, bundleQuotMorLX X qm₂), rfl⟩ = rfl := rfl
+
+/-- Helper: compCod for quotDataPhiLX is reflexivity. -/
+theorem quotDataPhiLX_compCod {a b c : X.obj}
+    (qm₁ : (toPLangQuotientData X).QuotMor a b)
+    (qm₂ : (toPLangQuotientData X).QuotMor b c) :
+    (quotDataPhiLX X).compCod
+      ⟨(bundleQuotMorLX X qm₁, bundleQuotMorLX X qm₂), rfl⟩ = rfl := rfl
+
+/-- Embedding the composite of two quotient morphisms equals the composite of
+    their embeddings. This is the second main factored lemma, using comp_witness.
+
+    This shows that L(η_X) preserves composition. -/
+theorem embedLXMorAsVar_quotComp {a b c : X.obj}
+    (qm₁ : (toPLangQuotientData X).QuotMor a b)
+    (qm₂ : (toPLangQuotientData X).QuotMor b c) :
+    embedLXMorAsVar X ((toPLangQuotientData X).quotComp qm₂ qm₁) =
+      (quotDataPhiLX X).quotComp (embedLXMorAsVar X qm₂) (embedLXMorAsVar X qm₁)
+    := by
+  unfold embedLXMorAsVar bundleQuotMorLX
+  unfold PLangQuotientData.quotComp PLangQuotientData.quotMor
+  -- Goal: ⟦var ⟨a, c, quotComp qm₂ qm₁⟩⟧ = quotComp ⟦var ⟨b, c, qm₂⟩⟧ ⟦var ⟨a, b, qm₁⟩⟧
+  -- RHS = ⟦comp (var ⟨b, c, qm₂⟩) (var ⟨a, b, qm₁⟩)⟧
+  apply Quotient.sound
+  apply PLangQuotientData.FreeMorEquiv.symm
+  apply PLangQuotientData.FreeMorEquiv.rel
+  -- Goal: FreeMorEquivGen (comp (var ...) (var ...)) (var (composite))
+  -- comp_witness provides exactly this
+  let p : (quotDataPhiLX X).CompWitness :=
+    ⟨(bundleQuotMorLX X qm₁, bundleQuotMorLX X qm₂), rfl⟩
+  have h := PLangQuotientData.FreeMorEquivGen.comp_witness (D := quotDataPhiLX X) p
+  -- h relates comp (cast (compMatch p) (var (left p))) (var (right p))
+  --          to cast (compDom p, compCod p) (var (composite p))
+  simp only [cast_eq] at h
+  convert h using 2
+
+/-! ### Construction of L(η_X) as OverFunctorData
+
+Using the factored lemmas, we now construct L(η_X) : L(X) → L(Φ(L(X))).
+This maps each morphism in L(X) to its embedding as a variable in L(Φ(L(X))). -/
+
+/-- The morphism map for L(η_X): embed each bundled morphism as a variable. -/
+def LUnitX_morFn : (triangleLXQuiver X).MorType →
+    (quotDataPhiLX X).quotQuiver.MorType :=
+  fun m => ⟨m.1, m.2.1, embedLXMorAsVar X m.2.2⟩
+
+/-- L(η_X) respects sources: trivial since objFn = id. -/
+theorem LUnitX_src_comm (m : (triangleLXQuiver X).MorType) :
+    (quotDataPhiLX X).quotQuiver.src (LUnitX_morFn X m) = m.1 := rfl
+
+/-- L(η_X) respects targets: trivial since objFn = id. -/
+theorem LUnitX_tgt_comm (m : (triangleLXQuiver X).MorType) :
+    (quotDataPhiLX X).quotQuiver.tgt (LUnitX_morFn X m) = m.2.1 := rfl
+
+/-- The quiver morphism component of L(η_X). -/
+def LUnitX_quiverMor : OverQuiverMorphism (triangleLXQuiver X)
+    (quotDataPhiLX X).quotQuiver where
+  objFn := id
+  morFn := LUnitX_morFn X
+  src_comm := fun m => LUnitX_src_comm X m
+  tgt_comm := fun m => LUnitX_tgt_comm X m
+
+/-- L(η_X) preserves identities. -/
+theorem LUnitX_map_id (a : X.obj) :
+    LUnitX_morFn X ((triangleLX X).idFn a) =
+      (triangleLPhiLX X).idFn a := by
+  simp only [LUnitX_morFn, triangleLPhiLX, quotDataPhiLX,
+    PLangQuotientData.toOverCategoryData, PLangQuotientData.quotCategoryOps,
+    PLangQuotientData.quotIdFn]
+  congr 2
+  exact embedLXMorAsVar_quotId X a
+
+/-- L(η_X) preserves composition. -/
+theorem LUnitX_map_comp (p : (triangleLXQuiver X).ComposablePairsType) :
+    LUnitX_morFn X ((triangleLX X).compFn p) =
+      (triangleLPhiLX X).compFn ⟨(LUnitX_morFn X p.val.1, LUnitX_morFn X p.val.2),
+        (LUnitX_tgt_comm X p.val.1).trans
+          ((congrArg id p.property).trans
+            (LUnitX_src_comm X p.val.2).symm)⟩ := by
+  obtain ⟨⟨⟨a, b, qm₁⟩, ⟨b', c, qm₂⟩⟩, heq⟩ := p
+  -- heq : b = b' (composability condition)
+  cases heq
+  simp only [LUnitX_morFn, triangleLPhiLX, quotDataPhiLX,
+    PLangQuotientData.toOverCategoryData, PLangQuotientData.quotCategoryOps,
+    PLangQuotientData.quotCompFn, PLangQuotientData.quotQuiver]
+  congr 2
+  simp only [embedLXMorAsVar_quotComp]
+
+/-- L(η_X) : L(X) → L(Φ(L(X))) as a functor between OverCategoryData.
+    This is the image of the unit η_X under the reflection functor L. -/
+def LUnitX : OverFunctorData (triangleLX X) (triangleLPhiLX X) where
+  toOverQuiverMorphism := LUnitX_quiverMor X
+  map_id := LUnitX_map_id X
+  map_comp := LUnitX_map_comp X
+
+/-! ### Left Triangle Identity
+
+The left triangle identity states that ε_{L(X)} ∘ L(η_X) = id_{L(X)}.
+This follows from leftTriangle_obj and leftTriangle_mor. -/
+
+/-- The composition ε_{L(X)} ∘ L(η_X) on objects is the identity. -/
+theorem leftTriangle_comp_objFn (a : X.obj) :
+    (counitAtLX X).objFn ((LUnitX X).objFn a) = a := rfl
+
+/-- The composition ε_{L(X)} ∘ L(η_X) on morphisms is the identity.
+    This is the essence of the left triangle identity. -/
+theorem leftTriangle_comp_morFn (m : (triangleLXQuiver X).MorType) :
+    (counitAtLX X).morFn ((LUnitX X).morFn m) = m := by
+  obtain ⟨a, b, qm⟩ := m
+  simp only [LUnitX, LUnitX_quiverMor, LUnitX_morFn, counitAtLX,
+    Counit.counitFunctorData, Counit.counitQuiverMor]
+  simp only [leftTriangle_mor, bundleQuotMorLX]
+
+/-- The left triangle identity: ε_{L(X)} ∘ L(η_X) = id_{L(X)}.
+
+    This is one of the two triangle identities for the adjunction L ⊣ Φ.
+    Together with the right triangle, it establishes the adjunction. -/
+theorem leftTriangle :
+    (LUnitX X).comp (counitAtLX X) = OverFunctorData.id (triangleLX X) := by
+  have h_obj : ∀ a, (counitAtLX X).objFn ((LUnitX X).objFn a) = a :=
+    leftTriangle_comp_objFn X
+  have h_mor : ∀ m, (counitAtLX X).morFn ((LUnitX X).morFn m) = m :=
+    leftTriangle_comp_morFn X
+  apply OverFunctorData.ext
+  · ext a
+    exact h_obj a
+  · funext m
+    exact h_mor m
+
 end LeftTriangle
 
 end ReflectionL
