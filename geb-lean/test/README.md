@@ -53,7 +53,7 @@ def exampleVertices : List MyFiniteType := [x₀, x₁]
 #guard decide (exampleVertices.length = 2)
 ```
 
-This avoids introducing classical choice just to evaluate `Fintype.card`.
+This avoids introducing the axiom of choice just to evaluate `Fintype.card`.
 
 ### Using Plausible (Property-Based Testing)
 

@@ -10,8 +10,7 @@ infrastructure.
 
 ### Task 6: Direct Proof of PhiFunctor Fully Faithful (Complete)
 
-Proved computationally that `PhiFunctor` is fully faithful, without using
-mathlib's noncomputable `Adjunction.fullyFaithfulROfIsIsoCounit`:
+Proved computationally that `PhiFunctor` is fully faithful.
 
 1. `phiPreimage` - constructs preimages as `ε_X⁻¹ ≫ L(f) ≫ ε_Y`
 2. `adjunctionUnit_app_isIso` - proves unit at `Φ(Z)` is an isomorphism using
@@ -31,11 +30,6 @@ Connected the counit isomorphism to mathlib's standard formulations:
 3. `adjunctionCounit_isIso` - instance showing the full counit natural transformation
    is `IsIso`
 4. `catCopresheafCounitNatIso` - the natural isomorphism form of the counit
-
-Note: Mathlib's `Adjunction.fullyFaithfulROfIsIsoCounit` is noncomputable, so we
-don't directly apply it to maintain our computational requirement. However, the
-`IsIso` instances establish the same mathematical content, and the theorem can
-be applied in contexts where noncomputability is acceptable.
 
 ### Task 4: Universe Polymorphism Analysis (Complete)
 
@@ -148,7 +142,7 @@ New definitions in `CatJudgmentAdjunction.lean`:
    - `phi_map_preimage` and `phi_preimage_map` - round-trip properties
    - `phiFunctorFullyFaithful : PhiFunctor.FullyFaithful` - computational proof
 
-## Key Files
+## Related Files
 
 - `GebLean/CatJudgmentAdjunction.lean` - Main adjunction and equivalences
 - `GebLean/Utilities/Category.lean` - BundledCategoryData and equivCat

@@ -7,8 +7,6 @@ from previous sessions.
 ## Structure
 
 - `workstreams/` - One Markdown file per active workstream or project area
-- `decisions.md` - Cross-cutting decisions and their rationale
-- `blockers.md` - Open questions and blockers awaiting resolution
 
 ## Workstream Files
 
@@ -19,7 +17,7 @@ following template:
 # Workstream: [Name]
 
 ## Status
-[Active | Paused | Blocked]
+[Active | Paused ]
 
 ## Context
 [Brief description of what this workstream is about]
@@ -35,5 +33,3 @@ following template:
 ## Maintenance
 
 - Archive or delete workstream files when work is complete
-- Prune old entries from `decisions.md` periodically
-- Clear resolved items from `blockers.md`

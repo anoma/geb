@@ -151,7 +151,8 @@ Proving this is an equivalence requires:
    Investigate whether morphisms of presentations can be defined without
    setoids.
 
-2. **Constructivity**: Keep everything constructive (no classical axioms).
+2. **Constructivity**: Keep everything constructive (no excluded middle,
+   no noncomputability).
 
 ## Dependencies and Prerequisites
 
@@ -381,8 +382,8 @@ To construct a presentation for a copresheaf `F : D ⥤ Type`:
 
 ### Verification
 
-- [x] Ensure all code is constructive (no classical axioms)
-- [ ] Ensure no sorry or noncomputable (toCopresheaf uses noncomputable)
+- [x] Ensure all code is constructive (no excluded middle, no nomcomputability)
+- [ ] Ensure all definitions and lemmas are computable
 - [x] Run lake build and lake test
 
 ## References
@@ -395,9 +396,9 @@ To construct a presentation for a copresheaf `F : D ⥤ Type`:
 
 ## Notes
 
-The `FreeCoequalizerCompletion.lean` file in this codebase is NOT the
-construction we want (that file was specified incorrectly). However, its
-coding style and structure may serve as a reference.
+The `FreeCoequalizerCompletion.lean` file in this codebase is not the
+construction we want.  However, its coding style and structure may serve
+as a reference.
 
 The approach here differs in that we are not freely adding coequalizers to
 a category, but rather using coequalizers of polynomial functors to
@@ -497,17 +498,17 @@ surjective but not faithful or full. We use localization to fix this:
 ### Potential Challenges
 
 1. **Universe levels**: The category of elements may introduce universe
-   constraints that need careful handling
+   constraints
 
-2. **Noncomputability**: The density presentation construction may need
-   `noncomputable` due to the quotient in coequalizers
+2. **Noncomputability**: The density presentation construction must
+   use Setoids rather than quotients in coequalizers
 
 3. **Comparison morphism existence**: Proving that arbitrary presentations
-   have comparison morphisms to canonical presentations requires careful
+   have comparison morphisms to canonical presentations requires
    use of universal properties
 
 4. **Setoid equality in Quot**: Working with `Quot` requires using
-   `Quot.sound` and `Quot.ind` carefully for proofs
+   `Quot.sound` and `Quot.ind` for proofs
 
 ## Current Work In Progress (Session State)
 
@@ -755,7 +756,7 @@ noncomputability is isolated to this external step.
 
 #### Advantages
 
-1. Fully constructive - no choice, no noncomputable
+1. Fully constructive - no choice, no noncomputability
 2. Mathematically natural - presentations inherently give setoid-valued
    functors before any quotienting
 3. Reuses most existing code - just adds setoid layer

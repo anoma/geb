@@ -111,7 +111,7 @@ Using `CoequalizerData` typeclass (computable coequalizer structure):
 
 The construction uses `CoequalizerData` typeclass (similar to `CoprodData`
 and `ProdData` in Families.lean) for computable coequalizer structure. This
-allows avoiding `noncomputable` and `classical`.
+allows requiring noncomputability or excluded middle.
 
 The `FreeCoequalizerCompletionCat` definition as a `Cat` object was removed
 due to typeclass resolution issues with universe levels.

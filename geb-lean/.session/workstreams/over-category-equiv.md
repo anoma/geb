@@ -268,7 +268,7 @@ same categories without any constraints:
 - `catToOverFunctorData : BundledCategoryData.{max v u, u} →
   BundledOverCategoryData.{max v u, u}`
 
-The key observation is that `max (max v u) u = max v u`, so the sigma
+`max (max v u) u = max v u`, so the sigma
 construction doesn't bump the universe level on the round-trip.
 
 Round-trip functors:

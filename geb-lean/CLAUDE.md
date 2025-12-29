@@ -11,8 +11,6 @@ to pick up context from previous sessions:
 
 - `.session/README.md` - Structure overview
 - `.session/workstreams/` - Active workstreams with tasks and context
-- `.session/decisions.md` - Cross-cutting decisions (avoid re-litigating)
-- `.session/blockers.md` - Open questions awaiting resolution
 
 Before ending a session or when significant progress is made, update the
 relevant files in `.session/` so future sessions can continue the work.

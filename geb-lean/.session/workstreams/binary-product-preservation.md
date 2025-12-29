@@ -1,13 +1,13 @@
 # Binary Product Preservation Workstream
 
-## Status: In Progress (Blocked)
+## Status: In Progress
 
 Working on proving that LFunctor preserves binary products:
 `L(F₁ × F₂) ≅ L(F₁) × L(F₂)` in BundledOverCategoryData.
 
-## Fundamental Blocker: Cast/Match Issue
+## Cast/Match
 
-Progress is blocked by a fundamental Lean limitation: pattern matching does
+We need to figure out the standard way of handling how pattern matching does
 not reduce through `cast` operations. When we have functions like:
 
 ```lean
@@ -62,9 +62,9 @@ input is a `var` because the `cast` wrapper prevents definitional reduction.
 ## Components Not Yet Implemented
 
 The following theorems and definitions are required before product preservation
-can be completed. They have not been implemented due to the cast/match blocker.
+can be completed.
 
-### Embedding Respects Theorems (Blocked)
+### Embedding Respects Theorems
 
 These theorems prove that the embedding functions respect the equivalence
 relation on free morphisms. Required for lifting to quotients.
@@ -91,7 +91,7 @@ relation on free morphisms. Required for lifting to quotients.
 8. **`quotMorPairComp`**: Lift `freeMorPairComp` to quotient level using
    `Quotient.lift₂`. Depends on `freeMorPairComp_respects`.
 
-### Round-Trip Theorems (Blocked)
+### Round-Trip Theorems (In Progress)
 
 These theorems prove that `proj ∘ pair = id`, establishing one direction
 of the isomorphism.

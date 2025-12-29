@@ -149,7 +149,7 @@ category (which is also a framed bicategory) of slice polynomial functors.
 
 ### Cleanup Complete - Ready for Grothendieck Refactoring
 
-All incomplete code attempting low-level transport proofs has been removed from
+All incomplete code containing low-level transport proofs has been removed from
 `GebLean/PolyAlg.lean`. The following definitions were removed:
 
 - `polyFreeMMonadMulAtLeft`, `polyFreeMMonadMulLeft`, `polyFreeMMonadMul_comm`

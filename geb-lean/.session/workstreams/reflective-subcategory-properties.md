@@ -20,7 +20,7 @@ is a reflective subcategory of `FunctorData (Type u)`.
 
 ### 1. Mathlib Reflective Subcategory Code
 
-**Key Structures in `Mathlib.CategoryTheory.Adjunction.Reflective`:**
+**Structures in `Mathlib.CategoryTheory.Adjunction.Reflective`:**
 
 - `CategoryTheory.Reflective` class: A functor `R : D ⥤ C` is reflective when
   it is fully faithful and right adjoint. Fields:
@@ -56,7 +56,7 @@ is a reflective subcategory of `FunctorData (Type u)`.
 
 ### 2. Limit/Colimit Preservation (Implemented)
 
-**Key theorems in `Mathlib.CategoryTheory.Adjunction.Limits`:**
+**Theorems in `Mathlib.CategoryTheory.Adjunction.Limits`:**
 
 - `CategoryTheory.Adjunction.rightAdjoint_preservesLimits`:
   For `adj : F ⊣ G`, we get `PreservesLimitsOfSize G`

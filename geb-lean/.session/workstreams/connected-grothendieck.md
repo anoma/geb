@@ -20,7 +20,7 @@ and composition laws proved.
 
 ### Corrected Analysis: Alt DOES Project to Arrow C
 
-Previous analysis was incorrect. The Alt construction has morphisms that form
+Alt construction has morphisms that form
 Arrow squares with both domain and codomain going forward in C:
 
 **Alt morphism structure** (`f : x -> y` in `ConnectedGrothendieckAlt`):
@@ -98,7 +98,7 @@ associativity for free.
      `ConnectedGrothendieckContra` to `ConnGrothendieckHom`
    - `connGrothendieckHomToContraHom` converts morphisms from
      `ConnGrothendieckHom` to `ConnectedGrothendieckContra`
-   - Key lemmas: `overOpToTwistedArrow_map_eq_twMorphDom_comp_eqToHom`,
+   - Lemmas: `overOpToTwistedArrow_map_eq_twMorphDom_comp_eqToHom`,
      `twDom'_diagDom_eq_diagCod`, `twCod'_diagDom_eq_diagCod`,
      `connGrothendieckHomToContra_source_eq`, `overOpToTwArr_map_innerBase_eq`
 
@@ -301,7 +301,7 @@ See `docs/connected-grothendieck-functor-characterization.md` for full theory.
    ```
 
    This states coherence between the explicit diagonal transport and the
-   standard Grothendieck composition. Key lemmas for the proof:
+   standard Grothendieck composition. Lemmas used in the proof:
    - `domainFiberTransport_naturality`
    - `functorToConnGrothendieckInnerBaseTwMorph`
    - `functorToConnGrothendieckDomainTransportTwEq`
@@ -336,7 +336,7 @@ See `docs/connected-grothendieck-functor-characterization.md` for full theory.
 ### Investigated and Resolved
 
 - **Alt projection category**: Initially hypothesized that Alt projects to
-  `TwistedArrow' C`, but investigation revealed that Alt actually projects
+  `TwistedArrow' C`, but investigation revealed that Alt projects
   to `Arrow C` just like Contra. The `Under.w` lemma provides the Arrow
   square commutativity, and `Under.map_map_right` ensures the codomain
   component is preserved through transitions.
@@ -383,7 +383,7 @@ the nested approach via `C^op`. This is because the morphism directions
 in `TwistedArrowOp' C` and `(TwistedArrow' C)^op'` don't align in a way
 that makes the nested approach simple.
 
-Key insight for category laws:
+Enforcing category laws:
 
 - Use `@CategoryStruct.comp (TwistedArrow' C)` for explicit composition
 - `G.map_comp g.twMorph f.twMorph` (reversed order for opposite category)
@@ -399,7 +399,7 @@ is currently implicit.
 
 - nLab whiskering and lax natural transformation articles
 - mathlib4's `Whiskering.lean`, `Bicategory/Functor/Lax.lean`, `Grothendieck.lean`
-- Key insight: standard whiskering doesn't compose well with lax transformations
+- Standard whiskering doesn't compose well with lax transformations
   in general, but for functors to Cat with constant targets, a specialized
   construction works
 
@@ -435,7 +435,7 @@ must have an opposite category as its domain. This requires either:
 
 For `overOpMapFunctor C`, this works because `(overOpMapFunctor C).obj y =
 Cat.of ((Over y)ᵒᵖ')` definitionally. However, expressing this in the general
-`LaxNatTransData` framework requires complex cast management.
+`LaxNatTransData` framework requires cast management.
 
 **Current approach**: The `fiberFunctorContra` in ConnectedGrothendieck.lean is
 defined directly using `innerFiberContra` and `innerFiberContraTransition`,

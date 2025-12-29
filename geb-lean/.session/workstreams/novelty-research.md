@@ -8,7 +8,7 @@ This workstream investigates whether the reflective adjunction L |- Phi between
 Cat and copresheaves on CategoryJudgments (a finite 4-object category) is a
 novel construction or equivalent to something known.
 
-## Key Files
+## Related Files
 
 - `GebLean/CategoryJudgments.lean` - The finite index category (4 objects: Obj,
   Mor, Id, Comp)
@@ -24,7 +24,7 @@ novel construction or equivalent to something known.
    - Right adjoint: Nerve N : Cat -> [Δ^op, Set] (presheaves)
    - Left adjoint: Realization τ₁ : [Δ^op, Set] -> Cat
    - Not reflective (nerve is not fully faithful)
-   - Reference: Kan (1958), "Functors involving c.s.s complexes"
+   - Reference: Kan (1958), "Functors involving c.s.s."
 
 2. **Essentially Algebraic Theory Presentation**
    - Cat is the category of models of a finite limit sketch

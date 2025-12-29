@@ -59,7 +59,7 @@ Products in BundledOverCategoryData (categories) are product categories:
 - Morphisms (a₁,b₁) → (a₂,b₂): C.Mor(a₁,a₂) × D.Mor(b₁,b₂)
 - Composition: componentwise
 
-**Key insight:** In F × G, the morphism type (F × G).morC = F.morC × G.morC
+In F × G, the morphism type (F × G).morC = F.morC × G.morC
 contains ALL pairs of morphisms, including (m, id) and (id, n) forms. This
 allows "padding" shorter paths with identities.
 
@@ -221,12 +221,12 @@ L(α)([m_1, ..., m_n]) = [α(m_1), ..., α(m_n)]
 **Reverse direction (the critical question):** If L(α)([path]) = L(β)([path]),
 can we represent [path] by morphisms that individually satisfy α = β?
 
-Attempted counterexamples failed because NatTransData must preserve composition.
+Counterexamples failed because NatTransData must preserve composition.
 If [m_1, ..., m_n] reduces to [k] via composition, then L(α)([path]) = [α(k)]
 and L(β)([path]) = [β(k)]. For these to be equal as single-morphism classes, we
 need α(k) = β(k).
 
-**Key insight:** The NatTransData structure (preservation of composition) forces
+The NatTransData structure (preservation of composition) forces
 agreement on composites when the composition relation applies. This propagates
 the equalizer condition through the quotient structure.
 
@@ -327,7 +327,7 @@ morphisms dom, cod, idMor, idObj, left, right, composite of CategoryJudgments.
 1. What are the structural similarities between our adjunction and the
    nerve-realization adjunction?
 2. What are the differences?
-3. Can insights from nerve-realization inform our understanding?
+3. Can nerve-realization adjunction inform our understanding?
 
 **The nerve-realization adjunction:**
 
@@ -365,13 +365,13 @@ L ⊣ Φ : BundledOverCategoryData ⇆ FunctorData = [CategoryJudgments, Type]
 **Structural differences:**
 
 | Aspect | Nerve-Realization | Our Adjunction |
-|--------|-------------------|----------------|
+| ------ | ----------------- | -------------- |
 | Variance | Presheaves (contravariant) | Copresheaves (covariant) |
 | Index size | Δ (infinite objects) | CategoryJudgments (4 objects) |
 | Data | All n-chains (any length) | Fixed components |
 | Style | Simplicial/infinitary | Algebraic/finitary |
 
-**Insights:**
+**Observations:**
 
 1. **Computational advantage**: Our representation is more directly computational
    with finite components and fixed-arity structure maps. The simplicial approach
@@ -455,7 +455,7 @@ In `CatJudgmentAdjunction.lean`, section `BinaryProduct`:
 Remaining work for `L(F₁ × F₂) ≅ L(F₁) × L(F₂)`:
 
 1. **id_witness and comp_witness cases** - The proof that `freeMorProj₁` respects
-   equivalence has two remaining cases that require careful cast handling:
+   equivalence has two remaining cases that require cast handling:
    - `id_witness`: Shows projection of identity witness equivalence holds
    - `comp_witness`: Shows projection of composition witness equivalence holds
    The challenge is that the `id_witness` generator involves a `cast` term:

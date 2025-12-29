@@ -44,7 +44,7 @@ Under Phi, this would correspond to a "transformation between transformations":
 
 - A 2-cell in the copresheaf category [J, Type]
 
-### The Key Insight
+### 1-categorical structure
 
 The copresheaf category [J, Type] is a 1-category with:
 
@@ -194,9 +194,9 @@ In a Cat-valued setting:
 - Stephen Lack, "A 2-Categories Companion" (IMA notes)
 - arXiv:2002.06055, "2-Dimensional Categories"
 
-## New Insight: Cat-Valued Copresheaves via Currying
+## Cat-Valued Copresheaves via Currying
 
-### The Key Observation
+### Pre/post-composing adjunction
 
 Since we have the adjunction L ⊣ Φ : Cat ⇆ [J, Type], we can construct Cat-valued
 copresheaves by composing with L:
@@ -262,7 +262,7 @@ Define Ψ(C) : J × J → Type by:
 - Ψ(C)(Obj, Mor) = Mor_C (morphisms viewed as "arrows from objects to morphisms")
 - Other entries encode composition and identity structure
 
-The exact definition requires careful analysis to ensure L_* ∘ Ψ produces the
+The exact definition must be proven to ensure L_* ∘ Ψ produces the
 correct Cat-valued structure.
 
 ### Verification Needed

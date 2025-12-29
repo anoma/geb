@@ -45,12 +45,12 @@ relating two copresheaves on C × J (after embedding and currying).
 - J_ω (globular limit) is closer to the globe category
 - Neither is precisely Δ, but J_ω may be a finite presentation
 
-## Key Sub-Questions (Resolved)
+## Sub-Questions (Resolved)
 
 1. Natural transformations ↔ [C × J, Type]: Confirmed via currying
 2. [J × J, Type] structure: Double categories; 16 objects
 3. J^n growth: Confirmed 4^n objects (exponential)
-4. J^ω notion: Two options - cubical (colimit) or globular (hierarchy limit)
+4. J^ω notion: Two choices - cubical (colimit) or globular (hierarchy limit)
 5. Relation to Δ: Different geometric flavor; J_ω is closer
 
 ## Code References

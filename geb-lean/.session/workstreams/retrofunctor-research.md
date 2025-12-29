@@ -9,7 +9,7 @@ categories with retrofunctors as morphisms can be represented via a reflective
 or coreflective adjunction with a copresheaf (or presheaf) category, similar to
 the L |- Phi adjunction for Cat.
 
-## Key Concepts
+## Concepts
 
 ### Retrofunctors (Cofunctors)
 
@@ -30,7 +30,7 @@ Properties:
 - Morphisms: Retrofunctors
 - Composition: (γ ∘ φ)₁(a, u) = φ₁(a, γ₁(φ₀(a), u))
 
-### Key Results from Literature
+### Results from Literature
 
 1. **Polynomial Connection**: Cof ≅ comonoid morphisms in Poly(1,1)
    - Small categories are comonoids in (Poly, y, ◁)
@@ -60,7 +60,7 @@ Consider presheaves on CategoryJudgments^op instead of copresheaves:
 - R : [J^op, Type] → Cof reflects presheaves to retrofunctor categories
 
 **Status**: Needs investigation - the composition lifting in retrofunctors
-is more complex than simple functorial structure
+is different from simple functorial structure
 
 ### Direction 2: Extended Index Category
 
@@ -105,7 +105,7 @@ A direct analogue of the L |- Phi adjunction for Cof appears unlikely because:
    form of a copresheaf functor
 
 2. **Dependent lifting**: The morphism lift depends on both source object
-   and target morphism, requiring a more complex index structure
+   and target morphism, requiring a different index structure
 
 3. **Polynomial perspective**: The Poly(1,1) characterization suggests Cof
    is better understood through comonoid theory than copresheaf theory

@@ -238,7 +238,7 @@ def ofCatJudgCoprFunctor : CatJudgCopr ⥤ JudgmentSection where
 
 ### Phase 4: Bicategorical Structure
 
-The key insight from `docs/judgment-section-equivalence.md`:
+The correspondence from `docs/judgment-section-equivalence.md`:
 
 | Cat (2-category) | [J, Cat] (2-category) |
 | ---------------- | -------------------- |
