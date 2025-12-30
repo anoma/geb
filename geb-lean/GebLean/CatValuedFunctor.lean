@@ -168,4 +168,240 @@ theorem whiskerRight_natTransEquiv (η : F ⋙ PhiFunctor ⟶ G ⋙ PhiFunctor) 
 
 end NatTransEquiv
 
+/-! ## Slice Category Adjunction Lifting
+
+The reflective embedding `PhiFunctor : Cat → [J, Type]` lifts to slice categories:
+for any category X (as `BundledOverCategoryData`), we get a reflective embedding
+
+  `Cat/X ⟵reflective⟶ [J, Type]/Phi(X)`
+
+This uses mathlib's `Over.postAdjunctionRight` to lift the adjunction, and
+`Functor.FullyFaithful.over` to lift full faithfulness. -/
+
+section SliceAdjunction
+
+variable (X : BundledOverCategoryData.{u, u})
+
+/-- Post-composition with PhiFunctor on slice categories.
+    This sends an object `(A, f : A ⟶ X)` in `Cat/X` to
+    `(Phi(A), Phi.map f : Phi(A) ⟶ Phi(X))` in `[J, Type]/Phi(X)`. -/
+abbrev phiSlice : Over X ⥤ Over (PhiFunctor.obj X) :=
+  Over.post PhiFunctor
+
+/-- Post-composition with LFunctor on slice categories.
+    Combined with mapping by the counit, this is the left adjoint to phiSlice. -/
+abbrev lSliceBase : Over (PhiFunctor.obj X) ⥤ Over (LFunctor.obj (PhiFunctor.obj X)) :=
+  Over.post LFunctor
+
+/-- The left adjoint to phiSlice, combining post-composition with L and
+    mapping by the counit isomorphism. -/
+abbrev lSlice : Over (PhiFunctor.obj X) ⥤ Over X :=
+  lSliceBase X ⋙ Over.map (catCopresheafMathlibAdjunction.counit.app X)
+
+/-- The slice adjunction: `lSlice X ⊣ phiSlice X`.
+    This lifts the base adjunction `LFunctor ⊣ PhiFunctor` to slice categories
+    over X and Phi(X). -/
+def sliceAdjunction : lSlice X ⊣ phiSlice X :=
+  Over.postAdjunctionRight catCopresheafMathlibAdjunction
+
+/-- phiSlice is a right adjoint. -/
+instance phiSlice_isRightAdjoint : (phiSlice X).IsRightAdjoint where
+  exists_leftAdjoint := ⟨lSlice X, ⟨sliceAdjunction X⟩⟩
+
+/-- lSlice is a left adjoint. -/
+instance lSlice_isLeftAdjoint : (lSlice X).IsLeftAdjoint where
+  exists_rightAdjoint := ⟨phiSlice X, ⟨sliceAdjunction X⟩⟩
+
+/-- Post-composition with PhiFunctor is fully faithful on slice categories.
+    This follows from PhiFunctor being fully faithful. -/
+def phiSliceFullyFaithful : (phiSlice X).FullyFaithful :=
+  phiFunctorFullyFaithful.over X
+
+/-- phiSlice is full. -/
+instance phiSlice_full : (phiSlice X).Full :=
+  (phiSliceFullyFaithful X).full
+
+/-- phiSlice is faithful. -/
+instance phiSlice_faithful : (phiSlice X).Faithful :=
+  (phiSliceFullyFaithful X).faithful
+
+end SliceAdjunction
+
+/-! ## Reflectivity of the Slice Embedding
+
+The slice adjunction is reflective: the counit is an isomorphism.
+This follows because the base counit `L ⋙ Phi ≅ Id` is an isomorphism. -/
+
+section SliceReflectivity
+
+variable (X : BundledOverCategoryData.{u, u})
+
+/-- The counit of the slice adjunction at an object of Over X is an isomorphism.
+
+    For an object `(A, f : A ⟶ X)` in `Over X`, the counit component is:
+    `(L(Phi(A)), L(Phi(f)) ≫ counit_X) ⟶ (A, f)`
+
+    The left component is `counit_A : L(Phi(A)) ⟶ A`, which is an isomorphism
+    by reflectivity of the base adjunction. -/
+instance sliceAdjunction_counit_app_isIso (Y : Over X) :
+    IsIso ((sliceAdjunction X).counit.app Y) := by
+  -- The counit left component is the base counit, which is an iso
+  have h : IsIso ((sliceAdjunction X).counit.app Y).left := inferInstance
+  -- Use Over.isoMk to construct the iso, then extract IsIso from the fact that
+  -- the morphism equals the hom of an iso
+  let i : Over _ := (lSlice X).obj ((phiSlice X).obj Y)
+  let j : Over X := Y
+  let iso : i ≅ j := Over.isoMk (asIso ((sliceAdjunction X).counit.app Y).left)
+  have heq : iso.hom = (sliceAdjunction X).counit.app Y := by
+    apply Over.OverMorphism.ext
+    rfl
+  rw [← heq]
+  exact iso.isIso_hom
+
+/-- The counit of the slice adjunction is a natural isomorphism. -/
+instance sliceAdjunction_counit_isIso : IsIso (sliceAdjunction X).counit :=
+  NatIso.isIso_of_isIso_app _
+
+/-- The slice embedding `phiSlice X : Cat/X ⥤ [J, Type]/Phi(X)` is reflective.
+    This establishes that `Cat/X` is a reflective subcategory of `[J, Type]/Phi(X)`. -/
+instance phiSlice_reflective : Reflective (phiSlice X) where
+  L := lSlice X
+  adj := sliceAdjunction X
+
+end SliceReflectivity
+
+/-! ## Slice Morphism Equivalence
+
+The equivalence on hom-sets induced by full faithfulness of phiSlice. -/
+
+section SliceHomEquiv
+
+variable {X : BundledOverCategoryData.{u, u}}
+variable (A B : Over X)
+
+/-- The equivalence between morphisms in the slice over Phi(X) and morphisms
+    in the slice over X, induced by full faithfulness of phiSlice. -/
+def sliceHomEquiv : ((phiSlice X).obj A ⟶ (phiSlice X).obj B) ≃ (A ⟶ B) :=
+  (phiSliceFullyFaithful X).homEquiv.symm
+
+/-- Applying phiSlice to the preimage gives the original morphism. -/
+@[simp]
+theorem sliceHomEquiv_map (f : A ⟶ B) :
+    sliceHomEquiv A B ((phiSlice X).map f) = f :=
+  (phiSliceFullyFaithful X).preimage_map f
+
+/-- The image under phiSlice of the preimage is the original morphism. -/
+@[simp]
+theorem map_sliceHomEquiv (g : (phiSlice X).obj A ⟶ (phiSlice X).obj B) :
+    (phiSlice X).map (sliceHomEquiv A B g) = g :=
+  (phiSliceFullyFaithful X).map_preimage g
+
+end SliceHomEquiv
+
+/-! ## Slice-Valued Functor Categories
+
+For a fixed category X (as `BundledOverCategoryData`), we lift the reflective embedding
+of slice categories to functor categories:
+
+  `[C, Cat/X] ⟵reflective⟶ [C, [J, Type]/Phi(X)]`
+
+This is constructed by whiskering with `phiSlice X`, analogously to how we lifted
+the base adjunction to functor categories. -/
+
+section SliceValuedFunctorCategories
+
+variable (C : Type u) [Category.{v} C]
+variable (X : BundledOverCategoryData.{u, u})
+
+/-- The whiskering functor `(phiSlice X ∘ −) : [C, Cat/X] ⥤ [C, [J, Type]/Phi(X)]`.
+    This sends a functor `F : C ⥤ Over X` to `F ⋙ phiSlice X`. -/
+abbrev phiSliceWhiskering :
+    (C ⥤ Over X) ⥤ (C ⥤ Over (PhiFunctor.obj X)) :=
+  (Functor.whiskeringRight C (Over X) _).obj (phiSlice X)
+
+/-- The whiskering functor `(lSlice X ∘ −) : [C, [J, Type]/Phi(X)] ⥤ [C, Cat/X]`.
+    This is the left adjoint to `phiSliceWhiskering`. -/
+abbrev lSliceWhiskering :
+    (C ⥤ Over (PhiFunctor.obj X)) ⥤ (C ⥤ Over X) :=
+  (Functor.whiskeringRight C _ (Over X)).obj (lSlice X)
+
+/-- Post-composition with `phiSlice X` is fully faithful on functor categories.
+    This follows from `phiSlice X` being fully faithful. -/
+def phiSliceWhiskeringFullyFaithful :
+    (phiSliceWhiskering C X).FullyFaithful :=
+  (phiSliceFullyFaithful X).whiskeringRight C
+
+/-- The whiskering functor with phiSlice is full. -/
+instance phiSliceWhiskering_full : (phiSliceWhiskering C X).Full :=
+  (phiSliceWhiskeringFullyFaithful C X).full
+
+/-- The whiskering functor with phiSlice is faithful. -/
+instance phiSliceWhiskering_faithful : (phiSliceWhiskering C X).Faithful :=
+  (phiSliceWhiskeringFullyFaithful C X).faithful
+
+/-- The lifted adjunction `(lSlice X ∘ −) ⊣ (phiSlice X ∘ −)` on functor categories
+    valued in slices. -/
+def sliceValuedAdjunction :
+    lSliceWhiskering C X ⊣ phiSliceWhiskering C X :=
+  Adjunction.whiskerRight C (sliceAdjunction X)
+
+/-- phiSliceWhiskering is a right adjoint. -/
+instance phiSliceWhiskering_isRightAdjoint : (phiSliceWhiskering C X).IsRightAdjoint where
+  exists_leftAdjoint := ⟨lSliceWhiskering C X, ⟨sliceValuedAdjunction C X⟩⟩
+
+/-- lSliceWhiskering is a left adjoint. -/
+instance lSliceWhiskering_isLeftAdjoint : (lSliceWhiskering C X).IsLeftAdjoint where
+  exists_rightAdjoint := ⟨phiSliceWhiskering C X, ⟨sliceValuedAdjunction C X⟩⟩
+
+/-- The counit of the slice-valued functor adjunction at a functor F has iso components. -/
+instance sliceValuedAdjunction_counit_app_isIso
+    (F : C ⥤ Over X) :
+    IsIso ((sliceValuedAdjunction C X).counit.app F) := by
+  apply NatIso.isIso_of_isIso_app
+
+/-- The counit of the slice-valued functor adjunction is a natural isomorphism. -/
+instance sliceValuedAdjunction_counit_isIso :
+    IsIso (sliceValuedAdjunction C X).counit :=
+  NatIso.isIso_of_isIso_app _
+
+/-- The whiskering functor `(phiSlice X ∘ −)` is reflective.
+    This establishes that `[C, Cat/X]` is a reflective subcategory of
+    `[C, [J, Type]/Phi(X)]`. -/
+instance phiSliceWhiskering_reflective : Reflective (phiSliceWhiskering C X) where
+  L := lSliceWhiskering C X
+  adj := sliceValuedAdjunction C X
+
+end SliceValuedFunctorCategories
+
+/-! ## Natural Transformation Equivalence for Slice-Valued Functors
+
+The equivalence on natural transformations induced by full faithfulness of
+the slice-valued whiskering functor. -/
+
+section SliceNatTransEquiv
+
+variable {C : Type u} [Category.{v} C]
+variable {X : BundledOverCategoryData.{u, u}}
+variable (F G : C ⥤ Over X)
+
+/-- The equivalence between natural transformations in the slice-valued image
+    and natural transformations in the original functor category. -/
+def sliceNatTransEquiv :
+    (F ⋙ phiSlice X ⟶ G ⋙ phiSlice X) ≃ (F ⟶ G) :=
+  (phiSliceWhiskeringFullyFaithful C X).homEquiv.symm
+
+/-- Applying phiSlice to the preimage gives the original transformation. -/
+@[simp]
+theorem sliceNatTransEquiv_whiskerRight (α : F ⟶ G) :
+    sliceNatTransEquiv F G (Functor.whiskerRight α (phiSlice X)) = α :=
+  (phiSliceWhiskeringFullyFaithful C X).preimage_map α
+
+/-- The image under phiSlice of the preimage is the original transformation. -/
+@[simp]
+theorem whiskerRight_sliceNatTransEquiv (η : F ⋙ phiSlice X ⟶ G ⋙ phiSlice X) :
+    Functor.whiskerRight (sliceNatTransEquiv F G η) (phiSlice X) = η :=
+  (phiSliceWhiskeringFullyFaithful C X).map_preimage η
+
+end SliceNatTransEquiv
+
 end GebLean
