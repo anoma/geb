@@ -120,33 +120,100 @@ theorem QuiverGr.mk_morFamily.{uObj, uMor} (X : Type uObj) (M : X × X → Type 
 theorem QuiverGr.eta.{uObj, uMor} (Q : QuiverGr.{uObj, uMor}) :
     QuiverGr.mk Q.objType Q.morFamily = Q := rfl
 
-/-! ## Layer 2: Identity-Quiver Structure via Grothendieck Construction
+/-! ## Layered Bundle Structures
 
-For layer 2, we bundle quiver structure and identity structure together in the
-fiber over each type. Given `X : Type uObj`, the fiber `IdQuiverBundle X` has:
-- Objects: pairs `(Hom : X × X → Type uMor, id : ∀ x, Hom(x, x))`
-- Morphisms: natural transformations that preserve identity
+Each layer adds one new piece of structure, using `extends` to build on the
+previous layer. This eliminates code duplication and makes the layering explicit.
 
-This allows proper pullback along functions: for `f : X → Y`, a bundle
-`(Hom_Y, id_Y)` pulls back to `(f*Hom_Y, f*id_Y)` where:
-- `(f*Hom_Y)(x, y) = Hom_Y(f x, f y)`
-- `(f*id_Y)(x) = id_Y(f x)`
+Pullback along functions `f : X → Y` works uniformly:
+- `Hom_X(x, y) := Hom_Y(f x, f y)`
+- `id_X(x) := id_Y(f x)`
+- `comp_X(f, g) := comp_Y(f, g)`
 -/
 
-/-- Bundle of quiver structure with identity: pairs of morphism family and
-    identity assignment. -/
-structure IdQuiverBundle.{uObj, uMor} (X : Type uObj) where
+/-! ### Layer 1: Quiver Bundles (morphism families only) -/
+
+/-- Bundle of just the quiver structure: a morphism family over a type. -/
+structure QuiverBundle.{uObj, uMor} (X : Type uObj) where
   /-- The morphism family: for each pair `(x, y)`, a type of morphisms -/
   morFamily : X × X → Type uMor
+
+/-- Morphisms between quiver bundles: natural transformations on morphism
+    families. -/
+structure QuiverBundle.Hom.{uObj, uMor} {X : Type uObj}
+    (B₁ B₂ : QuiverBundle.{uObj, uMor} X) where
+  /-- The natural transformation on morphism families -/
+  transform : ∀ p : X × X, B₁.morFamily p → B₂.morFamily p
+
+/-- Identity morphism for QuiverBundle. -/
+def QuiverBundle.Hom.identity.{uObj, uMor} {X : Type uObj}
+    (B : QuiverBundle.{uObj, uMor} X) : QuiverBundle.Hom B B where
+  transform := fun _ m => m
+
+/-- Composition of QuiverBundle morphisms. -/
+def QuiverBundle.Hom.comp.{uObj, uMor} {X : Type uObj}
+    {B₁ B₂ B₃ : QuiverBundle.{uObj, uMor} X}
+    (f : QuiverBundle.Hom B₁ B₂) (g : QuiverBundle.Hom B₂ B₃) :
+    QuiverBundle.Hom B₁ B₃ where
+  transform := fun p m => g.transform p (f.transform p m)
+
+/-- Extensionality for QuiverBundle.Hom. -/
+@[ext]
+theorem QuiverBundle.Hom.ext.{uObj, uMor} {X : Type uObj}
+    {B₁ B₂ : QuiverBundle.{uObj, uMor} X}
+    {f g : QuiverBundle.Hom B₁ B₂}
+    (h : ∀ p m, f.transform p m = g.transform p m) : f = g := by
+  cases f; cases g
+  congr 1
+  funext p m
+  exact h p m
+
+/-- Category instance for QuiverBundle over a fixed type. -/
+instance QuiverBundle.instCategory.{uObj, uMor} (X : Type uObj) :
+    Category.{max uObj uMor} (QuiverBundle.{uObj, uMor} X) where
+  Hom := QuiverBundle.Hom
+  id := QuiverBundle.Hom.identity
+  comp := QuiverBundle.Hom.comp
+  id_comp := fun _ => by ext p m; rfl
+  comp_id := fun _ => by ext p m; rfl
+  assoc := fun _ _ _ => by ext p m; rfl
+
+/-- Pullback of a QuiverBundle along a function. -/
+def QuiverBundle.pullback.{uObj, uMor} {X Y : Type uObj}
+    (f : X → Y) (B : QuiverBundle.{uObj, uMor} Y) :
+    QuiverBundle.{uObj, uMor} X where
+  morFamily := fun p => B.morFamily (f p.1, f p.2)
+
+/-- Pullback of a morphism of QuiverBundles. -/
+def QuiverBundle.Hom.pullback.{uObj, uMor} {X Y : Type uObj}
+    (f : X → Y) {B₁ B₂ : QuiverBundle.{uObj, uMor} Y}
+    (φ : QuiverBundle.Hom B₁ B₂) :
+    QuiverBundle.Hom (QuiverBundle.pullback f B₁)
+      (QuiverBundle.pullback f B₂) where
+  transform := fun p => φ.transform (f p.1, f p.2)
+
+/-- Pullback functor for QuiverBundle categories. -/
+def QuiverBundle.pullbackFunctor.{uObj, uMor} {X Y : Type uObj} (f : X → Y) :
+    QuiverBundle.{uObj, uMor} Y ⥤ QuiverBundle.{uObj, uMor} X where
+  obj := QuiverBundle.pullback f
+  map := QuiverBundle.Hom.pullback f
+  map_id := fun _ => by apply QuiverBundle.Hom.ext; intro p m; rfl
+  map_comp := fun _ _ => by apply QuiverBundle.Hom.ext; intro p m; rfl
+
+/-! ### Layer 2: Identity-Quiver Bundles (extends QuiverBundle with identity) -/
+
+/-- Bundle of quiver structure with identity: extends QuiverBundle with
+    identity assignment. -/
+structure IdQuiverBundle.{uObj, uMor} (X : Type uObj)
+    extends QuiverBundle.{uObj, uMor} X where
   /-- The identity assignment: for each `x`, an identity morphism -/
   idMor : ∀ x : X, morFamily (x, x)
 
-/-- Morphisms between identity-quiver bundles over the same base type:
-    natural transformations that preserve identity. -/
+/-- Morphisms between identity-quiver bundles: extends QuiverBundle.Hom with
+    identity preservation. -/
 structure IdQuiverBundle.Hom.{uObj, uMor} {X : Type uObj}
-    (B₁ B₂ : IdQuiverBundle.{uObj, uMor} X) where
-  /-- The natural transformation on morphism families -/
-  transform : ∀ p : X × X, B₁.morFamily p → B₂.morFamily p
+    (B₁ B₂ : IdQuiverBundle.{uObj, uMor} X)
+    extends QuiverBundle.Hom B₁.toQuiverBundle B₂.toQuiverBundle where
   /-- The transformation preserves identity morphisms -/
   preserves_id : ∀ x : X, transform (x, x) (B₁.idMor x) = B₂.idMor x
 
@@ -172,8 +239,8 @@ theorem IdQuiverBundle.Hom.ext.{uObj, uMor} {X : Type uObj}
     (h : ∀ p m, f.transform p m = g.transform p m) : f = g := by
   cases f; cases g
   congr 1
-  funext p m
-  exact h p m
+  apply QuiverBundle.Hom.ext
+  exact h
 
 /-- Category instance for IdQuiverBundle over a fixed type. -/
 instance IdQuiverBundle.instCategory.{uObj, uMor} (X : Type uObj) :
@@ -308,7 +375,7 @@ def IdGr.ofData.{uObj, uMor}
     (M : X × X → Type uMor)
     (idMorFn : ∀ x : X, M (x, x)) :
     IdGr.{uObj, uMor} :=
-  ⟨X, ⟨M, idMorFn⟩⟩
+  ⟨X, { toQuiverBundle := ⟨M⟩, idMor := idMorFn }⟩
 
 @[simp]
 theorem IdGr.mk_objType.{uObj, uMor} (X : Type uObj) (B : IdQuiverBundle.{uObj, uMor} X) :
@@ -353,23 +420,18 @@ together in the fiber over each type. Given `X : Type uObj`, the fiber
 Pullback along `f : X → Y` works for all three components.
 -/
 
-/-- Bundle of quiver structure with identity and composition. -/
-structure CompBundle.{uObj, uMor} (X : Type uObj) where
-  /-- The morphism family: for each pair `(x, y)`, a type of morphisms -/
-  morFamily : X × X → Type uMor
-  /-- The identity assignment: for each `x`, an identity morphism -/
-  idMor : ∀ x : X, morFamily (x, x)
+/-- Bundle of quiver structure with identity and composition.
+    Extends `IdQuiverBundle` with composition operation. -/
+structure CompBundle.{uObj, uMor} (X : Type uObj)
+    extends IdQuiverBundle.{uObj, uMor} X where
   /-- The composition operation -/
   compOp : ∀ (x y z : X), morFamily (x, y) → morFamily (y, z) → morFamily (x, z)
 
 /-- Morphisms between composition bundles over the same base type:
-    natural transformations preserving identity and composition. -/
+    extends `IdQuiverBundle.Hom` with composition preservation. -/
 structure CompBundle.Hom.{uObj, uMor} {X : Type uObj}
-    (B₁ B₂ : CompBundle.{uObj, uMor} X) where
-  /-- The natural transformation on morphism families -/
-  transform : ∀ p : X × X, B₁.morFamily p → B₂.morFamily p
-  /-- The transformation preserves identity morphisms -/
-  preserves_id : ∀ x : X, transform (x, x) (B₁.idMor x) = B₂.idMor x
+    (B₁ B₂ : CompBundle.{uObj, uMor} X)
+    extends toIdHom : IdQuiverBundle.Hom B₁.toIdQuiverBundle B₂.toIdQuiverBundle where
   /-- The transformation preserves composition -/
   preserves_comp : ∀ (x y z : X) (f : B₁.morFamily (x, y)) (g : B₁.morFamily (y, z)),
     transform (x, z) (B₁.compOp x y z f g) =
@@ -399,8 +461,8 @@ theorem CompBundle.Hom.ext.{uObj, uMor} {X : Type uObj}
     (h : ∀ p m, f.transform p m = g.transform p m) : f = g := by
   cases f; cases g
   congr 1
-  funext p m
-  exact h p m
+  apply IdQuiverBundle.Hom.ext
+  exact h
 
 /-- Category instance for CompBundle over a fixed type. -/
 instance CompBundle.instCategory.{uObj, uMor} (X : Type uObj) :
@@ -566,7 +628,8 @@ def CompGr.ofData.{uObj, uMor}
     (idMorFn : ∀ x : X, M (x, x))
     (compOpFn : ∀ (x y z : X), M (x, y) → M (y, z) → M (x, z)) :
     CompGr.{uObj, uMor} :=
-  ⟨X, ⟨M, idMorFn, compOpFn⟩⟩
+  ⟨X, { toIdQuiverBundle := { toQuiverBundle := ⟨M⟩, idMor := idMorFn },
+        compOp := compOpFn }⟩
 
 @[simp]
 theorem CompGr.ofData_objType.{uObj, uMor}
