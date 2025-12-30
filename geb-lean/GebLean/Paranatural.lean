@@ -133,6 +133,38 @@ structure Paranat where
   /-- The paranaturality condition -/
   paranatural : IsParanatural F G app
 
+namespace Paranat
+
+variable {F G}
+
+/-- The identity paranatural transformation on an endoprofunctor. -/
+@[simp]
+def id : Paranat F F where
+  app _ d := d
+  paranatural _ _ _ _ _ h := h
+
+variable {H : Cᵒᵖ ⥤ C ⥤ Type w}
+
+/-- Composition of paranatural transformations. -/
+@[simp]
+def comp (α : Paranat F G) (β : Paranat G H) : Paranat F H where
+  app I d := β.app I (α.app I d)
+  paranatural I₀ I₁ f d₀ d₁ hF := β.paranatural I₀ I₁ f _ _ (α.paranatural I₀ I₁ f d₀ d₁ hF)
+
+end Paranat
+
+/-- The type of endoprofunctors on a category `C`, viewed as objects of a
+category where morphisms are paranatural transformations. -/
+def EndoProf : Type max u v (w + 1) := Cᵒᵖ ⥤ C ⥤ Type w
+
+instance : Category (EndoProf (C := C)) where
+  Hom F G := Paranat F G
+  id F := Paranat.id
+  comp := Paranat.comp
+  id_comp _ := by ext; rfl
+  comp_id _ := by ext; rfl
+  assoc _ _ _ := by ext; rfl
+
 end Paranatural
 
 end GebLean
