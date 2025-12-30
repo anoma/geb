@@ -40,6 +40,9 @@ universe w
 
 variable (F : Cᵒᵖ ⥤ C ⥤ Type w)
 
+/-- Apply an endoprofunctor at the diagonal: `diagApp F I` is `F(I, I)`. -/
+abbrev diagApp (I : C) : Type w := (F.obj (Opposite.op I)).obj I
+
 /-- The type of diagonal elements for an endoprofunctor `F : Cᵒᵖ ⥤ C ⥤ Type w`.
 An object consists of a base object `I : C` and a diagonal element
 `elem : (F.obj (op I)).obj I`. -/
@@ -47,8 +50,8 @@ An object consists of a base object `I : C` and a diagonal element
 structure DiagElem where
   /-- The base object in `C` -/
   base : C
-  /-- The diagonal element in `(F.obj (op base)).obj base` -/
-  elem : (F.obj (Opposite.op base)).obj base
+  /-- The diagonal element in `diagApp F base` -/
+  elem : diagApp F base
 
 /-- The diagonal compatibility condition for an endoprofunctor. Given a morphism
 `f : I₀ ⟶ I₁` and diagonal elements `d₀ ∈ F(I₀, I₀)` and `d₁ ∈ F(I₁, I₁)`,
@@ -56,8 +59,7 @@ this asserts that the covariant action of `f` on `d₀` equals the contravariant
 action of `f` on `d₁`. -/
 @[simp]
 def DiagCompat (I₀ I₁ : C) (f : I₀ ⟶ I₁)
-    (d₀ : (F.obj (Opposite.op I₀)).obj I₀)
-    (d₁ : (F.obj (Opposite.op I₁)).obj I₁) : Prop :=
+    (d₀ : diagApp F I₀) (d₁ : diagApp F I₁) : Prop :=
   (F.obj (Opposite.op I₀)).map f d₀ = (F.map f.op).app I₁ d₁
 
 /-- A morphism in the category of diagonal elements from `(I₀, g₀)` to `(I₁, g₁)`
@@ -210,15 +212,14 @@ variable (F G : Cᵒᵖ ⥤ C ⥤ Type w)
 between two endoprofunctors. This is the signature without the paranaturality
 condition. -/
 def ParanatSig : Type (max u w) :=
-  (I : C) → (F.obj (Opposite.op I)).obj I → (G.obj (Opposite.op I)).obj I
+  (I : C) → diagApp F I → diagApp G I
 
 /-- The paranaturality condition for a family of functions between diagonal
 elements of two endoprofunctors. A family `α` is paranatural if whenever
 the covariant and contravariant actions of a morphism agree on elements of `F`,
 then the same morphism's actions agree on the images under `α` in `G`. -/
 def IsParanatural (α : ParanatSig F G) : Prop :=
-  ∀ (I₀ I₁ : C) (f : I₀ ⟶ I₁) (d₀ : (F.obj (Opposite.op I₀)).obj I₀)
-    (d₁ : (F.obj (Opposite.op I₁)).obj I₁),
+  ∀ (I₀ I₁ : C) (f : I₀ ⟶ I₁) (d₀ : diagApp F I₀) (d₁ : diagApp F I₁),
     DiagCompat F I₀ I₁ f d₀ d₁ → DiagCompat G I₀ I₁ f (α I₀ d₀) (α I₁ d₁)
 
 /-- A paranatural transformation between two endoprofunctors `F` and `G` on `C`.
