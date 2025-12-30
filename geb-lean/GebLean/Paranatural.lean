@@ -95,7 +95,7 @@ def Hom.comp {x y z : DiagElem F} (f : Hom F x y) (g : Hom F y z) :
     rw [op_comp]
     simp only [Functor.map_comp, NatTrans.comp_app, types_comp_apply]
 
-instance : Category (DiagElem F) where
+instance diagElemCategory : Category (DiagElem F) where
   Hom := Hom F
   id := Hom.id F
   comp := Hom.comp F
@@ -160,13 +160,17 @@ universe w
 
 variable (F G : Cᵒᵖ ⥤ C ⥤ Type w)
 
+/-- The type of component families for a (potential) paranatural transformation
+between two endoprofunctors. This is the signature without the paranaturality
+condition. -/
+def ParanatSig : Type (max u w) :=
+  (I : C) → (F.obj (Opposite.op I)).obj I → (G.obj (Opposite.op I)).obj I
+
 /-- The paranaturality condition for a family of functions between diagonal
 elements of two endoprofunctors. A family `α` is paranatural if whenever
 the covariant and contravariant actions of a morphism agree on elements of `F`,
 then the same morphism's actions agree on the images under `α` in `G`. -/
-def IsParanatural
-    (α : (I : C) → (F.obj (Opposite.op I)).obj I → (G.obj (Opposite.op I)).obj I) :
-    Prop :=
+def IsParanatural (α : ParanatSig F G) : Prop :=
   ∀ (I₀ I₁ : C) (f : I₀ ⟶ I₁) (d₀ : (F.obj (Opposite.op I₀)).obj I₀)
     (d₁ : (F.obj (Opposite.op I₁)).obj I₁),
     DiagCompat F I₀ I₁ f d₀ d₁ → DiagCompat G I₀ I₁ f (α I₀ d₀) (α I₁ d₁)
@@ -177,9 +181,35 @@ condition for morphisms between diagonal elements. -/
 @[ext]
 structure Paranat where
   /-- The component of the paranatural transformation at object `I` -/
-  app : (I : C) → (F.obj (Opposite.op I)).obj I → (G.obj (Opposite.op I)).obj I
+  app : ParanatSig F G
   /-- The paranaturality condition -/
   paranatural : IsParanatural F G app
+
+/-- Restriction of a natural transformation between endoprofunctors to the
+diagonal. Given `η : F ⟶ G`, we obtain a family of functions on diagonal
+elements by applying `η` at both contravariant and covariant positions. -/
+def NatTrans.restrict (η : F ⟶ G) : ParanatSig F G :=
+  fun I d => (η.app (Opposite.op I)).app I d
+
+/-- The restriction of a natural transformation to the diagonal is paranatural.
+This uses naturality in both the contravariant and covariant directions,
+combined with the identity laws for the category. -/
+theorem NatTrans.restrict_isParanatural (η : F ⟶ G) :
+    IsParanatural F G (NatTrans.restrict F G η) := by
+  intro I₀ I₁ f d₀ d₁ hcompat
+  simp only [NatTrans.restrict, DiagCompat]
+  have nat_cov := congrFun ((η.app (Opposite.op I₀)).naturality f) d₀
+  simp only [types_comp_apply] at nat_cov
+  rw [← nat_cov, hcompat]
+  have nat_con := congrFun (congrArg (NatTrans.app · I₁) (η.naturality f.op)) d₁
+  simp only [types_comp_apply, NatTrans.comp_app] at nat_con
+  exact nat_con
+
+/-- Construct a paranatural transformation from a natural transformation
+by restricting to the diagonal. -/
+def Paranat.ofNatTrans (η : F ⟶ G) : Paranat F G where
+  app := NatTrans.restrict F G η
+  paranatural := NatTrans.restrict_isParanatural F G η
 
 namespace Paranat
 
@@ -205,7 +235,7 @@ end Paranat
 category where morphisms are paranatural transformations. -/
 def EndoProf : Type max u v (w + 1) := Cᵒᵖ ⥤ C ⥤ Type w
 
-instance : Category (EndoProf (C := C)) where
+instance endoProfCategory : Category (EndoProf (C := C)) where
   Hom F G := Paranat F G
   id F := Paranat.id
   comp := Paranat.comp
