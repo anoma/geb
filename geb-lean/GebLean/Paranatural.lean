@@ -456,4 +456,79 @@ def paranaturalSliceEquiv :
 
 end ParanaturalSliceEquiv
 
+section EndoProfFullyFaithful
+
+/-!
+## EndoProf as a full subcategory of Cat/C
+
+The category `EndoProf` of endoprofunctors with paranatural transformations
+embeds fully faithfully into the slice category `Cat/C` via the diagonal
+elements construction. This establishes `EndoProf` as a full subcategory
+of `Cat/C`, where the objects are those of the form `(DiagElem F, forget F)`.
+-/
+
+variable (C : Type u) [Category.{v} C]
+
+/-- The functor induced by a paranatural identity is the identity functor. -/
+@[simp]
+theorem Paranat.toFunctor_id (F : Cᵒᵖ ⥤ C ⥤ Type u) :
+    (Paranat.id (F := F)).toFunctor = 𝟭 (DiagElem F) := by
+  refine Functor.ext (fun x => ?_) (fun x y f => ?_)
+  · rfl
+  · simp only [Functor.id_map, eqToHom_refl, Category.comp_id, Category.id_comp]
+    rfl
+
+/-- `Paranat.toOverHom` sends the identity to the identity morphism. -/
+@[simp]
+theorem Paranat.toOverHom_id (F : Cᵒᵖ ⥤ C ⥤ Type u) :
+    Paranat.toOverHom C F F Paranat.id = 𝟙 ((diagElemSliceFunctor C).obj F) := by
+  apply Over.OverMorphism.ext
+  exact Paranat.toFunctor_id C F
+
+/-- The functor induced by a composition of paranatural transformations is
+the composition of the induced functors. -/
+@[simp]
+theorem Paranat.toFunctor_comp {F G H : Cᵒᵖ ⥤ C ⥤ Type u}
+    (α : Paranat F G) (β : Paranat G H) :
+    (α.comp β).toFunctor = α.toFunctor ⋙ β.toFunctor := by
+  refine Functor.ext (fun x => ?_) (fun x y f => ?_)
+  · rfl
+  · simp only [Functor.comp_map, eqToHom_refl, Category.comp_id, Category.id_comp]
+    rfl
+
+/-- `Paranat.toOverHom` preserves composition. -/
+@[simp]
+theorem Paranat.toOverHom_comp {F G H : Cᵒᵖ ⥤ C ⥤ Type u}
+    (α : Paranat F G) (β : Paranat G H) :
+    Paranat.toOverHom C F H (α.comp β) =
+      Paranat.toOverHom C F G α ≫ Paranat.toOverHom C G H β := by
+  apply Over.OverMorphism.ext
+  exact Paranat.toFunctor_comp C α β
+
+/-- The functor from `EndoProf` to `Over (Cat.of C)` sending each endoprofunctor
+to its category of diagonal elements with the forgetful functor to `C`.
+Morphisms (paranatural transformations) are sent to slice morphisms via the
+induced functors on diagonal elements. -/
+def diagElemEndoProf : EndoProf (C := C) ⥤ Over (Cat.of C) where
+  obj F := (diagElemSliceFunctor C).obj F
+  map α := Paranat.toOverHom C _ _ α
+  map_id F := Paranat.toOverHom_id C F
+  map_comp α β := Paranat.toOverHom_comp C α β
+
+/-- `diagElemEndoProf` is fully faithful, establishing `EndoProf` as a full
+subcategory of `Cat/C`. The objects of this subcategory are precisely those
+of the form `(DiagElem F, forget F)` for endoprofunctors `F`. -/
+def diagElemEndoProf_fullyFaithful : (diagElemEndoProf C).FullyFaithful where
+  preimage φ := Paranat.ofOverHom C φ
+  map_preimage φ := Paranat.toOverHom_ofOverHom C φ
+  preimage_map α := Paranat.ofOverHom_toOverHom C α
+
+instance diagElemEndoProf_full : (diagElemEndoProf C).Full :=
+  (diagElemEndoProf_fullyFaithful C).full
+
+instance diagElemEndoProf_faithful : (diagElemEndoProf C).Faithful :=
+  (diagElemEndoProf_fullyFaithful C).faithful
+
+end EndoProfFullyFaithful
+
 end GebLean
