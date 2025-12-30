@@ -3548,6 +3548,43 @@ def mapQuotHomND {F G : Obj.CatJudgCopr.{uInd, vInd, wInd, xInd}}
     exact mapFreeMorND_equiv α heq'
   · exact m
 
+/-- mapQuotHomND preserves formal identity morphisms. -/
+theorem mapQuotHomND_idFormal {F G : Obj.CatJudgCopr.{uInd, vInd, wInd, xInd}}
+    (α : Mor.CatJudgNatTrans F G) (x : F.obj) :
+    mapQuotHomND α ((quotDataOf F).quotHomIdFormal x) =
+    (quotDataOf G).quotHomIdFormal (α.objMap x) := by
+  simp only [QuotientDataND.quotHomIdFormal, QuotientDataND.quotHomND,
+    mapQuotHomND]
+  apply Quotient.sound
+  change (quotDataOf G).FreeMorEquiv
+    (mapValidHomND α ((quotDataOf F).validIdFormal x)).val
+    ((quotDataOf G).validIdFormal (α.objMap x)).val
+  simp only [mapValidHomND, QuotientDataND.validIdFormal, mapFreeMorND]
+  exact QuotientDataND.FreeMorEquiv.refl _
+
+/-- mapQuotHomND preserves composition. -/
+theorem mapQuotHomND_comp {F G : Obj.CatJudgCopr.{uInd, vInd, wInd, xInd}}
+    (α : Mor.CatJudgNatTrans F G)
+    {a b c : F.obj}
+    (f : (quotDataOf F).QuotHomND a b)
+    (g : (quotDataOf F).QuotHomND b c) :
+    mapQuotHomND α ((quotDataOf F).quotHomComp f g) =
+    (quotDataOf G).quotHomComp (mapQuotHomND α f) (mapQuotHomND α g) := by
+  induction f using Quotient.inductionOn with
+  | h vf =>
+    induction g using Quotient.inductionOn with
+    | h vg =>
+      simp only [QuotientDataND.quotHomComp, QuotientDataND.quotHomND,
+        mapQuotHomND]
+      apply Quotient.sound
+      change (quotDataOf G).FreeMorEquiv
+        (mapValidHomND α ((quotDataOf F).validCompHom vg vf)).val
+        ((quotDataOf G).validCompHom (mapValidHomND α vg)
+          (mapValidHomND α vf)).val
+      simp only [mapValidHomND, QuotientDataND.validCompHom,
+        FreeMorValidatorData.validCompND, mapFreeMorND]
+      exact QuotientDataND.FreeMorEquiv.refl _
+
 end UniverseIndependentAdjunction
 
 end GebLean
