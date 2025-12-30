@@ -1,4 +1,5 @@
 import Mathlib.CategoryTheory.Category.Basic
+import Mathlib.CategoryTheory.Category.Cat
 import Mathlib.CategoryTheory.Functor.Basic
 import Mathlib.CategoryTheory.Products.Basic
 import Mathlib.CategoryTheory.Types.Basic
@@ -141,6 +142,15 @@ theorem map_comp_nat (η : F ⟶ G) (θ : G ⟶ H) :
     apply Hom.ext; rfl
 
 end DiagElem
+
+/-- The functor from endoprofunctors on `C` to the category of categories,
+sending each endoprofunctor `F` to its category of diagonal elements. -/
+@[simps]
+def diagElemFunctor : (Cᵒᵖ ⥤ C ⥤ Type w) ⥤ Cat where
+  obj F := Cat.of (DiagElem F)
+  map η := DiagElem.map η
+  map_id _ := DiagElem.map_id_nat
+  map_comp η θ := DiagElem.map_comp_nat η θ
 
 end DiagonalElements
 
