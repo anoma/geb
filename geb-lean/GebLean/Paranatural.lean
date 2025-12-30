@@ -106,6 +106,19 @@ instance diagElemCategory : Category (DiagElem F) where
   comp_id f := by ext; simp
   assoc f g h := by ext; simp [Category.assoc]
 
+/-- The base component of `eqToHom` in `DiagElem` is `eqToHom` in `C`. -/
+@[simp]
+theorem Hom.eqToHom_base {x y : DiagElem F} (h : x = y) :
+    (eqToHom h).base = eqToHom (congrArg DiagElem.base h) := by
+  subst h
+  rfl
+
+/-- The base component of a composition in `DiagElem`. -/
+@[simp]
+theorem Hom.comp_base {x y z : DiagElem F} (f : x ⟶ y) (g : y ⟶ z) :
+    (f ≫ g).base = f.base ≫ g.base :=
+  rfl
+
 variable {F}
 variable {G : Cᵒᵖ ⥤ C ⥤ Type w}
 
@@ -291,5 +304,156 @@ instance endoProfCategory : Category (EndoProf (C := C)) where
   assoc _ _ _ := by ext; rfl
 
 end Paranatural
+
+section ParanaturalSliceEquiv
+
+/-!
+## Equivalence between paranatural transformations and slice morphisms
+
+A paranatural transformation `α : Paranat F G` corresponds precisely to a
+morphism in `Over (Cat.of C)` from `(DiagElem F, forget F)` to
+`(DiagElem G, forget G)`. This section establishes this correspondence,
+showing that `EndoProf` embeds fully faithfully into `Cat/C`.
+-/
+
+variable (C : Type u) [Category.{v} C]
+variable (F G : Cᵒᵖ ⥤ C ⥤ Type u)
+
+/-- A paranatural transformation induces a functor between diagonal element
+categories. The functor preserves the base object and transforms diagonal
+elements via the paranatural components. -/
+@[simps]
+def Paranat.toFunctor (α : Paranat F G) : DiagElem F ⥤ DiagElem G where
+  obj x := ⟨x.base, α.app x.base x.elem⟩
+  map {x y} f := ⟨f.base, α.paranatural x.base y.base f.base x.elem y.elem f.compat⟩
+  map_id _ := DiagElem.Hom.ext rfl
+  map_comp _ _ := DiagElem.Hom.ext rfl
+
+/-- The functor induced by a paranatural transformation commutes with the
+forgetful functors to `C`. -/
+theorem Paranat.toFunctor_forget (α : Paranat F G) :
+    α.toFunctor ⋙ DiagElem.forget G = DiagElem.forget F := by
+  refine Functor.ext (fun x => ?_) (fun x y f => ?_)
+  · rfl
+  · simp only [Functor.comp_map, eqToHom_refl, Category.comp_id, Category.id_comp,
+      toFunctor_map_base, DiagElem.forget_map]
+
+/-- A paranatural transformation induces a morphism in the slice category
+`Over (Cat.of C)`. -/
+def Paranat.toOverHom (α : Paranat F G) :
+    (diagElemSliceFunctor C).obj F ⟶ (diagElemSliceFunctor C).obj G :=
+  Over.homMk α.toFunctor (α.toFunctor_forget)
+
+variable {F G}
+
+/-- The slice condition for an Over morphism: the functor composition with
+the forgetful functor equals the domain's forgetful functor. -/
+theorem sliceCondition
+    (φ : (diagElemSliceFunctor C).obj F ⟶ (diagElemSliceFunctor C).obj G) :
+    φ.left ⋙ DiagElem.forget G = DiagElem.forget F := by
+  have h := φ.w
+  simp only [diagElemSliceFunctor, Over.mk_left, Over.mk_hom] at h
+  exact h
+
+/-- A slice morphism preserves the base object of diagonal elements. -/
+theorem sliceCondition_obj
+    (φ : (diagElemSliceFunctor C).obj F ⟶ (diagElemSliceFunctor C).obj G)
+    (x : DiagElem F) :
+    (φ.left.obj x).base = x.base :=
+  congrFun (congrArg Functor.obj (sliceCondition C φ)) x
+
+/-- A slice morphism preserves the base of mapped morphisms, via transport. -/
+theorem sliceCondition_map
+    (φ : (diagElemSliceFunctor C).obj F ⟶ (diagElemSliceFunctor C).obj G)
+    {x y : DiagElem F} (f : x ⟶ y) :
+    (φ.left.map f).base =
+      eqToHom (sliceCondition_obj C φ x) ≫ f.base ≫
+        eqToHom (sliceCondition_obj C φ y).symm := by
+  have heq := sliceCondition C φ
+  have h := Functor.congr_hom heq f
+  simp only [Functor.comp_map, DiagElem.forget_map] at h
+  exact h
+
+/-- Extract a paranatural transformation from a slice morphism. The slice
+condition ensures the functor preserves base objects, giving us a family
+of functions on diagonal elements. Functoriality ensures paranaturality. -/
+def Paranat.ofOverHom
+    (φ : (diagElemSliceFunctor C).obj F ⟶ (diagElemSliceFunctor C).obj G) :
+    Paranat F G where
+  app I d :=
+    let x : DiagElem F := ⟨I, d⟩
+    let y : DiagElem G := φ.left.obj x
+    have hbase : y.base = I := sliceCondition_obj C φ x
+    hbase ▸ y.elem
+  paranatural := fun I₀ I₁ f d₀ d₁ hcompat => by
+    simp only [DiagCompat]
+    let x₀ : DiagElem F := ⟨I₀, d₀⟩
+    let x₁ : DiagElem F := ⟨I₁, d₁⟩
+    let mor : x₀ ⟶ x₁ := ⟨f, hcompat⟩
+    let y₀ := φ.left.obj x₀
+    let y₁ := φ.left.obj x₁
+    let hmor := φ.left.map mor
+    have hcompat' : DiagCompat G y₀.base y₁.base hmor.base y₀.elem y₁.elem := hmor.compat
+    simp only [DiagCompat] at hcompat'
+    have hbase₀ : y₀.base = I₀ := sliceCondition_obj C φ x₀
+    have hbase₁ : y₁.base = I₁ := sliceCondition_obj C φ x₁
+    have hmor_base := sliceCondition_map C φ mor
+    suffices h : ∀ (b₀ b₁ : C) (g : b₀ ⟶ b₁) (e₀ : diagApp G b₀) (e₁ : diagApp G b₁)
+        (h₀ : b₀ = I₀) (h₁ : b₁ = I₁) (_ : g = eqToHom h₀ ≫ f ≫ eqToHom h₁.symm)
+        (_ : DiagCompat G b₀ b₁ g e₀ e₁),
+        (G.obj (Opposite.op I₀)).map f (h₀ ▸ e₀) =
+          (G.map f.op).app I₁ (h₁ ▸ e₁) by
+      exact h y₀.base y₁.base hmor.base y₀.elem y₁.elem hbase₀ hbase₁ hmor_base hcompat'
+    intro b₀ b₁ g e₀ e₁ h₀ h₁ hg hc
+    subst h₀ h₁
+    simp only [eqToHom_refl, Category.comp_id, Category.id_comp] at hg
+    subst hg
+    exact hc
+
+/-- Converting a paranatural transformation to a slice morphism and back
+yields the original transformation. -/
+@[simp]
+theorem Paranat.ofOverHom_toOverHom (α : Paranat F G) :
+    ofOverHom C (toOverHom C F G α) = α := by
+  ext
+  rfl
+
+/-- Converting a slice morphism to a paranatural transformation and back
+yields the original slice morphism. -/
+@[simp]
+theorem Paranat.toOverHom_ofOverHom
+    (φ : (diagElemSliceFunctor C).obj F ⟶ (diagElemSliceFunctor C).obj G) :
+    toOverHom C F G (ofOverHom C φ) = φ := by
+  apply Over.OverMorphism.ext
+  refine Functor.ext ?h_obj ?h_map
+  case h_obj =>
+    intro x
+    apply DiagElem.ext
+    · exact (sliceCondition_obj C φ x).symm
+    · simp only [ofOverHom, toOverHom, Over.homMk_left, toFunctor_obj_base,
+        toFunctor_obj_elem, eqRec_eq_cast]
+      exact cast_heq _ _
+  case h_map =>
+    intro x y f
+    apply DiagElem.Hom.ext
+    simp only [ofOverHom, toOverHom, Over.homMk_left, toFunctor_map_base]
+    rw [DiagElem.Hom.comp_base, DiagElem.Hom.comp_base,
+        DiagElem.Hom.eqToHom_base, DiagElem.Hom.eqToHom_base]
+    rw [sliceCondition_map]
+    simp only [Category.assoc, eqToHom_trans_assoc, eqToHom_trans, eqToHom_refl,
+      Category.comp_id, Category.id_comp]
+
+/-- The equivalence between paranatural transformations and slice morphisms.
+This shows that `Paranat F G` is isomorphic to the hom-set in `Over (Cat.of C)`
+between the diagonal element categories. -/
+def paranaturalSliceEquiv :
+    Paranat F G ≃
+    ((diagElemSliceFunctor C).obj F ⟶ (diagElemSliceFunctor C).obj G) where
+  toFun := Paranat.toOverHom C F G
+  invFun := Paranat.ofOverHom C
+  left_inv := Paranat.ofOverHom_toOverHom C
+  right_inv := Paranat.toOverHom_ofOverHom C
+
+end ParanaturalSliceEquiv
 
 end GebLean
