@@ -531,4 +531,117 @@ instance diagElemEndoProf_faithful : (diagElemEndoProf C).Faithful :=
 
 end EndoProfFullyFaithful
 
+section Paranat2
+
+/-!
+## 2-categorical structure: transformations between paranatural transformations
+
+Given two paranatural transformations `α β : Paranat F G`, we can view them
+as functors `α.toFunctor β.toFunctor : DiagElem F ⥤ DiagElem G`. A natural
+transformation between these functors constitutes a "2-morphism" between
+paranatural transformations.
+
+In the slice 2-category `Cat/C`, 2-morphisms must commute with the projections
+to `C`. We show that this constraint forces any such 2-morphism to be the
+identity, making the slice category locally discrete (hom-categories are
+discrete). As a consequence, `α = β` whenever a slice-compatible 2-morphism
+exists between them.
+
+In `Cat` without the slice constraint, non-trivial 2-morphisms can exist;
+they correspond to coherent families of endomorphisms on the base objects.
+-/
+
+variable (C : Type u) [Category.{v} C]
+variable {F G : Cᵒᵖ ⥤ C ⥤ Type u}
+
+/-- A 2-morphism in the slice category `Cat/C` between two slice morphisms.
+This consists of a natural transformation between the underlying functors
+that is compatible with the projections to `C`.
+
+For slice morphisms `φ ψ : Over X`, a 2-cell `θ : φ ⟹ ψ` must satisfy
+`θ_a ≫ ψ.hom = φ.hom` for each object `a`. When `X = Cat.of C` and the
+morphisms are forgetful functors, this means `(forget G).map (θ.app x) = 𝟙`. -/
+@[ext]
+structure Slice2Hom (α β : Paranat F G) where
+  /-- The underlying natural transformation -/
+  nat : α.toFunctor ⟶ β.toFunctor
+  /-- Compatibility with the forgetful functor: θ_x.base = 𝟙 -/
+  slice_compat : ∀ x : DiagElem F, (nat.app x).base = 𝟙 x.base
+
+variable {α β : Paranat F G}
+
+/-- The component of a slice 2-morphism at a diagonal element. -/
+abbrev Slice2Hom.component (θ : Slice2Hom C α β) (x : DiagElem F) :
+    (Paranat.toFunctor C F G α).obj x ⟶ (Paranat.toFunctor C F G β).obj x :=
+  θ.nat.app x
+
+/-- The base of a slice 2-morphism component is the identity. -/
+theorem Slice2Hom.component_base (θ : Slice2Hom C α β) (x : DiagElem F) :
+    (θ.component C x).base = 𝟙 x.base :=
+  θ.slice_compat x
+
+/-- When the slice compatibility condition holds, the slice 2-morphism forces
+the targets to have the same element component. This is because the morphism
+has base component `𝟙` but connects `α.app x.base x.elem` to `β.app x.base x.elem`.
+The only way a DiagElem morphism with base `𝟙` can exist is if the elements
+are equal (due to the diagonal compatibility condition). -/
+theorem Slice2Hom.elem_eq (θ : Slice2Hom C α β) (x : DiagElem F) :
+    α.app x.base x.elem = β.app x.base x.elem := by
+  have hbase := θ.component_base C x
+  let mor := θ.component C x
+  have hcompat := mor.compat
+  simp only [DiagCompat, Paranat.toFunctor_obj_base, Paranat.toFunctor_obj_elem] at hcompat
+  rw [hbase] at hcompat
+  simp only [op_id, Functor.map_id, NatTrans.id_app, types_id_apply] at hcompat
+  exact hcompat
+
+/-- Any two paranatural transformations admitting a slice 2-morphism between
+them must be equal. This shows that `EndoProf` is locally discrete when
+viewed as a 2-category via the embedding into `Cat/C`. -/
+theorem Slice2Hom.paranat_eq (θ : Slice2Hom C α β) : α = β := by
+  apply Paranat.ext
+  funext I d
+  exact θ.elem_eq C ⟨I, d⟩
+
+/-- If `α = β`, there is a canonical slice 2-morphism between them
+(the identity). -/
+def Slice2Hom.ofEq (h : α = β) : Slice2Hom C α β where
+  nat := eqToHom (congrArg (Paranat.toFunctor C F G) h)
+  slice_compat x := by
+    subst h
+    simp only [eqToHom_refl, NatTrans.id_app]
+    rfl
+
+/-- The type of slice 2-morphisms is equivalent to the equality type. -/
+def slice2HomEquivEq (α β : Paranat F G) : Slice2Hom C α β ≃ (α = β) where
+  toFun θ := θ.paranat_eq C
+  invFun h := Slice2Hom.ofEq C h
+  left_inv θ := by
+    have h := θ.paranat_eq C
+    subst h
+    apply Slice2Hom.ext
+    simp only [Slice2Hom.ofEq, eqToHom_refl]
+    ext x
+    have hbase := θ.component_base C x
+    apply DiagElem.Hom.ext
+    simp only [NatTrans.id_app]
+    exact hbase.symm
+  right_inv h := Subsingleton.elim _ _
+
+/-- The hom-set `Paranat F G` has at most one slice 2-morphism between any
+two elements (in fact, exactly one iff they are equal). This is the
+"locally discrete" property. -/
+instance slice2Hom_subsingleton (α β : Paranat F G) : Subsingleton (Slice2Hom C α β) where
+  allEq θ₁ θ₂ := by
+    have h := θ₁.paranat_eq C
+    subst h
+    apply Slice2Hom.ext
+    ext x
+    have hbase₁ := θ₁.component_base C x
+    have hbase₂ := θ₂.component_base C x
+    apply DiagElem.Hom.ext
+    rw [hbase₁, hbase₂]
+
+end Paranat2
+
 end GebLean
