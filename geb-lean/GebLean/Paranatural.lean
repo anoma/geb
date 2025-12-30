@@ -102,6 +102,44 @@ instance : Category (DiagElem F) where
   comp_id f := by ext; simp
   assoc f g h := by ext; simp [Category.assoc]
 
+variable {F}
+variable {G : Cᵒᵖ ⥤ C ⥤ Type w}
+
+/-- A natural transformation `η : F ⟶ G` induces a functor `DiagElem F ⥤ DiagElem G`
+by applying `η` to diagonal elements. -/
+@[simps]
+def map (η : F ⟶ G) : DiagElem F ⥤ DiagElem G where
+  obj x := ⟨x.base, (η.app (Opposite.op x.base)).app x.base x.elem⟩
+  map {x y} f := ⟨f.base, by
+    simp only [DiagCompat]
+    have nat_cov := congrFun ((η.app (Opposite.op x.base)).naturality f.base) x.elem
+    simp only [types_comp_apply] at nat_cov
+    rw [← nat_cov, f.compat]
+    have nat_con := congrFun (congrArg (NatTrans.app · y.base) (η.naturality f.base.op)) y.elem
+    simp only [types_comp_apply, NatTrans.comp_app] at nat_con
+    exact nat_con⟩
+  map_id x := Hom.ext rfl
+  map_comp f g := Hom.ext rfl
+
+/-- `DiagElem.map` sends the identity natural transformation to the identity functor. -/
+@[simp]
+theorem map_id_nat : map (𝟙 F) = 𝟭 (DiagElem F) := by
+  refine Functor.ext (fun x => ?_) (fun x y f => ?_)
+  · apply DiagElem.ext <;> rfl
+  · simp only [Functor.id_map, eqToHom_refl, Category.comp_id, Category.id_comp]
+    apply Hom.ext; rfl
+
+variable {H : Cᵒᵖ ⥤ C ⥤ Type w}
+
+/-- `DiagElem.map` preserves composition of natural transformations. -/
+@[simp]
+theorem map_comp_nat (η : F ⟶ G) (θ : G ⟶ H) :
+    map (η ≫ θ) = map η ⋙ map θ := by
+  refine Functor.ext (fun x => ?_) (fun x y f => ?_)
+  · apply DiagElem.ext <;> rfl
+  · simp only [Functor.comp_map, eqToHom_refl, Category.comp_id, Category.id_comp]
+    apply Hom.ext; rfl
+
 end DiagElem
 
 end DiagonalElements
