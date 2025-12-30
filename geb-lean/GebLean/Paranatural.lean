@@ -1,5 +1,6 @@
 import Mathlib.CategoryTheory.Category.Basic
 import Mathlib.CategoryTheory.Category.Cat
+import Mathlib.CategoryTheory.Comma.Over.Basic
 import Mathlib.CategoryTheory.Functor.Basic
 import Mathlib.CategoryTheory.Products.Basic
 import Mathlib.CategoryTheory.Types.Basic
@@ -141,6 +142,32 @@ theorem map_comp_nat (η : F ⟶ G) (θ : G ⟶ H) :
   · simp only [Functor.comp_map, eqToHom_refl, Category.comp_id, Category.id_comp]
     apply Hom.ext; rfl
 
+variable (F) in
+/-- The forgetful functor from the category of diagonal elements to the base
+category, projecting out the underlying object. -/
+@[simps]
+def forget : DiagElem F ⥤ C where
+  obj x := x.base
+  map f := f.base
+  map_id _ := rfl
+  map_comp _ _ := rfl
+
+/-- `DiagElem.map` commutes with the forgetful functor: the square
+```
+DiagElem F --map η--> DiagElem G
+    |                     |
+ forget F              forget G
+    |                     |
+    v                     v
+    C ========id========= C
+```
+commutes. -/
+theorem map_forget (η : F ⟶ G) : map η ⋙ forget G = forget F := by
+  refine Functor.ext (fun x => ?_) (fun x y f => ?_)
+  · rfl
+  · simp only [Functor.comp_map, eqToHom_refl, Category.comp_id, Category.id_comp,
+      map_map_base, forget_map]
+
 end DiagElem
 
 /-- The functor from endoprofunctors on `C` to the category of categories,
@@ -153,6 +180,25 @@ def diagElemFunctor : (Cᵒᵖ ⥤ C ⥤ Type w) ⥤ Cat where
   map_comp η θ := DiagElem.map_comp_nat η θ
 
 end DiagonalElements
+
+section DiagElemSlice
+
+/-- The functor from endoprofunctors on `C` (valued in `Type u` to match `C`)
+to the slice category `Cat/C`, sending each endoprofunctor `F` to the pair
+`(DiagElem F, forget F)`. The commutativity of the forgetful functor with
+`DiagElem.map` ensures this is well-defined on morphisms.
+
+Note: This requires the profunctor to be valued in `Type u` (same universe as
+`C`) for the slice category to be well-defined. For general universe levels,
+see `diagElemFunctor` which targets `Cat` directly. -/
+def diagElemSliceFunctor (C : Type u) [Category.{v} C] :
+    (Cᵒᵖ ⥤ C ⥤ Type u) ⥤ Over (Cat.of C) :=
+  { obj := fun F => Over.mk (Y := Cat.of (DiagElem F)) (DiagElem.forget F)
+    map := fun {F G} η => Over.homMk (DiagElem.map η)
+    map_id := fun F => Over.OverMorphism.ext DiagElem.map_id_nat
+    map_comp := fun {F G H} η θ => Over.OverMorphism.ext (DiagElem.map_comp_nat η θ) }
+
+end DiagElemSlice
 
 section Paranatural
 
