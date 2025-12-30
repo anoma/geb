@@ -2877,4 +2877,677 @@ def reflectionLFlex (C : Obj.CatJudgCopr.{uF, vF, wF, xF}) :
 
 end FlexibleUniverseAdjunction
 
+/-! ## Universe-Independent Adjunction
+
+The approach above still correlates universes because `PFreeMorFlex` is indexed by
+objects (at universe u) and contains morphisms (at universe v), forcing
+`Type (max u v)` for the morphism type.
+
+We use a different approach: define free morphisms as non-dependent on objects
+(just lists/trees of base morphisms), then use a `Prop` predicate to validate
+that a free morphism has a given domain and codomain. Since `Prop = Sort 0`,
+the subtype `{ m : FreeMor // ValidMor a b m }` stays at the morphism universe v.
+
+This allows `Cat.{v, u} ⊣ CatJudgCopr.{u, v, w, x}` with all four universe
+levels independent. -/
+
+section UniverseIndependentAdjunction
+
+universe uInd vInd wInd xInd
+
+/-! ### Non-Dependent Free Morphisms
+
+Free morphisms that don't mention objects in their type, only in validation. -/
+
+/-- Non-dependent free morphisms over a morphism type.
+    These form trees of compositions and identities, but the source/target
+    of each constructor is not tracked in the type - only in validation.
+
+    The type has two kinds of identities:
+    - `idFormal`: a formal identity (which object it belongs to is tracked
+      in the validation predicate, not the type)
+    - `idWitness witness`: identity from a witness morphism that is an
+      endomorphism -/
+inductive FreeMorND (Mor : Type vInd) : Type vInd where
+  /-- A morphism from the base quiver. -/
+  | var (f : Mor) : FreeMorND Mor
+  /-- A formal identity morphism at some object (determined by validation). -/
+  | idFormal : FreeMorND Mor
+  /-- An identity morphism from a witness (an endomorphism). -/
+  | idWitness (witness : Mor) : FreeMorND Mor
+  /-- Composition of two free morphisms. -/
+  | comp (g f : FreeMorND Mor) : FreeMorND Mor
+
+namespace FreeMorND
+
+variable {Mor : Type vInd}
+
+/-- Size of a free morphism (for termination proofs). -/
+def size : FreeMorND Mor → Nat
+  | var _ => 1
+  | idFormal => 1
+  | idWitness _ => 1
+  | comp g f => 1 + g.size + f.size
+
+end FreeMorND
+
+/-- Data needed to validate free morphisms.
+    Objects at universe uVal, morphisms at universe vVal. -/
+structure FreeMorValidatorData.{uVal, vVal} where
+  /-- Object type. -/
+  Obj : Type uVal
+  /-- Morphism type. -/
+  Mor : Type vVal
+  /-- Source of a morphism. -/
+  src : Mor → Obj
+  /-- Target of a morphism. -/
+  tgt : Mor → Obj
+
+namespace FreeMorValidatorData
+
+variable (V : FreeMorValidatorData.{uInd, vInd})
+
+/-- Predicate: a free morphism is valid with given source a and target b.
+    This is a `Prop` (Sort 0) so it doesn't affect universe levels.
+
+    There are two identity constructors:
+    - `idFormal`: validates the formal identity at any object
+    - `idWitness`: validates an identity from a witness endomorphism -/
+inductive ValidMor : V.Obj → V.Obj → FreeMorND V.Mor → Prop where
+  /-- A variable morphism f is valid from (src f) to (tgt f). -/
+  | var (f : V.Mor) : ValidMor (V.src f) (V.tgt f) (.var f)
+  /-- A formal identity at any object a. -/
+  | idFormal (a : V.Obj) : ValidMor a a .idFormal
+  /-- An identity from a witness: requires witness morphism with src = tgt = a. -/
+  | idWitness (a : V.Obj) (witness : V.Mor)
+      (hsrc : V.src witness = a) (htgt : V.tgt witness = a) :
+      ValidMor a a (.idWitness witness)
+  /-- Composition: g : b → c and f : a → b gives g ∘ f : a → c. -/
+  | comp {a b c : V.Obj} {g f : FreeMorND V.Mor}
+      (hg : ValidMor b c g) (hf : ValidMor a b f) :
+      ValidMor a c (.comp g f)
+
+/-- The type of valid morphisms from a to b.
+    This is a subtype of FreeMorND, staying at universe v. -/
+def ValidHomND (a b : V.Obj) : Type vInd :=
+  { m : FreeMorND V.Mor // V.ValidMor a b m }
+
+/-- Formal identity valid morphism at any object. -/
+def validIdFormalND (a : V.Obj) : V.ValidHomND a a :=
+  ⟨.idFormal, .idFormal a⟩
+
+/-- Identity valid morphism at an object via witness.
+    Requires a witness morphism f with src f = tgt f = a. -/
+def validIdWitnessND {a : V.Obj} (witness : V.Mor)
+    (hsrc : V.src witness = a) (htgt : V.tgt witness = a) :
+    V.ValidHomND a a :=
+  ⟨.idWitness witness, .idWitness a witness hsrc htgt⟩
+
+/-- Composition of valid morphisms. -/
+def validCompND {a b c : V.Obj}
+    (g : V.ValidHomND b c) (f : V.ValidHomND a b) :
+    V.ValidHomND a c :=
+  ⟨.comp g.val f.val, .comp g.property f.property⟩
+
+end FreeMorValidatorData
+
+/-! ### Quotient Data with Independent Universes
+
+This structure packages all the data needed to build a quotient category:
+validator data plus identity and composition witnesses. -/
+
+/-- Complete data for building a quotient category with independent universes.
+    - Objects at universe uInd
+    - Morphisms at universe vInd
+    - Identity witnesses at universe wInd
+    - Composition witnesses at universe xInd -/
+structure QuotientDataND.{uQD, vQD, wQD, xQD} extends
+    FreeMorValidatorData.{uQD, vQD} where
+  /-- Type of identity witnesses. -/
+  IdWitness : Type wQD
+  /-- Type of composition witnesses. -/
+  CompWitness : Type xQD
+  /-- The morphism that witnesses an identity (src = tgt). -/
+  idMor : IdWitness → Mor
+  /-- Proof that identity morphisms have equal source and target. -/
+  idEndo : ∀ i, src (idMor i) = tgt (idMor i)
+  /-- Left factor of a composition witness. -/
+  left : CompWitness → Mor
+  /-- Right factor of a composition witness. -/
+  right : CompWitness → Mor
+  /-- The composite morphism. -/
+  composite : CompWitness → Mor
+  /-- Composability: target of right = source of left. -/
+  compMatch : ∀ c, tgt (right c) = src (left c)
+  /-- Source of composite = source of right. -/
+  compSrc : ∀ c, src (composite c) = src (right c)
+  /-- Target of composite = target of left. -/
+  compTgt : ∀ c, tgt (composite c) = tgt (left c)
+
+namespace QuotientDataND
+
+variable (D : QuotientDataND.{uInd, vInd, wInd, xInd})
+
+/-- Convert to the underlying validator data. -/
+def toValidatorData : FreeMorValidatorData.{uInd, vInd} :=
+  D.toFreeMorValidatorData
+
+/-- Generators for the equivalence relation on free morphisms.
+    This is a `Prop` to avoid universe pollution.
+
+    The equivalence includes laws for formal identities (which work at any
+    object) and witness identities (from endomorphism witnesses). -/
+inductive FreeMorEquivGen : FreeMorND D.Mor → FreeMorND D.Mor → Prop where
+  /-- Left identity (formal): idFormal ∘ f ~ f. -/
+  | id_left_formal (f : FreeMorND D.Mor) :
+      FreeMorEquivGen (.comp .idFormal f) f
+  /-- Right identity (formal): f ∘ idFormal ~ f. -/
+  | id_right_formal (f : FreeMorND D.Mor) :
+      FreeMorEquivGen (.comp f .idFormal) f
+  /-- Left identity (witness): idWitness w ∘ f ~ f. -/
+  | id_left_witness (witness : D.Mor) (f : FreeMorND D.Mor) :
+      FreeMorEquivGen (.comp (.idWitness witness) f) f
+  /-- Right identity (witness): f ∘ idWitness w ~ f. -/
+  | id_right_witness (witness : D.Mor) (f : FreeMorND D.Mor) :
+      FreeMorEquivGen (.comp f (.idWitness witness)) f
+  /-- Associativity: (h ∘ g) ∘ f ~ h ∘ (g ∘ f). -/
+  | assoc (h g f : FreeMorND D.Mor) :
+      FreeMorEquivGen (.comp (.comp h g) f) (.comp h (.comp g f))
+  /-- Identity witness equivalence: var(idMor i) ~ idWitness(idMor i). -/
+  | id_var_witness (i : D.IdWitness) :
+      FreeMorEquivGen (.var (D.idMor i)) (.idWitness (D.idMor i))
+  /-- Formal identity equals witness identity: idFormal ~ idWitness(idMor i). -/
+  | id_formal_witness (i : D.IdWitness) :
+      FreeMorEquivGen .idFormal (.idWitness (D.idMor i))
+  /-- Composition witness: comp (var left) (var right) ~ var composite. -/
+  | comp_witness (c : D.CompWitness) :
+      FreeMorEquivGen
+        (.comp (.var (D.left c)) (.var (D.right c)))
+        (.var (D.composite c))
+
+/-- The full equivalence relation: RST closure with congruence. -/
+inductive FreeMorEquiv : FreeMorND D.Mor → FreeMorND D.Mor → Prop where
+  /-- From generators. -/
+  | gen {f g : FreeMorND D.Mor} : D.FreeMorEquivGen f g → FreeMorEquiv f g
+  /-- Reflexivity. -/
+  | refl (f : FreeMorND D.Mor) : FreeMorEquiv f f
+  /-- Symmetry. -/
+  | symm {f g : FreeMorND D.Mor} : FreeMorEquiv f g → FreeMorEquiv g f
+  /-- Transitivity. -/
+  | trans {f g h : FreeMorND D.Mor} :
+      FreeMorEquiv f g → FreeMorEquiv g h → FreeMorEquiv f h
+  /-- Left congruence: f ~ g implies h ∘ f ~ h ∘ g. -/
+  | cong_left (h : FreeMorND D.Mor) {f g : FreeMorND D.Mor} :
+      FreeMorEquiv f g → FreeMorEquiv (.comp h f) (.comp h g)
+  /-- Right congruence: f ~ g implies f ∘ h ~ g ∘ h. -/
+  | cong_right {f g : FreeMorND D.Mor} (h : FreeMorND D.Mor) :
+      FreeMorEquiv f g → FreeMorEquiv (.comp f h) (.comp g h)
+
+theorem freeMorEquiv_isEquivalence : Equivalence D.FreeMorEquiv where
+  refl := FreeMorEquiv.refl
+  symm := FreeMorEquiv.symm
+  trans := FreeMorEquiv.trans
+
+/-- Setoid on free morphisms. -/
+def freeMorSetoid : Setoid (FreeMorND D.Mor) where
+  r := D.FreeMorEquiv
+  iseqv := D.freeMorEquiv_isEquivalence
+
+/-- Quotient of free morphisms by the equivalence relation.
+    This is Type vInd since FreeMorND D.Mor : Type vInd and the
+    equivalence is a Prop. -/
+def QuotFreeMor : Type vInd := Quotient D.freeMorSetoid
+
+/-- Quotient map. -/
+def quotFreeMor (f : FreeMorND D.Mor) : D.QuotFreeMor :=
+  Quotient.mk D.freeMorSetoid f
+
+/-- Composition respects equivalence. -/
+theorem comp_respects {f₁ f₂ g₁ g₂ : FreeMorND D.Mor}
+    (hf : D.FreeMorEquiv f₁ f₂) (hg : D.FreeMorEquiv g₁ g₂) :
+    D.FreeMorEquiv (.comp g₁ f₁) (.comp g₂ f₂) :=
+  FreeMorEquiv.trans (FreeMorEquiv.cong_left g₁ hf) (FreeMorEquiv.cong_right f₂ hg)
+
+/-- Composition of quotient morphisms. -/
+def quotComp : D.QuotFreeMor → D.QuotFreeMor → D.QuotFreeMor :=
+  Quotient.lift₂
+    (fun f g => D.quotFreeMor (.comp g f))
+    (fun _ _ _ _ hf hg => Quotient.sound (D.comp_respects hf hg))
+
+/-- Formal identity quotient morphism. -/
+def quotIdFormal : D.QuotFreeMor :=
+  D.quotFreeMor .idFormal
+
+/-- Identity quotient morphism from a witness. -/
+def quotIdWitness (witness : D.Mor) : D.QuotFreeMor :=
+  D.quotFreeMor (.idWitness witness)
+
+/-- Variable morphism in the quotient. -/
+def quotVar (f : D.Mor) : D.QuotFreeMor :=
+  D.quotFreeMor (.var f)
+
+/-! #### Valid Morphism Quotient
+
+Quotient of valid morphisms (subtype) by the equivalence relation.
+This produces the hom-types of our quotient category. -/
+
+/-- Equivalence relation on valid morphisms (induced by FreeMorEquiv). -/
+def validMorEquiv (a b : D.Obj) : D.toValidatorData.ValidHomND a b →
+    D.toValidatorData.ValidHomND a b → Prop :=
+  fun f g => D.FreeMorEquiv f.val g.val
+
+theorem validMorEquiv_isEquivalence (a b : D.Obj) :
+    Equivalence (D.validMorEquiv a b) where
+  refl f := FreeMorEquiv.refl f.val
+  symm h := FreeMorEquiv.symm h
+  trans h1 h2 := FreeMorEquiv.trans h1 h2
+
+/-- Setoid on valid morphisms. -/
+def validHomSetoid (a b : D.Obj) : Setoid (D.toValidatorData.ValidHomND a b) where
+  r := D.validMorEquiv a b
+  iseqv := D.validMorEquiv_isEquivalence a b
+
+/-- The setoid equivalence relation on valid morphisms is the same as
+    FreeMorEquiv on the underlying free morphisms. -/
+theorem validHomSetoid_r_eq_freeMorEquiv {a b : D.Obj}
+    (f g : D.toValidatorData.ValidHomND a b) :
+    (D.validHomSetoid a b).r f g = D.FreeMorEquiv f.val g.val := rfl
+
+/-- Convert from setoid equivalence to FreeMorEquiv. -/
+def setoidEquivToFreeMorEquiv {a b : D.Obj}
+    {f g : D.toValidatorData.ValidHomND a b}
+    (h : @HasEquiv.Equiv _
+      (@instHasEquivOfSetoid _ (D.validHomSetoid a b)) f g) :
+    D.FreeMorEquiv f.val g.val := h
+
+/-- Quotient of valid morphisms: morphisms from a to b in the quotient category.
+    This is Type vInd since ValidHomND a b : Type vInd and the equivalence
+    is a Prop. -/
+def QuotHomND (a b : D.Obj) : Type vInd :=
+  Quotient (D.validHomSetoid a b)
+
+/-- Quotient map for valid morphisms. -/
+def quotHomND {a b : D.Obj} (f : D.toValidatorData.ValidHomND a b) :
+    D.QuotHomND a b :=
+  Quotient.mk (D.validHomSetoid a b) f
+
+/-- Variable morphism in the quotient category. -/
+def quotHomVar (f : D.Mor) : D.QuotHomND (D.src f) (D.tgt f) :=
+  D.quotHomND ⟨.var f, FreeMorValidatorData.ValidMor.var f⟩
+
+/-! #### Category Operations
+
+Identity and composition on QuotHomND. -/
+
+/-- Valid formal identity morphism at any object. -/
+def validIdFormal (a : D.Obj) : D.toValidatorData.ValidHomND a a :=
+  ⟨.idFormal, FreeMorValidatorData.ValidMor.idFormal a⟩
+
+/-- Valid identity morphism at an object using an identity witness.
+    The witness i provides idMor i with src = tgt. -/
+def validIdWitness (i : D.IdWitness) :
+    D.toValidatorData.ValidHomND (D.src (D.idMor i)) (D.src (D.idMor i)) :=
+  ⟨.idWitness (D.idMor i),
+   FreeMorValidatorData.ValidMor.idWitness _ (D.idMor i) rfl (D.idEndo i).symm⟩
+
+/-- Quotient formal identity morphism at any object. -/
+def quotHomIdFormal (a : D.Obj) : D.QuotHomND a a :=
+  D.quotHomND (D.validIdFormal a)
+
+/-- Quotient identity morphism from an identity witness. -/
+def quotHomId (i : D.IdWitness) :
+    D.QuotHomND (D.src (D.idMor i)) (D.src (D.idMor i)) :=
+  D.quotHomND (D.validIdWitness i)
+
+/-- Composition of valid morphisms. -/
+def validCompHom {a b c : D.Obj}
+    (g : D.toValidatorData.ValidHomND b c)
+    (f : D.toValidatorData.ValidHomND a b) :
+    D.toValidatorData.ValidHomND a c :=
+  D.toValidatorData.validCompND g f
+
+/-- Composition respects the equivalence relation on valid morphisms. -/
+theorem validComp_respects {a b c : D.Obj}
+    {f₁ f₂ : D.toValidatorData.ValidHomND a b}
+    {g₁ g₂ : D.toValidatorData.ValidHomND b c}
+    (hf : D.validMorEquiv a b f₁ f₂) (hg : D.validMorEquiv b c g₁ g₂) :
+    D.validMorEquiv a c (D.validCompHom g₁ f₁) (D.validCompHom g₂ f₂) := by
+  simp only [validMorEquiv, validCompHom, FreeMorValidatorData.validCompND]
+  exact D.comp_respects hf hg
+
+/-- Composition of quotient morphisms. -/
+def quotHomComp {a b c : D.Obj} :
+    D.QuotHomND a b → D.QuotHomND b c → D.QuotHomND a c :=
+  Quotient.lift₂
+    (fun f g => D.quotHomND (D.validCompHom g f))
+    (fun _ _ _ _ hf hg => Quotient.sound (D.validComp_respects hf hg))
+
+/-- Left identity law (formal): idFormal ∘ f ~ f at any object. -/
+theorem quotHomComp_id_left_formal {a b : D.Obj}
+    (f : D.QuotHomND a b) :
+    D.quotHomComp f (D.quotHomIdFormal b) = f := by
+  induction f using Quotient.inductionOn with
+  | h fm =>
+    simp only [quotHomComp, quotHomIdFormal, quotHomND]
+    apply Quotient.sound
+    simp only [validCompHom, FreeMorValidatorData.validCompND, validIdFormal]
+    exact FreeMorEquiv.gen (FreeMorEquivGen.id_left_formal fm.val)
+
+/-- Right identity law (formal): f ∘ idFormal ~ f at any object. -/
+theorem quotHomComp_id_right_formal {a b : D.Obj}
+    (f : D.QuotHomND a b) :
+    D.quotHomComp (D.quotHomIdFormal a) f = f := by
+  induction f using Quotient.inductionOn with
+  | h fm =>
+    simp only [quotHomComp, quotHomIdFormal, quotHomND]
+    apply Quotient.sound
+    simp only [validCompHom, FreeMorValidatorData.validCompND, validIdFormal]
+    exact FreeMorEquiv.gen (FreeMorEquivGen.id_right_formal fm.val)
+
+/-- Left identity law at the witness object: id ∘ f ~ f
+    where f : a → (src (idMor i)) and id is at (src (idMor i)). -/
+theorem quotHomComp_id_left_witness {a : D.Obj} (i : D.IdWitness)
+    (f : D.QuotHomND a (D.src (D.idMor i))) :
+    D.quotHomComp f (D.quotHomId i) = f := by
+  induction f using Quotient.inductionOn with
+  | h fm =>
+    simp only [quotHomComp, quotHomId, quotHomND]
+    apply Quotient.sound
+    simp only [validCompHom, FreeMorValidatorData.validCompND, validIdWitness]
+    exact FreeMorEquiv.gen (FreeMorEquivGen.id_left_witness (D.idMor i) fm.val)
+
+/-- Right identity law at the witness object: f ∘ id ~ f
+    where f : (src (idMor i)) → b and id is at (src (idMor i)). -/
+theorem quotHomComp_id_right_witness {b : D.Obj} (i : D.IdWitness)
+    (f : D.QuotHomND (D.src (D.idMor i)) b) :
+    D.quotHomComp (D.quotHomId i) f = f := by
+  induction f using Quotient.inductionOn with
+  | h fm =>
+    simp only [quotHomComp, quotHomId, quotHomND]
+    apply Quotient.sound
+    simp only [validCompHom, FreeMorValidatorData.validCompND, validIdWitness]
+    exact FreeMorEquiv.gen (FreeMorEquivGen.id_right_witness (D.idMor i) fm.val)
+
+/-- Associativity: (h ∘ g) ∘ f ~ h ∘ (g ∘ f). -/
+theorem quotHomComp_assoc {a b c d : D.Obj}
+    (f : D.QuotHomND a b) (g : D.QuotHomND b c) (h : D.QuotHomND c d) :
+    D.quotHomComp (D.quotHomComp f g) h =
+      D.quotHomComp f (D.quotHomComp g h) := by
+  induction f using Quotient.inductionOn with
+  | h fm =>
+    induction g using Quotient.inductionOn with
+    | h gm =>
+      induction h using Quotient.inductionOn with
+      | h hm =>
+        simp only [quotHomComp, quotHomND]
+        apply Quotient.sound
+        simp only [validCompHom, FreeMorValidatorData.validCompND]
+        exact FreeMorEquiv.symm
+          (FreeMorEquiv.gen (FreeMorEquivGen.assoc hm.val gm.val fm.val))
+
+end QuotientDataND
+
+/-! ### Conversion from CatJudgCopr to QuotientDataND
+
+Every CatJudgCopr provides exactly the data needed for QuotientDataND. -/
+
+/-- Convert a CatJudgCopr to QuotientDataND.
+    The universe levels match up exactly:
+    - CatJudgCopr.{u, v, w, x} → QuotientDataND.{u, v, w, x}
+    - obj : Type u → Obj : Type u
+    - mor : Type v → Mor : Type v
+    - idType : Type w → IdWitness : Type w
+    - compType : Type x → CompWitness : Type x -/
+def QuotientDataND.ofCatJudgCopr (C : Obj.CatJudgCopr.{uInd, vInd, wInd, xInd}) :
+    QuotientDataND.{uInd, vInd, wInd, xInd} where
+  Obj := C.obj
+  Mor := C.mor
+  src := C.dom
+  tgt := C.cod
+  IdWitness := C.idType
+  CompWitness := C.compType
+  idMor := C.idMor
+  idEndo := fun i => congrFun C.endoProof i
+  left := C.left
+  right := C.right
+  composite := C.composite
+  compMatch := fun c => congrFun C.compMatchProof c
+  compSrc := fun c => congrFun C.compDomProof c
+  compTgt := fun c => congrFun C.compCodProof c
+
+/-! ### Category Instance from QuotientDataND
+
+Every QuotientDataND gives rise to a category with:
+- Objects: D.Obj (Type u)
+- Morphisms: D.QuotHomND a b (Type v)
+- Identity: D.quotHomIdFormal a
+- Composition: D.quotHomComp -/
+
+namespace QuotientDataND
+
+variable (D : QuotientDataND.{uInd, vInd, wInd, xInd})
+
+/-- Category instance on the objects of a QuotientDataND.
+    Objects are at universe uInd, morphisms at universe vInd.
+    This gives us a category in Cat.{vInd, uInd}. -/
+instance instCategory : CategoryTheory.Category.{vInd, uInd} D.Obj where
+  Hom := D.QuotHomND
+  id a := D.quotHomIdFormal a
+  comp f g := D.quotHomComp f g
+  id_comp f := D.quotHomComp_id_right_formal f
+  comp_id f := D.quotHomComp_id_left_formal f
+  assoc f g h := D.quotHomComp_assoc f g h
+
+/-- The bundled category from a QuotientDataND. -/
+def toCategory : CategoryTheory.Cat.{vInd, uInd} :=
+  CategoryTheory.Cat.of D.Obj
+
+end QuotientDataND
+
+/-! ### The L Functor: CatJudgCopr → Cat
+
+The reflection functor L sends a CatJudgCopr to its quotient category.
+- L : CatJudgCopr.{u, v, w, x} → Cat.{v, u}
+- Objects at universe u, morphisms at universe v
+- The quotient category has independent universe levels! -/
+
+/-- The L functor on objects: sends a CatJudgCopr to its quotient category.
+    This achieves the universe-independent goal:
+    - CatJudgCopr.{u, v, w, x} → Cat.{v, u}
+    - All four universes (u, v, w, x) are independent! -/
+def LObj (C : Obj.CatJudgCopr.{uInd, vInd, wInd, xInd}) :
+    CategoryTheory.Cat.{vInd, uInd} :=
+  (QuotientDataND.ofCatJudgCopr C).toCategory
+
+/-! #### Extending morphism mappings through free morphisms -/
+
+/-- Map free morphisms using the morphism component of a CatJudgNatTrans. -/
+def mapFreeMorND {F G : Obj.CatJudgCopr.{uInd, vInd, wInd, xInd}}
+    (α : Mor.CatJudgNatTrans F G)
+    (m : FreeMorND F.mor) : FreeMorND G.mor :=
+  match m with
+  | .var f => .var (α.morMap f)
+  | .idFormal => .idFormal
+  | .idWitness w => .idWitness (α.morMap w)
+  | .comp g f => .comp (mapFreeMorND α g) (mapFreeMorND α f)
+
+/-- Abbreviation for the QuotientDataND from a CatJudgCopr. -/
+abbrev quotDataOf (C : Obj.CatJudgCopr.{uInd, vInd, wInd, xInd}) :
+    QuotientDataND.{uInd, vInd, wInd, xInd} :=
+  QuotientDataND.ofCatJudgCopr C
+
+/-- mapFreeMorND preserves validity.
+    Uses the naturality conditions on domain and codomain. -/
+def mapFreeMorND_valid {F G : Obj.CatJudgCopr.{uInd, vInd, wInd, xInd}}
+    (α : Mor.CatJudgNatTrans F G)
+    {a b : F.obj} {m : FreeMorND F.mor}
+    (hv : (quotDataOf F).toValidatorData.ValidMor a b m) :
+    (quotDataOf G).toValidatorData.ValidMor
+      (α.objMap a) (α.objMap b) (mapFreeMorND α m) := by
+  let DG := quotDataOf G
+  match hv with
+  | .var f =>
+    change DG.toValidatorData.ValidMor
+      (α.objMap (F.dom f)) (α.objMap (F.cod f)) (.var (α.morMap f))
+    have hdom : α.objMap (F.dom f) = G.dom (α.morMap f) := by
+      have := α.domProof
+      simp only [Mor.CatJudgNaturalityDom] at this
+      exact congrFun this f
+    have hcod : α.objMap (F.cod f) = G.cod (α.morMap f) := by
+      have := α.codProof
+      simp only [Mor.CatJudgNaturalityCod] at this
+      exact congrFun this f
+    rw [hdom, hcod]
+    constructor
+  | .idFormal a' =>
+    change DG.toValidatorData.ValidMor
+      (α.objMap a') (α.objMap a') .idFormal
+    constructor
+  | .idWitness a' witness hsrc htgt =>
+    change DG.toValidatorData.ValidMor
+      (α.objMap a') (α.objMap a') (.idWitness (α.morMap witness))
+    have hdom : α.objMap (F.dom witness) = G.dom (α.morMap witness) := by
+      have := α.domProof
+      simp only [Mor.CatJudgNaturalityDom] at this
+      exact congrFun this witness
+    have hcod : α.objMap (F.cod witness) = G.cod (α.morMap witness) := by
+      have := α.codProof
+      simp only [Mor.CatJudgNaturalityCod] at this
+      exact congrFun this witness
+    have hsrc' : G.dom (α.morMap witness) = α.objMap a' := by
+      rw [← hdom]; exact congrArg α.objMap hsrc
+    have htgt' : G.cod (α.morMap witness) = α.objMap a' := by
+      rw [← hcod]; exact congrArg α.objMap htgt
+    constructor
+    · exact hsrc'
+    · exact htgt'
+  | .comp hg hf =>
+    change DG.toValidatorData.ValidMor _ _
+      (.comp (mapFreeMorND α _) (mapFreeMorND α _))
+    exact FreeMorValidatorData.ValidMor.comp
+      (mapFreeMorND_valid α hg) (mapFreeMorND_valid α hf)
+
+/-- Map valid morphisms using a CatJudgNatTrans. -/
+def mapValidHomND {F G : Obj.CatJudgCopr.{uInd, vInd, wInd, xInd}}
+    (α : Mor.CatJudgNatTrans F G)
+    {a b : F.obj}
+    (m : (QuotientDataND.ofCatJudgCopr F).toValidatorData.ValidHomND a b) :
+    (QuotientDataND.ofCatJudgCopr G).toValidatorData.ValidHomND
+      (α.objMap a) (α.objMap b) :=
+  ⟨mapFreeMorND α m.val, mapFreeMorND_valid α m.property⟩
+
+/-- mapFreeMorND preserves the generating equivalence relation.
+    Uses naturality of identity and composition witnesses. -/
+theorem mapFreeMorND_gen {F G : Obj.CatJudgCopr.{uInd, vInd, wInd, xInd}}
+    (α : Mor.CatJudgNatTrans F G)
+    {f g : FreeMorND F.mor}
+    (h : (quotDataOf F).FreeMorEquivGen f g) :
+    (quotDataOf G).FreeMorEquivGen (mapFreeMorND α f) (mapFreeMorND α g) := by
+  match h with
+  | .id_left_formal fm =>
+    change (quotDataOf G).FreeMorEquivGen
+      (.comp .idFormal (mapFreeMorND α fm)) (mapFreeMorND α fm)
+    exact QuotientDataND.FreeMorEquivGen.id_left_formal _
+  | .id_right_formal fm =>
+    change (quotDataOf G).FreeMorEquivGen
+      (.comp (mapFreeMorND α fm) .idFormal) (mapFreeMorND α fm)
+    exact QuotientDataND.FreeMorEquivGen.id_right_formal _
+  | .id_left_witness w fm =>
+    change (quotDataOf G).FreeMorEquivGen
+      (.comp (.idWitness (α.morMap w)) (mapFreeMorND α fm)) (mapFreeMorND α fm)
+    exact QuotientDataND.FreeMorEquivGen.id_left_witness _ _
+  | .id_right_witness w fm =>
+    change (quotDataOf G).FreeMorEquivGen
+      (.comp (mapFreeMorND α fm) (.idWitness (α.morMap w))) (mapFreeMorND α fm)
+    exact QuotientDataND.FreeMorEquivGen.id_right_witness _ _
+  | .assoc hm gm fm =>
+    change (quotDataOf G).FreeMorEquivGen
+      (.comp (.comp (mapFreeMorND α hm) (mapFreeMorND α gm)) (mapFreeMorND α fm))
+      (.comp (mapFreeMorND α hm) (.comp (mapFreeMorND α gm) (mapFreeMorND α fm)))
+    exact QuotientDataND.FreeMorEquivGen.assoc _ _ _
+  | .id_var_witness i =>
+    have hnat := α.idMorProof
+    simp only [Mor.CatJudgNaturalityIdMor] at hnat
+    have himage : α.morMap ((quotDataOf F).idMor i) =
+        (quotDataOf G).idMor (α.idMap i) := congrFun hnat i
+    simp only [mapFreeMorND]
+    rw [himage]
+    let i' : (quotDataOf G).IdWitness := α.idMap i
+    exact QuotientDataND.FreeMorEquivGen.id_var_witness i'
+  | .id_formal_witness i =>
+    have hnat := α.idMorProof
+    simp only [Mor.CatJudgNaturalityIdMor] at hnat
+    have himage : α.morMap ((quotDataOf F).idMor i) =
+        (quotDataOf G).idMor (α.idMap i) := congrFun hnat i
+    simp only [mapFreeMorND]
+    rw [himage]
+    let i' : (quotDataOf G).IdWitness := α.idMap i
+    exact QuotientDataND.FreeMorEquivGen.id_formal_witness i'
+  | .comp_witness c =>
+    have hnatL := α.leftProof
+    have hnatR := α.rightProof
+    have hnatC := α.compositeProof
+    simp only [Mor.CatJudgNaturalityLeft] at hnatL
+    simp only [Mor.CatJudgNaturalityRight] at hnatR
+    simp only [Mor.CatJudgNaturalityComposite] at hnatC
+    have hL : α.morMap ((quotDataOf F).left c) =
+        (quotDataOf G).left (α.compMap c) := congrFun hnatL c
+    have hR : α.morMap ((quotDataOf F).right c) =
+        (quotDataOf G).right (α.compMap c) := congrFun hnatR c
+    have hC : α.morMap ((quotDataOf F).composite c) =
+        (quotDataOf G).composite (α.compMap c) := congrFun hnatC c
+    simp only [mapFreeMorND]
+    rw [hL, hR, hC]
+    let c' : (quotDataOf G).CompWitness := α.compMap c
+    exact QuotientDataND.FreeMorEquivGen.comp_witness c'
+
+/-- mapFreeMorND preserves the full equivalence relation. -/
+theorem mapFreeMorND_equiv {F G : Obj.CatJudgCopr.{uInd, vInd, wInd, xInd}}
+    (α : Mor.CatJudgNatTrans F G)
+    {f g : FreeMorND F.mor}
+    (h : (quotDataOf F).FreeMorEquiv f g) :
+    (quotDataOf G).FreeMorEquiv (mapFreeMorND α f) (mapFreeMorND α g) := by
+  match h with
+  | .gen hgen => exact QuotientDataND.FreeMorEquiv.gen (mapFreeMorND_gen α hgen)
+  | .refl _ => exact QuotientDataND.FreeMorEquiv.refl _
+  | .symm heq =>
+    exact QuotientDataND.FreeMorEquiv.symm (mapFreeMorND_equiv α heq)
+  | .trans heq1 heq2 =>
+    exact QuotientDataND.FreeMorEquiv.trans
+      (mapFreeMorND_equiv α heq1) (mapFreeMorND_equiv α heq2)
+  | .cong_left hm heq =>
+    change (quotDataOf G).FreeMorEquiv
+      (.comp (mapFreeMorND α hm) (mapFreeMorND α _))
+      (.comp (mapFreeMorND α hm) (mapFreeMorND α _))
+    exact QuotientDataND.FreeMorEquiv.cong_left _ (mapFreeMorND_equiv α heq)
+  | .cong_right hm heq =>
+    change (quotDataOf G).FreeMorEquiv
+      (.comp (mapFreeMorND α _) (mapFreeMorND α hm))
+      (.comp (mapFreeMorND α _) (mapFreeMorND α hm))
+    exact QuotientDataND.FreeMorEquiv.cong_right _ (mapFreeMorND_equiv α heq)
+
+/-! #### Lifting to Quotient Morphisms -/
+
+/-- Map quotient morphisms using a CatJudgNatTrans.
+    This lifts mapValidHomND through the equivalence relation. -/
+def mapQuotHomND {F G : Obj.CatJudgCopr.{uInd, vInd, wInd, xInd}}
+    (α : Mor.CatJudgNatTrans F G)
+    {a b : F.obj}
+    (m : (quotDataOf F).QuotHomND a b) :
+    (quotDataOf G).QuotHomND (α.objMap a) (α.objMap b) := by
+  apply Quotient.lift
+    (fun vm => Quotient.mk
+      ((quotDataOf G).validHomSetoid (α.objMap a) (α.objMap b))
+      (mapValidHomND α vm))
+  · intro vm1 vm2 heq
+    apply Quotient.sound
+    change (quotDataOf G).FreeMorEquiv
+      (mapValidHomND α vm1).val (mapValidHomND α vm2).val
+    have heq' := (quotDataOf F).setoidEquivToFreeMorEquiv heq
+    simp only [mapValidHomND]
+    exact mapFreeMorND_equiv α heq'
+  · exact m
+
+end UniverseIndependentAdjunction
+
 end GebLean
