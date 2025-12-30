@@ -1,30 +1,30 @@
 import GebLean.CatJudgmentAdjunction
+import Mathlib.CategoryTheory.Adjunction.Whiskering
 
 /-!
-# Cat-Valued Functors and Copresheaf Transformations
+# Cat-Valued Functor Categories and Copresheaf Transformations
 
-This file establishes that natural transformations between Cat-valued functors
-correspond bijectively to natural transformations between their images under
-the copresheaf embedding.
+This file establishes that the reflective embedding
+`PhiFunctor : BundledOverCategoryData → [J, Type]` (where J = CategoryJudgments)
+lifts to a reflective embedding of functor categories:
 
-Given the reflective embedding `Phi : BundledOverCategoryData → [J, Type]`
-(where J = CategoryJudgments), and functors `F, G : C ⥤ BundledOverCategoryData`,
-we prove:
+  `[C, Cat] ⟵reflective⟶ [C, [J, Type]]`
 
-  `(F ⋙ Phi ⟶ G ⋙ Phi) ≃ (F ⟶ G)`
+for any category C.
 
-This follows from the full faithfulness of Phi, which implies that
-post-composition with Phi induces equivalences on hom-sets, and this
-extends to natural transformation spaces.
+This uses the general fact that post-composition with a fully faithful functor
+is itself fully faithful (`Functor.FullyFaithful.whiskeringRight`), and that
+adjunctions lift pointwise to functor categories (`Adjunction.whiskerRight`).
 
 ## Main Results
 
-- `natTransOfWhiskeredPhi`: Given a natural transformation between
-  `F ⋙ Phi` and `G ⋙ Phi`, construct the corresponding natural
-  transformation between `F` and `G`.
+- `phiWhiskeringFullyFaithful`: Post-composition with `PhiFunctor` is fully
+  faithful on functor categories.
 
-- `natTransEquiv`: The equivalence between natural transformations
-  `F ⋙ Phi ⟶ G ⋙ Phi` and natural transformations `F ⟶ G`.
+- `catCopresheafFunctorAdjunction`: The lifted adjunction
+  `(L ∘ −) ⊣ (Φ ∘ −) : [C, Cat] ⇄ [C, [J, Type]]`
+
+- `phiWhiskering_reflective`: The whiskering functor `(Φ ∘ −)` is reflective.
 -/
 
 namespace GebLean
@@ -33,91 +33,138 @@ open CategoryTheory
 
 universe v u
 
-variable {C : Type u} [Category.{v} C]
+/-! ## Full Faithfulness of Whiskering with Phi
+
+The general theorem `Functor.FullyFaithful.whiskeringRight` states that if
+`F : D ⥤ E` is fully faithful, then the whiskering functor
+`(F ∘ −) : [C, D] ⥤ [C, E]` is also fully faithful.
+
+We apply this to `PhiFunctor` to get full faithfulness of post-composition. -/
+
+section WhiskeringFullyFaithful
+
+variable (C : Type u) [Category.{v} C]
+
+/-- The whiskering functor `(Φ ∘ −) : [C, Cat] ⥤ [C, [J, Type]]`.
+    This sends a functor `F : C ⥤ BundledOverCategoryData` to `F ⋙ PhiFunctor`. -/
+abbrev phiWhiskering :
+    (C ⥤ BundledOverCategoryData.{u, u}) ⥤
+    (C ⥤ CategoryJudgments.FunctorData (Type u)) :=
+  (Functor.whiskeringRight C BundledOverCategoryData _).obj PhiFunctor
+
+/-- Post-composition with `PhiFunctor` is fully faithful on functor categories.
+    This is an instance of the general theorem that whiskering with a fully
+    faithful functor preserves full faithfulness. -/
+def phiWhiskeringFullyFaithful :
+    (phiWhiskering C).FullyFaithful :=
+  phiFunctorFullyFaithful.whiskeringRight C
+
+/-- The whiskering functor with Phi is full. -/
+instance phiWhiskering_full : (phiWhiskering C).Full :=
+  (phiWhiskeringFullyFaithful C).full
+
+/-- The whiskering functor with Phi is faithful. -/
+instance phiWhiskering_faithful : (phiWhiskering C).Faithful :=
+  (phiWhiskeringFullyFaithful C).faithful
+
+end WhiskeringFullyFaithful
+
+/-! ## Lifted Adjunction for Functor Categories
+
+The adjunction `LFunctor ⊣ PhiFunctor` lifts pointwise to functor categories:
+`(L ∘ −) ⊣ (Φ ∘ −) : [C, [J, Type]] ⇄ [C, Cat]`
+
+This uses mathlib's `Adjunction.whiskerRight`. -/
+
+section LiftedAdjunction
+
+variable (C : Type u) [Category.{v} C]
+
+/-- The whiskering functor `(L ∘ −) : [C, [J, Type]] ⥤ [C, Cat]`.
+    This is the left adjoint to `phiWhiskering`. -/
+abbrev lWhiskering :
+    (C ⥤ CategoryJudgments.FunctorData (Type u)) ⥤
+    (C ⥤ BundledOverCategoryData.{u, u}) :=
+  (Functor.whiskeringRight C _ BundledOverCategoryData).obj LFunctor
+
+/-- The lifted adjunction `(L ∘ −) ⊣ (Φ ∘ −)` on functor categories.
+    This is constructed by lifting the base adjunction pointwise. -/
+def catCopresheafFunctorAdjunction :
+    lWhiskering C ⊣ phiWhiskering C :=
+  Adjunction.whiskerRight C catCopresheafMathlibAdjunction
+
+/-- The whiskering functor with Phi is a right adjoint. -/
+instance phiWhiskering_isRightAdjoint : (phiWhiskering C).IsRightAdjoint where
+  exists_leftAdjoint := ⟨lWhiskering C, ⟨catCopresheafFunctorAdjunction C⟩⟩
+
+/-- The whiskering functor with L is a left adjoint. -/
+instance lWhiskering_isLeftAdjoint : (lWhiskering C).IsLeftAdjoint where
+  exists_rightAdjoint := ⟨phiWhiskering C, ⟨catCopresheafFunctorAdjunction C⟩⟩
+
+end LiftedAdjunction
+
+/-! ## Reflectivity of the Lifted Embedding
+
+Since the original adjunction is reflective (counit is an isomorphism),
+the lifted adjunction is also reflective. This follows because:
+1. The counit of `adj.whiskerRight C` has components `(adj.counit.app (F c))_c`
+2. Each such component is an iso by the original reflectivity
+3. Hence the lifted counit is also an iso -/
+
+section LiftedReflectivity
+
+variable (C : Type u) [Category.{v} C]
+
+/-- The counit of the lifted adjunction at a functor F has iso components. -/
+instance catCopresheafFunctorAdjunction_counit_app_isIso
+    (F : C ⥤ BundledOverCategoryData.{u, u}) :
+    IsIso ((catCopresheafFunctorAdjunction C).counit.app F) := by
+  apply NatIso.isIso_of_isIso_app
+
+/-- The counit of the lifted adjunction is a natural isomorphism. -/
+instance catCopresheafFunctorAdjunction_counit_isIso :
+    IsIso (catCopresheafFunctorAdjunction C).counit :=
+  NatIso.isIso_of_isIso_app _
+
+/-- The whiskering functor `(Φ ∘ −)` is reflective: it is a fully faithful
+    right adjoint. This establishes that `[C, Cat]` is a reflective subcategory
+    of `[C, [J, Type]]`. -/
+instance phiWhiskering_reflective : Reflective (phiWhiskering C) where
+  L := lWhiskering C
+  adj := catCopresheafFunctorAdjunction C
+
+end LiftedReflectivity
+
+/-! ## Natural Transformation Equivalence
+
+For explicit use, we provide the equivalence between natural transformations
+`F ⟶ G` and `F ⋙ Phi ⟶ G ⋙ Phi` derived from the full faithfulness. -/
 
 section NatTransEquiv
 
+variable {C : Type u} [Category.{v} C]
 variable (F G : C ⥤ BundledOverCategoryData.{u, u})
 
-/--
-Whisker a natural transformation `α : F ⟶ G` with `PhiFunctor` on the right.
-This constructs a natural transformation `F ⋙ PhiFunctor ⟶ G ⋙ PhiFunctor`
-whose components are `PhiFunctor.map (α.app c)`.
--/
-@[simps]
-def whiskerRightPhi (α : F ⟶ G) : F ⋙ PhiFunctor ⟶ G ⋙ PhiFunctor where
-  app c := PhiFunctor.map (α.app c)
-  naturality {c c'} f := by
-    simp only [Functor.comp_obj, Functor.comp_map]
-    rw [← PhiFunctor.map_comp, ← PhiFunctor.map_comp]
-    congr 1
-    exact α.naturality f
+/-- The equivalence between natural transformations `F ⋙ Phi ⟶ G ⋙ Phi` and
+    natural transformations `F ⟶ G`.
 
-/--
-Given a natural transformation `η : F ⋙ PhiFunctor ⟶ G ⋙ PhiFunctor`,
-construct the corresponding natural transformation `F ⟶ G` by applying
-the preimage at each component.
--/
-@[simps]
-def natTransOfWhiskeredPhi
-    (η : F ⋙ PhiFunctor ⟶ G ⋙ PhiFunctor) : F ⟶ G where
-  app c := phiPreimage (η.app c)
-  naturality {c c'} f := by
-    apply phiFunctorFullyFaithful.map_injective
-    simp only [Functor.map_comp, phi_map_preimage]
-    have h1 := η.naturality f
-    simp only [Functor.comp_map] at h1
-    exact h1
-
-/--
-Whiskering a natural transformation with PhiFunctor on the right preserves
-the original transformation when we apply the preimage construction.
--/
-theorem natTransOfWhiskeredPhi_whiskerRightPhi (α : F ⟶ G) :
-    natTransOfWhiskeredPhi F G (whiskerRightPhi F G α) = α := by
-  ext c
-  simp only [natTransOfWhiskeredPhi_app, whiskerRightPhi_app, phi_preimage_map]
-
-/--
-The preimage construction followed by whiskering with PhiFunctor gives back
-the original natural transformation.
--/
-theorem whiskerRightPhi_natTransOfWhiskeredPhi
-    (η : F ⋙ PhiFunctor ⟶ G ⋙ PhiFunctor) :
-    whiskerRightPhi F G (natTransOfWhiskeredPhi F G η) = η := by
-  ext c
-  simp only [whiskerRightPhi_app, natTransOfWhiskeredPhi_app, phi_map_preimage]
-
-/--
-The equivalence between natural transformations `F ⋙ Phi ⟶ G ⋙ Phi` and
-natural transformations `F ⟶ G`, where `Phi = PhiFunctor` is the fully
-faithful embedding of categories into copresheaves on CategoryJudgments.
-
-This shows that post-composing Cat-valued functors with the copresheaf
-embedding preserves and reflects natural transformations: the embedding
-does not introduce any "extra" transformations nor collapse any.
--/
+    This is an instance of the general fact that post-composition with a fully
+    faithful functor induces bijections on hom-sets. -/
 def natTransEquiv :
-    (F ⋙ PhiFunctor ⟶ G ⋙ PhiFunctor) ≃ (F ⟶ G) where
-  toFun := natTransOfWhiskeredPhi F G
-  invFun := whiskerRightPhi F G
-  left_inv := whiskerRightPhi_natTransOfWhiskeredPhi F G
-  right_inv := natTransOfWhiskeredPhi_whiskerRightPhi F G
+    (F ⋙ PhiFunctor ⟶ G ⋙ PhiFunctor) ≃ (F ⟶ G) :=
+  (phiWhiskeringFullyFaithful C).homEquiv.symm
 
-/--
-The forward direction of `natTransEquiv` applied to a whiskered transformation.
--/
+/-- The preimage of a whiskered natural transformation is the original. -/
 @[simp]
-theorem natTransEquiv_apply (α : F ⟶ G) :
-    natTransEquiv F G (whiskerRightPhi F G α) = α :=
-  natTransOfWhiskeredPhi_whiskerRightPhi F G α
+theorem natTransEquiv_whiskerRight (α : F ⟶ G) :
+    natTransEquiv F G (Functor.whiskerRight α PhiFunctor) = α :=
+  (phiWhiskeringFullyFaithful C).preimage_map α
 
-/--
-The inverse direction of `natTransEquiv`.
--/
+/-- The whiskered form of the preimage is the original transformation. -/
 @[simp]
-theorem natTransEquiv_symm_apply (α : F ⟶ G) :
-    (natTransEquiv F G).symm α = whiskerRightPhi F G α := rfl
+theorem whiskerRight_natTransEquiv (η : F ⋙ PhiFunctor ⟶ G ⋙ PhiFunctor) :
+    Functor.whiskerRight (natTransEquiv F G η) PhiFunctor = η :=
+  (phiWhiskeringFullyFaithful C).map_preimage η
 
 end NatTransEquiv
 
