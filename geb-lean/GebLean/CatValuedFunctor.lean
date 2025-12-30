@@ -1,4 +1,5 @@
 import GebLean.CatJudgmentAdjunction
+import GebLean.Utilities.Elements
 import Mathlib.CategoryTheory.Adjunction.Whiskering
 
 /-!
@@ -403,5 +404,163 @@ theorem whiskerRight_sliceNatTransEquiv (η : F ⋙ phiSlice X ⟶ G ⋙ phiSlic
   (phiSliceWhiskeringFullyFaithful C X).map_preimage η
 
 end SliceNatTransEquiv
+
+/-! ## Reflective Embedding to Copresheaf Categories on Elements
+
+The slice category `Over (Phi(X))` is equivalent to the category of copresheaves
+on the category of elements `(Phi(X)).Elements`. Composing this equivalence with
+the slice adjunction gives a reflective embedding:
+
+  `Cat/X ⟵reflective⟶ [(Phi(X)).Elements, Type]`
+
+This makes the structure parallel to the base adjunction `Cat ⥤ [J, Type]`, but
+now indexed over elements of `Phi(X)` rather than over judgment types.
+
+The composition uses the categorical isomorphism between `FunctorData (Type u)`
+and the standard functor category `CategoryJudgments.Obj ⥤ Type u` to connect
+`PhiFunctor.obj X` (which lives in `FunctorData`) to the copresheaf
+representation via `sliceEquivCopresheaf`. -/
+
+section ElementsCopresheafAdjunction
+
+open CategoryTheory
+
+variable (X : BundledOverCategoryData.{u, u})
+
+/-- The standard functor representation of `PhiFunctor.obj X`.
+    This converts from `FunctorData (Type u)` to `CategoryJudgments.Obj ⥤ Type u`
+    using the categorical isomorphism. -/
+abbrev phiAsStdFunctor : CategoryJudgments.Obj ⥤ Type u :=
+  CategoryJudgments.functorDataToFunctor.obj (PhiFunctor.obj X)
+
+/-- Equivalence between the slice over FunctorData and the slice over the
+    corresponding standard functor. This is induced by the categorical
+    equivalence `functorDataEquivCat`. -/
+abbrev sliceFunctorDataEquiv :
+    Over (PhiFunctor.obj X) ≌ Over (phiAsStdFunctor X) :=
+  Over.postEquiv (PhiFunctor.obj X) CategoryJudgments.functorDataEquivCat
+
+/-- Post-composition with the FunctorData-to-Functor conversion on slice categories.
+    This converts from `Over (PhiFunctor.obj X)` to `Over (phiAsStdFunctor X)`. -/
+abbrev sliceFunctorDataConvert :
+    Over (PhiFunctor.obj X) ⥤ Over (phiAsStdFunctor X) :=
+  (sliceFunctorDataEquiv X).functor
+
+/-- The inverse conversion: from slice over standard functor to slice over FunctorData. -/
+abbrev sliceFunctorDataConvertInv :
+    Over (phiAsStdFunctor X) ⥤ Over (PhiFunctor.obj X) :=
+  (sliceFunctorDataEquiv X).inverse
+
+/-- The slice over FunctorData converts to slice over standard functor. -/
+def sliceFunctorDataConvertFullyFaithful :
+    (sliceFunctorDataConvert X).FullyFaithful :=
+  (sliceFunctorDataEquiv X).fullyFaithfulFunctor
+
+/-- The composite functor from `Over X` to copresheaves on elements of `Phi(X)`.
+    This composes:
+    1. `phiSlice X` : slice category lifting of PhiFunctor
+    2. `sliceFunctorDataConvert X` : conversion to standard functor category slice
+    3. `sliceEquivCopresheaf` : equivalence to copresheaves on elements -/
+abbrev phiSliceElements :
+    Over X ⥤ ((phiAsStdFunctor X).Elements ⥤ Type u) :=
+  phiSlice X ⋙ sliceFunctorDataConvert X ⋙
+  (sliceEquivCopresheaf (phiAsStdFunctor X)).functor
+
+/-- The left adjoint: from copresheaves on elements of `Phi(X)` back to `Over X`.
+    This composes the inverses in reverse order. -/
+abbrev lSliceElements :
+    ((phiAsStdFunctor X).Elements ⥤ Type u) ⥤ Over X :=
+  (sliceEquivCopresheaf (phiAsStdFunctor X)).inverse ⋙
+  sliceFunctorDataConvertInv X ⋙ lSlice X
+
+/-- phiSliceElements is fully faithful.
+    This follows because it is the composition of fully faithful functors:
+    `phiSlice X` (reflective embedding), `sliceFunctorDataConvert X` (from
+    equivalence), and an equivalence functor. -/
+def phiSliceElementsFullyFaithful : (phiSliceElements X).FullyFaithful :=
+  ((phiSliceFullyFaithful X).comp (sliceFunctorDataConvertFullyFaithful X)).comp
+  (sliceEquivCopresheaf (phiAsStdFunctor X)).fullyFaithfulFunctor
+
+/-- phiSliceElements is full. -/
+instance phiSliceElements_full : (phiSliceElements X).Full :=
+  (phiSliceElementsFullyFaithful X).full
+
+/-- phiSliceElements is faithful. -/
+instance phiSliceElements_faithful : (phiSliceElements X).Faithful :=
+  (phiSliceElementsFullyFaithful X).faithful
+
+end ElementsCopresheafAdjunction
+
+/-! ## Functor Categories to Copresheaf Categories on Elements
+
+Lifting the elements adjunction to functor categories gives:
+
+  `[C, Cat/X] ⟵reflective⟶ [C, [(Phi(X)).Elements, Type]]`
+
+This provides functorial access to the copresheaf representation of slice-valued
+functors. -/
+
+section ElementsValuedFunctorCategories
+
+open CategoryTheory
+
+variable (C : Type u) [Category.{v} C]
+variable (X : BundledOverCategoryData.{u, u})
+
+/-- The whiskering functor to copresheaf categories on elements:
+    `[C, Cat/X] ⥤ [C, [(Phi(X)).Elements, Type]]`. -/
+abbrev phiSliceElementsWhiskering :
+    (C ⥤ Over X) ⥤ (C ⥤ ((phiAsStdFunctor X).Elements ⥤ Type u)) :=
+  (Functor.whiskeringRight C (Over X) _).obj (phiSliceElements X)
+
+/-- The left adjoint whiskering functor:
+    `[C, [(Phi(X)).Elements, Type]] ⥤ [C, Cat/X]`. -/
+abbrev lSliceElementsWhiskering :
+    (C ⥤ ((phiAsStdFunctor X).Elements ⥤ Type u)) ⥤ (C ⥤ Over X) :=
+  (Functor.whiskeringRight C _ (Over X)).obj (lSliceElements X)
+
+/-- Post-composition with `phiSliceElements X` is fully faithful. -/
+def phiSliceElementsWhiskeringFullyFaithful :
+    (phiSliceElementsWhiskering C X).FullyFaithful :=
+  (phiSliceElementsFullyFaithful X).whiskeringRight C
+
+/-- phiSliceElementsWhiskering is full. -/
+instance phiSliceElementsWhiskering_full : (phiSliceElementsWhiskering C X).Full :=
+  (phiSliceElementsWhiskeringFullyFaithful C X).full
+
+/-- phiSliceElementsWhiskering is faithful. -/
+instance phiSliceElementsWhiskering_faithful : (phiSliceElementsWhiskering C X).Faithful :=
+  (phiSliceElementsWhiskeringFullyFaithful C X).faithful
+
+end ElementsValuedFunctorCategories
+
+/-! ## Natural Transformation Equivalence for Elements-Valued Functors -/
+
+section ElementsNatTransEquiv
+
+variable {C : Type u} [Category.{v} C]
+variable {X : BundledOverCategoryData.{u, u}}
+variable (F G : C ⥤ Over X)
+
+/-- The equivalence between natural transformations in the elements-valued image
+    and natural transformations in the original functor category. -/
+def elementsNatTransEquiv :
+    (F ⋙ phiSliceElements X ⟶ G ⋙ phiSliceElements X) ≃ (F ⟶ G) :=
+  (phiSliceElementsWhiskeringFullyFaithful C X).homEquiv.symm
+
+/-- Applying phiSliceElements to the preimage gives the original transformation. -/
+@[simp]
+theorem elementsNatTransEquiv_whiskerRight (α : F ⟶ G) :
+    elementsNatTransEquiv F G (Functor.whiskerRight α (phiSliceElements X)) = α :=
+  (phiSliceElementsWhiskeringFullyFaithful C X).preimage_map α
+
+/-- The image under phiSliceElements of the preimage is the original transformation. -/
+@[simp]
+theorem whiskerRight_elementsNatTransEquiv
+    (η : F ⋙ phiSliceElements X ⟶ G ⋙ phiSliceElements X) :
+    Functor.whiskerRight (elementsNatTransEquiv F G η) (phiSliceElements X) = η :=
+  (phiSliceElementsWhiskeringFullyFaithful C X).map_preimage η
+
+end ElementsNatTransEquiv
 
 end GebLean
