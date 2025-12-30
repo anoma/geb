@@ -167,6 +167,12 @@ def forget : DiagElem F ⥤ C where
   map_id _ := rfl
   map_comp _ _ := rfl
 
+/-- The forgetful functor is faithful: morphisms in `DiagElem F` are determined
+by their base component. The compatibility condition is a property (a proof),
+not additional data, so two morphisms with the same base are equal. -/
+instance forget_faithful : (forget F).Faithful where
+  map_injective h := Hom.ext h
+
 /-- `DiagElem.map` commutes with the forgetful functor: the square
 ```
 DiagElem F --map η--> DiagElem G
@@ -541,14 +547,29 @@ as functors `α.toFunctor β.toFunctor : DiagElem F ⥤ DiagElem G`. A natural
 transformation between these functors constitutes a "2-morphism" between
 paranatural transformations.
 
-In the slice 2-category `Cat/C`, 2-morphisms must commute with the projections
-to `C`. We show that this constraint forces any such 2-morphism to be the
-identity, making the slice category locally discrete (hom-categories are
-discrete). As a consequence, `α = β` whenever a slice-compatible 2-morphism
-exists between them.
+### Slice 2-morphisms and faithfulness
 
-In `Cat` without the slice constraint, non-trivial 2-morphisms can exist;
-they correspond to coherent families of endomorphisms on the base objects.
+In the slice 2-category `Cat/C`, a 2-morphism `θ : H ⟹ K` between 1-morphisms
+`H, K : (D, F) → (E, G)` must satisfy `G(θ_d) = 𝟙` for all `d : D`. This
+constraint means `θ_d` lies in the kernel of `G` on morphisms.
+
+The triviality of 2-morphisms depends on the **faithfulness** of the structure
+morphism `G : E ⥤ C`:
+
+- If `G` is faithful, then `G(θ_d) = 𝟙` implies `θ_d = 𝟙`, forcing all
+  2-morphisms to be identities (locally discrete).
+- If `G` is not faithful, non-trivial 2-morphisms can exist in the kernel.
+
+For example, `Cat/1 ≃ Cat` as a 2-category with full 2-morphism structure,
+since the unique functor to the terminal category is maximally non-faithful.
+
+### Our case
+
+The forgetful functor `DiagElem.forget G : DiagElem G ⥤ C` is faithful because
+morphisms in `DiagElem G` are determined by their base component (the
+compatibility condition is a property, not additional data). This faithfulness
+forces the locally discrete structure: any slice-compatible 2-morphism between
+paranatural transformations implies they are equal.
 -/
 
 variable (C : Type u) [Category.{v} C]
