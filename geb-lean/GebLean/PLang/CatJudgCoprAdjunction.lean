@@ -3585,6 +3585,324 @@ theorem mapQuotHomND_comp {F G : Obj.CatJudgCopr.{uInd, vInd, wInd, xInd}}
         FreeMorValidatorData.validCompND, mapFreeMorND]
       exact QuotientDataND.FreeMorEquiv.refl _
 
+/-! #### Building the L Functor Morphism Map
+
+Each CatJudgNatTrans α : F ⟶ G induces a functor LObj F ⥤ LObj G
+between the quotient categories. -/
+
+/-- The functor induced by a CatJudgNatTrans between quotient categories. -/
+def LMap {F G : Obj.CatJudgCopr.{uInd, vInd, wInd, xInd}}
+    (α : Mor.CatJudgNatTrans F G) :
+    (quotDataOf F).toCategory ⟶ (quotDataOf G).toCategory where
+  obj := α.objMap
+  map := mapQuotHomND α
+  map_id x := mapQuotHomND_idFormal α x
+  map_comp f g := mapQuotHomND_comp α f g
+
+/-- LMap preserves identity natural transformations.
+    The identity CatJudgNatTrans maps to the identity functor. -/
+theorem LMap_id (F : Obj.CatJudgCopr.{uInd, vInd, wInd, xInd}) :
+    LMap (Cat.CatJudgNatTrans.id F) = 𝟙 (quotDataOf F).toCategory := by
+  refine CategoryTheory.Functor.ext (fun x => rfl) ?_
+  intro x y f
+  simp only [LMap, CategoryTheory.eqToHom_refl,
+    CategoryTheory.Category.comp_id, CategoryTheory.Category.id_comp]
+  induction f using Quotient.inductionOn with
+  | h vf =>
+    apply Quotient.sound
+    change (quotDataOf F).FreeMorEquiv
+      (mapValidHomND _ vf).val vf.val
+    simp only [mapValidHomND, Cat.CatJudgNatTrans.id, Cat.CatJudgMap.id]
+    induction vf.val with
+    | var f => exact QuotientDataND.FreeMorEquiv.refl _
+    | idFormal => exact QuotientDataND.FreeMorEquiv.refl _
+    | idWitness w => exact QuotientDataND.FreeMorEquiv.refl _
+    | comp g f ih_g ih_f =>
+      simp only [mapFreeMorND]
+      exact (quotDataOf F).comp_respects ih_f ih_g
+
+/-- LMap preserves composition of natural transformations. -/
+theorem LMap_comp {F G H : Obj.CatJudgCopr.{uInd, vInd, wInd, xInd}}
+    (α : Mor.CatJudgNatTrans F G) (β : Mor.CatJudgNatTrans G H) :
+    LMap (Cat.CatJudgNatTrans.comp α β) = LMap α ≫ LMap β := by
+  refine CategoryTheory.Functor.ext (fun x => rfl) ?_
+  intro x y f
+  simp only [LMap, CategoryTheory.eqToHom_refl,
+    CategoryTheory.Category.comp_id, CategoryTheory.Category.id_comp]
+  induction f using Quotient.inductionOn with
+  | h vf =>
+    apply Quotient.sound
+    change (quotDataOf H).FreeMorEquiv
+      (mapValidHomND _ vf).val
+      (mapValidHomND β (mapValidHomND α vf)).val
+    simp only [mapValidHomND, Cat.CatJudgNatTrans.comp, Cat.CatJudgMap.comp,
+      Mor.CatJudgNatTrans.map, Mor.ObjMorMap.objMap, Mor.ObjMorMap.morMap,
+      Cat.ObjMap.comp]
+    induction vf.val with
+    | var f => exact QuotientDataND.FreeMorEquiv.refl _
+    | idFormal => exact QuotientDataND.FreeMorEquiv.refl _
+    | idWitness w => exact QuotientDataND.FreeMorEquiv.refl _
+    | comp g f ih_g ih_f =>
+      simp only [mapFreeMorND]
+      exact (quotDataOf H).comp_respects ih_f ih_g
+
+/-- The L functor from CatJudgCopr to Cat with independent universes.
+    L : CatJudgCopr.{u+1, v+1, w+1, x+1} ⥤ Cat.{v+1, u+1}
+
+    On objects: F ↦ (quotDataOf F).toCategory
+    On morphisms: α ↦ LMap α
+
+    The `+ 1` form is required to match the Category instance for CatJudgCopr,
+    which is defined at universe levels `u+1, v+1, w+1, x+1`. -/
+def L : Obj.CatJudgCopr.{uInd + 1, vInd + 1, wInd + 1, xInd + 1} ⥤
+    CategoryTheory.Cat.{vInd + 1, uInd + 1} where
+  obj := fun F => (quotDataOf F).toCategory
+  map := fun α => LMap α
+  map_id := fun F => LMap_id F
+  map_comp := fun α β => LMap_comp α β
+
+/-! #### The Φ Functor: Cat → CatJudgCopr
+
+The Φ functor embeds a category as a CatJudgCopr by:
+- obj = the object type of the category
+- mor = bundled morphisms (Σ (a b : obj), Hom a b)
+- idType = objects (each object witnesses its identity morphism)
+- compType = composable pairs
+
+Note: For the bundled morphisms to fit in the correct universe,
+we work with Cat.{vInd+1, vInd+1} where objects and morphisms share
+the same universe. This ensures Σ (a b : obj), Hom a b : Type (vInd+1). -/
+
+/-- Bundled morphism type for a category. -/
+def CatBundledMor (C : CategoryTheory.Cat.{vInd + 1, vInd + 1}) :
+    Type (vInd + 1) :=
+  Σ (a b : C.α), (a ⟶ b)
+
+/-- Source of a bundled morphism. -/
+def CatBundledMor.src {C : CategoryTheory.Cat.{vInd + 1, vInd + 1}}
+    (m : CatBundledMor C) : C.α :=
+  m.1
+
+/-- Target of a bundled morphism. -/
+def CatBundledMor.tgt {C : CategoryTheory.Cat.{vInd + 1, vInd + 1}}
+    (m : CatBundledMor C) : C.α :=
+  m.2.1
+
+/-- The underlying morphism. -/
+def CatBundledMor.hom {C : CategoryTheory.Cat.{vInd + 1, vInd + 1}}
+    (m : CatBundledMor C) : m.src ⟶ m.tgt :=
+  m.2.2
+
+/-- Bundle a morphism with its endpoints. -/
+def bundleMor {C : CategoryTheory.Cat.{vInd + 1, vInd + 1}}
+    {a b : C.α} (f : a ⟶ b) : CatBundledMor C :=
+  ⟨a, b, f⟩
+
+/-- Composable pairs of bundled morphisms. -/
+def CatComposablePairs (C : CategoryTheory.Cat.{vInd + 1, vInd + 1}) :
+    Type (vInd + 1) :=
+  { p : CatBundledMor C × CatBundledMor C // p.2.tgt = p.1.src }
+
+/-- The CatJudgObj for a category. -/
+def ΦCatJudgObj (C : CategoryTheory.Cat.{vInd + 1, vInd + 1}) :
+    Obj.CatJudgObj.{vInd + 2, vInd + 2, vInd + 2, vInd + 2} :=
+  ((C.α, CatBundledMor C), (C.α, CatComposablePairs C))
+
+/-- Identity morphism bundled for a category. -/
+def ΦIdMor (C : CategoryTheory.Cat.{vInd + 1, vInd + 1}) (a : C.α) :
+    CatBundledMor C :=
+  bundleMor (𝟙 a)
+
+/-- The CatJudgMor for a category. -/
+def ΦCatJudgMor (C : CategoryTheory.Cat.{vInd + 1, vInd + 1}) :
+    Obj.CatJudgMor (ΦCatJudgObj C) :=
+  ((CatBundledMor.src, CatBundledMor.tgt),
+   (ΦIdMor C,
+    (fun p => p.val.1,
+     fun p => p.val.2,
+     fun p =>
+       let g := p.val.2.hom
+       let f := p.val.1.hom
+       let heq : p.val.2.tgt = p.val.1.src := p.property
+       let f' : p.val.2.tgt ⟶ p.val.1.tgt := heq.symm ▸ f
+       bundleMor (g ≫ f'))))
+
+/-- The CatJudgObjMor for a category. -/
+def ΦCatJudgObjMor (C : CategoryTheory.Cat.{vInd + 1, vInd + 1}) :
+    Obj.CatJudgObjMor.{vInd + 1, vInd + 1, vInd + 1, vInd + 1} :=
+  ⟨ΦCatJudgObj C, ΦCatJudgMor C⟩
+
+/-- Identity morphisms are endomorphisms. -/
+theorem Φ_endo (C : CategoryTheory.Cat.{vInd + 1, vInd + 1}) :
+    Obj.ObjMorIdObjMorEndo (ΦCatJudgObjMor C).toObjMorIdObjMor := by
+  unfold Obj.ObjMorIdObjMorEndo
+  funext a
+  simp only [Function.comp_apply, ΦCatJudgObjMor, ΦCatJudgMor, ΦCatJudgObj,
+    Obj.CatJudgObjMor.toObjMorIdObjMor, Obj.CatJudgObjMor.catJudgObj,
+    Obj.CatJudgObj.toObjMorIdObj, Obj.ObjMorIdObjMor.dom, Obj.ObjMorIdMor.dom,
+    Obj.ObjMorMor.dom, Obj.ObjMorIdObjMor.idMor, Obj.ObjMorIdMor.idMor,
+    Obj.CatJudgMor.idMor, Obj.ObjMorIdObjMor.cod, Obj.ObjMorIdMor.cod,
+    Obj.ObjMorMor.cod, bundleMor, CatBundledMor.src, CatBundledMor.tgt,
+    ΦIdMor]
+
+/-- Composable pairs match: cod of right = dom of left. -/
+theorem Φ_compMatch (C : CategoryTheory.Cat.{vInd + 1, vInd + 1}) :
+    Obj.ObjMorCompObjMorMatch (ΦCatJudgObjMor C).toObjMorCompObjMor := by
+  unfold Obj.ObjMorCompObjMorMatch
+  funext p
+  simp only [Function.comp_apply, ΦCatJudgObjMor, ΦCatJudgMor, ΦCatJudgObj,
+    Obj.CatJudgObjMor.toObjMorCompObjMor, Obj.ObjMorCompObjMor.cod,
+    Obj.ObjMorCompMor.cod, Obj.ObjMorMor.cod, Obj.ObjMorCompObjMor.right,
+    Obj.ObjMorCompMor.right, Obj.ObjMorCompProj.right,
+    Obj.ObjMorCompObjMor.dom, Obj.ObjMorCompMor.dom, Obj.ObjMorMor.dom,
+    Obj.ObjMorCompObjMor.left, Obj.ObjMorCompMor.left,
+    Obj.ObjMorCompProj.left, Obj.CatJudgObjMor.catJudgObj,
+    Obj.CatJudgObj.toObjMorCompObj, CatBundledMor.src, CatBundledMor.tgt]
+  exact p.property
+
+/-- Domain of composite equals domain of right morphism. -/
+theorem Φ_compDom (C : CategoryTheory.Cat.{vInd + 1, vInd + 1}) :
+    Obj.ObjMorCompObjMorCompDom (ΦCatJudgObjMor C).toObjMorCompObjMor := by
+  unfold Obj.ObjMorCompObjMorCompDom
+  funext p
+  simp only [Function.comp_apply, ΦCatJudgObjMor, ΦCatJudgMor, ΦCatJudgObj,
+    Obj.CatJudgObjMor.toObjMorCompObjMor, Obj.ObjMorCompObjMor.dom,
+    Obj.ObjMorCompMor.dom, Obj.ObjMorMor.dom, Obj.ObjMorCompObjMor.composite,
+    Obj.ObjMorCompMor.composite, Obj.ObjMorCompProj.composite,
+    Obj.ObjMorCompObjMor.right, Obj.ObjMorCompMor.right,
+    Obj.ObjMorCompProj.right, Obj.CatJudgObjMor.catJudgObj,
+    Obj.CatJudgObj.toObjMorCompObj, CatBundledMor.src, bundleMor]
+
+/-- Codomain of composite equals codomain of left morphism. -/
+theorem Φ_compCod (C : CategoryTheory.Cat.{vInd + 1, vInd + 1}) :
+    Obj.ObjMorCompObjMorCompCod (ΦCatJudgObjMor C).toObjMorCompObjMor := by
+  unfold Obj.ObjMorCompObjMorCompCod
+  funext p
+  simp only [Function.comp_apply, ΦCatJudgObjMor, ΦCatJudgMor, ΦCatJudgObj,
+    Obj.CatJudgObjMor.toObjMorCompObjMor, Obj.ObjMorCompObjMor.cod,
+    Obj.ObjMorCompMor.cod, Obj.ObjMorMor.cod, Obj.ObjMorCompObjMor.composite,
+    Obj.ObjMorCompMor.composite, Obj.ObjMorCompProj.composite,
+    Obj.ObjMorCompObjMor.left, Obj.ObjMorCompMor.left,
+    Obj.ObjMorCompProj.left, Obj.CatJudgObjMor.catJudgObj,
+    Obj.CatJudgObj.toObjMorCompObj, CatBundledMor.tgt, bundleMor]
+
+/-- All composition conditions hold. -/
+theorem Φ_compCond (C : CategoryTheory.Cat.{vInd + 1, vInd + 1}) :
+    Obj.ObjMorCompObjMorCond (ΦCatJudgObjMor C).toObjMorCompObjMor :=
+  ⟨Φ_compMatch C, Φ_compDom C, Φ_compCod C⟩
+
+/-- All category judgment conditions hold. -/
+theorem Φ_cond (C : CategoryTheory.Cat.{vInd + 1, vInd + 1}) :
+    Obj.CatJudgObjMorCond (ΦCatJudgObjMor C) :=
+  ⟨Φ_endo C, Φ_compCond C⟩
+
+/-- The Φ functor on objects: Cat → CatJudgCopr. -/
+def ΦObj (C : CategoryTheory.Cat.{vInd + 1, vInd + 1}) :
+    Obj.CatJudgCopr.{vInd + 1, vInd + 1, vInd + 1, vInd + 1} :=
+  ⟨ΦCatJudgObjMor C, Φ_cond C⟩
+
+/-- Map a bundled morphism under a functor. -/
+def ΦMapMor {C D : CategoryTheory.Cat.{vInd + 1, vInd + 1}}
+    (F : C ⟶ D) (m : CatBundledMor C) : CatBundledMor D :=
+  ⟨F.obj m.src, F.obj m.tgt, F.map m.hom⟩
+
+/-- Map composable pairs under a functor. -/
+def ΦMapComp {C D : CategoryTheory.Cat.{vInd + 1, vInd + 1}}
+    (F : C ⟶ D) (p : CatComposablePairs C) : CatComposablePairs D :=
+  ⟨(ΦMapMor F p.val.1, ΦMapMor F p.val.2),
+   by simp only [ΦMapMor, CatBundledMor.src, CatBundledMor.tgt]
+      exact congrArg F.obj p.property⟩
+
+/-- The CatJudgMap induced by a functor. -/
+def ΦCatJudgMap {C D : CategoryTheory.Cat.{vInd + 1, vInd + 1}} (F : C ⟶ D) :
+    Mor.CatJudgMap (ΦObj C) (ΦObj D) :=
+  ((F.obj, ΦMapMor F), (F.obj, ΦMapComp F))
+
+/-- Domain naturality for Φ. -/
+theorem ΦNatDom {C D : CategoryTheory.Cat.{vInd + 1, vInd + 1}} (F : C ⟶ D) :
+    Mor.CatJudgNaturalityDom (ΦCatJudgMap F) := by
+  unfold Mor.CatJudgNaturalityDom ΦCatJudgMap Mor.CatJudgMap.objMap
+    Mor.ObjMorMap.objMap Mor.CatJudgMap.morMap Mor.ObjMorMap.morMap
+    Obj.CatJudgCopr.dom ΦObj Obj.CatJudgObjMor.dom
+    ΦCatJudgObjMor ΦCatJudgMor Obj.CatJudgObjMor.domCod
+    Obj.CatJudgMor.domCod Obj.ObjMorMor.dom
+  funext m
+  simp only [Function.comp_apply, ΦMapMor, CatBundledMor.src]
+
+/-- Codomain naturality for Φ. -/
+theorem ΦNatCod {C D : CategoryTheory.Cat.{vInd + 1, vInd + 1}} (F : C ⟶ D) :
+    Mor.CatJudgNaturalityCod (ΦCatJudgMap F) := by
+  unfold Mor.CatJudgNaturalityCod ΦCatJudgMap Mor.CatJudgMap.objMap
+    Mor.ObjMorMap.objMap Mor.CatJudgMap.morMap Mor.ObjMorMap.morMap
+    Obj.CatJudgCopr.cod ΦObj Obj.CatJudgObjMor.cod
+    ΦCatJudgObjMor ΦCatJudgMor Obj.CatJudgObjMor.domCod
+    Obj.CatJudgMor.domCod Obj.ObjMorMor.cod
+  funext m
+  simp only [Function.comp_apply, ΦMapMor, CatBundledMor.tgt]
+
+/-- Dom/cod naturality for Φ. -/
+theorem ΦNatDomCod {C D : CategoryTheory.Cat.{vInd + 1, vInd + 1}} (F : C ⟶ D) :
+    Mor.CatJudgNaturalityDomCod (ΦCatJudgMap F) :=
+  ⟨ΦNatDom F, ΦNatCod F⟩
+
+/-- Identity morphism naturality for Φ. -/
+theorem ΦNatIdMor {C D : CategoryTheory.Cat.{vInd + 1, vInd + 1}} (F : C ⟶ D) :
+    Mor.CatJudgNaturalityIdMor (ΦCatJudgMap F) := by
+  unfold Mor.CatJudgNaturalityIdMor ΦCatJudgMap Mor.CatJudgMap.morMap
+    Mor.ObjMorMap.morMap Mor.CatJudgMap.idMap
+    Obj.CatJudgCopr.idMor ΦObj Obj.CatJudgObjMor.idMor
+    ΦCatJudgObjMor ΦCatJudgMor Obj.CatJudgMor.idMor
+  funext a
+  simp only [Function.comp_apply, ΦMapMor, ΦIdMor, bundleMor,
+    CatBundledMor.src, CatBundledMor.tgt, CatBundledMor.hom,
+    CategoryTheory.Functor.map_id]
+
+/-- Left projection naturality for Φ. -/
+theorem ΦNatLeft {C D : CategoryTheory.Cat.{vInd + 1, vInd + 1}} (F : C ⟶ D) :
+    Mor.CatJudgNaturalityLeft (ΦCatJudgMap F) := by
+  funext p
+  rfl
+
+/-- Right projection naturality for Φ. -/
+theorem ΦNatRight {C D : CategoryTheory.Cat.{vInd + 1, vInd + 1}} (F : C ⟶ D) :
+    Mor.CatJudgNaturalityRight (ΦCatJudgMap F) := by
+  funext p
+  rfl
+
+/-- Functor map commutes with transport on domain of morphisms. -/
+theorem Φ_map_cast_dom {C D : CategoryTheory.Cat.{vInd + 1, vInd + 1}} (F : C ⟶ D)
+    {a b c : C.α} (heq : a = b) (f : a ⟶ c) :
+    F.map (heq ▸ f) = (congrArg F.obj heq) ▸ F.map f := by
+  subst heq
+  rfl
+
+/-- Composite naturality for Φ. -/
+theorem ΦNatComposite {C D : CategoryTheory.Cat.{vInd + 1, vInd + 1}} (F : C ⟶ D) :
+    Mor.CatJudgNaturalityComposite (ΦCatJudgMap F) := by
+  unfold Mor.CatJudgNaturalityComposite
+  funext p
+  simp only [Function.comp_apply, ΦCatJudgMap, Mor.CatJudgMap.morMap,
+    Mor.ObjMorMap.morMap, Mor.CatJudgMap.compMap]
+  unfold Obj.CatJudgCopr.composite ΦObj Obj.CatJudgObjMor.composite
+    ΦCatJudgObjMor ΦCatJudgMor
+  simp only [ΦMapMor, ΦMapComp, CatBundledMor.src, CatBundledMor.tgt,
+    CatBundledMor.hom, bundleMor]
+  congr 1
+  congr 1
+  simp only [CategoryTheory.Functor.map_comp]
+  congr 1
+  exact Φ_map_cast_dom F p.property.symm _
+
+/-- All naturality for Φ. -/
+theorem ΦNatAll {C D : CategoryTheory.Cat.{vInd + 1, vInd + 1}} (F : C ⟶ D) :
+    Mor.CatJudgNaturalityAll (ΦCatJudgMap F) :=
+  ⟨ΦNatDomCod F, ΦNatIdMor F, ΦNatLeft F, ΦNatRight F, ΦNatComposite F⟩
+
+/-- The CatJudgNatTrans induced by a functor. -/
+def ΦNatTrans {C D : CategoryTheory.Cat.{vInd + 1, vInd + 1}} (F : C ⟶ D) :
+    Mor.CatJudgNatTrans (ΦObj C) (ΦObj D) :=
+  ⟨ΦCatJudgMap F, ΦNatAll F⟩
+
 end UniverseIndependentAdjunction
 
 end GebLean
