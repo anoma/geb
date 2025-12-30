@@ -48,6 +48,16 @@ structure DiagElem where
   /-- The diagonal element in `(F.obj (op base)).obj base` -/
   elem : (F.obj (Opposite.op base)).obj base
 
+/-- The diagonal compatibility condition for an endoprofunctor. Given a morphism
+`f : I₀ ⟶ I₁` and diagonal elements `d₀ ∈ F(I₀, I₀)` and `d₁ ∈ F(I₁, I₁)`,
+this asserts that the covariant action of `f` on `d₀` equals the contravariant
+action of `f` on `d₁`. -/
+@[simp]
+def DiagCompat (I₀ I₁ : C) (f : I₀ ⟶ I₁)
+    (d₀ : (F.obj (Opposite.op I₀)).obj I₀)
+    (d₁ : (F.obj (Opposite.op I₁)).obj I₁) : Prop :=
+  (F.obj (Opposite.op I₀)).map f d₀ = (F.map f.op).app I₁ d₁
+
 /-- A morphism in the category of diagonal elements from `(I₀, g₀)` to `(I₁, g₁)`
 is a morphism `f : I₀ ⟶ I₁` in `C` such that the covariant action of `f` on `g₀`
 equals the contravariant action of `f` on `g₁`. -/
@@ -57,8 +67,7 @@ structure DiagElem.Hom (x y : DiagElem F) where
   base : x.base ⟶ y.base
   /-- The compatibility condition: covariant action on source element equals
   contravariant action on target element -/
-  compat : (F.obj (Opposite.op x.base)).map base x.elem =
-           (F.map base.op).app y.base y.elem
+  compat : DiagCompat F x.base y.base base x.elem y.elem
 
 namespace DiagElem
 
@@ -74,7 +83,7 @@ def Hom.comp {x y z : DiagElem F} (f : Hom F x y) (g : Hom F y z) :
     Hom F x z where
   base := f.base ≫ g.base
   compat := by
-    simp only [Functor.map_comp]
+    simp only [DiagCompat, Functor.map_comp]
     change (F.obj (Opposite.op x.base)).map g.base
         ((F.obj (Opposite.op x.base)).map f.base x.elem) =
       (F.map (f.base ≫ g.base).op).app z.base z.elem
@@ -112,8 +121,7 @@ def IsParanatural
     Prop :=
   ∀ (I₀ I₁ : C) (f : I₀ ⟶ I₁) (d₀ : (F.obj (Opposite.op I₀)).obj I₀)
     (d₁ : (F.obj (Opposite.op I₁)).obj I₁),
-    (F.obj (Opposite.op I₀)).map f d₀ = (F.map f.op).app I₁ d₁ →
-    (G.obj (Opposite.op I₀)).map f (α I₀ d₀) = (G.map f.op).app I₁ (α I₁ d₁)
+    DiagCompat F I₀ I₁ f d₀ d₁ → DiagCompat G I₀ I₁ f (α I₀ d₀) (α I₁ d₁)
 
 /-- A paranatural transformation between two endoprofunctors `F` and `G` on `C`.
 A family of functions on diagonal elements that preserves the compatibility
