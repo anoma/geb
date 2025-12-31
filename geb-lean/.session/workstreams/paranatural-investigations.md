@@ -84,6 +84,16 @@ construction to form something larger than DiagElem:
 - Arrow(C) has good properties: inclusion C ↪ Arrow(C) has both left and
   right adjoints (domain/codomain projections), preserving all limits/colimits
 
+### 8. Extranatural Transformations and Paranaturality
+
+Investigate the relationship between extranatural transformations
+(Eilenberg-Kelly 1966) and paranatural/strong dinatural transformations:
+
+- Does mathlib have extranatural transformations?
+- What is the precise relationship to paranaturality?
+- Is there a "strong extranatural" notion combining both generalizations?
+- What are the connections to parametricity?
+
 ## Context Files
 
 - GebLean/Paranatural.lean - Core paranatural definitions
@@ -306,6 +316,71 @@ value for:
 - "Internalized" parametricity where relation witnesses are explicit
 
 For basic parametricity, Rel-enriched DiagElem is simpler and more direct.
+
+#### Question 8: Extranatural Transformations and Paranaturality
+
+**Research findings**:
+
+Mathlib has `CategoryTheory.DinatTrans` (weak dinatural transformations) but does
+NOT have strong dinatural transformations or extranatural transformations.
+
+**Terminology clarification** (confirmed by literature):
+
+- **Dinatural** (weak): Components α_c : F(c,c) → G(c,c) satisfying hexagon for
+  morphisms f : c → c'. Condition only required for canonical span. Do NOT
+  compose in general.
+- **Strong dinatural** (Mulry 1992): Same components but hexagon must hold for
+  ALL spans. These DO compose.
+- **Paranatural** = Strong dinatural (confirmed by Neumann 2023, arXiv:2307.09289)
+- **Extranatural** (Eilenberg-Kelly 1966): For functors with mixed variance where
+  some variables appear only in one component. Compose under "no cycle" condition.
+
+**Relationship diagram**:
+
+```text
+                    Natural
+                       |
+               Extranatural (special shape)
+                       |
+                   Dinatural (weak)
+                       ^
+        Strong Dinatural = Paranatural (stronger condition)
+```
+
+Extranatural and strong dinatural are ORTHOGONAL: extranatural concerns functor
+shape, strong concerns condition strength. Both generalize natural transformations
+but in different directions.
+
+**Relationship to parametricity**:
+
+Strong dinaturality captures graph-relation parametricity (Vene 2006, Eppendahl
+1999). A family is strong dinatural iff it preserves pullback-defined relations
+R_{F,f}. This matches our Question 4 analysis: paranaturality tests morphism
+graphs, not all relations.
+
+The CCC limitation: Strong dinatural transformations don't form a Cartesian
+closed category, explaining why they can't model all polymorphic types including
+nested function types.
+
+**Open questions**:
+
+1. Is there a "strong extranatural" notion combining both generalizations?
+2. Precise characterization of types where paranaturality = parametricity
+3. DiagElem analogue for extranatural transformations
+4. Strong dinaturality in enriched settings (extranatural generalizes to enriched
+   categories, but dinatural only works for Cartesian enrichment)
+5. Connection between standard ends (weak extranaturality via wedges) and
+   StructuralEnd
+
+**References**:
+
+- Mulry, "Strong Monads, Algebras and Fixed Points" (1992) - original definition
+- Neumann, "Paranatural Category Theory" (2023, arXiv:2307.09289) - confirms
+  paranaturality = strong dinaturality
+- Eppendahl, "Parametricity and Mulry's Strong Dinaturality" (1999)
+- Vene, "Parametricity and Strong Dinaturality" (2006)
+- Eilenberg-Kelly, "A generalization of the functorial calculus" (1966) -
+  extranatural transformations
 
 ### Proposed Implementation Path
 
