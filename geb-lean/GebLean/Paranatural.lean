@@ -798,6 +798,48 @@ abbrev eval (φ : StructureIntegral F G) (x : DiagElem F) : diagApp G x.base :=
 
 end StructureIntegral
 
+/-! ### Equivalence between StructureIntegral and Paranat
+
+The structure integral `StructureIntegral F G` is equivalent to the type of
+paranatural transformations `Paranat F G`. The correspondence is:
+- A family `(x : DiagElem F) → diagApp G x.base` corresponds to
+  a function `(I : C) → diagApp F I → diagApp G I` by currying.
+- The equalizer condition corresponds to the paranaturality condition.
+-/
+
+/-- Convert a `StructureIntegral` to a `Paranat` by uncurrying.
+The family indexed by F-structures becomes a curried function. -/
+def StructureIntegral.toParanat (φ : StructureIntegral F G) : Paranat F G where
+  app I d := φ.family ⟨I, d⟩
+  paranatural I₀ I₁ f d₀ d₁ hcompat := by
+    simp only [DiagCompat] at hcompat ⊢
+    let x : DiagElem F := ⟨I₀, d₀⟩
+    let y : DiagElem F := ⟨I₁, d₁⟩
+    let fHom : x ⟶ y := ⟨f, hcompat⟩
+    have h := φ.paranatural fHom
+    simp only [covAction, contravAction] at h
+    exact h
+
+/-- Convert a `Paranat` to a `StructureIntegral` by currying.
+The curried function becomes a family indexed by F-structures. -/
+def Paranat.toStructureIntegral (α : Paranat F G) : StructureIntegral F G where
+  family x := α.app x.base x.elem
+  equalizer := by
+    funext x y f
+    simp only [structIntMapCov, structIntMapContrav, covAction, contravAction]
+    exact α.paranatural x.base y.base f.base x.elem y.elem f.compat
+
+/-- The structure integral is equivalent to paranatural transformations. -/
+def structureIntegralEquivParanat : StructureIntegral F G ≃ Paranat F G where
+  toFun := StructureIntegral.toParanat F G
+  invFun := Paranat.toStructureIntegral F G
+  left_inv φ := by
+    ext x
+    simp only [Paranat.toStructureIntegral, StructureIntegral.toParanat]
+  right_inv α := by
+    ext
+    simp only [StructureIntegral.toParanat, Paranat.toStructureIntegral]
+
 /-! ### Costructure integral (coequalizer definition) -/
 
 /-- Codomain of the costructure integral coequalizer: pairs of an F-structure
