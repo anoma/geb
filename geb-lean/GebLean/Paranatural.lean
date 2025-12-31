@@ -1,11 +1,13 @@
 import Mathlib.CategoryTheory.Category.Basic
 import Mathlib.CategoryTheory.Category.Cat
 import Mathlib.CategoryTheory.Comma.Over.Basic
+import Mathlib.CategoryTheory.Discrete.Basic
 import Mathlib.CategoryTheory.Elements
 import Mathlib.CategoryTheory.Functor.Basic
 import Mathlib.CategoryTheory.Products.Basic
 import Mathlib.CategoryTheory.Types.Basic
 import Mathlib.CategoryTheory.Opposites
+import GebLean.Utilities.ConnectedGrothendieck
 import GebLean.Utilities.Elements
 import GebLean.Utilities.TwistedArrow
 
@@ -1433,6 +1435,191 @@ instance : Category (TwCoprArrElem F) where
     exact Category.assoc f.base g.base h.base
 
 end TwCoprArrElem
+
+section TwCoprArrElemIsoConnGrothendieck
+
+/-! ## Isomorphism with connected Grothendieck construction
+
+We prove that `TwCoprArrElem F` is isomorphic to the connected Grothendieck
+construction applied to `F` composed with the discrete category functor.
+
+Given `F : TwistedArrow' C ⥤ Type w`, composing with `typeToCat` gives
+`F ⋙ typeToCat : TwistedArrow' C ⥤ Cat` where each fiber `F.obj tw` becomes
+the discrete category `Discrete (F.obj tw)`.
+
+In discrete categories, morphisms exist only between equal elements (as
+identities). This means the fiber morphism condition in `ConnGrothendieckHom`
+reduces to an equality, matching `TwArrCompat`.
+-/
+
+/-- Convert a twisted arrow back to an Arrow. -/
+def twToArr' (tw : TwistedArrow' C) : Arrow C :=
+  Arrow.mk (twArr' tw)
+
+lemma twToArr'_arrToTw' (φ : Arrow C) : twToArr' (arrToTw' φ) = φ := by
+  simp only [twToArr', arrToTw', twArr']
+  rfl
+
+lemma arrToTw'_twToArr' (tw : TwistedArrow' C) : arrToTw' (twToArr' tw) = tw := by
+  simp only [arrToTw', twToArr', twArr', twDom', twCod']
+  rfl
+
+lemma twToArr'_left (tw : TwistedArrow' C) :
+    (twToArr' tw).left = twDom' tw := rfl
+
+lemma twToArr'_right (tw : TwistedArrow' C) :
+    (twToArr' tw).right = twCod' tw := rfl
+
+lemma twToArr'_hom (tw : TwistedArrow' C) :
+    (twToArr' tw).hom = twArr' tw := rfl
+
+/-! ### Correspondence with connected Grothendieck for discrete fibers
+
+We now show that `TwCoprArrElem F` is the "discrete fiber" case of the
+connected Grothendieck construction. Specifically:
+
+- Objects `(arr, elem)` in `TwCoprArrElem F` correspond to objects
+  `(arrToTw' arr, elem)` in `ConnGrothendieck (F composed with discrete)`
+
+- Morphisms in `TwCoprArrElem F` (Arrow morphisms with `TwArrCompat`) correspond
+  to morphisms in `ConnGrothendieck` where the fiber morphism is an identity
+  (the only kind of morphism in discrete categories)
+
+We establish this correspondence via explicit bijections on objects and
+morphisms.
+-/
+
+/-- Object bijection: `TwCoprArrElem F` objects correspond bijectively to
+pairs `(tw, elem)` where `tw : TwistedArrow' C` and `elem : F.obj tw`. -/
+def TwCoprArrElem.equivTwElem :
+    TwCoprArrElem F ≃ Σ tw : TwistedArrow' C, F.obj tw where
+  toFun x := ⟨arrToTw' x.arr, x.elem⟩
+  invFun p := ⟨twToArr' p.1, (arrToTw'_twToArr' p.1).symm ▸ p.2⟩
+  left_inv _ := rfl
+  right_inv _ := rfl
+
+/-- An Arrow morphism `φ : arr₁ ⟶ arr₂` satisfies the square commutativity
+`φ.left ≫ arr₂.hom = arr₁.hom ≫ φ.right`. -/
+lemma Arrow.hom_w {arr₁ arr₂ : Arrow C} (φ : arr₁ ⟶ arr₂) :
+    φ.left ≫ arr₂.hom = arr₁.hom ≫ φ.right :=
+  φ.w
+
+/-- The TwArrCompat condition for `TwCoprArrElem` morphisms corresponds to
+the fiber equality needed for discrete Grothendieck morphisms. -/
+lemma TwArrCompat_as_fiberEq {x y : TwCoprArrElem F} (φ : x.arr ⟶ y.arr)
+    (h : TwArrCompat F φ x.elem y.elem) :
+    F.map (arrToDiagFromSource φ) x.elem =
+    F.map (arrToDiagFromTarget φ) y.elem :=
+  h
+
+/-! ### Correspondence with ConnGrothendieck constructions
+
+The diagonal constructions in `ConnGrothendieck` (using `connGrothendieckDiagCod`
+and the twisted arrow morphisms `connGrothendieckTwMorphCod/Dom`) correspond
+exactly to our `arrDiagTw'` and `arrToDiagFromSource/Target` constructions.
+-/
+
+/-- The diagonal from `ConnGrothendieck` matches `arrDiagTw'`. Given an
+Arrow morphism `φ : arr₁ ⟶ arr₂`, both compute `tw(arr₁.hom ≫ φ.right)`. -/
+lemma connGrothendieckDiagCod_eq_arrDiagTw' {arr₁ arr₂ : Arrow C}
+    (φ : arr₁ ⟶ arr₂) :
+    connGrothendieckDiagCod C (arrToTw' arr₁) φ.right = arrDiagTw' φ := by
+  simp only [connGrothendieckDiagCod, arrDiagTw', arrDiag, arrToTw', twObjMk'_arr]
+
+/-- The domain-based diagonal matches `arrDiagTw'` via the arrow square
+commutativity. -/
+lemma connGrothendieckDiagDom_eq_arrDiagTw' {arr₁ arr₂ : Arrow C}
+    (φ : arr₁ ⟶ arr₂) :
+    connGrothendieckDiagDom C (arrToTw' arr₂) φ.left = arrDiagTw' φ := by
+  simp only [connGrothendieckDiagDom, arrDiagTw', arrDiag, arrToTw',
+    twObjMk'_arr, Arrow.hom_w]
+
+/-- The two diagonal representations are equal. -/
+lemma connGrothendieckDiags_eq {arr₁ arr₂ : Arrow C} (φ : arr₁ ⟶ arr₂) :
+    connGrothendieckDiagCod C (arrToTw' arr₁) φ.right =
+    connGrothendieckDiagDom C (arrToTw' arr₂) φ.left := by
+  rw [connGrothendieckDiagCod_eq_arrDiagTw', connGrothendieckDiagDom_eq_arrDiagTw']
+
+/-! ### The morphism correspondence
+
+For a functor `F : TwistedArrow' C ⥤ Type w`, morphisms in `TwCoprArrElem F`
+consist of an Arrow morphism `φ` together with the `TwArrCompat` condition.
+
+In `ConnGrothendieck (F ⋙ discrete)` (where fibers are discrete categories),
+morphisms would consist of `(domArr, codArr, square_comm, fiberMorph)`.
+In a discrete category, morphisms only exist between equal elements,
+so `fiberMorph` existing implies the transported fibers are equal.
+
+Specifically, the `fiberMorph` in `ConnGrothendieck` goes from
+`F.map (twMorphCod) x.fiber` to `F.map (twMorphDom) y.fiber`
+in the fiber at the diagonal. For discrete fibers, this morphism
+exists iff these elements are equal, which is exactly `TwArrCompat`.
+
+The correspondence:
+- `connGrothendieckTwMorphCod C (arrToTw' arr₁) φ.right` corresponds to
+  `arrToDiagFromSource φ` (both are `twHomMk' (𝟙 _) φ.right ...`)
+- `connGrothendieckTwMorphDom C (arrToTw' arr₂) φ.left` corresponds to
+  `arrToDiagFromTarget φ` (both are `twHomMk' φ.left (𝟙 _) ...`)
+-/
+
+/-- The twisted arrow morphisms have the same components. -/
+lemma twMorphCod_domArr_eq {arr₁ arr₂ : Arrow C} (φ : arr₁ ⟶ arr₂) :
+    twDomArr' (connGrothendieckTwMorphCod C (arrToTw' arr₁) φ.right) =
+    twDomArr' (arrToDiagFromSource φ) := by
+  simp only [connGrothendieckTwMorphCod, arrToDiagFromSource, twHomMk'_domArr,
+    connGrothendieckDiagCod, arrToTw', twObjMk'_dom, Functor.id_obj]
+
+lemma twMorphCod_codArr_eq {arr₁ arr₂ : Arrow C} (φ : arr₁ ⟶ arr₂) :
+    twCodArr' (connGrothendieckTwMorphCod C (arrToTw' arr₁) φ.right) =
+    twCodArr' (arrToDiagFromSource φ) := by
+  simp only [connGrothendieckTwMorphCod, arrToDiagFromSource, twHomMk'_codArr]
+
+lemma twMorphDom_domArr_eq {arr₁ arr₂ : Arrow C} (φ : arr₁ ⟶ arr₂) :
+    twDomArr' (connGrothendieckTwMorphDom C (arrToTw' arr₂) φ.left) =
+    twDomArr' (arrToDiagFromTarget φ) := by
+  simp only [connGrothendieckTwMorphDom, arrToDiagFromTarget, twHomMk'_domArr]
+
+lemma twMorphDom_codArr_eq {arr₁ arr₂ : Arrow C} (φ : arr₁ ⟶ arr₂) :
+    twCodArr' (connGrothendieckTwMorphDom C (arrToTw' arr₂) φ.left) =
+    twCodArr' (arrToDiagFromTarget φ) := by
+  simp only [connGrothendieckTwMorphDom, arrToDiagFromTarget, twHomMk'_codArr,
+    arrToTw', twObjMk'_cod, Functor.id_obj]
+
+/-! ### Summary of correspondence
+
+The results above establish that `TwCoprArrElem F` is the discrete-fiber
+specialization of `ConnGrothendieck`. Specifically:
+
+**Objects:**
+- `TwCoprArrElem F` object: `(arr : Arrow C, elem : F.obj (arrToTw' arr))`
+- `ConnGrothendieck (F ⋙ discrete)` object: `(tw, fiber)` where `fiber ∈ Discrete (F.obj tw)`
+
+Via `equivTwElem`, these correspond: `arr ↔ arrToTw' arr` and `elem ↔ fiber`.
+
+**Morphisms:**
+- In `TwCoprArrElem F`: Arrow morphism `φ` plus `TwArrCompat F φ x.elem y.elem`
+- In `ConnGrothendieck (F ⋙ discrete)`: `(φ.left, φ.right, φ.w, fiberMorph)`
+
+The `fiberMorph` is a morphism in the discrete category `Discrete (F.obj diag)`
+from the transported source fiber to the transported target fiber.
+In a discrete category, such a morphism exists iff the elements are equal.
+
+By the lemmas above:
+- `connGrothendieckDiagCod/Dom` match `arrDiagTw'`
+- `connGrothendieckTwMorphCod/Dom` have the same dom/cod components as
+  `arrToDiagFromSource/Target`
+
+Therefore the transported fibers in `ConnGrothendieck` are:
+- `F.map (connGrothendieckTwMorphCod ...) x.fiber` matches
+  `F.map (arrToDiagFromSource φ) x.elem`
+- `F.map (connGrothendieckTwMorphDom ...) y.fiber` matches
+  `F.map (arrToDiagFromTarget φ) y.elem`
+
+The `fiberMorph` condition (morphism exists in discrete category) is
+equivalent to equality of these transported fibers, which is `TwArrCompat`.
+-/
+
+end TwCoprArrElemIsoConnGrothendieck
 
 end TwCoprToArr
 
