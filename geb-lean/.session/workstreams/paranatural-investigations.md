@@ -94,6 +94,41 @@ Investigate the relationship between extranatural transformations
 - Is there a "strong extranatural" notion combining both generalizations?
 - What are the connections to parametricity?
 
+### 9. DiagElem as Connected Grothendieck Subcategory
+
+**Conjecture**: The category of diagonal elements `DiagElem(Γ)` for a profunctor
+`Γ : Cᵒᵖ × C → Type` is a subcategory of a specialization of the connected
+Grothendieck construction. The construction proceeds as follows:
+
+1. **Forgetful functor**: There is a forgetful functor `Tw(C) → Cᵒᵖ × C` that
+   forgets the morphism in objects (sending `(f : a → b)` to `(a, b)`).
+
+2. **Precomposition**: Given `Γ : Cᵒᵖ × C → Type`, precompose with the forgetful
+   functor to obtain `Γ̃ : Tw(C) → Type`.
+
+3. **Discrete inclusion**: Post-compose with the `Set → Cat` inclusion (treating
+   sets as discrete categories) to obtain `Γ̂ : Tw(C) → Cat`.
+
+4. **Connected Grothendieck**: Apply the connected Grothendieck construction to
+   `Γ̂` to obtain a category over `Arrow(C)`.
+
+5. **Diagonal restriction**: Take the full subcategory where objects have
+   `domain = codomain` and the morphism is the identity. This forces the two
+   components of Arrow(C) morphisms to coincide (since `m ∘ id = id ∘ m` means
+   `m = m`).
+
+6. **Discrete collapse**: Since the target categories are discrete, fiber
+   morphisms reduce to equalities, which should give exactly the DiagElem
+   compatibility condition.
+
+**Questions**:
+
+- Is this conjecture correct?
+- If so, what is the precise equivalence or isomorphism?
+- If not, what is the correct relationship between DiagElem and connected
+  Grothendieck?
+- Does this perspective suggest new properties of DiagElem?
+
 ## Context Files
 
 - GebLean/Paranatural.lean - Core paranatural definitions
@@ -382,11 +417,63 @@ nested function types.
 - Eilenberg-Kelly, "A generalization of the functorial calculus" (1966) -
   extranatural transformations
 
+#### Question 9: DiagElem as Connected Grothendieck Subcategory
+
+Assessment: LIKELY CORRECT (90% confidence)
+
+The conjecture that `DiagElem(Γ)` arises as a subcategory of the connected
+Grothendieck construction appears to be correct. The precise statement is:
+
+```text
+DiagElem(Γ) ≅ ConnGroth(Γ̂) ×_{Arrow(C)} C
+```
+
+where:
+
+- `Γ̂ : Tw(C) → Cat` is the discrete-category-valued functor induced from Γ
+- `ConnGroth` is the connected Grothendieck construction
+- The pullback is along the diagonal `Δ : C → Arrow(C)` sending `c ↦ id_c`
+
+**Why it works**:
+
+1. **Objects match**: On the connected Grothendieck side, objects over identity
+   arrows are `(id_c, s ∈ Γ(c,c))`, which corresponds exactly to DiagElem
+   objects `(c, s ∈ Γ(c,c))`.
+
+2. **Arrow(C) morphisms between identities are single morphisms**: A morphism
+   `id_a → id_b` in Arrow(C) consists of `(α,β)` with `β ∘ id = id ∘ α`, forcing
+   `α = β`. So morphisms are just `m : a → b` in C.
+
+3. **The two-sided fiber transport gives the DiagElem condition**: In the
+   two-sided Grothendieck pattern for `Ψ : Aᵒᵖ × B → Cat`, a morphism involves
+   comparing `b!(x)` with `a*(x')`. When applied to the diagonal of a profunctor
+   `Γ`, this yields exactly:
+
+   ```text
+   Γ(id, m)(s) = Γ(m, id)(t)  in Γ(a, b)
+   ```
+
+   which is the DiagElem compatibility condition.
+
+**Generalization**: Just as the ordinary Grothendieck construction
+generalizes the category of elements (setting fibers = discrete categories),
+the connected Grothendieck construction generalizes DiagElem. The "connected"
+aspect naturally captures the two-directional transport that defines diagonal
+element morphisms.
+
+**Remaining verification needed**:
+
+- Confirm the exact implementation of connected Grothendieck in the codebase
+  matches this analysis
+- Verify coherence conditions and universe level handling
+- Determine whether the relationship is isomorphism or merely equivalence
+
 ### Proposed Implementation Path
 
 1. Implement Dialgebra category and prove equivalences (Question 1)
 2. Document the end = StructuralEnd correspondence formally (Question 2)
 3. Explore Rel-enriched diagonal elements for parametricity (Question 4)
-4. Investigate `Paranat(Δ, Hom) ≅ DiagElem(Δ)` and implications for Question 5
+4. Investigate `Paranat(Hom, Δ) ≅ StructuralEnd(Δ)` and implications (Question 5)
 5. Verify `Over Γ ≌ Prof(DiagElem Γ)` conjecture (Question 5 updated)
 6. Formalize StructuralCoend as colimit over (DiagElem F)ᵒᵖ (Question 6)
+7. Prove DiagElem ≅ ConnGroth(Γ̂) ×_{Arrow(C)} C (Question 9)
