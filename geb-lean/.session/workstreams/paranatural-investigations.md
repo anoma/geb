@@ -568,6 +568,33 @@ For arbitrary C, one might consider Span(C) (where Span(Set) ≅ Rel) or interna
 relations Rel(C) (if C has finite limits). A parameterized version might be
 [Tw(Span(C))ᵒᵖ, Set] (at the cost of more work!).
 
+Clarification - why both Span and Tw are needed:
+
+These constructions serve different purposes and don't replace each other:
+
+| Construction | Provides | Missing |
+|--------------|----------|---------|
+| [Span(C)ᵒᵖ, Set] | Relational morphisms, topos | Profunctor structure |
+| [Tw(C)ᵒᵖ, Set] | Connecting-morphism structure, topos | Relational morphisms |
+| [Tw(Span(C))ᵒᵖ, Set] | Both | - |
+
+- **[Span(C)ᵒᵖ, Set]** = presheaves on Span(C). For each object a: a set F(a).
+  For each span a ← R → b: a function F(b) → F(a). This is NOT profunctors -
+  it lacks the mixed variance (contravariant × covariant on pairs).
+
+- **Profunctors on Span(C)** = Span(C)ᵒᵖ × Span(C) → Set. Proper profunctor
+  structure with mixed variance. Paranaturality makes sense here. But this
+  changes the BASE category to Span(C).
+
+- **[Tw(Span(C))ᵒᵖ, Set]** = presheaves on Tw(Span(C)). Objects are spans in C.
+  This connects to profunctors via diagonal-restriction (Question 9) while
+  providing relational morphisms.
+
+The Tw(-) part gives profunctor-like structure (objects are morphisms/spans,
+encoding the connection between source and target). Span(C) upgrades the
+morphisms from functions to relations/spans. The full [Tw(Span(C))ᵒᵖ, Set]
+combines both.
+
 (40%) A "connected transformation" notion better than paranaturality exists -
 UNCERTAIN
 
