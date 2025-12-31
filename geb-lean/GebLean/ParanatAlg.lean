@@ -290,4 +290,96 @@ def diagElemPointedEquiv :
 
 end DiagElemPointedEquiv
 
+section InitialAlgebraCorrespondence
+
+/-!
+### Paranatural transformations and initial algebras
+
+The main theorem: when an endofunctor `F : Type v ⥤ Type v` has an initial
+algebra `μF`, there is a bijection between:
+- Paranatural transformations `Paranat (AlgProf F) IdProf`
+- Elements of the carrier `μF.a`
+
+The correspondence is:
+- Forward: Given `x : μF.a`, define `α(A, alg) := (unique algebra hom μF → A)(x)`
+- Backward: Given `α : Paranat`, define `x := α(μF.a, μF.str)`
+
+The paranaturality condition ensures that the forward direction is well-defined
+(the result is independent of how we transport `x` through algebra homomorphisms),
+and the initiality ensures the round-trip properties.
+-/
+
+variable (F : Type v ⥤ Type v)
+
+/-- Given an element of an initial F-algebra, construct a paranatural
+transformation from `AlgProf F` to `IdProf`. At each type `A` with algebra
+structure `alg : F.obj A → A`, we apply the unique algebra homomorphism
+from the initial algebra to `(A, alg)`. -/
+def initialToParanat (μF : Endofunctor.Algebra F) (hμF : IsInitial μF)
+    (x : μF.a) : Paranat (AlgProf F) IdProf where
+  app A alg :=
+    let targetAlg : Endofunctor.Algebra F := ⟨A, alg⟩
+    (hμF.to targetAlg).f x
+  paranatural := fun A₀ A₁ f d₀ d₁ hcompat => by
+    simp only [DiagCompat, AlgProf_obj_obj, AlgProf_obj_map, AlgProf_map_app] at hcompat
+    simp only [DiagCompat, IdProf, Functor.id_obj, Functor.id_map, NatTrans.id_app,
+      types_id_apply]
+    let alg₀ : Endofunctor.Algebra F := ⟨A₀, d₀⟩
+    let alg₁ : Endofunctor.Algebra F := ⟨A₁, d₁⟩
+    let algHom : alg₀ ⟶ alg₁ := ⟨f, hcompat.symm⟩
+    have h := hμF.hom_ext (hμF.to alg₀ ≫ algHom) (hμF.to alg₁)
+    have hfx : (hμF.to alg₀ ≫ algHom).f x = f ((hμF.to alg₀).f x) := rfl
+    have heq : (hμF.to alg₁).f x = (hμF.to alg₀ ≫ algHom).f x := by
+      rw [h]
+    rw [heq, hfx]
+
+/-- Given a paranatural transformation from `AlgProf F` to `IdProf`, extract
+an element of the initial algebra by applying the transformation to the
+initial algebra's own structure map. -/
+def paranatToInitial (μF : Endofunctor.Algebra F)
+    (α : Paranat (AlgProf F) IdProf) : μF.a :=
+  α.app μF.a μF.str
+
+/-- The round-trip from initial algebra element to paranatural and back
+yields the original element. -/
+theorem paranatToInitial_initialToParanat (μF : Endofunctor.Algebra F)
+    (hμF : IsInitial μF) (x : μF.a) :
+    paranatToInitial F μF (initialToParanat F μF hμF x) = x := by
+  simp only [paranatToInitial, initialToParanat]
+  have h := hμF.hom_ext (hμF.to μF) (𝟙 μF)
+  have heq : (hμF.to μF).f = _root_.id := by
+    ext y
+    exact congrFun (congrArg Endofunctor.Algebra.Hom.f h) y
+  rw [heq]
+  rfl
+
+/-- The round-trip from paranatural to initial algebra element and back
+yields the original paranatural transformation. -/
+theorem initialToParanat_paranatToInitial (μF : Endofunctor.Algebra F)
+    (hμF : IsInitial μF) (α : Paranat (AlgProf F) IdProf) :
+    initialToParanat F μF hμF (paranatToInitial F μF α) = α := by
+  apply Paranat.ext
+  funext A alg
+  simp only [initialToParanat, paranatToInitial]
+  let targetAlg : Endofunctor.Algebra F := ⟨A, alg⟩
+  let homToTarget := hμF.to targetAlg
+  have hcompat : DiagCompat (AlgProf F) μF.a A homToTarget.f μF.str alg := by
+    simp only [DiagCompat, AlgProf_obj_obj, AlgProf_obj_map, AlgProf_map_app]
+    exact homToTarget.h.symm
+  have hpara := α.paranatural μF.a A homToTarget.f μF.str alg hcompat
+  simp only [DiagCompat, IdProf, Functor.id_obj, Functor.id_map, NatTrans.id_app,
+    types_id_apply] at hpara
+  exact hpara
+
+/-- The bijection between elements of an initial F-algebra and paranatural
+transformations from `AlgProf F` to `IdProf`. -/
+def initialAlgebraParanatEquiv (μF : Endofunctor.Algebra F) (hμF : IsInitial μF) :
+    μF.a ≃ Paranat (AlgProf F) IdProf where
+  toFun := initialToParanat F μF hμF
+  invFun := paranatToInitial F μF
+  left_inv := paranatToInitial_initialToParanat F μF hμF
+  right_inv := initialToParanat_paranatToInitial F μF hμF
+
+end InitialAlgebraCorrespondence
+
 end GebLean
