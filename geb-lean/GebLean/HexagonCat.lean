@@ -256,36 +256,34 @@ def diagElemToHexagonFunctor : DiagElem (ProfDialgebraProf P Q) ⥤ HexagonObj P
   map_id _ := HexagonHom.ext' rfl
   map_comp _ _ := HexagonHom.ext' rfl
 
-/-- The unit isomorphism: round-trip through diagonal elements is identity. -/
-def hexagonDiagElemUnitIso :
-    𝟭 (HexagonObj P Q) ≅ hexagonToDiagElemFunctor P Q ⋙ diagElemToHexagonFunctor P Q :=
-  NatIso.ofComponents
-    (fun _ => eqToIso rfl)
-    (fun {_ _} f => by
-      simp only [eqToIso_refl, Iso.refl_hom, Category.id_comp, Category.comp_id]
+/-- The hexagon category is isomorphic (as a category) to the diagonal elements
+of the profunctor-dialgebra profunctor. -/
+def hexagonDiagElemIsoCat :
+    HexagonObj P Q ≅Cat DiagElem (ProfDialgebraProf P Q) where
+  hom := hexagonToDiagElemFunctor P Q
+  inv := diagElemToHexagonFunctor P Q
+  hom_inv_id := by
+    apply Functor.ext
+    case h_obj => intro x; rfl
+    case h_map =>
+      intro x y f
+      simp only [eqToHom_refl, Category.comp_id, Category.id_comp]
       apply HexagonHom.ext'
-      rfl)
-
-/-- The counit isomorphism: round-trip through hexagon category is identity. -/
-def hexagonDiagElemCounitIso :
-    diagElemToHexagonFunctor P Q ⋙ hexagonToDiagElemFunctor P Q ≅
-    𝟭 (DiagElem (ProfDialgebraProf P Q)) :=
-  NatIso.ofComponents
-    (fun _ => eqToIso rfl)
-    (fun {_ _} f => by
-      simp only [eqToIso_refl, Iso.refl_hom, Category.id_comp, Category.comp_id]
+      rfl
+  inv_hom_id := by
+    apply Functor.ext
+    case h_obj => intro x; apply DiagElem.ext <;> rfl
+    case h_map =>
+      intro x y f
+      simp only [eqToHom_refl, Category.comp_id, Category.id_comp]
       apply DiagElem.Hom.ext
-      rfl)
+      rfl
 
 /-- The equivalence between the hexagon category and diagonal elements of the
-profunctor-dialgebra profunctor. -/
+profunctor-dialgebra profunctor, derived from the categorical isomorphism. -/
 def hexagonDiagElemEquiv :
     HexagonObj P Q ≌ DiagElem (ProfDialgebraProf P Q) :=
-  CategoryTheory.Equivalence.mk
-    (hexagonToDiagElemFunctor P Q)
-    (diagElemToHexagonFunctor P Q)
-    (hexagonDiagElemUnitIso P Q)
-    (hexagonDiagElemCounitIso P Q)
+  Cat.equivOfIso (hexagonDiagElemIsoCat P Q)
 
 end HexagonDiagElemEquiv
 
