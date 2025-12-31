@@ -1,4 +1,5 @@
 import GebLean.Paranatural
+import Mathlib.CategoryTheory.Category.Pointed
 import Mathlib.CategoryTheory.Endofunctor.Algebra
 import Mathlib.CategoryTheory.Limits.Shapes.Terminal
 
@@ -35,7 +36,7 @@ universe u v
 
 variable {C : Type u} [Category.{v} C]
 
-section AlgebraProfilector
+section AlgebraProfunctor
 
 variable (F : C ⥤ C)
 
@@ -67,7 +68,7 @@ def AlgProf : Cᵒᵖ ⥤ C ⥤ Type v where
   map_id x := by ext y a; simp
   map_comp {x₁ x₂ x₃} f g := by ext y a; simp [Category.assoc]
 
-end AlgebraProfilector
+end AlgebraProfunctor
 
 section IdentityProfunctor
 
@@ -203,94 +204,57 @@ A diagonal element of `IdProf` at object `A` consists of:
 - A base object `A : Type v`
 - An element of `IdProf A A = A`
 
-This is precisely a pointed type.
+This is precisely a pointed type. We use mathlib's `Pointed` category.
+
+Note: `Pointed` is also equivalent to the category of elements of the identity
+functor `𝟭 (Type v)`, since `(𝟭 (Type v)).Elements = Σ (A : Type v), A`.
 -/
-
-/-- A pointed type is a type with a distinguished element. -/
-@[ext]
-structure PointedType where
-  /-- The underlying type -/
-  carrier : Type v
-  /-- The distinguished point -/
-  point : carrier
-
-/-- A morphism of pointed types preserves the point. -/
-@[ext]
-structure PointedType.Hom (X Y : PointedType) where
-  /-- The underlying function -/
-  fn : X.carrier → Y.carrier
-  /-- The point is preserved -/
-  point_preserved : fn X.point = Y.point
-
-/-- The identity morphism of pointed types. -/
-@[simps]
-def PointedType.Hom.id (X : PointedType) : Hom X X where
-  fn := _root_.id
-  point_preserved := rfl
-
-/-- Composition of pointed type morphisms. -/
-@[simps]
-def PointedType.Hom.comp {X Y Z : PointedType} (f : Hom X Y) (g : Hom Y Z) :
-    Hom X Z where
-  fn := g.fn ∘ f.fn
-  point_preserved := by
-    simp only [Function.comp_apply]
-    rw [f.point_preserved, g.point_preserved]
-
-instance pointedTypeCategory : Category PointedType where
-  Hom := PointedType.Hom
-  id := PointedType.Hom.id
-  comp := PointedType.Hom.comp
-  id_comp _ := PointedType.Hom.ext rfl
-  comp_id _ := PointedType.Hom.ext rfl
-  assoc _ _ _ := PointedType.Hom.ext rfl
 
 /-- Convert a diagonal element of `IdProf` to a pointed type. -/
 @[simps]
-def diagElemToPointed (x : DiagElem IdProf) : PointedType where
-  carrier := x.base
-  point := x.elem
+def diagElemToPointed (x : DiagElem IdProf) : Pointed.{v} :=
+  Pointed.mk x.base x.elem
 
 /-- Convert a pointed type to a diagonal element of `IdProf`. -/
 @[simps]
-def pointedToDiagElem (p : PointedType) : DiagElem IdProf where
-  base := p.carrier
+def pointedToDiagElem (p : Pointed.{v}) : DiagElem IdProf where
+  base := p.X
   elem := p.point
 
 /-- Convert a morphism of diagonal elements to a pointed type morphism. -/
 @[simps]
 def diagElemHomToPointedHom {x y : DiagElem IdProf} (f : x ⟶ y) :
     diagElemToPointed x ⟶ diagElemToPointed y where
-  fn := f.base
-  point_preserved := by
-    simp only [diagElemToPointed_carrier, diagElemToPointed_point]
+  toFun := f.base
+  map_point := by
+    simp only [diagElemToPointed]
     have hcompat := f.compat
     simp only [DiagCompat, IdProf] at hcompat
     exact hcompat
 
 /-- Convert a pointed type morphism to a morphism of diagonal elements. -/
 @[simps]
-def pointedHomToDiagElemHom {p q : PointedType}
+def pointedHomToDiagElemHom {p q : Pointed.{v}}
     (f : p ⟶ q) :
     pointedToDiagElem p ⟶ pointedToDiagElem q where
-  base := f.fn
+  base := f.toFun
   compat := by
     simp only [DiagCompat, pointedToDiagElem_base, pointedToDiagElem_elem, IdProf]
-    exact f.point_preserved
+    exact f.map_point
 
 /-- The functor from diagonal elements of `IdProf` to pointed types. -/
 @[simps]
 def diagElemToPointedFunctor :
-    DiagElem IdProf ⥤ PointedType where
+    DiagElem IdProf ⥤ Pointed.{v} where
   obj := diagElemToPointed
   map := diagElemHomToPointedHom
-  map_id _ := PointedType.Hom.ext rfl
-  map_comp _ _ := PointedType.Hom.ext rfl
+  map_id _ := Pointed.Hom.ext rfl
+  map_comp _ _ := Pointed.Hom.ext rfl
 
 /-- The functor from pointed types to diagonal elements of `IdProf`. -/
 @[simps]
 def pointedToDiagElemFunctor :
-    PointedType ⥤ DiagElem IdProf where
+    Pointed.{v} ⥤ DiagElem IdProf where
   obj := pointedToDiagElem
   map := pointedHomToDiagElemHom
   map_id _ := DiagElem.Hom.ext rfl
@@ -302,28 +266,22 @@ def diagElemPointedUnitIso :
     𝟭 (DiagElem IdProf) ≅ diagElemToPointedFunctor ⋙ pointedToDiagElemFunctor :=
   NatIso.ofComponents
     (fun x => eqToIso rfl)
-    (fun {x y} f => by
-      apply DiagElem.Hom.ext
-      rfl)
+    (fun {_ _} _ => by apply DiagElem.Hom.ext; rfl)
 
 /-- The counit isomorphism for the equivalence between diagonal elements of
 `IdProf` and pointed types. -/
 def diagElemPointedCounitIso :
-    pointedToDiagElemFunctor ⋙ diagElemToPointedFunctor ≅ 𝟭 PointedType :=
+    pointedToDiagElemFunctor ⋙ diagElemToPointedFunctor ≅ 𝟭 Pointed.{v} :=
   NatIso.ofComponents
     (fun p => by
       refine ⟨⟨_root_.id, rfl⟩, ⟨_root_.id, rfl⟩, ?_, ?_⟩
-      · apply PointedType.Hom.ext; rfl
-      · apply PointedType.Hom.ext; rfl)
-    (fun {p q} f => by
-      apply PointedType.Hom.ext
-      simp only [Functor.comp_obj, Functor.id_obj, Functor.comp_map,
-        pointedToDiagElemFunctor_map, diagElemToPointedFunctor_map, Functor.id_map]
-      rfl)
+      · apply Pointed.Hom.ext; rfl
+      · apply Pointed.Hom.ext; rfl)
+    (fun {_ _} _ => by apply Pointed.Hom.ext; rfl)
 
 /-- The equivalence between diagonal elements of `IdProf` and pointed types. -/
 def diagElemPointedEquiv :
-    DiagElem IdProf ≌ PointedType :=
+    DiagElem IdProf ≌ Pointed.{v} :=
   CategoryTheory.Equivalence.mk
     diagElemToPointedFunctor
     pointedToDiagElemFunctor
