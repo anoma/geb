@@ -1621,6 +1621,106 @@ equivalent to equality of these transported fibers, which is `TwArrCompat`.
 
 end TwCoprArrElemIsoConnGrothendieck
 
+/-! ### Equivalence with ConnGrothendieck (F ⋙ typeToCat)
+
+We prove that `TwCoprArrElem F` is equivalent to `ConnGrothendieck (F ⋙ typeToCat)`
+when universes align. In discrete categories, morphisms exist only between
+equal elements (as identities), so the `fiberMorph` condition becomes an equality
+condition (as with the category of elements as a special case of the
+Grothendieck construction).
+
+For the universes to align, we need `F : TwistedArrow' C ⥤ Type u` where
+`C : Type u` has `Category.{u} C`, since `typeToCat : Type u ⥤ Cat.{u, u}`
+and `ConnGrothendieck` expects `Cat.{v, u}`.
+-/
+
+section ConnGrothendieckEquiv
+
+variable {C : Type u} [Category.{u} C]
+variable (F : TwistedArrow' C ⥤ Type u)
+
+/-- The composition `F ⋙ typeToCat` as a functor to Cat. -/
+abbrev typeToCatF : TwistedArrow' C ⥤ Cat.{u, u} := F ⋙ typeToCat
+
+/-- Convert a `TwCoprArrElem` object to a `ConnGrothendieckObj`. -/
+def twCoprArrElemToConnGrothendieckObj (x : TwCoprArrElem F) :
+    ConnGrothendieckObj C (typeToCatF F) where
+  arrow := arrToTw' x.arr
+  fiber := ⟨x.elem⟩
+
+/-- Convert a `ConnGrothendieckObj` to a `TwCoprArrElem` object. -/
+def connGrothendieckObjToTwCoprArrElem (x : ConnGrothendieckObj C (typeToCatF F)) :
+    TwCoprArrElem F where
+  arr := twToArr' x.arrow
+  elem := (arrToTw'_twToArr' x.arrow) ▸ (x.fiber : Discrete _).as
+
+/-- Round-trip from `TwCoprArrElem` to `ConnGrothendieckObj` and back is identity. -/
+@[simp]
+lemma connGrothendieckObj_roundtrip (x : TwCoprArrElem F) :
+    connGrothendieckObjToTwCoprArrElem F
+      (twCoprArrElemToConnGrothendieckObj F x) = x := by
+  simp only [connGrothendieckObjToTwCoprArrElem, twCoprArrElemToConnGrothendieckObj]
+  rfl
+
+/-- Round-trip from `ConnGrothendieckObj` to `TwCoprArrElem` and back is identity. -/
+@[simp]
+lemma twCoprArrElemObj_roundtrip (x : ConnGrothendieckObj C (typeToCatF F)) :
+    twCoprArrElemToConnGrothendieckObj F
+      (connGrothendieckObjToTwCoprArrElem F x) = x := by
+  simp only [twCoprArrElemToConnGrothendieckObj, connGrothendieckObjToTwCoprArrElem]
+  ext <;> simp [arrToTw'_twToArr']
+
+/-- Bijection between objects of `TwCoprArrElem F` and `ConnGrothendieck (F ⋙ typeToCat)`. -/
+def twCoprArrElemObjEquiv :
+    TwCoprArrElem F ≃ ConnGrothendieckObj C (typeToCatF F) where
+  toFun := twCoprArrElemToConnGrothendieckObj F
+  invFun := connGrothendieckObjToTwCoprArrElem F
+  left_inv := connGrothendieckObj_roundtrip F
+  right_inv := twCoprArrElemObj_roundtrip F
+
+/-! ### Morphism correspondence
+
+For discrete fiber categories, the `fiberMorph` in `ConnGrothendieckHom` is
+just an identity morphism witnessing equality of the transported fibers.
+This corresponds exactly to `TwArrCompat`.
+-/
+
+/-- The diagonal for ConnGrothendieck matches `arrDiagTw'` via the arrow square. -/
+lemma connGrothendieckDiagCod_eq_arrDiagTw {x y : TwCoprArrElem F}
+    (f : TwCoprArrElem.Hom F x y) :
+    connGrothendieckDiagCod C (arrToTw' x.arr) f.base.right = arrDiagTw' f.base := by
+  exact connGrothendieckDiagCod_eq_arrDiagTw' f.base
+
+/-- The TwMorphCod from ConnGrothendieck equals arrToDiagFromSource. -/
+lemma connGrothendieckTwMorphCod_eq_arrToDiagFromSource
+    {x y : TwCoprArrElem F} (f : TwCoprArrElem.Hom F x y) :
+    connGrothendieckTwMorphCod C (arrToTw' x.arr) f.base.right =
+    arrToDiagFromSource f.base ≫
+      eqToHom (connGrothendieckDiagCod_eq_arrDiagTw F f).symm := by
+  apply twHom'_ext
+  · simp only [connGrothendieckTwMorphCod, twHomMk'_domArr, twDomArr'_comp,
+      arrToDiagFromSource, connGrothendieckDiagCod, arrToTw', twObjMk'_dom,
+      eqToHom_refl', twDomArr'_id, Functor.id_obj, arrDiagTw', arrDiag,
+      Category.id_comp]
+  · simp only [connGrothendieckTwMorphCod, twHomMk'_codArr, arrToDiagFromSource,
+      eqToHom_refl', Category.comp_id]
+
+/-- The TwMorphDom from ConnGrothendieck equals arrToDiagFromTarget. -/
+lemma connGrothendieckTwMorphDom_eq_arrToDiagFromTarget
+    {x y : TwCoprArrElem F} (f : TwCoprArrElem.Hom F x y) :
+    connGrothendieckTwMorphDom C (arrToTw' y.arr) f.base.left =
+    arrToDiagFromTarget f.base ≫
+      eqToHom (connGrothendieckDiagDom_eq_arrDiagTw' f.base).symm := by
+  apply twHom'_ext
+  · simp only [connGrothendieckTwMorphDom, twHomMk'_domArr, twDomArr'_comp,
+      arrToDiagFromTarget, twDomArr'_eqToHom, arrDiagTw', arrDiag, twObjMk'_dom,
+      eqToHom_refl, Category.id_comp]
+  · simp only [connGrothendieckTwMorphDom, twHomMk'_codArr, twCodArr'_comp,
+      arrToDiagFromTarget, twCodArr'_eqToHom, connGrothendieckDiagDom,
+      arrToTw', twObjMk'_cod, eqToHom_refl, Functor.id_obj, Category.comp_id]
+
+end ConnGrothendieckEquiv
+
 end TwCoprToArr
 
 end GebLean
