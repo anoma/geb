@@ -104,6 +104,45 @@ def CoalgProf : Cᵒᵖ ⥤ C ⥤ Type v where
 
 end CoalgebraProfunctor
 
+section DialgebraProfunctor
+
+variable {D : Type u} [Category.{v} D]
+variable (F G : C ⥤ D)
+
+/-!
+### The dialgebra profunctor
+
+For functors `F, G : C ⥤ D`, the dialgebra profunctor `DialgebraProf F G` sends
+`(x, y)` to the type of morphisms `F.obj x ⟶ G.obj y` in `D`. This profunctor
+encodes the structure of (F,G)-dialgebras: a diagonal element at `A` is
+precisely a dialgebra structure `F.obj A ⟶ G.obj A`.
+
+This generalizes both algebra and coalgebra profunctors:
+- `AlgProf F ≅ DialgebraProf F (𝟭 C)` when `D = C`
+- `CoalgProf F ≅ DialgebraProf (𝟭 C) F` when `D = C`
+-/
+
+/-- The dialgebra profunctor for functors `F, G : C ⥤ D`. At objects `(x, y)`,
+this is the type `F.obj x ⟶ G.obj y` of "dialgebra-like" morphisms in `D`.
+Contravariant in `x` via precomposition with `F.map`, covariant in `y`
+via postcomposition with `G.map`. -/
+@[simps]
+def DialgebraProf : Cᵒᵖ ⥤ C ⥤ Type v where
+  obj x := {
+    obj := fun y => F.obj x.unop ⟶ G.obj y
+    map := fun g a => a ≫ G.map g
+    map_id := fun _ => by ext; simp
+    map_comp := fun _ _ => by ext; simp [Category.assoc]
+  }
+  map {x₁ x₂} f := {
+    app := fun y a => F.map f.unop ≫ a
+    naturality := fun _ _ g => by ext; simp [Category.assoc]
+  }
+  map_id x := by ext y a; simp
+  map_comp {x₁ x₂ x₃} f g := by ext y a; simp [Category.assoc]
+
+end DialgebraProfunctor
+
 section DiagElemAlgebraEquiv
 
 variable (F : C ⥤ C)
