@@ -7,6 +7,7 @@ import Mathlib.CategoryTheory.Products.Basic
 import Mathlib.CategoryTheory.Types.Basic
 import Mathlib.CategoryTheory.Opposites
 import GebLean.Utilities.Elements
+import GebLean.Utilities.TwistedArrow
 
 /-!
 # Category of diagonal elements and paranatural transformations
@@ -1223,5 +1224,216 @@ def diagElemPresheafEquiv : DiagElem (presheafToProf Q) ≌ Q.ElementsPre :=
   Cat.equivOfIso (diagElemPresheafIso Q)
 
 end DiagElemElementsEquiv
+
+section TwCoprToArr
+
+universe w
+
+variable (F : TwistedArrow' C ⥤ Type w)
+
+/-- Interpret an Arrow object as a TwistedArrow' object.
+An arrow `f : X ⟶ Y` becomes the twisted arrow with domain `X`, codomain `Y`,
+and arrow `f`. -/
+def arrToTw' (arr : Arrow C) : TwistedArrow' C :=
+  twObjMk' arr.hom
+
+/-- Given an Arrow morphism `φ : arr₁ ⟶ arr₂`, the "diagonal" arrow is
+`arr₁.hom ≫ φ.right = φ.left ≫ arr₂.hom`, which goes from `arr₁.left` to
+`arr₂.right`. -/
+def arrDiag {arr₁ arr₂ : Arrow C} (φ : arr₁ ⟶ arr₂) :
+    arr₁.left ⟶ arr₂.right :=
+  arr₁.hom ≫ φ.right
+
+/-- The diagonal as a TwistedArrow' object. -/
+def arrDiagTw' {arr₁ arr₂ : Arrow C} (φ : arr₁ ⟶ arr₂) : TwistedArrow' C :=
+  twObjMk' (arrDiag φ)
+
+/-- From the source twisted arrow `tw(arr₁.hom)` to the diagonal `tw(diag φ)`.
+This uses `𝟙` on domains and `φ.right` on codomains. -/
+def arrToDiagFromSource {arr₁ arr₂ : Arrow C} (φ : arr₁ ⟶ arr₂) :
+    arrToTw' arr₁ ⟶ arrDiagTw' φ :=
+  twHomMk'
+    (𝟙 arr₁.left)
+    φ.right
+    (by simp only [arrToTw', arrDiagTw', arrDiag, twObjMk'_arr]
+        exact Category.id_comp _)
+
+/-- From the target twisted arrow `tw(arr₂.hom)` to the diagonal `tw(diag φ)`.
+This uses `φ.left` on domains and `𝟙` on codomains. -/
+def arrToDiagFromTarget {arr₁ arr₂ : Arrow C} (φ : arr₁ ⟶ arr₂) :
+    arrToTw' arr₂ ⟶ arrDiagTw' φ :=
+  twHomMk'
+    φ.left
+    (𝟙 arr₂.right)
+    (by simp only [arrToTw', arrDiagTw', arrDiag, twObjMk'_arr]
+        calc φ.left ≫ arr₂.hom ≫ 𝟙 arr₂.right
+            = φ.left ≫ arr₂.hom := congrArg (φ.left ≫ ·) (Category.comp_id _)
+          _ = arr₁.hom ≫ φ.right := φ.w)
+
+/-- The diagonal compatibility condition for twisted arrow copresheaves over
+arrows. Given an Arrow morphism `φ : arr₁ ⟶ arr₂` and elements
+`e₁ ∈ F(tw(arr₁.hom))` and `e₂ ∈ F(tw(arr₂.hom))`, this asserts that
+transporting `e₁` forward via `(𝟙, φ.right)` equals transporting `e₂`
+forward via `(φ.left, 𝟙)` in `F(tw(diag φ))`. -/
+def TwArrCompat {arr₁ arr₂ : Arrow C} (φ : arr₁ ⟶ arr₂)
+    (e₁ : F.obj (arrToTw' arr₁)) (e₂ : F.obj (arrToTw' arr₂)) : Prop :=
+  F.map (arrToDiagFromSource φ) e₁ = F.map (arrToDiagFromTarget φ) e₂
+
+/-- An element of the twisted arrow copresheaf over an arrow: an arrow paired
+with an element of the copresheaf at that arrow (interpreted as a twisted
+arrow). -/
+@[ext]
+structure TwCoprArrElem where
+  /-- The underlying arrow in `C` -/
+  arr : Arrow C
+  /-- The element of the copresheaf at this arrow -/
+  elem : F.obj (arrToTw' arr)
+
+/-- A morphism in `TwCoprArrElem F` from `(arr₁, e₁)` to `(arr₂, e₂)` consists
+of an Arrow morphism `φ : arr₁ ⟶ arr₂` such that the diagonal compatibility
+condition holds. -/
+@[ext]
+structure TwCoprArrElem.Hom (x y : TwCoprArrElem F) where
+  /-- The underlying Arrow morphism -/
+  base : x.arr ⟶ y.arr
+  /-- The compatibility condition -/
+  compat : TwArrCompat F base x.elem y.elem
+
+namespace TwCoprArrElem
+
+/-- Given composable Arrow morphisms `f : arr₁ → arr₂` and `g : arr₂ → arr₃`,
+there is a twisted arrow morphism from `diag(f)` to `diag(f ≫ g)` via
+`(𝟙, g.right)`. -/
+def diagToCompDiagViaCod {arr₁ arr₂ arr₃ : Arrow C} (f : arr₁ ⟶ arr₂)
+    (g : arr₂ ⟶ arr₃) : arrDiagTw' f ⟶ arrDiagTw' (f ≫ g) :=
+  twHomMk'
+    (𝟙 arr₁.left)
+    g.right
+    (by simp only [arrDiagTw', arrDiag, twObjMk'_arr, Arrow.comp_right]
+        calc 𝟙 arr₁.left ≫ (arr₁.hom ≫ f.right) ≫ g.right
+            = (arr₁.hom ≫ f.right) ≫ g.right := Category.id_comp _
+          _ = arr₁.hom ≫ f.right ≫ g.right := by rw [Category.assoc])
+
+/-- Given composable Arrow morphisms `f : arr₁ → arr₂` and `g : arr₂ → arr₃`,
+there is a twisted arrow morphism from `diag(g)` to `diag(f ≫ g)` via
+`(f.left, 𝟙)`. -/
+def diagToCompDiagViaDom {arr₁ arr₂ arr₃ : Arrow C} (f : arr₁ ⟶ arr₂)
+    (g : arr₂ ⟶ arr₃) : arrDiagTw' g ⟶ arrDiagTw' (f ≫ g) :=
+  twHomMk'
+    f.left
+    (𝟙 arr₃.right)
+    (by simp only [arrDiagTw', arrDiag, twObjMk'_arr, Arrow.comp_right]
+        calc f.left ≫ (arr₂.hom ≫ g.right) ≫ 𝟙 arr₃.right
+            = f.left ≫ (arr₂.hom ≫ g.right) :=
+                congrArg (f.left ≫ ·) (Category.comp_id _)
+          _ = (f.left ≫ arr₂.hom) ≫ g.right := by rw [← Category.assoc]
+          _ = (arr₁.hom ≫ f.right) ≫ g.right :=
+                congrArg (· ≫ g.right) (f.w)
+          _ = arr₁.hom ≫ f.right ≫ g.right := by rw [Category.assoc])
+
+def Hom.id (x : TwCoprArrElem F) : Hom F x x where
+  base := 𝟙 x.arr
+  compat := by
+    simp only [TwArrCompat]
+    have h : arrToDiagFromSource (𝟙 x.arr) = arrToDiagFromTarget (𝟙 x.arr) := by
+      apply Subtype.ext
+      simp only [Arrow.id_left, Arrow.id_right, arrToDiagFromSource, arrToDiagFromTarget,
+        twHomMk', CategoryOfElements.homMk]
+    rw [h]
+
+def Hom.comp {x y z : TwCoprArrElem F} (f : Hom F x y) (g : Hom F y z) :
+    Hom F x z where
+  base := f.base ≫ g.base
+  compat := by
+    simp only [TwArrCompat]
+    have step1 : arrToDiagFromSource (f.base ≫ g.base) =
+        arrToDiagFromSource f.base ≫ diagToCompDiagViaCod f.base g.base := by
+      apply Subtype.ext
+      simp only [arrToDiagFromSource, diagToCompDiagViaCod, twHomMk',
+        CategoryOfElements.homMk, Arrow.comp_right]
+      rw [CategoryOfElements.comp_val]
+      ext
+      · simp only [CategoryTheory.prod_comp_fst]
+        symm
+        exact Category.id_comp _
+      · simp only [CategoryTheory.prod_comp_snd]
+    have step2 : arrToDiagFromTarget (f.base ≫ g.base) =
+        arrToDiagFromTarget g.base ≫ diagToCompDiagViaDom f.base g.base := by
+      apply Subtype.ext
+      simp only [arrToDiagFromTarget, diagToCompDiagViaDom, twHomMk',
+        CategoryOfElements.homMk, Arrow.comp_left]
+      rw [CategoryOfElements.comp_val]
+      ext
+      · simp only [CategoryTheory.prod_comp_fst]
+        -- In Cᵒᵖ', composition is reversed: g ≫ f in Cᵒᵖ' = f ≫ g in C
+        change f.base.left ≫ g.base.left = f.base.left ≫ g.base.left
+        rfl
+      · simp only [CategoryTheory.prod_comp_snd]
+        symm
+        exact Category.comp_id _
+    have step3 : arrToDiagFromTarget f.base ≫ diagToCompDiagViaCod f.base g.base =
+        arrToDiagFromSource g.base ≫ diagToCompDiagViaDom f.base g.base := by
+      apply Subtype.ext
+      simp only [arrToDiagFromTarget, arrToDiagFromSource, diagToCompDiagViaCod,
+        diagToCompDiagViaDom, twHomMk', CategoryOfElements.homMk]
+      rw [CategoryOfElements.comp_val, CategoryOfElements.comp_val]
+      ext
+      · simp only [CategoryTheory.prod_comp_fst]
+        -- In Cᵒᵖ', comp is reversed: f ≫ g = g ≫ f in C
+        -- So f.base.left ≫ 𝟙 x.arr.left (in Cᵒᵖ') = 𝟙 x.arr.left ≫ f.base.left (in C)
+        -- and 𝟙 y.arr.left ≫ f.base.left (in Cᵒᵖ') = f.base.left ≫ 𝟙 y.arr.left (in C)
+        change 𝟙 x.arr.left ≫ f.base.left = f.base.left ≫ 𝟙 y.arr.left
+        simp only [Category.id_comp, Category.comp_id]
+      · simp only [CategoryTheory.prod_comp_snd]
+        change 𝟙 y.arr.right ≫ g.base.right = g.base.right ≫ 𝟙 z.arr.right
+        simp only [Category.id_comp, Category.comp_id]
+    calc F.map (arrToDiagFromSource (f.base ≫ g.base)) x.elem
+        = F.map (arrToDiagFromSource f.base ≫ diagToCompDiagViaCod f.base g.base)
+            x.elem := by rw [step1]
+      _ = F.map (diagToCompDiagViaCod f.base g.base)
+            (F.map (arrToDiagFromSource f.base) x.elem) := by
+          rw [F.map_comp]; rfl
+      _ = F.map (diagToCompDiagViaCod f.base g.base)
+            (F.map (arrToDiagFromTarget f.base) y.elem) := by
+          rw [f.compat]
+      _ = F.map (arrToDiagFromTarget f.base ≫ diagToCompDiagViaCod f.base g.base)
+            y.elem := by
+          rw [F.map_comp]; rfl
+      _ = F.map (arrToDiagFromSource g.base ≫ diagToCompDiagViaDom f.base g.base)
+            y.elem := by rw [step3]
+      _ = F.map (diagToCompDiagViaDom f.base g.base)
+            (F.map (arrToDiagFromSource g.base) y.elem) := by
+          rw [F.map_comp]; rfl
+      _ = F.map (diagToCompDiagViaDom f.base g.base)
+            (F.map (arrToDiagFromTarget g.base) z.elem) := by
+          rw [g.compat]
+      _ = F.map (arrToDiagFromTarget g.base ≫ diagToCompDiagViaDom f.base g.base)
+            z.elem := by
+          rw [F.map_comp]; rfl
+      _ = F.map (arrToDiagFromTarget (f.base ≫ g.base)) z.elem := by
+          rw [step2]
+
+instance : CategoryStruct (TwCoprArrElem F) where
+  Hom := Hom F
+  id := @Hom.id _ _ F
+  comp := @Hom.comp _ _ F
+
+instance : Category (TwCoprArrElem F) where
+  id_comp f := by
+    apply Hom.ext
+    dsimp only [CategoryStruct.id, CategoryStruct.comp, Hom.id, Hom.comp]
+    exact Category.id_comp f.base
+  comp_id f := by
+    apply Hom.ext
+    dsimp only [CategoryStruct.id, CategoryStruct.comp, Hom.id, Hom.comp]
+    exact Category.comp_id f.base
+  assoc f g h := by
+    apply Hom.ext
+    dsimp only [CategoryStruct.comp, Hom.comp]
+    exact Category.assoc f.base g.base h.base
+
+end TwCoprArrElem
+
+end TwCoprToArr
 
 end GebLean
