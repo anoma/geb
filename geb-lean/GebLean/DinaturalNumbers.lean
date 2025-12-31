@@ -1,4 +1,5 @@
 import GebLean.Paranatural
+import Mathlib.CategoryTheory.Functor.Currying
 
 /-!
 # Dinatural numbers: endo-paranatural transformations of Hom are ℕ
@@ -44,30 +45,23 @@ section HomProfunctor
 /-!
 ### The hom-profunctor
 
-The hom-profunctor `HomProf : (Type v)ᵒᵖ ⥤ Type v ⥤ Type v` sends
-`(x, y)` to the function type `x → y`.
+The hom-profunctor `HomProf : Typeᵒᵖ ⥤ Type ⥤ Type` sends `(x, y)` to
+the function type `x → y`.
 
 - Contravariant in the first argument: precomposition
 - Covariant in the second argument: postcomposition
+
+We use mathlib's `Functor.hom Type : Typeᵒᵖ × Type ⥤ Type` curried via
+`Functor.curry`.
 -/
 
 /-- The hom-profunctor on `Type`, sending `(x, y)` to `x → y`.
-Contravariant in the first argument via precomposition, covariant in the
-second via postcomposition. -/
-@[simps]
-def HomProf : Typeᵒᵖ ⥤ Type ⥤ Type where
-  obj x := {
-    obj := fun y => x.unop → y
-    map := fun g f => g ∘ f
-    map_id := fun _ => by ext; rfl
-    map_comp := fun _ _ => by ext; rfl
-  }
-  map {x₁ x₂} f := {
-    app := fun y g => g ∘ f.unop
-    naturality := fun _ _ _ => by ext; rfl
-  }
-  map_id _ := by ext; rfl
-  map_comp _ _ := by ext; rfl
+This is mathlib's hom-pairing `Functor.hom Type` in curried form. -/
+abbrev HomProf : Typeᵒᵖ ⥤ Type ⥤ Type :=
+  Functor.curry.obj (Functor.hom Type)
+
+@[simp]
+theorem HomProf_obj_obj (A B : Type) : (HomProf.obj (Opposite.op A)).obj B = (A → B) := rfl
 
 /-- The diagonal of `HomProf` at `A` is endomorphisms `A → A`. -/
 theorem HomProf_diag (A : Type) : diagApp HomProf A = (A → A) := rfl
@@ -160,7 +154,7 @@ compatibility condition relating `(ℕ, succ)` to `(A, f)`. -/
 theorem iterate_compat {A : Type} (f : A → A) (a : A) :
     DiagCompat HomProf ℕ A (fun k => iterateN k f a) Nat.succ f := by
   simp only [DiagCompat, HomProf_obj_obj]
-  ext k
+  funext k
   rfl
 
 /-- The round-trip from paranatural to `ℕ` and back is the identity.
