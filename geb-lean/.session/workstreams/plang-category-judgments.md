@@ -123,7 +123,13 @@ approach before generalizing:
   - Used Sigma.ext + sigma_heq_of_fst_eq_snd_heq pattern
 - [x] Fix unit_naturality_PLang proof (idMap/compMap components)
   - Extracted naturality equations as local hypotheses before rewriting
-- [ ] Complete mathlib Adjunction construction with equal universes
+- [x] Complete mathlib Adjunction construction with equal universes
+  - [x] unitNatTrans: unit as NatTrans (𝟭 AdjGr ⟶ LAdjFunctor ⋙ ΦAdjFunctor)
+  - [x] counitNatTrans: counit as NatTrans (ΦAdjFunctor ⋙ LAdjFunctor ⟶ 𝟭 AdjCat)
+  - [x] coreUnitCounit: Adjunction.CoreUnitCounit with triangle identities
+  - [x] grAdjunction: LAdjFunctor ⊣ ΦAdjFunctor via mkOfUnitCounit
+  - [x] phiFunctorFullyFaithful: PhiFunctor.FullyFaithful instance
+  - [x] phiReflective: Reflective ΦAdjFunctor instance
 
 #### 3.2 Universe-Flexible Adjunction (Required)
 
@@ -141,6 +147,13 @@ universe levels. This is the primary goal of this workstream.
 - [ ] Remove `AdjunctionDataAt` custom structure (use mathlib throughout)
 
 #### 3.3 Reflective Embedding Instances (Required)
+
+Equal-universe version (Grothendieck approach) is complete:
+
+- [x] `phiFunctorFullyFaithful : PhiFunctor.FullyFaithful`
+- [x] `phiReflective : Reflective ΦAdjFunctor`
+
+Universe-flexible version still needed:
 
 - [ ] Prove `Functor.FullyFaithful PhiFunctorPLang`
   - Φ is fully faithful: `∀ X Y, (X ⟶ Y) ≃ (Φ X ⟶ Φ Y)`

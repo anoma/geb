@@ -412,6 +412,15 @@ def CompWitBundle.Hom.comp.{uObj, uMor, uWit, uCWit}
   witRight_eq := fun w => (g.witRight_eq (f.witMap w)).trans (f.witRight_eq w)
   witComp_eq := fun w => (g.witComp_eq (f.witMap w)).trans (f.witComp_eq w)
 
+/-- The witMap of a composition is function composition of witMaps. -/
+@[simp]
+theorem CompWitBundle.Hom.comp_witMap.{uObj, uMor, uWit, uCWit}
+    {I : IdWitGr.{uObj, uMor, uWit}}
+    {B₁ B₂ B₃ : CompWitBundle.{uObj, uMor, uWit, uCWit} I}
+    (f : CompWitBundle.Hom B₁ B₂) (g : CompWitBundle.Hom B₂ B₃)
+    (w : B₁.witType) :
+    (f.comp g).witMap w = g.witMap (f.witMap w) := rfl
+
 /-- Category instance for CompWitBundle over a fixed IdWitGr. -/
 instance CompWitBundle.instCategory.{uObj, uMor, uWit, uCWit}
     (I : IdWitGr.{uObj, uMor, uWit}) :
@@ -424,6 +433,14 @@ instance CompWitBundle.instCategory.{uObj, uMor, uWit, uCWit}
   id_comp := fun {_ _} _ => CompWitBundle.Hom.ext fun _ => rfl
   comp_id := fun {_ _} _ => CompWitBundle.Hom.ext fun _ => rfl
   assoc := fun {_ _ _ _} _ _ _ => CompWitBundle.Hom.ext fun _ => rfl
+
+/-- Category composition of CompWitBundle morphisms. -/
+@[simp]
+theorem CompWitBundle.Hom.category_comp_witMap.{uObj, uMor, uWit, uCWit}
+    {I : IdWitGr.{uObj, uMor, uWit}}
+    {B₁ B₂ B₃ : CompWitBundle.{uObj, uMor, uWit, uCWit} I}
+    (f : B₁ ⟶ B₂) (g : B₂ ⟶ B₃) (w : B₁.witType) :
+    (f ≫ g).witMap w = g.witMap (f.witMap w) := rfl
 
 /-! ### Pushforward of Composition Witness Bundles
 
