@@ -9,20 +9,31 @@ import GebLean.Utilities.Families
 /-!
 # Category Judgments via Layered Grothendieck Construction
 
-This module presents category-judgment copresheaves as a chain of contravariant
-Grothendieck constructions using `GrothendieckContra'` and `familyFunctor`.
+This module presents category-judgment copresheaves as a layered Grothendieck
+construction with independent universe parameters.
 
-The layering with independent universe parameters:
+The layering:
 
-* Layer 0: `Type uObj` (object types)
-* Layer 1: `GrothendieckContra' quiverFunctor` — quiver structures with morphism
-  families in `Type uMor`
-* Layer 2: `GrothendieckContra' idFunctor` — identity structures
-* Layer 3: `GrothendieckContra' compFunctor` — composition structures
+* Layer 1: `QuiverGr = GrothendieckContra' quiverFunctor`
+  - Contravariant over `Type uObj`
+  - Objects: pairs (X : Type, mor : X × X → Type uMor)
+  - Morphisms use pullback along functions
 
-Each layer is the `GrothendieckContra'` of a functor from the opposite of
-the previous layer into `Cat`. The universe parameters `uObj` and `uMor` remain
-independent throughout, analogous to `Cat.{vMor, uObj}`.
+* Layer 2: `IdWitGr = Grothendieck idWitFunctor`
+  - Covariant over QuiverGr
+  - Objects: pairs (Q : QuiverGr, idWit : IdWitBundle Q)
+  - Identity witnesses certify which morphisms are identities
+  - Morphisms use pushforward along quiver morphisms
+
+* Layer 3: `CompWitGr = Grothendieck compWitFunctor`
+  - Covariant over IdWitGr
+  - Objects: pairs (I : IdWitGr, compWit : CompWitBundle I)
+  - Composition witnesses certify which morphism triples are compositions
+  - Morphisms use pushforward along IdWitGr morphisms
+
+Layers 2 and 3 use the copresheaf/relational approach: identity and composition
+are represented as witness types with projections, matching `CatJudgCopr`.
+This allows the covariant Grothendieck construction with pushforward functors.
 -/
 
 namespace GebLean
@@ -120,697 +131,476 @@ theorem QuiverGr.mk_morFamily.{uObj, uMor} (X : Type uObj) (M : X × X → Type 
 theorem QuiverGr.eta.{uObj, uMor} (Q : QuiverGr.{uObj, uMor}) :
     QuiverGr.mk Q.objType Q.morFamily = Q := rfl
 
-/-! ## Layered Bundle Structures
+/-! ## Copresheaf-Style Identity Witness Bundles
 
-Each layer adds one new piece of structure, using `extends` to build on the
-previous layer. This eliminates code duplication and makes the layering explicit.
+The copresheaf approach represents identity as a *relation* rather than a function.
+Instead of assigning an identity morphism to each object (`∀ x, Hom x x`),
+we have:
+- A type of identity witnesses
+- Projections extracting the object and morphism from each witness
 
-Pullback along functions `f : X → Y` works uniformly:
-- `Hom_X(x, y) := Hom_Y(f x, f y)`
-- `id_X(x) := id_Y(f x)`
-- `comp_X(f, g) := comp_Y(f, g)`
+This matches `CatJudgCopr` and allows the covariant Grothendieck construction
+to work because identity data can be *pushed forward* along quiver morphisms.
+
+Given `h : Q₁ → Q₂`, the pushforward of identity witness data `(W, obj, mor)`:
+- Same witness type W
+- `obj' w = h.base (obj w)`
+- `mor' w = h.fiber (mor w)`
 -/
 
-/-! ### Layer 1: Quiver Bundles (morphism families only) -/
+/-- Bundle of identity witness data over a quiver Q.
 
-/-- Bundle of just the quiver structure: a morphism family over a type. -/
-structure QuiverBundle.{uObj, uMor} (X : Type uObj) where
-  /-- The morphism family: for each pair `(x, y)`, a type of morphisms -/
-  morFamily : X × X → Type uMor
+    This is the copresheaf/relational approach: instead of a function assigning
+    an identity morphism to each object, we have a type of witnesses with
+    projections. Each witness certifies that a particular morphism is an
+    identity at a particular object.
 
-/-- Morphisms between quiver bundles: natural transformations on morphism
-    families. -/
-structure QuiverBundle.Hom.{uObj, uMor} {X : Type uObj}
-    (B₁ B₂ : QuiverBundle.{uObj, uMor} X) where
-  /-- The natural transformation on morphism families -/
-  transform : ∀ p : X × X, B₁.morFamily p → B₂.morFamily p
+    For a category C, the identity witness type could be C.obj itself,
+    with witObj = id and witMor = 𝟙. But this representation is more flexible
+    and allows the Grothendieck construction to work via pushforward. -/
+structure IdWitBundle.{uObj, uMor, uWit} (Q : QuiverGr.{uObj, uMor}) where
+  witType : Type uWit
+  witObj : witType → Q.objType
+  witMor : (w : witType) → Q.Hom (witObj w) (witObj w)
 
-/-- Identity morphism for QuiverBundle. -/
-def QuiverBundle.Hom.identity.{uObj, uMor} {X : Type uObj}
-    (B : QuiverBundle.{uObj, uMor} X) : QuiverBundle.Hom B B where
-  transform := fun _ m => m
+/-- Morphisms between identity witness bundles over the same quiver:
+    functions on witness types that preserve both object and morphism
+    projections. The witMor_eq field uses cast since witMor_eq at w relates
+    morphisms at B₂.witObj (witMap w) and B₁.witObj w. -/
+structure IdWitBundle.Hom.{uObj, uMor, uWit} {Q : QuiverGr.{uObj, uMor}}
+    (B₁ B₂ : IdWitBundle.{uObj, uMor, uWit} Q) where
+  witMap : B₁.witType → B₂.witType
+  witObj_eq : ∀ w, B₂.witObj (witMap w) = B₁.witObj w
+  witMor_eq : ∀ w, HEq (B₂.witMor (witMap w)) (B₁.witMor w)
 
-/-- Composition of QuiverBundle morphisms. -/
-def QuiverBundle.Hom.comp.{uObj, uMor} {X : Type uObj}
-    {B₁ B₂ B₃ : QuiverBundle.{uObj, uMor} X}
-    (f : QuiverBundle.Hom B₁ B₂) (g : QuiverBundle.Hom B₂ B₃) :
-    QuiverBundle.Hom B₁ B₃ where
-  transform := fun p m => g.transform p (f.transform p m)
-
-/-- Extensionality for QuiverBundle.Hom. -/
 @[ext]
-theorem QuiverBundle.Hom.ext.{uObj, uMor} {X : Type uObj}
-    {B₁ B₂ : QuiverBundle.{uObj, uMor} X}
-    {f g : QuiverBundle.Hom B₁ B₂}
-    (h : ∀ p m, f.transform p m = g.transform p m) : f = g := by
+theorem IdWitBundle.Hom.ext.{uObj, uMor, uWit} {Q : QuiverGr.{uObj, uMor}}
+    {B₁ B₂ : IdWitBundle.{uObj, uMor, uWit} Q}
+    {f g : IdWitBundle.Hom B₁ B₂}
+    (h : ∀ w, f.witMap w = g.witMap w) : f = g := by
   cases f; cases g
   congr 1
-  funext p m
-  exact h p m
+  funext w
+  exact h w
 
-/-- Category instance for QuiverBundle over a fixed type. -/
-instance QuiverBundle.instCategory.{uObj, uMor} (X : Type uObj) :
-    Category.{max uObj uMor} (QuiverBundle.{uObj, uMor} X) where
-  Hom := QuiverBundle.Hom
-  id := QuiverBundle.Hom.identity
-  comp := QuiverBundle.Hom.comp
-  id_comp := fun _ => by ext p m; rfl
-  comp_id := fun _ => by ext p m; rfl
-  assoc := fun _ _ _ => by ext p m; rfl
+/-- Identity morphism for IdWitBundle. -/
+def IdWitBundle.Hom.identity.{uObj, uMor, uWit} {Q : QuiverGr.{uObj, uMor}}
+    (B : IdWitBundle.{uObj, uMor, uWit} Q) : IdWitBundle.Hom B B where
+  witMap := id
+  witObj_eq := fun _ => rfl
+  witMor_eq := fun _ => HEq.rfl
 
-/-- Pullback of a QuiverBundle along a function. -/
-def QuiverBundle.pullback.{uObj, uMor} {X Y : Type uObj}
-    (f : X → Y) (B : QuiverBundle.{uObj, uMor} Y) :
-    QuiverBundle.{uObj, uMor} X where
-  morFamily := fun p => B.morFamily (f p.1, f p.2)
+/-- Composition of IdWitBundle morphisms. -/
+def IdWitBundle.Hom.comp.{uObj, uMor, uWit} {Q : QuiverGr.{uObj, uMor}}
+    {B₁ B₂ B₃ : IdWitBundle.{uObj, uMor, uWit} Q}
+    (f : IdWitBundle.Hom B₁ B₂) (g : IdWitBundle.Hom B₂ B₃) :
+    IdWitBundle.Hom B₁ B₃ where
+  witMap := g.witMap ∘ f.witMap
+  witObj_eq := fun w => by
+    simp only [Function.comp_apply]
+    rw [g.witObj_eq, f.witObj_eq]
+  witMor_eq := fun w => by
+    simp only [Function.comp_apply]
+    exact HEq.trans (g.witMor_eq (f.witMap w)) (f.witMor_eq w)
 
-/-- Pullback of a morphism of QuiverBundles. -/
-def QuiverBundle.Hom.pullback.{uObj, uMor} {X Y : Type uObj}
-    (f : X → Y) {B₁ B₂ : QuiverBundle.{uObj, uMor} Y}
-    (φ : QuiverBundle.Hom B₁ B₂) :
-    QuiverBundle.Hom (QuiverBundle.pullback f B₁)
-      (QuiverBundle.pullback f B₂) where
-  transform := fun p => φ.transform (f p.1, f p.2)
+/-- Category instance for IdWitBundle over a fixed quiver. -/
+instance IdWitBundle.instCategory.{uObj, uMor, uWit} (Q : QuiverGr.{uObj, uMor}) :
+    Category.{uWit} (IdWitBundle.{uObj, uMor, uWit} Q) where
+  Hom B₁ B₂ := IdWitBundle.Hom B₁ B₂
+  id B := IdWitBundle.Hom.identity B
+  comp := fun {B₁ B₂ B₃} (f : IdWitBundle.Hom B₁ B₂) (g : IdWitBundle.Hom B₂ B₃) =>
+    IdWitBundle.Hom.comp f g
+  id_comp := fun {_ _} _ => IdWitBundle.Hom.ext fun _ => rfl
+  comp_id := fun {_ _} _ => IdWitBundle.Hom.ext fun _ => rfl
+  assoc := fun {_ _ _ _} _ _ _ => IdWitBundle.Hom.ext fun _ => rfl
 
-/-- Pullback functor for QuiverBundle categories. -/
-def QuiverBundle.pullbackFunctor.{uObj, uMor} {X Y : Type uObj} (f : X → Y) :
-    QuiverBundle.{uObj, uMor} Y ⥤ QuiverBundle.{uObj, uMor} X where
-  obj := QuiverBundle.pullback f
-  map := QuiverBundle.Hom.pullback f
-  map_id := fun _ => by apply QuiverBundle.Hom.ext; intro p m; rfl
-  map_comp := fun _ _ => by apply QuiverBundle.Hom.ext; intro p m; rfl
+/-! ### Pushforward of Identity Witness Bundles
 
-/-! ### Layer 2: Identity-Quiver Bundles (extends QuiverBundle with identity) -/
+Given a quiver morphism `h : Q₁ ⟶ Q₂`, we can push forward identity witness
+data from Q₁ to Q₂. This is the functorial action for the covariant
+Grothendieck construction.
+-/
 
-/-- Bundle of quiver structure with identity: extends QuiverBundle with
-    identity assignment. -/
-structure IdQuiverBundle.{uObj, uMor} (X : Type uObj)
-    extends QuiverBundle.{uObj, uMor} X where
-  /-- The identity assignment: for each `x`, an identity morphism -/
-  idMor : ∀ x : X, morFamily (x, x)
+/-- Pushforward of an identity witness bundle along a quiver morphism. -/
+def IdWitBundle.pushforward.{uObj, uMor, uWit}
+    {Q₁ Q₂ : QuiverGr.{uObj, uMor}} (h : Q₁ ⟶ Q₂)
+    (B : IdWitBundle.{uObj, uMor, uWit} Q₁) :
+    IdWitBundle.{uObj, uMor, uWit} Q₂ where
+  witType := B.witType
+  witObj := fun w => h.base (B.witObj w)
+  witMor := fun w => h.fiber (B.witObj w, B.witObj w) (B.witMor w)
 
-/-- Morphisms between identity-quiver bundles: extends QuiverBundle.Hom with
-    identity preservation. -/
-structure IdQuiverBundle.Hom.{uObj, uMor} {X : Type uObj}
-    (B₁ B₂ : IdQuiverBundle.{uObj, uMor} X)
-    extends QuiverBundle.Hom B₁.toQuiverBundle B₂.toQuiverBundle where
-  /-- The transformation preserves identity morphisms -/
-  preserves_id : ∀ x : X, transform (x, x) (B₁.idMor x) = B₂.idMor x
+/-- Pushforward of a morphism of identity witness bundles. -/
+def IdWitBundle.Hom.pushforward.{uObj, uMor, uWit}
+    {Q₁ Q₂ : QuiverGr.{uObj, uMor}} (h : Q₁ ⟶ Q₂)
+    {B₁ B₂ : IdWitBundle.{uObj, uMor, uWit} Q₁}
+    (φ : IdWitBundle.Hom B₁ B₂) :
+    IdWitBundle.Hom (IdWitBundle.pushforward h B₁)
+                    (IdWitBundle.pushforward h B₂) where
+  witMap := φ.witMap
+  witObj_eq := fun w => by
+    simp only [IdWitBundle.pushforward]
+    rw [φ.witObj_eq]
+  witMor_eq := fun w => by
+    simp only [IdWitBundle.pushforward]
+    have hobj := φ.witObj_eq w
+    have hmor := φ.witMor_eq w
+    have helper : ∀ {a b : Q₁.objType} (hab : a = b)
+        {m : Q₁.morFamily (a, a)} {n : Q₁.morFamily (b, b)} (hmn : HEq m n),
+        HEq (h.fiber (a, a) m) (h.fiber (b, b) n) := by
+      intro a b hab m n hmn
+      subst hab
+      exact heq_of_eq (congrArg (h.fiber _) (eq_of_heq hmn))
+    exact helper hobj hmor
 
-/-- Identity morphism for IdQuiverBundle. -/
-def IdQuiverBundle.Hom.identity.{uObj, uMor} {X : Type uObj}
-    (B : IdQuiverBundle.{uObj, uMor} X) : IdQuiverBundle.Hom B B where
-  transform := fun _ m => m
-  preserves_id := fun _ => rfl
+/-- Pushforward functor for identity witness bundles. -/
+def IdWitBundle.pushforwardFunctor.{uObj, uMor, uWit}
+    {Q₁ Q₂ : QuiverGr.{uObj, uMor}} (h : Q₁ ⟶ Q₂) :
+    IdWitBundle.{uObj, uMor, uWit} Q₁ ⥤ IdWitBundle.{uObj, uMor, uWit} Q₂ where
+  obj := IdWitBundle.pushforward h
+  map := fun {B₁ B₂} (φ : IdWitBundle.Hom B₁ B₂) =>
+    IdWitBundle.Hom.pushforward h φ
+  map_id _ := IdWitBundle.Hom.ext fun _ => rfl
+  map_comp _ _ := IdWitBundle.Hom.ext fun _ => rfl
 
-/-- Composition of IdQuiverBundle morphisms. -/
-def IdQuiverBundle.Hom.comp.{uObj, uMor} {X : Type uObj}
-    {B₁ B₂ B₃ : IdQuiverBundle.{uObj, uMor} X}
-    (f : IdQuiverBundle.Hom B₁ B₂) (g : IdQuiverBundle.Hom B₂ B₃) :
-    IdQuiverBundle.Hom B₁ B₃ where
-  transform := fun p m => g.transform p (f.transform p m)
-  preserves_id := fun x => by rw [f.preserves_id, g.preserves_id]
+@[simp]
+theorem IdWitBundle.pushforward_id.{uObj, uMor, uWit}
+    {Q : QuiverGr.{uObj, uMor}} (B : IdWitBundle.{uObj, uMor, uWit} Q) :
+    IdWitBundle.pushforward (𝟙 Q) B = B := rfl
 
-/-- Extensionality for IdQuiverBundle.Hom. -/
+@[simp]
+theorem IdWitBundle.pushforward_comp.{uObj, uMor, uWit}
+    {Q₁ Q₂ Q₃ : QuiverGr.{uObj, uMor}} (f : Q₁ ⟶ Q₂) (g : Q₂ ⟶ Q₃)
+    (B : IdWitBundle.{uObj, uMor, uWit} Q₁) :
+    IdWitBundle.pushforward (f ≫ g) B =
+    IdWitBundle.pushforward g (IdWitBundle.pushforward f B) := rfl
+
+/-! ### The Identity Witness Functor
+
+The covariant functor from QuiverGr to Cat sending each quiver to its
+category of identity witness bundles.
+-/
+
+/-- The identity witness functor: sends quivers to categories of identity
+    witness bundles, with pushforward as the functorial action.
+
+    This is a covariant functor QuiverGr → Cat, suitable for mathlib's
+    standard Grothendieck construction. -/
+def idWitFunctor.{uObj, uMor, uWit} :
+    QuiverGr.{uObj, uMor} ⥤
+    Cat.{uWit, max uObj uMor (uWit + 1)} where
+  obj Q := Cat.of (IdWitBundle.{uObj, uMor, uWit} Q)
+  map h := IdWitBundle.pushforwardFunctor h
+  map_id Q := by
+    apply Functor.ext
+    · intro B Y f
+      simp only [eqToHom_refl, Category.id_comp, Category.comp_id]
+      apply IdWitBundle.Hom.ext
+      intro w; rfl
+    · intro B; rfl
+  map_comp f g := by
+    apply Functor.ext
+    · intro B Y φ
+      simp only [eqToHom_refl, Category.id_comp, Category.comp_id]
+      apply IdWitBundle.Hom.ext
+      intro w; rfl
+    · intro B; rfl
+
+/-! ## Layer 2 via Covariant Grothendieck: Quivers with Identity Witnesses
+
+Using mathlib's standard Grothendieck construction with the identity witness
+functor gives us the category of quivers equipped with identity witness data.
+-/
+
+/-- The second layer via covariant Grothendieck: quivers with identity witness
+    structures. Objects are pairs (Q, B) where Q is a quiver and B is an
+    identity witness bundle over Q. -/
+abbrev IdWitGr.{uObj, uMor, uWit} :=
+  Grothendieck idWitFunctor.{uObj, uMor, uWit}
+
+namespace IdWitGr
+
+/-- Extract the underlying quiver from an IdWitGr. -/
+abbrev quiver.{uObj, uMor, uWit} (I : IdWitGr.{uObj, uMor, uWit}) :
+    QuiverGr.{uObj, uMor} := I.base
+
+/-- Extract the object type from an IdWitGr. -/
+abbrev objType.{uObj, uMor, uWit} (I : IdWitGr.{uObj, uMor, uWit}) :
+    Type uObj := I.quiver.objType
+
+/-- The type of morphisms from x to y in an IdWitGr. -/
+abbrev Hom'.{uObj, uMor, uWit} (I : IdWitGr.{uObj, uMor, uWit})
+    (x y : I.objType) : Type uMor := I.quiver.Hom x y
+
+end IdWitGr
+
+/-! ## Layer 3: Composition Witness Bundles
+
+Composition witness bundles over an `IdWitGr`. Each witness certifies that
+a particular triple of morphisms (f, g, h) represents a composition f ≫ g = h.
+-/
+
+/-- Bundle of composition witness data over an IdWitGr.
+    Each witness provides source/middle/target objects and three morphisms:
+    - left: source → middle
+    - right: middle → target
+    - composite: source → target (= left ≫ right in a category) -/
+structure CompWitBundle.{uObj, uMor, uWit, uCWit}
+    (I : IdWitGr.{uObj, uMor, uWit}) where
+  witType : Type uCWit
+  witSrc : witType → I.objType
+  witMid : witType → I.objType
+  witTgt : witType → I.objType
+  witLeft : (w : witType) → I.Hom' (witSrc w) (witMid w)
+  witRight : (w : witType) → I.Hom' (witMid w) (witTgt w)
+  witComp : (w : witType) → I.Hom' (witSrc w) (witTgt w)
+
+/-- Morphisms between composition witness bundles over the same IdWitGr:
+    functions on witness types that preserve all projections. -/
+structure CompWitBundle.Hom.{uObj, uMor, uWit, uCWit}
+    {I : IdWitGr.{uObj, uMor, uWit}}
+    (B₁ B₂ : CompWitBundle.{uObj, uMor, uWit, uCWit} I) where
+  witMap : B₁.witType → B₂.witType
+  witSrc_eq : ∀ w, B₂.witSrc (witMap w) = B₁.witSrc w
+  witMid_eq : ∀ w, B₂.witMid (witMap w) = B₁.witMid w
+  witTgt_eq : ∀ w, B₂.witTgt (witMap w) = B₁.witTgt w
+  witLeft_eq : ∀ w, HEq (B₂.witLeft (witMap w)) (B₁.witLeft w)
+  witRight_eq : ∀ w, HEq (B₂.witRight (witMap w)) (B₁.witRight w)
+  witComp_eq : ∀ w, HEq (B₂.witComp (witMap w)) (B₁.witComp w)
+
 @[ext]
-theorem IdQuiverBundle.Hom.ext.{uObj, uMor} {X : Type uObj}
-    {B₁ B₂ : IdQuiverBundle.{uObj, uMor} X}
-    {f g : IdQuiverBundle.Hom B₁ B₂}
-    (h : ∀ p m, f.transform p m = g.transform p m) : f = g := by
+theorem CompWitBundle.Hom.ext.{uObj, uMor, uWit, uCWit}
+    {I : IdWitGr.{uObj, uMor, uWit}}
+    {B₁ B₂ : CompWitBundle.{uObj, uMor, uWit, uCWit} I}
+    {f g : CompWitBundle.Hom B₁ B₂}
+    (h : ∀ w, f.witMap w = g.witMap w) : f = g := by
   cases f; cases g
   congr 1
-  apply QuiverBundle.Hom.ext
-  exact h
+  funext w
+  exact h w
 
-/-- Category instance for IdQuiverBundle over a fixed type. -/
-instance IdQuiverBundle.instCategory.{uObj, uMor} (X : Type uObj) :
-    Category.{max uObj uMor} (IdQuiverBundle.{uObj, uMor} X) where
-  Hom := IdQuiverBundle.Hom
-  id := IdQuiverBundle.Hom.identity
-  comp := IdQuiverBundle.Hom.comp
-  id_comp := fun f => by
-    ext p m
-    rfl
-  comp_id := fun f => by
-    ext p m
-    rfl
-  assoc := fun f g h => by
-    ext p m
-    rfl
+/-- Identity morphism for CompWitBundle. -/
+def CompWitBundle.Hom.identity.{uObj, uMor, uWit, uCWit}
+    {I : IdWitGr.{uObj, uMor, uWit}}
+    (B : CompWitBundle.{uObj, uMor, uWit, uCWit} I) :
+    CompWitBundle.Hom B B where
+  witMap := id
+  witSrc_eq := fun _ => rfl
+  witMid_eq := fun _ => rfl
+  witTgt_eq := fun _ => rfl
+  witLeft_eq := fun _ => HEq.rfl
+  witRight_eq := fun _ => HEq.rfl
+  witComp_eq := fun _ => HEq.rfl
 
-/-- Pullback of an IdQuiverBundle along a function. -/
-def IdQuiverBundle.pullback.{uObj, uMor} {X Y : Type uObj}
-    (f : X → Y) (B : IdQuiverBundle.{uObj, uMor} Y) : IdQuiverBundle.{uObj, uMor} X where
-  morFamily := fun p => B.morFamily (f p.1, f p.2)
-  idMor := fun x => B.idMor (f x)
+/-- Composition of CompWitBundle morphisms. -/
+def CompWitBundle.Hom.comp.{uObj, uMor, uWit, uCWit}
+    {I : IdWitGr.{uObj, uMor, uWit}}
+    {B₁ B₂ B₃ : CompWitBundle.{uObj, uMor, uWit, uCWit} I}
+    (f : CompWitBundle.Hom B₁ B₂) (g : CompWitBundle.Hom B₂ B₃) :
+    CompWitBundle.Hom B₁ B₃ where
+  witMap := g.witMap ∘ f.witMap
+  witSrc_eq := fun w => by
+    simp only [Function.comp_apply]
+    rw [g.witSrc_eq, f.witSrc_eq]
+  witMid_eq := fun w => by
+    simp only [Function.comp_apply]
+    rw [g.witMid_eq, f.witMid_eq]
+  witTgt_eq := fun w => by
+    simp only [Function.comp_apply]
+    rw [g.witTgt_eq, f.witTgt_eq]
+  witLeft_eq := fun w => (g.witLeft_eq (f.witMap w)).trans (f.witLeft_eq w)
+  witRight_eq := fun w => (g.witRight_eq (f.witMap w)).trans (f.witRight_eq w)
+  witComp_eq := fun w => (g.witComp_eq (f.witMap w)).trans (f.witComp_eq w)
 
-/-- Pullback of a morphism of IdQuiverBundles. -/
-def IdQuiverBundle.Hom.pullback.{uObj, uMor} {X Y : Type uObj}
-    (f : X → Y) {B₁ B₂ : IdQuiverBundle.{uObj, uMor} Y}
-    (φ : IdQuiverBundle.Hom B₁ B₂) :
-    IdQuiverBundle.Hom (IdQuiverBundle.pullback f B₁)
-      (IdQuiverBundle.pullback f B₂) where
-  transform := fun p => φ.transform (f p.1, f p.2)
-  preserves_id := fun x => φ.preserves_id (f x)
+/-- Category instance for CompWitBundle over a fixed IdWitGr. -/
+instance CompWitBundle.instCategory.{uObj, uMor, uWit, uCWit}
+    (I : IdWitGr.{uObj, uMor, uWit}) :
+    Category.{uCWit} (CompWitBundle.{uObj, uMor, uWit, uCWit} I) where
+  Hom B₁ B₂ := CompWitBundle.Hom B₁ B₂
+  id B := CompWitBundle.Hom.identity B
+  comp := fun {B₁ B₂ B₃}
+    (f : CompWitBundle.Hom B₁ B₂) (g : CompWitBundle.Hom B₂ B₃) =>
+    CompWitBundle.Hom.comp f g
+  id_comp := fun {_ _} _ => CompWitBundle.Hom.ext fun _ => rfl
+  comp_id := fun {_ _} _ => CompWitBundle.Hom.ext fun _ => rfl
+  assoc := fun {_ _ _ _} _ _ _ => CompWitBundle.Hom.ext fun _ => rfl
 
-/-- Pullback functor for IdQuiverBundle categories. -/
-def IdQuiverBundle.pullbackFunctor.{uObj, uMor} {X Y : Type uObj} (f : X → Y) :
-    IdQuiverBundle.{uObj, uMor} Y ⥤ IdQuiverBundle.{uObj, uMor} X where
-  obj := IdQuiverBundle.pullback f
-  map := IdQuiverBundle.Hom.pullback f
-  map_id := fun B => by
-    apply IdQuiverBundle.Hom.ext
-    intro p m
-    rfl
-  map_comp := fun φ ψ => by
-    apply IdQuiverBundle.Hom.ext
-    intro p m
-    rfl
+/-! ### Pushforward of Composition Witness Bundles
 
-/-- Pullback along identity equals identity on objects. -/
-@[simp]
-theorem IdQuiverBundle.pullback_id.{uObj, uMor} {X : Type uObj}
-    (B : IdQuiverBundle.{uObj, uMor} X) :
-    IdQuiverBundle.pullback (fun x => x) B = B := rfl
-
-/-- Pullback along identity equals identity on morphisms. -/
-@[simp]
-theorem IdQuiverBundle.Hom.pullback_id.{uObj, uMor} {X : Type uObj}
-    {B₁ B₂ : IdQuiverBundle.{uObj, uMor} X} (φ : IdQuiverBundle.Hom B₁ B₂) :
-    IdQuiverBundle.Hom.pullback (fun x => x) φ = φ := rfl
-
-/-- Pullback functor along identity is identity. -/
-@[simp]
-theorem IdQuiverBundle.pullbackFunctor_id.{uObj, uMor} (X : Type uObj) :
-    IdQuiverBundle.pullbackFunctor (𝟙 X) =
-      𝟙 (Cat.of (IdQuiverBundle.{uObj, uMor} X)) := rfl
-
-/-- Pullback along composition equals composition of pullbacks on objects. -/
-@[simp]
-theorem IdQuiverBundle.pullback_comp.{uObj, uMor} {X Y Z : Type uObj}
-    (f : X → Y) (g : Y → Z) (B : IdQuiverBundle.{uObj, uMor} Z) :
-    IdQuiverBundle.pullback f (IdQuiverBundle.pullback g B) =
-      IdQuiverBundle.pullback (fun x => g (f x)) B := rfl
-
-/-- Pullback functor along composition equals composition of pullback functors.
-    In `(Type uObj)ᵒᵖ'`, morphisms are reversed: `f : X ⟶ Y` means `f : Y → X`.
-    Composition `f ≫ g : X ⟶ Z` means `g ∘ f : Z → X`. -/
-@[simp]
-theorem IdQuiverBundle.pullbackFunctor_comp.{uObj, uMor}
-    {X Y Z : (Type uObj)ᵒᵖ'} (f : X ⟶ Y) (g : Y ⟶ Z) :
-    IdQuiverBundle.pullbackFunctor.{uObj, uMor} f ⋙
-      IdQuiverBundle.pullbackFunctor g =
-      IdQuiverBundle.pullbackFunctor (f ≫ g) := rfl
-
-/-- The identity-quiver functor: sends types to categories of identity-quiver
-    bundles, with pullback as the functorial action. -/
-def idQuiverFunctor.{uObj, uMor} :
-    (Type uObj)ᵒᵖ' ⥤ Cat.{max uObj uMor, max uObj (uMor + 1)} where
-  obj X := Cat.of (IdQuiverBundle.{uObj, uMor} X)
-  map f := IdQuiverBundle.pullbackFunctor f
-  map_id := fun _ => rfl
-  map_comp := fun _ _ => rfl
-
-/-! ## Layer 2 Grothendieck Construction -/
-
-/-- The second layer: Grothendieck construction of the identity-quiver functor.
-    Objects are pairs `(X : Type uObj, B : IdQuiverBundle X)`. -/
-abbrev IdGr.{uObj, uMor} :=
-  GrothendieckContra'.{uObj + 1, uObj, max uObj (uMor + 1), max uObj uMor}
-    (C := Type uObj)
-    idQuiverFunctor.{uObj, uMor}
-
-/-- For a quiver Q, the type of identity structures. -/
-def IdStruct.{uObj, uMor} (Q : QuiverGr.{uObj, uMor}) : Type (max uObj uMor) :=
-  ∀ x : Q.objType, Q.Hom x x
-
-/-! ### Layer 2 Accessors -/
-
-/-- Extract the object type from an identity-quiver. -/
-def IdGr.objType.{uObj, uMor} (I : IdGr.{uObj, uMor}) : Type uObj := I.base
-
-/-- Extract the morphism family from an identity-quiver. -/
-def IdGr.morFamily.{uObj, uMor} (I : IdGr.{uObj, uMor}) :
-    I.objType × I.objType → Type uMor :=
-  I.fiber.morFamily
-
-/-- The type of morphisms from `x` to `y` in identity-quiver `I`. -/
-def IdGr.Hom.{uObj, uMor} (I : IdGr.{uObj, uMor}) (x y : I.objType) : Type uMor :=
-  I.morFamily (x, y)
-
-/-- Get the identity morphism for an object. -/
-def IdGr.id.{uObj, uMor} (I : IdGr.{uObj, uMor}) (x : I.objType) : I.Hom x x :=
-  I.fiber.idMor x
-
-/-! ### Layer 2 Constructors -/
-
-/-- Construct an IdGr from a type and an IdQuiverBundle. -/
-def IdGr.mk.{uObj, uMor} (X : Type uObj) (B : IdQuiverBundle.{uObj, uMor} X) :
-    IdGr.{uObj, uMor} :=
-  ⟨X, B⟩
-
-/-- Construct an IdGr from raw data. -/
-def IdGr.ofData.{uObj, uMor}
-    (X : Type uObj)
-    (M : X × X → Type uMor)
-    (idMorFn : ∀ x : X, M (x, x)) :
-    IdGr.{uObj, uMor} :=
-  ⟨X, { toQuiverBundle := ⟨M⟩, idMor := idMorFn }⟩
-
-@[simp]
-theorem IdGr.mk_objType.{uObj, uMor} (X : Type uObj) (B : IdQuiverBundle.{uObj, uMor} X) :
-    (IdGr.mk X B).objType = X := rfl
-
-@[simp]
-theorem IdGr.mk_fiber.{uObj, uMor} (X : Type uObj) (B : IdQuiverBundle.{uObj, uMor} X) :
-    (IdGr.mk X B).fiber = B := rfl
-
-@[simp]
-theorem IdGr.ofData_objType.{uObj, uMor}
-    (X : Type uObj) (M : X × X → Type uMor) (idMorFn : ∀ x : X, M (x, x)) :
-    (IdGr.ofData X M idMorFn).objType = X := rfl
-
-@[simp]
-theorem IdGr.ofData_morFamily.{uObj, uMor}
-    (X : Type uObj) (M : X × X → Type uMor) (idMorFn : ∀ x : X, M (x, x)) :
-    (IdGr.ofData X M idMorFn).morFamily = M := rfl
-
-@[simp]
-theorem IdGr.ofData_id.{uObj, uMor}
-    (X : Type uObj) (M : X × X → Type uMor) (idMorFn : ∀ x : X, M (x, x))
-    (x : X) :
-    (IdGr.ofData X M idMorFn).id x = idMorFn x := rfl
-
-/-- Reconstruction: an identity-quiver equals its components. -/
-theorem IdGr.eta.{uObj, uMor} (I : IdGr.{uObj, uMor}) :
-    IdGr.mk I.objType I.fiber = I := rfl
-
-/-- Extract the underlying QuiverGr from an IdGr. -/
-def IdGr.toQuiverGr.{uObj, uMor} (I : IdGr.{uObj, uMor}) : QuiverGr.{uObj, uMor} :=
-  QuiverGr.mk I.objType I.morFamily
-
-/-! ## Layer 3: Composition Structure via Grothendieck Construction
-
-For layer 3, we bundle quiver structure, identity structure, and composition
-together in the fiber over each type. Given `X : Type uObj`, the fiber
-`CompBundle X` has:
-- Objects: triples `(Hom, id, comp)` with composition operation
-- Morphisms: natural transformations preserving identity and composition
-
-Pullback along `f : X → Y` works for all three components.
+Given an IdWitGr morphism `h : I₁ ⟶ I₂`, we can push forward composition
+witness data from I₁ to I₂.
 -/
 
-/-- Bundle of quiver structure with identity and composition.
-    Extends `IdQuiverBundle` with composition operation. -/
-structure CompBundle.{uObj, uMor} (X : Type uObj)
-    extends IdQuiverBundle.{uObj, uMor} X where
-  /-- The composition operation -/
-  compOp : ∀ (x y z : X), morFamily (x, y) → morFamily (y, z) → morFamily (x, z)
+/-- Pushforward of a composition witness bundle along an IdWitGr morphism. -/
+def CompWitBundle.pushforward.{uObj, uMor, uWit, uCWit}
+    {I₁ I₂ : IdWitGr.{uObj, uMor, uWit}} (h : I₁ ⟶ I₂)
+    (B : CompWitBundle.{uObj, uMor, uWit, uCWit} I₁) :
+    CompWitBundle.{uObj, uMor, uWit, uCWit} I₂ where
+  witType := B.witType
+  witSrc := fun w => h.base.base (B.witSrc w)
+  witMid := fun w => h.base.base (B.witMid w)
+  witTgt := fun w => h.base.base (B.witTgt w)
+  witLeft := fun w => h.base.fiber (B.witSrc w, B.witMid w) (B.witLeft w)
+  witRight := fun w => h.base.fiber (B.witMid w, B.witTgt w) (B.witRight w)
+  witComp := fun w => h.base.fiber (B.witSrc w, B.witTgt w) (B.witComp w)
 
-/-- Morphisms between composition bundles over the same base type:
-    extends `IdQuiverBundle.Hom` with composition preservation. -/
-structure CompBundle.Hom.{uObj, uMor} {X : Type uObj}
-    (B₁ B₂ : CompBundle.{uObj, uMor} X)
-    extends toIdHom : IdQuiverBundle.Hom B₁.toIdQuiverBundle B₂.toIdQuiverBundle where
-  /-- The transformation preserves composition -/
-  preserves_comp : ∀ (x y z : X) (f : B₁.morFamily (x, y)) (g : B₁.morFamily (y, z)),
-    transform (x, z) (B₁.compOp x y z f g) =
-      B₂.compOp x y z (transform (x, y) f) (transform (y, z) g)
+/-- HEq transport for fiber maps: if the pairs and morphisms are related by
+    equalities/HEq, then the fiber maps are HEq. -/
+theorem QuiverGr.Hom.fiber_heq.{uObj, uMor}
+    {Q₁ Q₂ : QuiverGr.{uObj, uMor}} (f : Q₁ ⟶ Q₂)
+    {a₁ a₂ b₁ b₂ : Q₁.objType} (ha : a₂ = a₁) (hb : b₂ = b₁)
+    {m₁ : Q₁.Hom a₁ b₁} {m₂ : Q₁.Hom a₂ b₂} (hm : HEq m₂ m₁) :
+    HEq (f.fiber (a₂, b₂) m₂) (f.fiber (a₁, b₁) m₁) := by
+  subst ha hb
+  exact heq_of_eq (congrArg (f.fiber _) (eq_of_heq hm))
 
-/-- Identity morphism for CompBundle. -/
-def CompBundle.Hom.identity.{uObj, uMor} {X : Type uObj}
-    (B : CompBundle.{uObj, uMor} X) : CompBundle.Hom B B where
-  transform := fun _ m => m
-  preserves_id := fun _ => rfl
-  preserves_comp := fun _ _ _ _ _ => rfl
+/-- Pushforward of a morphism of composition witness bundles. -/
+def CompWitBundle.Hom.pushforward.{uObj, uMor, uWit, uCWit}
+    {I₁ I₂ : IdWitGr.{uObj, uMor, uWit}} (h : I₁ ⟶ I₂)
+    {B₁ B₂ : CompWitBundle.{uObj, uMor, uWit, uCWit} I₁}
+    (φ : CompWitBundle.Hom B₁ B₂) :
+    CompWitBundle.Hom (CompWitBundle.pushforward h B₁)
+                      (CompWitBundle.pushforward h B₂) where
+  witMap := φ.witMap
+  witSrc_eq := fun w => by
+    simp only [CompWitBundle.pushforward]
+    rw [φ.witSrc_eq]
+  witMid_eq := fun w => by
+    simp only [CompWitBundle.pushforward]
+    rw [φ.witMid_eq]
+  witTgt_eq := fun w => by
+    simp only [CompWitBundle.pushforward]
+    rw [φ.witTgt_eq]
+  witLeft_eq := fun w => by
+    simp only [CompWitBundle.pushforward]
+    exact QuiverGr.Hom.fiber_heq h.base (φ.witSrc_eq w) (φ.witMid_eq w) (φ.witLeft_eq w)
+  witRight_eq := fun w => by
+    simp only [CompWitBundle.pushforward]
+    exact QuiverGr.Hom.fiber_heq h.base (φ.witMid_eq w) (φ.witTgt_eq w) (φ.witRight_eq w)
+  witComp_eq := fun w => by
+    simp only [CompWitBundle.pushforward]
+    exact QuiverGr.Hom.fiber_heq h.base (φ.witSrc_eq w) (φ.witTgt_eq w) (φ.witComp_eq w)
 
-/-- Composition of CompBundle morphisms. -/
-def CompBundle.Hom.comp.{uObj, uMor} {X : Type uObj}
-    {B₁ B₂ B₃ : CompBundle.{uObj, uMor} X}
-    (f : CompBundle.Hom B₁ B₂) (g : CompBundle.Hom B₂ B₃) :
-    CompBundle.Hom B₁ B₃ where
-  transform := fun p m => g.transform p (f.transform p m)
-  preserves_id := fun x => by rw [f.preserves_id, g.preserves_id]
-  preserves_comp := fun x y z fm gm => by rw [f.preserves_comp, g.preserves_comp]
-
-/-- Extensionality for CompBundle.Hom. -/
-@[ext]
-theorem CompBundle.Hom.ext.{uObj, uMor} {X : Type uObj}
-    {B₁ B₂ : CompBundle.{uObj, uMor} X}
-    {f g : CompBundle.Hom B₁ B₂}
-    (h : ∀ p m, f.transform p m = g.transform p m) : f = g := by
-  cases f; cases g
-  congr 1
-  apply IdQuiverBundle.Hom.ext
-  exact h
-
-/-- Category instance for CompBundle over a fixed type. -/
-instance CompBundle.instCategory.{uObj, uMor} (X : Type uObj) :
-    Category.{max uObj uMor} (CompBundle.{uObj, uMor} X) where
-  Hom := CompBundle.Hom
-  id := CompBundle.Hom.identity
-  comp := CompBundle.Hom.comp
-  id_comp := fun f => by
-    ext p m
-    rfl
-  comp_id := fun f => by
-    ext p m
-    rfl
-  assoc := fun f g h => by
-    ext p m
-    rfl
-
-/-- Pullback of a CompBundle along a function. -/
-def CompBundle.pullback.{uObj, uMor} {X Y : Type uObj}
-    (f : X → Y) (B : CompBundle.{uObj, uMor} Y) : CompBundle.{uObj, uMor} X where
-  morFamily := fun p => B.morFamily (f p.1, f p.2)
-  idMor := fun x => B.idMor (f x)
-  compOp := fun x y z fm gm => B.compOp (f x) (f y) (f z) fm gm
-
-/-- Pullback of a morphism of CompBundles. -/
-def CompBundle.Hom.pullback.{uObj, uMor} {X Y : Type uObj}
-    (f : X → Y) {B₁ B₂ : CompBundle.{uObj, uMor} Y}
-    (φ : CompBundle.Hom B₁ B₂) :
-    CompBundle.Hom (CompBundle.pullback f B₁) (CompBundle.pullback f B₂) where
-  transform := fun p => φ.transform (f p.1, f p.2)
-  preserves_id := fun x => φ.preserves_id (f x)
-  preserves_comp := fun x y z fm gm => φ.preserves_comp (f x) (f y) (f z) fm gm
-
-/-- Pullback functor for CompBundle categories. -/
-def CompBundle.pullbackFunctor.{uObj, uMor} {X Y : Type uObj} (f : X → Y) :
-    CompBundle.{uObj, uMor} Y ⥤ CompBundle.{uObj, uMor} X where
-  obj := CompBundle.pullback f
-  map := CompBundle.Hom.pullback f
-  map_id := fun B => by
-    apply CompBundle.Hom.ext
-    intro p m
-    rfl
-  map_comp := fun φ ψ => by
-    apply CompBundle.Hom.ext
-    intro p m
-    rfl
-
-/-- Pullback along identity equals identity on objects. -/
-@[simp]
-theorem CompBundle.pullback_id.{uObj, uMor} {X : Type uObj}
-    (B : CompBundle.{uObj, uMor} X) :
-    CompBundle.pullback (fun x => x) B = B := rfl
-
-/-- Pullback along identity equals identity on morphisms. -/
-@[simp]
-theorem CompBundle.Hom.pullback_id.{uObj, uMor} {X : Type uObj}
-    {B₁ B₂ : CompBundle.{uObj, uMor} X} (φ : CompBundle.Hom B₁ B₂) :
-    CompBundle.Hom.pullback (fun x => x) φ = φ := rfl
-
-/-- Pullback functor along identity is identity. -/
-@[simp]
-theorem CompBundle.pullbackFunctor_id.{uObj, uMor} (X : Type uObj) :
-    CompBundle.pullbackFunctor (𝟙 X) =
-      𝟙 (Cat.of (CompBundle.{uObj, uMor} X)) := rfl
-
-/-- Pullback along composition equals composition of pullbacks on objects. -/
-@[simp]
-theorem CompBundle.pullback_comp.{uObj, uMor} {X Y Z : Type uObj}
-    (f : X → Y) (g : Y → Z) (B : CompBundle.{uObj, uMor} Z) :
-    CompBundle.pullback f (CompBundle.pullback g B) =
-      CompBundle.pullback (fun x => g (f x)) B := rfl
-
-/-- Pullback functor along composition equals composition of pullback functors. -/
-@[simp]
-theorem CompBundle.pullbackFunctor_comp.{uObj, uMor}
-    {X Y Z : (Type uObj)ᵒᵖ'} (f : X ⟶ Y) (g : Y ⟶ Z) :
-    CompBundle.pullbackFunctor.{uObj, uMor} f ⋙
-      CompBundle.pullbackFunctor g =
-      CompBundle.pullbackFunctor (f ≫ g) := rfl
-
-/-- The composition functor: sends types to categories of composition bundles,
-    with pullback as the functorial action. -/
-def compFunctor.{uObj, uMor} :
-    (Type uObj)ᵒᵖ' ⥤ Cat.{max uObj uMor, max uObj (uMor + 1)} where
-  obj X := Cat.of (CompBundle.{uObj, uMor} X)
-  map f := CompBundle.pullbackFunctor f
-  map_id := fun _ => rfl
-  map_comp := fun _ _ => rfl
-
-/-! ## Layer 3 Grothendieck Construction -/
-
-/-- The third layer: Grothendieck construction of the composition functor.
-    Objects are pairs `(X : Type uObj, B : CompBundle X)`. -/
-abbrev CompGr.{uObj, uMor} :=
-  GrothendieckContra'.{uObj + 1, uObj, max uObj (uMor + 1), max uObj uMor}
-    (C := Type uObj)
-    compFunctor.{uObj, uMor}
-
-/-- For an IdGr I, the type of composition structures. -/
-def CompStruct.{uObj, uMor} (I : IdGr.{uObj, uMor}) : Type (max uObj uMor) :=
-  ∀ (x y z : I.objType), I.Hom x y → I.Hom y z → I.Hom x z
-
-/-! ### Layer 3 Accessors -/
-
-/-- Extract the object type from a composition structure. -/
-def CompGr.objType.{uObj, uMor} (C : CompGr.{uObj, uMor}) : Type uObj := C.base
-
-/-- Extract the morphism family from a composition structure. -/
-def CompGr.morFamily.{uObj, uMor} (C : CompGr.{uObj, uMor}) :
-    C.objType × C.objType → Type uMor :=
-  C.fiber.morFamily
-
-/-- The type of morphisms from `x` to `y` in composition structure `C`. -/
-def CompGr.Hom.{uObj, uMor} (C : CompGr.{uObj, uMor}) (x y : C.objType) : Type uMor :=
-  C.morFamily (x, y)
-
-/-- Extract the identity morphism for an object. -/
-def CompGr.idMor.{uObj, uMor} (C : CompGr.{uObj, uMor}) (x : C.objType) : C.Hom x x :=
-  C.fiber.idMor x
-
-/-- Compose two morphisms. -/
-def CompGr.comp.{uObj, uMor} (C : CompGr.{uObj, uMor}) {x y z : C.objType}
-    (f : C.Hom x y) (g : C.Hom y z) : C.Hom x z :=
-  C.fiber.compOp x y z f g
-
-/-! ### Layer 3 Constructors -/
-
-/-- Construct a CompGr from a type and a CompBundle. -/
-def CompGr.mk.{uObj, uMor} (X : Type uObj) (B : CompBundle.{uObj, uMor} X) :
-    CompGr.{uObj, uMor} :=
-  ⟨X, B⟩
+/-- Pushforward functor for composition witness bundles. -/
+def CompWitBundle.pushforwardFunctor.{uObj, uMor, uWit, uCWit}
+    {I₁ I₂ : IdWitGr.{uObj, uMor, uWit}} (h : I₁ ⟶ I₂) :
+    CompWitBundle.{uObj, uMor, uWit, uCWit} I₁ ⥤
+    CompWitBundle.{uObj, uMor, uWit, uCWit} I₂ where
+  obj := CompWitBundle.pushforward h
+  map := fun {B₁ B₂} (φ : CompWitBundle.Hom B₁ B₂) =>
+    CompWitBundle.Hom.pushforward h φ
+  map_id _ := CompWitBundle.Hom.ext fun _ => rfl
+  map_comp _ _ := CompWitBundle.Hom.ext fun _ => rfl
 
 @[simp]
-theorem CompGr.mk_objType.{uObj, uMor} (X : Type uObj) (B : CompBundle.{uObj, uMor} X) :
-    (CompGr.mk X B).objType = X := rfl
+theorem CompWitBundle.pushforward_id.{uObj, uMor, uWit, uCWit}
+    {I : IdWitGr.{uObj, uMor, uWit}}
+    (B : CompWitBundle.{uObj, uMor, uWit, uCWit} I) :
+    CompWitBundle.pushforward (𝟙 I) B = B := rfl
 
 @[simp]
-theorem CompGr.mk_fiber.{uObj, uMor} (X : Type uObj) (B : CompBundle.{uObj, uMor} X) :
-    (CompGr.mk X B).fiber = B := rfl
+theorem CompWitBundle.pushforward_comp.{uObj, uMor, uWit, uCWit}
+    {I₁ I₂ I₃ : IdWitGr.{uObj, uMor, uWit}}
+    (f : I₁ ⟶ I₂) (g : I₂ ⟶ I₃)
+    (B : CompWitBundle.{uObj, uMor, uWit, uCWit} I₁) :
+    CompWitBundle.pushforward (f ≫ g) B =
+    CompWitBundle.pushforward g (CompWitBundle.pushforward f B) := rfl
 
-/-- Reconstruction: a composition structure equals its components. -/
-theorem CompGr.eta.{uObj, uMor} (C : CompGr.{uObj, uMor}) :
-    CompGr.mk C.objType C.fiber = C := rfl
+/-! ### The Composition Witness Functor -/
 
-/-- Extract the underlying QuiverGr from a CompGr. -/
-def CompGr.toQuiverGr.{uObj, uMor} (C : CompGr.{uObj, uMor}) : QuiverGr.{uObj, uMor} :=
-  QuiverGr.mk C.objType C.morFamily
+/-- The composition witness functor: sends IdWitGr objects to categories of
+    composition witness bundles, with pushforward as the functorial action.
 
-/-- Extract the underlying IdGr from a CompGr. -/
-def CompGr.toIdGr.{uObj, uMor} (C : CompGr.{uObj, uMor}) : IdGr.{uObj, uMor} :=
-  IdGr.ofData C.objType C.morFamily C.fiber.idMor
+    This is a covariant functor IdWitGr → Cat, suitable for mathlib's
+    standard Grothendieck construction. -/
+def compWitFunctor.{uObj, uMor, uWit, uCWit} :
+    IdWitGr.{uObj, uMor, uWit} ⥤
+    Cat.{uCWit, max uObj uMor (uCWit + 1)} where
+  obj I := Cat.of (CompWitBundle.{uObj, uMor, uWit, uCWit} I)
+  map h := CompWitBundle.pushforwardFunctor h
+  map_id I := by
+    apply Functor.ext
+    · intro B Y f
+      simp only [eqToHom_refl, Category.id_comp, Category.comp_id]
+      apply CompWitBundle.Hom.ext
+      intro w; rfl
+    · intro B; rfl
+  map_comp f g := by
+    apply Functor.ext
+    · intro B Y φ
+      simp only [eqToHom_refl, Category.id_comp, Category.comp_id]
+      apply CompWitBundle.Hom.ext
+      intro w; rfl
+    · intro B; rfl
 
-/-! ## Complete Constructor
+/-! ## Layer 3 via Covariant Grothendieck: Quivers with Composition Witnesses
 
-Construct a full `CompGr` from all the raw data at once.
+Using mathlib's standard Grothendieck construction with the composition
+witness functor gives us the category of IdWitGr equipped with composition
+witness data.
 -/
 
-/-- Construct a CompGr from raw data: object type, morphism family,
-    identity assignment, and composition operation. -/
-def CompGr.ofData.{uObj, uMor}
-    (X : Type uObj)
-    (M : X × X → Type uMor)
-    (idMorFn : ∀ x : X, M (x, x))
-    (compOpFn : ∀ (x y z : X), M (x, y) → M (y, z) → M (x, z)) :
-    CompGr.{uObj, uMor} :=
-  ⟨X, { toIdQuiverBundle := { toQuiverBundle := ⟨M⟩, idMor := idMorFn },
-        compOp := compOpFn }⟩
+/-- The third layer via covariant Grothendieck: quivers with identity AND
+    composition witness structures. Objects are pairs (I, B) where I is an
+    IdWitGr and B is a composition witness bundle over I. -/
+abbrev CompWitGr.{uObj, uMor, uWit, uCWit} :=
+  Grothendieck compWitFunctor.{uObj, uMor, uWit, uCWit}
 
-@[simp]
-theorem CompGr.ofData_objType.{uObj, uMor}
-    (X : Type uObj) (M : X × X → Type uMor)
-    (idMorFn : ∀ x : X, M (x, x))
-    (compOpFn : ∀ (x y z : X), M (x, y) → M (y, z) → M (x, z)) :
-    (CompGr.ofData X M idMorFn compOpFn).objType = X := rfl
+namespace CompWitGr
 
-@[simp]
-theorem CompGr.ofData_morFamily.{uObj, uMor}
-    (X : Type uObj) (M : X × X → Type uMor)
-    (idMorFn : ∀ x : X, M (x, x))
-    (compOpFn : ∀ (x y z : X), M (x, y) → M (y, z) → M (x, z)) :
-    (CompGr.ofData X M idMorFn compOpFn).morFamily = M := rfl
+/-- Extract the underlying IdWitGr from a CompWitGr. -/
+abbrev idWitGr.{uObj, uMor, uWit, uCWit}
+    (C : CompWitGr.{uObj, uMor, uWit, uCWit}) :
+    IdWitGr.{uObj, uMor, uWit} := C.base
 
-@[simp]
-theorem CompGr.ofData_idMor.{uObj, uMor}
-    (X : Type uObj) (M : X × X → Type uMor)
-    (idMorFn : ∀ x : X, M (x, x))
-    (compOpFn : ∀ (x y z : X), M (x, y) → M (y, z) → M (x, z))
-    (x : X) :
-    (CompGr.ofData X M idMorFn compOpFn).idMor x = idMorFn x := rfl
+/-- Extract the underlying quiver from a CompWitGr. -/
+abbrev quiver.{uObj, uMor, uWit, uCWit}
+    (C : CompWitGr.{uObj, uMor, uWit, uCWit}) :
+    QuiverGr.{uObj, uMor} := C.idWitGr.quiver
 
-@[simp]
-theorem CompGr.ofData_comp.{uObj, uMor}
-    (X : Type uObj) (M : X × X → Type uMor)
-    (idMorFn : ∀ x : X, M (x, x))
-    (compOpFn : ∀ (x y z : X), M (x, y) → M (y, z) → M (x, z))
-    {x y z : X} (f : M (x, y)) (g : M (y, z)) :
-    (CompGr.ofData X M idMorFn compOpFn).comp f g = compOpFn x y z f g := rfl
+/-- Extract the object type from a CompWitGr. -/
+abbrev objType.{uObj, uMor, uWit, uCWit}
+    (C : CompWitGr.{uObj, uMor, uWit, uCWit}) :
+    Type uObj := C.quiver.objType
 
-/-! ## The Φ Functor: Categories to CompGr
+/-- The type of morphisms from x to y in a CompWitGr. -/
+abbrev Hom'.{uObj, uMor, uWit, uCWit}
+    (C : CompWitGr.{uObj, uMor, uWit, uCWit})
+    (x y : C.objType) : Type uMor := C.quiver.Hom x y
 
-The Φ functor extracts the underlying category judgment data from a category.
-Given a category `C : Cat.{v, u}`, we extract:
-- Object type: the type of objects (in universe `u`)
-- Morphism family: for each pair `(x, y)`, the type of morphisms (in universe `v`)
-- Identity: the identity morphisms
-- Composition: the composition operation
+/-- Extract the identity witness bundle from a CompWitGr. -/
+abbrev idBundle.{uObj, uMor, uWit, uCWit}
+    (C : CompWitGr.{uObj, uMor, uWit, uCWit}) :
+    IdWitBundle.{uObj, uMor, uWit} C.quiver := C.idWitGr.fiber
 
-This is the right adjoint in the reflective adjunction `L ⊣ Φ` where `L`
-freely generates a category from judgment data.
--/
+/-- Extract the composition witness bundle from a CompWitGr. -/
+abbrev bundle.{uObj, uMor, uWit, uCWit}
+    (C : CompWitGr.{uObj, uMor, uWit, uCWit}) :
+    CompWitBundle.{uObj, uMor, uWit, uCWit} C.idWitGr := C.fiber
 
-/-- Extract the underlying `CompGr` data from a category.
-    This is the object mapping of the Φ functor. -/
-def CompGr.ofCat.{uObj, uMor} (C : Cat.{uMor, uObj}) : CompGr.{uObj, uMor} :=
-  CompGr.ofData
-    C
-    (fun p => p.1 ⟶ p.2)
-    (fun x => 𝟙 x)
-    (fun _ _ _ f g => f ≫ g)
+end CompWitGr
 
-@[simp]
-theorem CompGr.ofCat_objType.{uObj, uMor} (C : Cat.{uMor, uObj}) :
-    (CompGr.ofCat C).objType = C := rfl
+/-! ## Layered Grothendieck Construction Summary
 
-@[simp]
-theorem CompGr.ofCat_Hom.{uObj, uMor} (C : Cat.{uMor, uObj}) (x y : C) :
-    (CompGr.ofCat C).Hom x y = (x ⟶ y) := rfl
+The complete three-layer construction:
 
-@[simp]
-theorem CompGr.ofCat_idMor.{uObj, uMor} (C : Cat.{uMor, uObj}) (x : C) :
-    (CompGr.ofCat C).idMor x = 𝟙 x := rfl
+* Layer 1: `QuiverGr = GrothendieckContra' (quiverFunctor : (Type uObj)ᵒᵖ' ⥤ Cat)`
+  - Objects: pairs (X : Type, mor : X × X → Type) with a quiver structure
+  - Morphisms use pullback along functions
 
-@[simp]
-theorem CompGr.ofCat_comp.{uObj, uMor} (C : Cat.{uMor, uObj})
-    {x y z : C} (f : x ⟶ y) (g : y ⟶ z) :
-    (CompGr.ofCat C).comp f g = f ≫ g := rfl
+* Layer 2: `IdWitGr = Grothendieck (idWitFunctor : QuiverGr ⥤ Cat)`
+  - Objects: pairs (Q : QuiverGr, idWit : IdWitBundle Q)
+  - Identity witnesses certify which morphisms are identities
+  - Morphisms use pushforward along quiver morphisms
 
-/-! ## Category Laws for CompGr
+* Layer 3: `CompWitGr = Grothendieck (compWitFunctor : IdWitGr ⥤ Cat)`
+  - Objects: pairs (I : IdWitGr, compWit : CompWitBundle I)
+  - Composition witnesses certify which morphism triples are compositions
+  - Morphisms use pushforward along IdWitGr morphisms
 
-A `CompGr` represents category judgment data but doesn't enforce category laws.
-We define predicates for the laws so we can identify lawful instances.
--/
-
-/-- Left identity law: `id ≫ f = f` for all morphisms `f`. -/
-def CompGr.IdLeft.{uObj, uMor} (C : CompGr.{uObj, uMor}) : Prop :=
-  ∀ (x y : C.objType) (f : C.Hom x y), C.comp (C.idMor x) f = f
-
-/-- Right identity law: `f ≫ id = f` for all morphisms `f`. -/
-def CompGr.IdRight.{uObj, uMor} (C : CompGr.{uObj, uMor}) : Prop :=
-  ∀ (x y : C.objType) (f : C.Hom x y), C.comp f (C.idMor y) = f
-
-/-- Associativity law: `(f ≫ g) ≫ h = f ≫ (g ≫ h)`. -/
-def CompGr.Assoc.{uObj, uMor} (C : CompGr.{uObj, uMor}) : Prop :=
-  ∀ (w x y z : C.objType) (f : C.Hom w x) (g : C.Hom x y) (h : C.Hom y z),
-    C.comp (C.comp f g) h = C.comp f (C.comp g h)
-
-/-- A `CompGr` satisfying category laws. -/
-structure CompGr.IsLawful.{uObj, uMor} (C : CompGr.{uObj, uMor}) : Prop where
-  id_left : C.IdLeft
-  id_right : C.IdRight
-  assoc : C.Assoc
-
-/-- Categories give lawful CompGr. -/
-theorem CompGr.ofCat_isLawful.{uObj, uMor} (C : Cat.{uMor, uObj}) :
-    (CompGr.ofCat C).IsLawful where
-  id_left := fun _ _ f => Category.id_comp f
-  id_right := fun _ _ f => Category.comp_id f
-  assoc := fun _ _ _ _ f g h => Category.assoc f g h
-
-/-! ## The L Functor: Lawful CompGr to Cat
-
-For a lawful `CompGr`, we can construct the corresponding category.
-This is the left adjoint in the reflective adjunction.
--/
-
-/-- Category instance for a lawful CompGr. -/
-def CompGr.toCategoryStruct.{uObj, uMor} (C : CompGr.{uObj, uMor}) :
-    CategoryStruct C.objType where
-  Hom := C.Hom
-  id := C.idMor
-  comp := C.comp
-
-/-- A lawful CompGr gives a full Category instance. -/
-def CompGr.toCategory.{uObj, uMor} (C : CompGr.{uObj, uMor})
-    (h : C.IsLawful) : Category C.objType :=
-  { C.toCategoryStruct with
-    id_comp := h.id_left _ _
-    comp_id := h.id_right _ _
-    assoc := h.assoc _ _ _ _ }
-
-/-- The bundled category from a lawful CompGr. -/
-def CompGr.toCat.{uObj, uMor} (C : CompGr.{uObj, uMor})
-    (h : C.IsLawful) : Cat.{uMor, uObj} :=
-  @Cat.of C.objType (C.toCategory h)
-
-/-! ## Round-trip Properties
-
-Properties of the `ofCat`/`toCat` correspondence.
--/
-
-/-- Extracting data from a category and rebuilding gives the same category
-    (up to definitional equality of the Category structure). -/
-theorem CompGr.ofCat_toCat_eq.{uObj, uMor} (C : Cat.{uMor, uObj}) :
-    (CompGr.ofCat C).toCat (CompGr.ofCat_isLawful C) = C := by
-  unfold CompGr.toCat CompGr.toCategory CompGr.toCategoryStruct
-  unfold CompGr.ofCat CompGr.ofData
-  exact Cat.coe_of C
-
-/-- For a lawful CompGr, extracting from toCat gives back the same data. -/
-theorem CompGr.toCat_ofCat_eq.{uObj, uMor} (C : CompGr.{uObj, uMor})
-    (h : C.IsLawful) :
-    CompGr.ofCat (C.toCat h) = C := by
-  unfold CompGr.ofCat CompGr.ofData CompGr.toCat
-  simp only [Cat.of_α]
-  rfl
-
-/-! ## Summary
-
-We have constructed a three-layer structure for category-judgment data, with
-all layers as proper contravariant Grothendieck constructions over `Type`:
-
-1. `quiverFunctor : (Type uObj)ᵒᵖ' ⥤ Cat` — sends types to quiver categories
-   `QuiverGr = GrothendieckContra' quiverFunctor` — quiver structures
-
-2. `idQuiverFunctor : (Type uObj)ᵒᵖ' ⥤ Cat` — bundles quiver and identity
-   `IdGr = GrothendieckContra' idQuiverFunctor` — quivers with identity
-
-3. `compFunctor : (Type uObj)ᵒᵖ' ⥤ Cat` — bundles quiver, identity, composition
-   `CompGr = GrothendieckContra' compFunctor` — categories-without-laws
-
-Universe parameters:
-- `uObj`: universe for object types
-- `uMor`: universe for morphism types (independent of `uObj`)
-
-Each layer has:
-- Accessors (`objType`, `morFamily`, `Hom`, `id`, `comp`)
-- Constructors (`mk`, `ofData`)
-- Inverse proofs (`eta`)
-
-The `CompGr.{uObj, uMor}` type captures full category-judgment copresheaf data
-with independent universe parameters, analogous to `Cat.{vMor, uObj}`.
-
-Each layer bundles all accumulated structure in its fiber over `Type`:
-- `IdQuiverBundle X` bundles morphism family + identity assignment over `X`
-- `CompBundle X` bundles morphism family + identity + composition over `X`
-
-Pullback along functions provides the contravariant functorial action:
-for `f : X → Y`, structures pull back via `Hom_X(x,y) := Hom_Y(fx, fy)`.
+The fiber functors use pushforward for covariant functoriality:
+- `idWitFunctor.map h` pushes forward identity witness data along h
+- `compWitFunctor.map h` pushes forward composition witness data along h
 -/
 
 end Groth
