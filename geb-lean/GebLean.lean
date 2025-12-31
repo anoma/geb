@@ -6,6 +6,7 @@ import GebLean.CategoryJudgments
 import GebLean.CatValuedFunctor
 import GebLean.CategoryPresentation
 import GebLean.DepCategoryJudgments
+import GebLean.DinaturalNumbers
 import GebLean.FiniteQuiver
 import GebLean.FreeCoequalizerCompletion
 import GebLean.LayeredEquivalence
