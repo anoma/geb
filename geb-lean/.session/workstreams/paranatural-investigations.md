@@ -39,7 +39,11 @@ slideshow)
 
 Page 10 slide "Divergence between strong dinaturality and parametricity"
 shows a case where the "free theorem" from parametric polymorphism differs
-from what we get from paranaturality (strong dinaturality).
+from what we get from paranaturality.
+
+**Terminology note**: We use "paranaturality" consistently to mean strong
+dinaturality. Plain "dinaturality" refers to the weaker (non-compositional)
+condition which is less useful for our purposes.
 
 Questions:
 
@@ -49,6 +53,36 @@ Questions:
   (Church numerals, initial algebras, terminal coalgebras)
 - What is the right category-theoretic notion of parametricity?
 - Can we identify possibilities and rank them by likelihood of correctness?
+
+### 5. Slice-Presheaf Equivalence for Diagonal Elements
+
+There is a well-known equivalence between slices over a presheaf and presheaves
+over its category of elements (`slicePresheafEquiv`, `sliceCopresheafEquiv`).
+
+Is there something similar for diagonal elements?
+
+- Is there an equivalence between slices over a profunctor (in the category
+  of paranatural transformations) and profunctors over the category of
+  diagonal elements?
+- If not, what IS equivalent to profunctors over DiagElem?
+
+### 6. Costructure Integral via Opposite Categories
+
+The costructure integral has "opposite directionality" from the standard coend.
+Could we express it as a coend after all using an opposite category (like
+(DiagElem Γ)ᵒᵖ or similar)?
+
+### 7. Grothendieck Construction Approach to Parametricity
+
+Alternative to Rel-enrichment: use two-sided or connected Grothendieck
+construction to form something larger than DiagElem:
+
+- Two-sided construction: sliced over C × C, giving two morphisms
+- Connected construction: sliced over Arrow(C), with connecting morphism
+  in the object ensuring relationship between contravariant/covariant positions
+- Use category-of-elements specialization where base category is discrete
+- Arrow(C) has good properties: inclusion C ↪ Arrow(C) has both left and
+  right adjoints (domain/codomain projections), preserving all limits/colimits
 
 ## Context Files
 
@@ -84,6 +118,15 @@ Questions:
 **Finding**: StructuralEnd IS the Type-valued end:
 
 - `StructuralEnd Γ = ∫_I Γ(I,I)`
+- **Category**: The end is taken over C (the base category of the profunctor)
+- **Characterization**: The end is the limit over the twisted arrow category Tw(C),
+  or equivalently defined via the wedge condition / equalizer:
+
+  ```text
+  ∫_c Γ(c,c) = { (x_c) ∈ ∏_c Γ(c,c) | ∀f:c→d, Γ(f,d)(x_d) = Γ(c,f)(x_c) }
+  ```
+
+  This matches our StructuralEnd definition exactly.
 
 **Finding**: StructuralCoend is NOT the standard coend:
 
@@ -106,7 +149,7 @@ Questions:
 **Root cause analysis**:
 The divergence occurs because:
 
-- Dinaturality tests condition for morphism graphs: (r∘f, f∘r) pairs
+- Paranaturality tests condition for morphism graphs: (r∘f, f∘r) pairs
 - Parametricity tests condition for ALL relations R with f∘h = k∘f
 
 For type φ : ∀X.((X → X) → X) → X:
@@ -131,7 +174,7 @@ For type φ : ∀X.((X → X) → X) → X:
    - May work for first-order types
 
 4. **Syntactic restriction (LOW likelihood)**
-   - Limit to "linear" types where dinaturality = parametricity
+   - Limit to "linear" types where paranaturality = parametricity
    - Works but doesn't solve the general case
 
 **Why paranaturality works for Church numerals, μF, νF**:
@@ -139,8 +182,113 @@ These types have "linear" structure where the morphism-graph pairs suffice.
 The problematic types like ((X → X) → X) → X have nested higher-order iteration
 creating non-linear patterns.
 
+#### Question 5: Slice-Presheaf Equivalence for Diagonal Elements
+
+**Finding**: The standard equivalence does NOT directly generalize.
+
+The standard result `Over P ≌ (P.Elements ⥤ Type)` for presheaves P : Cᵒᵖ → Type
+does not immediately give `Over Γ (in Paranat) ≌ (DiagElem Γ ⥤ Type)` for
+profunctors Γ : Cᵒᵖ × C → Type.
+
+**Reasons**:
+
+1. DiagElem Γ only captures diagonal elements (c, x ∈ Γ(c,c)), losing off-diagonal
+   information from Γ(a,b) where a ≠ b
+2. Paranatural transformations η : Δ → Γ have components η_{a,b} for ALL (a,b),
+   not just diagonal positions
+3. The paranaturality condition constrains how diagonal and off-diagonal relate
+
+**Partial results**:
+
+- `Over Γ` in ordinary Nat ≌ `(Γ.Elements ⥤ Type)` (standard result)
+- DiagElem Γ is a pullback: `Γ.Elements ×_{Cᵒᵖ×C} C` along the diagonal
+- For Hom profunctor: `Paranat(Δ, Hom) ≅ DiagElem(Δ)` (Yoneda-type result)
+
+**Updated conjecture**:
+
+`Over Γ (in Paranat)` ≌ `Prof(DiagElem Γ)` (profunctors on DiagElem Γ)
+
+Reasoning:
+
+- Paranatural transformations have MIXED variance (contravariant + covariant)
+- Copresheaves `(DiagElem Γ → Type)` only capture covariant structure
+- Profunctors `((DiagElem Γ)ᵒᵖ × DiagElem Γ → Type)` capture mixed variance
+- The off-diagonal values of Δ naturally encode profunctor data via transport
+
+This is MORE PLAUSIBLE than the copresheaf conjecture.
+
+**Recommended investigation**:
+
+1. Study whether the Yoneda-type result `Paranat(Δ, Hom) ≅ DiagElem(Δ)` holds
+2. Define the functor `Over Γ → Prof(DiagElem Γ)` explicitly
+3. Construct and verify the inverse
+
+#### Question 6: Costructure Integral via Opposite Categories
+
+**Finding**: YES, StructuralCoend can be expressed as a colimit using (DiagElem F)ᵒᵖ.
+
+The reason for the oppositization is that:
+
+- Standard coend ∫^c F(c,c) quotients diagonal elements by "coming from" off-diagonal
+- StructuralCoend quotients diagonal elements by "mapping to" off-diagonal
+- These are DUAL operations
+
+**Precise statement**:
+
+```text
+StructuralCoend F ≅ colim_{(DiagElem F)ᵒᵖ} π
+```
+
+where π : DiagElem F → Type is the carrier projection (c, s) ↦ c.
+
+**Why (DiagElem F)ᵒᵖ**: The StructuralCoend identifies (x, a) ~ (y, f(a)) for
+f : x → y in DiagElem F. In the opposite category, f becomes a morphism y → x,
+so the colimit quotients by "reversed" morphisms, which gives the right direction.
+
+**Not a standard coend on C**: This is NOT of the form ∫^c Γ(c,c) for a profunctor
+Γ : Cᵒᵖ × C → Type. The difference is that DiagElem F morphisms are more
+restrictive than C morphisms (they must preserve F-structure).
+
+#### Question 7: Grothendieck Construction Approach to Parametricity
+
+**Finding**: Grothendieck constructions over Set DO NOT directly capture parametricity.
+
+The fundamental issue:
+
+- Set has functions as morphisms, not relations
+- Two-sided Grothendieck tests pairs (f, g) of functions = morphism graphs
+- Connected Grothendieck adds arrow structure but arrows are still functions
+- Neither captures general relations R : A × B
+
+**Using Rel as base category DOES work**:
+
+- DiagElem over Rel-enriched profunctors Γ̂ : Relᵒᵖ × Rel → Rel captures parametricity
+- Connected Grothendieck E(F) for F : Tw(Rel) → Cat gives "internalized" parametricity
+  with relations as first-class objects
+
+**Comparison with Rel-enriched DiagElem**:
+
+| Approach | Parametricity? | Effort | Notes |
+| -------- | -------------- | ------ | ----- |
+| DiagElem/Set | No (morph. graphs) | Low | Existing infra |
+| Two-sided/Set | No (func. pairs) | Medium | More structure |
+| DiagElem/Rel | YES | Medium | Direct, clean |
+| Connected/Rel | YES | Higher | Rel first-class |
+
+**Conclusion**: The Grothendieck approach doesn't AVOID the need for Rel. It adds
+value for:
+
+- Making relations first-class objects in the category
+- Compositional categorical structure via fibrations
+- "Internalized" parametricity where relation witnesses are explicit
+
+For basic parametricity, Rel-enriched DiagElem is simpler and more direct.
+
 ### Proposed Implementation Path
 
 1. Implement Dialgebra category and prove equivalences (Question 1)
 2. Document the end = StructuralEnd correspondence formally (Question 2)
 3. Explore Rel-enriched diagonal elements for parametricity (Question 4)
+4. Investigate `Paranat(Δ, Hom) ≅ DiagElem(Δ)` and implications for Question 5
+5. Verify `Over Γ ≌ Prof(DiagElem Γ)` conjecture (Question 5 updated)
+6. Formalize StructuralCoend as colimit over (DiagElem F)ᵒᵖ (Question 6)
