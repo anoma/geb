@@ -491,6 +491,14 @@ def initialAlgebraParanatEquiv (μF : Endofunctor.Algebra F) (hμF : IsInitial �
   left_inv := paranatToInitial_initialToParanat F μF hμF
   right_inv := initialToParanat_paranatToInitial F μF hμF
 
+/-- The bijection between elements of an initial F-algebra and the
+structural end `StructuralEnd (AlgProf F)`. -/
+def initialAlgebraStructuralEndEquiv (μF : Endofunctor.Algebra F)
+    (hμF : IsInitial μF) :
+    μF.a ≃ StructuralEnd (AlgProf F) :=
+  (initialAlgebraParanatEquiv F μF hμF).trans
+    (structureIntegralEquivParanat (AlgProf F) IdProf).symm
+
 end InitialAlgebraCorrespondence
 
 section TerminalCoalgebraCorrespondence
