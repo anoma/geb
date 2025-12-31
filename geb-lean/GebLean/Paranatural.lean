@@ -1153,31 +1153,33 @@ def diagElemCopresheafIso : DiagElem (copresheafToProf P) ≅Cat P.Elements wher
 def diagElemCopresheafEquiv : DiagElem (copresheafToProf P) ≌ P.Elements :=
   Cat.equivOfIso (diagElemCopresheafIso P)
 
-/-! ### Presheaf case: DiagElem ≃ Elementsᵒᵖ
+/-! ### Presheaf case: DiagElem ≃ ElementsPre
 
 For a presheaf `Q : Cᵒᵖ ⥤ Type w`, the diagonal elements of `presheafToProf Q`
-are isomorphic to the opposite of the category of elements.
+are isomorphic to `Q.ElementsPre`, the standard (contravariant) category of
+elements for presheaves.
 
-The morphism direction reversal arises because:
+`Q.ElementsPre` is defined as `Q.Elementsᵒᵖ` where `Q.Elements` treats `Q` as a
+copresheaf on `Cᵒᵖ`. This is the conventional definition where:
+- Objects: pairs `(X, x)` with `X : C` and `x : Q.obj (op X)`
+- Morphisms `(X, x) → (Y, y)`: maps `f : X ⟶ Y` in `C` with `Q.map f.op y = x`
+
+The morphism direction in `DiagElem` matches `ElementsPre`:
 - In `DiagElem`, morphisms `f : I₀ ⟶ I₁` go from `(I₀, elem₀)` to `(I₁, elem₁)`
   with condition `elem₀ = Q.map (op f) elem₁`
-- In `Q.Elements`, morphisms `g : (op I₁) ⟶ (op I₀)` (i.e., `g = op f`)
-  go from `(op I₁, elem₁)` to `(op I₀, elem₀)` with condition
-  `Q.map g elem₁ = elem₀`
-
-So `DiagElem (presheafToProf Q)` ≃ `Q.Elementsᵒᵖ`.
+- In `Q.ElementsPre`, morphisms go in the same direction with the same condition
 -/
 
 variable {P}
 variable (Q : Cᵒᵖ ⥤ Type w)
 
-/-- Functor from `DiagElem (presheafToProf Q)` to `Q.Elementsᵒᵖ`.
+/-- Functor from `DiagElem (presheafToProf Q)` to `Q.ElementsPre`.
 Objects `(I, elem : Q(op I))` map to `op ⟨op I, elem⟩`.
 A morphism `f : I₀ ⟶ I₁` with `elem₀ = Q.map (op f) elem₁` corresponds to
-`op ⟨op f, ...⟩ : (op I₁, elem₁) ⟶ (op I₀, elem₀)` in `Q.Elementsᵒᵖ`. -/
+`op ⟨op f, ...⟩ : (op I₁, elem₁) ⟶ (op I₀, elem₀)` in `Q.ElementsPre`. -/
 @[simps!]
-def diagElemToElementsOpPresheaf :
-    DiagElem (presheafToProf Q) ⥤ Q.Elementsᵒᵖ where
+def diagElemToElementsPre :
+    DiagElem (presheafToProf Q) ⥤ Q.ElementsPre where
   obj x := Opposite.op ⟨Opposite.op x.base, x.elem⟩
   map {x y} f := Opposite.op ⟨f.base.op, by
     have h := f.compat
@@ -1186,11 +1188,11 @@ def diagElemToElementsOpPresheaf :
   map_id _ := rfl
   map_comp _ _ := rfl
 
-/-- Functor from `Q.Elementsᵒᵖ` to `DiagElem (presheafToProf Q)`.
+/-- Functor from `Q.ElementsPre` to `DiagElem (presheafToProf Q)`.
 Objects `op ⟨op I, elem⟩` map to `(I, elem)`. -/
 @[simps!]
-def elementsOpPresheafToDiagElem :
-    Q.Elementsᵒᵖ ⥤ DiagElem (presheafToProf Q) where
+def elementsPreToDiagElem :
+    Q.ElementsPre ⥤ DiagElem (presheafToProf Q) where
   obj p := ⟨p.unop.fst.unop, p.unop.snd⟩
   map {p q} f := ⟨f.unop.val.unop, by
     simp only [DiagCompat]
@@ -1200,10 +1202,10 @@ def elementsOpPresheafToDiagElem :
   map_comp _ _ := DiagElem.Hom.ext rfl
 
 /-- The category of diagonal elements of `presheafToProf Q` is isomorphic
-to the opposite of the category of elements `Q.Elementsᵒᵖ`. -/
-def diagElemPresheafIso : DiagElem (presheafToProf Q) ≅Cat Q.Elementsᵒᵖ where
-  hom := diagElemToElementsOpPresheaf Q
-  inv := elementsOpPresheafToDiagElem Q
+to `Q.ElementsPre`, the standard category of elements for presheaves. -/
+def diagElemPresheafIso : DiagElem (presheafToProf Q) ≅Cat Q.ElementsPre where
+  hom := diagElemToElementsPre Q
+  inv := elementsPreToDiagElem Q
   hom_inv_id := by
     apply Functor.ext
     case h_obj => intro x; apply DiagElem.ext <;> rfl
@@ -1216,8 +1218,8 @@ def diagElemPresheafIso : DiagElem (presheafToProf Q) ≅Cat Q.Elementsᵒᵖ wh
       simp only [eqToHom_refl, Category.comp_id, Category.id_comp]
       exact Opposite.op_unop f
 
-/-- The categorical equivalence between diagonal elements and Q.Elementsᵒᵖ. -/
-def diagElemPresheafEquiv : DiagElem (presheafToProf Q) ≌ Q.Elementsᵒᵖ :=
+/-- The categorical equivalence between diagonal elements and Q.ElementsPre. -/
+def diagElemPresheafEquiv : DiagElem (presheafToProf Q) ≌ Q.ElementsPre :=
   Cat.equivOfIso (diagElemPresheafIso Q)
 
 end DiagElemElementsEquiv

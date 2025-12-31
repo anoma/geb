@@ -543,6 +543,40 @@ instance (F : Cᵒᵖ' ⥤ Type w) :
     (elementsContraToElementsContra' F).ReflectsIsomorphisms :=
   inferInstanceAs (elementsContraEquiv F).inverse.ReflectsIsomorphisms
 
+/-! ### ElementsPre: category of elements for presheaves using mathlib's op
+
+For a presheaf `F : Cᵒᵖ ⥤ Type w` (using mathlib's opposite), the category of
+elements treats `F` as a copresheaf on `Cᵒᵖ`. The standard "contravariant
+category of elements" for presheaves reverses morphism direction.
+-/
+
+/--
+The (contravariant) category of elements for a presheaf `F : Cᵒᵖ ⥤ Type w`.
+
+This is the standard construction: take mathlib's category of elements (which
+treats F as a copresheaf on `Cᵒᵖ`), then take its opposite to get the
+conventional presheaf category of elements where:
+- Objects: pairs `(X, x)` with `X : C` and `x : F.obj (op X)`
+- Morphisms `(X, x) → (Y, y)`: maps `f : X ⟶ Y` in `C` with `F.map f.op y = x`
+-/
+def Functor.ElementsPre (F : Cᵒᵖ ⥤ Type w) := F.Elementsᵒᵖ
+
+instance (F : Cᵒᵖ ⥤ Type w) : Category F.ElementsPre :=
+  inferInstanceAs (Category F.Elementsᵒᵖ)
+
+/--
+`ElementsPre F` equals `ElementsContra (op'ToOp ⋙ F)` definitionally.
+
+This follows from `opToOp' ⋙ op'ToOp = 𝟭 Cᵒᵖ` (which holds by `rfl`):
+- `ElementsContra (op'ToOp ⋙ F) = ((opToOp' ⋙ (op'ToOp ⋙ F)).Elements)ᵒᵖ`
+- Since `opToOp' ⋙ op'ToOp = 𝟭`, the composition `opToOp' ⋙ (op'ToOp ⋙ F)`
+  equals `F` on objects and morphisms
+- Therefore `(opToOp' ⋙ (op'ToOp ⋙ F)).Elements = F.Elements`
+- And `ElementsPre F = F.Elementsᵒᵖ = ElementsContra (op'ToOp ⋙ F)`
+-/
+theorem elementsPreEqElementsContra (F : Cᵒᵖ ⥤ Type w) :
+    F.ElementsPre = (op'ToOp ⋙ F).ElementsContra := rfl
+
 section CovariantCategoryOfElements
 
 variable {D : Type u} [Category.{v} D]
