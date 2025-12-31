@@ -1,10 +1,12 @@
 import Mathlib.CategoryTheory.Category.Basic
 import Mathlib.CategoryTheory.Category.Cat
 import Mathlib.CategoryTheory.Comma.Over.Basic
+import Mathlib.CategoryTheory.Elements
 import Mathlib.CategoryTheory.Functor.Basic
 import Mathlib.CategoryTheory.Products.Basic
 import Mathlib.CategoryTheory.Types.Basic
 import Mathlib.CategoryTheory.Opposites
+import GebLean.Utilities.Elements
 
 /-!
 # Category of diagonal elements and paranatural transformations
@@ -1008,5 +1010,216 @@ theorem structuralCoend_sound (F : (Type v)ᵒᵖ ⥤ Type v ⥤ Type v)
   exact h
 
 end StructuralEndsCoends
+
+section ProfunctorConversions
+
+/-!
+## Converting presheaves and copresheaves to profunctors
+
+A copresheaf `P : C ⥤ Type w` can be viewed as a profunctor that is constant
+in the contravariant argument: `copresheafToProf P` sends `(x, y)` to `P(y)`.
+
+A presheaf `P : Cᵒᵖ ⥤ Type w` can be viewed as a profunctor that is constant
+in the covariant argument: `presheafToProf P` sends `(x, y)` to `P(x)`.
+
+These conversions provide a uniform way to treat presheaves and copresheaves
+as profunctors, and they preserve the category of diagonal elements up to
+equivalence with the (contravariant) category of elements.
+-/
+
+variable {C : Type u} [Category.{v} C]
+
+universe w
+
+/-- Convert a copresheaf to a profunctor by making it constant in the
+contravariant argument. For `P : C ⥤ Type w`, the profunctor
+`copresheafToProf P` sends `(x, y)` to `P(y)`. -/
+abbrev copresheafToProf (P : C ⥤ Type w) : Cᵒᵖ ⥤ C ⥤ Type w :=
+  (Functor.const Cᵒᵖ).obj P
+
+/-- Convert a presheaf to a profunctor by making it constant in the
+covariant argument. For `P : Cᵒᵖ ⥤ Type w`, the profunctor
+`presheafToProf P` sends `(x, y)` to `P(x)`. -/
+abbrev presheafToProf (P : Cᵒᵖ ⥤ Type w) : Cᵒᵖ ⥤ C ⥤ Type w :=
+  P ⋙ Functor.const C
+
+@[simp]
+theorem copresheafToProf_obj_obj (P : C ⥤ Type w) (x : Cᵒᵖ) (y : C) :
+    ((copresheafToProf P).obj x).obj y = P.obj y := rfl
+
+@[simp]
+theorem copresheafToProf_obj_map (P : C ⥤ Type w) (x : Cᵒᵖ) {y₀ y₁ : C}
+    (f : y₀ ⟶ y₁) :
+    ((copresheafToProf P).obj x).map f = P.map f := rfl
+
+@[simp]
+theorem copresheafToProf_map_app (P : C ⥤ Type w) {x₀ x₁ : Cᵒᵖ}
+    (f : x₀ ⟶ x₁) (y : C) :
+    ((copresheafToProf P).map f).app y = id := rfl
+
+@[simp]
+theorem presheafToProf_obj_obj (P : Cᵒᵖ ⥤ Type w) (x : Cᵒᵖ) (y : C) :
+    ((presheafToProf P).obj x).obj y = P.obj x := rfl
+
+@[simp]
+theorem presheafToProf_obj_map (P : Cᵒᵖ ⥤ Type w) (x : Cᵒᵖ) {y₀ y₁ : C}
+    (f : y₀ ⟶ y₁) :
+    ((presheafToProf P).obj x).map f = id := rfl
+
+@[simp]
+theorem presheafToProf_map_app (P : Cᵒᵖ ⥤ Type w) {x₀ x₁ : Cᵒᵖ}
+    (f : x₀ ⟶ x₁) (y : C) :
+    ((presheafToProf P).map f).app y = P.map f := rfl
+
+/-- The diagonal of `copresheafToProf P` at `I` is `P(I)`. -/
+theorem copresheafToProf_diag (P : C ⥤ Type w) (I : C) :
+    diagApp (copresheafToProf P) I = P.obj I := rfl
+
+/-- The diagonal of `presheafToProf P` at `I` is `P(op I)`. -/
+theorem presheafToProf_diag (P : Cᵒᵖ ⥤ Type w) (I : C) :
+    diagApp (presheafToProf P) I = P.obj (Opposite.op I) := rfl
+
+/-- The identity profunctor can be expressed as a copresheaf-to-profunctor
+conversion of the identity functor on `Type v`. -/
+theorem IdProf_eq_copresheafToProf :
+    IdProf = copresheafToProf (𝟭 (Type v)) := rfl
+
+end ProfunctorConversions
+
+section DiagElemElementsEquiv
+
+/-!
+## Equivalence between diagonal elements and categories of elements
+
+When we view a copresheaf `P : C ⥤ Type w` as a profunctor via
+`copresheafToProf`, the category of diagonal elements `DiagElem` is
+isomorphic to the (covariant) category of elements `P.Elements`.
+
+When we view a presheaf `Q : Cᵒᵖ ⥤ Type w` as a profunctor via
+`presheafToProf`, the category of diagonal elements is isomorphic to
+the opposite of the category of elements `Q.Elementsᵒᵖ`.
+-/
+
+variable {C : Type u} [Category.{v} C]
+
+universe w
+
+/-! ### Copresheaf case: DiagElem ≃ Elements -/
+
+variable (P : C ⥤ Type w)
+
+/-- Functor from `DiagElem (copresheafToProf P)` to `P.Elements`.
+Objects `(I, elem)` map to `⟨I, elem⟩`. -/
+@[simps]
+def diagElemToElements : DiagElem (copresheafToProf P) ⥤ P.Elements where
+  obj x := ⟨x.base, x.elem⟩
+  map {x y} f := ⟨f.base, by
+    have h := f.compat
+    simp only [DiagCompat] at h
+    exact h⟩
+  map_id _ := rfl
+  map_comp _ _ := rfl
+
+/-- Functor from `P.Elements` to `DiagElem (copresheafToProf P)`.
+Objects `⟨I, elem⟩` map to `(I, elem)`. -/
+@[simps]
+def elementsToDiagElem : P.Elements ⥤ DiagElem (copresheafToProf P) where
+  obj p := ⟨p.fst, p.snd⟩
+  map {p q} f := ⟨f.val, by
+    simp only [DiagCompat]
+    exact f.property⟩
+  map_id _ := DiagElem.Hom.ext rfl
+  map_comp _ _ := DiagElem.Hom.ext rfl
+
+/-- The category of diagonal elements of `copresheafToProf P` is isomorphic
+to the (covariant) category of elements `P.Elements`. -/
+def diagElemCopresheafIso : DiagElem (copresheafToProf P) ≅Cat P.Elements where
+  hom := diagElemToElements P
+  inv := elementsToDiagElem P
+  hom_inv_id := by
+    apply Functor.ext
+    case h_obj => intro x; apply DiagElem.ext <;> rfl
+    case h_map => intro x y f; apply DiagElem.Hom.ext; simp
+  inv_hom_id := by
+    apply Functor.ext
+    case h_obj => intro p; rfl
+    case h_map =>
+      intro p q f
+      simp only [eqToHom_refl, Category.comp_id, Category.id_comp]
+      apply Subtype.ext
+      rfl
+
+/-- The categorical equivalence between diagonal elements and Elements. -/
+def diagElemCopresheafEquiv : DiagElem (copresheafToProf P) ≌ P.Elements :=
+  Cat.equivOfIso (diagElemCopresheafIso P)
+
+/-! ### Presheaf case: DiagElem ≃ Elementsᵒᵖ
+
+For a presheaf `Q : Cᵒᵖ ⥤ Type w`, the diagonal elements of `presheafToProf Q`
+are isomorphic to the opposite of the category of elements.
+
+The morphism direction reversal arises because:
+- In `DiagElem`, morphisms `f : I₀ ⟶ I₁` go from `(I₀, elem₀)` to `(I₁, elem₁)`
+  with condition `elem₀ = Q.map (op f) elem₁`
+- In `Q.Elements`, morphisms `g : (op I₁) ⟶ (op I₀)` (i.e., `g = op f`)
+  go from `(op I₁, elem₁)` to `(op I₀, elem₀)` with condition
+  `Q.map g elem₁ = elem₀`
+
+So `DiagElem (presheafToProf Q)` ≃ `Q.Elementsᵒᵖ`.
+-/
+
+variable {P}
+variable (Q : Cᵒᵖ ⥤ Type w)
+
+/-- Functor from `DiagElem (presheafToProf Q)` to `Q.Elementsᵒᵖ`.
+Objects `(I, elem : Q(op I))` map to `op ⟨op I, elem⟩`.
+A morphism `f : I₀ ⟶ I₁` with `elem₀ = Q.map (op f) elem₁` corresponds to
+`op ⟨op f, ...⟩ : (op I₁, elem₁) ⟶ (op I₀, elem₀)` in `Q.Elementsᵒᵖ`. -/
+@[simps!]
+def diagElemToElementsOpPresheaf :
+    DiagElem (presheafToProf Q) ⥤ Q.Elementsᵒᵖ where
+  obj x := Opposite.op ⟨Opposite.op x.base, x.elem⟩
+  map {x y} f := Opposite.op ⟨f.base.op, by
+    have h := f.compat
+    simp only [DiagCompat] at h
+    exact h.symm⟩
+  map_id _ := rfl
+  map_comp _ _ := rfl
+
+/-- Functor from `Q.Elementsᵒᵖ` to `DiagElem (presheafToProf Q)`.
+Objects `op ⟨op I, elem⟩` map to `(I, elem)`. -/
+@[simps!]
+def elementsOpPresheafToDiagElem :
+    Q.Elementsᵒᵖ ⥤ DiagElem (presheafToProf Q) where
+  obj p := ⟨p.unop.fst.unop, p.unop.snd⟩
+  map {p q} f := ⟨f.unop.val.unop, by
+    simp only [DiagCompat]
+    have h := f.unop.property
+    exact h.symm⟩
+  map_id _ := DiagElem.Hom.ext rfl
+  map_comp _ _ := DiagElem.Hom.ext rfl
+
+/-- The category of diagonal elements of `presheafToProf Q` is isomorphic
+to the opposite of the category of elements `Q.Elementsᵒᵖ`. -/
+def diagElemPresheafIso : DiagElem (presheafToProf Q) ≅Cat Q.Elementsᵒᵖ where
+  hom := diagElemToElementsOpPresheaf Q
+  inv := elementsOpPresheafToDiagElem Q
+  hom_inv_id := by
+    apply Functor.ext
+    case h_obj => intro x; apply DiagElem.ext <;> rfl
+    case h_map => intro x y f; apply DiagElem.Hom.ext; simp
+  inv_hom_id := by
+    apply Functor.ext
+    case h_obj => intro p; rfl
+    case h_map =>
+      intro p q f
+      simp only [eqToHom_refl, Category.comp_id, Category.id_comp]
+      exact Opposite.op_unop f
+
+/-- The categorical equivalence between diagonal elements and Q.Elementsᵒᵖ. -/
+def diagElemPresheafEquiv : DiagElem (presheafToProf Q) ≌ Q.Elementsᵒᵖ :=
+  Cat.equivOfIso (diagElemPresheafIso Q)
+
+end DiagElemElementsEquiv
 
 end GebLean
