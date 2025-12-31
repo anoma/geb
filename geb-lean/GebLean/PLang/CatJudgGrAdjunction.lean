@@ -186,29 +186,117 @@ For a CompWitGr X, we construct the quotient category L(X):
 1. Objects = X.objType (objects of the underlying quiver)
 2. Morphisms = Quot(FreeMor) by identity and composition witness relations
 3. Category structure from FreeMor's identity/composition quotiented
+
+The construction uses bundled morphisms to achieve proper universe polymorphism.
+The free morphism expressions are defined without object indices, with a separate
+validity predicate (as a Prop) tracking the typing. This allows the morphism
+universe to be independent of the object universe.
 -/
 
 universe uObj uMor uWit uCWit
 
+/-! ### Bundled Morphism Type -/
+
+/-- The total space of morphisms in a CompWitGr: pairs of objects with a
+    morphism between them. -/
+def MorBundle (X : Groth.CompWitGr.{uObj, uMor, uWit, uCWit}) :
+    Type (max uObj uMor) :=
+  Σ (a b : X.objType), X.Hom' a b
+
+namespace MorBundle
+
+variable {X : Groth.CompWitGr.{uObj, uMor, uWit, uCWit}}
+
+/-- The source of a bundled morphism. -/
+def src (m : MorBundle X) : X.objType := m.1
+
+/-- The target of a bundled morphism. -/
+def tgt (m : MorBundle X) : X.objType := m.2.1
+
+/-- The underlying morphism of a bundled morphism. -/
+def mor (m : MorBundle X) : X.Hom' m.src m.tgt := m.2.2
+
+/-- Create a bundled morphism from components. -/
+def mk (a b : X.objType) (f : X.Hom' a b) : MorBundle X := ⟨a, b, f⟩
+
+@[simp]
+theorem mk_src (a b : X.objType) (f : X.Hom' a b) : (mk a b f).src = a := rfl
+
+@[simp]
+theorem mk_tgt (a b : X.objType) (f : X.Hom' a b) : (mk a b f).tgt = b := rfl
+
+@[simp]
+theorem mk_mor (a b : X.objType) (f : X.Hom' a b) :
+    (mk a b f).mor = f := rfl
+
+end MorBundle
+
+/-! ### Free Morphism Expressions (Non-indexed) -/
+
 /-- Free morphisms over a quiver: formal expressions built from variables,
-    identity, and composition. -/
-inductive FreeMor (X : Groth.CompWitGr.{uObj, uMor, uWit, uCWit}) :
-    X.objType → X.objType → Type (max uObj uMor) where
-  /-- A variable morphism from the underlying quiver. -/
-  | var {a b : X.objType} : X.Hom' a b → FreeMor X a b
-  /-- The formal identity at an object. -/
-  | id (a : X.objType) : FreeMor X a a
-  /-- Composition of free morphisms. -/
-  | comp {a b c : X.objType} : FreeMor X b c → FreeMor X a b → FreeMor X a c
+    identity, and composition. This type is NOT indexed by source/target;
+    instead, validity is tracked by a separate Prop predicate.
+
+    The identity constructor carries no data - validity determines which
+    object the identity is at. This allows the type to potentially be at
+    a lower universe level than if objects were stored. -/
+inductive FreeMorRaw (X : Groth.CompWitGr.{uObj, uMor, uWit, uCWit}) :
+    Type (max uObj uMor) where
+  /-- A variable morphism from the underlying quiver (bundled with endpoints). -/
+  | var : MorBundle X → FreeMorRaw X
+  /-- The formal identity (which object is determined by validity). -/
+  | id : FreeMorRaw X
+  /-- Composition of free morphisms (whether composable is determined by
+      validity). -/
+  | comp : FreeMorRaw X → FreeMorRaw X → FreeMorRaw X
+
+/-- Validity predicate for free morphism expressions. A raw free morphism
+    is valid at (a, b) if it represents a valid morphism from a to b. -/
+inductive ValidFreeMor (X : Groth.CompWitGr.{uObj, uMor, uWit, uCWit}) :
+    X.objType → X.objType → FreeMorRaw X → Prop where
+  /-- A variable is valid if it matches the bundled endpoints. -/
+  | var (m : MorBundle X) : ValidFreeMor X m.src m.tgt (.var m)
+  /-- Identity is valid from any object to itself. -/
+  | id (a : X.objType) : ValidFreeMor X a a .id
+  /-- Composition is valid if both parts are valid and the endpoints match. -/
+  | comp {a b c : X.objType} {g f : FreeMorRaw X}
+      (hg : ValidFreeMor X b c g) (hf : ValidFreeMor X a b f) :
+      ValidFreeMor X a c (.comp g f)
+
+/-- Free morphisms with tracked validity: a raw expression paired with
+    a proof that it represents a valid morphism from a to b. -/
+def FreeMor (X : Groth.CompWitGr.{uObj, uMor, uWit, uCWit})
+    (a b : X.objType) : Type (max uObj uMor) :=
+  { m : FreeMorRaw X // ValidFreeMor X a b m }
 
 namespace FreeMor
 
 variable {X : Groth.CompWitGr.{uObj, uMor, uWit, uCWit}}
 
+/-- Construct a variable free morphism from endpoints and a quiver morphism. -/
+def var (a b : X.objType) (f : X.Hom' a b) : FreeMor X a b :=
+  ⟨.var (MorBundle.mk a b f), ValidFreeMor.var (MorBundle.mk a b f)⟩
+
+/-- The identity free morphism at an object. -/
+def id (a : X.objType) : FreeMor X a a :=
+  ⟨.id, ValidFreeMor.id a⟩
+
+/-- Composition of free morphisms. -/
+def comp {a b c : X.objType} (g : FreeMor X b c) (f : FreeMor X a b) :
+    FreeMor X a c :=
+  ⟨.comp g.val f.val, ValidFreeMor.comp g.property f.property⟩
+
+/-- Extract the raw free morphism. -/
+def raw {a b : X.objType} (f : FreeMor X a b) : FreeMorRaw X := f.val
+
+/-- The validity proof for a free morphism. -/
+def valid {a b : X.objType} (f : FreeMor X a b) : ValidFreeMor X a b f.raw :=
+  f.property
+
 /-- Cast a free morphism along object equalities. -/
 def castEq {a b a' b' : X.objType} (ha : a = a') (hb : b = b')
     (f : FreeMor X a b) : FreeMor X a' b' :=
-  ha ▸ hb ▸ f
+  ⟨f.val, ha ▸ hb ▸ f.property⟩
 
 @[simp]
 theorem castEq_rfl {a b : X.objType} (f : FreeMor X a b) :
@@ -220,39 +308,51 @@ theorem castEq_trans {a b a' b' a'' b'' : X.objType}
     (f.castEq ha hb).castEq ha' hb' = f.castEq (ha.trans ha') (hb.trans hb') := by
   subst ha hb ha' hb'; rfl
 
-/-- HEq lifts through the var constructor with heterogeneous endpoint equalities. -/
+/-- Two free morphisms are equal iff their raw representations are equal. -/
+theorem eq_iff_raw_eq {a b : X.objType} (f g : FreeMor X a b) :
+    f = g ↔ f.raw = g.raw :=
+  Subtype.ext_iff
+
+/-- HEq for var when endpoints and morphisms are heterogeneously equal. -/
 theorem var_heq' {a₁ b₁ a₂ b₂ : X.objType} {m₁ : X.Hom' a₁ b₁} {m₂ : X.Hom' a₂ b₂}
     (ha : a₁ = a₂) (hb : b₁ = b₂)
-    (hm : HEq m₁ m₂) : HEq (FreeMor.var m₁) (FreeMor.var m₂) := by
+    (hm : HEq m₁ m₂) : HEq (var a₁ b₁ m₁) (var a₂ b₂ m₂) := by
   subst ha hb
-  exact heq_of_eq (congrArg FreeMor.var (eq_of_heq hm))
+  have : m₁ = m₂ := eq_of_heq hm
+  subst this
+  rfl
 
 end FreeMor
 
 /-- Generating relations for the free morphism equivalence.
-    These come from the category axioms plus witness relations. -/
+    These come from the category axioms plus witness relations.
+    Relations are defined on the raw representations. -/
 inductive FreeMorEquivGen (X : Groth.CompWitGr.{uObj, uMor, uWit, uCWit}) :
     {a b : X.objType} → FreeMor X a b → FreeMor X a b → Prop where
   /-- Left identity: id ∘ f ~ f -/
   | id_left {a b : X.objType} (f : FreeMor X a b) :
-      FreeMorEquivGen X (.comp (.id b) f) f
+      FreeMorEquivGen X (FreeMor.comp (FreeMor.id b) f) f
   /-- Right identity: f ∘ id ~ f -/
   | id_right {a b : X.objType} (f : FreeMor X a b) :
-      FreeMorEquivGen X (.comp f (.id a)) f
+      FreeMorEquivGen X (FreeMor.comp f (FreeMor.id a)) f
   /-- Associativity: (h ∘ g) ∘ f ~ h ∘ (g ∘ f) -/
   | assoc {a b c d : X.objType}
       (h : FreeMor X c d) (g : FreeMor X b c) (f : FreeMor X a b) :
-      FreeMorEquivGen X (.comp (.comp h g) f) (.comp h (.comp g f))
+      FreeMorEquivGen X
+        (FreeMor.comp (FreeMor.comp h g) f)
+        (FreeMor.comp h (FreeMor.comp g f))
   /-- Identity witness: var(witMor i) ~ id(witObj i). -/
   | id_witness (i : X.idBundle.witType) :
       FreeMorEquivGen X
-        (.var (X.idBundle.witMor i))
-        (.id (X.idBundle.witObj i))
-  /-- Composition witness: var(left) ∘ var(right) ~ var(composite). -/
+        (FreeMor.var (X.idBundle.witObj i) (X.idBundle.witObj i) (X.idBundle.witMor i))
+        (FreeMor.id (X.idBundle.witObj i))
+  /-- Composition witness: var(right) ∘ var(left) ~ var(composite). -/
   | comp_witness (c : X.bundle.witType) :
       FreeMorEquivGen X
-        (.comp (.var (X.bundle.witRight c)) (.var (X.bundle.witLeft c)))
-        (.var (X.bundle.witComp c))
+        (FreeMor.comp
+          (FreeMor.var (X.bundle.witMid c) (X.bundle.witTgt c) (X.bundle.witRight c))
+          (FreeMor.var (X.bundle.witSrc c) (X.bundle.witMid c) (X.bundle.witLeft c)))
+        (FreeMor.var (X.bundle.witSrc c) (X.bundle.witTgt c) (X.bundle.witComp c))
 
 /-- The equivalence relation on free morphisms. -/
 inductive FreeMorEquiv (X : Groth.CompWitGr.{uObj, uMor, uWit, uCWit}) :
@@ -271,11 +371,13 @@ inductive FreeMorEquiv (X : Groth.CompWitGr.{uObj, uMor, uWit, uCWit}) :
   /-- Left congruence: f ~ g implies h ∘ f ~ h ∘ g. -/
   | cong_left {a b c : X.objType}
       (h : FreeMor X b c) {f g : FreeMor X a b} :
-      FreeMorEquiv X f g → FreeMorEquiv X (.comp h f) (.comp h g)
+      FreeMorEquiv X f g →
+      FreeMorEquiv X (FreeMor.comp h f) (FreeMor.comp h g)
   /-- Right congruence: f ~ g implies f ∘ h ~ g ∘ h. -/
   | cong_right {a b c : X.objType}
       {f g : FreeMor X b c} (h : FreeMor X a b) :
-      FreeMorEquiv X f g → FreeMorEquiv X (.comp f h) (.comp g h)
+      FreeMorEquiv X f g →
+      FreeMorEquiv X (FreeMor.comp f h) (FreeMor.comp g h)
 
 theorem FreeMorEquiv.isEquiv (X : Groth.CompWitGr.{uObj, uMor, uWit, uCWit})
     {a b : X.objType} :
@@ -358,12 +460,49 @@ def LMorObj {X Y : Groth.CompWitGr.{uObj, uMor, uWit, uCWit}} (F : X ⟶ Y) :
     X.objType → Y.objType :=
   F.base.base.base
 
+/-- Map a raw free morphism along a CompWitGr morphism. -/
+def mapFreeMorRaw {X Y : Groth.CompWitGr.{uObj, uMor, uWit, uCWit}} (F : X ⟶ Y) :
+    FreeMorRaw X → FreeMorRaw Y
+  | .var m => .var (MorBundle.mk (LMorObj F m.src) (LMorObj F m.tgt)
+                     (F.base.base.fiber ⟨m.src, m.tgt⟩ m.mor))
+  | .id => .id
+  | .comp g f => .comp (mapFreeMorRaw F g) (mapFreeMorRaw F f)
+
+/-- mapFreeMorRaw preserves validity. -/
+theorem mapFreeMorRaw_valid {X Y : Groth.CompWitGr.{uObj, uMor, uWit, uCWit}} (F : X ⟶ Y)
+    {a b : X.objType} {m : FreeMorRaw X} (h : ValidFreeMor X a b m) :
+    ValidFreeMor Y (LMorObj F a) (LMorObj F b) (mapFreeMorRaw F m) := by
+  induction h with
+  | var m =>
+    simp only [mapFreeMorRaw]
+    exact ValidFreeMor.var (MorBundle.mk (LMorObj F m.src) (LMorObj F m.tgt)
+      (F.base.base.fiber ⟨m.src, m.tgt⟩ m.mor))
+  | id a => exact ValidFreeMor.id _
+  | comp hg hf ihg ihf => exact ValidFreeMor.comp ihg ihf
+
 /-- Map a free morphism along a CompWitGr morphism. -/
-def mapFreeMor {X Y : Groth.CompWitGr.{uObj, uMor, uWit, uCWit}} (F : X ⟶ Y) :
-    {a b : X.objType} → FreeMor X a b → FreeMor Y (LMorObj F a) (LMorObj F b)
-  | _, _, .var f => .var (F.base.base.fiber ⟨_, _⟩ f)
-  | _, _, .id a => .id (LMorObj F a)
-  | _, _, .comp g f => .comp (mapFreeMor F g) (mapFreeMor F f)
+def mapFreeMor {X Y : Groth.CompWitGr.{uObj, uMor, uWit, uCWit}} (F : X ⟶ Y)
+    {a b : X.objType} (m : FreeMor X a b) : FreeMor Y (LMorObj F a) (LMorObj F b) :=
+  ⟨mapFreeMorRaw F m.val, mapFreeMorRaw_valid F m.property⟩
+
+@[simp]
+theorem mapFreeMor_var {X Y : Groth.CompWitGr.{uObj, uMor, uWit, uCWit}} (F : X ⟶ Y)
+    (a b : X.objType) (f : X.Hom' a b) :
+    mapFreeMor F (FreeMor.var a b f) =
+      FreeMor.var (LMorObj F a) (LMorObj F b) (F.base.base.fiber ⟨a, b⟩ f) :=
+  Subtype.ext rfl
+
+@[simp]
+theorem mapFreeMor_id {X Y : Groth.CompWitGr.{uObj, uMor, uWit, uCWit}} (F : X ⟶ Y)
+    (a : X.objType) :
+    mapFreeMor F (FreeMor.id a) = FreeMor.id (LMorObj F a) :=
+  Subtype.ext rfl
+
+@[simp]
+theorem mapFreeMor_comp {X Y : Groth.CompWitGr.{uObj, uMor, uWit, uCWit}} (F : X ⟶ Y)
+    {a b c : X.objType} (g : FreeMor X b c) (f : FreeMor X a b) :
+    mapFreeMor F (FreeMor.comp g f) = FreeMor.comp (mapFreeMor F g) (mapFreeMor F f) :=
+  Subtype.ext rfl
 
 /-- mapFreeMor respects the generating equivalence relation. -/
 theorem mapFreeMor_respects_gen {X Y : Groth.CompWitGr.{uObj, uMor, uWit, uCWit}}
@@ -372,21 +511,26 @@ theorem mapFreeMor_respects_gen {X Y : Groth.CompWitGr.{uObj, uMor, uWit, uCWit}
     FreeMorEquiv Y (mapFreeMor F f) (mapFreeMor F g) := by
   cases h with
   | id_left f' =>
+    simp only [mapFreeMor_comp, mapFreeMor_id]
     exact FreeMorEquiv.rel (FreeMorEquivGen.id_left _)
   | id_right f' =>
+    simp only [mapFreeMor_comp, mapFreeMor_id]
     exact FreeMorEquiv.rel (FreeMorEquivGen.id_right _)
   | assoc h' g' f' =>
+    simp only [mapFreeMor_comp]
     exact FreeMorEquiv.rel (FreeMorEquivGen.assoc _ _ _)
   | id_witness i =>
     have hobj := F.base.fiber.witObj_eq i
     have hmor := F.base.fiber.witMor_eq i
-    simp only [mapFreeMor, LMorObj]
+    simp only [mapFreeMor_var, mapFreeMor_id, LMorObj]
     have h := FreeMorEquiv.rel (FreeMorEquivGen.id_witness (F.base.fiber.witMap i))
     simp only [Groth.CompWitGr.idBundle] at h
     convert h using 2
     case h.e'_2 => exact hobj.symm
     case h.e'_3 => exact hobj.symm
-    case h.e'_4.e'_4 => exact hmor.symm
+    case h.e'_4 =>
+      simp only [Groth.CompWitGr.idBundle]
+      exact hmor.symm
   | comp_witness c =>
     have hsrc := F.fiber.witSrc_eq c
     have hmid := F.fiber.witMid_eq c
@@ -396,7 +540,7 @@ theorem mapFreeMor_respects_gen {X Y : Groth.CompWitGr.{uObj, uMor, uWit, uCWit}
     have hcomp := F.fiber.witComp_eq c
     simp only [Groth.compWitFunctor, Groth.CompWitBundle.pushforwardFunctor,
       Groth.CompWitBundle.pushforward] at hsrc hmid htgt hleft hright hcomp
-    simp only [mapFreeMor, LMorObj]
+    simp only [mapFreeMor_var, mapFreeMor_comp, LMorObj]
     have h := FreeMorEquiv.rel (FreeMorEquivGen.comp_witness (F.fiber.witMap c))
     simp only [Groth.CompWitGr.bundle] at h
     convert h using 2
@@ -409,7 +553,9 @@ theorem mapFreeMor_respects_gen {X Y : Groth.CompWitGr.{uObj, uMor, uWit, uCWit}
     case h.e'_4.e'_6 =>
       simp only [Groth.CompWitGr.bundle]
       exact FreeMor.var_heq' hsrc.symm hmid.symm hleft.symm
-    case h.e'_5.e'_4 => exact hcomp.symm
+    case h.e'_5 =>
+      simp only [Groth.CompWitGr.bundle]
+      exact hcomp.symm
 
 /-- mapFreeMor respects the full equivalence relation. -/
 theorem mapFreeMor_respects {X Y : Groth.CompWitGr.{uObj, uMor, uWit, uCWit}}
@@ -421,8 +567,12 @@ theorem mapFreeMor_respects {X Y : Groth.CompWitGr.{uObj, uMor, uWit, uCWit}}
   | refl _ => exact FreeMorEquiv.refl _
   | symm _ ih => exact FreeMorEquiv.symm ih
   | trans _ _ ih1 ih2 => exact FreeMorEquiv.trans ih1 ih2
-  | cong_left h' _ ih => exact FreeMorEquiv.cong_left _ ih
-  | cong_right h' _ ih => exact FreeMorEquiv.cong_right _ ih
+  | cong_left h' _ ih =>
+    simp only [mapFreeMor_comp]
+    exact FreeMorEquiv.cong_left _ ih
+  | cong_right h' _ ih =>
+    simp only [mapFreeMor_comp]
+    exact FreeMorEquiv.cong_right _ ih
 
 /-- L(F) on morphisms descends to the quotient. -/
 def LMorHom {X Y : Groth.CompWitGr.{uObj, uMor, uWit, uCWit}} (F : X ⟶ Y)
@@ -436,14 +586,14 @@ def LMorHom {X Y : Groth.CompWitGr.{uObj, uMor, uWit, uCWit}} (F : X ⟶ Y)
 theorem LMorHom_id {X Y : Groth.CompWitGr.{uObj, uMor, uWit, uCWit}} (F : X ⟶ Y)
     (a : X.objType) :
     LMorHom F (QuotMor.id a) = QuotMor.id (LMorObj F a) := by
-  simp only [LMorHom, QuotMor.id, Quotient.lift_mk, mapFreeMor]
+  simp only [LMorHom, QuotMor.id, Quotient.lift_mk, mapFreeMor_id]
 
 theorem LMorHom_comp {X Y : Groth.CompWitGr.{uObj, uMor, uWit, uCWit}} (F : X ⟶ Y)
     {a b c : X.objType} (g : QuotMor X b c) (f : QuotMor X a b) :
     LMorHom F (QuotMor.comp g f) = QuotMor.comp (LMorHom F g) (LMorHom F f) := by
   induction g using Quotient.ind
   induction f using Quotient.ind
-  rfl
+  simp only [QuotMor.comp, LMorHom, Quotient.lift_mk, mapFreeMor_comp]
 
 /-- L(F) as a functor L(X) ⥤ L(Y). -/
 def LMorFunctor {X Y : Groth.CompWitGr.{uObj, uMor, uWit, uCWit}} (F : X ⟶ Y) :
@@ -453,22 +603,24 @@ def LMorFunctor {X Y : Groth.CompWitGr.{uObj, uMor, uWit, uCWit}} (F : X ⟶ Y) 
   map_id := LMorHom_id F
   map_comp f g := LMorHom_comp F g f
 
+/-- Helper: mapFreeMorRaw with identity morphism equals the original. -/
+theorem mapFreeMorRaw_id {X : Groth.CompWitGr.{uObj, uMor, uWit, uCWit}}
+    (m : FreeMorRaw X) :
+    mapFreeMorRaw (𝟙 X) m = m := by
+  induction m with
+  | var v => rfl
+  | id => rfl
+  | comp g f ihg ihf => simp only [mapFreeMorRaw, ihg, ihf]
+
 /-- Helper: mapFreeMor with identity morphism is equivalent to the original. -/
 theorem mapFreeMor_id_equiv {X : Groth.CompWitGr.{uObj, uMor, uWit, uCWit}}
     {a b : X.objType} (m : FreeMor X a b) :
     FreeMorEquiv X (mapFreeMor (𝟙 X) m) m := by
-  induction m with
-  | var v =>
-    simp only [mapFreeMor]
-    apply FreeMorEquiv.refl
-  | id a =>
-    simp only [mapFreeMor]
-    apply FreeMorEquiv.refl
-  | comp g f ihg ihf =>
-    simp only [mapFreeMor]
-    exact FreeMorEquiv.trans
-      (FreeMorEquiv.cong_left _ ihf)
-      (FreeMorEquiv.cong_right _ ihg)
+  have h : mapFreeMor (𝟙 X) m = m := by
+    apply Subtype.ext
+    simp only [mapFreeMor, mapFreeMorRaw_id]
+  rw [h]
+  exact FreeMorEquiv.refl _
 
 /-- L preserves identity morphisms: L(id_X) = id_{L(X)}. -/
 theorem LMorFunctor_id (X : Groth.CompWitGr.{uObj, uMor, uWit, uCWit}) :
@@ -486,22 +638,24 @@ theorem LMorFunctor_id (X : Groth.CompWitGr.{uObj, uMor, uWit, uCWit}) :
     apply Quotient.sound
     exact mapFreeMor_id_equiv _
 
+/-- Helper: mapFreeMorRaw distributes over composition of morphisms. -/
+theorem mapFreeMorRaw_comp {X Y Z : Groth.CompWitGr.{uObj, uMor, uWit, uCWit}}
+    (F : X ⟶ Y) (G : Y ⟶ Z) (m : FreeMorRaw X) :
+    mapFreeMorRaw (F ≫ G) m = mapFreeMorRaw G (mapFreeMorRaw F m) := by
+  induction m with
+  | var v => rfl
+  | id => rfl
+  | comp g f ihg ihf => simp only [mapFreeMorRaw, ihg, ihf]
+
 /-- Helper: mapFreeMor distributes over composition of morphisms in CompWitGr. -/
 theorem mapFreeMor_comp_equiv {X Y Z : Groth.CompWitGr.{uObj, uMor, uWit, uCWit}}
     (F : X ⟶ Y) (G : Y ⟶ Z) {a b : X.objType} (m : FreeMor X a b) :
     FreeMorEquiv Z (mapFreeMor (F ≫ G) m) (mapFreeMor G (mapFreeMor F m)) := by
-  induction m with
-  | var v =>
-    simp only [mapFreeMor]
-    apply FreeMorEquiv.refl
-  | id a =>
-    simp only [mapFreeMor]
-    apply FreeMorEquiv.refl
-  | comp g f ihg ihf =>
-    simp only [mapFreeMor]
-    exact FreeMorEquiv.trans
-      (FreeMorEquiv.cong_left _ ihf)
-      (FreeMorEquiv.cong_right _ ihg)
+  have h : mapFreeMor (F ≫ G) m = mapFreeMor G (mapFreeMor F m) := by
+    apply Subtype.ext
+    simp only [mapFreeMor, mapFreeMorRaw_comp]
+  rw [h]
+  exact FreeMorEquiv.refl _
 
 /-- L preserves composition: L(G ∘ F) = L(G) ∘ L(F). -/
 theorem LMorFunctor_comp {X Y Z : Groth.CompWitGr.{uObj, uMor, uWit, uCWit}}

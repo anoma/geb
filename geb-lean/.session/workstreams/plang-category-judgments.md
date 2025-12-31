@@ -256,34 +256,45 @@ For JudgmentUniverse (already Cat-valued):
 
 ### Universe Constraints and Resolution
 
-**Current Constraint**: The intermediate implementation forces equal universe
-levels. The constraint source is `PLangQuotientData.{w}` which uses a single
-level for all components:
+**Current State**: The Grothendieck-based implementation in
+`CatJudgGrAdjunction.lean` uses four independent universe levels
+`{uObj, uMor, uWit, uCWit}`:
+
+- `CompWitGr.{uObj, uMor, uWit, uCWit}` has objects at `Type uObj`
+- Quiver morphisms are at `Type uMor`
+- Identity witnesses at `Type uWit`, composition witnesses at `Type uCWit`
+
+The L functor constructs the quotient category:
+
+- `LFunctor : CompWitGr.{uObj, uMor, uWit, uCWit} → Cat.{max uObj uMor, uObj}`
+
+**Morphism Universe Analysis**: The morphism universe is `max uObj uMor`
+(not just `uMor`) due to a fundamental constraint of the free category
+construction:
+
+1. `MorBundle X : Type (max uObj uMor)` bundles endpoints with morphisms
+2. Free morphisms reference objects (for composition endpoints)
+3. This forces morphisms to be at `max uObj uMor` unless `uObj ≤ uMor`
+
+**FreeMor Redesign (Completed)**: FreeMor was redesigned with bundled morphisms:
 
 ```lean
-structure PLangQuotientData.{w} where
-  quiver : OverQuiver.{w, w}
-  IdWitness : Type w
-  CompWitness : Type w
-  -- all at same level w
+def MorBundle X := Σ (a b : X.objType), X.Hom' a b
+
+inductive FreeMorRaw X : Type (max uObj uMor) where
+  | var : MorBundle X → FreeMorRaw X
+  | id : FreeMorRaw X
+  | comp : FreeMorRaw X → FreeMorRaw X → FreeMorRaw X
+
+inductive ValidFreeMor X : X.objType → X.objType → FreeMorRaw X → Prop where
+  | var, | id, | comp : (validity rules)
+
+def FreeMor X a b := { m : FreeMorRaw X // ValidFreeMor X a b m }
 ```
 
-This causes `toPLangQuotientData` to require
-`C : Obj.CatJudgCopr.{u, u, u, u}` with all four levels equal.
-
-**Required Resolution**: Generalize to `PLangQuotientData.{u,v,w,x}` with:
-
-- `quiver.Obj : Type u` (object universe)
-- `quiver.Mor a b : Type v` (morphism universe)
-- `IdWitness : Type w`, `CompWitness : Type x` (witness universes)
-
-Then `toPLangQuotientData` can accept `C : Cat.{v,u}` and produce
-`PLangQuotientData.{u,v,w,x}` with `w` and `x` determined by the embedding
-but independent of `u` and `v`.
-
-The PLang formulation uses explicit parameters `{u, v, w, x}` throughout the
-`Obj` and `Mor` namespaces, so the generalization should flow through once
-the quotient data structure is fixed.
+This separation of raw structure from validity predicate enables
+`mapFreeMorRaw` to operate on the non-indexed type, with validity
+preserved as a Prop.
 
 ### Incremental Structure
 
