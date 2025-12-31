@@ -129,6 +129,45 @@ Grothendieck construction. The construction proceeds as follows:
   Grothendieck?
 - Does this perspective suggest new properties of DiagElem?
 
+### 10. Tw(C)-Copresheaves as Foundation for Parametricity
+
+**Motivation**: DiagElem(Γ) is a restriction of the connected Grothendieck
+construction to diagonal elements. This raises the question: are we losing
+something by this restriction? Would we gain better categorical properties
+by working with the full connected Grothendieck construction?
+
+**Core proposal**: Instead of studying profunctors `Γ : Cᵒᵖ × C → Type` with
+paranatural transformations, study copresheaves on twisted-arrow categories
+`F : Tw(C) → Type` with natural transformations.
+
+**Rationale**: For parametricity, we ultimately care about diagonal elements
+(where the type variable is instantiated to the same type on both sides).
+The twisted-arrow category Tw(C) naturally includes the "connecting morphism"
+between contravariant and covariant positions. Objects of Tw(C) are arrows
+`f : a → b`, which encode exactly this connection.
+
+**Questions**:
+
+1. Do natural transformations between Tw(C)-copresheaves correspond to
+   paranatural transformations when restricted to the diagonal?
+
+2. Would "connected transformations" (natural transformations between
+   Tw(C)-copresheaves) have better compositional properties than paranatural
+   transformations?
+
+3. Is `[Tw(C), Set]` (copresheaves on twisted arrows) a better setting for
+   parametricity than profunctors with paranatural transformations? Note that
+   `[Tw(C), Set]` has good categorical properties (locally presentable,
+   cocomplete) while profunctors with paranaturality do not form a topos.
+
+4. What is the precise relationship between:
+   - Profunctors `Cᵒᵖ × C → Type`
+   - Tw(C)-copresheaves `Tw(C) → Type`
+   - Arrow(C)-copresheaves `Arrow(C) → Type`
+
+5. Could this approach resolve the parametricity/paranaturality divergence
+   (Question 4)?
+
 ## Context Files
 
 - GebLean/Paranatural.lean - Core paranatural definitions
