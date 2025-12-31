@@ -202,7 +202,20 @@ profunctors Γ : Cᵒᵖ × C → Type.
 
 - `Over Γ` in ordinary Nat ≌ `(Γ.Elements ⥤ Type)` (standard result)
 - DiagElem Γ is a pullback: `Γ.Elements ×_{Cᵒᵖ×C} C` along the diagonal
-- For Hom profunctor: `Paranat(Δ, Hom) ≅ DiagElem(Δ)` (Yoneda-type result)
+
+**Possible Yoneda-type result (UNVERIFIED)**:
+
+The standard profunctor Yoneda lemma is `Nat(Hom, Γ) ≅ ∫_c Γ(c,c)` — transformations
+**FROM** the Hom profunctor correspond to elements of the end. A paranatural
+analogue might be:
+
+```text
+Paranat(Hom, Δ) ≅ StructuralEnd(Δ)
+```
+
+Note: This involves transformations FROM Hom, matching the direction of standard
+Yoneda. Also note that StructuralEnd is a type (the end ∫_c Δ(c,c)), whereas
+DiagElem is a category — these are related but distinct.
 
 **Updated conjecture**:
 
@@ -217,11 +230,21 @@ Reasoning:
 
 This is MORE PLAUSIBLE than the copresheaf conjecture.
 
+**Open sub-question**: What are the morphisms in `Prof(DiagElem Γ)`?
+
+- Option A: Natural transformations (standard profunctor category)
+- Option B: Paranatural transformations (recursive paranaturality)
+
+The left side uses paranatural transformations explicitly. The right side could
+use either. The standard slice-presheaf equivalence uses natural transformations
+on both sides, but here paranaturality might propagate. This needs investigation.
+
 **Recommended investigation**:
 
-1. Study whether the Yoneda-type result `Paranat(Δ, Hom) ≅ DiagElem(Δ)` holds
+1. Verify whether `Paranat(Hom, Δ) ≅ StructuralEnd(Δ)` holds
 2. Define the functor `Over Γ → Prof(DiagElem Γ)` explicitly
-3. Construct and verify the inverse
+3. Determine which morphism structure (natural vs paranatural) makes this work
+4. Construct and verify the inverse
 
 #### Question 6: Costructure Integral via Opposite Categories
 
