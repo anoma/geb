@@ -507,6 +507,89 @@ element morphisms.
 - Verify coherence conditions and universe level handling
 - Determine whether the relationship is isomorphism or merely equivalence
 
+#### Question 10: Tw(C)-Copresheaves as Foundation for Parametricity
+
+**Findings (probability-ordered)**:
+
+**(95%) [Tw(C)ᵒᵖ, Set] is a topos - CONFIRMED**
+
+Presheaf categories are always topoi. This gives exponentials, subobject
+classifiers, and internal logic. This is a structural advantage over
+profunctors with paranatural transformations.
+
+(80%) Neither Tw(C) nor Arrow(C) naturality equals paranaturality - LIKELY
+
+Detailed analysis reveals:
+
+- **Tw(C) morphisms between identities**: `(α,β) : id_a → id_b` requires
+  `β ∘ α = id_b` (section-retraction pairs). This is MORE RESTRICTIVE than
+  arbitrary morphisms `m : a → b`.
+
+- **Arrow(C) morphisms between identities**: `(m,m) : id_a → id_b` for any
+  `m : a → b`. The naturality condition becomes `η ∘ Γ(m,m) = Δ(m,m) ∘ η`,
+  which tests the diagonal action, not the paranaturality hexagon.
+
+- **Paranaturality** tests: `Δ(id,m) ∘ η ∘ Γ(m,id) = Δ(m,id) ∘ η ∘ Γ(id,m)`,
+  comparing two different transport paths.
+
+These are fundamentally different coherence conditions.
+
+(60%) Tw(Rel) copresheaves may capture full parametricity - PLAUSIBLE
+
+If we replace Set with Rel (relations as morphisms), then:
+
+- Morphisms in C = Rel are relations R : A ↔ B
+- Tw(Rel) objects are relations
+- Natural transformations would test relational parametricity
+
+This connects to Question 4's finding that Rel-enrichment is needed for full
+parametricity.
+
+**(40%) A "connected transformation" notion better than paranaturality exists -
+UNCERTAIN**
+
+We could define "connected transformations" as natural transformations between
+genuine Tw(C)-copresheaves (not just profunctors viewed through the restriction
+functor). These would:
+
+- Have components `η_f : F(f) → G(f)` for ALL arrows f, not just identities
+- Satisfy naturality for Tw(C) morphisms
+
+But it's unclear whether this captures anything useful for parametricity that
+paranaturality doesn't.
+
+(30%) Pure Tw(Set) approach resolves parametricity divergence - UNLIKELY
+
+The parametricity/paranaturality divergence (Question 4) stems from paranaturality
+testing function graphs while parametricity tests all relations. Tw(Set) still
+only has functions as morphisms, so it likely inherits the same limitation.
+
+**What we lose by restricting to DiagElem**:
+
+- Information about non-identity connecting morphisms
+- The topos structure of the ambient category
+
+**What we gain by staying with DiagElem**:
+
+- Direct connection to existing paranatural transformation theory
+- Simpler objects (diagonal elements vs full arrow-indexed families)
+- The paranaturality condition itself (which Tw(C)/Arrow(C) naturality doesn't
+  capture)
+
+**Conclusions**:
+
+1. Tw(C)-copresheaves provide better categorical structure (topos) but don't
+   capture paranaturality
+
+2. For parametricity, Tw(Rel) or Rel-enriched approaches remain the most
+   promising direction
+
+3. The connected Grothendieck perspective (Question 9) explains WHERE DiagElem
+   comes from but doesn't suggest it should be REPLACED
+
+4. A hybrid approach might work: use Tw(C)-copresheaves for the ambient category
+   structure but impose paranaturality conditions separately
+
 ### Proposed Implementation Path
 
 1. Implement Dialgebra category and prove equivalences (Question 1)
@@ -516,3 +599,4 @@ element morphisms.
 5. Verify `Over Γ ≌ Prof(DiagElem Γ)` conjecture (Question 5 updated)
 6. Formalize StructuralCoend as colimit over (DiagElem F)ᵒᵖ (Question 6)
 7. Prove DiagElem ≅ ConnGroth(Γ̂) ×_{Arrow(C)} C (Question 9)
+8. Investigate Tw(Rel)-copresheaves for full parametricity (Question 10)
