@@ -117,4 +117,176 @@ instance : Category (HexagonObj P Q) where
 
 end HexagonCategory
 
+section ProfunctorDialgebraProfunctor
+
+/-!
+### The profunctor-dialgebra profunctor
+
+For endo-profunctors `P, Q : Cᵒᵖ × C ⥤ Type v`, we define the "profunctor-dialgebra
+profunctor" `ProfDialgebraProf P Q : Cᵒᵖ ⥤ C ⥤ Type v` by:
+
+```
+(ProfDialgebraProf P Q)(a, b) = (P(b, a) → Q(a, b))
+```
+
+This is the profunctor-level analogue of the dialgebra profunctor for functors:
+- Dialgebra profunctor for `F, G : C ⥤ D`: `(x, y) ↦ Hom_D(F(x), G(y))`
+- Profunctor-dialgebra for `P, Q : Cᵒᵖ × C ⥤ Type`: `(a, b) ↦ (P(b, a) → Q(a, b))`
+
+The "twist" in P's arguments (using `P(b, a)` instead of `P(a, b)`) accounts for
+the mixed variance of profunctors.
+
+The diagonal elements of this profunctor are exactly the objects of the hexagon
+category, and the diagonal compatibility condition becomes the hexagon condition.
+-/
+
+variable (P Q : Cᵒᵖ × C ⥤ Type v)
+
+/-- The profunctor-dialgebra profunctor for endo-profunctors `P` and `Q`.
+At objects `(a, b)`, this is the function type `P(b, a) → Q(a, b)`.
+Contravariant in `a` via `Q.map₁ ∘ _ ∘ P.map₂`, covariant in `b` via
+`Q.map₂ ∘ _ ∘ P.map₁`. -/
+@[simps]
+def ProfDialgebraProf : Cᵒᵖ ⥤ C ⥤ Type v where
+  obj a := {
+    obj := fun b => P.obj (Opposite.op b, a.unop) → Q.obj (Opposite.op a.unop, b)
+    map := fun {b b'} g φ p =>
+      Prof.map₂ Q g (φ (Prof.map₁ P g p))
+    map_id := fun b => by
+      ext φ p
+      simp only [Prof.map₁, Prof.map₂, types_id_apply,
+        Opposite.op_unop, op_id, ← prod_id, Functor.map_id]
+    map_comp := fun {b₁ b₂ b₃} g₁ g₂ => by
+      ext φ p
+      simp only [Prof.map₁, Prof.map₂, types_comp_apply]
+      simp only [← FunctorToTypes.map_comp_apply, prod_comp, Category.id_comp, op_comp]
+  }
+  map {a₁ a₂} f := {
+    app := fun b φ p =>
+      Prof.map₁ Q f.unop (φ (Prof.map₂ P f.unop p))
+    naturality := fun {b₁ b₂} g => by
+      ext φ p
+      simp only [types_comp_apply, Prof.map₁, Prof.map₂]
+      simp only [← FunctorToTypes.map_comp_apply, prod_comp, Category.id_comp, Category.comp_id]
+  }
+  map_id a := by
+    ext b φ p
+    simp only [Prof.map₁, Prof.map₂, NatTrans.id_app, types_id_apply,
+      Opposite.op_unop, unop_id, op_id, ← prod_id, Functor.map_id]
+  map_comp {a₁ a₂ a₃} f g := by
+    ext b φ p
+    simp only [Prof.map₁, Prof.map₂, NatTrans.comp_app, types_comp_apply,
+      ← FunctorToTypes.map_comp_apply, prod_comp, Category.id_comp,
+      unop_comp, op_comp]
+
+end ProfunctorDialgebraProfunctor
+
+section HexagonDiagElemEquiv
+
+/-!
+### Hexagon category as diagonal elements
+
+The hexagon category `HexagonObj P Q` is equivalent to the category of diagonal
+elements of the profunctor-dialgebra profunctor `ProfDialgebraProf P Q`.
+
+- Objects: A diagonal element `(c, φ)` where `φ ∈ (ProfDialgebraProf P Q)(c, c)`
+  corresponds to `φ : P(c, c) → Q(c, c)`, which is exactly a hexagon object.
+
+- Morphisms: The diagonal compatibility condition for `m : c → d` is:
+  ```
+  (ProfDialgebraProf P Q).map₂(m)(φ) = (ProfDialgebraProf P Q).map₁(m)(ψ)
+  ```
+  which expands to: for all `p : P(d, c)`,
+  ```
+  Q.map₂(m)(φ(P.map₁(m)(p))) = Q.map₁(m)(ψ(P.map₂(m)(p)))
+  ```
+  This is exactly the hexagon condition.
+-/
+
+variable (P Q : Cᵒᵖ × C ⥤ Type v)
+
+/-- Convert a hexagon object to a diagonal element of the profunctor-dialgebra
+profunctor. -/
+@[simps]
+def hexagonObjToDiagElem (x : HexagonObj P Q) : DiagElem (ProfDialgebraProf P Q) where
+  base := x.base
+  elem := x.diag
+
+/-- Convert a diagonal element of the profunctor-dialgebra profunctor to a
+hexagon object. -/
+@[simps]
+def diagElemToHexagonObj (x : DiagElem (ProfDialgebraProf P Q)) : HexagonObj P Q where
+  base := x.base
+  diag := x.elem
+
+/-- Convert a hexagon morphism to a diagonal element morphism. -/
+@[simps]
+def hexagonHomToDiagElemHom {x y : HexagonObj P Q} (f : x ⟶ y) :
+    hexagonObjToDiagElem P Q x ⟶ hexagonObjToDiagElem P Q y where
+  base := f.hom
+  compat := by
+    simp only [DiagCompat, hexagonObjToDiagElem_base, ProfDialgebraProf_obj_obj]
+    ext p
+    exact f.condition p
+
+/-- Convert a diagonal element morphism to a hexagon morphism. -/
+@[simps]
+def diagElemHomToHexagonHom {x y : DiagElem (ProfDialgebraProf P Q)}
+    (f : x ⟶ y) : diagElemToHexagonObj P Q x ⟶ diagElemToHexagonObj P Q y where
+  hom := f.base
+  condition := by
+    intro p
+    have hcompat := f.compat
+    simp only [DiagCompat, ProfDialgebraProf_obj_obj] at hcompat
+    exact congrFun hcompat p
+
+/-- The functor from the hexagon category to diagonal elements. -/
+@[simps]
+def hexagonToDiagElemFunctor : HexagonObj P Q ⥤ DiagElem (ProfDialgebraProf P Q) where
+  obj := hexagonObjToDiagElem P Q
+  map := hexagonHomToDiagElemHom P Q
+  map_id _ := DiagElem.Hom.ext rfl
+  map_comp _ _ := DiagElem.Hom.ext rfl
+
+/-- The functor from diagonal elements to the hexagon category. -/
+@[simps]
+def diagElemToHexagonFunctor : DiagElem (ProfDialgebraProf P Q) ⥤ HexagonObj P Q where
+  obj := diagElemToHexagonObj P Q
+  map := diagElemHomToHexagonHom P Q
+  map_id _ := HexagonHom.ext' rfl
+  map_comp _ _ := HexagonHom.ext' rfl
+
+/-- The unit isomorphism: round-trip through diagonal elements is identity. -/
+def hexagonDiagElemUnitIso :
+    𝟭 (HexagonObj P Q) ≅ hexagonToDiagElemFunctor P Q ⋙ diagElemToHexagonFunctor P Q :=
+  NatIso.ofComponents
+    (fun _ => eqToIso rfl)
+    (fun {_ _} f => by
+      simp only [eqToIso_refl, Iso.refl_hom, Category.id_comp, Category.comp_id]
+      apply HexagonHom.ext'
+      rfl)
+
+/-- The counit isomorphism: round-trip through hexagon category is identity. -/
+def hexagonDiagElemCounitIso :
+    diagElemToHexagonFunctor P Q ⋙ hexagonToDiagElemFunctor P Q ≅
+    𝟭 (DiagElem (ProfDialgebraProf P Q)) :=
+  NatIso.ofComponents
+    (fun _ => eqToIso rfl)
+    (fun {_ _} f => by
+      simp only [eqToIso_refl, Iso.refl_hom, Category.id_comp, Category.comp_id]
+      apply DiagElem.Hom.ext
+      rfl)
+
+/-- The equivalence between the hexagon category and diagonal elements of the
+profunctor-dialgebra profunctor. -/
+def hexagonDiagElemEquiv :
+    HexagonObj P Q ≌ DiagElem (ProfDialgebraProf P Q) :=
+  CategoryTheory.Equivalence.mk
+    (hexagonToDiagElemFunctor P Q)
+    (diagElemToHexagonFunctor P Q)
+    (hexagonDiagElemUnitIso P Q)
+    (hexagonDiagElemCounitIso P Q)
+
+end HexagonDiagElemEquiv
+
 end GebLean
