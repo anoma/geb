@@ -534,7 +534,7 @@ Detailed analysis reveals:
 
 These are fundamentally different coherence conditions.
 
-(60%) Tw(Rel) copresheaves may capture full parametricity - PLAUSIBLE
+(60%) Tw(Rel) copresheaves may capture full parametricity - PLAUSIBLE BUT LIMITED
 
 If we replace Set with Rel (relations as morphisms), then:
 
@@ -545,8 +545,31 @@ If we replace Set with Rel (relations as morphisms), then:
 This connects to Question 4's finding that Rel-enrichment is needed for full
 parametricity.
 
-**(40%) A "connected transformation" notion better than paranaturality exists -
-UNCERTAIN**
+However, there are structural concerns:
+
+- **Rel is NOT a topos**: It lacks cartesian closure (no exponentials) and a
+  standard subobject classifier. Rel is instead a dagger category / allegory /
+  ∗-autonomous category (connected to linear logic).
+
+- **[Tw(Rel)ᵒᵖ, Set] IS a topos**: Presheaves on any small category form a
+  topos. So we could work in this presheaf topos while using Rel's relational
+  structure.
+
+- **But Rel is a FIXED category**: It doesn't parameterize over arbitrary C.
+  This approach addresses Reynolds-style relational parametricity specifically,
+  not "parametricity over an arbitrary category C."
+
+These are fundamentally different concerns:
+
+1. **Paranaturality over C**: Works for any category C (parametric in C)
+2. **Relational parametricity**: Semantic notion specific to Set/Rel settings
+
+For arbitrary C, one might consider Span(C) (where Span(Set) ≅ Rel) or internal
+relations Rel(C) (if C has finite limits). A parameterized version might be
+[Tw(Span(C))ᵒᵖ, Set] (at the cost of more work!).
+
+(40%) A "connected transformation" notion better than paranaturality exists -
+UNCERTAIN
 
 We could define "connected transformations" as natural transformations between
 genuine Tw(C)-copresheaves (not just profunctors viewed through the restriction
@@ -581,13 +604,23 @@ only has functions as morphisms, so it likely inherits the same limitation.
 1. Tw(C)-copresheaves provide better categorical structure (topos) but don't
    capture paranaturality
 
-2. For parametricity, Tw(Rel) or Rel-enriched approaches remain the most
-   promising direction
+2. Two distinct concerns must be separated:
+   - **Paranaturality over arbitrary C**: A categorical notion that works for
+     any category C
+   - **Relational parametricity**: A semantic notion (Reynolds-style) specific
+     to Set/Rel, testing polymorphism against all relations
 
-3. The connected Grothendieck perspective (Question 9) explains WHERE DiagElem
+3. [Tw(Rel)ᵒᵖ, Set] is a topos (even though Rel itself is not), providing
+   logical structure while using relational morphisms. But this addresses only
+   relational parametricity, not parametricity over arbitrary C.
+
+4. For arbitrary C, Span(C) or Rel(C) might provide "relations in C," leading
+   to [Tw(Span(C))ᵒᵖ, Set], but this requires further investigation.
+
+5. The connected Grothendieck perspective (Question 9) explains WHERE DiagElem
    comes from but doesn't suggest it should be REPLACED
 
-4. A hybrid approach might work: use Tw(C)-copresheaves for the ambient category
+6. A hybrid approach might work: use Tw(C)-copresheaves for the ambient category
    structure but impose paranaturality conditions separately
 
 ### Proposed Implementation Path
