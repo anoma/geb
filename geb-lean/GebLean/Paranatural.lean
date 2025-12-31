@@ -950,6 +950,63 @@ abbrev StructureIntegralSelf := StructureIntegral F F
 /-- The costructure integral of a single profunctor with itself. -/
 abbrev CostructureIntegralSelf := CostructureIntegral F F
 
+/-! ### The identity profunctor and structural ends/coends
+
+The identity profunctor for `Type v` sends `(x, y)` to `y`. This gives the
+single-profunctor structure/costructure integrals when used as the second
+argument: `StructuralEnd F = StructureIntegral F IdProf` and
+`StructuralCoend F = CostructureIntegral F IdProf`.
+-/
+
+/-- The identity profunctor on `Type v`, sending `(x, y)` to `y`.
+This is constant in the first argument and the identity in the second.
+A diagonal element at `A` is just a point of `A`, making `DiagElem IdProf`
+equivalent to the category of pointed types. -/
+abbrev IdProf : (Type v)ᵒᵖ ⥤ Type v ⥤ Type v :=
+  (Functor.const (Type v)ᵒᵖ).obj (𝟭 (Type v))
+
+/-- The structural end (single-profunctor structure integral).
+This is `∫_C F(C,C) pC`, the equalizer of families indexed by F-structures
+taking values in their carriers.
+
+For `F = AlgProf G`, this gives paranatural transformations from algebras
+to their carriers, equivalent to the initial algebra `μG.a`. -/
+abbrev StructuralEnd (F : (Type v)ᵒᵖ ⥤ Type v ⥤ Type v) : Type _ :=
+  StructureIntegral F IdProf
+
+/-- The structural coend (single-profunctor costructure integral).
+This is `∫^C F(C,C) pC`, the coequalizer of F-structures paired with
+carrier elements.
+
+For `F = CoalgProf G`, this gives pointed coalgebras quotiented by
+coalgebra morphisms, equivalent to the terminal coalgebra `νG.V`. -/
+abbrev StructuralCoend (F : (Type v)ᵒᵖ ⥤ Type v ⥤ Type v) : Type _ :=
+  CostructureIntegral F IdProf
+
+/-- For the structural coend, the off-diagonal is just the source carrier. -/
+theorem structuralCoend_offDiag (F : (Type v)ᵒᵖ ⥤ Type v ⥤ Type v)
+    (x y : DiagElem F) : offDiagApp IdProf y.base x.base = x.base := rfl
+
+/-- For the structural coend, the contravariant action is identity
+(IdProf is constant in the first argument). -/
+theorem structuralCoend_contravAction (F : (Type v)ᵒᵖ ⥤ Type v ⥤ Type v)
+    {x y : DiagElem F} (f : x ⟶ y) (a : x.base) :
+    contravAction IdProf f.base x.base a = a := rfl
+
+/-- For the structural coend, the covariant action applies the morphism. -/
+theorem structuralCoend_covAction (F : (Type v)ᵒᵖ ⥤ Type v ⥤ Type v)
+    {x y : DiagElem F} (f : x ⟶ y) (a : x.base) :
+    covAction IdProf y.base f.base a = f.base a := rfl
+
+/-- The structural coend sim relation: `(x, a) ~ (y, f a)` for morphism `f`. -/
+theorem structuralCoend_sound (F : (Type v)ᵒᵖ ⥤ Type v ⥤ Type v)
+    {x y : DiagElem F} (f : x ⟶ y) (a : x.base) :
+    CostructureIntegral.mk (G := IdProf) x a =
+      CostructureIntegral.mk y (f.base a) := by
+  have h := CostructureIntegral.sound (G := IdProf) f a
+  simp only [structuralCoend_contravAction, structuralCoend_covAction] at h
+  exact h
+
 end StructuralEndsCoends
 
 end GebLean
