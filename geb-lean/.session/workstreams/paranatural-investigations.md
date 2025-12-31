@@ -168,6 +168,64 @@ between contravariant and covariant positions. Objects of Tw(C) are arrows
 5. Could this approach resolve the parametricity/paranaturality divergence
    (Question 4)?
 
+### 11. PHOAS, Mendler Algebras, and Dual-Variance Recursion
+
+**References**:
+
+- "PHOAS for Free" (Edward Kmett):
+  <https://www.schoolofhaskell.com/user/edwardk/phoas>
+- Uustalu, "Mendler-style Inductive Types, Categorically" (categorified Mendler)
+- Idris-2 implementations in docs/PolyDifuncTest.idr and docs/InternalProfunctor.idr
+
+**Background**:
+
+Parametric Higher-Order Abstract Syntax (PHOAS) and Mendler algebras are
+approaches to handling dual-variance (contravariant × covariant) in recursive
+data structures. These may share limitations with paranatural transformations.
+
+**PHOAS approach**:
+
+The ExpF functor `ExpF a b = App b b | Lam (a → b)` is a profunctor:
+
+- Contravariant in `a` (appears in negative position in Lam)
+- Covariant in `b` (appears in positive positions)
+
+The recursion scheme: `Rec p a b = Place b | Roll (p a (Rec p a b))`
+
+Closed terms are obtained via the end: `∀x. Rec p x x`
+
+**Mendler algebra formulas** (from Idris-2 implementations):
+
+```text
+MendlerAlg g c = ((x : Type) → (x → c) → g x x → c)
+ProfMendlerExt g c = (x : Type ** (x → c, g x x))
+ProfMendlerUniv g c = ((x : Type) → ((y : Type) → (y → c) → g y y → x) → x)
+```
+
+The existential form is the coend formula `∫ˣ (x → c) × g(x,x)`, and MendlerAlg
+is a cowedge. The universal form is a CPS encoding of the same.
+
+**Questions**:
+
+1. Do PHOAS and Mendler algebras share limitations with paranaturality?
+
+2. Does the "diagonal-first" nature of these approaches (immediately working
+   with P(x,x)) lose information that Tw(C)-copresheaves preserve?
+
+3. Can Mendler algebras be enriched over categories other than Set?
+
+4. Is there a categorical analogue of parametric polymorphism beyond relational
+   parametricity?
+
+5. Is there a "free PHOAS monad" construction in the connected Grothendieck
+   setting?
+
+**OPEN QUESTION**: This is an active area of investigation. The implementations
+in docs/ contain computational content but (as noted by the implementer) may be
+missing explicit paranaturality/commutativity conditions. The relationship
+between PHOAS/Mendler approaches and full categorical paranaturality needs
+further study.
+
 ## Context Files
 
 - GebLean/Paranatural.lean - Core paranatural definitions
@@ -650,6 +708,70 @@ only has functions as morphisms, so it likely inherits the same limitation.
 6. A hybrid approach might work: use Tw(C)-copresheaves for the ambient category
    structure but impose paranaturality conditions separately
 
+#### Question 11: PHOAS, Mendler Algebras, and Dual-Variance Recursion
+
+This is an open question under active investigation.
+
+Findings (probability-ordered):
+
+(95%) PHOAS and Mendler algebras are computational manifestations of ends/coends
+
+- PHOAS "closed terms" = end `∫ₓ P(x,x)` = sections of the forgetful functor
+- Mendler algebras = cowedges for coends
+- Both rely on parametric polymorphism to get naturality/coherence for free
+- The Idris implementations confirm: `MendlerAlg g c` is the cowedge formula,
+  `ProfMendlerExt g c` is the coend formula `∫ˣ (x → c) × g(x,x)`
+
+(90%) These approaches share the "diagonal collapse" limitation as DiagElem
+
+- PHOAS immediately reduces to P(x,x)
+- Mendler folds P(x,x) into c
+- Neither directly captures the full profunctor P(a,b) for a ≠ b
+- This mirrors our finding that DiagElem loses off-diagonal information
+
+(85%) Tw(C)-copresheaves generalize PHOAS by preserving off-diagonal information
+
+- Objects of Tw(C) are morphisms a → b (including a ≠ b cases)
+- [Tw(C)ᵒᵖ, Set] captures the full profunctor structure
+- The hexagon category lives naturally in this setting
+- PHOAS is "diagonal-first"; Tw(C)-copresheaves are "profunctor-first"
+
+(75%) A "categorical Mendler algebra" would be a cowedge in an enriched setting
+
+- Requires coends to exist in the enriching category
+- In Set-enriched case, reduces to standard Mendler algebra
+- In general case, needs explicit coherence conditions
+- This parallels DiagElem: in Set, parametricity gives wedge conditions for
+  free; in general categories, we need explicit conditions
+
+(70%) The connected Grothendieck construction provides the "right" bridge
+
+- Takes a profunctor P : Cᵒᵖ × C → Cat
+- Builds a fibration over Arr(C) capturing arrow dependence
+- Unifies PHOAS diagonal structure with full profunctor variation
+- May support a "free PHOAS monad" construction
+
+**Analysis of Idris implementations**:
+
+The user noted these implementations "don't include most of the
+paranaturality/commutativity conditions, but they do have the computational
+content." This is significant:
+
+1. The computational content (recursion) works without explicit coherence
+2. But coherence (paranaturality) is implicitly enforced by parametricity
+3. When moving beyond Set to arbitrary C, coherence must be made explicit
+
+This mirrors our DiagElem finding: in Set, parametric polymorphism gives wedge
+conditions for free; in general categories, we need explicit conditions.
+
+**Open questions**:
+
+- Can Mendler algebras be enriched over categories other than Set?
+- Does parametric polymorphism have a categorical analogue beyond relational
+  parametricity?
+- Is there a "free PHOAS monad" construction in the connected Grothendieck
+  setting?
+
 ### Proposed Implementation Path
 
 1. Implement Dialgebra category and prove equivalences (Question 1)
@@ -660,3 +782,5 @@ only has functions as morphisms, so it likely inherits the same limitation.
 6. Formalize StructuralCoend as colimit over (DiagElem F)ᵒᵖ (Question 6)
 7. Prove DiagElem ≅ ConnGroth(Γ̂) ×_{Arrow(C)} C (Question 9)
 8. Investigate Tw(Rel)-copresheaves for full parametricity (Question 10)
+9. Explore categorical Mendler algebras and PHOAS-Grothendieck connection
+   (Question 11, OPEN)
