@@ -631,7 +631,7 @@ Clarification - why both Span and Tw are needed:
 These constructions serve different purposes and don't replace each other:
 
 | Construction | Provides | Missing |
-|--------------|----------|---------|
+| ------------ | -------- | ------- |
 | [Span(C)ᵒᵖ, Set] | Relational morphisms, topos | Profunctor structure |
 | [Tw(C)ᵒᵖ, Set] | Connecting-morphism structure, topos | Relational morphisms |
 | [Tw(Span(C))ᵒᵖ, Set] | Both | - |
