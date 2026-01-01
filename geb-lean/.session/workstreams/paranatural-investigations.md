@@ -873,7 +873,7 @@ Presheaf categories have:
 
 The Yoneda embedding is full and faithful. For paranatural transformations
 η : Γ → Δ between profunctors on C, we can extend to profunctors on [Cᵒᵖ, Set]
-by Kan extension. The key question is whether paranaturality conditions lift.
+by Kan extension. The question is whether paranaturality conditions lift.
 
 Conjecture: If η is paranatural for profunctors on C, then Lan_y(η) is
 paranatural for the extended profunctors on [Cᵒᵖ, Set].
@@ -939,7 +939,7 @@ underlies that statement? And if we have that model, why not use it directly?
 (95%) The model is REFLEXIVE GRAPH CATEGORIES - established by Dunphy-Reddy
 
 The categorical semantics of parametricity uses reflexive graph categories.
-Key sources:
+Sources:
 
 - Dunphy's 2002 thesis "Parametricity as a Notion of Uniformity in Reflexive
   Graphs" (supervised by Reddy)
@@ -1083,7 +1083,8 @@ For full parametricity (not just paranaturality), we need Span(C):
 - Objects of Span(C) are objects of C
 - Morphisms a → b are spans: a ← R → b (generalizing functions to relations)
 
-The key fact: Span(Set) ≅ Rel (category of sets and relations).
+Up to identification of equivalent induced relations,
+Span(Set) ≅ Rel (category of sets and relations).
 
 For arbitrary C with pullbacks, Span(C) forms a bicategory with:
 
@@ -1153,6 +1154,406 @@ This IS a special case of the span approach:
 - nLab span
 - 1Lab "The bicategory of spans"
 
+### 16. PER Model for Parametricity
+
+**Question**: When referring to "PER" as a model of reflexive graph categories for
+parametricity, does this mean "partial equivalence relations"? If so, what is that
+model and what are the references?
+
+(95%) Partial Equivalence Relations
+
+A partial equivalence relation (PER) on a set X is a binary relation R ⊆ X × X
+that is symmetric and transitive (but not necessarily reflexive). The domain of
+the PER is {x ∈ X | xRx}, the set of elements related to themselves.
+
+The PER model for parametricity works as follows:
+
+1. **Basic setup**: Types are interpreted as PERs on a universal domain (often
+   the natural numbers ω or an untyped lambda calculus model).
+
+2. **Polymorphic types**: ∀α.F(α) is interpreted as:
+   - Elements are those x such that for ALL PERs R, x is in the domain of F(R)
+   - Two elements x, y are related iff for ALL PERs R, (x,y) ∈ F(R)
+
+3. **Free theorems emerge**: Because polymorphic functions must work uniformly
+   across ALL PERs, they must preserve the relational structure.
+
+(90%) Connection to reflexive graphs
+
+The category **PER** of partial equivalence relations can be viewed as:
+
+- Objects: PERs on some base set
+- Morphisms: functions that preserve the PER structure (i.e., if xRx' then
+  f(x) R' f(x'))
+
+This forms a reflexive graph category where:
+
+- Each PER R induces a reflexive graph (dom(R), R|_{dom(R)})
+- Morphisms are graph homomorphisms
+
+The Dunphy-Reddy framework generalizes this: instead of working with PERs on a
+fixed universal domain, they work with reflexive graph categories abstractly.
+
+(85%) References
+
+1. **Mitchell-Meyer 1985**: "Second-order logical relations" - establishes
+   logical relations for System F
+
+2. **Plotkin-Abadi 1993**: "A logic for parametric polymorphism" - develops
+   the logical foundation
+
+3. **Bainbridge et al. 1990**: "Functorial polymorphism" - categorical treatment
+
+4. **Dunphy-Reddy 2004**: "Parametric limits" - reflexive graph category approach
+
+5. **Atkey-Ghani-Johann 2014**: "A relationally parametric model" - fibrational
+   approach
+
+(80%) Why PERs capture parametricity
+
+The intuition is:
+
+- A PER R represents "observational equivalence at type R"
+- A parametric function f : ∀α.F(α) must map R-related inputs to F(R)-related
+  outputs for ANY choice of R
+- This forces f to be "uniform" - it can't inspect the type parameter
+
+The PER model is a "realizability model": each PER can be viewed as specifying
+which programs are valid implementations of an abstract type.
+
+### 17. Contravariant Yoneda Embedding and Continuations
+
+**Question**: The covariant Yoneda embedding C ↪ [Cᵒᵖ, Type] embeds a category
+into its presheaves. What about embedding Cᵒᵖ into [C, Type] (copresheaves)?
+This should correspond to continuations. How does this relate to right Kan
+extensions?
+
+**Reference**: docs/Kan-extensions-program-optimization.pdf (Hinze 2012)
+
+(95%) The contravariant representable embedding
+
+The embedding Cᵒᵖ → [C, Type] sends:
+
+- Object A ∈ Cᵒᵖ (i.e., A ∈ C) to the copresheaf Hom(A, −) : C → Type
+- Morphism f : A → B in Cᵒᵖ (i.e., f : B → A in C) to the natural
+  transformation Hom(f, −) : Hom(A, −) ⇒ Hom(B, −)
+
+This is the *covariant* Yoneda embedding viewed contravariantly.
+
+(95%) Right Kan extensions ARE generalized continuations
+
+From Hinze's paper, the right Kan extension (G/J)(A) has the formula:
+
+```text
+(G/J)(A) = ∀Z. D(A, JZ) → GZ
+```
+
+When J : C → D and G : C → Type. This is the "end formula":
+
+```text
+(G/J)(A) = ∫_Z GZ^{D(A,JZ)}
+```
+
+**The continuation monad as codensity monad**:
+
+When we take J = id : C → C, we get the codensity monad:
+
+```text
+(G/id)(A) = ∀Z. (A → Z) → GZ
+```
+
+Setting G = id (identity functor), we get:
+
+```text
+C(A) = ∀Z. (A → Z) → Z
+```
+
+This IS the continuation monad! More generally, for any monad M:
+
+```text
+C_M(A) = ∀Z. (A → M Z) → M Z
+```
+
+is the codensity monad for M's Kleisli inclusion, and every monad arises this way.
+
+(90%) Application to dual-variance
+
+For profunctors Γ : Cᵒᵖ × C → Type, we can view them via:
+
+1. **Presheaf view**: Fix contravariant argument, get presheaf in covariant
+2. **Copresheaf view**: Fix covariant argument, get copresheaf in contravariant
+
+The copresheaf view corresponds to "continuation semantics":
+
+- Γ(A, −) : C → Type is like "computations expecting A-shaped input"
+- Transport along f : B → A (in Cᵒᵖ) is like "composing with continuation"
+
+(85%) Yoneda lemma for copresheaves
+
+For copresheaves F : C → Type, the Yoneda lemma gives:
+
+```text
+Nat(Hom(A, −), F) ≅ F(A)
+```
+
+This is the standard covariant Yoneda lemma.
+
+The embedding Cᵒᵖ ↪ [C, Type] via Hom(−, −) is full and faithful, meaning C
+embeds contravariantly as "continuation types" in the copresheaf category.
+
+(80%) Connection to polynomial profunctors
+
+In the polynomial profunctor setting (PolyDifunc.idr):
+
+- `CovHomSlice a` = slice over Hom(a, −) = polynomial functor with projection
+  to the covariant hom-functor
+- `CovHomCoslice a` = coslice under Hom(a, −) = polynomial functor with
+  injection from the covariant hom-functor
+
+These are the basis for the hom-objects in the CCC structure: morphisms OUT
+of polynomial profunctors use the continuation-like pattern of mapping into
+a "continuation type" indexed by positions.
+
+(75%) Potential application to parametricity
+
+The continuation perspective suggests:
+
+- Parametric functions can be viewed as "polymorphic continuations"
+- The uniformity condition is: the continuation must work for ANY choice of
+  "answer type"
+- This connects to the ∀Z quantification in the Kan extension formula
+
+Specifically, a paranatural transformation τ : Γ ⇒ Δ might be viewable as a
+"relational continuation transformer" that works uniformly.
+
+### 18. Polynomial Profunctors CCC Structure
+
+**Question**: The polynomial profunctor implementation (PolyDifunc.idr) on Type
+is Cartesian closed. Would this generalize to any cocomplete CCC C? And do the
+hom-objects allow representing types like ((X → X) → X) → X?
+
+**Reference**: docs/PolyDifunc.idr, especially `TypeProHomObj` and
+`TypeParaRepHomObj`
+
+(90%) Structure of the CCC on polynomial profunctors
+
+From the implementation, the CCC structure works as follows:
+
+1. **Objects** (`TypeProAr`): polynomial profunctors represented as:
+   - `pos : Type` - positions
+   - `contra : pos → Type` - contravariant directions
+   - `covar : pos → Type` - covariant directions
+
+2. **Terminal object**: Unit profunctor (single position, unit directions)
+
+3. **Products** (`TypeParaProduct`): positional product with:
+   - Positions: P × Q
+   - Contravariant: disjoint union of contravariants
+   - Covariant: disjoint union of covariants
+
+4. **Hom-objects** (`TypeProHomObj`): For profunctors P, Q, the internal hom
+   [P, Q] is:
+
+```idris
+TypeProHomObj p q =
+  TypeParaSetProduct {a=(ipaPos p)}
+    (\pi => TypeParaRepHomObj (ipaContra p pi) (ipaCovar p pi) q)
+```
+
+This says: a morphism P → Q is, for each position in P, a morphism from the
+corresponding representable Hom(contra[p], −) × Hom(−, covar[p]) to Q.
+
+(85%) The representable hom-object decomposition
+
+The formula `TypeParaRepHomObj p p' q` computes hom-objects out of
+birepresentables. Since polynomial profunctors are coproducts of
+birepresentables, and coproducts are colimits, we use the adjunction:
+
+```text
+Hom(∐_i R_i, Q) ≅ ∏_i Hom(R_i, Q)
+```
+
+This is why hom-objects are products over positions.
+
+(80%) Generalization to cocomplete CCCs
+
+The construction should generalize, but with caveats:
+
+1. **Cocompleteness needed**: For coproducts of representables (polynomial
+   structure)
+
+2. **CCC structure needed**: For the internal hom to exist and be well-behaved
+
+3. **Size issues**: For large categories, we need locally small hom-sets or
+   work in a larger universe
+
+The possible theorem would be: if C is a locally small cocomplete CCC, then the
+category of C-valued polynomial profunctors (= finitary birepresentable
+functors Cᵒᵖ × C → Type) is also a CCC.
+
+(75%) Representing ((X → X) → X) → X
+
+This is a critical question. In the polynomial profunctor CCC:
+
+- X is a type variable, so we need to interpret → as the internal hom
+- (X → X) = [Hom(−,X) × Hom(X,−), Hom(−,X) × Hom(X,−)]
+
+The challenge: the internal hom [P, Q] is polynomial only when P is
+polynomial. But Hom(−,X) × Hom(X,−) is a representable profunctor, so
+its internal hom should be polynomial.
+
+However, there's a subtlety: the type variable X appears both covariantly and
+contravariantly. In the polynomial profunctor setting:
+
+- X as object: pick a type X
+- X as profunctor: the representable Hom(−,X) × Hom(X,−)
+
+For ((X → X) → X) → X, treating X as a profunctor:
+
+1. (X → X) = internal hom of the representable with itself
+2. ((X → X) → X) = hom from that to X
+3. Final → X = hom to X
+
+Each step produces a polynomial profunctor, so the indeed we CAN
+represent such types, but they're profunctors, not single types.
+
+(70%) Interpreting the result
+
+The polynomial profunctor interpretation of ((X → X) → X) → X gives a
+*family* indexed by (contravariant position, covariant position). To get a
+single type, we'd need to:
+
+1. Evaluate at specific arguments: P(A, B) for types A, B
+2. Take diagonal elements: P(A, A)
+3. Or take a (co)end: ∫_A P(A, A) or ∫^A P(A, A)
+
+This connects back to parametricity: the "free theorem" for type
+((X → X) → X) → X would come from examining the diagonal elements.
+
+### 19. Hom-Profunctor as Parametric Right Adjoint
+
+**Question**: Can we model polynomial profunctors as PRAs from Cᵒᵖ to the
+category of PRAs from C to Type (curried view)? This would make the
+hom-profunctor Hom(−, −) polynomial. See docs/SlicePolyDifunc.idr.
+
+(85%) The curried PRA approach
+
+The idea is to view a profunctor Γ : Cᵒᵖ × C → Type in curried form:
+
+```text
+Γ̃ : Cᵒᵖ → [C, Type]
+```
+
+where Γ̃(A) = Γ(A, −) is a copresheaf.
+
+Now, if we restrict to:
+
+- Copresheaves that are PRAs (polynomial functors) C → Type
+- The functor Γ̃ itself being a PRA Cᵒᵖ → PRA(C, Type)
+
+Then the hom-profunctor becomes:
+
+```text
+Hom̃ : Cᵒᵖ → [C, Type]
+Hom̃(A) = Hom(A, −)
+```
+
+The covariant hom-functor Hom(A, −) is representable, hence a PRA (the "most
+polynomial" functor - identity composed with a constant direction).
+
+(80%) Is Hom̃ itself a PRA?
+
+For Hom̃ to be a PRA from Cᵒᵖ to copresheaves, we need it to have a
+polynomial presentation:
+
+```text
+Hom̃ = Lan_i ∘ i* for some i : I → Cᵒᵖ
+```
+
+The Yoneda embedding C → [Cᵒᵖ, Type] IS the left Kan extension along the
+identity. Dually, Cᵒᵖ → [C, Type] via Hom(−, −) has similar properties.
+
+The question is whether this is "polynomial" in the right sense.
+
+(75%) Analysis of SlicePolyDifunc.idr
+
+The implementation defines `PIP` (Polynomial functor In Poly), which is:
+
+```idris
+PIP = (t1p ** t1d ** et1p ** et1d ** et2p ** et2d ** etonpos ** etondir)
+```
+
+This represents polynomial functors on the category Poly of polynomial
+endofunctors on Type, with evaluation through multiple layers.
+
+The structure captures:
+
+1. A base polynomial functor (t1p, t1d)
+2. Extensions for operating on polynomial functors (et1p, et1d, et2p, et2d)
+3. Natural transformations (etonpos, etondir)
+
+This is related to the slice category approach: polynomial functors on Poly
+correspond to PRAs on slices.
+
+(70%) The slice-polynomial correspondence
+
+From the code, there's an isomorphism between:
+
+- `PCECW b` = polynomial functor structures parameterized by base b
+- `CoprCovHomSlice b` = coproducts of slices over covariant hom-functors
+
+This suggests polynomial profunctors can be built from:
+
+1. A base polynomial functor b
+2. For each position of b, a slice over the covariant hom-functor of its
+   direction
+
+(65%) Making Hom polynomial via this approach
+
+To make the hom-profunctor Hom(−, −) polynomial in the curried PRA sense:
+
+1. View Hom(−, −) as Cᵒᵖ → [C, Type]
+2. Represent this as a PRA using the Yoneda structure
+3. The "positions" would be objects of C (for Cᵒᵖ)
+4. The "directions" at position A would be the generators of Hom(A, −)
+
+Since Hom(A, −) is representable (generated by id : A → A), this should work:
+
+```text
+Hom̃ : Cᵒᵖ → PRA(C, Type)
+Hom̃(A) = "represented by A"
+```
+
+The challenge is making this precise categorically and verifying the PRA
+structure.
+
+(60%) Quotient types and coequalizers
+
+The SlicePolyDifunc.idr implementation notes issues with impredicative
+coequalizers. In Lean/mathlib:
+
+- We have proper quotient types via `Quotient` and `Setoid`
+- This would allow genuine coequalizers
+- The construction would be more correct and convenient
+
+A Lean port would:
+
+1. Define polynomial functors on Poly using mathlib's PFunctor
+2. Use Setoid/Quotient for coequalizers
+3. Verify the PRA structure formally
+
+(55%) Connection to multi-adjunctions
+
+The implementation mentions multi-adjunctions between Poly and Type slices.
+This relates to:
+
+- Parametric right adjoints having left multi-adjoints
+- The representability of copresheaves induced by polynomial structure
+
+The connection to our parametricity investigation: if polynomial profunctors
+arise from curried PRAs, then the PRA's left adjoint structure might encode
+the uniformity condition that gives parametricity.
+
 ### Proposed Implementation Path
 
 1. Implement Dialgebra category and prove equivalences (Question 1)
@@ -1165,3 +1566,7 @@ This IS a special case of the span approach:
 8. Investigate Tw(Rel)-copresheaves for full parametricity (Question 10)
 9. Explore categorical Mendler algebras and PHOAS-Grothendieck connection
    (Question 11, OPEN)
+10. Verify PER model references and connection to reflexive graphs (Question 16)
+11. Formalize continuation/Kan-extension connection for dual-variance (Question 17)
+12. Port polynomial profunctor CCC to Lean and verify generalization (Question 18)
+13. Define curried-PRA polynomial profunctors in Lean (Question 19)
