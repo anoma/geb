@@ -65,9 +65,25 @@ Cat-enriched operations to copresheaf-enriched operations
 
 4. **No reuse**: Universal properties not exploited for composition
 
-## Current Status (2025-12-23 Session)
+## Current Status
 
-### Completed This Session
+### Related Work: PolyTwCoprType Refactoring (2025-01-03)
+
+The `PolyTwCoprType.lean` module has been refactored to use mathlib's category
+of elements (`F.Elements`) as the foundation for `ElemCatObj` and `ElemCatMor`.
+This aligns with the Grothendieck refactoring goals:
+
+- `ElemCatObj` is now an abbreviation for `ccrElementsObj P.outerPolyProdId`
+- `ElemCatMor` is now an abbreviation for `ccrElementsMor X Y`
+- Accessor functions extract components from the sigma-type representation
+- Compatibility proofs use categorical structure rather than ad-hoc transport
+
+This demonstrates the pattern of using mathlib's categorical infrastructure
+to avoid low-level dependent type manipulations.
+
+See `.session/workstreams/paranatural-investigations.md` for details.
+
+### Completed (2025-12-23 Session)
 
 1. **Double Grothendieck Composition Lemmas** (Phase 1.1 continued):
    - Added `ιSecond` and `ιNested` fiber inclusion functors

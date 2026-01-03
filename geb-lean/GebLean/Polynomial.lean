@@ -1,5 +1,6 @@
 import Mathlib.CategoryTheory.Comma.Over.Basic
 import Mathlib.CategoryTheory.Category.Cat
+import Mathlib.CategoryTheory.Elements
 import Mathlib.CategoryTheory.Pi.Basic
 import Mathlib.CategoryTheory.Limits.Shapes.Products
 import Mathlib.CategoryTheory.Limits.Over
@@ -351,6 +352,49 @@ def ccrToFunctor (P : CoprodCovarRepCat D) : D ⥤ Type _ where
   map := ccrEvalMap
   map_id := fun _ => ccrEvalMap_id
   map_comp := fun f g => ccrEvalMap_comp f g
+
+/-! ### Category of Elements
+
+The category of elements of a coproduct of covariant representables is
+obtained by applying mathlib's `Functor.Elements` to `ccrToFunctor`.
+
+Objects are pairs `(A : D, x : ccrEval P A)` where `x = ⟨i, f⟩` consists of
+a position `i : ccrIndex P` and a morphism `f : ccrFamily P i ⟶ A`.
+
+Morphisms `(A, ⟨i, f⟩) ⟶ (B, ⟨j, g⟩)` are morphisms `h : A ⟶ B` in `D` such
+that `ccrEvalMap h ⟨i, f⟩ = ⟨j, g⟩`, which means `i = j` and `f ≫ h = g`.
+-/
+
+/-- The category of elements of a polynomial functor. -/
+abbrev ccrElements (P : CoprodCovarRepCat D) : Type _ := (ccrToFunctor P).Elements
+
+/-- Objects of the category of elements: pairs `(A, x)` where `x : ccrEval P A`. -/
+abbrev ccrElementsObj (P : CoprodCovarRepCat D) : Type _ := (ccrToFunctor P).Elements
+
+instance ccrElementsCategory (P : CoprodCovarRepCat D) :
+    Category (ccrElements P) :=
+  inferInstance
+
+/-- Morphisms in the category of elements. -/
+abbrev ccrElementsMor {P : CoprodCovarRepCat D} (X Y : ccrElements P) : Type _ :=
+  X ⟶ Y
+
+/-- The base object of an element in the category of elements. -/
+def ccrElementsBase {P : CoprodCovarRepCat D} (e : ccrElements P) : D := e.fst
+
+/-- The fiber (the element of `ccrEval P A`) of an element in the category of
+elements. -/
+def ccrElementsFiber {P : CoprodCovarRepCat D} (e : ccrElements P) :
+    ccrEval P (ccrElementsBase e) := e.snd
+
+/-- The position component of an element in the category of elements. -/
+def ccrElementsPos {P : CoprodCovarRepCat D} (e : ccrElements P) : ccrIndex P :=
+  (ccrElementsFiber e).1
+
+/-- The morphism component of an element in the category of elements. -/
+def ccrElementsHom {P : CoprodCovarRepCat D} (e : ccrElements P) :
+    ccrFamily P (ccrElementsPos e) ⟶ ccrElementsBase e :=
+  (ccrElementsFiber e).2
 
 end GeneralPolynomialFunctors
 

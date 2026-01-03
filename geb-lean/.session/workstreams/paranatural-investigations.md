@@ -1554,6 +1554,261 @@ The connection to our parametricity investigation: if polynomial profunctors
 arise from curried PRAs, then the PRA's left adjoint structure might encode
 the uniformity condition that gives parametricity.
 
+### 20. Twisted-Arrow Copresheaves and Arr(C) for Full Parametricity
+
+**Question**: Should we be using twisted-arrow copresheaves Tw(C)ᵒᵖ → Type
+instead of profunctors C^op × C → Type for parametricity? Should parametric
+transformations be identity-on-morphisms functors over Arr(C) rather than
+identity-on-objects functors over C?
+
+**Motivation**: Neumann's counterexample where paranaturality and parametricity
+diverge involves a condition "for all h, k with commutativity condition" — and
+that commutativity condition is exactly the condition for (h, k) to be a
+morphism in the arrow category Arr(C). This suggests paranaturality forgets
+morphism structure that full parametricity requires.
+
+(95%) The arrow category Arr(C) is richer than C
+
+Arr(C) has:
+
+- Objects: morphisms f : A → B in C
+- Morphisms f → f': commutative squares (h, k) with k ∘ f = f' ∘ h
+
+The inclusion C ↪ Arr(C) via c ↦ id_c is both reflective and coreflective:
+
+- Left adjoint: dom (domain projection)
+- Right adjoint: cod (codomain projection)
+
+Because it has both adjoints, this inclusion preserves all limits AND colimits.
+Furthermore:
+
+- If C is cartesian closed, Arr(C) = [•→•, C] is cartesian closed
+- If C is a topos, Arr(C) is a topos (with richer subobject classifier)
+
+Objects of C embed as identity morphisms, so Arr(C) is a "morphism-centric"
+view where we track not just objects but the morphisms between positions.
+
+(90%) Paranaturality forgets morphism structure
+
+Current approach for paranaturality:
+
+- Profunctor Γ : C^op × C → Type
+- Diagonal elements DiagElem(Γ) sliced over C
+- Paranatural transformations = identity-on-C-objects functors in Cat/C
+
+The diagonal isn't just "same object in both positions" — it's specifically
+"identity morphism". By projecting to C, we forget that diagonal elements sit
+over identity morphisms in Arr(C).
+
+(85%) The proposed reframing
+
+| Current (Paranaturality) | Proposed (Full Parametricity) |
+| -------------------------- | ------------------------------- |
+| Profunctor Γ : C^op × C → Type | Tw-copresheaf Φ : Tw(C)ᵒᵖ → Type |
+| DiagElem(Γ) over C | TwCoprArrElem(Φ) over Arr(C) |
+| Paranatural = id-on-obj in Cat/C | Parametric = id-on-mor in Cat/Arr(C) |
+
+The connected Grothendieck construction for Tw(C)ᵒᵖ → Cat produces categories
+over Arr(C). When the target is discrete (sets/types), we get TwCoprArrElem.
+
+(80%) Why this captures full parametricity
+
+An identity-on-underlying-morphisms functor between TwCoprArrElem categories
+must respect:
+
+1. The domain object (like paranaturality)
+2. The codomain object (like paranaturality)
+3. The morphism between them (which paranaturality forgets)
+
+For Neumann's divergence case with "for all h, k with commutativity":
+
+- (h, k) form a morphism in Arr(C)
+- Working over Arr(C) makes this condition structural, not an extra quantifier
+
+(75%) Diagonal elements as identity-morphism restriction
+
+A twisted-arrow copresheaf Φ : Tw(C)ᵒᵖ → Type assigns Φ(f) to each morphism
+f : A → B. The restriction to identity morphisms gives:
+
+```text
+Φ(id_A) = "diagonal data at A"
+```
+
+This should correspond to Γ(A, A) for the associated profunctor Γ. The full
+Φ contains more information: how the diagonal data relates across morphisms.
+
+(70%) Polynomial twisted-arrow copresheaves — naive approach
+
+One possibility: coproducts of representables on Tw(C):
+
+```text
+Φ = ∐_{i ∈ I} Hom_{Tw(C)}(f_i, −)
+```
+
+The positions are morphisms f_i : A_i → B_i, not pairs of objects.
+
+**Problem**: Tw(C) typically lacks coproducts and products even when C has them.
+The naive "coproduct of representables" formula requires these to exist in the
+indexing category, making this approach inadequate.
+
+(68%) Dependent functors via currying — a richer approach
+
+The connected Grothendieck construction and TwArrPresheaf.lean show that
+twisted-arrow copresheaves can be "curried" into dependent functors. This
+suggests a richer notion of "polynomial" that uses full dependency.
+
+**Observation**: A twisted-arrow copresheaf Φ : Tw(C)ᵒᵖ → Type assigns
+data to each morphism f : A → B. The curried view organizes this as:
+
+- For each object c : C, data depending on morphisms out of c
+- The dependency structure respects composition
+
+This is analogous to how polynomial functors P(X) = Σ_{i:I} X^{B_i} use
+dependent products over a base type I.
+
+(65%) Dependent functors to Dirichlet functors on slices
+
+**Proposal**: Instead of coproducts of representables, use dependent functors
+from C to Dirichlet functors on slice categories:
+
+1. Start with a polynomial endofunctor P : C → C with positions I and
+   directions B_i (so P(c) = Σ_{i:I} Hom(B_i, c))
+
+2. Form the category of elements ∫P with objects (c, i, f : B_i → c)
+
+3. Define a dependent functor from ∫P to Dirichlet functors:
+   - For each (c, i, f), produce a Dirichlet functor on C/c or C/B_i
+
+A Dirichlet functor (covariant polynomial) on C/c has form:
+
+```text
+Dir(x) = Σ_{j : J} Hom_{C/c}(x, D_j)
+```
+
+This is dual to polynomial functors: sums of covariant representables.
+
+(62%) Alternative via families and the slice equivalence
+
+The slice/family equivalence (see `familySliceEquiv` in Polynomial.lean):
+
+```text
+Type/A ≃ Fam_A(Type) = (a : A) → Type
+```
+
+sends (B, f : B → A) to the fiber family a ↦ f⁻¹(a).
+
+**Alternative proposal**: A polynomial twisted-arrow copresheaf could be:
+
+```text
+P : C → Dir(Fam(C))
+```
+
+where:
+
+- P is a polynomial functor from C
+- Dir(Fam(C)) is the category of Dirichlet functors on families over C
+- The family structure provides the "slice over varying objects" capability
+
+This avoids needing coproducts in Tw(C) by working with the dependent/family
+structure directly.
+
+(60%) Why this might capture parametricity better
+
+The dependent-functor approach:
+
+1. Uses the natural curried structure of twisted-arrow copresheaves
+2. Connects directly to the connected Grothendieck construction
+3. Allows the "slice object" to vary with input (full dependency)
+4. Uses Dirichlet functors (covariant polynomial) which are the natural
+   dual to polynomial functors
+
+For the algebra profunctor Alg_F(A, B) = Hom(FA, B), the corresponding
+dependent structure would have:
+
+- Base polynomial: F itself
+- For each (A, i, f : B_i → A), the Dirichlet part captures how algebra
+  structures transport across morphisms
+
+(65%) Dual-variance datatypes via Arr(C)
+
+The proposal for dual-variance datatypes becomes:
+
+1. Start with a polynomial twisted-arrow copresheaf Φ
+2. Form TwCoprArrElem(Φ) over Arr(C)
+3. The forgetful functor U : TwCoprArrElem(Φ) → Arr(C) may have adjoints
+4. Initial/terminal objects in TwCoprArrElem(Φ) are dual-variance datatypes
+
+Since C ↪ Arr(C) preserves limits/colimits, initial/terminal objects of C
+map to initial/terminal in Arr(C), and adjoints to U would take these to
+the corresponding initial/terminal twisted-arrow elements.
+
+(60%) Connection to existing work
+
+The in-progress equivalence TwCoprArrElem ↔ ConnGrothendieck (Question 9)
+becomes central: it shows that twisted-arrow copresheaf elements over Arr(C)
+are equivalent to a connected Grothendieck construction.
+
+The existing DiagElem approach would be recovered by pulling back along the
+inclusion C ↪ Arr(C), but this pullback loses the morphism information that
+distinguishes paranaturality from full parametricity.
+
+(55%) Open questions
+
+1. Does the TwCoprArrElem approach give correct parametricity conditions for
+   standard examples (folds, Church encodings, Neumann's counterexample)?
+
+2. What is the relationship between:
+   - Polynomial profunctors (coproducts of birepresentables)
+   - Polynomial Tw-copresheaves (coproducts of Tw(C)-representables)
+
+3. For the algebra profunctor Alg_F(A, B) = Hom(FA, B), what is the
+   corresponding twisted-arrow copresheaf, and does TwCoprArrElem recover
+   F-Alg with the correct parametricity structure?
+
+4. How do the induced (co)monads from TwCoprArrElem adjoints relate to
+   those from DiagElem adjoints?
+
+### Completed Work
+
+#### PolyTwCoprType Refactoring (2025-01-03)
+
+The `PolyTwCoprType.lean` module has been refactored to use mathlib's category
+of elements infrastructure. This supports Question 20's investigation of
+TwCoprArrElem as a foundation for full parametricity.
+
+**Stage 1** (completed): Replaced `outerPos` and `outerDir` fields in
+`DepPolyFunctor` with a single `outerPoly : CoprodCovarRepCat Type` field.
+
+**Stage 2** (completed): Added category of elements aliases in `Polynomial.lean`
+using mathlib's `F.Elements` category. Defined `ccrProdIdType` operation for
+polynomials (the `× id` operation).
+
+**Stage 3** (completed): Replaced `ElemCatObj` and `ElemCatMor` structures with
+abbreviations for `ccrElementsObj`/`ccrElementsMor` of `outerPolyProdId`. This
+required:
+
+- Creating accessor functions (`ElemCatObj.baseType`, `ElemCatObj.pos`,
+  `ElemCatObj.dirMap`, `ElemCatObj.elem`, `ElemCatMor.func`, `ElemCatMor.posEq`)
+- Proving compatibility lemmas (`ElemCatMor.dirCompat`, `ElemCatMor.elemCompat`)
+  using sigma decomposition and heterogeneous equality handling
+- Updating `Eval` structure to use explicit accessor function calls
+- Updating `evalMap` proofs for the new accessor pattern
+
+**Proof pattern for dependent type equalities in morphism compatibility**:
+
+```lean
+-- For ElemCatMor.dirCompat and elemCompat proofs:
+-- 1. Destructure Y with `obtain ⟨Yt, Ysnd⟩ := Y; obtain ⟨Yfst, Ysnd⟩ := Ysnd`
+-- 2. Use `Sigma.mk.injEq` to split sigma equality into components
+-- 3. Use `subst hfst` to substitute the first component
+-- 4. Use `heq_eq_eq` to convert heterogeneous to homogeneous equality
+-- 5. Apply the remaining equality via simp or congrFun
+```
+
+This refactoring eliminates custom structure definitions in favor of mathlib's
+categorical infrastructure, supporting the goal of using universal properties
+rather than low-level transport proofs.
+
 ### Proposed Implementation Path
 
 1. Implement Dialgebra category and prove equivalences (Question 1)
@@ -1570,3 +1825,4 @@ the uniformity condition that gives parametricity.
 11. Formalize continuation/Kan-extension connection for dual-variance (Question 17)
 12. Port polynomial profunctor CCC to Lean and verify generalization (Question 18)
 13. Define curried-PRA polynomial profunctors in Lean (Question 19)
+14. Implement TwCoprArrElem approach for full parametricity (Question 20)
