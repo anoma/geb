@@ -1434,6 +1434,13 @@ instance : Category (TwCoprArrElem F) where
     dsimp only [CategoryStruct.comp, Hom.comp]
     exact Category.assoc f.base g.base h.base
 
+/-- The base component of `eqToHom` in `TwCoprArrElem` is `eqToHom` in `Arrow C`. -/
+@[simp]
+theorem Hom.eqToHom_base {x y : TwCoprArrElem F} (h : x = y) :
+    (eqToHom h).base = eqToHom (congrArg TwCoprArrElem.arr h) := by
+  subst h
+  rfl
+
 end TwCoprArrElem
 
 section TwCoprArrElemIsoConnGrothendieck
@@ -1642,6 +1649,13 @@ variable (F : TwistedArrow' C ⥤ Type u)
 /-- The composition `F ⋙ typeToCat` as a functor to Cat. -/
 abbrev typeToCatF : TwistedArrow' C ⥤ Cat.{u, u} := F ⋙ typeToCat
 
+/-- The connected Grothendieck construction as a category.
+This uses `ConnectedGrothendieckContra`, which is `Grothendieck (fiberFunctorContra C G)`.
+The base is an object `b : C` (the codomain), and the fiber is `innerFiberContra C G b`
+which contains the arrow (as `Over b`) and the element in `G.obj tw`. -/
+abbrev ConnGrothendieck (G : TwistedArrow' C ⥤ Cat.{u, u}) :=
+  ConnectedGrothendieckContra C G
+
 /-- Convert a `TwCoprArrElem` object to a `ConnGrothendieckObj`. -/
 def twCoprArrElemToConnGrothendieckObj (x : TwCoprArrElem F) :
     ConnGrothendieckObj C (typeToCatF F) where
@@ -1718,6 +1732,820 @@ lemma connGrothendieckTwMorphDom_eq_arrToDiagFromTarget
   · simp only [connGrothendieckTwMorphDom, twHomMk'_codArr, twCodArr'_comp,
       arrToDiagFromTarget, twCodArr'_eqToHom, connGrothendieckDiagDom,
       arrToTw', twObjMk'_cod, eqToHom_refl, Functor.id_obj, Category.comp_id]
+
+/-! ### Fiber morphism construction
+
+For discrete categories, the fiber morphism in `ConnGrothendieckHom` is just an
+`eqToHom` witnessing equality of transported fibers. We build this from the
+`TwArrCompat` condition.
+-/
+
+/-- The source of the fiber morphism for the forward direction, expressed
+in terms of the `arrToDiagFromSource` mapping. -/
+def twCoprArrElemFiberSrc {x y : TwCoprArrElem F} (f : TwCoprArrElem.Hom F x y) :
+    (typeToCatF F).obj (arrDiagTw' f.base) :=
+  ⟨F.map (arrToDiagFromSource f.base) x.elem⟩
+
+/-- The target of the fiber morphism for the forward direction, expressed
+in terms of the `arrToDiagFromTarget` mapping. -/
+def twCoprArrElemFiberTgt {x y : TwCoprArrElem F} (f : TwCoprArrElem.Hom F x y) :
+    (typeToCatF F).obj (arrDiagTw' f.base) :=
+  ⟨F.map (arrToDiagFromTarget f.base) y.elem⟩
+
+/-- The fiber source and target are equal via `TwArrCompat`. -/
+lemma twCoprArrElemFiber_eq {x y : TwCoprArrElem F} (f : TwCoprArrElem.Hom F x y) :
+    twCoprArrElemFiberSrc F f = twCoprArrElemFiberTgt F f := by
+  simp only [twCoprArrElemFiberSrc, twCoprArrElemFiberTgt]
+  congr 1
+  exact f.compat
+
+/-- The actual fiber morphism source in `ConnGrothendieckHom` terms. -/
+def connGrothendieckHomFiberSrc {x y : TwCoprArrElem F} (f : TwCoprArrElem.Hom F x y) :
+    (typeToCatF F).obj
+      (connGrothendieckDiagCod C (arrToTw' x.arr) f.base.right) :=
+  (typeToCatF F).map (connGrothendieckTwMorphCod C (arrToTw' x.arr) f.base.right)
+    |>.obj ⟨x.elem⟩
+
+/-- The fiber morphism source equals the simpler representation up to `eqToHom`. -/
+lemma connGrothendieckHomFiberSrc_eq {x y : TwCoprArrElem F}
+    (f : TwCoprArrElem.Hom F x y) :
+    (eqToHom (congrArg (typeToCatF F).obj (connGrothendieckDiagCod_eq_arrDiagTw F f))).obj
+      (connGrothendieckHomFiberSrc F f) = twCoprArrElemFiberSrc F f := by
+  simp only [connGrothendieckHomFiberSrc, twCoprArrElemFiberSrc]
+  simp only [connGrothendieckTwMorphCod_eq_arrToDiagFromSource, Functor.map_comp,
+    Cat.comp_obj, eqToHom_map]
+  rfl
+
+/-- Square commutativity in the form needed for `connGrothendieckDiagEq`. -/
+lemma twCoprArrElemSquareComm {x y : TwCoprArrElem F} (f : TwCoprArrElem.Hom F x y) :
+    twArr' (arrToTw' x.arr) ≫ f.base.right =
+    f.base.left ≫ twArr' (arrToTw' y.arr) := by
+  simp only [arrToTw', twObjMk'_arr]
+  have hw := f.base.w
+  simp only [Functor.id_map] at hw
+  exact hw.symm
+
+/-- The diagonal equality for objects converted from `TwCoprArrElem`. -/
+def connGrothendieckDiagEqForTwCoprArr {x y : TwCoprArrElem F}
+    (f : TwCoprArrElem.Hom F x y) :
+    connGrothendieckDiagDom C (arrToTw' y.arr) f.base.left =
+    connGrothendieckDiagCod C (arrToTw' x.arr) f.base.right :=
+  connGrothendieckDiagEq C (typeToCatF F)
+    (twCoprArrElemToConnGrothendieckObj F x)
+    (twCoprArrElemToConnGrothendieckObj F y)
+    f.base.left f.base.right (twCoprArrElemSquareComm F f)
+
+/-! ### Constructing the fiber morphism
+
+For discrete categories, morphisms are subsingletons (only `eqToHom`s exist).
+We construct the required fiber morphism by showing the source and target
+types are equal, then using `eqToHom`.
+-/
+
+/-- Applying `eqToHom` in Cat to a `Discrete` element with an inner `eqToHom` in Type
+preserves the underlying value when both transports compose to identity. -/
+lemma eqToHom_discrete_nested_cancel {X Y : Type u}
+    (h1 : Cat.of (Discrete Y) = Cat.of (Discrete X))
+    (h2 : X = Y) (x : X) :
+    ((eqToHom h1).obj { as := eqToHom h2 x }).as = x := by
+  subst h2
+  cases h1
+  rfl
+
+/-- When applying `eqToHom h` in `Cat` to a discrete element where `h` is a proof
+that `Cat.of (Discrete X) = Cat.of (Discrete X)`, the `.as` is preserved. -/
+lemma Cat.eqToHom_discrete_obj_as {X : Type*}
+    (h : Cat.of (Discrete X) = Cat.of (Discrete X)) (x : X) :
+    ((eqToHom h).obj (Discrete.mk x)).as = x := by
+  cases h
+  rfl
+
+/-- The source category for the fiber morphism is equal to the target category. -/
+lemma typeToCatFiberCatEq {x y : TwCoprArrElem F} (f : TwCoprArrElem.Hom F x y) :
+    (typeToCatF F).obj (connGrothendieckDiagCod C (arrToTw' x.arr) f.base.right) =
+    (typeToCatF F).obj (connGrothendieckDiagDom C (arrToTw' y.arr) f.base.left) := by
+  rw [connGrothendieckDiagEqForTwCoprArr]
+
+/-- The fiber morphism source object as a `Discrete` element. -/
+def twCoprArrElemFiberMorphSrc {x y : TwCoprArrElem F} (f : TwCoprArrElem.Hom F x y) :
+    (typeToCatF F).obj (connGrothendieckDiagCod C (arrToTw' x.arr) f.base.right) :=
+  ((typeToCatF F).map (connGrothendieckTwMorphCod C (arrToTw' x.arr) f.base.right)).obj
+    ⟨x.elem⟩
+
+/-- The fiber morphism target object as a `Discrete` element, in the codomain cat. -/
+def twCoprArrElemFiberMorphTgt {x y : TwCoprArrElem F} (f : TwCoprArrElem.Hom F x y) :
+    (typeToCatF F).obj (connGrothendieckDiagDom C (arrToTw' y.arr) f.base.left) :=
+  ((typeToCatF F).map (connGrothendieckTwMorphDom C (arrToTw' y.arr) f.base.left)).obj
+    ⟨y.elem⟩
+
+/-- The fiber morphism target transported to the source category. -/
+def twCoprArrElemFiberMorphTgtTransported {x y : TwCoprArrElem F}
+    (f : TwCoprArrElem.Hom F x y) :
+    (typeToCatF F).obj (connGrothendieckDiagCod C (arrToTw' x.arr) f.base.right) :=
+  (eqToHom (typeToCatFiberCatEq F f).symm).obj (twCoprArrElemFiberMorphTgt F f)
+
+/-- The source and transported target of the fiber morphism have equal underlying
+elements. This follows from `TwArrCompat`. -/
+lemma twCoprArrElemFiberMorphEq {x y : TwCoprArrElem F} (f : TwCoprArrElem.Hom F x y) :
+    (twCoprArrElemFiberMorphSrc F f : Discrete _).as =
+    (twCoprArrElemFiberMorphTgtTransported F f : Discrete _).as := by
+  simp only [twCoprArrElemFiberMorphSrc, twCoprArrElemFiberMorphTgtTransported,
+    twCoprArrElemFiberMorphTgt]
+  simp only [connGrothendieckTwMorphCod_eq_arrToDiagFromSource,
+    connGrothendieckTwMorphDom_eq_arrToDiagFromTarget]
+  simp only [Functor.map_comp, Cat.comp_obj]
+  simp only [typeToCatF, Functor.comp_obj, Functor.comp_map, typeToCat,
+    Discrete.functor_obj, Cat.of_α]
+  simp only [Function.comp_apply]
+  -- Unfold Discrete.functor.obj to expose the .as manipulation
+  simp only [Discrete.functor_obj]
+  -- After unfolding, the eqToHom applications are on reflexive equalities
+  simp only [eqToHom_refl, Functor.map_id]
+  -- Unfold identity morphism in Type
+  dsimp only [CategoryStruct.id]
+  -- Simplify Discrete.mk ∘ id and extract .as
+  simp only [Function.comp_apply, id_eq]
+  -- Now we need to handle the eqToHom.obj on the RHS
+  -- For discrete categories, (eqToHom h).obj preserves the .as value
+  -- Use transitivity with f.compat
+  trans F.map (arrToDiagFromTarget f.base) y.elem
+  · exact f.compat
+  · -- Show RHS equals F.map (arrToDiagFromTarget f.base) y.elem
+    -- The eqToHom terms wrap the value but preserve .as via nested cancellation
+    simp only [eqToHom_map]
+    -- The outer eqToHom (Cat level) and inner eqToHom (Type level) cancel
+    symm
+    exact eqToHom_discrete_nested_cancel _ _ _
+
+/-- Construct a discrete category morphism from element equality. -/
+def discreteMorphOfEq {X : Type*} {a b : Discrete X} (h : a.as = b.as) : a ⟶ b :=
+  Discrete.eqToHom h
+
+/-- The fiber morphism for converting `TwCoprArrElem.Hom` to `ConnGrothendieckHom`. -/
+def twCoprArrElemToConnGrothendieckFiberMorph {x y : TwCoprArrElem F}
+    (f : TwCoprArrElem.Hom F x y) :
+    twCoprArrElemFiberMorphSrc F f ⟶ twCoprArrElemFiberMorphTgtTransported F f :=
+  discreteMorphOfEq (twCoprArrElemFiberMorphEq F f)
+
+/-- The fiber morphism cast to the type expected by `ConnGrothendieckHom`.
+
+The source type matches directly. The target type requires showing that
+the `eqToHom` in `ConnGrothendieckHom.fiberMorph` corresponds to our
+`typeToCatFiberCatEq` equality. -/
+def twCoprArrElemToConnGrothendieckFiberMorphCast {x y : TwCoprArrElem F}
+    (f : TwCoprArrElem.Hom F x y) :
+    ((typeToCatF F).map (connGrothendieckTwMorphCod C (arrToTw' x.arr) f.base.right)).obj
+      ⟨x.elem⟩ ⟶
+    ((typeToCatF F).map (connGrothendieckTwMorphDom C (arrToTw' y.arr) f.base.left ≫
+      eqToHom (connGrothendieckDiagEqForTwCoprArr F f))).obj ⟨y.elem⟩ := by
+  -- Transform the target using functoriality: F.map (g ≫ eqToHom h) = F.map g ≫ F.map (eqToHom h)
+  simp only [Functor.map_comp, Cat.comp_obj]
+  -- Transform F.map (eqToHom h) to eqToHom (congrArg F.obj h)
+  simp only [eqToHom_map]
+  -- Now the goal matches twCoprArrElemFiberMorphTgtTransported up to proof equality
+  convert twCoprArrElemToConnGrothendieckFiberMorph F f using 2
+
+/-- Convert a `TwCoprArrElem.Hom` to a `ConnGrothendieckHom`. -/
+def twCoprArrElemToConnGrothendieckHom {x y : TwCoprArrElem F}
+    (f : TwCoprArrElem.Hom F x y) :
+    ConnGrothendieckHom C (typeToCatF F)
+      (twCoprArrElemToConnGrothendieckObj F x)
+      (twCoprArrElemToConnGrothendieckObj F y) where
+  domArr := f.base.left
+  codArr := f.base.right
+  square_comm := twCoprArrElemSquareComm F f
+  fiberMorph := twCoprArrElemToConnGrothendieckFiberMorphCast F f
+
+/-- Convert a `TwCoprArrElem` object directly to `ConnGrothendieck` (which is
+`ConnectedGrothendieckContra`).
+
+The mapping is:
+- `base = x.arr.right` (codomain of the arrow)
+- `fiber.base = Over.mk x.arr.hom` (the arrow as element of `Over x.arr.right`)
+- `fiber.fiber = ⟨x.elem⟩` (the element in the discrete category) -/
+def twCoprArrElemToConnGrothendieckContraObj (x : TwCoprArrElem F) :
+    ConnGrothendieck (typeToCatF F) :=
+  connGrothendieckObjToContraObj C (typeToCatF F) (twCoprArrElemToConnGrothendieckObj F x)
+
+/-- Convert a `TwCoprArrElem.Hom` directly to a morphism in `ConnGrothendieck`
+(which is `ConnectedGrothendieckContra`). -/
+def twCoprArrElemToConnGrothendieckContraHom {x y : TwCoprArrElem F}
+    (f : TwCoprArrElem.Hom F x y) :
+    twCoprArrElemToConnGrothendieckContraObj F x ⟶ twCoprArrElemToConnGrothendieckContraObj F y :=
+  connGrothendieckHomToContraHom C (typeToCatF F) (twCoprArrElemToConnGrothendieckHom F f)
+
+/-- The forward functor from `TwCoprArrElem F` to `ConnGrothendieck (typeToCatF F)`
+preserves identity morphisms: the converted identity equals the identity in the
+Grothendieck category. -/
+theorem twCoprArrElemToConnGrothendieck_map_id (x : TwCoprArrElem F) :
+    twCoprArrElemToConnGrothendieckContraHom F (TwCoprArrElem.Hom.id F x) =
+    𝟙 (twCoprArrElemToConnGrothendieckContraObj F x) := by
+  simp only [twCoprArrElemToConnGrothendieckContraHom, twCoprArrElemToConnGrothendieckHom]
+  apply Grothendieck.ext
+  case w_base =>
+    simp only [connGrothendieckHomToContraHom]
+    simp only [CategoryStruct.id, TwCoprArrElem.Hom.id]
+    rfl
+  case w_fiber =>
+    simp only [connGrothendieckHomToContraHom]
+    simp only [CategoryStruct.id, TwCoprArrElem.Hom.id]
+    simp only [Grothendieck.id]
+    -- Goal: eqToHom ≫ { base := ..., fiber := ... } = eqToHom in GrothendieckContra'
+    refine GrothendieckContra'.ext _ _ ?w_base ?w_fiber
+    case w_base =>
+      -- Base in GrothendieckContra' gives Over morphisms
+      rw [GrothendieckContra'.cat_comp_base]
+      -- Goal: (eqToHom _).base ≫ connGrothendieckHomToContraInnerBase ... = (eqToHom _).base
+      simp only [connGrothendieckHomToContraInnerBase]
+      -- Now goal is (eqToHom ...).base ≫ Over.homMk (𝟙 x.arr.left) ... = (eqToHom ...).base
+      -- Use extensionality for Over morphisms
+      apply Over.OverMorphism.ext
+      simp only [Over.homMk_left, Over.comp_left]
+      -- Goal: (eqToHom ⋯).base.left ≫ 𝟙 x.arr.left = (eqToHom ⋯).base.left
+      erw [Category.comp_id]
+      -- LHS eqToHom is reflexive, simplifies to (𝟙 X).base.left
+      simp only [eqToHom_refl]
+      -- Now: (𝟙 X).base.left = (eqToHom ⋯).base.left
+      -- Simplify (𝟙 X).base to 𝟙 X.base, then (𝟙 Y).left to 𝟙 Y.left
+      erw [GrothendieckContra'.cat_id_base, Over.id_left]
+      -- Now: 𝟙 _ = (eqToHom ⋯).left in Over category
+      -- Simplify RHS: eqToHom.base gives Over eqToHom, Over.eqToHom_left gives eqToHom in C
+      erw [GrothendieckContra'.base_eqToHom, Over.eqToHom_left, eqToHom_refl]
+    case w_fiber =>
+      -- Fiber in GrothendieckContra' involves compositions of eqToHom
+      -- The fiber category is discrete (via typeToCat), so all morphisms
+      -- between the same objects are equal
+      apply @Subsingleton.elim _ (Discrete.instSubsingletonDiscreteHom _ _)
+
+/-- The forward functor from `TwCoprArrElem F` to `ConnGrothendieck (typeToCatF F)`
+preserves composition. -/
+theorem twCoprArrElemToConnGrothendieck_map_comp {x y z : TwCoprArrElem F}
+    (f : x ⟶ y) (g : y ⟶ z) :
+    twCoprArrElemToConnGrothendieckContraHom F (f ≫ g) =
+    twCoprArrElemToConnGrothendieckContraHom F f ≫
+    twCoprArrElemToConnGrothendieckContraHom F g := by
+  simp only [twCoprArrElemToConnGrothendieckContraHom, twCoprArrElemToConnGrothendieckHom]
+  apply Grothendieck.ext
+  case w_base =>
+    simp only [connGrothendieckHomToContraHom]
+    -- Goal: (f ≫ g).base.right = (... ≫ ...).base
+    -- RHS composition in Grothendieck has .base = f'.base ≫ g'.base = f.base.right ≫ g.base.right
+    rfl
+  case w_fiber =>
+    -- Both sides are morphisms in GrothendieckContra' with discrete fibers
+    simp only [connGrothendieckHomToContraHom]
+    -- Goal involves compositions of GrothendieckContra' morphisms
+    -- Apply GrothendieckContra'.ext to compare base and fiber
+    refine GrothendieckContra'.ext _ _ ?w_base ?w_fiber
+    case w_base =>
+      -- LHS: (eqToHom ≫ {...}).base
+      -- RHS: (g1 ≫ g2).fiber.base
+      rw [GrothendieckContra'.cat_comp_base]
+      simp only [connGrothendieckHomToContraInnerBase]
+      -- Apply Over.OverMorphism.ext to compare .left components
+      apply Over.OverMorphism.ext
+      simp only [Over.homMk_left, Over.comp_left]
+      -- LHS: (eqToHom ⋯).base.left ≫ (f ≫ g).base.left
+      -- Simplify eqToHom.base.left to eqToHom, then to identity
+      erw [GrothendieckContra'.base_eqToHom, Over.eqToHom_left]
+      simp only [eqToHom_refl, Category.id_comp]
+      -- LHS is now: (f ≫ g).base.left = f.base.left ≫ g.base.left
+      -- Need to expand RHS: Grothendieck.comp fiber base left
+      rw [Grothendieck.comp_fiber]
+      -- RHS is now: (eqToHom ≫ (F.map g.base).map f.fiber ≫ g.fiber).base.left
+      -- Expand compositions in GrothendieckContra'
+      erw [GrothendieckContra'.cat_comp_base, GrothendieckContra'.cat_comp_base]
+      -- Now expand compositions in Over
+      simp only [Over.comp_left]
+      -- Simplify Over.homMk.left and eqToHom.base.left
+      simp only [Over.homMk_left]
+      erw [GrothendieckContra'.base_eqToHom, Over.eqToHom_left, eqToHom_refl,
+           Category.id_comp]
+      -- The fiberFunctorContra transport preserves .base.left
+      rw [fiberFunctorContra_map_base_left]
+      simp only [Over.homMk_left]
+      -- Now both sides should be f.base.left ≫ g.base.left
+      rfl
+    case w_fiber =>
+      -- Fiber morphisms in discrete categories are subsingleton
+      apply @Subsingleton.elim _ (Discrete.instSubsingletonDiscreteHom _ _)
+
+/-- The forward functor from `TwCoprArrElem F` to `ConnGrothendieck (typeToCatF F)`. -/
+def twCoprArrElemToConnGrothendieck :
+    TwCoprArrElem F ⥤ ConnGrothendieck (typeToCatF F) where
+  obj := twCoprArrElemToConnGrothendieckContraObj F
+  map := fun f => twCoprArrElemToConnGrothendieckContraHom F f
+  map_id := fun x => twCoprArrElemToConnGrothendieck_map_id F x
+  map_comp := fun f g => twCoprArrElemToConnGrothendieck_map_comp F f g
+
+/-! ### Inverse functor: ConnGrothendieck → TwCoprArrElem
+
+The inverse functor maps `ConnGrothendieck` objects and morphisms back to
+`TwCoprArrElem`. For discrete fiber categories, the existence of a `fiberMorph`
+(which must be an `eqToHom`) implies the `TwArrCompat` condition.
+-/
+
+/-- Convert a `ConnGrothendieck` object to a `TwCoprArrElem` object.
+This composes `connGrothendieckContraObjToObj` with `connGrothendieckObjToTwCoprArrElem`. -/
+def connGrothendieckToTwCoprArrElemObj (x : ConnGrothendieck (typeToCatF F)) :
+    TwCoprArrElem F :=
+  connGrothendieckObjToTwCoprArrElem F (connGrothendieckContraObjToObj C (typeToCatF F) x)
+
+/-- Extract the `ConnGrothendieckHom` from a `ConnGrothendieck` morphism. -/
+def connGrothendieckToHomData {x y : ConnGrothendieck (typeToCatF F)} (f : x ⟶ y) :
+    ConnGrothendieckHom C (typeToCatF F)
+      (connGrothendieckContraObjToObj C (typeToCatF F) x)
+      (connGrothendieckContraObjToObj C (typeToCatF F) y) :=
+  connGrothendieckContraHomToHom C (typeToCatF F) f
+
+/-- The base arrow morphism extracted from a `ConnGrothendieck` morphism.
+Maps the source arrow to the target arrow. -/
+def connGrothendieckToArrowHom {x y : ConnGrothendieck (typeToCatF F)} (f : x ⟶ y) :
+    (connGrothendieckToTwCoprArrElemObj F x).arr ⟶
+    (connGrothendieckToTwCoprArrElemObj F y).arr := by
+  simp only [connGrothendieckToTwCoprArrElemObj, connGrothendieckObjToTwCoprArrElem,
+    connGrothendieckContraObjToObj]
+  refine Arrow.homMk ?left ?right ?w
+  case left => exact (connGrothendieckToHomData F f).domArr
+  case right => exact (connGrothendieckToHomData F f).codArr
+  case w =>
+    simp only [connGrothendieckToHomData, connGrothendieckContraHomToHom,
+      twToArr'_hom]
+    have hsq := (connGrothendieckContraHomToHom C (typeToCatF F) f).square_comm
+    simp only [connGrothendieckContraObjToObj, twObjMk'_arr] at hsq
+    exact hsq.symm
+
+/-- The left component of `connGrothendieckToArrowHom`. -/
+lemma connGrothendieckToArrowHom_left {x y : ConnGrothendieck (typeToCatF F)} (f : x ⟶ y) :
+    (connGrothendieckToArrowHom F f).left = (connGrothendieckToHomData F f).domArr := by
+  simp only [connGrothendieckToArrowHom, connGrothendieckToTwCoprArrElemObj,
+    connGrothendieckObjToTwCoprArrElem, connGrothendieckContraObjToObj]
+  rfl
+
+/-- The right component of `connGrothendieckToArrowHom`. -/
+lemma connGrothendieckToArrowHom_right {x y : ConnGrothendieck (typeToCatF F)} (f : x ⟶ y) :
+    (connGrothendieckToArrowHom F f).right = (connGrothendieckToHomData F f).codArr := by
+  simp only [connGrothendieckToArrowHom, connGrothendieckToTwCoprArrElemObj,
+    connGrothendieckObjToTwCoprArrElem, connGrothendieckContraObjToObj]
+  rfl
+
+/-- In `Type u`, `eqToHom` applied to a value equals `cast` applied to the value. -/
+lemma eqToHom_apply_eq' {α β : Type u} (h : α = β) (x : α) :
+    eqToHom h x = cast h x := by
+  subst h
+  rfl
+
+/-- When `eqToHom h x` appears in a goal where both sides have the same type,
+the equality `h` must be between definitionally equal types, so the cast
+is identity. -/
+lemma eqToHom_self_apply {α : Type u} (h : α = α) (x : α) : eqToHom h x = x := by
+  have heq : h = rfl := Subsingleton.elim h rfl
+  rw [heq]
+  rfl
+
+/-- For `eqToHom` on an equality between definitionally equal types.
+Given `h : X = Y` where `X` and `Y` are definitionally equal, and `x : X`,
+we have `eqToHom h x = x` when viewed as having the same type. -/
+lemma eqToHom_id {α β : Type u} (h : α = β) (x : α) (heq : α = β := by rfl) :
+    HEq (eqToHom h x) x := by
+  subst h
+  rfl
+
+/-- In Type u, eqToHom transporting a value gives heterogeneous equality with
+the original value. This lemma handles the case where the types α and β are
+propositionally equal but not necessarily definitionally equal. -/
+lemma eqToHom_heq {α β : Type u} (h : α = β) (x : α) : HEq (eqToHom h x) x := by
+  subst h
+  rfl
+
+/-- Helper lemma for F.map across source equality.
+
+When two morphisms go from equal sources to the same target and are HEq,
+and we apply F.map to HEq values, the results are HEq. -/
+lemma fmap_heq_of_src_eq {src₁ src₂ tgt : TwistedArrow' C}
+    (hsrc : src₁ = src₂)
+    (m₁ : src₁ ⟶ tgt) (m₂ : src₂ ⟶ tgt) (hm : HEq m₁ m₂)
+    (v₁ : F.obj src₁) (v₂ : F.obj src₂) (hv : HEq v₁ v₂) :
+    HEq (F.map m₁ v₁) (F.map m₂ v₂) := by
+  subst hsrc
+  cases hm
+  cases hv
+  rfl
+
+/-- When morphisms to the same target have equal sources and are HEq,
+applying F.map to HEq values gives equal results (after eqToHom). -/
+lemma eqToHom_fmap_eq_fmap {src₁ src₂ tgt : TwistedArrow' C}
+    (hsrc : src₁ = src₂)
+    (m₁ : src₁ ⟶ tgt) (m₂ : src₂ ⟶ tgt) (hm : HEq m₁ m₂)
+    (v₁ : F.obj src₁) (v₂ : F.obj src₂) (hv : HEq v₁ v₂)
+    (htgt : F.obj tgt = F.obj tgt) :
+    eqToHom htgt (F.map m₁ v₁) = F.map m₂ v₂ := by
+  subst hsrc
+  cases hm
+  cases hv
+  rfl
+
+/-- When two `twHomMk'` morphisms have equal target twisted arrows and HEq arrow
+components, the `F.map` applications are HEq. After substituting the target
+equality, both morphisms have the same type and equal components, hence are
+equal. -/
+lemma functor_map_twHomMk'_heq_of_target_eq (F : TwistedArrow' C ⥤ Type u)
+    {src tgt₁ tgt₂ : TwistedArrow' C}
+    (htgt : tgt₁ = tgt₂)
+    (domArr₁ : twDom' tgt₁ ⟶ twDom' src) (codArr₁ : twCod' src ⟶ twCod' tgt₁)
+    (comm₁ : domArr₁ ≫ twArr' src ≫ codArr₁ = twArr' tgt₁)
+    (domArr₂ : twDom' tgt₂ ⟶ twDom' src) (codArr₂ : twCod' src ⟶ twCod' tgt₂)
+    (comm₂ : domArr₂ ≫ twArr' src ≫ codArr₂ = twArr' tgt₂)
+    (hdom : HEq domArr₁ domArr₂) (hcod : HEq codArr₁ codArr₂)
+    (e : F.obj src) :
+    HEq (F.map (twHomMk' domArr₁ codArr₁ comm₁) e)
+        (F.map (twHomMk' domArr₂ codArr₂ comm₂) e) := by
+  subst htgt
+  cases hdom
+  cases hcod
+  rfl
+
+/-- The connGrothendieckDiagDom for the target arrow equals arrDiagTw' of the
+extracted arrow morphism. -/
+lemma connGrothendieckDiagDom_eq_arrDiagTw'_of_connGrothendieck
+    {x y : ConnGrothendieck (typeToCatF F)} (f : x ⟶ y) :
+    connGrothendieckDiagDom C (twObjMk' y.fiber.base.hom) f.fiber.base.left =
+    arrDiagTw' (connGrothendieckToArrowHom F f) := by
+  have h := connGrothendieckDiagDom_eq_arrDiagTw' (connGrothendieckToArrowHom F f)
+  simp only [connGrothendieckToTwCoprArrElemObj, connGrothendieckObjToTwCoprArrElem,
+    connGrothendieckContraObjToObj, arrToTw'] at h
+  rw [connGrothendieckToArrowHom_left] at h
+  simp only [connGrothendieckToHomData, connGrothendieckContraHomToHom] at h
+  exact h
+
+/-- When `eqToHom` is applied for a proof of `T = T` (same type), the result
+equals the original value. In Types, this reduces to showing `cast rfl x = x`. -/
+lemma eqToHom_self_cancel {T : Type u} (h : T = T) (x : T) : eqToHom h x = x := by
+  simp only [eqToHom_refl, types_id_apply]
+
+/-- In the Types category, for any equality proof `h : A = B` between
+definitionally equal types, and any value, `eqToHom h` acts as identity.
+This uses proof irrelevance: any such `h` equals `rfl`. -/
+lemma types_eqToHom_eq_self {A : Type u} (h : A = A) (x : A) :
+    (eqToHom h : A → A) x = x := by
+  have hp : h = rfl := Subsingleton.elim h rfl
+  subst hp
+  rfl
+
+/-- For any proof `h : A = A` (equality between the same type), casting
+a value using `h` returns the original value. By proof irrelevance,
+any such `h` equals `rfl`. -/
+@[simp]
+lemma cast_self_eq {A : Type u} (h : A = A) (x : A) : cast h x = x := by
+  have hp : h = rfl := Subsingleton.elim h rfl
+  subst hp
+  rfl
+
+/-- For any equality proof `h : A = B`, `cast h x` is heterogeneously equal
+to `x`. This is a fundamental property of transport. -/
+lemma cast_heq_self {A B : Type u} (h : A = B) (x : A) : HEq (cast h x) x := by
+  subst h
+  rfl
+
+/-- For any equality proof `h : A = B`, `cast h x` is heterogeneously equal
+to any `y : B` that is itself heterogeneously equal to `x`. -/
+lemma cast_heq_of_heq {A B : Type u} (h : A = B) (x : A) (y : B) (hxy : HEq x y) :
+    HEq (cast h x) y := by
+  subst h
+  exact hxy
+
+/-- In the Types category, `eqToHom h x = y` when `x` and `y` are
+heterogeneously equal. After substituting the equality `h`, this reduces
+to proving `x = y` when both have type `A`. -/
+lemma types_eqToHom_cancel {A B : Type u} (h : A = B) (x : A) (y : B)
+    (hxy : HEq x y) : (eqToHom h : A ⟶ B) x = y := by
+  subst h
+  exact eq_of_heq hxy
+
+/-- In the Types category, `eqToHom h` applied to a value `x` is
+heterogeneously equal to `x`. -/
+lemma types_eqToHom_heq {A B : Type u} (h : A = B) (x : A) :
+    HEq ((eqToHom h : A ⟶ B) x) x := by
+  subst h
+  rfl
+
+/-- In the Types category, when `eqToHom h x` has the same type as `x`
+(which happens when `A = B` definitionally), they are equal. -/
+lemma types_eqToHom_eq {A B : Type u} (h : A = B) (x : A) (htype : A = B) :
+    (eqToHom h : A ⟶ B) x = cast htype x := by
+  subst h
+  rfl
+
+/-- For any equality proof `h : A = B` where both the LHS (cast h x) and
+RHS are of the same type (which happens when A and B are definitionally
+equal), the equation holds. This version works with definitional equality.
+-/
+lemma cast_eq_of_def_eq {A B : Type u} (h : A = B) (x : A) :
+    cast h x = (h ▸ x : B) := rfl
+
+/-- When `cast h x = y` as a propositional equality (meaning both sides
+have the same type), and both sides are derived from the same value,
+the equality holds via heterogeneous equality. -/
+lemma cast_eq_self_of_heq {A B : Type u} (h : A = B) (x : A)
+    (htype : B = A) : cast h x = cast htype.symm x := by
+  subst h
+  rfl
+
+/-- In the Types category, `eqToHom h x = h ▸ x`. This follows from
+the definition of `eqToHom` in the Types category. -/
+lemma types_eqToHom_eq_subst {A B : Type u} (h : A = B) (x : A) :
+    (eqToHom h : A ⟶ B) x = h ▸ x := by
+  subst h
+  rfl
+
+/-- When `h : A = A`, `h ▸ x = x` by proof irrelevance (since `h = rfl`). -/
+lemma eq_subst_self {A : Type u} (h : A = A) (x : A) : h ▸ x = x := by
+  have : h = rfl := Subsingleton.elim h rfl
+  rw [this]
+
+/-- When `h : A = B` and both sides of `h ▸ x = y` have the same type (meaning
+A and B are definitionally equal), the equality holds if `x = y` after
+casting to the common type. This is a more general version of `eq_subst_self`
+that handles the case where A and B are syntactically different but
+definitionally equal. -/
+lemma eq_subst_self' {A B : Type u} (h : A = B) (x : A) : h ▸ x = x := by
+  subst h
+  rfl
+
+/-- In the Types category, `eqToHom h x = x` when the source and target types
+are definitionally equal. This uses `subst` to reduce to reflexivity.
+The RHS `x` is implicitly coerced to type `B` via the equality `h`. -/
+lemma types_eqToHom_eq_self' {A B : Type u} (h : A = B) (x : A) :
+    (eqToHom h : A ⟶ B) x = h ▸ x := by
+  subst h
+  rfl
+
+
+/-- The compatibility condition holds for the extracted morphism.
+
+For discrete fiber categories, any morphism between fibers must be an `eqToHom`,
+which implies the elements are equal. This gives us `TwArrCompat`. -/
+lemma connGrothendieckToTwCoprArrElem_compat {x y : ConnGrothendieck (typeToCatF F)}
+    (f : x ⟶ y) :
+    TwArrCompat F (connGrothendieckToArrowHom F f)
+      (connGrothendieckToTwCoprArrElemObj F x).elem
+      (connGrothendieckToTwCoprArrElemObj F y).elem := by
+  simp only [TwArrCompat]
+  -- Get the fiberMorph from the ConnGrothendieckHom structure directly
+  let hdata := connGrothendieckToHomData F f
+  -- The fiber morphism is in a discrete category, so it implies equality of .as values
+  have heq := GrothendieckContra'.discrete_morphism_eq hdata.fiberMorph
+  -- heq gives us equality of .as values after transport through fiber functors
+  -- We need to translate this to TwArrCompat form
+  simp only [connGrothendieckToTwCoprArrElemObj, connGrothendieckObjToTwCoprArrElem,
+    connGrothendieckContraObjToObj, arrToDiagFromSource, arrToDiagFromTarget,
+    connGrothendieckToArrowHom_left, connGrothendieckToArrowHom_right]
+  -- The heq hypothesis relates fibers via connGrothendieckTwMorphCod/Dom
+  -- We need to show the goal which uses arrToDiagFromSource/Target
+  -- Use transitivity: LHS -> (fiber via TwMorphCod) = (fiber via TwMorphDom) -> RHS
+  -- The middle equality comes from heq
+  -- First simplify heq to make it usable
+  simp only [hdata, connGrothendieckToHomData, connGrothendieckContraHomToHom,
+    connGrothendieckTwMorphCod, connGrothendieckTwMorphDom] at heq
+  simp only [typeToCatF, Functor.comp_obj, Functor.comp_map, typeToCat, Cat.of_α] at heq
+  dsimp only [Discrete.functor] at heq
+  simp only [Function.comp_apply] at heq
+  simp only [twToArr'_left, twToArr'_right, twObjMk'_dom, twObjMk'_cod,
+    connGrothendieckDiagCod, twDom', twCod', Functor.id_obj,
+    Functor.map_comp, eqToHom_map, types_comp_apply] at heq ⊢
+  -- Need to unfold connGrothendieckContraObjToObj in heq to match the goal
+  simp only [connGrothendieckContraObjToObj] at heq
+  -- Also unfold connGrothendieckToHomData in goal
+  simp only [connGrothendieckToHomData, connGrothendieckContraHomToHom]
+  -- Unfold twObjMk' to expose the underlying structure
+  simp only [twObjMk', Functor.id_obj] at heq
+  -- Use trans with heq; the RHS simplifies since eqToHom on X = X is identity
+  refine Eq.trans heq ?_
+  -- Goal: eqToHom pf (F.map morph₁ elem) = F.map morph₂ elem
+  simp only [connGrothendieckToArrowHom]
+  -- Generalize to expose the proof terms explicitly
+  generalize_proofs _ _ _ _ _ _ pf₂ pf₁ pf
+  -- pf₂ is the eqToHom proof: F.obj target₁ = F.obj target₂
+  -- pf₁ is the proof for twHomMk' with target connGrothendieckDiagDom
+  -- pf is the proof for twHomMk' with target arrDiagTw'
+  -- Using hdiag, both targets are equal, so the morphisms are equal
+  have hdiag := connGrothendieckDiagDom_eq_arrDiagTw'_of_connGrothendieck (F := F) f
+  simp only [arrDiagTw'] at hdiag
+  -- Both twHomMk' have the same target after rewriting, so pf₁ and pf prove
+  -- the same statement up to hdiag. Use cast_heq to transport.
+  -- We must show that F.map (twHomMk' ... pf₁) = F.map (twHomMk' ... pf)
+  -- after accounting for eqToHom pf₂
+  -- Use types_eqToHom_cancel with the heq between the F.map applications
+  apply types_eqToHom_cancel
+  -- Goal: HEq (F.map (twHomMk' ... pf₁) elem) (F.map (twHomMk' ... pf) elem)
+  -- Both twHomMk' have the same domArr and codArr; targets equal by hdiag
+  -- Use the functor_map_twHomMk'_heq_of_target_eq lemma
+  exact functor_map_twHomMk'_heq_of_target_eq F hdiag _ _ pf₁ _ _ pf HEq.rfl HEq.rfl _
+
+/-- The morphism map from ConnGrothendieck to TwCoprArrElem. -/
+def connGrothendieckToTwCoprArrElemHom {x y : ConnGrothendieck (typeToCatF F)}
+    (f : x ⟶ y) :
+    connGrothendieckToTwCoprArrElemObj F x ⟶ connGrothendieckToTwCoprArrElemObj F y :=
+  ⟨connGrothendieckToArrowHom F f, connGrothendieckToTwCoprArrElem_compat F f⟩
+
+/-- Functor from ConnGrothendieck (F ⋙ typeToCat) to TwCoprArrElem F. -/
+def connGrothendieckToTwCoprArrElem :
+    ConnGrothendieck (typeToCatF F) ⥤ TwCoprArrElem F where
+  obj := connGrothendieckToTwCoprArrElemObj F
+  map := connGrothendieckToTwCoprArrElemHom F
+  map_id := fun x => by
+    apply TwCoprArrElem.Hom.ext
+    simp only [connGrothendieckToTwCoprArrElemHom, connGrothendieckToArrowHom]
+    simp only [id]
+    apply Arrow.hom_ext
+    · simp only [connGrothendieckToHomData, connGrothendieckContraHomToHom,
+        Arrow.homMk_left]
+      have hL : (Grothendieck.id x).fiber.base.left = 𝟙 x.fiber.base.left :=
+        connGrothendieckContraHomDomArr_id C (typeToCatF F) x
+      change (Grothendieck.id x).fiber.base.left =
+        (TwCoprArrElem.Hom.id F (connGrothendieckToTwCoprArrElemObj F x)).base.left
+      rw [hL]
+      simp only [TwCoprArrElem.Hom.id, Arrow.id_left, connGrothendieckToTwCoprArrElemObj,
+        connGrothendieckObjToTwCoprArrElem, connGrothendieckContraObjToObj,
+        twToArr'_left, twObjMk'_dom]
+      rfl
+    · simp only [connGrothendieckToHomData, connGrothendieckContraHomToHom,
+        Arrow.homMk_right]
+      have hL : (Grothendieck.id x).base = 𝟙 x.base :=
+        connGrothendieckContraHomCodArr_id C (typeToCatF F) x
+      have hR : (TwCoprArrElem.Hom.id F (connGrothendieckToTwCoprArrElemObj F x)).base.right =
+          𝟙 (connGrothendieckToTwCoprArrElemObj F x).arr.right := Arrow.id_right _
+      change (Grothendieck.id x).base =
+        (TwCoprArrElem.Hom.id F (connGrothendieckToTwCoprArrElemObj F x)).base.right
+      rw [hL, hR]
+      simp only [connGrothendieckToTwCoprArrElemObj, connGrothendieckObjToTwCoprArrElem,
+        connGrothendieckContraObjToObj, twToArr'_right, twObjMk'_cod]
+      rfl
+  map_comp := fun {x y z} f g => by
+    apply TwCoprArrElem.Hom.ext
+    simp only [connGrothendieckToTwCoprArrElemHom, connGrothendieckToArrowHom]
+    simp only [CategoryStruct.comp, TwCoprArrElem.Hom.comp]
+    apply Arrow.hom_ext
+    · simp only [connGrothendieckToHomData, connGrothendieckContraHomToHom]
+      have hL : (f ≫ g).fiber.base.left =
+          f.fiber.base.left ≫ g.fiber.base.left :=
+        connGrothendieckContraHomDomArr_comp C (typeToCatF F) f g
+      change (f ≫ g).fiber.base.left = f.fiber.base.left ≫ g.fiber.base.left
+      rw [hL]
+    · simp only [connGrothendieckToHomData, connGrothendieckContraHomToHom]
+      have hL : (f ≫ g).base = f.base ≫ g.base :=
+        connGrothendieckContraHomCodArr_comp C (typeToCatF F) f g
+      change (f ≫ g).base = f.base ≫ g.base
+      rw [hL]
+
+/-! ### Round-trip lemmas for functor composition -/
+
+/-- Composing the forward and inverse functors on objects equals identity (first direction). -/
+lemma twCoprArr_connGroth_obj_roundtrip (x : TwCoprArrElem F) :
+    (connGrothendieckToTwCoprArrElem F).obj
+      ((twCoprArrElemToConnGrothendieck F).obj x) = x := by
+  simp only [twCoprArrElemToConnGrothendieck, connGrothendieckToTwCoprArrElem]
+  simp only [twCoprArrElemToConnGrothendieckContraObj, connGrothendieckToTwCoprArrElemObj]
+  rw [connGrothendieckObj_contraRoundtrip]
+  exact connGrothendieckObj_roundtrip F x
+
+/-- Composing the forward and inverse functors on objects equals identity (second direction). -/
+lemma connGroth_twCoprArr_obj_roundtrip (x : ConnGrothendieck (typeToCatF F)) :
+    (twCoprArrElemToConnGrothendieck F).obj
+      ((connGrothendieckToTwCoprArrElem F).obj x) = x := by
+  simp only [twCoprArrElemToConnGrothendieck, connGrothendieckToTwCoprArrElem]
+  simp only [twCoprArrElemToConnGrothendieckContraObj, connGrothendieckToTwCoprArrElemObj]
+  rw [twCoprArrElemObj_roundtrip]
+  exact connGrothendieckContraObj_roundtrip C (typeToCatF F) x
+
+/-- The base of the roundtrip morphism equals the original base. -/
+lemma twCoprArr_connGroth_hom_base {x y : TwCoprArrElem F} (f : x ⟶ y) :
+    ((connGrothendieckToTwCoprArrElem F).map
+      ((twCoprArrElemToConnGrothendieck F).map f)).base = f.base := by
+  simp only [twCoprArrElemToConnGrothendieck, connGrothendieckToTwCoprArrElem,
+    twCoprArrElemToConnGrothendieckContraHom, connGrothendieckToTwCoprArrElemHom,
+    connGrothendieckToArrowHom, twCoprArrElemToConnGrothendieckHom,
+    connGrothendieckHomToContraHom, connGrothendieckToHomData,
+    connGrothendieckContraHomToHom]
+  rfl
+
+/-- The base of the roundtrip morphism in ConnGrothendieck equals the original. -/
+lemma connGroth_twCoprArr_hom_base {x y : ConnGrothendieck (typeToCatF F)} (f : x ⟶ y) :
+    ((twCoprArrElemToConnGrothendieck F).map
+      ((connGrothendieckToTwCoprArrElem F).map f)).base = f.base := by
+  simp only [connGrothendieckToTwCoprArrElem, twCoprArrElemToConnGrothendieck,
+    connGrothendieckToTwCoprArrElemHom, twCoprArrElemToConnGrothendieckContraHom,
+    connGrothendieckToArrowHom, twCoprArrElemToConnGrothendieckHom,
+    connGrothendieckHomToContraHom, connGrothendieckToHomData,
+    connGrothendieckContraHomToHom]
+  rfl
+
+/-- The unit isomorphism component: identity morphism from x to the round-trip of x. -/
+def twCoprArrConnGrothUnitIsoApp (x : TwCoprArrElem F) :
+    x ≅ (connGrothendieckToTwCoprArrElem F).obj
+      ((twCoprArrElemToConnGrothendieck F).obj x) :=
+  eqToIso (twCoprArr_connGroth_obj_roundtrip F x).symm
+
+/-- The counit isomorphism component: identity morphism from round-trip of x to x. -/
+def twCoprArrConnGrothCounitIsoApp (x : ConnGrothendieck (typeToCatF F)) :
+    (twCoprArrElemToConnGrothendieck F).obj
+      ((connGrothendieckToTwCoprArrElem F).obj x) ≅ x :=
+  eqToIso (connGroth_twCoprArr_obj_roundtrip F x)
+
+/-- The unit natural isomorphism for the equivalence. -/
+def twCoprArrConnGrothUnitIso :
+    𝟭 (TwCoprArrElem F) ≅
+      twCoprArrElemToConnGrothendieck F ⋙ connGrothendieckToTwCoprArrElem F :=
+  NatIso.ofComponents
+    (fun x => twCoprArrConnGrothUnitIsoApp F x)
+    (fun {x y} f => by
+      simp only [Functor.id_obj, Functor.comp_obj, Functor.id_map, Functor.comp_map,
+        twCoprArrConnGrothUnitIsoApp]
+      simp only [eqToIso.hom]
+      apply TwCoprArrElem.Hom.ext
+      simp only [CategoryStruct.comp, TwCoprArrElem.Hom.comp]
+      rw [twCoprArr_connGroth_hom_base]
+      simp only [eqToHom_refl, CategoryStruct.id, TwCoprArrElem.Hom.id,
+        Category.id_comp, Category.comp_id])
+
+/-- The counit natural isomorphism for the equivalence. -/
+def twCoprArrConnGrothCounitIso :
+    connGrothendieckToTwCoprArrElem F ⋙ twCoprArrElemToConnGrothendieck F ≅
+      𝟭 (ConnGrothendieck (typeToCatF F)) :=
+  NatIso.ofComponents
+    (fun x => twCoprArrConnGrothCounitIsoApp F x)
+    (fun {x y} f => by
+      simp only [Functor.comp_obj, Functor.id_obj, Functor.comp_map, Functor.id_map,
+        twCoprArrConnGrothCounitIsoApp]
+      simp only [eqToIso.hom]
+      apply Grothendieck.ext
+      case w_base =>
+        rw [Grothendieck.comp_base, Grothendieck.comp_base]
+        rw [connGroth_twCoprArr_hom_base]
+        rw [Grothendieck.base_eqToHom, Grothendieck.base_eqToHom]
+        simp only [eqToHom_refl, Category.id_comp, Category.comp_id]
+      case w_fiber =>
+        rw [Grothendieck.comp_fiber, Grothendieck.comp_fiber]
+        rw [Grothendieck.fiber_eqToHom, Grothendieck.fiber_eqToHom]
+        simp only [eqToHom_map, eqToHom_trans_assoc]
+        -- Both sides are now morphisms in a GrothendieckContra' fiber.
+        -- Use GrothendieckContra'.ext to break down the equality.
+        apply GrothendieckContra'.ext
+        case w_base =>
+          apply Over.OverMorphism.ext
+          -- Use conv to work around dependent type issues
+          conv_lhs =>
+            rw [grothendieckContra'_comp_base_left, grothendieckContra'_comp_base_left]
+          conv_rhs =>
+            rw [grothendieckContra'_comp_base_left]
+          simp only [fiberFunctorContra_map_base_left]
+          -- Expand round-trip: domArr ends up being f.fiber.base.left
+          simp only [twCoprArrElemToConnGrothendieck, connGrothendieckToTwCoprArrElem,
+                     twCoprArrElemToConnGrothendieckContraHom,
+                     connGrothendieckToTwCoprArrElemHom,
+                     connGrothendieckHomToContraHom,
+                     connGrothendieckHomToContraInnerBase,
+                     Over.homMk_left, twCoprArrElemToConnGrothendieckHom,
+                     connGrothendieckToArrowHom,
+                     connGrothendieckToHomData, connGrothendieckContraHomToHom,
+                     id_eq, Arrow.homMk_left]
+          -- Transform (eqToHom h).base.left to eqToHom in C
+          -- LHS is: (eqToHom ⋯).base.left ≫ f.fiber.base.left ≫ (eqToHom ⋯).base.left
+          -- RHS is: (eqToHom ⋯).base.left ≫ f.fiber.base.left
+          conv_lhs =>
+            arg 1 -- first component
+            rw [GrothendieckContra'.base_eqToHom, Over.eqToHom_left]
+          conv_lhs =>
+            arg 2 -- second ≫ part
+            arg 2 -- third component
+            rw [GrothendieckContra'.base_eqToHom, Over.eqToHom_left]
+          conv_rhs =>
+            arg 1
+            rw [GrothendieckContra'.base_eqToHom, Over.eqToHom_left]
+          simp only [eqToHom_refl, Category.id_comp, Category.comp_id]
+        case w_fiber =>
+          apply @Subsingleton.elim _ (Discrete.instSubsingletonDiscreteHom _ _))
+
+/-- The triangle identity for the equivalence: functor ∘ unit ∘ counit = id. -/
+lemma twCoprArrConnGroth_functor_unitIso_comp (x : TwCoprArrElem F) :
+    (twCoprArrElemToConnGrothendieck F).map ((twCoprArrConnGrothUnitIso F).hom.app x) ≫
+      (twCoprArrConnGrothCounitIso F).hom.app ((twCoprArrElemToConnGrothendieck F).obj x) =
+    𝟙 ((twCoprArrElemToConnGrothendieck F).obj x) := by
+  simp only [twCoprArrConnGrothUnitIso, twCoprArrConnGrothCounitIso,
+    NatIso.ofComponents_hom_app, twCoprArrConnGrothUnitIsoApp, twCoprArrConnGrothCounitIsoApp]
+  simp only [eqToIso.hom]
+  rw [eqToHom_map]
+  rw [eqToHom_trans]
+  simp only [eqToHom_refl, Functor.id_obj]
+
+/-- `TwCoprArrElem F` is categorically equivalent to `ConnGrothendieck (F ⋙ typeToCat)`. -/
+def twCoprArrElemConnGrothendieckEquiv :
+    TwCoprArrElem F ≌ ConnGrothendieck (typeToCatF F) where
+  functor := twCoprArrElemToConnGrothendieck F
+  inverse := connGrothendieckToTwCoprArrElem F
+  unitIso := twCoprArrConnGrothUnitIso F
+  counitIso := twCoprArrConnGrothCounitIso F
+  functor_unitIso_comp := twCoprArrConnGroth_functor_unitIso_comp F
 
 end ConnGrothendieckEquiv
 

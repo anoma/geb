@@ -1,5 +1,9 @@
 # TwCoprArrElem ↔ ConnGrothendieck Equivalence
 
+## Status
+
+COMPLETED. The categorical equivalence is fully defined and compiles.
+
 ## Goal
 
 Prove that `TwCoprArrElem F` is categorically equivalent to
@@ -24,8 +28,6 @@ universe parameters are `u`.
 
 ### 1. Object Correspondence
 
-Defined bijection between objects:
-
 ```lean
 def twCoprArrElemToConnGrothendieckObj (x : TwCoprArrElem F) :
     ConnGrothendieckObj C (typeToCatF F)
@@ -37,91 +39,59 @@ def twCoprArrElemObjEquiv :
     TwCoprArrElem F ≃ ConnGrothendieckObj C (typeToCatF F)
 ```
 
-Round-trip lemmas prove these are inverses:
-
-- `connGrothendieckObj_roundtrip`
-- `twCoprArrElemObj_roundtrip`
-
-### 2. Morphism Correspondence Lemmas
-
-Established relationships between twisted arrow morphisms:
-
-```lean
-lemma connGrothendieckDiagCod_eq_arrDiagTw
-lemma connGrothendieckTwMorphCod_eq_arrToDiagFromSource
-lemma connGrothendieckTwMorphDom_eq_arrToDiagFromTarget
-```
-
-These show:
-
-- `connGrothendieckTwMorphCod` equals `arrToDiagFromSource` (up to eqToHom)
-- `connGrothendieckTwMorphDom` equals `arrToDiagFromTarget` (up to eqToHom)
-
-### 3. Fiber Correspondence (In Progress)
-
-Started defining fiber source/target for discrete categories:
-
-```lean
-def twCoprArrElemFiberSource  -- fiber transported via codomain arrow
-def twCoprArrElemFiberTarget  -- fiber transported via domain arrow
-lemma twCoprArrElemFiber_eq   -- equality via TwArrCompat (has errors)
-```
-
-## Current Errors
-
-The `twCoprArrElemFiber_eq` lemma has build errors:
-
-1. **Parameter order issue**: The definitions use `F` implicitly from
-   `TwCoprArrElem F`, but the lemma tries to pass `C` and `F` explicitly
-   in the wrong positions.
-
-2. **Missing lemma**: `connGrothendieckDiagEq'` doesn't exist. Need to use
-   `connGrothendieckDiagEq` from ConnectedGrothendieck.lean, which takes
-   `ConnGrothendieckObj` arguments rather than raw arrows. Will need to
-   adapt or create a version for raw Arrow morphisms.
-
-## Remaining Work
-
-### 1. Fix Fiber Equality Lemma
-
-Need to fix `twCoprArrElemFiber_eq` by:
-
-- Correcting parameter order in function calls
-- Using correct diagonal equality lemma (may need to define
-  `connGrothendieckDiagEq'` for Arrow morphisms, or adapt existing lemma)
-
-### 2. Define Functor TwCoprArrElem → ConnGrothendieck
+### 2. Forward Functor
 
 ```lean
 def twCoprArrElemToConnGrothendieck :
     TwCoprArrElem F ⥤ ConnGrothendieck (typeToCatF F)
 ```
 
-Object map: `twCoprArrElemToConnGrothendieckObj`
+Maps morphisms to `ConnGrothendieckHom` with fiber morphisms as `eqToHom`.
 
-Morphism map needs `ConnGrothendieckHom` with:
-
-- `domArr = f.base.left`
-- `codArr = f.base.right`
-- `square_comm` from Arrow morphism `f.base.w`
-- `fiberMorph` = identity (via `eqToHom`) since fibers are discrete
-
-For discrete categories, `fiberMorph` is just `eqToHom` witnessing that
-the transported fibers are equal, which follows from `TwArrCompat`.
-
-### 3. Define Inverse Functor
+### 3. Inverse Functor
 
 ```lean
 def connGrothendieckToTwCoprArrElem :
     ConnGrothendieck (typeToCatF F) ⥤ TwCoprArrElem F
 ```
 
-### 4. Prove Categorical Equivalence
+Maps `ConnGrothendieckHom` back to `TwCoprArrElem.Hom`.
 
-Show the functors form an equivalence:
+### 4. Unit Natural Isomorphism
 
-- Unit natural isomorphism
-- Counit natural isomorphism
+```lean
+def twCoprArrConnGrothUnitIso :
+    𝟭 (TwCoprArrElem F) ≅
+      twCoprArrElemToConnGrothendieck F ⋙ connGrothendieckToTwCoprArrElem F
+```
+
+Components are `eqToIso` from the object round-trip equality.
+
+### 5. Counit Natural Isomorphism
+
+```lean
+def twCoprArrConnGrothCounitIso :
+    connGrothendieckToTwCoprArrElem F ⋙ twCoprArrElemToConnGrothendieck F ≅
+      𝟭 (ConnGrothendieck (typeToCatF F))
+```
+
+Naturality proof uses `Grothendieck.ext` and `GrothendieckContra'.ext`.
+The fiber case relies on `Discrete.instSubsingletonDiscreteHom` (discrete
+categories have at most one morphism between any two objects).
+
+### 6. Triangle Identities
+
+```lean
+lemma twCoprArrConnGroth_functor_unitIso_comp
+lemma twCoprArrConnGroth_inverse_counitIso_comp
+```
+
+### 7. Equivalence Definition
+
+```lean
+def twCoprArrConnGrothEquiv :
+    TwCoprArrElem F ≌ ConnGrothendieck (typeToCatF F)
+```
 
 ## Technical Notes
 
@@ -134,22 +104,25 @@ F.map (arrToDiagFromSource φ) e₁ = F.map (arrToDiagFromTarget φ) e₂
 ```
 
 This corresponds exactly to the fiber compatibility needed for
-`ConnGrothendieckHom` when fibers are discrete (only identity morphisms).
+`ConnGrothendieckHom` when fibers are discrete.
 
 ### Discrete Category Simplification
 
 Since `typeToCat X = Cat.of (Discrete X)`, morphisms in fibers are just
 identities. This means `fiberMorph` in `ConnGrothendieckHom` is always
-an `eqToHom`, and the equality it witnesses comes from `TwArrCompat`.
+an `eqToHom`, and naturality for fiber morphisms follows from the
+subsingleton property of discrete category hom-sets.
 
-### Relevant Definitions from ConnectedGrothendieck.lean
+### Proof Techniques
 
-- `ConnGrothendieckObj`: object with `arrow` and `fiber` fields
-- `ConnGrothendieckHom`: morphism with `domArr`, `codArr`, `square_comm`,
-  `fiberMorph`
-- `connGrothendieckDiagCod/Dom`: the diagonal twisted arrows
-- `connGrothendieckTwMorphCod/Dom`: twisted arrow morphisms to diagonal
-- `connGrothendieckDiagEq`: equality between two diagonal representations
+The counit naturality proof uses:
+
+- `grothendieckContra'_comp_base_left` to decompose compositions
+- `fiberFunctorContra_map_base_left` to strip transition functor
+- `GrothendieckContra'.base_eqToHom` and `Over.eqToHom_left` to
+  transform `eqToHom` terms to the base category
+- `conv` tactics to work around dependent type issues with `rw`
+- `Discrete.instSubsingletonDiscreteHom` for fiber morphism equality
 
 ## Dependencies
 
