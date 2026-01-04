@@ -398,13 +398,13 @@ The functor is faithful: distinct functors induce distinct natural transformatio
 def PhiFunctor_PLang.{u', v'} : CategoryTheory.Cat.{v' + 1, u' + 1} ⥤
     Obj.CatJudgCopr.{u' + 1, (max (u' + 1) (v' + 1)), u' + 1, (max (u' + 1) (v' + 1))} where
   obj C := catToCatJudgCopr C.α
-  map F := functorToCatJudgNatTrans F
+  map F := functorToCatJudgNatTrans F.toFunctor
   map_id C := by
     rw [CategoryTheory.Cat.id_eq_id]
     exact functorToCatJudgNatTrans_id C.α
   map_comp {X Y Z} F G := by
     rw [CategoryTheory.Cat.comp_eq_comp]
-    exact functorToCatJudgNatTrans_comp X.α F G
+    exact functorToCatJudgNatTrans_comp X.α F.toFunctor G.toFunctor
 
 end PhiFunctor
 
@@ -1742,7 +1742,8 @@ abbrev LPhiObj (C : Type (uAdj + 1)) [Category.{uAdj + 1} C] :=
 
 /-- The functor L(Phi(F)) induced by F : C ⥤ D. -/
 abbrev LPhiFunctor {C D : Type (uAdj + 1)} [Category.{uAdj + 1} C]
-    [Category.{uAdj + 1} D] (F : C ⥤ D) : LPhiObj C ⥤ LPhiObj D :=
+    [Category.{uAdj + 1} D] (F : C ⥤ D) :
+    Cat.of (LPhiObj C) ⟶ Cat.of (LPhiObj D) :=
   catJudgNatTransToCatMor (functorToCatJudgNatTrans F)
 
 /-- counitEval commutes with functor application on FreeMor.var. -/
@@ -1816,7 +1817,7 @@ theorem freeMorMapPhi_eq_mapQuiver {C D : Type (uAdj + 1)} [Category.{uAdj + 1} 
 /-- The functor L(Phi(F)) applied to counitFunctor maps. -/
 abbrev LPhiFunctor' (C D : Type (uAdj + 1)) [Category.{uAdj + 1} C]
     [Category.{uAdj + 1} D] (F : C ⥤ D) :
-    (LPhiObj C) ⥤ (LPhiObj D) :=
+    Cat.of (LPhiObj C) ⟶ Cat.of (LPhiObj D) :=
   catJudgNatTransToCatMor (functorToCatJudgNatTrans F)
 
 /-- The counit naturality at the morphism level for FreeMor. -/
@@ -1851,18 +1852,12 @@ theorem counit_naturality_quot {C D : Type (uAdj + 1)} [Category.{uAdj + 1} C]
 theorem LPhiFunctor_counit_map {C D : Type (uAdj + 1)} [Category.{uAdj + 1} C]
     [Category.{uAdj + 1} D] (F : C ⥤ D) {a b : C}
     (m : adjHomSet (counitSource C) a b) :
-    (counitFunctor D).map ((LPhiFunctor' C D F).map m) =
+    (counitFunctor D).map ((LPhiFunctor' C D F).toFunctor.map m) =
     F.map ((counitFunctor C).map m) := by
   rcases m with ⟨⟨ma, mb, qm⟩, ha, hb⟩
   subst ha hb
-  simp only [counitFunctor, counitHomMap, extractQuotMor, cast_eq, counitFunctorMap]
-  -- Unfold the functor layers
-  simp only [catJudgNatTransToCatMor, BundledCategoryData.functorToCat,
-    catJudgNatTransToFunctorData, toBundledCategoryData_map,
-    catJudgNatTransToOverFunctorData, catJudgNatTransToQuotQuiverMor,
-    catJudgCoprToOverCategoryData', CategoryQuotientData.toOverCategoryData,
-    catJudgNatTransToCategoryQuotientMorphism,
-    CategoryQuotientData.bundleQuotMor, CategoryQuotientData.quotQuiver]
+  simp only [counitFunctor, counitHomMap, extractQuotMor, cast_eq, counitFunctorMap,
+    catJudgNatTransToCatMor]
   exact counit_naturality_quot F qm
 
 /-- The composition Φ ⋙ L : Cat → Cat at matched universe levels. -/
@@ -1875,17 +1870,17 @@ abbrev PhiL : CategoryTheory.Cat.{uAdj + 1, uAdj + 1} ⥤
 For each category C, the component ε_C : L(Φ(C)) ⥤ C evaluates the free
 category on C's quiver (with category condition witnesses) back to C itself. -/
 def counitNT : PhiL.{uAdj} ⟶ 𝟭 (CategoryTheory.Cat.{uAdj + 1, uAdj + 1}) where
-  app := fun C => counitFunctor C.α
+  app := fun C => (counitFunctor C.α).toCatHom
   naturality := fun {C D} F => by
-    simp only [CategoryTheory.Cat.comp_eq_comp, CategoryTheory.Functor.id_obj,
-      CategoryTheory.Functor.id_map]
-    have h_obj : ∀ x, (PhiL.map F ⋙ counitFunctor ↑D).obj x =
-        (counitFunctor ↑C ⋙ F).obj x := fun _ => rfl
+    simp only [CategoryTheory.Functor.id_obj, CategoryTheory.Functor.id_map]
+    have h_obj : ∀ x, ((PhiL.map F).toFunctor ⋙ counitFunctor ↑D).obj x =
+        (counitFunctor ↑C ⋙ F.toFunctor).obj x := fun _ => rfl
+    apply Cat.Hom.ext
     refine CategoryTheory.Functor.ext h_obj ?_
     intro x y f
     simp only [CategoryTheory.Functor.comp_obj, CategoryTheory.Functor.comp_map,
       eqToHom_refl, Category.id_comp, Category.comp_id]
-    exact LPhiFunctor_counit_map F f
+    exact LPhiFunctor_counit_map F.toFunctor f
 
 /-! ### Unit Natural Transformation
 

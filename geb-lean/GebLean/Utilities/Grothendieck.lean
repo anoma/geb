@@ -41,6 +41,25 @@ namespace GebLean
 
 open CategoryTheory GebLean
 
+/--
+Congruence lemma for `Cat.Hom.toFunctor` applied to objects.
+Given an equality of `Cat.Hom` morphisms, derives equality at the level of
+functor application to objects.
+-/
+theorem catHom_congr_obj {C D : Cat} {f g : Cat.Hom C D} (h : f = g) (x : C) :
+    f.toFunctor.obj x = g.toFunctor.obj x :=
+  Functor.congr_obj (congrArg Cat.Hom.toFunctor h) x
+
+/--
+Congruence lemma for `Cat.Hom.toFunctor` applied to morphisms.
+Given an equality of `Cat.Hom` morphisms, derives heterogeneous equality at
+the level of functor application to morphisms.
+-/
+theorem catHom_congr_map {C D : Cat} {f g : Cat.Hom C D} (h : f = g)
+    {x y : C} (m : x ⟶ y) :
+    f.toFunctor.map m ≍ g.toFunctor.map m :=
+  h ▸ HEq.refl _
+
 @[simp]
 def GrothendieckCatF.{u, v} {C : Type u} [CI : Category.{v, u} C] :
   (Cat.of C ⥤ Cat.{v, u}) ⥤ Cat.{v, u} :=
@@ -178,8 +197,8 @@ def gcComp.{u, v, u₂, v₂} {C : Type u} [CI : Category.{v, u} C]
 def gcConv.{u, v, u₂, v₂} {C : Type u} [CI : Category.{v, u} C]
   (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) {X Y : GrothendieckContra (C := C) F'}
   (f g : gcHom F' X Y) (w_base : f.base = g.base) :
-    ((Cat.postCompOpFunctor'.obj F').map f.base).obj Y.fiber ⟶
-    ((Cat.postCompOpFunctor'.obj F').map g.base).obj Y.fiber :=
+    ((Cat.postCompOpFunctor'.obj F').map f.base).toFunctor.obj Y.fiber ⟶
+    ((Cat.postCompOpFunctor'.obj F').map g.base).toFunctor.obj Y.fiber :=
       eqToHom (by rw [w_base])
 
 @[ext (iff := false)]
@@ -202,10 +221,11 @@ theorem gcf_id_base.{u, v, u₂, v₂} {C : Type u} [CI : Category.{v, u} C]
 @[simp]
 theorem gcf_id_base_eq.{u, v, u₂, v₂} {C : Type u} [CI : Category.{v, u} C]
   (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) (X : GrothendieckContra F') :
-    ((Cat.postCompOpFunctor'.obj F').map (gcId F' X).base).obj X.fiber = X.fiber :=
+    ((Cat.postCompOpFunctor'.obj F').map (gcId F' X).base).toFunctor.obj X.fiber =
+      X.fiber :=
   of_eq_true
     (Eq.trans
-      (congrArg (fun x ↦ x.obj X.fiber = X.fiber) (F'.map_id X.base))
+      (congrArg (fun x ↦ x.toFunctor.obj X.fiber = X.fiber) (F'.map_id X.base))
       (eq_self X.fiber))
 
 @[simp]
@@ -217,60 +237,60 @@ theorem gcf_id_fiber.{u, v, u₂, v₂} {C : Type u} [CI : Category.{v, u} C]
 @[simp]
 theorem gcf_id_fiber_cod_eq.{u, v, u₂, v₂} {C : Type u} [CI : Category.{v, u} C]
     (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) (X : GrothendieckContra F') :
-  (F'.map  (𝟙 X.base)).obj X.fiber = X.fiber :=
-    (Functor.congr_obj (F'.map_id X.base).symm X.fiber).symm
+  (F'.map (𝟙 X.base)).toFunctor.obj X.fiber = X.fiber :=
+    (catHom_congr_obj (F'.map_id X.base).symm X.fiber).symm
 
 @[simp]
 theorem gcf_id_fiber_eq.{u, v, u₂, v₂} {C : Type u} [CI : Category.{v, u} C]
     (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) (X : GrothendieckContra F') :
-  (X.fiber ⟶ (F'.map  (𝟙 X.base)).obj X.fiber) = (X.fiber ⟶ X.fiber) :=
+  (X.fiber ⟶ (F'.map (𝟙 X.base)).toFunctor.obj X.fiber) = (X.fiber ⟶ X.fiber) :=
     (congrArg (Quiver.Hom X.fiber) (gcf_id_fiber_cod_eq F' X).symm).symm
 
 @[simp]
 theorem gcf_id_fiber_eq_op.{u, v, u₂, v₂} {C : Type u} [CI : Category.{v, u} C]
     (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) (X : GrothendieckContra F') :
-  ((F'.map  (𝟙 X.base)).obj X.fiber ⟶ X.fiber) = (X.fiber ⟶ X.fiber) :=
+  ((F'.map (𝟙 X.base)).toFunctor.obj X.fiber ⟶ X.fiber) = (X.fiber ⟶ X.fiber) :=
     (congrFun (congrArg Quiver.Hom (gcf_id_fiber_cod_eq F' X).symm)
       X.fiber).symm
 
 @[simp]
 theorem gcf_id_fiber_eq_rev.{u, v, u₂, v₂} {C : Type u} [CI : Category.{v, u} C]
     (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) (X : GrothendieckContra F') :
-  ((F'.map  (𝟙 X.base)).obj X.fiber ⟶ X.fiber) =
-  (X.fiber ⟶ (F'.map  (𝟙 X.base)).obj X.fiber) :=
+  ((F'.map (𝟙 X.base)).toFunctor.obj X.fiber ⟶ X.fiber) =
+  (X.fiber ⟶ (F'.map (𝟙 X.base)).toFunctor.obj X.fiber) :=
     Eq.trans (gcf_id_fiber_eq_op F' X) (gcf_id_fiber_eq F' X).symm
 
 @[simp]
 theorem gcf_comp_fiber_cod_eq.{u, v, u₂, v₂} {C : Type u}
     [CI : Category.{v, u} C] (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂})
     {X Y Z : GrothendieckContra F'} (f : gcHom F' X Y) (g : gcHom F' Y Z) :
-  (F'.map f.base).obj ((F'.map g.base).obj Z.fiber) =
-  (F'.map (g.base ≫ f.base)).obj Z.fiber :=
-    (symm <| Functor.congr_obj (F'.map_comp g.base f.base) Z.fiber)
+  (F'.map f.base).toFunctor.obj ((F'.map g.base).toFunctor.obj Z.fiber) =
+  (F'.map (g.base ≫ f.base)).toFunctor.obj Z.fiber :=
+    (symm <| catHom_congr_obj (F'.map_comp g.base f.base) Z.fiber)
 
 @[simp]
 theorem gcf_comp_fiber_eq.{u, v, u₂, v₂} {C : Type u}
     [CI : Category.{v, u} C] (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂})
     {X Y Z : GrothendieckContra F'} (f : gcHom F' X Y) (g : gcHom F' Y Z) :
-  ((F'.map f.base).obj Y.fiber ⟶
-    (F'.map f.base).obj ((F'.map g.base).obj Z.fiber)) =
-  ((F'.map f.base).obj Y.fiber ⟶
-    (F'.map (g.base ≫ f.base)).obj Z.fiber) :=
+  ((F'.map f.base).toFunctor.obj Y.fiber ⟶
+    (F'.map f.base).toFunctor.obj ((F'.map g.base).toFunctor.obj Z.fiber)) =
+  ((F'.map f.base).toFunctor.obj Y.fiber ⟶
+    (F'.map (g.base ≫ f.base)).toFunctor.obj Z.fiber) :=
   (congrArg
-    (Quiver.Hom ((F'.map f.base).obj Y.fiber))
+    (Quiver.Hom ((F'.map f.base).toFunctor.obj Y.fiber))
     (gcf_comp_fiber_cod_eq F' f g).symm).symm
 
 @[simp]
 theorem gcf_comp_fiber_eq_op.{u, v, u₂, v₂} {C : Type u}
     [CI : Category.{v, u} C] (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂})
     {X Y Z : GrothendieckContra F'} (f : gcHom F' X Y) (g : gcHom F' Y Z) :
-  ((F'.map f.base).obj ((F'.map g.base).obj Z.fiber) ⟶
-    (F'.map f.base).obj Y.fiber) =
-  ((F'.map (g.base ≫ f.base)).obj Z.fiber ⟶
-    (F'.map f.base).obj Y.fiber) :=
+  ((F'.map f.base).toFunctor.obj ((F'.map g.base).toFunctor.obj Z.fiber) ⟶
+    (F'.map f.base).toFunctor.obj Y.fiber) =
+  ((F'.map (g.base ≫ f.base)).toFunctor.obj Z.fiber ⟶
+    (F'.map f.base).toFunctor.obj Y.fiber) :=
   (congrFun
     (congrArg Quiver.Hom (gcf_comp_fiber_cod_eq F' f g).symm)
-    ((F'.map f.base).obj Y.fiber)).symm
+    ((F'.map f.base).toFunctor.obj Y.fiber)).symm
 
 @[simp]
 theorem gcf_comp_base.{u, v, u₂, v₂} {C : Type u}
@@ -283,15 +303,17 @@ theorem gcf_comp_base.{u, v, u₂, v₂} {C : Type u}
 theorem gcf_comp_fiber_precomp.{u, v, u₂, v₂} {C : Type u}
     [CI : Category.{v, u} C] (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂})
     {X Y Z : GrothendieckContra F'} (f : gcHom F' X Y) (g : gcHom F' Y Z) :
- ((Cat.postCompOpFunctor'.obj F').map (g.base ≫ f.base)).obj Z.fiber =
-  ((Cat.postCompOpFunctor'.obj F').map f.base).obj
-    (((Cat.postCompOpFunctor'.obj F').map g.base).obj Z.fiber) :=
+ ((Cat.postCompOpFunctor'.obj F').map (g.base ≫ f.base)).toFunctor.obj Z.fiber =
+  ((Cat.postCompOpFunctor'.obj F').map f.base).toFunctor.obj
+    (((Cat.postCompOpFunctor'.obj F').map g.base).toFunctor.obj Z.fiber) :=
   of_eq_true
     (Eq.trans
       (congrArg
-        (fun x ↦ x.obj Z.fiber = (F'.map f.base).obj ((F'.map g.base).obj Z.fiber))
+        (fun x ↦ x.toFunctor.obj Z.fiber =
+          (F'.map f.base).toFunctor.obj ((F'.map g.base).toFunctor.obj Z.fiber))
         (F'.map_comp g.base f.base))
-      (eq_self ((F'.map f.base).obj ((F'.map g.base).obj Z.fiber))))
+      (eq_self ((F'.map f.base).toFunctor.obj
+        ((F'.map g.base).toFunctor.obj Z.fiber))))
 
 @[simp]
 theorem gcf_comp_fiber.{u, v, u₂, v₂} {C : Type u}
@@ -299,7 +321,7 @@ theorem gcf_comp_fiber.{u, v, u₂, v₂} {C : Type u}
     {X Y Z : GrothendieckContra F'} (f : gcHom F' X Y) (g : gcHom F' Y Z) :
   (gcComp F' f g).fiber =
     eqToHom (gcf_comp_fiber_precomp F' f g) ≫
-    ((Cat.postCompOpFunctor'.obj F').map f.base).map g.fiber ≫
+    ((Cat.postCompOpFunctor'.obj F').map f.base).toFunctor.map g.fiber ≫
     f.fiber
       := rfl
 
@@ -427,7 +449,7 @@ Given a fiber function `fib`, a morphism function assigns to each morphism
 `g : d ⟶ d'` in `D` a morphism from the transported fiber to the target fiber.
 -/
 abbrev FunctorToHom (baseFunc : D ⥤ C) (fib : FunctorToFib F baseFunc) :=
-  ∀ {d d' : D} (g : d ⟶ d'), (F.map (baseFunc.map g)).obj (fib d) ⟶ fib d'
+  ∀ {d d' : D} (g : d ⟶ d'), (F.map (baseFunc.map g)).toFunctor.obj (fib d) ⟶ fib d'
 
 /-! ### Internal Implementation Types
 
@@ -440,16 +462,15 @@ The type of identity equality proofs for `functorTo`.
 This equality is derived automatically from `baseFunc.map_id` and `F.map_id`.
 -/
 abbrev FunctorToEqId (baseFunc : D ⥤ C) (fib : FunctorToFib F baseFunc) :=
-  ∀ d, (F.map (baseFunc.map (𝟙 d))).obj (fib d) = fib d
+  ∀ d, (F.map (baseFunc.map (𝟙 d))).toFunctor.obj (fib d) = fib d
 
 /--
 Derive the identity equality from functor laws.
 -/
 lemma functorToEqIdProof (baseFunc : D ⥤ C) (fib : FunctorToFib F baseFunc) :
-    FunctorToEqId F baseFunc fib := by
-  intro d
-  simp only [baseFunc.map_id]
-  exact congrFun (congrArg Functor.obj (F.map_id (baseFunc.obj d))) (fib d)
+    FunctorToEqId F baseFunc fib := fun d => by
+  rw [baseFunc.map_id, F.map_id]
+  rfl
 
 /--
 The type of composition equality proofs for `functorTo`.
@@ -457,18 +478,17 @@ This equality is derived automatically from `baseFunc.map_comp` and `F.map_comp`
 -/
 abbrev FunctorToEqComp (baseFunc : D ⥤ C) (fib : FunctorToFib F baseFunc) :=
   ∀ {d d' d'' : D} (g : d ⟶ d') (h : d' ⟶ d''),
-    (F.map (baseFunc.map (g ≫ h))).obj (fib d) =
-    (F.map (baseFunc.map h)).obj ((F.map (baseFunc.map g)).obj (fib d))
+    (F.map (baseFunc.map (g ≫ h))).toFunctor.obj (fib d) =
+    (F.map (baseFunc.map h)).toFunctor.obj
+      ((F.map (baseFunc.map g)).toFunctor.obj (fib d))
 
 /--
 Derive the composition equality from functor laws.
 -/
 lemma functorToEqCompProof (baseFunc : D ⥤ C) (fib : FunctorToFib F baseFunc) :
-    FunctorToEqComp F baseFunc fib := by
-  intro d d' d'' g h
-  simp only [baseFunc.map_comp]
-  exact congrFun (congrArg Functor.obj (F.map_comp (baseFunc.map g) (baseFunc.map h)))
-    (fib d)
+    FunctorToEqComp F baseFunc fib := fun g h => by
+  rw [baseFunc.map_comp, F.map_comp]
+  rfl
 
 /-! ### Client-Facing Coherence Types
 
@@ -492,7 +512,7 @@ abbrev FunctorToHomComp (baseFunc : D ⥤ C) (fib : FunctorToFib F baseFunc)
     (hom : FunctorToHom F baseFunc fib) :=
   ∀ {d d' d'' : D} (g : d ⟶ d') (h : d' ⟶ d''),
     hom (g ≫ h) = eqToHom (functorToEqCompProof F baseFunc fib g h) ≫
-      (F.map (baseFunc.map h)).map (hom g) ≫ hom h
+      (F.map (baseFunc.map h)).toFunctor.map (hom g) ≫ hom h
 
 /--
 The data required to construct a functor into the Grothendieck construction.
@@ -617,7 +637,7 @@ variable {F}
 The type of morphism functions for a section.
 -/
 abbrev SectionHom (fib : SectionFib F) :=
-  ∀ {c c' : C} (f : c ⟶ c'), (F.map f).obj (fib c) ⟶ fib c'
+  ∀ {c c' : C} (f : c ⟶ c'), (F.map f).toFunctor.obj (fib c) ⟶ fib c'
 
 /--
 The identity coherence condition for sections.
@@ -631,7 +651,7 @@ The composition coherence condition for sections.
 abbrev SectionHomComp (fib : SectionFib F) (hom : SectionHom fib) :=
   ∀ {c c' c'' : C} (f : c ⟶ c') (g : c' ⟶ c''),
     hom (f ≫ g) = eqToHom (functorToEqCompProof F (𝟭 C) fib f g) ≫
-      (F.map g).map (hom f) ≫ hom g
+      (F.map g).toFunctor.map (hom f) ≫ hom g
 
 variable (F)
 
@@ -777,7 +797,7 @@ source fiber to the target fiber.
 -/
 abbrev NatTransToFibMor (dataG dataH : FunctorToData F (D := D))
     (baseNat : dataG.baseFunc ⟶ dataH.baseFunc) :=
-  ∀ d, (F.map (baseNat.app d)).obj (dataG.fib d) ⟶ dataH.fib d
+  ∀ d, (F.map (baseNat.app d)).toFunctor.obj (dataG.fib d) ⟶ dataH.fib d
 
 /--
 The type of base equality proofs for `natTransTo`.
@@ -787,8 +807,8 @@ Clients can provide any proof of this equality.
 abbrev NatTransToEqBase (dataG dataH : FunctorToData F (D := D))
     (baseNat : dataG.baseFunc ⟶ dataH.baseFunc) :=
   ∀ {d d' : D} (f : d ⟶ d'),
-    (F.map (dataG.baseFunc.map f ≫ baseNat.app d')).obj (dataG.fib d) =
-    (F.map (baseNat.app d ≫ dataH.baseFunc.map f)).obj (dataG.fib d)
+    (F.map (dataG.baseFunc.map f ≫ baseNat.app d')).toFunctor.obj (dataG.fib d) =
+    (F.map (baseNat.app d ≫ dataH.baseFunc.map f)).toFunctor.obj (dataG.fib d)
 
 /--
 The fiber naturality condition for `natTransTo`.
@@ -803,13 +823,13 @@ abbrev NatTransToFibNat (dataG dataH : FunctorToData F (D := D))
     (fibMor : NatTransToFibMor F dataG dataH baseNat)
     (eq_base : NatTransToEqBase F dataG dataH baseNat) :=
   ∀ {d d' : D} (f : d ⟶ d'),
-    eqToHom (Functor.congr_obj
+    eqToHom (catHom_congr_obj
         (F.map_comp (dataG.baseFunc.map f) (baseNat.app d')) (dataG.fib d)) ≫
-      (F.map (baseNat.app d')).map (dataG.hom f) ≫
+      (F.map (baseNat.app d')).toFunctor.map (dataG.hom f) ≫
       fibMor d' =
-    eqToHom ((eq_base f).trans (Functor.congr_obj
+    eqToHom ((eq_base f).trans (catHom_congr_obj
         (F.map_comp (baseNat.app d) (dataH.baseFunc.map f)) (dataG.fib d))) ≫
-      (F.map (dataH.baseFunc.map f)).map (fibMor d) ≫
+      (F.map (dataH.baseFunc.map f)).toFunctor.map (fibMor d) ≫
       dataH.hom f
 
 /--
@@ -876,7 +896,7 @@ def ofNatTrans : NatTransToData F dataG dataH where
     simp only [functorTo] at h
     have hbase := congrArg Grothendieck.Hom.base h
     simp only [Grothendieck.comp_base] at hbase
-    exact Functor.congr_obj (congrArg F.map hbase) (dataG.fib d)
+    exact catHom_congr_obj (congrArg F.map hbase) (dataG.fib d)
   fibNat {d d'} f := by
     simp only [ofNatTransBaseNat, functorTo]
     have h := α.naturality f
@@ -980,8 +1000,8 @@ Categorical isomorphism between `FunctorToData F` and the functor category
 `D ⥤ Grothendieck F`.
 -/
 def functorToDataIsoCat : FunctorToData F (D := D) ≅Cat (D ⥤ Grothendieck F) where
-  hom := functorToDataToFunctorCat F (D := D)
-  inv := functorCatToFunctorToData F (D := D)
+  hom := (functorToDataToFunctorCat F (D := D)).toCatHom
+  inv := (functorCatToFunctorToData F (D := D)).toCatHom
   hom_inv_id := rfl
   inv_hom_id := rfl
 
@@ -1015,7 +1035,7 @@ For each morphism `f : c ⟶ c'`, we have a natural transformation
 `fib c ⟶ F.map f ⋙ fib c'`.
 -/
 abbrev FunctorFromHom (fib : FunctorFromFib F (E := E)) :=
-  ∀ {c c' : C} (f : c ⟶ c'), fib c ⟶ F.map f ⋙ fib c'
+  ∀ {c c' : C} (f : c ⟶ c'), fib c ⟶ (F.map f).toFunctor ⋙ fib c'
 
 /--
 The identity coherence property for `Grothendieck.functorFrom`.
@@ -1033,7 +1053,7 @@ and the canonical isomorphism from `F.map_comp`.
 abbrev FunctorFromHomComp (fib : FunctorFromFib F (E := E))
     (hom : FunctorFromHom F fib) :=
   ∀ c₁ c₂ c₃ (f : c₁ ⟶ c₂) (g : c₂ ⟶ c₃), hom (f ≫ g) =
-    hom f ≫ Functor.whiskerLeft (F.map f) (hom g) ≫
+    hom f ≫ Functor.whiskerLeft (F.map f).toFunctor (hom g) ≫
     eqToHom (by simp only [Functor.map_comp]; rfl)
 
 /--
@@ -1078,12 +1098,12 @@ def ofFunctorFrom : FunctorFromData F (E := E) where
     ext x
     simp only [Functor.comp_obj, Grothendieck.ι_obj, Functor.whiskerRight_app, eqToHom_app,
       Grothendieck.ιNatTrans]
-    have heq : (⟨c, x⟩ : Grothendieck F) = ⟨c, (F.map (𝟙 c)).obj x⟩ := by
+    have heq : (⟨c, x⟩ : Grothendieck F) = ⟨c, (F.map (𝟙 c)).toFunctor.obj x⟩ := by
       simp only [Functor.map_id]
       rfl
     have h : (Grothendieck.Hom.mk (base := 𝟙 c)
-        (fiber := 𝟙 ((F.map (𝟙 c)).obj x)) :
-        Grothendieck.Hom (F := F) ⟨c, x⟩ ⟨c, (F.map (𝟙 c)).obj x⟩) = eqToHom heq := by
+        (fiber := 𝟙 ((F.map (𝟙 c)).toFunctor.obj x)) :
+        Grothendieck.Hom (F := F) ⟨c, x⟩ ⟨c, (F.map (𝟙 c)).toFunctor.obj x⟩) = eqToHom heq := by
       rw [Grothendieck.eqToHom_eq]
       simp
     rw [h, eqToHom_map]
@@ -1093,10 +1113,10 @@ def ofFunctorFrom : FunctorFromData F (E := E) where
       Functor.whiskerRight_app, Functor.whiskerLeft_app, eqToHom_app,
       Grothendieck.ιNatTrans]
     rw [← Category.assoc, ← H.map_comp]
-    have heq_obj : (⟨c₃, (F.map g).obj ((F.map f).obj x)⟩ : Grothendieck F) =
-        ⟨c₃, (F.map (f ≫ g)).obj x⟩ := by
+    have heq_obj : (⟨c₃, (F.map g).toFunctor.obj ((F.map f).toFunctor.obj x)⟩ :
+        Grothendieck F) = ⟨c₃, (F.map (f ≫ g)).toFunctor.obj x⟩ := by
       congr 1
-      exact (congrFun (congrArg Functor.obj (F.map_comp f g)) x).symm
+      exact (catHom_congr_obj (F.map_comp f g) x).symm
     rw [← eqToHom_map H heq_obj, ← H.map_comp]
     congr 1
     apply Grothendieck.ext <;> simp
@@ -1149,7 +1169,8 @@ theorem ofFunctorFrom_functorFromData_hom_app {c c' : C} (f : c ⟶ c') (x : F.o
       (congrFun (ofFunctorFrom_functorFromData_fib data) c)) x) ≫
     (data.hom f).app x ≫
     eqToHom (congrFun (congrArg Functor.obj
-      (congrFun (ofFunctorFrom_functorFromData_fib data) c')) ((F.map f).obj x)).symm := by
+      (congrFun (ofFunctorFrom_functorFromData_fib data) c'))
+        ((F.map f).toFunctor.obj x)).symm := by
   simp only [ofFunctorFrom, Functor.whiskerRight_app, functorFromData,
     Grothendieck.ιNatTrans, Grothendieck.ι_obj, Grothendieck.functorFrom_map]
   simp only [Functor.map_id, Category.id_comp, Category.comp_id, eqToHom_refl]
@@ -1185,7 +1206,8 @@ F.map f ⋙ dataG.fib c' --> F.map f ⋙ dataH.fib c'
 -/
 abbrev NatTransFromCoherence (fibNat : NatTransFromFib F dataG dataH) :=
   ∀ {c c' : C} (f : c ⟶ c'),
-    dataG.hom f ≫ Functor.whiskerLeft (F.map f) (fibNat c') = fibNat c ≫ dataH.hom f
+    dataG.hom f ≫ Functor.whiskerLeft (F.map f).toFunctor (fibNat c') =
+      fibNat c ≫ dataH.hom f
 
 /--
 The data for a natural transformation between functors from the Grothendieck
@@ -1553,7 +1575,7 @@ structure Hom (X Y : GrothendieckContra' F') where
   /-- The morphism between base objects. -/
   base : X.base ⟶ Y.base
   /-- The morphism from the source fiber object to the pullback of the target fiber object. -/
-  fiber : X.fiber ⟶ (F'.map base).obj Y.fiber
+  fiber : X.fiber ⟶ (F'.map base).toFunctor.obj Y.fiber
 
 @[ext (iff := false)]
 theorem ext {X Y : GrothendieckContra' F'} (f g : Hom X Y) (w_base : f.base = g.base)
@@ -1565,23 +1587,23 @@ theorem ext {X Y : GrothendieckContra' F'} (f g : Hom X Y) (w_base : f.base = g.
 
 @[simp]
 theorem id_fiber_cod_eq (X : GrothendieckContra' F') :
-  (F'.map  (𝟙 X.base)).obj X.fiber = X.fiber :=
-    (Functor.congr_obj (F'.map_id X.base).symm X.fiber).symm
+  (F'.map (𝟙 X.base)).toFunctor.obj X.fiber = X.fiber :=
+    catHom_congr_obj (F'.map_id X.base) X.fiber
 
 @[simp]
 theorem id_fiber_eq (X : GrothendieckContra' F') :
-  (X.fiber ⟶ (F'.map  (𝟙 X.base)).obj X.fiber) = (X.fiber ⟶ X.fiber) :=
+  (X.fiber ⟶ (F'.map (𝟙 X.base)).toFunctor.obj X.fiber) = (X.fiber ⟶ X.fiber) :=
     (congrArg (Quiver.Hom X.fiber) (id_fiber_cod_eq X).symm).symm
 
 @[simp]
 theorem id_fiber_eq_op (X : GrothendieckContra' F') :
-  ((F'.map  (𝟙 X.base)).obj X.fiber ⟶ X.fiber) = (X.fiber ⟶ X.fiber) :=
+  ((F'.map (𝟙 X.base)).toFunctor.obj X.fiber ⟶ X.fiber) = (X.fiber ⟶ X.fiber) :=
     (congrFun (congrArg Quiver.Hom (id_fiber_cod_eq X).symm) X.fiber).symm
 
 @[simp]
 theorem id_fiber_eq_rev (X : GrothendieckContra' F') :
-  ((F'.map  (𝟙 X.base)).obj X.fiber ⟶ X.fiber) =
-  (X.fiber ⟶ (F'.map  (𝟙 X.base)).obj X.fiber) :=
+  ((F'.map (𝟙 X.base)).toFunctor.obj X.fiber ⟶ X.fiber) =
+  (X.fiber ⟶ (F'.map (𝟙 X.base)).toFunctor.obj X.fiber) :=
     Eq.trans (id_fiber_eq_op X) (id_fiber_eq X).symm
 
 /-- The identity morphism in the contravariant Grothendieck category.
@@ -1596,37 +1618,37 @@ instance (X : GrothendieckContra' F') : Inhabited (Hom X X) :=
 @[simp]
 theorem comp_fiber_cod_eq {X Y Z : GrothendieckContra' F'}
   (f : Hom X Y) (g : Hom Y Z) :
-    (F'.map f.base).obj ((F'.map g.base).obj Z.fiber) =
-    (F'.map (g.base ≫ f.base)).obj Z.fiber :=
-      (symm <| Functor.congr_obj (F'.map_comp g.base f.base) Z.fiber)
+    (F'.map f.base).toFunctor.obj ((F'.map g.base).toFunctor.obj Z.fiber) =
+    (F'.map (g.base ≫ f.base)).toFunctor.obj Z.fiber :=
+      (symm <| catHom_congr_obj (F'.map_comp g.base f.base) Z.fiber)
 
 @[simp]
 theorem comp_fiber_eq {X Y Z : GrothendieckContra' F'}
   (f : Hom X Y) (g : Hom Y Z) :
-  ((F'.map f.base).obj Y.fiber ⟶
-    (F'.map f.base).obj ((F'.map g.base).obj Z.fiber)) =
-  ((F'.map f.base).obj Y.fiber ⟶
-    (F'.map (g.base ≫ f.base)).obj Z.fiber) :=
+  ((F'.map f.base).toFunctor.obj Y.fiber ⟶
+    (F'.map f.base).toFunctor.obj ((F'.map g.base).toFunctor.obj Z.fiber)) =
+  ((F'.map f.base).toFunctor.obj Y.fiber ⟶
+    (F'.map (g.base ≫ f.base)).toFunctor.obj Z.fiber) :=
   (congrArg
-    (Quiver.Hom ((F'.map f.base).obj Y.fiber))
+    (Quiver.Hom ((F'.map f.base).toFunctor.obj Y.fiber))
     (comp_fiber_cod_eq f g ).symm).symm
 
 @[simp]
 theorem comp_fiber_eq_op {X Y Z : GrothendieckContra' F'}
   (f : Hom X Y) (g : Hom Y Z) :
-  ((F'.map f.base).obj ((F'.map g.base).obj Z.fiber) ⟶
-    (F'.map f.base).obj Y.fiber) =
-  ((F'.map (g.base ≫ f.base)).obj Z.fiber ⟶
-    (F'.map f.base).obj Y.fiber) :=
+  ((F'.map f.base).toFunctor.obj ((F'.map g.base).toFunctor.obj Z.fiber) ⟶
+    (F'.map f.base).toFunctor.obj Y.fiber) =
+  ((F'.map (g.base ≫ f.base)).toFunctor.obj Z.fiber ⟶
+    (F'.map f.base).toFunctor.obj Y.fiber) :=
   (congrFun
     (congrArg Quiver.Hom (comp_fiber_cod_eq f g).symm)
-    ((F'.map f.base).obj Y.fiber)).symm
+    ((F'.map f.base).toFunctor.obj Y.fiber)).symm
 
 /-- Composition of morphisms in the contravariant Grothendieck category.
 -/
 def comp {X Y Z : GrothendieckContra' F'} (f : Hom X Y) (g : Hom Y Z) : Hom X Z where
   base := f.base ≫ g.base
-  fiber := f.fiber ≫ (F'.map f.base).map g.fiber ≫
+  fiber := f.fiber ≫ (F'.map f.base).toFunctor.map g.fiber ≫
     eqToHom (comp_fiber_cod_eq f g)
 
 attribute [local simp] eqToHom_map Functor.map_id
@@ -1644,13 +1666,15 @@ instance GrothendieckContraInst' : Category (GrothendieckContra' F') where
     ext
     · simp [comp, id]
     · dsimp [comp, id]
-      slice_lhs 1 3 => erw [Functor.congr_hom (F'.map_id X.base) f.fiber]
+      slice_lhs 1 3 =>
+        erw [Functor.congr_hom (congrArg Cat.Hom.toFunctor (F'.map_id X.base)) f.fiber]
       simp
   assoc f g h := by
     ext
     · simp [comp]
     · dsimp [comp]
-      slice_lhs 2 4 => erw [Functor.congr_hom (F'.map_comp g.base f.base) h.fiber]
+      slice_lhs 2 4 =>
+        erw [Functor.congr_hom (congrArg Cat.Hom.toFunctor (F'.map_comp g.base f.base)) h.fiber]
       simp
 
 abbrev GrothendieckContraCat' : Cat := Cat.of (GrothendieckContra' F')
@@ -1660,11 +1684,10 @@ theorem id_base (X : GrothendieckContra' F') : (id X).base = 𝟙 X.base := rfl
 
 @[simp]
 theorem id_base_eq (X : GrothendieckContra' F') :
-  (F'.map X.id.base).obj X.fiber = X.fiber :=
-    (Functor.congr_obj (F'.map_id X.base).symm X.fiber).symm
+  (F'.map X.id.base).toFunctor.obj X.fiber = X.fiber :=
+    catHom_congr_obj (F'.map_id X.base) X.fiber
 
-@[simp]
-theorem id_fiber (X : GrothendieckContra' F') :
+theorem id_fiber_val (X : GrothendieckContra' F') :
     (id X).fiber = eqToHom (id_base_eq X).symm := rfl
 
 @[simp]
@@ -1673,7 +1696,7 @@ theorem comp_base {X Y Z : GrothendieckContra' F'} (f : Hom X Y) (g : Hom Y Z) :
 
 @[simp]
 theorem comp_fiber {X Y Z : GrothendieckContra' F'} (f : Hom X Y) (g : Hom Y Z) :
-    (comp f g).fiber = f.fiber ≫ (F'.map f.base).map g.fiber ≫
+    (comp f g).fiber = f.fiber ≫ (F'.map f.base).toFunctor.map g.fiber ≫
       eqToHom (comp_fiber_cod_eq f g) :=
         rfl
 
@@ -1700,7 +1723,7 @@ theorem cat_comp_base {X Y Z : GrothendieckContra' F'} (f : X ⟶ Y) (g : Y ⟶ 
 @[simp]
 theorem cat_comp_fiber {X Y Z : GrothendieckContra' F'}
     (f : X ⟶ Y) (g : Y ⟶ Z) :
-    (f ≫ g).fiber = f.fiber ≫ (F'.map f.base).map g.fiber ≫
+    (f ≫ g).fiber = f.fiber ≫ (F'.map f.base).toFunctor.map g.fiber ≫
       eqToHom (comp_fiber_cod_eq f g) := rfl
 
 theorem congr {X Y : GrothendieckContra' F'} {f g : X ⟶ Y} (h : f = g) :
@@ -1734,6 +1757,16 @@ lemma eqToHom_eq {X Y : GrothendieckContra' F'} (hF : X = Y) :
   subst hF
   rfl
 
+lemma eqToHom_proof_irrel {D : Type*} [Category D] {a b : D}
+    (h₁ h₂ : a = b) : eqToHom h₁ = eqToHom h₂ := by
+  cases h₁
+  rfl
+
+lemma comp_comp_eqToHom_eq {D : Type*} [Category D] {a b c d : D}
+    (f : a ⟶ b) (g : b ⟶ c) (h₁ h₂ : c = d) :
+    f ≫ g ≫ eqToHom h₁ = f ≫ g ≫ eqToHom h₂ := by
+  exact congrArg (f ≫ g ≫ ·) (eqToHom_proof_irrel h₁ h₂)
+
 section Isomorphism
 
 def grothendieckContraIsoHomObj :
@@ -1759,7 +1792,7 @@ theorem grothendieckContraIsoHomMapId_fiber_components
     (base : C) (fiber : F'.obj base) :
     (grothendieckContraIsoHomMap (gcId F' ⟨base, fiber⟩)).fiber =
     (id ⟨base, fiber⟩).fiber := by
-  simp only [grothendieckContraIsoHomMap, gcf_id_fiber, id_fiber]
+  simp only [grothendieckContraIsoHomMap, gcf_id_fiber, id_fiber_val]
   exact Cat.eqToHom_postCompOp_eq F' base
     (gcf_id_base_eq F' ⟨base, fiber⟩)
     (id_base_eq ⟨base, fiber⟩).symm
@@ -1772,7 +1805,8 @@ theorem grothendieckContraIsoHomMapId
   have h_fiber := @grothendieckContraIsoHomMapId_fiber_components _ CInst F' base fiber
   refine GrothendieckContra'.ext _ _ h_base ?_
   rw [h_fiber]
-  simp
+  rw [id_fiber_val]
+  simp only [eqToHom_trans, cat_id_fiber]
 
 theorem grothendieckContraIsoHomMapComp_base_components
     {X Y Z : GrothendieckContra F'}
@@ -1787,12 +1821,14 @@ theorem grothendieckContraIsoHomMapComp_base_components
 theorem grothendieckContraIsoHomMapComp_fiber_eq
     {X Y Z : GrothendieckContra F'} (f : gcHom F' X Y) (g : gcHom F' Y Z) :
     eqToHom (gcf_comp_fiber_precomp F' f g) ≫
-      ((Cat.postCompOpFunctor'.obj F').map f.base).map g.fiber ≫ f.fiber =
+      ((Cat.postCompOpFunctor'.obj F').map f.base).toFunctor.map g.fiber ≫ f.fiber =
     (grothendieckContraIsoHomMap f ≫ grothendieckContraIsoHomMap g).fiber := by
-  simp
-    [ grothendieckContraIsoHomMap, grothendieckContraIsoHomObj,
-      Cat.postCompOpFunctor', GrothendieckContraInst', CategoryStruct.comp,
-      Cat.opFunctorObj', Cat.of, Cat.str, Bundled.of, CategoryOp'Inst]
+  unfold Cat.Hom.toFunctor
+  simp only [CategoryOp'.eq_1, CategoryOp'Inst, CategoryOpQuivInst.eq_1, Cat.postCompOpFunctor',
+    Cat.opFunctor'.eq_1, Cat.str, Functor.op'.eq_1, functorOp'Obj.eq_1,
+    Functor.whiskeringRight_obj_obj, Functor.comp_obj, Cat.opFunctorObj', Cat.of, Bundled.of,
+    CategoryStruct.comp, Functor.comp_map, Functor.toCatHom_toFunctor, Category.assoc,
+    grothendieckContraIsoHomObj, GrothendieckContraInst', grothendieckContraIsoHomMap, comp_fiber]
   apply congrArg
   apply congrArg
   apply Cat.eqToHom_postCompOp_eq
@@ -1875,16 +1911,19 @@ theorem grothendieckContraIsoInvMapComp_base_components
 
 theorem grothendieckContraIsoInvMapComp_fiber_eq
     {X Y Z : GrothendieckContra' F'} (f : X ⟶ Y) (g : Y ⟶ Z) :
-    f.fiber ≫ (F'.map f.base).map g.fiber ≫ eqToHom (comp_fiber_cod_eq f g) =
+    f.fiber ≫ (F'.map f.base).toFunctor.map g.fiber ≫ eqToHom (comp_fiber_cod_eq f g) =
     eqToHom (gcf_comp_fiber_precomp F' (grothendieckContraIsoInvMap f)
       (grothendieckContraIsoInvMap g)) ≫
-    ((Cat.postCompOpFunctor'.obj F').map (grothendieckContraIsoInvMap f).base).map
+    ((Cat.postCompOpFunctor'.obj F').map (grothendieckContraIsoInvMap f).base).toFunctor.map
       (grothendieckContraIsoInvMap g).fiber ≫
     (grothendieckContraIsoInvMap f).fiber := by
-  simp
-    [ grothendieckContraIsoInvMap, grothendieckContraIsoInvObj,
-      Cat.postCompOpFunctor', CategoryStruct.comp,
-      Cat.opFunctorObj', Cat.of, Cat.str, Bundled.of, CategoryOp'Inst]
+  simp only [grothendieckContraIsoInvMap, grothendieckContraIsoInvObj,
+    CategoryStruct.comp,
+    Cat.postCompOpFunctor', Cat.opFunctorObj', Cat.of, Cat.str, Bundled.of,
+    CategoryOp'.eq_1, CategoryOp'Inst, CategoryOpQuivInst.eq_1,
+    Cat.opFunctor'.eq_1, Functor.op'.eq_1, functorOp'Obj.eq_1,
+    Functor.whiskeringRight_obj_obj, Functor.comp_obj, Functor.comp_map,
+    Functor.toCatHom_toFunctor, Category.assoc]
   apply congrArg
   apply congrArg
   apply Eq.symm
@@ -1953,10 +1992,10 @@ proving equations rather than just definitional equality.
 -/
 def grothendieckContraIso :
     GrothendieckContraCat F' ≅Cat GrothendieckContra' F' where
-  hom := grothendieckContraIsoHom
-  inv := grothendieckContraIsoInv
-  hom_inv_id := grothendieckContraIsoHomInvId
-  inv_hom_id := grothendieckContraIsoInvHomId
+  hom := grothendieckContraIsoHom.toCatHom
+  inv := grothendieckContraIsoInv.toCatHom
+  hom_inv_id := Cat.Hom.ext grothendieckContraIsoHomInvId
+  inv_hom_id := Cat.Hom.ext grothendieckContraIsoInvHomId
 
 def grothendieckContraEquiv :
   GrothendieckContraCat F' ≌ GrothendieckContra' F' :=
@@ -1967,7 +2006,7 @@ instance gcIsoHomFaithful : (grothendieckContraIsoHom (F' := F')).Faithful := by
   infer_instance
 
 instance gcIsoInvFaithful : (grothendieckContraIsoInv (F' := F')).Faithful := by
-  change (grothendieckContraEquiv (F' := F')).symm.functor.Faithful
+  change (grothendieckContraEquiv (F' := F')).inverse.Faithful
   infer_instance
 
 def gcDomFuncToGcContra'.{u₃, v₃}
@@ -2158,7 +2197,7 @@ def transferredComp {E : Type uₑ} [Category.{vₑ} E] {E' : Type uₑ'} [Categ
     ⟨gImg.base, gImg.fiber⟩
   -- Compose them in GrothendieckContra' H'
   ⟨fImg.base ≫ gImg.base,
-   fImg.fiber ≫ (H'.map fImg.base).map gImg.fiber ≫
+   fImg.fiber ≫ (H'.map fImg.base).toFunctor.map gImg.fiber ≫
      eqToHom (comp_fiber_cod_eq fImgAsContra gImgAsContra)⟩
 
 /--
@@ -2176,13 +2215,20 @@ theorem transferFromCov_map_id {E : Type uₑ} [Category.{vₑ} E] {E' : Type u�
 /--
 The transferred functor maps composition to the explicitly constructed composition.
 -/
-@[simp]
 theorem transferFromCov_map_comp {E : Type uₑ} [Category.{vₑ} E] {E' : Type uₑ'} [Category.{vₑ'} E']
     {G' : Eᵒᵖ' ⥤ Cat.{v₃, u₃}} {H' : E'ᵒᵖ' ⥤ Cat.{v₄, u₄}}
     (F_cov : GrothendieckContraCat G' ⥤ GrothendieckContraCat H')
     {X Y Z : GrothendieckContra' G'} (f : X ⟶ Y) (g : Y ⟶ Z) :
     (transferFromCov F_cov).map (f ≫ g) = transferredComp F_cov f g := by
-  exact Functor.map_comp (transferFromCov F_cov) f g
+  unfold transferFromCov bicompGcIsoHomInv postcompGcIsoHom precompGcIsoInv
+  simp only [Functor.whiskeringRight_obj_obj, Functor.whiskeringLeft_obj_obj,
+    Functor.comp_obj, Functor.comp_map]
+  rw [grothendieckContraIsoInv.map_comp, Functor.map_comp, grothendieckContraIsoHom.map_comp]
+  unfold transferredComp
+  simp only [grothendieckContraIsoHom, grothendieckContraIsoInv,
+    grothendieckContraIsoHomMap, grothendieckContraIsoHomObj,
+    grothendieckContraIsoInvMap, grothendieckContraIsoInvObj]
+  rfl
 
 def transferFromCovMap
     {E : Type uₑ} [Category.{vₑ} E] {E' : Type uₑ'} [Category.{vₑ'} E']
@@ -2205,7 +2251,7 @@ morphism in `C`, then `transport` maps each `x.base`-based element of
 @[simps]
 def transport (x : GrothendieckContra' F') {c : C} (t : c ⟶ x.base) :
     GrothendieckContra' F' :=
-  ⟨c, (F'.map t).obj x.fiber⟩
+  ⟨c, (F'.map t).toFunctor.obj x.fiber⟩
 
 /--
 If `F' : Cᵒᵖ' ⥤ Cat` is a contravariant functor and `t : c ⟶ x.base` is a
@@ -2215,14 +2261,14 @@ morphism in `C`, then `transport` maps each `x.base`-based element `x` of
 `fromTransport` is the morphism `x.transport t ⟶ x` induced by `t` and the
 identity on fibers.
 -/
-@[simps]
+@[simps!]
 def fromTransport (x : GrothendieckContra' F') {c : C} (t : c ⟶ x.base) :
     x.transport t ⟶ x :=
-  ⟨t, 𝟙 _⟩
+  ⟨t, 𝟙 ((F'.map t).toFunctor.obj x.fiber)⟩
 
 private lemma map_iso_comp_obj_eq {X Y : GrothendieckContra' F'}
     (e₁ : X.base ≅ Y.base) (z : F'.obj Y.base) :
-    z = (F'.map e₁.hom ≫ F'.map e₁.inv).obj z := by
+    z = (F'.map e₁.hom ≫ F'.map e₁.inv).toFunctor.obj z := by
   have : F'.map e₁.hom ≫ F'.map e₁.inv = 𝟙 (F'.obj Y.base) := by
     rw [← F'.map_comp, ← F'.map_id]
     congr 1
@@ -2232,10 +2278,11 @@ private lemma map_iso_comp_obj_eq {X Y : GrothendieckContra' F'}
 @[simps!]
 def isoMk_cov_fiber_equiv
     {X Y : GrothendieckContraCat F'} (e₁ : X.base ≅ Y.base)
-    (e₂ : X.fiber ≅ (F'.map e₁.inv).obj Y.fiber) :
-    ((Cat.postCompOpFunctor'.obj F').map e₁.hom).obj X.fiber ≅ Y.fiber :=
-  ((Cat.postCompOpFunctor'.obj F').map e₁.hom).mapIso e₂ ≪≫
-    eqToIso (Functor.congr_obj ((Cat.postCompOpFunctor'.obj F').mapIso e₁).inv_hom_id Y.fiber)
+    (e₂ : X.fiber ≅ (F'.map e₁.inv).toFunctor.obj Y.fiber) :
+    ((Cat.postCompOpFunctor'.obj F').map e₁.hom).toFunctor.obj X.fiber ≅ Y.fiber :=
+  ((Cat.postCompOpFunctor'.obj F').map e₁.hom).toFunctor.mapIso e₂ ≪≫
+    eqToIso (Functor.congr_obj (congrArg Cat.Hom.toFunctor
+      ((Cat.postCompOpFunctor'.obj F').mapIso e₁).inv_hom_id) Y.fiber)
 
 -- Lemma: F'.map of a composition of isos
 private lemma map_comp_iso {X Y : GrothendieckContraCat F'} (e₁ : X.base ≅ Y.base) :
@@ -2248,7 +2295,7 @@ private lemma map_inv_hom_eq_id {X Y : GrothendieckContraCat F'} (e₁ : X.base 
 
 @[simps!]
 def isoMk_cov {X Y : GrothendieckContraCat F'} (e₁ : X.base ≅ Y.base)
-    (e₂ : X.fiber ≅ (F'.map e₁.inv).obj Y.fiber) :
+    (e₂ : X.fiber ≅ (F'.map e₁.inv).toFunctor.obj Y.fiber) :
     X ≅ Y :=
   Grothendieck.isoMk (X := X) (Y := Y)
     e₁
@@ -2278,9 +2325,9 @@ Additionally, `(baseIsoToCov e₁).inv` is definitionally equal to `e₁.hom`, s
 functor application `(F'.map (baseIsoToCov e₁).inv).obj` equals `(F'.map e₁.hom).obj`.
 -/
 def fiberIsoToCov {X Y : GrothendieckContra' F'} (e₁ : X.base ≅ Y.base)
-    (e₂ : X.fiber ≅ (F'.map e₁.hom).obj Y.fiber) :
+    (e₂ : X.fiber ≅ (F'.map e₁.hom).toFunctor.obj Y.fiber) :
     (grothendieckContraIsoInv.obj X).fiber ≅
-    (F'.map (baseIsoToCov e₁).inv).obj (grothendieckContraIsoInv.obj Y).fiber :=
+    (F'.map (baseIsoToCov e₁).inv).toFunctor.obj (grothendieckContraIsoInv.obj Y).fiber :=
   -- grothendieckContraIsoInv maps to GrothendieckContra which uses Cat.postCompOpFunctor'.obj F'
   -- This means fibers are in (F'.obj _)ᵒᵖ' instead of F'.obj _
   -- We need to convert e₂ to an iso in the opposite category
@@ -2308,7 +2355,7 @@ the isomorphism `grothendieckContraIso`.
 -/
 @[simps!]
 def isoMk {X Y : GrothendieckContra' F'} (e₁ : X.base ≅ Y.base)
-    (e₂ : X.fiber ≅ (F'.map e₁.hom).obj Y.fiber) :
+    (e₂ : X.fiber ≅ (F'.map e₁.hom).toFunctor.obj Y.fiber) :
     X ≅ Y :=
   isoFromCov (isoMk_cov (baseIsoToCov e₁) (fiberIsoToCov e₁ e₂))
 
@@ -2347,7 +2394,7 @@ def map_cov (α : F' ⟶ G') :
     Functor.op' (Grothendieck.map (Cat.postCompOpFunctor'.map α))
 
 theorem map_cov_obj (α : F' ⟶ G') (X : GrothendieckContra F') :
-    (map_cov α).obj X = ⟨X.base, (α.app X.base).obj X.fiber⟩ := by
+    (map_cov α).obj X = ⟨X.base, (α.app X.base).toFunctor.obj X.fiber⟩ := by
   unfold map_cov
   simp only [Functor.op', functorOp'Obj]
   rw [Grothendieck.map_obj]
@@ -2356,8 +2403,9 @@ theorem map_cov_obj (α : F' ⟶ G') (X : GrothendieckContra F') :
 
 theorem map_cov_map (α : F' ⟶ G') {X Y : GrothendieckContra F'} (f : gcHom F' X Y) :
     (map_cov α).map f = ⟨f.base,
-      (eqToHom (Eq.symm ((Cat.postCompOpFunctor'.map α).naturality f.base))).app Y.fiber ≫
-      (Functor.op' (α.app X.base)).map f.fiber⟩ := by
+      (eqToHom (Eq.symm ((Cat.postCompOpFunctor'.map α).naturality f.base))).toNatTrans.app
+        Y.fiber ≫
+      (Functor.op' (α.app X.base).toFunctor).map f.fiber⟩ := by
   unfold map_cov
   simp only [Functor.op', functorOp'Obj]
   rw [Grothendieck.map_map]
@@ -2376,16 +2424,22 @@ def map (α : F' ⟶ G') : GrothendieckContra' F' ⥤ GrothendieckContra' G' :=
 
 @[simp]
 theorem map_obj (α : F' ⟶ G') (X : GrothendieckContra' F') :
-    (map α).obj X = ⟨X.base, (α.app X.base).obj X.fiber⟩ := rfl
+    (map α).obj X = ⟨X.base, (α.app X.base).toFunctor.obj X.fiber⟩ := rfl
 
 @[simp]
 theorem map_map (α : F' ⟶ G') {X Y : GrothendieckContra' F'} (f : X ⟶ Y) :
-    (map α).map f = ⟨f.base, (α.app X.base).map f.fiber ≫
-      (eqToHom (α.naturality f.base)).app Y.fiber⟩ := by
+    (map α).map f = ⟨f.base, (α.app X.base).toFunctor.map f.fiber ≫
+      (eqToHom (α.naturality f.base)).toNatTrans.app Y.fiber⟩ := by
   unfold map
   simp only [transferFromCov_map, transferredMap]
   rw [map_cov_map]
-  simp
+  simp only [transferFromCov_obj, CategoryOp'.eq_1, CategoryOp'Inst.eq_1,
+    CategoryOpQuivInst.eq_1, Cat.postCompOpFunctor'.eq_1, Cat.opFunctor'.eq_1,
+    Functor.op'.eq_1, functorOp'Obj.eq_1, Functor.whiskeringRight_obj_obj,
+    GrothendieckContraCat, GrothendieckContraCatOp, GrothendieckCat, map_cov_obj_base,
+    Functor.comp_obj, Functor.comp_map, Functor.toCatHom_toFunctor, map_cov_obj_fiber,
+    Functor.whiskeringRight_obj_map, Functor.whiskerRight_app, Cat.Hom.comp_toFunctor,
+    Cat.Hom₂.eqToHom_toNatTrans, eqToHom_app]
   congr 1
   rw [op_comp_eq]
   congr 1
@@ -2396,8 +2450,13 @@ theorem functor_comp_forget {α : F' ⟶ G'} :
     GrothendieckContra'.forget F' :=
   rfl
 
+theorem catHom_comp_forget {α : F' ⟶ G'} :
+    (GrothendieckContra'.map α).toCatHom ≫ (GrothendieckContra'.forget G').toCatHom =
+    (GrothendieckContra'.forget F').toCatHom :=
+  rfl
+
 @[simp]
-theorem map_id_eq : map (𝟙 F') = 𝟙 (Cat.of <| GrothendieckContra' F') := by
+theorem map_id_eq : map (𝟙 F') = 𝟭 (GrothendieckContra' F') := by
   fapply Functor.ext
   · intro X
     rfl
@@ -2405,7 +2464,7 @@ theorem map_id_eq : map (𝟙 F') = 𝟙 (Cat.of <| GrothendieckContra' F') := b
     simp [map_map]
     rfl
 
-def mapIdIso : map (𝟙 F') ≅ 𝟙 (Cat.of <| GrothendieckContra' F') :=
+def mapIdIso : map (𝟙 F') ≅ 𝟭 (GrothendieckContra' F') :=
   eqToIso map_id_eq
 
 @[simp]
@@ -2415,8 +2474,9 @@ theorem map_comp_eq (α : F' ⟶ G') (β : G' ⟶ H') :
   · intro X
     rfl
   · intro X Y f
-    simp only [map_map, NatTrans.comp_app, Cat.comp_obj, Cat.comp_map,
+    simp only [map_map, NatTrans.comp_app, Functor.comp_obj, Functor.comp_map,
       eqToHom_refl, Functor.comp_map, Functor.map_comp, Category.comp_id, Category.id_comp]
+    unfold Cat.Hom.toFunctor
     fapply GrothendieckContra'.ext
     · rfl
     · simp
@@ -2511,11 +2571,13 @@ theorem compAsSmallFunctorEquivalenceInverse_map
     ⟨f.base,
      eqToHom (compAsSmallFunctorEquivalenceInverse_obj_fiber X) ≫
      AsSmall.up.map f.fiber⟩ := by
-  simp
+  simp only [CategoryOp'.eq_1, CategoryOp'Inst.eq_1, CategoryOpQuivInst.eq_1, Functor.comp_obj,
+    Cat.asSmallFunctor_obj, Cat.of_α, compAsSmallFunctorEquivalenceInverse_obj_fiber,
+    Functor.comp_map, Cat.asSmallFunctor_map, Functor.toCatHom_toFunctor, AsSmall.down_obj,
+    AsSmall.up_obj_down, eqToHom_refl, Category.id_comp]
   unfold compAsSmallFunctorEquivalenceInverse
-  simp only
-    [transferFromCov_map, transferredMap,
-     compAsSmallFunctorEquivalenceInverse_cov_map]
+  simp only [transferFromCov_map, transferredMap,
+    compAsSmallFunctorEquivalenceInverse_cov_map]
 
 def compAsSmallFunctorEquivalence :
     GrothendieckContra' (F' ⋙ Cat.asSmallFunctor.{w}) ≌
@@ -2566,9 +2628,9 @@ category `(Cᵒᵖ' ⥤ Cat)` to the over category over the base category.
 def functor {E : Type u} [Category.{v} E] :
     (Eᵒᵖ' ⥤ Cat.{v, u}) ⥤ Over (T := Cat.{v, u}) (Cat.of E) where
   obj F' := Over.mk (X := Cat.of E) (Y := Cat.of (GrothendieckContra' F'))
-                    (GrothendieckContra'.forget F')
-  map {_ _} α := Over.homMk (X := Cat.of E) (GrothendieckContra'.map α)
-                            GrothendieckContra'.functor_comp_forget
+                    (GrothendieckContra'.forget F').toCatHom
+  map {_ _} α := Over.homMk (X := Cat.of E) (GrothendieckContra'.map α).toCatHom
+                            GrothendieckContra'.catHom_comp_forget
   map_id F' := by
     ext
     exact GrothendieckContra'.map_id_eq (F' := F')
@@ -2659,8 +2721,16 @@ def grothendieckTypeToCat :
     (fun X ↦ Iso.refl _)
     (fun f ↦ by
       refine ext _ _ ?_ ?_
-      · simp; rfl
-      · simp; apply Subsingleton.elim)
+      · simp only [CategoryOp'.eq_1, CategoryOp'Inst.eq_1, CategoryOpQuivInst.eq_1,
+          Functor.id_obj, Functor.comp_obj, Iso.refl_hom, Functor.comp_map,
+          typeToCat_map, Functor.toCatHom_toFunctor, Discrete.functor_obj_eq_as,
+          Function.comp_apply, Functor.id_map, Category.comp_id, Category.id_comp,
+          grothendieckTypeToCatFunctor, grothendieckTypeToCatInverse]
+      · simp only [CategoryOp'.eq_1, CategoryOp'Inst.eq_1, CategoryOpQuivInst.eq_1,
+          Functor.id_obj, Functor.comp_obj, Iso.refl_hom, Functor.comp_map,
+          typeToCat_map, Functor.toCatHom_toFunctor, Discrete.functor_obj_eq_as,
+          Function.comp_apply, Functor.id_map]
+        apply @Subsingleton.elim _ (Discrete.instSubsingletonDiscreteHom _ _))
   counitIso := NatIso.ofComponents
     (fun p ↦ Iso.refl _)
     (fun f ↦ by
@@ -2874,7 +2944,6 @@ def mapWhiskerLeftIsoConjPreMap {G' : Cᵒᵖ' ⥤ Cat.{w, u₁}} (G : D ≌ C) 
   -- Define helper variables for preEquivalence at F' and G'
   let preF := preEquivalence F' G
   let preG := preEquivalence G' G
-
   calc grothendieckContraIsoInv ⋙
         map_cov (Functor.whiskerLeft (functorOp'Obj G.functor) α) ⋙
         grothendieckContraIsoHom
@@ -2968,25 +3037,32 @@ def ι_obj (c : C) (d : F'.obj c) :
     rfl
 
 def ι_map_fiber (c : C) {d : F'.obj c} :
-  d = (F'.map (𝟙 c)).obj ((ι c).obj d).fiber := by
-    simp [ι_obj]
-    have deq := (congrFun (congrArg Functor.obj <| F'.map_id c) d).symm
-    simp at deq
+  d = (F'.map (𝟙 c)).toFunctor.obj ((ι c).obj d).fiber := by
+    simp only [CategoryOp'.eq_1, CategoryOp'Inst.eq_1, CategoryOpQuivInst.eq_1, Cat.of_α]
+    have map_id_func := congrArg Cat.Hom.toFunctor (F'.map_id c)
+    have deq := (congrFun (congrArg Functor.obj map_id_func) d).symm
+    simp only [Cat.id_eq_id, Functor.id_obj] at deq
     exact deq
 
 def ι_map (c : C) {d d' : F'.obj c} (f : d ⟶ d') :
   (ι c).map f = ⟨𝟙 c, f ≫ eqToHom (ι_map_fiber c (d := d'))⟩ := by
-    simp [ι_obj]
+    simp only [Cat.of_α, CategoryOp'.eq_1, CategoryOp'Inst.eq_1, CategoryOpQuivInst.eq_1]
     unfold ι
     unfold gr_ι_flip
     apply ext
-    all_goals simp
-      [gcCodFuncToGcContra', gcCodFuncToGcContra, evaluation,
-       grothendieckContraIsoHom, grothendieckContraIsoHomMap]
-    -- The base goal is now solved, only fiber remains
-    rw [op_comp_eq]
-    apply congrArg
-    rw [Cat.eqToHom_op'_eq]
+    case w_base =>
+      simp only [gcCodFuncToGcContra', gcCodFuncToGcContra, evaluation,
+        grothendieckContraIsoHom, grothendieckContraIsoHomMap, Functor.comp_obj,
+        Functor.comp_map, Functor.op'.eq_1, functorOp'Obj.eq_1, Grothendieck.ι_map]
+      rfl
+    case w_fiber =>
+      simp only [gcCodFuncToGcContra', gcCodFuncToGcContra, evaluation,
+        grothendieckContraIsoHom, grothendieckContraIsoHomMap, Functor.comp_obj,
+        Functor.comp_map, Functor.op'.eq_1, functorOp'Obj.eq_1, Grothendieck.ι_map,
+        eqToHom_refl', Category.comp_id]
+      apply eq_of_heq
+      simp only [eqToHom_comp_heq_iff]
+      exact (comp_eqToHom_heq f _).symm
 
 /--
 The covariant fiber inclusion functor is faithful.
@@ -3009,7 +3085,7 @@ Natural transformation induced by a morphism in the base category.
 For f : c ⟶ d in C (viewed as d ⟶ c in Cᵒᵖ'), the natural transformation
 goes from F'.map f ⋙ ι c to ι d.
 -/
-def ιNatTrans {c d : C} (f : c ⟶ d) : F'.map f ⋙ ι c ⟶ ι d where
+def ιNatTrans {c d : C} (f : c ⟶ d) : (F'.map f).toFunctor ⋙ ι c ⟶ ι d where
   app X := { base := f, fiber := 𝟙 _ }
   naturality X Y g := by
     simp only [ι_obj, ι_map, Functor.comp_obj, Functor.comp_map]
@@ -3017,7 +3093,7 @@ def ιNatTrans {c d : C} (f : c ⟶ d) : F'.map f ⋙ ι c ⟶ ι d where
     unfold Category.toCategoryStruct
     unfold GrothendieckContraCat'
     unfold Cat.of Cat.str Bundled.of
-    simp
+    simp only [CategoryOp'.eq_1, CategoryOp'Inst.eq_1, CategoryOpQuivInst.eq_1]
     unfold GrothendieckContraInst'
     unfold comp
     apply ext
@@ -3027,19 +3103,22 @@ def ιNatTrans {c d : C} (f : c ⟶ d) : F'.map f ⋙ ι c ⟶ ι d where
     case w_fiber =>
       -- fiber component: involves eqToHom and functoriality
       simp only [Category.id_comp, Functor.map_id, Category.assoc]
-      change ((F'.map f).map g ≫ _) ≫ _ ≫ _ = (F'.map f).map (g ≫ _) ≫ _
+      change ((F'.map f).toFunctor.map g ≫ _) ≫ _ ≫ _ =
+        (F'.map f).toFunctor.map (g ≫ _) ≫ _
       rw [Functor.map_comp]
       rw [eqToHom_map]
       simp only [Category.assoc]
       simp
 
 variable (fib : ∀ c, F'.obj c ⥤ T)
-variable (hom : ∀ {c d : C} (f : c ⟶ d), F'.map f ⋙ fib c ⟶ fib d)
-variable (hom_id : ∀ c, hom (𝟙 c) = eqToHom (congrArg (· ⋙ fib c) (F'.map_id c)))
+variable (hom : ∀ {c d : C} (f : c ⟶ d), (F'.map f).toFunctor ⋙ fib c ⟶ fib d)
+variable (hom_id : ∀ c,
+  hom (𝟙 c) = eqToHom (congrArg (· ⋙ fib c) (congrArg Cat.Hom.toFunctor (F'.map_id c))))
 
 variable (hom_comp : ∀ {c d e : C} (f : c ⟶ d) (g : d ⟶ e),
-  hom (f ≫ g) = eqToHom (congrArg (· ⋙ fib c) (F'.map_comp g f)) ≫
-    Functor.whiskerLeft (F'.map g) (hom f) ≫ hom g)
+  hom (f ≫ g) =
+    eqToHom (congrArg (· ⋙ fib c) (congrArg Cat.Hom.toFunctor (F'.map_comp g f))) ≫
+    Functor.whiskerLeft (F'.map g).toFunctor (hom f) ≫ hom g)
 
 /--
 Construct a functor from the contravariant Grothendieck construction given
@@ -3069,8 +3148,8 @@ def functorFrom : GrothendieckContra' F' ⥤ T where
     congr 1
     -- The goal is now showing naturality of hom f.base
     -- Recognize (fib X.base).map ∘ (F'.map f.base).map as (F'.map f ⋙ fib X).map
-    change (fib X.base).map ((F'.map f.base).map g.fiber) ≫
-      (hom f.base).app ((F'.map g.base).obj Z.fiber) ≫ (hom g.base).app Z.fiber =
+    change (fib X.base).map ((F'.map f.base).toFunctor.map g.fiber) ≫
+      (hom f.base).app ((F'.map g.base).toFunctor.obj Z.fiber) ≫ (hom g.base).app Z.fiber =
       (hom f.base).app Y.fiber ≫ (fib Y.base).map g.fiber ≫ (hom g.base).app Z.fiber
     rw [← Functor.comp_map]
     -- Reassociate to separate the naturality square
@@ -3105,7 +3184,7 @@ def ιCompFunctorFrom (c : C) :
 Interaction between fiber inclusion and `map`.
 -/
 def ιCompMap {G' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}} (α : F' ⟶ G') (c : C) :
-    ι c ⋙ map α ≅ (α.app c) ⋙ ι c :=
+    ι c ⋙ map α ≅ (α.app c).toFunctor ⋙ ι c :=
   NatIso.ofComponents
     (fun _ => Iso.refl _)
     (fun f => by
@@ -3140,7 +3219,7 @@ The type of natural transformations for bundled `FunctorFromData`.
 For each `f : c ⟶ d`, a natural transformation `F'.map f ⋙ fib c ⟶ fib d`.
 -/
 abbrev FunctorFromDataHom (fib : FunctorFromDataFib (F' := F') (T := T)) :=
-  ∀ {c d : C} (f : c ⟶ d), F'.map f ⋙ fib c ⟶ fib d
+  ∀ {c d : C} (f : c ⟶ d), (F'.map f).toFunctor ⋙ fib c ⟶ fib d
 
 /--
 The identity coherence property for bundled `FunctorFromData`.
@@ -3148,7 +3227,8 @@ States that `hom (𝟙 c)` equals the canonical isomorphism from `F'.map_id`.
 -/
 abbrev FunctorFromDataHomId (fib : FunctorFromDataFib (F' := F') (T := T))
     (hom : FunctorFromDataHom (F' := F') fib) :=
-  ∀ c, hom (𝟙 c) = eqToHom (congrArg (· ⋙ fib c) (F'.map_id c))
+  ∀ c, hom (𝟙 c) =
+    eqToHom (congrArg (· ⋙ fib c) (congrArg Cat.Hom.toFunctor (F'.map_id c)))
 
 /--
 The composition coherence property for bundled `FunctorFromData`.
@@ -3158,8 +3238,8 @@ States that `hom (f ≫ g)` decomposes as the composition of whiskered `hom f`,
 abbrev FunctorFromDataHomComp (fib : FunctorFromDataFib (F' := F') (T := T))
     (hom : FunctorFromDataHom (F' := F') fib) :=
   ∀ {c d e : C} (f : c ⟶ d) (g : d ⟶ e), hom (f ≫ g) =
-    eqToHom (congrArg (· ⋙ fib c) (F'.map_comp g f)) ≫
-    Functor.whiskerLeft (F'.map g) (hom f) ≫ hom g
+    eqToHom (congrArg (· ⋙ fib c) (congrArg Cat.Hom.toFunctor (F'.map_comp g f))) ≫
+    Functor.whiskerLeft (F'.map g).toFunctor (hom f) ≫ hom g
 
 /--
 Bundled data for constructing a functor from the contravariant Grothendieck construction.
@@ -3203,9 +3283,9 @@ def ofFunctorFrom : FunctorFromData (F' := F') (T := T) where
   hom_id' c := by
     ext x
     simp only [Functor.whiskerRight_app, eqToHom_app, ιNatTrans, ι_obj, Functor.comp_obj]
-    have h_fmap_id : (F'.map (𝟙 c)).obj x = x :=
-      congrFun (congrArg Functor.obj (F'.map_id c)) x
-    have hsrc_eq : (⟨c, (F'.map (𝟙 c)).obj x⟩ : GrothendieckContra' F') = ⟨c, x⟩ := by
+    have h_fmap_id : (F'.map (𝟙 c)).toFunctor.obj x = x :=
+      congrFun (congrArg Functor.obj (congrArg Cat.Hom.toFunctor (F'.map_id c))) x
+    have hsrc_eq : (⟨c, (F'.map (𝟙 c)).toFunctor.obj x⟩ : GrothendieckContra' F') = ⟨c, x⟩ := by
       simp only [h_fmap_id]
     rw [← eqToHom_map H hsrc_eq]
     congr 1
@@ -3216,11 +3296,13 @@ def ofFunctorFrom : FunctorFromData (F' := F') (T := T) where
     simp only [NatTrans.comp_app, Functor.whiskerRight_app, Functor.whiskerLeft_app,
       eqToHom_app, ιNatTrans, ι_obj, Functor.comp_obj]
     let fg : c₁ ⟶ c₃ := f ≫ g
-    have heq_obj : (⟨c₁, (F'.map f).obj ((F'.map g).obj x)⟩ : GrothendieckContra' F') =
-        ⟨c₁, (F'.map fg).obj x⟩ := by
-      simp only [fg]
+    have heq_obj :
+        (⟨c₁, (F'.map f).toFunctor.obj ((F'.map g).toFunctor.obj x)⟩ :
+          GrothendieckContra' F') =
+        ⟨c₁, (F'.map fg).toFunctor.obj x⟩ := by
       congr 1
-      exact (congrFun (congrArg Functor.obj (F'.map_comp g f)) x).symm
+      exact (congrFun (congrArg Functor.obj
+        (congrArg Cat.Hom.toFunctor (F'.map_comp g f))) x).symm
     simp only [← H.map_comp]
     rw [← eqToHom_map H heq_obj.symm, ← H.map_comp]
     congr 1
@@ -3243,7 +3325,7 @@ theorem functorFromData_ofFunctorFrom : functorFromData (ofFunctorFrom H) = H :=
     rw [← H.map_comp]
     congr 1
     have w_base : (({ base := 𝟙 X.base, fiber := f.fiber ≫ eqToHom (ι_map_fiber X.base) } :
-        Hom X ((ι X.base).obj ((F'.map f.base).obj Y.fiber))) ≫
+        Hom X ((ι X.base).obj ((F'.map f.base).toFunctor.obj Y.fiber))) ≫
         (ιNatTrans f.base).app Y.fiber).base = f.base := by
       unfold CategoryStruct.comp Category.toCategoryStruct GrothendieckContraCat' Cat.of Cat.str
         Bundled.of GrothendieckContraInst' comp ιNatTrans
@@ -3252,10 +3334,11 @@ theorem functorFromData_ofFunctorFrom : functorFromData (ofFunctorFrom H) = H :=
     simp only [GrothendieckContraInst', comp_fiber, ιNatTrans, Category.assoc]
     -- Goal: f.fiber ≫ eqToHom _ ≫ (F'.map (𝟙 X.base)).map (𝟙 _) ≫ eqToHom _ ≫ eqToHom _ = f.fiber
     -- Use the fact that (F'.map (𝟙 X.base)).map (𝟙 _) = 𝟙 _
-    have h_map_id : (F'.map (𝟙 X.base)).map
-        (𝟙 ((F'.map f.base ⋙ ι X.base).obj Y.fiber).fiber) =
-        𝟙 ((F'.map (𝟙 X.base)).obj ((F'.map f.base ⋙ ι X.base).obj Y.fiber).fiber) :=
-      (F'.map (𝟙 X.base)).map_id _
+    have h_map_id : (F'.map (𝟙 X.base)).toFunctor.map
+        (𝟙 (((F'.map f.base).toFunctor ⋙ ι X.base).obj Y.fiber).fiber) =
+        𝟙 ((F'.map (𝟙 X.base)).toFunctor.obj
+          (((F'.map f.base).toFunctor ⋙ ι X.base).obj Y.fiber).fiber) :=
+      (F'.map (𝟙 X.base)).toFunctor.map_id _
     rw [h_map_id]
     -- Goal: f.fiber ≫ eqToHom A ≫ 𝟙 X ≫ eqToHom B = f.fiber
     -- Use convert to get: ... = f.fiber ≫ 𝟙 _
@@ -3296,7 +3379,7 @@ up to `eqToHom` coercions.
 theorem ofFunctorFrom_functorFromData_hom_app {c d : C} (f : c ⟶ d) (x : F'.obj d) :
     ((ofFunctorFrom (functorFromData data)).hom' f).app x =
     eqToHom (congrFun (congrArg Functor.obj
-      (congrFun (ofFunctorFrom_functorFromData_fib data) c)) ((F'.map f).obj x)) ≫
+      (congrFun (ofFunctorFrom_functorFromData_fib data) c)) ((F'.map f).toFunctor.obj x)) ≫
     (data.hom' f).app x ≫
     eqToHom (congrFun (congrArg Functor.obj
       (congrFun (ofFunctorFrom_functorFromData_fib data) d)) x).symm := by
@@ -3331,7 +3414,8 @@ F'.map f ⋙ dataG.fib' c --F'.map f ◁ fibNat c--> F'.map f ⋙ dataH.fib' c
 -/
 abbrev NatTransFromDataCoherence (fibNat : NatTransFromDataFib (F' := F') dataG dataH) :=
   ∀ {c d : C} (f : c ⟶ d),
-    Functor.whiskerLeft (F'.map f) (fibNat c) ≫ dataH.hom' f = dataG.hom' f ≫ fibNat d
+    Functor.whiskerLeft (F'.map f).toFunctor (fibNat c) ≫ dataH.hom' f =
+      dataG.hom' f ≫ fibNat d
 
 /--
 The data for a natural transformation between functors from the contravariant
@@ -3690,7 +3774,7 @@ Given a fiber function `fib`, a morphism function assigns to each morphism
 `g : e ⟶ e'` in `E` a morphism from the source fiber to the transported fiber.
 -/
 abbrev FunctorToHom (baseFunc : E ⥤ C) (fib : FunctorToFib baseFunc) :=
-  ∀ {e e' : E} (g : e ⟶ e'), fib e ⟶ (F'.map (baseFunc.map g)).obj (fib e')
+  ∀ {e e' : E} (g : e ⟶ e'), fib e ⟶ (F'.map (baseFunc.map g)).toFunctor.obj (fib e')
 
 
 /-! ### Internal Implementation Types
@@ -3705,7 +3789,7 @@ This equality is derived automatically from `baseFunc.map_id` and `F'.map_id`.
 -/
 abbrev FunctorToEqId (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) (baseFunc : E ⥤ C)
     (fib : FunctorToFib (F' := F') baseFunc) :=
-  ∀ e, fib e = (F'.map (baseFunc.map (𝟙 e))).obj (fib e)
+  ∀ e, fib e = (F'.map (baseFunc.map (𝟙 e))).toFunctor.obj (fib e)
 
 /--
 Derive the identity equality from functor laws.
@@ -3713,8 +3797,14 @@ Derive the identity equality from functor laws.
 lemma functorToEqIdProof (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) (baseFunc : E ⥤ C)
     (fib : FunctorToFib (F' := F') baseFunc) : FunctorToEqId F' baseFunc fib := by
   intro e
-  simp only [baseFunc.map_id]
-  exact (congrFun (congrArg Functor.obj (F'.map_id (baseFunc.obj e))) (fib e)).symm
+  have h1 : baseFunc.map (𝟙 e) = 𝟙 (baseFunc.obj e) := baseFunc.map_id e
+  have h2 : F'.map (𝟙 (baseFunc.obj e)) = 𝟙 (F'.obj (baseFunc.obj e)) :=
+    F'.map_id (baseFunc.obj e)
+  calc fib e = (𝟭 (F'.obj (baseFunc.obj e))).obj (fib e) := rfl
+    _ = (F'.map (𝟙 (baseFunc.obj e))).toFunctor.obj (fib e) := by
+        exact congrArg (·.toFunctor.obj (fib e)) h2.symm
+    _ = (F'.map (baseFunc.map (𝟙 e))).toFunctor.obj (fib e) := by
+        exact congrArg (fun g => (F'.map g).toFunctor.obj (fib e)) h1.symm
 
 /--
 The type of composition equality proofs for `GrothendieckContra'.functorTo`.
@@ -3723,8 +3813,9 @@ This equality is derived automatically from `baseFunc.map_comp` and `F'.map_comp
 abbrev FunctorToEqComp (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) (baseFunc : E ⥤ C)
     (fib : FunctorToFib (F' := F') baseFunc) :=
   ∀ {e e' e'' : E} (g : e ⟶ e') (h : e' ⟶ e''),
-    (F'.map (baseFunc.map g)).obj ((F'.map (baseFunc.map h)).obj (fib e'')) =
-    (F'.map (baseFunc.map (g ≫ h))).obj (fib e'')
+    (F'.map (baseFunc.map g)).toFunctor.obj
+      ((F'.map (baseFunc.map h)).toFunctor.obj (fib e'')) =
+    (F'.map (baseFunc.map (g ≫ h))).toFunctor.obj (fib e'')
 
 /--
 Derive the composition equality from functor laws.
@@ -3732,9 +3823,20 @@ Derive the composition equality from functor laws.
 lemma functorToEqCompProof (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) (baseFunc : E ⥤ C)
     (fib : FunctorToFib (F' := F') baseFunc) : FunctorToEqComp F' baseFunc fib := by
   intro e e' e'' g h
-  simp only [baseFunc.map_comp]
-  exact (congrFun (congrArg Functor.obj
-    (F'.map_comp (baseFunc.map h) (baseFunc.map g))) (fib e'')).symm
+  have h1 : baseFunc.map (g ≫ h) = baseFunc.map g ≫ baseFunc.map h := baseFunc.map_comp g h
+  have h2 : F'.map (baseFunc.map h ≫ baseFunc.map g) =
+      F'.map (baseFunc.map h) ≫ F'.map (baseFunc.map g) := by
+    have := @Functor.map_comp Cᵒᵖ' _ Cat.{v₂, u₂} _ F' (baseFunc.obj e'')
+      (baseFunc.obj e') (baseFunc.obj e) (baseFunc.map h) (baseFunc.map g)
+    simp only [op_comp_eq] at this
+    exact this
+  calc (F'.map (baseFunc.map g)).toFunctor.obj
+         ((F'.map (baseFunc.map h)).toFunctor.obj (fib e''))
+    = ((F'.map (baseFunc.map h) ≫ F'.map (baseFunc.map g))).toFunctor.obj (fib e'') := rfl
+    _ = (F'.map (baseFunc.map h ≫ baseFunc.map g)).toFunctor.obj (fib e'') := by
+        exact congrArg (·.toFunctor.obj (fib e'')) h2.symm
+    _ = (F'.map (baseFunc.map (g ≫ h))).toFunctor.obj (fib e'') := by
+        simp only [op_comp_eq, ← baseFunc.map_comp]
 
 /--
 The identity coherence property for `GrothendieckContra'.functorTo`.
@@ -3754,7 +3856,7 @@ abbrev FunctorToHomComp (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) (baseFunc : E ⥤ C
     (hom : FunctorToHom baseFunc fib) :=
   ∀ {e e' e'' : E} (g : e ⟶ e') (h : e' ⟶ e''),
     hom (g ≫ h) =
-      hom g ≫ (F'.map (baseFunc.map g)).map (hom h) ≫
+      hom g ≫ (F'.map (baseFunc.map g)).toFunctor.map (hom h) ≫
         eqToHom (functorToEqCompProof F' baseFunc fib g h)
 
 /--
@@ -3821,7 +3923,7 @@ def ofFunctor : FunctorToData F' (E := E) where
   hom_id e := by
     change (G.map (𝟙 e)).fiber = eqToHom _
     have h : G.map (𝟙 e) = id (G.obj e) := G.map_id e
-    rw [congr h, id_fiber, eqToHom_trans]
+    rw [congr h, id_fiber_val, eqToHom_trans]
   hom_comp g h := by
     change (G.map (g ≫ h)).fiber = _ ≫ _ ≫ eqToHom _
     have hcomp : G.map (g ≫ h) = comp (G.map g) (G.map h) := G.map_comp g h
@@ -3890,7 +3992,7 @@ The type of morphism functions for a contravariant section.
 In the contravariant case, morphisms go from source fiber to transported target fiber.
 -/
 abbrev SectionHomContra (fib : SectionFibContra F') :=
-  ∀ {c c' : C} (f : c ⟶ c'), fib c ⟶ (F'.map f).obj (fib c')
+  ∀ {c c' : C} (f : c ⟶ c'), fib c ⟶ (F'.map f).toFunctor.obj (fib c')
 
 /--
 The identity coherence condition for contravariant sections.
@@ -3904,7 +4006,7 @@ The composition coherence condition for contravariant sections.
 abbrev SectionHomCompContra (fib : SectionFibContra F') (hom : SectionHomContra fib) :=
   ∀ {c c' c'' : C} (f : c ⟶ c') (g : c' ⟶ c''),
     hom (f ≫ g) =
-      hom f ≫ (F'.map f).map (hom g) ≫
+      hom f ≫ (F'.map f).toFunctor.map (hom g) ≫
         eqToHom (functorToEqCompProof F' (𝟭 C) fib f g)
 
 variable (F')
@@ -4066,7 +4168,7 @@ fiber to the transported target fiber.
 abbrev NatTransToFibMor (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂})
     (dataG dataH : FunctorToData F' (E := E))
     (baseNat : dataG.baseFunc ⟶ dataH.baseFunc) :=
-  ∀ e, dataG.fib e ⟶ (F'.map (baseNat.app e)).obj (dataH.fib e)
+  ∀ e, dataG.fib e ⟶ (F'.map (baseNat.app e)).toFunctor.obj (dataH.fib e)
 
 /--
 The type of base equality proofs for `natTransTo` in the contravariant case.
@@ -4081,7 +4183,7 @@ abbrev NatTransToEqBase (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂})
       baseNat.app e ≫ dataH.baseFunc.map f
     let comp2 : dataG.baseFunc.obj e ⟶ dataH.baseFunc.obj e' :=
       dataG.baseFunc.map f ≫ baseNat.app e'
-    (F'.map comp1).obj (dataH.fib e') = (F'.map comp2).obj (dataH.fib e')
+    (F'.map comp1).toFunctor.obj (dataH.fib e') = (F'.map comp2).toFunctor.obj (dataH.fib e')
 
 /--
 The fiber naturality condition for `natTransTo` in the contravariant case.
@@ -4096,14 +4198,17 @@ abbrev NatTransToFibNat (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂})
     (eq_base : NatTransToEqBase F' dataG dataH baseNat) :=
   ∀ {e e' : E} (f : e ⟶ e'),
     dataG.hom f ≫
-      (F'.map (dataG.baseFunc.map f)).map (fibMor e') ≫
+      (F'.map (dataG.baseFunc.map f)).toFunctor.map (fibMor e') ≫
       eqToHom (Functor.congr_obj
-        (F'.map_comp (baseNat.app e') (dataG.baseFunc.map f)).symm (dataH.fib e')) =
+        (congrArg Cat.Hom.toFunctor
+          (F'.map_comp (baseNat.app e') (dataG.baseFunc.map f)).symm)
+        (dataH.fib e')) =
     fibMor e ≫
-      (F'.map (baseNat.app e)).map (dataH.hom f) ≫
+      (F'.map (baseNat.app e)).toFunctor.map (dataH.hom f) ≫
       eqToHom ((Functor.congr_obj
-        (F'.map_comp (dataH.baseFunc.map f) (baseNat.app e)).symm (dataH.fib e')).trans
-        (eq_base f))
+        (congrArg Cat.Hom.toFunctor
+          (F'.map_comp (dataH.baseFunc.map f) (baseNat.app e)).symm)
+        (dataH.fib e')).trans (eq_base f))
 
 /--
 The data required to construct a natural transformation between functors
@@ -4170,7 +4275,8 @@ def ofNatTrans : NatTransToData F' dataG dataH where
     simp only [functorTo] at h
     have hbase := congrArg Hom.base h
     simp only [GrothendieckContraInst', comp_base] at hbase
-    exact Functor.congr_obj (congrArg F'.map hbase.symm) (dataH.fib e')
+    exact Functor.congr_obj (congrArg (fun x => (F'.map x).toFunctor) hbase.symm)
+      (dataH.fib e')
   fibNat {e e'} f := by
     simp only [ofNatTransBaseNat, functorTo]
     have h := α.naturality f
@@ -4280,8 +4386,8 @@ Categorical isomorphism between `FunctorToData F'` and the functor category
 -/
 def functorToDataIsoCat :
     FunctorToData F' (E := E) ≅Cat (E ⥤ GrothendieckContra' F') where
-  hom := functorToDataToFunctorCat
-  inv := functorCatToFunctorToData
+  hom := functorToDataToFunctorCat.toCatHom
+  inv := functorCatToFunctorToData.toCatHom
   hom_inv_id := rfl
   inv_hom_id := rfl
 
@@ -4332,7 +4438,8 @@ source fiber to `(fibFib c').obj ((G.map f).obj x)` in the destination fiber.
 abbrev FunctorBetweenFibHomCrossApp (baseFib : FunctorBetweenBaseFib (C := C) (D := D))
     (fibFib : FunctorBetweenFibFib G F baseFib) :=
   ∀ {c c' : C} (f : c ⟶ c') (x : G.obj c),
-    (F.map (baseFib.map f)).obj ((fibFib c).obj x) ⟶ (fibFib c').obj ((G.map f).obj x)
+    (F.map (baseFib.map f)).toFunctor.obj ((fibFib c).obj x) ⟶
+      (fibFib c').obj ((G.map f).toFunctor.obj x)
 
 /--
 The naturality condition for cross-fiber morphisms: for each `f : c ⟶ c'` and
@@ -4342,8 +4449,8 @@ abbrev FunctorBetweenFibHomCrossNat (baseFib : FunctorBetweenBaseFib (C := C) (D
     (fibFib : FunctorBetweenFibFib G F baseFib)
     (fibHomCrossApp : FunctorBetweenFibHomCrossApp G F baseFib fibFib) :=
   ∀ {c c' : C} (f : c ⟶ c') {x y : G.obj c} (g : x ⟶ y),
-    (F.map (baseFib.map f)).map ((fibFib c).map g) ≫ fibHomCrossApp f y =
-    fibHomCrossApp f x ≫ (fibFib c').map ((G.map f).map g)
+    (F.map (baseFib.map f)).toFunctor.map ((fibFib c).map g) ≫ fibHomCrossApp f y =
+    fibHomCrossApp f x ≫ (fibFib c').map ((G.map f).toFunctor.map g)
 
 /--
 The equality proof for identity morphisms in the target Grothendieck.
@@ -4353,8 +4460,8 @@ States that `(F.map (baseFib.map (𝟙 c))).obj ((fibFib c).obj x)` equals
 abbrev FunctorBetweenBaseHomEqId (baseFib : FunctorBetweenBaseFib (C := C) (D := D))
     (fibFib : FunctorBetweenFibFib G F baseFib) :=
   ∀ (c : C) (x : G.obj c),
-    (F.map (baseFib.map (𝟙 c))).obj ((fibFib c).obj x) =
-      (fibFib c).obj ((G.map (𝟙 c)).obj x)
+    (F.map (baseFib.map (𝟙 c))).toFunctor.obj ((fibFib c).obj x) =
+      (fibFib c).obj ((G.map (𝟙 c)).toFunctor.obj x)
 
 /--
 Derive the identity equality from functor laws.
@@ -4375,9 +4482,9 @@ the morphisms sequentially.
 abbrev FunctorBetweenBaseHomEqComp (baseFib : FunctorBetweenBaseFib (C := C) (D := D))
     (fibFib : FunctorBetweenFibFib G F baseFib) :=
   ∀ {c c' c'' : C} (f : c ⟶ c') (g : c' ⟶ c'') (x : G.obj c),
-    (F.map (baseFib.map (f ≫ g))).obj ((fibFib c).obj x) =
-    (F.map (baseFib.map g)).obj
-      ((F.map (baseFib.map f)).obj ((fibFib c).obj x))
+    (F.map (baseFib.map (f ≫ g))).toFunctor.obj ((fibFib c).obj x) =
+    (F.map (baseFib.map g)).toFunctor.obj
+      ((F.map (baseFib.map f)).toFunctor.obj ((fibFib c).obj x))
 
 /--
 Derive the composition equality from functor laws.
@@ -4389,7 +4496,8 @@ lemma functorBetweenBaseHomEqCompProof
   intro c c' c'' f g x
   simp only [baseFib.map_comp]
   exact congrFun (congrArg Functor.obj
-    (F.map_comp (baseFib.map f) (baseFib.map g))) ((fibFib c).obj x)
+    (congrArg (fun x => x.toFunctor) (F.map_comp (baseFib.map f) (baseFib.map g))))
+    ((fibFib c).obj x)
 
 /--
 The identity coherence: `fibHomCrossApp (𝟙 c) x` equals the derived eqToHom.
@@ -4408,8 +4516,8 @@ This comes from `G.map_comp`.
 abbrev FunctorBetweenGMapCompEq (baseFib : FunctorBetweenBaseFib (C := C) (D := D))
     (fibFib : FunctorBetweenFibFib G F baseFib) :=
   ∀ {c c' c'' : C} (f : c ⟶ c') (g : c' ⟶ c'') (x : G.obj c),
-    (fibFib c'').obj ((G.map g).obj ((G.map f).obj x)) =
-    (fibFib c'').obj ((G.map (f ≫ g)).obj x)
+    (fibFib c'').obj ((G.map g).toFunctor.obj ((G.map f).toFunctor.obj x)) =
+    (fibFib c'').obj ((G.map (f ≫ g)).toFunctor.obj x)
 
 /--
 Derive the G.map_comp equality from functor laws.
@@ -4420,7 +4528,8 @@ lemma functorBetweenGMapCompEqProof
     FunctorBetweenGMapCompEq G F baseFib fibFib := by
   intro c c' c'' f g x
   exact congrArg (fibFib c'').obj
-    (congrFun (congrArg Functor.obj (G.map_comp f g).symm) x)
+    (congrFun (congrArg Functor.obj
+      (congrArg (fun x => x.toFunctor) (G.map_comp f g)).symm) x)
 
 /--
 The composition coherence: `fibHomCrossApp (f ≫ g) x` decomposes correctly.
@@ -4431,8 +4540,8 @@ abbrev FunctorBetweenBaseHomComp (baseFib : FunctorBetweenBaseFib (C := C) (D :=
   ∀ {c c' c'' : C} (f : c ⟶ c') (g : c' ⟶ c'') (x : G.obj c),
     fibHomCrossApp (f ≫ g) x =
     eqToHom (functorBetweenBaseHomEqCompProof G F baseFib fibFib f g x) ≫
-    (F.map (baseFib.map g)).map (fibHomCrossApp f x) ≫
-    fibHomCrossApp g ((G.map f).obj x) ≫
+    (F.map (baseFib.map g)).toFunctor.map (fibHomCrossApp f x) ≫
+    fibHomCrossApp g ((G.map f).toFunctor.obj x) ≫
     eqToHom (functorBetweenGMapCompEqProof G F baseFib fibFib f g x)
 
 /--
@@ -4489,11 +4598,11 @@ The equality proof for `functorBetweenInnerHom`. Since the base functor is const
 (mapping everything to `𝟙`), `F.map (𝟙 d)` acts as the identity on objects.
 -/
 lemma functorBetweenInnerHom_eq (c : C) (x : G.obj c) :
-    (F.map ((functorBetweenInnerBaseFunc G F data c).map (𝟙 x))).obj
+    (F.map ((functorBetweenInnerBaseFunc G F data c).map (𝟙 x))).toFunctor.obj
       (functorBetweenInnerFib G F data c x) =
     functorBetweenInnerFib G F data c x := by
   simp only [functorBetweenInnerBaseFunc, functorBetweenInnerFib, Functor.const_obj_map]
-  exact congrFun (congrArg Functor.obj (F.map_id _)) _
+  exact congrFun (congrArg Functor.obj (congrArg Cat.Hom.toFunctor (F.map_id _))) _
 
 /--
 The fiber morphisms for the inner FunctorTo construction.
@@ -4501,7 +4610,7 @@ Since the base functor is constant, the transport is trivial and
 the fiber morphism is just `(fibFib c).map φ`.
 -/
 def functorBetweenInnerHom (c : C) {x y : G.obj c} (φ : x ⟶ y) :
-    (F.map ((functorBetweenInnerBaseFunc G F data c).map φ)).obj
+    (F.map ((functorBetweenInnerBaseFunc G F data c).map φ)).toFunctor.obj
       (functorBetweenInnerFib G F data c x) ⟶
     functorBetweenInnerFib G F data c y :=
   eqToHom (functorBetweenInnerHom_eq G F data c x) ≫
@@ -4538,12 +4647,13 @@ theorem functorBetweenInnerHom_comp (c : C) {x y z : G.obj c}
       eqToHom (Grothendieck.functorToEqCompProof F
         (functorBetweenInnerBaseFunc G F data c)
         (functorBetweenInnerFib G F data c) φ ψ) ≫
-      (F.map ((functorBetweenInnerBaseFunc G F data c).map ψ)).map
+      (F.map ((functorBetweenInnerBaseFunc G F data c).map ψ)).toFunctor.map
         (functorBetweenInnerHom G F data c φ) ≫
       functorBetweenInnerHom G F data c ψ := by
   simp only [functorBetweenInnerHom, functorBetweenInnerBaseFunc, functorBetweenInnerFib,
     Functor.const_obj_obj, Functor.const_obj_map, (data.fibFib c).map_comp]
-  have hFid : F.map (𝟙 (data.baseFib.obj c)) = 𝟭 (F.obj (data.baseFib.obj c)) := F.map_id _
+  have hFid : (F.map (𝟙 (data.baseFib.obj c))).toFunctor =
+      𝟭 (F.obj (data.baseFib.obj c)) := congrArg Cat.Hom.toFunctor (F.map_id _)
   rw [functor_map_of_eq_id hFid]
   cat_disch
 
@@ -4552,11 +4662,12 @@ The proof term from `functorBetweenInnerHom` can be expressed explicitly.
 Since the base functor is constant, `(F.map (𝟙 d)).obj x = x`.
 -/
 lemma functorBetweenInnerHom_proof (c : C) (x : G.obj c) :
-    (F.map ((functorBetweenInnerBaseFunc G F data c).map (𝟙 x))).obj
+    (F.map ((functorBetweenInnerBaseFunc G F data c).map (𝟙 x))).toFunctor.obj
       (functorBetweenInnerFib G F data c x) =
     functorBetweenInnerFib G F data c x := by
   simp only [functorBetweenInnerBaseFunc, Functor.const_obj_map]
-  have hFid : F.map (𝟙 (data.baseFib.obj c)) = 𝟭 (F.obj (data.baseFib.obj c)) := F.map_id _
+  have hFid : (F.map (𝟙 (data.baseFib.obj c))).toFunctor =
+      𝟭 (F.obj (data.baseFib.obj c)) := congrArg Cat.Hom.toFunctor (F.map_id _)
   simp only [hFid, Functor.id_obj]
 
 /--
@@ -4566,37 +4677,43 @@ This is because `(F.map (𝟙 d)).obj x = (𝟭 _).obj x = x`.
 @[simp]
 lemma eqToHom_functorBetweenInnerHom_eq (c : C) (x : G.obj c) :
     eqToHom (functorBetweenInnerHom_eq G F data c x) =
-    eqToHom (congrFun (congrArg Functor.obj (F.map_id (data.baseFib.obj c))) _) := by
+    eqToHom (congrFun (congrArg Functor.obj
+      (congrArg Cat.Hom.toFunctor (F.map_id (data.baseFib.obj c)))) _) := by
   simp only [functorBetweenInnerBaseFunc, functorBetweenInnerFib, Functor.const_obj_map]
 
 /--
-Mapping `eqToHom (functorBetweenInnerHom_eq ...)` through `(F.map g).map` yields an `eqToHom`.
+Mapping `eqToHom (functorBetweenInnerHom_eq ...)` through `(F.map g).toFunctor.map`
+yields an `eqToHom`.
 -/
 lemma functor_map_eqToHom_functorBetweenInnerHom_eq {c : C} (x : G.obj c)
     {d : D} (g : data.baseFib.obj c ⟶ d) :
-    (F.map g).map (eqToHom (functorBetweenInnerHom_eq G F data c x)) =
-    eqToHom (congrArg (F.map g).obj (functorBetweenInnerHom_eq G F data c x)) := by
-  exact functor_map_eqToHom (F.map g) (functorBetweenInnerHom_eq G F data c x)
+    (F.map g).toFunctor.map (eqToHom (functorBetweenInnerHom_eq G F data c x)) =
+    eqToHom (congrArg (F.map g).toFunctor.obj
+      (functorBetweenInnerHom_eq G F data c x)) := by
+  exact functor_map_eqToHom (F.map g).toFunctor (functorBetweenInnerHom_eq G F data c x)
 
 /--
-The equality `functorBetweenInnerHom_eq` becomes reflexive after applying `(F.map g).obj`.
+The equality `functorBetweenInnerHom_eq` becomes reflexive after applying
+`(F.map g).toFunctor.obj`.
 -/
 lemma functorBetweenInnerHom_eq_transport {c : C} (x : G.obj c)
     {d : D} (g : data.baseFib.obj c ⟶ d) :
-    (F.map g).obj ((F.map (𝟙 (data.baseFib.obj c))).obj ((data.fibFib c).obj x)) =
-    (F.map g).obj ((data.fibFib c).obj x) := by
-  rw [F.map_id]
-  rfl
+    (F.map g).toFunctor.obj ((F.map (𝟙 (data.baseFib.obj c))).toFunctor.obj
+      ((data.fibFib c).obj x)) =
+    (F.map g).toFunctor.obj ((data.fibFib c).obj x) := by
+  have h : (F.map (𝟙 (data.baseFib.obj c))).toFunctor = 𝟭 _ :=
+    congrArg Cat.Hom.toFunctor (F.map_id _)
+  simp only [h, Functor.id_obj]
 
 /--
-Transport of `functorBetweenInnerHom` through `(F.map g).map` relates to
-the underlying `(data.fibFib c).map φ` via `eqToHom`.
+Transport of `functorBetweenInnerHom` through `(F.map g).toFunctor.map` relates to
+the underlying `(data.fibFib c).toFunctor.map φ` via `eqToHom`.
 -/
 lemma functorBetweenInnerHom_transport {c : C} {x y : G.obj c} (φ : x ⟶ y)
     {d : D} (g : data.baseFib.obj c ⟶ d) :
-    (F.map g).map (functorBetweenInnerHom G F data c φ) =
+    (F.map g).toFunctor.map (functorBetweenInnerHom G F data c φ) =
     eqToHom (functorBetweenInnerHom_eq_transport G F data x g) ≫
-      (F.map g).map ((data.fibFib c).map φ) := by
+      (F.map g).toFunctor.map ((data.fibFib c).map φ) := by
   simp only [functorBetweenInnerHom, Functor.map_comp]
   rw [functor_map_eqToHom_functorBetweenInnerHom_eq]
 
@@ -4632,7 +4749,7 @@ in `Grothendieck F`.
 -/
 def functorBetweenHomNatApp {c c' : C} (f : c ⟶ c') (x : G.obj c) :
     (functorBetweenFibFunc G F data c).obj x ⟶
-    (functorBetweenFibFunc G F data c').obj ((G.map f).obj x) :=
+    (functorBetweenFibFunc G F data c').obj ((G.map f).toFunctor.obj x) :=
   ⟨data.baseFib.map f, data.fibHomCrossApp f x⟩
 
 /--
@@ -4644,7 +4761,7 @@ theorem functorBetweenHomNat_naturality {c c' : C} (f : c ⟶ c')
     (functorBetweenFibFunc G F data c).map φ ≫
       functorBetweenHomNatApp G F data f y =
     functorBetweenHomNatApp G F data f x ≫
-      (functorBetweenFibFunc G F data c').map ((G.map f).map φ) := by
+      (functorBetweenFibFunc G F data c').map ((G.map f).toFunctor.map φ) := by
   refine Grothendieck.ext _ _ ?_ ?_
   · simp only [functorBetweenFibFunc, functorBetweenHomNatApp,
       Grothendieck.functorTo, Grothendieck.comp_base,
@@ -4657,7 +4774,8 @@ theorem functorBetweenHomNat_naturality {c c' : C} (f : c ⟶ c')
       functorBetweenInnerFib, Functor.const_obj_obj, Functor.const_obj_map,
       functorBetweenInnerHom]
     simp only [Functor.map_comp, functor_map_eqToHom_functorBetweenInnerHom_eq]
-    have hFmapId : F.map (𝟙 (data.baseFib.obj c')) = 𝟭 _ := F.map_id _
+    have hFmapId : (F.map (𝟙 (data.baseFib.obj c'))).toFunctor = 𝟭 _ := by
+      simp only [F.map_id, Cat.id_eq_id]
     rw [functor_map_of_eq_id hFmapId]
     have hNat := data.fibHomCrossNat f φ
     cat_disch
@@ -4668,7 +4786,7 @@ for the outer FunctorFrom construction.
 -/
 def functorBetweenHomNat {c c' : C} (f : c ⟶ c') :
     functorBetweenFibFunc G F data c ⟶
-    G.map f ⋙ functorBetweenFibFunc G F data c' where
+    (G.map f).toFunctor ⋙ functorBetweenFibFunc G F data c' where
   app := functorBetweenHomNatApp G F data f
   naturality _ _ φ := functorBetweenHomNat_naturality G F data f φ
 
@@ -4696,7 +4814,7 @@ the same base, the result is the identity functor.
 -/
 lemma map_base_eqToHom_same_base {d : D} {x y : F.obj d}
     (h : (⟨d, x⟩ : Grothendieck F) = ⟨d, y⟩) :
-    F.map (eqToHom h).base = 𝟭 (F.obj d) := by
+    (F.map (eqToHom h).base).toFunctor = 𝟭 (F.obj d) := by
   simp only [Grothendieck.base_eqToHom, eqToHom_refl, F.map_id, Cat.id_eq_id]
 
 /--
@@ -4784,8 +4902,8 @@ abbrev NatTransBetweenCoherence
     (fibHomCrossAppG : FunctorBetweenFibHomCrossApp G F baseFib fibFibG)
     (fibHomCrossAppH : FunctorBetweenFibHomCrossApp G F baseFib fibFibH) :=
   ∀ {c c' : C} (f : c ⟶ c') (x : G.obj c),
-    (F.map (baseFib.map f)).map (fibNatApp c x) ≫ fibHomCrossAppH f x =
-    fibHomCrossAppG f x ≫ fibNatApp c' ((G.map f).obj x)
+    (F.map (baseFib.map f)).toFunctor.map (fibNatApp c x) ≫ fibHomCrossAppH f x =
+    fibHomCrossAppG f x ≫ fibNatApp c' ((G.map f).toFunctor.obj x)
 
 /--
 Bundled data for a natural transformation between functors
@@ -4851,8 +4969,8 @@ abbrev FunctorBetweenContraFibHomCrossApp
     (baseFib : FunctorBetweenContraBaseFib (C := C) (D := D))
     (fibFib : FunctorBetweenContraFibFib G' F' baseFib) :=
   ∀ {c c' : C} (f : c ⟶ c') (x' : G'.obj c'),
-    (fibFib c).obj ((G'.map f).obj x') ⟶
-    (F'.map (baseFib.map f)).obj ((fibFib c').obj x')
+    (fibFib c).obj ((G'.map f).toFunctor.obj x') ⟶
+    (F'.map (baseFib.map f)).toFunctor.obj ((fibFib c').obj x')
 
 /--
 The naturality condition for cross-fiber morphisms in the contravariant case.
@@ -4864,8 +4982,8 @@ abbrev FunctorBetweenContraFibHomCrossNat
     (fibFib : FunctorBetweenContraFibFib G' F' baseFib)
     (fibHomCrossApp : FunctorBetweenContraFibHomCrossApp G' F' baseFib fibFib) :=
   ∀ {c c' : C} (f : c ⟶ c') {x' y' : G'.obj c'} (g : x' ⟶ y'),
-    (fibFib c).map ((G'.map f).map g) ≫ fibHomCrossApp f y' =
-    fibHomCrossApp f x' ≫ (F'.map (baseFib.map f)).map ((fibFib c').map g)
+    (fibFib c).map ((G'.map f).toFunctor.map g) ≫ fibHomCrossApp f y' =
+    fibHomCrossApp f x' ≫ (F'.map (baseFib.map f)).toFunctor.map ((fibFib c').map g)
 
 /--
 The equality proof for identity morphisms in the contravariant Grothendieck.
@@ -4877,8 +4995,8 @@ abbrev FunctorBetweenContraBaseHomEqId
     (baseFib : FunctorBetweenContraBaseFib (C := C) (D := D))
     (fibFib : FunctorBetweenContraFibFib G' F' baseFib) :=
   ∀ (c : C) (x : G'.obj c),
-    (fibFib c).obj ((G'.map (𝟙 c)).obj x) =
-    (F'.map (baseFib.map (𝟙 c))).obj ((fibFib c).obj x)
+    (fibFib c).obj ((G'.map (𝟙 c)).toFunctor.obj x) =
+    (F'.map (baseFib.map (𝟙 c))).toFunctor.obj ((fibFib c).obj x)
 
 /--
 Derive the identity equality from functor laws.
@@ -4907,9 +5025,9 @@ abbrev FunctorBetweenContraBaseHomEqComp
     (baseFib : FunctorBetweenContraBaseFib (C := C) (D := D))
     (fibFib : FunctorBetweenContraFibFib G' F' baseFib) :=
   ∀ {c c' c'' : C} (f : c ⟶ c') (g : c' ⟶ c'') (x'' : G'.obj c''),
-    (F'.map (baseFib.map f)).obj
-      ((F'.map (baseFib.map g)).obj ((fibFib c'').obj x'')) =
-    (F'.map (baseFib.map (f ≫ g))).obj ((fibFib c'').obj x'')
+    (F'.map (baseFib.map f)).toFunctor.obj
+      ((F'.map (baseFib.map g)).toFunctor.obj ((fibFib c'').obj x'')) =
+    (F'.map (baseFib.map (f ≫ g))).toFunctor.obj ((fibFib c'').obj x'')
 
 /--
 Derive the composition equality from functor laws.
@@ -4921,8 +5039,8 @@ lemma functorBetweenContraBaseHomEqCompProof
     FunctorBetweenContraBaseHomEqComp G' F' baseFib fibFib := by
   intro c c' c'' f g x''
   simp only [baseFib.map_comp]
-  exact (congrFun (congrArg Functor.obj
-    (F'.map_comp (baseFib.map g) (baseFib.map f))) ((fibFib c'').obj x'')).symm
+  have h := congrArg Cat.Hom.toFunctor (F'.map_comp (baseFib.map g) (baseFib.map f))
+  exact (congrFun (congrArg Functor.obj h) ((fibFib c'').obj x'')).symm
 
 /--
 The equality proof relating `(G'.map f).obj ((G'.map g).obj x'')` to the
@@ -4939,8 +5057,8 @@ abbrev FunctorBetweenContraGMapCompEq
     (baseFib : FunctorBetweenContraBaseFib (C := C) (D := D))
     (fibFib : FunctorBetweenContraFibFib G' F' baseFib) :=
   ∀ {c c' c'' : C} (f : c ⟶ c') (g : c' ⟶ c'') (x'' : G'.obj c''),
-    (fibFib c).obj ((G'.map f).obj ((G'.map g).obj x'')) =
-    (fibFib c).obj ((G'.map (@CategoryStruct.comp C _ c c' c'' f g)).obj x'')
+    (fibFib c).obj ((G'.map f).toFunctor.obj ((G'.map g).toFunctor.obj x'')) =
+    (fibFib c).obj ((G'.map (@CategoryStruct.comp C _ c c' c'' f g)).toFunctor.obj x'')
 
 /--
 Derive the G'.map_comp equality from functor laws.
@@ -4951,8 +5069,8 @@ lemma functorBetweenContraGMapCompEqProof
     (fibFib : FunctorBetweenContraFibFib G' F' baseFib) :
     FunctorBetweenContraGMapCompEq G' F' baseFib fibFib := by
   intro c c' c'' f g x''
-  exact congrArg (fibFib c).obj
-    (congrFun (congrArg Functor.obj (G'.map_comp g f)) x'').symm
+  have h := congrArg Cat.Hom.toFunctor (G'.map_comp g f)
+  exact congrArg (fibFib c).obj (congrFun (congrArg Functor.obj h) x'').symm
 
 /--
 The identity coherence: `fibHomCrossApp (𝟙 c) x` equals the derived eqToHom.
@@ -4982,8 +5100,8 @@ abbrev FunctorBetweenContraBaseHomComp
   ∀ {c c' c'' : C} (f : c ⟶ c') (g : c' ⟶ c'') (x'' : G'.obj c''),
     eqToHom (functorBetweenContraGMapCompEqProof G' F' baseFib fibFib f g x'') ≫
       fibHomCrossApp (@CategoryStruct.comp C _ c c' c'' f g) x'' =
-    fibHomCrossApp f ((G'.map g).obj x'') ≫
-    (F'.map (baseFib.map f)).map (fibHomCrossApp g x'') ≫
+    fibHomCrossApp f ((G'.map g).toFunctor.obj x'') ≫
+    (F'.map (baseFib.map f)).toFunctor.map (fibHomCrossApp g x'') ≫
     eqToHom (functorBetweenContraBaseHomEqCompProof G' F' baseFib fibFib f g x'')
 
 /--
@@ -5070,8 +5188,8 @@ abbrev NatTransBetweenContraCoherence
     (fibHomCrossAppG : FunctorBetweenContraFibHomCrossApp G' F' baseFib fibFibG)
     (fibHomCrossAppH : FunctorBetweenContraFibHomCrossApp G' F' baseFib fibFibH) :=
   ∀ {c c' : C} (f : c ⟶ c') (x' : G'.obj c'),
-    fibHomCrossAppG f x' ≫ (F'.map (baseFib.map f)).map (fibNatApp c' x') =
-    fibNatApp c ((G'.map f).obj x') ≫ fibHomCrossAppH f x'
+    fibHomCrossAppG f x' ≫ (F'.map (baseFib.map f)).toFunctor.map (fibNatApp c' x') =
+    fibNatApp c ((G'.map f).toFunctor.obj x') ≫ fibHomCrossAppH f x'
 
 /--
 Bundled data for a natural transformation between functors
@@ -5157,7 +5275,8 @@ to nLab's `F ⇒ G`.)
 -/
 abbrev LaxNatTransLaxApp :=
   ∀ {c c' : C} (f : c ⟶ c') (x : G.obj c),
-    (F.map f).obj ((app c).obj x) ⟶ (app c').obj ((G.map f).obj x)
+    (F.map f).toFunctor.obj ((app c).obj x) ⟶
+    (app c').obj ((G.map f).toFunctor.obj x)
 
 variable (laxApp : LaxNatTransLaxApp app)
 
@@ -5167,8 +5286,8 @@ the appropriate square commutes.
 -/
 abbrev LaxNatTransLaxNat :=
   ∀ {c c' : C} (f : c ⟶ c') {x y : G.obj c} (φ : x ⟶ y),
-    (F.map f).map ((app c).map φ) ≫ laxApp f y =
-    laxApp f x ≫ (app c').map ((G.map f).map φ)
+    (F.map f).toFunctor.map ((app c).map φ) ≫ laxApp f y =
+    laxApp f x ≫ (app c').map ((G.map f).toFunctor.map φ)
 
 /--
 Equality proof for identity laxity. States that
@@ -5176,14 +5295,19 @@ Equality proof for identity laxity. States that
 -/
 abbrev LaxNatTransIdEq :=
   ∀ (c : C) (x : G.obj c),
-    (F.map (𝟙 c)).obj ((app c).obj x) = (app c).obj ((G.map (𝟙 c)).obj x)
+    (F.map (𝟙 c)).toFunctor.obj ((app c).obj x) =
+    (app c).obj ((G.map (𝟙 c)).toFunctor.obj x)
 
 /--
 Derive the identity equality from functor laws.
 -/
 lemma laxNatTransIdEqProof : LaxNatTransIdEq app := by
   intro c x
-  simp only [F.map_id, G.map_id, Cat.id_eq_id, Functor.id_obj]
+  have hF : (F.map (𝟙 c)).toFunctor = 𝟭 _ :=
+    congrArg Cat.Hom.toFunctor (F.map_id c) |>.trans (Cat.id_eq_id (F.obj c))
+  have hG : (G.map (𝟙 c)).toFunctor = 𝟭 _ :=
+    congrArg Cat.Hom.toFunctor (G.map_id c) |>.trans (Cat.id_eq_id (G.obj c))
+  simp only [hF, hG, Functor.id_obj]
 
 /--
 Identity coherence: `laxApp (𝟙 c) x` equals the canonical eqToHom.
@@ -5197,31 +5321,32 @@ Equality proof for composition laxity.
 -/
 abbrev LaxNatTransCompEq :=
   ∀ {c c' c'' : C} (f : c ⟶ c') (g : c' ⟶ c'') (x : G.obj c),
-    (F.map (f ≫ g)).obj ((app c).obj x) =
-    (F.map g).obj ((F.map f).obj ((app c).obj x))
+    (F.map (f ≫ g)).toFunctor.obj ((app c).obj x) =
+    (F.map g).toFunctor.obj ((F.map f).toFunctor.obj ((app c).obj x))
 
 /--
 Derive the composition equality from functor laws.
 -/
 lemma laxNatTransCompEqProof : LaxNatTransCompEq app := by
   intro c c' c'' f g x
-  exact congrFun (congrArg Functor.obj (F.map_comp f g)) ((app c).obj x)
+  have h := congrArg Cat.Hom.toFunctor (F.map_comp f g)
+  exact congrFun (congrArg Functor.obj h) ((app c).obj x)
 
 /--
 Equality for the right side of composition coherence.
 -/
 abbrev LaxNatTransCompEqRight :=
   ∀ {c c' c'' : C} (f : c ⟶ c') (g : c' ⟶ c'') (x : G.obj c),
-    (app c'').obj ((G.map g).obj ((G.map f).obj x)) =
-    (app c'').obj ((G.map (f ≫ g)).obj x)
+    (app c'').obj ((G.map g).toFunctor.obj ((G.map f).toFunctor.obj x)) =
+    (app c'').obj ((G.map (f ≫ g)).toFunctor.obj x)
 
 /--
 Derive the right composition equality from functor laws.
 -/
 lemma laxNatTransCompEqRightProof : LaxNatTransCompEqRight app := by
   intro c c' c'' f g x
-  exact congrArg (app c'').obj
-    (congrFun (congrArg Functor.obj (G.map_comp f g).symm) x)
+  have h := congrArg Cat.Hom.toFunctor (G.map_comp f g)
+  exact congrArg (app c'').obj (congrFun (congrArg Functor.obj h.symm) x)
 
 /--
 Composition coherence: `laxApp (f ≫ g) x` decomposes as eqToHom,
@@ -5231,8 +5356,8 @@ abbrev LaxNatTransLaxComp :=
   ∀ {c c' c'' : C} (f : c ⟶ c') (g : c' ⟶ c'') (x : G.obj c),
     laxApp (f ≫ g) x =
     eqToHom (laxNatTransCompEqProof app f g x) ≫
-    (F.map g).map (laxApp f x) ≫
-    laxApp g ((G.map f).obj x) ≫
+    (F.map g).toFunctor.map (laxApp f x) ≫
+    laxApp g ((G.map f).toFunctor.obj x) ≫
     eqToHom (laxNatTransCompEqRightProof app f g x)
 
 /--
@@ -5278,11 +5403,15 @@ def LaxNatTransData.toFunctor : Grothendieck G ⥤ Grothendieck F where
     · simp only [Grothendieck.comp_base]
     · simp only [Grothendieck.comp_fiber, Grothendieck.comp_base]
       simp only [α.laxComp f.base g.base X.fiber]
-      simp only [(α.app Z.base).map_comp, (F.map g.base).map_comp, eqToHom_map,
-        Category.assoc, eqToHom_trans_assoc, eqToHom_refl, Category.id_comp]
-      have h : (F.map g.base).map ((α.app Y.base).map f.fiber) ≫ α.laxApp g.base Y.fiber =
-          α.laxApp g.base ((G.map f.base).obj X.fiber) ≫
-          (α.app Z.base).map ((G.map g.base).map f.fiber) := α.laxNat g.base f.fiber
+      simp only [(α.app Z.base).map_comp, eqToHom_map, Category.assoc, eqToHom_trans_assoc,
+        eqToHom_refl, Category.id_comp]
+      unfold Cat.Hom.toFunctor
+      simp only [Functor.map_comp, Category.assoc]
+      have h : (F.map g.base).toFunctor.map ((α.app Y.base).map f.fiber) ≫
+          α.laxApp g.base Y.fiber =
+          α.laxApp g.base ((G.map f.base).toFunctor.obj X.fiber) ≫
+          (α.app Z.base).map ((G.map g.base).toFunctor.map f.fiber) := α.laxNat g.base f.fiber
+      unfold Cat.Hom.toFunctor at h
       simp only [← Category.assoc]
       congr 1
       simp only [Category.assoc]
@@ -5308,9 +5437,13 @@ The identity lax natural transformation.
 def LaxNatTransData.id (G : C ⥤ Cat.{vF, uF}) : LaxNatTransData G G where
   app c := 𝟭 (G.obj c)
   laxApp f x := eqToHom (by simp only [Functor.id_obj])
-  laxNat f φ := by simp
+  laxNat {c c'} f {x y} φ := by
+    simp only [Functor.id_obj, Functor.id_map, eqToHom_refl, Category.id_comp, Category.comp_id]
   laxId c x := rfl
-  laxComp f g x := by simp
+  laxComp {c c' c''} f g x := by
+    unfold Cat.Hom.toFunctor
+    simp only [Functor.id_obj, eqToHom_refl, Category.id_comp, Functor.map_id,
+      eqToHom_trans]
 
 /--
 Composition of lax natural transformations.
@@ -5327,23 +5460,25 @@ def LaxNatTransData.comp {G H K : C ⥤ Cat.{vF, uF}}
     β.laxApp f ((α.app c).obj x) ≫ (β.app c').map (α.laxApp f x)
   laxNat {c c'} f {x y} φ := by
     simp only [Functor.comp_obj, Functor.comp_map, Category.assoc]
-    have hα : (H.map f).map ((α.app c).map φ) ≫ α.laxApp f y =
-        α.laxApp f x ≫ (α.app c').map ((G.map f).map φ) := α.laxNat f φ
-    have hβ : (K.map f).map ((β.app c).map ((α.app c).map φ)) ≫ β.laxApp f ((α.app c).obj y) =
-        β.laxApp f ((α.app c).obj x) ≫ (β.app c').map ((H.map f).map ((α.app c).map φ)) :=
+    have hα : (H.map f).toFunctor.map ((α.app c).map φ) ≫ α.laxApp f y =
+        α.laxApp f x ≫ (α.app c').map ((G.map f).toFunctor.map φ) := α.laxNat f φ
+    have hβ : (K.map f).toFunctor.map ((β.app c).map ((α.app c).map φ)) ≫
+        β.laxApp f ((α.app c).obj y) =
+        β.laxApp f ((α.app c).obj x) ≫
+        (β.app c').map ((H.map f).toFunctor.map ((α.app c).map φ)) :=
         β.laxNat f ((α.app c).map φ)
-    rw [← Category.assoc ((K.map f).map _) _ _, hβ, Category.assoc, ← Functor.map_comp,
-        hα, Functor.map_comp]
+    rw [← Category.assoc ((K.map f).toFunctor.map _) _ _, hβ, Category.assoc,
+        ← Functor.map_comp, hα, Functor.map_comp]
   laxId c x := by
     simp only [Functor.comp_obj, α.laxId, eqToHom_map, β.laxId, eqToHom_trans]
   laxComp {c c' c''} f g x := by
     simp only [α.laxComp f g x, β.laxComp f g ((α.app c).obj x)]
     simp only [Functor.map_comp, (β.app c'').map_comp, eqToHom_map, Category.assoc,
       eqToHom_trans_assoc]
-    have hβ : (K.map g).map ((β.app c').map (α.laxApp f x)) ≫
-            β.laxApp g ((α.app c').obj ((G.map f).obj x)) =
-          β.laxApp g ((H.map f).obj ((α.app c).obj x)) ≫
-            (β.app c'').map ((H.map g).map (α.laxApp f x)) :=
+    have hβ : (K.map g).toFunctor.map ((β.app c').map (α.laxApp f x)) ≫
+            β.laxApp g ((α.app c').obj ((G.map f).toFunctor.obj x)) =
+          β.laxApp g ((H.map f).toFunctor.obj ((α.app c).obj x)) ≫
+            (β.app c'').map ((H.map g).toFunctor.map (α.laxApp f x)) :=
         β.laxNat g (α.laxApp f x)
     congr 1
     simp only [← Category.assoc]
@@ -5424,7 +5559,7 @@ Applying `eqToHom h : A ⥤ B` in `Cat` to an object `x : A` gives heterogeneous
 equality with the original object. This uses `cases` to eliminate the equality.
 -/
 lemma eqToHom_obj_heq (A B : Cat) (h : A = B) (x : A.α) :
-    HEq ((eqToHom h).obj x) x := by
+    HEq ((eqToHom h).toFunctor.obj x) x := by
   cases h
   rfl
 
@@ -5433,7 +5568,7 @@ For a functor `eqToHom h : C ⥤ D` in `Cat` where `h : C = D`, applying it to
 a morphism gives something HEq to the original morphism.
 -/
 lemma eqToHom_map_heq' {C D : Cat} (h : C = D) {x y : C} (f : x ⟶ y) :
-    (eqToHom h).map f ≍ f := by
+    (eqToHom h).toFunctor.map f ≍ f := by
   subst h
   rfl
 
@@ -5442,7 +5577,7 @@ Version of `eqToHom_map_heq'` where the functor is only propositionally equal
 to `eqToHom`.
 -/
 lemma functor_map_heq_of_eq_eqToHom' {C D : Cat} (h : C = D)
-    (G : C ⥤ D) (hG : G = eqToHom h) {x y : C} (f : x ⟶ y) :
+    (G : ↑C ⥤ ↑D) (hG : G = (eqToHom h).toFunctor) {x y : ↑C} (f : x ⟶ y) :
     G.map f ≍ f := by
   subst hG
   exact eqToHom_map_heq' h f
@@ -5453,11 +5588,12 @@ the `.map` of `G.map (𝟙 c)` is HEq to identity on morphisms.
 -/
 lemma functor_map_id_heq {C : Type*} [Category C] (G : C ⥤ Cat) (c : C)
     {X Y : (G.obj c).α} (f : X ⟶ Y) :
-    HEq ((G.map (𝟙 c)).map f) f := by
-  have hG : G.map (𝟙 c) = eqToHom rfl := by
-    rw [G.map_id, Cat.id_eq_id]
-    rfl
-  exact functor_map_heq_of_eq_eqToHom' rfl (G.map (𝟙 c)) hG f
+    HEq ((G.map (𝟙 c)).toFunctor.map f) f := by
+  have hG : (G.map (𝟙 c)).toFunctor = 𝟭 (G.obj c) := by
+    rw [G.map_id]
+    exact Cat.id_eq_id (G.obj c)
+  unfold Cat.Hom.toFunctor at hG ⊢
+  rw [hG, Functor.id_map]
 
 /--
 When `G.map (f ≫ g) = G.map f ⋙ G.map g` (functor composition law), the `.map`
@@ -5465,9 +5601,14 @@ of `G.map (f ≫ g)` on a morphism `h` is HEq to composing the maps.
 -/
 lemma functor_map_comp_heq {C : Type*} [Category C] (G : C ⥤ Cat) {c c' c'' : C}
     (f : c ⟶ c') (g : c' ⟶ c'') {X Y : (G.obj c).α} (h : X ⟶ Y) :
-    HEq ((G.map (f ≫ g)).map h) ((G.map g).map ((G.map f).map h)) := by
-  rw [G.map_comp]
-  rfl
+    HEq ((G.map (f ≫ g)).toFunctor.map h)
+      ((G.map g).toFunctor.map ((G.map f).toFunctor.map h)) := by
+  have hComp : (G.map (f ≫ g)).toFunctor = (G.map f).toFunctor ⋙ (G.map g).toFunctor := by
+    have := congrArg Cat.Hom.toFunctor (G.map_comp f g)
+    simp only [Cat.comp_eq_comp] at this
+    exact this
+  unfold Cat.Hom.toFunctor at hComp ⊢
+  rw [hComp, Functor.comp_map]
 
 /--
 When two functors `F G : C ⥤ D` are equal, their maps on a morphism are HEq.
@@ -5516,7 +5657,7 @@ When `F = (Functor.const C).obj D`, we have `F.map f = 𝟙 D`, so
 `α.laxApp f x : (α.app c).obj x ⟶ (α.app c').obj ((G.map f).obj x)` in `↑D`.
 -/
 abbrev LaxNatTransData.laxAppConst {c c' : C} (f : c ⟶ c') (x : G.obj c) :
-    (α.app c).obj x ⟶ (α.app c').obj ((G.map f).obj x) :=
+    (α.app c).obj x ⟶ (α.app c').obj ((G.map f).toFunctor.obj x) :=
   α.laxApp f x
 
 /--
@@ -5525,7 +5666,8 @@ Maps `(x, e) : Grothendieck (α.app c ⋙ H)` to `Grothendieck (α.app c' ⋙ H)
 -/
 def LaxNatTransData.grothendieckTransitionObj {c c' : C} (f : c ⟶ c')
     (X : Grothendieck (α.app c ⋙ H)) : Grothendieck (α.app c' ⋙ H) :=
-  ⟨(G.map f).obj X.base, (H.map (α.laxAppConst D f X.base)).obj X.fiber⟩
+  ⟨(G.map f).toFunctor.obj X.base,
+   (H.map (α.laxAppConst D f X.base)).toFunctor.obj X.fiber⟩
 
 /--
 Fiber coherence equation for the Grothendieck transition morphism.
@@ -5535,17 +5677,17 @@ and then the base map is equal to applying the base map and then the transition.
 -/
 theorem LaxNatTransData.grothendieckTransition_fiber_eq {c c' : C} (f : c ⟶ c')
     {X Y : Grothendieck (α.app c ⋙ H)} (g : X ⟶ Y) :
-    ((α.app c' ⋙ H).map ((G.map f).map g.base)).obj
-      ((H.map (α.laxAppConst D f X.base)).obj X.fiber) =
-    (H.map (α.laxAppConst D f Y.base)).obj
-      (((α.app c ⋙ H).map g.base).obj X.fiber) := by
+    ((α.app c' ⋙ H).map ((G.map f).toFunctor.map g.base)).toFunctor.obj
+      ((H.map (α.laxAppConst D f X.base)).toFunctor.obj X.fiber) =
+    (H.map (α.laxAppConst D f Y.base)).toFunctor.obj
+      (((α.app c ⋙ H).map g.base).toFunctor.obj X.fiber) := by
   simp only [Functor.comp_obj, Functor.comp_map]
   have laxNat := α.laxNat f g.base
   simp only [Functor.const_obj_obj, Functor.const_obj_map, Cat.id_eq_id,
     Functor.id_map] at laxNat
   have h := congrArg (H.map ·) laxNat
   simp only [H.map_comp] at h
-  have h' := congrFun (congrArg (·.obj) h) X.fiber
+  have h' := congrFun (congrArg (Cat.Hom.toFunctor · |>.obj) h) X.fiber
   exact h'.symm
 
 /--
@@ -5554,10 +5696,10 @@ Morphism map for the Grothendieck transition functor.
 def LaxNatTransData.grothendieckTransitionHom {c c' : C} (f : c ⟶ c')
     {X Y : Grothendieck (α.app c ⋙ H)} (g : X ⟶ Y) :
     α.grothendieckTransitionObj D H f X ⟶ α.grothendieckTransitionObj D H f Y where
-  base := (G.map f).map g.base
+  base := (G.map f).toFunctor.map g.base
   fiber :=
     eqToHom (α.grothendieckTransition_fiber_eq D H f g) ≫
-    (H.map (α.laxAppConst D f Y.base)).map g.fiber
+    (H.map (α.laxAppConst D f Y.base)).toFunctor.map g.fiber
 
 /--
 The transition functor for the Grothendieck construction along `f : c ⟶ c'`.
@@ -5585,32 +5727,39 @@ def LaxNatTransData.grothendieckTransition {c c' : C} (f : c ⟶ c') :
       simp only [Functor.const_obj_obj, Functor.const_obj_map, Cat.id_eq_id] at laxNat
       -- The two functor compositions are equal by lax naturality
       -- In Cat, ⋙ is the same as ≫ (composition of morphisms)
-      have hFunEq : H.map ((α.app c).map h.base) ⋙ H.map (α.laxApp f Z.base) =
-                    H.map (α.laxApp f Y.base) ⋙ H.map ((α.app c').map ((G.map f).map h.base)) := by
-        change H.map ((α.app c).map h.base) ≫ H.map (α.laxApp f Z.base) =
-               H.map (α.laxApp f Y.base) ≫ H.map ((α.app c').map ((G.map f).map h.base))
+      have hFunEqCat : H.map ((α.app c).map h.base) ≫ H.map (α.laxApp f Z.base) =
+                       H.map (α.laxApp f Y.base) ≫
+                       H.map ((α.app c').map ((G.map f).toFunctor.map h.base)) := by
         rw [← H.map_comp, ← H.map_comp]
-        -- laxNat has (𝟭 ↑D).map which is id on morphisms
         simp only [Functor.id_map] at laxNat
         exact congrArg H.map laxNat
+      have hFunEq : (H.map ((α.app c).map h.base)).toFunctor ⋙
+                    (H.map (α.laxApp f Z.base)).toFunctor =
+                    (H.map (α.laxApp f Y.base)).toFunctor ⋙
+                    (H.map ((α.app c').map ((G.map f).toFunctor.map h.base))).toFunctor := by
+        have := congrArg Cat.Hom.toFunctor hFunEqCat
+        simp only [Cat.comp_eq_comp] at this
+        unfold Cat.Hom.toFunctor at this
+        exact this
       -- Use naturality of eqToHom hFunEq to relate the two functor maps
       have hNat := (eqToHom hFunEq).naturality g.fiber
       simp only [eqToHom_app, Functor.comp_obj, Functor.comp_map] at hNat
       -- hNat: F2.map (F1.map g.fiber) ≫ eqToHom _ = eqToHom _ ≫ G2.map (G1.map g.fiber)
       -- hNat relates the two paths for g.fiber modulo eqToHom
       -- Insert identity as (... ≫ 𝟙) then rewrite 𝟙 to eqToHom ≫ eqToHom.symm
-      rw [← Category.comp_id ((H.map (α.laxApp f Z.base)).map
-            ((H.map ((α.app c).map h.base)).map g.fiber))]
+      rw [← Category.comp_id ((H.map (α.laxApp f Z.base)).toFunctor.map
+            ((H.map ((α.app c).map h.base)).toFunctor.map g.fiber))]
       -- The object equality at codomain of g.fiber
       -- (F ⋙ G).obj X is defeq to G.obj (F.obj X)
       have hObjEq :
-          (H.map (α.laxApp f Z.base)).obj ((H.map ((α.app c).map h.base)).obj Y.fiber) =
-          (H.map ((α.app c').map ((G.map f).map h.base))).obj
-            ((H.map (α.laxApp f Y.base)).obj Y.fiber) := by
+          (H.map (α.laxApp f Z.base)).toFunctor.obj
+            ((H.map ((α.app c).map h.base)).toFunctor.obj Y.fiber) =
+          (H.map ((α.app c').map ((G.map f).toFunctor.map h.base))).toFunctor.obj
+            ((H.map (α.laxApp f Y.base)).toFunctor.obj Y.fiber) := by
         simp only [← Functor.comp_obj]
         exact Functor.congr_obj hFunEq Y.fiber
-      rw [show (𝟙 _ : _ ⟶ (H.map (α.laxApp f Z.base)).obj
-            ((H.map ((α.app c).map h.base)).obj Y.fiber)) =
+      rw [show (𝟙 _ : _ ⟶ (H.map (α.laxApp f Z.base)).toFunctor.obj
+            ((H.map ((α.app c).map h.base)).toFunctor.obj Y.fiber)) =
           eqToHom hObjEq ≫ eqToHom hObjEq.symm
           by simp only [eqToHom_trans, eqToHom_refl]]
       simp only [Category.assoc]
@@ -5619,22 +5768,26 @@ def LaxNatTransData.grothendieckTransition {c c' : C} (f : c ⟶ c') :
       -- We need to show the eqToHom proofs are equal
       -- Domain equality for the domain of g.fiber
       have hObjEq_dom :
-          (H.map (α.laxApp f Z.base)).obj
-            ((H.map ((α.app c).map h.base)).obj (((α.app c ⋙ H).map g.base).obj X.fiber)) =
-          (H.map ((α.app c').map ((G.map f).map h.base))).obj
-            ((H.map (α.laxApp f Y.base)).obj (((α.app c ⋙ H).map g.base).obj X.fiber)) := by
+          (H.map (α.laxApp f Z.base)).toFunctor.obj
+            ((H.map ((α.app c).map h.base)).toFunctor.obj
+              (((α.app c ⋙ H).map g.base).toFunctor.obj X.fiber)) =
+          (H.map ((α.app c').map ((G.map f).toFunctor.map h.base))).toFunctor.obj
+            ((H.map (α.laxApp f Y.base)).toFunctor.obj
+              (((α.app c ⋙ H).map g.base).toFunctor.obj X.fiber)) := by
         simp only [← Functor.comp_obj]
-        exact Functor.congr_obj hFunEq (((α.app c ⋙ H).map g.base).obj X.fiber)
-      have hNat' : (H.map (α.laxApp f Z.base)).map ((H.map ((α.app c).map h.base)).map g.fiber) ≫
+        exact Functor.congr_obj hFunEq (((α.app c ⋙ H).map g.base).toFunctor.obj X.fiber)
+      have hNat' :
+          (H.map (α.laxApp f Z.base)).toFunctor.map
+            ((H.map ((α.app c).map h.base)).toFunctor.map g.fiber) ≫
           eqToHom hObjEq =
           eqToHom hObjEq_dom ≫
-          (H.map ((α.app c').map ((G.map f).map h.base))).map
-            ((H.map (α.laxApp f Y.base)).map g.fiber) := by
+          (H.map ((α.app c').map ((G.map f).toFunctor.map h.base))).toFunctor.map
+            ((H.map (α.laxApp f Y.base)).toFunctor.map g.fiber) := by
         simp only [← Functor.comp_obj, ← Functor.comp_map]
         exact hNat
       -- Reassociate to match hNat' pattern
-      rw [← Category.assoc ((H.map (α.laxApp f Z.base)).map
-            ((H.map ((α.app c).map h.base)).map g.fiber)) (eqToHom hObjEq)]
+      rw [← Category.assoc ((H.map (α.laxApp f Z.base)).toFunctor.map
+            ((H.map ((α.app c).map h.base)).toFunctor.map g.fiber)) (eqToHom hObjEq)]
       rw [hNat']
       -- Simplify eqToHom chains
       simp only [Category.assoc, eqToHom_trans_assoc]
@@ -5694,9 +5847,12 @@ lemma LaxNatTransData.grothendieckFunctor_map_comp_map {c c' c'' : C}
         Functor.id_map] at laxComp
     have hFunEq : H.map (α.laxApp (f ≫ g) Y.base) =
         H.map (eqToHom _ ≫ α.laxApp f Y.base ≫
-          α.laxApp g ((G.map f).obj Y.base) ≫ eqToHom _) :=
+          α.laxApp g ((G.map f).toFunctor.obj Y.base) ≫ eqToHom _) :=
       congrArg H.map laxComp
     simp only [H.map_comp, eqToHom_map] at hFunEq
+    have hFunEq' := congrArg Cat.Hom.toFunctor hFunEq
+    simp only [Cat.comp_eq_comp] at hFunEq'
+    unfold Cat.Hom.toFunctor at hFunEq'
     simp only [Grothendieck.comp_base,
         Grothendieck.fiber_eqToHom,
         Functor.comp_obj, Functor.comp_map,
@@ -5712,8 +5868,8 @@ lemma LaxNatTransData.grothendieckFunctor_map_comp_map {c c' c'' : C}
     -- RHS = outer.map (g_fun.map (f_fun.map h.fiber))
     -- with outer = H.map ((α.app c'').map (eqToHom _).base)
     --
-    -- Use hFunEq to expand LHS
-    apply HEq.trans (functor_eq_map_heq hFunEq h.fiber)
+    -- Use hFunEq' to expand LHS
+    apply HEq.trans (functor_eq_map_heq hFunEq' h.fiber)
     -- Now: (eqToHom ≫ Hf ≫ Hg ≫ eqToHom).map h.fiber ≍ outer.map (...)
     simp only [Functor.comp_map]
     -- Expanded: outer_eq.map (Hg.map (Hf.map (inner_eq.map h.fiber)))
@@ -5730,9 +5886,11 @@ lemma LaxNatTransData.grothendieckFunctor_map_comp_map {c c' c'' : C}
         eqToHom (congrArg (fun x => H.obj ((α.app c'').obj x.base))
           (α.grothendieckFunctor_map_comp_obj D H f g Y).symm) := by
       simp only [Grothendieck.base_eqToHom, eqToHom_map]
+    have hOuterIsEqToHom' := congrArg Cat.Hom.toFunctor hOuterIsEqToHom
+    unfold Cat.Hom.toFunctor at hOuterIsEqToHom'
     -- Strip the outer eqToHom from RHS
     apply HEq.symm
-    apply HEq.trans (functor_map_heq_of_eq_eqToHom' _ _ hOuterIsEqToHom _)
+    apply HEq.trans (functor_map_heq_of_eq_eqToHom' _ _ hOuterIsEqToHom' _)
     -- Now both sides are: Hg.map (Hf.map (some form of h.fiber))
     -- Need to show inner_eq.map h.fiber vs h.fiber lift through Hf and Hg
     apply HEq.symm
@@ -5750,9 +5908,10 @@ and each morphism `f : c ⟶ c'` to the transition functor `grothendieckTransiti
 -/
 def LaxNatTransData.grothendieckFunctor : C ⥤ Cat.{vF, uF} where
   obj c := Cat.of (Grothendieck (α.app c ⋙ H))
-  map f := α.grothendieckTransition D H f
+  map f := (α.grothendieckTransition D H f).toCatHom
   map_id c := by
-    simp only [Cat.id_eq_id]
+    apply Cat.Hom.ext
+    simp only [Functor.toCatHom_toFunctor, Cat.id_eq_id]
     apply Functor.ext
     case h_obj =>
       intro X
@@ -5781,13 +5940,15 @@ def LaxNatTransData.grothendieckFunctor : C ⥤ Cat.{vF, uF} where
         apply eq_of_heq
         apply HEq.trans (eqToHom_comp_heq _ _)
         apply HEq.trans (eqToHom_comp_heq _ _)
-        have h1 : HEq ((H.map (α.laxApp (𝟙 c) Y.base)).map f.fiber) f.fiber := by
+        have h1 : HEq ((H.map (α.laxApp (𝟙 c) Y.base)).toFunctor.map f.fiber)
+            f.fiber := by
           rw [hId, eqToHom_map]
           exact eqToHom_map_heq' _ _
         apply HEq.trans h1
         exact HEq.symm (@Grothendieck.conj_eqToHom_fiber_heq _ _ (α.app c ⋙ H) _ _ _ _ _ _ _)
   map_comp {c c' c''} f g := by
-    simp only [Cat.comp_eq_comp]
+    apply Cat.Hom.ext
+    simp only [Cat.Hom.comp_toFunctor, Functor.toCatHom_toFunctor]
     apply Functor.ext
     case h_obj => exact α.grothendieckFunctor_map_comp_obj D H f g
     case h_map => exact α.grothendieckFunctor_map_comp_map D H f g
@@ -5879,19 +6040,23 @@ are all identities (up to `eqToHom`).
 -/
 def LaxNatTransData.ofNatTrans {G H : C ⥤ Cat.{vC, uC}} (α : NatTrans G H) :
     LaxNatTransData G H where
-  app c := α.app c
+  app c := (α.app c).toFunctor
   laxApp {c c'} f x := eqToHom (by
     simp only [← Functor.comp_obj]
-    exact (congrArg (·.obj x) (α.naturality f)).symm)
+    have nat := congrArg Cat.Hom.toFunctor (α.naturality f)
+    simp only [Cat.Hom.comp_toFunctor] at nat
+    exact (congrArg (·.obj x) nat).symm)
   laxNat {c c'} f {x y} φ := by
-    have nat := α.naturality f
+    have nat := congrArg Cat.Hom.toFunctor (α.naturality f)
+    simp only [Cat.Hom.comp_toFunctor] at nat
     have h := Functor.congr_hom nat.symm φ
-    change (H.map f).map ((α.app c).map φ) ≫ _ = _ ≫ (α.app c').map ((G.map f).map φ)
-    conv_lhs => rw [show (H.map f).map ((α.app c).map φ) =
-        (α.app c ≫ H.map f).map φ from rfl]
+    change (H.map f).toFunctor.map ((α.app c).toFunctor.map φ) ≫ _ =
+      _ ≫ (α.app c').toFunctor.map ((G.map f).toFunctor.map φ)
+    conv_lhs => rw [show (H.map f).toFunctor.map ((α.app c).toFunctor.map φ) =
+        ((α.app c).toFunctor ⋙ (H.map f).toFunctor).map φ from rfl]
     rw [h]
-    conv_lhs => rw [show (G.map f ≫ α.app c').map φ =
-        (α.app c').map ((G.map f).map φ) from rfl]
+    conv_lhs => rw [show ((G.map f).toFunctor ⋙ (α.app c').toFunctor).map φ =
+        (α.app c').toFunctor.map ((G.map f).toFunctor.map φ) from rfl]
     simp only [Category.assoc, eqToHom_trans, eqToHom_refl, Category.comp_id]
   laxId c x := by
     simp
@@ -6128,7 +6293,8 @@ from (G'-transport-then-α) to (α-then-F'-transport).
 -/
 abbrev OplaxNatTransOplaxApp :=
   ∀ {c c' : C} (f : c' ⟶ c) (x : G'.obj c),
-    (app c').obj ((G'.map f).obj x) ⟶ (F'.map f).obj ((app c).obj x)
+    (app c').obj ((G'.map f).toFunctor.obj x) ⟶
+    (F'.map f).toFunctor.obj ((app c).obj x)
 
 variable (oplaxApp : OplaxNatTransOplaxApp app)
 
@@ -6140,24 +6306,27 @@ have domain `(app c').obj ((G'.map f).obj x)` and codomain
 -/
 abbrev OplaxNatTransOplaxNat :=
   ∀ {c c' : C} (f : c' ⟶ c) {x y : G'.obj c} (φ : x ⟶ y),
-    (app c').map ((G'.map f).map φ) ≫ oplaxApp f y =
-    oplaxApp f x ≫ (F'.map f).map ((app c).map φ)
+    (app c').map ((G'.map f).toFunctor.map φ) ≫ oplaxApp f y =
+    oplaxApp f x ≫ (F'.map f).toFunctor.map ((app c).map φ)
 
 /--
 Equality proof for identity oplax coherence.
 -/
 abbrev OplaxNatTransIdEq :=
   ∀ (c : C) (x : G'.obj c),
-    (app c).obj ((G'.map (𝟙 c)).obj x) = (F'.map (𝟙 c)).obj ((app c).obj x)
+    (app c).obj ((G'.map (𝟙 c)).toFunctor.obj x) =
+    (F'.map (𝟙 c)).toFunctor.obj ((app c).obj x)
 
 /--
 Derive the identity equality from functor laws.
 -/
 lemma oplaxNatTransIdEqProof : OplaxNatTransIdEq app := by
   intro c x
-  have hG : G'.map (𝟙 c) = 𝟙 (G'.obj c) := G'.map_id c
-  have hF : F'.map (𝟙 c) = 𝟙 (F'.obj c) := F'.map_id c
-  simp only [hG, hF, Cat.id_eq_id, Functor.id_obj]
+  have hG : (G'.map (𝟙 c)).toFunctor = 𝟭 _ :=
+    congrArg Cat.Hom.toFunctor (G'.map_id c) |>.trans (Cat.id_eq_id (G'.obj c))
+  have hF : (F'.map (𝟙 c)).toFunctor = 𝟭 _ :=
+    congrArg Cat.Hom.toFunctor (F'.map_id c) |>.trans (Cat.id_eq_id (F'.obj c))
+  simp only [hG, hF, Functor.id_obj]
 
 /--
 Identity coherence: `oplaxApp (𝟙 c) x` equals the canonical eqToHom.
@@ -6173,15 +6342,16 @@ By contravariant functoriality: `G'.map (g ≫ f) = G'.map f ⋙ G'.map g`.
 -/
 abbrev OplaxNatTransCompEqLeft :=
   ∀ {c c' c'' : C} (f : c' ⟶ c) (g : c'' ⟶ c') (x : G'.obj c),
-    (app c'').obj ((G'.map (@CategoryStruct.comp C _ c'' c' c g f)).obj x) =
-    (app c'').obj ((G'.map g).obj ((G'.map f).obj x))
+    (app c'').obj ((G'.map (@CategoryStruct.comp C _ c'' c' c g f)).toFunctor.obj x) =
+    (app c'').obj ((G'.map g).toFunctor.obj ((G'.map f).toFunctor.obj x))
 
 /--
 Derive the left composition equality from functor laws.
 -/
 lemma oplaxNatTransCompEqLeftProof : OplaxNatTransCompEqLeft app := by
   intro c c' c'' f g x
-  exact congrArg (app c'').obj (congrFun (congrArg Functor.obj (G'.map_comp f g)) x)
+  exact congrArg (app c'').obj (congrFun (congrArg Functor.obj
+    (congrArg (fun x => x.toFunctor) (G'.map_comp f g))) x)
 
 /--
 Equality proof for composition oplax coherence (right side).
@@ -6190,15 +6360,16 @@ By contravariant functoriality: `F'.map (g ≫ f) = F'.map f ⋙ F'.map g`.
 -/
 abbrev OplaxNatTransCompEqRight :=
   ∀ {c c' c'' : C} (f : c' ⟶ c) (g : c'' ⟶ c') (x : G'.obj c),
-    (F'.map g).obj ((F'.map f).obj ((app c).obj x)) =
-    (F'.map (@CategoryStruct.comp C _ c'' c' c g f)).obj ((app c).obj x)
+    (F'.map g).toFunctor.obj ((F'.map f).toFunctor.obj ((app c).obj x)) =
+    (F'.map (@CategoryStruct.comp C _ c'' c' c g f)).toFunctor.obj ((app c).obj x)
 
 /--
 Derive the right composition equality from functor laws.
 -/
 lemma oplaxNatTransCompEqRightProof : OplaxNatTransCompEqRight app := by
   intro c c' c'' f g x
-  exact (congrFun (congrArg Functor.obj (F'.map_comp f g)) ((app c).obj x)).symm
+  exact (congrFun (congrArg Functor.obj
+    (congrArg (fun x => x.toFunctor) (F'.map_comp f g))) ((app c).obj x)).symm
 
 /--
 Composition coherence: `oplaxApp (g ≫ f) x` decomposes stepwise.
@@ -6210,8 +6381,8 @@ abbrev OplaxNatTransOplaxComp :=
   ∀ {c c' c'' : C} (f : c' ⟶ c) (g : c'' ⟶ c') (x : G'.obj c),
     oplaxApp (@CategoryStruct.comp C _ c'' c' c g f) x =
     eqToHom (oplaxNatTransCompEqLeftProof app f g x) ≫
-    oplaxApp g ((G'.map f).obj x) ≫
-    (F'.map g).map (oplaxApp f x) ≫
+    oplaxApp g ((G'.map f).toFunctor.obj x) ≫
+    (F'.map g).toFunctor.map (oplaxApp f x) ≫
     eqToHom (oplaxNatTransCompEqRightProof app f g x)
 
 /--
@@ -6244,9 +6415,12 @@ Identity oplax natural transformation.
 def OplaxNatTransData.id (G' : Cᵒᵖ' ⥤ Cat.{vF, uF}) : OplaxNatTransData G' G' where
   app c := 𝟭 (G'.obj c)
   oplaxApp f x := eqToHom (by simp only [Functor.id_obj])
-  oplaxNat f φ := by simp
+  oplaxNat f φ := by
+    intro y φ'
+    simp only [Functor.id_map, eqToHom_naturality]
   oplaxId c x := rfl
-  oplaxComp f g x := by simp
+  oplaxComp f g x := by
+    simp only [Functor.map_id, Category.id_comp, eqToHom_trans, eqToHom_refl]
 
 /--
 Composition of oplax natural transformations.
@@ -6264,30 +6438,30 @@ def OplaxNatTransData.comp {G' H' K' : Cᵒᵖ' ⥤ Cat.{vF, uF}}
     (β.app c').map (α.oplaxApp f x) ≫ β.oplaxApp f ((α.app c).obj x)
   oplaxNat {c c'} f {x y} φ := by
     simp only [Functor.comp_obj, Functor.comp_map]
-    have hα : (α.app c').map ((G'.map f).map φ) ≫ α.oplaxApp f y =
-        α.oplaxApp f x ≫ (H'.map f).map ((α.app c).map φ) := α.oplaxNat f φ
-    have hβ : (β.app c').map ((H'.map f).map ((α.app c).map φ)) ≫
+    have hα : (α.app c').map ((G'.map f).toFunctor.map φ) ≫ α.oplaxApp f y =
+        α.oplaxApp f x ≫ (H'.map f).toFunctor.map ((α.app c).map φ) := α.oplaxNat f φ
+    have hβ : (β.app c').map ((H'.map f).toFunctor.map ((α.app c).map φ)) ≫
             β.oplaxApp f ((α.app c).obj y) =
         β.oplaxApp f ((α.app c).obj x) ≫
-            (K'.map f).map ((β.app c).map ((α.app c).map φ)) :=
+            (K'.map f).toFunctor.map ((β.app c).map ((α.app c).map φ)) :=
         β.oplaxNat f ((α.app c).map φ)
     calc
-      _ = ((β.app c').map ((α.app c').map ((G'.map f).map φ)) ≫
+      _ = ((β.app c').map ((α.app c').map ((G'.map f).toFunctor.map φ)) ≫
           (β.app c').map (α.oplaxApp f y)) ≫ β.oplaxApp f ((α.app c).obj y) := by
         simp only [Category.assoc]
-      _ = (β.app c').map ((α.app c').map ((G'.map f).map φ) ≫ α.oplaxApp f y) ≫
+      _ = (β.app c').map ((α.app c').map ((G'.map f).toFunctor.map φ) ≫ α.oplaxApp f y) ≫
           β.oplaxApp f ((α.app c).obj y) := by rw [← (β.app c').map_comp]
-      _ = (β.app c').map (α.oplaxApp f x ≫ (H'.map f).map ((α.app c).map φ)) ≫
+      _ = (β.app c').map (α.oplaxApp f x ≫ (H'.map f).toFunctor.map ((α.app c).map φ)) ≫
           β.oplaxApp f ((α.app c).obj y) := by rw [hα]
       _ = ((β.app c').map (α.oplaxApp f x) ≫
-          (β.app c').map ((H'.map f).map ((α.app c).map φ))) ≫
+          (β.app c').map ((H'.map f).toFunctor.map ((α.app c).map φ))) ≫
           β.oplaxApp f ((α.app c).obj y) := by rw [(β.app c').map_comp]
       _ = (β.app c').map (α.oplaxApp f x) ≫
-          (β.app c').map ((H'.map f).map ((α.app c).map φ)) ≫
+          (β.app c').map ((H'.map f).toFunctor.map ((α.app c).map φ)) ≫
           β.oplaxApp f ((α.app c).obj y) := by simp only [Category.assoc]
       _ = (β.app c').map (α.oplaxApp f x) ≫
           (β.oplaxApp f ((α.app c).obj x) ≫
-          (K'.map f).map ((β.app c).map ((α.app c).map φ))) := by rw [hβ]
+          (K'.map f).toFunctor.map ((β.app c).map ((α.app c).map φ))) := by rw [hβ]
       _ = _ := by simp only [Category.assoc]
   oplaxId c x := by
     simp only [Functor.comp_obj, α.oplaxId, eqToHom_map, β.oplaxId, eqToHom_trans]
@@ -6318,7 +6492,7 @@ def OplaxNatTransData.toFunctor (α : OplaxNatTransData G' F') :
     · change ((α.app X.base).map (GrothendieckContra'.id (F' := G') X).fiber ≫
         α.oplaxApp (GrothendieckContra'.id (F' := G') X).base X.fiber) ≫ eqToHom _ =
         (GrothendieckContra'.id (F' := F') ⟨X.base, (α.app X.base).obj X.fiber⟩).fiber
-      simp only [GrothendieckContra'.id_fiber, GrothendieckContra'.id_base,
+      simp only [GrothendieckContra'.id_fiber_val, GrothendieckContra'.id_base,
         α.oplaxId, eqToHom_map, eqToHom_trans]
   map_comp {X Y Z} f g := by
     refine GrothendieckContra'.ext _ _ ?_ ?_
@@ -6337,7 +6511,7 @@ def OplaxNatTransData.toFunctor (α : OplaxNatTransData G' F') :
       -- Here f.base : X.base ⟶ Y.base and g.base : Y.base ⟶ Z.base, so f.base ≫ g.base.
       -- We apply oplaxComp with arguments swapped: g.base plays role of f, f.base plays role of g.
       simp only [α.oplaxComp g.base f.base Z.fiber]
-      simp only [(α.app X.base).map_comp, (F'.map f.base).map_comp, eqToHom_map,
+      simp only [(α.app X.base).map_comp, (F'.map f.base).toFunctor.map_comp, eqToHom_map,
         Category.assoc, eqToHom_trans_assoc, eqToHom_refl, Category.id_comp]
       slice_lhs 2 3 => rw [α.oplaxNat f.base g.fiber]
       simp only [Category.assoc, Category.comp_id]

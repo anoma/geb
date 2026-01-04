@@ -55,16 +55,13 @@ inductive SemiHom.{u, v, w} : Obj.{u} → Obj.{v} → Type w where
   -- Morphisms from Mor to Obj (domain and codomain)
   | dom : SemiHom Obj.mor Obj.obj
   | cod : SemiHom Obj.mor Obj.obj
-
   -- Morphisms from Id
   | idObj : SemiHom Obj.id Obj.obj  -- which object this is an identity for
   | idMor : SemiHom Obj.id Obj.mor  -- which morphism is the identity
-
   -- Morphisms from Comp to Mor
   | left      : SemiHom Obj.comp Obj.mor  -- morphism being post-composed
   | right     : SemiHom Obj.comp Obj.mor  -- morphism being pre-composed
   | composite : SemiHom Obj.comp Obj.mor  -- resulting composite
-
   -- Morphisms from Comp to Obj
   | intermediate  : SemiHom Obj.comp Obj.obj  -- shared intermediate object
   | compositeDom  : SemiHom Obj.comp Obj.obj  -- domain of composite
@@ -76,7 +73,6 @@ def SemiHom.comp : ∀ {X Y Z : Obj}, SemiHom X Y → SemiHom Y Z → SemiHom X 
   -- Compositions from Id to Obj (idMor ≫ dom/cod = idObj)
   | _, _, _, idMor, dom => idObj
   | _, _, _, idMor, cod => idObj
-
   -- Compositions from Comp to Obj via Mor
   | _, _, _, left, dom => intermediate
   | _, _, _, left, cod => compositeCod
@@ -470,7 +466,9 @@ theorem mkFunctor_functorToData (F : Obj ⥤ C) :
     intro X Y f
     cases f with
     | id =>
-      cases X <;> (simp [mkFunctor, functorToData]; exact (F.map_id _).symm)
+      cases X <;>
+      (simp only [mkFunctor, functorToData, eqToHom_refl, Category.comp_id,
+        Category.id_comp]; exact (F.map_id _).symm)
     | hom f' =>
       cases f' <;> simp only [mkFunctor, functorToData, mapSemiHom,
         eqToHom_refl, Category.comp_id, Category.id_comp]
@@ -645,16 +643,25 @@ theorem functorDataToFunctor_comp_functorToFunctorData :
     intro F G α
     simp only [Functor.comp_obj, Functor.comp_map, Functor.id_obj,
       Functor.id_map, functorToFunctorData, functorDataToFunctor,
-      natTransToData_mkNatTrans]
-    simp
+      natTransToData_mkNatTrans, eqToHom_refl, Category.comp_id,
+      Category.id_comp]
 
 /-- The two functors form a categorical isomorphism: they compose to the
     identity functor in both directions. -/
-def functorDataIsoCat : FunctorData C ≅Cat (Obj ⥤ C) where
-  hom := functorDataToFunctor
-  inv := functorToFunctorData
-  hom_inv_id := functorDataToFunctor_comp_functorToFunctorData
-  inv_hom_id := functorToFunctorData_comp_functorDataToFunctor
+def functorDataIsoCat.{u, v} {C : Type u} [Category.{v, u} C] :
+    FunctorData.{u, v} C ≅Cat (Obj.{v} ⥤ C) :=
+  let FDCat : Cat.{v, max u v} := Cat.of (FunctorData.{u, v} C)
+  let FunCat : Cat.{v, max u v} := Cat.of (Obj.{v} ⥤ C)
+  let hom' : FDCat ⟶ FunCat := ⟨functorDataToFunctor⟩
+  let inv' : FunCat ⟶ FDCat := ⟨functorToFunctorData⟩
+  { hom := hom'
+    inv := inv'
+    hom_inv_id := by
+      apply Cat.Hom.ext
+      exact functorDataToFunctor_comp_functorToFunctorData
+    inv_hom_id := by
+      apply Cat.Hom.ext
+      exact functorToFunctorData_comp_functorDataToFunctor }
 
 /-- The two functors form an equivalence of categories (derived from the
     isomorphism). -/
@@ -686,7 +693,9 @@ theorem functorData_iso_iff_setoid_equiv (F G : FunctorData C) :
   · intro ⟨e⟩
     exact ⟨functorDataToFunctor.mapIso e⟩
   · intro ⟨e⟩
-    exact ⟨functorDataEquivCat.inverse.mapIso e⟩
+    have h1 : functorToFunctorData.obj (mkFunctor F) = F := functorToData_mkFunctor F
+    have h2 : functorToFunctorData.obj (mkFunctor G) = G := functorToData_mkFunctor G
+    exact ⟨eqToIso h1.symm ≪≫ functorToFunctorData.mapIso e ≪≫ eqToIso h2⟩
 
 end FunctorDataEquivalence
 

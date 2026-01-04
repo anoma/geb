@@ -239,7 +239,7 @@ Precomposition with `(overOpMapFunctor C).map h` for a morphism `h : y ⟶ y'`.
 def precompOverOpMap {y y' : C} (h : y ⟶ y') :
     ((Over y')ᵒᵖ' ⥤ Type v) ⥤ ((Over y)ᵒᵖ' ⥤ Type v) :=
   (Functor.whiskeringLeft ((Over y)ᵒᵖ') (Over y')ᵒᵖ' (Type v)).obj
-    ((overOpMapFunctor C).map h)
+    ((overOpMapFunctor C).map h).toFunctor
 
 /--
 The type of presheaves on `(Over y)ᵒᵖ'` for a fixed `y : C`.
@@ -267,7 +267,7 @@ Precomposition with `(Over.mapFunctor C).map h` for a morphism `h : y ⟶ y'`.
 def precompOverMap {y y' : C} (h : y ⟶ y') :
     (Over y' ⥤ Type v) ⥤ (Over y ⥤ Type v) :=
   (Functor.whiskeringLeft (Over y) (Over y') (Type v)).obj
-    ((Over.mapFunctor C).map h)
+    ((Over.mapFunctor C).map h).toFunctor
 
 /--
 Functor `Cᵒᵖ' ⥤ Cat` sending `y` to the category of copresheaves on `Over y`.

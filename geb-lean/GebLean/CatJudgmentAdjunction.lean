@@ -4471,7 +4471,6 @@ theorem freeMorProj₁_cast_id_var (i₁ : F₁.idC) (i₂ : F₂.idC) :
                     (prodQuotData F₁ F₂).id_tgt (i₁, i₂)])
         (FreeMor.var ((prodQuotData F₁ F₂).idMor (i₁, i₂))))
       (FreeMor.var ((prodQuotData F₁ F₂).idMor (i₁, i₂))) := cast_heq _ _
-
   -- Step 2: Apply freeMorProj₁_heq to get HEq between freeMorProj₁ applications
   -- Note: need .symm since id_src says src = idObj, but we need idObj = src
   have h_proj_heq : HEq
@@ -4484,7 +4483,6 @@ theorem freeMorProj₁_cast_id_var (i₁ : F₁.idC) (i₂ : F₂.idC) :
       ((prodQuotData F₁ F₂).id_src (i₁, i₂)).symm
       ((prodQuotData F₁ F₂).id_tgt (i₁, i₂)).symm
       h_lhs_cast
-
   -- Step 3: freeMorProj₁ (var (m₁, m₂)) = var m₁ by freeMorProj₁_var_simple
   -- So h_proj_heq gives: LHS HEq var (idMor i₁)
 
@@ -4494,7 +4492,6 @@ theorem freeMorProj₁_cast_id_var (i₁ : F₁.idC) (i₂ : F₂.idC) :
         (FreeMor.var ((quotData₁ F₁).idMor i₁)))
       (FreeMor.var (Q := (quotData₁ F₁).quiver) ((quotData₁ F₁).idMor i₁)) :=
     cast_heq _ _
-
   -- Step 5: Combine: LHS HEq var m₁ HEq RHS
   exact h_proj_heq.trans h_rhs_cast.symm
 

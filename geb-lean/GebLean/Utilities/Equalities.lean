@@ -140,8 +140,7 @@ via the equality.
 lemma sigma_ext_fst {α : Type*} {β : α → Type*} {a₁ a₂ : α} {b₁ : β a₁} {b₂ : β a₂}
     (ha : a₁ = a₂) (hb : ha ▸ b₁ = b₂) : (⟨a₁, b₁⟩ : Sigma β) = ⟨a₂, b₂⟩ := by
   cases ha
-  simp at hb
-  rw [hb]
+  exact congrArg (Sigma.mk _) hb
 
 /--
 Sigma transport `.snd` extraction: transporting a sigma along an equality in

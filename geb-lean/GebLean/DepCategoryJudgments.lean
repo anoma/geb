@@ -371,7 +371,6 @@ def functorDataToDep_depToFunctorData_idT.{u}
     have hsig_eq := eq_of_heq hsig
     rw [Sigma.mk.injEq] at hsig_eq
     have ⟨_, hm⟩ := hsig_eq
-    simp at hm
     subst hm
     simp only [cast_eq, depToFunctorData, extractRoundTrippedMor]
     congr 1
@@ -565,7 +564,7 @@ def depToFunctorData_functorDataToDep_compC.{u}
   left_inv c := by
     rcases c with ⟨a, b, c_obj, ⟨f, hfa, hfb⟩, ⟨g, hga, hgb⟩,
       ⟨h, hha, hhc⟩, ⟨comp, hr, hl, hcomp⟩⟩
-    simp at hr hl hcomp hfa hfb hga hgb hha hhc
+    dsimp only [] at hr hl hcomp hfa hfb hga hgb hha hhc
     subst hfa hfb hr hl hcomp hgb
     rfl
   right_inv c := rfl
@@ -734,28 +733,45 @@ def mkCopresheaf_depToFunctorData_functorDataToDep.{u}
                    depToFunctorData_functorDataToDep_morC,
                    depToFunctorData_functorDataToDep_idC,
                    depToFunctorData_functorDataToDep_compC, mapSemiHom]
-        <;> (first | (ext x; simp; exact x.snd.snd.property.1.symm)
-                    | (ext x; simp; exact x.snd.snd.property.2.symm)
-                    | (ext x; simp; exact x.snd.snd.property.symm)
-                    | (ext x; simp; exact x.snd.snd.snd.snd.snd.snd.property.1.symm)
-                    | (ext x; simp; exact x.snd.snd.snd.snd.snd.snd.property.2.1.symm)
-                    | (ext x; simp; exact x.snd.snd.snd.snd.snd.snd.property.2.2.symm)
-                    | (ext x; simp
-                       calc x.fst
-                         _ = data.dom ↑x.snd.fst := x.snd.fst.property.1.symm
-                         _ = data.dom (data.idMor ↑x.snd.snd) :=
-                               congrArg data.dom x.snd.snd.property.symm)
-                    | (ext x; simp
+        <;> (first
+          | (ext x
+             simp only [eqToIso_refl, Iso.refl_hom, types_comp_apply, types_id_apply]
+             exact x.snd.snd.property.1.symm)
+          | (ext x
+             simp only [eqToIso_refl, Iso.refl_hom, types_comp_apply, types_id_apply]
+             exact x.snd.snd.property.2.symm)
+          | (ext x
+             simp only [eqToIso_refl, Iso.refl_hom, types_comp_apply, types_id_apply]
+             exact x.snd.snd.property.symm)
+          | (ext x
+             simp only [eqToIso_refl, Iso.refl_hom, types_comp_apply, types_id_apply]
+             exact x.snd.snd.snd.snd.snd.snd.property.1.symm)
+          | (ext x
+             simp only [eqToIso_refl, Iso.refl_hom, types_comp_apply, types_id_apply]
+             exact x.snd.snd.snd.snd.snd.snd.property.2.1.symm)
+          | (ext x
+             simp only [eqToIso_refl, Iso.refl_hom, types_comp_apply, types_id_apply]
+             exact x.snd.snd.snd.snd.snd.snd.property.2.2.symm)
+          | (ext x
+             simp only [eqToIso_refl, Iso.refl_hom, types_comp_apply, types_id_apply]
+             calc x.fst
+               _ = data.dom ↑x.snd.fst := x.snd.fst.property.1.symm
+               _ = data.dom (data.idMor ↑x.snd.snd) :=
+                     congrArg data.dom x.snd.snd.property.symm)
+                    | (ext x
+                       simp only [eqToIso_refl, Iso.refl_hom, types_comp_apply, types_id_apply]
                        calc x.snd.fst
                          _ = data.cod ↑x.snd.snd.snd.fst := x.snd.snd.snd.fst.property.2.symm
                          _ = data.cod (data.right ↑x.snd.snd.snd.snd.snd.snd) :=
                                congrArg data.cod x.snd.snd.snd.snd.snd.snd.property.1.symm)
-                    | (ext x; simp
+                    | (ext x
+                       simp only [eqToIso_refl, Iso.refl_hom, types_comp_apply, types_id_apply]
                        calc x.fst
                          _ = data.dom ↑x.snd.snd.snd.fst := x.snd.snd.snd.fst.property.1.symm
                          _ = data.dom (data.right ↑x.snd.snd.snd.snd.snd.snd) :=
                                congrArg data.dom x.snd.snd.snd.snd.snd.snd.property.1.symm)
-                    | (ext x; simp
+                    | (ext x
+                       simp only [eqToIso_refl, Iso.refl_hom, types_comp_apply, types_id_apply]
                        calc x.snd.snd.fst
                          _ = data.cod ↑x.snd.snd.snd.snd.fst :=
                            x.snd.snd.snd.snd.fst.property.2.symm

@@ -162,9 +162,13 @@ theorem mkFunctor_functorToData {C : Type*} [Category C] (F : Obj ⥤ C) :
     | id =>
       cases X
       all_goals
-        simp [mkFunctor, functorToData, objMap]
+        simp only [mkFunctor, functorToData, objMap, eqToHom_refl,
+          Category.comp_id, Category.id_comp]
         exact (F.map_id _).symm
-    | hom g => cases g <;> simp [mkFunctor, functorToData, mapSemiHom]
+    | hom g =>
+      cases g <;>
+      simp only [mkFunctor, functorToData, mapSemiHom, eqToHom_refl,
+        Category.comp_id, Category.id_comp]
 
 @[ext]
 structure NatTransData {C : Type*} [Category C] (F G : FunctorData C) where
@@ -286,15 +290,18 @@ theorem functorDataToFunctor_comp_functorToFunctorData {C : Type*} [Category C] 
     intro F G α
     simp only [Functor.comp_obj, Functor.comp_map, Functor.id_obj,
       Functor.id_map, functorToFunctorData, functorDataToFunctor,
-      natTransToData_mkNatTrans]
-    simp
+      natTransToData_mkNatTrans, eqToHom_refl, Category.comp_id, Category.id_comp]
 
 /-- The categorical isomorphism between FunctorData C and Obj ⥤ C. -/
 def functorDataIsoCat {C : Type*} [Category C] : FunctorData C ≅Cat (Obj ⥤ C) where
-  hom := functorDataToFunctor
-  inv := functorToFunctorData
-  hom_inv_id := functorDataToFunctor_comp_functorToFunctorData
-  inv_hom_id := functorToFunctorData_comp_functorDataToFunctor
+  hom := functorDataToFunctor.toCatHom
+  inv := functorToFunctorData.toCatHom
+  hom_inv_id := by
+    apply Cat.Hom.ext
+    exact functorDataToFunctor_comp_functorToFunctorData
+  inv_hom_id := by
+    apply Cat.Hom.ext
+    exact functorToFunctorData_comp_functorDataToFunctor
 
 /-- The categorical equivalence between FunctorData C and Obj ⥤ C. -/
 def functorDataEquivCat {C : Type*} [Category C] : FunctorData C ≌ (Obj ⥤ C) :=
@@ -318,7 +325,7 @@ theorem DepNatTrans.ext' {F G : DepData} {α β : DepNatTrans F G}
     α = β := by
   cases α with | mk appObj₁ appMor₁ =>
   cases β with | mk appObj₂ appMor₂ =>
-  simp at h_obj
+  simp only [] at h_obj
   subst h_obj
   congr
   funext a b m
@@ -429,12 +436,12 @@ def counitIso : coprToDep ⋙ depToCopr ≅ 𝟭 CopresheafData :=
         naturality_dom := by
           funext ⟨a, b, m⟩
           cases m with | mk val prop =>
-          simp [depToCopr, coprToDep, depToCopresheafData, copresheafDataToDep]
+          simp only [depToCopr, coprToDep, copresheafDataToDep]
           exact prop.1.symm
         naturality_cod := by
           funext ⟨a, b, m⟩
           cases m with | mk val prop =>
-          simp [depToCopr, coprToDep, depToCopresheafData, copresheafDataToDep]
+          simp only [depToCopr, coprToDep, copresheafDataToDep]
           exact prop.2.symm
       }
       inv := {

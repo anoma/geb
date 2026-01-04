@@ -141,18 +141,18 @@ def totalSpace (G : F.Elements ⥤ Type w) : C ⥤ Type w where
       have : G.map ⟨𝟙 X, hx⟩ gx = G.map (𝟙 ⟨X, x⟩) gx := by
         congr 1
       rw [this]
-      simp
+      simp only [Functor.map_id, types_id_apply]
     refine Sigma.ext hx ?_
-    simp
+    simp only [types_id_apply]
     convert heq_of_eq h using 2 <;> try exact sigma_ext_rfl_heq hx
     congr 2
-    · funext; simp
+    · funext; rw [hx]
     exact proof_irrel_heq rfl hx
   map_comp := by
     intros X Y Z f g
     ext ⟨x, gx⟩
-    · simp
-    · simp
+    · simp only [Functor.map_comp, types_comp_apply]
+    · simp only [types_comp_apply]
       have h := congrFun (@Functor.map_comp _ _ _ _ G ⟨X, x⟩ ⟨Y, F.map f x⟩ ⟨Z, F.map g (F.map f x)⟩
         ⟨f, rfl⟩ ⟨g, rfl⟩) gx
       simp only [types_comp_apply] at h
@@ -160,7 +160,7 @@ def totalSpace (G : F.Elements ⥤ Type w) : C ⥤ Type w where
         rw [F.map_comp]; rfl
       convert heq_of_eq h using 2 <;> try exact sigma_ext_rfl_heq hcomp
       congr 2
-      · funext; simp
+      · funext; rw [hcomp]
       exact proof_irrel_heq _ _
 
 /--
@@ -241,7 +241,7 @@ def sliceCopresheafUnitIso : 𝟭 (Over F) ≅ sliceToCopresheaf F ⋙ copreshea
           ext X ⟨x, ⟨fx, hfx⟩⟩
           dsimp [Fiber]
           refine Sigma.ext hfx ?_
-          simp
+          dsimp only []
           congr 1
           · funext y
             rw [hfx]
@@ -251,7 +251,7 @@ def sliceCopresheafUnitIso : 𝟭 (Over F) ≅ sliceToCopresheaf F ⋙ copreshea
       ext X fx
       dsimp [sliceToCopresheaf, copresheafToSlice, totalSpace, Fiber]
       refine Sigma.ext (congrFun (congrFun (congrArg NatTrans.app α.w) X) fx) ?_
-      simp
+      dsimp only []
       congr 1
       · funext y
         have h := congrFun (congrFun (congrArg NatTrans.app α.w) X) fx
@@ -329,7 +329,7 @@ def sliceCopresheafCounitIso :
           cases p with | mk p₁ p₂ =>
           cases q with | mk q₁ q₂ =>
           -- Simplify projections but keep hq as an equation between Sigmas
-          simp at fprop gx ⊢
+          dsimp only [] at fprop gx ⊢
           -- Use cases on hp
           cases hp
           -- Use injection on hq to get q₂ = F.map fval p₂
@@ -387,7 +387,7 @@ lemma triangle_identity_transport {G F : C ⥤ Type w} (η : G ⟶ F)
       ⟨a.val, pf₁⟩ p pf₂).val = a.val := by
   obtain ⟨aval, aproof⟩ := a
   obtain ⟨pfst, psnd⟩ := p
-  simp
+  simp only [Subtype.coe_mk]
   cases pf₁ with
     | refl =>
       exact triangle_identity_transport_aux η pfst psnd aval aproof pf₂
@@ -401,7 +401,7 @@ private lemma sliceCopresheafFunctorUnitIso (η : Over F) :
   dsimp [sliceToCopresheaf, sliceCopresheafUnitIso, sliceCopresheafCounitIso]
   -- Use Subtype.ext to reduce to showing coercions equal
   apply Subtype.ext
-  simp [Fiber]
+  simp only [Fiber]
   -- Goal: ↑(⋯ ▸ ⟨↑a, ⋯⟩) = ↑a
   generalize_proofs pf₁ pf₂
   exact triangle_identity_transport η.hom p a pf₁ pf₂
@@ -516,10 +516,14 @@ lemma elementsContra_roundtrip_eq_id (F : Cᵒᵖ' ⥤ Type w) :
 
 def elementsContraIso (F : Cᵒᵖ' ⥤ Type w) :
     F.ElementsContra' ≅Cat F.ElementsContra where
-  hom := elementsContra'ToElementsContra F
-  inv := elementsContraToElementsContra' F
-  hom_inv_id := elementsContra'_roundtrip_eq_id F
-  inv_hom_id := elementsContra_roundtrip_eq_id F
+  hom := (elementsContra'ToElementsContra F).toCatHom
+  inv := (elementsContraToElementsContra' F).toCatHom
+  hom_inv_id := by
+    apply Cat.Hom.ext
+    exact elementsContra'_roundtrip_eq_id F
+  inv_hom_id := by
+    apply Cat.Hom.ext
+    exact elementsContra_roundtrip_eq_id F
 
 /--
 The categorical equivalence between `F.ElementsContra'` and `F.ElementsContra`,
@@ -688,7 +692,9 @@ def isoMk {F : Cᵒᵖ' ⥤ Type w} (x y : F.ElementsContra')
     x ≅ y :=
   Iso.symm <|
     (CategoryOfElements.isoMk (C := Cᵒᵖ') (F := F) y x (Iso.symm e))
-    (by unfold isoToOp' ; simp ; exact he)
+    (by unfold isoToOp'
+        simp only [CategoryOp'.eq_1, CategoryOp'Inst.eq_1, CategoryOpQuivInst.eq_1, Iso.symm_mk]
+        exact he)
 
 end CategoryOfElementsContra'
 

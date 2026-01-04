@@ -1264,10 +1264,16 @@ def functorCategoryIsoMathlib {C : Type u} {D : Type u₁}
       (@Cat.of (@CategoryTheory.Functor C (CategoryOfData dataC) D (CategoryOfData dataD))
         (@CategoryTheory.Functor.category C (CategoryOfData dataC) D (CategoryOfData dataD)))
         where
-  hom := functorCategoryToMathlib dataC dataD
-  inv := mathlibToFunctorCategory dataC dataD
-  hom_inv_id := functorCategoryToMathlib_comp_mathlibToFunctorCategory dataC dataD
-  inv_hom_id := mathlibToFunctorCategory_comp_functorCategoryToMathlib dataC dataD
+  hom := Cat.Hom.ofFunctor (functorCategoryToMathlib dataC dataD)
+  inv := Cat.Hom.ofFunctor (mathlibToFunctorCategory dataC dataD)
+  hom_inv_id := by
+    apply Cat.Hom.ext
+    simp only [Cat.Hom.comp_toFunctor, Cat.Hom.id_toFunctor]
+    exact functorCategoryToMathlib_comp_mathlibToFunctorCategory dataC dataD
+  inv_hom_id := by
+    apply Cat.Hom.ext
+    simp only [Cat.Hom.comp_toFunctor, Cat.Hom.id_toFunctor]
+    exact mathlibToFunctorCategory_comp_functorCategoryToMathlib dataC dataD
 
 section EqToHom
 
@@ -1322,11 +1328,11 @@ lemma heq_iff_comp_eqToHom {X Y Z : C} (f : X ⟶ Y) (g : X ⟶ Z) (p : Y = Z) :
   constructor
   · intro h
     cases p
-    simp
+    simp only [eqToHom_refl, Category.comp_id]
     exact eq_of_heq h
   · intro h
     cases p
-    simp at h
+    simp only [eqToHom_refl, Category.comp_id] at h
     exact heq_of_eq h
 
 /--
@@ -1338,11 +1344,11 @@ lemma heq_iff_eqToHom_comp {X Y Z : C} (f : Y ⟶ Z) (g : X ⟶ Z) (p : X = Y) :
   constructor
   · intro h
     cases p
-    simp
+    simp only [eqToHom_refl, Category.id_comp]
     exact eq_of_heq h
   · intro h
     cases p
-    simp at h
+    simp only [eqToHom_refl, Category.id_comp] at h
     exact heq_of_eq h
 
 /--
@@ -1354,17 +1360,14 @@ lemma heq_iff_comp_eqToHom_comp {W X Y Z : C}
     HEq f g ↔ eqToHom p ≫ f ≫ eqToHom q = g := by
   constructor
   · intro h
-    -- f : X ⟶ Y and g : W ⟶ Z with f ≍ g
-    -- First use heq_iff_eqToHom_comp to get eqToHom p ≫ f = intermediate
-    -- Then use heq_iff_comp_eqToHom to handle the postcomposition
     cases p
     cases q
-    simp
+    simp only [eqToHom_refl, Category.comp_id, Category.id_comp]
     exact eq_of_heq h
   · intro h
     cases p
     cases q
-    simp at h
+    simp only [eqToHom_refl, Category.comp_id, Category.id_comp] at h
     exact heq_of_eq h
 
 /--
@@ -1807,36 +1810,53 @@ theorem toCatObj_ofCatObj (C : Cat.{v', u'}) :
 /-- The functor from `BundledCategoryData` to `Cat`. -/
 def functorToCat : BundledCategoryData.{v', u'} ⥤ Cat.{v', u'} where
   obj := toCatObj
-  map := fun {C D} F => @FunctorOfData C.Obj D.Obj C.Hom D.Hom C.data D.data F
+  map {C D} F :=
+    ⟨@FunctorOfData C.Obj D.Obj C.Hom D.Hom C.data D.data F⟩
   map_id := fun _ => rfl
   map_comp := fun _ _ => rfl
 
 /-- The functor from `Cat` to `BundledCategoryData`. -/
 def functorFromCat : Cat.{v', u'} ⥤ BundledCategoryData.{v', u'} where
   obj := ofCatObj
-  map := fun {C D} (F : C ⥤ D) =>
-    @functorDataOfFunctor C D C.str D.str F
+  map := fun {C D} (F : C ⟶ D) =>
+    @functorDataOfFunctor C D C.str D.str F.toFunctor
   map_id := fun _ => rfl
   map_comp := fun _ _ => rfl
 
 /-- The composition `functorToCat ⋙ functorFromCat` is the identity functor
     on `BundledCategoryData`. -/
 theorem functorToCat_comp_functorFromCat :
-    functorToCat.{v', u'} ⋙ functorFromCat = 𝟭 BundledCategoryData.{v', u'} :=
-  rfl
+    functorToCat.{v', u'} ⋙ functorFromCat = 𝟭 BundledCategoryData.{v', u'} := by
+  apply Functor.ext
+  · intro X Y f
+    rfl
+  · intro X
+    rfl
 
 /-- The composition `functorFromCat ⋙ functorToCat` is the identity functor
     on `Cat`. -/
 theorem functorFromCat_comp_functorToCat :
-    functorFromCat.{v', u'} ⋙ functorToCat = 𝟭 Cat.{v', u'} := rfl
+    functorFromCat.{v', u'} ⋙ functorToCat = 𝟭 Cat.{v', u'} := by
+  apply Functor.ext
+  · intro X Y f
+    apply Cat.Hom.ext
+    rfl
+  · intro X
+    rfl
 
 /-- The isomorphism in `Cat` between `BundledCategoryData.toCat` and
     `Cat.of Cat`. -/
 def isoCat : toCat.{v', u'} ≅ Cat.of Cat.{v', u'} where
-  hom := functorToCat
-  inv := functorFromCat
-  hom_inv_id := functorToCat_comp_functorFromCat
-  inv_hom_id := functorFromCat_comp_functorToCat
+  hom := functorToCat.toCatHom
+  inv := functorFromCat.toCatHom
+  hom_inv_id := by
+    apply Cat.Hom.ext
+    simp only [Functor.toCatHom_toFunctor, Cat.Hom.comp_toFunctor, Cat.Hom.id_toFunctor]
+    exact functorToCat_comp_functorFromCat
+  inv_hom_id := by
+    apply Cat.Hom.ext
+    simp only [Functor.toCatHom_toFunctor, Cat.Hom.comp_toFunctor, Cat.Hom.id_toFunctor]
+    exact functorFromCat_comp_functorToCat
 
 /-- The equivalence between `BundledCategoryData` and `Cat`, derived from
     the isomorphism. -/

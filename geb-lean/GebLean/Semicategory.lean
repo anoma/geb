@@ -115,7 +115,7 @@ def comp (F : Semifunctor U V) (G : Semifunctor V W) :
     Semifunctor U W where
   toPrefunctor := Prefunctor.comp F.toPrefunctor G.toPrefunctor
   map_comp f g := by
-    simp [Prefunctor.comp]
+    simp only [Prefunctor.comp_obj, Prefunctor.comp_map]
     rw [F.map_comp, G.map_comp]
 
 theorem id_comp (F : Semifunctor V W) : comp (id V) F = F := by
@@ -367,20 +367,22 @@ def liftToFunctor {U : Type u} {V : Type u}
 /-- The inclusion functor from semicategories to categories. -/
 def toCat : SemicategoryCat ⥤ Cat where
   obj V := ⟨V.α, adjoinedIdCategory⟩
-  map {V W} F := liftToFunctor F
+  map {V W} F := (liftToFunctor F).toCatHom
   map_id V := by
+    apply Cat.Hom.ext
     refine CategoryTheory.Functor.ext ?_ ?_
     · intro x
       rfl
     · intro x y f
-      simp only [eqToHom_refl]
+      simp only [eqToHom_refl, Category.comp_id, Category.id_comp]
       cases f <;> rfl
   map_comp {U V W} F G := by
+    apply Cat.Hom.ext
     refine CategoryTheory.Functor.ext ?_ ?_
     · intro x
       rfl
     · intro x y f
-      simp only [eqToHom_refl]
+      simp only [eqToHom_refl, Category.comp_id, Category.id_comp]
       cases f <;> rfl
 
 end Semicategory

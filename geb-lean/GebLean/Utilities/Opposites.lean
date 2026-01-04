@@ -104,28 +104,30 @@ The functor from `Cᵒᵖ` to `Cᵒᵖ'` that converts between mathlib's opposit
 and our opposite.
 -/
 @[simp]
-def catOfOpToOp' : Cat.of Cᵒᵖ ⟶ Cat.of Cᵒᵖ' where
+def opToOp' : Cᵒᵖ ⥤ Cᵒᵖ' where
   obj X := X.unop
   map f := f.unop
   map_id _ := rfl
   map_comp _ _ := rfl
 
+/-- The `Cat.Hom` version of `opToOp'`. -/
 @[simp]
-def opToOp' : Cᵒᵖ ⥤ Cᵒᵖ' := catOfOpToOp'
+def catOfOpToOp' : Cat.of Cᵒᵖ ⟶ Cat.of Cᵒᵖ' := ⟨opToOp'⟩
 
 /--
 The functor from `Cᵒᵖ'` to `Cᵒᵖ` that converts between our opposite and
 mathlib's opposite.
 -/
 @[simp]
-def catOfOp'ToOp : Cat.of Cᵒᵖ' ⟶ Cat.of Cᵒᵖ where
+def op'ToOp : Cᵒᵖ' ⥤ Cᵒᵖ where
   obj := Opposite.op
   map f := f.op
   map_id _ := rfl
   map_comp _ _ := rfl
 
+/-- The `Cat.Hom` version of `op'ToOp`. -/
 @[simp]
-def op'ToOp : Cᵒᵖ' ⥤ Cᵒᵖ := catOfOp'ToOp
+def catOfOp'ToOp : Cat.of Cᵒᵖ' ⟶ Cat.of Cᵒᵖ := op'ToOp.toCatHom
 
 /--
 The two functors compose to the identity on the nose (actual equality, not just
@@ -154,8 +156,14 @@ Categorical isomorphism between `Cᵒᵖ` and `Cᵒᵖ'` in the category of cate
 def opIsoOp' : Cᵒᵖ ≅Cat Cᵒᵖ' where
   hom := catOfOpToOp'
   inv := catOfOp'ToOp
-  hom_inv_id := rfl
-  inv_hom_id := rfl
+  hom_inv_id := by
+    apply Cat.Hom.ext
+    simp only [Cat.Hom.comp_toFunctor, Cat.Hom.id_toFunctor]
+    rfl
+  inv_hom_id := by
+    apply Cat.Hom.ext
+    simp only [Cat.Hom.comp_toFunctor, Cat.Hom.id_toFunctor]
+    rfl
 
 /--
 The categorical equivalence induced by the isomorphism of categories.
@@ -177,19 +185,19 @@ postcomposition with the isomorphism between `Cᵒᵖ` and `Cᵒᵖ'`.
 -/
 @[simp]
 def preCompToOp : (Cᵒᵖ' ⥤ D) ⥤ (Cᵒᵖ ⥤ D) :=
-  (Functor.whiskeringLeft Cᵒᵖ Cᵒᵖ' D).obj catOfOpToOp'
+  (Functor.whiskeringLeft Cᵒᵖ Cᵒᵖ' D).obj opToOp'
 
 @[simp]
 def preCompToOp' : (Cᵒᵖ ⥤ D) ⥤ (Cᵒᵖ' ⥤ D) :=
-  (Functor.whiskeringLeft Cᵒᵖ' Cᵒᵖ D).obj catOfOp'ToOp
+  (Functor.whiskeringLeft Cᵒᵖ' Cᵒᵖ D).obj op'ToOp
 
 @[simp]
 def postCompToOp : (C ⥤ Dᵒᵖ') ⥤ (C ⥤ Dᵒᵖ) :=
-  (Functor.whiskeringRight C Dᵒᵖ' Dᵒᵖ).obj catOfOp'ToOp
+  (Functor.whiskeringRight C Dᵒᵖ' Dᵒᵖ).obj op'ToOp
 
 @[simp]
 def postCompToOp' : (C ⥤ Dᵒᵖ) ⥤ (C ⥤ Dᵒᵖ') :=
-  (Functor.whiskeringRight C Dᵒᵖ Dᵒᵖ').obj catOfOpToOp'
+  (Functor.whiskeringRight C Dᵒᵖ Dᵒᵖ').obj opToOp'
 
 @[simp]
 def biCompToOp : (Cᵒᵖ' ⥤ Dᵒᵖ') ⥤ (Cᵒᵖ ⥤ Dᵒᵖ) :=
@@ -205,10 +213,18 @@ isomorphism.
 -/
 @[simp]
 def functorOpIsoOp' : (Cᵒᵖ ⥤ D) ≅Cat (Cᵒᵖ' ⥤ D) where
-  hom := preCompToOp'
-  inv := preCompToOp
-  hom_inv_id := rfl
-  inv_hom_id := rfl
+  hom := preCompToOp'.toCatHom
+  inv := preCompToOp.toCatHom
+  hom_inv_id := by
+    apply Cat.Hom.ext
+    simp only [Cat.Hom.comp_toFunctor, Cat.Hom.id_toFunctor,
+      Functor.toCatHom_toFunctor]
+    rfl
+  inv_hom_id := by
+    apply Cat.Hom.ext
+    simp only [Cat.Hom.comp_toFunctor, Cat.Hom.id_toFunctor,
+      Functor.toCatHom_toFunctor]
+    rfl
 
 /--
 The equivalence of functor categories induced by the isomorphism.
@@ -231,10 +247,18 @@ isomorphism.
 -/
 @[simp]
 def functorToOpIsoToOp' : (C ⥤ Dᵒᵖ) ≅Cat (C ⥤ Dᵒᵖ') where
-  hom := postCompToOp'
-  inv := postCompToOp
-  hom_inv_id := rfl
-  inv_hom_id := rfl
+  hom := postCompToOp'.toCatHom
+  inv := postCompToOp.toCatHom
+  hom_inv_id := by
+    apply Cat.Hom.ext
+    simp only [Cat.Hom.comp_toFunctor, Cat.Hom.id_toFunctor,
+      Functor.toCatHom_toFunctor]
+    rfl
+  inv_hom_id := by
+    apply Cat.Hom.ext
+    simp only [Cat.Hom.comp_toFunctor, Cat.Hom.id_toFunctor,
+      Functor.toCatHom_toFunctor]
+    rfl
 
 /--
 The equivalence of functor categories induced by the isomorphism.
@@ -313,11 +337,19 @@ def opProdToProdOp : (Cᵒᵖ' × Dᵒᵖ') ⥤ (C × D)ᵒᵖ' :=
     map f := (f.1, f.2)
   }
 
-def prodOpIso : (C × D)ᵒᵖ' ≅Cat (Cᵒᵖ' × Dᵒᵖ') :=
-  {
-    hom := prodOpToOpProd
-    inv := opProdToProdOp
-  }
+def prodOpIso : (C × D)ᵒᵖ' ≅Cat (Cᵒᵖ' × Dᵒᵖ') where
+  hom := prodOpToOpProd.toCatHom
+  inv := opProdToProdOp.toCatHom
+  hom_inv_id := by
+    apply Cat.Hom.ext
+    simp only [Cat.Hom.comp_toFunctor, Cat.Hom.id_toFunctor,
+      Functor.toCatHom_toFunctor]
+    rfl
+  inv_hom_id := by
+    apply Cat.Hom.ext
+    simp only [Cat.Hom.comp_toFunctor, Cat.Hom.id_toFunctor,
+      Functor.toCatHom_toFunctor]
+    rfl
 
 def prodOpEquiv' : (C × D)ᵒᵖ' ≌ (Cᵒᵖ' × Dᵒᵖ') :=
   Cat.equivOfIso prodOpIso
@@ -521,14 +553,23 @@ def opFunctorObj' (E : Cat.{v, u}) : Cat.{v, u} := .of Eᵒᵖ'
 @[simp]
 def opFunctor' : Cat.{v, u} ⥤ Cat.{v, u} where
   obj := opFunctorObj'
-  map := _root_.GebLean.Functor.op'
+  map F := (_root_.GebLean.Functor.op' F.toFunctor).toCatHom
+  map_id X := by
+    apply Cat.Hom.ext
+    simp only [Cat.Hom.id_toFunctor, Functor.toCatHom_toFunctor]
+    rfl
+  map_comp F G := by
+    apply Cat.Hom.ext
+    simp only [Cat.Hom.comp_toFunctor, Functor.toCatHom_toFunctor]
+    rfl
 
 /--
 `Functor.op'` maps `eqToHom` functors to `eqToHom` functors.
 -/
 @[simp]
 theorem Functor.op'_eqToHom {C D : Cat.{v, u}} (h : C = D) :
-    _root_.GebLean.Functor.op' (eqToHom h) = eqToHom (congrArg opFunctorObj' h) := by
+    _root_.GebLean.Functor.op' (eqToHom h).toFunctor =
+      (eqToHom (congrArg opFunctorObj' h)).toFunctor := by
   cases h
   rfl
 
@@ -541,7 +582,11 @@ isomorphism, our `opFunctor'` is involutive on the nose because
 theorem opFunctor'_comp_self_eq_id : opFunctor'.{v, u} ⋙ opFunctor'.{v, u} = 𝟭 _ := by
   apply Functor.ext
   case h_obj => intro C; rfl
-  case h_map => intros C D F; rfl
+  case h_map =>
+    intros C D F
+    apply Cat.Hom.ext
+    simp only [Functor.comp_map, Functor.id_map]
+    rfl
 
 /--
 The natural isomorphism between the double application of `Cat.opFunctor'` and
@@ -560,8 +605,8 @@ equality (strict involution), not only an equivalence.
 -/
 @[simp]
 def opCatIso' : Cat.{v, u} ≅Cat Cat.{v, u} where
-  hom := opFunctor'.{v, u}
-  inv := opFunctor'.{v, u}
+  hom := opFunctor'.{v, u}.toCatHom
+  inv := opFunctor'.{v, u}.toCatHom
 
 @[simp]
 def opEquivalence' : Cat.{v, u} ≌ Cat.{v, u} := Cat.equivOfIso opCatIso'
@@ -577,35 +622,38 @@ def opFunctorIsoOpFunctor' : Cat.opFunctor.{v, u} ≅ opFunctor'.{v, u} where
     app := fun C => catOfOpToOp'
     naturality := by
       intros C D F
+      apply Cat.Hom.ext
       apply Functor.ext
       case h_obj =>
         intro X
         rfl
       case h_map =>
         intros X Y f
-        simp
+        simp only [eqToHom_refl, Category.comp_id, Category.id_comp]
+        rfl
   }
   inv := {
     app := fun C => catOfOp'ToOp
     naturality := by
       intros C D F
+      apply Cat.Hom.ext
       apply Functor.ext
       case h_obj =>
         intro X
         rfl
       case h_map =>
         intros X Y f
-        simp
+        simp only [eqToHom_refl, Category.comp_id, Category.id_comp]
         rfl
   }
   hom_inv_id := by
     ext C
-    change catOfOpToOp' ⋙ catOfOp'ToOp = 𝟭 _
-    exact opToOp'_comp_op'ToOp
+    simp only [NatTrans.comp_app, NatTrans.id_app]
+    rfl
   inv_hom_id := by
     ext C
-    change catOfOp'ToOp ⋙ catOfOpToOp' = 𝟭 _
-    exact op'ToOp_comp_opToOp'
+    simp only [NatTrans.comp_app, NatTrans.id_app]
+    rfl
 
 /--
 Functor-category endofunctors induced by precomposition and
@@ -664,7 +712,8 @@ For a functor `F : Cᵒᵖ' ⥤ Cat`, the morphism function
 @[simp]
 theorem postCompOpFunctor'_map_eq {C : Type u} [Category.{v} C]
     (F : Cᵒᵖ' ⥤ Cat.{v₁, u₁}) {X Y : C} (φ : X ⟶ Y) :
-    (Cat.postCompOpFunctor'.obj F).map φ = Functor.op' (F.map φ) := rfl
+    ((Cat.postCompOpFunctor'.obj F).map φ).toFunctor =
+      Functor.op' (F.map φ).toFunctor := rfl
 
 end Cat
 

@@ -154,16 +154,16 @@ def JudgmentLevel.forgetCatToObjAsCat.{uJ} :
 def JudgmentLevel.Hom.toCatHom.{uJ} : {j₁ j₂ : JudgmentLevel} →
     JudgmentLevel.Hom j₁ j₂ →
     (JudgmentLevel.toCat.{uJ} j₁ ⟶ JudgmentLevel.toCat.{uJ} j₂)
-  | .obj, .obj, .id .obj => 𝟭 _
-  | .quiv, .quiv, .id .quiv => 𝟭 _
-  | .cat, .cat, .id .cat => 𝟭 _
-  | .quiv, .obj, .quivToObj => JudgmentLevel.forgetQuivToObjAsCat.{uJ}
-  | .cat, .quiv, .catToQuiv => JudgmentLevel.forgetCatToQuivAsCat.{uJ}
-  | .cat, .obj, .catToObj => JudgmentLevel.forgetCatToObjAsCat.{uJ}
+  | .obj, .obj, .id .obj => (𝟭 _).toCatHom
+  | .quiv, .quiv, .id .quiv => (𝟭 _).toCatHom
+  | .cat, .cat, .id .cat => (𝟭 _).toCatHom
+  | .quiv, .obj, .quivToObj => JudgmentLevel.forgetQuivToObjAsCat.{uJ}.toCatHom
+  | .cat, .quiv, .catToQuiv => JudgmentLevel.forgetCatToQuivAsCat.{uJ}.toCatHom
+  | .cat, .obj, .catToObj => JudgmentLevel.forgetCatToObjAsCat.{uJ}.toCatHom
 
-/-- Identity morphisms map to identity functors. -/
+/-- Identity morphisms map to identity morphisms in Cat. -/
 theorem JudgmentLevel.Hom.toCatHom_id.{uJ} (j : JudgmentLevel) :
-    JudgmentLevel.Hom.toCatHom.{uJ} (.id j) = 𝟭 (JudgmentLevel.toCat.{uJ} j) := by
+    JudgmentLevel.Hom.toCatHom.{uJ} (.id j) = 𝟙 (JudgmentLevel.toCat.{uJ} j) := by
   cases j <;> rfl
 
 /-- The composition of forgetful functors catToQuiv and quivToObj equals catToObj. -/
@@ -176,31 +176,61 @@ theorem JudgmentLevel.forgetCatToObj_eq_comp.{uJ} :
   · intro X
     rfl
 
-/-- Composition of morphisms maps to composition of functors. -/
+/-- Composition of morphisms maps to composition of morphisms in Cat. -/
 theorem JudgmentLevel.Hom.toCatHom_comp.{uJ} : {j₁ j₂ j₃ : JudgmentLevel} →
     (f : JudgmentLevel.Hom j₁ j₂) → (g : JudgmentLevel.Hom j₂ j₃) →
     JudgmentLevel.Hom.toCatHom.{uJ} (JudgmentLevel.Hom.comp f g) =
-    JudgmentLevel.Hom.toCatHom.{uJ} f ⋙ JudgmentLevel.Hom.toCatHom.{uJ} g
+    JudgmentLevel.Hom.toCatHom.{uJ} f ≫ JudgmentLevel.Hom.toCatHom.{uJ} g
   | .obj, .obj, .obj, .id .obj, .id .obj => by
-      simp only [Hom.comp, Hom.toCatHom, Functor.id_comp]
+      apply Cat.Hom.ext
+      simp only [Hom.comp, Hom.toCatHom, Functor.toCatHom_toFunctor,
+        Cat.Hom.comp_toFunctor]
+      exact (Functor.id_comp _).symm
   | .quiv, .quiv, .quiv, .id .quiv, .id .quiv => by
-      simp only [Hom.comp, Hom.toCatHom, Functor.id_comp]
+      apply Cat.Hom.ext
+      simp only [Hom.comp, Hom.toCatHom, Functor.toCatHom_toFunctor,
+        Cat.Hom.comp_toFunctor]
+      exact (Functor.id_comp _).symm
   | .quiv, .quiv, .obj, .id .quiv, .quivToObj => by
-      simp only [Hom.comp, Hom.toCatHom, Functor.id_comp]
+      apply Cat.Hom.ext
+      simp only [Hom.comp, Hom.toCatHom, Functor.toCatHom_toFunctor,
+        Cat.Hom.comp_toFunctor]
+      exact (Functor.id_comp _).symm
   | .quiv, .obj, .obj, .quivToObj, .id .obj => by
-      simp only [Hom.comp, Hom.toCatHom, Functor.comp_id]
+      apply Cat.Hom.ext
+      simp only [Hom.comp, Hom.toCatHom, Functor.toCatHom_toFunctor,
+        Cat.Hom.comp_toFunctor]
+      exact (Functor.comp_id _).symm
   | .cat, .cat, .cat, .id .cat, .id .cat => by
-      simp only [Hom.comp, Hom.toCatHom, Functor.id_comp]
+      apply Cat.Hom.ext
+      simp only [Hom.comp, Hom.toCatHom, Functor.toCatHom_toFunctor,
+        Cat.Hom.comp_toFunctor]
+      exact (Functor.id_comp _).symm
   | .cat, .cat, .quiv, .id .cat, .catToQuiv => by
-      simp only [Hom.comp, Hom.toCatHom, Functor.id_comp]
+      apply Cat.Hom.ext
+      simp only [Hom.comp, Hom.toCatHom, Functor.toCatHom_toFunctor,
+        Cat.Hom.comp_toFunctor]
+      exact (Functor.id_comp _).symm
   | .cat, .cat, .obj, .id .cat, .catToObj => by
-      simp only [Hom.comp, Hom.toCatHom, Functor.id_comp]
+      apply Cat.Hom.ext
+      simp only [Hom.comp, Hom.toCatHom, Functor.toCatHom_toFunctor,
+        Cat.Hom.comp_toFunctor]
+      exact (Functor.id_comp _).symm
   | .cat, .quiv, .quiv, .catToQuiv, .id .quiv => by
-      simp only [Hom.comp, Hom.toCatHom, Functor.comp_id]
-  | .cat, .quiv, .obj, .catToQuiv, .quivToObj =>
-      JudgmentLevel.forgetCatToObj_eq_comp.{uJ}
+      apply Cat.Hom.ext
+      simp only [Hom.comp, Hom.toCatHom, Functor.toCatHom_toFunctor,
+        Cat.Hom.comp_toFunctor]
+      exact (Functor.comp_id _).symm
+  | .cat, .quiv, .obj, .catToQuiv, .quivToObj => by
+      apply Cat.Hom.ext
+      simp only [Hom.comp, Hom.toCatHom, Functor.toCatHom_toFunctor,
+        Cat.Hom.comp_toFunctor]
+      exact JudgmentLevel.forgetCatToObj_eq_comp.{uJ}
   | .cat, .obj, .obj, .catToObj, .id .obj => by
-      simp only [Hom.comp, Hom.toCatHom, Functor.comp_id]
+      apply Cat.Hom.ext
+      simp only [Hom.comp, Hom.toCatHom, Functor.toCatHom_toFunctor,
+        Cat.Hom.comp_toFunctor]
+      exact (Functor.comp_id _).symm
 
 /-- The judgment universe functor from the judgment category to Cat. -/
 def JudgmentUniverse.{uJ} : JudgmentLevel ⥤ Cat.{uJ + 1, uJ + 2} where
@@ -719,7 +749,7 @@ theorem JudgmentSection.evalAt_catToObj.{uJ} (s : JudgmentSection.{uJ}) :
     naturality condition connecting the section to the uncurried view. -/
 theorem JudgmentSection.evalAt_natural.{uJ} (s : JudgmentSection.{uJ})
     {j₁ j₂ : JudgmentLevel} (f : JudgmentLevel.Hom j₁ j₂) :
-    (JudgmentLevel.Hom.toCatHom.{uJ} f).obj (s.evalAt j₁) = s.evalAt j₂ := by
+    (JudgmentLevel.Hom.toCatHom.{uJ} f).toFunctor.obj (s.evalAt j₁) = s.evalAt j₂ := by
   match j₁, j₂, f with
   | .obj, .obj, .id .obj => rfl
   | .quiv, .quiv, .id .quiv => rfl

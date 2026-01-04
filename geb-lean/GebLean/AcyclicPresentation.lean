@@ -224,11 +224,11 @@ theorem pathVertices_le_endpoint {V : Type u} [inst : AcyclicQuiver.{u, v} V]
     v ∈ pathVertices p → v ≤ b := by
   induction p with
   | nil =>
-    simp [pathVertices]
+    simp only [pathVertices, List.mem_singleton]
     intro h
     rw [h]
   | cons p' f ih =>
-    simp [pathVertices]
+    simp only [pathVertices, List.mem_append, List.mem_singleton]
     intro h
     cases h with
     | inl h' =>
@@ -252,7 +252,7 @@ theorem pathVertices_nodup {V : Type u} [inst : AcyclicQuiver.{u, v} V]
     · exact ih
     · simp
     · intro v v_mem_p' v_mem_sing
-      simp at v_mem_sing
+      simp only [List.mem_singleton] at v_mem_sing
       subst v_mem_sing
       have c_le_mid : _ ≤ _ := pathVertices_le_endpoint p' _ v_mem_p'
       have mid_lt_c : _ < _ := inst.edgesIncrease f
