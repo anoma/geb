@@ -516,6 +516,8 @@ theorem densityMap_snd_comm (α : F ⟶ G) :
       Functor.op', functorOp'Obj, ccrFamily, DensityMorphismIndex.hom,
       densityMorphismIndexMap, densityTgt, densitySrc, densityElementsObj,
       DensityMorphismIndex.src, ccrObjMk, DensityMorphismIndex.tgt]
+    unfold Cat.Hom.toFunctor
+    unfold Functor.toCatHom
     simp only [densityElementsHom_val, Category.comp_id]
     exact (Category.id_comp _).symm
 
