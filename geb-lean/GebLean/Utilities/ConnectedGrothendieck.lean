@@ -6373,15 +6373,19 @@ lemma functorToConnGrothendieck_map_comp_fiber_base {d d' d'' : D}
       ⟨functorToConnGrothendieckAltBase data h,
         functorToConnGrothendieckAltFiber data h⟩).fiber.base := by
   simp only [GrothendieckContra'.comp_fiber, functorToConnGrothendieckAltFiber,
-    innerFiberAltTransition_map, domainFiberFunctor_map]
+    domainFiberFunctor_map]
   apply Under.UnderMorphism.ext
-  -- Simplify id and unfold composition
   simp only [id_eq]
   rw [Grothendieck.comp_base, Comma.comp_right]
+  simp only [functorToConnGrothendieckObjMap_base, functorToConnGrothendieckObjMap_fiber_base,
+    Under.mk_right, Functor.id_obj, CategoryOp'.eq_1, CategoryOp'Inst.eq_1, CategoryOpQuivInst.eq_1,
+    Functor.toCatHom_toFunctor, TwistedArrow'.eq_1, Functor.comp_obj,
+    functorToConnGrothendieckObjMap_fiber_fiber, eqToHom_refl, Cat.Hom.id_toFunctor,
+    Cat.Hom.comp_toFunctor, eq_mpr_eq_cast, GrothendieckContra'.comp_base, Functor.map_comp,
+    functor_map_eqToHom, congrArg_cast_hom_right, cast_cast, innerFiberAltTransition_map]
   rw [Grothendieck.comp_base, Comma.comp_right]
+  simp only [Under.mk_right, Functor.id_obj]
   rw [Grothendieck.comp_base, Comma.comp_right]
-  -- Simplify record accessors and transition base
-  dsimp only []
   simp only [innerFiberAltTransitionHom_base, functorToConnGrothendieckInnerBase,
     Under.homMk_right, Under.map_map_right, Functor.map_comp, Arrow.comp_right,
     Category.assoc]
