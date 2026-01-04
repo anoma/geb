@@ -167,7 +167,12 @@ fixed point.
 ### The Approximation Approach
 
 Unlike W-types (which are inductive), M-types cannot be defined inductively
-because they may contain infinite data. Instead, we use *approximations*:
+because they may contain infinite data. In the terminology of Gambino and Kock,
+W-type elements are *well-founded trees* (finite height for finitary
+polynomials), while M-type elements are generally *non-well-founded* - they
+may have infinite height even when the polynomial is finitary.
+
+Instead, we use *approximations*:
 
 ```lean
 inductive PolyCofixApprox (P : PolyEndo X) : Nat → X → Type u where
@@ -242,6 +247,18 @@ consistency ensuring the approximations are compatible. Categorically, this
 is an inverse limit construction: an M-type element is a point in the limit
 of the diagram `... → Approx(2) → Approx(1) → Approx(0)` where arrows
 "forget the deepest level."
+
+This matches the categorical construction of the cofree comonad. Following
+Libkind and Spivak, define `P^(0) = 1` and `P^(n+1) = 1 × P(P^(n))`, with
+projection maps `π^(n) : P^(n+1) → P^(n)`. Then the cofree comonad is:
+
+```text
+c_P = lim ( ··· → P^(2) → P^(1) → P^(0) )
+```
+
+Our `PolyCofixApprox P n x` corresponds to `P^(n)`, and the agreement
+relation encodes the projection maps. The `PolyCofix` structure bundles
+a compatible sequence - exactly the data of a point in this limit.
 
 ### Meta-level: The Construction Uses W-types
 
@@ -414,6 +431,19 @@ The free/cofree constructions are parametric versions that allow
 non-trivial leaf labels (for W) or node annotations (for M).
 `─────────────────────────────────────────────────`
 
+`★ Pattern runs on matter ─────────────────────`
+Libkind and Spivak describe the free monad as representing **patterns**
+(terminating decision trees) and the cofree comonad as representing
+**matter** (infinite behavior trees). Patterns start and end; matter
+persists indefinitely. The free monad on P gives well-founded P-trees
+(finite height for finitary P), while the cofree comonad gives
+non-well-founded P-trees that can respond forever.
+
+This terminology clarifies the duality: W-types (free monad on ∅) are
+patterns with no variable slots, while M-types (cofree comonad on 1)
+are matter with trivial annotations at each node.
+`─────────────────────────────────────────────────`
+
 ### Free Monad and Cofree Comonad as Polynomials
 
 The definitions above show that free monads and cofree comonads are
@@ -440,6 +470,14 @@ the positions.
 - `Directions(t)` = leaf positions in tree `t`
 
 So: `FreeM_P(A) ≅ Σ (t : TreeShapes), (LeafPositions(t) → A)`
+
+These tree shapes can be understood as **terminating decision trees**: each
+position in P represents a "question" or "decision point," and each direction
+represents a possible "answer" or "choice." A tree shape specifies the
+branching structure - which questions are asked depending on previous
+answers - while the directions (leaf positions) mark where final values
+are needed. In the "pattern runs on matter" terminology, tree shapes are
+the patterns.
 
 In the code, this is exhibited by:
 
@@ -616,6 +654,35 @@ the overall M-type structure.
 These higher-order structures are documented in the code at
 `PolyAlg.lean` (see the comment near `polyFreeMPoly`).
 
+### The Module Structure: Pattern Runs on Matter
+
+Beyond the individual monad and comonad structures, there is an interaction
+between them. Libkind and Spivak prove (Theorem 3.4) that the free monad
+is a **module over the cofree comonad**. Specifically, there is a natural
+map:
+
+```text
+ν_{P,Q} : m_P ⊗ c_Q → c_{P⊗Q}
+```
+
+where `m_P` is the free monad on P, `c_Q` is the cofree comonad on Q, and
+`⊗` is the substitution product of polynomials.
+
+This map formalizes "pattern runs on matter": given a finite decision tree
+(pattern, from `m_P`) and an infinite behavior tree (matter, from `c_Q`),
+we can run the pattern on the matter to produce a result. The pattern
+determines what questions to ask; the matter provides the answers; the
+result is the path taken through the pattern.
+
+The module laws ensure this interaction is coherent:
+
+- **Unit**: Running an empty pattern (just return) on matter does nothing
+- **Associativity**: Running a compound pattern (pattern-of-patterns) is
+  the same as running them sequentially
+
+This module structure is what allows finite programs to interact with
+infinite environments in a well-defined way.
+
 ## Summary
 
 | Concept | Definition | Universal Property |
@@ -632,7 +699,52 @@ The constructions satisfy:
 - `PolyFix P ≃ PolyFreeM ∅ P` (W-type is free monad on empty)
 - `PolyCofix P ≃ PolyCofreeM 1 P` (M-type is cofree comonad on terminal)
 
+## Application: Interviews Run on People
+
+This example is taken directly from Libkind and Spivak's paper "Pattern runs
+on matter: The free monad monad as a module over the cofree comonad comonad"
+(arXiv:2404.16321). It illustrates the "pattern runs on matter" framework
+concretely.
+
+Consider a polynomial P whose positions are questions and whose directions
+are possible answers. For example:
+
+```text
+P = {Tea?} × y^{Y,N} + {Kind?} × y^{green,black,herbal}
+```
+
+This polynomial has two positions (questions): "Do you want tea?" with two
+possible answers, and "What kind of tea?" with three possible answers.
+
+**Pattern (free monad)**: An element of `m_P` is a terminating decision tree,
+i.e., an interview. For example: "Ask 'Tea?'. If Y, ask 'Kind?'. If N,
+ask 'Tea?' again." The tree has finite depth; the interview eventually ends.
+
+**Matter (cofree comonad)**: An element of `c_{[P,1]}` is a person - an
+infinite behavior tree that can answer any sequence of questions. At each
+node, the person provides an answer for each possible question, and the
+subtrees represent how they would continue answering after each response.
+A person's answers may depend on the history of questions asked.
+
+**Running the interview**: The module action `m_P ⊗ c_{[P,1]} → c_1 ≅ N × y`
+runs the interview on the person. The result is a natural number (how many
+questions were asked) together with the final state. The interview's finite
+structure determines when to stop; the person's infinite capacity ensures
+they can always respond.
+
+For instance, if Alice always says "N" to tea and "herbal" for kind, and
+the interview is "Ask Tea?, then ask Tea? again," running this on Alice
+yields 2 (two questions asked). If Bob initially says "N" but on the
+second asking says "Y" and prefers "black," running the same interview
+yields 2 questions but a different traversal of the interview tree.
+
+The pattern (interview structure) is finite and terminating. The matter
+(person) is infinite and persistent. The interaction produces a finite
+trace through the pattern, guided by the matter's responses.
+
 ## References
 
 - Abbott, Altenkirch, Ghani: "Containers: Constructing Strictly Positive Types"
 - Avigad, Carneiro, Hudon: "Data Types as Quotients of Polynomial Functors"
+- Libkind, Spivak: "Pattern runs on matter: The free monad monad as a module
+  over the cofree comonad comonad" (arXiv:2404.16321)
