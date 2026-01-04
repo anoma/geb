@@ -2,7 +2,7 @@ name = "geb-lean"
 version = "0.1.0"
 keywords = ["math"]
 defaultTargets = ["GebLean"]
-testDriver = "test"
+testDriver = "GebLeanTests"
 
 [leanOptions]
 pp.unicode.fun = true # pretty-prints `fun a ↦ b`
@@ -21,10 +21,9 @@ scope = "leanprover-community"
 [[lean_lib]]
 name = "GebLean"
 
-# Test library
+# Test library - named uniquely to avoid conflicts with dependencies
 [[lean_lib]]
-name = "test"
-roots = ["test"]
+name = "GebLeanTests"
 
 [lean_lib.leanOptions]
 linter.hashCommand = false
