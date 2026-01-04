@@ -1370,7 +1370,7 @@ theorem map_preimage (φ : categoryToCompWitGr C ⟶ categoryToCompWitGr D) :
     -- Unfold and simplify to get projection equalities
     unfold categoryToCompWitGr categoryCompWitBundle at hSrc hMid hTgt hLeft hRight
     simp only [Groth.compWitFunctor, Groth.CompWitBundle.pushforwardFunctor,
-      Groth.CompWitBundle.pushforward, categoryToIdWitGr] at hSrc hMid hTgt hLeft hRight
+      categoryToIdWitGr] at hSrc hMid hTgt hLeft hRight
     -- Prove by destructing the witMap result and substituting
     symm
     rcases hw : φ.fiber.witMap ⟨x, ⟨y, ⟨z, (f, g)⟩⟩⟩ with ⟨x', ⟨y', ⟨z', ⟨f', g'⟩⟩⟩⟩
@@ -1429,8 +1429,7 @@ lemma compWitFiber_naturality {X Y : AdjCompWitGr.{uObj, uMor}} (f : X ⟶ Y) :
     Groth.CompWitBundle.Hom.pushforward, Groth.CompWitGr.bundle]
   rw [Groth.CompWitBundle.Hom.category_comp_witMap,
       Groth.CompWitBundle.Hom.category_comp_witMap]
-  simp only [LMorObj, LMorHom_embedAsQuot, Groth.CompWitBundle.pushforward,
-    Groth.compWitFunctor]
+  simp only [LMorObj, Groth.CompWitBundle.pushforward, Groth.compWitFunctor]
   -- Extract the coherence equalities from f.fiber in expanded form
   have hSrc : f.base.base.base (X.fiber.witSrc w) =
       Y.fiber.witSrc (f.fiber.witMap w) := (f.fiber.witSrc_eq w).symm
@@ -1492,7 +1491,7 @@ theorem unitGr_naturality (X Y : AdjCompWitGr.{uObj, uMor}) (f : X ⟶ Y) :
         funext ⟨a, b⟩ g
         -- Both sides embed a generator morphism, then map through f
         simp only [GrothendieckContra'.cat_comp_fiber, eqToHom_refl, Category.comp_id]
-        simp only [embedAsQuot, LMorHom, mapFreeMor, FreeMor.var]
+        simp only [embedAsQuot, FreeMor.var]
         rfl
     case _ =>
       -- IdWitBundle fiber case
