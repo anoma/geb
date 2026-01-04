@@ -313,10 +313,16 @@ theorem fromMathlib_toMathlib : fromMathlib ⋙ toMathlib = 𝟭 _ := by
 
 /-- The two categories are isomorphic (as objects in Cat). -/
 def isomorphism : WalkingParallelPairCat ≅Cat WalkingParallelPair where
-  hom := toMathlib
-  inv := fromMathlib
-  hom_inv_id := toMathlib_fromMathlib
-  inv_hom_id := fromMathlib_toMathlib
+  hom := toMathlib.toCatHom
+  inv := fromMathlib.toCatHom
+  hom_inv_id := by
+    apply Cat.Hom.ext
+    simp only [Cat.Hom.comp_toFunctor, Cat.Hom.id_toFunctor, Functor.toCatHom]
+    exact toMathlib_fromMathlib
+  inv_hom_id := by
+    apply Cat.Hom.ext
+    simp only [Cat.Hom.comp_toFunctor, Cat.Hom.id_toFunctor, Functor.toCatHom]
+    exact fromMathlib_toMathlib
 
 /-- The two categories are equivalent (derived from the isomorphism). -/
 def equivalence : WalkingParallelPairCat ≌ WalkingParallelPair :=

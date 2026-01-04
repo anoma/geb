@@ -154,8 +154,10 @@ def ProfDialgebraProf : Cᵒᵖ ⥤ C ⥤ Type v where
       Prof.map₂ Q g (φ (Prof.map₁ P g p))
     map_id := fun b => by
       ext φ p
-      simp only [Prof.map₁, Prof.map₂, types_id_apply,
-        Opposite.op_unop, op_id, ← prod_id, Functor.map_id]
+      simp only [Prof.map₁, Prof.map₂, types_id_apply, Opposite.op_unop, op_id]
+      -- The goal has (𝟙 a, 𝟙 b) which equals 𝟙 (a, b) definitionally
+      change Q.map (𝟙 (a, b)) (φ (P.map (𝟙 (Opposite.op b, Opposite.unop a)) p)) = φ p
+      simp only [Functor.map_id, types_id_apply]
     map_comp := fun {b₁ b₂ b₃} g₁ g₂ => by
       ext φ p
       simp only [Prof.map₁, Prof.map₂, types_comp_apply]
@@ -172,7 +174,9 @@ def ProfDialgebraProf : Cᵒᵖ ⥤ C ⥤ Type v where
   map_id a := by
     ext b φ p
     simp only [Prof.map₁, Prof.map₂, NatTrans.id_app, types_id_apply,
-      Opposite.op_unop, unop_id, op_id, ← prod_id, Functor.map_id]
+      Opposite.op_unop, unop_id, op_id]
+    change Q.map (𝟙 (a, b)) (φ (P.map (𝟙 (Opposite.op b, Opposite.unop a)) p)) = φ p
+    simp only [Functor.map_id, types_id_apply]
   map_comp {a₁ a₂ a₃} f g := by
     ext b φ p
     simp only [Prof.map₁, Prof.map₂, NatTrans.comp_app, types_comp_apply,
@@ -260,9 +264,12 @@ def diagElemToHexagonFunctor : DiagElem (ProfDialgebraProf P Q) ⥤ HexagonObj P
 of the profunctor-dialgebra profunctor. -/
 def hexagonDiagElemIsoCat :
     HexagonObj P Q ≅Cat DiagElem (ProfDialgebraProf P Q) where
-  hom := hexagonToDiagElemFunctor P Q
-  inv := diagElemToHexagonFunctor P Q
+  hom := (hexagonToDiagElemFunctor P Q).toCatHom
+  inv := (diagElemToHexagonFunctor P Q).toCatHom
   hom_inv_id := by
+    apply Cat.Hom.ext
+    unfold Cat.Hom.toFunctor Functor.toCatHom
+    simp only [Cat.Hom.comp_toFunctor, Cat.Hom.id_toFunctor]
     apply Functor.ext
     case h_obj => intro x; rfl
     case h_map =>
@@ -271,6 +278,9 @@ def hexagonDiagElemIsoCat :
       apply HexagonHom.ext'
       rfl
   inv_hom_id := by
+    apply Cat.Hom.ext
+    unfold Cat.Hom.toFunctor Functor.toCatHom
+    simp only [Cat.Hom.comp_toFunctor, Cat.Hom.id_toFunctor]
     apply Functor.ext
     case h_obj => intro x; apply DiagElem.ext <;> rfl
     case h_map =>
