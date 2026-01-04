@@ -1075,7 +1075,7 @@ theorem rightTriangle :
       unitCompWitBundleMor, categoryToCompWitGr, categoryToIdWitGr]
     apply Groth.CompWitBundle.Hom.ext
     intro w
-    simp only [categoryCompWitBundle, categoryIdWitBundle, id]
+    simp only [categoryCompWitBundle, categoryIdWitBundle]
     rfl
 
 variable (X : AdjCompWitGr.{uObj, uMor})
@@ -1357,7 +1357,7 @@ theorem map_preimage (φ : categoryToCompWitGr C ⟶ categoryToCompWitGr D) :
     apply Groth.CompWitBundle.Hom.ext
     intro ⟨x, y, z, f, g⟩
     simp only [PhiFunctor, functorToCompWitGrHom, functorToCompWitBundleHom,
-      compWitGrHomToFunctor, compWitGrHomObjMap, compWitGrHomMorMap,
+      compWitGrHomToFunctor, compWitGrHomObjMap,
       Groth.compWitFunctor, Groth.CompWitBundle.pushforwardFunctor,
       Groth.CompWitBundle.pushforward, categoryToCompWitGr, categoryToIdWitGr,
       categoryCompWitBundle]

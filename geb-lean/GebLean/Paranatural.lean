@@ -498,7 +498,7 @@ theorem Paranat.toOverHom_id (F : Cᵒᵖ ⥤ C ⥤ Type u) :
   apply Over.OverMorphism.ext
   apply Cat.Hom.ext
   simp only [toOverHom, Over.homMk_left, Functor.toCatHom_toFunctor,
-    diagElemSliceFunctor, Cat.Hom.id_toFunctor]
+    diagElemSliceFunctor]
   exact Paranat.toFunctor_id C F
 
 /-- The functor induced by a composition of paranatural transformations is
@@ -520,8 +520,7 @@ theorem Paranat.toOverHom_comp {F G H : Cᵒᵖ ⥤ C ⥤ Type u}
       Paranat.toOverHom C F G α ≫ Paranat.toOverHom C G H β := by
   apply Over.OverMorphism.ext
   apply Cat.Hom.ext
-  simp only [toOverHom, Over.homMk_left, Functor.toCatHom_toFunctor,
-    commaCategory, Cat.Hom.comp_toFunctor]
+  simp only [toOverHom, Over.homMk_left, Functor.toCatHom_toFunctor]
   exact Paranat.toFunctor_comp C α β
 
 /-- The functor from `EndoProf` to `Over (Cat.of C)` sending each endoprofunctor
@@ -2342,8 +2341,7 @@ lemma connGrothendieckToTwCoprArrElem_compat {x y : ConnGrothendieck (typeToCatF
   dsimp only [Discrete.functor] at heq
   simp only [Function.comp_apply] at heq
   simp only [twToArr'_left, twToArr'_right, twObjMk'_dom, twObjMk'_cod,
-    connGrothendieckDiagCod, twDom', twCod', Functor.id_obj,
-    Functor.map_comp, eqToHom_map, types_comp_apply] at heq ⊢
+    connGrothendieckDiagCod, twDom', twCod'] at heq ⊢
   -- Need to unfold connGrothendieckContraObjToObj in heq to match the goal
   simp only [connGrothendieckContraObjToObj] at heq
   -- Also unfold connGrothendieckToHomData in goal
