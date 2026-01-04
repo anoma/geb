@@ -6264,7 +6264,8 @@ lemma functorToConnGrothendieck_transportedTgt_comp_eq {d d' d'' : D}
       (GrothendieckContra'.comp
         ⟨functorToConnGrothendieckAltBase data g, functorToConnGrothendieckAltFiber data g⟩
         ⟨functorToConnGrothendieckAltBase data h, functorToConnGrothendieckAltFiber data h⟩
-      ).base).obj (functorToConnGrothendieckObjMap data d'').fiber := by
+      ).base).toFunctor.obj (functorToConnGrothendieckObjMap data d'').fiber := by
+  unfold Cat.Hom.toFunctor
   simp only [functorToConnGrothendieckTransportedTgt, functorToConnGrothendieckAltBase,
     Functor.map_comp, Arrow.comp_left, GrothendieckContra'.comp_base]
 
@@ -6275,7 +6276,7 @@ lemma functorToConnGrothendieck_map_id_fiber_base (d : D) :
     (functorToConnGrothendieckAltFiber data (𝟙 d) ≫
       eqToHom (functorToConnGrothendieck_transportedTgt_id_eq data d)).base =
     ((GrothendieckContra'.id (functorToConnGrothendieckObjMap data d)).fiber).base := by
-  rw [GrothendieckContra'.id_fiber]
+  rw [GrothendieckContra'.id_fiber_val]
   rw [Grothendieck.comp_base]
   rw [Grothendieck.base_eqToHom]
   rw [functorToConnGrothendieckAltFiber_id_base]
@@ -6290,7 +6291,7 @@ lemma functorToConnGrothendieck_map_id_fiber_fiber (d : D) :
       (functorToConnGrothendieckAltFiber data (𝟙 d) ≫
         eqToHom (functorToConnGrothendieck_transportedTgt_id_eq data d)).fiber =
     ((GrothendieckContra'.id (functorToConnGrothendieckObjMap data d)).fiber).fiber := by
-  simp only [GrothendieckContra'.id_fiber]
+  simp only [GrothendieckContra'.id_fiber_val]
   rw [Grothendieck.comp_fiber]
   simp only [eqToHom_trans_assoc]
   have hIdFiber := functorToConnGrothendieckAltFiber_id_fiber_heq data d
@@ -6303,12 +6304,14 @@ lemma functorToConnGrothendieck_map_id_fiber_fiber (d : D) :
     (functorToConnGrothendieckObjMap data d).base
     (functorToConnGrothendieck_transportedTgt_id_eq data d)
   -- Use Cat.functor_map_heq_of_eq_eqToHom to show G.map fiber ≍ fiber
-  have hMapFiber := Cat.functor_map_heq_of_eq_eqToHom _ _ hFunEq
+  -- Convert hFunEq to use .toFunctor on both sides
+  have hFunEq' := congrArg Cat.Hom.toFunctor hFunEq
+  have hMapFiber := Cat.functor_map_heq_of_eq_eqToHom _ _ hFunEq'
     (functorToConnGrothendieckAltFiber data (𝟙 d)).fiber
   -- Both G.map fiber and fiber are HEq to 𝟙
   have hGmapId : ((restrictToDomainFiber C F
       (functorToConnGrothendieckObjMap data d).base).map
-      (eqToHom (functorToConnGrothendieck_transportedTgt_id_eq data d)).base).map
+      (eqToHom (functorToConnGrothendieck_transportedTgt_id_eq data d)).base).toFunctor.map
       (functorToConnGrothendieckAltFiber data (𝟙 d)).fiber ≍
       𝟙 (functorToConnGrothendieckObjMap data d).fiber.fiber := by
     exact HEq.trans hMapFiber hIdFiber
