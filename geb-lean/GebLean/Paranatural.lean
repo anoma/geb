@@ -1894,9 +1894,19 @@ lemma twCoprArrElemFiberMorphEq {x y : TwCoprArrElem F} (f : TwCoprArrElem.Hom F
     simp only [Category.comp_id]
     exact f.compat
   · -- Show RHS equals F.map (arrToDiagFromTarget f.base) y.elem
-    -- The outer eqToHom (Cat level) and inner eqToHom (Type level) cancel
+    -- The composition is inside F.map (in TwistedArrow' category)
     symm
-    exact eqToHom_discrete_nested_cancel _ _ _
+    dsimp only [Function.comp_apply]
+    -- Split F.map (g ≫ eqToHom h) into F.map g ≫ F.map (eqToHom h)
+    simp only [Functor.map_comp]
+    -- F.map (eqToHom h) = eqToHom (congrArg F.obj h) in Type
+    simp only [eqToHom_map]
+    -- Now we have ((eqToHom ...).obj { as := eqToHom ... (F.map ... y.elem) }).as
+    -- h2 requires: F.obj (arrDiagTw' f.base) = F.obj (connGrothendieckDiagDom ...)
+    have h2 : F.obj (arrDiagTw' f.base) =
+        F.obj (connGrothendieckDiagDom C (arrToTw' y.arr) f.base.left) :=
+      congrArg F.obj (connGrothendieckDiagDom_eq_arrDiagTw' f.base).symm
+    exact eqToHom_discrete_nested_cancel _ h2 _
 
 /-- Construct a discrete category morphism from element equality. -/
 def discreteMorphOfEq {X : Type*} {a b : Discrete X} (h : a.as = b.as) : a ⟶ b :=
@@ -2356,8 +2366,13 @@ lemma connGrothendieckToTwCoprArrElem_compat {x y : ConnGrothendieck (typeToCatF
   -- the same statement up to hdiag. Use cast_heq to transport.
   -- We must show that F.map (twHomMk' ... pf₁) = F.map (twHomMk' ... pf)
   -- after accounting for eqToHom pf₂
-  -- Use types_eqToHom_cancel with the heq between the F.map applications
+  -- Simplify function composition (f ∘ g) x patterns and Discrete.mk x).as = x
   simp only [Functor.toCatHom_toFunctor]
+  dsimp only [Function.comp_apply]
+  -- Now goal: F.map (m ≫ eqToHom h) elem = F.map m' elem
+  -- Split F.map (m ≫ eqToHom h) and convert F.map (eqToHom h) to eqToHom
+  simp only [Functor.map_comp, eqToHom_map, types_comp_apply]
+  -- Now goal is: eqToHom (congrArg F.obj h) (F.map m elem) = F.map m' elem
   apply types_eqToHom_cancel
   -- Goal: HEq (F.map (twHomMk' ... pf₁) elem) (F.map (twHomMk' ... pf) elem)
   -- Both twHomMk' have the same domArr and codArr; targets equal by hdiag
