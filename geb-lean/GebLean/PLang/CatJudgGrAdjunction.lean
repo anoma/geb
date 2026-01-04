@@ -1327,6 +1327,8 @@ theorem preimage_map (F : C ⥤ D) :
     simp only [compWitGrHomToFunctor, compWitGrHomMorMap, compWitGrHomObjMap]
     simp only [PhiFunctor, functorToCompWitGrHom, functorToIdWitGrHom,
       functorToQuiverHom]
+    unfold Functor.toCatHom Cat.Hom.toFunctor
+    rfl
 
 /-- compWitGrHomToFunctor followed by PhiFunctor.map is the identity. -/
 theorem map_preimage (φ : categoryToCompWitGr C ⟶ categoryToCompWitGr D) :
@@ -1387,7 +1389,7 @@ def phiFunctorFullyFaithful : PhiFunctor.{v, u}.FullyFaithful :=
   Functor.FullyFaithful.mk
     (preimage := fun φ => (compWitGrHomToFunctor φ).toCatHom)
     (map_preimage := map_preimage)
-    (preimage_map := fun F => by simp only [preimage_map])
+    (preimage_map := fun _ => by rfl)
 
 end FullFaithfulness
 
@@ -1519,7 +1521,7 @@ theorem unitGr_naturality (X Y : AdjCompWitGr.{uObj, uMor}) (f : X ⟶ Y) :
     Inducting on validity gives proper typing for composition cases. -/
 theorem evalFreeMor_naturality (C D : AdjCat.{uObj, uMor}) (f : C ⟶ D)
     {a b : (ΦC C).objType} (m : FreeMor (ΦC C) a b) :
-    f.map (evalFreeMor C m) =
+    f.toFunctor.map (evalFreeMor C m) =
       evalFreeMor D ⟨mapFreeMorRaw (PhiFunctor.map f) m.1,
         mapFreeMorRaw_valid (PhiFunctor.map f) m.2⟩ := by
   -- Induct on validity proof which has proper endpoint typing
@@ -1533,9 +1535,9 @@ theorem evalFreeMor_naturality (C D : AdjCat.{uObj, uMor}) (f : C ⟶ D)
     simp only [evalFreeMor, evalFreeMorRaw, mapFreeMorRaw]
     simp only [PhiFunctor, functorToCompWitGrHom, functorToIdWitGrHom,
                functorToQuiverHom, LMorObj]
-    exact f.map_id a'
+    exact f.toFunctor.map_id a'
   | comp hg hf ihg ihf =>
-    simp only [evalFreeMor, evalFreeMorRaw, mapFreeMorRaw, f.map_comp]
+    simp only [evalFreeMor, evalFreeMorRaw, mapFreeMorRaw, f.toFunctor.map_comp]
     simp only [evalFreeMor] at ihg ihf
     exact congrArg₂ (· ≫ ·) ihf ihg
 
