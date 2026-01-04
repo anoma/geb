@@ -562,6 +562,28 @@ Here `ccrObjMk` constructs a CCR object from a family function, with the
 index type being the domain of the family (the shape/position type) and
 the family being the direction types at each shape.
 
+**Intuitive reading of directions**:
+
+For the **free monad**, recall that positions are tree shapes - finite
+trees with P-shaped internal nodes and unit-labeled leaves (marking
+"slots" for variable terms). The directions at a given tree shape are
+exactly the *leaf positions* in that tree. Intuitively: a position tells
+you the *shape* of a term with variables, and the directions tell you
+*where the variables go*. To build an actual term `FreeM_P(A)`, you
+choose a tree shape and then fill each variable slot with a value from A.
+
+For the **cofree comonad**, positions are M-type shapes - potentially
+infinite trees with P-shaped nodes. The directions at a given M-type
+shape are the *node positions* throughout the (possibly infinite)
+structure, indexed by depth. Intuitively: a position tells you the
+*shape* of a (co)recursive structure, and the directions tell you
+*where to put annotations*. To build an actual element `CofreeM_P(A)`,
+you choose an M-type shape and then annotate every node (at every finite
+depth) with a value from A. Since M-types can be infinite, a single
+shape may have infinitely many annotation positions - but each individual
+position is at some finite depth, so we can specify them all via the
+depth-indexed type `Σ n, PolyCofreeAnnotPosAt P shape n`.
+
 ### Higher-Order Monad and Comonad Structure
 
 The constructions `P ↦ polyFreeMPoly P` (free monad) and
