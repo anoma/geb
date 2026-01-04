@@ -1888,10 +1888,12 @@ lemma twCoprArrElemFiberMorphEq {x y : TwCoprArrElem F} (f : TwCoprArrElem.Hom F
   -- For discrete categories, (eqToHom h).obj preserves the .as value
   -- Use transitivity with f.compat
   trans F.map (arrToDiagFromTarget f.base) y.elem
-  · exact f.compat
+  · -- The goal has identity in the form toCategoryStruct.2; change to standard form
+    change F.map (arrToDiagFromSource f.base ≫ 𝟙 (arrDiagTw' f.base)) x.elem =
+           F.map (arrToDiagFromTarget f.base) y.elem
+    simp only [Category.comp_id]
+    exact f.compat
   · -- Show RHS equals F.map (arrToDiagFromTarget f.base) y.elem
-    -- The eqToHom terms wrap the value but preserve .as via nested cancellation
-    simp only [eqToHom_map]
     -- The outer eqToHom (Cat level) and inner eqToHom (Type level) cancel
     symm
     exact eqToHom_discrete_nested_cancel _ _ _
