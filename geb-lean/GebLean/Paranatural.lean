@@ -1787,9 +1787,12 @@ lemma connGrothendieckHomFiberSrc_eq {x y : TwCoprArrElem F}
     (f : TwCoprArrElem.Hom F x y) :
     (eqToHom (congrArg (typeToCatF F).obj (connGrothendieckDiagCod_eq_arrDiagTw F f))).toFunctor.obj
       (connGrothendieckHomFiberSrc F f) = twCoprArrElemFiberSrc F f := by
+  unfold Cat.Hom.toFunctor
   simp only [connGrothendieckHomFiberSrc, twCoprArrElemFiberSrc]
-  simp only [connGrothendieckTwMorphCod_eq_arrToDiagFromSource, Cat.Hom.comp_toFunctor,
-    Functor.comp_obj, eqToHom_map]
+  unfold Cat.Hom.toFunctor
+  simp only [connGrothendieckTwMorphCod_eq_arrToDiagFromSource, Functor.comp_obj]
+  -- The goal has an eqToHom composed with the morphism; extract it
+  simp only [Functor.map_comp, eqToHom_map]
   rfl
 
 /-- Square commutativity in the form needed for `connGrothendieckDiagEq`. -/
@@ -1869,18 +1872,18 @@ lemma twCoprArrElemFiberMorphEq {x y : TwCoprArrElem F} (f : TwCoprArrElem.Hom F
     twCoprArrElemFiberMorphTgt]
   simp only [connGrothendieckTwMorphCod_eq_arrToDiagFromSource,
     connGrothendieckTwMorphDom_eq_arrToDiagFromTarget]
-  simp only [Cat.Hom.comp_toFunctor, Functor.comp_obj]
-  simp only [typeToCatF, Functor.comp_obj, Functor.comp_map, typeToCat,
-    Discrete.functor_obj, Cat.of_α]
-  simp only [Function.comp_apply]
+  unfold Cat.Hom.toFunctor
+  simp only [typeToCatF, Functor.comp_map, typeToCat]
+  unfold Functor.toCatHom
+  dsimp only [Function.comp_apply]
   -- Unfold Discrete.functor.obj to expose the .as manipulation
   simp only [Discrete.functor_obj]
   -- After unfolding, the eqToHom applications are on reflexive equalities
-  simp only [eqToHom_refl, Functor.map_id]
+  simp only [eqToHom_refl]
   -- Unfold identity morphism in Type
-  dsimp only [CategoryStruct.id]
+  unfold CategoryStruct.id
   -- Simplify Discrete.mk ∘ id and extract .as
-  simp only [Function.comp_apply, id_eq]
+  simp only [Function.comp_apply]
   -- Now we need to handle the eqToHom.obj on the RHS
   -- For discrete categories, (eqToHom h).obj preserves the .as value
   -- Use transitivity with f.compat
@@ -2352,7 +2355,7 @@ lemma connGrothendieckToTwCoprArrElem_compat {x y : ConnGrothendieck (typeToCatF
   -- We must show that F.map (twHomMk' ... pf₁) = F.map (twHomMk' ... pf)
   -- after accounting for eqToHom pf₂
   -- Use types_eqToHom_cancel with the heq between the F.map applications
-  dsimp only [Cat.Hom.toFunctor, Functor.toCatHom]
+  simp only [Functor.toCatHom_toFunctor]
   apply types_eqToHom_cancel
   -- Goal: HEq (F.map (twHomMk' ... pf₁) elem) (F.map (twHomMk' ... pf) elem)
   -- Both twHomMk' have the same domArr and codArr; targets equal by hdiag
