@@ -2354,30 +2354,19 @@ lemma connGrothendieckToTwCoprArrElem_compat {x y : ConnGrothendieck (typeToCatF
   refine Eq.trans heq ?_
   -- Goal: eqToHom pf (F.map morph₁ elem) = F.map morph₂ elem
   simp only [connGrothendieckToArrowHom]
-  -- Generalize to expose the proof terms explicitly
-  generalize_proofs _ _ _ _ _ _ pf₂ pf₁ pf
-  -- pf₂ is the eqToHom proof: F.obj target₁ = F.obj target₂
-  -- pf₁ is the proof for twHomMk' with target connGrothendieckDiagDom
-  -- pf is the proof for twHomMk' with target arrDiagTw'
-  -- Using hdiag, both targets are equal, so the morphisms are equal
-  have hdiag := connGrothendieckDiagDom_eq_arrDiagTw'_of_connGrothendieck (F := F) f
-  simp only [arrDiagTw'] at hdiag
-  -- Both twHomMk' have the same target after rewriting, so pf₁ and pf prove
-  -- the same statement up to hdiag. Use cast_heq to transport.
-  -- We must show that F.map (twHomMk' ... pf₁) = F.map (twHomMk' ... pf)
-  -- after accounting for eqToHom pf₂
   -- Simplify function composition (f ∘ g) x patterns and Discrete.mk x).as = x
   simp only [Functor.toCatHom_toFunctor]
   dsimp only [Function.comp_apply]
-  -- Now goal: F.map (m ≫ eqToHom h) elem = F.map m' elem
   -- Split F.map (m ≫ eqToHom h) and convert F.map (eqToHom h) to eqToHom
   simp only [Functor.map_comp, eqToHom_map, types_comp_apply]
   -- Now goal is: eqToHom (congrArg F.obj h) (F.map m elem) = F.map m' elem
+  -- Using hdiag, both targets are equal, so the morphisms are equal
+  have hdiag := connGrothendieckDiagDom_eq_arrDiagTw'_of_connGrothendieck (F := F) f
+  simp only [arrDiagTw'] at hdiag
+  -- We must show that F.map (twHomMk' ... pf₁) = F.map (twHomMk' ... pf)
+  -- after accounting for eqToHom. Let Lean infer the proof terms.
   apply types_eqToHom_cancel
-  -- Goal: HEq (F.map (twHomMk' ... pf₁) elem) (F.map (twHomMk' ... pf) elem)
-  -- Both twHomMk' have the same domArr and codArr; targets equal by hdiag
-  -- Use the functor_map_twHomMk'_heq_of_target_eq lemma
-  exact functor_map_twHomMk'_heq_of_target_eq F hdiag _ _ pf₁ _ _ pf HEq.rfl HEq.rfl _
+  exact functor_map_twHomMk'_heq_of_target_eq F hdiag _ _ _ _ _ _ HEq.rfl HEq.rfl _
 
 /-- The morphism map from ConnGrothendieck to TwCoprArrElem. -/
 def connGrothendieckToTwCoprArrElemHom {x y : ConnGrothendieck (typeToCatF F)}
