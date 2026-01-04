@@ -260,9 +260,9 @@ lemma TwArrCopresheaf.sliceGrothendieck_hom_comp (F : TwArrCopresheaf C) :
   simp only [sliceNatTrans]
   rw [NatTrans.comp_app, NatTrans.comp_app]
   simp only [overOpCopresheafFunctor, copresheafConstruction,
-    copresheafConstructionMap, Functor.op', Functor.comp_map,
+    Functor.op', Functor.comp_map,
     Functor.whiskeringLeft, overOpMapFunctor, Functor.comp_obj,
-    Functor.whiskerLeft_app]
+    Functor.whiskerLeft_app, Functor.toCatHom_toFunctor]
   rw [eqToHom_app]
   funext x
   simp only [types_comp_apply]
@@ -283,7 +283,8 @@ lemma TwArrCopresheaf.sliceGrothendieck_hom_comp (F : TwArrCopresheaf C) :
   rw [hfst_rfl, eqToHom_refl, prod_id]
   simp only [twObjMk', functorOp'Obj]
   have hleft_eq :
-      (((Cat.postCompOpFunctor'.obj (Over.mapFunctor C)).map g).obj f).left = f.left := rfl
+      (((Cat.postCompOpFunctor'.obj (Over.mapFunctor C)).map g).toFunctor.obj f).left =
+        f.left := rfl
   apply Prod.ext
   · simp only [CategoryOp'Inst, prod_comp]
     change 𝟙 f.left = 𝟙 f.left ≫ 𝟙 f.left ≫ 𝟙 f.left
@@ -531,13 +532,14 @@ def TwArrPresheaf.sliceCopresheaf (F : TwArrPresheaf C) (y : C) :
          CategoryStruct.comp, Category.toCategoryStruct,
          instCategoryOpTwistedArrow', OpProdInst']
       unfold id CategoryStruct.id
-      simp
+      simp only [CategoryOp'.eq_1, CategoryOp'Inst.eq_1, CategoryOpQuivInst.eq_1,
+        prod_Hom, OpTwistedArrow'.eq_1, CategoryOfElementsContra'.comp_val]
       unfold OpProdInst'
-      simp
+      simp only [CategoryOp'.eq_1, CategoryOp'Inst.eq_1, CategoryOpQuivInst.eq_1]
       unfold
         CategoryStruct.id CategoryStruct.comp Category.toCategoryStruct
         opProd' uniformProd
-      simp
+      simp only [CategoryOp'.eq_1]
       exact (Category.id_comp (𝟙 y)).symm
 
 /--
@@ -678,9 +680,9 @@ lemma TwArrPresheaf.sliceGrothendieck_hom_comp (F : TwArrPresheaf C) :
   simp only [sliceGrothendieckHomFiber, sliceNatTrans, Functor.id_obj, Functor.id_map]
   rw [NatTrans.comp_app, NatTrans.comp_app]
   simp only [overCopresheafFunctor, copresheafConstruction,
-    copresheafConstructionMap, Functor.op', Functor.comp_map,
+    Functor.op', Functor.comp_map,
     Functor.whiskeringLeft, Over.mapFunctor, Functor.comp_obj,
-    Functor.whiskerLeft_app]
+    Functor.whiskerLeft_app, Functor.toCatHom_toFunctor]
   rw [eqToHom_app]
   funext x
   simp only [types_comp_apply]
@@ -1054,9 +1056,9 @@ lemma TwArrOpCopresheaf.sliceGrothendieck_hom_comp (F : TwArrOpCopresheaf C) :
   simp only [sliceNatTrans]
   rw [NatTrans.comp_app, NatTrans.comp_app]
   simp only [overOpCopresheafFunctor, copresheafConstruction,
-    copresheafConstructionMap, Functor.op', Functor.comp_map,
+    Functor.op', Functor.comp_map,
     Functor.whiskeringLeft, overOpMapFunctor, Functor.comp_obj,
-    Functor.whiskerLeft_app]
+    Functor.whiskerLeft_app, Functor.toCatHom_toFunctor]
   rw [eqToHom_app]
   funext a
   simp only [types_comp_apply]
@@ -1077,7 +1079,8 @@ lemma TwArrOpCopresheaf.sliceGrothendieck_hom_comp (F : TwArrOpCopresheaf C) :
   rw [hfst_rfl, eqToHom_refl, prod_id]
   simp only [twOpObjMk', functorOp'Obj]
   have hleft_eq :
-      (((Cat.postCompOpFunctor'.obj (Over.mapFunctor C)).map g).obj f).left = f.left := rfl
+      (((Cat.postCompOpFunctor'.obj (Over.mapFunctor C)).map g).toFunctor.obj f).left =
+        f.left := rfl
   apply Prod.ext
   · simp only [prod_comp, Category.comp_id]
   · simp only [CategoryOp'Inst, prod_comp]
@@ -1274,7 +1277,8 @@ def TwArrOpPresheaf.sliceCopresheaf (F : TwArrOpPresheaf C) (x : C) :
         [coTwDomArr', coTwHomMk', CategoryOfElements.homMk,
          CategoryStruct.comp, Category.toCategoryStruct,
          CategoryOp'Inst, prod_comp]
-      simp
+      simp only [CategoryOp'.eq_1, CategoryOpQuivInst.eq_1, prod_Hom,
+        CoTwistedArrow.eq_1, CategoryOfElementsContra'.comp_val]
       exact (Category.id_comp (𝟙 x)).symm
     · simp only [coTwCodArr']
       rfl
@@ -1418,9 +1422,9 @@ lemma TwArrOpPresheaf.sliceGrothendieck_hom_comp (F : TwArrOpPresheaf C) :
   simp only [sliceGrothendieckHomFiber, sliceNatTrans, Functor.id_obj, Functor.id_map]
   rw [NatTrans.comp_app, NatTrans.comp_app]
   simp only [overCopresheafFunctor, copresheafConstruction,
-    copresheafConstructionMap, Functor.op', Functor.comp_map,
+    Functor.op', Functor.comp_map,
     Functor.whiskeringLeft, Over.mapFunctor, Functor.comp_obj,
-    Functor.whiskerLeft_app]
+    Functor.toCatHom_toFunctor, Functor.whiskerLeft_app]
   rw [eqToHom_app]
   funext a
   simp only [types_comp_apply]

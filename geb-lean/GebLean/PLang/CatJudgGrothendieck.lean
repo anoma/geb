@@ -290,8 +290,9 @@ def idWitFunctor.{uObj, uMor, uWit} :
     QuiverGr.{uObj, uMor} ⥤
     Cat.{uWit, max uObj uMor (uWit + 1)} where
   obj Q := Cat.of (IdWitBundle.{uObj, uMor, uWit} Q)
-  map h := IdWitBundle.pushforwardFunctor h
+  map h := (IdWitBundle.pushforwardFunctor h).toCatHom
   map_id Q := by
+    apply Cat.Hom.ext
     apply Functor.ext
     · intro B Y f
       simp only [eqToHom_refl, Category.id_comp, Category.comp_id]
@@ -299,6 +300,7 @@ def idWitFunctor.{uObj, uMor, uWit} :
       intro w; rfl
     · intro B; rfl
   map_comp f g := by
+    apply Cat.Hom.ext
     apply Functor.ext
     · intro B Y φ
       simp only [eqToHom_refl, Category.id_comp, Category.comp_id]
@@ -534,8 +536,9 @@ def compWitFunctor.{uObj, uMor, uWit, uCWit} :
     IdWitGr.{uObj, uMor, uWit} ⥤
     Cat.{uCWit, max uObj uMor (uCWit + 1)} where
   obj I := Cat.of (CompWitBundle.{uObj, uMor, uWit, uCWit} I)
-  map h := CompWitBundle.pushforwardFunctor h
+  map h := (CompWitBundle.pushforwardFunctor h).toCatHom
   map_id I := by
+    apply Cat.Hom.ext
     apply Functor.ext
     · intro B Y f
       simp only [eqToHom_refl, Category.id_comp, Category.comp_id]
@@ -543,6 +546,7 @@ def compWitFunctor.{uObj, uMor, uWit, uCWit} :
       intro w; rfl
     · intro B; rfl
   map_comp f g := by
+    apply Cat.Hom.ext
     apply Functor.ext
     · intro B Y φ
       simp only [eqToHom_refl, Category.id_comp, Category.comp_id]

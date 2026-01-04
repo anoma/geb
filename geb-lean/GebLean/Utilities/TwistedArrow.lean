@@ -122,8 +122,8 @@ def twHomMkChain' {w x y z : C}
   twHomMk'
     (x := twObjMk' (dom := w) (cod := y) domObjArr)
     (y := twObjMk' (dom := x) (cod := z) (domArr ≫ domObjArr ≫ codArr))
-    (by simp [twObjMk'_dom] ; exact domArr)
-    (by simp [twObjMk'_cod] ; exact codArr)
+    (by simp only [twObjMk'_dom] ; exact domArr)
+    (by simp only [twObjMk'_cod] ; exact codArr)
     rfl
 
 /--
@@ -266,8 +266,8 @@ def twOpHomMkChain' {w x y z : C}
   twOpHomMk'
     (x := twOpObjMk' (dom := w) (cod := y) domObjArr)
     (y := twOpObjMk' (dom := x) (cod := z) (codArr ≫ domObjArr ≫ domArr))
-    (by simp [twOpObjMk'_dom] ; exact domArr)
-    (by simp [twOpObjMk'_cod] ; exact codArr)
+    (by simp only [twOpObjMk'_dom] ; exact domArr)
+    (by simp only [twOpObjMk'_cod] ; exact codArr)
     rfl
 
 /--
@@ -385,8 +385,8 @@ def opTwHomMkChain' {w x y z : C}
   opTwHomMk'
     (x := opTwObjMk' (dom := w) (cod := z) (domArr ≫ codObjArr ≫ codArr))
     (y := opTwObjMk' (dom := x) (cod := y) codObjArr)
-    (by simp [opTwObjMk'_dom] ; exact domArr)
-    (by simp [opTwObjMk'_cod] ; exact codArr)
+    (by simp only [opTwObjMk'_dom] ; exact domArr)
+    (by simp only [opTwObjMk'_cod] ; exact codArr)
     rfl
 
 /--
@@ -495,7 +495,7 @@ def coTwHomMk' {x y : CoTwistedArrow C}
     (codArr : coTwCod' x ⟶ coTwCod' y)
     (comm : codArr ≫ coTwArr' y ≫ domArr = coTwArr' x) : x ⟶ y :=
   CategoryOfElements.homMk y x (codArr, domArr)
-    (by simp [homPreOp', profunctorToOp', hom']  ;exact comm)
+    (by simp only [homPreOp', profunctorToOp', hom'] ; exact comm)
 
 def coTwHomMkChain' {w x y z : C}
     (codArr : y ⟶ z) (codObjArr : z ⟶ x) (domArr : x ⟶ w) :
@@ -504,8 +504,8 @@ def coTwHomMkChain' {w x y z : C}
   coTwHomMk'
     (x := coTwObjMk' (dom := w) (cod := y) (codArr ≫ codObjArr ≫ domArr))
     (y := coTwObjMk' (dom := x) (cod := z) codObjArr)
-    (by simp [coTwObjMk'_dom] ; exact domArr)
-    (by simp [coTwObjMk'_cod] ; exact codArr)
+    (by simp only [coTwObjMk'_dom] ; exact domArr)
+    (by simp only [coTwObjMk'_cod] ; exact codArr)
     rfl
 
 /--
@@ -609,10 +609,10 @@ def twistedArrowOp'ToOpTwistedArrow :
 -/
 def opTwistedArrowIsoTwistedArrowOp' :
     OpTwistedArrow' C ≅Cat (TwistedArrow' C)ᵒᵖ' where
-  hom := opTwistedArrowToTwistedArrowOp'
-  inv := twistedArrowOp'ToOpTwistedArrow
-  hom_inv_id := rfl
-  inv_hom_id := rfl
+  hom := opTwistedArrowToTwistedArrowOp'.toCatHom
+  inv := twistedArrowOp'ToOpTwistedArrow.toCatHom
+  hom_inv_id := Cat.Hom.ext rfl
+  inv_hom_id := Cat.Hom.ext rfl
 
 /--
 Functor from `CoTwistedArrow C` to `(TwistedArrowOp' C)ᵒᵖ'`.
@@ -661,10 +661,10 @@ def twistedArrowOpOp'ToCoTwistedArrow :
 -/
 def coTwistedArrowIsoTwistedArrowOpOp' :
     CoTwistedArrow C ≅Cat (TwistedArrowOp' C)ᵒᵖ' where
-  hom := coTwistedArrowToTwistedArrowOpOp'
-  inv := twistedArrowOpOp'ToCoTwistedArrow
-  hom_inv_id := rfl
-  inv_hom_id := rfl
+  hom := coTwistedArrowToTwistedArrowOpOp'.toCatHom
+  inv := twistedArrowOpOp'ToCoTwistedArrow.toCatHom
+  hom_inv_id := Cat.Hom.ext rfl
+  inv_hom_id := Cat.Hom.ext rfl
 
 /--
 `TwistedArrowOp' C` is definitionally equal to `TwistedArrow' (Cᵒᵖ')`.
@@ -771,9 +771,9 @@ This is the self-duality property: the twisted arrow category of `C` is
 isomorphic to the twisted arrow category of `C^op'`.
 -/
 def twistedArrowIsoTwistedArrowOp' : TwistedArrow' C ≅Cat TwistedArrowOp' C where
-  hom := twistedArrowToTwistedArrowOp'
-  inv := twistedArrowOp'ToTwistedArrow
-  hom_inv_id := by
+  hom := twistedArrowToTwistedArrowOp'.toCatHom
+  inv := twistedArrowOp'ToTwistedArrow.toCatHom
+  hom_inv_id := Cat.Hom.ext <| by
     fapply Functor.ext
     · exact twistedArrowRoundTrip_obj
     · intros tw tw' f
@@ -784,7 +784,7 @@ def twistedArrowIsoTwistedArrowOp' : TwistedArrow' C ≅Cat TwistedArrowOp' C wh
       · unfold twistedArrowToTwistedArrowOp' twistedArrowOp'ToTwistedArrow
         simp only [eqToHom_refl, Category.id_comp, Category.comp_id]
         rfl
-  inv_hom_id := by
+  inv_hom_id := Cat.Hom.ext <| by
     fapply Functor.ext
     · exact twistedArrowOp'RoundTrip_obj
     · intros tw tw' f
@@ -861,9 +861,9 @@ This shows that the opposite of the twisted arrow category is isomorphic to
 the co-twisted arrow category (opposite of twisted arrow of opposite).
 -/
 def opTwistedArrowIsoCoTwistedArrow : OpTwistedArrow' C ≅Cat CoTwistedArrow C where
-  hom := opTwistedArrowToCoTwistedArrow
-  inv := coTwistedArrowToOpTwistedArrow
-  hom_inv_id := by
+  hom := opTwistedArrowToCoTwistedArrow.toCatHom
+  inv := coTwistedArrowToOpTwistedArrow.toCatHom
+  hom_inv_id := Cat.Hom.ext <| by
     fapply Functor.ext
     · exact opTwistedArrowRoundTrip_obj
     · intros tw tw' f
@@ -874,7 +874,7 @@ def opTwistedArrowIsoCoTwistedArrow : OpTwistedArrow' C ≅Cat CoTwistedArrow C 
       · unfold opTwistedArrowToCoTwistedArrow coTwistedArrowToOpTwistedArrow
         simp only [eqToHom_refl, Category.id_comp, Category.comp_id]
         rfl
-  inv_hom_id := by
+  inv_hom_id := Cat.Hom.ext <| by
     fapply Functor.ext
     · exact coTwistedArrowRoundTrip_obj
     · intros tw tw' f
@@ -992,7 +992,7 @@ def grothendieckUnderToTwArrMap {g g' : Grothendieck (Under.mapFunctor C)}
   refine twHomMk' m.base.unop m.fiber.right ?_
   simp only [grothendieckUnderToTwArrObj, twObjMk'_arr]
   have h := Under.w m.fiber
-  simp only [Under.mapFunctor_map, Under.map_obj_hom] at h
+  simp only [Under.mapFunctor_map] at h
   rw [← Category.assoc]
   exact h
 
@@ -1488,16 +1488,16 @@ This establishes that the arrow category is self-dual up to taking the
 opposite of the arrow category on the opposite category.
 -/
 def arrowIsoArrowOpOp' : Arrow C ≅Cat (ArrowOp' C)ᵒᵖ' where
-  hom := arrowToArrowOpOp'
-  inv := arrowOpOp'ToArrow
-  hom_inv_id := by
+  hom := arrowToArrowOpOp'.toCatHom
+  inv := arrowOpOp'ToArrow.toCatHom
+  hom_inv_id := Cat.Hom.ext <| by
     fapply Functor.ext
     · exact arrowRoundTrip_obj
     · intros x y f
       apply Arrow.hom_ext <;>
         dsimp [arrowToArrowOpOp', arrowOpOp'ToArrow] <;>
         simp only [Category.id_comp, Category.comp_id]
-  inv_hom_id := by
+  inv_hom_id := Cat.Hom.ext <| by
     fapply Functor.ext
     · exact arrowOpOp'RoundTrip_obj
     · intros x y f
@@ -1506,7 +1506,10 @@ def arrowIsoArrowOpOp' : Arrow C ≅Cat (ArrowOp' C)ᵒᵖ' where
       dsimp only [arrowToArrowOpOp', arrowOpOp'ToArrow]
       simp only [Arrow.homMk_left, Arrow.homMk_right]
       unfold ArrowOp' CategoryOp'
-      simp
+      simp only [CategoryOp'Inst.eq_1, CategoryOp'.eq_1, CategoryOpQuivInst.eq_1,
+        Functor.id_obj, Functor.comp_obj, Arrow.mk_right, Arrow.mk_left, Arrow.mk_hom,
+        Cat.of_α, Cat.Hom.comp_toFunctor, Functor.toCatHom_toFunctor,
+        Cat.Hom.id_toFunctor, eqToHom_refl, Functor.id_map]
       cases x
       cases y
       unfold Arrow.mk

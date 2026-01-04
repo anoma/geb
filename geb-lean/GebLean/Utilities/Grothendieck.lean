@@ -3142,9 +3142,10 @@ def functorFrom : GrothendieckContra' F' ⥤ T where
     rw [Functor.map_comp, Functor.map_comp]
     -- Use hom_comp to expand hom (f.base ≫ g.base)
     rw [hom_comp]
-    -- Simplify whiskerLeft - this eliminates the eqToHom terms
-    simp [Functor.whiskerLeft]
-    -- Cancel common prefix
+    simp only [CategoryOp'.eq_1, CategoryOp'Inst.eq_1, CategoryOpQuivInst.eq_1,
+      functor_map_eqToHom, Cat.Hom.comp_toFunctor, NatTrans.comp_app, Functor.comp_obj,
+      eqToHom_app, Functor.whiskerLeft_app, Category.assoc, eqToHom_trans_assoc,
+      eqToHom_refl, Category.id_comp]
     congr 1
     -- The goal is now showing naturality of hom f.base
     -- Recognize (fib X.base).map ∘ (F'.map f.base).map as (F'.map f ⋙ fib X).map
@@ -3166,17 +3167,12 @@ def ιCompFunctorFrom (c : C) :
   NatIso.ofComponents
     (fun _ => Iso.refl _)
     (fun f => by
-      -- Need to show: (ι c ⋙ functorFrom).map f ≫ Iso.refl _ = Iso.refl _ ≫ (fib c).map f
-      -- which simplifies to: (functorFrom).map (ι c).map f = (fib c).map f
-      simp [functorFrom, ι_obj]
-      -- Use ι_map to rewrite (ι c).map f
+      simp only [CategoryOp'.eq_1, CategoryOp'Inst.eq_1, CategoryOpQuivInst.eq_1, Cat.of_α,
+        Functor.comp_obj, Functor.comp_map, Iso.refl_hom, Category.comp_id, Category.id_comp,
+        functorFrom, ι_obj]
       rw [ι_map]
-      -- Now we have (fib c).map (f ≫ eqToHom ...) ≫ (hom (𝟙 c)).app _
-      simp only [Functor.map_comp, ι_obj]
-      -- Use hom_id to simplify hom (𝟙 c)
-      rw [hom_id]
-      -- Simplify the eqToHom terms
-      simp
+      simp only [hom_id, eqToHom_app, Functor.map_comp, Category.assoc]
+      simp only [eqToHom_map, eqToHom_trans, eqToHom_refl, Category.comp_id]
     )
 
 

@@ -200,9 +200,9 @@ theorem functorToCompWitGrHom_comp {A B E : Cat.{v, u}}
     Sends categories to their canonical CompWitGr encoding. -/
 def PhiFunctor : Cat.{v, u} ⥤ Groth.CompWitGr.{u, v, u, max u v} where
   obj C := categoryToCompWitGr C
-  map F := functorToCompWitGrHom F
+  map F := functorToCompWitGrHom F.toFunctor
   map_id C := functorToCompWitGrHom_id C
-  map_comp F G := functorToCompWitGrHom_comp F G
+  map_comp F G := functorToCompWitGrHom_comp F.toFunctor G.toFunctor
 
 /-! ## Reflection Functor L : CompWitGr → Cat
 
@@ -561,8 +561,8 @@ theorem mapFreeMor_respects_gen {X Y : Groth.CompWitGr.{uObj, uMor, uWit, uCWit}
     have hleft := F.fiber.witLeft_eq c
     have hright := F.fiber.witRight_eq c
     have hcomp := F.fiber.witComp_eq c
-    simp only [Groth.compWitFunctor, Groth.CompWitBundle.pushforwardFunctor,
-      Groth.CompWitBundle.pushforward] at hsrc hmid htgt hleft hright hcomp
+    simp only [Groth.compWitFunctor,
+      Groth.CompWitBundle.pushforwardFunctor] at hsrc hmid htgt hleft hright hcomp
     simp only [mapFreeMor_var, mapFreeMor_comp, LMorObj]
     have h := FreeMorEquiv.rel (FreeMorEquivGen.comp_witness (F.fiber.witMap c))
     simp only [Groth.CompWitGr.bundle] at h
@@ -650,7 +650,8 @@ theorem mapFreeMor_id_equiv {X : Groth.CompWitGr.{uObj, uMor, uWit, uCWit}}
 
 /-- L preserves identity morphisms: L(id_X) = id_{L(X)}. -/
 theorem LMorFunctor_id (X : Groth.CompWitGr.{uObj, uMor, uWit, uCWit}) :
-    LMorFunctor (𝟙 X) = 𝟙 (LObj X) := by
+    LMorFunctor (𝟙 X) = Cat.Hom.toFunctor (𝟙 (LObj X)) := by
+  unfold Cat.Hom.toFunctor
   apply CategoryTheory.Functor.ext
   case h_obj =>
     intro a
@@ -703,9 +704,9 @@ theorem LMorFunctor_comp {X Y Z : Groth.CompWitGr.{uObj, uMor, uWit, uCWit}}
 /-- The reflection functor L : CompWitGr ⥤ Cat. -/
 def LFunctor : Groth.CompWitGr.{uObj, uMor, uWit, uCWit} ⥤ Cat.{max uObj uMor, uObj} where
   obj := fun X => LObj X
-  map := fun F => LMorFunctor F
-  map_id := fun X => LMorFunctor_id X
-  map_comp := fun F G => LMorFunctor_comp F G
+  map := fun F => (LMorFunctor F).toCatHom
+  map_id := fun X => Cat.Hom.ext (LMorFunctor_id X)
+  map_comp := fun F G => Cat.Hom.ext (LMorFunctor_comp F G)
 
 end GrAdjunction
 
@@ -1048,7 +1049,7 @@ Notes:
 - Φ(ε_C) applies this pointwise in the CompWitGr structure
 - Composing: a morphism f becomes [var f] then evaluates back to f -/
 theorem rightTriangle :
-    unitGr (categoryToCompWitGr C) ≫ PhiFunctor.map (counitGr C) = 𝟙 _ := by
+    unitGr (categoryToCompWitGr C) ≫ PhiFunctor.map (counitGr C).toCatHom = 𝟙 _ := by
   -- CompWitGr is Grothendieck compWitFunctor, so morphisms have base (IdWitGr) and fiber
   refine Grothendieck.ext _ _ ?hbase ?hfiber
   case hbase =>
@@ -1154,7 +1155,8 @@ Notes:
 - ε_{L(X)} evaluates these back by treating [var [f]] as just [f]
 - Composing gives the identity because evaluation undoes embedding -/
 theorem leftTriangle :
-    LFunctor.map (unitGr X) ≫ counitGr (LObj X) = 𝟙 (LObj X) := by
+    LFunctor.map (unitGr X) ≫ (counitGr (LObj X)).toCatHom = 𝟙 (LObj X) := by
+  apply Cat.Hom.ext
   apply Functor.ext
   case h_obj =>
     intro a
@@ -1217,8 +1219,7 @@ theorem compWitGrHomMapId (φ : categoryToCompWitGr C ⟶ categoryToCompWitGr D)
   have hObj : φ.base.fiber.witMap a = φ.base.base.base a := φ.base.fiber.witObj_eq a
   have hMor := φ.base.fiber.witMor_eq a
   simp only [categoryToCompWitGr, categoryToIdWitGr, categoryIdWitBundle,
-    Groth.idWitFunctor, Groth.IdWitBundle.pushforwardFunctor,
-    Groth.IdWitBundle.pushforward] at hMor
+    Groth.idWitFunctor, Groth.IdWitBundle.pushforwardFunctor] at hMor
   apply eq_of_heq
   apply HEq.trans hMor.symm
   rw [hObj]
@@ -1245,8 +1246,7 @@ theorem compWitGrHomMapComp (φ : categoryToCompWitGr C ⟶ categoryToCompWitGr 
   have hTgt := φ.fiber.witTgt_eq w
   simp only [categoryToCompWitGr, categoryCompWitBundle, categoryToIdWitGr,
     categoryIdWitBundle, categoryToQuiver, Groth.compWitFunctor,
-    Groth.CompWitBundle.pushforwardFunctor, Groth.CompWitBundle.pushforward,
-    CompWitType] at hComp hLeft hRight hSrc hMid hTgt
+    Groth.CompWitBundle.pushforwardFunctor, CompWitType] at hComp hLeft hRight hSrc hMid hTgt
   -- Unfold w in hypotheses to get (a, b, c, f, g)
   simp only [w] at hComp hLeft hRight hSrc hMid hTgt
   -- Direct approach: convert through witness morphisms
@@ -1318,7 +1318,7 @@ def compWitGrHomToFunctor
 
 /-- PhiFunctor.map followed by compWitGrHomToFunctor is the identity. -/
 theorem preimage_map (F : C ⥤ D) :
-    compWitGrHomToFunctor (PhiFunctor.map F) = F := by
+    compWitGrHomToFunctor (PhiFunctor.map F.toCatHom) = F := by
   apply Functor.ext
   case h_obj => intro a; rfl
   case h_map =>
@@ -1330,7 +1330,7 @@ theorem preimage_map (F : C ⥤ D) :
 
 /-- compWitGrHomToFunctor followed by PhiFunctor.map is the identity. -/
 theorem map_preimage (φ : categoryToCompWitGr C ⟶ categoryToCompWitGr D) :
-    PhiFunctor.map (compWitGrHomToFunctor φ) = φ := by
+    PhiFunctor.map (compWitGrHomToFunctor φ).toCatHom = φ := by
   apply Grothendieck.ext
   case w_base =>
     apply Grothendieck.ext
@@ -1385,9 +1385,9 @@ theorem map_preimage (φ : categoryToCompWitGr C ⟶ categoryToCompWitGr D) :
     equivalence on hom-sets. -/
 def phiFunctorFullyFaithful : PhiFunctor.{v, u}.FullyFaithful :=
   Functor.FullyFaithful.mk
-    (preimage := compWitGrHomToFunctor)
+    (preimage := fun φ => (compWitGrHomToFunctor φ).toCatHom)
     (map_preimage := map_preimage)
-    (preimage_map := preimage_map)
+    (preimage_map := fun F => by simp only [preimage_map])
 
 end FullFaithfulness
 
@@ -1416,9 +1416,9 @@ abbrev ΦAdjFunctor : AdjCat.{uObj, uMor} ⥤ AdjGr.{uObj, uMor} := PhiFunctor
 
 /-- Helper lemma for fiber naturality: the CompWitBundle fiber condition. -/
 lemma compWitFiber_naturality {X Y : AdjCompWitGr.{uObj, uMor}} (f : X ⟶ Y) :
-    (Groth.compWitFunctor.map (PhiFunctor.map (LFunctor.map f)).base).map
+    (Groth.compWitFunctor.map (PhiFunctor.map (LFunctor.map f)).base).toFunctor.map
       (unitGr X).fiber ≫ (PhiFunctor.map (LFunctor.map f)).fiber =
-    (Groth.compWitFunctor.map (unitGr Y).base).map f.fiber ≫ (unitGr Y).fiber := by
+    (Groth.compWitFunctor.map (unitGr Y).base).toFunctor.map f.fiber ≫ (unitGr Y).fiber := by
   apply Groth.CompWitBundle.Hom.ext
   intro w
   simp only [unitGr, unitCompWitBundleMor, PhiFunctor, LFunctor,

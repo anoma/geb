@@ -83,9 +83,8 @@ def familyMap.{u', v', w'} {C' : Type u'} [Category.{v'} C'] {X Y : Type w'}
   obj F x := F (f x)
   map φ x := φ (f x)
 
-@[simp]
 theorem familyMap_id.{u', v', w'} {C' : Type u'} [Category.{v'} C'] (X : Type w') :
-    familyMap (C' := C') (𝟙 X) = 𝟙 (FamilyCat C' X) := rfl
+    familyMap (C' := C') (𝟙 X) = 𝟭 (X → C') := rfl
 
 @[simp]
 theorem familyMap_comp.{u', v', w'} {C' : Type u'} [Category.{v'} C']
@@ -106,9 +105,9 @@ an `X`-indexed family by `(G : Y → C) ↦ (G ∘ f : X → C)`.
 def familyFunctor.{u', v', w'} (C' : Type u') [Category.{v'} C'] :
     Type w'ᵒᵖ' ⥤ Cat.{max w' v', max u' w'} where
   obj X := FamilyCat C' X
-  map f := familyMap (C' := C') f
-  map_id X := familyMap_id X
-  map_comp _ _ := rfl
+  map f := (familyMap (C' := C') f).toCatHom
+  map_id X := Cat.Hom.ext (familyMap_id X)
+  map_comp _ _ := Cat.Hom.ext rfl
 
 end FunctorialityInIndex
 
@@ -175,17 +174,19 @@ to `familyFunctor D`, with components given by `familyPostcomp F X`.
 @[simp]
 def familyNatTrans {C D : Type u} [Category.{v} C] [Category.{v} D] (F : C ⥤ D) :
     familyFunctor C ⟶ familyFunctor D where
-  app X := familyPostcomp F X
-  naturality _ _ f := (familyPostcomp_natural F f).symm
+  app X := (familyPostcomp F X).toCatHom
+  naturality _ _ f := Cat.Hom.ext (familyPostcomp_natural F f).symm
 
-@[simp]
 theorem familyNatTrans_id (C : Type u) [Category.{v} C] :
-    familyNatTrans (𝟭 C) = 𝟙 (familyFunctor C) := rfl
+    familyNatTrans (𝟭 C) = 𝟙 (familyFunctor C) := by
+  ext X : 2
+  exact Cat.Hom.ext rfl
 
-@[simp]
 theorem familyNatTrans_comp {C D E : Type u} [Category.{v} C] [Category.{v} D]
     [Category.{v} E] (F : C ⥤ D) (G : D ⥤ E) :
-    familyNatTrans (F ⋙ G) = familyNatTrans F ≫ familyNatTrans G := rfl
+    familyNatTrans (F ⋙ G) = familyNatTrans F ≫ familyNatTrans G := by
+  ext X : 2
+  exact Cat.Hom.ext rfl
 
 /--
 The family bifunctor `familyBifunctor : Cat ⥤ (Type uᵒᵖ' ⥤ Cat)` sends a
@@ -195,9 +196,9 @@ to the natural transformation `familyNatTrans F`.
 @[simp]
 def familyBifunctor : Cat.{v, u} ⥤ (Type uᵒᵖ' ⥤ Cat.{max u v, u}) where
   obj C := familyFunctor C
-  map F := familyNatTrans F
+  map F := familyNatTrans F.toFunctor
   map_id C := familyNatTrans_id C
-  map_comp F G := familyNatTrans_comp F G
+  map_comp F G := familyNatTrans_comp F.toFunctor G.toFunctor
 
 end FamilyBifunctor
 
@@ -1341,10 +1342,9 @@ lemma ccrDirichletEval_ext {P : CoprodCovarRepCat.{u, v, w} C} {A : C}
   obtain ⟨i, f⟩ := x
   obtain ⟨j, g⟩ := y
   simp only [ccrDirichletEvalIndex, ccrDirichletEvalMor] at hIdx hMor
-  subst hIdx
-  simp at hMor
-  subst hMor
-  rfl
+  cases hIdx
+  suffices hMor' : f = g by subst hMor'; rfl
+  exact hMor
 
 /--
 Eta rule for Dirichlet evaluation.
@@ -1536,10 +1536,10 @@ to/from the free coproduct completion, which has direct access to mathlib's
 presheaf machinery via the contravariant Grothendieck construction.
 -/
 def ccrOpIsoCat : CoprodCovarRepCat.{u, v, w} Cᵒᵖ ≅Cat FreeCoprodCompletionCat.{u, v, w} C where
-  hom := ccrOpToFc
-  inv := fcToCcrOp
-  hom_inv_id := ccrOpToFc_fcToCcrOp
-  inv_hom_id := fcToCcrOp_ccrOpToFc
+  hom := ccrOpToFc.toCatHom
+  inv := fcToCcrOp.toCatHom
+  hom_inv_id := Cat.Hom.ext ccrOpToFc_fcToCcrOp
+  inv_hom_id := Cat.Hom.ext fcToCcrOp_ccrOpToFc
 
 /--
 Categorical equivalence between `CoprodCovarRepCat (Cᵒᵖ)` and `FreeCoprodCompletionCat C`,
@@ -2241,8 +2241,8 @@ def ccrsToFcp :
 -/
 def fcpCcrsIso :
     FreeCoprodProdCat.{u, v, w₁, w₂} C ≅Cat CoprodCovarRepSquaredCat.{u, v, w₁, w₂} C where
-  hom := fcpToCcrs C
-  inv := ccrsToFcp C
+  hom := (fcpToCcrs C).toCatHom
+  inv := (ccrsToFcp C).toCatHom
 
 /--
 `FreeCoprodProdCat C` and `CoprodCovarRepSquaredCat C` are equivalent categories.
