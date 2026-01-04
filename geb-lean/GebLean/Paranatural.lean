@@ -201,9 +201,9 @@ sending each endoprofunctor `F` to its category of diagonal elements. -/
 @[simps]
 def diagElemFunctor : (Cᵒᵖ ⥤ C ⥤ Type w) ⥤ Cat where
   obj F := Cat.of (DiagElem F)
-  map η := DiagElem.map η
-  map_id _ := DiagElem.map_id_nat
-  map_comp η θ := DiagElem.map_comp_nat η θ
+  map η := (DiagElem.map η).toCatHom
+  map_id _ := by apply Cat.Hom.ext; exact DiagElem.map_id_nat
+  map_comp η θ := by apply Cat.Hom.ext; exact DiagElem.map_comp_nat η θ
 
 end DiagonalElements
 
@@ -219,10 +219,11 @@ Note: This requires the profunctor to be valued in `Type u` (same universe as
 see `diagElemFunctor` which targets `Cat` directly. -/
 def diagElemSliceFunctor (C : Type u) [Category.{v} C] :
     (Cᵒᵖ ⥤ C ⥤ Type u) ⥤ Over (Cat.of C) :=
-  { obj := fun F => Over.mk (Y := Cat.of (DiagElem F)) (DiagElem.forget F)
-    map := fun {F G} η => Over.homMk (DiagElem.map η)
-    map_id := fun F => Over.OverMorphism.ext DiagElem.map_id_nat
-    map_comp := fun {F G H} η θ => Over.OverMorphism.ext (DiagElem.map_comp_nat η θ) }
+  { obj := fun F => Over.mk (Y := Cat.of (DiagElem F)) (DiagElem.forget F).toCatHom
+    map := fun {F G} η => Over.homMk (DiagElem.map η).toCatHom
+    map_id := fun F => Over.OverMorphism.ext (Cat.Hom.ext DiagElem.map_id_nat)
+    map_comp := fun {F G H} η θ =>
+      Over.OverMorphism.ext (Cat.Hom.ext (DiagElem.map_comp_nat η θ)) }
 
 end DiagElemSlice
 
@@ -353,7 +354,7 @@ theorem Paranat.toFunctor_forget (α : Paranat F G) :
 `Over (Cat.of C)`. -/
 def Paranat.toOverHom (α : Paranat F G) :
     (diagElemSliceFunctor C).obj F ⟶ (diagElemSliceFunctor C).obj G :=
-  Over.homMk α.toFunctor (α.toFunctor_forget)
+  Over.homMk α.toFunctor.toCatHom (Cat.Hom.ext α.toFunctor_forget)
 
 variable {F G}
 
@@ -361,23 +362,23 @@ variable {F G}
 the forgetful functor equals the domain's forgetful functor. -/
 theorem sliceCondition
     (φ : (diagElemSliceFunctor C).obj F ⟶ (diagElemSliceFunctor C).obj G) :
-    φ.left ⋙ DiagElem.forget G = DiagElem.forget F := by
+    φ.left.toFunctor ⋙ DiagElem.forget G = DiagElem.forget F := by
   have h := φ.w
   simp only [diagElemSliceFunctor, Over.mk_left, Over.mk_hom] at h
-  exact h
+  exact Cat.Hom.ext_iff.mp h
 
 /-- A slice morphism preserves the base object of diagonal elements. -/
 theorem sliceCondition_obj
     (φ : (diagElemSliceFunctor C).obj F ⟶ (diagElemSliceFunctor C).obj G)
     (x : DiagElem F) :
-    (φ.left.obj x).base = x.base :=
+    (φ.left.toFunctor.obj x).base = x.base :=
   congrFun (congrArg Functor.obj (sliceCondition C φ)) x
 
 /-- A slice morphism preserves the base of mapped morphisms, via transport. -/
 theorem sliceCondition_map
     (φ : (diagElemSliceFunctor C).obj F ⟶ (diagElemSliceFunctor C).obj G)
     {x y : DiagElem F} (f : x ⟶ y) :
-    (φ.left.map f).base =
+    (φ.left.toFunctor.map f).base =
       eqToHom (sliceCondition_obj C φ x) ≫ f.base ≫
         eqToHom (sliceCondition_obj C φ y).symm := by
   have heq := sliceCondition C φ
@@ -393,7 +394,7 @@ def Paranat.ofOverHom
     Paranat F G where
   app I d :=
     let x : DiagElem F := ⟨I, d⟩
-    let y : DiagElem G := φ.left.obj x
+    let y : DiagElem G := φ.left.toFunctor.obj x
     have hbase : y.base = I := sliceCondition_obj C φ x
     hbase ▸ y.elem
   paranatural := fun I₀ I₁ f d₀ d₁ hcompat => by
@@ -401,9 +402,9 @@ def Paranat.ofOverHom
     let x₀ : DiagElem F := ⟨I₀, d₀⟩
     let x₁ : DiagElem F := ⟨I₁, d₁⟩
     let mor : x₀ ⟶ x₁ := ⟨f, hcompat⟩
-    let y₀ := φ.left.obj x₀
-    let y₁ := φ.left.obj x₁
-    let hmor := φ.left.map mor
+    let y₀ := φ.left.toFunctor.obj x₀
+    let y₁ := φ.left.toFunctor.obj x₁
+    let hmor := φ.left.toFunctor.map mor
     have hcompat' : DiagCompat G y₀.base y₁.base hmor.base y₀.elem y₁.elem := hmor.compat
     simp only [DiagCompat] at hcompat'
     have hbase₀ : y₀.base = I₀ := sliceCondition_obj C φ x₀
@@ -436,18 +437,19 @@ theorem Paranat.toOverHom_ofOverHom
     (φ : (diagElemSliceFunctor C).obj F ⟶ (diagElemSliceFunctor C).obj G) :
     toOverHom C F G (ofOverHom C φ) = φ := by
   apply Over.OverMorphism.ext
+  apply Cat.Hom.ext
+  simp only [toOverHom, Over.homMk_left, Functor.toCatHom_toFunctor]
   refine Functor.ext ?h_obj ?h_map
   case h_obj =>
     intro x
     apply DiagElem.ext
     · exact (sliceCondition_obj C φ x).symm
-    · simp only [ofOverHom, toOverHom, Over.homMk_left, toFunctor_obj_base,
-        toFunctor_obj_elem, eqRec_eq_cast]
+    · simp only [ofOverHom, toFunctor_obj_elem, eqRec_eq_cast]
       exact cast_heq _ _
   case h_map =>
     intro x y f
     apply DiagElem.Hom.ext
-    simp only [ofOverHom, toOverHom, Over.homMk_left, toFunctor_map_base]
+    simp only [ofOverHom, toFunctor_map_base]
     rw [DiagElem.Hom.comp_base, DiagElem.Hom.comp_base,
         DiagElem.Hom.eqToHom_base, DiagElem.Hom.eqToHom_base]
     rw [sliceCondition_map]
@@ -494,6 +496,9 @@ theorem Paranat.toFunctor_id (F : Cᵒᵖ ⥤ C ⥤ Type u) :
 theorem Paranat.toOverHom_id (F : Cᵒᵖ ⥤ C ⥤ Type u) :
     Paranat.toOverHom C F F Paranat.id = 𝟙 ((diagElemSliceFunctor C).obj F) := by
   apply Over.OverMorphism.ext
+  apply Cat.Hom.ext
+  simp only [toOverHom, Over.homMk_left, Functor.toCatHom_toFunctor,
+    diagElemSliceFunctor, Cat.Hom.id_toFunctor]
   exact Paranat.toFunctor_id C F
 
 /-- The functor induced by a composition of paranatural transformations is
@@ -514,6 +519,9 @@ theorem Paranat.toOverHom_comp {F G H : Cᵒᵖ ⥤ C ⥤ Type u}
     Paranat.toOverHom C F H (α.comp β) =
       Paranat.toOverHom C F G α ≫ Paranat.toOverHom C G H β := by
   apply Over.OverMorphism.ext
+  apply Cat.Hom.ext
+  simp only [toOverHom, Over.homMk_left, Functor.toCatHom_toFunctor,
+    commaCategory, Cat.Hom.comp_toFunctor]
   exact Paranat.toFunctor_comp C α β
 
 /-- The functor from `EndoProf` to `Over (Cat.of C)` sending each endoprofunctor
@@ -1137,13 +1145,17 @@ def elementsToDiagElem : P.Elements ⥤ DiagElem (copresheafToProf P) where
 /-- The category of diagonal elements of `copresheafToProf P` is isomorphic
 to the (covariant) category of elements `P.Elements`. -/
 def diagElemCopresheafIso : DiagElem (copresheafToProf P) ≅Cat P.Elements where
-  hom := diagElemToElements P
-  inv := elementsToDiagElem P
+  hom := (diagElemToElements P).toCatHom
+  inv := (elementsToDiagElem P).toCatHom
   hom_inv_id := by
+    apply Cat.Hom.ext
+    simp only [Functor.toCatHom_toFunctor, Cat.Hom.comp_toFunctor, Cat.Hom.id_toFunctor]
     apply Functor.ext
     case h_obj => intro x; apply DiagElem.ext <;> rfl
     case h_map => intro x y f; apply DiagElem.Hom.ext; simp
   inv_hom_id := by
+    apply Cat.Hom.ext
+    simp only [Functor.toCatHom_toFunctor, Cat.Hom.comp_toFunctor, Cat.Hom.id_toFunctor]
     apply Functor.ext
     case h_obj => intro p; rfl
     case h_map =>
@@ -1207,13 +1219,17 @@ def elementsPreToDiagElem :
 /-- The category of diagonal elements of `presheafToProf Q` is isomorphic
 to `Q.ElementsPre`, the standard category of elements for presheaves. -/
 def diagElemPresheafIso : DiagElem (presheafToProf Q) ≅Cat Q.ElementsPre where
-  hom := diagElemToElementsPre Q
-  inv := elementsPreToDiagElem Q
+  hom := (diagElemToElementsPre Q).toCatHom
+  inv := (elementsPreToDiagElem Q).toCatHom
   hom_inv_id := by
+    apply Cat.Hom.ext
+    simp only [Functor.toCatHom_toFunctor, Cat.Hom.comp_toFunctor, Cat.Hom.id_toFunctor]
     apply Functor.ext
     case h_obj => intro x; apply DiagElem.ext <;> rfl
     case h_map => intro x y f; apply DiagElem.Hom.ext; simp
   inv_hom_id := by
+    apply Cat.Hom.ext
+    simp only [Functor.toCatHom_toFunctor, Cat.Hom.comp_toFunctor, Cat.Hom.id_toFunctor]
     apply Functor.ext
     case h_obj => intro p; rfl
     case h_map =>
@@ -1764,16 +1780,16 @@ def connGrothendieckHomFiberSrc {x y : TwCoprArrElem F} (f : TwCoprArrElem.Hom F
     (typeToCatF F).obj
       (connGrothendieckDiagCod C (arrToTw' x.arr) f.base.right) :=
   (typeToCatF F).map (connGrothendieckTwMorphCod C (arrToTw' x.arr) f.base.right)
-    |>.obj ⟨x.elem⟩
+    |>.toFunctor.obj ⟨x.elem⟩
 
 /-- The fiber morphism source equals the simpler representation up to `eqToHom`. -/
 lemma connGrothendieckHomFiberSrc_eq {x y : TwCoprArrElem F}
     (f : TwCoprArrElem.Hom F x y) :
-    (eqToHom (congrArg (typeToCatF F).obj (connGrothendieckDiagCod_eq_arrDiagTw F f))).obj
+    (eqToHom (congrArg (typeToCatF F).obj (connGrothendieckDiagCod_eq_arrDiagTw F f))).toFunctor.obj
       (connGrothendieckHomFiberSrc F f) = twCoprArrElemFiberSrc F f := by
   simp only [connGrothendieckHomFiberSrc, twCoprArrElemFiberSrc]
-  simp only [connGrothendieckTwMorphCod_eq_arrToDiagFromSource, Functor.map_comp,
-    Cat.comp_obj, eqToHom_map]
+  simp only [connGrothendieckTwMorphCod_eq_arrToDiagFromSource, Cat.Hom.comp_toFunctor,
+    Functor.comp_obj, eqToHom_map]
   rfl
 
 /-- Square commutativity in the form needed for `connGrothendieckDiagEq`. -/
@@ -1807,7 +1823,7 @@ preserves the underlying value when both transports compose to identity. -/
 lemma eqToHom_discrete_nested_cancel {X Y : Type u}
     (h1 : Cat.of (Discrete Y) = Cat.of (Discrete X))
     (h2 : X = Y) (x : X) :
-    ((eqToHom h1).obj { as := eqToHom h2 x }).as = x := by
+    ((eqToHom h1).toFunctor.obj { as := eqToHom h2 x }).as = x := by
   subst h2
   cases h1
   rfl
@@ -1816,7 +1832,7 @@ lemma eqToHom_discrete_nested_cancel {X Y : Type u}
 that `Cat.of (Discrete X) = Cat.of (Discrete X)`, the `.as` is preserved. -/
 lemma Cat.eqToHom_discrete_obj_as {X : Type*}
     (h : Cat.of (Discrete X) = Cat.of (Discrete X)) (x : X) :
-    ((eqToHom h).obj (Discrete.mk x)).as = x := by
+    ((eqToHom h).toFunctor.obj (Discrete.mk x)).as = x := by
   cases h
   rfl
 
@@ -1829,20 +1845,20 @@ lemma typeToCatFiberCatEq {x y : TwCoprArrElem F} (f : TwCoprArrElem.Hom F x y) 
 /-- The fiber morphism source object as a `Discrete` element. -/
 def twCoprArrElemFiberMorphSrc {x y : TwCoprArrElem F} (f : TwCoprArrElem.Hom F x y) :
     (typeToCatF F).obj (connGrothendieckDiagCod C (arrToTw' x.arr) f.base.right) :=
-  ((typeToCatF F).map (connGrothendieckTwMorphCod C (arrToTw' x.arr) f.base.right)).obj
+  ((typeToCatF F).map (connGrothendieckTwMorphCod C (arrToTw' x.arr) f.base.right)).toFunctor.obj
     ⟨x.elem⟩
 
 /-- The fiber morphism target object as a `Discrete` element, in the codomain cat. -/
 def twCoprArrElemFiberMorphTgt {x y : TwCoprArrElem F} (f : TwCoprArrElem.Hom F x y) :
     (typeToCatF F).obj (connGrothendieckDiagDom C (arrToTw' y.arr) f.base.left) :=
-  ((typeToCatF F).map (connGrothendieckTwMorphDom C (arrToTw' y.arr) f.base.left)).obj
+  ((typeToCatF F).map (connGrothendieckTwMorphDom C (arrToTw' y.arr) f.base.left)).toFunctor.obj
     ⟨y.elem⟩
 
 /-- The fiber morphism target transported to the source category. -/
 def twCoprArrElemFiberMorphTgtTransported {x y : TwCoprArrElem F}
     (f : TwCoprArrElem.Hom F x y) :
     (typeToCatF F).obj (connGrothendieckDiagCod C (arrToTw' x.arr) f.base.right) :=
-  (eqToHom (typeToCatFiberCatEq F f).symm).obj (twCoprArrElemFiberMorphTgt F f)
+  (eqToHom (typeToCatFiberCatEq F f).symm).toFunctor.obj (twCoprArrElemFiberMorphTgt F f)
 
 /-- The source and transported target of the fiber morphism have equal underlying
 elements. This follows from `TwArrCompat`. -/
@@ -1853,7 +1869,7 @@ lemma twCoprArrElemFiberMorphEq {x y : TwCoprArrElem F} (f : TwCoprArrElem.Hom F
     twCoprArrElemFiberMorphTgt]
   simp only [connGrothendieckTwMorphCod_eq_arrToDiagFromSource,
     connGrothendieckTwMorphDom_eq_arrToDiagFromTarget]
-  simp only [Functor.map_comp, Cat.comp_obj]
+  simp only [Cat.Hom.comp_toFunctor, Functor.comp_obj]
   simp only [typeToCatF, Functor.comp_obj, Functor.comp_map, typeToCat,
     Discrete.functor_obj, Cat.of_α]
   simp only [Function.comp_apply]
@@ -1894,12 +1910,12 @@ the `eqToHom` in `ConnGrothendieckHom.fiberMorph` corresponds to our
 `typeToCatFiberCatEq` equality. -/
 def twCoprArrElemToConnGrothendieckFiberMorphCast {x y : TwCoprArrElem F}
     (f : TwCoprArrElem.Hom F x y) :
-    ((typeToCatF F).map (connGrothendieckTwMorphCod C (arrToTw' x.arr) f.base.right)).obj
+    ((typeToCatF F).map (connGrothendieckTwMorphCod C (arrToTw' x.arr) f.base.right)).toFunctor.obj
       ⟨x.elem⟩ ⟶
     ((typeToCatF F).map (connGrothendieckTwMorphDom C (arrToTw' y.arr) f.base.left ≫
-      eqToHom (connGrothendieckDiagEqForTwCoprArr F f))).obj ⟨y.elem⟩ := by
+      eqToHom (connGrothendieckDiagEqForTwCoprArr F f))).toFunctor.obj ⟨y.elem⟩ := by
   -- Transform the target using functoriality: F.map (g ≫ eqToHom h) = F.map g ≫ F.map (eqToHom h)
-  simp only [Functor.map_comp, Cat.comp_obj]
+  simp only [Functor.map_comp, Cat.Hom.comp_toFunctor, Functor.comp_obj]
   -- Transform F.map (eqToHom h) to eqToHom (congrArg F.obj h)
   simp only [eqToHom_map]
   -- Now the goal matches twCoprArrElemFiberMorphTgtTransported up to proof equality
@@ -2336,6 +2352,7 @@ lemma connGrothendieckToTwCoprArrElem_compat {x y : ConnGrothendieck (typeToCatF
   -- We must show that F.map (twHomMk' ... pf₁) = F.map (twHomMk' ... pf)
   -- after accounting for eqToHom pf₂
   -- Use types_eqToHom_cancel with the heq between the F.map applications
+  dsimp only [Cat.Hom.toFunctor, Functor.toCatHom]
   apply types_eqToHom_cancel
   -- Goal: HEq (F.map (twHomMk' ... pf₁) elem) (F.map (twHomMk' ... pf) elem)
   -- Both twHomMk' have the same domArr and codArr; targets equal by hdiag
