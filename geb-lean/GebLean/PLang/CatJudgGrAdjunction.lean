@@ -1542,12 +1542,13 @@ theorem evalFreeMor_naturality (C D : AdjCat.{uObj, uMor}) (f : C ⟶ D)
     exact congrArg₂ (· ≫ ·) ihf ihg
 
 /-- Counit naturality: for f : C ⥤ D between categories,
-    ε_C ≫ f = L(Φ(f)) ≫ ε_D.
+    ε_C ⋙ f = L(Φ(f)) ⋙ ε_D.
 
     This says that evaluating free morphisms then applying f
     equals mapping through L(Φ(f)) then evaluating. -/
 theorem counitGr_naturality (C D : AdjCat.{uObj, uMor}) (f : C ⟶ D) :
-    counitGr C ≫ f = LFunctor.map (PhiFunctor.map f) ≫ counitGr D := by
+    counitGr C ⋙ f.toFunctor =
+      (LFunctor.map (PhiFunctor.map f)).toFunctor ⋙ counitGr D := by
   -- Both sides are functors L(Φ(C)) ⥤ D
   -- Use functor extensionality: check on objects and morphisms
   apply CategoryTheory.Functor.ext
@@ -1568,8 +1569,8 @@ theorem counitGr_naturality (C D : AdjCat.{uObj, uMor}) (f : C ⟶ D) :
     -- First handle the eqToHom terms
     simp only [eqToHom_refl, Category.id_comp, Category.comp_id]
     -- Unfold the functor compositions in Cat
-    -- (F ≫ G).map f = G.map (F.map f) definitionally
-    change f.map ((counitGr C).map ⟦g'⟧) =
+    -- (F ⋙ G).map f = G.map (F.map f) definitionally
+    change f.toFunctor.map ((counitGr C).map ⟦g'⟧) =
       (counitGr D).map ((LMorFunctor (PhiFunctor.map f)).map ⟦g'⟧)
     -- Expand counitGr.map and LMorFunctor.map
     simp only [counitGr, LMorFunctor, evalQuotMor, LMorHom, mapFreeMor]
@@ -1588,8 +1589,12 @@ def unitNatTrans : 𝟭 AdjGr.{uObj, uMor} ⟶ LAdjFunctor ⋙ ΦAdjFunctor wher
 
 /-- The counit as a natural transformation: PhiFunctor ⋙ LFunctor ⟶ 𝟭 AdjCat. -/
 def counitNatTrans : ΦAdjFunctor ⋙ LAdjFunctor ⟶ 𝟭 AdjCat.{uObj, uMor} where
-  app := counitGr
-  naturality := fun C D f => (counitGr_naturality C D f).symm
+  app C := (counitGr C).toCatHom
+  naturality C D f := by
+    apply Cat.Hom.ext
+    simp only [Functor.comp_map, Functor.id_map, Cat.Hom.comp_toFunctor,
+      Functor.toCatHom_toFunctor]
+    exact (counitGr_naturality C D f).symm
 
 /-- Core adjunction data with unit, counit, and triangle identities. -/
 def coreUnitCounit : Adjunction.CoreUnitCounit LAdjFunctor ΦAdjFunctor where
@@ -1599,12 +1604,18 @@ def coreUnitCounit : Adjunction.CoreUnitCounit LAdjFunctor ΦAdjFunctor where
     ext X
     simp only [NatTrans.comp_app, Functor.comp_obj, Functor.whiskerRight_app,
       Functor.id_obj, Functor.associator_hom_app, Functor.whiskerLeft_app]
-    exact leftTriangle X
+    -- Goal needs .toFunctor on both sides; leftTriangle X gives Cat.Hom equality
+    have h := leftTriangle X
+    simp only [counitNatTrans, unitNatTrans, ΦAdjFunctor, LFunctor] at h ⊢
+    exact congrArg Cat.Hom.toFunctor h
   right_triangle := by
     ext C
     simp only [NatTrans.comp_app, Functor.comp_obj, Functor.whiskerLeft_app,
       Functor.id_obj, Functor.associator_inv_app, Functor.whiskerRight_app]
-    exact rightTriangle C
+    -- Similar to left_triangle: convert Cat.Hom equality to Functor equality
+    have h := rightTriangle C
+    simp only [counitNatTrans, unitNatTrans, LAdjFunctor, PhiFunctor] at h ⊢
+    exact h
 
 /-- The L ⊣ Φ adjunction between CompWitGr and Cat. -/
 def grAdjunction : LAdjFunctor ⊣ ΦAdjFunctor :=
