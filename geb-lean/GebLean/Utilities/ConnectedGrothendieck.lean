@@ -5815,7 +5815,7 @@ lemma functorToConnGrothendieckInnerFiberSrcEq {d d' : D} (g : d ⟶ d') :
       ((functorToConnGrothendieckSrcTransport (arrFun := data.arrFun) g).obj (data.fib d)) := by
   unfold Cat.Hom.toFunctor
   simp only [functorToConnGrothendieckMapEq, functorToConnGrothendieckDiagonalFiberEq,
-    eqToHom_refl, Functor.id_obj]
+    eqToHom_refl, Cat.Hom.id_toFunctor, Functor.id_obj]
 
 /--
 The Under to TwistedArrow transformation on arrowToUnder gives arrowToTwisted.
@@ -6034,13 +6034,16 @@ lemma functorToConnGrothendieckInnerBaseTwMorph {d d' : D} (g : d ⟶ d') :
 The restrictToDomainFiber map of innerBase equals SrcTransport followed by eqToHom.
 -/
 lemma functorToConnGrothendieckInnerBaseMapEq {d d' : D} (g : d ⟶ d') :
-    (restrictToDomainFiber C F (data.arrFun.obj d).left).map
-      (functorToConnGrothendieckInnerBase data g) =
-    functorToConnGrothendieckSrcTransport (arrFun := data.arrFun) g ≫
-    eqToHom (congrArg F.obj (functorToConnGrothendieckDomainTransportTargetTw data g)).symm := by
+    ((restrictToDomainFiber C F (data.arrFun.obj d).left).map
+      (functorToConnGrothendieckInnerBase data g)).toFunctor =
+    functorToConnGrothendieckSrcTransport (arrFun := data.arrFun) g ⋙
+    (eqToHom (congrArg F.obj
+      (functorToConnGrothendieckDomainTransportTargetTw data g)).symm).toFunctor := by
+  unfold Cat.Hom.toFunctor
   simp only [restrictToDomainFiber, Functor.comp_map]
   rw [functorToConnGrothendieckInnerBaseTwMorph]
   simp only [Functor.map_comp, eqToHom_map, functorToConnGrothendieckSrcTransport]
+  rfl
 
 /--
 The fiber morphism for the `GrothendieckContra'` morphism construction.
@@ -6056,13 +6059,15 @@ def functorToConnGrothendieckAltFiber {d d' : D} (g : d ⟶ d') :
   simp only [restrictToDomainFiber, Functor.comp_map,
     functorToConnGrothendieckObjMap_base]
   rw [functorToConnGrothendieckInnerBaseTwMorph]
-  simp only [Functor.map_comp, Functor.comp_obj, domainFiberTransport,
-    functorToConnGrothendieckAltBase, functorToConnGrothendieckObjMap_fiber_base]
+  unfold Cat.Hom.toFunctor Functor.toCatHom
+  simp only [Functor.map_comp, Functor.comp_obj, Cat.Hom.comp_toFunctor,
+    functorToConnGrothendieckAltBase, functorToConnGrothendieckObjMap_fiber_base,
+    eqToHom_map, functorToConnGrothendieckObjMap_fiber_fiber, innerFiberAltTransitionObj]
+  unfold domainFiberTransport
   rw [functorToConnGrothendieckDomainTransportTwEq]
-  simp only [Functor.map_comp, eqToHom_map,
-    functorToConnGrothendieckObjMap_fiber_fiber]
+  simp only [Functor.map_comp, eqToHom_map]
   exact (eqToHom (congrArg F.obj
-    (functorToConnGrothendieckDomainTransportTargetTw data g).symm)).map (data.hom g)
+    (functorToConnGrothendieckDomainTransportTargetTw data g).symm)).toFunctor.map (data.hom g)
 
 /--
 The base component of `functorToConnGrothendieckAltFiber` is `functorToConnGrothendieckInnerBase`.
@@ -6242,11 +6247,12 @@ The transported target for the identity equals the fiber image under identity.
 lemma functorToConnGrothendieck_transportedTgt_id_eq (d : D) :
     functorToConnGrothendieckTransportedTgt data (𝟙 d) =
     ((domainFiberFunctor C F).map
-      (GrothendieckContra'.id (functorToConnGrothendieckObjMap data d)).base).obj
+      (GrothendieckContra'.id (functorToConnGrothendieckObjMap data d)).base).toFunctor.obj
       (functorToConnGrothendieckObjMap data d).fiber := by
+  unfold Cat.Hom.toFunctor
   simp only [functorToConnGrothendieckTransportedTgt, functorToConnGrothendieckAltBase,
     Functor.map_id, Arrow.id_left, GrothendieckContra'.id,
-    functorToConnGrothendieckObjMap_base]
+    functorToConnGrothendieckObjMap_base, Cat.Hom.id_toFunctor, Functor.id_obj]
 
 /--
 The transported target for composition equals the fiber image under composition.
