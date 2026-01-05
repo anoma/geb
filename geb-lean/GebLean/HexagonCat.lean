@@ -387,26 +387,39 @@ abbrev ProjProfF : Cᵒᵖ × C ⥤ Type v := @ProjProf C _ C _ F
 /-- The projection profunctor for G, specialized to C. -/
 abbrev ProjProfG : Cᵒᵖ × C ⥤ Type v := @ProjProf C _ C _ G
 
+def hexagonProjProfDiagElemIsoCat :
+    HexagonObj (ProjProfF F) (ProjProfG G) ≅Cat
+    DiagElem (DialgebraProfType F G) := by
+  rw [← profDialgebraProjProf_eq F G]
+  exact hexagonDiagElemIsoCat (ProjProfF F) (ProjProfG G)
+
 /-- The hexagon category for projection profunctors is equivalent to
 `DiagElem (DialgebraProfType F G)`. -/
 def hexagonProjProfDiagElemEquiv :
     HexagonObj (ProjProfF F) (ProjProfG G) ≌
-    DiagElem (DialgebraProfType F G) := by
-  rw [← profDialgebraProjProf_eq F G]
-  exact hexagonDiagElemEquiv (ProjProfF F) (ProjProfG G)
+    DiagElem (DialgebraProfType F G) :=
+  Cat.equivOfIso (hexagonProjProfDiagElemIsoCat F G)
 
 /-- The equivalence `DiagElem (DialgebraProfType F G) ≌ DiagElem (DialgebraProf F G)`
 via rewriting along the equality of profunctors. -/
-def diagElemDialgebraProfTypeEquiv :
-    DiagElem (DialgebraProfType F G) ≌ DiagElem (DialgebraProf F G) := by
+def diagElemDialgebraProfTypeIsoCat :
+    DiagElem (DialgebraProfType F G) ≅Cat DiagElem (DialgebraProf F G) := by
   rw [dialgebraProfType_eq_dialgebraProf F G]
+
+def diagElemDialgebraProfTypeEquiv :
+    DiagElem (DialgebraProfType F G) ≌ DiagElem (DialgebraProf F G) :=
+  Cat.equivOfIso (diagElemDialgebraProfTypeIsoCat F G)
 
 /-- The hexagon category for projection profunctors is equivalent to
 the dialgebra category `DialgebraType F G`. -/
+def hexagonProjProfDialgIsoCat :
+    HexagonObj (ProjProfF F) (ProjProfG G) ≅Cat DialgebraType F G :=
+  (hexagonProjProfDiagElemIsoCat F G).trans
+    ((diagElemDialgebraProfTypeIsoCat F G).trans (diagElemDialgIsoCat F G))
+
 def hexagonProjProfDialgEquiv :
     HexagonObj (ProjProfF F) (ProjProfG G) ≌ DialgebraType F G :=
-  (hexagonProjProfDiagElemEquiv F G).trans
-    ((diagElemDialgebraProfTypeEquiv F G).trans (diagElemDialgEquiv F G))
+  Cat.equivOfIso (hexagonProjProfDialgIsoCat F G)
 
 end ProjProfDialgebraEquiv
 

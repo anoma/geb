@@ -315,40 +315,15 @@ def algToDiagElemFunctor : Endofunctor.Algebra F ⥤ DiagElem (AlgProf F) where
   map_id _ := DiagElem.Hom.ext rfl
   map_comp _ _ := DiagElem.Hom.ext rfl
 
-/-- The unit isomorphism for the equivalence between diagonal elements and
-F-algebras: the round-trip through algebras and back is the identity. -/
-def diagElemAlgUnitIso :
-    𝟭 (DiagElem (AlgProf F)) ≅ diagElemToAlgFunctor F ⋙ algToDiagElemFunctor F :=
-  NatIso.ofComponents
-    (fun x => eqToIso rfl)
-    (fun {x y} f => by
-      apply DiagElem.Hom.ext
-      simp only [Functor.id_obj, Functor.comp_obj, Functor.id_map, Functor.comp_map,
-        diagElemToAlgFunctor_map, algToDiagElemFunctor_map,
-        diagElemHomToAlgHom_f, algHomToDiagElemHom_base,
-        eqToIso_refl, Iso.refl_hom, Category.comp_id, Category.id_comp])
-
-/-- The counit isomorphism for the equivalence: the round-trip through
-diagonal elements and back is the identity. -/
-def diagElemAlgCounitIso :
-    algToDiagElemFunctor F ⋙ diagElemToAlgFunctor F ≅ 𝟭 (Endofunctor.Algebra F) :=
-  NatIso.ofComponents
-    (fun alg => Endofunctor.Algebra.isoMk (Iso.refl _) (by simp))
-    (fun {alg₁ alg₂} f => by
-      apply Endofunctor.Algebra.Hom.ext
-      simp only [Functor.comp_obj, Functor.id_obj, Functor.comp_map,
-        diagElemToAlgFunctor_map, algToDiagElemFunctor_map, Functor.id_map,
-        Endofunctor.Algebra.comp_f, Endofunctor.Algebra.isoMk, Iso.refl_hom,
-        diagElemHomToAlgHom_f, algHomToDiagElemHom_base,
-        Category.comp_id, Category.id_comp])
+/-- The equivalence between diagonal elements of `AlgProf F` and F-algebras. -/
+def diagElemAlgIsoCat : DiagElem (AlgProf F) ≅Cat Endofunctor.Algebra F :=
+  { hom := (diagElemToAlgFunctor F).toCatHom
+    inv := (algToDiagElemFunctor F).toCatHom
+  }
 
 /-- The equivalence between diagonal elements of `AlgProf F` and F-algebras. -/
 def diagElemAlgEquiv : DiagElem (AlgProf F) ≌ Endofunctor.Algebra F :=
-  CategoryTheory.Equivalence.mk
-    (diagElemToAlgFunctor F)
-    (algToDiagElemFunctor F)
-    (diagElemAlgUnitIso F)
-    (diagElemAlgCounitIso F)
+  Cat.equivOfIso (diagElemAlgIsoCat F)
 
 end DiagElemAlgebraEquiv
 
@@ -416,40 +391,14 @@ def coalgToDiagElemFunctor : Endofunctor.Coalgebra F ⥤ DiagElem (CoalgProf F) 
   map_id _ := DiagElem.Hom.ext rfl
   map_comp _ _ := DiagElem.Hom.ext rfl
 
-/-- The unit isomorphism for the equivalence between diagonal elements and
-F-coalgebras: the round-trip through coalgebras and back is the identity. -/
-def diagElemCoalgUnitIso :
-    𝟭 (DiagElem (CoalgProf F)) ≅ diagElemToCoalgFunctor F ⋙ coalgToDiagElemFunctor F :=
-  NatIso.ofComponents
-    (fun x => eqToIso rfl)
-    (fun {x y} f => by
-      apply DiagElem.Hom.ext
-      simp only [Functor.id_obj, Functor.comp_obj, Functor.id_map, Functor.comp_map,
-        diagElemToCoalgFunctor_map, coalgToDiagElemFunctor_map,
-        diagElemHomToCoalgHom_f, coalgHomToDiagElemHom_base,
-        eqToIso_refl, Iso.refl_hom, Category.comp_id, Category.id_comp])
-
-/-- The counit isomorphism for the equivalence: the round-trip through
-diagonal elements and back is the identity. -/
-def diagElemCoalgCounitIso :
-    coalgToDiagElemFunctor F ⋙ diagElemToCoalgFunctor F ≅ 𝟭 (Endofunctor.Coalgebra F) :=
-  NatIso.ofComponents
-    (fun coalg => Endofunctor.Coalgebra.isoMk (Iso.refl _) (by simp))
-    (fun {coalg₁ coalg₂} f => by
-      apply Endofunctor.Coalgebra.Hom.ext
-      simp only [Functor.comp_obj, Functor.id_obj, Functor.comp_map,
-        diagElemToCoalgFunctor_map, coalgToDiagElemFunctor_map, Functor.id_map,
-        Endofunctor.Coalgebra.comp_f, Endofunctor.Coalgebra.isoMk, Iso.refl_hom,
-        diagElemHomToCoalgHom_f, coalgHomToDiagElemHom_base,
-        Category.comp_id, Category.id_comp])
+def diagElemCoalgIsoCat : DiagElem (CoalgProf F) ≅Cat Endofunctor.Coalgebra F :=
+  { hom := (diagElemToCoalgFunctor F).toCatHom
+    inv := (coalgToDiagElemFunctor F).toCatHom
+  }
 
 /-- The equivalence between diagonal elements of `CoalgProf F` and F-coalgebras. -/
 def diagElemCoalgEquiv : DiagElem (CoalgProf F) ≌ Endofunctor.Coalgebra F :=
-  CategoryTheory.Equivalence.mk
-    (diagElemToCoalgFunctor F)
-    (coalgToDiagElemFunctor F)
-    (diagElemCoalgUnitIso F)
-    (diagElemCoalgCounitIso F)
+  Cat.equivOfIso (diagElemCoalgIsoCat F)
 
 end DiagElemCoalgebraEquiv
 
@@ -524,44 +473,18 @@ def dialgToDiagElemFunctor :
   map_id _ := DiagElem.Hom.ext rfl
   map_comp _ _ := DiagElem.Hom.ext rfl
 
-/-- The unit isomorphism for the equivalence between diagonal elements and
-dialgebras: the round-trip through dialgebras and back is the identity. -/
-def diagElemDialgUnitIso :
-    𝟭 (DiagElem (DialgebraProf F G)) ≅
-      diagElemToDialgFunctor F G ⋙ dialgToDiagElemFunctor F G :=
-  NatIso.ofComponents
-    (fun x => eqToIso rfl)
-    (fun {x y} f => by
-      apply DiagElem.Hom.ext
-      simp only [Functor.id_obj, Functor.comp_obj, Functor.id_map, Functor.comp_map,
-        diagElemToDialgFunctor_map, dialgToDiagElemFunctor_map,
-        diagElemHomToDialgHom_base, dialgHomToDiagElemHom_base,
-        eqToIso_refl, Iso.refl_hom, Category.comp_id, Category.id_comp])
-
-/-- The counit isomorphism for the equivalence: the round-trip through
-diagonal elements and back is the identity. -/
-def diagElemDialgCounitIso :
-    dialgToDiagElemFunctor F G ⋙ diagElemToDialgFunctor F G ≅
-      𝟭 (Dialgebra F G) :=
-  NatIso.ofComponents
-    (fun d => Dialgebra.isoMk (Iso.refl _) (by simp))
-    (fun {d₁ d₂} f => by
-      apply Dialgebra.Hom.ext
-      simp only [Functor.comp_obj, Functor.id_obj, Functor.comp_map,
-        diagElemToDialgFunctor_map, dialgToDiagElemFunctor_map, Functor.id_map,
-        Dialgebra.comp_base, Dialgebra.isoMk_hom_base, Iso.refl_hom,
-        diagElemHomToDialgHom_base, dialgHomToDiagElemHom_base,
-        Category.comp_id, Category.id_comp])
+def diagElemDialgIsoCat :
+    DiagElem (DialgebraProf F G) ≅Cat Dialgebra F G :=
+  {
+    hom := (diagElemToDialgFunctor F G).toCatHom
+    inv := (dialgToDiagElemFunctor F G).toCatHom
+  }
 
 /-- The equivalence between diagonal elements of `DialgebraProf F G` and
 (F,G)-dialgebras. -/
 def diagElemDialgEquiv :
     DiagElem (DialgebraProf F G) ≌ Dialgebra F G :=
-  CategoryTheory.Equivalence.mk
-    (diagElemToDialgFunctor F G)
-    (dialgToDiagElemFunctor F G)
-    (diagElemDialgUnitIso F G)
-    (diagElemDialgCounitIso F G)
+  Cat.equivOfIso (diagElemDialgIsoCat F G)
 
 end DiagElemDialgebraEquiv
 
@@ -630,33 +553,16 @@ def pointedToDiagElemFunctor :
   map_id _ := DiagElem.Hom.ext rfl
   map_comp _ _ := DiagElem.Hom.ext rfl
 
-/-- The unit isomorphism for the equivalence between diagonal elements of
-`IdProf` and pointed types. -/
-def diagElemPointedUnitIso :
-    𝟭 (DiagElem IdProf) ≅ diagElemToPointedFunctor ⋙ pointedToDiagElemFunctor :=
-  NatIso.ofComponents
-    (fun x => eqToIso rfl)
-    (fun {_ _} _ => by apply DiagElem.Hom.ext; rfl)
-
-/-- The counit isomorphism for the equivalence between diagonal elements of
-`IdProf` and pointed types. -/
-def diagElemPointedCounitIso :
-    pointedToDiagElemFunctor ⋙ diagElemToPointedFunctor ≅ 𝟭 Pointed.{v} :=
-  NatIso.ofComponents
-    (fun p => by
-      refine ⟨⟨_root_.id, rfl⟩, ⟨_root_.id, rfl⟩, ?_, ?_⟩
-      · apply Pointed.Hom.ext; rfl
-      · apply Pointed.Hom.ext; rfl)
-    (fun {_ _} _ => by apply Pointed.Hom.ext; rfl)
+def diagElemPointedIsoCat :
+    DiagElem IdProf ≅Cat Pointed.{v} :=
+  { hom := (diagElemToPointedFunctor).toCatHom
+    inv := (pointedToDiagElemFunctor).toCatHom
+  }
 
 /-- The equivalence between diagonal elements of `IdProf` and pointed types. -/
 def diagElemPointedEquiv :
     DiagElem IdProf ≌ Pointed.{v} :=
-  CategoryTheory.Equivalence.mk
-    diagElemToPointedFunctor
-    pointedToDiagElemFunctor
-    diagElemPointedUnitIso
-    diagElemPointedCounitIso
+  Cat.equivOfIso (diagElemPointedIsoCat)
 
 end DiagElemPointedEquiv
 
