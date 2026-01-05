@@ -47,9 +47,8 @@ variable {P Q}
 `(c, f)` and `(d, g)`. This says that the two paths around the hexagon
 from `P(d,c)` to `Q(c,d)` are equal. -/
 def HexagonCondition (X Y : HexagonObj P Q) (m : X.base ⟶ Y.base) : Prop :=
-  ∀ (p : P.obj (Opposite.op Y.base, X.base)),
-    Prof.map₂ Q m (X.diag (Prof.map₁ P m p)) =
-    Prof.map₁ Q m (Y.diag (Prof.map₂ P m p))
+  Prof.map₂ Q m ∘ X.diag ∘ Prof.map₁ P m =
+  Prof.map₁ Q m ∘ Y.diag ∘ Prof.map₂ P m
 
 /-- A morphism in the hexagon category: a morphism `m : c → d` in `C`
 satisfying the hexagon condition. -/
@@ -67,15 +66,17 @@ theorem HexagonHom.ext' {X Y : HexagonObj P Q} {f g : HexagonHom X Y}
 /-- The identity morphism in the hexagon category. -/
 def HexagonHom.id (X : HexagonObj P Q) : HexagonHom X X where
   hom := 𝟙 X.base
-  condition := fun p => by
-    simp only [Prof.map₁, Prof.map₂]
+  condition := by
+    ext p
+    simp only [Prof.map₁, Prof.map₂, Function.comp_apply]
     rfl
 
 /-- Composition of morphisms in the hexagon category. -/
 def HexagonHom.comp {X Y Z : HexagonObj P Q}
     (f : HexagonHom X Y) (g : HexagonHom Y Z) : HexagonHom X Z where
   hom := f.hom ≫ g.hom
-  condition := fun p => by
+  condition := by
+    ext p
     have fc := f.condition
     have gc := g.condition
     let p_gY := Prof.map₁ P g.hom p
@@ -85,13 +86,14 @@ def HexagonHom.comp {X Y Z : HexagonObj P Q}
     have Qnat : ∀ q, Prof.map₂ Q g.hom (Prof.map₁ Q f.hom q) =
                      Prof.map₁ Q f.hom (Prof.map₂ Q g.hom q) :=
       fun q => Prof.map_comm Q f.hom g.hom q
-    calc Prof.map₂ Q (f.hom ≫ g.hom) (X.diag (Prof.map₁ P (f.hom ≫ g.hom) p))
+    calc (Prof.map₂ Q (f.hom ≫ g.hom) ∘ X.diag ∘ Prof.map₁ P (f.hom ≫ g.hom)) p
         = Prof.map₂ Q g.hom (Prof.map₂ Q f.hom
             (X.diag (Prof.map₁ P f.hom (Prof.map₁ P g.hom p)))) := by
-          simp only [Prof.map₁_comp, Prof.map₂_comp]
+          simp only [Function.comp_apply, Prof.map₁_comp, Prof.map₂_comp]
         _ = Prof.map₂ Q g.hom
               (Prof.map₁ Q f.hom (Y.diag (Prof.map₂ P f.hom p_gY))) := by
-          simp only [p_gY]; exact congrArg (Prof.map₂ Q g.hom) (fc p_gY)
+          simp only [p_gY]
+          exact congrArg (Prof.map₂ Q g.hom) (congrFun fc p_gY)
         _ = Prof.map₂ Q g.hom
               (Prof.map₁ Q f.hom (Y.diag (Prof.map₁ P g.hom p_fZ))) := by
           rw [Pnat]
@@ -100,11 +102,13 @@ def HexagonHom.comp {X Y Z : HexagonObj P Q}
           rw [Qnat]
         _ = Prof.map₁ Q f.hom
               (Prof.map₁ Q g.hom (Z.diag (Prof.map₂ P g.hom p_fZ))) := by
-          simp only [p_fZ]; exact congrArg (Prof.map₁ Q f.hom) (gc p_fZ)
-        _ = Prof.map₁ Q (f.hom ≫ g.hom) (Z.diag (Prof.map₂ P (f.hom ≫ g.hom) p)) := by
-          change Prof.map₁ Q f.hom (Prof.map₁ Q g.hom
-                   (Z.diag (Prof.map₂ P g.hom (Prof.map₂ P f.hom p)))) = _
-          simp only [Prof.map₁_comp, Prof.map₂_comp]
+          simp only [p_fZ]
+          exact congrArg (Prof.map₁ Q f.hom) (congrFun gc p_fZ)
+        _ = Prof.map₁ Q f.hom (Prof.map₁ Q g.hom
+              (Z.diag (Prof.map₂ P g.hom (Prof.map₂ P f.hom p)))) := by
+          simp only [p_fZ]
+        _ = (Prof.map₁ Q (f.hom ≫ g.hom) ∘ Z.diag ∘ Prof.map₂ P (f.hom ≫ g.hom)) p := by
+          simp only [Function.comp_apply, Prof.map₁_comp, Prof.map₂_comp]
 
 /-- The hexagon category as a category instance. -/
 instance : Category (HexagonObj P Q) where
@@ -230,8 +234,7 @@ def hexagonHomToDiagElemHom {x y : HexagonObj P Q} (f : x ⟶ y) :
   base := f.hom
   compat := by
     simp only [DiagCompat, hexagonObjToDiagElem_base, ProfDialgebraProf_obj_obj]
-    ext p
-    exact f.condition p
+    exact f.condition
 
 /-- Convert a diagonal element morphism to a hexagon morphism. -/
 @[simps]
@@ -239,10 +242,9 @@ def diagElemHomToHexagonHom {x y : DiagElem (ProfDialgebraProf P Q)}
     (f : x ⟶ y) : diagElemToHexagonObj P Q x ⟶ diagElemToHexagonObj P Q y where
   hom := f.base
   condition := by
-    intro p
     have hcompat := f.compat
     simp only [DiagCompat, ProfDialgebraProf_obj_obj] at hcompat
-    exact congrFun hcompat p
+    exact hcompat
 
 /-- The functor from the hexagon category to diagonal elements. -/
 @[simps]
