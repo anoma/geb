@@ -231,4 +231,47 @@ theorem Prof.map_comm (P : Cᵒᵖ × C ⥤ Type v) {a b c d : C} (f : a ⟶ b) 
 
 end ProfunctorMaps
 
+section ProjectionProfunctor
+
+/-!
+### Projection profunctor
+
+For a functor `F : C ⥤ Type v`, we define the projection profunctor
+`ProjProf F : Cᵒᵖ × C ⥤ Type v` by `ProjProf F (a, b) = F.obj b`.
+
+This ignores the contravariant argument and is the precomposition of `F`
+with the second projection functor `Prod.snd Cᵒᵖ C : Cᵒᵖ × C ⥤ C`.
+-/
+
+variable {C : Type u} [Category.{v} C]
+
+/-- The projection profunctor derived from a functor `F : C ⥤ Type v`.
+`ProjProf F (a, b) = F.obj b`, ignoring the contravariant argument. -/
+def ProjProf (F : C ⥤ Type v) : Cᵒᵖ × C ⥤ Type v :=
+  CategoryTheory.Prod.snd Cᵒᵖ C ⋙ F
+
+@[simp]
+theorem ProjProf_obj (F : C ⥤ Type v) (p : Cᵒᵖ × C) :
+    (ProjProf F).obj p = F.obj p.2 := rfl
+
+@[simp]
+theorem ProjProf_map (F : C ⥤ Type v) {p q : Cᵒᵖ × C} (f : p ⟶ q) :
+    (ProjProf F).map f = F.map f.2 := rfl
+
+/-- The contravariant action on `ProjProf F` is the identity. -/
+@[simp]
+theorem ProjProf_map₁ (F : C ⥤ Type v) {a b c : C} (f : a ⟶ b)
+    (x : (ProjProf F).obj (Opposite.op b, c)) :
+    Prof.map₁ (ProjProf F) f x = x := by
+  simp only [Prof.map₁, ProjProf_map, F.map_id, types_id_apply]
+
+/-- The covariant action on `ProjProf F` is `F.map`. -/
+@[simp]
+theorem ProjProf_map₂ (F : C ⥤ Type v) {a b c : C} (g : b ⟶ c)
+    (x : (ProjProf F).obj (Opposite.op a, b)) :
+    Prof.map₂ (ProjProf F) g x = F.map g x := by
+  simp only [Prof.map₂, ProjProf_map]
+
+end ProjectionProfunctor
+
 end GebLean

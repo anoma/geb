@@ -112,7 +112,7 @@ def HexagonHom.comp {X Y Z : HexagonObj P Q}
           simp only [Function.comp_apply, Prof.map₁_comp, Prof.map₂_comp]
 
 /-- The hexagon category as a category instance. -/
-instance : Category (HexagonObj P Q) where
+instance HexagonCat : Category (HexagonObj P Q) where
   Hom := HexagonHom
   id := HexagonHom.id
   comp := HexagonHom.comp
