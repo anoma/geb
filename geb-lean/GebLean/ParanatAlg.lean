@@ -106,7 +106,9 @@ end CoalgebraProfunctor
 
 section DialgebraProfunctor
 
-variable {D : Type u} [Category.{v} D]
+universe u' v'
+
+variable {D : Type u'} [Category.{v'} D]
 variable (F G : C ⥤ D)
 
 /-!
@@ -127,7 +129,7 @@ this is the type `F.obj x ⟶ G.obj y` of "dialgebra-like" morphisms in `D`.
 Contravariant in `x` via precomposition with `F.map`, covariant in `y`
 via postcomposition with `G.map`. -/
 @[simps]
-def DialgebraProf : Cᵒᵖ ⥤ C ⥤ Type v where
+def DialgebraProf : Cᵒᵖ ⥤ C ⥤ Type v' where
   obj x := {
     obj := fun y => F.obj x.unop ⟶ G.obj y
     map := fun g a => a ≫ G.map g
@@ -165,7 +167,9 @@ This generalizes both algebras and coalgebras:
 - When `F = 𝟭 C`, a dialgebra is a G-coalgebra
 -/
 
-variable {D : Type u} [Category.{v} D]
+universe u' v'
+
+variable {D : Type u'} [Category.{v'} D]
 variable (F G : C ⥤ D)
 
 /-- An object of the dialgebra category for functors `F, G : C ⥤ D`.
@@ -451,7 +455,9 @@ end DiagElemCoalgebraEquiv
 
 section DiagElemDialgebraEquiv
 
-variable {D : Type u} [Category.{v} D]
+universe u' v'
+
+variable {D : Type u'} [Category.{v'} D]
 variable (F G : C ⥤ D)
 
 /-!
