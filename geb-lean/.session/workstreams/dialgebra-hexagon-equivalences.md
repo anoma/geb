@@ -66,39 +66,44 @@ Follow the pattern from `diagElemAlgEquiv` and `diagElemCoalgEquiv`:
 
 Give the `Category (HexagonObj P Q)` instance a name `HexagonCat` for clarity.
 
-### 4. Covariant Projection Profunctor
+### 4. Profunctors Derived from Functors
 
-For functors `F, G : C -> D`, there are two approaches to derive profunctors:
+For a functor `F : C -> D`, there are two approaches to derive profunctors on
+`Dop x C`:
 
-#### Approach A: Forget contravariant argument
-
-```text
-F' : Cop x C -> Type v
-F'(a, b) = F.obj b
-```
-
-This is precomposition with the second projection `Cop x C -> C`.
-
-#### Approach B: Representable endo-profunctor
+#### Approach A: Forgetful profunctor (projection)
 
 ```text
-F' : Cop x C -> Type v
-F'(a, b) = Hom_D(F.obj a, F.obj b)
+F' : Dop x C -> Type v
+F'(d, c) = F.obj c
 ```
 
-Note: The nlab definition of representable profunctor for `f : C -> D` is
-`D(1,f)(d, c) = Hom_D(d, f(c))`, where `d` is in D and `c` is in C. This is
-a profunctor `Dop x C -> Set` (not `Cop x C`). The hom-set `Hom_D(d, f(c))`
-lives in Type (the enriching category), making this a valid profunctor.
-For endo-profunctors on C derived from `F : C -> D`, the natural analogues
-are either Approach A (ignoring the contravariant argument, requiring
-`F : C -> Type v`) or the hom-functor construction above (applying F to
-both arguments, valid for any `F : C -> D`).
+This ignores the contravariant argument entirely. It is precomposition of F
+with the second projection `Dop x C -> C`.
 
-#### Analysis
+For endo-profunctors on C (i.e., when D = C), this requires `F : C -> Type v`
+(so that `F.obj c` lives in Type).
 
-**Approach A is correct for dialgebras**: With `P(a,b) = F.obj b` and
-`Q(a,b) = G.obj b`:
+#### Approach B: Representable profunctor
+
+```text
+D(1,F) : Dop x C -> Type v
+D(1,F)(d, c) = Hom_D(d, F.obj c)
+```
+
+This is the standard nlab definition of representable profunctor for
+`F : C -> D`. The contravariant argument `d` comes from D, not from C.
+The hom-set `Hom_D(d, F.obj c)` lives in Type (the enriching category),
+making this a valid profunctor.
+
+For endo-profunctors on C (when D = C), this becomes `C(1,F)(a, c) = Hom(a, F c)`.
+
+#### Analysis for Dialgebra Equivalence
+
+For `HexagonCat`, we need endo-profunctors `P, Q : Cop x C -> Type v`.
+
+**Approach A with `F : C -> Type v`**: Setting `P(a,c) = F.obj c` and
+`Q(a,c) = G.obj c`:
 
 - `Prof.map1 P m` = identity (contravariant action is trivial)
 - `Prof.map2 P m` = `F.map m` (covariant action)
@@ -107,15 +112,17 @@ The hexagon condition `P(m,1) . f . Q(1,m) = P(1,m) . g . Q(m,1)` becomes:
 `id . f . G.map m = F.map m . g . id`, which simplifies to
 `f . G.map m = F.map m . g` -- the dialgebra morphism condition.
 
-**Approach B gives a different structure**: The diagonal
-`P(c,c) = Hom_D(F.obj c, F.obj c)` is a hom-set, not a single object.
-A diagonal transformation `P(c,c) -> Q(c,c)` would be a function
-`Hom_D(F c, F c) -> Hom_D(G c, G c)`, which is not a dialgebra structure.
+**Approach B with `F : C -> C`**: Setting `P(a,c) = Hom(a, F.obj c)`:
 
-**Conclusion**: Approach A is the correct one for the dialgebra equivalence.
+The diagonal `P(c,c) = Hom(c, F.obj c)` is a hom-set, not a single element.
+A diagonal element would pick out a morphism `c -> F.obj c` for each `c`,
+which is a *coalgebra* structure, not an algebra. The hexagon condition
+for morphisms would relate to coalgebra morphisms, not dialgebras.
 
-Next step: Check if mathlib has the second projection functor
-`Cop x C -> C`. If not, define it in `Utilities/Category.lean`.
+**Conclusion**: Approach A (forgetful/projection profunctor) with functors
+`F, G : C -> Type v` is correct for the dialgebra equivalence.
+
+The `ProjProf` utility in `Profunctors.lean` implements Approach A.
 
 ### 5. HexagonCat equivalent to DiagElem(DialgebraProf)
 
@@ -152,8 +159,9 @@ Commutes: `G.map m . phi = psi . F.map m`
 
 ### Hexagon Condition Simplification
 
-When P and Q ignore the contravariant argument:
+When `P = ProjProf F` and `Q = ProjProf G` for `F, G : C -> Type v`:
 
+- `P(a, c) = F.obj c` (ignores contravariant argument)
 - `Prof.map1 P m` = identity (contravariant action is trivial)
 - `Prof.map2 P m` = `F.map m` (covariant action)
 
