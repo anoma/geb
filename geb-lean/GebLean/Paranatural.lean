@@ -4,6 +4,8 @@ import Mathlib.CategoryTheory.Comma.Over.Basic
 import Mathlib.CategoryTheory.Discrete.Basic
 import Mathlib.CategoryTheory.Elements
 import Mathlib.CategoryTheory.Functor.Basic
+import Mathlib.CategoryTheory.Functor.Currying
+import Mathlib.CategoryTheory.ObjectProperty.FullSubcategory
 import Mathlib.CategoryTheory.Products.Basic
 import Mathlib.CategoryTheory.Types.Basic
 import Mathlib.CategoryTheory.Opposites
@@ -2574,5 +2576,544 @@ def twCoprArrElemConnGrothendieckEquiv :
 end ConnGrothendieckEquiv
 
 end TwCoprToArr
+
+section DiagElemAsTwCoprArrElem
+
+/-! ## DiagElem as a full subcategory of TwCoprArrElem
+
+We show that `DiagElem P` for a profunctor `P : Cᵒᵖ ⥤ C ⥤ Type w` is
+categorically equivalent to the full subcategory of `TwCoprArrElem F`
+where:
+- `F` is the composition of the projection from `TwistedArrow' C` to `Cᵒᵖ' × C`
+  with the profunctor `P`
+- The arrows are identity morphisms
+
+An object in `DiagElem P` is `(I : C, elem : P.obj (op I) I)`.
+
+An object in the identity subcategory of `TwCoprArrElem F` is
+`(Arrow.mk (𝟙 I), elem : F.obj (arrToTw' (Arrow.mk (𝟙 I))))`.
+
+Since `arrToTw' (Arrow.mk (𝟙 I)) = twObjMk' (𝟙 I)` which projects to `(I, I)`,
+and `F.obj (twObjMk' (𝟙 I)) = P.obj (op I) I` when `F` is the profunctor
+composition, these categories have the same objects up to isomorphism.
+-/
+
+variable (C : Type u) [Category.{v} C]
+
+/-- The forgetful functor from `TwistedArrow' C` to `Cᵒᵖ' × C`, forgetting
+the arrow and keeping only the domain and codomain.
+
+Since `TwistedArrow' C = hom'.Elements`, this is just the projection functor
+from the category of elements. -/
+def twForget : TwistedArrow' C ⥤ opProdSym' C :=
+  CategoryOfElements.π hom'
+
+@[simp]
+lemma twForget_obj (tw : TwistedArrow' C) :
+    (twForget C).obj tw = (twDom' tw, twCod' tw) := rfl
+
+@[simp]
+lemma twForget_map {tw₁ tw₂ : TwistedArrow' C} (f : tw₁ ⟶ tw₂) :
+    (twForget C).map f = (twDomArr' f, twCodArr' f) := rfl
+
+universe w
+
+variable {C}
+variable (P : Cᵒᵖ ⥤ C ⥤ Type w)
+
+/-- Given a profunctor `P : Cᵒᵖ ⥤ C ⥤ Type w`, compose the forgetful functor
+from twisted arrows with the profunctor to get a functor
+`TwistedArrow' C ⥤ Type w`.
+
+The composition goes: `TwistedArrow' C → Cᵒᵖ' × C → Cᵒᵖ × C → Type w`. -/
+def profToTwCopr : TwistedArrow' C ⥤ Type w :=
+  twForget C ⋙ (opProdEquiv C C).inverse ⋙ CategoryTheory.Functor.uncurry.obj P
+
+/-- Predicate that an arrow is an identity morphism. -/
+def Arrow.IsIdentity (arr : Arrow C) : Prop :=
+  ∃ (h : arr.left = arr.right), arr.hom = eqToHom h
+
+/-- Predicate identifying objects in `TwCoprArrElem (profToTwCopr P)` whose
+underlying arrow is an identity. -/
+def IsIdentityTwCoprArrElem :
+    ObjectProperty (TwCoprArrElem (profToTwCopr P)) :=
+  fun x => Arrow.IsIdentity x.arr
+
+/-- The full subcategory of `TwCoprArrElem (profToTwCopr P)` where the
+underlying arrows are identities. -/
+abbrev IdentityTwCoprArrElem :=
+  (IsIdentityTwCoprArrElem P).FullSubcategory
+
+/-- The arrow `Arrow.mk (𝟙 I)` satisfies the identity predicate. -/
+lemma Arrow.mk_id_isIdentity (I : C) : Arrow.IsIdentity (Arrow.mk (𝟙 I)) :=
+  ⟨rfl, rfl⟩
+
+/-- The twisted arrow for an identity arrow `𝟙 I`. -/
+abbrev twObjId (I : C) : TwistedArrow' C :=
+  arrToTw' (Arrow.mk (𝟙 I))
+
+/-- For an identity arrow, `profToTwCopr P` computes to `diagApp P`. -/
+lemma profToTwCopr_id_obj (I : C) :
+    (profToTwCopr P).obj (twObjId I) = diagApp P I := by
+  simp only [profToTwCopr, twObjId, Functor.comp_obj]
+  rfl
+
+/-- Convert a diagonal element to an element in the profunctor on identity. -/
+def diagElemToTwCoprElem (I : C) (e : diagApp P I) :
+    (profToTwCopr P).obj (twObjId I) :=
+  cast (profToTwCopr_id_obj P I).symm e
+
+/-- Convert an element in the profunctor on identity to a diagonal element. -/
+def twCoprElemToDiagElem (I : C) (e : (profToTwCopr P).obj (twObjId I)) :
+    diagApp P I :=
+  cast (profToTwCopr_id_obj P I) e
+
+@[simp]
+lemma diagElemToTwCoprElem_twCoprElemToDiagElem (I : C)
+    (e : (profToTwCopr P).obj (twObjId I)) :
+    diagElemToTwCoprElem P I (twCoprElemToDiagElem P I e) = e := by
+  simp only [diagElemToTwCoprElem, twCoprElemToDiagElem, cast_eq]
+
+@[simp]
+lemma twCoprElemToDiagElem_diagElemToTwCoprElem (I : C) (e : diagApp P I) :
+    twCoprElemToDiagElem P I (diagElemToTwCoprElem P I e) = e := by
+  simp only [twCoprElemToDiagElem, diagElemToTwCoprElem, cast_eq]
+
+/-- Construct an Arrow morphism between identity arrows from a morphism in C.
+For identity arrows, the left and right components must be equal. -/
+def idArrowHom {I₀ I₁ : C} (f : I₀ ⟶ I₁) :
+    Arrow.mk (𝟙 I₀) ⟶ Arrow.mk (𝟙 I₁) where
+  left := f
+  right := f
+  w := by simp
+
+/-- The object map of the functor from `DiagElem P` to `TwCoprArrElem`. -/
+def diagElemToTwCoprArrElemObj (x : DiagElem P) :
+    TwCoprArrElem (profToTwCopr P) where
+  arr := Arrow.mk (𝟙 x.base)
+  elem := diagElemToTwCoprElem P x.base x.elem
+
+/-- The object satisfies the identity predicate. -/
+lemma diagElemToTwCoprArrElemObj_isIdentity (x : DiagElem P) :
+    IsIdentityTwCoprArrElem P (diagElemToTwCoprArrElemObj P x) :=
+  Arrow.mk_id_isIdentity x.base
+
+/-- The object map into the full subcategory. -/
+def diagElemToIdentityTwCoprObj (x : DiagElem P) :
+    IdentityTwCoprArrElem P :=
+  ⟨diagElemToTwCoprArrElemObj P x, diagElemToTwCoprArrElemObj_isIdentity P x⟩
+
+/-- The diagonal twisted arrow for an identity arrow morphism is the diagonal
+of the underlying morphism. -/
+lemma arrDiag_idArrowHom {I₀ I₁ : C} (f : I₀ ⟶ I₁) :
+    arrDiag (idArrowHom (C := C) f) = Arrow.mk f := by
+  simp only [arrDiag, idArrowHom, Arrow.mk_hom]
+  congr 1
+  exact Category.id_comp f
+
+@[simp]
+lemma idArrowHom_left {I₀ I₁ : C} (f : I₀ ⟶ I₁) :
+    (idArrowHom (C := C) f).left = f := rfl
+
+@[simp]
+lemma idArrowHom_right {I₀ I₁ : C} (f : I₀ ⟶ I₁) :
+    (idArrowHom (C := C) f).right = f := rfl
+
+/-- The source of `arrToDiagFromSource` for an identity arrow morphism. -/
+@[simp]
+lemma arrToDiagFromSource_idArrowHom_dom {I₀ I₁ : C} (f : I₀ ⟶ I₁) :
+    twDomArr' (arrToDiagFromSource (idArrowHom (C := C) f)) = 𝟙 I₀ := rfl
+
+/-- The target of `arrToDiagFromSource` for an identity arrow morphism. -/
+@[simp]
+lemma arrToDiagFromSource_idArrowHom_cod {I₀ I₁ : C} (f : I₀ ⟶ I₁) :
+    twCodArr' (arrToDiagFromSource (idArrowHom (C := C) f)) = f := rfl
+
+/-- The source of `arrToDiagFromTarget` for an identity arrow morphism. -/
+@[simp]
+lemma arrToDiagFromTarget_idArrowHom_dom {I₀ I₁ : C} (f : I₀ ⟶ I₁) :
+    twDomArr' (arrToDiagFromTarget (idArrowHom (C := C) f)) = f := rfl
+
+/-- The target of `arrToDiagFromTarget` for an identity arrow morphism. -/
+@[simp]
+lemma arrToDiagFromTarget_idArrowHom_cod {I₀ I₁ : C} (f : I₀ ⟶ I₁) :
+    twCodArr' (arrToDiagFromTarget (idArrowHom (C := C) f)) = 𝟙 I₁ := rfl
+
+/-- The `profToTwCopr` map on `arrToDiagFromSource` for identity arrows
+computes to the covariant action `diagPostArr`. -/
+lemma profToTwCopr_map_arrToDiagFromSource_id {I₀ I₁ : C} (f : I₀ ⟶ I₁)
+    (e : (profToTwCopr P).obj (twObjId I₀)) :
+    (profToTwCopr P).map (arrToDiagFromSource (idArrowHom (C := C) f)) e =
+    (P.obj (Opposite.op I₀)).map f (twCoprElemToDiagElem P I₀ e) := by
+  simp only [twCoprElemToDiagElem, cast_eq, profToTwCopr, Functor.comp_map,
+    twForget_map, opProdEquiv, Equivalence.prod, Functor.prod_map,
+    opEquivOp', arrToDiagFromSource_idArrowHom_dom,
+    arrToDiagFromSource_idArrowHom_cod, Functor.uncurry,
+    CategoryTheory.Equivalence.refl_inverse, Functor.id_map]
+  simp only [twForget, arrToTw', arrDiagTw', idArrowHom, Cat.equivOfIso,
+    opIsoOp', catOfOp'ToOp, op'ToOp, twObjMk', arrDiag]
+  simp only [CategoryOfElements.π_obj, hom', Functor.id_obj, Arrow.mk_left,
+    Arrow.mk_right, Functor.prod_obj, Functor.toCatHom_toFunctor]
+  erw [op_id, P.map_id, NatTrans.id_app]
+  rfl
+
+/-- The `profToTwCopr` map on `arrToDiagFromTarget` for identity arrows
+computes to the contravariant action `diagPreArr`. -/
+lemma profToTwCopr_map_arrToDiagFromTarget_id {I₀ I₁ : C} (f : I₀ ⟶ I₁)
+    (e : (profToTwCopr P).obj (twObjId I₁)) :
+    (profToTwCopr P).map (arrToDiagFromTarget (idArrowHom (C := C) f)) e =
+    (P.map f.op).app I₁ (twCoprElemToDiagElem P I₁ e) := by
+  simp only [twCoprElemToDiagElem, cast_eq, profToTwCopr, Functor.comp_map,
+    twForget_map, opProdEquiv, Equivalence.prod, Functor.prod_map,
+    opEquivOp', arrToDiagFromTarget_idArrowHom_dom,
+    arrToDiagFromTarget_idArrowHom_cod, Functor.uncurry,
+    CategoryTheory.Equivalence.refl_inverse, Functor.id_map]
+  simp only [twForget, arrToTw', arrDiagTw', idArrowHom, Cat.equivOfIso,
+    opIsoOp', catOfOp'ToOp, op'ToOp, twObjMk', arrDiag]
+  simp only [CategoryOfElements.π_obj, hom', Functor.id_obj, Arrow.mk_left,
+    Arrow.mk_right, Functor.prod_obj, Functor.toCatHom_toFunctor,
+    Functor.map_id, Category.comp_id]
+  rfl
+
+/-- `DiagCompat` for a morphism `f` is equivalent to `TwArrCompat` for the
+identity arrow morphism `idArrowHom f`. -/
+lemma diagCompat_iff_twArrCompat_idArrowHom {I₀ I₁ : C} (f : I₀ ⟶ I₁)
+    (e₀ : (profToTwCopr P).obj (twObjId I₀))
+    (e₁ : (profToTwCopr P).obj (twObjId I₁)) :
+    DiagCompat P I₀ I₁ f (twCoprElemToDiagElem P I₀ e₀)
+      (twCoprElemToDiagElem P I₁ e₁) ↔
+    TwArrCompat (profToTwCopr P) (idArrowHom (C := C) f) e₀ e₁ := by
+  simp only [DiagCompat, TwArrCompat]
+  rw [profToTwCopr_map_arrToDiagFromSource_id,
+      profToTwCopr_map_arrToDiagFromTarget_id]
+
+/-- Convert `DiagCompat` to `TwArrCompat` via `diagElemToTwCoprElem`. -/
+lemma diagCompatToTwArrCompat {x y : DiagElem P} (f : x ⟶ y) :
+    TwArrCompat (profToTwCopr P) (idArrowHom (C := C) f.base)
+      (diagElemToTwCoprElem P x.base x.elem)
+      (diagElemToTwCoprElem P y.base y.elem) := by
+  rw [← diagCompat_iff_twArrCompat_idArrowHom]
+  simp only [twCoprElemToDiagElem_diagElemToTwCoprElem]
+  exact f.compat
+
+/-- The morphism map from `DiagElem` morphisms to `TwCoprArrElem` morphisms. -/
+def diagElemToTwCoprArrElemHom {x y : DiagElem P} (f : x ⟶ y) :
+    TwCoprArrElem.Hom (profToTwCopr P)
+      (diagElemToTwCoprArrElemObj P x)
+      (diagElemToTwCoprArrElemObj P y) where
+  base := idArrowHom f.base
+  compat := diagCompatToTwArrCompat P f
+
+/-- The morphism map into the full subcategory. -/
+def diagElemToIdentityTwCoprHom {x y : DiagElem P} (f : x ⟶ y) :
+    diagElemToIdentityTwCoprObj P x ⟶ diagElemToIdentityTwCoprObj P y :=
+  InducedCategory.homMk (diagElemToTwCoprArrElemHom P f)
+
+/-- `idArrowHom` sends identity morphisms to identity arrow morphisms. -/
+@[simp]
+lemma idArrowHom_id (I : C) :
+    idArrowHom (C := C) (𝟙 I) = 𝟙 (Arrow.mk (𝟙 I)) := by
+  ext <;> rfl
+
+/-- `idArrowHom` preserves composition. -/
+@[simp]
+lemma idArrowHom_comp {I₀ I₁ I₂ : C} (f : I₀ ⟶ I₁) (g : I₁ ⟶ I₂) :
+    idArrowHom (C := C) (f ≫ g) = idArrowHom f ≫ idArrowHom g := by
+  ext <;> rfl
+
+/-- The functor from `DiagElem P` to the full subcategory of identity arrows. -/
+def diagElemToIdentityTwCopr : DiagElem P ⥤ IdentityTwCoprArrElem P where
+  obj := diagElemToIdentityTwCoprObj P
+  map := diagElemToIdentityTwCoprHom P
+  map_id x := by
+    apply InducedCategory.hom_ext
+    simp only [diagElemToIdentityTwCoprHom, InducedCategory.homMk_hom,
+      diagElemToTwCoprArrElemHom]
+    apply TwCoprArrElem.Hom.ext
+    simp only [CategoryStruct.id, TwCoprArrElem.Hom.id, diagElemToTwCoprArrElemObj,
+      diagElemToIdentityTwCoprObj, DiagElem.Hom.id, idArrowHom_id]
+  map_comp f g := by
+    apply InducedCategory.hom_ext
+    simp only [diagElemToIdentityTwCoprHom, InducedCategory.homMk_hom,
+      diagElemToTwCoprArrElemHom]
+    apply TwCoprArrElem.Hom.ext
+    simp only [DiagElem.Hom.comp_base, idArrowHom_comp]
+    rfl
+
+/-- Extract the equality from `Arrow.IsIdentity`. -/
+lemma Arrow.IsIdentity.left_eq_right {arr : Arrow C} (hid : Arrow.IsIdentity arr) :
+    arr.left = arr.right :=
+  hid.choose
+
+/-- Extract the hom equality from `Arrow.IsIdentity`. -/
+lemma Arrow.IsIdentity.hom_eq_eqToHom {arr : Arrow C} (hid : Arrow.IsIdentity arr) :
+    arr.hom = eqToHom hid.left_eq_right :=
+  hid.choose_spec
+
+/-- Type equality for `profToTwCopr` on identity arrows. -/
+lemma profToTwCopr_obj_isIdentity_eq (arr : Arrow C) (h : arr.left = arr.right) :
+    (profToTwCopr P).obj (arrToTw' arr) = diagApp P arr.left := by
+  simp only [profToTwCopr, Functor.comp_obj, arrToTw', twObjMk', twForget,
+    Cat.equivOfIso, opIsoOp', catOfOp'ToOp, op'ToOp, opProdEquiv,
+    Equivalence.prod, opEquivOp', diagApp, Functor.uncurry]
+  simp only [Functor.prod_obj, CategoryTheory.Equivalence.refl_inverse,
+    Functor.id_obj]
+  congr 1; exact h.symm
+
+/-- Type equality for `profToTwCopr` using `Arrow.IsIdentity`. -/
+lemma profToTwCopr_obj_isIdentity (arr : Arrow C) (hid : Arrow.IsIdentity arr) :
+    (profToTwCopr P).obj (arrToTw' arr) = diagApp P arr.left :=
+  profToTwCopr_obj_isIdentity_eq P arr hid.left_eq_right
+
+/-- The object map of the inverse functor from `IdentityTwCoprArrElem` to
+`DiagElem`. -/
+def identityTwCoprToDiagElemObj (x : IdentityTwCoprArrElem P) : DiagElem P where
+  base := x.obj.arr.left
+  elem := cast (profToTwCopr_obj_isIdentity P x.obj.arr x.property) x.obj.elem
+
+/-- For arrow morphisms between identity arrows, the right component equals
+the left component transported through the equality proofs. -/
+lemma Arrow.Hom.right_eq_left_cast_of_isIdentity {arr₁ arr₂ : Arrow C}
+    (h₁ : Arrow.IsIdentity arr₁) (h₂ : Arrow.IsIdentity arr₂) (φ : arr₁ ⟶ arr₂) :
+    φ.right = eqToHom h₁.left_eq_right.symm ≫ φ.left ≫ eqToHom h₂.left_eq_right := by
+  have hw := φ.w
+  rw [h₁.hom_eq_eqToHom, h₂.hom_eq_eqToHom] at hw
+  simp only [Functor.id_map] at hw
+  have hwsymm : eqToHom h₁.left_eq_right ≫ φ.right =
+      φ.left ≫ eqToHom h₂.left_eq_right := hw.symm
+  calc φ.right
+      = eqToHom h₁.left_eq_right.symm ≫ eqToHom h₁.left_eq_right ≫ φ.right := by simp
+    _ = eqToHom h₁.left_eq_right.symm ≫ (φ.left ≫ eqToHom h₂.left_eq_right) := by
+        rw [hwsymm]
+    _ = eqToHom h₁.left_eq_right.symm ≫ φ.left ≫ eqToHom h₂.left_eq_right := rfl
+
+/-- Helper lemma: when domain and codomain objects coincide, the profunctor
+compatibility simplifies. Uses free object parameters to allow `subst`. -/
+lemma profunctor_transport_compat_aux {a₁ a₂ b₁ b₂ : C}
+    (ha : a₁ = b₁) (hb : a₂ = b₂) (f : a₁ ⟶ a₂)
+    (x : (P.obj (Opposite.op a₁)).obj b₁)
+    (y : (P.obj (Opposite.op a₂)).obj b₂)
+    (h : hb ▸ (P.obj (Opposite.op a₁)).map f (ha.symm ▸ x) =
+         (P.map f.op).app b₂ y) :
+    (P.obj (Opposite.op a₁)).map f (ha.symm ▸ x) =
+    (P.map f.op).app a₂ (hb.symm ▸ y) := by
+  subst ha hb
+  exact h
+
+/-- Convert `TwArrCompat` on identity arrows to `DiagCompat`.
+Uses destructuring to enable substitution. -/
+lemma twArrCompat_isIdentity_to_diagCompat {arr₁ arr₂ : Arrow C}
+    (h₁ : Arrow.IsIdentity arr₁) (h₂ : Arrow.IsIdentity arr₂)
+    (φ : arr₁ ⟶ arr₂)
+    (e₁ : (profToTwCopr P).obj (arrToTw' arr₁))
+    (e₂ : (profToTwCopr P).obj (arrToTw' arr₂))
+    (hcompat : TwArrCompat (profToTwCopr P) φ e₁ e₂) :
+    DiagCompat P arr₁.left arr₂.left φ.left
+      (cast (profToTwCopr_obj_isIdentity P arr₁ h₁) e₁)
+      (cast (profToTwCopr_obj_isIdentity P arr₂ h₂) e₂) := by
+  -- Destructure the arrows to get access to free variables for substitution
+  rcases arr₁ with ⟨l₁, r₁, hom₁⟩
+  rcases arr₂ with ⟨l₂, r₂, hom₂⟩
+  -- Extract the equality from IsIdentity
+  obtain ⟨eq₁, heq₁⟩ := h₁
+  obtain ⟨eq₂, heq₂⟩ := h₂
+  -- Use cases to eliminate the equalities, handling the dependencies
+  cases eq₁
+  cases eq₂
+  -- After case analysis, l₁ = r₁ and l₂ = r₂, so identity arrows become true identities
+  -- The casts all become trivial
+  simp only [cast_eq]
+  simp only [DiagCompat, TwArrCompat, profToTwCopr, Functor.comp_obj,
+    Functor.comp_map] at *
+  simp only [twForget_map, arrToDiagFromSource, arrToDiagFromTarget,
+    opProdEquiv, Equivalence.prod, Functor.prod_map, opEquivOp',
+    Functor.uncurry, CategoryTheory.Equivalence.refl_inverse,
+    Functor.id_map, twHomMk'_domArr, twHomMk'_codArr] at hcompat
+  simp only [twForget, arrToTw', twObjMk', Cat.equivOfIso, opIsoOp',
+    catOfOp'ToOp, op'ToOp, CategoryOfElements.π_obj, Functor.prod_obj,
+    Functor.id_obj, arrDiagTw', arrDiag] at hcompat
+  simp only [Functor.toCatHom_toFunctor] at hcompat
+  simp only [types_id_apply, (P.obj _).map_id, types_comp_apply] at hcompat
+  -- heq₁ and heq₂ are now proofs that hom₁/hom₂ = eqToHom rfl = 𝟙
+  simp only [eqToHom_refl] at heq₁ heq₂
+  -- heq₁ : hom₁ = 𝟙 l₁, heq₂ : hom₂ = 𝟙 l₂
+  -- Substitute to eliminate hom₁ and hom₂ from the context
+  subst heq₁ heq₂
+  -- Now φ : Arrow.mk (𝟙 l₁) ⟶ Arrow.mk (𝟙 l₂)
+  -- φ.w : 𝟙 l₁ ≫ φ.right = φ.left ≫ 𝟙 l₂
+  have hφ_eq : φ.right = φ.left := by
+    have hw := φ.w
+    change φ.left ≫ 𝟙 l₂ = 𝟙 l₁ ≫ φ.right at hw
+    simp only [Category.id_comp, Category.comp_id] at hw
+    exact hw.symm
+  change (P.obj (Opposite.op l₁)).map φ.right ((P.map (𝟙 l₁).op).app l₁ e₁) =
+         (P.map φ.left.op).app l₂ e₂ at hcompat
+  simp only [op_id, Functor.map_id, NatTrans.id_app, types_id_apply] at hcompat
+  rw [hφ_eq] at hcompat
+  exact hcompat
+
+/-- The morphism map of the inverse functor from `IdentityTwCoprArrElem` to
+`DiagElem`. Given a morphism in the identity arrows subcategory, extract the
+left component of the underlying arrow morphism. -/
+def identityTwCoprToDiagElemHom {x y : IdentityTwCoprArrElem P}
+    (f : x ⟶ y) : identityTwCoprToDiagElemObj P x ⟶ identityTwCoprToDiagElemObj P y where
+  base := f.hom.base.left
+  compat := by
+    apply twArrCompat_isIdentity_to_diagCompat P x.property y.property
+    exact f.hom.compat
+
+/-- The inverse functor preserves identity morphisms. -/
+theorem identityTwCoprToDiagElemHom_id (x : IdentityTwCoprArrElem P) :
+    identityTwCoprToDiagElemHom P (𝟙 x) = 𝟙 (identityTwCoprToDiagElemObj P x) :=
+  DiagElem.Hom.ext rfl
+
+/-- The inverse functor preserves composition. -/
+theorem identityTwCoprToDiagElemHom_comp {x y z : IdentityTwCoprArrElem P}
+    (f : x ⟶ y) (g : y ⟶ z) :
+    identityTwCoprToDiagElemHom P (f ≫ g) =
+    identityTwCoprToDiagElemHom P f ≫ identityTwCoprToDiagElemHom P g :=
+  DiagElem.Hom.ext rfl
+
+/-- The inverse functor from the full subcategory of identity-arrow elements
+back to diagonal elements. -/
+def identityTwCoprToDiagElem : IdentityTwCoprArrElem P ⥤ DiagElem P where
+  obj := identityTwCoprToDiagElemObj P
+  map := identityTwCoprToDiagElemHom P
+  map_id := identityTwCoprToDiagElemHom_id P
+  map_comp := identityTwCoprToDiagElemHom_comp P
+
+/-- An identity arrow is equal to `Arrow.mk (𝟙 left)`. -/
+lemma Arrow.IsIdentity.eq_mk_id {arr : Arrow C} (hid : Arrow.IsIdentity arr) :
+    arr = Arrow.mk (𝟙 arr.left) := by
+  rcases arr with ⟨left, right, hom⟩
+  obtain ⟨heq, hhom⟩ := hid
+  cases heq
+  simp only [eqToHom_refl] at hhom
+  subst hhom
+  rfl
+
+/-- Round-trip: DiagElem → IdentityTwCoprArrElem → DiagElem gives back the
+original object. -/
+theorem roundTrip_diag_obj (x : DiagElem P) :
+    identityTwCoprToDiagElemObj P (diagElemToIdentityTwCoprObj P x) = x := by
+  apply DiagElem.ext
+  · rfl
+  · simp only [diagElemToIdentityTwCoprObj, identityTwCoprToDiagElemObj,
+      diagElemToTwCoprArrElemObj, diagElemToTwCoprElem, cast_eq]
+    exact HEq.rfl
+
+/-- Round-trip on morphisms from DiagElem direction. -/
+theorem roundTrip_diag_map {x y : DiagElem P} (f : x ⟶ y) :
+    identityTwCoprToDiagElemHom P (diagElemToIdentityTwCoprHom P f) =
+    eqToHom (roundTrip_diag_obj P x) ≫ f ≫ eqToHom (roundTrip_diag_obj P y).symm := by
+  apply DiagElem.Hom.ext
+  simp only [diagElemToIdentityTwCoprHom, identityTwCoprToDiagElemHom,
+    InducedCategory.homMk_hom, diagElemToTwCoprArrElemHom, idArrowHom]
+  simp only [eqToHom_refl, Category.comp_id, Category.id_comp]
+
+/-- Arrow equality for round-trip from IdentityTwCoprArrElem direction. -/
+lemma roundTrip_tw_arr (x : IdentityTwCoprArrElem P) :
+    (diagElemToTwCoprArrElemObj P (identityTwCoprToDiagElemObj P x)).arr = x.obj.arr := by
+  simp only [diagElemToTwCoprArrElemObj, identityTwCoprToDiagElemObj]
+  exact (x.property.eq_mk_id).symm
+
+/-- Element equality for round-trip from IdentityTwCoprArrElem direction. -/
+lemma roundTrip_tw_elem (x : IdentityTwCoprArrElem P) :
+    (diagElemToTwCoprArrElemObj P (identityTwCoprToDiagElemObj P x)).elem ≍
+    x.obj.elem := by
+  -- Destructure to get free variables for substitution
+  rcases x with ⟨⟨arr, elem⟩, hid⟩
+  rcases arr with ⟨left, right, hom⟩
+  obtain ⟨heq, hhom⟩ := hid
+  cases heq
+  simp only [eqToHom_refl] at hhom
+  subst hhom
+  -- Now arr = Arrow.mk (𝟙 left), so casts simplify
+  simp only [diagElemToTwCoprArrElemObj, identityTwCoprToDiagElemObj,
+    diagElemToTwCoprElem, cast_eq]
+  exact HEq.rfl
+
+/-- Round-trip: IdentityTwCoprArrElem → DiagElem → IdentityTwCoprArrElem gives
+back the original object. -/
+theorem roundTrip_tw_obj (x : IdentityTwCoprArrElem P) :
+    diagElemToIdentityTwCoprObj P (identityTwCoprToDiagElemObj P x) = x := by
+  apply ObjectProperty.FullSubcategory.ext
+  apply TwCoprArrElem.ext
+  · exact roundTrip_tw_arr P x
+  · exact roundTrip_tw_elem P x
+
+/-- Round-trip on morphisms from IdentityTwCoprArrElem direction. -/
+theorem roundTrip_tw_map {x y : IdentityTwCoprArrElem P} (f : x ⟶ y) :
+    diagElemToIdentityTwCoprHom P (identityTwCoprToDiagElemHom P f) =
+    eqToHom (roundTrip_tw_obj P x) ≫ f ≫ eqToHom (roundTrip_tw_obj P y).symm := by
+  -- Destructure to get access to the identity arrow structure
+  rcases x with ⟨⟨arr_x, elem_x⟩, hid_x⟩
+  rcases y with ⟨⟨arr_y, elem_y⟩, hid_y⟩
+  rcases arr_x with ⟨lx, rx, hom_x⟩
+  rcases arr_y with ⟨ly, ry, hom_y⟩
+  obtain ⟨eqx, heqx⟩ := hid_x
+  obtain ⟨eqy, heqy⟩ := hid_y
+  cases eqx; cases eqy
+  simp only [eqToHom_refl] at heqx heqy
+  subst heqx heqy
+  -- Now both arrows are Arrow.mk (𝟙 _)
+  apply InducedCategory.hom_ext
+  apply TwCoprArrElem.Hom.ext
+  simp only [diagElemToIdentityTwCoprHom, diagElemToTwCoprArrElemHom,
+    identityTwCoprToDiagElemHom, InducedCategory.homMk_hom, idArrowHom,
+    diagElemToIdentityTwCoprObj, diagElemToTwCoprArrElemObj,
+    identityTwCoprToDiagElemObj]
+  simp only [eqToHom_refl, Category.comp_id, Category.id_comp]
+  have hw := f.hom.base.w
+  simp only [Functor.id_map] at hw
+  have heq : f.hom.base.left = f.hom.base.right := by
+    calc f.hom.base.left = f.hom.base.left ≫ 𝟙 ly := by rw [Category.comp_id]
+      _ = 𝟙 lx ≫ f.hom.base.right := hw
+      _ = f.hom.base.right := by rw [Category.id_comp]
+  ext
+  · rfl
+  · exact heq
+
+/-- Unit iso: `𝟭 (DiagElem P) ≅ diagElemToIdentityTwCopr P ⋙ identityTwCoprToDiagElem P`. -/
+def diagIdentityTwCoprUnitIso :
+    𝟭 (DiagElem P) ≅ diagElemToIdentityTwCopr P ⋙ identityTwCoprToDiagElem P :=
+  NatIso.ofComponents
+    (fun x => eqToIso (roundTrip_diag_obj P x).symm)
+    (fun {x y} f => by
+      simp only [Functor.id_map, Functor.comp_map, eqToIso.hom,
+        identityTwCoprToDiagElem, diagElemToIdentityTwCopr,
+        roundTrip_diag_map]
+      symm
+      calc eqToHom _ ≫ eqToHom _ ≫ f ≫ eqToHom _
+          = (eqToHom _ ≫ eqToHom _) ≫ f ≫ eqToHom _ := by rw [Category.assoc]
+        _ = eqToHom _ ≫ f ≫ eqToHom _ := by rw [eqToHom_trans]
+        _ = 𝟙 _ ≫ f ≫ eqToHom _ := by rfl
+        _ = f ≫ eqToHom _ := by rw [Category.id_comp])
+
+/-- Counit iso: `identityTwCoprToDiagElem P ⋙ diagElemToIdentityTwCopr P ≅ 𝟭 _`. -/
+def diagIdentityTwCoprCounitIso :
+    identityTwCoprToDiagElem P ⋙ diagElemToIdentityTwCopr P ≅ 𝟭 (IdentityTwCoprArrElem P) :=
+  NatIso.ofComponents
+    (fun x => eqToIso (roundTrip_tw_obj P x))
+    (fun {x y} f => by
+      simp only [Functor.comp_map, Functor.id_map, eqToIso.hom,
+        diagElemToIdentityTwCopr, identityTwCoprToDiagElem,
+        roundTrip_tw_map]
+      rw [Category.assoc, Category.assoc, eqToHom_trans]
+      simp only [eqToHom_refl, Category.comp_id])
+
+/-- `DiagElem P` is equivalent to `IdentityTwCoprArrElem P`. -/
+def diagElemIdentityTwCoprEquiv : DiagElem P ≌ IdentityTwCoprArrElem P where
+  functor := diagElemToIdentityTwCopr P
+  inverse := identityTwCoprToDiagElem P
+  unitIso := diagIdentityTwCoprUnitIso P
+  counitIso := diagIdentityTwCoprCounitIso P
+  functor_unitIso_comp X := by
+    simp only [diagIdentityTwCoprUnitIso, diagIdentityTwCoprCounitIso,
+      NatIso.ofComponents_hom_app, eqToIso.hom]
+    rw [eqToHom_map, eqToHom_trans, eqToHom_refl]
+    rfl
+
+end DiagElemAsTwCoprArrElem
 
 end GebLean
