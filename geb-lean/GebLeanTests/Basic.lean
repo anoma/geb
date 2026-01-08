@@ -74,4 +74,16 @@ instance coprc_is_f.{u, v, w} (C : Type u) [Category.{v, u} C] :
   coprc.{u, v, w} C = fctrc.{u, v, w + 1, w} C (Type w) :=
     rfl
 
+instance overf.{u, v, w} (C : Type u) [Category.{v, u} C] (F : C ⥤ Type w) :
+  Category.{max u w, max u v (w + 1)} (Over (T := C ⥤ Type w) F) :=
+    inferInstance
+
+instance elc.{u, v, w} (C : Type u) [Category.{v, u} C] (F : C ⥤ Type w) :
+  Category.{v, max u w} F.Elements :=
+    inferInstance
+
+instance coprel.{u, v, w, w'} (C : Type u) [Category.{v, u} C] (F : C ⥤ Type w) :
+  Category.{max u w w', max u v w (w' + 1)} (F.Elements ⥤ Type w') :=
+    inferInstance
+
 end UniverseIllustrations
