@@ -35,3 +35,43 @@ private instance toLarge.{u} (C : Cat.{u, u + 1}) :
     C.str
 
 end InstanceIllustrations
+
+namespace UniverseIllustrations
+
+open CategoryTheory
+
+abbrev ovr.{u, v} (C : Type u) [Category.{v, u} C] (X : C) :
+  Type (max u v) :=
+    Over X
+
+instance ovrc.{u, v} (C : Type u) [Category.{v, u} C] (X : C) :
+  Category.{v, max u v} (ovr.{u, v} C X) :=
+    inferInstance
+
+abbrev fctr.{u, v, u', v'} (C : Type u) (D : Type u')
+    [Category.{v, u} C] [Category.{v', u'} D] :
+  Type (max u v u' v') :=
+    C ⥤ D
+
+instance fctrc.{u, v, u', v'} (C : Type u) (D : Type u')
+    [Category.{v, u} C] [Category.{v', u'} D] :
+  Category.{max u v', max u u' v v'} (fctr.{u, v, u', v'} C D) :=
+    inferInstance
+
+abbrev copr.{u, v, w} (C : Type u) [Category.{v, u} C] :
+  Type (max u v (w + 1)) :=
+    C ⥤ Type w
+
+lemma copr_is_f.{u, v, w} (C : Type u) [Category.{v, u} C] :
+  copr.{u, v, w} C = fctr.{u, v, w + 1, w} C (Type w) :=
+    rfl
+
+instance coprc.{u, v, w} (C : Type u) [Category.{v, u} C] :
+  Category.{max u w, max u v (w + 1)} (copr.{u, v, w} C) :=
+    inferInstance
+
+instance coprc_is_f.{u, v, w} (C : Type u) [Category.{v, u} C] :
+  coprc.{u, v, w} C = fctrc.{u, v, w + 1, w} C (Type w) :=
+    rfl
+
+end UniverseIllustrations
