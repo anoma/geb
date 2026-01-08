@@ -425,8 +425,9 @@ of `F` viewed as a copresheaf on `Cᵒᵖ'`.
 -/
 def Functor.ElementsContra' (F : Cᵒᵖ' ⥤ Type w) := F.Elementsᵒᵖ'
 
-instance (F : Cᵒᵖ' ⥤ Type w) : Category F.ElementsContra' :=
-  inferInstanceAs (Category F.Elementsᵒᵖ')
+instance ElementsContraCat' (F : Cᵒᵖ' ⥤ Type w) :
+  Category.{v, max u w} F.ElementsContra' :=
+    inferInstanceAs (Category F.Elementsᵒᵖ')
 
 /--
 For a presheaf `F`, `F.Elements` is `F.ElementsContra'ᵒᵖ'`.
