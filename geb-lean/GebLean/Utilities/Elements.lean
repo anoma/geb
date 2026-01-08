@@ -409,7 +409,9 @@ private lemma sliceCopresheafFunctorUnitIso (η : Over F) :
 /--
 The categorical equivalence between `Over F` and copresheaves on `F.Elements`.
 -/
-def sliceEquivCopresheaf : Over F ≌ (F.Elements ⥤ Type w) where
+def sliceEquivCopresheaf :
+    Equivalence.{max u w, max u w, max u v (w + 1), max u v (w + 1)}
+      (Over F) (F.Elements ⥤ Type w) where
   functor := sliceToCopresheaf F
   inverse := copresheafToSlice F
   unitIso := sliceCopresheafUnitIso F
