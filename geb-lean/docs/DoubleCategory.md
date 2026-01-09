@@ -56,6 +56,52 @@ building up from type definitions to operation bundles to law bundles:
 - `VertCategoryOfDoubleCategoryData` - Mathlib Category instance
 - `HorCategoryOfDoubleCategoryData` - Mathlib Category instance
 
+## Double Functors
+
+A strict double functor between double categories preserves all structure
+strictly. The implementation follows the Ops/Laws/Data pattern:
+
+- `DoubleFunctorOps` - Object map, vertical/horizontal morphism maps, square
+  map
+- `DoubleFunctorLaws` - All preservation laws bundled
+- `DoubleFunctorData` - Operations and laws bundled
+
+Preservation properties (with `DF` prefix for explicit parameter versions):
+
+- `DFPreservesVId`, `DFPreservesHId` - Identity preservation
+- `DFPreservesVComp`, `DFPreservesHComp` - Composition preservation
+- `DFPreservesSqVertId`, `DFPreservesSqHorId` - Square identity preservation
+- `DFPreservesSqVComp`, `DFPreservesSqHComp` - Square composition preservation
+
+Helper functions:
+
+- `vertFunctorData`, `horFunctorData` - Extract ordinary functor data
+
+## Natural Transformations
+
+Two kinds of natural transformations exist between double functors, differing
+in whether the components are vertical or horizontal morphisms.
+
+### Vertical Transformations
+
+A vertical transformation `τ : F ⟹ᵥ G` assigns to each object `A` a vertical
+morphism `τ_A : F(A) →ᵥ G(A)` with naturality squares for horizontal
+morphisms.
+
+- `VertTransOps` - Components and naturality squares
+- `VertTransLaws` - Naturality and coherence with identities and composition
+- `VertTransData` - Operations and laws bundled
+
+### Horizontal Transformations
+
+A horizontal transformation `σ : F ⟹ₕ G` assigns to each object `A` a
+horizontal morphism `σ_A : F(A) →ₕ G(A)` with naturality squares for
+vertical morphisms.
+
+- `HorTransOps` - Components and naturality squares
+- `HorTransLaws` - Naturality and coherence with identities and composition
+- `HorTransData` - Operations and laws bundled
+
 ## Universe Polymorphism
 
 The implementation uses four universe variables:
@@ -96,22 +142,18 @@ vertical morphism `v : A →ᵥ B`, a companion is a horizontal morphism
 
 Conjoints are the dual notion.
 
-### Double Functors
-
-A double functor `F : D → E` between double categories consists of:
-
-- Object map
-- Vertical functor
-- Horizontal functor
-- Square map preserving all structure
-
-### Horizontal and Vertical Transformations
-
-Natural transformations adapted to the double category setting.
-
 ### Modifications
 
-2-cells between double natural transformations.
+2-cells between double natural transformations (vertical or horizontal).
+
+### Composition of Double Functors
+
+Identity double functors and composition of double functors, forming a
+category of double categories.
+
+### Composition of Transformations
+
+Vertical and horizontal composition of transformations.
 
 ### Tabulators
 

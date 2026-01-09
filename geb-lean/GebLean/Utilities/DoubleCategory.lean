@@ -449,4 +449,430 @@ def HorCategoryOfDoubleCategoryData {Obj : Type u}
     (data : DoubleCategoryData Obj vhs hhs sqs) : Category.{hMor, u} Obj :=
   CategoryOfData data.horCategoryData
 
+/-! ## Double Functors
+
+Strict double functors preserve all structure of double categories. -/
+
+universe u₁ vMor₁ hMor₁ sq₁ u₂ vMor₂ hMor₂ sq₂
+
+/-- Operations for a strict double functor.
+
+Bundles the four mapping components: objects, vertical morphisms,
+horizontal morphisms, and squares.
+
+A double functor F : D → E maps:
+- Objects of D to objects of E
+- Vertical morphisms v : A →ᵥ B to F(v) : F(A) →ᵥ F(B)
+- Horizontal morphisms h : A →ₕ B to F(h) : F(A) →ₕ F(B)
+- Squares α to F(α) with corresponding boundary -/
+structure DoubleFunctorOps
+    {Obj₁ : Type u₁} (vhs₁ : VertHomSet Obj₁) (hhs₁ : HorHomSet Obj₁)
+    (sqs₁ : SquareSet vhs₁ hhs₁)
+    {Obj₂ : Type u₂} (vhs₂ : VertHomSet Obj₂) (hhs₂ : HorHomSet Obj₂)
+    (sqs₂ : SquareSet vhs₂ hhs₂) where
+  /-- Object map -/
+  objMap : Obj₁ → Obj₂
+  /-- Vertical morphism map -/
+  vertMap : ∀ {A B : Obj₁}, vhs₁ A B → vhs₂ (objMap A) (objMap B)
+  /-- Horizontal morphism map -/
+  horMap : ∀ {A B : Obj₁}, hhs₁ A B → hhs₂ (objMap A) (objMap B)
+  /-- Square map -/
+  sqMap : ∀ {A B C D : Obj₁} {v₁ : vhs₁ A C} {v₂ : vhs₁ B D}
+    {h₁ : hhs₁ A B} {h₂ : hhs₁ C D},
+    sqs₁ v₁ v₂ h₁ h₂ → sqs₂ (vertMap v₁) (vertMap v₂) (horMap h₁) (horMap h₂)
+
+/-- Law that the double functor preserves vertical identity morphisms. -/
+abbrev DFPreservesVId {Obj₁ : Type u₁}
+    {vhs₁ : VertHomSet Obj₁} {hhs₁ : HorHomSet Obj₁} {sqs₁ : SquareSet vhs₁ hhs₁}
+    {Obj₂ : Type u₂}
+    {vhs₂ : VertHomSet Obj₂} {hhs₂ : HorHomSet Obj₂} {sqs₂ : SquareSet vhs₂ hhs₂}
+    (ops₁ : DoubleCategoryOps Obj₁ vhs₁ hhs₁ sqs₁)
+    (ops₂ : DoubleCategoryOps Obj₂ vhs₂ hhs₂ sqs₂)
+    (fops : DoubleFunctorOps vhs₁ hhs₁ sqs₁ vhs₂ hhs₂ sqs₂) : Prop :=
+  ∀ (A : Obj₁), fops.vertMap (ops₁.vId A) = ops₂.vId (fops.objMap A)
+
+/-- Law that the double functor preserves horizontal identity morphisms. -/
+abbrev DFPreservesHId {Obj₁ : Type u₁}
+    {vhs₁ : VertHomSet Obj₁} {hhs₁ : HorHomSet Obj₁} {sqs₁ : SquareSet vhs₁ hhs₁}
+    {Obj₂ : Type u₂}
+    {vhs₂ : VertHomSet Obj₂} {hhs₂ : HorHomSet Obj₂} {sqs₂ : SquareSet vhs₂ hhs₂}
+    (ops₁ : DoubleCategoryOps Obj₁ vhs₁ hhs₁ sqs₁)
+    (ops₂ : DoubleCategoryOps Obj₂ vhs₂ hhs₂ sqs₂)
+    (fops : DoubleFunctorOps vhs₁ hhs₁ sqs₁ vhs₂ hhs₂ sqs₂) : Prop :=
+  ∀ (A : Obj₁), fops.horMap (ops₁.hId A) = ops₂.hId (fops.objMap A)
+
+/-- Law that the double functor preserves vertical composition of morphisms. -/
+abbrev DFPreservesVComp {Obj₁ : Type u₁}
+    {vhs₁ : VertHomSet Obj₁} {hhs₁ : HorHomSet Obj₁} {sqs₁ : SquareSet vhs₁ hhs₁}
+    {Obj₂ : Type u₂}
+    {vhs₂ : VertHomSet Obj₂} {hhs₂ : HorHomSet Obj₂} {sqs₂ : SquareSet vhs₂ hhs₂}
+    (ops₁ : DoubleCategoryOps Obj₁ vhs₁ hhs₁ sqs₁)
+    (ops₂ : DoubleCategoryOps Obj₂ vhs₂ hhs₂ sqs₂)
+    (fops : DoubleFunctorOps vhs₁ hhs₁ sqs₁ vhs₂ hhs₂ sqs₂) : Prop :=
+  ∀ {A B C : Obj₁} (v : vhs₁ A B) (v' : vhs₁ B C),
+    fops.vertMap (ops₁.vComp v v') = ops₂.vComp (fops.vertMap v) (fops.vertMap v')
+
+/-- Law that the double functor preserves horizontal composition of morphisms. -/
+abbrev DFPreservesHComp {Obj₁ : Type u₁}
+    {vhs₁ : VertHomSet Obj₁} {hhs₁ : HorHomSet Obj₁} {sqs₁ : SquareSet vhs₁ hhs₁}
+    {Obj₂ : Type u₂}
+    {vhs₂ : VertHomSet Obj₂} {hhs₂ : HorHomSet Obj₂} {sqs₂ : SquareSet vhs₂ hhs₂}
+    (ops₁ : DoubleCategoryOps Obj₁ vhs₁ hhs₁ sqs₁)
+    (ops₂ : DoubleCategoryOps Obj₂ vhs₂ hhs₂ sqs₂)
+    (fops : DoubleFunctorOps vhs₁ hhs₁ sqs₁ vhs₂ hhs₂ sqs₂) : Prop :=
+  ∀ {A B C : Obj₁} (h : hhs₁ A B) (h' : hhs₁ B C),
+    fops.horMap (ops₁.hComp h h') = ops₂.hComp (fops.horMap h) (fops.horMap h')
+
+/-- Law that the double functor preserves vertical identity squares. -/
+abbrev DFPreservesSqVertId {Obj₁ : Type u₁}
+    {vhs₁ : VertHomSet Obj₁} {hhs₁ : HorHomSet Obj₁} {sqs₁ : SquareSet vhs₁ hhs₁}
+    {Obj₂ : Type u₂}
+    {vhs₂ : VertHomSet Obj₂} {hhs₂ : HorHomSet Obj₂} {sqs₂ : SquareSet vhs₂ hhs₂}
+    (ops₁ : DoubleCategoryOps Obj₁ vhs₁ hhs₁ sqs₁)
+    (ops₂ : DoubleCategoryOps Obj₂ vhs₂ hhs₂ sqs₂)
+    (fops : DoubleFunctorOps vhs₁ hhs₁ sqs₁ vhs₂ hhs₂ sqs₂) : Prop :=
+  ∀ {A B : Obj₁} (h : hhs₁ A B),
+    HEq (fops.sqMap (ops₁.sqVertId h)) (ops₂.sqVertId (fops.horMap h))
+
+/-- Law that the double functor preserves horizontal identity squares. -/
+abbrev DFPreservesSqHorId {Obj₁ : Type u₁}
+    {vhs₁ : VertHomSet Obj₁} {hhs₁ : HorHomSet Obj₁} {sqs₁ : SquareSet vhs₁ hhs₁}
+    {Obj₂ : Type u₂}
+    {vhs₂ : VertHomSet Obj₂} {hhs₂ : HorHomSet Obj₂} {sqs₂ : SquareSet vhs₂ hhs₂}
+    (ops₁ : DoubleCategoryOps Obj₁ vhs₁ hhs₁ sqs₁)
+    (ops₂ : DoubleCategoryOps Obj₂ vhs₂ hhs₂ sqs₂)
+    (fops : DoubleFunctorOps vhs₁ hhs₁ sqs₁ vhs₂ hhs₂ sqs₂) : Prop :=
+  ∀ {A C : Obj₁} (v : vhs₁ A C),
+    HEq (fops.sqMap (ops₁.sqHorId v)) (ops₂.sqHorId (fops.vertMap v))
+
+/-- Law that the double functor preserves vertical composition of squares. -/
+abbrev DFPreservesSqVComp {Obj₁ : Type u₁}
+    {vhs₁ : VertHomSet Obj₁} {hhs₁ : HorHomSet Obj₁} {sqs₁ : SquareSet vhs₁ hhs₁}
+    {Obj₂ : Type u₂}
+    {vhs₂ : VertHomSet Obj₂} {hhs₂ : HorHomSet Obj₂} {sqs₂ : SquareSet vhs₂ hhs₂}
+    (ops₁ : DoubleCategoryOps Obj₁ vhs₁ hhs₁ sqs₁)
+    (ops₂ : DoubleCategoryOps Obj₂ vhs₂ hhs₂ sqs₂)
+    (fops : DoubleFunctorOps vhs₁ hhs₁ sqs₁ vhs₂ hhs₂ sqs₂) : Prop :=
+  ∀ {A B C D E F : Obj₁}
+    {v₁ : vhs₁ A C} {v₂ : vhs₁ B D} {v₁' : vhs₁ C E} {v₂' : vhs₁ D F}
+    {h₁ : hhs₁ A B} {h₂ : hhs₁ C D} {h₃ : hhs₁ E F}
+    (α : sqs₁ v₁ v₂ h₁ h₂) (β : sqs₁ v₁' v₂' h₂ h₃),
+    HEq (fops.sqMap (ops₁.sqVComp α β))
+      (ops₂.sqVComp (fops.sqMap α) (fops.sqMap β))
+
+/-- Law that the double functor preserves horizontal composition of squares. -/
+abbrev DFPreservesSqHComp {Obj₁ : Type u₁}
+    {vhs₁ : VertHomSet Obj₁} {hhs₁ : HorHomSet Obj₁} {sqs₁ : SquareSet vhs₁ hhs₁}
+    {Obj₂ : Type u₂}
+    {vhs₂ : VertHomSet Obj₂} {hhs₂ : HorHomSet Obj₂} {sqs₂ : SquareSet vhs₂ hhs₂}
+    (ops₁ : DoubleCategoryOps Obj₁ vhs₁ hhs₁ sqs₁)
+    (ops₂ : DoubleCategoryOps Obj₂ vhs₂ hhs₂ sqs₂)
+    (fops : DoubleFunctorOps vhs₁ hhs₁ sqs₁ vhs₂ hhs₂ sqs₂) : Prop :=
+  ∀ {A B C D E F : Obj₁}
+    {v₁ : vhs₁ A D} {v₂ : vhs₁ B E} {v₃ : vhs₁ C F}
+    {h₁ : hhs₁ A B} {h₂ : hhs₁ B C} {h₃ : hhs₁ D E} {h₄ : hhs₁ E F}
+    (α : sqs₁ v₁ v₂ h₁ h₃) (β : sqs₁ v₂ v₃ h₂ h₄),
+    HEq (fops.sqMap (ops₁.sqHComp α β))
+      (ops₂.sqHComp (fops.sqMap α) (fops.sqMap β))
+
+/-- Laws for a strict double functor.
+
+Bundles all preservation laws for morphisms and squares. -/
+structure DoubleFunctorLaws {Obj₁ : Type u₁}
+    {vhs₁ : VertHomSet Obj₁} {hhs₁ : HorHomSet Obj₁} {sqs₁ : SquareSet vhs₁ hhs₁}
+    {Obj₂ : Type u₂}
+    {vhs₂ : VertHomSet Obj₂} {hhs₂ : HorHomSet Obj₂} {sqs₂ : SquareSet vhs₂ hhs₂}
+    (ops₁ : DoubleCategoryOps Obj₁ vhs₁ hhs₁ sqs₁)
+    (ops₂ : DoubleCategoryOps Obj₂ vhs₂ hhs₂ sqs₂)
+    (fops : DoubleFunctorOps vhs₁ hhs₁ sqs₁ vhs₂ hhs₂ sqs₂) : Prop where
+  /-- Preserves vertical identity morphisms -/
+  map_vId : DFPreservesVId ops₁ ops₂ fops
+  /-- Preserves horizontal identity morphisms -/
+  map_hId : DFPreservesHId ops₁ ops₂ fops
+  /-- Preserves vertical composition of morphisms -/
+  map_vComp : DFPreservesVComp ops₁ ops₂ fops
+  /-- Preserves horizontal composition of morphisms -/
+  map_hComp : DFPreservesHComp ops₁ ops₂ fops
+  /-- Preserves vertical identity squares -/
+  map_sqVertId : DFPreservesSqVertId ops₁ ops₂ fops
+  /-- Preserves horizontal identity squares -/
+  map_sqHorId : DFPreservesSqHorId ops₁ ops₂ fops
+  /-- Preserves vertical composition of squares -/
+  map_sqVComp : DFPreservesSqVComp ops₁ ops₂ fops
+  /-- Preserves horizontal composition of squares -/
+  map_sqHComp : DFPreservesSqHComp ops₁ ops₂ fops
+
+/-- Data for a strict double functor.
+
+Bundles the operations and laws for a double functor between double categories.
+This follows the pattern of `FunctorData` in Category.lean. -/
+structure DoubleFunctorData {Obj₁ : Type u₁}
+    {vhs₁ : VertHomSet Obj₁} {hhs₁ : HorHomSet Obj₁} {sqs₁ : SquareSet vhs₁ hhs₁}
+    {Obj₂ : Type u₂}
+    {vhs₂ : VertHomSet Obj₂} {hhs₂ : HorHomSet Obj₂} {sqs₂ : SquareSet vhs₂ hhs₂}
+    (data₁ : DoubleCategoryData Obj₁ vhs₁ hhs₁ sqs₁)
+    (data₂ : DoubleCategoryData Obj₂ vhs₂ hhs₂ sqs₂)
+    extends DoubleFunctorOps vhs₁ hhs₁ sqs₁ vhs₂ hhs₂ sqs₂ where
+  /-- Double functor laws -/
+  laws : DoubleFunctorLaws data₁.toDoubleCategoryOps data₂.toDoubleCategoryOps
+    toDoubleFunctorOps
+
+namespace DoubleFunctorData
+
+variable {Obj₁ : Type u₁} {vhs₁ : VertHomSet Obj₁} {hhs₁ : HorHomSet Obj₁}
+variable {sqs₁ : SquareSet vhs₁ hhs₁}
+variable {Obj₂ : Type u₂} {vhs₂ : VertHomSet Obj₂} {hhs₂ : HorHomSet Obj₂}
+variable {sqs₂ : SquareSet vhs₂ hhs₂}
+variable {data₁ : DoubleCategoryData Obj₁ vhs₁ hhs₁ sqs₁}
+variable {data₂ : DoubleCategoryData Obj₂ vhs₂ hhs₂ sqs₂}
+
+/-- Extract the vertical functor data from a double functor. -/
+def vertFunctorData (F : DoubleFunctorData data₁ data₂) :
+    FunctorData data₁.vertCategoryData data₂.vertCategoryData where
+  obj := F.objMap
+  map := F.vertMap
+  laws := {
+    map_id := F.laws.map_vId
+    map_comp := F.laws.map_vComp
+  }
+
+/-- Extract the horizontal functor data from a double functor. -/
+def horFunctorData (F : DoubleFunctorData data₁ data₂) :
+    FunctorData data₁.horCategoryData data₂.horCategoryData where
+  obj := F.objMap
+  map := F.horMap
+  laws := {
+    map_id := F.laws.map_hId
+    map_comp := F.laws.map_hComp
+  }
+
+end DoubleFunctorData
+
+/-! ## Vertical Natural Transformations
+
+A vertical transformation between double functors assigns to each object a
+vertical morphism, with squares filling the naturality diagrams for horizontal
+morphisms.
+
+Given double functors F, G : D → E, a vertical transformation τ : F ⟹ᵥ G
+consists of:
+- For each object A : D, a vertical morphism τ_A : F(A) →ᵥ G(A)
+- For each horizontal morphism h : A →ₕ B, a square:
+  ```
+  F(A) ──F(h)──▶ F(B)
+   │              │
+  τ_A            τ_B
+   ▼              ▼
+  G(A) ──G(h)──▶ G(B)
+  ```
+-/
+
+/-- Operations for a vertical transformation between double functors. -/
+structure VertTransOps {Obj₁ : Type u₁}
+    {vhs₁ : VertHomSet Obj₁} {hhs₁ : HorHomSet Obj₁} {sqs₁ : SquareSet vhs₁ hhs₁}
+    {Obj₂ : Type u₂}
+    {vhs₂ : VertHomSet Obj₂} {hhs₂ : HorHomSet Obj₂} {sqs₂ : SquareSet vhs₂ hhs₂}
+    (F G : DoubleFunctorOps vhs₁ hhs₁ sqs₁ vhs₂ hhs₂ sqs₂) where
+  /-- Component vertical morphisms -/
+  app : ∀ (A : Obj₁), vhs₂ (F.objMap A) (G.objMap A)
+  /-- Naturality squares for horizontal morphisms -/
+  natSquare : ∀ {A B : Obj₁} (h : hhs₁ A B),
+    sqs₂ (app A) (app B) (F.horMap h) (G.horMap h)
+
+/-- Naturality condition: components compose with vertical morphism maps.
+
+For each vertical morphism v : A →ᵥ B in D:
+  τ_A ≫ G(v) = F(v) ≫ τ_B
+-/
+abbrev VertTransNaturality {Obj₁ : Type u₁}
+    {vhs₁ : VertHomSet Obj₁} {hhs₁ : HorHomSet Obj₁} {sqs₁ : SquareSet vhs₁ hhs₁}
+    {Obj₂ : Type u₂}
+    {vhs₂ : VertHomSet Obj₂} {hhs₂ : HorHomSet Obj₂} {sqs₂ : SquareSet vhs₂ hhs₂}
+    (ops₂ : DoubleCategoryOps Obj₂ vhs₂ hhs₂ sqs₂)
+    {F G : DoubleFunctorOps vhs₁ hhs₁ sqs₁ vhs₂ hhs₂ sqs₂}
+    (τ : VertTransOps F G) : Prop :=
+  ∀ {A B : Obj₁} (v : vhs₁ A B),
+    ops₂.vComp (τ.app A) (G.vertMap v) = ops₂.vComp (F.vertMap v) (τ.app B)
+
+/-- Coherence: naturality squares compose with horizontal identity squares.
+
+For each object A, the naturality square of the horizontal identity h = id_A
+should equal the horizontal identity square on τ_A (up to HEq because
+functor laws change the boundary types). -/
+abbrev VertTransIdCoherence {Obj₁ : Type u₁}
+    {vhs₁ : VertHomSet Obj₁} {hhs₁ : HorHomSet Obj₁} {sqs₁ : SquareSet vhs₁ hhs₁}
+    {Obj₂ : Type u₂}
+    {vhs₂ : VertHomSet Obj₂} {hhs₂ : HorHomSet Obj₂} {sqs₂ : SquareSet vhs₂ hhs₂}
+    (ops₁ : DoubleCategoryOps Obj₁ vhs₁ hhs₁ sqs₁)
+    (ops₂ : DoubleCategoryOps Obj₂ vhs₂ hhs₂ sqs₂)
+    {F G : DoubleFunctorOps vhs₁ hhs₁ sqs₁ vhs₂ hhs₂ sqs₂}
+    (_flaws : DoubleFunctorLaws ops₁ ops₂ F)
+    (_glaws : DoubleFunctorLaws ops₁ ops₂ G)
+    (τ : VertTransOps F G) : Prop :=
+  ∀ (A : Obj₁), HEq (τ.natSquare (ops₁.hId A)) (ops₂.sqHorId (τ.app A))
+
+/-- Coherence: naturality squares compose horizontally.
+
+For composable horizontal morphisms h : A →ₕ B and h' : B →ₕ C:
+  natSquare(h ≫ h') = natSquare(h) ⬝ₕ natSquare(h')
+(up to HEq because functor laws change the boundary types).
+-/
+abbrev VertTransCompCoherence {Obj₁ : Type u₁}
+    {vhs₁ : VertHomSet Obj₁} {hhs₁ : HorHomSet Obj₁} {sqs₁ : SquareSet vhs₁ hhs₁}
+    {Obj₂ : Type u₂}
+    {vhs₂ : VertHomSet Obj₂} {hhs₂ : HorHomSet Obj₂} {sqs₂ : SquareSet vhs₂ hhs₂}
+    (ops₁ : DoubleCategoryOps Obj₁ vhs₁ hhs₁ sqs₁)
+    (ops₂ : DoubleCategoryOps Obj₂ vhs₂ hhs₂ sqs₂)
+    {F G : DoubleFunctorOps vhs₁ hhs₁ sqs₁ vhs₂ hhs₂ sqs₂}
+    (_flaws : DoubleFunctorLaws ops₁ ops₂ F)
+    (_glaws : DoubleFunctorLaws ops₁ ops₂ G)
+    (τ : VertTransOps F G) : Prop :=
+  ∀ {A B C : Obj₁} (h : hhs₁ A B) (h' : hhs₁ B C),
+    HEq (τ.natSquare (ops₁.hComp h h'))
+      (ops₂.sqHComp (τ.natSquare h) (τ.natSquare h'))
+
+/-- Laws for a vertical transformation. -/
+structure VertTransLaws {Obj₁ : Type u₁}
+    {vhs₁ : VertHomSet Obj₁} {hhs₁ : HorHomSet Obj₁} {sqs₁ : SquareSet vhs₁ hhs₁}
+    {Obj₂ : Type u₂}
+    {vhs₂ : VertHomSet Obj₂} {hhs₂ : HorHomSet Obj₂} {sqs₂ : SquareSet vhs₂ hhs₂}
+    (ops₁ : DoubleCategoryOps Obj₁ vhs₁ hhs₁ sqs₁)
+    (ops₂ : DoubleCategoryOps Obj₂ vhs₂ hhs₂ sqs₂)
+    {F G : DoubleFunctorOps vhs₁ hhs₁ sqs₁ vhs₂ hhs₂ sqs₂}
+    (flaws : DoubleFunctorLaws ops₁ ops₂ F)
+    (glaws : DoubleFunctorLaws ops₁ ops₂ G)
+    (τ : VertTransOps F G) : Prop where
+  /-- Naturality for vertical morphisms -/
+  naturality : VertTransNaturality ops₂ τ
+  /-- Identity coherence -/
+  idCoherence : VertTransIdCoherence ops₁ ops₂ flaws glaws τ
+  /-- Composition coherence -/
+  compCoherence : VertTransCompCoherence ops₁ ops₂ flaws glaws τ
+
+/-- Data for a vertical transformation between double functors. -/
+structure VertTransData {Obj₁ : Type u₁}
+    {vhs₁ : VertHomSet Obj₁} {hhs₁ : HorHomSet Obj₁} {sqs₁ : SquareSet vhs₁ hhs₁}
+    {Obj₂ : Type u₂}
+    {vhs₂ : VertHomSet Obj₂} {hhs₂ : HorHomSet Obj₂} {sqs₂ : SquareSet vhs₂ hhs₂}
+    {data₁ : DoubleCategoryData Obj₁ vhs₁ hhs₁ sqs₁}
+    {data₂ : DoubleCategoryData Obj₂ vhs₂ hhs₂ sqs₂}
+    (F G : DoubleFunctorData data₁ data₂)
+    extends VertTransOps F.toDoubleFunctorOps G.toDoubleFunctorOps where
+  /-- Vertical transformation laws -/
+  laws : VertTransLaws data₁.toDoubleCategoryOps data₂.toDoubleCategoryOps
+    F.laws G.laws toVertTransOps
+
+/-! ## Horizontal Natural Transformations
+
+A horizontal transformation between double functors assigns to each object a
+horizontal morphism, with squares filling the naturality diagrams for vertical
+morphisms.
+
+Given double functors F, G : D → E, a horizontal transformation τ : F ⟹ₕ G
+consists of:
+- For each object A : D, a horizontal morphism τ_A : F(A) →ₕ G(A)
+- For each vertical morphism v : A →ᵥ C, a square:
+  ```
+  F(A) ──τ_A──▶ G(A)
+   │              │
+  F(v)          G(v)
+   ▼              ▼
+  F(C) ──τ_C──▶ G(C)
+  ```
+-/
+
+/-- Operations for a horizontal transformation between double functors. -/
+structure HorTransOps {Obj₁ : Type u₁}
+    {vhs₁ : VertHomSet Obj₁} {hhs₁ : HorHomSet Obj₁} {sqs₁ : SquareSet vhs₁ hhs₁}
+    {Obj₂ : Type u₂}
+    {vhs₂ : VertHomSet Obj₂} {hhs₂ : HorHomSet Obj₂} {sqs₂ : SquareSet vhs₂ hhs₂}
+    (F G : DoubleFunctorOps vhs₁ hhs₁ sqs₁ vhs₂ hhs₂ sqs₂) where
+  /-- Component horizontal morphisms -/
+  app : ∀ (A : Obj₁), hhs₂ (F.objMap A) (G.objMap A)
+  /-- Naturality squares for vertical morphisms -/
+  natSquare : ∀ {A C : Obj₁} (v : vhs₁ A C),
+    sqs₂ (F.vertMap v) (G.vertMap v) (app A) (app C)
+
+/-- Naturality condition: components compose with horizontal morphism maps.
+
+For each horizontal morphism h : A →ₕ B in D:
+  τ_A ≫ G(h) = F(h) ≫ τ_B
+-/
+abbrev HorTransNaturality {Obj₁ : Type u₁}
+    {vhs₁ : VertHomSet Obj₁} {hhs₁ : HorHomSet Obj₁} {sqs₁ : SquareSet vhs₁ hhs₁}
+    {Obj₂ : Type u₂}
+    {vhs₂ : VertHomSet Obj₂} {hhs₂ : HorHomSet Obj₂} {sqs₂ : SquareSet vhs₂ hhs₂}
+    (ops₂ : DoubleCategoryOps Obj₂ vhs₂ hhs₂ sqs₂)
+    {F G : DoubleFunctorOps vhs₁ hhs₁ sqs₁ vhs₂ hhs₂ sqs₂}
+    (τ : HorTransOps F G) : Prop :=
+  ∀ {A B : Obj₁} (h : hhs₁ A B),
+    ops₂.hComp (τ.app A) (G.horMap h) = ops₂.hComp (F.horMap h) (τ.app B)
+
+/-- Coherence: naturality squares compose with vertical identity squares.
+
+For each object A, the naturality square of the vertical identity v = id_A
+should equal the vertical identity square on τ_A (up to HEq). -/
+abbrev HorTransIdCoherence {Obj₁ : Type u₁}
+    {vhs₁ : VertHomSet Obj₁} {hhs₁ : HorHomSet Obj₁} {sqs₁ : SquareSet vhs₁ hhs₁}
+    {Obj₂ : Type u₂}
+    {vhs₂ : VertHomSet Obj₂} {hhs₂ : HorHomSet Obj₂} {sqs₂ : SquareSet vhs₂ hhs₂}
+    (ops₁ : DoubleCategoryOps Obj₁ vhs₁ hhs₁ sqs₁)
+    (ops₂ : DoubleCategoryOps Obj₂ vhs₂ hhs₂ sqs₂)
+    {F G : DoubleFunctorOps vhs₁ hhs₁ sqs₁ vhs₂ hhs₂ sqs₂}
+    (_flaws : DoubleFunctorLaws ops₁ ops₂ F)
+    (_glaws : DoubleFunctorLaws ops₁ ops₂ G)
+    (τ : HorTransOps F G) : Prop :=
+  ∀ (A : Obj₁), HEq (τ.natSquare (ops₁.vId A)) (ops₂.sqVertId (τ.app A))
+
+/-- Coherence: naturality squares compose vertically.
+
+For composable vertical morphisms v : A →ᵥ C and v' : C →ᵥ E:
+  natSquare(v ≫ v') = natSquare(v) ⬝ᵥ natSquare(v')
+(up to HEq because functor laws change the boundary types).
+-/
+abbrev HorTransCompCoherence {Obj₁ : Type u₁}
+    {vhs₁ : VertHomSet Obj₁} {hhs₁ : HorHomSet Obj₁} {sqs₁ : SquareSet vhs₁ hhs₁}
+    {Obj₂ : Type u₂}
+    {vhs₂ : VertHomSet Obj₂} {hhs₂ : HorHomSet Obj₂} {sqs₂ : SquareSet vhs₂ hhs₂}
+    (ops₁ : DoubleCategoryOps Obj₁ vhs₁ hhs₁ sqs₁)
+    (ops₂ : DoubleCategoryOps Obj₂ vhs₂ hhs₂ sqs₂)
+    {F G : DoubleFunctorOps vhs₁ hhs₁ sqs₁ vhs₂ hhs₂ sqs₂}
+    (_flaws : DoubleFunctorLaws ops₁ ops₂ F)
+    (_glaws : DoubleFunctorLaws ops₁ ops₂ G)
+    (τ : HorTransOps F G) : Prop :=
+  ∀ {A C E : Obj₁} (v : vhs₁ A C) (v' : vhs₁ C E),
+    HEq (τ.natSquare (ops₁.vComp v v'))
+      (ops₂.sqVComp (τ.natSquare v) (τ.natSquare v'))
+
+/-- Laws for a horizontal transformation. -/
+structure HorTransLaws {Obj₁ : Type u₁}
+    {vhs₁ : VertHomSet Obj₁} {hhs₁ : HorHomSet Obj₁} {sqs₁ : SquareSet vhs₁ hhs₁}
+    {Obj₂ : Type u₂}
+    {vhs₂ : VertHomSet Obj₂} {hhs₂ : HorHomSet Obj₂} {sqs₂ : SquareSet vhs₂ hhs₂}
+    (ops₁ : DoubleCategoryOps Obj₁ vhs₁ hhs₁ sqs₁)
+    (ops₂ : DoubleCategoryOps Obj₂ vhs₂ hhs₂ sqs₂)
+    {F G : DoubleFunctorOps vhs₁ hhs₁ sqs₁ vhs₂ hhs₂ sqs₂}
+    (flaws : DoubleFunctorLaws ops₁ ops₂ F)
+    (glaws : DoubleFunctorLaws ops₁ ops₂ G)
+    (τ : HorTransOps F G) : Prop where
+  /-- Naturality for horizontal morphisms -/
+  naturality : HorTransNaturality ops₂ τ
+  /-- Identity coherence -/
+  idCoherence : HorTransIdCoherence ops₁ ops₂ flaws glaws τ
+  /-- Composition coherence -/
+  compCoherence : HorTransCompCoherence ops₁ ops₂ flaws glaws τ
+
+/-- Data for a horizontal transformation between double functors. -/
+structure HorTransData {Obj₁ : Type u₁}
+    {vhs₁ : VertHomSet Obj₁} {hhs₁ : HorHomSet Obj₁} {sqs₁ : SquareSet vhs₁ hhs₁}
+    {Obj₂ : Type u₂}
+    {vhs₂ : VertHomSet Obj₂} {hhs₂ : HorHomSet Obj₂} {sqs₂ : SquareSet vhs₂ hhs₂}
+    {data₁ : DoubleCategoryData Obj₁ vhs₁ hhs₁ sqs₁}
+    {data₂ : DoubleCategoryData Obj₂ vhs₂ hhs₂ sqs₂}
+    (F G : DoubleFunctorData data₁ data₂)
+    extends HorTransOps F.toDoubleFunctorOps G.toDoubleFunctorOps where
+  /-- Horizontal transformation laws -/
+  laws : HorTransLaws data₁.toDoubleCategoryOps data₂.toDoubleCategoryOps
+    F.laws G.laws toHorTransOps
+
 end GebLean

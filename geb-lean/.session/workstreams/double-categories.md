@@ -13,6 +13,13 @@ Implementation of strict double categories and related structures.
 - [x] Mathlib Category instances (VertCategoryOfDoubleCategoryData,
       HorCategoryOfDoubleCategoryData)
 - [x] Design document (docs/DoubleCategory.md)
+- [x] DoubleFunctorOps structure
+- [x] DoubleFunctorLaws structure (with DFPreserves* abbrevs)
+- [x] DoubleFunctorData structure (with vertFunctorData, horFunctorData)
+- [x] Vertical natural transformations (VertTransOps, VertTransLaws,
+      VertTransData)
+- [x] Horizontal natural transformations (HorTransOps, HorTransLaws,
+      HorTransData)
 
 ## In Progress
 
@@ -27,19 +34,18 @@ None currently.
 - [ ] Prove relationship between companions and conjoints
 - [ ] Connection to adjunctions
 
-### Double Functors
+### Double Functors (Extended)
 
-- [ ] DoubleFunctorOps structure
-- [ ] DoubleFunctorLaws structure
-- [ ] DoubleFunctorData structure
 - [ ] Composition of double functors
 - [ ] Identity double functor
+- [ ] Category of double categories
 
-### Natural Transformations
+### Natural Transformations (Extended)
 
-- [ ] Horizontal natural transformation
-- [ ] Vertical natural transformation
-- [ ] Relationship between them
+- [ ] Vertical composition of vertical transformations
+- [ ] Horizontal composition of vertical transformations
+- [ ] Vertical composition of horizontal transformations
+- [ ] Horizontal composition of horizontal transformations
 
 ### Modifications
 
