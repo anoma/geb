@@ -9,6 +9,7 @@ import GebLean.DepCategoryJudgments
 import GebLean.DinaturalNumbers
 import GebLean.FiniteQuiver
 import GebLean.FreeCoequalizerCompletion
+import GebLean.FreeToposBT
 import GebLean.HexagonCat
 import GebLean.LayeredEquivalence
 import GebLean.Paranatural
