@@ -26,6 +26,10 @@ Implementation of strict double categories and related structures.
 - [x] HorTransOps.hComp (horizontal composition of horizontal transformations)
 - [x] VertTransOps.hComp (Godement product of vertical transformations)
 - [x] HorTransOps.vComp (Godement product of horizontal transformations)
+- [x] Category axioms for VertTransOps.vComp (identity, associativity - HEq)
+- [x] Category axioms for HorTransOps.hComp (identity, associativity - HEq)
+- [x] Helper lemmas (VertTransOps.heq_mk, HorTransOps.heq_mk,
+      sqVIdComp_heq, sqVCompId_heq, sqVAssoc_heq, sqHIdComp_heq, etc.)
 
 ## In Progress
 
@@ -50,8 +54,19 @@ None currently.
 
 - [ ] VertTransLaws for vComp and hComp
 - [ ] HorTransLaws for hComp and vComp
-- [ ] Identity and associativity laws for transformation composition
-- [ ] Interchange law for vertical and horizontal transformation composition
+- [ ] Identity and associativity laws for Godement products (hComp/vComp)
+
+### Interchange Law for Transformations
+
+The interchange law for transformations relates the Godement product
+to vertical/horizontal composition. However, the naive formulation
+`(τ ⬝ᵥ τ') ⬝ₕ (σ ⬝ᵥ σ') = (τ ⬝ₕ σ) ⬝ᵥ (τ' ⬝ₕ σ')` does not hold
+because the component evaluations occur at different intermediate
+objects (G vs H). A proper interchange law requires:
+
+- Modifications (2-cells between transformations), or
+- Additional functor law requirements, or
+- A different compositional structure
 
 ### Modifications
 

@@ -117,6 +117,31 @@ Identity and composition operations for transformations:
 - `HorTransOps.vComp` - Godement product of horizontal transformations
   (composing τ : F ⟹ₕ G with σ : H ⟹ₕ K to get (H∘F) ⟹ₕ (K∘G))
 
+### Category Axioms for Transformation Composition
+
+The category axioms (identity and associativity) for vComp and hComp hold
+as heterogeneous equalities (HEq) rather than propositional equality (Eq).
+This is because the transformation structures contain dependent types:
+the natSquare field depends on the app field, so when two transformations
+have equal app components but different expressions for them, their types
+technically differ.
+
+Helper lemmas:
+
+- `VertTransOps.heq_mk`, `HorTransOps.heq_mk` - Construct HEq from
+  component-wise equality/HEq
+- `sqVIdComp_heq`, `sqVCompId_heq`, `sqVAssoc_heq` - Square law wrappers
+- `sqHIdComp_heq`, `sqHCompId_heq`, `sqHAssoc_heq` - Square law wrappers
+
+Category axioms:
+
+- `VertTransOps.vComp_id_left_heq` - id ⬝ᵥ τ ≅ τ
+- `VertTransOps.vComp_id_right_heq` - τ ⬝ᵥ id ≅ τ
+- `VertTransOps.vComp_assoc_heq` - (τ ⬝ᵥ σ) ⬝ᵥ ρ ≅ τ ⬝ᵥ (σ ⬝ᵥ ρ)
+- `HorTransOps.hComp_id_left_heq` - id ⬝ₕ τ ≅ τ
+- `HorTransOps.hComp_id_right_heq` - τ ⬝ₕ id ≅ τ
+- `HorTransOps.hComp_assoc_heq` - (τ ⬝ₕ σ) ⬝ₕ ρ ≅ τ ⬝ₕ (σ ⬝ₕ ρ)
+
 ## Double Functor Composition
 
 - `DoubleFunctorOps.comp` - Composition of double functor operations
@@ -174,7 +199,14 @@ identity and composition satisfy category axioms.
 ### Transformation Laws for Composition
 
 Laws proving that the composition operations on transformations satisfy
-associativity, identity, and interchange conditions.
+associativity and identity conditions. The identity and associativity
+laws for vComp and hComp are implemented.
+
+Note: The interchange law for transformations is subtle. The naive
+formulation `(τ ⬝ᵥ τ') ⬝ₕ (σ ⬝ᵥ σ') = (τ ⬝ₕ σ) ⬝ᵥ (τ' ⬝ₕ σ')` does not
+hold because the Godement product evaluates components at intermediate
+objects that differ on each side (G vs H). A proper interchange requires
+modifications (2-cells between transformations) or additional structure.
 
 ### Tabulators
 

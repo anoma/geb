@@ -668,6 +668,7 @@ consists of:
 -/
 
 /-- Operations for a vertical transformation between double functors. -/
+@[ext]
 structure VertTransOps {Obj₁ : Type u₁}
     {vhs₁ : VertHomSet Obj₁} {hhs₁ : HorHomSet Obj₁} {sqs₁ : SquareSet vhs₁ hhs₁}
     {Obj₂ : Type u₂}
@@ -782,6 +783,7 @@ consists of:
 -/
 
 /-- Operations for a horizontal transformation between double functors. -/
+@[ext]
 structure HorTransOps {Obj₁ : Type u₁}
     {vhs₁ : VertHomSet Obj₁} {hhs₁ : HorHomSet Obj₁} {sqs₁ : SquareSet vhs₁ hhs₁}
     {Obj₂ : Type u₂}
@@ -1018,5 +1020,239 @@ def HorTransOps.vComp {Obj₁ : Type u₁}
   app := fun A => ops₃.hComp (H.horMap (τ.app A)) (σ.app (G.objMap A))
   natSquare := fun v =>
     ops₃.sqHComp (H.sqMap (τ.natSquare v)) (σ.natSquare (G.vertMap v))
+
+/-! ## Category Axioms for Transformation Composition
+
+The composition operations on transformations satisfy the category axioms
+when the target double category satisfies its laws.
+-/
+
+/-! ### Vertical Composition of Vertical Transformations -/
+
+/-- Heterogeneous equality of VertTransOps from component-wise HEq.
+
+This is useful when proving laws about transformation composition, where the
+square type depends on the vertical morphism type. -/
+theorem VertTransOps.heq_mk {Obj₁ : Type u₁}
+    {vhs₁ : VertHomSet Obj₁} {hhs₁ : HorHomSet Obj₁} {sqs₁ : SquareSet vhs₁ hhs₁}
+    {Obj₂ : Type u₂}
+    {vhs₂ : VertHomSet Obj₂} {hhs₂ : HorHomSet Obj₂} {sqs₂ : SquareSet vhs₂ hhs₂}
+    {F G : DoubleFunctorOps vhs₁ hhs₁ sqs₁ vhs₂ hhs₂ sqs₂}
+    {app₁ app₂ : ∀ (A : Obj₁), vhs₂ (F.objMap A) (G.objMap A)}
+    {natSquare₁ : ∀ {A B : Obj₁} (h : hhs₁ A B),
+      sqs₂ (app₁ A) (app₁ B) (F.horMap h) (G.horMap h)}
+    {natSquare₂ : ∀ {A B : Obj₁} (h : hhs₁ A B),
+      sqs₂ (app₂ A) (app₂ B) (F.horMap h) (G.horMap h)}
+    (h_app : ∀ A, app₁ A = app₂ A)
+    (h_natSquare : ∀ {A B : Obj₁} (h : hhs₁ A B),
+      HEq (natSquare₁ h) (natSquare₂ h)) :
+    HEq (VertTransOps.mk app₁ natSquare₁) (VertTransOps.mk app₂ natSquare₂) := by
+  have app_eq : app₁ = app₂ := funext h_app
+  subst app_eq
+  have natSquare_eq : @natSquare₁ = @natSquare₂ := by
+    funext A B h
+    exact eq_of_heq (h_natSquare h)
+  subst natSquare_eq
+  rfl
+
+/-- Helper lemma: vertical identity square law (HEq version). -/
+theorem sqVIdComp_heq {Obj : Type u}
+    {vhs : VertHomSet Obj} {hhs : HorHomSet Obj} {sqs : SquareSet vhs hhs}
+    (ops : DoubleCategoryOps Obj vhs hhs sqs)
+    (laws : DoubleCategoryLaws ops)
+    {A B C D : Obj} {v₁ : vhs A C} {v₂ : vhs B D} {h₁ : hhs A B} {h₂ : hhs C D}
+    (α : sqs v₁ v₂ h₁ h₂) :
+    HEq (ops.sqVComp (ops.sqVertId h₁) α) α :=
+  laws.sqLaws.sqVIdComp α
+
+/-- Helper lemma: vertical right identity square law (HEq version). -/
+theorem sqVCompId_heq {Obj : Type u}
+    {vhs : VertHomSet Obj} {hhs : HorHomSet Obj} {sqs : SquareSet vhs hhs}
+    (ops : DoubleCategoryOps Obj vhs hhs sqs)
+    (laws : DoubleCategoryLaws ops)
+    {A B C D : Obj} {v₁ : vhs A C} {v₂ : vhs B D} {h₁ : hhs A B} {h₂ : hhs C D}
+    (α : sqs v₁ v₂ h₁ h₂) :
+    HEq (ops.sqVComp α (ops.sqVertId h₂)) α :=
+  laws.sqLaws.sqVCompId α
+
+/-- Helper lemma: vertical associativity square law (HEq version). -/
+theorem sqVAssoc_heq {Obj : Type u}
+    {vhs : VertHomSet Obj} {hhs : HorHomSet Obj} {sqs : SquareSet vhs hhs}
+    (ops : DoubleCategoryOps Obj vhs hhs sqs)
+    (laws : DoubleCategoryLaws ops)
+    {A B C D E F G H : Obj}
+    {v₁ : vhs A C} {v₂ : vhs B D}
+    {v₁' : vhs C E} {v₂' : vhs D F}
+    {v₁'' : vhs E G} {v₂'' : vhs F H}
+    {h₁ : hhs A B} {h₂ : hhs C D} {h₃ : hhs E F} {h₄ : hhs G H}
+    (α : sqs v₁ v₂ h₁ h₂) (β : sqs v₁' v₂' h₂ h₃) (γ : sqs v₁'' v₂'' h₃ h₄) :
+    HEq (ops.sqVComp (ops.sqVComp α β) γ) (ops.sqVComp α (ops.sqVComp β γ)) :=
+  laws.sqLaws.sqVAssoc α β γ
+
+/-- Left identity law for vertical composition of vertical transformations.
+
+Note: This holds as heterogeneous equality because the natSquare field's type
+depends on the app field, and composition with the identity transformation
+changes the types of the squares. -/
+theorem VertTransOps.vComp_id_left_heq {Obj₁ : Type u₁}
+    {vhs₁ : VertHomSet Obj₁} {hhs₁ : HorHomSet Obj₁} {sqs₁ : SquareSet vhs₁ hhs₁}
+    {Obj₂ : Type u₂}
+    {vhs₂ : VertHomSet Obj₂} {hhs₂ : HorHomSet Obj₂} {sqs₂ : SquareSet vhs₂ hhs₂}
+    (ops₂ : DoubleCategoryOps Obj₂ vhs₂ hhs₂ sqs₂)
+    (laws₂ : DoubleCategoryLaws ops₂)
+    {F G : DoubleFunctorOps vhs₁ hhs₁ sqs₁ vhs₂ hhs₂ sqs₂}
+    (τ : VertTransOps F G) :
+    HEq (VertTransOps.vComp ops₂ (VertTransOps.id ops₂ F) τ) τ := by
+  simp only [VertTransOps.vComp, VertTransOps.id]
+  apply VertTransOps.heq_mk
+  · intro A
+    exact laws₂.vertLaws.id_laws.id_comp _
+  · intro A B h
+    exact sqVIdComp_heq ops₂ laws₂ _
+
+/-- Right identity law for vertical composition of vertical transformations. -/
+theorem VertTransOps.vComp_id_right_heq {Obj₁ : Type u₁}
+    {vhs₁ : VertHomSet Obj₁} {hhs₁ : HorHomSet Obj₁} {sqs₁ : SquareSet vhs₁ hhs₁}
+    {Obj₂ : Type u₂}
+    {vhs₂ : VertHomSet Obj₂} {hhs₂ : HorHomSet Obj₂} {sqs₂ : SquareSet vhs₂ hhs₂}
+    (ops₂ : DoubleCategoryOps Obj₂ vhs₂ hhs₂ sqs₂)
+    (laws₂ : DoubleCategoryLaws ops₂)
+    {F G : DoubleFunctorOps vhs₁ hhs₁ sqs₁ vhs₂ hhs₂ sqs₂}
+    (τ : VertTransOps F G) :
+    HEq (VertTransOps.vComp ops₂ τ (VertTransOps.id ops₂ G)) τ := by
+  simp only [VertTransOps.vComp, VertTransOps.id]
+  apply VertTransOps.heq_mk
+  · intro A
+    exact laws₂.vertLaws.id_laws.comp_id _
+  · intro A B h
+    exact sqVCompId_heq ops₂ laws₂ _
+
+/-- Associativity law for vertical composition of vertical transformations. -/
+theorem VertTransOps.vComp_assoc_heq {Obj₁ : Type u₁}
+    {vhs₁ : VertHomSet Obj₁} {hhs₁ : HorHomSet Obj₁} {sqs₁ : SquareSet vhs₁ hhs₁}
+    {Obj₂ : Type u₂}
+    {vhs₂ : VertHomSet Obj₂} {hhs₂ : HorHomSet Obj₂} {sqs₂ : SquareSet vhs₂ hhs₂}
+    (ops₂ : DoubleCategoryOps Obj₂ vhs₂ hhs₂ sqs₂)
+    (laws₂ : DoubleCategoryLaws ops₂)
+    {F G H K : DoubleFunctorOps vhs₁ hhs₁ sqs₁ vhs₂ hhs₂ sqs₂}
+    (τ : VertTransOps F G) (σ : VertTransOps G H) (ρ : VertTransOps H K) :
+    HEq (VertTransOps.vComp ops₂ (VertTransOps.vComp ops₂ τ σ) ρ)
+        (VertTransOps.vComp ops₂ τ (VertTransOps.vComp ops₂ σ ρ)) := by
+  simp only [VertTransOps.vComp]
+  apply VertTransOps.heq_mk
+  · intro A
+    exact laws₂.vertLaws.assoc _ _ _
+  · intro A B h
+    exact sqVAssoc_heq ops₂ laws₂ _ _ _
+
+/-! ### Category Axioms for HorTransOps.hComp -/
+
+/-- Helper for constructing HEq of HorTransOps from component-wise HEq. -/
+theorem HorTransOps.heq_mk {Obj₁ : Type u₁}
+    {vhs₁ : VertHomSet Obj₁} {hhs₁ : HorHomSet Obj₁} {sqs₁ : SquareSet vhs₁ hhs₁}
+    {Obj₂ : Type u₂}
+    {vhs₂ : VertHomSet Obj₂} {hhs₂ : HorHomSet Obj₂} {sqs₂ : SquareSet vhs₂ hhs₂}
+    {F G : DoubleFunctorOps vhs₁ hhs₁ sqs₁ vhs₂ hhs₂ sqs₂}
+    {app₁ app₂ : ∀ (A : Obj₁), hhs₂ (F.objMap A) (G.objMap A)}
+    {natSquare₁ : ∀ {A C : Obj₁} (v : vhs₁ A C),
+      sqs₂ (F.vertMap v) (G.vertMap v) (app₁ A) (app₁ C)}
+    {natSquare₂ : ∀ {A C : Obj₁} (v : vhs₁ A C),
+      sqs₂ (F.vertMap v) (G.vertMap v) (app₂ A) (app₂ C)}
+    (h_app : ∀ A, app₁ A = app₂ A)
+    (h_natSquare : ∀ {A C : Obj₁} (v : vhs₁ A C),
+      HEq (natSquare₁ v) (natSquare₂ v)) :
+    HEq (HorTransOps.mk app₁ natSquare₁) (HorTransOps.mk app₂ natSquare₂) := by
+  have app_eq : app₁ = app₂ := funext h_app
+  subst app_eq
+  have natSquare_eq : @natSquare₁ = @natSquare₂ := by
+    funext A C v
+    exact eq_of_heq (h_natSquare v)
+  subst natSquare_eq
+  rfl
+
+/-- Horizontal identity-composition law for squares (HEq version). -/
+theorem sqHIdComp_heq {Obj : Type u}
+    {vhs : VertHomSet Obj} {hhs : HorHomSet Obj} {sqs : SquareSet vhs hhs}
+    (ops : DoubleCategoryOps Obj vhs hhs sqs)
+    (laws : DoubleCategoryLaws ops)
+    {A B C D : Obj} {v₁ : vhs A B} {v₂ : vhs C D} {h₁ : hhs A C} {h₂ : hhs B D}
+    (α : sqs v₁ v₂ h₁ h₂) :
+    HEq (ops.sqHComp (ops.sqHorId v₁) α) α :=
+  laws.sqLaws.sqHIdComp α
+
+/-- Horizontal composition-identity law for squares (HEq version). -/
+theorem sqHCompId_heq {Obj : Type u}
+    {vhs : VertHomSet Obj} {hhs : HorHomSet Obj} {sqs : SquareSet vhs hhs}
+    (ops : DoubleCategoryOps Obj vhs hhs sqs)
+    (laws : DoubleCategoryLaws ops)
+    {A B C D : Obj} {v₁ : vhs A B} {v₂ : vhs C D} {h₁ : hhs A C} {h₂ : hhs B D}
+    (α : sqs v₁ v₂ h₁ h₂) :
+    HEq (ops.sqHComp α (ops.sqHorId v₂)) α :=
+  laws.sqLaws.sqHCompId α
+
+/-- Horizontal associativity law for squares (HEq version). -/
+theorem sqHAssoc_heq {Obj : Type u}
+    {vhs : VertHomSet Obj} {hhs : HorHomSet Obj} {sqs : SquareSet vhs hhs}
+    (ops : DoubleCategoryOps Obj vhs hhs sqs)
+    (laws : DoubleCategoryLaws ops)
+    {A B C D E F G H : Obj}
+    {v₁ : vhs A E} {v₂ : vhs B F} {v₃ : vhs C G} {v₄ : vhs D H}
+    {h₁ : hhs A B} {h₂ : hhs B C} {h₃ : hhs C D}
+    {h₅ : hhs E F} {h₆ : hhs F G} {h₇ : hhs G H}
+    (α : sqs v₁ v₂ h₁ h₅) (β : sqs v₂ v₃ h₂ h₆) (γ : sqs v₃ v₄ h₃ h₇) :
+    HEq (ops.sqHComp (ops.sqHComp α β) γ) (ops.sqHComp α (ops.sqHComp β γ)) :=
+  laws.sqLaws.sqHAssoc α β γ
+
+/-- Left identity law for horizontal composition of horizontal transformations. -/
+theorem HorTransOps.hComp_id_left_heq {Obj₁ : Type u₁}
+    {vhs₁ : VertHomSet Obj₁} {hhs₁ : HorHomSet Obj₁} {sqs₁ : SquareSet vhs₁ hhs₁}
+    {Obj₂ : Type u₂}
+    {vhs₂ : VertHomSet Obj₂} {hhs₂ : HorHomSet Obj₂} {sqs₂ : SquareSet vhs₂ hhs₂}
+    (ops₂ : DoubleCategoryOps Obj₂ vhs₂ hhs₂ sqs₂)
+    (laws₂ : DoubleCategoryLaws ops₂)
+    {F G : DoubleFunctorOps vhs₁ hhs₁ sqs₁ vhs₂ hhs₂ sqs₂}
+    (τ : HorTransOps F G) :
+    HEq (HorTransOps.hComp ops₂ (HorTransOps.id ops₂ F) τ) τ := by
+  simp only [HorTransOps.hComp, HorTransOps.id]
+  apply HorTransOps.heq_mk
+  · intro A
+    exact laws₂.horLaws.id_laws.id_comp _
+  · intro A C v
+    exact sqHIdComp_heq ops₂ laws₂ _
+
+/-- Right identity law for horizontal composition of horizontal transformations. -/
+theorem HorTransOps.hComp_id_right_heq {Obj₁ : Type u₁}
+    {vhs₁ : VertHomSet Obj₁} {hhs₁ : HorHomSet Obj₁} {sqs₁ : SquareSet vhs₁ hhs₁}
+    {Obj₂ : Type u₂}
+    {vhs₂ : VertHomSet Obj₂} {hhs₂ : HorHomSet Obj₂} {sqs₂ : SquareSet vhs₂ hhs₂}
+    (ops₂ : DoubleCategoryOps Obj₂ vhs₂ hhs₂ sqs₂)
+    (laws₂ : DoubleCategoryLaws ops₂)
+    {F G : DoubleFunctorOps vhs₁ hhs₁ sqs₁ vhs₂ hhs₂ sqs₂}
+    (τ : HorTransOps F G) :
+    HEq (HorTransOps.hComp ops₂ τ (HorTransOps.id ops₂ G)) τ := by
+  simp only [HorTransOps.hComp, HorTransOps.id]
+  apply HorTransOps.heq_mk
+  · intro A
+    exact laws₂.horLaws.id_laws.comp_id _
+  · intro A C v
+    exact sqHCompId_heq ops₂ laws₂ _
+
+/-- Associativity law for horizontal composition of horizontal transformations. -/
+theorem HorTransOps.hComp_assoc_heq {Obj₁ : Type u₁}
+    {vhs₁ : VertHomSet Obj₁} {hhs₁ : HorHomSet Obj₁} {sqs₁ : SquareSet vhs₁ hhs₁}
+    {Obj₂ : Type u₂}
+    {vhs₂ : VertHomSet Obj₂} {hhs₂ : HorHomSet Obj₂} {sqs₂ : SquareSet vhs₂ hhs₂}
+    (ops₂ : DoubleCategoryOps Obj₂ vhs₂ hhs₂ sqs₂)
+    (laws₂ : DoubleCategoryLaws ops₂)
+    {F G H K : DoubleFunctorOps vhs₁ hhs₁ sqs₁ vhs₂ hhs₂ sqs₂}
+    (τ : HorTransOps F G) (σ : HorTransOps G H) (ρ : HorTransOps H K) :
+    HEq (HorTransOps.hComp ops₂ (HorTransOps.hComp ops₂ τ σ) ρ)
+        (HorTransOps.hComp ops₂ τ (HorTransOps.hComp ops₂ σ ρ)) := by
+  simp only [HorTransOps.hComp]
+  apply HorTransOps.heq_mk
+  · intro A
+    exact laws₂.horLaws.assoc _ _ _
+  · intro A C v
+    exact sqHAssoc_heq ops₂ laws₂ _ _ _
 
 end GebLean
