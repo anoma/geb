@@ -102,6 +102,26 @@ vertical morphisms.
 - `HorTransLaws` - Naturality and coherence with identities and composition
 - `HorTransData` - Operations and laws bundled
 
+### Composition of Transformations
+
+Identity and composition operations for transformations:
+
+- `VertTransOps.id` - Identity vertical transformation on a functor
+- `HorTransOps.id` - Identity horizontal transformation on a functor
+- `VertTransOps.vComp` - Vertical composition of vertical transformations
+  (composing τ : F ⟹ᵥ G with σ : G ⟹ᵥ H)
+- `HorTransOps.hComp` - Horizontal composition of horizontal transformations
+  (composing τ : F ⟹ₕ G with σ : G ⟹ₕ H)
+- `VertTransOps.hComp` - Godement product of vertical transformations
+  (composing τ : F ⟹ᵥ G with σ : H ⟹ᵥ K to get (H∘F) ⟹ᵥ (K∘G))
+- `HorTransOps.vComp` - Godement product of horizontal transformations
+  (composing τ : F ⟹ₕ G with σ : H ⟹ₕ K to get (H∘F) ⟹ₕ (K∘G))
+
+## Double Functor Composition
+
+- `DoubleFunctorOps.comp` - Composition of double functor operations
+- `DoubleFunctorOps.id` - Identity double functor operations
+
 ## Universe Polymorphism
 
 The implementation uses four universe variables:
@@ -146,14 +166,15 @@ Conjoints are the dual notion.
 
 2-cells between double natural transformations (vertical or horizontal).
 
-### Composition of Double Functors
+### DoubleFunctorLaws for Composition
 
-Identity double functors and composition of double functors, forming a
-category of double categories.
+Laws proving that composed double functors preserve structure, and that
+identity and composition satisfy category axioms.
 
-### Composition of Transformations
+### Transformation Laws for Composition
 
-Vertical and horizontal composition of transformations.
+Laws proving that the composition operations on transformations satisfy
+associativity, identity, and interchange conditions.
 
 ### Tabulators
 

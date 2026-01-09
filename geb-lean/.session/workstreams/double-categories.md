@@ -20,6 +20,12 @@ Implementation of strict double categories and related structures.
       VertTransData)
 - [x] Horizontal natural transformations (HorTransOps, HorTransLaws,
       HorTransData)
+- [x] DoubleFunctorOps.comp and DoubleFunctorOps.id
+- [x] VertTransOps.id and HorTransOps.id (identity transformations)
+- [x] VertTransOps.vComp (vertical composition of vertical transformations)
+- [x] HorTransOps.hComp (horizontal composition of horizontal transformations)
+- [x] VertTransOps.hComp (Godement product of vertical transformations)
+- [x] HorTransOps.vComp (Godement product of horizontal transformations)
 
 ## In Progress
 
@@ -34,18 +40,18 @@ None currently.
 - [ ] Prove relationship between companions and conjoints
 - [ ] Connection to adjunctions
 
-### Double Functors (Extended)
+### Double Functors (Laws for Composition)
 
-- [ ] Composition of double functors
-- [ ] Identity double functor
-- [ ] Category of double categories
+- [ ] DoubleFunctorLaws for composed functors
+- [ ] Identity and associativity laws for functor composition
+- [ ] DoubleFunctorData for composed functors
 
-### Natural Transformations (Extended)
+### Transformation Composition Laws
 
-- [ ] Vertical composition of vertical transformations
-- [ ] Horizontal composition of vertical transformations
-- [ ] Vertical composition of horizontal transformations
-- [ ] Horizontal composition of horizontal transformations
+- [ ] VertTransLaws for vComp and hComp
+- [ ] HorTransLaws for hComp and vComp
+- [ ] Identity and associativity laws for transformation composition
+- [ ] Interchange law for vertical and horizontal transformation composition
 
 ### Modifications
 

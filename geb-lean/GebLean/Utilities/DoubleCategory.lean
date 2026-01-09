@@ -42,7 +42,7 @@ namespace GebLean
 
 open CategoryTheory
 
-universe u vMor hMor sq
+universe u vMor hMor sq u₃ vMor₃ hMor₃ sq₃
 
 /-- Vertical morphism type family.
 
@@ -874,5 +874,149 @@ structure HorTransData {Obj₁ : Type u₁}
   /-- Horizontal transformation laws -/
   laws : HorTransLaws data₁.toDoubleCategoryOps data₂.toDoubleCategoryOps
     F.laws G.laws toHorTransOps
+
+/-! ## Composition of Transformations -/
+
+/-! ### Vertical Composition of Vertical Transformations
+
+Given vertical transformations τ : F ⟹ᵥ G and σ : G ⟹ᵥ H, their vertical
+composition σ ⬝ᵥ τ : F ⟹ᵥ H has:
+- Components: (σ ⬝ᵥ τ)_A = τ_A ⬝ᵥ σ_A
+- Naturality squares: vertical composition of the naturality squares
+-/
+
+/-- Vertical composition of vertical transformation operations. -/
+def VertTransOps.vComp {Obj₁ : Type u₁}
+    {vhs₁ : VertHomSet Obj₁} {hhs₁ : HorHomSet Obj₁} {sqs₁ : SquareSet vhs₁ hhs₁}
+    {Obj₂ : Type u₂}
+    {vhs₂ : VertHomSet Obj₂} {hhs₂ : HorHomSet Obj₂} {sqs₂ : SquareSet vhs₂ hhs₂}
+    (ops₂ : DoubleCategoryOps Obj₂ vhs₂ hhs₂ sqs₂)
+    {F G H : DoubleFunctorOps vhs₁ hhs₁ sqs₁ vhs₂ hhs₂ sqs₂}
+    (τ : VertTransOps F G) (σ : VertTransOps G H) : VertTransOps F H where
+  app := fun A => ops₂.vComp (τ.app A) (σ.app A)
+  natSquare := fun h => ops₂.sqVComp (τ.natSquare h) (σ.natSquare h)
+
+/-! ### Horizontal Composition of Horizontal Transformations
+
+Given horizontal transformations τ : F ⟹ₕ G and σ : G ⟹ₕ H, their horizontal
+composition σ ⬝ₕ τ : F ⟹ₕ H has:
+- Components: (σ ⬝ₕ τ)_A = τ_A ⬝ₕ σ_A
+- Naturality squares: horizontal composition of the naturality squares
+-/
+
+/-- Horizontal composition of horizontal transformation operations. -/
+def HorTransOps.hComp {Obj₁ : Type u₁}
+    {vhs₁ : VertHomSet Obj₁} {hhs₁ : HorHomSet Obj₁} {sqs₁ : SquareSet vhs₁ hhs₁}
+    {Obj₂ : Type u₂}
+    {vhs₂ : VertHomSet Obj₂} {hhs₂ : HorHomSet Obj₂} {sqs₂ : SquareSet vhs₂ hhs₂}
+    (ops₂ : DoubleCategoryOps Obj₂ vhs₂ hhs₂ sqs₂)
+    {F G H : DoubleFunctorOps vhs₁ hhs₁ sqs₁ vhs₂ hhs₂ sqs₂}
+    (τ : HorTransOps F G) (σ : HorTransOps G H) : HorTransOps F H where
+  app := fun A => ops₂.hComp (τ.app A) (σ.app A)
+  natSquare := fun v => ops₂.sqHComp (τ.natSquare v) (σ.natSquare v)
+
+/-! ### Identity Transformations -/
+
+/-- Identity vertical transformation on a double functor. -/
+def VertTransOps.id {Obj₁ : Type u₁}
+    {vhs₁ : VertHomSet Obj₁} {hhs₁ : HorHomSet Obj₁} {sqs₁ : SquareSet vhs₁ hhs₁}
+    {Obj₂ : Type u₂}
+    {vhs₂ : VertHomSet Obj₂} {hhs₂ : HorHomSet Obj₂} {sqs₂ : SquareSet vhs₂ hhs₂}
+    (ops₂ : DoubleCategoryOps Obj₂ vhs₂ hhs₂ sqs₂)
+    (F : DoubleFunctorOps vhs₁ hhs₁ sqs₁ vhs₂ hhs₂ sqs₂) : VertTransOps F F where
+  app := fun A => ops₂.vId (F.objMap A)
+  natSquare := fun h => ops₂.sqVertId (F.horMap h)
+
+/-- Identity horizontal transformation on a double functor. -/
+def HorTransOps.id {Obj₁ : Type u₁}
+    {vhs₁ : VertHomSet Obj₁} {hhs₁ : HorHomSet Obj₁} {sqs₁ : SquareSet vhs₁ hhs₁}
+    {Obj₂ : Type u₂}
+    {vhs₂ : VertHomSet Obj₂} {hhs₂ : HorHomSet Obj₂} {sqs₂ : SquareSet vhs₂ hhs₂}
+    (ops₂ : DoubleCategoryOps Obj₂ vhs₂ hhs₂ sqs₂)
+    (F : DoubleFunctorOps vhs₁ hhs₁ sqs₁ vhs₂ hhs₂ sqs₂) : HorTransOps F F where
+  app := fun A => ops₂.hId (F.objMap A)
+  natSquare := fun v => ops₂.sqHorId (F.vertMap v)
+
+/-! ### Double Functor Composition
+
+To define the full "horizontal composition of vertical transformations"
+(Godement product), we first need composition of double functors.
+-/
+
+/-- Composition of double functor operations. -/
+def DoubleFunctorOps.comp {Obj₁ : Type u₁}
+    {vhs₁ : VertHomSet Obj₁} {hhs₁ : HorHomSet Obj₁} {sqs₁ : SquareSet vhs₁ hhs₁}
+    {Obj₂ : Type u₂}
+    {vhs₂ : VertHomSet Obj₂} {hhs₂ : HorHomSet Obj₂} {sqs₂ : SquareSet vhs₂ hhs₂}
+    {Obj₃ : Type u₃}
+    {vhs₃ : VertHomSet Obj₃} {hhs₃ : HorHomSet Obj₃} {sqs₃ : SquareSet vhs₃ hhs₃}
+    (F : DoubleFunctorOps vhs₁ hhs₁ sqs₁ vhs₂ hhs₂ sqs₂)
+    (G : DoubleFunctorOps vhs₂ hhs₂ sqs₂ vhs₃ hhs₃ sqs₃) :
+    DoubleFunctorOps vhs₁ hhs₁ sqs₁ vhs₃ hhs₃ sqs₃ where
+  objMap := G.objMap ∘ F.objMap
+  vertMap := fun v => G.vertMap (F.vertMap v)
+  horMap := fun h => G.horMap (F.horMap h)
+  sqMap := fun α => G.sqMap (F.sqMap α)
+
+/-- Identity double functor operations. -/
+def DoubleFunctorOps.id {Obj : Type u}
+    {vhs : VertHomSet Obj} {hhs : HorHomSet Obj} {sqs : SquareSet vhs hhs} :
+    DoubleFunctorOps vhs hhs sqs vhs hhs sqs where
+  objMap := _root_.id
+  vertMap := fun v => v
+  horMap := fun h => h
+  sqMap := fun α => α
+
+/-! ### Cross Compositions of Transformations
+
+The "horizontal composition of vertical transformations" is the Godement
+product: given τ : F ⟹ᵥ G (between D → E) and σ : H ⟹ᵥ K (between E → E'),
+we get (σ * τ) : (H ∘ F) ⟹ᵥ (K ∘ G) (between D → E').
+
+At each object A, the component is: H(τ_A) ⬝ᵥ σ_{G(A)} = σ_{F(A)} ⬝ᵥ K(τ_A)
+(these are equal by naturality of σ).
+-/
+
+/-- Horizontal composition (Godement product) of vertical transformations.
+
+Given τ : F ⟹ᵥ G between D → E and σ : H ⟹ᵥ K between E → E',
+the composite (σ * τ) : (H ∘ F) ⟹ᵥ (K ∘ G) has components:
+  (σ * τ)_A = H(τ_A) ⬝ᵥ σ_{G(A)}
+-/
+def VertTransOps.hComp {Obj₁ : Type u₁}
+    {vhs₁ : VertHomSet Obj₁} {hhs₁ : HorHomSet Obj₁} {sqs₁ : SquareSet vhs₁ hhs₁}
+    {Obj₂ : Type u₂}
+    {vhs₂ : VertHomSet Obj₂} {hhs₂ : HorHomSet Obj₂} {sqs₂ : SquareSet vhs₂ hhs₂}
+    {Obj₃ : Type u₃}
+    {vhs₃ : VertHomSet Obj₃} {hhs₃ : HorHomSet Obj₃} {sqs₃ : SquareSet vhs₃ hhs₃}
+    (ops₃ : DoubleCategoryOps Obj₃ vhs₃ hhs₃ sqs₃)
+    {F G : DoubleFunctorOps vhs₁ hhs₁ sqs₁ vhs₂ hhs₂ sqs₂}
+    {H K : DoubleFunctorOps vhs₂ hhs₂ sqs₂ vhs₃ hhs₃ sqs₃}
+    (τ : VertTransOps F G) (σ : VertTransOps H K) :
+    VertTransOps (F.comp H) (G.comp K) where
+  app := fun A => ops₃.vComp (H.vertMap (τ.app A)) (σ.app (G.objMap A))
+  natSquare := fun h =>
+    ops₃.sqVComp (H.sqMap (τ.natSquare h)) (σ.natSquare (G.horMap h))
+
+/-- Vertical composition (Godement product) of horizontal transformations.
+
+Given τ : F ⟹ₕ G between D → E and σ : H ⟹ₕ K between E → E',
+the composite (σ * τ) : (H ∘ F) ⟹ₕ (K ∘ G) has components:
+  (σ * τ)_A = H(τ_A) ⬝ₕ σ_{G(A)}
+-/
+def HorTransOps.vComp {Obj₁ : Type u₁}
+    {vhs₁ : VertHomSet Obj₁} {hhs₁ : HorHomSet Obj₁} {sqs₁ : SquareSet vhs₁ hhs₁}
+    {Obj₂ : Type u₂}
+    {vhs₂ : VertHomSet Obj₂} {hhs₂ : HorHomSet Obj₂} {sqs₂ : SquareSet vhs₂ hhs₂}
+    {Obj₃ : Type u₃}
+    {vhs₃ : VertHomSet Obj₃} {hhs₃ : HorHomSet Obj₃} {sqs₃ : SquareSet vhs₃ hhs₃}
+    (ops₃ : DoubleCategoryOps Obj₃ vhs₃ hhs₃ sqs₃)
+    {F G : DoubleFunctorOps vhs₁ hhs₁ sqs₁ vhs₂ hhs₂ sqs₂}
+    {H K : DoubleFunctorOps vhs₂ hhs₂ sqs₂ vhs₃ hhs₃ sqs₃}
+    (τ : HorTransOps F G) (σ : HorTransOps H K) :
+    HorTransOps (F.comp H) (G.comp K) where
+  app := fun A => ops₃.hComp (H.horMap (τ.app A)) (σ.app (G.objMap A))
+  natSquare := fun v =>
+    ops₃.sqHComp (H.sqMap (τ.natSquare v)) (σ.natSquare (G.vertMap v))
 
 end GebLean
