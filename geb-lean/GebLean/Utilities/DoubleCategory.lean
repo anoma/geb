@@ -453,7 +453,7 @@ def HorCategoryOfDoubleCategoryData {Obj : Type u}
 
 Strict double functors preserve all structure of double categories. -/
 
-universe u₁ vMor₁ hMor₁ sq₁ u₂ vMor₂ hMor₂ sq₂
+universe u₁ vMor₁ hMor₁ sq₁ u₂ vMor₂ hMor₂ sq₂ u₄ vMor₄ hMor₄ sq₄
 
 /-- Operations for a strict double functor.
 
@@ -1031,6 +1031,40 @@ theorem sqMap_heq {Obj₁ : Type u₁}
   cases heq
   rfl
 
+/-- Right identity for double functor composition. -/
+@[simp]
+theorem DoubleFunctorOps.comp_id_right {Obj₁ : Type u₁}
+    {vhs₁ : VertHomSet Obj₁} {hhs₁ : HorHomSet Obj₁} {sqs₁ : SquareSet vhs₁ hhs₁}
+    {Obj₂ : Type u₂}
+    {vhs₂ : VertHomSet Obj₂} {hhs₂ : HorHomSet Obj₂} {sqs₂ : SquareSet vhs₂ hhs₂}
+    (F : DoubleFunctorOps vhs₁ hhs₁ sqs₁ vhs₂ hhs₂ sqs₂) :
+    DoubleFunctorOps.comp F DoubleFunctorOps.id = F := rfl
+
+/-- Left identity for double functor composition. -/
+@[simp]
+theorem DoubleFunctorOps.comp_id_left {Obj₁ : Type u₁}
+    {vhs₁ : VertHomSet Obj₁} {hhs₁ : HorHomSet Obj₁} {sqs₁ : SquareSet vhs₁ hhs₁}
+    {Obj₂ : Type u₂}
+    {vhs₂ : VertHomSet Obj₂} {hhs₂ : HorHomSet Obj₂} {sqs₂ : SquareSet vhs₂ hhs₂}
+    (F : DoubleFunctorOps vhs₁ hhs₁ sqs₁ vhs₂ hhs₂ sqs₂) :
+    DoubleFunctorOps.comp DoubleFunctorOps.id F = F := rfl
+
+/-- Associativity of double functor composition. -/
+@[simp]
+theorem DoubleFunctorOps.comp_assoc {Obj₁ : Type u₁}
+    {vhs₁ : VertHomSet Obj₁} {hhs₁ : HorHomSet Obj₁} {sqs₁ : SquareSet vhs₁ hhs₁}
+    {Obj₂ : Type u₂}
+    {vhs₂ : VertHomSet Obj₂} {hhs₂ : HorHomSet Obj₂} {sqs₂ : SquareSet vhs₂ hhs₂}
+    {Obj₃ : Type u₃}
+    {vhs₃ : VertHomSet Obj₃} {hhs₃ : HorHomSet Obj₃} {sqs₃ : SquareSet vhs₃ hhs₃}
+    {Obj₄ : Type u₄}
+    {vhs₄ : VertHomSet Obj₄} {hhs₄ : HorHomSet Obj₄} {sqs₄ : SquareSet vhs₄ hhs₄}
+    (F : DoubleFunctorOps vhs₁ hhs₁ sqs₁ vhs₂ hhs₂ sqs₂)
+    (G : DoubleFunctorOps vhs₂ hhs₂ sqs₂ vhs₃ hhs₃ sqs₃)
+    (H : DoubleFunctorOps vhs₃ hhs₃ sqs₃ vhs₄ hhs₄ sqs₄) :
+    DoubleFunctorOps.comp (DoubleFunctorOps.comp F G) H =
+    DoubleFunctorOps.comp F (DoubleFunctorOps.comp G H) := rfl
+
 /-- Composed double functors preserve double category structure.
 
 If F : D → E and G : E → E' both satisfy DoubleFunctorLaws, then G ∘ F does too.
@@ -1093,6 +1127,87 @@ theorem DoubleFunctorLaws.comp {Obj₁ : Type u₁}
     have step2 := glaws.map_sqHComp (F.sqMap α) (F.sqMap β)
     have mid := sqMap_heq G step1 rfl rfl (flaws.map_hComp h₁ h₂) (flaws.map_hComp h₃ h₄)
     exact HEq.trans mid step2
+
+/-- Identity double functor satisfies DoubleFunctorLaws. -/
+theorem DoubleFunctorLaws.id {Obj : Type u}
+    {vhs : VertHomSet Obj} {hhs : HorHomSet Obj} {sqs : SquareSet vhs hhs}
+    (ops : DoubleCategoryOps Obj vhs hhs sqs) :
+    DoubleFunctorLaws ops ops DoubleFunctorOps.id where
+  map_vId := fun _ => rfl
+  map_hId := fun _ => rfl
+  map_vComp := fun _ _ => rfl
+  map_hComp := fun _ _ => rfl
+  map_sqVertId := fun _ => HEq.rfl
+  map_sqHorId := fun _ => HEq.rfl
+  map_sqVComp := fun _ _ => HEq.rfl
+  map_sqHComp := fun _ _ => HEq.rfl
+
+/-- Identity double functor data. -/
+def DoubleFunctorData.id {Obj : Type u}
+    {vhs : VertHomSet Obj} {hhs : HorHomSet Obj} {sqs : SquareSet vhs hhs}
+    (data : DoubleCategoryData Obj vhs hhs sqs) :
+    DoubleFunctorData data data where
+  toDoubleFunctorOps := DoubleFunctorOps.id
+  laws := DoubleFunctorLaws.id data.toDoubleCategoryOps
+
+/-- Composition of double functor data. -/
+def DoubleFunctorData.comp {Obj₁ : Type u₁}
+    {vhs₁ : VertHomSet Obj₁} {hhs₁ : HorHomSet Obj₁} {sqs₁ : SquareSet vhs₁ hhs₁}
+    {Obj₂ : Type u₂}
+    {vhs₂ : VertHomSet Obj₂} {hhs₂ : HorHomSet Obj₂} {sqs₂ : SquareSet vhs₂ hhs₂}
+    {Obj₃ : Type u₃}
+    {vhs₃ : VertHomSet Obj₃} {hhs₃ : HorHomSet Obj₃} {sqs₃ : SquareSet vhs₃ hhs₃}
+    {data₁ : DoubleCategoryData Obj₁ vhs₁ hhs₁ sqs₁}
+    {data₂ : DoubleCategoryData Obj₂ vhs₂ hhs₂ sqs₂}
+    {data₃ : DoubleCategoryData Obj₃ vhs₃ hhs₃ sqs₃}
+    (F : DoubleFunctorData data₁ data₂)
+    (G : DoubleFunctorData data₂ data₃) :
+    DoubleFunctorData data₁ data₃ where
+  toDoubleFunctorOps := F.toDoubleFunctorOps.comp G.toDoubleFunctorOps
+  laws := DoubleFunctorLaws.comp data₁.toDoubleCategoryOps data₂.toDoubleCategoryOps
+      data₃.toDoubleCategoryOps F.laws G.laws
+
+/-- Right identity for double functor data composition. -/
+@[simp]
+theorem DoubleFunctorData.comp_id_right {Obj₁ : Type u₁}
+    {vhs₁ : VertHomSet Obj₁} {hhs₁ : HorHomSet Obj₁} {sqs₁ : SquareSet vhs₁ hhs₁}
+    {Obj₂ : Type u₂}
+    {vhs₂ : VertHomSet Obj₂} {hhs₂ : HorHomSet Obj₂} {sqs₂ : SquareSet vhs₂ hhs₂}
+    {data₁ : DoubleCategoryData Obj₁ vhs₁ hhs₁ sqs₁}
+    {data₂ : DoubleCategoryData Obj₂ vhs₂ hhs₂ sqs₂}
+    (F : DoubleFunctorData data₁ data₂) :
+    DoubleFunctorData.comp F (DoubleFunctorData.id data₂) = F := rfl
+
+/-- Left identity for double functor data composition. -/
+@[simp]
+theorem DoubleFunctorData.comp_id_left {Obj₁ : Type u₁}
+    {vhs₁ : VertHomSet Obj₁} {hhs₁ : HorHomSet Obj₁} {sqs₁ : SquareSet vhs₁ hhs₁}
+    {Obj₂ : Type u₂}
+    {vhs₂ : VertHomSet Obj₂} {hhs₂ : HorHomSet Obj₂} {sqs₂ : SquareSet vhs₂ hhs₂}
+    {data₁ : DoubleCategoryData Obj₁ vhs₁ hhs₁ sqs₁}
+    {data₂ : DoubleCategoryData Obj₂ vhs₂ hhs₂ sqs₂}
+    (F : DoubleFunctorData data₁ data₂) :
+    DoubleFunctorData.comp (DoubleFunctorData.id data₁) F = F := rfl
+
+/-- Associativity of double functor data composition. -/
+@[simp]
+theorem DoubleFunctorData.comp_assoc {Obj₁ : Type u₁}
+    {vhs₁ : VertHomSet Obj₁} {hhs₁ : HorHomSet Obj₁} {sqs₁ : SquareSet vhs₁ hhs₁}
+    {Obj₂ : Type u₂}
+    {vhs₂ : VertHomSet Obj₂} {hhs₂ : HorHomSet Obj₂} {sqs₂ : SquareSet vhs₂ hhs₂}
+    {Obj₃ : Type u₃}
+    {vhs₃ : VertHomSet Obj₃} {hhs₃ : HorHomSet Obj₃} {sqs₃ : SquareSet vhs₃ hhs₃}
+    {Obj₄ : Type u₄}
+    {vhs₄ : VertHomSet Obj₄} {hhs₄ : HorHomSet Obj₄} {sqs₄ : SquareSet vhs₄ hhs₄}
+    {data₁ : DoubleCategoryData Obj₁ vhs₁ hhs₁ sqs₁}
+    {data₂ : DoubleCategoryData Obj₂ vhs₂ hhs₂ sqs₂}
+    {data₃ : DoubleCategoryData Obj₃ vhs₃ hhs₃ sqs₃}
+    {data₄ : DoubleCategoryData Obj₄ vhs₄ hhs₄ sqs₄}
+    (F : DoubleFunctorData data₁ data₂)
+    (G : DoubleFunctorData data₂ data₃)
+    (H : DoubleFunctorData data₃ data₄) :
+    DoubleFunctorData.comp (DoubleFunctorData.comp F G) H =
+    DoubleFunctorData.comp F (DoubleFunctorData.comp G H) := rfl
 
 /-! ### Cross Compositions of Transformations
 

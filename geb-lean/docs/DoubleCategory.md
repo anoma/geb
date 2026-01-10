@@ -144,8 +144,25 @@ Category axioms:
 
 ## Double Functor Composition
 
+Operations:
+
 - `DoubleFunctorOps.comp` - Composition of double functor operations
 - `DoubleFunctorOps.id` - Identity double functor operations
+- `DoubleFunctorData.comp` - Composition of double functor data
+- `DoubleFunctorData.id` - Identity double functor data
+
+Category axioms (all proved by `rfl`):
+
+- `DoubleFunctorOps.comp_id_right` - F ∘ id = F
+- `DoubleFunctorOps.comp_id_left` - id ∘ F = F
+- `DoubleFunctorOps.comp_assoc` - (F ∘ G) ∘ H = F ∘ (G ∘ H)
+- `DoubleFunctorData.comp_id_right`, `comp_id_left`, `comp_assoc` - analogous
+
+Laws:
+
+- `DoubleFunctorLaws.id` - Identity functor satisfies DoubleFunctorLaws
+- `DoubleFunctorLaws.comp` - Composition of functors satisfying laws also
+  satisfies laws
 
 ## Universe Polymorphism
 
@@ -190,37 +207,6 @@ Conjoints are the dual notion.
 ### Modifications
 
 2-cells between double natural transformations (vertical or horizontal).
-
-### DoubleFunctorLaws for Composition
-
-Laws proving that composed double functors preserve structure, and that
-identity and composition satisfy category axioms.
-
-### Transformation Laws for Composition
-
-Theorems proving that the composition operations on transformations preserve
-transformation structure:
-
-- `VertTransOps.id_laws` - identity vertical transformation satisfies VertTransLaws
-- `VertTransOps.vComp_laws` - vertical composition preserves VertTransLaws
-- `VertTransOps.hComp_laws` - Godement product preserves VertTransLaws
-- `HorTransOps.id_laws` - identity horizontal transformation satisfies HorTransLaws
-- `HorTransOps.hComp_laws` - horizontal composition preserves HorTransLaws
-- `HorTransOps.vComp_laws` - Godement product preserves HorTransLaws
-
-The identity and associativity laws for vComp and hComp are also implemented
-(as HEq properties).
-
-The interchange law for transformations relates the Godement product
-to vertical/horizontal composition:
-
-`(τ ⬝ᵥ τ') ⬝ₕ (σ ⬝ᵥ σ') = (τ ⬝ₕ σ) ⬝ᵥ (τ' ⬝ₕ σ')`
-
-This holds when the transformation σ satisfies `VertTransLaws` (or
-`HorTransLaws` for horizontal). The laws include `naturality` (for
-morphisms) and `squareNaturality` (for squares), which together ensure
-components at intermediate objects can be reordered. See
-`VertTransOps.interchange` and `HorTransOps.interchange`.
 
 ### Tabulators
 

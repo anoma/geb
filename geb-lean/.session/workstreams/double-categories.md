@@ -42,6 +42,11 @@ Implementation of strict double categories and related structures.
 - [x] HorTransOps.id_laws (HorTransLaws for identity horizontal transformation)
 - [x] HorTransOps.hComp_laws (HorTransLaws for horizontal composition)
 - [x] HorTransOps.vComp_laws (HorTransLaws for Godement product)
+- [x] DoubleFunctorOps category axioms (comp_id_right, comp_id_left, comp_assoc)
+- [x] DoubleFunctorLaws.id (identity functor satisfies laws)
+- [x] DoubleFunctorLaws.comp (composition preserves laws)
+- [x] DoubleFunctorData.id and DoubleFunctorData.comp
+- [x] DoubleFunctorData category axioms (comp_id_right, comp_id_left, comp_assoc)
 
 ## In Progress
 
@@ -55,12 +60,6 @@ None currently.
 - [ ] Define conjoint structure
 - [ ] Prove relationship between companions and conjoints
 - [ ] Connection to adjunctions
-
-### Double Functors (Laws for Composition)
-
-- [ ] DoubleFunctorLaws for composed functors
-- [ ] Identity and associativity laws for functor composition
-- [ ] DoubleFunctorData for composed functors
 
 ### Transformation Composition Laws (Completed)
 
