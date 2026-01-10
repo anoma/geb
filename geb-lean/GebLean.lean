@@ -21,6 +21,7 @@ import GebLean.Polynomial
 import GebLean.PolyPresentation
 import GebLean.PolyPresentationEquiv
 import GebLean.PolyTwCoprType
+import GebLean.ProfAlg
 import GebLean.Semicategory
 import GebLean.Utilities
 import GebLean.Utilities.Category
