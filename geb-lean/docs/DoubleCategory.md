@@ -202,11 +202,16 @@ Laws proving that the composition operations on transformations satisfy
 associativity and identity conditions. The identity and associativity
 laws for vComp and hComp are implemented.
 
-Note: The interchange law for transformations is subtle. The naive
-formulation `(τ ⬝ᵥ τ') ⬝ₕ (σ ⬝ᵥ σ') = (τ ⬝ₕ σ) ⬝ᵥ (τ' ⬝ₕ σ')` does not
-hold because the Godement product evaluates components at intermediate
-objects that differ on each side (G vs H). A proper interchange requires
-modifications (2-cells between transformations) or additional structure.
+The interchange law for transformations relates the Godement product
+to vertical/horizontal composition:
+
+`(τ ⬝ᵥ τ') ⬝ₕ (σ ⬝ᵥ σ') = (τ ⬝ₕ σ) ⬝ᵥ (τ' ⬝ₕ σ')`
+
+This holds when the transformation σ satisfies `VertTransLaws` (or
+`HorTransLaws` for horizontal). The laws include `naturality` (for
+morphisms) and `squareNaturality` (for squares), which together ensure
+components at intermediate objects can be reordered. See
+`VertTransOps.interchange` and `HorTransOps.interchange`.
 
 ### Tabulators
 

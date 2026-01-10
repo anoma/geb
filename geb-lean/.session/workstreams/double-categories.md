@@ -30,6 +30,11 @@ Implementation of strict double categories and related structures.
 - [x] Category axioms for HorTransOps.hComp (identity, associativity - HEq)
 - [x] Helper lemmas (VertTransOps.heq_mk, HorTransOps.heq_mk,
       sqVIdComp_heq, sqVCompId_heq, sqVAssoc_heq, sqHIdComp_heq, etc.)
+- [x] VertTransOps.interchange (interchange law for vertical transformations)
+- [x] HorTransOps.interchange (interchange law for horizontal transformations)
+- [x] HorTransSquareNaturality definition
+- [x] sqVComp_heq_left, sqVComp_heq_right (HEq congruence for sqVComp)
+- [x] sqHComp_heq_left, sqHComp_heq_right (HEq congruence for sqHComp)
 
 ## In Progress
 
@@ -56,17 +61,15 @@ None currently.
 - [ ] HorTransLaws for hComp and vComp
 - [ ] Identity and associativity laws for Godement products (hComp/vComp)
 
-### Interchange Law for Transformations
+### Interchange Law for Transformations (Completed)
 
 The interchange law for transformations relates the Godement product
-to vertical/horizontal composition. However, the naive formulation
-`(τ ⬝ᵥ τ') ⬝ₕ (σ ⬝ᵥ σ') = (τ ⬝ₕ σ) ⬝ᵥ (τ' ⬝ₕ σ')` does not hold
-because the component evaluations occur at different intermediate
-objects (G vs H). A proper interchange law requires:
-
-- Modifications (2-cells between transformations), or
-- Additional functor law requirements, or
-- A different compositional structure
+to vertical/horizontal composition. The law:
+`(τ ⬝ᵥ τ') ⬝ₕ (σ ⬝ᵥ σ') = (τ ⬝ₕ σ) ⬝ᵥ (τ' ⬝ₕ σ')`
+holds when σ satisfies `VertTransLaws` (or `HorTransLaws` for horizontal).
+These laws include the naturality conditions (`naturality` and
+`squareNaturality`) that ensure intermediate components can be reordered.
+See `VertTransOps.interchange` and `HorTransOps.interchange`.
 
 ### Modifications
 

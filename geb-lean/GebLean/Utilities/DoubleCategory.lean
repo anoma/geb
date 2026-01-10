@@ -695,6 +695,27 @@ abbrev VertTransNaturality {Obj₁ : Type u₁}
   ∀ {A B : Obj₁} (v : vhs₁ A B),
     ops₂.vComp (τ.app A) (G.vertMap v) = ops₂.vComp (F.vertMap v) (τ.app B)
 
+/-- Square naturality condition: naturality squares commute with functor maps.
+
+For a transformation σ : K ⟹ᵥ L and any square α with horizontal boundaries
+h₁ (top) and h₂ (bottom), we have:
+  K(α) ⬝ᵥ σ.natSquare(h₂) ≅ σ.natSquare(h₁) ⬝ᵥ L(α)
+(up to HEq because the vertical boundaries differ by morphism naturality).
+
+This is a higher coherence condition needed for the interchange law. -/
+abbrev VertTransSquareNaturality {Obj₁ : Type u₁}
+    {vhs₁ : VertHomSet Obj₁} {hhs₁ : HorHomSet Obj₁} {sqs₁ : SquareSet vhs₁ hhs₁}
+    {Obj₂ : Type u₂}
+    {vhs₂ : VertHomSet Obj₂} {hhs₂ : HorHomSet Obj₂} {sqs₂ : SquareSet vhs₂ hhs₂}
+    (ops₂ : DoubleCategoryOps Obj₂ vhs₂ hhs₂ sqs₂)
+    {K L : DoubleFunctorOps vhs₁ hhs₁ sqs₁ vhs₂ hhs₂ sqs₂}
+    (σ : VertTransOps K L) : Prop :=
+  ∀ {A B C D : Obj₁} {v₁ : vhs₁ A C} {v₂ : vhs₁ B D}
+    {h₁ : hhs₁ A B} {h₂ : hhs₁ C D}
+    (α : sqs₁ v₁ v₂ h₁ h₂),
+    HEq (ops₂.sqVComp (K.sqMap α) (σ.natSquare h₂))
+        (ops₂.sqVComp (σ.natSquare h₁) (L.sqMap α))
+
 /-- Coherence: naturality squares compose with horizontal identity squares.
 
 For each object A, the naturality square of the horizontal identity h = id_A
@@ -745,6 +766,8 @@ structure VertTransLaws {Obj₁ : Type u₁}
     (τ : VertTransOps F G) : Prop where
   /-- Naturality for vertical morphisms -/
   naturality : VertTransNaturality ops₂ τ
+  /-- Naturality for squares -/
+  squareNaturality : VertTransSquareNaturality ops₂ τ
   /-- Identity coherence -/
   idCoherence : VertTransIdCoherence ops₁ ops₂ flaws glaws τ
   /-- Composition coherence -/
@@ -810,6 +833,27 @@ abbrev HorTransNaturality {Obj₁ : Type u₁}
   ∀ {A B : Obj₁} (h : hhs₁ A B),
     ops₂.hComp (τ.app A) (G.horMap h) = ops₂.hComp (F.horMap h) (τ.app B)
 
+/-- Square naturality condition: naturality squares commute with functor maps.
+
+For a transformation σ : K ⟹ₕ L and any square α with vertical boundaries
+v₁ (left) and v₂ (right), we have:
+  K(α) ⬝ₕ σ.natSquare(v₂) ≅ σ.natSquare(v₁) ⬝ₕ L(α)
+(up to HEq because the horizontal boundaries differ by morphism naturality).
+
+This is a higher coherence condition needed for the interchange law. -/
+abbrev HorTransSquareNaturality {Obj₁ : Type u₁}
+    {vhs₁ : VertHomSet Obj₁} {hhs₁ : HorHomSet Obj₁} {sqs₁ : SquareSet vhs₁ hhs₁}
+    {Obj₂ : Type u₂}
+    {vhs₂ : VertHomSet Obj₂} {hhs₂ : HorHomSet Obj₂} {sqs₂ : SquareSet vhs₂ hhs₂}
+    (ops₂ : DoubleCategoryOps Obj₂ vhs₂ hhs₂ sqs₂)
+    {K L : DoubleFunctorOps vhs₁ hhs₁ sqs₁ vhs₂ hhs₂ sqs₂}
+    (σ : HorTransOps K L) : Prop :=
+  ∀ {A B C D : Obj₁} {v₁ : vhs₁ A C} {v₂ : vhs₁ B D}
+    {h₁ : hhs₁ A B} {h₂ : hhs₁ C D}
+    (α : sqs₁ v₁ v₂ h₁ h₂),
+    HEq (ops₂.sqHComp (K.sqMap α) (σ.natSquare v₂))
+        (ops₂.sqHComp (σ.natSquare v₁) (L.sqMap α))
+
 /-- Coherence: naturality squares compose with vertical identity squares.
 
 For each object A, the naturality square of the vertical identity v = id_A
@@ -859,6 +903,8 @@ structure HorTransLaws {Obj₁ : Type u₁}
     (τ : HorTransOps F G) : Prop where
   /-- Naturality for horizontal morphisms -/
   naturality : HorTransNaturality ops₂ τ
+  /-- Naturality for squares -/
+  squareNaturality : HorTransSquareNaturality ops₂ τ
   /-- Identity coherence -/
   idCoherence : HorTransIdCoherence ops₁ ops₂ flaws glaws τ
   /-- Composition coherence -/
@@ -1054,6 +1100,24 @@ theorem VertTransOps.heq_mk {Obj₁ : Type u₁}
     exact eq_of_heq (h_natSquare h)
   subst natSquare_eq
   rfl
+
+/-- Helper lemma: vertical morphism composition associativity. -/
+theorem vComp_assoc {Obj : Type u}
+    {vhs : VertHomSet Obj} {hhs : HorHomSet Obj} {sqs : SquareSet vhs hhs}
+    (ops : DoubleCategoryOps Obj vhs hhs sqs)
+    (laws : DoubleCategoryLaws ops)
+    {A B C D : Obj} (f : vhs A B) (g : vhs B C) (h : vhs C D) :
+    ops.vComp (ops.vComp f g) h = ops.vComp f (ops.vComp g h) :=
+  laws.vertLaws.assoc f g h
+
+/-- Helper lemma: horizontal morphism composition associativity. -/
+theorem hComp_assoc {Obj : Type u}
+    {vhs : VertHomSet Obj} {hhs : HorHomSet Obj} {sqs : SquareSet vhs hhs}
+    (ops : DoubleCategoryOps Obj vhs hhs sqs)
+    (laws : DoubleCategoryLaws ops)
+    {A B C D : Obj} (f : hhs A B) (g : hhs B C) (h : hhs C D) :
+    ops.hComp (ops.hComp f g) h = ops.hComp f (ops.hComp g h) :=
+  laws.horLaws.assoc f g h
 
 /-- Helper lemma: vertical identity square law (HEq version). -/
 theorem sqVIdComp_heq {Obj : Type u}
@@ -1254,5 +1318,359 @@ theorem HorTransOps.hComp_assoc_heq {Obj₁ : Type u₁}
     exact laws₂.horLaws.assoc _ _ _
   · intro A C v
     exact sqHAssoc_heq ops₂ laws₂ _ _ _
+
+/-! ### Interchange Law for Transformations
+
+The interchange law relates the Godement product (horizontal composition) and
+vertical composition of vertical transformations. Given transformations
+τ : F ⟹ᵥ G, τ' : G ⟹ᵥ H (between D and E) and σ : K ⟹ᵥ L, σ' : L ⟹ᵥ M
+(between E and E'), the interchange law states:
+
+  (τ ⬝ᵥ τ') ⬝ₕ (σ ⬝ᵥ σ') = (τ ⬝ₕ σ) ⬝ᵥ (τ' ⬝ₕ σ')
+
+This requires:
+- K preserves vertical composition (DoubleFunctorLaws)
+- σ satisfies naturality with respect to vertical morphisms (VertTransNaturality)
+- Associativity of vertical composition in the target category
+-/
+
+/-- HEq congruence for sqVComp in the first argument (left square). -/
+theorem sqVComp_heq_left {Obj : Type u}
+    {vhs : VertHomSet Obj} {hhs : HorHomSet Obj} {sqs : SquareSet vhs hhs}
+    (ops : DoubleCategoryOps Obj vhs hhs sqs)
+    {A B C D E F : Obj}
+    {v₁ v₁' : vhs A C} {v₂ v₂' : vhs B D} {v₃ : vhs C E} {v₄ : vhs D F}
+    {h₁ : hhs A B} {h₂ : hhs C D} {h₃ : hhs E F}
+    {α : sqs v₁ v₂ h₁ h₂} {α' : sqs v₁' v₂' h₁ h₂}
+    (β : sqs v₃ v₄ h₂ h₃)
+    (heq : HEq α α') (hv₁ : v₁ = v₁') (hv₂ : v₂ = v₂') :
+    HEq (ops.sqVComp α β) (ops.sqVComp α' β) := by
+  subst hv₁ hv₂
+  exact heq_of_eq (congrArg (ops.sqVComp · β) (eq_of_heq heq))
+
+/-- HEq congruence for sqVComp in the second argument (right square). -/
+theorem sqVComp_heq_right {Obj : Type u}
+    {vhs : VertHomSet Obj} {hhs : HorHomSet Obj} {sqs : SquareSet vhs hhs}
+    (ops : DoubleCategoryOps Obj vhs hhs sqs)
+    {A B C D E F : Obj}
+    {v₁ : vhs A C} {v₂ : vhs B D} {v₃ v₃' : vhs C E} {v₄ v₄' : vhs D F}
+    {h₁ : hhs A B} {h₂ : hhs C D} {h₃ : hhs E F}
+    (α : sqs v₁ v₂ h₁ h₂)
+    {β : sqs v₃ v₄ h₂ h₃} {β' : sqs v₃' v₄' h₂ h₃}
+    (heq : HEq β β') (hv₃ : v₃ = v₃') (hv₄ : v₄ = v₄') :
+    HEq (ops.sqVComp α β) (ops.sqVComp α β') := by
+  subst hv₃ hv₄
+  exact heq_of_eq (congrArg (ops.sqVComp α) (eq_of_heq heq))
+
+/-- Helper lemma for interchange: the natSquare component HEq.
+
+This proves the square-level interchange law. Given squares α, β in the source,
+and transformations σ, σ' in the target, we show that the two ways of composing
+(using klaws, associativity, and σSqNat) produce HEq squares. -/
+theorem interchange_natSquare {Obj₁ : Type u₁}
+    {vhs₁ : VertHomSet Obj₁} {hhs₁ : HorHomSet Obj₁} {sqs₁ : SquareSet vhs₁ hhs₁}
+    {Obj₂ : Type u₂}
+    {vhs₂ : VertHomSet Obj₂} {hhs₂ : HorHomSet Obj₂} {sqs₂ : SquareSet vhs₂ hhs₂}
+    {Obj₃ : Type u₃}
+    {vhs₃ : VertHomSet Obj₃} {hhs₃ : HorHomSet Obj₃} {sqs₃ : SquareSet vhs₃ hhs₃}
+    (ops₂ : DoubleCategoryOps Obj₂ vhs₂ hhs₂ sqs₂)
+    (ops₃ : DoubleCategoryOps Obj₃ vhs₃ hhs₃ sqs₃)
+    (laws₃ : DoubleCategoryLaws ops₃)
+    {F G H : DoubleFunctorOps vhs₁ hhs₁ sqs₁ vhs₂ hhs₂ sqs₂}
+    {K L M : DoubleFunctorOps vhs₂ hhs₂ sqs₂ vhs₃ hhs₃ sqs₃}
+    (klaws : DoubleFunctorLaws ops₂ ops₃ K)
+    (τ : VertTransOps F G) (τ' : VertTransOps G H)
+    (σ : VertTransOps K L) (σ' : VertTransOps L M)
+    (σNat : VertTransNaturality ops₃ σ)
+    (σSqNat : VertTransSquareNaturality ops₃ σ)
+    {A B : Obj₁} (h : hhs₁ A B) :
+    HEq (ops₃.sqVComp (K.sqMap (ops₂.sqVComp (τ.natSquare h) (τ'.natSquare h)))
+           (ops₃.sqVComp (σ.natSquare (H.horMap h)) (σ'.natSquare (H.horMap h))))
+        (ops₃.sqVComp (ops₃.sqVComp (K.sqMap (τ.natSquare h)) (σ.natSquare (G.horMap h)))
+           (ops₃.sqVComp (L.sqMap (τ'.natSquare h)) (σ'.natSquare (H.horMap h)))) := by
+  -- Abbreviations for readability
+  let α := τ.natSquare h
+  let β := τ'.natSquare h
+  let γ := σ.natSquare (H.horMap h)
+  let δ := σ'.natSquare (H.horMap h)
+  let γ' := σ.natSquare (G.horMap h)
+  have kpres := klaws.map_sqVComp α β
+  have σsqnat := σSqNat β
+  -- Chain of HEq transformations
+  -- Step 1: Apply K preserves sqVComp
+  have s1 : HEq (ops₃.sqVComp (K.sqMap (ops₂.sqVComp α β)) (ops₃.sqVComp γ δ))
+                (ops₃.sqVComp (ops₃.sqVComp (K.sqMap α) (K.sqMap β)) (ops₃.sqVComp γ δ)) :=
+    sqVComp_heq_left ops₃ (ops₃.sqVComp γ δ) kpres (klaws.map_vComp _ _) (klaws.map_vComp _ _)
+  -- Step 2: Associativity on outer
+  have s2 : HEq (ops₃.sqVComp (ops₃.sqVComp (K.sqMap α) (K.sqMap β)) (ops₃.sqVComp γ δ))
+                (ops₃.sqVComp (K.sqMap α) (ops₃.sqVComp (K.sqMap β) (ops₃.sqVComp γ δ))) :=
+    sqVAssoc_heq ops₃ laws₃ (K.sqMap α) (K.sqMap β) (ops₃.sqVComp γ δ)
+  -- Step 3: Associativity on inner
+  have s3 : HEq (ops₃.sqVComp (K.sqMap α) (ops₃.sqVComp (K.sqMap β) (ops₃.sqVComp γ δ)))
+                (ops₃.sqVComp (K.sqMap α) (ops₃.sqVComp (ops₃.sqVComp (K.sqMap β) γ) δ)) :=
+    sqVComp_heq_right ops₃ (K.sqMap α)
+      (HEq.symm (sqVAssoc_heq ops₃ laws₃ (K.sqMap β) γ δ))
+      (Eq.symm (vComp_assoc ops₃ laws₃ _ _ _))
+      (Eq.symm (vComp_assoc ops₃ laws₃ _ _ _))
+  -- Step 4: Apply σSqNat to swap (K.sqMap β) ⬝ᵥ γ with γ' ⬝ᵥ (L.sqMap β)
+  -- Boundary equalities from VertTransNaturality: σ(X) ⬝ᵥ L(v) = K(v) ⬝ᵥ σ(Y)
+  have s4 : HEq (ops₃.sqVComp (K.sqMap α) (ops₃.sqVComp (ops₃.sqVComp (K.sqMap β) γ) δ))
+                (ops₃.sqVComp (K.sqMap α) (ops₃.sqVComp (ops₃.sqVComp γ' (L.sqMap β)) δ)) :=
+    sqVComp_heq_right ops₃ (K.sqMap α)
+      (sqVComp_heq_left ops₃ δ σsqnat (Eq.symm (σNat (τ'.app A))) (Eq.symm (σNat (τ'.app B))))
+      (congrArg (ops₃.vComp · (σ'.app (H.objMap A))) (Eq.symm (σNat (τ'.app A))))
+      (congrArg (ops₃.vComp · (σ'.app (H.objMap B))) (Eq.symm (σNat (τ'.app B))))
+  -- Step 5: Associativity on inner again
+  have s5 : HEq (ops₃.sqVComp (K.sqMap α) (ops₃.sqVComp (ops₃.sqVComp γ' (L.sqMap β)) δ))
+                (ops₃.sqVComp (K.sqMap α) (ops₃.sqVComp γ' (ops₃.sqVComp (L.sqMap β) δ))) :=
+    sqVComp_heq_right ops₃ (K.sqMap α)
+      (sqVAssoc_heq ops₃ laws₃ γ' (L.sqMap β) δ)
+      (vComp_assoc ops₃ laws₃ _ _ _)
+      (vComp_assoc ops₃ laws₃ _ _ _)
+  -- Step 6: Associativity on outer to get final form
+  have s6 : HEq (ops₃.sqVComp (K.sqMap α) (ops₃.sqVComp γ' (ops₃.sqVComp (L.sqMap β) δ)))
+                (ops₃.sqVComp (ops₃.sqVComp (K.sqMap α) γ') (ops₃.sqVComp (L.sqMap β) δ)) :=
+    HEq.symm (sqVAssoc_heq ops₃ laws₃ (K.sqMap α) γ' (ops₃.sqVComp (L.sqMap β) δ))
+  -- Chain all HEq steps
+  exact HEq.trans s1 (HEq.trans s2 (HEq.trans s3 (HEq.trans s4 (HEq.trans s5 s6))))
+
+/-- Helper lemma for interchange: the app component equality. -/
+theorem interchange_app {Obj₁ : Type u₁}
+    {vhs₁ : VertHomSet Obj₁} {hhs₁ : HorHomSet Obj₁} {sqs₁ : SquareSet vhs₁ hhs₁}
+    {Obj₂ : Type u₂}
+    {vhs₂ : VertHomSet Obj₂} {hhs₂ : HorHomSet Obj₂} {sqs₂ : SquareSet vhs₂ hhs₂}
+    {Obj₃ : Type u₃}
+    {vhs₃ : VertHomSet Obj₃} {hhs₃ : HorHomSet Obj₃} {sqs₃ : SquareSet vhs₃ hhs₃}
+    (ops₂ : DoubleCategoryOps Obj₂ vhs₂ hhs₂ sqs₂)
+    (ops₃ : DoubleCategoryOps Obj₃ vhs₃ hhs₃ sqs₃)
+    (laws₃ : DoubleCategoryLaws ops₃)
+    {F G H : DoubleFunctorOps vhs₁ hhs₁ sqs₁ vhs₂ hhs₂ sqs₂}
+    {K L M : DoubleFunctorOps vhs₂ hhs₂ sqs₂ vhs₃ hhs₃ sqs₃}
+    (klaws : DoubleFunctorLaws ops₂ ops₃ K)
+    (τ : VertTransOps F G) (τ' : VertTransOps G H)
+    (σ : VertTransOps K L) (σ' : VertTransOps L M)
+    (σNat : VertTransNaturality ops₃ σ)
+    (A : Obj₁) :
+    ((τ.vComp ops₂ τ').hComp ops₃ (σ.vComp ops₃ σ')).app A
+    = ((τ.hComp ops₃ σ).vComp ops₃ (τ'.hComp ops₃ σ')).app A := by
+  simp only [VertTransOps.hComp, VertTransOps.vComp]
+  rw [klaws.map_vComp]
+  rw [vComp_assoc ops₃ laws₃ (K.vertMap (τ.app A)) (K.vertMap (τ'.app A))
+        (ops₃.vComp (σ.app (H.objMap A)) (σ'.app (H.objMap A)))]
+  rw [← vComp_assoc ops₃ laws₃ (K.vertMap (τ'.app A)) (σ.app (H.objMap A))
+        (σ'.app (H.objMap A))]
+  rw [← σNat (τ'.app A)]
+  rw [vComp_assoc ops₃ laws₃ (σ.app (G.objMap A)) (L.vertMap (τ'.app A))
+        (σ'.app (H.objMap A))]
+  rw [← vComp_assoc ops₃ laws₃ (K.vertMap (τ.app A)) (σ.app (G.objMap A))
+        (ops₃.vComp (L.vertMap (τ'.app A)) (σ'.app (H.objMap A)))]
+
+theorem VertTransOps.interchange {Obj₁ : Type u₁}
+    {vhs₁ : VertHomSet Obj₁} {hhs₁ : HorHomSet Obj₁} {sqs₁ : SquareSet vhs₁ hhs₁}
+    {Obj₂ : Type u₂}
+    {vhs₂ : VertHomSet Obj₂} {hhs₂ : HorHomSet Obj₂} {sqs₂ : SquareSet vhs₂ hhs₂}
+    {Obj₃ : Type u₃}
+    {vhs₃ : VertHomSet Obj₃} {hhs₃ : HorHomSet Obj₃} {sqs₃ : SquareSet vhs₃ hhs₃}
+    (ops₂ : DoubleCategoryOps Obj₂ vhs₂ hhs₂ sqs₂)
+    (ops₃ : DoubleCategoryOps Obj₃ vhs₃ hhs₃ sqs₃)
+    (laws₃ : DoubleCategoryLaws ops₃)
+    {F G H : DoubleFunctorOps vhs₁ hhs₁ sqs₁ vhs₂ hhs₂ sqs₂}
+    {K L M : DoubleFunctorOps vhs₂ hhs₂ sqs₂ vhs₃ hhs₃ sqs₃}
+    (klaws : DoubleFunctorLaws ops₂ ops₃ K)
+    (llaws : DoubleFunctorLaws ops₂ ops₃ L)
+    (τ : VertTransOps F G) (τ' : VertTransOps G H)
+    (σ : VertTransOps K L) (σ' : VertTransOps L M)
+    (σlaws : VertTransLaws ops₂ ops₃ klaws llaws σ) :
+    (τ.vComp ops₂ τ').hComp ops₃ (σ.vComp ops₃ σ')
+    = (τ.hComp ops₃ σ).vComp ops₃ (τ'.hComp ops₃ σ') := by
+  have h_app : ∀ A, ((τ.vComp ops₂ τ').hComp ops₃ (σ.vComp ops₃ σ')).app A
+      = ((τ.hComp ops₃ σ).vComp ops₃ (τ'.hComp ops₃ σ')).app A :=
+    interchange_app ops₂ ops₃ laws₃ klaws τ τ' σ σ' σlaws.naturality
+  apply eq_of_heq
+  apply VertTransOps.heq_mk h_app
+  intro A B h
+  simp only [VertTransOps.vComp, VertTransOps.hComp]
+  exact interchange_natSquare ops₂ ops₃ laws₃ klaws τ τ' σ σ'
+    σlaws.naturality σlaws.squareNaturality h
+
+/-- HEq congruence for sqHComp in the first argument (left square).
+
+For horizontal composition with this layout:
+```
+A ─h₁─▶ B ─h₂─▶ C
+│       │       │
+v₁      v₂      v₃
+▼       ▼       ▼
+D ─h₃─▶ E ─h₄─▶ F
+```
+The squares share the middle vertical boundary v₂. -/
+theorem sqHComp_heq_left {Obj : Type u}
+    {vhs : VertHomSet Obj} {hhs : HorHomSet Obj} {sqs : SquareSet vhs hhs}
+    (ops : DoubleCategoryOps Obj vhs hhs sqs)
+    {A B C D E F : Obj}
+    {v₁ : vhs A D} {v₂ : vhs B E} {v₃ : vhs C F}
+    {h₁ h₁' : hhs A B} {h₂ : hhs B C} {h₃ h₃' : hhs D E} {h₄ : hhs E F}
+    {α : sqs v₁ v₂ h₁ h₃} {α' : sqs v₁ v₂ h₁' h₃'}
+    (β : sqs v₂ v₃ h₂ h₄)
+    (heq : HEq α α') (hh₁ : h₁ = h₁') (hh₃ : h₃ = h₃') :
+    HEq (ops.sqHComp α β) (ops.sqHComp α' β) := by
+  subst hh₁ hh₃
+  exact heq_of_eq (congrArg (ops.sqHComp · β) (eq_of_heq heq))
+
+/-- HEq congruence for sqHComp in the second argument (right square).
+
+For horizontal composition with the layout shown in `sqHComp_heq_left`, squares share
+the middle vertical boundary v₂. -/
+theorem sqHComp_heq_right {Obj : Type u}
+    {vhs : VertHomSet Obj} {hhs : HorHomSet Obj} {sqs : SquareSet vhs hhs}
+    (ops : DoubleCategoryOps Obj vhs hhs sqs)
+    {A B C D E F : Obj}
+    {v₁ : vhs A D} {v₂ : vhs B E} {v₃ : vhs C F}
+    {h₁ : hhs A B} {h₂ h₂' : hhs B C} {h₃ : hhs D E} {h₄ h₄' : hhs E F}
+    (α : sqs v₁ v₂ h₁ h₃)
+    {β : sqs v₂ v₃ h₂ h₄} {β' : sqs v₂ v₃ h₂' h₄'}
+    (heq : HEq β β') (hh₂ : h₂ = h₂') (hh₄ : h₄ = h₄') :
+    HEq (ops.sqHComp α β) (ops.sqHComp α β') := by
+  subst hh₂ hh₄
+  exact heq_of_eq (congrArg (ops.sqHComp α) (eq_of_heq heq))
+
+/-- Helper lemma for horizontal interchange: the natSquare component HEq.
+
+This proves the square-level interchange law for horizontal transformations.
+Given squares α, β in the source, and transformations σ, σ' in the target,
+we show that the two ways of composing produce HEq squares. -/
+theorem interchange_natSquare_hor {Obj₁ : Type u₁}
+    {vhs₁ : VertHomSet Obj₁} {hhs₁ : HorHomSet Obj₁} {sqs₁ : SquareSet vhs₁ hhs₁}
+    {Obj₂ : Type u₂}
+    {vhs₂ : VertHomSet Obj₂} {hhs₂ : HorHomSet Obj₂} {sqs₂ : SquareSet vhs₂ hhs₂}
+    {Obj₃ : Type u₃}
+    {vhs₃ : VertHomSet Obj₃} {hhs₃ : HorHomSet Obj₃} {sqs₃ : SquareSet vhs₃ hhs₃}
+    (ops₂ : DoubleCategoryOps Obj₂ vhs₂ hhs₂ sqs₂)
+    (ops₃ : DoubleCategoryOps Obj₃ vhs₃ hhs₃ sqs₃)
+    (laws₃ : DoubleCategoryLaws ops₃)
+    {F G H : DoubleFunctorOps vhs₁ hhs₁ sqs₁ vhs₂ hhs₂ sqs₂}
+    {K L M : DoubleFunctorOps vhs₂ hhs₂ sqs₂ vhs₃ hhs₃ sqs₃}
+    (klaws : DoubleFunctorLaws ops₂ ops₃ K)
+    (τ : HorTransOps F G) (τ' : HorTransOps G H)
+    (σ : HorTransOps K L) (σ' : HorTransOps L M)
+    (σNat : HorTransNaturality ops₃ σ)
+    (σSqNat : HorTransSquareNaturality ops₃ σ)
+    {A B : Obj₁} (v : vhs₁ A B) :
+    HEq (ops₃.sqHComp (K.sqMap (ops₂.sqHComp (τ.natSquare v) (τ'.natSquare v)))
+           (ops₃.sqHComp (σ.natSquare (H.vertMap v)) (σ'.natSquare (H.vertMap v))))
+        (ops₃.sqHComp (ops₃.sqHComp (K.sqMap (τ.natSquare v)) (σ.natSquare (G.vertMap v)))
+           (ops₃.sqHComp (L.sqMap (τ'.natSquare v)) (σ'.natSquare (H.vertMap v)))) := by
+  let α := τ.natSquare v
+  let β := τ'.natSquare v
+  let γ := σ.natSquare (H.vertMap v)
+  let δ := σ'.natSquare (H.vertMap v)
+  let γ' := σ.natSquare (G.vertMap v)
+  have kpres := klaws.map_sqHComp α β
+  have σsqnat := σSqNat β
+  -- Step 1: Apply K preserves sqHComp
+  have s1 : HEq (ops₃.sqHComp (K.sqMap (ops₂.sqHComp α β)) (ops₃.sqHComp γ δ))
+                (ops₃.sqHComp (ops₃.sqHComp (K.sqMap α) (K.sqMap β)) (ops₃.sqHComp γ δ)) :=
+    sqHComp_heq_left ops₃ (ops₃.sqHComp γ δ) kpres (klaws.map_hComp _ _) (klaws.map_hComp _ _)
+  -- Step 2: Associativity on outer
+  have s2 : HEq (ops₃.sqHComp (ops₃.sqHComp (K.sqMap α) (K.sqMap β)) (ops₃.sqHComp γ δ))
+                (ops₃.sqHComp (K.sqMap α) (ops₃.sqHComp (K.sqMap β) (ops₃.sqHComp γ δ))) :=
+    sqHAssoc_heq ops₃ laws₃ (K.sqMap α) (K.sqMap β) (ops₃.sqHComp γ δ)
+  -- Step 3: Associativity on inner
+  have s3 : HEq (ops₃.sqHComp (K.sqMap α) (ops₃.sqHComp (K.sqMap β) (ops₃.sqHComp γ δ)))
+                (ops₃.sqHComp (K.sqMap α) (ops₃.sqHComp (ops₃.sqHComp (K.sqMap β) γ) δ)) :=
+    sqHComp_heq_right ops₃ (K.sqMap α)
+      (HEq.symm (sqHAssoc_heq ops₃ laws₃ (K.sqMap β) γ δ))
+      (Eq.symm (hComp_assoc ops₃ laws₃ _ _ _))
+      (Eq.symm (hComp_assoc ops₃ laws₃ _ _ _))
+  -- Step 4: Apply σSqNat to swap (K.sqMap β) ⬝ₕ γ with γ' ⬝ₕ (L.sqMap β)
+  have s4 : HEq (ops₃.sqHComp (K.sqMap α) (ops₃.sqHComp (ops₃.sqHComp (K.sqMap β) γ) δ))
+                (ops₃.sqHComp (K.sqMap α) (ops₃.sqHComp (ops₃.sqHComp γ' (L.sqMap β)) δ)) :=
+    sqHComp_heq_right ops₃ (K.sqMap α)
+      (sqHComp_heq_left ops₃ δ σsqnat (Eq.symm (σNat (τ'.app A))) (Eq.symm (σNat (τ'.app B))))
+      (congrArg (ops₃.hComp · (σ'.app (H.objMap A))) (Eq.symm (σNat (τ'.app A))))
+      (congrArg (ops₃.hComp · (σ'.app (H.objMap B))) (Eq.symm (σNat (τ'.app B))))
+  -- Step 5: Associativity on inner again
+  have s5 : HEq (ops₃.sqHComp (K.sqMap α) (ops₃.sqHComp (ops₃.sqHComp γ' (L.sqMap β)) δ))
+                (ops₃.sqHComp (K.sqMap α) (ops₃.sqHComp γ' (ops₃.sqHComp (L.sqMap β) δ))) :=
+    sqHComp_heq_right ops₃ (K.sqMap α)
+      (sqHAssoc_heq ops₃ laws₃ γ' (L.sqMap β) δ)
+      (hComp_assoc ops₃ laws₃ _ _ _)
+      (hComp_assoc ops₃ laws₃ _ _ _)
+  -- Step 6: Associativity on outer to get final form
+  have s6 : HEq (ops₃.sqHComp (K.sqMap α) (ops₃.sqHComp γ' (ops₃.sqHComp (L.sqMap β) δ)))
+                (ops₃.sqHComp (ops₃.sqHComp (K.sqMap α) γ') (ops₃.sqHComp (L.sqMap β) δ)) :=
+    HEq.symm (sqHAssoc_heq ops₃ laws₃ (K.sqMap α) γ' (ops₃.sqHComp (L.sqMap β) δ))
+  exact HEq.trans s1 (HEq.trans s2 (HEq.trans s3 (HEq.trans s4 (HEq.trans s5 s6))))
+
+/-- Helper lemma for horizontal interchange: the app component equality. -/
+theorem interchange_app_hor {Obj₁ : Type u₁}
+    {vhs₁ : VertHomSet Obj₁} {hhs₁ : HorHomSet Obj₁} {sqs₁ : SquareSet vhs₁ hhs₁}
+    {Obj₂ : Type u₂}
+    {vhs₂ : VertHomSet Obj₂} {hhs₂ : HorHomSet Obj₂} {sqs₂ : SquareSet vhs₂ hhs₂}
+    {Obj₃ : Type u₃}
+    {vhs₃ : VertHomSet Obj₃} {hhs₃ : HorHomSet Obj₃} {sqs₃ : SquareSet vhs₃ hhs₃}
+    (ops₂ : DoubleCategoryOps Obj₂ vhs₂ hhs₂ sqs₂)
+    (ops₃ : DoubleCategoryOps Obj₃ vhs₃ hhs₃ sqs₃)
+    (laws₃ : DoubleCategoryLaws ops₃)
+    {F G H : DoubleFunctorOps vhs₁ hhs₁ sqs₁ vhs₂ hhs₂ sqs₂}
+    {K L M : DoubleFunctorOps vhs₂ hhs₂ sqs₂ vhs₃ hhs₃ sqs₃}
+    (klaws : DoubleFunctorLaws ops₂ ops₃ K)
+    (τ : HorTransOps F G) (τ' : HorTransOps G H)
+    (σ : HorTransOps K L) (σ' : HorTransOps L M)
+    (σNat : HorTransNaturality ops₃ σ)
+    (A : Obj₁) :
+    ((τ.hComp ops₂ τ').vComp ops₃ (σ.hComp ops₃ σ')).app A
+    = ((τ.vComp ops₃ σ).hComp ops₃ (τ'.vComp ops₃ σ')).app A := by
+  simp only [HorTransOps.vComp, HorTransOps.hComp]
+  rw [klaws.map_hComp]
+  rw [hComp_assoc ops₃ laws₃ (K.horMap (τ.app A)) (K.horMap (τ'.app A))
+        (ops₃.hComp (σ.app (H.objMap A)) (σ'.app (H.objMap A)))]
+  rw [← hComp_assoc ops₃ laws₃ (K.horMap (τ'.app A)) (σ.app (H.objMap A))
+        (σ'.app (H.objMap A))]
+  rw [← σNat (τ'.app A)]
+  rw [hComp_assoc ops₃ laws₃ (σ.app (G.objMap A)) (L.horMap (τ'.app A))
+        (σ'.app (H.objMap A))]
+  rw [← hComp_assoc ops₃ laws₃ (K.horMap (τ.app A)) (σ.app (G.objMap A))
+        (ops₃.hComp (L.horMap (τ'.app A)) (σ'.app (H.objMap A)))]
+
+/-- Interchange law for horizontal transformations.
+
+For horizontal transformations τ, τ' (between F, G, H in D) and σ, σ'
+(between K, L, M from E to E'), the interchange law states:
+
+  (τ ⬝ₕ τ') ⬝ᵥ (σ ⬝ₕ σ') = (τ ⬝ᵥ σ) ⬝ₕ (τ' ⬝ᵥ σ')
+
+This requires:
+- K preserves horizontal composition (DoubleFunctorLaws)
+- σ satisfies naturality with respect to horizontal morphisms (HorTransNaturality)
+- σ satisfies square naturality (HorTransSquareNaturality)
+- Associativity of horizontal composition in the target category -/
+theorem HorTransOps.interchange {Obj₁ : Type u₁}
+    {vhs₁ : VertHomSet Obj₁} {hhs₁ : HorHomSet Obj₁} {sqs₁ : SquareSet vhs₁ hhs₁}
+    {Obj₂ : Type u₂}
+    {vhs₂ : VertHomSet Obj₂} {hhs₂ : HorHomSet Obj₂} {sqs₂ : SquareSet vhs₂ hhs₂}
+    {Obj₃ : Type u₃}
+    {vhs₃ : VertHomSet Obj₃} {hhs₃ : HorHomSet Obj₃} {sqs₃ : SquareSet vhs₃ hhs₃}
+    (ops₂ : DoubleCategoryOps Obj₂ vhs₂ hhs₂ sqs₂)
+    (ops₃ : DoubleCategoryOps Obj₃ vhs₃ hhs₃ sqs₃)
+    (laws₃ : DoubleCategoryLaws ops₃)
+    {F G H : DoubleFunctorOps vhs₁ hhs₁ sqs₁ vhs₂ hhs₂ sqs₂}
+    {K L M : DoubleFunctorOps vhs₂ hhs₂ sqs₂ vhs₃ hhs₃ sqs₃}
+    (klaws : DoubleFunctorLaws ops₂ ops₃ K)
+    (llaws : DoubleFunctorLaws ops₂ ops₃ L)
+    (τ : HorTransOps F G) (τ' : HorTransOps G H)
+    (σ : HorTransOps K L) (σ' : HorTransOps L M)
+    (σlaws : HorTransLaws ops₂ ops₃ klaws llaws σ) :
+    (τ.hComp ops₂ τ').vComp ops₃ (σ.hComp ops₃ σ')
+    = (τ.vComp ops₃ σ).hComp ops₃ (τ'.vComp ops₃ σ') := by
+  have h_app : ∀ A, ((τ.hComp ops₂ τ').vComp ops₃ (σ.hComp ops₃ σ')).app A
+      = ((τ.vComp ops₃ σ).hComp ops₃ (τ'.vComp ops₃ σ')).app A :=
+    interchange_app_hor ops₂ ops₃ laws₃ klaws τ τ' σ σ' σlaws.naturality
+  apply eq_of_heq
+  apply HorTransOps.heq_mk h_app
+  intro A B v
+  simp only [HorTransOps.hComp, HorTransOps.vComp]
+  exact interchange_natSquare_hor ops₂ ops₃ laws₃ klaws τ τ' σ σ'
+    σlaws.naturality σlaws.squareNaturality v
 
 end GebLean
