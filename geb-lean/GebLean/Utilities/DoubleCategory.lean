@@ -2614,4 +2614,152 @@ theorem HorTransOps.vComp_laws {Obj₁ : Type u₁}
       (laws₃.sqLaws.interchange _ _ _ _).symm
     exact HEq.trans s5 (heq_of_eq s6)
 
+/-! ## Companions and Conjoints
+
+In a double category, companions and conjoints relate vertical and horizontal
+morphisms. Given a vertical morphism `v : A →ᵥ B`:
+
+- A **companion** is a horizontal morphism `v* : A →ₕ B` (same direction)
+  with binding squares witnessing that v and v* behave like "the same morphism"
+  viewed in different directions.
+
+- A **conjoint** is a horizontal morphism `v_* : B →ₕ A` (opposite direction)
+  with binding squares witnessing a dual relationship.
+
+The binding squares for a companion `v*` of `v : A →ᵥ B` are:
+
+```text
+  φ (phi):              ψ (psi):
+  A ─hId─▶ A            A ──v*──▶ B
+  │        │            │         │
+ vId       v            v        vId
+  ▼        ▼            ▼         ▼
+  A ──v*─▶ B            B ─hId──▶ B
+```
+
+The companion identity states: φ ⬝ᵥ ψ ≅ sqHorId v (using HEq since boundaries
+differ by identity laws).
+
+For conjoints, the binding squares for `v_*` of `v : A →ᵥ B` are:
+
+```text
+  ε (epsilon):          η (eta):
+  B ──v_*──▶ A          A ──hId──▶ A
+  │          │          │          │
+ vId         v          v         vId
+  ▼          ▼          ▼          ▼
+  B ──hId──▶ B          B ──v_*──▶ A
+```
+
+The squares compose **horizontally** (not vertically), and the conjoint identity
+states: ε ⬝ₕ η ≅ sqVertId v_* (using HEq since boundaries differ by identity laws)
+-/
+
+/-- A companion for a vertical morphism v : A →ᵥ B is a horizontal morphism
+v* : A →ₕ B together with binding squares satisfying coherence.
+
+The binding squares compose vertically. The identity condition uses HEq because
+sqVComp phi psi has vertical boundaries (vComp (vId A) v, vComp v (vId B)) while
+sqHorId v has boundaries (v, v), which are propositionally but not definitionally
+equal. -/
+structure Companion {Obj : Type u}
+    {vhs : VertHomSet Obj} {hhs : HorHomSet Obj} {sqs : SquareSet vhs hhs}
+    (ops : DoubleCategoryOps Obj vhs hhs sqs)
+    {A B : Obj} (v : vhs A B) where
+  /-- The companion horizontal morphism -/
+  hor : hhs A B
+  /-- The φ binding square: sqs (vId A) v (hId A) hor -/
+  phi : sqs (ops.vId A) v (ops.hId A) hor
+  /-- The ψ binding square: sqs v (vId B) hor (hId B) -/
+  psi : sqs v (ops.vId B) hor (ops.hId B)
+  /-- Companion identity: φ ⬝ᵥ ψ ≅ sqHorId v (HEq since boundaries differ) -/
+  identity : HEq (ops.sqVComp phi psi) (ops.sqHorId v)
+
+/-- A conjoint for a vertical morphism v : A →ᵥ B is a horizontal morphism
+v_* : B →ₕ A (opposite direction) together with binding squares.
+
+The binding squares compose horizontally. The identity condition uses HEq because
+sqHComp epsilon eta has horizontal boundaries (hComp hor (hId A), hComp (hId B) hor)
+while sqVertId hor has boundaries (hor, hor), which are propositionally but not
+definitionally equal. -/
+structure Conjoint {Obj : Type u}
+    {vhs : VertHomSet Obj} {hhs : HorHomSet Obj} {sqs : SquareSet vhs hhs}
+    (ops : DoubleCategoryOps Obj vhs hhs sqs)
+    {A B : Obj} (v : vhs A B) where
+  /-- The conjoint horizontal morphism (opposite direction) -/
+  hor : hhs B A
+  /-- The ε binding square: sqs (vId B) v hor (hId B) -/
+  epsilon : sqs (ops.vId B) v hor (ops.hId B)
+  /-- The η binding square: sqs v (vId A) (hId A) hor -/
+  eta : sqs v (ops.vId A) (ops.hId A) hor
+  /-- Conjoint identity: ε ⬝ₕ η ≅ sqVertId hor (HEq since boundaries differ) -/
+  identity : HEq (ops.sqHComp epsilon eta) (ops.sqVertId hor)
+
+/-- A double category has all companions if every vertical morphism has one. -/
+class HasCompanions {Obj : Type u}
+    {vhs : VertHomSet Obj} {hhs : HorHomSet Obj} {sqs : SquareSet vhs hhs}
+    (ops : DoubleCategoryOps Obj vhs hhs sqs) where
+  /-- Every vertical morphism has a companion -/
+  companion : ∀ {A B : Obj} (v : vhs A B), Companion ops v
+
+/-- A double category has all conjoints if every vertical morphism has one. -/
+class HasConjoints {Obj : Type u}
+    {vhs : VertHomSet Obj} {hhs : HorHomSet Obj} {sqs : SquareSet vhs hhs}
+    (ops : DoubleCategoryOps Obj vhs hhs sqs) where
+  /-- Every vertical morphism has a conjoint -/
+  conjoint : ∀ {A B : Obj} (v : vhs A B), Conjoint ops v
+
+namespace Companion
+
+variable {Obj : Type u}
+variable {vhs : VertHomSet Obj} {hhs : HorHomSet Obj} {sqs : SquareSet vhs hhs}
+variable {ops : DoubleCategoryOps Obj vhs hhs sqs}
+variable {laws : DoubleCategoryLaws ops}
+
+/-- The companion of a vertical identity is the horizontal identity. -/
+def ofVId (A : Obj) (laws : DoubleCategoryLaws ops) : Companion ops (ops.vId A) where
+  hor := ops.hId A
+  phi := ops.sqVertId (ops.hId A)
+  psi := ops.sqVertId (ops.hId A)
+  identity := by
+    -- sqVIdComp says: sqVComp (sqVertId h) α ≅ α
+    have step1 : HEq (ops.sqVComp (ops.sqVertId (ops.hId A)) (ops.sqVertId (ops.hId A)))
+                     (ops.sqVertId (ops.hId A)) :=
+      sqVIdComp_heq ops laws (ops.sqVertId (ops.hId A))
+    -- idOnId says: sqHorId (vId A) = sqVertId (hId A)
+    have step2 : ops.sqHorId (ops.vId A) = ops.sqVertId (ops.hId A) := laws.sqLaws.idOnId A
+    exact HEq.trans step1 (heq_of_eq step2.symm)
+
+end Companion
+
+namespace Conjoint
+
+variable {Obj : Type u}
+variable {vhs : VertHomSet Obj} {hhs : HorHomSet Obj} {sqs : SquareSet vhs hhs}
+variable {ops : DoubleCategoryOps Obj vhs hhs sqs}
+variable {laws : DoubleCategoryLaws ops}
+
+/-- The conjoint of a vertical identity is the horizontal identity. -/
+def ofVId (A : Obj) (laws : DoubleCategoryLaws ops) : Conjoint ops (ops.vId A) where
+  hor := ops.hId A
+  epsilon := ops.sqVertId (ops.hId A)
+  eta := ops.sqVertId (ops.hId A)
+  identity := by
+    -- horIdHComp says: sqHComp (sqVertId h) (sqVertId h') = sqVertId (hComp h h')
+    have step1 : ops.sqHComp (ops.sqVertId (ops.hId A)) (ops.sqVertId (ops.hId A)) =
+                 ops.sqVertId (ops.hComp (ops.hId A) (ops.hId A)) :=
+      laws.sqLaws.horIdHComp (ops.hId A) (ops.hId A)
+    -- Horizontal identity law: hComp (hId A) (hId A) = hId A
+    have step2 : ops.hComp (ops.hId A) (ops.hId A) = ops.hId A :=
+      laws.horLaws.id_laws.id_comp (ops.hId A)
+    -- Use recOn for dependent type: sqVertId (hComp ...) ≅ sqVertId (hId A)
+    have step3 : HEq (ops.sqVertId (ops.hComp (ops.hId A) (ops.hId A)))
+                     (ops.sqVertId (ops.hId A)) :=
+      step2.symm.recOn (motive := fun h' _ =>
+        HEq (ops.sqVertId h') (ops.sqVertId (ops.hId A))) HEq.rfl
+    -- Combine: sqHComp ... ≅ sqVertId (hId A)
+    exact HEq.trans (heq_of_eq step1) step3
+
+end Conjoint
+
 end GebLean

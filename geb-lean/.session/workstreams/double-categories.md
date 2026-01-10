@@ -56,8 +56,13 @@ None currently.
 
 ### Companions and Conjoints
 
-- [ ] Define companion structure
-- [ ] Define conjoint structure
+- [x] Define Companion structure
+- [x] Define Conjoint structure
+- [x] HasCompanions class
+- [x] HasConjoints class
+- [x] Companion.ofVId (companion of vertical identity)
+- [x] Conjoint.ofVId (conjoint of vertical identity)
+- [x] Documentation with diagrams
 - [ ] Prove relationship between companions and conjoints
 - [ ] Connection to adjunctions
 

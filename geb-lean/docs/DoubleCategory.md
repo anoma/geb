@@ -192,17 +192,132 @@ The two ways to compose must be equal:
 (α ⬝ₕ α') ⬝ᵥ (β ⬝ₕ β') = (α ⬝ᵥ β) ⬝ₕ (α' ⬝ᵥ β')
 ```
 
+## Companions and Conjoints
+
+Companions and conjoints relate vertical and horizontal morphisms in a
+double category. They provide a way to "translate" between the two kinds
+of morphisms while preserving structure.
+
+### Companions
+
+A companion for a vertical morphism `v : A →ᵥ B` is a horizontal morphism
+`v* : A →ₕ B` going in the same direction, together with two binding
+squares satisfying an identity condition.
+
+```text
+        hId A             hor
+     A ───────→ A      A ───────→ B
+     |         |       |         |
+vId A│    φ    │v    v │    ψ    │ vId B
+     ↓         ↓       ↓         ↓
+     A ───────→ B      B ───────→ B
+        hor              hId B
+```
+
+The binding squares φ and ψ compose vertically:
+
+```text
+        hId A
+     A ───────→ A
+     |         |
+vId A│    φ    │v
+     ↓         ↓
+     A ───────→ B
+     |   hor   |
+   v │    ψ    │ vId B
+     ↓         ↓
+     B ───────→ B
+        hId B
+```
+
+The identity condition states: `φ ⬝ᵥ ψ ≅ sqHorId v`.
+
+This uses heterogeneous equality (HEq) because the boundaries differ:
+`φ ⬝ᵥ ψ` has vertical boundaries `(vComp (vId A) v, vComp v (vId B))`
+while `sqHorId v` has boundaries `(v, v)`. These are propositionally
+equal by the identity laws but not definitionally equal.
+
+Implementation:
+
+- `Companion` - Structure with `hor`, `phi`, `psi`, and `identity` fields
+- `HasCompanions` - Class for double categories where every vertical
+  morphism has a companion
+- `Companion.ofVId` - The companion of a vertical identity is the
+  horizontal identity
+
+### Conjoints
+
+A conjoint for a vertical morphism `v : A →ᵥ B` is a horizontal morphism
+`v_* : B →ₕ A` going in the opposite direction, together with two binding
+squares satisfying an identity condition.
+
+```text
+        hor             hId A
+     B ───────→ A      A ───────→ A
+     |         |       |         |
+vId B│    ε    │v    v │    η    │ vId A
+     ↓         ↓       ↓         ↓
+     B ───────→ B      B ───────→ A
+        hId B             hor
+```
+
+The binding squares ε and η compose horizontally:
+
+```text
+           hor             hId A
+        B ───────→ A ───────→ A
+        |         |         |
+   vId B│    ε    │v   η    │ vId A
+        ↓         ↓         ↓
+        B ───────→ B ───────→ A
+           hId B       hor
+```
+
+The identity condition states: `ε ⬝ₕ η ≅ sqVertId hor`.
+
+This again uses HEq because `ε ⬝ₕ η` has horizontal boundaries
+`(hComp hor (hId A), hComp (hId B) hor)` while `sqVertId hor` has
+boundaries `(hor, hor)`.
+
+Implementation:
+
+- `Conjoint` - Structure with `hor`, `epsilon`, `eta`, and `identity`
+  fields
+- `HasConjoints` - Class for double categories where every vertical
+  morphism has a conjoint
+- `Conjoint.ofVId` - The conjoint of a vertical identity is the
+  horizontal identity
+
+### Companion vs Conjoint
+
+The distinction between companions and conjoints lies in:
+
+1. Direction: Companions go the same direction as the vertical morphism
+   (A →ₕ B), conjoints go the opposite direction (B →ₕ A)
+
+2. Composition: Companion binding squares compose vertically, conjoint
+   binding squares compose horizontally
+
+3. Duality: In a double category with duality, conjoints in one
+   direction correspond to companions in the opposite direction
+
+### Example: Identity Morphisms
+
+For any vertical identity `vId A`, both the companion and conjoint are
+the horizontal identity `hId A`:
+
+- `Companion.ofVId A` gives companion `hId A` with binding squares
+  `sqVertId (hId A)` for both φ and ψ
+- `Conjoint.ofVId A` gives conjoint `hId A` with binding squares
+  `sqVertId (hId A)` for both ε and η
+
+The identity conditions use the `sqVIdComp` law (for companions) and
+`horIdHComp` law (for conjoints) to verify that composing identity
+squares yields the appropriate identity square.
+
 ## Future Extensions
 
 The following extensions are planned for future development:
-
-### Companions and Conjoints
-
-A companion pair relates horizontal and vertical morphisms. Given a
-vertical morphism `v : A →ᵥ B`, a companion is a horizontal morphism
-`v* : A →ₕ B` with squares witnessing a specific relationship.
-
-Conjoints are the dual notion.
 
 ### Modifications
 
