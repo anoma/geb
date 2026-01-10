@@ -76,7 +76,50 @@ applied to `P.toCurriedFunctor`:
 - `PHOASExpr`: Recursive PHOAS expression type
 - `phoasAlgMap`: Algebra structure map
 
+### Generalized Polynomial Profunctors (GenPolyProf)
+
+A two-layer generalization combining Dirichlet and exponential variance:
+
+#### GenPolyProf Core
+
+- `GenPolyProf`: Generalized polynomial profunctor with:
+  - `A`: Dirichlet positions
+  - `S`: Dirichlet arities (`A → Type u`)
+  - `B`: Exponential positions (`A → Type u`)
+  - `N, T`: Negative and positive exponential arities
+
+- `GenPolyProf.eval V W`: Evaluation formula
+  `P(V,W) = Σ (a : A), (V → S a) × Σ (b : B a), ((N a b → V) → (T a b → W))`
+
+#### GenPolyProf Actions
+
+- `innerEval`: The inner exponential part at a fixed Dirichlet position
+- `covAction`: Covariant action (acts on exponential layer)
+- `contravAction`: Contravariant action (acts on both layers)
+- `bimap`: Combined bifunctorial action
+- Identity and composition laws, interchange law
+
+#### Embeddings
+
+- `PolyProf.toGen`: Embeds `PolyProf` into `GenPolyProf` (trivial Dirichlet)
+- `PolyProf.toGenEvalEquiv`: Proves evaluation is preserved
+- `DirichletFunctor`: Coproducts of contravariant representables
+- `DirichletFunctor.toGenPolyProf`: Embeds Dirichlet into `GenPolyProf`
+- `DirichletFunctor.toGenEvalEquiv`: Proves `D.eval V × W` form
+
+#### Category Structure
+
+- `GenPolyProf.Hom`: Natural transformations with:
+  - `app`: Component maps `P.eval V W → Q.eval V W`
+  - `naturality_contrav`: Contravariant naturality
+  - `naturality_cov`: Covariant naturality
+- `GenPolyProf.Hom.id`: Identity transformation
+- `GenPolyProf.Hom.comp`: Composition
+- `Category GenPolyProf.{u}`: Category instance
+
 ## Architecture Notes
+
+### Original PolyProf
 
 The polynomial profunctor `P(V,W) = Σ_b ((arity_neg b → V) → (arity_pos b → W))`
 captures datatypes where each constructor has both contravariant inputs
@@ -92,6 +135,24 @@ The diagonal elements generalize F-algebras/coalgebras:
 - For `AlgProf F`, diagonal elements are exactly F-algebras
 - For `CoalgProf F`, diagonal elements are exactly F-coalgebras
 - For general polynomial profunctors, they capture "bi-algebras"
+
+### Two-Layer Generalization (GenPolyProf)
+
+`GenPolyProf` combines two variance mechanisms:
+
+1. **Dirichlet layer**: `Σ (a : A), (V → S a)` provides direct contravariance
+   through function types into S. This captures coproducts of contravariant
+   representables (Dirichlet functors).
+
+2. **Exponential layer**: `Σ (b : B a), ((N a b → V) → (T a b → W))` provides
+   contravariance through nesting in an exponential. This is the original
+   `PolyProf` mechanism.
+
+The combined form `Σ a, (V → S a) × Σ b, ((N a b → V) → (T a b → W))`:
+
+- Subsumes `PolyProf` (set A = Unit, S = Unit)
+- Subsumes Dirichlet functors as profunctors (set B = Unit, N = Empty, T = Unit)
+- Captures a richer class of profunctors
 
 ## Connection to Existing Code
 

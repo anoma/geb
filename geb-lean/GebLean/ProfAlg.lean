@@ -506,4 +506,319 @@ def PolyProf.toPFunctor (P : PolyProf.{u}) (_ : P.IsPurelyCovariant) :
 
 end PurelyCovariant
 
+/-! ## Generalized Polynomial Profunctors
+
+A generalized polynomial profunctor has a two-layer structure:
+1. An outer Dirichlet layer with positions `A` and arities `S : A → Type`
+2. An inner exponential layer with positions `B : A → Type` and arities
+   `N, T : (a : A) → B a → Type`
+
+The evaluation formula is:
+```
+P(V, W) = Σ (a : A), (V → S a) × Σ (b : B a), ((N a b → V) → (T a b → W))
+```
+
+This generalizes both:
+- The original `PolyProf` (when `A = Unit` and `S = Unit`)
+- Pure Dirichlet functors as profunctors (when `B a = Unit`, `N = Empty`)
+-/
+
+section GenPolyProf
+
+/--
+A generalized polynomial profunctor with both Dirichlet and exponential layers.
+
+The evaluation formula combines:
+- Dirichlet structure: `Σ_a (V → S a)` for contravariance via direct function types
+- Exponential structure: `((N → V) → (T → W))` for contravariance via nesting
+-/
+structure GenPolyProf where
+  /-- Dirichlet positions -/
+  A : Type u
+  /-- Dirichlet arities: for each position a, the type that V maps into -/
+  S : A → Type u
+  /-- Exponential positions: for each Dirichlet position, a type of inner positions -/
+  B : A → Type u
+  /-- Negative exponential arities -/
+  N : (a : A) → B a → Type u
+  /-- Positive exponential arities -/
+  T : (a : A) → B a → Type u
+
+namespace GenPolyProf
+
+variable (P : GenPolyProf.{u})
+
+/--
+The inner exponential part of the evaluation at a fixed Dirichlet position.
+-/
+def innerEval (a : P.A) (V W : Type u) : Type u :=
+  Σ (b : P.B a), ((P.N a b → V) → (P.T a b → W))
+
+/--
+Evaluate a generalized polynomial profunctor at types V and W.
+
+`P.eval V W = Σ (a : A), (V → S a) × Σ (b : B a), ((N a b → V) → (T a b → W))`
+-/
+def eval (V W : Type u) : Type u :=
+  Σ (a : P.A), (V → P.S a) × P.innerEval a V W
+
+/--
+The covariant action on the inner exponential part.
+-/
+def innerCovAction {a : P.A} {V W W' : Type u} (g : W → W') :
+    P.innerEval a V W → P.innerEval a V W' :=
+  fun ⟨b, h⟩ => ⟨b, fun k => g ∘ h k⟩
+
+/--
+The contravariant action on the inner exponential part.
+-/
+def innerContravAction {a : P.A} {V V' W : Type u} (f : V → V') :
+    P.innerEval a V' W → P.innerEval a V W :=
+  fun ⟨b, h⟩ => ⟨b, fun k => h (f ∘ k)⟩
+
+/--
+The covariant action of a generalized polynomial profunctor.
+Given `g : W → W'`, maps `P.eval V W → P.eval V W'`.
+-/
+def covAction {V W W' : Type u} (g : W → W') :
+    P.eval V W → P.eval V W' :=
+  fun ⟨a, f, inner⟩ => ⟨a, f, P.innerCovAction g inner⟩
+
+/--
+The contravariant action of a generalized polynomial profunctor.
+Given `f : V → V'`, maps `P.eval V' W → P.eval V W`.
+
+This acts on both layers:
+- Dirichlet layer: postcompose `f` with the function `V' → S a`
+- Exponential layer: precompose with `f` in the `(N → V') → ...` part
+-/
+def contravAction {V V' W : Type u} (f : V → V') :
+    P.eval V' W → P.eval V W :=
+  fun ⟨a, s, inner⟩ => ⟨a, s ∘ f, P.innerContravAction f inner⟩
+
+@[simp]
+lemma covAction_id (V W : Type u) :
+    P.covAction (id : W → W) = (id : P.eval V W → P.eval V W) := by
+  funext ⟨a, f, b, h⟩
+  simp only [covAction, innerCovAction, id_eq]
+  rfl
+
+@[simp]
+lemma contravAction_id (V W : Type u) :
+    P.contravAction (id : V → V) = (id : P.eval V W → P.eval V W) := by
+  funext ⟨a, f, b, h⟩
+  simp only [contravAction, innerContravAction, id_eq]
+  rfl
+
+@[simp]
+lemma covAction_comp {V W W' W'' : Type u} (g : W → W') (g' : W' → W'') :
+    P.covAction (g' ∘ g) = P.covAction g' ∘ P.covAction (V := V) g := by
+  funext ⟨a, f, b, h⟩
+  rfl
+
+@[simp]
+lemma contravAction_comp {V V' V'' W : Type u} (f : V → V') (f' : V' → V'') :
+    P.contravAction (f' ∘ f) =
+    P.contravAction f ∘ P.contravAction (W := W) f' := by
+  funext ⟨a, s, b, h⟩
+  simp only [contravAction, innerContravAction, Function.comp_apply,
+    Function.comp_assoc]
+
+/--
+The interchange law: covariant and contravariant actions commute.
+-/
+@[simp]
+lemma covAction_contravAction_comm {V V' W W' : Type u}
+    (f : V → V') (g : W → W') (x : P.eval V' W) :
+    P.covAction g (P.contravAction f x) =
+    P.contravAction f (P.covAction g x) := by
+  obtain ⟨a, s, b, h⟩ := x
+  simp only [covAction, contravAction, innerCovAction, innerContravAction]
+
+/--
+The bifunctorial action of a generalized polynomial profunctor.
+-/
+def bimap {V V' W W' : Type u} (f : V' → V) (g : W → W') :
+    P.eval V W → P.eval V' W' :=
+  fun ⟨a, s, b, h⟩ => ⟨a, s ∘ f, b, fun k => g ∘ h (f ∘ k)⟩
+
+end GenPolyProf
+
+/-! ### Natural Transformations between GenPolyProf
+
+A natural transformation between generalized polynomial profunctors is a
+family of functions `η_{V,W} : P.eval V W → Q.eval V W` that is natural in
+both arguments: contravariant in V and covariant in W.
+-/
+
+/--
+A natural transformation between two generalized polynomial profunctors.
+
+The naturality conditions are:
+- `η ∘ P.contravAction f = Q.contravAction f ∘ η` (contravariant naturality)
+- `η ∘ P.covAction g = Q.covAction g ∘ η` (covariant naturality)
+-/
+structure GenPolyProf.Hom (P Q : GenPolyProf.{u}) where
+  /-- The component maps -/
+  app : ∀ (V W : Type u), P.eval V W → Q.eval V W
+  /-- Naturality in the contravariant argument -/
+  naturality_contrav : ∀ {V V' W : Type u} (f : V → V') (x : P.eval V' W),
+    app V W (P.contravAction f x) = Q.contravAction f (app V' W x)
+  /-- Naturality in the covariant argument -/
+  naturality_cov : ∀ {V W W' : Type u} (g : W → W') (x : P.eval V W),
+    app V W' (P.covAction g x) = Q.covAction g (app V W x)
+
+namespace GenPolyProf.Hom
+
+variable {P Q R : GenPolyProf.{u}}
+
+/--
+The identity natural transformation.
+-/
+@[simps]
+def id (P : GenPolyProf.{u}) : P.Hom P where
+  app := fun _ _ => _root_.id
+  naturality_contrav := fun _ _ => rfl
+  naturality_cov := fun _ _ => rfl
+
+/--
+Composition of natural transformations.
+-/
+@[simps]
+def comp (η : P.Hom Q) (θ : Q.Hom R) : P.Hom R where
+  app := fun V W => θ.app V W ∘ η.app V W
+  naturality_contrav := fun f x => by
+    simp only [Function.comp_apply]
+    rw [η.naturality_contrav, θ.naturality_contrav]
+  naturality_cov := fun g x => by
+    simp only [Function.comp_apply]
+    rw [η.naturality_cov, θ.naturality_cov]
+
+end GenPolyProf.Hom
+
+/--
+The category of generalized polynomial profunctors.
+-/
+instance : Category GenPolyProf.{u} where
+  Hom := GenPolyProf.Hom
+  id := GenPolyProf.Hom.id
+  comp := fun f g => GenPolyProf.Hom.comp f g
+  id_comp := fun f => by
+    cases f
+    simp only [GenPolyProf.Hom.id, GenPolyProf.Hom.comp]
+    rfl
+  comp_id := fun f => by
+    cases f
+    simp only [GenPolyProf.Hom.id, GenPolyProf.Hom.comp]
+    rfl
+  assoc := fun f g h => by
+    cases f; cases g; cases h
+    simp only [GenPolyProf.Hom.comp]
+    rfl
+
+/-! ### Embedding PolyProf into GenPolyProf
+
+The original `PolyProf` embeds into `GenPolyProf` by setting:
+- `A = Unit` (single Dirichlet position)
+- `S () = PUnit` (trivial Dirichlet arity)
+- `B () = P.B` (positions become exponential positions)
+- `N () = P.arity_neg` (negative arities)
+- `T () = P.arity_pos` (positive arities)
+-/
+
+/--
+Embed a polynomial profunctor into the generalized form.
+-/
+def PolyProf.toGen (P : PolyProf.{u}) : GenPolyProf.{u} where
+  A := PUnit.{u+1}
+  S := fun _ => PUnit.{u+1}
+  B := fun _ => P.B
+  N := fun _ => P.arity_neg
+  T := fun _ => P.arity_pos
+
+/--
+The evaluation of a generalized polynomial profunctor arising from `PolyProf`
+is equivalent to the original evaluation.
+-/
+def PolyProf.toGenEvalEquiv (P : PolyProf.{u}) (V W : Type u) :
+    P.toGen.eval V W ≃ P.eval V W where
+  toFun := fun ⟨_, _, b, h⟩ => ⟨b, h⟩
+  invFun := fun ⟨b, h⟩ => ⟨PUnit.unit, fun _ => PUnit.unit, b, h⟩
+  left_inv := fun ⟨a, f, b, h⟩ => by simp only; congr
+  right_inv := fun ⟨b, h⟩ => rfl
+
+/-! ### Dirichlet Profunctors
+
+A Dirichlet functor `D(V) = Σ_a (V → S a)` can be viewed as a profunctor
+`P(V, W) = D(V) × W = Σ_a (V → S a) × W`.
+
+This embeds into `GenPolyProf` by setting:
+- `A` = the Dirichlet positions
+- `S` = the Dirichlet arities
+- `B a = Unit` (single exponential position per Dirichlet position)
+- `N a () = Empty` (no negative exponential arity)
+- `T a () = Unit` (trivial positive exponential arity, giving `Unit → W ≃ W`)
+-/
+
+/--
+A Dirichlet functor on Type.
+
+`D(V) = Σ (a : A), (V → S a)`
+
+This is the free coproduct completion by contravariant representables.
+-/
+structure DirichletFunctor where
+  /-- Positions -/
+  A : Type u
+  /-- Arities at each position -/
+  S : A → Type u
+
+namespace DirichletFunctor
+
+variable (D : DirichletFunctor.{u})
+
+/--
+Evaluate a Dirichlet functor at a type V.
+-/
+def eval (V : Type u) : Type u :=
+  Σ (a : D.A), (V → D.S a)
+
+/--
+The contravariant action of a Dirichlet functor.
+-/
+def contravAction {V V' : Type u} (f : V → V') :
+    D.eval V' → D.eval V :=
+  fun ⟨a, g⟩ => ⟨a, g ∘ f⟩
+
+/--
+View a Dirichlet functor as a profunctor `P(V, W) = D(V) × W`.
+-/
+def toGenPolyProf : GenPolyProf.{u} where
+  A := D.A
+  S := D.S
+  B := fun _ => PUnit.{u+1}
+  N := fun _ _ => PEmpty.{u+1}
+  T := fun _ _ => PUnit.{u+1}
+
+/--
+The evaluation of the Dirichlet profunctor is `D(V) × W`.
+-/
+def toGenEvalEquiv (V W : Type u) :
+    D.toGenPolyProf.eval V W ≃ D.eval V × W where
+  toFun := fun ⟨a, f, _, h⟩ => (⟨a, f⟩, h (fun e => PEmpty.elim e) PUnit.unit)
+  invFun := fun (⟨a, f⟩, w) => ⟨a, f, PUnit.unit, fun _ _ => w⟩
+  left_inv := fun ⟨a, f, _, h⟩ => by
+    simp only
+    congr
+    funext k p
+    cases p
+    congr
+    funext e
+    exact PEmpty.elim e
+  right_inv := fun (⟨a, f⟩, w) => rfl
+
+end DirichletFunctor
+
+end GenPolyProf
+
 end GebLean
