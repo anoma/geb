@@ -198,9 +198,18 @@ identity and composition satisfy category axioms.
 
 ### Transformation Laws for Composition
 
-Laws proving that the composition operations on transformations satisfy
-associativity and identity conditions. The identity and associativity
-laws for vComp and hComp are implemented.
+Theorems proving that the composition operations on transformations preserve
+transformation structure:
+
+- `VertTransOps.id_laws` - identity vertical transformation satisfies VertTransLaws
+- `VertTransOps.vComp_laws` - vertical composition preserves VertTransLaws
+- `VertTransOps.hComp_laws` - Godement product preserves VertTransLaws
+- `HorTransOps.id_laws` - identity horizontal transformation satisfies HorTransLaws
+- `HorTransOps.hComp_laws` - horizontal composition preserves HorTransLaws
+- `HorTransOps.vComp_laws` - Godement product preserves HorTransLaws
+
+The identity and associativity laws for vComp and hComp are also implemented
+(as HEq properties).
 
 The interchange law for transformations relates the Godement product
 to vertical/horizontal composition:

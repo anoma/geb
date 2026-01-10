@@ -35,6 +35,13 @@ Implementation of strict double categories and related structures.
 - [x] HorTransSquareNaturality definition
 - [x] sqVComp_heq_left, sqVComp_heq_right (HEq congruence for sqVComp)
 - [x] sqHComp_heq_left, sqHComp_heq_right (HEq congruence for sqHComp)
+- [x] sqVComp_heq_both, sqHComp_heq_both (HEq for both square arguments)
+- [x] VertTransOps.id_laws (VertTransLaws for identity vertical transformation)
+- [x] VertTransOps.vComp_laws (VertTransLaws for vertical composition)
+- [x] VertTransOps.hComp_laws (VertTransLaws for Godement product)
+- [x] HorTransOps.id_laws (HorTransLaws for identity horizontal transformation)
+- [x] HorTransOps.hComp_laws (HorTransLaws for horizontal composition)
+- [x] HorTransOps.vComp_laws (HorTransLaws for Godement product)
 
 ## In Progress
 
@@ -55,10 +62,13 @@ None currently.
 - [ ] Identity and associativity laws for functor composition
 - [ ] DoubleFunctorData for composed functors
 
-### Transformation Composition Laws
+### Transformation Composition Laws (Completed)
 
-- [ ] VertTransLaws for vComp and hComp
-- [ ] HorTransLaws for hComp and vComp
+All transformation composition operations now have laws proving they preserve
+the transformation structure:
+
+- [x] VertTransLaws for id, vComp, and hComp
+- [x] HorTransLaws for id, hComp, and vComp
 - [ ] Identity and associativity laws for Godement products (hComp/vComp)
 
 ### Interchange Law for Transformations (Completed)
