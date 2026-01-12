@@ -315,6 +315,24 @@ The identity conditions use the `sqVIdComp` law (for companions) and
 `horIdHComp` law (for conjoints) to verify that composing identity
 squares yields the appropriate identity square.
 
+### Composition of Companions and Conjoints
+
+Companions and conjoints are preserved by vertical composition:
+
+- `Companion.comp`: Given `v : A →ᵥ B` with companion `v* : A →ₕ B` and
+  `w : B →ᵥ C` with companion `w* : B →ₕ C`, the composite `vComp v w`
+  has companion `hComp v* w* : A →ₕ C`. The binding squares are
+  constructed by pasting the individual binding squares.
+
+- `Conjoint.comp`: Given `v : A →ᵥ B` with conjoint `v_* : B →ₕ A` and
+  `w : B →ᵥ C` with conjoint `w_* : C →ₕ B`, the composite `vComp v w`
+  has conjoint `hComp w_* v_* : C →ₕ A` (note the reversed order). The
+  binding squares are constructed by pasting.
+
+The proofs of the identity conditions for composed companions/conjoints
+require the interchange law and several HEq congruence lemmas including
+`sqVComp_heq_both`, `sqHComp_heq_both`, and `sqHComp_heq_all`.
+
 ## Future Extensions
 
 The following extensions are planned for future development:

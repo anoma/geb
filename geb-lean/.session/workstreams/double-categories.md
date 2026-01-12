@@ -63,6 +63,9 @@ None currently.
 - [x] Companion.ofVId (companion of vertical identity)
 - [x] Conjoint.ofVId (conjoint of vertical identity)
 - [x] Documentation with diagrams
+- [x] Companion.comp (companion of composite is composite of companions)
+- [x] Conjoint.comp (conjoint of composite is composite of conjoints in reverse)
+- [x] sqHComp_heq_all (HEq congruence when all boundaries change)
 - [ ] Prove relationship between companions and conjoints
 - [ ] Connection to adjunctions
 

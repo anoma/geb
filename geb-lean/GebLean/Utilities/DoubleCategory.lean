@@ -1601,7 +1601,6 @@ theorem interchange_natSquare {Obj₁ : Type u₁}
            (ops₃.sqVComp (σ.natSquare (H.horMap h)) (σ'.natSquare (H.horMap h))))
         (ops₃.sqVComp (ops₃.sqVComp (K.sqMap (τ.natSquare h)) (σ.natSquare (G.horMap h)))
            (ops₃.sqVComp (L.sqMap (τ'.natSquare h)) (σ'.natSquare (H.horMap h)))) := by
-  -- Abbreviations for readability
   let α := τ.natSquare h
   let β := τ'.natSquare h
   let γ := σ.natSquare (H.horMap h)
@@ -1609,42 +1608,33 @@ theorem interchange_natSquare {Obj₁ : Type u₁}
   let γ' := σ.natSquare (G.horMap h)
   have kpres := klaws.map_sqVComp α β
   have σsqnat := σSqNat β
-  -- Chain of HEq transformations
-  -- Step 1: Apply K preserves sqVComp
   have s1 : HEq (ops₃.sqVComp (K.sqMap (ops₂.sqVComp α β)) (ops₃.sqVComp γ δ))
                 (ops₃.sqVComp (ops₃.sqVComp (K.sqMap α) (K.sqMap β)) (ops₃.sqVComp γ δ)) :=
     sqVComp_heq_left ops₃ (ops₃.sqVComp γ δ) kpres (klaws.map_vComp _ _) (klaws.map_vComp _ _)
-  -- Step 2: Associativity on outer
   have s2 : HEq (ops₃.sqVComp (ops₃.sqVComp (K.sqMap α) (K.sqMap β)) (ops₃.sqVComp γ δ))
                 (ops₃.sqVComp (K.sqMap α) (ops₃.sqVComp (K.sqMap β) (ops₃.sqVComp γ δ))) :=
     sqVAssoc_heq ops₃ laws₃ (K.sqMap α) (K.sqMap β) (ops₃.sqVComp γ δ)
-  -- Step 3: Associativity on inner
   have s3 : HEq (ops₃.sqVComp (K.sqMap α) (ops₃.sqVComp (K.sqMap β) (ops₃.sqVComp γ δ)))
                 (ops₃.sqVComp (K.sqMap α) (ops₃.sqVComp (ops₃.sqVComp (K.sqMap β) γ) δ)) :=
     sqVComp_heq_right ops₃ (K.sqMap α)
       (HEq.symm (sqVAssoc_heq ops₃ laws₃ (K.sqMap β) γ δ))
       (Eq.symm (vComp_assoc ops₃ laws₃ _ _ _))
       (Eq.symm (vComp_assoc ops₃ laws₃ _ _ _))
-  -- Step 4: Apply σSqNat to swap (K.sqMap β) ⬝ᵥ γ with γ' ⬝ᵥ (L.sqMap β)
-  -- Boundary equalities from VertTransNaturality: σ(X) ⬝ᵥ L(v) = K(v) ⬝ᵥ σ(Y)
   have s4 : HEq (ops₃.sqVComp (K.sqMap α) (ops₃.sqVComp (ops₃.sqVComp (K.sqMap β) γ) δ))
                 (ops₃.sqVComp (K.sqMap α) (ops₃.sqVComp (ops₃.sqVComp γ' (L.sqMap β)) δ)) :=
     sqVComp_heq_right ops₃ (K.sqMap α)
       (sqVComp_heq_left ops₃ δ σsqnat (Eq.symm (σNat (τ'.app A))) (Eq.symm (σNat (τ'.app B))))
       (congrArg (ops₃.vComp · (σ'.app (H.objMap A))) (Eq.symm (σNat (τ'.app A))))
       (congrArg (ops₃.vComp · (σ'.app (H.objMap B))) (Eq.symm (σNat (τ'.app B))))
-  -- Step 5: Associativity on inner again
   have s5 : HEq (ops₃.sqVComp (K.sqMap α) (ops₃.sqVComp (ops₃.sqVComp γ' (L.sqMap β)) δ))
                 (ops₃.sqVComp (K.sqMap α) (ops₃.sqVComp γ' (ops₃.sqVComp (L.sqMap β) δ))) :=
     sqVComp_heq_right ops₃ (K.sqMap α)
       (sqVAssoc_heq ops₃ laws₃ γ' (L.sqMap β) δ)
       (vComp_assoc ops₃ laws₃ _ _ _)
       (vComp_assoc ops₃ laws₃ _ _ _)
-  -- Step 6: Associativity on outer to get final form
   have s6 : HEq (ops₃.sqVComp (K.sqMap α) (ops₃.sqVComp γ' (ops₃.sqVComp (L.sqMap β) δ)))
                 (ops₃.sqVComp (ops₃.sqVComp (K.sqMap α) γ') (ops₃.sqVComp (L.sqMap β) δ)) :=
     HEq.symm (sqVAssoc_heq ops₃ laws₃ (K.sqMap α) γ' (ops₃.sqVComp (L.sqMap β) δ))
-  -- Chain all HEq steps
   exact HEq.trans s1 (HEq.trans s2 (HEq.trans s3 (HEq.trans s4 (HEq.trans s5 s6))))
 
 /-- Helper lemma for interchange: the app component equality. -/
@@ -1773,6 +1763,27 @@ theorem sqHComp_heq_both {Obj : Type u}
   cases hβ
   rfl
 
+/-- HEq congruence for sqHComp when all boundaries may change.
+
+This is a fully general version that allows both vertical and horizontal
+boundaries to vary, given appropriate equality proofs. -/
+theorem sqHComp_heq_all {Obj : Type u}
+    {vhs : VertHomSet Obj} {hhs : HorHomSet Obj} {sqs : SquareSet vhs hhs}
+    (ops : DoubleCategoryOps Obj vhs hhs sqs)
+    {A B C D E F : Obj}
+    {v₁ v₁' : vhs A D} {v₂ v₂' : vhs B E} {v₃ v₃' : vhs C F}
+    {h₁ h₁' : hhs A B} {h₂ h₂' : hhs B C} {h₃ h₃' : hhs D E} {h₄ h₄' : hhs E F}
+    {α : sqs v₁ v₂ h₁ h₃} {α' : sqs v₁' v₂' h₁' h₃'}
+    {β : sqs v₂ v₃ h₂ h₄} {β' : sqs v₂' v₃' h₂' h₄'}
+    (hα : HEq α α') (hβ : HEq β β')
+    (hleft : v₁ = v₁') (hmid : v₂ = v₂') (hright : v₃ = v₃')
+    (htop : h₁ = h₁') (hmidH : h₂ = h₂') (hbot₁ : h₃ = h₃') (hbot₂ : h₄ = h₄') :
+    HEq (ops.sqHComp α β) (ops.sqHComp α' β') := by
+  subst hleft hmid hright htop hmidH hbot₁ hbot₂
+  cases hα
+  cases hβ
+  rfl
+
 /-- Helper lemma for horizontal interchange: the natSquare component HEq.
 
 This proves the square-level interchange law for horizontal transformations.
@@ -1806,36 +1817,30 @@ theorem interchange_natSquare_hor {Obj₁ : Type u₁}
   let γ' := σ.natSquare (G.vertMap v)
   have kpres := klaws.map_sqHComp α β
   have σsqnat := σSqNat β
-  -- Step 1: Apply K preserves sqHComp
   have s1 : HEq (ops₃.sqHComp (K.sqMap (ops₂.sqHComp α β)) (ops₃.sqHComp γ δ))
                 (ops₃.sqHComp (ops₃.sqHComp (K.sqMap α) (K.sqMap β)) (ops₃.sqHComp γ δ)) :=
     sqHComp_heq_left ops₃ (ops₃.sqHComp γ δ) kpres (klaws.map_hComp _ _) (klaws.map_hComp _ _)
-  -- Step 2: Associativity on outer
   have s2 : HEq (ops₃.sqHComp (ops₃.sqHComp (K.sqMap α) (K.sqMap β)) (ops₃.sqHComp γ δ))
                 (ops₃.sqHComp (K.sqMap α) (ops₃.sqHComp (K.sqMap β) (ops₃.sqHComp γ δ))) :=
     sqHAssoc_heq ops₃ laws₃ (K.sqMap α) (K.sqMap β) (ops₃.sqHComp γ δ)
-  -- Step 3: Associativity on inner
   have s3 : HEq (ops₃.sqHComp (K.sqMap α) (ops₃.sqHComp (K.sqMap β) (ops₃.sqHComp γ δ)))
                 (ops₃.sqHComp (K.sqMap α) (ops₃.sqHComp (ops₃.sqHComp (K.sqMap β) γ) δ)) :=
     sqHComp_heq_right ops₃ (K.sqMap α)
       (HEq.symm (sqHAssoc_heq ops₃ laws₃ (K.sqMap β) γ δ))
       (Eq.symm (hComp_assoc ops₃ laws₃ _ _ _))
       (Eq.symm (hComp_assoc ops₃ laws₃ _ _ _))
-  -- Step 4: Apply σSqNat to swap (K.sqMap β) ⬝ₕ γ with γ' ⬝ₕ (L.sqMap β)
   have s4 : HEq (ops₃.sqHComp (K.sqMap α) (ops₃.sqHComp (ops₃.sqHComp (K.sqMap β) γ) δ))
                 (ops₃.sqHComp (K.sqMap α) (ops₃.sqHComp (ops₃.sqHComp γ' (L.sqMap β)) δ)) :=
     sqHComp_heq_right ops₃ (K.sqMap α)
       (sqHComp_heq_left ops₃ δ σsqnat (Eq.symm (σNat (τ'.app A))) (Eq.symm (σNat (τ'.app B))))
       (congrArg (ops₃.hComp · (σ'.app (H.objMap A))) (Eq.symm (σNat (τ'.app A))))
       (congrArg (ops₃.hComp · (σ'.app (H.objMap B))) (Eq.symm (σNat (τ'.app B))))
-  -- Step 5: Associativity on inner again
   have s5 : HEq (ops₃.sqHComp (K.sqMap α) (ops₃.sqHComp (ops₃.sqHComp γ' (L.sqMap β)) δ))
                 (ops₃.sqHComp (K.sqMap α) (ops₃.sqHComp γ' (ops₃.sqHComp (L.sqMap β) δ))) :=
     sqHComp_heq_right ops₃ (K.sqMap α)
       (sqHAssoc_heq ops₃ laws₃ γ' (L.sqMap β) δ)
       (hComp_assoc ops₃ laws₃ _ _ _)
       (hComp_assoc ops₃ laws₃ _ _ _)
-  -- Step 6: Associativity on outer to get final form
   have s6 : HEq (ops₃.sqHComp (K.sqMap α) (ops₃.sqHComp γ' (ops₃.sqHComp (L.sqMap β) δ)))
                 (ops₃.sqHComp (ops₃.sqHComp (K.sqMap α) γ') (ops₃.sqHComp (L.sqMap β) δ)) :=
     HEq.symm (sqHAssoc_heq ops₃ laws₃ (K.sqMap α) γ' (ops₃.sqHComp (L.sqMap β) δ))
@@ -1998,36 +2003,29 @@ theorem VertTransOps.vComp_laws {Obj₁ : Type u₁}
   squareNaturality := by
     intro A B C D v₁ v₂ h₁ h₂ α
     simp only [VertTransOps.vComp]
-    -- Goal: HEq (sqVComp (F.sqMap α) (sqVComp (τ.natSquare h₂) (σ.natSquare h₂)))
-    --           (sqVComp (sqVComp (τ.natSquare h₁) (σ.natSquare h₁)) (H.sqMap α))
-    -- Step 1: LHS associativity
     have s1 : HEq (ops₂.sqVComp (F.sqMap α) (ops₂.sqVComp (τ.natSquare h₂)
                       (σ.natSquare h₂)))
                   (ops₂.sqVComp (ops₂.sqVComp (F.sqMap α) (τ.natSquare h₂))
                       (σ.natSquare h₂)) :=
       HEq.symm (sqVAssoc_heq ops₂ laws₂ (F.sqMap α) (τ.natSquare h₂)
           (σ.natSquare h₂))
-    -- Step 2: Apply τ's squareNaturality
     have s2 : HEq (ops₂.sqVComp (ops₂.sqVComp (F.sqMap α) (τ.natSquare h₂))
                       (σ.natSquare h₂))
                   (ops₂.sqVComp (ops₂.sqVComp (τ.natSquare h₁) (G.sqMap α))
                       (σ.natSquare h₂)) :=
       sqVComp_heq_left ops₂ (σ.natSquare h₂) (τlaws.squareNaturality α)
           (τlaws.naturality v₁).symm (τlaws.naturality v₂).symm
-    -- Step 3: Associativity in middle
     have s3 : HEq (ops₂.sqVComp (ops₂.sqVComp (τ.natSquare h₁) (G.sqMap α))
                       (σ.natSquare h₂))
                   (ops₂.sqVComp (τ.natSquare h₁) (ops₂.sqVComp (G.sqMap α)
                       (σ.natSquare h₂))) :=
       sqVAssoc_heq ops₂ laws₂ (τ.natSquare h₁) (G.sqMap α) (σ.natSquare h₂)
-    -- Step 4: Apply σ's squareNaturality
     have s4 : HEq (ops₂.sqVComp (τ.natSquare h₁) (ops₂.sqVComp (G.sqMap α)
                       (σ.natSquare h₂)))
                   (ops₂.sqVComp (τ.natSquare h₁) (ops₂.sqVComp (σ.natSquare h₁)
                       (H.sqMap α))) :=
       sqVComp_heq_right ops₂ (τ.natSquare h₁) (σlaws.squareNaturality α)
           (σlaws.naturality v₁).symm (σlaws.naturality v₂).symm
-    -- Step 5: RHS associativity
     have s5 : HEq (ops₂.sqVComp (τ.natSquare h₁) (ops₂.sqVComp (σ.natSquare h₁)
                       (H.sqMap α)))
                   (ops₂.sqVComp (ops₂.sqVComp (τ.natSquare h₁) (σ.natSquare h₁))
@@ -2089,8 +2087,6 @@ theorem VertTransOps.hComp_laws {Obj₁ : Type u₁}
   naturality := by
     intro A B v
     simp only [VertTransOps.hComp, DoubleFunctorOps.comp]
-    -- Goal: (H.vertMap (τ.app A) ⬝ σ.app (G A)) ⬝ K(G(v)) =
-    --       H(F(v)) ⬝ (H.vertMap (τ.app B) ⬝ σ.app (G B))
     have assoc := @laws₃.vertLaws.assoc
     simp only [DoubleCategoryOps.vertCategoryOps] at assoc
     calc ops₃.vComp (ops₃.vComp (H.vertMap (τ.app A)) (σ.app (G.objMap A)))
@@ -2119,27 +2115,18 @@ theorem VertTransOps.hComp_laws {Obj₁ : Type u₁}
   squareNaturality := by
     intro A B C D v₁ v₂ h₁ h₂ α
     simp only [VertTransOps.hComp, DoubleFunctorOps.comp]
-    -- Goal: HEq (sqVComp (H.sqMap (F.sqMap α))
-    --                     (sqVComp (H.sqMap (τ.natSquare h₂))
-    --                              (σ.natSquare (G.horMap h₂))))
-    --            (sqVComp (sqVComp (H.sqMap (τ.natSquare h₁))
-    --                              (σ.natSquare (G.horMap h₁)))
-    --                     (K.sqMap (G.sqMap α)))
-    -- Step 1: Reassociate LHS - ((H(F(α)) ⬝ H(τ.natSq h₂)) ⬝ σ.natSq(G(h₂)))
     have s1 : HEq (ops₃.sqVComp (H.sqMap (F.sqMap α))
                       (ops₃.sqVComp (H.sqMap (τ.natSquare h₂))
                           (σ.natSquare (G.horMap h₂))))
                   (ops₃.sqVComp (ops₃.sqVComp (H.sqMap (F.sqMap α))
                       (H.sqMap (τ.natSquare h₂))) (σ.natSquare (G.horMap h₂))) :=
       HEq.symm (sqVAssoc_heq ops₃ laws₃ _ _ _)
-    -- Step 2: Use H preserves sqVComp (reversed) to get H(F(α) ⬝ τ.natSq h₂)
     have s2 : HEq (ops₃.sqVComp (ops₃.sqVComp (H.sqMap (F.sqMap α))
                       (H.sqMap (τ.natSquare h₂))) (σ.natSquare (G.horMap h₂)))
                   (ops₃.sqVComp (H.sqMap (ops₂.sqVComp (F.sqMap α) (τ.natSquare h₂)))
                       (σ.natSquare (G.horMap h₂))) :=
       sqVComp_heq_left ops₃ _ (HEq.symm (hlaws.map_sqVComp (F.sqMap α)
           (τ.natSquare h₂))) (hlaws.map_vComp _ _).symm (hlaws.map_vComp _ _).symm
-    -- Step 3: Use τ's squareNaturality (via H.sqMap)
     have s3 : HEq (ops₃.sqVComp (H.sqMap (ops₂.sqVComp (F.sqMap α) (τ.natSquare h₂)))
                       (σ.natSquare (G.horMap h₂)))
                   (ops₃.sqVComp (H.sqMap (ops₂.sqVComp (τ.natSquare h₁) (G.sqMap α)))
@@ -2150,21 +2137,18 @@ theorem VertTransOps.hComp_laws {Obj₁ : Type u₁}
       exact sqVComp_heq_left ops₃ _ heq_inner
           (congrArg H.vertMap (τlaws.naturality v₁).symm)
           (congrArg H.vertMap (τlaws.naturality v₂).symm)
-    -- Step 4: Use H preserves sqVComp to expand
     have s4 : HEq (ops₃.sqVComp (H.sqMap (ops₂.sqVComp (τ.natSquare h₁) (G.sqMap α)))
                       (σ.natSquare (G.horMap h₂)))
                   (ops₃.sqVComp (ops₃.sqVComp (H.sqMap (τ.natSquare h₁))
                       (H.sqMap (G.sqMap α))) (σ.natSquare (G.horMap h₂))) :=
       sqVComp_heq_left ops₃ _ (hlaws.map_sqVComp (τ.natSquare h₁) (G.sqMap α))
           (hlaws.map_vComp _ _) (hlaws.map_vComp _ _)
-    -- Step 5: Reassociate to get H(τ.natSq h₁) ⬝ (H(G(α)) ⬝ σ.natSq(G(h₂)))
     have s5 : HEq (ops₃.sqVComp (ops₃.sqVComp (H.sqMap (τ.natSquare h₁))
                       (H.sqMap (G.sqMap α))) (σ.natSquare (G.horMap h₂)))
                   (ops₃.sqVComp (H.sqMap (τ.natSquare h₁))
                       (ops₃.sqVComp (H.sqMap (G.sqMap α))
                           (σ.natSquare (G.horMap h₂)))) :=
       sqVAssoc_heq ops₃ laws₃ _ _ _
-    -- Step 6: Apply σ's squareNaturality
     have s6 : HEq (ops₃.sqVComp (H.sqMap (τ.natSquare h₁))
                       (ops₃.sqVComp (H.sqMap (G.sqMap α))
                           (σ.natSquare (G.horMap h₂))))
@@ -2173,7 +2157,6 @@ theorem VertTransOps.hComp_laws {Obj₁ : Type u₁}
                           (K.sqMap (G.sqMap α)))) :=
       sqVComp_heq_right ops₃ _ (σlaws.squareNaturality (G.sqMap α))
           (σlaws.naturality (G.vertMap v₁)).symm (σlaws.naturality (G.vertMap v₂)).symm
-    -- Step 7: Final reassociation
     have s7 : HEq (ops₃.sqVComp (H.sqMap (τ.natSquare h₁))
                       (ops₃.sqVComp (σ.natSquare (G.horMap h₁))
                           (K.sqMap (G.sqMap α))))
@@ -2197,20 +2180,16 @@ theorem VertTransOps.hComp_laws {Obj₁ : Type u₁}
       congrArg K.horMap ghid
     have kkgid : K.horMap (ops₂.hId (G.objMap A)) = ops₃.hId (K.objMap (G.objMap A)) :=
       klaws.map_hId (G.objMap A)
-    -- Step 1: Transport σ's argument via ghid (dependent HEq)
     have σarg : HEq (σ.natSquare (G.horMap (ops₁.hId A)))
                     (σ.natSquare (ops₂.hId (G.objMap A))) :=
       Eq.rec (motive := fun h _ => HEq (σ.natSquare (G.horMap (ops₁.hId A)))
                                        (σ.natSquare h))
              HEq.rfl ghid
-    -- Step 2: Apply τ's idCoherence through sqMap
     have τidcoh : HEq (H.sqMap (τ.natSquare (ops₁.hId A)))
                       (H.sqMap (ops₂.sqHorId (τ.app A))) :=
       sqMap_heq H (τlaws.idCoherence A) rfl rfl fhid ghid
-    -- Step 3: Combine steps 1 and 2
     have s12 := sqVComp_heq_both ops₃ τidcoh σarg
         (congrArg H.horMap fhid) hghid kghid
-    -- Step 4: Convert H.sqMap (sqHorId τ) to sqHorId (H.vert τ) and apply σ's idCoherence
     have hpres : HEq (H.sqMap (ops₂.sqHorId (τ.app A)))
                      (ops₃.sqHorId (H.vertMap (τ.app A))) :=
       hlaws.map_sqHorId (τ.app A)
@@ -2218,7 +2197,6 @@ theorem VertTransOps.hComp_laws {Obj₁ : Type u₁}
                       (ops₃.sqHorId (σ.app (G.objMap A))) :=
       σlaws.idCoherence (G.objMap A)
     have s34 := sqVComp_heq_both ops₃ hpres σidcoh hhfid hhgid kkgid
-    -- Step 5: Use vertIdVComp
     have s5 : ops₃.sqVComp (ops₃.sqHorId (H.vertMap (τ.app A)))
                            (ops₃.sqHorId (σ.app (G.objMap A))) =
               ops₃.sqHorId (ops₃.vComp (H.vertMap (τ.app A)) (σ.app (G.objMap A))) :=
@@ -2227,23 +2205,16 @@ theorem VertTransOps.hComp_laws {Obj₁ : Type u₁}
   compCoherence := by
     intro A B C h h'
     simp only [VertTransOps.hComp, DoubleFunctorOps.comp]
-    -- Goal: HEq (sqVComp (H.sqMap (τ.natSquare (hComp h h')))
-    --                    (σ.natSquare (G.horMap (hComp h h'))))
-    --           (sqHComp (sqVComp (H.sqMap (τ.natSquare h)) (σ.natSquare (G.horMap h)))
-    --                    (sqVComp (H.sqMap (τ.natSquare h')) (σ.natSquare (G.horMap h'))))
-    -- Step 1: Apply τ's compCoherence through H.sqMap
     have τcomp : HEq (H.sqMap (τ.natSquare (ops₁.hComp h h')))
                      (H.sqMap (ops₂.sqHComp (τ.natSquare h) (τ.natSquare h'))) :=
       sqMap_heq H (τlaws.compCoherence h h')
           rfl rfl (flaws.map_hComp h h') (glaws.map_hComp h h')
-    -- Step 2: Apply H preserves sqHComp
     have hcomp : HEq (H.sqMap (ops₂.sqHComp (τ.natSquare h) (τ.natSquare h')))
                      (ops₃.sqHComp (H.sqMap (τ.natSquare h)) (H.sqMap (τ.natSquare h'))) :=
       hlaws.map_sqHComp (τ.natSquare h) (τ.natSquare h')
     have s12 : HEq (H.sqMap (τ.natSquare (ops₁.hComp h h')))
                    (ops₃.sqHComp (H.sqMap (τ.natSquare h)) (H.sqMap (τ.natSquare h'))) :=
       HEq.trans τcomp hcomp
-    -- Step 3: Transport σ's argument via G preserves hComp
     have gcomp : G.horMap (ops₁.hComp h h') = ops₂.hComp (G.horMap h) (G.horMap h') :=
       glaws.map_hComp h h'
     have σtrans : HEq (σ.natSquare (G.horMap (ops₁.hComp h h')))
@@ -2251,14 +2222,12 @@ theorem VertTransOps.hComp_laws {Obj₁ : Type u₁}
       Eq.rec (motive := fun x _ => HEq (σ.natSquare (G.horMap (ops₁.hComp h h')))
                                        (σ.natSquare x))
              HEq.rfl gcomp
-    -- Step 4: Apply σ's compCoherence
     have σcomp : HEq (σ.natSquare (ops₂.hComp (G.horMap h) (G.horMap h')))
                      (ops₃.sqHComp (σ.natSquare (G.horMap h)) (σ.natSquare (G.horMap h'))) :=
       σlaws.compCoherence (G.horMap h) (G.horMap h')
     have s34 : HEq (σ.natSquare (G.horMap (ops₁.hComp h h')))
                    (ops₃.sqHComp (σ.natSquare (G.horMap h)) (σ.natSquare (G.horMap h'))) :=
       HEq.trans σtrans σcomp
-    -- Step 5: Combine using sqVComp_heq_both
     have hghcomp : H.horMap (G.horMap (ops₁.hComp h h')) =
                    ops₃.hComp (H.horMap (G.horMap h)) (H.horMap (G.horMap h')) :=
       (congrArg H.horMap gcomp).trans (hlaws.map_hComp (G.horMap h) (G.horMap h'))
@@ -2270,7 +2239,6 @@ theorem VertTransOps.hComp_laws {Obj₁ : Type u₁}
       (congrArg H.horMap (flaws.map_hComp h h')).trans
         (hlaws.map_hComp (F.horMap h) (F.horMap h'))
     have s5 := sqVComp_heq_both ops₃ s12 s34 hfhcomp hghcomp kghcomp
-    -- Step 6: Apply interchange law
     have s6 : ops₃.sqVComp (ops₃.sqHComp (H.sqMap (τ.natSquare h))
                                          (H.sqMap (τ.natSquare h')))
                            (ops₃.sqHComp (σ.natSquare (G.horMap h))
@@ -2478,7 +2446,6 @@ theorem HorTransOps.vComp_laws {Obj₁ : Type u₁}
   squareNaturality := by
     intro A B C D v₁ v₂ h₁ h₂ α
     simp only [HorTransOps.vComp, DoubleFunctorOps.comp]
-    -- HorTransOps.natSquare takes a vertical morphism, so use v₁, v₂
     have s1 : HEq (ops₃.sqHComp (H.sqMap (F.sqMap α))
                       (ops₃.sqHComp (H.sqMap (τ.natSquare v₂))
                           (σ.natSquare (G.vertMap v₂))))
@@ -2722,13 +2689,171 @@ def ofVId (A : Obj) (laws : DoubleCategoryLaws ops) : Companion ops (ops.vId A) 
   phi := ops.sqVertId (ops.hId A)
   psi := ops.sqVertId (ops.hId A)
   identity := by
-    -- sqVIdComp says: sqVComp (sqVertId h) α ≅ α
     have step1 : HEq (ops.sqVComp (ops.sqVertId (ops.hId A)) (ops.sqVertId (ops.hId A)))
                      (ops.sqVertId (ops.hId A)) :=
       sqVIdComp_heq ops laws (ops.sqVertId (ops.hId A))
-    -- idOnId says: sqHorId (vId A) = sqVertId (hId A)
     have step2 : ops.sqHorId (ops.vId A) = ops.sqVertId (ops.hId A) := laws.sqLaws.idOnId A
     exact HEq.trans step1 (heq_of_eq step2.symm)
+
+section CompanionComp
+
+variable {Obj : Type u}
+variable {vhs : VertHomSet Obj} {hhs : HorHomSet Obj} {sqs : SquareSet vhs hhs}
+variable (ops : DoubleCategoryOps Obj vhs hhs sqs)
+variable (laws : DoubleCategoryLaws ops)
+variable {A B C : Obj} (v : vhs A B) (w : vhs B C)
+variable (cv : Companion ops v) (cw : Companion ops w)
+
+/-- The intermediate square for composite phi: sqVComp (sqHorId v) cw.phi
+    after casting to have left vertical = v. -/
+def compPhiInner : sqs v (ops.vComp v w) (ops.hId A) cw.hor :=
+  let sq1 := ops.sqVComp (ops.sqHorId v) cw.phi
+  let eq1 : ops.vComp v (ops.vId B) = v := laws.vertLaws.id_laws.comp_id v
+  eq1.recOn (motive := fun v' _ => sqs v' (ops.vComp v w) (ops.hId A) cw.hor) sq1
+
+/-- The phi binding square for the composite companion. -/
+def compPhi : sqs (ops.vId A) (ops.vComp v w) (ops.hId A) (ops.hComp cv.hor cw.hor) :=
+  let sq3 := ops.sqHComp cv.phi (compPhiInner ops laws v w cw)
+  let eq2 : ops.hComp (ops.hId A) (ops.hId A) = ops.hId A :=
+    laws.horLaws.id_laws.id_comp (ops.hId A)
+  eq2.recOn (motive := fun h' _ =>
+    sqs (ops.vId A) (ops.vComp v w) h' (ops.hComp cv.hor cw.hor)) sq3
+
+/-- The intermediate square for composite psi: sqVComp cv.psi (sqHorId w)
+    after casting to have right vertical = w. -/
+def compPsiInner : sqs (ops.vComp v w) w cv.hor (ops.hId C) :=
+  let sq1 := ops.sqVComp cv.psi (ops.sqHorId w)
+  let eq1 : ops.vComp (ops.vId B) w = w := laws.vertLaws.id_laws.id_comp w
+  eq1.recOn (motive := fun w' _ => sqs (ops.vComp v w) w' cv.hor (ops.hId C)) sq1
+
+/-- The psi binding square for the composite companion. -/
+def compPsi : sqs (ops.vComp v w) (ops.vId C) (ops.hComp cv.hor cw.hor) (ops.hId C) :=
+  let sq3 := ops.sqHComp (compPsiInner ops laws v w cv) cw.psi
+  let eq2 : ops.hComp (ops.hId C) (ops.hId C) = ops.hId C :=
+    laws.horLaws.id_laws.id_comp (ops.hId C)
+  eq2.recOn (motive := fun h' _ =>
+    sqs (ops.vComp v w) (ops.vId C) (ops.hComp cv.hor cw.hor) h') sq3
+
+/-- The identity condition for the composite companion.
+
+This is the main lemma: sqVComp (compPhi) (compPsi) ≅ sqHorId (vComp v w).
+
+The proof uses cv.identity, cw.identity, vertIdVComp, and the interchange law
+together with associativity of square composition. -/
+theorem compIdentity :
+    HEq (ops.sqVComp (compPhi ops laws v w cv cw) (compPsi ops laws v w cv cw))
+        (ops.sqHorId (ops.vComp v w)) := by
+  let eqVL : ops.vComp v (ops.vId B) = v := laws.vertLaws.id_laws.comp_id v
+  let eqVR : ops.vComp (ops.vId B) w = w := laws.vertLaws.id_laws.id_comp w
+  let eqHL : ops.hComp (ops.hId A) (ops.hId A) = ops.hId A :=
+    laws.horLaws.id_laws.id_comp (ops.hId A)
+  let eqHR : ops.hComp (ops.hId C) (ops.hId C) = ops.hId C :=
+    laws.horLaws.id_laws.id_comp (ops.hId C)
+  let phiRaw := ops.sqHComp cv.phi (compPhiInner ops laws v w cw)
+  let psiRaw := ops.sqHComp (compPsiInner ops laws v w cv) cw.psi
+  have h_phi_heq : HEq (compPhi ops laws v w cv cw) phiRaw := by
+    simp only [compPhi]
+    exact eqRec_heq_self _ eqHL
+  have h_psi_heq : HEq (compPsi ops laws v w cv cw) psiRaw := by
+    simp only [compPsi]
+    exact eqRec_heq_self _ eqHR
+  have h_vcomp_heq :
+      HEq (ops.sqVComp (compPhi ops laws v w cv cw) (compPsi ops laws v w cv cw))
+          (ops.sqVComp phiRaw psiRaw) :=
+    sqVComp_heq_both ops h_phi_heq h_psi_heq eqHL.symm rfl eqHR.symm
+  have interch := laws.sqLaws.interchange cv.phi (compPhiInner ops laws v w cw)
+                    (compPsiInner ops laws v w cv) cw.psi
+  have h_after_interch :
+      HEq (ops.sqVComp phiRaw psiRaw)
+          (ops.sqHComp (ops.sqVComp cv.phi (compPsiInner ops laws v w cv))
+                       (ops.sqVComp (compPhiInner ops laws v w cw) cw.psi)) :=
+    heq_of_eq interch
+  have h_psiInner_heq :
+      HEq (compPsiInner ops laws v w cv) (ops.sqVComp cv.psi (ops.sqHorId w)) := by
+    simp only [compPsiInner]
+    exact eqRec_heq_self _ eqVR
+  have h_phiInner_heq :
+      HEq (compPhiInner ops laws v w cw) (ops.sqVComp (ops.sqHorId v) cw.phi) := by
+    simp only [compPhiInner]
+    exact eqRec_heq_self _ eqVL
+  have h_left_assoc :
+      HEq (ops.sqVComp cv.phi (ops.sqVComp cv.psi (ops.sqHorId w)))
+          (ops.sqVComp (ops.sqVComp cv.phi cv.psi) (ops.sqHorId w)) :=
+    (sqVAssoc_heq ops laws cv.phi cv.psi (ops.sqHorId w)).symm
+  have h_left_id :
+      HEq (ops.sqVComp (ops.sqVComp cv.phi cv.psi) (ops.sqHorId w))
+          (ops.sqVComp (ops.sqHorId v) (ops.sqHorId w)) :=
+    sqVComp_heq_left ops (ops.sqHorId w) cv.identity
+      (laws.vertLaws.id_laws.id_comp v)
+      (laws.vertLaws.id_laws.comp_id v)
+  have h_left_vertId :
+      ops.sqVComp (ops.sqHorId v) (ops.sqHorId w) = ops.sqHorId (ops.vComp v w) :=
+    laws.sqLaws.vertIdVComp v w
+  have h_left_combined :
+      HEq (ops.sqVComp cv.phi (ops.sqVComp cv.psi (ops.sqHorId w)))
+          (ops.sqHorId (ops.vComp v w)) :=
+    HEq.trans h_left_assoc (HEq.trans h_left_id (heq_of_eq h_left_vertId))
+  have h_left_with_cast :
+      HEq (ops.sqVComp cv.phi (compPsiInner ops laws v w cv))
+          (ops.sqHorId (ops.vComp v w)) := by
+    apply HEq.trans _ h_left_combined
+    exact sqVComp_heq_right ops cv.phi h_psiInner_heq rfl eqVR.symm
+  have h_right_assoc :
+      HEq (ops.sqVComp (ops.sqVComp (ops.sqHorId v) cw.phi) cw.psi)
+          (ops.sqVComp (ops.sqHorId v) (ops.sqVComp cw.phi cw.psi)) :=
+    sqVAssoc_heq ops laws (ops.sqHorId v) cw.phi cw.psi
+  have h_right_id :
+      HEq (ops.sqVComp (ops.sqHorId v) (ops.sqVComp cw.phi cw.psi))
+          (ops.sqVComp (ops.sqHorId v) (ops.sqHorId w)) :=
+    sqVComp_heq_right ops (ops.sqHorId v) cw.identity
+      (laws.vertLaws.id_laws.id_comp w)
+      (laws.vertLaws.id_laws.comp_id w)
+  have h_right_combined :
+      HEq (ops.sqVComp (ops.sqVComp (ops.sqHorId v) cw.phi) cw.psi)
+          (ops.sqHorId (ops.vComp v w)) :=
+    HEq.trans h_right_assoc (HEq.trans h_right_id (heq_of_eq h_left_vertId))
+  have h_right_with_cast :
+      HEq (ops.sqVComp (compPhiInner ops laws v w cw) cw.psi)
+          (ops.sqHorId (ops.vComp v w)) := by
+    apply HEq.trans _ h_right_combined
+    exact sqVComp_heq_left ops cw.psi h_phiInner_heq eqVL.symm rfl
+  have h_hcomp_of_horIds :
+      HEq (ops.sqHComp (ops.sqVComp cv.phi (compPsiInner ops laws v w cv))
+                       (ops.sqVComp (compPhiInner ops laws v w cw) cw.psi))
+          (ops.sqHComp (ops.sqHorId (ops.vComp v w)) (ops.sqHorId (ops.vComp v w))) :=
+    sqHComp_heq_both ops h_left_with_cast h_right_with_cast
+      (laws.vertLaws.id_laws.id_comp _)
+      rfl
+      (laws.vertLaws.id_laws.comp_id _)
+  have h_horId_hcomp_self :
+      HEq (ops.sqHComp (ops.sqHorId (ops.vComp v w)) (ops.sqHorId (ops.vComp v w)))
+          (ops.sqHorId (ops.vComp v w)) :=
+    sqHIdComp_heq ops laws (ops.sqHorId (ops.vComp v w))
+  have final_step :
+      HEq (ops.sqHComp (ops.sqVComp cv.phi (compPsiInner ops laws v w cv))
+                       (ops.sqVComp (compPhiInner ops laws v w cw) cw.psi))
+          (ops.sqHorId (ops.vComp v w)) :=
+    HEq.trans h_hcomp_of_horIds h_horId_hcomp_self
+  exact HEq.trans h_vcomp_heq (HEq.trans h_after_interch final_step)
+
+end CompanionComp
+
+/-- The companion of a vertical composite is the horizontal composite of companions.
+
+Given v : A →ᵥ B with companion v* and w : B →ᵥ C with companion w*,
+the companion of (vComp v w) is (hComp v* w*).
+
+The binding squares are constructed by pasting:
+- φ_{v∘w} = sqHComp φᵥ (sqVComp (sqHorId v) φᵤ)
+- ψ_{v∘w} = sqHComp (sqVComp ψᵥ (sqHorId w)) ψᵤ
+-/
+def comp {A B C : Obj} {v : vhs A B} {w : vhs B C}
+    (cv : Companion ops v) (cw : Companion ops w)
+    (laws : DoubleCategoryLaws ops) : Companion ops (ops.vComp v w) where
+  hor := ops.hComp cv.hor cw.hor
+  phi := compPhi ops laws v w cv cw
+  psi := compPsi ops laws v w cv cw
+  identity := compIdentity ops laws v w cv cw
 
 end Companion
 
@@ -2745,20 +2870,267 @@ def ofVId (A : Obj) (laws : DoubleCategoryLaws ops) : Conjoint ops (ops.vId A) w
   epsilon := ops.sqVertId (ops.hId A)
   eta := ops.sqVertId (ops.hId A)
   identity := by
-    -- horIdHComp says: sqHComp (sqVertId h) (sqVertId h') = sqVertId (hComp h h')
     have step1 : ops.sqHComp (ops.sqVertId (ops.hId A)) (ops.sqVertId (ops.hId A)) =
                  ops.sqVertId (ops.hComp (ops.hId A) (ops.hId A)) :=
       laws.sqLaws.horIdHComp (ops.hId A) (ops.hId A)
-    -- Horizontal identity law: hComp (hId A) (hId A) = hId A
     have step2 : ops.hComp (ops.hId A) (ops.hId A) = ops.hId A :=
       laws.horLaws.id_laws.id_comp (ops.hId A)
-    -- Use recOn for dependent type: sqVertId (hComp ...) ≅ sqVertId (hId A)
     have step3 : HEq (ops.sqVertId (ops.hComp (ops.hId A) (ops.hId A)))
                      (ops.sqVertId (ops.hId A)) :=
       step2.symm.recOn (motive := fun h' _ =>
         HEq (ops.sqVertId h') (ops.sqVertId (ops.hId A))) HEq.rfl
-    -- Combine: sqHComp ... ≅ sqVertId (hId A)
     exact HEq.trans (heq_of_eq step1) step3
+
+section ConjointComp
+
+variable {Obj : Type u}
+variable {vhs : VertHomSet Obj} {hhs : HorHomSet Obj} {sqs : SquareSet vhs hhs}
+variable (ops : DoubleCategoryOps Obj vhs hhs sqs)
+variable (laws : DoubleCategoryLaws ops)
+variable {A B C : Obj} (v : vhs A B) (w : vhs B C)
+variable (cv : Conjoint ops v) (cw : Conjoint ops w)
+
+/-- The intermediate square for composite epsilon: sqVComp cv.epsilon (sqHorId w)
+    after casting to have left vertical = w. -/
+def compEpsilonInner : sqs w (ops.vComp v w) cv.hor (ops.hId C) :=
+  let sq1 := ops.sqVComp cv.epsilon (ops.sqHorId w)
+  let eq1 : ops.vComp (ops.vId B) w = w := laws.vertLaws.id_laws.id_comp w
+  eq1.recOn (motive := fun w' _ => sqs w' (ops.vComp v w) cv.hor (ops.hId C)) sq1
+
+/-- The epsilon binding square for the composite conjoint. -/
+def compEpsilon : sqs (ops.vId C) (ops.vComp v w) (ops.hComp cw.hor cv.hor) (ops.hId C) :=
+  let sq3 := ops.sqHComp cw.epsilon (compEpsilonInner ops laws v w cv)
+  let eq2 : ops.hComp (ops.hId C) (ops.hId C) = ops.hId C :=
+    laws.horLaws.id_laws.id_comp (ops.hId C)
+  eq2.recOn (motive := fun h' _ =>
+    sqs (ops.vId C) (ops.vComp v w) (ops.hComp cw.hor cv.hor) h') sq3
+
+/-- The intermediate square for composite eta: sqVComp (sqHorId v) cw.eta
+    after casting to have right vertical = v. -/
+def compEtaInner : sqs (ops.vComp v w) v (ops.hId A) cw.hor :=
+  let sq1 := ops.sqVComp (ops.sqHorId v) cw.eta
+  let eq1 : ops.vComp v (ops.vId B) = v := laws.vertLaws.id_laws.comp_id v
+  eq1.recOn (motive := fun v' _ => sqs (ops.vComp v w) v' (ops.hId A) cw.hor) sq1
+
+/-- The eta binding square for the composite conjoint. -/
+def compEta : sqs (ops.vComp v w) (ops.vId A) (ops.hId A) (ops.hComp cw.hor cv.hor) :=
+  let sq3 := ops.sqHComp (compEtaInner ops laws v w cw) cv.eta
+  let eq2 : ops.hComp (ops.hId A) (ops.hId A) = ops.hId A :=
+    laws.horLaws.id_laws.id_comp (ops.hId A)
+  eq2.recOn (motive := fun h' _ =>
+    sqs (ops.vComp v w) (ops.vId A) h' (ops.hComp cw.hor cv.hor)) sq3
+
+/-- The identity condition for the composite conjoint.
+
+This is the main lemma: sqHComp compEpsilon compEta ≅ sqVertId (hComp cw.hor cv.hor).
+
+The proof strategy:
+1. Peel off outer casts to get epsilonRaw and etaRaw
+2. Use interchange on the middle (X ⬝ₕ Y) to get sqVComp cv.epsilon cw.eta
+3. Rearrange via associativity
+4. Use cv.identity: cv.epsilon ⬝ₕ cv.eta ≅ sqVertId cv.hor
+5. Use cw.identity: cw.epsilon ⬝ₕ cw.eta ≅ sqVertId cw.hor
+6. Apply horIdHComp to get sqVertId (hComp cw.hor cv.hor) -/
+theorem compIdentity :
+    HEq (ops.sqHComp (compEpsilon ops laws v w cv cw) (compEta ops laws v w cv cw))
+        (ops.sqVertId (ops.hComp cw.hor cv.hor)) := by
+  let eqVL : ops.vComp (ops.vId B) w = w := laws.vertLaws.id_laws.id_comp w
+  let eqVR : ops.vComp v (ops.vId B) = v := laws.vertLaws.id_laws.comp_id v
+  let eqHT : ops.hComp (ops.hId A) (ops.hId A) = ops.hId A :=
+    laws.horLaws.id_laws.id_comp (ops.hId A)
+  let eqHB : ops.hComp (ops.hId C) (ops.hId C) = ops.hId C :=
+    laws.horLaws.id_laws.id_comp (ops.hId C)
+  let epsilonRaw := ops.sqHComp cw.epsilon (compEpsilonInner ops laws v w cv)
+  let etaRaw := ops.sqHComp (compEtaInner ops laws v w cw) cv.eta
+  have h_epsilon_heq : HEq (compEpsilon ops laws v w cv cw) epsilonRaw := by
+    simp only [compEpsilon]
+    exact eqRec_heq_self _ eqHB
+  have h_eta_heq : HEq (compEta ops laws v w cv cw) etaRaw := by
+    simp only [compEta]
+    exact eqRec_heq_self _ eqHT
+  have h_epsilonInner_heq :
+      HEq (compEpsilonInner ops laws v w cv)
+          (ops.sqVComp cv.epsilon (ops.sqHorId w)) := by
+    simp only [compEpsilonInner]
+    exact eqRec_heq_self _ eqVL
+  have h_etaInner_heq :
+      HEq (compEtaInner ops laws v w cw)
+          (ops.sqVComp (ops.sqHorId v) cw.eta) := by
+    simp only [compEtaInner]
+    exact eqRec_heq_self _ eqVR
+  let X := ops.sqVComp cv.epsilon (ops.sqHorId w)
+  let Y := ops.sqVComp (ops.sqHorId v) cw.eta
+  let X' := compEpsilonInner ops laws v w cv
+  have hX_heq : HEq X X' := h_epsilonInner_heq.symm
+  let Y' := compEtaInner ops laws v w cw
+  have hY_heq : HEq Y Y' := h_etaInner_heq.symm
+  have h_inner_comp_heq :
+      HEq (ops.sqHComp (compEpsilonInner ops laws v w cv) (compEtaInner ops laws v w cw))
+          (ops.sqHComp X Y) :=
+    sqHComp_heq_both ops h_epsilonInner_heq h_etaInner_heq
+      eqVL.symm rfl eqVR.symm
+  have interch := laws.sqLaws.interchange cv.epsilon (ops.sqHorId v)
+                    (ops.sqHorId w) cw.eta
+  have h_cv_eps_hId :
+      HEq (ops.sqHComp cv.epsilon (ops.sqHorId v)) cv.epsilon :=
+    sqHCompId_heq ops laws cv.epsilon
+  have h_hId_cw_eta :
+      HEq (ops.sqHComp (ops.sqHorId w) cw.eta) cw.eta :=
+    sqHIdComp_heq ops laws cw.eta
+  let cvCwVComp := ops.sqVComp cv.epsilon cw.eta
+  have eqType : sqs (ops.vComp (ops.vId B) w) (ops.vComp v (ops.vId B)) cv.hor cw.hor =
+                sqs w v cv.hor cw.hor := by
+    rw [eqVL, eqVR]
+  let cvCwVComp' : sqs w v cv.hor cw.hor := cast eqType cvCwVComp
+  have hcvCwVComp_heq : HEq cvCwVComp cvCwVComp' := (cast_heq eqType cvCwVComp).symm
+  have h_after_interch :
+      HEq (ops.sqVComp (ops.sqHComp cv.epsilon (ops.sqHorId v))
+                       (ops.sqHComp (ops.sqHorId w) cw.eta))
+          cvCwVComp :=
+    sqVComp_heq_both ops h_cv_eps_hId h_hId_cw_eta
+      (laws.horLaws.id_laws.comp_id cv.hor)
+      (laws.horLaws.id_laws.id_comp (ops.hId B))
+      (laws.horLaws.id_laws.id_comp cw.hor)
+  have h_XY_vcomp : HEq (ops.sqHComp X Y) cvCwVComp :=
+    HEq.trans (heq_of_eq interch.symm) h_after_interch
+  have interch2 := laws.sqLaws.interchange cv.epsilon cv.eta cw.eta
+                     (ops.sqVertId cv.hor)
+  have h_X'Y'_to_vcomp' : HEq (ops.sqHComp X' Y') cvCwVComp' :=
+    HEq.trans h_inner_comp_heq (HEq.trans h_XY_vcomp hcvCwVComp_heq)
+  have h_XYeta :
+      HEq (ops.sqHComp X' (ops.sqHComp Y' cv.eta))
+          (ops.sqHComp cvCwVComp' cv.eta) := by
+    have h_assoc3 :
+        HEq (ops.sqHComp X' (ops.sqHComp Y' cv.eta))
+            (ops.sqHComp (ops.sqHComp X' Y') cv.eta) :=
+      (sqHAssoc_heq ops laws X' Y' cv.eta).symm
+    have h_assoc_to_vcomp' :
+        HEq (ops.sqHComp (ops.sqHComp X' Y') cv.eta)
+            (ops.sqHComp cvCwVComp' cv.eta) :=
+      sqHComp_heq_left ops cv.eta h_X'Y'_to_vcomp'
+        (laws.horLaws.id_laws.comp_id cv.hor)
+        (laws.horLaws.id_laws.id_comp cw.hor)
+    exact HEq.trans h_assoc3 h_assoc_to_vcomp'
+  have h_full_to_cvCw :
+      HEq (ops.sqHComp (ops.sqHComp cw.epsilon X') (ops.sqHComp Y' cv.eta))
+          (ops.sqHComp cw.epsilon (ops.sqHComp cvCwVComp' cv.eta)) := by
+    have step1 :
+        HEq (ops.sqHComp (ops.sqHComp cw.epsilon X') (ops.sqHComp Y' cv.eta))
+            (ops.sqHComp cw.epsilon (ops.sqHComp X' (ops.sqHComp Y' cv.eta))) :=
+      sqHAssoc_heq ops laws cw.epsilon X' (ops.sqHComp Y' cv.eta)
+    have step2 :
+        HEq (ops.sqHComp cw.epsilon (ops.sqHComp X' (ops.sqHComp Y' cv.eta)))
+            (ops.sqHComp cw.epsilon (ops.sqHComp cvCwVComp' cv.eta)) :=
+      sqHComp_heq_right ops cw.epsilon h_XYeta
+        (congrArg (ops.hComp cv.hor ·) eqHT)
+        (laws.horLaws.id_laws.id_comp (ops.hComp cw.hor cv.hor))
+    exact HEq.trans step1 step2
+  have h_assoc_cw :
+      HEq (ops.sqHComp cw.epsilon (ops.sqHComp cvCwVComp' cv.eta))
+          (ops.sqHComp (ops.sqHComp cw.epsilon cvCwVComp') cv.eta) :=
+    (sqHAssoc_heq ops laws cw.epsilon cvCwVComp' cv.eta).symm
+  have h_cv_eta_vcomp :
+      HEq cv.eta (ops.sqVComp cv.eta (ops.sqVertId cv.hor)) :=
+    (sqVCompId_heq ops laws cv.eta).symm
+  have h_cvCw_eta_bridge :
+      HEq (ops.sqHComp cvCwVComp' cv.eta)
+          (ops.sqHComp cvCwVComp (ops.sqVComp cv.eta (ops.sqVertId cv.hor))) :=
+    sqHComp_heq_both ops hcvCwVComp_heq.symm h_cv_eta_vcomp
+      eqVL.symm eqVR.symm (laws.vertLaws.id_laws.comp_id (ops.vId A)).symm
+  have h_interch2_applied :
+      HEq (ops.sqHComp cvCwVComp (ops.sqVComp cv.eta (ops.sqVertId cv.hor)))
+          (ops.sqVComp (ops.sqHComp cv.epsilon cv.eta)
+                       (ops.sqHComp cw.eta (ops.sqVertId cv.hor))) :=
+    heq_of_eq interch2.symm
+  have h_cvCw_eta_full :
+      HEq (ops.sqHComp cvCwVComp' cv.eta)
+          (ops.sqVComp (ops.sqHComp cv.epsilon cv.eta)
+                       (ops.sqHComp cw.eta (ops.sqVertId cv.hor))) :=
+    HEq.trans h_cvCw_eta_bridge h_interch2_applied
+  let eqMid : ops.hComp (ops.hId B) cv.hor = cv.hor := laws.horLaws.id_laws.id_comp cv.hor
+  let β := ops.sqHComp cw.eta (ops.sqVertId cv.hor)
+  let eqType : sqs w (ops.vId A) (ops.hComp (ops.hId B) cv.hor) (ops.hComp cw.hor cv.hor) =
+               sqs w (ops.vId A) cv.hor (ops.hComp cw.hor cv.hor) := by rw [eqMid]
+  let β' := cast eqType β
+  have hβ_heq : HEq β β' := (cast_heq eqType β).symm
+  have h_vcomp_heq_both :
+      HEq (ops.sqVComp (ops.sqHComp cv.epsilon cv.eta) β)
+          (ops.sqVComp (ops.sqVertId cv.hor) β') :=
+    sqVComp_heq_both ops cv.identity hβ_heq
+      (laws.horLaws.id_laws.comp_id cv.hor)
+      eqMid
+      rfl
+  have h_vIdComp_β' : HEq (ops.sqVComp (ops.sqVertId cv.hor) β') β' :=
+    sqVIdComp_heq ops laws β'
+  have h_cv_id_and_vIdComp :
+      HEq (ops.sqVComp (ops.sqHComp cv.epsilon cv.eta) β) β :=
+    HEq.trans (HEq.trans h_vcomp_heq_both h_vIdComp_β') hβ_heq.symm
+  have h_cvCw_eta_to_beta :
+      HEq (ops.sqHComp cvCwVComp' cv.eta) β :=
+    HEq.trans h_cvCw_eta_full h_cv_id_and_vIdComp
+  have h_assoc_cw_eta_vId :
+      HEq (ops.sqHComp cw.epsilon (ops.sqHComp cw.eta (ops.sqVertId cv.hor)))
+          (ops.sqHComp (ops.sqHComp cw.epsilon cw.eta) (ops.sqVertId cv.hor)) :=
+    (sqHAssoc_heq ops laws cw.epsilon cw.eta (ops.sqVertId cv.hor)).symm
+  have h_cw_id_vertId :
+      HEq (ops.sqHComp (ops.sqHComp cw.epsilon cw.eta) (ops.sqVertId cv.hor))
+          (ops.sqHComp (ops.sqVertId cw.hor) (ops.sqVertId cv.hor)) :=
+    sqHComp_heq_left ops (ops.sqVertId cv.hor) cw.identity
+      (laws.horLaws.id_laws.comp_id cw.hor)
+      (laws.horLaws.id_laws.id_comp cw.hor)
+  have h_horIdHComp :
+      ops.sqHComp (ops.sqVertId cw.hor) (ops.sqVertId cv.hor) =
+      ops.sqVertId (ops.hComp cw.hor cv.hor) :=
+    laws.sqLaws.horIdHComp cw.hor cv.hor
+  have h_final_step :
+      HEq (ops.sqHComp cw.epsilon (ops.sqHComp cw.eta (ops.sqVertId cv.hor)))
+          (ops.sqVertId (ops.hComp cw.hor cv.hor)) :=
+    HEq.trans (HEq.trans h_assoc_cw_eta_vId h_cw_id_vertId) (heq_of_eq h_horIdHComp)
+  have eqTop : ops.hComp cv.hor (ops.hId A) = ops.hComp (ops.hId B) cv.hor :=
+    (laws.horLaws.id_laws.comp_id cv.hor).trans
+    (laws.horLaws.id_laws.id_comp cv.hor).symm
+  have h_cw_eps_inner :
+      HEq (ops.sqHComp cw.epsilon (ops.sqHComp cvCwVComp' cv.eta))
+          (ops.sqHComp cw.epsilon β) :=
+    sqHComp_heq_right ops cw.epsilon h_cvCw_eta_to_beta eqTop rfl
+  have h_inner_to_target :
+      HEq (ops.sqHComp cw.epsilon (ops.sqHComp cvCwVComp' cv.eta))
+          (ops.sqVertId (ops.hComp cw.hor cv.hor)) :=
+    HEq.trans h_cw_eps_inner h_final_step
+  have h_full_inner_to_target :
+      HEq (ops.sqHComp (ops.sqHComp cw.epsilon X') (ops.sqHComp Y' cv.eta))
+          (ops.sqVertId (ops.hComp cw.hor cv.hor)) :=
+    HEq.trans h_full_to_cvCw h_inner_to_target
+  have h_raw_to_target :
+      HEq (ops.sqHComp epsilonRaw etaRaw)
+          (ops.sqVertId (ops.hComp cw.hor cv.hor)) :=
+    h_full_inner_to_target
+  have h_comp_to_raw :
+      HEq (ops.sqHComp (compEpsilon ops laws v w cv cw) (compEta ops laws v w cv cw))
+          (ops.sqHComp epsilonRaw etaRaw) :=
+    sqHComp_heq_all ops h_epsilon_heq h_eta_heq
+      rfl rfl rfl rfl eqHT.symm eqHB.symm rfl
+  exact HEq.trans h_comp_to_raw h_raw_to_target
+
+end ConjointComp
+
+/-- The conjoint of a vertical composite is the horizontal composite of conjoints
+in reverse order.
+
+Given v : A →ᵥ B with conjoint v_* : B →ₕ A and w : B →ᵥ C with conjoint
+w_* : C →ₕ B, the conjoint of (vComp v w) : A →ᵥ C is (hComp w_* v_*) : C →ₕ A.
+
+The binding squares are constructed by pasting:
+- ε_{v∘w} = sqHComp (sqVComp cw.epsilon (sqHorId v)) cv.epsilon
+- η_{v∘w} = sqHComp cv.eta (sqVComp (sqHorId w) cw.eta)
+-/
+def comp {A B C : Obj} {v : vhs A B} {w : vhs B C}
+    (cv : Conjoint ops v) (cw : Conjoint ops w)
+    (laws : DoubleCategoryLaws ops) : Conjoint ops (ops.vComp v w) where
+  hor := ops.hComp cw.hor cv.hor
+  epsilon := compEpsilon ops laws v w cv cw
+  eta := compEta ops laws v w cv cw
+  identity := compIdentity ops laws v w cv cw
 
 end Conjoint
 
