@@ -1696,6 +1696,99 @@ theorem VertTransOps.interchange {Obj₁ : Type u₁}
   exact interchange_natSquare ops₂ ops₃ laws₃ klaws τ τ' σ σ'
     σlaws.naturality σlaws.squareNaturality h
 
+/-! ### Godement Product Laws for VertTransOps
+
+The Godement product (horizontal composition of vertical transformations)
+satisfies identity and associativity laws. Unlike the "same direction"
+composition (vComp), these laws require DoubleFunctorLaws on some functors.
+-/
+
+/-- Right identity for Godement product: hComp τ (id Id) ≅ τ.
+
+Composing a vertical transformation with the identity transformation on
+the identity functor yields the original transformation. -/
+theorem VertTransOps.hComp_id_right_heq {Obj₁ : Type u₁}
+    {vhs₁ : VertHomSet Obj₁} {hhs₁ : HorHomSet Obj₁} {sqs₁ : SquareSet vhs₁ hhs₁}
+    {Obj₂ : Type u₂}
+    {vhs₂ : VertHomSet Obj₂} {hhs₂ : HorHomSet Obj₂} {sqs₂ : SquareSet vhs₂ hhs₂}
+    (ops₂ : DoubleCategoryOps Obj₂ vhs₂ hhs₂ sqs₂)
+    (laws₂ : DoubleCategoryLaws ops₂)
+    {F G : DoubleFunctorOps vhs₁ hhs₁ sqs₁ vhs₂ hhs₂ sqs₂}
+    (τ : VertTransOps F G) :
+    HEq (VertTransOps.hComp ops₂ τ (VertTransOps.id ops₂ DoubleFunctorOps.id)) τ := by
+  simp only [VertTransOps.hComp, VertTransOps.id, DoubleFunctorOps.id]
+  apply VertTransOps.heq_mk
+  · intro A
+    exact laws₂.vertLaws.id_laws.comp_id _
+  · intro A B h
+    exact sqVCompId_heq ops₂ laws₂ _
+
+/-- Left identity for Godement product: hComp (id Id) σ ≅ σ.
+
+Composing the identity transformation on the identity functor with a
+vertical transformation yields the original transformation. Requires
+DoubleFunctorLaws on the post-composed functor H. -/
+theorem VertTransOps.hComp_id_left_heq {Obj₁ : Type u₁}
+    {vhs₁ : VertHomSet Obj₁} {hhs₁ : HorHomSet Obj₁} {sqs₁ : SquareSet vhs₁ hhs₁}
+    {Obj₂ : Type u₂}
+    {vhs₂ : VertHomSet Obj₂} {hhs₂ : HorHomSet Obj₂} {sqs₂ : SquareSet vhs₂ hhs₂}
+    (ops₁ : DoubleCategoryOps Obj₁ vhs₁ hhs₁ sqs₁)
+    (ops₂ : DoubleCategoryOps Obj₂ vhs₂ hhs₂ sqs₂)
+    (laws₂ : DoubleCategoryLaws ops₂)
+    {H K : DoubleFunctorOps vhs₁ hhs₁ sqs₁ vhs₂ hhs₂ sqs₂}
+    (hlaws : DoubleFunctorLaws ops₁ ops₂ H)
+    (σ : VertTransOps H K) :
+    HEq (VertTransOps.hComp ops₂
+        (VertTransOps.id ops₁ DoubleFunctorOps.id) σ) σ := by
+  simp only [VertTransOps.hComp, VertTransOps.id, DoubleFunctorOps.id]
+  apply VertTransOps.heq_mk
+  · intro A
+    rw [hlaws.map_vId]
+    exact laws₂.vertLaws.id_laws.id_comp _
+  · intro A B h
+    have h1 := sqVComp_heq_left ops₂ (σ.natSquare h) (hlaws.map_sqVertId h)
+        (hlaws.map_vId A) (hlaws.map_vId B)
+    have h2 := sqVIdComp_heq ops₂ laws₂ (σ.natSquare h)
+    exact HEq.trans h1 h2
+
+/-- Associativity for Godement product: hComp (hComp τ σ) ρ ≅ hComp τ (hComp σ ρ).
+
+The Godement product is associative. This requires DoubleFunctorLaws on the
+outermost functor L (the one closest to the final target category). -/
+theorem VertTransOps.hComp_assoc_heq {Obj₁ : Type u₁}
+    {vhs₁ : VertHomSet Obj₁} {hhs₁ : HorHomSet Obj₁} {sqs₁ : SquareSet vhs₁ hhs₁}
+    {Obj₂ : Type u₂}
+    {vhs₂ : VertHomSet Obj₂} {hhs₂ : HorHomSet Obj₂} {sqs₂ : SquareSet vhs₂ hhs₂}
+    {Obj₃ : Type u₃}
+    {vhs₃ : VertHomSet Obj₃} {hhs₃ : HorHomSet Obj₃} {sqs₃ : SquareSet vhs₃ hhs₃}
+    {Obj₄ : Type u₄}
+    {vhs₄ : VertHomSet Obj₄} {hhs₄ : HorHomSet Obj₄} {sqs₄ : SquareSet vhs₄ hhs₄}
+    (ops₃ : DoubleCategoryOps Obj₃ vhs₃ hhs₃ sqs₃)
+    (ops₄ : DoubleCategoryOps Obj₄ vhs₄ hhs₄ sqs₄)
+    (laws₄ : DoubleCategoryLaws ops₄)
+    {F G : DoubleFunctorOps vhs₁ hhs₁ sqs₁ vhs₂ hhs₂ sqs₂}
+    {H K : DoubleFunctorOps vhs₂ hhs₂ sqs₂ vhs₃ hhs₃ sqs₃}
+    {L M : DoubleFunctorOps vhs₃ hhs₃ sqs₃ vhs₄ hhs₄ sqs₄}
+    (llaws : DoubleFunctorLaws ops₃ ops₄ L)
+    (τ : VertTransOps F G) (σ : VertTransOps H K) (ρ : VertTransOps L M) :
+    HEq (VertTransOps.hComp ops₄ (VertTransOps.hComp ops₃ τ σ) ρ)
+        (VertTransOps.hComp ops₄ τ (VertTransOps.hComp ops₄ σ ρ)) := by
+  simp only [VertTransOps.hComp]
+  apply VertTransOps.heq_mk
+  · intro A
+    rw [llaws.map_vComp]
+    exact laws₄.vertLaws.assoc _ _ _
+  · intro A B h
+    let τ_ns := τ.natSquare h
+    let σ_ns := σ.natSquare (G.horMap h)
+    let ρ_ns := ρ.natSquare (K.horMap (G.horMap h))
+    have lpres := llaws.map_sqVComp (H.sqMap τ_ns) σ_ns
+    have h1 := sqVComp_heq_left ops₄ ρ_ns lpres
+        (llaws.map_vComp _ _) (llaws.map_vComp _ _)
+    have h2 := sqVAssoc_heq ops₄ laws₄
+        (L.sqMap (H.sqMap τ_ns)) (L.sqMap σ_ns) ρ_ns
+    exact HEq.trans h1 h2
+
 /-- HEq congruence for sqHComp in the first argument (left square).
 
 For horizontal composition with this layout:
@@ -1783,6 +1876,91 @@ theorem sqHComp_heq_all {Obj : Type u}
   cases hα
   cases hβ
   rfl
+
+/-! ### Godement Product Laws for HorTransOps
+
+The Godement product (vertical composition of horizontal transformations,
+HorTransOps.vComp) satisfies identity and associativity laws. These are
+dual to the VertTransOps.hComp laws. -/
+
+/-- Right identity for Godement product: vComp τ (id Id) ≅ τ. -/
+theorem HorTransOps.vComp_id_right_heq {Obj₁ : Type u₁}
+    {vhs₁ : VertHomSet Obj₁} {hhs₁ : HorHomSet Obj₁} {sqs₁ : SquareSet vhs₁ hhs₁}
+    {Obj₂ : Type u₂}
+    {vhs₂ : VertHomSet Obj₂} {hhs₂ : HorHomSet Obj₂} {sqs₂ : SquareSet vhs₂ hhs₂}
+    (ops₂ : DoubleCategoryOps Obj₂ vhs₂ hhs₂ sqs₂)
+    (laws₂ : DoubleCategoryLaws ops₂)
+    {F G : DoubleFunctorOps vhs₁ hhs₁ sqs₁ vhs₂ hhs₂ sqs₂}
+    (τ : HorTransOps F G) :
+    HEq (HorTransOps.vComp ops₂ τ (HorTransOps.id ops₂ DoubleFunctorOps.id)) τ := by
+  simp only [HorTransOps.vComp, HorTransOps.id, DoubleFunctorOps.id]
+  apply HorTransOps.heq_mk
+  · intro A
+    exact laws₂.horLaws.id_laws.comp_id _
+  · intro A B v
+    exact sqHCompId_heq ops₂ laws₂ _
+
+/-- Left identity for Godement product: vComp (id Id) σ ≅ σ. -/
+theorem HorTransOps.vComp_id_left_heq {Obj₁ : Type u₁}
+    {vhs₁ : VertHomSet Obj₁} {hhs₁ : HorHomSet Obj₁} {sqs₁ : SquareSet vhs₁ hhs₁}
+    {Obj₂ : Type u₂}
+    {vhs₂ : VertHomSet Obj₂} {hhs₂ : HorHomSet Obj₂} {sqs₂ : SquareSet vhs₂ hhs₂}
+    (ops₁ : DoubleCategoryOps Obj₁ vhs₁ hhs₁ sqs₁)
+    (ops₂ : DoubleCategoryOps Obj₂ vhs₂ hhs₂ sqs₂)
+    (laws₂ : DoubleCategoryLaws ops₂)
+    {H K : DoubleFunctorOps vhs₁ hhs₁ sqs₁ vhs₂ hhs₂ sqs₂}
+    (hlaws : DoubleFunctorLaws ops₁ ops₂ H)
+    (σ : HorTransOps H K) :
+    HEq (HorTransOps.vComp ops₂
+        (HorTransOps.id ops₁ DoubleFunctorOps.id) σ) σ := by
+  simp only [HorTransOps.vComp, HorTransOps.id, DoubleFunctorOps.id]
+  apply HorTransOps.heq_mk
+  · intro A
+    rw [hlaws.map_hId]
+    exact laws₂.horLaws.id_laws.id_comp _
+  · intro A B v
+    have h1 := sqHComp_heq_left ops₂ (σ.natSquare v) (hlaws.map_sqHorId v)
+        (hlaws.map_hId A) (hlaws.map_hId B)
+    have h2 := sqHIdComp_heq ops₂ laws₂ (σ.natSquare v)
+    exact HEq.trans h1 h2
+
+/-- Associativity for Godement product: vComp (vComp τ σ) ρ ≅ vComp τ (vComp σ ρ).
+
+The Godement product is associative. This requires DoubleFunctorLaws on the
+outermost functor L (the one closest to the final target category). -/
+theorem HorTransOps.vComp_assoc_heq {Obj₁ : Type u₁}
+    {vhs₁ : VertHomSet Obj₁} {hhs₁ : HorHomSet Obj₁} {sqs₁ : SquareSet vhs₁ hhs₁}
+    {Obj₂ : Type u₂}
+    {vhs₂ : VertHomSet Obj₂} {hhs₂ : HorHomSet Obj₂} {sqs₂ : SquareSet vhs₂ hhs₂}
+    {Obj₃ : Type u₃}
+    {vhs₃ : VertHomSet Obj₃} {hhs₃ : HorHomSet Obj₃} {sqs₃ : SquareSet vhs₃ hhs₃}
+    {Obj₄ : Type u₄}
+    {vhs₄ : VertHomSet Obj₄} {hhs₄ : HorHomSet Obj₄} {sqs₄ : SquareSet vhs₄ hhs₄}
+    (ops₃ : DoubleCategoryOps Obj₃ vhs₃ hhs₃ sqs₃)
+    (ops₄ : DoubleCategoryOps Obj₄ vhs₄ hhs₄ sqs₄)
+    (laws₄ : DoubleCategoryLaws ops₄)
+    {F G : DoubleFunctorOps vhs₁ hhs₁ sqs₁ vhs₂ hhs₂ sqs₂}
+    {H K : DoubleFunctorOps vhs₂ hhs₂ sqs₂ vhs₃ hhs₃ sqs₃}
+    {L M : DoubleFunctorOps vhs₃ hhs₃ sqs₃ vhs₄ hhs₄ sqs₄}
+    (llaws : DoubleFunctorLaws ops₃ ops₄ L)
+    (τ : HorTransOps F G) (σ : HorTransOps H K) (ρ : HorTransOps L M) :
+    HEq (HorTransOps.vComp ops₄ (HorTransOps.vComp ops₃ τ σ) ρ)
+        (HorTransOps.vComp ops₄ τ (HorTransOps.vComp ops₄ σ ρ)) := by
+  simp only [HorTransOps.vComp]
+  apply HorTransOps.heq_mk
+  · intro A
+    rw [llaws.map_hComp]
+    exact laws₄.horLaws.assoc _ _ _
+  · intro A B v
+    let τ_ns := τ.natSquare v
+    let σ_ns := σ.natSquare (G.vertMap v)
+    let ρ_ns := ρ.natSquare (K.vertMap (G.vertMap v))
+    have lpres := llaws.map_sqHComp (H.sqMap τ_ns) σ_ns
+    have h1 := sqHComp_heq_left ops₄ ρ_ns lpres
+        (llaws.map_hComp _ _) (llaws.map_hComp _ _)
+    have h2 := sqHAssoc_heq ops₄ laws₄
+        (L.sqMap (H.sqMap τ_ns)) (L.sqMap σ_ns) ρ_ns
+    exact HEq.trans h1 h2
 
 /-- Helper lemma for horizontal interchange: the natSquare component HEq.
 

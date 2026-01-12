@@ -76,7 +76,9 @@ the transformation structure:
 
 - [x] VertTransLaws for id, vComp, and hComp
 - [x] HorTransLaws for id, hComp, and vComp
-- [ ] Identity and associativity laws for Godement products (hComp/vComp)
+- [x] Identity and associativity laws for Godement products (hComp/vComp)
+      (VertTransOps.hComp_id_right_heq, hComp_id_left_heq, hComp_assoc_heq;
+       HorTransOps.vComp_id_right_heq, vComp_id_left_heq, vComp_assoc_heq)
 
 ### Interchange Law for Transformations (Completed)
 

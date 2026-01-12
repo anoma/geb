@@ -142,6 +142,15 @@ Category axioms:
 - `HorTransOps.hComp_id_right_heq` - τ ⬝ₕ id ≅ τ
 - `HorTransOps.hComp_assoc_heq` - (τ ⬝ₕ σ) ⬝ₕ ρ ≅ τ ⬝ₕ (σ ⬝ₕ ρ)
 
+Godement product (cross-direction composition) category axioms:
+
+- `VertTransOps.hComp_id_left_heq` - hComp (id Id) σ ≅ σ
+- `VertTransOps.hComp_id_right_heq` - hComp τ (id Id) ≅ τ
+- `VertTransOps.hComp_assoc_heq` - hComp (hComp τ σ) ρ ≅ hComp τ (hComp σ ρ)
+- `HorTransOps.vComp_id_left_heq` - vComp (id Id) σ ≅ σ
+- `HorTransOps.vComp_id_right_heq` - vComp τ (id Id) ≅ τ
+- `HorTransOps.vComp_assoc_heq` - vComp (vComp τ σ) ρ ≅ vComp τ (vComp σ ρ)
+
 ## Double Functor Composition
 
 Operations:
