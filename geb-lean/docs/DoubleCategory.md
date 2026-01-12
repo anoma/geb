@@ -371,13 +371,61 @@ Additional compositions:
 Primed versions (`adjunctionUnit'`, etc.) apply identity laws to simplify
 the types.
 
+## Modifications
+
+Modifications are 2-cells between natural transformations in a double
+category, providing structure for a 3-categorical view of double
+categories, functors, transformations, and modifications.
+
+### Vertical Modifications
+
+A modification Γ : τ ⟹ σ between vertical transformations τ, σ : F ⟹ᵥ G
+assigns to each object A a square relating τ_A and σ_A:
+
+```text
+       hId F(A)
+    F(A) ─────→ F(A)
+     |           |
+τ_A  │    Γ_A    │ σ_A
+     ↓           ↓
+    G(A) ─────→ G(A)
+       hId G(A)
+```
+
+Implementation:
+
+- `VertModOps` - Component squares for each object
+- `VertModLaws` - Naturality: τ.natSquare(f) ⬝ₕ Γ_B ≅ Γ_A ⬝ₕ σ.natSquare(f)
+- `VertModData` - Operations and laws bundled
+- `VertModOps.id` - Identity modification on a transformation
+- `VertModOps.hComp` - Horizontal composition of modifications
+
+### Horizontal Modifications
+
+A modification Γ : τ ⟹ σ between horizontal transformations τ, σ : F ⟹ₕ G
+assigns to each object A a square relating τ_A and σ_A:
+
+```text
+        τ_A
+    F(A) ─────→ G(A)
+     |           |
+vId  │    Γ_A    │ vId
+     ↓           ↓
+    F(A) ─────→ G(A)
+        σ_A
+```
+
+Implementation:
+
+- `HorModOps` - Component squares for each object
+- `HorModLaws` - Naturality: τ.natSquare(v) ⬝ᵥ Γ_B ≅ Γ_A ⬝ᵥ σ.natSquare(v)
+- `HorModData` - Operations and laws bundled
+- `HorModOps.id` - Identity modification on a transformation
+- `HorModOps.vComp` - Vertical composition of modifications
+
 ## Future Extensions
 
 The following extensions are planned for future development:
-
-### Modifications
-
-2-cells between double natural transformations (vertical or horizontal).
 
 ### Tabulators
 

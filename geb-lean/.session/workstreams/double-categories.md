@@ -47,6 +47,12 @@ Implementation of strict double categories and related structures.
 - [x] DoubleFunctorLaws.comp (composition preserves laws)
 - [x] DoubleFunctorData.id and DoubleFunctorData.comp
 - [x] DoubleFunctorData category axioms (comp_id_right, comp_id_left, comp_assoc)
+- [x] VertModOps structure for modifications between vertical transformations
+- [x] HorModOps structure for modifications between horizontal transformations
+- [x] VertModOps.id and HorModOps.id (identity modifications)
+- [x] VertModOps.hComp and HorModOps.vComp (composition with law-based transport)
+- [x] VertModLaws and HorModLaws (naturality conditions for modifications)
+- [x] VertModData and HorModData (bundled Ops and Laws)
 
 ## In Progress
 
@@ -92,10 +98,12 @@ These laws include the naturality conditions (`naturality` and
 `squareNaturality`) that ensure intermediate components can be reordered.
 See `VertTransOps.interchange` and `HorTransOps.interchange`.
 
-### Modifications
+### Modifications (Completed)
 
-- [ ] Modification between horizontal transformations
-- [ ] Modification between vertical transformations
+- [x] VertModOps, VertModLaws, VertModData for vertical transformations
+- [x] HorModOps, HorModLaws, HorModData for horizontal transformations
+- [x] Identity modifications (VertModOps.id, HorModOps.id)
+- [x] Composition (VertModOps.hComp, HorModOps.vComp) with law-based transport
 
 ### Examples
 

@@ -3412,4 +3412,271 @@ def etaHCompPhi' : sqs v v (ops.hId A) (ops.hComp cj.hor cv.hor) :=
 
 end CompanionConjointAdjunction
 
+/-! ## Modifications between Transformations
+
+A modification between two natural transformations (vertical or horizontal)
+is a collection of 2-cells (squares) relating the components. In a double
+category, modifications provide the structure for a 3-category of double
+categories, functors, transformations, and modifications.
+-/
+
+/-- Operations for a modification between vertical transformations.
+
+A modification Γ : τ ⟹ σ between vertical transformations τ, σ : F ⟹ᵥ G
+assigns to each object A a square relating τ.app A and σ.app A:
+
+```
+       hId F(A)
+    F(A) ─────→ F(A)
+     |           |
+τ_A  │    Γ_A    │ σ_A
+     ↓           ↓
+    G(A) ─────→ G(A)
+       hId G(A)
+```
+
+The square has identity horizontal boundaries and the transformation
+components as vertical boundaries.
+-/
+structure VertModOps {Obj₁ : Type u₁}
+    {vhs₁ : VertHomSet Obj₁} {hhs₁ : HorHomSet Obj₁} {sqs₁ : SquareSet vhs₁ hhs₁}
+    {Obj₂ : Type u₂}
+    {vhs₂ : VertHomSet Obj₂} {hhs₂ : HorHomSet Obj₂} {sqs₂ : SquareSet vhs₂ hhs₂}
+    (ops₂ : DoubleCategoryOps Obj₂ vhs₂ hhs₂ sqs₂)
+    {F G : DoubleFunctorOps vhs₁ hhs₁ sqs₁ vhs₂ hhs₂ sqs₂}
+    (τ σ : VertTransOps F G) where
+  /-- Component squares: one for each object -/
+  app : ∀ (A : Obj₁), sqs₂ (τ.app A) (σ.app A) (ops₂.hId (F.objMap A))
+                                                (ops₂.hId (G.objMap A))
+
+/-- Operations for a modification between horizontal transformations.
+
+A modification Γ : τ ⟹ σ between horizontal transformations τ, σ : F ⟹ₕ G
+assigns to each object A a square relating τ.app A and σ.app A:
+
+```
+        τ_A
+    F(A) ─────→ G(A)
+     |           |
+vId  │    Γ_A    │ vId
+     ↓           ↓
+    F(A) ─────→ G(A)
+        σ_A
+```
+
+The square has identity vertical boundaries and the transformation
+components as horizontal boundaries.
+-/
+structure HorModOps {Obj₁ : Type u₁}
+    {vhs₁ : VertHomSet Obj₁} {hhs₁ : HorHomSet Obj₁} {sqs₁ : SquareSet vhs₁ hhs₁}
+    {Obj₂ : Type u₂}
+    {vhs₂ : VertHomSet Obj₂} {hhs₂ : HorHomSet Obj₂} {sqs₂ : SquareSet vhs₂ hhs₂}
+    (ops₂ : DoubleCategoryOps Obj₂ vhs₂ hhs₂ sqs₂)
+    {F G : DoubleFunctorOps vhs₁ hhs₁ sqs₁ vhs₂ hhs₂ sqs₂}
+    (τ σ : HorTransOps F G) where
+  /-- Component squares: one for each object -/
+  app : ∀ (A : Obj₁), sqs₂ (ops₂.vId (F.objMap A)) (ops₂.vId (G.objMap A))
+                           (τ.app A) (σ.app A)
+
+namespace VertModOps
+
+variable {Obj₁ : Type u₁}
+variable {vhs₁ : VertHomSet Obj₁} {hhs₁ : HorHomSet Obj₁} {sqs₁ : SquareSet vhs₁ hhs₁}
+variable {Obj₂ : Type u₂}
+variable {vhs₂ : VertHomSet Obj₂} {hhs₂ : HorHomSet Obj₂} {sqs₂ : SquareSet vhs₂ hhs₂}
+variable (ops₂ : DoubleCategoryOps Obj₂ vhs₂ hhs₂ sqs₂)
+variable {F G : DoubleFunctorOps vhs₁ hhs₁ sqs₁ vhs₂ hhs₂ sqs₂}
+
+/-- Identity modification on a vertical transformation.
+
+The identity modification uses horizontal identity squares sqHorId on the
+transformation components, giving squares with τ_A on both vertical sides.
+-/
+def id (τ : VertTransOps F G) : VertModOps ops₂ τ τ where
+  app A := ops₂.sqHorId (τ.app A)
+
+/-- Horizontal composition of modifications between vertical transformations.
+
+Given Γ : τ ⟹ σ and Δ : σ ⟹ ρ, their composite is τ ⟹ ρ. The composition
+uses sqHComp which produces squares with horizontal boundaries
+hComp (hId X) (hId X), requiring identity law transport to obtain hId X.
+-/
+def hComp {τ σ ρ : VertTransOps F G}
+    (laws₂ : DoubleCategoryLaws ops₂)
+    (Γ : VertModOps ops₂ τ σ) (Δ : VertModOps ops₂ σ ρ) : VertModOps ops₂ τ ρ where
+  app A :=
+    let rawComp := ops₂.sqHComp (Γ.app A) (Δ.app A)
+    let eqTop := laws₂.horLaws.id_laws.id_comp (ops₂.hId (F.objMap A))
+    let eqBot := laws₂.horLaws.id_laws.id_comp (ops₂.hId (G.objMap A))
+    eqTop.recOn (motive := fun h' _ =>
+      sqs₂ (τ.app A) (ρ.app A) h' (ops₂.hId (G.objMap A)))
+      (eqBot.recOn (motive := fun h' _ =>
+        sqs₂ (τ.app A) (ρ.app A)
+          (ops₂.hComp (ops₂.hId (F.objMap A)) (ops₂.hId (F.objMap A))) h')
+        rawComp)
+
+end VertModOps
+
+namespace HorModOps
+
+variable {Obj₁ : Type u₁}
+variable {vhs₁ : VertHomSet Obj₁} {hhs₁ : HorHomSet Obj₁} {sqs₁ : SquareSet vhs₁ hhs₁}
+variable {Obj₂ : Type u₂}
+variable {vhs₂ : VertHomSet Obj₂} {hhs₂ : HorHomSet Obj₂} {sqs₂ : SquareSet vhs₂ hhs₂}
+variable (ops₂ : DoubleCategoryOps Obj₂ vhs₂ hhs₂ sqs₂)
+variable {F G : DoubleFunctorOps vhs₁ hhs₁ sqs₁ vhs₂ hhs₂ sqs₂}
+
+/-- Identity modification on a horizontal transformation.
+
+The identity modification uses vertical identity squares sqVertId on the
+transformation components, giving squares with τ_A on both horizontal sides.
+-/
+def id (τ : HorTransOps F G) : HorModOps ops₂ τ τ where
+  app A := ops₂.sqVertId (τ.app A)
+
+/-- Vertical composition of modifications between horizontal transformations.
+
+Given Γ : τ ⟹ σ and Δ : σ ⟹ ρ, their composite is τ ⟹ ρ. The composition
+uses sqVComp which produces squares with vertical boundaries
+vComp (vId X) (vId X), requiring identity law transport to obtain vId X.
+-/
+def vComp {τ σ ρ : HorTransOps F G}
+    (laws₂ : DoubleCategoryLaws ops₂)
+    (Γ : HorModOps ops₂ τ σ) (Δ : HorModOps ops₂ σ ρ) : HorModOps ops₂ τ ρ where
+  app A :=
+    let rawComp := ops₂.sqVComp (Γ.app A) (Δ.app A)
+    let eqLeft := laws₂.vertLaws.id_laws.id_comp (ops₂.vId (F.objMap A))
+    let eqRight := laws₂.vertLaws.id_laws.id_comp (ops₂.vId (G.objMap A))
+    eqLeft.recOn (motive := fun v' _ =>
+      sqs₂ v' (ops₂.vId (G.objMap A)) (τ.app A) (ρ.app A))
+      (eqRight.recOn (motive := fun v' _ =>
+        sqs₂ (ops₂.vComp (ops₂.vId (F.objMap A)) (ops₂.vId (F.objMap A))) v'
+          (τ.app A) (ρ.app A))
+        rawComp)
+
+end HorModOps
+
+/-- Laws for a modification between vertical transformations.
+
+For a modification Γ : τ ⟹ σ, naturality requires that for any horizontal
+morphism f : A →ₕ B in the source category, the following diagram commutes:
+
+```
+                     F(f)
+        F(A) ─────────────────────→ F(B)
+         │                           │
+    τ_A  │                           │ τ_B
+         │    τ.natSquare(f)         │
+         ↓                           ↓
+        G(A) ─────────────────────→ G(B)
+         │         G(f)              │
+    σ_A  │                           │ σ_B
+         │    σ.natSquare(f)         │
+         ↓                           ↓
+        G(A) ─────────────────────→ G(B)
+                     G(f)
+```
+
+The law states: τ.natSquare(f) ⬝ₕ Γ_B ≅ Γ_A ⬝ₕ σ.natSquare(f)
+(both paths give a square from τ_A to σ_B with top F(f) and bottom G(f))
+-/
+structure VertModLaws {Obj₁ : Type u₁}
+    {vhs₁ : VertHomSet Obj₁} {hhs₁ : HorHomSet Obj₁} {sqs₁ : SquareSet vhs₁ hhs₁}
+    (ops₁ : DoubleCategoryOps Obj₁ vhs₁ hhs₁ sqs₁)
+    {Obj₂ : Type u₂}
+    {vhs₂ : VertHomSet Obj₂} {hhs₂ : HorHomSet Obj₂} {sqs₂ : SquareSet vhs₂ hhs₂}
+    (ops₂ : DoubleCategoryOps Obj₂ vhs₂ hhs₂ sqs₂)
+    {F G : DoubleFunctorOps vhs₁ hhs₁ sqs₁ vhs₂ hhs₂ sqs₂}
+    {τ σ : VertTransOps F G}
+    (Γ : VertModOps ops₂ τ σ) where
+  /-- Naturality: τ.natSquare(f) ⬝ₕ Γ_B ≅ Γ_A ⬝ₕ σ.natSquare(f)
+
+  The equality is heterogeneous because the two sides have different
+  horizontal boundaries that are only propositionally equal:
+  - LHS has top hComp (F.hMap f) (hId F(B)), bottom hComp (G.hMap f) (hId G(B))
+  - RHS has top hComp (hId F(A)) (F.hMap f), bottom hComp (hId G(A)) (G.hMap f)
+  These are equal by identity laws but not definitionally.
+  -/
+  naturality : ∀ {A B : Obj₁} (f : hhs₁ A B),
+    HEq (ops₂.sqHComp (τ.natSquare f) (Γ.app B))
+        (ops₂.sqHComp (Γ.app A) (σ.natSquare f))
+
+/-- Laws for a modification between horizontal transformations.
+
+For a modification Γ : τ ⟹ σ, naturality requires that for any vertical
+morphism v : A →ᵥ B in the source category, the following diagram commutes:
+
+```
+                     τ_A
+        F(A) ─────────────────────→ G(A)
+         │                           │
+         │     τ.natSquare(v)        │
+  F.vMap v│                          │ G.vMap v
+         │                           │
+         ↓                           ↓
+        F(B) ─────────────────────→ G(B)
+         │         τ_B               │
+         │     σ.natSquare(v)        │
+  F.vMap v│                          │ G.vMap v
+         │                           │
+         ↓                           ↓
+        F(B) ─────────────────────→ G(B)
+                     σ_B
+```
+
+The law states: τ.natSquare(v) ⬝ᵥ Γ_B ≅ Γ_A ⬝ᵥ σ.natSquare(v)
+(both paths give a square from F.vMap v to G.vMap v with left τ_A and
+right σ_B)
+-/
+structure HorModLaws {Obj₁ : Type u₁}
+    {vhs₁ : VertHomSet Obj₁} {hhs₁ : HorHomSet Obj₁} {sqs₁ : SquareSet vhs₁ hhs₁}
+    (ops₁ : DoubleCategoryOps Obj₁ vhs₁ hhs₁ sqs₁)
+    {Obj₂ : Type u₂}
+    {vhs₂ : VertHomSet Obj₂} {hhs₂ : HorHomSet Obj₂} {sqs₂ : SquareSet vhs₂ hhs₂}
+    (ops₂ : DoubleCategoryOps Obj₂ vhs₂ hhs₂ sqs₂)
+    {F G : DoubleFunctorOps vhs₁ hhs₁ sqs₁ vhs₂ hhs₂ sqs₂}
+    {τ σ : HorTransOps F G}
+    (Γ : HorModOps ops₂ τ σ) where
+  /-- Naturality: τ.natSquare(v) ⬝ᵥ Γ_B ≅ Γ_A ⬝ᵥ σ.natSquare(v)
+
+  The equality is heterogeneous because the two sides have different
+  vertical boundaries that are only propositionally equal:
+  - LHS has left vComp (F.vMap v) (vId F(B)), right vComp (G.vMap v) (vId G(B))
+  - RHS has left vComp (vId F(A)) (F.vMap v), right vComp (vId G(A)) (G.vMap v)
+  These are equal by identity laws but not definitionally.
+  -/
+  naturality : ∀ {A B : Obj₁} (v : vhs₁ A B),
+    HEq (ops₂.sqVComp (τ.natSquare v) (Γ.app B))
+        (ops₂.sqVComp (Γ.app A) (σ.natSquare v))
+
+/-- Data for a modification between vertical transformations.
+
+Bundles the component squares (ops) and the naturality condition (laws).
+-/
+structure VertModData {Obj₁ : Type u₁}
+    {vhs₁ : VertHomSet Obj₁} {hhs₁ : HorHomSet Obj₁} {sqs₁ : SquareSet vhs₁ hhs₁}
+    (ops₁ : DoubleCategoryOps Obj₁ vhs₁ hhs₁ sqs₁)
+    {Obj₂ : Type u₂}
+    {vhs₂ : VertHomSet Obj₂} {hhs₂ : HorHomSet Obj₂} {sqs₂ : SquareSet vhs₂ hhs₂}
+    (ops₂ : DoubleCategoryOps Obj₂ vhs₂ hhs₂ sqs₂)
+    {F G : DoubleFunctorOps vhs₁ hhs₁ sqs₁ vhs₂ hhs₂ sqs₂}
+    (τ σ : VertTransOps F G) extends
+    VertModOps ops₂ τ σ,
+    VertModLaws ops₁ ops₂ toVertModOps
+
+/-- Data for a modification between horizontal transformations.
+
+Bundles the component squares (ops) and the naturality condition (laws).
+-/
+structure HorModData {Obj₁ : Type u₁}
+    {vhs₁ : VertHomSet Obj₁} {hhs₁ : HorHomSet Obj₁} {sqs₁ : SquareSet vhs₁ hhs₁}
+    (ops₁ : DoubleCategoryOps Obj₁ vhs₁ hhs₁ sqs₁)
+    {Obj₂ : Type u₂}
+    {vhs₂ : VertHomSet Obj₂} {hhs₂ : HorHomSet Obj₂} {sqs₂ : SquareSet vhs₂ hhs₂}
+    (ops₂ : DoubleCategoryOps Obj₂ vhs₂ hhs₂ sqs₂)
+    {F G : DoubleFunctorOps vhs₁ hhs₁ sqs₁ vhs₂ hhs₂ sqs₂}
+    (τ σ : HorTransOps F G) extends
+    HorModOps ops₂ τ σ,
+    HorModLaws ops₁ ops₂ toHorModOps
+
 end GebLean
