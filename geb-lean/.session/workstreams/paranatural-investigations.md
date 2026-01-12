@@ -57,7 +57,7 @@ Questions:
 ### 5. Slice-Presheaf Equivalence for Diagonal Elements
 
 There is a well-known equivalence between slices over a presheaf and presheaves
-over its category of elements (`slicePresheafEquiv`, `sliceCopresheafEquiv`).
+over its category of elements (`sliceEquivPresheaf`, `sliceEquivCopresheaf`).
 
 Is there something similar for diagonal elements?
 
