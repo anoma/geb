@@ -371,6 +371,35 @@ Additional compositions:
 Primed versions (`adjunctionUnit'`, etc.) apply identity laws to simplify
 the types.
 
+#### Triangle Identities
+
+The triangle identities express that whiskering unit/counit by the companion
+or conjoint and composing vertically yields identity squares. These are the
+coherence conditions that make `v* ⊣ v_*` a proper adjunction.
+
+**Right triangle (for v*):**
+
+```text
+     sqVComp (unitWhiskerRight'' ⬝ᵥ counitWhiskerLeft') = sqVertId v*
+```
+
+The constructions:
+
+- `unitWhiskerRight`: adjunctionUnit' ⬝ₕ sqVertId `v*` (raw)
+- `unitWhiskerRight'`: applies identity law to get top boundary `v*`
+- `unitWhiskerRight''`: applies associativity for bottom boundary
+- `counitWhiskerLeft`: sqVertId `v*` ⬝ₕ adjunctionCounit' (raw)
+- `counitWhiskerLeft'`: applies identity law to get bottom boundary `v*`
+- `rightTriangleComposite`: the vertical composite of whiskered unit and counit
+
+**Left triangle (for v_*):**
+
+```text
+     sqVComp (unitWhiskerLeftConj' ⬝ᵥ counitWhiskerRightConj'') = sqVertId v_*
+```
+
+The constructions mirror the right triangle with `v_*` in place of `v*`.
+
 ## Modifications
 
 Modifications are 2-cells between natural transformations in a double

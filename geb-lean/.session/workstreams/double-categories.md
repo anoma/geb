@@ -74,7 +74,9 @@ None currently.
 - [x] sqHComp_heq_all (HEq congruence when all boundaries change)
 - [x] adjunctionUnit, adjunctionCounit (unit/counit of companion-conjoint adjunction)
 - [x] psiHCompEpsilon, etaHCompPhi (additional binding square compositions)
-- [ ] Triangle identities for companion-conjoint adjunction
+- [x] Triangle identity constructions (rightTriangleComposite, leftTriangleComposite)
+- [x] Triangle identity whiskering operations (unitWhiskerRight'', counitWhiskerLeft', etc.)
+- [ ] Triangle identity proofs (rightTriangleComposite = sqVertId cv.hor, etc.)
 - [ ] Uniqueness of companions/conjoints
 
 ### Transformation Composition Laws (Completed)

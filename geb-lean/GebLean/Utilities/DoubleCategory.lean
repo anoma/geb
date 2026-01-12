@@ -3410,6 +3410,158 @@ def etaHCompPhi' : sqs v v (ops.hId A) (ops.hComp cj.hor cv.hor) :=
     sqs v v h' (ops.hComp cj.hor cv.hor))
     (etaHCompPhi ops v cv cj)
 
+/-! ### Triangle Identities
+
+The triangle identities express that whiskering unit/counit by the companion
+or conjoint and composing vertically yields identity squares.
+
+Right triangle (for v*):
+  sqVComp (adjunctionUnit' ⬝ₕ sqVertId v*) (sqVertId v* ⬝ₕ adjunctionCounit') = sqVertId v*
+
+Left triangle (for v_*):
+  sqVComp (sqVertId v_* ⬝ₕ adjunctionUnit') (adjunctionCounit' ⬝ₕ sqVertId v_*) = sqVertId v_*
+-/
+
+/-- Whisker adjunctionUnit' by cv.hor on the right.
+
+Raw type: sqs (vId A) (vId B) (hId A ⬝ v*) ((v* ⬝ v_*) ⬝ v*)
+-/
+def unitWhiskerRight : sqs (ops.vId A) (ops.vId B)
+    (ops.hComp (ops.hId A) cv.hor) (ops.hComp (ops.hComp cv.hor cj.hor) cv.hor) :=
+  ops.sqHComp (adjunctionUnit' ops laws v cv cj) (ops.sqVertId cv.hor)
+
+/-- Whisker cv.hor on the left by adjunctionCounit'.
+
+Raw type: sqs (vId A) (vId B) (v* ⬝ (v_* ⬝ v*)) (v* ⬝ hId B)
+-/
+def counitWhiskerLeft : sqs (ops.vId A) (ops.vId B)
+    (ops.hComp cv.hor (ops.hComp cj.hor cv.hor)) (ops.hComp cv.hor (ops.hId B)) :=
+  ops.sqHComp (ops.sqVertId cv.hor) (adjunctionCounit' ops laws v cv cj)
+
+/-- Whisker adjunctionUnit' by cv.hor on the right, with identity law applied to top.
+
+Type: sqs (vId A) (vId B) v* ((v* ⬝ v_*) ⬝ v*)
+-/
+def unitWhiskerRight' : sqs (ops.vId A) (ops.vId B)
+    cv.hor (ops.hComp (ops.hComp cv.hor cj.hor) cv.hor) :=
+  let eq := laws.horLaws.id_laws.id_comp cv.hor
+  eq.recOn (motive := fun h' _ =>
+    sqs (ops.vId A) (ops.vId B) h' (ops.hComp (ops.hComp cv.hor cj.hor) cv.hor))
+    (unitWhiskerRight ops laws v cv cj)
+
+/-- Whisker cv.hor on the left by adjunctionCounit', with identity law applied to bottom.
+
+Type: sqs (vId A) (vId B) (v* ⬝ (v_* ⬝ v*)) v*
+-/
+def counitWhiskerLeft' : sqs (ops.vId A) (ops.vId B)
+    (ops.hComp cv.hor (ops.hComp cj.hor cv.hor)) cv.hor :=
+  let eq := laws.horLaws.id_laws.comp_id cv.hor
+  eq.recOn (motive := fun h' _ =>
+    sqs (ops.vId A) (ops.vId B) (ops.hComp cv.hor (ops.hComp cj.hor cv.hor)) h')
+    (counitWhiskerLeft ops laws v cv cj)
+
+/-- Apply associativity to unitWhiskerRight' to get bottom boundary v* ⬝ (v_* ⬝ v*).
+
+Type: sqs (vId A) (vId B) v* (v* ⬝ (v_* ⬝ v*))
+-/
+def unitWhiskerRight'' : sqs (ops.vId A) (ops.vId B)
+    cv.hor (ops.hComp cv.hor (ops.hComp cj.hor cv.hor)) :=
+  let eq := laws.horLaws.assoc cv.hor cj.hor cv.hor
+  eq.recOn (motive := fun h' _ =>
+    sqs (ops.vId A) (ops.vId B) cv.hor h')
+    (unitWhiskerRight' ops laws v cv cj)
+
+/-- Right triangle raw: vertical composite of whiskered unit and counit.
+
+Raw type has `vComp (vId A) (vId A)` vertical boundaries from sqVComp.
+-/
+def rightTriangleCompositeRaw : sqs (ops.vComp (ops.vId A) (ops.vId A))
+    (ops.vComp (ops.vId B) (ops.vId B)) cv.hor cv.hor :=
+  ops.sqVComp (unitWhiskerRight'' ops laws v cv cj) (counitWhiskerLeft' ops laws v cv cj)
+
+/-- Right triangle: vertical composite of whiskered unit and counit.
+
+The composite (unitWhiskerRight'' ⬝ᵥ counitWhiskerLeft') should equal sqVertId cv.hor.
+-/
+def rightTriangleComposite : sqs (ops.vId A) (ops.vId B) cv.hor cv.hor :=
+  let eqLeft := laws.vertLaws.id_laws.id_comp (ops.vId A)
+  let eqRight := laws.vertLaws.id_laws.id_comp (ops.vId B)
+  eqLeft.recOn (motive := fun v' _ =>
+    sqs v' (ops.vId B) cv.hor cv.hor)
+    (eqRight.recOn (motive := fun v' _ =>
+      sqs (ops.vComp (ops.vId A) (ops.vId A)) v' cv.hor cv.hor)
+      (rightTriangleCompositeRaw ops laws v cv cj))
+
+/-- Whisker cj.hor on the right by adjunctionUnit'.
+
+Raw type: sqs (vId A) (vId B) (v_* ⬝ hId A) (v_* ⬝ (v* ⬝ v_*))
+-/
+def unitWhiskerLeftConj : sqs (ops.vId B) (ops.vId A)
+    (ops.hComp cj.hor (ops.hId A)) (ops.hComp cj.hor (ops.hComp cv.hor cj.hor)) :=
+  ops.sqHComp (ops.sqVertId cj.hor) (adjunctionUnit' ops laws v cv cj)
+
+/-- Whisker adjunctionCounit' by cj.hor on the left.
+
+Raw type: sqs (vId B) (vId A) ((v_* ⬝ v*) ⬝ v_*) (hId B ⬝ v_*)
+-/
+def counitWhiskerRightConj : sqs (ops.vId B) (ops.vId A)
+    (ops.hComp (ops.hComp cj.hor cv.hor) cj.hor) (ops.hComp (ops.hId B) cj.hor) :=
+  ops.sqHComp (adjunctionCounit' ops laws v cv cj) (ops.sqVertId cj.hor)
+
+/-- Whisker cj.hor on the right by adjunctionUnit', with identity law applied.
+
+Type: sqs (vId B) (vId A) v_* (v_* ⬝ (v* ⬝ v_*))
+-/
+def unitWhiskerLeftConj' : sqs (ops.vId B) (ops.vId A)
+    cj.hor (ops.hComp cj.hor (ops.hComp cv.hor cj.hor)) :=
+  let eq := laws.horLaws.id_laws.comp_id cj.hor
+  eq.recOn (motive := fun h' _ =>
+    sqs (ops.vId B) (ops.vId A) h' (ops.hComp cj.hor (ops.hComp cv.hor cj.hor)))
+    (unitWhiskerLeftConj ops laws v cv cj)
+
+/-- Whisker adjunctionCounit' by cj.hor on the left, with identity law applied.
+
+Type: sqs (vId B) (vId A) ((v_* ⬝ v*) ⬝ v_*) v_*
+-/
+def counitWhiskerRightConj' : sqs (ops.vId B) (ops.vId A)
+    (ops.hComp (ops.hComp cj.hor cv.hor) cj.hor) cj.hor :=
+  let eq := laws.horLaws.id_laws.id_comp cj.hor
+  eq.recOn (motive := fun h' _ =>
+    sqs (ops.vId B) (ops.vId A) (ops.hComp (ops.hComp cj.hor cv.hor) cj.hor) h')
+    (counitWhiskerRightConj ops laws v cv cj)
+
+/-- Apply associativity to counitWhiskerRightConj' to get top boundary v_* ⬝ (v* ⬝ v_*).
+
+Type: sqs (vId B) (vId A) (v_* ⬝ (v* ⬝ v_*)) v_*
+-/
+def counitWhiskerRightConj'' : sqs (ops.vId B) (ops.vId A)
+    (ops.hComp cj.hor (ops.hComp cv.hor cj.hor)) cj.hor :=
+  let eq := laws.horLaws.assoc cj.hor cv.hor cj.hor
+  eq.recOn (motive := fun h' _ =>
+    sqs (ops.vId B) (ops.vId A) h' cj.hor)
+    (counitWhiskerRightConj' ops laws v cv cj)
+
+/-- Left triangle raw: vertical composite of whiskered unit and counit.
+
+Raw type has `vComp (vId B) (vId B)` vertical boundaries from sqVComp.
+-/
+def leftTriangleCompositeRaw : sqs (ops.vComp (ops.vId B) (ops.vId B))
+    (ops.vComp (ops.vId A) (ops.vId A)) cj.hor cj.hor :=
+  ops.sqVComp (unitWhiskerLeftConj' ops laws v cv cj) (counitWhiskerRightConj'' ops laws v cv cj)
+
+/-- Left triangle: vertical composite of whiskered unit and counit.
+
+The composite (unitWhiskerLeftConj' ⬝ᵥ counitWhiskerRightConj'') should equal sqVertId cj.hor.
+-/
+def leftTriangleComposite : sqs (ops.vId B) (ops.vId A) cj.hor cj.hor :=
+  let eqLeft := laws.vertLaws.id_laws.id_comp (ops.vId B)
+  let eqRight := laws.vertLaws.id_laws.id_comp (ops.vId A)
+  eqLeft.recOn (motive := fun v' _ =>
+    sqs v' (ops.vId A) cj.hor cj.hor)
+    (eqRight.recOn (motive := fun v' _ =>
+      sqs (ops.vComp (ops.vId B) (ops.vId B)) v' cj.hor cj.hor)
+      (leftTriangleCompositeRaw ops laws v cv cj))
+
 end CompanionConjointAdjunction
 
 /-! ## Modifications between Transformations
