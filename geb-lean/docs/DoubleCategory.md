@@ -342,6 +342,35 @@ The proofs of the identity conditions for composed companions/conjoints
 require the interchange law and several HEq congruence lemmas including
 `sqVComp_heq_both`, `sqHComp_heq_both`, and `sqHComp_heq_all`.
 
+### Companion-Conjoint Adjunction
+
+When a vertical morphism `v : A →ᵥ B` has both a companion `v* : A →ₕ B`
+and a conjoint `v_* : B →ₕ A`, their binding squares compose to form
+unit and counit squares that establish an adjunction `v* ⊣ v_*` in the
+horizontal bicategory.
+
+The binding squares are:
+
+- φ : sqs (vId A) v (hId A) v* (companion)
+- ψ : sqs v (vId B) v* (hId B) (companion)
+- ε : sqs (vId B) v v_* (hId B) (conjoint)
+- η : sqs v (vId A) (hId A) v_* (conjoint)
+
+The compositions that form the adjunction:
+
+- `adjunctionUnit`: φ ⬝ₕ η gives a square from `hId A` to `v* ⬝ v_*`
+- `adjunctionCounit`: ε ⬝ₕ ψ gives a square from `v_* ⬝ v*` to `hId B`
+
+Additional compositions:
+
+- `psiHCompEpsilon`: ψ ⬝ₕ ε gives a square from `v* ⬝ v_*` to `hId B`
+  with vertical boundary `v` on both sides
+- `etaHCompPhi`: η ⬝ₕ φ gives a square from `hId A` to `v_* ⬝ v*`
+  with vertical boundary `v` on both sides
+
+Primed versions (`adjunctionUnit'`, etc.) apply identity laws to simplify
+the types.
+
 ## Future Extensions
 
 The following extensions are planned for future development:

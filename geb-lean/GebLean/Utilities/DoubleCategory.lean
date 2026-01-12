@@ -3312,4 +3312,104 @@ def comp {A B C : Obj} {v : vhs A B} {w : vhs B C}
 
 end Conjoint
 
+/-! ## Companion-Conjoint Pairs and Adjunctions
+
+When a vertical morphism has both a companion and a conjoint, their binding
+squares compose to give unit and counit squares that form an adjunction in
+the horizontal bicategory.
+-/
+
+section CompanionConjointAdjunction
+
+variable {Obj : Type u}
+variable {vhs : VertHomSet Obj} {hhs : HorHomSet Obj} {sqs : SquareSet vhs hhs}
+variable (ops : DoubleCategoryOps Obj vhs hhs sqs)
+variable (laws : DoubleCategoryLaws ops)
+variable {A B : Obj} (v : vhs A B)
+variable (cv : Companion ops v) (cj : Conjoint ops v)
+
+/-- The unit square of the adjunction v* ⊣ v_*.
+
+Given companion (v*, φ, ψ) and conjoint (v_*, ε, η), the unit is φ ⬝ₕ η:
+- Top: hId A
+- Bottom: hComp v* v_*
+- Left: vId A
+- Right: vId A
+
+This represents a morphism from hId A to v* ⬝ₕ v_* in the horizontal bicategory.
+-/
+def adjunctionUnit : sqs (ops.vId A) (ops.vId A)
+    (ops.hComp (ops.hId A) (ops.hId A)) (ops.hComp cv.hor cj.hor) :=
+  ops.sqHComp cv.phi cj.eta
+
+/-- The counit square of the adjunction v* ⊣ v_*.
+
+Given companion (v*, φ, ψ) and conjoint (v_*, ε, η), the counit is ε ⬝ₕ ψ:
+- Top: hComp v_* v*
+- Bottom: hId B
+- Left: vId B
+- Right: vId B
+
+This represents a morphism from v_* ⬝ₕ v* to hId B in the horizontal bicategory.
+-/
+def adjunctionCounit : sqs (ops.vId B) (ops.vId B)
+    (ops.hComp cj.hor cv.hor) (ops.hComp (ops.hId B) (ops.hId B)) :=
+  ops.sqHComp cj.epsilon cv.psi
+
+/-- The unit square with identity laws applied.
+
+The raw unit has type sqs (vId A) (vId A) (hComp (hId A) (hId A)) (hComp v* v_*).
+This version casts to sqs (vId A) (vId A) (hId A) (hComp v* v_*).
+-/
+def adjunctionUnit' : sqs (ops.vId A) (ops.vId A) (ops.hId A) (ops.hComp cv.hor cj.hor) :=
+  let eq := laws.horLaws.id_laws.id_comp (ops.hId A)
+  eq.recOn (motive := fun h' _ =>
+    sqs (ops.vId A) (ops.vId A) h' (ops.hComp cv.hor cj.hor))
+    (adjunctionUnit ops v cv cj)
+
+/-- The counit square with identity laws applied.
+
+The raw counit has type sqs (vId B) (vId B) (hComp v_* v*) (hComp (hId B) (hId B)).
+This version casts to sqs (vId B) (vId B) (hComp v_* v*) (hId B).
+-/
+def adjunctionCounit' : sqs (ops.vId B) (ops.vId B) (ops.hComp cj.hor cv.hor) (ops.hId B) :=
+  let eq := laws.horLaws.id_laws.id_comp (ops.hId B)
+  eq.recOn (motive := fun h' _ =>
+    sqs (ops.vId B) (ops.vId B) (ops.hComp cj.hor cv.hor) h')
+    (adjunctionCounit ops v cv cj)
+
+/-- Horizontal composition ψ ⬝ₕ ε : sqs v v (v* ⬝ v_*) (hId B ⬝ hId B).
+
+Composing the second companion binding square with the first conjoint binding square
+gives a square with vertical boundary v on both sides.
+-/
+def psiHCompEpsilon : sqs v v
+    (ops.hComp cv.hor cj.hor) (ops.hComp (ops.hId B) (ops.hId B)) :=
+  ops.sqHComp cv.psi cj.epsilon
+
+/-- Horizontal composition η ⬝ₕ φ : sqs v v (hId A ⬝ hId A) (v_* ⬝ v*).
+
+Composing the second conjoint binding square with the first companion binding square
+gives a square with vertical boundary v on both sides.
+-/
+def etaHCompPhi : sqs v v
+    (ops.hComp (ops.hId A) (ops.hId A)) (ops.hComp cj.hor cv.hor) :=
+  ops.sqHComp cj.eta cv.phi
+
+/-- ψ ⬝ₕ ε with identity laws applied: sqs v v (v* ⬝ v_*) (hId B). -/
+def psiHCompEpsilon' : sqs v v (ops.hComp cv.hor cj.hor) (ops.hId B) :=
+  let eq := laws.horLaws.id_laws.id_comp (ops.hId B)
+  eq.recOn (motive := fun h' _ =>
+    sqs v v (ops.hComp cv.hor cj.hor) h')
+    (psiHCompEpsilon ops v cv cj)
+
+/-- η ⬝ₕ φ with identity laws applied: sqs v v (hId A) (v_* ⬝ v*). -/
+def etaHCompPhi' : sqs v v (ops.hId A) (ops.hComp cj.hor cv.hor) :=
+  let eq := laws.horLaws.id_laws.id_comp (ops.hId A)
+  eq.recOn (motive := fun h' _ =>
+    sqs v v h' (ops.hComp cj.hor cv.hor))
+    (etaHCompPhi ops v cv cj)
+
+end CompanionConjointAdjunction
+
 end GebLean
