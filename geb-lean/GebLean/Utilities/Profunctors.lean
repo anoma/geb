@@ -176,6 +176,67 @@ def homPreOp' : (opProdSym' Cᵒᵖ')ᵒᵖ' ⥤ Type v :=
 
 end HomVariants
 
+section HomPreOpComputation
+
+/-!
+### Computing `homPreOp.obj`
+
+The functor `homPreOp : (Cᵒᵖᵒᵖ × Cᵒᵖ)ᵒᵖ ⥤ Type v` is defined through a chain
+of equivalences. This section provides lemmas to convert between
+`homPreOp.obj (op (op (op dom), op cod))` and the hom set `cod ⟶ dom`.
+-/
+
+variable {C : Type u} [Category.{v} C]
+
+/--
+For the input `op (op (op dom), op cod)`, `homPreOp.obj` gives a type
+that is definitionally related to the hom set `cod ⟶ dom`.
+
+This lemma computes the intermediate type by unfolding the equivalence chain.
+-/
+lemma homPreOp_obj_eq {dom cod : C} :
+    homPreOp.obj (Opposite.op (Opposite.op (Opposite.op dom), Opposite.op cod))
+    = (Functor.hom C).obj
+        ((CategoryTheory.Prod.swap C Cᵒᵖ).obj
+          ((opOpProdEquiv C Cᵒᵖ).functor.obj
+            ((opProdSymSelfDual Cᵒᵖ).functor.obj
+              (Opposite.op (Opposite.op (Opposite.op dom), Opposite.op cod))))) := by
+  rfl
+
+/--
+Complete computation showing that `homPreOp.obj (op (op (op dom), op cod)) = (cod ⟶ dom)`.
+-/
+@[simp]
+lemma homPreOp_obj_hom {dom cod : C} :
+    homPreOp.obj (Opposite.op (Opposite.op (Opposite.op dom), Opposite.op cod))
+    = (dom ⟶ cod) := by
+  simp only [homPreOp, profunctorPreOp, profunctorPre, profunctorOp,
+    Functor.comp_obj]
+  simp only [opProdSymSelfDual, Equivalence.trans_functor, Functor.comp_obj]
+  simp only [prodOpEquiv_functor_obj]
+  simp only [opOpProdEquiv, Equivalence.prod_functor, Functor.prod_obj,
+    opOpEquivalence, Equivalence.refl_functor, Functor.id_obj]
+  simp only [opProdProdOpEquiv, Equivalence.symm_functor,
+    CategoryTheory.Prod.braiding_inverse, CategoryTheory.Prod.swap_obj]
+  simp only [Functor.hom_obj, unopUnop_obj]
+
+/--
+Convert from `dom ⟶ cod` to `homPreOp.obj (op (op (op dom), op cod))`.
+-/
+def homPreOpObjIn {dom cod : C} (f : dom ⟶ cod) :
+    homPreOp.obj (Opposite.op (Opposite.op (Opposite.op dom), Opposite.op cod)) :=
+  homPreOp_obj_hom (C := C) (dom := dom) (cod := cod) ▸ f
+
+/--
+Convert from `homPreOp.obj (op (op (op dom), op cod))` to `dom ⟶ cod`.
+-/
+def homPreOpObjOut {dom cod : C}
+    (f : homPreOp.obj (Opposite.op (Opposite.op (Opposite.op dom), Opposite.op cod))) :
+    dom ⟶ cod :=
+  homPreOp_obj_hom (C := C) (dom := dom) (cod := cod) ▸ f
+
+end HomPreOpComputation
+
 section ProfunctorMaps
 
 /-!
