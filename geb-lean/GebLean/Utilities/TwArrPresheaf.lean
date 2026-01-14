@@ -4,6 +4,8 @@ import GebLean.Utilities.Presheaf
 import GebLean.Utilities.Slice
 import GebLean.Utilities.TwistedArrow
 import Mathlib.CategoryTheory.EqToHom
+import Mathlib.CategoryTheory.Functor.Currying
+import Mathlib.CategoryTheory.Products.Basic
 
 /-!
 # Functor categories on twisted arrow categories
@@ -1567,5 +1569,119 @@ def sliceGrothendieckFibMapOpPresheaf (fib : SliceGrothendieckFibOpPresheaf C)
   exact (hom domArr).app (Over.mk f') step1'
 
 end TwArrOpPresheaf
+
+section ProfunctorOnTwistedArrow
+
+/-!
+## Profunctors composed with forgetful functors
+
+Given a profunctor `P : Cᵒᵖ ⥤ C ⥤ D`, we can compose with the forgetful
+functor to get a functor from a twisted arrow category to `D`.
+-/
+
+variable {D : Type*} [Category.{v} D]
+
+/--
+Given a profunctor `P : Cᵒᵖ ⥤ C ⥤ D`, compose with the forgetful functor
+to get a functor from `TwistedArrow C` to `D`.
+
+For a twisted arrow `(dom, cod, f)`, this evaluates to `(P.obj (op dom)).obj cod`.
+-/
+def profunctorOnTwistedArrow (P : Cᵒᵖ ⥤ C ⥤ D) : TwistedArrow C ⥤ D :=
+  twistedArrowForget C ⋙ CategoryTheory.Functor.uncurry.obj P
+
+@[simp]
+theorem profunctorOnTwistedArrow_obj (P : Cᵒᵖ ⥤ C ⥤ D) (tw : TwistedArrow C) :
+    (profunctorOnTwistedArrow C P).obj tw =
+    (P.obj (Opposite.op (twDom tw))).obj (twCod tw) := rfl
+
+@[simp]
+theorem profunctorOnTwistedArrow_map (P : Cᵒᵖ ⥤ C ⥤ D)
+    {x y : TwistedArrow C} (f : x ⟶ y) :
+    (profunctorOnTwistedArrow C P).map f =
+    (P.map (twDomArr f).op).app (twCod x) ≫
+    (P.obj (Opposite.op (twDom y))).map (twCodArr f) := rfl
+
+/--
+The equivalence from `Cᵒᵖᵒᵖ × Cᵒᵖ` to `Cᵒᵖ × C` via swap and `opOpEquivalence`.
+-/
+def coTwistedArrowProdEquiv :
+    Cᵒᵖᵒᵖ × Cᵒᵖ ≌ Cᵒᵖ × C :=
+  (CategoryTheory.Equivalence.prod
+    (opOpEquivalence C)
+    (CategoryTheory.Equivalence.refl (C := Cᵒᵖ))).trans
+    (Prod.braiding C Cᵒᵖ)
+
+/--
+Given a profunctor `P : Cᵒᵖ ⥤ C ⥤ D`, compose with the forgetful functor
+and equivalence to get a functor from `CoTwistedArrow C` to `D`.
+
+For a co-twisted arrow with `coTwDom = a` and `coTwCod = b`, this evaluates to
+`(P.obj (op a)).obj b`. The dom/cod are swapped relative to the arrow direction
+because of how the equivalence and braiding compose.
+-/
+def profunctorOnCoTwistedArrow (P : Cᵒᵖ ⥤ C ⥤ D) : CoTwistedArrow C ⥤ D :=
+  coTwistedArrowForget C ⋙
+    (coTwistedArrowProdEquiv C).functor ⋙
+    CategoryTheory.Functor.uncurry.obj P
+
+@[simp]
+theorem profunctorOnCoTwistedArrow_obj (P : Cᵒᵖ ⥤ C ⥤ D) (tw : CoTwistedArrow C) :
+    (profunctorOnCoTwistedArrow C P).obj tw =
+    (P.obj (Opposite.op (coTwDom tw))).obj (coTwCod tw) := rfl
+
+/--
+The functor map formula for `profunctorOnCoTwistedArrow`.
+
+For a morphism `m : x ⟶ y` in `CoTwistedArrow C`, the profunctor functor maps it
+to the composition of the contravariant action (via `coTwDomArr`) followed by
+the covariant action (via `coTwCodArr`).
+-/
+theorem profunctorOnCoTwistedArrow_map (P : Cᵒᵖ ⥤ C ⥤ D)
+    {x y : CoTwistedArrow C} (m : x ⟶ y) :
+    (profunctorOnCoTwistedArrow C P).map m =
+    (P.map (coTwDomArr m).op).app (coTwCod x) ≫
+    (P.obj (Opposite.op (coTwDom y))).map (coTwCodArr m) := rfl
+
+/--
+The functor map from a general arrow to the domain identity via contravariant.
+
+For `f : i ⟶ j`, there is a morphism in `CoTwistedArrow` from `coTwObjMk f`
+to `coTwObjMk (𝟙 i)`, and the profunctor functor maps this via the
+contravariant action: `(P.map f.op).app i : P(j, i) → P(i, i)`.
+-/
+theorem profunctorOnCoTwistedArrow_map_to_dom (P : Cᵒᵖ ⥤ C ⥤ D)
+    {i j : C} (f : i ⟶ j) :
+    let morph_to_i : coTwObjMk f ⟶ coTwObjMk (𝟙 i) := coTwHomMk
+      (domArr := f) (codArr := 𝟙 i)
+      (by simp [Category.id_comp])
+    (profunctorOnCoTwistedArrow C P).map morph_to_i =
+      (P.map f.op).app i := by
+  intro morph_to_i
+  rw [profunctorOnCoTwistedArrow_map]
+  simp only [morph_to_i, coTwDomArr_coTwHomMk, coTwCodArr_coTwHomMk,
+    coTwObjMk_cod, coTwObjMk_dom, Functor.map_id, Category.comp_id]
+
+/--
+The functor map from a general arrow to the codomain identity via covariant.
+
+For `f : i ⟶ j`, there is a morphism in `CoTwistedArrow` from `coTwObjMk f`
+to `coTwObjMk (𝟙 j)`, and the profunctor functor maps this via the
+covariant action: `(P.obj (op j)).map f : P(j, i) → P(j, j)`.
+-/
+theorem profunctorOnCoTwistedArrow_map_to_cod (P : Cᵒᵖ ⥤ C ⥤ D)
+    {i j : C} (f : i ⟶ j) :
+    let morph_to_j : coTwObjMk f ⟶ coTwObjMk (𝟙 j) := coTwHomMk
+      (domArr := 𝟙 j) (codArr := f)
+      (by simp [Category.comp_id])
+    (profunctorOnCoTwistedArrow C P).map morph_to_j =
+      (P.obj (Opposite.op j)).map f := by
+  intro morph_to_j
+  rw [profunctorOnCoTwistedArrow_map]
+  simp only [morph_to_j, coTwDomArr_coTwHomMk, coTwCodArr_coTwHomMk,
+    coTwObjMk_cod, coTwObjMk_dom, op_id, Functor.map_id, NatTrans.id_app,
+    Category.id_comp]
+
+end ProfunctorOnTwistedArrow
 
 end GebLean

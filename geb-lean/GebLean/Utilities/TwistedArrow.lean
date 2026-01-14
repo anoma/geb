@@ -1820,4 +1820,37 @@ end ArrowCategories
 
 end TwistedArrowCategories
 
+section ForgetfulFunctors
+
+/-!
+## Forgetful functors from twisted arrow categories
+
+The twisted arrow categories forget to product categories via projection
+from the category of elements.
+-/
+
+variable (C : Type u) [Category.{v} C]
+
+/--
+The forgetful functor from `TwistedArrow C` to `Cᵒᵖ × C`.
+
+This is `CategoryOfElements.π` applied to the hom functor.
+-/
+abbrev twistedArrowForget : TwistedArrow C ⥤ Cᵒᵖ × C :=
+  CategoryOfElements.π (Functor.hom C)
+
+/--
+The forgetful functor from `CoTwistedArrow C` to `Cᵒᵖᵒᵖ × Cᵒᵖ`.
+
+This projects from the co-twisted arrow category to the base product category.
+The encoding stores `(op (op coTwCod), op coTwDom)` in the pair.
+-/
+def coTwistedArrowForget : CoTwistedArrow C ⥤ Cᵒᵖᵒᵖ × Cᵒᵖ where
+  obj tw := (Opposite.op (Opposite.op (coTwCod tw)), Opposite.op (coTwDom tw))
+  map f := ⟨(coTwCodArr f).op.op, (coTwDomArr f).op⟩
+  map_id _ := by ext <;> rfl
+  map_comp _ _ := by ext <;> rfl
+
+end ForgetfulFunctors
+
 end GebLean
