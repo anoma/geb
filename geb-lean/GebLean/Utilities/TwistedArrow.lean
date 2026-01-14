@@ -240,12 +240,15 @@ def coTwCodArr {x y : CoTwistedArrow C} (f : x ⟶ y) :
     coTwCod x ⟶ coTwCod y :=
   f.unop.val.unop.1.unop.unop
 
+@[simp]
 lemma coTwObjMk_dom {dom cod : C} (arr : cod ⟶ dom) :
     coTwDom (coTwObjMk arr) = dom := rfl
 
+@[simp]
 lemma coTwObjMk_cod {dom cod : C} (arr : cod ⟶ dom) :
     coTwCod (coTwObjMk arr) = cod := rfl
 
+@[simp]
 lemma coTwObjMk_arr {dom cod : C} (arr : cod ⟶ dom) :
     coTwArr (coTwObjMk arr) = arr := by
   unfold coTwArr coTwObjMk
@@ -272,18 +275,21 @@ def coTwHomMk {x y : CoTwistedArrow C}
         Functor.comp_map, Functor.hom_map]
       exact comm))
 
+@[simp]
 lemma coTwHomMk_domArr {x y : CoTwistedArrow C}
     (domArr : coTwDom y ⟶ coTwDom x)
     (codArr : coTwCod x ⟶ coTwCod y)
     (comm : codArr ≫ coTwArr y ≫ domArr = coTwArr x) :
     coTwDomArr (coTwHomMk domArr codArr comm) = domArr := rfl
 
+@[simp]
 lemma coTwCodArr_coTwHomMk {x y : CoTwistedArrow C}
     (domArr : coTwDom y ⟶ coTwDom x)
     (codArr : coTwCod x ⟶ coTwCod y)
     (comm : codArr ≫ coTwArr y ≫ domArr = coTwArr x) :
     coTwCodArr (coTwHomMk domArr codArr comm) = codArr := rfl
 
+@[simp]
 lemma coTwDomArr_coTwHomMk {x y : CoTwistedArrow C}
     (domArr : coTwDom y ⟶ coTwDom x)
     (codArr : coTwCod x ⟶ coTwCod y)
