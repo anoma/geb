@@ -4078,6 +4078,358 @@ theorem rightTriangleIdentity
   apply HEq.trans (rightTriangleComposite_expand ops laws v cv cj)
   exact sqVComp_whiskers_eq_sqVertId ops laws v cv cj h_vComp_eta_eps h_hComp_phi_psi
 
+/-! #### Left Triangle Identity Lemma Chain
+
+Parallel to the right triangle, we build the left triangle identity proof
+through small lemmas. The left triangle works with the conjoint binding
+squares (ε, η) rather than the companion ones (φ, ψ).
+-/
+
+/-- leftTriangleCompositeRaw is the sqVComp of the conjoint whiskering operations. -/
+theorem leftTriangleCompositeRaw_expand :
+    HEq (leftTriangleCompositeRaw ops laws v cv cj)
+        (ops.sqVComp (unitWhiskerLeftConj' ops laws v cv cj)
+                     (counitWhiskerRightConj'' ops laws v cv cj)) := HEq.rfl
+
+/-- leftTriangleComposite is HEq to leftTriangleCompositeRaw via vertical identity laws. -/
+theorem leftTriangleComposite_heq_raw :
+    HEq (leftTriangleComposite ops laws v cv cj)
+        (leftTriangleCompositeRaw ops laws v cv cj) := by
+  simp only [leftTriangleComposite]
+  apply HEq.trans
+  · exact eqRec_heq_self _ (laws.vertLaws.id_laws.id_comp (ops.vId B))
+  · exact eqRec_heq_self _ (laws.vertLaws.id_laws.id_comp (ops.vId A))
+
+/-- leftTriangleComposite is HEq to sqVComp of conjoint whiskers. -/
+theorem leftTriangleComposite_expand :
+    HEq (leftTriangleComposite ops laws v cv cj)
+        (ops.sqVComp (unitWhiskerLeftConj' ops laws v cv cj)
+                     (counitWhiskerRightConj'' ops laws v cv cj)) :=
+  HEq.trans (leftTriangleComposite_heq_raw ops laws v cv cj)
+            (leftTriangleCompositeRaw_expand ops laws v cv cj)
+
+/-- unitWhiskerLeftConj is definitionally sqHComp (sqVertId cj.hor) adjunctionUnit'. -/
+theorem unitWhiskerLeftConj_eq :
+    unitWhiskerLeftConj ops laws v cv cj =
+    ops.sqHComp (ops.sqVertId cj.hor) (adjunctionUnit' ops laws v cv cj) := rfl
+
+/-- counitWhiskerRightConj is definitionally sqHComp adjunctionCounit' (sqVertId cj.hor). -/
+theorem counitWhiskerRightConj_eq :
+    counitWhiskerRightConj ops laws v cv cj =
+    ops.sqHComp (adjunctionCounit' ops laws v cv cj) (ops.sqVertId cj.hor) := rfl
+
+/-- unitWhiskerLeftConj' is HEq to unitWhiskerLeftConj via comp_id transport. -/
+theorem unitWhiskerLeftConj'_heq_unitWhiskerLeftConj :
+    HEq (unitWhiskerLeftConj' ops laws v cv cj)
+        (unitWhiskerLeftConj ops laws v cv cj) := by
+  simp only [unitWhiskerLeftConj']
+  exact eqRec_heq_self _ (laws.horLaws.id_laws.comp_id cj.hor)
+
+/-- counitWhiskerRightConj' is HEq to counitWhiskerRightConj via id_comp transport. -/
+theorem counitWhiskerRightConj'_heq_counitWhiskerRightConj :
+    HEq (counitWhiskerRightConj' ops laws v cv cj)
+        (counitWhiskerRightConj ops laws v cv cj) := by
+  simp only [counitWhiskerRightConj']
+  exact eqRec_heq_self _ (laws.horLaws.id_laws.id_comp cj.hor)
+
+/-- counitWhiskerRightConj'' is HEq to counitWhiskerRightConj' via assoc transport. -/
+theorem counitWhiskerRightConj''_heq_counitWhiskerRightConj' :
+    HEq (counitWhiskerRightConj'' ops laws v cv cj)
+        (counitWhiskerRightConj' ops laws v cv cj) := by
+  simp only [counitWhiskerRightConj'']
+  exact eqRec_heq_self _ (laws.horLaws.assoc cj.hor cv.hor cj.hor)
+
+/-- counitWhiskerRightConj'' is HEq to counitWhiskerRightConj via both transports. -/
+theorem counitWhiskerRightConj''_heq_counitWhiskerRightConj :
+    HEq (counitWhiskerRightConj'' ops laws v cv cj)
+        (counitWhiskerRightConj ops laws v cv cj) :=
+  HEq.trans (counitWhiskerRightConj''_heq_counitWhiskerRightConj' ops laws v cv cj)
+            (counitWhiskerRightConj'_heq_counitWhiskerRightConj ops laws v cv cj)
+
+/-- Expand unitWhiskerLeftConj to primitive sqHComp form.
+
+unitWhiskerLeftConj = sqHComp (sqVertId cj.hor) (sqHComp phi eta) with transport.
+-/
+theorem unitWhiskerLeftConj_expand :
+    HEq (unitWhiskerLeftConj ops laws v cv cj)
+        (ops.sqHComp (ops.sqVertId cj.hor) (ops.sqHComp cv.phi cj.eta)) := by
+  rw [unitWhiskerLeftConj_eq]
+  exact sqHComp_heq_right ops (ops.sqVertId cj.hor)
+    (adjunctionUnit'_heq_adjunctionUnit ops laws v cv cj)
+    (laws.horLaws.id_laws.id_comp (ops.hId A)).symm
+    rfl
+
+/-- Expand counitWhiskerRightConj to primitive sqHComp form.
+
+counitWhiskerRightConj = sqHComp (sqHComp epsilon psi) (sqVertId cj.hor) with transport.
+-/
+theorem counitWhiskerRightConj_expand :
+    HEq (counitWhiskerRightConj ops laws v cv cj)
+        (ops.sqHComp (ops.sqHComp cj.epsilon cv.psi) (ops.sqVertId cj.hor)) := by
+  rw [counitWhiskerRightConj_eq]
+  exact sqHComp_heq_left ops (ops.sqVertId cj.hor)
+    (adjunctionCounit'_heq_adjunctionCounit ops laws v cv cj)
+    rfl
+    (laws.horLaws.id_laws.id_comp (ops.hId B)).symm
+
+/-- Full expansion of unitWhiskerLeftConj.
+
+unitWhiskerLeftConj ≅ sqHComp (sqHComp (sqVertId cj.hor) phi) eta
+-/
+theorem unitWhiskerLeftConj_full_expand :
+    HEq (unitWhiskerLeftConj ops laws v cv cj)
+        (ops.sqHComp (ops.sqHComp (ops.sqVertId cj.hor) cv.phi) cj.eta) := by
+  have h_assoc : HEq (ops.sqHComp (ops.sqVertId cj.hor) (ops.sqHComp cv.phi cj.eta))
+      (ops.sqHComp (ops.sqHComp (ops.sqVertId cj.hor) cv.phi) cj.eta) :=
+    (sqHAssoc_heq ops laws (ops.sqVertId cj.hor) cv.phi cj.eta).symm
+  exact HEq.trans (unitWhiskerLeftConj_expand ops laws v cv cj) h_assoc
+
+/-- Full expansion of counitWhiskerRightConj.
+
+counitWhiskerRightConj ≅ sqHComp epsilon (sqHComp psi (sqVertId cj.hor))
+-/
+theorem counitWhiskerRightConj_full_expand :
+    HEq (counitWhiskerRightConj ops laws v cv cj)
+        (ops.sqHComp cj.epsilon (ops.sqHComp cv.psi (ops.sqVertId cj.hor))) := by
+  have h_assoc : HEq (ops.sqHComp (ops.sqHComp cj.epsilon cv.psi) (ops.sqVertId cj.hor))
+      (ops.sqHComp cj.epsilon (ops.sqHComp cv.psi (ops.sqVertId cj.hor))) :=
+    sqHAssoc_heq ops laws cj.epsilon cv.psi (ops.sqVertId cj.hor)
+  exact HEq.trans (counitWhiskerRightConj_expand ops laws v cv cj) h_assoc
+
+/-- Full expansion of unitWhiskerLeftConj' through all transports.
+
+unitWhiskerLeftConj' ≅ sqHComp (sqHComp (sqVertId cj.hor) phi) eta
+-/
+theorem unitWhiskerLeftConj'_expand_full :
+    HEq (unitWhiskerLeftConj' ops laws v cv cj)
+        (ops.sqHComp (ops.sqHComp (ops.sqVertId cj.hor) cv.phi) cj.eta) := by
+  apply HEq.trans (unitWhiskerLeftConj'_heq_unitWhiskerLeftConj ops laws v cv cj)
+  exact unitWhiskerLeftConj_full_expand ops laws v cv cj
+
+/-- Full expansion of counitWhiskerRightConj'' through all transports.
+
+counitWhiskerRightConj'' ≅ sqHComp epsilon (sqHComp psi (sqVertId cj.hor))
+-/
+theorem counitWhiskerRightConj''_expand_full :
+    HEq (counitWhiskerRightConj'' ops laws v cv cj)
+        (ops.sqHComp cj.epsilon (ops.sqHComp cv.psi (ops.sqVertId cj.hor))) := by
+  apply HEq.trans (counitWhiskerRightConj''_heq_counitWhiskerRightConj ops laws v cv cj)
+  exact counitWhiskerRightConj_full_expand ops laws v cv cj
+
+theorem sqVComp_whiskers_eq_sqVertId_conj
+    (h_hComp_eps_eta : HEq (ops.sqHComp cj.epsilon cj.eta) (ops.sqVertId cj.hor))
+    (h_vComp_phi_psi : HEq (ops.sqVComp cv.phi cv.psi) (ops.sqHorId v)) :
+    HEq (ops.sqVComp (unitWhiskerLeftConj' ops laws v cv cj)
+                     (counitWhiskerRightConj'' ops laws v cv cj))
+        (ops.sqVertId cj.hor) := by
+  let phi := cv.phi
+  let psi := cv.psi
+  let eta := cj.eta
+  let epsilon := cj.epsilon
+  have h_vIdComp_B : ops.vComp (ops.vId B) (ops.vId B) = ops.vId B :=
+    laws.vertLaws.id_laws.id_comp (ops.vId B)
+  have h_vIdComp_A : ops.vComp (ops.vId A) (ops.vId A) = ops.vId A :=
+    laws.vertLaws.id_laws.id_comp (ops.vId A)
+  let sqVertIdPhiEta := ops.sqHComp (ops.sqHComp (ops.sqVertId cj.hor) phi) eta
+  let epsPsiSqVertId := ops.sqHComp epsilon (ops.sqHComp psi (ops.sqVertId cj.hor))
+  have h_uwlc'_expand : HEq (unitWhiskerLeftConj' ops laws v cv cj) sqVertIdPhiEta :=
+    unitWhiskerLeftConj'_expand_full ops laws v cv cj
+  have h_cwrc''_expand : HEq (counitWhiskerRightConj'' ops laws v cv cj) epsPsiSqVertId :=
+    counitWhiskerRightConj''_expand_full ops laws v cv cj
+  have h_hIdB_cjhor : ops.hComp (ops.hId B) cj.hor = cj.hor :=
+    laws.horLaws.id_laws.id_comp cj.hor
+  have h_cjhor_hIdA : ops.hComp cj.hor (ops.hId A) = cj.hor :=
+    laws.horLaws.id_laws.comp_id cj.hor
+  have h_hAssoc_mid : ops.hComp cj.hor (ops.hComp cv.hor cj.hor) =
+                      ops.hComp (ops.hComp cj.hor cv.hor) cj.hor :=
+    (laws.horLaws.assoc cj.hor cv.hor cj.hor).symm
+  have h_hIdA_cvhor : ops.hComp (ops.hId A) cv.hor = cv.hor :=
+    laws.horLaws.id_laws.id_comp cv.hor
+  have h_cvhor_hIdB : ops.hComp cv.hor (ops.hId B) = cv.hor :=
+    laws.horLaws.id_laws.comp_id cv.hor
+  have h_hAssoc_htop : ops.hComp cj.hor (ops.hComp cv.hor cj.hor) =
+                       ops.hComp (ops.hComp cj.hor cv.hor) cj.hor :=
+    (laws.horLaws.assoc cj.hor cv.hor cj.hor).symm
+  let epsPsiSqVertIdTransp_ty_eq : sqs (ops.vId B) (ops.vId A)
+          (ops.hComp cj.hor (ops.hComp cv.hor cj.hor))
+          (ops.hComp (ops.hId B) (ops.hComp (ops.hId B) cj.hor)) =
+        sqs (ops.vId B) (ops.vId A)
+          (ops.hComp (ops.hComp cj.hor cv.hor) cj.hor)
+          (ops.hComp (ops.hId B) (ops.hComp (ops.hId B) cj.hor)) := by
+    rw [h_hAssoc_htop]
+  let epsPsiSqVertIdTransp : sqs (ops.vId B) (ops.vId A)
+          (ops.hComp (ops.hComp cj.hor cv.hor) cj.hor)
+          (ops.hComp (ops.hId B) (ops.hComp (ops.hId B) cj.hor)) :=
+    cast epsPsiSqVertIdTransp_ty_eq epsPsiSqVertId
+  have h_epsPsiSqVertId_transp :
+      HEq epsPsiSqVertId epsPsiSqVertIdTransp :=
+    (cast_heq epsPsiSqVertIdTransp_ty_eq epsPsiSqVertId).symm
+  have h_cwrc''_expand_transp :
+      HEq (counitWhiskerRightConj'' ops laws v cv cj) epsPsiSqVertIdTransp :=
+    HEq.trans h_cwrc''_expand h_epsPsiSqVertId_transp
+  let phiEta := ops.sqHComp phi eta
+  let epsilonPsi := ops.sqHComp epsilon psi
+  have h_sqVComp_sqVertId_eps :
+      HEq (ops.sqVComp (ops.sqVertId cj.hor) epsilon) epsilon :=
+    sqVIdComp_heq ops laws epsilon
+  have h_sqVComp_eta_sqVertId :
+      HEq (ops.sqVComp eta (ops.sqVertId cj.hor)) eta :=
+    sqVCompId_heq ops laws eta
+  have h_sqVComp_sqVertId_sqVertId :
+      HEq (ops.sqVComp (ops.sqVertId cj.hor) (ops.sqVertId cj.hor))
+          (ops.sqVertId cj.hor) :=
+    sqVIdComp_heq ops laws (ops.sqVertId cj.hor)
+  have h_assoc_top_1 : ops.hComp (ops.hComp cj.hor (ops.hId A)) (ops.hId A) =
+                       ops.hComp cj.hor (ops.hComp (ops.hId A) (ops.hId A)) :=
+    laws.horLaws.assoc cj.hor (ops.hId A) (ops.hId A)
+  have h_assoc_bot_1 : ops.hComp (ops.hComp cj.hor cv.hor) cj.hor =
+                       ops.hComp cj.hor (ops.hComp cv.hor cj.hor) :=
+    laws.horLaws.assoc cj.hor cv.hor cj.hor
+  let sqVertIdPhiEtaReassoc :=
+    ops.sqHComp (ops.sqVertId cj.hor) phiEta
+  have h_sqVertIdPhiEta_reassoc :
+      HEq sqVertIdPhiEta sqVertIdPhiEtaReassoc :=
+    sqHAssoc_heq ops laws (ops.sqVertId cj.hor) phi eta
+  let epsilonPsiSqVertId := ops.sqHComp epsilonPsi (ops.sqVertId cj.hor)
+  have h_epsPsiSqVertId_reassoc :
+      HEq epsPsiSqVertId epsilonPsiSqVertId :=
+    (sqHAssoc_heq ops laws epsilon psi (ops.sqVertId cj.hor)).symm
+  have h_hIdA_hIdA : ops.hComp (ops.hId A) (ops.hId A) = ops.hId A :=
+    laws.horLaws.id_laws.id_comp (ops.hId A)
+  have h_hIdB_hIdB : ops.hComp (ops.hId B) (ops.hId B) = ops.hId B :=
+    laws.horLaws.id_laws.id_comp (ops.hId B)
+  have h_cjhor_hIdA : ops.hComp cj.hor (ops.hId A) = cj.hor :=
+    laws.horLaws.id_laws.comp_id cj.hor
+  have h_hIdB_cjhor : ops.hComp (ops.hId B) cj.hor = cj.hor :=
+    laws.horLaws.id_laws.id_comp cj.hor
+  have h_sqVertId_hIdA_hIdA : ops.hComp (ops.hComp cj.hor (ops.hId A)) (ops.hId A) = cj.hor := by
+    rw [h_cjhor_hIdA, h_cjhor_hIdA]
+  have h_sqVertId_hIdB_cjhor : ops.hComp (ops.hId B) (ops.hComp (ops.hId B) cj.hor) = cj.hor := by
+    rw [h_hIdB_cjhor, h_hIdB_cjhor]
+  have h_vComp_vIdB_vIdB : ops.vComp (ops.vId B) (ops.vId B) = ops.vId B :=
+    laws.vertLaws.id_laws.id_comp (ops.vId B)
+  have h_vComp_vIdA_vIdA : ops.vComp (ops.vId A) (ops.vId A) = ops.vId A :=
+    laws.vertLaws.id_laws.id_comp (ops.vId A)
+  let resultType := sqs (ops.vComp (ops.vId B) (ops.vId B))
+                        (ops.vComp (ops.vId A) (ops.vId A))
+                        (ops.hComp (ops.hComp cj.hor (ops.hId A)) (ops.hId A))
+                        (ops.hComp (ops.hId B) (ops.hComp (ops.hId B) cj.hor))
+  let targetType := sqs (ops.vId B) (ops.vId A) cj.hor cj.hor
+  have h_resultType_eq_targetType : resultType = targetType := by
+    simp only [resultType, targetType]
+    rw [h_vComp_vIdB_vIdB, h_vComp_vIdA_vIdA, h_sqVertId_hIdA_hIdA, h_sqVertId_hIdB_cjhor]
+  have h_sqVertIdPhiEta_htop :
+      ops.hComp (ops.hComp cj.hor (ops.hId A)) (ops.hId A) = cj.hor :=
+    h_sqVertId_hIdA_hIdA
+  have h_epsPsiSqVertId_hbot :
+      ops.hComp (ops.hId B) (ops.hComp (ops.hId B) cj.hor) = cj.hor :=
+    h_sqVertId_hIdB_cjhor
+  have h_vcomp_whiskers_heq :
+      HEq (ops.sqVComp (unitWhiskerLeftConj' ops laws v cv cj)
+                       (counitWhiskerRightConj'' ops laws v cv cj))
+          (ops.sqVComp sqVertIdPhiEta epsPsiSqVertIdTransp) :=
+    sqVComp_heq_both ops h_uwlc'_expand h_cwrc''_expand_transp
+      h_sqVertId_hIdA_hIdA.symm h_hAssoc_mid h_sqVertId_hIdB_cjhor.symm
+  let rawVComp := ops.sqVComp sqVertIdPhiEta epsPsiSqVertIdTransp
+  have h_epsEta : HEq (ops.sqHComp epsilon eta) (ops.sqVertId cj.hor) := h_hComp_eps_eta
+  have h_phiPsi : HEq (ops.sqVComp phi psi) (ops.sqHorId v) := h_vComp_phi_psi
+  let rawVCompTargetTypeEq : sqs (ops.vComp (ops.vId B) (ops.vId B))
+                                 (ops.vComp (ops.vId A) (ops.vId A))
+                                 (ops.hComp (ops.hComp cj.hor (ops.hId A)) (ops.hId A))
+                                 (ops.hComp (ops.hId B) (ops.hComp (ops.hId B) cj.hor)) =
+                             sqs (ops.vId B) (ops.vId A) cj.hor cj.hor := by
+    rw [h_vComp_vIdB_vIdB, h_vComp_vIdA_vIdA]
+    rw [h_sqVertId_hIdA_hIdA, h_sqVertId_hIdB_cjhor]
+  let rawVCompTransp : sqs (ops.vId B) (ops.vId A) cj.hor cj.hor :=
+    cast rawVCompTargetTypeEq rawVComp
+  have h_rawVComp_transp : HEq rawVComp rawVCompTransp :=
+    (cast_heq rawVCompTargetTypeEq rawVComp).symm
+  have h_vcomp_whiskers_heq_transp :
+      HEq (ops.sqVComp (unitWhiskerLeftConj' ops laws v cv cj)
+                       (counitWhiskerRightConj'' ops laws v cv cj))
+          rawVCompTransp :=
+    HEq.trans h_vcomp_whiskers_heq h_rawVComp_transp
+  let phiEtaLoc := ops.sqHComp phi eta
+  have h_sqVertIdPhiEta_reassoc :
+      HEq sqVertIdPhiEta (ops.sqHComp (ops.sqVertId cj.hor) phiEtaLoc) :=
+    sqHAssoc_heq ops laws (ops.sqVertId cj.hor) phi eta
+  let epsilonPsiLoc := ops.sqHComp epsilon psi
+  have h_epsPsiSqVertId_reassoc :
+      HEq epsPsiSqVertId (ops.sqHComp epsilonPsiLoc (ops.sqVertId cj.hor)) :=
+    (sqHAssoc_heq ops laws epsilon psi (ops.sqVertId cj.hor)).symm
+  have h_phiEta_htop : ops.hComp (ops.hId A) (ops.hId A) = ops.hId A :=
+    laws.horLaws.id_laws.id_comp (ops.hId A)
+  have h_epsPsi_hbot : ops.hComp (ops.hId B) (ops.hId B) = ops.hId B :=
+    laws.horLaws.id_laws.id_comp (ops.hId B)
+  have h_vIdA_v : ops.vComp (ops.vId A) v = v := laws.vertLaws.id_laws.id_comp v
+  have h_v_vIdB : ops.vComp v (ops.vId B) = v := laws.vertLaws.id_laws.comp_id v
+  let psiSqVertId := ops.sqHComp psi (ops.sqVertId cj.hor)
+  have h_epsPsiSqVertId_eq : epsPsiSqVertId = ops.sqHComp epsilon psiSqVertId := rfl
+  have h_rawVCompTransp_eq_sqVertId :
+      rawVCompTransp = ops.sqVertId cj.hor := by
+    apply eq_of_heq
+    apply HEq.trans h_rawVComp_transp.symm
+    let TL := ops.sqVertId cj.hor
+    let phiEta := ops.sqHComp phi eta
+    have h_top_reassoc : HEq sqVertIdPhiEta (ops.sqHComp TL phiEta) :=
+      sqHAssoc_heq ops laws TL phi eta
+    have h_epsPsiSqVertIdTransp_heq :
+        HEq epsPsiSqVertIdTransp (ops.sqHComp epsilon psiSqVertId) := by
+      apply HEq.trans (cast_heq epsPsiSqVertIdTransp_ty_eq epsPsiSqVertId)
+      exact HEq.rfl
+    have h_interch_outer :
+        ops.sqVComp (ops.sqHComp TL phiEta) (ops.sqHComp epsilon psiSqVertId) =
+        ops.sqHComp (ops.sqVComp TL epsilon) (ops.sqVComp phiEta psiSqVertId) :=
+      laws.sqLaws.interchange TL phiEta epsilon psiSqVertId
+    have h_sqVComp_TL_eps : HEq (ops.sqVComp TL epsilon) epsilon :=
+      sqVIdComp_heq ops laws epsilon
+    have h_interch_inner :
+        ops.sqVComp (ops.sqHComp phi eta) (ops.sqHComp psi (ops.sqVertId cj.hor)) =
+        ops.sqHComp (ops.sqVComp phi psi) (ops.sqVComp eta (ops.sqVertId cj.hor)) :=
+      laws.sqLaws.interchange phi eta psi (ops.sqVertId cj.hor)
+    have h_sqVComp_eta_sqVertId : HEq (ops.sqVComp eta (ops.sqVertId cj.hor)) eta :=
+      sqVCompId_heq ops laws eta
+    have h_sqHComp_sqHorId_eta : HEq (ops.sqHComp (ops.sqHorId v) eta) eta :=
+      sqHIdComp_heq ops laws eta
+    have h_sqVComp_phiEta_psiSqVertId_to_eta :
+        HEq (ops.sqVComp phiEta psiSqVertId) eta := by
+      have h_via_interch : ops.sqVComp phiEta psiSqVertId =
+          ops.sqHComp (ops.sqVComp phi psi) (ops.sqVComp eta (ops.sqVertId cj.hor)) :=
+        h_interch_inner
+      rw [h_via_interch]
+      apply HEq.trans (sqHComp_heq_all ops h_phiPsi h_sqVComp_eta_sqVertId
+        h_vIdA_v h_v_vIdB h_vIdComp_A rfl rfl rfl rfl)
+      exact h_sqHComp_sqHorId_eta
+    have h_outer_to_epsEta :
+        HEq (ops.sqVComp (ops.sqHComp TL phiEta) (ops.sqHComp epsilon psiSqVertId))
+            (ops.sqHComp epsilon eta) := by
+      rw [h_interch_outer]
+      apply sqHComp_heq_all ops h_sqVComp_TL_eps h_sqVComp_phiEta_psiSqVertId_to_eta
+      · exact h_vIdComp_B
+      · exact h_vIdA_v
+      · exact h_vIdComp_A
+      · rfl
+      · exact h_phiEta_htop
+      · rfl
+      · exact h_hIdB_cjhor
+    have h_rawVComp_to_epsEta :
+        HEq rawVComp (ops.sqHComp epsilon eta) := by
+      apply HEq.trans (sqVComp_heq_all ops h_top_reassoc h_epsPsiSqVertIdTransp_heq
+        rfl rfl rfl rfl h_assoc_top_1 h_assoc_bot_1 rfl)
+      exact h_outer_to_epsEta
+    apply HEq.trans h_rawVComp_to_epsEta
+    exact h_epsEta
+  apply HEq.trans h_vcomp_whiskers_heq_transp
+  exact heq_of_eq h_rawVCompTransp_eq_sqVertId
+
+theorem leftTriangleIdentity
+    (h_hComp_eps_eta : HEq (ops.sqHComp cj.epsilon cj.eta) (ops.sqVertId cj.hor))
+    (h_vComp_phi_psi : HEq (ops.sqVComp cv.phi cv.psi) (ops.sqHorId v)) :
+    leftTriangleComposite ops laws v cv cj = ops.sqVertId cj.hor := by
+  apply eq_of_heq
+  apply HEq.trans (leftTriangleComposite_expand ops laws v cv cj)
+  exact sqVComp_whiskers_eq_sqVertId_conj ops laws v cv cj h_hComp_eps_eta h_vComp_phi_psi
+
 end CompanionConjointAdjunction
 
 /-! ## Modifications between Transformations
