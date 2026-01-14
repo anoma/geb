@@ -161,123 +161,174 @@ lemma twCodArr_comp {x y z : TwistedArrow C} (f : x ⟶ y) (g : y ⟶ z) :
 end TwistedArrowHelpers
 
 /--
-The co-twisted arrow category of `C`, defined as the category of elements of
-`Functor.hom Cᵒᵖ`.
+The co-twisted arrow category of `C`, defined as the presheaf category of
+elements of `homPreOp`.
 
 Objects are triples `(dom, cod, arr : cod ⟶ dom)` where the arrow points
 from codomain to domain (opposite direction from `TwistedArrow`).
 
-A morphism from `(dom, cod, arr)` to `(dom', cod', arr')` consists of:
-- `domArr : dom ⟶ dom'` (morphism between domains, going forwards)
-- `codArr : cod' ⟶ cod` (morphism between codomains, going backwards)
-such that `arr = codArr ≫ arr' ≫ domArr`.
+Since `homPreOp : (Cᵒᵖᵒᵖ × Cᵒᵖ)ᵒᵖ ⥤ Type v`, its `ElementsPre` has objects
+`Opposite.op ⟨p, x⟩` where `p : Cᵒᵖᵒᵖ × Cᵒᵖ` and `x : homPreOp.obj (op p)`.
 -/
 abbrev CoTwistedArrow (C : Type u) [Category.{v} C] :=
-  (Functor.hom Cᵒᵖ).Elements
+  (homPreOp (C := C)).ElementsPre
 
-instance (C : Type u) [Category.{v} C] : Category (CoTwistedArrow C) := by
-  unfold CoTwistedArrow
-  infer_instance
+instance (C : Type u) [Category.{v} C] : Category (CoTwistedArrow C) :=
+  inferInstanceAs (Category (homPreOp (C := C)).ElementsPre)
 
 section CoTwistedArrowHelpers
 
 variable {C : Type u} [Category.{v} C]
 
 /--
-Construct an object of `CoTwistedArrow C` from domain, codomain, and arrow.
-The arrow goes from `cod` to `dom`.
--/
-def coTwObjMk {dom cod : C} (arr : cod ⟶ dom) : CoTwistedArrow C :=
-  ⟨(Opposite.op (Opposite.op dom), Opposite.op cod), arr.op⟩
-
-/--
 Extract the domain from an object of `CoTwistedArrow C`.
+
+For `tw : CoTwistedArrow C = (homPreOp C).ElementsPre`, the underlying
+element structure is:
+- `tw.unop : (homPreOp C).Elements` is `⟨p, x⟩`
+- `tw.unop.fst : (Cᵒᵖᵒᵖ × Cᵒᵖ)ᵒᵖ`
+- `tw.unop.fst.unop : Cᵒᵖᵒᵖ × Cᵒᵖ`
+- With encoding `(op (op cod), op dom)`:
+  - `.1.unop.unop` gives `cod`
+  - `.2.unop` gives `dom`
 -/
-def coTwDom (x : CoTwistedArrow C) : C := x.fst.1.unop.unop
+def coTwDom (tw : CoTwistedArrow C) : C := tw.unop.fst.unop.2.unop
 
 /--
 Extract the codomain from an object of `CoTwistedArrow C`.
 -/
-def coTwCod (x : CoTwistedArrow C) : C := x.fst.2.unop
+def coTwCod (tw : CoTwistedArrow C) : C := tw.unop.fst.unop.1.unop.unop
+
+/--
+Construct an object of `CoTwistedArrow C` from domain, codomain, and arrow.
+The arrow goes from `cod` to `dom`.
+
+The structure is `Opposite.op ⟨p, x⟩` where:
+- `p : (Cᵒᵖᵒᵖ × Cᵒᵖ)ᵒᵖ` encodes `(op (op cod), op dom)`
+- `x : homPreOp.obj p = cod ⟶ dom` is the arrow
+-/
+def coTwObjMk {dom cod : C} (arr : cod ⟶ dom) : CoTwistedArrow C :=
+  Opposite.op ⟨Opposite.op (Opposite.op (Opposite.op cod), Opposite.op dom),
+    homPreOpObjIn arr⟩
 
 /--
 Extract the arrow from an object of `CoTwistedArrow C`.
-The arrow goes from `coTwCod x` to `coTwDom x`.
+The arrow goes from `coTwCod tw` to `coTwDom tw`.
 -/
-def coTwArr (x : CoTwistedArrow C) : coTwCod x ⟶ coTwDom x := x.snd.unop
+def coTwArr (tw : CoTwistedArrow C) : coTwCod tw ⟶ coTwDom tw :=
+  homPreOpObjOut tw.unop.snd
 
-@[simp]
+/--
+Extract the domain arrow from a morphism in `CoTwistedArrow C`.
+
+Since `CoTwistedArrow C = (homPreOp C).Elementsᵒᵖ`, morphisms are reversed:
+a morphism `f : x ⟶ y` in `CoTwistedArrow C` corresponds to
+`f.unop : y.unop ⟶ x.unop` in `(homPreOp C).Elements`.
+
+The `.val` of such a morphism is a morphism in `(Cᵒᵖᵒᵖ × Cᵒᵖ)ᵒᵖ`.
+The domain goes backwards (from `y` to `x`), matching `CoTwistedArrow'`.
+-/
+def coTwDomArr {x y : CoTwistedArrow C} (f : x ⟶ y) :
+    coTwDom y ⟶ coTwDom x :=
+  f.unop.val.unop.2.unop
+
+/--
+Extract the codomain arrow from a morphism in `CoTwistedArrow C`.
+The codomain goes forwards (from `x` to `y`), matching `CoTwistedArrow'`.
+-/
+def coTwCodArr {x y : CoTwistedArrow C} (f : x ⟶ y) :
+    coTwCod x ⟶ coTwCod y :=
+  f.unop.val.unop.1.unop.unop
+
 lemma coTwObjMk_dom {dom cod : C} (arr : cod ⟶ dom) :
     coTwDom (coTwObjMk arr) = dom := rfl
 
-@[simp]
 lemma coTwObjMk_cod {dom cod : C} (arr : cod ⟶ dom) :
     coTwCod (coTwObjMk arr) = cod := rfl
 
-@[simp]
 lemma coTwObjMk_arr {dom cod : C} (arr : cod ⟶ dom) :
-    coTwArr (coTwObjMk arr) = arr := rfl
+    coTwArr (coTwObjMk arr) = arr := by
+  unfold coTwArr coTwObjMk
+  simp only [homPreOpObjOut, homPreOpObjIn]
 
 /--
 Construct a morphism in `CoTwistedArrow C` from morphisms on domains and
 codomains.
 
 A morphism from `x` to `y` consists of:
-- `domArr : coTwDom x ⟶ coTwDom y` (morphism between domains, going forwards)
-- `codArr : coTwCod y ⟶ coTwCod x` (morphism between codomains, going backwards)
-such that `codArr ≫ coTwArr x ≫ domArr = coTwArr y`.
+- `domArr : coTwDom y ⟶ coTwDom x` (morphism between domains, going backwards)
+- `codArr : coTwCod x ⟶ coTwCod y` (morphism between codomains, going forwards)
+such that the square commutes: `codArr ≫ coTwArr y ≫ domArr = coTwArr x`.
 -/
 def coTwHomMk {x y : CoTwistedArrow C}
-    (domArr : coTwDom x ⟶ coTwDom y)
-    (codArr : coTwCod y ⟶ coTwCod x)
-    (comm : codArr ≫ coTwArr x ≫ domArr = coTwArr y) : x ⟶ y :=
-  CategoryOfElements.homMk x y (domArr.op.op, codArr.op)
+    (domArr : coTwDom y ⟶ coTwDom x)
+    (codArr : coTwCod x ⟶ coTwCod y)
+    (comm : codArr ≫ coTwArr y ≫ domArr = coTwArr x) : x ⟶ y :=
+  Quiver.Hom.op (CategoryOfElements.homMk y.unop x.unop
+    (Quiver.Hom.op (codArr.op.op, domArr.op))
     (by
-      simp only [Functor.hom_map]
-      unfold coTwArr at comm
-      change domArr.op ≫ x.snd ≫ codArr.op = y.snd
-      rw [← Quiver.Hom.op_unop x.snd, ← Quiver.Hom.op_unop y.snd]
-      simp only [← op_comp]
-      rw [Category.assoc]
-      exact congrArg Quiver.Hom.op comm)
+      unfold coTwArr coTwCod coTwDom at comm
+      simp only [homPreOp, profunctorPreOp, profunctorPre, profunctorOp,
+        Functor.comp_map, Functor.hom_map]
+      exact comm))
+
+lemma coTwHomMk_domArr {x y : CoTwistedArrow C}
+    (domArr : coTwDom y ⟶ coTwDom x)
+    (codArr : coTwCod x ⟶ coTwCod y)
+    (comm : codArr ≫ coTwArr y ≫ domArr = coTwArr x) :
+    coTwDomArr (coTwHomMk domArr codArr comm) = domArr := rfl
+
+lemma coTwCodArr_coTwHomMk {x y : CoTwistedArrow C}
+    (domArr : coTwDom y ⟶ coTwDom x)
+    (codArr : coTwCod x ⟶ coTwCod y)
+    (comm : codArr ≫ coTwArr y ≫ domArr = coTwArr x) :
+    coTwCodArr (coTwHomMk domArr codArr comm) = codArr := rfl
+
+lemma coTwDomArr_coTwHomMk {x y : CoTwistedArrow C}
+    (domArr : coTwDom y ⟶ coTwDom x)
+    (codArr : coTwCod x ⟶ coTwCod y)
+    (comm : codArr ≫ coTwArr y ≫ domArr = coTwArr x) :
+    coTwDomArr (coTwHomMk domArr codArr comm) = domArr := rfl
 
 /--
-Extract the domain arrow from a morphism in `CoTwistedArrow C`.
+Extract the commutativity condition from a morphism in `CoTwistedArrow C`.
 -/
-def coTwDomArr {x y : CoTwistedArrow C} (f : x ⟶ y) :
-    coTwDom x ⟶ coTwDom y :=
-  f.val.1.unop.unop
-
-/--
-Extract the codomain arrow from a morphism in `CoTwistedArrow C`.
--/
-def coTwCodArr {x y : CoTwistedArrow C} (f : x ⟶ y) :
-    coTwCod y ⟶ coTwCod x :=
-  f.val.2.unop
-
-@[simp]
-lemma coTwDomArr_id (tw : CoTwistedArrow C) : coTwDomArr (𝟙 tw) = 𝟙 (coTwDom tw) := rfl
-
-@[simp]
-lemma coTwCodArr_id (tw : CoTwistedArrow C) : coTwCodArr (𝟙 tw) = 𝟙 (coTwCod tw) := rfl
-
-@[simp]
-lemma coTwDomArr_comp {x y z : CoTwistedArrow C} (f : x ⟶ y) (g : y ⟶ z) :
-    coTwDomArr (f ≫ g) = coTwDomArr f ≫ coTwDomArr g := rfl
-
-@[simp]
-lemma coTwCodArr_comp {x y z : CoTwistedArrow C} (f : x ⟶ y) (g : y ⟶ z) :
-    coTwCodArr (f ≫ g) = coTwCodArr g ≫ coTwCodArr f := rfl
+lemma coTwHomComm {x y : CoTwistedArrow C} (f : x ⟶ y) :
+    coTwCodArr f ≫ coTwArr y ≫ coTwDomArr f = coTwArr x := by
+  unfold coTwCodArr coTwDomArr coTwArr coTwCod coTwDom homPreOpObjOut
+  have h := f.unop.property
+  simp only [homPreOp, profunctorPreOp, profunctorPre, profunctorOp,
+    Functor.comp_map, Functor.hom_map] at h
+  exact h
 
 @[ext]
 lemma coTwHom_ext {x y : CoTwistedArrow C} (f g : x ⟶ y)
     (hdom : coTwDomArr f = coTwDomArr g)
     (hcod : coTwCodArr f = coTwCodArr g) : f = g := by
-  unfold coTwDomArr at hdom
+  apply Quiver.Hom.unop_inj
+  apply CategoryOfElements.ext
+  apply Quiver.Hom.unop_inj
   unfold coTwCodArr at hcod
-  ext
-  · exact Quiver.Hom.unop_inj (Quiver.Hom.unop_inj hdom)
-  · exact Quiver.Hom.unop_inj hcod
+  unfold coTwDomArr at hdom
+  apply Prod.ext
+  · exact congr_arg (fun x => x.op.op) hcod
+  · exact congr_arg Quiver.Hom.op hdom
+
+@[simp]
+lemma coTwDomArr_id (tw : CoTwistedArrow C) :
+    coTwDomArr (𝟙 tw) = 𝟙 (coTwDom tw) := rfl
+
+@[simp]
+lemma coTwCodArr_id (tw : CoTwistedArrow C) :
+    coTwCodArr (𝟙 tw) = 𝟙 (coTwCod tw) := rfl
+
+@[simp]
+lemma coTwDomArr_comp {x y z : CoTwistedArrow C} (f : x ⟶ y) (g : y ⟶ z) :
+    coTwDomArr (f ≫ g) = coTwDomArr g ≫ coTwDomArr f := rfl
+
+@[simp]
+lemma coTwCodArr_comp {x y z : CoTwistedArrow C} (f : x ⟶ y) (g : y ⟶ z) :
+    coTwCodArr (f ≫ g) = coTwCodArr f ≫ coTwCodArr g := rfl
 
 end CoTwistedArrowHelpers
 
