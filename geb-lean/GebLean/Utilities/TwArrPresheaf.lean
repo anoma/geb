@@ -14,11 +14,11 @@ variants to `Type v`:
 - `TwArrCopresheaf C` = `TwistedArrow' C ⥤ Type v` (copresheaves on Tw)
 - `TwArrPresheaf C` = `OpTwistedArrow' C ⥤ Type v` (presheaves on Tw)
 - `TwArrOpCopresheaf C` = `TwistedArrowOp' C ⥤ Type v` (copresheaves on TwOp)
-- `TwArrOpPresheaf C` = `CoTwistedArrow C ⥤ Type v` (presheaves on TwOp)
+- `TwArrOpPresheaf C` = `CoTwistedArrow' C ⥤ Type v` (presheaves on TwOp)
 
 Since `OpTwistedArrow' C ≅ (TwistedArrow' C)ᵒᵖ'`, functors from `OpTwistedArrow'`
 are presheaves on `TwistedArrow'`. Similarly, since
-`CoTwistedArrow C ≅ (TwistedArrowOp' C)ᵒᵖ'`, functors from `CoTwistedArrow`
+`CoTwistedArrow' C ≅ (TwistedArrowOp' C)ᵒᵖ'`, functors from `CoTwistedArrow'`
 are presheaves on `TwistedArrowOp'`.
 
 Two of these have direct slice equivalences via `sliceEquivCopresheaf`:
@@ -1214,12 +1214,12 @@ section TwArrOpPresheaf
 
 /--
 Presheaves on the opposite-variant twisted arrow category: covariant functors
-from `CoTwistedArrow C` to `Type v`.
+from `CoTwistedArrow' C` to `Type v`.
 
-Since `CoTwistedArrow C ≅ (TwistedArrowOp' C)ᵒᵖ'`, these are contravariant
+Since `CoTwistedArrow' C ≅ (TwistedArrowOp' C)ᵒᵖ'`, these are contravariant
 functors on `TwistedArrowOp' C`, i.e., presheaves.
 -/
-def TwArrOpPresheaf := CoTwistedArrow C ⥤ Type v
+def TwArrOpPresheaf := CoTwistedArrow' C ⥤ Type v
 
 instance : Category (TwArrOpPresheaf C) := by
   unfold TwArrOpPresheaf
@@ -1278,7 +1278,7 @@ def TwArrOpPresheaf.sliceCopresheaf (F : TwArrOpPresheaf C) (x : C) :
          CategoryStruct.comp, Category.toCategoryStruct,
          CategoryOp'Inst, prod_comp]
       simp only [CategoryOp'.eq_1, CategoryOpQuivInst.eq_1, prod_Hom,
-        CoTwistedArrow.eq_1, CategoryOfElementsContra'.comp_val]
+        CoTwistedArrow'.eq_1, CategoryOfElementsContra'.comp_val]
       exact (Category.id_comp (𝟙 x)).symm
     · simp only [coTwCodArr']
       rfl
@@ -1318,12 +1318,12 @@ def TwArrOpPresheaf.sliceNatTrans (F : TwArrOpPresheaf C) {x x' : C}
     apply coTwHom'_ext
     · simp only
         [coTwDomArr', coTwHomMk', CategoryOfElements.homMk,
-         Category.toCategoryStruct, instCategoryCoTwistedArrow, CategoryOp'Inst]
+         Category.toCategoryStruct, instCategoryCoTwistedArrow', CategoryOp'Inst]
       change (h ≫ 𝟙 x', g.left ≫ 𝟙 f'.left).1 = (𝟙 x ≫ h, 𝟙 f.left ≫ g.left).1
       simp only [Category.id_comp, Category.comp_id]
     · simp only
         [coTwCodArr', coTwHomMk', CategoryOfElements.homMk,
-         Category.toCategoryStruct, instCategoryCoTwistedArrow, CategoryOp'Inst]
+         Category.toCategoryStruct, instCategoryCoTwistedArrow', CategoryOp'Inst]
       change (h ≫ 𝟙 x', g.left ≫ 𝟙 f'.left).2 = (𝟙 x ≫ h, 𝟙 f.left ≫ g.left).2
       simp only [Category.id_comp, Category.comp_id]
 
@@ -1515,7 +1515,7 @@ For a co-twisted arrow `tw = (cod, dom, f : cod ⟶ dom)`, the object is
 of `Over dom`.
 -/
 def sliceGrothendieckFibObjOpPresheaf (fib : SliceGrothendieckFibOpPresheaf C)
-    (tw : CoTwistedArrow C) : Type v :=
+    (tw : CoTwistedArrow' C) : Type v :=
   let x : C := coTwDom' tw
   (fib x).obj (Over.mk (coTwArr' tw))
 
@@ -1547,7 +1547,7 @@ Maps from `(fib dom).obj (Over.mk arr)` to `(fib dom').obj (Over.mk arr')`.
 -/
 def sliceGrothendieckFibMapOpPresheaf (fib : SliceGrothendieckFibOpPresheaf C)
     (hom : SliceGrothendieckHomOpPresheaf C fib)
-    {tw tw' : CoTwistedArrow C} (m : tw ⟶ tw') :
+    {tw tw' : CoTwistedArrow' C} (m : tw ⟶ tw') :
     sliceGrothendieckFibObjOpPresheaf C fib tw →
       sliceGrothendieckFibObjOpPresheaf C fib tw' := by
   intro a

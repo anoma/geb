@@ -45,6 +45,242 @@ instance (C : Type u) [Category.{v} C] : Category (TwistedArrow C) := by
   unfold TwistedArrow
   infer_instance
 
+variable {C : Type u} [Category.{v} C]
+
+section TwistedArrowHelpers
+
+/--
+Construct an object of `TwistedArrow C` from domain, codomain, and arrow.
+-/
+def twObjMk {dom cod : C} (arr : dom ⟶ cod) : TwistedArrow C :=
+  ⟨(Opposite.op dom, cod), arr⟩
+
+/--
+Extract the domain from an object of `TwistedArrow C`.
+-/
+def twDom (x : TwistedArrow C) : C := x.fst.1.unop
+
+/--
+Extract the codomain from an object of `TwistedArrow C`.
+-/
+def twCod (x : TwistedArrow C) : C := x.fst.2
+
+/--
+Extract the arrow from an object of `TwistedArrow C`.
+-/
+def twArr (x : TwistedArrow C) : twDom x ⟶ twCod x := x.snd
+
+lemma twObjMk_dom {dom cod : C} (arr : dom ⟶ cod) :
+    twDom (twObjMk arr) = dom := rfl
+
+lemma twObjMk_cod {dom cod : C} (arr : dom ⟶ cod) :
+    twCod (twObjMk arr) = cod := rfl
+
+lemma twObjMk_arr {dom cod : C} (arr : dom ⟶ cod) :
+    twArr (twObjMk arr) = arr := rfl
+
+/--
+Reconstructing a twisted arrow object from its components gives the original.
+-/
+@[simp]
+lemma twObjMk_twArr (x : TwistedArrow C) : twObjMk (twArr x) = x := rfl
+
+/--
+Construct a morphism in `TwistedArrow C` from morphisms on domains and
+codomains.
+
+A morphism from `(X, Y, f)` to `(X', Y', f')` consists of:
+- `domArr : X' ⟶ X` (morphism between domains, going backwards)
+- `codArr : Y ⟶ Y'` (morphism between codomains, going forwards)
+such that the square commutes: `domArr ≫ f ≫ codArr = f'`.
+-/
+def twHomMk {x y : TwistedArrow C}
+    (domArr : twDom y ⟶ twDom x)
+    (codArr : twCod x ⟶ twCod y)
+    (comm : domArr ≫ twArr x ≫ codArr = twArr y) : x ⟶ y :=
+  CategoryOfElements.homMk x y (domArr.op, codArr) comm
+
+/--
+Extract the domain arrow from a morphism in `TwistedArrow C`.
+-/
+def twDomArr {x y : TwistedArrow C} (f : x ⟶ y) : twDom y ⟶ twDom x :=
+  f.val.1.unop
+
+/--
+Extract the codomain arrow from a morphism in `TwistedArrow C`.
+-/
+def twCodArr {x y : TwistedArrow C} (f : x ⟶ y) : twCod x ⟶ twCod y :=
+  f.val.2
+
+lemma twHomMk_domArr {x y : TwistedArrow C}
+    (domArr : twDom y ⟶ twDom x)
+    (codArr : twCod x ⟶ twCod y)
+    (comm : domArr ≫ twArr x ≫ codArr = twArr y) :
+    twDomArr (twHomMk domArr codArr comm) = domArr := rfl
+
+lemma twHomMk_codArr {x y : TwistedArrow C}
+    (domArr : twDom y ⟶ twDom x)
+    (codArr : twCod x ⟶ twCod y)
+    (comm : domArr ≫ twArr x ≫ codArr = twArr y) :
+    twCodArr (twHomMk domArr codArr comm) = codArr := rfl
+
+/--
+Extract the commutativity condition from a morphism in `TwistedArrow C`.
+-/
+lemma twHomComm {x y : TwistedArrow C} (f : x ⟶ y) :
+    twDomArr f ≫ twArr x ≫ twCodArr f = twArr y :=
+  f.property
+
+@[ext]
+lemma twHom_ext {x y : TwistedArrow C} (f g : x ⟶ y)
+    (hdom : twDomArr f = twDomArr g)
+    (hcod : twCodArr f = twCodArr g) : f = g := by
+  cases f; cases g
+  congr
+  exact Prod.ext (Opposite.unop_injective hdom) hcod
+
+@[simp]
+lemma twHomMk_eta {x y : TwistedArrow C} (f : x ⟶ y) :
+    twHomMk (twDomArr f) (twCodArr f) (twHomComm f) = f := by
+  apply twHom_ext <;> simp only [twHomMk_domArr, twHomMk_codArr]
+
+@[simp]
+lemma twDomArr_id (tw : TwistedArrow C) : twDomArr (𝟙 tw) = 𝟙 (twDom tw) := rfl
+
+@[simp]
+lemma twCodArr_id (tw : TwistedArrow C) : twCodArr (𝟙 tw) = 𝟙 (twCod tw) := rfl
+
+@[simp]
+lemma twDomArr_comp {x y z : TwistedArrow C} (f : x ⟶ y) (g : y ⟶ z) :
+    twDomArr (f ≫ g) = twDomArr g ≫ twDomArr f := rfl
+
+@[simp]
+lemma twCodArr_comp {x y z : TwistedArrow C} (f : x ⟶ y) (g : y ⟶ z) :
+    twCodArr (f ≫ g) = twCodArr f ≫ twCodArr g := rfl
+
+end TwistedArrowHelpers
+
+/--
+The co-twisted arrow category of `C`, defined as the category of elements of
+`Functor.hom Cᵒᵖ`.
+
+Objects are triples `(dom, cod, arr : cod ⟶ dom)` where the arrow points
+from codomain to domain (opposite direction from `TwistedArrow`).
+
+A morphism from `(dom, cod, arr)` to `(dom', cod', arr')` consists of:
+- `domArr : dom ⟶ dom'` (morphism between domains, going forwards)
+- `codArr : cod' ⟶ cod` (morphism between codomains, going backwards)
+such that `arr = codArr ≫ arr' ≫ domArr`.
+-/
+abbrev CoTwistedArrow (C : Type u) [Category.{v} C] :=
+  (Functor.hom Cᵒᵖ).Elements
+
+instance (C : Type u) [Category.{v} C] : Category (CoTwistedArrow C) := by
+  unfold CoTwistedArrow
+  infer_instance
+
+section CoTwistedArrowHelpers
+
+variable {C : Type u} [Category.{v} C]
+
+/--
+Construct an object of `CoTwistedArrow C` from domain, codomain, and arrow.
+The arrow goes from `cod` to `dom`.
+-/
+def coTwObjMk {dom cod : C} (arr : cod ⟶ dom) : CoTwistedArrow C :=
+  ⟨(Opposite.op (Opposite.op dom), Opposite.op cod), arr.op⟩
+
+/--
+Extract the domain from an object of `CoTwistedArrow C`.
+-/
+def coTwDom (x : CoTwistedArrow C) : C := x.fst.1.unop.unop
+
+/--
+Extract the codomain from an object of `CoTwistedArrow C`.
+-/
+def coTwCod (x : CoTwistedArrow C) : C := x.fst.2.unop
+
+/--
+Extract the arrow from an object of `CoTwistedArrow C`.
+The arrow goes from `coTwCod x` to `coTwDom x`.
+-/
+def coTwArr (x : CoTwistedArrow C) : coTwCod x ⟶ coTwDom x := x.snd.unop
+
+@[simp]
+lemma coTwObjMk_dom {dom cod : C} (arr : cod ⟶ dom) :
+    coTwDom (coTwObjMk arr) = dom := rfl
+
+@[simp]
+lemma coTwObjMk_cod {dom cod : C} (arr : cod ⟶ dom) :
+    coTwCod (coTwObjMk arr) = cod := rfl
+
+@[simp]
+lemma coTwObjMk_arr {dom cod : C} (arr : cod ⟶ dom) :
+    coTwArr (coTwObjMk arr) = arr := rfl
+
+/--
+Construct a morphism in `CoTwistedArrow C` from morphisms on domains and
+codomains.
+
+A morphism from `x` to `y` consists of:
+- `domArr : coTwDom x ⟶ coTwDom y` (morphism between domains, going forwards)
+- `codArr : coTwCod y ⟶ coTwCod x` (morphism between codomains, going backwards)
+such that `codArr ≫ coTwArr x ≫ domArr = coTwArr y`.
+-/
+def coTwHomMk {x y : CoTwistedArrow C}
+    (domArr : coTwDom x ⟶ coTwDom y)
+    (codArr : coTwCod y ⟶ coTwCod x)
+    (comm : codArr ≫ coTwArr x ≫ domArr = coTwArr y) : x ⟶ y :=
+  CategoryOfElements.homMk x y (domArr.op.op, codArr.op)
+    (by
+      simp only [Functor.hom_map]
+      unfold coTwArr at comm
+      change domArr.op ≫ x.snd ≫ codArr.op = y.snd
+      rw [← Quiver.Hom.op_unop x.snd, ← Quiver.Hom.op_unop y.snd]
+      simp only [← op_comp]
+      rw [Category.assoc]
+      exact congrArg Quiver.Hom.op comm)
+
+/--
+Extract the domain arrow from a morphism in `CoTwistedArrow C`.
+-/
+def coTwDomArr {x y : CoTwistedArrow C} (f : x ⟶ y) :
+    coTwDom x ⟶ coTwDom y :=
+  f.val.1.unop.unop
+
+/--
+Extract the codomain arrow from a morphism in `CoTwistedArrow C`.
+-/
+def coTwCodArr {x y : CoTwistedArrow C} (f : x ⟶ y) :
+    coTwCod y ⟶ coTwCod x :=
+  f.val.2.unop
+
+@[simp]
+lemma coTwDomArr_id (tw : CoTwistedArrow C) : coTwDomArr (𝟙 tw) = 𝟙 (coTwDom tw) := rfl
+
+@[simp]
+lemma coTwCodArr_id (tw : CoTwistedArrow C) : coTwCodArr (𝟙 tw) = 𝟙 (coTwCod tw) := rfl
+
+@[simp]
+lemma coTwDomArr_comp {x y z : CoTwistedArrow C} (f : x ⟶ y) (g : y ⟶ z) :
+    coTwDomArr (f ≫ g) = coTwDomArr f ≫ coTwDomArr g := rfl
+
+@[simp]
+lemma coTwCodArr_comp {x y z : CoTwistedArrow C} (f : x ⟶ y) (g : y ⟶ z) :
+    coTwCodArr (f ≫ g) = coTwCodArr g ≫ coTwCodArr f := rfl
+
+@[ext]
+lemma coTwHom_ext {x y : CoTwistedArrow C} (f g : x ⟶ y)
+    (hdom : coTwDomArr f = coTwDomArr g)
+    (hcod : coTwCodArr f = coTwCodArr g) : f = g := by
+  unfold coTwDomArr at hdom
+  unfold coTwCodArr at hcod
+  ext
+  · exact Quiver.Hom.unop_inj (Quiver.Hom.unop_inj hdom)
+  · exact Quiver.Hom.unop_inj hcod
+
+end CoTwistedArrowHelpers
+
 @[simp]
 def TwistedArrow' (C : Type u) [Category.{v} C] :=
   (hom' (C := C)).Elements
@@ -438,37 +674,37 @@ The opposite of the twisted arrow category of `Cᵒᵖ'`, which we
 are calling the co-twisted arrow category of `C`.
 -/
 @[simp]
-def CoTwistedArrow (C : Type u) [Category.{v} C] :=
+def CoTwistedArrow' (C : Type u) [Category.{v} C] :=
   (homPreOp' (C := C)).ElementsContra'
 
-instance (C : Type u) [Category.{v} C] : Category (CoTwistedArrow C) := by
-  unfold CoTwistedArrow
+instance (C : Type u) [Category.{v} C] : Category (CoTwistedArrow' C) := by
+  unfold CoTwistedArrow'
   infer_instance
 
-section CoTwistedArrowHelpers
+section CoTwistedArrow'Helpers
 
 /--
-Construct an object of `CoTwistedArrow C` from domain, codomain, and arrow.
+Construct an object of `CoTwistedArrow' C` from domain, codomain, and arrow.
 Note: The arrow goes from `cod` to `dom`, and this is the opposite of
 `TwistedArrowOp' C`.
 -/
-def coTwObjMk' {dom cod : C} (arr : cod ⟶ dom) : CoTwistedArrow C :=
+def coTwObjMk' {dom cod : C} (arr : cod ⟶ dom) : CoTwistedArrow' C :=
   ⟨(cod, dom), arr⟩
 
 /--
-Extract the domain from an object of `CoTwistedArrow C`.
+Extract the domain from an object of `CoTwistedArrow' C`.
 -/
-def coTwDom' (x : CoTwistedArrow C) : C := x.fst.2
+def coTwDom' (x : CoTwistedArrow' C) : C := x.fst.2
 
 /--
-Extract the codomain from an object of `CoTwistedArrow C`.
+Extract the codomain from an object of `CoTwistedArrow' C`.
 -/
-def coTwCod' (x : CoTwistedArrow C) : C := x.fst.1
+def coTwCod' (x : CoTwistedArrow' C) : C := x.fst.1
 
 /--
-Extract the arrow from an object of `CoTwistedArrow C`.
+Extract the arrow from an object of `CoTwistedArrow' C`.
 -/
-def coTwArr' (x : CoTwistedArrow C) : coTwCod' x ⟶ coTwDom' x := x.snd
+def coTwArr' (x : CoTwistedArrow' C) : coTwCod' x ⟶ coTwDom' x := x.snd
 
 lemma coTwObjMk'_dom {dom cod : C} (arr : cod ⟶ dom) :
     coTwDom' (coTwObjMk' arr) = dom := rfl
@@ -480,7 +716,7 @@ lemma coTwObjMk'_arr {dom cod : C} (arr : cod ⟶ dom) :
     coTwArr' (coTwObjMk' arr) = arr := rfl
 
 /--
-Construct a morphism in `CoTwistedArrow C` from morphisms on domains and
+Construct a morphism in `CoTwistedArrow' C` from morphisms on domains and
 codomains.
 
 A morphism from `(X, Y, f)` to `(X', Y', f')` consists of:
@@ -490,7 +726,7 @@ such that the square commutes: `codArr ≫ f' ≫ domArr = f`.
 
 Note: This is the opposite of `TwistedArrowOp' C`.
 -/
-def coTwHomMk' {x y : CoTwistedArrow C}
+def coTwHomMk' {x y : CoTwistedArrow' C}
     (domArr : coTwDom' y ⟶ coTwDom' x)
     (codArr : coTwCod' x ⟶ coTwCod' y)
     (comm : codArr ≫ coTwArr' y ≫ domArr = coTwArr' x) : x ⟶ y :=
@@ -509,36 +745,36 @@ def coTwHomMkChain' {w x y z : C}
     rfl
 
 /--
-Extract the domain arrow from a morphism in `CoTwistedArrow C`.
+Extract the domain arrow from a morphism in `CoTwistedArrow' C`.
 Note: This goes backwards (from `y`'s domain to `x`'s domain).
 -/
-def coTwDomArr' {x y : CoTwistedArrow C} (f : x ⟶ y) :
+def coTwDomArr' {x y : CoTwistedArrow' C} (f : x ⟶ y) :
     coTwDom' y ⟶ coTwDom' x :=
   f.val.2
 
 /--
-Extract the codomain arrow from a morphism in `CoTwistedArrow C`.
+Extract the codomain arrow from a morphism in `CoTwistedArrow' C`.
 -/
-def coTwCodArr' {x y : CoTwistedArrow C} (f : x ⟶ y) :
+def coTwCodArr' {x y : CoTwistedArrow' C} (f : x ⟶ y) :
     coTwCod' x ⟶ coTwCod' y :=
   f.val.1
 
-lemma coTwHomMk'_domArr {x y : CoTwistedArrow C}
+lemma coTwHomMk'_domArr {x y : CoTwistedArrow' C}
     (domArr : coTwDom' y ⟶ coTwDom' x)
     (codArr : coTwCod' x ⟶ coTwCod' y)
     (comm : codArr ≫ coTwArr' y ≫ domArr = coTwArr' x) :
     coTwDomArr' (coTwHomMk' domArr codArr comm) = domArr := rfl
 
-lemma coTwHomMk'_codArr {x y : CoTwistedArrow C}
+lemma coTwHomMk'_codArr {x y : CoTwistedArrow' C}
     (domArr : coTwDom' y ⟶ coTwDom' x)
     (codArr : coTwCod' x ⟶ coTwCod' y)
     (comm : codArr ≫ coTwArr' y ≫ domArr = coTwArr' x) :
     coTwCodArr' (coTwHomMk' domArr codArr comm) = codArr := rfl
 
 /--
-Extract the commutativity condition from a morphism in `CoTwistedArrow C`.
+Extract the commutativity condition from a morphism in `CoTwistedArrow' C`.
 -/
-lemma coTwHomComm' {x y : CoTwistedArrow C} (f : x ⟶ y) :
+lemma coTwHomComm' {x y : CoTwistedArrow' C} (f : x ⟶ y) :
     coTwCodArr' f ≫ coTwArr' y ≫ coTwDomArr' f = coTwArr' x := by
   unfold coTwCodArr' coTwDomArr' coTwArr'
   change f.val.1 ≫ y.snd ≫ f.val.2 = x.snd
@@ -549,14 +785,14 @@ lemma coTwHomComm' {x y : CoTwistedArrow C} (f : x ⟶ y) :
   exact h
 
 @[ext]
-lemma coTwHom'_ext {x y : CoTwistedArrow C} (f g : x ⟶ y)
+lemma coTwHom'_ext {x y : CoTwistedArrow' C} (f g : x ⟶ y)
     (hdom : coTwDomArr' f = coTwDomArr' g)
     (hcod : coTwCodArr' f = coTwCodArr' g) : f = g := by
   cases f; cases g
   congr
   exact Prod.ext hcod hdom
 
-end CoTwistedArrowHelpers
+end CoTwistedArrow'Helpers
 
 section TwistedArrowIsomorphisms
 
@@ -615,14 +851,14 @@ def opTwistedArrowIsoTwistedArrowOp' :
   inv_hom_id := Cat.Hom.ext rfl
 
 /--
-Functor from `CoTwistedArrow C` to `(TwistedArrowOp' C)ᵒᵖ'`.
+Functor from `CoTwistedArrow' C` to `(TwistedArrowOp' C)ᵒᵖ'`.
 
-Objects of `CoTwistedArrow C` are stored as `((cod, dom), arr : cod ⟶ dom)`.
+Objects of `CoTwistedArrow' C` are stored as `((cod, dom), arr : cod ⟶ dom)`.
 Objects of `TwistedArrowOp' C` are stored as `((dom, cod), arr : cod ⟶ dom)`.
 So we swap the pair components.
 -/
 def coTwistedArrowToTwistedArrowOpOp' :
-    CoTwistedArrow C ⥤ (TwistedArrowOp' C)ᵒᵖ' where
+    CoTwistedArrow' C ⥤ (TwistedArrowOp' C)ᵒᵖ' where
   obj x :=
     let dom := coTwDom' x ; let cod := coTwCod' x ; let arr := coTwArr' x
     ⟨(dom, cod), arr⟩
@@ -638,10 +874,10 @@ def coTwistedArrowToTwistedArrowOpOp' :
   map_comp {x y z} f g := by apply twOpHom'_ext <;> rfl
 
 /--
-Functor from `(TwistedArrowOp' C)ᵒᵖ'` to `CoTwistedArrow C`.
+Functor from `(TwistedArrowOp' C)ᵒᵖ'` to `CoTwistedArrow' C`.
 -/
-def twistedArrowOpOp'ToCoTwistedArrow :
-    (TwistedArrowOp' C)ᵒᵖ' ⥤ CoTwistedArrow C where
+def twistedArrowOpOp'ToCoTwistedArrow' :
+    (TwistedArrowOp' C)ᵒᵖ' ⥤ CoTwistedArrow' C where
   obj x :=
     let dom := twOpDom' x ; let cod := twOpCod' x ; let arr := twOpArr' x
     ⟨(cod, dom), arr⟩
@@ -657,12 +893,12 @@ def twistedArrowOpOp'ToCoTwistedArrow :
   map_comp {x y z} f g := by apply coTwHom'_ext <;> rfl
 
 /--
-`CoTwistedArrow C` is isomorphic to `(TwistedArrowOp' C)ᵒᵖ'`.
+`CoTwistedArrow' C` is isomorphic to `(TwistedArrowOp' C)ᵒᵖ'`.
 -/
 def coTwistedArrowIsoTwistedArrowOpOp' :
-    CoTwistedArrow C ≅Cat (TwistedArrowOp' C)ᵒᵖ' where
+    CoTwistedArrow' C ≅Cat (TwistedArrowOp' C)ᵒᵖ' where
   hom := coTwistedArrowToTwistedArrowOpOp'.toCatHom
-  inv := twistedArrowOpOp'ToCoTwistedArrow.toCatHom
+  inv := twistedArrowOpOp'ToCoTwistedArrow'.toCatHom
   hom_inv_id := Cat.Hom.ext rfl
   inv_hom_id := Cat.Hom.ext rfl
 
@@ -676,12 +912,12 @@ theorem twistedArrowOpEqTwistedArrowOfOp' :
     TwistedArrowOp' C = TwistedArrow' (Cᵒᵖ') := rfl
 
 /--
-`OpTwistedArrow' (Cᵒᵖ')` is definitionally equal to `CoTwistedArrow C`.
+`OpTwistedArrow' (Cᵒᵖ')` is definitionally equal to `CoTwistedArrow' C`.
 
 Both are defined as `ElementsContra'` of `homPreOp'`.
 -/
-theorem opTwistedArrowOfOpEqCoTwistedArrow :
-    OpTwistedArrow' (Cᵒᵖ') = CoTwistedArrow C := rfl
+theorem opTwistedArrowOfOpEqCoTwistedArrow' :
+    OpTwistedArrow' (Cᵒᵖ') = CoTwistedArrow' C := rfl
 
 section TwistedArrowSelfDuality
 
@@ -703,7 +939,7 @@ swap.
 This self-duality reduces the four twisted arrow variants to two fundamental
 categories (up to isomorphism):
 - `TwistedArrow' C ≅ TwistedArrowOp' C`
-- `OpTwistedArrow' C ≅ CoTwistedArrow C`
+- `OpTwistedArrow' C ≅ CoTwistedArrow' C`
 -/
 
 /--
@@ -797,17 +1033,17 @@ def twistedArrowIsoTwistedArrowOp' : TwistedArrow' C ≅Cat TwistedArrowOp' C wh
         rfl
 
 /--
-Functor from `OpTwistedArrow' C` to `CoTwistedArrow C`.
+Functor from `OpTwistedArrow' C` to `CoTwistedArrow' C`.
 
 This combines the isomorphisms:
 - `OpTwistedArrow' C ≅ (TwistedArrow' C)^op'`
 - `TwistedArrow' C ≅ TwistedArrowOp' C`
-- `(TwistedArrowOp' C)^op' ≅ CoTwistedArrow C`
+- `(TwistedArrowOp' C)^op' ≅ CoTwistedArrow' C`
 
 Objects are preserved as the same underlying arrow in `C`.
 Morphisms swap components.
 -/
-def opTwistedArrowToCoTwistedArrow : OpTwistedArrow' C ⥤ CoTwistedArrow C where
+def opTwistedArrowToCoTwistedArrow' : OpTwistedArrow' C ⥤ CoTwistedArrow' C where
   obj tw := coTwObjMk' (opTwArr' tw)
   map {x y} f :=
     coTwHomMk'
@@ -820,9 +1056,9 @@ def opTwistedArrowToCoTwistedArrow : OpTwistedArrow' C ⥤ CoTwistedArrow C wher
   map_comp {x y z} f g := by apply coTwHom'_ext <;> rfl
 
 /--
-Functor from `CoTwistedArrow C` to `OpTwistedArrow' C`.
+Functor from `CoTwistedArrow' C` to `OpTwistedArrow' C`.
 -/
-def coTwistedArrowToOpTwistedArrow : CoTwistedArrow C ⥤ OpTwistedArrow' C where
+def coTwistedArrowToOpTwistedArrow : CoTwistedArrow' C ⥤ OpTwistedArrow' C where
   obj tw := opTwObjMk' (coTwArr' tw)
   map {x y} f :=
     opTwHomMk'
@@ -835,43 +1071,43 @@ def coTwistedArrowToOpTwistedArrow : CoTwistedArrow C ⥤ OpTwistedArrow' C wher
   map_comp {x y z} f g := by apply opTwHom'_ext <;> rfl
 
 /--
-Round-trip on objects: `OpTwistedArrow' → CoTwistedArrow → OpTwistedArrow'`
+Round-trip on objects: `OpTwistedArrow' → CoTwistedArrow' → OpTwistedArrow'`
 returns the same object.
 -/
 theorem opTwistedArrowRoundTrip_obj (tw : OpTwistedArrow' C) :
-    coTwistedArrowToOpTwistedArrow.obj (opTwistedArrowToCoTwistedArrow.obj tw) = tw := by
-  simp only [opTwistedArrowToCoTwistedArrow, coTwistedArrowToOpTwistedArrow,
+    coTwistedArrowToOpTwistedArrow.obj (opTwistedArrowToCoTwistedArrow'.obj tw) = tw := by
+  simp only [opTwistedArrowToCoTwistedArrow', coTwistedArrowToOpTwistedArrow,
     opTwObjMk', coTwObjMk', opTwArr', coTwArr', opTwDom', opTwCod', coTwDom', coTwCod']
   rfl
 
 /--
-Round-trip on objects: `CoTwistedArrow → OpTwistedArrow' → CoTwistedArrow`
+Round-trip on objects: `CoTwistedArrow' → OpTwistedArrow' → CoTwistedArrow'`
 returns the same object.
 -/
-theorem coTwistedArrowRoundTrip_obj (tw : CoTwistedArrow C) :
-    opTwistedArrowToCoTwistedArrow.obj (coTwistedArrowToOpTwistedArrow.obj tw) = tw := by
-  simp only [opTwistedArrowToCoTwistedArrow, coTwistedArrowToOpTwistedArrow,
+theorem coTwistedArrowRoundTrip_obj (tw : CoTwistedArrow' C) :
+    opTwistedArrowToCoTwistedArrow'.obj (coTwistedArrowToOpTwistedArrow.obj tw) = tw := by
+  simp only [opTwistedArrowToCoTwistedArrow', coTwistedArrowToOpTwistedArrow,
     opTwObjMk', coTwObjMk', opTwArr', coTwArr', opTwDom', opTwCod', coTwDom', coTwCod']
   rfl
 
 /--
-`OpTwistedArrow' C` is isomorphic to `CoTwistedArrow C`.
+`OpTwistedArrow' C` is isomorphic to `CoTwistedArrow' C`.
 
 This shows that the opposite of the twisted arrow category is isomorphic to
 the co-twisted arrow category (opposite of twisted arrow of opposite).
 -/
-def opTwistedArrowIsoCoTwistedArrow : OpTwistedArrow' C ≅Cat CoTwistedArrow C where
-  hom := opTwistedArrowToCoTwistedArrow.toCatHom
+def opTwistedArrowIsoCoTwistedArrow' : OpTwistedArrow' C ≅Cat CoTwistedArrow' C where
+  hom := opTwistedArrowToCoTwistedArrow'.toCatHom
   inv := coTwistedArrowToOpTwistedArrow.toCatHom
   hom_inv_id := Cat.Hom.ext <| by
     fapply Functor.ext
     · exact opTwistedArrowRoundTrip_obj
     · intros tw tw' f
       apply opTwHom'_ext
-      · unfold opTwistedArrowToCoTwistedArrow coTwistedArrowToOpTwistedArrow
+      · unfold opTwistedArrowToCoTwistedArrow' coTwistedArrowToOpTwistedArrow
         simp only [eqToHom_refl, Category.id_comp, Category.comp_id]
         rfl
-      · unfold opTwistedArrowToCoTwistedArrow coTwistedArrowToOpTwistedArrow
+      · unfold opTwistedArrowToCoTwistedArrow' coTwistedArrowToOpTwistedArrow
         simp only [eqToHom_refl, Category.id_comp, Category.comp_id]
         rfl
   inv_hom_id := Cat.Hom.ext <| by
@@ -879,10 +1115,10 @@ def opTwistedArrowIsoCoTwistedArrow : OpTwistedArrow' C ≅Cat CoTwistedArrow C 
     · exact coTwistedArrowRoundTrip_obj
     · intros tw tw' f
       apply coTwHom'_ext
-      · unfold opTwistedArrowToCoTwistedArrow coTwistedArrowToOpTwistedArrow
+      · unfold opTwistedArrowToCoTwistedArrow' coTwistedArrowToOpTwistedArrow
         simp only [eqToHom_refl, Category.id_comp, Category.comp_id]
         rfl
-      · unfold opTwistedArrowToCoTwistedArrow coTwistedArrowToOpTwistedArrow
+      · unfold opTwistedArrowToCoTwistedArrow' coTwistedArrowToOpTwistedArrow
         simp only [eqToHom_refl, Category.id_comp, Category.comp_id]
         rfl
 
@@ -1076,7 +1312,7 @@ Twisted categories (domArr and codArr go in opposite directions):
 - `TwistedArrow' C`: objects dom→cod, domArr backward, codArr forward
 - `OpTwistedArrow' C`: objects dom→cod, domArr forward, codArr backward
 - `TwistedArrowOp' C`: objects cod→dom, domArr forward, codArr backward
-- `CoTwistedArrow C`: objects cod→dom, domArr backward, codArr forward
+- `CoTwistedArrow' C`: objects cod→dom, domArr backward, codArr forward
 
 Arrow categories (domArr and codArr go in the same direction):
 - `Arr(C)`: objects dom→cod, both forward
@@ -1092,8 +1328,8 @@ isomorphism) via self-duality isomorphisms.
 Twisted arrow self-duality (reduces 4 twisted to 2):
 - `TwistedArrow' C ≅ TwistedArrowOp' C` (proven as
   `twistedArrowIsoTwistedArrowOp'`)
-- `OpTwistedArrow' C ≅ CoTwistedArrow C` (proven as
-  `opTwistedArrowIsoCoTwistedArrow`)
+- `OpTwistedArrow' C ≅ CoTwistedArrow' C` (proven as
+  `opTwistedArrowIsoCoTwistedArrow'`)
 
 Arrow self-duality (reduces 4 arrow to 2):
 - `Arrow C ≅ (ArrowOp' C)ᵒᵖ'` (proven as `arrowIsoArrowOpOp'`)
@@ -1121,12 +1357,12 @@ Group 2 — Covariant Grothendieck with Over:
 - Gr(O(C)): `Arr(C)`
 - Gr(O(C) ⋙ op): related to `TwistedArrow'(Cᵒᵖ')ᵒᵖ`
 - Gr(O(Cᵒᵖ')): `Arr(C)ᵒᵖ`
-- Gr(O(Cᵒᵖ') ⋙ op): `CoTwistedArrow C`
+- Gr(O(Cᵒᵖ') ⋙ op): `CoTwistedArrow' C`
 
 Group 3 — Contravariant Grothendieck with Under:
 - GrC'(U(C)): `Arr(C)`
 - GrC'(U(C) ⋙ op): related to `TwistedArrow' C`
-- GrC'(U(Cᵒᵖ')): `CoTwistedArrow C`
+- GrC'(U(Cᵒᵖ')): `CoTwistedArrow' C`
 - GrC'(U(Cᵒᵖ') ⋙ op): `Arr(C)ᵒᵖ`
 
 Group 4 — Contravariant Grothendieck with Over:
@@ -1166,13 +1402,13 @@ The remaining twisted arrow variants follow from existing isomorphisms:
   (proven as `opTwistedArrowIsoTwistedArrowOp'`)
 - `TwistedArrowOp' C = TwistedArrow' Cᵒᵖ'`
   (definitional via `twistedArrowOpEqTwistedArrowOfOp'`)
-- `CoTwistedArrow C ≅ (TwistedArrowOp' C)ᵒᵖ'`
+- `CoTwistedArrow' C ≅ (TwistedArrowOp' C)ᵒᵖ'`
   (proven as `coTwistedArrowIsoTwistedArrowOpOp'`)
 
 These combine to give:
 - `OpTwistedArrow' C ≌ (Grothendieck (Under.mapFunctor C))ᵒᵖ'`
 - `TwistedArrowOp' C ≌ Grothendieck (Under.mapFunctor Cᵒᵖ')`
-- `CoTwistedArrow C ≌ (Grothendieck (Under.mapFunctor Cᵒᵖ'))ᵒᵖ'`
+- `CoTwistedArrow' C ≌ (Grothendieck (Under.mapFunctor Cᵒᵖ'))ᵒᵖ'`
 -/
 
 /--
@@ -1191,15 +1427,15 @@ def opTwArrEquivGrothendieckUnderOp' :
 /-!
 ### Remaining Twisted Arrow Variants
 
-The equivalences for `TwistedArrowOp' C` and `CoTwistedArrow C` follow from:
+The equivalences for `TwistedArrowOp' C` and `CoTwistedArrow' C` follow from:
 
 - `TwistedArrowOp' C = TwistedArrow' Cᵒᵖ'` (definitional equality, but different
   category instances in Lean's typeclass system)
-- `CoTwistedArrow C ≅Cat (TwistedArrowOp' C)ᵒᵖ'`
+- `CoTwistedArrow' C ≅Cat (TwistedArrowOp' C)ᵒᵖ'`
 
 Combined with `twArrEquivGrothendieckUnder`, these give:
 - `TwistedArrowOp' C ≌ Grothendieck (Under.mapFunctor Cᵒᵖ')`
-- `CoTwistedArrow C ≌ (Grothendieck (Under.mapFunctor Cᵒᵖ'))ᵒᵖ'`
+- `CoTwistedArrow' C ≌ (Grothendieck (Under.mapFunctor Cᵒᵖ'))ᵒᵖ'`
 
 Direct Lean implementations would require working around typeclass instance
 differences between `TwistedArrowOp' C` and `TwistedArrow' Cᵒᵖ'`.
