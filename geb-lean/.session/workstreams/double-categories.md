@@ -75,8 +75,11 @@ None currently.
 - [x] adjunctionUnit, adjunctionCounit (unit/counit of companion-conjoint adjunction)
 - [x] psiHCompEpsilon, etaHCompPhi (additional binding square compositions)
 - [x] Triangle identity constructions (rightTriangleComposite, leftTriangleComposite)
-- [x] Triangle identity whiskering operations (unitWhiskerRight'', counitWhiskerLeft', etc.)
-- [ ] Triangle identity proofs (rightTriangleComposite = sqVertId cv.hor, etc.)
+- [x] Triangle identity whiskering operations
+      (unitWhiskerRight'', counitWhiskerLeft', etc.)
+- [x] Triangle identity proofs (rightTriangleComposite = sqVertId cv.hor, etc.)
+      (require coherence hypotheses: sqVComp eta epsilon = sqHorId v and
+       sqHComp phi psi = sqVertId cv.hor)
 - [ ] Uniqueness of companions/conjoints
 
 ### Transformation Composition Laws (Completed)
