@@ -57,7 +57,7 @@ the elements of the sets involved. An arrow $h$ is a homomorphism if, for
 any object $A$ of $\mathcal{C}$ and any element $a \in H(A, A)$, the
 following holds in $\mathcal{C}$:
 
-**$$h \circ \Phi_A(a) = \Psi_A(a)$$**
+$$h \circ \Phi_A(a) = \Psi_A(a)$$
 
 This equality is represented by the following commuting diagram in the base
 category $\mathcal{C}$:
