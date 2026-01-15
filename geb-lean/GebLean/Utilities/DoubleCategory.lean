@@ -4758,8 +4758,8 @@ end CompanionConjointAdjunction
 /-! ## Uniqueness of Companions and Conjoints
 
 Given two companions (or conjoints) of the same vertical morphism, there is a
-canonical isomorphism between their horizontal morphisms. The isomorphism is
-constructed as a "globular 2-cell" - a square with identity vertical boundaries.
+canonical comparison square between their horizontal morphisms. This comparison
+is a "globular 2-cell" - a square with identity vertical boundaries.
 
 The comparison square between two companions cv and cv' is:
 ```
@@ -4774,6 +4774,17 @@ vId│   sqHComp cv'.φ cv.ψ   │vId
 
 After transporting along horizontal identity laws, this becomes a square from
 cv.hor to cv'.hor.
+
+The comparison squares in both directions (cv → cv' and cv' → cv) are defined
+below. To show these form an isomorphism, one would need to prove that their
+compositions equal the identity squares. In a general strict double category,
+this requires additional structure such as:
+- Conjoints (using the mate correspondence from the adjunction structure)
+- Connections (folding operations that enable globular 2-cell composition)
+- A universal property characterization of companions
+
+The triangle identity proofs in `CompanionConjointAdjunction` provide the
+machinery for the conjoint-based approach when coherence conditions are met.
 -/
 
 section CompanionConjointUniqueness
@@ -4797,6 +4808,13 @@ def Companion.toHom (cv cv' : Companion ops v) :
     · exact laws.horLaws.id_laws.id_comp cv.hor
     · exact laws.horLaws.id_laws.comp_id cv'.hor)
   (Companion.comparisonSquare ops v cv cv')
+
+/-- The inverse direction comparison square from cv' to cv.
+
+This is `toHom cv' cv` - the globular 2-cell in the opposite direction. -/
+def Companion.invHom (cv cv' : Companion ops v) :
+    sqs (ops.vId A) (ops.vId B) cv'.hor cv.hor :=
+  toHom ops laws v cv' cv
 
 end CompanionConjointUniqueness
 

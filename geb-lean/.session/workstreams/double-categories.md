@@ -80,12 +80,15 @@ None currently.
 - [x] Triangle identity proofs (rightTriangleComposite = sqVertId cv.hor, etc.)
       (require coherence hypotheses: sqVComp eta epsilon = sqHorId v and
        sqHComp phi psi = sqVertId cv.hor)
-- [x] Companion.comparisonSquare, Companion.toHom (comparison squares for
-      uniqueness, well-defined but isomorphism proof blocked)
-- [-] Uniqueness of companions/conjoints: Proof blocked because the crossed
-      composition (sqHComp cv'.phi cv.psi) ⬝ᵥ (sqHComp cv.phi cv'.psi) cannot
-      be directly related to sqVertId cv.hor using available interchange laws.
-      The hIdentity conditions give uncrossed compositions only.
+- [x] Companion.comparisonSquare, Companion.toHom, Companion.invHom
+      (comparison squares between companions - globular 2-cells)
+- [-] Uniqueness isomorphism: The comparison squares are well-defined, but
+      proving they compose to identities requires additional structure.
+      Analysis shows the interchange law cannot be directly applied because
+      inner boundaries don't match (cv'.hor ≠ hId A). Approaches to complete:
+      - Mate correspondence (requires formalizing mates via conjoints)
+      - Connections (folding operations for globular 2-cell composition)
+      - Universal property characterization of companions
 
 ### Transformation Composition Laws (Completed)
 
