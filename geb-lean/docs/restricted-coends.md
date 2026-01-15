@@ -43,8 +43,8 @@ the following diagram commutes in $\text{Set}$:
 $$
 \begin{CD}
 H(A, A) @>{\Phi_A}>> \mathcal{C}(G(A, A), C) \\
-@. @VV{\mathcal{C}(G(A, A), h)}V \\
-@. \mathcal{C}(G(A, A), D) @<<{\Psi_A} < \dots
+@| @VV{\mathcal{C}(G(A, A), h)}V \\
+H(A, A) @>{\Psi_A}>> \mathcal{C}(G(A, A), D)
 \end{CD}
 $$
 
