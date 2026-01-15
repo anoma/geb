@@ -2839,8 +2839,17 @@ structure Companion {Obj : Type u}
   phi : sqs (ops.vId A) v (ops.hId A) hor
   /-- The ψ binding square: sqs v (vId B) hor (hId B) -/
   psi : sqs v (ops.vId B) hor (ops.hId B)
-  /-- Companion identity: φ ⬝ᵥ ψ ≅ sqHorId v (HEq since boundaries differ) -/
-  identity : HEq (ops.sqVComp phi psi) (ops.sqHorId v)
+  /-- Vertical companion identity: φ ⬝ᵥ ψ ≅ sqHorId v (HEq since boundaries differ)
+
+  This is one of the two companion identities. The vertical composition of the
+  binding squares gives the horizontal identity on v. -/
+  vIdentity : HEq (ops.sqVComp phi psi) (ops.sqHorId v)
+  /-- Horizontal companion identity: φ ⬝ₕ ψ ≅ sqVertId hor (HEq since boundaries differ)
+
+  This is the second companion identity. The horizontal composition of the
+  binding squares gives the vertical identity on hor. Together with vIdentity,
+  this makes (hor, phi, psi) a proper companion pair. -/
+  hIdentity : HEq (ops.sqHComp phi psi) (ops.sqVertId hor)
 
 /-- A conjoint for a vertical morphism v : A →ᵥ B is a horizontal morphism
 v_* : B →ₕ A (opposite direction) together with binding squares.
@@ -2859,8 +2868,21 @@ structure Conjoint {Obj : Type u}
   epsilon : sqs (ops.vId B) v hor (ops.hId B)
   /-- The η binding square: sqs v (vId A) (hId A) hor -/
   eta : sqs v (ops.vId A) (ops.hId A) hor
-  /-- Conjoint identity: ε ⬝ₕ η ≅ sqVertId hor (HEq since boundaries differ) -/
-  identity : HEq (ops.sqHComp epsilon eta) (ops.sqVertId hor)
+  /-- Horizontal conjoint identity: ε ⬝ₕ η ≅ sqVertId hor (HEq since boundaries differ)
+
+  This is one of the two conjoint identities. The horizontal composition of the
+  binding squares gives the vertical identity on hor. -/
+  hIdentity : HEq (ops.sqHComp epsilon eta) (ops.sqVertId hor)
+  /-- Vertical conjoint identity: η ⬝ᵥ ε ≅ sqHorId v (HEq since boundaries differ)
+
+  This is the second conjoint identity. The vertical composition of eta then
+  epsilon gives the horizontal identity on v. Together with hIdentity, this
+  makes (hor, epsilon, eta) a proper conjoint pair.
+
+  Note: The order is eta then epsilon because for sqVComp, we need the bottom
+  of the first square to equal the top of the second. eta has bottom = hor
+  and epsilon has top = hor, so sqVComp eta epsilon type-checks. -/
+  vIdentity : HEq (ops.sqVComp eta epsilon) (ops.sqHorId v)
 
 /-- A double category has all companions if every vertical morphism has one. -/
 class HasCompanions {Obj : Type u}
@@ -2888,12 +2910,23 @@ def ofVId (A : Obj) (laws : DoubleCategoryLaws ops) : Companion ops (ops.vId A) 
   hor := ops.hId A
   phi := ops.sqVertId (ops.hId A)
   psi := ops.sqVertId (ops.hId A)
-  identity := by
+  vIdentity := by
     have step1 : HEq (ops.sqVComp (ops.sqVertId (ops.hId A)) (ops.sqVertId (ops.hId A)))
                      (ops.sqVertId (ops.hId A)) :=
       sqVIdComp_heq ops laws (ops.sqVertId (ops.hId A))
     have step2 : ops.sqHorId (ops.vId A) = ops.sqVertId (ops.hId A) := laws.sqLaws.idOnId A
     exact HEq.trans step1 (heq_of_eq step2.symm)
+  hIdentity := by
+    have step1 : ops.sqHComp (ops.sqVertId (ops.hId A)) (ops.sqVertId (ops.hId A)) =
+                 ops.sqVertId (ops.hComp (ops.hId A) (ops.hId A)) :=
+      laws.sqLaws.horIdHComp (ops.hId A) (ops.hId A)
+    have step2 : ops.hComp (ops.hId A) (ops.hId A) = ops.hId A :=
+      laws.horLaws.id_laws.id_comp (ops.hId A)
+    have step3 : HEq (ops.sqVertId (ops.hComp (ops.hId A) (ops.hId A)))
+                     (ops.sqVertId (ops.hId A)) :=
+      step2.symm.recOn (motive := fun h' _ =>
+        HEq (ops.sqVertId h') (ops.sqVertId (ops.hId A))) HEq.rfl
+    exact HEq.trans (heq_of_eq step1) step3
 
 section CompanionComp
 
@@ -2983,7 +3016,7 @@ theorem compIdentity :
   have h_left_id :
       HEq (ops.sqVComp (ops.sqVComp cv.phi cv.psi) (ops.sqHorId w))
           (ops.sqVComp (ops.sqHorId v) (ops.sqHorId w)) :=
-    sqVComp_heq_left ops (ops.sqHorId w) cv.identity
+    sqVComp_heq_left ops (ops.sqHorId w) cv.vIdentity
       (laws.vertLaws.id_laws.id_comp v)
       (laws.vertLaws.id_laws.comp_id v)
   have h_left_vertId :
@@ -3005,7 +3038,7 @@ theorem compIdentity :
   have h_right_id :
       HEq (ops.sqVComp (ops.sqHorId v) (ops.sqVComp cw.phi cw.psi))
           (ops.sqVComp (ops.sqHorId v) (ops.sqHorId w)) :=
-    sqVComp_heq_right ops (ops.sqHorId v) cw.identity
+    sqVComp_heq_right ops (ops.sqHorId v) cw.vIdentity
       (laws.vertLaws.id_laws.id_comp w)
       (laws.vertLaws.id_laws.comp_id w)
   have h_right_combined :
@@ -3036,6 +3069,181 @@ theorem compIdentity :
     HEq.trans h_hcomp_of_horIds h_horId_hcomp_self
   exact HEq.trans h_vcomp_heq (HEq.trans h_after_interch final_step)
 
+/-- The horizontal identity condition for the composite companion.
+
+This lemma proves: sqHComp (compPhi) (compPsi) ≅ sqVertId (hComp cv.hor cw.hor).
+
+The proof strategy:
+1. Peel off outer casts to get phiRaw and psiRaw
+2. Use interchange to show sqVComp cv.psi cw.phi ≅ sqHComp cv.psi cw.phi
+3. Rearrange using associativity to get sqHComp (sqHComp cv.phi cv.psi) (sqHComp cw.phi cw.psi)
+4. Apply cv.hIdentity and cw.hIdentity to get sqHComp (sqVertId cv.hor) (sqVertId cw.hor)
+5. Apply horIdHComp to get sqVertId (hComp cv.hor cw.hor) -/
+theorem compHIdentity :
+    HEq (ops.sqHComp (compPhi ops laws v w cv cw) (compPsi ops laws v w cv cw))
+        (ops.sqVertId (ops.hComp cv.hor cw.hor)) := by
+  let eqVL : ops.vComp v (ops.vId B) = v := laws.vertLaws.id_laws.comp_id v
+  let eqVR : ops.vComp (ops.vId B) w = w := laws.vertLaws.id_laws.id_comp w
+  let eqHL : ops.hComp (ops.hId A) (ops.hId A) = ops.hId A :=
+    laws.horLaws.id_laws.id_comp (ops.hId A)
+  let eqHR : ops.hComp (ops.hId C) (ops.hId C) = ops.hId C :=
+    laws.horLaws.id_laws.id_comp (ops.hId C)
+  let phiRaw := ops.sqHComp cv.phi (compPhiInner ops laws v w cw)
+  let psiRaw := ops.sqHComp (compPsiInner ops laws v w cv) cw.psi
+  have h_phi_heq : HEq (compPhi ops laws v w cv cw) phiRaw := by
+    simp only [compPhi]
+    exact eqRec_heq_self _ eqHL
+  have h_psi_heq : HEq (compPsi ops laws v w cv cw) psiRaw := by
+    simp only [compPsi]
+    exact eqRec_heq_self _ eqHR
+  have h_hcomp_heq :
+      HEq (ops.sqHComp (compPhi ops laws v w cv cw) (compPsi ops laws v w cv cw))
+          (ops.sqHComp phiRaw psiRaw) :=
+    sqHComp_heq_all ops h_phi_heq h_psi_heq
+      rfl rfl rfl eqHL.symm rfl rfl eqHR.symm
+  have h_phiInner_heq :
+      HEq (compPhiInner ops laws v w cw) (ops.sqVComp (ops.sqHorId v) cw.phi) := by
+    simp only [compPhiInner]
+    exact eqRec_heq_self _ eqVL
+  have h_psiInner_heq :
+      HEq (compPsiInner ops laws v w cv) (ops.sqVComp cv.psi (ops.sqHorId w)) := by
+    simp only [compPsiInner]
+    exact eqRec_heq_self _ eqVR
+  let X' := compPhiInner ops laws v w cw
+  let Y' := compPsiInner ops laws v w cv
+  let psiPhi := ops.sqVComp cv.psi cw.phi
+  let h_hIdB : ops.hComp (ops.hId B) (ops.hId B) = ops.hId B :=
+    laws.horLaws.id_laws.id_comp (ops.hId B)
+  have h_psiPhi_heq_hcomp : HEq psiPhi (ops.sqHComp cv.psi cw.phi) := by
+    let sqVertIdB := ops.sqVertId (ops.hId B)
+    let sqHorIdVIdB := ops.sqHorId (ops.vId B)
+    have h_idOnId : sqHorIdVIdB = sqVertIdB := laws.sqLaws.idOnId B
+    have interch := laws.sqLaws.interchange cv.psi sqVertIdB sqVertIdB cw.phi
+    have h_psi_vcomp_vId :
+        HEq (ops.sqVComp cv.psi sqVertIdB) cv.psi :=
+      sqVCompId_heq ops laws cv.psi
+    have h_vId_vcomp_phi :
+        HEq (ops.sqVComp sqVertIdB cw.phi) cw.phi :=
+      sqVIdComp_heq ops laws cw.phi
+    have h_psi_hcomp_hId_raw :
+        HEq (ops.sqHComp cv.psi sqHorIdVIdB) cv.psi :=
+      sqHCompId_heq ops laws cv.psi
+    have h_psi_hcomp_vId :
+        HEq (ops.sqHComp cv.psi sqVertIdB) cv.psi := by
+      rw [← h_idOnId]; exact h_psi_hcomp_hId_raw
+    have h_hId_hcomp_phi_raw :
+        HEq (ops.sqHComp sqHorIdVIdB cw.phi) cw.phi :=
+      sqHIdComp_heq ops laws cw.phi
+    have h_vId_hcomp_phi :
+        HEq (ops.sqHComp sqVertIdB cw.phi) cw.phi := by
+      rw [← h_idOnId]; exact h_hId_hcomp_phi_raw
+    have h_lhs : HEq (ops.sqVComp (ops.sqHComp cv.psi sqVertIdB)
+                                  (ops.sqHComp sqVertIdB cw.phi))
+                     psiPhi :=
+      sqVComp_heq_both ops h_psi_hcomp_vId h_vId_hcomp_phi
+        (laws.horLaws.id_laws.comp_id cv.hor) h_hIdB (laws.horLaws.id_laws.id_comp cw.hor)
+    have h_rhs : HEq (ops.sqHComp (ops.sqVComp cv.psi sqVertIdB)
+                                  (ops.sqVComp sqVertIdB cw.phi))
+                     (ops.sqHComp cv.psi cw.phi) :=
+      sqHComp_heq_both ops h_psi_vcomp_vId h_vId_vcomp_phi
+        (laws.vertLaws.id_laws.comp_id v)
+        (laws.vertLaws.id_laws.comp_id (ops.vId B))
+        (laws.vertLaws.id_laws.id_comp w)
+    exact HEq.trans h_lhs.symm (HEq.trans (heq_of_eq interch) h_rhs)
+  have h_X'Y'_heq : HEq (ops.sqHComp X' Y') psiPhi := by
+    have h_X_heq : HEq X' (ops.sqVComp (ops.sqHorId v) cw.phi) := h_phiInner_heq
+    have h_Y_heq : HEq Y' (ops.sqVComp cv.psi (ops.sqHorId w)) := h_psiInner_heq
+    have interch := laws.sqLaws.interchange (ops.sqHorId v) cv.psi cw.phi (ops.sqHorId w)
+    have h_horId_psi : HEq (ops.sqHComp (ops.sqHorId v) cv.psi) cv.psi :=
+      sqHIdComp_heq ops laws cv.psi
+    have h_phi_horId : HEq (ops.sqHComp cw.phi (ops.sqHorId w)) cw.phi :=
+      sqHCompId_heq ops laws cw.phi
+    have h_lhs_simp :
+        HEq (ops.sqVComp (ops.sqHComp (ops.sqHorId v) cv.psi)
+                         (ops.sqHComp cw.phi (ops.sqHorId w)))
+            psiPhi :=
+      sqVComp_heq_both ops h_horId_psi h_phi_horId
+        (laws.horLaws.id_laws.id_comp cv.hor)
+        h_hIdB
+        (laws.horLaws.id_laws.comp_id cw.hor)
+    have h_XY_hcomp : HEq (ops.sqHComp (ops.sqVComp (ops.sqHorId v) cw.phi)
+                                       (ops.sqVComp cv.psi (ops.sqHorId w)))
+                          psiPhi :=
+      HEq.trans (heq_of_eq interch.symm) h_lhs_simp
+    have step1 : HEq (ops.sqHComp X' Y')
+                     (ops.sqHComp (ops.sqVComp (ops.sqHorId v) cw.phi)
+                                  (ops.sqVComp cv.psi (ops.sqHorId w))) :=
+      sqHComp_heq_both ops h_X_heq h_Y_heq eqVL.symm rfl eqVR.symm
+    exact HEq.trans step1 h_XY_hcomp
+  have h_assoc_phiRaw :
+      HEq (ops.sqHComp phiRaw psiRaw)
+          (ops.sqHComp cv.phi (ops.sqHComp X' (ops.sqHComp Y' cw.psi))) := by
+    have s1 := sqHAssoc_heq ops laws cv.phi X' (ops.sqHComp Y' cw.psi)
+    have s2 : HEq (ops.sqHComp phiRaw (ops.sqHComp Y' cw.psi))
+                  (ops.sqHComp (ops.sqHComp cv.phi X') (ops.sqHComp Y' cw.psi)) := HEq.rfl
+    exact HEq.trans s2 s1
+  have h_assoc_inner :
+      HEq (ops.sqHComp X' (ops.sqHComp Y' cw.psi))
+          (ops.sqHComp (ops.sqHComp X' Y') cw.psi) :=
+    (sqHAssoc_heq ops laws X' Y' cw.psi).symm
+  have h_XY_to_psiPhi_hcomp :
+      HEq (ops.sqHComp (ops.sqHComp X' Y') cw.psi)
+          (ops.sqHComp (ops.sqHComp cv.psi cw.phi) cw.psi) :=
+    sqHComp_heq_left ops cw.psi (HEq.trans h_X'Y'_heq h_psiPhi_heq_hcomp)
+      ((laws.horLaws.id_laws.id_comp cv.hor).trans
+        (laws.horLaws.id_laws.comp_id cv.hor).symm)
+      ((laws.horLaws.id_laws.comp_id cw.hor).trans
+        (laws.horLaws.id_laws.id_comp cw.hor).symm)
+  have h_assoc_psi_phi_psi :
+      HEq (ops.sqHComp (ops.sqHComp cv.psi cw.phi) cw.psi)
+          (ops.sqHComp cv.psi (ops.sqHComp cw.phi cw.psi)) :=
+    sqHAssoc_heq ops laws cv.psi cw.phi cw.psi
+  have h_inner_full :
+      HEq (ops.sqHComp X' (ops.sqHComp Y' cw.psi))
+          (ops.sqHComp cv.psi (ops.sqHComp cw.phi cw.psi)) :=
+    HEq.trans (HEq.trans h_assoc_inner h_XY_to_psiPhi_hcomp) h_assoc_psi_phi_psi
+  have h_outer_assoc :
+      HEq (ops.sqHComp cv.phi (ops.sqHComp cv.psi (ops.sqHComp cw.phi cw.psi)))
+          (ops.sqHComp (ops.sqHComp cv.phi cv.psi) (ops.sqHComp cw.phi cw.psi)) :=
+    (sqHAssoc_heq ops laws cv.phi cv.psi (ops.sqHComp cw.phi cw.psi)).symm
+  have h_to_phi_psi_products :
+      HEq (ops.sqHComp phiRaw psiRaw)
+          (ops.sqHComp (ops.sqHComp cv.phi cv.psi) (ops.sqHComp cw.phi cw.psi)) := by
+    have s1 : HEq (ops.sqHComp phiRaw psiRaw)
+                  (ops.sqHComp cv.phi (ops.sqHComp X' (ops.sqHComp Y' cw.psi))) :=
+      h_assoc_phiRaw
+    have s2 : HEq (ops.sqHComp cv.phi (ops.sqHComp X' (ops.sqHComp Y' cw.psi)))
+                  (ops.sqHComp cv.phi (ops.sqHComp cv.psi (ops.sqHComp cw.phi cw.psi))) :=
+      sqHComp_heq_right ops cv.phi h_inner_full
+        ((laws.horLaws.id_laws.id_comp (ops.hComp cv.hor cw.hor)).trans
+          (congrArg (ops.hComp cv.hor) (laws.horLaws.id_laws.id_comp cw.hor)).symm)
+        ((congrArg (ops.hComp cw.hor) (laws.horLaws.id_laws.id_comp (ops.hId C))).trans
+          ((laws.horLaws.id_laws.comp_id cw.hor).trans
+            ((laws.horLaws.id_laws.id_comp cw.hor).symm.trans
+              (congrArg (ops.hComp (ops.hId B)) (laws.horLaws.id_laws.comp_id cw.hor).symm))))
+    exact HEq.trans (HEq.trans s1 s2) h_outer_assoc
+  have h_cv_identity :
+      HEq (ops.sqHComp (ops.sqHComp cv.phi cv.psi) (ops.sqHComp cw.phi cw.psi))
+          (ops.sqHComp (ops.sqVertId cv.hor) (ops.sqHComp cw.phi cw.psi)) :=
+    sqHComp_heq_left ops (ops.sqHComp cw.phi cw.psi) cv.hIdentity
+      (laws.horLaws.id_laws.id_comp cv.hor)
+      (laws.horLaws.id_laws.comp_id cv.hor)
+  have h_cw_identity :
+      HEq (ops.sqHComp (ops.sqVertId cv.hor) (ops.sqHComp cw.phi cw.psi))
+          (ops.sqHComp (ops.sqVertId cv.hor) (ops.sqVertId cw.hor)) :=
+    sqHComp_heq_right ops (ops.sqVertId cv.hor) cw.hIdentity
+      (laws.horLaws.id_laws.id_comp cw.hor)
+      (laws.horLaws.id_laws.comp_id cw.hor)
+  have h_horIdHComp :
+      ops.sqHComp (ops.sqVertId cv.hor) (ops.sqVertId cw.hor) =
+      ops.sqVertId (ops.hComp cv.hor cw.hor) :=
+    laws.sqLaws.horIdHComp cv.hor cw.hor
+  exact HEq.trans h_hcomp_heq
+    (HEq.trans h_to_phi_psi_products
+      (HEq.trans h_cv_identity
+        (HEq.trans h_cw_identity
+          (heq_of_eq h_horIdHComp))))
+
 end CompanionComp
 
 /-- The companion of a vertical composite is the horizontal composite of companions.
@@ -3053,7 +3261,8 @@ def comp {A B C : Obj} {v : vhs A B} {w : vhs B C}
   hor := ops.hComp cv.hor cw.hor
   phi := compPhi ops laws v w cv cw
   psi := compPsi ops laws v w cv cw
-  identity := compIdentity ops laws v w cv cw
+  vIdentity := compIdentity ops laws v w cv cw
+  hIdentity := compHIdentity ops laws v w cv cw
 
 end Companion
 
@@ -3069,7 +3278,7 @@ def ofVId (A : Obj) (laws : DoubleCategoryLaws ops) : Conjoint ops (ops.vId A) w
   hor := ops.hId A
   epsilon := ops.sqVertId (ops.hId A)
   eta := ops.sqVertId (ops.hId A)
-  identity := by
+  hIdentity := by
     have step1 : ops.sqHComp (ops.sqVertId (ops.hId A)) (ops.sqVertId (ops.hId A)) =
                  ops.sqVertId (ops.hComp (ops.hId A) (ops.hId A)) :=
       laws.sqLaws.horIdHComp (ops.hId A) (ops.hId A)
@@ -3080,6 +3289,12 @@ def ofVId (A : Obj) (laws : DoubleCategoryLaws ops) : Conjoint ops (ops.vId A) w
       step2.symm.recOn (motive := fun h' _ =>
         HEq (ops.sqVertId h') (ops.sqVertId (ops.hId A))) HEq.rfl
     exact HEq.trans (heq_of_eq step1) step3
+  vIdentity := by
+    have step1 : HEq (ops.sqVComp (ops.sqVertId (ops.hId A)) (ops.sqVertId (ops.hId A)))
+                     (ops.sqVertId (ops.hId A)) :=
+      sqVIdComp_heq ops laws (ops.sqVertId (ops.hId A))
+    have step2 : ops.sqHorId (ops.vId A) = ops.sqVertId (ops.hId A) := laws.sqLaws.idOnId A
+    exact HEq.trans step1 (heq_of_eq step2.symm)
 
 section ConjointComp
 
@@ -3256,7 +3471,7 @@ theorem compIdentity :
   have h_vcomp_heq_both :
       HEq (ops.sqVComp (ops.sqHComp cv.epsilon cv.eta) β)
           (ops.sqVComp (ops.sqVertId cv.hor) β') :=
-    sqVComp_heq_both ops cv.identity hβ_heq
+    sqVComp_heq_both ops cv.hIdentity hβ_heq
       (laws.horLaws.id_laws.comp_id cv.hor)
       eqMid
       rfl
@@ -3275,7 +3490,7 @@ theorem compIdentity :
   have h_cw_id_vertId :
       HEq (ops.sqHComp (ops.sqHComp cw.epsilon cw.eta) (ops.sqVertId cv.hor))
           (ops.sqHComp (ops.sqVertId cw.hor) (ops.sqVertId cv.hor)) :=
-    sqHComp_heq_left ops (ops.sqVertId cv.hor) cw.identity
+    sqHComp_heq_left ops (ops.sqVertId cv.hor) cw.hIdentity
       (laws.horLaws.id_laws.comp_id cw.hor)
       (laws.horLaws.id_laws.id_comp cw.hor)
   have h_horIdHComp :
@@ -3312,6 +3527,113 @@ theorem compIdentity :
       rfl rfl rfl rfl eqHT.symm eqHB.symm rfl
   exact HEq.trans h_comp_to_raw h_raw_to_target
 
+/-- The vertical identity condition for the composite conjoint.
+
+This lemma proves: sqVComp (compEta) (compEpsilon) ≅ sqHorId (vComp v w).
+
+The proof strategy:
+1. Peel off outer casts to get etaRaw and epsilonRaw
+2. Use interchange to rearrange the composition
+3. Apply cv.vIdentity and cw.vIdentity
+4. Apply vertIdVComp to get sqHorId (vComp v w) -/
+theorem compVIdentity :
+    HEq (ops.sqVComp (compEta ops laws v w cv cw) (compEpsilon ops laws v w cv cw))
+        (ops.sqHorId (ops.vComp v w)) := by
+  let eqVL : ops.vComp (ops.vId B) w = w := laws.vertLaws.id_laws.id_comp w
+  let eqVR : ops.vComp v (ops.vId B) = v := laws.vertLaws.id_laws.comp_id v
+  let eqHT : ops.hComp (ops.hId A) (ops.hId A) = ops.hId A :=
+    laws.horLaws.id_laws.id_comp (ops.hId A)
+  let eqHB : ops.hComp (ops.hId C) (ops.hId C) = ops.hId C :=
+    laws.horLaws.id_laws.id_comp (ops.hId C)
+  let etaRaw := ops.sqHComp (compEtaInner ops laws v w cw) cv.eta
+  let epsilonRaw := ops.sqHComp cw.epsilon (compEpsilonInner ops laws v w cv)
+  have h_eta_heq : HEq (compEta ops laws v w cv cw) etaRaw := by
+    simp only [compEta]
+    exact eqRec_heq_self _ eqHT
+  have h_epsilon_heq : HEq (compEpsilon ops laws v w cv cw) epsilonRaw := by
+    simp only [compEpsilon]
+    exact eqRec_heq_self _ eqHB
+  have h_vcomp_heq :
+      HEq (ops.sqVComp (compEta ops laws v w cv cw) (compEpsilon ops laws v w cv cw))
+          (ops.sqVComp etaRaw epsilonRaw) :=
+    sqVComp_heq_both ops h_eta_heq h_epsilon_heq eqHT.symm rfl eqHB.symm
+  have h_etaInner_heq :
+      HEq (compEtaInner ops laws v w cw) (ops.sqVComp (ops.sqHorId v) cw.eta) := by
+    simp only [compEtaInner]
+    exact eqRec_heq_self _ eqVR
+  have h_epsilonInner_heq :
+      HEq (compEpsilonInner ops laws v w cv)
+          (ops.sqVComp cv.epsilon (ops.sqHorId w)) := by
+    simp only [compEpsilonInner]
+    exact eqRec_heq_self _ eqVL
+  have interch := laws.sqLaws.interchange (compEtaInner ops laws v w cw) cv.eta
+                    cw.epsilon (compEpsilonInner ops laws v w cv)
+  have h_after_interch :
+      HEq (ops.sqVComp etaRaw epsilonRaw)
+          (ops.sqHComp (ops.sqVComp (compEtaInner ops laws v w cw) cw.epsilon)
+                       (ops.sqVComp cv.eta (compEpsilonInner ops laws v w cv))) :=
+    heq_of_eq interch
+  have h_left_assoc :
+      HEq (ops.sqVComp (ops.sqVComp (ops.sqHorId v) cw.eta) cw.epsilon)
+          (ops.sqVComp (ops.sqHorId v) (ops.sqVComp cw.eta cw.epsilon)) :=
+    sqVAssoc_heq ops laws (ops.sqHorId v) cw.eta cw.epsilon
+  have h_left_id :
+      HEq (ops.sqVComp (ops.sqHorId v) (ops.sqVComp cw.eta cw.epsilon))
+          (ops.sqVComp (ops.sqHorId v) (ops.sqHorId w)) :=
+    sqVComp_heq_right ops (ops.sqHorId v) cw.vIdentity
+      (laws.vertLaws.id_laws.comp_id w)
+      (laws.vertLaws.id_laws.id_comp w)
+  have h_vertIdVComp :
+      ops.sqVComp (ops.sqHorId v) (ops.sqHorId w) = ops.sqHorId (ops.vComp v w) :=
+    laws.sqLaws.vertIdVComp v w
+  have h_left_combined :
+      HEq (ops.sqVComp (ops.sqVComp (ops.sqHorId v) cw.eta) cw.epsilon)
+          (ops.sqHorId (ops.vComp v w)) :=
+    HEq.trans h_left_assoc (HEq.trans h_left_id (heq_of_eq h_vertIdVComp))
+  have h_left_with_cast :
+      HEq (ops.sqVComp (compEtaInner ops laws v w cw) cw.epsilon)
+          (ops.sqHorId (ops.vComp v w)) := by
+    apply HEq.trans _ h_left_combined
+    exact sqVComp_heq_left ops cw.epsilon h_etaInner_heq rfl eqVR.symm
+  have h_right_assoc :
+      HEq (ops.sqVComp cv.eta (ops.sqVComp cv.epsilon (ops.sqHorId w)))
+          (ops.sqVComp (ops.sqVComp cv.eta cv.epsilon) (ops.sqHorId w)) :=
+    (sqVAssoc_heq ops laws cv.eta cv.epsilon (ops.sqHorId w)).symm
+  have h_right_id :
+      HEq (ops.sqVComp (ops.sqVComp cv.eta cv.epsilon) (ops.sqHorId w))
+          (ops.sqVComp (ops.sqHorId v) (ops.sqHorId w)) :=
+    sqVComp_heq_left ops (ops.sqHorId w) cv.vIdentity
+      (laws.vertLaws.id_laws.comp_id v)
+      (laws.vertLaws.id_laws.id_comp v)
+  have h_right_combined :
+      HEq (ops.sqVComp cv.eta (ops.sqVComp cv.epsilon (ops.sqHorId w)))
+          (ops.sqHorId (ops.vComp v w)) :=
+    HEq.trans h_right_assoc (HEq.trans h_right_id (heq_of_eq h_vertIdVComp))
+  have h_right_with_cast :
+      HEq (ops.sqVComp cv.eta (compEpsilonInner ops laws v w cv))
+          (ops.sqHorId (ops.vComp v w)) := by
+    apply HEq.trans _ h_right_combined
+    exact sqVComp_heq_right ops cv.eta h_epsilonInner_heq eqVL.symm rfl
+  have h_hcomp_of_horIds :
+      HEq (ops.sqHComp (ops.sqVComp (compEtaInner ops laws v w cw) cw.epsilon)
+                       (ops.sqVComp cv.eta (compEpsilonInner ops laws v w cv)))
+          (ops.sqHComp (ops.sqHorId (ops.vComp v w))
+                       (ops.sqHorId (ops.vComp v w))) :=
+    sqHComp_heq_both ops h_left_with_cast h_right_with_cast
+      (laws.vertLaws.id_laws.comp_id _)
+      rfl
+      (laws.vertLaws.id_laws.id_comp _)
+  have h_horId_hcomp_self :
+      HEq (ops.sqHComp (ops.sqHorId (ops.vComp v w)) (ops.sqHorId (ops.vComp v w)))
+          (ops.sqHorId (ops.vComp v w)) :=
+    sqHIdComp_heq ops laws (ops.sqHorId (ops.vComp v w))
+  have final_step :
+      HEq (ops.sqHComp (ops.sqVComp (compEtaInner ops laws v w cw) cw.epsilon)
+                       (ops.sqVComp cv.eta (compEpsilonInner ops laws v w cv)))
+          (ops.sqHorId (ops.vComp v w)) :=
+    HEq.trans h_hcomp_of_horIds h_horId_hcomp_self
+  exact HEq.trans h_vcomp_heq (HEq.trans h_after_interch final_step)
+
 end ConjointComp
 
 /-- The conjoint of a vertical composite is the horizontal composite of conjoints
@@ -3330,7 +3652,8 @@ def comp {A B C : Obj} {v : vhs A B} {w : vhs B C}
   hor := ops.hComp cw.hor cv.hor
   epsilon := compEpsilon ops laws v w cv cw
   eta := compEta ops laws v w cv cw
-  identity := compIdentity ops laws v w cv cw
+  hIdentity := compIdentity ops laws v w cv cw
+  vIdentity := compVIdentity ops laws v w cv cw
 
 end Conjoint
 
@@ -3858,8 +4181,8 @@ theorem sqVComp_whiskers_eq_sqVertId
   let psi := cv.psi
   let eta := cj.eta
   let epsilon := cj.epsilon
-  have h_cv_identity : HEq (ops.sqVComp phi psi) (ops.sqHorId v) := cv.identity
-  have h_cj_identity : HEq (ops.sqHComp epsilon eta) (ops.sqVertId cj.hor) := cj.identity
+  have h_cv_identity : HEq (ops.sqVComp phi psi) (ops.sqHorId v) := cv.vIdentity
+  have h_cj_identity : HEq (ops.sqHComp epsilon eta) (ops.sqVertId cj.hor) := cj.hIdentity
   let unitRaw := ops.sqHComp (ops.sqHComp phi eta) (ops.sqVertId cv.hor)
   let counitRaw := ops.sqHComp (ops.sqVertId cv.hor) (ops.sqHComp epsilon psi)
   have h_phiEtaSqVertId_assoc :
@@ -4431,6 +4754,51 @@ theorem leftTriangleIdentity
   exact sqVComp_whiskers_eq_sqVertId_conj ops laws v cv cj h_hComp_eps_eta h_vComp_phi_psi
 
 end CompanionConjointAdjunction
+
+/-! ## Uniqueness of Companions and Conjoints
+
+Given two companions (or conjoints) of the same vertical morphism, there is a
+canonical isomorphism between their horizontal morphisms. The isomorphism is
+constructed as a "globular 2-cell" - a square with identity vertical boundaries.
+
+The comparison square between two companions cv and cv' is:
+```
+      hComp (hId A) cv.hor
+   A ─────────────────────→ B
+   |                        |
+vId│   sqHComp cv'.φ cv.ψ   │vId
+   ↓                        ↓
+   A ─────────────────────→ B
+      hComp cv'.hor (hId B)
+```
+
+After transporting along horizontal identity laws, this becomes a square from
+cv.hor to cv'.hor.
+-/
+
+section CompanionConjointUniqueness
+
+variable {Obj : Type u}
+  {vhs : VertHomSet Obj} {hhs : HorHomSet Obj} {sqs : SquareSet vhs hhs}
+  (ops : DoubleCategoryOps Obj vhs hhs sqs)
+  (laws : DoubleCategoryLaws ops)
+  {A B : Obj} (v : vhs A B)
+
+def Companion.comparisonSquare (cv cv' : Companion ops v) :
+    sqs (ops.vId A) (ops.vId B)
+        (ops.hComp (ops.hId A) cv.hor)
+        (ops.hComp cv'.hor (ops.hId B)) :=
+  ops.sqHComp cv'.phi cv.psi
+
+def Companion.toHom (cv cv' : Companion ops v) :
+    sqs (ops.vId A) (ops.vId B) cv.hor cv'.hor :=
+  cast (by
+    congr 1
+    · exact laws.horLaws.id_laws.id_comp cv.hor
+    · exact laws.horLaws.id_laws.comp_id cv'.hor)
+  (Companion.comparisonSquare ops v cv cv')
+
+end CompanionConjointUniqueness
 
 /-! ## Modifications between Transformations
 

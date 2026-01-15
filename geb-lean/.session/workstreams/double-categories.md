@@ -80,7 +80,12 @@ None currently.
 - [x] Triangle identity proofs (rightTriangleComposite = sqVertId cv.hor, etc.)
       (require coherence hypotheses: sqVComp eta epsilon = sqHorId v and
        sqHComp phi psi = sqVertId cv.hor)
-- [ ] Uniqueness of companions/conjoints
+- [x] Companion.comparisonSquare, Companion.toHom (comparison squares for
+      uniqueness, well-defined but isomorphism proof blocked)
+- [-] Uniqueness of companions/conjoints: Proof blocked because the crossed
+      composition (sqHComp cv'.phi cv.psi) ⬝ᵥ (sqHComp cv.phi cv'.psi) cannot
+      be directly related to sqVertId cv.hor using available interchange laws.
+      The hIdentity conditions give uncrossed compositions only.
 
 ### Transformation Composition Laws (Completed)
 
