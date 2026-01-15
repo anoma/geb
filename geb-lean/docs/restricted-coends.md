@@ -33,8 +33,53 @@ H(B, B) @>{\Phi_B}>> \mathcal{C}(G(B, B), C)
 \end{CD}
 $$
 
-The category of all such $H$-restricted $G$-cowedges is denoted as
-**$\text{Cow}_G^H$**.
+**Restricted Cowedge Homomorphism:**
+
+An **$H$-restricted $G$-cowedge homomorphism** between two $H$-restricted
+$G$-cowedges $(C, \Phi)$ and $(D, \Psi)$ is an arrow $h : C \to D$ of
+$\mathcal{C}$ with the property that, for any object $A$ of $\mathcal{C}$,
+the following diagram commutes in $\text{Set}$:
+
+$$
+\begin{CD}
+H(A, A) @>{\Phi_A}>> \mathcal{C}(G(A, A), C) \\
+@. @VV{\mathcal{C}(G(A, A), h)}V \\
+@. \mathcal{C}(G(A, A), D) @<<{\Psi_A} < \dots
+\end{CD}
+$$
+
+In the above diagram, the vertical arrow $\mathcal{C}(G(A, A), h)$ represents
+**post-composition** by $h$ (mapping $f \mapsto h \circ f$).
+
+**Equivalent Pointwise Condition:**
+The condition for the homomorphism can be expressed more simply in terms of
+the elements of the sets involved. An arrow $h$ is a homomorphism if, for
+any object $A$ of $\mathcal{C}$ and any element $a \in H(A, A)$, the
+following holds in $\mathcal{C}$:
+
+**$$h \circ \Phi_A(a) = \Psi_A(a)$$**
+
+This equality is represented by the following commuting diagram in the base
+category $\mathcal{C}$:
+
+$$
+\begin{CD}
+G(A, A) @>{\Phi_A(a)}>> C \\
+@V{\Psi_A(a)}VV @VV{h}V \\
+D @= D
+\end{CD}
+$$
+
+**Formation of a Category:**
+
+With these definitions established, the collection of $H$-restricted
+$G$-cowedges and the homomorphisms between them form the category
+**$\text{Cow}_G^H$**:
+
+* **Identities:** The identity morphism for an object $(C, \Phi)$ is the
+  identity arrow $\text{id}_C$ of the base category.
+* **Composition:** Composition of homomorphisms is inherited from the
+  composition of arrows in the base category $\mathcal{C}$.
 
 ---
 
