@@ -842,12 +842,12 @@ namespace IsRestrictedCoend
 variable {G : Cᵒᵖ ⥤ C ⥤ C} {H : Cᵒᵖ ⥤ C ⥤ Type w} {c : RestrictedCowedge G H}
 
 /-- The universal morphism from a restricted coend to any restricted cowedge. -/
-noncomputable def desc (hc : IsRestrictedCoend G H c)
+def desc (hc : IsRestrictedCoend G H c)
     (d : RestrictedCowedge G H) : c ⟶ d :=
   hc.to d
 
 /-- The underlying morphism in `C` from a restricted coend to any cowedge. -/
-noncomputable def descHom (hc : IsRestrictedCoend G H c)
+def descHom (hc : IsRestrictedCoend G H c)
     (d : RestrictedCowedge G H) : c.pt ⟶ d.pt :=
   (hc.desc d).hom
 
@@ -857,29 +857,40 @@ theorem homExt (hc : IsRestrictedCoend G H c)
   Limits.IsInitial.hom_ext hc f g
 
 /-- Two restricted coends are isomorphic (uniqueness up to isomorphism). -/
-noncomputable def toUniqueUpToIso {c c' : RestrictedCowedge G H}
+def toUniqueUpToIso {c c' : RestrictedCowedge G H}
     (hc : IsRestrictedCoend G H c) (hc' : IsRestrictedCoend G H c') :
     c ≅ c' :=
   Limits.IsInitial.uniqueUpToIso hc hc'
 
 end IsRestrictedCoend
 
-/-- A restricted coend exists if there is an initial restricted cowedge. -/
-class HasRestrictedCoend (G : Cᵒᵖ ⥤ C ⥤ C) (H : Cᵒᵖ ⥤ C ⥤ Type w) : Prop where
-  exists_initial : ∃ c : RestrictedCowedge G H, Nonempty (IsRestrictedCoend G H c)
+/-- A restricted coend cone bundles a cowedge with the proof it is initial.
+This is the data-carrying version, analogous to mathlib's `LimitCone`. -/
+structure RestrictedCoendCone (G : Cᵒᵖ ⥤ C ⥤ C) (H : Cᵒᵖ ⥤ C ⥤ Type w) where
+  /-- The underlying restricted cowedge. -/
+  cowedge : RestrictedCowedge G H
+  /-- The proof that the cowedge is initial. -/
+  isInitial : IsRestrictedCoend G H cowedge
+
+/-- A restricted coend exists if there is an initial restricted cowedge.
+This class carries the data directly (rather than asserting existence as a Prop)
+to support constructive extraction of the coend. -/
+class HasRestrictedCoend (G : Cᵒᵖ ⥤ C ⥤ C) (H : Cᵒᵖ ⥤ C ⥤ Type w) where
+  /-- The cone containing the coend and proof of initiality. -/
+  cone : RestrictedCoendCone G H
 
 namespace HasRestrictedCoend
 
 variable (G : Cᵒᵖ ⥤ C ⥤ C) (H : Cᵒᵖ ⥤ C ⥤ Type w) [HasRestrictedCoend G H]
 
 /-- The restricted coend object (carrier of the initial restricted cowedge). -/
-noncomputable def restrictedCoend : RestrictedCowedge G H :=
-  Classical.choose HasRestrictedCoend.exists_initial
+def restrictedCoend : RestrictedCowedge G H :=
+  HasRestrictedCoend.cone.cowedge
 
 /-- The restricted coend is initial. -/
-noncomputable def restrictedCoendIsInitial :
+def restrictedCoendIsInitial :
     IsRestrictedCoend G H (restrictedCoend G H) :=
-  Classical.choice (Classical.choose_spec HasRestrictedCoend.exists_initial)
+  HasRestrictedCoend.cone.isInitial
 
 end HasRestrictedCoend
 
