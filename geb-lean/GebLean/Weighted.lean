@@ -646,6 +646,110 @@ theorem cowedgeToCocone_coconeToCowedge (P : Cᵒᵖ ⥤ C ⥤ D) (w : Cowedge P
       erw [P.map_id, NatTrans.id_app, Category.id_comp]
       exact (Multicofork.π_eq_app_right ⟨pt, ι⟩ b).symm
 
+/--
+The functor from cowedges to cocones over the co-twisted arrow diagram.
+
+Objects are mapped via `cowedgeToCocone`.
+Morphisms are mapped by taking the underlying morphism on cocone points.
+-/
+def cowedgeToCoconeFunctor (P : Cᵒᵖ ⥤ C ⥤ D) :
+    Cowedge P ⥤ Cocone (profunctorOnCoTwistedArrow C P) where
+  obj := cowedgeToCocone P
+  map {w₁ w₂} f := {
+    hom := f.hom
+    w := fun tw => by
+      simp only [cowedgeToCocone, cowedgeToCoconeιApp, Category.assoc,
+        Multicofork.π_comp_hom]
+  }
+  map_id _ := rfl
+  map_comp _ _ := rfl
+
+/--
+The functor from cocones over the co-twisted arrow diagram to cowedges.
+
+Objects are mapped via `coconeToCowedge`.
+Morphisms are mapped by taking the underlying morphism on cocone points.
+-/
+def coconeToCowedgeFunctor (P : Cᵒᵖ ⥤ C ⥤ D) :
+    Cocone (profunctorOnCoTwistedArrow C P) ⥤ Cowedge P where
+  obj := coconeToCowedge P
+  map {c₁ c₂} f := {
+    hom := f.hom
+    w := fun tw => by
+      cases tw with
+      | left arr =>
+        simp only [coconeToCowedge, Multicofork.ofπ_ι_app, coconeToCoWedgeComponents]
+        let leftObj : C := arr.left
+        have hw := f.w (coTwObjMk (𝟙 leftObj))
+        simp only [multispanShapeCoend_fst]
+        rw [Category.assoc, hw]
+      | right j =>
+        simp only [coconeToCowedge, Multicofork.ofπ_ι_app, coconeToCoWedgeComponents]
+        let jC : C := j
+        exact f.w (coTwObjMk (𝟙 jC))
+  }
+  map_id _ := rfl
+  map_comp _ _ := rfl
+
+/--
+For cocones, the `.hom` field of `eqToHom h` is `eqToHom` applied to the cocone
+point equality.
+-/
+@[simp]
+theorem Cocone.eqToHom_hom {J' : Type*} [Category J'] {E' : Type*} [Category E']
+    {F : J' ⥤ E'} {c c' : Cocone F} (h : c = c') :
+    (eqToHom h).hom = eqToHom (congrArg Cocone.pt h) := by
+  subst h
+  rfl
+
+/--
+The composition `coconeToCowedgeFunctor ⋙ cowedgeToCoconeFunctor` is naturally
+isomorphic to the identity functor on cocones.
+-/
+def cowedgeCoconeUnitIso (P : Cᵒᵖ ⥤ C ⥤ D) :
+    𝟭 (Cocone (profunctorOnCoTwistedArrow C P)) ≅
+    coconeToCowedgeFunctor P ⋙ cowedgeToCoconeFunctor P :=
+  NatIso.ofComponents
+    (fun c => eqToIso (coconeToCowedge_cowedgeToCocone P c).symm)
+    (fun {c₁ c₂} f => by
+      apply CoconeMorphism.ext
+      simp only [Functor.id_map, Functor.comp_map, eqToIso.hom,
+        Cocone.category_comp_hom, coconeToCowedgeFunctor, cowedgeToCoconeFunctor,
+        Cocone.eqToHom_hom, eqToHom_refl, Category.comp_id, Category.id_comp])
+
+/--
+The composition `cowedgeToCoconeFunctor ⋙ coconeToCowedgeFunctor` is naturally
+isomorphic to the identity functor on cowedges.
+-/
+def cowedgeCoconeCounitIso (P : Cᵒᵖ ⥤ C ⥤ D) :
+    cowedgeToCoconeFunctor P ⋙ coconeToCowedgeFunctor P ≅ 𝟭 (Cowedge P) :=
+  NatIso.ofComponents
+    (fun w => eqToIso (cowedgeToCocone_coconeToCowedge P w))
+    (fun {w₁ w₂} f => by
+      apply CoconeMorphism.ext
+      simp only [Functor.comp_map, Functor.id_map, eqToIso.hom,
+        cowedgeToCoconeFunctor, coconeToCowedgeFunctor, Cocone.category_comp_hom,
+        Cocone.eqToHom_hom, eqToHom_refl, Category.comp_id, Category.id_comp])
+
+/--
+The category of cowedges over `P` is equivalent to the category of cocones over
+`profunctorOnCoTwistedArrow C P`.
+-/
+def cowedgeCoconeEquiv (P : Cᵒᵖ ⥤ C ⥤ D) :
+    Cowedge P ≌ Cocone (profunctorOnCoTwistedArrow C P) where
+  functor := cowedgeToCoconeFunctor P
+  inverse := coconeToCowedgeFunctor P
+  unitIso := (cowedgeCoconeCounitIso P).symm
+  counitIso := (cowedgeCoconeUnitIso P).symm
+  functor_unitIso_comp w := by
+    apply CoconeMorphism.ext
+    simp only [Iso.symm_hom, Functor.comp_obj, Functor.id_obj,
+      cowedgeCoconeCounitIso, cowedgeCoconeUnitIso,
+      NatIso.ofComponents, eqToIso.hom, eqToIso.inv, cowedgeToCoconeFunctor,
+      coconeToCowedgeFunctor, Cocone.category_comp_hom, Cocone.category_id_hom,
+      Cocone.eqToHom_hom, eqToHom_refl]
+    exact Category.id_comp _
+
 end CowedgeCoconeCorrespondence
 
 section WeightedLimitColimit
