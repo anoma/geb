@@ -1,4 +1,5 @@
 import Mathlib.CategoryTheory.Category.Basic
+import Mathlib.CategoryTheory.Functor.FullyFaithful
 import Mathlib.CategoryTheory.Limits.Cones
 import Mathlib.CategoryTheory.Limits.Shapes.End
 import GebLean.Paranatural
@@ -1168,14 +1169,28 @@ instance RestrictedCowedgeCat (G : Cᵒᵖ ⥤ C ⥤ C) (H : Cᵒᵖ ⥤ C ⥤ T
   comp_id f := by ext; simp [RestrictedCowedge.Hom.comp, RestrictedCowedge.Hom.id]
   assoc f g h := by ext; simp [RestrictedCowedge.Hom.comp]
 
-/-- The forgetful functor from strong restricted cowedges to restricted cowedges. -/
-def StrongRestrictedCowedge.forgetToRestricted (G : Cᵒᵖ ⥤ C ⥤ C)
+/-- The inclusion functor from strong restricted cowedges to restricted cowedges.
+This embeds the category of cowedges with paranaturality into the category of
+cowedges with dinaturality. Since paranaturality implies dinaturality, every
+strong restricted cowedge is a restricted cowedge, and morphisms are defined
+identically in both categories (arrows commuting with the family). -/
+def StrongRestrictedCowedge.inclusion (G : Cᵒᵖ ⥤ C ⥤ C)
     (H : Cᵒᵖ ⥤ C ⥤ Type v) :
     StrongRestrictedCowedge G H ⥤ RestrictedCowedge G H where
   obj c := c.toRestrictedCowedge
   map f := ⟨f.hom, f.comm⟩
   map_id _ := rfl
   map_comp _ _ := rfl
+
+/-- The inclusion functor is fully faithful, making strong restricted cowedges
+a full subcategory of restricted cowedges. This holds because morphisms in both
+categories are defined identically: arrows in `C` that commute with the family
+of structure morphisms. -/
+def StrongRestrictedCowedge.inclusion_fullyFaithful (G : Cᵒᵖ ⥤ C ⥤ C)
+    (H : Cᵒᵖ ⥤ C ⥤ Type v) :
+    (StrongRestrictedCowedge.inclusion G H).FullyFaithful :=
+  Functor.FullyFaithful.mk
+    (fun {c d} f => ⟨f.hom, f.comm⟩)
 
 end RestrictedCowedges
 

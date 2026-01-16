@@ -212,8 +212,10 @@ associativity laws.
 - `StrongRestrictedCowedge.Hom`: Morphisms between strong restricted cowedges
 - `StrongRestrictedCowedge.Hom.id`, `Hom.comp`: Identity and composition
 - `StrongRestrictedCowedgeCat`: Category instance for strong restricted cowedges
-- `forgetToRestricted`: Forgetful functor from strong restricted cowedges
-  to restricted cowedges
+- `inclusion`: Inclusion functor from strong restricted cowedges to
+  restricted cowedges
+- `inclusion_fullyFaithful`: Proof that the inclusion is fully faithful,
+  making strong restricted cowedges a full subcategory
 
 ### 7. Compare with Paranaturality Version
 
@@ -307,10 +309,11 @@ Keep all three definitions in the codebase:
 2. `StrongRestrictedCowedge`: For applications requiring paranaturality
 3. `WeightedCowedge`: For general weighted colimit theory
 
-The forgetful functors `StrongRestrictedCowedge → RestrictedCowedge` capture
-the relationship between the definitions. The relationship between
-`WeightedCowedge` and the restricted variants would require additional
-work (diagonal restriction and Kan extension) to formalize.
+The fully faithful inclusion functor `StrongRestrictedCowedge → RestrictedCowedge`
+establishes that strong restricted cowedges form a full subcategory of restricted
+cowedges. The relationship between `WeightedCowedge` and the restricted variants
+would require additional work (diagonal restriction and Kan extension) to
+formalize.
 
 ## References
 
@@ -327,7 +330,8 @@ work (diagonal restriction and Kan extension) to formalize.
     `RestrictedCowedgeCat` (~line 905)
   - Strong restricted cowedges: `StrongRestrictedCowedge` (~line 966),
     `StrongRestrictedCowedgeCat` (~line 1032)
-  - Forgetful functor: `forgetToRestricted` (~line 1058)
+  - Inclusion functor: `inclusion` (~line 1177),
+    `inclusion_fullyFaithful` (~line 1189)
   - Wedge/cone equivalences: `coneToWedge` (~line 247), `wedgeToCone` (~line 328)
 
 - `GebLean/Utilities/TwistedArrow.lean`: Twisted arrow infrastructure
