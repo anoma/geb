@@ -679,6 +679,119 @@ instance slice2Hom_subsingleton (α β : Paranat F G) : Subsingleton (Slice2Hom 
 
 end Paranat2
 
+section Dinaturality
+
+/-!
+## Dinaturality
+
+Dinaturality is a weaker condition than paranaturality. A family of functions
+`α : (I : C) → F(I,I) → G(I,I)` between two endoprofunctors is dinatural if
+for any morphism `f : I₀ ⟶ I₁` and any element `x : F(I₁, I₀)` (an off-diagonal
+element), the following hexagon commutes:
+
+```
+F(I₁, I₀) --F.rmap f--> F(I₁, I₁) --α I₁--> G(I₁, I₁) --G.lmap f--> G(I₀, I₁)
+    |                                                                     |
+    |                      (dinaturality)                                 |
+    |                                                                     |
+F(I₁, I₀) --F.lmap f--> F(I₀, I₀) --α I₀--> G(I₀, I₀) --G.rmap f--> G(I₀, I₁)
+```
+
+The covariant and contravariant actions on a profunctor `F : Cᵒᵖ ⥤ C ⥤ Type w`
+are:
+- `rmap f` (covariant, right action): `(F.obj (op I)).map f`
+- `lmap f` (contravariant, left action): `(F.map f.op).app J`
+
+Paranaturality implies dinaturality via the profunctor naturality square.
+-/
+
+universe w'
+
+variable {C : Type u} [Category.{v} C]
+variable (F G : Cᵒᵖ ⥤ C ⥤ Type w')
+variable {I I₀ I₁ J : C}
+
+/-- Covariant (right) action of a morphism on a profunctor.
+For `f : I₀ ⟶ I₁` and `x : F(I, I₀)`, gives `F.rmap f x : F(I, I₁)`. -/
+abbrev Profunctor.rmap (f : I₀ ⟶ I₁) (x : (F.obj (Opposite.op I)).obj I₀) :
+    (F.obj (Opposite.op I)).obj I₁ :=
+  (F.obj (Opposite.op I)).map f x
+
+/-- Contravariant (left) action of a morphism on a profunctor.
+For `f : I₀ ⟶ I₁` and `x : F(I₁, J)`, gives `F.lmap f x : F(I₀, J)`. -/
+abbrev Profunctor.lmap (f : I₀ ⟶ I₁) (x : (F.obj (Opposite.op I₁)).obj J) :
+    (F.obj (Opposite.op I₀)).obj J :=
+  (F.map f.op).app J x
+
+/-- The dinaturality condition for a family of functions between diagonal
+elements of two endoprofunctors. A family `α` is dinatural if for any morphism
+`f : I₀ ⟶ I₁` and any off-diagonal element `x : F(I₁, I₀)`, the two paths
+through the dinaturality hexagon agree. -/
+def IsDinatural (α : ParanatSig F G) : Prop :=
+  ∀ (I₀ I₁ : C) (f : I₀ ⟶ I₁) (x : (F.obj (Opposite.op I₁)).obj I₀),
+    Profunctor.lmap G f (α I₁ (Profunctor.rmap F f x)) =
+    Profunctor.rmap G f (α I₀ (Profunctor.lmap F f x))
+
+/-- The profunctor naturality square: lmap and rmap commute.
+For `f : I₀ ⟶ I₁` and `x : F(I₁, I₀)`:
+  `F.lmap f (F.rmap f x) = F.rmap f (F.lmap f x)`
+This is a direct consequence of the naturality of `F.map f.op`. -/
+theorem Profunctor.lmap_rmap_comm {I₀ I₁ : C} (f : I₀ ⟶ I₁)
+    (x : (F.obj (Opposite.op I₁)).obj I₀) :
+    Profunctor.lmap F f (Profunctor.rmap F f x) =
+    Profunctor.rmap F f (Profunctor.lmap F f x) := by
+  unfold Profunctor.lmap Profunctor.rmap
+  have nat := congrFun ((F.map f.op).naturality f) x
+  simp only [types_comp_apply] at nat
+  exact nat
+
+/-- DiagCompat expressed using lmap and rmap: two diagonal elements are
+compatible via `f` iff `F.rmap f d₀ = F.lmap f d₁`. -/
+theorem diagCompat_iff_rmap_eq_lmap {I₀ I₁ : C} (f : I₀ ⟶ I₁)
+    (d₀ : diagApp F I₀) (d₁ : diagApp F I₁) :
+    DiagCompat F I₀ I₁ f d₀ d₁ ↔
+    Profunctor.rmap F f d₀ = Profunctor.lmap F f d₁ := by
+  unfold DiagCompat Profunctor.rmap Profunctor.lmap
+  constructor <;> exact id
+
+/-- For any morphism `f : I₀ ⟶ I₁` and off-diagonal element `x : F(I₁, I₀)`,
+the diagonal elements `F.lmap f x` and `F.rmap f x` are compatible via `f`.
+This is the naturality of the profunctor. -/
+theorem lmap_rmap_diagCompat {I₀ I₁ : C} (f : I₀ ⟶ I₁)
+    (x : (F.obj (Opposite.op I₁)).obj I₀) :
+    DiagCompat F I₀ I₁ f (Profunctor.lmap F f x) (Profunctor.rmap F f x) := by
+  rw [diagCompat_iff_rmap_eq_lmap]
+  exact (Profunctor.lmap_rmap_comm F f x).symm
+
+/-- Every paranatural transformation is dinatural.
+Given a paranatural `α` and `f : I₀ ⟶ I₁` with `x : F(I₁, I₀)`:
+1. Define `d₀ := F.lmap f x` and `d₁ := F.rmap f x`
+2. By profunctor naturality, `DiagCompat F I₀ I₁ f d₀ d₁`
+3. By paranaturality, `DiagCompat G I₀ I₁ f (α I₀ d₀) (α I₁ d₁)`
+4. This is exactly the dinaturality condition. -/
+theorem paranatural_implies_dinatural (α : ParanatSig F G)
+    (hα : IsParanatural F G α) : IsDinatural F G α := by
+  intro I₀ I₁ f x
+  have compat := lmap_rmap_diagCompat F f x
+  have para := hα I₀ I₁ f _ _ compat
+  rw [diagCompat_iff_rmap_eq_lmap] at para
+  exact para.symm
+
+/-- A dinatural transformation between two endoprofunctors. -/
+@[ext]
+structure Dinat where
+  /-- The component of the dinatural transformation at object `I` -/
+  app : ParanatSig F G
+  /-- The dinaturality condition -/
+  dinatural : IsDinatural F G app
+
+/-- Every paranatural transformation gives rise to a dinatural transformation. -/
+def Paranat.toDinat (α : Paranat F G) : Dinat F G where
+  app := α.app
+  dinatural := paranatural_implies_dinatural F G α.app α.paranatural
+
+end Dinaturality
+
 section StructuralEndsCoends
 
 /-!
