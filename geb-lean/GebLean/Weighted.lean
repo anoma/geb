@@ -678,6 +678,22 @@ structure RestrictedCowedge (G : Cᵒᵖ ⥤ C ⥤ C) (H : Cᵒᵖ ⥤ C ⥤ Typ
   /-- The dinaturality condition on the family. -/
   isDinatural : IsDinatural H (G ⇓ pt) family
 
+/-- Convert a restricted cowedge to a `Dinat` transformation `H → G ⇓ pt`. -/
+def RestrictedCowedge.toDinat {G : Cᵒᵖ ⥤ C ⥤ C} {H : Cᵒᵖ ⥤ C ⥤ Type v}
+    (c : RestrictedCowedge G H) : Dinat H (G ⇓ c.pt) where
+  app := c.family
+  dinatural := c.isDinatural
+
+/-- Construct a restricted cowedge from a carrier object and a `Dinat` transformation.
+
+Given `pt : C` and a dinatural transformation `α : H → G ⇓ pt`, we obtain a
+restricted cowedge with the same carrier and family. -/
+def RestrictedCowedge.ofDinat {G : Cᵒᵖ ⥤ C ⥤ C} {H : Cᵒᵖ ⥤ C ⥤ Type v}
+    (pt : C) (α : Dinat H (G ⇓ pt)) : RestrictedCowedge G H where
+  pt := pt
+  family := α.app
+  isDinatural := α.dinatural
+
 namespace RestrictedCowedge
 
 variable {G : Cᵒᵖ ⥤ C ⥤ C} {H : Cᵒᵖ ⥤ C ⥤ Type v}
@@ -815,58 +831,6 @@ theorem sliceProfunctor_diagCompat_iff {G : Cᵒᵖ ⥤ C ⥤ C} (c : C)
     exact this
   · intro h
     exact h
-
-/-!
-### Vene's dinaturality equals `IsDinatural` for the slice profunctor
-
-The restricted cowedge dinaturality condition from Vene's thesis is exactly
-the `IsDinatural` condition for the family viewed as `ParanatSig H (G ⇓ pt)`.
-
-For `f : I₀ → I₁` and `x : H(I₁, I₀)`:
-- Vene's condition compares two morphisms `G(I₁, I₀) → pt`
-- `IsDinatural` for `G ⇓ pt` also compares two morphisms `G(I₁, I₀) → pt`
-
-The slice profunctor `G ⇓ pt` has `(G ⇓ pt)(I, J) = Hom(G(J, I), pt)` (note the
-index swap), and its profunctor actions are:
-- `(G ⇓ pt).rmap f` = precomposition by `G.lmap f`
-- `(G ⇓ pt).lmap f` = precomposition by `G.rmap f`
-
-This swap makes the `IsDinatural` condition match Vene's formulation exactly.
--/
-
-/-- The family of a restricted cowedge satisfies `IsDinatural H (G ⇓ pt)`.
-
-This shows that Vene's dinaturality condition is exactly the standard dinaturality
-condition for the family viewed as a transformation `H → G ⇓ pt` to the slice
-profunctor. -/
-theorem RestrictedCowedge.family_isDinatural {G : Cᵒᵖ ⥤ C ⥤ C} {H : Cᵒᵖ ⥤ C ⥤ Type v}
-    (c : RestrictedCowedge G H) : IsDinatural H (G ⇓ c.pt) c.family := by
-  intro I₀ I₁ f x
-  -- Expand IsDinatural: we need to show
-  -- (G ⇓ c.pt).lmap f (c.family I₁ (H.rmap f x)) =
-  -- (G ⇓ c.pt).rmap f (c.family I₀ (H.lmap f x))
-  -- which unfolds to:
-  -- (G.obj (op I₁)).map f ≫ c.family I₁ ((H.obj (op I₁)).map f x) =
-  -- (G.map f.op).app I₀ ≫ c.family I₀ ((H.map f.op).app I₀ x)
-  simp only [Profunctor.lmap, Profunctor.rmap, sliceProfunctor]
-  -- This is Vene's dinaturality with sides swapped
-  exact (c.dinaturality' f x).symm
-
-/-- Convert a restricted cowedge to a `Dinat` transformation `H → G ⇓ pt`. -/
-def RestrictedCowedge.toDinat {G : Cᵒᵖ ⥤ C ⥤ C} {H : Cᵒᵖ ⥤ C ⥤ Type v}
-    (c : RestrictedCowedge G H) : Dinat H (G ⇓ c.pt) where
-  app := c.family
-  dinatural := c.family_isDinatural
-
-/-- Construct a restricted cowedge from a carrier object and a `Dinat` transformation.
-
-Given `pt : C` and a dinatural transformation `α : H → G ⇓ pt`, we obtain a
-restricted cowedge with the same carrier and family. -/
-def RestrictedCowedge.ofDinat {G : Cᵒᵖ ⥤ C ⥤ C} {H : Cᵒᵖ ⥤ C ⥤ Type v}
-    (pt : C) (α : Dinat H (G ⇓ pt)) : RestrictedCowedge G H where
-  pt := pt
-  family := α.app
-  isDinatural := α.dinatural
 
 /-- Dinaturality of a restricted cowedge implies DiagCompat for the image under
 the family map, for pairs that factor through off-diagonal elements.
