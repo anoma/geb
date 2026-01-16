@@ -548,6 +548,119 @@ The relationship to twisted arrow categories:
 - For ends, this category of elements is the twisted arrow category
 -/
 
+variable {J : Type*} [Category J]
+
+/--
+The functor `Hom(X, D(-)) : J ⥤ Type v` for a fixed object `X : C` and
+diagram `D : J ⥤ C`. This is the composition `D ⋙ coyoneda.obj (op X)`.
+-/
+abbrev homFromFunctor (X : C) (D : J ⥤ C) : J ⥤ Type v :=
+  D ⋙ coyoneda.obj (Opposite.op X)
+
+/--
+The functor `Hom(D(-), X) : Jᵒᵖ ⥤ Type v` for a fixed object `X : C` and
+diagram `D : J ⥤ C`. This sends `j` to `Hom(D.obj j, X)` and acts
+contravariantly via precomposition.
+-/
+def homToFunctor (D : J ⥤ C) (X : C) : Jᵒᵖ ⥤ Type v where
+  obj j := D.obj j.unop ⟶ X
+  map f g := D.map f.unop ≫ g
+  map_id _ := by
+    funext g
+    simp only [unop_id, Functor.map_id, Category.id_comp, types_id_apply]
+  map_comp f g := by
+    funext h
+    simp only [unop_comp, Functor.map_comp, Category.assoc, types_comp_apply]
+
+/--
+A weighted cone over a diagram `D : J ⥤ C` with weight `W : J ⥤ Type v`
+consists of a cone point `pt` and a natural transformation from `W` to the
+functor `Hom(pt, D(-))`.
+-/
+structure WeightedCone (W : J ⥤ Type v) (D : J ⥤ C) where
+  /-- The cone point -/
+  pt : C
+  /-- The natural transformation from the weight to `Hom(pt, D(-))` -/
+  π : W ⟶ homFromFunctor pt D
+
+/--
+For a weighted cone, extract the morphism at index `j` for weight element `w`.
+-/
+def WeightedCone.leg {W : J ⥤ Type v} {D : J ⥤ C} (c : WeightedCone W D)
+    (j : J) (w : W.obj j) : c.pt ⟶ D.obj j :=
+  c.π.app j w
+
+/--
+Naturality for weighted cones: for `f : j ⟶ j'` and `w : W.obj j`,
+composing with `D.map f` equals applying `W.map f` first.
+-/
+theorem WeightedCone.naturality {W : J ⥤ Type v} {D : J ⥤ C}
+    (c : WeightedCone W D) {j j' : J} (f : j ⟶ j') (w : W.obj j) :
+    c.leg j w ≫ D.map f = c.leg j' (W.map f w) := by
+  unfold leg homFromFunctor
+  have nat := c.π.naturality f
+  simp only [Functor.comp_obj, Functor.comp_map] at nat
+  exact (congrFun nat w).symm
+
+/--
+A weighted cocone over a diagram `D : J ⥤ C` with weight `W : Jᵒᵖ ⥤ Type v`
+(a presheaf on `J`) consists of a cocone point `pt` and a natural
+transformation from `W` to the functor `Hom(D(-), pt)`.
+
+Note: The weight is contravariant (`Jᵒᵖ ⥤ Type v`) to match the variance
+of `Hom(D(-), pt)`.
+-/
+structure WeightedCocone (W : Jᵒᵖ ⥤ Type v) (D : J ⥤ C) where
+  /-- The cocone point -/
+  pt : C
+  /-- The natural transformation from the weight to `Hom(D(-), pt)` -/
+  ι : W ⟶ homToFunctor D pt
+
+/--
+For a weighted cocone, extract the morphism at index `j` for weight element `w`.
+-/
+def WeightedCocone.leg {W : Jᵒᵖ ⥤ Type v} {D : J ⥤ C} (c : WeightedCocone W D)
+    (j : J) (w : W.obj (Opposite.op j)) : D.obj j ⟶ c.pt :=
+  c.ι.app (Opposite.op j) w
+
+/--
+Naturality for weighted cocones: for `f : j ⟶ j'` and `w : W.obj (op j')`,
+precomposing with `D.map f` equals applying `W.map f.op` first.
+-/
+theorem WeightedCocone.naturality {W : Jᵒᵖ ⥤ Type v} {D : J ⥤ C}
+    (c : WeightedCocone W D) {j j' : J} (f : j ⟶ j') (w : W.obj (Opposite.op j')) :
+    D.map f ≫ c.leg j' w = c.leg j (W.map f.op w) := by
+  unfold leg homToFunctor
+  have nat := c.ι.naturality f.op
+  exact (congrFun nat w).symm
+
+variable {D : Type w} [Category.{v} D]
+
+/--
+A weighted wedge over a profunctor `P : Cᵒᵖ ⥤ C ⥤ D` with weight
+`W : TwistedArrow C ⥤ Type v` is a weighted cone over the diagram
+`profunctorOnTwistedArrow C P` with the given weight.
+
+This generalizes ordinary wedges: when `W` is the terminal functor (constant
+at a singleton), a weighted wedge is exactly an ordinary wedge.
+-/
+abbrev WeightedWedge (W : TwistedArrow C ⥤ Type v) (P : Cᵒᵖ ⥤ C ⥤ D) :=
+  WeightedCone W (profunctorOnTwistedArrow C P)
+
+/--
+A weighted cowedge over a profunctor `P : Cᵒᵖ ⥤ C ⥤ D` with weight
+`W : (CoTwistedArrow C)ᵒᵖ ⥤ Type v` is a weighted cocone over the diagram
+`profunctorOnCoTwistedArrow C P` with the given weight.
+
+The weight is contravariant (a presheaf on `CoTwistedArrow C`) to match the
+variance required by weighted cocones.
+
+This generalizes ordinary cowedges: when `W` is the terminal functor (constant
+at a singleton), a weighted cowedge is exactly an ordinary cowedge.
+-/
+abbrev WeightedCowedge (W : (CoTwistedArrow C)ᵒᵖ ⥤ Type v) (P : Cᵒᵖ ⥤ C ⥤ D) :=
+  WeightedCocone W (profunctorOnCoTwistedArrow C P)
+
 end WeightedLimitColimit
 
 section RestrictedCowedges
@@ -826,6 +939,110 @@ def Hom.comp {c d e : RestrictedCowedge G H} (f : Hom c d) (g : Hom d e) :
 end RestrictedCowedge
 
 /-!
+### Strong restricted cowedges
+
+A *strong restricted cowedge* uses the paranaturality condition instead of
+dinaturality. This is a stronger condition: every paranatural transformation
+is dinatural, but the converse does not hold in general.
+
+The paranaturality condition requires that for *all* DiagCompat pairs of
+diagonal elements, the family preserves the compatibility. In contrast,
+dinaturality only requires this for DiagCompat pairs that factor through
+off-diagonal elements.
+-/
+
+/--
+An `H`-restricted `G`-cowedge with the paranaturality condition.
+
+This is the "strong" version of a restricted cowedge, where the family
+satisfies the full paranaturality condition rather than just dinaturality.
+
+Structure:
+- `pt : C` - the carrier (summit) object
+- `family : ParanatSig H (G ⇓ pt)` - the family of morphisms
+- `isParanatural : IsParanatural H (G ⇓ pt) family` - the paranaturality condition
+-/
+structure StrongRestrictedCowedge (G : Cᵒᵖ ⥤ C ⥤ C) (H : Cᵒᵖ ⥤ C ⥤ Type v) where
+  /-- The carrier (summit) object. -/
+  pt : C
+  /-- The family of morphisms as a `ParanatSig H (G ⇓ pt)`. -/
+  family : ParanatSig H (G ⇓ pt)
+  /-- The paranaturality condition on the family. -/
+  isParanatural : IsParanatural H (G ⇓ pt) family
+
+/-- Convert a strong restricted cowedge to a `Paranat` transformation `H → G ⇓ pt`. -/
+def StrongRestrictedCowedge.toParanat {G : Cᵒᵖ ⥤ C ⥤ C} {H : Cᵒᵖ ⥤ C ⥤ Type v}
+    (c : StrongRestrictedCowedge G H) : Paranat H (G ⇓ c.pt) where
+  app := c.family
+  paranatural := c.isParanatural
+
+/-- Construct a strong restricted cowedge from a carrier object and a
+`Paranat` transformation. -/
+def StrongRestrictedCowedge.ofParanat {G : Cᵒᵖ ⥤ C ⥤ C} {H : Cᵒᵖ ⥤ C ⥤ Type v}
+    (pt : C) (α : Paranat H (G ⇓ pt)) : StrongRestrictedCowedge G H where
+  pt := pt
+  family := α.app
+  isParanatural := α.paranatural
+
+/-- Every strong restricted cowedge is a restricted cowedge, since paranaturality
+implies dinaturality. -/
+def StrongRestrictedCowedge.toRestrictedCowedge {G : Cᵒᵖ ⥤ C ⥤ C}
+    {H : Cᵒᵖ ⥤ C ⥤ Type v} (c : StrongRestrictedCowedge G H) :
+    RestrictedCowedge G H where
+  pt := c.pt
+  family := c.family
+  isDinatural := paranatural_implies_dinatural H (G ⇓ c.pt) c.family c.isParanatural
+
+namespace StrongRestrictedCowedge
+
+variable {G : Cᵒᵖ ⥤ C ⥤ C} {H : Cᵒᵖ ⥤ C ⥤ Type v}
+
+/--
+A morphism between strong restricted cowedges is an arrow in `C` that commutes
+with all family morphisms (pointwise condition).
+-/
+@[ext]
+structure Hom (c d : StrongRestrictedCowedge G H) where
+  /-- The underlying morphism in `C`. -/
+  hom : c.pt ⟶ d.pt
+  /-- Compatibility: for all `A` and `a ∈ H(A, A)`, composition with `hom`
+  transforms `c.family` to `d.family`. -/
+  comm (A : C) (a : (H.obj (Opposite.op A)).obj A) :
+    c.family A a ≫ hom = d.family A a
+
+attribute [simp] Hom.comm
+
+/-- The identity morphism on a strong restricted cowedge. -/
+@[simps]
+def Hom.id (c : StrongRestrictedCowedge G H) : Hom c c where
+  hom := 𝟙 c.pt
+  comm _ _ := Category.comp_id _
+
+/-- Composition of strong restricted cowedge morphisms. -/
+@[simps]
+def Hom.comp {c d e : StrongRestrictedCowedge G H} (f : Hom c d) (g : Hom d e) :
+    Hom c e where
+  hom := f.hom ≫ g.hom
+  comm A a := by rw [← Category.assoc, f.comm, g.comm]
+
+end StrongRestrictedCowedge
+
+/--
+The category of `H`-restricted `G`-cowedges with the paranaturality condition.
+
+Objects are strong restricted cowedges `(C, Φ)` and morphisms are arrows
+`h : C → D` compatible with the family structure.
+-/
+instance StrongRestrictedCowedgeCat (G : Cᵒᵖ ⥤ C ⥤ C) (H : Cᵒᵖ ⥤ C ⥤ Type v) :
+    Category (StrongRestrictedCowedge G H) where
+  Hom := StrongRestrictedCowedge.Hom
+  id := StrongRestrictedCowedge.Hom.id
+  comp := StrongRestrictedCowedge.Hom.comp
+  id_comp f := by ext; simp [StrongRestrictedCowedge.Hom.comp, StrongRestrictedCowedge.Hom.id]
+  comp_id f := by ext; simp [StrongRestrictedCowedge.Hom.comp, StrongRestrictedCowedge.Hom.id]
+  assoc f g h := by ext; simp [StrongRestrictedCowedge.Hom.comp]
+
+/-!
 ### Relationship between dinaturality and paranaturality
 
 For restricted cowedges, the dinaturality condition relates to paranaturality
@@ -950,6 +1167,15 @@ instance RestrictedCowedgeCat (G : Cᵒᵖ ⥤ C ⥤ C) (H : Cᵒᵖ ⥤ C ⥤ T
   id_comp f := by ext; simp [RestrictedCowedge.Hom.comp, RestrictedCowedge.Hom.id]
   comp_id f := by ext; simp [RestrictedCowedge.Hom.comp, RestrictedCowedge.Hom.id]
   assoc f g h := by ext; simp [RestrictedCowedge.Hom.comp]
+
+/-- The forgetful functor from strong restricted cowedges to restricted cowedges. -/
+def StrongRestrictedCowedge.forgetToRestricted (G : Cᵒᵖ ⥤ C ⥤ C)
+    (H : Cᵒᵖ ⥤ C ⥤ Type v) :
+    StrongRestrictedCowedge G H ⥤ RestrictedCowedge G H where
+  obj c := c.toRestrictedCowedge
+  map f := ⟨f.hom, f.comm⟩
+  map_id _ := rfl
+  map_comp _ _ := rfl
 
 end RestrictedCowedges
 

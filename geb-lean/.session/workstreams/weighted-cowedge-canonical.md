@@ -81,9 +81,11 @@ A weighted cone over `D : J ⥤ C` with weight `W : J ⥤ Type v` consists of:
 
 Equivalently: a natural transformation `W ⟶ Hom(c, D(-))`.
 
-**Status**: Not started
+**Status**: Completed
 
-**Location**: New file `GebLean/WeightedLimits.lean` or add to `Weighted.lean`
+**Location**: `GebLean/Weighted.lean` (~line 580)
+
+**Implementation**: `WeightedCone W D` with `π : W ⟶ homFromFunctor pt D`
 
 ### 2. Define Weighted Cocones (General)
 
@@ -94,24 +96,29 @@ Dual to weighted cones:
 - Naturality: for `f : j ⟶ j'` and `w : W.obj j'`, we have
   `ι j' w ∘ D.map f = ι j (W.map f w)`
 
-Equivalently: a natural transformation `Hom(D(-), c) ⟶ W`.
+Equivalently: a natural transformation `W ⟶ Hom(D(-), c)` where `W : Jᵒᵖ ⥤ Type v`.
 
-**Status**: Not started
+**Status**: Completed
 
-**Location**: Same file as weighted cones
+**Location**: `GebLean/Weighted.lean` (~line 613)
+
+**Implementation**: `WeightedCocone W D` with `ι : W ⟶ homToFunctor D pt`
 
 ### 3. Define Weighted Wedges
 
 A weighted wedge combines the twisted arrow reduction with weighted cones:
 
-Given `F : Cᵒᵖ ⥤ C ⥤ Type v` and weight `W : Tw(C)ᵒᵖ ⥤ Type v`:
+Given `P : Cᵒᵖ ⥤ C ⥤ D` and weight `W : TwistedArrow C ⥤ Type v`:
 
-- Reduce `F` to a diagram on `Tw(C)` via `profunctorOnTwistedArrow`
+- Reduce `P` to a diagram on `TwistedArrow C` via `profunctorOnTwistedArrow`
 - Take a weighted cone with weight `W`
 
-**Status**: Not started
+**Status**: Completed
 
-**Location**: `GebLean/Weighted.lean`
+**Location**: `GebLean/Weighted.lean` (~line 648)
+
+**Implementation**:
+`WeightedWedge W P := WeightedCone W (profunctorOnTwistedArrow C P)`
 
 ### 4. Define Weighted Cowedges
 
@@ -119,14 +126,17 @@ Dual construction using weighted cocones.
 
 For restricted cowedges specifically:
 
-- The weight `H : Cᵒᵖ × C → Type v` pulls back along the forgetful functor
-  `coTwistedArrowForget` to give a weight on `CoTwistedArrow C`
-- The functor `G : Cᵒᵖ × C → C` becomes a diagram via
+- The weight `W : (CoTwistedArrow C)ᵒᵖ ⥤ Type v` is a presheaf on the
+  co-twisted arrow category
+- The functor `G : Cᵒᵖ ⥤ C ⥤ C` becomes a diagram via
   `profunctorOnCoTwistedArrow`
 
-**Status**: Not started
+**Status**: Completed
 
-**Location**: `GebLean/Weighted.lean`
+**Location**: `GebLean/Weighted.lean` (~line 662)
+
+**Implementation**:
+`WeightedCowedge W P := WeightedCocone W (profunctorOnCoTwistedArrow C P)`
 
 ### 5. Compare with Vene's Restricted Cowedge (Dinaturality)
 
@@ -143,7 +153,33 @@ Questions to answer:
 - If not, what's the relationship?
 - Which captures Vene's original definition more faithfully?
 
-**Status**: Not started
+**Status**: In progress
+
+**Findings**:
+
+The two structures are not directly equivalent:
+
+1. **Weighted cowedge** (`WeightedCowedge W G`): Uses a weight functor
+   `W : (CoTwistedArrow C)ᵒᵖ ⥤ Type v` and provides data at *all* co-twisted
+   arrows (morphisms `f : A ⟶ B` in `C`).
+
+2. **Restricted cowedge** (`RestrictedCowedge G H`): Uses a profunctor
+   `H : Cᵒᵖ ⥤ C ⥤ Type v` but only provides data at *diagonal* elements
+   (identity morphisms `id_A : A ⟶ A`), with a dinaturality condition
+   relating the diagonal data across different objects.
+
+The relationship:
+
+- A restricted cowedge can be seen as specifying the "diagonal restriction"
+  of a potential weighted cowedge
+- The dinaturality condition ensures consistency of the diagonal data
+- To get a weight `W` from `H`, one would compose `H` with the co-twisted
+  arrow forgetful functor: `profunctorOnCoTwistedArrow C H`
+- The restricted cowedge only uses diagonal values of this composition
+
+Vene's original definition uses dinaturality, so `RestrictedCowedge` is
+faithful to Vene's thesis. The weighted formulation is more general but
+requires data at all co-twisted arrows, not just diagonals.
 
 ### 6. Define Strong Restricted Cowedges
 
@@ -162,9 +198,22 @@ homomorphism as for `RestrictedCowedge` (post-composition commuting with the
 family). Verify that this forms a category by proving the identity and
 associativity laws.
 
-**Status**: Not started
+**Status**: Completed
 
-**Location**: `GebLean/Weighted.lean`
+**Location**: `GebLean/Weighted.lean` (~line 966)
+
+**Implementation**:
+
+- `StrongRestrictedCowedge G H` structure with `pt`, `family`, `isParanatural`
+- `StrongRestrictedCowedge.toParanat`: Convert to `Paranat H (G ⇓ pt)`
+- `StrongRestrictedCowedge.ofParanat`: Convert from `Paranat H (G ⇓ pt)`
+- `StrongRestrictedCowedge.toRestrictedCowedge`: Every strong restricted
+  cowedge is a restricted cowedge (paranaturality implies dinaturality)
+- `StrongRestrictedCowedge.Hom`: Morphisms between strong restricted cowedges
+- `StrongRestrictedCowedge.Hom.id`, `Hom.comp`: Identity and composition
+- `StrongRestrictedCowedgeCat`: Category instance for strong restricted cowedges
+- `forgetToRestricted`: Forgetful functor from strong restricted cowedges
+  to restricted cowedges
 
 ### 7. Compare with Paranaturality Version
 
@@ -177,7 +226,44 @@ Questions to answer:
 - Is it equivalent to `RestrictedCowedge` (the dinaturality version)?
 - If all three differ, which is "correct"?
 
-**Status**: Not started
+**Status**: Completed
+
+**Findings**:
+
+The three definitions form a hierarchy with strict inclusions:
+
+```text
+WeightedCowedge  ⊋  StrongRestrictedCowedge  ⊋  RestrictedCowedge
+   (most data)         (paranaturality)          (dinaturality)
+```
+
+**1. StrongRestrictedCowedge vs RestrictedCowedge**:
+
+- `StrongRestrictedCowedge.toRestrictedCowedge` exists (paranaturality implies
+  dinaturality)
+- The reverse does NOT hold in general
+- Paranaturality tests ALL compatible diagonal pairs `(d₀, d₁)` with
+  `DiagCompat F I₀ I₁ f d₀ d₁`
+- Dinaturality only tests pairs of the form `(F.lmap f x, F.rmap f x)` for
+  off-diagonal elements `x`
+- Not every compatible pair arises from an off-diagonal element
+
+**2. WeightedCowedge vs StrongRestrictedCowedge**:
+
+- WeightedCowedge provides data at ALL co-twisted arrows (all morphisms in C)
+- StrongRestrictedCowedge provides data only at diagonal elements
+- The weighted formulation has strictly more data
+- To embed StrongRestrictedCowedge into WeightedCowedge, one would need to
+  extend diagonal data to all co-twisted arrows (likely via Kan extension)
+- This extension is not generally unique or canonical without additional
+  structure
+
+**3. Relationship to Vene's Definition**:
+
+- Vene's original definition uses dinaturality, so `RestrictedCowedge` matches
+  Vene's thesis
+- `StrongRestrictedCowedge` is a strengthening that uses paranaturality
+- `WeightedCowedge` is the most general formulation from first principles
 
 ### 8. Determine Canonical Definition
 
@@ -188,21 +274,61 @@ Based on the comparisons in Tasks 5 and 7:
   cowedge, as it's derived from first principles)
 - Update the codebase accordingly
 
-**Status**: Not started
+**Status**: Completed
+
+**Conclusion**:
+
+The three definitions are NOT equivalent and serve different purposes. Which
+is "canonical" depends on context:
+
+**For Vene's Mendler-style recursion (original motivation)**:
+
+Use `RestrictedCowedge` (dinaturality). This matches Vene's thesis exactly and
+is sufficient for the categorical semantics of inductive and coinductive types.
+
+**For the strongest condition on diagonal data**:
+
+Use `StrongRestrictedCowedge` (paranaturality). This is a natural strengthening
+that preserves all compatible diagonal pairs, not just those arising from
+off-diagonal elements. Useful when paranaturality is required by the
+application.
+
+**For the most general weighted formulation**:
+
+Use `WeightedCowedge`. This is derived from first principles of weighted
+colimits and provides data at all morphisms, not just identities. This is the
+"correct" categorical formulation when full generality is needed.
+
+**Recommendation**:
+
+Keep all three definitions in the codebase:
+
+1. `RestrictedCowedge`: For Vene-style restricted coends
+2. `StrongRestrictedCowedge`: For applications requiring paranaturality
+3. `WeightedCowedge`: For general weighted colimit theory
+
+The forgetful functors `StrongRestrictedCowedge → RestrictedCowedge` capture
+the relationship between the definitions. The relationship between
+`WeightedCowedge` and the restricted variants would require additional
+work (diagonal restriction and Kan extension) to formalize.
 
 ## References
 
 ### Code References
 
-- `GebLean/Weighted.lean`: Current restricted cowedge implementation
-  - `RestrictedCowedge` structure (~line 740)
-  - `sliceProfunctor` (~line 576)
-  - `sliceProfunctorFunctor` (~line 609)
-  - `sliceProfunctorBifunctor` (~line 699)
-  - `coneToWedge` (~line 247)
-  - `wedgeToCone` (~line 328)
-  - `coconeToCowedge` (~line 469)
-  - `cowedgeToCocone` (~line 455)
+- `GebLean/Weighted.lean`: Weighted limits and restricted cowedges
+  - Weighted cones/cocones: `WeightedCone` (~line 580),
+    `WeightedCocone` (~line 613)
+  - Weighted wedges/cowedges: `WeightedWedge` (~line 648),
+    `WeightedCowedge` (~line 661)
+  - Slice profunctor: `sliceProfunctor` (~line 689),
+    `sliceProfunctorFunctor` (~line 722)
+  - Restricted cowedges: `RestrictedCowedge` (~line 840),
+    `RestrictedCowedgeCat` (~line 905)
+  - Strong restricted cowedges: `StrongRestrictedCowedge` (~line 966),
+    `StrongRestrictedCowedgeCat` (~line 1032)
+  - Forgetful functor: `forgetToRestricted` (~line 1058)
+  - Wedge/cone equivalences: `coneToWedge` (~line 247), `wedgeToCone` (~line 328)
 
 - `GebLean/Utilities/TwistedArrow.lean`: Twisted arrow infrastructure
   - `twistedArrowForget` functor
@@ -214,8 +340,10 @@ Based on the comparisons in Tasks 5 and 7:
   - `profunctorOnCoTwistedArrow` (~line 1623)
 
 - `GebLean/Paranatural.lean`: Paranaturality definitions
-  - `ParanatSig` structure
-  - `IsDinatural` predicate
+  - `ParanatSig` structure (~line 241)
+  - `IsParanatural` predicate (~line 248)
+  - `IsDinatural` predicate (~line 730)
+  - `paranatural_implies_dinatural` theorem (~line 772)
 
 ### Documentation References
 
