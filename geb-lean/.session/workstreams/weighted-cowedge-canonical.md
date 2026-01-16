@@ -145,22 +145,43 @@ Questions to answer:
 
 **Status**: Not started
 
-### 6. Compare with Paranaturality Version
+### 6. Define Strong Restricted Cowedges
 
-Consider what happens if we use paranaturality instead of dinaturality
-in the restricted cowedge definition.
+Define `StrongRestrictedCowedge` analogously to `RestrictedCowedge`, but using
+`IsParanatural` instead of `IsDinatural`. Paranatural transformations are also
+called "strong dinatural transformations", hence the name.
+
+The structure should have:
+
+- `pt : C` - the summit object
+- `family : ParanatSig H (G ⇓ pt)` - the family of morphisms
+- `isParanatural : IsParanatural H (G ⇓ pt) family` - paranaturality condition
+
+Define the category of strong restricted cowedges with the same notion of
+homomorphism as for `RestrictedCowedge` (post-composition commuting with the
+family). Verify that this forms a category by proving the identity and
+associativity laws.
+
+**Status**: Not started
+
+**Location**: `GebLean/Weighted.lean`
+
+### 7. Compare with Paranaturality Version
+
+Compare `StrongRestrictedCowedge` (from Task 6) with `RestrictedCowedge` and
+with weighted cowedges (from Task 4).
 
 Questions to answer:
 
-- Is this equivalent to the weighted cowedge?
-- Is it equivalent to the dinaturality version?
+- Is `StrongRestrictedCowedge` equivalent to the weighted cowedge?
+- Is it equivalent to `RestrictedCowedge` (the dinaturality version)?
 - If all three differ, which is "correct"?
 
 **Status**: Not started
 
-### 7. Determine Canonical Definition
+### 8. Determine Canonical Definition
 
-Based on the comparisons in Tasks 5 and 6:
+Based on the comparisons in Tasks 5 and 7:
 
 - If all definitions coincide, document this equivalence
 - If they differ, determine which is canonical (likely the weighted
