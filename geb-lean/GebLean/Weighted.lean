@@ -387,6 +387,128 @@ theorem wedgeToCone_coneToWedge (P : Cᵒᵖ ⥤ C ⥤ D) (w : Wedge P) :
       -- Use the relationship K.π.app (right b) = K.ι (fst b) ≫ I.fst b
       simp only [← Multifork.app_right_eq_ι_comp_fst]
 
+/-!
+### Categorical Equivalence
+
+We upgrade the wedge/cone correspondence to a categorical equivalence by
+defining functors in both directions and proving they form an equivalence.
+-/
+
+/--
+The functor from wedges to cones over the twisted arrow diagram.
+
+Objects are mapped via `wedgeToCone`.
+Morphisms are mapped by taking the underlying morphism on cone points.
+-/
+def wedgeToConeFunctor (P : Cᵒᵖ ⥤ C ⥤ D) :
+    Wedge P ⥤ Cone (profunctorOnTwistedArrow C P) where
+  obj := wedgeToCone P
+  map {w₁ w₂} f := {
+    hom := f.hom
+    w := fun tw => by
+      simp only [wedgeToCone, wedgeToConeπApp]
+      let dom : C := twDom tw
+      let arr : dom ⟶ twCod tw := twArr tw
+      have hw : f.hom ≫ Multifork.ι w₂ dom = Multifork.ι w₁ dom :=
+        f.w (WalkingMulticospan.left dom)
+      calc f.hom ≫ (Multifork.ι w₂ dom ≫ (P.obj (Opposite.op dom)).map arr)
+          = (f.hom ≫ Multifork.ι w₂ dom) ≫ (P.obj (Opposite.op dom)).map arr := by
+            simp only [Category.assoc]
+          _ = Multifork.ι w₁ dom ≫ (P.obj (Opposite.op dom)).map arr := by
+            rw [hw]
+  }
+  map_id _ := rfl
+  map_comp _ _ := rfl
+
+/--
+The functor from cones over the twisted arrow diagram to wedges.
+
+Objects are mapped via `coneToWedge`.
+Morphisms are mapped by taking the underlying morphism on cone points.
+-/
+def coneToWedgeFunctor (P : Cᵒᵖ ⥤ C ⥤ D) :
+    Cone (profunctorOnTwistedArrow C P) ⥤ Wedge P where
+  obj := coneToWedge P
+  map {c₁ c₂} f := {
+    hom := f.hom
+    w := fun tw => by
+      cases tw with
+      | left j =>
+        simp only [coneToWedge, coneToWedgeComponents, Multifork.ofι_π_app]
+        let jC : C := j
+        exact f.w (twObjMk (𝟙 jC))
+      | right b =>
+        simp only [coneToWedge, Multifork.ofι_π_app, coneToWedgeComponents]
+        let j : C := (multicospanShapeEnd C).fst b
+        have hw := f.w (twObjMk (𝟙 j))
+        rw [← Category.assoc, hw]
+  }
+  map_id _ := rfl
+  map_comp _ _ := rfl
+
+/--
+For cones, the `.hom` field of `eqToHom h` is `eqToHom` applied to the cone point
+equality. This allows `eqToHom_refl` to simplify when cone points are
+definitionally equal.
+-/
+@[simp]
+theorem Cone.eqToHom_hom {J' : Type*} [Category J'] {E' : Type*} [Category E']
+    {F : J' ⥤ E'} {c c' : Cone F} (h : c = c') :
+    (eqToHom h).hom = eqToHom (congrArg Cone.pt h) := by
+  subst h
+  rfl
+
+/--
+The composition `coneToWedgeFunctor ⋙ wedgeToConeFunctor` is naturally isomorphic
+to the identity functor on cones.
+-/
+def wedgeConeUnitIso (P : Cᵒᵖ ⥤ C ⥤ D) :
+    𝟭 (Cone (profunctorOnTwistedArrow C P)) ≅
+    coneToWedgeFunctor P ⋙ wedgeToConeFunctor P :=
+  NatIso.ofComponents
+    (fun c => eqToIso (coneToWedge_wedgeToCone P c).symm)
+    (fun {c₁ c₂} f => by
+      apply ConeMorphism.ext
+      simp only [Functor.id_map, Functor.comp_map, eqToIso.hom,
+        Cone.category_comp_hom, coneToWedgeFunctor, wedgeToConeFunctor,
+        Cone.eqToHom_hom, eqToHom_refl, Category.comp_id, Category.id_comp])
+
+/--
+The composition `wedgeToConeFunctor ⋙ coneToWedgeFunctor` is naturally isomorphic
+to the identity functor on wedges.
+-/
+def wedgeConeCounitIso (P : Cᵒᵖ ⥤ C ⥤ D) :
+    wedgeToConeFunctor P ⋙ coneToWedgeFunctor P ≅ 𝟭 (Wedge P) :=
+  NatIso.ofComponents
+    (fun w => eqToIso (wedgeToCone_coneToWedge P w))
+    (fun {w₁ w₂} f => by
+      apply ConeMorphism.ext
+      simp only [Functor.comp_map, Functor.id_map, eqToIso.hom,
+        wedgeToConeFunctor, coneToWedgeFunctor, Cone.category_comp_hom,
+        Cone.eqToHom_hom, eqToHom_refl, Category.comp_id, Category.id_comp])
+
+/--
+The category of wedges over `P` is equivalent to the category of cones over
+`profunctorOnTwistedArrow C P`.
+-/
+def wedgeConeEquiv (P : Cᵒᵖ ⥤ C ⥤ D) :
+    Wedge P ≌ Cone (profunctorOnTwistedArrow C P) where
+  functor := wedgeToConeFunctor P
+  inverse := coneToWedgeFunctor P
+  unitIso := (wedgeConeCounitIso P).symm
+  counitIso := (wedgeConeUnitIso P).symm
+  functor_unitIso_comp w := by
+    apply ConeMorphism.ext
+    simp only [Iso.symm_hom, Functor.comp_obj, Functor.id_obj,
+      wedgeConeCounitIso, wedgeConeUnitIso,
+      NatIso.ofComponents, eqToIso.hom, eqToIso.inv, wedgeToConeFunctor,
+      coneToWedgeFunctor, Cone.category_comp_hom, Cone.category_id_hom,
+      Cone.eqToHom_hom, eqToHom_refl]
+    -- Goal: 𝟙 w.pt ≫ 𝟙 (wedgeToCone P (coneToWedge P (wedgeToCone P w))).pt
+    --       = 𝟙 (wedgeToCone P w).pt
+    -- All pt fields are definitionally equal to w.pt
+    exact Category.id_comp _
+
 end WedgeConeCorrespondence
 
 section CowedgeCoconeCorrespondence

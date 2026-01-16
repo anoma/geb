@@ -331,21 +331,24 @@ Steps:
 - Define a functor `Cone (profunctorOnTwistedArrow C F) ⥤ Wedge F`
 - Prove these form an equivalence of categories
 
-**Status**: In progress
+**Status**: Completed
 
 **Location**: `GebLean/Weighted.lean` (~line 400)
 
-**Implementation in progress**:
+**Implementation**:
 
 - `wedgeToConeFunctor`: Functor from wedges to cones
 - `coneToWedgeFunctor`: Functor from cones to wedges
-- `wedgeConeUnitIso`: Unit natural isomorphism
-- `wedgeConeCounitIso`: Counit natural isomorphism
+- `wedgeConeUnitIso`: Unit natural isomorphism using `eqToIso` and
+  `coneToWedge_wedgeToCone`
+- `wedgeConeCounitIso`: Counit natural isomorphism using `eqToIso` and
+  `wedgeToCone_coneToWedge`
 - `wedgeConeEquiv`: The categorical equivalence
   `Wedge P ≌ Cone (profunctorOnTwistedArrow C P)`
 
-Added helper lemma `Cone.eqToHom_hom` to handle `eqToHom` simplification in
-naturality proofs for cone morphisms.
+Helper lemma `Cone.eqToHom_hom` handles `eqToHom` simplification in
+naturality proofs for cone morphisms. The `functor_unitIso_comp` proof uses
+`Category.id_comp` to simplify the identity composition.
 
 ### 10. Prove Cones Are Weighted Cones with Constant Weight
 
