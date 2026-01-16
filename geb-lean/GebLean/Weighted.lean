@@ -759,6 +759,85 @@ theorem WeightedCocone.naturality {W : Jᵒᵖ ⥤ Type v} {D : J ⥤ C}
   have nat := c.ι.naturality f.op
   exact (congrFun nat w).symm
 
+/--
+A morphism between weighted cones consists of a morphism between the cone
+points that commutes with the projections for all weight elements.
+-/
+@[ext]
+structure WeightedCone.Hom {W : J ⥤ Type v} {D : J ⥤ C}
+    (c₁ c₂ : WeightedCone W D) where
+  /-- The morphism between cone points -/
+  hom : c₁.pt ⟶ c₂.pt
+  /-- Commutativity: for each index j and weight w, the triangle commutes -/
+  w : ∀ (j : J) (w : W.obj j), hom ≫ c₂.leg j w = c₁.leg j w := by aesop_cat
+
+attribute [reassoc (attr := simp)] WeightedCone.Hom.w
+
+/--
+Identity morphism for weighted cones.
+-/
+def WeightedCone.Hom.id {W : J ⥤ Type v} {D : J ⥤ C} (c : WeightedCone W D) :
+    WeightedCone.Hom c c where
+  hom := 𝟙 c.pt
+
+/--
+Composition of weighted cone morphisms.
+-/
+def WeightedCone.Hom.comp {W : J ⥤ Type v} {D : J ⥤ C}
+    {c₁ c₂ c₃ : WeightedCone W D}
+    (f : WeightedCone.Hom c₁ c₂) (g : WeightedCone.Hom c₂ c₃) :
+    WeightedCone.Hom c₁ c₃ where
+  hom := f.hom ≫ g.hom
+  w j w := by simp [f.w, g.w]
+
+instance (W : J ⥤ Type v) (D : J ⥤ C) : Category (WeightedCone W D) where
+  Hom := WeightedCone.Hom
+  id := WeightedCone.Hom.id
+  comp := WeightedCone.Hom.comp
+  id_comp f := by ext; simp [WeightedCone.Hom.id, WeightedCone.Hom.comp]
+  comp_id f := by ext; simp [WeightedCone.Hom.id, WeightedCone.Hom.comp]
+  assoc f g h := by ext; simp [WeightedCone.Hom.comp, Category.assoc]
+
+/--
+A morphism between weighted cocones consists of a morphism between the cocone
+points that commutes with the injections for all weight elements.
+-/
+@[ext]
+structure WeightedCocone.Hom {W : Jᵒᵖ ⥤ Type v} {D : J ⥤ C}
+    (c₁ c₂ : WeightedCocone W D) where
+  /-- The morphism between cocone points -/
+  hom : c₁.pt ⟶ c₂.pt
+  /-- Commutativity: for each index j and weight w, the triangle commutes -/
+  w : ∀ (j : J) (w : W.obj (Opposite.op j)),
+      c₁.leg j w ≫ hom = c₂.leg j w := by aesop_cat
+
+attribute [reassoc (attr := simp)] WeightedCocone.Hom.w
+
+/--
+Identity morphism for weighted cocones.
+-/
+def WeightedCocone.Hom.id {W : Jᵒᵖ ⥤ Type v} {D : J ⥤ C}
+    (c : WeightedCocone W D) : WeightedCocone.Hom c c where
+  hom := 𝟙 c.pt
+
+/--
+Composition of weighted cocone morphisms.
+-/
+def WeightedCocone.Hom.comp {W : Jᵒᵖ ⥤ Type v} {D : J ⥤ C}
+    {c₁ c₂ c₃ : WeightedCocone W D}
+    (f : WeightedCocone.Hom c₁ c₂) (g : WeightedCocone.Hom c₂ c₃) :
+    WeightedCocone.Hom c₁ c₃ where
+  hom := f.hom ≫ g.hom
+  w j w := by simp [g.w, f.w_assoc]
+
+instance (W : Jᵒᵖ ⥤ Type v) (D : J ⥤ C) : Category (WeightedCocone W D) where
+  Hom := WeightedCocone.Hom
+  id := WeightedCocone.Hom.id
+  comp := WeightedCocone.Hom.comp
+  id_comp f := by ext; simp [WeightedCocone.Hom.id, WeightedCocone.Hom.comp]
+  comp_id f := by ext; simp [WeightedCocone.Hom.id, WeightedCocone.Hom.comp]
+  assoc f g h := by ext; simp [WeightedCocone.Hom.comp, Category.assoc]
+
 variable {D : Type w} [Category.{v} D]
 
 /--

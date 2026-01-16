@@ -435,7 +435,19 @@ Steps:
 - Define `Category (WeightedCone W D)` instance
 - Repeat for `WeightedCocone`
 
-**Status**: Not started
+**Status**: Completed
+
+**Location**: `GebLean/Weighted.lean` (~line 762)
+
+**Implementation**:
+
+- `WeightedCone.Hom`: Morphisms with `hom : c₁.pt ⟶ c₂.pt` and commutativity
+  condition `∀ j w, hom ≫ c₂.leg j w = c₁.leg j w`
+- `WeightedCone.Hom.id`, `WeightedCone.Hom.comp`: Identity and composition
+- `Category (WeightedCone W D)` instance
+- `WeightedCocone.Hom`: Dual construction with commutativity
+  `∀ j w, c₁.leg j w ≫ hom = c₂.leg j w`
+- `Category (WeightedCocone W D)` instance
 
 ### 12. Upgrade Cone/Weighted-Cone to Categorical Equivalence
 
