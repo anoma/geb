@@ -628,6 +628,93 @@ def sliceProfunctorFunctor (G : Cᵒᵖ ⥤ C ⥤ C) : C ⥤ (Cᵒᵖ ⥤ C ⥤ 
 theorem sliceProfunctor_eq_functor_obj (G : Cᵒᵖ ⥤ C ⥤ C) (c : C) :
     sliceProfunctor G c = (sliceProfunctorFunctor G).obj c := rfl
 
+/-- Given a natural transformation `β : G' ⟹ G`, precomposition induces a natural
+transformation `(G ⇓ c) ⟶ (G' ⇓ c)` for each `c`.
+
+At component `(A, B)`, the map `Hom(G(B, A), c) → Hom(G'(B, A), c)` is
+precomposition by `(β.app (op B)).app A : G'(B, A) → G(B, A)`. -/
+def sliceProfunctorPrecomp {G G' : Cᵒᵖ ⥤ C ⥤ C} (β : G' ⟶ G) (c : C) :
+    (G ⇓ c) ⟶ (G' ⇓ c) where
+  app A :=
+    { app := fun X m => (β.app (Opposite.op X)).app A.unop ≫ m
+      naturality := fun X Y g => by
+        funext m
+        simp only [types_comp_apply, sliceProfunctor]
+        -- Goal: β.app (op Y) .app A ≫ G'.map g.op .app A ≫ m
+        --     = G.map g.op .app A ≫ β.app (op X) .app A ≫ m
+        rw [← Category.assoc, ← Category.assoc]
+        congr 1
+        -- Need: β.app (op Y) .app A ≫ G'.map g.op .app A
+        --     = G.map g.op .app A ≫ β.app (op X) .app A
+        -- This is (β.naturality g.op) applied at component A
+        exact congrFun (congrArg NatTrans.app (β.naturality g.op).symm) A.unop }
+  naturality A B f := by
+    ext X m
+    simp only [FunctorToTypes.comp, sliceProfunctor]
+    -- Goal: β.app (op X) .app B ≫ G'.obj (op X) .map f ≫ m
+    --     = G.obj (op X) .map f ≫ β.app (op X) .app A ≫ m
+    rw [← Category.assoc, ← Category.assoc]
+    congr 1
+    -- Need: (β.app (op X)).app B ≫ G'.obj.map f = G.obj.map f ≫ (β.app (op X)).app A
+    exact ((β.app (Opposite.op X)).naturality f.unop).symm
+
+/-- Precomposition by the identity is the identity. -/
+theorem sliceProfunctorPrecomp_id (G : Cᵒᵖ ⥤ C ⥤ C) (c : C) :
+    sliceProfunctorPrecomp (𝟙 G) c = 𝟙 (G ⇓ c) := by
+  ext A X m
+  simp only [sliceProfunctorPrecomp, NatTrans.id_app, Category.id_comp, types_id_apply]
+
+/-- Precomposition respects composition (contravariantly). -/
+theorem sliceProfunctorPrecomp_comp {G G' G'' : Cᵒᵖ ⥤ C ⥤ C}
+    (β : G' ⟶ G) (γ : G'' ⟶ G') (c : C) :
+    sliceProfunctorPrecomp (γ ≫ β) c =
+    sliceProfunctorPrecomp β c ≫ sliceProfunctorPrecomp γ c := by
+  ext A X m
+  simp only [sliceProfunctorPrecomp, NatTrans.comp_app, Category.assoc, types_comp_apply]
+
+/-- Precomposition is natural in the object `c`. Given `β : G' ⟶ G` and `f : c ⟶ c'`,
+the following square commutes:
+```
+(G ⇓ c) --precomp β--> (G' ⇓ c)
+   |                      |
+   | postcomp f           | postcomp f
+   v                      v
+(G ⇓ c') -precomp β-> (G' ⇓ c')
+```
+-/
+theorem sliceProfunctorPrecomp_natural {G G' : Cᵒᵖ ⥤ C ⥤ C} (β : G' ⟶ G)
+    {c c' : C} (f : c ⟶ c') :
+    sliceProfunctorPrecomp β c ≫ (sliceProfunctorFunctor G').map f =
+    (sliceProfunctorFunctor G).map f ≫ sliceProfunctorPrecomp β c' := by
+  ext A X m
+  simp only [sliceProfunctorPrecomp, sliceProfunctorFunctor, NatTrans.comp_app,
+    types_comp_apply, Category.assoc]
+
+/-- The slice profunctor construction is bifunctorial: contravariant in `G` and
+covariant in `c`.
+
+This functor `(Cᵒᵖ ⥤ C ⥤ C)ᵒᵖ ⥤ C ⥤ (Cᵒᵖ ⥤ C ⥤ Type v)` sends:
+- Objects: `op G ↦ (c ↦ G ⇓ c)`, i.e., `sliceProfunctorFunctor G`
+- Morphisms: a morphism `op G → op G'` (i.e., `β : G' ⟹ G`) induces precomposition -/
+def sliceProfunctorBifunctor : (Cᵒᵖ ⥤ C ⥤ C)ᵒᵖ ⥤ C ⥤ (Cᵒᵖ ⥤ C ⥤ Type v) where
+  obj opG := sliceProfunctorFunctor opG.unop
+  map {opG opG'} β :=
+    -- β : opG ⟶ opG' in the opposite category, i.e., β.unop : G' ⟶ G
+    { app := fun c => sliceProfunctorPrecomp β.unop c
+      naturality := fun c c' f => (sliceProfunctorPrecomp_natural β.unop f).symm }
+  map_id opG := by
+    ext c A X m
+    simp only [unop_id, sliceProfunctorPrecomp, NatTrans.id_app, Category.id_comp,
+      types_id_apply]
+  map_comp {opG opG' opG''} β γ := by
+    ext c A X m
+    simp only [unop_comp, sliceProfunctorPrecomp, NatTrans.comp_app, Category.assoc,
+      types_comp_apply]
+
+/-- The slice profunctor at `G` and `c` equals the bifunctor applied to `op G` and `c`. -/
+theorem sliceProfunctor_eq_bifunctor (G : Cᵒᵖ ⥤ C ⥤ C) (c : C) :
+    G ⇓ c = (sliceProfunctorBifunctor.obj (Opposite.op G)).obj c := rfl
+
 /-- The diagonal of the slice profunctor at `A` is `Hom(G(A, A), c)`. -/
 theorem sliceProfunctor_diagApp (G : Cᵒᵖ ⥤ C ⥤ C) (c : C) (A : C) :
     diagApp (G ⇓ c) A = ((G.obj (Opposite.op A)).obj A ⟶ c) := by
