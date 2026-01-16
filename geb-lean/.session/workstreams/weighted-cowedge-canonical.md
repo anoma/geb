@@ -315,6 +315,96 @@ cowedges. The relationship between `WeightedCowedge` and the restricted variants
 would require additional work (diagonal restriction and Kan extension) to
 formalize.
 
+### 9. Upgrade Wedge/Cone Correspondence to Categorical Equivalence
+
+The existing `coneToWedge` and `wedgeToCone` functions establish a correspondence
+between cones over `profunctorOnTwistedArrow C F` and wedges over `F`. Mathlib
+provides `Category` instances for both `Cone` and `Wedge` (where `Wedge` is an
+abbreviation for `Multifork`). We should upgrade this correspondence to a full
+categorical equivalence.
+
+Steps:
+
+- Verify mathlib's `Category` instance for `Cone F`
+- Verify mathlib's `Category` instance for `Wedge F` (via `Multifork`)
+- Define a functor `Wedge F ⥤ Cone (profunctorOnTwistedArrow C F)`
+- Define a functor `Cone (profunctorOnTwistedArrow C F) ⥤ Wedge F`
+- Prove these form an equivalence of categories
+
+**Status**: Not started
+
+### 10. Prove Cones Are Weighted Cones with Constant Weight
+
+Ordinary cones should be a special case of weighted cones where the weight
+functor is the constant functor returning the terminal object (a singleton type).
+Specifically:
+
+- For a cone over `D : J ⥤ C`, the weight is `(const J).obj PUnit`
+- The weighted cone structure `W ⟶ Hom(pt, D(-))` specializes to
+  `(const J).obj PUnit ⟶ Hom(pt, D(-))`, which is equivalent to picking one
+  morphism `pt ⟶ D(j)` for each `j`
+
+This equivalence will validate that our `WeightedCone` definition is correct.
+
+Steps:
+
+- Define `coneToWeightedCone`: Convert a `Cone D` to a `WeightedCone` with
+  constant weight
+- Define `weightedConeToCone`: Convert a weighted cone with constant weight to
+  a `Cone D`
+- Prove these are inverse (up to isomorphism)
+- Optionally, upgrade to a categorical equivalence
+
+**Status**: Completed
+
+**Location**: `GebLean/Weighted.lean` (~line 690)
+
+**Implementation**:
+
+- `unitWeight J`: Constant functor `(Functor.const J).obj PUnit.{v + 1}`
+- `unitWeightOp J`: Contravariant version for cocones
+- `coneToWeightedCone`: Converts `Cone D` to `WeightedCone (unitWeight J) D`
+- `weightedConeToCone`: Converts weighted cone back to ordinary cone
+- `coneToWeightedCone_weightedConeToCone`: Round-trip `rfl`
+- `weightedConeToCone_coneToWeightedCone`: Round-trip equality proven via `ext`
+- Analogous functions for cocones
+
+### 11. Verify Weighted Cocone Direction
+
+For ordinary cocones, the natural transformation goes `ι : F ⟶ (const J).obj pt`
+(from the diagram to the constant functor). For weighted cocones, by the
+universal property of weighted colimits:
+
+```text
+Hom(colim_W D, c) ≅ Nat(W, Hom(D(-), c))
+```
+
+A weighted cocone with apex `c` IS a natural transformation `W ⟶ Hom(D(-), c)`.
+This means the natural transformation goes TO the hom-functor, not FROM it.
+
+Our current definition has `ι : W ⟶ homToFunctor D pt`, which matches this.
+However, the "direction" interpretation differs from ordinary cocones because:
+
+- Ordinary cocone: `D(j) → pt` for each `j` (morphisms go TO the apex)
+- Weighted cocone: For each `j` and `w : W(j)`, a morphism `D(j) → pt`
+
+The weight `W : Jᵒᵖ ⥤ Type v` being contravariant accounts for the direction.
+
+Steps:
+
+- Implement `coconeToWeightedCocone` with constant weight
+- Implement `weightedCoconeToCocone` in the opposite direction
+- Verify these are inverse to confirm the direction is correct
+- If the equivalence fails, diagnose and fix `WeightedCocone`
+
+**Status**: Completed
+
+**Verification**: The round-trip theorems compile and prove that the direction
+is correct. The naturality condition in `coconeToWeightedCocone` requires
+`.symm` because cocone naturality `D.map f ≫ c.ι.app j' = c.ι.app j` is
+opposite to the weighted cocone naturality direction. This asymmetry is
+expected because the weight `W : Jᵒᵖ ⥤ Type v` is contravariant.
+
 ## References
 
 ### Code References
@@ -333,6 +423,10 @@ formalize.
   - Inclusion functor: `inclusion` (~line 1177),
     `inclusion_fullyFaithful` (~line 1189)
   - Wedge/cone equivalences: `coneToWedge` (~line 247), `wedgeToCone` (~line 328)
+  - Cone/weighted-cone equivalence: `unitWeight` (~line 690),
+    `coneToWeightedCone` (~line 702), `weightedConeToCone` (~line 722)
+  - Cocone/weighted-cocone equivalence: `coconeToWeightedCocone` (~line 762),
+    `weightedCoconeToCocone` (~line 782)
 
 - `GebLean/Utilities/TwistedArrow.lean`: Twisted arrow infrastructure
   - `twistedArrowForget` functor

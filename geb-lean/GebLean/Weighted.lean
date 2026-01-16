@@ -578,6 +578,7 @@ A weighted cone over a diagram `D : J ⥤ C` with weight `W : J ⥤ Type v`
 consists of a cone point `pt` and a natural transformation from `W` to the
 functor `Hom(pt, D(-))`.
 -/
+@[ext]
 structure WeightedCone (W : J ⥤ Type v) (D : J ⥤ C) where
   /-- The cone point -/
   pt : C
@@ -611,6 +612,7 @@ transformation from `W` to the functor `Hom(D(-), pt)`.
 Note: The weight is contravariant (`Jᵒᵖ ⥤ Type v`) to match the variance
 of `Hom(D(-), pt)`.
 -/
+@[ext]
 structure WeightedCocone (W : Jᵒᵖ ⥤ Type v) (D : J ⥤ C) where
   /-- The cocone point -/
   pt : C
@@ -663,6 +665,154 @@ abbrev WeightedCowedge (W : (CoTwistedArrow C)ᵒᵖ ⥤ Type v) (P : Cᵒᵖ �
   WeightedCocone W (profunctorOnCoTwistedArrow C P)
 
 end WeightedLimitColimit
+
+section ConeWeightedConeEquivalence
+
+/-!
+## Cones as weighted cones with constant weight
+
+Ordinary cones and cocones are special cases of weighted cones and cocones
+where the weight functor is constant at a singleton type. This section
+establishes this relationship.
+-/
+
+variable {J : Type u} [Category.{v} J] {C : Type w} [Category.{v} C]
+
+/--
+The constant unit weight functor `J ⥤ Type v` that sends every object
+to `PUnit` and every morphism to the identity.
+-/
+abbrev unitWeight (J : Type u) [Category.{v} J] : J ⥤ Type v :=
+  (Functor.const J).obj PUnit.{v + 1}
+
+/--
+The contravariant constant unit weight functor `Jᵒᵖ ⥤ Type v` that sends
+every object to `PUnit` and every morphism to the identity.
+-/
+abbrev unitWeightOp (J : Type u) [Category.{v} J] : Jᵒᵖ ⥤ Type v :=
+  (Functor.const Jᵒᵖ).obj PUnit.{v + 1}
+
+/--
+Convert an ordinary cone to a weighted cone with the constant unit weight.
+
+For a cone over `D : J ⥤ C`, the weighted cone has:
+- The same apex `c.pt`
+- For each `j : J`, the unique element of `PUnit` maps to `c.π.app j`
+-/
+def coneToWeightedCone {D : J ⥤ C} (c : Cone D) :
+    WeightedCone (unitWeight J) D where
+  pt := c.pt
+  π := {
+    app := fun j _ => c.π.app j
+    naturality := fun j j' f => by
+      funext _
+      simp only [types_comp_apply, homFromFunctor, Functor.comp_obj, Functor.comp_map,
+        unitWeight, Functor.const_obj_obj, Functor.const_obj_map]
+      have nat := c.π.naturality f
+      simp only [Functor.const_obj_obj, Functor.const_obj_map, Category.id_comp] at nat
+      exact nat
+  }
+
+/--
+Convert a weighted cone with constant unit weight back to an ordinary cone.
+
+Since `PUnit` has exactly one element, we evaluate the weighted cone's
+morphism family at `PUnit.unit`.
+-/
+def weightedConeToCone {D : J ⥤ C} (c : WeightedCone (unitWeight J) D) :
+    Cone D where
+  pt := c.pt
+  π := {
+    app := fun j => c.π.app j PUnit.unit
+    naturality := fun j j' f => by
+      have nat := c.π.naturality f
+      simp only [unitWeight, Functor.const_obj_obj, Functor.const_obj_map,
+        homFromFunctor, Functor.comp_obj, Functor.comp_map] at nat
+      simp only [Functor.const_obj_obj, Functor.const_obj_map, Category.id_comp]
+      exact congrFun nat PUnit.unit
+  }
+
+/--
+Converting a cone to a weighted cone and back gives the original cone.
+-/
+theorem coneToWeightedCone_weightedConeToCone {D : J ⥤ C} (c : Cone D) :
+    weightedConeToCone (coneToWeightedCone c) = c := rfl
+
+/--
+Converting a weighted cone (with unit weight) to a cone and back gives
+the original weighted cone.
+-/
+theorem weightedConeToCone_coneToWeightedCone {D : J ⥤ C}
+    (c : WeightedCone (unitWeight J) D) :
+    coneToWeightedCone (weightedConeToCone c) = c := by
+  ext
+  · rfl
+  · apply heq_of_eq
+    ext j w
+    cases w
+    rfl
+
+/--
+Convert an ordinary cocone to a weighted cocone with the constant unit weight.
+
+For a cocone over `D : J ⥤ C`, the weighted cocone has:
+- The same apex `c.pt`
+- For each `j : J`, the unique element of `PUnit` maps to `c.ι.app j`
+-/
+def coconeToWeightedCocone {D : J ⥤ C} (c : Cocone D) :
+    WeightedCocone (unitWeightOp J) D where
+  pt := c.pt
+  ι := {
+    app := fun j _ => c.ι.app j.unop
+    naturality := fun j j' f => by
+      funext _
+      simp only [types_comp_apply, homToFunctor, unitWeightOp,
+        Functor.const_obj_obj, Functor.const_obj_map]
+      have nat := c.ι.naturality f.unop
+      simp only [Functor.const_obj_obj, Functor.const_obj_map, Category.comp_id] at nat
+      exact nat.symm
+  }
+
+/--
+Convert a weighted cocone with constant unit weight back to an ordinary cocone.
+
+Since `PUnit` has exactly one element, we evaluate the weighted cocone's
+morphism family at `PUnit.unit`.
+-/
+def weightedCoconeToCocone {D : J ⥤ C} (c : WeightedCocone (unitWeightOp J) D) :
+    Cocone D where
+  pt := c.pt
+  ι := {
+    app := fun j => c.ι.app (Opposite.op j) PUnit.unit
+    naturality := fun j j' f => by
+      have nat := c.ι.naturality f.op
+      simp only [unitWeightOp, Functor.const_obj_obj, Functor.const_obj_map,
+        homToFunctor] at nat
+      simp only [Functor.const_obj_obj, Functor.const_obj_map, Category.comp_id]
+      exact (congrFun nat PUnit.unit).symm
+  }
+
+/--
+Converting a cocone to a weighted cocone and back gives the original cocone.
+-/
+theorem coconeToWeightedCocone_weightedCoconeToCocone {D : J ⥤ C} (c : Cocone D) :
+    weightedCoconeToCocone (coconeToWeightedCocone c) = c := rfl
+
+/--
+Converting a weighted cocone (with unit weight) to a cocone and back gives
+the original weighted cocone.
+-/
+theorem weightedCoconeToCocone_coconeToWeightedCocone {D : J ⥤ C}
+    (c : WeightedCocone (unitWeightOp J) D) :
+    coconeToWeightedCocone (weightedCoconeToCocone c) = c := by
+  ext
+  · rfl
+  · apply heq_of_eq
+    ext j w
+    cases w
+    simp only [coconeToWeightedCocone, weightedCoconeToCocone, Opposite.op_unop]
+
+end ConeWeightedConeEquivalence
 
 section RestrictedCowedges
 
