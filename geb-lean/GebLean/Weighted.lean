@@ -663,25 +663,34 @@ variable {C : Type u} [Category.{v} C]
 
 /--
 An `H`-restricted `G`-cowedge for an endodifunctor `G : Cᵒᵖ ⥤ C ⥤ C` and
-restriction functor `H : Cᵒᵖ ⥤ C ⥤ Type w`.
+restriction functor `H : Cᵒᵖ ⥤ C ⥤ Type v`.
 
-This consists of a carrier object and a family of morphisms parametrized
-by diagonal elements of `H`, satisfying a dinaturality condition.
--/
-structure RestrictedCowedge (G : Cᵒᵖ ⥤ C ⥤ C) (H : Cᵒᵖ ⥤ C ⥤ Type w) where
+This consists of a carrier object and a dinatural transformation from `H` to
+the slice profunctor `G ⇓ pt`.
+
+The universe of `H` is `v` (the morphism universe) to match the slice profunctor
+`G ⇓ pt : Cᵒᵖ ⥤ C ⥤ Type v`. -/
+structure RestrictedCowedge (G : Cᵒᵖ ⥤ C ⥤ C) (H : Cᵒᵖ ⥤ C ⥤ Type v) where
   /-- The carrier (summit) object. -/
   pt : C
-  /-- For each `A : C` and `a : H(A, A)`, a morphism `G(A, A) → pt`. -/
-  family (A : C) : (H.obj (Opposite.op A)).obj A → ((G.obj (Opposite.op A)).obj A ⟶ pt)
-  /-- Dinaturality: for `g : A → B` and `x : H(B, A)`, the two paths to `pt`
-  from `G(B, A)` agree. -/
-  dinaturality {A B : C} (g : A ⟶ B) (x : (H.obj (Opposite.op B)).obj A) :
-    (G.map g.op).app A ≫ family A ((H.map g.op).app A x) =
-    (G.obj (Opposite.op B)).map g ≫ family B ((H.obj (Opposite.op B)).map g x)
+  /-- The family of morphisms as a `ParanatSig H (G ⇓ pt)`. -/
+  family : ParanatSig H (G ⇓ pt)
+  /-- The dinaturality condition on the family. -/
+  isDinatural : IsDinatural H (G ⇓ pt) family
 
 namespace RestrictedCowedge
 
-variable {G : Cᵒᵖ ⥤ C ⥤ C} {H : Cᵒᵖ ⥤ C ⥤ Type w}
+variable {G : Cᵒᵖ ⥤ C ⥤ C} {H : Cᵒᵖ ⥤ C ⥤ Type v}
+
+/-- The explicit dinaturality equation: for `g : A → B` and `x : H(B, A)`,
+the two paths from `G(B, A)` to `pt` agree. -/
+theorem dinaturality' (c : RestrictedCowedge G H) {A B : C} (g : A ⟶ B)
+    (x : (H.obj (Opposite.op B)).obj A) :
+    (G.map g.op).app A ≫ c.family A ((H.map g.op).app A x) =
+    (G.obj (Opposite.op B)).map g ≫ c.family B ((H.obj (Opposite.op B)).map g x) := by
+  have dinat := c.isDinatural A B g x
+  simp only [Profunctor.lmap, Profunctor.rmap, sliceProfunctor] at dinat
+  exact dinat.symm
 
 /--
 A morphism between restricted cowedges is an arrow in `C` that commutes
@@ -765,12 +774,12 @@ G(g, A) ≫ Φ_A(H(g, A)(x)) = G(B, g) ≫ Φ_B(H(B, g)(x))
 This is exactly the dinaturality condition, and it expresses that the two ways
 to get from `G(B, A)` to `pt` agree. -/
 theorem RestrictedCowedge.dinaturality_as_paranaturality
-    {G : Cᵒᵖ ⥤ C ⥤ C} {H : Cᵒᵖ ⥤ C ⥤ Type w}
+    {G : Cᵒᵖ ⥤ C ⥤ C} {H : Cᵒᵖ ⥤ C ⥤ Type v}
     (c : RestrictedCowedge G H) {A B : C} (g : A ⟶ B)
     (x : (H.obj (Opposite.op B)).obj A) :
     (G.map g.op).app A ≫ c.family A ((H.map g.op).app A x) =
     (G.obj (Opposite.op B)).map g ≫ c.family B ((H.obj (Opposite.op B)).map g x) :=
-  c.dinaturality g x
+  c.dinaturality' g x
 
 /-- The family of a restricted cowedge, viewed as a `ParanatSig H (G ⇓ pt)`.
 
@@ -807,6 +816,58 @@ theorem sliceProfunctor_diagCompat_iff {G : Cᵒᵖ ⥤ C ⥤ C} (c : C)
   · intro h
     exact h
 
+/-!
+### Vene's dinaturality equals `IsDinatural` for the slice profunctor
+
+The restricted cowedge dinaturality condition from Vene's thesis is exactly
+the `IsDinatural` condition for the family viewed as `ParanatSig H (G ⇓ pt)`.
+
+For `f : I₀ → I₁` and `x : H(I₁, I₀)`:
+- Vene's condition compares two morphisms `G(I₁, I₀) → pt`
+- `IsDinatural` for `G ⇓ pt` also compares two morphisms `G(I₁, I₀) → pt`
+
+The slice profunctor `G ⇓ pt` has `(G ⇓ pt)(I, J) = Hom(G(J, I), pt)` (note the
+index swap), and its profunctor actions are:
+- `(G ⇓ pt).rmap f` = precomposition by `G.lmap f`
+- `(G ⇓ pt).lmap f` = precomposition by `G.rmap f`
+
+This swap makes the `IsDinatural` condition match Vene's formulation exactly.
+-/
+
+/-- The family of a restricted cowedge satisfies `IsDinatural H (G ⇓ pt)`.
+
+This shows that Vene's dinaturality condition is exactly the standard dinaturality
+condition for the family viewed as a transformation `H → G ⇓ pt` to the slice
+profunctor. -/
+theorem RestrictedCowedge.family_isDinatural {G : Cᵒᵖ ⥤ C ⥤ C} {H : Cᵒᵖ ⥤ C ⥤ Type v}
+    (c : RestrictedCowedge G H) : IsDinatural H (G ⇓ c.pt) c.family := by
+  intro I₀ I₁ f x
+  -- Expand IsDinatural: we need to show
+  -- (G ⇓ c.pt).lmap f (c.family I₁ (H.rmap f x)) =
+  -- (G ⇓ c.pt).rmap f (c.family I₀ (H.lmap f x))
+  -- which unfolds to:
+  -- (G.obj (op I₁)).map f ≫ c.family I₁ ((H.obj (op I₁)).map f x) =
+  -- (G.map f.op).app I₀ ≫ c.family I₀ ((H.map f.op).app I₀ x)
+  simp only [Profunctor.lmap, Profunctor.rmap, sliceProfunctor]
+  -- This is Vene's dinaturality with sides swapped
+  exact (c.dinaturality' f x).symm
+
+/-- Convert a restricted cowedge to a `Dinat` transformation `H → G ⇓ pt`. -/
+def RestrictedCowedge.toDinat {G : Cᵒᵖ ⥤ C ⥤ C} {H : Cᵒᵖ ⥤ C ⥤ Type v}
+    (c : RestrictedCowedge G H) : Dinat H (G ⇓ c.pt) where
+  app := c.family
+  dinatural := c.family_isDinatural
+
+/-- Construct a restricted cowedge from a carrier object and a `Dinat` transformation.
+
+Given `pt : C` and a dinatural transformation `α : H → G ⇓ pt`, we obtain a
+restricted cowedge with the same carrier and family. -/
+def RestrictedCowedge.ofDinat {G : Cᵒᵖ ⥤ C ⥤ C} {H : Cᵒᵖ ⥤ C ⥤ Type v}
+    (pt : C) (α : Dinat H (G ⇓ pt)) : RestrictedCowedge G H where
+  pt := pt
+  family := α.app
+  isDinatural := α.dinatural
+
 /-- Dinaturality of a restricted cowedge implies DiagCompat for the image under
 the family map, for pairs that factor through off-diagonal elements.
 
@@ -815,14 +876,14 @@ Given a restricted cowedge `c`, morphism `g : A → B`, and off-diagonal element
 `(H.obj (op B)).map g x` are DiagCompat in `H`, and their images under `c.family`
 are DiagCompat in `G ⇓ c.pt`. -/
 theorem RestrictedCowedge.family_preserves_diagCompat_offDiag
-    {G : Cᵒᵖ ⥤ C ⥤ C} {H : Cᵒᵖ ⥤ C ⥤ Type w}
+    {G : Cᵒᵖ ⥤ C ⥤ C} {H : Cᵒᵖ ⥤ C ⥤ Type v}
     (c : RestrictedCowedge G H) {A B : C} (g : A ⟶ B)
     (x : (H.obj (Opposite.op B)).obj A) :
     DiagCompat (G ⇓ c.pt) A B g
       (c.family A ((H.map g.op).app A x))
       (c.family B ((H.obj (Opposite.op B)).map g x)) := by
   rw [sliceProfunctor_diagCompat_iff]
-  exact c.dinaturality g x
+  exact c.dinaturality' g x
 
 /--
 The category of `H`-restricted `G`-cowedges.
@@ -830,7 +891,7 @@ The category of `H`-restricted `G`-cowedges.
 Objects are restricted cowedges `(C, Φ)` and morphisms are arrows `h : C → D`
 compatible with the family structure.
 -/
-instance RestrictedCowedgeCat (G : Cᵒᵖ ⥤ C ⥤ C) (H : Cᵒᵖ ⥤ C ⥤ Type w) :
+instance RestrictedCowedgeCat (G : Cᵒᵖ ⥤ C ⥤ C) (H : Cᵒᵖ ⥤ C ⥤ Type v) :
     Category (RestrictedCowedge G H) where
   Hom := RestrictedCowedge.Hom
   id := RestrictedCowedge.Hom.id
@@ -860,13 +921,13 @@ variable {C : Type u} [Category.{v} C]
 An `H`-restricted `G`-coend is an initial object in the category of
 `H`-restricted `G`-cowedges.
 -/
-abbrev IsRestrictedCoend (G : Cᵒᵖ ⥤ C ⥤ C) (H : Cᵒᵖ ⥤ C ⥤ Type w)
+abbrev IsRestrictedCoend (G : Cᵒᵖ ⥤ C ⥤ C) (H : Cᵒᵖ ⥤ C ⥤ Type v)
     (c : RestrictedCowedge G H) :=
   Limits.IsInitial c
 
 namespace IsRestrictedCoend
 
-variable {G : Cᵒᵖ ⥤ C ⥤ C} {H : Cᵒᵖ ⥤ C ⥤ Type w} {c : RestrictedCowedge G H}
+variable {G : Cᵒᵖ ⥤ C ⥤ C} {H : Cᵒᵖ ⥤ C ⥤ Type v} {c : RestrictedCowedge G H}
 
 /-- The universal morphism from a restricted coend to any restricted cowedge. -/
 def desc (hc : IsRestrictedCoend G H c)
@@ -893,7 +954,7 @@ end IsRestrictedCoend
 
 /-- A restricted coend cone bundles a cowedge with the proof it is initial.
 This is the data-carrying version, analogous to mathlib's `LimitCone`. -/
-structure RestrictedCoendCone (G : Cᵒᵖ ⥤ C ⥤ C) (H : Cᵒᵖ ⥤ C ⥤ Type w) where
+structure RestrictedCoendCone (G : Cᵒᵖ ⥤ C ⥤ C) (H : Cᵒᵖ ⥤ C ⥤ Type v) where
   /-- The underlying restricted cowedge. -/
   cowedge : RestrictedCowedge G H
   /-- The proof that the cowedge is initial. -/
@@ -902,13 +963,13 @@ structure RestrictedCoendCone (G : Cᵒᵖ ⥤ C ⥤ C) (H : Cᵒᵖ ⥤ C ⥤ T
 /-- A restricted coend exists if there is an initial restricted cowedge.
 This class carries the data directly (rather than asserting existence as a Prop)
 to support constructive extraction of the coend. -/
-class HasRestrictedCoend (G : Cᵒᵖ ⥤ C ⥤ C) (H : Cᵒᵖ ⥤ C ⥤ Type w) where
+class HasRestrictedCoend (G : Cᵒᵖ ⥤ C ⥤ C) (H : Cᵒᵖ ⥤ C ⥤ Type v) where
   /-- The cone containing the coend and proof of initiality. -/
   cone : RestrictedCoendCone G H
 
 namespace HasRestrictedCoend
 
-variable (G : Cᵒᵖ ⥤ C ⥤ C) (H : Cᵒᵖ ⥤ C ⥤ Type w) [HasRestrictedCoend G H]
+variable (G : Cᵒᵖ ⥤ C ⥤ C) (H : Cᵒᵖ ⥤ C ⥤ Type v) [HasRestrictedCoend G H]
 
 /-- The restricted coend object (carrier of the initial restricted cowedge). -/
 def restrictedCoend : RestrictedCowedge G H :=
