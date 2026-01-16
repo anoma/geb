@@ -1,6 +1,7 @@
 import Mathlib.CategoryTheory.Category.Basic
 import Mathlib.CategoryTheory.Limits.Cones
 import Mathlib.CategoryTheory.Limits.Shapes.End
+import GebLean.Paranatural
 import GebLean.Utilities.TwArrPresheaf
 
 /-!
@@ -552,6 +553,60 @@ end WeightedLimitColimit
 section RestrictedCowedges
 
 /-!
+## Slice profunctor
+
+Given an endodifunctor `G : Cᵒᵖ ⥤ C ⥤ C` and an object `c : C`, we define
+the *slice profunctor* `G ⇓ c : Cᵒᵖ ⥤ C ⥤ Type` by `(G ⇓ c)(A, B) := Hom(G(B, A), c)`.
+
+Note the argument swap: `G(B, A)` not `G(A, B)`. This ensures the correct
+variance for an endoprofunctor to Type.
+-/
+
+variable {C : Type u} [Category.{v} C]
+
+/-- The slice profunctor `G ⇓ c` for an endodifunctor `G : Cᵒᵖ ⥤ C ⥤ C` and
+object `c : C`. Defined as `(G ⇓ c)(A, B) := Hom_C(G(B, A), c)`.
+
+The covariant action (second argument): for `g : X → Y`, the map
+`Hom(G(X, A), c) → Hom(G(Y, A), c)` is precomposition by `G(g, A) : G(Y, A) → G(X, A)`.
+
+The contravariant action (first argument): for `f : A → B`, the map
+`Hom(G(X, B), c) → Hom(G(X, A), c)` is precomposition by `G(X, f) : G(X, A) → G(X, B)`.
+-/
+def sliceProfunctor (G : Cᵒᵖ ⥤ C ⥤ C) (c : C) : Cᵒᵖ ⥤ C ⥤ Type v where
+  obj A :=
+    { obj := fun X => (G.obj (Opposite.op X)).obj A.unop ⟶ c
+      map := fun g m => (G.map g.op).app A.unop ≫ m
+      map_id := fun X => by
+        funext m
+        simp only [op_id, Functor.map_id, NatTrans.id_app, Category.id_comp, types_id_apply]
+      map_comp := fun f g => by
+        funext m
+        simp only [op_comp, Functor.map_comp, NatTrans.comp_app, Category.assoc, types_comp_apply] }
+  map f :=
+    { app := fun X m => (G.obj (Opposite.op X)).map f.unop ≫ m
+      naturality := fun X Y g => by
+        funext m
+        simp only [types_comp_apply]
+        rw [← Category.assoc, ← Category.assoc]
+        congr 1
+        exact (G.map g.op).naturality f.unop }
+  map_id := fun A => by
+    ext X m
+    simp only [unop_id, Functor.map_id, Category.id_comp, NatTrans.id_app, types_id_apply]
+  map_comp := fun f g => by
+    ext X m
+    simp only [unop_comp, Functor.map_comp, Category.assoc, NatTrans.comp_app, types_comp_apply]
+
+/-- Notation for the slice profunctor. -/
+scoped infixl:70 " ⇓ " => sliceProfunctor
+
+/-- The diagonal of the slice profunctor at `A` is `Hom(G(A, A), c)`. -/
+theorem sliceProfunctor_diagApp (G : Cᵒᵖ ⥤ C ⥤ C) (c : C) (A : C) :
+    diagApp (G ⇓ c) A = ((G.obj (Opposite.op A)).obj A ⟶ c) := by
+  simp only [diagApp, sliceProfunctor, Opposite.unop_op]
+
+/-!
 ## Restricted cowedges
 
 Following Vene's thesis (2000), a *restricted cowedge* generalizes ordinary
@@ -630,6 +685,117 @@ def Hom.comp {c d e : RestrictedCowedge G H} (f : Hom c d) (g : Hom d e) :
   comm A a := by rw [← Category.assoc, f.comm, g.comm]
 
 end RestrictedCowedge
+
+/-!
+### Relationship between dinaturality and paranaturality
+
+For restricted cowedges, the dinaturality condition relates to paranaturality
+as follows:
+
+Given `g : A → B` and an off-diagonal element `x : H(B, A)`, define:
+- `a := H(g, id_A)(x) : H(A, A)`
+- `b := H(id_B, g)(x) : H(B, B)`
+
+These elements are always DiagCompat in `H`:
+```
+H(A, g)(a) = H(A, g)(H(g, A)(x)) = H(g, g)(x)
+H(g, B)(b) = H(g, B)(H(B, g)(x)) = H(g, g)(x)
+```
+
+The dinaturality condition then ensures that `Φ_A(a)` and `Φ_B(b)` satisfy
+a corresponding compatibility condition in the target.
+
+In general, paranaturality is stronger than dinaturality because not every
+DiagCompat pair of diagonal elements factors through an off-diagonal element.
+However, for the restricted cowedge universal property, dinaturality suffices.
+-/
+
+/-- Off-diagonal elements of `H` induce DiagCompat pairs of diagonal elements.
+Given `g : A → B` and `x : H(B, A)`, the elements `H(g, A)(x)` and `H(B, g)(x)`
+are DiagCompat via `g`. -/
+theorem offDiagonal_induces_diagCompat (H : Cᵒᵖ ⥤ C ⥤ Type w)
+    {A B : C} (g : A ⟶ B) (x : (H.obj (Opposite.op B)).obj A) :
+    DiagCompat H A B g ((H.map g.op).app A x) ((H.obj (Opposite.op B)).map g x) := by
+  simp only [DiagCompat]
+  -- Goal: H(A, g)(H(g, A)(x)) = H(g, B)(H(B, g)(x))
+  -- Use naturality of H.map g.op : H.obj (op B) ⟶ H.obj (op A)
+  -- Naturality says: (H.obj (op B)).map g ≫ (H.map g.op).app B
+  --                = (H.map g.op).app A ≫ (H.obj (op A)).map g
+  have nat := (H.map g.op).naturality g
+  -- nat : (H.obj (op B)).map g ≫ (H.map g.op).app B
+  --     = (H.map g.op).app A ≫ (H.obj (op A)).map g
+  -- Apply both sides to x
+  exact congrFun nat.symm x
+
+/-- The dinaturality condition for a restricted cowedge implies a paranaturality-like
+condition for pairs that factor through off-diagonal elements.
+
+Given a restricted cowedge `(pt, Φ)` and `g : A → B`, `x : H(B, A)`, the morphisms
+`Φ_A(H(g, A)(x))` and `Φ_B(H(B, g)(x))` satisfy:
+```
+G(g, A) ≫ Φ_A(H(g, A)(x)) = G(B, g) ≫ Φ_B(H(B, g)(x))
+```
+This is exactly the dinaturality condition, and it expresses that the two ways
+to get from `G(B, A)` to `pt` agree. -/
+theorem RestrictedCowedge.dinaturality_as_paranaturality
+    {G : Cᵒᵖ ⥤ C ⥤ C} {H : Cᵒᵖ ⥤ C ⥤ Type w}
+    (c : RestrictedCowedge G H) {A B : C} (g : A ⟶ B)
+    (x : (H.obj (Opposite.op B)).obj A) :
+    (G.map g.op).app A ≫ c.family A ((H.map g.op).app A x) =
+    (G.obj (Opposite.op B)).map g ≫ c.family B ((H.obj (Opposite.op B)).map g x) :=
+  c.dinaturality g x
+
+/-- The family of a restricted cowedge, viewed as a `ParanatSig H (G ⇓ pt)`.
+
+Since `diagApp H A = (H.obj (op A)).obj A` and
+`diagApp (G ⇓ pt) A = (G.obj (op A)).obj A ⟶ pt` (definitionally), the family
+type `(A : C) → diagApp H A → diagApp (G ⇓ pt) A` equals `ParanatSig H (G ⇓ pt)`.
+
+This provides the bridge between the cowedge formulation and the paranatural
+transformation machinery. Note that dinaturality implies paranaturality only
+for DiagCompat pairs that factor through off-diagonal elements.
+
+The universe constraint `v = w` is needed because `ParanatSig` requires both
+endoprofunctors to be valued in the same universe, and the slice profunctor
+`G ⇓ pt` outputs `Type v` (the morphism universe). -/
+def RestrictedCowedge.familyAsParanatSig {G : Cᵒᵖ ⥤ C ⥤ C} {H : Cᵒᵖ ⥤ C ⥤ Type v}
+    (c : RestrictedCowedge G H) : ParanatSig H (G ⇓ c.pt) :=
+  c.family
+
+/-- `DiagCompat` for the slice profunctor `G ⇓ c` at morphisms is exactly the
+dinaturality equation. This shows that `m₀ : Hom(G(A,A), c)` and `m₁ : Hom(G(B,B), c)`
+are DiagCompat iff the two paths from `G(B,A)` to `c` agree. -/
+theorem sliceProfunctor_diagCompat_iff {G : Cᵒᵖ ⥤ C ⥤ C} (c : C)
+    {A B : C} (f : A ⟶ B)
+    (m₀ : diagApp (G ⇓ c) A) (m₁ : diagApp (G ⇓ c) B) :
+    DiagCompat (G ⇓ c) A B f m₀ m₁ ↔
+    (G.map f.op).app A ≫ m₀ = (G.obj (Opposite.op B)).map f ≫ m₁ := by
+  simp only [DiagCompat, sliceProfunctor, Opposite.unop_op]
+  constructor
+  · intro h
+    have : ((G ⇓ c).obj (Opposite.op A)).map f m₀ =
+           ((G ⇓ c).map f.op).app B m₁ := h
+    simp only [sliceProfunctor] at this
+    exact this
+  · intro h
+    exact h
+
+/-- Dinaturality of a restricted cowedge implies DiagCompat for the image under
+the family map, for pairs that factor through off-diagonal elements.
+
+Given a restricted cowedge `c`, morphism `g : A → B`, and off-diagonal element
+`x : H(B, A)`, the induced diagonal elements `(H.map g.op).app A x` and
+`(H.obj (op B)).map g x` are DiagCompat in `H`, and their images under `c.family`
+are DiagCompat in `G ⇓ c.pt`. -/
+theorem RestrictedCowedge.family_preserves_diagCompat_offDiag
+    {G : Cᵒᵖ ⥤ C ⥤ C} {H : Cᵒᵖ ⥤ C ⥤ Type w}
+    (c : RestrictedCowedge G H) {A B : C} (g : A ⟶ B)
+    (x : (H.obj (Opposite.op B)).obj A) :
+    DiagCompat (G ⇓ c.pt) A B g
+      (c.family A ((H.map g.op).app A x))
+      (c.family B ((H.obj (Opposite.op B)).map g x)) := by
+  rw [sliceProfunctor_diagCompat_iff]
+  exact c.dinaturality g x
 
 /--
 The category of `H`-restricted `G`-cowedges.
