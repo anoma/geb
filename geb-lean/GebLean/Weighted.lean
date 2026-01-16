@@ -601,6 +601,33 @@ def sliceProfunctor (G : Cᵒᵖ ⥤ C ⥤ C) (c : C) : Cᵒᵖ ⥤ C ⥤ Type v
 /-- Notation for the slice profunctor. -/
 scoped infixl:70 " ⇓ " => sliceProfunctor
 
+/-- The slice profunctor construction is itself functorial in `c : C`.
+Given `G : Cᵒᵖ ⥤ C ⥤ C`, this defines a functor `C ⥤ (Cᵒᵖ ⥤ C ⥤ Type v)`.
+
+For a morphism `f : c ⟶ c'`, the induced natural transformation
+`(G ⇓ c) ⟶ (G ⇓ c')` acts by post-composition with `f`. -/
+def sliceProfunctorFunctor (G : Cᵒᵖ ⥤ C ⥤ C) : C ⥤ (Cᵒᵖ ⥤ C ⥤ Type v) where
+  obj c := G ⇓ c
+  map f :=
+    { app := fun A =>
+        { app := fun X m => m ≫ f
+          naturality := fun X Y g => by
+            funext m
+            simp only [types_comp_apply, sliceProfunctor, Category.assoc] }
+      naturality := fun A B g => by
+        ext X m
+        simp only [FunctorToTypes.comp, sliceProfunctor, Category.assoc] }
+  map_id c := by
+    ext A X m
+    simp only [Category.comp_id, NatTrans.id_app, types_id_apply]
+  map_comp f g := by
+    ext A X m
+    simp only [FunctorToTypes.comp, Category.assoc, NatTrans.comp_app]
+
+/-- `sliceProfunctor G c` equals the application of `sliceProfunctorFunctor G` at `c`. -/
+theorem sliceProfunctor_eq_functor_obj (G : Cᵒᵖ ⥤ C ⥤ C) (c : C) :
+    sliceProfunctor G c = (sliceProfunctorFunctor G).obj c := rfl
+
 /-- The diagonal of the slice profunctor at `A` is `Hom(G(A, A), c)`. -/
 theorem sliceProfunctor_diagApp (G : Cᵒᵖ ⥤ C ⥤ C) (c : C) (A : C) :
     diagApp (G ⇓ c) A = ((G.obj (Opposite.op A)).obj A ⟶ c) := by
