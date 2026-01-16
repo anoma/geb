@@ -549,4 +549,174 @@ The relationship to twisted arrow categories:
 
 end WeightedLimitColimit
 
+section RestrictedCowedges
+
+/-!
+## Restricted cowedges
+
+Following Vene's thesis (2000), a *restricted cowedge* generalizes ordinary
+cowedges by parametrizing the injection morphisms with a "restriction" functor.
+
+Given:
+- `G : Cᵒᵖ ⥤ C ⥤ C`, an endodifunctor
+- `H : Cᵒᵖ ⥤ C ⥤ Type*`, a difunctor to Type (the "restriction")
+
+An `H`-restricted `G`-cowedge `(C, Φ)` consists of:
+- An object `C` (the carrier/summit)
+- A family `Φ_A : H(A, A) → Hom(G(A, A), C)` satisfying dinaturality
+
+The dinaturality condition states that for `g : A → B` and `x : H(B, A)`:
+```
+Φ_A(H(g, id)(x)) ∘ G(g, id) = Φ_B(H(id, g)(x)) ∘ G(id, g)
+```
+
+The `H`-restricted `G`-cowedges form a category `RestrictedCowedgeCat G H`
+where morphisms are arrows `h : C → D` such that for all `A` and `a ∈ H(A,A)`:
+```
+h ∘ Φ_A(a) = Ψ_A(a)
+```
+-/
+
+variable {C : Type u} [Category.{v} C]
+
+/--
+An `H`-restricted `G`-cowedge for an endodifunctor `G : Cᵒᵖ ⥤ C ⥤ C` and
+restriction functor `H : Cᵒᵖ ⥤ C ⥤ Type w`.
+
+This consists of a carrier object and a family of morphisms parametrized
+by diagonal elements of `H`, satisfying a dinaturality condition.
+-/
+structure RestrictedCowedge (G : Cᵒᵖ ⥤ C ⥤ C) (H : Cᵒᵖ ⥤ C ⥤ Type w) where
+  /-- The carrier (summit) object. -/
+  pt : C
+  /-- For each `A : C` and `a : H(A, A)`, a morphism `G(A, A) → pt`. -/
+  family (A : C) : (H.obj (Opposite.op A)).obj A → ((G.obj (Opposite.op A)).obj A ⟶ pt)
+  /-- Dinaturality: for `g : A → B` and `x : H(B, A)`, the two paths to `pt`
+  from `G(B, A)` agree. -/
+  dinaturality {A B : C} (g : A ⟶ B) (x : (H.obj (Opposite.op B)).obj A) :
+    (G.map g.op).app A ≫ family A ((H.map g.op).app A x) =
+    (G.obj (Opposite.op B)).map g ≫ family B ((H.obj (Opposite.op B)).map g x)
+
+namespace RestrictedCowedge
+
+variable {G : Cᵒᵖ ⥤ C ⥤ C} {H : Cᵒᵖ ⥤ C ⥤ Type w}
+
+/--
+A morphism between restricted cowedges is an arrow in `C` that commutes
+with all family morphisms (pointwise condition).
+-/
+@[ext]
+structure Hom (c d : RestrictedCowedge G H) where
+  /-- The underlying morphism in `C`. -/
+  hom : c.pt ⟶ d.pt
+  /-- Compatibility: for all `A` and `a ∈ H(A, A)`, composition with `hom`
+  transforms `c.family` to `d.family`. -/
+  comm (A : C) (a : (H.obj (Opposite.op A)).obj A) :
+    c.family A a ≫ hom = d.family A a
+
+attribute [simp] Hom.comm
+
+/-- The identity morphism on a restricted cowedge. -/
+@[simps]
+def Hom.id (c : RestrictedCowedge G H) : Hom c c where
+  hom := 𝟙 c.pt
+  comm _ _ := Category.comp_id _
+
+/-- Composition of restricted cowedge morphisms. -/
+@[simps]
+def Hom.comp {c d e : RestrictedCowedge G H} (f : Hom c d) (g : Hom d e) :
+    Hom c e where
+  hom := f.hom ≫ g.hom
+  comm A a := by rw [← Category.assoc, f.comm, g.comm]
+
+end RestrictedCowedge
+
+/--
+The category of `H`-restricted `G`-cowedges.
+
+Objects are restricted cowedges `(C, Φ)` and morphisms are arrows `h : C → D`
+compatible with the family structure.
+-/
+instance RestrictedCowedgeCat (G : Cᵒᵖ ⥤ C ⥤ C) (H : Cᵒᵖ ⥤ C ⥤ Type w) :
+    Category (RestrictedCowedge G H) where
+  Hom := RestrictedCowedge.Hom
+  id := RestrictedCowedge.Hom.id
+  comp := RestrictedCowedge.Hom.comp
+  id_comp f := by ext; simp [RestrictedCowedge.Hom.comp, RestrictedCowedge.Hom.id]
+  comp_id f := by ext; simp [RestrictedCowedge.Hom.comp, RestrictedCowedge.Hom.id]
+  assoc f g h := by ext; simp [RestrictedCowedge.Hom.comp]
+
+end RestrictedCowedges
+
+section RestrictedCoends
+
+/-!
+## Restricted coends
+
+A *restricted coend* is an `H`-restricted `G`-cowedge that is initial in
+the category of restricted cowedges.
+
+This generalizes ordinary coends: when `H` is the constant functor to a
+singleton type, an `H`-restricted `G`-coend is exactly the ordinary coend
+`∫^A G(A, A)`.
+-/
+
+variable {C : Type u} [Category.{v} C]
+
+/--
+An `H`-restricted `G`-coend is an initial object in the category of
+`H`-restricted `G`-cowedges.
+-/
+abbrev IsRestrictedCoend (G : Cᵒᵖ ⥤ C ⥤ C) (H : Cᵒᵖ ⥤ C ⥤ Type w)
+    (c : RestrictedCowedge G H) :=
+  Limits.IsInitial c
+
+namespace IsRestrictedCoend
+
+variable {G : Cᵒᵖ ⥤ C ⥤ C} {H : Cᵒᵖ ⥤ C ⥤ Type w} {c : RestrictedCowedge G H}
+
+/-- The universal morphism from a restricted coend to any restricted cowedge. -/
+noncomputable def desc (hc : IsRestrictedCoend G H c)
+    (d : RestrictedCowedge G H) : c ⟶ d :=
+  hc.to d
+
+/-- The underlying morphism in `C` from a restricted coend to any cowedge. -/
+noncomputable def descHom (hc : IsRestrictedCoend G H c)
+    (d : RestrictedCowedge G H) : c.pt ⟶ d.pt :=
+  (hc.desc d).hom
+
+/-- Any two morphisms from a restricted coend are equal (uniqueness). -/
+theorem homExt (hc : IsRestrictedCoend G H c)
+    {d : RestrictedCowedge G H} (f g : c ⟶ d) : f = g :=
+  Limits.IsInitial.hom_ext hc f g
+
+/-- Two restricted coends are isomorphic (uniqueness up to isomorphism). -/
+noncomputable def toUniqueUpToIso {c c' : RestrictedCowedge G H}
+    (hc : IsRestrictedCoend G H c) (hc' : IsRestrictedCoend G H c') :
+    c ≅ c' :=
+  Limits.IsInitial.uniqueUpToIso hc hc'
+
+end IsRestrictedCoend
+
+/-- A restricted coend exists if there is an initial restricted cowedge. -/
+class HasRestrictedCoend (G : Cᵒᵖ ⥤ C ⥤ C) (H : Cᵒᵖ ⥤ C ⥤ Type w) : Prop where
+  exists_initial : ∃ c : RestrictedCowedge G H, Nonempty (IsRestrictedCoend G H c)
+
+namespace HasRestrictedCoend
+
+variable (G : Cᵒᵖ ⥤ C ⥤ C) (H : Cᵒᵖ ⥤ C ⥤ Type w) [HasRestrictedCoend G H]
+
+/-- The restricted coend object (carrier of the initial restricted cowedge). -/
+noncomputable def restrictedCoend : RestrictedCowedge G H :=
+  Classical.choose HasRestrictedCoend.exists_initial
+
+/-- The restricted coend is initial. -/
+noncomputable def restrictedCoendIsInitial :
+    IsRestrictedCoend G H (restrictedCoend G H) :=
+  Classical.choice (Classical.choose_spec HasRestrictedCoend.exists_initial)
+
+end HasRestrictedCoend
+
+end RestrictedCoends
+
 end GebLean
