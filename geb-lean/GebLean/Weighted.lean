@@ -1775,16 +1775,24 @@ Specifically, for `f : X ⟶ Y` in `(W.Elements)ᵒᵖ`:
 - But we need: morphism from X's output to Y's output
 
 This means `P(twDom -, twCod -)` does not naturally extend to a profunctor on
-W.Elements with the expected variance. The weighted cone/cocone approach
-(weightedWedgeElementsEquiv and weightedCowedgeElementsEquiv) remains the
-canonical way to reduce weighted wedges to ordinary cones/cocones.
+W.Elements with the expected variance.
 
-Alternative approaches that might work:
-1. Use CoTwistedArrow instead of TwistedArrow (reversed domain variance)
-2. Work with cowedges instead of wedges (dual variance structure)
-3. Define on a twisted product category that corrects the variance
-4. Restrict to weights of the form `profunctorOnTwistedArrow C Q` and use
-   `(profunctorOnTwistedArrow C Q).Elements` as the domain category
+### Deeper Explanation: Promonads
+
+For a weighted wedge to reduce to an ordinary wedge over some profunctor
+`P' : C'ᵒᵖ ⥤ C' ⥤ D`, we need `TwistedArrow C' ≅ W.Elements` for some `C'`.
+But `TwistedArrow C'` is itself the category of elements of the hom-profunctor
+`Hom_{C'} : C'ᵒᵖ × C' → Set`.
+
+So this condition asks that `W` be (isomorphic to) the hom-profunctor of some
+category. Not every profunctor is a hom-profunctor - a profunctor needs the
+structure of a **promonad** (a monad in the bicategory of profunctors) to
+correspond to some category's hom-functor. The variance obstruction is a
+symptom of this deeper structural requirement.
+
+The weighted cone/cocone approach (weightedWedgeElementsEquiv and
+weightedCowedgeElementsEquiv) remains the canonical reduction. Reduction to
+ordinary wedges requires the weight to be a hom-profunctor.
 -/
 
 end WeightedWedgeAsProfunctor

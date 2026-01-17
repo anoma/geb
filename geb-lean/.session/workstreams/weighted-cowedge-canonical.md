@@ -703,12 +703,26 @@ Specifically, for `f : X ⟶ Y` in `(W.Elements)ᵒᵖ`:
 - We need a morphism from X's output to Y's output
 - But `P.map (twDomArr f.unop.val).op` gives Y's output to X's output
 
-**Conclusion**: The weighted cone/cocone approach (Tasks 16-17) remains the
-canonical way to reduce weighted wedges to ordinary cones/cocones. The direct
-reduction to ordinary wedges over a derived profunctor does not work due to
-this variance obstruction.
+**Deeper Explanation**:
 
-**Location**: Documented in `GebLean/Weighted.lean` section `WeightedWedgeAsProfunctor`
+The condition `TwistedArrow C' ≅ W.Elements` for some category `C'` is
+equivalent to asking that `W` be (isomorphic to) the **hom-profunctor** of
+some category, since `TwistedArrow C'` is itself the category of elements of
+`Hom_{C'} : C'^op × C' → Set`.
+
+Not every profunctor is a hom-profunctor. A profunctor requires additional
+structure - specifically, the structure of a **promonad** (a monad in the
+bicategory of profunctors) - to be guaranteed to correspond to some
+category's hom-functor. The variance obstruction is a symptom of this
+deeper structural requirement.
+
+**Conclusion**: The weighted cone/cocone approach (Tasks 16-17) remains the
+canonical way to reduce weighted wedges to ordinary cones/cocones. Reduction
+to ordinary wedges requires the weight to be a hom-profunctor (equivalently,
+a promonad), which arbitrary weights are not.
+
+**Location**: Documented in `GebLean/Weighted.lean` section
+`WeightedWedgeAsProfunctor`
 
 ### 19. Weighted Cowedges as Full Subcategory of Strong Restricted Cowedges
 
