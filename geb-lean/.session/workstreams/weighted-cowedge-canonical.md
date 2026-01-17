@@ -679,17 +679,36 @@ for some `C'`. A natural candidate:
 - Then diagonal `P'((tw, w), (tw, w)) = P(tw.src, tw.tgt)` matches the weighted
   wedge target
 
-Steps:
+**Status**: Completed (negative result)
 
-- Define `weightedWedgeProfunctor W P : (W.Elements)ᵒᵖ ⥤ W.Elements ⥤ D`
-- Define conversion
-  `weightedWedgeToElementsWedge :`
-  `WeightedWedge W P → Wedge (weightedWedgeProfunctor W P)`
-- Define inverse conversion
-- Prove these form a categorical equivalence
-- Investigate whether `TwistedArrow (W.Elements)` relates to our diagram
+**Findings**: Variance Obstruction
 
-**Status**: Not started
+The naive approach of defining `P'((tw₁, w₁), (tw₂, w₂)) := P(twDom tw₁, twCod tw₂)`
+does NOT extend to a profunctor on `W.Elements` with the correct variance.
+
+For a TwistedArrow morphism `f : tw₁ ⟶ tw₂`:
+
+- `twDomArr f : twDom tw₂ ⟶ twDom tw₁` (contravariant in domain)
+- `twCodArr f : twCod tw₁ ⟶ twCod tw₂` (covariant in codomain)
+
+For `P : Cᵒᵖ ⥤ C ⥤ D` (contravariant in first arg, covariant in second):
+
+- The second argument works: `twCodArr` is covariant, matching P's second slot
+- The first argument fails: `twDomArr` is contravariant, and when composed with
+  P's contravariance and the opposite category structure, we get the wrong
+  direction for the overall morphism
+
+Specifically, for `f : X ⟶ Y` in `(W.Elements)ᵒᵖ`:
+
+- We need a morphism from X's output to Y's output
+- But `P.map (twDomArr f.unop.val).op` gives Y's output to X's output
+
+**Conclusion**: The weighted cone/cocone approach (Tasks 16-17) remains the
+canonical way to reduce weighted wedges to ordinary cones/cocones. The direct
+reduction to ordinary wedges over a derived profunctor does not work due to
+this variance obstruction.
+
+**Location**: Documented in `GebLean/Weighted.lean` section `WeightedWedgeAsProfunctor`
 
 ### 19. Weighted Cowedges as Full Subcategory of Strong Restricted Cowedges
 

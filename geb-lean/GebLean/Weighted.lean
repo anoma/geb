@@ -1740,6 +1740,53 @@ def weightedCowedgeElementsEquiv (W : (CoTwistedArrow C)ᵒᵖ ⥤ Type v₅)
 
 end WeightedWedgeCowedgeEquivalences
 
+section WeightedWedgeAsProfunctor
+
+/-!
+## Weighted Wedges and Derived Profunctors: Variance Obstruction
+
+We investigate whether weighted wedges can alternatively be characterized as
+ordinary wedges over a profunctor defined on the category of elements.
+
+The naive idea is: given `W : TwistedArrow C ⥤ Type v` and `P : Cᵒᵖ ⥤ C ⥤ D`,
+define a profunctor `P' : (W.Elements)ᵒᵖ ⥤ W.Elements ⥤ D` by:
+
+  `P'((tw₁, w₁), (tw₂, w₂)) := P(twDom tw₁, twCod tw₂)`
+
+This satisfies the diagonal condition:
+`P'((tw, w), (tw, w)) = P(twDom tw, twCod tw)`, matching weighted wedge targets.
+
+However, there is a variance obstruction for the functorial action:
+
+For a TwistedArrow morphism `f : tw₁ ⟶ tw₂`:
+- `twDomArr f : twDom tw₂ ⟶ twDom tw₁` (contravariant in the domain)
+- `twCodArr f : twCod tw₁ ⟶ twCod tw₂` (covariant in the codomain)
+
+For `P : Cᵒᵖ ⥤ C ⥤ D` (contravariant in first arg, covariant in second):
+- The second argument works: `twCodArr` is covariant, matching P's second slot
+- The first argument fails: `twDomArr` is contravariant, but when composed with
+  P's contravariance and the opposite category structure, we get the wrong
+  direction for the overall morphism
+
+Specifically, for `f : X ⟶ Y` in `(W.Elements)ᵒᵖ`:
+- `f.unop.val : Y.unop.fst ⟶ X.unop.fst` in TwistedArrow
+- `twDomArr f.unop.val : twDom X.unop.fst ⟶ twDom Y.unop.fst`
+- After `.op` and `P.map`: morphism from Y's output to X's output
+- But we need: morphism from X's output to Y's output
+
+This means `P(twDom -, twCod -)` does not naturally extend to a profunctor on
+W.Elements with the expected variance. The weighted cone/cocone approach
+(weightedWedgeElementsEquiv and weightedCowedgeElementsEquiv) remains the
+canonical way to reduce weighted wedges to ordinary cones/cocones.
+
+Alternative approaches that might work:
+1. Use CoTwistedArrow instead of TwistedArrow (reversed domain variance)
+2. Work with cowedges instead of wedges (dual variance structure)
+3. Define on a twisted product category that corrects the variance
+-/
+
+end WeightedWedgeAsProfunctor
+
 section RestrictedCowedges
 
 /-!
