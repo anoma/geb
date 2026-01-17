@@ -265,6 +265,21 @@ lemma coTwObjMk_arr {dom cod : C} (arr : cod ⟶ dom) :
   simp only [homPreOpObjOut, homPreOpObjIn]
 
 /--
+The diagonal co-twisted arrow for an object `A : C`, which is the identity
+morphism `𝟙 A` viewed as a co-twisted arrow from `A` to `A`.
+-/
+abbrev diagCoTwArr (A : C) : CoTwistedArrow C := coTwObjMk (𝟙 A)
+
+@[simp]
+lemma diagCoTwArr_dom (A : C) : coTwDom (diagCoTwArr A) = A := rfl
+
+@[simp]
+lemma diagCoTwArr_cod (A : C) : coTwCod (diagCoTwArr A) = A := rfl
+
+@[simp]
+lemma diagCoTwArr_arr (A : C) : coTwArr (diagCoTwArr A) = 𝟙 A := coTwObjMk_arr (𝟙 A)
+
+/--
 Construct a morphism in `CoTwistedArrow C` from morphisms on domains and
 codomains.
 
@@ -415,8 +430,7 @@ theorem twistedArrowRoundTrip_map_domArr {x y : TwistedArrow C} (f : x ⟶ y) :
     twDomArr ((twistedArrowToTwistedArrowOp ⋙ twistedArrowOpToTwistedArrow).map f) =
     twDomArr f := by
   simp only [Functor.comp_map, twistedArrowToTwistedArrowOp, twistedArrowOpToTwistedArrow,
-    twHomMk_domArr, twHomMk_codArr]
-  exact Quiver.Hom.op_unop (twDomArr f)
+    twHomMk_domArr, twHomMk_codArr, Quiver.Hom.unop_op]
 
 /--
 Round-trip preserves morphisms on codomain component.
@@ -426,8 +440,7 @@ theorem twistedArrowRoundTrip_map_codArr {x y : TwistedArrow C} (f : x ⟶ y) :
     twCodArr ((twistedArrowToTwistedArrowOp ⋙ twistedArrowOpToTwistedArrow).map f) =
     twCodArr f := by
   simp only [Functor.comp_map, twistedArrowToTwistedArrowOp, twistedArrowOpToTwistedArrow,
-    twHomMk_domArr, twHomMk_codArr]
-  exact Quiver.Hom.op_unop (twCodArr f)
+    twHomMk_domArr, twHomMk_codArr, Quiver.Hom.unop_op]
 
 /--
 Round-trip preserves morphisms on domain component (opposite direction).
@@ -437,8 +450,7 @@ theorem twistedArrowOpRoundTrip_map_domArr {x y : TwistedArrow (Cᵒᵖ)} (f : x
     twDomArr ((twistedArrowOpToTwistedArrow ⋙ twistedArrowToTwistedArrowOp).map f) =
     twDomArr f := by
   simp only [Functor.comp_map, twistedArrowToTwistedArrowOp, twistedArrowOpToTwistedArrow,
-    twHomMk_domArr, twHomMk_codArr]
-  exact Quiver.Hom.unop_op (twDomArr f)
+    twHomMk_domArr, twHomMk_codArr, Quiver.Hom.op_unop]
 
 /--
 Round-trip preserves morphisms on codomain component (opposite direction).
@@ -448,8 +460,29 @@ theorem twistedArrowOpRoundTrip_map_codArr {x y : TwistedArrow (Cᵒᵖ)} (f : x
     twCodArr ((twistedArrowOpToTwistedArrow ⋙ twistedArrowToTwistedArrowOp).map f) =
     twCodArr f := by
   simp only [Functor.comp_map, twistedArrowToTwistedArrowOp, twistedArrowOpToTwistedArrow,
-    twHomMk_domArr, twHomMk_codArr]
-  exact Quiver.Hom.unop_op (twCodArr f)
+    twHomMk_domArr, twHomMk_codArr, Quiver.Hom.op_unop]
+
+/--
+The round-trip `inverse ⋙ functor` is definitionally the identity functor.
+-/
+theorem twistedArrowRoundTrip_map {x y : TwistedArrow C} (f : x ⟶ y) :
+    (twistedArrowToTwistedArrowOp ⋙ twistedArrowOpToTwistedArrow).map f = f := by
+  apply twHom_ext
+  · simp only [Functor.comp_map, twistedArrowToTwistedArrowOp, twistedArrowOpToTwistedArrow,
+      twHomMk_domArr, twHomMk_codArr, Quiver.Hom.unop_op]
+  · simp only [Functor.comp_map, twistedArrowToTwistedArrowOp, twistedArrowOpToTwistedArrow,
+      twHomMk_domArr, twHomMk_codArr, Quiver.Hom.unop_op]
+
+/--
+The round-trip `functor ⋙ inverse` is definitionally the identity functor.
+-/
+theorem twistedArrowOpRoundTrip_map {x y : TwistedArrow (Cᵒᵖ)} (f : x ⟶ y) :
+    (twistedArrowOpToTwistedArrow ⋙ twistedArrowToTwistedArrowOp).map f = f := by
+  apply twHom_ext
+  · simp only [Functor.comp_map, twistedArrowToTwistedArrowOp, twistedArrowOpToTwistedArrow,
+      twHomMk_domArr, twHomMk_codArr, Quiver.Hom.op_unop]
+  · simp only [Functor.comp_map, twistedArrowToTwistedArrowOp, twistedArrowOpToTwistedArrow,
+      twHomMk_domArr, twHomMk_codArr, Quiver.Hom.op_unop]
 
 /--
 The twisted arrow category is self-dual: `TwistedArrow C ≌ TwistedArrow (Cᵒᵖ)`.
@@ -460,23 +493,15 @@ def twistedArrowEquivTwistedArrowOp : TwistedArrow C ≌ TwistedArrow (Cᵒᵖ) 
   unitIso := NatIso.ofComponents
     (fun tw => eqToIso (twistedArrowRoundTrip_obj tw).symm)
     (fun {x y} f => by
-      simp only [eqToIso.hom, Functor.id_obj, Functor.comp_obj, Functor.id_map,
-        Functor.comp_map]
-      apply twHom_ext
-      · simp only [twDomArr_comp, twDomArr_eqToHom, twistedArrowRoundTrip_obj,
-          twistedArrowRoundTrip_map_domArr, Category.comp_id, Category.id_comp]
-      · simp only [twCodArr_comp, twCodArr_eqToHom, twistedArrowRoundTrip_obj,
-          twistedArrowRoundTrip_map_codArr, Category.comp_id, Category.id_comp])
+      simp only [eqToIso.hom, Functor.id_obj, Functor.comp_obj, Functor.id_map]
+      rw [eqToHom_refl, eqToHom_refl, Category.id_comp, Category.comp_id]
+      exact (twistedArrowRoundTrip_map f).symm)
   counitIso := NatIso.ofComponents
     (fun tw => eqToIso (twistedArrowOpRoundTrip_obj tw))
     (fun {x y} f => by
-      simp only [eqToIso.hom, Functor.comp_obj, Functor.id_obj, Functor.comp_map,
-        Functor.id_map]
-      apply twHom_ext
-      · simp only [twDomArr_comp, twDomArr_eqToHom, twistedArrowOpRoundTrip_obj,
-          twistedArrowOpRoundTrip_map_domArr, Category.comp_id, Category.id_comp]
-      · simp only [twCodArr_comp, twCodArr_eqToHom, twistedArrowOpRoundTrip_obj,
-          twistedArrowOpRoundTrip_map_codArr, Category.comp_id, Category.id_comp])
+      simp only [eqToIso.hom, Functor.comp_obj, Functor.id_obj, Functor.id_map]
+      rw [eqToHom_refl, eqToHom_refl, Category.id_comp, Category.comp_id]
+      exact twistedArrowOpRoundTrip_map f)
 
 end TwistedArrowSelfDualityUnprimed
 
@@ -1183,7 +1208,7 @@ def twistedArrowOp'ToTwistedArrow : TwistedArrowOp' C ⥤ TwistedArrow' C where
 Round-trip on objects: `TwistedArrow' → TwistedArrowOp' → TwistedArrow'`
 returns the same object.
 -/
-theorem twistedArrowRoundTrip_obj (tw : TwistedArrow' C) :
+theorem twistedArrow'RoundTrip_obj (tw : TwistedArrow' C) :
     twistedArrowOp'ToTwistedArrow.obj (twistedArrowToTwistedArrowOp'.obj tw) = tw := by
   simp only [twistedArrowToTwistedArrowOp', twistedArrowOp'ToTwistedArrow,
     twObjMk', twOpObjMk', twArr', twOpArr', twOpCod', twOpDom', twCod', twDom']
@@ -1210,7 +1235,7 @@ def twistedArrowIsoTwistedArrowOp' : TwistedArrow' C ≅Cat TwistedArrowOp' C wh
   inv := twistedArrowOp'ToTwistedArrow.toCatHom
   hom_inv_id := Cat.Hom.ext <| by
     fapply Functor.ext
-    · exact twistedArrowRoundTrip_obj
+    · exact twistedArrow'RoundTrip_obj
     · intros tw tw' f
       apply twHom'_ext
       · unfold twistedArrowToTwistedArrowOp' twistedArrowOp'ToTwistedArrow
