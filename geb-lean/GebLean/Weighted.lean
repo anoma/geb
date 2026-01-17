@@ -3336,6 +3336,32 @@ For the category of elements, two perspectives arise:
 These should be equivalent via the category equivalence
 `CoTwistedArrow C ≌ (TwistedArrow Cᵒᵖ)ᵒᵖ`, but the choice affects the
 concrete morphism directions.
+
+### Relationship with Strong Restricted Cowedges
+
+Strong restricted cowedges (`StrongRestrictedCowedge G H`) and weighted cowedges
+(`WeightedCowedge W G`) are structurally different:
+
+1. **Variance**: `WeightedCowedge` requires a presheaf weight
+   `(CoTwistedArrow C)ᵒᵖ ⥤ Type v`, while the diagonal values `H(A,A)` of a
+   bifunctor H do not form a presheaf on `CoTwistedArrow C` in any canonical way.
+
+2. **Naturality conditions**: WeightedCocone naturality relates single weight
+   elements via the weight's functorial action. Paranaturality relates pairs
+   of diagonal elements that satisfy a compatibility condition (DiagCompat).
+   These are different types of coherence.
+
+3. **Data scope**: WeightedCowedges have data at ALL co-twisted arrows;
+   StrongRestrictedCowedges only have data at diagonals.
+
+4. **DiagElem variance**: The category `DiagElem H` has morphisms going in the
+   same direction as C (covariant), while presheaf weights for cocones are
+   contravariant. This covariant/contravariant mismatch prevents embedding.
+
+Strong restricted cowedges are best understood as capturing "diagonal
+paranaturality" while weighted cowedges capture "full functorial naturality"
+over the twisted arrow category. These represent different mathematical
+structures rather than a subcategory relationship.
 -/
 
 end WeightedCowedgeEmbedding

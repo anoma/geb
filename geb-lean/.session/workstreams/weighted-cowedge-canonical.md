@@ -1163,6 +1163,105 @@ compatibility condition in `TwCoprArrElem` restricts morphisms more than the
 transport condition in `W.Elements`. The weighted wedge naturality conditions
 cannot be recovered from wedge paranaturality over the restricted category.
 
+### Task 25: Relationship Between Weighted Cowedges and Strong Restricted Cowedges
+
+**Goal**: Determine whether weighted cowedges (when `D = C`) form a full
+subcategory of strong restricted cowedges using `sliceWeightCovariant`.
+
+**Analysis**:
+
+#### Structure Comparison
+
+**WeightedCowedge W G** (where `W : (CoTwistedArrow C)ᵒᵖ ⥤ Type v`):
+
+- `pt : C`
+- For each `tw : CoTwistedArrow C` and `w : W.obj (op tw)`, a morphism
+  `G(coTwDom tw, coTwCod tw) → pt`
+- Naturality: for `m : tw → tw'` and `w : W.obj (op tw')`:
+  `profunctorOnCoTwistedArrow G.map m ≫ leg tw' w = leg tw (W.map m.op w)`
+
+**StrongRestrictedCowedge G H**:
+
+- `pt : C`
+- `family : ParanatSig H (G ⇓ pt)` - for each `A` and `h ∈ H(A,A)`, a morphism
+  `G(A,A) → pt`
+- `isParanatural`: for DiagCompat pairs `h₀ ∈ H(I₀,I₀)`, `h₁ ∈ H(I₁,I₁)` with
+  `H(I₀, f)(h₀) = H(f, I₁)(h₁)`, we have
+  `G(I₀, f)(family h₀) = G(f, I₁)(family h₁)`
+
+#### Variance Analysis
+
+**sliceWeightCovariant G c**: `CoTwistedArrow C ⥤ Type v` (copresheaf/covariant)
+
+- At diagonals: `sliceWeightCovariant G c (diagCoTwArr A) = G(A,A) → c`
+- WeightedCowedge needs: `(CoTwistedArrow C)ᵒᵖ ⥤ Type v` (presheaf/contravariant)
+
+The variance mismatch prevents direct use of `sliceWeightCovariant` as a
+weight for `WeightedCowedge`. However, via the equivalence
+`CoTwistedArrow C ≌ (TwistedArrow Cᵒᵖ)ᵒᵖ`, we can view `sliceWeightCovariant`
+as a presheaf on `TwistedArrow Cᵒᵖ`, usable for weighted wedges (not cowedges).
+
+#### Morphism Structure in CoTwistedArrow
+
+Morphisms between diagonals `diagCoTwArr I₀ → diagCoTwArr I₁`:
+
+- Consist of `(f, f)` where `f : I₀ → I₁`
+- The profunctor map: `profunctorOnCoTwistedArrow G.map (f,f)` gives
+  `G(f, f) : G(I₀, I₀) → G(I₁, I₁)`
+
+For a weight `W` concentrated on diagonals to work, we'd need functorial maps
+`W.obj (op (diagCoTwArr I₁)) → W.obj (op (diagCoTwArr I₀))`, i.e.,
+`H(I₁, I₁) → H(I₀, I₀)` for `f : I₀ → I₁`.
+
+But H's bifunctorial structure only provides:
+
+- `H.map f.op : H(I₁, -) → H(I₀, -)` (contravariant in first argument)
+- `H(-).map f : H(-, I₀) → H(-, I₁)` (covariant in second argument)
+
+Neither gives `H(I₁, I₁) → H(I₀, I₀)` directly. The diagonal values of a
+bifunctor do not generally form a contravariant functor on C.
+
+#### Naturality vs Paranaturality: The Key Distinction
+
+**WeightedCocone naturality**: For ALL morphisms `m : tw → tw'` in the
+indexing category, relates weight elements at source/target via the weight's
+functorial action `W.map m.op`.
+
+**Paranaturality**: Only applies to **DiagCompat pairs** - pairs of diagonal
+elements `(h₀, h₁)` that satisfy `H(I₀, f)(h₀) = H(f, I₁)(h₁)`. The condition
+relates the images of compatible pairs, not arbitrary elements.
+
+These are fundamentally different:
+
+1. WeightedCocone naturality is about single elements moving along morphisms
+2. Paranaturality is about pairs of elements being "compatible" and mapping
+   to compatible results
+
+#### Task 25 Conclusion
+
+Strong restricted cowedges are **NOT** weighted cowedges with a special weight:
+
+1. **Variance obstruction**: The diagonal values `H(A,A)` don't form a presheaf
+   on `CoTwistedArrow C` in any canonical way
+2. **Condition type mismatch**: WeightedCocone naturality involves the weight's
+   functorial action on single elements; paranaturality is a condition on
+   compatible pairs of elements
+3. **Data scope difference**: WeightedCowedges have data at ALL co-twisted
+   arrows; StrongRestrictedCowedges only have data at diagonals
+
+The relationship is best understood as:
+
+- Strong restricted cowedges capture "diagonal paranaturality"
+- Weighted cowedges capture "full functorial naturality"
+- These are different coherence conditions, not subcategory relationships
+
+**Alternative perspective**: DiagElem H gives a **covariant** category over C
+(morphisms go the same direction), while weighted cocone weights must be
+**contravariant**. This covariant/contravariant duality is why the structures
+don't embed into each other.
+
+**Status**: Completed (negative result - no full subcategory relationship)
+
 ## References
 
 ### Code References
