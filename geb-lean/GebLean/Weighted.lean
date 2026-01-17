@@ -1,4 +1,5 @@
 import Mathlib.CategoryTheory.Category.Basic
+import Mathlib.CategoryTheory.Elements
 import Mathlib.CategoryTheory.Functor.FullyFaithful
 import Mathlib.CategoryTheory.Limits.Cones
 import Mathlib.CategoryTheory.Limits.Shapes.End
@@ -884,6 +885,10 @@ def WeightedCone.Hom.id {W : J ⥤ Type v} {D : J ⥤ C} (c : WeightedCone W D) 
     WeightedCone.Hom c c where
   hom := 𝟙 c.pt
 
+@[simp]
+theorem WeightedCone.Hom.id_hom {W : J ⥤ Type v} {D : J ⥤ C}
+    (c : WeightedCone W D) : (WeightedCone.Hom.id c).hom = 𝟙 c.pt := rfl
+
 /--
 Composition of weighted cone morphisms.
 -/
@@ -894,13 +899,28 @@ def WeightedCone.Hom.comp {W : J ⥤ Type v} {D : J ⥤ C}
   hom := f.hom ≫ g.hom
   w j w := by simp [f.w, g.w]
 
+@[simp]
+theorem WeightedCone.Hom.comp_hom {W : J ⥤ Type v} {D : J ⥤ C}
+    {c₁ c₂ c₃ : WeightedCone W D}
+    (f : WeightedCone.Hom c₁ c₂) (g : WeightedCone.Hom c₂ c₃) :
+    (WeightedCone.Hom.comp f g).hom = f.hom ≫ g.hom := rfl
+
 instance (W : J ⥤ Type v) (D : J ⥤ C) : Category (WeightedCone W D) where
   Hom := WeightedCone.Hom
   id := WeightedCone.Hom.id
   comp := WeightedCone.Hom.comp
-  id_comp f := by ext; simp [WeightedCone.Hom.id, WeightedCone.Hom.comp]
-  comp_id f := by ext; simp [WeightedCone.Hom.id, WeightedCone.Hom.comp]
-  assoc f g h := by ext; simp [WeightedCone.Hom.comp, Category.assoc]
+  id_comp f := by ext; simp
+  comp_id f := by ext; simp
+  assoc f g h := by ext; simp [Category.assoc]
+
+@[simp]
+theorem WeightedCone.category_comp_hom {W : J ⥤ Type v} {D : J ⥤ C}
+    {c₁ c₂ c₃ : WeightedCone W D}
+    (f : c₁ ⟶ c₂) (g : c₂ ⟶ c₃) : (f ≫ g).hom = f.hom ≫ g.hom := rfl
+
+@[simp]
+theorem WeightedCone.category_id_hom {W : J ⥤ Type v} {D : J ⥤ C}
+    (c : WeightedCone W D) : (𝟙 c : c ⟶ c).hom = 𝟙 c.pt := rfl
 
 /--
 A morphism between weighted cocones consists of a morphism between the cocone
@@ -934,6 +954,16 @@ def WeightedCocone.Hom.comp {W : Jᵒᵖ ⥤ Type v} {D : J ⥤ C}
   hom := f.hom ≫ g.hom
   w j w := by simp [g.w, f.w_assoc]
 
+@[simp]
+theorem WeightedCocone.Hom.id_hom {W : Jᵒᵖ ⥤ Type v} {D : J ⥤ C}
+    (c : WeightedCocone W D) : (WeightedCocone.Hom.id c).hom = 𝟙 c.pt := rfl
+
+@[simp]
+theorem WeightedCocone.Hom.comp_hom {W : Jᵒᵖ ⥤ Type v} {D : J ⥤ C}
+    {c₁ c₂ c₃ : WeightedCocone W D}
+    (f : WeightedCocone.Hom c₁ c₂) (g : WeightedCocone.Hom c₂ c₃) :
+    (WeightedCocone.Hom.comp f g).hom = f.hom ≫ g.hom := rfl
+
 instance (W : Jᵒᵖ ⥤ Type v) (D : J ⥤ C) : Category (WeightedCocone W D) where
   Hom := WeightedCocone.Hom
   id := WeightedCocone.Hom.id
@@ -941,6 +971,15 @@ instance (W : Jᵒᵖ ⥤ Type v) (D : J ⥤ C) : Category (WeightedCocone W D) 
   id_comp f := by ext; simp [WeightedCocone.Hom.id, WeightedCocone.Hom.comp]
   comp_id f := by ext; simp [WeightedCocone.Hom.id, WeightedCocone.Hom.comp]
   assoc f g h := by ext; simp [WeightedCocone.Hom.comp, Category.assoc]
+
+@[simp]
+theorem WeightedCocone.category_comp_hom {W : Jᵒᵖ ⥤ Type v} {D : J ⥤ C}
+    {c₁ c₂ c₃ : WeightedCocone W D}
+    (f : c₁ ⟶ c₂) (g : c₂ ⟶ c₃) : (f ≫ g).hom = f.hom ≫ g.hom := rfl
+
+@[simp]
+theorem WeightedCocone.category_id_hom {W : Jᵒᵖ ⥤ Type v} {D : J ⥤ C}
+    (c : WeightedCocone W D) : (𝟙 c : c ⟶ c).hom = 𝟙 c.pt := rfl
 
 variable {D : Type w} [Category.{v} D]
 
@@ -1117,7 +1156,589 @@ theorem weightedCoconeToCocone_coconeToWeightedCocone {D : J ⥤ C}
     cases w
     simp only [coconeToWeightedCocone, weightedCoconeToCocone, Opposite.op_unop]
 
+/--
+Functor from cones to weighted cones with constant unit weight.
+-/
+def coneToWeightedConeFunctor (D : J ⥤ C) :
+    Cone D ⥤ WeightedCone (unitWeight J) D where
+  obj := coneToWeightedCone
+  map f := {
+    hom := f.hom
+    w := fun j _ => f.w j
+  }
+  map_id _ := rfl
+  map_comp _ _ := rfl
+
+/--
+Functor from weighted cones with constant unit weight to cones.
+-/
+def weightedConeToConeFunctor (D : J ⥤ C) :
+    WeightedCone (unitWeight J) D ⥤ Cone D where
+  obj := weightedConeToCone
+  map f := {
+    hom := f.hom
+    w := fun j => f.w j PUnit.unit
+  }
+  map_id _ := rfl
+  map_comp _ _ := rfl
+
+/--
+The unit natural isomorphism for the cone/weighted-cone equivalence.
+
+Converting a cone to weighted and back is definitionally equal to the original.
+-/
+def coneWeightedConeUnitIso (D : J ⥤ C) :
+    𝟭 (Cone D) ≅ coneToWeightedConeFunctor D ⋙ weightedConeToConeFunctor D :=
+  NatIso.ofComponents (fun _ => Iso.refl _) (fun {_ _} _ => by
+    apply ConeMorphism.ext
+    simp only [Functor.id_map, Functor.comp_map, coneToWeightedConeFunctor,
+      weightedConeToConeFunctor, Iso.refl_hom, Category.id_comp, Category.comp_id])
+
+/--
+The counit natural isomorphism for the cone/weighted-cone equivalence.
+
+Converting a weighted cone to cone and back is isomorphic to the original.
+-/
+def coneWeightedConeCounitIso (D : J ⥤ C) :
+    weightedConeToConeFunctor D ⋙ coneToWeightedConeFunctor D ≅
+    𝟭 (WeightedCone (unitWeight J) D) :=
+  NatIso.ofComponents
+    (fun c => ⟨⟨𝟙 c.pt, fun j w => by
+                cases w
+                dsimp [Functor.id_obj, Functor.comp_obj, coneToWeightedConeFunctor,
+                       weightedConeToConeFunctor, coneToWeightedCone, weightedConeToCone,
+                       WeightedCone.leg]
+                simp only [Category.id_comp]⟩,
+               ⟨𝟙 c.pt, fun j w => by
+                cases w
+                dsimp [Functor.id_obj, Functor.comp_obj, coneToWeightedConeFunctor,
+                       weightedConeToConeFunctor, coneToWeightedCone, weightedConeToCone,
+                       WeightedCone.leg]
+                simp only [Category.id_comp]⟩,
+               by apply WeightedCone.Hom.ext
+                  dsimp [coneToWeightedConeFunctor, weightedConeToConeFunctor,
+                         coneToWeightedCone, weightedConeToCone]
+                  simp only [Category.comp_id],
+               by apply WeightedCone.Hom.ext
+                  dsimp [coneToWeightedConeFunctor, weightedConeToConeFunctor,
+                         coneToWeightedCone, weightedConeToCone]
+                  simp only [Category.comp_id]⟩)
+    (fun f => by
+      apply WeightedCone.Hom.ext
+      dsimp [coneToWeightedConeFunctor, weightedConeToConeFunctor,
+             coneToWeightedCone, weightedConeToCone]
+      simp only [Category.comp_id, Category.id_comp])
+
+/--
+Cones over `D : J ⥤ C` are categorically equivalent to weighted cones
+with constant unit weight.
+-/
+def coneWeightedConeEquiv (D : J ⥤ C) :
+    Cone D ≌ WeightedCone (unitWeight J) D where
+  functor := coneToWeightedConeFunctor D
+  inverse := weightedConeToConeFunctor D
+  unitIso := coneWeightedConeUnitIso D
+  counitIso := coneWeightedConeCounitIso D
+  functor_unitIso_comp c := by
+    apply WeightedCone.Hom.ext
+    dsimp [coneWeightedConeUnitIso, coneWeightedConeCounitIso, coneToWeightedConeFunctor,
+           weightedConeToConeFunctor, coneToWeightedCone, weightedConeToCone]
+    simp only [Category.comp_id]
+
+/--
+Functor from cocones to weighted cocones with constant unit weight.
+-/
+def coconeToWeightedCoconeFunctor (D : J ⥤ C) :
+    Cocone D ⥤ WeightedCocone (unitWeightOp J) D where
+  obj := coconeToWeightedCocone
+  map f := {
+    hom := f.hom
+    w := fun j _ => f.w j
+  }
+  map_id _ := rfl
+  map_comp _ _ := rfl
+
+/--
+Functor from weighted cocones with constant unit weight to cocones.
+-/
+def weightedCoconeToCoconeFunctor (D : J ⥤ C) :
+    WeightedCocone (unitWeightOp J) D ⥤ Cocone D where
+  obj := weightedCoconeToCocone
+  map f := {
+    hom := f.hom
+    w := fun j => f.w j PUnit.unit
+  }
+  map_id _ := rfl
+  map_comp _ _ := rfl
+
+/--
+The unit natural isomorphism for the cocone/weighted-cocone equivalence.
+-/
+def coconeWeightedCoconeUnitIso (D : J ⥤ C) :
+    𝟭 (Cocone D) ≅ coconeToWeightedCoconeFunctor D ⋙ weightedCoconeToCoconeFunctor D :=
+  NatIso.ofComponents (fun _ => Iso.refl _) (fun {_ _} _ => by
+    apply CoconeMorphism.ext
+    simp only [Functor.id_map, Functor.comp_map, coconeToWeightedCoconeFunctor,
+      weightedCoconeToCoconeFunctor, Iso.refl_hom, Category.id_comp, Category.comp_id])
+
+/--
+The counit natural isomorphism for the cocone/weighted-cocone equivalence.
+-/
+def coconeWeightedCoconeCounitIso (D : J ⥤ C) :
+    weightedCoconeToCoconeFunctor D ⋙ coconeToWeightedCoconeFunctor D ≅
+    𝟭 (WeightedCocone (unitWeightOp J) D) :=
+  NatIso.ofComponents
+    (fun c => ⟨⟨𝟙 c.pt, fun j w => by
+                cases w
+                dsimp [Functor.comp_obj, weightedCoconeToCoconeFunctor,
+                       coconeToWeightedCoconeFunctor, coconeToWeightedCocone,
+                       weightedCoconeToCocone, WeightedCocone.leg]
+                simp only [Category.comp_id]⟩,
+               ⟨𝟙 c.pt, fun j w => by
+                cases w
+                dsimp [Functor.id_obj, weightedCoconeToCoconeFunctor,
+                       coconeToWeightedCoconeFunctor, coconeToWeightedCocone,
+                       weightedCoconeToCocone, WeightedCocone.leg]
+                simp only [Category.comp_id]⟩,
+               by apply WeightedCocone.Hom.ext
+                  dsimp [coconeToWeightedCoconeFunctor, weightedCoconeToCoconeFunctor,
+                         coconeToWeightedCocone, weightedCoconeToCocone]
+                  simp only [Category.comp_id],
+               by apply WeightedCocone.Hom.ext
+                  dsimp [coconeToWeightedCoconeFunctor, weightedCoconeToCoconeFunctor,
+                         coconeToWeightedCocone, weightedCoconeToCocone]
+                  simp only [Category.comp_id]⟩)
+    (fun f => by
+      apply WeightedCocone.Hom.ext
+      dsimp [coconeToWeightedCoconeFunctor, weightedCoconeToCoconeFunctor,
+             coconeToWeightedCocone, weightedCoconeToCocone]
+      simp only [Category.comp_id, Category.id_comp])
+
+/--
+Cocones over `D : J ⥤ C` are categorically equivalent to weighted cocones
+with constant unit weight.
+-/
+def coconeWeightedCoconeEquiv (D : J ⥤ C) :
+    Cocone D ≌ WeightedCocone (unitWeightOp J) D where
+  functor := coconeToWeightedCoconeFunctor D
+  inverse := weightedCoconeToCoconeFunctor D
+  unitIso := coconeWeightedCoconeUnitIso D
+  counitIso := coconeWeightedCoconeCounitIso D
+  functor_unitIso_comp c := by
+    apply WeightedCocone.Hom.ext
+    dsimp [coconeWeightedCoconeUnitIso, coconeWeightedCoconeCounitIso,
+           coconeToWeightedCoconeFunctor, weightedCoconeToCoconeFunctor,
+           coconeToWeightedCocone, weightedCoconeToCocone]
+    simp only [Category.comp_id]
+
 end ConeWeightedConeEquivalence
+
+section WeightedConeElementsEquivalence
+
+/-!
+## Weighted cones and cones over the category of elements
+
+A weighted cone with weight `W : J ⥤ Type v` and diagram `D : J ⥤ C` is equivalent
+to an ordinary cone over the composite functor `CategoryOfElements.π W ⋙ D`.
+
+The category of elements `W.Elements` has:
+- Objects: pairs `⟨j, w⟩` where `j : J` and `w : W.obj j`
+- Morphisms `⟨j, w⟩ ⟶ ⟨j', w'⟩`: morphisms `f : j ⟶ j'` in `J` with `W.map f w = w'`
+
+The projection `CategoryOfElements.π W : W.Elements ⥤ J` forgets the element.
+The composite `CategoryOfElements.π W ⋙ D : W.Elements ⥤ C` sends `⟨j, w⟩ ↦ D.obj j`.
+
+This equivalence shows that weighted cones are ordinary cones over an expanded
+indexing category, which is foundational for the theory of weighted limits.
+-/
+
+universe u₁ v₁ u₂
+
+variable {J : Type u₁} [Category.{v₁} J] {C : Type u₂} [Category.{v₁} C]
+variable (W : J ⥤ Type v₁) (D : J ⥤ C)
+
+/--
+Convert a weighted cone to a cone over the category of elements.
+
+Given `c : WeightedCone W D`, define a cone over `CategoryOfElements.π W ⋙ D` with:
+- Apex: `c.pt`
+- Legs: for `p = ⟨j, w⟩`, the leg is `c.leg j w : c.pt ⟶ D.obj j`
+-/
+def weightedConeToElementsCone (W : J ⥤ Type v₁) (D : J ⥤ C)
+    (c : WeightedCone W D) : Cone (CategoryOfElements.π W ⋙ D) where
+  pt := c.pt
+  π := {
+    app := fun p => c.leg p.fst p.snd
+    naturality := fun ⟨j, w⟩ ⟨j', w'⟩ ⟨f, hf⟩ => by
+      dsimp [CategoryOfElements.π]
+      simp only [Category.id_comp]
+      have nat := (c.naturality f w).symm
+      simp only [hf] at nat
+      exact nat
+  }
+
+/--
+Convert a cone over the category of elements to a weighted cone.
+
+Given a cone `c` over `CategoryOfElements.π W ⋙ D`, define a weighted cone with:
+- Apex: `c.pt`
+- Legs: `leg j w := c.π.app ⟨j, w⟩`
+-/
+def elementsConeToWeightedCone (W : J ⥤ Type v₁) (D : J ⥤ C)
+    (c : Cone (CategoryOfElements.π W ⋙ D)) : WeightedCone W D where
+  pt := c.pt
+  π := {
+    app := fun j w => c.π.app ⟨j, w⟩
+    naturality := fun {j j'} f => by
+      funext w
+      dsimp [homFromFunctor]
+      have nat := c.π.naturality (CategoryOfElements.homMk ⟨j, w⟩ ⟨j', W.map f w⟩ f rfl)
+      simp only [Functor.const_obj_obj, Functor.const_obj_map, Category.id_comp,
+        Functor.comp_obj, CategoryOfElements.π_obj,
+        Functor.comp_map, CategoryOfElements.π_map] at nat
+      exact nat
+  }
+
+/--
+`weightedConeToElementsCone` and `elementsConeToWeightedCone` are inverses (one direction).
+-/
+theorem weightedCone_elements_roundtrip (W : J ⥤ Type v₁) (D : J ⥤ C)
+    (c : WeightedCone W D) :
+    elementsConeToWeightedCone W D (weightedConeToElementsCone W D c) = c := by
+  cases c
+  rfl
+
+/--
+`elementsConeToWeightedCone` and `weightedConeToElementsCone` are inverses (other direction).
+-/
+theorem elements_weightedCone_roundtrip (W : J ⥤ Type v₁) (D : J ⥤ C)
+    (c : Cone (CategoryOfElements.π W ⋙ D)) :
+    weightedConeToElementsCone W D (elementsConeToWeightedCone W D c) = c := by
+  cases c with
+  | mk pt π =>
+    rfl
+
+/--
+Functor from weighted cones to cones over the category of elements.
+-/
+def weightedConeToElementsConeFunctor (W : J ⥤ Type v₁) (D : J ⥤ C) :
+    WeightedCone W D ⥤ Cone (CategoryOfElements.π W ⋙ D) where
+  obj := weightedConeToElementsCone W D
+  map f := {
+    hom := f.hom
+    w := fun p => by
+      dsimp [weightedConeToElementsCone]
+      exact f.w p.fst p.snd
+  }
+  map_id _ := rfl
+  map_comp _ _ := rfl
+
+/--
+Functor from cones over the category of elements to weighted cones.
+-/
+def elementsConeToWeightedConeFunctor (W : J ⥤ Type v₁) (D : J ⥤ C) :
+    Cone (CategoryOfElements.π W ⋙ D) ⥤ WeightedCone W D where
+  obj := elementsConeToWeightedCone W D
+  map f := {
+    hom := f.hom
+    w := fun j w => by
+      dsimp [elementsConeToWeightedCone]
+      exact f.w ⟨j, w⟩
+  }
+  map_id _ := rfl
+  map_comp _ _ := rfl
+
+/--
+The unit natural isomorphism: `𝟭 (WeightedCone W D) ≅ ⋯ ⋙ ⋯`.
+-/
+def weightedConeElementsUnitIso (W : J ⥤ Type v₁) (D : J ⥤ C) :
+    𝟭 (WeightedCone W D) ≅
+    weightedConeToElementsConeFunctor W D ⋙ elementsConeToWeightedConeFunctor W D :=
+  NatIso.ofComponents (fun c => by
+    have h := weightedCone_elements_roundtrip W D c
+    exact eqToIso h.symm)
+    (fun {c₁ c₂} f => by
+      apply WeightedCone.Hom.ext
+      dsimp [weightedConeToElementsConeFunctor, elementsConeToWeightedConeFunctor,
+        weightedConeToElementsCone, elementsConeToWeightedCone]
+      simp only [Category.comp_id, Category.id_comp])
+
+/--
+The counit natural isomorphism: `⋯ ⋙ ⋯ ≅ 𝟭 (Cone ⋯)`.
+-/
+def weightedConeElementsCounitIso (W : J ⥤ Type v₁) (D : J ⥤ C) :
+    elementsConeToWeightedConeFunctor W D ⋙ weightedConeToElementsConeFunctor W D ≅
+    𝟭 (Cone (CategoryOfElements.π W ⋙ D)) :=
+  NatIso.ofComponents (fun c => by
+    have h := elements_weightedCone_roundtrip W D c
+    exact eqToIso h)
+    (fun {c₁ c₂} f => by
+      apply ConeMorphism.ext
+      dsimp [weightedConeToElementsConeFunctor, elementsConeToWeightedConeFunctor,
+        weightedConeToElementsCone, elementsConeToWeightedCone]
+      simp only [Category.comp_id, Category.id_comp])
+
+/--
+Weighted cones over `W : J ⥤ Type v` and `D : J ⥤ C` are categorically equivalent
+to ordinary cones over the composite `CategoryOfElements.π W ⋙ D : W.Elements ⥤ C`.
+
+This is foundational for the theory of weighted limits: it shows that weighted
+limits can be computed as ordinary limits over the expanded indexing category
+of elements.
+-/
+def weightedConeElementsEquiv (W : J ⥤ Type v₁) (D : J ⥤ C) :
+    WeightedCone W D ≌ Cone (CategoryOfElements.π W ⋙ D) where
+  functor := weightedConeToElementsConeFunctor W D
+  inverse := elementsConeToWeightedConeFunctor W D
+  unitIso := weightedConeElementsUnitIso W D
+  counitIso := weightedConeElementsCounitIso W D
+  functor_unitIso_comp c := by
+    apply ConeMorphism.ext
+    dsimp [weightedConeElementsUnitIso, weightedConeElementsCounitIso,
+      weightedConeToElementsConeFunctor, elementsConeToWeightedConeFunctor,
+      weightedConeToElementsCone, elementsConeToWeightedCone]
+    simp only [Category.comp_id]
+
+end WeightedConeElementsEquivalence
+
+section WeightedCoconeElementsEquivalence
+
+/-!
+## Weighted Cocones as Ordinary Cocones over Category of Elements
+
+For weighted cocones with weight `W : Jᵒᵖ ⥤ Type v₁` and diagram `D : J ⥤ C`,
+we establish an equivalence with ordinary cocones over the composite
+`(CategoryOfElements.π W).op ⋙ unopUnop J ⋙ D : (W.Elements)ᵒᵖ ⥤ C`.
+
+This is the dual of the weighted cone/elements equivalence.
+-/
+
+universe u₃ v₃ u₄
+
+variable {J : Type u₃} [Category.{v₃} J] {C : Type u₄} [Category.{v₃} C]
+variable (W : Jᵒᵖ ⥤ Type v₃) (D : J ⥤ C)
+
+/--
+The diagram functor for weighted cocones: maps the opposite of the category
+of elements to `C` via the projection and `D`.
+-/
+def weightedCoconeDiagram : (W.Elements)ᵒᵖ ⥤ C :=
+  (CategoryOfElements.π W).op ⋙ unopUnop J ⋙ D
+
+/--
+Convert a weighted cocone to a cocone over the elements diagram.
+-/
+def weightedCoconeToElementsCocone (W : Jᵒᵖ ⥤ Type v₃) (D : J ⥤ C)
+    (c : WeightedCocone W D) : Cocone (weightedCoconeDiagram W D) where
+  pt := c.pt
+  ι := {
+    app := fun p_op =>
+      let p := p_op.unop
+      c.leg p.fst.unop p.snd
+    naturality := fun p_op q_op f_op => by
+      dsimp [weightedCoconeDiagram, CategoryOfElements.π, unopUnop]
+      simp only [Category.comp_id]
+      -- f_op.unop : q_op.unop ⟶ p_op.unop in W.Elements
+      -- f_op.unop.val : q_op.unop.fst ⟶ p_op.unop.fst in Jᵒᵖ
+      -- f_op.unop.property : W.map f_op.unop.val q_op.unop.snd = p_op.unop.snd
+      have nat := c.naturality f_op.unop.val.unop q_op.unop.snd
+      simp only [Opposite.op_unop] at nat
+      rw [nat]
+      congr 1
+      exact f_op.unop.property
+  }
+
+/--
+Convert a cocone over the elements diagram to a weighted cocone.
+-/
+def elementsCoconeToWeightedCocone (W : Jᵒᵖ ⥤ Type v₃) (D : J ⥤ C)
+    (c : Cocone (weightedCoconeDiagram W D)) : WeightedCocone W D where
+  pt := c.pt
+  ι := {
+    app := fun j_op w => c.ι.app (Opposite.op (Sigma.mk j_op w))
+    naturality := fun {j_op j'_op} f => by
+      ext w
+      dsimp [homToFunctor]
+      -- We need: c.ι.app (op ⟨j'_op, W.map f w⟩) = D.map f.unop ≫ c.ι.app (op ⟨j_op, w⟩)
+      -- Use cocone naturality for morphism from op ⟨j'_op, W.map f w⟩ to op ⟨j_op, w⟩
+      let src := Sigma.mk j_op w
+      let tgt := Sigma.mk j'_op (W.map f w)
+      have nat := c.ι.naturality (Opposite.op (CategoryOfElements.homMk src tgt f rfl))
+      simp only [Functor.const_obj_obj, Functor.const_obj_map, Category.comp_id,
+        weightedCoconeDiagram, Functor.comp_obj, Functor.op_obj,
+        CategoryOfElements.π_obj, unopUnop_obj, Opposite.unop_op,
+        Functor.comp_map, Functor.op_map, CategoryOfElements.π_map,
+        unopUnop_map] at nat
+      exact nat.symm
+  }
+
+/--
+Round-trip: weighted cocone → elements cocone → weighted cocone is identity.
+-/
+theorem weightedCocone_elements_roundtrip (W : Jᵒᵖ ⥤ Type v₃) (D : J ⥤ C)
+    (c : WeightedCocone W D) :
+    elementsCoconeToWeightedCocone W D (weightedCoconeToElementsCocone W D c) = c := by
+  cases c with
+  | mk pt ι => rfl
+
+/--
+Round-trip: elements cocone → weighted cocone → elements cocone is identity.
+-/
+theorem elements_weightedCocone_roundtrip (W : Jᵒᵖ ⥤ Type v₃) (D : J ⥤ C)
+    (c : Cocone (weightedCoconeDiagram W D)) :
+    weightedCoconeToElementsCocone W D (elementsCoconeToWeightedCocone W D c) = c := by
+  cases c with
+  | mk pt ι => rfl
+
+/--
+Functor from weighted cocones to cocones over the elements diagram.
+-/
+def weightedCoconeToElementsCoconeFunctor (W : Jᵒᵖ ⥤ Type v₃) (D : J ⥤ C) :
+    WeightedCocone W D ⥤ Cocone (weightedCoconeDiagram W D) where
+  obj := weightedCoconeToElementsCocone W D
+  map f := {
+    hom := f.hom
+    w := fun p_op => by
+      dsimp [weightedCoconeToElementsCocone]
+      exact f.w p_op.unop.fst.unop p_op.unop.snd
+  }
+  map_id _ := rfl
+  map_comp _ _ := rfl
+
+/--
+Functor from cocones over the elements diagram to weighted cocones.
+-/
+def elementsCoconeToWeightedCoconeFunctor (W : Jᵒᵖ ⥤ Type v₃) (D : J ⥤ C) :
+    Cocone (weightedCoconeDiagram W D) ⥤ WeightedCocone W D where
+  obj := elementsCoconeToWeightedCocone W D
+  map f := {
+    hom := f.hom
+    w := fun (j : J) (w : W.obj (Opposite.op j)) => by
+      dsimp [elementsCoconeToWeightedCocone]
+      exact f.w (Opposite.op (Sigma.mk (Opposite.op j) w))
+  }
+  map_id _ := rfl
+  map_comp _ _ := rfl
+
+/--
+The unit natural isomorphism: `𝟭 (WeightedCocone W D) ≅ ⋯ ⋙ ⋯`.
+-/
+def weightedCoconeElementsUnitIso (W : Jᵒᵖ ⥤ Type v₃) (D : J ⥤ C) :
+    𝟭 (WeightedCocone W D) ≅
+    weightedCoconeToElementsCoconeFunctor W D ⋙ elementsCoconeToWeightedCoconeFunctor W D :=
+  NatIso.ofComponents (fun c => eqToIso (weightedCocone_elements_roundtrip W D c).symm)
+    (fun {c₁ c₂} f => by
+      apply WeightedCocone.Hom.ext
+      simp only [Functor.id_obj, Functor.comp_obj, Functor.id_map, Functor.comp_map,
+        weightedCoconeToElementsCoconeFunctor, elementsCoconeToWeightedCoconeFunctor,
+        weightedCoconeToElementsCocone, elementsCoconeToWeightedCocone,
+        eqToIso_refl, Iso.refl_hom, Category.comp_id, Category.id_comp])
+
+/--
+The counit natural isomorphism: `⋯ ⋙ ⋯ ≅ 𝟭 (Cocone ⋯)`.
+-/
+def weightedCoconeElementsCounitIso (W : Jᵒᵖ ⥤ Type v₃) (D : J ⥤ C) :
+    elementsCoconeToWeightedCoconeFunctor W D ⋙ weightedCoconeToElementsCoconeFunctor W D ≅
+    𝟭 (Cocone (weightedCoconeDiagram W D)) :=
+  NatIso.ofComponents (fun c => eqToIso (elements_weightedCocone_roundtrip W D c))
+    (fun {c₁ c₂} f => by
+      apply CoconeMorphism.ext
+      simp only [Functor.id_obj, Functor.comp_obj, Functor.id_map, Functor.comp_map,
+        weightedCoconeToElementsCoconeFunctor, elementsCoconeToWeightedCoconeFunctor,
+        weightedCoconeToElementsCocone, elementsCoconeToWeightedCocone,
+        eqToIso_refl, Iso.refl_hom, Category.comp_id, Category.id_comp])
+
+/--
+Weighted cocones over `W : Jᵒᵖ ⥤ Type v` and `D : J ⥤ C` are categorically equivalent
+to ordinary cocones over the composite
+`(CategoryOfElements.π W).op ⋙ unopUnop J ⋙ D : (W.Elements)ᵒᵖ ⥤ C`.
+
+This is foundational for the theory of weighted colimits: it shows that weighted
+colimits can be computed as ordinary colimits over the expanded indexing category.
+-/
+def weightedCoconeElementsEquiv (W : Jᵒᵖ ⥤ Type v₃) (D : J ⥤ C) :
+    WeightedCocone W D ≌ Cocone (weightedCoconeDiagram W D) where
+  functor := weightedCoconeToElementsCoconeFunctor W D
+  inverse := elementsCoconeToWeightedCoconeFunctor W D
+  unitIso := weightedCoconeElementsUnitIso W D
+  counitIso := weightedCoconeElementsCounitIso W D
+  functor_unitIso_comp c := by
+    apply CoconeMorphism.ext
+    dsimp [weightedCoconeElementsUnitIso, weightedCoconeElementsCounitIso,
+      weightedCoconeToElementsCoconeFunctor, elementsCoconeToWeightedCoconeFunctor,
+      weightedCoconeToElementsCocone, elementsCoconeToWeightedCocone,
+      eqToIso, eqToHom]
+    simp only [Category.comp_id]
+
+end WeightedCoconeElementsEquivalence
+
+section WeightedWedgeCowedgeEquivalences
+
+/-!
+## Weighted wedges and cowedges reduce to ordinary cones and cocones
+
+By composing the definitions of weighted wedges/cowedges with the
+equivalences from the previous sections, we obtain that:
+
+- Weighted wedges are equivalent to cones over the category of elements
+- Weighted cowedges are equivalent to cocones over the opposite of the
+  category of elements
+
+These composed equivalences follow directly from the definitions.
+-/
+
+universe u₅ v₅
+
+variable {C : Type u₅} [Category.{v₅} C] {D : Type*} [Category.{v₅} D]
+
+/--
+The diagram for weighted wedges: composing the projection from the category
+of elements with the profunctor-on-twisted-arrow functor.
+
+For a weight `W : TwistedArrow C ⥤ Type v` and profunctor `P : Cᵒᵖ ⥤ C ⥤ D`,
+this gives a functor `W.Elements ⥤ D`.
+-/
+def weightedWedgeDiagram (W : TwistedArrow C ⥤ Type v₅) (P : Cᵒᵖ ⥤ C ⥤ D) :
+    W.Elements ⥤ D :=
+  CategoryOfElements.π W ⋙ profunctorOnTwistedArrow C P
+
+/--
+The diagram for weighted cowedges: composing the projection from the
+opposite category of elements with the profunctor-on-co-twisted-arrow functor.
+
+For a weight `W : (CoTwistedArrow C)ᵒᵖ ⥤ Type v` and profunctor
+`P : Cᵒᵖ ⥤ C ⥤ D`, this gives a functor `(W.Elements)ᵒᵖ ⥤ D`.
+-/
+def weightedCowedgeDiagram (W : (CoTwistedArrow C)ᵒᵖ ⥤ Type v₅)
+    (P : Cᵒᵖ ⥤ C ⥤ D) : (W.Elements)ᵒᵖ ⥤ D :=
+  weightedCoconeDiagram W (profunctorOnCoTwistedArrow C P)
+
+/--
+Weighted wedges over a profunctor `P : Cᵒᵖ ⥤ C ⥤ D` with weight
+`W : TwistedArrow C ⥤ Type v` are categorically equivalent to ordinary
+cones over the weighted wedge diagram on `W.Elements`.
+
+This follows by applying `weightedConeElementsEquiv` to the definition
+`WeightedWedge W P := WeightedCone W (profunctorOnTwistedArrow C P)`.
+-/
+def weightedWedgeElementsEquiv (W : TwistedArrow C ⥤ Type v₅)
+    (P : Cᵒᵖ ⥤ C ⥤ D) : WeightedWedge W P ≌ Cone (weightedWedgeDiagram W P) :=
+  weightedConeElementsEquiv W (profunctorOnTwistedArrow C P)
+
+/--
+Weighted cowedges over a profunctor `P : Cᵒᵖ ⥤ C ⥤ D` with weight
+`W : (CoTwistedArrow C)ᵒᵖ ⥤ Type v` are categorically equivalent to ordinary
+cocones over the weighted cowedge diagram on `(W.Elements)ᵒᵖ`.
+
+This follows by applying `weightedCoconeElementsEquiv` to the definition
+`WeightedCowedge W P := WeightedCocone W (profunctorOnCoTwistedArrow C P)`.
+-/
+def weightedCowedgeElementsEquiv (W : (CoTwistedArrow C)ᵒᵖ ⥤ Type v₅)
+    (P : Cᵒᵖ ⥤ C ⥤ D) :
+    WeightedCowedge W P ≌ Cocone (weightedCowedgeDiagram W P) :=
+  weightedCoconeElementsEquiv W (profunctorOnCoTwistedArrow C P)
+
+end WeightedWedgeCowedgeEquivalences
 
 section RestrictedCowedges
 

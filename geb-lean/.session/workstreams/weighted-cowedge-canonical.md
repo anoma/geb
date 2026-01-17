@@ -462,7 +462,18 @@ Steps:
 - Prove unit and counit natural isomorphisms
 - Construct `coneWeightedConeEquiv : Cone D ≌ WeightedCone (unitWeight J) D`
 
-**Status**: Not started (depends on Task 11.5)
+**Status**: Completed
+
+**Location**: `GebLean/Weighted.lean` (~line 1270)
+
+**Implementation**:
+
+- `coneToWeightedConeFunctor`: Functor from cones to weighted cones
+- `weightedConeToConeFunctor`: Functor from weighted cones to cones
+- `coneWeightedConeUnitIso`: Unit natural isomorphism
+- `coneWeightedConeCounitIso`: Counit natural isomorphism
+- `coneWeightedConeEquiv`: The categorical equivalence
+  `Cone D ≌ WeightedCone (unitWeight J) D`
 
 ### 13. Upgrade Cocone/Weighted-Cocone to Categorical Equivalence
 
@@ -474,7 +485,18 @@ Steps:
 - Prove unit and counit natural isomorphisms
 - Construct `coconeWeightedCoconeEquiv`
 
-**Status**: Not started (depends on Task 11.5)
+**Status**: Completed
+
+**Location**: `GebLean/Weighted.lean` (~line 1380)
+
+**Implementation**:
+
+- `coconeToWeightedCoconeFunctor`: Functor from cocones to weighted cocones
+- `weightedCoconeToCocone Functor`: Functor from weighted cocones to cocones
+- `coconeWeightedCoconeUnitIso`: Unit natural isomorphism
+- `coconeWeightedCoconeCounitIso`: Counit natural isomorphism
+- `coconeWeightedCoconeEquiv`: The categorical equivalence
+  `Cocone D ≌ WeightedCocone (unitWeightOp J) D`
 
 ### 14. Prove Weighted Cones Are Cones over Category of Elements
 
@@ -501,7 +523,20 @@ Steps:
 - Prove equivalence
 - Upgrade to categorical equivalence
 
-**Status**: Not started
+**Status**: Completed
+
+**Location**: `GebLean/Weighted.lean` (~line 1489)
+
+**Implementation**:
+
+- `weightedConeToElementsCone`: Converts weighted cone to cone over elements
+- `elementsConeToWeightedCone`: Converts cone over elements to weighted cone
+- `weightedConeToElementsConeFunctor`: Functor from weighted cones to cones
+- `elementsConeToWeightedConeFunctor`: Functor in the opposite direction
+- `weightedConeElementsUnitIso`: Unit natural isomorphism
+- `weightedConeElementsCounitIso`: Counit natural isomorphism
+- `weightedConeElementsEquiv`: The categorical equivalence
+  `WeightedCone W D ≌ Cone (CategoryOfElements.π W ⋙ D)`
 
 **Reference**: `Mathlib/CategoryTheory/Elements.lean` line 48 for `Functor.Elements`
 
@@ -522,9 +557,27 @@ Steps:
 - Prove equivalence
 - Upgrade to categorical equivalence
 
-**Status**: Not started
+**Status**: Completed
 
-**Reference**: `GebLean/Utilities/Elements.lean` line 569 for `Functor.ElementsPre`
+**Location**: `GebLean/Weighted.lean` (~line 1660)
+
+**Implementation**:
+
+- `weightedCoconeDiagram`: Functor `(W.Elements)ᵒᵖ ⥤ C` via the projection
+- `weightedCoconeToElementsCocone`: Converts weighted cocone to cocone over
+  elements
+- `elementsCoconeToWeightedCocone`: Converts cocone over elements to weighted
+  cocone
+- `weightedCoconeToElementsCoconeFunctor`: Functor from weighted cocones to
+  cocones
+- `elementsCoconeToWeightedCoconeFunctor`: Functor in the opposite direction
+- `weightedCoconeElementsUnitIso`: Unit natural isomorphism
+- `weightedCoconeElementsCounitIso`: Counit natural isomorphism
+- `weightedCoconeElementsEquiv`: The categorical equivalence
+  `WeightedCocone W D ≌ Cocone (weightedCoconeDiagram W D)`
+
+**Reference**: Uses mathlib's `CategoryOfElements.π` and `unopUnop` for the
+diagram functor construction.
 
 ### 16. Compose Equivalences: Weighted Wedges Reduce to Cones
 
@@ -549,7 +602,19 @@ Steps:
 - Verify that the composition gives the expected result
 - Document the full chain of equivalences
 
-**Status**: Not started (depends on Tasks 9, 14)
+**Status**: Completed
+
+**Location**: `GebLean/Weighted.lean` (~line 1701)
+
+**Implementation**:
+
+- `weightedWedgeDiagram`: Functor `W.Elements ⥤ D` via
+  `CategoryOfElements.π W ⋙ profunctorOnTwistedArrow C P`
+- `weightedWedgeElementsEquiv`: The categorical equivalence
+  `WeightedWedge W P ≌ Cone (weightedWedgeDiagram W P)`
+
+This follows directly by applying `weightedConeElementsEquiv` to the definition
+of `WeightedWedge` as a `WeightedCone` over the twisted arrow diagram.
 
 ### 17. Compose Equivalences: Weighted Cowedges Reduce to Cocones
 
@@ -572,7 +637,20 @@ Steps:
 - Verify the composition
 - Document the full chain of equivalences
 
-**Status**: Not started (depends on Tasks 15)
+**Status**: Completed
+
+**Location**: `GebLean/Weighted.lean` (~line 1712)
+
+**Implementation**:
+
+- `weightedCowedgeDiagram`: Functor `(W.Elements)ᵒᵖ ⥤ D` via
+  `weightedCoconeDiagram W (profunctorOnCoTwistedArrow C P)`
+- `weightedCowedgeElementsEquiv`: The categorical equivalence
+  `WeightedCowedge W P ≌ Cocone (weightedCowedgeDiagram W P)`
+
+This follows directly by applying `weightedCoconeElementsEquiv` to the
+definition of `WeightedCowedge` as a `WeightedCocone` over the co-twisted
+arrow diagram.
 
 ## References
 
