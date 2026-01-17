@@ -652,6 +652,95 @@ This follows directly by applying `weightedCoconeElementsEquiv` to the
 definition of `WeightedCowedge` as a `WeightedCocone` over the co-twisted
 arrow diagram.
 
+### 18. Alternative Characterization: Weighted Wedges as Ordinary Wedges
+
+We defined weighted wedges as weighted cones over twisted arrow diagrams,
+which reduces them to ordinary cones. An alternative approach would be to
+express weighted wedges as ordinary wedges over a derived profunctor.
+
+**Question**: Given `W : TwistedArrow C ⥤ Type v` and `P : Cᵒᵖ ⥤ C ⥤ D`, is
+there a category `C'` and profunctor `P' : C'ᵒᵖ ⥤ C' ⥤ D` such that:
+
+```text
+WeightedWedge W P ≌ Wedge P'
+```
+
+**Approach**: The chain of equivalences gives us:
+
+```text
+WeightedWedge W P ≌ Cone (CategoryOfElements.π W ⋙ profunctorOnTwistedArrow C P)
+```
+
+For this to factor through ordinary wedges, we need `TwistedArrow C' ≅ W.Elements`
+for some `C'`. A natural candidate:
+
+- Take `C' := W.Elements` as a category
+- Define `P' : C'ᵒᵖ ⥤ C' ⥤ D` by `P'((tw₁, w₁), (tw₂, w₂)) := P(tw₁.src, tw₂.tgt)`
+- Then diagonal `P'((tw, w), (tw, w)) = P(tw.src, tw.tgt)` matches the weighted
+  wedge target
+
+Steps:
+
+- Define `weightedWedgeProfunctor W P : (W.Elements)ᵒᵖ ⥤ W.Elements ⥤ D`
+- Define conversion
+  `weightedWedgeToElementsWedge :`
+  `WeightedWedge W P → Wedge (weightedWedgeProfunctor W P)`
+- Define inverse conversion
+- Prove these form a categorical equivalence
+- Investigate whether `TwistedArrow (W.Elements)` relates to our diagram
+
+**Status**: Not started
+
+### 19. Weighted Cowedges as Full Subcategory of Strong Restricted Cowedges
+
+When `D = C` (the endofunctor case), weighted cowedges should relate to
+restricted cowedges. Since strong restricted cowedges use paranaturality
+(which is stronger than dinaturality), we conjecture that weighted cowedges
+embed as a full subcategory of strong restricted cowedges.
+
+**Setup**: For weighted cowedges with `D = C`:
+
+- `W : (CoTwistedArrow C)ᵒᵖ ⥤ Type v` - weight functor
+- `P : Cᵒᵖ ⥤ C ⥤ C` - endodifunctor (playing the role of `G`)
+
+For strong restricted cowedges:
+
+- `G : Cᵒᵖ ⥤ C ⥤ C` - endodifunctor
+- `H : Cᵒᵖ ⥤ C ⥤ Type v` - restriction profunctor
+- `IsParanatural H (G ⇓ pt) family` - paranaturality condition
+
+**Observation**: The "diagonal restriction" of `W` to identity co-twisted
+arrows gives a profunctor. Define `H(A, B) := W(op (CoTwistedArrow.mk (𝟙 A)))`
+... but this only captures diagonal data.
+
+However, the relationship may be more subtle. A weighted cowedge provides
+data at ALL co-twisted arrows, while a strong restricted cowedge only has
+data at diagonal elements satisfying paranaturality.
+
+**Conjecture**: There exists a functor
+
+```text
+WeightedCowedgeCat W P ⥤ StrongRestrictedCowedgeCat P H
+```
+
+where `H` is derived from `W` by diagonal restriction, and this functor is
+fully faithful (making weighted cowedges a full subcategory).
+
+Steps:
+
+- Define the diagonal restriction `diagonalRestriction W : Cᵒᵖ ⥤ C ⥤ Type v`
+  from a weight `W : (CoTwistedArrow C)ᵒᵖ ⥤ Type v`
+- Define `weightedCowedgeToStrongRestricted` converting weighted cowedges to
+  strong restricted cowedges
+- Verify that weighted cowedge naturality implies paranaturality
+- Define the functor on morphisms
+- Prove the functor is fully faithful
+
+If successful, the relationship with ordinary restricted cowedges follows by
+composing with the inclusion `StrongRestrictedCowedgeCat ⥤ RestrictedCowedgeCat`.
+
+**Status**: Not started
+
 ## References
 
 ### Code References
