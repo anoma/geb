@@ -1863,9 +1863,9 @@ For the diagonal case where `tw₁ = tw₂ = twObjMk (𝟙 A)`:
 - A morphism to itself requires `twDomArr m : A ⟶ A` and `twCodArr m : A ⟶ A`
   with the twisted arrow coherence condition
 
-The key observation is that `profunctorTwArrElements Q` naturally incorporates
-both the twisted arrow structure AND the profunctor structure, potentially
-allowing a more direct relationship with ordinary wedges.
+`profunctorTwArrElements Q` naturally incorporates both the twisted arrow
+structure AND the profunctor structure, potentially allowing a more direct
+relationship with ordinary wedges.
 
 However, for expressing weighted wedges as ordinary wedges over a profunctor
 on `profunctorTwArrElements Q`, we still need to define a profunctor
@@ -2786,7 +2786,7 @@ To embed weighted cowedges into strong restricted cowedges, we need to define
 a profunctor `H : Cᵒᵖ ⥤ C ⥤ Type v` from a weight `W : (CoTwistedArrow C)ᵒᵖ ⥤ Type v`
 such that `diagApp H A = weightDiagElem W A`.
 
-The natural attempt is to define `H.obj (op A).obj B := W.obj (op (diagCoTwArr A))`,
+We could define `H.obj (op A).obj B := W.obj (op (diagCoTwArr A))`,
 constant in the second argument `B`. For this to be functorial in the first
 argument, we need:
 
@@ -2993,7 +2993,7 @@ For an embedding to exist via constant profunctors, we would need either:
   diagonal co-twisted arrows)
 - Or a quotient/coproduct construction that collapses the varying types into one
 
-The first option is very restrictive. The second option would lose the fine-grained
+The first is very restrictive. The second would lose the fine-grained
 structure of the weighted cowedge.
 
 ### Groupoid Case

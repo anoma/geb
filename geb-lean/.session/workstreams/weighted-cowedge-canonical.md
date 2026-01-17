@@ -953,7 +953,7 @@ weighted colimits in the standard sense. The relationship may require:
 This task explored using a **covariant** functor (copresheaf) instead of a
 presheaf to address the variance mismatch from Task 22.
 
-**Key Insight**: The variance analysis in Task 22 showed that the profunctor
+The variance analysis in Task 22 showed that the profunctor
 action gives morphisms in the wrong direction for a presheaf. However, for a
 **covariant** functor `W : CoTwistedArrow C ⥤ Type v`, the directions align
 correctly.
