@@ -2104,6 +2104,70 @@ restricted cowedge structure where morphisms only exist along isomorphisms.
 
 end ProfunctorDerivedWeight
 
+section TwCoprArrElemApproach
+
+/-!
+## Alternative: Diagonal Elements Category (TwCoprArrElem)
+
+An alternative approach to expressing weighted wedges as ordinary wedges uses
+`TwCoprArrElem W` from `Paranatural.lean` - the category of diagonal elements
+with compatibility conditions - instead of `W.Elements`.
+
+### The Setup
+
+For a weight `W : TwistedArrow C ⥤ Type v`, `TwCoprArrElem W` has:
+- Objects: pairs `(arr : Arrow C, elem : W.obj(arrToTw' arr))`
+- Morphisms: `φ : arr₁ → arr₂` satisfying **diagonal compatibility**:
+  `W.map(arrToDiagFromSource φ) e₁ = W.map(arrToDiagFromTarget φ) e₂`
+
+The diagonal compatibility condition says that the two ways to transport an
+element along an arrow morphism (via source and via target) must agree.
+
+### Proposed Profunctor on TwCoprArrElem
+
+Given `P : Cᵒᵖ ⥤ C ⥤ D`, define `Q : (TwCoprArrElem W)ᵒᵖ ⥤ TwCoprArrElem W ⥤ D`:
+  `Q((arr₁, w₁), (arr₂, w₂)) = P(arr₁.right, arr₂.left)`
+
+This is functorial because it factors through the forgetful functor to `Arrow C`:
+- Contravariant: `P.map(f.base.right.op)` gives `P(arr₂.right, _) → P(arr₁.right, _)`
+- Covariant: `(P.obj _).map(g.base.left)` gives `P(_, arr₂.left) → P(_, arr₃.left)`
+
+On the diagonal: `Q((arr, w), (arr, w)) = P(twDom(arrToTw' arr), twCod(arrToTw' arr))`
+matching the weighted wedge target types.
+
+### Analysis
+
+The diagonal compatibility in `TwCoprArrElem W` is a RESTRICTION on morphisms,
+not a condition wedges must satisfy. In contrast, `W.Elements` has a morphism
+`(tw₁, w₁) → (tw₂, W.map g w₁)` for every twisted arrow morphism `g`.
+
+Weighted wedge naturality requires conditions for ALL twisted arrow morphisms.
+Wedge paranaturality over `Q` only requires conditions for diagonal-compatible
+morphisms. Since diagonal-compatible morphisms form a subset:
+
+  Wedges over Q impose FEWER conditions than weighted wedges.
+
+This gives an inclusion `WeightedWedge W P → Wedge Q` (every weighted wedge
+induces a wedge over Q), but NOT an equivalence. A wedge over Q lacks the full
+naturality required by weighted wedges.
+
+### Connection to diagElemIdentityTwCoprEquiv
+
+The equivalence `DiagElem P ≌ IdentityTwCoprArrElem P` shows diagonal profunctor
+elements correspond to identity-arrow elements. For wedges, diagonal evaluation
+corresponds to identity arrows. However, `TwCoprArrElem W` includes ALL arrows,
+not just identities, so the restriction of morphisms still causes the mismatch.
+
+### Conclusion
+
+The `TwCoprArrElem` approach does not yield an equivalence with weighted wedges.
+It provides only a forgetful/inclusion functor. The diagonal compatibility
+condition restricts morphisms too much - we lose the full naturality conditions
+that weighted wedges require.
+-/
+
+end TwCoprArrElemApproach
+
 section RestrictedCowedges
 
 /-!

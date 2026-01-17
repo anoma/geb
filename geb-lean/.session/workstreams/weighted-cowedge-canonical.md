@@ -1065,6 +1065,104 @@ morphism directions in the elements category.
 - `sliceWeightCovariant_obj_diag`: Diagonal evaluation
 - `sliceWeightCovariant_obj_eq_diagApp`: Matches slice profunctor diagonal
 
+### Task 24: TwCoprArrElem Approach for Weighted Wedges
+
+This task investigates whether using `TwCoprArrElem W` (the category of diagonal
+elements with compatibility conditions) instead of `W.Elements` could provide a
+cleaner reduction of weighted wedges to ordinary wedges.
+
+**Motivation**: The variance obstruction in Task 18 prevented expressing weighted
+wedges as ordinary wedges over `W.Elements`. The category `TwCoprArrElem W` from
+`Paranatural.lean` captures diagonal-compatible morphisms, which is precisely
+what paranaturality is about. Perhaps this alternative domain category could
+circumvent the variance issues.
+
+**Setup**:
+
+- `W : TwistedArrow C ⥤ Type v` (copresheaf on twisted arrows)
+- `P : Cᵒᵖ ⥤ C ⥤ D` (profunctor)
+- `TwCoprArrElem W` has objects `(arr : Arrow C, elem : W.obj(arrToTw' arr))`
+- Morphisms require **diagonal compatibility**:
+  `W.map(arrToDiagFromSource φ) e₁ = W.map(arrToDiagFromTarget φ) e₂`
+
+**Proposed profunctor**: Define `Q : (TwCoprArrElem W)ᵒᵖ ⥤ TwCoprArrElem W ⥤ D`:
+
+```text
+Q((arr₁, w₁), (arr₂, w₂)) = P(arr₁.right, arr₂.left)
+```
+
+where `arr.right` = target and `arr.left` = source.
+
+**Diagonal evaluation**:
+
+```text
+Q((arr, w), (arr, w)) = P(arr.right, arr.left)
+                      = P(twDom(arrToTw' arr), twCod(arrToTw' arr))
+```
+
+This matches the target type for weighted wedge data at that twisted arrow.
+
+**Functoriality analysis**:
+
+The proposed Q is functorial because it factors through the forgetful functor
+`U : TwCoprArrElem W → Arrow C`:
+
+- Contravariant: `f.base.right : arr₁.right → arr₂.right` gives
+  `P.map(f.base.right.op) : P(arr₂.right, _) → P(arr₁.right, _)`
+- Covariant: `g.base.left : arr₂.left → arr₃.left` gives
+  `(P.obj _).map(g.base.left) : P(_, arr₂.left) → P(_, arr₃.left)`
+
+Notably, Q **ignores the weight elements** entirely - it depends only on the
+underlying arrows.
+
+**Analysis: Weighted wedge naturality vs. wedge paranaturality**
+
+Weighted wedge naturality requires: for ALL `g : tw → tw'` in `TwistedArrow C`
+and `w : W.obj tw`:
+
+```text
+π tw w ≫ (profunctorOnTwistedArrow C P).map g = π tw' (W.map g w)
+```
+
+Wedge paranaturality over Q requires: for morphisms `f : (arr, w) → (arr', w')`
+in `TwCoprArrElem W`:
+
+```text
+π(arr,w) ≫ Q.map(f.op).app(arr,w) = π(arr',w') ≫ Q.obj(op(arr',w')).map f
+```
+
+The morphisms in `TwCoprArrElem W` require diagonal compatibility, which is a
+RESTRICTION - not all pairs `(arr₁, w₁)`, `(arr₂, w₂)` have morphisms between
+them. In contrast, `W.Elements` has a morphism `(tw₁, w₁) → (tw₂, W.map g w₁)`
+for EVERY twisted arrow morphism `g : tw₁ → tw₂`.
+
+**Conclusion**:
+
+Wedges over Q impose FEWER conditions than weighted wedges because:
+
+1. Diagonal compatibility restricts which morphisms exist in `TwCoprArrElem W`
+2. Weighted wedge naturality applies to ALL weight transports
+
+This gives an inclusion `WeightedWedge W P → Wedge Q` (restriction of structure),
+but NOT an equivalence. Every weighted wedge induces a wedge over Q, but the
+converse fails - a wedge over Q lacks the full naturality required by weighted
+wedges.
+
+**Connection to `diagElemIdentityTwCoprEquiv`**:
+
+The equivalence `DiagElem P ≌ IdentityTwCoprArrElem P` shows that diagonal
+profunctor elements correspond to identity-arrow elements. For wedges, we
+evaluate on diagonals, which corresponds to evaluating on identity arrows.
+However, `TwCoprArrElem W` includes ALL arrows, not just identities.
+
+**Status**: Completed (negative result - inclusion but not equivalence)
+
+**Finding**: The `TwCoprArrElem` approach does not yield an equivalence with
+weighted wedges. It provides only an inclusion functor, because the diagonal
+compatibility condition in `TwCoprArrElem` restricts morphisms more than the
+transport condition in `W.Elements`. The weighted wedge naturality conditions
+cannot be recovered from wedge paranaturality over the restricted category.
+
 ## References
 
 ### Code References
