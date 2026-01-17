@@ -1115,7 +1115,7 @@ The proposed Q is functorial because it factors through the forgetful functor
 Notably, Q **ignores the weight elements** entirely - it depends only on the
 underlying arrows.
 
-**Analysis: Weighted wedge naturality vs. wedge paranaturality**
+#### Weighted wedge naturality vs. wedge paranaturality
 
 Weighted wedge naturality requires: for ALL `g : tw → tw'` in `TwistedArrow C`
 and `w : W.obj tw`:
