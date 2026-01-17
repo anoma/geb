@@ -992,7 +992,7 @@ This generalizes ordinary wedges: when `W` is the terminal functor (constant
 at a singleton), a weighted wedge is exactly an ordinary wedge.
 -/
 abbrev WeightedWedge (W : TwistedArrow C ⥤ Type v) (P : Cᵒᵖ ⥤ C ⥤ D) :=
-  WeightedCone W (profunctorOnTwistedArrow C P)
+  WeightedCone (J := TwistedArrow C) W (profunctorOnTwistedArrow C P)
 
 /--
 A weighted cowedge over a profunctor `P : Cᵒᵖ ⥤ C ⥤ D` with weight
@@ -1006,7 +1006,7 @@ This generalizes ordinary cowedges: when `W` is the terminal functor (constant
 at a singleton), a weighted cowedge is exactly an ordinary cowedge.
 -/
 abbrev WeightedCowedge (W : (CoTwistedArrow C)ᵒᵖ ⥤ Type v) (P : Cᵒᵖ ⥤ C ⥤ D) :=
-  WeightedCocone W (profunctorOnCoTwistedArrow C P)
+  WeightedCocone (J := CoTwistedArrow C) W (profunctorOnCoTwistedArrow C P)
 
 end WeightedLimitColimit
 
@@ -1120,7 +1120,7 @@ For a cocone over `D : J ⥤ C`, the weighted cocone has:
 - The same apex `c.pt`
 - For each `j : J`, the unique element of `PUnit` maps to `c.ι.app j`
 -/
-def coconeToWeightedCocone {D : J ⥤ C} (c : Cocone D) :
+def coconeToWeightedCocone {D : J ⥤ C} (c : Cocone (J := J) D) :
     WeightedCocone (unitWeightOp J) D where
   pt := c.pt
   ι := {
