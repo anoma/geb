@@ -883,6 +883,157 @@ on the category of elements, except when restricted to groupoids.
 - `diagTwArrMorphismOfIso`: Morphism between diagonals requires isomorphism
 - Documentation of variance analysis and paranaturality relationship
 
+### Task 22: Slice Profunctor Weight Variance Analysis
+
+This task explored whether the slice profunctor `G ⇓ c` could induce a
+functorial weight on co-twisted arrows that relates weighted cowedges to
+restricted cowedges.
+
+**Motivation**: Restricted cowedges use `sliceProfunctor G c`, not a trivial
+profunctor. Any relationship between weighted cowedges and restricted cowedges
+must involve the slice profunctor structure.
+
+**Approach**: Define `sliceWeightObj G c : CoTwistedArrow C → Type v` where:
+`sliceWeightObj G c tw = (G.obj (op (coTwCod tw))).obj (coTwDom tw) ⟶ c`
+
+At diagonal co-twisted arrows, this gives `(G.obj (op A)).obj A ⟶ c`, matching
+`diagApp (G ⇓ c) A`.
+
+**Variance Analysis for Functoriality**:
+
+For a morphism `m : opSrc ⟶ opTgt` in `(CoTwistedArrow C)ᵒᵖ`, a presheaf
+requires `map m : W.obj opSrc → W.obj opTgt`. With our weight definition:
+
+- Source: `(G(coTwCod opSrc, coTwDom opSrc)) ⟶ c`
+- Target: `(G(coTwCod opTgt, coTwDom opTgt)) ⟶ c`
+
+Given `h : G(opSrc) ⟶ c`, we need to produce `G(opTgt) ⟶ c`.
+
+The profunctor action from `m.unop : opTgt.unop ⟶ opSrc.unop` gives:
+
+- `coTwDomArr m.unop : coTwDom opSrc.unop ⟶ coTwDom opTgt.unop`
+- `coTwCodArr m.unop : coTwCod opTgt.unop ⟶ coTwCod opSrc.unop`
+
+Combined profunctor action: `G(coTwCod opSrc, coTwDom opSrc) ⟶
+                             G(coTwCod opTgt, coTwDom opTgt)`
+
+This is the WRONG direction! We have:
+
+- `α : G(opSrc) ⟶ G(opTgt)` from profunctor action
+- `h : G(opSrc) ⟶ c` input
+
+We cannot compose `α` and `h` to get `G(opTgt) ⟶ c`. The profunctor action
+gives maps in the wrong direction for building a presheaf on `(CoTwistedArrow
+C)ᵒᵖ`.
+
+**Finding**: The slice profunctor does NOT induce a functorial weight on
+`(CoTwistedArrow C)ᵒᵖ` via the standard profunctor action. This is a
+fundamental variance mismatch.
+
+**Interpretation**: Restricted cowedges are not directly equivalent to
+weighted colimits in the standard sense. The relationship may require:
+
+1. Enriched category theory
+2. A modified notion of weighted colimit
+3. An alternative categorical framework
+
+**Status**: Completed (negative result - variance obstruction confirmed)
+
+**Location**: `GebLean/Weighted.lean` section `WeightedCowedgeEmbedding`
+
+**Implementation**:
+
+- `sliceWeightObj G c tw`: Non-functorial type family on co-twisted arrows
+- `sliceWeightObj_diag`: Diagonal equals `(G(A,A)) ⟶ c`
+- `sliceWeightObj_diagApp_eq`: Diagonal matches `diagApp (G ⇓ c) A`
+- Detailed documentation of the variance mismatch analysis
+
+### Task 23: Covariant Slice Weight Functor
+
+This task explored using a **covariant** functor (copresheaf) instead of a
+presheaf to address the variance mismatch from Task 22.
+
+**Key Insight**: The variance analysis in Task 22 showed that the profunctor
+action gives morphisms in the wrong direction for a presheaf. However, for a
+**covariant** functor `W : CoTwistedArrow C ⥤ Type v`, the directions align
+correctly.
+
+**Variance Analysis (Covariant Case)**:
+
+For a morphism `m : x ⟶ y` in `CoTwistedArrow C`:
+
+- `coTwDomArr m : coTwDom y ⟶ coTwDom x` (backwards)
+- `coTwCodArr m : coTwCod x ⟶ coTwCod y` (forwards)
+
+The profunctor `G : Cᵒᵖ ⥤ C ⥤ C` action gives:
+
+- `G.map (coTwCodArr m).op : G(coTwCod y, -) ⟶ G(coTwCod x, -)`
+- `G(-).map (coTwDomArr m) : G(-, coTwDom y) ⟶ G(-, coTwDom x)`
+
+Combined: `profAction : G(coTwCod y, coTwDom y) ⟶ G(coTwCod x, coTwDom x)`
+
+For a covariant functor, given `h : G(x) ⟶ c`, we need `G(y) ⟶ c`.
+We can compose: `profAction ≫ h : G(y) ⟶ c`.
+
+This is the correct direction!
+
+**Result**: The slice profunctor DOES induce a functorial weight, but it's a
+**copresheaf** (covariant functor) on `CoTwistedArrow C`, not a presheaf.
+
+**Implications**:
+
+1. Weighted **colimits** use presheaves `W : Jᵒᵖ ⥤ Type v` as weights
+2. Weighted **limits** use copresheaves `W : J ⥤ Type v` as weights
+
+Since `CoTwistedArrow C = (TwistedArrow Cᵒᵖ)ᵒᵖ` by definition, a covariant
+functor on `CoTwistedArrow C` is equivalently a **presheaf on
+`TwistedArrow Cᵒᵖ`**:
+
+```text
+sliceWeightCovariant G c : CoTwistedArrow C ⥤ Type v
+                        = (TwistedArrow Cᵒᵖ)ᵒᵖ ⥤ Type v
+                        (presheaf on TwistedArrow Cᵒᵖ)
+```
+
+This means the slice weight CAN serve as a weight for weighted colimits over
+the category `TwistedArrow Cᵒᵖ`. The relationship to restricted cowedges is:
+
+- Restricted cowedges are defined using `G : Cᵒᵖ ⥤ C ⥤ C` and
+  `H : Cᵒᵖ ⥤ C ⥤ Type v`
+- The slice profunctor `G ⇓ c` induces a presheaf weight on `TwistedArrow Cᵒᵖ`
+- Weighted cowedges with this weight relate to restricted cowedges
+
+This resolves the apparent contradiction: we have a copresheaf on
+`CoTwistedArrow C`, but viewing the same functor through the equivalence
+`CoTwistedArrow C = (TwistedArrow Cᵒᵖ)ᵒᵖ`, it becomes a presheaf suitable
+for weighted colimits.
+
+**Category of Elements Consideration**:
+
+For the category of elements, two perspectives arise:
+
+1. `(sliceWeightCovariant G c).Elements` - covariant elements of the copresheaf
+   on `CoTwistedArrow C`
+2. `W'.ElementsPre` where `W'` is the transported presheaf on `TwistedArrow Cᵒᵖ`
+
+These should be equivalent via the category equivalence
+`CoTwistedArrow C ≌ (TwistedArrow Cᵒᵖ)ᵒᵖ`, but the choice affects the concrete
+morphism directions in the elements category.
+
+**Status**: Completed (positive result)
+
+**Location**: `GebLean/Weighted.lean` section `WeightedCowedgeEmbedding`
+
+**Implementation**:
+
+- `sliceWeightProfunctorAction`: Profunctor action for co-twisted arrow morphisms
+- `sliceWeightProfunctorAction_id`: Preserves identities
+- `sliceWeightProfunctorAction_comp`: Preserves composition (via naturality)
+- `sliceWeightMapCovariant`: Covariant map action
+- `sliceWeightCovariant`: The full functor `CoTwistedArrow C ⥤ Type v`
+- `sliceWeightCovariant_obj_diag`: Diagonal evaluation
+- `sliceWeightCovariant_obj_eq_diagApp`: Matches slice profunctor diagonal
+
 ## References
 
 ### Code References

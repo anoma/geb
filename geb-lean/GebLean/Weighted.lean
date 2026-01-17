@@ -3032,6 +3032,223 @@ restricted cowedges is more subtle and may require additional categorical
 machinery (such as enrichment or fibered categories) to formalize properly.
 -/
 
+/-!
+### Slice-Profunctor-Induced Weight
+
+Instead of trying to derive a profunctor from an arbitrary weight, we consider
+the reverse direction: given a slice profunctor `G ⇓ c`, define the induced
+weight on co-twisted arrows.
+
+For a co-twisted arrow `f : A ⟶ B`, the slice profunctor evaluates to:
+`((G ⇓ c).obj (op A)).obj B = (G.obj (op B)).obj A ⟶ c`
+
+We define `sliceWeight G c : (CoTwistedArrow C)ᵒᵖ ⥤ Type v` such that:
+`sliceWeight G c .obj (op (coTwObjMk f)) = (G.obj (op B)).obj A ⟶ c`
+
+For a morphism `m : x ⟶ y` in `CoTwistedArrow C`:
+- `coTwDomArr m : coTwDom y ⟶ coTwDom x` (backwards)
+- `coTwCodArr m : coTwCod x ⟶ coTwCod y` (forwards)
+
+For `m : opSrc ⟶ opTgt` in `(CoTwistedArrow C)ᵒᵖ`, we have
+`m.unop : opTgt.unop ⟶ opSrc.unop`, so:
+- `coTwDomArr m.unop : coTwDom opSrc.unop ⟶ coTwDom opTgt.unop`
+- `coTwCodArr m.unop : coTwCod opTgt.unop ⟶ coTwCod opSrc.unop`
+
+The profunctor action on `G : Cᵒᵖ ⥤ C ⥤ C`:
+- Contravariant in first arg: for `f : A ⟶ B`, `G.map f.op` goes `G(B,-) ⟶ G(A,-)`
+- Covariant in second arg: for `g : X ⟶ Y`, `G(-).map g` goes `G(-,X) ⟶ G(-,Y)`
+
+Applying to our morphism arrows:
+- `G.map (coTwCodArr m.unop).op` gives `G(coTwCod opSrc,-) ⟶ G(coTwCod opTgt,-)`
+- `G(-).map (coTwDomArr m.unop)` gives `G(-,coTwDom opSrc) ⟶ G(-,coTwDom opTgt)`
+
+Combined: `G(coTwCod opSrc, coTwDom opSrc) ⟶ G(coTwCod opTgt, coTwDom opTgt)`
+
+But for a presheaf `W : (CoTwistedArrow C)ᵒᵖ ⥤ Type v`, we need:
+- `W.map m : W.obj opSrc → W.obj opTgt`
+- i.e., `(G(coTwCod opSrc, coTwDom opSrc) ⟶ c) → (G(coTwCod opTgt, coTwDom opTgt) ⟶ c)`
+
+Given `h : G(opSrc) ⟶ c` and the profunctor action `α : G(opSrc) ⟶ G(opTgt)`,
+we cannot compose these to get `G(opTgt) ⟶ c`. The directions do not match.
+
+This is a fundamental variance mismatch: the slice profunctor does not induce
+a functorial weight on `(CoTwistedArrow C)ᵒᵖ` via the standard profunctor action.
+
+This suggests that restricted cowedges are not directly equivalent to weighted
+colimits in the standard sense. The relationship may require a different
+categorical framework (e.g., enriched category theory, or a modified notion
+of weighted colimit).
+-/
+
+/-- The slice weight as a type family on co-twisted arrows (not functorial).
+
+For a co-twisted arrow `tw` with `coTwArr tw : coTwCod tw ⟶ coTwDom tw`,
+this gives the type `(G.obj (op (coTwCod tw))).obj (coTwDom tw) ⟶ c`.
+
+At the diagonal co-twisted arrow `diagCoTwArr A = 𝟙_A`, this evaluates to
+`(G.obj (op A)).obj A ⟶ c`, which equals `diagApp (G ⇓ c) A` - the diagonal
+of the slice profunctor. -/
+def sliceWeightObj (G : Cᵒᵖ ⥤ C ⥤ C) (c : C) (tw : CoTwistedArrow C) : Type v :=
+  (G.obj (Opposite.op (coTwCod tw))).obj (coTwDom tw) ⟶ c
+
+@[simp]
+theorem sliceWeightObj_def (G : Cᵒᵖ ⥤ C ⥤ C) (c : C) (tw : CoTwistedArrow C) :
+    sliceWeightObj G c tw =
+    ((G.obj (Opposite.op (coTwCod tw))).obj (coTwDom tw) ⟶ c) := rfl
+
+/-- At the diagonal co-twisted arrow, the slice weight type is `(G(A,A)) ⟶ c`.
+Note: for `G : Cᵒᵖ ⥤ C ⥤ C`, `(G.obj (op A)).obj A` is an object of C, and
+the slice weight gives the type of morphisms from that object to c. -/
+theorem sliceWeightObj_diag (G : Cᵒᵖ ⥤ C ⥤ C) (c : C) (A : C) :
+    sliceWeightObj G c (diagCoTwArr A) = ((G.obj (Opposite.op A)).obj A ⟶ c) := by
+  simp only [sliceWeightObj_def, diagCoTwArr, coTwObjMk_dom, coTwObjMk_cod]
+
+/-- The diagonal of the slice weight matches the diagonal of the slice profunctor.
+This shows that `sliceWeightObj` captures the correct diagonal structure: for
+the slice profunctor `G ⇓ c`, its diagonal at A is `(G(A,A)) ⟶ c`, which is
+exactly what `sliceWeightObj G c` gives at `diagCoTwArr A`. -/
+theorem sliceWeightObj_diagApp_eq (G : Cᵒᵖ ⥤ C ⥤ C) (c : C) (A : C) :
+    sliceWeightObj G c (diagCoTwArr A) = diagApp (G ⇓ c) A := by
+  rw [sliceWeightObj_diag, sliceProfunctor_diagApp]
+
+/-!
+### Covariant Slice Weight Functor
+
+The variance mismatch with presheaves suggests using a **covariant** functor
+(copresheaf) on `CoTwistedArrow C` instead. For a morphism `m : x ⟶ y` in
+`CoTwistedArrow C`:
+
+- `coTwDomArr m : coTwDom y ⟶ coTwDom x` (backwards)
+- `coTwCodArr m : coTwCod x ⟶ coTwCod y` (forwards)
+
+The profunctor `G : Cᵒᵖ ⥤ C ⥤ C` gives:
+
+- `G.map (coTwCodArr m).op : G(coTwCod y, -) ⟶ G(coTwCod x, -)`
+- `G(-).map (coTwDomArr m) : G(-, coTwDom y) ⟶ G(-, coTwDom x)`
+
+Combined action: `G(coTwCod y, coTwDom y) ⟶ G(coTwCod x, coTwDom x)`
+
+Given `h : G(coTwCod x, coTwDom x) ⟶ c`, we can compose:
+`profAction ≫ h : G(coTwCod y, coTwDom y) ⟶ c`
+
+This is the correct direction for a covariant functor on `CoTwistedArrow C`!
+-/
+
+/-- The profunctor action for morphisms between co-twisted arrows.
+For `m : x ⟶ y` in `CoTwistedArrow C`, this gives a morphism from
+`G(coTwCod y, coTwDom y)` to `G(coTwCod x, coTwDom x)`. -/
+def sliceWeightProfunctorAction (G : Cᵒᵖ ⥤ C ⥤ C) {x y : CoTwistedArrow C}
+    (m : x ⟶ y) :
+    (G.obj (Opposite.op (coTwCod y))).obj (coTwDom y) ⟶
+    (G.obj (Opposite.op (coTwCod x))).obj (coTwDom x) :=
+  (G.obj (Opposite.op (coTwCod y))).map (coTwDomArr m) ≫
+    (G.map (coTwCodArr m).op).app (coTwDom x)
+
+/-- The slice weight morphism action for a covariant functor.
+Given `h : G(coTwCod x, coTwDom x) ⟶ c` and a co-twisted arrow morphism
+`m : x ⟶ y`, produces `sliceWeightProfunctorAction G m ≫ h : G(y) ⟶ c`. -/
+def sliceWeightMapCovariant (G : Cᵒᵖ ⥤ C ⥤ C) (c : C) {x y : CoTwistedArrow C}
+    (m : x ⟶ y) :
+    sliceWeightObj G c x → sliceWeightObj G c y :=
+  fun h => sliceWeightProfunctorAction G m ≫ h
+
+/-- The profunctor action preserves identities. -/
+theorem sliceWeightProfunctorAction_id (G : Cᵒᵖ ⥤ C ⥤ C) (x : CoTwistedArrow C) :
+    sliceWeightProfunctorAction G (𝟙 x) = 𝟙 _ := by
+  simp only [sliceWeightProfunctorAction]
+  rw [coTwDomArr_id, coTwCodArr_id]
+  simp only [op_id, CategoryTheory.Functor.map_id, NatTrans.id_app, Category.id_comp]
+
+/-- The profunctor action preserves composition. -/
+theorem sliceWeightProfunctorAction_comp (G : Cᵒᵖ ⥤ C ⥤ C)
+    {x y z : CoTwistedArrow C} (m : x ⟶ y) (n : y ⟶ z) :
+    sliceWeightProfunctorAction G (m ≫ n) =
+      sliceWeightProfunctorAction G n ≫ sliceWeightProfunctorAction G m := by
+  simp only [sliceWeightProfunctorAction]
+  rw [coTwDomArr_comp, coTwCodArr_comp]
+  simp only [CategoryTheory.Functor.map_comp, op_comp, NatTrans.comp_app]
+  -- Naturality of G.map (coTwCodArr n).op applied to coTwDomArr m gives interchange
+  have nat := (G.map (coTwCodArr n).op).naturality (coTwDomArr m)
+  -- Use calc to handle associativity explicitly
+  calc _ = (G.obj _).map (coTwDomArr n) ≫ (G.obj _).map (coTwDomArr m) ≫
+           (G.map (coTwCodArr n).op).app _ ≫ (G.map (coTwCodArr m).op).app _ := by
+           simp only [Category.assoc]
+       _ = (G.obj _).map (coTwDomArr n) ≫ ((G.obj _).map (coTwDomArr m) ≫
+           (G.map (coTwCodArr n).op).app _) ≫ (G.map (coTwCodArr m).op).app _ := by
+           simp only [← Category.assoc]
+       _ = (G.obj _).map (coTwDomArr n) ≫ ((G.map (coTwCodArr n).op).app _ ≫
+           (G.obj _).map (coTwDomArr m)) ≫ (G.map (coTwCodArr m).op).app _ := by
+           rw [nat]
+       _ = _ := by simp only [Category.assoc]
+
+/-- Identity law for the covariant slice weight map. -/
+theorem sliceWeightMapCovariant_id (G : Cᵒᵖ ⥤ C ⥤ C) (c : C) (x : CoTwistedArrow C)
+    (h : sliceWeightObj G c x) :
+    sliceWeightMapCovariant G c (𝟙 x) h = h := by
+  simp only [sliceWeightMapCovariant, sliceWeightProfunctorAction_id, Category.id_comp]
+
+/-- Composition law for the covariant slice weight map. -/
+theorem sliceWeightMapCovariant_comp (G : Cᵒᵖ ⥤ C ⥤ C) (c : C)
+    {x y z : CoTwistedArrow C} (m : x ⟶ y) (n : y ⟶ z)
+    (h : sliceWeightObj G c x) :
+    sliceWeightMapCovariant G c (m ≫ n) h =
+      sliceWeightMapCovariant G c n (sliceWeightMapCovariant G c m h) := by
+  simp only [sliceWeightMapCovariant, sliceWeightProfunctorAction_comp, Category.assoc]
+
+/-- The covariant slice weight as a functor from `CoTwistedArrow C` to `Type v`.
+This is a copresheaf on the co-twisted arrow category, induced by the slice
+profunctor `G ⇓ c`. -/
+def sliceWeightCovariant (G : Cᵒᵖ ⥤ C ⥤ C) (c : C) : CoTwistedArrow C ⥤ Type v where
+  obj := sliceWeightObj G c
+  map := sliceWeightMapCovariant G c
+  map_id x := by
+    ext h
+    exact sliceWeightMapCovariant_id G c x h
+  map_comp m n := by
+    ext h
+    exact sliceWeightMapCovariant_comp G c m n h
+
+/-- The covariant slice weight at a diagonal co-twisted arrow. -/
+@[simp]
+theorem sliceWeightCovariant_obj_diag (G : Cᵒᵖ ⥤ C ⥤ C) (c : C) (A : C) :
+    (sliceWeightCovariant G c).obj (diagCoTwArr A) =
+    ((G.obj (Opposite.op A)).obj A ⟶ c) := by
+  simp only [sliceWeightCovariant, sliceWeightObj_diag]
+
+/-- The covariant slice weight matches the slice profunctor diagonal. -/
+theorem sliceWeightCovariant_obj_eq_diagApp (G : Cᵒᵖ ⥤ C ⥤ C) (c : C) (A : C) :
+    (sliceWeightCovariant G c).obj (diagCoTwArr A) = diagApp (G ⇓ c) A := by
+  rw [sliceWeightCovariant_obj_diag, sliceProfunctor_diagApp]
+
+/-!
+### Implications for Weighted Colimits
+
+The covariant slice weight `sliceWeightCovariant G c : CoTwistedArrow C ⥤ Type v`
+is a copresheaf (covariant functor) on `CoTwistedArrow C`.
+
+Since `CoTwistedArrow C = OpTwistedArrow' (Cᵒᵖ') ≅ (TwistedArrow Cᵒᵖ)ᵒᵖ`
+(see `TwistedArrow.lean` theorems `opTwistedArrowIsoTwistedArrowOp'` and
+`OpTwistedArrow' (Cᵒᵖ') = CoTwistedArrow' C`), a covariant functor on
+`CoTwistedArrow C` is equivalently a **presheaf on `TwistedArrow Cᵒᵖ`**.
+
+Weighted colimits use presheaves as weights. Therefore, the slice profunctor
+induces a weight suitable for weighted colimits over `TwistedArrow Cᵒᵖ`.
+
+The relationship between restricted cowedges and weighted colimits:
+- `sliceWeightCovariant G c : CoTwistedArrow C ⥤ Type v` is a copresheaf
+- Viewing as `(TwistedArrow Cᵒᵖ)ᵒᵖ ⥤ Type v`, this is a presheaf on
+  `TwistedArrow Cᵒᵖ`
+- This presheaf can serve as a weight for weighted colimits
+
+For the category of elements, two perspectives arise:
+1. `(sliceWeightCovariant G c).Elements` - covariant elements of the copresheaf
+2. `W'.ElementsPre` where `W'` is the transported presheaf on `TwistedArrow Cᵒᵖ`
+
+These should be equivalent via the category equivalence
+`CoTwistedArrow C ≌ (TwistedArrow Cᵒᵖ)ᵒᵖ`, but the choice affects the
+concrete morphism directions.
+-/
+
 end WeightedCowedgeEmbedding
 
 end GebLean
