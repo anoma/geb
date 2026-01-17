@@ -1018,6 +1018,23 @@ section ConeWeightedConeEquivalence
 Ordinary cones and cocones are special cases of weighted cones and cocones
 where the weight functor is constant at a singleton type. This section
 establishes this relationship.
+
+### Ends, the Hom-Profunctor, and the Terminal Weight
+
+For wedges specifically, this equivalence has deeper significance. An **end**
+is a weighted limit where the weight is the hom-profunctor. The terminal
+functor on `TwistedArrow C` corresponds to the hom-profunctor via the
+slice/elements correspondence:
+
+- `TwistedArrow C` = category of elements of `Hom_C`
+- A copresheaf `F : TwistedArrow C ⥤ Type v` corresponds to a slice over
+  `Hom_C` in the category of profunctors
+- The terminal object in a slice `Prof/Hom_C` is `id : Hom_C → Hom_C`
+- So the terminal functor on `TwistedArrow C` "is" the hom-profunctor
+
+Therefore, `WeightedWedge (unitWeight (TwistedArrow C)) P ≌ Wedge P` is
+another way of expressing that ordinary wedges (ends) are weighted limits
+with the hom-profunctor weight. Dually for cowedges (coends).
 -/
 
 variable {J : Type u} [Category.{v} J] {C : Type w} [Category.{v} C]

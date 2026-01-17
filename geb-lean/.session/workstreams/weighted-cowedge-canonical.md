@@ -386,6 +386,23 @@ Steps:
 - `weightedConeToCone_coneToWeightedCone`: Round-trip equality proven via `ext`
 - Analogous functions for cocones
 
+**Conceptual Significance: Ends and the Hom-Profunctor**:
+
+This equivalence has deeper significance when applied to wedges. An **end** is
+a weighted limit where the weight is the hom-profunctor.
+The equivalence between weighted wedges with terminal weight and ordinary
+wedges is a manifestation of this:
+
+- `TwistedArrow C` = category of elements of `Hom_C`
+- A copresheaf `F : TwistedArrow C ⥤ Type v` corresponds to a slice over
+  `Hom_C` in the category of profunctors
+- The terminal object in a slice `Prof/Hom_C` is `id : Hom_C → Hom_C`
+- So the terminal functor on `TwistedArrow C` "is" the hom-profunctor
+
+Therefore, `WeightedWedge (unitWeight (TwistedArrow C)) P ≌ Wedge P` is another
+way of expressing that ordinary wedges (ends) are weighted limits with the
+hom-profunctor weight. Dually for cowedges (coends).
+
 ### 11. Verify Weighted Cocone Direction
 
 For ordinary cocones, the natural transformation goes `ι : F ⟶ (const J).obj pt`
