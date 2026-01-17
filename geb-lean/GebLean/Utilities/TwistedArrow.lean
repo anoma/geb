@@ -158,6 +158,16 @@ lemma twDomArr_comp {x y z : TwistedArrow C} (f : x ⟶ y) (g : y ⟶ z) :
 lemma twCodArr_comp {x y z : TwistedArrow C} (f : x ⟶ y) (g : y ⟶ z) :
     twCodArr (f ≫ g) = twCodArr f ≫ twCodArr g := rfl
 
+@[simp]
+lemma twDomArr_eqToHom {x y : TwistedArrow C} (h : x = y) :
+    twDomArr (eqToHom h) = eqToHom (congrArg twDom h).symm := by
+  cases h; rfl
+
+@[simp]
+lemma twCodArr_eqToHom {x y : TwistedArrow C} (h : x = y) :
+    twCodArr (eqToHom h) = eqToHom (congrArg twCod h) := by
+  cases h; rfl
+
 end TwistedArrowHelpers
 
 /--
@@ -337,6 +347,138 @@ lemma coTwCodArr_comp {x y z : CoTwistedArrow C} (f : x ⟶ y) (g : y ⟶ z) :
     coTwCodArr (f ≫ g) = coTwCodArr f ≫ coTwCodArr g := rfl
 
 end CoTwistedArrowHelpers
+
+section TwistedArrowSelfDualityUnprimed
+
+/-!
+## Self-Duality for Unprimed Twisted Arrow Categories
+
+The twisted arrow category is self-dual: `TwistedArrow C ≌ TwistedArrow (Cᵒᵖ)`.
+
+This equivalence swaps domain and codomain while taking the opposite of the
+arrow. Combined with the op functor, this gives the equivalence
+`(TwistedArrow C)ᵒᵖ ≌ CoTwistedArrow C`.
+-/
+
+variable {C : Type u} [Category.{v} C]
+
+/--
+Functor from `TwistedArrow C` to `TwistedArrow (Cᵒᵖ)`.
+
+Sends `(dom, cod, f : dom ⟶ cod)` to `(op cod, op dom, f.op : op cod ⟶ op dom)`.
+-/
+def twistedArrowToTwistedArrowOp : TwistedArrow C ⥤ TwistedArrow (Cᵒᵖ) where
+  obj := fun tw => twObjMk (twArr tw).op
+  map := fun {x y} m =>
+    twHomMk (twCodArr m).op (twDomArr m).op (by
+      simp only [twObjMk_arr, ← op_comp, Category.assoc, twHomComm])
+  map_id := fun tw => by apply twHom_ext <;> rfl
+  map_comp := fun {x y z} f g => by apply twHom_ext <;> rfl
+
+/--
+Functor from `TwistedArrow (Cᵒᵖ)` to `TwistedArrow C`.
+
+Sends `(dom', cod', f' : dom' ⟶ cod')` where `dom', cod' : Cᵒᵖ`
+to `(cod'.unop, dom'.unop, f'.unop)`.
+-/
+def twistedArrowOpToTwistedArrow : TwistedArrow (Cᵒᵖ) ⥤ TwistedArrow C where
+  obj := fun tw => twObjMk (twArr tw).unop
+  map := fun {x y} m =>
+    twHomMk (twCodArr m).unop (twDomArr m).unop (by
+      simp only [twObjMk_arr, ← unop_comp, Category.assoc, twHomComm])
+  map_id := fun tw => by apply twHom_ext <;> rfl
+  map_comp := fun {x y z} f g => by apply twHom_ext <;> rfl
+
+/--
+Round-trip from `TwistedArrow C` through `TwistedArrow (Cᵒᵖ)` and back
+gives the identity on objects.
+-/
+theorem twistedArrowRoundTrip_obj (tw : TwistedArrow C) :
+    twistedArrowOpToTwistedArrow.obj (twistedArrowToTwistedArrowOp.obj tw) = tw := by
+  simp only [twistedArrowToTwistedArrowOp, twistedArrowOpToTwistedArrow, twObjMk]
+  rfl
+
+/--
+Round-trip from `TwistedArrow (Cᵒᵖ)` through `TwistedArrow C` and back
+gives the identity on objects.
+-/
+theorem twistedArrowOpRoundTrip_obj (tw : TwistedArrow (Cᵒᵖ)) :
+    twistedArrowToTwistedArrowOp.obj (twistedArrowOpToTwistedArrow.obj tw) = tw := by
+  simp only [twistedArrowToTwistedArrowOp, twistedArrowOpToTwistedArrow, twObjMk]
+  rfl
+
+/--
+Round-trip preserves morphisms on domain component.
+-/
+@[simp]
+theorem twistedArrowRoundTrip_map_domArr {x y : TwistedArrow C} (f : x ⟶ y) :
+    twDomArr ((twistedArrowToTwistedArrowOp ⋙ twistedArrowOpToTwistedArrow).map f) =
+    twDomArr f := by
+  simp only [Functor.comp_map, twistedArrowToTwistedArrowOp, twistedArrowOpToTwistedArrow,
+    twHomMk_domArr, twHomMk_codArr]
+  exact Quiver.Hom.op_unop (twDomArr f)
+
+/--
+Round-trip preserves morphisms on codomain component.
+-/
+@[simp]
+theorem twistedArrowRoundTrip_map_codArr {x y : TwistedArrow C} (f : x ⟶ y) :
+    twCodArr ((twistedArrowToTwistedArrowOp ⋙ twistedArrowOpToTwistedArrow).map f) =
+    twCodArr f := by
+  simp only [Functor.comp_map, twistedArrowToTwistedArrowOp, twistedArrowOpToTwistedArrow,
+    twHomMk_domArr, twHomMk_codArr]
+  exact Quiver.Hom.op_unop (twCodArr f)
+
+/--
+Round-trip preserves morphisms on domain component (opposite direction).
+-/
+@[simp]
+theorem twistedArrowOpRoundTrip_map_domArr {x y : TwistedArrow (Cᵒᵖ)} (f : x ⟶ y) :
+    twDomArr ((twistedArrowOpToTwistedArrow ⋙ twistedArrowToTwistedArrowOp).map f) =
+    twDomArr f := by
+  simp only [Functor.comp_map, twistedArrowToTwistedArrowOp, twistedArrowOpToTwistedArrow,
+    twHomMk_domArr, twHomMk_codArr]
+  exact Quiver.Hom.unop_op (twDomArr f)
+
+/--
+Round-trip preserves morphisms on codomain component (opposite direction).
+-/
+@[simp]
+theorem twistedArrowOpRoundTrip_map_codArr {x y : TwistedArrow (Cᵒᵖ)} (f : x ⟶ y) :
+    twCodArr ((twistedArrowOpToTwistedArrow ⋙ twistedArrowToTwistedArrowOp).map f) =
+    twCodArr f := by
+  simp only [Functor.comp_map, twistedArrowToTwistedArrowOp, twistedArrowOpToTwistedArrow,
+    twHomMk_domArr, twHomMk_codArr]
+  exact Quiver.Hom.unop_op (twCodArr f)
+
+/--
+The twisted arrow category is self-dual: `TwistedArrow C ≌ TwistedArrow (Cᵒᵖ)`.
+-/
+def twistedArrowEquivTwistedArrowOp : TwistedArrow C ≌ TwistedArrow (Cᵒᵖ) where
+  functor := twistedArrowToTwistedArrowOp
+  inverse := twistedArrowOpToTwistedArrow
+  unitIso := NatIso.ofComponents
+    (fun tw => eqToIso (twistedArrowRoundTrip_obj tw).symm)
+    (fun {x y} f => by
+      simp only [eqToIso.hom, Functor.id_obj, Functor.comp_obj, Functor.id_map,
+        Functor.comp_map]
+      apply twHom_ext
+      · simp only [twDomArr_comp, twDomArr_eqToHom, twistedArrowRoundTrip_obj,
+          twistedArrowRoundTrip_map_domArr, Category.comp_id, Category.id_comp]
+      · simp only [twCodArr_comp, twCodArr_eqToHom, twistedArrowRoundTrip_obj,
+          twistedArrowRoundTrip_map_codArr, Category.comp_id, Category.id_comp])
+  counitIso := NatIso.ofComponents
+    (fun tw => eqToIso (twistedArrowOpRoundTrip_obj tw))
+    (fun {x y} f => by
+      simp only [eqToIso.hom, Functor.comp_obj, Functor.id_obj, Functor.comp_map,
+        Functor.id_map]
+      apply twHom_ext
+      · simp only [twDomArr_comp, twDomArr_eqToHom, twistedArrowOpRoundTrip_obj,
+          twistedArrowOpRoundTrip_map_domArr, Category.comp_id, Category.id_comp]
+      · simp only [twCodArr_comp, twCodArr_eqToHom, twistedArrowOpRoundTrip_obj,
+          twistedArrowOpRoundTrip_map_codArr, Category.comp_id, Category.id_comp])
+
+end TwistedArrowSelfDualityUnprimed
 
 @[simp]
 def TwistedArrow' (C : Type u) [Category.{v} C] :=
