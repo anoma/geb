@@ -1783,9 +1783,301 @@ Alternative approaches that might work:
 1. Use CoTwistedArrow instead of TwistedArrow (reversed domain variance)
 2. Work with cowedges instead of wedges (dual variance structure)
 3. Define on a twisted product category that corrects the variance
+4. Restrict to weights of the form `profunctorOnTwistedArrow C Q` and use
+   `(profunctorOnTwistedArrow C Q).Elements` as the domain category
 -/
 
 end WeightedWedgeAsProfunctor
+
+section ProfunctorDerivedWeight
+
+/-!
+## Weights Derived from Profunctors
+
+When the weight functor `W : TwistedArrow C ⥤ Type v` is itself derived from
+a profunctor via `profunctorOnTwistedArrow`, the category of elements has
+a richer structure that may avoid the variance obstruction.
+
+For a profunctor `Q : Cᵒᵖ ⥤ C ⥤ Type v`, define:
+  `W := profunctorOnTwistedArrow C Q : TwistedArrow C ⥤ Type v`
+
+Then `W.Elements` has objects `(tw, q)` where:
+  - `tw : TwistedArrow C` is a morphism `f : A ⟶ B` in C
+  - `q : Q.obj (op B).obj A` is an element at the (source, target) pair
+
+The morphisms in `W.Elements` are pairs `(m, hq)` where:
+  - `m : tw₁ ⟶ tw₂` in TwistedArrow C
+  - `hq : W.map m q₁ = q₂`, i.e., the profunctor action preserves elements
+
+The profunctor action `W.map m = (profunctorOnTwistedArrow C Q).map m` is:
+  `Q.map (twCodArr m).op .app (twDom tw₂) ≫ Q.obj (op (twCod tw₂)).map (twDomArr m)`
+
+This combines both the contravariant and covariant actions of Q in a way that
+respects the twisted arrow structure.
+
+The question is: does `W.Elements` have a structure compatible with ordinary
+wedges, avoiding the variance obstruction?
+-/
+
+variable {C : Type u} [Category.{v} C]
+
+/-- When `W = profunctorOnTwistedArrow C Q`, the category of elements consists of
+twisted arrows paired with elements of Q at the corresponding positions. -/
+abbrev profunctorTwArrElements (Q : Cᵒᵖ ⥤ C ⥤ Type v) :=
+  (profunctorOnTwistedArrow C Q).Elements
+
+/-- An object of `profunctorTwArrElements Q` consists of a twisted arrow
+`f : A ⟶ B` and an element `q : Q.obj (op A).obj B`.
+
+For `twObjMk f` where `f : A ⟶ B`, we have `twDom = A` and `twCod = B`,
+so the profunctor evaluates to `(Q.obj (op A)).obj B`. -/
+def profunctorTwArrElements.mk (Q : Cᵒᵖ ⥤ C ⥤ Type v)
+    {A B : C} (f : A ⟶ B) (q : (Q.obj (Opposite.op A)).obj B) :
+    profunctorTwArrElements Q :=
+  ⟨twObjMk f, q⟩
+
+/-- The underlying twisted arrow of an element. -/
+def profunctorTwArrElements.tw (Q : Cᵒᵖ ⥤ C ⥤ Type v)
+    (x : profunctorTwArrElements Q) : TwistedArrow C :=
+  x.fst
+
+/-- The element component. For a twisted arrow `tw`, the element type is
+`(Q.obj (op (twDom tw))).obj (twCod tw)`. -/
+def profunctorTwArrElements.elem (Q : Cᵒᵖ ⥤ C ⥤ Type v)
+    (x : profunctorTwArrElements Q) :
+    (Q.obj (Opposite.op (twDom x.fst))).obj (twCod x.fst) :=
+  x.snd
+
+/-!
+### Variance Analysis for `profunctorTwArrElements`
+
+For a morphism `m : tw₁ ⟶ tw₂` in `TwistedArrow C`, the induced morphism
+`(m, hq) : (tw₁, q₁) ⟶ (tw₂, q₂)` in `profunctorTwArrElements Q` satisfies
+the condition `(profunctorOnTwistedArrow C Q).map m q₁ = q₂`.
+
+Expanding `profunctorOnTwistedArrow C Q .map m`:
+  `(Q.map (twCodArr m).op).app (twDom tw₂) ≫ (Q.obj (op (twCod tw₂))).map (twDomArr m)`
+
+For the diagonal case where `tw₁ = tw₂ = twObjMk (𝟙 A)`:
+- `twDom = A`, `twCod = A`
+- A morphism to itself requires `twDomArr m : A ⟶ A` and `twCodArr m : A ⟶ A`
+  with the twisted arrow coherence condition
+
+The key observation is that `profunctorTwArrElements Q` naturally incorporates
+both the twisted arrow structure AND the profunctor structure, potentially
+allowing a more direct relationship with ordinary wedges.
+
+However, for expressing weighted wedges as ordinary wedges over a profunctor
+on `profunctorTwArrElements Q`, we still need to define a profunctor
+`P' : (profunctorTwArrElements Q)ᵒᵖ ⥤ profunctorTwArrElements Q ⥤ D`
+with the correct variance.
+
+The investigation continues in the analysis below.
+-/
+
+/-!
+### Dual: Profunctor-Derived Weight for Co-Twisted Arrows
+
+For weighted cowedges, we use `profunctorOnCoTwistedArrow C Q` where
+`Q : Cᵒᵖ ⥤ C ⥤ Type v` is a profunctor to Type. This gives us a copresheaf
+`profunctorOnCoTwistedArrow C Q : CoTwistedArrow C ⥤ Type v`.
+
+To get a presheaf (for weighted cowedge weights), we compose with `op`:
+`(profunctorOnCoTwistedArrow C Q).op : (CoTwistedArrow C)ᵒᵖ ⥤ Type v`.
+
+The category of elements of this presheaf is
+`(profunctorOnCoTwistedArrow C Q).op.ElementsPre ≅ (profunctorOnCoTwistedArrow C Q).Elements`.
+-/
+
+/-- When `Q : Cᵒᵖ ⥤ C ⥤ Type v`, the category of elements of
+`profunctorOnCoTwistedArrow C Q` consists of co-twisted arrows paired with
+elements of Q at the corresponding positions. -/
+abbrev profunctorCoTwArrElements (Q : Cᵒᵖ ⥤ C ⥤ Type v) :=
+  (profunctorOnCoTwistedArrow C Q).Elements
+
+/-- An object of `profunctorCoTwArrElements Q` consists of a co-twisted arrow
+`(dom, cod, f : cod ⟶ dom)` and an element `q : Q.obj (op dom).obj cod`.
+
+For `coTwObjMk g` where `g : A ⟶ B`, we have `coTwDom = B` (target of g) and
+`coTwCod = A` (source of g), so the profunctor evaluates to
+`(Q.obj (op B)).obj A`. -/
+def profunctorCoTwArrElements.mk (Q : Cᵒᵖ ⥤ C ⥤ Type v)
+    {A B : C} (g : A ⟶ B) (q : (Q.obj (Opposite.op B)).obj A) :
+    profunctorCoTwArrElements Q :=
+  ⟨coTwObjMk g, q⟩
+
+/-- The underlying co-twisted arrow of an element. -/
+def profunctorCoTwArrElements.coTw (Q : Cᵒᵖ ⥤ C ⥤ Type v)
+    (x : profunctorCoTwArrElements Q) : CoTwistedArrow C :=
+  x.fst
+
+/-- The element component. For a co-twisted arrow `tw`, the element type is
+`(Q.obj (op (coTwDom tw))).obj (coTwCod tw)`. -/
+def profunctorCoTwArrElements.elem (Q : Cᵒᵖ ⥤ C ⥤ Type v)
+    (x : profunctorCoTwArrElements Q) :
+    (Q.obj (Opposite.op (coTwDom x.fst))).obj (coTwCod x.fst) :=
+  x.snd
+
+/-!
+### Diagonal Elements in Profunctor-Derived Weights
+
+For a profunctor `Q : Cᵒᵖ ⥤ C ⥤ Type v`, the diagonal elements of
+`profunctorOnTwistedArrow C Q` at `twObjMk (𝟙 A)` are exactly `diagApp Q A`:
+
+- `(profunctorOnTwistedArrow C Q).obj (twObjMk (𝟙 A))`
+- `= (Q.obj (op (twDom (twObjMk (𝟙 A))))).obj (twCod (twObjMk (𝟙 A)))`
+- `= (Q.obj (op A)).obj A`
+- `= diagApp Q A`
+
+Similarly for co-twisted arrows:
+- `(profunctorOnCoTwistedArrow C Q).obj (coTwObjMk (𝟙 A))`
+- `= (Q.obj (op (coTwDom (coTwObjMk (𝟙 A))))).obj (coTwCod (coTwObjMk (𝟙 A)))`
+- `= (Q.obj (op A)).obj A`
+- `= diagApp Q A`
+
+This gives a direct correspondence between diagonal elements of
+profunctor-derived weights and diagonal elements of the profunctor itself.
+-/
+
+/-- The diagonal element type of `profunctorOnTwistedArrow C Q` at the
+identity twisted arrow equals `diagApp Q A`. -/
+@[simp]
+lemma profunctorOnTwistedArrow_diagElem (Q : Cᵒᵖ ⥤ C ⥤ Type v) (A : C) :
+    (profunctorOnTwistedArrow C Q).obj (twObjMk (𝟙 A)) = diagApp Q A := rfl
+
+/-- The diagonal element type of `profunctorOnCoTwistedArrow C Q` at the
+identity co-twisted arrow equals `diagApp Q A`. -/
+@[simp]
+lemma profunctorOnCoTwistedArrow_diagElem (Q : Cᵒᵖ ⥤ C ⥤ Type v) (A : C) :
+    (profunctorOnCoTwistedArrow C Q).obj (coTwObjMk (𝟙 A)) = diagApp Q A := rfl
+
+/-!
+### Morphisms in Profunctor-Derived Element Categories
+
+A morphism in `profunctorTwArrElements Q` from `(tw₁, q₁)` to `(tw₂, q₂)`
+consists of:
+- A twisted arrow morphism `m : tw₁ ⟶ tw₂`
+- A proof that `(profunctorOnTwistedArrow C Q).map m q₁ = q₂`
+
+The profunctor map `(profunctorOnTwistedArrow C Q).map m` is:
+```
+(Q.map (twDomArr m).op).app (twCod tw₂) ≫ (Q.obj (op (twDom tw₂))).map (twCodArr m)
+```
+
+This combines the contravariant action of Q (via `twDomArr m`) with the
+covariant action (via `twCodArr m`).
+
+For diagonal-to-diagonal morphisms `m : twObjMk (𝟙 A) ⟶ twObjMk (𝟙 B)`:
+- `twDomArr m : A ⟶ B` and `twCodArr m : A ⟶ B`
+- The coherence condition forces `twDomArr m = twCodArr m`
+- So `m` is determined by a single morphism `f : A ⟶ B` in C
+
+The profunctor map becomes:
+```
+(Q.map f.op).app B ≫ (Q.obj (op B)).map f : diagApp Q A → diagApp Q B
+```
+
+This is exactly the `DiagCompat` condition: `d₁` and `d₂` are related if
+`(Q.obj (op A)).map f d₁ = (Q.map f.op).app B d₂`.
+
+Therefore, morphisms between diagonal elements in `profunctorTwArrElements Q`
+correspond exactly to `DiagCompat` pairs in Q.
+-/
+
+/-!
+### Variance Obstruction for Diagonal Twisted Arrows
+
+A morphism `m : twObjMk (𝟙 A) ⟶ twObjMk (𝟙 B)` in `TwistedArrow C` requires:
+- `twDomArr m : B ⟶ A` (domain arrow goes backwards)
+- `twCodArr m : A ⟶ B` (codomain arrow goes forwards)
+- Coherence: `twDomArr m ≫ 𝟙 A ≫ twCodArr m = 𝟙 B`
+
+The coherence condition simplifies to `twDomArr m ≫ twCodArr m = 𝟙 B`,
+requiring `twDomArr m` and `twCodArr m` to form a retraction/section pair.
+
+This is equivalent to having an isomorphism when both compositions are
+identities (i.e., `twCodArr m ≫ twDomArr m = 𝟙 A` as well).
+
+Therefore, morphisms between diagonal twisted arrows correspond to
+*isomorphisms* in C, not arbitrary morphisms. This is the same variance
+obstruction seen in the weighted cowedge embedding analysis.
+-/
+
+/-- For the profunctor-derived weight, a morphism between diagonal twisted
+arrows requires an isomorphism in C. Given `i : A ≅ B`, we can form a
+twisted arrow morphism with `twDomArr = i.inv` and `twCodArr = i.hom`. -/
+def diagTwArrMorphismOfIso {A B : C} (i : A ≅ B) :
+    twObjMk (𝟙 A) ⟶ twObjMk (𝟙 B) :=
+  twHomMk i.inv i.hom (by
+    simp only [twObjMk_arr, twObjMk_dom, twObjMk_cod, Category.id_comp, Iso.inv_hom_id])
+
+@[simp]
+lemma diagTwArrMorphismOfIso_domArr {A B : C} (i : A ≅ B) :
+    twDomArr (diagTwArrMorphismOfIso i) = i.inv := rfl
+
+@[simp]
+lemma diagTwArrMorphismOfIso_codArr {A B : C} (i : A ≅ B) :
+    twCodArr (diagTwArrMorphismOfIso i) = i.hom := rfl
+
+/-- The profunctor map along a diagonal twisted arrow morphism from an iso.
+
+For `i : A ≅ B`, the formula is:
+`(Q.map i.inv.op).app A ≫ (Q.obj (op B)).map i.hom : diagApp Q A ⟶ diagApp Q B`
+-/
+theorem profunctorOnTwistedArrow_map_diagIso (Q : Cᵒᵖ ⥤ C ⥤ Type v) {A B : C}
+    (i : A ≅ B) :
+    (profunctorOnTwistedArrow C Q).map (diagTwArrMorphismOfIso i) =
+      (Q.map i.inv.op).app A ≫ (Q.obj (Opposite.op B)).map i.hom := by
+  simp only [profunctorOnTwistedArrow_map, diagTwArrMorphismOfIso_domArr,
+    diagTwArrMorphismOfIso_codArr, twObjMk_cod, twObjMk_dom]
+
+/-!
+### Relationship to Paranaturality (Groupoid Case)
+
+When C is a groupoid (all morphisms are isomorphisms), the variance
+obstruction disappears. In this case, for any morphism `f : A ⟶ B` in C,
+we can form a twisted arrow morphism between the diagonals:
+
+```
+diagTwArrMorphismOfIso (asIso f) : twObjMk (𝟙 A) ⟶ twObjMk (𝟙 B)
+```
+
+The profunctor map condition becomes: `(Q.map f⁻¹.op).app B ≫ (Q.obj (op B)).map f`
+
+This relates to `DiagCompat` but with the inverse morphism involved.
+
+For a general category C, morphisms in `profunctorTwArrElements Q` between
+diagonal elements only exist along isomorphisms, so the paranaturality
+relation only holds along isomorphisms (consistent with our earlier finding).
+
+### Summary: Profunctor-Derived Weight Approach
+
+The question was whether using `(profunctorOnTwistedArrow W).Elements` or
+`(profunctorOnCoTwistedArrow W).ElementsPre` as the domain category (instead
+of `W.Elements`) could avoid the variance obstruction when expressing weighted
+wedges/cowedges as ordinary wedges/cowedges.
+
+**Finding**: The variance obstruction persists.
+
+For `profunctorTwArrElements Q`:
+- Diagonal elements at `twObjMk (𝟙 A)` correspond to `diagApp Q A`
+- Morphisms between diagonals require isomorphisms in C (not arbitrary morphisms)
+- The coherence condition `twDomArr ≫ twArr x ≫ twCodArr = twArr y` forces
+  `twDomArr` and `twCodArr` to form a retraction/section pair
+
+The same holds dually for `profunctorCoTwArrElements Q`.
+
+**Conclusion**: The profunctor-derived weight approach does not circumvent the
+variance obstruction. Weighted wedges/cowedges over general profunctors cannot
+be expressed as ordinary wedges/cowedges over an induced presheaf/copresheaf
+on the category of elements, except when restricted to isomorphisms (groupoids).
+
+This matches the result from the direct weighted cowedge embedding analysis:
+the embedding `StrongResCowedge G c → Cowedge (sliceQ G c) c` requires the
+restricted cowedge structure where morphisms only exist along isomorphisms.
+-/
+
+end ProfunctorDerivedWeight
 
 section RestrictedCowedges
 
@@ -2398,5 +2690,348 @@ def restrictedCoendIsInitial :
 end HasRestrictedCoend
 
 end RestrictedCoends
+
+section WeightedCowedgeEmbedding
+
+/-!
+## Weighted Cowedges and Strong Restricted Cowedges
+
+This section explores the relationship between weighted cowedges (when `D = C`)
+and strong restricted cowedges. The goal is to show that weighted cowedges
+embed as a (potentially full) subcategory of strong restricted cowedges.
+
+For a weighted cowedge `WeightedCowedge W P` with:
+- `W : (CoTwistedArrow C)ᵒᵖ ⥤ Type v` (the weight)
+- `P : Cᵒᵖ ⥤ C ⥤ C` (endoprofunctor)
+
+The weighted cowedge provides data at ALL co-twisted arrows (all morphisms
+in `C`). A strong restricted cowedge only provides data at diagonal elements
+(identity morphisms). The embedding restricts weighted cowedge data to the
+diagonal co-twisted arrows.
+-/
+
+variable {C : Type u} [Category.{v} C]
+
+/-- The diagonal co-twisted arrow for an object `A`, representing the identity
+morphism `𝟙 A : A ⟶ A` as an object of `CoTwistedArrow C`. -/
+abbrev diagCoTwArr (A : C) : CoTwistedArrow C := coTwObjMk (𝟙 A)
+
+@[simp]
+lemma diagCoTwArr_dom (A : C) : coTwDom (diagCoTwArr A) = A := rfl
+
+@[simp]
+lemma diagCoTwArr_cod (A : C) : coTwCod (diagCoTwArr A) = A := rfl
+
+@[simp]
+lemma diagCoTwArr_arr (A : C) : coTwArr (diagCoTwArr A) = 𝟙 A :=
+  @coTwObjMk_arr C _ A A (𝟙 A)
+
+/-- Extract the diagonal element type from a weight functor `W` at object `A`.
+This is `W(op (diagCoTwArr A)) = W(op (coTwObjMk (𝟙 A)))`. -/
+abbrev weightDiagElem (W : (CoTwistedArrow C)ᵒᵖ ⥤ Type v) (A : C) : Type v :=
+  W.obj (Opposite.op (diagCoTwArr A))
+
+/-- Given a weighted cowedge over an endoprofunctor `P`, extract the family
+of morphisms at diagonal co-twisted arrows.
+
+For `A : C` and `w : weightDiagElem W A`, this gives:
+`(P.obj (op A)).obj A ⟶ pt`
+
+This matches the signature required for `ParanatSig H (P ⇓ pt)` when we take
+`diagApp H A = weightDiagElem W A`. -/
+def WeightedCowedge.diagFamily {W : (CoTwistedArrow C)ᵒᵖ ⥤ Type v}
+    {P : Cᵒᵖ ⥤ C ⥤ C} (c : WeightedCowedge W P) (A : C)
+    (w : weightDiagElem W A) : (P.obj (Opposite.op A)).obj A ⟶ c.pt :=
+  c.leg (diagCoTwArr A) w
+
+/-!
+### Diagonal Restriction Profunctor
+
+To define a strong restricted cowedge from a weighted cowedge, we need a
+profunctor `H : Cᵒᵖ ⥤ C ⥤ Type v`. The natural choice is to define `H` such
+that `diagApp H A = weightDiagElem W A`.
+
+The straightforward approach is to make `H.obj (op A)` constant in its second
+argument: `H.obj (op A).obj B = W.obj (op (diagCoTwArr A))` for all `B`.
+
+For functoriality in the first argument, we would need morphisms between
+diagonal co-twisted arrows, which requires isomorphisms (or at least split
+morphisms) in `C`. This is because a morphism `diagCoTwArr A ⟶ diagCoTwArr B`
+in `CoTwistedArrow C` requires both `A ⟶ B` and `B ⟶ A` satisfying a
+composition condition.
+
+Instead, we define a simpler version that works for any `W` by making `H`
+constant in BOTH arguments: `H = const (const (W.obj (op (diagCoTwArr A))))`.
+This means the diagonal restriction gives a trivial profunctor structure, but
+it still captures the correct diagonal elements.
+-/
+
+/-- The constant profunctor that returns a fixed type `T` for all inputs.
+This is `(const Cᵒᵖ).obj ((const C).obj T)`. -/
+abbrev constProfunctor (T : Type v) : Cᵒᵖ ⥤ C ⥤ Type v :=
+  (Functor.const Cᵒᵖ).obj ((Functor.const C).obj T)
+
+@[simp]
+lemma constProfunctor_obj_obj (T : Type v) (A B : C) :
+    ((constProfunctor (C := C) T).obj (Opposite.op A)).obj B = T := rfl
+
+@[simp]
+lemma constProfunctor_diagApp (T : Type v) (A : C) :
+    diagApp (constProfunctor (C := C) T) A = T := rfl
+
+/-!
+### Variance Obstruction for Diagonal Restriction
+
+To embed weighted cowedges into strong restricted cowedges, we need to define
+a profunctor `H : Cᵒᵖ ⥤ C ⥤ Type v` from a weight `W : (CoTwistedArrow C)ᵒᵖ ⥤ Type v`
+such that `diagApp H A = weightDiagElem W A`.
+
+The natural attempt is to define `H.obj (op A).obj B := W.obj (op (diagCoTwArr A))`,
+constant in the second argument `B`. For this to be functorial in the first
+argument, we need:
+
+For `f : A' ⟶ A` (so `f.op : op A ⟶ op A'`), define:
+  `(H.map f.op).app B : H.obj (op A).obj B → H.obj (op A').obj B`
+  = `W.obj (op (diagCoTwArr A)) → W.obj (op (diagCoTwArr A'))`
+
+This requires a morphism `W.map m.op` for some `m : diagCoTwArr A' ⟶ diagCoTwArr A`
+in `CoTwistedArrow C`.
+
+A morphism `m : diagCoTwArr A' ⟶ diagCoTwArr A` consists of:
+- `l : coTwDom (diagCoTwArr A) ⟶ coTwDom (diagCoTwArr A') = A ⟶ A'`
+- `r : coTwCod (diagCoTwArr A') ⟶ coTwCod (diagCoTwArr A) = A' ⟶ A`
+- Compatibility: `l ≫ coTwArr (diagCoTwArr A') = coTwArr (diagCoTwArr A) ≫ r`
+  which simplifies to `l ≫ 𝟙 A' = 𝟙 A ≫ r`, i.e., `l = r`
+
+Since `l : A ⟶ A'` and `r : A' ⟶ A` must satisfy `l = r`, we need `A ≅ A'`
+with `l` and `r` being inverse isomorphisms.
+
+This variance obstruction means that a profunctor `H` with the required
+diagonal elements can only have non-trivial functorial structure when the
+relevant objects are connected by isomorphisms in `C`.
+-/
+
+/-- A co-twisted arrow morphism between diagonal co-twisted arrows
+`diagCoTwArr A ⟶ diagCoTwArr B` requires both a morphism `B ⟶ A` (for the
+domain) and `A ⟶ B` (for the codomain) that are equal. This means
+`A` and `B` must be isomorphic. -/
+def diagCoTwArrHomOfIso {A B : C} (i : A ≅ B) :
+    diagCoTwArr A ⟶ diagCoTwArr B :=
+  coTwHomMk i.inv i.hom (by simp)
+
+@[simp]
+lemma diagCoTwArrHomOfIso_domArr {A B : C} (i : A ≅ B) :
+    coTwDomArr (diagCoTwArrHomOfIso i) = i.inv := rfl
+
+@[simp]
+lemma diagCoTwArrHomOfIso_codArr {A B : C} (i : A ≅ B) :
+    coTwCodArr (diagCoTwArrHomOfIso i) = i.hom := rfl
+
+/-- The restriction of a weight functor along an isomorphism between objects.
+Given `W : (CoTwistedArrow C)ᵒᵖ ⥤ Type v` and an isomorphism `i : A ≅ B`,
+this transports elements from `weightDiagElem W B` to `weightDiagElem W A`. -/
+def weightDiagTransport (W : (CoTwistedArrow C)ᵒᵖ ⥤ Type v) {A B : C} (i : A ≅ B) :
+    weightDiagElem W B → weightDiagElem W A :=
+  W.map (diagCoTwArrHomOfIso i).op
+
+/-!
+### Trivial Profunctor Case
+
+When we use the constant profunctor `constProfunctor T`, the `DiagCompat`
+condition becomes equality: `DiagCompat (constProfunctor T) I₀ I₁ f d₀ d₁`
+holds iff `d₀ = d₁`.
+
+This is because both the covariant and contravariant actions are identities:
+- `(constProfunctor T).obj (op I₀).map f = 𝟙`
+- `((constProfunctor T).map f.op).app I₁ = 𝟙`
+
+With this trivial H, the paranaturality condition becomes: for equal input
+elements, the output elements must satisfy `DiagCompat` in `G ⇓ pt`.
+-/
+
+/-- The covariant action of the constant profunctor is the identity. -/
+@[simp]
+lemma constProfunctor_map_cov (T : Type v) (A : Cᵒᵖ) {X Y : C} (f : X ⟶ Y) :
+    ((constProfunctor (C := C) T).obj A).map f = id := rfl
+
+/-- The contravariant action of the constant profunctor is the identity. -/
+@[simp]
+lemma constProfunctor_map_con (T : Type v) {A B : Cᵒᵖ} (g : A ⟶ B) (X : C) :
+    ((constProfunctor (C := C) T).map g).app X = id := rfl
+
+/-- `DiagCompat` for the constant profunctor reduces to equality. -/
+theorem constProfunctor_diagCompat_iff_eq (T : Type v) (I₀ I₁ : C) (f : I₀ ⟶ I₁)
+    (d₀ d₁ : T) :
+    DiagCompat (constProfunctor (C := C) T) I₀ I₁ f d₀ d₁ ↔ d₀ = d₁ := by
+  simp [DiagCompat]
+
+/-!
+### Extracting Diagonal Data from Weighted Cowedges
+
+Given a weighted cowedge, we can extract the diagonal family as a `ParanatSig`.
+The paranaturality condition requires relating elements across morphisms in C,
+which corresponds to morphisms between diagonal co-twisted arrows.
+
+Since morphisms between diagonal co-twisted arrows require isomorphisms,
+the weighted cowedge naturality condition only provides paranaturality
+relations along isomorphisms, not along arbitrary morphisms.
+
+For the special case where `H = constProfunctor T` (so `DiagCompat H` is
+equality), paranaturality becomes: equal input elements give `DiagCompat`
+outputs in the slice profunctor.
+-/
+
+/-- Extract the diagonal family signature from a weighted cowedge.
+This gives a `ParanatSig` where the source profunctor `H` has
+`diagApp H A = weightDiagElem W A`. -/
+def WeightedCowedge.diagFamilySig {W : (CoTwistedArrow C)ᵒᵖ ⥤ Type v}
+    {P : Cᵒᵖ ⥤ C ⥤ C} (c : WeightedCowedge W P) :
+    (A : C) → weightDiagElem W A → diagApp (P ⇓ c.pt) A :=
+  fun A w => c.leg (diagCoTwArr A) w
+
+/-- The diagonal family signature equals the leg applied at diagonal co-twisted
+arrows. -/
+@[simp]
+theorem WeightedCowedge.diagFamilySig_eq {W : (CoTwistedArrow C)ᵒᵖ ⥤ Type v}
+    {P : Cᵒᵖ ⥤ C ⥤ C} (c : WeightedCowedge W P) (A : C) (w : weightDiagElem W A) :
+    c.diagFamilySig A w = c.leg (diagCoTwArr A) w := rfl
+
+/-!
+### Paranaturality Along Isomorphisms
+
+The weighted cowedge naturality condition implies that the diagonal family
+satisfies paranaturality along isomorphisms. Specifically, for an isomorphism
+`i : A ≅ B` and elements `wA : weightDiagElem W A`, `wB : weightDiagElem W B`
+that are related via `W.map (diagCoTwArrHomOfIso i.symm).op`, the corresponding
+legs satisfy the slice profunctor `DiagCompat` condition along `i.hom`.
+
+This is a partial result: full paranaturality would require this condition
+along ALL morphisms, but weighted cowedge structure only provides it along
+isomorphisms.
+-/
+
+/-- The naturality condition for weighted cowedges along a co-twisted arrow
+morphism `m : α ⟶ β` states that transporting via `W.map m.op` and then
+taking the leg at `α` equals the leg at `β` precomposed with the profunctor
+action. -/
+theorem WeightedCowedge.naturality_at {W : (CoTwistedArrow C)ᵒᵖ ⥤ Type v}
+    {P : Cᵒᵖ ⥤ C ⥤ C} (c : WeightedCowedge W P) {α β : CoTwistedArrow C}
+    (m : α ⟶ β) (wβ : W.obj (Opposite.op β)) :
+    (profunctorOnCoTwistedArrow C P).map m ≫ c.leg β wβ =
+      c.leg α (W.map m.op wβ) :=
+  c.naturality m wβ
+
+/-!
+### Paranaturality Along Isomorphisms: Detailed Analysis
+
+When we have an isomorphism `i : A ≅ B`, we can form a co-twisted arrow morphism
+`diagCoTwArrHomOfIso i : diagCoTwArr A ⟶ diagCoTwArr B`. The weighted cowedge
+naturality along this morphism gives:
+
+```
+(profunctorOnCoTwistedArrow C P).map (diagCoTwArrHomOfIso i) ≫ leg (diagCoTwArr B) wB
+  = leg (diagCoTwArr A) (W.map (diagCoTwArrHomOfIso i).op wB)
+```
+
+The `profunctorOnCoTwistedArrow` morphism expands to:
+```
+P.map i.inv.op .app B ≫ (P.obj (op B)).map i.hom
+```
+
+This gives us a "paranaturality along isomorphisms" result.
+-/
+
+/-- The profunctor action between diagonal co-twisted arrows along an
+isomorphism `i : A ≅ B`. This is the morphism
+`(P.obj (op A)).obj A ⟶ (P.obj (op B)).obj B` obtained from the
+co-twisted arrow morphism `diagCoTwArrHomOfIso i`. -/
+def profunctorDiagIsoAction {P : Cᵒᵖ ⥤ C ⥤ C} {A B : C} (i : A ≅ B) :
+    (P.obj (Opposite.op A)).obj A ⟶ (P.obj (Opposite.op B)).obj B :=
+  (profunctorOnCoTwistedArrow C P).map (diagCoTwArrHomOfIso i)
+
+/-- The profunctor diagonal action along an isomorphism factors through
+the covariant and contravariant actions of the profunctor. -/
+theorem profunctorDiagIsoAction_eq {P : Cᵒᵖ ⥤ C ⥤ C} {A B : C} (i : A ≅ B) :
+    profunctorDiagIsoAction (P := P) i =
+      (P.map i.inv.op).app A ≫ (P.obj (Opposite.op B)).map i.hom := by
+  simp only [profunctorDiagIsoAction, profunctorOnCoTwistedArrow_map]
+  rfl
+
+/-- Weighted cowedge naturality along a diagonal isomorphism. For an isomorphism
+`i : A ≅ B` and weight element `wB : weightDiagElem W B`, the diagram family
+satisfies:
+
+```
+profunctorDiagIsoAction i ≫ diagFamilySig c B wB
+  = diagFamilySig c A (weightDiagTransport W i wB)
+```
+
+This is the "paranaturality along isomorphisms" property. -/
+theorem WeightedCowedge.diagFamilySig_iso_naturality
+    {W : (CoTwistedArrow C)ᵒᵖ ⥤ Type v} {P : Cᵒᵖ ⥤ C ⥤ C}
+    (c : WeightedCowedge W P) {A B : C} (i : A ≅ B)
+    (wB : weightDiagElem W B) :
+    profunctorDiagIsoAction (P := P) i ≫ c.diagFamilySig B wB =
+      c.diagFamilySig A (weightDiagTransport W i wB) := by
+  simp only [diagFamilySig, profunctorDiagIsoAction, weightDiagTransport]
+  exact c.naturality_at (diagCoTwArrHomOfIso i) wB
+
+/-!
+### Trivial Profunctor Case Analysis
+
+When we try to use `constProfunctor T` as the indexing profunctor `H`, we face
+a fundamental type mismatch:
+
+1. For weighted cowedges, the diagonal element type `weightDiagElem W A` varies
+   with `A`. Different objects have different weight element types.
+
+2. For `constProfunctor T`, the diagonal element type `diagApp (constProfunctor T) A = T`
+   is the same for all objects.
+
+For an embedding to exist via constant profunctors, we would need either:
+- All `weightDiagElem W A` to be the same type T (requiring W to be constant on
+  diagonal co-twisted arrows)
+- Or a quotient/coproduct construction that collapses the varying types into one
+
+The first option is very restrictive. The second option would lose the fine-grained
+structure of the weighted cowedge.
+
+### Groupoid Case
+
+When C is a groupoid (all morphisms are isomorphisms), the variance obstruction
+disappears. In this case:
+
+1. Every morphism `f : A ⟶ B` has an inverse, so we can form co-twisted arrow
+   morphisms between ANY diagonal co-twisted arrows.
+
+2. The weight functor W can have non-trivial functorial structure on diagonal
+   co-twisted arrows, allowing us to define a proper profunctor H.
+
+3. The weighted cowedge naturality gives full paranaturality (not just along
+   isomorphisms).
+
+### Conclusion
+
+The embedding `WeightedCowedgeCat W P ⥤ StrongRestrictedCowedgeCat P H` exists
+in these cases:
+
+1. **C is a groupoid**: The profunctor H can be defined functorially from W by
+   using the isomorphism structure. Paranaturality follows from weighted
+   cowedge naturality.
+
+2. **W is constant on diagonal co-twisted arrows**: If `weightDiagElem W A = T`
+   for all A, we can use `H = constProfunctor T`. However, the paranaturality
+   condition in this case is very restrictive.
+
+3. **Single-object category**: When C has only one object, there's effectively
+   only one diagonal co-twisted arrow, so the variance obstruction disappears.
+
+For general categories and weights, a direct embedding does not exist due to
+the variance obstruction. The relationship between weighted cowedges and strong
+restricted cowedges is more subtle and may require additional categorical
+machinery (such as enrichment or fibered categories) to formalize properly.
+-/
+
+end WeightedCowedgeEmbedding
 
 end GebLean

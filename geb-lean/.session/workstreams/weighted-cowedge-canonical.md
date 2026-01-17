@@ -758,7 +758,130 @@ Steps:
 If successful, the relationship with ordinary restricted cowedges follows by
 composing with the inclusion `StrongRestrictedCowedgeCat ⥤ RestrictedCowedgeCat`.
 
-**Status**: Not started
+**Status**: Completed (negative result)
+
+**Findings**: Variance Obstruction for Diagonal Restriction
+
+A direct embedding from weighted cowedges to strong restricted cowedges faces a
+fundamental variance obstruction, analogous to Task 18's findings.
+
+#### Problem 1: Co-twisted Arrow Morphisms Between Diagonals
+
+To define a profunctor `H : Cᵒᵖ ⥤ C ⥤ Type v` from
+`W : (CoTwistedArrow C)ᵒᵖ ⥤ Type v` such that `diagApp H A = weightDiagElem W A`,
+we need H to be functorial.
+
+For a morphism `f : A' ⟶ A`, we need `(H.map f.op).app B` which requires
+`W.obj (op (diagCoTwArr A)) → W.obj (op (diagCoTwArr A'))`, i.e., a co-twisted
+arrow morphism `diagCoTwArr A' ⟶ diagCoTwArr A`.
+
+Such a morphism requires:
+
+- `l : A ⟶ A'` (domain direction)
+- `r : A' ⟶ A` (codomain direction)
+- `l = r` (compatibility condition)
+
+This means `l` and `r` must be inverse isomorphisms, so morphisms between
+diagonal co-twisted arrows only exist when the objects are isomorphic.
+
+#### Problem 2: Trivial Profunctor Case
+
+Using `constProfunctor T` (where `DiagCompat = equality`) doesn't help because:
+
+- Weighted cowedges have varying diagonal types: `weightDiagElem W A` differs
+  by A
+- Constant profunctors have the same type T at all objects
+
+#### Partial Result: Paranaturality Along Isomorphisms
+
+Weighted cowedge naturality DOES give a "paranaturality along isomorphisms"
+result:
+
+```lean
+theorem WeightedCowedge.diagFamilySig_iso_naturality
+    {W : (CoTwistedArrow C)ᵒᵖ ⥤ Type v} {P : Cᵒᵖ ⥤ C ⥤ C}
+    (c : WeightedCowedge W P) {A B : C} (i : A ≅ B)
+    (wB : weightDiagElem W B) :
+    profunctorDiagIsoAction i ≫ c.diagFamilySig B wB =
+      c.diagFamilySig A (weightDiagTransport W i wB)
+```
+
+#### Cases Where Embedding Works
+
+1. **Groupoids**: When C is a groupoid, all morphisms are isomorphisms, so the
+   variance obstruction disappears and full paranaturality follows.
+
+2. **Constant Weight on Diagonals**: If `weightDiagElem W A = T` for all A,
+   we can use `H = constProfunctor T`, but paranaturality is very restrictive.
+
+3. **Single-Object Category**: When C has one object, only one diagonal
+   co-twisted arrow exists.
+
+#### Conclusion
+
+The conjectured embedding does not exist for general categories and weights.
+The relationship between weighted cowedges and strong restricted cowedges
+requires additional categorical structure (groupoid enrichment, fibered
+categories) to formalize properly.
+
+**Location**: `GebLean/Weighted.lean` section `WeightedCowedgeEmbedding`
+
+### 20. Profunctor-Derived Weight Approach
+
+This task explored an alternative approach suggested by the user: instead of
+using `W.Elements` as the domain category, use `(profunctorOnTwistedArrow W).Elements`
+(and dually `(profunctorOnCoTwistedArrow W).ElementsPre` for cowedges).
+
+**Motivation**: The variance obstruction in Tasks 18-19 arose from trying to
+match profunctor variance with category-of-elements morphism directions.
+The hope was that using the profunctor-on-twisted-arrow construction would
+give a domain category with the "correct" morphism directions.
+
+**Analysis**:
+
+For `Q : Cᵒᵖ ⥤ C ⥤ Type v`, the elements category `profunctorTwArrElements Q`
+has objects `(tw, q)` where `tw : TwistedArrow C` and
+`q : (Q.obj (op (twDom tw))).obj (twCod tw)`.
+
+**Diagonal Elements**: At diagonal twisted arrows `twObjMk (𝟙 A)`:
+
+- `(profunctorOnTwistedArrow C Q).obj (twObjMk (𝟙 A)) = diagApp Q A`
+- This correctly captures the diagonal profunctor elements
+
+**Morphisms Between Diagonals**: A morphism `m : twObjMk (𝟙 A) ⟶ twObjMk (𝟙 B)`
+requires:
+
+- `twDomArr m : B ⟶ A` (backwards direction)
+- `twCodArr m : A ⟶ B` (forwards direction)
+- Coherence: `twDomArr m ≫ 𝟙 A ≫ twCodArr m = 𝟙 B`
+
+The coherence condition simplifies to `twDomArr m ≫ twCodArr m = 𝟙 B`,
+forcing `twDomArr m` and `twCodArr m` to form a retraction/section pair.
+
+For an isomorphism `i : A ≅ B`, we can define `diagTwArrMorphismOfIso i` with
+`twDomArr = i.inv` and `twCodArr = i.hom`.
+
+**Finding**: The variance obstruction persists even with profunctor-derived weights.
+Morphisms between diagonal twisted arrows require isomorphisms in C, not
+arbitrary morphisms.
+
+**Conclusion**: The profunctor-derived weight approach does not circumvent the
+variance obstruction. Weighted wedges/cowedges over general profunctors cannot
+be expressed as ordinary wedges/cowedges over an induced presheaf/copresheaf
+on the category of elements, except when restricted to groupoids.
+
+**Status**: Completed (negative result)
+
+**Location**: `GebLean/Weighted.lean` section `ProfunctorDerivedWeight`
+
+**Implementation**:
+
+- `profunctorTwArrElements Q`: Category of elements of profunctor on twisted arrows
+- `profunctorCoTwArrElements Q`: Dual for co-twisted arrows
+- `profunctorOnTwistedArrow_diagElem`: Diagonal elements equal `diagApp Q A`
+- `profunctorOnCoTwistedArrow_diagElem`: Dual for co-twisted arrows
+- `diagTwArrMorphismOfIso`: Morphism between diagonals requires isomorphism
+- Documentation of variance analysis and paranaturality relationship
 
 ## References
 
