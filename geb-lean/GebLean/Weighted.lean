@@ -493,7 +493,8 @@ The category of wedges over `P` is equivalent to the category of cones over
 `profunctorOnTwistedArrow C P`.
 -/
 def wedgeConeEquiv (P : Cᵒᵖ ⥤ C ⥤ D) :
-    Wedge P ≌ Cone (profunctorOnTwistedArrow C P) where
+    Wedge (J := C) (C := D) P ≌
+    Cone (J := TwistedArrow C) (C := D) (profunctorOnTwistedArrow C P) where
   functor := wedgeToConeFunctor P
   inverse := coneToWedgeFunctor P
   unitIso := (wedgeConeCounitIso P).symm
@@ -737,7 +738,8 @@ The category of cowedges over `P` is equivalent to the category of cocones over
 `profunctorOnCoTwistedArrow C P`.
 -/
 def cowedgeCoconeEquiv (P : Cᵒᵖ ⥤ C ⥤ D) :
-    Cowedge P ≌ Cocone (profunctorOnCoTwistedArrow C P) where
+    Cowedge (J := C) (C := D) P ≌
+    Cocone (J := CoTwistedArrow C) (C := D) (profunctorOnCoTwistedArrow C P) where
   functor := cowedgeToCoconeFunctor P
   inverse := coconeToCowedgeFunctor P
   unitIso := (cowedgeCoconeCounitIso P).symm
@@ -995,24 +997,26 @@ This generalizes ordinary wedges: when `W` is the terminal profunctor (constant
 at a singleton), a weighted wedge is exactly an ordinary wedge.
 -/
 abbrev WeightedWedge (W : Cᵒᵖ ⥤ C ⥤ Type v) (P : Cᵒᵖ ⥤ C ⥤ D) :=
-  WeightedCone (J := TwistedArrow C)
+  WeightedCone (C := D) (J := TwistedArrow C)
     (profunctorOnTwistedArrow C W) (profunctorOnTwistedArrow C P)
 
 /--
 A weighted cowedge over a profunctor `P : Cᵒᵖ ⥤ C ⥤ D` with weight profunctor
 `W : Cᵒᵖ ⥤ C ⥤ Type v` is a weighted cocone over the diagram
-`profunctorOnTwistedArrow C P` with weight `profunctorOnOpTwistedArrow C W`.
+`profunctorOnCoTwistedArrow C P` with weight `profunctorOnOpCoTwistedArrow C W`.
 
-Both the weight and the diagram are profunctors. The weight is converted via
-`profunctorOnOpTwistedArrow` (giving a presheaf on `TwistedArrow C`), while
-the diagram is converted via `profunctorOnTwistedArrow`.
+Both the weight and the diagram are profunctors. The weight is evaluated on
+the opposite of the co-twisted arrow category via `profunctorOnOpCoTwistedArrow`,
+which uses the equivalence `(CoTwistedArrow C)ᵒᵖ ≌ TwistedArrow C`. The diagram
+is evaluated via `profunctorOnCoTwistedArrow`.
 
 This generalizes ordinary cowedges: when `W` is the terminal profunctor
 (constant at a singleton), a weighted cowedge is exactly an ordinary cowedge.
 -/
 abbrev WeightedCowedge (W : Cᵒᵖ ⥤ C ⥤ Type v) (P : Cᵒᵖ ⥤ C ⥤ D) :=
-  WeightedCocone (J := TwistedArrow C)
-    (profunctorOnOpTwistedArrow C W) (profunctorOnTwistedArrow C P)
+  WeightedCocone (C := D) (J := CoTwistedArrow C)
+    (profunctorOnOpCoTwistedArrow C W)
+    (profunctorOnCoTwistedArrow C P)
 
 end WeightedLimitColimit
 
@@ -1736,16 +1740,16 @@ def weightedWedgeDiagram (W : Cᵒᵖ ⥤ C ⥤ Type v₅) (P : Cᵒᵖ ⥤ C �
 
 /--
 The diagram for weighted cowedges: composing the projection from the
-opposite category of elements with the profunctor-on-twisted-arrow functor.
+opposite category of elements with the profunctor-on-co-twisted-arrow functor.
 
 For weight profunctor `W : Cᵒᵖ ⥤ C ⥤ Type v` and diagram profunctor
 `P : Cᵒᵖ ⥤ C ⥤ D`, this gives a functor
-`(profunctorOnOpTwistedArrow C W).ElementsPre ⥤ D`.
+`(profunctorOnOpCoTwistedArrow C W).ElementsPre ⥤ D`.
 -/
 def weightedCowedgeDiagram (W : Cᵒᵖ ⥤ C ⥤ Type v₅)
-    (P : Cᵒᵖ ⥤ C ⥤ D) : (profunctorOnOpTwistedArrow C W).ElementsPre ⥤ D :=
-  weightedCoconeDiagram (profunctorOnOpTwistedArrow C W)
-    (profunctorOnTwistedArrow C P)
+    (P : Cᵒᵖ ⥤ C ⥤ D) : (profunctorOnOpCoTwistedArrow C W).ElementsPre ⥤ D :=
+  weightedCoconeDiagram (profunctorOnOpCoTwistedArrow C W)
+    (profunctorOnCoTwistedArrow C P)
 
 /--
 Weighted wedges over profunctors `W` (weight) and `P` (diagram) are
@@ -1764,8 +1768,8 @@ categorically equivalent to ordinary cocones over the weighted cowedge diagram.
 def weightedCowedgeElementsEquiv (W : Cᵒᵖ ⥤ C ⥤ Type v₅)
     (P : Cᵒᵖ ⥤ C ⥤ D) :
     WeightedCowedge W P ≌ Cocone (weightedCowedgeDiagram W P) :=
-  weightedCoconeElementsEquiv (profunctorOnOpTwistedArrow C W)
-    (profunctorOnTwistedArrow C P)
+  weightedCoconeElementsEquiv (profunctorOnOpCoTwistedArrow C W)
+    (profunctorOnCoTwistedArrow C P)
 
 end WeightedWedgeCowedgeEquivalences
 
