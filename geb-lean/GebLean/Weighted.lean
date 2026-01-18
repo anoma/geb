@@ -3306,6 +3306,14 @@ theorem sliceWeightCovariant_obj_eq_diagApp (G : Cᵒᵖ ⥤ C ⥤ C) (c : C) (A
     (sliceWeightCovariant G c).obj (diagCoTwArr A) = diagApp (G ⇓ c) A := by
   rw [sliceWeightCovariant_obj_diag, sliceProfunctor_diagApp]
 
+/-- The slice weight as a presheaf on `TwistedArrow C`.
+
+This is `sliceWeightCovariant G c` pre-composed with the equivalence
+`(TwistedArrow C)ᵒᵖ ≌ CoTwistedArrow C`, giving a contravariant functor
+on `TwistedArrow C`, i.e., a presheaf. -/
+def sliceWeight (G : Cᵒᵖ ⥤ C ⥤ C) (c : C) : (TwistedArrow C)ᵒᵖ ⥤ Type v :=
+  twistedArrowOpEquivCoTwistedArrow.functor ⋙ sliceWeightCovariant G c
+
 /-!
 ### Implications for Weighted Colimits
 
