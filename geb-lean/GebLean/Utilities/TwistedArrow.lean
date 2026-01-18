@@ -503,6 +503,39 @@ def twistedArrowEquivTwistedArrowOp : TwistedArrow C ≌ TwistedArrow (Cᵒᵖ) 
       rw [eqToHom_refl, eqToHom_refl, Category.id_comp, Category.comp_id]
       exact twistedArrowOpRoundTrip_map f)
 
+/--
+The categorical isomorphism `Cat.of (TwistedArrow C) ≅ Cat.of (TwistedArrow (Cᵒᵖ))`.
+This is stronger than the equivalence, showing that the two categories are
+isomorphic as objects in `Cat`. The round-trip functors are definitionally
+the identity on objects.
+-/
+def twistedArrowIsoTwistedArrowOp :
+    TwistedArrow C ≅Cat TwistedArrow (Cᵒᵖ) :=
+  Cat.isoOfEquiv
+    twistedArrowEquivTwistedArrowOp
+    twistedArrowRoundTrip_obj
+    twistedArrowOpRoundTrip_obj
+
+/--
+The categorical isomorphism `(TwistedArrow C)ᵒᵖ ≅ (TwistedArrow (Cᵒᵖ))ᵒᵖ` in Cat,
+obtained by applying `Cat.opFunctor` to `twistedArrowIsoTwistedArrowOp`.
+
+This uses the fact that `Cat.opFunctor.mapIso` preserves isomorphisms:
+applying `op` to `TwistedArrow C ≅ TwistedArrow (Cᵒᵖ)` yields
+`(TwistedArrow C)ᵒᵖ ≅ (TwistedArrow (Cᵒᵖ))ᵒᵖ`.
+-/
+def twistedArrowOpIsoTwistedArrowOpOp :
+    (TwistedArrow C)ᵒᵖ ≅Cat (TwistedArrow (Cᵒᵖ))ᵒᵖ :=
+  Cat.opFunctor.mapIso twistedArrowIsoTwistedArrowOp
+
+/--
+The equivalence `(TwistedArrow C)ᵒᵖ ≌ (TwistedArrow (Cᵒᵖ))ᵒᵖ` derived from the
+categorical isomorphism via `Cat.equivOfIso`.
+-/
+def twistedArrowOpEquivTwistedArrowOpOp :
+    (TwistedArrow C)ᵒᵖ ≌ (TwistedArrow (Cᵒᵖ))ᵒᵖ :=
+  Cat.equivOfIso twistedArrowOpIsoTwistedArrowOpOp
+
 end TwistedArrowSelfDualityUnprimed
 
 @[simp]
