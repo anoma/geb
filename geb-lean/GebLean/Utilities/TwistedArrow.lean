@@ -536,6 +536,167 @@ def twistedArrowOpEquivTwistedArrowOpOp :
     (TwistedArrow C)ᵒᵖ ≌ (TwistedArrow (Cᵒᵖ))ᵒᵖ :=
   Cat.equivOfIso twistedArrowOpIsoTwistedArrowOpOp
 
+/-!
+### Isomorphism between `(TwistedArrow (Cᵒᵖ))ᵒᵖ` and `CoTwistedArrow C`
+
+Objects of `TwistedArrow (Cᵒᵖ)` are triples `(dom, cod, arr)` where:
+- `dom : Cᵒᵖ` (domain in opposite category)
+- `cod : Cᵒᵖ` (codomain in opposite category)
+- `arr : dom ⟶ cod` in `Cᵒᵖ`, which corresponds to `cod.unop ⟶ dom.unop` in `C`
+
+Objects of `CoTwistedArrow C` are triples `(dom, cod, arr)` where:
+- `dom : C` (domain)
+- `cod : C` (codomain)
+- `arr : cod ⟶ dom` in `C`
+
+The correspondence maps `TwistedArrow (Cᵒᵖ)` object `(dom_op, cod_op, arr)` to
+`CoTwistedArrow C` object `(dom_op.unop, cod_op.unop, arr')` where `arr'` is the
+corresponding morphism in `C`.
+-/
+
+/--
+Functor from `(TwistedArrow (Cᵒᵖ))ᵒᵖ` to `CoTwistedArrow C`.
+
+Maps `op tw` where `tw : TwistedArrow (Cᵒᵖ)` to the corresponding co-twisted
+arrow with domain `(twDom tw).unop` and codomain `(twCod tw).unop`.
+-/
+def twistedArrowOpOpToCoTwistedArrow : (TwistedArrow (Cᵒᵖ))ᵒᵖ ⥤ CoTwistedArrow C where
+  obj tw :=
+    let t := tw.unop
+    coTwObjMk (twArr t).unop
+  map {x y} f :=
+    let g := f.unop
+    coTwHomMk
+      (domArr := (twDomArr g).unop)
+      (codArr := (twCodArr g).unop)
+      (by
+        simp only [coTwObjMk_arr, coTwObjMk_cod, coTwObjMk_dom]
+        have h := twHomComm g
+        calc (twCodArr g).unop ≫ (twArr y.unop).unop ≫ (twDomArr g).unop
+            = ((twCodArr g).unop ≫ (twArr y.unop).unop) ≫ (twDomArr g).unop :=
+                (Category.assoc _ _ _).symm
+          _ = ((twDomArr g) ≫ (twArr y.unop) ≫ (twCodArr g)).unop := by
+                simp only [unop_comp]
+          _ = (twArr x.unop).unop := by rw [h])
+  map_id tw := by
+    apply coTwHom_ext
+    · simp only [twDomArr, unop_id, coTwDomArr]; rfl
+    · simp only [twCodArr, unop_id, coTwCodArr]; rfl
+  map_comp {x y z} f g := by
+    apply coTwHom_ext
+    · simp only [coTwHomMk_domArr, twDomArr, unop_comp]; rfl
+    · simp only [coTwCodArr_coTwHomMk, twCodArr, unop_comp]; rfl
+
+/--
+Functor from `CoTwistedArrow C` to `(TwistedArrow (Cᵒᵖ))ᵒᵖ`.
+
+Maps a co-twisted arrow `(dom, cod, arr : cod ⟶ dom)` to `op tw` where
+`tw : TwistedArrow (Cᵒᵖ)` has domain `op dom`, codomain `op cod`, and the
+corresponding arrow.
+-/
+def coTwistedArrowToTwistedArrowOpOp : CoTwistedArrow C ⥤ (TwistedArrow (Cᵒᵖ))ᵒᵖ where
+  obj tw := Opposite.op (twObjMk (coTwArr tw).op)
+  map {x y} f :=
+    Quiver.Hom.op (twHomMk
+      (domArr := (coTwDomArr f).op)
+      (codArr := (coTwCodArr f).op)
+      (by
+        simp only [twObjMk_arr]
+        have h := coTwHomComm f
+        calc (coTwDomArr f).op ≫ (coTwArr y).op ≫ (coTwCodArr f).op
+            = ((coTwDomArr f).op ≫ (coTwArr y).op) ≫ (coTwCodArr f).op :=
+                (Category.assoc _ _ _).symm
+          _ = ((coTwCodArr f) ≫ (coTwArr y) ≫ (coTwDomArr f)).op := by
+                simp only [op_comp]
+          _ = (coTwArr x).op := by rw [h]))
+  map_id tw := by
+    apply Quiver.Hom.unop_inj
+    apply twHom_ext
+    · simp only [coTwDomArr, unop_id, twDomArr]; rfl
+    · simp only [coTwCodArr, unop_id, twCodArr]; rfl
+  map_comp {x y z} f g := by
+    apply Quiver.Hom.unop_inj
+    apply twHom_ext
+    · simp only [coTwDomArr, twDomArr]; rfl
+    · simp only [coTwCodArr, twCodArr]; rfl
+
+/--
+Round-trip on objects: `(TwistedArrow (Cᵒᵖ))ᵒᵖ → CoTwistedArrow C → (TwistedArrow (Cᵒᵖ))ᵒᵖ`
+returns the same object.
+-/
+theorem twistedArrowOpOpCoTwRoundTrip_obj (tw : (TwistedArrow (Cᵒᵖ))ᵒᵖ) :
+    coTwistedArrowToTwistedArrowOpOp.obj (twistedArrowOpOpToCoTwistedArrow.obj tw) = tw := by
+  simp only [twistedArrowOpOpToCoTwistedArrow, coTwistedArrowToTwistedArrowOpOp,
+    coTwObjMk_arr, Quiver.Hom.op_unop]
+  rfl
+
+/--
+Round-trip on objects: `CoTwistedArrow C → (TwistedArrow (Cᵒᵖ))ᵒᵖ → CoTwistedArrow C`
+returns the same object.
+-/
+theorem coTwTwistedArrowOpOpRoundTrip_obj (tw : CoTwistedArrow C) :
+    twistedArrowOpOpToCoTwistedArrow.obj (coTwistedArrowToTwistedArrowOpOp.obj tw) = tw := by
+  simp only [twistedArrowOpOpToCoTwistedArrow, coTwistedArrowToTwistedArrowOpOp,
+    twObjMk_arr, Quiver.Hom.unop_op]
+  rfl
+
+/--
+The equivalence `(TwistedArrow (Cᵒᵖ))ᵒᵖ ≌ CoTwistedArrow C`.
+-/
+def twistedArrowOpOpEquivCoTwistedArrow :
+    (TwistedArrow (Cᵒᵖ))ᵒᵖ ≌ CoTwistedArrow C where
+  functor := twistedArrowOpOpToCoTwistedArrow
+  inverse := coTwistedArrowToTwistedArrowOpOp
+  unitIso := NatIso.ofComponents
+    (fun tw => eqToIso (twistedArrowOpOpCoTwRoundTrip_obj tw).symm)
+    (fun {x y} f => by
+      simp only [eqToIso.hom, Functor.id_obj, Functor.comp_obj, Functor.id_map]
+      rw [eqToHom_refl, eqToHom_refl, Category.id_comp, Category.comp_id]
+      apply Quiver.Hom.unop_inj
+      apply twHom_ext <;> rfl)
+  counitIso := NatIso.ofComponents
+    (fun tw => eqToIso (coTwTwistedArrowOpOpRoundTrip_obj tw))
+    (fun {x y} f => by
+      simp only [eqToIso.hom, Functor.comp_obj, Functor.id_obj, Functor.id_map]
+      rw [eqToHom_refl, eqToHom_refl, Category.id_comp, Category.comp_id]
+      apply coTwHom_ext <;> rfl)
+
+/--
+The categorical isomorphism `(TwistedArrow (Cᵒᵖ))ᵒᵖ ≅ CoTwistedArrow C` in `Cat`.
+-/
+def twistedArrowOpOpIsoCoTwistedArrow :
+    (TwistedArrow (Cᵒᵖ))ᵒᵖ ≅Cat CoTwistedArrow C :=
+  Cat.isoOfEquiv
+    twistedArrowOpOpEquivCoTwistedArrow
+    twistedArrowOpOpCoTwRoundTrip_obj
+    coTwTwistedArrowOpOpRoundTrip_obj
+
+/-!
+### Composed isomorphism: `(TwistedArrow C)ᵒᵖ ≅ CoTwistedArrow C`
+
+Composing the isomorphisms:
+- `(TwistedArrow C)ᵒᵖ ≅ (TwistedArrow (Cᵒᵖ))ᵒᵖ`
+- `(TwistedArrow (Cᵒᵖ))ᵒᵖ ≅ CoTwistedArrow C`
+
+gives the isomorphism `(TwistedArrow C)ᵒᵖ ≅ CoTwistedArrow C`.
+-/
+
+/--
+The categorical isomorphism `(TwistedArrow C)ᵒᵖ ≅ CoTwistedArrow C` in `Cat`,
+obtained by composing the self-duality isomorphism with the
+`(TwistedArrow (Cᵒᵖ))ᵒᵖ ≅ CoTwistedArrow C` isomorphism.
+-/
+def twistedArrowOpIsoCoTwistedArrow :
+    (TwistedArrow C)ᵒᵖ ≅Cat CoTwistedArrow C :=
+  twistedArrowOpIsoTwistedArrowOpOp ≪≫ twistedArrowOpOpIsoCoTwistedArrow
+
+/--
+The equivalence `(TwistedArrow C)ᵒᵖ ≌ CoTwistedArrow C` derived from the
+categorical isomorphism.
+-/
+def twistedArrowOpEquivCoTwistedArrow : (TwistedArrow C)ᵒᵖ ≌ CoTwistedArrow C :=
+  Cat.equivOfIso twistedArrowOpIsoCoTwistedArrow
+
 end TwistedArrowSelfDualityUnprimed
 
 @[simp]
