@@ -1682,6 +1682,29 @@ theorem profunctorOnCoTwistedArrow_map_to_cod (P : Cᵒᵖ ⥤ C ⥤ D)
     coTwObjMk_cod, coTwObjMk_dom, op_id, Functor.map_id, NatTrans.id_app,
     Category.id_comp]
 
+/--
+Given a profunctor `P : Cᵒᵖ ⥤ C ⥤ D`, compose with the equivalence
+`(TwistedArrow C)ᵒᵖ ≌ CoTwistedArrow C` and the forgetful functor to get
+a functor from `(TwistedArrow C)ᵒᵖ` to `D`.
+
+This is a presheaf on `TwistedArrow C` when `D = Type v`, making it
+suitable as a weight for weighted cocones over `TwistedArrow C`.
+-/
+def profunctorOnOpTwistedArrow (P : Cᵒᵖ ⥤ C ⥤ D) : (TwistedArrow C)ᵒᵖ ⥤ D :=
+  twistedArrowOpEquivCoTwistedArrow.functor ⋙ profunctorOnCoTwistedArrow C P
+
+theorem profunctorOnOpTwistedArrow_obj (P : Cᵒᵖ ⥤ C ⥤ D)
+    (tw : (TwistedArrow C)ᵒᵖ) :
+    (profunctorOnOpTwistedArrow C P).obj tw =
+    (profunctorOnCoTwistedArrow C P).obj
+      (twistedArrowOpEquivCoTwistedArrow.functor.obj tw) := rfl
+
+theorem profunctorOnOpTwistedArrow_map (P : Cᵒᵖ ⥤ C ⥤ D)
+    {x y : (TwistedArrow C)ᵒᵖ} (f : x ⟶ y) :
+    (profunctorOnOpTwistedArrow C P).map f =
+    (profunctorOnCoTwistedArrow C P).map
+      (twistedArrowOpEquivCoTwistedArrow.functor.map f) := rfl
+
 end ProfunctorOnTwistedArrow
 
 end GebLean

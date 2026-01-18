@@ -984,26 +984,35 @@ theorem WeightedCocone.category_id_hom {W : Jᵒᵖ ⥤ Type v} {D : J ⥤ C}
 variable {D : Type w} [Category.{v} D]
 
 /--
-A weighted wedge over a profunctor `P : Cᵒᵖ ⥤ C ⥤ D` with weight
-`W : TwistedArrow C ⥤ Type v` is a weighted cone over the diagram
-`profunctorOnTwistedArrow C P` with the given weight.
+A weighted wedge over a profunctor `P : Cᵒᵖ ⥤ C ⥤ D` with weight profunctor
+`W : Cᵒᵖ ⥤ C ⥤ Type v` is a weighted cone over the diagram
+`profunctorOnTwistedArrow C P` with weight `profunctorOnTwistedArrow C W`.
 
-This generalizes ordinary wedges: when `W` is the terminal functor (constant
+Both the weight and the diagram are profunctors, converted to functors on
+`TwistedArrow C` via `profunctorOnTwistedArrow`.
+
+This generalizes ordinary wedges: when `W` is the terminal profunctor (constant
 at a singleton), a weighted wedge is exactly an ordinary wedge.
 -/
-abbrev WeightedWedge (W : TwistedArrow C ⥤ Type v) (P : Cᵒᵖ ⥤ C ⥤ D) :=
-  WeightedCone (J := TwistedArrow C) W (profunctorOnTwistedArrow C P)
+abbrev WeightedWedge (W : Cᵒᵖ ⥤ C ⥤ Type v) (P : Cᵒᵖ ⥤ C ⥤ D) :=
+  WeightedCone (J := TwistedArrow C)
+    (profunctorOnTwistedArrow C W) (profunctorOnTwistedArrow C P)
 
 /--
-A weighted cowedge over a profunctor `P : Cᵒᵖ ⥤ C ⥤ D` with weight
-`W : (TwistedArrow C)ᵒᵖ ⥤ Type v` is a weighted cocone over the diagram
-`profunctorOnTwistedArrow C P` with the given weight.
+A weighted cowedge over a profunctor `P : Cᵒᵖ ⥤ C ⥤ D` with weight profunctor
+`W : Cᵒᵖ ⥤ C ⥤ Type v` is a weighted cocone over the diagram
+`profunctorOnTwistedArrow C P` with weight `profunctorOnOpTwistedArrow C W`.
 
-The weight is contravariant (a presheaf on `TwistedArrow C`) to match the
-variance required by weighted cocones.
+Both the weight and the diagram are profunctors. The weight is converted via
+`profunctorOnOpTwistedArrow` (giving a presheaf on `TwistedArrow C`), while
+the diagram is converted via `profunctorOnTwistedArrow`.
+
+This generalizes ordinary cowedges: when `W` is the terminal profunctor
+(constant at a singleton), a weighted cowedge is exactly an ordinary cowedge.
 -/
-abbrev WeightedCowedge (W : (TwistedArrow C)ᵒᵖ ⥤ Type v) (P : Cᵒᵖ ⥤ C ⥤ D) :=
-  WeightedCocone (J := TwistedArrow C) W (profunctorOnTwistedArrow C P)
+abbrev WeightedCowedge (W : Cᵒᵖ ⥤ C ⥤ Type v) (P : Cᵒᵖ ⥤ C ⥤ D) :=
+  WeightedCocone (J := TwistedArrow C)
+    (profunctorOnOpTwistedArrow C W) (profunctorOnTwistedArrow C P)
 
 end WeightedLimitColimit
 
@@ -1372,6 +1381,13 @@ variable {J : Type u₁} [Category.{v₁} J] {C : Type u₂} [Category.{v₁} C]
 variable (W : J ⥤ Type v₁) (D : J ⥤ C)
 
 /--
+The diagram functor for weighted cones: maps the the category
+of elements to `C` via the projection and `D`.
+-/
+def weightedConeDiagram : W.Elements ⥤ C :=
+  CategoryOfElements.π W ⋙ D
+
+/--
 Convert a weighted cone to a cone over the category of elements.
 
 Given `c : WeightedCone W D`, define a cone over `CategoryOfElements.π W ⋙ D` with:
@@ -1379,7 +1395,7 @@ Given `c : WeightedCone W D`, define a cone over `CategoryOfElements.π W ⋙ D`
 - Legs: for `p = ⟨j, w⟩`, the leg is `c.leg j w : c.pt ⟶ D.obj j`
 -/
 def weightedConeToElementsCone (W : J ⥤ Type v₁) (D : J ⥤ C)
-    (c : WeightedCone W D) : Cone (CategoryOfElements.π W ⋙ D) where
+    (c : WeightedCone W D) : Cone (weightedConeDiagram W D) where
   pt := c.pt
   π := {
     app := fun p => c.leg p.fst p.snd
@@ -1709,48 +1725,47 @@ variable {C : Type u₅} [Category.{v₅} C] {D : Type*} [Category.{v₅} D]
 The diagram for weighted wedges: composing the projection from the category
 of elements with the profunctor-on-twisted-arrow functor.
 
-For a weight `W : TwistedArrow C ⥤ Type v` and profunctor `P : Cᵒᵖ ⥤ C ⥤ D`,
-this gives a functor `W.Elements ⥤ D`.
+For weight profunctor `W : Cᵒᵖ ⥤ C ⥤ Type v` and diagram profunctor
+`P : Cᵒᵖ ⥤ C ⥤ D`, this gives a functor
+`(profunctorOnTwistedArrow C W).Elements ⥤ D`.
 -/
-def weightedWedgeDiagram (W : TwistedArrow C ⥤ Type v₅) (P : Cᵒᵖ ⥤ C ⥤ D) :
-    W.Elements ⥤ D :=
-  CategoryOfElements.π W ⋙ profunctorOnTwistedArrow C P
+def weightedWedgeDiagram (W : Cᵒᵖ ⥤ C ⥤ Type v₅) (P : Cᵒᵖ ⥤ C ⥤ D) :
+    (profunctorOnTwistedArrow C W).Elements ⥤ D :=
+  weightedConeDiagram (profunctorOnTwistedArrow C W)
+    (profunctorOnTwistedArrow C P)
 
 /--
 The diagram for weighted cowedges: composing the projection from the
 opposite category of elements with the profunctor-on-twisted-arrow functor.
 
-For a weight `W : (TwistedArrow C)ᵒᵖ ⥤ Type v` and profunctor
-`P : Cᵒᵖ ⥤ C ⥤ D`, this gives a functor `(W.Elements)ᵒᵖ ⥤ D`.
+For weight profunctor `W : Cᵒᵖ ⥤ C ⥤ Type v` and diagram profunctor
+`P : Cᵒᵖ ⥤ C ⥤ D`, this gives a functor
+`(profunctorOnOpTwistedArrow C W).ElementsPre ⥤ D`.
 -/
-def weightedCowedgeDiagram (W : (TwistedArrow C)ᵒᵖ ⥤ Type v₅)
-    (P : Cᵒᵖ ⥤ C ⥤ D) : (W.Elements)ᵒᵖ ⥤ D :=
-  weightedCoconeDiagram W (profunctorOnTwistedArrow C P)
+def weightedCowedgeDiagram (W : Cᵒᵖ ⥤ C ⥤ Type v₅)
+    (P : Cᵒᵖ ⥤ C ⥤ D) : (profunctorOnOpTwistedArrow C W).ElementsPre ⥤ D :=
+  weightedCoconeDiagram (profunctorOnOpTwistedArrow C W)
+    (profunctorOnTwistedArrow C P)
 
 /--
-Weighted wedges over a profunctor `P : Cᵒᵖ ⥤ C ⥤ D` with weight
-`W : TwistedArrow C ⥤ Type v` are categorically equivalent to ordinary
-cones over the weighted wedge diagram on `W.Elements`.
-
-This follows by applying `weightedConeElementsEquiv` to the definition
-`WeightedWedge W P := WeightedCone W (profunctorOnTwistedArrow C P)`.
+Weighted wedges over profunctors `W` (weight) and `P` (diagram) are
+categorically equivalent to ordinary cones over the weighted wedge diagram.
 -/
-def weightedWedgeElementsEquiv (W : TwistedArrow C ⥤ Type v₅)
-    (P : Cᵒᵖ ⥤ C ⥤ D) : WeightedWedge W P ≌ Cone (weightedWedgeDiagram W P) :=
-  weightedConeElementsEquiv W (profunctorOnTwistedArrow C P)
+def weightedWedgeElementsEquiv (W : Cᵒᵖ ⥤ C ⥤ Type v₅)
+    (P : Cᵒᵖ ⥤ C ⥤ D) :
+    WeightedWedge W P ≌ Cone (weightedWedgeDiagram W P) :=
+  weightedConeElementsEquiv (profunctorOnTwistedArrow C W)
+    (profunctorOnTwistedArrow C P)
 
 /--
-Weighted cowedges over a profunctor `P : Cᵒᵖ ⥤ C ⥤ D` with weight
-`W : (TwistedArrow C)ᵒᵖ ⥤ Type v` are categorically equivalent to ordinary
-cocones over the weighted cowedge diagram on `(W.Elements)ᵒᵖ`.
-
-This follows by applying `weightedCoconeElementsEquiv` to the definition
-`WeightedCowedge W P := WeightedCocone W (profunctorOnTwistedArrow C P)`.
+Weighted cowedges over profunctors `W` (weight) and `P` (diagram) are
+categorically equivalent to ordinary cocones over the weighted cowedge diagram.
 -/
-def weightedCowedgeElementsEquiv (W : (TwistedArrow C)ᵒᵖ ⥤ Type v₅)
+def weightedCowedgeElementsEquiv (W : Cᵒᵖ ⥤ C ⥤ Type v₅)
     (P : Cᵒᵖ ⥤ C ⥤ D) :
     WeightedCowedge W P ≌ Cocone (weightedCowedgeDiagram W P) :=
-  weightedCoconeElementsEquiv W (profunctorOnTwistedArrow C P)
+  weightedCoconeElementsEquiv (profunctorOnOpTwistedArrow C W)
+    (profunctorOnTwistedArrow C P)
 
 end WeightedWedgeCowedgeEquivalences
 
@@ -2817,17 +2832,17 @@ This is `W(op (diagTwArr A)) = W(op (twObjMk (𝟙 A)))`. -/
 abbrev weightDiagElem (W : (TwistedArrow C)ᵒᵖ ⥤ Type v) (A : C) : Type v :=
   W.obj (Opposite.op (diagTwArr A))
 
-/-- Given a weighted cowedge over an endoprofunctor `P`, extract the family
+/-- Given a weighted cocone over a twisted arrow diagram, extract the family
 of morphisms at diagonal twisted arrows.
 
-For `A : C` and `w : weightDiagElem W A`, this gives:
-`(P.obj (op A)).obj A ⟶ pt`
+For `A : C` and `w : weightDiagElem W A`, this gives `F.obj (diagTwArr A) ⟶ pt`.
+When `F = profunctorOnTwistedArrow C P`, this becomes `(P.obj (op A)).obj A ⟶ pt`.
 
 This matches the signature required for `ParanatSig H (P ⇓ pt)` when we take
 `diagApp H A = weightDiagElem W A`. -/
-def WeightedCowedge.diagFamily {W : (TwistedArrow C)ᵒᵖ ⥤ Type v}
-    {P : Cᵒᵖ ⥤ C ⥤ C} (c : WeightedCowedge W P) (A : C)
-    (w : weightDiagElem W A) : (P.obj (Opposite.op A)).obj A ⟶ c.pt :=
+def weightedCoconeDiagFamily {W : (TwistedArrow C)ᵒᵖ ⥤ Type v}
+    {F : TwistedArrow C ⥤ C} (c : WeightedCocone W F) (A : C)
+    (w : weightDiagElem W A) : F.obj (diagTwArr A) ⟶ c.pt :=
   c.leg (diagTwArr A) w
 
 /-!
@@ -2967,20 +2982,27 @@ equality), paranaturality becomes: equal input elements give `DiagCompat`
 outputs in the slice profunctor.
 -/
 
-/-- Extract the diagonal family signature from a weighted cowedge.
-This gives a `ParanatSig` where the source profunctor `H` has
+/-- Extract the diagonal family signature from a weighted cocone over a
+twisted arrow diagram. This gives a family `(A : C) → weightDiagElem W A →
+F.obj (diagTwArr A) ⟶ pt`.
+
+When `F = profunctorOnTwistedArrow C P` for an endoprofunctor `P`, this
+becomes `(A : C) → weightDiagElem W A → diagApp (P ⇓ pt) A`, giving a
+`ParanatSig` where the source profunctor `H` has
 `diagApp H A = weightDiagElem W A`. -/
-def WeightedCowedge.diagFamilySig {W : (TwistedArrow C)ᵒᵖ ⥤ Type v}
-    {P : Cᵒᵖ ⥤ C ⥤ C} (c : WeightedCowedge W P) :
-    (A : C) → weightDiagElem W A → diagApp (P ⇓ c.pt) A :=
+def weightedCoconeDiagFamilySig {W : (TwistedArrow C)ᵒᵖ ⥤ Type v}
+    {F : TwistedArrow C ⥤ C} (c : WeightedCocone W F) :
+    (A : C) → weightDiagElem W A → (F.obj (diagTwArr A) ⟶ c.pt) :=
   fun A w => c.leg (diagTwArr A) w
 
 /-- The diagonal family signature equals the leg applied at diagonal twisted
 arrows. -/
 @[simp]
-theorem WeightedCowedge.diagFamilySig_eq {W : (TwistedArrow C)ᵒᵖ ⥤ Type v}
-    {P : Cᵒᵖ ⥤ C ⥤ C} (c : WeightedCowedge W P) (A : C) (w : weightDiagElem W A) :
-    c.diagFamilySig A w = c.leg (diagTwArr A) w := rfl
+theorem weightedCoconeDiagFamilySig_eq {W : (TwistedArrow C)ᵒᵖ ⥤ Type v}
+    {F : TwistedArrow C ⥤ C} (c : WeightedCocone W F) (A : C)
+    (w : weightDiagElem W A) :
+    (weightedCoconeDiagFamilySig c A w : F.obj (diagTwArr A) ⟶ c.pt) =
+      c.leg (diagTwArr A) w := rfl
 
 /-!
 ### Paranaturality Along Isomorphisms
@@ -2996,15 +3018,14 @@ along ALL morphisms, but weighted cowedge structure only provides it along
 isomorphisms.
 -/
 
-/-- The naturality condition for weighted cowedges along a twisted arrow
+/-- The naturality condition for weighted cocones along a twisted arrow
 morphism `m : α ⟶ β` states that transporting via `W.map m.op` and then
-taking the leg at `α` equals the leg at `β` precomposed with the profunctor
-action. -/
-theorem WeightedCowedge.naturality_at {W : (TwistedArrow C)ᵒᵖ ⥤ Type v}
-    {P : Cᵒᵖ ⥤ C ⥤ C} (c : WeightedCowedge W P) {α β : TwistedArrow C}
+taking the leg at `α` equals the leg at `β` precomposed with the diagram
+map. -/
+theorem weightedCoconeNaturalityAt {W : (TwistedArrow C)ᵒᵖ ⥤ Type v}
+    {F : TwistedArrow C ⥤ C} (c : WeightedCocone W F) {α β : TwistedArrow C}
     (m : α ⟶ β) (wβ : W.obj (Opposite.op β)) :
-    (profunctorOnTwistedArrow C P).map m ≫ c.leg β wβ =
-      c.leg α (W.map m.op wβ) :=
+    F.map m ≫ c.leg β wβ = c.leg α (W.map m.op wβ) :=
   c.naturality m wβ
 
 /-!
@@ -3043,24 +3064,27 @@ theorem profunctorDiagIsoAction_eq {P : Cᵒᵖ ⥤ C ⥤ C} {A B : C} (i : A �
   simp only [profunctorDiagIsoAction, profunctorOnTwistedArrow_map]
   rfl
 
-/-- Weighted cowedge naturality along a diagonal isomorphism. For an isomorphism
+/-- Weighted cocone naturality along a diagonal isomorphism. For an isomorphism
 `i : A ≅ B` and weight element `wB : weightDiagElem W B`, the diagram family
 satisfies:
 
 ```
-profunctorDiagIsoAction i ≫ diagFamilySig c B wB
-  = diagFamilySig c A (weightDiagTransport W i wB)
+profunctorDiagIsoAction i ≫ weightedCoconeDiagFamilySig c B wB
+  = weightedCoconeDiagFamilySig c A (weightDiagTransport W i wB)
 ```
 
-This is the "paranaturality along isomorphisms" property. -/
-theorem WeightedCowedge.diagFamilySig_iso_naturality
+This is the "paranaturality along isomorphisms" property.
+
+This theorem specializes to weighted cocones over profunctors via
+`profunctorOnTwistedArrow`. -/
+theorem weightedCoconeDiagFamilySigIsoNaturality
     {W : (TwistedArrow C)ᵒᵖ ⥤ Type v} {P : Cᵒᵖ ⥤ C ⥤ C}
-    (c : WeightedCowedge W P) {A B : C} (i : A ≅ B)
+    (c : WeightedCocone W (profunctorOnTwistedArrow C P)) {A B : C} (i : A ≅ B)
     (wB : weightDiagElem W B) :
-    profunctorDiagIsoAction (P := P) i ≫ c.diagFamilySig B wB =
-      c.diagFamilySig A (weightDiagTransport W i wB) := by
-  simp only [diagFamilySig, profunctorDiagIsoAction, weightDiagTransport]
-  exact c.naturality_at (diagTwArrMorphismOfIso i) wB
+    profunctorDiagIsoAction (P := P) i ≫ weightedCoconeDiagFamilySig c B wB =
+      weightedCoconeDiagFamilySig c A (weightDiagTransport W i wB) := by
+  simp only [weightedCoconeDiagFamilySig, profunctorDiagIsoAction]
+  exact weightedCoconeNaturalityAt c (diagTwArrMorphismOfIso i) wB
 
 /-!
 ### Trivial Profunctor Case Analysis
@@ -3314,15 +3338,18 @@ on `TwistedArrow C`, i.e., a presheaf. -/
 def sliceWeight (G : Cᵒᵖ ⥤ C ⥤ C) (c : C) : (TwistedArrow C)ᵒᵖ ⥤ Type v :=
   twistedArrowOpEquivCoTwistedArrow.functor ⋙ sliceWeightCovariant G c
 
-/-- A weighted cowedge where the weight is derived from the slice profunctor
+/-- A weighted cocone where the weight is derived from the slice profunctor
 `G ⇓ c`. This takes the same parameters as `RestrictedCowedge` and
 `StrongRestrictedCowedge` (an endoprofunctor `G` and an object `c`).
 
-This is a `WeightedCowedge` where:
+This is a `WeightedCocone` where:
 - The weight is `sliceWeight G c : (TwistedArrow C)ᵒᵖ ⥤ Type v`
-- The diagram is `profunctorOnTwistedArrow C G : TwistedArrow C ⥤ C` -/
+- The diagram is `profunctorOnTwistedArrow C G : TwistedArrow C ⥤ C`
+
+Note: This uses `WeightedCocone` directly instead of `WeightedCowedge` because
+`sliceWeight` is a twisted arrow presheaf, not a profunctor. -/
 abbrev SliceWeightedCowedge (G : Cᵒᵖ ⥤ C ⥤ C) (c : C) :=
-  WeightedCowedge (sliceWeight G c) G
+  WeightedCocone (sliceWeight G c) (profunctorOnTwistedArrow C G)
 
 /-!
 ### Implications for Weighted Colimits
