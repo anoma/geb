@@ -36,29 +36,6 @@ So:
 - `WeightedCocone W D` has weight `W : Jᵒᵖ ⥤ Type v` (a presheaf) and consists
   of a natural transformation `W ⟶ homToFunctor D pt`
 
-## Background: Reductions
-
-### Weighted Cones to Ordinary Cones
-
-For a weight `W : J ⥤ Type v` and diagram `D : J ⥤ C`:
-
-```text
-WeightedCone W D ≅ Cone (D ∘ π)
-```
-
-where `π : El(W) → J` is the projection from the category of elements.
-
-### Wedges to Cones
-
-For a profunctor `P : Cᵒᵖ ⥤ C ⥤ D`:
-
-```text
-Wedge P ≅ Cone (profunctorOnTwistedArrow C P)
-```
-
-where `Tw(C) = El(Hom_C)` is the twisted arrow category (the category of
-elements of the hom profunctor).
-
 ## Four Candidates
 
 The question suggests four possibilities for the base category K:
@@ -68,125 +45,96 @@ The question suggests four possibilities for the base category K:
 3. `DiagElem W` - Category of diagonal elements of the weight profunctor
 4. `DiagElem W` for wedges, `(DiagElem W)ᵒᵖ` for cowedges
 
-## Analysis
+## Analysis Results
 
-### Structure of WeightedWedge
+### Option 1: Already Implemented
 
-A `WeightedWedge W P` consists of:
-
-- An apex `pt : D`
-- For each `tw ∈ TwistedArrow C` and `w ∈ W(twDom, twCod)`, a morphism
-  `leg(tw, w) : pt ⟶ P(twDom, twCod)`
-- Naturality along morphisms in `TwistedArrow C`
-
-The indexing is by `El(profunctorOnTwistedArrow C W)`, which has:
-
-- Objects: pairs `(f : c → d, w)` where `w ∈ W(c, d)`
-- Morphisms: `(u, v) : (f, w) → (g, w')` where `(u, v)` is a morphism in
-  `Tw(C)` and the weight is preserved
-
-### Structure of Ordinary Wedges
-
-An ordinary wedge for `Q : Kᵒᵖ ⥤ K ⥤ D` consists of:
-
-- An apex `pt : D`
-- For each `k : K`, a morphism `π_k : pt ⟶ Q(k, k)`
-- Wedge condition: for `f : k₁ ⟶ k₂`, the covariant and contravariant
-  actions agree
-
-The indexing is by objects of K (at the diagonal).
-
-### Why DiagElem W is the Natural Choice
-
-For a wedge over `K = DiagElem W`:
-
-- Objects of `DiagElem W` are pairs `(c, w)` where `w ∈ W(c, c)`
-- This matches the "diagonal" components of a weighted wedge
-
-If we define `Q = P ∘ (forget × forget)` where `forget : DiagElem W → C`:
-
-- `Q((c, w), (c, w)) = P(c, c)`
-- Components would be `π_{(c,w)} : pt ⟶ P(c, c)` for each diagonal element
-
-The wedge condition for a morphism `f : (c₁, w₁) ⟶ (c₂, w₂)` in `DiagElem W`:
-
-```text
-P(id, f.base) ∘ π_{(c₁,w₁)} = P(f.base, id) ∘ π_{(c₂,w₂)}
-```
-
-This is the dinaturality/wedge condition restricted to morphisms that are
-compatible with the weight profunctor.
-
-### The Indexing Mismatch
-
-There is a fundamental mismatch:
-
-- `WeightedWedge W P` has components at ALL twisted arrows with weight data
-- Ordinary wedges on `DiagElem W` only have components at DIAGONAL elements
-
-However, the naturality condition of weighted wedges
-might determine the non-diagonal components from the diagonal ones.
-
-For a weighted cone, the leg at `(f : c → d, w)` can be computed from legs
-at simpler twisted arrows via naturality.
-
-### Proposed Approach
-
-Define:
-
-- `WeightedWedge' W P := Wedge (pullbackProfunctor (DiagElem.forget W) P)`
-
-where `pullbackProfunctor F P` is the profunctor on `DiagElem W` defined by:
-
-```text
-(pullbackProfunctor F P).obj (op x) :=
-  fun y => P.obj (op (F.obj x)) |>.obj (F.obj y)
-```
-
-The equivalence would need to show:
-
-1. Every weighted wedge restricts to a wedge on `DiagElem W`
-2. Every wedge on `DiagElem W` extends uniquely to a weighted wedge
-3. These operations are inverse functors
-
-## Tasks
-
-### 1. Define the Pullback Profunctor
-
-Define `pullbackProfunctor : (K ⥤ C) → (Cᵒᵖ ⥤ C ⥤ D) → (Kᵒᵖ ⥤ K ⥤ D)`
-that pulls back a profunctor along a functor.
-
-### 2. Define WeightedWedge' and WeightedCowedge'
+The codebase already implements the category of elements approach via
+`weightedWedgeElementsEquiv` (Weighted.lean, line 1760):
 
 ```lean
-abbrev WeightedWedge' (W : Cᵒᵖ ⥤ C ⥤ Type v) (P : Cᵒᵖ ⥤ C ⥤ D) :=
-  Wedge (pullbackProfunctor (DiagElem.forget W) P)
-
-abbrev WeightedCowedge' (W : Cᵒᵖ ⥤ C ⥤ Type v) (P : Cᵒᵖ ⥤ C ⥤ D) :=
-  Cowedge (pullbackProfunctor (DiagElem.forget W) P)
+def weightedWedgeElementsEquiv (W : Cᵒᵖ ⥤ C ⥤ Type v₅) (P : Cᵒᵖ ⥤ C ⥤ D) :
+    WeightedWedge W P ≌ Cone (weightedWedgeDiagram W P) :=
+  weightedConeElementsEquiv (profunctorOnTwistedArrow C W)
+    (profunctorOnTwistedArrow C P)
 ```
 
-### 3. Construct Restriction Functor
+This shows that `WeightedWedge W P` is equivalent to ordinary cones over the
+diagram `weightedWedgeDiagram W P`, which is obtained by composing:
 
-`restrict : WeightedWedge W P ⥤ WeightedWedge' W P`
+- The projection `π : El(profunctorOnTwistedArrow C W) → TwistedArrow C`
+- The profunctor diagram `profunctorOnTwistedArrow C P`
 
-Takes a weighted wedge and restricts to diagonal components.
+Similarly for cowedges via `weightedCowedgeElementsEquiv`.
 
-### 4. Construct Extension Functor
+### Options 3 and 4: Variance Obstruction
 
-`extend : WeightedWedge' W P ⥤ WeightedWedge W P`
+The codebase explicitly documents why the DiagElem approach does NOT work
+in general (Weighted.lean, lines 1778-1833, section "WeightedWedgeAsProfunctor").
 
-Takes a wedge on `DiagElem W` and extends to all twisted arrows using the
-naturality data.
+The naive idea is to define a profunctor `P'` on the category of elements such
+that `Wedge P' ≌ WeightedWedge W P`. However:
 
-### 5. Prove Equivalence
+**Variance Obstruction**: For a TwistedArrow morphism `f : tw₁ ⟶ tw₂`:
 
-Show that `restrict` and `extend` form an equivalence of categories.
+- `twDomArr f : twDom tw₂ ⟶ twDom tw₁` (contravariant in the domain)
+- `twCodArr f : twCod tw₁ ⟶ twCod tw₂` (covariant in the codomain)
+
+For `P : Cᵒᵖ ⥤ C ⥤ D` (contravariant in first arg, covariant in second):
+
+- The second argument works: `twCodArr` is covariant, matching P's second slot
+- The first argument fails: `twDomArr` is contravariant, but when composed with
+  P's contravariance and the opposite category structure, we get the wrong
+  direction for the overall morphism
+
+**Promonad Explanation**: For a weighted wedge to reduce to an ordinary wedge
+over some profunctor `P' : C'ᵒᵖ ⥤ C' ⥤ D`, we need `TwistedArrow C' ≅ W.Elements`
+for some `C'`. But `TwistedArrow C'` is itself the category of elements of the
+hom-profunctor `Hom_{C'} : C'ᵒᵖ × C' → Set`.
+
+This requires the weight W to be (isomorphic to) the hom-profunctor of some
+category. Not every profunctor is a hom-profunctor - a profunctor needs the
+structure of a **promonad** (a monad in the bicategory of profunctors) to
+correspond to some category's hom-functor.
+
+### DiagElem vs Full Category of Elements
+
+There is also an indexing mismatch:
+
+- `WeightedWedge W P` has components at ALL twisted arrows with weight data:
+  objects `(f : c → d, w ∈ W(c, d))`
+- `DiagElem W` only has objects at DIAGONAL elements: `(c, w ∈ W(c, c))`
+
+For ordinary wedges, the naturality condition allows reconstructing non-diagonal
+components from diagonal ones (via the canonical morphisms in TwistedArrow).
+But for weighted wedges, this reconstruction requires that every element
+`w ∈ W(c, d)` can be obtained from diagonal elements via the weight's
+functorial action - which is only true when W is a hom-profunctor.
+
+## Conclusion
+
+**The canonical reduction is via the category of elements (Option 1)**, which
+is already implemented in the codebase. Reduction to ordinary wedges over
+DiagElem W (Options 3 and 4) does NOT work in general due to:
+
+1. The variance obstruction for defining a suitable profunctor
+2. The weight needing to be a hom-profunctor (promonad structure)
+3. Insufficient data in diagonal elements alone to reconstruct all components
 
 ## Status
 
-- [ ] Task 1: Define pullback profunctor
-- [ ] Task 2: Define WeightedWedge' and WeightedCowedge'
-- [ ] Task 3: Construct restriction functor
-- [ ] Task 4: Construct extension functor
-- [ ] Task 5: Prove equivalence
+- [x] Task 1: Analyze which option is most likely to give equivalence
+  - **Result**: Option 1 (category of elements) is the canonical reduction
+  - Options 3/4 (DiagElem W) do NOT work in general
+- [x] Task 2: Check if equivalence is already implemented
+  - **Result**: Yes, `weightedWedgeElementsEquiv` and
+    `weightedCowedgeElementsEquiv` are already proven
+- [ ] Task 3: Document findings in codebase (this file)
+- [x] Task 4: Close investigation - the existing implementation is correct
+
+## References
+
+- Weighted.lean lines 1760-1774: `weightedWedgeElementsEquiv`,
+  `weightedCowedgeElementsEquiv`
+- Weighted.lean lines 1778-1833: Variance obstruction analysis
+- Weighted.lean lines 1835-1919: Analysis for profunctor-derived weights
