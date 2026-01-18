@@ -3972,6 +3972,110 @@ def restrictWeightedCowedge (H : Cᵒᵖ ⥤ C ⥤ Type v) (G : Cᵒᵖ ⥤ C �
   family := weightedCowedgeFamilyAtIdentity H G wc
   isDinatural := weightedCowedgeFamilyAtIdentity_dinatural H G wc
 
+/-- The morphism map of the restriction functor: a morphism of weighted cowedges
+induces a morphism of restricted cowedges. -/
+def restrictWeightedCowedgeHom (H : Cᵒᵖ ⥤ C ⥤ Type v) (G : Cᵒᵖ ⥤ C ⥤ C)
+    {wc₁ wc₂ : WeightedCowedge H G} (f : WeightedCocone.Hom wc₁ wc₂) :
+    RestrictedCowedge.Hom (restrictWeightedCowedge H G wc₁)
+      (restrictWeightedCowedge H G wc₂) where
+  hom := f.hom
+  comm A a := by
+    simp only [restrictWeightedCowedge, weightedCowedgeFamilyAtIdentity,
+      eq_mpr_eq_cast, cast_eq]
+    rw [Category.assoc, f.w (idCoTwistedArrow A) (diagAppToWeightAtIdentity H A a)]
+
+theorem restrictWeightedCowedgeHom_id (H : Cᵒᵖ ⥤ C ⥤ Type v) (G : Cᵒᵖ ⥤ C ⥤ C)
+    (wc : WeightedCowedge H G) :
+    restrictWeightedCowedgeHom H G (WeightedCocone.Hom.id wc) =
+      RestrictedCowedge.Hom.id (restrictWeightedCowedge H G wc) := by
+  ext
+  rfl
+
+theorem restrictWeightedCowedgeHom_comp (H : Cᵒᵖ ⥤ C ⥤ Type v) (G : Cᵒᵖ ⥤ C ⥤ C)
+    {wc₁ wc₂ wc₃ : WeightedCowedge H G}
+    (f : WeightedCocone.Hom wc₁ wc₂) (g : WeightedCocone.Hom wc₂ wc₃) :
+    restrictWeightedCowedgeHom H G (f.comp g) =
+      (restrictWeightedCowedgeHom H G f).comp (restrictWeightedCowedgeHom H G g) := by
+  ext
+  rfl
+
+/-- The restriction functor from weighted cowedges to restricted cowedges. -/
+def restrictionFunctor (H : Cᵒᵖ ⥤ C ⥤ Type v) (G : Cᵒᵖ ⥤ C ⥤ C) :
+    WeightedCowedge H G ⥤ RestrictedCowedge G H where
+  obj := restrictWeightedCowedge H G
+  map := restrictWeightedCowedgeHom H G
+  map_id wc := restrictWeightedCowedgeHom_id H G wc
+  map_comp f g := restrictWeightedCowedgeHom_comp H G f g
+
+instance restrictionFunctor_faithful (H : Cᵒᵖ ⥤ C ⥤ Type v) (G : Cᵒᵖ ⥤ C ⥤ C) :
+    (restrictionFunctor H G).Faithful where
+  map_injective {wc₁ wc₂} {f g} heq := by
+    apply WeightedCocone.Hom.ext
+    simp only [restrictionFunctor] at heq
+    have : (restrictWeightedCowedgeHom H G f).hom =
+           (restrictWeightedCowedgeHom H G g).hom := by
+      rw [heq]
+    exact this
+
+/-- Commutativity at identity arrows implies commutativity for weight elements
+that are in the image of the weight map from identity.
+
+For a morphism `m : tw ⟶ id(A)` in CoTwistedArrow, the weight functor gives
+`W.map m.op : W.obj (op (id A)) → W.obj (op tw)`. For any `w' : W.obj (op (id A))`,
+if `h` commutes with legs at identity, then it commutes with legs at tw for
+the element `W.map m.op w'`.
+
+This follows from weighted cocone naturality:
+`D.map m ≫ wc.leg (id A) w' = wc.leg tw (W.map m.op w')` -/
+theorem commutativity_from_identity_image (H : Cᵒᵖ ⥤ C ⥤ Type v) (G : Cᵒᵖ ⥤ C ⥤ C)
+    {wc₁ wc₂ : WeightedCowedge H G} (h : wc₁.pt ⟶ wc₂.pt)
+    {A : C}
+    (hid : ∀ (w : (profunctorOnOpCoTwistedArrow C H).obj
+             (Opposite.op (idCoTwistedArrow A))),
+           wc₁.leg (idCoTwistedArrow A) w ≫ h = wc₂.leg (idCoTwistedArrow A) w)
+    {tw : CoTwistedArrow C}
+    (m : tw ⟶ idCoTwistedArrow A)
+    (w' : (profunctorOnOpCoTwistedArrow C H).obj (Opposite.op (idCoTwistedArrow A))) :
+    wc₁.leg tw ((profunctorOnOpCoTwistedArrow C H).map m.op w') ≫ h =
+    wc₂.leg tw ((profunctorOnOpCoTwistedArrow C H).map m.op w') := by
+  have nat₁ := wc₁.naturality m w'
+  have nat₂ := wc₂.naturality m w'
+  calc wc₁.leg tw ((profunctorOnOpCoTwistedArrow C H).map m.op w') ≫ h
+      = ((profunctorOnCoTwistedArrow C G).map m ≫ wc₁.leg (idCoTwistedArrow A) w') ≫ h := by
+          rw [← nat₁]
+    _ = (profunctorOnCoTwistedArrow C G).map m ≫ (wc₁.leg (idCoTwistedArrow A) w' ≫ h) := by
+          rw [Category.assoc]
+    _ = (profunctorOnCoTwistedArrow C G).map m ≫ wc₂.leg (idCoTwistedArrow A) w' := by
+          rw [hid]
+    _ = wc₂.leg tw ((profunctorOnOpCoTwistedArrow C H).map m.op w') := by
+          rw [← nat₂]
+
+/-!
+### Fullness of the restriction functor
+
+The restriction functor is faithful (proven above). Whether it is full depends
+on whether the weight maps from identity co-twisted arrows are jointly
+surjective onto arbitrary co-twisted arrows.
+
+Specifically, for fullness we need: for every `tw : CoTwistedArrow C` and
+every `w : W.obj (op tw)`, there exists an identity arrow `id A` and a morphism
+`m : tw ⟶ id A` such that `w` is in the image of `W.map m.op`.
+
+For the Hom profunctor `H(X, Y) = Hom(X, Y)`, the weight maps are:
+- From target: `(H.map f.op).app I₁ : H(I₁, I₁) → H(I₀, I₁)` (precomposition by f)
+- From source: `(H.obj (op I₀)).map f : H(I₀, I₀) → H(I₀, I₁)` (postcomposition by f)
+
+These maps are not generally surjective. For example, with f : {a,b} → {c}
+constant, precomposition and postcomposition both yield only constant
+functions, missing non-constant functions in Hom({a,b}, {c,d}).
+
+For a general profunctor H, the restriction functor is not full.
+The faithfulness result above already provides the weaker property that
+the restriction functor reflects isomorphisms when restricted to weighted
+cowedges whose weight elements at non-identity arrows all factor through
+identity.
+-/
+
 end WeightedRestrictedCorrespondence
 
 end GebLean
