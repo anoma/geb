@@ -3731,6 +3731,247 @@ def coTwToIdentityAtTarget {I₀ I₁ : C} (f : I₀ ⟶ I₁) :
     coTwObjMk f ⟶ idCoTwistedArrow I₁ :=
   coTwHomMk (𝟙 I₁) f (by simp [idCoTwistedArrow, coTwObjMk_arr])
 
+/-- The diagram functor map along `coTwToIdentityAtSource` equals the
+contravariant profunctor action. -/
+theorem diagram_map_coTwToIdentityAtSource (G : Cᵒᵖ ⥤ C ⥤ C)
+    {I₀ I₁ : C} (f : I₀ ⟶ I₁) :
+    (profunctorOnCoTwistedArrow C G).map (coTwToIdentityAtSource f) =
+    (G.map f.op).app I₀ := by
+  unfold coTwToIdentityAtSource
+  rw [profunctorOnCoTwistedArrow_map]
+  simp only [coTwDomArr_coTwHomMk, coTwCodArr_coTwHomMk, coTwObjMk_cod,
+    idCoTwistedArrow, coTwObjMk_dom, Functor.map_id, Category.comp_id]
+
+/-- The diagram functor map along `coTwToIdentityAtTarget` equals the
+covariant profunctor action. -/
+theorem diagram_map_coTwToIdentityAtTarget (G : Cᵒᵖ ⥤ C ⥤ C)
+    {I₀ I₁ : C} (f : I₀ ⟶ I₁) :
+    (profunctorOnCoTwistedArrow C G).map (coTwToIdentityAtTarget f) =
+    (G.obj (Opposite.op I₁)).map f := by
+  unfold coTwToIdentityAtTarget
+  rw [profunctorOnCoTwistedArrow_map]
+  simp only [coTwDomArr_coTwHomMk, coTwCodArr_coTwHomMk, coTwObjMk_cod,
+    idCoTwistedArrow, coTwObjMk_dom, op_id, Functor.map_id, NatTrans.id_app,
+    Category.id_comp]
+
+/-!
+### Weight map coherence
+
+For an off-diagonal element `x : H(I₁, I₀)`, the two paths through the
+weight functor yield the same result at `coTwObjMk f`:
+- Path 1: `H.rmap f x ∈ H(I₁, I₁)` → weight at idCoTwistedArrow I₁
+          → weight at coTwObjMk f via coTwToIdentityAtTarget
+- Path 2: `H.lmap f x ∈ H(I₀, I₀)` → weight at idCoTwistedArrow I₀
+          → weight at coTwObjMk f via coTwToIdentityAtSource
+-/
+
+/-- The equivalence functor maps the identity morphism at I₁ to a twisted arrow
+with specific domain/codomain arrow components.
+For (coTwToIdentityAtTarget f).op, the image has twDomArr = f and twCodArr = 𝟙 I₁.
+-/
+theorem equiv_map_coTwToIdentityAtTarget_twDomArr {I₀ I₁ : C} (f : I₀ ⟶ I₁) :
+    twDomArr (coTwistedArrowOpEquivTwistedArrow.functor.map (coTwToIdentityAtTarget f).op) =
+    f := by
+  simp only [coTwToIdentityAtTarget, coTwistedArrowOpEquivTwistedArrow, Cat.equivOfIso,
+    coTwistedArrowOpIsoTwistedArrow]
+  simp only [Iso.trans_hom]
+  simp only [coTwistedArrowOpIsoTwistedArrowOp, Cat.opFunctor,
+    Cat.opFunctorInvolutive, Iso.trans_hom]
+  simp only [twistedArrowOpOpIsoCoTwistedArrow, twistedArrowIsoTwistedArrowOp]
+  simp only [Cat.isoOfEquiv, twistedArrowEquivTwistedArrowOp, Iso.symm_hom]
+  simp only [twistedArrowOpToTwistedArrow, Functor.mapIso_hom]
+  simp only [twDomArr, twHomMk, coTwHomMk]
+  rfl
+
+/-- The equivalence functor maps the identity morphism at I₁ to a twisted arrow
+with twCodArr = 𝟙 I₁.
+-/
+theorem equiv_map_coTwToIdentityAtTarget_twCodArr {I₀ I₁ : C} (f : I₀ ⟶ I₁) :
+    twCodArr (coTwistedArrowOpEquivTwistedArrow.functor.map (coTwToIdentityAtTarget f).op) =
+    𝟙 I₁ := by
+  simp only [coTwToIdentityAtTarget, coTwistedArrowOpEquivTwistedArrow, Cat.equivOfIso,
+    coTwistedArrowOpIsoTwistedArrow]
+  simp only [Iso.trans_hom]
+  simp only [coTwistedArrowOpIsoTwistedArrowOp, Cat.opFunctor,
+    Cat.opFunctorInvolutive, Iso.trans_hom]
+  simp only [twistedArrowOpOpIsoCoTwistedArrow, twistedArrowIsoTwistedArrowOp]
+  simp only [Cat.isoOfEquiv, twistedArrowEquivTwistedArrowOp, Iso.symm_hom]
+  simp only [twistedArrowOpToTwistedArrow, Functor.mapIso_hom]
+  simp only [twCodArr, twHomMk, coTwHomMk]
+  rfl
+
+/-- The equivalence functor maps (coTwToIdentityAtSource f).op to a twisted arrow
+morphism with twDomArr = 𝟙 I₀.
+-/
+theorem equiv_map_coTwToIdentityAtSource_twDomArr {I₀ I₁ : C} (f : I₀ ⟶ I₁) :
+    twDomArr (coTwistedArrowOpEquivTwistedArrow.functor.map (coTwToIdentityAtSource f).op) =
+    𝟙 I₀ := by
+  simp only [coTwToIdentityAtSource, coTwistedArrowOpEquivTwistedArrow, Cat.equivOfIso,
+    coTwistedArrowOpIsoTwistedArrow]
+  simp only [Iso.trans_hom]
+  simp only [coTwistedArrowOpIsoTwistedArrowOp, Cat.opFunctor,
+    Cat.opFunctorInvolutive, Iso.trans_hom]
+  simp only [twistedArrowOpOpIsoCoTwistedArrow, twistedArrowIsoTwistedArrowOp]
+  simp only [Cat.isoOfEquiv, twistedArrowEquivTwistedArrowOp, Iso.symm_hom]
+  simp only [twistedArrowOpToTwistedArrow, Functor.mapIso_hom]
+  simp only [twDomArr, twHomMk, coTwHomMk]
+  rfl
+
+/-- The equivalence functor maps (coTwToIdentityAtSource f).op to a twisted arrow
+morphism with twCodArr = f.
+-/
+theorem equiv_map_coTwToIdentityAtSource_twCodArr {I₀ I₁ : C} (f : I₀ ⟶ I₁) :
+    twCodArr (coTwistedArrowOpEquivTwistedArrow.functor.map (coTwToIdentityAtSource f).op) =
+    f := by
+  simp only [coTwToIdentityAtSource, coTwistedArrowOpEquivTwistedArrow, Cat.equivOfIso,
+    coTwistedArrowOpIsoTwistedArrow]
+  simp only [Iso.trans_hom]
+  simp only [coTwistedArrowOpIsoTwistedArrowOp, Cat.opFunctor,
+    Cat.opFunctorInvolutive, Iso.trans_hom]
+  simp only [twistedArrowOpOpIsoCoTwistedArrow, twistedArrowIsoTwistedArrowOp]
+  simp only [Cat.isoOfEquiv, twistedArrowEquivTwistedArrowOp, Iso.symm_hom]
+  simp only [twistedArrowOpToTwistedArrow, Functor.mapIso_hom]
+  simp only [twCodArr, twHomMk, coTwHomMk]
+  rfl
+
+/-- The object-level computation: the equivalence maps idCoTwistedArrow I
+to the diagonal twisted arrow diagTwArr I = twObjMk (𝟙 I). -/
+theorem equiv_identity_obj_eq (I : C) :
+    coTwistedArrowOpEquivTwistedArrow.functor.obj (Opposite.op (idCoTwistedArrow I)) =
+    diagTwArr I := by
+  simp only [coTwistedArrowOpEquivTwistedArrow, Cat.equivOfIso,
+    coTwistedArrowOpIsoTwistedArrow]
+  simp only [Iso.trans_hom]
+  simp only [coTwistedArrowOpIsoTwistedArrowOp, Cat.opFunctor,
+    Cat.opFunctorInvolutive, Iso.trans_hom, Functor.comp_obj]
+  simp only [twistedArrowOpOpIsoCoTwistedArrow, twistedArrowIsoTwistedArrowOp]
+  simp only [Cat.isoOfEquiv, twistedArrowEquivTwistedArrowOp, Iso.symm_hom]
+  simp only [twistedArrowOpToTwistedArrow]
+  simp only [idCoTwistedArrow, diagTwArr]
+  rfl
+
+/-- The object-level computation: the equivalence maps coTwObjMk f to
+twObjMk f (the same morphism viewed as a twisted arrow). -/
+theorem equiv_arrow_obj_eq {I₀ I₁ : C} (f : I₀ ⟶ I₁) :
+    coTwistedArrowOpEquivTwistedArrow.functor.obj (Opposite.op (coTwObjMk f)) =
+    twObjMk f := by
+  simp only [coTwistedArrowOpEquivTwistedArrow, Cat.equivOfIso,
+    coTwistedArrowOpIsoTwistedArrow]
+  simp only [Iso.trans_hom]
+  simp only [coTwistedArrowOpIsoTwistedArrowOp, Cat.opFunctor,
+    Cat.opFunctorInvolutive, Iso.trans_hom, Functor.comp_obj]
+  simp only [twistedArrowOpOpIsoCoTwistedArrow, twistedArrowIsoTwistedArrowOp]
+  simp only [Cat.isoOfEquiv, twistedArrowEquivTwistedArrowOp, Iso.symm_hom]
+  simp only [twistedArrowOpToTwistedArrow]
+  simp only [coTwObjMk, twObjMk]
+  rfl
+
+/-- Computing the profunctor map along `coTwToIdentityAtTarget f` on an element
+from the diagonal at I₁. The result is `(H.map f.op).app I₁ y` at the weight
+for `coTwObjMk f`.
+
+This lemma explicitly computes the map, accounting for the dependent types
+that arise from the equivalence between co-twisted arrow opposites and
+twisted arrows. -/
+theorem profunctor_map_coTwToIdentityAtTarget_diag (H : Cᵒᵖ ⥤ C ⥤ Type v)
+    {I₀ I₁ : C} (f : I₀ ⟶ I₁) (y : (H.obj (Opposite.op I₁)).obj I₁) :
+    (profunctorOnOpCoTwistedArrow C H).map (coTwToIdentityAtTarget f).op
+      (diagAppToWeightAtIdentity H I₁ y) =
+    cast (by simp only [profunctorOnOpCoTwistedArrow_at_arrow])
+      ((H.map f.op).app I₁ y) := by
+  simp only [profunctorOnOpCoTwistedArrow_map, profunctorOnTwistedArrow_map,
+    equiv_map_coTwToIdentityAtTarget_twDomArr, equiv_map_coTwToIdentityAtTarget_twCodArr,
+    diagAppToWeightAtIdentity, cast_eq]
+  change ((H.map f.op).app I₁ ≫ (H.obj (Opposite.op I₀)).map (𝟙 I₁)) y = (H.map f.op).app I₁ y
+  simp only [Functor.map_id, Category.comp_id]
+
+/-- Computing the profunctor map along `coTwToIdentityAtSource f` on an element
+from the diagonal at I₀. The result is `(H.obj (Opposite.op I₀)).map f y` at
+the weight for `coTwObjMk f`.
+
+This lemma explicitly computes the map, accounting for the dependent types. -/
+theorem profunctor_map_coTwToIdentityAtSource_diag (H : Cᵒᵖ ⥤ C ⥤ Type v)
+    {I₀ I₁ : C} (f : I₀ ⟶ I₁) (y : (H.obj (Opposite.op I₀)).obj I₀) :
+    (profunctorOnOpCoTwistedArrow C H).map (coTwToIdentityAtSource f).op
+      (diagAppToWeightAtIdentity H I₀ y) =
+    cast (by simp only [profunctorOnOpCoTwistedArrow_at_arrow])
+      ((H.obj (Opposite.op I₀)).map f y) := by
+  simp only [profunctorOnOpCoTwistedArrow_map, profunctorOnTwistedArrow_map,
+    equiv_map_coTwToIdentityAtSource_twDomArr, equiv_map_coTwToIdentityAtSource_twCodArr,
+    diagAppToWeightAtIdentity, cast_eq]
+  change ((H.map (𝟙 I₀).op).app I₀ ≫ (H.obj (Opposite.op I₀)).map f) y =
+         (H.obj (Opposite.op I₀)).map f y
+  simp only [op_id, Functor.map_id, NatTrans.id_app, Category.id_comp]
+
+/-- The weight functor map along `coTwToIdentityAtTarget` and `coTwToIdentityAtSource`
+give the same result. This is the weight coherence condition. -/
+theorem weight_map_coTwToIdentity_coherence (H : Cᵒᵖ ⥤ C ⥤ Type v)
+    {I₀ I₁ : C} (f : I₀ ⟶ I₁) (x : (H.obj (Opposite.op I₁)).obj I₀) :
+    (profunctorOnOpCoTwistedArrow C H).map (coTwToIdentityAtTarget f).op
+      (diagAppToWeightAtIdentity H I₁ ((H.obj (Opposite.op I₁)).map f x)) =
+    (profunctorOnOpCoTwistedArrow C H).map (coTwToIdentityAtSource f).op
+      (diagAppToWeightAtIdentity H I₀ ((H.map f.op).app I₀ x)) := by
+  have nat := (H.map f.op).naturality f
+  have heq : (H.map f.op).app I₁ ((H.obj (Opposite.op I₁)).map f x) =
+             (H.obj (Opposite.op I₀)).map f ((H.map f.op).app I₀ x) := by
+    have := congrFun nat x
+    simp only [types_comp_apply] at this
+    exact this
+  have lhs_eq : (profunctorOnOpCoTwistedArrow C H).map (coTwToIdentityAtTarget f).op
+      (diagAppToWeightAtIdentity H I₁ ((H.obj (Opposite.op I₁)).map f x)) =
+      (H.map f.op).app I₁ ((H.obj (Opposite.op I₁)).map f x) := by
+    simp only [profunctorOnOpCoTwistedArrow_map, profunctorOnTwistedArrow_map,
+      equiv_map_coTwToIdentityAtTarget_twDomArr, equiv_map_coTwToIdentityAtTarget_twCodArr,
+      diagAppToWeightAtIdentity, cast_eq]
+    change ((H.map f.op).app I₁ ≫ (H.obj (Opposite.op I₀)).map (𝟙 I₁))
+           ((H.obj (Opposite.op I₁)).map f x) =
+           (H.map f.op).app I₁ ((H.obj (Opposite.op I₁)).map f x)
+    simp only [Functor.map_id, Category.comp_id]
+  have rhs_eq : (profunctorOnOpCoTwistedArrow C H).map (coTwToIdentityAtSource f).op
+      (diagAppToWeightAtIdentity H I₀ ((H.map f.op).app I₀ x)) =
+      (H.obj (Opposite.op I₀)).map f ((H.map f.op).app I₀ x) := by
+    simp only [profunctorOnOpCoTwistedArrow_map, profunctorOnTwistedArrow_map,
+      equiv_map_coTwToIdentityAtSource_twDomArr, equiv_map_coTwToIdentityAtSource_twCodArr,
+      diagAppToWeightAtIdentity, cast_eq]
+    change ((H.map (𝟙 I₀).op).app I₀ ≫ (H.obj (Opposite.op I₀)).map f)
+           ((H.map f.op).app I₀ x) =
+           (H.obj (Opposite.op I₀)).map f ((H.map f.op).app I₀ x)
+    simp only [op_id, Functor.map_id, NatTrans.id_app, Category.id_comp]
+  rw [lhs_eq, rhs_eq, heq]
+
+/-!
+### Dinaturality of the extracted family
+-/
+
+/-- The extracted family from a WeightedCowedge satisfies dinaturality. -/
+theorem weightedCowedgeFamilyAtIdentity_dinatural
+    (H : Cᵒᵖ ⥤ C ⥤ Type v) (G : Cᵒᵖ ⥤ C ⥤ C)
+    (wc : WeightedCowedge H G) :
+    IsDinatural H (G ⇓ wc.pt) (weightedCowedgeFamilyAtIdentity H G wc) := by
+  intro I₀ I₁ f x
+  unfold Profunctor.lmap Profunctor.rmap weightedCowedgeFamilyAtIdentity
+  simp only [sliceProfunctor, diagApp, Quiver.Hom.unop_op]
+  simp only [diagonalToIdentityHom]
+  simp only [eq_mpr_eq_cast, congrArg_cast_hom_left]
+  simp only [eqToHom_refl, Category.id_comp]
+  rw [← diagram_map_coTwToIdentityAtTarget G f, ← diagram_map_coTwToIdentityAtSource G f]
+  rw [WeightedCocone.naturality wc (coTwToIdentityAtTarget f)]
+  rw [WeightedCocone.naturality wc (coTwToIdentityAtSource f)]
+  congr 1
+  exact weight_map_coTwToIdentity_coherence H f x
+
+/-!
+### The restriction functor
+-/
+
+/-- Restrict a weighted cowedge to a restricted cowedge by extracting the
+family at identity co-twisted arrows. -/
+def restrictWeightedCowedge (H : Cᵒᵖ ⥤ C ⥤ Type v) (G : Cᵒᵖ ⥤ C ⥤ C)
+    (wc : WeightedCowedge H G) : RestrictedCowedge G H where
+  pt := wc.pt
+  family := weightedCowedgeFamilyAtIdentity H G wc
+  isDinatural := weightedCowedgeFamilyAtIdentity_dinatural H G wc
+
 end WeightedRestrictedCorrespondence
 
 end GebLean
