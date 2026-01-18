@@ -1523,7 +1523,8 @@ limits can be computed as ordinary limits over the expanded indexing category
 of elements.
 -/
 def weightedConeElementsEquiv (W : J ⥤ Type v₁) (D : J ⥤ C) :
-    WeightedCone W D ≌ Cone (CategoryOfElements.π W ⋙ D) where
+    WeightedCone (C := C) (J := J) W D ≌
+    Cone (J := W.Elements) (C := C) (weightedConeDiagram W D) where
   functor := weightedConeToElementsConeFunctor W D
   inverse := elementsConeToWeightedConeFunctor W D
   unitIso := weightedConeElementsUnitIso W D
@@ -1687,13 +1688,14 @@ def weightedCoconeElementsCounitIso (W : Jᵒᵖ ⥤ Type v₃) (D : J ⥤ C) :
 /--
 Weighted cocones over `W : Jᵒᵖ ⥤ Type v` and `D : J ⥤ C` are categorically equivalent
 to ordinary cocones over the composite
-`(CategoryOfElements.π W).op ⋙ unopUnop J ⋙ D : (W.Elements)ᵒᵖ ⥤ C`.
+`(CategoryOfElements.π W).op ⋙ unopUnop J ⋙ D : W.ElementsPre ⥤ C`.
 
 This is foundational for the theory of weighted colimits: it shows that weighted
 colimits can be computed as ordinary colimits over the expanded indexing category.
 -/
 def weightedCoconeElementsEquiv (W : Jᵒᵖ ⥤ Type v₃) (D : J ⥤ C) :
-    WeightedCocone W D ≌ Cocone (weightedCoconeDiagram W D) where
+    WeightedCocone (C := C) (J := J) W D ≌
+    Cocone (J := W.ElementsPre) (C := C) (weightedCoconeDiagram W D) where
   functor := weightedCoconeToElementsCoconeFunctor W D
   inverse := elementsCoconeToWeightedCoconeFunctor W D
   unitIso := weightedCoconeElementsUnitIso W D
