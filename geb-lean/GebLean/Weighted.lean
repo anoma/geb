@@ -3588,6 +3588,149 @@ theorem profunctorOnCoTwistedArrow_at_arrow (P : Cᵒᵖ ⥤ C ⥤ D)
     (P.obj (Opposite.op dom)).obj cod := by
   simp only [profunctorOnCoTwistedArrow_obj, coTwObjMk_dom, coTwObjMk_cod]
 
+/-!
+### Restriction functor: WeightedCowedge → RestrictedCowedge
+
+The restriction functor extracts diagonal data from a weighted cowedge.
+Given `WeightedCowedge H G`, we construct `RestrictedCowedge G H` by
+restricting the cocone components to identity arrows.
+
+At identity `(𝟙 A)`:
+- Weight: `H(A, A)` (by `profunctorOnOpCoTwistedArrow_at_identity`)
+- Diagram: `G(A, A)` (by `profunctorOnCoTwistedArrow_at_identity`)
+- The cocone leg gives: `H(A, A) → (G(A, A) → pt)`
+
+This exactly matches the structure of `RestrictedCowedge G H`.
+-/
+
+/-- The homToFunctor at identity evaluates to morphisms from the diagonal. -/
+theorem homToFunctor_at_identity (P : Cᵒᵖ ⥤ C ⥤ C) (pt : C) (A : C) :
+    (homToFunctor (profunctorOnCoTwistedArrow C P) pt).obj
+      (Opposite.op (idCoTwistedArrow A)) =
+    ((P.obj (Opposite.op A)).obj A ⟶ pt) := by
+  simp only [homToFunctor]
+  rw [profunctorOnCoTwistedArrow_at_identity P A]
+
+/-- Cast from the weight type at identity to the diagonal app type. -/
+def weightAtIdentityToDiagApp (H : Cᵒᵖ ⥤ C ⥤ Type v) (A : C)
+    (w : (profunctorOnOpCoTwistedArrow C H).obj (Opposite.op (idCoTwistedArrow A))) :
+    diagApp H A :=
+  cast (profunctorOnOpCoTwistedArrow_at_identity H A) w
+
+/-- Cast from the diagonal app type to the weight type at identity. -/
+def diagAppToWeightAtIdentity (H : Cᵒᵖ ⥤ C ⥤ Type v) (A : C)
+    (h : diagApp H A) :
+    (profunctorOnOpCoTwistedArrow C H).obj (Opposite.op (idCoTwistedArrow A)) :=
+  cast (profunctorOnOpCoTwistedArrow_at_identity H A).symm h
+
+@[simp]
+theorem weightAtIdentityToDiagApp_diagAppToWeightAtIdentity (H : Cᵒᵖ ⥤ C ⥤ Type v)
+    (A : C) (h : diagApp H A) :
+    weightAtIdentityToDiagApp H A (diagAppToWeightAtIdentity H A h) = h := by
+  simp only [weightAtIdentityToDiagApp, diagAppToWeightAtIdentity, cast_eq]
+
+@[simp]
+theorem diagAppToWeightAtIdentity_weightAtIdentityToDiagApp (H : Cᵒᵖ ⥤ C ⥤ Type v)
+    (A : C) (w : (profunctorOnOpCoTwistedArrow C H).obj
+      (Opposite.op (idCoTwistedArrow A))) :
+    diagAppToWeightAtIdentity H A (weightAtIdentityToDiagApp H A w) = w := by
+  simp only [weightAtIdentityToDiagApp, diagAppToWeightAtIdentity, cast_eq]
+
+/-- An isomorphism between the diagram at identity and the diagonal. Since
+`G : Cᵒᵖ ⥤ C ⥤ C` returns objects of C, we use `eqToIso` for object equality. -/
+def diagramAtIdentityIso (G : Cᵒᵖ ⥤ C ⥤ C) (A : C) :
+    (profunctorOnCoTwistedArrow C G).obj (idCoTwistedArrow A) ≅
+    (G.obj (Opposite.op A)).obj A :=
+  eqToIso (profunctorOnCoTwistedArrow_at_identity G A)
+
+/-- Morphism from the diagonal of G to the diagram at identity. -/
+def diagonalToIdentityHom (G : Cᵒᵖ ⥤ C ⥤ C) (A : C) :
+    (G.obj (Opposite.op A)).obj A ⟶
+    (profunctorOnCoTwistedArrow C G).obj (idCoTwistedArrow A) :=
+  eqToHom (profunctorOnCoTwistedArrow_at_identity G A).symm
+
+/-- Morphism from the diagram at identity to the diagonal of G. -/
+def identityToDiagonalHom (G : Cᵒᵖ ⥤ C ⥤ C) (A : C) :
+    (profunctorOnCoTwistedArrow C G).obj (idCoTwistedArrow A) ⟶
+    (G.obj (Opposite.op A)).obj A :=
+  eqToHom (profunctorOnCoTwistedArrow_at_identity G A)
+
+@[simp]
+theorem diagonalToIdentityHom_identityToDiagonalHom (G : Cᵒᵖ ⥤ C ⥤ C) (A : C) :
+    diagonalToIdentityHom G A ≫ identityToDiagonalHom G A =
+    𝟙 ((G.obj (Opposite.op A)).obj A) := by
+  simp only [diagonalToIdentityHom, identityToDiagonalHom]
+  exact eqToHom_trans _ _
+
+@[simp]
+theorem identityToDiagonalHom_diagonalToIdentityHom (G : Cᵒᵖ ⥤ C ⥤ C) (A : C) :
+    identityToDiagonalHom G A ≫ diagonalToIdentityHom G A =
+    𝟙 ((profunctorOnCoTwistedArrow C G).obj (idCoTwistedArrow A)) := by
+  simp only [diagonalToIdentityHom, identityToDiagonalHom]
+  exact eqToHom_trans _ _
+
+/-!
+### Restriction functor: WeightedCowedge → RestrictedCowedge
+
+Given a `WeightedCowedge H G` (where H is the Type-valued weight and G is the
+C-valued diagram), we can extract a `RestrictedCowedge G H` by restricting
+the cocone components to identity arrows.
+
+At identity `(𝟙_A)`:
+- Weight: `H(A, A)` (by `profunctorOnOpCoTwistedArrow_at_identity`)
+- Diagram: `G(A, A)` (by `profunctorOnCoTwistedArrow_at_identity`)
+- The cocone leg gives: `H(A, A) → (G(A, A) → pt)`
+
+This matches the `family` function structure of `RestrictedCowedge G H`:
+`(I : C) → diagApp H I → diagApp (G ⇓ pt) I`
+where `diagApp (G ⇓ pt) I = (G(I, I) ⟶ pt)`.
+-/
+
+/-- Extract the family function from a WeightedCowedge at identity arrows.
+Given a WeightedCowedge H G with point pt, for each object A, this extracts
+the cocone component at the identity arrow 𝟙_A and converts it to the type
+expected by RestrictedCowedge. -/
+def weightedCowedgeFamilyAtIdentity (H : Cᵒᵖ ⥤ C ⥤ Type v) (G : Cᵒᵖ ⥤ C ⥤ C)
+    (wc : WeightedCowedge H G) (A : C) :
+    diagApp H A → diagApp (G ⇓ wc.pt) A := by
+  intro h
+  -- h : diagApp H A = (H.obj (op A)).obj A
+  -- Goal: diagApp (G ⇓ wc.pt) A = (G.obj (op A)).obj A ⟶ wc.pt
+  rw [sliceProfunctor_diagApp]
+  have w : (profunctorOnOpCoTwistedArrow C H).obj
+      (Opposite.op (idCoTwistedArrow A)) :=
+    diagAppToWeightAtIdentity H A h
+  have leg := wc.leg (idCoTwistedArrow A) w
+  -- leg : (profunctorOnCoTwistedArrow C G).obj (idCoTwistedArrow A) ⟶ wc.pt
+  -- Need: (G.obj (op A)).obj A ⟶ wc.pt
+  exact diagonalToIdentityHom G A ≫ leg
+
+/-!
+### Canonical morphisms in CoTwistedArrow
+
+For `f : I₀ ⟶ I₁`, there are canonical morphisms in `CoTwistedArrow C`:
+- `coTwObjMk f ⟶ idCoTwistedArrow I₀` (domain direction)
+- `coTwObjMk f ⟶ idCoTwistedArrow I₁` (codomain direction)
+
+These are analogous to the canonical morphisms described in the wedge-cone
+correspondence: they connect an arbitrary arrow to the identity arrows at
+its domain and codomain.
+-/
+
+/-- Canonical morphism from `coTwObjMk f` to `idCoTwistedArrow` at the source.
+For `f : I₀ ⟶ I₁`, we have `coTwCod (coTwObjMk f) = I₀` (source of f).
+This morphism has `domArr = f` and `codArr = 𝟙 I₀`. -/
+def coTwToIdentityAtSource {I₀ I₁ : C} (f : I₀ ⟶ I₁) :
+    coTwObjMk f ⟶ idCoTwistedArrow I₀ :=
+  coTwHomMk f (𝟙 I₀) (by simp [idCoTwistedArrow, coTwObjMk_arr])
+
+/-- Canonical morphism from `coTwObjMk f` to `idCoTwistedArrow` at the target.
+For `f : I₀ ⟶ I₁`, we have `coTwDom (coTwObjMk f) = I₁` (target of f).
+This morphism has `domArr = 𝟙 I₁` and `codArr = f`. -/
+def coTwToIdentityAtTarget {I₀ I₁ : C} (f : I₀ ⟶ I₁) :
+    coTwObjMk f ⟶ idCoTwistedArrow I₁ :=
+  coTwHomMk (𝟙 I₁) f (by simp [idCoTwistedArrow, coTwObjMk_arr])
+
 end WeightedRestrictedCorrespondence
 
 end GebLean
