@@ -1536,7 +1536,7 @@ variable (W : Jᵒᵖ ⥤ Type v₃) (D : J ⥤ C)
 The diagram functor for weighted cocones: maps the opposite of the category
 of elements to `C` via the projection and `D`.
 -/
-def weightedCoconeDiagram : (W.Elements)ᵒᵖ ⥤ C :=
+def weightedCoconeDiagram : W.ElementsPre ⥤ C :=
   (CategoryOfElements.π W).op ⋙ unopUnop J ⋙ D
 
 /--
@@ -3313,6 +3313,16 @@ This is `sliceWeightCovariant G c` pre-composed with the equivalence
 on `TwistedArrow C`, i.e., a presheaf. -/
 def sliceWeight (G : Cᵒᵖ ⥤ C ⥤ C) (c : C) : (TwistedArrow C)ᵒᵖ ⥤ Type v :=
   twistedArrowOpEquivCoTwistedArrow.functor ⋙ sliceWeightCovariant G c
+
+/-- A weighted cowedge where the weight is derived from the slice profunctor
+`G ⇓ c`. This takes the same parameters as `RestrictedCowedge` and
+`StrongRestrictedCowedge` (an endoprofunctor `G` and an object `c`).
+
+This is a `WeightedCowedge` where:
+- The weight is `sliceWeight G c : (TwistedArrow C)ᵒᵖ ⥤ Type v`
+- The diagram is `profunctorOnTwistedArrow C G : TwistedArrow C ⥤ C` -/
+abbrev SliceWeightedCowedge (G : Cᵒᵖ ⥤ C ⥤ C) (c : C) :=
+  WeightedCowedge (sliceWeight G c) G
 
 /-!
 ### Implications for Weighted Colimits
