@@ -3412,4 +3412,182 @@ structures rather than a subcategory relationship.
 
 end WeightedCowedgeEmbedding
 
+/-!
+## Weighted Cowedge and Restricted Cowedge Correspondence
+
+This section establishes the relationship between `WeightedCowedge W P` and
+`RestrictedCowedge G H`. Both structures capture a notion of "cowedge" for
+profunctors, but with different formulations:
+
+- `WeightedCowedge W P` uses `(CoTwistedArrow C)ᵒᵖ` as the indexing category
+  with weight `profunctorOnOpCoTwistedArrow C W` and diagram
+  `profunctorOnCoTwistedArrow C P`. It has components at ALL co-twisted arrows.
+
+- `RestrictedCowedge G H` has data only at diagonal objects (identity arrows),
+  with a dinaturality condition.
+
+The correspondence parallels the standard result that cowedges for a profunctor
+`P : Cᵒᵖ × C → Set` correspond bijectively to cocones for the derived functor
+`P″ : Tw(Cᵒᵖ)ᵒᵖ → Set` (see `docs/wedge-cone-equivalence.md`).
+
+### Structure of the equivalence
+
+For `WeightedCowedge W P` (where `W, P : Cᵒᵖ ⥤ C ⥤ D`):
+
+At an arrow `(arr : cod → dom)` in `CoTwistedArrow C`:
+- **Weight**: `W(cod, dom)` = W(source, target)
+- **Diagram**: `P(dom, cod)` = P(target, source)
+- **Component type**: `W(cod, dom) ⟶ P(dom, cod)`
+
+At identity `(𝟙 A)`:
+- **Weight**: `W(A, A)`
+- **Diagram**: `P(A, A)`
+- **Component type**: `W(A, A) ⟶ P(A, A)`
+
+This matches `RestrictedCowedge`'s diagonal structure exactly.
+-/
+
+section WeightedRestrictedCorrespondence
+
+variable {C : Type u} [Category.{v} C]
+
+/-- The identity co-twisted arrow at an object A. This is `coTwObjMk (𝟙 A)`,
+representing the identity arrow `𝟙_A : A → A` as a co-twisted arrow. -/
+def idCoTwistedArrow (A : C) : CoTwistedArrow C := coTwObjMk (𝟙 A)
+
+@[simp]
+theorem idCoTwistedArrow_dom (A : C) : coTwDom (idCoTwistedArrow A) = A :=
+  coTwObjMk_dom (𝟙 A)
+
+@[simp]
+theorem idCoTwistedArrow_cod (A : C) : coTwCod (idCoTwistedArrow A) = A :=
+  coTwObjMk_cod (𝟙 A)
+
+@[simp]
+theorem idCoTwistedArrow_arr (A : C) : coTwArr (idCoTwistedArrow A) = 𝟙 A :=
+  coTwObjMk_arr (𝟙 A)
+
+/-- The equivalence `coTwistedArrowOpEquivTwistedArrow` maps identity
+co-twisted arrows to identity twisted arrows (domain component). -/
+theorem coTwistedArrowOpEquiv_identity_dom (A : C) :
+    twDom (coTwistedArrowOpEquivTwistedArrow.functor.obj
+      (Opposite.op (idCoTwistedArrow A))) = A := by
+  simp only [coTwistedArrowOpEquivTwistedArrow, Cat.equivOfIso,
+    coTwistedArrowOpIsoTwistedArrow]
+  simp only [Iso.trans_hom]
+  simp only [coTwistedArrowOpIsoTwistedArrowOp, Cat.opFunctor,
+    Cat.opFunctorInvolutive, Iso.trans_hom, Functor.comp_obj]
+  simp only [twistedArrowOpOpIsoCoTwistedArrow, twistedArrowIsoTwistedArrowOp]
+  simp only [Cat.isoOfEquiv, twistedArrowEquivTwistedArrowOp, Iso.symm_hom]
+  simp only [twistedArrowOpToTwistedArrow]
+  simp only [idCoTwistedArrow]
+  simp only [twDom, twObjMk]
+  rfl
+
+/-- The equivalence `coTwistedArrowOpEquivTwistedArrow` maps identity
+co-twisted arrows to identity twisted arrows (codomain component). -/
+theorem coTwistedArrowOpEquiv_identity_cod (A : C) :
+    twCod (coTwistedArrowOpEquivTwistedArrow.functor.obj
+      (Opposite.op (idCoTwistedArrow A))) = A := by
+  simp only [coTwistedArrowOpEquivTwistedArrow, Cat.equivOfIso,
+    coTwistedArrowOpIsoTwistedArrow]
+  simp only [Iso.trans_hom]
+  simp only [coTwistedArrowOpIsoTwistedArrowOp, Cat.opFunctor,
+    Cat.opFunctorInvolutive, Iso.trans_hom, Functor.comp_obj]
+  simp only [twistedArrowOpOpIsoCoTwistedArrow, twistedArrowIsoTwistedArrowOp]
+  simp only [Cat.isoOfEquiv, twistedArrowEquivTwistedArrowOp, Iso.symm_hom]
+  simp only [twistedArrowOpToTwistedArrow]
+  simp only [idCoTwistedArrow]
+  simp only [twCod, twObjMk]
+  rfl
+
+/-- The weight profunctor at the identity co-twisted arrow evaluates to the
+diagonal of the weight. This shows that `profunctorOnOpCoTwistedArrow C W`
+evaluated at `op (idCoTwistedArrow A)` gives `W(A, A)`. -/
+theorem profunctorOnOpCoTwistedArrow_at_identity (W : Cᵒᵖ ⥤ C ⥤ Type v) (A : C) :
+    (profunctorOnOpCoTwistedArrow C W).obj (Opposite.op (idCoTwistedArrow A)) =
+    (W.obj (Opposite.op A)).obj A := by
+  simp only [profunctorOnOpCoTwistedArrow, Functor.comp_obj,
+    profunctorOnTwistedArrow_obj]
+  rw [coTwistedArrowOpEquiv_identity_dom A, coTwistedArrowOpEquiv_identity_cod A]
+
+/-- The equivalence maps general co-twisted arrows correctly (domain). For
+`arr : cod → dom` in C, the equivalence functor maps `op (coTwObjMk arr)` to
+a twisted arrow with domain `cod`. -/
+theorem coTwistedArrowOpEquiv_arrow_dom {cod dom : C} (arr : cod ⟶ dom) :
+    twDom (coTwistedArrowOpEquivTwistedArrow.functor.obj
+      (Opposite.op (coTwObjMk arr))) = cod := by
+  simp only [coTwistedArrowOpEquivTwistedArrow, Cat.equivOfIso,
+    coTwistedArrowOpIsoTwistedArrow]
+  simp only [Iso.trans_hom]
+  simp only [coTwistedArrowOpIsoTwistedArrowOp, Cat.opFunctor,
+    Cat.opFunctorInvolutive, Iso.trans_hom, Functor.comp_obj]
+  simp only [twistedArrowOpOpIsoCoTwistedArrow, twistedArrowIsoTwistedArrowOp]
+  simp only [Cat.isoOfEquiv, twistedArrowEquivTwistedArrowOp, Iso.symm_hom]
+  simp only [twistedArrowOpToTwistedArrow]
+  simp only [twDom, twObjMk]
+  rfl
+
+/-- The equivalence maps general co-twisted arrows correctly (codomain). For
+`arr : cod → dom` in C, the equivalence functor maps `op (coTwObjMk arr)` to
+a twisted arrow with codomain `dom`. -/
+theorem coTwistedArrowOpEquiv_arrow_cod {cod dom : C} (arr : cod ⟶ dom) :
+    twCod (coTwistedArrowOpEquivTwistedArrow.functor.obj
+      (Opposite.op (coTwObjMk arr))) = dom := by
+  simp only [coTwistedArrowOpEquivTwistedArrow, Cat.equivOfIso,
+    coTwistedArrowOpIsoTwistedArrow]
+  simp only [Iso.trans_hom]
+  simp only [coTwistedArrowOpIsoTwistedArrowOp, Cat.opFunctor,
+    Cat.opFunctorInvolutive, Iso.trans_hom, Functor.comp_obj]
+  simp only [twistedArrowOpOpIsoCoTwistedArrow, twistedArrowIsoTwistedArrowOp]
+  simp only [Cat.isoOfEquiv, twistedArrowEquivTwistedArrowOp, Iso.symm_hom]
+  simp only [twistedArrowOpToTwistedArrow]
+  simp only [twCod, twObjMk]
+  rfl
+
+/-- The weight profunctor at a general co-twisted arrow. For `arr : cod → dom`,
+the weight evaluates to `W(cod, dom)`. -/
+theorem profunctorOnOpCoTwistedArrow_at_arrow (W : Cᵒᵖ ⥤ C ⥤ Type v)
+    {cod dom : C} (arr : cod ⟶ dom) :
+    (profunctorOnOpCoTwistedArrow C W).obj (Opposite.op (coTwObjMk arr)) =
+    (W.obj (Opposite.op cod)).obj dom := by
+  simp only [profunctorOnOpCoTwistedArrow, Functor.comp_obj,
+    profunctorOnTwistedArrow_obj]
+  rw [coTwistedArrowOpEquiv_arrow_dom arr, coTwistedArrowOpEquiv_arrow_cod arr]
+
+/-!
+### From RestrictedCowedge to WeightedCowedge
+
+Given a `RestrictedCowedge G H` with diagonal data `family_A : H(A,A) → (G(A,A) → pt)`,
+we construct a `WeightedCowedge H G` by extending to all co-twisted arrows.
+
+For an arrow `(arr : cod → dom)` in CoTwistedArrow C:
+- Weight type: `H(cod, dom)`
+- Diagram object: `G(dom, cod)`
+- We define `leg_arr : H(cod, dom) → (G(dom, cod) → pt)` by:
+  `leg_arr w = G(1, arr) ≫ family_dom (H(arr, 1) w)`
+
+This uses the cowedge-cocone correspondence: the full cocone data is determined
+by the diagonal (cowedge) data via functorial transport.
+-/
+
+variable {D : Type*} [Category D]
+
+/-- The diagram profunctor at the identity co-twisted arrow evaluates to the
+diagonal. This is the Type v version matching the diagram for WeightedCowedge. -/
+theorem profunctorOnCoTwistedArrow_at_identity (P : Cᵒᵖ ⥤ C ⥤ D) (A : C) :
+    (profunctorOnCoTwistedArrow C P).obj (idCoTwistedArrow A) =
+    (P.obj (Opposite.op A)).obj A := by
+  simp only [profunctorOnCoTwistedArrow_obj, idCoTwistedArrow_dom, idCoTwistedArrow_cod]
+
+/-- The diagram profunctor at a general co-twisted arrow. For `arr : cod → dom`,
+the diagram evaluates to `P(dom, cod)`. -/
+theorem profunctorOnCoTwistedArrow_at_arrow (P : Cᵒᵖ ⥤ C ⥤ D)
+    {cod dom : C} (arr : cod ⟶ dom) :
+    (profunctorOnCoTwistedArrow C P).obj (coTwObjMk arr) =
+    (P.obj (Opposite.op dom)).obj cod := by
+  simp only [profunctorOnCoTwistedArrow_obj, coTwObjMk_dom, coTwObjMk_cod]
+
+end WeightedRestrictedCorrespondence
+
 end GebLean
