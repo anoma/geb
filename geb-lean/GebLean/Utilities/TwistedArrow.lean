@@ -697,6 +697,58 @@ categorical isomorphism.
 def twistedArrowOpEquivCoTwistedArrow : (TwistedArrow C)ᵒᵖ ≌ CoTwistedArrow C :=
   Cat.equivOfIso twistedArrowOpIsoCoTwistedArrow
 
+/-!
+### Isomorphism: `(CoTwistedArrow C)ᵒᵖ ≅ TwistedArrow (Cᵒᵖ)`
+
+This isomorphism is obtained by composing:
+1. `Cat.opFunctor.mapIso twistedArrowOpOpIsoCoTwistedArrow.symm` to get
+   `(CoTwistedArrow C)ᵒᵖ ≅ ((TwistedArrow (Cᵒᵖ))ᵒᵖ)ᵒᵖ`
+2. `Cat.opFunctorInvolutive.app` to get
+   `((TwistedArrow (Cᵒᵖ))ᵒᵖ)ᵒᵖ ≅ TwistedArrow (Cᵒᵖ)`
+-/
+
+/--
+The categorical isomorphism `(CoTwistedArrow C)ᵒᵖ ≅ TwistedArrow (Cᵒᵖ)` in `Cat`.
+-/
+def coTwistedArrowOpIsoTwistedArrowOp :
+    (CoTwistedArrow C)ᵒᵖ ≅Cat TwistedArrow (Cᵒᵖ) :=
+  Cat.opFunctor.mapIso twistedArrowOpOpIsoCoTwistedArrow.symm ≪≫
+    Cat.opFunctorInvolutive.app (Cat.of (TwistedArrow (Cᵒᵖ)))
+
+/--
+The equivalence `(CoTwistedArrow C)ᵒᵖ ≌ TwistedArrow (Cᵒᵖ)` derived from the
+categorical isomorphism.
+-/
+def coTwistedArrowOpEquivTwistedArrowOp :
+    (CoTwistedArrow C)ᵒᵖ ≌ TwistedArrow (Cᵒᵖ) :=
+  Cat.equivOfIso coTwistedArrowOpIsoTwistedArrowOp
+
+/-!
+### Composed isomorphism: `(CoTwistedArrow C)ᵒᵖ ≅ TwistedArrow C`
+
+Composing the isomorphisms:
+- `(CoTwistedArrow C)ᵒᵖ ≅ TwistedArrow (Cᵒᵖ)`
+- `TwistedArrow (Cᵒᵖ) ≅ TwistedArrow C` (via `twistedArrowIsoTwistedArrowOp.symm`)
+
+gives the isomorphism `(CoTwistedArrow C)ᵒᵖ ≅ TwistedArrow C`.
+-/
+
+/--
+The categorical isomorphism `(CoTwistedArrow C)ᵒᵖ ≅ TwistedArrow C` in `Cat`,
+obtained by composing `coTwistedArrowOpIsoTwistedArrowOp` with
+`twistedArrowIsoTwistedArrowOp.symm`.
+-/
+def coTwistedArrowOpIsoTwistedArrow :
+    (CoTwistedArrow C)ᵒᵖ ≅Cat TwistedArrow C :=
+  coTwistedArrowOpIsoTwistedArrowOp ≪≫ twistedArrowIsoTwistedArrowOp.symm
+
+/--
+The equivalence `(CoTwistedArrow C)ᵒᵖ ≌ TwistedArrow C` derived from the
+categorical isomorphism.
+-/
+def coTwistedArrowOpEquivTwistedArrow : (CoTwistedArrow C)ᵒᵖ ≌ TwistedArrow C :=
+  Cat.equivOfIso coTwistedArrowOpIsoTwistedArrow
+
 end TwistedArrowSelfDualityUnprimed
 
 @[simp]

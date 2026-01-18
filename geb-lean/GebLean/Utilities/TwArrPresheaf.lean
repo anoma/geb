@@ -1705,6 +1705,29 @@ theorem profunctorOnOpTwistedArrow_map (P : Cᵒᵖ ⥤ C ⥤ D)
     (profunctorOnCoTwistedArrow C P).map
       (twistedArrowOpEquivCoTwistedArrow.functor.map f) := rfl
 
+/--
+The functor evaluating a profunctor on the opposite of the co-twisted arrow
+category.
+
+For `P : Cᵒᵖ ⥤ C ⥤ D`, this produces `(CoTwistedArrow C)ᵒᵖ ⥤ D` by composing
+the equivalence `(CoTwistedArrow C)ᵒᵖ ≌ TwistedArrow C` with evaluation on
+`TwistedArrow C`.
+-/
+def profunctorOnOpCoTwistedArrow (P : Cᵒᵖ ⥤ C ⥤ D) : (CoTwistedArrow C)ᵒᵖ ⥤ D :=
+  coTwistedArrowOpEquivTwistedArrow.functor ⋙ profunctorOnTwistedArrow C P
+
+theorem profunctorOnOpCoTwistedArrow_obj (P : Cᵒᵖ ⥤ C ⥤ D)
+    (cotw : (CoTwistedArrow C)ᵒᵖ) :
+    (profunctorOnOpCoTwistedArrow C P).obj cotw =
+    (profunctorOnTwistedArrow C P).obj
+      (coTwistedArrowOpEquivTwistedArrow.functor.obj cotw) := rfl
+
+theorem profunctorOnOpCoTwistedArrow_map (P : Cᵒᵖ ⥤ C ⥤ D)
+    {x y : (CoTwistedArrow C)ᵒᵖ} (f : x ⟶ y) :
+    (profunctorOnOpCoTwistedArrow C P).map f =
+    (profunctorOnTwistedArrow C P).map
+      (coTwistedArrowOpEquivTwistedArrow.functor.map f) := rfl
+
 end ProfunctorOnTwistedArrow
 
 end GebLean
