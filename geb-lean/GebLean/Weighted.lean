@@ -996,17 +996,14 @@ abbrev WeightedWedge (W : TwistedArrow C ⥤ Type v) (P : Cᵒᵖ ⥤ C ⥤ D) :
 
 /--
 A weighted cowedge over a profunctor `P : Cᵒᵖ ⥤ C ⥤ D` with weight
-`W : (CoTwistedArrow C)ᵒᵖ ⥤ Type v` is a weighted cocone over the diagram
-`profunctorOnCoTwistedArrow C P` with the given weight.
+`W : (TwistedArrow C)ᵒᵖ ⥤ Type v` is a weighted cocone over the diagram
+`profunctorOnTwistedArrow C P` with the given weight.
 
-The weight is contravariant (a presheaf on `CoTwistedArrow C`) to match the
+The weight is contravariant (a presheaf on `TwistedArrow C`) to match the
 variance required by weighted cocones.
-
-This generalizes ordinary cowedges: when `W` is the terminal functor (constant
-at a singleton), a weighted cowedge is exactly an ordinary cowedge.
 -/
-abbrev WeightedCowedge (W : (CoTwistedArrow C)ᵒᵖ ⥤ Type v) (P : Cᵒᵖ ⥤ C ⥤ D) :=
-  WeightedCocone (J := CoTwistedArrow C) W (profunctorOnCoTwistedArrow C P)
+abbrev WeightedCowedge (W : (TwistedArrow C)ᵒᵖ ⥤ Type v) (P : Cᵒᵖ ⥤ C ⥤ D) :=
+  WeightedCocone (J := TwistedArrow C) W (profunctorOnTwistedArrow C P)
 
 end WeightedLimitColimit
 
@@ -1721,14 +1718,14 @@ def weightedWedgeDiagram (W : TwistedArrow C ⥤ Type v₅) (P : Cᵒᵖ ⥤ C �
 
 /--
 The diagram for weighted cowedges: composing the projection from the
-opposite category of elements with the profunctor-on-co-twisted-arrow functor.
+opposite category of elements with the profunctor-on-twisted-arrow functor.
 
-For a weight `W : (CoTwistedArrow C)ᵒᵖ ⥤ Type v` and profunctor
+For a weight `W : (TwistedArrow C)ᵒᵖ ⥤ Type v` and profunctor
 `P : Cᵒᵖ ⥤ C ⥤ D`, this gives a functor `(W.Elements)ᵒᵖ ⥤ D`.
 -/
-def weightedCowedgeDiagram (W : (CoTwistedArrow C)ᵒᵖ ⥤ Type v₅)
+def weightedCowedgeDiagram (W : (TwistedArrow C)ᵒᵖ ⥤ Type v₅)
     (P : Cᵒᵖ ⥤ C ⥤ D) : (W.Elements)ᵒᵖ ⥤ D :=
-  weightedCoconeDiagram W (profunctorOnCoTwistedArrow C P)
+  weightedCoconeDiagram W (profunctorOnTwistedArrow C P)
 
 /--
 Weighted wedges over a profunctor `P : Cᵒᵖ ⥤ C ⥤ D` with weight
@@ -1744,16 +1741,16 @@ def weightedWedgeElementsEquiv (W : TwistedArrow C ⥤ Type v₅)
 
 /--
 Weighted cowedges over a profunctor `P : Cᵒᵖ ⥤ C ⥤ D` with weight
-`W : (CoTwistedArrow C)ᵒᵖ ⥤ Type v` are categorically equivalent to ordinary
+`W : (TwistedArrow C)ᵒᵖ ⥤ Type v` are categorically equivalent to ordinary
 cocones over the weighted cowedge diagram on `(W.Elements)ᵒᵖ`.
 
 This follows by applying `weightedCoconeElementsEquiv` to the definition
-`WeightedCowedge W P := WeightedCocone W (profunctorOnCoTwistedArrow C P)`.
+`WeightedCowedge W P := WeightedCocone W (profunctorOnTwistedArrow C P)`.
 -/
-def weightedCowedgeElementsEquiv (W : (CoTwistedArrow C)ᵒᵖ ⥤ Type v₅)
+def weightedCowedgeElementsEquiv (W : (TwistedArrow C)ᵒᵖ ⥤ Type v₅)
     (P : Cᵒᵖ ⥤ C ⥤ D) :
     WeightedCowedge W P ≌ Cocone (weightedCowedgeDiagram W P) :=
-  weightedCoconeElementsEquiv W (profunctorOnCoTwistedArrow C P)
+  weightedCoconeElementsEquiv W (profunctorOnTwistedArrow C P)
 
 end WeightedWedgeCowedgeEquivalences
 
@@ -2790,48 +2787,48 @@ and strong restricted cowedges. The goal is to show that weighted cowedges
 embed as a (potentially full) subcategory of strong restricted cowedges.
 
 For a weighted cowedge `WeightedCowedge W P` with:
-- `W : (CoTwistedArrow C)ᵒᵖ ⥤ Type v` (the weight)
+- `W : (TwistedArrow C)ᵒᵖ ⥤ Type v` (the weight)
 - `P : Cᵒᵖ ⥤ C ⥤ C` (endoprofunctor)
 
-The weighted cowedge provides data at ALL co-twisted arrows (all morphisms
+The weighted cowedge provides data at ALL twisted arrows (all morphisms
 in `C`). A strong restricted cowedge only provides data at diagonal elements
 (identity morphisms). The embedding restricts weighted cowedge data to the
-diagonal co-twisted arrows.
+diagonal twisted arrows.
 -/
 
 variable {C : Type u} [Category.{v} C]
 
-/-- The diagonal co-twisted arrow for an object `A`, representing the identity
-morphism `𝟙 A : A ⟶ A` as an object of `CoTwistedArrow C`. -/
-abbrev diagCoTwArr (A : C) : CoTwistedArrow C := coTwObjMk (𝟙 A)
+/-- The diagonal twisted arrow for an object `A`, representing the identity
+morphism `𝟙 A : A ⟶ A` as an object of `TwistedArrow C`. -/
+abbrev diagTwArr (A : C) : TwistedArrow C := twObjMk (𝟙 A)
 
 @[simp]
-lemma diagCoTwArr_dom (A : C) : coTwDom (diagCoTwArr A) = A := rfl
+lemma diagTwArr_dom (A : C) : twDom (diagTwArr A) = A := rfl
 
 @[simp]
-lemma diagCoTwArr_cod (A : C) : coTwCod (diagCoTwArr A) = A := rfl
+lemma diagTwArr_cod (A : C) : twCod (diagTwArr A) = A := rfl
 
 @[simp]
-lemma diagCoTwArr_arr (A : C) : coTwArr (diagCoTwArr A) = 𝟙 A :=
-  @coTwObjMk_arr C _ A A (𝟙 A)
+lemma diagTwArr_arr (A : C) : twArr (diagTwArr A) = 𝟙 A :=
+  @twObjMk_arr C _ A A (𝟙 A)
 
 /-- Extract the diagonal element type from a weight functor `W` at object `A`.
-This is `W(op (diagCoTwArr A)) = W(op (coTwObjMk (𝟙 A)))`. -/
-abbrev weightDiagElem (W : (CoTwistedArrow C)ᵒᵖ ⥤ Type v) (A : C) : Type v :=
-  W.obj (Opposite.op (diagCoTwArr A))
+This is `W(op (diagTwArr A)) = W(op (twObjMk (𝟙 A)))`. -/
+abbrev weightDiagElem (W : (TwistedArrow C)ᵒᵖ ⥤ Type v) (A : C) : Type v :=
+  W.obj (Opposite.op (diagTwArr A))
 
 /-- Given a weighted cowedge over an endoprofunctor `P`, extract the family
-of morphisms at diagonal co-twisted arrows.
+of morphisms at diagonal twisted arrows.
 
 For `A : C` and `w : weightDiagElem W A`, this gives:
 `(P.obj (op A)).obj A ⟶ pt`
 
 This matches the signature required for `ParanatSig H (P ⇓ pt)` when we take
 `diagApp H A = weightDiagElem W A`. -/
-def WeightedCowedge.diagFamily {W : (CoTwistedArrow C)ᵒᵖ ⥤ Type v}
+def WeightedCowedge.diagFamily {W : (TwistedArrow C)ᵒᵖ ⥤ Type v}
     {P : Cᵒᵖ ⥤ C ⥤ C} (c : WeightedCowedge W P) (A : C)
     (w : weightDiagElem W A) : (P.obj (Opposite.op A)).obj A ⟶ c.pt :=
-  c.leg (diagCoTwArr A) w
+  c.leg (diagTwArr A) w
 
 /-!
 ### Diagonal Restriction Profunctor
@@ -2917,11 +2914,11 @@ lemma diagCoTwArrHomOfIso_codArr {A B : C} (i : A ≅ B) :
     coTwCodArr (diagCoTwArrHomOfIso i) = i.hom := rfl
 
 /-- The restriction of a weight functor along an isomorphism between objects.
-Given `W : (CoTwistedArrow C)ᵒᵖ ⥤ Type v` and an isomorphism `i : A ≅ B`,
+Given `W : (TwistedArrow C)ᵒᵖ ⥤ Type v` and an isomorphism `i : A ≅ B`,
 this transports elements from `weightDiagElem W B` to `weightDiagElem W A`. -/
-def weightDiagTransport (W : (CoTwistedArrow C)ᵒᵖ ⥤ Type v) {A B : C} (i : A ≅ B) :
+def weightDiagTransport (W : (TwistedArrow C)ᵒᵖ ⥤ Type v) {A B : C} (i : A ≅ B) :
     weightDiagElem W B → weightDiagElem W A :=
-  W.map (diagCoTwArrHomOfIso i).op
+  W.map (diagTwArrMorphismOfIso i).op
 
 /-!
 ### Trivial Profunctor Case
@@ -2973,17 +2970,17 @@ outputs in the slice profunctor.
 /-- Extract the diagonal family signature from a weighted cowedge.
 This gives a `ParanatSig` where the source profunctor `H` has
 `diagApp H A = weightDiagElem W A`. -/
-def WeightedCowedge.diagFamilySig {W : (CoTwistedArrow C)ᵒᵖ ⥤ Type v}
+def WeightedCowedge.diagFamilySig {W : (TwistedArrow C)ᵒᵖ ⥤ Type v}
     {P : Cᵒᵖ ⥤ C ⥤ C} (c : WeightedCowedge W P) :
     (A : C) → weightDiagElem W A → diagApp (P ⇓ c.pt) A :=
-  fun A w => c.leg (diagCoTwArr A) w
+  fun A w => c.leg (diagTwArr A) w
 
-/-- The diagonal family signature equals the leg applied at diagonal co-twisted
+/-- The diagonal family signature equals the leg applied at diagonal twisted
 arrows. -/
 @[simp]
-theorem WeightedCowedge.diagFamilySig_eq {W : (CoTwistedArrow C)ᵒᵖ ⥤ Type v}
+theorem WeightedCowedge.diagFamilySig_eq {W : (TwistedArrow C)ᵒᵖ ⥤ Type v}
     {P : Cᵒᵖ ⥤ C ⥤ C} (c : WeightedCowedge W P) (A : C) (w : weightDiagElem W A) :
-    c.diagFamilySig A w = c.leg (diagCoTwArr A) w := rfl
+    c.diagFamilySig A w = c.leg (diagTwArr A) w := rfl
 
 /-!
 ### Paranaturality Along Isomorphisms
@@ -2991,7 +2988,7 @@ theorem WeightedCowedge.diagFamilySig_eq {W : (CoTwistedArrow C)ᵒᵖ ⥤ Type 
 The weighted cowedge naturality condition implies that the diagonal family
 satisfies paranaturality along isomorphisms. Specifically, for an isomorphism
 `i : A ≅ B` and elements `wA : weightDiagElem W A`, `wB : weightDiagElem W B`
-that are related via `W.map (diagCoTwArrHomOfIso i.symm).op`, the corresponding
+that are related via `W.map (diagTwArrMorphismOfIso i.symm).op`, the corresponding
 legs satisfy the slice profunctor `DiagCompat` condition along `i.hom`.
 
 This is a partial result: full paranaturality would require this condition
@@ -2999,30 +2996,30 @@ along ALL morphisms, but weighted cowedge structure only provides it along
 isomorphisms.
 -/
 
-/-- The naturality condition for weighted cowedges along a co-twisted arrow
+/-- The naturality condition for weighted cowedges along a twisted arrow
 morphism `m : α ⟶ β` states that transporting via `W.map m.op` and then
 taking the leg at `α` equals the leg at `β` precomposed with the profunctor
 action. -/
-theorem WeightedCowedge.naturality_at {W : (CoTwistedArrow C)ᵒᵖ ⥤ Type v}
-    {P : Cᵒᵖ ⥤ C ⥤ C} (c : WeightedCowedge W P) {α β : CoTwistedArrow C}
+theorem WeightedCowedge.naturality_at {W : (TwistedArrow C)ᵒᵖ ⥤ Type v}
+    {P : Cᵒᵖ ⥤ C ⥤ C} (c : WeightedCowedge W P) {α β : TwistedArrow C}
     (m : α ⟶ β) (wβ : W.obj (Opposite.op β)) :
-    (profunctorOnCoTwistedArrow C P).map m ≫ c.leg β wβ =
+    (profunctorOnTwistedArrow C P).map m ≫ c.leg β wβ =
       c.leg α (W.map m.op wβ) :=
   c.naturality m wβ
 
 /-!
 ### Paranaturality Along Isomorphisms: Detailed Analysis
 
-When we have an isomorphism `i : A ≅ B`, we can form a co-twisted arrow morphism
-`diagCoTwArrHomOfIso i : diagCoTwArr A ⟶ diagCoTwArr B`. The weighted cowedge
+When we have an isomorphism `i : A ≅ B`, we can form a twisted arrow morphism
+`diagTwArrMorphismOfIso i : diagTwArr A ⟶ diagTwArr B`. The weighted cowedge
 naturality along this morphism gives:
 
 ```
-(profunctorOnCoTwistedArrow C P).map (diagCoTwArrHomOfIso i) ≫ leg (diagCoTwArr B) wB
-  = leg (diagCoTwArr A) (W.map (diagCoTwArrHomOfIso i).op wB)
+(profunctorOnTwistedArrow C P).map (diagTwArrMorphismOfIso i) ≫ leg (diagTwArr B) wB
+  = leg (diagTwArr A) (W.map (diagTwArrMorphismOfIso i).op wB)
 ```
 
-The `profunctorOnCoTwistedArrow` morphism expands to:
+The `profunctorOnTwistedArrow` morphism expands to:
 ```
 P.map i.inv.op .app B ≫ (P.obj (op B)).map i.hom
 ```
@@ -3030,20 +3027,20 @@ P.map i.inv.op .app B ≫ (P.obj (op B)).map i.hom
 This gives us a "paranaturality along isomorphisms" result.
 -/
 
-/-- The profunctor action between diagonal co-twisted arrows along an
+/-- The profunctor action between diagonal twisted arrows along an
 isomorphism `i : A ≅ B`. This is the morphism
 `(P.obj (op A)).obj A ⟶ (P.obj (op B)).obj B` obtained from the
-co-twisted arrow morphism `diagCoTwArrHomOfIso i`. -/
+twisted arrow morphism `diagTwArrMorphismOfIso i`. -/
 def profunctorDiagIsoAction {P : Cᵒᵖ ⥤ C ⥤ C} {A B : C} (i : A ≅ B) :
     (P.obj (Opposite.op A)).obj A ⟶ (P.obj (Opposite.op B)).obj B :=
-  (profunctorOnCoTwistedArrow C P).map (diagCoTwArrHomOfIso i)
+  (profunctorOnTwistedArrow C P).map (diagTwArrMorphismOfIso i)
 
 /-- The profunctor diagonal action along an isomorphism factors through
 the covariant and contravariant actions of the profunctor. -/
 theorem profunctorDiagIsoAction_eq {P : Cᵒᵖ ⥤ C ⥤ C} {A B : C} (i : A ≅ B) :
     profunctorDiagIsoAction (P := P) i =
       (P.map i.inv.op).app A ≫ (P.obj (Opposite.op B)).map i.hom := by
-  simp only [profunctorDiagIsoAction, profunctorOnCoTwistedArrow_map]
+  simp only [profunctorDiagIsoAction, profunctorOnTwistedArrow_map]
   rfl
 
 /-- Weighted cowedge naturality along a diagonal isomorphism. For an isomorphism
@@ -3057,13 +3054,13 @@ profunctorDiagIsoAction i ≫ diagFamilySig c B wB
 
 This is the "paranaturality along isomorphisms" property. -/
 theorem WeightedCowedge.diagFamilySig_iso_naturality
-    {W : (CoTwistedArrow C)ᵒᵖ ⥤ Type v} {P : Cᵒᵖ ⥤ C ⥤ C}
+    {W : (TwistedArrow C)ᵒᵖ ⥤ Type v} {P : Cᵒᵖ ⥤ C ⥤ C}
     (c : WeightedCowedge W P) {A B : C} (i : A ≅ B)
     (wB : weightDiagElem W B) :
     profunctorDiagIsoAction (P := P) i ≫ c.diagFamilySig B wB =
       c.diagFamilySig A (weightDiagTransport W i wB) := by
   simp only [diagFamilySig, profunctorDiagIsoAction, weightDiagTransport]
-  exact c.naturality_at (diagCoTwArrHomOfIso i) wB
+  exact c.naturality_at (diagTwArrMorphismOfIso i) wB
 
 /-!
 ### Trivial Profunctor Case Analysis

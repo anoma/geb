@@ -1221,7 +1221,7 @@ But H's bifunctorial structure only provides:
 Neither gives `H(I₁, I₁) → H(I₀, I₀)` directly. The diagonal values of a
 bifunctor do not generally form a contravariant functor on C.
 
-#### Naturality vs Paranaturality: The Key Distinction
+#### Naturality vs Paranaturality
 
 **WeightedCocone naturality**: For ALL morphisms `m : tw → tw'` in the
 indexing category, relates weight elements at source/target via the weight's
