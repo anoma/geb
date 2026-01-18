@@ -271,7 +271,6 @@ def sliceCopresheafCounitIso :
       (fun p => {
         hom := fun y => by
           dsimp [sliceToCopresheaf, copresheafToSlice, Fiber, totalSpace, totalSpaceProj] at y
-          -- y : { z : Σ (x : F.obj p.fst), G.obj ⟨p.fst, x⟩ // z.fst = p.snd }
           have hp : (⟨p.fst, y.val.fst⟩ : F.Elements) = p := by
             ext
             · rfl
@@ -279,7 +278,6 @@ def sliceCopresheafCounitIso :
           exact hp ▸ y.val.snd
         inv := fun gx => by
           dsimp [sliceToCopresheaf, copresheafToSlice, Fiber, totalSpace, totalSpaceProj]
-          -- gx : G.obj p
           exact ⟨⟨p.snd, gx⟩, rfl⟩
         hom_inv_id := by
           ext ⟨⟨x, gx⟩, hx⟩
@@ -294,8 +292,6 @@ def sliceCopresheafCounitIso :
         ext ⟨⟨x, gx⟩, hx⟩
         dsimp [sliceToCopresheaf, copresheafToSlice, Fiber, fiberMap, totalSpace,
           totalSpaceProj] at hx ⊢
-        -- hx : x = p.snd
-        -- Define the equality proofs explicitly
         have hp : (⟨p.fst, x⟩ : F.Elements) = p := by
           ext
           · rfl
@@ -303,61 +299,36 @@ def sliceCopresheafCounitIso :
         have hq : (⟨q.fst, F.map f.val x⟩ : F.Elements) = q := by
           ext
           · rfl
-          · -- Need: F.map f.val x ≍ q.snd
-            -- Since f : p ⟶ q in F.Elements, we have F.map f.val p.snd = q.snd
-            have fprop : F.map f.val p.snd = q.snd := f.property
-            -- x = p.snd by hx, so F.map f.val x = q.snd
+          · have fprop : F.map f.val p.snd = q.snd := f.property
             have : F.map f.val x = q.snd := by
               rw [hx, fprop]
             exact heq_of_eq this
-        -- Component naturality
         subst hx
-        -- Now apply transport_heq to eliminate the Sigma.ext transport
         apply transport_heq
-        -- Goal: G.map ⟨↑f, proof⟩ gx ≍ G.map f gx where proof is some equality
-        -- Use cases on f to destructure it into its morphism and property
         cases f with
         | mk fval fprop =>
-          -- Now f = ⟨fval, fprop⟩ definitionally
-          -- Use cases on the proof from totalSpace
           generalize totalSpace._proof_1 F G fval ⟨p.snd, gx⟩ = proof
           cases proof
-          -- After cases, the LHS has ⟨↑⟨fval, fprop⟩, Eq.refl ...⟩
-          -- Simplify ↑⟨fval, fprop⟩ to fval
           simp only [Subtype.coe_mk]
-          -- Use cases on p and q to eliminate eta-expansions
           cases p with | mk p₁ p₂ =>
           cases q with | mk q₁ q₂ =>
-          -- Simplify projections but keep hq as an equation between Sigmas
           dsimp only [] at fprop gx ⊢
-          -- Use cases on hp
           cases hp
-          -- Use injection on hq to get q₂ = F.map fval p₂
           injection hq with hq₁ hq₂
-          -- We have destructed too much - the types no longer align
-          -- The morphisms live in different hom-sets after all the cases
-          -- But they should be related through the equalities hp, hq
-          -- Try using funext or other extensionality principles
-          -- Or use grind to solve this automatically
           grind
         ))
     (fun {G H} α => by
       ext p ⟨⟨x, gx⟩, hx⟩
       dsimp [sliceToCopresheaf, copresheafToSlice, Fiber, totalSpace, totalSpaceProj] at hx ⊢
-      -- hx : x = p.snd
       have hp : (⟨p.fst, x⟩ : F.Elements) = p := by
         ext
         · rfl
         · exact heq_of_eq hx
-      -- Outer naturality
       subst hx
       simp_all only []
-      -- Use the same generalize + cases approach
       generalize hp_eq : hp = hp'
       cases hp'
-      -- After cases, p is in canonical form
       simp_all only []
-      -- The goal should now simplify
       rfl)
 
 /--
@@ -593,6 +564,24 @@ theorem CategoryOfElements.eqToHom_val {F : D ⥤ Type w} {p q : F.Elements}
     (h : p = q) : (eqToHom h).val = eqToHom (congrArg Sigma.fst h) := by
   cases h; rfl
 
+/--
+If a morphism `f` in the category of elements has `f.val = eqToHom h` for some
+equality `h`, then its inverse has value `eqToHom h.symm`.
+-/
+theorem CategoryOfElements.val_inv_of_val_eq_eqToHom {F : D ⥤ Type w}
+    {p q : F.Elements} (f : p ⟶ q) [IsIso f] (h : p.fst = q.fst)
+    (hf : f.val = eqToHom h) :
+    (inv f).val = eqToHom h.symm := by
+  have inv_f_val : (inv f).val ≫ f.val = (inv f ≫ f).val := rfl
+  simp only [IsIso.inv_hom_id] at inv_f_val
+  have id_val : (𝟙 q : q ⟶ q).val = 𝟙 q.fst := rfl
+  rw [id_val, hf] at inv_f_val
+  calc (inv f).val = (inv f).val ≫ 𝟙 p.fst := by rw [Category.comp_id]
+    _ = (inv f).val ≫ eqToHom h ≫ eqToHom h.symm := by rw [eqToHom_trans, eqToHom_refl]
+    _ = ((inv f).val ≫ eqToHom h) ≫ eqToHom h.symm := by rw [Category.assoc]
+    _ = 𝟙 q.fst ≫ eqToHom h.symm := by rw [inv_f_val]
+    _ = eqToHom h.symm := by rw [Category.id_comp]
+
 end CovariantCategoryOfElements
 
 namespace CategoryOfElementsContra'
@@ -814,10 +803,6 @@ private lemma counit_naturality_val (X : C) {p q : (coyoneda'.obj X).ElementsCon
         (elementsToOver X ⋙ overToElements X).obj p ⟶
         (𝟭 ((coyoneda'.obj X).ElementsContra')).obj p) ≫ g).val := by
   dsimp [elementsToOver, overToElements]
-  -- In the category of elements, (f ≫ g).val = g.val ≫ f.val (in Cᵒᵖ')
-  -- LHS: (⟨g.val, _⟩ ≫ ⟨𝟙 q.fst, _⟩).val
-  -- RHS: (⟨𝟙 p.fst, _⟩ ≫ g).val
-  -- These are both morphisms in Cᵒᵖ', composition is (f ≫ g).val = g.val ≫ f.val
   change ((@CategoryStruct.id Cᵒᵖ' _ q.fst) ≫ g.val) =
          (g.val ≫ (@CategoryStruct.id Cᵒᵖ' _ p.fst))
   rw [Category.id_comp, Category.comp_id]
@@ -845,12 +830,6 @@ private lemma functor_unitIso_comp_helper (X : C) (f : Over X) :
     (@CategoryStruct.id ((coyoneda'.obj X).ElementsContra') _
       ((overToElements X).obj f)).val := by
   dsimp [overToElements, elementsToOver, overElementsUnitIso, overElementsCounitIso]
-  -- Unit at f: Over.isoMk (Iso.refl _) has .left = 𝟙 f.left
-  -- Mapped through overToElements: ⟨𝟙 f.left, _⟩
-  -- Counit at ⟨f.left, f.hom⟩: ⟨𝟙 f.left, _⟩
-  -- Composition: ⟨𝟙 f.left ≫ 𝟙 f.left, _⟩ = ⟨𝟙 f.left, _⟩
-  -- Identity: ⟨𝟙 f.left, _⟩
-  -- The .val parts are both 𝟙 f.left (in Cᵒᵖ')
   change ((@CategoryStruct.id Cᵒᵖ' _ f.left) ≫ (@CategoryStruct.id Cᵒᵖ' _ f.left)) =
          (@CategoryStruct.id Cᵒᵖ' _ f.left)
   rw [Category.comp_id]
@@ -873,5 +852,342 @@ def overEquivElements : Over X ≌ (coyoneda'.obj X).ElementsContra' where
 end OverEquivalence
 
 end ElementsContra'
+
+section ElementsEquivIso
+
+/-!
+## Recovering functors from categories of elements
+
+This section proves that an equivalence of categories of elements that commutes
+with the projections to the base category induces a natural isomorphism of the
+underlying functors.
+
+Given functors `F, G : J ⥤ Type v` and an equivalence `e : F.Elements ≃ G.Elements`,
+if the equivalence commutes with projections (i.e., `e.functor ⋙ π_G = π_F`), then
+`F ≅ G`.
+
+The construction works by:
+1. The projection-commuting condition ensures the equivalence preserves fibers
+2. Restricting to each fiber gives bijections `F.obj j ≃ G.obj j`
+3. Functoriality of the equivalence implies naturality of these bijections
+-/
+
+variable {J : Type u} [Category.{v} J]
+
+/--
+An equivalence of categories of elements over `J`, meaning an equivalence that
+commutes with the projections to the base category in both directions, and
+whose counit projects to `eqToHom` (identity modulo the base object equality).
+
+The `counit_proj` condition ensures that the counit isomorphism projects to
+identity morphisms (via `eqToHom`) when we apply the projection functor. This
+is needed to show that the induced natural transformation is indeed a natural
+isomorphism (not just a natural transformation between isomorphic objects).
+-/
+structure ElementsEquivOver (F G : J ⥤ Type w) where
+  /-- The underlying equivalence of categories of elements -/
+  equiv : F.Elements ≌ G.Elements
+  /-- The forward functor commutes with projections -/
+  commutes : equiv.functor ⋙ CategoryOfElements.π G = CategoryOfElements.π F
+  /-- The inverse functor commutes with projections -/
+  commutes_inv : equiv.inverse ⋙ CategoryOfElements.π F = CategoryOfElements.π G
+  /-- The counit projects to eqToHom -/
+  counit_proj : ∀ q : G.Elements, (equiv.counitIso.hom.app q).val =
+      eqToHom (by
+        have h1 := congrFun (congrArg Functor.obj commutes) (equiv.inverse.obj q)
+        simp only [Functor.comp_obj, CategoryOfElements.π_obj] at h1
+        have h2 := congrFun (congrArg Functor.obj commutes_inv) q
+        simp only [Functor.comp_obj, CategoryOfElements.π_obj] at h2
+        exact h1.trans h2)
+  /-- The unit projects to eqToHom -/
+  unit_proj : ∀ p : F.Elements, (equiv.unitIso.hom.app p).val =
+      eqToHom (by
+        have h1 := congrFun (congrArg Functor.obj commutes) p
+        simp only [Functor.comp_obj, CategoryOfElements.π_obj] at h1
+        have h2 := congrFun (congrArg Functor.obj commutes_inv) (equiv.functor.obj p)
+        simp only [Functor.comp_obj, CategoryOfElements.π_obj] at h2
+        exact h1.symm.trans h2.symm)
+
+namespace ElementsEquivOver
+
+variable {F G : J ⥤ Type w}
+
+/--
+The equivalence preserves the base object: if `e.equiv.functor` sends `⟨j, x⟩`
+to some element, that element must be over `j`.
+-/
+theorem functor_base_eq (e : ElementsEquivOver F G) (p : F.Elements) :
+    (e.equiv.functor.obj p).fst = p.fst := by
+  have h := congrFun (congrArg Functor.obj e.commutes) p
+  simp only [Functor.comp_obj, CategoryOfElements.π_obj] at h
+  exact h
+
+/--
+The inverse equivalence also preserves the base object.
+-/
+theorem inverse_base_eq (e : ElementsEquivOver F G) (q : G.Elements) :
+    (e.equiv.inverse.obj q).fst = q.fst := by
+  have h := congrFun (congrArg Functor.obj e.commutes_inv) q
+  simp only [Functor.comp_obj, CategoryOfElements.π_obj] at h
+  exact h
+
+/--
+The equality proof used in `counit_proj`: the base of `functor.obj (inverse.obj q)`
+equals the base of `q`.
+-/
+def counit_proj_eq (e : ElementsEquivOver F G) (q : G.Elements) :
+    (e.equiv.functor.obj (e.equiv.inverse.obj q)).fst = q.fst := by
+  have h1 := congrFun (congrArg Functor.obj e.commutes) (e.equiv.inverse.obj q)
+  simp only [Functor.comp_obj, CategoryOfElements.π_obj] at h1
+  have h2 := congrFun (congrArg Functor.obj e.commutes_inv) q
+  simp only [Functor.comp_obj, CategoryOfElements.π_obj] at h2
+  exact h1.trans h2
+
+/--
+The equality proof used in `unit_proj`: the base of `p` equals the base of
+`inverse.obj (functor.obj p)`.
+-/
+def unit_proj_eq (e : ElementsEquivOver F G) (p : F.Elements) :
+    p.fst = (e.equiv.inverse.obj (e.equiv.functor.obj p)).fst := by
+  have h1 := congrFun (congrArg Functor.obj e.commutes) p
+  simp only [Functor.comp_obj, CategoryOfElements.π_obj] at h1
+  have h2 := congrFun (congrArg Functor.obj e.commutes_inv) (e.equiv.functor.obj p)
+  simp only [Functor.comp_obj, CategoryOfElements.π_obj] at h2
+  exact h1.symm.trans h2.symm
+
+/--
+The component of the natural transformation at `j`, sending `x : F.obj j` to
+the corresponding element of `G.obj j`.
+-/
+def natTransApp (e : ElementsEquivOver F G) (j : J) (x : F.obj j) : G.obj j :=
+  cast (congrArg G.obj (e.functor_base_eq ⟨j, x⟩)) (e.equiv.functor.obj ⟨j, x⟩).snd
+
+/--
+The component of the inverse natural transformation at `j`.
+-/
+def natTransInvApp (e : ElementsEquivOver F G) (j : J) (y : G.obj j) : F.obj j :=
+  cast (congrArg F.obj (e.inverse_base_eq ⟨j, y⟩)) (e.equiv.inverse.obj ⟨j, y⟩).snd
+
+/--
+In the Types category, `eqToHom h` equals `cast h` as functions.
+This connects the categorical morphism with the type-theoretic cast.
+-/
+private lemma eqToHom_eq_cast {X Y : Type w} (h : X = Y) (x : X) :
+    eqToHom h x = cast h x := by subst h; rfl
+
+/--
+Helper lemma for naturality proof: relates cast and functor map.
+Uses `Functor.congr_hom` to handle the dependent type equality from `commutes`.
+-/
+private theorem natTrans_naturality_aux (e : ElementsEquivOver F G) {j k : J}
+    (f : j ⟶ k) (x : F.obj j) :
+    let pj : F.Elements := ⟨j, x⟩
+    let pk : F.Elements := ⟨k, F.map f x⟩
+    let qj := e.equiv.functor.obj pj
+    let qk := e.equiv.functor.obj pk
+    let hj := e.functor_base_eq pj
+    let hk := e.functor_base_eq pk
+    let morphF : pj ⟶ pk := ⟨f, rfl⟩
+    let _morphG := e.equiv.functor.map morphF
+    cast (congrArg G.obj hk) qk.snd = G.map f (cast (congrArg G.obj hj) qj.snd) := by
+  intro pj pk qj qk hj hk morphF _morphG
+  have morphG_val_eq : _morphG.val = eqToHom hj ≫ f ≫ eqToHom hk.symm := by
+    have h := Functor.congr_hom e.commutes morphF
+    simp only [Functor.comp_map, CategoryOfElements.π_map] at h
+    exact h
+  have morphG_prop := _morphG.property
+  calc cast (congrArg G.obj hk) qk.snd
+      = cast (congrArg G.obj hk) (G.map _morphG.val qj.snd) := by rw [morphG_prop]
+    _ = G.map (eqToHom hk) (G.map _morphG.val qj.snd) := by
+        rw [eqToHom_map G hk, eqToHom_eq_cast]
+    _ = G.map (_morphG.val ≫ eqToHom hk) qj.snd := by
+        rw [← FunctorToTypes.map_comp_apply]
+    _ = G.map (eqToHom hj ≫ f ≫ eqToHom hk.symm ≫ eqToHom hk) qj.snd := by
+        rw [morphG_val_eq]; simp only [Category.assoc]
+    _ = G.map (eqToHom hj ≫ f) qj.snd := by
+        simp only [eqToHom_trans, eqToHom_refl, Category.comp_id]
+    _ = G.map f (G.map (eqToHom hj) qj.snd) := by
+        rw [FunctorToTypes.map_comp_apply]
+    _ = G.map f (cast (congrArg G.obj hj) qj.snd) := by
+        rw [eqToHom_map G hj, eqToHom_eq_cast]
+
+/--
+The forward map preserves morphisms: functoriality of the equivalence implies
+naturality of the induced transformation.
+-/
+theorem natTrans_naturality (e : ElementsEquivOver F G) {j k : J}
+    (f : j ⟶ k) (x : F.obj j) :
+    e.natTransApp k (F.map f x) = G.map f (e.natTransApp j x) := by
+  simp only [natTransApp]
+  exact natTrans_naturality_aux e f x
+
+/--
+The inverse naturality: functoriality of the inverse implies naturality.
+-/
+theorem natTransInv_naturality (e : ElementsEquivOver F G) {j k : J}
+    (f : j ⟶ k) (y : G.obj j) :
+    e.natTransInvApp k (G.map f y) = F.map f (e.natTransInvApp j y) := by
+  simp only [natTransInvApp]
+  let qj : G.Elements := ⟨j, y⟩
+  let qk : G.Elements := ⟨k, G.map f y⟩
+  let pj := e.equiv.inverse.obj qj
+  let pk := e.equiv.inverse.obj qk
+  have hj : pj.fst = j := e.inverse_base_eq qj
+  have hk : pk.fst = k := e.inverse_base_eq qk
+  let morphG : qj ⟶ qk := ⟨f, rfl⟩
+  let morphF := e.equiv.inverse.map morphG
+  have morphF_prop := morphF.property
+  have morphF_val_eq : morphF.val = eqToHom hj ≫ f ≫ eqToHom hk.symm := by
+    have h := Functor.congr_hom e.commutes_inv morphG
+    simp only [Functor.comp_map, CategoryOfElements.π_map] at h
+    exact h
+  calc cast (congrArg F.obj hk) pk.snd
+      = cast (congrArg F.obj hk) (F.map morphF.val pj.snd) := by rw [morphF_prop]
+    _ = F.map (eqToHom hk) (F.map morphF.val pj.snd) := by
+        rw [eqToHom_map F hk, eqToHom_eq_cast]
+    _ = F.map (morphF.val ≫ eqToHom hk) pj.snd := by
+        rw [← FunctorToTypes.map_comp_apply]
+    _ = F.map (eqToHom hj ≫ f ≫ eqToHom hk.symm ≫ eqToHom hk) pj.snd := by
+        rw [morphF_val_eq]; simp only [Category.assoc]
+    _ = F.map (eqToHom hj ≫ f) pj.snd := by
+        simp only [eqToHom_trans, eqToHom_refl, Category.comp_id]
+    _ = F.map f (F.map (eqToHom hj) pj.snd) := by
+        rw [FunctorToTypes.map_comp_apply]
+    _ = F.map f (cast (congrArg F.obj hj) pj.snd) := by
+        rw [eqToHom_map F hj, eqToHom_eq_cast]
+
+/--
+The natural transformation from F to G induced by the equivalence.
+-/
+def toNatTrans (e : ElementsEquivOver F G) : F ⟶ G where
+  app j := e.natTransApp j
+  naturality j k f := by
+    funext x
+    exact e.natTrans_naturality f x
+
+/--
+The inverse natural transformation from G to F.
+-/
+def toNatTransInv (e : ElementsEquivOver F G) : G ⟶ F where
+  app j := e.natTransInvApp j
+  naturality j k f := by
+    funext y
+    exact e.natTransInv_naturality f y
+
+/--
+Helper lemma: composition of casts equals cast of transitive equality.
+-/
+private lemma cast_trans_eq {X Y Z : Type w} (h1 : X = Y) (h2 : Y = Z) (x : X) :
+    cast h2 (cast h1 x) = cast (h1.trans h2) x := by
+  subst h1; subst h2; rfl
+
+/--
+Helper lemma: an element with cast second component equals the original element.
+For `p : Σ j, H.obj j` with `h : p.fst = j`, we have `⟨j, cast h' p.snd⟩ = p`
+where `h' = congrArg H.obj h`.
+-/
+private lemma sigma_cast_snd_eq {H : J ⥤ Type w} (p : H.Elements) {k : J}
+    (h : p.fst = k) : (⟨k, cast (congrArg H.obj h) p.snd⟩ : H.Elements) = p := by
+  subst h; rfl
+
+/--
+When two values are HEq and we cast both to the same target type, the results
+are equal. The proofs used for casting may differ but both point to the same
+target type.
+-/
+private lemma cast_heq_cast {A B T : Type w} {a : A} {b : B}
+    (hab : a ≍ b) (ha : A = T) (hb : B = T) :
+    cast ha a = cast hb b := by
+  cases ha; cases hb
+  exact eq_of_heq hab
+
+/--
+The forward and inverse natural transformations compose to the identity on G.
+-/
+theorem natTrans_inv_comp (e : ElementsEquivOver F G) :
+    e.toNatTransInv ≫ e.toNatTrans = 𝟙 G := by
+  ext j y
+  simp only [NatTrans.comp_app, types_comp_apply, NatTrans.id_app, types_id_apply,
+    toNatTrans, toNatTransInv, natTransApp, natTransInvApp]
+  let q : G.Elements := ⟨j, y⟩
+  have counit_prop := (e.equiv.counitIso.hom.app q).property
+  have counit_val := e.counit_proj q
+  simp only [counit_val, eqToHom_map, Functor.comp_obj, Functor.id_obj] at counit_prop
+  rw [← eqToHom_eq_cast]
+  have hp : (e.equiv.inverse.obj q).fst = j := e.inverse_base_eq q
+  have hp' : (⟨j, cast (congrArg F.obj hp) (e.equiv.inverse.obj q).snd⟩ : F.Elements) =
+      e.equiv.inverse.obj q := sigma_cast_snd_eq (e.equiv.inverse.obj q) hp
+  have functor_eq := congrArg e.equiv.functor.obj hp'
+  convert counit_prop using 2
+  exact (Sigma.mk.inj_iff.mp functor_eq).2
+
+/--
+The inverse and forward natural transformations compose to the identity on F.
+This mirrors the structure of `natTrans_inv_comp` but uses the unit property.
+-/
+theorem natTrans_comp_inv (e : ElementsEquivOver F G) :
+    e.toNatTrans ≫ e.toNatTransInv = 𝟙 F := by
+  ext j x
+  simp only [NatTrans.comp_app, types_comp_apply, NatTrans.id_app, types_id_apply,
+    toNatTrans, toNatTransInv, natTransApp, natTransInvApp]
+  let p : F.Elements := ⟨j, x⟩
+  let q := e.equiv.functor.obj p
+  have hq : q.fst = j := e.functor_base_eq p
+  have hp : (e.equiv.inverse.obj q).fst = j := (e.inverse_base_eq q).trans hq
+  have q_eq : (⟨j, cast (congrArg G.obj hq) q.snd⟩ : G.Elements) = q := sigma_cast_snd_eq q hq
+  have inverse_eq : e.equiv.inverse.obj ⟨j, cast (congrArg G.obj hq) q.snd⟩ =
+      e.equiv.inverse.obj q := congrArg e.equiv.inverse.obj q_eq
+  have snd_heq : (e.equiv.inverse.obj ⟨j, cast (congrArg G.obj hq) q.snd⟩).snd ≍
+      (e.equiv.inverse.obj q).snd := (Sigma.mk.inj_iff.mp inverse_eq).2
+  have hp_nested : (e.equiv.inverse.obj ⟨j, cast (congrArg G.obj hq) q.snd⟩).fst = j := by
+    rw [inverse_eq]; exact hp
+  have goal_eq : cast (congrArg F.obj hp_nested)
+      (e.equiv.inverse.obj ⟨j, cast (congrArg G.obj hq) q.snd⟩).snd =
+      cast (congrArg F.obj hp) (e.equiv.inverse.obj q).snd :=
+    cast_heq_cast snd_heq (congrArg F.obj hp_nested) (congrArg F.obj hp)
+  rw [goal_eq]
+  have unit_inv_prop := (e.equiv.unitIso.inv.app p).property
+  simp only [Functor.comp_obj, Functor.id_obj] at unit_inv_prop
+  have morph_eq : (e.equiv.unitIso.inv.app p).val = eqToHom hp := by
+    have unit_hom_val := e.unit_proj p
+    have cat_inv_val : (inv (e.equiv.unitIso.hom.app p)).val =
+        eqToHom (e.unit_proj_eq p).symm :=
+      CategoryOfElements.val_inv_of_val_eq_eqToHom
+        (e.equiv.unitIso.hom.app p) (e.unit_proj_eq p) unit_hom_val
+    have inv_eq : inv (e.equiv.unitIso.hom.app p) = e.equiv.unitIso.inv.app p := by
+      simp only [← Iso.app_hom, IsIso.Iso.inv_hom, Iso.app_inv]
+    rw [inv_eq] at cat_inv_val
+    convert cat_inv_val using 1
+  calc cast (congrArg F.obj hp) (e.equiv.inverse.obj q).snd
+      = F.map (eqToHom hp) (e.equiv.inverse.obj q).snd := by
+          rw [eqToHom_map, eqToHom_eq_cast]
+    _ = F.map (e.equiv.unitIso.inv.app p).val (e.equiv.inverse.obj q).snd := by
+          rw [morph_eq]
+    _ = p.snd := unit_inv_prop
+    _ = x := rfl
+
+/--
+The natural isomorphism from F to G induced by an equivalence of their
+categories of elements that commutes with projections.
+-/
+def toNatIso (e : ElementsEquivOver F G) : F ≅ G where
+  hom := e.toNatTrans
+  inv := e.toNatTransInv
+  hom_inv_id := e.natTrans_comp_inv
+  inv_hom_id := e.natTrans_inv_comp
+
+end ElementsEquivOver
+
+variable (F G : J ⥤ Type w)
+
+/--
+Given an equivalence of categories of elements that commutes with the
+projections to the base category, the underlying functors are naturally
+isomorphic.
+-/
+def elementsEquivOverToNatIso (e : ElementsEquivOver F G) : F ≅ G :=
+  e.toNatIso
+
+end ElementsEquivIso
 
 end CategoryTheory
