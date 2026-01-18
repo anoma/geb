@@ -123,11 +123,11 @@ DiagElem W (Options 3 and 4) does NOT work in general due to:
 
 ## Status
 
-- [x] Task 1: Analyze which option is most likely to give equivalence
+- [x] Task 1: Analyze which "Option" is most likely to give equivalence
   - **Result**: Option 1 (category of elements) is the canonical reduction
   - Options 3/4 (DiagElem W) do NOT work in general
 - [x] Task 2: Check if equivalence is already implemented
-  - **Result**: Yes, `weightedWedgeElementsEquiv` and
+  - **Result**: `weightedWedgeElementsEquiv` and
     `weightedCowedgeElementsEquiv` are already proven
 - [ ] Task 3: Document findings in codebase (this file)
 - [x] Task 4: Close investigation - the existing implementation is correct
