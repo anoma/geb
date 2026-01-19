@@ -1797,38 +1797,7 @@ theorem twistedArrow_proj_eq :
     twistedArrowForget C = CategoryOfElements.π (Functor.hom C) :=
   rfl
 
-/-!
-### Resolution: Every Weighted Wedge Reduces to an Ordinary Wedge
-
-For any `W : Cᵒᵖ ⥤ C ⥤ Type v` and `P : Cᵒᵖ ⥤ C ⥤ D`, there exist `C'` and
-`P' : C'ᵒᵖ ⥤ C' ⥤ D` such that `WeightedWedge W P ≌ Wedge P'`.
-
-The `HasSourceIdentities` analysis above shows that the *indexing categories*
-cannot be equivalent when W is not a hom-profunctor. However, indexing category
-equivalence is sufficient but not necessary for cone category equivalence.
-
-The weighted wedge diagram `F : J → D` where `J = (profunctorOnTwistedArrow C W).Elements`
-has values `F(tw, w) = P(twDom tw, twCod tw)` depending only on the underlying
-twisted arrow `tw`, not on the weight element `w`. This structural property
-allows constructing C' and P' such that the cone categories are equivalent,
-even when the indexing categories differ.
-
-#### Construction
-
-Given `W : Cᵒᵖ ⥤ C ⥤ Type v` and `P : Cᵒᵖ ⥤ C ⥤ D`:
-
-1. Let `J = (profunctorOnTwistedArrow C W).Elements` (the weighted wedge indexing category)
-2. Let `F = weightedWedgeDiagram W P : J ⥤ D`
-3. Define `C' = J` and `P' = (Functor.const Jᵒᵖ).obj F : Jᵒᵖ ⥤ J ⥤ D`
-
-Then `P'(j₁, j₂) = F(j₂)` is constant in the first argument. The dinaturality
-condition for `f : j → j'` becomes `F(f) ∘ ω_j = id ∘ ω_j' = ω_j'`, which
-matches the cone naturality condition exactly.
--/
-
-/-- The profunctor constant in its first argument: `P'(j₁, j₂) = F(j₂)`.
-This is used in the reduction theorem to show that any weighted wedge
-can be expressed as an ordinary wedge. -/
+/-- The profunctor constant in its first argument: `P'(j₁, j₂) = F(j₂)`. -/
 def constFirstArgProf {J : Type*} [Category J] {D : Type*} [Category D]
     (F : J ⥤ D) : Jᵒᵖ ⥤ J ⥤ D :=
   (Functor.const Jᵒᵖ).obj F
@@ -1856,17 +1825,8 @@ The cone legs become wedge legs directly. -/
 def coneToWedgeConstProf {J : Type*} [Category J] {D : Type*} [Category D]
     (F : J ⥤ D) (c : Cone F) : Wedge (constFirstArgProf F) :=
   Wedge.mk c.pt (fun j => c.π.app j) (fun {j j'} f => by
-    -- Goal: c.π.app j ≫ ((constFirstArgProf F).obj (op j)).map f
-    --     = c.π.app j' ≫ ((constFirstArgProf F).map f.op).app j'
-    -- LHS simplifies to: c.π.app j ≫ F.map f
-    -- RHS simplifies to: c.π.app j' ≫ 𝟙 (F.obj j') = c.π.app j'
     simp only [constFirstArgProf, Functor.const_obj_obj, Functor.const_obj_map,
       NatTrans.id_app, Category.comp_id]
-    -- Now need: c.π.app j ≫ F.map f = c.π.app j'
-    -- Use cone naturality: ((Functor.const J).obj c.pt).map f ≫ c.π.app j'
-    --                    = c.π.app j ≫ F.map f
-    -- which simplifies to: 𝟙 c.pt ≫ c.π.app j' = c.π.app j ≫ F.map f
-    -- i.e., c.π.app j' = c.π.app j ≫ F.map f (after id_comp)
     have nat := c.π.naturality f
     dsimp only [Functor.const_obj_obj, Functor.const_obj_map] at nat
     rw [Category.id_comp] at nat
@@ -1880,17 +1840,10 @@ def wedgeConstProfToCone {J : Type*} [Category J] {D : Type*} [Category D]
   π := {
     app := fun j => Multifork.ι w j
     naturality := fun j j' f => by
-      -- Need: ((Functor.const J).obj w.pt).map f ≫ Multifork.ι w j'
-      --     = Multifork.ι w j ≫ F.map f
-      -- i.e., 𝟙 w.pt ≫ Multifork.ι w j' = Multifork.ι w j ≫ F.map f
-      -- From wedge dinaturality for f : j ⟶ j':
-      -- w.condition f : Multifork.ι w j ≫ F.map f = Multifork.ι w j' ≫ 𝟙 _
       dsimp only [Functor.const_obj_obj, Functor.const_obj_map]
       rw [Category.id_comp]
-      -- Goal: Multifork.ι w j' = Multifork.ι w j ≫ F.map f
       have din := w.condition f
       simp only [constFirstArgProf_map_snd, constFirstArgProf_map_fst] at din
-      -- din : Multifork.ι w j ≫ F.map f = Multifork.ι w j' ≫ 𝟙 (F.obj j')
       calc Multifork.ι w j' = Multifork.ι w j' ≫ 𝟙 _ := (Category.comp_id _).symm
         _ = Multifork.ι w j ≫ F.map f := din.symm
   }
@@ -1900,11 +1853,8 @@ def wedgeConstProfToCone {J : Type*} [Category J] {D : Type*} [Category D]
 theorem wedgeConstProfToCone_coneToWedge {J : Type*} [Category J]
     {D : Type*} [Category D] (F : J ⥤ D) (c : Cone F) :
     wedgeConstProfToCone F (coneToWedgeConstProf F c) = c := by
-  -- Show equality of cones by showing points and legs match
   cases c with | mk pt π =>
   simp only [coneToWedgeConstProf, wedgeConstProfToCone]
-  -- Points are definitionally equal
-  -- For legs, Multifork.ι (Wedge.mk ...) j = π j definitionally
   rfl
 
 /-- Round-trip: wedge to cone to wedge is identity. -/
@@ -1912,16 +1862,12 @@ theorem wedgeConstProfToCone_coneToWedge {J : Type*} [Category J]
 theorem coneToWedgeConstProf_wedgeToCone {J : Type*} [Category J]
     {D : Type*} [Category D] (F : J ⥤ D) (w : Wedge (constFirstArgProf F)) :
     coneToWedgeConstProf F (wedgeConstProfToCone F w) = w := by
-  -- Need to show equality of wedges (Multiforks)
   cases w with | mk pt π =>
   simp only [wedgeConstProfToCone, coneToWedgeConstProf]
-  -- Goal: Wedge.mk pt (fun j => Multifork.ι ⟨pt, π⟩ j) _ = ⟨pt, π⟩
-  -- Use Cone.mk.injEq to decompose into point equality and π heq
   rw [Cone.mk.injEq]
   constructor
-  · rfl -- points are definitionally equal
-  · -- Show π heq
-    apply heq_of_eq
+  · rfl
+  · apply heq_of_eq
     ext tw
     simp only [Multifork.ofι_π_app]
     cases tw with
@@ -1937,11 +1883,8 @@ def coneToWedgeConstProfFunctor {J : Type*} [Category J]
   map := fun {c₁ c₂} f => {
     hom := f.hom
     w := fun tw => by
-      -- tw : WalkingMulticospan (multicospanShapeEnd J)
       cases tw with
       | left j =>
-        -- Need: f.hom ≫ Multifork.ι (coneToWedgeConstProf F c₂) j
-        --     = Multifork.ι (coneToWedgeConstProf F c₁) j
         simp only [coneToWedgeConstProf, Multifork.ofι_π_app]
         exact f.w j
       | right b =>
@@ -1960,7 +1903,6 @@ def wedgeConstProfToConeFunctor {J : Type*} [Category J]
     hom := f.hom
     w := fun j => by
       simp only [wedgeConstProfToCone]
-      -- Need: f.hom ≫ Multifork.ι w₂ j = Multifork.ι w₁ j
       have h := f.w (WalkingMulticospan.left j)
       exact h
   }
@@ -1975,7 +1917,6 @@ def wedgeConstProfEquivCone {J : Type*} [Category J]
   unitIso := NatIso.ofComponents
     (fun w => eqToIso (coneToWedgeConstProf_wedgeToCone F w).symm)
     (fun {w₁ w₂} f => by
-      -- Show naturality: f ≫ eqToHom = eqToHom ≫ (functor ⋙ inverse).map f
       ext
       simp only [Functor.comp_obj, Functor.id_obj, Functor.comp_map, Functor.id_map,
         coneToWedgeConstProfFunctor, wedgeConstProfToConeFunctor,
