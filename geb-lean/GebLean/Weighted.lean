@@ -1778,7 +1778,7 @@ def weightedCowedgeElementsEquiv (W : Cᵒᵖ ⥤ C ⥤ Type v₅)
 
 end WeightedWedgeCowedgeEquivalences
 
-section WeightedWedgeAsProfunctor
+section ConstProfWedgeAsCone
 
 variable {C : Type u} [Category.{v} C]
 
@@ -1930,7 +1930,7 @@ def wedgeConstProfEquivCone {J : Type*} [Category J]
         wedgeConstProfToConeFunctor, coneToWedgeConstProfFunctor,
         eqToIso.hom, eqToHom_refl, Category.comp_id, Category.id_comp])
 
-end WeightedWedgeAsProfunctor
+end ConstProfWedgeAsCone
 
 section RestrictedCowedges
 
