@@ -265,6 +265,19 @@ lemma coTwObjMk_arr {dom cod : C} (arr : cod ⟶ dom) :
   simp only [homPreOpObjOut, homPreOpObjIn]
 
 /--
+A co-twisted arrow equals its reconstruction from components.
+This provides a canonical form for any co-twisted arrow.
+-/
+@[simp]
+lemma coTw_eq_coTwObjMk (tw : CoTwistedArrow C) :
+    tw = coTwObjMk (coTwArr tw) := by
+  unfold coTwObjMk coTwArr coTwCod coTwDom homPreOpObjIn homPreOpObjOut
+  rw [← Opposite.unop_inj_iff]
+  apply Sigma.ext
+  · simp only [Opposite.op_unop]
+  · simp only [heq_eq_eq]
+
+/--
 The diagonal co-twisted arrow for an object `A : C`, which is the identity
 morphism `𝟙 A` viewed as a co-twisted arrow from `A` to `A`.
 -/
