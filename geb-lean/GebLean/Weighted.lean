@@ -758,6 +758,160 @@ def cowedgeCoconeEquiv (P : Cᵒᵖ ⥤ C ⥤ D) :
 
 end CowedgeCoconeCorrespondence
 
+section ConstProfWedgeAsCone
+
+variable {C : Type u} [Category.{v} C]
+
+/--
+The uncurried weight profunctor: given `W : Cᵒᵖ ⥤ C ⥤ Type v`, this is
+`Functor.uncurry.obj W : Cᵒᵖ × C ⥤ Type v`.
+-/
+abbrev uncurriedProfunctor (W : Cᵒᵖ ⥤ C ⥤ Type v) : Cᵒᵖ × C ⥤ Type v :=
+  Functor.uncurry.obj W
+
+/--
+For the hom-profunctor case: `TwistedArrow C` projects to `Cᵒᵖ × C` via
+`twistedArrowForget C`, which equals `CategoryOfElements.π (Functor.hom C)`.
+-/
+theorem twistedArrow_proj_eq :
+    twistedArrowForget C = CategoryOfElements.π (Functor.hom C) :=
+  rfl
+
+/-- The profunctor constant in its first argument: `P'(j₁, j₂) = F(j₂)`. -/
+def constFirstArgProf {J : Type*} [Category J] {D : Type*} [Category D]
+    (F : J ⥤ D) : Jᵒᵖ ⥤ J ⥤ D :=
+  (Functor.const Jᵒᵖ).obj F
+
+/-- For the constant-first-arg profunctor, the diagonal value at `j` is `F(j)`. -/
+@[simp]
+lemma constFirstArgProf_diag {J : Type*} [Category J] {D : Type*} [Category D]
+    (F : J ⥤ D) (j : J) :
+    ((constFirstArgProf F).obj (Opposite.op j)).obj j = F.obj j := rfl
+
+/-- The covariant action on `f : j → j'` is `F(f)`. -/
+@[simp]
+lemma constFirstArgProf_map_snd {J : Type*} [Category J] {D : Type*} [Category D]
+    (F : J ⥤ D) {j₁ j₂ : J} (f : j₁ ⟶ j₂) (k : Jᵒᵖ) :
+    ((constFirstArgProf F).obj k).map f = F.map f := rfl
+
+/-- The contravariant action on `f : j → j'` is identity. -/
+@[simp]
+lemma constFirstArgProf_map_fst {J : Type*} [Category J] {D : Type*} [Category D]
+    (F : J ⥤ D) {j₁ j₂ : J} (f : j₁ ⟶ j₂) (k : J) :
+    ((constFirstArgProf F).map f.op).app k = 𝟙 (F.obj k) := rfl
+
+/-- Convert a cone over `F` to a wedge over the constant-first-arg profunctor.
+The cone legs become wedge legs directly. -/
+def coneToWedgeConstProf {J : Type*} [Category J] {D : Type*} [Category D]
+    (F : J ⥤ D) (c : Cone F) : Wedge (constFirstArgProf F) :=
+  Wedge.mk c.pt (fun j => c.π.app j) (fun {j j'} f => by
+    simp only [constFirstArgProf, Functor.const_obj_obj, Functor.const_obj_map,
+      NatTrans.id_app, Category.comp_id]
+    have nat := c.π.naturality f
+    dsimp only [Functor.const_obj_obj, Functor.const_obj_map] at nat
+    rw [Category.id_comp] at nat
+    exact nat.symm)
+
+/-- Convert a wedge over the constant-first-arg profunctor to a cone over `F`.
+The wedge legs become cone legs directly. -/
+def wedgeConstProfToCone {J : Type*} [Category J] {D : Type*} [Category D]
+    (F : J ⥤ D) (w : Wedge (constFirstArgProf F)) : Cone F where
+  pt := w.pt
+  π := {
+    app := fun j => Multifork.ι w j
+    naturality := fun j j' f => by
+      dsimp only [Functor.const_obj_obj, Functor.const_obj_map]
+      rw [Category.id_comp]
+      have din := w.condition f
+      simp only [constFirstArgProf_map_snd, constFirstArgProf_map_fst] at din
+      calc Multifork.ι w j' = Multifork.ι w j' ≫ 𝟙 _ := (Category.comp_id _).symm
+        _ = Multifork.ι w j ≫ F.map f := din.symm
+  }
+
+/-- Round-trip: cone to wedge to cone is identity. -/
+@[simp]
+theorem wedgeConstProfToCone_coneToWedge {J : Type*} [Category J]
+    {D : Type*} [Category D] (F : J ⥤ D) (c : Cone F) :
+    wedgeConstProfToCone F (coneToWedgeConstProf F c) = c := by
+  cases c with | mk pt π =>
+  simp only [coneToWedgeConstProf, wedgeConstProfToCone]
+  rfl
+
+/-- Round-trip: wedge to cone to wedge is identity. -/
+@[simp]
+theorem coneToWedgeConstProf_wedgeToCone {J : Type*} [Category J]
+    {D : Type*} [Category D] (F : J ⥤ D) (w : Wedge (constFirstArgProf F)) :
+    coneToWedgeConstProf F (wedgeConstProfToCone F w) = w := by
+  cases w with | mk pt π =>
+  simp only [wedgeConstProfToCone, coneToWedgeConstProf]
+  rw [Cone.mk.injEq]
+  constructor
+  · rfl
+  · apply heq_of_eq
+    ext tw
+    simp only [Multifork.ofι_π_app]
+    cases tw with
+    | left j => rfl
+    | right b =>
+      simp only [← Multifork.app_right_eq_ι_comp_fst]
+
+/-- Functor from cones over F to wedges over the constant-first-arg profunctor. -/
+def coneToWedgeConstProfFunctor {J : Type*} [Category J]
+    {D : Type*} [Category D] (F : J ⥤ D) :
+    Cone F ⥤ Wedge (constFirstArgProf F) where
+  obj := coneToWedgeConstProf F
+  map := fun {c₁ c₂} f => {
+    hom := f.hom
+    w := fun tw => by
+      cases tw with
+      | left j =>
+        simp only [coneToWedgeConstProf, Multifork.ofι_π_app]
+        exact f.w j
+      | right b =>
+        simp only [coneToWedgeConstProf, Multifork.ofι_π_app]
+        let j : J := (multicospanShapeEnd J).fst b
+        have hw := f.w j
+        rw [← Category.assoc, hw]
+  }
+
+/-- Functor from wedges over constant-first-arg profunctor to cones over F. -/
+def wedgeConstProfToConeFunctor {J : Type*} [Category J]
+    {D : Type*} [Category D] (F : J ⥤ D) :
+    Wedge (constFirstArgProf F) ⥤ Cone F where
+  obj := wedgeConstProfToCone F
+  map := fun {w₁ w₂} f => {
+    hom := f.hom
+    w := fun j => by
+      simp only [wedgeConstProfToCone]
+      have h := f.w (WalkingMulticospan.left j)
+      exact h
+  }
+
+/-- The category of wedges over a constant-first-arg profunctor is equivalent
+to the category of cones over the underlying functor. -/
+def wedgeConstProfEquivCone {J : Type*} [Category J]
+    {D' : Type*} [Category D'] (F : J ⥤ D') :
+    Wedge (constFirstArgProf F) ≌ Cone F where
+  functor := wedgeConstProfToConeFunctor F
+  inverse := coneToWedgeConstProfFunctor F
+  unitIso := NatIso.ofComponents
+    (fun w => eqToIso (coneToWedgeConstProf_wedgeToCone F w).symm)
+    (fun {w₁ w₂} f => by
+      ext
+      simp only [Functor.comp_obj, Functor.id_obj, Functor.comp_map, Functor.id_map,
+        coneToWedgeConstProfFunctor, wedgeConstProfToConeFunctor,
+        eqToIso.hom, Cone.category_comp_hom, Cone.eqToHom_hom, eqToHom_refl,
+        Category.comp_id, Category.id_comp])
+  counitIso := NatIso.ofComponents
+    (fun c => eqToIso (wedgeConstProfToCone_coneToWedge F c).symm)
+    (fun {c₁ c₂} f => by
+      ext
+      simp only [Functor.comp_obj, Functor.id_obj, Functor.comp_map, Functor.id_map,
+        wedgeConstProfToConeFunctor, coneToWedgeConstProfFunctor,
+        eqToIso.hom, eqToHom_refl, Category.comp_id, Category.id_comp])
+
+end ConstProfWedgeAsCone
+
 section WeightedLimitColimit
 
 /-!
@@ -1777,160 +1931,6 @@ def weightedCowedgeElementsEquiv (W : Cᵒᵖ ⥤ C ⥤ Type v₅)
     (profunctorOnCoTwistedArrow C P)
 
 end WeightedWedgeCowedgeEquivalences
-
-section ConstProfWedgeAsCone
-
-variable {C : Type u} [Category.{v} C]
-
-/--
-The uncurried weight profunctor: given `W : Cᵒᵖ ⥤ C ⥤ Type v`, this is
-`Functor.uncurry.obj W : Cᵒᵖ × C ⥤ Type v`.
--/
-abbrev uncurriedProfunctor (W : Cᵒᵖ ⥤ C ⥤ Type v) : Cᵒᵖ × C ⥤ Type v :=
-  Functor.uncurry.obj W
-
-/--
-For the hom-profunctor case: `TwistedArrow C` projects to `Cᵒᵖ × C` via
-`twistedArrowForget C`, which equals `CategoryOfElements.π (Functor.hom C)`.
--/
-theorem twistedArrow_proj_eq :
-    twistedArrowForget C = CategoryOfElements.π (Functor.hom C) :=
-  rfl
-
-/-- The profunctor constant in its first argument: `P'(j₁, j₂) = F(j₂)`. -/
-def constFirstArgProf {J : Type*} [Category J] {D : Type*} [Category D]
-    (F : J ⥤ D) : Jᵒᵖ ⥤ J ⥤ D :=
-  (Functor.const Jᵒᵖ).obj F
-
-/-- For the constant-first-arg profunctor, the diagonal value at `j` is `F(j)`. -/
-@[simp]
-lemma constFirstArgProf_diag {J : Type*} [Category J] {D : Type*} [Category D]
-    (F : J ⥤ D) (j : J) :
-    ((constFirstArgProf F).obj (Opposite.op j)).obj j = F.obj j := rfl
-
-/-- The covariant action on `f : j → j'` is `F(f)`. -/
-@[simp]
-lemma constFirstArgProf_map_snd {J : Type*} [Category J] {D : Type*} [Category D]
-    (F : J ⥤ D) {j₁ j₂ : J} (f : j₁ ⟶ j₂) (k : Jᵒᵖ) :
-    ((constFirstArgProf F).obj k).map f = F.map f := rfl
-
-/-- The contravariant action on `f : j → j'` is identity. -/
-@[simp]
-lemma constFirstArgProf_map_fst {J : Type*} [Category J] {D : Type*} [Category D]
-    (F : J ⥤ D) {j₁ j₂ : J} (f : j₁ ⟶ j₂) (k : J) :
-    ((constFirstArgProf F).map f.op).app k = 𝟙 (F.obj k) := rfl
-
-/-- Convert a cone over `F` to a wedge over the constant-first-arg profunctor.
-The cone legs become wedge legs directly. -/
-def coneToWedgeConstProf {J : Type*} [Category J] {D : Type*} [Category D]
-    (F : J ⥤ D) (c : Cone F) : Wedge (constFirstArgProf F) :=
-  Wedge.mk c.pt (fun j => c.π.app j) (fun {j j'} f => by
-    simp only [constFirstArgProf, Functor.const_obj_obj, Functor.const_obj_map,
-      NatTrans.id_app, Category.comp_id]
-    have nat := c.π.naturality f
-    dsimp only [Functor.const_obj_obj, Functor.const_obj_map] at nat
-    rw [Category.id_comp] at nat
-    exact nat.symm)
-
-/-- Convert a wedge over the constant-first-arg profunctor to a cone over `F`.
-The wedge legs become cone legs directly. -/
-def wedgeConstProfToCone {J : Type*} [Category J] {D : Type*} [Category D]
-    (F : J ⥤ D) (w : Wedge (constFirstArgProf F)) : Cone F where
-  pt := w.pt
-  π := {
-    app := fun j => Multifork.ι w j
-    naturality := fun j j' f => by
-      dsimp only [Functor.const_obj_obj, Functor.const_obj_map]
-      rw [Category.id_comp]
-      have din := w.condition f
-      simp only [constFirstArgProf_map_snd, constFirstArgProf_map_fst] at din
-      calc Multifork.ι w j' = Multifork.ι w j' ≫ 𝟙 _ := (Category.comp_id _).symm
-        _ = Multifork.ι w j ≫ F.map f := din.symm
-  }
-
-/-- Round-trip: cone to wedge to cone is identity. -/
-@[simp]
-theorem wedgeConstProfToCone_coneToWedge {J : Type*} [Category J]
-    {D : Type*} [Category D] (F : J ⥤ D) (c : Cone F) :
-    wedgeConstProfToCone F (coneToWedgeConstProf F c) = c := by
-  cases c with | mk pt π =>
-  simp only [coneToWedgeConstProf, wedgeConstProfToCone]
-  rfl
-
-/-- Round-trip: wedge to cone to wedge is identity. -/
-@[simp]
-theorem coneToWedgeConstProf_wedgeToCone {J : Type*} [Category J]
-    {D : Type*} [Category D] (F : J ⥤ D) (w : Wedge (constFirstArgProf F)) :
-    coneToWedgeConstProf F (wedgeConstProfToCone F w) = w := by
-  cases w with | mk pt π =>
-  simp only [wedgeConstProfToCone, coneToWedgeConstProf]
-  rw [Cone.mk.injEq]
-  constructor
-  · rfl
-  · apply heq_of_eq
-    ext tw
-    simp only [Multifork.ofι_π_app]
-    cases tw with
-    | left j => rfl
-    | right b =>
-      simp only [← Multifork.app_right_eq_ι_comp_fst]
-
-/-- Functor from cones over F to wedges over the constant-first-arg profunctor. -/
-def coneToWedgeConstProfFunctor {J : Type*} [Category J]
-    {D : Type*} [Category D] (F : J ⥤ D) :
-    Cone F ⥤ Wedge (constFirstArgProf F) where
-  obj := coneToWedgeConstProf F
-  map := fun {c₁ c₂} f => {
-    hom := f.hom
-    w := fun tw => by
-      cases tw with
-      | left j =>
-        simp only [coneToWedgeConstProf, Multifork.ofι_π_app]
-        exact f.w j
-      | right b =>
-        simp only [coneToWedgeConstProf, Multifork.ofι_π_app]
-        let j : J := (multicospanShapeEnd J).fst b
-        have hw := f.w j
-        rw [← Category.assoc, hw]
-  }
-
-/-- Functor from wedges over constant-first-arg profunctor to cones over F. -/
-def wedgeConstProfToConeFunctor {J : Type*} [Category J]
-    {D : Type*} [Category D] (F : J ⥤ D) :
-    Wedge (constFirstArgProf F) ⥤ Cone F where
-  obj := wedgeConstProfToCone F
-  map := fun {w₁ w₂} f => {
-    hom := f.hom
-    w := fun j => by
-      simp only [wedgeConstProfToCone]
-      have h := f.w (WalkingMulticospan.left j)
-      exact h
-  }
-
-/-- The category of wedges over a constant-first-arg profunctor is equivalent
-to the category of cones over the underlying functor. -/
-def wedgeConstProfEquivCone {J : Type*} [Category J]
-    {D' : Type*} [Category D'] (F : J ⥤ D') :
-    Wedge (constFirstArgProf F) ≌ Cone F where
-  functor := wedgeConstProfToConeFunctor F
-  inverse := coneToWedgeConstProfFunctor F
-  unitIso := NatIso.ofComponents
-    (fun w => eqToIso (coneToWedgeConstProf_wedgeToCone F w).symm)
-    (fun {w₁ w₂} f => by
-      ext
-      simp only [Functor.comp_obj, Functor.id_obj, Functor.comp_map, Functor.id_map,
-        coneToWedgeConstProfFunctor, wedgeConstProfToConeFunctor,
-        eqToIso.hom, Cone.category_comp_hom, Cone.eqToHom_hom, eqToHom_refl,
-        Category.comp_id, Category.id_comp])
-  counitIso := NatIso.ofComponents
-    (fun c => eqToIso (wedgeConstProfToCone_coneToWedge F c).symm)
-    (fun {c₁ c₂} f => by
-      ext
-      simp only [Functor.comp_obj, Functor.id_obj, Functor.comp_map, Functor.id_map,
-        wedgeConstProfToConeFunctor, coneToWedgeConstProfFunctor,
-        eqToIso.hom, eqToHom_refl, Category.comp_id, Category.id_comp])
-
-end ConstProfWedgeAsCone
 
 section RestrictedCowedges
 
