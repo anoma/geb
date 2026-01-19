@@ -912,6 +912,160 @@ def wedgeConstProfEquivCone {J : Type*} [Category J]
 
 end ConstProfWedgeAsCone
 
+section ConstProfCowedgeAsCocone
+
+variable {C : Type u} [Category.{v} C]
+
+/-- The profunctor constant in its second argument: `P(k, j) = G(k)`.
+For `G : Jᵒᵖ ⥤ D`, this profunctor is constant in the covariant (second) position.
+The diagonal at `j` is `G(op j)`, which equals `(G.leftOp).obj j`.
+This is the dual of `constFirstArgProf`. -/
+def constSecondArgProf {J : Type*} [Category J] {D : Type*} [Category D]
+    (G : Jᵒᵖ ⥤ D) : Jᵒᵖ ⥤ J ⥤ D :=
+  G ⋙ (Functor.const J)
+
+/-- For the constant-second-arg profunctor, the diagonal at `j` is `G(op j)`. -/
+@[simp]
+lemma constSecondArgProf_diag {J : Type*} [Category J] {D : Type*} [Category D]
+    (G : Jᵒᵖ ⥤ D) (j : J) :
+    ((constSecondArgProf G).obj (Opposite.op j)).obj j = G.obj (Opposite.op j) := rfl
+
+/-- The covariant action on `f : j → j'` is identity (constant in second arg). -/
+@[simp]
+lemma constSecondArgProf_map_snd {J : Type*} [Category J] {D : Type*} [Category D]
+    (G : Jᵒᵖ ⥤ D) {j₁ j₂ : J} (f : j₁ ⟶ j₂) (k : Jᵒᵖ) :
+    ((constSecondArgProf G).obj k).map f = 𝟙 (G.obj k) := rfl
+
+/-- The contravariant action is the functorial action of `G`. -/
+@[simp]
+lemma constSecondArgProf_map_fst {J : Type*} [Category J] {D : Type*} [Category D]
+    (G : Jᵒᵖ ⥤ D) {k₁ k₂ : Jᵒᵖ} (f : k₁ ⟶ k₂) (j : J) :
+    ((constSecondArgProf G).map f).app j = G.map f := rfl
+
+/-- Convert a cocone over `G : Jᵒᵖ ⥤ D` to a cowedge over the constant-second-arg profunctor.
+The cocone leg at `op j` becomes the cowedge leg at `j`. -/
+def coconeToCowedgeConstProf {J : Type*} [Category J] {D : Type*} [Category D]
+    (G : Jᵒᵖ ⥤ D) (c : Cocone G) : Cowedge (constSecondArgProf G) :=
+  Cowedge.mk c.pt (fun j => c.ι.app (Opposite.op j)) (fun {j j'} f => by
+    simp only [constSecondArgProf, Functor.comp_obj, Functor.const_obj_obj,
+      Functor.comp_map, Functor.const_obj_map]
+    have nat := c.ι.naturality f.op
+    dsimp only [Functor.const_obj_obj, Functor.const_obj_map] at nat
+    rw [Category.comp_id] at nat
+    rw [Category.id_comp]
+    exact nat)
+
+/-- Convert a cowedge over the constant-second-arg profunctor to a cocone over `G : Jᵒᵖ ⥤ D`.
+The cowedge leg at `j` becomes the cocone leg at `op j`. -/
+def cowedgeConstProfToCocone {J : Type*} [Category J] {D : Type*} [Category D]
+    (G : Jᵒᵖ ⥤ D) (w : Cowedge (constSecondArgProf G)) : Cocone G where
+  pt := w.pt
+  ι := {
+    app := fun k => Multicofork.π w k.unop
+    naturality := fun k₁ k₂ f => by
+      dsimp only [Functor.const_obj_obj, Functor.const_obj_map]
+      rw [Category.comp_id]
+      have din := w.condition f.unop
+      simp only [constSecondArgProf, Functor.comp_obj, Functor.const_obj_obj,
+        Functor.comp_map, Functor.const_obj_map, Category.id_comp] at din
+      rw [Quiver.Hom.op_unop] at din
+      exact din
+  }
+
+/-- Round-trip: cocone to cowedge to cocone is identity. -/
+@[simp]
+theorem cowedgeConstProfToCocone_coconeToCowedge {J : Type*} [Category J]
+    {D : Type*} [Category D] (G : Jᵒᵖ ⥤ D) (c : Cocone G) :
+    cowedgeConstProfToCocone G (coconeToCowedgeConstProf G c) = c := by
+  cases c with | mk pt ι =>
+  simp only [coconeToCowedgeConstProf, cowedgeConstProfToCocone]
+  rfl
+
+/-- Round-trip: cowedge to cocone to cowedge is identity. -/
+@[simp]
+theorem coconeToCowedgeConstProf_cowedgeToCocone {J : Type*} [Category J]
+    {D : Type*} [Category D] (G : Jᵒᵖ ⥤ D) (w : Cowedge (constSecondArgProf G)) :
+    coconeToCowedgeConstProf G (cowedgeConstProfToCocone G w) = w := by
+  cases w with | mk pt π =>
+  simp only [cowedgeConstProfToCocone, coconeToCowedgeConstProf]
+  rw [Cocone.mk.injEq]
+  constructor
+  · rfl
+  · apply heq_of_eq
+    ext tw
+    cases tw with
+    | left j =>
+      exact (Multicofork.fst_app_right (I := multispanIndexCoend _) ⟨pt, π⟩ j).symm
+    | right b =>
+      exact (Multicofork.π_eq_app_right ⟨pt, π⟩ b).symm
+
+/-- Functor from cocones over G to cowedges over the constant-second-arg profunctor. -/
+def coconeToCowedgeConstProfFunctor {J : Type*} [Category J]
+    {D : Type*} [Category D] (G : Jᵒᵖ ⥤ D) :
+    Cocone G ⥤ Cowedge (constSecondArgProf G) where
+  obj := coconeToCowedgeConstProf G
+  map {c₁ c₂} f := {
+    hom := f.hom
+    w := fun tw => by
+      -- For multispanShapeCoend: .L = Arrow J, .R = J
+      cases tw with
+      | left arr =>
+        -- arr : Arrow J
+        -- Goal: (fst arr ≫ c₁.π (op arr.left)) ≫ f.hom = fst arr ≫ c₂.π (op arr.left)
+        -- where fst arr = G.map arr.hom.op
+        simp only [coconeToCowedgeConstProf, Multicofork.ofπ_ι_app, multispanShapeCoend_fst]
+        have hw := f.w (Opposite.op arr.left)
+        simp only [Functor.const_obj_obj] at hw
+        rw [Category.assoc, hw]
+      | right j =>
+        -- j : J directly
+        simp only [coconeToCowedgeConstProf, Multicofork.ofπ_ι_app]
+        have hw := f.w (Opposite.op j)
+        simp only [Functor.const_obj_obj] at hw
+        exact hw
+  }
+
+/-- Functor from cowedges over constant-second-arg profunctor to cocones over G. -/
+def cowedgeConstProfToCoconeFunctor {J : Type*} [Category J]
+    {D : Type*} [Category D] (G : Jᵒᵖ ⥤ D) :
+    Cowedge (constSecondArgProf G) ⥤ Cocone G where
+  obj := cowedgeConstProfToCocone G
+  map {w₁ w₂} f := {
+    hom := f.hom
+    w := fun k => by
+      -- k : Jᵒᵖ, need to relate to WalkingMultispan index
+      -- For multispanShapeCoend: .L = Arrow J, .R = J
+      -- Use .right case since that's indexed by J
+      simp only [cowedgeConstProfToCocone, Functor.const_obj_obj]
+      have h := f.w (WalkingMultispan.right k.unop)
+      exact h
+  }
+
+/-- The category of cowedges over a constant-second-arg profunctor is equivalent
+to the category of cocones over the underlying functor. -/
+def cowedgeConstProfEquivCocone {J : Type*} [Category J]
+    {D' : Type*} [Category D'] (G : Jᵒᵖ ⥤ D') :
+    Cowedge (constSecondArgProf G) ≌ Cocone G where
+  functor := cowedgeConstProfToCoconeFunctor G
+  inverse := coconeToCowedgeConstProfFunctor G
+  unitIso := NatIso.ofComponents
+    (fun w => eqToIso (coconeToCowedgeConstProf_cowedgeToCocone G w).symm)
+    (fun {w₁ w₂} f => by
+      ext
+      simp only [Functor.comp_obj, Functor.id_obj, Functor.comp_map, Functor.id_map,
+        coconeToCowedgeConstProfFunctor, cowedgeConstProfToCoconeFunctor,
+        eqToIso.hom, Cocone.category_comp_hom, Cocone.eqToHom_hom, eqToHom_refl,
+        Category.comp_id, Category.id_comp])
+  counitIso := NatIso.ofComponents
+    (fun c => eqToIso (cowedgeConstProfToCocone_coconeToCowedge G c).symm)
+    (fun {c₁ c₂} f => by
+      ext
+      simp only [Functor.comp_obj, Functor.id_obj, Functor.comp_map, Functor.id_map,
+        cowedgeConstProfToCoconeFunctor, coconeToCowedgeConstProfFunctor,
+        eqToIso.hom, eqToHom_refl, Category.comp_id, Category.id_comp])
+
+end ConstProfCowedgeAsCocone
+
 section WeightedLimitColimit
 
 /-!
