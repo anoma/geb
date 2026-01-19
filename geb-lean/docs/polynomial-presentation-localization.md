@@ -208,11 +208,9 @@ leaving only the represented copresheaf.
 
 ## Constructivity Analysis
 
-The equivalence with Type-valued copresheaves encounters a fundamental
-constructivity obstruction. This section analyzes the issue and presents
-a constructive alternative.
+The equivalence with Type-valued copresheaves is non-constructive.
 
-### The Obstruction
+### Non-constructivity of quotients
 
 For the inverse morphism `g : S(E(X)) → X`, we need
 `tgtHom : densityTgt(E(X)) → X.tgt`.
@@ -231,7 +229,7 @@ Since `ccrReindex X.fst j` and `ccrReindex X.snd j` can differ, index
 extraction is **not well-defined on equivalence classes**. We cannot use
 `Quot.lift`; only `Quot.out` (which requires choice) would work.
 
-This obstruction applies equally to:
+This applies equally to:
 
 - Direct inverse construction
 - Fullness proofs (which require constructing lifts)

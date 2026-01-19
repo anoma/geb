@@ -631,7 +631,7 @@ For the inverse morphism's `tgtHom : densityTgt(X.toCopresheaf) → X.tgt`:
 - These indices can DIFFER - index extraction is not quotient-compatible
 - Cannot use `Quot.lift`; only `Quot.out` (requiring choice) works
 
-This obstruction applies to ALL approaches that require a function from
+This applies to all approaches that require a function from
 quotient-indexed types.
 
 ### Constructive Alternative: Setoid-Valued Copresheaves

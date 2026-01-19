@@ -1026,7 +1026,7 @@ end Equivalence
 /-! ## Setoid-Valued Density Presentation
 
 The constructive alternative to the Type-valued equivalence uses Setoid-valued
-copresheaves. This avoids the noncomputability obstruction by keeping the
+copresheaves. This avoids noncomputability by keeping the
 pre-quotient structure.
 
 For F : D ⥤ SetoidBundle, the density presentation uses:
