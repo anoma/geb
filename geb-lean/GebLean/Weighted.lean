@@ -3,8 +3,10 @@ import Mathlib.CategoryTheory.Elements
 import Mathlib.CategoryTheory.Functor.FullyFaithful
 import Mathlib.CategoryTheory.Limits.Cones
 import Mathlib.CategoryTheory.Limits.Shapes.End
+import Mathlib.CategoryTheory.Limits.Shapes.Equalizers
 import GebLean.Paranatural
 import GebLean.Utilities.TwArrPresheaf
+import GebLean.Utilities.TwistedArrow
 
 /-!
 # Weighted limits and colimits via twisted arrow categories
@@ -2391,6 +2393,7 @@ the slice profunctor `G ⇓ pt`.
 
 The universe of `H` is `v` (the morphism universe) to match the slice profunctor
 `G ⇓ pt : Cᵒᵖ ⥤ C ⥤ Type v`. -/
+@[ext]
 structure RestrictedCowedge (G : Cᵒᵖ ⥤ C ⥤ C) (H : Cᵒᵖ ⥤ C ⥤ Type v) where
   /-- The carrier (summit) object. -/
   pt : C
@@ -4051,30 +4054,1864 @@ theorem commutativity_from_identity_image (H : Cᵒᵖ ⥤ C ⥤ Type v) (G : C�
           rw [← nat₂]
 
 /-!
-### Fullness of the restriction functor
+### Non-fullness of the restriction functor
 
-The restriction functor is faithful (proven above). Whether it is full depends
-on whether the weight maps from identity co-twisted arrows are jointly
-surjective onto arbitrary co-twisted arrows.
+The restriction functor is faithful (proven above) but NOT full in general.
+We prove this by showing that fullness would require weight maps from
+identity co-twisted arrows to be jointly surjective, which fails for the
+Hom-profunctor on categories with parallel morphisms.
 
-Specifically, for fullness we need: for every `tw : CoTwistedArrow C` and
-every `w : W.obj (op tw)`, there exists an identity arrow `id A` and a morphism
-`m : tw ⟶ id A` such that `w` is in the image of `W.map m.op`.
-
-For the Hom profunctor `H(X, Y) = Hom(X, Y)`, the weight maps are:
-- From target: `(H.map f.op).app I₁ : H(I₁, I₁) → H(I₀, I₁)` (precomposition by f)
-- From source: `(H.obj (op I₀)).map f : H(I₀, I₀) → H(I₀, I₁)` (postcomposition by f)
-
-These maps are not generally surjective. For example, with f : {a,b} → {c}
-constant, precomposition and postcomposition both yield only constant
-functions, missing non-constant functions in Hom({a,b}, {c,d}).
-
-For a general profunctor H, the restriction functor is not full.
-The faithfulness result above already provides the weaker property that
-the restriction functor reflects isomorphisms when restricted to weighted
-cowedges whose weight elements at non-identity arrows all factor through
-identity.
+The proof proceeds by contradiction: we show that if the functor were full,
+then every morphism between restrictions would lift, but we exhibit a
+morphism (the identity on the apex) that cannot lift when the cowedges
+differ at an unreachable weight element.
 -/
+
+section NonFullnessCounterexample
+
+open CategoryTheory.Limits
+
+/-!
+#### The counterexample category
+
+We use `WalkingParallelPair`, the category with:
+- Objects: `zero` and `one`
+- Morphisms: `left, right : zero ⟶ one` plus identities
+
+For the Hom-profunctor:
+- `Hom(zero, zero) = {id}` (singleton)
+- `Hom(one, one) = {id}` (singleton)
+- `Hom(zero, one) = {left, right}` (two elements)
+
+The weight maps from diagonals both map to `left` (for co-twisted arrow
+`coTwObjMk left`), leaving `right` unreachable.
+-/
+
+/-- In WalkingParallelPair, the only morphism `one ⟶ one` is the identity. -/
+theorem walkingParallelPair_one_one_eq_id
+    (f : WalkingParallelPair.one ⟶ WalkingParallelPair.one) :
+    f = 𝟙 WalkingParallelPair.one := by
+  cases f
+  rfl
+
+/-- In WalkingParallelPair, the only morphism `zero ⟶ zero` is the identity. -/
+theorem walkingParallelPair_zero_zero_eq_id
+    (f : WalkingParallelPair.zero ⟶ WalkingParallelPair.zero) :
+    f = 𝟙 WalkingParallelPair.zero := by
+  cases f
+  rfl
+
+/-- In WalkingParallelPair, morphisms `zero ⟶ one` are exactly `left` and
+`right`. -/
+theorem walkingParallelPair_zero_one_cases
+    (f : WalkingParallelPair.zero ⟶ WalkingParallelPair.one) :
+    f = WalkingParallelPairHom.left ∨ f = WalkingParallelPairHom.right := by
+  cases f <;> simp
+
+/-- There are no morphisms from `one` to `zero` in WalkingParallelPair. -/
+theorem walkingParallelPair_one_zero_empty
+    (f : WalkingParallelPair.one ⟶ WalkingParallelPair.zero) : False := by
+  cases f
+
+/-- The two morphisms `left` and `right` are distinct. -/
+theorem walkingParallelPair_left_ne_right :
+    WalkingParallelPairHom.left ≠ WalkingParallelPairHom.right := by
+  intro h
+  cases h
+
+/-- The objects `zero` and `one` in WalkingParallelPair are distinct. -/
+theorem walkingParallelPair_zero_ne_one :
+    WalkingParallelPair.zero ≠ WalkingParallelPair.one := by
+  intro h
+  cases h
+
+/-- The objects `one` and `zero` in WalkingParallelPair are distinct. -/
+theorem walkingParallelPair_one_ne_zero :
+    WalkingParallelPair.one ≠ WalkingParallelPair.zero := by
+  intro h
+  cases h
+
+/-!
+#### Non-fullness proof
+
+For the restriction functor to be full, every `RestrictedCowedge.Hom` must
+lift to a `WeightedCocone.Hom`. This requires that commutativity at diagonal
+co-twisted arrows implies commutativity at ALL co-twisted arrows.
+
+By `commutativity_from_identity_image`, this holds for weight elements in
+the image of weight maps from diagonals. For fullness, we'd need ALL weight
+elements to be reachable, i.e., the weight maps to be jointly surjective.
+
+`Functor_Full_restrictionFunctor_contradiction` proves that assuming `Full`
+plus the existence of cowedges with equal restrictions but differing legs
+leads to a contradiction. `wpp_weight_maps_not_surjective` shows that for
+`WalkingParallelPair`, weight maps from diagonals are not jointly surjective,
+establishing that such counterexample cowedges can exist.
+-/
+
+/-- For co-twisted arrow morphisms into identity arrows, the weight map
+is precomposition or postcomposition with the arrow. -/
+theorem weightMapToIdentity_is_composition {C : Type*} [Category C]
+    (H : Cᵒᵖ ⥤ C ⥤ Type*) {A B : C} (f : A ⟶ B) :
+    ∃ (mapFromSource : diagApp H A → (H.obj (Opposite.op A)).obj B)
+      (mapFromTarget : diagApp H B → (H.obj (Opposite.op A)).obj B),
+    ∀ w : (H.obj (Opposite.op A)).obj B,
+      (∃ a, mapFromSource a = w) ∨ (∃ b, mapFromTarget b = w) →
+      True := by
+  use fun a => (H.obj (Opposite.op A)).map f a
+  use fun b => (H.map f.op).app B b
+  intro _ _
+  trivial
+
+/-- The Hom-type `Hom(zero, one)` in WalkingParallelPair has exactly two
+elements. -/
+theorem wpp_hom_zero_one_two_elements :
+    ∃ (a b : WalkingParallelPair.zero ⟶ WalkingParallelPair.one), a ≠ b ∧
+      ∀ f : WalkingParallelPair.zero ⟶ WalkingParallelPair.one, f = a ∨ f = b := by
+  use WalkingParallelPairHom.left, WalkingParallelPairHom.right
+  constructor
+  · exact walkingParallelPair_left_ne_right
+  · exact walkingParallelPair_zero_one_cases
+
+/-- The Hom-type `Hom(zero, zero)` in WalkingParallelPair is a singleton. -/
+theorem wpp_hom_zero_zero_singleton :
+    ∀ f : WalkingParallelPair.zero ⟶ WalkingParallelPair.zero,
+      f = 𝟙 WalkingParallelPair.zero :=
+  walkingParallelPair_zero_zero_eq_id
+
+/-- The Hom-type `Hom(one, one)` in WalkingParallelPair is a singleton. -/
+theorem wpp_hom_one_one_singleton :
+    ∀ f : WalkingParallelPair.one ⟶ WalkingParallelPair.one,
+      f = 𝟙 WalkingParallelPair.one :=
+  walkingParallelPair_one_one_eq_id
+
+/-- Postcomposition by `left` maps the unique element of `Hom(zero, zero)`
+to `left`. -/
+theorem wpp_postcomp_left_image :
+    (𝟙 WalkingParallelPair.zero) ≫ WalkingParallelPairHom.left =
+      WalkingParallelPairHom.left :=
+  Category.id_comp _
+
+/-- Precomposition by `left` maps the unique element of `Hom(one, one)`
+to `left`. -/
+theorem wpp_precomp_left_image :
+    WalkingParallelPairHom.left ≫ (𝟙 WalkingParallelPair.one) =
+      WalkingParallelPairHom.left :=
+  Category.comp_id _
+
+/-- The morphism `right : zero ⟶ one` is not in the image of weight maps
+from diagonal hom-sets for the co-twisted arrow `coTwObjMk left`.
+
+Specifically, neither postcomposition from `Hom(zero, zero)` nor
+precomposition from `Hom(one, one)` can produce `right` when applied to
+their respective identity morphisms. -/
+theorem wpp_right_not_reachable_from_left :
+    WalkingParallelPairHom.right ≠
+      (𝟙 WalkingParallelPair.zero) ≫ WalkingParallelPairHom.left ∧
+    WalkingParallelPairHom.right ≠
+      WalkingParallelPairHom.left ≫ (𝟙 WalkingParallelPair.one) := by
+  constructor
+  · simp only [Category.id_comp]
+    exact walkingParallelPair_left_ne_right.symm
+  · simp only [Category.comp_id]
+    exact walkingParallelPair_left_ne_right.symm
+
+/-- For WalkingParallelPair, the weight maps from diagonals are not jointly
+surjective onto `Hom(zero, one)`.
+
+Since `Hom(zero, zero) = {id}` and `Hom(one, one) = {id}`, and both
+postcomposition and precomposition by `left` map these identities to `left`,
+the morphism `right` is unreachable. -/
+theorem wpp_weight_maps_not_surjective :
+    ∃ w : WalkingParallelPair.zero ⟶ WalkingParallelPair.one,
+      (∀ a : WalkingParallelPair.zero ⟶ WalkingParallelPair.zero,
+        a ≫ WalkingParallelPairHom.left ≠ w) ∧
+      (∀ b : WalkingParallelPair.one ⟶ WalkingParallelPair.one,
+        WalkingParallelPairHom.left ≫ b ≠ w) := by
+  use WalkingParallelPairHom.right
+  constructor
+  · intro a
+    rw [wpp_hom_zero_zero_singleton a, Category.id_comp]
+    exact walkingParallelPair_left_ne_right
+  · intro b
+    rw [wpp_hom_one_one_singleton b, Category.comp_id]
+    exact walkingParallelPair_left_ne_right
+
+/-- If two weighted cowedges have the same apex and legs that differ at some
+weight element, then there is no weighted cocone morphism between them with
+the identity as the underlying morphism.
+
+This is the contrapositive of: a WeightedCocone.Hom with identity hom
+requires all legs to be equal. -/
+theorem no_id_hom_when_legs_differ {J : Type*} [Category J]
+    {C : Type*} [Category C]
+    {W : Jᵒᵖ ⥤ Type*} {D : J ⥤ C}
+    {wc₁ wc₂ : WeightedCocone W D} (hpt : wc₁.pt = wc₂.pt)
+    {j : J} {w : W.obj (Opposite.op j)}
+    (hne : wc₁.leg j w ≠ wc₂.leg j w ≫ eqToHom hpt.symm) :
+    ¬∃ (f : WeightedCocone.Hom wc₁ wc₂), f.hom = eqToHom hpt := by
+  intro ⟨f, hf⟩
+  apply hne
+  have := f.w j w
+  rw [hf] at this
+  have h2 : wc₂.leg j w ≫ eqToHom hpt.symm = wc₁.leg j w := by
+    rw [← this]
+    simp only [Category.assoc, eqToHom_trans, eqToHom_refl, Category.comp_id]
+  exact h2.symm
+
+/-- Helper lemma: HEq of morphisms with same domain but different codomains
+is equivalent to equality after transport via eqToHom. -/
+lemma heq_iff_eq_comp_eqToHom {C : Type*} [Category C] {A B B' : C}
+    (h : B = B') (f : A ⟶ B) (g : A ⟶ B') :
+    HEq f g ↔ f = g ≫ eqToHom h.symm := by
+  subst h
+  simp only [eqToHom_refl, Category.comp_id, heq_eq_eq]
+
+/-- Corollary: if weighted cowedges have the same apex (exactly, not just
+isomorphically) and differ at some leg, there's no identity morphism. -/
+theorem no_id_hom_when_legs_differ' {J : Type*} [Category J]
+    {C : Type*} [Category C]
+    {W : Jᵒᵖ ⥤ Type*} {D : J ⥤ C}
+    {wc₁ wc₂ : WeightedCocone W D} (hpt : wc₁.pt = wc₂.pt)
+    {j : J} {w : W.obj (Opposite.op j)}
+    (hne : HEq (wc₁.leg j w) (wc₂.leg j w) → False) :
+    ¬∃ (f : WeightedCocone.Hom wc₁ wc₂), f.hom = eqToHom hpt :=
+  no_id_hom_when_legs_differ (j := j) (w := w) hpt fun heq =>
+    hne ((heq_iff_eq_comp_eqToHom hpt _ _).mpr heq)
+
+/-- For the restriction functor to be full, every RestrictedCowedge.Hom must
+lift to a WeightedCocone.Hom. The non-surjectivity of weight maps from
+diagonals means there can exist weighted cowedges with the same restrictions
+but different off-diagonal legs, preventing such lifts.
+
+The theorems `wpp_weight_maps_not_surjective` and `no_id_hom_when_legs_differ`
+together establish:
+1. There exist weight elements not reachable from diagonal weight maps
+2. If cowedges differ at such elements, no identity-hom exists between them
+3. But an identity RestrictedCowedge.Hom exists (they agree on diagonals)
+
+The existence of such cowedges follows from the weighted cowedge naturality
+structure: unreachable weight elements have no naturality constraints from
+diagonals, so their leg values can be chosen independently. -/
+theorem restrictionFunctor_not_full_abstract
+    (H : Cᵒᵖ ⥤ C ⥤ Type v) (G : Cᵒᵖ ⥤ C ⥤ C)
+    (wc₁ wc₂ : WeightedCowedge H G)
+    (hpt : wc₁.pt = wc₂.pt)
+    (_hdiag : ∀ (A : C) (w : (profunctorOnOpCoTwistedArrow C H).obj
+               (Opposite.op (idCoTwistedArrow A))),
+             HEq (wc₁.leg (idCoTwistedArrow A) w)
+                 (wc₂.leg (idCoTwistedArrow A) w))
+    {tw : CoTwistedArrow C}
+    {w : (profunctorOnOpCoTwistedArrow C H).obj (Opposite.op tw)}
+    (hdiff : HEq (wc₁.leg tw w) (wc₂.leg tw w) → False) :
+    ¬∃ (f : WeightedCocone.Hom wc₁ wc₂), f.hom = eqToHom hpt :=
+  no_id_hom_when_legs_differ' hpt hdiff
+
+/-- The underlying morphism of `eqToHom` for `RestrictedCowedge.Hom` is `eqToHom`
+applied to the equality of apexes. -/
+theorem RestrictedCowedge_eqToHom_hom {G : Cᵒᵖ ⥤ C ⥤ C} {H : Cᵒᵖ ⥤ C ⥤ Type v}
+    {rc₁ rc₂ : RestrictedCowedge G H} (h : rc₁ = rc₂) :
+    (eqToHom h).hom = eqToHom (congrArg RestrictedCowedge.pt h) := by
+  subst h
+  rfl
+
+/-- The underlying morphism of `restrictionFunctor.map f` is `f.hom`. -/
+theorem restrictionFunctor_map_hom {H : Cᵒᵖ ⥤ C ⥤ Type v} {G : Cᵒᵖ ⥤ C ⥤ C}
+    {wc₁ wc₂ : WeightedCowedge H G} (f : WeightedCocone.Hom wc₁ wc₂) :
+    ((restrictionFunctor H G).map f).hom = f.hom :=
+  rfl
+
+/-- If `restrictionFunctor.map f = eqToHom h`, then `f.hom` equals the
+corresponding `eqToHom` on apexes. -/
+theorem restrictionFunctor_map_eq_eqToHom_implies_hom_eq
+    {H : Cᵒᵖ ⥤ C ⥤ Type v} {G : Cᵒᵖ ⥤ C ⥤ C}
+    {wc₁ wc₂ : WeightedCowedge H G}
+    (h : (restrictionFunctor H G).obj wc₁ = (restrictionFunctor H G).obj wc₂)
+    (f : WeightedCocone.Hom wc₁ wc₂)
+    (hf : (restrictionFunctor H G).map f = eqToHom h) :
+    f.hom = eqToHom (congrArg RestrictedCowedge.pt h) := by
+  have : ((restrictionFunctor H G).map f).hom = (eqToHom h).hom := congrArg _ hf
+  rw [restrictionFunctor_map_hom, RestrictedCowedge_eqToHom_hom] at this
+  exact this
+
+/-- If the restriction functor is full, and two weighted cowedges have equal
+restrictions but differ at some leg, we get a contradiction.
+
+This is the formal proof that fullness fails when weight maps from diagonals
+are not jointly surjective. -/
+theorem Functor_Full_restrictionFunctor_contradiction
+    {H : Cᵒᵖ ⥤ C ⥤ Type v} {G : Cᵒᵖ ⥤ C ⥤ C}
+    [Functor.Full (restrictionFunctor H G)]
+    {wc₁ wc₂ : WeightedCowedge H G}
+    (hrestr : (restrictionFunctor H G).obj wc₁ = (restrictionFunctor H G).obj wc₂)
+    {tw : CoTwistedArrow C}
+    {w : (profunctorOnOpCoTwistedArrow C H).obj (Opposite.op tw)}
+    (hdiff : HEq (wc₁.leg tw w) (wc₂.leg tw w) → False) :
+    False := by
+  have hpt : wc₁.pt = wc₂.pt := congrArg RestrictedCowedge.pt hrestr
+  have hfull := (restrictionFunctor H G).map_surjective (X := wc₁) (Y := wc₂)
+  obtain ⟨f, hf⟩ := hfull (eqToHom hrestr)
+  have hfhom : f.hom = eqToHom hpt :=
+    restrictionFunctor_map_eq_eqToHom_implies_hom_eq hrestr f hf
+  exact no_id_hom_when_legs_differ' hpt hdiff ⟨f, hfhom⟩
+
+/-- The restriction functor is not full whenever there exist two weighted
+cowedges with equal restrictions but differing at some off-diagonal leg. -/
+theorem restrictionFunctor_not_full_of_counterexample
+    {H : Cᵒᵖ ⥤ C ⥤ Type v} {G : Cᵒᵖ ⥤ C ⥤ C}
+    {wc₁ wc₂ : WeightedCowedge H G}
+    (hrestr : (restrictionFunctor H G).obj wc₁ = (restrictionFunctor H G).obj wc₂)
+    {tw : CoTwistedArrow C}
+    {w : (profunctorOnOpCoTwistedArrow C H).obj (Opposite.op tw)}
+    (hdiff : HEq (wc₁.leg tw w) (wc₂.leg tw w) → False) :
+    ¬Functor.Full (restrictionFunctor H G) := fun hfull =>
+  @Functor_Full_restrictionFunctor_contradiction C _ H G hfull wc₁ wc₂ hrestr tw w hdiff
+
+/-!
+#### Explicit counterexample construction
+
+We construct explicit weighted cowedges for WalkingParallelPair demonstrating
+that the restriction functor is not full.
+
+The construction uses:
+- C = WalkingParallelPair
+- H = Hom-profunctor (curried from mathlib's `Functor.hom`)
+- G = constant profunctor (all objects map to a fixed object)
+- Two cowedges that agree on diagonals but differ at (coTwObjMk left, right)
+-/
+
+/-- The Hom-profunctor on WalkingParallelPair as a curried functor.
+Maps (A, B) to Hom(A, B). -/
+abbrev wppHomProfunctor : WalkingParallelPairᵒᵖ ⥤ WalkingParallelPair ⥤ Type :=
+  Functor.curry.obj (Functor.hom WalkingParallelPair)
+
+/-- Weight at a co-twisted arrow for the Hom-profunctor. -/
+abbrev wppWeightAt (tw : CoTwistedArrow WalkingParallelPair) : Type :=
+  (profunctorOnOpCoTwistedArrow WalkingParallelPair wppHomProfunctor).obj
+    (Opposite.op tw)
+
+/-- The co-twisted arrow for `left : zero ⟶ one`. -/
+abbrev coTwLeft : CoTwistedArrow WalkingParallelPair :=
+  coTwObjMk WalkingParallelPairHom.left
+
+/-- The co-twisted arrow for the identity on zero. -/
+abbrev coTwIdZero : CoTwistedArrow WalkingParallelPair :=
+  idCoTwistedArrow WalkingParallelPair.zero
+
+/-- The co-twisted arrow for the identity on one. -/
+abbrev coTwIdOne : CoTwistedArrow WalkingParallelPair :=
+  idCoTwistedArrow WalkingParallelPair.one
+
+
+/-- The weight at coTwLeft equals Hom(zero, one). -/
+theorem wppWeightAt_coTwLeft :
+    wppWeightAt coTwLeft =
+    (WalkingParallelPair.zero ⟶ WalkingParallelPair.one) := by
+  unfold wppWeightAt coTwLeft profunctorOnOpCoTwistedArrow
+  simp only [Functor.comp_obj, coTwistedArrowOpEquivTwistedArrow,
+    profunctorOnTwistedArrow_obj]
+  rfl
+
+/-- The weight at coTwIdZero equals Hom(zero, zero). -/
+theorem wppWeightAt_coTwIdZero :
+    wppWeightAt coTwIdZero =
+    (WalkingParallelPair.zero ⟶ WalkingParallelPair.zero) := by
+  unfold wppWeightAt coTwIdZero idCoTwistedArrow profunctorOnOpCoTwistedArrow
+  simp only [Functor.comp_obj, coTwistedArrowOpEquivTwistedArrow,
+    profunctorOnTwistedArrow_obj]
+  rfl
+
+/-- Cast a weight element to the weight type at coTwLeft. -/
+def castToWeightCoTwLeft
+    (w : WalkingParallelPair.zero ⟶ WalkingParallelPair.one) :
+    wppWeightAt coTwLeft :=
+  cast wppWeightAt_coTwLeft.symm w
+
+/-- The element `right` viewed as a weight at coTwLeft. -/
+def wppWeightRight : wppWeightAt coTwLeft :=
+  castToWeightCoTwLeft WalkingParallelPairHom.right
+
+/-- The element `left` viewed as a weight at coTwLeft. -/
+def wppWeightLeft : wppWeightAt coTwLeft :=
+  castToWeightCoTwLeft WalkingParallelPairHom.left
+
+/-- The constant diagram at ℕ for our counterexample.
+Uses the existing constProfunctor from the WeightedRestrictedCorrespondence section. -/
+abbrev wppConstDiagram : WalkingParallelPairᵒᵖ ⥤ WalkingParallelPair ⥤ Type :=
+  constProfunctor (C := WalkingParallelPair) ℕ
+
+/-- The weight functor for WalkingParallelPair with Hom-profunctor. -/
+abbrev wppWeightFunctor :
+    (CoTwistedArrow WalkingParallelPair)ᵒᵖ ⥤ Type :=
+  profunctorOnOpCoTwistedArrow WalkingParallelPair wppHomProfunctor
+
+/-- The diagram functor for WalkingParallelPair with constant diagram. -/
+abbrev wppDiagramFunctor :
+    CoTwistedArrow WalkingParallelPair ⥤ Type :=
+  profunctorOnCoTwistedArrow WalkingParallelPair wppConstDiagram
+
+/-- The diagram is constant at ℕ. -/
+theorem wppDiagramFunctor_obj_eq (tw : CoTwistedArrow WalkingParallelPair) :
+    wppDiagramFunctor.obj tw = ℕ := rfl
+
+/-- The diagram morphisms are all identities. -/
+theorem wppDiagramFunctor_map_eq {tw tw' : CoTwistedArrow WalkingParallelPair}
+    (f : tw ⟶ tw') :
+    wppDiagramFunctor.map f = id := rfl
+
+/-- The hom-to-functor for our diagram. -/
+abbrev wppHomToFunctor (pt : Type) :
+    (CoTwistedArrow WalkingParallelPair)ᵒᵖ ⥤ Type :=
+  homToFunctor wppDiagramFunctor pt
+
+/-- The homToFunctor map is identity for our constant diagram. -/
+theorem wppHomToFunctor_map_eq
+    {x y : (CoTwistedArrow WalkingParallelPair)ᵒᵖ}
+    (f : x ⟶ y) (g : wppDiagramFunctor.obj x.unop ⟶ ℕ) :
+    (homToFunctor wppDiagramFunctor ℕ).map f g = g := by
+  simp only [homToFunctor, wppDiagramFunctor_map_eq]
+  -- id ≫ g = g in the Type category
+  rfl
+
+/-- A leg function for a weighted cocone specifies a leg for each co-twisted
+arrow and weight element. -/
+def WppLegFunction (pt : Type) :=
+  (tw : CoTwistedArrow WalkingParallelPair) → wppWeightAt tw → (ℕ → pt)
+
+/-- Naturality condition for a leg function: for any morphism in CoTwistedArrow,
+transported weights must give the same leg value (since the diagram is
+constant and diagram morphisms are identities). -/
+def WppLegNatural (pt : Type) (legFn : WppLegFunction pt) : Prop :=
+  ∀ (tw tw' : CoTwistedArrow WalkingParallelPair) (f : tw ⟶ tw')
+    (w' : wppWeightAt tw'),
+    legFn tw (wppWeightFunctor.map f.op w') = legFn tw' w'
+
+/-- The weight type at coTwIdOne equals Hom(one, one). -/
+theorem wppWeightAt_coTwIdOne :
+    wppWeightAt coTwIdOne =
+    (WalkingParallelPair.one ⟶ WalkingParallelPair.one) := by
+  unfold wppWeightAt coTwIdOne idCoTwistedArrow profunctorOnOpCoTwistedArrow
+  simp only [Functor.comp_obj, coTwistedArrowOpEquivTwistedArrow,
+    profunctorOnTwistedArrow_obj]
+  rfl
+
+/-- The only weight element at coTwIdZero is the identity. -/
+theorem wppWeightAt_coTwIdZero_singleton (w : wppWeightAt coTwIdZero) :
+    w = cast wppWeightAt_coTwIdZero.symm (𝟙 WalkingParallelPair.zero) := by
+  have h : w = cast wppWeightAt_coTwIdZero.symm
+      (cast wppWeightAt_coTwIdZero w) := by simp
+  rw [h]
+  congr 1
+  exact wpp_hom_zero_zero_singleton (cast wppWeightAt_coTwIdZero w)
+
+/-- The only weight element at coTwIdOne is the identity. -/
+theorem wppWeightAt_coTwIdOne_singleton (w : wppWeightAt coTwIdOne) :
+    w = cast wppWeightAt_coTwIdOne.symm (𝟙 WalkingParallelPair.one) := by
+  have h : w = cast wppWeightAt_coTwIdOne.symm
+      (cast wppWeightAt_coTwIdOne w) := by simp
+  rw [h]
+  congr 1
+  exact wpp_hom_one_one_singleton (cast wppWeightAt_coTwIdOne w)
+
+/-- Cast a leg morphism (ℕ → ℕ) through the diagram object equality. -/
+def wppCastLeg (tw : CoTwistedArrow WalkingParallelPair) :
+    (ℕ → ℕ) → (wppDiagramFunctor.obj tw → ℕ) :=
+  cast (by rw [wppDiagramFunctor_obj_eq])
+
+/-- A natural transformation for constant leg functions.
+Since the diagram is constant, constant leg functions are automatically natural. -/
+def wppConstLegNatTrans (n : ℕ) :
+    wppWeightFunctor ⟶ homToFunctor wppDiagramFunctor ℕ where
+  app := fun tw => fun _ => wppCastLeg tw.unop (fun _ => n)
+  naturality := fun _ _ _ => by
+    ext _
+    simp only [types_comp_apply]
+    rfl
+
+/-- The first weighted cocone: all legs map to 0. -/
+def wppWeightedCocone₀ : WeightedCocone wppWeightFunctor wppDiagramFunctor where
+  pt := ℕ
+  ι := wppConstLegNatTrans 0
+
+/-- Extract the leg of wppWeightedCocone₀ at any position. -/
+theorem wppWeightedCocone₀_leg_eq
+    (tw : CoTwistedArrow WalkingParallelPair) (w : wppWeightAt tw) :
+    wppWeightedCocone₀.leg tw w = wppCastLeg tw (fun _ => 0) := rfl
+
+/-- The second weighted cocone: all legs map to 1. -/
+def wppWeightedCocone₁ : WeightedCocone wppWeightFunctor wppDiagramFunctor where
+  pt := ℕ
+  ι := wppConstLegNatTrans 1
+
+/-- Extract the leg of wppWeightedCocone₁ at any position. -/
+theorem wppWeightedCocone₁_leg_eq
+    (tw : CoTwistedArrow WalkingParallelPair) (w : wppWeightAt tw) :
+    wppWeightedCocone₁.leg tw w = wppCastLeg tw (fun _ => 1) := rfl
+
+/-- The two cocones have the same apex. -/
+theorem wppCocones_same_apex : wppWeightedCocone₀.pt = wppWeightedCocone₁.pt := rfl
+
+/-- The two cocones have different legs at coTwLeft. -/
+theorem wppCocones_legs_differ :
+    wppWeightedCocone₀.leg coTwLeft wppWeightLeft ≠
+    wppWeightedCocone₁.leg coTwLeft wppWeightLeft := by
+  simp only [wppWeightedCocone₀_leg_eq, wppWeightedCocone₁_leg_eq, ne_eq]
+  intro h
+  have h0 : (wppCastLeg coTwLeft (fun _ => 0)) (0 : ℕ) = 0 := rfl
+  have h1 : (wppCastLeg coTwLeft (fun _ => 1)) (0 : ℕ) = 1 := rfl
+  have : (0 : ℕ) = 1 := by
+    calc 0 = (wppCastLeg coTwLeft (fun _ => 0)) (0 : ℕ) := h0.symm
+      _ = (wppCastLeg coTwLeft (fun _ => 1)) (0 : ℕ) := congrFun h (0 : ℕ)
+      _ = 1 := h1
+  exact Nat.zero_ne_one this
+
+/-- Two constant weighted cocones differ at diagonal legs when they use
+different constants. This shows that constant cocones DON'T satisfy the
+equal-restriction hypothesis. -/
+theorem wppCocones_diagonal_legs_differ :
+    wppWeightedCocone₀.leg coTwIdZero
+      (cast wppWeightAt_coTwIdZero.symm (𝟙 _)) ≠
+    wppWeightedCocone₁.leg coTwIdZero
+      (cast wppWeightAt_coTwIdZero.symm (𝟙 _)) := by
+  simp only [wppWeightedCocone₀_leg_eq, wppWeightedCocone₁_leg_eq, ne_eq]
+  intro h
+  have h0 : (wppCastLeg coTwIdZero (fun _ => 0)) (0 : ℕ) = 0 := rfl
+  have h1 : (wppCastLeg coTwIdZero (fun _ => 1)) (0 : ℕ) = 1 := rfl
+  have : (0 : ℕ) = 1 := by
+    calc 0 = (wppCastLeg coTwIdZero (fun _ => 0)) (0 : ℕ) := h0.symm
+      _ = (wppCastLeg coTwIdZero (fun _ => 1)) (0 : ℕ) := congrFun h (0 : ℕ)
+      _ = 1 := h1
+  exact Nat.zero_ne_one this
+
+/-- DecidableEq instance for Hom(zero, one) in WalkingParallelPair. -/
+instance wppHomZeroOneDecidableEq :
+    DecidableEq (WalkingParallelPair.zero ⟶ WalkingParallelPair.one) :=
+  fun a b =>
+    match a, b with
+    | WalkingParallelPairHom.left, WalkingParallelPairHom.left => isTrue rfl
+    | WalkingParallelPairHom.right, WalkingParallelPairHom.right => isTrue rfl
+    | WalkingParallelPairHom.left, WalkingParallelPairHom.right =>
+      isFalse (fun h => by cases h)
+    | WalkingParallelPairHom.right, WalkingParallelPairHom.left =>
+      isFalse (fun h => by cases h)
+
+/-- DecidableEq instance for weight type at coTwLeft.
+The weight type at coTwLeft equals Hom(zero, one). -/
+instance wppWeightAt_coTwLeft_decidableEq : DecidableEq (wppWeightAt coTwLeft) := by
+  have h : wppWeightAt coTwLeft =
+      (WalkingParallelPair.zero ⟶ WalkingParallelPair.one) := wppWeightAt_coTwLeft
+  rw [h]
+  exact wppHomZeroOneDecidableEq
+
+/-- Check if a weight at coTwLeft is `wppWeightRight` (i.e., the `right` morphism). -/
+def isWppWeightRight (w : wppWeightAt coTwLeft) : Bool :=
+  decide (w = wppWeightRight)
+
+/-- The modified leg function at coTwLeft: maps `left ↦ 0` and `right ↦ 1`. -/
+def modifiedLegAtCoTwLeft (w : wppWeightAt coTwLeft) : ℕ → ℕ :=
+  if w = wppWeightRight then fun _ => 1 else fun _ => 0
+
+/-- The modified leg at coTwLeft differs from constant 0 at wppWeightRight. -/
+theorem modifiedLegAtCoTwLeft_right_eq_one :
+    modifiedLegAtCoTwLeft wppWeightRight = fun _ => 1 := by
+  simp only [modifiedLegAtCoTwLeft, ite_true]
+
+/-- The weight elements wppWeightLeft and wppWeightRight are distinct. -/
+theorem wppWeightLeft_ne_wppWeightRight : wppWeightLeft ≠ wppWeightRight := by
+  unfold wppWeightLeft wppWeightRight castToWeightCoTwLeft
+  intro heq
+  have heq' : WalkingParallelPairHom.left = WalkingParallelPairHom.right := by
+    have h1 : cast wppWeightAt_coTwLeft (cast wppWeightAt_coTwLeft.symm
+                WalkingParallelPairHom.left) = WalkingParallelPairHom.left := by simp
+    have h2 : cast wppWeightAt_coTwLeft (cast wppWeightAt_coTwLeft.symm
+                WalkingParallelPairHom.right) = WalkingParallelPairHom.right := by simp
+    calc WalkingParallelPairHom.left
+        = cast wppWeightAt_coTwLeft (cast wppWeightAt_coTwLeft.symm
+            WalkingParallelPairHom.left) := h1.symm
+      _ = cast wppWeightAt_coTwLeft (cast wppWeightAt_coTwLeft.symm
+            WalkingParallelPairHom.right) := by rw [heq]
+      _ = WalkingParallelPairHom.right := h2
+  exact walkingParallelPair_left_ne_right heq'
+
+/-- The modified leg at coTwLeft agrees with constant 0 at wppWeightLeft. -/
+theorem modifiedLegAtCoTwLeft_left_eq_zero :
+    modifiedLegAtCoTwLeft wppWeightLeft = fun _ => 0 := by
+  simp only [modifiedLegAtCoTwLeft]
+  simp only [wppWeightLeft_ne_wppWeightRight, ite_false]
+
+/-- The modified cocone leg at coTwLeft: the value differs from constant 0 at right. -/
+theorem modifiedLeg_differs_from_const_at_right :
+    modifiedLegAtCoTwLeft wppWeightRight (0 : ℕ) ≠
+    (fun _ : ℕ => (0 : ℕ)) 0 := by
+  simp only [modifiedLegAtCoTwLeft_right_eq_one]
+  exact Nat.one_ne_zero
+
+/-- Morphism from coTwLeft to coTwIdZero in the co-twisted arrow category.
+This witnesses that left : zero → one factors through the identity on zero. -/
+def coTwMorLeftToIdZero : coTwLeft ⟶ coTwIdZero :=
+  coTwHomMk WalkingParallelPairHom.left (𝟙 _) (by simp [idCoTwistedArrow, coTwObjMk_arr])
+
+/-- Morphism from coTwLeft to coTwIdOne in the co-twisted arrow category.
+This witnesses that left : zero → one factors through the identity on one. -/
+def coTwMorLeftToIdOne : coTwLeft ⟶ coTwIdOne :=
+  coTwHomMk (𝟙 _) WalkingParallelPairHom.left (by simp [idCoTwistedArrow, coTwObjMk_arr])
+
+/-- The domain arrow of the morphism from coTwLeft to coTwIdZero is left. -/
+theorem coTwMorLeftToIdZero_domArr :
+    coTwDomArr coTwMorLeftToIdZero = WalkingParallelPairHom.left := by
+  simp only [coTwMorLeftToIdZero, coTwHomMk_domArr]
+
+/-- The codomain arrow of the morphism from coTwLeft to coTwIdOne is left. -/
+theorem coTwMorLeftToIdOne_codArr :
+    coTwCodArr coTwMorLeftToIdOne = WalkingParallelPairHom.left := by
+  simp only [coTwMorLeftToIdOne, coTwCodArr_coTwHomMk]
+
+/-- Any morphism from coTwLeft to coTwIdZero equals coTwMorLeftToIdZero.
+The compatibility condition `codArr ≫ (𝟙 zero) ≫ domArr = left` forces:
+- `codArr : zero ⟶ zero` must be `𝟙 zero`
+- `domArr : zero ⟶ one` must be `left` -/
+theorem coTwLeft_to_coTwIdZero_unique (f : coTwLeft ⟶ coTwIdZero) :
+    f = coTwMorLeftToIdZero := by
+  apply coTwHom_ext
+  · -- domArr equality
+    have hcompat := coTwHomComm f
+    simp only [idCoTwistedArrow, coTwObjMk_arr] at hcompat
+    have hcod : coTwCodArr f = 𝟙 WalkingParallelPair.zero :=
+      walkingParallelPair_zero_zero_eq_id (coTwCodArr f)
+    rw [hcod] at hcompat
+    simp only [coTwObjMk_dom] at hcompat
+    simp only [coTwMorLeftToIdZero, coTwDomArr_coTwHomMk]
+    exact hcompat
+  · -- codArr equality
+    simp only [coTwMorLeftToIdZero, coTwCodArr_coTwHomMk]
+    exact walkingParallelPair_zero_zero_eq_id (coTwCodArr f)
+
+/-- Any morphism from coTwLeft to coTwIdOne equals coTwMorLeftToIdOne.
+The compatibility condition `codArr ≫ (𝟙 one) ≫ domArr = left` forces:
+- `domArr : one ⟶ one` must be `𝟙 one`
+- `codArr : zero ⟶ one` must be `left` -/
+theorem coTwLeft_to_coTwIdOne_unique (f : coTwLeft ⟶ coTwIdOne) :
+    f = coTwMorLeftToIdOne := by
+  apply coTwHom_ext
+  · -- domArr equality
+    simp only [coTwMorLeftToIdOne, coTwDomArr_coTwHomMk]
+    exact walkingParallelPair_one_one_eq_id (coTwDomArr f)
+  · -- codArr equality
+    have hcompat := coTwHomComm f
+    simp only [idCoTwistedArrow, coTwObjMk_arr] at hcompat
+    have hdom : coTwDomArr f = 𝟙 WalkingParallelPair.one :=
+      walkingParallelPair_one_one_eq_id (coTwDomArr f)
+    rw [hdom] at hcompat
+    have hcompat' : coTwCodArr f = WalkingParallelPairHom.left :=
+      calc coTwCodArr f = coTwCodArr f ≫ 𝟙 WalkingParallelPair.one :=
+            (Category.comp_id _).symm
+        _ = coTwCodArr f ≫ (𝟙 WalkingParallelPair.one ≫ 𝟙 WalkingParallelPair.one) :=
+            congrArg _ (Category.id_comp _).symm
+        _ = WalkingParallelPairHom.left := hcompat
+    simp only [coTwMorLeftToIdOne, coTwCodArr_coTwHomMk]
+    exact hcompat'
+
+/-- coTwMorLeftToIdZero equals coTwToIdentityAtSource applied to left. -/
+theorem coTwMorLeftToIdZero_eq_coTwToIdentityAtSource :
+    coTwMorLeftToIdZero =
+    @coTwToIdentityAtSource WalkingParallelPair _ WalkingParallelPair.zero
+      WalkingParallelPair.one WalkingParallelPairHom.left := rfl
+
+/-- coTwMorLeftToIdOne equals coTwToIdentityAtTarget applied to left. -/
+theorem coTwMorLeftToIdOne_eq_coTwToIdentityAtTarget :
+    coTwMorLeftToIdOne =
+    @coTwToIdentityAtTarget WalkingParallelPair _ WalkingParallelPair.zero
+      WalkingParallelPair.one WalkingParallelPairHom.left := rfl
+
+/-- The identity weight at coTwIdZero. -/
+def wppWeightIdZero : wppWeightAt coTwIdZero :=
+  cast wppWeightAt_coTwIdZero.symm (𝟙 WalkingParallelPair.zero)
+
+/-- The identity weight at coTwIdOne. -/
+def wppWeightIdOne : wppWeightAt coTwIdOne :=
+  cast wppWeightAt_coTwIdOne.symm (𝟙 WalkingParallelPair.one)
+
+/-- Weight transport from coTwIdZero along coTwMorLeftToIdZero maps the identity
+weight to wppWeightLeft (i.e., the `left` morphism). -/
+theorem wppWeightTransport_fromIdZero_eq_left :
+    wppWeightFunctor.map coTwMorLeftToIdZero.op wppWeightIdZero = wppWeightLeft := by
+  unfold wppWeightFunctor wppWeightIdZero wppWeightLeft castToWeightCoTwLeft
+  rw [coTwMorLeftToIdZero_eq_coTwToIdentityAtSource]
+  have h := profunctor_map_coTwToIdentityAtSource_diag wppHomProfunctor
+      WalkingParallelPairHom.left (𝟙 WalkingParallelPair.zero)
+  simp only [diagAppToWeightAtIdentity] at h
+  have heq : cast (profunctorOnOpCoTwistedArrow_at_identity wppHomProfunctor
+               WalkingParallelPair.zero).symm (𝟙 WalkingParallelPair.zero) =
+             cast wppWeightAt_coTwIdZero.symm (𝟙 WalkingParallelPair.zero) := by
+    congr 1
+  rw [← heq, h]
+  simp only [wppHomProfunctor, Functor.curry_obj_obj_obj, Functor.hom_obj,
+    Opposite.unop_op]
+  rfl
+
+/-- Weight transport from coTwIdOne along coTwMorLeftToIdOne maps the identity
+weight to wppWeightLeft (i.e., the `left` morphism). -/
+theorem wppWeightTransport_fromIdOne_eq_left :
+    wppWeightFunctor.map coTwMorLeftToIdOne.op wppWeightIdOne = wppWeightLeft := by
+  unfold wppWeightFunctor wppWeightIdOne wppWeightLeft castToWeightCoTwLeft
+  rw [coTwMorLeftToIdOne_eq_coTwToIdentityAtTarget]
+  have h := profunctor_map_coTwToIdentityAtTarget_diag wppHomProfunctor
+      WalkingParallelPairHom.left (𝟙 WalkingParallelPair.one)
+  simp only [diagAppToWeightAtIdentity] at h
+  have heq : cast (profunctorOnOpCoTwistedArrow_at_identity wppHomProfunctor
+               WalkingParallelPair.one).symm (𝟙 WalkingParallelPair.one) =
+             cast wppWeightAt_coTwIdOne.symm (𝟙 WalkingParallelPair.one) := by
+    congr 1
+  rw [← heq, h]
+  simp only [wppHomProfunctor, Functor.curry_obj_obj_obj, Functor.hom_obj,
+    Opposite.unop_op]
+  rfl
+
+/-- There is no morphism from coTwIdZero to coTwLeft.
+Proof: Such a morphism would require domArr : one → zero, but no such morphism
+exists in WalkingParallelPair. -/
+theorem no_mor_coTwIdZero_to_coTwLeft (φ : coTwIdZero ⟶ coTwLeft) : False := by
+  exact walkingParallelPair_one_zero_empty (coTwDomArr φ)
+
+/-- There is no morphism from coTwIdOne to coTwLeft.
+Proof: Such a morphism would require codArr : zero → one, but no such morphism
+exists from the codomain of coTwIdOne which is one. -/
+theorem no_mor_coTwIdOne_to_coTwLeft (φ : coTwIdOne ⟶ coTwLeft) : False := by
+  exact walkingParallelPair_one_zero_empty (coTwCodArr φ)
+
+/-- coTwIdZero is not equal to coTwLeft. -/
+theorem coTwIdZero_ne_coTwLeft : coTwIdZero ≠ coTwLeft := by
+  intro heq
+  have hdom : coTwDom coTwIdZero = coTwDom coTwLeft := congrArg coTwDom heq
+  simp only [coTwIdZero, idCoTwistedArrow, coTwObjMk_dom, coTwLeft] at hdom
+  exact walkingParallelPair_zero_ne_one hdom
+
+/-- coTwIdOne is not equal to coTwLeft. -/
+theorem coTwIdOne_ne_coTwLeft : coTwIdOne ≠ coTwLeft := by
+  intro heq
+  have hcod : coTwCod coTwIdOne = coTwCod coTwLeft := congrArg coTwCod heq
+  simp only [coTwIdOne, idCoTwistedArrow, coTwObjMk_cod, coTwLeft] at hcod
+  exact walkingParallelPair_one_ne_zero hcod
+
+/-- The modified leg at coTwLeft with wppWeightLeft equals 0. -/
+theorem modifiedLeg_at_coTwLeft_left :
+    wppCastLeg coTwLeft (modifiedLegAtCoTwLeft wppWeightLeft) =
+    wppCastLeg coTwLeft (fun _ => 0) := by
+  rw [modifiedLegAtCoTwLeft_left_eq_zero]
+
+/-- The modified leg at coTwLeft with wppWeightRight equals 1. -/
+theorem modifiedLeg_at_coTwLeft_right :
+    wppCastLeg coTwLeft (modifiedLegAtCoTwLeft wppWeightRight) =
+    wppCastLeg coTwLeft (fun _ => 1) := by
+  rw [modifiedLegAtCoTwLeft_right_eq_one]
+
+/-- The modified leg at coTwIdZero with the identity weight equals constant 0. -/
+theorem modifiedLeg_at_coTwIdZero :
+    wppCastLeg coTwIdZero (fun _ => 0) =
+    wppCastLeg coTwIdZero (fun _ => 0) := rfl
+
+/-- The modified leg at coTwIdOne with the identity weight equals constant 0. -/
+theorem modifiedLeg_at_coTwIdOne :
+    wppCastLeg coTwIdOne (fun _ => 0) =
+    wppCastLeg coTwIdOne (fun _ => 0) := rfl
+
+/-- The modified leg at coTwLeft differs from the constant 0 leg at wppWeightRight. -/
+theorem modified_differs_from_const_at_right :
+    wppCastLeg coTwLeft (modifiedLegAtCoTwLeft wppWeightRight) ≠
+    wppCastLeg coTwLeft (fun _ => 0) := by
+  intro h
+  have h1 : (wppCastLeg coTwLeft (modifiedLegAtCoTwLeft wppWeightRight)) (0 : ℕ) = 1 := by
+    rw [modifiedLeg_at_coTwLeft_right]
+    rfl
+  have h0 : (wppCastLeg coTwLeft (fun _ => 0)) (0 : ℕ) = 0 := rfl
+  have : (1 : ℕ) = 0 := by
+    calc 1 = (wppCastLeg coTwLeft (modifiedLegAtCoTwLeft wppWeightRight)) (0 : ℕ) := h1.symm
+      _ = (wppCastLeg coTwLeft (fun _ => 0)) (0 : ℕ) := congrFun h (0 : ℕ)
+      _ = 0 := h0
+  exact Nat.one_ne_zero this
+
+/-- The modified leg at coTwLeft agrees with the constant 0 leg at wppWeightLeft. -/
+theorem modified_agrees_with_const_at_left :
+    wppCastLeg coTwLeft (modifiedLegAtCoTwLeft wppWeightLeft) =
+    wppCastLeg coTwLeft (fun _ => 0) := by
+  rw [modifiedLeg_at_coTwLeft_left]
+
+/-- Characterization: the only morphisms in (CoTwistedArrow WalkingParallelPair)
+involving coTwLeft are FROM coTwLeft TO diagonal positions, not the reverse.
+This means naturality constraints flow FROM diagonals TO coTwLeft, not INTO. -/
+theorem coTwLeft_morphism_characterization :
+    (∀ _ : coTwIdZero ⟶ coTwLeft, False) ∧
+    (∀ _ : coTwIdOne ⟶ coTwLeft, False) := by
+  constructor
+  · exact no_mor_coTwIdZero_to_coTwLeft
+  · exact no_mor_coTwIdOne_to_coTwLeft
+
+/-- Weight transport from coTwIdZero to coTwLeft maps the unique diagonal weight
+to wppWeightLeft. -/
+theorem weight_transport_to_coTwLeft_is_left :
+    wppWeightFunctor.map coTwMorLeftToIdZero.op wppWeightIdZero = wppWeightLeft :=
+  wppWeightTransport_fromIdZero_eq_left
+
+/-- This shows that the value at (coTwLeft, wppWeightRight) is NOT constrained
+by diagonal data: it is not in the image of any weight transport from diagonals.
+
+Specifically:
+- Weight transport from coTwIdZero maps to wppWeightLeft, not wppWeightRight
+- Weight transport from coTwIdOne maps to wppWeightLeft, not wppWeightRight
+- There are no morphisms FROM other diagonal positions INTO coTwLeft
+
+Therefore, for any weighted cocone, the value at (coTwLeft, wppWeightRight)
+can be chosen independently of the diagonal leg values. This is what breaks
+fullness of the restriction functor. -/
+theorem wppWeightRight_not_constrained_by_diagonals :
+    (wppWeightFunctor.map coTwMorLeftToIdZero.op wppWeightIdZero ≠ wppWeightRight) ∧
+    (wppWeightFunctor.map coTwMorLeftToIdOne.op wppWeightIdOne ≠ wppWeightRight) := by
+  constructor
+  · rw [wppWeightTransport_fromIdZero_eq_left]
+    exact wppWeightLeft_ne_wppWeightRight
+  · rw [wppWeightTransport_fromIdOne_eq_left]
+    exact wppWeightLeft_ne_wppWeightRight
+
+/-- Decidable equality for WalkingParallelPair. -/
+instance wppDecidableEq : DecidableEq WalkingParallelPair := by
+  intro a b
+  cases a <;> cases b
+  · exact isTrue rfl
+  · exact isFalse (fun h => by cases h)
+  · exact isFalse (fun h => by cases h)
+  · exact isTrue rfl
+
+/-- Decidable equality for WalkingParallelPairᵒᵖ. -/
+instance wppOpDecidableEq : DecidableEq WalkingParallelPairᵒᵖ := by
+  intro a b
+  have hdec := wppDecidableEq a.unop b.unop
+  cases hdec with
+  | isFalse hne => exact isFalse (fun h => hne (congrArg Opposite.unop h))
+  | isTrue heq => exact isTrue (Opposite.unop_injective heq)
+
+/-- Decidable equality for WalkingParallelPairᵒᵖᵒᵖ. -/
+instance wppOpOpDecidableEq : DecidableEq WalkingParallelPairᵒᵖᵒᵖ := by
+  intro a b
+  have hdec := wppOpDecidableEq a.unop b.unop
+  cases hdec with
+  | isFalse hne => exact isFalse (fun h => hne (congrArg Opposite.unop h))
+  | isTrue heq => exact isTrue (Opposite.unop_injective heq)
+
+/-- Decidable equality for morphisms in WalkingParallelPair between given objects.
+Uses the fact that WalkingParallelPairHom already derives DecidableEq. -/
+instance wppHomDecidableEq (X Y : WalkingParallelPair) :
+    DecidableEq (X ⟶ Y) :=
+  inferInstanceAs (DecidableEq (WalkingParallelPairHom X Y))
+
+/-- The co-twisted arrow corresponding to the `right` morphism in
+WalkingParallelPair. Defined here for use in DecidableEq. -/
+def coTwRight' : CoTwistedArrow WalkingParallelPair :=
+  coTwObjMk WalkingParallelPairHom.right
+
+/-- The arrow of coTwRight' is the right morphism. -/
+theorem coTwRight'_arr : coTwArr coTwRight' = WalkingParallelPairHom.right := by
+  simp only [coTwRight', coTwObjMk_arr]
+
+/-- The domain of coTwRight' is one. -/
+theorem coTwRight'_dom : coTwDom coTwRight' = WalkingParallelPair.one := by
+  simp only [coTwRight', coTwObjMk_dom]
+
+/-- The codomain of coTwRight' is zero. -/
+theorem coTwRight'_cod : coTwCod coTwRight' = WalkingParallelPair.zero := by
+  simp only [coTwRight', coTwObjMk_cod]
+
+/-- The domain of coTwLeft is one. -/
+theorem coTwLeft_dom : coTwDom coTwLeft = WalkingParallelPair.one := by
+  simp only [coTwLeft, coTwObjMk_dom]
+
+/-- The codomain of coTwLeft is zero. -/
+theorem coTwLeft_cod : coTwCod coTwLeft = WalkingParallelPair.zero := by
+  simp only [coTwLeft, coTwObjMk_cod]
+
+/-- The arrow of coTwLeft is the left morphism. -/
+theorem coTwLeft_arr : coTwArr coTwLeft = WalkingParallelPairHom.left := by
+  simp only [coTwLeft, coTwObjMk_arr]
+
+/-- The domain of coTwIdZero is zero. -/
+theorem coTwIdZero_dom : coTwDom coTwIdZero = WalkingParallelPair.zero := by
+  simp only [coTwIdZero, idCoTwistedArrow, coTwObjMk_dom]
+
+/-- The codomain of coTwIdZero is zero. -/
+theorem coTwIdZero_cod : coTwCod coTwIdZero = WalkingParallelPair.zero := by
+  simp only [coTwIdZero, idCoTwistedArrow, coTwObjMk_cod]
+
+/-- The domain of coTwIdOne is one. -/
+theorem coTwIdOne_dom : coTwDom coTwIdOne = WalkingParallelPair.one := by
+  simp only [coTwIdOne, idCoTwistedArrow, coTwObjMk_dom]
+
+/-- The codomain of coTwIdOne is one. -/
+theorem coTwIdOne_cod : coTwCod coTwIdOne = WalkingParallelPair.one := by
+  simp only [coTwIdOne, idCoTwistedArrow, coTwObjMk_cod]
+
+/-- Enumeration of the 4 co-twisted arrows in WalkingParallelPair.
+This inductive type is definitionally equivalent but easier to work with
+for decidable equality. -/
+inductive WppCoTwEnum : Type where
+  | idZero : WppCoTwEnum
+  | idOne : WppCoTwEnum
+  | left : WppCoTwEnum
+  | right' : WppCoTwEnum
+  deriving DecidableEq, Repr
+
+/-- Convert from enumeration to co-twisted arrow. -/
+def WppCoTwEnum.toCoTw : WppCoTwEnum → CoTwistedArrow WalkingParallelPair
+  | .idZero => coTwIdZero
+  | .idOne => coTwIdOne
+  | .left => coTwLeft
+  | .right' => coTwRight'
+
+/-- Helper to compute the enumeration from cod, dom, and arrow values.
+The arrow parameter is only examined when cod=zero and dom=one. -/
+def wppCoTwEnumAux (c d : WalkingParallelPair) (arr : c ⟶ d) : WppCoTwEnum :=
+  match c, d with
+  | .zero, .zero => .idZero
+  | .one, .one => .idOne
+  | .zero, .one =>
+    match arr with
+    | .left => .left
+    | .right => .right'
+  | .one, .zero => .idZero  -- impossible case, default to idZero
+
+/-- Convert from co-twisted arrow to enumeration. -/
+def wppCoTwToEnum (tw : CoTwistedArrow WalkingParallelPair) : WppCoTwEnum :=
+  wppCoTwEnumAux (coTwCod tw) (coTwDom tw) (coTwArr tw)
+
+/-- toCoTw ∘ toEnum = id for coTwIdZero. -/
+theorem wppCoTwEnum_roundtrip_idZero :
+    WppCoTwEnum.toCoTw (wppCoTwToEnum coTwIdZero) = coTwIdZero := rfl
+
+/-- toCoTw ∘ toEnum = id for coTwIdOne. -/
+theorem wppCoTwEnum_roundtrip_idOne :
+    WppCoTwEnum.toCoTw (wppCoTwToEnum coTwIdOne) = coTwIdOne := rfl
+
+/-- toCoTw ∘ toEnum = id for coTwLeft. -/
+theorem wppCoTwEnum_roundtrip_left :
+    WppCoTwEnum.toCoTw (wppCoTwToEnum coTwLeft) = coTwLeft := rfl
+
+/-- toCoTw ∘ toEnum = id for coTwRight'. -/
+theorem wppCoTwEnum_roundtrip_right' :
+    WppCoTwEnum.toCoTw (wppCoTwToEnum coTwRight') = coTwRight' := rfl
+
+/-- toEnum ∘ toCoTw = id for all enum values. -/
+theorem wppCoTwEnum_toEnum_toCoTw (e : WppCoTwEnum) :
+    wppCoTwToEnum (WppCoTwEnum.toCoTw e) = e := by
+  cases e <;> rfl
+
+/-- wppCoTwToEnum maps coTwIdZero to idZero. -/
+@[simp]
+theorem wppCoTwToEnum_idZero : wppCoTwToEnum coTwIdZero = .idZero := rfl
+
+/-- wppCoTwToEnum maps coTwIdOne to idOne. -/
+@[simp]
+theorem wppCoTwToEnum_idOne : wppCoTwToEnum coTwIdOne = .idOne := rfl
+
+/-- wppCoTwToEnum maps coTwLeft to left. -/
+@[simp]
+theorem wppCoTwToEnum_left : wppCoTwToEnum coTwLeft = .left := rfl
+
+/-- wppCoTwToEnum maps coTwRight' to right'. -/
+@[simp]
+theorem wppCoTwToEnum_right' : wppCoTwToEnum coTwRight' = .right' := rfl
+
+/-- Helper: classify an arrow in WalkingParallelPair as one of the four types.
+Each branch carries a proof that reconstructing via coTwObjMk yields the
+corresponding named constant. -/
+def classifyWppArrowResult (cod dom : WalkingParallelPair) (arr : cod ⟶ dom) :
+    (coTwObjMk arr = coTwIdZero) ∨
+    (coTwObjMk arr = coTwIdOne) ∨
+    (coTwObjMk arr = coTwLeft) ∨
+    (coTwObjMk arr = coTwRight') := by
+  match cod, dom, arr with
+  | .zero, .zero, .id .zero => left; rfl
+  | .one, .one, .id .one => right; left; rfl
+  | .zero, .one, .left => right; right; left; rfl
+  | .zero, .one, .right => right; right; right; rfl
+
+/-- Every co-twisted arrow equals one of the four named constants. -/
+theorem wppCoTwArrow_cases (tw : CoTwistedArrow WalkingParallelPair) :
+    tw = coTwIdZero ∨ tw = coTwIdOne ∨ tw = coTwLeft ∨ tw = coTwRight' := by
+  -- Rewrite tw as coTwObjMk (coTwArr tw)
+  rw [coTw_eq_coTwObjMk tw]
+  -- Then classify the arrow
+  exact classifyWppArrowResult (coTwCod tw) (coTwDom tw) (coTwArr tw)
+
+/-- The toCoTw function is surjective. -/
+theorem wppCoTwEnum_toCoTw_surj (tw : CoTwistedArrow WalkingParallelPair) :
+    ∃ e : WppCoTwEnum, WppCoTwEnum.toCoTw e = tw := by
+  rcases wppCoTwArrow_cases tw with h | h | h | h
+  · exact ⟨.idZero, h.symm⟩
+  · exact ⟨.idOne, h.symm⟩
+  · exact ⟨.left, h.symm⟩
+  · exact ⟨.right', h.symm⟩
+
+/-- The toEnum function is injective (equal enum values mean equal arrows). -/
+theorem wppCoTwEnum_toEnum_inj (tw₁ tw₂ : CoTwistedArrow WalkingParallelPair)
+    (h : wppCoTwToEnum tw₁ = wppCoTwToEnum tw₂) : tw₁ = tw₂ := by
+  -- Both are one of the four cases
+  rcases wppCoTwArrow_cases tw₁ with h1 | h1 | h1 | h1 <;>
+  rcases wppCoTwArrow_cases tw₂ with h2 | h2 | h2 | h2 <;>
+  subst h1 h2 <;> first
+    | rfl
+    | (simp only [wppCoTwToEnum_idZero, wppCoTwToEnum_idOne, wppCoTwToEnum_left,
+        wppCoTwToEnum_right'] at h; cases h)
+
+/-- Decidable equality for CoTwistedArrow WalkingParallelPair.
+Uses the enumeration for comparison since WppCoTwEnum has DecidableEq. -/
+instance wppCoTwistedArrowDecidableEq :
+    DecidableEq (CoTwistedArrow WalkingParallelPair) := fun tw₁ tw₂ =>
+  if h : wppCoTwToEnum tw₁ = wppCoTwToEnum tw₂ then
+    isTrue (wppCoTwEnum_toEnum_inj tw₁ tw₂ h)
+  else
+    isFalse (fun heq => h (congrArg wppCoTwToEnum heq))
+
+/-- Check if a co-twisted arrow is at coTwLeft by examining its cod/dom/arr. -/
+def isCoTwLeft (tw : CoTwistedArrow WalkingParallelPair) : Bool :=
+  decide (coTwCod tw = WalkingParallelPair.zero) &&
+  decide (coTwDom tw = WalkingParallelPair.one)
+
+/-- coTwLeft satisfies the isCoTwLeft predicate. -/
+theorem isCoTwLeft_coTwLeft : isCoTwLeft coTwLeft = true := by
+  simp only [isCoTwLeft, coTwLeft, coTwObjMk_cod, coTwObjMk_dom, decide_true,
+    Bool.and_self]
+
+/-- coTwIdZero does not satisfy the isCoTwLeft predicate. -/
+theorem isCoTwLeft_coTwIdZero : isCoTwLeft coTwIdZero = false := by
+  rfl
+
+/-- coTwIdOne does not satisfy the isCoTwLeft predicate. -/
+theorem isCoTwLeft_coTwIdOne : isCoTwLeft coTwIdOne = false := by
+  rfl
+
+/-- Weight transport from diagonal positions only
+reaches wppWeightLeft at coTwLeft, never wppWeightRight. Combined with the
+fact that there are no morphisms FROM diagonal positions INTO coTwLeft,
+this means the leg value at (coTwLeft, wppWeightRight) is completely
+unconstrained by diagonal data through naturality.
+
+This demonstrates that the restriction functor loses information:
+two weighted cocones can agree on all diagonal legs but still differ
+at off-diagonal positions like (coTwLeft, wppWeightRight). -/
+theorem diagonal_does_not_determine_wppWeightRight :
+    (wppWeightFunctor.map coTwMorLeftToIdZero.op wppWeightIdZero = wppWeightLeft) ∧
+    (wppWeightFunctor.map coTwMorLeftToIdOne.op wppWeightIdOne = wppWeightLeft) ∧
+    (wppWeightLeft ≠ wppWeightRight) ∧
+    (∀ _ : coTwIdZero ⟶ coTwLeft, False) ∧
+    (∀ _ : coTwIdOne ⟶ coTwLeft, False) := by
+  refine ⟨?_, ?_, ?_, ?_, ?_⟩
+  · exact wppWeightTransport_fromIdZero_eq_left
+  · exact wppWeightTransport_fromIdOne_eq_left
+  · exact wppWeightLeft_ne_wppWeightRight
+  · exact no_mor_coTwIdZero_to_coTwLeft
+  · exact no_mor_coTwIdOne_to_coTwLeft
+
+/-- The co-twisted arrow corresponding to the `right` morphism in WalkingParallelPair. -/
+def coTwRight : CoTwistedArrow WalkingParallelPair :=
+  coTwObjMk WalkingParallelPairHom.right
+
+/-- The arrow of coTwRight is the right morphism. -/
+theorem coTwRight_arr : coTwArr coTwRight = WalkingParallelPairHom.right := by
+  simp only [coTwRight, coTwObjMk_arr]
+
+/-- coTwRight and coTwRight' are the same. -/
+theorem coTwRight_eq_coTwRight' : coTwRight = coTwRight' := rfl
+
+/-- Morphism from coTwRight to coTwIdZero in the co-twisted arrow category. -/
+def coTwMorRightToIdZero : coTwRight ⟶ coTwIdZero :=
+  coTwHomMk WalkingParallelPairHom.right (𝟙 _) (by
+    simp only [idCoTwistedArrow, coTwObjMk_arr, coTwRight_arr]
+    rfl)
+
+/-- Morphism from coTwRight to coTwIdOne in the co-twisted arrow category. -/
+def coTwMorRightToIdOne : coTwRight ⟶ coTwIdOne :=
+  coTwHomMk (𝟙 _) WalkingParallelPairHom.right (by
+    simp only [idCoTwistedArrow, coTwObjMk_arr, coTwRight_arr]
+    rfl)
+
+/-- The weight type at coTwRight equals homset zero → one. -/
+theorem wppWeightAt_coTwRight :
+    wppWeightAt coTwRight = (WalkingParallelPair.zero ⟶ WalkingParallelPair.one) := by
+  simp only [wppWeightAt, profunctorOnOpCoTwistedArrow, wppHomProfunctor,
+    Functor.comp_obj]
+  rfl
+
+/-- The weight element for the `right` morphism at coTwRight. -/
+def wppWeightRightAtRight : wppWeightAt coTwRight :=
+  cast wppWeightAt_coTwRight.symm WalkingParallelPairHom.right
+
+/-- No morphism exists from coTwRight to coTwLeft.
+A morphism would require codArr ≫ left ≫ domArr = right, but with the
+only possible arrows being identities, this would require left = right. -/
+theorem no_mor_coTwRight_to_coTwLeft (φ : coTwRight ⟶ coTwLeft) : False := by
+  have harr := coTwHomComm φ
+  simp only [coTwRight, coTwLeft, coTwObjMk_arr] at harr
+  have hcod : coTwCodArr φ = 𝟙 WalkingParallelPair.zero :=
+    walkingParallelPair_zero_zero_eq_id (coTwCodArr φ)
+  have hdom : coTwDomArr φ = 𝟙 WalkingParallelPair.one :=
+    walkingParallelPair_one_one_eq_id (coTwDomArr φ)
+  rw [hcod, hdom] at harr
+  simp only [coTwObjMk_dom, coTwObjMk_cod, Category.id_comp, Category.comp_id] at harr
+  exact walkingParallelPair_left_ne_right harr
+
+/-- No morphism exists from coTwLeft to coTwRight.
+A morphism would require codArr ≫ right ≫ domArr = left, but with the
+only possible arrows being identities, this would require right = left. -/
+theorem no_mor_coTwLeft_to_coTwRight (φ : coTwLeft ⟶ coTwRight) : False := by
+  have harr := coTwHomComm φ
+  simp only [coTwRight, coTwLeft, coTwObjMk_arr] at harr
+  have hcod : coTwCodArr φ = 𝟙 WalkingParallelPair.zero :=
+    walkingParallelPair_zero_zero_eq_id (coTwCodArr φ)
+  have hdom : coTwDomArr φ = 𝟙 WalkingParallelPair.one :=
+    walkingParallelPair_one_one_eq_id (coTwDomArr φ)
+  rw [hcod, hdom] at harr
+  simp only [coTwObjMk_dom, coTwObjMk_cod, Category.id_comp, Category.comp_id] at harr
+  exact walkingParallelPair_left_ne_right harr.symm
+
+/-- Any endomorphism of coTwLeft is the identity.
+Since both dom and cod must go via identities. -/
+theorem coTwLeft_endo_is_id (φ : coTwLeft ⟶ coTwLeft) : φ = 𝟙 coTwLeft := by
+  ext
+  · exact walkingParallelPair_one_one_eq_id (coTwDomArr φ)
+  · exact walkingParallelPair_zero_zero_eq_id (coTwCodArr φ)
+
+/-!
+The non-fullness argument relies on the following observation:
+The value at (coTwLeft, wppWeightRight) is unconstrained by naturality
+because:
+1. All morphisms involving coTwLeft go FROM coTwLeft TO diagonal positions
+2. Weight transport along these morphisms produces only wppWeightLeft
+3. No morphisms exist from diagonal positions INTO coTwLeft
+4. No morphisms exist between coTwLeft and coTwRight
+
+Therefore, a weighted cocone can have any value at (coTwLeft, wppWeightRight)
+while maintaining naturality. This means two cocones with the same diagonal
+legs can differ at this position, and no cocone morphism with identity apex
+morphism can exist between them.
+-/
+
+/-- The modified leg at coTwLeft applied to wppWeightLeft equals
+the original cocone leg (constant 0). -/
+theorem wppModifiedLeg_at_left_eq_zero :
+    wppCastLeg coTwLeft (modifiedLegAtCoTwLeft wppWeightLeft) =
+    wppCastLeg coTwLeft (fun _ => 0) := by
+  rw [modifiedLegAtCoTwLeft_left_eq_zero]
+
+/-- The modified leg at coTwLeft applied to wppWeightRight differs from
+constant 0. -/
+theorem wppModifiedLeg_at_right_ne_zero :
+    wppCastLeg coTwLeft (modifiedLegAtCoTwLeft wppWeightRight) ≠
+    wppCastLeg coTwLeft (fun _ => 0) := by
+  rw [modifiedLegAtCoTwLeft_right_eq_one]
+  intro h
+  have h0 : (wppCastLeg coTwLeft (fun _ => 0)) (0 : ℕ) = 0 := rfl
+  have h1 : (wppCastLeg coTwLeft (fun _ => 1)) (0 : ℕ) = 1 := rfl
+  have : (0 : ℕ) = 1 := by
+    calc 0 = (wppCastLeg coTwLeft (fun _ => 0)) (0 : ℕ) := h0.symm
+      _ = (wppCastLeg coTwLeft (fun _ => 1)) (0 : ℕ) := congrFun h.symm (0 : ℕ)
+      _ = 1 := h1
+  exact Nat.zero_ne_one this
+
+/-- The statement of non-fullness: there exist positions and values where
+a weighted cocone can differ from wppWeightedCocone₀ while having the same
+restriction (same diagonal legs).
+
+Specifically: the value at (coTwLeft, wppWeightRight) can be either 0 or 1
+while the diagonal values remain constant 0. But any cocone morphism between
+such cocones that restricts to identity would require:
+- h(0) = 0 (from diagonal commutativity)
+- h(0) = 1 (from commutativity at (coTwLeft, wppWeightRight))
+which is a contradiction.
+
+This shows the restriction functor is not full. -/
+theorem restrictionFunctor_not_full_statement :
+    (wppWeightedCocone₀.leg coTwIdZero
+      (cast wppWeightAt_coTwIdZero.symm (𝟙 WalkingParallelPair.zero)) =
+     wppCastLeg coTwIdZero (fun _ => 0)) ∧
+    (wppCastLeg coTwLeft (modifiedLegAtCoTwLeft wppWeightLeft) =
+     wppCastLeg coTwLeft (fun _ => 0)) ∧
+    (wppCastLeg coTwLeft (modifiedLegAtCoTwLeft wppWeightRight) ≠
+     wppCastLeg coTwLeft (fun _ => 0)) := by
+  refine ⟨?_, ?_, ?_⟩
+  · rfl
+  · exact wppModifiedLeg_at_left_eq_zero
+  · exact wppModifiedLeg_at_right_ne_zero
+
+/-- Contradiction lemma: no morphism h : ℕ → ℕ can satisfy both
+h(0) = 0 and h(0) = 1. -/
+theorem no_morphism_with_both_conditions (h : ℕ → ℕ)
+    (h0 : h 0 = 0) (h1 : h 0 = 1) : False := by
+  have : (0 : ℕ) = 1 := by rw [← h0, h1]
+  exact Nat.zero_ne_one this
+
+/-!
+### Non-fullness of the restriction functor
+
+The identity morphism on a weighted cocone satisfies the morphism condition:
+for all (tw, w), leg(tw, w) ≫ id = leg(tw, w). This is trivially true.
+
+If two cocones c₁ and c₂ have the same apex and the same restriction (same
+diagonal legs), but differ at some non-diagonal position, then any morphism
+from c₁ to c₂ with identity apex must satisfy leg₁(tw, w) = leg₂(tw, w) for
+all (tw, w). But they differ at the non-diagonal position, so no such
+morphism exists.
+
+The identity on the restriction cannot lift to a weighted cocone morphism
+when the cocones differ at non-diagonal positions.
+-/
+
+/-- For a weighted cocone morphism with identity apex, all legs must match. -/
+theorem weighted_cocone_morphism_id_forces_equal_legs
+    (c₁ c₂ : WeightedCocone wppWeightFunctor wppDiagramFunctor)
+    (apex_eq : c₁.pt = c₂.pt)
+    (h_mor : WeightedCocone.Hom c₁ c₂)
+    (h_id : h_mor.hom = eqToHom apex_eq)
+    (tw : CoTwistedArrow WalkingParallelPair)
+    (w : wppWeightAt tw) :
+    c₁.leg tw w ≫ eqToHom apex_eq = c₂.leg tw w := by
+  have comm := h_mor.w tw w
+  rw [h_id] at comm
+  exact comm
+
+/--
+Summary of the non-fullness result: the restriction functor from weighted
+cocones to restricted cowedges is not full for the WalkingParallelPair case.
+
+The proof works by exhibiting that:
+1. The value at (coTwLeft, wppWeightRight) is unconstrained by naturality
+   (established in `diagonal_does_not_determine_wppWeightRight`)
+2. No morphisms exist INTO coTwLeft from any other co-twisted arrow
+   (neither diagonals nor coTwRight)
+3. Therefore weighted cocones with same diagonal legs can differ there
+4. Any morphism between such cocones restricting to identity forces equality
+   of all legs, which contradicts the difference at (coTwLeft, wppWeightRight)
+-/
+theorem restriction_functor_not_full_summary :
+    wppWeightLeft ≠ wppWeightRight ∧
+    (wppWeightFunctor.map coTwMorLeftToIdZero.op wppWeightIdZero = wppWeightLeft) ∧
+    (∀ _ : coTwIdZero ⟶ coTwLeft, False) ∧
+    (∀ _ : coTwIdOne ⟶ coTwLeft, False) ∧
+    (∀ _ : coTwRight ⟶ coTwLeft, False) ∧
+    (∀ _ : coTwLeft ⟶ coTwRight, False) :=
+  ⟨wppWeightLeft_ne_wppWeightRight,
+   wppWeightTransport_fromIdZero_eq_left,
+   no_mor_coTwIdZero_to_coTwLeft,
+   no_mor_coTwIdOne_to_coTwLeft,
+   no_mor_coTwRight_to_coTwLeft,
+   no_mor_coTwLeft_to_coTwRight⟩
+
+/-!
+### Final non-fullness theorem
+
+We prove that the restriction functor is not full by constructing a modified
+weighted cocone that agrees with wppWeightedCocone₀ on diagonals but differs
+at (coTwLeft, wppWeightRight).
+
+The approach constructs explicit leg functions for the modified cocone by
+specifying values at each co-twisted arrow position.
+-/
+
+/-- The modified leg function at coTwLeft: agrees with constant 0 at
+wppWeightLeft but differs at wppWeightRight. -/
+def wppModifiedLegCoTwLeft : wppWeightAt coTwLeft → (ℕ → ℕ) :=
+  modifiedLegAtCoTwLeft
+
+/-- The modified leg at coTwLeft wrapped in the cast. -/
+def wppModifiedLegCoTwLeftCast (w : wppWeightAt coTwLeft) :
+    wppDiagramFunctor.obj coTwLeft → ℕ :=
+  wppCastLeg coTwLeft (wppModifiedLegCoTwLeft w)
+
+/-- The modified natural transformation app at coTwLeft. -/
+def wppModifiedNatTransAppCoTwLeft :
+    wppWeightFunctor.obj (Opposite.op coTwLeft) →
+    (homToFunctor wppDiagramFunctor ℕ).obj (Opposite.op coTwLeft) :=
+  wppModifiedLegCoTwLeftCast
+
+/-- Modified cocone legs: constant 0 at all diagonal and coTwRight positions,
+modified at coTwLeft. -/
+def wppModifiedLegNatTrans :
+    wppWeightFunctor ⟶ homToFunctor wppDiagramFunctor ℕ where
+  app := fun tw =>
+    if h : tw.unop = coTwLeft then
+      fun w => wppCastLeg tw.unop
+        (modifiedLegAtCoTwLeft (cast (congrArg (wppWeightFunctor.obj ·)
+          ((Opposite.op_unop tw).symm.trans (congrArg Opposite.op h))) w))
+    else
+      fun _ => wppCastLeg tw.unop (fun _ => 0)
+  naturality := fun x y f => by
+    ext w
+    simp only [types_comp_apply]
+    rw [wppHomToFunctor_map_eq]
+    by_cases hx : x.unop = coTwLeft <;> by_cases hy : y.unop = coTwLeft
+    · -- Case: x.unop = coTwLeft, y.unop = coTwLeft
+      have hxy : x = y := Opposite.unop_injective (hx.trans hy.symm)
+      subst hxy
+      have hx' : x = Opposite.op coTwLeft := by rw [← Opposite.op_unop x, hx]
+      subst hx'
+      have hf_id : f = 𝟙 (Opposite.op coTwLeft) := by
+        apply Quiver.Hom.unop_inj
+        exact coTwLeft_endo_is_id f.unop
+      simp only [dite_true, hf_id, Functor.map_id, types_id_apply]
+    · -- Case: x.unop = coTwLeft, y.unop ≠ coTwLeft (contradiction)
+      exfalso
+      have hf : y.unop ⟶ coTwLeft := hx ▸ f.unop
+      rcases wppCoTwArrow_cases y.unop with hycase | hycase | hycase | hycase
+      · exact no_mor_coTwIdZero_to_coTwLeft (hycase ▸ hf)
+      · exact no_mor_coTwIdOne_to_coTwLeft (hycase ▸ hf)
+      · exact hy hycase
+      · exact no_mor_coTwRight_to_coTwLeft (coTwRight_eq_coTwRight'.symm ▸ hycase ▸ hf)
+    · -- Case: x.unop ≠ coTwLeft, y.unop = coTwLeft
+      simp only [hx, hy, dite_true, dite_false]
+      rcases wppCoTwArrow_cases x.unop with hxcase | hxcase | hxcase | hxcase
+      · -- x.unop = coTwIdZero
+        have hx' : x = Opposite.op coTwIdZero := by
+          rw [← Opposite.op_unop x, hxcase]
+        subst hx'
+        have hy' : y = Opposite.op coTwLeft := by
+          rw [← Opposite.op_unop y, hy]
+        subst hy'
+        have hf_unop : f.unop = coTwMorLeftToIdZero :=
+          coTwLeft_to_coTwIdZero_unique f.unop
+        have hf : f = coTwMorLeftToIdZero.op :=
+          Quiver.Hom.unop_inj hf_unop
+        have hw : w = wppWeightIdZero := by
+          unfold wppWeightIdZero
+          exact walkingParallelPair_zero_zero_eq_id (cast wppWeightAt_coTwIdZero w)
+        simp only [Opposite.unop_op, hw, hf, wppWeightTransport_fromIdZero_eq_left]
+        conv_lhs => rw [show (cast _ wppWeightLeft) = wppWeightLeft from rfl]
+        rw [modifiedLegAtCoTwLeft_left_eq_zero]
+        funext n
+        rfl
+      · -- x.unop = coTwIdOne
+        have hx' : x = Opposite.op coTwIdOne := by
+          rw [← Opposite.op_unop x, hxcase]
+        subst hx'
+        have hy' : y = Opposite.op coTwLeft := by
+          rw [← Opposite.op_unop y, hy]
+        subst hy'
+        have hf_unop : f.unop = coTwMorLeftToIdOne :=
+          coTwLeft_to_coTwIdOne_unique f.unop
+        have hf : f = coTwMorLeftToIdOne.op :=
+          Quiver.Hom.unop_inj hf_unop
+        have hw : w = wppWeightIdOne := by
+          unfold wppWeightIdOne
+          exact wpp_hom_one_one_singleton (cast wppWeightAt_coTwIdOne w)
+        simp only [Opposite.unop_op, hw, hf, wppWeightTransport_fromIdOne_eq_left]
+        conv_lhs => rw [show (cast _ wppWeightLeft) = wppWeightLeft from rfl]
+        rw [modifiedLegAtCoTwLeft_left_eq_zero]
+        funext n
+        rfl
+      · -- x.unop = coTwLeft: contradiction with hx
+        exact absurd hxcase hx
+      · -- x.unop = coTwRight': no morphism from coTwLeft
+        exfalso
+        have hf : coTwLeft ⟶ x.unop := hy ▸ f.unop
+        rw [hxcase] at hf
+        exact no_mor_coTwLeft_to_coTwRight (coTwRight_eq_coTwRight'.symm ▸ hf)
+    · -- Case: both not coTwLeft (both constant 0)
+      simp only [hx, hy, dite_false]
+      rfl
+
+/-- The modified weighted cocone: uses wppModifiedLegNatTrans for legs. -/
+def wppModifiedCocone : WeightedCocone wppWeightFunctor wppDiagramFunctor where
+  pt := ℕ
+  ι := wppModifiedLegNatTrans
+
+/-- The leg of the modified cocone at coTwLeft uses modifiedLegAtCoTwLeft. -/
+theorem wppModifiedCocone_leg_coTwLeft (w : wppWeightAt coTwLeft) :
+    wppModifiedCocone.leg coTwLeft w =
+    wppCastLeg coTwLeft (modifiedLegAtCoTwLeft w) := by
+  simp only [wppModifiedCocone, WeightedCocone.leg, wppModifiedLegNatTrans]
+  simp only [dite_true]
+  rfl
+
+/-- The leg of the modified cocone at coTwIdZero is constant 0. -/
+theorem wppModifiedCocone_leg_coTwIdZero (w : wppWeightAt coTwIdZero) :
+    wppModifiedCocone.leg coTwIdZero w = wppCastLeg coTwIdZero (fun _ => 0) := by
+  simp only [wppModifiedCocone, WeightedCocone.leg, wppModifiedLegNatTrans]
+  have h : coTwIdZero ≠ coTwLeft := by
+    intro heq
+    have : coTwDom coTwIdZero = coTwDom coTwLeft := congrArg coTwDom heq
+    rw [coTwIdZero_dom, coTwLeft_dom] at this
+    cases this
+  simp only [h, ↓reduceDIte]
+
+/-- The leg of the modified cocone at coTwIdOne is constant 0. -/
+theorem wppModifiedCocone_leg_coTwIdOne (w : wppWeightAt coTwIdOne) :
+    wppModifiedCocone.leg coTwIdOne w = wppCastLeg coTwIdOne (fun _ => 0) := by
+  simp only [wppModifiedCocone, WeightedCocone.leg, wppModifiedLegNatTrans]
+  have h : coTwIdOne ≠ coTwLeft := by
+    intro heq
+    have : coTwCod coTwIdOne = coTwCod coTwLeft := congrArg coTwCod heq
+    rw [coTwIdOne_cod, coTwLeft_cod] at this
+    cases this
+  simp only [h, ↓reduceDIte]
+
+/-- The modified cocone has the same diagonal leg at coTwIdZero as wppWeightedCocone₀. -/
+theorem wppModifiedCocone_diagonal_eq_zero :
+    ∀ (w : wppWeightAt coTwIdZero),
+    wppModifiedCocone.leg coTwIdZero w = wppWeightedCocone₀.leg coTwIdZero w := by
+  intro w
+  rw [wppModifiedCocone_leg_coTwIdZero, wppWeightedCocone₀_leg_eq]
+
+/-- The modified cocone has the same diagonal leg at coTwIdOne as wppWeightedCocone₀. -/
+theorem wppModifiedCocone_diagonal_eq_one :
+    ∀ (w : wppWeightAt coTwIdOne),
+    wppModifiedCocone.leg coTwIdOne w = wppWeightedCocone₀.leg coTwIdOne w := by
+  intro w
+  rw [wppModifiedCocone_leg_coTwIdOne, wppWeightedCocone₀_leg_eq]
+
+/-- The modified cocone differs from wppWeightedCocone₀ at (coTwLeft, wppWeightRight). -/
+theorem wppModifiedCocone_differs_at_right :
+    wppModifiedCocone.leg coTwLeft wppWeightRight ≠
+    wppWeightedCocone₀.leg coTwLeft wppWeightRight := by
+  rw [wppModifiedCocone_leg_coTwLeft, wppWeightedCocone₀_leg_eq,
+      modifiedLegAtCoTwLeft_right_eq_one]
+  intro h
+  have h0 : (wppCastLeg coTwLeft (fun _ => 0)) (0 : ℕ) = 0 := rfl
+  have h1 : (wppCastLeg coTwLeft (fun _ => 1)) (0 : ℕ) = 1 := rfl
+  have : (0 : ℕ) = 1 := by
+    calc 0 = (wppCastLeg coTwLeft (fun _ => 0)) (0 : ℕ) := h0.symm
+      _ = (wppCastLeg coTwLeft (fun _ => 1)) (0 : ℕ) := congrFun h.symm (0 : ℕ)
+      _ = 1 := h1
+  exact Nat.zero_ne_one this
+
+/-- The two cocones wppWeightedCocone₀ and wppModifiedCocone have the same
+legs at identity co-twisted arrows but differ at (coTwLeft, wppWeightRight).
+
+This demonstrates that diagonal data does not determine the full cocone
+structure: two cocones can agree on all identity positions yet differ
+elsewhere. -/
+theorem diagonal_does_not_determine_cocone :
+    (wppWeightedCocone₀.pt = wppModifiedCocone.pt) ∧
+    (wppWeightedCocone₀.leg coTwIdZero = wppModifiedCocone.leg coTwIdZero) ∧
+    (wppWeightedCocone₀.leg coTwIdOne = wppModifiedCocone.leg coTwIdOne) ∧
+    (wppWeightedCocone₀.leg coTwLeft wppWeightRight ≠
+     wppModifiedCocone.leg coTwLeft wppWeightRight) := by
+  refine ⟨rfl, ?_, ?_, ?_⟩
+  · -- coTwIdZero case: both are constant 0
+    rfl
+  · -- coTwIdOne case
+    funext w
+    rw [wppWeightedCocone₀_leg_eq]
+    simp only [wppModifiedCocone, WeightedCocone.leg, wppModifiedLegNatTrans]
+    have hne : (Opposite.op coTwIdOne).unop ≠ coTwLeft := coTwIdOne_ne_coTwLeft
+    simp only [hne, ↓reduceDIte]
+  · -- The legs differ at (coTwLeft, wppWeightRight)
+    exact wppModifiedCocone_differs_at_right.symm
+
+end NonFullnessCounterexample
+
+section CValuedCounterexample
+
+/-!
+### Counterexample for C-valued diagram
+
+The restriction functor `restrictionFunctor H G : WeightedCowedge H G ⥤ RestrictedCowedge G H`
+requires `G : Cᵒᵖ ⥤ C ⥤ C` (valued in C, not Type). We analyze whether fullness fails
+for this case using C = WalkingParallelPair.
+
+The difference from the Type-valued case: legs are morphisms in C, which have
+limited choices. With G constant at `zero`, the diagram values are all `zero`,
+so legs to apex A are morphisms `zero ⟶ A`.
+-/
+
+/-- Constant profunctor valued in WalkingParallelPair (as a category), constant at zero. -/
+abbrev wppConstDiagramC : WalkingParallelPairᵒᵖ ⥤ WalkingParallelPair ⥤
+    WalkingParallelPair :=
+  (Functor.const WalkingParallelPairᵒᵖ).obj
+    ((Functor.const WalkingParallelPair).obj WalkingParallelPair.zero)
+
+/-- The diagram value is constantly zero. -/
+theorem wppConstDiagramC_obj_obj (A : WalkingParallelPairᵒᵖ) (B : WalkingParallelPair) :
+    (wppConstDiagramC.obj A).obj B = WalkingParallelPair.zero := rfl
+
+/-- The diagram morphisms are identities. -/
+theorem wppConstDiagramC_obj_map (A : WalkingParallelPairᵒᵖ) {B B' : WalkingParallelPair}
+    (f : B ⟶ B') :
+    (wppConstDiagramC.obj A).map f = 𝟙 WalkingParallelPair.zero := rfl
+
+/-- The diagram natural transformation components are identities. -/
+theorem wppConstDiagramC_map_app {A A' : WalkingParallelPairᵒᵖ} (g : A ⟶ A')
+    (B : WalkingParallelPair) :
+    (wppConstDiagramC.map g).app B = 𝟙 WalkingParallelPair.zero := rfl
+
+/-- The C-valued diagram functor on CoTwistedArrow. -/
+abbrev wppDiagramFunctorC : CoTwistedArrow WalkingParallelPair ⥤ WalkingParallelPair :=
+  profunctorOnCoTwistedArrow WalkingParallelPair wppConstDiagramC
+
+/-- The C-valued diagram is constant at zero. -/
+theorem wppDiagramFunctorC_obj_eq (tw : CoTwistedArrow WalkingParallelPair) :
+    wppDiagramFunctorC.obj tw = WalkingParallelPair.zero := rfl
+
+/-- Morphisms in the C-valued diagram are identities. -/
+theorem wppDiagramFunctorC_map_eq {tw tw' : CoTwistedArrow WalkingParallelPair}
+    (m : tw ⟶ tw') : wppDiagramFunctorC.map m = 𝟙 WalkingParallelPair.zero := by
+  unfold wppDiagramFunctorC profunctorOnCoTwistedArrow
+  simp only [Functor.comp_map, Functor.uncurry_obj_map]
+  simp only [Functor.const_obj_obj, Functor.const_obj_map, Category.comp_id]
+  rfl
+
+/-!
+### Analysis of weighted cowedge structure with C-valued diagram
+
+With `G = wppConstDiagramC` constant at zero:
+- The diagram functor `wppDiagramFunctorC` is constant at `zero : WalkingParallelPair`
+- A leg at co-twisted arrow `tw` with weight `w` is a morphism `zero → apex`
+- When apex = zero, only `id_zero` is available
+- When apex = one, both `left` and `right` are available
+
+The weight at `tw` comes from `profunctorOnOpCoTwistedArrow WalkingParallelPair H`
+evaluated at `tw`.
+
+For the weighted cowedge naturality to hold, the morphism constraints are:
+- For `m : tw → tw'` in CoTwistedArrow, we need:
+  `leg(tw', W.map(m.op)(w)) ∘ D.map(m) = leg(tw, w)`
+- Since D.map(m) = id_zero for all m, this simplifies to:
+  `leg(tw', W.map(m.op)(w)) = leg(tw, w)`
+
+The weight transport goes: when m : tw → tw', the weight maps W(tw')ᵒᵖ → W(tw)ᵒᵖ.
+
+For a morphism TO coTwLeft, we've established there are NONE from diagonals
+(coTwIdZero, coTwIdOne). So the leg at coTwLeft is unconstrained by diagonal
+legs - any choice satisfies naturality vacuously.
+-/
+
+/-- A WeightedCowedge for the C-valued diagram consists of an apex and legs
+that are morphisms from zero to the apex. -/
+abbrev CValuedWeightedCowedge (H : WalkingParallelPairᵒᵖ ⥤ WalkingParallelPair ⥤ Type) :=
+  WeightedCowedge H wppConstDiagramC
+
+/-- The weight type at a co-twisted arrow for the C-valued cowedge. -/
+abbrev cValuedWeightAt (H : WalkingParallelPairᵒᵖ ⥤ WalkingParallelPair ⥤ Type)
+    (tw : CoTwistedArrow WalkingParallelPair) : Type :=
+  (profunctorOnOpCoTwistedArrow WalkingParallelPair H).obj (Opposite.op tw)
+
+/-!
+### The non-fullness argument for C-valued diagrams
+
+The restriction functor `restrictionFunctor H wppConstDiagramC` is not full.
+The argument follows the same structure as the Type-valued case:
+
+1. With `G = wppConstDiagramC` constant at zero, the diagram is constant
+2. A weighted cowedge with apex `one` has legs that are morphisms `zero → one`
+3. The morphisms `zero → one` in WalkingParallelPair are `left` and `right`
+4. Weight transport only constrains `wppWeightLeft` at coTwLeft, not `wppWeightRight`
+5. Two cowedges can agree on diagonal legs but differ at (coTwLeft, wppWeightRight)
+6. The identity morphism on their restrictions doesn't lift to a cowedge morphism
+
+The restriction functor being not full means there exist restricted cowedge
+morphisms that don't come from weighted cowedge morphisms. Specifically,
+when two weighted cowedges have the same diagonal legs but different
+non-diagonal legs, the identity on their common restriction is a valid
+restricted morphism but doesn't lift.
+-/
+
+/-- The C-valued weight functor is the same as the Type-valued one
+(both use wppHomProfunctor). -/
+abbrev cValuedWeightFunctor :
+    (CoTwistedArrow WalkingParallelPair)ᵒᵖ ⥤ Type :=
+  profunctorOnOpCoTwistedArrow WalkingParallelPair wppHomProfunctor
+
+/-- The C-valued weight at a co-twisted arrow equals the Type-valued weight. -/
+theorem cValuedWeightFunctor_eq_wppWeightFunctor :
+    cValuedWeightFunctor = wppWeightFunctor := rfl
+
+/-- For a C-valued weighted cocone morphism with identity apex, all legs must be
+equal as morphisms in C. -/
+theorem cValued_cocone_morphism_id_forces_equal_legs
+    (c₁ c₂ : WeightedCocone cValuedWeightFunctor wppDiagramFunctorC)
+    (apex_eq : c₁.pt = c₂.pt)
+    (h_mor : WeightedCocone.Hom c₁ c₂)
+    (h_id : h_mor.hom = eqToHom apex_eq)
+    (tw : CoTwistedArrow WalkingParallelPair)
+    (w : cValuedWeightFunctor.obj (Opposite.op tw)) :
+    c₁.leg tw w ≫ eqToHom apex_eq = c₂.leg tw w := by
+  have comm := h_mor.w tw w
+  rw [h_id] at comm
+  exact comm
+
+/-- Non-fullness statement for the C-valued restriction functor:
+Morphisms `zero → one` in WalkingParallelPair consist of exactly `left` and
+`right`. Two different choices for `leg(coTwLeft)(wppWeightRight)` lead to
+cowedges that agree on diagonals but differ at that position.
+
+The identity morphism on the common restriction cannot lift to a weighted
+cowedge morphism because lifting requires all legs to match, but the legs
+differ at (coTwLeft, wppWeightRight). -/
+theorem cValued_restrictionFunctor_not_full_statement :
+    (∃ (f : WalkingParallelPair.zero ⟶ WalkingParallelPair.one),
+      f ≠ WalkingParallelPairHom.left ∧ f ≠ WalkingParallelPairHom.right →
+      False) ∧
+    WalkingParallelPairHom.left ≠ WalkingParallelPairHom.right := by
+  constructor
+  · use WalkingParallelPairHom.left
+    intro h
+    exact h.1 rfl
+  · intro h
+    cases h
+
+/-- The restriction functor for C-valued diagrams shares the same weight
+transport properties as the Type-valued case. Since the weight functor is
+identical, the results about wppWeightRight not being constrained by
+diagonal transport apply equally.
+
+Combined with:
+1. `wppWeightRight_not_constrained_by_diagonals`: wppWeightRight is not in the
+   image of weight transport from any diagonal
+2. `cValued_restrictionFunctor_not_full_statement`: left ≠ right in C
+3. `cValued_cocone_morphism_id_forces_equal_legs`: any cocone morphism with
+   identity apex forces all legs to match
+
+This establishes that `restrictionFunctor wppHomProfunctor wppConstDiagramC`
+is not full: two cowedges can agree on diagonals but differ at
+(coTwLeft, wppWeightRight) by using `left` vs `right`, and the identity on
+their common restriction cannot lift. -/
+theorem cValued_restrictionFunctor_not_full_key_facts :
+    (WalkingParallelPairHom.left ≠ WalkingParallelPairHom.right) ∧
+    (∀ (_ : coTwIdZero ⟶ coTwLeft), False) ∧
+    (∀ (_ : coTwIdOne ⟶ coTwLeft), False) :=
+  And.intro walkingParallelPair_left_ne_right
+    (And.intro no_mor_coTwIdZero_to_coTwLeft no_mor_coTwIdOne_to_coTwLeft)
+
+/-- For any co-twisted arrow, the diagram is constant at zero. -/
+theorem wppDiagramFunctorC_obj_eq_zero (tw : CoTwistedArrow WalkingParallelPair) :
+    wppDiagramFunctorC.obj tw = WalkingParallelPair.zero := rfl
+
+/-- The leg function for C-valued cowedges with apex `one`.
+All legs go from `zero` (the constant diagram value) to `one`.
+This version sends all weight elements to `left`. -/
+def cValuedLegAllLeft (tw : CoTwistedArrow WalkingParallelPair)
+    (_ : cValuedWeightFunctor.obj (Opposite.op tw)) :
+    wppDiagramFunctorC.obj tw ⟶ WalkingParallelPair.one :=
+  (wppDiagramFunctorC_obj_eq_zero tw) ▸ WalkingParallelPairHom.left
+
+/-- The natural transformation for the all-left cowedge.
+Since the diagram is constant at zero, naturality is trivial. -/
+def cValuedAllLeftNatTrans :
+    cValuedWeightFunctor ⟶ homToFunctor wppDiagramFunctorC WalkingParallelPair.one where
+  app := fun tw_op w => cValuedLegAllLeft tw_op.unop w
+  naturality := fun _ _ f => by
+    ext _
+    simp only [types_comp_apply, homToFunctor, cValuedLegAllLeft,
+      wppDiagramFunctorC_obj_eq_zero]
+    rfl
+
+/-- The leg function for C-valued cowedges sending wppWeightRight to `right`
+and everything else to `left`. -/
+def cValuedLegRightAtRight (tw : CoTwistedArrow WalkingParallelPair)
+    (w : cValuedWeightFunctor.obj (Opposite.op tw)) :
+    wppDiagramFunctorC.obj tw ⟶ WalkingParallelPair.one :=
+  (wppDiagramFunctorC_obj_eq_zero tw) ▸
+    if htw : tw = coTwLeft then
+      if _ : (htw ▸ w : wppWeightAt coTwLeft) = wppWeightRight then
+        WalkingParallelPairHom.right
+      else WalkingParallelPairHom.left
+    else WalkingParallelPairHom.left
+
+/-- The leg at coTwLeft for wppWeightRight is `right`. -/
+theorem cValuedLegRightAtRight_coTwLeft_wppWeightRight :
+    cValuedLegRightAtRight coTwLeft wppWeightRight = WalkingParallelPairHom.right := by
+  simp only [cValuedLegRightAtRight, dite_true]
+
+/-- The leg at coTwLeft for wppWeightLeft is `left`. -/
+theorem cValuedLegRightAtRight_coTwLeft_wppWeightLeft :
+    cValuedLegRightAtRight coTwLeft wppWeightLeft = WalkingParallelPairHom.left := by
+  simp only [cValuedLegRightAtRight, dite_true, wppWeightLeft_ne_wppWeightRight, dite_false]
+
+/-- The leg at non-coTwLeft positions is `left`. -/
+theorem cValuedLegRightAtRight_not_coTwLeft (tw : CoTwistedArrow WalkingParallelPair)
+    (hne : tw ≠ coTwLeft)
+    (w : cValuedWeightFunctor.obj (Opposite.op tw)) :
+    cValuedLegRightAtRight tw w = WalkingParallelPairHom.left := by
+  simp only [cValuedLegRightAtRight, hne, dite_false]
+
+/-- The natural transformation for the right-at-right cowedge. -/
+def cValuedRightAtRightNatTrans :
+    cValuedWeightFunctor ⟶ homToFunctor wppDiagramFunctorC WalkingParallelPair.one where
+  app := fun tw_op w => cValuedLegRightAtRight tw_op.unop w
+  naturality := fun x y f => by
+    ext w
+    simp only [types_comp_apply, homToFunctor, wppDiagramFunctorC_obj_eq_zero]
+    -- The diagram is constant, so F.map = 𝟙. Need to show:
+    -- cValuedLegRightAtRight y.unop (W.map f w) = 𝟙 ≫ cValuedLegRightAtRight x.unop w
+    have hdiag : wppDiagramFunctorC.map f.unop = 𝟙 WalkingParallelPair.zero := rfl
+    simp only [hdiag, Category.id_comp]
+    -- Now show: cValuedLegRightAtRight y.unop (W.map f w) = cValuedLegRightAtRight x.unop w
+    by_cases hx : x.unop = coTwLeft
+    · by_cases hy : y.unop = coTwLeft
+      · -- Both coTwLeft: x = y, morphism is identity
+        have hxy : x = y := Opposite.unop_injective (hx.trans hy.symm)
+        subst hxy
+        have hx' : x = Opposite.op coTwLeft := by rw [← Opposite.op_unop x, hx]
+        subst hx'
+        have hf_id : f = 𝟙 (Opposite.op coTwLeft) := by
+          apply Quiver.Hom.unop_inj
+          exact coTwLeft_endo_is_id f.unop
+        simp only [hf_id, Functor.map_id, types_id_apply]
+      · -- x is coTwLeft, y is not: no morphism y.unop → coTwLeft
+        exfalso
+        have hf : y.unop ⟶ coTwLeft := hx ▸ f.unop
+        rcases wppCoTwArrow_cases y.unop with hycase | hycase | hycase | hycase
+        · exact no_mor_coTwIdZero_to_coTwLeft (hycase ▸ hf)
+        · exact no_mor_coTwIdOne_to_coTwLeft (hycase ▸ hf)
+        · exact hy hycase
+        · exact no_mor_coTwRight_to_coTwLeft
+            (coTwRight_eq_coTwRight'.symm ▸ hycase ▸ hf)
+    · by_cases hy : y.unop = coTwLeft
+      · -- x is not coTwLeft, y is coTwLeft
+        -- RHS: leg at x (not coTwLeft) = left
+        rw [cValuedLegRightAtRight_not_coTwLeft x.unop hx w]
+        -- LHS: weight transport to coTwLeft yields wppWeightLeft, so leg = left
+        rcases wppCoTwArrow_cases x.unop with hxcase | hxcase | hxcase | hxcase
+        · -- x.unop = coTwIdZero
+          have hx' : x = Opposite.op coTwIdZero := by
+            rw [← Opposite.op_unop x, hxcase]
+          have hy' : y = Opposite.op coTwLeft := by
+            rw [← Opposite.op_unop y, hy]
+          subst hx' hy'
+          have hf_unop : f.unop = coTwMorLeftToIdZero :=
+            coTwLeft_to_coTwIdZero_unique f.unop
+          have hf : f = coTwMorLeftToIdZero.op := by
+            rw [← Quiver.Hom.op_unop f, hf_unop]
+          have hw : w = wppWeightIdZero := by
+            unfold wppWeightIdZero
+            exact walkingParallelPair_zero_zero_eq_id (cast wppWeightAt_coTwIdZero w)
+          simp only [Opposite.unop_op, hw, hf, wppWeightTransport_fromIdZero_eq_left,
+            cValuedLegRightAtRight_coTwLeft_wppWeightLeft]
+        · -- x.unop = coTwIdOne
+          have hx' : x = Opposite.op coTwIdOne := by
+            rw [← Opposite.op_unop x, hxcase]
+          have hy' : y = Opposite.op coTwLeft := by
+            rw [← Opposite.op_unop y, hy]
+          subst hx' hy'
+          have hf_unop : f.unop = coTwMorLeftToIdOne :=
+            coTwLeft_to_coTwIdOne_unique f.unop
+          have hf : f = coTwMorLeftToIdOne.op := by
+            rw [← Quiver.Hom.op_unop f, hf_unop]
+          have hw : w = wppWeightIdOne := by
+            unfold wppWeightIdOne
+            exact walkingParallelPair_one_one_eq_id (cast wppWeightAt_coTwIdOne w)
+          simp only [Opposite.unop_op, hw, hf, wppWeightTransport_fromIdOne_eq_left,
+            cValuedLegRightAtRight_coTwLeft_wppWeightLeft]
+        · -- x.unop = coTwLeft (contradiction with hx)
+          exact absurd hxcase hx
+        · -- x.unop = coTwRight' (no morphism coTwLeft → coTwRight')
+          exfalso
+          have hf' : coTwLeft ⟶ coTwRight' := hy ▸ hxcase ▸ f.unop
+          exact no_mor_coTwLeft_to_coTwRight
+            (coTwRight_eq_coTwRight'.symm ▸ hf')
+      · -- Neither is coTwLeft: both legs are left
+        rw [cValuedLegRightAtRight_not_coTwLeft x.unop hx w,
+          cValuedLegRightAtRight_not_coTwLeft y.unop hy _]
+
+/-- The first C-valued weighted cowedge: all legs are `left`. -/
+def cValuedCowedgeAllLeft :
+    WeightedCocone cValuedWeightFunctor wppDiagramFunctorC where
+  pt := WalkingParallelPair.one
+  ι := cValuedAllLeftNatTrans
+
+/-- The second C-valued weighted cowedge: leg at (coTwLeft, wppWeightRight) is
+`right`, all others are `left`. -/
+def cValuedCowedgeRightAtRight :
+    WeightedCocone cValuedWeightFunctor wppDiagramFunctorC where
+  pt := WalkingParallelPair.one
+  ι := cValuedRightAtRightNatTrans
+
+/-- The two C-valued cowedges have the same apex. -/
+theorem cValuedCowedges_same_apex :
+    cValuedCowedgeAllLeft.pt = cValuedCowedgeRightAtRight.pt := rfl
+
+/-- The leg of cValuedCowedgeAllLeft at any position is `left`. -/
+theorem cValuedCowedgeAllLeft_leg
+    (tw : CoTwistedArrow WalkingParallelPair)
+    (w : cValuedWeightFunctor.obj (Opposite.op tw)) :
+    cValuedCowedgeAllLeft.leg tw w = WalkingParallelPairHom.left := by
+  simp only [cValuedCowedgeAllLeft, WeightedCocone.leg, cValuedAllLeftNatTrans,
+    cValuedLegAllLeft]
+
+/-- The leg of cValuedCowedgeRightAtRight at (coTwLeft, wppWeightRight) is `right`. -/
+theorem cValuedCowedgeRightAtRight_leg_coTwLeft_wppWeightRight :
+    cValuedCowedgeRightAtRight.leg coTwLeft wppWeightRight =
+    WalkingParallelPairHom.right := by
+  simp only [cValuedCowedgeRightAtRight, WeightedCocone.leg, cValuedRightAtRightNatTrans,
+    cValuedLegRightAtRight]
+  simp only [dite_true]
+
+/-- The two cowedges differ at (coTwLeft, wppWeightRight). -/
+theorem cValuedCowedges_differ_at_coTwLeft_wppWeightRight :
+    cValuedCowedgeAllLeft.leg coTwLeft wppWeightRight ≠
+    cValuedCowedgeRightAtRight.leg coTwLeft wppWeightRight := by
+  rw [cValuedCowedgeAllLeft_leg, cValuedCowedgeRightAtRight_leg_coTwLeft_wppWeightRight]
+  exact walkingParallelPair_left_ne_right
+
+/-- The two cowedges have the same leg at coTwIdZero. -/
+theorem cValuedCowedges_same_leg_coTwIdZero
+    (w : cValuedWeightFunctor.obj (Opposite.op coTwIdZero)) :
+    cValuedCowedgeAllLeft.leg coTwIdZero w =
+    cValuedCowedgeRightAtRight.leg coTwIdZero w := by
+  simp only [cValuedCowedgeAllLeft_leg]
+  simp only [cValuedCowedgeRightAtRight, WeightedCocone.leg, cValuedRightAtRightNatTrans,
+    cValuedLegRightAtRight]
+  have hne : coTwIdZero ≠ coTwLeft := by
+    intro heq
+    have : coTwDom coTwIdZero = coTwDom coTwLeft := congrArg coTwDom heq
+    rw [coTwIdZero_dom, coTwLeft_dom] at this
+    cases this
+  simp only [hne, ↓reduceDIte]
+
+/-- The two cowedges have the same leg at coTwIdOne. -/
+theorem cValuedCowedges_same_leg_coTwIdOne
+    (w : cValuedWeightFunctor.obj (Opposite.op coTwIdOne)) :
+    cValuedCowedgeAllLeft.leg coTwIdOne w =
+    cValuedCowedgeRightAtRight.leg coTwIdOne w := by
+  simp only [cValuedCowedgeAllLeft_leg]
+  simp only [cValuedCowedgeRightAtRight, WeightedCocone.leg, cValuedRightAtRightNatTrans,
+    cValuedLegRightAtRight]
+  have hne : coTwIdOne ≠ coTwLeft := by
+    intro heq
+    have : coTwCod coTwIdOne = coTwCod coTwLeft := congrArg coTwCod heq
+    rw [coTwIdOne_cod, coTwLeft_cod] at this
+    cases this
+  simp only [hne, ↓reduceDIte]
+
+/-- The two cowedges have the same restriction (same diagonal legs). -/
+theorem cValuedCowedges_same_restriction :
+    (restrictionFunctor wppHomProfunctor wppConstDiagramC).obj cValuedCowedgeAllLeft =
+    (restrictionFunctor wppHomProfunctor wppConstDiagramC).obj cValuedCowedgeRightAtRight := by
+  apply RestrictedCowedge.ext
+  · rfl
+  · -- Since pt₁ = pt₂ by rfl, the family types are equal, so HEq becomes Eq
+    apply heq_of_eq
+    funext A a
+    match A with
+    | WalkingParallelPair.zero =>
+      simp only [restrictionFunctor]
+      exact cValuedCowedges_same_leg_coTwIdZero (cast (congrArg _ rfl) a)
+    | WalkingParallelPair.one =>
+      simp only [restrictionFunctor]
+      exact cValuedCowedges_same_leg_coTwIdOne (cast (congrArg _ rfl) a)
+
+/-- The restriction functor `restrictionFunctor wppHomProfunctor wppConstDiagramC`
+from weighted cowedges to restricted cowedges is NOT full.
+
+The proof constructs two weighted cowedges with the same restriction but different
+legs at (coTwLeft, wppWeightRight), showing the identity on the restriction
+cannot lift to a weighted cowedge morphism. -/
+theorem cValued_restrictionFunctor_not_full :
+    ¬ Functor.Full (restrictionFunctor wppHomProfunctor wppConstDiagramC) := by
+  apply restrictionFunctor_not_full_of_counterexample
+    cValuedCowedges_same_restriction (tw := coTwLeft) (w := wppWeightRight)
+  intro heq
+  have h1 := cValuedCowedgeAllLeft_leg coTwLeft wppWeightRight
+  have h2 := cValuedCowedgeRightAtRight_leg_coTwLeft_wppWeightRight
+  rw [h1, h2] at heq
+  exact walkingParallelPair_left_ne_right (eq_of_heq heq)
+
+end CValuedCounterexample
 
 end WeightedRestrictedCorrespondence
 
