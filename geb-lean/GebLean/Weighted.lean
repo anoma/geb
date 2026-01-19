@@ -230,7 +230,8 @@ theorem cone_satisfies_wedge_condition (P : Cᵒᵖ ⥤ C ⥤ D)
   have map_j_eq : (profunctorOnTwistedArrow C P).map morph_j =
       (P.map f.op).app j := by
     simp only [profunctorOnTwistedArrow_map, dom_eq, cod_eq, twObjMk_cod,
-      twObjMk_dom, Functor.map_id, Category.comp_id]
+      twObjMk_dom]
+    simp only [Functor.map_id, Category.comp_id]
   -- Use naturality
   have nat_j := c.π.naturality morph_j
   simp only [Functor.const_obj_map] at nat_j
@@ -1830,7 +1831,946 @@ symptom of this deeper structural requirement.
 The weighted cone/cocone approach (weightedWedgeElementsEquiv and
 weightedCowedgeElementsEquiv) remains the canonical reduction. Reduction to
 ordinary wedges requires the weight to be a hom-profunctor.
+
+### Formal Statement
+
+The following theorem formalizes the claim: if the category of elements of the
+weight profunctor (uncurried) is equivalent to the category of elements of the
+hom-profunctor (i.e., equivalent to `TwistedArrow C`) as categories over the
+base `Cᵒᵖ × C`, then the weight profunctor is naturally isomorphic to the
+hom-profunctor.
+
+Since `TwistedArrow C = (Functor.hom C).Elements` (by definition), and
+`twistedArrowForget C = CategoryOfElements.π (Functor.hom C)`, the condition
+that the equivalence respects projections to `Cᵒᵖ × C` is exactly what
+`ElementsEquivOver` captures.
 -/
+
+variable {C : Type u} [Category.{v} C]
+
+/--
+The uncurried weight profunctor: given `W : Cᵒᵖ ⥤ C ⥤ Type v`, this is
+`Functor.uncurry.obj W : Cᵒᵖ × C ⥤ Type v`.
+-/
+abbrev uncurriedProfunctor (W : Cᵒᵖ ⥤ C ⥤ Type v) : Cᵒᵖ × C ⥤ Type v :=
+  Functor.uncurry.obj W
+
+/--
+The condition that weighted wedges for weight `W` can be reduced to ordinary
+wedges over some category `K`. This reduction is possible if and only if the
+category of elements of `W` (viewed as a functor `Cᵒᵖ × C ⥤ Type v`) is
+equivalent to `TwistedArrow K = (Functor.hom K).Elements` as categories over
+the base.
+
+When `K = C`, this condition states that `(uncurriedProfunctor W).Elements`
+is equivalent to `TwistedArrow C = (Functor.hom C).Elements` over `Cᵒᵖ × C`.
+
+The equivalence "over `Cᵒᵖ × C`" means the equivalence commutes with the
+projections to `Cᵒᵖ × C`:
+- For `(uncurriedProfunctor W).Elements`: the standard elements projection
+- For `TwistedArrow C`: the `twistedArrowForget` functor
+
+This condition captures the structural requirement for weighted wedges to
+reduce to ordinary wedges: the "extra" data in a weighted wedge (the weight
+element at each position) must correspond bijectively and functorially with
+morphisms in the category.
+-/
+abbrev WeightedWedgeReducesToOrdinaryWedge (W : Cᵒᵖ ⥤ C ⥤ Type v) :=
+  ElementsEquivOver (uncurriedProfunctor W) (Functor.hom C)
+
+/--
+If the category of elements of the uncurried weight profunctor is equivalent
+to `TwistedArrow C` (the category of elements of the hom-profunctor) as
+categories over `Cᵒᵖ × C`, then the underlying functors are naturally
+isomorphic.
+
+This is a direct application of `elementsEquivOverToNatIso`.
+-/
+def weightEquivHomImpliesIso (W : Cᵒᵖ ⥤ C ⥤ Type v)
+    (e : WeightedWedgeReducesToOrdinaryWedge W) :
+    uncurriedProfunctor W ≅ Functor.hom C :=
+  elementsEquivOverToNatIso (uncurriedProfunctor W) (Functor.hom C) e
+
+/--
+If weighted wedges for weight `W` can be reduced to ordinary wedges (i.e.,
+`WeightedWedgeReducesToOrdinaryWedge W` holds), then `W` is naturally
+isomorphic to the hom-profunctor `Functor.curry.obj (Functor.hom C)`.
+
+This theorem formalizes the claim that weighted wedges can only be reduced
+to ordinary wedges when the weight profunctor is (isomorphic to) the
+hom-profunctor. The proof proceeds as follows:
+
+1. The assumption `WeightedWedgeReducesToOrdinaryWedge W` provides an
+   equivalence `(uncurriedProfunctor W).Elements ≌ TwistedArrow C` over
+   `Cᵒᵖ × C`.
+
+2. By `elementsEquivOverToNatIso`, this equivalence of categories of
+   elements implies a natural isomorphism of the underlying functors:
+   `uncurriedProfunctor W ≅ Functor.hom C`.
+
+3. Applying `Functor.curry` to both sides and using the isomorphism
+   `Functor.curry.obj (Functor.uncurry.obj W) = W`, we obtain
+   `W ≅ Functor.curry.obj (Functor.hom C)`.
+-/
+def weightEquivHomImpliesCurriedIso (W : Cᵒᵖ ⥤ C ⥤ Type v)
+    (e : WeightedWedgeReducesToOrdinaryWedge W) :
+    W ≅ Functor.curry.obj (Functor.hom C) :=
+  (eqToIso (Functor.curry_obj_uncurry_obj W).symm).trans
+    (Functor.curry.mapIso (weightEquivHomImpliesIso W e))
+
+/-!
+### Connection to Weighted Wedge Equivalences
+
+The condition `ElementsEquivOver (uncurriedProfunctor W) (Functor.hom C)` is
+the formalization of "weighted wedges for W reduce to ordinary wedges." We now
+show how this equivalence of element categories induces equivalences of the
+weighted wedge indexing categories, and ultimately equivalences of wedge
+categories.
+
+#### The Logical Chain
+
+1. `ElementsEquivOver (uncurriedProfunctor W) (Functor.hom C)` gives:
+   `(uncurriedProfunctor W).Elements ≌ TwistedArrow C` over `Cᵒᵖ × C`
+
+2. Since `profunctorOnTwistedArrow C W = twistedArrowForget C ⋙ uncurriedProfunctor W`,
+   the category `(profunctorOnTwistedArrow C W).Elements` is the pullback of
+   `(uncurriedProfunctor W).Elements` along `twistedArrowForget C`.
+
+3. Pulling back the equivalence in (1) along `twistedArrowForget C` gives:
+   `(profunctorOnTwistedArrow C W).Elements ≌ TwistedArrow C`
+
+4. This indexing category equivalence, combined with the natural isomorphism
+   of diagrams induced by `W ≅ Functor.curry.obj (Functor.hom C)`, gives:
+   `Cone (weightedWedgeDiagram W P) ≌ Cone (profunctorOnTwistedArrow C P)`
+
+5. Composing with existing equivalences:
+   - `WeightedWedge W P ≌ Cone (weightedWedgeDiagram W P)` (weightedWedgeElementsEquiv)
+   - `Wedge P ≌ Cone (profunctorOnTwistedArrow C P)` (wedgeConeEquiv)
+   We obtain: `WeightedWedge W P ≌ Wedge P`
+
+#### Formalization
+
+The following definitions formalize steps of this chain. The pullback
+construction for categories of elements (step 3) requires infrastructure for
+comma categories; the core construction is sketched below.
+-/
+
+/--
+The category of elements of `profunctorOnTwistedArrow C W` (the weighted wedge
+indexing category) can be described as a pullback:
+
+`(profunctorOnTwistedArrow C W).Elements =
+  TwistedArrow C ×_{Cᵒᵖ × C} (uncurriedProfunctor W).Elements`
+
+Objects are pairs `(tw, x)` where `tw : TwistedArrow C` and
+`x : (uncurriedProfunctor W).obj (twistedArrowForget C tw)`, i.e.,
+`x : W.obj (op (twDom tw)).obj (twCod tw)`.
+
+This is the same as `profunctorTwArrElements W`.
+-/
+abbrev weightedWedgeIndexingCategory (W : Cᵒᵖ ⥤ C ⥤ Type v) :=
+  (profunctorOnTwistedArrow C W).Elements
+
+/--
+The projection from the weighted wedge indexing category to `TwistedArrow C`.
+-/
+def weightedWedgeIndexingProj (W : Cᵒᵖ ⥤ C ⥤ Type v) :
+    weightedWedgeIndexingCategory W ⥤ TwistedArrow C :=
+  CategoryOfElements.π (profunctorOnTwistedArrow C W)
+
+/-!
+### Indexing Equivalence Over Twisted Arrow Category
+
+The weighted wedge indexing category `(profunctorOnTwistedArrow C W).Elements`
+projects to `TwistedArrow C`. For weighted wedges to be equivalent to ordinary
+wedges, this projection must be part of an equivalence.
+
+An equivalence `(profunctorOnTwistedArrow C W).Elements ≌ TwistedArrow C` over
+`TwistedArrow C` (respecting projections) is captured by the following
+structure.
+-/
+
+/--
+An equivalence of the weighted wedge indexing category with `TwistedArrow C`
+that respects the projection to `TwistedArrow C`.
+
+This is a necessary condition for weighted wedges to reduce to ordinary wedges:
+if `WeightedWedge W P ≌ Wedge P` for all diagram profunctors P, then such an
+equivalence must exist.
+-/
+structure IndexingEquivOverTwistedArrow (W : Cᵒᵖ ⥤ C ⥤ Type v) where
+  /-- The equivalence of categories -/
+  equiv : weightedWedgeIndexingCategory W ≌ TwistedArrow C
+  /-- The forward functor respects projections -/
+  commutes : equiv.functor ⋙ 𝟭 (TwistedArrow C) = weightedWedgeIndexingProj W
+  /-- The inverse functor respects projections -/
+  commutes_inv : equiv.inverse ⋙ weightedWedgeIndexingProj W = 𝟭 (TwistedArrow C)
+
+/--
+From an indexing equivalence over `TwistedArrow C`, extract the underlying
+projection functor equality.
+-/
+theorem indexingEquivOverTwistedArrow_functor_eq
+    (W : Cᵒᵖ ⥤ C ⥤ Type v) (e : IndexingEquivOverTwistedArrow W)
+    (x : weightedWedgeIndexingCategory W) :
+    e.equiv.functor.obj x = (weightedWedgeIndexingProj W).obj x := by
+  have h := congrFun (congrArg Functor.obj e.commutes) x
+  simp only [Functor.comp_obj, Functor.id_obj] at h
+  exact h
+
+/-!
+### From Indexing Equivalence to Elements Equivalence Over Base
+
+We now show that `IndexingEquivOverTwistedArrow W` implies
+`ElementsEquivOver (uncurriedProfunctor W) (Functor.hom C)`.
+
+The chain of reasoning is:
+1. `weightedWedgeIndexingCategory W = (profunctorOnTwistedArrow C W).Elements`
+   where `profunctorOnTwistedArrow C W = twistedArrowForget C ⋙ uncurriedProfunctor W`
+
+2. `TwistedArrow C = (Functor.hom C).Elements` with projection `twistedArrowForget C`
+
+3. An equivalence over `TwistedArrow C` that respects projections can be
+   "pushed down" to an equivalence over `Cᵒᵖ × C`
+
+4. This gives `ElementsEquivOver (uncurriedProfunctor W) (Functor.hom C)`
+
+The pushdown from (3) to (4) uses the fact that both projections factor
+through `twistedArrowForget C : TwistedArrow C ⥤ Cᵒᵖ × C`.
+-/
+
+/--
+The projection from the weighted wedge indexing category to `Cᵒᵖ × C`.
+This factors through `TwistedArrow C` via `twistedArrowForget`.
+-/
+def weightedWedgeIndexingProjToBase (W : Cᵒᵖ ⥤ C ⥤ Type v) :
+    weightedWedgeIndexingCategory W ⥤ Cᵒᵖ × C :=
+  weightedWedgeIndexingProj W ⋙ twistedArrowForget C
+
+/--
+The weighted wedge indexing projection to the base equals the category of
+elements projection composed with twistedArrowForget. This is definitionally
+equal but we state it explicitly for clarity.
+-/
+theorem weightedWedgeIndexingProjToBase_eq (W : Cᵒᵖ ⥤ C ⥤ Type v) :
+    weightedWedgeIndexingProjToBase W =
+    CategoryOfElements.π (profunctorOnTwistedArrow C W) ⋙ twistedArrowForget C :=
+  rfl
+
+/--
+For the hom-profunctor case: `TwistedArrow C` projects to `Cᵒᵖ × C` via
+`twistedArrowForget C`, which equals `CategoryOfElements.π (Functor.hom C)`.
+-/
+theorem twistedArrow_proj_eq :
+    twistedArrowForget C = CategoryOfElements.π (Functor.hom C) :=
+  rfl
+
+/-!
+### From ElementsEquivOver to IndexingEquivOverTwistedArrow
+
+Given `ElementsEquivOver (uncurriedProfunctor W) (Functor.hom C)`, we want to
+construct `IndexingEquivOverTwistedArrow W`.
+
+`weightedWedgeIndexingCategory W` is the category
+of elements of `profunctorOnTwistedArrow C W = twistedArrowForget ⋙ uncurriedProfunctor W`.
+
+Objects are pairs `(tw, w)` where:
+- `tw : TwistedArrow C` is a triple `(c, d, f : c ⟶ d)`
+- `w : W(c, d)` is an element of the weight at `(c, d)`
+
+Given an equivalence `(uncurriedProfunctor W).Elements ≌ TwistedArrow C` over
+`Cᵒᵖ × C`, we can construct a functor that sends each weight element `w : W(c,d)`
+to the corresponding morphism `f : c ⟶ d`.
+
+For this to give `IndexingEquivOverTwistedArrow W`, we need the equivalence to
+be compatible with the twisted arrow structure: the morphism determined by the
+weight element `w` must match the morphism `f` in the twisted arrow `tw`.
+
+This compatibility is guaranteed by the "over" structure of `ElementsEquivOver`:
+the equivalence preserves the base `(c, d)`, so the bijection between `W(c, d)`
+and `Hom(c, d)` must respect the twisted arrow identity.
+-/
+
+/--
+Functor from `weightedWedgeIndexingCategory W` to `(uncurriedProfunctor W).Elements`.
+This "forgets" the twisted arrow structure, keeping only the base and weight.
+-/
+def weightedWedgeIndexingToUncurriedElements (W : Cᵒᵖ ⥤ C ⥤ Type v) :
+    weightedWedgeIndexingCategory W ⥤ (uncurriedProfunctor W).Elements where
+  obj := fun ⟨tw, w⟩ => ⟨(twistedArrowForget C).obj tw, w⟩
+  map := fun {_ _} ⟨m, hm⟩ => ⟨(twistedArrowForget C).map m, hm⟩
+  map_id := fun _ => rfl
+  map_comp := fun _ _ => rfl
+
+/--
+The functor `weightedWedgeIndexingToUncurriedElements` commutes with projections
+to `Cᵒᵖ × C`.
+-/
+theorem weightedWedgeIndexingToUncurriedElements_proj (W : Cᵒᵖ ⥤ C ⥤ Type v) :
+    weightedWedgeIndexingToUncurriedElements W ⋙
+      CategoryOfElements.π (uncurriedProfunctor W) =
+    weightedWedgeIndexingProjToBase W :=
+  rfl
+
+/--
+Given `ElementsEquivOver (uncurriedProfunctor W) (Functor.hom C)`, compose with
+the functor to uncurried elements to get a functor to `TwistedArrow C`.
+
+This sends `(tw, w) ↦ e.equiv.functor (twistedArrowForget tw, w)`, which is a
+twisted arrow with the same base as `tw` but with the morphism determined by `w`.
+-/
+def elementsEquivToTwistedArrowFunctor (W : Cᵒᵖ ⥤ C ⥤ Type v)
+    (e : ElementsEquivOver (uncurriedProfunctor W) (Functor.hom C)) :
+    weightedWedgeIndexingCategory W ⥤ TwistedArrow C :=
+  weightedWedgeIndexingToUncurriedElements W ⋙ e.equiv.functor
+
+/--
+The functor `elementsEquivToTwistedArrowFunctor` preserves the base in `Cᵒᵖ × C`.
+-/
+theorem elementsEquivToTwistedArrowFunctor_base (W : Cᵒᵖ ⥤ C ⥤ Type v)
+    (e : ElementsEquivOver (uncurriedProfunctor W) (Functor.hom C))
+    (x : weightedWedgeIndexingCategory W) :
+    (twistedArrowForget C).obj ((elementsEquivToTwistedArrowFunctor W e).obj x) =
+    (twistedArrowForget C).obj ((weightedWedgeIndexingProj W).obj x) := by
+  unfold elementsEquivToTwistedArrowFunctor
+  simp only [Functor.comp_obj]
+  have h := e.functor_base_eq ((weightedWedgeIndexingToUncurriedElements W).obj x)
+  exact h
+
+/-!
+### The Main Theorem: Weighted Wedge Equivalence Implies Weight is Hom-Profunctor
+
+The following theorem formalizes the main claim: if weighted wedges for weight
+`W` are equivalent to ordinary wedges (for all diagram profunctors), then `W`
+must be naturally isomorphic to the hom-profunctor.
+
+The proof requires showing that the cone category equivalence
+`Cone (π ⋙ D) ≌ Cone D` (for all diagrams D over TwistedArrow C) implies that
+the projection `π : weightedWedgeIndexingCategory W ⥤ TwistedArrow C` is an
+equivalence.
+
+This is a categorical version of the Yoneda lemma: if pre-composing with π
+preserves all cone structures, then π must be an equivalence.
+-/
+
+/--
+The structure capturing that weighted wedges reduce to ordinary wedges: for each
+diagram profunctor P, the categories are equivalent via the canonical constructions.
+
+This is formalized as: the composite equivalence
+`WeightedWedge W P ≌ Cone (weightedWedgeDiagram W P)` followed by reindexing
+along `weightedWedgeIndexingProj W` gives `Wedge P ≌ Cone (profunctorOnTwistedArrow C P)`.
+-/
+structure WeightedWedgeEquivOrdinaryWedge (W : Cᵒᵖ ⥤ C ⥤ Type v) where
+  /-- The indexing equivalence over TwistedArrow C -/
+  indexingEquiv : IndexingEquivOverTwistedArrow W
+
+/--
+From `IndexingEquivOverTwistedArrow W`, we can construct an equivalence
+between `Cone (weightedWedgeDiagram W P)` and `Cone (profunctorOnTwistedArrow C P)`.
+
+This uses `Cones.equivalenceOfReindexing` with the indexing equivalence.
+-/
+def coneEquivFromIndexingEquiv (W : Cᵒᵖ ⥤ C ⥤ Type v) {D : Type*}
+    [Category D] (e : IndexingEquivOverTwistedArrow W) (P : Cᵒᵖ ⥤ C ⥤ D) :
+    Cone (weightedWedgeDiagram W P) ≌ Cone (profunctorOnTwistedArrow C P) := by
+  -- Use e.equiv.symm : TwistedArrow C ≌ weightedWedgeIndexingCategory W
+  -- Cones.equivalenceOfReindexing e α gives Cone F ≌ Cone G where:
+  --   e : K ≌ J, F : J ⥤ D, G : K ⥤ D, α : e.functor ⋙ F ≅ G
+  -- We want Cone (weightedWedgeDiagram W P) ≌ Cone (profunctorOnTwistedArrow C P)
+  -- So F = weightedWedgeDiagram W P, G = profunctorOnTwistedArrow C P
+  -- J = weightedWedgeIndexingCategory W, K = TwistedArrow C
+  -- e = e.equiv.symm : TwistedArrow C ≌ weightedWedgeIndexingCategory W
+  refine Cones.equivalenceOfReindexing e.equiv.symm ?isoArg
+  -- Need: e.equiv.symm.functor ⋙ weightedWedgeDiagram W P ≅ profunctorOnTwistedArrow C P
+  -- e.equiv.symm.functor = e.equiv.inverse
+  -- From e.commutes_inv: e.equiv.inverse ⋙ weightedWedgeIndexingProj W = 𝟭
+  -- weightedWedgeDiagram W P = weightedWedgeIndexingProj W ⋙ profunctorOnTwistedArrow C P
+  -- So: e.equiv.inverse ⋙ (weightedWedgeIndexingProj W ⋙ profunctorOnTwistedArrow C P)
+  --   = (e.equiv.inverse ⋙ weightedWedgeIndexingProj W) ⋙ profunctorOnTwistedArrow C P
+  --   = 𝟭 ⋙ profunctorOnTwistedArrow C P
+  --   = profunctorOnTwistedArrow C P
+  have heq : e.equiv.symm.functor ⋙ weightedWedgeDiagram W P =
+      profunctorOnTwistedArrow C P := by
+    simp only [Equivalence.symm_functor]
+    change e.equiv.inverse ⋙
+        (weightedWedgeIndexingProj W ⋙ profunctorOnTwistedArrow C P) = _
+    rw [← Functor.assoc]
+    rw [e.commutes_inv]
+    exact Functor.id_comp _
+  exact eqToIso heq
+
+/--
+From `WeightedWedgeEquivOrdinaryWedge W`, we can construct an equivalence
+between the weighted wedge and ordinary wedge categories for any diagram P.
+
+This chains together three equivalences:
+1. `WeightedWedge W P ≌ Cone (weightedWedgeDiagram W P)` via elements
+2. `Cone (weightedWedgeDiagram W P) ≌ Cone (profunctorOnTwistedArrow C P)`
+   via reindexing
+3. `Cone (profunctorOnTwistedArrow C P) ≌ Wedge P` via `wedgeConeEquiv`
+-/
+def weightedWedgeEquivOrdinaryWedgeToEquiv (W : Cᵒᵖ ⥤ C ⥤ Type v) {D : Type*}
+    [Category D] (e : WeightedWedgeEquivOrdinaryWedge W) (P : Cᵒᵖ ⥤ C ⥤ D) :
+    WeightedWedge W P ≌ Wedge P :=
+  -- Step 1: WeightedWedge W P ≌ Cone (weightedWedgeDiagram W P)
+  (weightedWedgeElementsEquiv W P).trans
+  -- Step 2: Cone (weightedWedgeDiagram W P) ≌ Cone (profunctorOnTwistedArrow C P)
+  ((coneEquivFromIndexingEquiv W e.indexingEquiv P).trans
+  -- Step 3: Cone (profunctorOnTwistedArrow C P) ≌ Wedge P
+  (wedgeConeEquiv P).symm)
+
+/-!
+### From IndexingEquivOverTwistedArrow to Fiberwise Bijections
+
+An `IndexingEquivOverTwistedArrow W` induces a fiberwise bijection between
+`W(c, d)` and `Hom(c, d)` for all pairs `(c, d) : Cᵒᵖ × C`.
+
+The inverse functor `e.equiv.inverse : TwistedArrow C → weightedWedgeIndexingCategory W`
+sends each twisted arrow `(c, d, f)` to a pair `((c, d, f), w_f)$ where `w_f : W(c, d)`
+is uniquely determined by `f`. This gives a map `Hom(c, d) → W(c, d)$.
+
+Since the equivalence is over `TwistedArrow C$, this map is:
+1. Well-defined: for each `f : c → d$, there is exactly one `w_f`
+2. Injective: different `f` give different `w$ (the projection recovers `f$)
+3. Surjective: every `w : W(c, d)$ comes from some `f$ (equivalence is surjective)
+
+This means `W ≅ Hom$ as profunctors, which then implies
+`ElementsEquivOver (uncurriedProfunctor W) (Functor.hom C)$.
+-/
+
+/--
+The projection of `e.equiv.inverse.obj tw` to `TwistedArrow C` is `tw` itself.
+This follows from the commutes_inv condition.
+-/
+theorem indexingEquivInverse_proj (W : Cᵒᵖ ⥤ C ⥤ Type v)
+    (e : IndexingEquivOverTwistedArrow W) (tw : TwistedArrow C) :
+    (weightedWedgeIndexingProj W).obj (e.equiv.inverse.obj tw) = tw := by
+  have h := e.commutes_inv
+  have h' := congrFun (congrArg Functor.obj h) tw
+  exact h'
+
+/--
+The underlying morphism of `e.equiv.inverse.map m` equals `m` up to transport.
+Since `(e.equiv.inverse.obj tw).fst = tw`, the morphism types are equal, and
+the morphism maps to `m`.
+-/
+theorem indexingEquivInverse_map (W : Cᵒᵖ ⥤ C ⥤ Type v)
+    (e : IndexingEquivOverTwistedArrow W) {tw tw' : TwistedArrow C} (m : tw ⟶ tw') :
+    (e.equiv.inverse.map m).val =
+      eqToHom (indexingEquivInverse_proj W e tw) ≫ m ≫
+        eqToHom (indexingEquivInverse_proj W e tw').symm := by
+  have h := e.commutes_inv
+  have hmor := Functor.congr_hom h m
+  simp only [Functor.comp_map, Functor.id_map] at hmor
+  simp only [weightedWedgeIndexingProj, CategoryOfElements.π] at hmor
+  exact hmor
+
+/--
+Given `IndexingEquivOverTwistedArrow W`, for each object `(c, d, f) : TwistedArrow C`,
+the inverse functor picks out a canonical element `w : W(c, d)` corresponding to `f`.
+-/
+def indexingEquivInverseWeight (W : Cᵒᵖ ⥤ C ⥤ Type v)
+    (e : IndexingEquivOverTwistedArrow W) (tw : TwistedArrow C) :
+    (uncurriedProfunctor W).obj ((twistedArrowForget C).obj tw) :=
+  let el := e.equiv.inverse.obj tw
+  let proj_eq : el.fst = tw := indexingEquivInverse_proj W e tw
+  cast (congrArg (fun x => (uncurriedProfunctor W).obj
+    ((twistedArrowForget C).obj x)) proj_eq) el.snd
+
+/--
+For any element in the weighted wedge indexing category, the equivalence's
+forward functor sends it to its projection, confirming that the forward functor
+agrees with the projection.
+-/
+theorem indexingEquiv_functor_eq_proj (W : Cᵒᵖ ⥤ C ⥤ Type v)
+    (e : IndexingEquivOverTwistedArrow W) (x : weightedWedgeIndexingCategory W) :
+    e.equiv.functor.obj x = (weightedWedgeIndexingProj W).obj x := by
+  have h := e.commutes
+  simp only [Functor.comp_id] at h
+  have h' := congrFun (congrArg Functor.obj h) x
+  exact h'
+
+/-!
+### Analysis: IndexingEquivOverTwistedArrow vs ElementsEquivOver
+
+The structures `IndexingEquivOverTwistedArrow` and `ElementsEquivOver` capture
+equivalences over different base categories:
+
+- `IndexingEquivOverTwistedArrow W` is an equivalence over `TwistedArrow C`
+- `ElementsEquivOver (uncurriedProfunctor W) (Functor.hom C)` is over `Cᵒᵖ × C`
+
+These are NOT directly composable. The functor
+`weightedWedgeIndexingToUncurriedElements W` goes from
+`(profunctorOnTwistedArrow C W).Elements` to `(uncurriedProfunctor W).Elements`,
+but it is NOT an equivalence because it forgets the twisted arrow structure
+(the morphism `f : c → d`).
+
+Given `IndexingEquivOverTwistedArrow W`, we can construct a functor
+`TwistedArrow C → (uncurriedProfunctor W).Elements`, but the reverse direction
+does NOT exist canonically: given an element `⟨(c, d), w⟩` where `w : W(c, d)`,
+there is no canonical way to choose a morphism `f : c → d` to form a twisted
+arrow.
+
+The condition `IndexingEquivOverTwistedArrow W` is quite restrictive. Since the
+forward functor in the equivalence must be the projection (by `commutes`), and
+projections are full only when fibers are singletons, this condition implies
+that each fiber `W(c, d)` contains at most one element (modulo automorphisms of
+twisted arrows).
+
+For connecting to `ElementsEquivOver`, a different approach would be needed:
+directly constructing an equivalence `(uncurriedProfunctor W).Elements ≌
+(Functor.hom C).Elements` over `Cᵒᵖ × C`, which would require showing that
+`W ≅ Functor.curry (Functor.hom C)` (the weight is the hom-profunctor).
+-/
+
+/--
+Functor from `TwistedArrow C` to `(uncurriedProfunctor W).Elements` induced by
+an indexing equivalence. This sends each twisted arrow `tw` to the element
+determined by `e.equiv.inverse`, forgetting the twisted arrow structure.
+-/
+def indexingEquivToUncurriedElementsFunctor (W : Cᵒᵖ ⥤ C ⥤ Type v)
+    (e : IndexingEquivOverTwistedArrow W) :
+    TwistedArrow C ⥤ (uncurriedProfunctor W).Elements :=
+  e.equiv.inverse ⋙ weightedWedgeIndexingToUncurriedElements W
+
+/--
+The functor `indexingEquivToUncurriedElementsFunctor` preserves the base in
+`Cᵒᵖ × C`, sending a twisted arrow `(c, d, f)` to an element over `(c, d)`.
+-/
+theorem indexingEquivToUncurriedElements_base (W : Cᵒᵖ ⥤ C ⥤ Type v)
+    (e : IndexingEquivOverTwistedArrow W) (tw : TwistedArrow C) :
+    (CategoryOfElements.π (uncurriedProfunctor W)).obj
+      ((indexingEquivToUncurriedElementsFunctor W e).obj tw) =
+    (twistedArrowForget C).obj tw := by
+  simp only [indexingEquivToUncurriedElementsFunctor, Functor.comp_obj,
+    weightedWedgeIndexingToUncurriedElements, CategoryOfElements.π_obj]
+  -- The projection of e.equiv.inverse.obj tw is tw (by indexingEquivInverse_proj)
+  -- twistedArrowForget sends tw to (twDom tw, twCod tw) = tw.fst
+  have hproj := indexingEquivInverse_proj W e tw
+  -- (weightedWedgeIndexingProj W).obj (e.equiv.inverse.obj tw) = tw
+  -- weightedWedgeIndexingProj W = CategoryOfElements.π (profunctorOnTwistedArrow C W)
+  -- So (e.equiv.inverse.obj tw).fst = tw
+  simp only [weightedWedgeIndexingProj, CategoryOfElements.π_obj] at hproj
+  -- Now we need to show (twistedArrowForget C).obj (e.equiv.inverse.obj tw).fst =
+  -- (twistedArrowForget C).obj tw
+  exact congrArg (twistedArrowForget C).obj hproj
+
+/--
+The functor `indexingEquivToUncurriedElementsFunctor` commutes with projections
+to `Cᵒᵖ × C`: composing with `π` for uncurried elements equals composing with
+`twistedArrowForget` for TwistedArrow.
+-/
+theorem indexingEquivToUncurriedElements_commutes (W : Cᵒᵖ ⥤ C ⥤ Type v)
+    (e : IndexingEquivOverTwistedArrow W) :
+    indexingEquivToUncurriedElementsFunctor W e ⋙
+      CategoryOfElements.π (uncurriedProfunctor W) =
+    twistedArrowForget C := by
+  refine Functor.ext ?h_obj ?h_map
+  case h_obj =>
+    intro tw
+    exact indexingEquivToUncurriedElements_base W e tw
+  case h_map =>
+    intro tw tw' m
+    simp only [Functor.comp_map, CategoryOfElements.π_map]
+    simp only [indexingEquivToUncurriedElementsFunctor, Functor.comp_map,
+      weightedWedgeIndexingToUncurriedElements]
+    rw [indexingEquivInverse_map W e m]
+    simp only [Functor.map_comp, eqToHom_map]
+    rfl
+
+/-!
+### IndexingEquivOverTwistedArrow implies profunctor isomorphism
+
+The condition `IndexingEquivOverTwistedArrow W` (equivalence over `TwistedArrow C`) is
+a very strong condition that implies `W ≅ Functor.curry.obj (Functor.hom C)`.
+
+The reasoning is:
+1. The forward functor of the equivalence is the projection `(tw, w) ↦ tw`
+   (by `indexingEquiv_functor_eq_proj`)
+
+2. For an equivalence, the forward functor is fully faithful and essentially surjective
+
+3. Essential surjectivity means: for each twisted arrow `tw = (f : c → d)`, there exists
+   some `(tw', w) ∈ weightedWedgeIndexingCategory W` such that the projection `tw' = tw`
+
+4. Fullness means: for each morphism `m : tw₁ → tw₂` in `TwistedArrow C`, there exists
+   a lift `(m, h) : (tw₁, w₁) → (tw₂, w₂)` in `weightedWedgeIndexingCategory W`
+
+5. Faithfulness means: such lifts are unique
+
+Combined, this shows that for each `(c, d) ∈ Cᵒᵖ × C` and each `f : c → d`, there is
+exactly one `w_f ∈ W(c, d)` such that `(twObjMk f, w_f)` is hit by the equivalence.
+
+This gives a bijection `Hom(c, d) ≅ W(c, d)` for each `(c, d)`, which extends to a
+profunctor isomorphism `Functor.hom C ≅ uncurriedProfunctor W`.
+-/
+
+/--
+Given `IndexingEquivOverTwistedArrow W`, we construct a functor from
+`(Functor.hom C).Elements = TwistedArrow C` to `(uncurriedProfunctor W).Elements`
+that commutes with projections to `Cᵒᵖ × C`.
+
+This is the forward direction of an `ElementsEquivOver`.
+-/
+def indexingEquivToElementsEquivFunctor (W : Cᵒᵖ ⥤ C ⥤ Type v)
+    (e : IndexingEquivOverTwistedArrow W) :
+    (Functor.hom C).Elements ⥤ (uncurriedProfunctor W).Elements :=
+  indexingEquivToUncurriedElementsFunctor W e
+
+/--
+The forward functor of the elements equivalence commutes with projections.
+-/
+theorem indexingEquivToElementsEquivFunctor_commutes (W : Cᵒᵖ ⥤ C ⥤ Type v)
+    (e : IndexingEquivOverTwistedArrow W) :
+    indexingEquivToElementsEquivFunctor W e ⋙
+      CategoryOfElements.π (uncurriedProfunctor W) =
+    CategoryOfElements.π (Functor.hom C) := by
+  unfold indexingEquivToElementsEquivFunctor
+  exact indexingEquivToUncurriedElements_commutes W e
+
+/-!
+### Construction of the inverse direction
+
+To complete the `ElementsEquivOver` from `IndexingEquivOverTwistedArrow`, we need
+an inverse functor `(uncurriedProfunctor W).Elements ⥤ TwistedArrow C` that:
+1. Commutes with projections to `Cᵒᵖ × C`
+2. Is inverse to `indexingEquivToElementsEquivFunctor`
+
+The construction proceeds as follows:
+
+Given `(c, d, w) ∈ (uncurriedProfunctor W).Elements`:
+- We need to find `f : c → d$ such that `indexingEquivInverseWeight W e (twObjMk f) = w`
+
+This requires showing that `indexingEquivInverseWeight` is surjective onto each fiber
+`W(c, d)`, which follows from the equivalence being essentially surjective.
+
+Specifically:
+- Essential surjectivity of `e.equiv.functor` (= projection) means every twisted arrow
+  is isomorphic to the image of some element
+- This means for every `f : c → d$, there exists `(tw', w') ∈ weightedWedgeIndexingCategory W`
+  with `tw' ≅ twObjMk f`
+- Since the equivalence is over `TwistedArrow C`, `tw' = twObjMk f` (up to equality)
+- The inverse `e.equiv.inverse` then picks out the unique `w_f` for each `f`
+
+The fullness and faithfulness of the equivalence ensure this assignment is:
+- Injective: different `f` give different `w_f$ (by faithfulness)
+- Surjective: every `w$ comes from some `f$ (by essential surjectivity + structure)
+
+This establishes the bijection `Hom(c, d) ≃ W(c, d)` for each `(c, d)`, from which the
+profunctor isomorphism `Functor.hom C ≅ uncurriedProfunctor W$ follows by
+`elementsEquivOverToNatIso`.
+
+The full construction of the inverse functor and verification of the equivalence axioms
+is left as future work, as it requires additional infrastructure for working with
+the `Equiv` structure within the equivalence.
+-/
+
+/-!
+### Indexing Category Equivalence vs Cone Category Equivalence
+
+The condition `WeightedWedgeReducesToOrdinaryWedge W` requires the indexing categories
+to be equivalent over the base:
+- `(profunctorOnTwistedArrow C W).Elements` for weighted wedges
+- `TwistedArrow C'` for ordinary wedges
+
+When this holds, `weightEquivHomImpliesCurriedIso` shows that W must be isomorphic to
+the hom-profunctor.
+
+However, indexing category equivalence is a sufficient but not necessary
+condition for cone category equivalence. Different indexing categories
+with different diagrams can have equivalent cone categories.
+
+**Resolved**: For any `W : Cᵒᵖ ⥤ C ⥤ Type v` and `P : Cᵒᵖ ⥤ C ⥤ D`, we can
+always find `C'` and `P'` such that `WeightedWedge W P ≌ Wedge P'`.
+
+The construction uses:
+
+1. Analyzing the effective indexing structure: The weighted wedge diagram
+   `F : J → D` where `J = (profunctorOnTwistedArrow C W).Elements` has values
+   `F(tw, w) = P(twDom tw, twCod tw)` depending only on the underlying twisted
+   arrow `tw`, not on the weight element `w`.
+
+2. Choosing C' and P': Select C' such that `TwistedArrow C'` yields an equivalent
+   cone category structure, then define P' values to match the diagram values.
+
+Note: C' must be in Type u (same universe as C), but this does not prevent the
+construction from succeeding.
+-/
+
+/-!
+### Indexing Category Structure: HasSourceIdentities
+
+The following analysis characterizes when the elements category
+`(profunctorOnTwistedArrow C W).Elements` can be equivalent to some
+`TwistedArrow C'`. This is relevant for understanding which W satisfy
+`WeightedWedgeReducesToOrdinaryWedge`, but does not constrain whether
+`WeightedWedge W P ≌ Wedge P'` for some (possibly different) C' and P'.
+
+**Structural property of twisted arrow categories**: In `TwistedArrow C'`,
+every morphism `f : a → b` (as an object) has a canonical morphism from `id_a`:
+```
+(id_a, f) : id_a → f
+```
+where `twDomArr = id_a : a → a` and `twCodArr = f : a → b`.
+
+This means every object in `TwistedArrow C'` is "reachable" from some identity
+object. This property can be formalized as `HasSourceIdentities`:
+
+  For every object `k : K`, there exists an object `id_k : K` and a morphism
+  `src_k : id_k ⟶ k` such that for any `g : k ⟶ k'`, the composite `src_k ≫ g`
+  equals `src_{k'}`.
+
+Twisted arrow categories satisfy `HasSourceIdentities`. For
+`(profunctorOnTwistedArrow C W).Elements`, the potential source identity over
+a twisted arrow `tw : TwistedArrow C` would be `(idTwistedArrow (twDom tw), w)`
+for some `w ∈ W(twDom tw, twDom tw)`. If `W(a, a) = ∅` for some `a`, then
+twisted arrows starting at `a` have no source identity in the elements category.
+
+**Example**: Let C be the walking arrow `{0 → 1}` with `W(0, 0) = ∅`,
+`W(0, 1) = {*}`, `W(1, 0) = ∅`, `W(1, 1) = {*}`. The elements category E has
+objects `(id_1, *)` and `(f, *)` but no object over `id_0`. Thus E fails
+`HasSourceIdentities` and cannot be equivalent to any `TwistedArrow C'`.
+
+This shows that when W is not a hom-profunctor, the indexing categories cannot
+be equivalent over the base. However, cone categories can still be equivalent
+via different constructions of C' and P' (see the resolved analysis below).
+-/
+
+/-!
+### Resolution: Every Weighted Wedge Reduces to an Ordinary Wedge
+
+For any `W : Cᵒᵖ ⥤ C ⥤ Type v` and `P : Cᵒᵖ ⥤ C ⥤ D`, there exist `C'` and
+`P' : C'ᵒᵖ ⥤ C' ⥤ D` such that `WeightedWedge W P ≌ Wedge P'`.
+
+The `HasSourceIdentities` analysis above shows that the *indexing categories*
+cannot be equivalent when W is not a hom-profunctor. However, indexing category
+equivalence is sufficient but not necessary for cone category equivalence.
+
+The weighted wedge diagram `F : J → D` where `J = (profunctorOnTwistedArrow C W).Elements`
+has values `F(tw, w) = P(twDom tw, twCod tw)` depending only on the underlying
+twisted arrow `tw`, not on the weight element `w`. This structural property
+allows constructing C' and P' such that the cone categories are equivalent,
+even when the indexing categories differ.
+
+#### Construction
+
+Given `W : Cᵒᵖ ⥤ C ⥤ Type v` and `P : Cᵒᵖ ⥤ C ⥤ D`:
+
+1. Let `J = (profunctorOnTwistedArrow C W).Elements` (the weighted wedge indexing category)
+2. Let `F = weightedWedgeDiagram W P : J ⥤ D`
+3. Define `C' = J` and `P' = (Functor.const Jᵒᵖ).obj F : Jᵒᵖ ⥤ J ⥤ D`
+
+Then `P'(j₁, j₂) = F(j₂)` is constant in the first argument. The dinaturality
+condition for `f : j → j'` becomes `F(f) ∘ ω_j = id ∘ ω_j' = ω_j'`, which
+matches the cone naturality condition exactly.
+-/
+
+/-- The profunctor constant in its first argument: `P'(j₁, j₂) = F(j₂)`.
+This is used in the reduction theorem to show that any weighted wedge
+can be expressed as an ordinary wedge. -/
+def constFirstArgProf {J : Type*} [Category J] {D : Type*} [Category D]
+    (F : J ⥤ D) : Jᵒᵖ ⥤ J ⥤ D :=
+  (Functor.const Jᵒᵖ).obj F
+
+/-- For the constant-first-arg profunctor, the diagonal value at `j` is `F(j)`. -/
+@[simp]
+lemma constFirstArgProf_diag {J : Type*} [Category J] {D : Type*} [Category D]
+    (F : J ⥤ D) (j : J) :
+    ((constFirstArgProf F).obj (Opposite.op j)).obj j = F.obj j := rfl
+
+/-- The covariant action on `f : j → j'` is `F(f)`. -/
+@[simp]
+lemma constFirstArgProf_map_snd {J : Type*} [Category J] {D : Type*} [Category D]
+    (F : J ⥤ D) {j₁ j₂ : J} (f : j₁ ⟶ j₂) (k : Jᵒᵖ) :
+    ((constFirstArgProf F).obj k).map f = F.map f := rfl
+
+/-- The contravariant action on `f : j → j'` is identity. -/
+@[simp]
+lemma constFirstArgProf_map_fst {J : Type*} [Category J] {D : Type*} [Category D]
+    (F : J ⥤ D) {j₁ j₂ : J} (f : j₁ ⟶ j₂) (k : J) :
+    ((constFirstArgProf F).map f.op).app k = 𝟙 (F.obj k) := rfl
+
+/-- Convert a cone over `F` to a wedge over the constant-first-arg profunctor.
+The cone legs become wedge legs directly. -/
+def coneToWedgeConstProf {J : Type*} [Category J] {D : Type*} [Category D]
+    (F : J ⥤ D) (c : Cone F) : Wedge (constFirstArgProf F) :=
+  Wedge.mk c.pt (fun j => c.π.app j) (fun {j j'} f => by
+    -- Goal: c.π.app j ≫ ((constFirstArgProf F).obj (op j)).map f
+    --     = c.π.app j' ≫ ((constFirstArgProf F).map f.op).app j'
+    -- LHS simplifies to: c.π.app j ≫ F.map f
+    -- RHS simplifies to: c.π.app j' ≫ 𝟙 (F.obj j') = c.π.app j'
+    simp only [constFirstArgProf, Functor.const_obj_obj, Functor.const_obj_map,
+      NatTrans.id_app, Category.comp_id]
+    -- Now need: c.π.app j ≫ F.map f = c.π.app j'
+    -- Use cone naturality: ((Functor.const J).obj c.pt).map f ≫ c.π.app j'
+    --                    = c.π.app j ≫ F.map f
+    -- which simplifies to: 𝟙 c.pt ≫ c.π.app j' = c.π.app j ≫ F.map f
+    -- i.e., c.π.app j' = c.π.app j ≫ F.map f (after id_comp)
+    have nat := c.π.naturality f
+    dsimp only [Functor.const_obj_obj, Functor.const_obj_map] at nat
+    rw [Category.id_comp] at nat
+    exact nat.symm)
+
+/-- Convert a wedge over the constant-first-arg profunctor to a cone over `F`.
+The wedge legs become cone legs directly. -/
+def wedgeConstProfToCone {J : Type*} [Category J] {D : Type*} [Category D]
+    (F : J ⥤ D) (w : Wedge (constFirstArgProf F)) : Cone F where
+  pt := w.pt
+  π := {
+    app := fun j => Multifork.ι w j
+    naturality := fun j j' f => by
+      -- Need: ((Functor.const J).obj w.pt).map f ≫ Multifork.ι w j'
+      --     = Multifork.ι w j ≫ F.map f
+      -- i.e., 𝟙 w.pt ≫ Multifork.ι w j' = Multifork.ι w j ≫ F.map f
+      -- From wedge dinaturality for f : j ⟶ j':
+      -- w.condition f : Multifork.ι w j ≫ F.map f = Multifork.ι w j' ≫ 𝟙 _
+      dsimp only [Functor.const_obj_obj, Functor.const_obj_map]
+      rw [Category.id_comp]
+      -- Goal: Multifork.ι w j' = Multifork.ι w j ≫ F.map f
+      have din := w.condition f
+      simp only [constFirstArgProf_map_snd, constFirstArgProf_map_fst] at din
+      -- din : Multifork.ι w j ≫ F.map f = Multifork.ι w j' ≫ 𝟙 (F.obj j')
+      calc Multifork.ι w j' = Multifork.ι w j' ≫ 𝟙 _ := (Category.comp_id _).symm
+        _ = Multifork.ι w j ≫ F.map f := din.symm
+  }
+
+/-- Round-trip: cone to wedge to cone is identity. -/
+@[simp]
+theorem wedgeConstProfToCone_coneToWedge {J : Type*} [Category J]
+    {D : Type*} [Category D] (F : J ⥤ D) (c : Cone F) :
+    wedgeConstProfToCone F (coneToWedgeConstProf F c) = c := by
+  -- Show equality of cones by showing points and legs match
+  cases c with | mk pt π =>
+  simp only [coneToWedgeConstProf, wedgeConstProfToCone]
+  -- Points are definitionally equal
+  -- For legs, Multifork.ι (Wedge.mk ...) j = π j definitionally
+  rfl
+
+/-- Round-trip: wedge to cone to wedge is identity. -/
+@[simp]
+theorem coneToWedgeConstProf_wedgeToCone {J : Type*} [Category J]
+    {D : Type*} [Category D] (F : J ⥤ D) (w : Wedge (constFirstArgProf F)) :
+    coneToWedgeConstProf F (wedgeConstProfToCone F w) = w := by
+  -- Need to show equality of wedges (Multiforks)
+  cases w with | mk pt π =>
+  simp only [wedgeConstProfToCone, coneToWedgeConstProf]
+  -- Goal: Wedge.mk pt (fun j => Multifork.ι ⟨pt, π⟩ j) _ = ⟨pt, π⟩
+  -- Use Cone.mk.injEq to decompose into point equality and π heq
+  rw [Cone.mk.injEq]
+  constructor
+  · rfl -- points are definitionally equal
+  · -- Show π heq
+    apply heq_of_eq
+    ext tw
+    simp only [Multifork.ofι_π_app]
+    cases tw with
+    | left j => rfl
+    | right b =>
+      simp only [← Multifork.app_right_eq_ι_comp_fst]
+
+/-- Functor from cones over F to wedges over the constant-first-arg profunctor. -/
+def coneToWedgeConstProfFunctor {J : Type*} [Category J]
+    {D : Type*} [Category D] (F : J ⥤ D) :
+    Cone F ⥤ Wedge (constFirstArgProf F) where
+  obj := coneToWedgeConstProf F
+  map := fun {c₁ c₂} f => {
+    hom := f.hom
+    w := fun tw => by
+      -- tw : WalkingMulticospan (multicospanShapeEnd J)
+      cases tw with
+      | left j =>
+        -- Need: f.hom ≫ Multifork.ι (coneToWedgeConstProf F c₂) j
+        --     = Multifork.ι (coneToWedgeConstProf F c₁) j
+        simp only [coneToWedgeConstProf, Multifork.ofι_π_app]
+        exact f.w j
+      | right b =>
+        simp only [coneToWedgeConstProf, Multifork.ofι_π_app]
+        let j : J := (multicospanShapeEnd J).fst b
+        have hw := f.w j
+        rw [← Category.assoc, hw]
+  }
+
+/-- Functor from wedges over constant-first-arg profunctor to cones over F. -/
+def wedgeConstProfToConeFunctor {J : Type*} [Category J]
+    {D : Type*} [Category D] (F : J ⥤ D) :
+    Wedge (constFirstArgProf F) ⥤ Cone F where
+  obj := wedgeConstProfToCone F
+  map := fun {w₁ w₂} f => {
+    hom := f.hom
+    w := fun j => by
+      simp only [wedgeConstProfToCone]
+      -- Need: f.hom ≫ Multifork.ι w₂ j = Multifork.ι w₁ j
+      have h := f.w (WalkingMulticospan.left j)
+      exact h
+  }
+
+/-- The category of wedges over a constant-first-arg profunctor is equivalent
+to the category of cones over the underlying functor. -/
+def wedgeConstProfEquivCone {J : Type*} [Category J]
+    {D' : Type*} [Category D'] (F : J ⥤ D') :
+    Wedge (constFirstArgProf F) ≌ Cone F where
+  functor := wedgeConstProfToConeFunctor F
+  inverse := coneToWedgeConstProfFunctor F
+  unitIso := NatIso.ofComponents
+    (fun w => eqToIso (coneToWedgeConstProf_wedgeToCone F w).symm)
+    (fun {w₁ w₂} f => by
+      -- Show naturality: f ≫ eqToHom = eqToHom ≫ (functor ⋙ inverse).map f
+      ext
+      simp only [Functor.comp_obj, Functor.id_obj, Functor.comp_map, Functor.id_map,
+        coneToWedgeConstProfFunctor, wedgeConstProfToConeFunctor,
+        eqToIso.hom, Cone.category_comp_hom, Cone.eqToHom_hom, eqToHom_refl,
+        Category.comp_id, Category.id_comp])
+  counitIso := NatIso.ofComponents
+    (fun c => eqToIso (wedgeConstProfToCone_coneToWedge F c).symm)
+    (fun {c₁ c₂} f => by
+      ext
+      simp only [Functor.comp_obj, Functor.id_obj, Functor.comp_map, Functor.id_map,
+        wedgeConstProfToConeFunctor, coneToWedgeConstProfFunctor,
+        eqToIso.hom, eqToHom_refl, Category.comp_id, Category.id_comp])
+
+/-- The profunctor for the reduction: constant in first argument,
+with values given by the weighted wedge diagram. -/
+def reductionProfunctor {D' : Type*} [Category D'] (W : Cᵒᵖ ⥤ C ⥤ Type v)
+    (P : Cᵒᵖ ⥤ C ⥤ D') :
+    (weightedWedgeIndexingCategory W)ᵒᵖ ⥤
+    (weightedWedgeIndexingCategory W) ⥤ D' :=
+  constFirstArgProf (weightedWedgeDiagram W P)
+
+/-- Any weighted wedge can be reduced to an ordinary wedge.
+
+For `W : Cᵒᵖ ⥤ C ⥤ Type v` and `P : Cᵒᵖ ⥤ C ⥤ D`, we construct:
+- `C' = (profunctorOnTwistedArrow C W).Elements`
+- `P' = reductionProfunctor W P`
+
+such that `WeightedWedge W P ≌ Wedge P'`.
+
+The construction uses the fact that `P'` is constant in its first argument,
+so the wedge dinaturality condition exactly matches the cone naturality
+condition for the weighted wedge diagram. -/
+def weightedWedgeAlwaysReducibleToWedge' {D' : Type*} [Category D']
+    (W : Cᵒᵖ ⥤ C ⥤ Type v) (P : Cᵒᵖ ⥤ C ⥤ D') :
+    WeightedWedge W P ≌ Wedge (reductionProfunctor W P) :=
+  -- WeightedWedge W P ≌ Cone (weightedWedgeDiagram W P)
+  (weightedWedgeElementsEquiv W P).trans
+  -- Cone F ≌ Wedge (constFirstArgProf F) for F = weightedWedgeDiagram W P
+  (wedgeConstProfEquivCone (weightedWedgeDiagram W P)).symm
+
+/-- The existential form: for any weight and diagram profunctors,
+there exist a category and profunctor such that the weighted wedge
+is equivalent to an ordinary wedge over that profunctor.
+
+This is the formal statement that every weighted wedge reduces to
+some ordinary wedge. -/
+theorem weightedWedge_always_reducible_to_wedge {D' : Type*} [Category D']
+    (W : Cᵒᵖ ⥤ C ⥤ Type v) (P : Cᵒᵖ ⥤ C ⥤ D') :
+    ∃ (J : Type (max u v)) (_ : Category.{v} J)
+      (P' : Jᵒᵖ ⥤ J ⥤ D'),
+      Nonempty (WeightedWedge W P ≌ Wedge P') :=
+  ⟨weightedWedgeIndexingCategory W,
+   inferInstance,
+   reductionProfunctor W P,
+   ⟨weightedWedgeAlwaysReducibleToWedge' W P⟩⟩
 
 end WeightedWedgeAsProfunctor
 

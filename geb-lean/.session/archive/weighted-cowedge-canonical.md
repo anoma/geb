@@ -153,7 +153,7 @@ Questions to answer:
 - If not, what's the relationship?
 - Which captures Vene's original definition more faithfully?
 
-**Status**: In progress
+**Status**: Completed
 
 **Findings**:
 
