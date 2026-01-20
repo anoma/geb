@@ -3568,6 +3568,120 @@ theorem weightedCowedgeFamilyAtIdentity_dinatural
   exact weight_map_coTwToIdentity_coherence H f x
 
 /-!
+### Paranaturality of the extracted family
+
+A stronger result: the extracted family is not just dinatural but paranatural.
+This follows from the fact that for any compatible pair of diagonal elements
+`(d₀, d₁)` with `DiagCompat H I₀ I₁ f d₀ d₁`, they map to the same weight
+element at the off-diagonal co-twisted arrow `coTwObjMk f`. Applying weighted
+cocone naturality along `coTwToIdentityAtSource` and `coTwToIdentityAtTarget`
+then shows their images under the family satisfy `DiagCompat` for the slice
+profunctor.
+-/
+
+/-- For a compatible pair of diagonal elements, the profunctor maps to the
+off-diagonal co-twisted arrow agree. This uses `DiagCompat` to identify the
+images. -/
+theorem weight_map_coTwToIdentity_from_diagCompat (H : Cᵒᵖ ⥤ C ⥤ Type v)
+    {I₀ I₁ : C} (f : I₀ ⟶ I₁) (d₀ : diagApp H I₀) (d₁ : diagApp H I₁)
+    (hcompat : DiagCompat H I₀ I₁ f d₀ d₁) :
+    (profunctorOnOpCoTwistedArrow C H).map (coTwToIdentityAtSource f).op
+      (diagAppToWeightAtIdentity H I₀ d₀) =
+    (profunctorOnOpCoTwistedArrow C H).map (coTwToIdentityAtTarget f).op
+      (diagAppToWeightAtIdentity H I₁ d₁) := by
+  rw [profunctor_map_coTwToIdentityAtSource_diag, profunctor_map_coTwToIdentityAtTarget_diag]
+  simp only [cast_eq]
+  exact hcompat
+
+/-- The extracted family from a WeightedCowedge satisfies paranaturality.
+This is stronger than dinaturality: it preserves the compatibility condition
+for any pair of diagonal elements that are compatible under the profunctor
+structure, not just pairs that arise from the off-diagonal via the profunctor
+maps. -/
+theorem weightedCowedgeFamilyAtIdentity_paranatural
+    (H : Cᵒᵖ ⥤ C ⥤ Type v) (G : Cᵒᵖ ⥤ C ⥤ C)
+    (wc : WeightedCowedge H G) :
+    IsParanatural H (G ⇓ wc.pt) (weightedCowedgeFamilyAtIdentity H G wc) := by
+  intro I₀ I₁ f d₀ d₁ hcompat
+  unfold DiagCompat weightedCowedgeFamilyAtIdentity
+  simp only [sliceProfunctor, diagApp, Quiver.Hom.unop_op]
+  simp only [diagonalToIdentityHom]
+  simp only [eq_mpr_eq_cast, congrArg_cast_hom_left]
+  simp only [eqToHom_refl, Category.id_comp]
+  rw [← diagram_map_coTwToIdentityAtSource G f, ← diagram_map_coTwToIdentityAtTarget G f]
+  rw [WeightedCocone.naturality wc (coTwToIdentityAtSource f)]
+  rw [WeightedCocone.naturality wc (coTwToIdentityAtTarget f)]
+  congr 1
+  exact weight_map_coTwToIdentity_from_diagCompat H f d₀ d₁ hcompat
+
+/-!
+### The strong restriction functor
+
+Since `weightedCowedgeFamilyAtIdentity` is paranatural (not just dinatural),
+weighted cowedges map to strong restricted cowedges. This functor composes
+with the inclusion `StrongRestrictedCowedge.inclusion` to give the regular
+restriction functor.
+-/
+
+/-- Restrict a weighted cowedge to a strong restricted cowedge by extracting
+the family at identity co-twisted arrows. Since the extracted family is
+paranatural (proved by `weightedCowedgeFamilyAtIdentity_paranatural`), we get
+a strong restricted cowedge. -/
+def strongRestrictWeightedCowedge (H : Cᵒᵖ ⥤ C ⥤ Type v) (G : Cᵒᵖ ⥤ C ⥤ C)
+    (wc : WeightedCowedge H G) : StrongRestrictedCowedge G H where
+  pt := wc.pt
+  family := weightedCowedgeFamilyAtIdentity H G wc
+  isParanatural := weightedCowedgeFamilyAtIdentity_paranatural H G wc
+
+/-- The morphism map of the strong restriction functor: a morphism of weighted
+cowedges induces a morphism of strong restricted cowedges. -/
+def strongRestrictWeightedCowedgeHom (H : Cᵒᵖ ⥤ C ⥤ Type v) (G : Cᵒᵖ ⥤ C ⥤ C)
+    {wc₁ wc₂ : WeightedCowedge H G} (f : WeightedCocone.Hom wc₁ wc₂) :
+    StrongRestrictedCowedge.Hom (strongRestrictWeightedCowedge H G wc₁)
+      (strongRestrictWeightedCowedge H G wc₂) where
+  hom := f.hom
+  comm A a := by
+    simp only [strongRestrictWeightedCowedge, weightedCowedgeFamilyAtIdentity,
+      eq_mpr_eq_cast, cast_eq]
+    rw [Category.assoc, f.w (idCoTwistedArrow A) (diagAppToWeightAtIdentity H A a)]
+
+theorem strongRestrictWeightedCowedgeHom_id (H : Cᵒᵖ ⥤ C ⥤ Type v) (G : Cᵒᵖ ⥤ C ⥤ C)
+    (wc : WeightedCowedge H G) :
+    strongRestrictWeightedCowedgeHom H G (WeightedCocone.Hom.id wc) =
+      StrongRestrictedCowedge.Hom.id (strongRestrictWeightedCowedge H G wc) := by
+  ext
+  rfl
+
+theorem strongRestrictWeightedCowedgeHom_comp (H : Cᵒᵖ ⥤ C ⥤ Type v) (G : Cᵒᵖ ⥤ C ⥤ C)
+    {wc₁ wc₂ wc₃ : WeightedCowedge H G}
+    (f : WeightedCocone.Hom wc₁ wc₂) (g : WeightedCocone.Hom wc₂ wc₃) :
+    strongRestrictWeightedCowedgeHom H G (f.comp g) =
+      (strongRestrictWeightedCowedgeHom H G f).comp
+        (strongRestrictWeightedCowedgeHom H G g) := by
+  ext
+  rfl
+
+/-- The strong restriction functor from weighted cowedges to strong restricted
+cowedges. This is the factorization of the restriction functor through the
+full subcategory of paranatural families. -/
+def strongRestrictionFunctor (H : Cᵒᵖ ⥤ C ⥤ Type v) (G : Cᵒᵖ ⥤ C ⥤ C) :
+    WeightedCowedge H G ⥤ StrongRestrictedCowedge G H where
+  obj := strongRestrictWeightedCowedge H G
+  map := strongRestrictWeightedCowedgeHom H G
+  map_id wc := strongRestrictWeightedCowedgeHom_id H G wc
+  map_comp f g := strongRestrictWeightedCowedgeHom_comp H G f g
+
+instance strongRestrictionFunctor_faithful (H : Cᵒᵖ ⥤ C ⥤ Type v) (G : Cᵒᵖ ⥤ C ⥤ C) :
+    (strongRestrictionFunctor H G).Faithful where
+  map_injective {wc₁ wc₂} {f g} heq := by
+    apply WeightedCocone.Hom.ext
+    simp only [strongRestrictionFunctor] at heq
+    have : (strongRestrictWeightedCowedgeHom H G f).hom =
+           (strongRestrictWeightedCowedgeHom H G g).hom := by
+      rw [heq]
+    exact this
+
+/-!
 ### The restriction functor
 -/
 
@@ -3623,6 +3737,23 @@ instance restrictionFunctor_faithful (H : Cᵒᵖ ⥤ C ⥤ Type v) (G : Cᵒᵖ
            (restrictWeightedCowedgeHom H G g).hom := by
       rw [heq]
     exact this
+
+/-- The restriction functor factors as the strong restriction functor
+followed by the inclusion of strong restricted cowedges into restricted
+cowedges. This demonstrates that weighted cowedges map first into the full
+subcategory of paranatural families before being further included into the
+category of dinatural families. -/
+theorem restrictionFunctor_eq_inclusion_comp_strong (H : Cᵒᵖ ⥤ C ⥤ Type v)
+    (G : Cᵒᵖ ⥤ C ⥤ C) :
+    restrictionFunctor H G =
+      strongRestrictionFunctor H G ⋙ StrongRestrictedCowedge.inclusion G H := by
+  apply Functor.ext
+  · intro wc₁ wc₂ f
+    simp only [Functor.comp_map, eqToHom_refl, Category.id_comp, Category.comp_id]
+    apply RestrictedCowedge.Hom.ext
+    rfl
+  · intro wc
+    rfl
 
 /-- Commutativity at identity arrows implies commutativity for weight elements
 that are in the image of the weight map from identity.
@@ -5516,6 +5647,57 @@ theorem cValued_restrictionFunctor_not_full :
   exact walkingParallelPair_left_ne_right (eq_of_heq heq)
 
 end CValuedCounterexample
+
+/-!
+### Non-fullness of the strong restriction functor
+
+Since `restrictionFunctor = strongRestrictionFunctor ⋙ inclusion` and
+`inclusion` is fully faithful, the non-fullness of `restrictionFunctor`
+implies non-fullness of `strongRestrictionFunctor`.
+
+The argument: if `strongRestrictionFunctor` were full, then the composition
+with the fully faithful functor `inclusion` would also be full. But
+`restrictionFunctor` is not full (proven above), contradiction.
+-/
+
+/-- General lemma: if a composition F ⋙ G is not full and G is fully
+faithful, then F is not full.
+
+Proof by contrapositive: if F is full and G is fully faithful, then
+F ⋙ G is full. For any morphism h : (F ⋙ G)(a) → (F ⋙ G)(a'), since G is
+fully faithful there exists unique g : F(a) → F(a') with G(g) = h. Since F
+is full, there exists f : a → a' with F(f) = g. Then (F ⋙ G)(f) = h. -/
+theorem not_full_of_comp_not_full_and_second_fullyFaithful'
+    {A : Type*} [Category A] {B : Type*} [Category B] {D : Type*} [Category D]
+    (F : A ⥤ B) (G : B ⥤ D) (hG : G.FullyFaithful)
+    (hcomp : ¬Functor.Full (F ⋙ G)) : ¬Functor.Full F := by
+  intro hF
+  apply hcomp
+  exact ⟨fun {_ _} h ↦
+    let ⟨g, hg⟩ := hG.map_surjective h
+    let ⟨f, hf⟩ := hF.map_surjective g
+    ⟨f, by simp only [Functor.comp_map, hf, hg]⟩⟩
+
+/-- The strong restriction functor is not full.
+
+Since `restrictionFunctor = strongRestrictionFunctor ⋙ inclusion` and the
+inclusion is fully faithful, the non-fullness of `restrictionFunctor`
+(proven in `cValued_restrictionFunctor_not_full`) implies non-fullness of
+`strongRestrictionFunctor`. -/
+theorem cValued_strongRestrictionFunctor_not_full :
+    ¬ Functor.Full (strongRestrictionFunctor wppHomProfunctor wppConstDiagramC)
+    := by
+  have hcomp : restrictionFunctor wppHomProfunctor wppConstDiagramC =
+      strongRestrictionFunctor wppHomProfunctor wppConstDiagramC ⋙
+        StrongRestrictedCowedge.inclusion wppConstDiagramC wppHomProfunctor :=
+    restrictionFunctor_eq_inclusion_comp_strong wppHomProfunctor wppConstDiagramC
+  have hnotfull := cValued_restrictionFunctor_not_full
+  rw [hcomp] at hnotfull
+  exact not_full_of_comp_not_full_and_second_fullyFaithful'
+    (strongRestrictionFunctor wppHomProfunctor wppConstDiagramC)
+    (StrongRestrictedCowedge.inclusion wppConstDiagramC wppHomProfunctor)
+    (StrongRestrictedCowedge.inclusion_fullyFaithful wppConstDiagramC wppHomProfunctor)
+    hnotfull
 
 end WeightedRestrictedCorrespondence
 
