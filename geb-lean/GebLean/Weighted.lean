@@ -5,6 +5,7 @@ import Mathlib.CategoryTheory.Limits.Cones
 import Mathlib.CategoryTheory.Limits.Shapes.End
 import Mathlib.CategoryTheory.Limits.Shapes.Equalizers
 import GebLean.Paranatural
+import GebLean.Utilities.Category
 import GebLean.Utilities.TwArrPresheaf
 import GebLean.Utilities.TwistedArrow
 
@@ -5652,37 +5653,19 @@ end CValuedCounterexample
 ### Non-fullness of the strong restriction functor
 
 Since `restrictionFunctor = strongRestrictionFunctor ⋙ inclusion` and
-`inclusion` is fully faithful, the non-fullness of `restrictionFunctor`
-implies non-fullness of `strongRestrictionFunctor`.
+`inclusion` is full, the non-fullness of `restrictionFunctor` implies
+non-fullness of `strongRestrictionFunctor`.
 
 The argument: if `strongRestrictionFunctor` were full, then the composition
-with the fully faithful functor `inclusion` would also be full. But
-`restrictionFunctor` is not full (proven above), contradiction.
+with the full functor `inclusion` would also be full. But `restrictionFunctor`
+is not full (proven above), contradiction.
 -/
-
-/-- General lemma: if a composition F ⋙ G is not full and G is fully
-faithful, then F is not full.
-
-Proof by contrapositive: if F is full and G is fully faithful, then
-F ⋙ G is full. For any morphism h : (F ⋙ G)(a) → (F ⋙ G)(a'), since G is
-fully faithful there exists unique g : F(a) → F(a') with G(g) = h. Since F
-is full, there exists f : a → a' with F(f) = g. Then (F ⋙ G)(f) = h. -/
-theorem not_full_of_comp_not_full_and_second_fullyFaithful'
-    {A : Type*} [Category A] {B : Type*} [Category B] {D : Type*} [Category D]
-    (F : A ⥤ B) (G : B ⥤ D) (hG : G.FullyFaithful)
-    (hcomp : ¬Functor.Full (F ⋙ G)) : ¬Functor.Full F := by
-  intro hF
-  apply hcomp
-  exact ⟨fun {_ _} h ↦
-    let ⟨g, hg⟩ := hG.map_surjective h
-    let ⟨f, hf⟩ := hF.map_surjective g
-    ⟨f, by simp only [Functor.comp_map, hf, hg]⟩⟩
 
 /-- The strong restriction functor is not full.
 
 Since `restrictionFunctor = strongRestrictionFunctor ⋙ inclusion` and the
-inclusion is fully faithful, the non-fullness of `restrictionFunctor`
-(proven in `cValued_restrictionFunctor_not_full`) implies non-fullness of
+inclusion is full, the non-fullness of `restrictionFunctor` (proven in
+`cValued_restrictionFunctor_not_full`) implies non-fullness of
 `strongRestrictionFunctor`. -/
 theorem cValued_strongRestrictionFunctor_not_full :
     ¬ Functor.Full (strongRestrictionFunctor wppHomProfunctor wppConstDiagramC)
@@ -5693,10 +5676,12 @@ theorem cValued_strongRestrictionFunctor_not_full :
     restrictionFunctor_eq_inclusion_comp_strong wppHomProfunctor wppConstDiagramC
   have hnotfull := cValued_restrictionFunctor_not_full
   rw [hcomp] at hnotfull
-  exact not_full_of_comp_not_full_and_second_fullyFaithful'
+  letI : (StrongRestrictedCowedge.inclusion wppConstDiagramC wppHomProfunctor).Full :=
+    (StrongRestrictedCowedge.inclusion_fullyFaithful
+      wppConstDiagramC wppHomProfunctor).full
+  exact Functor.not_full_of_comp_not_full_and_full
     (strongRestrictionFunctor wppHomProfunctor wppConstDiagramC)
     (StrongRestrictedCowedge.inclusion wppConstDiagramC wppHomProfunctor)
-    (StrongRestrictedCowedge.inclusion_fullyFaithful wppConstDiagramC wppHomProfunctor)
     hnotfull
 
 end WeightedRestrictedCorrespondence

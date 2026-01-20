@@ -172,17 +172,18 @@ canonical way to define the leg there.
 
 Since:
 
-- `StrongRestrictedCowedge.inclusion` is fully faithful
+- `StrongRestrictedCowedge.inclusion` is full (only fullness is required, not
+  full faithfulness)
 - `restrictionFunctor` is NOT full (proven via `WalkingParallelPair`
   counterexample)
 
-If `strongRestrictionFunctor` were full, the composition with a fully faithful
-functor would also be full. Contradiction.
+If `strongRestrictionFunctor` were full, the composition with a full functor
+would also be full. Contradiction.
 
 **Implementation**:
 
-- `not_full_of_comp_not_full_and_second_fullyFaithful'`: General contrapositive
-  lemma
+- `Functor.not_full_of_comp_not_full_and_full` (in `Utilities/Category.lean`):
+  General contrapositive lemma
 - `cValued_strongRestrictionFunctor_not_full`: Application to strong restriction
 
 ## Tasks

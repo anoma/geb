@@ -49,6 +49,11 @@ Convenience notation and helpers for working with categories.
 * `FunctorOfData`: Build a `CategoryTheory.Functor` from `FunctorData`
 * `functorDataOfFunctor`: Extract `FunctorData` from a `Functor`
 
+### Functor fullness
+
+* `Functor.not_full_of_comp_not_full_and_full`: If `F ⋙ G` is not full and
+  `G` is full, then `F` is not full
+
 ### Miscellaneous
 
 * `≅Cat`: Notation for isomorphisms between categories without explicit
@@ -2390,6 +2395,21 @@ def categoryData : CategoryData BundledOverCategoryData.{vBOver, uBOver} homSet 
   laws := categoryLaws
 
 end BundledOverCategoryData
+
+/-! ### Functor fullness lemmas -/
+
+/-- If a composition `F ⋙ G` is not full and `G` is full, then `F` is not
+full. -/
+theorem Functor.not_full_of_comp_not_full_and_full
+    {A : Type*} [Category A] {B : Type*} [Category B] {D : Type*} [Category D]
+    (F : A ⥤ B) (G : B ⥤ D) [hG : G.Full]
+    (hcomp : ¬Functor.Full (F ⋙ G)) : ¬Functor.Full F := by
+  intro hF
+  apply hcomp
+  exact ⟨fun {_ _} h ↦
+    let ⟨g, hg⟩ := hG.map_surjective h
+    let ⟨f, hf⟩ := hF.map_surjective g
+    ⟨f, by simp only [Functor.comp_map, hf, hg]⟩⟩
 
 end GebLean
 
