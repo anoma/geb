@@ -35,3 +35,4 @@ import GebLean.Utilities.Opposites
 import GebLean.Utilities.Sigma
 import GebLean.Utilities.TwistedArrow
 import GebLean.Weighted
+import GebLean.WeightedAlg
