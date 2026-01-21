@@ -2,6 +2,7 @@ import Mathlib.CategoryTheory.Functor.Hom
 import Mathlib.CategoryTheory.Equivalence
 import Mathlib.CategoryTheory.Products.Basic
 import Mathlib.CategoryTheory.Types.Basic
+import Mathlib.CategoryTheory.Whiskering
 import GebLean.Utilities.Opposites
 
 /-!
@@ -192,18 +193,32 @@ def homPreOp' : (opProdSym' Cᵒᵖ')ᵒᵖ' ⥤ Type v :=
 variable {J : Type*} [Category J]
 
 /--
+The bifunctor `(J ⥤ C) ⥤ Cᵒᵖ ⥤ J ⥤ Type v` sending `(D, Xᵒᵖ)` to
+`Hom(X, D(-)) : J ⥤ Type v`. Built from whiskering and coyoneda.
+-/
+def homFromFunctorBifunctor : (J ⥤ C) ⥤ Cᵒᵖ ⥤ J ⥤ Type v :=
+  (coyoneda ⋙ Functor.whiskeringRight J C (Type v)).flip
+
+/--
 The functor `Hom(X, D(-)) : J ⥤ Type v` for a diagram `D : J ⥤ C` and
-fixed object `X : C`. This is the composition `D ⋙ coyoneda.obj (op X)`.
+fixed object `X : C`. Obtained from `homFromFunctorBifunctor`.
 -/
 abbrev homFromFunctor (D : J ⥤ C) (X : C) : J ⥤ Type v :=
-  D ⋙ coyoneda.obj (Opposite.op X)
+  (homFromFunctorBifunctor.obj D).obj (Opposite.op X)
+
+/--
+The bifunctor `(J ⥤ C)ᵒᵖ ⥤ C ⥤ Jᵒᵖ ⥤ Type v` sending `(Dᵒᵖ, X)` to
+`Hom(D(-), X) : Jᵒᵖ ⥤ Type v`. Built from opHom, whiskering, and yoneda.
+-/
+def homToFunctorBifunctor : (J ⥤ C)ᵒᵖ ⥤ C ⥤ Jᵒᵖ ⥤ Type v :=
+  Functor.opHom J C ⋙ (yoneda ⋙ Functor.whiskeringRight Jᵒᵖ Cᵒᵖ (Type v)).flip
 
 /--
 The functor `Hom(D(-), X) : Jᵒᵖ ⥤ Type v` for a diagram `D : J ⥤ C` and
-fixed object `X : C`. This is the composition `D.op ⋙ yoneda.obj X`.
+fixed object `X : C`. Obtained from `homToFunctorBifunctor`.
 -/
 abbrev homToFunctor (D : J ⥤ C) (X : C) : Jᵒᵖ ⥤ Type v :=
-  D.op ⋙ yoneda.obj X
+  (homToFunctorBifunctor.obj (Opposite.op D)).obj X
 
 end HomVariants
 

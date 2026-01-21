@@ -1120,7 +1120,6 @@ theorem WeightedCone.naturality {W : J ⥤ Type v} {D : J ⥤ C}
     c.leg j w ≫ D.map f = c.leg j' (W.map f w) := by
   unfold leg homFromFunctor
   have nat := c.π.naturality f
-  simp only [Functor.comp_obj, Functor.comp_map] at nat
   exact (congrFun nat w).symm
 
 /--
@@ -1367,8 +1366,8 @@ def coneToWeightedCone {D : J ⥤ C} (c : Cone D) :
     app := fun j _ => c.π.app j
     naturality := fun j j' f => by
       funext _
-      simp only [types_comp_apply, homFromFunctor, Functor.comp_obj, Functor.comp_map,
-        unitWeight, Functor.const_obj_obj, Functor.const_obj_map]
+      simp only [types_comp_apply, homFromFunctor, unitWeight, Functor.const_obj_obj,
+        Functor.const_obj_map]
       have nat := c.π.naturality f
       simp only [Functor.const_obj_obj, Functor.const_obj_map, Category.id_comp] at nat
       exact nat
@@ -1388,7 +1387,7 @@ def weightedConeToCone {D : J ⥤ C} (c : WeightedCone (unitWeight J) D) :
     naturality := fun j j' f => by
       have nat := c.π.naturality f
       simp only [unitWeight, Functor.const_obj_obj, Functor.const_obj_map,
-        homFromFunctor, Functor.comp_obj, Functor.comp_map] at nat
+        homFromFunctor] at nat
       simp only [Functor.const_obj_obj, Functor.const_obj_map, Category.id_comp]
       exact congrFun nat PUnit.unit
   }
