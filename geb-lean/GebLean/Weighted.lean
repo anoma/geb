@@ -1093,28 +1093,6 @@ The relationship to twisted arrow categories:
 variable {J : Type*} [Category J]
 
 /--
-The functor `Hom(X, D(-)) : J ⥤ Type v` for a fixed object `X : C` and
-diagram `D : J ⥤ C`. This is the composition `D ⋙ coyoneda.obj (op X)`.
--/
-abbrev homFromFunctor (X : C) (D : J ⥤ C) : J ⥤ Type v :=
-  D ⋙ coyoneda.obj (Opposite.op X)
-
-/--
-The functor `Hom(D(-), X) : Jᵒᵖ ⥤ Type v` for a fixed object `X : C` and
-diagram `D : J ⥤ C`. This sends `j` to `Hom(D.obj j, X)` and acts
-contravariantly via precomposition.
--/
-def homToFunctor (D : J ⥤ C) (X : C) : Jᵒᵖ ⥤ Type v where
-  obj j := D.obj j.unop ⟶ X
-  map f g := D.map f.unop ≫ g
-  map_id _ := by
-    funext g
-    simp only [unop_id, Functor.map_id, Category.id_comp, types_id_apply]
-  map_comp f g := by
-    funext h
-    simp only [unop_comp, Functor.map_comp, Category.assoc, types_comp_apply]
-
-/--
 A weighted cone over a diagram `D : J ⥤ C` with weight `W : J ⥤ Type v`
 consists of a cone point `pt` and a natural transformation from `W` to the
 functor `Hom(pt, D(-))`.
@@ -1124,7 +1102,7 @@ structure WeightedCone (W : J ⥤ Type v) (D : J ⥤ C) where
   /-- The cone point -/
   pt : C
   /-- The natural transformation from the weight to `Hom(pt, D(-))` -/
-  π : W ⟶ homFromFunctor pt D
+  π : W ⟶ homFromFunctor D pt
 
 /--
 For a weighted cone, extract the morphism at index `j` for weight element `w`.
@@ -3216,8 +3194,10 @@ theorem homToFunctor_at_identity (P : Cᵒᵖ ⥤ C ⥤ C) (pt : C) (A : C) :
     (homToFunctor (profunctorOnCoTwistedArrow C P) pt).obj
       (Opposite.op (idCoTwistedArrow A)) =
     ((P.obj (Opposite.op A)).obj A ⟶ pt) := by
-  simp only [homToFunctor]
+  change (yoneda.obj pt).obj (Opposite.op ((profunctorOnCoTwistedArrow C P).obj
+    (idCoTwistedArrow A))) = _
   rw [profunctorOnCoTwistedArrow_at_identity P A]
+  rfl
 
 /-- Cast from the weight type at identity to the diagonal app type. -/
 def weightAtIdentityToDiagApp (H : Cᵒᵖ ⥤ C ⥤ Type v) (A : C)
@@ -4205,8 +4185,8 @@ theorem wppHomToFunctor_map_eq
     {x y : (CoTwistedArrow WalkingParallelPair)ᵒᵖ}
     (f : x ⟶ y) (g : wppDiagramFunctor.obj x.unop ⟶ ℕ) :
     (homToFunctor wppDiagramFunctor ℕ).map f g = g := by
-  simp only [homToFunctor, wppDiagramFunctor_map_eq]
-  -- id ≫ g = g in the Type category
+  change wppDiagramFunctor.map f.unop ≫ g = g
+  simp only [wppDiagramFunctor_map_eq]
   rfl
 
 /-- A leg function for a weighted cocone specifies a leg for each co-twisted
@@ -5432,8 +5412,7 @@ def cValuedAllLeftNatTrans :
   app := fun tw_op w => cValuedLegAllLeft tw_op.unop w
   naturality := fun _ _ f => by
     ext _
-    simp only [types_comp_apply, homToFunctor, cValuedLegAllLeft,
-      wppDiagramFunctorC_obj_eq_zero]
+    simp only [types_comp_apply, cValuedLegAllLeft]
     rfl
 
 /-- The leg function for C-valued cowedges sending wppWeightRight to `right`
@@ -5471,11 +5450,10 @@ def cValuedRightAtRightNatTrans :
   app := fun tw_op w => cValuedLegRightAtRight tw_op.unop w
   naturality := fun x y f => by
     ext w
-    simp only [types_comp_apply, homToFunctor, wppDiagramFunctorC_obj_eq_zero]
-    -- The diagram is constant, so F.map = 𝟙. Need to show:
-    -- cValuedLegRightAtRight y.unop (W.map f w) = 𝟙 ≫ cValuedLegRightAtRight x.unop w
-    have hdiag : wppDiagramFunctorC.map f.unop = 𝟙 WalkingParallelPair.zero := rfl
-    simp only [hdiag, Category.id_comp]
+    simp only [types_comp_apply]
+    change cValuedLegRightAtRight y.unop (cValuedWeightFunctor.map f w) =
+      wppDiagramFunctorC.map f.unop ≫ cValuedLegRightAtRight x.unop w
+    simp only [wppDiagramFunctorC_map_eq]
     -- Now show: cValuedLegRightAtRight y.unop (W.map f w) = cValuedLegRightAtRight x.unop w
     by_cases hx : x.unop = coTwLeft
     · by_cases hy : y.unop = coTwLeft
@@ -5488,6 +5466,7 @@ def cValuedRightAtRightNatTrans :
           apply Quiver.Hom.unop_inj
           exact coTwLeft_endo_is_id f.unop
         simp only [hf_id, Functor.map_id, types_id_apply]
+        rfl
       · -- x is coTwLeft, y is not: no morphism y.unop → coTwLeft
         exfalso
         have hf : y.unop ⟶ coTwLeft := hx ▸ f.unop
@@ -5518,6 +5497,7 @@ def cValuedRightAtRightNatTrans :
             exact walkingParallelPair_zero_zero_eq_id (cast wppWeightAt_coTwIdZero w)
           simp only [Opposite.unop_op, hw, hf, wppWeightTransport_fromIdZero_eq_left,
             cValuedLegRightAtRight_coTwLeft_wppWeightLeft]
+          rfl
         · -- x.unop = coTwIdOne
           have hx' : x = Opposite.op coTwIdOne := by
             rw [← Opposite.op_unop x, hxcase]
@@ -5533,6 +5513,7 @@ def cValuedRightAtRightNatTrans :
             exact walkingParallelPair_one_one_eq_id (cast wppWeightAt_coTwIdOne w)
           simp only [Opposite.unop_op, hw, hf, wppWeightTransport_fromIdOne_eq_left,
             cValuedLegRightAtRight_coTwLeft_wppWeightLeft]
+          rfl
         · -- x.unop = coTwLeft (contradiction with hx)
           exact absurd hxcase hx
         · -- x.unop = coTwRight' (no morphism coTwLeft → coTwRight')
@@ -5543,6 +5524,7 @@ def cValuedRightAtRightNatTrans :
       · -- Neither is coTwLeft: both legs are left
         rw [cValuedLegRightAtRight_not_coTwLeft x.unop hx w,
           cValuedLegRightAtRight_not_coTwLeft y.unop hy _]
+        rfl
 
 /-- The first C-valued weighted cowedge: all legs are `left`. -/
 def cValuedCowedgeAllLeft :

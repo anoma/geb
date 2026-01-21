@@ -189,6 +189,22 @@ The hom functor viewed as a presheaf on `(Cᵒᵖ'ᵒᵖ' × Cᵒᵖ')`.
 def homPreOp' : (opProdSym' Cᵒᵖ')ᵒᵖ' ⥤ Type v :=
   profunctorPreOp' (C := C) hom'
 
+variable {J : Type*} [Category J]
+
+/--
+The functor `Hom(X, D(-)) : J ⥤ Type v` for a diagram `D : J ⥤ C` and
+fixed object `X : C`. This is the composition `D ⋙ coyoneda.obj (op X)`.
+-/
+abbrev homFromFunctor (D : J ⥤ C) (X : C) : J ⥤ Type v :=
+  D ⋙ coyoneda.obj (Opposite.op X)
+
+/--
+The functor `Hom(D(-), X) : Jᵒᵖ ⥤ Type v` for a diagram `D : J ⥤ C` and
+fixed object `X : C`. This is the composition `D.op ⋙ yoneda.obj X`.
+-/
+abbrev homToFunctor (D : J ⥤ C) (X : C) : Jᵒᵖ ⥤ Type v :=
+  D.op ⋙ yoneda.obj X
+
 end HomVariants
 
 section HomPreOpComputation
