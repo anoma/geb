@@ -75,6 +75,21 @@ def opProdSymSelfDual' (C : Type u) [Category C] :
     (prodOpEquiv' (C := Cᵒᵖ') (D := C))
     (opProdProdOpEquiv' C).symm
 
+section Endodifunctors
+
+variable {C : Type u} [Category.{v} C]
+
+/-- The identity endodifunctor on `C`, sending `(A, B)` to `B` (via the
+identity functor `𝟭 C`).
+
+This is constant in the first (contravariant) argument and identity in the
+second (covariant) argument. For `C = Type v`, a diagonal element at `A` is
+a point of `A`, making `DiagElem IdProf` equivalent to pointed types. -/
+abbrev IdProf : Cᵒᵖ ⥤ C ⥤ C :=
+  (Functor.const Cᵒᵖ).obj (𝟭 C)
+
+end Endodifunctors
+
 section ProfunctorVariants
 
 variable {C : Type u} [Category.{v} C]

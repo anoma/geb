@@ -1077,20 +1077,14 @@ abbrev StructureIntegralSelf := StructureIntegral F F
 /-- The costructure integral of a single profunctor with itself. -/
 abbrev CostructureIntegralSelf := CostructureIntegral F F
 
-/-! ### The identity profunctor and structural ends/coends
+/-! ### The identity endodifunctor and structural ends/coends
 
-The identity profunctor for `Type v` sends `(x, y)` to `y`. This gives the
-single-profunctor structure/costructure integrals when used as the second
-argument: `StructuralEnd F = StructureIntegral F IdProf` and
+The identity endodifunctor `IdProf` (defined in `Profunctors.lean`) sends
+`(x, y)` to `y`. This gives the single-profunctor structure/costructure
+integrals when used as the second argument:
+`StructuralEnd F = StructureIntegral F IdProf` and
 `StructuralCoend F = CostructureIntegral F IdProf`.
 -/
-
-/-- The identity profunctor on `Type v`, sending `(x, y)` to `y`.
-This is constant in the first argument and the identity in the second.
-A diagonal element at `A` is just a point of `A`, making `DiagElem IdProf`
-equivalent to the category of pointed types. -/
-abbrev IdProf : (Type v)ᵒᵖ ⥤ Type v ⥤ Type v :=
-  (Functor.const (Type v)ᵒᵖ).obj (𝟭 (Type v))
 
 /-- The structural end (single-profunctor structure integral).
 This is `∫_C F(C,C) pC`, the equalizer of families indexed by F-structures
