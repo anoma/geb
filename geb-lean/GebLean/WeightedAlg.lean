@@ -1,6 +1,7 @@
 import GebLean.Weighted
 import GebLean.ParanatAlg
 import Mathlib.CategoryTheory.Limits.Shapes.Terminal
+import Mathlib.CategoryTheory.Functor.Currying
 
 /-!
 # Mendler-Lambek Correspondence via Restricted Coends
@@ -57,40 +58,59 @@ precomposition. A diagonal element at `A` is a morphism `A ⟶ pt`.
 This corresponds to Vene's "Id^i/C" (identity restricted to C) profunctor.
 -/
 
-/-- The inner functor for `HomToProf`: constant functor sending every `B`
-to the type `A ⟶ pt`. -/
-@[simps]
-def HomToProf.innerFunctor (pt : C) (A : Cᵒᵖ) : C ⥤ Type v where
-  obj _ := A.unop ⟶ pt
-  map _ := id
-  map_id _ := rfl
-  map_comp _ _ := rfl
-
 /-- The profunctor `HomToProf pt` sends `(A, B)` to `(A ⟶ pt)`.
-Contravariant in `A` via precomposition, constant in `B`. -/
-@[simps]
-def HomToProf (pt : C) : Cᵒᵖ ⥤ C ⥤ Type v where
-  obj A := HomToProf.innerFunctor pt A
-  map {A₁ A₂} f := {
-    app := fun _ h => f.unop ≫ h
-    naturality := fun _ _ _ => rfl
-  }
-  map_id _ := by ext; simp
-  map_comp _ _ := by ext; simp [Category.assoc]
+Contravariant in `A` via precomposition, constant in `B`.
+
+Constructed as the currying of `(Prod.fst Cᵒᵖ C) ⋙ (yoneda.obj pt)`:
+- `Prod.fst` projects out the first component
+- `yoneda.obj pt` gives the representable presheaf Hom(-, pt)
+- Currying converts from `Cᵒᵖ × C ⥤ Type v` to `Cᵒᵖ ⥤ C ⥤ Type v`
+
+This corresponds to Vene's "Id^i/C" (identity restricted to C) profunctor. -/
+def HomToProf (pt : C) : Cᵒᵖ ⥤ C ⥤ Type v :=
+  Functor.curry.obj (CategoryTheory.Prod.fst Cᵒᵖ C ⋙ yoneda.obj pt)
+
+/-- The object at `(A, B)` in `HomToProf pt` is `(A.unop ⟶ pt)`. -/
+@[simp]
+theorem HomToProf_obj_obj (pt : C) (A : Cᵒᵖ) (B : C) :
+    ((HomToProf pt).obj A).obj B = (A.unop ⟶ pt) := by
+  simp only [HomToProf, Functor.curry_obj_obj_obj, Functor.comp_obj,
+             CategoryTheory.Prod.fst_obj, yoneda_obj_obj]
 
 /-- The diagonal of `HomToProf pt` at `A` is the hom-set `(A ⟶ pt)`. -/
 theorem HomToProf_diag (pt A : C) :
-    diagApp (HomToProf pt) A = (A ⟶ pt) := rfl
+    diagApp (HomToProf pt) A = (A ⟶ pt) := by
+  simp only [diagApp, HomToProf_obj_obj]
+
+/-- The map in the first (contravariant) argument: precomposition. -/
+@[simp]
+theorem HomToProf_map_app (pt : C) {A₁ A₂ : Cᵒᵖ} (f : A₁ ⟶ A₂) (B : C)
+    (h : A₁.unop ⟶ pt) :
+    ((HomToProf pt).map f).app B h = f.unop ≫ h := by
+  simp only [HomToProf, Functor.curry_obj_map_app, Functor.comp_map,
+             CategoryTheory.Prod.fst_map, yoneda_obj_map]
+
+/-- The map in the second (covariant) argument is identity. -/
+@[simp]
+theorem HomToProf_obj_map (pt : C) (A : Cᵒᵖ) {B₁ B₂ : C} (g : B₁ ⟶ B₂)
+    (h : A.unop ⟶ pt) :
+    ((HomToProf pt).obj A).map g h = h := by
+  simp only [HomToProf, Functor.curry_obj_obj_map, Functor.comp_map,
+             CategoryTheory.Prod.fst_map, yoneda_obj_map]
+  simp [Category.id_comp]
 
 /-- Left action (contravariant): precomposition with `f`. -/
 theorem HomToProf_lmap (pt : C) {A B : C} (f : A ⟶ B)
     (h : diagApp (HomToProf pt) B) :
-    Profunctor.lmap (HomToProf pt) f h = f ≫ h := rfl
+    Profunctor.lmap (HomToProf pt) f h = f ≫ h := by
+  simp only [Profunctor.lmap, HomToProf_map_app]
+  rfl
 
 /-- Right action (covariant): identity (constant in second argument). -/
 theorem HomToProf_rmap (pt : C) {A B : C} (f : A ⟶ B)
     (h : diagApp (HomToProf pt) A) :
-    Profunctor.rmap (HomToProf pt) f h = h := rfl
+    Profunctor.rmap (HomToProf pt) f h = h := by
+  simp only [Profunctor.rmap, HomToProf_obj_map]
 
 end HomToProfunctor
 
@@ -142,8 +162,8 @@ theorem dinaturality (m : MendlerAlgebra G) {A B : C} (g : A ⟶ B)
     (G.map g.op).app A ≫ m.family A (g ≫ β) =
     (G.obj (Opposite.op B)).map g ≫ m.family B β := by
   have dinat := m.isDinatural A B g β
-  simp only [Profunctor.lmap, Profunctor.rmap, HomToProf, sliceProfunctor,
-    HomToProf.innerFunctor] at dinat
+  simp only [Profunctor.lmap, Profunctor.rmap, sliceProfunctor,
+    HomToProf_map_app, HomToProf_obj_map] at dinat
   exact dinat.symm
 
 /-- Convert a Mendler algebra to a restricted cowedge. -/
@@ -387,8 +407,8 @@ def GExtMapCowedge (pt₁ pt₂ : C) (h : pt₁ ⟶ pt₂) :
   isDinatural := by
     intro A B g x
     have dinat := (restrictedCoend G (HomToProf pt₂)).isDinatural A B g (x ≫ h)
-    simp only [Profunctor.lmap, Profunctor.rmap, HomToProf, sliceProfunctor,
-      HomToProf.innerFunctor, GExtInj, Category.assoc] at dinat ⊢
+    simp only [Profunctor.lmap, Profunctor.rmap, sliceProfunctor,
+      HomToProf_map_app, HomToProf_obj_map, GExtInj, Category.assoc] at dinat ⊢
     exact dinat
 
 /-- The morphism part of G^e: uses the universal property. -/
@@ -535,11 +555,11 @@ def ceil (a : ConventionalAlgebra (HasAllHomToProfCoends.GExtFunctor G)) :
   family := fun A γ => HasAllHomToProfCoends.GExtInj G a.pt A γ ≫ a.str
   isDinatural := by
     intro A B g x
-    simp only [Profunctor.lmap, Profunctor.rmap, HomToProf, sliceProfunctor,
-      HomToProf.innerFunctor]
+    simp only [Profunctor.lmap, Profunctor.rmap, sliceProfunctor,
+      HomToProf_map_app, HomToProf_obj_map]
     have dinat := (restrictedCoend G (HomToProf a.pt)).isDinatural A B g x
-    simp only [Profunctor.lmap, Profunctor.rmap, HomToProf, sliceProfunctor,
-      HomToProf.innerFunctor, HasAllHomToProfCoends.GExtInj] at dinat ⊢
+    simp only [Profunctor.lmap, Profunctor.rmap, sliceProfunctor,
+      HomToProf_map_app, HomToProf_obj_map, HasAllHomToProfCoends.GExtInj] at dinat ⊢
     simp only [← Category.assoc]
     exact congrArg (· ≫ a.str) dinat
 
@@ -589,8 +609,8 @@ def floorHom {m₁ m₂ : MendlerAlgebra G} (f : m₁ ⟶ m₂) :
       isDinatural := by
         intro A B g x
         have hdinat := m₂.isDinatural A B g (x ≫ f.hom)
-        simp only [Profunctor.lmap, Profunctor.rmap, sliceProfunctor, HomToProf,
-          HomToProf.innerFunctor, Category.assoc] at hdinat ⊢
+        simp only [Profunctor.lmap, Profunctor.rmap, sliceProfunctor,
+          HomToProf_map_app, HomToProf_obj_map, Category.assoc] at hdinat ⊢
         exact hdinat
     }
     let lhsMorph : RestrictedCowedge.Hom (restrictedCoend G (HomToProf m₁.pt)) targetCowedge := {
