@@ -252,8 +252,9 @@ theorem cowedgeLeg_dinatural (cwedge : HomToProfCowedge G pt) {x y : Over pt}
     (G.map f.left.op).app x.left ≫ cwedge.family x.left (f.left ≫ y.hom) =
     (G.obj (op y.left)).map f.left ≫ cwedge.family y.left y.hom := by
   have dinat := cwedge.isDinatural x.left y.left f.left y.hom
-  simp only [Profunctor.lmap, Profunctor.rmap, HomToProf, sliceProfunctor,
-    HomToProf.innerFunctor] at dinat
+  simp only [Profunctor.lmap, Profunctor.rmap, sliceProfunctor_obj_map,
+    sliceProfunctor_map_app, Quiver.Hom.unop_op, HomToProf_map_app,
+    HomToProf_obj_map] at dinat
   exact dinat.symm
 
 /-- The cowedge leg at x can be expressed using the factorization through y.
