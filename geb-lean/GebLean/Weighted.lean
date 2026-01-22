@@ -2078,6 +2078,26 @@ variance for an endoprofunctor to Type.
 
 variable {C : Type u} [Category.{v} C]
 
+/--
+The slice profunctor bifunctor: contravariant in `G` and covariant in `c`.
+
+`sliceProfunctorBifunctor.obj (op G) .obj c = G ⇓ c`
+
+This is built from standard functor compositions:
+1. Uncurry `G` and apply `.op` (contravariantly)
+2. Precompose with `opProdSymSelfDual.inverse` to swap arguments
+3. Postcompose with `yoneda.obj c` to get `Hom(-, c)`
+4. Curry the result
+-/
+def sliceProfunctorBifunctor : (Cᵒᵖ ⥤ C ⥤ C)ᵒᵖ ⥤ C ⥤ (Cᵒᵖ ⥤ C ⥤ Type v) :=
+  Functor.uncurry.op ⋙
+  Functor.opHom (Cᵒᵖ × C) C ⋙
+  (Functor.whiskeringLeft (Cᵒᵖ × C) ((Cᵒᵖ × C)ᵒᵖ) Cᵒᵖ).obj (opProdSymSelfDual C).inverse ⋙
+  (Functor.whiskeringRight (Cᵒᵖ × C) Cᵒᵖ (Type v)).flip ⋙
+  (Functor.whiskeringRight (Cᵒᵖ ⥤ Type v) (Cᵒᵖ × C ⥤ Type v) (Cᵒᵖ ⥤ C ⥤ Type v)).obj
+    Functor.curry ⋙
+  (Functor.whiskeringLeft C (Cᵒᵖ ⥤ Type v) (Cᵒᵖ ⥤ C ⥤ Type v)).obj yoneda
+
 /-- The slice profunctor `G ⇓ c` for an endodifunctor `G : Cᵒᵖ ⥤ C ⥤ C` and
 object `c : C`. Defined as `(G ⇓ c)(A, B) := Hom_C(G(B, A), c)`.
 
@@ -2087,30 +2107,8 @@ The covariant action (second argument): for `g : X → Y`, the map
 The contravariant action (first argument): for `f : A → B`, the map
 `Hom(G(X, B), c) → Hom(G(X, A), c)` is precomposition by `G(X, f) : G(X, A) → G(X, B)`.
 -/
-def sliceProfunctor (G : Cᵒᵖ ⥤ C ⥤ C) (c : C) : Cᵒᵖ ⥤ C ⥤ Type v where
-  obj A :=
-    { obj := fun X => (G.obj (Opposite.op X)).obj A.unop ⟶ c
-      map := fun g m => (G.map g.op).app A.unop ≫ m
-      map_id := fun X => by
-        funext m
-        simp only [op_id, Functor.map_id, NatTrans.id_app, Category.id_comp, types_id_apply]
-      map_comp := fun f g => by
-        funext m
-        simp only [op_comp, Functor.map_comp, NatTrans.comp_app, Category.assoc, types_comp_apply] }
-  map f :=
-    { app := fun X m => (G.obj (Opposite.op X)).map f.unop ≫ m
-      naturality := fun X Y g => by
-        funext m
-        simp only [types_comp_apply]
-        rw [← Category.assoc, ← Category.assoc]
-        congr 1
-        exact (G.map g.op).naturality f.unop }
-  map_id := fun A => by
-    ext X m
-    simp only [unop_id, Functor.map_id, Category.id_comp, NatTrans.id_app, types_id_apply]
-  map_comp := fun f g => by
-    ext X m
-    simp only [unop_comp, Functor.map_comp, Category.assoc, NatTrans.comp_app, types_comp_apply]
+abbrev sliceProfunctor (G : Cᵒᵖ ⥤ C ⥤ C) (c : C) : Cᵒᵖ ⥤ C ⥤ Type v :=
+  (sliceProfunctorBifunctor.obj (Opposite.op G)).obj c
 
 /-- Notation for the slice profunctor. -/
 scoped infixl:70 " ⇓ " => sliceProfunctor
@@ -2120,71 +2118,70 @@ Given `G : Cᵒᵖ ⥤ C ⥤ C`, this defines a functor `C ⥤ (Cᵒᵖ ⥤ C �
 
 For a morphism `f : c ⟶ c'`, the induced natural transformation
 `(G ⇓ c) ⟶ (G ⇓ c')` acts by post-composition with `f`. -/
-def sliceProfunctorFunctor (G : Cᵒᵖ ⥤ C ⥤ C) : C ⥤ (Cᵒᵖ ⥤ C ⥤ Type v) where
-  obj c := G ⇓ c
-  map f :=
-    { app := fun A =>
-        { app := fun X m => m ≫ f
-          naturality := fun X Y g => by
-            funext m
-            simp only [types_comp_apply, sliceProfunctor, Category.assoc] }
-      naturality := fun A B g => by
-        ext X m
-        simp only [FunctorToTypes.comp, sliceProfunctor, Category.assoc] }
-  map_id c := by
-    ext A X m
-    simp only [Category.comp_id, NatTrans.id_app, types_id_apply]
-  map_comp f g := by
-    ext A X m
-    simp only [FunctorToTypes.comp, Category.assoc, NatTrans.comp_app]
+abbrev sliceProfunctorFunctor (G : Cᵒᵖ ⥤ C ⥤ C) : C ⥤ (Cᵒᵖ ⥤ C ⥤ Type v) :=
+  sliceProfunctorBifunctor.obj (Opposite.op G)
 
 /-- `sliceProfunctor G c` equals the application of `sliceProfunctorFunctor G` at `c`. -/
 theorem sliceProfunctor_eq_functor_obj (G : Cᵒᵖ ⥤ C ⥤ C) (c : C) :
     sliceProfunctor G c = (sliceProfunctorFunctor G).obj c := rfl
+
+/-- The object computation: `((G ⇓ c).obj A).obj X = (G(X, A.unop) → c)`. -/
+@[simp]
+theorem sliceProfunctor_obj_obj (G : Cᵒᵖ ⥤ C ⥤ C) (c : C) (A : Cᵒᵖ) (X : C) :
+    ((G ⇓ c).obj A).obj X = ((G.obj (Opposite.op X)).obj A.unop ⟶ c) := rfl
+
+/-- The covariant map on the slice profunctor is precomposition with `G.map`. -/
+@[simp]
+theorem sliceProfunctor_obj_map (G : Cᵒᵖ ⥤ C ⥤ C) (c : C) (A : Cᵒᵖ)
+    {X Y : C} (f : X ⟶ Y) (m : (G.obj (Opposite.op X)).obj A.unop ⟶ c) :
+    ((G ⇓ c).obj A).map f m = (G.map f.op).app A.unop ≫ m := by
+  simp only [sliceProfunctor, sliceProfunctorBifunctor, Functor.comp_obj, Functor.comp_map,
+    Functor.op_obj, Functor.whiskeringLeft_obj_obj, Functor.whiskeringRight_obj_obj,
+    Functor.flip_obj_obj, Functor.curry_obj_obj_obj, Functor.curry_obj_obj_map,
+    yoneda_obj_obj, yoneda_obj_map, Functor.opHom_obj, Functor.op_map,
+    Functor.uncurry_obj_map, opProdSymSelfDual, Equivalence.trans_inverse,
+    opProdProdOpEquiv, Equivalence.symm_inverse, opOpProdEquiv,
+    Equivalence.prod_inverse, Functor.prod_map, opOpEquivalence,
+    Equivalence.refl_inverse, Functor.id_map, prodOpEquiv_inverse_map,
+    Quiver.Hom.unop_op, Opposite.unop_op]
+  aesop_cat
+
+/-- The contravariant map on the slice profunctor is precomposition with `G.obj.map`. -/
+@[simp]
+theorem sliceProfunctor_map_app (G : Cᵒᵖ ⥤ C ⥤ C) (c : C)
+    {A B : Cᵒᵖ} (f : A ⟶ B) (X : C) (m : (G.obj (Opposite.op X)).obj A.unop ⟶ c) :
+    ((G ⇓ c).map f).app X m = (G.obj (Opposite.op X)).map f.unop ≫ m := by
+  simp only [sliceProfunctor, sliceProfunctorBifunctor, Functor.comp_obj, Functor.comp_map,
+    Functor.op_obj, Functor.whiskeringLeft_obj_obj, Functor.whiskeringRight_obj_obj,
+    Functor.flip_obj_obj, Functor.curry_obj_obj_obj, Functor.curry_obj_map_app,
+    yoneda_obj_obj, Functor.opHom_obj, Functor.op_map,
+    Functor.uncurry_obj_map, opProdSymSelfDual, Equivalence.trans_inverse,
+    opProdProdOpEquiv, Equivalence.symm_inverse, opOpProdEquiv,
+    Equivalence.prod_inverse, Functor.prod_map, opOpEquivalence,
+    Equivalence.refl_inverse, Functor.id_map, prodOpEquiv_inverse_map,
+    Opposite.unop_op]
+  aesop_cat
 
 /-- Given a natural transformation `β : G' ⟹ G`, precomposition induces a natural
 transformation `(G ⇓ c) ⟶ (G' ⇓ c)` for each `c`.
 
 At component `(A, B)`, the map `Hom(G(B, A), c) → Hom(G'(B, A), c)` is
 precomposition by `(β.app (op B)).app A : G'(B, A) → G(B, A)`. -/
-def sliceProfunctorPrecomp {G G' : Cᵒᵖ ⥤ C ⥤ C} (β : G' ⟶ G) (c : C) :
-    (G ⇓ c) ⟶ (G' ⇓ c) where
-  app A :=
-    { app := fun X m => (β.app (Opposite.op X)).app A.unop ≫ m
-      naturality := fun X Y g => by
-        funext m
-        simp only [types_comp_apply, sliceProfunctor]
-        -- Goal: β.app (op Y) .app A ≫ G'.map g.op .app A ≫ m
-        --     = G.map g.op .app A ≫ β.app (op X) .app A ≫ m
-        rw [← Category.assoc, ← Category.assoc]
-        congr 1
-        -- Need: β.app (op Y) .app A ≫ G'.map g.op .app A
-        --     = G.map g.op .app A ≫ β.app (op X) .app A
-        -- This is (β.naturality g.op) applied at component A
-        exact congrFun (congrArg NatTrans.app (β.naturality g.op).symm) A.unop }
-  naturality A B f := by
-    ext X m
-    simp only [FunctorToTypes.comp, sliceProfunctor]
-    -- Goal: β.app (op X) .app B ≫ G'.obj (op X) .map f ≫ m
-    --     = G.obj (op X) .map f ≫ β.app (op X) .app A ≫ m
-    rw [← Category.assoc, ← Category.assoc]
-    congr 1
-    -- Need: (β.app (op X)).app B ≫ G'.obj.map f = G.obj.map f ≫ (β.app (op X)).app A
-    exact ((β.app (Opposite.op X)).naturality f.unop).symm
+abbrev sliceProfunctorPrecomp {G G' : Cᵒᵖ ⥤ C ⥤ C} (β : G' ⟶ G) (c : C) :
+    (G ⇓ c) ⟶ (G' ⇓ c) :=
+  (sliceProfunctorBifunctor.map β.op).app c
 
 /-- Precomposition by the identity is the identity. -/
 theorem sliceProfunctorPrecomp_id (G : Cᵒᵖ ⥤ C ⥤ C) (c : C) :
     sliceProfunctorPrecomp (𝟙 G) c = 𝟙 (G ⇓ c) := by
-  ext A X m
-  simp only [sliceProfunctorPrecomp, NatTrans.id_app, Category.id_comp, types_id_apply]
+  simp only [sliceProfunctorPrecomp, op_id, Functor.map_id, NatTrans.id_app]
 
 /-- Precomposition respects composition (contravariantly). -/
 theorem sliceProfunctorPrecomp_comp {G G' G'' : Cᵒᵖ ⥤ C ⥤ C}
     (β : G' ⟶ G) (γ : G'' ⟶ G') (c : C) :
     sliceProfunctorPrecomp (γ ≫ β) c =
     sliceProfunctorPrecomp β c ≫ sliceProfunctorPrecomp γ c := by
-  ext A X m
-  simp only [sliceProfunctorPrecomp, NatTrans.comp_app, Category.assoc, types_comp_apply]
+  simp only [sliceProfunctorPrecomp, op_comp, Functor.map_comp, NatTrans.comp_app]
 
 /-- Precomposition is natural in the object `c`. Given `β : G' ⟶ G` and `f : c ⟶ c'`,
 the following square commutes:
@@ -2200,30 +2197,8 @@ theorem sliceProfunctorPrecomp_natural {G G' : Cᵒᵖ ⥤ C ⥤ C} (β : G' ⟶
     {c c' : C} (f : c ⟶ c') :
     sliceProfunctorPrecomp β c ≫ (sliceProfunctorFunctor G').map f =
     (sliceProfunctorFunctor G).map f ≫ sliceProfunctorPrecomp β c' := by
-  ext A X m
-  simp only [sliceProfunctorPrecomp, sliceProfunctorFunctor, NatTrans.comp_app,
-    types_comp_apply, Category.assoc]
-
-/-- The slice profunctor construction is bifunctorial: contravariant in `G` and
-covariant in `c`.
-
-This functor `(Cᵒᵖ ⥤ C ⥤ C)ᵒᵖ ⥤ C ⥤ (Cᵒᵖ ⥤ C ⥤ Type v)` sends:
-- Objects: `op G ↦ (c ↦ G ⇓ c)`, i.e., `sliceProfunctorFunctor G`
-- Morphisms: a morphism `op G → op G'` (i.e., `β : G' ⟹ G`) induces precomposition -/
-def sliceProfunctorBifunctor : (Cᵒᵖ ⥤ C ⥤ C)ᵒᵖ ⥤ C ⥤ (Cᵒᵖ ⥤ C ⥤ Type v) where
-  obj opG := sliceProfunctorFunctor opG.unop
-  map {opG opG'} β :=
-    -- β : opG ⟶ opG' in the opposite category, i.e., β.unop : G' ⟶ G
-    { app := fun c => sliceProfunctorPrecomp β.unop c
-      naturality := fun c c' f => (sliceProfunctorPrecomp_natural β.unop f).symm }
-  map_id opG := by
-    ext c A X m
-    simp only [unop_id, sliceProfunctorPrecomp, NatTrans.id_app, Category.id_comp,
-      types_id_apply]
-  map_comp {opG opG' opG''} β γ := by
-    ext c A X m
-    simp only [unop_comp, sliceProfunctorPrecomp, NatTrans.comp_app, Category.assoc,
-      types_comp_apply]
+  simp only [sliceProfunctorPrecomp, sliceProfunctorFunctor]
+  exact ((sliceProfunctorBifunctor.map β.op).naturality f).symm
 
 /-- The slice profunctor at `G` and `c` equals the bifunctor applied to `op G` and `c`. -/
 theorem sliceProfunctor_eq_bifunctor (G : Cᵒᵖ ⥤ C ⥤ C) (c : C) :
@@ -2232,7 +2207,7 @@ theorem sliceProfunctor_eq_bifunctor (G : Cᵒᵖ ⥤ C ⥤ C) (c : C) :
 /-- The diagonal of the slice profunctor at `A` is `Hom(G(A, A), c)`. -/
 theorem sliceProfunctor_diagApp (G : Cᵒᵖ ⥤ C ⥤ C) (c : C) (A : C) :
     diagApp (G ⇓ c) A = ((G.obj (Opposite.op A)).obj A ⟶ c) := by
-  simp only [diagApp, sliceProfunctor, Opposite.unop_op]
+  simp only [diagApp, sliceProfunctor_obj_obj]
 
 /-!
 ## Restricted cowedges
@@ -2307,7 +2282,8 @@ theorem dinaturality' (c : RestrictedCowedge G H) {A B : C} (g : A ⟶ B)
     (G.map g.op).app A ≫ c.family A ((H.map g.op).app A x) =
     (G.obj (Opposite.op B)).map g ≫ c.family B ((H.obj (Opposite.op B)).map g x) := by
   have dinat := c.isDinatural A B g x
-  simp only [Profunctor.lmap, Profunctor.rmap, sliceProfunctor] at dinat
+  simp only [Profunctor.lmap, Profunctor.rmap,
+    sliceProfunctor_obj_map, sliceProfunctor_map_app] at dinat
   exact dinat.symm
 
 /--
@@ -2528,15 +2504,8 @@ theorem sliceProfunctor_diagCompat_iff {G : Cᵒᵖ ⥤ C ⥤ C} (c : C)
     (m₀ : diagApp (G ⇓ c) A) (m₁ : diagApp (G ⇓ c) B) :
     DiagCompat (G ⇓ c) A B f m₀ m₁ ↔
     (G.map f.op).app A ≫ m₀ = (G.obj (Opposite.op B)).map f ≫ m₁ := by
-  simp only [DiagCompat, sliceProfunctor, Opposite.unop_op]
-  constructor
-  · intro h
-    have : ((G ⇓ c).obj (Opposite.op A)).map f m₀ =
-           ((G ⇓ c).map f.op).app B m₁ := h
-    simp only [sliceProfunctor] at this
-    exact this
-  · intro h
-    exact h
+  simp only [DiagCompat, sliceProfunctor_obj_map, sliceProfunctor_map_app,
+    Quiver.Hom.unop_op]
 
 /-- Dinaturality of a restricted cowedge implies DiagCompat for the image under
 the family map, for pairs that factor through off-diagonal elements.
@@ -3162,8 +3131,7 @@ variable {D : Type*} [Category D]
 diagonal. This is the Type v version matching the diagram for WeightedCowedge. -/
 theorem profunctorOnCoTwistedArrow_at_identity (P : Cᵒᵖ ⥤ C ⥤ D) (A : C) :
     (profunctorOnCoTwistedArrow C P).obj (idCoTwistedArrow A) =
-    (P.obj (Opposite.op A)).obj A := by
-  simp only [profunctorOnCoTwistedArrow_obj, idCoTwistedArrow_dom, idCoTwistedArrow_cod]
+    (P.obj (Opposite.op A)).obj A := rfl
 
 /-- The diagram profunctor at a general co-twisted arrow. For `arr : cod → dom`,
 the diagram evaluates to `P(dom, cod)`. -/
@@ -3279,18 +3247,12 @@ the cocone component at the identity arrow 𝟙_A and converts it to the type
 expected by RestrictedCowedge. -/
 def weightedCowedgeFamilyAtIdentity (H : Cᵒᵖ ⥤ C ⥤ Type v) (G : Cᵒᵖ ⥤ C ⥤ C)
     (wc : WeightedCowedge H G) (A : C) :
-    diagApp H A → diagApp (G ⇓ wc.pt) A := by
-  intro h
-  -- h : diagApp H A = (H.obj (op A)).obj A
-  -- Goal: diagApp (G ⇓ wc.pt) A = (G.obj (op A)).obj A ⟶ wc.pt
-  rw [sliceProfunctor_diagApp]
-  have w : (profunctorOnOpCoTwistedArrow C H).obj
-      (Opposite.op (idCoTwistedArrow A)) :=
-    diagAppToWeightAtIdentity H A h
-  have leg := wc.leg (idCoTwistedArrow A) w
-  -- leg : (profunctorOnCoTwistedArrow C G).obj (idCoTwistedArrow A) ⟶ wc.pt
-  -- Need: (G.obj (op A)).obj A ⟶ wc.pt
-  exact diagonalToIdentityHom G A ≫ leg
+    diagApp H A → diagApp (G ⇓ wc.pt) A :=
+  fun h =>
+    -- diagApp (G ⇓ wc.pt) A is definitionally equal to
+    -- ((G.obj (op A)).obj A ⟶ wc.pt) via sliceProfunctor_obj_obj
+    diagonalToIdentityHom G A ≫ wc.leg (idCoTwistedArrow A)
+      (diagAppToWeightAtIdentity H A h)
 
 /-!
 ### Canonical morphisms in CoTwistedArrow
@@ -3537,11 +3499,19 @@ theorem weightedCowedgeFamilyAtIdentity_dinatural
     IsDinatural H (G ⇓ wc.pt) (weightedCowedgeFamilyAtIdentity H G wc) := by
   intro I₀ I₁ f x
   unfold Profunctor.lmap Profunctor.rmap weightedCowedgeFamilyAtIdentity
-  simp only [sliceProfunctor, diagApp, Quiver.Hom.unop_op]
-  simp only [diagonalToIdentityHom]
-  simp only [eq_mpr_eq_cast, congrArg_cast_hom_left]
-  simp only [eqToHom_refl, Category.id_comp]
+  simp only [sliceProfunctor_obj_map, sliceProfunctor_map_app, Quiver.Hom.unop_op,
+    diagonalToIdentityHom, eqToHom_refl]
   rw [← diagram_map_coTwToIdentityAtTarget G f, ← diagram_map_coTwToIdentityAtSource G f]
+  change (profunctorOnCoTwistedArrow C G).map (coTwToIdentityAtTarget f) ≫
+      (𝟙 ((profunctorOnCoTwistedArrow C G).obj (idCoTwistedArrow I₁)) ≫
+        WeightedCocone.leg wc (idCoTwistedArrow I₁)
+          (diagAppToWeightAtIdentity H I₁ ((H.obj (Opposite.op I₁)).map f x))) = _
+  rw [Category.id_comp]
+  change _ = (profunctorOnCoTwistedArrow C G).map (coTwToIdentityAtSource f) ≫
+      (𝟙 ((profunctorOnCoTwistedArrow C G).obj (idCoTwistedArrow I₀)) ≫
+        WeightedCocone.leg wc (idCoTwistedArrow I₀)
+          (diagAppToWeightAtIdentity H I₀ ((H.map f.op).app I₀ x)))
+  rw [Category.id_comp]
   rw [WeightedCocone.naturality wc (coTwToIdentityAtTarget f)]
   rw [WeightedCocone.naturality wc (coTwToIdentityAtSource f)]
   congr 1
@@ -3584,11 +3554,17 @@ theorem weightedCowedgeFamilyAtIdentity_paranatural
     IsParanatural H (G ⇓ wc.pt) (weightedCowedgeFamilyAtIdentity H G wc) := by
   intro I₀ I₁ f d₀ d₁ hcompat
   unfold DiagCompat weightedCowedgeFamilyAtIdentity
-  simp only [sliceProfunctor, diagApp, Quiver.Hom.unop_op]
-  simp only [diagonalToIdentityHom]
-  simp only [eq_mpr_eq_cast, congrArg_cast_hom_left]
-  simp only [eqToHom_refl, Category.id_comp]
+  simp only [sliceProfunctor_obj_map, sliceProfunctor_map_app, Quiver.Hom.unop_op]
+  simp only [diagonalToIdentityHom, eqToHom_refl]
   rw [← diagram_map_coTwToIdentityAtSource G f, ← diagram_map_coTwToIdentityAtTarget G f]
+  change (profunctorOnCoTwistedArrow C G).map (coTwToIdentityAtSource f) ≫
+      (𝟙 ((profunctorOnCoTwistedArrow C G).obj (idCoTwistedArrow I₀)) ≫
+        WeightedCocone.leg wc (idCoTwistedArrow I₀) (diagAppToWeightAtIdentity H I₀ d₀)) = _
+  rw [Category.id_comp]
+  change _ = (profunctorOnCoTwistedArrow C G).map (coTwToIdentityAtTarget f) ≫
+      (𝟙 ((profunctorOnCoTwistedArrow C G).obj (idCoTwistedArrow I₁)) ≫
+        WeightedCocone.leg wc (idCoTwistedArrow I₁) (diagAppToWeightAtIdentity H I₁ d₁))
+  rw [Category.id_comp]
   rw [WeightedCocone.naturality wc (coTwToIdentityAtSource f)]
   rw [WeightedCocone.naturality wc (coTwToIdentityAtTarget f)]
   congr 1
@@ -3621,8 +3597,7 @@ def strongRestrictWeightedCowedgeHom (H : Cᵒᵖ ⥤ C ⥤ Type v) (G : Cᵒᵖ
       (strongRestrictWeightedCowedge H G wc₂) where
   hom := f.hom
   comm A a := by
-    simp only [strongRestrictWeightedCowedge, weightedCowedgeFamilyAtIdentity,
-      eq_mpr_eq_cast, cast_eq]
+    simp only [strongRestrictWeightedCowedge, weightedCowedgeFamilyAtIdentity]
     rw [Category.assoc, f.w (idCoTwistedArrow A) (diagAppToWeightAtIdentity H A a)]
 
 theorem strongRestrictWeightedCowedgeHom_id (H : Cᵒᵖ ⥤ C ⥤ Type v) (G : Cᵒᵖ ⥤ C ⥤ C)
@@ -3681,8 +3656,7 @@ def restrictWeightedCowedgeHom (H : Cᵒᵖ ⥤ C ⥤ Type v) (G : Cᵒᵖ ⥤ C
       (restrictWeightedCowedge H G wc₂) where
   hom := f.hom
   comm A a := by
-    simp only [restrictWeightedCowedge, weightedCowedgeFamilyAtIdentity,
-      eq_mpr_eq_cast, cast_eq]
+    simp only [restrictWeightedCowedge, weightedCowedgeFamilyAtIdentity]
     rw [Category.assoc, f.w (idCoTwistedArrow A) (diagAppToWeightAtIdentity H A a)]
 
 theorem restrictWeightedCowedgeHom_id (H : Cᵒᵖ ⥤ C ⥤ Type v) (G : Cᵒᵖ ⥤ C ⥤ C)

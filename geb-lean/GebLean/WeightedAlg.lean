@@ -162,8 +162,9 @@ theorem dinaturality (m : MendlerAlgebra G) {A B : C} (g : A ⟶ B)
     (G.map g.op).app A ≫ m.family A (g ≫ β) =
     (G.obj (Opposite.op B)).map g ≫ m.family B β := by
   have dinat := m.isDinatural A B g β
-  simp only [Profunctor.lmap, Profunctor.rmap, sliceProfunctor,
-    HomToProf_map_app, HomToProf_obj_map] at dinat
+  simp only [Profunctor.lmap, Profunctor.rmap, sliceProfunctor_obj_map,
+    sliceProfunctor_map_app, HomToProf_map_app, HomToProf_obj_map,
+    Quiver.Hom.unop_op] at dinat
   exact dinat.symm
 
 /-- Convert a Mendler algebra to a restricted cowedge. -/
@@ -555,11 +556,12 @@ def ceil (a : ConventionalAlgebra (HasAllHomToProfCoends.GExtFunctor G)) :
   family := fun A γ => HasAllHomToProfCoends.GExtInj G a.pt A γ ≫ a.str
   isDinatural := by
     intro A B g x
-    simp only [Profunctor.lmap, Profunctor.rmap, sliceProfunctor,
-      HomToProf_map_app, HomToProf_obj_map]
+    simp only [Profunctor.lmap, Profunctor.rmap, sliceProfunctor_obj_map,
+      sliceProfunctor_map_app, Quiver.Hom.unop_op, HomToProf_map_app, HomToProf_obj_map]
     have dinat := (restrictedCoend G (HomToProf a.pt)).isDinatural A B g x
-    simp only [Profunctor.lmap, Profunctor.rmap, sliceProfunctor,
-      HomToProf_map_app, HomToProf_obj_map, HasAllHomToProfCoends.GExtInj] at dinat ⊢
+    simp only [Profunctor.lmap, Profunctor.rmap, sliceProfunctor_obj_map,
+      sliceProfunctor_map_app, Quiver.Hom.unop_op, HomToProf_map_app, HomToProf_obj_map,
+      HasAllHomToProfCoends.GExtInj] at dinat ⊢
     simp only [← Category.assoc]
     exact congrArg (· ≫ a.str) dinat
 
