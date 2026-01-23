@@ -462,15 +462,15 @@ theorem copowerFamily_roundtrip [HasCopowers C] (H : Cᵒᵖ ⥤ C ⥤ Type v)
     (ω : ∀ A, HasCopowers.copower (diagApp H A) ((G.obj (op A)).obj A) ⟶ pt)
     (hω : IsCopowerCowedgeDinatural H G pt ω) (A : C) :
     restrictedCowedgeToCopowerFamily H G
-      ⟨pt, copowerFamilyToRestrictedFamily H G pt ω,
-       fun A' B g x => by
+      (RestrictedCowedge.mk' pt (copowerFamilyToRestrictedFamily H G pt ω)
+       (fun A' B g x => by
          simp only [copowerFamilyToRestrictedFamily, Profunctor.lmap, Profunctor.rmap,
            sliceProfunctor_obj_map, sliceProfunctor_map_app, Quiver.Hom.unop_op]
-         exact hω A' B g x⟩ A = ω A := by
+         exact hω A' B g x)) A = ω A := by
   apply HasCopowers.ext
   intro h
-  simp only [restrictedCowedgeToCopowerFamily, copowerFamilyToRestrictedFamily,
-    HasCopowers.fac]
+  simp only [restrictedCowedgeToCopowerFamily, RestrictedCowedge.mk',
+    RestrictedCowedge.family, copowerFamilyToRestrictedFamily, HasCopowers.fac]
 
 /-- The restricted coend `Σ(H, G)` satisfies the universal property of the coend
 of the copower profunctor `∫^A H(A,A) · G(A,A)`.
@@ -494,25 +494,24 @@ theorem restrictedCoend_is_copowerCoend [HasCopowers C] (H : Cᵒᵖ ⥤ C ⥤ T
     copowerFamilyToRestrictedFamily H G pt ω
   let targetCwedge : RestrictedCowedge G H := {
     pt := pt
-    family := Φ
-    isDinatural := by
+    toRestrictedCowedgeOver := ⟨Φ, by
       intro A B g x
       simp only [Profunctor.lmap, Profunctor.rmap,
         sliceProfunctor_obj_map, sliceProfunctor_map_app, Quiver.Hom.unop_op]
       simp only [Φ, copowerFamilyToRestrictedFamily]
-      exact hω A B g x
+      exact hω A B g x⟩
   }
   use (restrictedCoendIsInitial G H).descHom targetCwedge
   constructor
   · intro A h
     have := ((restrictedCoendIsInitial G H).to targetCwedge).comm A h
-    simp only [targetCwedge, Φ, copowerFamilyToRestrictedFamily] at this
+    simp only [targetCwedge, Φ] at this
     exact this
   · intro g hg
     let gMor : RestrictedCowedge.Hom (restrictedCoend G H) targetCwedge := {
       hom := g
       comm := fun A h => by
-        simp only [targetCwedge, Φ, copowerFamilyToRestrictedFamily]
+        simp only [targetCwedge, Φ]
         exact hg A h
     }
     have eq := Limits.IsInitial.hom_ext (restrictedCoendIsInitial G H)
