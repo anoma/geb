@@ -372,29 +372,92 @@ end MendlerRestrictedEquivalence
 section WeightedCowedgeCorrespondence
 
 /-!
-## Investigation: WeightedCowedge Correspondence
+## WeightedCowedge Correspondence for HomToProf
 
-We investigate whether `WeightedCowedge` can accomplish the same correspondence
-as `RestrictedCowedge` for the Mendler-Lambek relationship.
+For the weight profunctor `H = HomToProf pt`, the categories of weighted
+cowedges and restricted cowedges are equivalent. This is because the
+weight at any co-twisted arrow `(arr : cod ⟶ dom)` is `cod ⟶ pt`, which
+depends only on the codomain (source) of the co-twisted arrow.
 
-Recall the structural difference:
-- `RestrictedCowedge G H` has data only at diagonals: `H(A, A) → (G(A,A) → pt)`
-- `WeightedCowedge W P` has data at ALL co-twisted arrows
+The weighted cocone naturality condition forces off-diagonal legs to be
+uniquely determined by diagonal legs. For a morphism
+`m : coTwObjMk arr ⟶ idCoTwistedArrow cod` in CoTwistedArrow:
 
-The `restrictionFunctor : WeightedCowedge H G ⥤ RestrictedCowedge G H` extracts
-diagonal data. It is faithful but not full.
+  D.map m ≫ c.leg (id_{cod}) w = c.leg (coTwObjMk arr) (W.map m.op w)
 
-For the Mendler correspondence, we use `H = HomToProf pt`. The question is:
-can we use `WeightedCowedge (HomToProf pt) G` instead of
-`RestrictedCowedge G (HomToProf pt)`?
+Since `HomToProf pt` is constant in the covariant position, `W.map m.op`
+is identity, so:
+
+  c.leg (coTwObjMk arr) γ = D.map m ≫ c.leg (id_{cod}) γ
+                         = (G.map arr.op).app cod ≫ family cod γ
+
+Thus every `RestrictedCowedge G (HomToProf pt)` extends uniquely to a
+`WeightedCowedge (HomToProf pt) G`, and vice versa.
 -/
 
 variable (G : Cᵒᵖ ⥤ C ⥤ C)
 
 /-- A weighted Mendler cowedge is a WeightedCowedge with weight HomToProf pt
-and diagram G. This has more data than a Mendler algebra: it specifies
-morphisms for ALL co-twisted arrows, not just diagonals. -/
+and diagram G. -/
 abbrev WeightedMendlerCowedge (pt : C) := WeightedCowedge (HomToProf pt) G
+
+/-!
+### Extension from RestrictedCowedge to WeightedCowedge
+
+Given a restricted cowedge with `family : A → (A ⟶ pt) → (G(A,A) ⟶ rc.pt)`,
+we extend to all co-twisted arrows via:
+
+  extendLeg (arr : cod ⟶ dom) (γ : cod ⟶ pt) := (G.map arr.op).app cod ≫ family cod γ
+-/
+
+/-- The extended leg at an arbitrary co-twisted arrow, computed from
+diagonal family data. For `(arr : cod ⟶ dom)` with weight `γ : cod ⟶ pt`,
+this is `(G.map arr.op).app cod ≫ family cod γ : G(dom, cod) ⟶ pt`. -/
+def extendMendlerLeg (pt : C) (rc : RestrictedCowedgeOver pt G (HomToProf pt))
+    (tw : CoTwistedArrow C) :
+    (profunctorOnOpCoTwistedArrow C (HomToProf pt)).obj (Opposite.op tw) →
+    ((profunctorOnCoTwistedArrow C G).obj tw ⟶ pt) := fun w =>
+  let cod := coTwCod tw
+  let dom := coTwDom tw
+  let arr := coTwArr tw
+  have hWeight : (profunctorOnOpCoTwistedArrow C (HomToProf pt)).obj (Opposite.op tw) =
+      (cod ⟶ pt) := profunctorOnOpCoTwistedArrow_at_arrow (HomToProf pt) arr
+  let γ : cod ⟶ pt := cast hWeight w
+  have hSlice : diagApp (G ⇓ pt) cod = ((G.obj (Opposite.op cod)).obj cod ⟶ pt) :=
+    sliceProfunctor_obj_obj G pt (Opposite.op cod) cod
+  let leg_at_cod : (G.obj (Opposite.op cod)).obj cod ⟶ pt :=
+    cast hSlice (rc.family cod (cast (HomToProf_diag pt cod) γ))
+  have hDom : (G.obj (Opposite.op dom)).obj cod =
+      (profunctorOnCoTwistedArrow C G).obj tw := rfl
+  eqToHom hDom ≫ (G.map arr.op).app cod ≫ leg_at_cod
+
+/-- For HomToProf, the weight at any co-twisted arrow depends only on the
+codomain (source in C). -/
+theorem HomToProf_weight_at_coTw (pt : C) (tw : CoTwistedArrow C) :
+    (profunctorOnOpCoTwistedArrow C (HomToProf pt)).obj (Opposite.op tw) =
+    (coTwCod tw ⟶ pt) :=
+  profunctorOnOpCoTwistedArrow_at_arrow (HomToProf pt) (coTwArr tw)
+
+/-!
+### Naturality of the extension
+
+The extended legs should satisfy weighted cocone naturality. For a morphism
+`f : tw ⟶ tw'` in CoTwistedArrow C:
+
+  (profunctorOnCoTwistedArrow C G).map f ≫ extendMendlerLeg tw' w
+    = extendMendlerLeg tw (weight.map f.op w)
+
+The mathematical proof relies on:
+1. For HomToProf, weight transport along `f.op` is precomposition by `coTwCodArr f`
+2. The co-twisted arrow commutator: `coTwCodArr f ≫ coTwArr tw' ≫ coTwDomArr f = coTwArr tw`
+3. The dinaturality of the restricted cowedge
+
+Formalizing this requires infrastructure to relate `twCodArr`/`twDomArr` on
+twisted arrows to `coTwCodArr`/`coTwDomArr` on co-twisted arrows through the
+`coTwistedArrowOpEquivTwistedArrow` equivalence. The current codebase has
+simp lemmas for specific cases (identity arrows, coTwToIdentityAtSource, etc.)
+but not yet the general morphism case needed here.
+-/
 
 /-- Restriction from weighted Mendler cowedge to Mendler algebra.
 This extracts the diagonal data from a weighted cowedge by composing
@@ -403,43 +466,6 @@ def weightedMendlerToMendler (pt : C) (wc : WeightedMendlerCowedge G pt)
     (hpt : wc.pt = pt) : MendlerAlgebra G :=
   let rc := restrictWeightedCowedge (HomToProf pt) G wc
   restrictedCowedgeToMendler G pt rc hpt
-
-/-!
-### Analysis of the Weighted vs Restricted Correspondence
-
-The restriction functor `WeightedCowedge H G ⥤ RestrictedCowedge G H` is:
-- **Faithful**: Injective on hom-sets (distinct weighted cowedge morphisms
-  give distinct restricted cowedge morphisms)
-- **Not full**: Some restricted cowedge morphisms don't lift to weighted
-  cowedge morphisms
-- **Not essentially surjective**: Not every restricted cowedge arises as
-  the restriction of a weighted cowedge
-
-Consequences for the Mendler-Lambek correspondence:
-
-1. **Fewer morphisms in WeightedCowedge**: Given weighted cowedges W₁, W₂
-   restricting to Mendler algebras M₁, M₂, a Mendler algebra morphism
-   M₁ → M₂ might not lift to a weighted cowedge morphism W₁ → W₂.
-
-2. **Not all Mendler algebras arise from weighted cowedges**: A weighted
-   cowedge `WeightedCowedge (HomToProf pt) G` requires data at ALL
-   co-twisted arrows `(arr : cod → dom)`:
-   - Weight value: `HomToProf pt (cod, dom) = (cod ⟶ pt)`
-   - Leg target: `G(cod, dom) ⟶ wc.pt`
-
-   For off-diagonal arrows where `cod ≠ dom`, this is strictly more
-   structure than a Mendler algebra provides. The dinaturality condition
-   of a Mendler algebra only constrains diagonal values.
-
-**Conclusion**: The category of weighted Mendler cowedges embeds faithfully
-into the category of Mendler algebras, but the embedding is not an
-equivalence. Therefore, `WeightedCowedge` cannot substitute for
-`RestrictedCowedge` in the Mendler-Lambek correspondence.
-
-**Open question**: When both exist, do the initial objects (weighted coend
-vs restricted coend) coincide? The universal property might force them to
-agree even though the general categories differ.
--/
 
 end WeightedCowedgeCorrespondence
 
