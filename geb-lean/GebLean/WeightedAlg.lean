@@ -133,8 +133,9 @@ satisfying the dinaturality condition: for `g : A ⟶ B` and `β : B ⟶ pt`:
 variable (G : Cᵒᵖ ⥤ C ⥤ C)
 
 /-- A Mendler-style algebra for an endodifunctor `G`.
-This is exactly a `RestrictedCowedge G (HomToProf pt)` where the restriction
-profunctor is the hom-to-pt profunctor. -/
+
+Structurally, this is equivalent to `Σ (pt : C), RestrictedCowedgeOver pt G (HomToProf pt)`
+where the restriction profunctor depends on the carrier. -/
 @[ext]
 structure MendlerAlgebra where
   /-- The carrier object. -/
@@ -181,6 +182,25 @@ def ofRestrictedCowedge' (pt : C) (family : ParanatSig (HomToProf pt) (G ⇓ pt)
   pt := pt
   family := family
   isDinatural := isDinatural
+
+/-- Convert a Mendler algebra to a RestrictedCowedgeOver. -/
+def toRestrictedCowedgeOver (m : MendlerAlgebra G) :
+    RestrictedCowedgeOver m.pt G (HomToProf m.pt) :=
+  ⟨m.family, m.isDinatural⟩
+
+/-- Construct a Mendler algebra from a point and a RestrictedCowedgeOver. -/
+def ofRestrictedCowedgeOver (pt : C) (u : RestrictedCowedgeOver pt G (HomToProf pt)) :
+    MendlerAlgebra G :=
+  ⟨pt, u.family, u.isDinatural⟩
+
+/-- Round-trip from MendlerAlgebra to RestrictedCowedgeOver and back. -/
+theorem ofRestrictedCowedgeOver_toRestrictedCowedgeOver (m : MendlerAlgebra G) :
+    ofRestrictedCowedgeOver m.pt m.toRestrictedCowedgeOver = m := rfl
+
+/-- Round-trip from RestrictedCowedgeOver to MendlerAlgebra and back. -/
+theorem toRestrictedCowedgeOver_ofRestrictedCowedgeOver (pt : C)
+    (u : RestrictedCowedgeOver pt G (HomToProf pt)) :
+    (ofRestrictedCowedgeOver pt u).toRestrictedCowedgeOver = u := rfl
 
 end MendlerAlgebra
 

@@ -1093,6 +1093,16 @@ The relationship to twisted arrow categories:
 variable {J : Type*} [Category J]
 
 /--
+A weighted cone under a fixed point `pt` over a diagram `D : J ⥤ C` with
+weight `W : J ⥤ Type v`. This contains just the natural transformation
+data without bundling the cone point.
+-/
+@[ext]
+structure WeightedConeUnder (pt : C) (W : J ⥤ Type v) (D : J ⥤ C) where
+  /-- The natural transformation from the weight to `Hom(pt, D(-))` -/
+  π : W ⟶ homFromFunctor D pt
+
+/--
 A weighted cone over a diagram `D : J ⥤ C` with weight `W : J ⥤ Type v`
 consists of a cone point `pt` and a natural transformation from `W` to the
 functor `Hom(pt, D(-))`.
@@ -1103,6 +1113,14 @@ structure WeightedCone (W : J ⥤ Type v) (D : J ⥤ C) where
   pt : C
   /-- The natural transformation from the weight to `Hom(pt, D(-))` -/
   π : W ⟶ homFromFunctor D pt
+
+/-- Convert a WeightedCone to its underlying WeightedConeUnder. -/
+def WeightedCone.toWeightedConeUnder {W : J ⥤ Type v} {D : J ⥤ C}
+    (c : WeightedCone W D) : WeightedConeUnder c.pt W D := ⟨c.π⟩
+
+/-- Construct a WeightedCone from a point and a WeightedConeUnder. -/
+def WeightedCone.ofWeightedConeUnder {W : J ⥤ Type v} {D : J ⥤ C}
+    (pt : C) (u : WeightedConeUnder pt W D) : WeightedCone W D := ⟨pt, u.π⟩
 
 /--
 For a weighted cone, extract the morphism at index `j` for weight element `w`.
@@ -1123,6 +1141,16 @@ theorem WeightedCone.naturality {W : J ⥤ Type v} {D : J ⥤ C}
   exact (congrFun nat w).symm
 
 /--
+A weighted cocone over a fixed point `pt` for a diagram `D : J ⥤ C` with
+weight `W : Jᵒᵖ ⥤ Type v`. This contains just the natural transformation
+data without bundling the cocone point.
+-/
+@[ext]
+structure WeightedCoconeOver (pt : C) (W : Jᵒᵖ ⥤ Type v) (D : J ⥤ C) where
+  /-- The natural transformation from the weight to `Hom(D(-), pt)` -/
+  ι : W ⟶ homToFunctor D pt
+
+/--
 A weighted cocone over a diagram `D : J ⥤ C` with weight `W : Jᵒᵖ ⥤ Type v`
 (a presheaf on `J`) consists of a cocone point `pt` and a natural
 transformation from `W` to the functor `Hom(D(-), pt)`.
@@ -1136,6 +1164,14 @@ structure WeightedCocone (W : Jᵒᵖ ⥤ Type v) (D : J ⥤ C) where
   pt : C
   /-- The natural transformation from the weight to `Hom(D(-), pt)` -/
   ι : W ⟶ homToFunctor D pt
+
+/-- Convert a WeightedCocone to its underlying WeightedCoconeOver. -/
+def WeightedCocone.toWeightedCoconeOver {W : Jᵒᵖ ⥤ Type v} {D : J ⥤ C}
+    (c : WeightedCocone W D) : WeightedCoconeOver c.pt W D := ⟨c.ι⟩
+
+/-- Construct a WeightedCocone from a point and a WeightedCoconeOver. -/
+def WeightedCocone.ofWeightedCoconeOver {W : Jᵒᵖ ⥤ Type v} {D : J ⥤ C}
+    (pt : C) (u : WeightedCoconeOver pt W D) : WeightedCocone W D := ⟨pt, u.ι⟩
 
 /--
 For a weighted cocone, extract the morphism at index `j` for weight element `w`.
@@ -2497,6 +2533,20 @@ h ∘ Φ_A(a) = Ψ_A(a)
 variable {C : Type u} [Category.{v} C]
 
 /--
+An `H`-restricted `G`-cowedge over a fixed point `pt` for an endodifunctor
+`G : Cᵒᵖ ⥤ C ⥤ C` and restriction functor `H : Cᵒᵖ ⥤ C ⥤ Type v`.
+
+This contains just the family and dinaturality data without bundling the
+carrier object.
+-/
+@[ext]
+structure RestrictedCowedgeOver (pt : C) (G : Cᵒᵖ ⥤ C ⥤ C) (H : Cᵒᵖ ⥤ C ⥤ Type v) where
+  /-- The family of morphisms as a `ParanatSig H (G ⇓ pt)`. -/
+  family : ParanatSig H (G ⇓ pt)
+  /-- The dinaturality condition on the family. -/
+  isDinatural : IsDinatural H (G ⇓ pt) family
+
+/--
 An `H`-restricted `G`-cowedge for an endodifunctor `G : Cᵒᵖ ⥤ C ⥤ C` and
 restriction functor `H : Cᵒᵖ ⥤ C ⥤ Type v`.
 
@@ -2513,6 +2563,16 @@ structure RestrictedCowedge (G : Cᵒᵖ ⥤ C ⥤ C) (H : Cᵒᵖ ⥤ C ⥤ Typ
   family : ParanatSig H (G ⇓ pt)
   /-- The dinaturality condition on the family. -/
   isDinatural : IsDinatural H (G ⇓ pt) family
+
+/-- Convert a RestrictedCowedge to its underlying RestrictedCowedgeOver. -/
+def RestrictedCowedge.toRestrictedCowedgeOver {G : Cᵒᵖ ⥤ C ⥤ C} {H : Cᵒᵖ ⥤ C ⥤ Type v}
+    (c : RestrictedCowedge G H) : RestrictedCowedgeOver c.pt G H :=
+  ⟨c.family, c.isDinatural⟩
+
+/-- Construct a RestrictedCowedge from a point and a RestrictedCowedgeOver. -/
+def RestrictedCowedge.ofRestrictedCowedgeOver {G : Cᵒᵖ ⥤ C ⥤ C} {H : Cᵒᵖ ⥤ C ⥤ Type v}
+    (pt : C) (u : RestrictedCowedgeOver pt G H) : RestrictedCowedge G H :=
+  ⟨pt, u.family, u.isDinatural⟩
 
 /-- Convert a restricted cowedge to a `Dinat` transformation `H → G ⇓ pt`. -/
 def RestrictedCowedge.toDinat {G : Cᵒᵖ ⥤ C ⥤ C} {H : Cᵒᵖ ⥤ C ⥤ Type v}
@@ -2589,6 +2649,19 @@ off-diagonal elements.
 -/
 
 /--
+An `H`-restricted `G`-cowedge with the paranaturality condition over a
+fixed point `pt`. This contains just the family and paranaturality data
+without bundling the carrier object.
+-/
+@[ext]
+structure StrongRestrictedCowedgeOver (pt : C) (G : Cᵒᵖ ⥤ C ⥤ C)
+    (H : Cᵒᵖ ⥤ C ⥤ Type v) where
+  /-- The family of morphisms as a `ParanatSig H (G ⇓ pt)`. -/
+  family : ParanatSig H (G ⇓ pt)
+  /-- The paranaturality condition on the family. -/
+  isParanatural : IsParanatural H (G ⇓ pt) family
+
+/--
 An `H`-restricted `G`-cowedge with the paranaturality condition.
 
 This is the "strong" version of a restricted cowedge, where the family
@@ -2599,6 +2672,7 @@ Structure:
 - `family : ParanatSig H (G ⇓ pt)` - the family of morphisms
 - `isParanatural : IsParanatural H (G ⇓ pt) family` - the paranaturality condition
 -/
+@[ext]
 structure StrongRestrictedCowedge (G : Cᵒᵖ ⥤ C ⥤ C) (H : Cᵒᵖ ⥤ C ⥤ Type v) where
   /-- The carrier (summit) object. -/
   pt : C
@@ -2606,6 +2680,25 @@ structure StrongRestrictedCowedge (G : Cᵒᵖ ⥤ C ⥤ C) (H : Cᵒᵖ ⥤ C �
   family : ParanatSig H (G ⇓ pt)
   /-- The paranaturality condition on the family. -/
   isParanatural : IsParanatural H (G ⇓ pt) family
+
+/-- Convert a StrongRestrictedCowedge to its underlying StrongRestrictedCowedgeOver. -/
+def StrongRestrictedCowedge.toStrongRestrictedCowedgeOver {G : Cᵒᵖ ⥤ C ⥤ C}
+    {H : Cᵒᵖ ⥤ C ⥤ Type v} (c : StrongRestrictedCowedge G H) :
+    StrongRestrictedCowedgeOver c.pt G H :=
+  ⟨c.family, c.isParanatural⟩
+
+/-- Construct a StrongRestrictedCowedge from a point and a StrongRestrictedCowedgeOver. -/
+def StrongRestrictedCowedge.ofStrongRestrictedCowedgeOver {G : Cᵒᵖ ⥤ C ⥤ C}
+    {H : Cᵒᵖ ⥤ C ⥤ Type v} (pt : C) (u : StrongRestrictedCowedgeOver pt G H) :
+    StrongRestrictedCowedge G H :=
+  ⟨pt, u.family, u.isParanatural⟩
+
+/-- Convert a StrongRestrictedCowedgeOver to a RestrictedCowedgeOver using the
+implication paranaturality → dinaturality. -/
+def StrongRestrictedCowedgeOver.toRestrictedCowedgeOver {pt : C} {G : Cᵒᵖ ⥤ C ⥤ C}
+    {H : Cᵒᵖ ⥤ C ⥤ Type v} (c : StrongRestrictedCowedgeOver pt G H) :
+    RestrictedCowedgeOver pt G H :=
+  ⟨c.family, paranatural_implies_dinatural H (G ⇓ pt) c.family c.isParanatural⟩
 
 /-- Convert a strong restricted cowedge to a `Paranat` transformation `H → G ⇓ pt`. -/
 def StrongRestrictedCowedge.toParanat {G : Cᵒᵖ ⥤ C ⥤ C} {H : Cᵒᵖ ⥤ C ⥤ Type v}
