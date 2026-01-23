@@ -132,16 +132,43 @@ satisfying the dinaturality condition: for `g : A ⟶ B` and `β : B ⟶ pt`:
 
 variable (G : Cᵒᵖ ⥤ C ⥤ C)
 
-/-- A Mendler-style algebra for an endodifunctor `G`.
+/-- A Mendler-style algebra for an endodifunctor `G` over a fixed carrier `pt`.
+This contains the algebra data without bundling the carrier object. -/
+@[ext]
+structure MendlerAlgebraOver (pt : C) where
+  /-- The cowedge data over the carrier. -/
+  toRestrictedCowedgeOver : RestrictedCowedgeOver pt G (HomToProf pt)
 
-Structurally, this is `Σ (pt : C), RestrictedCowedgeOver pt G (HomToProf pt)`
-where the restriction profunctor depends on the carrier. -/
+namespace MendlerAlgebraOver
+
+variable {G}
+
+/-- The family of algebra operations. -/
+abbrev family {pt : C} (m : MendlerAlgebraOver G pt) :
+    ParanatSig (HomToProf pt) (G ⇓ pt) :=
+  m.toRestrictedCowedgeOver.family
+
+/-- The dinaturality condition. -/
+abbrev isDinatural {pt : C} (m : MendlerAlgebraOver G pt) :
+    IsDinatural (HomToProf pt) (G ⇓ pt) m.family :=
+  m.toRestrictedCowedgeOver.isDinatural
+
+/-- Constructor with explicit family and dinaturality arguments. -/
+@[match_pattern]
+def mk' (pt : C) (family : ParanatSig (HomToProf pt) (G ⇓ pt))
+    (isDinatural : IsDinatural (HomToProf pt) (G ⇓ pt) family) :
+    MendlerAlgebraOver G pt :=
+  ⟨⟨family, isDinatural⟩⟩
+
+end MendlerAlgebraOver
+
+/-- A Mendler-style algebra for an endodifunctor `G`. -/
 @[ext]
 structure MendlerAlgebra where
   /-- The carrier object. -/
   pt : C
-  /-- The cowedge data over the carrier. -/
-  toRestrictedCowedgeOver : RestrictedCowedgeOver pt G (HomToProf pt)
+  /-- The algebra data over the carrier. -/
+  toMendlerAlgebraOver : MendlerAlgebraOver G pt
 
 namespace MendlerAlgebra
 
@@ -149,18 +176,23 @@ variable {G}
 
 /-- The family of algebra operations. -/
 abbrev family (m : MendlerAlgebra G) : ParanatSig (HomToProf m.pt) (G ⇓ m.pt) :=
-  m.toRestrictedCowedgeOver.family
+  m.toMendlerAlgebraOver.family
 
 /-- The dinaturality condition. -/
 abbrev isDinatural (m : MendlerAlgebra G) :
     IsDinatural (HomToProf m.pt) (G ⇓ m.pt) m.family :=
-  m.toRestrictedCowedgeOver.isDinatural
+  m.toMendlerAlgebraOver.isDinatural
+
+/-- The underlying RestrictedCowedgeOver. -/
+abbrev toRestrictedCowedgeOver (m : MendlerAlgebra G) :
+    RestrictedCowedgeOver m.pt G (HomToProf m.pt) :=
+  m.toMendlerAlgebraOver.toRestrictedCowedgeOver
 
 /-- Constructor with explicit family and dinaturality arguments. -/
 @[match_pattern]
 def mk' (pt : C) (family : ParanatSig (HomToProf pt) (G ⇓ pt))
     (isDinatural : IsDinatural (HomToProf pt) (G ⇓ pt) family) : MendlerAlgebra G :=
-  ⟨pt, ⟨family, isDinatural⟩⟩
+  ⟨pt, ⟨⟨family, isDinatural⟩⟩⟩
 
 /-- The algebra operation at object `A`: given `γ : A ⟶ pt`, produce
 `G(A, A) ⟶ pt`. -/
@@ -191,12 +223,25 @@ def toRestrictedCowedge (m : MendlerAlgebra G) :
 whose carrier is pt. -/
 def ofRestrictedCowedge' (pt : C) (family : ParanatSig (HomToProf pt) (G ⇓ pt))
     (isDinatural : IsDinatural (HomToProf pt) (G ⇓ pt) family) : MendlerAlgebra G :=
-  ⟨pt, ⟨family, isDinatural⟩⟩
+  ⟨pt, ⟨⟨family, isDinatural⟩⟩⟩
 
 /-- Construct a Mendler algebra from a point and a RestrictedCowedgeOver. -/
 def ofRestrictedCowedgeOver (pt : C) (u : RestrictedCowedgeOver pt G (HomToProf pt)) :
     MendlerAlgebra G :=
-  ⟨pt, u⟩
+  ⟨pt, ⟨u⟩⟩
+
+/-- Construct a Mendler algebra from a point and a MendlerAlgebraOver. -/
+def ofMendlerAlgebraOver (pt : C) (m : MendlerAlgebraOver G pt) : MendlerAlgebra G :=
+  ⟨pt, m⟩
+
+/-- Round-trip from MendlerAlgebra to MendlerAlgebraOver and back. -/
+theorem ofMendlerAlgebraOver_toMendlerAlgebraOver (m : MendlerAlgebra G) :
+    ofMendlerAlgebraOver m.pt m.toMendlerAlgebraOver = m := rfl
+
+/-- Round-trip from MendlerAlgebraOver to MendlerAlgebra and back. -/
+theorem toMendlerAlgebraOver_ofMendlerAlgebraOver (pt : C)
+    (u : MendlerAlgebraOver G pt) :
+    (ofMendlerAlgebraOver pt u).toMendlerAlgebraOver = u := rfl
 
 /-- Round-trip from MendlerAlgebra to RestrictedCowedgeOver and back. -/
 theorem ofRestrictedCowedgeOver_toRestrictedCowedgeOver (m : MendlerAlgebra G) :
@@ -282,19 +327,20 @@ with the carrier. -/
 def restrictedCowedgeToMendler (pt : C) (rc : RestrictedCowedge G (HomToProf pt))
     (hpt : rc.pt = pt) : MendlerAlgebra G where
   pt := rc.pt
-  toRestrictedCowedgeOver := ⟨
+  toMendlerAlgebraOver := ⟨⟨
     Eq.rec (motive := fun x _ => ParanatSig (HomToProf x) (G ⇓ rc.pt))
       rc.family hpt.symm,
     Eq.rec (motive := fun x h =>
         IsDinatural (HomToProf x) (G ⇓ rc.pt)
           (Eq.rec (motive := fun y _ => ParanatSig (HomToProf y) (G ⇓ rc.pt))
             rc.family h))
-      rc.isDinatural hpt.symm⟩
+      rc.isDinatural hpt.symm⟩⟩
 
 /-- For a Mendler algebra, converting to restricted cowedge and back
 preserves the structure. -/
 theorem mendler_restrictedCowedge_roundtrip (m : MendlerAlgebra G) :
-    restrictedCowedgeToMendler G m.pt (mendlerToRestrictedCowedge G m) rfl = m := rfl
+    restrictedCowedgeToMendler G m.pt (mendlerToRestrictedCowedge G m) rfl = m := by
+  cases m with | mk pt u => cases u with | mk r => cases r with | mk fam dinat => rfl
 
 end MendlerRestrictedEquivalence
 
@@ -578,7 +624,7 @@ to a Mendler algebra (pt, ceil(φ)) where ceil(φ)_A(γ) = φ ∘ inj_A(γ). -/
 def ceil (a : ConventionalAlgebra (HasAllHomToProfCoends.GExtFunctor G)) :
     MendlerAlgebra G where
   pt := a.pt
-  toRestrictedCowedgeOver := ⟨fun A γ => HasAllHomToProfCoends.GExtInj G a.pt A γ ≫ a.str, by
+  toMendlerAlgebraOver := ⟨⟨fun A γ => HasAllHomToProfCoends.GExtInj G a.pt A γ ≫ a.str, by
     intro A B g x
     simp only [Profunctor.lmap, Profunctor.rmap, sliceProfunctor_obj_map,
       sliceProfunctor_map_app, Quiver.Hom.unop_op, HomToProf_map_app, HomToProf_obj_map]
@@ -587,7 +633,7 @@ def ceil (a : ConventionalAlgebra (HasAllHomToProfCoends.GExtFunctor G)) :
       sliceProfunctor_map_app, Quiver.Hom.unop_op, HomToProf_map_app, HomToProf_obj_map,
       HasAllHomToProfCoends.GExtInj] at dinat ⊢
     simp only [← Category.assoc]
-    exact congrArg (· ≫ a.str) dinat⟩
+    exact congrArg (· ≫ a.str) dinat⟩⟩
 
 /-- floor(ceil(φ)) = φ (Proposition 5.15 in Vene).
 The floor of the ceiling of a conventional algebra structure is the
@@ -615,14 +661,16 @@ The ceiling of the floor of a Mendler algebra is the original algebra. -/
 theorem ceil_floor (m : MendlerAlgebra G) :
     ceil G (floor G m) = m := by
   cases m with | mk pt u =>
-  cases u with | mk family isDinat =>
+  cases u with | mk r =>
+  cases r with | mk family isDinat =>
   simp only [ceil, floor, MendlerAlgebra.toRestrictedCowedge, MendlerAlgebra.family,
     GExtDesc, GExtInj]
   congr 1
-  ext
-  · funext A γ
-    exact ((restrictedCoendIsInitial G (HomToProf pt)).to
-      ⟨pt, ⟨family, isDinat⟩⟩).comm A γ
+  apply MendlerAlgebraOver.ext
+  apply RestrictedCowedgeOver.ext
+  funext A γ
+  exact ((restrictedCoendIsInitial G (HomToProf pt)).to
+    ⟨pt, ⟨family, isDinat⟩⟩).comm A γ
 
 /-- floor preserves morphisms (Proposition 5.18 in Vene).
 If h is a Mendler algebra morphism, then h is a conventional G^e-algebra
@@ -683,13 +731,11 @@ def ceilHom {a₁ a₂ : ConventionalAlgebra (HasAllHomToProfCoends.GExtFunctor 
   hom := f.hom
   comm := by
     intro A γ
-    simp only [ceil, MendlerAlgebra.family, GExtInj]
+    simp only [ceil, MendlerAlgebra.family, MendlerAlgebraOver.family, GExtInj]
     have comm := f.comm
     simp only [GExtFunctor_map, GExtMap, GExtDesc, GExtMapCowedge,
       IsRestrictedCoend.descHom, IsRestrictedCoend.desc] at comm
-    simp only [Category.assoc]
-    rw [← comm]
-    simp only [← Category.assoc]
+    rw [Category.assoc, ← comm, ← Category.assoc]
     have h := (restrictedCoendIsInitial G (HomToProf a₁.pt)).to
       (GExtMapCowedge G a₁.pt a₂.pt f.hom) |>.comm A γ
     simp only [GExtMapCowedge, RestrictedCowedge.family, GExtInj] at h ⊢

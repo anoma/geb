@@ -1452,6 +1452,14 @@ variable {D : Type w} [Category.{v} D]
 
 /--
 A weighted wedge over a profunctor `P : Cᵒᵖ ⥤ C ⥤ D` with weight profunctor
+`W : Cᵒᵖ ⥤ C ⥤ Type v`, over a fixed apex `pt : D`.
+-/
+abbrev WeightedWedgeUnder (pt : D) (W : Cᵒᵖ ⥤ C ⥤ Type v) (P : Cᵒᵖ ⥤ C ⥤ D) :=
+  WeightedConeUnder (C := D) (J := TwistedArrow C) pt
+    (profunctorOnTwistedArrow C W) (profunctorOnTwistedArrow C P)
+
+/--
+A weighted wedge over a profunctor `P : Cᵒᵖ ⥤ C ⥤ D` with weight profunctor
 `W : Cᵒᵖ ⥤ C ⥤ Type v` is a weighted cone over the diagram
 `profunctorOnTwistedArrow C P` with weight `profunctorOnTwistedArrow C W`.
 
@@ -1464,6 +1472,15 @@ at a singleton), a weighted wedge is exactly an ordinary wedge.
 abbrev WeightedWedge (W : Cᵒᵖ ⥤ C ⥤ Type v) (P : Cᵒᵖ ⥤ C ⥤ D) :=
   WeightedCone (C := D) (J := TwistedArrow C)
     (profunctorOnTwistedArrow C W) (profunctorOnTwistedArrow C P)
+
+/--
+A weighted cowedge over a profunctor `P : Cᵒᵖ ⥤ C ⥤ D` with weight profunctor
+`W : Cᵒᵖ ⥤ C ⥤ Type v`, over a fixed apex `pt : D`.
+-/
+abbrev WeightedCowedgeOver (pt : D) (W : Cᵒᵖ ⥤ C ⥤ Type v) (P : Cᵒᵖ ⥤ C ⥤ D) :=
+  WeightedCoconeOver (C := D) (J := CoTwistedArrow C) pt
+    (profunctorOnOpCoTwistedArrow C W)
+    (profunctorOnCoTwistedArrow C P)
 
 /--
 A weighted cowedge over a profunctor `P : Cᵒᵖ ⥤ C ⥤ D` with weight profunctor
