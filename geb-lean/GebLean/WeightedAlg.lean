@@ -112,6 +112,31 @@ theorem HomToProf_rmap (pt : C) {A B : C} (f : A ⟶ B)
     Profunctor.rmap (HomToProf pt) f h = h := by
   simp only [Profunctor.rmap, HomToProf_obj_map]
 
+/-- `HomToProf pt` equals `IdProf ⇓ pt` (the identity profunctor sliced over pt).
+
+This formalizes the connection to Vene's "Id^i/C" notation: the profunctor
+sending `(A, B)` to `(A ⟶ pt)` is exactly the slice of the identity
+endodifunctor over `pt`. Both are constant in the second argument and
+contravariant (via precomposition) in the first. -/
+theorem HomToProf_eq_sliceIdProf (pt : C) : HomToProf pt = IdProf ⇓ pt := by
+  apply CategoryTheory.Functor.ext
+  case h_obj =>
+    intro A
+    apply CategoryTheory.Functor.ext
+    case h_obj => intro B; rfl
+    case h_map =>
+      intro B₁ B₂ g
+      simp only [eqToHom_refl, Category.comp_id, Category.id_comp]
+      ext h
+      simp only [HomToProf_obj_map, sliceProfunctor_obj_map, IdProf, Functor.const_obj_obj,
+        Functor.const_obj_map, NatTrans.id_app, Category.id_comp]
+  case h_map =>
+    intro A₁ A₂ f
+    ext B h
+    simp only [NatTrans.comp_app, types_comp_apply, eqToHom_app, eqToHom_refl, types_id_apply,
+      HomToProf_map_app, sliceProfunctor_map_app, IdProf, Functor.const_obj_obj,
+      Functor.id_obj, Functor.id_map]
+
 end HomToProfunctor
 
 section MendlerAlgebra
