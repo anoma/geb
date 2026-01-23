@@ -1104,23 +1104,27 @@ structure WeightedConeUnder (pt : C) (W : J ⥤ Type v) (D : J ⥤ C) where
 
 /--
 A weighted cone over a diagram `D : J ⥤ C` with weight `W : J ⥤ Type v`
-consists of a cone point `pt` and a natural transformation from `W` to the
-functor `Hom(pt, D(-))`.
+consists of a cone point `pt` and a `WeightedConeUnder pt W D`.
 -/
 @[ext]
 structure WeightedCone (W : J ⥤ Type v) (D : J ⥤ C) where
   /-- The cone point -/
   pt : C
-  /-- The natural transformation from the weight to `Hom(pt, D(-))` -/
-  π : W ⟶ homFromFunctor D pt
+  /-- The cone data under the point -/
+  toWeightedConeUnder : WeightedConeUnder pt W D
 
-/-- Convert a WeightedCone to its underlying WeightedConeUnder. -/
-def WeightedCone.toWeightedConeUnder {W : J ⥤ Type v} {D : J ⥤ C}
-    (c : WeightedCone W D) : WeightedConeUnder c.pt W D := ⟨c.π⟩
+namespace WeightedCone
 
-/-- Construct a WeightedCone from a point and a WeightedConeUnder. -/
-def WeightedCone.ofWeightedConeUnder {W : J ⥤ Type v} {D : J ⥤ C}
-    (pt : C) (u : WeightedConeUnder pt W D) : WeightedCone W D := ⟨pt, u.π⟩
+/-- The natural transformation from the weight to `Hom(pt, D(-))`. -/
+abbrev π {W : J ⥤ Type v} {D : J ⥤ C} (c : WeightedCone W D) :
+    W ⟶ homFromFunctor D c.pt := c.toWeightedConeUnder.π
+
+/-- Constructor with explicit point and natural transformation arguments. -/
+@[match_pattern]
+def mk' {W : J ⥤ Type v} {D : J ⥤ C} (pt : C) (π : W ⟶ homFromFunctor D pt) :
+    WeightedCone W D := ⟨pt, ⟨π⟩⟩
+
+end WeightedCone
 
 /--
 For a weighted cone, extract the morphism at index `j` for weight element `w`.
@@ -1152,8 +1156,7 @@ structure WeightedCoconeOver (pt : C) (W : Jᵒᵖ ⥤ Type v) (D : J ⥤ C) whe
 
 /--
 A weighted cocone over a diagram `D : J ⥤ C` with weight `W : Jᵒᵖ ⥤ Type v`
-(a presheaf on `J`) consists of a cocone point `pt` and a natural
-transformation from `W` to the functor `Hom(D(-), pt)`.
+(a presheaf on `J`) consists of a cocone point `pt` and a `WeightedCoconeOver pt W D`.
 
 Note: The weight is contravariant (`Jᵒᵖ ⥤ Type v`) to match the variance
 of `Hom(D(-), pt)`.
@@ -1162,16 +1165,21 @@ of `Hom(D(-), pt)`.
 structure WeightedCocone (W : Jᵒᵖ ⥤ Type v) (D : J ⥤ C) where
   /-- The cocone point -/
   pt : C
-  /-- The natural transformation from the weight to `Hom(D(-), pt)` -/
-  ι : W ⟶ homToFunctor D pt
+  /-- The cocone data over the point -/
+  toWeightedCoconeOver : WeightedCoconeOver pt W D
 
-/-- Convert a WeightedCocone to its underlying WeightedCoconeOver. -/
-def WeightedCocone.toWeightedCoconeOver {W : Jᵒᵖ ⥤ Type v} {D : J ⥤ C}
-    (c : WeightedCocone W D) : WeightedCoconeOver c.pt W D := ⟨c.ι⟩
+namespace WeightedCocone
 
-/-- Construct a WeightedCocone from a point and a WeightedCoconeOver. -/
-def WeightedCocone.ofWeightedCoconeOver {W : Jᵒᵖ ⥤ Type v} {D : J ⥤ C}
-    (pt : C) (u : WeightedCoconeOver pt W D) : WeightedCocone W D := ⟨pt, u.ι⟩
+/-- The natural transformation from the weight to `Hom(D(-), pt)`. -/
+abbrev ι {W : Jᵒᵖ ⥤ Type v} {D : J ⥤ C} (c : WeightedCocone W D) :
+    W ⟶ homToFunctor D c.pt := c.toWeightedCoconeOver.ι
+
+/-- Constructor with explicit point and natural transformation arguments. -/
+@[match_pattern]
+def mk' {W : Jᵒᵖ ⥤ Type v} {D : J ⥤ C} (pt : C) (ι : W ⟶ homToFunctor D pt) :
+    WeightedCocone W D := ⟨pt, ⟨ι⟩⟩
+
+end WeightedCocone
 
 /--
 For a weighted cocone, extract the morphism at index `j` for weight element `w`.
@@ -1657,7 +1665,7 @@ For a cone over `D : J ⥤ C`, the weighted cone has:
 def coneToWeightedCone {D : J ⥤ C} (c : Cone D) :
     WeightedCone (unitWeight J) D where
   pt := c.pt
-  π := {
+  toWeightedConeUnder := ⟨{
     app := fun j _ => c.π.app j
     naturality := fun j j' f => by
       funext _
@@ -1666,7 +1674,7 @@ def coneToWeightedCone {D : J ⥤ C} (c : Cone D) :
       have nat := c.π.naturality f
       simp only [Functor.const_obj_obj, Functor.const_obj_map, Category.id_comp] at nat
       exact nat
-  }
+  }⟩
 
 /--
 Convert a weighted cone with constant unit weight back to an ordinary cone.
@@ -1700,12 +1708,11 @@ the original weighted cone.
 theorem weightedConeToCone_coneToWeightedCone {D : J ⥤ C}
     (c : WeightedCone (unitWeight J) D) :
     coneToWeightedCone (weightedConeToCone c) = c := by
-  ext
-  · rfl
-  · apply heq_of_eq
-    ext j w
-    cases w
-    rfl
+  cases c with
+  | mk pt toWeightedConeUnder =>
+    cases toWeightedConeUnder with
+    | mk π =>
+      congr 1
 
 /--
 Convert an ordinary cocone to a weighted cocone with the constant unit weight.
@@ -1717,7 +1724,7 @@ For a cocone over `D : J ⥤ C`, the weighted cocone has:
 def coconeToWeightedCocone {D : J ⥤ C} (c : Cocone (J := J) D) :
     WeightedCocone (unitWeightOp J) D where
   pt := c.pt
-  ι := {
+  toWeightedCoconeOver := ⟨{
     app := fun j _ => c.ι.app j.unop
     naturality := fun j j' f => by
       funext _
@@ -1726,7 +1733,7 @@ def coconeToWeightedCocone {D : J ⥤ C} (c : Cocone (J := J) D) :
       have nat := c.ι.naturality f.unop
       simp only [Functor.const_obj_obj, Functor.const_obj_map, Category.comp_id] at nat
       exact nat.symm
-  }
+  }⟩
 
 /--
 Convert a weighted cocone with constant unit weight back to an ordinary cocone.
@@ -1760,12 +1767,10 @@ the original weighted cocone.
 theorem weightedCoconeToCocone_coconeToWeightedCocone {D : J ⥤ C}
     (c : WeightedCocone (unitWeightOp J) D) :
     coconeToWeightedCocone (weightedCoconeToCocone c) = c := by
-  ext
-  · rfl
-  · apply heq_of_eq
-    ext j w
-    cases w
-    simp only [coconeToWeightedCocone, weightedCoconeToCocone, Opposite.op_unop]
+  cases c with
+  | mk pt u =>
+    cases u with
+    | mk ι => congr 1
 
 /--
 Functor from cones to weighted cones with constant unit weight.
@@ -2005,7 +2010,7 @@ Given a cone `c` over `CategoryOfElements.π W ⋙ D`, define a weighted cone wi
 def elementsConeToWeightedCone (W : J ⥤ Type v₁) (D : J ⥤ C)
     (c : Cone (CategoryOfElements.π W ⋙ D)) : WeightedCone W D where
   pt := c.pt
-  π := {
+  toWeightedConeUnder := ⟨{
     app := fun j w => c.π.app ⟨j, w⟩
     naturality := fun {j j'} f => by
       funext w
@@ -2015,7 +2020,7 @@ def elementsConeToWeightedCone (W : J ⥤ Type v₁) (D : J ⥤ C)
         Functor.comp_obj, CategoryOfElements.π_obj,
         Functor.comp_map, CategoryOfElements.π_map] at nat
       exact nat
-  }
+  }⟩
 
 /--
 `weightedConeToElementsCone` and `elementsConeToWeightedCone` are inverses (one direction).
@@ -2023,8 +2028,10 @@ def elementsConeToWeightedCone (W : J ⥤ Type v₁) (D : J ⥤ C)
 theorem weightedCone_elements_roundtrip (W : J ⥤ Type v₁) (D : J ⥤ C)
     (c : WeightedCone W D) :
     elementsConeToWeightedCone W D (weightedConeToElementsCone W D c) = c := by
-  cases c
-  rfl
+  cases c with
+  | mk pt u =>
+    cases u with
+    | mk π => rfl
 
 /--
 `elementsConeToWeightedCone` and `weightedConeToElementsCone` are inverses (other direction).
@@ -2033,8 +2040,7 @@ theorem elements_weightedCone_roundtrip (W : J ⥤ Type v₁) (D : J ⥤ C)
     (c : Cone (CategoryOfElements.π W ⋙ D)) :
     weightedConeToElementsCone W D (elementsConeToWeightedCone W D c) = c := by
   cases c with
-  | mk pt π =>
-    rfl
+  | mk pt π => rfl
 
 /--
 Functor from weighted cones to cones over the category of elements.
@@ -2173,13 +2179,11 @@ Convert a cocone over the elements diagram to a weighted cocone.
 def elementsCoconeToWeightedCocone (W : Jᵒᵖ ⥤ Type v₃) (D : J ⥤ C)
     (c : Cocone (weightedCoconeDiagram W D)) : WeightedCocone W D where
   pt := c.pt
-  ι := {
+  toWeightedCoconeOver := ⟨{
     app := fun j_op w => c.ι.app (Opposite.op (Sigma.mk j_op w))
     naturality := fun {j_op j'_op} f => by
       ext w
       dsimp [homToFunctor]
-      -- We need: c.ι.app (op ⟨j'_op, W.map f w⟩) = D.map f.unop ≫ c.ι.app (op ⟨j_op, w⟩)
-      -- Use cocone naturality for morphism from op ⟨j'_op, W.map f w⟩ to op ⟨j_op, w⟩
       let src := Sigma.mk j_op w
       let tgt := Sigma.mk j'_op (W.map f w)
       have nat := c.ι.naturality (Opposite.op (CategoryOfElements.homMk src tgt f rfl))
@@ -2189,7 +2193,7 @@ def elementsCoconeToWeightedCocone (W : Jᵒᵖ ⥤ Type v₃) (D : J ⥤ C)
         Functor.comp_map, Functor.op_map, CategoryOfElements.π_map,
         unopUnop_map] at nat
       exact nat.symm
-  }
+  }⟩
 
 /--
 Round-trip: weighted cocone → elements cocone → weighted cocone is identity.
@@ -2198,7 +2202,9 @@ theorem weightedCocone_elements_roundtrip (W : Jᵒᵖ ⥤ Type v₃) (D : J ⥤
     (c : WeightedCocone W D) :
     elementsCoconeToWeightedCocone W D (weightedCoconeToElementsCocone W D c) = c := by
   cases c with
-  | mk pt ι => rfl
+  | mk pt u =>
+    cases u with
+    | mk ι => rfl
 
 /--
 Round-trip: elements cocone → weighted cocone → elements cocone is identity.
@@ -2550,8 +2556,7 @@ structure RestrictedCowedgeOver (pt : C) (G : Cᵒᵖ ⥤ C ⥤ C) (H : Cᵒᵖ 
 An `H`-restricted `G`-cowedge for an endodifunctor `G : Cᵒᵖ ⥤ C ⥤ C` and
 restriction functor `H : Cᵒᵖ ⥤ C ⥤ Type v`.
 
-This consists of a carrier object and a dinatural transformation from `H` to
-the slice profunctor `G ⇓ pt`.
+This consists of a carrier object and a `RestrictedCowedgeOver pt G H`.
 
 The universe of `H` is `v` (the morphism universe) to match the slice profunctor
 `G ⇓ pt : Cᵒᵖ ⥤ C ⥤ Type v`. -/
@@ -2559,20 +2564,28 @@ The universe of `H` is `v` (the morphism universe) to match the slice profunctor
 structure RestrictedCowedge (G : Cᵒᵖ ⥤ C ⥤ C) (H : Cᵒᵖ ⥤ C ⥤ Type v) where
   /-- The carrier (summit) object. -/
   pt : C
-  /-- The family of morphisms as a `ParanatSig H (G ⇓ pt)`. -/
-  family : ParanatSig H (G ⇓ pt)
-  /-- The dinaturality condition on the family. -/
-  isDinatural : IsDinatural H (G ⇓ pt) family
+  /-- The cowedge data over the point. -/
+  toRestrictedCowedgeOver : RestrictedCowedgeOver pt G H
 
-/-- Convert a RestrictedCowedge to its underlying RestrictedCowedgeOver. -/
-def RestrictedCowedge.toRestrictedCowedgeOver {G : Cᵒᵖ ⥤ C ⥤ C} {H : Cᵒᵖ ⥤ C ⥤ Type v}
-    (c : RestrictedCowedge G H) : RestrictedCowedgeOver c.pt G H :=
-  ⟨c.family, c.isDinatural⟩
+namespace RestrictedCowedge
 
-/-- Construct a RestrictedCowedge from a point and a RestrictedCowedgeOver. -/
-def RestrictedCowedge.ofRestrictedCowedgeOver {G : Cᵒᵖ ⥤ C ⥤ C} {H : Cᵒᵖ ⥤ C ⥤ Type v}
-    (pt : C) (u : RestrictedCowedgeOver pt G H) : RestrictedCowedge G H :=
-  ⟨pt, u.family, u.isDinatural⟩
+variable {G : Cᵒᵖ ⥤ C ⥤ C} {H : Cᵒᵖ ⥤ C ⥤ Type v}
+
+/-- The family of morphisms as a `ParanatSig H (G ⇓ pt)`. -/
+abbrev family (c : RestrictedCowedge G H) : ParanatSig H (G ⇓ c.pt) :=
+  c.toRestrictedCowedgeOver.family
+
+/-- The dinaturality condition on the family. -/
+abbrev isDinatural (c : RestrictedCowedge G H) : IsDinatural H (G ⇓ c.pt) c.family :=
+  c.toRestrictedCowedgeOver.isDinatural
+
+/-- Constructor with explicit point, family, and dinaturality arguments. -/
+@[match_pattern]
+def mk' (pt : C) (family : ParanatSig H (G ⇓ pt))
+    (isDinatural : IsDinatural H (G ⇓ pt) family) : RestrictedCowedge G H :=
+  ⟨pt, ⟨family, isDinatural⟩⟩
+
+end RestrictedCowedge
 
 /-- Convert a restricted cowedge to a `Dinat` transformation `H → G ⇓ pt`. -/
 def RestrictedCowedge.toDinat {G : Cᵒᵖ ⥤ C ⥤ C} {H : Cᵒᵖ ⥤ C ⥤ Type v}
@@ -2587,8 +2600,7 @@ restricted cowedge with the same carrier and family. -/
 def RestrictedCowedge.ofDinat {G : Cᵒᵖ ⥤ C ⥤ C} {H : Cᵒᵖ ⥤ C ⥤ Type v}
     (pt : C) (α : Dinat H (G ⇓ pt)) : RestrictedCowedge G H where
   pt := pt
-  family := α.app
-  isDinatural := α.dinatural
+  toRestrictedCowedgeOver := ⟨α.app, α.dinatural⟩
 
 namespace RestrictedCowedge
 
@@ -2666,32 +2678,34 @@ An `H`-restricted `G`-cowedge with the paranaturality condition.
 
 This is the "strong" version of a restricted cowedge, where the family
 satisfies the full paranaturality condition rather than just dinaturality.
-
-Structure:
-- `pt : C` - the carrier (summit) object
-- `family : ParanatSig H (G ⇓ pt)` - the family of morphisms
-- `isParanatural : IsParanatural H (G ⇓ pt) family` - the paranaturality condition
 -/
 @[ext]
 structure StrongRestrictedCowedge (G : Cᵒᵖ ⥤ C ⥤ C) (H : Cᵒᵖ ⥤ C ⥤ Type v) where
   /-- The carrier (summit) object. -/
   pt : C
-  /-- The family of morphisms as a `ParanatSig H (G ⇓ pt)`. -/
-  family : ParanatSig H (G ⇓ pt)
-  /-- The paranaturality condition on the family. -/
-  isParanatural : IsParanatural H (G ⇓ pt) family
+  /-- The cowedge data over the point. -/
+  toStrongRestrictedCowedgeOver : StrongRestrictedCowedgeOver pt G H
 
-/-- Convert a StrongRestrictedCowedge to its underlying StrongRestrictedCowedgeOver. -/
-def StrongRestrictedCowedge.toStrongRestrictedCowedgeOver {G : Cᵒᵖ ⥤ C ⥤ C}
-    {H : Cᵒᵖ ⥤ C ⥤ Type v} (c : StrongRestrictedCowedge G H) :
-    StrongRestrictedCowedgeOver c.pt G H :=
-  ⟨c.family, c.isParanatural⟩
+namespace StrongRestrictedCowedge
 
-/-- Construct a StrongRestrictedCowedge from a point and a StrongRestrictedCowedgeOver. -/
-def StrongRestrictedCowedge.ofStrongRestrictedCowedgeOver {G : Cᵒᵖ ⥤ C ⥤ C}
-    {H : Cᵒᵖ ⥤ C ⥤ Type v} (pt : C) (u : StrongRestrictedCowedgeOver pt G H) :
-    StrongRestrictedCowedge G H :=
-  ⟨pt, u.family, u.isParanatural⟩
+variable {G : Cᵒᵖ ⥤ C ⥤ C} {H : Cᵒᵖ ⥤ C ⥤ Type v}
+
+/-- The family of morphisms as a `ParanatSig H (G ⇓ pt)`. -/
+abbrev family (c : StrongRestrictedCowedge G H) : ParanatSig H (G ⇓ c.pt) :=
+  c.toStrongRestrictedCowedgeOver.family
+
+/-- The paranaturality condition on the family. -/
+abbrev isParanatural (c : StrongRestrictedCowedge G H) :
+    IsParanatural H (G ⇓ c.pt) c.family :=
+  c.toStrongRestrictedCowedgeOver.isParanatural
+
+/-- Constructor with explicit point, family, and paranaturality arguments. -/
+@[match_pattern]
+def mk' (pt : C) (family : ParanatSig H (G ⇓ pt))
+    (isParanatural : IsParanatural H (G ⇓ pt) family) : StrongRestrictedCowedge G H :=
+  ⟨pt, ⟨family, isParanatural⟩⟩
+
+end StrongRestrictedCowedge
 
 /-- Convert a StrongRestrictedCowedgeOver to a RestrictedCowedgeOver using the
 implication paranaturality → dinaturality. -/
@@ -2711,8 +2725,7 @@ def StrongRestrictedCowedge.toParanat {G : Cᵒᵖ ⥤ C ⥤ C} {H : Cᵒᵖ ⥤
 def StrongRestrictedCowedge.ofParanat {G : Cᵒᵖ ⥤ C ⥤ C} {H : Cᵒᵖ ⥤ C ⥤ Type v}
     (pt : C) (α : Paranat H (G ⇓ pt)) : StrongRestrictedCowedge G H where
   pt := pt
-  family := α.app
-  isParanatural := α.paranatural
+  toStrongRestrictedCowedgeOver := ⟨α.app, α.paranatural⟩
 
 /-- Every strong restricted cowedge is a restricted cowedge, since paranaturality
 implies dinaturality. -/
@@ -2720,8 +2733,8 @@ def StrongRestrictedCowedge.toRestrictedCowedge {G : Cᵒᵖ ⥤ C ⥤ C}
     {H : Cᵒᵖ ⥤ C ⥤ Type v} (c : StrongRestrictedCowedge G H) :
     RestrictedCowedge G H where
   pt := c.pt
-  family := c.family
-  isDinatural := paranatural_implies_dinatural H (G ⇓ c.pt) c.family c.isParanatural
+  toRestrictedCowedgeOver := ⟨c.family,
+    paranatural_implies_dinatural H (G ⇓ c.pt) c.family c.isParanatural⟩
 
 namespace StrongRestrictedCowedge
 
@@ -3981,8 +3994,8 @@ a strong restricted cowedge. -/
 def strongRestrictWeightedCowedge (H : Cᵒᵖ ⥤ C ⥤ Type v) (G : Cᵒᵖ ⥤ C ⥤ C)
     (wc : WeightedCowedge H G) : StrongRestrictedCowedge G H where
   pt := wc.pt
-  family := weightedCowedgeFamilyAtIdentity H G wc
-  isParanatural := weightedCowedgeFamilyAtIdentity_paranatural H G wc
+  toStrongRestrictedCowedgeOver := ⟨weightedCowedgeFamilyAtIdentity H G wc,
+    weightedCowedgeFamilyAtIdentity_paranatural H G wc⟩
 
 /-- The morphism map of the strong restriction functor: a morphism of weighted
 cowedges induces a morphism of strong restricted cowedges. -/
@@ -3992,7 +4005,8 @@ def strongRestrictWeightedCowedgeHom (H : Cᵒᵖ ⥤ C ⥤ Type v) (G : Cᵒᵖ
       (strongRestrictWeightedCowedge H G wc₂) where
   hom := f.hom
   comm A a := by
-    simp only [strongRestrictWeightedCowedge, weightedCowedgeFamilyAtIdentity]
+    simp only [strongRestrictWeightedCowedge, StrongRestrictedCowedge.family,
+      weightedCowedgeFamilyAtIdentity]
     rw [Category.assoc, f.w (idCoTwistedArrow A) (diagAppToWeightAtIdentity H A a)]
 
 theorem strongRestrictWeightedCowedgeHom_id (H : Cᵒᵖ ⥤ C ⥤ Type v) (G : Cᵒᵖ ⥤ C ⥤ C)
@@ -4040,8 +4054,8 @@ family at identity co-twisted arrows. -/
 def restrictWeightedCowedge (H : Cᵒᵖ ⥤ C ⥤ Type v) (G : Cᵒᵖ ⥤ C ⥤ C)
     (wc : WeightedCowedge H G) : RestrictedCowedge G H where
   pt := wc.pt
-  family := weightedCowedgeFamilyAtIdentity H G wc
-  isDinatural := weightedCowedgeFamilyAtIdentity_dinatural H G wc
+  toRestrictedCowedgeOver := ⟨weightedCowedgeFamilyAtIdentity H G wc,
+    weightedCowedgeFamilyAtIdentity_dinatural H G wc⟩
 
 /-- The morphism map of the restriction functor: a morphism of weighted cowedges
 induces a morphism of restricted cowedges. -/
@@ -4051,7 +4065,8 @@ def restrictWeightedCowedgeHom (H : Cᵒᵖ ⥤ C ⥤ Type v) (G : Cᵒᵖ ⥤ C
       (restrictWeightedCowedge H G wc₂) where
   hom := f.hom
   comm A a := by
-    simp only [restrictWeightedCowedge, weightedCowedgeFamilyAtIdentity]
+    simp only [restrictWeightedCowedge, RestrictedCowedge.family,
+      weightedCowedgeFamilyAtIdentity]
     rw [Category.assoc, f.w (idCoTwistedArrow A) (diagAppToWeightAtIdentity H A a)]
 
 theorem restrictWeightedCowedgeHom_id (H : Cᵒᵖ ⥤ C ⥤ Type v) (G : Cᵒᵖ ⥤ C ⥤ C)
@@ -4102,7 +4117,9 @@ theorem restrictionFunctor_eq_inclusion_comp_strong (H : Cᵒᵖ ⥤ C ⥤ Type 
     apply RestrictedCowedge.Hom.ext
     rfl
   · intro wc
-    rfl
+    simp only [restrictionFunctor, strongRestrictionFunctor, Functor.comp_obj,
+      StrongRestrictedCowedge.inclusion, restrictWeightedCowedge,
+      strongRestrictWeightedCowedge, StrongRestrictedCowedge.toRestrictedCowedge]
 
 /-- Commutativity at identity arrows implies commutativity for weight elements
 that are in the image of the weight map from identity.
@@ -4615,7 +4632,7 @@ def wppConstLegNatTrans (n : ℕ) :
 /-- The first weighted cocone: all legs map to 0. -/
 def wppWeightedCocone₀ : WeightedCocone wppWeightFunctor wppDiagramFunctor where
   pt := ℕ
-  ι := wppConstLegNatTrans 0
+  toWeightedCoconeOver := ⟨wppConstLegNatTrans 0⟩
 
 /-- Extract the leg of wppWeightedCocone₀ at any position. -/
 theorem wppWeightedCocone₀_leg_eq
@@ -4625,7 +4642,7 @@ theorem wppWeightedCocone₀_leg_eq
 /-- The second weighted cocone: all legs map to 1. -/
 def wppWeightedCocone₁ : WeightedCocone wppWeightFunctor wppDiagramFunctor where
   pt := ℕ
-  ι := wppConstLegNatTrans 1
+  toWeightedCoconeOver := ⟨wppConstLegNatTrans 1⟩
 
 /-- Extract the leg of wppWeightedCocone₁ at any position. -/
 theorem wppWeightedCocone₁_leg_eq
@@ -5502,20 +5519,20 @@ def wppModifiedLegNatTrans :
 /-- The modified weighted cocone: uses wppModifiedLegNatTrans for legs. -/
 def wppModifiedCocone : WeightedCocone wppWeightFunctor wppDiagramFunctor where
   pt := ℕ
-  ι := wppModifiedLegNatTrans
+  toWeightedCoconeOver := ⟨wppModifiedLegNatTrans⟩
 
 /-- The leg of the modified cocone at coTwLeft uses modifiedLegAtCoTwLeft. -/
 theorem wppModifiedCocone_leg_coTwLeft (w : wppWeightAt coTwLeft) :
     wppModifiedCocone.leg coTwLeft w =
     wppCastLeg coTwLeft (modifiedLegAtCoTwLeft w) := by
-  simp only [wppModifiedCocone, WeightedCocone.leg, wppModifiedLegNatTrans]
-  simp only [dite_true]
+  simp only [wppModifiedCocone, WeightedCocone.leg, WeightedCocone.ι,
+    wppModifiedLegNatTrans, dite_true]
   rfl
 
 /-- The leg of the modified cocone at coTwIdZero is constant 0. -/
 theorem wppModifiedCocone_leg_coTwIdZero (w : wppWeightAt coTwIdZero) :
     wppModifiedCocone.leg coTwIdZero w = wppCastLeg coTwIdZero (fun _ => 0) := by
-  simp only [wppModifiedCocone, WeightedCocone.leg, wppModifiedLegNatTrans]
+  simp only [wppModifiedCocone, WeightedCocone.leg, WeightedCocone.ι, wppModifiedLegNatTrans]
   have h : coTwIdZero ≠ coTwLeft := by
     intro heq
     have : coTwDom coTwIdZero = coTwDom coTwLeft := congrArg coTwDom heq
@@ -5526,7 +5543,7 @@ theorem wppModifiedCocone_leg_coTwIdZero (w : wppWeightAt coTwIdZero) :
 /-- The leg of the modified cocone at coTwIdOne is constant 0. -/
 theorem wppModifiedCocone_leg_coTwIdOne (w : wppWeightAt coTwIdOne) :
     wppModifiedCocone.leg coTwIdOne w = wppCastLeg coTwIdOne (fun _ => 0) := by
-  simp only [wppModifiedCocone, WeightedCocone.leg, wppModifiedLegNatTrans]
+  simp only [wppModifiedCocone, WeightedCocone.leg, WeightedCocone.ι, wppModifiedLegNatTrans]
   have h : coTwIdOne ≠ coTwLeft := by
     intro heq
     have : coTwCod coTwIdOne = coTwCod coTwLeft := congrArg coTwCod heq
@@ -5577,11 +5594,12 @@ theorem diagonal_does_not_determine_cocone :
      wppModifiedCocone.leg coTwLeft wppWeightRight) := by
   refine ⟨rfl, ?_, ?_, ?_⟩
   · -- coTwIdZero case: both are constant 0
-    rfl
+    funext w
+    rw [wppWeightedCocone₀_leg_eq, wppModifiedCocone_leg_coTwIdZero]
   · -- coTwIdOne case
     funext w
     rw [wppWeightedCocone₀_leg_eq]
-    simp only [wppModifiedCocone, WeightedCocone.leg, wppModifiedLegNatTrans]
+    simp only [wppModifiedCocone, WeightedCocone.leg, WeightedCocone.ι, wppModifiedLegNatTrans]
     have hne : (Opposite.op coTwIdOne).unop ≠ coTwLeft := coTwIdOne_ne_coTwLeft
     simp only [hne, ↓reduceDIte]
   · -- The legs differ at (coTwLeft, wppWeightRight)
@@ -5898,14 +5916,14 @@ def cValuedRightAtRightNatTrans :
 def cValuedCowedgeAllLeft :
     WeightedCocone cValuedWeightFunctor wppDiagramFunctorC where
   pt := WalkingParallelPair.one
-  ι := cValuedAllLeftNatTrans
+  toWeightedCoconeOver := ⟨cValuedAllLeftNatTrans⟩
 
 /-- The second C-valued weighted cowedge: leg at (coTwLeft, wppWeightRight) is
 `right`, all others are `left`. -/
 def cValuedCowedgeRightAtRight :
     WeightedCocone cValuedWeightFunctor wppDiagramFunctorC where
   pt := WalkingParallelPair.one
-  ι := cValuedRightAtRightNatTrans
+  toWeightedCoconeOver := ⟨cValuedRightAtRightNatTrans⟩
 
 /-- The two C-valued cowedges have the same apex. -/
 theorem cValuedCowedges_same_apex :
@@ -5970,16 +5988,20 @@ theorem cValuedCowedges_same_restriction :
     (restrictionFunctor wppHomProfunctor wppConstDiagramC).obj cValuedCowedgeRightAtRight := by
   apply RestrictedCowedge.ext
   · rfl
-  · -- Since pt₁ = pt₂ by rfl, the family types are equal, so HEq becomes Eq
+  · -- Since pt₁ = pt₂ by rfl, show equality of the underlying Over structures
     apply heq_of_eq
-    funext A a
-    match A with
-    | WalkingParallelPair.zero =>
-      simp only [restrictionFunctor]
-      exact cValuedCowedges_same_leg_coTwIdZero (cast (congrArg _ rfl) a)
-    | WalkingParallelPair.one =>
-      simp only [restrictionFunctor]
-      exact cValuedCowedges_same_leg_coTwIdOne (cast (congrArg _ rfl) a)
+    apply RestrictedCowedgeOver.ext
+    · -- Show family equality
+      funext A a
+      match A with
+      | WalkingParallelPair.zero =>
+        simp only [restrictionFunctor, restrictWeightedCowedge,
+          weightedCowedgeFamilyAtIdentity]
+        exact cValuedCowedges_same_leg_coTwIdZero (cast (congrArg _ rfl) a)
+      | WalkingParallelPair.one =>
+        simp only [restrictionFunctor, restrictWeightedCowedge,
+          weightedCowedgeFamilyAtIdentity]
+        exact cValuedCowedges_same_leg_coTwIdOne (cast (congrArg _ rfl) a)
 
 /-- The restriction functor `restrictionFunctor wppHomProfunctor wppConstDiagramC`
 from weighted cowedges to restricted cowedges is NOT full.

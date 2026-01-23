@@ -134,20 +134,33 @@ variable (G : Cᵒᵖ ⥤ C ⥤ C)
 
 /-- A Mendler-style algebra for an endodifunctor `G`.
 
-Structurally, this is equivalent to `Σ (pt : C), RestrictedCowedgeOver pt G (HomToProf pt)`
+Structurally, this is `Σ (pt : C), RestrictedCowedgeOver pt G (HomToProf pt)`
 where the restriction profunctor depends on the carrier. -/
 @[ext]
 structure MendlerAlgebra where
   /-- The carrier object. -/
   pt : C
-  /-- The family of algebra operations. -/
-  family : ParanatSig (HomToProf pt) (G ⇓ pt)
-  /-- The dinaturality condition. -/
-  isDinatural : IsDinatural (HomToProf pt) (G ⇓ pt) family
+  /-- The cowedge data over the carrier. -/
+  toRestrictedCowedgeOver : RestrictedCowedgeOver pt G (HomToProf pt)
 
 namespace MendlerAlgebra
 
 variable {G}
+
+/-- The family of algebra operations. -/
+abbrev family (m : MendlerAlgebra G) : ParanatSig (HomToProf m.pt) (G ⇓ m.pt) :=
+  m.toRestrictedCowedgeOver.family
+
+/-- The dinaturality condition. -/
+abbrev isDinatural (m : MendlerAlgebra G) :
+    IsDinatural (HomToProf m.pt) (G ⇓ m.pt) m.family :=
+  m.toRestrictedCowedgeOver.isDinatural
+
+/-- Constructor with explicit family and dinaturality arguments. -/
+@[match_pattern]
+def mk' (pt : C) (family : ParanatSig (HomToProf pt) (G ⇓ pt))
+    (isDinatural : IsDinatural (HomToProf pt) (G ⇓ pt) family) : MendlerAlgebra G :=
+  ⟨pt, ⟨family, isDinatural⟩⟩
 
 /-- The algebra operation at object `A`: given `γ : A ⟶ pt`, produce
 `G(A, A) ⟶ pt`. -/
@@ -172,26 +185,18 @@ theorem dinaturality (m : MendlerAlgebra G) {A B : C} (g : A ⟶ B)
 def toRestrictedCowedge (m : MendlerAlgebra G) :
     RestrictedCowedge G (HomToProf m.pt) where
   pt := m.pt
-  family := m.family
-  isDinatural := m.isDinatural
+  toRestrictedCowedgeOver := ⟨m.family, m.isDinatural⟩
 
 /-- Construct a Mendler algebra from a restricted cowedge with HomToProf pt
 whose carrier is pt. -/
 def ofRestrictedCowedge' (pt : C) (family : ParanatSig (HomToProf pt) (G ⇓ pt))
-    (isDinatural : IsDinatural (HomToProf pt) (G ⇓ pt) family) : MendlerAlgebra G where
-  pt := pt
-  family := family
-  isDinatural := isDinatural
-
-/-- Convert a Mendler algebra to a RestrictedCowedgeOver. -/
-def toRestrictedCowedgeOver (m : MendlerAlgebra G) :
-    RestrictedCowedgeOver m.pt G (HomToProf m.pt) :=
-  ⟨m.family, m.isDinatural⟩
+    (isDinatural : IsDinatural (HomToProf pt) (G ⇓ pt) family) : MendlerAlgebra G :=
+  ⟨pt, ⟨family, isDinatural⟩⟩
 
 /-- Construct a Mendler algebra from a point and a RestrictedCowedgeOver. -/
 def ofRestrictedCowedgeOver (pt : C) (u : RestrictedCowedgeOver pt G (HomToProf pt)) :
     MendlerAlgebra G :=
-  ⟨pt, u.family, u.isDinatural⟩
+  ⟨pt, u⟩
 
 /-- Round-trip from MendlerAlgebra to RestrictedCowedgeOver and back. -/
 theorem ofRestrictedCowedgeOver_toRestrictedCowedgeOver (m : MendlerAlgebra G) :
@@ -277,13 +282,14 @@ with the carrier. -/
 def restrictedCowedgeToMendler (pt : C) (rc : RestrictedCowedge G (HomToProf pt))
     (hpt : rc.pt = pt) : MendlerAlgebra G where
   pt := rc.pt
-  family := Eq.rec (motive := fun x _ => ParanatSig (HomToProf x) (G ⇓ rc.pt))
-              rc.family hpt.symm
-  isDinatural := Eq.rec (motive := fun x h =>
-      IsDinatural (HomToProf x) (G ⇓ rc.pt)
-        (Eq.rec (motive := fun y _ => ParanatSig (HomToProf y) (G ⇓ rc.pt))
-          rc.family h))
-    rc.isDinatural hpt.symm
+  toRestrictedCowedgeOver := ⟨
+    Eq.rec (motive := fun x _ => ParanatSig (HomToProf x) (G ⇓ rc.pt))
+      rc.family hpt.symm,
+    Eq.rec (motive := fun x h =>
+        IsDinatural (HomToProf x) (G ⇓ rc.pt)
+          (Eq.rec (motive := fun y _ => ParanatSig (HomToProf y) (G ⇓ rc.pt))
+            rc.family h))
+      rc.isDinatural hpt.symm⟩
 
 /-- For a Mendler algebra, converting to restricted cowedge and back
 preserves the structure. -/
@@ -424,13 +430,12 @@ the injection at pt₂. -/
 def GExtMapCowedge (pt₁ pt₂ : C) (h : pt₁ ⟶ pt₂) :
     RestrictedCowedge G (HomToProf pt₁) where
   pt := GExtObj G pt₂
-  family := fun A γ => GExtInj G pt₂ A (γ ≫ h)
-  isDinatural := by
+  toRestrictedCowedgeOver := ⟨fun A γ => GExtInj G pt₂ A (γ ≫ h), by
     intro A B g x
     have dinat := (restrictedCoend G (HomToProf pt₂)).isDinatural A B g (x ≫ h)
     simp only [Profunctor.lmap, Profunctor.rmap, sliceProfunctor,
       HomToProf_map_app, HomToProf_obj_map, GExtInj, Category.assoc] at dinat ⊢
-    exact dinat
+    exact dinat⟩
 
 /-- The morphism part of G^e: uses the universal property. -/
 def GExtMap (pt₁ pt₂ : C) (h : pt₁ ⟶ pt₂) :
@@ -448,7 +453,7 @@ theorem GExtMap_id (pt : C) :
       (GExtMapCowedge G pt pt (𝟙 pt)) := {
     hom := 𝟙 (GExtObj G pt)
     comm := fun A γ => by
-      simp only [GExtMapCowedge, GExtInj, Category.comp_id]
+      simp only [GExtMapCowedge, RestrictedCowedge.family, GExtInj, Category.comp_id]
       exact Category.comp_id _
   }
   have heq : hmorphId = (restrictedCoendIsInitial G (HomToProf pt)).to _ :=
@@ -467,12 +472,12 @@ theorem GExtMap_comp (pt₁ pt₂ pt₃ : C) (f : pt₁ ⟶ pt₂) (g : pt₂ �
     hom := GExtMap G pt₁ pt₂ f ≫ GExtMap G pt₂ pt₃ g
     comm := fun A γ => by
       simp only [GExtMap, GExtDesc, IsRestrictedCoend.descHom, IsRestrictedCoend.desc,
-        GExtMapCowedge, GExtInj]
+        GExtMapCowedge, RestrictedCowedge.family, GExtInj]
       have h1 := ((restrictedCoendIsInitial G (HomToProf pt₁)).to
         (GExtMapCowedge G pt₁ pt₂ f)).comm A γ
       have h2 := ((restrictedCoendIsInitial G (HomToProf pt₂)).to
         (GExtMapCowedge G pt₂ pt₃ g)).comm A (γ ≫ f)
-      simp only [GExtMapCowedge, GExtInj] at h1 h2
+      simp only [GExtMapCowedge, RestrictedCowedge.family, GExtInj] at h1 h2
       rw [← Category.assoc, h1, h2, Category.assoc]
   }
   have heq : hmorphComp =
@@ -573,8 +578,7 @@ to a Mendler algebra (pt, ceil(φ)) where ceil(φ)_A(γ) = φ ∘ inj_A(γ). -/
 def ceil (a : ConventionalAlgebra (HasAllHomToProfCoends.GExtFunctor G)) :
     MendlerAlgebra G where
   pt := a.pt
-  family := fun A γ => HasAllHomToProfCoends.GExtInj G a.pt A γ ≫ a.str
-  isDinatural := by
+  toRestrictedCowedgeOver := ⟨fun A γ => HasAllHomToProfCoends.GExtInj G a.pt A γ ≫ a.str, by
     intro A B g x
     simp only [Profunctor.lmap, Profunctor.rmap, sliceProfunctor_obj_map,
       sliceProfunctor_map_app, Quiver.Hom.unop_op, HomToProf_map_app, HomToProf_obj_map]
@@ -583,7 +587,7 @@ def ceil (a : ConventionalAlgebra (HasAllHomToProfCoends.GExtFunctor G)) :
       sliceProfunctor_map_app, Quiver.Hom.unop_op, HomToProf_map_app, HomToProf_obj_map,
       HasAllHomToProfCoends.GExtInj] at dinat ⊢
     simp only [← Category.assoc]
-    exact congrArg (· ≫ a.str) dinat
+    exact congrArg (· ≫ a.str) dinat⟩
 
 /-- floor(ceil(φ)) = φ (Proposition 5.15 in Vene).
 The floor of the ceiling of a conventional algebra structure is the
@@ -591,11 +595,12 @@ original structure. -/
 theorem floor_ceil (a : ConventionalAlgebra (HasAllHomToProfCoends.GExtFunctor G)) :
     floor G (ceil G a) = a := by
   cases a with | mk pt str =>
-  simp only [floor, ceil, MendlerAlgebra.toRestrictedCowedge, GExtDesc, GExtInj]
+  simp only [floor, ceil, MendlerAlgebra.toRestrictedCowedge, MendlerAlgebra.family,
+    GExtDesc, GExtInj]
   congr 1
   let targetCowedge : RestrictedCowedge G (HomToProf pt) :=
-    ⟨pt, fun A γ => (restrictedCoend G (HomToProf pt)).family A γ ≫ str,
-     (ceil G ⟨pt, str⟩).isDinatural⟩
+    ⟨pt, ⟨fun A γ => (restrictedCoend G (HomToProf pt)).family A γ ≫ str,
+     (ceil G ⟨pt, str⟩).isDinatural⟩⟩
   let strMorph : RestrictedCowedge.Hom (restrictedCoend G (HomToProf pt)) targetCowedge := {
     hom := str
     comm := fun _ _ => rfl
@@ -609,12 +614,15 @@ theorem floor_ceil (a : ConventionalAlgebra (HasAllHomToProfCoends.GExtFunctor G
 The ceiling of the floor of a Mendler algebra is the original algebra. -/
 theorem ceil_floor (m : MendlerAlgebra G) :
     ceil G (floor G m) = m := by
-  cases m with | mk pt family isDinat =>
-  simp only [ceil, floor, MendlerAlgebra.toRestrictedCowedge, GExtDesc, GExtInj]
+  cases m with | mk pt u =>
+  cases u with | mk family isDinat =>
+  simp only [ceil, floor, MendlerAlgebra.toRestrictedCowedge, MendlerAlgebra.family,
+    GExtDesc, GExtInj]
   congr 1
-  funext A γ
-  exact ((restrictedCoendIsInitial G (HomToProf pt)).to
-    ⟨pt, family, isDinat⟩).comm A γ
+  ext
+  · funext A γ
+    exact ((restrictedCoendIsInitial G (HomToProf pt)).to
+      ⟨pt, ⟨family, isDinat⟩⟩).comm A γ
 
 /-- floor preserves morphisms (Proposition 5.18 in Vene).
 If h is a Mendler algebra morphism, then h is a conventional G^e-algebra
@@ -627,13 +635,12 @@ def floorHom {m₁ m₂ : MendlerAlgebra G} (f : m₁ ⟶ m₂) :
       MendlerAlgebra.toRestrictedCowedge, IsRestrictedCoend.descHom, IsRestrictedCoend.desc]
     let targetCowedge : RestrictedCowedge G (HomToProf m₁.pt) := {
       pt := m₂.pt
-      family := fun A γ => m₂.family A (γ ≫ f.hom)
-      isDinatural := by
+      toRestrictedCowedgeOver := ⟨fun A γ => m₂.family A (γ ≫ f.hom), by
         intro A B g x
         have hdinat := m₂.isDinatural A B g (x ≫ f.hom)
         simp only [Profunctor.lmap, Profunctor.rmap, sliceProfunctor,
           HomToProf_map_app, HomToProf_obj_map, Category.assoc] at hdinat ⊢
-        exact hdinat
+        exact hdinat⟩
     }
     let lhsMorph : RestrictedCowedge.Hom (restrictedCoend G (HomToProf m₁.pt)) targetCowedge := {
       hom := (restrictedCoendIsInitial G (HomToProf m₁.pt)).descHom
@@ -676,7 +683,7 @@ def ceilHom {a₁ a₂ : ConventionalAlgebra (HasAllHomToProfCoends.GExtFunctor 
   hom := f.hom
   comm := by
     intro A γ
-    simp only [ceil, GExtInj]
+    simp only [ceil, MendlerAlgebra.family, GExtInj]
     have comm := f.comm
     simp only [GExtFunctor_map, GExtMap, GExtDesc, GExtMapCowedge,
       IsRestrictedCoend.descHom, IsRestrictedCoend.desc] at comm
@@ -685,7 +692,7 @@ def ceilHom {a₁ a₂ : ConventionalAlgebra (HasAllHomToProfCoends.GExtFunctor 
     simp only [← Category.assoc]
     have h := (restrictedCoendIsInitial G (HomToProf a₁.pt)).to
       (GExtMapCowedge G a₁.pt a₂.pt f.hom) |>.comm A γ
-    simp only [GExtMapCowedge, GExtInj] at h ⊢
+    simp only [GExtMapCowedge, RestrictedCowedge.family, GExtInj] at h ⊢
     rw [h]
 
 /-- The floor functor: MendlerAlgebra G ⥤ ConventionalAlgebra (GExtFunctor G). -/
