@@ -21,21 +21,39 @@ This connects Vene's Mendler-Lambek correspondence to standard category theory.
 
 ## Tasks
 
-- [ ] Define WeightedLimit as terminal object in WeightedCones category
-- [ ] Define WeightedColimit as initial object in WeightedCocones category
-- [ ] Check if mathlib has ends and coends
-- [ ] If mathlib has ends/coends, confirm they are weighted (co)limits with
-      hom-functor weight
-- [ ] Define WeightedEnd as terminal object in WeightedWedges category
-- [ ] Define WeightedCoend as initial object in WeightedCowedges category
-- [ ] Check if mathlib proves ends/coends as (co)limits over twisted arrow
-      category; if not, prove it ourselves
-- [ ] Prove restricted coend equals ordinary coend with copowers:
-      `Sigma(H, G) = integral^A H(A,A) . G(A,A)`
+- [x] Define WeightedLimit as terminal object in WeightedCones category
+- [x] Define WeightedColimit as initial object in WeightedCocones category
+- [x] Check if mathlib has ends and coends (they exist as Dinat/Paranat transforms)
+- [x] Define WeightedEnd and WeightedCoend (as terminal/initial weighted wedges)
+- [x] Prove ends/coends as limits/colimits over twisted arrow category
+- [x] Prove restricted coend equals ordinary coend with copowers:
+      `Sigma(H, G) = integral^A H(A,A) . G(A,A)` (via `restrictedCoend_is_copowerCoend`)
 - [ ] Investigate whether the ordinary coend can be expressed as a left Kan
       extension
 
 ## Notes
+
+### Implementation Summary
+
+The connection between restricted coends and copower coends is established in
+`GebLean/RestrictedCoendAsColimit.lean` via the following definitions:
+
+1. `HasCopowers C` - Type class for categories with copowers (type-indexed
+   coproducts), characterized by the adjunction `Hom(S . X, Y) ~ (S -> Hom(X, Y))`
+
+2. `IsCopowerCowedgeDinatural` - The dinaturality condition for a family
+   `omega : forall A, H(A,A) . G(A,A) -> pt` to form a cowedge of the copower
+   profunctor.
+
+3. `restrictedCowedgeToCopowerFamily` - Converts a restricted cowedge to a
+   family of copower morphisms using `HasCopowers.desc`.
+
+4. `copowerFamilyToRestrictedFamily` - Converts a copower family to a restricted
+   cowedge family using `HasCopowers.inj`.
+
+5. `restrictedCoend_is_copowerCoend` - The theorem stating that for a dinatural
+   copower cowedge family, there exists a unique morphism from the restricted
+   coend satisfying the factorization property.
 
 ### Universal Property Equivalence (Analysis)
 

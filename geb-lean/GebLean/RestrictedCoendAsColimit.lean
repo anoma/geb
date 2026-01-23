@@ -323,4 +323,202 @@ theorem GExtFunctor_as_HomToProfCoend [HasAllHomToProfCoends G] :
 
 end KanExtensionInterpretation
 
+section CopowerCoendEquivalence
+
+open HasRestrictedCoend
+
+/-!
+## Restricted Coends as Ordinary Coends with Copowers
+
+This section establishes the relationship:
+```text
+Σ(H, G) = ∫^A H(A,A) · G(A,A)
+```
+where:
+- `Σ(H, G)` is the H-restricted G-coend
+- `∫^A H(A,A) · G(A,A)` is the ordinary coend of the copower profunctor
+- `·` denotes the copower (tensoring with types)
+
+### Copowers (Type-Indexed Coproducts)
+
+For a type `S` and object `X`, the copower `S · X` is characterized by:
+```text
+Hom(S · X, Y) ≅ (S → Hom(X, Y))
+```
+
+When C has copowers, the copower profunctor `(H · G)(A, B) = H(A, B) · G(A, B)` is
+an endoprofunctor on C, and:
+
+1. A cowedge from `H · G` to apex `pt` consists of:
+   - Family `ω_A : H(A,A) · G(A,A) → pt`
+   - Dinaturality condition
+
+2. By the copower adjunction, this is equivalent to:
+   - Family `Φ_A : H(A,A) → (G(A,A) → pt)`
+   - Dinaturality condition (which matches that of restricted cowedges)
+
+3. This is exactly an H-restricted G-cowedge!
+
+The correspondence extends to an equivalence of categories, so initial objects
+(coends) correspond: the coend of `H · G` equals the restricted coend of `(G, H)`.
+-/
+
+/-- A category has copowers if for any type S and object X, the copower S · X
+exists as a colimit. The copower is characterized by the adjunction:
+`Hom(S · X, Y) ≅ (S → Hom(X, Y))`.
+
+For our purposes, we assume copowers exist and work with the universal property.
+-/
+class HasCopowers (C : Type u) [Category.{v} C] where
+  /-- The copower object S · X for a type S and object X. -/
+  copower : Type v → C → C
+  /-- The family of injections indexed by elements of S. -/
+  inj : ∀ (S : Type v) (X : C), S → (X ⟶ copower S X)
+  /-- The universal property: any family factors through the copower. -/
+  desc : ∀ {S : Type v} {X Y : C}, (S → (X ⟶ Y)) → (copower S X ⟶ Y)
+  /-- The family factors through the universal morphism. -/
+  fac : ∀ {S : Type v} {X Y : C} (f : S → (X ⟶ Y)) (s : S),
+    inj S X s ≫ desc f = f s
+  /-- Uniqueness of the factorization. -/
+  uniq : ∀ {S : Type v} {X Y : C} (f : S → (X ⟶ Y)) (g : copower S X ⟶ Y),
+    (∀ s, inj S X s ≫ g = f s) → g = desc f
+
+namespace HasCopowers
+
+variable {C : Type u} [Category.{v} C] [HasCopowers C]
+
+/-- Notation for the copower. -/
+infixl:70 " ·. " => copower
+
+/-- Extensionality for morphisms out of copowers: two morphisms are equal
+if they agree on all injections. -/
+theorem ext {S : Type v} {X Y : C} (f g : S ·. X ⟶ Y)
+    (h : ∀ s, inj S X s ≫ f = inj S X s ≫ g) : f = g := by
+  have hf := uniq (fun s => inj S X s ≫ f) f (fun _ => rfl)
+  have hg := uniq (fun s => inj S X s ≫ f) g (fun s => (h s).symm)
+  rw [hf, hg]
+
+end HasCopowers
+
+/-!
+### The Correspondence between Cowedges and Restricted Cowedges
+
+A cowedge from the copower profunctor `H · G` to apex `pt` corresponds
+bijectively to an H-restricted G-cowedge with apex `pt`.
+
+The bijection is given by the copower universal property:
+- Forward: `ω_A : H(A,A) · G(A,A) → pt` determines `Φ_A : H(A,A) → (G(A,A) → pt)`
+  by `Φ_A(h) = inj(h) ≫ ω_A`
+- Backward: `Φ_A : H(A,A) → (G(A,A) → pt)` determines `ω_A : H(A,A) · G(A,A) → pt`
+  by the universal property of copowers
+
+The dinaturality conditions correspond under this bijection.
+-/
+
+/-- Dinaturality condition for a copower cowedge family.
+
+For a family `ω : ∀ A, H(A,A) · G(A,A) → pt` to form a cowedge of the copower
+profunctor, it must satisfy: for all `g : A → B` and `x : H(B, A)`, the two
+paths from `G(B, A)` to `pt` agree. -/
+def IsCopowerCowedgeDinatural [HasCopowers C] (H : Cᵒᵖ ⥤ C ⥤ Type v)
+    (G : Cᵒᵖ ⥤ C ⥤ C) (pt : C)
+    (ω : ∀ A, HasCopowers.copower (diagApp H A) ((G.obj (op A)).obj A) ⟶ pt) :
+    Prop :=
+  ∀ (A B : C) (g : A ⟶ B) (x : (H.obj (Opposite.op B)).obj A),
+    (G.obj (Opposite.op B)).map g ≫
+      HasCopowers.inj _ _ ((H.obj (Opposite.op B)).map g x) ≫ ω B =
+    (G.map g.op).app A ≫
+      HasCopowers.inj _ _ ((H.map g.op).app A x) ≫ ω A
+
+/-- Given a restricted cowedge, construct the corresponding family of copower
+morphisms. This uses the copower universal property to assemble the indexed
+family into a single morphism from the copower. -/
+def restrictedCowedgeToCopowerFamily [HasCopowers C] (H : Cᵒᵖ ⥤ C ⥤ Type v)
+    (G : Cᵒᵖ ⥤ C ⥤ C) (cwedge : RestrictedCowedge G H) (A : C) :
+    HasCopowers.copower (diagApp H A) ((G.obj (op A)).obj A) ⟶ cwedge.pt :=
+  HasCopowers.desc (cwedge.family A)
+
+/-- Given a family of copower morphisms, extract the corresponding restricted
+cowedge family. This uses the copower injections. -/
+def copowerFamilyToRestrictedFamily [HasCopowers C] (H : Cᵒᵖ ⥤ C ⥤ Type v)
+    (G : Cᵒᵖ ⥤ C ⥤ C) (pt : C)
+    (ω : ∀ A, HasCopowers.copower (diagApp H A) ((G.obj (op A)).obj A) ⟶ pt)
+    (A : C) : diagApp H A → ((G.obj (op A)).obj A ⟶ pt) :=
+  fun h => HasCopowers.inj (diagApp H A) ((G.obj (op A)).obj A) h ≫ ω A
+
+/-- Round-trip: restricted cowedge → copower family → restricted family equals
+the original family. -/
+theorem restrictedCowedge_roundtrip [HasCopowers C] (H : Cᵒᵖ ⥤ C ⥤ Type v)
+    (G : Cᵒᵖ ⥤ C ⥤ C) (cwedge : RestrictedCowedge G H) (A : C) (h : diagApp H A) :
+    copowerFamilyToRestrictedFamily H G cwedge.pt
+      (restrictedCowedgeToCopowerFamily H G cwedge) A h = cwedge.family A h := by
+  simp only [copowerFamilyToRestrictedFamily, restrictedCowedgeToCopowerFamily,
+    HasCopowers.fac]
+
+/-- Round-trip: copower family → restricted family → copower family equals
+the original family (by uniqueness of copower factorization). -/
+theorem copowerFamily_roundtrip [HasCopowers C] (H : Cᵒᵖ ⥤ C ⥤ Type v)
+    (G : Cᵒᵖ ⥤ C ⥤ C) (pt : C)
+    (ω : ∀ A, HasCopowers.copower (diagApp H A) ((G.obj (op A)).obj A) ⟶ pt)
+    (hω : IsCopowerCowedgeDinatural H G pt ω) (A : C) :
+    restrictedCowedgeToCopowerFamily H G
+      ⟨pt, copowerFamilyToRestrictedFamily H G pt ω,
+       fun A' B g x => by
+         simp only [copowerFamilyToRestrictedFamily, Profunctor.lmap, Profunctor.rmap,
+           sliceProfunctor_obj_map, sliceProfunctor_map_app, Quiver.Hom.unop_op]
+         exact hω A' B g x⟩ A = ω A := by
+  apply HasCopowers.ext
+  intro h
+  simp only [restrictedCowedgeToCopowerFamily, copowerFamilyToRestrictedFamily,
+    HasCopowers.fac]
+
+/-- The restricted coend `Σ(H, G)` satisfies the universal property of the coend
+of the copower profunctor `∫^A H(A,A) · G(A,A)`.
+
+Assuming copowers exist, the restricted coend is (isomorphic to) the ordinary
+coend of `(A, B) ↦ H(A, B) · G(A, B)`. The isomorphism follows from the
+equivalence between H-restricted G-cowedges and cowedges of the copower
+profunctor, induced by the copower adjunction `Hom(S · X, Y) ≅ (S → Hom(X, Y))`.
+-/
+theorem restrictedCoend_is_copowerCoend [HasCopowers C] (H : Cᵒᵖ ⥤ C ⥤ Type v)
+    (G : Cᵒᵖ ⥤ C ⥤ C) [HasRestrictedCoend G H] :
+    ∀ (pt : C) (ω : ∀ A, HasCopowers.copower (diagApp H A)
+                         ((G.obj (op A)).obj A) ⟶ pt),
+    IsCopowerCowedgeDinatural H G pt ω →
+    ∃! f : (restrictedCoend G H).pt ⟶ pt,
+      ∀ A (h : diagApp H A),
+        (restrictedCoend G H).family A h ≫ f =
+        HasCopowers.inj _ _ h ≫ ω A := by
+  intro pt ω hω
+  let Φ : ∀ A, diagApp H A → ((G.obj (op A)).obj A ⟶ pt) :=
+    copowerFamilyToRestrictedFamily H G pt ω
+  let targetCwedge : RestrictedCowedge G H := {
+    pt := pt
+    family := Φ
+    isDinatural := by
+      intro A B g x
+      simp only [Profunctor.lmap, Profunctor.rmap,
+        sliceProfunctor_obj_map, sliceProfunctor_map_app, Quiver.Hom.unop_op]
+      simp only [Φ, copowerFamilyToRestrictedFamily]
+      exact hω A B g x
+  }
+  use (restrictedCoendIsInitial G H).descHom targetCwedge
+  constructor
+  · intro A h
+    have := ((restrictedCoendIsInitial G H).to targetCwedge).comm A h
+    simp only [targetCwedge, Φ, copowerFamilyToRestrictedFamily] at this
+    exact this
+  · intro g hg
+    let gMor : RestrictedCowedge.Hom (restrictedCoend G H) targetCwedge := {
+      hom := g
+      comm := fun A h => by
+        simp only [targetCwedge, Φ, copowerFamilyToRestrictedFamily]
+        exact hg A h
+    }
+    have eq := Limits.IsInitial.hom_ext (restrictedCoendIsInitial G H)
+      gMor ((restrictedCoendIsInitial G H).to targetCwedge)
+    exact congrArg RestrictedCowedge.Hom.hom eq
+
+end CopowerCoendEquivalence
+
 end GebLean

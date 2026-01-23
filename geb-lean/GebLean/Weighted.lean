@@ -2994,6 +2994,49 @@ lemma constProfunctor_diagApp (T : Type v) (A : C) :
     diagApp (constProfunctor (C := C) T) A = T := rfl
 
 /-!
+### Constant Profunctor on Twisted Arrow Categories
+
+When the weight profunctor is constant at a singleton type `PUnit`, the induced
+functor on the twisted arrow category is the constant functor at `PUnit`.
+This shows that weighted wedges with trivial weight are equivalent to ordinary
+cones over the diagram functor.
+-/
+
+/-- The constant profunctor on the twisted arrow category is the unit weight. -/
+theorem constProfunctorOnTwistedArrow_eq_unitWeight :
+    profunctorOnTwistedArrow C (constProfunctor (C := C) PUnit.{v+1}) =
+    unitWeight (TwistedArrow C) := rfl
+
+/-- Weighted wedges with trivial (unit) weight are equivalent to ordinary cones.
+
+When `W = constProfunctor PUnit`, a `WeightedWedge W P` is a `WeightedCone`
+with weight `unitWeight (TwistedArrow C)`, which is equivalent to an ordinary
+`Cone (profunctorOnTwistedArrow C P)` by `coneWeightedConeEquiv`.
+
+This equivalence is the foundation for expressing ends as limits over the
+twisted arrow category: `End P ≅ lim_{TwistedArrow C} (profunctorOnTwistedArrow C P)`.
+-/
+def trivialWeightedWedgeConeEquiv {D : Type w} [Category.{v} D]
+    (P : Cᵒᵖ ⥤ C ⥤ D) :
+    WeightedWedge (constProfunctor (C := C) PUnit.{v+1}) P ≌
+    Cone (profunctorOnTwistedArrow C P) := by
+  unfold WeightedWedge
+  rw [constProfunctorOnTwistedArrow_eq_unitWeight]
+  exact (coneWeightedConeEquiv (profunctorOnTwistedArrow C P)).symm
+
+/-- Weighted cowedges with trivial (unit) weight are equivalent to ordinary
+cocones. This is the dual of `trivialWeightedWedgeConeEquiv`. -/
+def trivialWeightedCowedgeCoconeEquiv {D : Type w} [Category.{v} D]
+    (P : Cᵒᵖ ⥤ C ⥤ D) :
+    WeightedCowedge (constProfunctor (C := C) PUnit.{v+1}) P ≌
+    Cocone (profunctorOnCoTwistedArrow C P) := by
+  unfold WeightedCowedge
+  have h : profunctorOnOpCoTwistedArrow C (constProfunctor (C := C) PUnit.{v+1}) =
+           unitWeightOp (CoTwistedArrow C) := rfl
+  rw [h]
+  exact (coconeWeightedCoconeEquiv (profunctorOnCoTwistedArrow C P)).symm
+
+/-!
 ### Extracting Diagonal Data from Weighted Cowedges
 
 Given a weighted cowedge, we can extract the diagonal family as a `ParanatSig`.
