@@ -490,6 +490,30 @@ theorem bimap_comp {S T U : Type v} {X Y Z : C}
     _ = (inj S X s ≫ bimap f₁ g₁) ≫ bimap f₂ g₂ := by rw [← bimap_inj f₁ g₁]
     _ = inj S X s ≫ bimap f₁ g₁ ≫ bimap f₂ g₂ := by rw [Category.assoc]
 
+/-- Postcomposing desc with a morphism: `desc f ≫ g = desc (fun s => f s ≫ g)`. -/
+theorem desc_comp {S : Type v} {X Y Z : C} (f : S → (X ⟶ Y)) (g : Y ⟶ Z) :
+    desc f ≫ g = desc (fun s => f s ≫ g) := by
+  apply ext
+  intro s
+  rw [← Category.assoc, fac, ← fac (fun s' => f s' ≫ g) s]
+
+/-- If the families commute with postcomposition, then desc respects it. -/
+theorem desc_postcomp_eq {S : Type v} {X Y Z : C} (f : S → (X ⟶ Y)) (h : S → (X ⟶ Z))
+    (g : Y ⟶ Z) (hfg : ∀ s, f s ≫ g = h s) :
+    desc f ≫ g = desc h := by
+  rw [desc_comp]
+  congr 1
+  funext s
+  exact hfg s
+
+/-- Copower round-trip: `desc (fun s => inj s ≫ g) = g`. -/
+@[simp]
+theorem desc_inj {S : Type v} {X Y : C} (g : copower S X ⟶ Y) :
+    desc (fun s => inj S X s ≫ g) = g := by
+  apply ext
+  intro s
+  rw [fac]
+
 end HasCopowers
 
 section CopowerProfunctor
@@ -874,6 +898,191 @@ theorem restrictedCowedgeToCopowerCowedge_pt (G : Cᵒᵖ ⥤ C ⥤ C) (pt : C)
 theorem copowerCowedgeToRestrictedCowedge_pt (G : Cᵒᵖ ⥤ C ⥤ C) (pt : C)
     (cw : Cowedge (copowerProf (HomToProf pt) G)) :
     (copowerCowedgeToRestrictedCowedge G pt cw).pt = cw.pt := rfl
+
+namespace Limits.Cocones
+
+/-- The `.hom` field of an `eqToHom` morphism between cocones equals `eqToHom` of
+the corresponding equality of apex points. -/
+@[simp]
+theorem eqToHom_hom {J : Type*} [Category J] {C' : Type*} [Category C']
+    {F : J ⥤ C'} {A B : Cocone F} (h : A = B) :
+    (eqToHom h).hom = eqToHom (congrArg Cocone.pt h) := by subst h; rfl
+
+end Limits.Cocones
+
+/-!
+### Categorical Equivalence
+
+The correspondence between restricted cowedges with weight `HomToProf pt` and
+cowedges over the copower profunctor extends to a categorical equivalence.
+-/
+
+/-- Type alias for restricted cowedges with the Hom-to-pt weight. -/
+abbrev HomRestrictedCowedge (G : Cᵒᵖ ⥤ C ⥤ C) (pt : C) :=
+  RestrictedCowedge G (HomToProf pt)
+
+/-- Type alias for cowedges over the copower profunctor with Hom-to-pt weight. -/
+abbrev HomCopowerCowedge (G : Cᵒᵖ ⥤ C ⥤ C) (pt : C) :=
+  Cowedge (copowerProf (HomToProf pt) G)
+
+/-- Convert a morphism of restricted cowedges to a morphism of cowedges. -/
+def restrictedCowedgeToCopowerCowedgeHom (G : Cᵒᵖ ⥤ C ⥤ C) (pt : C)
+    {rc₁ rc₂ : HomRestrictedCowedge G pt}
+    (f : RestrictedCowedge.Hom rc₁ rc₂) :
+    (restrictedCowedgeToCopowerCowedge G pt rc₁) ⟶
+    (restrictedCowedgeToCopowerCowedge G pt rc₂) where
+  hom := f.hom
+  w := fun j => by
+    rcases j with a | b
+    · -- left a case: follows from right case by precomposing with I.fst a
+      simp only [Multicofork.fst_app_right, Category.assoc]
+      congr 1
+      simp only [restrictedCowedgeToCopowerCowedge, copowerCowedge, Cowedge.mk_π,
+        restrictedCowedgeToCopowerFamily]
+      exact desc_postcomp_eq (rc₁.family a.left) (rc₂.family a.left) f.hom
+        (fun x => f.comm a.left x)
+    · -- right b case: prove π-commutativity
+      simp only [Multicofork.π_eq_app_right, restrictedCowedgeToCopowerCowedge,
+        copowerCowedge, Cowedge.mk_π, restrictedCowedgeToCopowerFamily]
+      exact desc_postcomp_eq (rc₁.family b) (rc₂.family b) f.hom (fun x => f.comm b x)
+
+/-- Convert a morphism of cowedges to a morphism of restricted cowedges. -/
+def copowerCowedgeToRestrictedCowedgeHom (G : Cᵒᵖ ⥤ C ⥤ C) (pt : C)
+    {cw₁ cw₂ : HomCopowerCowedge G pt}
+    (f : cw₁ ⟶ cw₂) :
+    RestrictedCowedge.Hom (copowerCowedgeToRestrictedCowedge G pt cw₁)
+      (copowerCowedgeToRestrictedCowedge G pt cw₂) where
+  hom := f.hom
+  comm := fun A x => by
+    simp only [copowerCowedgeToRestrictedCowedge, RestrictedCowedge.mk',
+      RestrictedCowedge.family, copowerFamilyToRestrictedFamily,
+      cowedgeToCopowerFamily]
+    rw [Category.assoc]
+    have w := Multicofork.π_comp_hom cw₁ cw₂ f A
+    calc inj _ _ x ≫ cw₁.π A ≫ f.hom = inj _ _ x ≫ cw₂.π A := by rw [w]
+
+/-- The functor from restricted cowedges to cowedges over the copower profunctor. -/
+def homRestrictedToCopowerFunctor (G : Cᵒᵖ ⥤ C ⥤ C) (pt : C) :
+    HomRestrictedCowedge G pt ⥤ HomCopowerCowedge G pt where
+  obj := restrictedCowedgeToCopowerCowedge G pt
+  map := restrictedCowedgeToCopowerCowedgeHom G pt
+  map_id := fun _ => by
+    ext
+    simp only [restrictedCowedgeToCopowerCowedgeHom]
+    rfl
+  map_comp := fun _ _ => by
+    ext
+    simp only [restrictedCowedgeToCopowerCowedgeHom]
+    rfl
+
+/-- The functor from cowedges over the copower profunctor to restricted cowedges. -/
+def copowerToHomRestrictedFunctor (G : Cᵒᵖ ⥤ C ⥤ C) (pt : C) :
+    HomCopowerCowedge G pt ⥤ HomRestrictedCowedge G pt where
+  obj := copowerCowedgeToRestrictedCowedge G pt
+  map := copowerCowedgeToRestrictedCowedgeHom G pt
+  map_id := fun _ => by
+    apply RestrictedCowedge.Hom.ext
+    simp only [copowerCowedgeToRestrictedCowedgeHom]
+    rfl
+  map_comp := fun _ _ => by
+    apply RestrictedCowedge.Hom.ext
+    simp only [copowerCowedgeToRestrictedCowedgeHom]
+    rfl
+
+/-- Round-trip from restricted cowedge to copower cowedge and back gives the
+original restricted cowedge. -/
+theorem copowerToRestricted_restrictedToCopower (G : Cᵒᵖ ⥤ C ⥤ C) (pt : C)
+    (rc : HomRestrictedCowedge G pt) :
+    copowerCowedgeToRestrictedCowedge G pt (restrictedCowedgeToCopowerCowedge G pt rc) = rc := by
+  apply RestrictedCowedge.ext
+  · rfl
+  · apply heq_of_eq
+    apply RestrictedCowedgeOver.ext
+    funext A x
+    simp only [copowerCowedgeToRestrictedCowedge, restrictedCowedgeToCopowerCowedge,
+      copowerCowedge, RestrictedCowedge.mk', RestrictedCowedge.family,
+      copowerFamilyToRestrictedFamily, cowedgeToCopowerFamily, Cowedge.mk_π,
+      restrictedCowedgeToCopowerFamily]
+    rw [fac]
+
+/-- Round-trip from copower cowedge to restricted cowedge and back gives the
+original copower cowedge. -/
+theorem restrictedToCopower_copowerToRestricted (G : Cᵒᵖ ⥤ C ⥤ C) (pt : C)
+    (cw : HomCopowerCowedge G pt) :
+    restrictedCowedgeToCopowerCowedge G pt (copowerCowedgeToRestrictedCowedge G pt cw) = cw := by
+  have hπ : ∀ A, (restrictedCowedgeToCopowerCowedge G pt
+      (copowerCowedgeToRestrictedCowedge G pt cw)).π A = cw.π A := by
+    intro A
+    simp only [restrictedCowedgeToCopowerCowedge, copowerCowedgeToRestrictedCowedge,
+      copowerCowedge, RestrictedCowedge.mk', Cowedge.mk_π, restrictedCowedgeToCopowerFamily]
+    change desc (copowerFamilyToRestrictedFamily (HomToProf pt) G cw.pt
+      (cowedgeToCopowerFamily (HomToProf pt) G cw) A) = cw.π A
+    unfold copowerFamilyToRestrictedFamily cowedgeToCopowerFamily
+    simp only [desc_inj]
+  have hι : (restrictedCowedgeToCopowerCowedge G pt
+      (copowerCowedgeToRestrictedCowedge G pt cw)).ι = cw.ι := by
+    apply NatTrans.ext
+    funext j
+    cases j with
+    | left a => simp only [Multicofork.fst_app_right, hπ]
+    | right b => simp only [Multicofork.π_eq_app_right, hπ]
+  -- Since pt is definitionally equal and ι is proven equal, use eta + hι
+  have : (restrictedCowedgeToCopowerCowedge G pt
+      (copowerCowedgeToRestrictedCowedge G pt cw)) =
+      ⟨cw.pt, (restrictedCowedgeToCopowerCowedge G pt
+        (copowerCowedgeToRestrictedCowedge G pt cw)).ι⟩ := rfl
+  rw [this, hι]
+
+/-- The unit isomorphism for the equivalence. -/
+def homRestrictedCopowerUnitIso (G : Cᵒᵖ ⥤ C ⥤ C) (pt : C) :
+    𝟭 (HomRestrictedCowedge G pt) ≅
+    homRestrictedToCopowerFunctor G pt ⋙ copowerToHomRestrictedFunctor G pt :=
+  NatIso.ofComponents
+    (fun rc => eqToIso (copowerToRestricted_restrictedToCopower G pt rc).symm)
+    (fun {rc₁ rc₂} f => by
+      apply RestrictedCowedge.Hom.ext
+      simp only [Functor.id_obj, Functor.comp_obj, Functor.id_map, Functor.comp_map,
+        homRestrictedToCopowerFunctor, copowerToHomRestrictedFunctor,
+        restrictedCowedgeToCopowerCowedgeHom, copowerCowedgeToRestrictedCowedgeHom,
+        eqToIso.hom]
+      simp only [RestrictedCowedgeCat, RestrictedCowedge.Hom.comp_hom,
+        RestrictedCowedge_eqToHom_hom, copowerCowedgeToRestrictedCowedge_pt,
+        restrictedCowedgeToCopowerCowedge_pt, eqToHom_refl, Category.id_comp, Category.comp_id])
+
+/-- The counit isomorphism for the equivalence. -/
+def homRestrictedCopowerCounitIso (G : Cᵒᵖ ⥤ C ⥤ C) (pt : C) :
+    copowerToHomRestrictedFunctor G pt ⋙ homRestrictedToCopowerFunctor G pt ≅
+    𝟭 (HomCopowerCowedge G pt) :=
+  NatIso.ofComponents
+    (fun cw => eqToIso (restrictedToCopower_copowerToRestricted G pt cw))
+    (fun {cw₁ cw₂} f => by
+      apply Limits.CoconeMorphism.ext
+      simp only [Functor.comp_obj, Functor.id_obj, Functor.comp_map, Functor.id_map,
+        copowerToHomRestrictedFunctor, homRestrictedToCopowerFunctor,
+        copowerCowedgeToRestrictedCowedgeHom, restrictedCowedgeToCopowerCowedgeHom,
+        eqToIso.hom, Limits.Cocone.category_comp_hom, Limits.Cocones.eqToHom_hom,
+        copowerCowedgeToRestrictedCowedge_pt, restrictedCowedgeToCopowerCowedge_pt,
+        eqToHom_refl, Category.id_comp, Category.comp_id])
+
+/-- The categorical equivalence between restricted cowedges with weight `HomToProf pt`
+and cowedges over the copower profunctor. -/
+def homRestrictedCopowerEquiv (G : Cᵒᵖ ⥤ C ⥤ C) (pt : C) :
+    HomRestrictedCowedge G pt ≌ HomCopowerCowedge G pt where
+  functor := homRestrictedToCopowerFunctor G pt
+  inverse := copowerToHomRestrictedFunctor G pt
+  unitIso := homRestrictedCopowerUnitIso G pt
+  counitIso := homRestrictedCopowerCounitIso G pt
+  functor_unitIso_comp X := by
+    apply Limits.CoconeMorphism.ext
+    simp only [homRestrictedCopowerUnitIso, homRestrictedCopowerCounitIso,
+      homRestrictedToCopowerFunctor, copowerToHomRestrictedFunctor,
+      NatIso.ofComponents_hom_app, eqToIso.hom, Functor.comp_obj,
+      restrictedCowedgeToCopowerCowedgeHom, Limits.Cocone.category_comp_hom,
+      Limits.Cocone.category_id_hom, Limits.Cocones.eqToHom_hom,
+      copowerCowedgeToRestrictedCowedge_pt, restrictedCowedgeToCopowerCowedge_pt,
+      eqToHom_refl, Category.comp_id, RestrictedCowedgeCat,
+      RestrictedCowedge_eqToHom_hom]
+    rfl
 
 end MendlerCowedgeCorrespondence
 
