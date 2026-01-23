@@ -1439,6 +1439,133 @@ abbrev WeightedCowedge (W : Cᵒᵖ ⥤ C ⥤ Type v) (P : Cᵒᵖ ⥤ C ⥤ D) 
     (profunctorOnOpCoTwistedArrow C W)
     (profunctorOnCoTwistedArrow C P)
 
+/-!
+## Weighted Ends and Coends
+
+A weighted end is a terminal object in the category of weighted wedges, and
+a weighted coend is an initial object in the category of weighted cowedges.
+
+These are specializations of weighted limits and colimits to profunctors
+(bifunctors `Cᵒᵖ ⥤ C ⥤ D`) using the twisted and co-twisted arrow categories.
+-/
+
+/-- A weighted end is a terminal object in the category of weighted wedges. -/
+abbrev IsWeightedEnd {W : Cᵒᵖ ⥤ C ⥤ Type v} {P : Cᵒᵖ ⥤ C ⥤ D}
+    (c : WeightedWedge W P) :=
+  Limits.IsTerminal c
+
+namespace IsWeightedEnd
+
+variable {W : Cᵒᵖ ⥤ C ⥤ Type v} {P : Cᵒᵖ ⥤ C ⥤ D} {c : WeightedWedge W P}
+
+/-- The universal morphism from any weighted wedge to the weighted end. -/
+def lift (hc : IsWeightedEnd c) (d : WeightedWedge W P) : d ⟶ c :=
+  hc.from d
+
+/-- The underlying morphism in `D` from any wedge to the end wedge. -/
+def liftHom (hc : IsWeightedEnd c) (d : WeightedWedge W P) : d.pt ⟶ c.pt :=
+  (hc.lift d).hom
+
+/-- Any two morphisms to a weighted end are equal (uniqueness). -/
+theorem homExt (hc : IsWeightedEnd c)
+    {d : WeightedWedge W P} (f g : d ⟶ c) : f = g :=
+  Limits.IsTerminal.hom_ext hc f g
+
+/-- Two weighted ends are isomorphic (uniqueness up to isomorphism). -/
+def toUniqueUpToIso {c c' : WeightedWedge W P}
+    (hc : IsWeightedEnd c) (hc' : IsWeightedEnd c') : c ≅ c' :=
+  Limits.IsTerminal.uniqueUpToIso hc hc'
+
+end IsWeightedEnd
+
+/-- A weighted end wedge bundles a wedge with the proof it is terminal. -/
+structure WeightedEndWedge (W : Cᵒᵖ ⥤ C ⥤ Type v) (P : Cᵒᵖ ⥤ C ⥤ D) where
+  /-- The underlying weighted wedge. -/
+  wedge : WeightedWedge W P
+  /-- The proof that the wedge is terminal. -/
+  isEnd : IsWeightedEnd wedge
+
+/-- A weighted end exists if there is a terminal weighted wedge. -/
+class HasWeightedEnd (W : Cᵒᵖ ⥤ C ⥤ Type v) (P : Cᵒᵖ ⥤ C ⥤ D) where
+  /-- The end wedge containing the end and proof of terminality. -/
+  endWedge : WeightedEndWedge W P
+
+namespace HasWeightedEnd
+
+variable (W : Cᵒᵖ ⥤ C ⥤ Type v) (P : Cᵒᵖ ⥤ C ⥤ D) [HasWeightedEnd W P]
+
+/-- The weighted end wedge (the terminal weighted wedge). -/
+def weightedEnd : WeightedWedge W P :=
+  HasWeightedEnd.endWedge.wedge
+
+/-- The weighted end is terminal. -/
+def weightedEndIsEnd : IsWeightedEnd (weightedEnd W P) :=
+  HasWeightedEnd.endWedge.isEnd
+
+/-- The weighted end object (the wedge point of the end wedge). -/
+def weightedEndObj : D := (weightedEnd W P).pt
+
+end HasWeightedEnd
+
+/-- A weighted coend is an initial object in the category of weighted
+cowedges. -/
+abbrev IsWeightedCoend {W : Cᵒᵖ ⥤ C ⥤ Type v} {P : Cᵒᵖ ⥤ C ⥤ D}
+    (c : WeightedCowedge W P) :=
+  Limits.IsInitial c
+
+namespace IsWeightedCoend
+
+variable {W : Cᵒᵖ ⥤ C ⥤ Type v} {P : Cᵒᵖ ⥤ C ⥤ D} {c : WeightedCowedge W P}
+
+/-- The universal morphism from a weighted coend to any weighted cowedge. -/
+def desc (hc : IsWeightedCoend c) (d : WeightedCowedge W P) : c ⟶ d :=
+  hc.to d
+
+/-- The underlying morphism in `D` from the coend to any cowedge. -/
+def descHom (hc : IsWeightedCoend c) (d : WeightedCowedge W P) : c.pt ⟶ d.pt :=
+  (hc.desc d).hom
+
+/-- Any two morphisms from a weighted coend are equal (uniqueness). -/
+theorem homExt (hc : IsWeightedCoend c)
+    {d : WeightedCowedge W P} (f g : c ⟶ d) : f = g :=
+  Limits.IsInitial.hom_ext hc f g
+
+/-- Two weighted coends are isomorphic (uniqueness up to isomorphism). -/
+def toUniqueUpToIso {c c' : WeightedCowedge W P}
+    (hc : IsWeightedCoend c) (hc' : IsWeightedCoend c') : c ≅ c' :=
+  Limits.IsInitial.uniqueUpToIso hc hc'
+
+end IsWeightedCoend
+
+/-- A weighted coend cowedge bundles a cowedge with the proof it is initial. -/
+structure WeightedCoendCowedge (W : Cᵒᵖ ⥤ C ⥤ Type v) (P : Cᵒᵖ ⥤ C ⥤ D) where
+  /-- The underlying weighted cowedge. -/
+  cowedge : WeightedCowedge W P
+  /-- The proof that the cowedge is initial. -/
+  isCoend : IsWeightedCoend cowedge
+
+/-- A weighted coend exists if there is an initial weighted cowedge. -/
+class HasWeightedCoend (W : Cᵒᵖ ⥤ C ⥤ Type v) (P : Cᵒᵖ ⥤ C ⥤ D) where
+  /-- The coend cowedge containing the coend and proof of initiality. -/
+  coendCowedge : WeightedCoendCowedge W P
+
+namespace HasWeightedCoend
+
+variable (W : Cᵒᵖ ⥤ C ⥤ Type v) (P : Cᵒᵖ ⥤ C ⥤ D) [HasWeightedCoend W P]
+
+/-- The weighted coend cowedge (the initial weighted cowedge). -/
+def weightedCoend : WeightedCowedge W P :=
+  HasWeightedCoend.coendCowedge.cowedge
+
+/-- The weighted coend is initial. -/
+def weightedCoendIsCoend : IsWeightedCoend (weightedCoend W P) :=
+  HasWeightedCoend.coendCowedge.isCoend
+
+/-- The weighted coend object (the cowedge point of the coend cowedge). -/
+def weightedCoendObj : D := (weightedCoend W P).pt
+
+end HasWeightedCoend
+
 end WeightedLimitColimit
 
 section ConeWeightedConeEquivalence
