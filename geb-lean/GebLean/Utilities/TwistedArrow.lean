@@ -762,6 +762,100 @@ categorical isomorphism.
 def coTwistedArrowOpEquivTwistedArrow : (CoTwistedArrow C)ᵒᵖ ≌ TwistedArrow C :=
   Cat.equivOfIso coTwistedArrowOpIsoTwistedArrow
 
+/-!
+### Object component lemmas for the equivalence
+
+These lemmas relate `twDom`/`twCod` on the twisted arrow side to
+`coTwDom`/`coTwCod` on the co-twisted arrow side through the
+`coTwistedArrowOpEquivTwistedArrow` equivalence.
+-/
+
+/-- The domain of the twisted arrow corresponding to a co-twisted arrow
+is the codomain of the co-twisted arrow. -/
+theorem coTwistedArrowOpEquiv_obj_dom (tw : CoTwistedArrow C) :
+    twDom (coTwistedArrowOpEquivTwistedArrow.functor.obj (Opposite.op tw)) =
+    coTwCod tw := by
+  simp only [coTwistedArrowOpEquivTwistedArrow, Cat.equivOfIso,
+    coTwistedArrowOpIsoTwistedArrow, Iso.trans_hom]
+  simp only [coTwistedArrowOpIsoTwistedArrowOp, Cat.opFunctor,
+    Cat.opFunctorInvolutive, Iso.trans_hom]
+  simp only [twistedArrowOpOpIsoCoTwistedArrow, twistedArrowIsoTwistedArrowOp]
+  simp only [Cat.isoOfEquiv, twistedArrowEquivTwistedArrowOp, Iso.symm_hom]
+  simp only [twistedArrowOpToTwistedArrow]
+  simp only [twDom, twObjMk, coTwCod]
+  rfl
+
+/-- The codomain of the twisted arrow corresponding to a co-twisted arrow
+is the domain of the co-twisted arrow. -/
+theorem coTwistedArrowOpEquiv_obj_cod (tw : CoTwistedArrow C) :
+    twCod (coTwistedArrowOpEquivTwistedArrow.functor.obj (Opposite.op tw)) =
+    coTwDom tw := by
+  simp only [coTwistedArrowOpEquivTwistedArrow, Cat.equivOfIso,
+    coTwistedArrowOpIsoTwistedArrow, Iso.trans_hom]
+  simp only [coTwistedArrowOpIsoTwistedArrowOp, Cat.opFunctor,
+    Cat.opFunctorInvolutive, Iso.trans_hom]
+  simp only [twistedArrowOpOpIsoCoTwistedArrow, twistedArrowIsoTwistedArrowOp]
+  simp only [Cat.isoOfEquiv, twistedArrowEquivTwistedArrowOp, Iso.symm_hom]
+  simp only [twistedArrowOpToTwistedArrow]
+  simp only [twCod, twObjMk, coTwDom]
+  rfl
+
+/-!
+### Morphism component lemmas for the equivalence
+
+These lemmas relate `twDomArr`/`twCodArr` on the twisted arrow side to
+`coTwDomArr`/`coTwCodArr` on the co-twisted arrow side through the
+`coTwistedArrowOpEquivTwistedArrow` equivalence.
+
+For a morphism `f : tw ⟶ tw'` in CoTwistedArrow C:
+- After the equivalence, this becomes
+  `equiv.map f.op : equiv.obj (op tw') ⟶ equiv.obj (op tw)`
+- The `twDomArr` component has type
+  `twDom (equiv.obj (op tw)) ⟶ twDom (equiv.obj (op tw'))`,
+  which equals `coTwCod tw ⟶ coTwCod tw'` (matching `coTwCodArr f`)
+- The `twCodArr` component has type
+  `twCod (equiv.obj (op tw')) ⟶ twCod (equiv.obj (op tw))`,
+  which equals `coTwDom tw' ⟶ coTwDom tw` (matching `coTwDomArr f`)
+-/
+
+/-- The `twDomArr` component of a morphism under the equivalence equals
+the `coTwCodArr` of the original morphism (modulo the object correspondence).
+The equality holds because `twDom ∘ equiv = coTwCod`. -/
+theorem coTwistedArrowOpEquiv_map_twDomArr {tw tw' : CoTwistedArrow C}
+    (f : tw ⟶ tw') :
+    twDomArr (coTwistedArrowOpEquivTwistedArrow.functor.map f.op) =
+    eqToHom (coTwistedArrowOpEquiv_obj_dom tw).symm ≫
+    coTwCodArr f ≫ eqToHom (coTwistedArrowOpEquiv_obj_dom tw') := by
+  simp only [eqToHom_refl, Category.id_comp, Category.comp_id]
+  simp only [coTwistedArrowOpEquivTwistedArrow, Cat.equivOfIso,
+    coTwistedArrowOpIsoTwistedArrow, Iso.trans_hom]
+  simp only [coTwistedArrowOpIsoTwistedArrowOp, Cat.opFunctor,
+    Cat.opFunctorInvolutive, Iso.trans_hom, Functor.mapIso_hom]
+  simp only [twistedArrowOpOpIsoCoTwistedArrow, twistedArrowIsoTwistedArrowOp]
+  simp only [Cat.isoOfEquiv, twistedArrowEquivTwistedArrowOp, Iso.symm_hom]
+  simp only [twistedArrowOpToTwistedArrow]
+  simp only [twDomArr, coTwCodArr]
+  rfl
+
+/-- The `twCodArr` component of a morphism under the equivalence equals
+the `coTwDomArr` of the original morphism (modulo the object correspondence).
+The equality holds because `twCod ∘ equiv = coTwDom`. -/
+theorem coTwistedArrowOpEquiv_map_twCodArr {tw tw' : CoTwistedArrow C}
+    (f : tw ⟶ tw') :
+    twCodArr (coTwistedArrowOpEquivTwistedArrow.functor.map f.op) =
+    eqToHom (coTwistedArrowOpEquiv_obj_cod tw').symm ≫
+    coTwDomArr f ≫ eqToHom (coTwistedArrowOpEquiv_obj_cod tw) := by
+  simp only [eqToHom_refl, Category.id_comp, Category.comp_id]
+  simp only [coTwistedArrowOpEquivTwistedArrow, Cat.equivOfIso,
+    coTwistedArrowOpIsoTwistedArrow, Iso.trans_hom]
+  simp only [coTwistedArrowOpIsoTwistedArrowOp, Cat.opFunctor,
+    Cat.opFunctorInvolutive, Iso.trans_hom, Functor.mapIso_hom]
+  simp only [twistedArrowOpOpIsoCoTwistedArrow, twistedArrowIsoTwistedArrowOp]
+  simp only [Cat.isoOfEquiv, twistedArrowEquivTwistedArrowOp, Iso.symm_hom]
+  simp only [twistedArrowOpToTwistedArrow]
+  simp only [twCodArr, coTwDomArr]
+  rfl
+
 end TwistedArrowSelfDualityUnprimed
 
 @[simp]
