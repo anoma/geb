@@ -1,3 +1,4 @@
+import GebLean.Paranatural
 import GebLean.WeightedAlg
 import GebLean.Utilities.Elements
 
@@ -99,27 +100,33 @@ that restricted cowedges provide a compatible family of maps to the apex,
 not functoriality of the diagram itself.
 -/
 
-/-- A restricted cowedge from G with weight H induces a cocone structure over
-the category of elements of (the diagonal of) H.
+/-- A restricted cowedge from G with weight H induces a family of morphisms
+indexed by the objects of `DiagElem H`, the category of diagonal elements of H.
+
+For an endoprofunctor `H : Cᵒᵖ ⥤ C ⥤ Type v`, `DiagElem H` is the category
+where objects are pairs `(A, h)` with `A : C` and `h : diagApp H A`, and
+morphisms are morphisms `f : A → B` in C satisfying the diagonal compatibility
+condition.
 
 Given a restricted cowedge `(pt, Φ)` where `Φ_A : H(A, A) → C(G(A, A), pt)`,
-we get for each element `(A, h) ∈ El(H_diag)` a morphism `Φ_A(h) : G(A, A) → pt`.
+we get for each object `x : DiagElem H` a morphism
+`Φ x.base x.elem : G(x.base, x.base) → pt`.
 
-The dinaturality of Φ ensures compatibility with morphisms in the category
-of elements.
+The dinaturality of Φ provides a compatibility condition with respect to
+morphisms in `DiagElem H`.
 -/
 structure RestrictedCowedgeCoconeData (H : Cᵒᵖ ⥤ C ⥤ Type v) (cwedge : RestrictedCowedge G H)
     where
-  /-- For each diagonal element, the map to the apex. -/
-  leg : (A : C) → (h : diagApp H A) → (G.obj (op A)).obj A ⟶ cwedge.pt
+  /-- For each object of `DiagElem H`, the map to the apex. -/
+  leg : (x : DiagElem H) → (G.obj (op x.base)).obj x.base ⟶ cwedge.pt
   /-- The leg equals the cowedge family. -/
-  leg_eq : ∀ A h, leg A h = cwedge.family A h
+  leg_eq : ∀ x, leg x = cwedge.family x.base x.elem
 
-/-- Convert a restricted cowedge to its cocone data. -/
+/-- Convert a restricted cowedge to its cocone data over `DiagElem H`. -/
 def RestrictedCowedge.toCoconeData (H : Cᵒᵖ ⥤ C ⥤ Type v) (cwedge : RestrictedCowedge G H) :
     RestrictedCowedgeCoconeData G H cwedge where
-  leg := cwedge.family
-  leg_eq _ _ := rfl
+  leg x := cwedge.family x.base x.elem
+  leg_eq _ := rfl
 
 end DiagramFromSlice
 
