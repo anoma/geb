@@ -46,41 +46,25 @@ universe u v
 
 variable {C : Type u} [Category.{v} C]
 
-section HomToProfAndCoyoneda
+section HomToProfAndYoneda
 
 /-!
-## HomToProf pt and coyoneda'.obj pt
+## HomToProf pt and yoneda.obj pt
 
-The profunctor `HomToProf pt : Cᵒᵖ ⥤ C ⥤ Type v` has the property that its
-diagonal `diagApp (HomToProf pt) A = (A ⟶ pt)` equals `(coyoneda'.obj pt).obj A`.
+The profunctor `HomToProf pt : Cᵒᵖ ⥤ C ⥤ Type v` is constant in its second
+argument. Its diagonal `diagApp (HomToProf pt) A = (A ⟶ pt)` equals
+`(yoneda.obj pt).obj (op A)`.
 
-Since `HomToProf pt` is constant in the second argument, its diagonal behavior
-is completely determined by the contravariant hom-functor.
+Thus the diagonal of `HomToProf pt` is just `yoneda.obj pt` (the contravariant
+hom-functor into pt).
 -/
 
-/-- The diagonal of `HomToProf pt` as a functor: sends `A` to `(A ⟶ pt)`,
-contravariant via precomposition. This is naturally isomorphic to
-`coyoneda'.obj pt` (though `coyoneda'` uses `op'` while this uses `op`). -/
-@[simps]
-def HomToProfDiag (pt : C) : Cᵒᵖ ⥤ Type v where
-  obj A := A.unop ⟶ pt
-  map {A B} f := fun h => f.unop ≫ h
-  map_id _ := by ext; simp
-  map_comp _ _ := by ext; simp [Category.assoc]
-
-/-- The diagonal of `HomToProf pt` at any object equals the diagonal functor
+/-- The diagonal of `HomToProf pt` at any object equals the Yoneda embedding
 evaluated at that object. -/
 theorem HomToProf_diagApp_eq (pt A : C) :
-    diagApp (HomToProf pt) A = (HomToProfDiag pt).obj (op A) := rfl
+    diagApp (HomToProf pt) A = (yoneda.obj pt).obj (op A) := rfl
 
-/-- Natural isomorphism between `HomToProfDiag pt` and the Yoneda embedding at pt.
-This uses mathlib's standard `yoneda`. -/
-def HomToProfDiagIsoYoneda (pt : C) : HomToProfDiag pt ≅ yoneda.obj pt :=
-  NatIso.ofComponents
-    (fun A => Equiv.toIso (Equiv.refl _))
-    (fun {A B} f => by ext h; rfl)
-
-end HomToProfAndCoyoneda
+end HomToProfAndYoneda
 
 section DiagramFromSlice
 
