@@ -877,4 +877,123 @@ theorem copowerCowedgeToRestrictedCowedge_pt (G : Cᵒᵖ ⥤ C ⥤ C) (pt : C)
 
 end MendlerCowedgeCorrespondence
 
+section KanExtensionConnection
+
+/-!
+### Connection to Left Kan Extensions
+
+The restricted coend `Σ(HomToProf pt, G)` has the structure of a pointwise left
+Kan extension formula, generalizing from covariant functors to profunctors.
+
+#### Background: Pointwise Left Kan Extensions
+
+For functors `L : C ⥤ D` and `F : C ⥤ H`, the pointwise left Kan extension of `F`
+along `L` at an object `Y : D` is:
+
+  `(Lan_L F)(Y) = colim_{g : CostructuredArrow L Y} F(g.left)`
+
+The comma category `CostructuredArrow L Y` has:
+- Objects: pairs `(X, f)` where `X : C` and `f : L(X) → Y`
+- Morphisms: `g : X₁ → X₂` such that `L(g) ≫ f₂ = f₁`
+
+When `L = 𝟭 C` (the identity functor), `CostructuredArrow (𝟭 C) pt ≃ Over pt`, so:
+
+  `(Lan_id F)(pt) = colim_{(A, f : A → pt) ∈ Over pt} F(A)`
+
+By the co-Yoneda lemma, this equals `F(pt)`.
+
+#### Connection to Restricted Coends
+
+For a profunctor `G : Cᵒᵖ ⥤ C ⥤ C`:
+
+1. The restricted coend `Σ(HomToProf pt, G)` is the initial object in the category
+   of `(HomToProf pt)`-restricted `G`-cowedges.
+
+2. The weight `HomToProf pt` restricted to the diagonal equals `coyoneda'.obj pt`,
+   and its category of elements is equivalent to `Over pt`.
+
+3. A restricted cowedge provides a compatible family `G(A, A) → apex` indexed by
+   `Over pt`, analogous to a cocone in the colimit formula.
+
+4. When `G(A, B) = F(B)` for some covariant `F : C ⥤ C`:
+   - The restricted coend reduces to `colim_{Over pt} F`
+   - This equals the pointwise Kan extension `(Lan_id F)(pt) = F(pt)`
+
+The restricted coend thus generalizes the Kan extension formula to profunctors
+where `G ∘ Δ` is not functorial.
+-/
+
+open HasRestrictedCoend
+
+variable {C : Type u} [Category.{v} C]
+
+/-- The diagonal of `constFirstArgProf F` at any object `A` is `F(A)`. -/
+theorem constFirstArgProf_diagonal (F : C ⥤ C) (A : C) :
+    ((constFirstArgProf F).obj (op A)).obj A = F.obj A := rfl
+
+/-- For a covariant functor `F : C ⥤ C`, the restricted cowedge with weight
+`HomToProf pt` and profunctor `constFirstArgProf F` has a canonical structure
+from any morphism `F(pt) → apex`.
+
+This shows that `F(pt)` is a candidate for the restricted coend, as it receives
+morphisms from all `F(A)` for `A` admitting a map to `pt`. -/
+def constFirstArgProfCowedge (F : C ⥤ C) (pt D : C) (morph : F.obj pt ⟶ D) :
+    RestrictedCowedge (constFirstArgProf F) (HomToProf pt) :=
+  RestrictedCowedge.mk' D
+    (fun A f => F.map f ≫ morph)
+    (fun A B g β => by
+      simp only [Profunctor.lmap, Profunctor.rmap, sliceProfunctor_obj_map,
+        sliceProfunctor_map_app, Quiver.Hom.unop_op, HomToProf_map_app,
+        HomToProf_obj_map, constFirstArgProf_map_snd, constFirstArgProf_map_fst,
+        Functor.map_comp, Category.assoc]
+      simp only [constFirstArgProf, Functor.const_obj_obj, Category.id_comp])
+
+/-- For a covariant functor `F`, the identity morphism on `F(pt)` induces the
+universal restricted cowedge. The apex `F(pt)` receives all `F(A)` via the
+functorial action of F on morphisms `A → pt`. -/
+def constFirstArgProfUniversalCowedge (F : C ⥤ C) (pt : C) :
+    RestrictedCowedge (constFirstArgProf F) (HomToProf pt) :=
+  constFirstArgProfCowedge F pt (F.obj pt) (𝟙 (F.obj pt))
+
+@[simp]
+theorem constFirstArgProfUniversalCowedge_pt (F : C ⥤ C) (pt : C) :
+    (constFirstArgProfUniversalCowedge F pt).pt = F.obj pt := rfl
+
+@[simp]
+theorem constFirstArgProfUniversalCowedge_family (F : C ⥤ C) (pt : C)
+    (A : C) (f : A ⟶ pt) :
+    (constFirstArgProfUniversalCowedge F pt).family A f = F.map f := by
+  simp only [constFirstArgProfUniversalCowedge, constFirstArgProfCowedge,
+    RestrictedCowedge.mk', RestrictedCowedge.family, Category.comp_id]
+
+/-- The universal cowedge for `constFirstArgProf F` is initial: any other
+restricted cowedge factors uniquely through it.
+
+This is the co-Yoneda lemma: `Σ(HomToProf pt, constFirstArgProf F) ≅ F(pt)`.
+When the profunctor arises from a covariant functor, the restricted coend
+equals the value of that functor, recovering the Kan extension formula. -/
+theorem constFirstArgProfUniversalCowedge_isInitial (F : C ⥤ C) (pt : C)
+    (cwedge : RestrictedCowedge (constFirstArgProf F) (HomToProf pt)) :
+    ∃! f : F.obj pt ⟶ cwedge.pt,
+      ∀ A (g : A ⟶ pt),
+        (constFirstArgProfUniversalCowedge F pt).family A g ≫ f = cwedge.family A g := by
+  use cwedge.family pt (𝟙 pt)
+  constructor
+  · intro A g
+    simp only [constFirstArgProfUniversalCowedge_family]
+    have dinat := cwedge.isDinatural A pt g (𝟙 pt)
+    simp only [Profunctor.lmap, Profunctor.rmap, sliceProfunctor_obj_map,
+      sliceProfunctor_map_app, Quiver.Hom.unop_op, HomToProf_map_app,
+      HomToProf_obj_map, Category.comp_id,
+      constFirstArgProf_map_snd, constFirstArgProf_map_fst] at dinat
+    simp only [constFirstArgProf, Functor.const_obj_obj, Category.id_comp] at dinat
+    exact dinat
+  · intro f hf
+    specialize hf pt (𝟙 pt)
+    simp only [constFirstArgProfUniversalCowedge_family, Functor.map_id] at hf
+    calc f = 𝟙 (F.obj pt) ≫ f := (Category.id_comp f).symm
+      _ = cwedge.family pt (𝟙 pt) := hf
+
+end KanExtensionConnection
+
 end GebLean

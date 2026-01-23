@@ -2,7 +2,7 @@
 
 ## Status
 
-Active
+Complete
 
 ## Context
 
@@ -28,8 +28,7 @@ This connects Vene's Mendler-Lambek correspondence to standard category theory.
 - [x] Prove ends/coends as limits/colimits over twisted arrow category
 - [x] Prove restricted coend equals ordinary coend with copowers:
       `Sigma(H, G) = integral^A H(A,A) . G(A,A)` (via `restrictedCoend_is_copowerCoend`)
-- [ ] Investigate whether the ordinary coend can be expressed as a left Kan
-      extension
+- [x] Investigate connection to left Kan extensions (co-Yoneda lemma formalized)
 
 ## Notes
 
@@ -54,6 +53,25 @@ The connection between restricted coends and copower coends is established in
 5. `restrictedCoend_is_copowerCoend` - The theorem stating that for a dinatural
    copower cowedge family, there exists a unique morphism from the restricted
    coend satisfying the factorization property.
+
+### Kan Extension Connection
+
+The connection to left Kan extensions is established in the `KanExtensionConnection`
+section of `RestrictedCoendAsColimit.lean`:
+
+1. `constFirstArgProfCowedge` - For a covariant functor `F : C ⥤ C`, builds a
+   restricted cowedge from any morphism `F(pt) → apex`.
+
+2. `constFirstArgProfUniversalCowedge` - The identity on `F(pt)` gives the
+   universal restricted cowedge.
+
+3. `constFirstArgProfUniversalCowedge_isInitial` - The co-Yoneda lemma:
+   `Σ(HomToProf pt, constFirstArgProf F) ≅ F(pt)`.
+
+This shows that when a profunctor arises from a covariant functor constant in
+its first argument, the restricted coend equals the functor's value. This
+recovers the Kan extension formula `(Lan_id F)(pt) = F(pt)` via the colimit
+formula over the slice category.
 
 ### Universal Property Equivalence (Analysis)
 
