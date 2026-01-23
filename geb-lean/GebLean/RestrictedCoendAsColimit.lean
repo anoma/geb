@@ -389,7 +389,186 @@ theorem ext {S : Type v} {X Y : C} (f g : S ·. X ⟶ Y)
   have hg := uniq (fun s => inj S X s ≫ f) g (fun s => (h s).symm)
   rw [hf, hg]
 
+/-- Functorial action of copowers on the base object.
+Given `g : X → Y`, we get `mapVal g : S · X → S · Y`. -/
+def mapVal {S : Type v} {X Y : C} (g : X ⟶ Y) : copower S X ⟶ copower S Y :=
+  desc (fun s => g ≫ inj S Y s)
+
+@[simp]
+theorem mapVal_inj {S : Type v} {X Y : C} (g : X ⟶ Y) (s : S) :
+    inj S X s ≫ mapVal g = g ≫ inj S Y s := fac _ s
+
+@[simp]
+theorem mapVal_id {S : Type v} {X : C} : mapVal (𝟙 X) = 𝟙 (copower S X) := by
+  apply ext
+  intro s
+  rw [mapVal_inj, Category.id_comp, Category.comp_id]
+
+@[simp]
+theorem mapVal_comp {S : Type v} {X Y Z : C} (f : X ⟶ Y) (g : Y ⟶ Z) :
+    mapVal (f ≫ g) = mapVal f ≫ mapVal (S := S) g := by
+  apply ext
+  intro s
+  calc inj S X s ≫ mapVal (f ≫ g) = (f ≫ g) ≫ inj S Z s := mapVal_inj _ s
+    _ = f ≫ g ≫ inj S Z s := by rw [Category.assoc]
+    _ = f ≫ (inj S Y s ≫ mapVal g) := by rw [← mapVal_inj g s]
+    _ = (f ≫ inj S Y s) ≫ mapVal g := by rw [← Category.assoc]
+    _ = (inj S X s ≫ mapVal f) ≫ mapVal g := by rw [← mapVal_inj f s]
+    _ = inj S X s ≫ mapVal f ≫ mapVal g := by rw [Category.assoc]
+
+/-- Functorial action of copowers on the indexing type.
+Given `f : S → T`, we get `mapIdx f : S · X → T · X`. -/
+def mapIdx {S T : Type v} {X : C} (f : S → T) : copower S X ⟶ copower T X :=
+  desc (fun s => inj T X (f s))
+
+@[simp]
+theorem mapIdx_inj {S T : Type v} {X : C} (f : S → T) (s : S) :
+    inj S X s ≫ mapIdx f = inj T X (f s) := fac _ s
+
+@[simp]
+theorem mapIdx_id {S : Type v} {X : C} : mapIdx (id : S → S) = 𝟙 (copower S X) := by
+  apply ext
+  intro s
+  rw [mapIdx_inj, id_eq, Category.comp_id]
+
+@[simp]
+theorem mapIdx_comp {S T U : Type v} {X : C} (f : S → T) (g : T → U) :
+    mapIdx (g ∘ f) = mapIdx f ≫ mapIdx (X := X) g := by
+  apply ext
+  intro s
+  calc inj S X s ≫ mapIdx (g ∘ f) = inj U X ((g ∘ f) s) := mapIdx_inj _ s
+    _ = inj U X (g (f s)) := rfl
+    _ = inj T X (f s) ≫ mapIdx g := (mapIdx_inj g _).symm
+    _ = (inj S X s ≫ mapIdx f) ≫ mapIdx g := by rw [← mapIdx_inj f s]
+    _ = inj S X s ≫ mapIdx f ≫ mapIdx g := by rw [Category.assoc]
+
+/-- Combined functorial action: given `f : S → T` and `g : X → Y`,
+we get `bimap f g : S · X → T · Y`. -/
+def bimap {S T : Type v} {X Y : C} (f : S → T) (g : X ⟶ Y) :
+    copower S X ⟶ copower T Y :=
+  desc (fun s => g ≫ inj T Y (f s))
+
+@[simp]
+theorem bimap_inj {S T : Type v} {X Y : C} (f : S → T) (g : X ⟶ Y) (s : S) :
+    inj S X s ≫ bimap f g = g ≫ inj T Y (f s) := fac _ s
+
+theorem bimap_eq_mapIdx_mapVal {S T : Type v} {X Y : C} (f : S → T) (g : X ⟶ Y) :
+    bimap f g = mapIdx f ≫ mapVal (S := T) g := by
+  apply ext
+  intro s
+  rw [bimap_inj, ← Category.assoc, mapIdx_inj, mapVal_inj]
+
+theorem bimap_eq_mapVal_mapIdx {S T : Type v} {X Y : C} (f : S → T) (g : X ⟶ Y) :
+    bimap f g = mapVal g ≫ mapIdx (X := Y) f := by
+  apply ext
+  intro s
+  calc inj S X s ≫ bimap f g = g ≫ inj T Y (f s) := bimap_inj _ _ s
+    _ = g ≫ (inj S Y s ≫ mapIdx f) := by rw [← mapIdx_inj f s]
+    _ = (g ≫ inj S Y s) ≫ mapIdx f := by rw [← Category.assoc]
+    _ = (inj S X s ≫ mapVal g) ≫ mapIdx f := by rw [← mapVal_inj g s]
+    _ = inj S X s ≫ mapVal g ≫ mapIdx f := by rw [Category.assoc]
+
+@[simp]
+theorem bimap_id {S : Type v} {X : C} : bimap (id : S → S) (𝟙 X) = 𝟙 (copower S X) := by
+  apply ext
+  intro s
+  rw [bimap_inj, id_eq, Category.id_comp, Category.comp_id]
+
+@[simp]
+theorem bimap_comp {S T U : Type v} {X Y Z : C}
+    (f₁ : S → T) (g₁ : X ⟶ Y) (f₂ : T → U) (g₂ : Y ⟶ Z) :
+    bimap (f₂ ∘ f₁) (g₁ ≫ g₂) = bimap f₁ g₁ ≫ bimap f₂ g₂ := by
+  apply ext
+  intro s
+  have step1 : inj S X s ≫ bimap (f₂ ∘ f₁) (g₁ ≫ g₂) =
+      (g₁ ≫ g₂) ≫ inj U Z (f₂ (f₁ s)) := bimap_inj _ _ s
+  calc inj S X s ≫ bimap (f₂ ∘ f₁) (g₁ ≫ g₂)
+      = (g₁ ≫ g₂) ≫ inj U Z (f₂ (f₁ s)) := step1
+    _ = g₁ ≫ g₂ ≫ inj U Z (f₂ (f₁ s)) := by rw [Category.assoc]
+    _ = g₁ ≫ (inj T Y (f₁ s) ≫ bimap f₂ g₂) := by rw [← bimap_inj f₂ g₂]
+    _ = (g₁ ≫ inj T Y (f₁ s)) ≫ bimap f₂ g₂ := by rw [← Category.assoc]
+    _ = (inj S X s ≫ bimap f₁ g₁) ≫ bimap f₂ g₂ := by rw [← bimap_inj f₁ g₁]
+    _ = inj S X s ≫ bimap f₁ g₁ ≫ bimap f₂ g₂ := by rw [Category.assoc]
+
 end HasCopowers
+
+section CopowerProfunctor
+
+/-!
+### The Copower Profunctor
+
+For profunctors `H : Cᵒᵖ ⥤ C ⥤ Type v` and `G : Cᵒᵖ ⥤ C ⥤ C`, the copower
+profunctor `copowerProf H G : Cᵒᵖ ⥤ C ⥤ C` is defined by:
+
+  `(copowerProf H G)(A, B) = H(A, B) · G(A, B)`
+
+where `·` denotes the copower. The functorial actions are:
+- Contravariant in first arg: uses `H.map f.op` on indices, `G.map f.op` on values
+- Covariant in second arg: uses `H.obj (op A).map g` on indices, `G.obj (op A).map g` on values
+-/
+
+open HasCopowers
+
+variable {C : Type u} [Category.{v} C] [HasCopowers C]
+
+/-- The inner functor of the copower profunctor: for fixed `A`, this is a
+functor `C ⥤ C` sending `B` to `H(A, B) · G(A, B)`. -/
+def copowerProfInner (H : Cᵒᵖ ⥤ C ⥤ Type v) (G : Cᵒᵖ ⥤ C ⥤ C) (A : Cᵒᵖ) :
+    C ⥤ C where
+  obj B := copower ((H.obj A).obj B) ((G.obj A).obj B)
+  map {B₁ B₂} g := bimap ((H.obj A).map g) ((G.obj A).map g)
+  map_id B := by simp only [Functor.map_id]; exact bimap_id
+  map_comp {B₁ B₂ B₃} f g := by
+    simp only [Functor.map_comp]
+    exact bimap_comp _ _ _ _
+
+/-- The copower profunctor `copowerProf H G : Cᵒᵖ ⥤ C ⥤ C` defined by
+`(copowerProf H G)(A, B) = H(A, B) · G(A, B)`. -/
+def copowerProf (H : Cᵒᵖ ⥤ C ⥤ Type v) (G : Cᵒᵖ ⥤ C ⥤ C) : Cᵒᵖ ⥤ C ⥤ C where
+  obj A := copowerProfInner H G A
+  map {A₁ A₂} f := {
+    app := fun B => bimap ((H.map f).app B) ((G.map f).app B)
+    naturality := fun {B₁ B₂} g => by
+      apply ext
+      intro s
+      simp only [copowerProfInner]
+      -- Goal: bimap (H_1.map g) (G_1.map g) ≫ bimap (H.map f).app (G.map f).app =
+      --       bimap (H.map f).app (G.map f).app ≫ bimap (H_2.map g) (G_2.map g)
+      -- where H_1 = H.obj A₁, G_1 = G.obj A₁, H_2 = H.obj A₂, G_2 = G.obj A₂
+      rw [← bimap_comp, ← bimap_comp]
+      -- Now we need: bimap ((H.map f).app ∘ (H.obj A₁).map g) ((G.obj A₁).map g ≫ (G.map f).app) =
+      --              bimap ((H.obj A₂).map g ∘ (H.map f).app) ((G.map f).app ≫ (G.obj A₂).map g)
+      have hH : (H.map f).app B₂ ∘ (H.obj A₁).map g = (H.obj A₂).map g ∘ (H.map f).app B₁ := by
+        ext x
+        exact congrFun ((H.map f).naturality g) x
+      have hG : (G.obj A₁).map g ≫ (G.map f).app B₂ = (G.map f).app B₁ ≫ (G.obj A₂).map g :=
+        (G.map f).naturality g
+      rw [hH, hG]
+  }
+  map_id A := by
+    ext B
+    simp only [Functor.map_id, NatTrans.id_app, copowerProfInner]
+    exact bimap_id
+  map_comp {A₁ A₂ A₃} f g := by
+    ext B
+    simp only [Functor.map_comp, NatTrans.comp_app, copowerProfInner]
+    exact bimap_comp _ _ _ _
+
+@[simp]
+theorem copowerProf_obj_obj (H : Cᵒᵖ ⥤ C ⥤ Type v) (G : Cᵒᵖ ⥤ C ⥤ C) (A : Cᵒᵖ) (B : C) :
+    ((copowerProf H G).obj A).obj B = copower ((H.obj A).obj B) ((G.obj A).obj B) := rfl
+
+@[simp]
+theorem copowerProf_obj_map (H : Cᵒᵖ ⥤ C ⥤ Type v) (G : Cᵒᵖ ⥤ C ⥤ C)
+    (A : Cᵒᵖ) {B₁ B₂ : C} (g : B₁ ⟶ B₂) :
+    ((copowerProf H G).obj A).map g = bimap ((H.obj A).map g) ((G.obj A).map g) := rfl
+
+@[simp]
+theorem copowerProf_map_app (H : Cᵒᵖ ⥤ C ⥤ Type v) (G : Cᵒᵖ ⥤ C ⥤ C)
+    {A₁ A₂ : Cᵒᵖ} (f : A₁ ⟶ A₂) (B : C) :
+    ((copowerProf H G).map f).app B = bimap ((H.map f).app B) ((G.map f).app B) := rfl
+
+end CopowerProfunctor
 
 /-!
 ### The Correspondence between Cowedges and Restricted Cowedges
@@ -510,5 +689,192 @@ theorem restrictedCoend_is_copowerCoend [HasCopowers C] (H : Cᵒᵖ ⥤ C ⥤ T
     exact congrArg RestrictedCowedge.Hom.hom eq
 
 end CopowerCoendEquivalence
+
+section CowedgeCorrespondence
+
+/-!
+### Correspondence between mathlib Cowedges and IsCopowerCowedgeDinatural
+
+This section establishes the equivalence between:
+1. `Cowedge (copowerProf H G)` - mathlib's standard cowedge structure over the
+   copower profunctor
+2. `IsCopowerCowedgeDinatural H G pt ω` - our ad-hoc dinaturality condition
+
+The correspondence is mediated by copower extensionality: the mathlib dinaturality
+condition `bimap f g ≫ ι i = bimap f' g' ≫ ι j` is equivalent to the pointwise
+condition `g ≫ inj(f x) ≫ ι i = g' ≫ inj(f' x) ≫ ι j` for all indices `x`.
+-/
+
+open HasCopowers Limits
+
+variable {C : Type u} [Category.{v} C] [HasCopowers C]
+
+/-- The mathlib dinaturality condition for `Cowedge (copowerProf H G)` implies
+`IsCopowerCowedgeDinatural`. -/
+theorem cowedge_dinatural_implies_copowerCowedgeDinatural
+    (H : Cᵒᵖ ⥤ C ⥤ Type v) (G : Cᵒᵖ ⥤ C ⥤ C) (pt : C)
+    (ω : ∀ A, copower (diagApp H A) ((G.obj (op A)).obj A) ⟶ pt)
+    (hω : ∀ ⦃i j : C⦄ (f : i ⟶ j),
+      ((copowerProf H G).map f.op).app i ≫ ω i =
+      ((copowerProf H G).obj (op j)).map f ≫ ω j) :
+    IsCopowerCowedgeDinatural H G pt ω := by
+  intro A B g x
+  have h := hω g
+  simp only [copowerProf_map_app, copowerProf_obj_map] at h
+  have lhs : inj _ _ x ≫ bimap ((H.map g.op).app A) ((G.map g.op).app A) ≫ ω A =
+      (G.map g.op).app A ≫ inj _ _ ((H.map g.op).app A x) ≫ ω A := by
+    rw [← Category.assoc, bimap_inj]
+    rw [Category.assoc]
+  have rhs : inj _ _ x ≫ bimap ((H.obj (op B)).map g) ((G.obj (op B)).map g) ≫ ω B =
+      (G.obj (op B)).map g ≫ inj _ _ ((H.obj (op B)).map g x) ≫ ω B := by
+    rw [← Category.assoc, bimap_inj]
+    rw [Category.assoc]
+  calc (G.obj (op B)).map g ≫ inj _ _ ((H.obj (op B)).map g x) ≫ ω B
+      = inj _ _ x ≫ bimap ((H.obj (op B)).map g) ((G.obj (op B)).map g) ≫ ω B := rhs.symm
+    _ = inj _ _ x ≫ bimap ((H.map g.op).app A) ((G.map g.op).app A) ≫ ω A := by
+        rw [← h]
+    _ = (G.map g.op).app A ≫ inj _ _ ((H.map g.op).app A x) ≫ ω A := lhs
+
+/-- `IsCopowerCowedgeDinatural` implies the mathlib dinaturality condition for
+`Cowedge (copowerProf H G)`. -/
+theorem copowerCowedgeDinatural_implies_cowedge_dinatural
+    (H : Cᵒᵖ ⥤ C ⥤ Type v) (G : Cᵒᵖ ⥤ C ⥤ C) (pt : C)
+    (ω : ∀ A, copower (diagApp H A) ((G.obj (op A)).obj A) ⟶ pt)
+    (hω : IsCopowerCowedgeDinatural H G pt ω) :
+    ∀ ⦃i j : C⦄ (f : i ⟶ j),
+      ((copowerProf H G).map f.op).app i ≫ ω i =
+      ((copowerProf H G).obj (op j)).map f ≫ ω j := by
+  intro i j f
+  simp only [copowerProf_map_app, copowerProf_obj_map]
+  apply ext
+  intro x
+  have h := hω i j f x
+  have lhs_eq : inj _ _ x ≫ bimap ((H.map f.op).app i) ((G.map f.op).app i) ≫ ω i =
+      (G.map f.op).app i ≫ inj _ _ ((H.map f.op).app i x) ≫ ω i := by
+    rw [← Category.assoc, bimap_inj, Category.assoc]
+  have rhs_eq : inj _ _ x ≫ bimap ((H.obj (op j)).map f) ((G.obj (op j)).map f) ≫ ω j =
+      (G.obj (op j)).map f ≫ inj _ _ ((H.obj (op j)).map f x) ≫ ω j := by
+    rw [← Category.assoc, bimap_inj, Category.assoc]
+  rw [lhs_eq, h.symm, ← rhs_eq]
+
+/-- Construct a mathlib `Cowedge (copowerProf H G)` from a family satisfying
+`IsCopowerCowedgeDinatural`. -/
+def copowerCowedge (H : Cᵒᵖ ⥤ C ⥤ Type v) (G : Cᵒᵖ ⥤ C ⥤ C) (pt : C)
+    (ω : ∀ A, copower (diagApp H A) ((G.obj (op A)).obj A) ⟶ pt)
+    (hω : IsCopowerCowedgeDinatural H G pt ω) :
+    Cowedge (copowerProf H G) :=
+  Cowedge.mk pt ω (copowerCowedgeDinatural_implies_cowedge_dinatural H G pt ω hω)
+
+/-- The apex of the cowedge. -/
+@[simp]
+theorem copowerCowedge_pt (H : Cᵒᵖ ⥤ C ⥤ Type v) (G : Cᵒᵖ ⥤ C ⥤ C) (pt : C)
+    (ω : ∀ A, copower (diagApp H A) ((G.obj (op A)).obj A) ⟶ pt)
+    (hω : IsCopowerCowedgeDinatural H G pt ω) :
+    (copowerCowedge H G pt ω hω).pt = pt := rfl
+
+/-- The legs of the cowedge match the original family. -/
+@[simp]
+theorem copowerCowedge_π (H : Cᵒᵖ ⥤ C ⥤ Type v) (G : Cᵒᵖ ⥤ C ⥤ C) (pt : C)
+    (ω : ∀ A, copower (diagApp H A) ((G.obj (op A)).obj A) ⟶ pt)
+    (hω : IsCopowerCowedgeDinatural H G pt ω) (A : C) :
+    (copowerCowedge H G pt ω hω).π A = ω A := rfl
+
+/-- Extract a family satisfying `IsCopowerCowedgeDinatural` from a mathlib
+`Cowedge (copowerProf H G)`. -/
+def cowedgeToCopowerFamily (H : Cᵒᵖ ⥤ C ⥤ Type v) (G : Cᵒᵖ ⥤ C ⥤ C)
+    (cw : Cowedge (copowerProf H G)) (A : C) :
+    copower (diagApp H A) ((G.obj (op A)).obj A) ⟶ cw.pt :=
+  cw.π A
+
+/-- A mathlib cowedge over the copower profunctor satisfies
+`IsCopowerCowedgeDinatural`. -/
+theorem cowedge_is_copowerCowedgeDinatural (H : Cᵒᵖ ⥤ C ⥤ Type v) (G : Cᵒᵖ ⥤ C ⥤ C)
+    (cw : Cowedge (copowerProf H G)) :
+    IsCopowerCowedgeDinatural H G cw.pt (cowedgeToCopowerFamily H G cw) :=
+  cowedge_dinatural_implies_copowerCowedgeDinatural H G cw.pt
+    (cowedgeToCopowerFamily H G cw)
+    (fun {_} {_} g => Cowedge.condition cw g)
+
+end CowedgeCorrespondence
+
+section MendlerCowedgeCorrespondence
+
+/-!
+### Mendler Algebras as Cowedges over the Copower Profunctor
+
+A `MendlerAlgebra G` with carrier `pt` consists of:
+- A family `Φ : ∀ A, (A → pt) → (G(A, A) → pt)`
+- A dinaturality condition
+
+This is exactly a `RestrictedCowedge G (HomToProf pt)` where the weight profunctor
+is `H = HomToProf pt`.
+
+By the correspondence established above, this is equivalent to a
+`Cowedge (copowerProf (HomToProf pt) G)`, where the copower profunctor is:
+
+  `(copowerProf (HomToProf pt) G)(A, B) = (A → pt) · G(A, B)`
+
+The copower `(A → pt) · G(A, B)` can be understood as the coproduct of copies of
+`G(A, B)`, one for each morphism `A → pt`.
+
+This provides a direct connection between Mendler algebras and standard categorical
+constructions (cowedges over a profunctor).
+-/
+
+open HasCopowers Limits
+
+variable {C : Type u} [Category.{v} C] [HasCopowers C]
+
+/-- Convert a restricted cowedge (with weight `HomToProf pt`) to a cowedge over
+the copower profunctor. -/
+def restrictedCowedgeToCopowerCowedge (G : Cᵒᵖ ⥤ C ⥤ C) (pt : C)
+    (rc : RestrictedCowedge G (HomToProf pt)) :
+    Cowedge (copowerProf (HomToProf pt) G) :=
+  copowerCowedge (HomToProf pt) G rc.pt
+    (restrictedCowedgeToCopowerFamily (HomToProf pt) G rc)
+    (by
+      intro A B g x
+      have dinat := rc.isDinatural A B g x
+      simp only [Profunctor.lmap, Profunctor.rmap, sliceProfunctor_obj_map,
+        sliceProfunctor_map_app, Quiver.Hom.unop_op] at dinat
+      simp only [restrictedCowedgeToCopowerFamily]
+      have lhs : (G.obj (op B)).map g ≫
+          (inj _ _ (((HomToProf pt).obj (op B)).map g x) ≫ desc (rc.family B)) =
+          (G.obj (op B)).map g ≫ rc.family B (((HomToProf pt).obj (op B)).map g x) := by
+        rw [fac]
+      have rhs : (G.map g.op).app A ≫
+          (inj _ _ (((HomToProf pt).map g.op).app A x) ≫ desc (rc.family A)) =
+          (G.map g.op).app A ≫ rc.family A (((HomToProf pt).map g.op).app A x) := by
+        rw [fac]
+      rw [lhs, dinat, ← rhs])
+
+/-- Convert a cowedge over the copower profunctor to a restricted cowedge. -/
+def copowerCowedgeToRestrictedCowedge (G : Cᵒᵖ ⥤ C ⥤ C) (pt : C)
+    (cw : Cowedge (copowerProf (HomToProf pt) G)) :
+    RestrictedCowedge G (HomToProf pt) :=
+  RestrictedCowedge.mk' cw.pt
+    (copowerFamilyToRestrictedFamily (HomToProf pt) G cw.pt (cowedgeToCopowerFamily _ _ cw))
+    (by
+      intro A B g x
+      have dinat := cowedge_is_copowerCowedgeDinatural (HomToProf pt) G cw A B g x
+      simp only [cowedgeToCopowerFamily] at dinat
+      simp only [Profunctor.lmap, Profunctor.rmap, sliceProfunctor_obj_map,
+        sliceProfunctor_map_app, Quiver.Hom.unop_op,
+        copowerFamilyToRestrictedFamily]
+      exact dinat)
+
+/-- The apex of the converted cowedge equals the original. -/
+@[simp]
+theorem restrictedCowedgeToCopowerCowedge_pt (G : Cᵒᵖ ⥤ C ⥤ C) (pt : C)
+    (rc : RestrictedCowedge G (HomToProf pt)) :
+    (restrictedCowedgeToCopowerCowedge G pt rc).pt = rc.pt := rfl
+
+/-- The apex of the converted restricted cowedge equals the original. -/
+@[simp]
+theorem copowerCowedgeToRestrictedCowedge_pt (G : Cᵒᵖ ⥤ C ⥤ C) (pt : C)
+    (cw : Cowedge (copowerProf (HomToProf pt) G)) :
+    (copowerCowedgeToRestrictedCowedge G pt cw).pt = cw.pt := rfl
+
+end MendlerCowedgeCorrespondence
 
 end GebLean
