@@ -1272,6 +1272,138 @@ theorem WeightedCocone.category_comp_hom {W : Jᵒᵖ ⥤ Type v} {D : J ⥤ C}
 theorem WeightedCocone.category_id_hom {W : Jᵒᵖ ⥤ Type v} {D : J ⥤ C}
     (c : WeightedCocone W D) : (𝟙 c : c ⟶ c).hom = 𝟙 c.pt := rfl
 
+section WeightedLimitsColimits
+
+/-!
+## Weighted Limits and Colimits
+
+A weighted limit is a terminal object in the category of weighted cones, and
+a weighted colimit is an initial object in the category of weighted cocones.
+
+These definitions parallel mathlib's `IsLimit`/`IsColimit` for ordinary
+limits and the `IsRestrictedCoend` pattern we use elsewhere.
+-/
+
+/-- A weighted limit is a terminal object in the category of weighted cones. -/
+abbrev IsWeightedLimit {W : J ⥤ Type v} {D : J ⥤ C} (c : WeightedCone W D) :=
+  Limits.IsTerminal c
+
+namespace IsWeightedLimit
+
+variable {W : J ⥤ Type v} {D : J ⥤ C} {c : WeightedCone W D}
+
+/-- The universal morphism from any weighted cone to the weighted limit. -/
+def lift (hc : IsWeightedLimit c) (d : WeightedCone W D) : d ⟶ c :=
+  hc.from d
+
+/-- The underlying morphism in `C` from any cone to the limit cone. -/
+def liftHom (hc : IsWeightedLimit c) (d : WeightedCone W D) : d.pt ⟶ c.pt :=
+  (hc.lift d).hom
+
+/-- Any two morphisms to a weighted limit are equal (uniqueness). -/
+theorem homExt (hc : IsWeightedLimit c)
+    {d : WeightedCone W D} (f g : d ⟶ c) : f = g :=
+  Limits.IsTerminal.hom_ext hc f g
+
+/-- Two weighted limits are isomorphic (uniqueness up to isomorphism). -/
+def toUniqueUpToIso {c c' : WeightedCone W D}
+    (hc : IsWeightedLimit c) (hc' : IsWeightedLimit c') : c ≅ c' :=
+  Limits.IsTerminal.uniqueUpToIso hc hc'
+
+end IsWeightedLimit
+
+/-- A weighted limit cone bundles a cone with the proof it is terminal.
+This is the data-carrying version, analogous to mathlib's `LimitCone`. -/
+structure WeightedLimitCone (W : J ⥤ Type v) (D : J ⥤ C) where
+  /-- The underlying weighted cone. -/
+  cone : WeightedCone W D
+  /-- The proof that the cone is terminal. -/
+  isLimit : IsWeightedLimit cone
+
+/-- A weighted limit exists if there is a terminal weighted cone. -/
+class HasWeightedLimit (W : J ⥤ Type v) (D : J ⥤ C) where
+  /-- The limit cone containing the limit and proof of terminality. -/
+  limitCone : WeightedLimitCone W D
+
+namespace HasWeightedLimit
+
+variable (W : J ⥤ Type v) (D : J ⥤ C) [HasWeightedLimit W D]
+
+/-- The weighted limit cone (the terminal weighted cone). -/
+def weightedLimit : WeightedCone W D :=
+  HasWeightedLimit.limitCone.cone
+
+/-- The weighted limit is terminal. -/
+def weightedLimitIsLimit : IsWeightedLimit (weightedLimit W D) :=
+  HasWeightedLimit.limitCone.isLimit
+
+/-- The weighted limit object (the cone point of the limit cone). -/
+def weightedLimitObj : C := (weightedLimit W D).pt
+
+end HasWeightedLimit
+
+/-- A weighted colimit is an initial object in the category of weighted
+cocones. -/
+abbrev IsWeightedColimit {W : Jᵒᵖ ⥤ Type v} {D : J ⥤ C}
+    (c : WeightedCocone W D) :=
+  Limits.IsInitial c
+
+namespace IsWeightedColimit
+
+variable {W : Jᵒᵖ ⥤ Type v} {D : J ⥤ C} {c : WeightedCocone W D}
+
+/-- The universal morphism from a weighted colimit to any weighted cocone. -/
+def desc (hc : IsWeightedColimit c) (d : WeightedCocone W D) : c ⟶ d :=
+  hc.to d
+
+/-- The underlying morphism in `C` from the colimit to any cocone. -/
+def descHom (hc : IsWeightedColimit c) (d : WeightedCocone W D) : c.pt ⟶ d.pt :=
+  (hc.desc d).hom
+
+/-- Any two morphisms from a weighted colimit are equal (uniqueness). -/
+theorem homExt (hc : IsWeightedColimit c)
+    {d : WeightedCocone W D} (f g : c ⟶ d) : f = g :=
+  Limits.IsInitial.hom_ext hc f g
+
+/-- Two weighted colimits are isomorphic (uniqueness up to isomorphism). -/
+def toUniqueUpToIso {c c' : WeightedCocone W D}
+    (hc : IsWeightedColimit c) (hc' : IsWeightedColimit c') : c ≅ c' :=
+  Limits.IsInitial.uniqueUpToIso hc hc'
+
+end IsWeightedColimit
+
+/-- A weighted colimit cone bundles a cocone with the proof it is initial.
+This is the data-carrying version, analogous to mathlib's `ColimitCocone`. -/
+structure WeightedColimitCocone (W : Jᵒᵖ ⥤ Type v) (D : J ⥤ C) where
+  /-- The underlying weighted cocone. -/
+  cocone : WeightedCocone W D
+  /-- The proof that the cocone is initial. -/
+  isColimit : IsWeightedColimit cocone
+
+/-- A weighted colimit exists if there is an initial weighted cocone. -/
+class HasWeightedColimit (W : Jᵒᵖ ⥤ Type v) (D : J ⥤ C) where
+  /-- The colimit cocone containing the colimit and proof of initiality. -/
+  colimitCocone : WeightedColimitCocone W D
+
+namespace HasWeightedColimit
+
+variable (W : Jᵒᵖ ⥤ Type v) (D : J ⥤ C) [HasWeightedColimit W D]
+
+/-- The weighted colimit cocone (the initial weighted cocone). -/
+def weightedColimit : WeightedCocone W D :=
+  HasWeightedColimit.colimitCocone.cocone
+
+/-- The weighted colimit is initial. -/
+def weightedColimitIsColimit : IsWeightedColimit (weightedColimit W D) :=
+  HasWeightedColimit.colimitCocone.isColimit
+
+/-- The weighted colimit object (the cocone point of the colimit cocone). -/
+def weightedColimitObj : C := (weightedColimit W D).pt
+
+end HasWeightedColimit
+
+end WeightedLimitsColimits
+
 variable {D : Type w} [Category.{v} D]
 
 /--
