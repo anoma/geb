@@ -1086,6 +1086,58 @@ def homRestrictedCopowerEquiv (G : Cᵒᵖ ⥤ C ⥤ C) (pt : C) :
 
 end MendlerCowedgeCorrespondence
 
+section HomRestrictedWeightedEquivalence
+
+/-!
+### Bijection between RestrictedCowedgeOver and WeightedCowedgeOver
+
+The round-trip theorems `restrict_extend_roundtrip` and `extend_restrict_roundtrip`
+from `WeightedAlg` establish that restriction and extension are inverse bijections
+for cowedges with weight `HomToProf pt` and apex point `pt`.
+
+For weight `HomToProf pt`, the weight type at any co-twisted arrow is
+`cod ⟶ pt`, which is independent of the covariant variable.  This allows
+unique extension from diagonal data.
+-/
+
+variable {C : Type u} [Category.{v} C]
+variable (G : Cᵒᵖ ⥤ C ⥤ C) (pt : C)
+
+/-- Type alias for weighted cowedges over pt with the Hom-to-pt weight. -/
+abbrev HomWeightedCowedgeOver (G : Cᵒᵖ ⥤ C ⥤ C) (pt : C) :=
+  WeightedCowedgeOver pt (HomToProf pt) G
+
+/-- Type alias for restricted cowedges over pt with the Hom-to-pt weight. -/
+abbrev HomRestrictedCowedgeOver (G : Cᵒᵖ ⥤ C ⥤ C) (pt : C) :=
+  RestrictedCowedgeOver pt G (HomToProf pt)
+
+/-- Round-trip from restricted to weighted and back gives the original. -/
+theorem weightedOverToRestricted_restrictedToWeighted
+    (rc : HomRestrictedCowedgeOver G pt) :
+    (restrictWeightedCowedge (HomToProf pt) G
+      ⟨pt, extendRestrictedCowedge (G := G) pt rc⟩).toRestrictedCowedgeOver = rc :=
+  restrict_extend_roundtrip (G := G) pt rc
+
+/-- Round-trip from weighted to restricted and back gives the original. -/
+theorem restrictedToWeightedOver_weightedToRestricted
+    (wc : HomWeightedCowedgeOver G pt) :
+    extendRestrictedCowedge (G := G) pt
+      (restrictWeightedCowedge (HomToProf pt) G ⟨pt, wc⟩).toRestrictedCowedgeOver = wc :=
+  extend_restrict_roundtrip (G := G) pt wc
+
+/-- The bijection between restricted cowedges over pt with weight `HomToProf pt`
+and weighted cowedges over pt with the same weight. The forward direction
+extends diagonal data to all co-twisted arrows; the inverse restricts to
+diagonals. -/
+def homRestrictedWeightedBijection :
+    HomRestrictedCowedgeOver G pt ≃ HomWeightedCowedgeOver G pt where
+  toFun := extendRestrictedCowedge (G := G) pt
+  invFun wc := (restrictWeightedCowedge (HomToProf pt) G ⟨pt, wc⟩).toRestrictedCowedgeOver
+  left_inv := weightedOverToRestricted_restrictedToWeighted G pt
+  right_inv := restrictedToWeightedOver_weightedToRestricted G pt
+
+end HomRestrictedWeightedEquivalence
+
 section KanExtensionConnection
 
 /-!
