@@ -2,6 +2,7 @@ import GebLean.Weighted
 import GebLean.ParanatAlg
 import Mathlib.CategoryTheory.Limits.Shapes.Terminal
 import Mathlib.CategoryTheory.Functor.Currying
+import Mathlib.CategoryTheory.Endofunctor.Algebra
 
 /-!
 # Mendler-Lambek Correspondence via Restricted Coends
@@ -1013,52 +1014,22 @@ We define:
 -/
 
 /-- A conventional F-algebra for an endofunctor F : C ⥤ C. -/
-@[ext]
-structure ConventionalAlgebra (F : C ⥤ C) where
-  /-- The carrier object. -/
-  pt : C
-  /-- The algebra structure morphism. -/
-  str : F.obj pt ⟶ pt
+abbrev ConventionalAlgebra (F : C ⥤ C) := Endofunctor.Algebra F
+
+abbrev ConventionalAlgebra.pt {F : C ⥤ C} (alg : ConventionalAlgebra F) : C := alg.a
 
 /-- A morphism of conventional F-algebras. -/
-@[ext]
-structure ConventionalAlgebraHom {F : C ⥤ C}
-    (a₁ a₂ : ConventionalAlgebra F) where
-  /-- The underlying morphism in C. -/
-  hom : a₁.pt ⟶ a₂.pt
-  /-- The compatibility condition: str₂ ∘ F(h) = h ∘ str₁. -/
-  comm : F.map hom ≫ a₂.str = a₁.str ≫ hom
+abbrev ConventionalAlgebraHom {F : C ⥤ C} (a₁ a₂ : ConventionalAlgebra F) :=
+  Endofunctor.Algebra.Hom a₁ a₂
 
-namespace ConventionalAlgebraHom
+abbrev ConventionalAlgebraHom.hom {F : C ⥤ C} {a₁ a₂ : ConventionalAlgebra F}
+    (f : ConventionalAlgebraHom a₁ a₂) : a₁.a ⟶ a₂.a := f.f
 
-variable {F : C ⥤ C}
+abbrev ConventionalAlgebraHom.comm {F : C ⥤ C} {a₁ a₂ : ConventionalAlgebra F}
+    (f : ConventionalAlgebraHom a₁ a₂) : F.map f.f ≫ a₂.str = a₁.str ≫ f.f := f.h
 
-/-- Identity morphism on a conventional algebra. -/
-@[simps]
-def id (a : ConventionalAlgebra F) : ConventionalAlgebraHom a a where
-  hom := 𝟙 a.pt
-  comm := by simp
-
-/-- Composition of conventional algebra morphisms. -/
-@[simps]
-def comp {a₁ a₂ a₃ : ConventionalAlgebra F}
-    (f : ConventionalAlgebraHom a₁ a₂) (g : ConventionalAlgebraHom a₂ a₃) :
-    ConventionalAlgebraHom a₁ a₃ where
-  hom := f.hom ≫ g.hom
-  comm := by
-    rw [F.map_comp, Category.assoc, g.comm, ← Category.assoc, f.comm]
-    simp [Category.assoc]
-
-end ConventionalAlgebraHom
-
-/-- The category of conventional F-algebras. -/
-instance ConventionalAlgebraCat (F : C ⥤ C) : Category (ConventionalAlgebra F) where
-  Hom := ConventionalAlgebraHom
-  id := ConventionalAlgebraHom.id
-  comp := ConventionalAlgebraHom.comp
-  id_comp _ := by ext; simp [ConventionalAlgebraHom.comp, ConventionalAlgebraHom.id]
-  comp_id _ := by ext; simp [ConventionalAlgebraHom.comp, ConventionalAlgebraHom.id]
-  assoc _ _ _ := by ext; simp [ConventionalAlgebraHom.comp, Category.assoc]
+abbrev ConventionalAlgebraCat (F : C ⥤ C) : Category (ConventionalAlgebra F) :=
+  Endofunctor.Algebra.instCategory F
 
 section FloorCeiling
 
@@ -1071,43 +1042,43 @@ G^e-algebra (pt, floor(Φ)) where floor(Φ) is the universal morphism from
 the restricted coend to pt. -/
 def floor (m : MendlerAlgebra G) :
     ConventionalAlgebra (HasAllHomToProfCoends.GExtFunctor G) where
-  pt := m.pt
+  a := m.pt
   str := HasAllHomToProfCoends.GExtDesc G m.pt m.toRestrictedCowedge
 
 /-- The ceiling translation: converts a conventional G^e-algebra (pt, φ)
 to a Mendler algebra (pt, ceil(φ)) where ceil(φ)_A(γ) = φ ∘ inj_A(γ). -/
-def ceil (a : ConventionalAlgebra (HasAllHomToProfCoends.GExtFunctor G)) :
+def ceil (alg : ConventionalAlgebra (HasAllHomToProfCoends.GExtFunctor G)) :
     MendlerAlgebra G where
-  pt := a.pt
-  toMendlerAlgebraOver := ⟨⟨fun A γ => HasAllHomToProfCoends.GExtInj G a.pt A γ ≫ a.str, by
+  pt := alg.a
+  toMendlerAlgebraOver := ⟨⟨fun A γ => HasAllHomToProfCoends.GExtInj G alg.a A γ ≫ alg.str, by
     intro A B g x
     simp only [Profunctor.lmap, Profunctor.rmap, sliceProfunctor_obj_map,
       sliceProfunctor_map_app, Quiver.Hom.unop_op, HomToProf_map_app, HomToProf_obj_map]
-    have dinat := (restrictedCoend G (HomToProf a.pt)).isDinatural A B g x
+    have dinat := (restrictedCoend G (HomToProf alg.a)).isDinatural A B g x
     simp only [Profunctor.lmap, Profunctor.rmap, sliceProfunctor_obj_map,
       sliceProfunctor_map_app, Quiver.Hom.unop_op, HomToProf_map_app, HomToProf_obj_map,
       HasAllHomToProfCoends.GExtInj] at dinat ⊢
     simp only [← Category.assoc]
-    exact congrArg (· ≫ a.str) dinat⟩⟩
+    exact congrArg (· ≫ alg.str) dinat⟩⟩
 
 /-- floor(ceil(φ)) = φ (Proposition 5.15 in Vene).
 The floor of the ceiling of a conventional algebra structure is the
 original structure. -/
-theorem floor_ceil (a : ConventionalAlgebra (HasAllHomToProfCoends.GExtFunctor G)) :
-    floor G (ceil G a) = a := by
-  cases a with | mk pt str =>
+theorem floor_ceil (alg : ConventionalAlgebra (HasAllHomToProfCoends.GExtFunctor G)) :
+    floor G (ceil G alg) = alg := by
+  cases alg with | mk carrier str =>
   simp only [floor, ceil, MendlerAlgebra.toRestrictedCowedge, MendlerAlgebra.family,
     GExtDesc, GExtInj]
   congr 1
-  let targetCowedge : RestrictedCowedge G (HomToProf pt) :=
-    ⟨pt, ⟨fun A γ => (restrictedCoend G (HomToProf pt)).family A γ ≫ str,
-     (ceil G ⟨pt, str⟩).isDinatural⟩⟩
-  let strMorph : RestrictedCowedge.Hom (restrictedCoend G (HomToProf pt)) targetCowedge := {
+  let targetCowedge : RestrictedCowedge G (HomToProf carrier) :=
+    ⟨carrier, ⟨fun A γ => (restrictedCoend G (HomToProf carrier)).family A γ ≫ str,
+     (ceil G ⟨carrier, str⟩).isDinatural⟩⟩
+  let strMorph : RestrictedCowedge.Hom (restrictedCoend G (HomToProf carrier)) targetCowedge := {
     hom := str
     comm := fun _ _ => rfl
   }
-  have huniq := (restrictedCoendIsInitial G (HomToProf pt)).hom_ext
-    ((restrictedCoendIsInitial G (HomToProf pt)).to targetCowedge) strMorph
+  have huniq := (restrictedCoendIsInitial G (HomToProf carrier)).hom_ext
+    ((restrictedCoendIsInitial G (HomToProf carrier)).to targetCowedge) strMorph
   simp only [IsRestrictedCoend.descHom, IsRestrictedCoend.desc]
   exact congrArg RestrictedCowedge.Hom.hom huniq
 
@@ -1132,8 +1103,8 @@ If h is a Mendler algebra morphism, then h is a conventional G^e-algebra
 morphism between the floor algebras. -/
 def floorHom {m₁ m₂ : MendlerAlgebra G} (f : m₁ ⟶ m₂) :
     floor G m₁ ⟶ floor G m₂ where
-  hom := f.hom
-  comm := by
+  f := f.hom
+  h := by
     simp only [floor, GExtFunctor_map, GExtMap, GExtDesc, GExtMapCowedge,
       MendlerAlgebra.toRestrictedCowedge, IsRestrictedCoend.descHom, IsRestrictedCoend.desc]
     let targetCowedge : RestrictedCowedge G (HomToProf m₁.pt) := {
@@ -1183,18 +1154,18 @@ If h is a conventional G^e-algebra morphism, then h is a Mendler algebra
 morphism between the ceiling algebras. -/
 def ceilHom {a₁ a₂ : ConventionalAlgebra (HasAllHomToProfCoends.GExtFunctor G)}
     (f : a₁ ⟶ a₂) : ceil G a₁ ⟶ ceil G a₂ where
-  hom := f.hom
+  hom := f.f
   comm := by
     intro A γ
     simp only [ceil, MendlerAlgebra.family, MendlerAlgebraOver.family, GExtInj]
-    have comm := f.comm
+    have hcomm := f.h
     simp only [GExtFunctor_map, GExtMap, GExtDesc, GExtMapCowedge,
-      IsRestrictedCoend.descHom, IsRestrictedCoend.desc] at comm
-    rw [Category.assoc, ← comm, ← Category.assoc]
-    have h := (restrictedCoendIsInitial G (HomToProf a₁.pt)).to
-      (GExtMapCowedge G a₁.pt a₂.pt f.hom) |>.comm A γ
-    simp only [GExtMapCowedge, RestrictedCowedge.family, GExtInj] at h ⊢
-    rw [h]
+      IsRestrictedCoend.descHom, IsRestrictedCoend.desc] at hcomm
+    rw [Category.assoc, ← hcomm, ← Category.assoc]
+    have hstep := (restrictedCoendIsInitial G (HomToProf a₁.a)).to
+      (GExtMapCowedge G a₁.a a₂.a f.f) |>.comm A γ
+    simp only [GExtMapCowedge, RestrictedCowedge.family, GExtInj] at hstep ⊢
+    rw [hstep]
 
 /-- The floor functor: MendlerAlgebra G ⥤ ConventionalAlgebra (GExtFunctor G). -/
 @[simps]
@@ -1202,8 +1173,8 @@ def floorFunctor : MendlerAlgebra G ⥤
     ConventionalAlgebra (HasAllHomToProfCoends.GExtFunctor G) where
   obj := floor G
   map := floorHom G
-  map_id := fun _ => ConventionalAlgebraHom.ext rfl
-  map_comp := fun _ _ => ConventionalAlgebraHom.ext rfl
+  map_id := fun _ => Endofunctor.Algebra.Hom.ext rfl
+  map_comp := fun _ _ => Endofunctor.Algebra.Hom.ext rfl
 
 /-- The ceiling functor: ConventionalAlgebra (GExtFunctor G) ⥤ MendlerAlgebra G. -/
 @[simps]
@@ -1214,10 +1185,10 @@ def ceilFunctor : ConventionalAlgebra (HasAllHomToProfCoends.GExtFunctor G) ⥤
   map_id := fun _ => MendlerAlgebraHom.ext rfl
   map_comp := fun _ _ => MendlerAlgebraHom.ext rfl
 
-/-- The .hom component of eqToHom in ConventionalAlgebra is eqToHom in C. -/
+/-- The .f component of eqToHom in ConventionalAlgebra is eqToHom in C. -/
 @[simp]
-theorem ConventionalAlgebra.eqToHom_hom {F : C ⥤ C} {a b : ConventionalAlgebra F}
-    (h : a = b) : (eqToHom h).hom = eqToHom (congrArg ConventionalAlgebra.pt h) := by
+theorem ConventionalAlgebra.eqToHom_f {F : C ⥤ C} {alg₁ alg₂ : ConventionalAlgebra F}
+    (h : alg₁ = alg₂) : (eqToHom h).f = eqToHom (congrArg Endofunctor.Algebra.a h) := by
   subst h
   rfl
 
@@ -1233,14 +1204,14 @@ theorem floorFunctor_comp_ceilFunctor :
     ceilFunctor G ⋙ floorFunctor G = 𝟭 _ :=
   Functor.ext (floor_ceil G) (fun a₁ a₂ f => by
     simp only [Functor.comp_map, Functor.id_map, floorFunctor_map, ceilFunctor_map]
-    apply ConventionalAlgebraHom.ext
+    apply Endofunctor.Algebra.Hom.ext
     simp only [floorHom, ceilHom]
-    have heq1 : congrArg ConventionalAlgebra.pt (floor_ceil G a₁) = rfl := rfl
-    have heq2 : congrArg ConventionalAlgebra.pt (floor_ceil G a₂).symm = rfl := rfl
-    rw [show (eqToHom (floor_ceil G a₁) ≫ f ≫ eqToHom (floor_ceil G a₂).symm).hom =
-        (eqToHom (floor_ceil G a₁)).hom ≫ f.hom ≫ (eqToHom (floor_ceil G a₂).symm).hom
+    have heq1 : congrArg Endofunctor.Algebra.a (floor_ceil G a₁) = rfl := rfl
+    have heq2 : congrArg Endofunctor.Algebra.a (floor_ceil G a₂).symm = rfl := rfl
+    rw [show (eqToHom (floor_ceil G a₁) ≫ f ≫ eqToHom (floor_ceil G a₂).symm).f =
+        (eqToHom (floor_ceil G a₁)).f ≫ f.f ≫ (eqToHom (floor_ceil G a₂).symm).f
         from rfl]
-    rw [ConventionalAlgebra.eqToHom_hom, ConventionalAlgebra.eqToHom_hom,
+    rw [ConventionalAlgebra.eqToHom_f, ConventionalAlgebra.eqToHom_f,
         heq1, heq2, eqToHom_refl, eqToHom_refl, Category.id_comp, Category.comp_id])
 
 /-- ceil ∘ floor = id on the Mendler algebra category. -/
