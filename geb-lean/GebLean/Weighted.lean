@@ -1316,6 +1316,15 @@ theorem WeightedCocone.category_comp_hom {W : Jᵒᵖ ⥤ Type v} {D : J ⥤ C}
 theorem WeightedCocone.category_id_hom {W : Jᵒᵖ ⥤ Type v} {D : J ⥤ C}
     (c : WeightedCocone W D) : (𝟙 c : c ⟶ c).hom = 𝟙 c.pt := rfl
 
+/-- For weighted cocones, the `.hom` field of `eqToHom h` is `eqToHom`
+applied to the cocone point equality. -/
+@[simp]
+theorem WeightedCocone.eqToHom_hom {W : Jᵒᵖ ⥤ Type v} {D : J ⥤ C}
+    {c c' : WeightedCocone W D} (h : c = c') :
+    (eqToHom h).hom = eqToHom (congrArg WeightedCocone.pt h) := by
+  subst h
+  rfl
+
 section WeightedLimitsColimits
 
 /-!

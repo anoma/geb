@@ -1089,11 +1089,11 @@ end MendlerCowedgeCorrespondence
 section HomRestrictedWeightedEquivalence
 
 /-!
-### Bijection between RestrictedCowedgeOver and WeightedCowedgeOver
+### Categorical Equivalence between HomRestrictedCowedge and HomWeightedCowedge
 
 The round-trip theorems `restrict_extend_roundtrip` and `extend_restrict_roundtrip`
 from `WeightedAlg` establish that restriction and extension are inverse bijections
-for cowedges with weight `HomToProf pt` and apex point `pt`.
+for cowedges with weight `HomToProf pt`.
 
 For weight `HomToProf pt`, the weight type at any co-twisted arrow is
 `cod ⟶ pt`, which is independent of the covariant variable.  This allows
@@ -1103,38 +1103,140 @@ unique extension from diagonal data.
 variable {C : Type u} [Category.{v} C]
 variable (G : Cᵒᵖ ⥤ C ⥤ C) (pt : C)
 
-/-- Type alias for weighted cowedges over pt with the Hom-to-pt weight. -/
-abbrev HomWeightedCowedgeOver (G : Cᵒᵖ ⥤ C ⥤ C) (pt : C) :=
-  WeightedCowedgeOver pt (HomToProf pt) G
+/-- Type alias for weighted cowedges with the Hom-to-pt weight. -/
+abbrev HomWeightedCowedge (G : Cᵒᵖ ⥤ C ⥤ C) (pt : C) :=
+  WeightedCowedge (HomToProf pt) G
 
-/-- Type alias for restricted cowedges over pt with the Hom-to-pt weight. -/
-abbrev HomRestrictedCowedgeOver (G : Cᵒᵖ ⥤ C ⥤ C) (pt : C) :=
-  RestrictedCowedgeOver pt G (HomToProf pt)
+/-- The point of a restricted-to-weighted extension equals the input point. -/
+@[simp]
+theorem restrictedCowedgeToWeightedCowedge_pt (rc : HomRestrictedCowedge G pt) :
+    (extendRestrictedCowedgeFull' (G := G) pt rc).pt = rc.pt := rfl
 
-/-- Round-trip from restricted to weighted and back gives the original. -/
-theorem weightedOverToRestricted_restrictedToWeighted
-    (rc : HomRestrictedCowedgeOver G pt) :
-    (restrictWeightedCowedge (HomToProf pt) G
-      ⟨pt, extendRestrictedCowedge (G := G) pt rc⟩).toRestrictedCowedgeOver = rc :=
-  restrict_extend_roundtrip (G := G) pt rc
+/-- The point of a weighted-to-restricted restriction equals the input point. -/
+@[simp]
+theorem weightedCowedgeToRestrictedCowedge_pt (wc : HomWeightedCowedge G pt) :
+    (restrictWeightedCowedge (HomToProf pt) G wc).pt = wc.pt := rfl
 
-/-- Round-trip from weighted to restricted and back gives the original. -/
-theorem restrictedToWeightedOver_weightedToRestricted
-    (wc : HomWeightedCowedgeOver G pt) :
-    extendRestrictedCowedge (G := G) pt
-      (restrictWeightedCowedge (HomToProf pt) G ⟨pt, wc⟩).toRestrictedCowedgeOver = wc :=
-  extend_restrict_roundtrip (G := G) pt wc
+/-- Convert a morphism of restricted cowedges to a morphism of weighted cowedges. -/
+def restrictedCowedgeToWeightedCowedgeHom
+    {rc₁ rc₂ : HomRestrictedCowedge G pt}
+    (f : RestrictedCowedge.Hom rc₁ rc₂) :
+    (extendRestrictedCowedgeFull' (G := G) pt rc₁) ⟶
+    (extendRestrictedCowedgeFull' (G := G) pt rc₂) where
+  hom := f.hom
+  w := fun tw γ => by
+    simp only [extendRestrictedCowedgeFull', extendRestrictedCowedge', WeightedCocone.leg]
+    unfold extendMendlerLeg'
+    simp only [eqToHom_refl, Category.id_comp, Category.assoc, cast_eq]
+    rw [f.comm]
 
-/-- The bijection between restricted cowedges over pt with weight `HomToProf pt`
-and weighted cowedges over pt with the same weight. The forward direction
-extends diagonal data to all co-twisted arrows; the inverse restricts to
-diagonals. -/
-def homRestrictedWeightedBijection :
-    HomRestrictedCowedgeOver G pt ≃ HomWeightedCowedgeOver G pt where
-  toFun := extendRestrictedCowedge (G := G) pt
-  invFun wc := (restrictWeightedCowedge (HomToProf pt) G ⟨pt, wc⟩).toRestrictedCowedgeOver
-  left_inv := weightedOverToRestricted_restrictedToWeighted G pt
-  right_inv := restrictedToWeightedOver_weightedToRestricted G pt
+/-- Convert a morphism of weighted cowedges to a morphism of restricted cowedges. -/
+def weightedCowedgeToRestrictedCowedgeHom
+    {wc₁ wc₂ : HomWeightedCowedge G pt}
+    (f : wc₁ ⟶ wc₂) :
+    RestrictedCowedge.Hom (restrictWeightedCowedge (HomToProf pt) G wc₁)
+      (restrictWeightedCowedge (HomToProf pt) G wc₂) where
+  hom := f.hom
+  comm := fun A x => by
+    simp only [restrictWeightedCowedge, RestrictedCowedge.family,
+      weightedCowedgeFamilyAtIdentity, Category.assoc]
+    have w := f.w (idCoTwistedArrow A) (diagAppToWeightAtIdentity (HomToProf pt) A x)
+    simp only [WeightedCocone.leg] at w
+    simp only [WeightedCocone.leg, w]
+
+/-- The functor from restricted cowedges to weighted cowedges. -/
+def homRestrictedToWeightedFunctor :
+    HomRestrictedCowedge G pt ⥤ HomWeightedCowedge G pt where
+  obj rc := extendRestrictedCowedgeFull' (G := G) pt rc
+  map := restrictedCowedgeToWeightedCowedgeHom G pt
+  map_id := fun _ => by
+    apply WeightedCocone.Hom.ext
+    simp only [restrictedCowedgeToWeightedCowedgeHom]
+    rfl
+  map_comp := fun _ _ => by
+    apply WeightedCocone.Hom.ext
+    simp only [restrictedCowedgeToWeightedCowedgeHom]
+    rfl
+
+/-- The functor from weighted cowedges to restricted cowedges. -/
+def weightedToHomRestrictedFunctor :
+    HomWeightedCowedge G pt ⥤ HomRestrictedCowedge G pt where
+  obj wc := restrictWeightedCowedge (HomToProf pt) G wc
+  map := weightedCowedgeToRestrictedCowedgeHom G pt
+  map_id := fun _ => by
+    apply RestrictedCowedge.Hom.ext
+    simp only [weightedCowedgeToRestrictedCowedgeHom]
+    rfl
+  map_comp := fun _ _ => by
+    apply RestrictedCowedge.Hom.ext
+    simp only [weightedCowedgeToRestrictedCowedgeHom]
+    rfl
+
+/-- Round-trip from restricted cowedge to weighted cowedge and back gives the
+original restricted cowedge. -/
+theorem weightedToRestricted_restrictedToWeighted (rc : HomRestrictedCowedge G pt) :
+    restrictWeightedCowedge (HomToProf pt) G
+      (extendRestrictedCowedgeFull' (G := G) pt rc) = rc := by
+  exact restrict_extend_roundtrip' (G := G) pt rc
+
+/-- Round-trip from weighted cowedge to restricted cowedge and back gives the
+original weighted cowedge. -/
+theorem restrictedToWeighted_weightedToRestricted (wc : HomWeightedCowedge G pt) :
+    extendRestrictedCowedgeFull' (G := G) pt
+      (restrictWeightedCowedge (HomToProf pt) G wc) = wc := by
+  exact extend_restrict_roundtrip' (G := G) pt wc
+
+/-- The unit isomorphism for the equivalence. -/
+def homRestrictedWeightedUnitIso :
+    𝟭 (HomRestrictedCowedge G pt) ≅
+    homRestrictedToWeightedFunctor G pt ⋙ weightedToHomRestrictedFunctor G pt :=
+  NatIso.ofComponents
+    (fun rc => eqToIso (weightedToRestricted_restrictedToWeighted G pt rc).symm)
+    (fun {rc₁ rc₂} f => by
+      apply RestrictedCowedge.Hom.ext
+      simp only [Functor.id_obj, Functor.comp_obj, Functor.id_map, Functor.comp_map,
+        homRestrictedToWeightedFunctor, weightedToHomRestrictedFunctor,
+        restrictedCowedgeToWeightedCowedgeHom, weightedCowedgeToRestrictedCowedgeHom,
+        eqToIso.hom]
+      simp only [RestrictedCowedgeCat, RestrictedCowedge.Hom.comp_hom,
+        RestrictedCowedge_eqToHom_hom, weightedCowedgeToRestrictedCowedge_pt,
+        restrictedCowedgeToWeightedCowedge_pt, eqToHom_refl, Category.id_comp, Category.comp_id])
+
+/-- The counit isomorphism for the equivalence. -/
+def homRestrictedWeightedCounitIso :
+    weightedToHomRestrictedFunctor G pt ⋙ homRestrictedToWeightedFunctor G pt ≅
+    𝟭 (HomWeightedCowedge G pt) :=
+  NatIso.ofComponents
+    (fun wc => eqToIso (restrictedToWeighted_weightedToRestricted G pt wc))
+    (fun {wc₁ wc₂} f => by
+      apply WeightedCocone.Hom.ext
+      simp only [Functor.comp_obj, Functor.id_obj, Functor.comp_map, Functor.id_map,
+        weightedToHomRestrictedFunctor, homRestrictedToWeightedFunctor,
+        weightedCowedgeToRestrictedCowedgeHom, restrictedCowedgeToWeightedCowedgeHom,
+        eqToIso.hom, WeightedCocone.category_comp_hom, WeightedCocone.eqToHom_hom,
+        restrictedCowedgeToWeightedCowedge_pt, weightedCowedgeToRestrictedCowedge_pt,
+        eqToHom_refl, Category.id_comp, Category.comp_id])
+
+/-- The categorical equivalence between restricted cowedges with weight
+`HomToProf pt` and weighted cowedges with the same weight.
+This formalizes that for the special case of `HomToProf pt`, restriction
+to diagonal elements is an equivalence, not just a faithful functor. -/
+def homRestrictedWeightedEquiv :
+    HomRestrictedCowedge G pt ≌ HomWeightedCowedge G pt where
+  functor := homRestrictedToWeightedFunctor G pt
+  inverse := weightedToHomRestrictedFunctor G pt
+  unitIso := homRestrictedWeightedUnitIso G pt
+  counitIso := homRestrictedWeightedCounitIso G pt
+  functor_unitIso_comp X := by
+    apply WeightedCocone.Hom.ext
+    simp only [homRestrictedWeightedUnitIso, homRestrictedWeightedCounitIso,
+      homRestrictedToWeightedFunctor, weightedToHomRestrictedFunctor,
+      NatIso.ofComponents_hom_app, eqToIso.hom, Functor.comp_obj, Functor.id_obj,
+      restrictedCowedgeToWeightedCowedgeHom, WeightedCocone.category_comp_hom,
+      WeightedCocone.category_id_hom, WeightedCocone.eqToHom_hom,
+      restrictedCowedgeToWeightedCowedge_pt, weightedCowedgeToRestrictedCowedge_pt,
+      eqToHom_refl, Category.comp_id, RestrictedCowedgeCat,
+      RestrictedCowedge_eqToHom_hom]
 
 end HomRestrictedWeightedEquivalence
 

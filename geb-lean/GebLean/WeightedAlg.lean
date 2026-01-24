@@ -410,9 +410,34 @@ we extend to all co-twisted arrows via:
   extendLeg (arr : cod ⟶ dom) (γ : cod ⟶ pt) := (G.map arr.op).app cod ≫ family cod γ
 -/
 
+/-- The generalized extended leg at an arbitrary co-twisted arrow, with
+separate weight point `wpt` and apex point `apt`. For a restricted cowedge
+with apex `apt` and weight `HomToProf wpt`, extends the diagonal family to
+all co-twisted arrows. The formula is:
+  `extendLeg (arr : cod ⟶ dom) (γ : cod ⟶ wpt) := (G.map arr.op).app cod ≫ family cod γ`
+-/
+def extendMendlerLeg' (wpt apt : C)
+    (rc : RestrictedCowedgeOver apt G (HomToProf wpt))
+    (tw : CoTwistedArrow C) :
+    (profunctorOnOpCoTwistedArrow C (HomToProf wpt)).obj (Opposite.op tw) →
+    ((profunctorOnCoTwistedArrow C G).obj tw ⟶ apt) := fun w =>
+  let cod := coTwCod tw
+  let dom := coTwDom tw
+  let arr := coTwArr tw
+  have hWeight : (profunctorOnOpCoTwistedArrow C (HomToProf wpt)).obj (Opposite.op tw) =
+      (cod ⟶ wpt) := profunctorOnOpCoTwistedArrow_at_arrow (HomToProf wpt) arr
+  let γ : cod ⟶ wpt := cast hWeight w
+  have hSlice : diagApp (HomToProf wpt) cod = (cod ⟶ wpt) := HomToProf_diag wpt cod
+  let leg_at_cod : (G.obj (Opposite.op cod)).obj cod ⟶ apt :=
+    rc.family cod (cast hSlice.symm γ)
+  have hDom : (G.obj (Opposite.op dom)).obj cod =
+      (profunctorOnCoTwistedArrow C G).obj tw := rfl
+  eqToHom hDom ≫ (G.map arr.op).app cod ≫ leg_at_cod
+
 /-- The extended leg at an arbitrary co-twisted arrow, computed from
 diagonal family data. For `(arr : cod ⟶ dom)` with weight `γ : cod ⟶ pt`,
-this is `(G.map arr.op).app cod ≫ family cod γ : G(dom, cod) ⟶ pt`. -/
+this is `(G.map arr.op).app cod ≫ family cod γ : G(dom, cod) ⟶ pt`.
+This is the special case where weight point equals apex point. -/
 def extendMendlerLeg (pt : C) (rc : RestrictedCowedgeOver pt G (HomToProf pt))
     (tw : CoTwistedArrow C) :
     (profunctorOnOpCoTwistedArrow C (HomToProf pt)).obj (Opposite.op tw) →
@@ -567,6 +592,56 @@ def extendRestrictedCowedgeFull (pt : C)
     WeightedCowedge (HomToProf pt) G :=
   ⟨pt, extendRestrictedCowedge (G := G) pt rc⟩
 
+/-- Naturality for the generalized extended leg with separate weight and apex. -/
+theorem extendMendlerLeg'_natural (wpt apt : C)
+    (rc : RestrictedCowedgeOver apt G (HomToProf wpt))
+    {tw tw' : CoTwistedArrow C} (f : tw ⟶ tw')
+    (w' : (profunctorOnOpCoTwistedArrow C (HomToProf wpt)).obj (Opposite.op tw')) :
+    (profunctorOnCoTwistedArrow C G).map f ≫
+      extendMendlerLeg' (G := G) wpt apt rc tw' w' =
+    extendMendlerLeg' (G := G) wpt apt rc tw
+      ((profunctorOnOpCoTwistedArrow C (HomToProf wpt)).map f.op w') := by
+  unfold extendMendlerLeg'
+  rw [profunctorOnCoTwistedArrow_map]
+  simp only [eqToHom_refl, Category.id_comp, Category.assoc, cast_eq]
+  rw [HomToProf_weight_map_eq' wpt f]
+  have comm := coTwHomComm f
+  rw [← comm]
+  simp only [op_comp, Functor.map_comp, NatTrans.comp_app, Category.assoc]
+  have nat_arr := (G.map (coTwArr tw').op).naturality (coTwCodArr f)
+  congr 1
+  calc (G.obj (op (coTwDom tw'))).map (coTwCodArr f) ≫
+       (G.map (coTwArr tw').op).app (coTwCod tw') ≫ rc.family (coTwCod tw') w'
+    = (G.map (coTwArr tw').op).app (coTwCod tw) ≫
+      (G.obj (op (coTwCod tw'))).map (coTwCodArr f) ≫ rc.family (coTwCod tw') w' := by
+        rw [← Category.assoc, nat_arr, Category.assoc]
+  _ = (G.map (coTwArr tw').op).app (coTwCod tw) ≫
+      (G.map (coTwCodArr f).op).app (coTwCod tw) ≫
+        rc.family (coTwCod tw) (coTwCodArr f ≫ w') := by
+        congr 1
+        have dinat := rc.isDinatural (coTwCod tw) (coTwCod tw') (coTwCodArr f) w'
+        simp only [Profunctor.lmap, Profunctor.rmap, sliceProfunctor_obj_map,
+          sliceProfunctor_map_app, Quiver.Hom.unop_op, HomToProf_map_app,
+          HomToProf_obj_map] at dinat
+        exact dinat
+
+/-- Generalized extension with separate weight point and apex point. -/
+def extendRestrictedCowedge' (wpt apt : C)
+    (rc : RestrictedCowedgeOver apt G (HomToProf wpt)) :
+    WeightedCowedgeOver apt (HomToProf wpt) G where
+  ι := {
+    app := fun tw => extendMendlerLeg' (G := G) wpt apt rc tw.unop
+    naturality := fun tw tw' f => by
+      ext w
+      simp only [types_comp_apply]
+      exact (extendMendlerLeg'_natural (G := G) wpt apt rc f.unop w).symm
+  }
+
+/-- Generalized extension bundled with apex point. -/
+def extendRestrictedCowedgeFull' (wpt : C) (rc : RestrictedCowedge G (HomToProf wpt)) :
+    WeightedCowedge (HomToProf wpt) G :=
+  ⟨rc.pt, extendRestrictedCowedge' (G := G) wpt rc.pt rc.toRestrictedCowedgeOver⟩
+
 /-- At an identity co-twisted arrow, the extended leg reduces to the original
 family (up to canonical casts). -/
 theorem extendMendlerLeg_at_identity (pt : C)
@@ -595,6 +670,36 @@ theorem restrict_extend_roundtrip (pt : C)
     extendRestrictedCowedgeFull, extendRestrictedCowedge, WeightedCocone.leg]
   rw [extendMendlerLeg_at_identity (G := G)]
   simp only [weightAtIdentityToDiagApp_diagAppToWeightAtIdentity]
+
+/-- Generalized identity lemma with separate weight and apex points. -/
+theorem extendMendlerLeg'_at_identity (wpt apt : C)
+    (rc : RestrictedCowedgeOver apt G (HomToProf wpt)) (A : C)
+    (γ : (profunctorOnOpCoTwistedArrow C (HomToProf wpt)).obj
+      (Opposite.op (idCoTwistedArrow A))) :
+    diagonalToIdentityHom G A ≫
+      extendMendlerLeg' (G := G) wpt apt rc (idCoTwistedArrow A) γ =
+    rc.family A (weightAtIdentityToDiagApp (HomToProf wpt) A γ) := by
+  unfold extendMendlerLeg' idCoTwistedArrow
+  simp only [coTwObjMk_arr, coTwObjMk_cod, coTwObjMk_dom]
+  simp only [op_id, Functor.map_id, NatTrans.id_app]
+  simp only [diagonalToIdentityHom, profunctorOnCoTwistedArrow_at_identity,
+    eqToHom_refl, Category.id_comp]
+  simp only [weightAtIdentityToDiagApp, cast_eq]
+  exact Category.id_comp _
+
+/-- Generalized restrict-extend round-trip. -/
+theorem restrict_extend_roundtrip' (wpt : C) (rc : RestrictedCowedge G (HomToProf wpt)) :
+    restrictWeightedCowedge (HomToProf wpt) G
+      (extendRestrictedCowedgeFull' (G := G) wpt rc) = rc := by
+  apply RestrictedCowedge.ext
+  · rfl
+  · apply heq_of_eq
+    apply RestrictedCowedgeOver.ext
+    funext A h
+    simp only [restrictWeightedCowedge, weightedCowedgeFamilyAtIdentity,
+      extendRestrictedCowedgeFull', extendRestrictedCowedge', WeightedCocone.leg]
+    rw [extendMendlerLeg'_at_identity (G := G)]
+    simp only [weightAtIdentityToDiagApp_diagAppToWeightAtIdentity]
 
 /-- The extended leg at any co-twisted arrow matches the original leg
 when starting from a weighted cowedge. This follows from the uniqueness
@@ -687,6 +792,76 @@ theorem extend_restrict_roundtrip (pt : C)
   ext tw γ
   simp only [extendRestrictedCowedgeFull, extendRestrictedCowedge]
   exact extendMendlerLeg_eq_original_leg (G := G) pt wc tw.unop γ
+
+/-- Helper for extend_restrict_roundtrip': proves equality at coTwObjMk. -/
+theorem extendMendlerLeg'_eq_original_leg_at_coTwObjMk (wpt : C)
+    (wc : WeightedCowedge (HomToProf wpt) G)
+    {cod dom : C} (arr : cod ⟶ dom)
+    (γ : (profunctorOnOpCoTwistedArrow C (HomToProf wpt)).obj
+      (Opposite.op (coTwObjMk arr))) :
+    let rc := (restrictWeightedCowedge (HomToProf wpt) G
+      wc).toRestrictedCowedgeOver
+    extendMendlerLeg' (G := G) wpt wc.pt rc (coTwObjMk arr) γ =
+    wc.toWeightedCoconeOver.ι.app (Opposite.op (coTwObjMk arr)) γ := by
+  intro rc
+  -- Use weighted cocone naturality with coTwToIdentityAtSource
+  have nat := wc.toWeightedCoconeOver.ι.naturality (coTwToIdentityAtSource arr).op
+  have natγ := congrFun nat γ
+  simp only [types_comp_apply] at natγ
+  -- For HomToProf, W.map (coTwToIdentityAtSource arr).op γ = γ
+  have weight_map_eq : (profunctorOnOpCoTwistedArrow C (HomToProf wpt)).map
+      (coTwToIdentityAtSource arr).op γ = γ := by
+    simp only [profunctorOnOpCoTwistedArrow_map, profunctorOnTwistedArrow_map,
+      equiv_map_coTwToIdentityAtSource_twDomArr, equiv_map_coTwToIdentityAtSource_twCodArr]
+    simp only [types_comp_apply]
+    simp only [HomToProf_map_app, Quiver.Hom.unop_op, HomToProf_obj_map]
+    exact Category.id_comp γ
+  rw [weight_map_eq] at natγ
+  -- homToFunctor map is precomposition by diagram map
+  have homToFunctor_map_form :
+      (homToFunctor (profunctorOnCoTwistedArrow C G) wc.pt).map
+        (coTwToIdentityAtSource arr).op
+        (wc.toWeightedCoconeOver.ι.app (Opposite.op (idCoTwistedArrow cod)) γ) =
+      (profunctorOnCoTwistedArrow C G).map (coTwToIdentityAtSource arr) ≫
+        wc.toWeightedCoconeOver.ι.app (Opposite.op (idCoTwistedArrow cod)) γ := rfl
+  rw [homToFunctor_map_form] at natγ
+  rw [diagram_map_coTwToIdentityAtSource] at natγ
+  -- natγ: wc.ι(coTwObjMk arr) γ = (G.map arr.op).app cod ≫ wc.ι(id_cod) γ
+  rw [natγ]
+  -- Show our formula equals (G.map arr.op).app cod ≫ wc.ι(id_cod) γ
+  unfold extendMendlerLeg' rc restrictWeightedCowedge weightedCowedgeFamilyAtIdentity
+  simp only [eqToHom_refl, Category.id_comp, cast_eq]
+  congr 1
+  simp only [profunctorOnCoTwistedArrow_at_identity]
+  simp only [diagAppToWeightAtIdentity]
+  simp only [diagonalToIdentityHom, WeightedCocone.leg]
+  exact Category.id_comp _
+
+/-- Generalized version of extendMendlerLeg_eq_original_leg. -/
+theorem extendMendlerLeg'_eq_original_leg (wpt : C)
+    (wc : WeightedCowedge (HomToProf wpt) G)
+    (tw : CoTwistedArrow C)
+    (γ : (profunctorOnOpCoTwistedArrow C (HomToProf wpt)).obj (Opposite.op tw)) :
+    let rc := (restrictWeightedCowedge (HomToProf wpt) G wc).toRestrictedCowedgeOver
+    extendMendlerLeg' (G := G) wpt wc.pt rc tw γ =
+    wc.toWeightedCoconeOver.ι.app (Opposite.op tw) γ := by
+  intro rc
+  have h := coTw_eq_coTwObjMk tw
+  revert γ
+  rw [h]
+  intro γ
+  exact extendMendlerLeg'_eq_original_leg_at_coTwObjMk (G := G) wpt wc (coTwArr tw) γ
+
+/-- Generalized extend-restrict round-trip for arbitrary apex. -/
+theorem extend_restrict_roundtrip' (wpt : C) (wc : WeightedCowedge (HomToProf wpt) G) :
+    extendRestrictedCowedgeFull' (G := G) wpt
+      (restrictWeightedCowedge (HomToProf wpt) G wc) = wc := by
+  apply WeightedCocone.ext
+  · rfl
+  · apply heq_of_eq
+    ext tw γ
+    simp only [extendRestrictedCowedgeFull', extendRestrictedCowedge']
+    exact extendMendlerLeg'_eq_original_leg (G := G) wpt wc tw.unop γ
 
 /-- Restriction from weighted Mendler cowedge to Mendler algebra.
 This extracts the diagonal data from a weighted cowedge by composing
