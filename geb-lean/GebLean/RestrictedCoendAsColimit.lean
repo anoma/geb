@@ -1240,6 +1240,212 @@ def homRestrictedWeightedEquiv :
 
 end HomRestrictedWeightedEquivalence
 
+section HomStrongRestrictedEquivalence
+
+/-!
+### Categorical Equivalence between HomRestrictedCowedge and HomStrongRestrictedCowedge
+
+For the weight `HomToProf pt`, dinaturality implies paranaturality. This is
+because every DiagCompat pair factors through an off-diagonal element:
+
+For `HomToProf pt`:
+- The rmap is identity: `((HomToProf pt).obj (op A)).map g h = h`
+- The lmap is precomposition: `((HomToProf pt).map f).app B h = f.unop ≫ h`
+
+So `DiagCompat (HomToProf pt) A B f a b` holds iff `a = f ≫ b`, which is exactly
+the form that arises from off-diagonal elements in dinaturality. This allows us
+to upgrade any `HomRestrictedCowedge` to a `HomStrongRestrictedCowedge`.
+-/
+
+variable {C : Type u} [Category.{v} C]
+variable (G : Cᵒᵖ ⥤ C ⥤ C) (pt : C)
+
+/-- Type alias for strong restricted cowedges with the Hom-to-pt weight. -/
+abbrev HomStrongRestrictedCowedge (G : Cᵒᵖ ⥤ C ⥤ C) (pt : C) :=
+  StrongRestrictedCowedge G (HomToProf pt)
+
+/-- For `HomToProf pt`, `DiagCompat` is equivalent to the condition `a = f ≫ b`.
+This is because the rmap is identity and the lmap is precomposition. -/
+theorem HomToProf_DiagCompat_iff {A B : C} (f : A ⟶ B) (a : A ⟶ pt) (b : B ⟶ pt) :
+    DiagCompat (HomToProf pt) A B f a b ↔ a = f ≫ b := by
+  constructor
+  · intro h
+    simp only [DiagCompat, HomToProf_obj_map, HomToProf_map_app, Quiver.Hom.unop_op] at h
+    exact h
+  · intro h
+    simp only [DiagCompat, HomToProf_obj_map, HomToProf_map_app, Quiver.Hom.unop_op]
+    exact h
+
+/-- For `HomToProf pt`, every DiagCompat pair factors through an off-diagonal
+element. Given `a : A ⟶ pt`, `b : B ⟶ pt`, and `f : A ⟶ B` with `a = f ≫ b`,
+the element `b : (B ⟶ pt) = ((HomToProf pt).obj (op B)).obj A` witnesses the
+factorization. -/
+theorem HomToProf_DiagCompat_factors {A B : C} (f : A ⟶ B) (a : A ⟶ pt) (b : B ⟶ pt)
+    (h : DiagCompat (HomToProf pt) A B f a b) :
+    ∃ (x : ((HomToProf pt).obj (Opposite.op B)).obj A),
+      ((HomToProf pt).map f.op).app A x = a ∧
+      ((HomToProf pt).obj (Opposite.op B)).map f x = b := by
+  rw [HomToProf_DiagCompat_iff] at h
+  use b
+  simp only [HomToProf_map_app, Quiver.Hom.unop_op, HomToProf_obj_map, and_true]
+  exact h.symm
+
+/-- For `HomToProf pt`, dinaturality implies paranaturality. This holds because
+every DiagCompat pair factors through an off-diagonal element, so the
+paranaturality condition follows from the dinaturality condition.
+The `apex` parameter is the carrier of the cowedge, which is independent of the
+`pt` parameter in the weight `HomToProf pt`. -/
+theorem HomToProf_dinatural_implies_paranatural (apex : C)
+    (family : ParanatSig (HomToProf pt) (G ⇓ apex))
+    (hdinat : IsDinatural (HomToProf pt) (G ⇓ apex) family) :
+    IsParanatural (HomToProf pt) (G ⇓ apex) family := by
+  intro A B f a b hcompat
+  obtain ⟨x, ha, hb⟩ := HomToProf_DiagCompat_factors pt f a b hcompat
+  have dinat := hdinat A B f x
+  simp only [Profunctor.lmap, Profunctor.rmap, HomToProf_map_app, HomToProf_obj_map,
+    Quiver.Hom.unop_op, sliceProfunctor_obj_map, sliceProfunctor_map_app] at dinat
+  simp only [DiagCompat, sliceProfunctor_obj_map, sliceProfunctor_map_app, Quiver.Hom.unop_op]
+  simp only [HomToProf_map_app, HomToProf_obj_map, Quiver.Hom.unop_op] at ha hb
+  rw [← ha, ← hb]
+  exact dinat.symm
+
+/-- Upgrade a `HomRestrictedCowedge` to a `HomStrongRestrictedCowedge` using the
+fact that dinaturality implies paranaturality for `HomToProf pt`. -/
+def upgradeToStrongRestrictedCowedge (rc : HomRestrictedCowedge G pt) :
+    HomStrongRestrictedCowedge G pt where
+  pt := rc.pt
+  toStrongRestrictedCowedgeOver := {
+    family := rc.family
+    isParanatural := HomToProf_dinatural_implies_paranatural G pt rc.pt rc.family rc.isDinatural
+  }
+
+/-- The point of an upgraded strong restricted cowedge equals the input point. -/
+@[simp]
+theorem upgradeToStrongRestrictedCowedge_pt (rc : HomRestrictedCowedge G pt) :
+    (upgradeToStrongRestrictedCowedge G pt rc).pt = rc.pt := rfl
+
+/-- The family of an upgraded strong restricted cowedge equals the input family. -/
+@[simp]
+theorem upgradeToStrongRestrictedCowedge_family (rc : HomRestrictedCowedge G pt) :
+    (upgradeToStrongRestrictedCowedge G pt rc).family = rc.family := rfl
+
+/-- Round-trip from restricted cowedge to strong restricted cowedge and back
+gives the original restricted cowedge. -/
+theorem inclusion_upgrade_roundtrip (rc : HomRestrictedCowedge G pt) :
+    (StrongRestrictedCowedge.inclusion G (HomToProf pt)).obj
+      (upgradeToStrongRestrictedCowedge G pt rc) = rc := by
+  apply RestrictedCowedge.ext
+  · rfl
+  · apply heq_of_eq
+    apply RestrictedCowedgeOver.ext
+    rfl
+
+/-- Round-trip from strong restricted cowedge to restricted cowedge and back
+gives the original strong restricted cowedge. -/
+theorem upgrade_inclusion_roundtrip (src : HomStrongRestrictedCowedge G pt) :
+    upgradeToStrongRestrictedCowedge G pt
+      ((StrongRestrictedCowedge.inclusion G (HomToProf pt)).obj src) = src := by
+  apply StrongRestrictedCowedge.ext
+  · rfl
+  · apply heq_of_eq
+    apply StrongRestrictedCowedgeOver.ext
+    rfl
+
+/-- Convert a morphism of restricted cowedges to a morphism of strong
+restricted cowedges. -/
+def restrictedCowedgeToStrongCowedgeHom
+    {rc₁ rc₂ : HomRestrictedCowedge G pt}
+    (f : RestrictedCowedge.Hom rc₁ rc₂) :
+    StrongRestrictedCowedge.Hom (upgradeToStrongRestrictedCowedge G pt rc₁)
+      (upgradeToStrongRestrictedCowedge G pt rc₂) where
+  hom := f.hom
+  comm := f.comm
+
+/-- Convert a morphism of strong restricted cowedges to a morphism of
+restricted cowedges. -/
+def strongCowedgeToRestrictedCowedgeHom
+    {src₁ src₂ : HomStrongRestrictedCowedge G pt}
+    (f : StrongRestrictedCowedge.Hom src₁ src₂) :
+    RestrictedCowedge.Hom
+      ((StrongRestrictedCowedge.inclusion G (HomToProf pt)).obj src₁)
+      ((StrongRestrictedCowedge.inclusion G (HomToProf pt)).obj src₂) where
+  hom := f.hom
+  comm := f.comm
+
+/-- The functor from restricted cowedges to strong restricted cowedges. -/
+def homRestrictedToStrongFunctor :
+    HomRestrictedCowedge G pt ⥤ HomStrongRestrictedCowedge G pt where
+  obj := upgradeToStrongRestrictedCowedge G pt
+  map := restrictedCowedgeToStrongCowedgeHom G pt
+  map_id := fun _ => by
+    apply StrongRestrictedCowedge.Hom.ext
+    simp only [restrictedCowedgeToStrongCowedgeHom]
+    rfl
+  map_comp := fun _ _ => by
+    apply StrongRestrictedCowedge.Hom.ext
+    simp only [restrictedCowedgeToStrongCowedgeHom]
+    rfl
+
+/-- The functor from strong restricted cowedges to restricted cowedges is
+the inclusion. -/
+abbrev strongToHomRestrictedFunctor :
+    HomStrongRestrictedCowedge G pt ⥤ HomRestrictedCowedge G pt :=
+  StrongRestrictedCowedge.inclusion G (HomToProf pt)
+
+/-- The unit isomorphism for the equivalence. -/
+def homRestrictedStrongUnitIso :
+    𝟭 (HomRestrictedCowedge G pt) ≅
+    homRestrictedToStrongFunctor G pt ⋙ strongToHomRestrictedFunctor G pt :=
+  NatIso.ofComponents
+    (fun rc => eqToIso (inclusion_upgrade_roundtrip G pt rc).symm)
+    (fun {rc₁ rc₂} f => by
+      apply RestrictedCowedge.Hom.ext
+      simp only [Functor.id_obj, Functor.comp_obj, Functor.id_map, Functor.comp_map,
+        homRestrictedToStrongFunctor, restrictedCowedgeToStrongCowedgeHom,
+        StrongRestrictedCowedge.inclusion, eqToIso.hom, RestrictedCowedgeCat,
+        RestrictedCowedge.Hom.comp_hom, RestrictedCowedge.Hom.id_hom,
+        upgradeToStrongRestrictedCowedge, eqToHom_refl, Category.comp_id,
+        Category.id_comp])
+
+/-- The counit isomorphism for the equivalence. -/
+def homRestrictedStrongCounitIso :
+    strongToHomRestrictedFunctor G pt ⋙ homRestrictedToStrongFunctor G pt ≅
+    𝟭 (HomStrongRestrictedCowedge G pt) :=
+  NatIso.ofComponents
+    (fun src => eqToIso (upgrade_inclusion_roundtrip G pt src))
+    (fun {src₁ src₂} f => by
+      apply StrongRestrictedCowedge.Hom.ext
+      simp only [Functor.comp_obj, Functor.id_obj, Functor.comp_map, Functor.id_map,
+        homRestrictedToStrongFunctor, StrongRestrictedCowedge.inclusion,
+        restrictedCowedgeToStrongCowedgeHom, eqToIso.hom, StrongRestrictedCowedgeCat,
+        StrongRestrictedCowedge.Hom.comp_hom, StrongRestrictedCowedge.Hom.id_hom,
+        StrongRestrictedCowedge.toRestrictedCowedge, upgradeToStrongRestrictedCowedge,
+        eqToHom_refl, Category.comp_id, Category.id_comp])
+
+/-- The categorical equivalence between restricted cowedges with weight
+`HomToProf pt` and strong restricted cowedges with the same weight.
+This formalizes that for `HomToProf pt`, dinaturality is equivalent to
+paranaturality, so the full subcategory of strong restricted cowedges
+is equivalent to the entire category of restricted cowedges. -/
+def homRestrictedStrongEquiv :
+    HomRestrictedCowedge G pt ≌ HomStrongRestrictedCowedge G pt where
+  functor := homRestrictedToStrongFunctor G pt
+  inverse := strongToHomRestrictedFunctor G pt
+  unitIso := homRestrictedStrongUnitIso G pt
+  counitIso := homRestrictedStrongCounitIso G pt
+  functor_unitIso_comp X := by
+    apply StrongRestrictedCowedge.Hom.ext
+    simp only [homRestrictedStrongUnitIso, homRestrictedStrongCounitIso,
+      homRestrictedToStrongFunctor, NatIso.ofComponents_hom_app,
+      eqToIso.hom, Functor.comp_obj, Functor.id_obj,
+      restrictedCowedgeToStrongCowedgeHom, StrongRestrictedCowedge.inclusion]
+    simp only [StrongRestrictedCowedgeCat, RestrictedCowedgeCat,
+      StrongRestrictedCowedge.Hom.comp_hom, StrongRestrictedCowedge.Hom.id_hom,
+      RestrictedCowedge.Hom.id_hom, StrongRestrictedCowedge.toRestrictedCowedge,
+      upgradeToStrongRestrictedCowedge, eqToHom_refl, Category.comp_id]
+
+end HomStrongRestrictedEquivalence
+
 section KanExtensionConnection
 
 /-!

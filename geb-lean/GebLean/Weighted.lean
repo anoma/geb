@@ -4442,6 +4442,14 @@ theorem RestrictedCowedge_eqToHom_hom {G : Cᵒᵖ ⥤ C ⥤ C} {H : Cᵒᵖ ⥤
   subst h
   rfl
 
+/-- The underlying morphism of `eqToHom` for `StrongRestrictedCowedge.Hom` is
+`eqToHom` applied to the equality of apexes. -/
+theorem StrongRestrictedCowedge_eqToHom_hom {G : Cᵒᵖ ⥤ C ⥤ C} {H : Cᵒᵖ ⥤ C ⥤ Type v}
+    {src₁ src₂ : StrongRestrictedCowedge G H} (h : src₁ = src₂) :
+    (eqToHom h).hom = eqToHom (congrArg StrongRestrictedCowedge.pt h) := by
+  subst h
+  rfl
+
 /-- The underlying morphism of `restrictionFunctor.map f` is `f.hom`. -/
 theorem restrictionFunctor_map_hom {H : Cᵒᵖ ⥤ C ⥤ Type v} {G : Cᵒᵖ ⥤ C ⥤ C}
     {wc₁ wc₂ : WeightedCowedge H G} (f : WeightedCocone.Hom wc₁ wc₂) :
