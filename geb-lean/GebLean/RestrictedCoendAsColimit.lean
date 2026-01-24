@@ -1084,6 +1084,16 @@ def homRestrictedCopowerEquiv (G : Cᵒᵖ ⥤ C ⥤ C) (pt : C) :
       RestrictedCowedge_eqToHom_hom]
     rfl
 
+/-- The categorical isomorphism between restricted cowedges with weight
+`HomToProf pt` and cowedges over the copower profunctor.
+This strengthens `homRestrictedCopowerEquiv` from an equivalence to an
+isomorphism, which is possible because the round-trips are equalities. -/
+def homRestrictedCopowerIso (G : Cᵒᵖ ⥤ C ⥤ C) (pt : C) :
+    HomRestrictedCowedge G pt ≅Cat HomCopowerCowedge G pt :=
+  Cat.isoOfEquiv (homRestrictedCopowerEquiv G pt)
+    (copowerToRestricted_restrictedToCopower G pt)
+    (restrictedToCopower_copowerToRestricted G pt)
+
 end MendlerCowedgeCorrespondence
 
 section HomRestrictedWeightedEquivalence
@@ -1237,6 +1247,16 @@ def homRestrictedWeightedEquiv :
       restrictedCowedgeToWeightedCowedge_pt, weightedCowedgeToRestrictedCowedge_pt,
       eqToHom_refl, Category.comp_id, RestrictedCowedgeCat,
       RestrictedCowedge_eqToHom_hom]
+
+/-- The categorical isomorphism between restricted cowedges with weight
+`HomToProf pt` and weighted cowedges with the same weight.
+This strengthens `homRestrictedWeightedEquiv` from an equivalence to an
+isomorphism, which is possible because the round-trips are equalities. -/
+def homRestrictedWeightedIso :
+    HomRestrictedCowedge G pt ≅Cat HomWeightedCowedge G pt :=
+  Cat.isoOfEquiv (homRestrictedWeightedEquiv G pt)
+    (weightedToRestricted_restrictedToWeighted G pt)
+    (restrictedToWeighted_weightedToRestricted G pt)
 
 end HomRestrictedWeightedEquivalence
 
@@ -1443,6 +1463,16 @@ def homRestrictedStrongEquiv :
       StrongRestrictedCowedge.Hom.comp_hom, StrongRestrictedCowedge.Hom.id_hom,
       RestrictedCowedge.Hom.id_hom, StrongRestrictedCowedge.toRestrictedCowedge,
       upgradeToStrongRestrictedCowedge, eqToHom_refl, Category.comp_id]
+
+/-- The categorical isomorphism between restricted cowedges with weight
+`HomToProf pt` and strong restricted cowedges with the same weight.
+This strengthens `homRestrictedStrongEquiv` from an equivalence to an
+isomorphism, which is possible because the round-trips are equalities. -/
+def homRestrictedStrongIso :
+    HomRestrictedCowedge G pt ≅Cat HomStrongRestrictedCowedge G pt :=
+  Cat.isoOfEquiv (homRestrictedStrongEquiv G pt)
+    (inclusion_upgrade_roundtrip G pt)
+    (upgrade_inclusion_roundtrip G pt)
 
 end HomStrongRestrictedEquivalence
 
