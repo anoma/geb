@@ -2930,6 +2930,15 @@ instance RestrictedCowedgeCat (G : Cᵒᵖ ⥤ C ⥤ C) (H : Cᵒᵖ ⥤ C ⥤ T
   comp_id f := by ext; simp [RestrictedCowedge.Hom.comp, RestrictedCowedge.Hom.id]
   assoc f g h := by ext; simp [RestrictedCowedge.Hom.comp]
 
+@[simp]
+theorem RestrictedCowedge.category_comp_hom {G : Cᵒᵖ ⥤ C ⥤ C} {H : Cᵒᵖ ⥤ C ⥤ Type v}
+    {c₁ c₂ c₃ : RestrictedCowedge G H}
+    (f : c₁ ⟶ c₂) (g : c₂ ⟶ c₃) : (f ≫ g).hom = f.hom ≫ g.hom := rfl
+
+@[simp]
+theorem RestrictedCowedge.category_id_hom {G : Cᵒᵖ ⥤ C ⥤ C} {H : Cᵒᵖ ⥤ C ⥤ Type v}
+    (c : RestrictedCowedge G H) : (𝟙 c : c ⟶ c).hom = 𝟙 c.pt := rfl
+
 /-- The inclusion functor from strong restricted cowedges to restricted cowedges.
 This embeds the category of cowedges with paranaturality into the category of
 cowedges with dinaturality. Since paranaturality implies dinaturality, every

@@ -1476,6 +1476,135 @@ def homRestrictedStrongIso :
 
 end HomStrongRestrictedEquivalence
 
+section HomRestrictedCowedgeFunctoriality
+
+/-!
+### Functoriality of HomRestrictedCowedge in the Weight Parameter
+
+`HomRestrictedCowedge G` is contravariant in the weight parameter `pt`. This
+arises from two observations:
+
+1. `HomToProf pt = IdProf ⇓ pt` is covariant in `pt` via `sliceProfunctorFunctor`
+2. `RestrictedCowedge G H` is contravariant in the weight `H` (precomposition)
+
+Composing covariant with contravariant gives a contravariant functor:
+  `HomRestrictedCowedgeFunctor G : Cᵒᵖ ⥤ Cat`
+
+For a morphism `φ : pt → pt'` in `C`, the induced functor
+`HomRestrictedCowedge G pt' ⥤ HomRestrictedCowedge G pt` acts by:
+- On objects: precompose the family indexing with `φ`
+- On morphisms: the underlying morphism is unchanged
+-/
+
+variable {C : Type u} [Category.{v} C]
+variable (G : Cᵒᵖ ⥤ C ⥤ C)
+
+/-- Reindex a restricted cowedge along a morphism `φ : pt → pt'`.
+Given a cowedge at weight `HomToProf pt'`, produce a cowedge at `HomToProf pt`
+by precomposing the family indexing with `φ`. -/
+def homRestrictedCowedgeReindex {pt pt' : C} (φ : pt ⟶ pt')
+    (rc : HomRestrictedCowedge G pt') : HomRestrictedCowedge G pt where
+  pt := rc.pt
+  toRestrictedCowedgeOver := {
+    family := fun A f => rc.family A (f ≫ φ)
+    isDinatural := fun A B g x => by
+      have dinat := rc.isDinatural A B g (x ≫ φ)
+      simp only [Profunctor.lmap, Profunctor.rmap, sliceProfunctor_obj_map,
+        sliceProfunctor_map_app, Quiver.Hom.unop_op,
+        HomToProf_map_app, HomToProf_obj_map, Category.assoc] at dinat ⊢
+      exact dinat
+  }
+
+/-- The apex of a reindexed cowedge equals the original apex. -/
+@[simp]
+theorem homRestrictedCowedgeReindex_pt {pt pt' : C} (φ : pt ⟶ pt')
+    (rc : HomRestrictedCowedge G pt') :
+    (homRestrictedCowedgeReindex G φ rc).pt = rc.pt := rfl
+
+/-- The family of a reindexed cowedge is precomposition with φ. -/
+@[simp]
+theorem homRestrictedCowedgeReindex_family {pt pt' : C} (φ : pt ⟶ pt')
+    (rc : HomRestrictedCowedge G pt') (A : C) (f : A ⟶ pt) :
+    (homRestrictedCowedgeReindex G φ rc).family A f = rc.family A (f ≫ φ) := rfl
+
+/-- Reindex a morphism of restricted cowedges along `φ : pt → pt'`. -/
+def homRestrictedCowedgeReindexHom {pt pt' : C} (φ : pt ⟶ pt')
+    {rc₁ rc₂ : HomRestrictedCowedge G pt'}
+    (f : RestrictedCowedge.Hom rc₁ rc₂) :
+    RestrictedCowedge.Hom (homRestrictedCowedgeReindex G φ rc₁)
+      (homRestrictedCowedgeReindex G φ rc₂) where
+  hom := f.hom
+  comm := fun A x => by
+    simp only [homRestrictedCowedgeReindex_family]
+    exact f.comm A (x ≫ φ)
+
+/-- The reindexing functor for a fixed morphism `φ : pt → pt'`. -/
+def homRestrictedCowedgeReindexFunctor {pt pt' : C} (φ : pt ⟶ pt') :
+    HomRestrictedCowedge G pt' ⥤ HomRestrictedCowedge G pt where
+  obj := homRestrictedCowedgeReindex G φ
+  map := homRestrictedCowedgeReindexHom G φ
+  map_id := fun _ => by
+    apply RestrictedCowedge.Hom.ext
+    simp only [homRestrictedCowedgeReindexHom]
+    rfl
+  map_comp := fun _ _ => by
+    apply RestrictedCowedge.Hom.ext
+    simp only [homRestrictedCowedgeReindexHom]
+    rfl
+
+/-- Reindexing by the identity is the identity functor. -/
+theorem homRestrictedCowedgeReindex_id (pt : C) (rc : HomRestrictedCowedge G pt) :
+    homRestrictedCowedgeReindex G (𝟙 pt) rc = rc := by
+  apply RestrictedCowedge.ext
+  · rfl
+  · apply heq_of_eq
+    apply RestrictedCowedgeOver.ext
+    funext A f
+    simp only [homRestrictedCowedgeReindex_family, Category.comp_id]
+
+/-- Reindexing respects composition (contravariantly). -/
+theorem homRestrictedCowedgeReindex_comp {pt pt' pt'' : C}
+    (φ : pt ⟶ pt') (ψ : pt' ⟶ pt'') (rc : HomRestrictedCowedge G pt'') :
+    homRestrictedCowedgeReindex G φ (homRestrictedCowedgeReindex G ψ rc) =
+    homRestrictedCowedgeReindex G (φ ≫ ψ) rc := by
+  apply RestrictedCowedge.ext
+  · rfl
+  · apply heq_of_eq
+    apply RestrictedCowedgeOver.ext
+    funext A f
+    simp only [homRestrictedCowedgeReindex_family, Category.assoc]
+
+/-- The contravariant functor sending `pt` to `HomRestrictedCowedge G pt`.
+
+For `φ : pt → pt'` in `C`, the induced functor goes in the opposite direction:
+`HomRestrictedCowedge G pt' ⥤ HomRestrictedCowedge G pt`. -/
+def homRestrictedCowedgeFunctor : Cᵒᵖ ⥤ Cat where
+  obj pt := Cat.of (HomRestrictedCowedge G pt.unop)
+  map {pt pt'} φ := ⟨homRestrictedCowedgeReindexFunctor G φ.unop⟩
+  map_id pt := by
+    apply Cat.Hom.ext
+    refine CategoryTheory.Functor.ext (fun rc => ?_) (fun rc₁ rc₂ f => ?_)
+    · simp only [Cat.of_α, homRestrictedCowedgeReindexFunctor]
+      exact homRestrictedCowedgeReindex_id G pt.unop rc
+    · apply RestrictedCowedge.Hom.ext
+      simp only [Cat.of_α, Cat.id_eq_id, Functor.id_map,
+        homRestrictedCowedgeReindexFunctor, homRestrictedCowedgeReindexHom,
+        HomRestrictedCowedge, RestrictedCowedge.category_comp_hom,
+        RestrictedCowedge_eqToHom_hom, eqToHom_refl, Category.id_comp, Category.comp_id]
+  map_comp {pt pt' pt''} φ ψ := by
+    apply Cat.Hom.ext
+    refine CategoryTheory.Functor.ext (fun rc => ?_) (fun rc₁ rc₂ f => ?_)
+    · simp only [Cat.of_α, homRestrictedCowedgeReindexFunctor]
+      exact (homRestrictedCowedgeReindex_comp G ψ.unop φ.unop rc).symm
+    · apply RestrictedCowedge.Hom.ext
+      simp only [Cat.of_α, Cat.comp_eq_comp, Functor.comp_map,
+        homRestrictedCowedgeReindexFunctor, homRestrictedCowedgeReindexHom,
+        HomRestrictedCowedge, RestrictedCowedge.category_comp_hom,
+        RestrictedCowedge_eqToHom_hom, homRestrictedCowedgeReindex_pt,
+        eqToHom_refl, Category.id_comp, Category.comp_id]
+
+end HomRestrictedCowedgeFunctoriality
+
 section KanExtensionConnection
 
 /-!
