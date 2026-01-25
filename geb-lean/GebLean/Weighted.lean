@@ -1096,10 +1096,30 @@ universe u₁ v₁
 variable {J : Type u₁} [Category.{v₁, u₁} J]
 
 /--
+A weighted cone under a fixed point `pt` over a diagram `D : J ⥤ C` with
+weight `W : J ⥤ Type v`. This is the type of natural transformations
+`W ⟶ Hom(pt, D(-))`.
+-/
+abbrev WeightedConeUnder (W : J ⥤ Type v) (D : J ⥤ C) (pt : C) :=
+  W ⟶ homFromFunctor D pt
+
+/-- `WeightedConeUnder` is the composition of `homFromFunctorBifunctor`
+with the natural transformation functor. This exhibits the functorial
+structure: it's built from the composition `W ⟶ homFromFunctorBifunctor D pt`. -/
+theorem WeightedConeUnder_eq_hom_to_bifunctor (W : J ⥤ Type v) (D : J ⥤ C)
+    (pt : C) : WeightedConeUnder W D pt =
+    (W ⟶ (homFromFunctorBifunctor.obj D).obj (Opposite.op pt)) := rfl
+
+/--
 The curried trifunctor exhibiting `WeightedConeUnder` as a functorial construction.
 
 Takes `W : (J ⥤ Type v)ᵒᵖ` and produces `(J ⥤ C) ⥤ Cᵒᵖ ⥤ Type` where
 the value at `(D, pt)` is `W.unop ⟶ homFromFunctor D pt.unop`.
+
+Built as a chain of compositions ending with `Functor.hom (J ⥤ Type v)`:
+1. Curry the hom functor on functor categories
+2. Whisker on the right with `Cᵒᵖ` to transform domain from `J ⥤ Type v`
+3. Pre-compose with `homFromFunctorBifunctor` to handle the `D` argument
 -/
 def weightedConeUnderCurriedTrifunctor :
     (J ⥤ Type v)ᵒᵖ ⥤ (J ⥤ C) ⥤ Cᵒᵖ ⥤ Type (max _ v) :=
@@ -1108,14 +1128,11 @@ def weightedConeUnderCurriedTrifunctor :
   (Functor.whiskeringLeft (J ⥤ C) (Cᵒᵖ ⥤ J ⥤ Type v) (Cᵒᵖ ⥤ Type (max u₁ v))).obj
     homFromFunctorBifunctor
 
-/--
-A weighted cone under a fixed point `pt` over a diagram `D : J ⥤ C` with
-weight `W : J ⥤ Type v`. This is the type of natural transformations
-`W ⟶ Hom(pt, D(-))`.
--/
-abbrev WeightedConeUnder (W : J ⥤ Type v) (D : J ⥤ C) (pt : C) :=
-  ((weightedConeUnderCurriedTrifunctor.obj (Opposite.op W)).obj D).obj
-    (Opposite.op pt)
+/-- `WeightedConeUnder` is an application of the curried trifunctor. -/
+theorem WeightedConeUnder_eq_trifunctor_obj (W : J ⥤ Type v) (D : J ⥤ C) (pt : C) :
+    WeightedConeUnder W D pt =
+      ((weightedConeUnderCurriedTrifunctor.obj (Opposite.op W)).obj D).obj
+        (Opposite.op pt) := rfl
 
 /--
 A weighted cone over a diagram `D : J ⥤ C` with weight `W : J ⥤ Type v`
@@ -1160,10 +1177,30 @@ theorem WeightedCone.naturality {W : J ⥤ Type v} {D : J ⥤ C}
   exact (congrFun nat w).symm
 
 /--
+A weighted cocone over a fixed point `pt` for a diagram `D : J ⥤ C` with
+weight `W : Jᵒᵖ ⥤ Type v`. This is the type of natural transformations
+`W ⟶ Hom(D(-), pt)`.
+-/
+abbrev WeightedCoconeOver (W : Jᵒᵖ ⥤ Type v) (D : J ⥤ C) (pt : C) :=
+  W ⟶ homToFunctor D pt
+
+/-- `WeightedCoconeOver` is the composition of `homToFunctorBifunctor`
+with the natural transformation functor. This exhibits the functorial
+structure: it's built from the composition `W ⟶ homToFunctorBifunctor Dᵒᵖ pt`. -/
+theorem WeightedCoconeOver_eq_hom_to_bifunctor (W : Jᵒᵖ ⥤ Type v) (D : J ⥤ C)
+    (pt : C) : WeightedCoconeOver W D pt =
+    (W ⟶ (homToFunctorBifunctor.obj (Opposite.op D)).obj pt) := rfl
+
+/--
 The curried trifunctor exhibiting `WeightedCoconeOver` as a functorial construction.
 
 Takes `W : (Jᵒᵖ ⥤ Type v)ᵒᵖ` and produces `(J ⥤ C)ᵒᵖ ⥤ C ⥤ Type` where
 the value at `(Dᵒᵖ, pt)` is `W.unop ⟶ homToFunctor D pt`.
+
+Built as a chain of compositions ending with `Functor.hom (Jᵒᵖ ⥤ Type v)`:
+1. Curry the hom functor on presheaf categories
+2. Whisker on the right with `C` to transform domain from `Jᵒᵖ ⥤ Type v`
+3. Pre-compose with `homToFunctorBifunctor` to handle the `D` argument
 -/
 def weightedCoconeOverCurriedTrifunctor :
     (Jᵒᵖ ⥤ Type v)ᵒᵖ ⥤ (J ⥤ C)ᵒᵖ ⥤ C ⥤ Type (max u₁ v) :=
@@ -1172,15 +1209,11 @@ def weightedCoconeOverCurriedTrifunctor :
   (Functor.whiskeringLeft (J ⥤ C)ᵒᵖ (C ⥤ Jᵒᵖ ⥤ Type v) (C ⥤ Type (max u₁ v))).obj
     homToFunctorBifunctor
 
-/--
-A weighted cocone over a fixed point `pt` for a diagram `D : J ⥤ C` with
-weight `W : Jᵒᵖ ⥤ Type v`. This is the type of natural transformations
-`W ⟶ Hom(D(-), pt)`.
--/
-abbrev WeightedCoconeOver (W : Jᵒᵖ ⥤ Type v) (D : J ⥤ C) (pt : C) :=
-  ((weightedCoconeOverCurriedTrifunctor.obj (Opposite.op W)).obj
-      (Opposite.op D)).obj
-    pt
+/-- `WeightedCoconeOver` is an application of the curried trifunctor. -/
+theorem WeightedCoconeOver_eq_trifunctor_obj (W : Jᵒᵖ ⥤ Type v) (D : J ⥤ C) (pt : C) :
+    WeightedCoconeOver W D pt =
+      ((weightedCoconeOverCurriedTrifunctor.obj (Opposite.op W)).obj
+        (Opposite.op D)).obj pt := rfl
 
 /--
 A weighted cocone over a diagram `D : J ⥤ C` with weight `W : Jᵒᵖ ⥤ Type v`
@@ -1723,7 +1756,7 @@ def coneToWeightedCone {D : J ⥤ C} (c : Cone D) :
     app := fun j _ => c.π.app j
     naturality := fun j j' f => by
       funext _
-      simp only [types_comp_apply, unitWeight, Functor.const_obj_obj,
+      simp only [types_comp_apply, homFromFunctor, unitWeight, Functor.const_obj_obj,
         Functor.const_obj_map]
       have nat := c.π.naturality f
       simp only [Functor.const_obj_obj, Functor.const_obj_map, Category.id_comp] at nat
@@ -1782,7 +1815,7 @@ def coconeToWeightedCocone {D : J ⥤ C} (c : Cocone (J := J) D) :
     app := fun j _ => c.ι.app j.unop
     naturality := fun j j' f => by
       funext _
-      simp only [types_comp_apply, unitWeightOp,
+      simp only [types_comp_apply, homToFunctor, unitWeightOp,
         Functor.const_obj_obj, Functor.const_obj_map]
       have nat := c.ι.naturality f.unop
       simp only [Functor.const_obj_obj, Functor.const_obj_map, Category.comp_id] at nat
