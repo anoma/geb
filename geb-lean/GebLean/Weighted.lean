@@ -1862,11 +1862,9 @@ indexing category and weight), and `WeightedCowedge` is definitionally equal to
 
 variable (W : Cᵒᵖ ⥤ C ⥤ Type v) (P : Cᵒᵖ ⥤ C ⥤ D)
 
-/-- The presheaf of weighted wedges under, as an instance of
-`weightedConeUnderPresheaf`. -/
+/-- The presheaf of weighted wedges under, expressed via the curried trifunctor. -/
 abbrev weightedWedgeUnderPresheaf : Dᵒᵖ ⥤ Type (max u v) :=
-  weightedConeUnderPresheaf (profunctorOnTwistedArrow C W)
-    (profunctorOnTwistedArrow C P)
+  (weightedWedgeUnderCurriedTrifunctor.obj (Opposite.op W)).obj P
 
 /-- The contravariant category of elements of the presheaf of weighted
 wedges. -/
@@ -1885,11 +1883,10 @@ def weightedWedgeEquivElementsPre :
     WeightedWedge W P ≌ WeightedWedgeElementsPre (D := D) W P :=
   Cat.equivOfIso (weightedWedgeIsoCat W P)
 
-/-- The copresheaf of weighted cowedges over, as an instance of
-`weightedCoconeOverCopresheaf`. -/
+/-- The copresheaf of weighted cowedges over, expressed via the curried
+trifunctor. -/
 abbrev weightedCowedgeOverCopresheaf : D ⥤ Type (max u v) :=
-  weightedCoconeOverCopresheaf (profunctorOnOpCoTwistedArrow C W)
-    (profunctorOnCoTwistedArrow C P)
+  (weightedCowedgeOverCurriedTrifunctor.obj (Opposite.op W)).obj (Opposite.op P)
 
 /-- The covariant category of elements of the copresheaf of weighted
 cowedges. -/
