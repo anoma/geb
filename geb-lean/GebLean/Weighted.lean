@@ -2973,17 +2973,136 @@ This contains just the family and dinaturality data without bundling the
 carrier object.
 -/
 @[ext]
-structure RestrictedCowedgeOver (pt : C) (G : Cᵒᵖ ⥤ C ⥤ C) (H : Cᵒᵖ ⥤ C ⥤ Type v) where
+structure RestrictedCowedgeOver (G : Cᵒᵖ ⥤ C ⥤ C) (H : Cᵒᵖ ⥤ C ⥤ Type v) (pt : C) where
   /-- The family of morphisms as a `ParanatSig H (G ⇓ pt)`. -/
   family : ParanatSig H (G ⇓ pt)
   /-- The dinaturality condition on the family. -/
   isDinatural : IsDinatural H (G ⇓ pt) family
 
+namespace RestrictedCowedgeOver
+
+variable {G G' G'' : Cᵒᵖ ⥤ C ⥤ C} {H H' H'' : Cᵒᵖ ⥤ C ⥤ Type v} {pt pt' pt'' : C}
+
+/-- Covariant action on the point parameter.
+Given `f : pt ⟶ pt'`, we map a restricted cowedge over `pt` to one over `pt'`
+by postcomposing each family morphism with `f`. -/
+def mapPt (f : pt ⟶ pt') (c : RestrictedCowedgeOver G H pt) :
+    RestrictedCowedgeOver G H pt' where
+  family A h := c.family A h ≫ f
+  isDinatural := by
+    intro I₀ I₁ g x
+    have dinat := c.isDinatural I₀ I₁ g x
+    simp only [Profunctor.lmap, Profunctor.rmap,
+      sliceProfunctor_obj_map, sliceProfunctor_map_app, Quiver.Hom.unop_op] at dinat ⊢
+    simp only [← Category.assoc]
+    exact congrArg (· ≫ f) dinat
+
+/-- `mapPt` respects identity: `mapPt (𝟙 pt) c = c`. -/
+@[simp]
+theorem mapPt_id (c : RestrictedCowedgeOver G H pt) :
+    mapPt (𝟙 pt) c = c := by
+  apply RestrictedCowedgeOver.ext
+  funext A h
+  simp only [mapPt, Category.comp_id]
+
+/-- `mapPt` respects composition: `mapPt (f ≫ g) c = mapPt g (mapPt f c)`. -/
+theorem mapPt_comp (f : pt ⟶ pt') (g : pt' ⟶ pt'')
+    (c : RestrictedCowedgeOver G H pt) :
+    mapPt (f ≫ g) c = mapPt g (mapPt f c) := by
+  apply RestrictedCowedgeOver.ext
+  funext A h
+  simp only [mapPt, Category.assoc]
+
+/-- Contravariant action on the `G` parameter.
+Given `β : G' ⟶ G`, we map a restricted cowedge for `G` to one for `G'`
+by precomposing each family morphism with the appropriate component of `β`. -/
+def mapG (β : G' ⟶ G) (c : RestrictedCowedgeOver G H pt) :
+    RestrictedCowedgeOver G' H pt where
+  family A h := (β.app (Opposite.op A)).app A ≫ c.family A h
+  isDinatural := by
+    intro I₀ I₁ g x
+    have dinat := c.isDinatural I₀ I₁ g x
+    simp only [Profunctor.lmap, Profunctor.rmap,
+      sliceProfunctor_obj_map, sliceProfunctor_map_app, Quiver.Hom.unop_op] at dinat ⊢
+    have nat₁ : (G'.obj (Opposite.op I₁)).map g ≫ (β.app (Opposite.op I₁)).app I₁ =
+        (β.app (Opposite.op I₁)).app I₀ ≫ (G.obj (Opposite.op I₁)).map g :=
+      (β.app (Opposite.op I₁)).naturality g
+    have nat₂ : (β.app (Opposite.op I₁)).app I₀ ≫ (G.map g.op).app I₀ =
+        (G'.map g.op).app I₀ ≫ (β.app (Opposite.op I₀)).app I₀ := by
+      have h := congrFun (congrArg NatTrans.app (β.naturality g.op)) I₀
+      simp only [NatTrans.comp_app] at h
+      exact h.symm
+    simp only [← Category.assoc]
+    rw [nat₁, Category.assoc, dinat, ← Category.assoc, nat₂, Category.assoc]
+
+/-- `mapG` respects identity: `mapG (𝟙 G) c = c`. -/
+@[simp]
+theorem mapG_id (c : RestrictedCowedgeOver G H pt) :
+    mapG (𝟙 G) c = c := by
+  apply RestrictedCowedgeOver.ext
+  funext A h
+  simp only [mapG, NatTrans.id_app]
+  exact Category.id_comp _
+
+/-- `mapG` respects composition (contravariantly):
+`mapG (β ≫ γ) c = mapG β (mapG γ c)`. -/
+theorem mapG_comp (β : G' ⟶ G) (γ : G ⟶ G'')
+    (c : RestrictedCowedgeOver G'' H pt) :
+    mapG (β ≫ γ) c = mapG β (mapG γ c) := by
+  apply RestrictedCowedgeOver.ext
+  funext A h
+  simp only [mapG, NatTrans.comp_app, Category.assoc]
+
+/-- Contravariant action on the `H` parameter.
+Given `α : H ⟶ H'`, we map a restricted cowedge for `H'` to one for `H`
+by precomposing the family with the appropriate component of `α`. -/
+def mapH (α : H ⟶ H') (c : RestrictedCowedgeOver G H' pt) :
+    RestrictedCowedgeOver G H pt where
+  family A h := c.family A ((α.app (Opposite.op A)).app A h)
+  isDinatural := by
+    intro I₀ I₁ g x
+    let y := (α.app (Opposite.op I₁)).app I₀ x
+    have dinat := c.isDinatural I₀ I₁ g y
+    simp only [Profunctor.lmap, Profunctor.rmap,
+      sliceProfunctor_obj_map, sliceProfunctor_map_app, Quiver.Hom.unop_op] at dinat ⊢
+    have nat_cov := congrFun ((α.app (Opposite.op I₁)).naturality g) x
+    simp only [types_comp_apply] at nat_cov
+    have nat_con := congrFun (congrArg (NatTrans.app · I₀)
+      (α.naturality g.op)) x
+    simp only [types_comp_apply, NatTrans.comp_app] at nat_con
+    calc (G.obj (Opposite.op I₁)).map g ≫
+          c.family I₁ ((α.app (Opposite.op I₁)).app I₁ ((H.obj (Opposite.op I₁)).map g x))
+        = (G.obj (Opposite.op I₁)).map g ≫ c.family I₁ ((H'.obj (Opposite.op I₁)).map g y) := by
+          rw [nat_cov]
+      _ = (G.map g.op).app I₀ ≫ c.family I₀ ((H'.map g.op).app I₀ y) := dinat
+      _ = (G.map g.op).app I₀ ≫
+            c.family I₀ ((α.app (Opposite.op I₀)).app I₀ ((H.map g.op).app I₀ x)) := by
+          rw [← nat_con]
+
+/-- `mapH` respects identity: `mapH (𝟙 H) c = c`. -/
+@[simp]
+theorem mapH_id (c : RestrictedCowedgeOver G H pt) :
+    mapH (𝟙 H) c = c := by
+  apply RestrictedCowedgeOver.ext
+  funext A h
+  simp only [mapH, NatTrans.id_app, types_id_apply]
+
+/-- `mapH` respects composition (contravariantly):
+`mapH (α ≫ β) c = mapH α (mapH β c)`. -/
+theorem mapH_comp (α : H ⟶ H') (β : H' ⟶ H'')
+    (c : RestrictedCowedgeOver G H'' pt) :
+    mapH (α ≫ β) c = mapH α (mapH β c) := by
+  apply RestrictedCowedgeOver.ext
+  funext A h
+  simp only [mapH, NatTrans.comp_app, types_comp_apply]
+
+end RestrictedCowedgeOver
+
 /--
 An `H`-restricted `G`-cowedge for an endodifunctor `G : Cᵒᵖ ⥤ C ⥤ C` and
 restriction functor `H : Cᵒᵖ ⥤ C ⥤ Type v`.
 
-This consists of a carrier object and a `RestrictedCowedgeOver pt G H`.
+This consists of a carrier object and a `RestrictedCowedgeOver G H pt`.
 
 The universe of `H` is `v` (the morphism universe) to match the slice profunctor
 `G ⇓ pt : Cᵒᵖ ⥤ C ⥤ Type v`. -/
@@ -2992,7 +3111,7 @@ structure RestrictedCowedge (G : Cᵒᵖ ⥤ C ⥤ C) (H : Cᵒᵖ ⥤ C ⥤ Typ
   /-- The carrier (summit) object. -/
   pt : C
   /-- The cowedge data over the point. -/
-  toRestrictedCowedgeOver : RestrictedCowedgeOver pt G H
+  toRestrictedCowedgeOver : RestrictedCowedgeOver G H pt
 
 namespace RestrictedCowedge
 
@@ -3093,8 +3212,8 @@ fixed point `pt`. This contains just the family and paranaturality data
 without bundling the carrier object.
 -/
 @[ext]
-structure StrongRestrictedCowedgeOver (pt : C) (G : Cᵒᵖ ⥤ C ⥤ C)
-    (H : Cᵒᵖ ⥤ C ⥤ Type v) where
+structure StrongRestrictedCowedgeOver (G : Cᵒᵖ ⥤ C ⥤ C) (H : Cᵒᵖ ⥤ C ⥤ Type v)
+    (pt : C) where
   /-- The family of morphisms as a `ParanatSig H (G ⇓ pt)`. -/
   family : ParanatSig H (G ⇓ pt)
   /-- The paranaturality condition on the family. -/
@@ -3111,7 +3230,7 @@ structure StrongRestrictedCowedge (G : Cᵒᵖ ⥤ C ⥤ C) (H : Cᵒᵖ ⥤ C �
   /-- The carrier (summit) object. -/
   pt : C
   /-- The cowedge data over the point. -/
-  toStrongRestrictedCowedgeOver : StrongRestrictedCowedgeOver pt G H
+  toStrongRestrictedCowedgeOver : StrongRestrictedCowedgeOver G H pt
 
 namespace StrongRestrictedCowedge
 
@@ -3136,9 +3255,9 @@ end StrongRestrictedCowedge
 
 /-- Convert a StrongRestrictedCowedgeOver to a RestrictedCowedgeOver using the
 implication paranaturality → dinaturality. -/
-def StrongRestrictedCowedgeOver.toRestrictedCowedgeOver {pt : C} {G : Cᵒᵖ ⥤ C ⥤ C}
-    {H : Cᵒᵖ ⥤ C ⥤ Type v} (c : StrongRestrictedCowedgeOver pt G H) :
-    RestrictedCowedgeOver pt G H :=
+def StrongRestrictedCowedgeOver.toRestrictedCowedgeOver {G : Cᵒᵖ ⥤ C ⥤ C}
+    {H : Cᵒᵖ ⥤ C ⥤ Type v} {pt : C} (c : StrongRestrictedCowedgeOver G H pt) :
+    RestrictedCowedgeOver G H pt :=
   ⟨c.family, paranatural_implies_dinatural H (G ⇓ pt) c.family c.isParanatural⟩
 
 /-- Convert a strong restricted cowedge to a `Paranat` transformation `H → G ⇓ pt`. -/

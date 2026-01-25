@@ -163,7 +163,7 @@ This contains the algebra data without bundling the carrier object. -/
 @[ext]
 structure MendlerAlgebraOver (pt : C) where
   /-- The cowedge data over the carrier. -/
-  toRestrictedCowedgeOver : RestrictedCowedgeOver pt G (HomToProf pt)
+  toRestrictedCowedgeOver : RestrictedCowedgeOver G (HomToProf pt) pt
 
 namespace MendlerAlgebraOver
 
@@ -211,7 +211,7 @@ abbrev isDinatural (m : MendlerAlgebra G) :
 
 /-- The underlying RestrictedCowedgeOver. -/
 abbrev toRestrictedCowedgeOver (m : MendlerAlgebra G) :
-    RestrictedCowedgeOver m.pt G (HomToProf m.pt) :=
+    RestrictedCowedgeOver G (HomToProf m.pt) m.pt :=
   m.toMendlerAlgebraOver.toRestrictedCowedgeOver
 
 /-- Constructor with explicit family and dinaturality arguments. -/
@@ -252,7 +252,7 @@ def ofRestrictedCowedge' (pt : C) (family : ParanatSig (HomToProf pt) (G ⇓ pt)
   ⟨pt, ⟨⟨family, isDinatural⟩⟩⟩
 
 /-- Construct a Mendler algebra from a point and a RestrictedCowedgeOver. -/
-def ofRestrictedCowedgeOver (pt : C) (u : RestrictedCowedgeOver pt G (HomToProf pt)) :
+def ofRestrictedCowedgeOver (pt : C) (u : RestrictedCowedgeOver G (HomToProf pt) pt) :
     MendlerAlgebra G :=
   ⟨pt, ⟨u⟩⟩
 
@@ -275,7 +275,7 @@ theorem ofRestrictedCowedgeOver_toRestrictedCowedgeOver (m : MendlerAlgebra G) :
 
 /-- Round-trip from RestrictedCowedgeOver to MendlerAlgebra and back. -/
 theorem toRestrictedCowedgeOver_ofRestrictedCowedgeOver (pt : C)
-    (u : RestrictedCowedgeOver pt G (HomToProf pt)) :
+    (u : RestrictedCowedgeOver G (HomToProf pt) pt) :
     (ofRestrictedCowedgeOver pt u).toRestrictedCowedgeOver = u := rfl
 
 end MendlerAlgebra
@@ -418,7 +418,7 @@ all co-twisted arrows. The formula is:
   `extendLeg (arr : cod ⟶ dom) (γ : cod ⟶ wpt) := (G.map arr.op).app cod ≫ family cod γ`
 -/
 def extendMendlerLeg' (wpt apt : C)
-    (rc : RestrictedCowedgeOver apt G (HomToProf wpt))
+    (rc : RestrictedCowedgeOver G (HomToProf wpt) apt)
     (tw : CoTwistedArrow C) :
     (profunctorOnOpCoTwistedArrow C (HomToProf wpt)).obj (Opposite.op tw) →
     ((profunctorOnCoTwistedArrow C G).obj tw ⟶ apt) := fun w =>
@@ -439,7 +439,7 @@ def extendMendlerLeg' (wpt apt : C)
 diagonal family data. For `(arr : cod ⟶ dom)` with weight `γ : cod ⟶ pt`,
 this is `(G.map arr.op).app cod ≫ family cod γ : G(dom, cod) ⟶ pt`.
 This is the special case where weight point equals apex point. -/
-def extendMendlerLeg (pt : C) (rc : RestrictedCowedgeOver pt G (HomToProf pt))
+def extendMendlerLeg (pt : C) (rc : RestrictedCowedgeOver G (HomToProf pt) pt)
     (tw : CoTwistedArrow C) :
     (profunctorOnOpCoTwistedArrow C (HomToProf pt)).obj (Opposite.op tw) →
     ((profunctorOnCoTwistedArrow C G).obj tw ⟶ pt) := fun w =>
@@ -527,7 +527,7 @@ theorem HomToProf_weight_map_eq' (pt : C) {tw tw' : CoTwistedArrow C}
   rw [HomToProf_obj_map, HomToProf_map_app, Quiver.Hom.unop_op]
 
 /-- The extended legs satisfy weighted cocone naturality. -/
-theorem extendMendlerLeg_natural (pt : C) (rc : RestrictedCowedgeOver pt G (HomToProf pt))
+theorem extendMendlerLeg_natural (pt : C) (rc : RestrictedCowedgeOver G (HomToProf pt) pt)
     {tw tw' : CoTwistedArrow C} (f : tw ⟶ tw')
     (w' : (profunctorOnOpCoTwistedArrow C (HomToProf pt)).obj (Opposite.op tw')) :
     (profunctorOnCoTwistedArrow C G).map f ≫ extendMendlerLeg (G := G) pt rc tw' w' =
@@ -571,7 +571,7 @@ theorem extendMendlerLeg_natural (pt : C) (rc : RestrictedCowedgeOver pt G (HomT
 
 /-- Extends a restricted cowedge to a weighted cowedge over the same point.
 This is the inverse direction of `restrictWeightedCowedge` for `HomToProf`. -/
-def extendRestrictedCowedge (pt : C) (rc : RestrictedCowedgeOver pt G (HomToProf pt)) :
+def extendRestrictedCowedge (pt : C) (rc : RestrictedCowedgeOver G (HomToProf pt) pt) :
     WeightedCowedgeOver (HomToProf pt) G pt where
   app := fun tw => extendMendlerLeg (G := G) pt rc tw.unop
   naturality := fun tw tw' f => by
@@ -587,13 +587,13 @@ def extendRestrictedCowedge (pt : C) (rc : RestrictedCowedgeOver pt G (HomToProf
 
 /-- Extends a restricted cowedge to a weighted cowedge (bundled with point). -/
 def extendRestrictedCowedgeFull (pt : C)
-    (rc : RestrictedCowedgeOver pt G (HomToProf pt)) :
+    (rc : RestrictedCowedgeOver G (HomToProf pt) pt) :
     WeightedCowedge (HomToProf pt) G :=
   ⟨pt, extendRestrictedCowedge (G := G) pt rc⟩
 
 /-- Naturality for the generalized extended leg with separate weight and apex. -/
 theorem extendMendlerLeg'_natural (wpt apt : C)
-    (rc : RestrictedCowedgeOver apt G (HomToProf wpt))
+    (rc : RestrictedCowedgeOver G (HomToProf wpt) apt)
     {tw tw' : CoTwistedArrow C} (f : tw ⟶ tw')
     (w' : (profunctorOnOpCoTwistedArrow C (HomToProf wpt)).obj (Opposite.op tw')) :
     (profunctorOnCoTwistedArrow C G).map f ≫
@@ -626,7 +626,7 @@ theorem extendMendlerLeg'_natural (wpt apt : C)
 
 /-- Generalized extension with separate weight point and apex point. -/
 def extendRestrictedCowedge' (wpt apt : C)
-    (rc : RestrictedCowedgeOver apt G (HomToProf wpt)) :
+    (rc : RestrictedCowedgeOver G (HomToProf wpt) apt) :
     WeightedCowedgeOver (HomToProf wpt) G apt where
   app := fun tw => extendMendlerLeg' (G := G) wpt apt rc tw.unop
   naturality := fun tw tw' f => by
@@ -642,7 +642,7 @@ def extendRestrictedCowedgeFull' (wpt : C) (rc : RestrictedCowedge G (HomToProf 
 /-- At an identity co-twisted arrow, the extended leg reduces to the original
 family (up to canonical casts). -/
 theorem extendMendlerLeg_at_identity (pt : C)
-    (rc : RestrictedCowedgeOver pt G (HomToProf pt)) (A : C)
+    (rc : RestrictedCowedgeOver G (HomToProf pt) pt) (A : C)
     (γ : (profunctorOnOpCoTwistedArrow C (HomToProf pt)).obj
       (Opposite.op (idCoTwistedArrow A))) :
     diagonalToIdentityHom G A ≫
@@ -658,7 +658,7 @@ theorem extendMendlerLeg_at_identity (pt : C)
 
 /-- The extend-restrict round-trip is the identity on RestrictedCowedgeOver. -/
 theorem restrict_extend_roundtrip (pt : C)
-    (rc : RestrictedCowedgeOver pt G (HomToProf pt)) :
+    (rc : RestrictedCowedgeOver G (HomToProf pt) pt) :
     (restrictWeightedCowedge (HomToProf pt) G
       (extendRestrictedCowedgeFull (G := G) pt rc)).toRestrictedCowedgeOver = rc := by
   apply RestrictedCowedgeOver.ext
@@ -670,7 +670,7 @@ theorem restrict_extend_roundtrip (pt : C)
 
 /-- Generalized identity lemma with separate weight and apex points. -/
 theorem extendMendlerLeg'_at_identity (wpt apt : C)
-    (rc : RestrictedCowedgeOver apt G (HomToProf wpt)) (A : C)
+    (rc : RestrictedCowedgeOver G (HomToProf wpt) apt) (A : C)
     (γ : (profunctorOnOpCoTwistedArrow C (HomToProf wpt)).obj
       (Opposite.op (idCoTwistedArrow A))) :
     diagonalToIdentityHom G A ≫
