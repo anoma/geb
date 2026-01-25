@@ -1506,6 +1506,128 @@ theorem WeightedCocone.eqToHom_hom {W : Jᵒᵖ ⥤ Type v} {D : J ⥤ C}
   subst h
   rfl
 
+section WeightedCoconeAsElements
+
+/-!
+### WeightedCocone as a category of elements
+
+The category `WeightedCocone W D` is isomorphic to the covariant category of
+elements (`Elements`) of the copresheaf of weighted cocones over.
+
+For the copresheaf `F := (weightedCoconeOverCurriedTrifunctor.obj (op W)).obj
+(op D)`, which sends `pt : C` to `WeightedCoconeOver W D pt`, we have:
+- Objects of `F.Elements` correspond to pairs `(pt, c)` where
+  `c : WeightedCoconeOver W D pt`
+- Morphisms in `F.Elements` from `(pt₁, c₁)` to `(pt₂, c₂)` correspond to
+  morphisms `f : pt₁ ⟶ pt₂` in `C` such that `c₁.leg j w ≫ f = c₂.leg j w`
+
+This matches exactly the definition of `WeightedCocone.Hom`.
+-/
+
+variable (W : Jᵒᵖ ⥤ Type v) (D : J ⥤ C)
+
+/-- The copresheaf of weighted cocones over, sending `pt : C` to
+`WeightedCoconeOver W D pt`. -/
+abbrev weightedCoconeOverCopresheaf : C ⥤ Type (max u₁ v) :=
+  ((weightedCoconeOverCurriedTrifunctor.obj (Opposite.op W)).obj
+    (Opposite.op D))
+
+/-- The category of elements of the copresheaf of weighted cocones over. -/
+abbrev WeightedCoconeElements := (weightedCoconeOverCopresheaf W D).Elements
+
+/-- Convert a weighted cocone to an element of the copresheaf category of
+elements. -/
+def weightedCoconeToElement (c : WeightedCocone W D) :
+    WeightedCoconeElements W D :=
+  ⟨c.pt, c.toWeightedCoconeOver⟩
+
+/-- Convert an element of the copresheaf category to a weighted cocone. -/
+def weightedCoconeOfElement (e : WeightedCoconeElements W D) :
+    WeightedCocone W D :=
+  ⟨e.fst, e.snd⟩
+
+@[simp]
+theorem weightedCoconeToElement_ofElement (e : WeightedCoconeElements W D) :
+    weightedCoconeToElement W D (weightedCoconeOfElement W D e) = e := by
+  simp only [weightedCoconeToElement, weightedCoconeOfElement]
+  exact Sigma.eta e
+
+@[simp]
+theorem weightedCoconeOfElement_toElement (c : WeightedCocone W D) :
+    weightedCoconeOfElement W D (weightedCoconeToElement W D c) = c := by
+  simp only [weightedCoconeToElement, weightedCoconeOfElement]
+
+/-- Functor from `WeightedCocone W D` to the category of elements of the
+copresheaf of weighted cocones. -/
+def weightedCoconeToElementsFunctor :
+    WeightedCocone W D ⥤ WeightedCoconeElements W D where
+  obj c := weightedCoconeToElement W D c
+  map {c₁ c₂} f := by
+    refine ⟨f.hom, ?_⟩
+    dsimp [weightedCoconeToElement, weightedCoconeOverCopresheaf,
+      weightedCoconeOverCurriedTrifunctor]
+    ext j w
+    dsimp [homToFunctorBifunctor, homToFunctor, yoneda]
+    exact f.w (Opposite.unop j) w
+
+/-- Functor from the category of elements to `WeightedCocone W D`. -/
+def elementsToWeightedCoconeFunctor :
+    WeightedCoconeElements W D ⥤ WeightedCocone W D where
+  obj e := weightedCoconeOfElement W D e
+  map {e₁ e₂} f := by
+    refine ⟨f.val, ?_⟩
+    intro j w
+    have h := congrFun (congrFun (congrArg NatTrans.app f.property) (Opposite.op j)) w
+    dsimp only [weightedCoconeOverCopresheaf, weightedCoconeOverCurriedTrifunctor,
+      homToFunctorBifunctor, homToFunctor, yoneda, Functor.comp_obj,
+      Functor.whiskeringRight_obj_obj, Functor.whiskeringRight_obj_map,
+      yoneda_obj_obj, yoneda_obj_map, NatTrans.comp_app, NatTrans.id_app,
+      weightedCoconeOfElement, WeightedCocone.leg] at h ⊢
+    exact h
+
+/-- The composition `toFunctor ⋙ fromFunctor` is the identity on weighted
+cocones. -/
+theorem weightedCoconeToFrom_eq_id' :
+    (weightedCoconeToElementsFunctor W D ⋙
+      elementsToWeightedCoconeFunctor W D) = 𝟭 _ := by
+  refine Functor.ext ?h_obj ?h_map
+  case h_obj => intro c; exact weightedCoconeOfElement_toElement W D c
+  case h_map =>
+    intro c₁ c₂ f
+    simp only [Functor.comp_map, eqToHom_refl, Category.comp_id, Category.id_comp]
+    rfl
+
+/-- The composition `fromFunctor ⋙ toFunctor` is the identity on elements. -/
+theorem weightedCoconeFromTo_eq_id' :
+    (elementsToWeightedCoconeFunctor W D ⋙
+      weightedCoconeToElementsFunctor W D) = 𝟭 _ := by
+  refine Functor.ext ?h_obj ?h_map
+  case h_obj =>
+    intro e
+    simp only [Functor.comp_obj, Functor.id_obj,
+      weightedCoconeToElementsFunctor, elementsToWeightedCoconeFunctor]
+    rw [weightedCoconeToElement_ofElement W D e]
+  case h_map =>
+    intro e₁ e₂ f
+    simp only [Functor.comp_map, eqToHom_refl, Category.comp_id, Category.id_comp]
+    rfl
+
+/-- The category `WeightedCocone W D` is isomorphic to the covariant category
+of elements of the copresheaf of weighted cocones over. -/
+def weightedCoconeIsoCat :
+    WeightedCocone W D ≅Cat WeightedCoconeElements W D where
+  hom := (weightedCoconeToElementsFunctor W D).toCatHom
+  inv := (elementsToWeightedCoconeFunctor W D).toCatHom
+  hom_inv_id := Cat.Hom.ext (weightedCoconeToFrom_eq_id' W D)
+  inv_hom_id := Cat.Hom.ext (weightedCoconeFromTo_eq_id' W D)
+
+/-- The equivalence derived from the isomorphism. -/
+def weightedCoconeEquivElements :
+    WeightedCocone W D ≌ WeightedCoconeElements W D :=
+  Cat.equivOfIso (weightedCoconeIsoCat W D)
+
+end WeightedCoconeAsElements
+
 section WeightedLimitsColimits
 
 /-!
