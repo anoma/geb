@@ -555,6 +555,98 @@ instance MendlerAlgebraCat : Category (MendlerAlgebra G) where
 
 end MendlerAlgebra
 
+section MendlerAlgDiagElemEquiv
+
+/-!
+## Mendler Algebras as Diagonal Elements
+
+`MendlerAlgebra G` is isomorphic to `DiagElem (mendlerAlgProfunctorFunctor G)`.
+This is because:
+- Both consist of a base object and algebra data at the diagonal
+- The morphism compatibility conditions match exactly
+-/
+
+variable (G : Cᵒᵖ ⥤ C ⥤ C)
+
+/-- Convert a Mendler algebra to a diagonal element of the Mendler algebra
+profunctor. -/
+@[simps]
+def mendlerAlgToDiagElem (m : MendlerAlgebra G) :
+    DiagElem (mendlerAlgProfunctorFunctor G) where
+  base := m.pt
+  elem := ⟨m.toRestrictedCowedgeOver⟩
+
+/-- Convert a diagonal element of the Mendler algebra profunctor to a
+Mendler algebra. -/
+@[simps]
+def diagElemToMendlerAlg (x : DiagElem (mendlerAlgProfunctorFunctor G)) :
+    MendlerAlgebra G where
+  pt := x.base
+  toMendlerAlgebraOver := ⟨x.elem.toRestrictedCowedgeOver⟩
+
+/-- Convert a Mendler algebra morphism to a diagonal element morphism. -/
+@[simps]
+def mendlerAlgHomToDiagElemHom {m₁ m₂ : MendlerAlgebra G}
+    (f : m₁ ⟶ m₂) :
+    mendlerAlgToDiagElem G m₁ ⟶ mendlerAlgToDiagElem G m₂ where
+  base := f.hom
+  compat := by
+    simp only [DiagCompat, mendlerAlgToDiagElem_base, mendlerAlgProfunctorFunctor]
+    apply MendlerAlgProfunctor.ext
+    apply RestrictedCowedgeOver.ext
+    funext A h
+    simp only [mendlerAlgToDiagElem, MendlerAlgProfunctor.mapPtC,
+      MendlerAlgProfunctor.mapPtH, RestrictedCowedgeOver.mapPt,
+      RestrictedCowedgeOver.mapH, HomToProf.mapPt]
+    exact f.comm A h
+
+/-- Convert a diagonal element morphism to a Mendler algebra morphism. -/
+@[simps]
+def diagElemHomToMendlerAlgHom {x y : DiagElem (mendlerAlgProfunctorFunctor G)}
+    (f : x ⟶ y) :
+    diagElemToMendlerAlg G x ⟶ diagElemToMendlerAlg G y where
+  hom := f.base
+  comm := fun A h => by
+    have hcompat := f.compat
+    simp only [DiagCompat, mendlerAlgProfunctorFunctor] at hcompat
+    have heq := congrArg MendlerAlgProfunctor.toRestrictedCowedgeOver hcompat
+    simp only [MendlerAlgProfunctor.mapPtC, MendlerAlgProfunctor.mapPtH,
+      RestrictedCowedgeOver.mapPt, RestrictedCowedgeOver.mapH,
+      HomToProf.mapPt] at heq
+    have h' := congrFun (congrFun (congrArg RestrictedCowedgeOver.family heq) A) h
+    exact h'
+
+/-- The functor from Mendler algebras to diagonal elements. -/
+@[simps]
+def mendlerAlgToDiagElemFunctor :
+    MendlerAlgebra G ⥤ DiagElem (mendlerAlgProfunctorFunctor G) where
+  obj := mendlerAlgToDiagElem G
+  map := mendlerAlgHomToDiagElemHom G
+  map_id _ := DiagElem.Hom.ext rfl
+  map_comp _ _ := DiagElem.Hom.ext rfl
+
+/-- The functor from diagonal elements to Mendler algebras. -/
+@[simps]
+def diagElemToMendlerAlgFunctor :
+    DiagElem (mendlerAlgProfunctorFunctor G) ⥤ MendlerAlgebra G where
+  obj := diagElemToMendlerAlg G
+  map := diagElemHomToMendlerAlgHom G
+  map_id _ := MendlerAlgebraHom.ext rfl
+  map_comp _ _ := MendlerAlgebraHom.ext rfl
+
+/-- `MendlerAlgebra G` is isomorphic to `DiagElem (mendlerAlgProfunctorFunctor G)`. -/
+def mendlerAlgDiagElemIsoCat :
+    MendlerAlgebra G ≅Cat DiagElem (mendlerAlgProfunctorFunctor G) where
+  hom := (mendlerAlgToDiagElemFunctor G).toCatHom
+  inv := (diagElemToMendlerAlgFunctor G).toCatHom
+
+/-- The equivalence derived from the isomorphism. -/
+def mendlerAlgDiagElemEquiv :
+    MendlerAlgebra G ≌ DiagElem (mendlerAlgProfunctorFunctor G) :=
+  Cat.equivOfIso (mendlerAlgDiagElemIsoCat G)
+
+end MendlerAlgDiagElemEquiv
+
 section MendlerRestrictedEquivalence
 
 /-!
