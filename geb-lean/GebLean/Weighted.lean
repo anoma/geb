@@ -1850,6 +1850,66 @@ abbrev WeightedCowedge (W : Cᵒᵖ ⥤ C ⥤ Type v) (P : Cᵒᵖ ⥤ C ⥤ D) 
     (profunctorOnOpCoTwistedArrow C W)
     (profunctorOnCoTwistedArrow C P)
 
+section WeightedWedgeCowedgeAsElements
+
+/-!
+### WeightedWedge and WeightedCowedge as categories of elements
+
+Since `WeightedWedge` is definitionally equal to `WeightedCone` (with specific
+indexing category and weight), and `WeightedCowedge` is definitionally equal to
+`WeightedCocone`, their categories of elements isomorphisms follow directly.
+-/
+
+variable (W : Cᵒᵖ ⥤ C ⥤ Type v) (P : Cᵒᵖ ⥤ C ⥤ D)
+
+/-- The presheaf of weighted wedges under, as an instance of
+`weightedConeUnderPresheaf`. -/
+abbrev weightedWedgeUnderPresheaf : Dᵒᵖ ⥤ Type (max u v) :=
+  weightedConeUnderPresheaf (profunctorOnTwistedArrow C W)
+    (profunctorOnTwistedArrow C P)
+
+/-- The contravariant category of elements of the presheaf of weighted
+wedges. -/
+abbrev WeightedWedgeElementsPre :=
+  (weightedWedgeUnderPresheaf (D := D) W P).ElementsPre
+
+/-- The category `WeightedWedge W P` is isomorphic to the contravariant
+category of elements of the presheaf of weighted wedges under. -/
+def weightedWedgeIsoCat :
+    WeightedWedge W P ≅Cat WeightedWedgeElementsPre (D := D) W P :=
+  weightedConeIsoCat (profunctorOnTwistedArrow C W)
+    (profunctorOnTwistedArrow C P)
+
+/-- The equivalence derived from the isomorphism. -/
+def weightedWedgeEquivElementsPre :
+    WeightedWedge W P ≌ WeightedWedgeElementsPre (D := D) W P :=
+  Cat.equivOfIso (weightedWedgeIsoCat W P)
+
+/-- The copresheaf of weighted cowedges over, as an instance of
+`weightedCoconeOverCopresheaf`. -/
+abbrev weightedCowedgeOverCopresheaf : D ⥤ Type (max u v) :=
+  weightedCoconeOverCopresheaf (profunctorOnOpCoTwistedArrow C W)
+    (profunctorOnCoTwistedArrow C P)
+
+/-- The covariant category of elements of the copresheaf of weighted
+cowedges. -/
+abbrev WeightedCowedgeElements :=
+  (weightedCowedgeOverCopresheaf (D := D) W P).Elements
+
+/-- The category `WeightedCowedge W P` is isomorphic to the covariant
+category of elements of the copresheaf of weighted cowedges over. -/
+def weightedCowedgeIsoCat :
+    WeightedCowedge W P ≅Cat WeightedCowedgeElements (D := D) W P :=
+  weightedCoconeIsoCat (profunctorOnOpCoTwistedArrow C W)
+    (profunctorOnCoTwistedArrow C P)
+
+/-- The equivalence derived from the isomorphism. -/
+def weightedCowedgeEquivElements :
+    WeightedCowedge W P ≌ WeightedCowedgeElements (D := D) W P :=
+  Cat.equivOfIso (weightedCowedgeIsoCat W P)
+
+end WeightedWedgeCowedgeAsElements
+
 /-!
 ## Weighted Ends and Coends
 
