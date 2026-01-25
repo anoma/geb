@@ -572,7 +572,7 @@ theorem extendMendlerLeg_natural (pt : C) (rc : RestrictedCowedgeOver pt G (HomT
 /-- Extends a restricted cowedge to a weighted cowedge over the same point.
 This is the inverse direction of `restrictWeightedCowedge` for `HomToProf`. -/
 def extendRestrictedCowedge (pt : C) (rc : RestrictedCowedgeOver pt G (HomToProf pt)) :
-    WeightedCowedgeOver pt (HomToProf pt) G where
+    WeightedCowedgeOver (HomToProf pt) G pt where
   ι := {
     app := fun tw => extendMendlerLeg (G := G) pt rc tw.unop
     naturality := fun tw tw' f => by
@@ -629,7 +629,7 @@ theorem extendMendlerLeg'_natural (wpt apt : C)
 /-- Generalized extension with separate weight point and apex point. -/
 def extendRestrictedCowedge' (wpt apt : C)
     (rc : RestrictedCowedgeOver apt G (HomToProf wpt)) :
-    WeightedCowedgeOver apt (HomToProf wpt) G where
+    WeightedCowedgeOver (HomToProf wpt) G apt where
   ι := {
     app := fun tw => extendMendlerLeg' (G := G) wpt apt rc tw.unop
     naturality := fun tw tw' f => by
@@ -708,8 +708,8 @@ of extension: the naturality condition forces the leg to be the
 composition `(G.map arr.op).app cod ≫ family cod`. -/
 -- Helper theorem for the canonical form where tw = coTwObjMk arr
 theorem extendMendlerLeg_eq_original_leg_at_coTwObjMk (pt : C)
-    (wc : WeightedCoconeOver pt (profunctorOnOpCoTwistedArrow C (HomToProf pt))
-      (profunctorOnCoTwistedArrow C G))
+    (wc : WeightedCoconeOver (profunctorOnOpCoTwistedArrow C (HomToProf pt))
+      (profunctorOnCoTwistedArrow C G) pt)
     {cod dom : C} (arr : cod ⟶ dom)
     (γ : (profunctorOnOpCoTwistedArrow C (HomToProf pt)).obj
       (Opposite.op (coTwObjMk arr))) :
@@ -762,8 +762,8 @@ theorem extendMendlerLeg_eq_original_leg_at_coTwObjMk (pt : C)
 
 -- General theorem using the canonical form
 theorem extendMendlerLeg_eq_original_leg (pt : C)
-    (wc : WeightedCoconeOver pt (profunctorOnOpCoTwistedArrow C (HomToProf pt))
-      (profunctorOnCoTwistedArrow C G))
+    (wc : WeightedCoconeOver (profunctorOnOpCoTwistedArrow C (HomToProf pt))
+      (profunctorOnCoTwistedArrow C G) pt)
     (tw : CoTwistedArrow C)
     (γ : (profunctorOnOpCoTwistedArrow C (HomToProf pt)).obj (Opposite.op tw)) :
     let rc := (restrictWeightedCowedge (HomToProf pt) G
@@ -785,8 +785,8 @@ theorem extendMendlerLeg_eq_original_leg (pt : C)
 with point pt. Starting from a weighted cowedge, restricting to diagonal,
 and then extending gives back the original cowedge. -/
 theorem extend_restrict_roundtrip (pt : C)
-    (wc : WeightedCoconeOver pt (profunctorOnOpCoTwistedArrow C (HomToProf pt))
-      (profunctorOnCoTwistedArrow C G)) :
+    (wc : WeightedCoconeOver (profunctorOnOpCoTwistedArrow C (HomToProf pt))
+      (profunctorOnCoTwistedArrow C G) pt) :
     (extendRestrictedCowedgeFull (G := G) pt
       (restrictWeightedCowedge (HomToProf pt) G ⟨pt, wc⟩).toRestrictedCowedgeOver
     ).toWeightedCoconeOver = wc := by

@@ -1098,7 +1098,7 @@ weight `W : J ⥤ Type v`. This contains just the natural transformation
 data without bundling the cone point.
 -/
 @[ext]
-structure WeightedConeUnder (pt : C) (W : J ⥤ Type v) (D : J ⥤ C) where
+structure WeightedConeUnder (W : J ⥤ Type v) (D : J ⥤ C) (pt : C) where
   /-- The natural transformation from the weight to `Hom(pt, D(-))` -/
   π : W ⟶ homFromFunctor D pt
 
@@ -1111,7 +1111,7 @@ structure WeightedCone (W : J ⥤ Type v) (D : J ⥤ C) where
   /-- The cone point -/
   pt : C
   /-- The cone data under the point -/
-  toWeightedConeUnder : WeightedConeUnder pt W D
+  toWeightedConeUnder : WeightedConeUnder W D pt
 
 namespace WeightedCone
 
@@ -1150,7 +1150,7 @@ weight `W : Jᵒᵖ ⥤ Type v`. This contains just the natural transformation
 data without bundling the cocone point.
 -/
 @[ext]
-structure WeightedCoconeOver (pt : C) (W : Jᵒᵖ ⥤ Type v) (D : J ⥤ C) where
+structure WeightedCoconeOver (W : Jᵒᵖ ⥤ Type v) (D : J ⥤ C) (pt : C) where
   /-- The natural transformation from the weight to `Hom(D(-), pt)` -/
   ι : W ⟶ homToFunctor D pt
 
@@ -1166,7 +1166,7 @@ structure WeightedCocone (W : Jᵒᵖ ⥤ Type v) (D : J ⥤ C) where
   /-- The cocone point -/
   pt : C
   /-- The cocone data over the point -/
-  toWeightedCoconeOver : WeightedCoconeOver pt W D
+  toWeightedCoconeOver : WeightedCoconeOver W D pt
 
 namespace WeightedCocone
 
@@ -1463,9 +1463,9 @@ variable {D : Type w} [Category.{v} D]
 A weighted wedge over a profunctor `P : Cᵒᵖ ⥤ C ⥤ D` with weight profunctor
 `W : Cᵒᵖ ⥤ C ⥤ Type v`, over a fixed apex `pt : D`.
 -/
-abbrev WeightedWedgeUnder (pt : D) (W : Cᵒᵖ ⥤ C ⥤ Type v) (P : Cᵒᵖ ⥤ C ⥤ D) :=
-  WeightedConeUnder (C := D) (J := TwistedArrow C) pt
-    (profunctorOnTwistedArrow C W) (profunctorOnTwistedArrow C P)
+abbrev WeightedWedgeUnder (W : Cᵒᵖ ⥤ C ⥤ Type v) (P : Cᵒᵖ ⥤ C ⥤ D) (pt : D) :=
+  WeightedConeUnder (C := D) (J := TwistedArrow C)
+    (profunctorOnTwistedArrow C W) (profunctorOnTwistedArrow C P) pt
 
 /--
 A weighted wedge over a profunctor `P : Cᵒᵖ ⥤ C ⥤ D` with weight profunctor
@@ -1486,10 +1486,10 @@ abbrev WeightedWedge (W : Cᵒᵖ ⥤ C ⥤ Type v) (P : Cᵒᵖ ⥤ C ⥤ D) :=
 A weighted cowedge over a profunctor `P : Cᵒᵖ ⥤ C ⥤ D` with weight profunctor
 `W : Cᵒᵖ ⥤ C ⥤ Type v`, over a fixed apex `pt : D`.
 -/
-abbrev WeightedCowedgeOver (pt : D) (W : Cᵒᵖ ⥤ C ⥤ Type v) (P : Cᵒᵖ ⥤ C ⥤ D) :=
-  WeightedCoconeOver (C := D) (J := CoTwistedArrow C) pt
+abbrev WeightedCowedgeOver (W : Cᵒᵖ ⥤ C ⥤ Type v) (P : Cᵒᵖ ⥤ C ⥤ D) (pt : D) :=
+  WeightedCoconeOver (C := D) (J := CoTwistedArrow C)
     (profunctorOnOpCoTwistedArrow C W)
-    (profunctorOnCoTwistedArrow C P)
+    (profunctorOnCoTwistedArrow C P) pt
 
 /--
 A weighted cowedge over a profunctor `P : Cᵒᵖ ⥤ C ⥤ D` with weight profunctor
