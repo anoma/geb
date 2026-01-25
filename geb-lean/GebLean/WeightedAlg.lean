@@ -138,6 +138,33 @@ theorem HomToProf_eq_sliceIdProf (pt : C) : HomToProf pt = IdProf ⇓ pt := by
       HomToProf_map_app, sliceProfunctor_map_app, IdProf, Functor.const_obj_obj,
       Functor.id_obj, Functor.id_map]
 
+/-- Given `f : pt ⟶ pt'`, construct a natural transformation
+`HomToProf pt ⟶ HomToProf pt'` by postcomposition. -/
+def HomToProf.mapPt {pt pt' : C} (f : pt ⟶ pt') : HomToProf pt ⟶ HomToProf pt' where
+  app A := {
+    app := fun _ γ => γ ≫ f
+    naturality := by
+      intros B₁ B₂ g
+      ext γ
+      simp only [HomToProf_obj_map, types_comp_apply]
+  }
+  naturality := by
+    intros A₁ A₂ g
+    ext B γ
+    simp only [NatTrans.comp_app, types_comp_apply, HomToProf_map_app, Category.assoc]
+
+/-- `HomToProf.mapPt` respects identity. -/
+@[simp]
+theorem HomToProf.mapPt_id (pt : C) : HomToProf.mapPt (𝟙 pt) = 𝟙 (HomToProf pt) := by
+  ext A B γ
+  simp only [mapPt, NatTrans.id_app, types_id_apply, Category.comp_id]
+
+/-- `HomToProf.mapPt` respects composition. -/
+theorem HomToProf.mapPt_comp {pt pt' pt'' : C} (f : pt ⟶ pt') (g : pt' ⟶ pt'') :
+    HomToProf.mapPt (f ≫ g) = HomToProf.mapPt f ≫ HomToProf.mapPt g := by
+  ext A B γ
+  simp only [mapPt, NatTrans.comp_app, types_comp_apply, Category.assoc]
+
 end HomToProfunctor
 
 section MendlerAlgebra
@@ -167,15 +194,15 @@ structure MendlerAlgebraOver (pt : C) where
 
 namespace MendlerAlgebraOver
 
-variable {G}
+variable {G} {G' : Cᵒᵖ ⥤ C ⥤ C} {pt : C}
 
 /-- The family of algebra operations. -/
-abbrev family {pt : C} (m : MendlerAlgebraOver G pt) :
+abbrev family (m : MendlerAlgebraOver G pt) :
     ParanatSig (HomToProf pt) (G ⇓ pt) :=
   m.toRestrictedCowedgeOver.family
 
 /-- The dinaturality condition. -/
-abbrev isDinatural {pt : C} (m : MendlerAlgebraOver G pt) :
+abbrev isDinatural (m : MendlerAlgebraOver G pt) :
     IsDinatural (HomToProf pt) (G ⇓ pt) m.family :=
   m.toRestrictedCowedgeOver.isDinatural
 
@@ -186,7 +213,165 @@ def mk' (pt : C) (family : ParanatSig (HomToProf pt) (G ⇓ pt))
     MendlerAlgebraOver G pt :=
   ⟨⟨family, isDinatural⟩⟩
 
+/-- Contravariant action on the G parameter. -/
+def mapG (β : G' ⟶ G) (m : MendlerAlgebraOver G pt) : MendlerAlgebraOver G' pt :=
+  ⟨RestrictedCowedgeOver.mapG β m.toRestrictedCowedgeOver⟩
+
+/-- `mapG` respects identity. -/
+@[simp]
+theorem mapG_id (m : MendlerAlgebraOver G pt) : mapG (𝟙 G) m = m := by
+  ext
+  simp only [mapG, RestrictedCowedgeOver.mapG_id]
+
+/-- `mapG` respects composition (contravariantly). -/
+theorem mapG_comp {G'' : Cᵒᵖ ⥤ C ⥤ C} (β : G' ⟶ G) (γ : G ⟶ G'')
+    (m : MendlerAlgebraOver G'' pt) :
+    mapG (β ≫ γ) m = mapG β (mapG γ m) := by
+  ext
+  simp only [mapG, RestrictedCowedgeOver.mapG_comp]
+
 end MendlerAlgebraOver
+
+/-- Mendler algebra data as a profunctor in the carrier parameters.
+
+In `MendlerAlgebraOver G pt`, the parameter `pt` appears in two places:
+- In `HomToProf pt` (the H parameter), which is contravariant
+- As the third parameter of `RestrictedCowedgeOver`, which is covariant
+
+This structure separates these into `ptH` (for HomToProf) and `ptC` (carrier),
+making the bifunctorial structure explicit:
+- `ptH`: contravariant (via HomToProf.mapPt + RestrictedCowedgeOver.mapH)
+- `ptC`: covariant (via RestrictedCowedgeOver.mapPt)
+
+This forms a profunctor `Cᵒᵖ ⥤ C ⥤ Type v` for each fixed `G`.
+`MendlerAlgebraOver G pt` is the diagonal case where `ptH = ptC = pt`. -/
+@[ext]
+structure MendlerAlgProfunctor (ptH ptC : C) where
+  /-- The underlying cowedge data. -/
+  toRestrictedCowedgeOver : RestrictedCowedgeOver G (HomToProf ptH) ptC
+
+namespace MendlerAlgProfunctor
+
+variable {G}
+variable {ptH ptH' ptH'' ptC ptC' ptC'' pt : C}
+variable {G' G'' : Cᵒᵖ ⥤ C ⥤ C}
+
+/-- Contravariant action on the G parameter. -/
+def mapG (β : G' ⟶ G) (m : MendlerAlgProfunctor G ptH ptC) :
+    MendlerAlgProfunctor G' ptH ptC :=
+  ⟨RestrictedCowedgeOver.mapG β m.toRestrictedCowedgeOver⟩
+
+/-- `mapG` respects identity. -/
+@[simp]
+theorem mapG_id (m : MendlerAlgProfunctor G ptH ptC) :
+    mapG (𝟙 G) m = m := by
+  ext
+  simp only [mapG, RestrictedCowedgeOver.mapG_id]
+
+/-- `mapG` respects composition (contravariantly). -/
+theorem mapG_comp (β : G' ⟶ G) (γ : G ⟶ G'')
+    (m : MendlerAlgProfunctor G'' ptH ptC) :
+    mapG (β ≫ γ) m = mapG β (mapG γ m) := by
+  ext
+  simp only [mapG, RestrictedCowedgeOver.mapG_comp]
+
+/-- Contravariant action on the ptH parameter.
+Given `f : ptH' ⟶ ptH`, we map `MendlerAlgProfunctor G ptH ptC` to
+`MendlerAlgProfunctor G ptH' ptC` by precomposing via `HomToProf.mapPt f`. -/
+def mapPtH (f : ptH' ⟶ ptH) (m : MendlerAlgProfunctor G ptH ptC) :
+    MendlerAlgProfunctor G ptH' ptC :=
+  ⟨RestrictedCowedgeOver.mapH (HomToProf.mapPt f) m.toRestrictedCowedgeOver⟩
+
+/-- `mapPtH` respects identity. -/
+@[simp]
+theorem mapPtH_id (m : MendlerAlgProfunctor G ptH ptC) :
+    mapPtH (𝟙 ptH) m = m := by
+  simp only [mapPtH, HomToProf.mapPt_id, RestrictedCowedgeOver.mapH_id]
+
+/-- `mapPtH` respects composition (contravariantly). -/
+theorem mapPtH_comp (f : ptH' ⟶ ptH) (g : ptH'' ⟶ ptH')
+    (m : MendlerAlgProfunctor G ptH ptC) :
+    mapPtH (g ≫ f) m = mapPtH g (mapPtH f m) := by
+  simp only [mapPtH, HomToProf.mapPt_comp, RestrictedCowedgeOver.mapH_comp]
+
+/-- Covariant action on the ptC parameter.
+Given `f : ptC ⟶ ptC'`, we map `MendlerAlgProfunctor G ptH ptC` to
+`MendlerAlgProfunctor G ptH ptC'` by postcomposition. -/
+def mapPtC (f : ptC ⟶ ptC') (m : MendlerAlgProfunctor G ptH ptC) :
+    MendlerAlgProfunctor G ptH ptC' :=
+  ⟨RestrictedCowedgeOver.mapPt f m.toRestrictedCowedgeOver⟩
+
+/-- `mapPtC` respects identity. -/
+@[simp]
+theorem mapPtC_id (m : MendlerAlgProfunctor G ptH ptC) :
+    mapPtC (𝟙 ptC) m = m := by
+  simp only [mapPtC, RestrictedCowedgeOver.mapPt_id]
+
+/-- `mapPtC` respects composition. -/
+theorem mapPtC_comp (f : ptC ⟶ ptC') (g : ptC' ⟶ ptC'')
+    (m : MendlerAlgProfunctor G ptH ptC) :
+    mapPtC (f ≫ g) m = mapPtC g (mapPtC f m) := by
+  simp only [mapPtC, RestrictedCowedgeOver.mapPt_comp]
+
+/-- Convert to `MendlerAlgebraOver` when the parameters coincide. -/
+def toMendlerAlgebraOver (m : MendlerAlgProfunctor G pt pt) :
+    MendlerAlgebraOver G pt :=
+  ⟨m.toRestrictedCowedgeOver⟩
+
+/-- Convert from `MendlerAlgebraOver`. -/
+def ofMendlerAlgebraOver (m : MendlerAlgebraOver G pt) :
+    MendlerAlgProfunctor G pt pt :=
+  ⟨m.toRestrictedCowedgeOver⟩
+
+/-- Round-trip from `MendlerAlgebraOver` and back. -/
+@[simp]
+theorem toMendlerAlgebraOver_ofMendlerAlgebraOver (m : MendlerAlgebraOver G pt) :
+    toMendlerAlgebraOver (ofMendlerAlgebraOver m) = m := rfl
+
+/-- Round-trip from `MendlerAlgProfunctor` and back. -/
+@[simp]
+theorem ofMendlerAlgebraOver_toMendlerAlgebraOver
+    (m : MendlerAlgProfunctor G pt pt) :
+    ofMendlerAlgebraOver (toMendlerAlgebraOver m) = m := rfl
+
+/-- Naturality: `mapPtH` and `mapPtC` commute.
+For `f : ptH' ⟶ ptH` and `g : ptC ⟶ ptC'`:
+`mapPtH f (mapPtC g m) = mapPtC g (mapPtH f m)` -/
+theorem mapPtH_mapPtC_comm (f : ptH' ⟶ ptH) (g : ptC ⟶ ptC')
+    (m : MendlerAlgProfunctor G ptH ptC) :
+    mapPtH f (mapPtC g m) = mapPtC g (mapPtH f m) := by
+  apply MendlerAlgProfunctor.ext
+  apply RestrictedCowedgeOver.ext
+  funext A h
+  simp only [mapPtH, mapPtC, RestrictedCowedgeOver.mapH, RestrictedCowedgeOver.mapPt]
+
+end MendlerAlgProfunctor
+
+/-- The profunctor `Cᵒᵖ ⥤ C ⥤ Type (max u v)` for Mendler algebra data.
+For a fixed endodifunctor `G`, this maps `(ptH, ptC)` to `MendlerAlgProfunctor G ptH ptC`. -/
+def mendlerAlgProfunctorFunctor (G : Cᵒᵖ ⥤ C ⥤ C) : Cᵒᵖ ⥤ C ⥤ Type (max u v) where
+  obj ptHop := {
+    obj := fun ptC => MendlerAlgProfunctor G ptHop.unop ptC
+    map := @fun _ _ g m => MendlerAlgProfunctor.mapPtC g m
+    map_id := fun _ => by
+      ext m
+      simp only [types_id_apply, MendlerAlgProfunctor.mapPtC_id]
+    map_comp := @fun _ _ _ f g => by
+      ext m
+      simp only [types_comp_apply, MendlerAlgProfunctor.mapPtC_comp]
+  }
+  map := @fun _ _ f => {
+    app := fun _ m => MendlerAlgProfunctor.mapPtH f.unop m
+    naturality := @fun _ _ g => by
+      funext m
+      simp only [types_comp_apply, MendlerAlgProfunctor.mapPtH_mapPtC_comm]
+  }
+  map_id := fun _ => by
+    ext _ m
+    simp only [NatTrans.id_app, types_id_apply, unop_id, MendlerAlgProfunctor.mapPtH_id]
+  map_comp := @fun _ _ _ f g => by
+    ext _ m
+    simp only [NatTrans.comp_app, types_comp_apply, unop_comp, MendlerAlgProfunctor.mapPtH_comp]
 
 /-- A Mendler-style algebra for an endodifunctor `G`. -/
 @[ext]
@@ -277,6 +462,22 @@ theorem ofRestrictedCowedgeOver_toRestrictedCowedgeOver (m : MendlerAlgebra G) :
 theorem toRestrictedCowedgeOver_ofRestrictedCowedgeOver (pt : C)
     (u : RestrictedCowedgeOver G (HomToProf pt) pt) :
     (ofRestrictedCowedgeOver pt u).toRestrictedCowedgeOver = u := rfl
+
+/-- Contravariant action on the G parameter. -/
+def mapG {G' : Cᵒᵖ ⥤ C ⥤ C} (β : G' ⟶ G) (m : MendlerAlgebra G) :
+    MendlerAlgebra G' :=
+  ⟨m.pt, MendlerAlgebraOver.mapG β m.toMendlerAlgebraOver⟩
+
+/-- `mapG` respects identity. -/
+@[simp]
+theorem mapG_id (m : MendlerAlgebra G) : mapG (𝟙 G) m = m := by
+  simp only [mapG, MendlerAlgebraOver.mapG_id]
+
+/-- `mapG` respects composition (contravariantly). -/
+theorem mapG_comp {G' G'' : Cᵒᵖ ⥤ C ⥤ C} (β : G' ⟶ G) (γ : G ⟶ G'')
+    (m : MendlerAlgebra G'') :
+    mapG (β ≫ γ) m = mapG β (mapG γ m) := by
+  simp only [mapG, MendlerAlgebraOver.mapG_comp]
 
 end MendlerAlgebra
 
