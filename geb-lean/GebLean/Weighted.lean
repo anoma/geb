@@ -1094,13 +1094,11 @@ variable {J : Type*} [Category J]
 
 /--
 A weighted cone under a fixed point `pt` over a diagram `D : J ⥤ C` with
-weight `W : J ⥤ Type v`. This contains just the natural transformation
-data without bundling the cone point.
+weight `W : J ⥤ Type v`. This is the type of natural transformations
+`W ⟶ Hom(pt, D(-))`.
 -/
-@[ext]
-structure WeightedConeUnder (W : J ⥤ Type v) (D : J ⥤ C) (pt : C) where
-  /-- The natural transformation from the weight to `Hom(pt, D(-))` -/
-  π : W ⟶ homFromFunctor D pt
+abbrev WeightedConeUnder (W : J ⥤ Type v) (D : J ⥤ C) (pt : C) :=
+  W ⟶ homFromFunctor D pt
 
 /--
 A weighted cone over a diagram `D : J ⥤ C` with weight `W : J ⥤ Type v`
@@ -1117,12 +1115,12 @@ namespace WeightedCone
 
 /-- The natural transformation from the weight to `Hom(pt, D(-))`. -/
 abbrev π {W : J ⥤ Type v} {D : J ⥤ C} (c : WeightedCone W D) :
-    W ⟶ homFromFunctor D c.pt := c.toWeightedConeUnder.π
+    W ⟶ homFromFunctor D c.pt := c.toWeightedConeUnder
 
 /-- Constructor with explicit point and natural transformation arguments. -/
 @[match_pattern]
 def mk' {W : J ⥤ Type v} {D : J ⥤ C} (pt : C) (π : W ⟶ homFromFunctor D pt) :
-    WeightedCone W D := ⟨pt, ⟨π⟩⟩
+    WeightedCone W D := ⟨pt, π⟩
 
 end WeightedCone
 
@@ -1146,13 +1144,11 @@ theorem WeightedCone.naturality {W : J ⥤ Type v} {D : J ⥤ C}
 
 /--
 A weighted cocone over a fixed point `pt` for a diagram `D : J ⥤ C` with
-weight `W : Jᵒᵖ ⥤ Type v`. This contains just the natural transformation
-data without bundling the cocone point.
+weight `W : Jᵒᵖ ⥤ Type v`. This is the type of natural transformations
+`W ⟶ Hom(D(-), pt)`.
 -/
-@[ext]
-structure WeightedCoconeOver (W : Jᵒᵖ ⥤ Type v) (D : J ⥤ C) (pt : C) where
-  /-- The natural transformation from the weight to `Hom(D(-), pt)` -/
-  ι : W ⟶ homToFunctor D pt
+abbrev WeightedCoconeOver (W : Jᵒᵖ ⥤ Type v) (D : J ⥤ C) (pt : C) :=
+  W ⟶ homToFunctor D pt
 
 /--
 A weighted cocone over a diagram `D : J ⥤ C` with weight `W : Jᵒᵖ ⥤ Type v`
@@ -1172,12 +1168,12 @@ namespace WeightedCocone
 
 /-- The natural transformation from the weight to `Hom(D(-), pt)`. -/
 abbrev ι {W : Jᵒᵖ ⥤ Type v} {D : J ⥤ C} (c : WeightedCocone W D) :
-    W ⟶ homToFunctor D c.pt := c.toWeightedCoconeOver.ι
+    W ⟶ homToFunctor D c.pt := c.toWeightedCoconeOver
 
 /-- Constructor with explicit point and natural transformation arguments. -/
 @[match_pattern]
 def mk' {W : Jᵒᵖ ⥤ Type v} {D : J ⥤ C} (pt : C) (ι : W ⟶ homToFunctor D pt) :
-    WeightedCocone W D := ⟨pt, ⟨ι⟩⟩
+    WeightedCocone W D := ⟨pt, ι⟩
 
 end WeightedCocone
 
@@ -1691,7 +1687,7 @@ For a cone over `D : J ⥤ C`, the weighted cone has:
 def coneToWeightedCone {D : J ⥤ C} (c : Cone D) :
     WeightedCone (unitWeight J) D where
   pt := c.pt
-  toWeightedConeUnder := ⟨{
+  toWeightedConeUnder := {
     app := fun j _ => c.π.app j
     naturality := fun j j' f => by
       funext _
@@ -1700,7 +1696,7 @@ def coneToWeightedCone {D : J ⥤ C} (c : Cone D) :
       have nat := c.π.naturality f
       simp only [Functor.const_obj_obj, Functor.const_obj_map, Category.id_comp] at nat
       exact nat
-  }⟩
+  }
 
 /--
 Convert a weighted cone with constant unit weight back to an ordinary cone.
@@ -1750,7 +1746,7 @@ For a cocone over `D : J ⥤ C`, the weighted cocone has:
 def coconeToWeightedCocone {D : J ⥤ C} (c : Cocone (J := J) D) :
     WeightedCocone (unitWeightOp J) D where
   pt := c.pt
-  toWeightedCoconeOver := ⟨{
+  toWeightedCoconeOver := {
     app := fun j _ => c.ι.app j.unop
     naturality := fun j j' f => by
       funext _
@@ -1759,7 +1755,7 @@ def coconeToWeightedCocone {D : J ⥤ C} (c : Cocone (J := J) D) :
       have nat := c.ι.naturality f.unop
       simp only [Functor.const_obj_obj, Functor.const_obj_map, Category.comp_id] at nat
       exact nat.symm
-  }⟩
+  }
 
 /--
 Convert a weighted cocone with constant unit weight back to an ordinary cocone.
@@ -2036,7 +2032,7 @@ Given a cone `c` over `CategoryOfElements.π W ⋙ D`, define a weighted cone wi
 def elementsConeToWeightedCone (W : J ⥤ Type v₁) (D : J ⥤ C)
     (c : Cone (CategoryOfElements.π W ⋙ D)) : WeightedCone W D where
   pt := c.pt
-  toWeightedConeUnder := ⟨{
+  toWeightedConeUnder := {
     app := fun j w => c.π.app ⟨j, w⟩
     naturality := fun {j j'} f => by
       funext w
@@ -2046,7 +2042,7 @@ def elementsConeToWeightedCone (W : J ⥤ Type v₁) (D : J ⥤ C)
         Functor.comp_obj, CategoryOfElements.π_obj,
         Functor.comp_map, CategoryOfElements.π_map] at nat
       exact nat
-  }⟩
+  }
 
 /--
 `weightedConeToElementsCone` and `elementsConeToWeightedCone` are inverses (one direction).
@@ -2205,7 +2201,7 @@ Convert a cocone over the elements diagram to a weighted cocone.
 def elementsCoconeToWeightedCocone (W : Jᵒᵖ ⥤ Type v₃) (D : J ⥤ C)
     (c : Cocone (weightedCoconeDiagram W D)) : WeightedCocone W D where
   pt := c.pt
-  toWeightedCoconeOver := ⟨{
+  toWeightedCoconeOver := {
     app := fun j_op w => c.ι.app (Opposite.op (Sigma.mk j_op w))
     naturality := fun {j_op j'_op} f => by
       ext w
@@ -2219,7 +2215,7 @@ def elementsCoconeToWeightedCocone (W : Jᵒᵖ ⥤ Type v₃) (D : J ⥤ C)
         Functor.comp_map, Functor.op_map, CategoryOfElements.π_map,
         unopUnop_map] at nat
       exact nat.symm
-  }⟩
+  }
 
 /--
 Round-trip: weighted cocone → elements cocone → weighted cocone is identity.
@@ -4685,7 +4681,7 @@ def wppConstLegNatTrans (n : ℕ) :
 /-- The first weighted cocone: all legs map to 0. -/
 def wppWeightedCocone₀ : WeightedCocone wppWeightFunctor wppDiagramFunctor where
   pt := ℕ
-  toWeightedCoconeOver := ⟨wppConstLegNatTrans 0⟩
+  toWeightedCoconeOver := wppConstLegNatTrans 0
 
 /-- Extract the leg of wppWeightedCocone₀ at any position. -/
 theorem wppWeightedCocone₀_leg_eq
@@ -4695,7 +4691,7 @@ theorem wppWeightedCocone₀_leg_eq
 /-- The second weighted cocone: all legs map to 1. -/
 def wppWeightedCocone₁ : WeightedCocone wppWeightFunctor wppDiagramFunctor where
   pt := ℕ
-  toWeightedCoconeOver := ⟨wppConstLegNatTrans 1⟩
+  toWeightedCoconeOver := wppConstLegNatTrans 1
 
 /-- Extract the leg of wppWeightedCocone₁ at any position. -/
 theorem wppWeightedCocone₁_leg_eq
@@ -5572,7 +5568,7 @@ def wppModifiedLegNatTrans :
 /-- The modified weighted cocone: uses wppModifiedLegNatTrans for legs. -/
 def wppModifiedCocone : WeightedCocone wppWeightFunctor wppDiagramFunctor where
   pt := ℕ
-  toWeightedCoconeOver := ⟨wppModifiedLegNatTrans⟩
+  toWeightedCoconeOver := wppModifiedLegNatTrans
 
 /-- The leg of the modified cocone at coTwLeft uses modifiedLegAtCoTwLeft. -/
 theorem wppModifiedCocone_leg_coTwLeft (w : wppWeightAt coTwLeft) :
@@ -5969,14 +5965,14 @@ def cValuedRightAtRightNatTrans :
 def cValuedCowedgeAllLeft :
     WeightedCocone cValuedWeightFunctor wppDiagramFunctorC where
   pt := WalkingParallelPair.one
-  toWeightedCoconeOver := ⟨cValuedAllLeftNatTrans⟩
+  toWeightedCoconeOver := cValuedAllLeftNatTrans
 
 /-- The second C-valued weighted cowedge: leg at (coTwLeft, wppWeightRight) is
 `right`, all others are `left`. -/
 def cValuedCowedgeRightAtRight :
     WeightedCocone cValuedWeightFunctor wppDiagramFunctorC where
   pt := WalkingParallelPair.one
-  toWeightedCoconeOver := ⟨cValuedRightAtRightNatTrans⟩
+  toWeightedCoconeOver := cValuedRightAtRightNatTrans
 
 /-- The two C-valued cowedges have the same apex. -/
 theorem cValuedCowedges_same_apex :

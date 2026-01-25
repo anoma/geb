@@ -573,19 +573,17 @@ theorem extendMendlerLeg_natural (pt : C) (rc : RestrictedCowedgeOver pt G (HomT
 This is the inverse direction of `restrictWeightedCowedge` for `HomToProf`. -/
 def extendRestrictedCowedge (pt : C) (rc : RestrictedCowedgeOver pt G (HomToProf pt)) :
     WeightedCowedgeOver (HomToProf pt) G pt where
-  ι := {
-    app := fun tw => extendMendlerLeg (G := G) pt rc tw.unop
-    naturality := fun tw tw' f => by
-      ext w
-      simp only [types_comp_apply]
-      -- f : tw ⟶ tw' in (CoTwistedArrow C)ᵒᵖ
-      -- f.unop : tw'.unop ⟶ tw.unop in CoTwistedArrow C
-      -- extendMendlerLeg_natural gives:
-      --   D.map f.unop ≫ leg (tw.unop) w = leg (tw'.unop) (W.map f w)
-      -- homToFunctor.map f gives: D.map f.unop ≫ -
-      -- So we need symm to get the right equation
-      exact (extendMendlerLeg_natural (G := G) pt rc f.unop w).symm
-  }
+  app := fun tw => extendMendlerLeg (G := G) pt rc tw.unop
+  naturality := fun tw tw' f => by
+    ext w
+    simp only [types_comp_apply]
+    -- f : tw ⟶ tw' in (CoTwistedArrow C)ᵒᵖ
+    -- f.unop : tw'.unop ⟶ tw.unop in CoTwistedArrow C
+    -- extendMendlerLeg_natural gives:
+    --   D.map f.unop ≫ leg (tw.unop) w = leg (tw.unop) (W.map f w)
+    -- homToFunctor.map f gives: D.map f.unop ≫ -
+    -- So we need symm to get the right equation
+    exact (extendMendlerLeg_natural (G := G) pt rc f.unop w).symm
 
 /-- Extends a restricted cowedge to a weighted cowedge (bundled with point). -/
 def extendRestrictedCowedgeFull (pt : C)
@@ -630,13 +628,11 @@ theorem extendMendlerLeg'_natural (wpt apt : C)
 def extendRestrictedCowedge' (wpt apt : C)
     (rc : RestrictedCowedgeOver apt G (HomToProf wpt)) :
     WeightedCowedgeOver (HomToProf wpt) G apt where
-  ι := {
-    app := fun tw => extendMendlerLeg' (G := G) wpt apt rc tw.unop
-    naturality := fun tw tw' f => by
-      ext w
-      simp only [types_comp_apply]
-      exact (extendMendlerLeg'_natural (G := G) wpt apt rc f.unop w).symm
-  }
+  app := fun tw => extendMendlerLeg' (G := G) wpt apt rc tw.unop
+  naturality := fun tw tw' f => by
+    ext w
+    simp only [types_comp_apply]
+    exact (extendMendlerLeg'_natural (G := G) wpt apt rc f.unop w).symm
 
 /-- Generalized extension bundled with apex point. -/
 def extendRestrictedCowedgeFull' (wpt : C) (rc : RestrictedCowedge G (HomToProf wpt)) :
@@ -716,12 +712,12 @@ theorem extendMendlerLeg_eq_original_leg_at_coTwObjMk (pt : C)
     let rc := (restrictWeightedCowedge (HomToProf pt) G
       ⟨pt, wc⟩).toRestrictedCowedgeOver
     extendMendlerLeg (G := G) pt rc (coTwObjMk arr) γ =
-    wc.ι.app (Opposite.op (coTwObjMk arr)) γ := by
+    wc.app (Opposite.op (coTwObjMk arr)) γ := by
   intro rc
   unfold extendMendlerLeg
   simp only [coTwObjMk_cod, coTwObjMk_dom, coTwObjMk_arr]
   -- Use weighted cocone naturality with coTwToIdentityAtSource
-  have nat := wc.ι.naturality (coTwToIdentityAtSource arr).op
+  have nat := wc.naturality (coTwToIdentityAtSource arr).op
   have natγ := congrFun nat γ
   simp only [types_comp_apply] at natγ
   -- For HomToProf, W.map (coTwToIdentityAtSource arr).op γ = γ
@@ -737,9 +733,9 @@ theorem extendMendlerLeg_eq_original_leg_at_coTwObjMk (pt : C)
   have homToFunctor_map_form :
       (homToFunctor (profunctorOnCoTwistedArrow C G) pt).map
         (coTwToIdentityAtSource arr).op
-        (wc.ι.app (Opposite.op (idCoTwistedArrow cod)) γ) =
+        (wc.app (Opposite.op (idCoTwistedArrow cod)) γ) =
       (profunctorOnCoTwistedArrow C G).map (coTwToIdentityAtSource arr) ≫
-        wc.ι.app (Opposite.op (idCoTwistedArrow cod)) γ := rfl
+        wc.app (Opposite.op (idCoTwistedArrow cod)) γ := rfl
   rw [homToFunctor_map_form] at natγ
   rw [diagram_map_coTwToIdentityAtSource] at natγ
   -- natγ: wc.ι(coTwObjMk arr) γ = (G.map arr.op).app cod ≫ wc.ι(id_cod) γ
@@ -752,11 +748,11 @@ theorem extendMendlerLeg_eq_original_leg_at_coTwObjMk (pt : C)
   simp only [diagAppToWeightAtIdentity, cast_eq]
   -- Need to unfold diagonalToIdentityHom and leg
   simp only [diagonalToIdentityHom, WeightedCocone.leg]
-  -- The structure { pt := pt, toWeightedCoconeOver := wc } has ι = wc.ι
-  -- (WeightedCocone.ι c = c.toWeightedCoconeOver.ι)
+  -- The structure { pt := pt, toWeightedCoconeOver := wc } has
+  -- toWeightedCoconeOver = wc
   have h : ({ pt := pt, toWeightedCoconeOver := wc } :
     WeightedCocone (profunctorOnOpCoTwistedArrow C (HomToProf pt))
-      (profunctorOnCoTwistedArrow C G)).ι = wc.ι := rfl
+      (profunctorOnCoTwistedArrow C G)).ι = wc := rfl
   rw [h]
   exact Category.id_comp _
 
@@ -769,7 +765,7 @@ theorem extendMendlerLeg_eq_original_leg (pt : C)
     let rc := (restrictWeightedCowedge (HomToProf pt) G
       ⟨pt, wc⟩).toRestrictedCowedgeOver
     extendMendlerLeg (G := G) pt rc tw γ =
-    wc.ι.app (Opposite.op tw) γ := by
+    wc.app (Opposite.op tw) γ := by
   intro rc
   -- A co-twisted arrow is definitionally a triple (cod, dom, arr : cod ⟶ dom)
   -- represented as coTwObjMk arr
@@ -803,10 +799,10 @@ theorem extendMendlerLeg'_eq_original_leg_at_coTwObjMk (wpt : C)
     let rc := (restrictWeightedCowedge (HomToProf wpt) G
       wc).toRestrictedCowedgeOver
     extendMendlerLeg' (G := G) wpt wc.pt rc (coTwObjMk arr) γ =
-    wc.toWeightedCoconeOver.ι.app (Opposite.op (coTwObjMk arr)) γ := by
+    wc.toWeightedCoconeOver.app (Opposite.op (coTwObjMk arr)) γ := by
   intro rc
   -- Use weighted cocone naturality with coTwToIdentityAtSource
-  have nat := wc.toWeightedCoconeOver.ι.naturality (coTwToIdentityAtSource arr).op
+  have nat := wc.toWeightedCoconeOver.naturality (coTwToIdentityAtSource arr).op
   have natγ := congrFun nat γ
   simp only [types_comp_apply] at natγ
   -- For HomToProf, W.map (coTwToIdentityAtSource arr).op γ = γ
@@ -822,9 +818,9 @@ theorem extendMendlerLeg'_eq_original_leg_at_coTwObjMk (wpt : C)
   have homToFunctor_map_form :
       (homToFunctor (profunctorOnCoTwistedArrow C G) wc.pt).map
         (coTwToIdentityAtSource arr).op
-        (wc.toWeightedCoconeOver.ι.app (Opposite.op (idCoTwistedArrow cod)) γ) =
+        (wc.toWeightedCoconeOver.app (Opposite.op (idCoTwistedArrow cod)) γ) =
       (profunctorOnCoTwistedArrow C G).map (coTwToIdentityAtSource arr) ≫
-        wc.toWeightedCoconeOver.ι.app (Opposite.op (idCoTwistedArrow cod)) γ := rfl
+        wc.toWeightedCoconeOver.app (Opposite.op (idCoTwistedArrow cod)) γ := rfl
   rw [homToFunctor_map_form] at natγ
   rw [diagram_map_coTwToIdentityAtSource] at natγ
   -- natγ: wc.ι(coTwObjMk arr) γ = (G.map arr.op).app cod ≫ wc.ι(id_cod) γ
@@ -845,7 +841,7 @@ theorem extendMendlerLeg'_eq_original_leg (wpt : C)
     (γ : (profunctorOnOpCoTwistedArrow C (HomToProf wpt)).obj (Opposite.op tw)) :
     let rc := (restrictWeightedCowedge (HomToProf wpt) G wc).toRestrictedCowedgeOver
     extendMendlerLeg' (G := G) wpt wc.pt rc tw γ =
-    wc.toWeightedCoconeOver.ι.app (Opposite.op tw) γ := by
+    wc.toWeightedCoconeOver.app (Opposite.op tw) γ := by
   intro rc
   have h := coTw_eq_coTwObjMk tw
   revert γ
