@@ -165,6 +165,33 @@ theorem HomToProf.mapPt_comp {pt pt' pt'' : C} (f : pt ⟶ pt') (g : pt' ⟶ pt'
   ext A B γ
   simp only [mapPt, NatTrans.comp_app, types_comp_apply, Category.assoc]
 
+/-- `HomToProf.mapPt f` equals the map from `sliceProfunctorFunctor IdProf`.
+
+Since `HomToProf pt = IdProf ⇓ pt` (by `HomToProf_eq_sliceIdProf`), the functorial
+structure on `HomToProf` in `pt` is inherited from the general `sliceProfunctorFunctor`. -/
+theorem HomToProf.mapPt_eq_sliceFunctorMap {pt pt' : C} (f : pt ⟶ pt') :
+    HomToProf.mapPt f =
+    eqToHom (HomToProf_eq_sliceIdProf pt) ≫
+    (sliceProfunctorFunctor IdProf).map f ≫
+    eqToHom (HomToProf_eq_sliceIdProf pt').symm := by
+  ext A B γ
+  simp only [mapPt, eqToHom_app, eqToHom_refl, Category.comp_id,
+    NatTrans.comp_app, types_comp_apply]
+  rfl
+
+/-- The functor from `C` to `Cᵒᵖ ⥤ C ⥤ Type v` that maps `pt` to `HomToProf pt`.
+This captures the covariant functoriality of `HomToProf` in `pt`. -/
+def homToProfFunctor : C ⥤ (Cᵒᵖ ⥤ C ⥤ Type v) where
+  obj pt := HomToProf pt
+  map f := HomToProf.mapPt f
+  map_id _ := HomToProf.mapPt_id _
+  map_comp f g := HomToProf.mapPt_comp f g
+
+/-- `homToProfFunctor` at `pt` equals `sliceProfunctorFunctor IdProf` at `pt`. -/
+theorem homToProfFunctor_obj_eq (pt : C) :
+    homToProfFunctor.obj pt = (sliceProfunctorFunctor IdProf).obj pt := by
+  exact HomToProf_eq_sliceIdProf pt
+
 end HomToProfunctor
 
 section MendlerAlgebra
@@ -372,6 +399,11 @@ def mendlerAlgProfunctorFunctor (G : Cᵒᵖ ⥤ C ⥤ C) : Cᵒᵖ ⥤ C ⥤ Ty
   map_comp := @fun _ _ _ f g => by
     ext _ m
     simp only [NatTrans.comp_app, types_comp_apply, unop_comp, MendlerAlgProfunctor.mapPtH_comp]
+
+/-- `MendlerAlgProfunctor G ptH ptC` equals the application of `mendlerAlgProfunctorFunctor`. -/
+theorem mendlerAlgProfunctor_eq_functor_obj (G : Cᵒᵖ ⥤ C ⥤ C) (ptH ptC : C) :
+    MendlerAlgProfunctor G ptH ptC =
+    ((mendlerAlgProfunctorFunctor G).obj (Opposite.op ptH)).obj ptC := rfl
 
 /-- A Mendler-style algebra for an endodifunctor `G`. -/
 @[ext]

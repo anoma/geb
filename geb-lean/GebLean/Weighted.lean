@@ -3096,7 +3096,50 @@ theorem mapH_comp (α : H ⟶ H') (β : H' ⟶ H'')
   funext A h
   simp only [mapH, NatTrans.comp_app, types_comp_apply]
 
+/-- Naturality: `mapH` and `mapPt` commute.
+For `α : H ⟶ H'` and `f : pt ⟶ pt'`:
+`mapH α (mapPt f c) = mapPt f (mapH α c)` -/
+theorem mapH_mapPt_comm (α : H ⟶ H') (f : pt ⟶ pt')
+    (c : RestrictedCowedgeOver G H' pt) :
+    mapH α (mapPt f c) = mapPt f (mapH α c) := by
+  apply RestrictedCowedgeOver.ext
+  funext A h
+  simp only [mapH, mapPt]
+
 end RestrictedCowedgeOver
+
+/-- The bifunctor `(Cᵒᵖ ⥤ C ⥤ Type v)ᵒᵖ ⥤ C ⥤ Type (max u v)` for restricted cowedges.
+For a fixed endodifunctor `G`, this maps `(H, pt)` to `RestrictedCowedgeOver G H pt`. -/
+def restrictedCowedgeOverFunctor (G : Cᵒᵖ ⥤ C ⥤ C) :
+    (Cᵒᵖ ⥤ C ⥤ Type v)ᵒᵖ ⥤ C ⥤ Type (max u v) where
+  obj Hop := {
+    obj := fun pt => RestrictedCowedgeOver G Hop.unop pt
+    map := @fun _ _ f c => RestrictedCowedgeOver.mapPt f c
+    map_id := fun _ => by
+      ext c
+      simp only [types_id_apply, RestrictedCowedgeOver.mapPt_id]
+    map_comp := @fun _ _ _ f g => by
+      ext c
+      simp only [types_comp_apply, RestrictedCowedgeOver.mapPt_comp]
+  }
+  map := @fun _ _ α => {
+    app := fun _ c => RestrictedCowedgeOver.mapH α.unop c
+    naturality := @fun _ _ f => by
+      funext c
+      simp only [types_comp_apply, RestrictedCowedgeOver.mapH_mapPt_comm]
+  }
+  map_id := fun _ => by
+    ext _ c
+    simp only [NatTrans.id_app, types_id_apply, unop_id, RestrictedCowedgeOver.mapH_id]
+  map_comp := @fun _ _ _ α β => by
+    ext _ c
+    simp only [NatTrans.comp_app, types_comp_apply, unop_comp, RestrictedCowedgeOver.mapH_comp]
+
+/-- `RestrictedCowedgeOver G H pt` is the application of `restrictedCowedgeOverFunctor G`. -/
+theorem restrictedCowedgeOver_eq_functor_obj (G : Cᵒᵖ ⥤ C ⥤ C)
+    (H : Cᵒᵖ ⥤ C ⥤ Type v) (pt : C) :
+    RestrictedCowedgeOver G H pt =
+    ((restrictedCowedgeOverFunctor G).obj (Opposite.op H)).obj pt := rfl
 
 /--
 An `H`-restricted `G`-cowedge for an endodifunctor `G : Cᵒᵖ ⥤ C ⥤ C` and
