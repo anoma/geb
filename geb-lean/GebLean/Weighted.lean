@@ -2811,6 +2811,16 @@ instance StrongRestrictedCowedgeCat (G : Cᵒᵖ ⥤ C ⥤ C) (H : Cᵒᵖ ⥤ C
   comp_id f := by ext; simp [StrongRestrictedCowedge.Hom.comp, StrongRestrictedCowedge.Hom.id]
   assoc f g h := by ext; simp [StrongRestrictedCowedge.Hom.comp]
 
+@[simp]
+theorem StrongRestrictedCowedge.category_comp_hom {G : Cᵒᵖ ⥤ C ⥤ C}
+    {H : Cᵒᵖ ⥤ C ⥤ Type v} {c₁ c₂ c₃ : StrongRestrictedCowedge G H}
+    (f : c₁ ⟶ c₂) (g : c₂ ⟶ c₃) : (f ≫ g).hom = f.hom ≫ g.hom := rfl
+
+@[simp]
+theorem StrongRestrictedCowedge.category_id_hom {G : Cᵒᵖ ⥤ C ⥤ C}
+    {H : Cᵒᵖ ⥤ C ⥤ Type v} (c : StrongRestrictedCowedge G H) :
+    (𝟙 c : c ⟶ c).hom = 𝟙 c.pt := rfl
+
 /-!
 ### Relationship between dinaturality and paranaturality
 

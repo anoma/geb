@@ -899,6 +899,26 @@ theorem copowerCowedgeToRestrictedCowedge_pt (G : Cᵒᵖ ⥤ C ⥤ C) (pt : C)
     (cw : Cowedge (copowerProf (HomToProf pt) G)) :
     (copowerCowedgeToRestrictedCowedge G pt cw).pt = cw.pt := rfl
 
+namespace Limits.Cocone
+
+@[simp]
+theorem category_comp_hom {J : Type*} [Category J] {C' : Type*} [Category C']
+    {F : J ⥤ C'} {c₁ c₂ c₃ : Cocone F}
+    (f : c₁ ⟶ c₂) (g : c₂ ⟶ c₃) : (f ≫ g).hom = f.hom ≫ g.hom := rfl
+
+@[simp]
+theorem category_id_hom {J : Type*} [Category J] {C' : Type*} [Category C']
+    {F : J ⥤ C'} (c : Cocone F) : (𝟙 c : c ⟶ c).hom = 𝟙 c.pt := rfl
+
+/-- The `.hom` field of an `eqToHom` morphism between cocones equals `eqToHom` of
+the corresponding equality of apex points. -/
+@[simp]
+theorem eqToHom_hom {J : Type*} [Category J] {C' : Type*} [Category C']
+    {F : J ⥤ C'} {A B : Cocone F} (h : A = B) :
+    (eqToHom h).hom = eqToHom (congrArg Cocone.pt h) := by subst h; rfl
+
+end Limits.Cocone
+
 namespace Limits.Cocones
 
 /-- The `.hom` field of an `eqToHom` morphism between cocones equals `eqToHom` of
@@ -909,6 +929,24 @@ theorem eqToHom_hom {J : Type*} [Category J] {C' : Type*} [Category C']
     (eqToHom h).hom = eqToHom (congrArg Cocone.pt h) := by subst h; rfl
 
 end Limits.Cocones
+
+namespace Limits
+
+@[simp]
+theorem Cowedge.category_comp_hom {J : Type*} [Category J] {C' : Type*} [Category C']
+    {F : Jᵒᵖ ⥤ J ⥤ C'} {c₁ c₂ c₃ : Cowedge F}
+    (f : c₁ ⟶ c₂) (g : c₂ ⟶ c₃) : (f ≫ g).hom = f.hom ≫ g.hom := rfl
+
+@[simp]
+theorem Cowedge.category_id_hom {J : Type*} [Category J] {C' : Type*} [Category C']
+    {F : Jᵒᵖ ⥤ J ⥤ C'} (c : Cowedge F) : (𝟙 c : c ⟶ c).hom = 𝟙 c.pt := rfl
+
+@[simp]
+theorem Cowedge.eqToHom_hom {J : Type*} [Category J] {C' : Type*} [Category C']
+    {F : Jᵒᵖ ⥤ J ⥤ C'} {A B : Cowedge F} (h : A = B) :
+    (eqToHom h).hom = eqToHom (congrArg Cocone.pt h) := by subst h; rfl
+
+end Limits
 
 /-!
 ### Categorical Equivalence
@@ -960,6 +998,16 @@ def copowerCowedgeToRestrictedCowedgeHom (G : Cᵒᵖ ⥤ C ⥤ C) (pt : C)
     rw [Category.assoc]
     have w := Multicofork.π_comp_hom cw₁ cw₂ f A
     calc inj _ _ x ≫ cw₁.π A ≫ f.hom = inj _ _ x ≫ cw₂.π A := by rw [w]
+
+@[simp]
+theorem restrictedCowedgeToCopowerCowedgeHom_hom (G : Cᵒᵖ ⥤ C ⥤ C) (pt : C)
+    {rc₁ rc₂ : HomRestrictedCowedge G pt} (f : RestrictedCowedge.Hom rc₁ rc₂) :
+    (restrictedCowedgeToCopowerCowedgeHom G pt f).hom = f.hom := rfl
+
+@[simp]
+theorem copowerCowedgeToRestrictedCowedgeHom_hom (G : Cᵒᵖ ⥤ C ⥤ C) (pt : C)
+    {cw₁ cw₂ : HomCopowerCowedge G pt} (f : cw₁ ⟶ cw₂) :
+    (copowerCowedgeToRestrictedCowedgeHom G pt f).hom = f.hom := rfl
 
 /-- The functor from restricted cowedges to cowedges over the copower profunctor. -/
 def homRestrictedToCopowerFunctor (G : Cᵒᵖ ⥤ C ⥤ C) (pt : C) :
@@ -1538,6 +1586,11 @@ def homRestrictedCowedgeReindexHom {pt pt' : C} (φ : pt ⟶ pt')
     simp only [homRestrictedCowedgeReindex_family]
     exact f.comm A (x ≫ φ)
 
+@[simp]
+theorem homRestrictedCowedgeReindexHom_hom {pt pt' : C} (φ : pt ⟶ pt')
+    {rc₁ rc₂ : HomRestrictedCowedge G pt'} (f : RestrictedCowedge.Hom rc₁ rc₂) :
+    (homRestrictedCowedgeReindexHom G φ f).hom = f.hom := rfl
+
 /-- The reindexing functor for a fixed morphism `φ : pt → pt'`. -/
 def homRestrictedCowedgeReindexFunctor {pt pt' : C} (φ : pt ⟶ pt') :
     HomRestrictedCowedge G pt' ⥤ HomRestrictedCowedge G pt where
@@ -1604,6 +1657,256 @@ def homRestrictedCowedgeFunctor : Cᵒᵖ ⥤ Cat where
         eqToHom_refl, Category.id_comp, Category.comp_id]
 
 end HomRestrictedCowedgeFunctoriality
+
+section CowedgeFunctorsAndNatIsos
+
+/-!
+### Contravariant Functors for Other Cowedge Types
+
+The contravariance of `HomRestrictedCowedge G` in the weight parameter `pt`
+extends to the equivalent cowedge categories. Each functor is defined by
+composing through the equivalence with `homRestrictedCowedgeFunctor`.
+
+The existing categorical isomorphisms then assemble into natural isomorphisms
+between these functors.
+-/
+
+open HasCopowers Limits
+
+variable {C : Type u} [Category.{v} C] [HasCopowers C]
+variable (G : Cᵒᵖ ⥤ C ⥤ C)
+
+/-- The contravariant functor sending `pt` to `HomCopowerCowedge G pt`.
+
+Defined by composing through `HomRestrictedCowedge` using the equivalence. -/
+def homCopowerCowedgeFunctor : Cᵒᵖ ⥤ Cat where
+  obj pt := Cat.of (HomCopowerCowedge G pt.unop)
+  map {pt pt'} φ := ⟨copowerToHomRestrictedFunctor G pt.unop ⋙
+    homRestrictedCowedgeReindexFunctor G φ.unop ⋙
+    homRestrictedToCopowerFunctor G pt'.unop⟩
+  map_id pt := by
+    apply Cat.Hom.ext
+    refine CategoryTheory.Functor.ext (fun cw => ?_) (fun cw₁ cw₂ f => ?_)
+    · simp only [Functor.comp_obj, copowerToHomRestrictedFunctor,
+        homRestrictedCowedgeReindexFunctor, homRestrictedToCopowerFunctor, unop_id]
+      rw [homRestrictedCowedgeReindex_id]
+      exact restrictedToCopower_copowerToRestricted G pt.unop cw
+    · apply Limits.CoconeMorphism.ext
+      simp only [Cat.id_eq_id, Functor.id_map, Functor.comp_obj, Functor.comp_map,
+        copowerToHomRestrictedFunctor, homRestrictedToCopowerFunctor,
+        homRestrictedCowedgeReindexFunctor, homRestrictedCowedgeReindexHom, unop_id,
+        copowerCowedgeToRestrictedCowedgeHom, restrictedCowedgeToCopowerCowedgeHom]
+      rw [Limits.Cocone.category_comp_hom, Limits.Cocone.category_comp_hom,
+        GebLean.Cocone.eqToHom_hom, GebLean.Cocone.eqToHom_hom]
+      simp only [copowerCowedgeToRestrictedCowedge_pt,
+        restrictedCowedgeToCopowerCowedge_pt, homRestrictedCowedgeReindex_pt,
+        eqToHom_refl, Category.id_comp, Category.comp_id]
+  map_comp {pt pt' pt''} φ ψ := by
+    apply Cat.Hom.ext
+    refine CategoryTheory.Functor.ext (fun cw => ?_) (fun cw₁ cw₂ f => ?_)
+    · simp only [Functor.comp_obj, Cat.comp_eq_comp, copowerToHomRestrictedFunctor,
+        homRestrictedCowedgeReindexFunctor, homRestrictedToCopowerFunctor, unop_comp]
+      rw [copowerToRestricted_restrictedToCopower, ← homRestrictedCowedgeReindex_comp]
+    · apply Limits.CoconeMorphism.ext
+      simp only [Cat.comp_eq_comp, Functor.comp_obj, Functor.comp_map,
+        copowerToHomRestrictedFunctor, homRestrictedToCopowerFunctor,
+        homRestrictedCowedgeReindexFunctor, homRestrictedCowedgeReindexHom, unop_comp,
+        copowerCowedgeToRestrictedCowedgeHom, restrictedCowedgeToCopowerCowedgeHom]
+      rw [Limits.Cocone.category_comp_hom, Limits.Cocone.category_comp_hom,
+        GebLean.Cocone.eqToHom_hom, GebLean.Cocone.eqToHom_hom]
+      simp only [copowerCowedgeToRestrictedCowedge_pt,
+        restrictedCowedgeToCopowerCowedge_pt, homRestrictedCowedgeReindex_pt,
+        eqToHom_refl, Category.id_comp, Category.comp_id]
+
+/-- The contravariant functor sending `pt` to `HomWeightedCowedge G pt`.
+
+Defined by composing through `HomRestrictedCowedge` using the equivalence. -/
+def homWeightedCowedgeFunctor : Cᵒᵖ ⥤ Cat where
+  obj pt := Cat.of (HomWeightedCowedge G pt.unop)
+  map {pt pt'} φ := ⟨weightedToHomRestrictedFunctor G pt.unop ⋙
+    homRestrictedCowedgeReindexFunctor G φ.unop ⋙
+    homRestrictedToWeightedFunctor G pt'.unop⟩
+  map_id pt := by
+    apply Cat.Hom.ext
+    refine CategoryTheory.Functor.ext (fun wc => ?_) (fun wc₁ wc₂ f => ?_)
+    · simp only [Functor.comp_obj, weightedToHomRestrictedFunctor,
+        homRestrictedCowedgeReindexFunctor, homRestrictedToWeightedFunctor, unop_id]
+      rw [homRestrictedCowedgeReindex_id]
+      exact restrictedToWeighted_weightedToRestricted G pt.unop wc
+    · apply WeightedCocone.Hom.ext
+      simp only [Cat.id_eq_id, Functor.id_map, Functor.comp_obj,
+        Functor.comp_map, weightedToHomRestrictedFunctor, homRestrictedToWeightedFunctor,
+        homRestrictedCowedgeReindexFunctor, homRestrictedCowedgeReindexHom, unop_id,
+        weightedCowedgeToRestrictedCowedgeHom, restrictedCowedgeToWeightedCowedgeHom]
+      rw [WeightedCocone.category_comp_hom, WeightedCocone.category_comp_hom,
+        WeightedCocone.eqToHom_hom, WeightedCocone.eqToHom_hom]
+      simp only [weightedCowedgeToRestrictedCowedge_pt,
+        restrictedCowedgeToWeightedCowedge_pt, homRestrictedCowedgeReindex_pt,
+        eqToHom_refl, Category.id_comp, Category.comp_id]
+  map_comp {pt pt' pt''} φ ψ := by
+    apply Cat.Hom.ext
+    refine CategoryTheory.Functor.ext (fun wc => ?_) (fun wc₁ wc₂ f => ?_)
+    · simp only [Functor.comp_obj, Cat.comp_eq_comp, weightedToHomRestrictedFunctor,
+        homRestrictedCowedgeReindexFunctor, homRestrictedToWeightedFunctor, unop_comp]
+      rw [weightedToRestricted_restrictedToWeighted, ← homRestrictedCowedgeReindex_comp]
+    · apply WeightedCocone.Hom.ext
+      simp only [Cat.comp_eq_comp, Functor.comp_obj, Functor.comp_map,
+        weightedToHomRestrictedFunctor, homRestrictedToWeightedFunctor,
+        homRestrictedCowedgeReindexFunctor, homRestrictedCowedgeReindexHom, unop_comp,
+        weightedCowedgeToRestrictedCowedgeHom, restrictedCowedgeToWeightedCowedgeHom]
+      rw [WeightedCocone.category_comp_hom, WeightedCocone.category_comp_hom,
+        WeightedCocone.eqToHom_hom, WeightedCocone.eqToHom_hom]
+      simp only [weightedCowedgeToRestrictedCowedge_pt,
+        restrictedCowedgeToWeightedCowedge_pt, homRestrictedCowedgeReindex_pt,
+        eqToHom_refl, Category.id_comp, Category.comp_id]
+
+/-- The contravariant functor sending `pt` to `HomStrongRestrictedCowedge G pt`.
+
+Defined by composing through `HomRestrictedCowedge` using the equivalence. -/
+def homStrongRestrictedCowedgeFunctor : Cᵒᵖ ⥤ Cat where
+  obj pt := Cat.of (HomStrongRestrictedCowedge G pt.unop)
+  map {pt pt'} φ := ⟨strongToHomRestrictedFunctor G pt.unop ⋙
+    homRestrictedCowedgeReindexFunctor G φ.unop ⋙
+    homRestrictedToStrongFunctor G pt'.unop⟩
+  map_id pt := by
+    apply Cat.Hom.ext
+    refine CategoryTheory.Functor.ext (fun src => ?_) (fun src₁ src₂ f => ?_)
+    · simp only [Functor.comp_obj, strongToHomRestrictedFunctor,
+        homRestrictedCowedgeReindexFunctor, homRestrictedToStrongFunctor, unop_id]
+      rw [homRestrictedCowedgeReindex_id]
+      exact upgrade_inclusion_roundtrip G pt.unop src
+    · apply StrongRestrictedCowedge.Hom.ext
+      simp only [Cat.id_eq_id, Functor.id_map, Functor.comp_obj,
+        Functor.comp_map, homRestrictedToStrongFunctor,
+        homRestrictedCowedgeReindexFunctor, homRestrictedCowedgeReindexHom, unop_id,
+        StrongRestrictedCowedge.inclusion, restrictedCowedgeToStrongCowedgeHom]
+      rw [StrongRestrictedCowedge.category_comp_hom,
+        StrongRestrictedCowedge.category_comp_hom,
+        StrongRestrictedCowedge_eqToHom_hom, StrongRestrictedCowedge_eqToHom_hom]
+      simp only [eqToHom_refl, Category.id_comp, Category.comp_id]
+  map_comp {pt pt' pt''} φ ψ := by
+    apply Cat.Hom.ext
+    refine CategoryTheory.Functor.ext (fun src => ?_) (fun src₁ src₂ f => ?_)
+    · simp only [Functor.comp_obj, Cat.comp_eq_comp, strongToHomRestrictedFunctor,
+        homRestrictedCowedgeReindexFunctor, homRestrictedToStrongFunctor, unop_comp]
+      rw [← homRestrictedCowedgeReindex_comp]
+      congr 1
+    · apply StrongRestrictedCowedge.Hom.ext
+      simp only [Cat.comp_eq_comp, Functor.comp_obj, Functor.comp_map,
+        homRestrictedToStrongFunctor,
+        homRestrictedCowedgeReindexFunctor, homRestrictedCowedgeReindexHom, unop_comp,
+        StrongRestrictedCowedge.inclusion, restrictedCowedgeToStrongCowedgeHom]
+      rw [StrongRestrictedCowedge.category_comp_hom,
+        StrongRestrictedCowedge.category_comp_hom,
+        StrongRestrictedCowedge_eqToHom_hom, StrongRestrictedCowedge_eqToHom_hom]
+      simp only [eqToHom_refl, Category.id_comp, Category.comp_id]
+
+/-- Natural isomorphism between `homRestrictedCowedgeFunctor` and
+`homCopowerCowedgeFunctor`, with components given by the per-object
+categorical isomorphisms `homRestrictedCopowerIso`. -/
+def homRestrictedCopowerNatIso :
+    homRestrictedCowedgeFunctor G ≅ homCopowerCowedgeFunctor G :=
+  NatIso.ofComponents
+    (fun pt => homRestrictedCopowerIso G pt.unop)
+    (fun {pt pt'} φ => by
+      apply Cat.Hom.ext
+      refine CategoryTheory.Functor.ext (fun rc => ?_) (fun rc₁ rc₂ f => ?_)
+      · simp only [Cat.comp_eq_comp, homRestrictedCowedgeFunctor,
+          homCopowerCowedgeFunctor, homRestrictedCopowerIso, Cat.isoOfEquiv_hom,
+          homRestrictedCopowerEquiv, homRestrictedCowedgeReindexFunctor,
+          copowerToHomRestrictedFunctor, homRestrictedToCopowerFunctor, Functor.comp_obj]
+        change restrictedCowedgeToCopowerCowedge G pt'.unop
+            (homRestrictedCowedgeReindex G φ.unop rc) =
+          restrictedCowedgeToCopowerCowedge G pt'.unop
+            (homRestrictedCowedgeReindex G φ.unop
+              (copowerCowedgeToRestrictedCowedge G pt.unop
+                (restrictedCowedgeToCopowerCowedge G pt.unop rc)))
+        rw [copowerToRestricted_restrictedToCopower]
+      · simp only [Cat.comp_eq_comp, homRestrictedCowedgeFunctor,
+          homCopowerCowedgeFunctor, homRestrictedCopowerIso, Cat.isoOfEquiv_hom,
+          homRestrictedCopowerEquiv, homRestrictedCowedgeReindexFunctor,
+          copowerToHomRestrictedFunctor, homRestrictedToCopowerFunctor,
+          homRestrictedCowedgeReindexHom, copowerCowedgeToRestrictedCowedgeHom,
+          restrictedCowedgeToCopowerCowedgeHom, Functor.comp_obj, Functor.comp_map,
+          Functor.toCatHom_toFunctor]
+        apply Limits.CoconeMorphism.ext
+        rw [Limits.Cocone.category_comp_hom, Limits.Cocone.category_comp_hom,
+          GebLean.Cocone.eqToHom_hom, GebLean.Cocone.eqToHom_hom]
+        simp only [restrictedCowedgeToCopowerCowedge_pt,
+          copowerCowedgeToRestrictedCowedge_pt, homRestrictedCowedgeReindex_pt,
+          eqToHom_refl, Category.id_comp, Category.comp_id])
+
+/-- Natural isomorphism between `homRestrictedCowedgeFunctor` and
+`homWeightedCowedgeFunctor`, with components given by the per-object
+categorical isomorphisms `homRestrictedWeightedIso`. -/
+def homRestrictedWeightedNatIso :
+    homRestrictedCowedgeFunctor G ≅ homWeightedCowedgeFunctor G :=
+  NatIso.ofComponents
+    (fun pt => homRestrictedWeightedIso G pt.unop)
+    (fun {pt pt'} φ => by
+      apply Cat.Hom.ext
+      refine CategoryTheory.Functor.ext (fun rc => ?_) (fun rc₁ rc₂ f => ?_)
+      · simp only [Cat.comp_eq_comp, homRestrictedCowedgeFunctor,
+          homWeightedCowedgeFunctor, homRestrictedWeightedIso, Cat.isoOfEquiv_hom,
+          homRestrictedWeightedEquiv, homRestrictedCowedgeReindexFunctor,
+          weightedToHomRestrictedFunctor, homRestrictedToWeightedFunctor, Functor.comp_obj]
+        change extendRestrictedCowedgeFull' G pt'.unop
+            (homRestrictedCowedgeReindex G φ.unop rc) =
+          extendRestrictedCowedgeFull' G pt'.unop
+            (homRestrictedCowedgeReindex G φ.unop
+              (restrictWeightedCowedge (HomToProf pt.unop) G
+                (extendRestrictedCowedgeFull' G pt.unop rc)))
+        rw [weightedToRestricted_restrictedToWeighted]
+      · simp only [Cat.comp_eq_comp, homRestrictedCowedgeFunctor,
+          homWeightedCowedgeFunctor, homRestrictedWeightedIso, Cat.isoOfEquiv_hom,
+          homRestrictedWeightedEquiv, homRestrictedCowedgeReindexFunctor,
+          weightedToHomRestrictedFunctor, homRestrictedToWeightedFunctor,
+          homRestrictedCowedgeReindexHom, weightedCowedgeToRestrictedCowedgeHom,
+          restrictedCowedgeToWeightedCowedgeHom, Functor.comp_obj, Functor.comp_map,
+          Functor.toCatHom_toFunctor]
+        apply WeightedCocone.Hom.ext
+        rw [WeightedCocone.category_comp_hom, WeightedCocone.category_comp_hom,
+          WeightedCocone.eqToHom_hom, WeightedCocone.eqToHom_hom]
+        simp only [restrictedCowedgeToWeightedCowedge_pt,
+          weightedCowedgeToRestrictedCowedge_pt, homRestrictedCowedgeReindex_pt,
+          eqToHom_refl, Category.id_comp, Category.comp_id])
+
+/-- Natural isomorphism between `homRestrictedCowedgeFunctor` and
+`homStrongRestrictedCowedgeFunctor`, with components given by the per-object
+categorical isomorphisms `homRestrictedStrongIso`. -/
+def homRestrictedStrongNatIso :
+    homRestrictedCowedgeFunctor G ≅ homStrongRestrictedCowedgeFunctor G :=
+  NatIso.ofComponents
+    (fun pt => homRestrictedStrongIso G pt.unop)
+    (fun {pt pt'} φ => by
+      apply Cat.Hom.ext
+      refine CategoryTheory.Functor.ext (fun rc => ?_) (fun rc₁ rc₂ f => ?_)
+      · simp only [Cat.comp_eq_comp, homRestrictedCowedgeFunctor,
+          homStrongRestrictedCowedgeFunctor, homRestrictedStrongIso, Cat.isoOfEquiv_hom,
+          homRestrictedStrongEquiv, homRestrictedCowedgeReindexFunctor,
+          strongToHomRestrictedFunctor, homRestrictedToStrongFunctor, Functor.comp_obj]
+        change upgradeToStrongRestrictedCowedge G pt'.unop
+            (homRestrictedCowedgeReindex G φ.unop rc) =
+          upgradeToStrongRestrictedCowedge G pt'.unop
+            (homRestrictedCowedgeReindex G φ.unop
+              ((StrongRestrictedCowedge.inclusion G (HomToProf pt.unop)).obj
+                (upgradeToStrongRestrictedCowedge G pt.unop rc)))
+        rw [inclusion_upgrade_roundtrip]
+      · simp only [Cat.comp_eq_comp, homRestrictedCowedgeFunctor,
+          homStrongRestrictedCowedgeFunctor, homRestrictedStrongIso, Cat.isoOfEquiv_hom,
+          homRestrictedStrongEquiv, homRestrictedCowedgeReindexFunctor,
+          homRestrictedToStrongFunctor, homRestrictedCowedgeReindexHom,
+          StrongRestrictedCowedge.inclusion, restrictedCowedgeToStrongCowedgeHom,
+          Functor.comp_obj, Functor.comp_map, Functor.toCatHom_toFunctor]
+        apply StrongRestrictedCowedge.Hom.ext
+        rw [StrongRestrictedCowedge.category_comp_hom,
+          StrongRestrictedCowedge.category_comp_hom,
+          StrongRestrictedCowedge_eqToHom_hom, StrongRestrictedCowedge_eqToHom_hom]
+        simp only [upgradeToStrongRestrictedCowedge_pt,
+          StrongRestrictedCowedge.toRestrictedCowedge, homRestrictedCowedgeReindex_pt,
+          eqToHom_refl, Category.id_comp, Category.comp_id])
+
+end CowedgeFunctorsAndNatIsos
 
 section KanExtensionConnection
 
