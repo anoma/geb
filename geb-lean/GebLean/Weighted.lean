@@ -1100,6 +1100,13 @@ weight `W : J ⥤ Type v`. This is the type of natural transformations
 abbrev WeightedConeUnder (W : J ⥤ Type v) (D : J ⥤ C) (pt : C) :=
   W ⟶ homFromFunctor D pt
 
+/-- `WeightedConeUnder` is the composition of `homFromFunctorBifunctor`
+with the natural transformation functor. This exhibits the functorial
+structure: it's built from the composition `W ⟶ homFromFunctorBifunctor D pt`. -/
+theorem WeightedConeUnder_eq_hom_to_bifunctor (W : J ⥤ Type v) (D : J ⥤ C)
+    (pt : C) : WeightedConeUnder W D pt =
+    (W ⟶ (homFromFunctorBifunctor.obj D).obj (Opposite.op pt)) := rfl
+
 /--
 A weighted cone over a diagram `D : J ⥤ C` with weight `W : J ⥤ Type v`
 consists of a cone point `pt` and a `WeightedConeUnder pt W D`.
@@ -1149,6 +1156,13 @@ weight `W : Jᵒᵖ ⥤ Type v`. This is the type of natural transformations
 -/
 abbrev WeightedCoconeOver (W : Jᵒᵖ ⥤ Type v) (D : J ⥤ C) (pt : C) :=
   W ⟶ homToFunctor D pt
+
+/-- `WeightedCoconeOver` is the composition of `homToFunctorBifunctor`
+with the natural transformation functor. This exhibits the functorial
+structure: it's built from the composition `W ⟶ homToFunctorBifunctor Dᵒᵖ pt`. -/
+theorem WeightedCoconeOver_eq_hom_to_bifunctor (W : Jᵒᵖ ⥤ Type v) (D : J ⥤ C)
+    (pt : C) : WeightedCoconeOver W D pt =
+    (W ⟶ (homToFunctorBifunctor.obj (Opposite.op D)).obj pt) := rfl
 
 /--
 A weighted cocone over a diagram `D : J ⥤ C` with weight `W : Jᵒᵖ ⥤ Type v`
