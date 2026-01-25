@@ -1,5 +1,6 @@
 import Mathlib.CategoryTheory.Category.Basic
 import Mathlib.CategoryTheory.Elements
+import Mathlib.CategoryTheory.Functor.Currying
 import Mathlib.CategoryTheory.Functor.FullyFaithful
 import Mathlib.CategoryTheory.Limits.Cones
 import Mathlib.CategoryTheory.Limits.Shapes.End
@@ -1108,6 +1109,30 @@ theorem WeightedConeUnder_eq_hom_to_bifunctor (W : J ⥤ Type v) (D : J ⥤ C)
     (W ⟶ (homFromFunctorBifunctor.obj D).obj (Opposite.op pt)) := rfl
 
 /--
+The curried trifunctor exhibiting `WeightedConeUnder` as a functorial construction.
+
+Takes `W : (J ⥤ Type v)ᵒᵖ` and produces `(J ⥤ C) ⥤ Cᵒᵖ ⥤ Type` where
+the value at `(D, pt)` is `W.unop ⟶ homFromFunctor D pt.unop`.
+
+Built as a chain of compositions ending with `Functor.hom (J ⥤ Type v)`:
+1. Curry the hom functor on functor categories
+2. Whisker on the right with `Cᵒᵖ` to transform domain from `J ⥤ Type v`
+3. Pre-compose with `homFromFunctorBifunctor` to handle the `D` argument
+-/
+def weightedConeUnderCurriedTrifunctor :
+    (J ⥤ Type v)ᵒᵖ ⥤ (J ⥤ C) ⥤ Cᵒᵖ ⥤ Type (max _ v) :=
+  Functor.curry.obj (Functor.hom (J ⥤ Type v)) ⋙
+  (Functor.whiskeringRight Cᵒᵖ (J ⥤ Type v) (Type _)) ⋙
+  (Functor.whiskeringLeft (J ⥤ C) (Cᵒᵖ ⥤ J ⥤ Type v) (Cᵒᵖ ⥤ Type _)).obj
+    homFromFunctorBifunctor
+
+/-- `WeightedConeUnder` is an application of the curried trifunctor. -/
+theorem WeightedConeUnder_eq_trifunctor_obj (W : J ⥤ Type v) (D : J ⥤ C) (pt : C) :
+    WeightedConeUnder W D pt =
+      ((weightedConeUnderCurriedTrifunctor.obj (Opposite.op W)).obj D).obj
+        (Opposite.op pt) := rfl
+
+/--
 A weighted cone over a diagram `D : J ⥤ C` with weight `W : J ⥤ Type v`
 consists of a cone point `pt` and a `WeightedConeUnder pt W D`.
 -/
@@ -1163,6 +1188,30 @@ structure: it's built from the composition `W ⟶ homToFunctorBifunctor Dᵒᵖ 
 theorem WeightedCoconeOver_eq_hom_to_bifunctor (W : Jᵒᵖ ⥤ Type v) (D : J ⥤ C)
     (pt : C) : WeightedCoconeOver W D pt =
     (W ⟶ (homToFunctorBifunctor.obj (Opposite.op D)).obj pt) := rfl
+
+/--
+The curried trifunctor exhibiting `WeightedCoconeOver` as a functorial construction.
+
+Takes `W : (Jᵒᵖ ⥤ Type v)ᵒᵖ` and produces `(J ⥤ C)ᵒᵖ ⥤ C ⥤ Type` where
+the value at `(Dᵒᵖ, pt)` is `W.unop ⟶ homToFunctor D pt`.
+
+Built as a chain of compositions ending with `Functor.hom (Jᵒᵖ ⥤ Type v)`:
+1. Curry the hom functor on presheaf categories
+2. Whisker on the right with `C` to transform domain from `Jᵒᵖ ⥤ Type v`
+3. Pre-compose with `homToFunctorBifunctor` to handle the `D` argument
+-/
+def weightedCoconeOverCurriedTrifunctor :
+    (Jᵒᵖ ⥤ Type v)ᵒᵖ ⥤ (J ⥤ C)ᵒᵖ ⥤ C ⥤ Type (max _ v) :=
+  Functor.curry.obj (Functor.hom (Jᵒᵖ ⥤ Type v)) ⋙
+  (Functor.whiskeringRight C (Jᵒᵖ ⥤ Type v) (Type _)) ⋙
+  (Functor.whiskeringLeft (J ⥤ C)ᵒᵖ (C ⥤ Jᵒᵖ ⥤ Type v) (C ⥤ Type _)).obj
+    homToFunctorBifunctor
+
+/-- `WeightedCoconeOver` is an application of the curried trifunctor. -/
+theorem WeightedCoconeOver_eq_trifunctor_obj (W : Jᵒᵖ ⥤ Type v) (D : J ⥤ C) (pt : C) :
+    WeightedCoconeOver W D pt =
+      ((weightedCoconeOverCurriedTrifunctor.obj (Opposite.op W)).obj
+        (Opposite.op D)).obj pt := rfl
 
 /--
 A weighted cocone over a diagram `D : J ⥤ C` with weight `W : Jᵒᵖ ⥤ Type v`
