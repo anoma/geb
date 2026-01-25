@@ -1529,6 +1529,25 @@ abbrev WeightedWedgeUnder (W : Cᵒᵖ ⥤ C ⥤ Type v) (P : Cᵒᵖ ⥤ C ⥤ 
     (profunctorOnTwistedArrow C W) (profunctorOnTwistedArrow C P) pt
 
 /--
+The curried trifunctor exhibiting `WeightedWedgeUnder` as a functorial
+construction. This composes `profunctorOnTwistedArrowFunctor` with the
+cone trifunctor to transform profunctors into weighted wedge types.
+-/
+def weightedWedgeUnderCurriedTrifunctor :
+    (Cᵒᵖ ⥤ C ⥤ Type v)ᵒᵖ ⥤ (Cᵒᵖ ⥤ C ⥤ D) ⥤ Dᵒᵖ ⥤ Type (max u v) :=
+  (profunctorOnTwistedArrowFunctor (C := C) (D := Type v)).op ⋙
+  (weightedConeUnderCurriedTrifunctor (J := TwistedArrow C) (C := D)) ⋙
+  (Functor.whiskeringLeft (Cᵒᵖ ⥤ C ⥤ D) (TwistedArrow C ⥤ D)
+    (Dᵒᵖ ⥤ Type (max u v))).obj (profunctorOnTwistedArrowFunctor (C := C))
+
+/-- `WeightedWedgeUnder` is an application of the curried trifunctor. -/
+theorem WeightedWedgeUnder_eq_trifunctor_obj
+    (W : Cᵒᵖ ⥤ C ⥤ Type v) (P : Cᵒᵖ ⥤ C ⥤ D) (pt : D) :
+    WeightedWedgeUnder W P pt =
+      ((weightedWedgeUnderCurriedTrifunctor.obj (Opposite.op W)).obj P).obj
+        (Opposite.op pt) := rfl
+
+/--
 A weighted wedge over a profunctor `P : Cᵒᵖ ⥤ C ⥤ D` with weight profunctor
 `W : Cᵒᵖ ⥤ C ⥤ Type v` is a weighted cone over the diagram
 `profunctorOnTwistedArrow C P` with weight `profunctorOnTwistedArrow C W`.
@@ -1551,6 +1570,25 @@ abbrev WeightedCowedgeOver (W : Cᵒᵖ ⥤ C ⥤ Type v) (P : Cᵒᵖ ⥤ C ⥤
   WeightedCoconeOver (C := D) (J := CoTwistedArrow C)
     (profunctorOnOpCoTwistedArrow C W)
     (profunctorOnCoTwistedArrow C P) pt
+
+/--
+The curried trifunctor exhibiting `WeightedCowedgeOver` as a functorial
+construction. This composes `profunctorOnOpCoTwistedArrowFunctor` and
+`profunctorOnCoTwistedArrowFunctor` with the cocone trifunctor.
+-/
+def weightedCowedgeOverCurriedTrifunctor :
+    (Cᵒᵖ ⥤ C ⥤ Type v)ᵒᵖ ⥤ (Cᵒᵖ ⥤ C ⥤ D)ᵒᵖ ⥤ D ⥤ Type (max u v) :=
+  (profunctorOnOpCoTwistedArrowFunctor (C := C) (D := Type v)).op ⋙
+  (weightedCoconeOverCurriedTrifunctor (J := CoTwistedArrow C) (C := D)) ⋙
+  (Functor.whiskeringLeft (Cᵒᵖ ⥤ C ⥤ D)ᵒᵖ (CoTwistedArrow C ⥤ D)ᵒᵖ
+    (D ⥤ Type (max u v))).obj (profunctorOnCoTwistedArrowFunctor (C := C)).op
+
+/-- `WeightedCowedgeOver` is an application of the curried trifunctor. -/
+theorem WeightedCowedgeOver_eq_trifunctor_obj
+    (W : Cᵒᵖ ⥤ C ⥤ Type v) (P : Cᵒᵖ ⥤ C ⥤ D) (pt : D) :
+    WeightedCowedgeOver W P pt =
+      ((weightedCowedgeOverCurriedTrifunctor.obj (Opposite.op W)).obj
+        (Opposite.op P)).obj pt := rfl
 
 /--
 A weighted cowedge over a profunctor `P : Cᵒᵖ ⥤ C ⥤ D` with weight profunctor
