@@ -372,6 +372,27 @@ theorem mapPtH_mapPtC_comm (f : ptH' ⟶ ptH) (g : ptC ⟶ ptC')
   funext A h
   simp only [mapPtH, mapPtC, RestrictedCowedgeOver.mapH, RestrictedCowedgeOver.mapPt]
 
+/-- Naturality: `mapG` and `mapPtH` commute.
+For `β : G' ⟶ G` and `f : ptH' ⟶ ptH`:
+`mapG β (mapPtH f m) = mapPtH f (mapG β m)` -/
+theorem mapG_mapPtH_comm (β : G' ⟶ G) (f : ptH' ⟶ ptH)
+    (m : MendlerAlgProfunctor G ptH ptC) :
+    mapG β (mapPtH f m) = mapPtH f (mapG β m) := by
+  apply MendlerAlgProfunctor.ext
+  simp only [mapG, mapPtH]
+  exact RestrictedCowedgeOver.mapG_mapH_comm β (HomToProf.mapPt f)
+    m.toRestrictedCowedgeOver
+
+/-- Naturality: `mapG` and `mapPtC` commute.
+For `β : G' ⟶ G` and `g : ptC ⟶ ptC'`:
+`mapG β (mapPtC g m) = mapPtC g (mapG β m)` -/
+theorem mapG_mapPtC_comm (β : G' ⟶ G) (g : ptC ⟶ ptC')
+    (m : MendlerAlgProfunctor G ptH ptC) :
+    mapG β (mapPtC g m) = mapPtC g (mapG β m) := by
+  apply MendlerAlgProfunctor.ext
+  simp only [mapG, mapPtC]
+  exact RestrictedCowedgeOver.mapG_mapPt_comm β g m.toRestrictedCowedgeOver
+
 end MendlerAlgProfunctor
 
 /-- The profunctor `Cᵒᵖ ⥤ C ⥤ Type (max u v)` for Mendler algebra data.
@@ -404,6 +425,39 @@ def mendlerAlgProfunctorFunctor (G : Cᵒᵖ ⥤ C ⥤ C) : Cᵒᵖ ⥤ C ⥤ Ty
 theorem mendlerAlgProfunctor_eq_functor_obj (G : Cᵒᵖ ⥤ C ⥤ C) (ptH ptC : C) :
     MendlerAlgProfunctor G ptH ptC =
     ((mendlerAlgProfunctorFunctor G).obj (Opposite.op ptH)).obj ptC := rfl
+
+/-- The trifunctor `(Cᵒᵖ ⥤ C ⥤ C)ᵒᵖ ⥤ Cᵒᵖ ⥤ C ⥤ Type (max u v)`.
+This extends `mendlerAlgProfunctorFunctor` to also be (contravariantly) functorial
+in the `G` parameter. -/
+def mendlerAlgProfunctorTrifunctor :
+    (Cᵒᵖ ⥤ C ⥤ C)ᵒᵖ ⥤ Cᵒᵖ ⥤ C ⥤ Type (max u v) where
+  obj Gop := mendlerAlgProfunctorFunctor Gop.unop
+  map := @fun Gop Gop' β => {
+    app := fun ptHop => {
+      app := fun ptC m => MendlerAlgProfunctor.mapG β.unop m
+      naturality := @fun _ _ g => by
+        funext m
+        simp only [types_comp_apply, mendlerAlgProfunctorFunctor]
+        exact MendlerAlgProfunctor.mapG_mapPtC_comm β.unop g m
+    }
+    naturality := @fun _ _ f => by
+      ext ptC m
+      simp only [types_comp_apply, mendlerAlgProfunctorFunctor, NatTrans.comp_app]
+      exact MendlerAlgProfunctor.mapG_mapPtH_comm β.unop f.unop m
+  }
+  map_id := fun Gop => by
+    ext ptHop ptC m
+    simp only [NatTrans.id_app, types_id_apply, unop_id, MendlerAlgProfunctor.mapG_id]
+  map_comp := @fun _ _ _ β γ => by
+    ext ptHop ptC m
+    simp only [NatTrans.comp_app, types_comp_apply, unop_comp]
+    exact MendlerAlgProfunctor.mapG_comp γ.unop β.unop m
+
+/-- `mendlerAlgProfunctorFunctor G` equals the application of
+`mendlerAlgProfunctorTrifunctor` at `G`. -/
+theorem mendlerAlgProfunctorFunctor_eq_trifunctor_obj (G : Cᵒᵖ ⥤ C ⥤ C) :
+    mendlerAlgProfunctorFunctor G =
+    mendlerAlgProfunctorTrifunctor.obj (Opposite.op G) := rfl
 
 /-- A Mendler-style algebra for an endodifunctor `G`. -/
 @[ext]
