@@ -1091,7 +1091,9 @@ The relationship to twisted arrow categories:
 - For ends, this category of elements is the twisted arrow category
 -/
 
-variable {J : Type*} [Category J]
+universe u₁ v₁
+
+variable {J : Type u₁} [Category.{v₁, u₁} J]
 
 /--
 A weighted cone under a fixed point `pt` over a diagram `D : J ⥤ C` with
@@ -1122,8 +1124,8 @@ Built as a chain of compositions ending with `Functor.hom (J ⥤ Type v)`:
 def weightedConeUnderCurriedTrifunctor :
     (J ⥤ Type v)ᵒᵖ ⥤ (J ⥤ C) ⥤ Cᵒᵖ ⥤ Type (max _ v) :=
   Functor.curry.obj (Functor.hom (J ⥤ Type v)) ⋙
-  (Functor.whiskeringRight Cᵒᵖ (J ⥤ Type v) (Type _)) ⋙
-  (Functor.whiskeringLeft (J ⥤ C) (Cᵒᵖ ⥤ J ⥤ Type v) (Cᵒᵖ ⥤ Type _)).obj
+  (Functor.whiskeringRight Cᵒᵖ (J ⥤ Type v) (Type (max u₁ v))) ⋙
+  (Functor.whiskeringLeft (J ⥤ C) (Cᵒᵖ ⥤ J ⥤ Type v) (Cᵒᵖ ⥤ Type (max u₁ v))).obj
     homFromFunctorBifunctor
 
 /-- `WeightedConeUnder` is an application of the curried trifunctor. -/
@@ -1201,10 +1203,10 @@ Built as a chain of compositions ending with `Functor.hom (Jᵒᵖ ⥤ Type v)`:
 3. Pre-compose with `homToFunctorBifunctor` to handle the `D` argument
 -/
 def weightedCoconeOverCurriedTrifunctor :
-    (Jᵒᵖ ⥤ Type v)ᵒᵖ ⥤ (J ⥤ C)ᵒᵖ ⥤ C ⥤ Type (max _ v) :=
+    (Jᵒᵖ ⥤ Type v)ᵒᵖ ⥤ (J ⥤ C)ᵒᵖ ⥤ C ⥤ Type (max u₁ v) :=
   Functor.curry.obj (Functor.hom (Jᵒᵖ ⥤ Type v)) ⋙
-  (Functor.whiskeringRight C (Jᵒᵖ ⥤ Type v) (Type _)) ⋙
-  (Functor.whiskeringLeft (J ⥤ C)ᵒᵖ (C ⥤ Jᵒᵖ ⥤ Type v) (C ⥤ Type _)).obj
+  (Functor.whiskeringRight C (Jᵒᵖ ⥤ Type v) (Type (max u₁ v))) ⋙
+  (Functor.whiskeringLeft (J ⥤ C)ᵒᵖ (C ⥤ Jᵒᵖ ⥤ Type v) (C ⥤ Type (max u₁ v))).obj
     homToFunctorBifunctor
 
 /-- `WeightedCoconeOver` is an application of the curried trifunctor. -/
