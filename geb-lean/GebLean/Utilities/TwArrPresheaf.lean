@@ -1603,6 +1603,18 @@ theorem profunctorOnTwistedArrow_map (P : Cᵒᵖ ⥤ C ⥤ D)
     (P.obj (Opposite.op (twDom y))).map (twCodArr f) := rfl
 
 /--
+Functorial version of `profunctorOnTwistedArrow`: a functor from profunctors
+to functors on `TwistedArrow C`.
+-/
+def profunctorOnTwistedArrowFunctor : (Cᵒᵖ ⥤ C ⥤ D) ⥤ (TwistedArrow C ⥤ D) :=
+  Functor.uncurry ⋙
+  (Functor.whiskeringLeft (TwistedArrow C) (Cᵒᵖ × C) D).obj (twistedArrowForget C)
+
+theorem profunctorOnTwistedArrow_eq_functor_obj (P : Cᵒᵖ ⥤ C ⥤ D) :
+    profunctorOnTwistedArrow C P =
+      (profunctorOnTwistedArrowFunctor (C := C)).obj P := rfl
+
+/--
 The equivalence from `Cᵒᵖᵒᵖ × Cᵒᵖ` to `Cᵒᵖ × C` via swap and `opOpEquivalence`.
 -/
 def coTwistedArrowProdEquiv :
@@ -1683,6 +1695,19 @@ theorem profunctorOnCoTwistedArrow_map_to_cod (P : Cᵒᵖ ⥤ C ⥤ D)
     Category.id_comp]
 
 /--
+Functorial version of `profunctorOnCoTwistedArrow`: a functor from profunctors
+to functors on `CoTwistedArrow C`.
+-/
+def profunctorOnCoTwistedArrowFunctor : (Cᵒᵖ ⥤ C ⥤ D) ⥤ (CoTwistedArrow C ⥤ D) :=
+  Functor.uncurry ⋙
+  (Functor.whiskeringLeft (CoTwistedArrow C) (Cᵒᵖ × C) D).obj
+    (coTwistedArrowForget C ⋙ (coTwistedArrowProdEquiv C).functor)
+
+theorem profunctorOnCoTwistedArrow_eq_functor_obj (P : Cᵒᵖ ⥤ C ⥤ D) :
+    profunctorOnCoTwistedArrow C P =
+      (profunctorOnCoTwistedArrowFunctor (C := C)).obj P := rfl
+
+/--
 Given a profunctor `P : Cᵒᵖ ⥤ C ⥤ D`, compose with the equivalence
 `(TwistedArrow C)ᵒᵖ ≌ CoTwistedArrow C` and the forgetful functor to get
 a functor from `(TwistedArrow C)ᵒᵖ` to `D`.
@@ -1727,6 +1752,20 @@ theorem profunctorOnOpCoTwistedArrow_map (P : Cᵒᵖ ⥤ C ⥤ D)
     (profunctorOnOpCoTwistedArrow C P).map f =
     (profunctorOnTwistedArrow C P).map
       (coTwistedArrowOpEquivTwistedArrow.functor.map f) := rfl
+
+/--
+Functorial version of `profunctorOnOpCoTwistedArrow`: a functor from profunctors
+to presheaves on `CoTwistedArrow C`.
+-/
+def profunctorOnOpCoTwistedArrowFunctor :
+    (Cᵒᵖ ⥤ C ⥤ D) ⥤ ((CoTwistedArrow C)ᵒᵖ ⥤ D) :=
+  (profunctorOnTwistedArrowFunctor (C := C)) ⋙
+  (Functor.whiskeringLeft (CoTwistedArrow C)ᵒᵖ (TwistedArrow C) D).obj
+    coTwistedArrowOpEquivTwistedArrow.functor
+
+theorem profunctorOnOpCoTwistedArrow_eq_functor_obj (P : Cᵒᵖ ⥤ C ⥤ D) :
+    profunctorOnOpCoTwistedArrow C P =
+      (profunctorOnOpCoTwistedArrowFunctor (C := C)).obj P := rfl
 
 end ProfunctorOnTwistedArrow
 
