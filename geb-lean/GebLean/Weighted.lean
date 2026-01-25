@@ -1318,6 +1318,126 @@ theorem WeightedCone.category_comp_hom {W : J ⥤ Type v} {D : J ⥤ C}
 theorem WeightedCone.category_id_hom {W : J ⥤ Type v} {D : J ⥤ C}
     (c : WeightedCone W D) : (𝟙 c : c ⟶ c).hom = 𝟙 c.pt := rfl
 
+section WeightedConeAsElementsPre
+
+/-!
+### WeightedCone as a category of elements
+
+The category `WeightedCone W D` is equivalent to the contravariant category of
+elements (`ElementsPre`) of the presheaf of weighted cones under.
+
+For the presheaf `F := (weightedConeUnderCurriedTrifunctor.obj (op W)).obj D`,
+which sends `pt : Cᵒᵖ` to `WeightedConeUnder W D pt.unop`, we have:
+- Objects of `F.ElementsPre` correspond to pairs `(pt, c)` where
+  `c : WeightedConeUnder W D pt`
+- Morphisms in `F.ElementsPre` from `(pt₁, c₁)` to `(pt₂, c₂)` correspond to
+  morphisms `f : pt₁ ⟶ pt₂` in `C` such that `f ≫ c₂.leg j w = c₁.leg j w`
+
+This matches exactly the definition of `WeightedCone.Hom`.
+-/
+
+variable (W : J ⥤ Type v) (D : J ⥤ C)
+
+/-- The presheaf of weighted cones under, sending `pt : Cᵒᵖ` to
+`WeightedConeUnder W D pt.unop`. -/
+abbrev weightedConeUnderPresheaf : Cᵒᵖ ⥤ Type (max u₁ v) :=
+  (weightedConeUnderCurriedTrifunctor.obj (Opposite.op W)).obj D
+
+/-- The category of elements of the presheaf of weighted cones under. -/
+abbrev WeightedConeElements := (weightedConeUnderPresheaf W D).Elements
+
+/-- The contravariant category of elements of the presheaf of weighted cones. -/
+abbrev WeightedConeElementsPre := (weightedConeUnderPresheaf W D).ElementsPre
+
+/-- Convert a weighted cone to an element of the presheaf category of elements. -/
+def weightedConeToElement (c : WeightedCone W D) : WeightedConeElements W D :=
+  ⟨Opposite.op c.pt, c.toWeightedConeUnder⟩
+
+/-- Convert an element of the presheaf category to a weighted cone. -/
+def weightedConeOfElement (e : WeightedConeElements W D) : WeightedCone W D :=
+  ⟨e.fst.unop, e.snd⟩
+
+@[simp]
+theorem weightedConeToElement_ofElement (e : WeightedConeElements W D) :
+    weightedConeToElement W D (weightedConeOfElement W D e) = e := by
+  simp only [weightedConeToElement, weightedConeOfElement, Opposite.op_unop]
+  exact Sigma.eta e
+
+@[simp]
+theorem weightedConeOfElement_toElement (c : WeightedCone W D) :
+    weightedConeOfElement W D (weightedConeToElement W D c) = c := by
+  simp only [weightedConeToElement, weightedConeOfElement, Opposite.unop_op]
+
+/-- Functor from `WeightedCone W D` to the opposite of the category of elements
+of the presheaf of weighted cones. -/
+def weightedConeToElementsPreFunctor :
+    WeightedCone W D ⥤ WeightedConeElementsPre W D where
+  obj c := Opposite.op (weightedConeToElement W D c)
+  map {c₁ c₂} f := by
+    refine Opposite.op ⟨f.hom.op, ?_⟩
+    dsimp [weightedConeToElement, weightedConeUnderPresheaf,
+      weightedConeUnderCurriedTrifunctor]
+    ext j w
+    dsimp [homFromFunctorBifunctor, homFromFunctor, coyoneda]
+    exact f.w j w
+
+/-- Functor from the opposite of the category of elements to `WeightedCone W D`. -/
+def elementsPreToWeightedConeFunctor :
+    WeightedConeElementsPre W D ⥤ WeightedCone W D where
+  obj e := weightedConeOfElement W D e.unop
+  map {e₁ e₂} f := by
+    refine ⟨f.unop.val.unop, ?_⟩
+    intro j w
+    have h := congrFun (congrFun (congrArg NatTrans.app f.unop.property) j) w
+    dsimp only [weightedConeUnderPresheaf, weightedConeUnderCurriedTrifunctor,
+      homFromFunctorBifunctor, homFromFunctor, coyoneda, Functor.comp_obj,
+      Functor.whiskeringRight_obj_obj, Functor.whiskeringRight_obj_map,
+      yoneda_obj_obj, yoneda_obj_map, NatTrans.comp_app, NatTrans.id_app,
+      weightedConeOfElement, WeightedCone.leg] at h ⊢
+    exact h
+
+/-- The composition `toFunctor ⋙ fromFunctor` is the identity on weighted cones. -/
+theorem weightedConeToFrom_eq_id :
+    (weightedConeToElementsPreFunctor W D ⋙
+      elementsPreToWeightedConeFunctor W D) = 𝟭 _ := by
+  refine Functor.ext ?h_obj ?h_map
+  case h_obj => intro c; exact weightedConeOfElement_toElement W D c
+  case h_map =>
+    intro c₁ c₂ f
+    simp only [Functor.comp_map, eqToHom_refl, Category.comp_id, Category.id_comp]
+    rfl
+
+/-- The composition `fromFunctor ⋙ toFunctor` is the identity on elements. -/
+theorem weightedConeFromTo_eq_id :
+    (elementsPreToWeightedConeFunctor W D ⋙
+      weightedConeToElementsPreFunctor W D) = 𝟭 _ := by
+  refine Functor.ext ?h_obj ?h_map
+  case h_obj =>
+    intro e
+    simp only [Functor.comp_obj, Functor.id_obj,
+      weightedConeToElementsPreFunctor, elementsPreToWeightedConeFunctor]
+    rw [weightedConeToElement_ofElement W D e.unop, Opposite.op_unop]
+  case h_map =>
+    intro e₁ e₂ f
+    simp only [Functor.comp_map, eqToHom_refl, Category.comp_id, Category.id_comp]
+    rfl
+
+/-- The category `WeightedCone W D` is isomorphic to the contravariant category
+of elements of the presheaf of weighted cones under. -/
+def weightedConeIsoCat :
+    WeightedCone W D ≅Cat WeightedConeElementsPre W D where
+  hom := (weightedConeToElementsPreFunctor W D).toCatHom
+  inv := (elementsPreToWeightedConeFunctor W D).toCatHom
+  hom_inv_id := Cat.Hom.ext (weightedConeToFrom_eq_id W D)
+  inv_hom_id := Cat.Hom.ext (weightedConeFromTo_eq_id W D)
+
+/-- The equivalence derived from the isomorphism. -/
+def weightedConeEquivElementsPre :
+    WeightedCone W D ≌ WeightedConeElementsPre W D :=
+  Cat.equivOfIso (weightedConeIsoCat W D)
+
+end WeightedConeAsElementsPre
+
 /--
 A morphism between weighted cocones consists of a morphism between the cocone
 points that commutes with the injections for all weight elements.
