@@ -3106,6 +3106,26 @@ theorem mapH_mapPt_comm (α : H ⟶ H') (f : pt ⟶ pt')
   funext A h
   simp only [mapH, mapPt]
 
+/-- Naturality: `mapG` and `mapH` commute.
+For `β : G' ⟶ G` and `α : H ⟶ H'`:
+`mapG β (mapH α c) = mapH α (mapG β c)` -/
+theorem mapG_mapH_comm (β : G' ⟶ G) (α : H ⟶ H')
+    (c : RestrictedCowedgeOver G H' pt) :
+    mapG β (mapH α c) = mapH α (mapG β c) := by
+  apply RestrictedCowedgeOver.ext
+  funext A h
+  simp only [mapG, mapH]
+
+/-- Naturality: `mapG` and `mapPt` commute.
+For `β : G' ⟶ G` and `f : pt ⟶ pt'`:
+`mapG β (mapPt f c) = mapPt f (mapG β c)` -/
+theorem mapG_mapPt_comm (β : G' ⟶ G) (f : pt ⟶ pt')
+    (c : RestrictedCowedgeOver G H pt) :
+    mapG β (mapPt f c) = mapPt f (mapG β c) := by
+  apply RestrictedCowedgeOver.ext
+  funext A h
+  simp only [mapG, mapPt, Category.assoc]
+
 end RestrictedCowedgeOver
 
 /-- The bifunctor `(Cᵒᵖ ⥤ C ⥤ Type v)ᵒᵖ ⥤ C ⥤ Type (max u v)` for restricted cowedges.
@@ -3140,6 +3160,39 @@ theorem restrictedCowedgeOver_eq_functor_obj (G : Cᵒᵖ ⥤ C ⥤ C)
     (H : Cᵒᵖ ⥤ C ⥤ Type v) (pt : C) :
     RestrictedCowedgeOver G H pt =
     ((restrictedCowedgeOverFunctor G).obj (Opposite.op H)).obj pt := rfl
+
+/-- The trifunctor `(Cᵒᵖ ⥤ C ⥤ C)ᵒᵖ ⥤ (Cᵒᵖ ⥤ C ⥤ Type v)ᵒᵖ ⥤ C ⥤ Type (max u v)`.
+This extends `restrictedCowedgeOverFunctor` to also be (contravariantly) functorial
+in the `G` parameter. -/
+def restrictedCowedgeOverTrifunctor :
+    (Cᵒᵖ ⥤ C ⥤ C)ᵒᵖ ⥤ (Cᵒᵖ ⥤ C ⥤ Type v)ᵒᵖ ⥤ C ⥤ Type (max u v) where
+  obj Gop := restrictedCowedgeOverFunctor Gop.unop
+  map := @fun Gop Gop' β => {
+    app := fun Hop => {
+      app := fun pt c => RestrictedCowedgeOver.mapG β.unop c
+      naturality := @fun _ _ f => by
+        funext c
+        simp only [types_comp_apply, restrictedCowedgeOverFunctor]
+        exact RestrictedCowedgeOver.mapG_mapPt_comm β.unop f c
+    }
+    naturality := @fun _ _ α => by
+      ext pt c
+      simp only [types_comp_apply, restrictedCowedgeOverFunctor, NatTrans.comp_app]
+      exact RestrictedCowedgeOver.mapG_mapH_comm β.unop α.unop c
+  }
+  map_id := fun Gop => by
+    ext Hop pt c
+    simp only [NatTrans.id_app, types_id_apply, unop_id, RestrictedCowedgeOver.mapG_id]
+  map_comp := @fun _ _ _ β γ => by
+    ext Hop pt c
+    simp only [NatTrans.comp_app, types_comp_apply, unop_comp]
+    exact RestrictedCowedgeOver.mapG_comp γ.unop β.unop c
+
+/-- `restrictedCowedgeOverFunctor G` equals the application of
+`restrictedCowedgeOverTrifunctor` at `G`. -/
+theorem restrictedCowedgeOverFunctor_eq_trifunctor_obj (G : Cᵒᵖ ⥤ C ⥤ C) :
+    restrictedCowedgeOverFunctor G =
+    restrictedCowedgeOverTrifunctor.obj (Opposite.op G) := rfl
 
 /--
 An `H`-restricted `G`-cowedge for an endodifunctor `G : Cᵒᵖ ⥤ C ⥤ C` and
