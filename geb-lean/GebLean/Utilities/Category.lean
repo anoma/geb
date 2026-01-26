@@ -2424,6 +2424,7 @@ def isTerminalOfEquivFunctor {C' : Type*} [Category C'] {D' : Type*} [Category D
   IsTerminal.ofUniqueHom
     (fun Y ↦ e.counitInv.app Y ≫ e.functor.map (hX.from (e.inverse.obj Y)))
     (fun Y f ↦ by
+      change f = e.counitInv.app Y ≫ e.functor.map (hX.from (e.inverse.obj Y))
       have h : e.inverse.map f ≫ e.unitInv.app X = hX.from (e.inverse.obj Y) :=
         hX.hom_ext _ _
       rw [← h, Functor.map_comp, ← Category.assoc, e.counitInv_naturality, Category.assoc,
@@ -2439,6 +2440,7 @@ def isInitialOfEquivFunctor {C' : Type*} [Category C'] {D' : Type*} [Category D'
   IsInitial.ofUniqueHom
     (fun Y ↦ e.functor.map (hX.to (e.inverse.obj Y)) ≫ e.counit.app Y)
     (fun Y f ↦ by
+      change f = e.functor.map (hX.to (e.inverse.obj Y)) ≫ e.counit.app Y
       have h : e.unit.app X ≫ e.inverse.map f = hX.to (e.inverse.obj Y) :=
         hX.hom_ext _ _
       rw [← h, Functor.map_comp, Category.assoc, e.counit_naturality, ← Category.assoc,
