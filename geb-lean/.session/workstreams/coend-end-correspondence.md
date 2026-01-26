@@ -17,6 +17,28 @@ The current `CoendAsNatTransformations` section in `RestrictedCoendAsColimit.lea
 has partial definitions but doesn't complete the proofs or make the end structure
 explicit.
 
+### Generalized Weighted Coend Elimination
+
+The ordinary coend elimination rule generalizes to weighted coends/ends:
+
+```text
+Hom(∫^A W(A) ⊗ P(A,A), Y) ≅ ∫_A [W(A), Hom(P(A,A), Y)]
+```
+
+where `⊗` is tensor/copower and `[-,-]` is cotensor/power. The ordinary rule
+is the special case where `W = terminalProfunctor` since `PUnit ⊗ X ≅ X` and
+`[PUnit, Y] ≅ Y`.
+
+Since we've shown ends and coends are weighted ends/coends with terminal weight,
+we should formalize the general weighted elimination rule first, then derive
+the ordinary rule as a special case.
+
+References:
+
+- [nLab: weighted colimit](https://ncatlab.org/nlab/show/weighted+colimit)
+- [Emily Riehl: Weighted Limits and Colimits](https://math.jhu.edu/~eriehl/weighted.pdf)
+- [Fosco Loregian: Coend Calculus](https://arxiv.org/pdf/1501.02503)
+
 ## Tasks
 
 - [x] Search mathlib for existing coend elimination formula
@@ -58,9 +80,19 @@ explicit.
     - `weightedCoendToColimitCocone` - from `IsWeightedCoend c` to `ColimitCocone`
     - `WeightedEndWedge.toLimitCone` - wrapper taking bundled structure
     - `WeightedCoendCowedge.toColimitCocone` - wrapper taking bundled structure
-- [ ] Show that `WeightedCowedgeOver unitProfunctor P Y` is the end
+- [x] Add `End`/`Coend` abbreviations
+  - `End P` = `WeightedEndWedge terminalProfunctor P`
+  - `Coend P` = `WeightedCoendCowedge terminalProfunctor P`
+  - These serve as our computable "end" and "coend" since mathlib's are not
+    computable
+- [ ] Formalize the generalized weighted coend elimination rule
+  - `Hom(∫^A W(A) ⊗ P(A,A), Y) ≅ ∫_A [W(A), Hom(P(A,A), Y)]`
+  - Requires tensor/copower and cotensor/power structures
+  - The ordinary rule is the special case with `W = terminalProfunctor`
+- [ ] Show that `WeightedCowedgeOver terminalProfunctor P Y` is the end
       `∫_A Hom(P(A,A), Y)`
-- [ ] Formalize the coend elimination rule using the end structure
+- [ ] Formalize the ordinary coend elimination rule as special case
+  - `Hom(∫^A P(A,A), Y) ≅ ∫_A Hom(P(A,A), Y)`
 - [ ] Prove the co-Yoneda isomorphism:
       `∫^A P(A,A) ≅ Nat(Y ↦ ∫_A Hom(P(A,A), Y), Id)`
 - [ ] Complete the proof that `coendToNatTrans` and `natTransToCoend` are
@@ -74,7 +106,7 @@ explicit.
 
 The section defines:
 
-- `cowedgeFamilyFunctor`: `Y ↦ WeightedCowedgeOver unitProfunctor P Y`
+- `cowedgeFamilyFunctor`: `Y ↦ WeightedCowedgeOver terminalProfunctor P Y`
 - `CowedgeNatTrans`: Natural transformations `cowedgeFamilyFunctor P ⟶ Id`
 - `coendInjectionCowedge`: Injection maps form a cowedge
 - `coendToNatTrans`: Coend element → natural transformation (assumes coend exists)

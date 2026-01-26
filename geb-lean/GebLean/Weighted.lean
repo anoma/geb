@@ -1956,8 +1956,8 @@ structure WeightedEndWedge (W : Cᵒᵖ ⥤ C ⥤ Type v) (P : Cᵒᵖ ⥤ C ⥤
 /-- An end of a profunctor `P`, bundling the terminal wedge with its proof.
 
 This is `WeightedEndWedge terminalProfunctor P`, the special case of weighted
-ends where the weight is trivial. Since mathlib's `end_` is noncomputable
-(it uses `Classical.choice`), we use this as our computable representation
+ends where the weight is trivial. Since mathlib's `end_` is not computable
+(it uses `choice`), we use this as our computable representation
 of ends. -/
 abbrev End (P : Cᵒᵖ ⥤ C ⥤ D) := WeightedEndWedge (terminalProfunctor (C := C)) P
 
@@ -2023,8 +2023,8 @@ structure WeightedCoendCowedge (W : Cᵒᵖ ⥤ C ⥤ Type v) (P : Cᵒᵖ ⥤ C
 /-- A coend of a profunctor `P`, bundling the initial cowedge with its proof.
 
 This is `WeightedCoendCowedge terminalProfunctor P`, the special case of weighted
-coends where the weight is trivial. Since mathlib's `coend` is noncomputable
-(it uses `Classical.choice`), we use this as our computable representation
+coends where the weight is trivial. Since mathlib's `coend` is not computable
+(it uses `choice`), we use this as our computable representation
 of coends. -/
 abbrev Coend (P : Cᵒᵖ ⥤ C ⥤ D) := WeightedCoendCowedge (terminalProfunctor (C := C)) P
 
