@@ -3968,6 +3968,56 @@ def isWeightedCoendOfIsInitialCowedge {D : Type w} [Category.{v} D]
     IsWeightedCoend ((trivialWeightedCowedgeCowedgeEquiv P).inverse.obj c) :=
   isInitialOfEquivFunctor (trivialWeightedCowedgeCowedgeEquiv P).symm hc
 
+/-- Isomorphism between two terminal wedge apices (computable).
+
+Given two terminal wedges for the same profunctor, their apices are
+isomorphic. The isomorphism is constructed from the unique morphisms
+`IsTerminal.from` between terminal objects, with inverse proofs via
+`IsTerminal.hom_ext`. -/
+def isTerminalWedgeIso {D : Type w} [Category.{v} D]
+    (P : Cᵒᵖ ⥤ C ⥤ D) {w₁ w₂ : Wedge (J := C) (C := D) P}
+    (hw₁ : IsTerminal w₁) (hw₂ : IsTerminal w₂) :
+    w₁.pt ≅ w₂.pt where
+  hom := (hw₂.from w₁).hom
+  inv := (hw₁.from w₂).hom
+  hom_inv_id := congrArg (·.hom) (hw₁.hom_ext (hw₂.from w₁ ≫ hw₁.from w₂) (𝟙 w₁))
+  inv_hom_id := congrArg (·.hom) (hw₂.hom_ext (hw₁.from w₂ ≫ hw₂.from w₁) (𝟙 w₂))
+
+/-- Isomorphism between two initial cowedge apices (computable). -/
+def isInitialCowedgeIso {D : Type w} [Category.{v} D]
+    (P : Cᵒᵖ ⥤ C ⥤ D) {w₁ w₂ : Cowedge (J := C) (C := D) P}
+    (hw₁ : IsInitial w₁) (hw₂ : IsInitial w₂) :
+    w₁.pt ≅ w₂.pt where
+  hom := (hw₁.to w₂).hom
+  inv := (hw₂.to w₁).hom
+  hom_inv_id := congrArg (·.hom) (hw₁.hom_ext (hw₁.to w₂ ≫ hw₂.to w₁) (𝟙 w₁))
+  inv_hom_id := congrArg (·.hom) (hw₂.hom_ext (hw₂.to w₁ ≫ hw₁.to w₂) (𝟙 w₂))
+
+/-- Isomorphism between a weighted end apex and a terminal wedge apex.
+
+Given a weighted wedge `c` with unit weight that is terminal (a weighted end)
+and a mathlib wedge `w` that is terminal, their apices are isomorphic. -/
+def weightedEndIsoTerminalWedge {D : Type w} [Category.{v} D]
+    (P : Cᵒᵖ ⥤ C ⥤ D)
+    {c : WeightedWedge (constProfunctor (C := C) PUnit.{v + 1}) P}
+    (hc : IsWeightedEnd c)
+    {w : Wedge (J := C) (C := D) P} (hw : IsTerminal w) :
+    c.pt ≅ w.pt :=
+  isTerminalWedgeIso P (isTerminalWedgeOfIsWeightedEnd P hc) hw
+
+/-- Isomorphism between a weighted coend apex and an initial cowedge apex.
+
+Given a weighted cowedge `c` with unit weight that is initial (a weighted
+coend) and a mathlib cowedge `w` that is initial, their apices are isomorphic.
+-/
+def weightedCoendIsoInitialCowedge {D : Type w} [Category.{v} D]
+    (P : Cᵒᵖ ⥤ C ⥤ D)
+    {c : WeightedCowedge (constProfunctor (C := C) PUnit.{v + 1}) P}
+    (hc : IsWeightedCoend c)
+    {w : Cowedge (J := C) (C := D) P} (hw : IsInitial w) :
+    c.pt ≅ w.pt :=
+  isInitialCowedgeIso P (isInitialCowedgeOfIsWeightedCoend P hc) hw
+
 /-!
 ### Extracting Diagonal Data from Weighted Cowedges
 

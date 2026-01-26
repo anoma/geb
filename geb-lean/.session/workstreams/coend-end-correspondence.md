@@ -36,6 +36,13 @@ explicit.
   - Added weighted end/coend to mathlib end/coend transfers:
     `isTerminalWedgeOfIsWeightedEnd`, `isWeightedEndOfIsTerminalWedge`,
     `isInitialCowedgeOfIsWeightedCoend`, `isWeightedCoendOfIsInitialCowedge`
+  - Added computable isomorphisms (computably, no `choice`):
+    - `isTerminalWedgeIso` - isomorphism between two terminal wedge apices
+    - `isInitialCowedgeIso` - isomorphism between two initial cowedge apices
+    - `weightedEndIsoTerminalWedge : c.pt ≅ w.pt` (given `IsWeightedEnd c` and
+      `IsTerminal w`)
+    - `weightedCoendIsoInitialCowedge : c.pt ≅ w.pt` (given `IsWeightedCoend c`
+      and `IsInitial w`)
 - [ ] Show that `WeightedCowedgeOver unitProfunctor P Y` is the end
       `∫_A Hom(P(A,A), Y)`
 - [ ] Formalize the coend elimination rule using the end structure
