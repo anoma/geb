@@ -396,4 +396,35 @@ theorem ProjProf_map₂ (F : C ⥤ Type w) {a b c : C} (g : b ⟶ c)
 
 end ProjectionProfunctorEndo
 
+section ConstantProfunctors
+
+/-!
+### Constant Profunctors
+
+The constant profunctor returns a fixed type for all inputs.
+The terminal profunctor is the special case where that type is `PUnit`.
+-/
+
+variable {C : Type u} [Category.{v} C]
+
+/-- The constant profunctor that returns a fixed type `T` for all inputs.
+This is `(const Cᵒᵖ).obj ((const C).obj T)`. -/
+abbrev constProfunctor (T : Type v) : Cᵒᵖ ⥤ C ⥤ Type v :=
+  (Functor.const Cᵒᵖ).obj ((Functor.const C).obj T)
+
+@[simp]
+lemma constProfunctor_obj_obj (T : Type v) (A B : C) :
+    ((constProfunctor (C := C) T).obj (Opposite.op A)).obj B = T := rfl
+
+/-- The terminal profunctor returns `PUnit` for all inputs.
+This is the weight profunctor for ordinary (unweighted) ends and coends. -/
+abbrev terminalProfunctor : Cᵒᵖ ⥤ C ⥤ Type v :=
+  constProfunctor PUnit.{v + 1}
+
+@[simp]
+lemma terminalProfunctor_obj_obj (A B : C) :
+    ((terminalProfunctor (C := C)).obj (Opposite.op A)).obj B = PUnit.{v + 1} := rfl
+
+end ConstantProfunctors
+
 end GebLean

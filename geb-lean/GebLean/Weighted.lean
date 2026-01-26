@@ -3744,18 +3744,13 @@ This means the diagonal restriction gives a trivial profunctor structure, but
 it still captures the correct diagonal elements.
 -/
 
-/-- The constant profunctor that returns a fixed type `T` for all inputs.
-This is `(const Cᵒᵖ).obj ((const C).obj T)`. -/
-abbrev constProfunctor (T : Type v) : Cᵒᵖ ⥤ C ⥤ Type v :=
-  (Functor.const Cᵒᵖ).obj ((Functor.const C).obj T)
-
-@[simp]
-lemma constProfunctor_obj_obj (T : Type v) (A B : C) :
-    ((constProfunctor (C := C) T).obj (Opposite.op A)).obj B = T := rfl
-
 @[simp]
 lemma constProfunctor_diagApp (T : Type v) (A : C) :
     diagApp (constProfunctor (C := C) T) A = T := rfl
+
+@[simp]
+lemma terminalProfunctor_diagApp (A : C) :
+    diagApp (terminalProfunctor (C := C)) A = PUnit.{v + 1} := rfl
 
 /-!
 ### Constant Profunctor on Twisted Arrow Categories
@@ -3768,12 +3763,12 @@ cones over the diagram functor.
 
 /-- The constant profunctor on the twisted arrow category is the unit weight. -/
 theorem constProfunctorOnTwistedArrow_eq_unitWeight :
-    profunctorOnTwistedArrow C (constProfunctor (C := C) PUnit.{v+1}) =
+    profunctorOnTwistedArrow C (terminalProfunctor (C := C)) =
     unitWeight (TwistedArrow C) := rfl
 
 /-- Weighted wedges with trivial (unit) weight are equivalent to ordinary cones.
 
-When `W = constProfunctor PUnit`, a `WeightedWedge W P` is a `WeightedCone`
+When `W = terminalProfunctor`, a `WeightedWedge W P` is a `WeightedCone`
 with weight `unitWeight (TwistedArrow C)`, which is equivalent to an ordinary
 `Cone (profunctorOnTwistedArrow C P)` by `coneWeightedConeEquiv`.
 
@@ -3782,7 +3777,7 @@ twisted arrow category: `End P ≅ lim_{TwistedArrow C} (profunctorOnTwistedArro
 -/
 def trivialWeightedWedgeConeEquiv {D : Type w} [Category.{v} D]
     (P : Cᵒᵖ ⥤ C ⥤ D) :
-    WeightedWedge (constProfunctor (C := C) PUnit.{v+1}) P ≌
+    WeightedWedge (terminalProfunctor (C := C)) P ≌
     Cone (profunctorOnTwistedArrow C P) := by
   unfold WeightedWedge
   rw [constProfunctorOnTwistedArrow_eq_unitWeight]
@@ -3792,10 +3787,10 @@ def trivialWeightedWedgeConeEquiv {D : Type w} [Category.{v} D]
 cocones. This is the dual of `trivialWeightedWedgeConeEquiv`. -/
 def trivialWeightedCowedgeCoconeEquiv {D : Type w} [Category.{v} D]
     (P : Cᵒᵖ ⥤ C ⥤ D) :
-    WeightedCowedge (constProfunctor (C := C) PUnit.{v+1}) P ≌
+    WeightedCowedge (terminalProfunctor (C := C)) P ≌
     Cocone (profunctorOnCoTwistedArrow C P) := by
   unfold WeightedCowedge
-  have h : profunctorOnOpCoTwistedArrow C (constProfunctor (C := C) PUnit.{v+1}) =
+  have h : profunctorOnOpCoTwistedArrow C (terminalProfunctor (C := C)) =
            unitWeightOp (CoTwistedArrow C) := rfl
   rw [h]
   exact (coconeWeightedCoconeEquiv (profunctorOnCoTwistedArrow C P)).symm
@@ -3816,7 +3811,7 @@ Composition of `trivialWeightedWedgeConeEquiv` (weighted wedge ≌ cone) with
 `wedgeConeEquiv.symm` (cone ≌ wedge). -/
 def trivialWeightedWedgeWedgeEquiv {D : Type w} [Category.{v} D]
     (P : Cᵒᵖ ⥤ C ⥤ D) :
-    WeightedWedge (constProfunctor (C := C) PUnit.{v+1}) P ≌
+    WeightedWedge (terminalProfunctor (C := C)) P ≌
     Wedge (J := C) (C := D) P :=
   (trivialWeightedWedgeConeEquiv P).trans (wedgeConeEquiv P).symm
 
@@ -3826,7 +3821,7 @@ Composition of `trivialWeightedCowedgeCoconeEquiv` (weighted cowedge ≌ cocone)
 with `cowedgeCoconeEquiv.symm` (cocone ≌ cowedge). -/
 def trivialWeightedCowedgeCowedgeEquiv {D : Type w} [Category.{v} D]
     (P : Cᵒᵖ ⥤ C ⥤ D) :
-    WeightedCowedge (constProfunctor (C := C) PUnit.{v+1}) P ≌
+    WeightedCowedge (terminalProfunctor (C := C)) P ≌
     Cowedge (J := C) (C := D) P :=
   (trivialWeightedCowedgeCoconeEquiv P).trans (cowedgeCoconeEquiv P).symm
 
@@ -3837,7 +3832,7 @@ Uses `hasLimitsOfShape_of_equivalence` to transfer `HasTerminal` across
 the categorical equivalence. -/
 def hasTerminalWeightedWedgeOfHasTerminalWedge {D : Type w} [Category.{v} D]
     (P : Cᵒᵖ ⥤ C ⥤ D) [HasTerminal (Wedge (J := C) (C := D) P)] :
-    HasTerminal (WeightedWedge (constProfunctor (C := C) PUnit.{v + 1}) P) :=
+    HasTerminal (WeightedWedge (terminalProfunctor (C := C)) P) :=
   Adjunction.hasLimitsOfShape_of_equivalence
     (trivialWeightedWedgeWedgeEquiv P).functor
 
@@ -3845,7 +3840,7 @@ def hasTerminalWeightedWedgeOfHasTerminalWedge {D : Type w} [Category.{v} D]
 equivalence between them. -/
 def hasTerminalWedgeOfHasTerminalWeightedWedge {D : Type w} [Category.{v} D]
     (P : Cᵒᵖ ⥤ C ⥤ D)
-    [HasTerminal (WeightedWedge (constProfunctor (C := C) PUnit.{v + 1}) P)] :
+    [HasTerminal (WeightedWedge (terminalProfunctor (C := C)) P)] :
     HasTerminal (Wedge (J := C) (C := D) P) :=
   Adjunction.hasLimitsOfShape_of_equivalence
     (trivialWeightedWedgeWedgeEquiv P).inverse
@@ -3857,7 +3852,7 @@ Uses `hasColimitsOfShape_of_equivalence` to transfer `HasInitial` across
 the categorical equivalence. -/
 def hasInitialWeightedCowedgeOfHasInitialCowedge {D : Type w} [Category.{v} D]
     (P : Cᵒᵖ ⥤ C ⥤ D) [HasInitial (Cowedge (J := C) (C := D) P)] :
-    HasInitial (WeightedCowedge (constProfunctor (C := C) PUnit.{v + 1}) P) :=
+    HasInitial (WeightedCowedge (terminalProfunctor (C := C)) P) :=
   Adjunction.hasColimitsOfShape_of_equivalence
     (trivialWeightedCowedgeCowedgeEquiv P).functor
 
@@ -3865,7 +3860,7 @@ def hasInitialWeightedCowedgeOfHasInitialCowedge {D : Type w} [Category.{v} D]
 equivalence between them. -/
 def hasInitialCowedgeOfHasInitialWeightedCowedge {D : Type w} [Category.{v} D]
     (P : Cᵒᵖ ⥤ C ⥤ D)
-    [HasInitial (WeightedCowedge (constProfunctor (C := C) PUnit.{v + 1}) P)] :
+    [HasInitial (WeightedCowedge (terminalProfunctor (C := C)) P)] :
     HasInitial (Cowedge (J := C) (C := D) P) :=
   Adjunction.hasColimitsOfShape_of_equivalence
     (trivialWeightedCowedgeCowedgeEquiv P).inverse
@@ -3882,21 +3877,21 @@ Note: `HasWeightedEnd` (a `Type` containing data) differs from `HasTerminal`
 theorem hasTerminalWeightedWedgeIffHasEnd {D : Type w} [Category.{v} D]
     (P : Cᵒᵖ ⥤ C ⥤ D) :
     HasTerminal
-      (WeightedWedge (constProfunctor (C := C) PUnit.{v + 1}) P) ↔ HasEnd P :=
+      (WeightedWedge (terminalProfunctor (C := C)) P) ↔ HasEnd P :=
   (trivialWeightedWedgeWedgeEquiv P).hasTerminal_iff.trans
     (hasLimit_iff_hasTerminal_cone _).symm
 
 /-- Construct `HasEnd P` from `HasTerminal (WeightedWedge unitW P)`. -/
 def hasEndOfHasTerminalWeightedWedge {D : Type w} [Category.{v} D]
     (P : Cᵒᵖ ⥤ C ⥤ D)
-    [HasTerminal (WeightedWedge (constProfunctor (C := C) PUnit.{v + 1}) P)] :
+    [HasTerminal (WeightedWedge (terminalProfunctor (C := C)) P)] :
     HasEnd P :=
   (hasTerminalWeightedWedgeIffHasEnd P).mp inferInstance
 
 /-- Construct `HasTerminal (WeightedWedge unitW P)` from `HasEnd P`. -/
 def hasTerminalWeightedWedgeOfHasEnd {D : Type w} [Category.{v} D]
     (P : Cᵒᵖ ⥤ C ⥤ D) [HasEnd P] :
-    HasTerminal (WeightedWedge (constProfunctor (C := C) PUnit.{v + 1}) P) :=
+    HasTerminal (WeightedWedge (terminalProfunctor (C := C)) P) :=
   (hasTerminalWeightedWedgeIffHasEnd P).mpr inferInstance
 
 /-- `HasInitial (WeightedCowedge unitW P)` is equivalent to `HasCoend P`.
@@ -3911,7 +3906,7 @@ Note: `HasWeightedCoend` (a `Type` containing data) differs from `HasInitial`
 theorem hasInitialWeightedCowedgeIffHasCoend {D : Type w} [Category.{v} D]
     (P : Cᵒᵖ ⥤ C ⥤ D) :
     HasInitial
-      (WeightedCowedge (constProfunctor (C := C) PUnit.{v + 1}) P) ↔
+      (WeightedCowedge (terminalProfunctor (C := C)) P) ↔
     HasCoend P :=
   (trivialWeightedCowedgeCowedgeEquiv P).hasInitial_iff.trans
     (hasColimit_iff_hasInitial_cocone _).symm
@@ -3919,14 +3914,14 @@ theorem hasInitialWeightedCowedgeIffHasCoend {D : Type w} [Category.{v} D]
 /-- Construct `HasCoend P` from `HasInitial (WeightedCowedge unitW P)`. -/
 def hasCoendOfHasInitialWeightedCowedge {D : Type w} [Category.{v} D]
     (P : Cᵒᵖ ⥤ C ⥤ D)
-    [HasInitial (WeightedCowedge (constProfunctor (C := C) PUnit.{v + 1}) P)] :
+    [HasInitial (WeightedCowedge (terminalProfunctor (C := C)) P)] :
     HasCoend P :=
   (hasInitialWeightedCowedgeIffHasCoend P).mp inferInstance
 
 /-- Construct `HasInitial (WeightedCowedge unitW P)` from `HasCoend P`. -/
 def hasInitialWeightedCowedgeOfHasCoend {D : Type w} [Category.{v} D]
     (P : Cᵒᵖ ⥤ C ⥤ D) [HasCoend P] :
-    HasInitial (WeightedCowedge (constProfunctor (C := C) PUnit.{v + 1}) P) :=
+    HasInitial (WeightedCowedge (terminalProfunctor (C := C)) P) :=
   (hasInitialWeightedCowedgeIffHasCoend P).mpr inferInstance
 
 /-- Transfer `IsWeightedEnd` to `IsTerminal` on mathlib wedges.
@@ -3934,7 +3929,7 @@ def hasInitialWeightedCowedgeOfHasCoend {D : Type w} [Category.{v} D]
 Given a weighted wedge that is terminal (i.e., a weighted end), its image
 under the equivalence to mathlib wedges is also terminal. -/
 def isTerminalWedgeOfIsWeightedEnd {D : Type w} [Category.{v} D]
-    (P : Cᵒᵖ ⥤ C ⥤ D) {c : WeightedWedge (constProfunctor (C := C) PUnit.{v + 1}) P}
+    (P : Cᵒᵖ ⥤ C ⥤ D) {c : WeightedWedge (terminalProfunctor (C := C)) P}
     (hc : IsWeightedEnd c) :
     IsTerminal ((trivialWeightedWedgeWedgeEquiv P).functor.obj c) :=
   isTerminalOfEquivFunctor (trivialWeightedWedgeWedgeEquiv P) hc
@@ -3954,7 +3949,7 @@ Given a weighted cowedge that is initial (i.e., a weighted coend), its image
 under the equivalence to mathlib cowedges is also initial. -/
 def isInitialCowedgeOfIsWeightedCoend {D : Type w} [Category.{v} D]
     (P : Cᵒᵖ ⥤ C ⥤ D)
-    {c : WeightedCowedge (constProfunctor (C := C) PUnit.{v + 1}) P}
+    {c : WeightedCowedge (terminalProfunctor (C := C)) P}
     (hc : IsWeightedCoend c) :
     IsInitial ((trivialWeightedCowedgeCowedgeEquiv P).functor.obj c) :=
   isInitialOfEquivFunctor (trivialWeightedCowedgeCowedgeEquiv P) hc
@@ -3999,7 +3994,7 @@ Given a weighted wedge `c` with unit weight that is terminal (a weighted end)
 and a mathlib wedge `w` that is terminal, their apices are isomorphic. -/
 def weightedEndIsoTerminalWedge {D : Type w} [Category.{v} D]
     (P : Cᵒᵖ ⥤ C ⥤ D)
-    {c : WeightedWedge (constProfunctor (C := C) PUnit.{v + 1}) P}
+    {c : WeightedWedge (terminalProfunctor (C := C)) P}
     (hc : IsWeightedEnd c)
     {w : Wedge (J := C) (C := D) P} (hw : IsTerminal w) :
     c.pt ≅ w.pt :=
@@ -4012,7 +4007,7 @@ coend) and a mathlib cowedge `w` that is initial, their apices are isomorphic.
 -/
 def weightedCoendIsoInitialCowedge {D : Type w} [Category.{v} D]
     (P : Cᵒᵖ ⥤ C ⥤ D)
-    {c : WeightedCowedge (constProfunctor (C := C) PUnit.{v + 1}) P}
+    {c : WeightedCowedge (terminalProfunctor (C := C)) P}
     (hc : IsWeightedCoend c)
     {w : Cowedge (J := C) (C := D) P} (hw : IsInitial w) :
     c.pt ≅ w.pt :=
@@ -4043,7 +4038,7 @@ instance. The weighted wedge's apex satisfies the universal property of the
 end. -/
 def hasEndOfIsWeightedEnd {D : Type w} [Category.{v} D]
     (P : Cᵒᵖ ⥤ C ⥤ D)
-    {c : WeightedWedge (constProfunctor (C := C) PUnit.{v + 1}) P}
+    {c : WeightedWedge (terminalProfunctor (C := C)) P}
     (hc : IsWeightedEnd c) : HasEnd P :=
   hasEndOfIsTerminalWedge P _ (isTerminalWedgeOfIsWeightedEnd P hc)
 
@@ -4054,7 +4049,7 @@ Given a weighted cowedge that is a weighted coend, we can construct the
 property of the coend. -/
 def hasCoendOfIsWeightedCoend {D : Type w} [Category.{v} D]
     (P : Cᵒᵖ ⥤ C ⥤ D)
-    {c : WeightedCowedge (constProfunctor (C := C) PUnit.{v + 1}) P}
+    {c : WeightedCowedge (terminalProfunctor (C := C)) P}
     (hc : IsWeightedCoend c) : HasCoend P :=
   hasCoendOfIsInitialCowedge P _ (isInitialCowedgeOfIsWeightedCoend P hc)
 
@@ -4064,7 +4059,7 @@ Given a weighted wedge that is a weighted end, its apex is the end object.
 This is definitionally equal to `c.pt`. -/
 abbrev weightedEnd {D : Type w} [Category.{v} D]
     (P : Cᵒᵖ ⥤ C ⥤ D)
-    (c : WeightedWedge (constProfunctor (C := C) PUnit.{v + 1}) P)
+    (c : WeightedWedge (terminalProfunctor (C := C)) P)
     (_ : IsWeightedEnd c) : D :=
   c.pt
 
@@ -4074,7 +4069,7 @@ Given a weighted cowedge that is a weighted coend, its apex is the coend object.
 This is definitionally equal to `c.pt`. -/
 abbrev weightedCoend {D : Type w} [Category.{v} D]
     (P : Cᵒᵖ ⥤ C ⥤ D)
-    (c : WeightedCowedge (constProfunctor (C := C) PUnit.{v + 1}) P)
+    (c : WeightedCowedge (terminalProfunctor (C := C)) P)
     (_ : IsWeightedCoend c) : D :=
   c.pt
 
@@ -4084,7 +4079,7 @@ These are the morphisms `weightedEnd P c hc ⟶ (P.obj (op j)).obj j` for each
 `j : C`, coming from the wedge structure. -/
 def weightedEnd.π {D : Type w} [Category.{v} D]
     (P : Cᵒᵖ ⥤ C ⥤ D)
-    (c : WeightedWedge (constProfunctor (C := C) PUnit.{v + 1}) P)
+    (c : WeightedWedge (terminalProfunctor (C := C)) P)
     (hc : IsWeightedEnd c) (j : C) :
     weightedEnd P c hc ⟶ (P.obj (Opposite.op j)).obj j :=
   ((trivialWeightedWedgeWedgeEquiv P).functor.obj c).ι j
@@ -4095,7 +4090,7 @@ These are the morphisms `(P.obj (op j)).obj j ⟶ weightedCoend P c hc` for each
 `j : C`, coming from the cowedge structure. -/
 def weightedCoend.ι {D : Type w} [Category.{v} D]
     (P : Cᵒᵖ ⥤ C ⥤ D)
-    (c : WeightedCowedge (constProfunctor (C := C) PUnit.{v + 1}) P)
+    (c : WeightedCowedge (terminalProfunctor (C := C)) P)
     (hc : IsWeightedCoend c) (j : C) :
     (P.obj (Opposite.op j)).obj j ⟶ weightedCoend P c hc :=
   ((trivialWeightedCowedgeCowedgeEquiv P).functor.obj c).π j
@@ -4106,7 +4101,7 @@ This bundles the wedge (as a cone) with its `IsLimit` proof, giving the
 complete "end" data structure. The cone's apex is `c.pt`. -/
 def weightedEndToLimitCone {D : Type w} [Category.{v} D]
     (P : Cᵒᵖ ⥤ C ⥤ D)
-    {c : WeightedWedge (constProfunctor (C := C) PUnit.{v + 1}) P}
+    {c : WeightedWedge (terminalProfunctor (C := C)) P}
     (hc : IsWeightedEnd c) :
     LimitCone (multicospanIndexEnd P).multicospan :=
   ⟨(trivialWeightedWedgeWedgeEquiv P).functor.obj c,
@@ -4118,7 +4113,7 @@ This bundles the cowedge (as a cocone) with its `IsColimit` proof, giving the
 complete "coend" data structure. The cocone's apex is `c.pt`. -/
 def weightedCoendToColimitCocone {D : Type w} [Category.{v} D]
     (P : Cᵒᵖ ⥤ C ⥤ D)
-    {c : WeightedCowedge (constProfunctor (C := C) PUnit.{v + 1}) P}
+    {c : WeightedCowedge (terminalProfunctor (C := C)) P}
     (hc : IsWeightedCoend c) :
     ColimitCocone (multispanIndexCoend P).multispan :=
   ⟨(trivialWeightedCowedgeCowedgeEquiv P).functor.obj c,
@@ -4127,14 +4122,14 @@ def weightedCoendToColimitCocone {D : Type w} [Category.{v} D]
 /-- Construct a `LimitCone` for the end diagram from a `WeightedEndWedge`. -/
 def WeightedEndWedge.toLimitCone {D : Type w} [Category.{v} D]
     (P : Cᵒᵖ ⥤ C ⥤ D)
-    (e : WeightedEndWedge (constProfunctor (C := C) PUnit.{v + 1}) P) :
+    (e : WeightedEndWedge (terminalProfunctor (C := C)) P) :
     LimitCone (multicospanIndexEnd P).multicospan :=
   weightedEndToLimitCone P e.isEnd
 
 /-- Construct a `ColimitCocone` for the coend diagram from a `WeightedCoendCowedge`. -/
 def WeightedCoendCowedge.toColimitCocone {D : Type w} [Category.{v} D]
     (P : Cᵒᵖ ⥤ C ⥤ D)
-    (e : WeightedCoendCowedge (constProfunctor (C := C) PUnit.{v + 1}) P) :
+    (e : WeightedCoendCowedge (terminalProfunctor (C := C)) P) :
     ColimitCocone (multispanIndexCoend P).multispan :=
   weightedCoendToColimitCocone P e.isCoend
 
