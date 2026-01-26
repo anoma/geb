@@ -28,12 +28,14 @@ explicit.
   - We already have equivalences for Wedge/Cowedge
   - Mathlib defines ends as terminal wedges, coends as initial cowedges
   - Transfer initiality/terminality across the categorical equivalences
-  - Result: Added `hasTerminalWeightedWedgeOfHasTerminalWedge`,
-    `hasTerminalWedgeOfHasTerminalWeightedWedge`,
-    `hasInitialWeightedCowedgeOfHasInitialCowedge`,
-    `hasInitialCowedgeOfHasInitialWeightedCowedge` using
-    `Adjunction.hasLimitsOfShape_of_equivalence` and
-    `Adjunction.hasColimitsOfShape_of_equivalence`
+  - Result: Added `Prop`-level transfers via `hasTerminalWeightedWedgeIffHasEnd`,
+    `hasInitialWeightedCowedgeIffHasCoend` using `Equivalence.hasTerminal_iff`
+    and `hasLimit_iff_hasTerminal_cone`
+  - Added data-level transfers `isTerminalOfEquivFunctor`/`isInitialOfEquivFunctor`
+    in `Utilities/Category.lean` (computable, no `choice`)
+  - Added weighted end/coend to mathlib end/coend transfers:
+    `isTerminalWedgeOfIsWeightedEnd`, `isWeightedEndOfIsTerminalWedge`,
+    `isInitialCowedgeOfIsWeightedCoend`, `isWeightedCoendOfIsInitialCowedge`
 - [ ] Show that `WeightedCowedgeOver unitProfunctor P Y` is the end
       `∫_A Hom(P(A,A), Y)`
 - [ ] Formalize the coend elimination rule using the end structure
