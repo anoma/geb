@@ -3929,6 +3929,45 @@ def hasInitialWeightedCowedgeOfHasCoend {D : Type w} [Category.{v} D]
     HasInitial (WeightedCowedge (constProfunctor (C := C) PUnit.{v + 1}) P) :=
   (hasInitialWeightedCowedgeIffHasCoend P).mpr inferInstance
 
+/-- Transfer `IsWeightedEnd` to `IsTerminal` on mathlib wedges.
+
+Given a weighted wedge that is terminal (i.e., a weighted end), its image
+under the equivalence to mathlib wedges is also terminal. -/
+def isTerminalWedgeOfIsWeightedEnd {D : Type w} [Category.{v} D]
+    (P : Cᵒᵖ ⥤ C ⥤ D) {c : WeightedWedge (constProfunctor (C := C) PUnit.{v + 1}) P}
+    (hc : IsWeightedEnd c) :
+    IsTerminal ((trivialWeightedWedgeWedgeEquiv P).functor.obj c) :=
+  isTerminalOfEquivFunctor (trivialWeightedWedgeWedgeEquiv P) hc
+
+/-- Transfer `IsTerminal` on mathlib wedges to `IsWeightedEnd`.
+
+Given a mathlib wedge that is terminal, its image under the inverse equivalence
+to weighted wedges is a weighted end. -/
+def isWeightedEndOfIsTerminalWedge {D : Type w} [Category.{v} D]
+    (P : Cᵒᵖ ⥤ C ⥤ D) {c : Wedge (J := C) (C := D) P} (hc : IsTerminal c) :
+    IsWeightedEnd ((trivialWeightedWedgeWedgeEquiv P).inverse.obj c) :=
+  isTerminalOfEquivFunctor (trivialWeightedWedgeWedgeEquiv P).symm hc
+
+/-- Transfer `IsWeightedCoend` to `IsInitial` on mathlib cowedges.
+
+Given a weighted cowedge that is initial (i.e., a weighted coend), its image
+under the equivalence to mathlib cowedges is also initial. -/
+def isInitialCowedgeOfIsWeightedCoend {D : Type w} [Category.{v} D]
+    (P : Cᵒᵖ ⥤ C ⥤ D)
+    {c : WeightedCowedge (constProfunctor (C := C) PUnit.{v + 1}) P}
+    (hc : IsWeightedCoend c) :
+    IsInitial ((trivialWeightedCowedgeCowedgeEquiv P).functor.obj c) :=
+  isInitialOfEquivFunctor (trivialWeightedCowedgeCowedgeEquiv P) hc
+
+/-- Transfer `IsInitial` on mathlib cowedges to `IsWeightedCoend`.
+
+Given a mathlib cowedge that is initial, its image under the inverse
+equivalence to weighted cowedges is a weighted coend. -/
+def isWeightedCoendOfIsInitialCowedge {D : Type w} [Category.{v} D]
+    (P : Cᵒᵖ ⥤ C ⥤ D) {c : Cowedge (J := C) (C := D) P} (hc : IsInitial c) :
+    IsWeightedCoend ((trivialWeightedCowedgeCowedgeEquiv P).inverse.obj c) :=
+  isInitialOfEquivFunctor (trivialWeightedCowedgeCowedgeEquiv P).symm hc
+
 /-!
 ### Extracting Diagonal Data from Weighted Cowedges
 
