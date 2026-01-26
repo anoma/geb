@@ -43,6 +43,11 @@ explicit.
       `IsTerminal w`)
     - `weightedCoendIsoInitialCowedge : c.pt ≅ w.pt` (given `IsWeightedCoend c`
       and `IsInitial w`)
+  - Added computable `HasEnd`/`HasCoend` constructors from terminal/initial data:
+    - `hasEndOfIsTerminalWedge : IsTerminal w → HasEnd P`
+    - `hasCoendOfIsInitialCowedge : IsInitial w → HasCoend P`
+    - `hasEndOfIsWeightedEnd : IsWeightedEnd c → HasEnd P`
+    - `hasCoendOfIsWeightedCoend : IsWeightedCoend c → HasCoend P`
 - [ ] Show that `WeightedCowedgeOver unitProfunctor P Y` is the end
       `∫_A Hom(P(A,A), Y)`
 - [ ] Formalize the coend elimination rule using the end structure

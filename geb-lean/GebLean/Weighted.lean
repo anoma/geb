@@ -4018,6 +4018,46 @@ def weightedCoendIsoInitialCowedge {D : Type w} [Category.{v} D]
     c.pt ≅ w.pt :=
   isInitialCowedgeIso P (isInitialCowedgeOfIsWeightedCoend P hc) hw
 
+/-- Construct `HasEnd P` from a terminal mathlib wedge.
+
+Given a wedge that is terminal, we can construct the `HasEnd P` instance.
+The wedge's apex then satisfies the universal property of the end. -/
+def hasEndOfIsTerminalWedge {D : Type w} [Category.{v} D]
+    (P : Cᵒᵖ ⥤ C ⥤ D) (w : Wedge (J := C) (C := D) P) (hw : IsTerminal w) :
+    HasEnd P :=
+  HasLimit.mk ⟨w, (Cone.isLimitEquivIsTerminal w).symm hw⟩
+
+/-- Construct `HasCoend P` from an initial mathlib cowedge.
+
+Given a cowedge that is initial, we can construct the `HasCoend P` instance.
+The cowedge's apex then satisfies the universal property of the coend. -/
+def hasCoendOfIsInitialCowedge {D : Type w} [Category.{v} D]
+    (P : Cᵒᵖ ⥤ C ⥤ D) (w : Cowedge (J := C) (C := D) P) (hw : IsInitial w) :
+    HasCoend P :=
+  HasColimit.mk ⟨w, (Cocone.isColimitEquivIsInitial w).symm hw⟩
+
+/-- Construct `HasEnd P` from a weighted end with unit weight.
+
+Given a weighted wedge that is a weighted end, we can construct the `HasEnd P`
+instance. The weighted wedge's apex satisfies the universal property of the
+end. -/
+def hasEndOfIsWeightedEnd {D : Type w} [Category.{v} D]
+    (P : Cᵒᵖ ⥤ C ⥤ D)
+    {c : WeightedWedge (constProfunctor (C := C) PUnit.{v + 1}) P}
+    (hc : IsWeightedEnd c) : HasEnd P :=
+  hasEndOfIsTerminalWedge P _ (isTerminalWedgeOfIsWeightedEnd P hc)
+
+/-- Construct `HasCoend P` from a weighted coend with unit weight.
+
+Given a weighted cowedge that is a weighted coend, we can construct the
+`HasCoend P` instance. The weighted cowedge's apex satisfies the universal
+property of the coend. -/
+def hasCoendOfIsWeightedCoend {D : Type w} [Category.{v} D]
+    (P : Cᵒᵖ ⥤ C ⥤ D)
+    {c : WeightedCowedge (constProfunctor (C := C) PUnit.{v + 1}) P}
+    (hc : IsWeightedCoend c) : HasCoend P :=
+  hasCoendOfIsInitialCowedge P _ (isInitialCowedgeOfIsWeightedCoend P hc)
+
 /-!
 ### Extracting Diagonal Data from Weighted Cowedges
 
