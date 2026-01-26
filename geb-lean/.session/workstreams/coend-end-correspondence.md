@@ -66,14 +66,52 @@ limits), then derive Level 2 and Level 3 as special cases. This requires:
 2. The elimination isomorphism at the weighted cone/cocone level
 3. Specialization to wedges/cowedges for ends/coends
 
+### Powers and Copowers as Weighted Limits/Colimits
+
+Powers and copowers are weighted limits/colimits over the terminal category:
+
+- **Copower**: `S ·. X` = weighted colimit of `1 → C` picking X, weighted by
+  `1^op → Set` picking S
+- **Power**: `X ^. S` = weighted limit of `1 → C` picking X, weighted by
+  `1 → Set` picking S
+
+This provides a consistency check for our definitions and allows deriving
+properties of powers/copowers from the general weighted limit/colimit theory.
+
+### Tensor-Hom Adjunction (Copower-Power Adjunction)
+
+When a category has both copowers and powers, they are adjoint:
+
+```text
+C(S ·. X, Y) ≅ Set(S, C(X, Y)) ≅ C(X, Y ^. S)
+```
+
+This is the "elimination rule for copowers using powers" - morphisms out of a
+copower correspond to morphisms into a power.
+
+### Weighted (Co)Limits via Ordinary (Co)Limits + Powers/Copowers
+
+For categories with powers/copowers and ordinary limits/colimits:
+
+```text
+{W, F} ≅ ∫_j F(j) ^. W(j)     (weighted limit via end of powers)
+W * F ≅ ∫^j W(j) ·. F(j)      (weighted colimit via coend of copowers)
+```
+
+These formulas express weighted (co)limits as ends/coends of powers/copowers,
+providing an alternative construction when the category has these structures.
+
 References:
 
 - [nLab: weighted colimit](https://ncatlab.org/nlab/show/weighted+colimit)
 - [nLab: weighted limit](https://ncatlab.org/nlab/show/weighted+limit)
 - [nLab: end](https://ncatlab.org/nlab/show/end)
+- [nLab: copower](https://ncatlab.org/nlab/show/copower)
+- [nLab: power](https://ncatlab.org/nlab/show/power)
 - [Emily Riehl: Weighted Limits and Colimits](https://emilyriehl.github.io/files/weighted.pdf)
 - [Fosco Loregian: Coend Calculus](https://arxiv.org/pdf/1501.02503)
 - [Bartosz Milewski: Weighted Colimits](https://bartoszmilewski.com/2020/07/20/weighted-colimits/)
+- [n-Category Café: Enrichment and its Limits](https://golem.ph.utexas.edu/category/2017/04/enrichment_and_its_limits.html)
 
 ## Tasks
 
@@ -126,6 +164,17 @@ References:
   - Powers are characterized by `Hom(Y, X ^. S) ≅ (S → Hom(Y, X))`
   - Added `mapVal`, `mapIdx`, `bimap` and their lemmas (dual to copowers)
   - Note: `mapIdx` is contravariant for powers (vs covariant for copowers)
+- [ ] Prove copowers/powers are weighted colimits/limits over terminal category
+  - `S ·. X` = weighted colimit of `1 → C` picking X, weight picking S
+  - `X ^. S` = weighted limit of `1 → C` picking X, weight picking S
+  - Validates our definitions are consistent with weighted (co)limit theory
+- [ ] Prove the tensor-hom adjunction (copower-power elimination)
+  - `C(S ·. X, Y) ≅ Set(S, C(X, Y)) ≅ C(X, Y ^. S)`
+  - This is the elimination rule for copowers using powers
+- [ ] Prove weighted (co)limits via ordinary (co)limits + powers/copowers
+  - `{W, F} ≅ ∫_j F(j) ^. W(j)` (weighted limit via end of powers)
+  - `W * F ≅ ∫^j W(j) ·. F(j)` (weighted colimit via coend of copowers)
+  - Add to `Weighted.lean` for categories with these structures
 - [ ] Formalize Level 1: Weighted colimit elimination via weighted limits
   - `C(W * F, Y) ≅ {W, C(F(-), Y)}`
   - Work at the `WeightedCone`/`WeightedCocone` level
