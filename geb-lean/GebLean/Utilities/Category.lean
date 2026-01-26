@@ -2,6 +2,7 @@ import Mathlib.CategoryTheory.Category.Cat
 import Mathlib.CategoryTheory.Comma.Arrow
 import Mathlib.CategoryTheory.Comma.Over.Basic
 import Mathlib.CategoryTheory.Equivalence
+import Mathlib.CategoryTheory.Limits.Shapes.IsTerminal
 import Mathlib.Combinatorics.Quiver.ReflQuiver
 
 /-!
@@ -2410,6 +2411,38 @@ theorem Functor.not_full_of_comp_not_full_and_full
     let ⟨g, hg⟩ := hG.map_surjective h
     let ⟨f, hf⟩ := hF.map_surjective g
     ⟨f, by simp only [Functor.comp_map, hf, hg]⟩⟩
+
+/-! ### Transferring terminal and initial objects across equivalences -/
+
+open Limits in
+/-- Transfer `IsTerminal` across an equivalence's functor (computably).
+
+Given a terminal object `X` in `C` and an equivalence `e : C ≌ D`, the image
+`e.functor.obj X` is terminal in `D`. -/
+def isTerminalOfEquivFunctor {C' : Type*} [Category C'] {D' : Type*} [Category D']
+    (e : C' ≌ D') {X : C'} (hX : IsTerminal X) : IsTerminal (e.functor.obj X) :=
+  IsTerminal.ofUniqueHom
+    (fun Y ↦ e.counitInv.app Y ≫ e.functor.map (hX.from (e.inverse.obj Y)))
+    (fun Y f ↦ by
+      have h : e.inverse.map f ≫ e.unitInv.app X = hX.from (e.inverse.obj Y) :=
+        hX.hom_ext _ _
+      rw [← h, Functor.map_comp, ← Category.assoc, e.counitInv_naturality, Category.assoc,
+        e.counitInv_functor_comp, Category.comp_id])
+
+open Limits in
+/-- Transfer `IsInitial` across an equivalence's functor (computably).
+
+Given an initial object `X` in `C` and an equivalence `e : C ≌ D`, the image
+`e.functor.obj X` is initial in `D`. -/
+def isInitialOfEquivFunctor {C' : Type*} [Category C'] {D' : Type*} [Category D']
+    (e : C' ≌ D') {X : C'} (hX : IsInitial X) : IsInitial (e.functor.obj X) :=
+  IsInitial.ofUniqueHom
+    (fun Y ↦ e.functor.map (hX.to (e.inverse.obj Y)) ≫ e.counit.app Y)
+    (fun Y f ↦ by
+      have h : e.unit.app X ≫ e.inverse.map f = hX.to (e.inverse.obj Y) :=
+        hX.hom_ext _ _
+      rw [← h, Functor.map_comp, Category.assoc, e.counit_naturality, ← Category.assoc,
+        e.functor_unit_comp, Category.id_comp])
 
 end GebLean
 
