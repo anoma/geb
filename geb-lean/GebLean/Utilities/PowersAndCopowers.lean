@@ -1,4 +1,6 @@
 import Mathlib.CategoryTheory.Category.Basic
+import Mathlib.CategoryTheory.Discrete.Basic
+import GebLean.Weighted
 
 /-!
 # Powers and Copowers
@@ -349,5 +351,232 @@ theorem lift_proj {X : C} {S : Type v} {Y : C} (g : Y ⟶ power X S) :
   rw [fac]
 
 end HasPowers
+
+/-!
+## Copowers as Weighted Colimits over the Terminal Category
+
+A copower `S ·. X` is exactly the weighted colimit of the constant diagram
+`terminalDiagram X : Discrete PUnit ⥤ C` with weight
+`terminalWeight S : (Discrete PUnit)ᵒᵖ ⥤ Type v` that picks the type `S`.
+
+This provides a consistency check for the definitions and connects copowers
+to the general theory of weighted colimits.
+-/
+
+section CopowerAsWeightedColimit
+
+open CategoryTheory CategoryTheory.Limits CategoryTheory.Discrete
+
+variable {C : Type u} [Category.{v} C]
+
+/-- The constant functor from the discrete terminal category picking object X. -/
+def terminalDiagram (X : C) : Discrete PUnit ⥤ C :=
+  Functor.fromPUnit X
+
+/-- The weight functor picking type S from the opposite of discrete terminal. -/
+def terminalWeight (S : Type v) : (Discrete PUnit)ᵒᵖ ⥤ Type v where
+  obj := fun _ => S
+  map := fun _ => id
+
+@[simp]
+theorem terminalWeight_obj (S : Type v) (j : (Discrete PUnit)ᵒᵖ) :
+    (terminalWeight S).obj j = S := rfl
+
+@[simp]
+theorem terminalWeight_map (S : Type v) {j₁ j₂ : (Discrete PUnit)ᵒᵖ} (f : j₁ ⟶ j₂) :
+    (terminalWeight S).map f = id := rfl
+
+@[simp]
+theorem terminalDiagram_obj (X : C) (j : Discrete PUnit) :
+    (terminalDiagram X).obj j = X := rfl
+
+@[simp]
+theorem terminalDiagram_map (X : C) {j₁ j₂ : Discrete PUnit} (f : j₁ ⟶ j₂) :
+    (terminalDiagram X).map f = 𝟙 X := by
+  simp only [terminalDiagram, Functor.fromPUnit]
+  rfl
+
+/-- The homToFunctor map for terminalDiagram is precomposition with identity. -/
+theorem terminalDiagram_homToFunctor_map (X Y : C)
+    {j₁ j₂ : (Discrete PUnit)ᵒᵖ} (f : j₁ ⟶ j₂) (g : X ⟶ Y) :
+    (homToFunctor (terminalDiagram X) Y).map f g = g := by
+  change (terminalDiagram X).map f.unop ≫ g = g
+  simp only [terminalDiagram_map]
+  exact Category.id_comp g
+
+variable [HasCopowers C]
+
+/-- The weighted cocone for a copower, with apex `copower S X` and legs given
+by the injection maps. -/
+def copowerCocone (S : Type v) (X : C) :
+    WeightedCocone (terminalWeight S) (terminalDiagram X) where
+  pt := HasCopowers.copower S X
+  toWeightedCoconeOver := {
+    app := fun _ s => HasCopowers.inj S X s
+    naturality := fun j₁ j₂ f => by
+      ext s
+      simp only [types_comp_apply, terminalWeight_map, id_eq]
+      rw [terminalDiagram_homToFunctor_map]
+  }
+
+/-- A weighted cocone over the terminal diagram and weight is determined by
+a single family of morphisms `S → (X ⟶ pt)`. -/
+def coconeOfFamily (S : Type v) (X : C) (apex : C) (fam : S → (X ⟶ apex)) :
+    WeightedCocone (terminalWeight S) (terminalDiagram X) where
+  pt := apex
+  toWeightedCoconeOver := {
+    app := fun _ s => fam s
+    naturality := fun j₁ j₂ f => by
+      ext s
+      simp only [types_comp_apply, terminalWeight_map, id_eq]
+      rw [terminalDiagram_homToFunctor_map]
+  }
+
+@[simp]
+theorem copowerCocone_pt (S : Type v) (X : C) :
+    (copowerCocone S X).pt = HasCopowers.copower S X := rfl
+
+theorem copowerCocone_ι_app (S : Type v) (X : C) (j : (Discrete PUnit)ᵒᵖ) (s : S) :
+    (copowerCocone S X).ι.app j s = HasCopowers.inj S X s := rfl
+
+@[simp]
+theorem copowerCocone_leg (S : Type v) (X : C) (j : Discrete PUnit) (s : S) :
+    (copowerCocone S X).leg j s = HasCopowers.inj S X s := rfl
+
+/-- The universal morphism from the copower cocone to any weighted cocone. -/
+def copowerCoconeDesc (S : Type v) (X : C)
+    (d : WeightedCocone (terminalWeight S) (terminalDiagram X)) :
+    WeightedCocone.Hom (copowerCocone S X) d where
+  hom := HasCopowers.desc (fun t => d.leg (mk ()) t)
+  w := fun j s => by
+    obtain ⟨⟨⟩⟩ := j
+    simp only [copowerCocone_leg]
+    have hfac := HasCopowers.fac (fun t => d.leg (mk ()) t) s
+    simp only [terminalWeight_obj, terminalDiagram_obj] at hfac
+    exact hfac
+
+/-- Uniqueness of morphisms from the copower cocone. -/
+theorem copowerCoconeDesc_unique (S : Type v) (X : C)
+    (d : WeightedCocone (terminalWeight S) (terminalDiagram X))
+    (f : WeightedCocone.Hom (copowerCocone S X) d) :
+    f = copowerCoconeDesc S X d := by
+  apply WeightedCocone.Hom.ext
+  apply HasCopowers.ext
+  intro s
+  have hw := f.w (mk ()) s
+  simp only [copowerCocone_leg] at hw
+  simp only [copowerCoconeDesc]
+  have hfac := HasCopowers.fac (fun t => d.leg (mk ()) t) s
+  simp only [terminalWeight_obj, terminalDiagram_obj] at hfac
+  rw [hfac]
+  exact hw
+
+/-- The copower cocone is initial in the category of weighted cocones,
+making copowers weighted colimits over the terminal category. -/
+def copowerIsWeightedColimit (S : Type v) (X : C) :
+    IsWeightedColimit (copowerCocone S X) :=
+  IsInitial.ofUniqueHom
+    (fun d => copowerCoconeDesc S X d)
+    (fun _ => copowerCoconeDesc_unique S X _)
+
+end CopowerAsWeightedColimit
+
+/-!
+## Powers as Weighted Limits over the Terminal Category
+
+Dually, a power `X ^. S` is exactly the weighted limit of the constant diagram
+`terminalDiagram X : Discrete PUnit ⥤ C` with weight
+`terminalWeightCov S : Discrete PUnit ⥤ Type v` that picks the type `S`.
+-/
+
+section PowerAsWeightedLimit
+
+open CategoryTheory CategoryTheory.Limits CategoryTheory.Discrete
+
+variable {C : Type u} [Category.{v} C]
+
+/-- The covariant weight functor picking type S from discrete terminal. -/
+def terminalWeightCov (S : Type v) : Discrete PUnit ⥤ Type v where
+  obj := fun _ => S
+  map := fun _ => id
+
+@[simp]
+theorem terminalWeightCov_obj (S : Type v) (j : Discrete PUnit) :
+    (terminalWeightCov S).obj j = S := rfl
+
+@[simp]
+theorem terminalWeightCov_map (S : Type v) {j₁ j₂ : Discrete PUnit} (f : j₁ ⟶ j₂) :
+    (terminalWeightCov S).map f = id := rfl
+
+/-- The homFromFunctor map for terminalDiagram is postcomposition with identity. -/
+theorem terminalDiagram_homFromFunctor_map (X Y : C)
+    {j₁ j₂ : Discrete PUnit} (f : j₁ ⟶ j₂) (g : Y ⟶ X) :
+    (homFromFunctor (terminalDiagram X) Y).map f g = g := by
+  change g ≫ (terminalDiagram X).map f = g
+  simp only [terminalDiagram_map, Category.comp_id]
+
+variable [HasPowers C]
+
+/-- The weighted cone for a power, with apex `power X S` and legs given
+by the projection maps. -/
+def powerCone (X : C) (S : Type v) :
+    WeightedCone (terminalWeightCov S) (terminalDiagram X) where
+  pt := HasPowers.power X S
+  toWeightedConeUnder := {
+    app := fun _ s => HasPowers.proj X S s
+    naturality := fun j₁ j₂ f => by
+      ext s
+      simp only [types_comp_apply, terminalWeightCov_map, id_eq]
+      rw [terminalDiagram_homFromFunctor_map]
+  }
+
+@[simp]
+theorem powerCone_pt (X : C) (S : Type v) :
+    (powerCone X S).pt = HasPowers.power X S := rfl
+
+theorem powerCone_π_app (X : C) (S : Type v) (j : Discrete PUnit) (s : S) :
+    (powerCone X S).π.app j s = HasPowers.proj X S s := rfl
+
+@[simp]
+theorem powerCone_leg (X : C) (S : Type v) (j : Discrete PUnit) (s : S) :
+    (powerCone X S).leg j s = HasPowers.proj X S s := rfl
+
+/-- The universal morphism from any weighted cone to the power cone. -/
+def powerConeLift (X : C) (S : Type v)
+    (d : WeightedCone (terminalWeightCov S) (terminalDiagram X)) :
+    WeightedCone.Hom d (powerCone X S) where
+  hom := HasPowers.lift (fun t => d.leg (mk ()) t)
+  w := fun j s => by
+    obtain ⟨⟨⟩⟩ := j
+    simp only [powerCone_leg]
+    have hfac := HasPowers.fac (fun t => d.leg (mk ()) t) s
+    simp only [terminalWeightCov_obj, terminalDiagram_obj] at hfac
+    exact hfac
+
+/-- Uniqueness of morphisms to the power cone. -/
+theorem powerConeLift_unique (X : C) (S : Type v)
+    (d : WeightedCone (terminalWeightCov S) (terminalDiagram X))
+    (f : WeightedCone.Hom d (powerCone X S)) :
+    f = powerConeLift X S d := by
+  apply WeightedCone.Hom.ext
+  apply HasPowers.ext
+  intro s
+  have hw := f.w (mk ()) s
+  simp only [powerCone_leg] at hw
+  simp only [powerConeLift]
+  have hfac := HasPowers.fac (fun t => d.leg (mk ()) t) s
+  simp only [terminalWeightCov_obj, terminalDiagram_obj] at hfac
+  rw [hfac]
+  exact hw
+
+/-- The power cone is terminal in the category of weighted cones,
+making powers weighted limits over the terminal category. -/
+def powerIsWeightedLimit (X : C) (S : Type v) :
+    IsWeightedLimit (powerCone X S) :=
+  IsTerminal.ofUniqueHom
+    (fun d => powerConeLift X S d)
+    (fun _ => powerConeLift_unique X S _)
+
+end PowerAsWeightedLimit
 
 end GebLean
