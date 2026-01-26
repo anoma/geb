@@ -579,4 +579,89 @@ def powerIsWeightedLimit (X : C) (S : Type v) :
 
 end PowerAsWeightedLimit
 
+/-!
+## Tensor-Hom Adjunction (Copower-Power Adjunction)
+
+When a category has both copowers and powers, they are adjoint:
+
+  `C(S ·. X, Y) ≅ (S → C(X, Y)) ≅ C(X, Y ^. S)`
+
+This is the "elimination rule for copowers using powers" - morphisms out of a
+copower correspond to morphisms into a power.
+-/
+
+section TensorHomAdjunction
+
+variable {C : Type u} [Category.{v} C]
+
+/-- The isomorphism `C(S ·. X, Y) ≅ (S → C(X, Y))` from the copower universal
+property. Morphisms out of a copower correspond to families of morphisms. -/
+def copowerHomEquiv [HasCopowers C] (S : Type v) (X Y : C) :
+    (HasCopowers.copower S X ⟶ Y) ≃ (S → (X ⟶ Y)) where
+  toFun f s := HasCopowers.inj S X s ≫ f
+  invFun := HasCopowers.desc
+  left_inv f := by
+    apply HasCopowers.ext
+    intro s
+    rw [HasCopowers.fac]
+  right_inv fam := by
+    funext s
+    simp only
+    rw [HasCopowers.fac]
+
+@[simp]
+theorem copowerHomEquiv_apply [HasCopowers C] {S : Type v} {X Y : C}
+    (f : HasCopowers.copower S X ⟶ Y) (s : S) :
+    copowerHomEquiv S X Y f s = HasCopowers.inj S X s ≫ f := rfl
+
+@[simp]
+theorem copowerHomEquiv_symm_apply [HasCopowers C] {S : Type v} {X Y : C}
+    (fam : S → (X ⟶ Y)) :
+    (copowerHomEquiv S X Y).symm fam = HasCopowers.desc fam := rfl
+
+/-- The isomorphism `(S → C(X, Y)) ≅ C(X, Y ^. S)` from the power universal
+property. Families of morphisms correspond to morphisms into a power. -/
+def powerHomEquiv [HasPowers C] (S : Type v) (X Y : C) :
+    (S → (Y ⟶ X)) ≃ (Y ⟶ HasPowers.power X S) where
+  toFun := HasPowers.lift
+  invFun f s := f ≫ HasPowers.proj X S s
+  left_inv fam := by
+    funext s
+    simp only
+    rw [HasPowers.fac]
+  right_inv f := by
+    apply HasPowers.ext
+    intro s
+    rw [HasPowers.fac]
+
+@[simp]
+theorem powerHomEquiv_apply [HasPowers C] {S : Type v} {X Y : C}
+    (fam : S → (Y ⟶ X)) :
+    powerHomEquiv S X Y fam = HasPowers.lift fam := rfl
+
+@[simp]
+theorem powerHomEquiv_symm_apply [HasPowers C] {S : Type v} {X Y : C}
+    (f : Y ⟶ HasPowers.power X S) (s : S) :
+    (powerHomEquiv S X Y).symm f s = f ≫ HasPowers.proj X S s := rfl
+
+/-- The full copower-power adjunction: `C(S ·. X, Y) ≅ C(X, Y ^. S)`.
+This combines the copower and power universal properties. -/
+def copowerPowerEquiv [HasCopowers C] [HasPowers C] (S : Type v) (X Y : C) :
+    (HasCopowers.copower S X ⟶ Y) ≃ (X ⟶ HasPowers.power Y S) :=
+  (copowerHomEquiv S X Y).trans (powerHomEquiv S Y X)
+
+@[simp]
+theorem copowerPowerEquiv_apply [HasCopowers C] [HasPowers C]
+    {S : Type v} {X Y : C} (f : HasCopowers.copower S X ⟶ Y) :
+    copowerPowerEquiv S X Y f =
+      HasPowers.lift (fun s => HasCopowers.inj S X s ≫ f) := rfl
+
+@[simp]
+theorem copowerPowerEquiv_symm_apply [HasCopowers C] [HasPowers C]
+    {S : Type v} {X Y : C} (f : X ⟶ HasPowers.power Y S) :
+    (copowerPowerEquiv S X Y).symm f =
+      HasCopowers.desc (fun s => f ≫ HasPowers.proj Y S s) := rfl
+
+end TensorHomAdjunction
+
 end GebLean

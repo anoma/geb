@@ -171,8 +171,11 @@ References:
   - Added `copowerCocone`, `copowerIsWeightedColimit` (initiality proof)
   - Added `powerCone`, `powerIsWeightedLimit` (terminality proof)
   - Validates our definitions are consistent with weighted (co)limit theory
-- [ ] Prove the tensor-hom adjunction (copower-power elimination)
+- [x] Prove the tensor-hom adjunction (copower-power elimination)
   - `C(S ·. X, Y) ≅ Set(S, C(X, Y)) ≅ C(X, Y ^. S)`
+  - Added `copowerHomEquiv : (S ·. X ⟶ Y) ≃ (S → (X ⟶ Y))`
+  - Added `powerHomEquiv : (S → (Y ⟶ X)) ≃ (Y ⟶ X ^. S)`
+  - Added `copowerPowerEquiv : (S ·. X ⟶ Y) ≃ (X ⟶ Y ^. S)` (composition)
   - This is the elimination rule for copowers using powers
 - [ ] Prove weighted (co)limits via ordinary (co)limits + powers/copowers
   - `{W, F} ≅ ∫_j F(j) ^. W(j)` (weighted limit via end of powers)
