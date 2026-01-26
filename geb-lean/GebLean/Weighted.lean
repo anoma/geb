@@ -4058,6 +4058,48 @@ def hasCoendOfIsWeightedCoend {D : Type w} [Category.{v} D]
     (hc : IsWeightedCoend c) : HasCoend P :=
   hasCoendOfIsInitialCowedge P _ (isInitialCowedgeOfIsWeightedCoend P hc)
 
+/-- The end object from a weighted end.
+
+Given a weighted wedge that is a weighted end, its apex is the end object.
+This is definitionally equal to `c.pt`. -/
+abbrev weightedEnd {D : Type w} [Category.{v} D]
+    (P : Cᵒᵖ ⥤ C ⥤ D)
+    (c : WeightedWedge (constProfunctor (C := C) PUnit.{v + 1}) P)
+    (_ : IsWeightedEnd c) : D :=
+  c.pt
+
+/-- The coend object from a weighted coend.
+
+Given a weighted cowedge that is a weighted coend, its apex is the coend object.
+This is definitionally equal to `c.pt`. -/
+abbrev weightedCoend {D : Type w} [Category.{v} D]
+    (P : Cᵒᵖ ⥤ C ⥤ D)
+    (c : WeightedCowedge (constProfunctor (C := C) PUnit.{v + 1}) P)
+    (_ : IsWeightedCoend c) : D :=
+  c.pt
+
+/-- Projections from the weighted end object.
+
+These are the morphisms `weightedEnd P c hc ⟶ (P.obj (op j)).obj j` for each
+`j : C`, coming from the wedge structure. -/
+def weightedEnd.π {D : Type w} [Category.{v} D]
+    (P : Cᵒᵖ ⥤ C ⥤ D)
+    (c : WeightedWedge (constProfunctor (C := C) PUnit.{v + 1}) P)
+    (hc : IsWeightedEnd c) (j : C) :
+    weightedEnd P c hc ⟶ (P.obj (Opposite.op j)).obj j :=
+  ((trivialWeightedWedgeWedgeEquiv P).functor.obj c).ι j
+
+/-- Injections into the weighted coend object.
+
+These are the morphisms `(P.obj (op j)).obj j ⟶ weightedCoend P c hc` for each
+`j : C`, coming from the cowedge structure. -/
+def weightedCoend.ι {D : Type w} [Category.{v} D]
+    (P : Cᵒᵖ ⥤ C ⥤ D)
+    (c : WeightedCowedge (constProfunctor (C := C) PUnit.{v + 1}) P)
+    (hc : IsWeightedCoend c) (j : C) :
+    (P.obj (Opposite.op j)).obj j ⟶ weightedCoend P c hc :=
+  ((trivialWeightedCowedgeCowedgeEquiv P).functor.obj c).π j
+
 /-!
 ### Extracting Diagonal Data from Weighted Cowedges
 
