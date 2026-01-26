@@ -164,9 +164,12 @@ References:
   - Powers are characterized by `Hom(Y, X ^. S) ≅ (S → Hom(Y, X))`
   - Added `mapVal`, `mapIdx`, `bimap` and their lemmas (dual to copowers)
   - Note: `mapIdx` is contravariant for powers (vs covariant for copowers)
-- [ ] Prove copowers/powers are weighted colimits/limits over terminal category
+- [x] Prove copowers/powers are weighted colimits/limits over terminal category
   - `S ·. X` = weighted colimit of `1 → C` picking X, weight picking S
   - `X ^. S` = weighted limit of `1 → C` picking X, weight picking S
+  - Added `terminalDiagram`, `terminalWeight`, `terminalWeightCov` functors
+  - Added `copowerCocone`, `copowerIsWeightedColimit` (initiality proof)
+  - Added `powerCone`, `powerIsWeightedLimit` (terminality proof)
   - Validates our definitions are consistent with weighted (co)limit theory
 - [ ] Prove the tensor-hom adjunction (copower-power elimination)
   - `C(S ·. X, Y) ≅ Set(S, C(X, Y)) ≅ C(X, Y ^. S)`
