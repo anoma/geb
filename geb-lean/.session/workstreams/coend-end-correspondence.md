@@ -54,8 +54,10 @@ explicit.
     - `weightedEnd.π P c hc j : weightedEnd P c hc ⟶ (P.obj (op j)).obj j`
     - `weightedCoend.ι P c hc j : (P.obj (op j)).obj j ⟶ weightedCoend P c hc`
   - Added computable `LimitCone`/`ColimitCocone` constructors from weighted data:
-    - `weightedEndToLimitCone : IsWeightedEnd c → LimitCone (multicospanIndexEnd P).multicospan`
-    - `weightedCoendToColimitCocone : IsWeightedCoend c → ColimitCocone (multispanIndexCoend P).multispan`
+    - `weightedEndToLimitCone` - from `IsWeightedEnd c` to `LimitCone`
+    - `weightedCoendToColimitCocone` - from `IsWeightedCoend c` to `ColimitCocone`
+    - `WeightedEndWedge.toLimitCone` - wrapper taking bundled structure
+    - `WeightedCoendCowedge.toColimitCocone` - wrapper taking bundled structure
 - [ ] Show that `WeightedCowedgeOver unitProfunctor P Y` is the end
       `∫_A Hom(P(A,A), Y)`
 - [ ] Formalize the coend elimination rule using the end structure
