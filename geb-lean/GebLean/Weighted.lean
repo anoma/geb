@@ -4100,6 +4100,30 @@ def weightedCoend.ι {D : Type w} [Category.{v} D]
     (P.obj (Opposite.op j)).obj j ⟶ weightedCoend P c hc :=
   ((trivialWeightedCowedgeCowedgeEquiv P).functor.obj c).π j
 
+/-- Construct a `LimitCone` for the end diagram from a weighted end.
+
+This bundles the wedge (as a cone) with its `IsLimit` proof, giving the
+complete "end" data structure. The cone's apex is `c.pt`. -/
+def weightedEndToLimitCone {D : Type w} [Category.{v} D]
+    (P : Cᵒᵖ ⥤ C ⥤ D)
+    {c : WeightedWedge (constProfunctor (C := C) PUnit.{v + 1}) P}
+    (hc : IsWeightedEnd c) :
+    LimitCone (multicospanIndexEnd P).multicospan :=
+  ⟨(trivialWeightedWedgeWedgeEquiv P).functor.obj c,
+   (Cone.isLimitEquivIsTerminal _).symm (isTerminalWedgeOfIsWeightedEnd P hc)⟩
+
+/-- Construct a `ColimitCocone` for the coend diagram from a weighted coend.
+
+This bundles the cowedge (as a cocone) with its `IsColimit` proof, giving the
+complete "coend" data structure. The cocone's apex is `c.pt`. -/
+def weightedCoendToColimitCocone {D : Type w} [Category.{v} D]
+    (P : Cᵒᵖ ⥤ C ⥤ D)
+    {c : WeightedCowedge (constProfunctor (C := C) PUnit.{v + 1}) P}
+    (hc : IsWeightedCoend c) :
+    ColimitCocone (multispanIndexCoend P).multispan :=
+  ⟨(trivialWeightedCowedgeCowedgeEquiv P).functor.obj c,
+   (Cocone.isColimitEquivIsInitial _).symm (isInitialCowedgeOfIsWeightedCoend P hc)⟩
+
 /-!
 ### Extracting Diagonal Data from Weighted Cowedges
 
