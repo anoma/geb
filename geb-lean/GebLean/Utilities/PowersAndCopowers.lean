@@ -662,6 +662,226 @@ theorem copowerPowerEquiv_symm_apply [HasCopowers C] [HasPowers C]
     (copowerPowerEquiv S X Y).symm f =
       HasCopowers.desc (fun s => f ≫ HasPowers.proj Y S s) := rfl
 
+/-- The copower functor for a fixed type `S`. Maps `X ↦ S ·. X`.
+This is the left adjoint to `powerByTypeFunctor S`. -/
+def copowerWithTypeFunctor [HasCopowers C] (S : Type v) : C ⥤ C where
+  obj := fun X => HasCopowers.copower S X
+  map := fun f => HasCopowers.mapVal f
+  map_id := fun _ => HasCopowers.mapVal_id
+  map_comp := fun _ _ => HasCopowers.mapVal_comp _ _
+
+@[simp]
+theorem copowerWithTypeFunctor_obj [HasCopowers C] (S : Type v) (X : C) :
+    (copowerWithTypeFunctor S).obj X = HasCopowers.copower S X := rfl
+
+@[simp]
+theorem copowerWithTypeFunctor_map [HasCopowers C] (S : Type v) {X Y : C} (f : X ⟶ Y) :
+    (copowerWithTypeFunctor S).map f = HasCopowers.mapVal f := rfl
+
+/-- The power functor for a fixed type `S`. Maps `X ↦ X ^. S`.
+This is the right adjoint to `copowerWithTypeFunctor S`. -/
+def powerByTypeFunctor [HasPowers C] (S : Type v) : C ⥤ C where
+  obj := fun X => HasPowers.power X S
+  map := fun f => HasPowers.mapVal f
+  map_id := fun _ => HasPowers.mapVal_id
+  map_comp := fun _ _ => HasPowers.mapVal_comp _ _
+
+@[simp]
+theorem powerByTypeFunctor_obj [HasPowers C] (S : Type v) (X : C) :
+    (powerByTypeFunctor S).obj X = HasPowers.power X S := rfl
+
+@[simp]
+theorem powerByTypeFunctor_map [HasPowers C] (S : Type v) {X Y : C} (f : X ⟶ Y) :
+    (powerByTypeFunctor S).map f = HasPowers.mapVal f := rfl
+
+/-- The copower-power adjunction: `S ·. _ ⊣ _ ^. S`.
+
+This is the categorical form of the tensor-hom adjunction, expressing that
+copower with a type is left adjoint to power by that type. -/
+def copowerPowerAdjunction [HasCopowers C] [HasPowers C] (S : Type v) :
+    copowerWithTypeFunctor (C := C) S ⊣ powerByTypeFunctor S :=
+  Adjunction.mkOfHomEquiv {
+    homEquiv := fun X Y => copowerPowerEquiv S X Y
+    homEquiv_naturality_left_symm := fun {X' X Y} f g => by
+      apply HasCopowers.ext
+      intro s
+      simp only [copowerWithTypeFunctor_map, copowerWithTypeFunctor_obj,
+        powerByTypeFunctor_obj, copowerPowerEquiv_symm_apply]
+      rw [← Category.assoc, HasCopowers.mapVal_inj, Category.assoc, HasCopowers.fac,
+        HasCopowers.fac, Category.assoc]
+    homEquiv_naturality_right := fun {X Y Y'} f g => by
+      apply HasPowers.ext
+      intro s
+      simp only [powerByTypeFunctor_map, powerByTypeFunctor_obj,
+        copowerWithTypeFunctor_obj, copowerPowerEquiv_apply]
+      rw [HasPowers.fac]
+      rw [Category.assoc (HasPowers.lift _) (HasPowers.mapVal g) (HasPowers.proj Y' S s)]
+      rw [HasPowers.mapVal_proj]
+      rw [← Category.assoc (HasPowers.lift _) (HasPowers.proj Y S s) g]
+      rw [HasPowers.fac, Category.assoc]
+  }
+
 end TensorHomAdjunction
+
+/-!
+## Weighted (Co)Limits via Ends/Coends of Powers/Copowers
+
+For categories with powers/copowers and ordinary ends/coends, weighted
+(co)limits can be expressed as:
+
+- `{W, F} ≅ ∫_j F(j) ^. W(j)` (weighted limit via end of powers)
+- `W * F ≅ ∫^j W(j) ·. F(j)` (weighted colimit via coend of copowers)
+
+This section defines the profunctors whose ends/coends give weighted
+(co)limits, and establishes the isomorphisms.
+-/
+
+section WeightedViaEnds
+
+open CategoryTheory Limits Opposite
+
+universe u₁ v₁ u₂
+
+variable {J : Type u₁} [Category.{v₁} J] {C : Type u₂} [Category.{v₁} C]
+
+/-!
+### The Copower Profunctor
+
+Given a weight `W : Jᵒᵖ ⥤ Type v` and a diagram `F : J ⥤ C`, the copower
+profunctor `copowerProfunctor W F : Jᵒᵖ ⥤ J ⥤ C` has:
+
+- Objects: `(copowerProfunctor W F).obj (op j₁).obj j₂ = W(j₁) ·. F(j₂)`
+- On the diagonal: `W(j) ·. F(j)`
+
+The coend of this profunctor gives the weighted colimit `W * F`.
+-/
+
+section CopowerProfunctor
+
+variable [HasCopowers C] (W : Jᵒᵖ ⥤ Type v₁) (F : J ⥤ C)
+
+/-- The inner functor of the copower profunctor: for a fixed `j : Jᵒᵖ`,
+maps `j' : J` to `W(j) ·. F(j')`.
+
+This is the composition `F ⋙ copowerWithTypeFunctor (W.obj j)`. -/
+def copowerProfunctorInner (j : Jᵒᵖ) : J ⥤ C :=
+  F ⋙ copowerWithTypeFunctor (W.obj j)
+
+@[simp]
+theorem copowerProfunctorInner_obj (j : Jᵒᵖ) (j' : J) :
+    (copowerProfunctorInner W F j).obj j' =
+      HasCopowers.copower (W.obj j) (F.obj j') := rfl
+
+@[simp]
+theorem copowerProfunctorInner_map (j : Jᵒᵖ) {j₁ j₂ : J} (g : j₁ ⟶ j₂) :
+    (copowerProfunctorInner W F j).map g = HasCopowers.mapVal (F.map g) := rfl
+
+/-- The copower profunctor `Jᵒᵖ ⥤ J ⥤ C` whose coend gives weighted colimits.
+
+For weight `W : Jᵒᵖ ⥤ Type v` and diagram `F : J ⥤ C`:
+- `(copowerProfunctor W F).obj (op j₁).obj j₂ = W(j₁) ·. F(j₂)`
+- On the diagonal: `W(j) ·. F(j)` -/
+def copowerProfunctor : Jᵒᵖ ⥤ J ⥤ C where
+  obj := copowerProfunctorInner W F
+  map := fun {j₁ j₂} f => {
+    app := fun j' => HasCopowers.mapIdx (W.map f)
+    naturality := fun j₁' j₂' g => by
+      simp only [copowerProfunctorInner_map]
+      rw [← HasCopowers.bimap_eq_mapVal_mapIdx, ← HasCopowers.bimap_eq_mapIdx_mapVal]
+  }
+  map_id := fun j => by
+    ext j'
+    simp only [copowerProfunctorInner_obj, W.map_id, NatTrans.id_app]
+    exact HasCopowers.mapIdx_id
+  map_comp := fun {j₁ j₂ j₃} f g => by
+    ext j'
+    simp only [copowerProfunctorInner_obj, W.map_comp, NatTrans.comp_app]
+    exact HasCopowers.mapIdx_comp (W.map f) (W.map g)
+
+@[simp]
+theorem copowerProfunctor_obj_obj (j : Jᵒᵖ) (j' : J) :
+    ((copowerProfunctor W F).obj j).obj j' =
+      HasCopowers.copower (W.obj j) (F.obj j') := rfl
+
+@[simp]
+theorem copowerProfunctor_obj_map (j : Jᵒᵖ) {j₁ j₂ : J} (g : j₁ ⟶ j₂) :
+    ((copowerProfunctor W F).obj j).map g = HasCopowers.mapVal (F.map g) := rfl
+
+@[simp]
+theorem copowerProfunctor_map_app {j₁ j₂ : Jᵒᵖ} (f : j₁ ⟶ j₂) (j' : J) :
+    ((copowerProfunctor W F).map f).app j' = HasCopowers.mapIdx (W.map f) := rfl
+
+end CopowerProfunctor
+
+/-!
+### The Power Profunctor
+
+Given a weight `W : J ⥤ Type v` and a diagram `F : J ⥤ C`, the power
+profunctor `powerProfunctor W F : Jᵒᵖ ⥤ J ⥤ C` has:
+
+- Objects: `(powerProfunctor W F).obj (op j₁).obj j₂ = F(j₂) ^. W(j₁)`
+- On the diagonal: `F(j) ^. W(j)`
+
+The end of this profunctor gives the weighted limit `{W, F}`.
+-/
+
+section PowerProfunctor
+
+variable [HasPowers C] (W : J ⥤ Type v₁) (F : J ⥤ C)
+
+/-- The inner functor of the power profunctor: for a fixed `j : Jᵒᵖ`,
+maps `j' : J` to `F(j') ^. W(j.unop)`.
+
+This is the composition `F ⋙ powerByTypeFunctor (W.obj j.unop)`. -/
+def powerProfunctorInner (j : Jᵒᵖ) : J ⥤ C :=
+  F ⋙ powerByTypeFunctor (W.obj j.unop)
+
+@[simp]
+theorem powerProfunctorInner_obj (j : Jᵒᵖ) (j' : J) :
+    (powerProfunctorInner W F j).obj j' =
+      HasPowers.power (F.obj j') (W.obj j.unop) := rfl
+
+@[simp]
+theorem powerProfunctorInner_map (j : Jᵒᵖ) {j₁ j₂ : J} (g : j₁ ⟶ j₂) :
+    (powerProfunctorInner W F j).map g = HasPowers.mapVal (F.map g) := rfl
+
+/-- The power profunctor `Jᵒᵖ ⥤ J ⥤ C` whose end gives weighted limits.
+
+For weight `W : J ⥤ Type v` and diagram `F : J ⥤ C`:
+- `(powerProfunctor W F).obj (op j₁).obj j₂ = F(j₂) ^. W(j₁)`
+- On the diagonal: `F(j) ^. W(j)` -/
+def powerProfunctor : Jᵒᵖ ⥤ J ⥤ C where
+  obj := powerProfunctorInner W F
+  map := fun {j₁ j₂} f => {
+    app := fun j' => HasPowers.mapIdx (W.map f.unop)
+    naturality := fun j₁' j₂' g => by
+      simp only [powerProfunctorInner_map]
+      rw [← HasPowers.bimap_eq_mapIdx_mapVal, ← HasPowers.bimap_eq_mapVal_mapIdx]
+  }
+  map_id := fun j => by
+    ext j'
+    simp only [powerProfunctorInner_obj, unop_id, W.map_id, NatTrans.id_app]
+    exact HasPowers.mapIdx_id
+  map_comp := fun {j₁ j₂ j₃} f g => by
+    ext j'
+    simp only [powerProfunctorInner_obj, unop_comp, W.map_comp, NatTrans.comp_app]
+    exact HasPowers.mapIdx_comp (W.map g.unop) (W.map f.unop)
+
+@[simp]
+theorem powerProfunctor_obj_obj (j : Jᵒᵖ) (j' : J) :
+    ((powerProfunctor W F).obj j).obj j' =
+      HasPowers.power (F.obj j') (W.obj j.unop) := rfl
+
+@[simp]
+theorem powerProfunctor_obj_map (j : Jᵒᵖ) {j₁ j₂ : J} (g : j₁ ⟶ j₂) :
+    ((powerProfunctor W F).obj j).map g = HasPowers.mapVal (F.map g) := rfl
+
+@[simp]
+theorem powerProfunctor_map_app {j₁ j₂ : Jᵒᵖ} (f : j₁ ⟶ j₂) (j' : J) :
+    ((powerProfunctor W F).map f).app j' = HasPowers.mapIdx (W.map f.unop) := rfl
+
+end PowerProfunctor
+
+end WeightedViaEnds
 
 end GebLean

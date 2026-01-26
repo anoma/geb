@@ -177,10 +177,26 @@ References:
   - Added `powerHomEquiv : (S → (Y ⟶ X)) ≃ (Y ⟶ X ^. S)`
   - Added `copowerPowerEquiv : (S ·. X ⟶ Y) ≃ (X ⟶ Y ^. S)` (composition)
   - This is the elimination rule for copowers using powers
-- [ ] Prove weighted (co)limits via ordinary (co)limits + powers/copowers
+  - Added `copowerWithTypeFunctor S : C ⥤ C` mapping `X ↦ S ·. X`
+  - Added `powerByTypeFunctor S : C ⥤ C` mapping `X ↦ X ^. S`
+  - Added `copowerPowerAdjunction S`:
+    `copowerWithTypeFunctor S ⊣ powerByTypeFunctor S`
+- [~] Prove weighted (co)limits via ordinary (co)limits + powers/copowers
   - `{W, F} ≅ ∫_j F(j) ^. W(j)` (weighted limit via end of powers)
   - `W * F ≅ ∫^j W(j) ·. F(j)` (weighted colimit via coend of copowers)
-  - Add to `Weighted.lean` for categories with these structures
+  - Progress:
+    - [x] Added `copowerProfunctor W F : Jᵒᵖ ⥤ J ⥤ C` in `PowersAndCopowers.lean`
+      - Diagonal: `(copowerProfunctor W F).obj (op j).obj j = W(j) ·. F(j)`
+      - Inner functor: `copowerProfunctorInner W F j =`
+        `F ⋙ copowerWithTypeFunctor (W.obj j)`
+    - [x] Added `powerProfunctor W F : Jᵒᵖ ⥤ J ⥤ C` in `PowersAndCopowers.lean`
+      - Diagonal: `(powerProfunctor W F).obj (op j).obj j = F(j) ^. W(j)`
+      - Inner functor: `powerProfunctorInner W F j =`
+        `F ⋙ powerByTypeFunctor (W.obj j.unop)`
+    - [ ] Establish equivalence
+      `WeightedCocone W F ≌ WeightedCowedge unit (copowerProfunctor W F)`
+    - [ ] Transfer initiality to prove `W * F ≅ ∫^j W(j) ·. F(j)`
+    - [ ] Dual for weighted limits and ends
 - [ ] Formalize Level 1: Weighted colimit elimination via weighted limits
   - `C(W * F, Y) ≅ {W, C(F(-), Y)}`
   - Work at the `WeightedCone`/`WeightedCocone` level
