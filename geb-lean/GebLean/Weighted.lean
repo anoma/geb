@@ -3870,6 +3870,65 @@ def hasInitialCowedgeOfHasInitialWeightedCowedge {D : Type w} [Category.{v} D]
   Adjunction.hasColimitsOfShape_of_equivalence
     (trivialWeightedCowedgeCowedgeEquiv P).inverse
 
+/-- `HasTerminal (WeightedWedge unitW P)` is equivalent to `HasEnd P`.
+
+This follows from two equivalences:
+1. `HasTerminal (WeightedWedge W P) ↔ HasTerminal (Wedge P)` via the
+   categorical equivalence `trivialWeightedWedgeWedgeEquiv`
+2. `HasTerminal (Wedge P) ↔ HasEnd P` via `hasLimit_iff_hasTerminal_cone`
+
+Note: `HasWeightedEnd` (a `Type` containing data) differs from `HasTerminal`
+(a `Prop`). This theorem works at the `Prop` level. -/
+theorem hasTerminalWeightedWedgeIffHasEnd {D : Type w} [Category.{v} D]
+    (P : Cᵒᵖ ⥤ C ⥤ D) :
+    HasTerminal
+      (WeightedWedge (constProfunctor (C := C) PUnit.{v + 1}) P) ↔ HasEnd P :=
+  (trivialWeightedWedgeWedgeEquiv P).hasTerminal_iff.trans
+    (hasLimit_iff_hasTerminal_cone _).symm
+
+/-- Construct `HasEnd P` from `HasTerminal (WeightedWedge unitW P)`. -/
+def hasEndOfHasTerminalWeightedWedge {D : Type w} [Category.{v} D]
+    (P : Cᵒᵖ ⥤ C ⥤ D)
+    [HasTerminal (WeightedWedge (constProfunctor (C := C) PUnit.{v + 1}) P)] :
+    HasEnd P :=
+  (hasTerminalWeightedWedgeIffHasEnd P).mp inferInstance
+
+/-- Construct `HasTerminal (WeightedWedge unitW P)` from `HasEnd P`. -/
+def hasTerminalWeightedWedgeOfHasEnd {D : Type w} [Category.{v} D]
+    (P : Cᵒᵖ ⥤ C ⥤ D) [HasEnd P] :
+    HasTerminal (WeightedWedge (constProfunctor (C := C) PUnit.{v + 1}) P) :=
+  (hasTerminalWeightedWedgeIffHasEnd P).mpr inferInstance
+
+/-- `HasInitial (WeightedCowedge unitW P)` is equivalent to `HasCoend P`.
+
+This follows from two equivalences:
+1. `HasInitial (WeightedCowedge W P) ↔ HasInitial (Cowedge P)` via the
+   categorical equivalence `trivialWeightedCowedgeCowedgeEquiv`
+2. `HasInitial (Cowedge P) ↔ HasCoend P` via `hasColimit_iff_hasInitial_cocone`
+
+Note: `HasWeightedCoend` (a `Type` containing data) differs from `HasInitial`
+(a `Prop`). This theorem works at the `Prop` level. -/
+theorem hasInitialWeightedCowedgeIffHasCoend {D : Type w} [Category.{v} D]
+    (P : Cᵒᵖ ⥤ C ⥤ D) :
+    HasInitial
+      (WeightedCowedge (constProfunctor (C := C) PUnit.{v + 1}) P) ↔
+    HasCoend P :=
+  (trivialWeightedCowedgeCowedgeEquiv P).hasInitial_iff.trans
+    (hasColimit_iff_hasInitial_cocone _).symm
+
+/-- Construct `HasCoend P` from `HasInitial (WeightedCowedge unitW P)`. -/
+def hasCoendOfHasInitialWeightedCowedge {D : Type w} [Category.{v} D]
+    (P : Cᵒᵖ ⥤ C ⥤ D)
+    [HasInitial (WeightedCowedge (constProfunctor (C := C) PUnit.{v + 1}) P)] :
+    HasCoend P :=
+  (hasInitialWeightedCowedgeIffHasCoend P).mp inferInstance
+
+/-- Construct `HasInitial (WeightedCowedge unitW P)` from `HasCoend P`. -/
+def hasInitialWeightedCowedgeOfHasCoend {D : Type w} [Category.{v} D]
+    (P : Cᵒᵖ ⥤ C ⥤ D) [HasCoend P] :
+    HasInitial (WeightedCowedge (constProfunctor (C := C) PUnit.{v + 1}) P) :=
+  (hasInitialWeightedCowedgeIffHasCoend P).mpr inferInstance
+
 /-!
 ### Extracting Diagonal Data from Weighted Cowedges
 
