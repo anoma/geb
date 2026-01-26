@@ -3801,6 +3801,76 @@ def trivialWeightedCowedgeCoconeEquiv {D : Type w} [Category.{v} D]
   exact (coconeWeightedCoconeEquiv (profunctorOnCoTwistedArrow C P)).symm
 
 /-!
+### Equivalence of Weighted Ends/Coends with Mathlib Ends/Coends
+
+When the weight profunctor is the unit (constant PUnit), weighted wedges are
+equivalent to mathlib's wedges, and weighted cowedges are equivalent to
+mathlib's cowedges. Since ends are terminal wedges and coends are initial
+cowedges, this gives equivalences between weighted ends/coends with unit
+weight and mathlib's ends/coends.
+-/
+
+/-- Weighted wedges with unit weight are equivalent to mathlib wedges.
+
+Composition of `trivialWeightedWedgeConeEquiv` (weighted wedge ≌ cone) with
+`wedgeConeEquiv.symm` (cone ≌ wedge). -/
+def trivialWeightedWedgeWedgeEquiv {D : Type w} [Category.{v} D]
+    (P : Cᵒᵖ ⥤ C ⥤ D) :
+    WeightedWedge (constProfunctor (C := C) PUnit.{v+1}) P ≌
+    Wedge (J := C) (C := D) P :=
+  (trivialWeightedWedgeConeEquiv P).trans (wedgeConeEquiv P).symm
+
+/-- Weighted cowedges with unit weight are equivalent to mathlib cowedges.
+
+Composition of `trivialWeightedCowedgeCoconeEquiv` (weighted cowedge ≌ cocone)
+with `cowedgeCoconeEquiv.symm` (cocone ≌ cowedge). -/
+def trivialWeightedCowedgeCowedgeEquiv {D : Type w} [Category.{v} D]
+    (P : Cᵒᵖ ⥤ C ⥤ D) :
+    WeightedCowedge (constProfunctor (C := C) PUnit.{v+1}) P ≌
+    Cowedge (J := C) (C := D) P :=
+  (trivialWeightedCowedgeCoconeEquiv P).trans (cowedgeCoconeEquiv P).symm
+
+/-- `HasTerminal (WeightedWedge W P)` from `HasTerminal (Wedge P)` via the
+equivalence between them.
+
+Uses `hasLimitsOfShape_of_equivalence` to transfer `HasTerminal` across
+the categorical equivalence. -/
+def hasTerminalWeightedWedgeOfHasTerminalWedge {D : Type w} [Category.{v} D]
+    (P : Cᵒᵖ ⥤ C ⥤ D) [HasTerminal (Wedge (J := C) (C := D) P)] :
+    HasTerminal (WeightedWedge (constProfunctor (C := C) PUnit.{v + 1}) P) :=
+  Adjunction.hasLimitsOfShape_of_equivalence
+    (trivialWeightedWedgeWedgeEquiv P).functor
+
+/-- `HasTerminal (Wedge P)` from `HasTerminal (WeightedWedge W P)` via the
+equivalence between them. -/
+def hasTerminalWedgeOfHasTerminalWeightedWedge {D : Type w} [Category.{v} D]
+    (P : Cᵒᵖ ⥤ C ⥤ D)
+    [HasTerminal (WeightedWedge (constProfunctor (C := C) PUnit.{v + 1}) P)] :
+    HasTerminal (Wedge (J := C) (C := D) P) :=
+  Adjunction.hasLimitsOfShape_of_equivalence
+    (trivialWeightedWedgeWedgeEquiv P).inverse
+
+/-- `HasInitial (WeightedCowedge W P)` from `HasInitial (Cowedge P)` via the
+equivalence between them.
+
+Uses `hasColimitsOfShape_of_equivalence` to transfer `HasInitial` across
+the categorical equivalence. -/
+def hasInitialWeightedCowedgeOfHasInitialCowedge {D : Type w} [Category.{v} D]
+    (P : Cᵒᵖ ⥤ C ⥤ D) [HasInitial (Cowedge (J := C) (C := D) P)] :
+    HasInitial (WeightedCowedge (constProfunctor (C := C) PUnit.{v + 1}) P) :=
+  Adjunction.hasColimitsOfShape_of_equivalence
+    (trivialWeightedCowedgeCowedgeEquiv P).functor
+
+/-- `HasInitial (Cowedge P)` from `HasInitial (WeightedCowedge W P)` via the
+equivalence between them. -/
+def hasInitialCowedgeOfHasInitialWeightedCowedge {D : Type w} [Category.{v} D]
+    (P : Cᵒᵖ ⥤ C ⥤ D)
+    [HasInitial (WeightedCowedge (constProfunctor (C := C) PUnit.{v + 1}) P)] :
+    HasInitial (Cowedge (J := C) (C := D) P) :=
+  Adjunction.hasColimitsOfShape_of_equivalence
+    (trivialWeightedCowedgeCowedgeEquiv P).inverse
+
+/-!
 ### Extracting Diagonal Data from Weighted Cowedges
 
 Given a weighted cowedge, we can extract the diagonal family as a `ParanatSig`.
