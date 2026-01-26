@@ -17,27 +17,63 @@ The current `CoendAsNatTransformations` section in `RestrictedCoendAsColimit.lea
 has partial definitions but doesn't complete the proofs or make the end structure
 explicit.
 
-### Generalized Weighted Coend Elimination
+### Generalized Elimination Hierarchy
 
-The ordinary coend elimination rule generalizes to weighted coends/ends:
+The elimination rules form a hierarchy of increasing generality:
+
+#### Level 1: Weighted Colimit → Weighted Limit
+
+The most general formula. For weight `W : J^op → V` and diagram `F : J → C`:
+
+```text
+C(W * F, Y) ≅ {W, C(F(-), Y)}
+```
+
+where `W * F` is the W-weighted colimit of F, and `{W, C(F(-), Y)}` is the
+W-weighted limit of the functor `j ↦ C(F(j), Y)`.
+
+#### Level 2: Weighted Coend → Weighted End
+
+Special case where F is a profunctor `P : C^op × C → D`:
 
 ```text
 Hom(∫^A W(A) ⊗ P(A,A), Y) ≅ ∫_A [W(A), Hom(P(A,A), Y)]
 ```
 
-where `⊗` is tensor/copower and `[-,-]` is cotensor/power. The ordinary rule
-is the special case where `W = terminalProfunctor` since `PUnit ⊗ X ≅ X` and
-`[PUnit, Y] ≅ Y`.
+where `⊗` is tensor/copower and `[-,-]` is cotensor/power.
 
-Since we've shown ends and coends are weighted ends/coends with terminal weight,
-we should formalize the general weighted elimination rule first, then derive
-the ordinary rule as a special case.
+#### Level 3: Ordinary Coend → Ordinary End
+
+Special case where `W = terminalProfunctor` (since `PUnit ⊗ X ≅ X` and
+`[PUnit, Y] ≅ Y`):
+
+```text
+Hom(∫^A P(A,A), Y) ≅ ∫_A Hom(P(A,A), Y)
+```
+
+### Implementation Strategy
+
+Since our code has:
+
+- `WeightedCone`/`WeightedCocone` as the general weighted limit/colimit cones
+- `WeightedWedge`/`WeightedCowedge` as special cases for ends/coends
+- `terminalProfunctor` giving ordinary ends/coends from weighted ones
+
+We should formalize Level 1 first (weighted colimit elimination via weighted
+limits), then derive Level 2 and Level 3 as special cases. This requires:
+
+1. Powers (dual to copowers) for the cotensor `[-,-]` operation
+2. The elimination isomorphism at the weighted cone/cocone level
+3. Specialization to wedges/cowedges for ends/coends
 
 References:
 
 - [nLab: weighted colimit](https://ncatlab.org/nlab/show/weighted+colimit)
-- [Emily Riehl: Weighted Limits and Colimits](https://math.jhu.edu/~eriehl/weighted.pdf)
+- [nLab: weighted limit](https://ncatlab.org/nlab/show/weighted+limit)
+- [nLab: end](https://ncatlab.org/nlab/show/end)
+- [Emily Riehl: Weighted Limits and Colimits](https://emilyriehl.github.io/files/weighted.pdf)
 - [Fosco Loregian: Coend Calculus](https://arxiv.org/pdf/1501.02503)
+- [Bartosz Milewski: Weighted Colimits](https://bartoszmilewski.com/2020/07/20/weighted-colimits/)
 
 ## Tasks
 
@@ -85,14 +121,22 @@ References:
   - `Coend P` = `WeightedCoendCowedge terminalProfunctor P`
   - These serve as our computable "end" and "coend" since mathlib's are not
     computable
-- [ ] Formalize the generalized weighted coend elimination rule
+- [x] Extract `HasCopowers` to `GebLean/Utilities/PowersAndCopowers.lean`
+- [x] Add `HasPowers` (dual to `HasCopowers`) in `PowersAndCopowers.lean`
+  - Powers are characterized by `Hom(Y, X ^. S) ≅ (S → Hom(Y, X))`
+  - Added `mapVal`, `mapIdx`, `bimap` and their lemmas (dual to copowers)
+  - Note: `mapIdx` is contravariant for powers (vs covariant for copowers)
+- [ ] Formalize Level 1: Weighted colimit elimination via weighted limits
+  - `C(W * F, Y) ≅ {W, C(F(-), Y)}`
+  - Work at the `WeightedCone`/`WeightedCocone` level
+- [ ] Formalize Level 2: Weighted coend elimination via weighted ends
   - `Hom(∫^A W(A) ⊗ P(A,A), Y) ≅ ∫_A [W(A), Hom(P(A,A), Y)]`
-  - Requires tensor/copower and cotensor/power structures
-  - The ordinary rule is the special case with `W = terminalProfunctor`
+  - Derive from Level 1 by specializing to wedges/cowedges
 - [ ] Show that `WeightedCowedgeOver terminalProfunctor P Y` is the end
       `∫_A Hom(P(A,A), Y)`
-- [ ] Formalize the ordinary coend elimination rule as special case
+- [ ] Formalize Level 3: Ordinary coend elimination via ordinary ends
   - `Hom(∫^A P(A,A), Y) ≅ ∫_A Hom(P(A,A), Y)`
+  - Derive from Level 2 with `W = terminalProfunctor`
 - [ ] Prove the co-Yoneda isomorphism:
       `∫^A P(A,A) ≅ Nat(Y ↦ ∫_A Hom(P(A,A), Y), Id)`
 - [ ] Complete the proof that `coendToNatTrans` and `natTransToCoend` are
@@ -151,4 +195,5 @@ exactly the dinaturality condition for the injection maps.
 
 - `GebLean/RestrictedCoendAsColimit.lean` - CoendAsNatTransformations section
 - `GebLean/WeightedAlg.lean` - WeightedWedge, WeightedCowedge definitions
-- `GebLean/Weighted.lean` - HasWeightedEnd, HasWeightedCoend
+- `GebLean/Weighted.lean` - HasWeightedEnd, HasWeightedCoend, End, Coend
+- `GebLean/Utilities/PowersAndCopowers.lean` - HasCopowers (and HasPowers)

@@ -186,4 +186,168 @@ theorem desc_inj {S : Type v} {X Y : C} (g : copower S X ⟶ Y) :
 
 end HasCopowers
 
+/-!
+## Powers
+-/
+
+/-- A category has powers if for every type `S` and object `X`, there is an
+object `X ^. S` with projections `X ^. S → X` indexed by elements of `S`, and a
+universal property: any family of morphisms `Y → X` indexed by `S` factors
+uniquely through the power. -/
+class HasPowers (C : Type u) [Category.{v} C] where
+  /-- The power object X ^. S for an object X and type S. -/
+  power : C → Type v → C
+  /-- The family of projections indexed by elements of S. -/
+  proj : ∀ (X : C) (S : Type v), S → (power X S ⟶ X)
+  /-- The universal property: any family factors through the power. -/
+  lift : ∀ {X : C} {S : Type v} {Y : C}, (S → (Y ⟶ X)) → (Y ⟶ power X S)
+  /-- The family factors through the universal morphism. -/
+  fac : ∀ {X : C} {S : Type v} {Y : C} (f : S → (Y ⟶ X)) (s : S),
+    lift f ≫ proj X S s = f s
+  /-- Uniqueness of the factorization. -/
+  uniq : ∀ {X : C} {S : Type v} {Y : C} (f : S → (Y ⟶ X)) (g : Y ⟶ power X S),
+    (∀ s, g ≫ proj X S s = f s) → g = lift f
+
+namespace HasPowers
+
+variable {C : Type u} [Category.{v} C] [HasPowers C]
+
+/-- Notation for the power. -/
+infixl:80 " ^. " => power
+
+/-- Extensionality for morphisms into powers: two morphisms are equal
+if they agree on all projections. -/
+theorem ext {X : C} {S : Type v} {Y : C} (f g : Y ⟶ X ^. S)
+    (h : ∀ s, f ≫ proj X S s = g ≫ proj X S s) : f = g := by
+  have hf := uniq (fun s => f ≫ proj X S s) f (fun _ => rfl)
+  have hg := uniq (fun s => f ≫ proj X S s) g (fun s => (h s).symm)
+  rw [hf, hg]
+
+/-- Functorial action of powers on the base object.
+Given `g : X → Y`, we get `mapVal g : X ^. S → Y ^. S`. -/
+def mapVal {X Y : C} {S : Type v} (g : X ⟶ Y) : power X S ⟶ power Y S :=
+  lift (fun s => proj X S s ≫ g)
+
+@[simp]
+theorem mapVal_proj {X Y : C} {S : Type v} (g : X ⟶ Y) (s : S) :
+    mapVal g ≫ proj Y S s = proj X S s ≫ g := fac _ s
+
+@[simp]
+theorem mapVal_id {X : C} {S : Type v} : mapVal (𝟙 X) = 𝟙 (power X S) := by
+  apply ext
+  intro s
+  rw [mapVal_proj, Category.comp_id, Category.id_comp]
+
+@[simp]
+theorem mapVal_comp {X Y Z : C} {S : Type v} (f : X ⟶ Y) (g : Y ⟶ Z) :
+    mapVal (f ≫ g) = mapVal (S := S) f ≫ mapVal g := by
+  apply ext
+  intro s
+  calc mapVal (f ≫ g) ≫ proj Z S s = proj X S s ≫ (f ≫ g) := mapVal_proj _ s
+    _ = (proj X S s ≫ f) ≫ g := by rw [Category.assoc]
+    _ = (mapVal f ≫ proj Y S s) ≫ g := by rw [← mapVal_proj f s]
+    _ = mapVal f ≫ proj Y S s ≫ g := by rw [Category.assoc]
+    _ = mapVal f ≫ (mapVal g ≫ proj Z S s) := by rw [← mapVal_proj g s]
+    _ = (mapVal f ≫ mapVal g) ≫ proj Z S s := by rw [← Category.assoc]
+
+/-- Functorial action of powers on the indexing type.
+Given `f : S → T`, we get `mapIdx f : X ^. T → X ^. S` (contravariant). -/
+def mapIdx {X : C} {S T : Type v} (f : S → T) : power X T ⟶ power X S :=
+  lift (fun s => proj X T (f s))
+
+@[simp]
+theorem mapIdx_proj {X : C} {S T : Type v} (f : S → T) (s : S) :
+    mapIdx f ≫ proj X S s = proj X T (f s) := fac _ s
+
+@[simp]
+theorem mapIdx_id {X : C} {S : Type v} : mapIdx (id : S → S) = 𝟙 (power X S) := by
+  apply ext
+  intro s
+  rw [mapIdx_proj, id_eq, Category.id_comp]
+
+@[simp]
+theorem mapIdx_comp {X : C} {S T U : Type v} (f : S → T) (g : T → U) :
+    mapIdx (g ∘ f) = mapIdx (X := X) g ≫ mapIdx f := by
+  apply ext
+  intro s
+  calc mapIdx (g ∘ f) ≫ proj X S s = proj X U ((g ∘ f) s) := mapIdx_proj _ s
+    _ = proj X U (g (f s)) := rfl
+    _ = mapIdx g ≫ proj X T (f s) := (mapIdx_proj g _).symm
+    _ = mapIdx g ≫ (mapIdx f ≫ proj X S s) := by rw [← mapIdx_proj f s]
+    _ = (mapIdx g ≫ mapIdx f) ≫ proj X S s := by rw [← Category.assoc]
+
+/-- Combined functorial action: given `f : S → T` and `g : X → Y`,
+we get `bimap f g : X ^. T → Y ^. S` (contravariant in index, covariant in object). -/
+def bimap {X Y : C} {S T : Type v} (f : S → T) (g : X ⟶ Y) :
+    power X T ⟶ power Y S :=
+  lift (fun s => proj X T (f s) ≫ g)
+
+@[simp]
+theorem bimap_proj {X Y : C} {S T : Type v} (f : S → T) (g : X ⟶ Y) (s : S) :
+    bimap f g ≫ proj Y S s = proj X T (f s) ≫ g := fac _ s
+
+theorem bimap_eq_mapIdx_mapVal {X Y : C} {S T : Type v} (f : S → T) (g : X ⟶ Y) :
+    bimap f g = mapIdx f ≫ mapVal (S := S) g := by
+  apply ext
+  intro s
+  rw [bimap_proj, Category.assoc, mapVal_proj, ← Category.assoc, mapIdx_proj]
+
+theorem bimap_eq_mapVal_mapIdx {X Y : C} {S T : Type v} (f : S → T) (g : X ⟶ Y) :
+    bimap f g = mapVal (S := T) g ≫ mapIdx (X := Y) f := by
+  apply ext
+  intro s
+  calc bimap f g ≫ proj Y S s = proj X T (f s) ≫ g := bimap_proj _ _ s
+    _ = (mapVal g ≫ proj Y T (f s)) ≫ 𝟙 Y := by rw [← mapVal_proj g, Category.comp_id]
+    _ = mapVal g ≫ proj Y T (f s) := by rw [Category.comp_id]
+    _ = mapVal g ≫ (mapIdx f ≫ proj Y S s) := by rw [← mapIdx_proj f s]
+    _ = (mapVal g ≫ mapIdx f) ≫ proj Y S s := by rw [← Category.assoc]
+
+@[simp]
+theorem bimap_id {X : C} {S : Type v} : bimap (id : S → S) (𝟙 X) = 𝟙 (power X S) := by
+  apply ext
+  intro s
+  rw [bimap_proj, id_eq, Category.comp_id, Category.id_comp]
+
+@[simp]
+theorem bimap_comp {X Y Z : C} {S T U : Type v}
+    (f₁ : T → U) (g₁ : X ⟶ Y) (f₂ : S → T) (g₂ : Y ⟶ Z) :
+    bimap (f₁ ∘ f₂) (g₁ ≫ g₂) = bimap f₁ g₁ ≫ bimap f₂ g₂ := by
+  apply ext
+  intro s
+  have step1 : bimap (f₁ ∘ f₂) (g₁ ≫ g₂) ≫ proj Z S s =
+      proj X U (f₁ (f₂ s)) ≫ (g₁ ≫ g₂) := bimap_proj _ _ s
+  calc bimap (f₁ ∘ f₂) (g₁ ≫ g₂) ≫ proj Z S s
+      = proj X U (f₁ (f₂ s)) ≫ (g₁ ≫ g₂) := step1
+    _ = (proj X U (f₁ (f₂ s)) ≫ g₁) ≫ g₂ := by rw [Category.assoc]
+    _ = (bimap f₁ g₁ ≫ proj Y T (f₂ s)) ≫ g₂ := by rw [← bimap_proj f₁ g₁]
+    _ = bimap f₁ g₁ ≫ proj Y T (f₂ s) ≫ g₂ := by rw [Category.assoc]
+    _ = bimap f₁ g₁ ≫ (bimap f₂ g₂ ≫ proj Z S s) := by rw [← bimap_proj f₂ g₂]
+    _ = (bimap f₁ g₁ ≫ bimap f₂ g₂) ≫ proj Z S s := by rw [← Category.assoc]
+
+/-- Precomposing lift with a morphism: `f ≫ lift g = lift (fun s => f ≫ g s)`. -/
+theorem lift_comp {X : C} {S : Type v} {Y Z : C} (f : Z ⟶ Y) (g : S → (Y ⟶ X)) :
+    f ≫ lift g = lift (fun s => f ≫ g s) := by
+  apply ext
+  intro s
+  rw [Category.assoc, fac, ← fac (fun s' => f ≫ g s') s]
+
+/-- If the families commute with precomposition, then lift respects it. -/
+theorem lift_precomp_eq {X : C} {S : Type v} {Y Z : C} (f : S → (Y ⟶ X)) (h : S → (Z ⟶ X))
+    (g : Z ⟶ Y) (hfg : ∀ s, g ≫ f s = h s) :
+    g ≫ lift f = lift h := by
+  rw [lift_comp]
+  congr 1
+  funext s
+  exact hfg s
+
+/-- Power round-trip: `lift (fun s => g ≫ proj s) = g`. -/
+@[simp]
+theorem lift_proj {X : C} {S : Type v} {Y : C} (g : Y ⟶ power X S) :
+    lift (fun s => g ≫ proj X S s) = g := by
+  apply ext
+  intro s
+  rw [fac]
+
+end HasPowers
+
 end GebLean
