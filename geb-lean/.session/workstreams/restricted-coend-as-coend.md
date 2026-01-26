@@ -29,6 +29,9 @@ This connects Vene's Mendler-Lambek correspondence to standard category theory.
 - [x] Prove restricted coend equals ordinary coend with copowers:
       `Sigma(H, G) = integral^A H(A,A) . G(A,A)` (via `restrictedCoend_is_copowerCoend`)
 - [x] Investigate connection to left Kan extensions (co-Yoneda lemma formalized)
+- [x] Characterize coends as natural transformations via co-Yoneda
+      (`CoendAsNatTransformations` section with `CowedgeFamily`, `coendToNatTrans`,
+      `natTransToCoend`)
 
 ## Notes
 
@@ -72,6 +75,31 @@ This shows that when a profunctor arises from a covariant functor constant in
 its first argument, the restricted coend equals the functor's value. This
 recovers the Kan extension formula `(Lan_id F)(pt) = F(pt)` via the colimit
 formula over the slice category.
+
+### Coends as Natural Transformations (Co-Yoneda Characterization)
+
+The `CoendAsNatTransformations` section in `RestrictedCoendAsColimit.lean`
+implements the co-Yoneda characterization of coends for profunctors on Type:
+
+1. `CowedgeFamily P Y` - Cowedge families `(π_A : P(A,A) → Y)` satisfying the
+   cowedge condition. This is equivalent to `Cowedge P` with apex `Y` but
+   stays in `Type w` rather than `Type (w+1)`.
+
+2. `cowedgeFamilyFunctor P : Type w ⥤ Type w` - The functor sending `Y` to
+   `CowedgeFamily P Y`. By the coend elimination rule, this is isomorphic to
+   `Hom(∫^A P(A,A), -)`.
+
+3. `CowedgeNatTrans P` - Natural transformations `cowedgeFamilyFunctor P ⟶ Id`.
+   By co-Yoneda, these correspond to elements of the coend `∫^A P(A,A)`.
+
+4. `coendToNatTrans` - Given an element `x` of a coend, constructs the
+   corresponding natural transformation where `τ_x.app Y cw = desc cw x`.
+
+5. `natTransToCoend` - Given a natural transformation, extracts the
+   corresponding coend element by applying it to the injection cowedge.
+
+This formalizes the co-Yoneda formula:
+`∫^A P(A,A) ≅ Nat(Y ↦ Cowedge_Y P, Id)`
 
 ### Universal Property Equivalence (Analysis)
 
