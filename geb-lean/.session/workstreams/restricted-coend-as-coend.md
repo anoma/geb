@@ -125,6 +125,37 @@ This is exactly an H-restricted G-cowedge! The dinaturality conditions match:
 3. Category of elements: `colim_{(A,f) in El(yoneda.obj pt)} G(A,A)`
 4. Slice category: "colimit" over `Over pt` (but not functorial for profunctors)
 
+### Profunctor Weight Extension (Simplified Approach)
+
+The equivalences between weighted cowedges/wedges and ordinary cowedges/wedges
+over copower/power profunctors are established via simple instantiation.
+
+Since `WeightedCowedge W P` is defined as `WeightedCocone` over
+`CoTwistedArrow C`, and
+`weightedCoconeCowedgeEquiv : WeightedCocone W F ≌`
+  `Cowedge (copowerProfunctor W F)` already exists, the
+equivalence for profunctor weights follows by instantiation:
+
+```lean
+abbrev copowerWeightedProfunctor :
+    (CoTwistedArrow C)ᵒᵖ ⥤ CoTwistedArrow C ⥤ D :=
+  copowerProfunctor
+    (profunctorOnOpCoTwistedArrow C W) (profunctorOnCoTwistedArrow C P)
+
+abbrev weightedCowedgeCowedgeEquiv :
+    WeightedCowedge W P ≌ Cowedge (copowerWeightedProfunctor W P) :=
+  @weightedCoconeCowedgeEquiv (CoTwistedArrow C) _ D _ _
+    (profunctorOnOpCoTwistedArrow C W)
+    (profunctorOnCoTwistedArrow C P)
+```
+
+Similarly for wedges using `powerWeightedProfunctor` and `weightedWedgeWedgeEquiv`.
+
+The universe constraints in `WeightedCoconeCoconeEquiv` and `WeightedConeConeEquiv`
+were generalized (2026-01-27) to allow the index and target categories to be in
+different universes, which in turn allows `ProfunctorWeights` to use fully
+polymorphic universes for `D : Type w`.
+
 ### Mathlib Resources to Check
 
 - `Mathlib.CategoryTheory.Limits.Shapes.End` - ends and coends
