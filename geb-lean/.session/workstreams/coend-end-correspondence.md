@@ -248,9 +248,19 @@ References:
     - `isTerminalPowerWedgeOfIsWeightedEnd`
     - `isWeightedEndOfIsTerminalPowerWedge`
     - `weightedEndIsoPowerWedge`
-- [ ] Formalize Level 1: Weighted colimit elimination via weighted limits
+- [x] Formalize Level 1: Weighted colimit elimination via weighted limits
   - `C(W * F, Y) ≅ {W, C(F(-), Y)}`
-  - Work at the `WeightedCone`/`WeightedCocone` level
+  - Implemented at the `WeightedCone`/`WeightedCocone` level in `Weighted.lean`
+  - Added `WeightedColimitElimination` section with:
+    - `WeightedCocone.postcompose` - post-compose cocone with morphism
+    - `WeightedCocone.ofCoconeOver` - construct cocone from cocone over apex
+    - `WeightedCocone.postcompose_id`, `postcompose_comp`, `postcompose_hom`
+    - `IsWeightedColimit.toWeightedCoconeOver` - forward direction
+    - `IsWeightedColimit.fromWeightedCoconeOver` - backward direction
+    - `homEquivWeightedCoconeOver : (c.pt ⟶ Y) ≃ WeightedCoconeOver W D Y`
+    - `homEquivWeightedCoconeOver_naturality` - naturality in Y
+  - Uses `homToFunctorBifunctor` from `Profunctors.lean` to express
+    `C(F(-), Y)` as a functor
 - [ ] Formalize Level 2: Weighted coend elimination via weighted ends
   - `Hom(∫^A W(A) ⊗ P(A,A), Y) ≅ ∫_A [W(A), Hom(P(A,A), Y)]`
   - Derive from Level 1 by specializing to wedges/cowedges
@@ -267,6 +277,38 @@ References:
       initiality/terminality rather than assuming coend existence via parameters
 
 ## Notes
+
+### Level 1 Elimination Rule Implementation
+
+The weighted colimit elimination rule `C(W * F, Y) ≅ {W, C(F(-), Y)}` is
+implemented in `GebLean/Weighted.lean` in the `WeightedColimitElimination`
+section.
+
+The formula expresses that morphisms from a weighted colimit into `Y` are
+isomorphic to weighted limits of the hom functor `C(F(-), Y)`. Since
+`WeightedCoconeOver W D Y` is defined as `W ⟶ homToFunctor D Y`, and this is
+exactly the weighted limit structure `{W, C(D(-), Y)}`, the elimination rule
+becomes:
+
+```text
+(c.pt ⟶ Y) ≃ WeightedCoconeOver W D Y
+```
+
+where `c` is the weighted colimit cocone.
+
+The forward direction `toWeightedCoconeOver` uses post-composition with the
+morphism `f : c.pt ⟶ Y`, relying on `homToFunctorBifunctor` from
+`Profunctors.lean` which gives the functoriality of `j ↦ C(D(j), Y)` in Y.
+
+The backward direction `fromWeightedCoconeOver` uses the universal property
+`descHom` to factor the cocone over through the colimit.
+
+The round-trip proofs use:
+
+- The morphism property of weighted cocone homomorphisms (for
+  `toWeightedCoconeOver_fromWeightedCoconeOver`)
+- The uniqueness of morphisms from the initial object (for
+  `fromWeightedCoconeOver_toWeightedCoconeOver`)
 
 ### Current State of CoendAsNatTransformations
 

@@ -1737,6 +1737,122 @@ def toUniqueUpToIso {c c' : WeightedCocone W D}
 
 end IsWeightedColimit
 
+/-!
+### Weighted Colimit Elimination
+
+The elimination rule for weighted colimits: morphisms from a weighted colimit
+into `Y` correspond bijectively to weighted cocones over `Y`. This is the
+universal property expressed as an equivalence:
+
+`(c.pt ⟶ Y) ≃ WeightedCoconeOver W D Y`
+
+where `c` is an initial weighted cocone (weighted colimit).
+-/
+
+section WeightedColimitElimination
+
+variable {J : Type u₁} [Category.{v} J] {C : Type u} [Category.{v} C]
+variable {W : Jᵒᵖ ⥤ Type v} {D : J ⥤ C}
+
+/-- Post-compose a weighted cocone with a morphism to get a weighted cocone
+over the new apex.
+
+Given `c : WeightedCocone W D` with apex `c.pt` and `f : c.pt ⟶ Y`, produces
+a weighted cocone over `Y` by composing: `c.ι ≫ (homToFunctorBifunctor _).map f`.
+-/
+def WeightedCocone.postcompose (c : WeightedCocone W D) {Y : C} (f : c.pt ⟶ Y) :
+    WeightedCoconeOver W D Y :=
+  c.ι ≫ ((homToFunctorBifunctor (J := J) (C := C)).obj (Opposite.op D)).map f
+
+/-- Construct a weighted cocone from a weighted cocone over a fixed apex. -/
+def WeightedCocone.ofCoconeOver {Y : C} (coconeOver : WeightedCoconeOver W D Y) :
+    WeightedCocone W D :=
+  ⟨Y, coconeOver⟩
+
+/-- Post-composing the identity morphism gives the original cocone data. -/
+@[simp]
+theorem WeightedCocone.postcompose_id (c : WeightedCocone W D) :
+    c.postcompose (𝟙 c.pt) = c.ι := by
+  simp only [postcompose, Functor.map_id, Category.comp_id]
+
+/-- Post-composition is functorial: `postcompose (f ≫ g) = postcompose f ≫ map g`. -/
+theorem WeightedCocone.postcompose_comp (c : WeightedCocone W D) {Y Z : C}
+    (f : c.pt ⟶ Y) (g : Y ⟶ Z) :
+    c.postcompose (f ≫ g) = c.postcompose f ≫
+      ((homToFunctorBifunctor (J := J) (C := C)).obj (Opposite.op D)).map g := by
+  simp only [postcompose, Functor.map_comp, Category.assoc]
+
+/-- A morphism of weighted cocones induces the same cocone over via
+postcomposition. -/
+theorem WeightedCocone.postcompose_hom {c₁ c₂ : WeightedCocone W D}
+    (h : c₁ ⟶ c₂) : c₁.postcompose h.hom = c₂.ι := by
+  ext j w
+  simp only [postcompose, FunctorToTypes.comp]
+  exact h.w j.unop w
+
+namespace IsWeightedColimit
+
+variable {c : WeightedCocone W D} (hc : IsWeightedColimit c)
+
+/-- The forward direction of the elimination rule: a morphism from the colimit
+induces a weighted cocone over the target. -/
+def toWeightedCoconeOver (Y : C) (f : c.pt ⟶ Y) : WeightedCoconeOver W D Y :=
+  c.postcompose f
+
+/-- The backward direction of the elimination rule: a weighted cocone over `Y`
+induces a morphism from the colimit to `Y`. -/
+def fromWeightedCoconeOver (Y : C) (coconeOver : WeightedCoconeOver W D Y) :
+    c.pt ⟶ Y :=
+  hc.descHom (WeightedCocone.ofCoconeOver coconeOver)
+
+/-- Round-trip: `fromWeightedCoconeOver` followed by `toWeightedCoconeOver`
+returns the original cocone over. -/
+theorem toWeightedCoconeOver_fromWeightedCoconeOver (Y : C)
+    (coconeOver : WeightedCoconeOver W D Y) :
+    toWeightedCoconeOver Y (fromWeightedCoconeOver hc Y coconeOver) =
+      coconeOver := by
+  unfold toWeightedCoconeOver fromWeightedCoconeOver descHom desc
+  exact WeightedCocone.postcompose_hom (hc.to (WeightedCocone.ofCoconeOver coconeOver))
+
+/-- Round-trip: `toWeightedCoconeOver` followed by `fromWeightedCoconeOver`
+returns the original morphism. -/
+theorem fromWeightedCoconeOver_toWeightedCoconeOver (Y : C) (f : c.pt ⟶ Y) :
+    fromWeightedCoconeOver hc Y (toWeightedCoconeOver Y f) = f := by
+  unfold fromWeightedCoconeOver toWeightedCoconeOver
+  let targetCocone : WeightedCocone W D := ⟨Y, c.postcompose f⟩
+  have huniq := hc.hom_ext
+    (hc.to targetCocone)
+    (WeightedCocone.Hom.mk f (fun _ _ => rfl))
+  simp only [descHom, desc]
+  exact congrArg WeightedCocone.Hom.hom huniq
+
+/-- The elimination rule equivalence: morphisms from a weighted colimit to `Y`
+correspond bijectively to weighted cocones over `Y`.
+
+This is the universal property of weighted colimits expressed as:
+`Hom(W * D, Y) ≃ {W, Hom(D(-), Y)}`
+
+where the right-hand side is the type of natural transformations
+`W ⟶ homToFunctor D Y`, which equals `WeightedCoconeOver W D Y`. -/
+def homEquivWeightedCoconeOver (Y : C) : (c.pt ⟶ Y) ≃ WeightedCoconeOver W D Y where
+  toFun := toWeightedCoconeOver Y
+  invFun := fromWeightedCoconeOver hc Y
+  left_inv := fromWeightedCoconeOver_toWeightedCoconeOver hc Y
+  right_inv := toWeightedCoconeOver_fromWeightedCoconeOver hc Y
+
+/-- The elimination rule is natural in `Y`: post-composing a morphism `f : c.pt ⟶ Y`
+with `g : Y ⟶ Z` corresponds to post-composing the weighted cocone over. -/
+theorem homEquivWeightedCoconeOver_naturality {Y Z : C} (f : c.pt ⟶ Y) (g : Y ⟶ Z) :
+    homEquivWeightedCoconeOver hc Z (f ≫ g) =
+    homEquivWeightedCoconeOver hc Y f ≫
+      ((homToFunctorBifunctor (J := J) (C := C)).obj (Opposite.op D)).map g := by
+  simp only [homEquivWeightedCoconeOver, Equiv.coe_fn_mk, toWeightedCoconeOver]
+  exact c.postcompose_comp f g
+
+end IsWeightedColimit
+
+end WeightedColimitElimination
+
 /-- A weighted colimit cone bundles a cocone with the proof it is initial.
 This is the data-carrying version, analogous to mathlib's `ColimitCocone`. -/
 structure WeightedColimitCocone (W : Jᵒᵖ ⥤ Type v) (D : J ⥤ C) where
