@@ -1642,6 +1642,18 @@ theorem profunctorOnCoTwistedArrow_obj (P : Cᵒᵖ ⥤ C ⥤ D) (tw : CoTwisted
     (profunctorOnCoTwistedArrow C P).obj tw =
     (P.obj (Opposite.op (coTwDom tw))).obj (coTwCod tw) := rfl
 
+/-- The first component of the equivalence composition is `op (coTwDom tw)`. -/
+@[simp]
+theorem coTwistedArrowProdEquiv_forget_fst (tw : CoTwistedArrow C) :
+    ((coTwistedArrowProdEquiv C).functor.obj
+      ((coTwistedArrowForget C).obj tw)).1 = Opposite.op (coTwDom tw) := rfl
+
+/-- The second component of the equivalence composition is `coTwCod tw`. -/
+@[simp]
+theorem coTwistedArrowProdEquiv_forget_snd (tw : CoTwistedArrow C) :
+    ((coTwistedArrowProdEquiv C).functor.obj
+      ((coTwistedArrowForget C).obj tw)).2 = coTwCod tw := rfl
+
 /--
 The functor map formula for `profunctorOnCoTwistedArrow`.
 
