@@ -882,6 +882,358 @@ theorem powerProfunctor_map_app {j₁ j₂ : Jᵒᵖ} (f : j₁ ⟶ j₂) (j' : 
 
 end PowerProfunctor
 
+/-!
+### Weighted Cocones as Cocones over the Copower Diagram
+
+The correspondence between weighted cocones and cocones over
+`profunctorOnCoTwistedArrow J (copowerProfunctor W F)`. A weighted cocone over
+`W` and `F` consists of maps `W(j) → (F(j) ⟶ pt)` natural in `j`. Via the
+copower adjunction, this corresponds to maps `W(j) ·. F(j) ⟶ pt` with the
+naturality condition of a cocone.
+
+Composing with `cowedgeCoconeEquiv` gives:
+`WeightedCocone W F ≌ Cowedge (copowerProfunctor W F)`
+-/
+
+section WeightedCoconeCoconeEquiv
+
+variable {J : Type u} [Category.{v} J]
+variable {C : Type u} [Category.{v} C] [HasCopowers C]
+variable (W : Jᵒᵖ ⥤ Type v) (F : J ⥤ C)
+
+open Limits
+
+/-- The cocone leg at a co-twisted arrow from weighted cocone data.
+
+For a co-twisted arrow `tw : j → j'` in J, the cocone leg is:
+`mapIdx (W.map (coTwArr tw).op) ≫ desc (c.leg (coTwCod tw))`
+
+This uses the copower profunctor action to transport from the codomain
+diagonal to the full co-twisted arrow. -/
+def copowerCoconeιApp (c : WeightedCocone W F) (tw : CoTwistedArrow J) :
+    (profunctorOnCoTwistedArrow J (copowerProfunctor W F)).obj tw ⟶ c.pt :=
+  HasCopowers.mapIdx (W.map (coTwArr tw).op) ≫
+    HasCopowers.desc (c.leg (coTwCod tw))
+
+/-- At identity co-twisted arrows, the cocone leg is just `desc (c.leg j)`. -/
+@[simp]
+theorem copowerCoconeιApp_at_id (c : WeightedCocone W F) (j : J) :
+    copowerCoconeιApp W F c (coTwObjMk (𝟙 j)) =
+      HasCopowers.desc (c.leg j) := by
+  simp only [copowerCoconeιApp, coTwObjMk_arr, coTwObjMk_cod]
+  erw [W.map_id, HasCopowers.mapIdx_id, Category.id_comp]
+
+/-- The cocone legs form a natural transformation. -/
+theorem copowerCoconeιApp_naturality (c : WeightedCocone W F)
+    {x y : CoTwistedArrow J} (m : x ⟶ y) :
+    (profunctorOnCoTwistedArrow J (copowerProfunctor W F)).map m ≫
+      copowerCoconeιApp W F c y =
+    copowerCoconeιApp W F c x := by
+  apply HasCopowers.ext
+  intro s
+  simp only [copowerCoconeιApp, profunctorOnCoTwistedArrow_map,
+    copowerProfunctor_map_app, copowerProfunctor_obj_map]
+  -- Use simp_rw to apply copower lemmas with reassociation
+  simp_rw [← Category.assoc]
+  simp_rw [HasCopowers.mapIdx_inj, HasCopowers.mapVal_inj, HasCopowers.fac]
+  -- Goal: ((F.map (coTwCodArr m) ≫ inj ... (W.map (coTwDomArr m).op s)) ≫
+  --        mapIdx (W.map (coTwArr y).op)) ≫ desc (c.leg (coTwCod y))
+  --       = c.leg (coTwCod x) (W.map (coTwArr x).op s)
+  -- Apply the remaining copower lemmas using conv
+  conv_lhs =>
+    rw [Category.assoc, Category.assoc]
+    arg 2
+    rw [← Category.assoc, HasCopowers.mapIdx_inj]
+    rw [HasCopowers.fac]
+  -- Goal: F.map (coTwCodArr m) ≫ c.leg y' (W.map (coTwArr y).op (W.map domArr.op s))
+  --       = c.leg x' (W.map (coTwArr x).op s)  where y' = coTwCod y, domArr = coTwDomArr m
+  rw [WeightedCocone.naturality c (coTwCodArr m)]
+  -- Goal: c.leg x' (W.map codArr.op (W.map (coTwArr y).op (W.map domArr.op s)))
+  --       = c.leg x' (W.map (coTwArr x).op s)  where codArr = coTwCodArr m
+  -- Show the weight values are equal via co-twisted arrow commutativity
+  simp only [← FunctorToTypes.map_comp_apply, ← op_comp, coTwHomComm m]
+
+/-- Convert a weighted cocone to a cocone over the copower profunctor diagram.
+
+Given a weighted cocone with `ι(j) : W(j) → (F(j) ⟶ pt)`, we construct a
+cocone with legs at each co-twisted arrow using `HasCopowers.desc` and
+`mapIdx`. -/
+def weightedCoconeToCopowerCocone (c : WeightedCocone W F) :
+    Cocone (profunctorOnCoTwistedArrow J (copowerProfunctor W F)) where
+  pt := c.pt
+  ι := {
+    app := copowerCoconeιApp W F c
+    naturality := fun _ _ m => by
+      simp only [Functor.const_obj_obj, Functor.const_obj_map, Category.comp_id]
+      exact copowerCoconeιApp_naturality W F c m
+  }
+
+/-- Convert a cocone over the copower profunctor diagram to a weighted cocone.
+
+Given a cocone with legs at each co-twisted arrow, we extract a weighted
+cocone by restricting to the diagonal (identity co-twisted arrows) and using
+the copower injection. -/
+def copowerCoconeToWeightedCocone
+    (c : Cocone (profunctorOnCoTwistedArrow J (copowerProfunctor W F))) :
+    WeightedCocone W F where
+  pt := c.pt
+  toWeightedCoconeOver := {
+    app := fun j s =>
+      HasCopowers.inj (W.obj j) (F.obj j.unop) s ≫ c.ι.app (coTwObjMk (𝟙 j.unop))
+    naturality := fun {j j'} f => by
+      funext s
+      simp only [types_comp_apply]
+      -- Use two naturality facts via the intermediate coTwObjMk f.unop
+      -- h1: mapIdx (W.map f) ≫ c.ι.app (id j') = c.ι.app f.unop
+      have h1 : HasCopowers.mapIdx (W.map f) ≫ c.ι.app (coTwObjMk (𝟙 j'.unop)) =
+          c.ι.app (coTwObjMk f.unop) := by
+        have nat := c.ι.naturality (coTwObjMkToIdentity f.unop)
+        simp only [Functor.const_obj_obj, Functor.const_obj_map, Category.comp_id,
+          profunctorOnCoTwistedArrow_map, copowerProfunctor_map_app,
+          copowerProfunctor_obj_map, coTwObjMkToIdentity_domArr,
+          coTwObjMkToIdentity_codArr, coTwObjMk_dom, coTwObjMk_cod,
+          Opposite.op_unop, F.map_id, HasCopowers.mapVal_id] at nat
+        -- nat: (mapIdx (W.map f.unop.op) ≫ 𝟙 _) ≫ c.ι.app _ = c.ι.app _
+        -- Reassociate: mapIdx _ ≫ (𝟙 _ ≫ c.ι.app _)
+        rw [Category.assoc] at nat
+        -- Use id_comp: mapIdx _ ≫ c.ι.app _
+        erw [Category.id_comp] at nat
+        -- Convert f.unop.op to f
+        rw [Quiver.Hom.op_unop] at nat
+        exact nat
+      -- h2: mapVal (F.map f.unop) ≫ c.ι.app (id j) = c.ι.app f.unop
+      have h2 : HasCopowers.mapVal (F.map f.unop) ≫
+          c.ι.app (coTwObjMk (𝟙 j.unop)) =
+          c.ι.app (coTwObjMk f.unop) := by
+        have nat := c.ι.naturality (coTwObjMkToIdentityAtDom f.unop)
+        simp only [Functor.const_obj_obj, Functor.const_obj_map, Category.comp_id,
+          profunctorOnCoTwistedArrow_map, copowerProfunctor_map_app,
+          copowerProfunctor_obj_map, coTwObjMkToIdentityAtDom_domArr,
+          coTwObjMkToIdentityAtDom_codArr, coTwObjMk_dom, coTwObjMk_cod,
+          Opposite.op_unop] at nat
+        -- nat: (mapIdx (W.map (𝟙 j.unop).op) ≫ mapVal _) ≫ c.ι.app _ = c.ι.app _
+        -- (𝟙 j.unop).op = 𝟙 j, W.map (𝟙 j) = id, mapIdx id = 𝟙
+        erw [op_id, W.map_id, HasCopowers.mapIdx_id, Category.id_comp] at nat
+        exact nat
+      -- From h1.symm.trans h2:
+      -- mapIdx (W.map f) ≫ c.ι.app (id j') = mapVal (F.map f.unop) ≫ c.ι.app (id j)
+      calc HasCopowers.inj (W.obj j') (F.obj j'.unop) (W.map f s) ≫
+              c.ι.app (coTwObjMk (𝟙 j'.unop))
+          = (HasCopowers.inj (W.obj j) (F.obj j'.unop) s ≫
+              HasCopowers.mapIdx (W.map f)) ≫
+                c.ι.app (coTwObjMk (𝟙 j'.unop)) := by
+                rw [HasCopowers.mapIdx_inj]
+        _ = HasCopowers.inj (W.obj j) (F.obj j'.unop) s ≫
+              (HasCopowers.mapIdx (W.map f) ≫
+                c.ι.app (coTwObjMk (𝟙 j'.unop))) := by
+                rw [Category.assoc]
+        _ = HasCopowers.inj (W.obj j) (F.obj j'.unop) s ≫
+              (HasCopowers.mapVal (F.map f.unop) ≫
+                c.ι.app (coTwObjMk (𝟙 j.unop))) := by
+                rw [h1, ← h2]
+        _ = (HasCopowers.inj (W.obj j) (F.obj j'.unop) s ≫
+              HasCopowers.mapVal (F.map f.unop)) ≫
+                c.ι.app (coTwObjMk (𝟙 j.unop)) := by
+                rw [← Category.assoc]
+        _ = (F.map f.unop ≫ HasCopowers.inj (W.obj j) (F.obj j.unop) s) ≫
+                c.ι.app (coTwObjMk (𝟙 j.unop)) := by
+                rw [HasCopowers.mapVal_inj]
+        _ = F.map f.unop ≫
+              (HasCopowers.inj (W.obj j) (F.obj j.unop) s ≫
+                c.ι.app (coTwObjMk (𝟙 j.unop))) := by
+                rw [Category.assoc]
+        _ = (homToFunctor F c.pt).map f
+              (HasCopowers.inj (W.obj j) (F.obj j.unop) s ≫
+                c.ι.app (coTwObjMk (𝟙 j.unop))) := rfl
+  }
+
+/-- Round-trip from weighted cocone to copower cocone and back yields the
+original. -/
+theorem copowerCoconeToWeightedCocone_of_weightedCocone (c : WeightedCocone W F) :
+    copowerCoconeToWeightedCocone W F (weightedCoconeToCopowerCocone W F c) = c := by
+  apply WeightedCocone.ext
+  · rfl
+  · apply heq_of_eq
+    ext j s
+    -- First simplify the LHS without unfolding copowerCoconeιApp
+    simp only [copowerCoconeToWeightedCocone]
+    -- Now we have: inj _ _ s ≫ (weightedCoconeToCopowerCocone W F c).ι.app ...
+    -- Unfold the cocone ι to get copowerCoconeιApp
+    simp only [weightedCoconeToCopowerCocone]
+    -- Now apply the identity simplification
+    -- Use erw because op (unop j) = j is only defeq
+    rw [copowerCoconeιApp_at_id]
+    erw [HasCopowers.fac]
+    -- c.leg (unop j) s = c.toWeightedCoconeOver.app j s by definition of leg
+    rfl
+
+/-- Round-trip from copower cocone to weighted cocone and back yields the
+original. -/
+theorem weightedCoconeToCopowerCocone_of_copowerCocone
+    (c : Cocone (profunctorOnCoTwistedArrow J (copowerProfunctor W F))) :
+    weightedCoconeToCopowerCocone W F (copowerCoconeToWeightedCocone W F c) = c := by
+  -- Destruct c and prove equality component-wise
+  obtain ⟨pt, ι⟩ := c
+  -- The pt is the same by definition (copowerCoconeToWeightedCocone preserves pt)
+  -- The ι is the same by construction
+  simp only [weightedCoconeToCopowerCocone, copowerCoconeToWeightedCocone]
+  -- Prove the cocones are equal by showing ι components match
+  congr 1
+  -- Need to prove the ι NatTrans are equal
+  ext tw
+  simp only [copowerCoconeιApp]
+  apply HasCopowers.ext
+  intro s
+  -- Reassociate to expose inj ≫ mapIdx pattern
+  rw [← Category.assoc, HasCopowers.mapIdx_inj]
+  -- Now we have: (inj _ _ (mapIdx s)) ≫ desc (...) = inj _ _ s ≫ ι.app tw
+  -- The desc factors through:
+  erw [HasCopowers.fac]
+  -- Use naturality of ι: for the morphism coTwToIdentityAtCod tw
+  -- which goes from tw to coTwObjMk (𝟙 (coTwCod tw))
+  have h := ι.naturality (coTwToIdentityAtCod tw)
+  simp only [Functor.const_obj_obj, Functor.const_obj_map, Category.comp_id,
+    profunctorOnCoTwistedArrow_map, copowerProfunctor_map_app,
+    copowerProfunctor_obj_map, coTwToIdentityAtCod_domArr,
+    coTwToIdentityAtCod_codArr] at h
+  -- h : mapIdx (W.map (coTwArr tw).op) ≫ mapVal (F.map (𝟙 _)) ≫ ι.app _ = ι.app tw
+  simp only [F.map_id, HasCopowers.mapVal_id] at h
+  -- h : (mapIdx _ ≫ 𝟙 _) ≫ ι.app _ = ι.app tw
+  -- Reassociate to get mapIdx _ ≫ (𝟙 _ ≫ ι.app _)
+  rw [Category.assoc] at h
+  -- Now use id_comp (use erw because the types are only defeq)
+  erw [Category.id_comp] at h
+  -- h : mapIdx (W.map (coTwArr tw).op) ≫ ι.app (coTwObjMk (𝟙 (coTwCod tw))) = ι.app tw
+  -- The goal is: leg (coTwCod tw) (W.map (coTwArr tw).op s) = inj _ _ s ≫ ι.app tw
+  -- First unfold the leg definition
+  simp only [WeightedCocone.leg, coTwistedArrowProdEquiv_forget_fst,
+    coTwistedArrowProdEquiv_forget_snd]
+  -- Now goal is: inj (W.obj (op (coTwCod tw))) _ (W.map (coTwArr tw).op s) ≫ ι.app ...
+  --            = inj (W.obj (op (coTwDom tw))) _ s ≫ ι.app tw
+  -- Rewrite inj _ _ (W.map _ s) as (inj _ _ s ≫ mapIdx _)
+  rw [← HasCopowers.mapIdx_inj (W.map (coTwArr tw).op) s]
+  -- Reassociate
+  rw [Category.assoc]
+  -- Apply h
+  rw [h]
+
+/-- Convert a weighted cocone morphism to a copower cocone morphism. -/
+def weightedCoconeHomToCopowerCoconeHom {c₁ c₂ : WeightedCocone W F}
+    (f : WeightedCocone.Hom c₁ c₂) :
+    (weightedCoconeToCopowerCocone W F c₁) ⟶
+      (weightedCoconeToCopowerCocone W F c₂) where
+  hom := f.hom
+  w := fun tw => by
+    -- Goal: copowerCoconeιApp c₁ tw ≫ f.hom = copowerCoconeιApp c₂ tw
+    -- Expand: (mapIdx _ ≫ desc (c₁.leg _)) ≫ f.hom = mapIdx _ ≫ desc (c₂.leg _)
+    simp only [weightedCoconeToCopowerCocone, copowerCoconeιApp]
+    -- Reassociate to: mapIdx _ ≫ (desc _ ≫ f.hom) = mapIdx _ ≫ desc _
+    rw [Category.assoc]
+    -- It suffices to prove: desc (c₁.leg _) ≫ f.hom = desc (c₂.leg _)
+    congr 1
+    -- Use ext to reduce to showing: inj s ≫ (desc _ ≫ f.hom) = inj s ≫ desc _
+    apply HasCopowers.ext
+    intro s
+    rw [← Category.assoc]
+    erw [HasCopowers.fac, HasCopowers.fac]
+    exact f.w (coTwCod tw) s
+
+/-- Convert a copower cocone morphism to a weighted cocone morphism. -/
+def copowerCoconeHomToWeightedCoconeHom
+    {c₁ c₂ : Cocone (profunctorOnCoTwistedArrow J (copowerProfunctor W F))}
+    (f : c₁ ⟶ c₂) :
+    WeightedCocone.Hom (copowerCoconeToWeightedCocone W F c₁)
+      (copowerCoconeToWeightedCocone W F c₂) where
+  hom := f.hom
+  w := fun j s => by
+    simp only [copowerCoconeToWeightedCocone, WeightedCocone.leg]
+    rw [Category.assoc]
+    congr 1
+    exact f.w (coTwObjMk (𝟙 j))
+
+@[simp]
+theorem weightedCoconeHomToCopowerCoconeHom_hom {c₁ c₂ : WeightedCocone W F}
+    (f : WeightedCocone.Hom c₁ c₂) :
+    (weightedCoconeHomToCopowerCoconeHom W F f).hom = f.hom := rfl
+
+@[simp]
+theorem copowerCoconeHomToWeightedCoconeHom_hom
+    {c₁ c₂ : Cocone (profunctorOnCoTwistedArrow J (copowerProfunctor W F))}
+    (f : c₁ ⟶ c₂) :
+    (copowerCoconeHomToWeightedCoconeHom W F f).hom = f.hom := rfl
+
+/-- The functor from weighted cocones to copower cocones. -/
+def weightedCoconeToCopowerCoconesFunctor :
+    WeightedCocone W F ⥤
+      Cocone (profunctorOnCoTwistedArrow J (copowerProfunctor W F)) where
+  obj := weightedCoconeToCopowerCocone W F
+  map := weightedCoconeHomToCopowerCoconeHom W F
+  map_id := fun _ => rfl
+  map_comp := fun {_ _ _} _ _ => rfl
+
+/-- The functor from copower cocones to weighted cocones. -/
+def copowerCoconesToWeightedCoconeFunctor :
+    Cocone (profunctorOnCoTwistedArrow J (copowerProfunctor W F)) ⥤
+      WeightedCocone W F where
+  obj := copowerCoconeToWeightedCocone W F
+  map := copowerCoconeHomToWeightedCoconeHom W F
+  map_id := fun _ => by
+    apply WeightedCocone.Hom.ext
+    rfl
+  map_comp := fun {_ _ _} _ _ => by
+    apply WeightedCocone.Hom.ext
+    rfl
+
+/-- The equivalence between weighted cocones and copower cocones.
+
+This relates weighted colimits to coends of copowers via the equivalence
+`Cocone (profunctorOnCoTwistedArrow J P) ≌ Cowedge P`. -/
+def weightedCoconeCopowerCoconeEquiv :
+    WeightedCocone W F ≌
+      Cocone (profunctorOnCoTwistedArrow J (copowerProfunctor W F)) where
+  functor := weightedCoconeToCopowerCoconesFunctor W F
+  inverse := copowerCoconesToWeightedCoconeFunctor W F
+  unitIso := NatIso.ofComponents
+    (fun c => eqToIso
+      (copowerCoconeToWeightedCocone_of_weightedCocone W F c).symm)
+    (fun {c₁ c₂} f => by
+      apply WeightedCocone.Hom.ext
+      simp only [weightedCoconeToCopowerCoconesFunctor,
+        copowerCoconesToWeightedCoconeFunctor, Functor.id_obj, Functor.comp_obj,
+        Functor.id_map, Functor.comp_map, eqToIso.hom,
+        weightedCoconeHomToCopowerCoconeHom_hom, copowerCoconeHomToWeightedCoconeHom_hom,
+        WeightedCocone.category_comp_hom, WeightedCocone.eqToHom_hom,
+        copowerCoconeToWeightedCocone, weightedCoconeToCopowerCocone,
+        eqToHom_refl, Category.id_comp, Category.comp_id])
+  counitIso := NatIso.ofComponents
+    (fun c => eqToIso
+      (weightedCoconeToCopowerCocone_of_copowerCocone W F c))
+    (fun {c₁ c₂} f => by
+      ext
+      simp only [copowerCoconesToWeightedCoconeFunctor,
+        weightedCoconeToCopowerCoconesFunctor, Functor.comp_obj, Functor.id_obj,
+        Functor.comp_map, Functor.id_map, eqToIso.hom,
+        copowerCoconeHomToWeightedCoconeHom_hom, weightedCoconeHomToCopowerCoconeHom_hom,
+        Cocone.category_comp_hom, Cocone.eqToHom_hom, copowerCoconeToWeightedCocone,
+        weightedCoconeToCopowerCocone, eqToHom_refl, Category.id_comp, Category.comp_id])
+  functor_unitIso_comp := fun c => by
+    ext
+    simp only [weightedCoconeToCopowerCoconesFunctor,
+      copowerCoconesToWeightedCoconeFunctor, Functor.comp_obj, Functor.id_obj,
+      NatIso.ofComponents_hom_app, eqToIso.hom,
+      eqToHom_map, eqToHom_trans, eqToHom_refl]
+
+/-- The equivalence between weighted cocones and cowedges over the copower
+profunctor.
+
+This is the categorical formulation of the fact that weighted colimits can be
+computed as coends of copowers: `W * F ≅ ∫^j W(j) ·. F(j)`. -/
+def weightedCoconeCowedgeEquiv :
+    WeightedCocone W F ≌ Cowedge (copowerProfunctor W F) :=
+  (weightedCoconeCopowerCoconeEquiv W F).trans (cowedgeCoconeEquiv _).symm
+
+end WeightedCoconeCoconeEquiv
+
 end WeightedViaEnds
 
 end GebLean

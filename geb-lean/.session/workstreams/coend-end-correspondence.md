@@ -193,8 +193,13 @@ References:
       - Diagonal: `(powerProfunctor W F).obj (op j).obj j = F(j) ^. W(j)`
       - Inner functor: `powerProfunctorInner W F j =`
         `F ⋙ powerByTypeFunctor (W.obj j.unop)`
-    - [ ] Establish equivalence
-      `WeightedCocone W F ≌ WeightedCowedge unit (copowerProfunctor W F)`
+    - [x] Established equivalence
+      `WeightedCocone W F ≌ Cocone (profunctorOnCoTwistedArrow J`
+      `(copowerProfunctor W F))`
+      via `weightedCoconeCopowerCoconeEquiv`
+    - [x] Composed with cowedge-cocone equivalence to get
+      `WeightedCocone W F ≌ Cowedge (copowerProfunctor W F)`
+      via `weightedCoconeCowedgeEquiv`
     - [ ] Transfer initiality to prove `W * F ≅ ∫^j W(j) ·. F(j)`
     - [ ] Dual for weighted limits and ends
 - [ ] Formalize Level 1: Weighted colimit elimination via weighted limits
