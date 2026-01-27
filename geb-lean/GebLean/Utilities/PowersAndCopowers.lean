@@ -897,7 +897,9 @@ Composing with `cowedgeCoconeEquiv` gives:
 
 section WeightedCoconeCoconeEquiv
 
-variable {J : Type u} [Category.{v} J]
+universe u₃
+
+variable {J : Type u₃} [Category.{v} J]
 variable {C : Type u} [Category.{v} C] [HasCopowers C]
 variable (W : Jᵒᵖ ⥤ Type v) (F : J ⥤ C)
 
@@ -1306,7 +1308,9 @@ This establishes the equivalence:
 
 section WeightedConeConeEquiv
 
-variable {J : Type u} [Category.{v} J]
+universe u₄
+
+variable {J : Type u₄} [Category.{v} J]
 variable {C : Type u} [Category.{v} C] [HasPowers C]
 variable (W : J ⥤ Type v) (F : J ⥤ C)
 
@@ -1682,101 +1686,51 @@ end WeightedConeConeEquiv
 ### Profunctor Weights: Copower and Power Profunctors
 
 For weighted cowedges/wedges with profunctor weights `W : Cᵒᵖ ⥤ C ⥤ Type v` and
-target profunctor `P : Cᵒᵖ ⥤ C ⥤ D`, we define composed profunctors:
+target profunctor `P : Cᵒᵖ ⥤ C ⥤ D`, the equivalences to ordinary
+cowedges/wedges follow directly from `weightedCoconeCowedgeEquiv` and
+`weightedConeWedgeEquiv` by instantiation.
 
-- `copowerWeightedProfunctor W P : Cᵒᵖ ⥤ C ⥤ D` with
-  `(copowerWeightedProfunctor W P).obj (op A).obj B = W(A,B) ·. P(A,B)`
-- `powerWeightedProfunctor W P : Cᵒᵖ ⥤ C ⥤ D` with
-  `(powerWeightedProfunctor W P).obj (op A).obj B = P(A,B) ^. W(A,B)`
+`WeightedCowedge W P` is a `WeightedCocone` over `CoTwistedArrow C` with:
+- Weight: `profunctorOnOpCoTwistedArrow C W : (CoTwistedArrow C)ᵒᵖ ⥤ Type v`
+- Diagram: `profunctorOnCoTwistedArrow C P : CoTwistedArrow C ⥤ D`
 
-These establish:
-- `WeightedCowedge W P ≌ Cowedge (copowerWeightedProfunctor W P)`
-- `WeightedWedge W P ≌ Wedge (powerWeightedProfunctor W P)`
+By `weightedCoconeCowedgeEquiv`, this is equivalent to:
+`Cowedge (copowerProfunctor (profunctorOnOpCoTwistedArrow C W)
+                            (profunctorOnCoTwistedArrow C P))`
 
-On the diagonal, these give `W(A,A) ·. P(A,A)` and `P(A,A) ^. W(A,A)`, so:
-- Weighted coend = coend of copowers: `∫^_W P ≅ ∫^A W(A,A) ·. P(A,A)`
-- Weighted end = end of powers: `∫_W P ≅ ∫_A P(A,A) ^. W(A,A)`
+Similarly for `WeightedWedge W P` via `weightedConeWedgeEquiv`.
 -/
 
 section ProfunctorWeights
 
+universe w
+
 variable {C : Type u} [Category.{v} C]
-variable {D : Type u} [Category.{v} D]
+variable {D : Type w} [Category.{v} D]
 
 section CopowerWeightedProfunctor
 
 variable [HasCopowers D]
 variable (W : Cᵒᵖ ⥤ C ⥤ Type v) (P : Cᵒᵖ ⥤ C ⥤ D)
 
-/-- The inner functor of the copower weighted profunctor: for a fixed `A : Cᵒᵖ`,
-maps `B : C` to `W(A,B) ·. P(A,B)`.
+/-- The copower profunctor for weighted cowedges with profunctor weights.
 
-This composes `W.obj A` and `P.obj A` pointwise via copower. -/
-def copowerWeightedProfunctorInner (A : Cᵒᵖ) : C ⥤ D where
-  obj B := HasCopowers.copower ((W.obj A).obj B) ((P.obj A).obj B)
-  map {B₁ B₂} g :=
-    HasCopowers.bimap ((W.obj A).map g) ((P.obj A).map g)
-  map_id B := by
-    simp only [Functor.map_id]
-    exact HasCopowers.bimap_id
-  map_comp {B₁ B₂ B₃} g h := by
-    simp only [Functor.map_comp, types_comp, HasCopowers.bimap_comp]
+This is `copowerProfunctor` applied to the weight and diagram extracted from
+`W` and `P` via the co-twisted arrow category. At a co-twisted arrow `tw`,
+this gives `W(coTwCod, coTwDom) ·. P(coTwDom, coTwCod)`. -/
+abbrev copowerWeightedProfunctor :
+    (CoTwistedArrow C)ᵒᵖ ⥤ CoTwistedArrow C ⥤ D :=
+  copowerProfunctor (profunctorOnOpCoTwistedArrow C W) (profunctorOnCoTwistedArrow C P)
 
-@[simp]
-theorem copowerWeightedProfunctorInner_obj (A : Cᵒᵖ) (B : C) :
-    (copowerWeightedProfunctorInner W P A).obj B =
-      HasCopowers.copower ((W.obj A).obj B) ((P.obj A).obj B) := rfl
+/-- Weighted cowedges are equivalent to cowedges over the copower weighted
+profunctor.
 
-@[simp]
-theorem copowerWeightedProfunctorInner_map (A : Cᵒᵖ) {B₁ B₂ : C} (g : B₁ ⟶ B₂) :
-    (copowerWeightedProfunctorInner W P A).map g =
-      HasCopowers.bimap ((W.obj A).map g) ((P.obj A).map g) := rfl
-
-/-- The copower weighted profunctor `Cᵒᵖ ⥤ C ⥤ D` whose coend gives weighted
-coends.
-
-For weight profunctor `W : Cᵒᵖ ⥤ C ⥤ Type v` and target profunctor
-`P : Cᵒᵖ ⥤ C ⥤ D`:
-- `(copowerWeightedProfunctor W P).obj (op A).obj B = W(A,B) ·. P(A,B)`
-- On the diagonal: `W(A,A) ·. P(A,A)` -/
-def copowerWeightedProfunctor : Cᵒᵖ ⥤ C ⥤ D where
-  obj := copowerWeightedProfunctorInner W P
-  map {A₁ A₂} f := {
-    app := fun B => HasCopowers.bimap ((W.map f).app B) ((P.map f).app B)
-    naturality := fun B₁ B₂ g => by
-      simp only [copowerWeightedProfunctorInner_map]
-      rw [← HasCopowers.bimap_comp, ← HasCopowers.bimap_comp]
-      congr 1
-      · simp only [← types_comp]
-        exact (W.map f).naturality g
-      · exact (P.map f).naturality g
-  }
-  map_id A := by
-    ext B
-    simp only [copowerWeightedProfunctorInner_obj, NatTrans.id_app]
-    erw [W.map_id, P.map_id]
-    simp only [NatTrans.id_app]
-    exact HasCopowers.bimap_id
-  map_comp {A₁ A₂ A₃} f g := by
-    ext B
-    simp only [copowerWeightedProfunctorInner_obj, NatTrans.comp_app]
-    rw [W.map_comp, P.map_comp, NatTrans.comp_app, NatTrans.comp_app]
-    exact HasCopowers.bimap_comp _ _ _ _
-
-@[simp]
-theorem copowerWeightedProfunctor_obj (A : Cᵒᵖ) :
-    (copowerWeightedProfunctor W P).obj A = copowerWeightedProfunctorInner W P A :=
-  rfl
-
-@[simp]
-theorem copowerWeightedProfunctor_obj_obj (A : Cᵒᵖ) (B : C) :
-    ((copowerWeightedProfunctor W P).obj A).obj B =
-      HasCopowers.copower ((W.obj A).obj B) ((P.obj A).obj B) := rfl
-
-@[simp]
-theorem copowerWeightedProfunctor_map_app {A₁ A₂ : Cᵒᵖ} (f : A₁ ⟶ A₂) (B : C) :
-    ((copowerWeightedProfunctor W P).map f).app B =
-      HasCopowers.bimap ((W.map f).app B) ((P.map f).app B) := rfl
+This is immediate from `weightedCoconeCowedgeEquiv` by instantiation. -/
+abbrev weightedCowedgeCowedgeEquiv :
+    WeightedCowedge W P ≌ Cowedge (copowerWeightedProfunctor W P) :=
+  @weightedCoconeCowedgeEquiv (CoTwistedArrow C) _ D _ _
+    (profunctorOnOpCoTwistedArrow C W)
+    (profunctorOnCoTwistedArrow C P)
 
 end CopowerWeightedProfunctor
 
@@ -1785,74 +1739,23 @@ section PowerWeightedProfunctor
 variable [HasPowers D]
 variable (W : Cᵒᵖ ⥤ C ⥤ Type v) (P : Cᵒᵖ ⥤ C ⥤ D)
 
-/-- The inner functor of the power weighted profunctor: for a fixed `A : Cᵒᵖ`,
-maps `B : C` to `P(A, B) ^. W(A.unop, op B)`. -/
-def powerWeightedProfunctorInner (A : Cᵒᵖ) : C ⥤ D where
-  obj B := HasPowers.power ((P.obj A).obj B) ((W.flip.obj A.unop).obj (op B))
-  map {B₁ B₂} g :=
-    HasPowers.bimap ((W.flip.obj A.unop).map g.op) ((P.obj A).map g)
-  map_id B := by
-    simp only [Functor.map_id, op_id]
-    exact HasPowers.bimap_id
-  map_comp {B₁ B₂ B₃} g h := by
-    simp only [Functor.map_comp, op_comp]
-    exact HasPowers.bimap_comp _ _ _ _
+/-- The power profunctor for weighted wedges with profunctor weights.
 
-@[simp]
-theorem powerWeightedProfunctorInner_obj (A : Cᵒᵖ) (B : C) :
-    (powerWeightedProfunctorInner W P A).obj B =
-      HasPowers.power ((P.obj A).obj B) ((W.flip.obj A.unop).obj (op B)) := rfl
+This is `powerProfunctor` applied to the weight and diagram extracted from
+`W` and `P` via the twisted arrow category. At a twisted arrow `tw`,
+this gives `P(twDom, twCod) ^. W(twDom, twCod)`. -/
+abbrev powerWeightedProfunctor :
+    (TwistedArrow C)ᵒᵖ ⥤ TwistedArrow C ⥤ D :=
+  powerProfunctor (profunctorOnTwistedArrow C W) (profunctorOnTwistedArrow C P)
 
-@[simp]
-theorem powerWeightedProfunctorInner_map (A : Cᵒᵖ) {B₁ B₂ : C} (g : B₁ ⟶ B₂) :
-    (powerWeightedProfunctorInner W P A).map g =
-      HasPowers.bimap ((W.flip.obj A.unop).map g.op) ((P.obj A).map g) := rfl
+/-- Weighted wedges are equivalent to wedges over the power weighted profunctor.
 
-/-- The power weighted profunctor `Cᵒᵖ ⥤ C ⥤ D` whose end gives weighted ends
-with profunctor weights.
-
-For weight profunctor `W : Cᵒᵖ ⥤ C ⥤ Type v` and target profunctor
-`P : Cᵒᵖ ⥤ C ⥤ D`:
-- `(powerWeightedProfunctor W P).obj (op A).obj B = P(A,B) ^. W(A, op B)`
-- On the diagonal: `P(A,A) ^. W(A, op A)` -/
-def powerWeightedProfunctor : Cᵒᵖ ⥤ C ⥤ D where
-  obj := powerWeightedProfunctorInner W P
-  map {A₁ A₂} f := {
-    app := fun B => HasPowers.bimap ((W.flip.map f.unop).app (op B)) ((P.map f).app B)
-    naturality := fun B₁ B₂ g => by
-      simp only [powerWeightedProfunctorInner_map]
-      rw [← HasPowers.bimap_comp, ← HasPowers.bimap_comp]
-      congr 1
-      · simp only [← types_comp]
-        exact ((W.flip.map f.unop).naturality g.op).symm
-      · exact (P.map f).naturality g
-  }
-  map_id A := by
-    ext B
-    simp only [powerWeightedProfunctorInner_obj, NatTrans.id_app, unop_id]
-    erw [W.flip.map_id, P.map_id]
-    simp only [NatTrans.id_app]
-    exact HasPowers.bimap_id
-  map_comp {A₁ A₂ A₃} f g := by
-    ext B
-    simp only [powerWeightedProfunctorInner_obj, NatTrans.comp_app, unop_comp]
-    rw [W.flip.map_comp, P.map_comp, NatTrans.comp_app, NatTrans.comp_app]
-    exact HasPowers.bimap_comp _ _ _ _
-
-@[simp]
-theorem powerWeightedProfunctor_obj (A : Cᵒᵖ) :
-    (powerWeightedProfunctor W P).obj A = powerWeightedProfunctorInner W P A :=
-  rfl
-
-@[simp]
-theorem powerWeightedProfunctor_obj_obj (A : Cᵒᵖ) (B : C) :
-    ((powerWeightedProfunctor W P).obj A).obj B =
-      HasPowers.power ((P.obj A).obj B) ((W.flip.obj A.unop).obj (op B)) := rfl
-
-@[simp]
-theorem powerWeightedProfunctor_map_app {A₁ A₂ : Cᵒᵖ} (f : A₁ ⟶ A₂) (B : C) :
-    ((powerWeightedProfunctor W P).map f).app B =
-      HasPowers.bimap ((W.flip.map f.unop).app (op B)) ((P.map f).app B) := rfl
+This is immediate from `weightedConeWedgeEquiv` by instantiation. -/
+abbrev weightedWedgeWedgeEquiv :
+    WeightedWedge W P ≌ Wedge (powerWeightedProfunctor W P) :=
+  @weightedConeWedgeEquiv (TwistedArrow C) _ D _ _
+    (profunctorOnTwistedArrow C W)
+    (profunctorOnTwistedArrow C P)
 
 end PowerWeightedProfunctor
 
