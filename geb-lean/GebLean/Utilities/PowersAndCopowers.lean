@@ -1232,6 +1232,57 @@ def weightedCoconeCowedgeEquiv :
     WeightedCocone W F ≌ Cowedge (copowerProfunctor W F) :=
   (weightedCoconeCopowerCoconeEquiv W F).trans (cowedgeCoconeEquiv _).symm
 
+/-- `HasInitial (WeightedCocone W F)` from `HasInitial (Cowedge _)` via the
+equivalence between them.
+
+Uses `hasColimitsOfShape_of_equivalence` to transfer `HasInitial` across
+the categorical equivalence. -/
+def hasInitialWeightedCoconeOfHasInitialCopowerCowedge
+    [HasInitial (Cowedge (copowerProfunctor W F))] :
+    HasInitial (WeightedCocone W F) :=
+  Adjunction.hasColimitsOfShape_of_equivalence
+    (weightedCoconeCowedgeEquiv W F).functor
+
+/-- `HasInitial (Cowedge _)` from `HasInitial (WeightedCocone W F)` via the
+equivalence between them. -/
+def hasInitialCopowerCowedgeOfHasInitialWeightedCocone
+    [HasInitial (WeightedCocone W F)] :
+    HasInitial (Cowedge (copowerProfunctor W F)) :=
+  Adjunction.hasColimitsOfShape_of_equivalence
+    (weightedCoconeCowedgeEquiv W F).inverse
+
+/-- Transfer `IsWeightedColimit` to `IsInitial` on cowedges over the copower
+profunctor.
+
+Given a weighted cocone that is initial (i.e., a weighted colimit), its image
+under the equivalence to cowedges is also initial. -/
+def isInitialCopowerCowedgeOfIsWeightedColimit {c : WeightedCocone W F}
+    (hc : IsWeightedColimit c) :
+    IsInitial ((weightedCoconeCowedgeEquiv W F).functor.obj c) :=
+  isInitialOfEquivFunctor (weightedCoconeCowedgeEquiv W F) hc
+
+/-- Transfer `IsInitial` on cowedges over the copower profunctor to
+`IsWeightedColimit`.
+
+Given a cowedge that is initial (i.e., a coend), its image under the inverse
+equivalence is a weighted colimit. -/
+def isWeightedColimitOfIsInitialCopowerCowedge
+    {c : Cowedge (copowerProfunctor W F)} (hc : IsInitial c) :
+    IsWeightedColimit ((weightedCoconeCowedgeEquiv W F).inverse.obj c) :=
+  isInitialOfEquivFunctor (weightedCoconeCowedgeEquiv W F).symm hc
+
+/-- Isomorphism between a weighted colimit apex and a coend of copowers apex.
+
+Given a weighted cocone `c` that is a weighted colimit and a cowedge `w` over
+the copower profunctor that is initial (a coend), their apices are isomorphic.
+This formalizes the formula `W * F ≅ ∫^j W(j) ·. F(j)`. -/
+def weightedColimitIsoCopowerCoend {c : WeightedCocone W F}
+    (hc : IsWeightedColimit c)
+    {w : Cowedge (copowerProfunctor W F)} (hw : IsInitial w) :
+    c.pt ≅ w.pt :=
+  isInitialCowedgeIso (copowerProfunctor W F)
+    (isInitialCopowerCowedgeOfIsWeightedColimit W F hc) hw
+
 end WeightedCoconeCoconeEquiv
 
 /-!
@@ -1573,6 +1624,57 @@ computed as ends of powers: `{W, F} ≅ ∫_j F(j) ^. W(j)`. -/
 def weightedConeWedgeEquiv :
     WeightedCone W F ≌ Wedge (powerProfunctor W F) :=
   (weightedConePowerConeEquiv W F).trans (wedgeConeEquiv (powerProfunctor W F)).symm
+
+/-- `HasTerminal (WeightedCone W F)` from `HasTerminal (Wedge _)` via the
+equivalence between them.
+
+Uses `hasLimitsOfShape_of_equivalence` to transfer `HasTerminal` across
+the categorical equivalence. -/
+def hasTerminalWeightedConeOfHasTerminalPowerWedge
+    [HasTerminal (Wedge (powerProfunctor W F))] :
+    HasTerminal (WeightedCone W F) :=
+  Adjunction.hasLimitsOfShape_of_equivalence
+    (weightedConeWedgeEquiv W F).functor
+
+/-- `HasTerminal (Wedge _)` from `HasTerminal (WeightedCone W F)` via the
+equivalence between them. -/
+def hasTerminalPowerWedgeOfHasTerminalWeightedCone
+    [HasTerminal (WeightedCone W F)] :
+    HasTerminal (Wedge (powerProfunctor W F)) :=
+  Adjunction.hasLimitsOfShape_of_equivalence
+    (weightedConeWedgeEquiv W F).inverse
+
+/-- Transfer `IsWeightedLimit` to `IsTerminal` on wedges over the power
+profunctor.
+
+Given a weighted cone that is terminal (i.e., a weighted limit), its image
+under the equivalence to wedges is also terminal. -/
+def isTerminalPowerWedgeOfIsWeightedLimit {c : WeightedCone W F}
+    (hc : IsWeightedLimit c) :
+    IsTerminal ((weightedConeWedgeEquiv W F).functor.obj c) :=
+  isTerminalOfEquivFunctor (weightedConeWedgeEquiv W F) hc
+
+/-- Transfer `IsTerminal` on wedges over the power profunctor to
+`IsWeightedLimit`.
+
+Given a wedge that is terminal (i.e., an end), its image under the inverse
+equivalence is a weighted limit. -/
+def isWeightedLimitOfIsTerminalPowerWedge
+    {c : Wedge (powerProfunctor W F)} (hc : IsTerminal c) :
+    IsWeightedLimit ((weightedConeWedgeEquiv W F).inverse.obj c) :=
+  isTerminalOfEquivFunctor (weightedConeWedgeEquiv W F).symm hc
+
+/-- Isomorphism between a weighted limit apex and an end of powers apex.
+
+Given a weighted cone `c` that is a weighted limit and a wedge `w` over
+the power profunctor that is terminal (an end), their apices are isomorphic.
+This formalizes the formula `{W, F} ≅ ∫_j F(j) ^. W(j)`. -/
+def weightedLimitIsoPowerEnd {c : WeightedCone W F}
+    (hc : IsWeightedLimit c)
+    {w : Wedge (powerProfunctor W F)} (hw : IsTerminal w) :
+    c.pt ≅ w.pt :=
+  isTerminalWedgeIso (powerProfunctor W F)
+    (isTerminalPowerWedgeOfIsWeightedLimit W F hc) hw
 
 end WeightedConeConeEquiv
 

@@ -181,7 +181,7 @@ References:
   - Added `powerByTypeFunctor S : C ⥤ C` mapping `X ↦ X ^. S`
   - Added `copowerPowerAdjunction S`:
     `copowerWithTypeFunctor S ⊣ powerByTypeFunctor S`
-- [~] Prove weighted (co)limits via ordinary (co)limits + powers/copowers
+- [x] Prove weighted (co)limits via ordinary (co)limits + powers/copowers
   - `{W, F} ≅ ∫_j F(j) ^. W(j)` (weighted limit via end of powers)
   - `W * F ≅ ∫^j W(j) ·. F(j)` (weighted colimit via coend of copowers)
   - Progress:
@@ -200,22 +200,36 @@ References:
     - [x] Composed with cowedge-cocone equivalence to get
       `WeightedCocone W F ≌ Cowedge (copowerProfunctor W F)`
       via `weightedCoconeCowedgeEquiv`
-    - [~] Dual: `WeightedCone W F ≌ Cone (profunctorOnTwistedArrow J
+    - [x] Dual: `WeightedCone W F ≌ Cone (profunctorOnTwistedArrow J
       (powerProfunctor W F))` via `weightedConePowerConeEquiv`
       - [x] `powerConeπApp_naturality` - cone legs form natural transformation
       - [x] `weightedConeToPowerCone` - conversion from weighted cones
       - [x] `powerConeToWeightedCone` - conversion from power cones
-      - [ ] Round-trip theorems (weighted → power → weighted = id)
-      - [ ] Round-trip theorems (power → weighted → power = id)
-      - [ ] Morphism mappings (weighted cone homs ↔ power cone homs)
-      - [ ] Functors and final equivalence `weightedConePowerConeEquiv`
-    - [ ] Compose with wedge-cone equivalence:
+      - [x] Round-trip theorems (weighted → power → weighted = id)
+      - [x] Round-trip theorems (power → weighted → power = id)
+      - [x] Morphism mappings (weighted cone homs ↔ power cone homs)
+      - [x] Functors and final equivalence `weightedConePowerConeEquiv`
+    - [x] Compose with wedge-cone equivalence:
       `WeightedCone W F ≌ Wedge (powerProfunctor W F)`
       via `weightedConeWedgeEquiv`
-    - [ ] Transfer initiality across `weightedCoconeCowedgeEquiv` to prove
+    - [x] Transfer initiality across `weightedCoconeCowedgeEquiv` to prove
       `W * F ≅ ∫^j W(j) ·. F(j)` (weighted colimit = coend of copowers)
-    - [ ] Transfer terminality across `weightedConeWedgeEquiv` to prove
+      - Added `hasInitialWeightedCoconeOfHasInitialCopowerCowedge`
+      - Added `hasInitialCopowerCowedgeOfHasInitialWeightedCocone`
+      - Added `isInitialCopowerCowedgeOfIsWeightedColimit`
+      - Added `isWeightedColimitOfIsInitialCopowerCowedge`
+    - [x] Transfer terminality across `weightedConeWedgeEquiv` to prove
       `{W, F} ≅ ∫_j F(j) ^. W(j)` (weighted limit = end of powers)
+      - Added `hasTerminalWeightedConeOfHasTerminalPowerWedge`
+      - Added `hasTerminalPowerWedgeOfHasTerminalWeightedCone`
+      - Added `isTerminalPowerWedgeOfIsWeightedLimit`
+      - Added `isWeightedLimitOfIsTerminalPowerWedge`
+    - [x] Added apex isomorphisms formalizing the (co)limit-(co)end formulas:
+      - `weightedColimitIsoCopowerCoend : c.pt ≅ w.pt`
+        (given `IsWeightedColimit c` and `IsInitial w` for cowedge
+        over `copowerProfunctor W F`)
+      - `weightedLimitIsoPowerEnd : c.pt ≅ w.pt` (given `IsWeightedLimit c`
+        and `IsTerminal w` for wedge over `powerProfunctor W F`)
 - [~] Extend to weighted cowedges/wedges with profunctor weights
   - [ ] Define composed profunctor for weighted cowedge:
     `copowerWeightedProfunctor W P : Cᵒᵖ ⥤ C ⥤ D` where W is profunctor weight
