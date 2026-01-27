@@ -200,8 +200,15 @@ References:
     - [x] Composed with cowedge-cocone equivalence to get
       `WeightedCocone W F ≌ Cowedge (copowerProfunctor W F)`
       via `weightedCoconeCowedgeEquiv`
-    - [ ] Dual: `WeightedCone W F ≌ Cone (profunctorOnTwistedArrow J
+    - [~] Dual: `WeightedCone W F ≌ Cone (profunctorOnTwistedArrow J
       (powerProfunctor W F))` via `weightedConePowerConeEquiv`
+      - [x] `powerConeπApp_naturality` - cone legs form natural transformation
+      - [x] `weightedConeToPowerCone` - conversion from weighted cones
+      - [x] `powerConeToWeightedCone` - conversion from power cones
+      - [ ] Round-trip theorems (weighted → power → weighted = id)
+      - [ ] Round-trip theorems (power → weighted → power = id)
+      - [ ] Morphism mappings (weighted cone homs ↔ power cone homs)
+      - [ ] Functors and final equivalence `weightedConePowerConeEquiv`
     - [ ] Compose with wedge-cone equivalence:
       `WeightedCone W F ≌ Wedge (powerProfunctor W F)`
       via `weightedConeWedgeEquiv`

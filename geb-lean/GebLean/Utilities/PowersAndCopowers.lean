@@ -1234,6 +1234,195 @@ def weightedCoconeCowedgeEquiv :
 
 end WeightedCoconeCoconeEquiv
 
+/-!
+### Weighted Cones as Cones over Power Profunctor
+
+The dual construction: weighted cones correspond to cones over the twisted
+arrow diagram of the power profunctor.
+
+Given a weight `W : Jᵒᵖ ⥤ Type v` and diagram `F : J ⥤ C`, the power
+profunctor `powerProfunctor W F` has:
+- Diagonal: `F(j) ^. W(j)` (power of F(j) by W(j))
+- Off-diagonal: mediated by power's functorial action
+
+A weighted cone with apex `pt` and projections `π : (j : Jᵒᵖ) → W(j) →
+(pt ⟶ F(j))` corresponds to a cone over the twisted arrow diagram with legs
+`pt ⟶ F(twDom tw) ^. W(op (twDom tw))` for each twisted arrow `tw`.
+
+This establishes the equivalence:
+`WeightedCone W F ≌ Wedge (powerProfunctor W F)`
+-/
+
+section WeightedConeConeEquiv
+
+variable {J : Type u} [Category.{v} J]
+variable {C : Type u} [Category.{v} C] [HasPowers C]
+variable (W : J ⥤ Type v) (F : J ⥤ C)
+
+open Limits
+
+/-- The cone leg at a twisted arrow from weighted cone data.
+
+For a twisted arrow `tw : j' → j` in J (with `twArr tw : twCod tw ⟶ twDom tw`),
+the cone leg is:
+`lift (c.leg (twDom tw)) ≫ mapVal (F.map (twArr tw))`
+
+This uses the power profunctor action to transport from the domain
+diagonal to the full twisted arrow. -/
+def powerConeπApp (c : WeightedCone W F) (tw : TwistedArrow J) :
+    c.pt ⟶ (profunctorOnTwistedArrow J (powerProfunctor W F)).obj tw :=
+  HasPowers.lift (c.leg (twDom tw)) ≫ HasPowers.mapVal (F.map (twArr tw))
+
+/-- At identity twisted arrows, the cone leg is just `lift (c.leg j)`. -/
+@[simp]
+theorem powerConeπApp_at_id (c : WeightedCone W F) (j : J) :
+    powerConeπApp W F c (twObjMk (𝟙 j)) =
+      HasPowers.lift (c.leg j) := by
+  simp only [powerConeπApp, twObjMk_arr, twObjMk_dom]
+  erw [F.map_id, HasPowers.mapVal_id, Category.comp_id]
+
+/-- The cone legs form a natural transformation.
+
+For cones, naturality says: `π.app y = π.app x ≫ D.map m` for `m : x ⟶ y`. -/
+theorem powerConeπApp_naturality (c : WeightedCone W F)
+    {x y : TwistedArrow J} (m : x ⟶ y) :
+    powerConeπApp W F c y =
+    powerConeπApp W F c x ≫
+      (profunctorOnTwistedArrow J (powerProfunctor W F)).map m := by
+  apply HasPowers.ext
+  intro s
+  simp only [powerConeπApp, profunctorOnTwistedArrow_map,
+    powerProfunctor_map_app, powerProfunctor_obj_map, Category.assoc]
+  -- LHS: lift (leg (twDom y)) ≫ mapVal (F.map (twArr y)) ≫ proj _ _ s
+  -- RHS: lift (leg (twDom x)) ≫ mapVal ≫ mapIdx ≫ mapVal ≫ proj _ _ s
+  -- The twistedArrowForget projections are definitionally equal to twDom/twCod
+  -- Convert s to have the canonical type for easier pattern matching
+  let s' : W.obj (twDom y) := s
+  change HasPowers.lift (c.leg (twDom y)) ≫
+       HasPowers.mapVal (F.map (twArr y)) ≫
+       HasPowers.proj (F.obj (twCod y)) (W.obj (twDom y)) s' =
+    HasPowers.lift (c.leg (twDom x)) ≫
+      HasPowers.mapVal (F.map (twArr x)) ≫
+        HasPowers.mapIdx (W.map (twDomArr m)) ≫
+          HasPowers.mapVal (F.map (twCodArr m)) ≫
+            HasPowers.proj (F.obj (twCod y)) (W.obj (twDom y)) s'
+  -- RHS: Apply power lemmas working from inside out using conv_rhs
+  -- Step 1: mapVal (twCodArr m) ≫ proj → proj ≫ F.map (twCodArr m)
+  conv_rhs => rw [HasPowers.mapVal_proj]
+  -- RHS: lift ≫ mapVal ≫ mapIdx ≫ (proj ≫ F.map)
+  -- Step 2: Need to left-assoc (mapIdx ≫ proj) for mapIdx_proj
+  conv_rhs => rw [← Category.assoc (f := HasPowers.mapIdx _), HasPowers.mapIdx_proj]
+  -- RHS: lift ≫ mapVal ≫ proj (W.map _ s') ≫ F.map
+  -- Step 3: Need to left-assoc to get (mapVal ≫ proj), then apply mapVal_proj
+  conv_rhs =>
+    rw [← Category.assoc (f := HasPowers.mapVal _), HasPowers.mapVal_proj]
+  -- RHS: lift ≫ ((proj ≫ F.map (twArr x)) ≫ F.map (twCodArr m))
+  -- Step 4: Flatten, then get (lift ≫ proj) adjacent, then apply fac
+  conv_rhs =>
+    rw [Category.assoc (f := HasPowers.proj _ _ _)]  -- flatten inner
+    rw [← Category.assoc (f := HasPowers.lift _)]   -- left-assoc lift ≫ proj
+    rw [HasPowers.fac]                              -- apply fac
+  -- RHS: leg (twDom x) (W.map _ s') ≫ F.map (twArr x) ≫ F.map (twCodArr m)
+  -- LHS: Apply power lemmas
+  conv_lhs => rw [HasPowers.mapVal_proj, ← Category.assoc, HasPowers.fac]
+  -- LHS: leg (twDom y) s' ≫ F.map (twArr y)
+  -- RHS: leg (twDom x) (W.map (twDomArr m) s') ≫ F.map (twArr x) ≫ F.map (twCodArr m)
+  -- Now prove LHS = RHS using twisted arrow commutativity and naturality
+  -- RHS: leg (twDom x) (W.map (twDomArr m) s') ≫ F.map (twArr x) ≫ F.map (twCodArr m)
+  -- Use naturality: leg (twDom x) (W.map (twDomArr m) s') = leg (twDom y) s' ≫ F.map (twDomArr m)
+  -- (since twDomArr m : twDom y ⟶ twDom x in the twisted arrow category)
+  rw [← WeightedCone.naturality c (twDomArr m)]
+  -- RHS: (leg (twDom y) s' ≫ F.map (twDomArr m)) ≫ F.map (twArr x) ≫ F.map (twCodArr m)
+  -- Reassociate and combine F.maps
+  rw [Category.assoc, ← F.map_comp, ← F.map_comp]
+  -- RHS: leg (twDom y) s' ≫ F.map (twDomArr m ≫ twArr x ≫ twCodArr m)
+  -- Use twisted arrow commutativity
+  rw [twHomComm m]
+
+/-- Convert a weighted cone to a cone over the power profunctor diagram.
+
+Given a weighted cone with `π(j) : W(j) → (pt ⟶ F(j))`, we construct a
+cone with legs at each twisted arrow using `HasPowers.lift` and
+`mapVal`. -/
+def weightedConeToPowerCone (c : WeightedCone W F) :
+    Cone (profunctorOnTwistedArrow J (powerProfunctor W F)) where
+  pt := c.pt
+  π := {
+    app := powerConeπApp W F c
+    naturality := fun _ _ m => by
+      simp only [Functor.const_obj_obj, Functor.const_obj_map, Category.id_comp]
+      exact powerConeπApp_naturality W F c m
+  }
+
+/-- Convert a cone over the power profunctor diagram to a weighted cone.
+
+Given a cone with legs at each twisted arrow, we extract a weighted
+cone by restricting to the diagonal (identity twisted arrows) and using
+the power projection. -/
+def powerConeToWeightedCone
+    (c : Cone (profunctorOnTwistedArrow J (powerProfunctor W F))) :
+    WeightedCone W F where
+  pt := c.pt
+  toWeightedConeUnder := {
+    app := fun j s =>
+      c.π.app (twObjMk (𝟙 j)) ≫ HasPowers.proj (F.obj j) (W.obj j) s
+    naturality := fun {j j'} f => by
+      funext s
+      simp only [types_comp_apply]
+      -- Goal: π(id_j') ≫ proj (W.map f s) = π(id_j) ≫ proj s ≫ F.map f
+      -- Use cone naturality at two twisted arrow morphisms
+      have h1 : c.π.app (twObjMk (𝟙 j)) ≫ HasPowers.mapVal (F.map f) =
+          c.π.app (twObjMk f) := by
+        have nat := c.π.naturality (twFromIdentityAtDom (twObjMk f))
+        simp only [Functor.const_obj_obj, Functor.const_obj_map, Category.id_comp,
+          profunctorOnTwistedArrow_map, powerProfunctor_map_app,
+          powerProfunctor_obj_map, twFromIdentityAtDom_domArr,
+          twFromIdentityAtDom_codArr, twObjMk_dom, twObjMk_cod,
+          twObjMk_arr] at nat
+        erw [W.map_id, HasPowers.mapIdx_id, Category.id_comp] at nat
+        exact nat.symm
+      have h2 : c.π.app (twObjMk (𝟙 j')) ≫ HasPowers.mapIdx (W.map f) =
+          c.π.app (twObjMk f) := by
+        have nat := c.π.naturality (twObjMkFromIdentityAtCod f)
+        simp only [Functor.const_obj_obj, Functor.const_obj_map, Category.id_comp,
+          profunctorOnTwistedArrow_map, powerProfunctor_map_app,
+          powerProfunctor_obj_map, twObjMkFromIdentityAtCod_domArr,
+          twObjMkFromIdentityAtCod_codArr, twObjMk_dom, twObjMk_cod] at nat
+        erw [F.map_id, HasPowers.mapVal_id, Category.comp_id] at nat
+        exact nat.symm
+      -- Use calc chain analogous to copowerCoconeToWeightedCocone
+      calc c.π.app (twObjMk (𝟙 j')) ≫
+            HasPowers.proj (F.obj j') (W.obj j') (W.map f s)
+        _ = c.π.app (twObjMk (𝟙 j')) ≫
+            (HasPowers.mapIdx (W.map f) ≫
+              HasPowers.proj (F.obj j') (W.obj j) s) := by
+              rw [← HasPowers.mapIdx_proj]
+        _ = (c.π.app (twObjMk (𝟙 j')) ≫ HasPowers.mapIdx (W.map f)) ≫
+              HasPowers.proj (F.obj j') (W.obj j) s := by
+              rw [← Category.assoc]
+        _ = c.π.app (twObjMk f) ≫
+              HasPowers.proj (F.obj j') (W.obj j) s := by
+              rw [h2]
+        _ = (c.π.app (twObjMk (𝟙 j)) ≫ HasPowers.mapVal (F.map f)) ≫
+              HasPowers.proj (F.obj j') (W.obj j) s := by
+              rw [← h1]
+        _ = c.π.app (twObjMk (𝟙 j)) ≫
+              (HasPowers.mapVal (F.map f) ≫
+                HasPowers.proj (F.obj j') (W.obj j) s) := by
+              rw [Category.assoc]
+        _ = c.π.app (twObjMk (𝟙 j)) ≫
+              (HasPowers.proj (F.obj j) (W.obj j) s ≫ F.map f) := by
+              conv_lhs => rw [HasPowers.mapVal_proj (F.map f) s]
+        _ = (c.π.app (twObjMk (𝟙 j)) ≫
+              HasPowers.proj (F.obj j) (W.obj j) s) ≫ F.map f := by
+              rw [← Category.assoc]
+        _ = (homFromFunctor F c.pt).map f
+              (c.π.app (twObjMk (𝟙 j)) ≫
+                HasPowers.proj (F.obj j) (W.obj j) s) := rfl
+  }
+
+end WeightedConeConeEquiv
+
 end WeightedViaEnds
 
 end GebLean
