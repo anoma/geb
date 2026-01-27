@@ -374,6 +374,58 @@ lemma coTwDomArr_comp {x y z : CoTwistedArrow C} (f : x ⟶ y) (g : y ⟶ z) :
 lemma coTwCodArr_comp {x y z : CoTwistedArrow C} (f : x ⟶ y) (g : y ⟶ z) :
     coTwCodArr (f ≫ g) = coTwCodArr f ≫ coTwCodArr g := rfl
 
+/--
+Morphism from any co-twisted arrow to the identity co-twisted arrow at its
+codomain. For `tw` with `arr : coTwCod tw ⟶ coTwDom tw`, this gives a morphism
+`tw ⟶ coTwObjMk (𝟙 (coTwCod tw))`.
+-/
+def coTwToIdentityAtCod (tw : CoTwistedArrow C) :
+    tw ⟶ coTwObjMk (𝟙 (coTwCod tw)) :=
+  coTwHomMk (coTwArr tw) (𝟙 (coTwCod tw)) (by simp)
+
+@[simp]
+lemma coTwToIdentityAtCod_domArr (tw : CoTwistedArrow C) :
+    coTwDomArr (coTwToIdentityAtCod tw) = coTwArr tw := rfl
+
+@[simp]
+lemma coTwToIdentityAtCod_codArr (tw : CoTwistedArrow C) :
+    coTwCodArr (coTwToIdentityAtCod tw) = 𝟙 (coTwCod tw) := rfl
+
+/--
+Morphism from a co-twisted arrow `coTwObjMk f` to `coTwObjMk (𝟙 cod)` where
+`f : cod ⟶ dom` is the arrow. This is a special case of `coTwToIdentityAtCod`
+but with explicit arguments.
+-/
+def coTwObjMkToIdentity {dom cod : C} (f : cod ⟶ dom) :
+    coTwObjMk f ⟶ coTwObjMk (𝟙 cod) :=
+  coTwToIdentityAtCod (coTwObjMk f)
+
+@[simp]
+lemma coTwObjMkToIdentity_domArr {dom cod : C} (f : cod ⟶ dom) :
+    coTwDomArr (coTwObjMkToIdentity f) = f := by
+  simp only [coTwObjMkToIdentity, coTwToIdentityAtCod_domArr, coTwObjMk_arr]
+
+@[simp]
+lemma coTwObjMkToIdentity_codArr {dom cod : C} (f : cod ⟶ dom) :
+    coTwCodArr (coTwObjMkToIdentity f) = 𝟙 cod := by
+  simp only [coTwObjMkToIdentity, coTwToIdentityAtCod_codArr, coTwObjMk_cod]
+
+/--
+Morphism from `coTwObjMk f` to `coTwObjMk (𝟙 dom)` where `f : cod ⟶ dom`.
+This goes to the identity at the domain (target of the arrow).
+-/
+def coTwObjMkToIdentityAtDom {dom cod : C} (f : cod ⟶ dom) :
+    coTwObjMk f ⟶ coTwObjMk (𝟙 dom) :=
+  coTwHomMk (𝟙 dom) f (by simp)
+
+@[simp]
+lemma coTwObjMkToIdentityAtDom_domArr {dom cod : C} (f : cod ⟶ dom) :
+    coTwDomArr (coTwObjMkToIdentityAtDom f) = 𝟙 dom := rfl
+
+@[simp]
+lemma coTwObjMkToIdentityAtDom_codArr {dom cod : C} (f : cod ⟶ dom) :
+    coTwCodArr (coTwObjMkToIdentityAtDom f) = f := rfl
+
 end CoTwistedArrowHelpers
 
 section TwistedArrowSelfDualityUnprimed
