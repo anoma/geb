@@ -200,8 +200,21 @@ References:
     - [x] Composed with cowedge-cocone equivalence to get
       `WeightedCocone W F ≌ Cowedge (copowerProfunctor W F)`
       via `weightedCoconeCowedgeEquiv`
-    - [ ] Transfer initiality to prove `W * F ≅ ∫^j W(j) ·. F(j)`
-    - [ ] Dual for weighted limits and ends
+    - [ ] Dual: `WeightedCone W F ≌ Cone (profunctorOnTwistedArrow J
+      (powerProfunctor W F))` via `weightedConePowerConeEquiv`
+    - [ ] Compose with wedge-cone equivalence:
+      `WeightedCone W F ≌ Wedge (powerProfunctor W F)`
+      via `weightedConeWedgeEquiv`
+    - [ ] Transfer initiality across `weightedCoconeCowedgeEquiv` to prove
+      `W * F ≅ ∫^j W(j) ·. F(j)` (weighted colimit = coend of copowers)
+    - [ ] Transfer terminality across `weightedConeWedgeEquiv` to prove
+      `{W, F} ≅ ∫_j F(j) ^. W(j)` (weighted limit = end of powers)
+- [~] Extend to weighted cowedges/wedges with profunctor weights
+  - [ ] Define composed profunctor for weighted cowedge:
+    `copowerWeightedProfunctor W P : Cᵒᵖ ⥤ C ⥤ D` where W is profunctor weight
+  - [ ] Establish `WeightedCowedge W P ≌ Cowedge (copowerWeightedProfunctor W P)`
+  - [ ] Dual: `WeightedWedge W P ≌ Wedge (powerWeightedProfunctor W P)`
+  - [ ] Transfer initiality/terminality for weighted coends/ends
 - [ ] Formalize Level 1: Weighted colimit elimination via weighted limits
   - `C(W * F, Y) ≅ {W, C(F(-), Y)}`
   - Work at the `WeightedCone`/`WeightedCocone` level
