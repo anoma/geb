@@ -1421,6 +1421,159 @@ def powerConeToWeightedCone
                 HasPowers.proj (F.obj j) (W.obj j) s) := rfl
   }
 
+/-- Round-trip from weighted cone to power cone and back yields the original. -/
+theorem powerConeToWeightedCone_of_weightedCone (c : WeightedCone W F) :
+    powerConeToWeightedCone W F (weightedConeToPowerCone W F c) = c := by
+  apply WeightedCone.ext
+  · rfl
+  · apply heq_of_eq
+    ext j s
+    simp only [powerConeToWeightedCone]
+    simp only [weightedConeToPowerCone]
+    rw [powerConeπApp_at_id]
+    erw [HasPowers.fac]
+    rfl
+
+/-- Round-trip from power cone to weighted cone and back yields the original. -/
+theorem weightedConeToPowerCone_of_powerCone
+    (c : Cone (profunctorOnTwistedArrow J (powerProfunctor W F))) :
+    weightedConeToPowerCone W F (powerConeToWeightedCone W F c) = c := by
+  obtain ⟨pt, π⟩ := c
+  simp only [weightedConeToPowerCone, powerConeToWeightedCone]
+  congr 1
+  ext tw
+  simp only [powerConeπApp]
+  apply HasPowers.ext
+  intro s
+  simp only [Category.assoc]
+  erw [HasPowers.mapVal_proj (F.map (twArr tw)) s]
+  rw [← Category.assoc]
+  erw [HasPowers.fac]
+  simp only [WeightedCone.leg]
+  rw [Category.assoc]
+  erw [← HasPowers.mapVal_proj (F.map (twArr tw)) s]
+  have h := π.naturality (twFromIdentityAtDom tw)
+  simp only [Functor.const_obj_obj, Functor.const_obj_map, Category.id_comp,
+    profunctorOnTwistedArrow_map, powerProfunctor_map_app,
+    powerProfunctor_obj_map, twFromIdentityAtDom_domArr,
+    twFromIdentityAtDom_codArr] at h
+  erw [W.map_id, HasPowers.mapIdx_id, Category.id_comp] at h
+  rw [← Category.assoc, ← h]
+  rfl
+
+/-- Convert a weighted cone morphism to a power cone morphism. -/
+def weightedConeHomToPowerConeHom {c₁ c₂ : WeightedCone W F}
+    (f : WeightedCone.Hom c₁ c₂) :
+    (weightedConeToPowerCone W F c₁) ⟶ (weightedConeToPowerCone W F c₂) where
+  hom := f.hom
+  w := fun tw => by
+    simp only [weightedConeToPowerCone, powerConeπApp]
+    apply HasPowers.ext
+    intro s
+    simp only [Category.assoc]
+    erw [HasPowers.mapVal_proj (F.map (twArr tw)) s]
+    conv_lhs =>
+      arg 2
+      rw [← Category.assoc]
+    conv_rhs => rw [← Category.assoc]
+    erw [HasPowers.fac, HasPowers.fac]
+    rw [← Category.assoc]
+    congr 1
+    exact f.w (twDom tw) s
+
+/-- Convert a power cone morphism to a weighted cone morphism. -/
+def powerConeHomToWeightedConeHom
+    {c₁ c₂ : Cone (profunctorOnTwistedArrow J (powerProfunctor W F))}
+    (f : c₁ ⟶ c₂) :
+    WeightedCone.Hom (powerConeToWeightedCone W F c₁)
+      (powerConeToWeightedCone W F c₂) where
+  hom := f.hom
+  w := fun j s => by
+    simp only [powerConeToWeightedCone, WeightedCone.leg]
+    rw [← Category.assoc]
+    congr 1
+    exact f.w (twObjMk (𝟙 j))
+
+@[simp]
+theorem weightedConeHomToPowerConeHom_hom {c₁ c₂ : WeightedCone W F}
+    (f : WeightedCone.Hom c₁ c₂) :
+    (weightedConeHomToPowerConeHom W F f).hom = f.hom := rfl
+
+@[simp]
+theorem powerConeHomToWeightedConeHom_hom
+    {c₁ c₂ : Cone (profunctorOnTwistedArrow J (powerProfunctor W F))}
+    (f : c₁ ⟶ c₂) :
+    (powerConeHomToWeightedConeHom W F f).hom = f.hom := rfl
+
+/-- The functor from weighted cones to power cones. -/
+def weightedConeToPowerConesFunctor :
+    WeightedCone W F ⥤
+      Cone (profunctorOnTwistedArrow J (powerProfunctor W F)) where
+  obj := weightedConeToPowerCone W F
+  map := weightedConeHomToPowerConeHom W F
+  map_id := fun _ => rfl
+  map_comp := fun {_ _ _} _ _ => rfl
+
+/-- The functor from power cones to weighted cones. -/
+def powerConesToWeightedConeFunctor :
+    Cone (profunctorOnTwistedArrow J (powerProfunctor W F)) ⥤
+      WeightedCone W F where
+  obj := powerConeToWeightedCone W F
+  map := powerConeHomToWeightedConeHom W F
+  map_id := fun _ => by
+    apply WeightedCone.Hom.ext
+    rfl
+  map_comp := fun {_ _ _} _ _ => by
+    apply WeightedCone.Hom.ext
+    rfl
+
+/-- The equivalence between weighted cones and power cones.
+
+This relates weighted limits to ends of powers via the equivalence
+`Cone (profunctorOnTwistedArrow J P) ≌ Wedge P`. -/
+def weightedConePowerConeEquiv :
+    WeightedCone W F ≌
+      Cone (profunctorOnTwistedArrow J (powerProfunctor W F)) where
+  functor := weightedConeToPowerConesFunctor W F
+  inverse := powerConesToWeightedConeFunctor W F
+  unitIso := NatIso.ofComponents
+    (fun c => eqToIso
+      (powerConeToWeightedCone_of_weightedCone W F c).symm)
+    (fun {c₁ c₂} f => by
+      apply WeightedCone.Hom.ext
+      simp only [weightedConeToPowerConesFunctor,
+        powerConesToWeightedConeFunctor, Functor.id_obj, Functor.comp_obj,
+        Functor.id_map, Functor.comp_map, eqToIso.hom,
+        weightedConeHomToPowerConeHom_hom, powerConeHomToWeightedConeHom_hom,
+        WeightedCone.category_comp_hom, WeightedCone.eqToHom_hom,
+        powerConeToWeightedCone, weightedConeToPowerCone,
+        eqToHom_refl, Category.id_comp, Category.comp_id])
+  counitIso := NatIso.ofComponents
+    (fun c => eqToIso
+      (weightedConeToPowerCone_of_powerCone W F c))
+    (fun {c₁ c₂} f => by
+      ext
+      simp only [powerConesToWeightedConeFunctor,
+        weightedConeToPowerConesFunctor, Functor.comp_obj, Functor.id_obj,
+        Functor.comp_map, Functor.id_map, eqToIso.hom,
+        powerConeHomToWeightedConeHom_hom, weightedConeHomToPowerConeHom_hom,
+        Cone.category_comp_hom, Cone.eqToHom_hom, powerConeToWeightedCone,
+        weightedConeToPowerCone, eqToHom_refl, Category.id_comp, Category.comp_id])
+  functor_unitIso_comp := fun c => by
+    ext
+    simp only [weightedConeToPowerConesFunctor,
+      powerConesToWeightedConeFunctor, Functor.comp_obj, Functor.id_obj,
+      NatIso.ofComponents_hom_app, eqToIso.hom,
+      eqToHom_map, eqToHom_trans, eqToHom_refl]
+
+/-- The equivalence between weighted cones and wedges over the power profunctor.
+
+This is the categorical formulation of the fact that weighted limits can be
+computed as ends of powers: `{W, F} ≅ ∫_j F(j) ^. W(j)`. -/
+def weightedConeWedgeEquiv :
+    WeightedCone W F ≌ Wedge (powerProfunctor W F) :=
+  (weightedConePowerConeEquiv W F).trans (wedgeConeEquiv (powerProfunctor W F)).symm
+
 end WeightedConeConeEquiv
 
 end WeightedViaEnds

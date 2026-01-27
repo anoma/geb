@@ -1318,6 +1318,15 @@ theorem WeightedCone.category_comp_hom {W : J ⥤ Type v} {D : J ⥤ C}
 theorem WeightedCone.category_id_hom {W : J ⥤ Type v} {D : J ⥤ C}
     (c : WeightedCone W D) : (𝟙 c : c ⟶ c).hom = 𝟙 c.pt := rfl
 
+/-- For weighted cones, the `.hom` field of `eqToHom h` is `eqToHom`
+applied to the cone point equality. -/
+@[simp]
+theorem WeightedCone.eqToHom_hom {W : J ⥤ Type v} {D : J ⥤ C}
+    {c c' : WeightedCone W D} (h : c = c') :
+    (eqToHom h).hom = eqToHom (congrArg WeightedCone.pt h) := by
+  subst h
+  rfl
+
 section WeightedConeAsElementsPre
 
 /-!
