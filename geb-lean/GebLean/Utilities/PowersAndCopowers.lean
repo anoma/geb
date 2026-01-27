@@ -1732,6 +1732,46 @@ abbrev weightedCowedgeCowedgeEquiv :
     (profunctorOnOpCoTwistedArrow C W)
     (profunctorOnCoTwistedArrow C P)
 
+/-- `HasInitial (WeightedCowedge W P)` from
+`HasInitial (Cowedge (copowerWeightedProfunctor W P))`. -/
+def hasInitialWeightedCowedgeOfHasInitialCopowerCowedge
+    [HasInitial (Cowedge (copowerWeightedProfunctor W P))] :
+    HasInitial (WeightedCowedge W P) :=
+  Adjunction.hasColimitsOfShape_of_equivalence
+    (weightedCowedgeCowedgeEquiv W P).functor
+
+/-- `HasInitial (Cowedge (copowerWeightedProfunctor W P))` from
+`HasInitial (WeightedCowedge W P)`. -/
+def hasInitialCopowerCowedgeOfHasInitialWeightedCowedge
+    [HasInitial (WeightedCowedge W P)] :
+    HasInitial (Cowedge (copowerWeightedProfunctor W P)) :=
+  Adjunction.hasColimitsOfShape_of_equivalence
+    (weightedCowedgeCowedgeEquiv W P).inverse
+
+/-- Transfer `IsWeightedCoend` to `IsInitial` on cowedges over the copower
+weighted profunctor. -/
+def isInitialCopowerCowedgeOfIsWeightedCoend {c : WeightedCowedge W P}
+    (hc : IsWeightedCoend c) :
+    IsInitial ((weightedCowedgeCowedgeEquiv W P).functor.obj c) :=
+  isInitialOfEquivFunctor (weightedCowedgeCowedgeEquiv W P) hc
+
+/-- Transfer `IsInitial` on cowedges over the copower weighted profunctor to
+`IsWeightedCoend`. -/
+def isWeightedCoendOfIsInitialCopowerCowedge
+    {c : Cowedge (copowerWeightedProfunctor W P)} (hc : IsInitial c) :
+    IsWeightedCoend ((weightedCowedgeCowedgeEquiv W P).inverse.obj c) :=
+  isInitialOfEquivFunctor (weightedCowedgeCowedgeEquiv W P).symm hc
+
+/-- Isomorphism between a weighted coend apex and an initial cowedge apex.
+
+Formalizes the formula for weighted coends with profunctor weights. -/
+def weightedCoendIsoCopowerCowedge {c : WeightedCowedge W P}
+    (hc : IsWeightedCoend c)
+    {w : Cowedge (copowerWeightedProfunctor W P)} (hw : IsInitial w) :
+    c.pt ≅ w.pt :=
+  isInitialCowedgeIso (copowerWeightedProfunctor W P)
+    (isInitialCopowerCowedgeOfIsWeightedCoend W P hc) hw
+
 end CopowerWeightedProfunctor
 
 section PowerWeightedProfunctor
@@ -1756,6 +1796,46 @@ abbrev weightedWedgeWedgeEquiv :
   @weightedConeWedgeEquiv (TwistedArrow C) _ D _ _
     (profunctorOnTwistedArrow C W)
     (profunctorOnTwistedArrow C P)
+
+/-- `HasTerminal (WeightedWedge W P)` from
+`HasTerminal (Wedge (powerWeightedProfunctor W P))`. -/
+def hasTerminalWeightedWedgeOfHasTerminalPowerWedge
+    [HasTerminal (Wedge (powerWeightedProfunctor W P))] :
+    HasTerminal (WeightedWedge W P) :=
+  Adjunction.hasLimitsOfShape_of_equivalence
+    (weightedWedgeWedgeEquiv W P).functor
+
+/-- `HasTerminal (Wedge (powerWeightedProfunctor W P))` from
+`HasTerminal (WeightedWedge W P)`. -/
+def hasTerminalPowerWedgeOfHasTerminalWeightedWedge
+    [HasTerminal (WeightedWedge W P)] :
+    HasTerminal (Wedge (powerWeightedProfunctor W P)) :=
+  Adjunction.hasLimitsOfShape_of_equivalence
+    (weightedWedgeWedgeEquiv W P).inverse
+
+/-- Transfer `IsWeightedEnd` to `IsTerminal` on wedges over the power
+weighted profunctor. -/
+def isTerminalPowerWedgeOfIsWeightedEnd {c : WeightedWedge W P}
+    (hc : IsWeightedEnd c) :
+    IsTerminal ((weightedWedgeWedgeEquiv W P).functor.obj c) :=
+  isTerminalOfEquivFunctor (weightedWedgeWedgeEquiv W P) hc
+
+/-- Transfer `IsTerminal` on wedges over the power weighted profunctor to
+`IsWeightedEnd`. -/
+def isWeightedEndOfIsTerminalPowerWedge
+    {c : Wedge (powerWeightedProfunctor W P)} (hc : IsTerminal c) :
+    IsWeightedEnd ((weightedWedgeWedgeEquiv W P).inverse.obj c) :=
+  isTerminalOfEquivFunctor (weightedWedgeWedgeEquiv W P).symm hc
+
+/-- Isomorphism between a weighted end apex and a terminal wedge apex.
+
+Formalizes the formula for weighted ends with profunctor weights. -/
+def weightedEndIsoPowerWedge {c : WeightedWedge W P}
+    (hc : IsWeightedEnd c)
+    {w : Wedge (powerWeightedProfunctor W P)} (hw : IsTerminal w) :
+    c.pt ≅ w.pt :=
+  isTerminalWedgeIso (powerWeightedProfunctor W P)
+    (isTerminalPowerWedgeOfIsWeightedEnd W P hc) hw
 
 end PowerWeightedProfunctor
 

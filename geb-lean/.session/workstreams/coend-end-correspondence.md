@@ -230,12 +230,24 @@ References:
         over `copowerProfunctor W F`)
       - `weightedLimitIsoPowerEnd : c.pt ≅ w.pt` (given `IsWeightedLimit c`
         and `IsTerminal w` for wedge over `powerProfunctor W F`)
-- [~] Extend to weighted cowedges/wedges with profunctor weights
-  - [ ] Define composed profunctor for weighted cowedge:
-    `copowerWeightedProfunctor W P : Cᵒᵖ ⥤ C ⥤ D` where W is profunctor weight
-  - [ ] Establish `WeightedCowedge W P ≌ Cowedge (copowerWeightedProfunctor W P)`
-  - [ ] Dual: `WeightedWedge W P ≌ Wedge (powerWeightedProfunctor W P)`
-  - [ ] Transfer initiality/terminality for weighted coends/ends
+- [x] Extend to weighted cowedges/wedges with profunctor weights
+  - [x] Define composed profunctor for weighted cowedge:
+    `copowerWeightedProfunctor W P` where W is profunctor weight
+  - [x] Establish `WeightedCowedge W P ≌ Cowedge (copowerWeightedProfunctor W P)`
+    via `weightedCowedgeCowedgeEquiv`
+  - [x] Dual: `WeightedWedge W P ≌ Wedge (powerWeightedProfunctor W P)`
+    via `weightedWedgeWedgeEquiv`
+  - [x] Transfer initiality/terminality for weighted coends/ends:
+    - `hasInitialWeightedCowedgeOfHasInitialCopowerCowedge`
+    - `hasInitialCopowerCowedgeOfHasInitialWeightedCowedge`
+    - `isInitialCopowerCowedgeOfIsWeightedCoend`
+    - `isWeightedCoendOfIsInitialCopowerCowedge`
+    - `weightedCoendIsoCopowerCowedge`
+    - `hasTerminalWeightedWedgeOfHasTerminalPowerWedge`
+    - `hasTerminalPowerWedgeOfHasTerminalWeightedWedge`
+    - `isTerminalPowerWedgeOfIsWeightedEnd`
+    - `isWeightedEndOfIsTerminalPowerWedge`
+    - `weightedEndIsoPowerWedge`
 - [ ] Formalize Level 1: Weighted colimit elimination via weighted limits
   - `C(W * F, Y) ≅ {W, C(F(-), Y)}`
   - Work at the `WeightedCone`/`WeightedCocone` level
