@@ -168,6 +168,60 @@ lemma twCodArr_eqToHom {x y : TwistedArrow C} (h : x = y) :
     twCodArr (eqToHom h) = eqToHom (congrArg twCod h) := by
   cases h; rfl
 
+/--
+Morphism from `twObjMk (𝟙 dom)` to a twisted arrow `tw` where the arrow starts
+at `dom = twDom tw`. This provides a morphism from the identity at the domain.
+-/
+def twFromIdentityAtDom (tw : TwistedArrow C) :
+    twObjMk (𝟙 (twDom tw)) ⟶ tw :=
+  twHomMk (𝟙 (twDom tw)) (twArr tw)
+    (by rw [twObjMk_arr, Category.id_comp]; exact Category.id_comp _)
+
+@[simp]
+lemma twFromIdentityAtDom_domArr (tw : TwistedArrow C) :
+    twDomArr (twFromIdentityAtDom tw) = 𝟙 (twDom tw) := rfl
+
+@[simp]
+lemma twFromIdentityAtDom_codArr (tw : TwistedArrow C) :
+    twCodArr (twFromIdentityAtDom tw) = twArr tw := rfl
+
+/--
+Morphism from `twObjMk (𝟙 dom)` to `twObjMk f` where `f : dom ⟶ cod`.
+This is a special case of `twFromIdentityAtDom` with explicit arguments.
+-/
+def twObjMkFromIdentity {dom cod : C} (f : dom ⟶ cod) :
+    twObjMk (𝟙 dom) ⟶ twObjMk f :=
+  twFromIdentityAtDom (twObjMk f)
+
+@[simp]
+lemma twObjMkFromIdentity_domArr {dom cod : C} (f : dom ⟶ cod) :
+    twDomArr (twObjMkFromIdentity f) = 𝟙 dom := by
+  simp only [twObjMkFromIdentity, twFromIdentityAtDom_domArr, twObjMk_dom]
+
+@[simp]
+lemma twObjMkFromIdentity_codArr {dom cod : C} (f : dom ⟶ cod) :
+    twCodArr (twObjMkFromIdentity f) = f := by
+  simp only [twObjMkFromIdentity, twFromIdentityAtDom_codArr, twObjMk_arr]
+
+/--
+Morphism from `twObjMk (𝟙 cod)` to `twObjMk f` where `f : dom ⟶ cod`.
+This goes from the identity at the codomain (target of the arrow).
+-/
+def twObjMkFromIdentityAtCod {dom cod : C} (f : dom ⟶ cod) :
+    twObjMk (𝟙 cod) ⟶ twObjMk f :=
+  twHomMk f (𝟙 cod) (by
+    rw [twObjMk_arr, twObjMk_arr]
+    change f ≫ 𝟙 cod ≫ 𝟙 cod = f
+    rw [Category.id_comp, Category.comp_id])
+
+@[simp]
+lemma twObjMkFromIdentityAtCod_domArr {dom cod : C} (f : dom ⟶ cod) :
+    twDomArr (twObjMkFromIdentityAtCod f) = f := rfl
+
+@[simp]
+lemma twObjMkFromIdentityAtCod_codArr {dom cod : C} (f : dom ⟶ cod) :
+    twCodArr (twObjMkFromIdentityAtCod f) = 𝟙 cod := rfl
+
 end TwistedArrowHelpers
 
 /--
