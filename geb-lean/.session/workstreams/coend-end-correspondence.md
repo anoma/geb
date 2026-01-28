@@ -267,9 +267,13 @@ References:
     - `weightedCoconeOver_eq_weightedLimitInType` - definitional equality
     - `homEquivWeightedLimitInType` - the elimination rule with explicit
       weighted limit type
-- [ ] Formalize Level 2: Weighted coend elimination via weighted ends
+- [x] Formalize Level 2: Weighted coend elimination via weighted ends
   - `Hom(∫^A W(A) ⊗ P(A,A), Y) ≅ ∫_A [W(A), Hom(P(A,A), Y)]`
-  - Derive from Level 1 by specializing to wedges/cowedges
+  - Implemented in `WeightedCoendElimAsEnd` section of `Weighted.lean`
+  - Added `homWeightedWedge_isWeightedEnd` - proves `homWeightedWedge c Y` is
+    a weighted end when `c` is a weighted coend
+  - Added `homIsoWeightedEndApex` - isomorphism `(c.pt ⟶ Y) ≅ d.pt` for
+    weighted end `d` of `homFromSwappedProfunctor P Y`
 - [ ] Show that `WeightedCowedgeOver terminalProfunctor P Y` is the end
       `∫_A Hom(P(A,A), Y)`
 - [ ] Formalize Level 3: Ordinary coend elimination via ordinary ends
@@ -338,6 +342,38 @@ chain becomes:
 4. `= {W, C(D(-), Y)}` - by the weighted limit formula in `Type`
 
 This is formalized in the `WeightedLimitInType` section of `Weighted.lean`.
+
+### Level 2 Elimination Rule Implementation
+
+The weighted coend elimination rule `Hom(∫^A W(A) ⊗ P(A,A), Y) ≅ ∫_A [W(A),
+Hom(P(A,A), Y)]` is implemented in `GebLean/Weighted.lean` in the
+`WeightedCoendElimAsEnd` section.
+
+The formula expresses that morphisms from a weighted coend into `Y` are
+isomorphic to weighted ends of the hom profunctor. This is:
+
+```text
+(c.pt ⟶ Y) ≅ {W, Hom(P(-,-), Y)}
+```
+
+where `c` is the weighted coend cowedge and `{W, ...}` denotes weighted end.
+
+The implementation consists of:
+
+1. `homWeightedWedge c Y` - constructs a weighted wedge over
+   `homFromSwappedProfunctor P Y` with apex `c.pt ⟶ Y`
+2. `homWeightedWedge_isWeightedEnd` - proves this wedge is terminal
+   (a weighted end) when `c` is a weighted coend
+3. `homIsoWeightedEndApex` - extracts the isomorphism `(c.pt ⟶ Y) ≅ d.pt`
+   for any other weighted end `d`
+
+The proof uses the duality between cowedge morphisms and wedge morphisms:
+
+- Forward: post-composing with `c.pt ⟶ Y` using `descHom`
+- Backward: converting a weighted wedge to a cowedge via `wedgeToCowedge`
+
+The uniqueness proof uses the equivalence `coTwistedArrowOpEquivTwistedArrow`
+to transport between cowedge and wedge conditions.
 
 ### Current State of CoendAsNatTransformations
 
