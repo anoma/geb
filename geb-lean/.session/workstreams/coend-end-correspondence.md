@@ -261,6 +261,12 @@ References:
     - `homEquivWeightedCoconeOver_naturality` - naturality in Y
   - Uses `homToFunctorBifunctor` from `Profunctors.lean` to express
     `C(F(-), Y)` as a functor
+  - Added `WeightedLimitInType` section connecting to weighted limits:
+    - `WeightedLimitInType W P := W ⟶ P` (weighted limit of P by W in Type
+      equals natural transformations, by the formula `{W,P} = ∫_j [W(j), P(j)]`)
+    - `weightedCoconeOver_eq_weightedLimitInType` - definitional equality
+    - `homEquivWeightedLimitInType` - the elimination rule with explicit
+      weighted limit type
 - [ ] Formalize Level 2: Weighted coend elimination via weighted ends
   - `Hom(∫^A W(A) ⊗ P(A,A), Y) ≅ ∫_A [W(A), Hom(P(A,A), Y)]`
   - Derive from Level 1 by specializing to wedges/cowedges
@@ -309,6 +315,29 @@ The round-trip proofs use:
   `toWeightedCoconeOver_fromWeightedCoconeOver`)
 - The uniqueness of morphisms from the initial object (for
   `fromWeightedCoconeOver_toWeightedCoconeOver`)
+
+### Weighted Limits in Type
+
+The weighted limit formula specializes in the category `Type v`. For functors
+`W, P : Jᵒᵖ ⥤ Type v`, the weighted limit is:
+
+```text
+{W, P} = ∫_j [W(j), P(j)] = ∫_j (W(j) → P(j)) = Nat(W, P) = W ⟶ P
+```
+
+where `[-,-]` is the internal hom in `Type` (function types), and the end
+over function types is the type of natural transformations.
+
+This makes `WeightedCoconeOver W D Y = W ⟶ homToFunctor D Y` definitionally
+equal to the weighted limit `{W, C(D(-), Y)}` in `Type`. The full elimination
+chain becomes:
+
+1. `(c.pt ⟶ Y)` - morphisms from weighted colimit
+2. `≃ WeightedCoconeOver W D Y` - by `homEquivWeightedCoconeOver`
+3. `= (W ⟶ homToFunctor D Y)` - by definition of `WeightedCoconeOver`
+4. `= {W, C(D(-), Y)}` - by the weighted limit formula in `Type`
+
+This is formalized in the `WeightedLimitInType` section of `Weighted.lean`.
 
 ### Current State of CoendAsNatTransformations
 

@@ -1853,6 +1853,103 @@ end IsWeightedColimit
 
 end WeightedColimitElimination
 
+/-! ### Weighted Limits in Type
+
+For functors `W, P : J ⥤ Type v`, the weighted limit `{W, P}` in the category
+`Type v` is the type of natural transformations `W ⟶ P`. This follows from
+the weighted limit formula:
+
+```
+{W, P} = ∫_j [W(j), P(j)] = ∫_j (W(j) → P(j)) = Nat(W, P)
+```
+
+where `[-,-]` is the internal hom (function type) in `Type`.
+
+We prove this using the existing `WeightedCone` structure, showing that
+`NatTrans W P` forms the terminal weighted cone.
+-/
+section WeightedLimitInType
+
+variable {J : Type v} [Category.{v} J]
+variable (W P : J ⥤ Type v)
+
+/-- The natural transformation weighted cone: apex is `W ⟶ P` with evaluation
+as the cone legs. For `w : W.obj j` and `η : W ⟶ P`, the leg returns
+`fun η => η.app j w : (W ⟶ P) → P.obj j`. -/
+def natTransWeightedCone : WeightedCone (C := Type v) W P where
+  pt := W ⟶ P
+  toWeightedConeUnder := {
+    app := fun j w η => η.app j w
+    naturality := fun {j k} f => by
+      funext w η
+      exact congrFun (η.naturality f) w
+  }
+
+variable {W P}
+
+/-- The canonical morphism from any weighted cone (in Type) to the natural
+transformation cone. Given a cone with apex `X` and legs
+`ι : W ⟶ homFromFunctor P X`, we construct a function `X → (W ⟶ P)`. -/
+def WeightedCone.toNatTransCone (c : WeightedCone (C := Type v) W P) :
+    c ⟶ natTransWeightedCone W P where
+  hom x := {
+    app := fun j w => c.π.app j w x
+    naturality := fun {j k} f => by
+      funext w
+      have nat := c.π.naturality f
+      exact congrFun (congrFun nat w) x
+  }
+  w j w := rfl
+
+/-- The morphism to the natural transformation cone is unique. -/
+theorem WeightedCone.toNatTransCone_unique (c : WeightedCone (C := Type v) W P)
+    (f : c ⟶ natTransWeightedCone W P) : f = c.toNatTransCone := by
+  apply WeightedCone.Hom.ext
+  funext x
+  apply NatTrans.ext
+  funext j w'
+  have h := f.w j w'
+  exact congrFun h x
+
+/-- The natural transformation cone is terminal: `W ⟶ P` is the weighted
+limit of `P` weighted by `W` in the category `Type v`. -/
+def natTransWeightedCone_isTerminal :
+    IsWeightedLimit (natTransWeightedCone W P) :=
+  IsTerminal.ofUniqueHom
+    (fun c => c.toNatTransCone)
+    (fun c f => c.toNatTransCone_unique f)
+
+/-! ### Connection to WeightedCoconeOver
+
+`WeightedCoconeOver W' D Y` for `W' : Jᵒᵖ ⥤ Type v` and `D : J ⥤ C` is exactly
+`W' ⟶ homToFunctor D Y`, which is the weighted limit of `homToFunctor D Y`
+weighted by `W'` in `Type v`.
+-/
+
+variable {C : Type u} [Category.{v} C] {W' : Jᵒᵖ ⥤ Type v} {D : J ⥤ C}
+
+/-- `WeightedCoconeOver W' D Y` equals the type of natural transformations,
+which is the weighted limit in `Type`. -/
+theorem weightedCoconeOver_eq_natTrans (Y : C) :
+    WeightedCoconeOver W' D Y = (W' ⟶ homToFunctor D Y) := rfl
+
+namespace IsWeightedColimit
+
+variable {c : WeightedCocone W' D} (hc : IsWeightedColimit c)
+
+/-- The weighted colimit elimination rule: morphisms from a weighted colimit
+`W' * D` to `Y` correspond bijectively to elements of the weighted limit
+`{W', C(D(-), Y)}` (natural transformations `W' ⟶ homToFunctor D Y`).
+
+This is the formula `C(W' * D, Y) ≃ {W', C(D(-), Y)}`. -/
+def homEquivWeightedLimit (Y : C) :
+    (c.pt ⟶ Y) ≃ (W' ⟶ homToFunctor D Y) :=
+  homEquivWeightedCoconeOver hc Y
+
+end IsWeightedColimit
+
+end WeightedLimitInType
+
 /-- A weighted colimit cone bundles a cocone with the proof it is initial.
 This is the data-carrying version, analogous to mathlib's `ColimitCocone`. -/
 structure WeightedColimitCocone (W : Jᵒᵖ ⥤ Type v) (D : J ⥤ C) where
