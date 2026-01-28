@@ -3319,6 +3319,277 @@ theorem sliceProfunctor_diagApp (G : Cᵒᵖ ⥤ C ⥤ C) (c : C) (A : C) :
     diagApp (G ⇓ c) A = ((G.obj (Opposite.op A)).obj A ⟶ c) := by
   simp only [diagApp, sliceProfunctor_obj_obj]
 
+section HomFromSwappedProfunctor
+
+/-!
+## Hom-from-swapped profunctor
+
+For a profunctor `P : Cᵒᵖ ⥤ C ⥤ D` and object `Y : D`, we define
+`homFromSwappedProfunctor P Y : Cᵒᵖ ⥤ C ⥤ Type v` by
+`(A, B) ↦ Hom_D(P(B, A), Y)`.
+
+This generalizes `sliceProfunctor G c` to arbitrary target categories.
+The slice profunctor is the special case where `D = C` and `Y = c`.
+
+The argument swap `P(B, A)` (instead of `P(A, B)`) ensures correct variance:
+- Contravariant in `A` via `P`'s covariance in second argument
+- Covariant in `B` via `P`'s contravariance in first argument
+-/
+
+variable {C : Type u} [Category.{v} C] {D : Type w} [Category.{v} D]
+
+/-- For a profunctor `P : Cᵒᵖ ⥤ C ⥤ D` and object `Y : D`, the profunctor
+`homFromSwappedProfunctor P Y : Cᵒᵖ ⥤ C ⥤ Type v` sends `(A, B)` to
+`Hom_D(P(B, A), Y)`.
+
+The argument swap ensures this is indeed a profunctor (contravariant in `A`,
+covariant in `B`). -/
+def homFromSwappedProfunctor (P : Cᵒᵖ ⥤ C ⥤ D) (Y : D) : Cᵒᵖ ⥤ C ⥤ Type v where
+  obj A := {
+    obj := fun B => (P.obj (Opposite.op B)).obj A.unop ⟶ Y
+    map := fun g h => (P.map g.op).app A.unop ≫ h
+    map_id := fun _ => by
+      ext h
+      simp only [types_id_apply, op_id, Functor.map_id, NatTrans.id_app,
+        Category.id_comp]
+    map_comp := fun f g => by
+      ext h
+      simp only [types_comp_apply, op_comp, Functor.map_comp, NatTrans.comp_app,
+        Category.assoc]
+  }
+  map f := {
+    app := fun B h => (P.obj (Opposite.op B)).map f.unop ≫ h
+    naturality := fun X Y g => by
+      ext h
+      simp only [types_comp_apply]
+      rw [← Category.assoc, ← Category.assoc]
+      congr 1
+      exact (P.map g.op).naturality f.unop
+  }
+  map_id := fun A => by
+    ext B h
+    simp only [NatTrans.id_app, types_id_apply, unop_id, Functor.map_id,
+      Category.id_comp]
+  map_comp := fun f g => by
+    ext B h
+    simp only [NatTrans.comp_app, types_comp_apply, unop_comp, Functor.map_comp,
+      Category.assoc]
+
+/-- The object computation for `homFromSwappedProfunctor`. -/
+@[simp]
+theorem homFromSwappedProfunctor_obj_obj (P : Cᵒᵖ ⥤ C ⥤ D) (Y : D)
+    (A : Cᵒᵖ) (B : C) :
+    ((homFromSwappedProfunctor P Y).obj A).obj B =
+      ((P.obj (Opposite.op B)).obj A.unop ⟶ Y) := rfl
+
+/-- The covariant map (in B) for `homFromSwappedProfunctor` is precomposition. -/
+@[simp]
+theorem homFromSwappedProfunctor_obj_map (P : Cᵒᵖ ⥤ C ⥤ D) (Y : D)
+    (A : Cᵒᵖ) {B B' : C} (g : B ⟶ B')
+    (h : (P.obj (Opposite.op B)).obj A.unop ⟶ Y) :
+    ((homFromSwappedProfunctor P Y).obj A).map g h = (P.map g.op).app A.unop ≫ h :=
+  rfl
+
+/-- The contravariant map (in A) for `homFromSwappedProfunctor` is precomposition. -/
+@[simp]
+theorem homFromSwappedProfunctor_map_app (P : Cᵒᵖ ⥤ C ⥤ D) (Y : D)
+    {A A' : Cᵒᵖ} (f : A ⟶ A') (B : C)
+    (h : (P.obj (Opposite.op B)).obj A.unop ⟶ Y) :
+    ((homFromSwappedProfunctor P Y).map f).app B h =
+      (P.obj (Opposite.op B)).map f.unop ≫ h := rfl
+
+/-- The diagonal of `homFromSwappedProfunctor P Y` at `A` is `Hom(P(A, A), Y)`. -/
+theorem homFromSwappedProfunctor_diagApp (P : Cᵒᵖ ⥤ C ⥤ D) (Y : D) (A : C) :
+    diagApp (homFromSwappedProfunctor P Y) A =
+      ((P.obj (Opposite.op A)).obj A ⟶ Y) := by
+  simp only [diagApp, homFromSwappedProfunctor_obj_obj]
+
+/-- The profunctor `homFromSwappedProfunctor P Y` evaluated on twisted arrows equals
+`homToFunctor (profunctorOnCoTwistedArrow C P) Y` after transporting via the
+equivalence `(CoTwistedArrow C)ᵒᵖ ≌ TwistedArrow C`.
+
+For a twisted arrow `(dom, cod, hom : dom → cod)`:
+- `profunctorOnTwistedArrow C (homFromSwappedProfunctor P Y)` at `(dom, cod, hom)`
+  = `Hom(P(cod, dom), Y)`
+- `homToFunctor (profunctorOnCoTwistedArrow C P) Y` at `op (cod, dom, hom)`
+  = `Hom(P(cod, dom), Y)`
+
+The equivalence maps `(dom, cod, hom)` to `op (cod, dom, hom)`, giving the equality. -/
+theorem profunctorOnTwistedArrow_homFromSwappedProfunctor_obj
+    (P : Cᵒᵖ ⥤ C ⥤ D) (Y : D) (tw : TwistedArrow C) :
+    (profunctorOnTwistedArrow C (homFromSwappedProfunctor P Y)).obj tw =
+    (homToFunctor (profunctorOnCoTwistedArrow C P) Y).obj
+      (coTwistedArrowOpEquivTwistedArrow.inverse.obj tw) := by
+  simp only [profunctorOnTwistedArrow_obj, homFromSwappedProfunctor_obj_obj]
+  unfold homToFunctor homToFunctorBifunctor
+  simp only [Functor.comp_obj, Functor.opHom_obj, Functor.flip_obj_obj,
+    Functor.whiskeringRight_obj_obj, yoneda_obj_obj, Functor.op_obj,
+    profunctorOnCoTwistedArrow_obj, coTwistedArrowOpEquivInverse_obj_dom,
+    coTwistedArrowOpEquivInverse_obj_cod]
+
+end HomFromSwappedProfunctor
+
+/-!
+## Weighted coend elimination as weighted end
+
+The weighted coend elimination rule `Hom(∫^A W(A,A)·P(A,A), Y) ≅ ∫_A W(A,A)^Hom(P(A,A), Y)`
+can be expressed using weighted ends with the `homFromSwappedProfunctor` diagram.
+
+Given a weighted cowedge `c : WeightedCowedge W P`, we construct a weighted wedge
+`homWeightedWedge c Y : WeightedWedge W (homFromSwappedProfunctor P Y)` with apex
+`c.pt ⟶ Y`. When `c` is a weighted coend, this wedge is a weighted end.
+-/
+
+section WeightedCoendElimAsEnd
+
+variable {C : Type u} [Category.{v} C] {D : Type w} [Category.{v} D]
+variable {W : Cᵒᵖ ⥤ C ⥤ Type v} {P : Cᵒᵖ ⥤ C ⥤ D}
+
+/-- The weighted wedge with apex `c.pt ⟶ Y` constructed from a weighted
+cowedge. The legs are given by postcomposition with the cowedge legs,
+with weight elements transported via the equivalence between
+`(CoTwistedArrow C)ᵒᵖ` and `TwistedArrow C`.
+
+This is the coend analogue of `IsWeightedColimit.homWeightedCone`. -/
+def homWeightedWedge (c : WeightedCowedge W P) (Y : D) :
+    WeightedWedge W (homFromSwappedProfunctor P Y) where
+  pt := c.pt ⟶ Y
+  toWeightedConeUnder := {
+    app := fun tw w f =>
+      -- Transport weight via the counit inverse
+      let w' := (profunctorOnTwistedArrow C W).map
+        (coTwistedArrowOpEquivTwistedArrow.counitInv.app tw) w
+      -- Apply cowedge leg and postcompose with f
+      -- The output type P(twCod, twDom) ⟶ Y equals the expected type
+      -- (profunctorOnTwistedArrow (homFromSwappedProfunctor P Y)).obj tw
+      cast (by
+        simp only [profunctorOnTwistedArrow_obj, homFromSwappedProfunctor_obj_obj]
+        congr 1)
+        (c.ι.app (coTwistedArrowOpEquivTwistedArrow.inverse.obj tw) w' ≫ f)
+    naturality := fun {tw tw'} g => by
+      funext w f
+      simp only [types_comp_apply]
+      -- Step 1: Rewrite weight transport using counitInv naturality
+      -- g ≫ counitInv.app tw' = counitInv.app tw ≫ (functor ∘ inverse).map g
+      have counit_nat := coTwistedArrowOpEquivTwistedArrow.counitInv.naturality g
+      simp only [Functor.comp_map, Functor.id_map] at counit_nat
+      -- W.map (counitInv.app tw') (W.map g w) = W.map (functor.map (inverse.map g)) w_tw
+      -- where w_tw = W.map (counitInv.app tw) w
+      have weight_eq : (profunctorOnTwistedArrow C W).map
+          (coTwistedArrowOpEquivTwistedArrow.counitInv.app tw')
+          ((profunctorOnTwistedArrow C W).map g w) =
+          (profunctorOnTwistedArrow C W).map
+            (coTwistedArrowOpEquivTwistedArrow.functor.map
+              (coTwistedArrowOpEquivTwistedArrow.inverse.map g))
+            ((profunctorOnTwistedArrow C W).map
+              (coTwistedArrowOpEquivTwistedArrow.counitInv.app tw) w) := by
+        -- Combine the LHS maps using Functor.map_comp
+        have lhs_step : (profunctorOnTwistedArrow C W).map
+            (coTwistedArrowOpEquivTwistedArrow.counitInv.app tw')
+            ((profunctorOnTwistedArrow C W).map g w) =
+            (profunctorOnTwistedArrow C W).map
+              (g ≫ coTwistedArrowOpEquivTwistedArrow.counitInv.app tw') w := by
+          have h := congrFun ((profunctorOnTwistedArrow C W).map_comp g
+            (coTwistedArrowOpEquivTwistedArrow.counitInv.app tw')) w
+          simp only [types_comp_apply] at h
+          exact h.symm
+        rw [lhs_step, counit_nat]
+        have rhs_step := congrFun ((profunctorOnTwistedArrow C W).map_comp
+          (coTwistedArrowOpEquivTwistedArrow.counitInv.app tw)
+          (coTwistedArrowOpEquivTwistedArrow.functor.map
+            (coTwistedArrowOpEquivTwistedArrow.inverse.map g))) w
+        simp only [types_comp_apply] at rhs_step
+        exact rhs_step
+      rw [weight_eq]
+      -- Step 2: Use cowedge naturality for the inverse.map g morphism
+      let g' := coTwistedArrowOpEquivTwistedArrow.inverse.map g
+      let w_tw := (profunctorOnTwistedArrow C W).map
+        (coTwistedArrowOpEquivTwistedArrow.counitInv.app tw) w
+      -- First handle cast on LHS using cast_eq_iff_heq
+      rw [cast_eq_iff_heq]
+      -- Use the cowedge naturality to connect both sides
+      have cowedge_nat := congrFun (c.ι.naturality g') w_tw
+      -- Rewrite profunctorOnOpCoTwistedArrow to profunctorOnTwistedArrow
+      simp only [types_comp_apply, profunctorOnOpCoTwistedArrow_map] at cowedge_nat
+      -- Now cowedge_nat relates the cowedge applications via functor.map g'
+      -- LHS: c.ι.app (inverse.obj tw') (W.map (functor.map g') w_tw)
+      -- = RHS of cowedge_nat = (homToFunctor ...).map g' (c.ι.app (inverse.obj tw) w_tw)
+      rw [cowedge_nat]
+      -- Now expand both homToFunctor and homFromFunctor to see P.map compositions
+      simp only [homFromFunctor, homFromFunctorBifunctor, homToFunctor,
+        homToFunctorBifunctor, Functor.flip_obj_obj, Functor.flip_obj_map,
+        Functor.comp_obj, Functor.comp_map, coyoneda, Functor.whiskeringRight_obj_obj,
+        yoneda_obj_map, yoneda_map_app, types_comp_apply]
+      simp only [profunctorOnTwistedArrow_map, types_comp_apply]
+      simp only [homFromSwappedProfunctor_map_app, homFromSwappedProfunctor_obj_map]
+      -- Simplify opHom and op_map to extract the underlying morphism
+      simp only [Functor.opHom_obj, Functor.op_map, Quiver.Hom.unop_op,
+        profunctorOnCoTwistedArrow_map, Category.assoc]
+      -- The goal is HEq of morphism compositions. The LHS uses
+      -- profunctorOnCoTwistedArrow.map on g'.unop, the RHS uses
+      -- profunctorOnTwistedArrow.map on g. The equivalence maps the components:
+      -- - coTwDomArr g'.unop = twCodArr g
+      -- - coTwCodArr g'.unop = twDomArr g
+      -- First prove these equalities by unfolding the equivalence.
+      have eq_dom : coTwDomArr g'.unop = twCodArr g := by
+        simp only [g', coTwistedArrowOpEquivTwistedArrow, Cat.equivOfIso,
+          coTwistedArrowOpIsoTwistedArrow, Iso.trans_inv, Iso.trans_hom,
+          coTwistedArrowOpIsoTwistedArrowOp, Cat.opFunctor,
+          Cat.opFunctorInvolutive, Functor.mapIso_hom, Functor.mapIso_inv,
+          twistedArrowOpOpIsoCoTwistedArrow, twistedArrowIsoTwistedArrowOp,
+          Cat.isoOfEquiv, twistedArrowEquivTwistedArrowOp, Iso.symm_inv,
+          twistedArrowToTwistedArrowOp, twistedArrowOpToTwistedArrow,
+          coTwDomArr, twCodArr, twDomArr]
+        rfl
+      have eq_cod : coTwCodArr g'.unop = twDomArr g := by
+        simp only [g', coTwistedArrowOpEquivTwistedArrow, Cat.equivOfIso,
+          coTwistedArrowOpIsoTwistedArrow, Iso.trans_inv, Iso.trans_hom,
+          coTwistedArrowOpIsoTwistedArrowOp, Cat.opFunctor,
+          Cat.opFunctorInvolutive, Functor.mapIso_hom, Functor.mapIso_inv,
+          twistedArrowOpOpIsoCoTwistedArrow, twistedArrowIsoTwistedArrowOp,
+          Cat.isoOfEquiv, twistedArrowEquivTwistedArrowOp, Iso.symm_inv,
+          twistedArrowToTwistedArrowOp, twistedArrowOpToTwistedArrow,
+          twCodArr, coTwCodArr, twDomArr]
+        rfl
+      -- The goal is a heterogeneous equality between morphism compositions.
+      -- Both sides are definitionally equal after unfolding the equivalence
+      -- machinery, so congr can close the goal.
+      congr 1
+  }
+
+/-- Given a weighted wedge `d` with apex `X` over `homFromSwappedProfunctor P Y`
+and an element `x : X`, constructs a weighted cowedge over `P` with apex `Y`.
+
+This is the adjoint transpose of the wedge structure, converting a wedge leg
+`X → (P(twCod, twDom) ⟶ Y)` into a cowedge leg `P(coTwDom, coTwCod) ⟶ Y` via
+the equivalence between twisted and co-twisted arrow categories. -/
+def wedgeToCowedge (d : WeightedWedge W (homFromSwappedProfunctor P Y))
+    (x : d.pt) : WeightedCowedge W P where
+  pt := Y
+  toWeightedCoconeOver := {
+    app := fun coTw w =>
+      -- Apply the wedge leg at the corresponding twisted arrow
+      let tw := coTwistedArrowOpEquivTwistedArrow.functor.obj coTw
+      -- Transport weight via the unit
+      let w' := (profunctorOnTwistedArrow C W).map
+        (coTwistedArrowOpEquivTwistedArrow.unit.app coTw) w
+      -- The wedge leg gives us a morphism P(twCod, twDom) ⟶ Y
+      -- which equals P(coTwDom, coTwCod) ⟶ Y by the equivalence
+      cast (by
+        simp only [profunctorOnCoTwistedArrow_obj, profunctorOnTwistedArrow_obj,
+          homFromSwappedProfunctor_obj_obj]
+        simp only [coTwistedArrowOpEquiv_obj_dom, coTwistedArrowOpEquiv_obj_cod]
+        rfl) (d.ι.app tw w' x)
+    naturality := fun {coTw coTw'} g => by
+      funext w
+      simp only [types_comp_apply]
+      -- Similar structure to homWeightedWedge naturality
+      -- Use the wedge naturality and transport through the equivalence
+      _
+  }
+
+end WeightedCoendElimAsEnd
+
 /-!
 ## Restricted cowedges
 
