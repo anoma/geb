@@ -962,6 +962,43 @@ theorem coTwistedArrowOpEquiv_map_twCodArr {tw tw' : CoTwistedArrow C}
   simp only [twCodArr, coTwDomArr]
   rfl
 
+/-!
+### Inverse direction lemmas for the equivalence
+
+These lemmas relate `coTwDom`/`coTwCod` of the inverse image to `twCod`/`twDom`
+of the original twisted arrow.
+-/
+
+/-- The domain of the co-twisted arrow corresponding to a twisted arrow
+(via the inverse of the equivalence) is the codomain of the twisted arrow. -/
+theorem coTwistedArrowOpEquivInverse_obj_dom (tw : TwistedArrow C) :
+    coTwDom ((coTwistedArrowOpEquivTwistedArrow.inverse.obj tw).unop) =
+    twCod tw := by
+  simp only [coTwistedArrowOpEquivTwistedArrow, Cat.equivOfIso,
+    coTwistedArrowOpIsoTwistedArrow, Iso.trans_inv]
+  simp only [coTwistedArrowOpIsoTwistedArrowOp, Cat.opFunctor,
+    Cat.opFunctorInvolutive, Iso.trans_inv, Functor.mapIso_inv]
+  simp only [twistedArrowOpOpIsoCoTwistedArrow, twistedArrowIsoTwistedArrowOp]
+  simp only [Cat.isoOfEquiv, twistedArrowEquivTwistedArrowOp, Iso.symm_inv]
+  simp only [twistedArrowToTwistedArrowOp]
+  simp only [coTwDom, twCod]
+  rfl
+
+/-- The codomain of the co-twisted arrow corresponding to a twisted arrow
+(via the inverse of the equivalence) is the domain of the twisted arrow. -/
+theorem coTwistedArrowOpEquivInverse_obj_cod (tw : TwistedArrow C) :
+    coTwCod ((coTwistedArrowOpEquivTwistedArrow.inverse.obj tw).unop) =
+    twDom tw := by
+  simp only [coTwistedArrowOpEquivTwistedArrow, Cat.equivOfIso,
+    coTwistedArrowOpIsoTwistedArrow, Iso.trans_inv]
+  simp only [coTwistedArrowOpIsoTwistedArrowOp, Cat.opFunctor,
+    Cat.opFunctorInvolutive, Iso.trans_inv, Functor.mapIso_inv]
+  simp only [twistedArrowOpOpIsoCoTwistedArrow, twistedArrowIsoTwistedArrowOp]
+  simp only [Cat.isoOfEquiv, twistedArrowEquivTwistedArrowOp, Iso.symm_inv]
+  simp only [twistedArrowToTwistedArrowOp]
+  simp only [coTwCod, twDom]
+  rfl
+
 end TwistedArrowSelfDualityUnprimed
 
 @[simp]
