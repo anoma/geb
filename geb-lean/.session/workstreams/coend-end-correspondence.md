@@ -276,9 +276,12 @@ References:
     weighted end `d` of `homFromSwappedProfunctor P Y`
 - [ ] Show that `WeightedCowedgeOver terminalProfunctor P Y` is the end
       `∫_A Hom(P(A,A), Y)`
-- [ ] Formalize Level 3: Ordinary coend elimination via ordinary ends
+- [x] Formalize Level 3: Ordinary coend elimination via ordinary ends
   - `Hom(∫^A P(A,A), Y) ≅ ∫_A Hom(P(A,A), Y)`
   - Derive from Level 2 with `W = terminalProfunctor`
+  - Added `homOrdinaryWedge` - constructs mathlib wedge from cowedge
+  - Added `homOrdinaryWedge_isTerminal` - proves terminality (end property)
+  - Added `ordinaryHomIsoEndApex` - extracts `(c.pt ⟶ Y) ≅ d.pt`
 - [ ] Prove the co-Yoneda isomorphism:
       `∫^A P(A,A) ≅ Nat(Y ↦ ∫_A Hom(P(A,A), Y), Id)`
 - [ ] Complete the proof that `coendToNatTrans` and `natTransToCoend` are
@@ -374,6 +377,30 @@ The proof uses the duality between cowedge morphisms and wedge morphisms:
 
 The uniqueness proof uses the equivalence `coTwistedArrowOpEquivTwistedArrow`
 to transport between cowedge and wedge conditions.
+
+### Level 3 Elimination Rule Implementation
+
+The ordinary coend elimination rule `Hom(∫^A P(A,A), Y) ≅ ∫_A Hom(P(A,A), Y)`
+is implemented by specializing Level 2 to the trivial weight (`terminalProfunctor`).
+
+Since `PUnit ⊗ X ≅ X` (trivial copower) and `[PUnit, Y] ≅ Y` (trivial power),
+the weighted formula reduces to the ordinary (unweighted) formula.
+
+The implementation consists of:
+
+1. `homOrdinaryWedge P c Y` - converts a mathlib cowedge to a mathlib wedge:
+   - Converts cowedge to weighted cowedge via `trivialWeightedCowedgeCowedgeEquiv`
+   - Applies `homWeightedWedge` to get weighted wedge for hom profunctor
+   - Converts back via `trivialWeightedWedgeWedgeEquiv`
+
+2. `homOrdinaryWedge_isTerminal P hc Y` - proves the wedge is terminal:
+   - Uses `isWeightedCoendOfIsInitialCowedge` to get weighted coend
+   - Applies `homWeightedWedge_isWeightedEnd` from Level 2
+   - Uses `isTerminalWedgeOfIsWeightedEnd` to convert to mathlib terminality
+
+3. `ordinaryHomIsoEndApex P hc Y hd` - extracts the isomorphism:
+   - Uses `isTerminalWedgeIso` to get isomorphism between terminal wedges
+   - Result: `(c.pt ⟶ Y) ≅ d.pt` where `c` is coend cowedge, `d` is end wedge
 
 ### Current State of CoendAsNatTransformations
 

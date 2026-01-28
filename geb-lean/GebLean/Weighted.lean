@@ -4977,6 +4977,60 @@ def WeightedCoendCowedge.toColimitCocone {D : Type w} [Category.{v} D]
   weightedCoendToColimitCocone P e.isCoend
 
 /-!
+### Ordinary Coend Elimination as End
+
+This section specializes the weighted coend elimination rule to the case of
+ordinary (trivially weighted) coends, giving:
+
+  Hom(∫^A P(A,A), Y) ≅ ∫_A Hom(P(A,A), Y)
+
+The construction converts mathlib cowedges/wedges to weighted cowedges/wedges
+via the trivial weight equivalences, applies the weighted elimination rule,
+and converts back.
+-/
+
+/-- Construct a mathlib wedge from a mathlib cowedge.
+
+Given a cowedge `c` for profunctor `P` and an object `Y`, constructs a wedge
+for `homFromSwappedProfunctor P Y` with apex `c.pt ⟶ Y`.
+
+This goes through weighted cowedges/wedges:
+1. Convert cowedge to weighted cowedge via `trivialWeightedCowedgeCowedgeEquiv`
+2. Apply `homWeightedWedge` to get weighted wedge
+3. Convert back via `trivialWeightedWedgeWedgeEquiv` -/
+def homOrdinaryWedge {D : Type w} [Category.{v} D]
+    (P : Cᵒᵖ ⥤ C ⥤ D) (c : Cowedge (J := C) (C := D) P) (Y : D) :
+    Wedge (J := C) (C := Type v) (homFromSwappedProfunctor P Y) :=
+  (trivialWeightedWedgeWedgeEquiv (homFromSwappedProfunctor P Y)).functor.obj
+    (homWeightedWedge ((trivialWeightedCowedgeCowedgeEquiv P).inverse.obj c) Y)
+
+/-- When a cowedge is initial (a coend), the constructed wedge is terminal
+(an end).
+
+This is the ordinary coend elimination rule: given a coend cowedge `c`, the
+wedge `homOrdinaryWedge P c Y` witnesses that `Hom(c.pt, Y)` is an end. -/
+def homOrdinaryWedge_isTerminal {D : Type w} [Category.{v} D]
+    (P : Cᵒᵖ ⥤ C ⥤ D) {c : Cowedge (J := C) (C := D) P}
+    (hc : IsInitial c) (Y : D) : IsTerminal (homOrdinaryWedge P c Y) :=
+  isTerminalWedgeOfIsWeightedEnd (homFromSwappedProfunctor P Y)
+    (homWeightedWedge_isWeightedEnd (isWeightedCoendOfIsInitialCowedge P hc) Y)
+
+/-- Extract the isomorphism between hom types from coend and end.
+
+Given a coend cowedge `c` and an end wedge `d` for the hom profunctor,
+extracts the isomorphism `(c.pt ⟶ Y) ≅ d.pt`.
+
+This is the computational content of the ordinary coend elimination rule:
+  `Hom(∫^A P(A,A), Y) ≅ ∫_A Hom(P(A,A), Y)` -/
+def ordinaryHomIsoEndApex {D : Type w} [Category.{v} D]
+    (P : Cᵒᵖ ⥤ C ⥤ D) {c : Cowedge (J := C) (C := D) P}
+    (hc : IsInitial c) (Y : D)
+    {d : Wedge (J := C) (C := Type v) (homFromSwappedProfunctor P Y)}
+    (hd : IsTerminal d) : (c.pt ⟶ Y) ≅ d.pt :=
+  isTerminalWedgeIso (homFromSwappedProfunctor P Y)
+    (homOrdinaryWedge_isTerminal P hc Y) hd
+
+/-!
 ### Extracting Diagonal Data from Weighted Cowedges
 
 Given a weighted cowedge, we can extract the diagonal family as a `ParanatSig`.
