@@ -1769,6 +1769,15 @@ def WeightedCocone.ofCoconeOver {Y : C} (coconeOver : WeightedCoconeOver W D Y) 
     WeightedCocone W D :=
   ⟨Y, coconeOver⟩
 
+/-- The application of a postcomposed cocone is composition with the morphism. -/
+@[simp]
+theorem WeightedCocone.postcompose_app (c : WeightedCocone W D) {Y : C}
+    (f : c.pt ⟶ Y) (j : Jᵒᵖ) (w : W.obj j) :
+    (c.postcompose f).app j w = c.ι.app j w ≫ f := by
+  simp only [postcompose, FunctorToTypes.comp, homToFunctorBifunctor,
+    Functor.flip_obj_map, Functor.comp_obj, Functor.comp_map]
+  rfl
+
 /-- Post-composing the identity morphism gives the original cocone data. -/
 @[simp]
 theorem WeightedCocone.postcompose_id (c : WeightedCocone W D) :
@@ -1933,6 +1942,17 @@ which is the weighted limit in `Type`. -/
 theorem weightedCoconeOver_eq_natTrans (Y : C) :
     WeightedCoconeOver W' D Y = (W' ⟶ homToFunctor D Y) := rfl
 
+/-- The weighted limit cone for `homToFunctor D Y` weighted by `W'`.
+This is `natTransWeightedCone` applied to the hom-functor. -/
+def homFunctorWeightedLimitCone (W' : Jᵒᵖ ⥤ Type v) (D : J ⥤ C) (Y : C) :
+    WeightedCone (C := Type v) W' (homToFunctor D Y) :=
+  natTransWeightedCone W' (homToFunctor D Y)
+
+/-- The weighted limit cone for `homToFunctor D Y` is terminal. -/
+def homFunctorWeightedLimitCone_isTerminal (W' : Jᵒᵖ ⥤ Type v) (D : J ⥤ C) (Y : C) :
+    IsWeightedLimit (homFunctorWeightedLimitCone W' D Y) :=
+  natTransWeightedCone_isTerminal
+
 namespace IsWeightedColimit
 
 variable {c : WeightedCocone W' D} (hc : IsWeightedColimit c)
@@ -1945,6 +1965,71 @@ This is the formula `C(W' * D, Y) ≃ {W', C(D(-), Y)}`. -/
 def homEquivWeightedLimit (Y : C) :
     (c.pt ⟶ Y) ≃ (W' ⟶ homToFunctor D Y) :=
   homEquivWeightedCoconeOver hc Y
+
+/-- The weighted cone with apex `c.pt ⟶ Y` constructed from a weighted
+colimit. The legs are given by postcomposition with the colimit legs. -/
+def homWeightedCone (Y : C) :
+    WeightedCone (C := Type v) W' (homToFunctor D Y) where
+  pt := c.pt ⟶ Y
+  toWeightedConeUnder := {
+    app := fun j w f => c.ι.app j w ≫ f
+    naturality := fun {j k} g => by
+      funext w f
+      have nat := congrFun (c.ι.naturality g) w
+      simp only [types_comp_apply, homToFunctor, homToFunctorBifunctor,
+        Functor.comp_obj, Functor.flip_obj_obj, homFromFunctorBifunctor,
+        homFromFunctor, coyoneda, Functor.comp_map,
+        Functor.whiskeringRight_obj_obj,
+        yoneda_obj_obj, yoneda_obj_map, Opposite.unop_op] at nat ⊢
+      simp only [Functor.flip_obj_map, yoneda_map_app, types_comp_apply,
+        yoneda_obj_map]
+      rw [nat, Category.assoc]
+  }
+
+/-- The morphism from the hom-weighted cone to the natural transformation
+weighted limit cone, given by the elimination equivalence. -/
+def homWeightedConeToLimit (Y : C) :
+    @homWeightedCone _ _ _ _ _ _ c Y ⟶ homFunctorWeightedLimitCone W' D Y where
+  hom := (homEquivWeightedLimit hc Y).toFun
+  w _ _ := rfl
+
+/-- The hom-weighted cone is a weighted limit. -/
+def homWeightedCone_isWeightedLimit (Y : C) :
+    IsWeightedLimit (@homWeightedCone _ _ _ _ _ _ c Y) := by
+  apply IsTerminal.ofIso (homFunctorWeightedLimitCone_isTerminal W' D Y)
+  exact {
+    hom := {
+      hom := (homEquivWeightedLimit hc Y).symm.toFun
+      w := fun j w => by
+        funext η
+        simp only [types_comp_apply, WeightedCone.leg, homWeightedCone,
+          natTransWeightedCone, homFunctorWeightedLimitCone]
+        have h := congrFun (congrFun (congrArg NatTrans.app
+          (toWeightedCoconeOver_fromWeightedCoconeOver hc Y η)) j) w
+        simp only [toWeightedCoconeOver, WeightedCocone.postcompose_app] at h
+        simp only [homEquivWeightedLimit, homEquivWeightedCoconeOver, Equiv.symm]
+        exact h
+    }
+    inv := (@homWeightedCone _ _ _ _ _ _ c Y).toNatTransCone
+    hom_inv_id := by
+      apply WeightedCone.Hom.ext
+      funext η
+      exact (homEquivWeightedLimit hc Y).right_inv η
+    inv_hom_id := by
+      apply WeightedCone.Hom.ext
+      funext f
+      exact (homEquivWeightedLimit hc Y).left_inv f
+  }
+
+/-- The full weighted colimit-limit correspondence: the apex of the
+hom-weighted cone (which is `c.pt ⟶ Y`) is isomorphic to the apex of the
+natural transformation weighted limit (which is `W' ⟶ homToFunctor D Y`).
+
+This expresses `C(W' * D, Y) ≅ {W', C(D(-), Y)}` as an isomorphism in `Type v`
+where both sides are characterized as weighted limits. -/
+def homWeightedLimitIso (Y : C) :
+    (@homWeightedCone _ _ _ _ _ _ c Y).pt ≅ (homFunctorWeightedLimitCone W' D Y).pt :=
+  (homEquivWeightedLimit hc Y).toIso
 
 end IsWeightedColimit
 
