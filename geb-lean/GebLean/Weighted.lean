@@ -2031,6 +2031,26 @@ def homWeightedLimitIso (Y : C) :
     (@homWeightedCone _ _ _ _ _ _ c Y).pt ≅ (homFunctorWeightedLimitCone W' D Y).pt :=
   (homEquivWeightedLimit hc Y).toIso
 
+/-- The hom-set from a weighted colimit to `Y` is isomorphic to the apex of
+any weighted limit of `homToFunctor D Y` by `W'`.
+
+Given:
+- `c` is a weighted colimit of `D` by `W'`
+- `d` is a weighted limit of `homToFunctor D Y` by `W'`
+
+Then `(c.pt ⟶ Y) ≅ d.pt`.
+
+This is the full weighted colimit-limit adjunction formula. -/
+def homIsoWeightedLimitApex (Y : C) {d : WeightedCone W' (homToFunctor D Y)}
+    (hd : IsWeightedLimit d) : (c.pt ⟶ Y) ≅ d.pt :=
+  let coneIso := IsTerminal.uniqueUpToIso
+    (homFunctorWeightedLimitCone_isTerminal W' D Y) hd
+  (homEquivWeightedLimit hc Y).toIso ≪≫
+    { hom := coneIso.hom.hom
+      inv := coneIso.inv.hom
+      hom_inv_id := congrArg WeightedCone.Hom.hom coneIso.hom_inv_id
+      inv_hom_id := congrArg WeightedCone.Hom.hom coneIso.inv_hom_id }
+
 end IsWeightedColimit
 
 end WeightedLimitInType
