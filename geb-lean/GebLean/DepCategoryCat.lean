@@ -89,6 +89,21 @@ def DepCategoryData.CompUnique (D : DepCategoryData) : Prop :=
   ∀ {a b c : D.objT} (f : D.morT a b) (g : D.morT b c) (h₁ h₂ : D.morT a c),
     Nonempty (D.compT f g h₁) → Nonempty (D.compT f g h₂) → h₁ = h₂
 
+/-- The identity relation is functional. -/
+structure DepCategoryData.IdFunctional (D : DepCategoryData) : Prop where
+  exists_ : D.IdExists
+  unique : D.IdUnique
+
+/-- The composition relation is functional. -/
+structure DepCategoryData.CompFunctional (D : DepCategoryData) : Prop where
+  exists_ : D.CompExists
+  unique : D.CompUnique
+
+/-- Both identity and composition relations are functional. -/
+structure DepCategoryData.Functional (D : DepCategoryData) : Prop where
+  id : D.IdFunctional
+  comp : D.CompFunctional
+
 end FunctionalityConditions
 
 end CategoryJudgments
