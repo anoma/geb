@@ -119,9 +119,9 @@ section FunctionalCategoryEquiv
 
 /-- A `DepCategoryData` bundled with its functionality witnesses.
     These are the objects that have the data of a category (without laws). -/
-structure DepFunctionalCategory.{v₁, v₂, v₃, v₄} where
+structure DepFunctionalCategory.{u₁, u₂, u₃, u₄} where
   /-- The underlying category data -/
-  data : DepCategoryData.{v₁, v₂, v₃, v₄}
+  data : DepCategoryData.{u₁, u₂, u₃, u₄}
   /-- The functionality witnesses -/
   functional : data.Functional
 
