@@ -126,38 +126,37 @@ structure DepFunctionalCategory.{u₁, u₂, u₃, u₄} : Type (max u₁ u₂ u
   functional : data.Functional
 
 /-- Convert a `BundledCategoryStruct` to a `DepCategoryData`. -/
-def bundledCategoryStructToDepData.{v, u} (C : BundledCategoryStruct.{v, u}) :
-    DepCategoryData :=
-  letI : CategoryStruct C := BundledCategoryStruct.instCategoryStruct C
-  { objT := C
-    morT := fun a b => a ⟶ b
-    idT := fun {o} m => m = 𝟙 o
-    compT := fun {_ _ _} f g h => h = f ≫ g }
+def bundledCategoryStructToDepData.{u₁, u₂, u₃, u₄}
+  (C : BundledCategoryStruct.{u₂, u₁}) :
+    DepCategoryData.{u₁ + 1, u₂ + 1, u₃ + 1, u₄ + 1} :=
+  { objT := C.α
+    morT := C.str.Hom
+    idT := fun {o} m => PULift.{u₃ + 1, 0} (m = C.str.id o)
+    compT := fun {_ _ _} f g h => PULift.{u₄ + 1, 0} (h = C.str.comp f g) }
 
 /-- A `BundledCategoryStruct` converted to `DepCategoryData` satisfies
     `IdExists`. -/
 def bundledCategoryStructToDepData_idExists (C : BundledCategoryStruct) :
-    (bundledCategoryStructToDepData C).IdExists := fun o =>
-  ⟨@CategoryStruct.id C (BundledCategoryStruct.instCategoryStruct C) o, rfl⟩
+    (bundledCategoryStructToDepData C).IdExists :=
+  _
 
 /-- A `BundledCategoryStruct` converted to `DepCategoryData` satisfies
     `IdUnique`. -/
 theorem bundledCategoryStructToDepData_idUnique (C : BundledCategoryStruct) :
-    (bundledCategoryStructToDepData C).IdUnique := fun _ _ _ h₁ h₂ =>
-  h₁.trans h₂.symm
+    (bundledCategoryStructToDepData C).IdUnique :=
+  _
 
 /-- A `BundledCategoryStruct` converted to `DepCategoryData` satisfies
     `CompExists`. -/
 def bundledCategoryStructToDepData_compExists (C : BundledCategoryStruct) :
-    (bundledCategoryStructToDepData C).CompExists := fun f g =>
-  ⟨@CategoryStruct.comp C (BundledCategoryStruct.instCategoryStruct C) _ _ _ f g,
-   rfl⟩
+    (bundledCategoryStructToDepData C).CompExists :=
+  _
 
 /-- A `BundledCategoryStruct` converted to `DepCategoryData` satisfies
     `CompUnique`. -/
 theorem bundledCategoryStructToDepData_compUnique (C : BundledCategoryStruct) :
-    (bundledCategoryStructToDepData C).CompUnique := fun _ _ _ _ p₁ p₂ =>
-  p₁.trans p₂.symm
+    (bundledCategoryStructToDepData C).CompUnique :=
+  _
 
 /-- A `BundledCategoryStruct` converted to `DepCategoryData` satisfies
     `Functional`. -/
@@ -173,8 +172,9 @@ def bundledCategoryStructToDepData_functional (C : BundledCategoryStruct) :
   }
 
 /-- Convert a `BundledCategoryStruct` to a `DepFunctionalCategory`. -/
-def bundledCategoryStructToDepFunctional (C : BundledCategoryStruct) :
-    DepFunctionalCategory where
+def bundledCategoryStructToDepFunctional.{u₁, u₂, u₃, u₄}
+    (C : BundledCategoryStruct.{u₂, u₁}) :
+      DepFunctionalCategory.{u₁ + 1, u₂ + 1, u₃ + 1, u₄ + 1} where
   data := bundledCategoryStructToDepData C
   functional := bundledCategoryStructToDepData_functional C
 
