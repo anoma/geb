@@ -68,6 +68,29 @@ namespace CategoryJudgments
 
 open CategoryTheory
 
+section FunctionalityConditions
+
+/-- Each object has an identity morphism. -/
+def DepCategoryData.IdExists (D : DepCategoryData) : Prop :=
+  ∀ (o : D.objT), ∃ (m : D.morT o o), Nonempty (D.idT m)
+
+/-- Each object has at most one identity morphism. -/
+def DepCategoryData.IdUnique (D : DepCategoryData) : Prop :=
+  ∀ (o : D.objT) (m₁ m₂ : D.morT o o),
+    Nonempty (D.idT m₁) → Nonempty (D.idT m₂) → m₁ = m₂
+
+/-- Each composable pair has a composite. -/
+def DepCategoryData.CompExists (D : DepCategoryData) : Prop :=
+  ∀ {a b c : D.objT} (f : D.morT a b) (g : D.morT b c),
+    ∃ (h : D.morT a c), Nonempty (D.compT f g h)
+
+/-- Each composable pair has at most one composite. -/
+def DepCategoryData.CompUnique (D : DepCategoryData) : Prop :=
+  ∀ {a b c : D.objT} (f : D.morT a b) (g : D.morT b c) (h₁ h₂ : D.morT a c),
+    Nonempty (D.compT f g h₁) → Nonempty (D.compT f g h₂) → h₁ = h₂
+
+end FunctionalityConditions
+
 end CategoryJudgments
 
 end GebLean
