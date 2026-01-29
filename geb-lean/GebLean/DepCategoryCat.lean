@@ -69,6 +69,18 @@ namespace CategoryJudgments
 
 open CategoryTheory
 
+section DepCategoryLift
+
+def lift.{u₁, u₂, u₃, u₄}
+  (D : DepCategoryData.{u₁, u₂, 0, 0}) :
+    DepCategoryData.{u₁, u₂, max 1 u₃, max 1 u₄} :=
+  { objT := D.objT
+    morT := D.morT
+    idT m := PULift.{u₃, 0} (D.idT m)
+    compT f g h := PULift.{u₄, 0} (D.compT f g h) }
+
+end DepCategoryLift
+
 section FunctionalityConditions
 
 /-- Each object has an identity morphism (with witness). Uses `PSigma` to
@@ -126,13 +138,19 @@ structure DepFunctionalCategory.{u₁, u₂, u₃, u₄} : Type (max u₁ u₂ u
   functional : data.Functional
 
 /-- Convert a `BundledCategoryStruct` to a `DepCategoryData`. -/
-def bundledCategoryStructToDepData.{u₁, u₂, u₃, u₄}
+def bundledCategoryStructToDepDataProp.{u₁, u₂}
   (C : BundledCategoryStruct.{u₂, u₁}) :
-    DepCategoryData.{u₁ + 1, u₂ + 1, u₃ + 1, u₄ + 1} :=
+    DepCategoryData.{u₁ + 1, u₂ + 1, 0, 0} :=
   { objT := C.α
     morT := C.str.Hom
-    idT := fun {o} m => PULift.{u₃ + 1, 0} (m = C.str.id o)
-    compT := fun {_ _ _} f g h => PULift.{u₄ + 1, 0} (h = C.str.comp f g) }
+    idT := fun {o} m => m = C.str.id o
+    compT := fun {_ _ _} f g h => h = C.str.comp f g }
+
+/-- Convert a `BundledCategoryStruct` to a `DepCategoryData`. -/
+def bundledCategoryStructToDepData.{u₁, u₂, u₃, u₄}
+  (C : BundledCategoryStruct.{u₂, u₁}) :
+    DepCategoryData.{u₁ + 1, u₂ + 1, max 1 u₃, max 1 u₄} :=
+  lift.{u₁ + 1, u₂ + 1, u₃, u₄} (bundledCategoryStructToDepDataProp.{u₁, u₂} C)
 
 /-- A `BundledCategoryStruct` converted to `DepCategoryData` satisfies
     `IdExists`. -/
@@ -174,7 +192,7 @@ def bundledCategoryStructToDepData_functional (C : BundledCategoryStruct) :
 /-- Convert a `BundledCategoryStruct` to a `DepFunctionalCategory`. -/
 def bundledCategoryStructToDepFunctional.{u₁, u₂, u₃, u₄}
     (C : BundledCategoryStruct.{u₂, u₁}) :
-      DepFunctionalCategory.{u₁ + 1, u₂ + 1, u₃ + 1, u₄ + 1} where
+      DepFunctionalCategory.{u₁ + 1, u₂ + 1, max 1 u₃, max 1 u₄} where
   data := bundledCategoryStructToDepData C
   functional := bundledCategoryStructToDepData_functional C
 
@@ -213,8 +231,9 @@ def depFunctionalToCategoryStruct (D : DepFunctionalCategory) :
   comp := D.compMor
 
 /-- Convert a `DepFunctionalCategory` to a `BundledCategoryStruct`. -/
-def depFunctionalToBundledCategoryStruct
-    (D : DepFunctionalCategory) : BundledCategoryStruct :=
+def depFunctionalToBundledCategoryStruct.{u₁, u₂, u₃, u₄}
+  (D : DepFunctionalCategory.{u₁ + 1, u₂ + 1, u₃, u₄}) :
+    BundledCategoryStruct.{u₂, u₁} :=
   @BundledCategoryStruct.of D.data.objT (depFunctionalToCategoryStruct D)
 
 end FunctionalCategoryEquiv
