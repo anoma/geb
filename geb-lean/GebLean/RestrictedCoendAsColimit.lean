@@ -1866,4 +1866,237 @@ theorem constFirstArgProfUniversalCowedge_isInitial (F : C ⥤ C) (pt : C)
 
 end KanExtensionConnection
 
+section CoendAsNatTransformations
+
+/-!
+### Coends in Type as Natural Transformations
+
+For endodifunctors on `Type`, we can express the restricted coend (equivalently,
+the copower coend) as a set of natural transformations using the Yoneda lemma.
+
+#### Background
+
+For any type `X`, the co-Yoneda lemma states:
+  `X ≅ Nat(Hom(X, -), Id)`
+where `Id` is the identity functor on `Type` and `Hom(X, -)` is the covariant
+hom-functor.
+
+For a coend `∫^A P(A,A)`, the universal property gives:
+  `Hom(∫^A P(A,A), Y) ≅ ∫_A Hom(P(A,A), Y)`
+
+The RHS consists of families `(α_A : P(A,A) → Y)_{A∈C}` satisfying the cowedge
+condition. This corresponds to a `WeightedCowedgeOver` with trivial weight.
+
+Combining the coend elimination rule with the co-Yoneda lemma:
+  `∫^A P(A,A) ≅ Nat(Y ↦ Cowedge_Y P, Id)`
+
+This characterizes the coend as natural transformations from the functor
+sending `Y` to cowedges with apex `Y`, to the identity functor on Type.
+
+#### Implementation
+
+We use `WeightedCowedgeOver terminalProfunctor P Y` as the type of cowedges
+over `P` with apex `Y`. By `trivialWeightedCowedgeCoconeEquiv`, this is equivalent
+to cocones over the co-twisted arrow diagram, which are cowedges of `P`.
+-/
+
+universe w
+
+variable {C : Type w} [Category.{w} C]
+
+open Limits
+
+/-- The functor sending each type `Y` to weighted cowedges with trivial weight.
+
+By the coend elimination rule, this is isomorphic to `Hom(∫^A P(A,A), -)`.
+This uses `WeightedCowedgeOver terminalProfunctor P Y`, which is equivalent
+to cowedges of `P` with apex `Y`. -/
+def cowedgeFamilyFunctor (P : Cᵒᵖ ⥤ C ⥤ Type w) : Type w ⥤ Type w :=
+  ((weightedCowedgeOverCurriedTrifunctor (C := C) (D := Type w)).obj
+    (Opposite.op terminalProfunctor)).obj (Opposite.op P)
+
+/-- Natural transformations from `cowedgeFamilyFunctor P` to the identity.
+
+By the co-Yoneda lemma combined with the coend elimination rule, these
+correspond to elements of the coend `∫^A P(A,A)`. -/
+def CowedgeNatTrans (P : Cᵒᵖ ⥤ C ⥤ Type w) :=
+  cowedgeFamilyFunctor P ⟶ 𝟭 (Type w)
+
+/-!
+### Correspondence: Coends and Natural Transformations
+
+The coend of `P` in `Type` can be characterized as natural transformations
+from `cowedgeFamilyFunctor P` to the identity functor.
+
+Given an element `x : ∫^A P(A,A)`, we define a natural transformation `τ_x` by:
+  `τ_x(Y)(cw) = desc_cw(x)`
+where `desc_cw : ∫^A P(A,A) → Y` is the unique map induced by the cowedge `cw`.
+
+Conversely, given a natural transformation `τ`, we recover an element by
+applying `τ` to the canonical injection cowedge.
+-/
+
+/-- The injection cowedge: the coend injections form a weighted cowedge
+with apex equal to the coend itself. For each co-twisted arrow `tw` with
+`arr : coTwCod tw ⟶ coTwDom tw`, the leg maps `x : P(dom, cod)` to
+`ι dom (P.map arr x)`, where we use the covariant action to transport
+to the diagonal, then inject into the coend. -/
+def coendInjectionCowedge (P : Cᵒᵖ ⥤ C ⥤ Type w) (coendPt : Type w)
+    (ι : ∀ A, diagApp P A → coendPt)
+    (hι : ∀ {i j : C} (f : i ⟶ j) (x : (P.obj (op j)).obj i),
+      ι i ((P.map f.op).app i x) = ι j ((P.obj (op j)).map f x)) :
+    WeightedCowedgeOver terminalProfunctor P coendPt where
+  app tw _ :=
+    let dom := coTwDom tw.unop
+    let arr := coTwArr tw.unop
+    fun x => ι dom ((P.obj (op dom)).map arr x)
+  naturality {tw tw'} f := by
+    funext _
+    funext x
+    simp only [types_comp_apply, terminalProfunctor, constProfunctor]
+    -- homToFunctor.map f g is definitionally D.map f.unop ≫ g
+    change ι (coTwDom tw'.unop) ((P.obj (op (coTwDom tw'.unop))).map (coTwArr tw'.unop) x) =
+      (fun y => ι (coTwDom tw.unop) ((P.obj (op (coTwDom tw.unop))).map (coTwArr tw.unop) y))
+        ((profunctorOnCoTwistedArrow C P).map f.unop x)
+    simp only []
+    rw [profunctorOnCoTwistedArrow_map]
+    -- For m = f.unop : tw'.unop ⟶ tw.unop:
+    -- (profunctorOnCoTwistedArrow P).map m =
+    --   (P.map (coTwDomArr m).op).app (coTwCod tw'.unop)
+    --     ≫ (P.obj (op (coTwDom tw.unop))).map (coTwCodArr m)
+    let dom := coTwDom tw.unop
+    let dom' := coTwDom tw'.unop
+    let cod' := coTwCod tw'.unop
+    let arr := coTwArr tw.unop
+    let arr' := coTwArr tw'.unop
+    let fDom := coTwDomArr f.unop   -- dom → dom'
+    let fCod := coTwCodArr f.unop   -- cod' → cod
+    -- The commutative square: fCod ≫ arr ≫ fDom = arr'
+    have sq := coTwHomComm f.unop
+    simp only [types_comp_apply]
+    -- Goal: ι dom' ((P.obj (op dom')).map arr' x)
+    --     = ι dom ((P.obj (op dom)).map arr
+    --         ((P.obj (op dom)).map fCod ((P.map fDom.op).app cod' x)))
+    -- Using sq: arr' = fCod ≫ arr ≫ fDom, so:
+    -- LHS = ι dom' ((P.obj (op dom')).map (fCod ≫ arr ≫ fDom) x)
+    --     = ι dom' ((P.obj (op dom')).map fDom
+    --         ((P.obj (op dom')).map arr ((P.obj (op dom')).map fCod x)))
+    -- Use dinaturality: ι dom ((P.map fDom.op).app dom z) = ι dom' ((P.obj (op dom')).map fDom z)
+    -- And naturality of (P.map fDom.op)
+    calc ι dom' ((P.obj (op dom')).map arr' x)
+      = ι dom' ((P.obj (op dom')).map (fCod ≫ arr ≫ fDom) x) := by rw [sq]
+      _ = ι dom' ((P.obj (op dom')).map fDom
+            ((P.obj (op dom')).map arr ((P.obj (op dom')).map fCod x))) := by
+          simp only [Functor.map_comp, types_comp_apply]
+      _ = ι dom ((P.map fDom.op).app dom
+            ((P.obj (op dom')).map arr ((P.obj (op dom')).map fCod x))) := by
+          rw [← hι fDom]
+      _ = ι dom ((P.obj (op dom)).map arr
+            ((P.map fDom.op).app _ ((P.obj (op dom')).map fCod x))) := by
+          -- Use naturality of (P.map fDom.op) at morphism arr
+          have nat := (P.map fDom.op).naturality arr
+          -- nat : (P.obj (op dom')).map arr ≫ (P.map fDom.op).app dom
+          --     = (P.map fDom.op).app (coTwCod tw.unop) ≫ (P.obj (op dom)).map arr
+          -- In Type: (f ≫ g) z = g (f z), so congrFun nat z gives the equality
+          exact congrArg (ι dom) (congrFun nat _)
+      _ = ι dom ((P.obj (op dom)).map arr
+            ((P.obj (op dom)).map fCod ((P.map fDom.op).app cod' x))) := by
+          -- Use naturality of (P.map fDom.op) at morphism fCod
+          have nat := (P.map fDom.op).naturality fCod
+          exact congrArg (ι dom ∘ (P.obj (op dom)).map arr) (congrFun nat _)
+
+/-- Given an element of a coend, construct the corresponding natural
+transformation via the co-Yoneda correspondence.
+
+For `x : coendPt`, the natural transformation `τ_x` is defined by:
+  `τ_x.app Y cw = desc cw x`
+where `desc cw : coendPt → Y` is the unique map induced by the cowedge `cw`.
+-/
+def coendToNatTrans (P : Cᵒᵖ ⥤ C ⥤ Type w)
+    (coendPt : Type w)
+    (ι : ∀ A, diagApp P A → coendPt)
+    (_hι : ∀ {i j : C} (f : i ⟶ j) (x : (P.obj (op j)).obj i),
+      ι i ((P.map f.op).app i x) = ι j ((P.obj (op j)).map f x))
+    (desc : ∀ {Y : Type w}, WeightedCowedgeOver terminalProfunctor P Y → coendPt → Y)
+    (fac : ∀ {Y : Type w} (cw : WeightedCowedgeOver terminalProfunctor P Y)
+      (A : C) (x : diagApp P A),
+      desc cw (ι A x) = cw.app (Opposite.op (diagCoTwArr A)) PUnit.unit x)
+    (_unique : ∀ {Y : Type w} (cw : WeightedCowedgeOver terminalProfunctor P Y)
+      (f g : coendPt → Y),
+      (∀ A x, f (ι A x) = cw.app (Opposite.op (diagCoTwArr A)) PUnit.unit x) →
+      (∀ A x, g (ι A x) = cw.app (Opposite.op (diagCoTwArr A)) PUnit.unit x) →
+      f = g)
+    (x : coendPt) :
+    CowedgeNatTrans P where
+  app Y cw := desc cw x
+  naturality {Y Y'} f := by
+    funext cw
+    simp only [cowedgeFamilyFunctor, types_comp_apply, Functor.id_obj, Functor.id_map]
+    -- The naturality follows from the fact that `desc` is the unique map
+    -- induced by the cowedge, and function composition in Type is associative.
+    -- For `f : Y → Y'`, `(cowedgeFamilyFunctor P).map f cw` is the cowedge
+    -- with legs `f ∘ cw.app tw`. The desc for this cowedge applied to x
+    -- equals `f (desc cw x)` by uniqueness.
+    -- Let cw' = cowedgeFamilyFunctor.map f cw. We show desc cw' = f ∘ desc cw
+    -- by uniqueness, then evaluate at x.
+    let cw' := ((weightedCowedgeOverCurriedTrifunctor.obj
+        (Opposite.op terminalProfunctor)).obj (Opposite.op P)).map f cw
+    have eq : desc cw' = f ∘ desc cw := _unique cw' (desc cw') (f ∘ desc cw)
+      (fun A y => fac cw' A y)
+      (fun A y => by
+        simp only [Function.comp_apply]
+        rw [fac]
+        -- cw'.app at diagonal = f ∘ cw.app at diagonal, by definition of the map
+        rfl)
+    exact congrFun eq x
+
+/-- Given a natural transformation, extract an element of the coend by
+applying it to the injection cowedge. -/
+def natTransToCoend (P : Cᵒᵖ ⥤ C ⥤ Type w) (coendPt : Type w)
+    (ι : ∀ A, diagApp P A → coendPt)
+    (hι : ∀ {i j : C} (f : i ⟶ j) (x : (P.obj (op j)).obj i),
+      ι i ((P.map f.op).app i x) = ι j ((P.obj (op j)).map f x))
+    (τ : CowedgeNatTrans P) : coendPt :=
+  τ.app coendPt (coendInjectionCowedge P coendPt ι hι)
+
+/-- Round-trip: natTransToCoend ∘ coendToNatTrans = id.
+
+Given an element `x` of the coend, converting it to a natural transformation
+and back yields `x`. This uses the factorization property `fac`. -/
+theorem natTransToCoend_coendToNatTrans (P : Cᵒᵖ ⥤ C ⥤ Type w)
+    (coendPt : Type w)
+    (ι : ∀ A, diagApp P A → coendPt)
+    (hι : ∀ {i j : C} (f : i ⟶ j) (x : (P.obj (op j)).obj i),
+      ι i ((P.map f.op).app i x) = ι j ((P.obj (op j)).map f x))
+    (desc : ∀ {Y : Type w}, WeightedCowedgeOver terminalProfunctor P Y →
+      coendPt → Y)
+    (fac : ∀ {Y : Type w} (cw : WeightedCowedgeOver terminalProfunctor P Y)
+      (A : C) (x : diagApp P A),
+      desc cw (ι A x) = cw.app (Opposite.op (diagCoTwArr A)) PUnit.unit x)
+    (unique : ∀ {Y : Type w} (cw : WeightedCowedgeOver terminalProfunctor P Y)
+      (f g : coendPt → Y),
+      (∀ A x, f (ι A x) = cw.app (Opposite.op (diagCoTwArr A)) PUnit.unit x) →
+      (∀ A x, g (ι A x) = cw.app (Opposite.op (diagCoTwArr A)) PUnit.unit x) →
+      f = g)
+    (x : coendPt) :
+    natTransToCoend P coendPt ι hι
+      (coendToNatTrans P coendPt ι hι desc fac unique x) = x := by
+  -- natTransToCoend applies τ_x to the injection cowedge
+  -- τ_x.app coendPt (injCowedge) = desc injCowedge x
+  -- By uniqueness, desc injCowedge = id, so the result is x
+  simp only [natTransToCoend, coendToNatTrans]
+  -- Goal: desc (coendInjectionCowedge P coendPt ι hι) x = x
+  -- We need to show desc injCowedge = id using uniqueness
+  have h : desc (coendInjectionCowedge P coendPt ι hι) = id := by
+    apply unique (coendInjectionCowedge P coendPt ι hι)
+    · intro A y
+      exact fac (coendInjectionCowedge P coendPt ι hι) A y
+    · intro A y
+      simp only [id_eq, coendInjectionCowedge, diagCoTwArr]
+      simp only [coTwObjMk_dom, coTwObjMk_arr]
+      simp only [(P.obj (op A)).map_id A, types_id_apply]
+  exact congrFun h x
+
+end CoendAsNatTransformations
+
 end GebLean
