@@ -5,6 +5,7 @@ import GebLean.CatJudgmentAdjunction
 import GebLean.CategoryJudgments
 import GebLean.CatValuedFunctor
 import GebLean.CategoryPresentation
+import GebLean.DepCategoryCat
 import GebLean.DepCategoryJudgments
 import GebLean.DinaturalNumbers
 import GebLean.FiniteQuiver
