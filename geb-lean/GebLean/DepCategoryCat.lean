@@ -1,5 +1,6 @@
 import Mathlib.CategoryTheory.Category.Cat
 import GebLean.DepCategoryJudgments
+import GebLean.Utilities.Category
 
 /-!
 # The Category of Categories as a Full Subcategory of DepCategoryData
@@ -105,6 +106,103 @@ structure DepCategoryData.Functional (D : DepCategoryData) : Prop where
   comp : D.CompFunctional
 
 end FunctionalityConditions
+
+section FunctionalCategoryEquiv
+
+/-- The subtype of `DepCategoryData` satisfying the functionality conditions.
+    These are the objects that have the data of a category (without laws). -/
+def DepFunctionalCategory := { D : DepCategoryData // D.Functional }
+
+/-- Convert a `BundledCategoryStruct` to a `DepCategoryData`. -/
+def bundledCategoryStructToDepData (C : BundledCategoryStruct) :
+    DepCategoryData :=
+  letI : CategoryStruct C := BundledCategoryStruct.instCategoryStruct C
+  { objT := C
+    morT := fun a b => a ⟶ b
+    idT := fun {o} m => m = 𝟙 o
+    compT := fun {_ _ _} f g h => h = f ≫ g }
+
+/-- A `BundledCategoryStruct` converted to `DepCategoryData` satisfies
+    `IdExists`. -/
+theorem bundledCategoryStructToDepData_idExists (C : BundledCategoryStruct) :
+    (bundledCategoryStructToDepData C).IdExists := fun o =>
+  ⟨@CategoryStruct.id C (BundledCategoryStruct.instCategoryStruct C) o, ⟨rfl⟩⟩
+
+/-- A `BundledCategoryStruct` converted to `DepCategoryData` satisfies
+    `IdUnique`. -/
+theorem bundledCategoryStructToDepData_idUnique (C : BundledCategoryStruct) :
+    (bundledCategoryStructToDepData C).IdUnique := fun _ _ _ ⟨h₁⟩ ⟨h₂⟩ =>
+  h₁.trans h₂.symm
+
+/-- A `BundledCategoryStruct` converted to `DepCategoryData` satisfies
+    `CompExists`. -/
+theorem bundledCategoryStructToDepData_compExists (C : BundledCategoryStruct) :
+    (bundledCategoryStructToDepData C).CompExists := fun f g =>
+  ⟨@CategoryStruct.comp C (BundledCategoryStruct.instCategoryStruct C) _ _ _ f g,
+   ⟨rfl⟩⟩
+
+/-- A `BundledCategoryStruct` converted to `DepCategoryData` satisfies
+    `CompUnique`. -/
+theorem bundledCategoryStructToDepData_compUnique (C : BundledCategoryStruct) :
+    (bundledCategoryStructToDepData C).CompUnique :=
+  fun _ _ _ _ ⟨p₁⟩ ⟨p₂⟩ => p₁.trans p₂.symm
+
+/-- A `BundledCategoryStruct` converted to `DepCategoryData` satisfies
+    `Functional`. -/
+theorem bundledCategoryStructToDepData_functional (C : BundledCategoryStruct) :
+    (bundledCategoryStructToDepData C).Functional where
+  id := {
+    exists_ := bundledCategoryStructToDepData_idExists C
+    unique := bundledCategoryStructToDepData_idUnique C
+  }
+  comp := {
+    exists_ := bundledCategoryStructToDepData_compExists C
+    unique := bundledCategoryStructToDepData_compUnique C
+  }
+
+/-- Convert a `BundledCategoryStruct` to a `DepFunctionalCategory`. -/
+def bundledCategoryStructToDepFunctional (C : BundledCategoryStruct) :
+    DepFunctionalCategory :=
+  ⟨bundledCategoryStructToDepData C, bundledCategoryStructToDepData_functional C⟩
+
+/-- Given a `DepFunctionalCategory`, extract the identity morphism for an
+    object using the functionality condition. -/
+noncomputable def DepFunctionalCategory.idMor (D : DepFunctionalCategory)
+    (o : D.val.objT) : D.val.morT o o :=
+  (D.property.id.exists_ o).choose
+
+/-- The identity morphism satisfies `idT`. -/
+theorem DepFunctionalCategory.idMor_spec (D : DepFunctionalCategory)
+    (o : D.val.objT) : Nonempty (D.val.idT (D.idMor o)) :=
+  (D.property.id.exists_ o).choose_spec
+
+/-- Given a `DepFunctionalCategory`, extract the composite morphism for a
+    composable pair using the functionality condition. -/
+noncomputable def DepFunctionalCategory.compMor (D : DepFunctionalCategory)
+    {a b c : D.val.objT} (f : D.val.morT a b) (g : D.val.morT b c) :
+    D.val.morT a c :=
+  (D.property.comp.exists_ f g).choose
+
+/-- The composite morphism satisfies `compT`. -/
+theorem DepFunctionalCategory.compMor_spec (D : DepFunctionalCategory)
+    {a b c : D.val.objT} (f : D.val.morT a b) (g : D.val.morT b c) :
+    Nonempty (D.val.compT f g (D.compMor f g)) :=
+  (D.property.comp.exists_ f g).choose_spec
+
+/-- Convert a `DepFunctionalCategory` to a `CategoryStruct` instance on its
+    object type. -/
+noncomputable def depFunctionalToCategoryStruct (D : DepFunctionalCategory) :
+    CategoryStruct D.val.objT where
+  Hom := D.val.morT
+  id := D.idMor
+  comp := D.compMor
+
+/-- Convert a `DepFunctionalCategory` to a `BundledCategoryStruct`. -/
+noncomputable def depFunctionalToBundledCategoryStruct
+    (D : DepFunctionalCategory) : BundledCategoryStruct :=
+  @BundledCategoryStruct.of D.val.objT (depFunctionalToCategoryStruct D)
+
+end FunctionalCategoryEquiv
 
 end CategoryJudgments
 

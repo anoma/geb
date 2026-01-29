@@ -2397,6 +2397,32 @@ def categoryData : CategoryData BundledOverCategoryData.{vBOver, uBOver} homSet 
 
 end BundledOverCategoryData
 
+/-! ### Bundled Category Struct
+
+A bundled version of `CategoryStruct`, analogous to how `Cat` bundles `Category`.
+This captures just the data of a category (objects, morphisms, identity,
+composition) without the laws. -/
+
+/-- A bundled category struct: a type with `CategoryStruct` instance.
+    This is analogous to `Cat` but without requiring the category laws. -/
+def BundledCategoryStruct := Bundled CategoryStruct
+
+namespace BundledCategoryStruct
+
+instance : CoeSort BundledCategoryStruct (Type*) :=
+  ⟨Bundled.α⟩
+
+/-- Construct a `BundledCategoryStruct` from a type with a `CategoryStruct`
+    instance. -/
+def of (C : Type*) [CategoryStruct C] : BundledCategoryStruct :=
+  Bundled.of C
+
+/-- Access the `CategoryStruct` instance from a bundled category struct. -/
+instance instCategoryStruct (C : BundledCategoryStruct) : CategoryStruct C :=
+  Bundled.str C
+
+end BundledCategoryStruct
+
 /-! ### Functor fullness lemmas -/
 
 /-- If a composition `F ⋙ G` is not full and `G` is full, then `F` is not
