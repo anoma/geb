@@ -2097,6 +2097,114 @@ theorem natTransToCoend_coendToNatTrans (P : Cᵒᵖ ⥤ C ⥤ Type w)
       simp only [(P.obj (op A)).map_id A, types_id_apply]
   exact congrFun h x
 
+/-- Morphism from any co-twisted arrow to the diagonal at its domain.
+
+For `tw = (A, B, f : B ⟶ A)`, there is a canonical morphism to
+`diagCoTwArr A = (A, A, 𝟙 A)` with `domArr = 𝟙 A` and `codArr = f`. -/
+def coTwToDomDiag (tw : CoTwistedArrow C) : tw ⟶ diagCoTwArr (coTwDom tw) :=
+  coTwHomMk (𝟙 (coTwDom tw)) (coTwArr tw) (by simp [diagCoTwArr])
+
+/-- Round-trip: coendToNatTrans ∘ natTransToCoend = id.
+
+Given a natural transformation `τ`, converting it to a coend element
+and back yields the same natural transformation. This uses naturality of τ
+and the factorization property. -/
+theorem coendToNatTrans_natTransToCoend (P : Cᵒᵖ ⥤ C ⥤ Type w)
+    (coendPt : Type w)
+    (ι : ∀ A, diagApp P A → coendPt)
+    (hι : ∀ {i j : C} (f : i ⟶ j) (x : (P.obj (op j)).obj i),
+      ι i ((P.map f.op).app i x) = ι j ((P.obj (op j)).map f x))
+    (desc : ∀ {Y : Type w}, WeightedCowedgeOver terminalProfunctor P Y →
+      coendPt → Y)
+    (fac : ∀ {Y : Type w} (cw : WeightedCowedgeOver terminalProfunctor P Y)
+      (A : C) (x : diagApp P A),
+      desc cw (ι A x) = cw.app (Opposite.op (diagCoTwArr A)) PUnit.unit x)
+    (unique : ∀ {Y : Type w} (cw : WeightedCowedgeOver terminalProfunctor P Y)
+      (f g : coendPt → Y),
+      (∀ A x, f (ι A x) = cw.app (Opposite.op (diagCoTwArr A)) PUnit.unit x) →
+      (∀ A x, g (ι A x) = cw.app (Opposite.op (diagCoTwArr A)) PUnit.unit x) →
+      f = g)
+    (τ : CowedgeNatTrans P) :
+    coendToNatTrans P coendPt ι hι desc fac unique
+      (natTransToCoend P coendPt ι hι τ) = τ := by
+  apply NatTrans.ext
+  funext Y
+  apply funext
+  intro cw
+  simp only [natTransToCoend, coendToNatTrans]
+  -- Goal: desc cw (τ.app coendPt injCowedge) = τ.app Y cw
+  let injCowedge := coendInjectionCowedge P coendPt ι hι
+  -- By naturality of τ at `desc cw`:
+  --   τ.app Y (map (desc cw) injCowedge) = desc cw (τ.app coendPt injCowedge)
+  have nat := τ.naturality (desc cw)
+  have nat_at_inj : τ.app Y ((cowedgeFamilyFunctor P).map (desc cw) injCowedge) =
+      desc cw (τ.app coendPt injCowedge) := congrFun nat injCowedge
+  rw [← nat_at_inj]
+  -- Goal: τ.app Y (map (desc cw) injCowedge) = τ.app Y cw
+  -- Suffices: (cowedgeFamilyFunctor P).map (desc cw) injCowedge = cw
+  have cw_eq : (cowedgeFamilyFunctor P).map (desc cw) injCowedge = cw := by
+    -- Both sides are cowedges. We prove they're equal by extensionality.
+    apply NatTrans.ext
+    funext tw
+    apply funext
+    intro u
+    apply funext
+    intro x
+    -- Since u : PUnit, we have u = PUnit.unit
+    cases u
+    -- The functor map postcomposes with desc cw.
+    -- LHS = (F.map (desc cw) injCowedge).app tw () x = desc cw (injCowedge.app tw () x)
+    -- First show LHS equals desc cw applied to the injection cowedge value
+    change desc cw ((coendInjectionCowedge P coendPt ι hι).app tw PUnit.unit x) =
+           cw.app tw PUnit.unit x
+    -- Unfold injCowedge: its app at tw gives ι dom (P.map x)
+    dsimp only [coendInjectionCowedge]
+    -- Goal: desc cw (ι dom ((P.obj (op dom)).map arr x)) = cw.app tw () x
+    rw [fac]
+    -- Goal: cw.app (op (diagCoTwArr dom)) () ((P.obj (op dom)).map arr x) = cw.app tw () x
+    -- Use naturality of cw at op(coTwToDomDiag tw.unop)
+    have nat_cw := cw.naturality (Opposite.op (coTwToDomDiag tw.unop))
+    have eq := congrFun (congrFun nat_cw PUnit.unit) x
+    simp only [types_comp_apply] at eq
+    -- eq : cw.app tw (W.map f ()) x = H.map f (cw.app source ()) x
+    -- For terminal weight, W.map is identity
+    -- For the profunctor, H.map f (cw.app source ()) x = cw.app source () (P.map arr x)
+    -- The diagonal object representation in eq is defeq to diagCoTwArr
+    -- We need: cw.app diag () (P.map arr x) = cw.app tw () x
+    -- This is eq with simplified functor applications
+    symm
+    calc cw.app tw PUnit.unit x
+        = cw.app tw ((unop ((profunctorOnOpCoTwistedArrowFunctor C).op.obj
+            (op terminalProfunctor))).map (op (coTwToDomDiag tw.unop)) PUnit.unit) x := rfl
+      _ = ((homToFunctorBifunctor.obj ((profunctorOnCoTwistedArrowFunctor C).op.obj
+            (op P))).obj Y).map (op (coTwToDomDiag tw.unop))
+            (cw.app (op (diagCoTwArr (coTwDom tw.unop))) PUnit.unit) x := eq
+      _ = cw.app (op (diagCoTwArr (coTwDom tw.unop))) PUnit.unit
+            ((P.obj (op (coTwDom tw.unop))).map (coTwArr tw.unop) x) := by
+          -- [H, Y].map (op f) is precomposition with H.map f
+          -- We need: g (H.map (coTwToDomDiag tw) x) = g (P.map arr x) for g = cw.app diag
+          -- This follows from H.map (coTwToDomDiag tw) = P.map arr
+          let dom := coTwDom tw.unop
+          let arr := coTwArr tw.unop
+          let H := profunctorOnCoTwistedArrow C P
+          -- First show the internal hom map is precomposition
+          have hom_map : ∀ (g : H.obj (diagCoTwArr dom) → Y) (y : H.obj tw.unop),
+              ((homToFunctorBifunctor.obj ((profunctorOnCoTwistedArrowFunctor C).op.obj
+                (op P))).obj Y).map (op (coTwToDomDiag tw.unop)) g y =
+              g (H.map (coTwToDomDiag tw.unop) y) := fun _ _ => rfl
+          rw [hom_map]
+          -- Now show the profunctor maps agree
+          -- H.map (coTwToDomDiag tw) = (P.obj (op dom)).map arr
+          have H_map : H.map (coTwToDomDiag tw.unop) x =
+              (P.obj (op dom)).map arr x := by
+            rw [profunctorOnCoTwistedArrow_map]
+            simp only [coTwToDomDiag, coTwDomArr_coTwHomMk, coTwCodArr_coTwHomMk,
+              diagCoTwArr_dom, op_id, Functor.map_id, NatTrans.id_app,
+              Category.id_comp]
+            rfl
+          rw [H_map]
+  rw [cw_eq]
+
 end CoendAsNatTransformations
 
 end GebLean

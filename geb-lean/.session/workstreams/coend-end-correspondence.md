@@ -294,8 +294,12 @@ References:
   - Added `ordinaryHomIsoEndApex` - extracts `(c.pt ⟶ Y) ≅ d.pt`
 - [ ] Prove the co-Yoneda isomorphism:
       `∫^A P(A,A) ≅ Nat(Y ↦ ∫_A Hom(P(A,A), Y), Id)`
-- [ ] Complete the proof that `coendToNatTrans` and `natTransToCoend` are
+- [x] Complete the proof that `coendToNatTrans` and `natTransToCoend` are
       mutually inverse
+  - `natTransToCoend_coendToNatTrans` - proves natural trans → coend → natural
+    trans = id
+  - `coendToNatTrans_natTransToCoend` - proves coend → natural trans → coend
+    = id
 - [ ] Clean up `CoendAsNatTransformations` section to use proper
       initiality/terminality rather than assuming coend existence via parameters
 
@@ -421,10 +425,14 @@ The section defines:
 - `coendInjectionCowedge`: Injection maps form a cowedge
 - `coendToNatTrans`: Coend element → natural transformation (assumes coend exists)
 - `natTransToCoend`: Natural transformation → coend element
+- `coTwToDomDiag`: Morphism from any co-twisted arrow to its domain's diagonal
+- `natTransToCoend_coendToNatTrans`: Round-trip proof (nat trans → coend → nat
+  trans = id)
+- `coendToNatTrans_natTransToCoend`: Round-trip proof (coend → nat trans → coend
+  = id)
 
-Missing:
+Still missing:
 
-- Proof that these maps are mutually inverse
 - Explicit connection to ends
 - Use of initiality (currently assumes `desc`, `fac`, `unique` as parameters)
 
