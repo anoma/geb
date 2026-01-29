@@ -236,7 +236,74 @@ def depFunctionalToBundledCategoryStruct.{u₁, u₂, u₃, u₄}
     BundledCategoryStruct.{u₂, u₁} :=
   @BundledCategoryStruct.of D.data.objT (depFunctionalToCategoryStruct D)
 
+/-- Round-trip from `BundledCategoryStruct` to `DepFunctionalCategory` and back
+    is the identity. -/
+theorem bundledCategoryStruct_roundtrip.{u₁, u₂, u₃, u₄}
+    (C : BundledCategoryStruct.{u₂, u₁}) :
+    depFunctionalToBundledCategoryStruct.{u₁, u₂, max 1 u₃, max 1 u₄}
+      (bundledCategoryStructToDepFunctional.{u₁, u₂, u₃, u₄} C) = C :=
+  rfl
+
+/-- Round-trip from `DepFunctionalCategory` (in the image of
+    `bundledCategoryStructToDepFunctional`) to `BundledCategoryStruct` and back
+    is the identity. This follows from the first round-trip. -/
+theorem depFunctionalCategory_image_roundtrip.{u₁, u₂, u₃, u₄}
+    (C : BundledCategoryStruct.{u₂, u₁}) :
+    bundledCategoryStructToDepFunctional.{u₁, u₂, u₃, u₄}
+      (depFunctionalToBundledCategoryStruct
+        (bundledCategoryStructToDepFunctional.{u₁, u₂, u₃, u₄} C)) =
+    bundledCategoryStructToDepFunctional.{u₁, u₂, u₃, u₄} C := by
+  rw [bundledCategoryStruct_roundtrip]
+
 end FunctionalCategoryEquiv
+
+section CatEmbedding
+
+/-- Convert a `Cat` object to a `DepCategoryData`. A category's structure
+    is encoded as DepCategoryData where identity and composition witnesses
+    are equality propositions. -/
+def catToDepCategoryData.{u₁, u₂, u₃, u₄} (C : Cat.{u₂, u₁}) :
+    DepCategoryData.{u₁ + 1, u₂ + 1, max 1 u₃, max 1 u₄} :=
+  { objT := C.α
+    morT := fun a b => a ⟶ b
+    idT := fun {o} m => PULift (m = 𝟙 o)
+    compT := fun {_ _ _} f g h => PULift (h = f ≫ g) }
+
+/-- Convert a functor between categories to a `DepNatTransData` morphism
+    between the corresponding `DepCategoryData` structures. -/
+def functorToDepNatTrans.{u₁, u₂, u₃, u₄} {C D : Cat.{u₂, u₁}}
+    (F : C ⟶ D) :
+    DepNatTransData (catToDepCategoryData.{u₁, u₂, u₃, u₄} C)
+                    (catToDepCategoryData.{u₁, u₂, u₃, u₄} D) where
+  appObj := F.toFunctor.obj
+  appMor := F.toFunctor.map
+  appId := fun {o} {_} hid =>
+    PULift.up (hid.down ▸ F.toFunctor.map_id o)
+  appComp := fun {_ _ _} {f g _} hcomp =>
+    PULift.up (hcomp.down ▸ F.toFunctor.map_comp f g)
+
+/-- `functorToDepNatTrans` maps the identity functor to the identity
+    DepNatTransData. -/
+theorem functorToDepNatTrans_id.{u₁, u₂, u₃, u₄} (C : Cat.{u₂, u₁}) :
+    functorToDepNatTrans.{u₁, u₂, u₃, u₄} (𝟙 C) =
+    DepNatTransData.id (catToDepCategoryData.{u₁, u₂, u₃, u₄} C) :=
+  rfl
+
+/-- `functorToDepNatTrans` preserves composition. -/
+theorem functorToDepNatTrans_comp.{u₁, u₂, u₃, u₄}
+    {C D E : Cat.{u₂, u₁}} (F : C ⟶ D) (G : D ⟶ E) :
+    functorToDepNatTrans.{u₁, u₂, u₃, u₄} (F ≫ G) =
+    DepNatTransData.comp (functorToDepNatTrans F) (functorToDepNatTrans G) :=
+  rfl
+
+/-- The embedding functor from `Cat` to `DepCategoryData`. -/
+def catEmbedding.{u₁, u₂, u₃, u₄} : Cat.{u₂, u₁} ⥤ DepCategoryData where
+  obj := catToDepCategoryData.{u₁, u₂, u₃, u₄}
+  map := functorToDepNatTrans.{u₁, u₂, u₃, u₄}
+  map_id := functorToDepNatTrans_id
+  map_comp := functorToDepNatTrans_comp
+
+end CatEmbedding
 
 end CategoryJudgments
 
