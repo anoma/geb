@@ -2714,6 +2714,24 @@ def explicitCoendElementEquiv {P : Cᵒᵖ ⥤ C ⥤ Type w'} :
   left_inv := ExplicitCoendElement.ofCowedgeNatTrans_ofExplicitCoendElement
   right_inv := CowedgeNatTrans.ofExplicitCoendElement_ofCowedgeNatTrans
 
+/-- The equivalence between a coend and explicit coend elements.
+
+Given a weighted cowedge `c` that satisfies the universal property of the coend
+(`IsWeightedCoend c`), its apex `c.pt` is equivalent to `ExplicitCoendElement P`.
+
+This is the composition of two equivalences:
+- `coendNatTransEquiv'`: `c.pt ≃ CowedgeNatTrans P` (co-Yoneda lemma)
+- `explicitCoendElementEquiv`: `ExplicitCoendElement P ≃ CowedgeNatTrans P`
+
+This establishes that `ExplicitCoendElement P` correctly characterizes elements
+of the coend `∫^A P(A,A)`: an element is determined by how it descends along
+any cowedge, with the descent being natural in the apex type. -/
+def coendExplicitEquiv (P : Cᵒᵖ ⥤ C ⥤ Type w')
+    (c : WeightedCowedge terminalProfunctor P)
+    (hc : IsWeightedCoend c) :
+    c.pt ≃ ExplicitCoendElement P :=
+  (coendNatTransEquiv' P c hc).trans explicitCoendElementEquiv.symm
+
 end ExplicitCoendElement
 
 end GebLean
