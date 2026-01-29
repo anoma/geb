@@ -119,14 +119,14 @@ section FunctionalCategoryEquiv
 
 /-- A `DepCategoryData` bundled with its functionality witnesses.
     These are the objects that have the data of a category (without laws). -/
-structure DepFunctionalCategory.{u₁, u₂, u₃, u₄} where
+structure DepFunctionalCategory.{u₁, u₂, u₃, u₄} : Type (max u₁ u₂ u₃ u₄) where
   /-- The underlying category data -/
   data : DepCategoryData.{u₁, u₂, u₃, u₄}
   /-- The functionality witnesses -/
   functional : data.Functional
 
 /-- Convert a `BundledCategoryStruct` to a `DepCategoryData`. -/
-def bundledCategoryStructToDepData (C : BundledCategoryStruct) :
+def bundledCategoryStructToDepData.{v, u} (C : BundledCategoryStruct.{v, u}) :
     DepCategoryData :=
   letI : CategoryStruct C := BundledCategoryStruct.instCategoryStruct C
   { objT := C
