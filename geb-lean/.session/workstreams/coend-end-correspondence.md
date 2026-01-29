@@ -274,8 +274,18 @@ References:
     a weighted end when `c` is a weighted coend
   - Added `homIsoWeightedEndApex` - isomorphism `(c.pt ⟶ Y) ≅ d.pt` for
     weighted end `d` of `homFromSwappedProfunctor P Y`
-- [ ] Show that `WeightedCowedgeOver terminalProfunctor P Y` is the end
+- [x] Show that `WeightedCowedgeOver terminalProfunctor P Y` is the end
       `∫_A Hom(P(A,A), Y)`
+  - Added `cowedgeOverWedgeπ` - extracts diagonal component from cowedge-over
+  - Added `cowedgeOverToHom` - maps cowedge-over to `c.pt ⟶ Y` via coend
+    universal property
+  - Added `cowedgeOverFromHom` - maps `c.pt ⟶ Y` to cowedge-over by
+    post-composition
+  - Added `cowedgeOver_roundtrip` - proves cowedge-over → hom → cowedge-over
+    = identity
+  - Added `hom_roundtrip` - proves hom → cowedge-over → hom = identity
+  - Combined with Level 3 (`homOrdinaryWedge_isTerminal`), this establishes
+    the bijection `WeightedCowedgeOver terminalProfunctor P Y ≃ ∫_A Hom(P(A,A), Y)`
 - [x] Formalize Level 3: Ordinary coend elimination via ordinary ends
   - `Hom(∫^A P(A,A), Y) ≅ ∫_A Hom(P(A,A), Y)`
   - Derive from Level 2 with `W = terminalProfunctor`

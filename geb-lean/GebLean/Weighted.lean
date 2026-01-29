@@ -5031,6 +5031,161 @@ def ordinaryHomIsoEndApex {D : Type w} [Category.{v} D]
     (homOrdinaryWedge_isTerminal P hc Y) hd
 
 /-!
+### WeightedCowedgeOver as End
+
+The type `WeightedCowedgeOver terminalProfunctor P Y` is the end
+`∫_A Hom(P(A,A), Y)`. This section provides the diagonal projection and
+establishes the connection to the hom weighted wedge.
+
+When `c` is a weighted coend for `terminalProfunctor` and `P`, we have:
+- `c.pt ⟶ Y` is the apex of `homWeightedWedge c Y`
+- `WeightedCowedgeOver terminalProfunctor P Y` is isomorphic to `c.pt ⟶ Y`
+  via the coend universal property
+-/
+
+/-- The wedge projection from `WeightedCowedgeOver` to the diagonal hom type.
+
+Given a natural transformation `η` in `WeightedCowedgeOver terminalProfunctor P Y`,
+extracts the component at the diagonal co-twisted arrow for object `A`. -/
+def cowedgeOverWedgeπ {D : Type w} [Category.{v} D]
+    (P : Cᵒᵖ ⥤ C ⥤ D) (Y : D) (A : C)
+    (η : WeightedCowedgeOver (terminalProfunctor (C := C)) P Y) :
+    (P.obj (Opposite.op A)).obj A ⟶ Y :=
+  η.app (Opposite.op (diagCoTwArr A)) PUnit.unit
+
+
+/-- Map from `WeightedCowedgeOver terminalProfunctor P Y` to the hom-set
+`c.pt ⟶ Y` using the coend universal property.
+
+When `c` is a weighted coend, this is the inverse of `cowedgeOverFromHom`. -/
+def cowedgeOverToHom {D : Type w} [Category.{v} D]
+    (P : Cᵒᵖ ⥤ C ⥤ D) (Y : D)
+    {c : WeightedCowedge (terminalProfunctor (C := C)) P}
+    (hc : IsWeightedCoend c)
+    (η : WeightedCowedgeOver (terminalProfunctor (C := C)) P Y) :
+    c.pt ⟶ Y :=
+  hc.descHom {
+    pt := Y
+    toWeightedCoconeOver := {
+      app := fun tw _ => η.app tw PUnit.unit
+      naturality := fun {tw₁ tw₂} m => by
+        ext _
+        have heq := congrFun (η.naturality m) PUnit.unit
+        simp only [types_comp_apply] at heq
+        -- For terminalProfunctor, the left-hand map is identity
+        have hLHSconst : (profunctorOnOpCoTwistedArrow C terminalProfunctor).map m PUnit.unit
+                       = PUnit.unit := rfl
+        rw [hLHSconst] at heq
+        exact heq
+    }
+  }
+
+/-- Map from `c.pt ⟶ Y` to `WeightedCowedgeOver terminalProfunctor P Y`
+by composing each leg with the morphism.
+
+This is the inverse of `cowedgeOverToHom`. -/
+def cowedgeOverFromHom {D : Type w} [Category.{v} D]
+    (P : Cᵒᵖ ⥤ C ⥤ D) (Y : D)
+    (c : WeightedCowedge (terminalProfunctor (C := C)) P)
+    (f : c.pt ⟶ Y) :
+    WeightedCowedgeOver (terminalProfunctor (C := C)) P Y where
+  app := fun tw _ => c.leg tw.unop PUnit.unit ≫ f
+  naturality := fun {tw₁ tw₂} m => by
+    ext _
+    simp only [types_comp_apply]
+    -- For terminalProfunctor, the left-hand map is identity
+    have hLHSconst : (profunctorOnOpCoTwistedArrow C terminalProfunctor).map m PUnit.unit
+                   = PUnit.unit := rfl
+    -- Extract the cowedge naturality
+    have cnat := congrFun (c.ι.naturality m) PUnit.unit
+    simp only [types_comp_apply] at cnat
+    rw [hLHSconst] at cnat
+    -- c.ι.app tw₂ () = (homToFunctor P c.pt).map m (c.ι.app tw₁ ())
+    --                = P.map m.unop ≫ c.ι.app tw₁ ()
+    -- Goal: c.ι.app tw₂ () ≫ f = (homToFunctor P Y).map m (c.ι.app tw₁ () ≫ f)
+    --                          = P.map m.unop ≫ (c.ι.app tw₁ () ≫ f)
+    -- LHS = (P.map m.unop ≫ c.ι.app tw₁ ()) ≫ f = P.map m.unop ≫ c.ι.app tw₁ () ≫ f
+    simp only [WeightedCocone.leg, Opposite.op_unop]
+    -- Both sides equal P.map m.unop ≫ c.ι.app tw₁ () ≫ f
+    -- From cnat: c.ι.app tw₂ () = (homToFunctor P c.pt).map m (c.ι.app tw₁ ())
+    -- and (homToFunctor D X).map f g = D.map f.unop ≫ g definitionally
+    have hLHS : c.ι.app tw₂ PUnit.unit =
+        (profunctorOnCoTwistedArrow C P).map m.unop ≫ c.ι.app tw₁ PUnit.unit := by
+      rw [cnat]; rfl
+    -- The RHS uses (homToFunctor P Y).map m, which is also P.map m.unop ≫ -
+    have hRHS : (homToFunctor (profunctorOnCoTwistedArrow C P) Y).map m
+          (c.ι.app tw₁ PUnit.unit ≫ f) =
+        (profunctorOnCoTwistedArrow C P).map m.unop ≫ c.ι.app tw₁ PUnit.unit ≫ f := rfl
+    rw [hLHS, hRHS, Category.assoc]
+
+/-- The round-trip from cowedge-over to hom and back is the identity. -/
+theorem cowedgeOver_roundtrip {D : Type w} [Category.{v} D]
+    (P : Cᵒᵖ ⥤ C ⥤ D) (Y : D)
+    {c : WeightedCowedge (terminalProfunctor (C := C)) P}
+    (hc : IsWeightedCoend c)
+    (η : WeightedCowedgeOver (terminalProfunctor (C := C)) P Y) :
+    cowedgeOverFromHom P Y c (cowedgeOverToHom P Y hc η) = η := by
+  apply NatTrans.ext
+  ext tw u
+  simp only [cowedgeOverFromHom, cowedgeOverToHom]
+  cases u
+  -- Use the factorization property: c.leg ≫ descHom = target cowedge leg
+  let targetCowedge : WeightedCowedge (terminalProfunctor (C := C)) P := {
+    pt := Y
+    toWeightedCoconeOver := {
+      app := fun tw' _ => η.app tw' PUnit.unit
+      naturality := fun {tw₁ tw₂} m => by
+        ext _
+        have heq := congrFun (η.naturality m) PUnit.unit
+        simp only [types_comp_apply] at heq
+        have hLHSconst : (profunctorOnOpCoTwistedArrow C terminalProfunctor).map m PUnit.unit
+                       = PUnit.unit := rfl
+        rw [hLHSconst] at heq
+        exact heq
+    }
+  }
+  have hfac := (hc.desc targetCowedge).w tw.unop PUnit.unit
+  simp only [IsWeightedCoend.descHom] at hfac ⊢
+  exact hfac
+
+/-- The round-trip from hom to cowedge-over and back is the identity. -/
+theorem hom_roundtrip {D : Type w} [Category.{v} D]
+    (P : Cᵒᵖ ⥤ C ⥤ D) (Y : D)
+    {c : WeightedCowedge (terminalProfunctor (C := C)) P}
+    (hc : IsWeightedCoend c)
+    (f : c.pt ⟶ Y) :
+    cowedgeOverToHom P Y hc (cowedgeOverFromHom P Y c f) = f := by
+  simp only [cowedgeOverToHom, cowedgeOverFromHom, IsWeightedCoend.descHom]
+  -- Build the target cowedge from f
+  let targetCowedge : WeightedCowedge (terminalProfunctor (C := C)) P := {
+    pt := Y
+    toWeightedCoconeOver := {
+      app := fun tw _ => c.leg tw.unop PUnit.unit ≫ f
+      naturality := fun {tw₁ tw₂} m => by
+        ext _
+        simp only [types_comp_apply]
+        have hLHSconst : (profunctorOnOpCoTwistedArrow C terminalProfunctor).map m PUnit.unit
+                       = PUnit.unit := rfl
+        have cnat := congrFun (c.ι.naturality m) PUnit.unit
+        simp only [types_comp_apply] at cnat
+        rw [hLHSconst] at cnat
+        simp only [WeightedCocone.leg, Opposite.op_unop]
+        have hLHS : c.ι.app tw₂ PUnit.unit =
+            (profunctorOnCoTwistedArrow C P).map m.unop ≫ c.ι.app tw₁ PUnit.unit := by
+          rw [cnat]; rfl
+        have hRHS : (homToFunctor (profunctorOnCoTwistedArrow C P) Y).map m
+              (c.ι.app tw₁ PUnit.unit ≫ f) =
+            (profunctorOnCoTwistedArrow C P).map m.unop ≫ c.ι.app tw₁ PUnit.unit ≫ f := rfl
+        rw [hLHS, hRHS, Category.assoc]
+    }
+  }
+  -- By uniqueness of morphisms from initial, this must equal f
+  have huniq := hc.homExt (hc.desc targetCowedge) ⟨f, fun tw w => by cases w; rfl⟩
+  calc (hc.desc targetCowedge).hom = (⟨f, fun tw w => by cases w; rfl⟩ :
+      WeightedCocone.Hom c targetCowedge).hom := congrArg WeightedCocone.Hom.hom huniq
+    _ = f := rfl
+
+/-!
 ### Extracting Diagonal Data from Weighted Cowedges
 
 Given a weighted cowedge, we can extract the diagonal family as a `ParanatSig`.
