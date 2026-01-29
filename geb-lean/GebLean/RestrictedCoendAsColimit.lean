@@ -2205,6 +2205,175 @@ theorem coendToNatTrans_natTransToCoend (P : Cᵒᵖ ⥤ C ⥤ Type w)
           rw [H_map]
   rw [cw_eq]
 
+/-- The equivalence between coend elements and natural transformations.
+
+This is the co-Yoneda isomorphism:
+  `∫^A P(A,A) ≃ Nat(Y ↦ Cowedge_Y P, Id)`
+
+The forward direction `coendToNatTrans` sends an element `x` to the natural
+transformation `τ_x` where `τ_x.app Y cw = desc cw x`.
+
+The backward direction `natTransToCoend` applies the natural transformation
+to the injection cowedge. -/
+def coendNatTransEquiv (P : Cᵒᵖ ⥤ C ⥤ Type w)
+    (coendPt : Type w)
+    (ι : ∀ A, diagApp P A → coendPt)
+    (hι : ∀ {i j : C} (f : i ⟶ j) (x : (P.obj (op j)).obj i),
+      ι i ((P.map f.op).app i x) = ι j ((P.obj (op j)).map f x))
+    (desc : ∀ {Y : Type w}, WeightedCowedgeOver terminalProfunctor P Y →
+      coendPt → Y)
+    (fac : ∀ {Y : Type w} (cw : WeightedCowedgeOver terminalProfunctor P Y)
+      (A : C) (x : diagApp P A),
+      desc cw (ι A x) = cw.app (Opposite.op (diagCoTwArr A)) PUnit.unit x)
+    (unique : ∀ {Y : Type w} (cw : WeightedCowedgeOver terminalProfunctor P Y)
+      (f g : coendPt → Y),
+      (∀ A x, f (ι A x) = cw.app (Opposite.op (diagCoTwArr A)) PUnit.unit x) →
+      (∀ A x, g (ι A x) = cw.app (Opposite.op (diagCoTwArr A)) PUnit.unit x) →
+      f = g) :
+    coendPt ≃ CowedgeNatTrans P where
+  toFun := coendToNatTrans P coendPt ι hι desc fac unique
+  invFun := natTransToCoend P coendPt ι hι
+  left_inv := natTransToCoend_coendToNatTrans P coendPt ι hι desc fac unique
+  right_inv := coendToNatTrans_natTransToCoend P coendPt ι hι desc fac unique
+
+/-!
+### Using Weighted Coend Infrastructure
+
+The above definitions take explicit parameters (`ι`, `desc`, `fac`, `unique`)
+representing the coend structure. Here we provide versions that derive these
+from a weighted cowedge with an `IsWeightedCoend` proof.
+-/
+
+/-- Extract the coend injection from a weighted cowedge.
+
+For a weighted cowedge `c` of `P` with trivial weight, the injection at `A`
+maps `x : P(A,A)` to `c.pt` by applying the cowedge leg at `diagCoTwArr A`. -/
+def coendInj (P : Cᵒᵖ ⥤ C ⥤ Type w) (c : WeightedCowedge terminalProfunctor P)
+    (A : C) : diagApp P A → c.pt :=
+  c.ι.app (Opposite.op (diagCoTwArr A)) PUnit.unit
+
+/-- The dinaturality condition for `coendInj`.
+
+For `f : i ⟶ j` and `x : P(j,i)`, we have:
+  `ι_i (P.map f.op · x) = ι_j (P(j,-).map f · x)`
+
+This follows from the cowedge naturality applied to the morphisms
+`coTwObjMkToIdentity` and `coTwObjMkToIdentityAtDom`. -/
+theorem coendInj_dinat (P : Cᵒᵖ ⥤ C ⥤ Type w)
+    (c : WeightedCowedge terminalProfunctor P)
+    {i j : C} (f : i ⟶ j) (x : (P.obj (op j)).obj i) :
+    coendInj P c i ((P.map f.op).app i x) =
+    coendInj P c j ((P.obj (op j)).map f x) := by
+  simp only [coendInj]
+  let tw := coTwObjMk f
+  let to_i : tw ⟶ diagCoTwArr i := coTwObjMkToIdentity f
+  let to_j : tw ⟶ diagCoTwArr j := coTwObjMkToIdentityAtDom f
+  have eq_i : (profunctorOnCoTwistedArrow C P).map to_i x =
+      (P.map f.op).app i x := by
+    simp only [to_i, tw, profunctorOnCoTwistedArrow_map, types_comp_apply,
+      coTwObjMkToIdentity_domArr, coTwObjMkToIdentity_codArr,
+      coTwObjMk_cod, diagCoTwArr_dom, Functor.map_id, types_id_apply]
+  have eq_j : (profunctorOnCoTwistedArrow C P).map to_j x =
+      (P.obj (Opposite.op j)).map f x := by
+    simp only [to_j, tw, profunctorOnCoTwistedArrow_map, types_comp_apply,
+      coTwObjMkToIdentityAtDom_domArr, coTwObjMkToIdentityAtDom_codArr,
+      coTwObjMk_cod, diagCoTwArr_dom, op_id]
+    have h : P.map (𝟙 (op j)) = 𝟙 (P.obj (op j)) := Functor.map_id P (op j)
+    simp only [h, NatTrans.id_app, types_id_apply]
+  rw [← eq_i, ← eq_j]
+  have nat_i := congrFun (congrFun (c.ι.naturality (Opposite.op to_i))
+    PUnit.unit) x
+  have nat_j := congrFun (congrFun (c.ι.naturality (Opposite.op to_j))
+    PUnit.unit) x
+  simp only [types_comp_apply] at nat_i nat_j
+  exact nat_i.symm.trans nat_j
+
+/-- The universal property (desc) from a weighted coend.
+
+Given a weighted cowedge `cw` over `Y`, the unique map `c.pt → Y` is obtained
+from the `IsWeightedCoend` initiality. -/
+def coendDesc (P : Cᵒᵖ ⥤ C ⥤ Type w) (c : WeightedCowedge terminalProfunctor P)
+    (hc : IsWeightedCoend c) {Y : Type w}
+    (cw : WeightedCowedgeOver terminalProfunctor P Y) : c.pt → Y :=
+  hc.descHom ⟨Y, cw⟩
+
+/-- The factorization property for `coendDesc`. -/
+theorem coendDesc_fac (P : Cᵒᵖ ⥤ C ⥤ Type w)
+    (c : WeightedCowedge terminalProfunctor P) (hc : IsWeightedCoend c)
+    {Y : Type w} (cw : WeightedCowedgeOver terminalProfunctor P Y)
+    (A : C) (x : diagApp P A) :
+    coendDesc P c hc cw (coendInj P c A x) =
+    cw.app (Opposite.op (diagCoTwArr A)) PUnit.unit x := by
+  simp only [coendDesc, coendInj]
+  have h := (hc.to ⟨Y, cw⟩).w (diagCoTwArr A) PUnit.unit
+  simp only [WeightedCocone.leg] at h
+  exact congrFun h x
+
+/-- The uniqueness property for `coendDesc`. -/
+theorem coendDesc_unique (P : Cᵒᵖ ⥤ C ⥤ Type w)
+    (c : WeightedCowedge terminalProfunctor P) (hc : IsWeightedCoend c)
+    {Y : Type w} (cw : WeightedCowedgeOver terminalProfunctor P Y)
+    (f g : c.pt → Y)
+    (hf : ∀ A x, f (coendInj P c A x) =
+      cw.app (Opposite.op (diagCoTwArr A)) PUnit.unit x)
+    (hg : ∀ A x, g (coendInj P c A x) =
+      cw.app (Opposite.op (diagCoTwArr A)) PUnit.unit x) :
+    f = g := by
+  -- Construct cowedge morphisms from c to ⟨Y, cw⟩ using f and g
+  -- and apply initiality
+  let hf_mor : c ⟶ ⟨Y, cw⟩ := ⟨f, by
+    intro tw u
+    cases u
+    funext x
+    simp only [types_comp_apply, WeightedCocone.leg]
+    let dom := coTwDom tw
+    let to_dom : tw ⟶ diagCoTwArr dom := coTwToDomDiag tw
+    have nat := congrFun (congrFun (c.ι.naturality (Opposite.op to_dom)) PUnit.unit) x
+    simp only [types_comp_apply, Subsingleton.elim _ PUnit.unit] at nat
+    have nat_cw := congrFun (congrFun (cw.naturality (Opposite.op to_dom)) PUnit.unit) x
+    simp only [types_comp_apply, Subsingleton.elim _ PUnit.unit] at nat_cw
+    change f (c.ι.app (Opposite.op tw) PUnit.unit x) =
+      cw.app (Opposite.op tw) PUnit.unit x
+    rw [nat, nat_cw]
+    simp only [coendInj] at hf
+    have hf_at_dom := hf dom ((profunctorOnCoTwistedArrow C P).map to_dom x)
+    convert hf_at_dom using 2⟩
+  let hg_mor : c ⟶ ⟨Y, cw⟩ := ⟨g, by
+    intro tw u
+    cases u
+    funext x
+    simp only [types_comp_apply, WeightedCocone.leg]
+    let dom := coTwDom tw
+    let to_dom : tw ⟶ diagCoTwArr dom := coTwToDomDiag tw
+    have nat := congrFun (congrFun (c.ι.naturality (Opposite.op to_dom)) PUnit.unit) x
+    simp only [types_comp_apply, Subsingleton.elim _ PUnit.unit] at nat
+    have nat_cw := congrFun (congrFun (cw.naturality (Opposite.op to_dom)) PUnit.unit) x
+    simp only [types_comp_apply, Subsingleton.elim _ PUnit.unit] at nat_cw
+    change g (c.ι.app (Opposite.op tw) PUnit.unit x) =
+      cw.app (Opposite.op tw) PUnit.unit x
+    rw [nat, nat_cw]
+    simp only [coendInj] at hg
+    have hg_at_dom := hg dom ((profunctorOnCoTwistedArrow C P).map to_dom x)
+    convert hg_at_dom using 2⟩
+  have eq := hc.hom_ext hf_mor hg_mor
+  exact congrArg (fun m => m.hom) eq
+
+/-- The co-Yoneda equivalence using weighted coend infrastructure.
+
+Given a weighted cowedge `c` that is a weighted coend (`IsWeightedCoend c`),
+the coend `c.pt` is equivalent to natural transformations from the cowedge
+family functor to the identity. -/
+def coendNatTransEquiv' (P : Cᵒᵖ ⥤ C ⥤ Type w)
+    (c : WeightedCowedge terminalProfunctor P)
+    (hc : IsWeightedCoend c) :
+    c.pt ≃ CowedgeNatTrans P :=
+  coendNatTransEquiv P c.pt
+    (coendInj P c)
+    (coendInj_dinat P c)
+    (fun cw => coendDesc P c hc cw)
+    (fun cw A x => coendDesc_fac P c hc cw A x)
+    (fun cw f g hf hg => coendDesc_unique P c hc cw f g hf hg)
+
 end CoendAsNatTransformations
 
 end GebLean

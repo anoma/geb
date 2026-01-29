@@ -2,7 +2,7 @@
 
 ## Status
 
-In Progress
+Complete
 
 ## Context
 
@@ -292,16 +292,24 @@ References:
   - Added `homOrdinaryWedge` - constructs mathlib wedge from cowedge
   - Added `homOrdinaryWedge_isTerminal` - proves terminality (end property)
   - Added `ordinaryHomIsoEndApex` - extracts `(c.pt ⟶ Y) ≅ d.pt`
-- [ ] Prove the co-Yoneda isomorphism:
+- [x] Prove the co-Yoneda isomorphism:
       `∫^A P(A,A) ≅ Nat(Y ↦ ∫_A Hom(P(A,A), Y), Id)`
+  - Implemented via `coendNatTransEquiv'` which uses `IsWeightedCoend`
+  - `CowedgeNatTrans P = cowedgeFamilyFunctor P ⟶ 𝟭 (Type w)`
+  - `cowedgeFamilyFunctor P` maps `Y ↦ WeightedCowedgeOver terminalProfunctor P Y`
+    which is `∫_A Hom(P(A,A), Y)`
 - [x] Complete the proof that `coendToNatTrans` and `natTransToCoend` are
       mutually inverse
   - `natTransToCoend_coendToNatTrans` - proves natural trans → coend → natural
     trans = id
   - `coendToNatTrans_natTransToCoend` - proves coend → natural trans → coend
     = id
-- [ ] Clean up `CoendAsNatTransformations` section to use proper
+- [x] Clean up `CoendAsNatTransformations` section to use proper
       initiality/terminality rather than assuming coend existence via parameters
+  - Added `coendInj`, `coendInj_dinat`, `coendDesc`, `coendDesc_fac`,
+    `coendDesc_unique` using `IsWeightedCoend`
+  - Added `coendNatTransEquiv'` that takes `IsWeightedCoend c` rather than
+    assuming desc/fac/unique as parameters
 
 ## Notes
 
@@ -431,10 +439,13 @@ The section defines:
 - `coendToNatTrans_natTransToCoend`: Round-trip proof (coend → nat trans → coend
   = id)
 
-Still missing:
+The section is now complete with:
 
-- Explicit connection to ends
-- Use of initiality (currently assumes `desc`, `fac`, `unique` as parameters)
+- `coendInj`, `coendInj_dinat` - injection maps and dinaturality
+- `coendDesc`, `coendDesc_fac`, `coendDesc_unique` - universal property using
+  `IsWeightedCoend`
+- `coendNatTransEquiv'` - the co-Yoneda isomorphism using weighted coend
+  infrastructure
 
 ### Dinaturality vs Paranaturality
 
