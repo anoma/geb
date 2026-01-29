@@ -2405,7 +2405,7 @@ composition) without the laws. -/
 
 /-- A bundled category struct: a type with `CategoryStruct` instance.
     This is analogous to `Cat` but without requiring the category laws. -/
-def BundledCategoryStruct := Bundled CategoryStruct
+def BundledCategoryStruct.{m, o} := Bundled CategoryStruct.{m, o}
 
 namespace BundledCategoryStruct
 
