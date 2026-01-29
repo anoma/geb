@@ -962,6 +962,628 @@ def mkCopresheafDep_functorDataToDep_depToFunctorData.{u}
                      depToFunctorData, functorDataToDep, mapSemiHom]
           ext x; simp)
 
+section DepCatCopresheafEquivalence
+
+/-- The counit component: isomorphism from the round-tripped CopresheafData
+    to the original. -/
+def copresheafRoundTripCounit (data : CopresheafData) :
+    NatTransData (depToFunctorData (functorDataToDep data)) data where
+  appObj := id
+  appMor := (depToFunctorData_functorDataToDep_morC data).toFun
+  appId := (depToFunctorData_functorDataToDep_idC data).toFun
+  appComp := (depToFunctorData_functorDataToDep_compC data).toFun
+  naturality_dom := by
+    funext ⟨a, b, ⟨m, ha, hb⟩⟩
+    simp only [types_comp_apply, id_eq, Equiv.toFun_as_coe,
+      depToFunctorData_functorDataToDep_morC]
+    exact ha.symm
+  naturality_cod := by
+    funext ⟨a, b, ⟨m, ha, hb⟩⟩
+    simp only [types_comp_apply, id_eq, Equiv.toFun_as_coe,
+      depToFunctorData_functorDataToDep_morC]
+    exact hb.symm
+  naturality_idMor := by
+    funext ⟨o, ⟨m, hdom, hcod⟩, ⟨i, hi⟩⟩
+    simp only [types_comp_apply, Equiv.toFun_as_coe,
+      depToFunctorData_functorDataToDep_morC,
+      depToFunctorData_functorDataToDep_idC, depToFunctorData]
+    exact hi.symm
+  naturality_left := by
+    funext ⟨a, b, c, ⟨f, hfa, hfb⟩, ⟨g, hga, hgb⟩, ⟨h, hha, hhb⟩,
+      ⟨comp, hr, hl, hcomp⟩⟩
+    simp only [types_comp_apply, Equiv.toFun_as_coe,
+      depToFunctorData_functorDataToDep_morC,
+      depToFunctorData_functorDataToDep_compC, depToFunctorData]
+    exact hl.symm
+  naturality_right := by
+    funext ⟨a, b, c, ⟨f, hfa, hfb⟩, ⟨g, hga, hgb⟩, ⟨h, hha, hhb⟩,
+      ⟨comp, hr, hl, hcomp⟩⟩
+    simp only [types_comp_apply, Equiv.toFun_as_coe,
+      depToFunctorData_functorDataToDep_morC,
+      depToFunctorData_functorDataToDep_compC, depToFunctorData]
+    exact hr.symm
+  naturality_composite := by
+    funext ⟨a, b, c, ⟨f, hfa, hfb⟩, ⟨g, hga, hgb⟩, ⟨h, hha, hhb⟩,
+      ⟨comp, hr, hl, hcomp⟩⟩
+    simp only [types_comp_apply, Equiv.toFun_as_coe,
+      depToFunctorData_functorDataToDep_morC,
+      depToFunctorData_functorDataToDep_compC, depToFunctorData]
+    exact hcomp.symm
+
+/-- Helper: HEq of nested sigma morphisms when the domain indices are equal.
+    After substituting the equality, the types become definitionally equal. -/
+private lemma morCSigma_heq_of_dom_eq (data : CopresheafData) {m : data.morC}
+    {a₁ a₂ b : data.objC} (ha : a₁ = a₂)
+    (hm₁ : data.dom m = a₁) (hm₂ : data.dom m = a₂)
+    (hm_cod₁ hm_cod₂ : data.cod m = b) :
+    HEq (⟨b, ⟨m, hm₁, hm_cod₁⟩⟩ :
+          Σ b', {m' : data.morC // data.dom m' = a₁ ∧ data.cod m' = b'})
+        (⟨b, ⟨m, hm₂, hm_cod₂⟩⟩ :
+          Σ b', {m' : data.morC // data.dom m' = a₂ ∧ data.cod m' = b'}) := by
+  subst ha
+  rfl
+
+/-- Helper: HEq of nested sigma morphisms when both domain and codomain
+    indices differ but are equal by hypotheses. -/
+private lemma morCSigma_heq_of_dom_cod_eq (data : CopresheafData) {m : data.morC}
+    {a₁ a₂ b₁ b₂ : data.objC} (ha : a₁ = a₂) (hb : b₁ = b₂)
+    (hm_dom₁ : data.dom m = a₁) (hm_dom₂ : data.dom m = a₂)
+    (hm_cod₁ : data.cod m = b₁) (hm_cod₂ : data.cod m = b₂) :
+    HEq (⟨b₁, ⟨m, hm_dom₁, hm_cod₁⟩⟩ :
+          Σ b', {m' : data.morC // data.dom m' = a₁ ∧ data.cod m' = b'})
+        (⟨b₂, ⟨m, hm_dom₂, hm_cod₂⟩⟩ :
+          Σ b', {m' : data.morC // data.dom m' = a₂ ∧ data.cod m' = b'}) := by
+  subst ha hb
+  rfl
+
+/-- The counit inverse: isomorphism from the original CopresheafData to
+    the round-tripped version. -/
+def copresheafRoundTripCounitInv (data : CopresheafData) :
+    NatTransData data (depToFunctorData (functorDataToDep data)) where
+  appObj := id
+  appMor := (depToFunctorData_functorDataToDep_morC data).invFun
+  appId := (depToFunctorData_functorDataToDep_idC data).invFun
+  appComp := (depToFunctorData_functorDataToDep_compC data).invFun
+  naturality_dom := by funext m; rfl
+  naturality_cod := by funext m; rfl
+  naturality_idMor := by
+    funext i
+    simp only [types_comp_apply, depToFunctorData_functorDataToDep_morC,
+      depToFunctorData_functorDataToDep_idC, depToFunctorData, functorDataToDep]
+    have h_endo := congrFun data.h_id_endo i
+    simp only [types_comp_apply] at h_endo
+    congr 1
+    congr 1
+    · exact h_endo.symm
+    · rw [Subtype.heq_iff_coe_eq (fun _ => by simp [h_endo])]
+  naturality_left := by
+    funext comp
+    simp only [types_comp_apply, depToFunctorData_functorDataToDep_morC,
+      depToFunctorData_functorDataToDep_compC, depToFunctorData, functorDataToDep]
+    have h_match := congrFun data.h_comp_match comp
+    simp only [types_comp_apply] at h_match
+    rw [Sigma.mk.inj_iff]
+    refine ⟨h_match.symm, ?_⟩
+    exact morCSigma_heq_of_dom_eq data h_match.symm rfl h_match.symm rfl rfl
+  naturality_right := by funext comp; rfl
+  naturality_composite := by
+    funext comp
+    simp only [types_comp_apply, depToFunctorData_functorDataToDep_morC,
+      depToFunctorData_functorDataToDep_compC, depToFunctorData, functorDataToDep]
+    have h_dom := congrFun data.h_comp_dom comp
+    have h_cod := congrFun data.h_comp_cod comp
+    simp only [types_comp_apply] at h_dom h_cod
+    rw [Sigma.mk.inj_iff]
+    refine ⟨h_dom, ?_⟩
+    exact morCSigma_heq_of_dom_cod_eq data h_dom h_cod rfl h_dom rfl h_cod
+
+/-- The counit composed with its inverse gives identity on round-tripped. -/
+theorem copresheafRoundTripCounit_inv_comp (data : CopresheafData) :
+    NatTransData.comp (copresheafRoundTripCounit data)
+      (copresheafRoundTripCounitInv data) =
+    NatTransData.id (depToFunctorData (functorDataToDep data)) := by
+  ext
+  all_goals
+    simp only [NatTransData.comp, NatTransData.id, copresheafRoundTripCounit,
+      copresheafRoundTripCounitInv]
+  · rfl
+  · rename_i x
+    exact (depToFunctorData_functorDataToDep_morC data).left_inv x
+  · rename_i x
+    exact (depToFunctorData_functorDataToDep_idC data).left_inv x
+  · rename_i x
+    exact (depToFunctorData_functorDataToDep_compC data).left_inv x
+
+/-- The inverse composed with counit gives identity on CopresheafData. -/
+theorem copresheafRoundTripCounitInv_comp (data : CopresheafData) :
+    NatTransData.comp (copresheafRoundTripCounitInv data)
+      (copresheafRoundTripCounit data) = NatTransData.id data := by
+  ext
+  all_goals
+    simp only [NatTransData.comp, NatTransData.id, copresheafRoundTripCounit,
+      copresheafRoundTripCounitInv]
+  · rfl
+  · rename_i x
+    exact (depToFunctorData_functorDataToDep_morC data).right_inv x
+  · rename_i x
+    exact (depToFunctorData_functorDataToDep_idC data).right_inv x
+  · rename_i x
+    exact (depToFunctorData_functorDataToDep_compC data).right_inv x
+
+/-- Isomorphism for a single CopresheafData showing the round-trip is
+    isomorphic to the original. -/
+def copresheafRoundTripIso (data : CopresheafData) :
+    depToFunctorData (functorDataToDep data) ≅ data where
+  hom := copresheafRoundTripCounit data
+  inv := copresheafRoundTripCounitInv data
+  hom_inv_id := copresheafRoundTripCounit_inv_comp data
+  inv_hom_id := copresheafRoundTripCounitInv_comp data
+
+/-- The counit natural transformation for the equivalence. -/
+def depCatCopresheafCounit :
+    copresheafToDepCat ⋙ depCatToCopresheaf ⟶ 𝟭 CopresheafData where
+  app := copresheafRoundTripCounit
+  naturality X Y f := by
+    simp only [Functor.comp_obj, Functor.id_obj, Functor.comp_map,
+      Functor.id_map, copresheafToDepCat, depCatToCopresheaf]
+    apply NatTransData.ext
+    · rfl
+    · funext ⟨a, b, ⟨m, ha, hb⟩⟩
+      simp only [depToFunctorData_functorDataToDep_morC, types_comp_apply,
+        CategoryStruct.comp, NatTransData.comp, copresheafRoundTripCounit,
+        natTransToDepNatTrans, depNatTransToNatTrans]
+      subst ha hb; rfl
+    · funext ⟨o, ⟨m, hdom, hcod⟩, ⟨i, hi⟩⟩
+      simp only [depToFunctorData_functorDataToDep_idC, types_comp_apply,
+        CategoryStruct.comp, NatTransData.comp, copresheafRoundTripCounit,
+        natTransToDepNatTrans, depNatTransToNatTrans]
+      subst hdom; rfl
+    · funext ⟨a, b, c, ⟨fv, hfa, hfb⟩, ⟨gv, hga, hgb⟩, ⟨hv, hha, hhb⟩,
+        ⟨comp, hr, hl, hcomp⟩⟩
+      simp only [depToFunctorData_functorDataToDep_compC, types_comp_apply,
+        CategoryStruct.comp, NatTransData.comp, copresheafRoundTripCounit,
+        natTransToDepNatTrans, depNatTransToNatTrans, Subtype.coe_mk,
+        Function.comp_apply]
+
+/-- Helper: Convert naturality lemmas to sigma equalities for morC. -/
+private lemma natTrans_morC_sigma_eq {X Y : CopresheafData} (f : NatTransData X Y)
+    (m : X.morC) :
+    (⟨Y.dom (f.appMor m), Y.cod (f.appMor m), ⟨f.appMor m, rfl, rfl⟩⟩ :
+      (depToFunctorData (functorDataToDep Y)).morC) =
+    ⟨f.appObj (X.dom m), f.appObj (X.cod m), ⟨f.appMor m,
+      (congrFun f.naturality_dom m).symm, (congrFun f.naturality_cod m).symm⟩⟩ := by
+  have h_dom := (congrFun f.naturality_dom m).symm
+  have h_cod := (congrFun f.naturality_cod m).symm
+  simp only [types_comp_apply] at h_dom h_cod
+  rw [Sigma.mk.inj_iff]
+  refine ⟨h_dom, ?_⟩
+  exact morCSigma_heq_of_dom_cod_eq Y h_dom h_cod rfl h_dom rfl h_cod
+
+/-- Helper: HEq for idC inner sigma when idMor maps differ by equality. -/
+private lemma idCSigma_heq_of_idMor_eq {data : CopresheafData}
+    {i : data.idC} {m₁ m₂ : data.morC} (hm : m₁ = m₂)
+    {a₁ a₂ : data.objC} (ha : a₁ = a₂)
+    (hdom₁ : data.dom m₁ = a₁) (hdom₂ : data.dom m₂ = a₂)
+    (hcod₁ : data.cod m₁ = a₁) (hcod₂ : data.cod m₂ = a₂)
+    (hi₁ : data.idMor i = m₁) (hi₂ : data.idMor i = m₂) :
+    HEq (⟨⟨m₁, hdom₁, hcod₁⟩, ⟨i, hi₁⟩⟩ :
+          (mor : {m : data.morC // data.dom m = a₁ ∧ data.cod m = a₁}) ×
+            {i' : data.idC // data.idMor i' = mor.val})
+        (⟨⟨m₂, hdom₂, hcod₂⟩, ⟨i, hi₂⟩⟩ :
+          (mor : {m : data.morC // data.dom m = a₂ ∧ data.cod m = a₂}) ×
+            {i' : data.idC // data.idMor i' = mor.val}) := by
+  subst hm ha; rfl
+
+/-- Helper: compC naturality sigma HEq using explicit subst. -/
+private lemma compCSigma_heq {data : CopresheafData}
+    {a₁ a₂ b₁ b₂ c₁ c₂ : data.objC}
+    {f₁ : data.morC} {g₁ : data.morC} {h₁ : data.morC} {comp₁ : data.compC}
+    {f₂ : data.morC} {g₂ : data.morC} {h₂ : data.morC} {comp₂ : data.compC}
+    (ha : a₁ = a₂) (hb : b₁ = b₂) (hc : c₁ = c₂)
+    (hf : f₁ = f₂) (hg : g₁ = g₂) (hh : h₁ = h₂) (hcomp : comp₁ = comp₂)
+    (hf_dom₁ : data.dom f₁ = a₁) (hf_dom₂ : data.dom f₂ = a₂)
+    (hf_cod₁ : data.cod f₁ = b₁) (hf_cod₂ : data.cod f₂ = b₂)
+    (hg_dom₁ : data.dom g₁ = b₁) (hg_dom₂ : data.dom g₂ = b₂)
+    (hg_cod₁ : data.cod g₁ = c₁) (hg_cod₂ : data.cod g₂ = c₂)
+    (hh_dom₁ : data.dom h₁ = a₁) (hh_dom₂ : data.dom h₂ = a₂)
+    (hh_cod₁ : data.cod h₁ = c₁) (hh_cod₂ : data.cod h₂ = c₂)
+    (hr₁ : data.right comp₁ = f₁) (hr₂ : data.right comp₂ = f₂)
+    (hl₁ : data.left comp₁ = g₁) (hl₂ : data.left comp₂ = g₂)
+    (hcomp₁ : data.composite comp₁ = h₁) (hcomp₂ : data.composite comp₂ = h₂) :
+    HEq (⟨a₁, b₁, c₁, ⟨f₁, hf_dom₁, hf_cod₁⟩, ⟨g₁, hg_dom₁, hg_cod₁⟩, ⟨h₁, hh_dom₁, hh_cod₁⟩,
+          ⟨comp₁, hr₁, hl₁, hcomp₁⟩⟩ :
+        (depToFunctorData (functorDataToDep data)).compC)
+       (⟨a₂, b₂, c₂, ⟨f₂, hf_dom₂, hf_cod₂⟩, ⟨g₂, hg_dom₂, hg_cod₂⟩, ⟨h₂, hh_dom₂, hh_cod₂⟩,
+          ⟨comp₂, hr₂, hl₂, hcomp₂⟩⟩ :
+        (depToFunctorData (functorDataToDep data)).compC) := by
+  subst ha hb hc hf hg hh hcomp
+  rfl
+
+/-- Helper: Convert naturality lemmas to sigma equalities for idC. -/
+private lemma natTrans_idC_sigma_eq {X Y : CopresheafData} (f : NatTransData X Y)
+    (i : X.idC) :
+    (⟨Y.dom (Y.idMor (f.appId i)), ⟨Y.idMor (f.appId i),
+        rfl, (congrFun Y.h_id_endo (f.appId i)).symm⟩, ⟨f.appId i, rfl⟩⟩ :
+      (depToFunctorData (functorDataToDep Y)).idC) =
+    ⟨f.appObj (X.dom (X.idMor i)), ⟨f.appMor (X.idMor i),
+        (congrFun f.naturality_dom (X.idMor i)).symm,
+        (congrFun f.naturality_cod (X.idMor i)).symm.trans
+          (congrArg f.appObj (congrFun X.h_id_endo i).symm)⟩,
+      ⟨f.appId i, (congrFun f.naturality_idMor i).symm⟩⟩ := by
+  have h_nat_dom := (congrFun f.naturality_dom (X.idMor i)).symm
+  have h_nat_idMor := (congrFun f.naturality_idMor i).symm
+  have h_nat_cod := (congrFun f.naturality_cod (X.idMor i)).symm
+  have h_endo_X := (congrFun X.h_id_endo i).symm
+  have h_endo_Y := (congrFun Y.h_id_endo (f.appId i)).symm
+  simp only [types_comp_apply] at h_nat_dom h_nat_idMor h_nat_cod h_endo_X h_endo_Y
+  rw [Sigma.mk.inj_iff]
+  have h_obj_eq : Y.dom (Y.idMor (f.appId i)) = f.appObj (X.dom (X.idMor i)) :=
+    (congrArg Y.dom h_nat_idMor).trans h_nat_dom
+  refine ⟨h_obj_eq, ?_⟩
+  exact idCSigma_heq_of_idMor_eq h_nat_idMor h_obj_eq
+    rfl h_nat_dom
+    h_endo_Y (h_nat_cod.trans (congrArg f.appObj h_endo_X))
+    rfl h_nat_idMor
+
+/-- The counit inverse natural transformation. -/
+def depCatCopresheafCounitInv :
+    𝟭 CopresheafData ⟶ copresheafToDepCat ⋙ depCatToCopresheaf where
+  app := copresheafRoundTripCounitInv
+  naturality X Y f := by
+    simp only [Functor.comp_obj, Functor.id_obj, Functor.comp_map,
+      Functor.id_map, copresheafToDepCat, depCatToCopresheaf]
+    apply NatTransData.ext
+    · rfl
+    · funext m
+      simp only [depToFunctorData_functorDataToDep_morC,
+        CategoryStruct.comp, NatTransData.comp, copresheafRoundTripCounitInv,
+        natTransToDepNatTrans, depNatTransToNatTrans, Function.comp_apply]
+      exact natTrans_morC_sigma_eq f m
+    · funext i
+      simp only [depToFunctorData_functorDataToDep_idC,
+        CategoryStruct.comp, NatTransData.comp, copresheafRoundTripCounitInv,
+        natTransToDepNatTrans, depNatTransToNatTrans, Function.comp_apply]
+      exact natTrans_idC_sigma_eq f i
+    · funext c
+      simp only [depToFunctorData_functorDataToDep_compC,
+        CategoryStruct.comp, NatTransData.comp, copresheafRoundTripCounitInv,
+        natTransToDepNatTrans, depNatTransToNatTrans, Function.comp_apply]
+      have h_nat_dom : Y.dom (f.appMor (X.right c)) = f.appObj (X.dom (X.right c)) :=
+        (congrFun f.naturality_dom (X.right c)).symm
+      have h_nat_dom' : Y.dom (f.appMor (X.composite c)) =
+          f.appObj (X.dom (X.composite c)) :=
+        (congrFun f.naturality_dom (X.composite c)).symm
+      have h_nat_cod : Y.cod (f.appMor (X.left c)) = f.appObj (X.cod (X.left c)) :=
+        (congrFun f.naturality_cod (X.left c)).symm
+      have h_nat_cod' : Y.cod (f.appMor (X.right c)) = f.appObj (X.cod (X.right c)) :=
+        (congrFun f.naturality_cod (X.right c)).symm
+      have h_nat_right : Y.right (f.appComp c) = f.appMor (X.right c) :=
+        (congrFun f.naturality_right c).symm
+      have h_nat_left : Y.left (f.appComp c) = f.appMor (X.left c) :=
+        (congrFun f.naturality_left c).symm
+      have h_nat_composite : Y.composite (f.appComp c) = f.appMor (X.composite c) :=
+        (congrFun f.naturality_composite c).symm
+      have h_nat_dom_left : Y.dom (f.appMor (X.left c)) = f.appObj (X.dom (X.left c)) :=
+        (congrFun f.naturality_dom (X.left c)).symm
+      have h_comp_match_X : X.cod (X.right c) = X.dom (X.left c) :=
+        congrFun X.h_comp_match c
+      have h_comp_dom_X : X.dom (X.composite c) = X.dom (X.right c) :=
+        congrFun X.h_comp_dom c
+      have h_comp_cod_X : X.cod (X.composite c) = X.cod (X.left c) :=
+        congrFun X.h_comp_cod c
+      have h_nat_dom_comp : Y.dom (f.appMor (X.composite c)) =
+          f.appObj (X.dom (X.composite c)) :=
+        (congrFun f.naturality_dom (X.composite c)).symm
+      have h_nat_cod_comp : Y.cod (f.appMor (X.composite c)) =
+          f.appObj (X.cod (X.composite c)) :=
+        (congrFun f.naturality_cod (X.composite c)).symm
+      have h_comp_match_Y : Y.cod (Y.right (f.appComp c)) = Y.dom (Y.left (f.appComp c)) :=
+        congrFun Y.h_comp_match (f.appComp c)
+      have h_comp_dom_Y : Y.dom (Y.composite (f.appComp c)) =
+          Y.dom (Y.right (f.appComp c)) :=
+        congrFun Y.h_comp_dom (f.appComp c)
+      have h_comp_cod_Y : Y.cod (Y.composite (f.appComp c)) =
+          Y.cod (Y.left (f.appComp c)) :=
+        congrFun Y.h_comp_cod (f.appComp c)
+      exact eq_of_heq (compCSigma_heq
+        ((congrArg Y.dom h_nat_right).trans h_nat_dom)
+        ((congrArg Y.cod h_nat_right).trans h_nat_cod')
+        ((congrArg Y.cod h_nat_left).trans h_nat_cod)
+        h_nat_right h_nat_left h_nat_composite rfl
+        rfl h_nat_dom
+        rfl h_nat_cod'
+        h_comp_match_Y.symm (h_nat_dom_left.trans (congrArg f.appObj h_comp_match_X.symm))
+        rfl h_nat_cod
+        h_comp_dom_Y (h_nat_dom_comp.trans (congrArg f.appObj h_comp_dom_X))
+        h_comp_cod_Y (h_nat_cod_comp.trans (congrArg f.appObj h_comp_cod_X))
+        rfl h_nat_right rfl h_nat_left rfl h_nat_composite)
+
+/-- The counit is a natural isomorphism. -/
+def depCatCopresheafCounitIso :
+    copresheafToDepCat ⋙ depCatToCopresheaf ≅ 𝟭 CopresheafData where
+  hom := depCatCopresheafCounit
+  inv := depCatCopresheafCounitInv
+  hom_inv_id := by
+    apply CategoryTheory.NatTrans.ext
+    funext data
+    simp only [Functor.comp_obj, NatTrans.comp_app, NatTrans.id_app,
+      depCatCopresheafCounit, depCatCopresheafCounitInv]
+    exact copresheafRoundTripCounit_inv_comp data
+  inv_hom_id := by
+    apply CategoryTheory.NatTrans.ext
+    funext data
+    simp only [Functor.id_obj, NatTrans.comp_app, NatTrans.id_app,
+      depCatCopresheafCounit, depCatCopresheafCounitInv]
+    exact copresheafRoundTripCounitInv_comp data
+
+/-- The unit natural transformation component at a single object.
+    Maps DepCategoryData to its round-trip through CopresheafData. -/
+def depCatRoundTripUnit (data : DepCategoryData) :
+    DepNatTransData data (functorDataToDep (depToFunctorData data)) where
+  appObj := id
+  appMor m := ⟨⟨_, _, m⟩, rfl, rfl⟩
+  appId wit := ⟨⟨_, _, wit⟩, rfl⟩
+  appComp wit := ⟨⟨_, _, _, _, _, _, wit⟩, rfl, rfl, rfl⟩
+
+/-- The unit inverse natural transformation component at a single object.
+    Extracts from the round-tripped structure back to the original. -/
+def depCatRoundTripUnitInv (data : DepCategoryData) :
+    DepNatTransData (functorDataToDep (depToFunctorData data)) data where
+  appObj := id
+  appMor m := (functorDataToDep_depToFunctorData_morT data _ _).toFun m
+  appId {o} {m} wit :=
+    (functorDataToDep_depToFunctorData_idT data o m).toFun wit
+  appComp {a b c} {f g h} wit :=
+    (functorDataToDep_depToFunctorData_compT data a b c f g h).toFun wit
+
+/-- Round-tripping from DepCategoryData to CopresheafData and back is identity.
+    The unit then unit inverse composition. -/
+lemma depCatRoundTripUnit_inv_comp (data : DepCategoryData) :
+    DepNatTransData.comp (depCatRoundTripUnit data) (depCatRoundTripUnitInv data) =
+    DepNatTransData.id data := rfl
+
+/-- Round-tripping from DepCategoryData to CopresheafData and back is identity.
+    The unit inverse then unit composition. -/
+lemma depCatRoundTripUnitInv_comp (data : DepCategoryData) :
+    DepNatTransData.comp (depCatRoundTripUnitInv data) (depCatRoundTripUnit data) =
+    DepNatTransData.id (functorDataToDep (depToFunctorData data)) := by
+  have h_mor : ∀ a b (m : (functorDataToDep (depToFunctorData data)).morT a b),
+      (depCatRoundTripUnit data).appMor ((depCatRoundTripUnitInv data).appMor m) = m :=
+    fun a b m => (functorDataToDep_depToFunctorData_morT data a b).left_inv m
+  have h_id : ∀ o (m : (functorDataToDep (depToFunctorData data)).morT o o)
+      (wit : (functorDataToDep (depToFunctorData data)).idT m),
+      (depCatRoundTripUnit data).appId ((depCatRoundTripUnitInv data).appId wit) ≍ wit :=
+    fun o m wit => by
+      rcases m with ⟨⟨a, b, m'⟩, ha : a = o, hb : b = o⟩
+      rcases wit with ⟨⟨o', ⟨m'', wit'⟩⟩, hw⟩
+      subst ha hb
+      simp only [depToFunctorData, functorDataToDep, depCatRoundTripUnitInv,
+        depCatRoundTripUnit, functorDataToDep_depToFunctorData_idT,
+        functorDataToDep_depToFunctorData_morT] at hw ⊢
+      have ⟨ho', heq_inner⟩ := Sigma.mk.inj_iff.mp hw
+      subst ho'
+      have ⟨_, hwit'⟩ := Sigma.mk.inj_iff.mp (eq_of_heq heq_inner)
+      simp only [heq_eq_eq] at hwit'
+      subst hwit'
+      rfl
+  have h_comp : ∀ a b c (fv : (functorDataToDep (depToFunctorData data)).morT a b)
+      (gv : (functorDataToDep (depToFunctorData data)).morT b c)
+      (hv : (functorDataToDep (depToFunctorData data)).morT a c)
+      (wit : (functorDataToDep (depToFunctorData data)).compT fv gv hv),
+      (depCatRoundTripUnit data).appComp
+        ((depCatRoundTripUnitInv data).appComp wit) ≍ wit :=
+    fun a b c fv gv hv wit => by
+      rcases fv with ⟨⟨af, bf, f'⟩, hfa : af = a, hfb : bf = b⟩
+      rcases gv with ⟨⟨ag, bg, g'⟩, hga : ag = b, hgb : bg = c⟩
+      rcases hv with ⟨⟨ah, bh, h'⟩, hha : ah = a, hhb : bh = c⟩
+      rcases wit with ⟨⟨ac, bc, cc, fc, gc, hc, witc⟩, hr, hl, hcomp⟩
+      subst hfa hfb hga hgb hha hhb
+      simp only [depToFunctorData, functorDataToDep, depCatRoundTripUnitInv,
+        depCatRoundTripUnit, functorDataToDep_depToFunctorData_compT,
+        functorDataToDep_depToFunctorData_morT] at hr hl hcomp ⊢
+      -- Extract ac = a, bc = b, fc = f' from hr
+      have ⟨hac, heq_r⟩ := Sigma.mk.inj_iff.mp hr
+      subst hac
+      have ⟨hbc, hfc⟩ := Sigma.mk.inj_iff.mp (eq_of_heq heq_r)
+      subst hbc
+      simp only [heq_eq_eq] at hfc
+      subst hfc
+      -- Extract cc = c, gc = g' from hl
+      have ⟨_, heq_l⟩ := Sigma.mk.inj_iff.mp hl
+      have ⟨hcc, hgc⟩ := Sigma.mk.inj_iff.mp (eq_of_heq heq_l)
+      subst hcc
+      simp only [heq_eq_eq] at hgc
+      subst hgc
+      -- Extract hc = h' from hcomp
+      have ⟨_, heq_comp⟩ := Sigma.mk.inj_iff.mp hcomp
+      have ⟨_, hhc⟩ := Sigma.mk.inj_iff.mp (eq_of_heq heq_comp)
+      simp only [heq_eq_eq] at hhc
+      subst hhc
+      rfl
+  refine DepNatTransData.ext rfl ?_ ?_ ?_
+  · apply heq_of_eq; funext a b m; exact h_mor a b m
+  · apply Function.hfunext rfl
+    intro o o' ho
+    have ho_eq : o = o' := eq_of_heq ho; subst ho_eq
+    apply Function.hfunext rfl
+    intro m m' hm
+    have hm_eq : m = m' := eq_of_heq hm; subst hm_eq
+    apply Function.hfunext
+    · rfl
+    · intro wit wit' hwit
+      have hwit_eq : wit = wit' := eq_of_heq hwit; subst hwit_eq
+      exact h_id o m wit
+  · apply Function.hfunext rfl
+    intro a a' ha
+    have ha_eq : a = a' := eq_of_heq ha; subst ha_eq
+    apply Function.hfunext rfl
+    intro b b' hb
+    have hb_eq : b = b' := eq_of_heq hb; subst hb_eq
+    apply Function.hfunext rfl
+    intro c c' hc
+    have hc_eq : c = c' := eq_of_heq hc; subst hc_eq
+    apply Function.hfunext rfl
+    intro f f' hf
+    have hf_eq : f = f' := eq_of_heq hf; subst hf_eq
+    apply Function.hfunext rfl
+    intro g g' hg
+    have hg_eq : g = g' := eq_of_heq hg; subst hg_eq
+    apply Function.hfunext rfl
+    intro hv hv' hhv
+    have hhv_eq : hv = hv' := eq_of_heq hhv; subst hhv_eq
+    apply Function.hfunext
+    · rfl
+    · intro wit wit' hwit
+      have hwit_eq : wit = wit' := eq_of_heq hwit; subst hwit_eq
+      exact h_comp a b c f g hv wit
+
+/-- The unit natural transformation for the DepCategoryData-CopresheafData
+    equivalence. -/
+def depCatCopresheafUnit :
+    𝟭 DepCategoryData ⟶ depCatToCopresheaf ⋙ copresheafToDepCat where
+  app := depCatRoundTripUnit
+  naturality _ _ _ := rfl
+
+/-- After destructuring the wrapped morphisms and witnesses, the appComp
+    naturality reduces to definitional equality. This is used for building
+    the HEq proof. -/
+private lemma depCatCopresheafUnitInv_naturality_appComp_core
+    (X Y : DepCategoryData) (f : DepNatTransData X Y)
+    (a b c : X.objT) (fv : X.morT a b) (gv : X.morT b c) (hv : X.morT a c)
+    (wit : X.compT fv gv hv) :
+    HEq ((DepNatTransData.comp
+           (natTransToDepNatTrans (depNatTransToNatTrans f))
+           (depCatRoundTripUnitInv Y)).appComp
+         (⟨⟨a, b, c, fv, gv, hv, wit⟩, rfl, rfl, rfl⟩ :
+           (functorDataToDep (depToFunctorData X)).compT
+             ⟨⟨a, b, fv⟩, rfl, rfl⟩ ⟨⟨b, c, gv⟩, rfl, rfl⟩ ⟨⟨a, c, hv⟩, rfl, rfl⟩))
+        ((DepNatTransData.comp (depCatRoundTripUnitInv X) f).appComp
+         (⟨⟨a, b, c, fv, gv, hv, wit⟩, rfl, rfl, rfl⟩ :
+           (functorDataToDep (depToFunctorData X)).compT
+             ⟨⟨a, b, fv⟩, rfl, rfl⟩ ⟨⟨b, c, gv⟩, rfl, rfl⟩ ⟨⟨a, c, hv⟩, rfl, rfl⟩)) := by
+  rfl
+
+/-- HEq for the appComp component in the naturality of depCatCopresheafUnitInv.
+    After destructuring all the wrapped morphisms and witnesses, both sides
+    become definitionally equal. -/
+private lemma depCatCopresheafUnitInv_naturality_appComp_heq
+    (X Y : DepCategoryData) (f : DepNatTransData X Y)
+    (a b c : X.objT)
+    (fv : (functorDataToDep (depToFunctorData X)).morT a b)
+    (gv : (functorDataToDep (depToFunctorData X)).morT b c)
+    (hv : (functorDataToDep (depToFunctorData X)).morT a c)
+    (wit : (functorDataToDep (depToFunctorData X)).compT fv gv hv) :
+    HEq ((DepNatTransData.comp
+           (natTransToDepNatTrans (depNatTransToNatTrans f))
+           (depCatRoundTripUnitInv Y)).appComp wit)
+        ((DepNatTransData.comp (depCatRoundTripUnitInv X) f).appComp wit) := by
+  rcases fv with ⟨⟨af, bf, f''⟩, hfa : af = a, hfb : bf = b⟩
+  rcases gv with ⟨⟨ag, bg, g''⟩, hga : ag = b, hgb : bg = c⟩
+  rcases hv with ⟨⟨ah, bh, h''⟩, hha : ah = a, hhb : bh = c⟩
+  subst hfa hfb hga hgb hha hhb
+  rcases wit with ⟨⟨ac, bc, cc, fc, gc, hc, witc⟩, hr, hl, hcomp⟩
+  simp only [depToFunctorData] at hr hl hcomp
+  have ⟨hac, hr_rest⟩ := Sigma.mk.inj_iff.mp hr
+  subst hac
+  have ⟨hbc, hfc⟩ := Sigma.mk.inj_iff.mp (eq_of_heq hr_rest)
+  subst hbc
+  simp only [heq_eq_eq] at hfc; subst hfc
+  have ⟨_, hl_rest⟩ := Sigma.mk.inj_iff.mp hl
+  have ⟨hcc, hgc⟩ := Sigma.mk.inj_iff.mp (eq_of_heq hl_rest)
+  subst hcc
+  simp only [heq_eq_eq] at hgc; subst hgc
+  have ⟨_, hcomp_rest⟩ := Sigma.mk.inj_iff.mp hcomp
+  have ⟨_, hhc⟩ := Sigma.mk.inj_iff.mp (eq_of_heq hcomp_rest)
+  simp only [heq_eq_eq] at hhc; subst hhc
+  rfl
+
+/-- The unit inverse natural transformation. -/
+def depCatCopresheafUnitInv :
+    depCatToCopresheaf ⋙ copresheafToDepCat ⟶ 𝟭 DepCategoryData where
+  app := depCatRoundTripUnitInv
+  naturality X Y f := by
+    dsimp only [Functor.comp_obj, Functor.comp_map, Functor.id_obj,
+      Functor.id_map, copresheafToDepCat, depCatToCopresheaf,
+      CategoryStruct.comp]
+    have h_mor : ∀ a b (m : (functorDataToDep (depToFunctorData X)).morT a b),
+        (depCatRoundTripUnitInv Y).appMor
+          ((natTransToDepNatTrans (depNatTransToNatTrans f)).appMor m) =
+        f.appMor ((depCatRoundTripUnitInv X).appMor m) := fun a b m => by
+      rcases m with ⟨⟨a', b', m'⟩, ha : a' = a, hb : b' = b⟩
+      subst ha hb; rfl
+    refine DepNatTransData.ext rfl ?_ ?_ ?_
+    · apply heq_of_eq; funext a b m; exact h_mor a b m
+    · apply Function.hfunext rfl
+      intro o o' ho
+      have ho_eq : o = o' := eq_of_heq ho; subst ho_eq
+      apply Function.hfunext rfl
+      intro m m' hm
+      have hm_eq : m = m' := eq_of_heq hm; subst hm_eq
+      apply Function.hfunext
+      · rfl
+      · intro wit wit' hwit
+        have hwit_eq : wit = wit' := eq_of_heq hwit; subst hwit_eq
+        rcases m with ⟨⟨a', b', m'⟩, ha : a' = o, hb : b' = o⟩
+        subst ha hb
+        rcases wit with ⟨⟨o', ⟨m'', wit'⟩⟩, hw⟩
+        dsimp only [DepNatTransData.comp, depCatRoundTripUnitInv, natTransToDepNatTrans,
+          depNatTransToNatTrans, depToFunctorData, functorDataToDep] at hw ⊢
+        have ⟨ho', heq⟩ := Sigma.mk.inj_iff.mp hw
+        subst ho'
+        have ⟨_, hm_heq⟩ := Sigma.mk.inj_iff.mp (eq_of_heq heq)
+        simp only [heq_eq_eq] at hm_heq
+        subst hm_heq; rfl
+    · apply Function.hfunext rfl
+      intro a a' ha; have ha_eq : a = a' := eq_of_heq ha; subst ha_eq
+      apply Function.hfunext rfl
+      intro b b' hb; have hb_eq : b = b' := eq_of_heq hb; subst hb_eq
+      apply Function.hfunext rfl
+      intro c c' hc; have hc_eq : c = c' := eq_of_heq hc; subst hc_eq
+      apply Function.hfunext rfl
+      intro fv fv' hfv; have hfv_eq : fv = fv' := eq_of_heq hfv; subst hfv_eq
+      apply Function.hfunext rfl
+      intro gv gv' hgv; have hgv_eq : gv = gv' := eq_of_heq hgv; subst hgv_eq
+      apply Function.hfunext rfl
+      intro hv hv' hhv; have hhv_eq : hv = hv' := eq_of_heq hhv; subst hhv_eq
+      apply Function.hfunext rfl
+      intro wit wit' hwit; have hwit_eq : wit = wit' := eq_of_heq hwit; subst hwit_eq
+      exact depCatCopresheafUnitInv_naturality_appComp_heq X Y f a b c fv gv hv wit
+
+/-- The unit is a natural isomorphism. -/
+def depCatCopresheafUnitIso :
+    𝟭 DepCategoryData ≅ depCatToCopresheaf ⋙ copresheafToDepCat where
+  hom := depCatCopresheafUnit
+  inv := depCatCopresheafUnitInv
+  hom_inv_id := by
+    apply CategoryTheory.NatTrans.ext
+    funext data
+    simp only [Functor.id_obj, NatTrans.comp_app, NatTrans.id_app,
+      depCatCopresheafUnit, depCatCopresheafUnitInv]
+    exact depCatRoundTripUnit_inv_comp data
+  inv_hom_id := by
+    apply CategoryTheory.NatTrans.ext
+    funext data
+    simp only [Functor.comp_obj, NatTrans.comp_app, NatTrans.id_app,
+      depCatCopresheafUnit, depCatCopresheafUnitInv]
+    exact depCatRoundTripUnitInv_comp data
+
+/-- The equivalence between DepCategoryData and CopresheafData. -/
+def depCatCopresheafEquiv : DepCategoryData ≌ CopresheafData where
+  functor := depCatToCopresheaf
+  inverse := copresheafToDepCat
+  unitIso := depCatCopresheafUnitIso
+  counitIso := depCatCopresheafCounitIso
+  functor_unitIso_comp X := by
+    simp only [Functor.comp_obj, depCatCopresheafUnitIso,
+      depCatCopresheafCounitIso, depCatCopresheafUnit, depCatCopresheafCounit]
+    apply NatTransData.ext
+    · rfl
+    · funext m; rfl
+    · funext i; rfl
+    · funext c; rfl
+
+end DepCatCopresheafEquivalence
+
 end DepCategoryDataCorrespondences
 
 section CategoryCopresheafCorrespondence
