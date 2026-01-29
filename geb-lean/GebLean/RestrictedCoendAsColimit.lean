@@ -1915,6 +1915,68 @@ def cowedgeFamilyFunctor (P : Cᵒᵖ ⥤ C ⥤ Type w) : Type w ⥤ Type w :=
   ((weightedCowedgeOverCurriedTrifunctor (C := C) (D := Type w)).obj
     (Opposite.op terminalProfunctor)).obj (Opposite.op P)
 
+/-- The domain (weight) functor for cowedge families: the terminal profunctor
+evaluated on `(CoTwistedArrow C)ᵒᵖ` via the equivalence to `TwistedArrow C`.
+This is constant at `PUnit`. -/
+def cowedgeFamilyDom : (CoTwistedArrow C)ᵒᵖ ⥤ Type w :=
+  coTwistedArrowOpEquivTwistedArrow.functor ⋙
+    twistedArrowForget C ⋙
+    Functor.uncurry.obj
+      ((Functor.const Cᵒᵖ).obj ((Functor.const C).obj PUnit))
+
+/-- The codomain functor for cowedge families: `Hom(P(dom,cod), A)` where
+`dom` and `cod` are extracted from co-twisted arrows. -/
+def cowedgeFamilyCod (P : Cᵒᵖ ⥤ C ⥤ Type w) (A : Type w) :
+    (CoTwistedArrow C)ᵒᵖ ⥤ Type w :=
+  ((Functor.opHom (CoTwistedArrow C) (Type w) ⋙
+    (yoneda ⋙ Functor.whiskeringRight (CoTwistedArrow C)ᵒᵖ (Type w)ᵒᵖ
+      (Type w)).flip).obj
+    (Opposite.op (coTwistedArrowForget C ⋙
+      (coTwistedArrowProdEquiv C).functor ⋙
+      Functor.uncurry.obj P))).obj A
+
+lemma cowedgeFamilyDom_obj (cotw : (CoTwistedArrow C)ᵒᵖ) :
+    (cowedgeFamilyDom (C := C)).obj cotw = PUnit :=
+  rfl
+
+lemma cowedgeFamilyDom_map {cotw cotw' : (CoTwistedArrow C)ᵒᵖ} (f : cotw ⟶ cotw') :
+    (cowedgeFamilyDom (C := C)).map f = id :=
+  rfl
+
+lemma cowedgeFamilyCod_obj (P : Cᵒᵖ ⥤ C ⥤ Type w) (A : Type w)
+    (cotw : (CoTwistedArrow C)ᵒᵖ) :
+    (cowedgeFamilyCod P A).obj cotw =
+      ((P.obj (Opposite.op (coTwDom cotw.unop))).obj (coTwCod cotw.unop) → A) :=
+  rfl
+
+lemma cowedgeFamilyCod_map (P : Cᵒᵖ ⥤ C ⥤ Type w) (A : Type w)
+    {cotw cotw' : (CoTwistedArrow C)ᵒᵖ} (f : cotw ⟶ cotw') :
+    (cowedgeFamilyCod P A).map f = fun g =>
+      g ∘ (profunctorOnCoTwistedArrow C P).map f.unop :=
+  rfl
+
+lemma cowedgeFamilyFunctor_obj (P : Cᵒᵖ ⥤ C ⥤ Type w) (A : Type w) :
+    (cowedgeFamilyFunctor P).obj A =
+      (cowedgeFamilyDom (C := C) ⟶ cowedgeFamilyCod P A) :=
+  rfl
+
+lemma cowedgeFamilyFunctor_obj_component (P : Cᵒᵖ ⥤ C ⥤ Type w) (A : Type w)
+    (η : (cowedgeFamilyFunctor P).obj A) (cotw : (CoTwistedArrow C)ᵒᵖ) :
+    η.app cotw =
+      (fun (_ : PUnit.{w + 1}) =>
+        fun (x : (P.obj (Opposite.op (coTwDom cotw.unop))).obj
+          (coTwCod cotw.unop)) => η.app cotw PUnit.unit x) :=
+  rfl
+
+lemma cowedgeFamilyFunctor_obj_naturality (P : Cᵒᵖ ⥤ C ⥤ Type w) (A : Type w)
+    (η : (cowedgeFamilyFunctor P).obj A)
+    {cotw cotw' : (CoTwistedArrow C)ᵒᵖ} (f : cotw ⟶ cotw')
+    (u : PUnit.{w + 1})
+    (x : (P.obj (Opposite.op (coTwDom cotw'.unop))).obj (coTwCod cotw'.unop)) :
+    η.app cotw' u x =
+      η.app cotw u ((profunctorOnCoTwistedArrow C P).map f.unop x) :=
+  congrFun (congrFun (η.naturality f) u) x
+
 /-- Natural transformations from `cowedgeFamilyFunctor P` to the identity.
 
 By the co-Yoneda lemma combined with the coend elimination rule, these
