@@ -1568,7 +1568,8 @@ def depCatCopresheafUnitIso :
     exact depCatRoundTripUnitInv_comp data
 
 /-- The equivalence between DepCategoryData and CopresheafData. -/
-def depCatCopresheafEquiv : DepCategoryData ≌ CopresheafData where
+def depCatCopresheafEquiv.{u} :
+    DepCategoryData.{u + 1, u + 1, u + 1, u + 1} ≌ CopresheafData.{u} where
   functor := depCatToCopresheaf
   inverse := copresheafToDepCat
   unitIso := depCatCopresheafUnitIso
