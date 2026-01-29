@@ -2438,4 +2438,196 @@ def coendNatTransEquiv' (P : Cᵒᵖ ⥤ C ⥤ Type w)
 
 end CoendAsNatTransformations
 
+section ExplicitCoendElement
+
+/-!
+## Explicit Coend Element Structure
+
+The `CowedgeNatTrans P` type, while equivalent to the coend, has a somewhat
+abstract presentation involving nested natural transformations. We define
+`ExplicitCoendElement P` as an equivalent structure with explicit fields
+that directly express the universal property of coend elements.
+
+An element of the coend `∫^A P(A,A)` is characterized by its descent property:
+given any cowedge over `P`, it determines an element of the apex. This descent
+must be natural in the apex type.
+-/
+
+universe w'
+
+/-- A simplified cowedge over `P` with apex `Y`, without the `PUnit` indirection.
+
+This is equivalent to `WeightedCowedgeOver terminalProfunctor P Y` but removes
+the trivial `PUnit` argument from each leg. -/
+@[ext]
+structure SimplifiedCowedge {C : Type w'} [Category.{w'} C]
+    (P : Cᵒᵖ ⥤ C ⥤ Type w') (Y : Type w') where
+  leg : ∀ (A : C), (P.obj (Opposite.op A)).obj A → Y
+  dinat : ∀ {A B : C} (f : A ⟶ B) (x : (P.obj (Opposite.op B)).obj A),
+    leg A ((P.map f.op).app A x) = leg B ((P.obj (Opposite.op B)).map f x)
+
+variable {C : Type w'} [Category.{w'} C]
+
+/-- Push a simplified cowedge forward along a function. -/
+def SimplifiedCowedge.pushforward {P : Cᵒᵖ ⥤ C ⥤ Type w'} {Y Z : Type w'}
+    (f : Y → Z) (cw : SimplifiedCowedge P Y) : SimplifiedCowedge P Z where
+  leg A x := f (cw.leg A x)
+  dinat g x := congrArg f (cw.dinat g x)
+
+/-- An explicit representation of elements of the coend `∫^A P(A,A)`.
+
+This structure captures the universal property directly: an element of the
+coend is characterized by how it descends along any cowedge, and this descent
+must be natural in the apex type. -/
+structure ExplicitCoendElement (P : Cᵒᵖ ⥤ C ⥤ Type w') where
+  desc : ∀ {Y : Type w'}, SimplifiedCowedge P Y → Y
+  naturality : ∀ {Y Z : Type w'} (f : Y → Z) (cw : SimplifiedCowedge P Y),
+    f (desc cw) = desc (cw.pushforward f)
+
+/-- Convert a weighted cowedge to a simplified cowedge by dropping the `PUnit`
+argument. -/
+def SimplifiedCowedge.ofWeightedCowedge {P : Cᵒᵖ ⥤ C ⥤ Type w'} {Y : Type w'}
+    (η : (cowedgeFamilyFunctor P).obj Y) : SimplifiedCowedge P Y where
+  leg A x := η.app (Opposite.op (diagCoTwArr A)) PUnit.unit x
+  dinat {A B} f x := by
+    -- For f : A ⟶ B and x : P(B, A), we need to show:
+    -- leg A ((P.map f.op).app A x) = leg B ((P.obj (op B)).map f x)
+    -- i.e., η.app (diagCoTwArr A) () ((P.map f.op).app A x) =
+    --       η.app (diagCoTwArr B) () ((P.obj (op B)).map f x)
+    -- Both sides equal η.app (coTwObjMk f) () x via naturality.
+    -- Naturality at coTwObjMkToIdentity f says:
+    --   η.app (coTwObjMk f) () x = η.app (diagCoTwArr A) () (profunctor.map ... x)
+    -- where profunctor.map (coTwObjMkToIdentity f) x = (P.map f.op).app A x
+    have nat_A := congrFun (congrFun
+      (η.naturality (Opposite.op (coTwObjMkToIdentity f)))
+      PUnit.unit) x
+    simp only [types_comp_apply, Subsingleton.elim _ PUnit.unit] at nat_A
+    have nat_B := congrFun (congrFun
+      (η.naturality (Opposite.op (coTwObjMkToIdentityAtDom f)))
+      PUnit.unit) x
+    simp only [types_comp_apply, Subsingleton.elim _ PUnit.unit] at nat_B
+    -- nat_A : η.app (coTwObjMk f) () x = η.app (diagCoTwArr A) () (... x)
+    -- nat_B : η.app (coTwObjMk f) () x = η.app (diagCoTwArr B) () (... x)
+    -- Goal: η.app (diagCoTwArr A) () ((P.map f.op).app A x) =
+    --       η.app (diagCoTwArr B) () ((P.obj (op B)).map f x)
+    -- Use transitivity through η.app (coTwObjMk f) () x
+    have prof_A : (profunctorOnCoTwistedArrow C P).map (coTwObjMkToIdentity f) x =
+        (P.map f.op).app A x := by
+      rw [profunctorOnCoTwistedArrow_map]
+      simp only [coTwObjMkToIdentity_domArr, coTwObjMkToIdentity_codArr,
+        coTwObjMk_dom, coTwObjMk_cod,
+        Functor.map_id, types_comp_apply, types_id_apply]
+    have prof_B : (profunctorOnCoTwistedArrow C P).map
+        (coTwObjMkToIdentityAtDom f) x = (P.obj (Opposite.op B)).map f x := by
+      rw [profunctorOnCoTwistedArrow_map]
+      simp only [coTwObjMkToIdentityAtDom_domArr, coTwObjMkToIdentityAtDom_codArr,
+        coTwObjMk_dom, coTwObjMk_cod,
+        op_id, Functor.map_id, NatTrans.id_app, types_comp_apply, types_id_apply]
+    rw [← prof_A, ← prof_B]
+    exact nat_A.symm.trans nat_B
+
+
+/-- The naturality condition for `SimplifiedCowedge.toWeightedCowedge`.
+
+For a morphism `h : cotw ⟶ cotw'` in `(CoTwistedArrow C)ᵒᵖ`, we show that the
+two paths through the naturality square are equal.
+
+The proof follows the same pattern as `coendInjectionCowedge.naturality`:
+1. Use `coTwHomComm` to get the commutative square
+2. Apply functor map composition to split up the composite arrow
+3. Use dinaturality to transform between cowedge legs
+4. Use naturality of `P.map` to commute the operations -/
+lemma SimplifiedCowedge.toWeightedCowedge_naturality_core
+    {P : Cᵒᵖ ⥤ C ⥤ Type w'} {Y : Type w'}
+    (cw : SimplifiedCowedge P Y)
+    {cotw cotw' : (CoTwistedArrow C)ᵒᵖ} (h : cotw ⟶ cotw')
+    (x : (profunctorOnCoTwistedArrow C P).obj cotw'.unop) :
+    cw.leg (coTwDom cotw'.unop)
+        ((profunctorOnCoTwistedArrow C P).map (coTwToDomDiag cotw'.unop) x) =
+    cw.leg (coTwDom cotw.unop)
+        ((profunctorOnCoTwistedArrow C P).map (coTwToDomDiag cotw.unop)
+          ((profunctorOnCoTwistedArrow C P).map h.unop x)) := by
+  -- Set up notation for the objects and morphisms involved
+  let dom := coTwDom cotw.unop
+  let dom' := coTwDom cotw'.unop
+  let cod' := coTwCod cotw'.unop
+  let arr := coTwArr cotw.unop
+  let arr' := coTwArr cotw'.unop
+  let fDom := coTwDomArr h.unop   -- dom ⟶ dom'
+  let fCod := coTwCodArr h.unop   -- cod' ⟶ cod
+  -- The commutative square: fCod ≫ arr ≫ fDom = arr'
+  have sq := coTwHomComm h.unop
+  -- Expand the profunctor maps at coTwToDomDiag
+  simp only [coTwToDomDiag, profunctorOnCoTwistedArrow_map,
+    coTwDomArr_coTwHomMk, coTwCodArr_coTwHomMk, diagCoTwArr_dom, diagCoTwArr_cod,
+    op_id, Functor.map_id, NatTrans.id_app, Category.id_comp]
+  -- Now the goal involves cw.leg at dom' and dom, with P actions
+  -- LHS: cw.leg dom' ((P.obj (op dom')).map arr' x)
+  -- RHS: cw.leg dom ((P.obj (op dom)).map arr
+  --        ((P.obj (op dom)).map fCod ((P.map fDom.op).app cod' x)))
+  calc cw.leg dom' ((P.obj (op dom')).map arr' x)
+    = cw.leg dom' ((P.obj (op dom')).map (fCod ≫ arr ≫ fDom) x) := by rw [sq]
+    _ = cw.leg dom' ((P.obj (op dom')).map fDom
+          ((P.obj (op dom')).map arr ((P.obj (op dom')).map fCod x))) := by
+        simp only [Functor.map_comp, types_comp_apply]
+    _ = cw.leg dom ((P.map fDom.op).app dom
+          ((P.obj (op dom')).map arr ((P.obj (op dom')).map fCod x))) := by
+        rw [← cw.dinat fDom]
+    _ = cw.leg dom ((P.obj (op dom)).map arr
+          ((P.map fDom.op).app _ ((P.obj (op dom')).map fCod x))) := by
+        -- Use naturality of (P.map fDom.op) at morphism arr
+        have nat := (P.map fDom.op).naturality arr
+        exact congrArg (cw.leg dom) (congrFun nat _)
+    _ = cw.leg dom ((P.obj (op dom)).map arr
+          ((P.obj (op dom)).map fCod ((P.map fDom.op).app cod' x))) := by
+        -- Use naturality of (P.map fDom.op) at morphism fCod
+        have nat := (P.map fDom.op).naturality fCod
+        exact congrArg (cw.leg dom ∘ (P.obj (op dom)).map arr) (congrFun nat _)
+
+/-- Convert a simplified cowedge to a weighted cowedge by adding the trivial
+`PUnit` argument. -/
+def SimplifiedCowedge.toWeightedCowedge {P : Cᵒᵖ ⥤ C ⥤ Type w'} {Y : Type w'}
+    (cw : SimplifiedCowedge P Y) : (cowedgeFamilyFunctor P).obj Y where
+  app cotw _ x := cw.leg (coTwDom cotw.unop)
+      ((profunctorOnCoTwistedArrow C P).map (coTwToDomDiag cotw.unop) x)
+  naturality {cotw cotw'} h := by
+    funext _ x
+    simp only [types_comp_apply, Subsingleton.elim _ PUnit.unit]
+    exact cw.toWeightedCowedge_naturality_core h x
+
+/-- Round-trip from simplified to weighted to simplified is the identity. -/
+lemma SimplifiedCowedge.ofWeightedCowedge_toWeightedCowedge
+    {P : Cᵒᵖ ⥤ C ⥤ Type w'} {Y : Type w'} (cw : SimplifiedCowedge P Y) :
+    SimplifiedCowedge.ofWeightedCowedge (cw.toWeightedCowedge) = cw := by
+  ext A x
+  simp only [ofWeightedCowedge, toWeightedCowedge]
+  simp only [coTwToDomDiag, diagCoTwArr_dom, diagCoTwArr_arr,
+    profunctorOnCoTwistedArrow_map, coTwDomArr_coTwHomMk, coTwCodArr_coTwHomMk,
+    diagCoTwArr_cod, op_id, Functor.map_id, types_comp_apply,
+    NatTrans.id_app, types_id_apply]
+
+/-- Round-trip from weighted to simplified to weighted is the identity. -/
+lemma SimplifiedCowedge.toWeightedCowedge_ofWeightedCowedge
+    {P : Cᵒᵖ ⥤ C ⥤ Type w'} {Y : Type w'} (η : (cowedgeFamilyFunctor P).obj Y) :
+    (SimplifiedCowedge.ofWeightedCowedge η).toWeightedCowedge = η := by
+  apply NatTrans.ext
+  funext cotw
+  funext _ x
+  simp only [ofWeightedCowedge, toWeightedCowedge, Subsingleton.elim _ PUnit.unit]
+  have nat := congrFun (congrFun
+    (η.naturality (Opposite.op (coTwToDomDiag cotw.unop)))
+    PUnit.unit) x
+  simp only [types_comp_apply, Subsingleton.elim _ PUnit.unit] at nat
+  exact nat.symm
+
+/-- The equivalence between simplified cowedges and weighted cowedges. -/
+def SimplifiedCowedge.equiv {P : Cᵒᵖ ⥤ C ⥤ Type w'} {Y : Type w'} :
+    (cowedgeFamilyFunctor P).obj Y ≃ SimplifiedCowedge P Y where
+  toFun := SimplifiedCowedge.ofWeightedCowedge
+  invFun := SimplifiedCowedge.toWeightedCowedge
+  left_inv := SimplifiedCowedge.toWeightedCowedge_ofWeightedCowedge
+  right_inv := SimplifiedCowedge.ofWeightedCowedge_toWeightedCowedge
+
+end ExplicitCoendElement
+
 end GebLean
