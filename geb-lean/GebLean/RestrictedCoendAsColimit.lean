@@ -2479,6 +2479,7 @@ def SimplifiedCowedge.pushforward {P : Cᵒᵖ ⥤ C ⥤ Type w'} {Y Z : Type w'
 This structure captures the universal property directly: an element of the
 coend is characterized by how it descends along any cowedge, and this descent
 must be natural in the apex type. -/
+@[ext]
 structure ExplicitCoendElement (P : Cᵒᵖ ⥤ C ⥤ Type w') where
   desc : ∀ {Y : Type w'}, SimplifiedCowedge P Y → Y
   naturality : ∀ {Y Z : Type w'} (f : Y → Z) (cw : SimplifiedCowedge P Y),
@@ -2627,6 +2628,91 @@ def SimplifiedCowedge.equiv {P : Cᵒᵖ ⥤ C ⥤ Type w'} {Y : Type w'} :
   invFun := SimplifiedCowedge.toWeightedCowedge
   left_inv := SimplifiedCowedge.toWeightedCowedge_ofWeightedCowedge
   right_inv := SimplifiedCowedge.ofWeightedCowedge_toWeightedCowedge
+
+/-!
+### Equivalence: ExplicitCoendElement ≃ CowedgeNatTrans
+
+Using the equivalence between simplified and weighted cowedges, we establish
+that `ExplicitCoendElement P` is equivalent to `CowedgeNatTrans P`. This shows
+that the explicit characterization of coend elements via descent along cowedges
+is equivalent to the categorical characterization via natural transformations.
+-/
+
+/-- Convert a natural transformation from the cowedge family functor to an
+explicit coend element. Given `τ : cowedgeFamilyFunctor P ⟶ 𝟭 (Type w')`,
+the descent function applies `τ` to the weighted cowedge corresponding to a
+simplified cowedge. -/
+def ExplicitCoendElement.ofCowedgeNatTrans {P : Cᵒᵖ ⥤ C ⥤ Type w'}
+    (τ : CowedgeNatTrans P) : ExplicitCoendElement P where
+  desc cw := τ.app _ cw.toWeightedCowedge
+  naturality {Y Z} f cw := by
+    -- τ's naturality: f ∘ τ.app Y = τ.app Z ∘ (cowedgeFamilyFunctor P).map f
+    have nat := congrFun (τ.naturality f) cw.toWeightedCowedge
+    simp only [types_comp_apply, Functor.id_obj, Functor.id_map] at nat
+    -- nat : τ.app Z ((cowedgeFamilyFunctor P).map f cw.toWeightedCowedge) =
+    --       f (τ.app Y cw.toWeightedCowedge)
+    -- We need: f (τ.app Y cw.toWeightedCowedge) = τ.app Z (cw.pushforward f).toWeightedCowedge
+    rw [← nat]
+    -- Goal: τ.app Z ((cowedgeFamilyFunctor P).map f cw.toWeightedCowedge) =
+    --       τ.app Z (cw.pushforward f).toWeightedCowedge
+    -- Show the weighted cowedges are equal (definitionally equal)
+    rfl
+
+/-- Convert an explicit coend element to a natural transformation from the
+cowedge family functor. Given an element with descent function `desc`, the
+natural transformation at `Y` takes a weighted cowedge `η` and returns
+`desc (ofWeightedCowedge η)`. -/
+def CowedgeNatTrans.ofExplicitCoendElement {P : Cᵒᵖ ⥤ C ⥤ Type w'}
+    (e : ExplicitCoendElement P) : CowedgeNatTrans P where
+  app Y η := e.desc (SimplifiedCowedge.ofWeightedCowedge η)
+  naturality {Y Z} f := by
+    funext η
+    simp only [types_comp_apply, Functor.id_obj, Functor.id_map]
+    -- Goal: f (e.desc (ofWeightedCowedge η)) =
+    --       e.desc (ofWeightedCowedge ((cowedgeFamilyFunctor P).map f η))
+    rw [e.naturality f]
+    -- Show the simplified cowedges are equal (definitionally equal)
+    rfl
+
+/-- Round-trip: converting a natural transformation to an explicit element and
+back yields the original natural transformation. -/
+lemma CowedgeNatTrans.ofExplicitCoendElement_ofCowedgeNatTrans
+    {P : Cᵒᵖ ⥤ C ⥤ Type w'} (τ : CowedgeNatTrans P) :
+    CowedgeNatTrans.ofExplicitCoendElement (ExplicitCoendElement.ofCowedgeNatTrans τ) = τ := by
+  apply NatTrans.ext
+  funext Y
+  funext η
+  simp only [ofExplicitCoendElement, ExplicitCoendElement.ofCowedgeNatTrans, Functor.id_obj]
+  -- Goal: τ.app Y (ofWeightedCowedge η).toWeightedCowedge = τ.app Y η
+  rw [SimplifiedCowedge.toWeightedCowedge_ofWeightedCowedge]
+
+/-- Round-trip: converting an explicit element to a natural transformation and
+back yields the original explicit element. -/
+lemma ExplicitCoendElement.ofCowedgeNatTrans_ofExplicitCoendElement
+    {P : Cᵒᵖ ⥤ C ⥤ Type w'} (e : ExplicitCoendElement P) :
+    ExplicitCoendElement.ofCowedgeNatTrans (CowedgeNatTrans.ofExplicitCoendElement e) = e := by
+  ext Y cw
+  simp only [ofCowedgeNatTrans, CowedgeNatTrans.ofExplicitCoendElement]
+  -- Goal: e.desc (ofWeightedCowedge cw.toWeightedCowedge) = e.desc cw
+  rw [SimplifiedCowedge.ofWeightedCowedge_toWeightedCowedge]
+
+/-- The equivalence between explicit coend elements and natural transformations
+from the cowedge family functor to the identity.
+
+This equivalence shows that the two characterizations of coend elements are
+equivalent:
+- `ExplicitCoendElement P`: descent along simplified cowedges with naturality
+- `CowedgeNatTrans P`: natural transformations `cowedgeFamilyFunctor P ⟶ 𝟭 Type`
+
+When composed with `coendNatTransEquiv'`, this establishes that
+`ExplicitCoendElement P` correctly characterizes elements of the coend
+`∫^A P(A,A)`. -/
+def explicitCoendElementEquiv {P : Cᵒᵖ ⥤ C ⥤ Type w'} :
+    ExplicitCoendElement P ≃ CowedgeNatTrans P where
+  toFun := CowedgeNatTrans.ofExplicitCoendElement
+  invFun := ExplicitCoendElement.ofCowedgeNatTrans
+  left_inv := ExplicitCoendElement.ofCowedgeNatTrans_ofExplicitCoendElement
+  right_inv := CowedgeNatTrans.ofExplicitCoendElement_ofCowedgeNatTrans
 
 end ExplicitCoendElement
 
