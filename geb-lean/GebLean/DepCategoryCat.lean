@@ -255,12 +255,33 @@ end CategoryLaws
 
 section FunctionalCategoryEquiv
 
-/-- A `DepCategoryData` bundled with its functionality witnesses.
-    These are the objects that have the data of a category (without laws). -/
-structure DepFunctionalCategory.{u₁, u₂, u₃, u₄} : Type (max u₁ u₂ u₃ u₄)
-    extends DepCompleteObj.{u₁, u₂, u₃, u₄} where
-  /-- The uniqueness witnesses -/
-  unique : toDepCompleteObj.toDepCategoryData.Unique
+/-- The property that a `DepCompleteObj` has unique identity and composition
+    witnesses. This is an `ObjectProperty` on the category `DepCompleteObj`. -/
+def IsUnique : ObjectProperty DepCompleteObj :=
+  fun D => D.toDepCategoryData.Unique
+
+/-- The full subcategory of `DepCompleteObj` where identity and composition
+    are unique. These are the objects that have the data of a category
+    (without laws). -/
+abbrev DepFunctionalCategory := IsUnique.FullSubcategory
+
+namespace DepFunctionalCategory
+
+/-- The inclusion functor from `DepFunctionalCategory` to `DepCompleteObj`. -/
+abbrev ι : DepFunctionalCategory ⥤ DepCompleteObj := IsUnique.ι
+
+/-- Extract the underlying `DepCompleteObj`. -/
+abbrev toDepCompleteObj (D : DepFunctionalCategory) : DepCompleteObj := D.obj
+
+/-- Extract the underlying `DepCategoryData`. -/
+abbrev toDepCategoryData (D : DepFunctionalCategory) : DepCategoryData :=
+  D.obj.toDepCategoryData
+
+/-- Extract the uniqueness proof. -/
+abbrev unique (D : DepFunctionalCategory) : D.toDepCategoryData.Unique :=
+  D.property
+
+end DepFunctionalCategory
 
 /-- Convert a `BundledCategoryStruct` to a `DepCategoryData`. -/
 def bundledCategoryStructToDepDataProp.{u₁, u₂}
@@ -326,8 +347,8 @@ def bundledCategoryStructToDepCompleteObj.{u₁, u₂, u₃, u₄}
 def bundledCategoryStructToDepFunctional.{u₁, u₂, u₃, u₄}
     (C : BundledCategoryStruct.{u₂, u₁}) :
       DepFunctionalCategory.{u₁ + 1, u₂ + 1, max 1 u₃, max 1 u₄} where
-  toDepCompleteObj := bundledCategoryStructToDepCompleteObj C
-  unique := bundledCategoryStructToDepData_unique C
+  obj := bundledCategoryStructToDepCompleteObj C
+  property := bundledCategoryStructToDepData_unique C
 
 /-- Given a `DepFunctionalCategory`, extract the identity morphism for an
     object using the existence condition. -/
@@ -400,12 +421,39 @@ structure DepCategoryData.WitnessSubsingleton.{u₁, u₂, u₃, u₄}
   id : D.IdSubsingleton
   comp : D.CompSubsingleton
 
-/-- A `DepCategoryData` bundled with functionality and subsingleton witnesses.
-    These are exactly the objects that correspond to `BundledCategoryStruct`. -/
-structure DepFunctionalSubsingleton.{u₁, u₂, u₃, u₄} : Type (max u₁ u₂ u₃ u₄)
-    extends DepFunctionalCategory.{u₁, u₂, u₃, u₄} where
-  /-- The subsingleton witnesses -/
-  subsingleton : toDepCategoryData.WitnessSubsingleton
+/-- The property that a `DepFunctionalCategory` has subsingleton witness types.
+    This is an `ObjectProperty` on the category `DepFunctionalCategory`. -/
+def IsWitnessSubsingleton : ObjectProperty DepFunctionalCategory :=
+  fun D => D.toDepCategoryData.WitnessSubsingleton
+
+/-- The full subcategory of `DepFunctionalCategory` where witness types are
+    subsingletons. These are exactly the objects that correspond to
+    `BundledCategoryStruct`. -/
+abbrev DepFunctionalSubsingleton := IsWitnessSubsingleton.FullSubcategory
+
+namespace DepFunctionalSubsingleton
+
+/-- The inclusion functor to `DepFunctionalCategory`. -/
+abbrev ι : DepFunctionalSubsingleton ⥤ DepFunctionalCategory := IsWitnessSubsingleton.ι
+
+/-- Extract the underlying `DepFunctionalCategory`. -/
+abbrev toDepFunctionalCategory (D : DepFunctionalSubsingleton) : DepFunctionalCategory :=
+  D.obj
+
+/-- Extract the underlying `DepCompleteObj`. -/
+abbrev toDepCompleteObj (D : DepFunctionalSubsingleton) : DepCompleteObj :=
+  D.obj.toDepCompleteObj
+
+/-- Extract the underlying `DepCategoryData`. -/
+abbrev toDepCategoryData (D : DepFunctionalSubsingleton) : DepCategoryData :=
+  D.obj.toDepCategoryData
+
+/-- Extract the subsingleton proof. -/
+abbrev subsingleton (D : DepFunctionalSubsingleton) :
+    D.toDepCategoryData.WitnessSubsingleton :=
+  D.property
+
+end DepFunctionalSubsingleton
 
 /-- A `BundledCategoryStruct` converted to `DepCategoryData` satisfies
     `IdSubsingleton`. -/
@@ -430,8 +478,8 @@ def bundledCategoryStructToDepData_witnessSubsingleton (C : BundledCategoryStruc
 def bundledCategoryStructToDepFunctionalSubsingleton.{u₁, u₂, u₃, u₄}
     (C : BundledCategoryStruct.{u₂, u₁}) :
       DepFunctionalSubsingleton.{u₁ + 1, u₂ + 1, max 1 u₃, max 1 u₄} where
-  toDepFunctionalCategory := bundledCategoryStructToDepFunctional C
-  subsingleton := bundledCategoryStructToDepData_witnessSubsingleton C
+  obj := bundledCategoryStructToDepFunctional C
+  property := bundledCategoryStructToDepData_witnessSubsingleton C
 
 /-- Convert a `DepFunctionalSubsingleton` to a `DepFunctionalCategory`. -/
 def depFunctionalSubsingletonToFunctional.{u₁, u₂, u₃, u₄}
