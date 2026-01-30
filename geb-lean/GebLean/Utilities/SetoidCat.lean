@@ -20,6 +20,16 @@ namespace GebLean
 
 universe u
 
+/-- The quotient by `trueSetoid` (where all elements are related) is a
+    subsingleton. All elements are identified in the quotient. -/
+instance Quotient.trueSetoid_subsingleton (α : Sort*) :
+    Subsingleton (Quotient (@trueSetoid α)) where
+  allEq := by
+    intro a b
+    induction a using Quotient.ind
+    induction b using Quotient.ind
+    exact Quotient.sound trivial
+
 /--
 A type bundled with an equivalence relation (setoid structure).
 -/
