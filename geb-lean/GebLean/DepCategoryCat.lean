@@ -147,7 +147,7 @@ instance DepCompleteCat.{u₁, u₂, u₃, u₄} :
 /-- The forgetful functor from `DepCompleteObj` to `DepCategoryData`. -/
 def DepCompleteObj.forget : DepCompleteObj ⥤ DepCategoryData where
   obj := DepCompleteObj.toDepCategoryData
-  map := fun f => f
+  map := fun f ↦ f
   map_id := by intros; rfl
   map_comp := by intros; rfl
 
@@ -155,17 +155,17 @@ def DepCompleteObj.forget : DepCompleteObj ⥤ DepCategoryData where
     have equal underlying `DepNatTransData`, they are equal. This is trivial
     since morphisms are definitionally the same. -/
 instance DepCompleteFaithful : DepCompleteObj.forget.Faithful where
-  map_injective := fun h => h
+  map_injective := fun h ↦ h
 
 /-- The forgetful functor is full: every morphism between the underlying
     `DepCategoryData`s lifts to a morphism between `DepCompleteObj`s.
     This is trivial since morphisms are definitionally the same. -/
 instance DepCompleteFull : DepCompleteObj.forget.Full where
-  map_surjective := fun f => ⟨f, rfl⟩
+  map_surjective := fun f ↦ ⟨f, rfl⟩
 
 /-- The forgetful functor is fully faithful. -/
 def DepCompleteObj.forget.fullyFaithful : DepCompleteObj.forget.FullyFaithful :=
-  Functor.FullyFaithful.mk (preimage := fun f => f) (map_preimage := fun _ => rfl)
+  Functor.FullyFaithful.mk (preimage := fun f ↦ f) (map_preimage := fun _ ↦ rfl)
 
 /-- If two `DepCompleteObj`s have isomorphic underlying `DepCategoryData`,
     then they are isomorphic as `DepCompleteObj`s. -/
@@ -257,18 +257,18 @@ section FunctionalCategoryEquiv
 
 /-- The property that a `DepCompleteObj` has unique identity and composition
     witnesses. This is an `ObjectProperty` on the category `DepCompleteObj`. -/
-def IsUnique : ObjectProperty DepCompleteObj :=
-  fun D => D.toDepCategoryData.Unique
+def Unique : ObjectProperty DepCompleteObj :=
+  fun D ↦ D.toDepCategoryData.Unique
 
 /-- The full subcategory of `DepCompleteObj` where identity and composition
     are unique. These are the objects that have the data of a category
     (without laws). -/
-abbrev DepFunctionalCategory := IsUnique.FullSubcategory
+abbrev DepFunctionalCategory := Unique.FullSubcategory
 
 namespace DepFunctionalCategory
 
 /-- The inclusion functor from `DepFunctionalCategory` to `DepCompleteObj`. -/
-abbrev ι : DepFunctionalCategory ⥤ DepCompleteObj := IsUnique.ι
+abbrev ι : DepFunctionalCategory ⥤ DepCompleteObj := Unique.ι
 
 /-- Extract the underlying `DepCompleteObj`. -/
 abbrev toDepCompleteObj (D : DepFunctionalCategory) : DepCompleteObj := D.obj
@@ -289,8 +289,8 @@ def bundledCategoryStructToDepDataProp.{u₁, u₂}
     DepCategoryData.{u₁ + 1, u₂ + 1, 0, 0} :=
   { objT := C.α
     morT := C.str.Hom
-    idT := fun {o} m => m = C.str.id o
-    compT := fun {_ _ _} f g h => h = C.str.comp f g }
+    idT := fun {o} m ↦ m = C.str.id o
+    compT := fun {_ _ _} f g h ↦ h = C.str.comp f g }
 
 /-- Convert a `BundledCategoryStruct` to a `DepCategoryData`. -/
 def bundledCategoryStructToDepData.{u₁, u₂, u₃, u₄}
@@ -301,25 +301,25 @@ def bundledCategoryStructToDepData.{u₁, u₂, u₃, u₄}
 /-- A `BundledCategoryStruct` converted to `DepCategoryData` satisfies
     `IdExists`. -/
 def bundledCategoryStructToDepData_idExists (C : BundledCategoryStruct) :
-    (bundledCategoryStructToDepData C).IdExists := fun o =>
+    (bundledCategoryStructToDepData C).IdExists := fun o ↦
   ⟨C.str.id o, PULift.up rfl⟩
 
 /-- A `BundledCategoryStruct` converted to `DepCategoryData` satisfies
     `IdUnique`. -/
 theorem bundledCategoryStructToDepData_idUnique (C : BundledCategoryStruct) :
-    (bundledCategoryStructToDepData C).IdUnique := fun _ _ _ h₁ h₂ =>
+    (bundledCategoryStructToDepData C).IdUnique := fun _ _ _ h₁ h₂ ↦
   h₁.down.trans h₂.down.symm
 
 /-- A `BundledCategoryStruct` converted to `DepCategoryData` satisfies
     `CompExists`. -/
 def bundledCategoryStructToDepData_compExists (C : BundledCategoryStruct) :
-    (bundledCategoryStructToDepData C).CompExists := fun f g =>
+    (bundledCategoryStructToDepData C).CompExists := fun f g ↦
   ⟨C.str.comp f g, PULift.up rfl⟩
 
 /-- A `BundledCategoryStruct` converted to `DepCategoryData` satisfies
     `CompUnique`. -/
 theorem bundledCategoryStructToDepData_compUnique (C : BundledCategoryStruct) :
-    (bundledCategoryStructToDepData C).CompUnique := fun _ _ _ _ p₁ p₂ =>
+    (bundledCategoryStructToDepData C).CompUnique := fun _ _ _ _ p₁ p₂ ↦
   p₁.down.trans p₂.down.symm
 
 /-- A `BundledCategoryStruct` converted to `DepCategoryData` satisfies
@@ -423,18 +423,18 @@ structure DepCategoryData.WitnessSubsingleton.{u₁, u₂, u₃, u₄}
 
 /-- The property that a `DepFunctionalCategory` has subsingleton witness types.
     This is an `ObjectProperty` on the category `DepFunctionalCategory`. -/
-def IsWitnessSubsingleton : ObjectProperty DepFunctionalCategory :=
-  fun D => D.toDepCategoryData.WitnessSubsingleton
+def WitnessSubsingleton : ObjectProperty DepFunctionalCategory :=
+  fun D ↦ D.toDepCategoryData.WitnessSubsingleton
 
 /-- The full subcategory of `DepFunctionalCategory` where witness types are
     subsingletons. These are exactly the objects that correspond to
     `BundledCategoryStruct`. -/
-abbrev DepFunctionalSubsingleton := IsWitnessSubsingleton.FullSubcategory
+abbrev DepFunctionalSubsingleton := WitnessSubsingleton.FullSubcategory
 
 namespace DepFunctionalSubsingleton
 
 /-- The inclusion functor to `DepFunctionalCategory`. -/
-abbrev ι : DepFunctionalSubsingleton ⥤ DepFunctionalCategory := IsWitnessSubsingleton.ι
+abbrev ι : DepFunctionalSubsingleton ⥤ DepFunctionalCategory := WitnessSubsingleton.ι
 
 /-- Extract the underlying `DepFunctionalCategory`. -/
 abbrev toDepFunctionalCategory (D : DepFunctionalSubsingleton) : DepFunctionalCategory :=
@@ -458,14 +458,14 @@ end DepFunctionalSubsingleton
 /-- A `BundledCategoryStruct` converted to `DepCategoryData` satisfies
     `IdSubsingleton`. -/
 theorem bundledCategoryStructToDepData_idSubsingleton (C : BundledCategoryStruct) :
-    (bundledCategoryStructToDepData C).IdSubsingleton := fun _ _ =>
-  ⟨fun ⟨_⟩ ⟨_⟩ => rfl⟩
+    (bundledCategoryStructToDepData C).IdSubsingleton := fun _ _ ↦
+  ⟨fun ⟨_⟩ ⟨_⟩ ↦ rfl⟩
 
 /-- A `BundledCategoryStruct` converted to `DepCategoryData` satisfies
     `CompSubsingleton`. -/
 theorem bundledCategoryStructToDepData_compSubsingleton (C : BundledCategoryStruct) :
-    (bundledCategoryStructToDepData C).CompSubsingleton := fun _ _ _ =>
-  ⟨fun ⟨_⟩ ⟨_⟩ => rfl⟩
+    (bundledCategoryStructToDepData C).CompSubsingleton := fun _ _ _ ↦
+  ⟨fun ⟨_⟩ ⟨_⟩ ↦ rfl⟩
 
 /-- A `BundledCategoryStruct` converted to `DepCategoryData` satisfies
     `WitnessSubsingleton`. -/
