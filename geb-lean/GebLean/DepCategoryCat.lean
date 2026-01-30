@@ -420,51 +420,6 @@ def depFunctionalSubsingleton_roundtrip_compT_from.{u₁, u₂, u₃, u₄}
 
 end SubsingletonConditions
 
-section CatEmbedding
-
-/-- Convert a `Cat` object to a `DepCategoryData`. A category's structure
-    is encoded as DepCategoryData where identity and composition witnesses
-    are equality propositions. -/
-def catToDepCategoryData.{u₁, u₂, u₃, u₄} (C : Cat.{u₂, u₁}) :
-    DepCategoryData.{u₁ + 1, u₂ + 1, max 1 u₃, max 1 u₄} :=
-  bundledCategoryStructToDepData (BundledCategoryStruct.ofCat C)
-
-/-- Convert a functor between categories to a `DepNatTransData` morphism
-    between the corresponding `DepCategoryData` structures. -/
-def functorToDepNatTrans.{u₁, u₂, u₃, u₄} {C D : Cat.{u₂, u₁}}
-    (F : C ⟶ D) :
-    DepNatTransData (catToDepCategoryData.{u₁, u₂, u₃, u₄} C)
-                    (catToDepCategoryData.{u₁, u₂, u₃, u₄} D) where
-  appObj := F.toFunctor.obj
-  appMor := F.toFunctor.map
-  appId := fun {o} {_} hid =>
-    PULift.up (hid.down ▸ F.toFunctor.map_id o)
-  appComp := fun {_ _ _} {f g _} hcomp =>
-    PULift.up (hcomp.down ▸ F.toFunctor.map_comp f g)
-
-/-- `functorToDepNatTrans` maps the identity functor to the identity
-    DepNatTransData. -/
-theorem functorToDepNatTrans_id.{u₁, u₂, u₃, u₄} (C : Cat.{u₂, u₁}) :
-    functorToDepNatTrans.{u₁, u₂, u₃, u₄} (𝟙 C) =
-    DepNatTransData.id (catToDepCategoryData.{u₁, u₂, u₃, u₄} C) :=
-  rfl
-
-/-- `functorToDepNatTrans` preserves composition. -/
-theorem functorToDepNatTrans_comp.{u₁, u₂, u₃, u₄}
-    {C D E : Cat.{u₂, u₁}} (F : C ⟶ D) (G : D ⟶ E) :
-    functorToDepNatTrans.{u₁, u₂, u₃, u₄} (F ≫ G) =
-    DepNatTransData.comp (functorToDepNatTrans F) (functorToDepNatTrans G) :=
-  rfl
-
-/-- The embedding functor from `Cat` to `DepCategoryData`. -/
-def catEmbedding.{u₁, u₂, u₃, u₄} : Cat.{u₂, u₁} ⥤ DepCategoryData where
-  obj := catToDepCategoryData.{u₁, u₂, u₃, u₄}
-  map := functorToDepNatTrans.{u₁, u₂, u₃, u₄}
-  map_id := functorToDepNatTrans_id
-  map_comp := functorToDepNatTrans_comp
-
-end CatEmbedding
-
 end CategoryJudgments
 
 end GebLean
