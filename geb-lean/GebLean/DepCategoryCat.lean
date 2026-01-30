@@ -695,21 +695,6 @@ def depCategoryCatToCatFunctor.{u, v, w₃, w₄} :
   map_id _ := rfl
   map_comp _ _ := rfl
 
-/-- The functor `catToDepCategoryCatFunctor` is fully faithful. -/
-def catToDepCategoryCatFunctor.fullyFaithful.{u, v, w₃, w₄} :
-    catToDepCategoryCatFunctor.{u, v, w₃, w₄}.FullyFaithful :=
-  Functor.FullyFaithful.mk
-    (preimage := depCategoryCatHomToCatHom)
-    (map_preimage := depCategoryCatHom_roundtrip)
-
-instance catToDepCategoryCatFunctor.faithful.{u, v, w₃, w₄} :
-    catToDepCategoryCatFunctor.{u, v, w₃, w₄}.Faithful :=
-  catToDepCategoryCatFunctor.fullyFaithful.faithful
-
-instance catToDepCategoryCatFunctor.full.{u, v, w₃, w₄} :
-    catToDepCategoryCatFunctor.{u, v, w₃, w₄}.Full :=
-  catToDepCategoryCatFunctor.fullyFaithful.full
-
 /-- The composition `catToDepCategoryCatFunctor ⋙ depCategoryCatToCatFunctor` is
     naturally isomorphic to the identity on `Cat`. -/
 def catDepCategoryCatUnit.{u, v, w₃, w₄} :
@@ -847,6 +832,34 @@ def catDepCategoryCatEquiv.{u, v, w₃, w₄} :
   unitIso := catDepCategoryCatUnit
   counitIso := depCategoryCatCounit
   functor_unitIso_comp X := catDepCategoryCatEquiv_functor_unitIso_comp X
+
+/-- The functor `catToDepCategoryCatFunctor` is fully faithful, derived from the
+    equivalence. -/
+def catToDepCategoryCatFunctor.fullyFaithful.{u, v, w₃, w₄} :
+    catToDepCategoryCatFunctor.{u, v, max 1 w₃, max 1 w₄}.FullyFaithful :=
+  catDepCategoryCatEquiv.fullyFaithfulFunctor
+
+instance catToDepCategoryCatFunctor.faithful.{u, v, w₃, w₄} :
+    catToDepCategoryCatFunctor.{u, v, max 1 w₃, max 1 w₄}.Faithful :=
+  catDepCategoryCatEquiv.faithful_functor
+
+instance catToDepCategoryCatFunctor.full.{u, v, w₃, w₄} :
+    catToDepCategoryCatFunctor.{u, v, max 1 w₃, max 1 w₄}.Full :=
+  catDepCategoryCatEquiv.full_functor
+
+/-- The functor `depCategoryCatToCatFunctor` is fully faithful, derived from the
+    equivalence. -/
+def depCategoryCatToCatFunctor.fullyFaithful.{u, v, w₃, w₄} :
+    depCategoryCatToCatFunctor.{u, v, max 1 w₃, max 1 w₄}.FullyFaithful :=
+  catDepCategoryCatEquiv.fullyFaithfulInverse
+
+instance depCategoryCatToCatFunctor.faithful.{u, v, w₃, w₄} :
+    depCategoryCatToCatFunctor.{u, v, max 1 w₃, max 1 w₄}.Faithful :=
+  catDepCategoryCatEquiv.faithful_inverse
+
+instance depCategoryCatToCatFunctor.full.{u, v, w₃, w₄} :
+    depCategoryCatToCatFunctor.{u, v, max 1 w₃, max 1 w₄}.Full :=
+  catDepCategoryCatEquiv.full_inverse
 
 end CatEquivalence
 
