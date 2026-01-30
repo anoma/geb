@@ -621,6 +621,103 @@ theorem cat_roundtrip.{u, v, w₃, w₄} (C : Cat.{v, u}) :
       (catToDepCategoryCat.{u, v, w₃, w₄} C) = C :=
   rfl
 
+/-- Convert a `Cat.Hom` morphism to a morphism in `DepCategoryCat`. -/
+def catHomToDepCategoryCatHom.{u, v, w₃, w₄} {C D : Cat.{v, u}}
+    (F : C ⟶ D) :
+    catToDepCategoryCat.{u, v, w₃, w₄} C ⟶
+    catToDepCategoryCat.{u, v, w₃, w₄} D :=
+  ObjectProperty.homMk ⟨
+    F.toFunctor.obj,
+    F.toFunctor.map,
+    fun {_o _m} ⟨h⟩ ↦ ⟨h ▸ F.toFunctor.map_id _o⟩,
+    fun {_a _b _c _f _g _h} ⟨hcomp⟩ ↦ ⟨hcomp ▸ F.toFunctor.map_comp _f _g⟩
+  ⟩
+
+/-- Convert a morphism in `DepCategoryCat` to a `Cat.Hom`. -/
+def depCategoryCatHomToCatHom.{u, v, w₃, w₄} {C D : Cat.{v, u}}
+    (f : catToDepCategoryCat.{u, v, w₃, w₄} C ⟶
+         catToDepCategoryCat.{u, v, w₃, w₄} D) : C ⟶ D where
+  toFunctor := {
+    obj := f.hom.appObj
+    map := f.hom.appMor
+    map_id X := (f.hom.appId (o := X) (m := C.str.id X) ⟨rfl⟩).down
+    map_comp {_X _Y _Z} g h := (f.hom.appComp (f := g) (g := h) (h := g ≫ h) ⟨rfl⟩).down
+  }
+
+/-- Round-trip `Cat.Hom → DepCategoryCatHom → Cat.Hom` is the identity. -/
+theorem catHom_roundtrip.{u, v, w₃, w₄} {C D : Cat.{v, u}} (F : C ⟶ D) :
+    depCategoryCatHomToCatHom.{u, v, w₃, w₄} (catHomToDepCategoryCatHom F) = F :=
+  rfl
+
+/-- Round-trip `DepCategoryCatHom → Cat.Hom → DepCategoryCatHom` is the identity. -/
+theorem depCategoryCatHom_roundtrip.{u, v, w₃, w₄} {C D : Cat.{v, u}}
+    (f : catToDepCategoryCat.{u, v, w₃, w₄} C ⟶
+         catToDepCategoryCat.{u, v, w₃, w₄} D) :
+    catHomToDepCategoryCatHom (depCategoryCatHomToCatHom f) = f := by
+  apply ObjectProperty.hom_ext
+  simp only [catHomToDepCategoryCatHom, depCategoryCatHomToCatHom,
+             ObjectProperty.homMk_hom]
+  exact DepNatTransData.ext rfl HEq.rfl HEq.rfl HEq.rfl
+
+/-- The functor from `Cat` to `DepCategoryCat`. -/
+def catToDepCategoryCatFunctor.{u, v, w₃, w₄} :
+    Cat.{v, u} ⥤ DepCategoryCat.{u + 1, v + 1, max 1 w₃, max 1 w₄} where
+  obj := catToDepCategoryCat
+  map := catHomToDepCategoryCatHom
+  map_id _ := by
+    apply ObjectProperty.hom_ext
+    simp only [catHomToDepCategoryCatHom, ObjectProperty.homMk_hom]
+    exact DepNatTransData.ext rfl HEq.rfl HEq.rfl HEq.rfl
+  map_comp _ _ := by
+    apply ObjectProperty.hom_ext
+    simp only [catHomToDepCategoryCatHom, ObjectProperty.homMk_hom]
+    exact DepNatTransData.ext rfl HEq.rfl HEq.rfl HEq.rfl
+
+/-- The functor from `DepCategoryCat` to `Cat`. -/
+def depCategoryCatToCatFunctor.{u, v, w₃, w₄} :
+    DepCategoryCat.{u + 1, v + 1, max 1 w₃, max 1 w₄} ⥤ Cat.{v, u} where
+  obj := depCategoryCatToCat
+  map {D E} f := {
+    toFunctor := {
+      obj := f.hom.appObj
+      map := f.hom.appMor
+      map_id X := by
+        have hId := D.toDepCompleteObj.idMor_spec X
+        have hApp := f.hom.appId hId
+        exact E.isCategoryLike.unique.id _ _ _ hApp (E.toDepCompleteObj.idMor_spec _)
+      map_comp {_X _Y _Z} g h := by
+        have hComp := D.toDepCompleteObj.compMor_spec g h
+        have hApp := f.hom.appComp hComp
+        exact E.isCategoryLike.unique.comp _ _ _ _ hApp
+          (E.toDepCompleteObj.compMor_spec _ _)
+    }
+  }
+  map_id _ := rfl
+  map_comp _ _ := rfl
+
+/-- The functor `catToDepCategoryCatFunctor` is fully faithful. -/
+def catToDepCategoryCatFunctor.fullyFaithful.{u, v, w₃, w₄} :
+    catToDepCategoryCatFunctor.{u, v, w₃, w₄}.FullyFaithful :=
+  Functor.FullyFaithful.mk
+    (preimage := depCategoryCatHomToCatHom)
+    (map_preimage := depCategoryCatHom_roundtrip)
+
+instance catToDepCategoryCatFunctor.faithful.{u, v, w₃, w₄} :
+    catToDepCategoryCatFunctor.{u, v, w₃, w₄}.Faithful :=
+  catToDepCategoryCatFunctor.fullyFaithful.faithful
+
+instance catToDepCategoryCatFunctor.full.{u, v, w₃, w₄} :
+    catToDepCategoryCatFunctor.{u, v, w₃, w₄}.Full :=
+  catToDepCategoryCatFunctor.fullyFaithful.full
+
+/-- The composition `catToDepCategoryCatFunctor ⋙ depCategoryCatToCatFunctor` is
+    naturally isomorphic to the identity on `Cat`. -/
+def catDepCategoryCatUnit.{u, v, w₃, w₄} :
+    𝟭 Cat.{v, u} ≅
+    catToDepCategoryCatFunctor.{u, v, w₃, w₄} ⋙
+    depCategoryCatToCatFunctor.{u, v, w₃, w₄} :=
+  NatIso.ofComponents (fun C ↦ eqToIso (cat_roundtrip C).symm) (by intros; rfl)
+
 end CatEquivalence
 
 end CategoryJudgments
