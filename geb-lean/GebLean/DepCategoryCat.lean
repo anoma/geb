@@ -81,25 +81,39 @@ def lift.{u₁, u₂, u₃, u₄}
 
 end DepCategoryLift
 
-section FunctionalityConditions
+section CompletenessConditions
 
 /-- Each object has an identity morphism (with witness). Uses `PSigma` to
-    handle the case where `idT` is `Prop`-valued. -/
+    handle the case where `idT` is `Prop`-valued. This is a `Sort` because
+    we need to extract witnesses constructively. -/
 def DepCategoryData.IdExists.{u₁, u₂, u₃, u₄}
     (D : DepCategoryData.{u₁, u₂, u₃, u₄}) : Sort (max 1 u₁ u₂ u₃) :=
   ∀ (o : D.objT), PSigma (D.idT (o := o))
+
+/-- Each composable pair has a composite (with witness). Uses `PSigma` to
+    handle the case where `compT` is `Prop`-valued. This is a `Sort` because
+    we need to extract witnesses constructively. -/
+def DepCategoryData.CompExists.{u₁, u₂, u₃, u₄}
+    (D : DepCategoryData.{u₁, u₂, u₃, u₄}) : Sort (max 1 u₁ u₂ u₄) :=
+  ∀ {a b c : D.objT} (f : D.morT a b) (g : D.morT b c),
+    PSigma (D.compT f g)
+
+/-- Identity and composition morphisms exist (with witnesses). This is a `Sort`
+    because it contains the existence witnesses needed to extract identity
+    and composition functions. -/
+structure DepCategoryData.Exists.{u₁, u₂, u₃, u₄}
+    (D : DepCategoryData.{u₁, u₂, u₃, u₄}) : Sort (max 1 u₁ u₂ u₃ u₄) where
+  id : D.IdExists
+  comp : D.CompExists
+
+end CompletenessConditions
+
+section UniquenessConditions
 
 /-- Each object has at most one identity morphism. -/
 def DepCategoryData.IdUnique.{u₁, u₂, u₃, u₄}
     (D : DepCategoryData.{u₁, u₂, u₃, u₄}) : Prop :=
   ∀ (o : D.objT) (m₁ m₂ : D.morT o o), D.idT m₁ → D.idT m₂ → m₁ = m₂
-
-/-- Each composable pair has a composite (with witness). Uses `PSigma` to
-    handle the case where `compT` is `Prop`-valued. -/
-def DepCategoryData.CompExists.{u₁, u₂, u₃, u₄}
-    (D : DepCategoryData.{u₁, u₂, u₃, u₄}) : Sort (max 1 u₁ u₂ u₄) :=
-  ∀ {a b c : D.objT} (f : D.morT a b) (g : D.morT b c),
-    PSigma (D.compT f g)
 
 /-- Each composable pair has at most one composite. -/
 def DepCategoryData.CompUnique.{u₁, u₂, u₃, u₄}
@@ -107,18 +121,15 @@ def DepCategoryData.CompUnique.{u₁, u₂, u₃, u₄}
   ∀ {a b c : D.objT} (f : D.morT a b) (g : D.morT b c) (h₁ h₂ : D.morT a c),
     D.compT f g h₁ → D.compT f g h₂ → h₁ = h₂
 
-/-- Identity and composition morphisms exist (with witnesses). This is a `Sort`
-    because it contains the existence witnesses. -/
-structure DepCategoryData.Exists.{u₁, u₂, u₃, u₄}
-    (D : DepCategoryData.{u₁, u₂, u₃, u₄}) : Sort (max 1 u₁ u₂ u₃ u₄) where
-  id : D.IdExists
-  comp : D.CompExists
-
 /-- Identity and composition morphisms are unique. This is a `Prop`. -/
 structure DepCategoryData.Unique.{u₁, u₂, u₃, u₄}
     (D : DepCategoryData.{u₁, u₂, u₃, u₄}) : Prop where
   id : D.IdUnique
   comp : D.CompUnique
+
+end UniquenessConditions
+
+section FunctionalityConditions
 
 /-- The identity relation is functional (with witnesses). -/
 structure DepCategoryData.IdFunctional.{u₁, u₂, u₃, u₄}
