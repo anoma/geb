@@ -162,6 +162,10 @@ instance : DepCompleteObj.forget.Faithful where
 instance : DepCompleteObj.forget.Full where
   map_surjective := fun f => ⟨f, rfl⟩
 
+/-- The forgetful functor is fully faithful. -/
+def DepCompleteObj.forget.fullyFaithful : DepCompleteObj.forget.FullyFaithful :=
+  Functor.FullyFaithful.mk (preimage := fun f => f) (map_preimage := fun _ => rfl)
+
 /-- If two `DepCompleteObj`s have isomorphic underlying `DepCategoryData`,
     then they are isomorphic as `DepCompleteObj`s. -/
 def DepCompleteObj.isoOfDataIso {F G : DepCompleteObj}
