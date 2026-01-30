@@ -2421,6 +2421,11 @@ def of (C : Type*) [CategoryStruct C] : BundledCategoryStruct :=
 instance instCategoryStruct (C : BundledCategoryStruct) : CategoryStruct C :=
   Bundled.str C
 
+/-- Extract a `BundledCategoryStruct` from a `Cat` by forgetting the category
+    laws. -/
+def ofCat (C : Cat) : BundledCategoryStruct :=
+  @BundledCategoryStruct.of C.α C.str.toCategoryStruct
+
 end BundledCategoryStruct
 
 /-! ### Functor fullness lemmas -/

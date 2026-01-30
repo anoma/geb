@@ -324,16 +324,6 @@ theorem bundledCategoryStruct_subsingleton_roundtrip.{u₁, u₂, u₃, u₄}
       (bundledCategoryStructToDepFunctionalSubsingleton.{u₁, u₂, u₃, u₄} C) = C :=
   rfl
 
-/-- The `BundledCategoryStruct` extracted from a `DepFunctionalSubsingleton`
-    after round-tripping through `BundledCategoryStruct` is the same. -/
-theorem depFunctionalSubsingleton_bundled_roundtrip.{u₁, u₂, u₃, u₄}
-    (D : DepFunctionalSubsingleton.{u₁ + 1, u₂ + 1, max 1 u₃, max 1 u₄}) :
-    depFunctionalSubsingletonToBundledCategoryStruct.{u₁, u₂, max 1 u₃, max 1 u₄}
-      (bundledCategoryStructToDepFunctionalSubsingleton.{u₁, u₂, u₃, u₄}
-        (depFunctionalSubsingletonToBundledCategoryStruct D)) =
-    depFunctionalSubsingletonToBundledCategoryStruct D :=
-  bundledCategoryStruct_subsingleton_roundtrip _
-
 /-- For a `DepFunctionalSubsingleton`, the objects are preserved after
     round-tripping through `BundledCategoryStruct`. -/
 theorem depFunctionalSubsingleton_roundtrip_objT.{u₁, u₂, u₃, u₄}
@@ -422,10 +412,7 @@ section CatEmbedding
     are equality propositions. -/
 def catToDepCategoryData.{u₁, u₂, u₃, u₄} (C : Cat.{u₂, u₁}) :
     DepCategoryData.{u₁ + 1, u₂ + 1, max 1 u₃, max 1 u₄} :=
-  { objT := C.α
-    morT := fun a b => a ⟶ b
-    idT := fun {o} m => PULift (m = 𝟙 o)
-    compT := fun {_ _ _} f g h => PULift (h = f ≫ g) }
+  bundledCategoryStructToDepData (BundledCategoryStruct.ofCat C)
 
 /-- Convert a functor between categories to a `DepNatTransData` morphism
     between the corresponding `DepCategoryData` structures. -/
