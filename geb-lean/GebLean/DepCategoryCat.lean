@@ -718,6 +718,136 @@ def catDepCategoryCatUnit.{u, v, w₃, w₄} :
     depCategoryCatToCatFunctor.{u, v, w₃, w₄} :=
   NatIso.ofComponents (fun C ↦ eqToIso (cat_roundtrip C).symm) (by intros; rfl)
 
+/-- For `D : DepCategoryCat`, the `DepNatTransData` from the round-tripped version
+    back to `D`, using identity on objects and morphisms. -/
+def depCategoryCatCounitHom.{u, v, w₃, w₄}
+    (D : DepCategoryCat.{u + 1, v + 1, max 1 w₃, max 1 w₄}) :
+    (catToDepCategoryCat (depCategoryCatToCat D)).obj ⟶ D.obj :=
+  ⟨_root_.id,
+   _root_.id,
+   fun {_o _m} ⟨hEq⟩ ↦ hEq ▸ D.toDepCompleteObj.idMor_spec _o,
+   fun {_a _b _c _f _g _h} ⟨hEq⟩ ↦ hEq ▸ D.toDepCompleteObj.compMor_spec _f _g⟩
+
+/-- For `D : DepCategoryCat`, the `DepNatTransData` from `D` to the round-tripped
+    version, using identity on objects and morphisms. -/
+def depCategoryCatCounitInv.{u, v, w₃, w₄}
+    (D : DepCategoryCat.{u + 1, v + 1, max 1 w₃, max 1 w₄}) :
+    D.obj ⟶ (catToDepCategoryCat (depCategoryCatToCat D)).obj :=
+  ⟨_root_.id,
+   _root_.id,
+   fun {o m} hId ↦ ⟨D.isCategoryLike.unique.id o m (D.toDepCompleteObj.idMor o)
+                      hId (D.toDepCompleteObj.idMor_spec o)⟩,
+   fun {_a _b _c f g h} hComp ↦
+     ⟨D.isCategoryLike.unique.comp f g h (D.toDepCompleteObj.compMor f g)
+        hComp (D.toDepCompleteObj.compMor_spec f g)⟩⟩
+
+/-- The composition `inv ≫ hom` is identity for the counit. -/
+theorem depCategoryCatCounit_inv_hom.{u, v, w₃, w₄}
+    (D : DepCategoryCat.{u + 1, v + 1, max 1 w₃, max 1 w₄}) :
+    depCategoryCatCounitInv D ≫ depCategoryCatCounitHom D = 𝟙 D.obj := by
+  apply DepNatTransData.ext
+  · rfl
+  · exact HEq.rfl
+  · apply heq_of_eq
+    funext o m hId
+    change (depCategoryCatCounitHom D).appId
+      ((depCategoryCatCounitInv D).appId hId) = hId
+    simp only [depCategoryCatCounitHom, depCategoryCatCounitInv, id]
+    haveI : Subsingleton (D.obj.idT m) :=
+      D.property.witnessSubsingleton.id o m
+    exact Subsingleton.elim _ _
+  · apply heq_of_eq
+    funext a b c f g h hComp
+    change (depCategoryCatCounitHom D).appComp
+      ((depCategoryCatCounitInv D).appComp hComp) = hComp
+    simp only [depCategoryCatCounitHom, depCategoryCatCounitInv, id]
+    haveI : Subsingleton (D.obj.compT f g h) :=
+      D.property.witnessSubsingleton.comp f g h
+    exact Subsingleton.elim _ _
+
+/-- The counit component isomorphism for `D : DepCategoryCat` as an isomorphism
+    of `DepCompleteObj`. -/
+def depCategoryCatCounitObjIso.{u, v, w₃, w₄}
+    (D : DepCategoryCat.{u + 1, v + 1, max 1 w₃, max 1 w₄}) :
+    (catToDepCategoryCat (depCategoryCatToCat D)).obj ≅ D.obj where
+  hom := depCategoryCatCounitHom D
+  inv := depCategoryCatCounitInv D
+  hom_inv_id := rfl
+  inv_hom_id := depCategoryCatCounit_inv_hom D
+
+/-- The counit component isomorphism for `D : DepCategoryCat`. -/
+def depCategoryCatCounitIso.{u, v, w₃, w₄}
+    (D : DepCategoryCat.{u + 1, v + 1, max 1 w₃, max 1 w₄}) :
+    (depCategoryCatToCatFunctor.{u, v, w₃, w₄} ⋙
+     catToDepCategoryCatFunctor.{u, v, w₃, w₄}).obj D ≅ D :=
+  IsCategoryLike.isoMk (depCategoryCatCounitObjIso D)
+
+/-- The composition `depCategoryCatToCatFunctor ⋙ catToDepCategoryCatFunctor` is
+    naturally isomorphic to the identity on `DepCategoryCat`. -/
+def depCategoryCatCounit.{u, v, w₃, w₄} :
+    depCategoryCatToCatFunctor.{u, v, w₃, w₄} ⋙
+    catToDepCategoryCatFunctor.{u, v, w₃, w₄} ≅
+    𝟭 DepCategoryCat.{u + 1, v + 1, max 1 w₃, max 1 w₄} :=
+  NatIso.ofComponents depCategoryCatCounitIso (fun {D E} f ↦ by
+    apply ObjectProperty.hom_ext
+    simp only [Functor.comp_obj, Functor.comp_map, Functor.id_obj, Functor.id_map,
+               depCategoryCatCounitIso, depCategoryCatCounitObjIso,
+               catToDepCategoryCatFunctor, depCategoryCatToCatFunctor,
+               ObjectProperty.FullSubcategory.comp_hom,
+               catHomToDepCategoryCatHom, depCategoryCatCounitHom, ObjectProperty.homMk_hom,
+               ObjectProperty.isoMk_hom]
+    apply DepNatTransData.ext
+    · rfl
+    · exact HEq.rfl
+    · apply heq_of_eq
+      funext o m hId
+      exact @Subsingleton.elim (E.obj.idT (f.hom.appMor m))
+        (E.property.witnessSubsingleton.id (f.hom.appObj o) (f.hom.appMor m)) _ _
+    · apply heq_of_eq
+      funext a b c mf mg mh hComp
+      exact @Subsingleton.elim
+        (E.obj.compT (f.hom.appMor mf) (f.hom.appMor mg) (f.hom.appMor mh))
+        (E.property.witnessSubsingleton.comp
+          (f.hom.appMor mf) (f.hom.appMor mg) (f.hom.appMor mh)) _ _)
+
+/-- The functor-unitIso-comp triangle identity for the Cat ≌ DepCategoryCat
+    equivalence. -/
+theorem catDepCategoryCatEquiv_functor_unitIso_comp.{u, v, w₃, w₄} (X : Cat.{v, u}) :
+    catToDepCategoryCatFunctor.{u, v, w₃, w₄}.map
+      (catDepCategoryCatUnit.{u, v, max 1 w₃, max 1 w₄}.hom.app X) ≫
+    depCategoryCatCounit.{u, v, w₃, w₄}.hom.app
+      (catToDepCategoryCatFunctor.{u, v, w₃, w₄}.obj X) =
+    𝟙 (catToDepCategoryCatFunctor.{u, v, w₃, w₄}.obj X) := by
+  simp only [Functor.comp_obj, catDepCategoryCatUnit, NatIso.ofComponents_hom_app,
+             depCategoryCatCounit, Functor.id_obj, depCategoryCatCounitIso,
+             depCategoryCatCounitObjIso, catToDepCategoryCatFunctor,
+             catHomToDepCategoryCatHom, depCategoryCatCounitHom]
+  apply ObjectProperty.hom_ext
+  simp only [ObjectProperty.homMk_hom, ObjectProperty.FullSubcategory.comp_hom,
+             ObjectProperty.FullSubcategory.id_hom]
+  apply DepNatTransData.ext
+  · rfl
+  · exact HEq.rfl
+  · apply heq_of_eq
+    funext o m hId
+    exact @Subsingleton.elim
+      ((catToDepCategoryCat X).obj.idT m)
+      ((catToDepCategoryCat X).property.witnessSubsingleton.id o m) _ _
+  · apply heq_of_eq
+    funext a b c mf mg mh hComp
+    exact @Subsingleton.elim
+      ((catToDepCategoryCat X).obj.compT mf mg mh)
+      ((catToDepCategoryCat X).property.witnessSubsingleton.comp mf mg mh) _ _
+
+/-- The equivalence of categories between `Cat` and `DepCategoryCat`. -/
+def catDepCategoryCatEquiv.{u, v, w₃, w₄} :
+    Cat.{v, u} ≌ DepCategoryCat.{u + 1, v + 1, max 1 w₃, max 1 w₄} where
+  functor := catToDepCategoryCatFunctor
+  inverse := depCategoryCatToCatFunctor
+  unitIso := catDepCategoryCatUnit
+  counitIso := depCategoryCatCounit
+  functor_unitIso_comp X := catDepCategoryCatEquiv_functor_unitIso_comp X
+
 end CatEquivalence
 
 end CategoryJudgments
