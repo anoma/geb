@@ -108,6 +108,16 @@ structure DepCategoryData.Exists.{u₁, u₂, u₃, u₄}
 
 end CompletenessConditions
 
+section CompleteSubcategory
+
+/-- A `DepCategoryData` with existence witnesses for identity and composition.
+    This is a `Sort` because it contains extractable witnesses. -/
+structure DepCompleteObj.{u₁, u₂, u₃, u₄} : Type (max u₁ u₂ u₃ u₄)
+    extends DepCategoryData.{u₁, u₂, u₃, u₄} where
+  exists_ : toDepCategoryData.Exists
+
+end CompleteSubcategory
+
 section UniquenessConditions
 
 /-- Each object has at most one identity morphism. -/
