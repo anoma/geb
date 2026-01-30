@@ -147,7 +147,7 @@ instance DepCompleteCat.{u₁, u₂, u₃, u₄} :
 /-- The forgetful functor from `DepCompleteObj` to `DepCategoryData`. -/
 def DepCompleteObj.forget : DepCompleteObj ⥤ DepCategoryData where
   obj := DepCompleteObj.toDepCategoryData
-  map := fun f ↦ f
+  map := _root_.id
   map_id := by intros; rfl
   map_comp := by intros; rfl
 
@@ -155,7 +155,7 @@ def DepCompleteObj.forget : DepCompleteObj ⥤ DepCategoryData where
     have equal underlying `DepNatTransData`, they are equal. This is trivial
     since morphisms are definitionally the same. -/
 instance DepCompleteFaithful : DepCompleteObj.forget.Faithful where
-  map_injective := fun h ↦ h
+  map_injective := _root_.id
 
 /-- The forgetful functor is full: every morphism between the underlying
     `DepCategoryData`s lifts to a morphism between `DepCompleteObj`s.
@@ -165,7 +165,7 @@ instance DepCompleteFull : DepCompleteObj.forget.Full where
 
 /-- The forgetful functor is fully faithful. -/
 def DepCompleteObj.forget.fullyFaithful : DepCompleteObj.forget.FullyFaithful :=
-  Functor.FullyFaithful.mk (preimage := fun f ↦ f) (map_preimage := fun _ ↦ rfl)
+  Functor.FullyFaithful.mk (preimage := _root_.id) (map_preimage := fun _ ↦ rfl)
 
 /-- If two `DepCompleteObj`s have isomorphic underlying `DepCategoryData`,
     then they are isomorphic as `DepCompleteObj`s. -/
