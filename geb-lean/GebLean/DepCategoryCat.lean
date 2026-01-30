@@ -139,30 +139,6 @@ structure DepCategoryData.Unique.{u₁, u₂, u₃, u₄}
 
 end UniquenessConditions
 
-section FunctionalityConditions
-
-/-- The identity relation is functional (with witnesses). -/
-structure DepCategoryData.IdFunctional.{u₁, u₂, u₃, u₄}
-    (D : DepCategoryData.{u₁, u₂, u₃, u₄}) : Sort (max 1 u₁ u₂ u₃) where
-  exists_ : D.IdExists
-  unique : D.IdUnique
-
-/-- The composition relation is functional (with witnesses). -/
-structure DepCategoryData.CompFunctional.{u₁, u₂, u₃, u₄}
-    (D : DepCategoryData.{u₁, u₂, u₃, u₄}) : Sort (max 1 u₁ u₂ u₄) where
-  exists_ : D.CompExists
-  unique : D.CompUnique
-
-/-- Both identity and composition relations are functional (with witnesses).
-    This combines `Exists` (computational content) with `Unique` (propositional
-    content). -/
-structure DepCategoryData.Functional.{u₁, u₂, u₃, u₄}
-    (D : DepCategoryData.{u₁, u₂, u₃, u₄}) : Sort (max 1 u₁ u₂ u₃ u₄) where
-  exists_ : D.Exists
-  unique : D.Unique
-
-end FunctionalityConditions
-
 section CategoryLaws
 
 /-- Left identity law: composing an identity on the left yields the original
@@ -269,13 +245,6 @@ def bundledCategoryStructToDepData_unique (C : BundledCategoryStruct) :
     (bundledCategoryStructToDepData C).Unique where
   id := bundledCategoryStructToDepData_idUnique C
   comp := bundledCategoryStructToDepData_compUnique C
-
-/-- A `BundledCategoryStruct` converted to `DepCategoryData` satisfies
-    `Functional`. -/
-def bundledCategoryStructToDepData_functional (C : BundledCategoryStruct) :
-    (bundledCategoryStructToDepData C).Functional where
-  exists_ := bundledCategoryStructToDepData_exists C
-  unique := bundledCategoryStructToDepData_unique C
 
 /-- Convert a `BundledCategoryStruct` to a `DepCompleteObj`. -/
 def bundledCategoryStructToDepCompleteObj.{u₁, u₂, u₃, u₄}
