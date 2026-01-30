@@ -142,6 +142,51 @@ structure DepCategoryData.Functional.{u₁, u₂, u₃, u₄}
 
 end FunctionalityConditions
 
+section CategoryLaws
+
+/-- Left identity law: composing an identity on the left yields the original
+    morphism. For any identity `i` on `a` and morphism `f : a → b`, if `h` is
+    a composite of `i` and `f`, then `h = f`. -/
+def DepCategoryData.LeftIdentity.{u₁, u₂, u₃, u₄}
+    (D : DepCategoryData.{u₁, u₂, u₃, u₄}) : Prop :=
+  ∀ {a b : D.objT} (i : D.morT a a) (f : D.morT a b) (h : D.morT a b),
+    D.idT i → D.compT i f h → h = f
+
+/-- Right identity law: composing an identity on the right yields the original
+    morphism. For any morphism `f : a → b` and identity `i` on `b`, if `h` is
+    a composite of `f` and `i`, then `h = f`. -/
+def DepCategoryData.RightIdentity.{u₁, u₂, u₃, u₄}
+    (D : DepCategoryData.{u₁, u₂, u₃, u₄}) : Prop :=
+  ∀ {a b : D.objT} (f : D.morT a b) (i : D.morT b b) (h : D.morT a b),
+    D.idT i → D.compT f i h → h = f
+
+/-- Identity law: both left and right identity laws hold. -/
+structure DepCategoryData.Identity.{u₁, u₂, u₃, u₄}
+    (D : DepCategoryData.{u₁, u₂, u₃, u₄}) : Prop where
+  left : D.LeftIdentity
+  right : D.RightIdentity
+
+/-- Associativity law: composition is associative. For morphisms `f : a → b`,
+    `g : b → c`, `h : c → d`, if `fg` is `f ≫ g` and `gh` is `g ≫ h`, and
+    `fgh₁` is `fg ≫ h` and `fgh₂` is `f ≫ gh`, then `fgh₁ = fgh₂`. -/
+def DepCategoryData.Associativity.{u₁, u₂, u₃, u₄}
+    (D : DepCategoryData.{u₁, u₂, u₃, u₄}) : Prop :=
+  ∀ {a b c d : D.objT}
+    (f : D.morT a b) (g : D.morT b c) (h : D.morT c d)
+    (fg : D.morT a c) (gh : D.morT b d)
+    (fgh₁ fgh₂ : D.morT a d),
+    D.compT f g fg → D.compT g h gh →
+    D.compT fg h fgh₁ → D.compT f gh fgh₂ →
+    fgh₁ = fgh₂
+
+/-- Category laws: identity and associativity laws hold. -/
+structure DepCategoryData.CategoryLaws.{u₁, u₂, u₃, u₄}
+    (D : DepCategoryData.{u₁, u₂, u₃, u₄}) : Prop where
+  identity : D.Identity
+  associativity : D.Associativity
+
+end CategoryLaws
+
 section FunctionalCategoryEquiv
 
 /-- A `DepCategoryData` bundled with its functionality witnesses.
