@@ -306,6 +306,10 @@ def IsCategoryLike.{u₁, u₂, u₃, u₄} :
 abbrev DepCategoryCat.{u₁, u₂, u₃, u₄} :=
   IsCategoryLike.{u₁, u₂, u₃, u₄}.FullSubcategory
 
+instance DepCategoryCatInstance.{u₁, u₂, u₃, u₄} :
+  SmallCategory.{max u₁ u₂ u₃ u₄} DepCategoryCat.{u₁, u₂, u₃, u₄} :=
+    ObjectProperty.FullSubcategory.category IsCategoryLike.{u₁, u₂, u₃, u₄}
+
 namespace DepCategoryCat
 
 /-- The inclusion functor from `DepCategoryCat` to `DepCompleteObj`. -/
