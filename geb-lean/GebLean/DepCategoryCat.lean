@@ -303,7 +303,8 @@ def IsCategoryLike.{u₁, u₂, u₃, u₄} :
 
 /-- The full subcategory of `DepCompleteObj` consisting of objects that
     behave like categories. This is equivalent to `Cat`. -/
-abbrev DepCategoryCat := IsCategoryLike.FullSubcategory
+abbrev DepCategoryCat.{u₁, u₂, u₃, u₄} :=
+  IsCategoryLike.{u₁, u₂, u₃, u₄}.FullSubcategory
 
 namespace DepCategoryCat
 
@@ -483,6 +484,144 @@ theorem bundledCategoryStruct_roundtrip.{u₁, u₂, u₃, u₄}
   rfl
 
 end DepCompleteObjToCategoryStruct
+
+section CatEquivalence
+
+/-!
+## Universe level analysis for Cat ≃ DepCategoryCat
+
+The equivalence relates:
+- `Cat.{v, u}` (objects at `Type u`, morphisms at `Type v`)
+- `DepCategoryCat.{u+1, v+1, max 1 w₃, max 1 w₄}` for arbitrary witness universes `w₃, w₄`
+
+The `+1` shift occurs because `bundledCategoryStructToDepDataProp` embeds
+`Type u` into `Type (u+1)` via universe cumulativity. This shift is consistent
+and doesn't constrain which categories can be represented - any `Cat.{v, u}`
+maps to `DepCategoryCat.{u+1, v+1, ...}`.
+-/
+
+/-- Convert a `Cat` object to a `BundledCategoryStruct`. -/
+def catToBundledCategoryStruct.{u, v} (C : Cat.{v, u}) : BundledCategoryStruct.{v, u} :=
+  ⟨C.α, C.str.toCategoryStruct⟩
+
+/-- A `Cat` converted to `DepCategoryData` satisfies `LeftIdentity`. -/
+theorem catToDepData_leftIdentity.{u, v, w₃, w₄} (C : Cat.{v, u}) :
+    (bundledCategoryStructToDepData.{u, v, w₃, w₄}
+      (catToBundledCategoryStruct C)).LeftIdentity :=
+  fun {_a _b} i f h hIdI hCompIfH ↦ by
+    have heq_h : h = C.str.comp i f := hCompIfH.down
+    have heq_i : i = C.str.id _a := hIdI.down
+    simp only [heq_h, heq_i, Category.id_comp]
+
+/-- A `Cat` converted to `DepCategoryData` satisfies `RightIdentity`. -/
+theorem catToDepData_rightIdentity.{u, v, w₃, w₄} (C : Cat.{v, u}) :
+    (bundledCategoryStructToDepData.{u, v, w₃, w₄}
+      (catToBundledCategoryStruct C)).RightIdentity :=
+  fun {_a _b} f i h hIdI hCompFiH ↦ by
+    have heq_h : h = C.str.comp f i := hCompFiH.down
+    have heq_i : i = C.str.id _b := hIdI.down
+    simp only [heq_h, heq_i, Category.comp_id]
+
+/-- A `Cat` converted to `DepCategoryData` satisfies `Identity`. -/
+def catToDepData_identity.{u, v, w₃, w₄} (C : Cat.{v, u}) :
+    (bundledCategoryStructToDepData.{u, v, w₃, w₄}
+      (catToBundledCategoryStruct C)).Identity where
+  left := catToDepData_leftIdentity C
+  right := catToDepData_rightIdentity C
+
+/-- A `Cat` converted to `DepCategoryData` satisfies `Associativity`. -/
+theorem catToDepData_associativity.{u, v, w₃, w₄} (C : Cat.{v, u}) :
+    (bundledCategoryStructToDepData.{u, v, w₃, w₄}
+      (catToBundledCategoryStruct C)).Associativity :=
+  fun {_a _b _c _d} f g h fg gh fgh₁ fgh₂ hFG hGH hFGH hFGH' ↦ by
+    have hfg : fg = C.str.comp f g := hFG.down
+    have hgh : gh = C.str.comp g h := hGH.down
+    have hfgh1 : fgh₁ = C.str.comp fg h := hFGH.down
+    have hfgh2 : fgh₂ = C.str.comp f gh := hFGH'.down
+    simp only [hfg, hgh, hfgh1, hfgh2, Category.assoc]
+
+/-- A `Cat` converted to `DepCategoryData` satisfies `CategoryLaws`. -/
+def catToDepData_categoryLaws.{u, v, w₃, w₄} (C : Cat.{v, u}) :
+    (bundledCategoryStructToDepData.{u, v, w₃, w₄}
+      (catToBundledCategoryStruct C)).CategoryLaws where
+  identity := catToDepData_identity C
+  associativity := catToDepData_associativity C
+
+/-- A `Cat` converted to `DepCategoryData` satisfies `IsCategoryLike`. -/
+def catToDepData_isCategoryLike.{u, v, w₃, w₄} (C : Cat.{v, u}) :
+    (bundledCategoryStructToDepData.{u, v, w₃, w₄}
+      (catToBundledCategoryStruct C)).IsCategoryLike where
+  unique := bundledCategoryStructToDepData_unique (catToBundledCategoryStruct C)
+  witnessSubsingleton :=
+    bundledCategoryStructToDepData_witnessSubsingleton (catToBundledCategoryStruct C)
+  categoryLaws := catToDepData_categoryLaws C
+
+/-- Convert a `Cat.{v, u}` to a `DepCompleteObj.{u+1, v+1, max 1 w₃, max 1 w₄}`. -/
+def catToDepCompleteObj.{u, v, w₃, w₄} (C : Cat.{v, u}) :
+    DepCompleteObj.{u + 1, v + 1, max 1 w₃, max 1 w₄} :=
+  bundledCategoryStructToDepCompleteObj (catToBundledCategoryStruct C)
+
+/-- Convert a `Cat.{v, u}` to a `DepCategoryCat.{u+1, v+1, max 1 w₃, max 1 w₄}`. -/
+def catToDepCategoryCat.{u, v, w₃, w₄} (C : Cat.{v, u}) :
+    DepCategoryCat.{u + 1, v + 1, max 1 w₃, max 1 w₄} where
+  obj := catToDepCompleteObj.{u, v, w₃, w₄} C
+  property := catToDepData_isCategoryLike.{u, v, w₃, w₄} C
+
+/-- Given a `DepCategoryCat`, the extracted `CategoryStruct` satisfies `id_comp`. -/
+theorem depCategoryCat_id_comp.{u₁, u₂, u₃, u₄} (D : DepCategoryCat.{u₁, u₂, u₃, u₄})
+    {a b : D.toDepCategoryData.objT}
+    (f : D.toDepCategoryData.morT a b) :
+    D.toDepCompleteObj.compMor (D.toDepCompleteObj.idMor a) f = f := by
+  have hId := D.toDepCompleteObj.idMor_spec a
+  have hComp := D.toDepCompleteObj.compMor_spec (D.toDepCompleteObj.idMor a) f
+  exact D.isCategoryLike.categoryLaws.identity.left _ f _ hId hComp
+
+/-- Given a `DepCategoryCat`, the extracted `CategoryStruct` satisfies `comp_id`. -/
+theorem depCategoryCat_comp_id.{u₁, u₂, u₃, u₄} (D : DepCategoryCat.{u₁, u₂, u₃, u₄})
+    {a b : D.toDepCategoryData.objT}
+    (f : D.toDepCategoryData.morT a b) :
+    D.toDepCompleteObj.compMor f (D.toDepCompleteObj.idMor b) = f := by
+  have hId := D.toDepCompleteObj.idMor_spec b
+  have hComp := D.toDepCompleteObj.compMor_spec f (D.toDepCompleteObj.idMor b)
+  exact D.isCategoryLike.categoryLaws.identity.right f _ _ hId hComp
+
+/-- Given a `DepCategoryCat`, the extracted `CategoryStruct` satisfies `assoc`. -/
+theorem depCategoryCat_assoc.{u₁, u₂, u₃, u₄} (D : DepCategoryCat.{u₁, u₂, u₃, u₄})
+    {a b c d : D.toDepCategoryData.objT}
+    (f : D.toDepCategoryData.morT a b)
+    (g : D.toDepCategoryData.morT b c)
+    (h : D.toDepCategoryData.morT c d) :
+    D.toDepCompleteObj.compMor (D.toDepCompleteObj.compMor f g) h =
+    D.toDepCompleteObj.compMor f (D.toDepCompleteObj.compMor g h) := by
+  have hFG := D.toDepCompleteObj.compMor_spec f g
+  have hGH := D.toDepCompleteObj.compMor_spec g h
+  have hFGH := D.toDepCompleteObj.compMor_spec (D.toDepCompleteObj.compMor f g) h
+  have hFGH' := D.toDepCompleteObj.compMor_spec f (D.toDepCompleteObj.compMor g h)
+  exact D.isCategoryLike.categoryLaws.associativity f g h _ _ _ _ hFG hGH hFGH hFGH'
+
+/-- Convert a `DepCategoryCat.{u+1, v+1, w₃, w₄}` to a `Category` instance. -/
+def depCategoryCatToCategory.{u, v, w₃, w₄}
+    (D : DepCategoryCat.{u + 1, v + 1, w₃, w₄}) :
+    Category D.toDepCategoryData.objT where
+  Hom := D.toDepCategoryData.morT
+  id := D.toDepCompleteObj.idMor
+  comp := D.toDepCompleteObj.compMor
+  id_comp := depCategoryCat_id_comp D
+  comp_id := depCategoryCat_comp_id D
+  assoc := depCategoryCat_assoc D
+
+/-- Convert a `DepCategoryCat.{u+1, v+1, w₃, w₄}` to a `Cat.{v, u}`. -/
+def depCategoryCatToCat.{u, v, w₃, w₄}
+    (D : DepCategoryCat.{u + 1, v + 1, w₃, w₄}) : Cat.{v, u} :=
+  @Cat.of D.toDepCategoryData.objT (depCategoryCatToCategory D)
+
+/-- Round-trip from `Cat.{v, u}` to `DepCategoryCat` and back is the identity. -/
+theorem cat_roundtrip.{u, v, w₃, w₄} (C : Cat.{v, u}) :
+    depCategoryCatToCat.{u, v, max 1 w₃, max 1 w₄}
+      (catToDepCategoryCat.{u, v, w₃, w₄} C) = C :=
+  rfl
+
+end CatEquivalence
 
 end CategoryJudgments
 
