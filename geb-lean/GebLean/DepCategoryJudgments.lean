@@ -68,7 +68,8 @@ def DepNatTransData.comp {F G H : DepCategoryData}
 
 /-- Category instance for DepCategoryData with DepNatTransData as
     morphisms. -/
-instance : Category DepCategoryData where
+instance DepCategoryDataCat.{u₁, u₂, u₃, u₄} :
+    SmallCategory.{max u₁ u₂ u₃ u₄} DepCategoryData.{u₁, u₂, u₃, u₄} where
   Hom := DepNatTransData
   id := DepNatTransData.id
   comp := DepNatTransData.comp

@@ -135,7 +135,8 @@ def DepCompleteObj.comp {F G H : DepCompleteObj}
 /-- Category instance for `DepCompleteObj`. Since morphisms are exactly
     `DepNatTransData` on the underlying `DepCategoryData`, the category laws
     hold by the same proofs as for `DepCategoryData`. -/
-instance : Category DepCompleteObj where
+instance DepCompleteCat.{u₁, u₂, u₃, u₄} :
+    SmallCategory.{max u₁ u₂ u₃ u₄} DepCompleteObj.{u₁, u₂, u₃, u₄} where
   Hom := DepCompleteObj.Hom
   id := DepCompleteObj.id
   comp := DepCompleteObj.comp
@@ -153,13 +154,13 @@ def DepCompleteObj.forget : DepCompleteObj ⥤ DepCategoryData where
 /-- The forgetful functor is faithful: if two morphisms in `DepCompleteObj`
     have equal underlying `DepNatTransData`, they are equal. This is trivial
     since morphisms are definitionally the same. -/
-instance : DepCompleteObj.forget.Faithful where
+instance DepCompleteFaithful : DepCompleteObj.forget.Faithful where
   map_injective := fun h => h
 
 /-- The forgetful functor is full: every morphism between the underlying
     `DepCategoryData`s lifts to a morphism between `DepCompleteObj`s.
     This is trivial since morphisms are definitionally the same. -/
-instance : DepCompleteObj.forget.Full where
+instance DepCompleteFull : DepCompleteObj.forget.Full where
   map_surjective := fun f => ⟨f, rfl⟩
 
 /-- The forgetful functor is fully faithful. -/
