@@ -633,32 +633,6 @@ def catHomToDepCategoryCatHom.{u, v, w₃, w₄} {C D : Cat.{v, u}}
     fun {_a _b _c _f _g _h} ⟨hcomp⟩ ↦ ⟨hcomp ▸ F.toFunctor.map_comp _f _g⟩
   ⟩
 
-/-- Convert a morphism in `DepCategoryCat` to a `Cat.Hom`. -/
-def depCategoryCatHomToCatHom.{u, v, w₃, w₄} {C D : Cat.{v, u}}
-    (f : catToDepCategoryCat.{u, v, w₃, w₄} C ⟶
-         catToDepCategoryCat.{u, v, w₃, w₄} D) : C ⟶ D where
-  toFunctor := {
-    obj := f.hom.appObj
-    map := f.hom.appMor
-    map_id X := (f.hom.appId (o := X) (m := C.str.id X) ⟨rfl⟩).down
-    map_comp {_X _Y _Z} g h := (f.hom.appComp (f := g) (g := h) (h := g ≫ h) ⟨rfl⟩).down
-  }
-
-/-- Round-trip `Cat.Hom → DepCategoryCatHom → Cat.Hom` is the identity. -/
-theorem catHom_roundtrip.{u, v, w₃, w₄} {C D : Cat.{v, u}} (F : C ⟶ D) :
-    depCategoryCatHomToCatHom.{u, v, w₃, w₄} (catHomToDepCategoryCatHom F) = F :=
-  rfl
-
-/-- Round-trip `DepCategoryCatHom → Cat.Hom → DepCategoryCatHom` is the identity. -/
-theorem depCategoryCatHom_roundtrip.{u, v, w₃, w₄} {C D : Cat.{v, u}}
-    (f : catToDepCategoryCat.{u, v, w₃, w₄} C ⟶
-         catToDepCategoryCat.{u, v, w₃, w₄} D) :
-    catHomToDepCategoryCatHom (depCategoryCatHomToCatHom f) = f := by
-  apply ObjectProperty.hom_ext
-  simp only [catHomToDepCategoryCatHom, depCategoryCatHomToCatHom,
-             ObjectProperty.homMk_hom]
-  exact DepNatTransData.ext rfl HEq.rfl HEq.rfl HEq.rfl
-
 /-- The functor from `Cat` to `DepCategoryCat`. -/
 def catToDepCategoryCatFunctor.{u, v, w₃, w₄} :
     Cat.{v, u} ⥤ DepCategoryCat.{u + 1, v + 1, max 1 w₃, max 1 w₄} where
