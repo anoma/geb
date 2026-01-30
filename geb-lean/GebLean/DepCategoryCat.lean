@@ -191,11 +191,10 @@ section FunctionalCategoryEquiv
 
 /-- A `DepCategoryData` bundled with its functionality witnesses.
     These are the objects that have the data of a category (without laws). -/
-structure DepFunctionalCategory.{u₁, u₂, u₃, u₄} : Type (max u₁ u₂ u₃ u₄) where
-  /-- The underlying category data -/
-  data : DepCategoryData.{u₁, u₂, u₃, u₄}
+structure DepFunctionalCategory.{u₁, u₂, u₃, u₄}
+    extends DepCategoryData.{u₁, u₂, u₃, u₄} where
   /-- The functionality witnesses -/
-  functional : data.Functional
+  functional : toDepCategoryData.Functional
 
 /-- Convert a `BundledCategoryStruct` to a `DepCategoryData`. -/
 def bundledCategoryStructToDepDataProp.{u₁, u₂}
@@ -253,40 +252,42 @@ def bundledCategoryStructToDepData_functional (C : BundledCategoryStruct) :
 def bundledCategoryStructToDepFunctional.{u₁, u₂, u₃, u₄}
     (C : BundledCategoryStruct.{u₂, u₁}) :
       DepFunctionalCategory.{u₁ + 1, u₂ + 1, max 1 u₃, max 1 u₄} where
-  data := bundledCategoryStructToDepData C
+  toDepCategoryData := bundledCategoryStructToDepData C
   functional := bundledCategoryStructToDepData_functional C
 
 /-- Given a `DepFunctionalCategory`, extract the identity morphism for an
     object using the functionality condition. -/
 def DepFunctionalCategory.idMor (D : DepFunctionalCategory)
-    (o : D.data.objT) : D.data.morT o o :=
+    (o : D.toDepCategoryData.objT) : D.toDepCategoryData.morT o o :=
   (D.functional.exists_.id o).fst
 
 /-- The identity morphism satisfies `idT`. -/
 def DepFunctionalCategory.idMor_spec.{u₁, u₂, u₃, u₄}
     (D : DepFunctionalCategory.{u₁, u₂, u₃, u₄})
-    (o : D.data.objT) : D.data.idT (D.idMor o) :=
+    (o : D.toDepCategoryData.objT) : D.toDepCategoryData.idT (D.idMor o) :=
   (D.functional.exists_.id o).snd
 
 /-- Given a `DepFunctionalCategory`, extract the composite morphism for a
     composable pair using the functionality condition. -/
 def DepFunctionalCategory.compMor (D : DepFunctionalCategory)
-    {a b c : D.data.objT} (f : D.data.morT a b) (g : D.data.morT b c) :
-    D.data.morT a c :=
+    {a b c : D.toDepCategoryData.objT}
+    (f : D.toDepCategoryData.morT a b) (g : D.toDepCategoryData.morT b c) :
+    D.toDepCategoryData.morT a c :=
   (D.functional.exists_.comp f g).fst
 
 /-- The composite morphism satisfies `compT`. -/
 def DepFunctionalCategory.compMor_spec.{u₁, u₂, u₃, u₄}
     (D : DepFunctionalCategory.{u₁, u₂, u₃, u₄})
-    {a b c : D.data.objT} (f : D.data.morT a b) (g : D.data.morT b c) :
-    D.data.compT f g (D.compMor f g) :=
+    {a b c : D.toDepCategoryData.objT}
+    (f : D.toDepCategoryData.morT a b) (g : D.toDepCategoryData.morT b c) :
+    D.toDepCategoryData.compT f g (D.compMor f g) :=
   (D.functional.exists_.comp f g).snd
 
 /-- Convert a `DepFunctionalCategory` to a `CategoryStruct` instance on its
     object type. -/
 def depFunctionalToCategoryStruct (D : DepFunctionalCategory) :
-    CategoryStruct D.data.objT where
-  Hom := D.data.morT
+    CategoryStruct D.toDepCategoryData.objT where
+  Hom := D.toDepCategoryData.morT
   id := D.idMor
   comp := D.compMor
 
@@ -294,7 +295,7 @@ def depFunctionalToCategoryStruct (D : DepFunctionalCategory) :
 def depFunctionalToBundledCategoryStruct.{u₁, u₂, u₃, u₄}
   (D : DepFunctionalCategory.{u₁ + 1, u₂ + 1, u₃, u₄}) :
     BundledCategoryStruct.{u₂, u₁} :=
-  @BundledCategoryStruct.of D.data.objT (depFunctionalToCategoryStruct D)
+  @BundledCategoryStruct.of D.toDepCategoryData.objT (depFunctionalToCategoryStruct D)
 
 /-- Round-trip from `BundledCategoryStruct` to `DepFunctionalCategory` and back
     is the identity. -/
@@ -327,14 +328,10 @@ structure DepCategoryData.WitnessSubsingleton.{u₁, u₂, u₃, u₄}
 
 /-- A `DepCategoryData` bundled with functionality and subsingleton witnesses.
     These are exactly the objects that correspond to `BundledCategoryStruct`. -/
-structure DepFunctionalSubsingleton.{u₁, u₂, u₃, u₄} :
-    Type (max u₁ u₂ u₃ u₄) where
-  /-- The underlying category data -/
-  data : DepCategoryData.{u₁, u₂, u₃, u₄}
-  /-- The functionality witnesses -/
-  functional : data.Functional
+structure DepFunctionalSubsingleton.{u₁, u₂, u₃, u₄}
+    extends DepFunctionalCategory.{u₁, u₂, u₃, u₄} where
   /-- The subsingleton witnesses -/
-  subsingleton : data.WitnessSubsingleton
+  subsingleton : toDepCategoryData.WitnessSubsingleton
 
 /-- A `BundledCategoryStruct` converted to `DepCategoryData` satisfies
     `IdSubsingleton`. -/
@@ -359,16 +356,14 @@ def bundledCategoryStructToDepData_witnessSubsingleton (C : BundledCategoryStruc
 def bundledCategoryStructToDepFunctionalSubsingleton.{u₁, u₂, u₃, u₄}
     (C : BundledCategoryStruct.{u₂, u₁}) :
       DepFunctionalSubsingleton.{u₁ + 1, u₂ + 1, max 1 u₃, max 1 u₄} where
-  data := bundledCategoryStructToDepData C
-  functional := bundledCategoryStructToDepData_functional C
+  toDepFunctionalCategory := bundledCategoryStructToDepFunctional C
   subsingleton := bundledCategoryStructToDepData_witnessSubsingleton C
 
 /-- Convert a `DepFunctionalSubsingleton` to a `DepFunctionalCategory`. -/
 def depFunctionalSubsingletonToFunctional.{u₁, u₂, u₃, u₄}
     (D : DepFunctionalSubsingleton.{u₁, u₂, u₃, u₄}) :
-      DepFunctionalCategory.{u₁, u₂, u₃, u₄} where
-  data := D.data
-  functional := D.functional
+      DepFunctionalCategory.{u₁, u₂, u₃, u₄} :=
+  D.toDepFunctionalCategory
 
 /-- Convert a `DepFunctionalSubsingleton` to a `BundledCategoryStruct`. -/
 def depFunctionalSubsingletonToBundledCategoryStruct.{u₁, u₂, u₃, u₄}
@@ -389,25 +384,26 @@ theorem bundledCategoryStruct_subsingleton_roundtrip.{u₁, u₂, u₃, u₄}
 theorem depFunctionalSubsingleton_roundtrip_objT.{u₁, u₂, u₃, u₄}
     (D : DepFunctionalSubsingleton.{u₁ + 1, u₂ + 1, max 1 u₃, max 1 u₄}) :
     (bundledCategoryStructToDepFunctionalSubsingleton.{u₁, u₂, u₃, u₄}
-      (depFunctionalSubsingletonToBundledCategoryStruct D)).data.objT =
-    D.data.objT :=
+      (depFunctionalSubsingletonToBundledCategoryStruct D)).toDepCategoryData.objT =
+    D.toDepCategoryData.objT :=
   rfl
 
 /-- For a `DepFunctionalSubsingleton`, the morphisms are preserved after
     round-tripping through `BundledCategoryStruct`. -/
 theorem depFunctionalSubsingleton_roundtrip_morT.{u₁, u₂, u₃, u₄}
     (D : DepFunctionalSubsingleton.{u₁ + 1, u₂ + 1, max 1 u₃, max 1 u₄})
-    (a b : D.data.objT) :
+    (a b : D.toDepCategoryData.objT) :
     (bundledCategoryStructToDepFunctionalSubsingleton.{u₁, u₂, u₃, u₄}
-      (depFunctionalSubsingletonToBundledCategoryStruct D)).data.morT a b =
-    D.data.morT a b :=
+      (depFunctionalSubsingletonToBundledCategoryStruct D)).toDepCategoryData.morT a b =
+    D.toDepCategoryData.morT a b :=
   rfl
 
 /-- For a `DepFunctionalSubsingleton`, the identity witness holds if and only
     if the morphism equals the functionally-determined identity. -/
 theorem depFunctionalSubsingleton_idT_iff
-    (D : DepFunctionalSubsingleton) {o : D.data.objT} (m : D.data.morT o o) :
-    D.data.idT m ↔ m = (D.functional.exists_.id o).fst := by
+    (D : DepFunctionalSubsingleton)
+    {o : D.toDepCategoryData.objT} (m : D.toDepCategoryData.morT o o) :
+    D.toDepCategoryData.idT m ↔ m = (D.functional.exists_.id o).fst := by
   constructor
   · intro hm
     exact D.functional.unique.id o m _ hm (D.functional.exists_.id o).snd
@@ -417,9 +413,11 @@ theorem depFunctionalSubsingleton_idT_iff
 /-- For a `DepFunctionalSubsingleton`, the composition witness holds if and
     only if the result equals the functionally-determined composite. -/
 theorem depFunctionalSubsingleton_compT_iff
-    (D : DepFunctionalSubsingleton) {a b c : D.data.objT}
-    (f : D.data.morT a b) (g : D.data.morT b c) (h : D.data.morT a c) :
-    D.data.compT f g h ↔ h = (D.functional.exists_.comp f g).fst := by
+    (D : DepFunctionalSubsingleton) {a b c : D.toDepCategoryData.objT}
+    (f : D.toDepCategoryData.morT a b) (g : D.toDepCategoryData.morT b c)
+    (h : D.toDepCategoryData.morT a c) :
+    D.toDepCategoryData.compT f g h ↔
+      h = (D.functional.exists_.comp f g).fst := by
   constructor
   · intro hcomp
     exact D.functional.unique.comp f g h _ hcomp (D.functional.exists_.comp f g).snd
@@ -429,38 +427,45 @@ theorem depFunctionalSubsingleton_compT_iff
 /-- Convert an original `idT` witness to the round-tripped `idT` witness. -/
 def depFunctionalSubsingleton_roundtrip_idT_to.{u₁, u₂, u₃, u₄}
     (D : DepFunctionalSubsingleton.{u₁ + 1, u₂ + 1, max 1 u₃, max 1 u₄})
-    {o : D.data.objT} {m : D.data.morT o o} (hid : D.data.idT m) :
-    (bundledCategoryStructToDepFunctionalSubsingleton.{u₁, u₂, u₃, u₄}
-      (depFunctionalSubsingletonToBundledCategoryStruct D)).data.idT m :=
+    {o : D.toDepCategoryData.objT} {m : D.toDepCategoryData.morT o o}
+    (hid : D.toDepCategoryData.idT m) :
+    let D' := bundledCategoryStructToDepFunctionalSubsingleton.{u₁, u₂, u₃, u₄}
+      (depFunctionalSubsingletonToBundledCategoryStruct D)
+    D'.toDepCategoryData.idT m :=
   ⟨D.functional.unique.id o m _ hid (D.functional.exists_.id o).snd⟩
 
 /-- Convert a round-tripped `idT` witness back to the original `idT` witness. -/
 def depFunctionalSubsingleton_roundtrip_idT_from.{u₁, u₂, u₃, u₄}
     (D : DepFunctionalSubsingleton.{u₁ + 1, u₂ + 1, max 1 u₃, max 1 u₄})
-    {o : D.data.objT} {m : D.data.morT o o}
+    {o : D.toDepCategoryData.objT} {m : D.toDepCategoryData.morT o o}
     (hid : (bundledCategoryStructToDepFunctionalSubsingleton.{u₁, u₂, u₃, u₄}
-      (depFunctionalSubsingletonToBundledCategoryStruct D)).data.idT m) :
-    D.data.idT m :=
+      (depFunctionalSubsingletonToBundledCategoryStruct D)).toDepCategoryData.idT m) :
+    D.toDepCategoryData.idT m :=
   hid.down ▸ (D.functional.exists_.id o).snd
 
 /-- Convert an original `compT` witness to the round-tripped `compT` witness. -/
 def depFunctionalSubsingleton_roundtrip_compT_to.{u₁, u₂, u₃, u₄}
     (D : DepFunctionalSubsingleton.{u₁ + 1, u₂ + 1, max 1 u₃, max 1 u₄})
-    {a b c : D.data.objT}
-    {f : D.data.morT a b} {g : D.data.morT b c} {h : D.data.morT a c}
-    (hcomp : D.data.compT f g h) :
-    (bundledCategoryStructToDepFunctionalSubsingleton.{u₁, u₂, u₃, u₄}
-      (depFunctionalSubsingletonToBundledCategoryStruct D)).data.compT f g h :=
+    {a b c : D.toDepCategoryData.objT}
+    {f : D.toDepCategoryData.morT a b} {g : D.toDepCategoryData.morT b c}
+    {h : D.toDepCategoryData.morT a c}
+    (hcomp : D.toDepCategoryData.compT f g h) :
+    let D' := bundledCategoryStructToDepFunctionalSubsingleton.{u₁, u₂, u₃, u₄}
+      (depFunctionalSubsingletonToBundledCategoryStruct D)
+    D'.toDepCategoryData.compT f g h :=
   ⟨D.functional.unique.comp f g h _ hcomp (D.functional.exists_.comp f g).snd⟩
 
 /-- Convert a round-tripped `compT` witness back to the original `compT` witness. -/
 def depFunctionalSubsingleton_roundtrip_compT_from.{u₁, u₂, u₃, u₄}
     (D : DepFunctionalSubsingleton.{u₁ + 1, u₂ + 1, max 1 u₃, max 1 u₄})
-    {a b c : D.data.objT}
-    {f : D.data.morT a b} {g : D.data.morT b c} {h : D.data.morT a c}
-    (hcomp : (bundledCategoryStructToDepFunctionalSubsingleton.{u₁, u₂, u₃, u₄}
-      (depFunctionalSubsingletonToBundledCategoryStruct D)).data.compT f g h) :
-    D.data.compT f g h :=
+    {a b c : D.toDepCategoryData.objT}
+    {f : D.toDepCategoryData.morT a b} {g : D.toDepCategoryData.morT b c}
+    {h : D.toDepCategoryData.morT a c}
+    (hcomp :
+      let D' := bundledCategoryStructToDepFunctionalSubsingleton.{u₁, u₂, u₃, u₄}
+        (depFunctionalSubsingletonToBundledCategoryStruct D)
+      D'.toDepCategoryData.compT f g h) :
+    D.toDepCategoryData.compT f g h :=
   hcomp.down ▸ (D.functional.exists_.comp f g).snd
 
 end SubsingletonConditions
