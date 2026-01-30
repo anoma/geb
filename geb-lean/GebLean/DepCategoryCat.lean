@@ -188,7 +188,7 @@ section FunctionalCategoryEquiv
 
 /-- A `DepCategoryData` bundled with its functionality witnesses.
     These are the objects that have the data of a category (without laws). -/
-structure DepFunctionalCategory.{u₁, u₂, u₃, u₄}
+structure DepFunctionalCategory.{u₁, u₂, u₃, u₄} : Type (max u₁ u₂ u₃ u₄)
     extends DepCompleteObj.{u₁, u₂, u₃, u₄} where
   /-- The uniqueness witnesses -/
   unique : toDepCompleteObj.toDepCategoryData.Unique
@@ -333,7 +333,7 @@ structure DepCategoryData.WitnessSubsingleton.{u₁, u₂, u₃, u₄}
 
 /-- A `DepCategoryData` bundled with functionality and subsingleton witnesses.
     These are exactly the objects that correspond to `BundledCategoryStruct`. -/
-structure DepFunctionalSubsingleton.{u₁, u₂, u₃, u₄}
+structure DepFunctionalSubsingleton.{u₁, u₂, u₃, u₄} : Type (max u₁ u₂ u₃ u₄)
     extends DepFunctionalCategory.{u₁, u₂, u₃, u₄} where
   /-- The subsingleton witnesses -/
   subsingleton : toDepCategoryData.WitnessSubsingleton
