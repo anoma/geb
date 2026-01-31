@@ -11,9 +11,11 @@ categories) into `DepCategoryData`.
    - `DepCompleteCL` = FullSubcategory of `DepCompleteObj` with `CategoryLaws`
    - `DepCompleteUCL` = FullSubcategory of `DepCompleteCL` with `Unique`
    - `DepCategoryCat` = FullSubcategory of `DepCompleteUCL` with `WitnessSubsingleton`
-   - Equivalence `DepCategoryCat ≃ Cat`
+   - Equivalence `DepCategoryCat.{u, v, w₃, w₄} ≃ Cat.{v, u}` for
+     arbitrary `w₃, w₄`
    - Inclusion functors from mathlib's `ObjectProperty.ι`
    - Computable `FullyFaithful` instances (using explicit `preimage`)
+   - `PropBox.{u}` inductive type to lift `Prop` to arbitrary `Sort (u + 1)`
 
 2. `DepCategoryAdjunction.lean`:
    - `truncateWitnessesFunctor` truncates witness types via `Quotient trueSetoid`

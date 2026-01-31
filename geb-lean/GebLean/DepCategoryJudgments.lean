@@ -41,7 +41,7 @@ structure DepCategoryData.{u₁, u₂, u₃, u₄} : Type (max u₁ u₂ u₃ u�
 structure DepNatTransData.{u₁, u₂, u₃, u₄, v₁, v₂, v₃, v₄}
     (F : DepCategoryData.{u₁, u₂, u₃, u₄})
     (G : DepCategoryData.{v₁, v₂, v₃, v₄}) :
-    Type (max u₁ u₂ u₃ u₄ v₁ v₂ v₃ v₄) where
+    Sort (max 1 u₁ u₂ u₃ u₄ v₁ v₂ v₃ v₄) where
   appObj : F.objT → G.objT
   appMor : {a b : F.objT} → F.morT a b → G.morT (appObj a) (appObj b)
   appId : {o : F.objT} → {m : F.morT o o} → F.idT m →
@@ -68,8 +68,18 @@ def DepNatTransData.comp {F G H : DepCategoryData}
 
 /-- Category instance for DepCategoryData with DepNatTransData as
     morphisms. -/
-instance DepCategoryDataCat.{u₁, u₂, u₃, u₄} :
-    SmallCategory.{max u₁ u₂ u₃ u₄} DepCategoryData.{u₁, u₂, u₃, u₄} where
+instance DepCategoryDataSmallPropCat :
+    Category.{0, 0} DepCategoryData.{0, 0, 0, 0} where
+  Hom := DepNatTransData
+  id := DepNatTransData.id
+  comp := DepNatTransData.comp
+  id_comp := by intros; rfl
+  comp_id := by intros; rfl
+  assoc := by intros; rfl
+
+instance DepCategoryDataLargeCat.{u₁, u₂, u₃, u₄} :
+    LargeCategory.{max u₁ u₂ u₃ u₄}
+      DepCategoryData.{u₁ + 1, u₂ + 1, u₃ + 1, u₄ + 1} where
   Hom := DepNatTransData
   id := DepNatTransData.id
   comp := DepNatTransData.comp

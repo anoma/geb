@@ -56,7 +56,8 @@ section WitnessSubsingletonReflection
     (all elements related), making them subsingletons while staying in the
     same universe and remaining constructive. -/
 def DepCategoryData.truncateWitnesses.{u₁, u₂, u₃, u₄}
-    (D : DepCategoryData.{u₁, u₂, u₃, u₄}) : DepCategoryData.{u₁, u₂, u₃, u₄} where
+    (D : DepCategoryData.{u₁ + 1, u₂ + 1, u₃ + 1, u₄ + 1}) :
+    DepCategoryData.{u₁ + 1, u₂ + 1, u₃ + 1, u₄ + 1} where
   objT := D.objT
   morT := D.morT
   idT := fun m => Quotient (@trueSetoid (D.idT m))
@@ -87,9 +88,11 @@ def DepCategoryData.truncateWitnessesUnit (D : DepCategoryData) :
   appId := fun wit => Quotient.mk trueSetoid wit
   appComp := fun wit => Quotient.mk trueSetoid wit
 
-/-- The truncation functor on `DepCategoryData`. Stays in the same universe. -/
+/-- The truncation functor on `DepCategoryData`. Uses the LargeCategory instance
+    which requires universe levels of the form `{u₁+1, u₂+1, u₃+1, u₄+1}`. -/
 def truncateWitnessesFunctor.{u₁, u₂, u₃, u₄} :
-    DepCategoryData.{u₁, u₂, u₃, u₄} ⥤ DepCategoryData.{u₁, u₂, u₃, u₄} where
+    DepCategoryData.{u₁ + 1, u₂ + 1, u₃ + 1, u₄ + 1} ⥤
+    DepCategoryData.{u₁ + 1, u₂ + 1, u₃ + 1, u₄ + 1} where
   obj := DepCategoryData.truncateWitnesses
   map := fun {D E} α => {
     appObj := α.appObj
@@ -131,23 +134,29 @@ def DepCategoryData.truncateWitnessesCounit {D : DepCategoryData}
   appComp := Quotient.lift _root_.id
     (fun a b _ => @Subsingleton.elim _ (h.comp _ _ _) a b)
 
-/-- `WitnessSubsingleton` as an `ObjectProperty` on `DepCategoryData`. -/
+/-- `WitnessSubsingleton` as an `ObjectProperty` on `DepCategoryData`.
+    Uses universe levels compatible with the LargeCategory instance. -/
 def witnessSubsingletonProperty.{u₁, u₂, u₃, u₄} :
-    ObjectProperty DepCategoryData.{u₁, u₂, u₃, u₄} :=
+    ObjectProperty DepCategoryData.{u₁ + 1, u₂ + 1, u₃ + 1, u₄ + 1} :=
   DepCategoryData.WitnessSubsingleton
 
-/-- The full subcategory of `DepCategoryData` satisfying `WitnessSubsingleton`. -/
+/-- The full subcategory of `DepCategoryData` satisfying `WitnessSubsingleton`.
+    Uses universe levels compatible with the LargeCategory instance. -/
 abbrev DepCategoryDataWS.{u₁, u₂, u₃, u₄} : Type _ :=
   ObjectProperty.FullSubcategory witnessSubsingletonProperty.{u₁, u₂, u₃, u₄}
 
-/-- The inclusion functor from `DepCategoryDataWS` to `DepCategoryData`. -/
+/-- The inclusion functor from `DepCategoryDataWS` to `DepCategoryData`.
+    Uses universe levels compatible with the LargeCategory instance. -/
 abbrev depCategoryDataWSIncl.{u₁, u₂, u₃, u₄} :
-    DepCategoryDataWS.{u₁, u₂, u₃, u₄} ⥤ DepCategoryData.{u₁, u₂, u₃, u₄} :=
+    DepCategoryDataWS.{u₁, u₂, u₃, u₄} ⥤
+    DepCategoryData.{u₁ + 1, u₂ + 1, u₃ + 1, u₄ + 1} :=
   witnessSubsingletonProperty.ι
 
-/-- The truncation functor lifts to `DepCategoryDataWS`. -/
+/-- The truncation functor lifts to `DepCategoryDataWS`.
+    Uses universe levels compatible with the LargeCategory instance. -/
 def truncateWitnessesFunctorToWS.{u₁, u₂, u₃, u₄} :
-    DepCategoryData.{u₁, u₂, u₃, u₄} ⥤ DepCategoryDataWS.{u₁, u₂, u₃, u₄} where
+    DepCategoryData.{u₁ + 1, u₂ + 1, u₃ + 1, u₄ + 1} ⥤
+    DepCategoryDataWS.{u₁, u₂, u₃, u₄} where
   obj := fun D => ⟨D.truncateWitnesses, D.truncateWitnesses_witnessSubsingleton⟩
   map := fun {D E} α => ObjectProperty.homMk (truncateWitnessesFunctor.map α)
   map_id := fun D => by
@@ -164,7 +173,11 @@ category `C` with a functor `ι : C ⥤ DepCategoryData`. This allows the reflec
 to be applied at any level of the subcategory chain.
 -/
 
-variable {C : Type*} [Category C] (ι : C ⥤ DepCategoryData)
+section ParameterizedReflection
+
+universe u₁' u₂' u₃' u₄'
+variable {C : Type*} [Category C]
+         (ι : C ⥤ DepCategoryData.{u₁' + 1, u₂' + 1, u₃' + 1, u₄' + 1})
 
 /-- The `WitnessSubsingleton` property pulled back along a functor to
     `DepCategoryData`. An object `X : C` satisfies this property when
@@ -248,6 +261,8 @@ def truncateWitnessesCounitIsoAt (X : FullSubcategoryWS ι) :
       funext _ _ _ f g h w
       rfl
 
+end ParameterizedReflection
+
 /-! ### Reflective Instance for WitnessSubsingleton
 
 We complete the WitnessSubsingleton reflection by constructing the adjunction
@@ -255,7 +270,7 @@ and proving `Reflective depCategoryDataWSIncl`. -/
 
 /-- The unit of the truncation adjunction: D → truncate(D). -/
 def truncateWitnessesAdjUnit.{u₁, u₂, u₃, u₄} :
-    (𝟭 DepCategoryData.{u₁, u₂, u₃, u₄}) ⟶
+    (𝟭 DepCategoryData.{u₁ + 1, u₂ + 1, u₃ + 1, u₄ + 1}) ⟶
     truncateWitnessesFunctorToWS.{u₁, u₂, u₃, u₄} ⋙
     depCategoryDataWSIncl.{u₁, u₂, u₃, u₄} where
   app := fun D => D.truncateWitnessesUnit

@@ -71,13 +71,35 @@ open CategoryTheory
 
 section DepCategoryLift
 
+/-- Box a `Prop` into an arbitrary universe `Sort (u + 1)`. This allows lifting
+    propositions to higher universes while maintaining their proof content. -/
+inductive PropBox.{u} (P : Prop) : Sort (u + 1) where
+  | mk : P → PropBox P
+
+/-- Extract the proof from a `PropBox`. -/
+def PropBox.down.{u} {P : Prop} : PropBox.{u} P → P
+  | .mk p => p
+
+/-- Two `PropBox` values are equal if and only if the underlying proofs exist
+    (which they must, since we have the boxes). -/
+theorem PropBox.eq.{u} {P : Prop} (a b : PropBox.{u} P) : a = b := by
+  cases a; cases b; rfl
+
+/-- `PropBox` is a subsingleton since all boxes of the same proposition are
+    equal. -/
+instance PropBox.instSubsingleton.{u} {P : Prop} : Subsingleton (PropBox.{u} P) :=
+  ⟨PropBox.eq⟩
+
+/-- Lift a `DepCategoryData` with `Prop`-valued witnesses to one with witnesses
+    at arbitrary universe levels. Uses `PropBox` to lift from `Prop`
+    (Sort 0) to `Sort (u + 1)`. -/
 def lift.{u₁, u₂, u₃, u₄}
   (D : DepCategoryData.{u₁, u₂, 0, 0}) :
-    DepCategoryData.{u₁, u₂, max 1 u₃, max 1 u₄} :=
+    DepCategoryData.{u₁, u₂, u₃ + 1, u₄ + 1} :=
   { objT := D.objT
     morT := D.morT
-    idT m := PULift.{u₃, 0} (D.idT m)
-    compT f g h := PULift.{u₄, 0} (D.compT f g h) }
+    idT m := PropBox.{u₃} (D.idT m)
+    compT f g h := PropBox.{u₄} (D.compT f g h) }
 
 end DepCategoryLift
 
@@ -122,7 +144,7 @@ structure DepCompleteObj.{u₁, u₂, u₃, u₄} : Type (max u₁ u₂ u₃ u�
     identities and compositions map to compositions. -/
 abbrev DepCompleteObj.Hom.{u₁, u₂, u₃, u₄, v₁, v₂, v₃, v₄}
   (F : DepCompleteObj.{u₁, u₂, u₃, u₄}) (G : DepCompleteObj.{v₁, v₂, v₃, v₄}) :
-  Type (max u₁ u₂ u₃ u₄ v₁ v₂ v₃ v₄) :=
+  Sort (max 1 u₁ u₂ u₃ u₄ v₁ v₂ v₃ v₄) :=
     DepNatTransData.{u₁, u₂, u₃, u₄, v₁, v₂, v₃, v₄}
        F.toDepCategoryData
        G.toDepCategoryData
@@ -139,8 +161,18 @@ def DepCompleteObj.comp {F G H : DepCompleteObj}
 /-- Category instance for `DepCompleteObj`. Since morphisms are exactly
     `DepNatTransData` on the underlying `DepCategoryData`, the category laws
     hold by the same proofs as for `DepCategoryData`. -/
-instance DepCompleteCat.{u₁, u₂, u₃, u₄} :
-    SmallCategory.{max u₁ u₂ u₃ u₄} DepCompleteObj.{u₁, u₂, u₃, u₄} where
+instance DepCompleteSmallPropCat :
+    SmallCategory.{0} DepCompleteObj.{0, 0, 0, 0} where
+  Hom := DepCompleteObj.Hom
+  id := DepCompleteObj.id
+  comp := DepCompleteObj.comp
+  id_comp := by intros; rfl
+  comp_id := by intros; rfl
+  assoc := by intros; rfl
+
+instance DepCompleteLargeCat.{u₁, u₂, u₃, u₄} :
+    LargeCategory.{max u₁ u₂ u₃ u₄}
+      DepCompleteObj.{u₁ + 1, u₂ + 1, u₃ + 1, u₄ + 1} where
   Hom := DepCompleteObj.Hom
   id := DepCompleteObj.id
   comp := DepCompleteObj.comp
@@ -334,8 +366,8 @@ from mathlib's `ObjectProperty.ι`. -/
 
 /-- The property that a `DepCompleteObj` has CategoryLaws. -/
 def HasCategoryLaws.{u₁, u₂, u₃, u₄} :
-  ObjectProperty.{max u₁ u₂ u₃ u₄, max u₁ u₂ u₃ u₄}
-    DepCompleteObj.{u₁, u₂, u₃, u₄} :=
+  ObjectProperty.{max u₁ u₂ u₃ u₄, max u₁ u₂ u₃ u₄ + 1}
+    DepCompleteObj.{u₁ + 1, u₂ + 1, u₃ + 1, u₄ + 1} :=
   fun D ↦ D.toDepCategoryData.CategoryLaws
 
 /-- The full subcategory of `DepCompleteObj` with CategoryLaws.
@@ -344,12 +376,13 @@ abbrev DepCompleteCL.{u₁, u₂, u₃, u₄} :=
   HasCategoryLaws.{u₁, u₂, u₃, u₄}.FullSubcategory
 
 instance DepCompleteCLInstance.{u₁, u₂, u₃, u₄} :
-  SmallCategory.{max u₁ u₂ u₃ u₄} DepCompleteCL.{u₁, u₂, u₃, u₄} :=
+  LargeCategory.{max u₁ u₂ u₃ u₄} DepCompleteCL.{u₁, u₂, u₃, u₄} :=
     ObjectProperty.FullSubcategory.category HasCategoryLaws.{u₁, u₂, u₃, u₄}
 
 /-- The inclusion functor from `DepCompleteCL` to `DepCompleteObj`. -/
 abbrev DepCompleteCL.ι.{u₁, u₂, u₃, u₄} :
-    DepCompleteCL.{u₁, u₂, u₃, u₄} ⥤ DepCompleteObj.{u₁, u₂, u₃, u₄} :=
+    DepCompleteCL.{u₁, u₂, u₃, u₄} ⥤
+    DepCompleteObj.{u₁ + 1, u₂ + 1, u₃ + 1, u₄ + 1} :=
   HasCategoryLaws.ι
 
 /-- Extract the underlying `DepCompleteObj` from a `DepCompleteCL`. -/
@@ -361,7 +394,7 @@ abbrev DepCompleteCL.toDepCategoryData (D : DepCompleteCL) : DepCategoryData :=
 
 /-- The property that a `DepCompleteCL` has Unique morphisms. -/
 def DepCompleteCL.HasUnique.{u₁, u₂, u₃, u₄} :
-  ObjectProperty.{max u₁ u₂ u₃ u₄, max u₁ u₂ u₃ u₄}
+  ObjectProperty.{max u₁ u₂ u₃ u₄, max u₁ u₂ u₃ u₄ + 1}
     DepCompleteCL.{u₁, u₂, u₃, u₄} :=
   fun D ↦ D.toDepCategoryData.Unique
 
@@ -370,7 +403,7 @@ abbrev DepCompleteUCL.{u₁, u₂, u₃, u₄} :=
   DepCompleteCL.HasUnique.{u₁, u₂, u₃, u₄}.FullSubcategory
 
 instance DepCompleteUCLInstance.{u₁, u₂, u₃, u₄} :
-  SmallCategory.{max u₁ u₂ u₃ u₄} DepCompleteUCL.{u₁, u₂, u₃, u₄} :=
+  LargeCategory.{max u₁ u₂ u₃ u₄} DepCompleteUCL.{u₁, u₂, u₃, u₄} :=
     ObjectProperty.FullSubcategory.category DepCompleteCL.HasUnique.{u₁, u₂, u₃, u₄}
 
 /-- The inclusion functor from `DepCompleteUCL` to `DepCompleteCL`. -/
@@ -391,17 +424,17 @@ abbrev DepCompleteUCL.toDepCategoryData (D : DepCompleteUCL) : DepCategoryData :
 
 /-- The property that a `DepCompleteUCL` has subsingleton witnesses. -/
 def DepCompleteUCL.HasWitnessSubsingleton.{u₁, u₂, u₃, u₄} :
-  ObjectProperty.{max u₁ u₂ u₃ u₄, max u₁ u₂ u₃ u₄}
+  ObjectProperty.{max u₁ u₂ u₃ u₄, max u₁ u₂ u₃ u₄ + 1}
     DepCompleteUCL.{u₁, u₂, u₃, u₄} :=
   fun D ↦ D.toDepCategoryData.WitnessSubsingleton
 
 /-- The full subcategory of `DepCompleteUCL` with subsingleton witnesses.
     This is equivalent to `Cat`. -/
-abbrev DepCategoryCat.{u₁, u₂, u₃, u₄} : Type (max u₁ u₂ u₃ u₄) :=
+abbrev DepCategoryCat.{u₁, u₂, u₃, u₄} : Type (max u₁ u₂ u₃ u₄ + 1) :=
   DepCompleteUCL.HasWitnessSubsingleton.{u₁, u₂, u₃, u₄}.FullSubcategory
 
 instance DepCategoryCatInstance.{u₁, u₂, u₃, u₄} :
-  SmallCategory.{max u₁ u₂ u₃ u₄} DepCategoryCat.{u₁, u₂, u₃, u₄} :=
+  LargeCategory.{max u₁ u₂ u₃ u₄} DepCategoryCat.{u₁, u₂, u₃, u₄} :=
     ObjectProperty.FullSubcategory.category
       DepCompleteUCL.HasWitnessSubsingleton.{u₁, u₂, u₃, u₄}
 
@@ -505,17 +538,18 @@ def bundledCategoryStructToDepDataProp.{u₁, u₂}
     compT := fun {_ _ _} f g h ↦ h = C.str.comp f g }
 
 /-- Convert a `BundledCategoryStruct` to a `DepCategoryData` with lifted
-    universe levels. -/
+    universe levels. Uses `ULift (PLift _)` to lift `Prop` witnesses to
+    `Type u₃` and `Type u₄`. -/
 def bundledCategoryStructToDepData.{u₁, u₂, u₃, u₄}
   (C : BundledCategoryStruct.{u₂, u₁}) :
-    DepCategoryData.{u₁ + 1, u₂ + 1, max 1 u₃, max 1 u₄} :=
+    DepCategoryData.{u₁ + 1, u₂ + 1, u₃ + 1, u₄ + 1} :=
   lift.{u₁ + 1, u₂ + 1, u₃, u₄} (bundledCategoryStructToDepDataProp.{u₁, u₂} C)
 
 /-- A `BundledCategoryStruct` converted to `DepCategoryData` satisfies
     `IdExists`. -/
 def bundledCategoryStructToDepData_idExists (C : BundledCategoryStruct) :
     (bundledCategoryStructToDepData C).IdExists := fun o ↦
-  ⟨C.str.id o, PULift.up rfl⟩
+  ⟨C.str.id o, .mk rfl⟩
 
 /-- A `BundledCategoryStruct` converted to `DepCategoryData` satisfies
     `IdUnique`. -/
@@ -527,7 +561,7 @@ theorem bundledCategoryStructToDepData_idUnique (C : BundledCategoryStruct) :
     `CompExists`. -/
 def bundledCategoryStructToDepData_compExists (C : BundledCategoryStruct) :
     (bundledCategoryStructToDepData C).CompExists := fun f g ↦
-  ⟨C.str.comp f g, PULift.up rfl⟩
+  ⟨C.str.comp f g, .mk rfl⟩
 
 /-- A `BundledCategoryStruct` converted to `DepCategoryData` satisfies
     `CompUnique`. -/
@@ -553,13 +587,13 @@ def bundledCategoryStructToDepData_unique (C : BundledCategoryStruct) :
     `IdSubsingleton`. -/
 theorem bundledCategoryStructToDepData_idSubsingleton (C : BundledCategoryStruct) :
     (bundledCategoryStructToDepData C).IdSubsingleton := fun _ _ ↦
-  ⟨fun ⟨_⟩ ⟨_⟩ ↦ rfl⟩
+  PropBox.instSubsingleton
 
 /-- A `BundledCategoryStruct` converted to `DepCategoryData` satisfies
     `CompSubsingleton`. -/
 theorem bundledCategoryStructToDepData_compSubsingleton (C : BundledCategoryStruct) :
     (bundledCategoryStructToDepData C).CompSubsingleton := fun _ _ _ ↦
-  ⟨fun ⟨_⟩ ⟨_⟩ ↦ rfl⟩
+  PropBox.instSubsingleton
 
 /-- A `BundledCategoryStruct` converted to `DepCategoryData` satisfies
     `WitnessSubsingleton`. -/
@@ -571,7 +605,7 @@ def bundledCategoryStructToDepData_witnessSubsingleton (C : BundledCategoryStruc
 /-- Convert a `BundledCategoryStruct` to a `DepCompleteObj`. -/
 def bundledCategoryStructToDepCompleteObj.{u₁, u₂, u₃, u₄}
     (C : BundledCategoryStruct.{u₂, u₁}) :
-      DepCompleteObj.{u₁ + 1, u₂ + 1, max 1 u₃, max 1 u₄} where
+      DepCompleteObj.{u₁ + 1, u₂ + 1, u₃ + 1, u₄ + 1} where
   toDepCategoryData := bundledCategoryStructToDepData C
   exists_ := bundledCategoryStructToDepData_exists C
 
@@ -622,7 +656,7 @@ def depCompleteObjToBundledCategoryStruct.{u₁, u₂, u₃, u₄}
     is the identity. -/
 theorem bundledCategoryStruct_roundtrip.{u₁, u₂, u₃, u₄}
     (C : BundledCategoryStruct.{u₂, u₁}) :
-    depCompleteObjToBundledCategoryStruct.{u₁, u₂, max 1 u₃, max 1 u₄}
+    depCompleteObjToBundledCategoryStruct.{u₁, u₂, u₃ + 1, u₄ + 1}
       (bundledCategoryStructToDepCompleteObj.{u₁, u₂, u₃, u₄} C) = C :=
   rfl
 
@@ -699,26 +733,26 @@ def catToDepData_isCategoryLike.{u, v, w₃, w₄} (C : Cat.{v, u}) :
     bundledCategoryStructToDepData_witnessSubsingleton (catToBundledCategoryStruct C)
   categoryLaws := catToDepData_categoryLaws C
 
-/-- Convert a `Cat.{v, u}` to a `DepCompleteObj.{u+1, v+1, max 1 w₃, max 1 w₄}`. -/
+/-- Convert a `Cat.{v, u}` to a `DepCompleteObj.{u+1, v+1, w₃+1, w₄+1}`. -/
 def catToDepCompleteObj.{u, v, w₃, w₄} (C : Cat.{v, u}) :
-    DepCompleteObj.{u + 1, v + 1, max 1 w₃, max 1 w₄} :=
-  bundledCategoryStructToDepCompleteObj (catToBundledCategoryStruct C)
+    DepCompleteObj.{u + 1, v + 1, w₃ + 1, w₄ + 1} :=
+  bundledCategoryStructToDepCompleteObj.{u, v, w₃, w₄} (catToBundledCategoryStruct C)
 
-/-- Convert a `Cat.{v, u}` to a `DepCompleteCL.{u+1, v+1, max 1 w₃, max 1 w₄}`. -/
+/-- Convert a `Cat.{v, u}` to a `DepCompleteCL.{u, v, w₃, w₄}`. -/
 def catToDepCompleteCL.{u, v, w₃, w₄} (C : Cat.{v, u}) :
-    DepCompleteCL.{u + 1, v + 1, max 1 w₃, max 1 w₄} where
+    DepCompleteCL.{u, v, w₃, w₄} where
   obj := catToDepCompleteObj.{u, v, w₃, w₄} C
   property := catToDepData_categoryLaws.{u, v, w₃, w₄} C
 
-/-- Convert a `Cat.{v, u}` to a `DepCompleteUCL.{u+1, v+1, max 1 w₃, max 1 w₄}`. -/
+/-- Convert a `Cat.{v, u}` to a `DepCompleteUCL.{u, v, w₃, w₄}`. -/
 def catToDepCompleteUCL.{u, v, w₃, w₄} (C : Cat.{v, u}) :
-    DepCompleteUCL.{u + 1, v + 1, max 1 w₃, max 1 w₄} where
+    DepCompleteUCL.{u, v, w₃, w₄} where
   obj := catToDepCompleteCL.{u, v, w₃, w₄} C
   property := bundledCategoryStructToDepData_unique (catToBundledCategoryStruct C)
 
-/-- Convert a `Cat.{v, u}` to a `DepCategoryCat.{u+1, v+1, max 1 w₃, max 1 w₄}`. -/
+/-- Convert a `Cat.{v, u}` to a `DepCategoryCat.{u, v, w₃, w₄}`. -/
 def catToDepCategoryCat.{u, v, w₃, w₄} (C : Cat.{v, u}) :
-    DepCategoryCat.{u + 1, v + 1, max 1 w₃, max 1 w₄} where
+    DepCategoryCat.{u, v, w₃, w₄} where
   obj := catToDepCompleteUCL.{u, v, w₃, w₄} C
   property := bundledCategoryStructToDepData_witnessSubsingleton (catToBundledCategoryStruct C)
 
@@ -754,9 +788,11 @@ theorem depCategoryCat_assoc.{u₁, u₂, u₃, u₄} (D : DepCategoryCat.{u₁,
   have hFGH' := D.toDepCompleteObj.compMor_spec f (D.toDepCompleteObj.compMor g h)
   exact D.isCategoryLike.categoryLaws.associativity f g h _ _ _ _ hFG hGH hFGH hFGH'
 
-/-- Convert a `DepCategoryCat.{u+1, v+1, w₃, w₄}` to a `Category` instance. -/
+/-- Convert a `DepCategoryCat.{u, v, w₃, w₄}` to a `Category` instance.
+    Since `DepCategoryData` uses `Sort`, `DepCategoryCat.{u, v, w₃, w₄}` has
+    `objT : Sort (u + 1) = Type u` and `morT : Sort (v + 1) = Type v`. -/
 def depCategoryCatToCategory.{u, v, w₃, w₄}
-    (D : DepCategoryCat.{u + 1, v + 1, w₃, w₄}) :
+    (D : DepCategoryCat.{u, v, w₃, w₄}) :
     Category D.toDepCategoryData.objT where
   Hom := D.toDepCategoryData.morT
   id := D.toDepCompleteObj.idMor
@@ -765,15 +801,16 @@ def depCategoryCatToCategory.{u, v, w₃, w₄}
   comp_id := depCategoryCat_comp_id D
   assoc := depCategoryCat_assoc D
 
-/-- Convert a `DepCategoryCat.{u+1, v+1, w₃, w₄}` to a `Cat.{v, u}`. -/
+/-- Convert a `DepCategoryCat.{u, v, w₃, w₄}` to a `Cat.{v, u}`.
+    Since `DepCategoryCat.{u, v, w₃, w₄}` has `objT : Type u` (because
+    `Sort (u + 1) = Type u`) and `morT : Type v`, this maps to `Cat.{v, u}`. -/
 def depCategoryCatToCat.{u, v, w₃, w₄}
-    (D : DepCategoryCat.{u + 1, v + 1, w₃, w₄}) : Cat.{v, u} :=
+    (D : DepCategoryCat.{u, v, w₃, w₄}) : Cat.{v, u} :=
   @Cat.of D.toDepCategoryData.objT (depCategoryCatToCategory D)
 
 /-- Round-trip from `Cat.{v, u}` to `DepCategoryCat` and back is the identity. -/
 theorem cat_roundtrip.{u, v, w₃, w₄} (C : Cat.{v, u}) :
-    depCategoryCatToCat.{u, v, max 1 w₃, max 1 w₄}
-      (catToDepCategoryCat.{u, v, w₃, w₄} C) = C :=
+    depCategoryCatToCat (catToDepCategoryCat.{u, v, w₃, w₄} C) = C :=
   rfl
 
 /-- Extract the underlying `DepNatTransData` from a `DepCategoryCat` morphism.
@@ -786,28 +823,29 @@ def homToNatTrans {D E : DepCategoryCat}
     This constructs the nested `ObjectProperty.homMk` structure. -/
 def catHomToDepCategoryCatHom.{u, v, w₃, w₄} {C D : Cat.{v, u}}
     (F : C ⟶ D) :
-    catToDepCategoryCat.{u, v, w₃, w₄} C ⟶
-    catToDepCategoryCat.{u, v, w₃, w₄} D :=
+    catToDepCategoryCat.{u, v, w₃, w₄} C ⟶ catToDepCategoryCat.{u, v, w₃, w₄} D :=
   let natTrans : DepNatTransData
-      (catToDepCompleteObj C).toDepCategoryData
-      (catToDepCompleteObj D).toDepCategoryData :=
+      (catToDepCompleteObj.{u, v, w₃, w₄} C).toDepCategoryData
+      (catToDepCompleteObj.{u, v, w₃, w₄} D).toDepCategoryData :=
     { appObj := F.toFunctor.obj
       appMor := F.toFunctor.map
-      appId := fun {_o _m} ⟨h⟩ ↦ ⟨h ▸ F.toFunctor.map_id _o⟩
-      appComp := fun {_a _b _c _f _g _h} ⟨hcomp⟩ ↦ ⟨hcomp ▸ F.toFunctor.map_comp _f _g⟩ }
+      appId := fun {_o _m} h ↦ .mk (h.down ▸ F.toFunctor.map_id _o)
+      appComp := fun {_a _b _c _f _g _h} hcomp ↦
+        .mk (hcomp.down ▸ F.toFunctor.map_comp _f _g) }
   ObjectProperty.homMk (ObjectProperty.homMk (ObjectProperty.homMk natTrans))
 
 /-- The functor from `Cat` to `DepCategoryCat`. -/
 def catToDepCategoryCatFunctor.{u, v, w₃, w₄} :
-    Cat.{v, u} ⥤ DepCategoryCat.{u + 1, v + 1, max 1 w₃, max 1 w₄} where
-  obj := catToDepCategoryCat
-  map := catHomToDepCategoryCatHom
+    Cat.{v, u} ⥤ DepCategoryCat.{u, v, w₃, w₄} where
+  obj := catToDepCategoryCat.{u, v, w₃, w₄}
+  map := catHomToDepCategoryCatHom.{u, v, w₃, w₄}
   map_id _ := rfl
   map_comp _ _ := rfl
 
-/-- The functor from `DepCategoryCat` to `Cat`. -/
+/-- The functor from `DepCategoryCat` to `Cat`.
+    Uses the general `depCategoryCatToCat` definition. -/
 def depCategoryCatToCatFunctor.{u, v, w₃, w₄} :
-    DepCategoryCat.{u + 1, v + 1, max 1 w₃, max 1 w₄} ⥤ Cat.{v, u} where
+    DepCategoryCat.{u, v, w₃, w₄} ⥤ Cat.{v, u} where
   obj := depCategoryCatToCat
   map {D E} f := {
     toFunctor := {
@@ -831,52 +869,51 @@ def depCategoryCatToCatFunctor.{u, v, w₃, w₄} :
     naturally isomorphic to the identity on `Cat`. -/
 def catDepCategoryCatUnit.{u, v, w₃, w₄} :
     𝟭 Cat.{v, u} ≅
-    catToDepCategoryCatFunctor.{u, v, w₃, w₄} ⋙
-    depCategoryCatToCatFunctor.{u, v, w₃, w₄} :=
+    catToDepCategoryCatFunctor.{u, v, w₃, w₄} ⋙ depCategoryCatToCatFunctor.{u, v, w₃, w₄} :=
   NatIso.ofComponents (fun C ↦ eqToIso (cat_roundtrip C).symm) (by intros; rfl)
 
 /-- The underlying `DepNatTransData` for the counit hom from round-tripped to `D`. -/
 def depCategoryCatCounitHomNatTrans.{u, v, w₃, w₄}
-    (D : DepCategoryCat.{u + 1, v + 1, max 1 w₃, max 1 w₄}) :
+    (D : DepCategoryCat.{u, v, w₃, w₄}) :
     DepNatTransData
-      (catToDepCategoryCat (depCategoryCatToCat D)).toDepCategoryData
+      (catToDepCategoryCat.{u, v, w₃, w₄} (depCategoryCatToCat D)).toDepCategoryData
       D.toDepCategoryData :=
   { appObj := _root_.id
     appMor := _root_.id
-    appId := fun {_o _m} ⟨hEq⟩ ↦ hEq ▸ D.toDepCompleteObj.idMor_spec _o
-    appComp := fun {_a _b _c _f _g _h} ⟨hEq⟩ ↦
-      hEq ▸ D.toDepCompleteObj.compMor_spec _f _g }
+    appId := fun {_o _m} h ↦ h.down ▸ D.toDepCompleteObj.idMor_spec _o
+    appComp := fun {_a _b _c _f _g _h} h ↦
+      h.down ▸ D.toDepCompleteObj.compMor_spec _f _g }
 
 /-- The counit hom wrapped in nested `ObjectProperty.homMk` for `DepCompleteUCL`. -/
 def depCategoryCatCounitHom.{u, v, w₃, w₄}
-    (D : DepCategoryCat.{u + 1, v + 1, max 1 w₃, max 1 w₄}) :
-    (catToDepCategoryCat (depCategoryCatToCat D)).obj ⟶ D.obj :=
+    (D : DepCategoryCat.{u, v, w₃, w₄}) :
+    (catToDepCategoryCat.{u, v, w₃, w₄} (depCategoryCatToCat D)).obj ⟶ D.obj :=
   ObjectProperty.homMk (ObjectProperty.homMk (depCategoryCatCounitHomNatTrans D))
 
 /-- The underlying `DepNatTransData` for the counit inv from `D` to round-tripped. -/
 def depCategoryCatCounitInvNatTrans.{u, v, w₃, w₄}
-    (D : DepCategoryCat.{u + 1, v + 1, max 1 w₃, max 1 w₄}) :
+    (D : DepCategoryCat.{u, v, w₃, w₄}) :
     DepNatTransData
       D.toDepCategoryData
-      (catToDepCategoryCat (depCategoryCatToCat D)).toDepCategoryData :=
+      (catToDepCategoryCat.{u, v, w₃, w₄} (depCategoryCatToCat D)).toDepCategoryData :=
   { appObj := _root_.id
     appMor := _root_.id
-    appId := fun {o m} hId ↦ ⟨D.isCategoryLike.unique.id o m (D.toDepCompleteObj.idMor o)
-                                hId (D.toDepCompleteObj.idMor_spec o)⟩
+    appId := fun {o m} hId ↦ .mk (D.isCategoryLike.unique.id o m (D.toDepCompleteObj.idMor o)
+                                    hId (D.toDepCompleteObj.idMor_spec o))
     appComp := fun {_a _b _c f g h} hComp ↦
-      ⟨D.isCategoryLike.unique.comp f g h (D.toDepCompleteObj.compMor f g)
-         hComp (D.toDepCompleteObj.compMor_spec f g)⟩ }
+      .mk (D.isCategoryLike.unique.comp f g h (D.toDepCompleteObj.compMor f g)
+             hComp (D.toDepCompleteObj.compMor_spec f g)) }
 
 /-- The counit inv wrapped in nested `ObjectProperty.homMk` for `DepCompleteUCL`. -/
 def depCategoryCatCounitInv.{u, v, w₃, w₄}
-    (D : DepCategoryCat.{u + 1, v + 1, max 1 w₃, max 1 w₄}) :
-    D.obj ⟶ (catToDepCategoryCat (depCategoryCatToCat D)).obj :=
+    (D : DepCategoryCat.{u, v, w₃, w₄}) :
+    D.obj ⟶ (catToDepCategoryCat.{u, v, w₃, w₄} (depCategoryCatToCat D)).obj :=
   ObjectProperty.homMk (ObjectProperty.homMk (depCategoryCatCounitInvNatTrans D))
 
 /-- The composition `inv ≫ hom` is identity for the counit at the `DepNatTransData`
     level. -/
 theorem depCategoryCatCounit_inv_hom_natTrans.{u, v, w₃, w₄}
-    (D : DepCategoryCat.{u + 1, v + 1, max 1 w₃, max 1 w₄}) :
+    (D : DepCategoryCat.{u, v, w₃, w₄}) :
     DepNatTransData.comp (depCategoryCatCounitInvNatTrans D)
                          (depCategoryCatCounitHomNatTrans D) =
     DepNatTransData.id D.toDepCategoryData := by
@@ -900,7 +937,7 @@ theorem depCategoryCatCounit_inv_hom_natTrans.{u, v, w₃, w₄}
 
 /-- The composition `inv ≫ hom` is identity for the counit. -/
 theorem depCategoryCatCounit_inv_hom.{u, v, w₃, w₄}
-    (D : DepCategoryCat.{u + 1, v + 1, max 1 w₃, max 1 w₄}) :
+    (D : DepCategoryCat.{u, v, w₃, w₄}) :
     depCategoryCatCounitInv D ≫ depCategoryCatCounitHom D = 𝟙 D.obj := by
   simp only [depCategoryCatCounitInv, depCategoryCatCounitHom]
   apply ObjectProperty.hom_ext
@@ -912,8 +949,8 @@ theorem depCategoryCatCounit_inv_hom.{u, v, w₃, w₄}
 /-- The counit component isomorphism for `D : DepCategoryCat` as an isomorphism
     of `DepCompleteUCL`. -/
 def depCategoryCatCounitObjIso.{u, v, w₃, w₄}
-    (D : DepCategoryCat.{u + 1, v + 1, max 1 w₃, max 1 w₄}) :
-    (catToDepCategoryCat (depCategoryCatToCat D)).obj ≅ D.obj where
+    (D : DepCategoryCat.{u, v, w₃, w₄}) :
+    (catToDepCategoryCat.{u, v, w₃, w₄} (depCategoryCatToCat D)).obj ≅ D.obj where
   hom := depCategoryCatCounitHom D
   inv := depCategoryCatCounitInv D
   hom_inv_id := rfl
@@ -921,7 +958,7 @@ def depCategoryCatCounitObjIso.{u, v, w₃, w₄}
 
 /-- The counit component isomorphism for `D : DepCategoryCat`. -/
 def depCategoryCatCounitIso.{u, v, w₃, w₄}
-    (D : DepCategoryCat.{u + 1, v + 1, max 1 w₃, max 1 w₄}) :
+    (D : DepCategoryCat.{u, v, w₃, w₄}) :
     (depCategoryCatToCatFunctor.{u, v, w₃, w₄} ⋙
      catToDepCategoryCatFunctor.{u, v, w₃, w₄}).obj D ≅ D where
   hom := ObjectProperty.homMk (depCategoryCatCounitObjIso D).hom
@@ -942,7 +979,7 @@ def depCategoryCatCounitIso.{u, v, w₃, w₄}
 def depCategoryCatCounit.{u, v, w₃, w₄} :
     depCategoryCatToCatFunctor.{u, v, w₃, w₄} ⋙
     catToDepCategoryCatFunctor.{u, v, w₃, w₄} ≅
-    𝟭 DepCategoryCat.{u + 1, v + 1, max 1 w₃, max 1 w₄} :=
+    𝟭 DepCategoryCat.{u, v, w₃, w₄} :=
   NatIso.ofComponents depCategoryCatCounitIso (fun {D E} f ↦ by
     apply ObjectProperty.hom_ext
     apply ObjectProperty.hom_ext
@@ -968,7 +1005,7 @@ def depCategoryCatCounit.{u, v, w₃, w₄} :
     equivalence. -/
 theorem catDepCategoryCatEquiv_functor_unitIso_comp.{u, v, w₃, w₄} (X : Cat.{v, u}) :
     catToDepCategoryCatFunctor.{u, v, w₃, w₄}.map
-      (catDepCategoryCatUnit.{u, v, max 1 w₃, max 1 w₄}.hom.app X) ≫
+      (catDepCategoryCatUnit.{u, v, w₃, w₄}.hom.app X) ≫
     depCategoryCatCounit.{u, v, w₃, w₄}.hom.app
       (catToDepCategoryCatFunctor.{u, v, w₃, w₄}.obj X) =
     𝟙 (catToDepCategoryCatFunctor.{u, v, w₃, w₄}.obj X) := by
@@ -986,17 +1023,17 @@ theorem catDepCategoryCatEquiv_functor_unitIso_comp.{u, v, w₃, w₄} (X : Cat.
   · apply heq_of_eq
     funext o m hId
     exact @Subsingleton.elim
-      ((catToDepCategoryCat X).toDepCategoryData.idT m)
-      ((catToDepCategoryCat X).property.id o m) _ _
+      ((catToDepCategoryCat.{u, v, w₃, w₄} X).toDepCategoryData.idT m)
+      ((catToDepCategoryCat.{u, v, w₃, w₄} X).property.id o m) _ _
   · apply heq_of_eq
     funext a b c mf mg mh hComp
     exact @Subsingleton.elim
-      ((catToDepCategoryCat X).toDepCategoryData.compT mf mg mh)
-      ((catToDepCategoryCat X).property.comp mf mg mh) _ _
+      ((catToDepCategoryCat.{u, v, w₃, w₄} X).toDepCategoryData.compT mf mg mh)
+      ((catToDepCategoryCat.{u, v, w₃, w₄} X).property.comp mf mg mh) _ _
 
 /-- The equivalence of categories between `Cat` and `DepCategoryCat`. -/
 def catDepCategoryCatEquiv.{u, v, w₃, w₄} :
-    Cat.{v, u} ≌ DepCategoryCat.{u + 1, v + 1, max 1 w₃, max 1 w₄} where
+    Cat.{v, u} ≌ DepCategoryCat.{u, v, w₃, w₄} where
   functor := catToDepCategoryCatFunctor
   inverse := depCategoryCatToCatFunctor
   unitIso := catDepCategoryCatUnit
@@ -1006,29 +1043,29 @@ def catDepCategoryCatEquiv.{u, v, w₃, w₄} :
 /-- The functor `catToDepCategoryCatFunctor` is fully faithful, derived from the
     equivalence. -/
 def catToDepCategoryCatFunctor.fullyFaithful.{u, v, w₃, w₄} :
-    catToDepCategoryCatFunctor.{u, v, max 1 w₃, max 1 w₄}.FullyFaithful :=
+    catToDepCategoryCatFunctor.{u, v, w₃, w₄}.FullyFaithful :=
   catDepCategoryCatEquiv.fullyFaithfulFunctor
 
 instance catToDepCategoryCatFunctor.faithful.{u, v, w₃, w₄} :
-    catToDepCategoryCatFunctor.{u, v, max 1 w₃, max 1 w₄}.Faithful :=
+    catToDepCategoryCatFunctor.{u, v, w₃, w₄}.Faithful :=
   catDepCategoryCatEquiv.faithful_functor
 
 instance catToDepCategoryCatFunctor.full.{u, v, w₃, w₄} :
-    catToDepCategoryCatFunctor.{u, v, max 1 w₃, max 1 w₄}.Full :=
+    catToDepCategoryCatFunctor.{u, v, w₃, w₄}.Full :=
   catDepCategoryCatEquiv.full_functor
 
 /-- The functor `depCategoryCatToCatFunctor` is fully faithful, derived from the
     equivalence. -/
 def depCategoryCatToCatFunctor.fullyFaithful.{u, v, w₃, w₄} :
-    depCategoryCatToCatFunctor.{u, v, max 1 w₃, max 1 w₄}.FullyFaithful :=
+    depCategoryCatToCatFunctor.{u, v, w₃, w₄}.FullyFaithful :=
   catDepCategoryCatEquiv.fullyFaithfulInverse
 
 instance depCategoryCatToCatFunctor.faithful.{u, v, w₃, w₄} :
-    depCategoryCatToCatFunctor.{u, v, max 1 w₃, max 1 w₄}.Faithful :=
+    depCategoryCatToCatFunctor.{u, v, w₃, w₄}.Faithful :=
   catDepCategoryCatEquiv.faithful_inverse
 
 instance depCategoryCatToCatFunctor.full.{u, v, w₃, w₄} :
-    depCategoryCatToCatFunctor.{u, v, max 1 w₃, max 1 w₄}.Full :=
+    depCategoryCatToCatFunctor.{u, v, w₃, w₄}.Full :=
   catDepCategoryCatEquiv.full_inverse
 
 end CatEquivalence
@@ -1040,17 +1077,16 @@ def CatAsCatObj.{v, u} :
     Cat.of.{max u v, max u v + 1} (Cat.{v, u})
 
 def DepCategoryCatAsCatObj.{u₁, u₂, u₃, u₄} :
-  Cat.{max u₁ u₂ u₃ u₄, max u₁ u₂ u₃ u₄} :=
-    Cat.of.{max u₁ u₂ u₃ u₄, max u₁ u₂ u₃ u₄} DepCategoryCat.{u₁, u₂, u₃, u₄}
+  Cat.{max u₁ u₂ u₃ u₄, max u₁ u₂ u₃ u₄ + 1} :=
+    Cat.of.{max u₁ u₂ u₃ u₄, max u₁ u₂ u₃ u₄ + 1} DepCategoryCat.{u₁, u₂, u₃, u₄}
 
 def CatAsDepCatObj.{v, u, w₃, w₄} :
-  DepCategoryCat.{max u v + 2, max u v + 1, max 1 w₃, max 1 w₄} :=
-    catToDepCategoryCat.{max u v + 1, max u v, w₃, w₄}
-      CatAsCatObj.{v, u}
+  DepCategoryCat.{max u v + 1, max u v, w₃, w₄} :=
+    catToDepCategoryCat.{max u v + 1, max u v, w₃, w₄} CatAsCatObj.{v, u}
 
 def DepCategoryCatAsDepCatObj.{u₁, u₂, u₃, u₄, w₃, w₄} :
-  DepCategoryCat.{max u₁ u₂ u₃ u₄ + 1, max u₁ u₂ u₃ u₄ + 1, max 1 w₃, max 1 w₄} :=
-    catToDepCategoryCat.{max u₁ u₂ u₃ u₄, max u₁ u₂ u₃ u₄, w₃, w₄}
+  DepCategoryCat.{max u₁ u₂ u₃ u₄ + 1, max u₁ u₂ u₃ u₄, w₃, w₄} :=
+    catToDepCategoryCat.{max u₁ u₂ u₃ u₄ + 1, max u₁ u₂ u₃ u₄, w₃, w₄}
       DepCategoryCatAsCatObj.{u₁, u₂, u₃, u₄}
 
 end DepCategoryCatReflection
