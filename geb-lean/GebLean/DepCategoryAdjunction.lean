@@ -401,6 +401,288 @@ instance depCategoryDataWSIncl_reflective.{u₁, u₂, u₃, u₄} :
 
 end WitnessSubsingletonReflection
 
+/-! ## Reflective Inclusion: DepCategoryCat ⊆ DepCompleteUCL
+
+This section constructs the reflective inclusion of `DepCategoryCat` into
+`DepCompleteUCL` (DepComplete + Unique + CategoryLaws, without WitnessSubsingleton).
+
+The reflector is witness truncation: it takes any `DepCompleteUCL` object and
+truncates its witness types to make them subsingletons. -/
+
+section DepCategoryCatReflection
+
+/-- Truncation preserves `DepCategoryData.Exists`: if identity and composition
+    witnesses exist, so do their quotients. -/
+def DepCategoryData.truncateWitnesses_exists (D : DepCategoryData)
+    (h : D.Exists) : D.truncateWitnesses.Exists where
+  id := fun o =>
+    let ⟨m, w⟩ := h.id o
+    ⟨m, Quotient.mk trueSetoid w⟩
+  comp := fun f g =>
+    let ⟨h', w⟩ := h.comp f g
+    ⟨h', Quotient.mk trueSetoid w⟩
+
+/-- Truncation preserves `DepCategoryData.Unique`: morphism types are unchanged,
+    so uniqueness properties transfer directly. -/
+def DepCategoryData.truncateWitnesses_unique (D : DepCategoryData)
+    (h : D.Unique) : D.truncateWitnesses.Unique where
+  id := fun o m₁ m₂ w₁ w₂ => by
+    induction w₁ using Quotient.ind
+    induction w₂ using Quotient.ind
+    exact h.id o m₁ m₂ ‹_› ‹_›
+  comp := fun f g h₁ h₂ w₁ w₂ => by
+    induction w₁ using Quotient.ind
+    induction w₂ using Quotient.ind
+    exact h.comp f g h₁ h₂ ‹_› ‹_›
+
+/-- Truncation preserves `DepCategoryData.CategoryLaws`: morphism types are
+    unchanged, so the laws transfer directly. -/
+def DepCategoryData.truncateWitnesses_categoryLaws (D : DepCategoryData)
+    (h : D.CategoryLaws) : D.truncateWitnesses.CategoryLaws where
+  identity := {
+    left := fun i f hh wi wc => by
+      induction wi using Quotient.ind
+      induction wc using Quotient.ind
+      exact h.identity.left i f hh ‹_› ‹_›
+    right := fun f i hh wi wc => by
+      induction wi using Quotient.ind
+      induction wc using Quotient.ind
+      exact h.identity.right f i hh ‹_› ‹_›
+  }
+  associativity := fun f g hm fg gh fgh₁ fgh₂ wfg wgh wfgh₁ wfgh₂ => by
+    induction wfg using Quotient.ind
+    induction wgh using Quotient.ind
+    induction wfgh₁ using Quotient.ind
+    induction wfgh₂ using Quotient.ind
+    exact h.associativity f g hm fg gh fgh₁ fgh₂ ‹_› ‹_› ‹_› ‹_›
+
+/-- Truncation preserves `UniqueAndCategoryLaws`. -/
+def DepCategoryData.truncateWitnesses_uniqueAndCategoryLaws (D : DepCategoryData)
+    (h : D.UniqueAndCategoryLaws) : D.truncateWitnesses.UniqueAndCategoryLaws where
+  unique := D.truncateWitnesses_unique h.unique
+  categoryLaws := D.truncateWitnesses_categoryLaws h.categoryLaws
+
+/-- Truncation takes `DepCompleteObj` to `DepCompleteObj`, preserving existence. -/
+def DepCompleteObj.truncateWitnesses (D : DepCompleteObj) : DepCompleteObj where
+  toDepCategoryData := D.toDepCategoryData.truncateWitnesses
+  exists_ := D.toDepCategoryData.truncateWitnesses_exists D.exists_
+
+/-- Truncation produces `IsCategoryLike` from `Unique` and `CategoryLaws`. -/
+def DepCompleteObj.truncateWitnesses_isCategoryLike (D : DepCompleteObj)
+    (hUnique : D.toDepCategoryData.Unique)
+    (hLaws : D.toDepCategoryData.CategoryLaws) :
+    D.truncateWitnesses.toDepCategoryData.IsCategoryLike where
+  unique := D.toDepCategoryData.truncateWitnesses_unique hUnique
+  witnessSubsingleton := D.toDepCategoryData.truncateWitnesses_witnessSubsingleton
+  categoryLaws := D.toDepCategoryData.truncateWitnesses_categoryLaws hLaws
+
+/-- The truncation functor from `DepCompleteUCL` to `DepCategoryCat`.
+    Given `D : DepCompleteUCL`, we truncate the underlying `DepCompleteObj`
+    (accessed via `D.obj.obj`) and wrap it in the nested full subcategory. -/
+def truncateUCLFunctor.{u₁, u₂, u₃, u₄} :
+    DepCompleteUCL.{u₁, u₂, u₃, u₄} ⥤ DepCategoryCat.{u₁, u₂, u₃, u₄} where
+  obj := fun D =>
+    let truncated := D.toDepCompleteObj.truncateWitnesses
+    let hLike := D.toDepCompleteObj.truncateWitnesses_isCategoryLike D.property D.obj.property
+    { obj := { obj := { obj := truncated
+                        property :=
+                          D.toDepCompleteObj.toDepCategoryData.truncateWitnesses_categoryLaws
+                            D.obj.property }
+               property :=
+                 D.toDepCompleteObj.toDepCategoryData.truncateWitnesses_unique D.property }
+      property := D.toDepCompleteObj.toDepCategoryData.truncateWitnesses_witnessSubsingleton }
+  map := fun {D E} α =>
+    let natTrans : DepNatTransData
+        D.toDepCompleteObj.truncateWitnesses.toDepCategoryData
+        E.toDepCompleteObj.truncateWitnesses.toDepCategoryData :=
+      { appObj := α.hom.hom.appObj
+        appMor := α.hom.hom.appMor
+        appId := fun w => Quotient.map α.hom.hom.appId (fun _ _ _ => trivial) w
+        appComp := fun w => Quotient.map α.hom.hom.appComp (fun _ _ _ => trivial) w }
+    ObjectProperty.homMk (ObjectProperty.homMk (ObjectProperty.homMk natTrans))
+  map_id := fun D => by
+    apply ObjectProperty.hom_ext
+    apply ObjectProperty.hom_ext
+    apply ObjectProperty.hom_ext
+    apply DepNatTransData.ext
+    · rfl
+    · rfl
+    · apply heq_of_eq
+      funext _ m w
+      exact @Subsingleton.elim _
+        (Quotient.trueSetoid_subsingleton (D.toDepCategoryData.idT m)) _ _
+    · apply heq_of_eq
+      funext _ _ _ f g h w
+      exact @Subsingleton.elim _
+        (Quotient.trueSetoid_subsingleton (D.toDepCategoryData.compT f g h)) _ _
+  map_comp := fun {X Y Z} α β => by
+    apply ObjectProperty.hom_ext
+    apply ObjectProperty.hom_ext
+    apply ObjectProperty.hom_ext
+    apply DepNatTransData.ext
+    · rfl
+    · rfl
+    · apply heq_of_eq
+      funext _ m w
+      exact @Subsingleton.elim _
+        (Quotient.trueSetoid_subsingleton (Z.toDepCategoryData.idT _)) _ _
+    · apply heq_of_eq
+      funext _ _ _ f g h w
+      exact @Subsingleton.elim _
+        (Quotient.trueSetoid_subsingleton (Z.toDepCategoryData.compT _ _ _)) _ _
+
+/-- The unit of the DepCategoryCat ⊆ DepCompleteUCL adjunction.
+    For `D : DepCompleteUCL`, the unit maps `D` to its truncation embedded back. -/
+def truncateUCLUnit.{u₁, u₂, u₃, u₄} :
+    (𝟭 DepCompleteUCL.{u₁, u₂, u₃, u₄}) ⟶
+    truncateUCLFunctor.{u₁, u₂, u₃, u₄} ⋙ DepCategoryCat.ι.{u₁, u₂, u₃, u₄} where
+  app := fun D =>
+    ObjectProperty.homMk (ObjectProperty.homMk
+      D.toDepCategoryData.truncateWitnessesUnit)
+  naturality := fun {D E} α => by
+    apply ObjectProperty.hom_ext
+    apply ObjectProperty.hom_ext
+    apply DepNatTransData.ext
+    · rfl
+    · rfl
+    · apply heq_of_eq
+      funext o m w
+      exact @Subsingleton.elim _
+        (Quotient.trueSetoid_subsingleton (E.toDepCategoryData.idT _)) _ _
+    · apply heq_of_eq
+      funext a b c f g h w
+      exact @Subsingleton.elim _
+        (Quotient.trueSetoid_subsingleton (E.toDepCategoryData.compT _ _ _)) _ _
+
+/-- The counit of the DepCategoryCat ⊆ DepCompleteUCL adjunction.
+    For `D : DepCategoryCat`, the counit maps the truncation of `D` back to `D`. -/
+def truncateUCLCounit.{u₁, u₂, u₃, u₄} :
+    DepCategoryCat.ι.{u₁, u₂, u₃, u₄} ⋙ truncateUCLFunctor.{u₁, u₂, u₃, u₄} ⟶
+    (𝟭 DepCategoryCat.{u₁, u₂, u₃, u₄}) where
+  app := fun D =>
+    ObjectProperty.homMk (ObjectProperty.homMk (ObjectProperty.homMk
+      (DepCategoryData.truncateWitnessesCounit D.property)))
+  naturality := fun {D E} α => by
+    apply ObjectProperty.hom_ext
+    apply ObjectProperty.hom_ext
+    apply ObjectProperty.hom_ext
+    apply DepNatTransData.ext
+    · rfl
+    · rfl
+    · apply heq_of_eq
+      funext o m w
+      induction w using Quotient.ind
+      exact @Subsingleton.elim _
+        (E.property.id ((homToNatTrans α).appObj o) ((homToNatTrans α).appMor m)) _ _
+    · apply heq_of_eq
+      funext a b c f g h w
+      induction w using Quotient.ind
+      exact @Subsingleton.elim _
+        (E.property.comp
+          ((homToNatTrans α).appMor f)
+          ((homToNatTrans α).appMor g)
+          ((homToNatTrans α).appMor h)) _ _
+
+/-- The adjunction between `truncateUCLFunctor` and `DepCategoryCat.ι`. -/
+def truncateUCLAdjunction.{u₁, u₂, u₃, u₄} :
+    truncateUCLFunctor.{u₁, u₂, u₃, u₄} ⊣ DepCategoryCat.ι.{u₁, u₂, u₃, u₄} :=
+  Adjunction.mkOfUnitCounit {
+    unit := truncateUCLUnit
+    counit := truncateUCLCounit
+    left_triangle := by
+      ext D
+      simp only [NatTrans.comp_app, Functor.whiskerRight_app, Functor.comp_obj,
+                 Functor.id_obj, Functor.associator_hom_app, Functor.whiskerLeft_app,
+                 NatTrans.id_app', ObjectProperty.FullSubcategory.comp_hom,
+                 ObjectProperty.FullSubcategory.id_hom]
+      apply DepNatTransData.ext
+      · rfl
+      · rfl
+      · apply heq_of_eq
+        funext o m w
+        exact @Subsingleton.elim _
+          (Quotient.trueSetoid_subsingleton (D.toDepCategoryData.idT _)) _ _
+      · apply heq_of_eq
+        funext a b c f g h w
+        exact @Subsingleton.elim _
+          (Quotient.trueSetoid_subsingleton (D.toDepCategoryData.compT _ _ _)) _ _
+    right_triangle := by
+      ext E
+      simp only [NatTrans.comp_app, Functor.whiskerLeft_app, Functor.comp_obj,
+                 Functor.id_obj, Functor.associator_inv_app, Functor.whiskerRight_app,
+                 NatTrans.id_app', ObjectProperty.FullSubcategory.comp_hom,
+                 ObjectProperty.FullSubcategory.id_hom]
+      apply DepNatTransData.ext
+      · rfl
+      · rfl
+      · apply heq_of_eq
+        funext o m w
+        rfl
+      · apply heq_of_eq
+        funext a b c f g h w
+        rfl
+  }
+
+/-- The counit component at E is an isomorphism. -/
+def truncateUCLCounitIso.{u₁, u₂, u₃, u₄}
+    (E : DepCategoryCat.{u₁, u₂, u₃, u₄}) :
+    (DepCategoryCat.ι.{u₁, u₂, u₃, u₄} ⋙
+     truncateUCLFunctor.{u₁, u₂, u₃, u₄}).obj E ≅ E where
+  hom := truncateUCLCounit.app E
+  inv := ObjectProperty.homMk (ObjectProperty.homMk (ObjectProperty.homMk
+    E.toDepCategoryData.truncateWitnessesUnit))
+  hom_inv_id := by
+    apply ObjectProperty.hom_ext
+    apply ObjectProperty.hom_ext
+    apply ObjectProperty.hom_ext
+    simp only [Functor.comp_obj, ObjectProperty.FullSubcategory.comp_hom,
+               ObjectProperty.FullSubcategory.id_hom, ObjectProperty.homMk_hom]
+    apply DepNatTransData.ext
+    · rfl
+    · rfl
+    · apply heq_of_eq
+      funext o m w
+      exact @Subsingleton.elim _
+        (Quotient.trueSetoid_subsingleton (E.toDepCategoryData.idT _)) _ _
+    · apply heq_of_eq
+      funext a b c f g h w
+      exact @Subsingleton.elim _
+        (Quotient.trueSetoid_subsingleton (E.toDepCategoryData.compT _ _ _)) _ _
+  inv_hom_id := by
+    apply ObjectProperty.hom_ext
+    apply ObjectProperty.hom_ext
+    apply ObjectProperty.hom_ext
+    simp only [Functor.comp_obj, ObjectProperty.FullSubcategory.comp_hom,
+               ObjectProperty.FullSubcategory.id_hom, ObjectProperty.homMk_hom]
+    apply DepNatTransData.ext
+    · rfl
+    · rfl
+    · apply heq_of_eq
+      funext o m w
+      rfl
+    · apply heq_of_eq
+      funext a b c f g h w
+      rfl
+
+/-- Each counit component is an isomorphism. -/
+instance truncateUCLCounit_app_isIso.{u₁, u₂, u₃, u₄}
+    (E : DepCategoryCat.{u₁, u₂, u₃, u₄}) :
+    IsIso (truncateUCLAdjunction.{u₁, u₂, u₃, u₄}.counit.app E) :=
+  (truncateUCLCounitIso E).isIso_hom
+
+/-- The counit of the truncateUCL adjunction is a natural isomorphism. -/
+instance truncateUCLCounit_isIso.{u₁, u₂, u₃, u₄} :
+    IsIso truncateUCLAdjunction.{u₁, u₂, u₃, u₄}.counit :=
+  NatIso.isIso_of_isIso_app _
+
+/-- The inclusion of `DepCategoryCat` into `DepCompleteUCL` is reflective. -/
+instance depCategoryCatι_reflective.{u₁, u₂, u₃, u₄} :
+    Reflective DepCategoryCat.ι.{u₁, u₂, u₃, u₄} where
+  L := truncateUCLFunctor
+  adj := truncateUCLAdjunction
+
+end DepCategoryCatReflection
+
 end CategoryJudgments
 
 end GebLean
