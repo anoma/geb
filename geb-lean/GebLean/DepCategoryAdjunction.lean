@@ -2,6 +2,7 @@ import GebLean.DepCategoryCat
 import GebLean.Utilities.SetoidCat
 import Mathlib.CategoryTheory.Adjunction.Reflective
 import Mathlib.Data.Setoid.Basic
+import Mathlib.Logic.Relation
 
 /-!
 # Reflective Adjunction from Cat to DepCategoryData
