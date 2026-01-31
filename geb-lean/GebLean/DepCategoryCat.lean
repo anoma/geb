@@ -1035,8 +1035,9 @@ end CatEquivalence
 
 section DepCategoryCatReflection
 
-def CatAsCatObj.{v, u} : Cat.{max u v, max u v + 1} :=
-  Cat.of.{max u v, max u v + 1} (Cat.{v, u})
+def CatAsCatObj.{v, u} :
+  Cat.{max u v, max u v + 1} :=
+    Cat.of.{max u v, max u v + 1} (Cat.{v, u})
 
 def DepCategoryCatAsCatObj.{u₁, u₂, u₃, u₄} :
   Cat.{max u₁ u₂ u₃ u₄, max u₁ u₂ u₃ u₄} :=
