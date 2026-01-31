@@ -1039,7 +1039,7 @@ end CatEquivalence
 
 section DepCategoryCatReflection
 
-def DepCategoryCatAsDepCatObjViaCat.{u₁, u₂, u₃, u₄, w₃, w₄} :
+def DepCategoryCatAsDepCatObj.{u₁, u₂, u₃, u₄, w₃, w₄} :
   DepCategoryCat.{max u₁ u₂ u₃ u₄ + 1, max u₁ u₂ u₃ u₄ + 1} :=
     catToDepCategoryCat.{max u₁ u₂ u₃ u₄, max u₁ u₂ u₃ u₄, w₃, w₄}
       DepCategoryCatAsCatObj.{u₁, u₂, u₃, u₄}
