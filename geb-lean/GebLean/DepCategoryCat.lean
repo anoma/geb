@@ -397,13 +397,17 @@ def DepCompleteUCL.HasWitnessSubsingleton.{u₁, u₂, u₃, u₄} :
 
 /-- The full subcategory of `DepCompleteUCL` with subsingleton witnesses.
     This is equivalent to `Cat`. -/
-abbrev DepCategoryCat.{u₁, u₂, u₃, u₄} :=
+abbrev DepCategoryCat.{u₁, u₂, u₃, u₄} : Type (max u₁ u₂ u₃ u₄) :=
   DepCompleteUCL.HasWitnessSubsingleton.{u₁, u₂, u₃, u₄}.FullSubcategory
 
 instance DepCategoryCatInstance.{u₁, u₂, u₃, u₄} :
   SmallCategory.{max u₁ u₂ u₃ u₄} DepCategoryCat.{u₁, u₂, u₃, u₄} :=
     ObjectProperty.FullSubcategory.category
       DepCompleteUCL.HasWitnessSubsingleton.{u₁, u₂, u₃, u₄}
+
+def DepCategoryCatAsCatObj.{u₁, u₂, u₃, u₄} :
+  Cat.{max u₁ u₂ u₃ u₄, max u₁ u₂ u₃ u₄} :=
+    Cat.of.{max u₁ u₂ u₃ u₄, max u₁ u₂ u₃ u₄} DepCategoryCat.{u₁, u₂, u₃, u₄}
 
 /-- The inclusion functor from `DepCategoryCat` to `DepCompleteUCL`. -/
 abbrev DepCategoryCat.ι.{u₁, u₂, u₃, u₄} :
@@ -1032,6 +1036,26 @@ instance depCategoryCatToCatFunctor.full.{u, v, w₃, w₄} :
   catDepCategoryCatEquiv.full_inverse
 
 end CatEquivalence
+
+section DepCategoryCatReflection
+
+def DepCategoryCatAsDepCatObjViaCat.{u₁, u₂, u₃, u₄, w₃, w₄} :
+  DepCategoryCat.{max u₁ u₂ u₃ u₄ + 1, max u₁ u₂ u₃ u₄ + 1} :=
+    catToDepCategoryCat.{max u₁ u₂ u₃ u₄, max u₁ u₂ u₃ u₄, w₃, w₄}
+      DepCategoryCatAsCatObj.{u₁, u₂, u₃, u₄}
+
+/-- The `DepCategoryData` encoding `DepCategoryCat` as a category, with
+    `Prop`-valued witnesses. Objects are `DepCategoryCat` objects, morphisms
+    are the category morphisms, and witnesses are equality proofs. -/
+def DepCategoryCatAsDepCatDataProp.{u₁, u₂, u₃, u₄} :
+    DepCategoryData.{max u₁ u₂ u₃ u₄ + 1, max u₁ u₂ u₃ u₄ + 1, 0, 0} :=
+  { objT := DepCategoryCat.{u₁, u₂, u₃, u₄}
+    morT := fun D E => D ⟶ E
+    idT := fun {D} m => m = 𝟙 D
+    compT := fun {_ _ _} f g h => h = f ≫ g }
+
+
+end DepCategoryCatReflection
 
 end CategoryJudgments
 
