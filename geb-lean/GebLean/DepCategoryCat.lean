@@ -405,10 +405,6 @@ instance DepCategoryCatInstance.{u₁, u₂, u₃, u₄} :
     ObjectProperty.FullSubcategory.category
       DepCompleteUCL.HasWitnessSubsingleton.{u₁, u₂, u₃, u₄}
 
-def DepCategoryCatAsCatObj.{u₁, u₂, u₃, u₄} :
-  Cat.{max u₁ u₂ u₃ u₄, max u₁ u₂ u₃ u₄} :=
-    Cat.of.{max u₁ u₂ u₃ u₄, max u₁ u₂ u₃ u₄} DepCategoryCat.{u₁, u₂, u₃, u₄}
-
 /-- The inclusion functor from `DepCategoryCat` to `DepCompleteUCL`. -/
 abbrev DepCategoryCat.ι.{u₁, u₂, u₃, u₄} :
     DepCategoryCat.{u₁, u₂, u₃, u₄} ⥤ DepCompleteUCL.{u₁, u₂, u₃, u₄} :=
@@ -1038,6 +1034,10 @@ instance depCategoryCatToCatFunctor.full.{u, v, w₃, w₄} :
 end CatEquivalence
 
 section DepCategoryCatReflection
+
+def DepCategoryCatAsCatObj.{u₁, u₂, u₃, u₄} :
+  Cat.{max u₁ u₂ u₃ u₄, max u₁ u₂ u₃ u₄} :=
+    Cat.of.{max u₁ u₂ u₃ u₄, max u₁ u₂ u₃ u₄} DepCategoryCat.{u₁, u₂, u₃, u₄}
 
 def DepCategoryCatAsDepCatObj.{u₁, u₂, u₃, u₄, w₃, w₄} :
   DepCategoryCat.{max u₁ u₂ u₃ u₄ + 1, max u₁ u₂ u₃ u₄ + 1} :=
