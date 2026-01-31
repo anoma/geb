@@ -1040,7 +1040,7 @@ def DepCategoryCatAsCatObj.{u₁, u₂, u₃, u₄} :
     Cat.of.{max u₁ u₂ u₃ u₄, max u₁ u₂ u₃ u₄} DepCategoryCat.{u₁, u₂, u₃, u₄}
 
 def DepCategoryCatAsDepCatObj.{u₁, u₂, u₃, u₄, w₃, w₄} :
-  DepCategoryCat.{max u₁ u₂ u₃ u₄ + 1, max u₁ u₂ u₃ u₄ + 1} :=
+  DepCategoryCat.{max u₁ u₂ u₃ u₄ + 1, max u₁ u₂ u₃ u₄ + 1, max 1 w₃, max 1 w₄} :=
     catToDepCategoryCat.{max u₁ u₂ u₃ u₄, max u₁ u₂ u₃ u₄, w₃, w₄}
       DepCategoryCatAsCatObj.{u₁, u₂, u₃, u₄}
 
