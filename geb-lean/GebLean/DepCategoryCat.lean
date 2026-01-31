@@ -1044,17 +1044,6 @@ def DepCategoryCatAsDepCatObjViaCat.{u₁, u₂, u₃, u₄, w₃, w₄} :
     catToDepCategoryCat.{max u₁ u₂ u₃ u₄, max u₁ u₂ u₃ u₄, w₃, w₄}
       DepCategoryCatAsCatObj.{u₁, u₂, u₃, u₄}
 
-/-- The `DepCategoryData` encoding `DepCategoryCat` as a category, with
-    `Prop`-valued witnesses. Objects are `DepCategoryCat` objects, morphisms
-    are the category morphisms, and witnesses are equality proofs. -/
-def DepCategoryCatAsDepCatDataProp.{u₁, u₂, u₃, u₄} :
-    DepCategoryData.{max u₁ u₂ u₃ u₄ + 1, max u₁ u₂ u₃ u₄ + 1, 0, 0} :=
-  { objT := DepCategoryCat.{u₁, u₂, u₃, u₄}
-    morT := fun D E => D ⟶ E
-    idT := fun {D} m => m = 𝟙 D
-    compT := fun {_ _ _} f g h => h = f ≫ g }
-
-
 end DepCategoryCatReflection
 
 end CategoryJudgments
