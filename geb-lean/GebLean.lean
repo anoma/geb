@@ -9,6 +9,7 @@ import GebLean.DepCategoryAdjunction
 import GebLean.DepCategoryCat
 import GebLean.DepCategoryJudgments
 import GebLean.DinaturalNumbers
+import GebLean.Factorization
 import GebLean.FiniteQuiver
 import GebLean.FreeCoequalizerCompletion
 import GebLean.FreeToposBT
