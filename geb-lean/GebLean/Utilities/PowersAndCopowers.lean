@@ -188,6 +188,16 @@ theorem desc_inj {S : Type v} {X Y : C} (g : copower S X ⟶ Y) :
 
 end HasCopowers
 
+/-- Type u has copowers: the copower `S ·. X` is the product type `S × X`. -/
+instance typesHasCopowers : HasCopowers (Type u) where
+  copower S X := S × X
+  inj S X s := fun x => (s, x)
+  desc f := fun ⟨s, x⟩ => f s x
+  fac f s := rfl
+  uniq f g h := by
+    ext ⟨s, x⟩
+    exact congrFun (h s) x
+
 /-!
 ## Powers
 -/
@@ -351,6 +361,16 @@ theorem lift_proj {X : C} {S : Type v} {Y : C} (g : Y ⟶ power X S) :
   rw [fac]
 
 end HasPowers
+
+/-- Type u has powers: the power `X ^. S` is the function space `S → X`. -/
+instance typesHasPowers : HasPowers (Type u) where
+  power X S := S → X
+  proj X S s := fun f => f s
+  lift f := fun y s => f s y
+  fac f s := rfl
+  uniq f g h := by
+    ext y s
+    exact congrFun (h s) y
 
 /-!
 ## Copowers as Weighted Colimits over the Terminal Category
