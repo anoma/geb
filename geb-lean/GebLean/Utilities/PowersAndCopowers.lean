@@ -1839,6 +1839,162 @@ def weightedEndIsoPowerWedge {c : WeightedWedge W P}
 
 end PowerWeightedProfunctor
 
+section CopowerCoWeightedProfunctor
+
+/-!
+### Copower Profunctor for Co-Weighted Cowedges
+
+For `CoWeightedCowedge W P` (a `WeightedCocone` over `TwistedArrow C`):
+- Weight: `profunctorOnOpTwistedArrow C W : (TwistedArrow C)ᵒᵖ ⥤ Type v`
+- Diagram: `profunctorOnTwistedArrow C P : TwistedArrow C ⥤ D`
+
+By `weightedCoconeCowedgeEquiv`, this is equivalent to:
+`Cowedge (copowerProfunctor (profunctorOnOpTwistedArrow C W)
+                            (profunctorOnTwistedArrow C P))`
+-/
+
+variable [HasCopowers D]
+variable (W : Cᵒᵖ ⥤ C ⥤ Type v) (P : Cᵒᵖ ⥤ C ⥤ D)
+
+/-- The copower profunctor for co-weighted cowedges with profunctor weights.
+
+This is `copowerProfunctor` applied to the weight and diagram extracted from
+`W` and `P` via the twisted arrow category. At a twisted arrow `tw`,
+this gives `W(twCod, twDom) ·. P(twDom, twCod)`. -/
+abbrev copowerCoWeightedProfunctor :
+    (TwistedArrow C)ᵒᵖ ⥤ TwistedArrow C ⥤ D :=
+  copowerProfunctor (profunctorOnOpTwistedArrow C W) (profunctorOnTwistedArrow C P)
+
+/-- Co-weighted cowedges are equivalent to cowedges over the copower
+co-weighted profunctor.
+
+This is immediate from `weightedCoconeCowedgeEquiv` by instantiation. -/
+abbrev coWeightedCowedgeCowedgeEquiv :
+    CoWeightedCowedge W P ≌ Cowedge (copowerCoWeightedProfunctor W P) :=
+  @weightedCoconeCowedgeEquiv (TwistedArrow C) _ D _ _
+    (profunctorOnOpTwistedArrow C W)
+    (profunctorOnTwistedArrow C P)
+
+/-- `HasInitial (CoWeightedCowedge W P)` from
+`HasInitial (Cowedge (copowerCoWeightedProfunctor W P))`. -/
+def hasInitialCoWeightedCowedgeOfHasInitialCopowerCowedge
+    [HasInitial (Cowedge (copowerCoWeightedProfunctor W P))] :
+    HasInitial (CoWeightedCowedge W P) :=
+  Adjunction.hasColimitsOfShape_of_equivalence
+    (coWeightedCowedgeCowedgeEquiv W P).functor
+
+/-- `HasInitial (Cowedge (copowerCoWeightedProfunctor W P))` from
+`HasInitial (CoWeightedCowedge W P)`. -/
+def hasInitialCopowerCowedgeOfHasInitialCoWeightedCowedge
+    [HasInitial (CoWeightedCowedge W P)] :
+    HasInitial (Cowedge (copowerCoWeightedProfunctor W P)) :=
+  Adjunction.hasColimitsOfShape_of_equivalence
+    (coWeightedCowedgeCowedgeEquiv W P).inverse
+
+/-- Transfer `IsCoWeightedCoend` to `IsInitial` on cowedges over the copower
+co-weighted profunctor. -/
+def isInitialCopowerCowedgeOfIsCoWeightedCoend {c : CoWeightedCowedge W P}
+    (hc : IsCoWeightedCoend c) :
+    IsInitial ((coWeightedCowedgeCowedgeEquiv W P).functor.obj c) :=
+  isInitialOfEquivFunctor (coWeightedCowedgeCowedgeEquiv W P) hc
+
+/-- Transfer `IsInitial` on cowedges over the copower co-weighted profunctor to
+`IsCoWeightedCoend`. -/
+def isCoWeightedCoendOfIsInitialCopowerCowedge
+    {c : Cowedge (copowerCoWeightedProfunctor W P)} (hc : IsInitial c) :
+    IsCoWeightedCoend ((coWeightedCowedgeCowedgeEquiv W P).inverse.obj c) :=
+  isInitialOfEquivFunctor (coWeightedCowedgeCowedgeEquiv W P).symm hc
+
+/-- Isomorphism between a co-weighted coend apex and an initial cowedge apex.
+
+Formalizes the formula for co-weighted coends with profunctor weights. -/
+def coWeightedCoendIsoCopowerCowedge {c : CoWeightedCowedge W P}
+    (hc : IsCoWeightedCoend c)
+    {w : Cowedge (copowerCoWeightedProfunctor W P)} (hw : IsInitial w) :
+    c.pt ≅ w.pt :=
+  isInitialCowedgeIso (copowerCoWeightedProfunctor W P)
+    (isInitialCopowerCowedgeOfIsCoWeightedCoend W P hc) hw
+
+end CopowerCoWeightedProfunctor
+
+section PowerCoWeightedProfunctor
+
+/-!
+### Power Profunctor for Co-Weighted Wedges
+
+For `CoWeightedWedge W P` (a `WeightedCone` over `CoTwistedArrow C`):
+- Weight: `profunctorOnCoTwistedArrow C W : CoTwistedArrow C ⥤ Type v`
+- Diagram: `profunctorOnCoTwistedArrow C P : CoTwistedArrow C ⥤ D`
+
+By `weightedConeWedgeEquiv`, this is equivalent to:
+`Wedge (powerProfunctor (profunctorOnCoTwistedArrow C W)
+                         (profunctorOnCoTwistedArrow C P))`
+-/
+
+variable [HasPowers D]
+variable (W : Cᵒᵖ ⥤ C ⥤ Type v) (P : Cᵒᵖ ⥤ C ⥤ D)
+
+/-- The power profunctor for co-weighted wedges with profunctor weights.
+
+This is `powerProfunctor` applied to the weight and diagram extracted from
+`W` and `P` via the co-twisted arrow category. At a co-twisted arrow `cotw`,
+this gives `P(coTwDom, coTwCod) ^. W(coTwDom, coTwCod)`. -/
+abbrev powerCoWeightedProfunctor :
+    (CoTwistedArrow C)ᵒᵖ ⥤ CoTwistedArrow C ⥤ D :=
+  powerProfunctor (profunctorOnCoTwistedArrow C W) (profunctorOnCoTwistedArrow C P)
+
+/-- Co-weighted wedges are equivalent to wedges over the power co-weighted
+profunctor.
+
+This is immediate from `weightedConeWedgeEquiv` by instantiation. -/
+abbrev coWeightedWedgeWedgeEquiv :
+    CoWeightedWedge W P ≌ Wedge (powerCoWeightedProfunctor W P) :=
+  @weightedConeWedgeEquiv (CoTwistedArrow C) _ D _ _
+    (profunctorOnCoTwistedArrow C W)
+    (profunctorOnCoTwistedArrow C P)
+
+/-- `HasTerminal (CoWeightedWedge W P)` from
+`HasTerminal (Wedge (powerCoWeightedProfunctor W P))`. -/
+def hasTerminalCoWeightedWedgeOfHasTerminalPowerWedge
+    [HasTerminal (Wedge (powerCoWeightedProfunctor W P))] :
+    HasTerminal (CoWeightedWedge W P) :=
+  Adjunction.hasLimitsOfShape_of_equivalence
+    (coWeightedWedgeWedgeEquiv W P).functor
+
+/-- `HasTerminal (Wedge (powerCoWeightedProfunctor W P))` from
+`HasTerminal (CoWeightedWedge W P)`. -/
+def hasTerminalPowerWedgeOfHasTerminalCoWeightedWedge
+    [HasTerminal (CoWeightedWedge W P)] :
+    HasTerminal (Wedge (powerCoWeightedProfunctor W P)) :=
+  Adjunction.hasLimitsOfShape_of_equivalence
+    (coWeightedWedgeWedgeEquiv W P).inverse
+
+/-- Transfer `IsCoWeightedEnd` to `IsTerminal` on wedges over the power
+co-weighted profunctor. -/
+def isTerminalPowerWedgeOfIsCoWeightedEnd {c : CoWeightedWedge W P}
+    (hc : IsCoWeightedEnd c) :
+    IsTerminal ((coWeightedWedgeWedgeEquiv W P).functor.obj c) :=
+  isTerminalOfEquivFunctor (coWeightedWedgeWedgeEquiv W P) hc
+
+/-- Transfer `IsTerminal` on wedges over the power co-weighted profunctor to
+`IsCoWeightedEnd`. -/
+def isCoWeightedEndOfIsTerminalPowerWedge
+    {c : Wedge (powerCoWeightedProfunctor W P)} (hc : IsTerminal c) :
+    IsCoWeightedEnd ((coWeightedWedgeWedgeEquiv W P).inverse.obj c) :=
+  isTerminalOfEquivFunctor (coWeightedWedgeWedgeEquiv W P).symm hc
+
+/-- Isomorphism between a co-weighted end apex and a terminal wedge apex.
+
+Formalizes the formula for co-weighted ends with profunctor weights. -/
+def coWeightedEndIsoPowerWedge {c : CoWeightedWedge W P}
+    (hc : IsCoWeightedEnd c)
+    {w : Wedge (powerCoWeightedProfunctor W P)} (hw : IsTerminal w) :
+    c.pt ≅ w.pt :=
+  isTerminalWedgeIso (powerCoWeightedProfunctor W P)
+    (isTerminalPowerWedgeOfIsCoWeightedEnd W P hc) hw
+
+end PowerCoWeightedProfunctor
+
 end ProfunctorWeights
 
 end WeightedViaEnds
