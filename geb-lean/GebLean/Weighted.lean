@@ -5691,6 +5691,196 @@ end HasRestrictedEnd
 
 end RestrictedWedges
 
+section ProfunctorPullbackCowedge
+
+/-!
+## Profunctor pullback and cowedge characterization
+
+Given a profunctor `G : Cᵒᵖ ⥤ C ⥤ D` and a functor
+`F : E ⥤ C`, the *pullback profunctor*
+`profPullback G F : Eᵒᵖ ⥤ E ⥤ D` evaluates `G` on
+`F`-images: `(profPullback G F)(x, y) = G(F(x), F(y))`.
+
+Cowedges over `profPullback G (DiagElem.forget H)`
+are equivalent to strong restricted cowedges for `G`
+with restriction `H`: dinaturality over `DiagElem H`
+encodes paranaturality over `C` because morphisms in
+`DiagElem H` are exactly the `DiagCompat`-compatible
+pairs.
+-/
+
+universe u₂
+
+variable {C : Type u} [Category.{v} C]
+
+/-- The pullback of a profunctor along a functor.
+
+Given `G : Cᵒᵖ ⥤ C ⥤ D` and `F : E ⥤ C`,
+`profPullback G F` is the profunctor on `E` defined by
+`(profPullback G F)(x, y) = G(F(x), F(y))`.
+
+Constructed as
+`F.op ⋙ G ⋙ (whiskeringLeft E C D).obj F`:
+- `F.op` precomposes the contravariant argument
+- `(whiskeringLeft E C D).obj F` precomposes the
+  covariant argument
+-/
+def profPullback {E : Type u₂} [Category.{v} E]
+    {D : Type w} [Category.{v} D]
+    (G : Cᵒᵖ ⥤ C ⥤ D) (F : E ⥤ C) :
+    Eᵒᵖ ⥤ E ⥤ D :=
+  F.op ⋙ G ⋙ (Functor.whiskeringLeft E C D).obj F
+
+@[simp]
+theorem profPullback_obj_obj
+    {E : Type u₂} [Category.{v} E]
+    {D : Type w} [Category.{v} D]
+    (G : Cᵒᵖ ⥤ C ⥤ D) (F : E ⥤ C)
+    (y : Eᵒᵖ) (x : E) :
+    ((profPullback G F).obj y).obj x =
+    (G.obj (Opposite.op (F.obj y.unop))).obj
+      (F.obj x) := rfl
+
+@[simp]
+theorem profPullback_diag
+    {E : Type u₂} [Category.{v} E]
+    {D : Type w} [Category.{v} D]
+    (G : Cᵒᵖ ⥤ C ⥤ D) (F : E ⥤ C) (x : E) :
+    ((profPullback G F).obj
+      (Opposite.op x)).obj x =
+    (G.obj (Opposite.op (F.obj x))).obj
+      (F.obj x) := rfl
+
+/-- The cowedge condition for `profPullback G F`
+reduces to the `sliceProfunctor` DiagCompat
+condition on `G`. -/
+theorem profPullback_cowedge_condition
+    {E : Type u₂} [Category.{v} E]
+    {D : Type w} [Category.{v} D]
+    (G : Cᵒᵖ ⥤ C ⥤ D) (F : E ⥤ C)
+    (pt : D)
+    (ι : (x : E) →
+      (G.obj (Opposite.op (F.obj x))).obj
+        (F.obj x) ⟶ pt)
+    {x₀ x₁ : E} (g : x₀ ⟶ x₁)
+    (h : (G.map (F.map g).op).app
+          (F.obj x₀) ≫ ι x₀ =
+        (G.obj (Opposite.op
+          (F.obj x₁))).map
+          (F.map g) ≫ ι x₁) :
+    ((profPullback G F).map g.op).app
+      x₀ ≫ ι x₀ =
+    ((profPullback G F).obj
+      (Opposite.op x₁)).map g ≫ ι x₁ := by
+  exact h
+
+/-- Convert a strong restricted cowedge to a
+cowedge over the pullback profunctor.
+
+A `StrongRestrictedCowedge G H` has a paranatural
+family indexed by `(I : C, d : H(I,I))`. This
+uncurries to cowedge legs for
+`profPullback G (DiagElem.forget H)`, with
+paranaturality becoming dinaturality over
+`DiagElem H`. -/
+def strongRestrictedToCowedge
+    {D : Type w} [Category.{v} D]
+    (G : Cᵒᵖ ⥤ C ⥤ D)
+    (H : Cᵒᵖ ⥤ C ⥤ Type v)
+    (c : StrongRestrictedCowedge G H) :
+    Cowedge (profPullback G
+      (DiagElem.forget H)) :=
+  Cowedge.mk c.pt
+    (fun x => c.family x.base x.elem)
+    (fun {x₀ x₁} g => by
+      have hp :=
+        c.isParanatural
+          x₀.base x₁.base g.base
+          x₀.elem x₁.elem g.compat
+      simp only [DiagCompat,
+        sliceProfunctor_obj_map,
+        sliceProfunctor_map_app,
+        Quiver.Hom.unop_op] at hp
+      dsimp only [profPullback,
+        DiagElem.forget,
+        Functor.comp_obj,
+        Functor.comp_map,
+        Functor.op_obj,
+        Functor.op_map,
+        Functor.whiskeringLeft]
+      exact hp)
+
+/-- Convert a cowedge over the pullback profunctor
+to a strong restricted cowedge.
+
+The j-th leg `cw.π ⟨I, d⟩` of a cowedge over
+`profPullback G (DiagElem.forget H)` provides the
+family morphism at `(I, d)`, and the cowedge
+dinaturality condition over `DiagElem H` yields
+the paranaturality condition. -/
+def cowedgeToStrongRestricted
+    {D : Type w} [Category.{v} D]
+    (G : Cᵒᵖ ⥤ C ⥤ D)
+    (H : Cᵒᵖ ⥤ C ⥤ Type v)
+    (cw : Cowedge (profPullback G
+      (DiagElem.forget H))) :
+    StrongRestrictedCowedge G H :=
+  StrongRestrictedCowedge.mk' cw.pt
+    (fun I d => cw.π ⟨I, d⟩)
+    (fun I₀ I₁ f d₀ d₁ hcompat => by
+      let x₀ : DiagElem H := ⟨I₀, d₀⟩
+      let x₁ : DiagElem H := ⟨I₁, d₁⟩
+      have hcw := cw.condition
+        (show x₀ ⟶ x₁ from ⟨f, hcompat⟩)
+      dsimp only [profPullback,
+        DiagElem.forget,
+        Functor.comp_obj,
+        Functor.comp_map,
+        Functor.op_obj,
+        Functor.op_map,
+        Functor.whiskeringLeft] at hcw
+      simp only [DiagCompat,
+        sliceProfunctor_obj_map,
+        sliceProfunctor_map_app,
+        Quiver.Hom.unop_op]
+      exact hcw)
+
+/-- Round-trip: converting a strong restricted
+cowedge to a cowedge and back yields the original
+strong restricted cowedge. -/
+theorem cowedge_strongRestricted_roundtrip
+    {D : Type w} [Category.{v} D]
+    (G : Cᵒᵖ ⥤ C ⥤ D)
+    (H : Cᵒᵖ ⥤ C ⥤ Type v)
+    (c : StrongRestrictedCowedge G H) :
+    cowedgeToStrongRestricted G H
+      (strongRestrictedToCowedge G H c) = c := by
+  apply StrongRestrictedCowedge.ext
+  · rfl
+  · exact HEq.rfl
+
+/-- Round-trip: converting a cowedge to a strong
+restricted cowedge and back yields an isomorphic
+cowedge (with the same point and legs). -/
+def strongRestricted_cowedge_roundtrip
+    {D : Type w} [Category.{v} D]
+    (G : Cᵒᵖ ⥤ C ⥤ D)
+    (H : Cᵒᵖ ⥤ C ⥤ Type v)
+    (cw : Cowedge (profPullback G
+      (DiagElem.forget H))) :
+    strongRestrictedToCowedge G H
+      (cowedgeToStrongRestricted G H cw)
+      ≅ cw :=
+  Cowedge.ext (Iso.refl cw.pt) (fun j => by
+    simp only [strongRestrictedToCowedge,
+      cowedgeToStrongRestricted,
+      StrongRestrictedCowedge.mk',
+      StrongRestrictedCowedge.family,
+      Cowedge.mk_π, Iso.refl_hom]
+    erw [Category.comp_id])
+
+end ProfunctorPullbackCowedge
+
 section WeightedCowedgeEmbedding
 
 /-!
