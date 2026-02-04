@@ -6416,4 +6416,32 @@ end FunctorToConnGrothendieck
 
 end FunctorCharacterization
 
+section TwGrothendieck
+
+/-! ## TwGrothendieck: connected Grothendieck indexed by `TwistedArrow`
+
+Given `F : TwistedArrow C ⥤ Cat`, we define `TwGrothendieckObj C F`
+as `ConnGrothendieckObj C (tw'ToTw ⋙ F)`, making the components
+accessible via the unprimed twisted arrow API.
+-/
+
+variable (F : TwistedArrow C ⥤ Cat.{v, u})
+
+/-- The connected Grothendieck construction indexed by
+`TwistedArrow C` rather than `TwistedArrow' C`.
+
+Given `F : TwistedArrow C ⥤ Cat`, an object consists of:
+- An arrow `f : a ⟶ b` in `C` (as a `TwistedArrow C` object)
+- An object in the fiber category `F(f)` -/
+abbrev TwGrothendieckObj :=
+  ConnGrothendieckObj C (tw'ToTw ⋙ F)
+
+/-- The morphisms of the connected Grothendieck construction
+indexed by `TwistedArrow C`. -/
+abbrev TwGrothendieckHom
+    (x y : TwGrothendieckObj C F) :=
+  ConnGrothendieckHom C (tw'ToTw ⋙ F) x y
+
+end TwGrothendieck
+
 end GebLean

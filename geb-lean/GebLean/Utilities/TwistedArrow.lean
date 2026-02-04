@@ -1154,6 +1154,95 @@ lemma twCodArr'_comp {x y z : TwistedArrow' C} (f : x ⟶ y) (g : y ⟶ z) :
 
 end TwistedArrow'Helpers
 
+section TwistedArrowPrimedEquivalence
+
+/-!
+### Equivalence between `TwistedArrow C` and `TwistedArrow' C`
+
+`TwistedArrow C` stores the domain component via `Opposite.op`,
+while `TwistedArrow' C` stores it directly. The equivalence
+maps `(op a, b, f)` to `(a, b, f)` and back.
+-/
+
+/-- Functor from `TwistedArrow C` to `TwistedArrow' C`. -/
+def twToTw' : TwistedArrow C ⥤ TwistedArrow' C where
+  obj tw := twObjMk' (twArr tw)
+  map {x y} φ :=
+    twHomMk' (twDomArr φ) (twCodArr φ) (twHomComm φ)
+  map_id _ := by apply twHom'_ext <;> rfl
+  map_comp _ _ := by apply twHom'_ext <;> rfl
+
+/-- Functor from `TwistedArrow' C` to `TwistedArrow C`. -/
+def tw'ToTw : TwistedArrow' C ⥤ TwistedArrow C where
+  obj tw := twObjMk (twArr' tw)
+  map {x y} φ :=
+    twHomMk (twDomArr' φ) (twCodArr' φ) (twHomComm' φ)
+  map_id _ := by apply twHom_ext <;> rfl
+  map_comp _ _ := by apply twHom_ext <;> rfl
+
+lemma tw'ToTw_twToTw'_obj (tw : TwistedArrow C) :
+    tw'ToTw.obj (twToTw'.obj tw) = tw := rfl
+
+lemma twToTw'_tw'ToTw_obj (tw : TwistedArrow' C) :
+    twToTw'.obj (tw'ToTw.obj tw) = tw := rfl
+
+/-- The equivalence `TwistedArrow C ≌ TwistedArrow' C`. -/
+def twEquivTw' : TwistedArrow C ≌ TwistedArrow' C where
+  functor := twToTw'
+  inverse := tw'ToTw
+  unitIso := NatIso.ofComponents
+    (fun tw => eqToIso
+      (tw'ToTw_twToTw'_obj tw).symm)
+    (fun {x y} f => by
+      simp only [eqToIso.hom, Functor.id_obj,
+        Functor.comp_obj, Functor.id_map]
+      rw [eqToHom_refl, eqToHom_refl,
+        Category.id_comp, Category.comp_id]
+      apply twHom_ext <;> rfl)
+  counitIso := NatIso.ofComponents
+    (fun tw => eqToIso
+      (twToTw'_tw'ToTw_obj tw))
+    (fun {x y} f => by
+      simp only [eqToIso.hom, Functor.comp_obj,
+        Functor.id_obj, Functor.id_map]
+      rw [eqToHom_refl, eqToHom_refl,
+        Category.id_comp, Category.comp_id]
+      apply twHom'_ext <;> rfl)
+
+/-- The categorical isomorphism
+`TwistedArrow C ≅Cat TwistedArrow' C`. -/
+def twIsoTw' : TwistedArrow C ≅Cat TwistedArrow' C :=
+  Cat.isoOfEquiv
+    twEquivTw'
+    tw'ToTw_twToTw'_obj
+    twToTw'_tw'ToTw_obj
+
+@[simp]
+lemma twToTw'_obj_dom (tw : TwistedArrow C) :
+    twDom' (twToTw'.obj tw) = twDom tw := rfl
+
+@[simp]
+lemma twToTw'_obj_cod (tw : TwistedArrow C) :
+    twCod' (twToTw'.obj tw) = twCod tw := rfl
+
+@[simp]
+lemma twToTw'_obj_arr (tw : TwistedArrow C) :
+    twArr' (twToTw'.obj tw) = twArr tw := rfl
+
+@[simp]
+lemma tw'ToTw_obj_dom (tw : TwistedArrow' C) :
+    twDom (tw'ToTw.obj tw) = twDom' tw := rfl
+
+@[simp]
+lemma tw'ToTw_obj_cod (tw : TwistedArrow' C) :
+    twCod (tw'ToTw.obj tw) = twCod' tw := rfl
+
+@[simp]
+lemma tw'ToTw_obj_arr (tw : TwistedArrow' C) :
+    twArr (tw'ToTw.obj tw) = twArr' tw := rfl
+
+end TwistedArrowPrimedEquivalence
+
 /--
 The twisted arrow category of `Cᵒᵖ'`, defined as the category of elements
 of `homOp'`.

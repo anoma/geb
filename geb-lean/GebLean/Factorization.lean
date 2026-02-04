@@ -184,4 +184,192 @@ def factorisationFunctor (C : Type u) [Category.{v} C] :
         Functor.comp_map, eqToHom_refl,
         Category.id_comp, Category.comp_id]
 
+/-! ## Opposite factorization isomorphism
+
+The opposite of the factorization category is isomorphic to the
+factorization category of the opposite morphism:
+`(Factorisation f)ᵒᵖ ≅ Factorisation (f.op)`.
+-/
+
+section OpFactorisation
+
+variable {X Y : C} (f : X ⟶ Y)
+
+/-- Map a factorization of `f` to a factorization of `f.op`
+by swapping `ι` and `π` and taking their `op`. -/
+def factorisationToOp
+    (d : Factorisation f) : Factorisation f.op where
+  mid := Opposite.op d.mid
+  ι := d.π.op
+  π := d.ι.op
+  ι_π := by
+    rw [← op_comp, d.ι_π]
+
+/-- Map a factorization of `f.op` back to a factorization
+of `f` by unswapping. -/
+def factorisationFromOp
+    (d : Factorisation f.op) : Factorisation f where
+  mid := d.mid.unop
+  ι := d.π.unop
+  π := d.ι.unop
+  ι_π := by
+    rw [← unop_comp, d.ι_π, Quiver.Hom.unop_op]
+
+@[simp]
+lemma factorisationToOp_mid (d : Factorisation f) :
+    (factorisationToOp f d).mid = Opposite.op d.mid := rfl
+
+@[simp]
+lemma factorisationToOp_ι (d : Factorisation f) :
+    (factorisationToOp f d).ι = d.π.op := rfl
+
+@[simp]
+lemma factorisationToOp_π (d : Factorisation f) :
+    (factorisationToOp f d).π = d.ι.op := rfl
+
+@[simp]
+lemma factorisationFromOp_mid
+    (d : Factorisation f.op) :
+    (factorisationFromOp f d).mid = d.mid.unop := rfl
+
+@[simp]
+lemma factorisationFromOp_ι
+    (d : Factorisation f.op) :
+    (factorisationFromOp f d).ι = d.π.unop := rfl
+
+@[simp]
+lemma factorisationFromOp_π
+    (d : Factorisation f.op) :
+    (factorisationFromOp f d).π = d.ι.unop := rfl
+
+lemma factorisationToOp_fromOp
+    (d : Factorisation f.op) :
+    factorisationToOp f (factorisationFromOp f d) = d := by
+  cases d
+  simp only [factorisationToOp, factorisationFromOp,
+    Quiver.Hom.op_unop, Opposite.op_unop]
+
+lemma factorisationFromOp_toOp
+    (d : Factorisation f) :
+    factorisationFromOp f (factorisationToOp f d) = d := by
+  cases d
+  simp only [factorisationToOp, factorisationFromOp,
+    Quiver.Hom.unop_op, Opposite.unop_op]
+
+/-- The functor `(Factorisation f)ᵒᵖ ⥤ Factorisation (f.op)`.
+
+On objects, sends `op d` to `factorisationToOp f d`.
+On morphisms, a morphism `op d ⟶ op e` in the opposite category
+is a morphism `e ⟶ d` in `Factorisation f`, consisting of
+`h : e.mid ⟶ d.mid`. This maps to `h.op : op d.mid ⟶ op e.mid`
+in `Factorisation (f.op)`. -/
+def factorisationOpToOpFactorisation :
+    (Factorisation f)ᵒᵖ ⥤ Factorisation f.op where
+  obj d := factorisationToOp f d.unop
+  map {d e} g :=
+    { h := g.unop.h.op
+      ι_h := by
+        simp only [factorisationToOp, ← op_comp,
+          Factorisation.Hom.h_π]
+      h_π := by
+        simp only [factorisationToOp, ← op_comp,
+          Factorisation.Hom.ι_h] }
+  map_id _ := Factorisation.Hom.ext rfl
+  map_comp _ _ := Factorisation.Hom.ext rfl
+
+/-- The functor `Factorisation (f.op) ⥤ (Factorisation f)ᵒᵖ`.
+
+On objects, sends `d` to `op (factorisationFromOp f d)`.
+On morphisms, `h : d.mid ⟶ e.mid` in `Factorisation (f.op)`
+maps to `h.unop : e'.mid ⟶ d'.mid` viewed as a morphism
+`op d' ⟶ op e'` in the opposite category. -/
+def opFactorisationToFactorisationOp :
+    Factorisation f.op ⥤ (Factorisation f)ᵒᵖ where
+  obj d := Opposite.op (factorisationFromOp f d)
+  map {d e} g :=
+    Quiver.Hom.op
+      { h := g.h.unop
+        ι_h := by
+          simp only [factorisationFromOp,
+            ← unop_comp, Factorisation.Hom.h_π]
+        h_π := by
+          simp only [factorisationFromOp,
+            ← unop_comp, Factorisation.Hom.ι_h] }
+  map_id _ := Quiver.Hom.unop_inj (Factorisation.Hom.ext rfl)
+  map_comp _ _ :=
+    Quiver.Hom.unop_inj (Factorisation.Hom.ext rfl)
+
+lemma factorisationOpRoundTrip_obj (d : (Factorisation f)ᵒᵖ) :
+    (opFactorisationToFactorisationOp f).obj
+      ((factorisationOpToOpFactorisation f).obj d) = d := by
+  simp only [factorisationOpToOpFactorisation,
+    opFactorisationToFactorisationOp]
+  exact congrArg Opposite.op (factorisationFromOp_toOp f d.unop)
+
+lemma opFactorisationRoundTrip_obj
+    (d : Factorisation f.op) :
+    (factorisationOpToOpFactorisation f).obj
+      ((opFactorisationToFactorisationOp f).obj d) = d := by
+  simp only [factorisationOpToOpFactorisation,
+    opFactorisationToFactorisationOp]
+  exact factorisationToOp_fromOp f d
+
+lemma factorisationOpRoundTrip_map
+    {d e : (Factorisation f)ᵒᵖ}
+    (g : d ⟶ e) :
+    (factorisationOpToOpFactorisation f ⋙
+      opFactorisationToFactorisationOp f).map g = g := by
+  apply Quiver.Hom.unop_inj
+  apply Factorisation.Hom.ext
+  simp only [Functor.comp_map,
+    factorisationOpToOpFactorisation,
+    opFactorisationToFactorisationOp,
+    Quiver.Hom.unop_op]
+
+lemma opFactorisationRoundTrip_map
+    {d e : Factorisation f.op}
+    (g : d ⟶ e) :
+    (opFactorisationToFactorisationOp f ⋙
+      factorisationOpToOpFactorisation f).map g = g := by
+  apply Factorisation.Hom.ext
+  simp only [Functor.comp_map,
+    factorisationOpToOpFactorisation,
+    opFactorisationToFactorisationOp]
+  exact Quiver.Hom.op_unop g.h
+
+/-- The equivalence `(Factorisation f)ᵒᵖ ≌ Factorisation (f.op)`. -/
+def factorisationOpEquiv :
+    (Factorisation f)ᵒᵖ ≌ Factorisation f.op where
+  functor := factorisationOpToOpFactorisation f
+  inverse := opFactorisationToFactorisationOp f
+  unitIso := NatIso.ofComponents
+    (fun d => eqToIso
+      (factorisationOpRoundTrip_obj f d).symm)
+    (fun {d e} g => by
+      simp only [eqToIso.hom, Functor.id_obj,
+        Functor.comp_obj, Functor.id_map]
+      rw [eqToHom_refl, eqToHom_refl,
+        Category.id_comp, Category.comp_id]
+      exact (factorisationOpRoundTrip_map f g).symm)
+  counitIso := NatIso.ofComponents
+    (fun d => eqToIso
+      (opFactorisationRoundTrip_obj f d))
+    (fun {d e} g => by
+      simp only [eqToIso.hom, Functor.comp_obj,
+        Functor.id_obj, Functor.id_map]
+      rw [eqToHom_refl, eqToHom_refl,
+        Category.id_comp, Category.comp_id]
+      exact opFactorisationRoundTrip_map f g)
+
+/-- The categorical isomorphism
+`(Factorisation f)ᵒᵖ ≅Cat Factorisation (f.op)`. -/
+def factorisationOpIso :
+    (Factorisation f)ᵒᵖ ≅Cat Factorisation f.op :=
+  Cat.isoOfEquiv
+    (factorisationOpEquiv f)
+    (factorisationOpRoundTrip_obj f)
+    (opFactorisationRoundTrip_obj f)
+
+end OpFactorisation
+
 end GebLean
