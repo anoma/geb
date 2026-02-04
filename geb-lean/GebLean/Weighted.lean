@@ -5879,6 +5879,110 @@ def strongRestricted_cowedge_roundtrip
       Cowedge.mk_π, Iso.refl_hom]
     erw [Category.comp_id])
 
+/-- The functor from strong restricted cowedges to
+cowedges over the pullback profunctor. -/
+def strongRestrictedToCowedgeFunctor
+    {D : Type w} [Category.{v} D]
+    (G : Cᵒᵖ ⥤ C ⥤ D)
+    (H : Cᵒᵖ ⥤ C ⥤ Type v) :
+    StrongRestrictedCowedge G H ⥤
+    Cowedge (profPullback G
+      (DiagElem.forget H)) where
+  obj := strongRestrictedToCowedge G H
+  map {c d} f := {
+    hom := f.hom
+    w := fun j => by
+      cases j with
+      | right j₀ =>
+        simp only [strongRestrictedToCowedge]
+        exact f.comm j₀.base j₀.elem
+      | left a =>
+        simp only [Multicofork.fst_app_right,
+          Category.assoc]
+        congr 1
+        simp only [strongRestrictedToCowedge]
+        exact f.comm _ _
+  }
+
+/-- The functor from cowedges over the pullback
+profunctor to strong restricted cowedges. -/
+def cowedgeToStrongRestrictedFunctor
+    {D : Type w} [Category.{v} D]
+    (G : Cᵒᵖ ⥤ C ⥤ D)
+    (H : Cᵒᵖ ⥤ C ⥤ Type v) :
+    Cowedge (profPullback G
+      (DiagElem.forget H)) ⥤
+    StrongRestrictedCowedge G H where
+  obj := cowedgeToStrongRestricted G H
+  map {cw₁ cw₂} g := {
+    hom := g.hom
+    comm := fun A a =>
+      Multicofork.π_comp_hom cw₁ cw₂ g ⟨A, a⟩
+  }
+
+/-- The unit natural isomorphism: the composite
+`strong → cowedge → strong` is naturally isomorphic
+to the identity. The roundtrip preserves `.pt` and
+`.family` definitionally, so all components use
+identity morphisms. -/
+def profPullbackCowedgeUnit
+    {D : Type w} [Category.{v} D]
+    (G : Cᵒᵖ ⥤ C ⥤ D)
+    (H : Cᵒᵖ ⥤ C ⥤ Type v) :
+    𝟭 (StrongRestrictedCowedge G H) ≅
+    strongRestrictedToCowedgeFunctor G H ⋙
+    cowedgeToStrongRestrictedFunctor G H :=
+  NatIso.ofComponents
+    (fun c => {
+      hom := {
+        hom := 𝟙 c.pt
+        comm := fun _ _ => Category.comp_id _ }
+      inv := {
+        hom := 𝟙 c.pt
+        comm := fun _ _ => Category.comp_id _ }
+      hom_inv_id := by
+        apply StrongRestrictedCowedge.Hom.ext
+        dsimp; exact Category.comp_id _
+      inv_hom_id := by
+        apply StrongRestrictedCowedge.Hom.ext
+        dsimp; exact Category.comp_id _
+    })
+    (fun {c d} f => by
+      apply StrongRestrictedCowedge.Hom.ext
+      dsimp only [
+        cowedgeToStrongRestrictedFunctor,
+        strongRestrictedToCowedgeFunctor,
+        Functor.comp_map]
+      simp)
+
+/-- The counit natural isomorphism: the composite
+`cowedge → strong → cowedge` is naturally isomorphic
+to the identity. Uses the `Cowedge.ext` isomorphism
+from the roundtrip. -/
+def profPullbackCowedgeCounit
+    {D : Type w} [Category.{v} D]
+    (G : Cᵒᵖ ⥤ C ⥤ D)
+    (H : Cᵒᵖ ⥤ C ⥤ Type v) :
+    cowedgeToStrongRestrictedFunctor G H ⋙
+    strongRestrictedToCowedgeFunctor G H ≅
+    𝟭 (Cowedge (profPullback G
+      (DiagElem.forget H))) :=
+  NatIso.ofComponents
+    (fun cw =>
+      strongRestricted_cowedge_roundtrip G H cw)
+    (fun {cw₁ cw₂} g => by
+      apply CoconeMorphism.ext
+      dsimp only [
+        strongRestricted_cowedge_roundtrip,
+        strongRestrictedToCowedgeFunctor,
+        cowedgeToStrongRestrictedFunctor,
+        Functor.comp_map, Functor.id_map]
+      simp only [Functor.comp_obj, Functor.id_obj,
+        Cocone.category_comp_hom,
+        Cowedge.ext_hom_hom, Iso.refl_hom]
+      exact (Category.comp_id g.hom).trans
+        (Category.id_comp g.hom).symm)
+
 end ProfunctorPullbackCowedge
 
 section WeightedCowedgeEmbedding
