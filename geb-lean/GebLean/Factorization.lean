@@ -1407,6 +1407,94 @@ lemma twObjMkFromIdentityAtCod_comp {A B E : C}
       twExtendDom_codArr]
     exact (Category.comp_id _).symm
 
+lemma twMidPaths_eq {A B E : C}
+    (g : A ⟶ B) (g' : B ⟶ E) :
+    twObjMkFromIdentityAtCod g ≫
+      twExtendCod g g' =
+    twObjMkFromIdentity g' ≫
+      twExtendDom g g' := by
+  apply twHom_ext
+  · change 𝟙 A ≫ g = g ≫ 𝟙 B
+    rw [Category.id_comp, Category.comp_id]
+  · change 𝟙 B ≫ g' = g' ≫ 𝟙 E
+    rw [Category.id_comp, Category.comp_id]
+
+/-- The source transport for composition: the equality
+arising from factoring `twObjMkFromIdentity (g ≫ g')`
+into `twObjMkFromIdentity g ≫ twExtendCod g g'`. -/
+private lemma decFactComp_src_eq {A B E : C}
+    (g : A ⟶ B) (g' : B ⟶ E)
+    (x : F.obj (twObjMk (𝟙 A))) :
+    (F.map (twObjMkFromIdentity (g ≫ g'))
+      ).toFunctor.obj x =
+    (F.map (twExtendCod g g')).toFunctor.obj
+      ((F.map (twObjMkFromIdentity g)
+        ).toFunctor.obj x) := by
+  rw [twObjMkFromIdentity_comp,
+    Functor.map_comp, Cat.Hom.comp_toFunctor,
+    Functor.comp_obj]
+
+/-- The middle transport: the equality between
+the codomain-extended target of `fM` and the
+domain-extended source of `fM'`. -/
+private lemma decFactComp_mid_eq {A B E : C}
+    (g : A ⟶ B) (g' : B ⟶ E)
+    (y : F.obj (twObjMk (𝟙 B))) :
+    (F.map (twExtendCod g g')).toFunctor.obj
+      ((F.map (twObjMkFromIdentityAtCod g)
+        ).toFunctor.obj y) =
+    (F.map (twExtendDom g g')).toFunctor.obj
+      ((F.map (twObjMkFromIdentity g')
+        ).toFunctor.obj y) := by
+  rw [← Functor.comp_obj, ← Cat.Hom.comp_toFunctor,
+    ← Functor.map_comp, twMidPaths_eq,
+    Functor.map_comp, Cat.Hom.comp_toFunctor,
+    Functor.comp_obj]
+
+/-- The target transport for composition: the equality
+arising from factoring `twObjMkFromIdentityAtCod (g ≫ g')`
+into `twObjMkFromIdentityAtCod g' ≫ twExtendDom g g'`. -/
+private lemma decFactComp_tgt_eq {A B E : C}
+    (g : A ⟶ B) (g' : B ⟶ E)
+    (z : F.obj (twObjMk (𝟙 E))) :
+    (F.map (twObjMkFromIdentityAtCod (g ≫ g'))
+      ).toFunctor.obj z =
+    (F.map (twExtendDom g g')).toFunctor.obj
+      ((F.map (twObjMkFromIdentityAtCod g')
+        ).toFunctor.obj z) := by
+  rw [twObjMkFromIdentityAtCod_comp,
+    Functor.map_comp, Cat.Hom.comp_toFunctor,
+    Functor.comp_obj]
+
+/-- Composition in the decorated factorisation category.
+Given `m : x ⟶ y` and `n : y ⟶ z`, the composite fiber
+morphism is obtained by transporting `m.fiberMorph` and
+`n.fiberMorph` to `F(twObjMk (m.factHom.h ≫ n.factHom.h))`
+via the codomain and domain extension morphisms, with a
+middle `eqToHom` connecting them. -/
+def decFactComp
+    {x y z : DecFactObj F tw}
+    (m : DecFactHom F tw x y)
+    (n : DecFactHom F tw y z) :
+    DecFactHom F tw x z where
+  factHom := m.factHom ≫ n.factHom
+  fiberMorph :=
+    eqToHom (decFactComp_src_eq F
+      m.factHom.h n.factHom.h x.fiber) ≫
+    (F.map (twExtendCod m.factHom.h n.factHom.h)
+      ).toFunctor.map m.fiberMorph ≫
+    eqToHom (decFactComp_mid_eq F
+      m.factHom.h n.factHom.h y.fiber) ≫
+    (F.map (twExtendDom m.factHom.h n.factHom.h)
+      ).toFunctor.map n.fiberMorph ≫
+    eqToHom (decFactComp_tgt_eq F
+      m.factHom.h n.factHom.h z.fiber).symm
+
+instance : CategoryStruct (DecFactObj F tw) where
+  Hom := DecFactHom F tw
+  id := decFactId F tw
+  comp := decFactComp F tw
+
 end DecoratedFactorisation
 
 end GebLean
