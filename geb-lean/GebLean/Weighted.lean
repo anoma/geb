@@ -3657,8 +3657,8 @@ theorem profunctorOnTwistedArrow_sliceProf_obj
 
 Given a difunctor `G : Cᵒᵖ ⥤ C ⥤ D` and an object
 `c : D`, we define the *coslice profunctor*
-`cosliceProfunctor G c : Cᵒᵖ ⥤ C ⥤ Type` by
-`(cosliceProfunctor G c)(A, B) := Hom_D(c, G(A, B))`.
+`G ⇧ c : Cᵒᵖ ⥤ C ⥤ Type` by
+`(G ⇧ c)(A, B) := Hom_D(c, G(A, B))`.
 
 Note that unlike the slice profunctor, there is no
 argument swap: `G(A, B)` not `G(B, A)`. The covariant
@@ -3668,9 +3668,9 @@ in the slice profunctor reverses it, necessitating
 the swap.
 -/
 
-/-- The coslice profunctor for a difunctor
+/-- The coslice profunctor `G ⇧ c` for a difunctor
 `G : Cᵒᵖ ⥤ C ⥤ D` and object `c : D`.
-Defined as `(cosliceProfunctor G c)(A, B) := Hom_D(c, G(A, B))`.
+Defined as `(G ⇧ c)(A, B) := Hom_D(c, G(A, B))`.
 
 The covariant action (second argument): for
 `g : X → Y`, the map `Hom(c, G(A, X)) → Hom(c, G(A, Y))`
@@ -3717,13 +3717,17 @@ def cosliceProfunctor {D : Type w}
       Functor.map_comp, NatTrans.comp_app,
       Category.assoc]
 
-/-- The object computation of the coslice
-profunctor. -/
+/-- Notation for the coslice profunctor. -/
+scoped infixl:70 " ⇧ " => cosliceProfunctor
+
+/-- The object computation:
+`((G ⇧ c).obj A).obj X = (c ⟶ (G.obj A).obj X)`.
+-/
 @[simp]
 theorem cosliceProfunctor_obj_obj {D : Type w}
     [Category.{v} D] (G : Cᵒᵖ ⥤ C ⥤ D) (c : D)
     (A : Cᵒᵖ) (X : C) :
-    ((cosliceProfunctor G c).obj A).obj X =
+    ((G ⇧ c).obj A).obj X =
       (c ⟶ (G.obj A).obj X) :=
   rfl
 
@@ -3735,7 +3739,7 @@ theorem cosliceProfunctor_obj_map {D : Type w}
     (A : Cᵒᵖ)
     {X Y : C} (f : X ⟶ Y)
     (m : c ⟶ (G.obj A).obj X) :
-    ((cosliceProfunctor G c).obj A).map f m =
+    ((G ⇧ c).obj A).map f m =
       m ≫ (G.obj A).map f :=
   rfl
 
@@ -3746,9 +3750,202 @@ theorem cosliceProfunctor_map_app {D : Type w}
     [Category.{v} D] (G : Cᵒᵖ ⥤ C ⥤ D) (c : D)
     {A B : Cᵒᵖ} (f : A ⟶ B) (X : C)
     (m : c ⟶ (G.obj A).obj X) :
-    ((cosliceProfunctor G c).map f).app X m =
+    ((G ⇧ c).map f).app X m =
       m ≫ (G.map f).app X :=
   rfl
+
+/-- The coslice profunctor construction is
+functorial in `c : D` (contravariantly). Given
+`G : Cᵒᵖ ⥤ C ⥤ D`, this defines a functor
+`Dᵒᵖ ⥤ (Cᵒᵖ ⥤ C ⥤ Type v)`.
+
+For a morphism `f : c' ⟶ c` in `D`
+(viewed as `f.op : c ⟶ c'` in `Dᵒᵖ`),
+the induced natural transformation
+`(G ⇧ c) ⟶ (G ⇧ c')` acts by
+precomposition with `f`. -/
+def cosliceProfunctorFunctor {D : Type w}
+    [Category.{v} D] (G : Cᵒᵖ ⥤ C ⥤ D) :
+    Dᵒᵖ ⥤ (Cᵒᵖ ⥤ C ⥤ Type v) where
+  obj c := G ⇧ c.unop
+  map f := {
+    app := fun A => {
+      app := fun B m => f.unop ≫ m
+      naturality := fun X Y g => by
+        ext m
+        simp only [types_comp_apply,
+          cosliceProfunctor_obj_map,
+          Category.assoc]
+    }
+    naturality := fun A₁ A₂ g => by
+      ext B m
+      simp only [NatTrans.comp_app,
+        types_comp_apply,
+        cosliceProfunctor_map_app,
+        Category.assoc]
+  }
+  map_id := fun c => by
+    ext A B m
+    simp only [NatTrans.id_app,
+      types_id_apply, unop_id,
+      Category.id_comp]
+  map_comp := fun f g => by
+    ext A B m
+    simp only [NatTrans.comp_app,
+      types_comp_apply, unop_comp,
+      Category.assoc]
+
+/-- `cosliceProfunctor G c` equals the application
+of `cosliceProfunctorFunctor G` at `c`. -/
+theorem cosliceProfunctor_eq_functor_obj
+    {D : Type w} [Category.{v} D]
+    (G : Cᵒᵖ ⥤ C ⥤ D) (c : D) :
+    cosliceProfunctor G c =
+    (cosliceProfunctorFunctor G).obj
+      (Opposite.op c) := rfl
+
+/-- Given a natural transformation `β : G ⟶ G'`,
+postcomposition induces a natural transformation
+`(G ⇧ c) ⟶ (G' ⇧ c)` for each `c`.
+
+At component `(A, B)`, the map
+`Hom(c, G(A, B)) → Hom(c, G'(A, B))` is
+postcomposition by
+`(β.app A).app B : G(A, B) → G'(A, B)`. -/
+def cosliceProfunctorPostcomp {D : Type w}
+    [Category.{v} D] {G G' : Cᵒᵖ ⥤ C ⥤ D}
+    (β : G ⟶ G') (c : D) :
+    (G ⇧ c) ⟶ (G' ⇧ c) where
+  app A := {
+    app := fun B m =>
+      m ≫ (β.app A).app B
+    naturality := fun X Y g => by
+      ext m
+      simp only [types_comp_apply,
+        cosliceProfunctor_obj_map,
+        Category.assoc]
+      congr 1
+      exact (β.app A).naturality g
+  }
+  naturality := fun A₁ A₂ f => by
+    ext B m
+    simp only [NatTrans.comp_app,
+      types_comp_apply,
+      cosliceProfunctor_map_app,
+      Category.assoc]
+    congr 1
+    have h := congrFun
+      (congrArg NatTrans.app
+        (β.naturality f)) B
+    simp only [NatTrans.comp_app] at h
+    exact h
+
+/-- Postcomposition by the identity is the
+identity. -/
+theorem cosliceProfunctorPostcomp_id
+    {D : Type w} [Category.{v} D]
+    (G : Cᵒᵖ ⥤ C ⥤ D) (c : D) :
+    cosliceProfunctorPostcomp (𝟙 G) c =
+      𝟙 (G ⇧ c) := by
+  ext A B m
+  simp only [cosliceProfunctorPostcomp,
+    NatTrans.id_app, Category.comp_id,
+    NatTrans.id_app, types_id_apply]
+
+/-- Postcomposition respects composition
+(covariantly). -/
+theorem cosliceProfunctorPostcomp_comp
+    {D : Type w} [Category.{v} D]
+    {G G' G'' : Cᵒᵖ ⥤ C ⥤ D}
+    (β : G ⟶ G') (γ : G' ⟶ G'') (c : D) :
+    cosliceProfunctorPostcomp (β ≫ γ) c =
+    cosliceProfunctorPostcomp β c ≫
+      cosliceProfunctorPostcomp γ c := by
+  ext A B m
+  simp only [cosliceProfunctorPostcomp,
+    NatTrans.comp_app, types_comp_apply,
+    Category.assoc]
+
+/-- Postcomposition is natural in the object `c`.
+Given `β : G ⟶ G'` and `f : c ⟶ c'` in `Dᵒᵖ`,
+the following square commutes:
+```
+(G ⇧ c) --postcomp β--> (G' ⇧ c)
+   |                       |
+   | precomp f             | precomp f
+   v                       v
+(G ⇧ c') -postcomp β-> (G' ⇧ c')
+```
+where `c, c'` denote `c.unop, c'.unop`. -/
+theorem cosliceProfunctorPostcomp_natural
+    {D : Type w} [Category.{v} D]
+    {G G' : Cᵒᵖ ⥤ C ⥤ D} (β : G ⟶ G')
+    {c c' : Dᵒᵖ} (f : c ⟶ c') :
+    cosliceProfunctorPostcomp β c.unop ≫
+      (cosliceProfunctorFunctor G').map f =
+    (cosliceProfunctorFunctor G).map f ≫
+      cosliceProfunctorPostcomp β c'.unop := by
+  ext A B m
+  simp only [NatTrans.comp_app,
+    types_comp_apply,
+    cosliceProfunctorPostcomp,
+    cosliceProfunctorFunctor,
+    Category.assoc]
+
+/-- The bifunctor
+`(Cᵒᵖ ⥤ C ⥤ D) ⥤ Dᵒᵖ ⥤ (Cᵒᵖ ⥤ C ⥤ Type v)`
+sending `(G, c)` to `G ⇧ c`.
+Covariant in `G` via postcomposition,
+contravariant in `c` via precomposition.
+
+Built from `cosliceProfunctorFunctor` and
+`cosliceProfunctorPostcomp`. -/
+def cosliceProfunctorBifunctor
+    {D : Type w} [Category.{v} D] :
+    (Cᵒᵖ ⥤ C ⥤ D) ⥤
+      Dᵒᵖ ⥤ (Cᵒᵖ ⥤ C ⥤ Type v) where
+  obj G := cosliceProfunctorFunctor G
+  map := fun {G G'} β => {
+    app := fun c =>
+      cosliceProfunctorPostcomp β c.unop
+    naturality := fun {c c'} f =>
+      (cosliceProfunctorPostcomp_natural
+        β f).symm
+  }
+  map_id G := by
+    apply NatTrans.ext; funext c
+    simp only [NatTrans.id_app,
+      cosliceProfunctorPostcomp_id]; rfl
+  map_comp := fun {_ _ _} β γ => by
+    apply NatTrans.ext; funext c
+    simp only [NatTrans.comp_app,
+      cosliceProfunctorPostcomp_comp]
+
+/-- The diagonal of the coslice profunctor at `A`
+is `Hom(c, G(A, A))`. -/
+theorem cosliceProfunctor_diagApp {D : Type w}
+    [Category.{v} D] (G : Cᵒᵖ ⥤ C ⥤ D)
+    (c : D) (A : C) :
+    diagApp (G ⇧ c) A =
+      (c ⟶ (G.obj (Opposite.op A)).obj A) := by
+  simp only [diagApp, cosliceProfunctor_obj_obj]
+
+/-- `DiagCompat` for `G ⇧ c` is the equation
+stating that the two paths from `c` to `G(A, B)`
+agree:
+`d₀ ≫ G(A, f) = d₁ ≫ G(f, B)`. -/
+theorem cosliceProfunctor_diagCompat_iff
+    {D : Type w} [Category.{v} D]
+    {G : Cᵒᵖ ⥤ C ⥤ D} (c : D)
+    {A B : C} (f : A ⟶ B)
+    (m₀ : diagApp (G ⇧ c) A)
+    (m₁ : diagApp (G ⇧ c) B) :
+    DiagCompat (G ⇧ c) A B f m₀ m₁ ↔
+    m₀ ≫ (G.obj (Opposite.op A)).map f =
+      m₁ ≫ (G.map f.op).app B := by
+  simp only [DiagCompat,
+    cosliceProfunctor_obj_map,
+    cosliceProfunctor_map_app]
 
 /-!
 ## Weighted coend elimination as weighted end
@@ -5057,7 +5254,7 @@ This is dual to restricted cowedges, which have
 families `Ψ_A : H(A, A) → Hom_D(G(A, A), pt)`.
 
 The families are valued in the coslice profunctor
-`(cosliceProfunctor G pt)(A, B) := Hom_D(pt, G(A, B))`, which is
+`(G ⇧ pt)(A, B) := Hom_D(pt, G(A, B))`, which is
 the dual of the slice profunctor
 `(G ⇓ pt)(A, B) := Hom_D(G(B, A), pt)`.
 
@@ -5084,8 +5281,8 @@ structure RestrictedWedgeOver
     {D : Type w} [Category.{v} D]
     (G : Cᵒᵖ ⥤ C ⥤ D) (H : Cᵒᵖ ⥤ C ⥤ Type v)
     (pt : D) where
-  family : ParanatSig H (cosliceProfunctor G pt)
-  isDinatural : IsDinatural H (cosliceProfunctor G pt) family
+  family : ParanatSig H (G ⇧ pt)
+  isDinatural : IsDinatural H (G ⇧ pt) family
 
 /--
 An `H`-restricted `G`-wedge for a difunctor
@@ -5111,23 +5308,23 @@ variable {D : Type w} [Category.{v} D]
   {H : Cᵒᵖ ⥤ C ⥤ Type v}
 
 /-- The family of morphisms as a
-`ParanatSig H (cosliceProfunctor G pt)`. -/
+`ParanatSig H (G ⇧ pt)`. -/
 abbrev family (c : RestrictedWedge G H) :
-    ParanatSig H (cosliceProfunctor G c.pt) :=
+    ParanatSig H (G ⇧ c.pt) :=
   c.toRestrictedWedgeOver.family
 
 /-- The dinaturality condition on the family. -/
 abbrev isDinatural (c : RestrictedWedge G H) :
-    IsDinatural H (cosliceProfunctor G c.pt) c.family :=
+    IsDinatural H (G ⇧ c.pt) c.family :=
   c.toRestrictedWedgeOver.isDinatural
 
 /-- Constructor with explicit point, family, and
 dinaturality arguments. -/
 @[match_pattern]
 def mk' (pt : D)
-    (family : ParanatSig H (cosliceProfunctor G pt))
+    (family : ParanatSig H (G ⇧ pt))
     (isDinatural :
-      IsDinatural H (cosliceProfunctor G pt) family) :
+      IsDinatural H (G ⇧ pt) family) :
     RestrictedWedge G H :=
   ⟨pt, ⟨family, isDinatural⟩⟩
 
@@ -5227,9 +5424,9 @@ structure StrongRestrictedWedgeOver
     (G : Cᵒᵖ ⥤ C ⥤ D)
     (H : Cᵒᵖ ⥤ C ⥤ Type v)
     (pt : D) where
-  family : ParanatSig H (cosliceProfunctor G pt)
+  family : ParanatSig H (G ⇧ pt)
   isParanatural :
-    IsParanatural H (cosliceProfunctor G pt) family
+    IsParanatural H (G ⇧ pt) family
 
 /--
 An `H`-restricted `G`-wedge with the paranaturality
@@ -5251,26 +5448,26 @@ variable {D : Type w} [Category.{v} D]
   {H : Cᵒᵖ ⥤ C ⥤ Type v}
 
 /-- The family of morphisms as a
-`ParanatSig H (cosliceProfunctor G pt)`. -/
+`ParanatSig H (G ⇧ pt)`. -/
 abbrev family
     (c : StrongRestrictedWedge G H) :
-    ParanatSig H (cosliceProfunctor G c.pt) :=
+    ParanatSig H (G ⇧ c.pt) :=
   c.toStrongRestrictedWedgeOver.family
 
 /-- The paranaturality condition on the
 family. -/
 abbrev isParanatural
     (c : StrongRestrictedWedge G H) :
-    IsParanatural H (cosliceProfunctor G c.pt) c.family :=
+    IsParanatural H (G ⇧ c.pt) c.family :=
   c.toStrongRestrictedWedgeOver.isParanatural
 
 /-- Constructor with explicit point, family,
 and paranaturality arguments. -/
 @[match_pattern]
 def mk' (pt : D)
-    (family : ParanatSig H (cosliceProfunctor G pt))
+    (family : ParanatSig H (G ⇧ pt))
     (isParanatural :
-      IsParanatural H (cosliceProfunctor G pt) family) :
+      IsParanatural H (G ⇧ pt) family) :
     StrongRestrictedWedge G H :=
   ⟨pt, ⟨family, isParanatural⟩⟩
 
@@ -5322,7 +5519,7 @@ def StrongRestrictedWedgeOver.toRestrictedWedgeOver
     RestrictedWedgeOver G H pt :=
   ⟨c.family,
    paranatural_implies_dinatural
-     H (cosliceProfunctor G pt) c.family c.isParanatural⟩
+     H (G ⇧ pt) c.family c.isParanatural⟩
 
 /-- Every strong restricted wedge is a restricted
 wedge, since paranaturality implies
@@ -5336,7 +5533,7 @@ def StrongRestrictedWedge.toRestrictedWedge
   pt := c.pt
   toRestrictedWedgeOver := ⟨c.family,
     paranatural_implies_dinatural
-      H (cosliceProfunctor G c.pt) c.family c.isParanatural⟩
+      H (G ⇧ c.pt) c.family c.isParanatural⟩
 
 /--
 The category of `H`-restricted `G`-wedges with
