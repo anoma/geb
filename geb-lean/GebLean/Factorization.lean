@@ -1257,4 +1257,156 @@ instance factorisationToOverTw_reflective :
 
 end FactorisationReflectiveInclusion
 
+/-! ## Decorated factorisation categories
+
+Given `F : TwistedArrow C ⥤ Cat`, for each twisted arrow
+`tw`, the decorated factorisation category has objects
+`(d : Factorisation (twArr tw), x : F(twObjMk (𝟙 d.mid)))`
+and morphisms that carry both a factorisation morphism and a
+fiber morphism in `F(twObjMk h.h)`.
+-/
+
+section DecoratedFactorisation
+
+universe w₁ w₂
+
+variable (F : TwistedArrow C ⥤ Cat.{w₁, w₂})
+
+lemma twObjMkFromIdentity_id (A : C) :
+    twObjMkFromIdentity (𝟙 A) =
+      𝟙 (twObjMk (𝟙 A)) := by
+  apply twHom_ext <;> rfl
+
+lemma twObjMkFromIdentityAtCod_id (A : C) :
+    twObjMkFromIdentityAtCod (𝟙 A) =
+      𝟙 (twObjMk (𝟙 A)) := by
+  apply twHom_ext <;> rfl
+
+variable (tw : TwistedArrow C)
+
+/-- An object of the decorated factorisation category
+for a twisted arrow `tw` and functor `F : TwistedArrow C ⥤ Cat`.
+Consists of a factorisation of `twArr tw` and an object of
+the fiber category `F(twObjMk (𝟙 d.mid))`. -/
+@[ext]
+structure DecFactObj where
+  /-- The underlying factorisation. -/
+  fact : Factorisation (twArr tw)
+  /-- An object in the fiber category over the identity
+  at the midpoint. -/
+  fiber : F.obj (twObjMk (𝟙 fact.mid))
+
+/-- A morphism in the decorated factorisation category from
+`x` to `y`. Consists of a factorisation morphism `factHom`
+and a fiber morphism in `F(twObjMk factHom.h)` from
+the right-transport of `x.fiber` to the left-transport
+of `y.fiber`. -/
+structure DecFactHom
+    (x y : DecFactObj F tw) where
+  /-- The underlying factorisation morphism. -/
+  factHom : x.fact ⟶ y.fact
+  /-- The fiber morphism in `F(twObjMk factHom.h)`. The
+  source is `x.fiber` transported along the codomain
+  direction via `twObjMkFromIdentity factHom.h`. The
+  target is `y.fiber` transported along the domain
+  direction via `twObjMkFromIdentityAtCod factHom.h`. -/
+  fiberMorph :
+    (F.map (twObjMkFromIdentity factHom.h)
+      ).toFunctor.obj x.fiber ⟶
+    (F.map (twObjMkFromIdentityAtCod factHom.h)
+      ).toFunctor.obj y.fiber
+
+private lemma decFactId_fiber_eq
+    (x : DecFactObj F tw) :
+    (F.map (twObjMkFromIdentity
+        (Factorisation.Hom.h (𝟙 x.fact)))
+      ).toFunctor.obj x.fiber =
+    (F.map (twObjMkFromIdentityAtCod
+        (Factorisation.Hom.h (𝟙 x.fact)))
+      ).toFunctor.obj x.fiber := by
+  change (F.map (twObjMkFromIdentity (𝟙 x.fact.mid))
+    ).toFunctor.obj x.fiber =
+    (F.map (twObjMkFromIdentityAtCod (𝟙 x.fact.mid))
+      ).toFunctor.obj x.fiber
+  rw [twObjMkFromIdentity_id,
+    twObjMkFromIdentityAtCod_id]
+
+/-- The identity morphism in the decorated factorisation
+category. -/
+def decFactId (x : DecFactObj F tw) :
+    DecFactHom F tw x x where
+  factHom := 𝟙 x.fact
+  fiberMorph := eqToHom (decFactId_fiber_eq F tw x)
+
+/-- Extension morphism on the codomain: given
+`g : A ⟶ B` and `g' : B ⟶ C`, produces a twisted arrow
+morphism `twObjMk g ⟶ twObjMk (g ≫ g')` via `(𝟙, g')`. -/
+def twExtendCod {A B E : C}
+    (g : A ⟶ B) (g' : B ⟶ E) :
+    twObjMk g ⟶ twObjMk (g ≫ g') :=
+  twHomMk (𝟙 A) g' (by
+    simp only [twObjMk_arr]
+    exact Category.id_comp _)
+
+/-- Extension morphism on the domain: given
+`g : A ⟶ B` and `g' : B ⟶ E`, produces a twisted arrow
+morphism `twObjMk g' ⟶ twObjMk (g ≫ g')` via `(g, 𝟙)`. -/
+def twExtendDom {A B E : C}
+    (g : A ⟶ B) (g' : B ⟶ E) :
+    twObjMk g' ⟶ twObjMk (g ≫ g') :=
+  twHomMk (x := twObjMk g') (y := twObjMk (g ≫ g'))
+    g (𝟙 E) (by
+    change g ≫ g' ≫ 𝟙 E = g ≫ g'
+    rw [Category.comp_id])
+
+@[simp]
+lemma twExtendCod_domArr {A B E : C}
+    (g : A ⟶ B) (g' : B ⟶ E) :
+    twDomArr (twExtendCod g g') = 𝟙 A := rfl
+
+@[simp]
+lemma twExtendCod_codArr {A B E : C}
+    (g : A ⟶ B) (g' : B ⟶ E) :
+    twCodArr (twExtendCod g g') = g' := rfl
+
+@[simp]
+lemma twExtendDom_domArr {A B E : C}
+    (g : A ⟶ B) (g' : B ⟶ E) :
+    twDomArr (twExtendDom g g') = g := rfl
+
+@[simp]
+lemma twExtendDom_codArr {A B E : C}
+    (g : A ⟶ B) (g' : B ⟶ E) :
+    twCodArr (twExtendDom g g') = 𝟙 E := rfl
+
+lemma twObjMkFromIdentity_comp {A B E : C}
+    (g : A ⟶ B) (g' : B ⟶ E) :
+    twObjMkFromIdentity (g ≫ g') =
+      twObjMkFromIdentity g ≫
+        twExtendCod g g' := by
+  apply twHom_ext
+  · simp only [twObjMkFromIdentity_domArr,
+      twDomArr_comp, twExtendCod_domArr]
+    exact (Category.comp_id _).symm
+  · rfl
+
+lemma twObjMkFromIdentityAtCod_comp {A B E : C}
+    (g : A ⟶ B) (g' : B ⟶ E) :
+    twObjMkFromIdentityAtCod (g ≫ g') =
+      twObjMkFromIdentityAtCod g' ≫
+        twExtendDom g g' := by
+  apply twHom_ext
+  · change g ≫ g' =
+      twDomArr (twExtendDom g g') ≫
+        twDomArr (twObjMkFromIdentityAtCod g')
+    simp
+  · change 𝟙 E =
+      twCodArr (twObjMkFromIdentityAtCod g') ≫
+        twCodArr (twExtendDom g g')
+    simp only [twObjMkFromIdentityAtCod_codArr,
+      twExtendDom_codArr]
+    exact (Category.comp_id _).symm
+
+end DecoratedFactorisation
+
 end GebLean
