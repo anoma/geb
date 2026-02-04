@@ -3351,8 +3351,10 @@ section RestrictedCowedges
 /-!
 ## Slice profunctor
 
-Given an endodifunctor `G : Cᵒᵖ ⥤ C ⥤ C` and an object `c : C`, we define
-the *slice profunctor* `G ⇓ c : Cᵒᵖ ⥤ C ⥤ Type` by `(G ⇓ c)(A, B) := Hom(G(B, A), c)`.
+Given a difunctor `G : Cᵒᵖ ⥤ C ⥤ D` and an object
+`c : D`, we define the *slice profunctor*
+`G ⇓ c : Cᵒᵖ ⥤ C ⥤ Type` by
+`(G ⇓ c)(A, B) := Hom_D(G(B, A), c)`.
 
 Note the argument swap: `G(B, A)` not `G(A, B)`. This ensures the correct
 variance for an endoprofunctor to Type.
@@ -3360,113 +3362,201 @@ variance for an endoprofunctor to Type.
 
 variable {C : Type u} [Category.{v} C]
 
-/--
-The slice profunctor bifunctor: contravariant in `G` and covariant in `c`.
+/-- The slice profunctor `G ⇓ c` for a difunctor
+`G : Cᵒᵖ ⥤ C ⥤ D` and object `c : D`.
+Defined as `(G ⇓ c)(A, B) := Hom_D(G(B, A.unop), c)`.
 
-`sliceProfunctorBifunctor.obj (op G) .obj c = G ⇓ c`
+The covariant action (second argument): for
+`g : X → Y`, the map `Hom(G(X, A), c) → Hom(G(Y, A), c)`
+is precomposition by
+`G(g, A) : G(Y, A) → G(X, A)`.
 
-This is built from standard functor compositions:
-1. Uncurry `G` and apply `.op` (contravariantly)
-2. Precompose with `opProdSymSelfDual.inverse` to swap arguments
-3. Postcompose with `yoneda.obj c` to get `Hom(-, c)`
-4. Curry the result
--/
-def sliceProfunctorBifunctor : (Cᵒᵖ ⥤ C ⥤ C)ᵒᵖ ⥤ C ⥤ (Cᵒᵖ ⥤ C ⥤ Type v) :=
-  Functor.uncurry.op ⋙
-  Functor.opHom (Cᵒᵖ × C) C ⋙
-  (Functor.whiskeringLeft (Cᵒᵖ × C) ((Cᵒᵖ × C)ᵒᵖ) Cᵒᵖ).obj (opProdSymSelfDual C).inverse ⋙
-  (Functor.whiskeringRight (Cᵒᵖ × C) Cᵒᵖ (Type v)).flip ⋙
-  (Functor.whiskeringRight (Cᵒᵖ ⥤ Type v) (Cᵒᵖ × C ⥤ Type v) (Cᵒᵖ ⥤ C ⥤ Type v)).obj
-    Functor.curry ⋙
-  (Functor.whiskeringLeft C (Cᵒᵖ ⥤ Type v) (Cᵒᵖ ⥤ C ⥤ Type v)).obj yoneda
-
-/-- The slice profunctor `G ⇓ c` for an endodifunctor `G : Cᵒᵖ ⥤ C ⥤ C` and
-object `c : C`. Defined as `(G ⇓ c)(A, B) := Hom_C(G(B, A), c)`.
-
-The covariant action (second argument): for `g : X → Y`, the map
-`Hom(G(X, A), c) → Hom(G(Y, A), c)` is precomposition by `G(g, A) : G(Y, A) → G(X, A)`.
-
-The contravariant action (first argument): for `f : A → B`, the map
-`Hom(G(X, B), c) → Hom(G(X, A), c)` is precomposition by `G(X, f) : G(X, A) → G(X, B)`.
--/
-abbrev sliceProfunctor (G : Cᵒᵖ ⥤ C ⥤ C) (c : C) : Cᵒᵖ ⥤ C ⥤ Type v :=
-  (sliceProfunctorBifunctor.obj (Opposite.op G)).obj c
+The contravariant action (first argument): for
+`f : A → B`, the map `Hom(G(X, B), c) → Hom(G(X, A), c)`
+is precomposition by
+`G(X, f) : G(X, A) → G(X, B)`. -/
+def sliceProfunctor {D : Type w} [Category.{v} D]
+    (G : Cᵒᵖ ⥤ C ⥤ D) (c : D) :
+    Cᵒᵖ ⥤ C ⥤ Type v where
+  obj A := {
+    obj := fun B =>
+      (G.obj (Opposite.op B)).obj A.unop ⟶ c
+    map := fun g h =>
+      (G.map g.op).app A.unop ≫ h
+    map_id := fun _ => by
+      ext h
+      simp only [types_id_apply, op_id,
+        Functor.map_id, NatTrans.id_app,
+        Category.id_comp]
+    map_comp := fun f g => by
+      ext h
+      simp only [types_comp_apply, op_comp,
+        Functor.map_comp, NatTrans.comp_app,
+        Category.assoc]
+  }
+  map f := {
+    app := fun B h =>
+      (G.obj (Opposite.op B)).map f.unop ≫ h
+    naturality := fun X Y g => by
+      ext h
+      simp only [types_comp_apply]
+      rw [← Category.assoc, ← Category.assoc]
+      congr 1
+      exact (G.map g.op).naturality f.unop
+  }
+  map_id := fun A => by
+    ext B h
+    simp only [NatTrans.id_app, types_id_apply,
+      unop_id, Functor.map_id, Category.id_comp]
+  map_comp := fun f g => by
+    ext B h
+    simp only [NatTrans.comp_app, types_comp_apply,
+      unop_comp, Functor.map_comp, Category.assoc]
 
 /-- Notation for the slice profunctor. -/
 scoped infixl:70 " ⇓ " => sliceProfunctor
 
-/-- The slice profunctor construction is itself functorial in `c : C`.
-Given `G : Cᵒᵖ ⥤ C ⥤ C`, this defines a functor `C ⥤ (Cᵒᵖ ⥤ C ⥤ Type v)`.
+/-- The slice profunctor construction is functorial
+in `c : D`. Given `G : Cᵒᵖ ⥤ C ⥤ D`, this defines a
+functor `D ⥤ (Cᵒᵖ ⥤ C ⥤ Type v)`.
 
-For a morphism `f : c ⟶ c'`, the induced natural transformation
-`(G ⇓ c) ⟶ (G ⇓ c')` acts by post-composition with `f`. -/
-abbrev sliceProfunctorFunctor (G : Cᵒᵖ ⥤ C ⥤ C) : C ⥤ (Cᵒᵖ ⥤ C ⥤ Type v) :=
-  sliceProfunctorBifunctor.obj (Opposite.op G)
+For a morphism `f : c ⟶ c'`, the induced natural
+transformation `(G ⇓ c) ⟶ (G ⇓ c')` acts by
+post-composition with `f`. -/
+def sliceProfunctorFunctor {D : Type w}
+    [Category.{v} D] (G : Cᵒᵖ ⥤ C ⥤ D) :
+    D ⥤ (Cᵒᵖ ⥤ C ⥤ Type v) where
+  obj c := sliceProfunctor G c
+  map f := {
+    app := fun A => {
+      app := fun B m => m ≫ f
+      naturality := fun X Y g => by
+        ext m
+        simp only [types_comp_apply,
+          sliceProfunctor, Category.assoc]
+    }
+    naturality := fun A₁ A₂ g => by
+      ext B m
+      simp only [NatTrans.comp_app,
+        types_comp_apply, sliceProfunctor,
+        Category.assoc]
+  }
+  map_id := fun c => by
+    ext A B m
+    simp only [NatTrans.id_app, types_id_apply,
+      Category.comp_id]
+  map_comp := fun f g => by
+    ext A B m
+    simp only [NatTrans.comp_app,
+      types_comp_apply, Category.assoc]
 
-/-- `sliceProfunctor G c` equals the application of `sliceProfunctorFunctor G` at `c`. -/
-theorem sliceProfunctor_eq_functor_obj (G : Cᵒᵖ ⥤ C ⥤ C) (c : C) :
-    sliceProfunctor G c = (sliceProfunctorFunctor G).obj c := rfl
+/-- `sliceProfunctor G c` equals the application of
+`sliceProfunctorFunctor G` at `c`. -/
+theorem sliceProfunctor_eq_functor_obj
+    {D : Type w} [Category.{v} D]
+    (G : Cᵒᵖ ⥤ C ⥤ D) (c : D) :
+    sliceProfunctor G c =
+    (sliceProfunctorFunctor G).obj c := rfl
 
-/-- The object computation: `((G ⇓ c).obj A).obj X = (G(X, A.unop) → c)`. -/
+/-- The object computation:
+`((G ⇓ c).obj A).obj X = (G(X, A.unop) ⟶ c)`. -/
 @[simp]
-theorem sliceProfunctor_obj_obj (G : Cᵒᵖ ⥤ C ⥤ C) (c : C) (A : Cᵒᵖ) (X : C) :
-    ((G ⇓ c).obj A).obj X = ((G.obj (Opposite.op X)).obj A.unop ⟶ c) := rfl
+theorem sliceProfunctor_obj_obj {D : Type w}
+    [Category.{v} D] (G : Cᵒᵖ ⥤ C ⥤ D) (c : D)
+    (A : Cᵒᵖ) (X : C) :
+    ((G ⇓ c).obj A).obj X =
+      ((G.obj (Opposite.op X)).obj A.unop ⟶ c) :=
+  rfl
 
-/-- The covariant map on the slice profunctor is precomposition with `G.map`. -/
+/-- The covariant map on the slice profunctor is
+precomposition with `G.map`. -/
 @[simp]
-theorem sliceProfunctor_obj_map (G : Cᵒᵖ ⥤ C ⥤ C) (c : C) (A : Cᵒᵖ)
-    {X Y : C} (f : X ⟶ Y) (m : (G.obj (Opposite.op X)).obj A.unop ⟶ c) :
-    ((G ⇓ c).obj A).map f m = (G.map f.op).app A.unop ≫ m := by
-  simp only [sliceProfunctor, sliceProfunctorBifunctor, Functor.comp_obj, Functor.comp_map,
-    Functor.op_obj, Functor.whiskeringLeft_obj_obj, Functor.whiskeringRight_obj_obj,
-    Functor.flip_obj_obj, Functor.curry_obj_obj_obj, Functor.curry_obj_obj_map,
-    yoneda_obj_obj, yoneda_obj_map, Functor.opHom_obj, Functor.op_map,
-    Functor.uncurry_obj_map, opProdSymSelfDual, Equivalence.trans_inverse,
-    opProdProdOpEquiv, Equivalence.symm_inverse, opOpProdEquiv,
-    Equivalence.prod_inverse, Functor.prod_map, opOpEquivalence,
-    Equivalence.refl_inverse, Functor.id_map, prodOpEquiv_inverse_map,
-    Quiver.Hom.unop_op, Opposite.unop_op]
-  aesop_cat
+theorem sliceProfunctor_obj_map {D : Type w}
+    [Category.{v} D] (G : Cᵒᵖ ⥤ C ⥤ D) (c : D)
+    (A : Cᵒᵖ)
+    {X Y : C} (f : X ⟶ Y)
+    (m : (G.obj (Opposite.op X)).obj A.unop ⟶ c) :
+    ((G ⇓ c).obj A).map f m =
+      (G.map f.op).app A.unop ≫ m :=
+  rfl
 
-/-- The contravariant map on the slice profunctor is precomposition with `G.obj.map`. -/
+/-- The contravariant map on the slice profunctor is
+precomposition with `G.obj.map`. -/
 @[simp]
-theorem sliceProfunctor_map_app (G : Cᵒᵖ ⥤ C ⥤ C) (c : C)
-    {A B : Cᵒᵖ} (f : A ⟶ B) (X : C) (m : (G.obj (Opposite.op X)).obj A.unop ⟶ c) :
-    ((G ⇓ c).map f).app X m = (G.obj (Opposite.op X)).map f.unop ≫ m := by
-  simp only [sliceProfunctor, sliceProfunctorBifunctor, Functor.comp_obj, Functor.comp_map,
-    Functor.op_obj, Functor.whiskeringLeft_obj_obj, Functor.whiskeringRight_obj_obj,
-    Functor.flip_obj_obj, Functor.curry_obj_obj_obj, Functor.curry_obj_map_app,
-    yoneda_obj_obj, Functor.opHom_obj, Functor.op_map,
-    Functor.uncurry_obj_map, opProdSymSelfDual, Equivalence.trans_inverse,
-    opProdProdOpEquiv, Equivalence.symm_inverse, opOpProdEquiv,
-    Equivalence.prod_inverse, Functor.prod_map, opOpEquivalence,
-    Equivalence.refl_inverse, Functor.id_map, prodOpEquiv_inverse_map,
-    Opposite.unop_op]
-  aesop_cat
+theorem sliceProfunctor_map_app {D : Type w}
+    [Category.{v} D] (G : Cᵒᵖ ⥤ C ⥤ D) (c : D)
+    {A B : Cᵒᵖ} (f : A ⟶ B) (X : C)
+    (m : (G.obj (Opposite.op X)).obj A.unop ⟶ c) :
+    ((G ⇓ c).map f).app X m =
+      (G.obj (Opposite.op X)).map f.unop ≫ m :=
+  rfl
 
-/-- Given a natural transformation `β : G' ⟹ G`, precomposition induces a natural
-transformation `(G ⇓ c) ⟶ (G' ⇓ c)` for each `c`.
+/-- Given a natural transformation `β : G' ⟹ G`,
+precomposition induces a natural transformation
+`(G ⇓ c) ⟶ (G' ⇓ c)` for each `c`.
 
-At component `(A, B)`, the map `Hom(G(B, A), c) → Hom(G'(B, A), c)` is
-precomposition by `(β.app (op B)).app A : G'(B, A) → G(B, A)`. -/
-abbrev sliceProfunctorPrecomp {G G' : Cᵒᵖ ⥤ C ⥤ C} (β : G' ⟶ G) (c : C) :
-    (G ⇓ c) ⟶ (G' ⇓ c) :=
-  (sliceProfunctorBifunctor.map β.op).app c
+At component `(A, B)`, the map
+`Hom(G(B, A), c) → Hom(G'(B, A), c)` is
+precomposition by
+`(β.app (op B)).app A : G'(B, A) → G(B, A)`. -/
+def sliceProfunctorPrecomp {D : Type w}
+    [Category.{v} D] {G G' : Cᵒᵖ ⥤ C ⥤ D}
+    (β : G' ⟶ G) (c : D) :
+    (G ⇓ c) ⟶ (G' ⇓ c) where
+  app A := {
+    app := fun B m =>
+      (β.app (Opposite.op B)).app A.unop ≫ m
+    naturality := fun X Y g => by
+      ext m
+      simp only [types_comp_apply,
+        sliceProfunctor_obj_map,
+        ← Category.assoc]
+      congr 1
+      have h := congrFun
+        (congrArg NatTrans.app
+          (β.naturality g.op)) A.unop
+      simp only [NatTrans.comp_app] at h
+      exact h.symm
+  }
+  naturality := fun A₁ A₂ f => by
+    ext B m
+    simp only [NatTrans.comp_app,
+      types_comp_apply,
+      sliceProfunctor_map_app,
+      ← Category.assoc]
+    congr 1
+    exact ((β.app (Opposite.op B)).naturality
+      f.unop).symm
 
-/-- Precomposition by the identity is the identity. -/
-theorem sliceProfunctorPrecomp_id (G : Cᵒᵖ ⥤ C ⥤ C) (c : C) :
-    sliceProfunctorPrecomp (𝟙 G) c = 𝟙 (G ⇓ c) := by
-  simp only [sliceProfunctorPrecomp, op_id, Functor.map_id, NatTrans.id_app]
+/-- Precomposition by the identity is the
+identity. -/
+theorem sliceProfunctorPrecomp_id
+    {D : Type w} [Category.{v} D]
+    (G : Cᵒᵖ ⥤ C ⥤ D) (c : D) :
+    sliceProfunctorPrecomp (𝟙 G) c =
+      𝟙 (G ⇓ c) := by
+  ext A B m
+  simp only [sliceProfunctorPrecomp,
+    NatTrans.id_app, Category.id_comp,
+    NatTrans.id_app, types_id_apply]
 
-/-- Precomposition respects composition (contravariantly). -/
-theorem sliceProfunctorPrecomp_comp {G G' G'' : Cᵒᵖ ⥤ C ⥤ C}
-    (β : G' ⟶ G) (γ : G'' ⟶ G') (c : C) :
+/-- Precomposition respects composition
+(contravariantly). -/
+theorem sliceProfunctorPrecomp_comp
+    {D : Type w} [Category.{v} D]
+    {G G' G'' : Cᵒᵖ ⥤ C ⥤ D}
+    (β : G' ⟶ G) (γ : G'' ⟶ G') (c : D) :
     sliceProfunctorPrecomp (γ ≫ β) c =
-    sliceProfunctorPrecomp β c ≫ sliceProfunctorPrecomp γ c := by
-  simp only [sliceProfunctorPrecomp, op_comp, Functor.map_comp, NatTrans.comp_app]
+    sliceProfunctorPrecomp β c ≫
+      sliceProfunctorPrecomp γ c := by
+  ext A B m
+  simp only [sliceProfunctorPrecomp,
+    NatTrans.comp_app, types_comp_apply,
+    Category.assoc]
 
-/-- Precomposition is natural in the object `c`. Given `β : G' ⟶ G` and `f : c ⟶ c'`,
-the following square commutes:
+/-- Precomposition is natural in the object `c`.
+Given `β : G' ⟶ G` and `f : c ⟶ c'`, the
+following square commutes:
 ```
 (G ⇓ c) --precomp β--> (G' ⇓ c)
    |                      |
@@ -3475,140 +3565,102 @@ the following square commutes:
 (G ⇓ c') -precomp β-> (G' ⇓ c')
 ```
 -/
-theorem sliceProfunctorPrecomp_natural {G G' : Cᵒᵖ ⥤ C ⥤ C} (β : G' ⟶ G)
-    {c c' : C} (f : c ⟶ c') :
-    sliceProfunctorPrecomp β c ≫ (sliceProfunctorFunctor G').map f =
-    (sliceProfunctorFunctor G).map f ≫ sliceProfunctorPrecomp β c' := by
-  simp only [sliceProfunctorPrecomp, sliceProfunctorFunctor]
-  exact ((sliceProfunctorBifunctor.map β.op).naturality f).symm
+theorem sliceProfunctorPrecomp_natural
+    {D : Type w} [Category.{v} D]
+    {G G' : Cᵒᵖ ⥤ C ⥤ D} (β : G' ⟶ G)
+    {c c' : D} (f : c ⟶ c') :
+    sliceProfunctorPrecomp β c ≫
+      (sliceProfunctorFunctor G').map f =
+    (sliceProfunctorFunctor G).map f ≫
+      sliceProfunctorPrecomp β c' := by
+  ext A B m
+  simp only [NatTrans.comp_app,
+    types_comp_apply, sliceProfunctorPrecomp,
+    sliceProfunctorFunctor, Category.assoc]
 
-/-- The slice profunctor at `G` and `c` equals the bifunctor applied to `op G` and `c`. -/
-theorem sliceProfunctor_eq_bifunctor (G : Cᵒᵖ ⥤ C ⥤ C) (c : C) :
-    G ⇓ c = (sliceProfunctorBifunctor.obj (Opposite.op G)).obj c := rfl
+/-- The bifunctor
+`(Cᵒᵖ ⥤ C ⥤ D)ᵒᵖ ⥤ D ⥤ (Cᵒᵖ ⥤ C ⥤ Type v)`
+sending `(G, c)` to the slice profunctor `G ⇓ c`.
+Covariant in `c` via postcomposition,
+contravariant in `G` via precomposition.
 
-/-- The diagonal of the slice profunctor at `A` is `Hom(G(A, A), c)`. -/
-theorem sliceProfunctor_diagApp (G : Cᵒᵖ ⥤ C ⥤ C) (c : C) (A : C) :
-    diagApp (G ⇓ c) A = ((G.obj (Opposite.op A)).obj A ⟶ c) := by
+Built from `sliceProfunctorFunctor` and
+`sliceProfunctorPrecomp`. -/
+def sliceProfunctorBifunctor
+    {D : Type w} [Category.{v} D] :
+    (Cᵒᵖ ⥤ C ⥤ D)ᵒᵖ ⥤
+      D ⥤ (Cᵒᵖ ⥤ C ⥤ Type v) where
+  obj Gop := sliceProfunctorFunctor Gop.unop
+  map := fun {Gop Gop'} β => {
+    app := fun c =>
+      sliceProfunctorPrecomp β.unop c
+    naturality := fun {c c'} f =>
+      (sliceProfunctorPrecomp_natural
+        β.unop f).symm
+  }
+  map_id Gop := by
+    apply NatTrans.ext; funext c
+    simp only [NatTrans.id_app, unop_id,
+      sliceProfunctorPrecomp_id]; rfl
+  map_comp := fun {_ _ _} β γ => by
+    apply NatTrans.ext; funext c
+    simp only [NatTrans.comp_app, unop_comp,
+      sliceProfunctorPrecomp_comp]
+
+/-- The diagonal of the slice profunctor at `A`
+is `Hom(G(A, A), c)`. -/
+theorem sliceProfunctor_diagApp {D : Type w}
+    [Category.{v} D] (G : Cᵒᵖ ⥤ C ⥤ D)
+    (c : D) (A : C) :
+    diagApp (G ⇓ c) A =
+      ((G.obj (Opposite.op A)).obj A ⟶ c) := by
   simp only [diagApp, sliceProfunctor_obj_obj]
 
-section HomFromSwappedProfunctor
-
-/-!
-## Hom-from-swapped profunctor
-
-For a profunctor `P : Cᵒᵖ ⥤ C ⥤ D` and object `Y : D`, we define
-`homFromSwappedProfunctor P Y : Cᵒᵖ ⥤ C ⥤ Type v` by
-`(A, B) ↦ Hom_D(P(B, A), Y)`.
-
-This generalizes `sliceProfunctor G c` to arbitrary target categories.
-The slice profunctor is the special case where `D = C` and `Y = c`.
-
-The argument swap `P(B, A)` (instead of `P(A, B)`) ensures correct variance:
-- Contravariant in `A` via `P`'s covariance in second argument
-- Covariant in `B` via `P`'s contravariance in first argument
--/
-
-variable {C : Type u} [Category.{v} C] {D : Type w} [Category.{v} D]
-
-/-- For a profunctor `P : Cᵒᵖ ⥤ C ⥤ D` and object `Y : D`, the profunctor
-`homFromSwappedProfunctor P Y : Cᵒᵖ ⥤ C ⥤ Type v` sends `(A, B)` to
-`Hom_D(P(B, A), Y)`.
-
-The argument swap ensures this is indeed a profunctor (contravariant in `A`,
-covariant in `B`). -/
-def homFromSwappedProfunctor (P : Cᵒᵖ ⥤ C ⥤ D) (Y : D) : Cᵒᵖ ⥤ C ⥤ Type v where
-  obj A := {
-    obj := fun B => (P.obj (Opposite.op B)).obj A.unop ⟶ Y
-    map := fun g h => (P.map g.op).app A.unop ≫ h
-    map_id := fun _ => by
-      ext h
-      simp only [types_id_apply, op_id, Functor.map_id, NatTrans.id_app,
-        Category.id_comp]
-    map_comp := fun f g => by
-      ext h
-      simp only [types_comp_apply, op_comp, Functor.map_comp, NatTrans.comp_app,
-        Category.assoc]
-  }
-  map f := {
-    app := fun B h => (P.obj (Opposite.op B)).map f.unop ≫ h
-    naturality := fun X Y g => by
-      ext h
-      simp only [types_comp_apply]
-      rw [← Category.assoc, ← Category.assoc]
-      congr 1
-      exact (P.map g.op).naturality f.unop
-  }
-  map_id := fun A => by
-    ext B h
-    simp only [NatTrans.id_app, types_id_apply, unop_id, Functor.map_id,
-      Category.id_comp]
-  map_comp := fun f g => by
-    ext B h
-    simp only [NatTrans.comp_app, types_comp_apply, unop_comp, Functor.map_comp,
-      Category.assoc]
-
-/-- The object computation for `homFromSwappedProfunctor`. -/
-@[simp]
-theorem homFromSwappedProfunctor_obj_obj (P : Cᵒᵖ ⥤ C ⥤ D) (Y : D)
-    (A : Cᵒᵖ) (B : C) :
-    ((homFromSwappedProfunctor P Y).obj A).obj B =
-      ((P.obj (Opposite.op B)).obj A.unop ⟶ Y) := rfl
-
-/-- The covariant map (in B) for `homFromSwappedProfunctor` is precomposition. -/
-@[simp]
-theorem homFromSwappedProfunctor_obj_map (P : Cᵒᵖ ⥤ C ⥤ D) (Y : D)
-    (A : Cᵒᵖ) {B B' : C} (g : B ⟶ B')
-    (h : (P.obj (Opposite.op B)).obj A.unop ⟶ Y) :
-    ((homFromSwappedProfunctor P Y).obj A).map g h = (P.map g.op).app A.unop ≫ h :=
-  rfl
-
-/-- The contravariant map (in A) for `homFromSwappedProfunctor` is precomposition. -/
-@[simp]
-theorem homFromSwappedProfunctor_map_app (P : Cᵒᵖ ⥤ C ⥤ D) (Y : D)
-    {A A' : Cᵒᵖ} (f : A ⟶ A') (B : C)
-    (h : (P.obj (Opposite.op B)).obj A.unop ⟶ Y) :
-    ((homFromSwappedProfunctor P Y).map f).app B h =
-      (P.obj (Opposite.op B)).map f.unop ≫ h := rfl
-
-/-- The diagonal of `homFromSwappedProfunctor P Y` at `A` is `Hom(P(A, A), Y)`. -/
-theorem homFromSwappedProfunctor_diagApp (P : Cᵒᵖ ⥤ C ⥤ D) (Y : D) (A : C) :
-    diagApp (homFromSwappedProfunctor P Y) A =
-      ((P.obj (Opposite.op A)).obj A ⟶ Y) := by
-  simp only [diagApp, homFromSwappedProfunctor_obj_obj]
-
-/-- The profunctor `homFromSwappedProfunctor P Y` evaluated on twisted arrows equals
-`homToFunctor (profunctorOnCoTwistedArrow C P) Y` after transporting via the
-equivalence `(CoTwistedArrow C)ᵒᵖ ≌ TwistedArrow C`.
+/-- The slice profunctor `P ⇓ Y` evaluated on
+twisted arrows equals
+`homToFunctor (profunctorOnCoTwistedArrow C P) Y`
+after transporting via the equivalence
+`(CoTwistedArrow C)ᵒᵖ ≌ TwistedArrow C`.
 
 For a twisted arrow `(dom, cod, hom : dom → cod)`:
-- `profunctorOnTwistedArrow C (homFromSwappedProfunctor P Y)` at `(dom, cod, hom)`
-  = `Hom(P(cod, dom), Y)`
-- `homToFunctor (profunctorOnCoTwistedArrow C P) Y` at `op (cod, dom, hom)`
-  = `Hom(P(cod, dom), Y)`
-
-The equivalence maps `(dom, cod, hom)` to `op (cod, dom, hom)`, giving the equality. -/
-theorem profunctorOnTwistedArrow_homFromSwappedProfunctor_obj
-    (P : Cᵒᵖ ⥤ C ⥤ D) (Y : D) (tw : TwistedArrow C) :
-    (profunctorOnTwistedArrow C (homFromSwappedProfunctor P Y)).obj tw =
-    (homToFunctor (profunctorOnCoTwistedArrow C P) Y).obj
-      (coTwistedArrowOpEquivTwistedArrow.inverse.obj tw) := by
-  simp only [profunctorOnTwistedArrow_obj, homFromSwappedProfunctor_obj_obj]
+- `profunctorOnTwistedArrow C (P ⇓ Y)` at
+  `(dom, cod, hom)` = `Hom(P(cod, dom), Y)`
+- `homToFunctor
+    (profunctorOnCoTwistedArrow C P) Y`
+  at `op (cod, dom, hom)`
+  = `Hom(P(cod, dom), Y)` -/
+theorem profunctorOnTwistedArrow_sliceProf_obj
+    {D : Type w} [Category.{v} D]
+    (P : Cᵒᵖ ⥤ C ⥤ D) (Y : D)
+    (tw : TwistedArrow C) :
+    (profunctorOnTwistedArrow C
+      (P ⇓ Y)).obj tw =
+    (homToFunctor
+      (profunctorOnCoTwistedArrow C P)
+      Y).obj
+      (coTwistedArrowOpEquivTwistedArrow.inverse.obj
+        tw) := by
+  simp only [profunctorOnTwistedArrow_obj,
+    sliceProfunctor_obj_obj]
   unfold homToFunctor homToFunctorBifunctor
-  simp only [Functor.comp_obj, Functor.opHom_obj, Functor.flip_obj_obj,
-    Functor.whiskeringRight_obj_obj, yoneda_obj_obj, Functor.op_obj,
-    profunctorOnCoTwistedArrow_obj, coTwistedArrowOpEquivInverse_obj_dom,
+  simp only [Functor.comp_obj,
+    Functor.opHom_obj,
+    Functor.flip_obj_obj,
+    Functor.whiskeringRight_obj_obj,
+    yoneda_obj_obj, Functor.op_obj,
+    profunctorOnCoTwistedArrow_obj,
+    coTwistedArrowOpEquivInverse_obj_dom,
     coTwistedArrowOpEquivInverse_obj_cod]
-
-end HomFromSwappedProfunctor
 
 /-!
 ## Weighted coend elimination as weighted end
 
 The weighted coend elimination rule `Hom(∫^A W(A,A)·P(A,A), Y) ≅ ∫_A W(A,A)^Hom(P(A,A), Y)`
-can be expressed using weighted ends with the `homFromSwappedProfunctor` diagram.
+can be expressed using weighted ends with the
+slice profunctor `P ⇓ Y` as diagram.
 
 Given a weighted cowedge `c : WeightedCowedge W P`, we construct a weighted wedge
-`homWeightedWedge c Y : WeightedWedge W (homFromSwappedProfunctor P Y)` with apex
+`homWeightedWedge c Y : WeightedWedge W (P ⇓ Y)` with apex
 `c.pt ⟶ Y`. When `c` is a weighted coend, this wedge is a weighted end.
 -/
 
@@ -3624,7 +3676,7 @@ with weight elements transported via the equivalence between
 
 This is the coend analogue of `IsWeightedColimit.homWeightedCone`. -/
 def homWeightedWedge (c : WeightedCowedge W P) (Y : D) :
-    WeightedWedge W (homFromSwappedProfunctor P Y) where
+    WeightedWedge W (P ⇓ Y) where
   pt := c.pt ⟶ Y
   toWeightedConeUnder := {
     app := fun tw w f =>
@@ -3633,9 +3685,9 @@ def homWeightedWedge (c : WeightedCowedge W P) (Y : D) :
         (coTwistedArrowOpEquivTwistedArrow.counitInv.app tw) w
       -- Apply cowedge leg and postcompose with f
       -- The output type P(twCod, twDom) ⟶ Y equals the expected type
-      -- (profunctorOnTwistedArrow (homFromSwappedProfunctor P Y)).obj tw
+      -- (profunctorOnTwistedArrow (P ⇓ Y)).obj tw
       cast (by
-        simp only [profunctorOnTwistedArrow_obj, homFromSwappedProfunctor_obj_obj]
+        simp only [profunctorOnTwistedArrow_obj, sliceProfunctor_obj_obj]
         congr 1)
         (c.ι.app (coTwistedArrowOpEquivTwistedArrow.inverse.obj tw) w' ≫ f)
     naturality := fun {tw tw'} g => by
@@ -3693,7 +3745,6 @@ def homWeightedWedge (c : WeightedCowedge W P) (Y : D) :
         Functor.comp_obj, Functor.comp_map, coyoneda, Functor.whiskeringRight_obj_obj,
         yoneda_obj_map, yoneda_map_app, types_comp_apply]
       simp only [profunctorOnTwistedArrow_map, types_comp_apply]
-      simp only [homFromSwappedProfunctor_map_app, homFromSwappedProfunctor_obj_map]
       -- Simplify opHom and op_map to extract the underlying morphism
       simp only [Functor.opHom_obj, Functor.op_map, Quiver.Hom.unop_op,
         profunctorOnCoTwistedArrow_map, Category.assoc]
@@ -3731,7 +3782,7 @@ def homWeightedWedge (c : WeightedCowedge W P) (Y : D) :
 
 /-- The `app` function for `wedgeToCowedge`. Applies the wedge leg at the
 corresponding twisted arrow with appropriate cast. -/
-def wedgeToCowedge_app (Y : D) (d : WeightedWedge W (homFromSwappedProfunctor P Y))
+def wedgeToCowedge_app (Y : D) (d : WeightedWedge W (P ⇓ Y))
     (x : d.pt) (coTw : (CoTwistedArrow C)ᵒᵖ)
     (w : (profunctorOnOpCoTwistedArrow C W).obj coTw) :
     (homToFunctor (profunctorOnCoTwistedArrow C P) Y).obj coTw :=
@@ -3740,7 +3791,7 @@ def wedgeToCowedge_app (Y : D) (d : WeightedWedge W (homFromSwappedProfunctor P 
     simp only [homToFunctor, homToFunctorBifunctor, Functor.comp_obj,
       Functor.opHom_obj, Functor.flip_obj_obj, Functor.whiskeringRight_obj_obj,
       yoneda_obj_obj, Functor.op_obj, profunctorOnCoTwistedArrow_obj,
-      profunctorOnTwistedArrow_obj, homFromSwappedProfunctor_obj_obj]
+      profunctorOnTwistedArrow_obj, sliceProfunctor_obj_obj]
     have h1 := coTwistedArrowOpEquiv_obj_dom (Opposite.unop coTw)
     have h2 := coTwistedArrowOpEquiv_obj_cod (Opposite.unop coTw)
     simp only [Opposite.op_unop] at h1 h2
@@ -3748,7 +3799,7 @@ def wedgeToCowedge_app (Y : D) (d : WeightedWedge W (homFromSwappedProfunctor P 
 
 /-- Naturality lemma for `wedgeToCowedge`. -/
 theorem wedgeToCowedge_naturality (Y : D)
-    (d : WeightedWedge W (homFromSwappedProfunctor P Y))
+    (d : WeightedWedge W (P ⇓ Y))
     (x : d.pt) {coTw coTw' : (CoTwistedArrow C)ᵒᵖ} (g : coTw ⟶ coTw') :
     (profunctorOnOpCoTwistedArrow C W).map g ≫
       wedgeToCowedge_app Y d x coTw' =
@@ -3770,7 +3821,6 @@ theorem wedgeToCowedge_naturality (Y : D)
     Functor.comp_obj, Functor.comp_map, coyoneda, Functor.whiskeringRight_obj_obj,
     yoneda_obj_map, yoneda_map_app, types_comp_apply]
   simp only [profunctorOnTwistedArrow_map, types_comp_apply]
-  simp only [homFromSwappedProfunctor_map_app, homFromSwappedProfunctor_obj_map]
   simp only [Functor.opHom_obj, Functor.op_map, Quiver.Hom.unop_op,
     profunctorOnCoTwistedArrow_map, Category.assoc]
   -- The goal is a heterogeneous equality between morphism compositions.
@@ -3779,13 +3829,13 @@ theorem wedgeToCowedge_naturality (Y : D)
   -- coTwCodArr g.unop), so congr can close the goal.
   congr 1
 
-/-- Given a weighted wedge `d` with apex `X` over `homFromSwappedProfunctor P Y`
+/-- Given a weighted wedge `d` with apex `X` over `P ⇓ Y`
 and an element `x : X`, constructs a weighted cowedge over `P` with apex `Y`.
 
 This is the adjoint transpose of the wedge structure, converting a wedge leg
 `X → (P(twCod, twDom) ⟶ Y)` into a cowedge leg `P(coTwDom, coTwCod) ⟶ Y` via
 the equivalence between twisted and co-twisted arrow categories. -/
-def wedgeToCowedge (Y : D) (d : WeightedWedge W (homFromSwappedProfunctor P Y))
+def wedgeToCowedge (Y : D) (d : WeightedWedge W (P ⇓ Y))
     (x : d.pt) : WeightedCowedge W P where
   pt := Y
   toWeightedCoconeOver := {
@@ -3798,10 +3848,10 @@ def wedgeToCowedge (Y : D) (d : WeightedWedge W (homFromSwappedProfunctor P Y))
 This is the weighted coend elimination rule expressed as a weighted end:
 for a weighted coend `c : WeightedCowedge W P` and any object `Y`,
 morphisms `c.pt ⟶ Y` form the apex of the weighted end of
-`homFromSwappedProfunctor P Y` (which on the diagonal gives `Hom(P(A,A), Y)`).
+`P ⇓ Y` (which on the diagonal gives `Hom(P(A,A), Y)`).
 
 The forward direction uses `wedgeToCowedge` to convert any weighted wedge
-`d` over `homFromSwappedProfunctor P Y` with element `x : d.pt` into a
+`d` over `P ⇓ Y` with element `x : d.pt` into a
 weighted cowedge with apex `Y`, then applies the initiality of `c` to get
 `c.pt ⟶ Y`. -/
 def homWeightedWedge_isWeightedEnd {c : WeightedCowedge W P}
@@ -3868,9 +3918,7 @@ def homWeightedWedge_isWeightedEnd {c : WeightedCowedge W P}
         simp only [twDomArr_eqToHom, twCodArr_eqToHom]
         -- (eqToHom h).op = eqToHom (...), eqToHom_refl turns into id
         simp only [eqToHom_refl]
-        -- Identity morphisms simplify away
         simp only [op_id, Functor.map_id]
-        -- Try general simp
         simp
         rfl⟩)
     (fun d f => by
@@ -3918,7 +3966,7 @@ def homWeightedWedge_isWeightedEnd {c : WeightedCowedge W P}
         simp only [eqToHom_refl] at hSpec
         simp only [profunctorOnCoTwistedArrow_obj, TwistedArrow.eq_1,
           Cat.Hom.comp_toFunctor, Cat.of_α, Functor.comp_obj,
-          profunctorOnTwistedArrow_obj, homFromSwappedProfunctor_obj_obj,
+          profunctorOnTwistedArrow_obj, sliceProfunctor_obj_obj,
           cast_eq] at hSpec ⊢
         -- The nested iso applications simplify via Cat iso coherence
         convert hSpec using 2⟩
@@ -3927,18 +3975,18 @@ def homWeightedWedge_isWeightedEnd {c : WeightedCowedge W P}
       exact congrArg WeightedCocone.Hom.hom (hc.homExt φ (hc.desc (wedgeToCowedge Y d x))))
 
 /-- The hom-set from a weighted coend to `Y` is isomorphic to the apex of
-any weighted end of `homFromSwappedProfunctor P Y` by `W`.
+any weighted end of `P ⇓ Y` by `W`.
 
 Given:
 - `c` is a weighted coend of `P` by `W`
-- `d` is a weighted end of `homFromSwappedProfunctor P Y` by `W`
+- `d` is a weighted end of `P ⇓ Y` by `W`
 
 Then `(c.pt ⟶ Y) ≅ d.pt`.
 
 This is the weighted coend elimination rule expressed as a weighted end. -/
 def homIsoWeightedEndApex {c : WeightedCowedge W P}
     (hc : IsWeightedCoend c) (Y : D)
-    {d : WeightedWedge W (homFromSwappedProfunctor P Y)}
+    {d : WeightedWedge W (P ⇓ Y)}
     (hd : IsWeightedEnd d) : (c.pt ⟶ Y) ≅ d.pt :=
   let homIsEnd := homWeightedWedge_isWeightedEnd hc Y
   let wedgeIso := IsTerminal.uniqueUpToIso homIsEnd hd
@@ -3956,12 +4004,15 @@ Following Vene's thesis (2000), a *restricted cowedge* generalizes ordinary
 cowedges by parametrizing the injection morphisms with a "restriction" functor.
 
 Given:
-- `G : Cᵒᵖ ⥤ C ⥤ C`, an endodifunctor
-- `H : Cᵒᵖ ⥤ C ⥤ Type*`, a difunctor to Type (the "restriction")
+- `G : Cᵒᵖ ⥤ C ⥤ D`, a difunctor
+- `H : Cᵒᵖ ⥤ C ⥤ Type*`, a difunctor to
+  Type (the "restriction")
 
-An `H`-restricted `G`-cowedge `(C, Φ)` consists of:
-- An object `C` (the carrier/summit)
-- A family `Φ_A : H(A, A) → Hom(G(A, A), C)` satisfying dinaturality
+An `H`-restricted `G`-cowedge `(pt, Phi)` consists
+of:
+- An object `pt : D` (the carrier/summit)
+- A family `Phi_A : H(A, A) → Hom(G(A, A), pt)`
+  satisfying dinaturality
 
 The dinaturality condition states that for `g : A → B` and `x : H(B, A)`:
 ```
@@ -3978,14 +4029,18 @@ h ∘ Φ_A(a) = Ψ_A(a)
 variable {C : Type u} [Category.{v} C]
 
 /--
-An `H`-restricted `G`-cowedge over a fixed point `pt` for an endodifunctor
-`G : Cᵒᵖ ⥤ C ⥤ C` and restriction functor `H : Cᵒᵖ ⥤ C ⥤ Type v`.
+An `H`-restricted `G`-cowedge over a fixed point
+`pt` for a difunctor `G : Cᵒᵖ ⥤ C ⥤ D` and
+restriction functor `H : Cᵒᵖ ⥤ C ⥤ Type v`.
 
-This contains just the family and dinaturality data without bundling the
-carrier object.
+This contains the family and dinaturality data
+without bundling the carrier object.
 -/
 @[ext]
-structure RestrictedCowedgeOver (G : Cᵒᵖ ⥤ C ⥤ C) (H : Cᵒᵖ ⥤ C ⥤ Type v) (pt : C) where
+structure RestrictedCowedgeOver
+    {D : Type w} [Category.{v} D]
+    (G : Cᵒᵖ ⥤ C ⥤ D) (H : Cᵒᵖ ⥤ C ⥤ Type v)
+    (pt : D) where
   /-- The family of morphisms as a `ParanatSig H (G ⇓ pt)`. -/
   family : ParanatSig H (G ⇓ pt)
   /-- The dinaturality condition on the family. -/
@@ -3993,7 +4048,10 @@ structure RestrictedCowedgeOver (G : Cᵒᵖ ⥤ C ⥤ C) (H : Cᵒᵖ ⥤ C ⥤
 
 namespace RestrictedCowedgeOver
 
-variable {G G' G'' : Cᵒᵖ ⥤ C ⥤ C} {H H' H'' : Cᵒᵖ ⥤ C ⥤ Type v} {pt pt' pt'' : C}
+variable {D : Type w} [Category.{v} D]
+  {G G' G'' : Cᵒᵖ ⥤ C ⥤ D}
+  {H H' H'' : Cᵒᵖ ⥤ C ⥤ Type v}
+  {pt pt' pt'' : D}
 
 /-- Covariant action on the point parameter.
 Given `f : pt ⟶ pt'`, we map a restricted cowedge over `pt` to one over `pt'`
@@ -4142,8 +4200,11 @@ end RestrictedCowedgeOver
 
 /-- The bifunctor `(Cᵒᵖ ⥤ C ⥤ Type v)ᵒᵖ ⥤ C ⥤ Type (max u v)` for restricted cowedges.
 For a fixed endodifunctor `G`, this maps `(H, pt)` to `RestrictedCowedgeOver G H pt`. -/
-def restrictedCowedgeOverFunctor (G : Cᵒᵖ ⥤ C ⥤ C) :
-    (Cᵒᵖ ⥤ C ⥤ Type v)ᵒᵖ ⥤ C ⥤ Type (max u v) where
+def restrictedCowedgeOverFunctor
+    {D : Type w} [Category.{v} D]
+    (G : Cᵒᵖ ⥤ C ⥤ D) :
+    (Cᵒᵖ ⥤ C ⥤ Type v)ᵒᵖ ⥤
+      D ⥤ Type (max u v) where
   obj Hop := {
     obj := fun pt => RestrictedCowedgeOver G Hop.unop pt
     map := @fun _ _ f c => RestrictedCowedgeOver.mapPt f c
@@ -4168,16 +4229,21 @@ def restrictedCowedgeOverFunctor (G : Cᵒᵖ ⥤ C ⥤ C) :
     simp only [NatTrans.comp_app, types_comp_apply, unop_comp, RestrictedCowedgeOver.mapH_comp]
 
 /-- `RestrictedCowedgeOver G H pt` is the application of `restrictedCowedgeOverFunctor G`. -/
-theorem restrictedCowedgeOver_eq_functor_obj (G : Cᵒᵖ ⥤ C ⥤ C)
-    (H : Cᵒᵖ ⥤ C ⥤ Type v) (pt : C) :
+theorem restrictedCowedgeOver_eq_functor_obj
+    {D : Type w} [Category.{v} D]
+    (G : Cᵒᵖ ⥤ C ⥤ D)
+    (H : Cᵒᵖ ⥤ C ⥤ Type v) (pt : D) :
     RestrictedCowedgeOver G H pt =
     ((restrictedCowedgeOverFunctor G).obj (Opposite.op H)).obj pt := rfl
 
 /-- The trifunctor `(Cᵒᵖ ⥤ C ⥤ C)ᵒᵖ ⥤ (Cᵒᵖ ⥤ C ⥤ Type v)ᵒᵖ ⥤ C ⥤ Type (max u v)`.
 This extends `restrictedCowedgeOverFunctor` to also be (contravariantly) functorial
 in the `G` parameter. -/
-def restrictedCowedgeOverTrifunctor :
-    (Cᵒᵖ ⥤ C ⥤ C)ᵒᵖ ⥤ (Cᵒᵖ ⥤ C ⥤ Type v)ᵒᵖ ⥤ C ⥤ Type (max u v) where
+def restrictedCowedgeOverTrifunctor
+    {D : Type w} [Category.{v} D] :
+    (Cᵒᵖ ⥤ C ⥤ D)ᵒᵖ ⥤
+      (Cᵒᵖ ⥤ C ⥤ Type v)ᵒᵖ ⥤
+        D ⥤ Type (max u v) where
   obj Gop := restrictedCowedgeOverFunctor Gop.unop
   map := @fun Gop Gop' β => {
     app := fun Hop => {
@@ -4202,102 +4268,149 @@ def restrictedCowedgeOverTrifunctor :
 
 /-- `restrictedCowedgeOverFunctor G` equals the application of
 `restrictedCowedgeOverTrifunctor` at `G`. -/
-theorem restrictedCowedgeOverFunctor_eq_trifunctor_obj (G : Cᵒᵖ ⥤ C ⥤ C) :
+theorem restrictedCowedgeOverFunctor_eq_trifunctor_obj
+    {D : Type w} [Category.{v} D]
+    (G : Cᵒᵖ ⥤ C ⥤ D) :
     restrictedCowedgeOverFunctor G =
     restrictedCowedgeOverTrifunctor.obj (Opposite.op G) := rfl
 
 /--
-An `H`-restricted `G`-cowedge for an endodifunctor `G : Cᵒᵖ ⥤ C ⥤ C` and
-restriction functor `H : Cᵒᵖ ⥤ C ⥤ Type v`.
+An `H`-restricted `G`-cowedge for a difunctor
+`G : Cᵒᵖ ⥤ C ⥤ D` and restriction functor
+`H : Cᵒᵖ ⥤ C ⥤ Type v`.
 
-This consists of a carrier object and a `RestrictedCowedgeOver G H pt`.
+This consists of a carrier object and a
+`RestrictedCowedgeOver G H pt`.
 
-The universe of `H` is `v` (the morphism universe) to match the slice profunctor
+The universe of `H` is `v` (the morphism universe) to
+match the slice profunctor
 `G ⇓ pt : Cᵒᵖ ⥤ C ⥤ Type v`. -/
 @[ext]
-structure RestrictedCowedge (G : Cᵒᵖ ⥤ C ⥤ C) (H : Cᵒᵖ ⥤ C ⥤ Type v) where
+structure RestrictedCowedge
+    {D : Type w} [Category.{v} D]
+    (G : Cᵒᵖ ⥤ C ⥤ D)
+    (H : Cᵒᵖ ⥤ C ⥤ Type v) where
   /-- The carrier (summit) object. -/
-  pt : C
+  pt : D
   /-- The cowedge data over the point. -/
-  toRestrictedCowedgeOver : RestrictedCowedgeOver G H pt
+  toRestrictedCowedgeOver :
+    RestrictedCowedgeOver G H pt
 
 namespace RestrictedCowedge
 
-variable {G : Cᵒᵖ ⥤ C ⥤ C} {H : Cᵒᵖ ⥤ C ⥤ Type v}
+variable {D : Type w} [Category.{v} D]
+  {G : Cᵒᵖ ⥤ C ⥤ D}
+  {H : Cᵒᵖ ⥤ C ⥤ Type v}
 
-/-- The family of morphisms as a `ParanatSig H (G ⇓ pt)`. -/
-abbrev family (c : RestrictedCowedge G H) : ParanatSig H (G ⇓ c.pt) :=
+/-- The family of morphisms as a
+`ParanatSig H (G ⇓ pt)`. -/
+abbrev family (c : RestrictedCowedge G H) :
+    ParanatSig H (G ⇓ c.pt) :=
   c.toRestrictedCowedgeOver.family
 
 /-- The dinaturality condition on the family. -/
-abbrev isDinatural (c : RestrictedCowedge G H) : IsDinatural H (G ⇓ c.pt) c.family :=
+abbrev isDinatural (c : RestrictedCowedge G H) :
+    IsDinatural H (G ⇓ c.pt) c.family :=
   c.toRestrictedCowedgeOver.isDinatural
 
-/-- Constructor with explicit point, family, and dinaturality arguments. -/
+/-- Constructor with explicit point, family, and
+dinaturality arguments. -/
 @[match_pattern]
-def mk' (pt : C) (family : ParanatSig H (G ⇓ pt))
-    (isDinatural : IsDinatural H (G ⇓ pt) family) : RestrictedCowedge G H :=
+def mk' (pt : D)
+    (family : ParanatSig H (G ⇓ pt))
+    (isDinatural :
+      IsDinatural H (G ⇓ pt) family) :
+    RestrictedCowedge G H :=
   ⟨pt, ⟨family, isDinatural⟩⟩
 
 end RestrictedCowedge
 
-/-- Convert a restricted cowedge to a `Dinat` transformation `H → G ⇓ pt`. -/
-def RestrictedCowedge.toDinat {G : Cᵒᵖ ⥤ C ⥤ C} {H : Cᵒᵖ ⥤ C ⥤ Type v}
-    (c : RestrictedCowedge G H) : Dinat H (G ⇓ c.pt) where
+/-- Convert a restricted cowedge to a `Dinat`
+transformation `H → G ⇓ pt`. -/
+def RestrictedCowedge.toDinat
+    {D : Type w} [Category.{v} D]
+    {G : Cᵒᵖ ⥤ C ⥤ D}
+    {H : Cᵒᵖ ⥤ C ⥤ Type v}
+    (c : RestrictedCowedge G H) :
+    Dinat H (G ⇓ c.pt) where
   app := c.family
   dinatural := c.isDinatural
 
-/-- Construct a restricted cowedge from a carrier object and a `Dinat` transformation.
+/-- Construct a restricted cowedge from a carrier
+object and a `Dinat` transformation.
 
-Given `pt : C` and a dinatural transformation `α : H → G ⇓ pt`, we obtain a
-restricted cowedge with the same carrier and family. -/
-def RestrictedCowedge.ofDinat {G : Cᵒᵖ ⥤ C ⥤ C} {H : Cᵒᵖ ⥤ C ⥤ Type v}
-    (pt : C) (α : Dinat H (G ⇓ pt)) : RestrictedCowedge G H where
+Given `pt : D` and a dinatural transformation
+`α : H → G ⇓ pt`, we obtain a restricted cowedge
+with the same carrier and family. -/
+def RestrictedCowedge.ofDinat
+    {D : Type w} [Category.{v} D]
+    {G : Cᵒᵖ ⥤ C ⥤ D}
+    {H : Cᵒᵖ ⥤ C ⥤ Type v}
+    (pt : D) (α : Dinat H (G ⇓ pt)) :
+    RestrictedCowedge G H where
   pt := pt
   toRestrictedCowedgeOver := ⟨α.app, α.dinatural⟩
 
 namespace RestrictedCowedge
 
-variable {G : Cᵒᵖ ⥤ C ⥤ C} {H : Cᵒᵖ ⥤ C ⥤ Type v}
+variable {D : Type w} [Category.{v} D]
+  {G : Cᵒᵖ ⥤ C ⥤ D}
+  {H : Cᵒᵖ ⥤ C ⥤ Type v}
 
-/-- The explicit dinaturality equation: for `g : A → B` and `x : H(B, A)`,
-the two paths from `G(B, A)` to `pt` agree. -/
-theorem dinaturality' (c : RestrictedCowedge G H) {A B : C} (g : A ⟶ B)
+/-- The explicit dinaturality equation: for
+`g : A → B` and `x : H(B, A)`, the two paths from
+`G(B, A)` to `pt` agree. -/
+theorem dinaturality'
+    (c : RestrictedCowedge G H)
+    {A B : C} (g : A ⟶ B)
     (x : (H.obj (Opposite.op B)).obj A) :
-    (G.map g.op).app A ≫ c.family A ((H.map g.op).app A x) =
-    (G.obj (Opposite.op B)).map g ≫ c.family B ((H.obj (Opposite.op B)).map g x) := by
+    (G.map g.op).app A ≫
+      c.family A ((H.map g.op).app A x) =
+    (G.obj (Opposite.op B)).map g ≫
+      c.family B
+        ((H.obj (Opposite.op B)).map g x) := by
   have dinat := c.isDinatural A B g x
   simp only [Profunctor.lmap, Profunctor.rmap,
-    sliceProfunctor_obj_map, sliceProfunctor_map_app] at dinat
+    sliceProfunctor_obj_map,
+    sliceProfunctor_map_app] at dinat
   exact dinat.symm
 
 /--
-A morphism between restricted cowedges is an arrow in `C` that commutes
-with all family morphisms (pointwise condition).
+A morphism between restricted cowedges is an arrow
+in `D` that commutes with all family morphisms
+(pointwise condition).
 -/
 @[ext]
 structure Hom (c d : RestrictedCowedge G H) where
-  /-- The underlying morphism in `C`. -/
+  /-- The underlying morphism in `D`. -/
   hom : c.pt ⟶ d.pt
-  /-- Compatibility: for all `A` and `a ∈ H(A, A)`, composition with `hom`
-  transforms `c.family` to `d.family`. -/
-  comm (A : C) (a : (H.obj (Opposite.op A)).obj A) :
+  /-- Compatibility: for all `A` and
+  `a ∈ H(A, A)`, composition with `hom` transforms
+  `c.family` to `d.family`. -/
+  comm (A : C)
+    (a : (H.obj (Opposite.op A)).obj A) :
     c.family A a ≫ hom = d.family A a
 
 attribute [simp] Hom.comm
 
-/-- The identity morphism on a restricted cowedge. -/
+/-- The identity morphism on a restricted
+cowedge. -/
 @[simps]
-def Hom.id (c : RestrictedCowedge G H) : Hom c c where
+def Hom.id (c : RestrictedCowedge G H) :
+    Hom c c where
   hom := 𝟙 c.pt
   comm _ _ := Category.comp_id _
 
-/-- Composition of restricted cowedge morphisms. -/
+/-- Composition of restricted cowedge
+morphisms. -/
 @[simps]
-def Hom.comp {c d e : RestrictedCowedge G H} (f : Hom c d) (g : Hom d e) :
+def Hom.comp
+    {c d e : RestrictedCowedge G H}
+    (f : Hom c d) (g : Hom d e) :
     Hom c e where
   hom := f.hom ≫ g.hom
-  comm A a := by rw [← Category.assoc, f.comm, g.comm]
+  comm A a := by
+    rw [← Category.assoc, f.comm, g.comm]
 
 end RestrictedCowedge
 
@@ -4315,138 +4428,214 @@ off-diagonal elements.
 -/
 
 /--
-An `H`-restricted `G`-cowedge with the paranaturality condition over a
-fixed point `pt`. This contains just the family and paranaturality data
+An `H`-restricted `G`-cowedge with the
+paranaturality condition over a fixed point `pt`.
+This contains the family and paranaturality data
 without bundling the carrier object.
 -/
 @[ext]
-structure StrongRestrictedCowedgeOver (G : Cᵒᵖ ⥤ C ⥤ C) (H : Cᵒᵖ ⥤ C ⥤ Type v)
-    (pt : C) where
-  /-- The family of morphisms as a `ParanatSig H (G ⇓ pt)`. -/
+structure StrongRestrictedCowedgeOver
+    {D : Type w} [Category.{v} D]
+    (G : Cᵒᵖ ⥤ C ⥤ D)
+    (H : Cᵒᵖ ⥤ C ⥤ Type v)
+    (pt : D) where
+  /-- The family of morphisms as a
+  `ParanatSig H (G ⇓ pt)`. -/
   family : ParanatSig H (G ⇓ pt)
-  /-- The paranaturality condition on the family. -/
-  isParanatural : IsParanatural H (G ⇓ pt) family
+  /-- The paranaturality condition on the
+  family. -/
+  isParanatural :
+    IsParanatural H (G ⇓ pt) family
 
 /--
-An `H`-restricted `G`-cowedge with the paranaturality condition.
+An `H`-restricted `G`-cowedge with the
+paranaturality condition.
 
-This is the "strong" version of a restricted cowedge, where the family
-satisfies the full paranaturality condition rather than just dinaturality.
+This is the "strong" version of a restricted
+cowedge, where the family satisfies the full
+paranaturality condition rather than just
+dinaturality.
 -/
 @[ext]
-structure StrongRestrictedCowedge (G : Cᵒᵖ ⥤ C ⥤ C) (H : Cᵒᵖ ⥤ C ⥤ Type v) where
+structure StrongRestrictedCowedge
+    {D : Type w} [Category.{v} D]
+    (G : Cᵒᵖ ⥤ C ⥤ D)
+    (H : Cᵒᵖ ⥤ C ⥤ Type v) where
   /-- The carrier (summit) object. -/
-  pt : C
+  pt : D
   /-- The cowedge data over the point. -/
-  toStrongRestrictedCowedgeOver : StrongRestrictedCowedgeOver G H pt
+  toStrongRestrictedCowedgeOver :
+    StrongRestrictedCowedgeOver G H pt
 
 namespace StrongRestrictedCowedge
 
-variable {G : Cᵒᵖ ⥤ C ⥤ C} {H : Cᵒᵖ ⥤ C ⥤ Type v}
+variable {D : Type w} [Category.{v} D]
+  {G : Cᵒᵖ ⥤ C ⥤ D}
+  {H : Cᵒᵖ ⥤ C ⥤ Type v}
 
-/-- The family of morphisms as a `ParanatSig H (G ⇓ pt)`. -/
-abbrev family (c : StrongRestrictedCowedge G H) : ParanatSig H (G ⇓ c.pt) :=
+/-- The family of morphisms as a
+`ParanatSig H (G ⇓ pt)`. -/
+abbrev family
+    (c : StrongRestrictedCowedge G H) :
+    ParanatSig H (G ⇓ c.pt) :=
   c.toStrongRestrictedCowedgeOver.family
 
-/-- The paranaturality condition on the family. -/
-abbrev isParanatural (c : StrongRestrictedCowedge G H) :
+/-- The paranaturality condition on the
+family. -/
+abbrev isParanatural
+    (c : StrongRestrictedCowedge G H) :
     IsParanatural H (G ⇓ c.pt) c.family :=
   c.toStrongRestrictedCowedgeOver.isParanatural
 
-/-- Constructor with explicit point, family, and paranaturality arguments. -/
+/-- Constructor with explicit point, family,
+and paranaturality arguments. -/
 @[match_pattern]
-def mk' (pt : C) (family : ParanatSig H (G ⇓ pt))
-    (isParanatural : IsParanatural H (G ⇓ pt) family) : StrongRestrictedCowedge G H :=
+def mk' (pt : D)
+    (family : ParanatSig H (G ⇓ pt))
+    (isParanatural :
+      IsParanatural H (G ⇓ pt) family) :
+    StrongRestrictedCowedge G H :=
   ⟨pt, ⟨family, isParanatural⟩⟩
 
 end StrongRestrictedCowedge
 
-/-- Convert a StrongRestrictedCowedgeOver to a RestrictedCowedgeOver using the
-implication paranaturality → dinaturality. -/
-def StrongRestrictedCowedgeOver.toRestrictedCowedgeOver {G : Cᵒᵖ ⥤ C ⥤ C}
-    {H : Cᵒᵖ ⥤ C ⥤ Type v} {pt : C} (c : StrongRestrictedCowedgeOver G H pt) :
+/-- Convert a StrongRestrictedCowedgeOver to a
+RestrictedCowedgeOver using the implication
+paranaturality → dinaturality. -/
+def StrongRestrictedCowedgeOver.toRestrictedCowedgeOver
+    {D : Type w} [Category.{v} D]
+    {G : Cᵒᵖ ⥤ C ⥤ D}
+    {H : Cᵒᵖ ⥤ C ⥤ Type v} {pt : D}
+    (c : StrongRestrictedCowedgeOver G H pt) :
     RestrictedCowedgeOver G H pt :=
-  ⟨c.family, paranatural_implies_dinatural H (G ⇓ pt) c.family c.isParanatural⟩
+  ⟨c.family,
+   paranatural_implies_dinatural
+     H (G ⇓ pt) c.family c.isParanatural⟩
 
-/-- Convert a strong restricted cowedge to a `Paranat` transformation `H → G ⇓ pt`. -/
-def StrongRestrictedCowedge.toParanat {G : Cᵒᵖ ⥤ C ⥤ C} {H : Cᵒᵖ ⥤ C ⥤ Type v}
-    (c : StrongRestrictedCowedge G H) : Paranat H (G ⇓ c.pt) where
+/-- Convert a strong restricted cowedge to a
+`Paranat` transformation `H → G ⇓ pt`. -/
+def StrongRestrictedCowedge.toParanat
+    {D : Type w} [Category.{v} D]
+    {G : Cᵒᵖ ⥤ C ⥤ D}
+    {H : Cᵒᵖ ⥤ C ⥤ Type v}
+    (c : StrongRestrictedCowedge G H) :
+    Paranat H (G ⇓ c.pt) where
   app := c.family
   paranatural := c.isParanatural
 
-/-- Construct a strong restricted cowedge from a carrier object and a
-`Paranat` transformation. -/
-def StrongRestrictedCowedge.ofParanat {G : Cᵒᵖ ⥤ C ⥤ C} {H : Cᵒᵖ ⥤ C ⥤ Type v}
-    (pt : C) (α : Paranat H (G ⇓ pt)) : StrongRestrictedCowedge G H where
+/-- Construct a strong restricted cowedge from a
+carrier object and a `Paranat` transformation. -/
+def StrongRestrictedCowedge.ofParanat
+    {D : Type w} [Category.{v} D]
+    {G : Cᵒᵖ ⥤ C ⥤ D}
+    {H : Cᵒᵖ ⥤ C ⥤ Type v}
+    (pt : D) (α : Paranat H (G ⇓ pt)) :
+    StrongRestrictedCowedge G H where
   pt := pt
-  toStrongRestrictedCowedgeOver := ⟨α.app, α.paranatural⟩
+  toStrongRestrictedCowedgeOver :=
+    ⟨α.app, α.paranatural⟩
 
-/-- Every strong restricted cowedge is a restricted cowedge, since paranaturality
-implies dinaturality. -/
-def StrongRestrictedCowedge.toRestrictedCowedge {G : Cᵒᵖ ⥤ C ⥤ C}
-    {H : Cᵒᵖ ⥤ C ⥤ Type v} (c : StrongRestrictedCowedge G H) :
+/-- Every strong restricted cowedge is a restricted
+cowedge, since paranaturality implies
+dinaturality. -/
+def StrongRestrictedCowedge.toRestrictedCowedge
+    {D : Type w} [Category.{v} D]
+    {G : Cᵒᵖ ⥤ C ⥤ D}
+    {H : Cᵒᵖ ⥤ C ⥤ Type v}
+    (c : StrongRestrictedCowedge G H) :
     RestrictedCowedge G H where
   pt := c.pt
   toRestrictedCowedgeOver := ⟨c.family,
-    paranatural_implies_dinatural H (G ⇓ c.pt) c.family c.isParanatural⟩
+    paranatural_implies_dinatural
+      H (G ⇓ c.pt) c.family c.isParanatural⟩
 
 namespace StrongRestrictedCowedge
 
-variable {G : Cᵒᵖ ⥤ C ⥤ C} {H : Cᵒᵖ ⥤ C ⥤ Type v}
+variable {D : Type w} [Category.{v} D]
+  {G : Cᵒᵖ ⥤ C ⥤ D}
+  {H : Cᵒᵖ ⥤ C ⥤ Type v}
 
 /--
-A morphism between strong restricted cowedges is an arrow in `C` that commutes
-with all family morphisms (pointwise condition).
+A morphism between strong restricted cowedges is
+an arrow in `D` that commutes with all family
+morphisms (pointwise condition).
 -/
 @[ext]
-structure Hom (c d : StrongRestrictedCowedge G H) where
-  /-- The underlying morphism in `C`. -/
+structure Hom
+    (c d : StrongRestrictedCowedge G H) where
+  /-- The underlying morphism in `D`. -/
   hom : c.pt ⟶ d.pt
-  /-- Compatibility: for all `A` and `a ∈ H(A, A)`, composition with `hom`
-  transforms `c.family` to `d.family`. -/
-  comm (A : C) (a : (H.obj (Opposite.op A)).obj A) :
+  /-- Compatibility: for all `A` and
+  `a ∈ H(A, A)`, composition with `hom` transforms
+  `c.family` to `d.family`. -/
+  comm (A : C)
+    (a : (H.obj (Opposite.op A)).obj A) :
     c.family A a ≫ hom = d.family A a
 
 attribute [simp] Hom.comm
 
-/-- The identity morphism on a strong restricted cowedge. -/
+/-- The identity morphism on a strong restricted
+cowedge. -/
 @[simps]
-def Hom.id (c : StrongRestrictedCowedge G H) : Hom c c where
+def Hom.id
+    (c : StrongRestrictedCowedge G H) :
+    Hom c c where
   hom := 𝟙 c.pt
   comm _ _ := Category.comp_id _
 
-/-- Composition of strong restricted cowedge morphisms. -/
+/-- Composition of strong restricted cowedge
+morphisms. -/
 @[simps]
-def Hom.comp {c d e : StrongRestrictedCowedge G H} (f : Hom c d) (g : Hom d e) :
+def Hom.comp
+    {c d e : StrongRestrictedCowedge G H}
+    (f : Hom c d) (g : Hom d e) :
     Hom c e where
   hom := f.hom ≫ g.hom
-  comm A a := by rw [← Category.assoc, f.comm, g.comm]
+  comm A a := by
+    rw [← Category.assoc, f.comm, g.comm]
 
 end StrongRestrictedCowedge
 
 /--
-The category of `H`-restricted `G`-cowedges with the paranaturality condition.
+The category of `H`-restricted `G`-cowedges with
+the paranaturality condition.
 
-Objects are strong restricted cowedges `(C, Φ)` and morphisms are arrows
-`h : C → D` compatible with the family structure.
+Objects are strong restricted cowedges `(pt, Phi)`
+and morphisms are arrows `h : pt → pt'` compatible
+with the family structure.
 -/
-instance StrongRestrictedCowedgeCat (G : Cᵒᵖ ⥤ C ⥤ C) (H : Cᵒᵖ ⥤ C ⥤ Type v) :
+instance StrongRestrictedCowedgeCat
+    {D : Type w} [Category.{v} D]
+    (G : Cᵒᵖ ⥤ C ⥤ D)
+    (H : Cᵒᵖ ⥤ C ⥤ Type v) :
     Category (StrongRestrictedCowedge G H) where
   Hom := StrongRestrictedCowedge.Hom
   id := StrongRestrictedCowedge.Hom.id
   comp := StrongRestrictedCowedge.Hom.comp
-  id_comp f := by ext; simp [StrongRestrictedCowedge.Hom.comp, StrongRestrictedCowedge.Hom.id]
-  comp_id f := by ext; simp [StrongRestrictedCowedge.Hom.comp, StrongRestrictedCowedge.Hom.id]
-  assoc f g h := by ext; simp [StrongRestrictedCowedge.Hom.comp]
+  id_comp f := by
+    ext; simp [StrongRestrictedCowedge.Hom.comp,
+      StrongRestrictedCowedge.Hom.id]
+  comp_id f := by
+    ext; simp [StrongRestrictedCowedge.Hom.comp,
+      StrongRestrictedCowedge.Hom.id]
+  assoc f g h := by
+    ext; simp [StrongRestrictedCowedge.Hom.comp]
 
 @[simp]
-theorem StrongRestrictedCowedge.category_comp_hom {G : Cᵒᵖ ⥤ C ⥤ C}
-    {H : Cᵒᵖ ⥤ C ⥤ Type v} {c₁ c₂ c₃ : StrongRestrictedCowedge G H}
-    (f : c₁ ⟶ c₂) (g : c₂ ⟶ c₃) : (f ≫ g).hom = f.hom ≫ g.hom := rfl
+theorem StrongRestrictedCowedge.category_comp_hom
+    {D : Type w} [Category.{v} D]
+    {G : Cᵒᵖ ⥤ C ⥤ D}
+    {H : Cᵒᵖ ⥤ C ⥤ Type v}
+    {c₁ c₂ c₃ : StrongRestrictedCowedge G H}
+    (f : c₁ ⟶ c₂) (g : c₂ ⟶ c₃) :
+    (f ≫ g).hom = f.hom ≫ g.hom := rfl
 
 @[simp]
-theorem StrongRestrictedCowedge.category_id_hom {G : Cᵒᵖ ⥤ C ⥤ C}
-    {H : Cᵒᵖ ⥤ C ⥤ Type v} (c : StrongRestrictedCowedge G H) :
+theorem StrongRestrictedCowedge.category_id_hom
+    {D : Type w} [Category.{v} D]
+    {G : Cᵒᵖ ⥤ C ⥤ D}
+    {H : Cᵒᵖ ⥤ C ⥤ Type v}
+    (c : StrongRestrictedCowedge G H) :
     (𝟙 c : c ⟶ c).hom = 𝟙 c.pt := rfl
 
 /-!
@@ -4501,11 +4690,17 @@ G(g, A) ≫ Φ_A(H(g, A)(x)) = G(B, g) ≫ Φ_B(H(B, g)(x))
 This is exactly the dinaturality condition, and it expresses that the two ways
 to get from `G(B, A)` to `pt` agree. -/
 theorem RestrictedCowedge.dinaturality_as_paranaturality
-    {G : Cᵒᵖ ⥤ C ⥤ C} {H : Cᵒᵖ ⥤ C ⥤ Type v}
-    (c : RestrictedCowedge G H) {A B : C} (g : A ⟶ B)
+    {D : Type w} [Category.{v} D]
+    {G : Cᵒᵖ ⥤ C ⥤ D}
+    {H : Cᵒᵖ ⥤ C ⥤ Type v}
+    (c : RestrictedCowedge G H)
+    {A B : C} (g : A ⟶ B)
     (x : (H.obj (Opposite.op B)).obj A) :
-    (G.map g.op).app A ≫ c.family A ((H.map g.op).app A x) =
-    (G.obj (Opposite.op B)).map g ≫ c.family B ((H.obj (Opposite.op B)).map g x) :=
+    (G.map g.op).app A ≫
+      c.family A ((H.map g.op).app A x) =
+    (G.obj (Opposite.op B)).map g ≫
+      c.family B
+        ((H.obj (Opposite.op B)).map g x) :=
   c.dinaturality' g x
 
 /-- The family of a restricted cowedge, viewed as a `ParanatSig H (G ⇓ pt)`.
@@ -4521,19 +4716,29 @@ for DiagCompat pairs that factor through off-diagonal elements.
 The universe constraint `v = w` is needed because `ParanatSig` requires both
 endoprofunctors to be valued in the same universe, and the slice profunctor
 `G ⇓ pt` outputs `Type v` (the morphism universe). -/
-def RestrictedCowedge.familyAsParanatSig {G : Cᵒᵖ ⥤ C ⥤ C} {H : Cᵒᵖ ⥤ C ⥤ Type v}
-    (c : RestrictedCowedge G H) : ParanatSig H (G ⇓ c.pt) :=
+def RestrictedCowedge.familyAsParanatSig
+    {D : Type w} [Category.{v} D]
+    {G : Cᵒᵖ ⥤ C ⥤ D}
+    {H : Cᵒᵖ ⥤ C ⥤ Type v}
+    (c : RestrictedCowedge G H) :
+    ParanatSig H (G ⇓ c.pt) :=
   c.family
 
 /-- `DiagCompat` for the slice profunctor `G ⇓ c` at morphisms is exactly the
 dinaturality equation. This shows that `m₀ : Hom(G(A,A), c)` and `m₁ : Hom(G(B,B), c)`
 are DiagCompat iff the two paths from `G(B,A)` to `c` agree. -/
-theorem sliceProfunctor_diagCompat_iff {G : Cᵒᵖ ⥤ C ⥤ C} (c : C)
+theorem sliceProfunctor_diagCompat_iff
+    {D : Type w} [Category.{v} D]
+    {G : Cᵒᵖ ⥤ C ⥤ D} (c : D)
     {A B : C} (f : A ⟶ B)
-    (m₀ : diagApp (G ⇓ c) A) (m₁ : diagApp (G ⇓ c) B) :
+    (m₀ : diagApp (G ⇓ c) A)
+    (m₁ : diagApp (G ⇓ c) B) :
     DiagCompat (G ⇓ c) A B f m₀ m₁ ↔
-    (G.map f.op).app A ≫ m₀ = (G.obj (Opposite.op B)).map f ≫ m₁ := by
-  simp only [DiagCompat, sliceProfunctor_obj_map, sliceProfunctor_map_app,
+    (G.map f.op).app A ≫ m₀ =
+      (G.obj (Opposite.op B)).map f ≫ m₁ := by
+  simp only [DiagCompat,
+    sliceProfunctor_obj_map,
+    sliceProfunctor_map_app,
     Quiver.Hom.unop_op]
 
 /-- Dinaturality of a restricted cowedge implies DiagCompat for the image under
@@ -4544,59 +4749,83 @@ Given a restricted cowedge `c`, morphism `g : A → B`, and off-diagonal element
 `(H.obj (op B)).map g x` are DiagCompat in `H`, and their images under `c.family`
 are DiagCompat in `G ⇓ c.pt`. -/
 theorem RestrictedCowedge.family_preserves_diagCompat_offDiag
-    {G : Cᵒᵖ ⥤ C ⥤ C} {H : Cᵒᵖ ⥤ C ⥤ Type v}
-    (c : RestrictedCowedge G H) {A B : C} (g : A ⟶ B)
+    {D : Type w} [Category.{v} D]
+    {G : Cᵒᵖ ⥤ C ⥤ D}
+    {H : Cᵒᵖ ⥤ C ⥤ Type v}
+    (c : RestrictedCowedge G H)
+    {A B : C} (g : A ⟶ B)
     (x : (H.obj (Opposite.op B)).obj A) :
     DiagCompat (G ⇓ c.pt) A B g
       (c.family A ((H.map g.op).app A x))
-      (c.family B ((H.obj (Opposite.op B)).map g x)) := by
+      (c.family B
+        ((H.obj (Opposite.op B)).map g x)) := by
   rw [sliceProfunctor_diagCompat_iff]
   exact c.dinaturality' g x
 
 /--
 The category of `H`-restricted `G`-cowedges.
 
-Objects are restricted cowedges `(C, Φ)` and morphisms are arrows `h : C → D`
-compatible with the family structure.
+Objects are restricted cowedges `(pt, Phi)` and
+morphisms are arrows `h : pt → pt'` compatible
+with the family structure.
 -/
-instance RestrictedCowedgeCat (G : Cᵒᵖ ⥤ C ⥤ C) (H : Cᵒᵖ ⥤ C ⥤ Type v) :
+instance RestrictedCowedgeCat
+    {D : Type w} [Category.{v} D]
+    (G : Cᵒᵖ ⥤ C ⥤ D)
+    (H : Cᵒᵖ ⥤ C ⥤ Type v) :
     Category (RestrictedCowedge G H) where
   Hom := RestrictedCowedge.Hom
   id := RestrictedCowedge.Hom.id
   comp := RestrictedCowedge.Hom.comp
-  id_comp f := by ext; simp [RestrictedCowedge.Hom.comp, RestrictedCowedge.Hom.id]
-  comp_id f := by ext; simp [RestrictedCowedge.Hom.comp, RestrictedCowedge.Hom.id]
-  assoc f g h := by ext; simp [RestrictedCowedge.Hom.comp]
+  id_comp f := by
+    ext; simp [RestrictedCowedge.Hom.comp,
+      RestrictedCowedge.Hom.id]
+  comp_id f := by
+    ext; simp [RestrictedCowedge.Hom.comp,
+      RestrictedCowedge.Hom.id]
+  assoc f g h := by
+    ext; simp [RestrictedCowedge.Hom.comp]
 
 @[simp]
-theorem RestrictedCowedge.category_comp_hom {G : Cᵒᵖ ⥤ C ⥤ C} {H : Cᵒᵖ ⥤ C ⥤ Type v}
+theorem RestrictedCowedge.category_comp_hom
+    {D : Type w} [Category.{v} D]
+    {G : Cᵒᵖ ⥤ C ⥤ D}
+    {H : Cᵒᵖ ⥤ C ⥤ Type v}
     {c₁ c₂ c₃ : RestrictedCowedge G H}
-    (f : c₁ ⟶ c₂) (g : c₂ ⟶ c₃) : (f ≫ g).hom = f.hom ≫ g.hom := rfl
+    (f : c₁ ⟶ c₂) (g : c₂ ⟶ c₃) :
+    (f ≫ g).hom = f.hom ≫ g.hom := rfl
 
 @[simp]
-theorem RestrictedCowedge.category_id_hom {G : Cᵒᵖ ⥤ C ⥤ C} {H : Cᵒᵖ ⥤ C ⥤ Type v}
-    (c : RestrictedCowedge G H) : (𝟙 c : c ⟶ c).hom = 𝟙 c.pt := rfl
+theorem RestrictedCowedge.category_id_hom
+    {D : Type w} [Category.{v} D]
+    {G : Cᵒᵖ ⥤ C ⥤ D}
+    {H : Cᵒᵖ ⥤ C ⥤ Type v}
+    (c : RestrictedCowedge G H) :
+    (𝟙 c : c ⟶ c).hom = 𝟙 c.pt := rfl
 
-/-- The inclusion functor from strong restricted cowedges to restricted cowedges.
-This embeds the category of cowedges with paranaturality into the category of
-cowedges with dinaturality. Since paranaturality implies dinaturality, every
-strong restricted cowedge is a restricted cowedge, and morphisms are defined
-identically in both categories (arrows commuting with the family). -/
-def StrongRestrictedCowedge.inclusion (G : Cᵒᵖ ⥤ C ⥤ C)
+/-- The inclusion functor from strong restricted
+cowedges to restricted cowedges. This embeds the
+category of cowedges with paranaturality into the
+category of cowedges with dinaturality. -/
+def StrongRestrictedCowedge.inclusion
+    {D : Type w} [Category.{v} D]
+    (G : Cᵒᵖ ⥤ C ⥤ D)
     (H : Cᵒᵖ ⥤ C ⥤ Type v) :
-    StrongRestrictedCowedge G H ⥤ RestrictedCowedge G H where
+    StrongRestrictedCowedge G H ⥤
+      RestrictedCowedge G H where
   obj c := c.toRestrictedCowedge
   map f := ⟨f.hom, f.comm⟩
   map_id _ := rfl
   map_comp _ _ := rfl
 
-/-- The inclusion functor is fully faithful, making strong restricted cowedges
-a full subcategory of restricted cowedges. This holds because morphisms in both
-categories are defined identically: arrows in `C` that commute with the family
-of structure morphisms. -/
-def StrongRestrictedCowedge.inclusion_fullyFaithful (G : Cᵒᵖ ⥤ C ⥤ C)
+/-- The inclusion functor is fully faithful,
+making strong restricted cowedges a full
+subcategory of restricted cowedges. -/
+def StrongRestrictedCowedge.inclusion_fullyFaithful
+    {D : Type w} [Category.{v} D]
+    (G : Cᵒᵖ ⥤ C ⥤ D)
     (H : Cᵒᵖ ⥤ C ⥤ Type v) :
-    (StrongRestrictedCowedge.inclusion G H).FullyFaithful :=
+    (inclusion G H).FullyFaithful :=
   Functor.FullyFaithful.mk
     (fun {c d} f => ⟨f.hom, f.comm⟩)
 
@@ -4618,66 +4847,97 @@ singleton type, an `H`-restricted `G`-coend is exactly the ordinary coend
 variable {C : Type u} [Category.{v} C]
 
 /--
-An `H`-restricted `G`-coend is an initial object in the category of
-`H`-restricted `G`-cowedges.
+An `H`-restricted `G`-coend is an initial object
+in the category of `H`-restricted `G`-cowedges.
 -/
-abbrev IsRestrictedCoend (G : Cᵒᵖ ⥤ C ⥤ C) (H : Cᵒᵖ ⥤ C ⥤ Type v)
+abbrev IsRestrictedCoend
+    {D : Type w} [Category.{v} D]
+    (G : Cᵒᵖ ⥤ C ⥤ D)
+    (H : Cᵒᵖ ⥤ C ⥤ Type v)
     (c : RestrictedCowedge G H) :=
   Limits.IsInitial c
 
 namespace IsRestrictedCoend
 
-variable {G : Cᵒᵖ ⥤ C ⥤ C} {H : Cᵒᵖ ⥤ C ⥤ Type v} {c : RestrictedCowedge G H}
+variable {D : Type w} [Category.{v} D]
+  {G : Cᵒᵖ ⥤ C ⥤ D}
+  {H : Cᵒᵖ ⥤ C ⥤ Type v}
+  {c : RestrictedCowedge G H}
 
-/-- The universal morphism from a restricted coend to any restricted cowedge. -/
+/-- The universal morphism from a restricted
+coend to any restricted cowedge. -/
 def desc (hc : IsRestrictedCoend G H c)
     (d : RestrictedCowedge G H) : c ⟶ d :=
   hc.to d
 
-/-- The underlying morphism in `C` from a restricted coend to any cowedge. -/
+/-- The underlying morphism in `D` from a
+restricted coend to any cowedge. -/
 def descHom (hc : IsRestrictedCoend G H c)
-    (d : RestrictedCowedge G H) : c.pt ⟶ d.pt :=
+    (d : RestrictedCowedge G H) :
+    c.pt ⟶ d.pt :=
   (hc.desc d).hom
 
-/-- Any two morphisms from a restricted coend are equal (uniqueness). -/
+/-- Any two morphisms from a restricted coend
+are equal (uniqueness). -/
 theorem homExt (hc : IsRestrictedCoend G H c)
-    {d : RestrictedCowedge G H} (f g : c ⟶ d) : f = g :=
+    {d : RestrictedCowedge G H}
+    (f g : c ⟶ d) : f = g :=
   Limits.IsInitial.hom_ext hc f g
 
-/-- Two restricted coends are isomorphic (uniqueness up to isomorphism). -/
-def toUniqueUpToIso {c c' : RestrictedCowedge G H}
-    (hc : IsRestrictedCoend G H c) (hc' : IsRestrictedCoend G H c') :
+/-- Two restricted coends are isomorphic
+(uniqueness up to isomorphism). -/
+def toUniqueUpToIso
+    {c c' : RestrictedCowedge G H}
+    (hc : IsRestrictedCoend G H c)
+    (hc' : IsRestrictedCoend G H c') :
     c ≅ c' :=
   Limits.IsInitial.uniqueUpToIso hc hc'
 
 end IsRestrictedCoend
 
-/-- A restricted coend cone bundles a cowedge with the proof it is initial.
-This is the data-carrying version, analogous to mathlib's `LimitCone`. -/
-structure RestrictedCoendCone (G : Cᵒᵖ ⥤ C ⥤ C) (H : Cᵒᵖ ⥤ C ⥤ Type v) where
+/-- A restricted coend cone bundles a cowedge
+with the proof it is initial. -/
+structure RestrictedCoendCone
+    {D : Type w} [Category.{v} D]
+    (G : Cᵒᵖ ⥤ C ⥤ D)
+    (H : Cᵒᵖ ⥤ C ⥤ Type v) where
   /-- The underlying restricted cowedge. -/
   cowedge : RestrictedCowedge G H
-  /-- The proof that the cowedge is initial. -/
-  isInitial : IsRestrictedCoend G H cowedge
+  /-- The proof that the cowedge is
+  initial. -/
+  isInitial :
+    IsRestrictedCoend G H cowedge
 
-/-- A restricted coend exists if there is an initial restricted cowedge.
-This class carries the data directly (rather than asserting existence as a Prop)
-to support constructive extraction of the coend. -/
-class HasRestrictedCoend (G : Cᵒᵖ ⥤ C ⥤ C) (H : Cᵒᵖ ⥤ C ⥤ Type v) where
-  /-- The cone containing the coend and proof of initiality. -/
+/-- A restricted coend exists if there is an
+initial restricted cowedge. This class carries the
+data directly (rather than asserting existence as
+a Prop) to support constructive extraction of the
+coend. -/
+class HasRestrictedCoend
+    {D : Type w} [Category.{v} D]
+    (G : Cᵒᵖ ⥤ C ⥤ D)
+    (H : Cᵒᵖ ⥤ C ⥤ Type v) where
+  /-- The cone containing the coend and proof
+  of initiality. -/
   cone : RestrictedCoendCone G H
 
 namespace HasRestrictedCoend
 
-variable (G : Cᵒᵖ ⥤ C ⥤ C) (H : Cᵒᵖ ⥤ C ⥤ Type v) [HasRestrictedCoend G H]
+variable {D : Type w} [Category.{v} D]
+  (G : Cᵒᵖ ⥤ C ⥤ D)
+  (H : Cᵒᵖ ⥤ C ⥤ Type v)
+  [HasRestrictedCoend G H]
 
-/-- The restricted coend object (carrier of the initial restricted cowedge). -/
-def restrictedCoend : RestrictedCowedge G H :=
+/-- The restricted coend object (carrier of the
+initial restricted cowedge). -/
+def restrictedCoend :
+    RestrictedCowedge G H :=
   HasRestrictedCoend.cone.cowedge
 
 /-- The restricted coend is initial. -/
 def restrictedCoendIsInitial :
-    IsRestrictedCoend G H (restrictedCoend G H) :=
+    IsRestrictedCoend G H
+      (restrictedCoend G H) :=
   HasRestrictedCoend.cone.isInitial
 
 end HasRestrictedCoend
@@ -5164,7 +5424,7 @@ and converts back.
 /-- Construct a mathlib wedge from a mathlib cowedge.
 
 Given a cowedge `c` for profunctor `P` and an object `Y`, constructs a wedge
-for `homFromSwappedProfunctor P Y` with apex `c.pt ⟶ Y`.
+for `P ⇓ Y` with apex `c.pt ⟶ Y`.
 
 This goes through weighted cowedges/wedges:
 1. Convert cowedge to weighted cowedge via `trivialWeightedCowedgeCowedgeEquiv`
@@ -5172,8 +5432,8 @@ This goes through weighted cowedges/wedges:
 3. Convert back via `trivialWeightedWedgeWedgeEquiv` -/
 def homOrdinaryWedge {D : Type w} [Category.{v} D]
     (P : Cᵒᵖ ⥤ C ⥤ D) (c : Cowedge (J := C) (C := D) P) (Y : D) :
-    Wedge (J := C) (C := Type v) (homFromSwappedProfunctor P Y) :=
-  (trivialWeightedWedgeWedgeEquiv (homFromSwappedProfunctor P Y)).functor.obj
+    Wedge (J := C) (C := Type v) (P ⇓ Y) :=
+  (trivialWeightedWedgeWedgeEquiv (P ⇓ Y)).functor.obj
     (homWeightedWedge ((trivialWeightedCowedgeCowedgeEquiv P).inverse.obj c) Y)
 
 /-- When a cowedge is initial (a coend), the constructed wedge is terminal
@@ -5184,7 +5444,7 @@ wedge `homOrdinaryWedge P c Y` witnesses that `Hom(c.pt, Y)` is an end. -/
 def homOrdinaryWedge_isTerminal {D : Type w} [Category.{v} D]
     (P : Cᵒᵖ ⥤ C ⥤ D) {c : Cowedge (J := C) (C := D) P}
     (hc : IsInitial c) (Y : D) : IsTerminal (homOrdinaryWedge P c Y) :=
-  isTerminalWedgeOfIsWeightedEnd (homFromSwappedProfunctor P Y)
+  isTerminalWedgeOfIsWeightedEnd (P ⇓ Y)
     (homWeightedWedge_isWeightedEnd (isWeightedCoendOfIsInitialCowedge P hc) Y)
 
 /-- Extract the isomorphism between hom types from coend and end.
@@ -5197,9 +5457,9 @@ This is the computational content of the ordinary coend elimination rule:
 def ordinaryHomIsoEndApex {D : Type w} [Category.{v} D]
     (P : Cᵒᵖ ⥤ C ⥤ D) {c : Cowedge (J := C) (C := D) P}
     (hc : IsInitial c) (Y : D)
-    {d : Wedge (J := C) (C := Type v) (homFromSwappedProfunctor P Y)}
+    {d : Wedge (J := C) (C := Type v) (P ⇓ Y)}
     (hd : IsTerminal d) : (c.pt ⟶ Y) ≅ d.pt :=
-  isTerminalWedgeIso (homFromSwappedProfunctor P Y)
+  isTerminalWedgeIso (P ⇓ Y)
     (homOrdinaryWedge_isTerminal P hc Y) hd
 
 /-!

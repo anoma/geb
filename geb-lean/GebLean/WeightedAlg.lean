@@ -129,14 +129,18 @@ theorem HomToProf_eq_sliceIdProf (pt : C) : HomToProf pt = IdProf ⇓ pt := by
       intro B₁ B₂ g
       simp only [eqToHom_refl, Category.comp_id, Category.id_comp]
       ext h
-      simp only [HomToProf_obj_map, sliceProfunctor_obj_map, IdProf, Functor.const_obj_obj,
-        Functor.const_obj_map, NatTrans.id_app, Category.id_comp]
+      simp only [HomToProf_obj_map,
+        sliceProfunctor_obj_map, IdProf,
+        Functor.const_obj_obj,
+        Functor.const_obj_map, NatTrans.id_app,
+        Category.id_comp]
   case h_map =>
     intro A₁ A₂ f
     ext B h
-    simp only [NatTrans.comp_app, types_comp_apply, eqToHom_app, eqToHom_refl, types_id_apply,
-      HomToProf_map_app, sliceProfunctor_map_app, IdProf, Functor.const_obj_obj,
-      Functor.id_obj, Functor.id_map]
+    simp only [NatTrans.comp_app,
+      types_comp_apply, HomToProf_map_app,
+      sliceProfunctor_map_app, IdProf]
+    simp
 
 /-- Given `f : pt ⟶ pt'`, construct a natural transformation
 `HomToProf pt ⟶ HomToProf pt'` by postcomposition. -/
@@ -175,8 +179,9 @@ theorem HomToProf.mapPt_eq_sliceFunctorMap {pt pt' : C} (f : pt ⟶ pt') :
     (sliceProfunctorFunctor IdProf).map f ≫
     eqToHom (HomToProf_eq_sliceIdProf pt').symm := by
   ext A B γ
-  simp only [mapPt, eqToHom_app, eqToHom_refl, Category.comp_id,
-    NatTrans.comp_app, types_comp_apply]
+  simp only [mapPt, NatTrans.comp_app,
+    types_comp_apply, eqToHom_app]
+  simp only [eqToHom_refl]
   rfl
 
 /-- The functor from `C` to `Cᵒᵖ ⥤ C ⥤ Type v` that maps `pt` to `HomToProf pt`.
