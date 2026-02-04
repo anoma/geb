@@ -587,6 +587,131 @@ Grothendieck construction. An object consists of an arrow
 abbrev TotalFactGrothendieck :=
   TwGrothendieckObj C (factorisationFunctor C)
 
+/-- Two factorisations with the same midpoint, first factor,
+and second factor are heterogeneously equal, even when the
+composed arrows differ propositionally. -/
+private lemma factorisation_heq
+    {X Y : C} {f g : X ⟶ Y}
+    (d : Factorisation f) (e : Factorisation g)
+    (hmid : d.mid = e.mid)
+    (hι : HEq d.ι e.ι)
+    (hπ : HEq d.π e.π) :
+    HEq d e := by
+  cases d; cases e
+  cases hmid; cases hι; cases hπ
+  rename_i ι_π₁ ι_π₂
+  have : f = g := ι_π₁.symm.trans ι_π₂
+  subst this
+  exact heq_of_eq (by congr 1)
+
+/-- The type equivalence between the connected Grothendieck
+construction over `factorisationFunctor C` and the total
+factorization category. The forward map extracts domain,
+codomain, midpoint, and the two factors from the arrow and
+fiber. The inverse packs the composed arrow and factorization
+data. -/
+def totalFactGrothendieckEquivObj :
+    TotalFactGrothendieck C ≃ TotalFactObj C where
+  toFun x :=
+    { dom := twDom' x.arrow
+      cod := twCod' x.arrow
+      mid := x.fiber.mid
+      ι := x.fiber.ι
+      π := x.fiber.π }
+  invFun y :=
+    { arrow := twObjMk' (y.ι ≫ y.π)
+      fiber :=
+        { mid := y.mid
+          ι := y.ι
+          π := y.π
+          ι_π := rfl } }
+  right_inv _ := rfl
+  left_inv x := by
+    apply ConnGrothendieckObj.ext
+    · exact congrArg twObjMk' x.fiber.ι_π
+    · dsimp only []
+      apply factorisation_heq <;> rfl
+
+private abbrev toTotalFact :=
+  totalFactGrothendieckEquivObj C
+
+/-- The `Category` instance on `TotalFactGrothendieck C`,
+transferred from `TotalFactObj C` via
+`totalFactGrothendieckEquivObj`. Morphisms from `x` to `y` are
+`TotalFactHom C (e x) (e y)` where `e` is the object
+equivalence. -/
+instance : Category (TotalFactGrothendieck C) where
+  Hom x y :=
+    TotalFactHom C (toTotalFact C x) (toTotalFact C y)
+  id x := TotalFactHom.id C (toTotalFact C x)
+  comp f g := TotalFactHom.comp C f g
+  id_comp _ := TotalFactHom.ext
+    (Category.id_comp _) (Category.id_comp _)
+    (Category.id_comp _)
+  comp_id _ := TotalFactHom.ext
+    (Category.comp_id _) (Category.comp_id _)
+    (Category.comp_id _)
+  assoc _ _ _ := TotalFactHom.ext
+    (Category.assoc _ _ _) (Category.assoc _ _ _)
+    (Category.assoc _ _ _)
+
+/-- The functor from `TotalFactObj C` to
+`TotalFactGrothendieck C`, given by the inverse of
+`totalFactGrothendieckEquivObj`. On objects, packs the
+composable pair into a twisted arrow and factorisation.
+On morphisms, the identity transport (since `right_inv`
+is `rfl`). -/
+def totalFactToGrothendieck :
+    TotalFactObj C ⥤ TotalFactGrothendieck C where
+  obj x := (toTotalFact C).symm x
+  map f := f
+  map_id _ := rfl
+  map_comp _ _ := rfl
+
+/-- The functor from `TotalFactGrothendieck C` to
+`TotalFactObj C`, given by `totalFactGrothendieckEquivObj`.
+On objects, extracts domain, codomain, midpoint, and the
+two factors. On morphisms, the identity transport (since
+morphisms are defined as `TotalFactHom C (e x) (e y)`). -/
+def grothendieckToTotalFact :
+    TotalFactGrothendieck C ⥤ TotalFactObj C where
+  obj x := toTotalFact C x
+  map f := f
+  map_id _ := rfl
+  map_comp _ _ := rfl
+
+/-- `grothendieckToTotalFact ⋙ totalFactToGrothendieck`
+is the identity on objects. -/
+private lemma grothendieckTotalRoundTrip_obj
+    (x : TotalFactGrothendieck C) :
+    (totalFactToGrothendieck C).obj
+      ((grothendieckToTotalFact C).obj x) = x :=
+  (toTotalFact C).left_inv x
+
+/-- `totalFactToGrothendieck ⋙ grothendieckToTotalFact`
+is the identity on objects. -/
+private lemma totalGrothendieckRoundTrip_obj
+    (x : TotalFactObj C) :
+    (grothendieckToTotalFact C).obj
+      ((totalFactToGrothendieck C).obj x) = x :=
+  (toTotalFact C).right_inv x
+
+/-- The categorical isomorphism
+`TotalFactObj C ≅Cat TotalFactGrothendieck C`. -/
+def totalFactIsoGrothendieck :
+    TotalFactObj C ≅Cat TotalFactGrothendieck C where
+  hom := (totalFactToGrothendieck C).toCatHom
+  inv := (grothendieckToTotalFact C).toCatHom
+  hom_inv_id := rfl
+  inv_hom_id := by
+    apply Cat.Hom.ext
+    simp only [Cat.Hom.comp_toFunctor, Cat.Hom.id_toFunctor,
+      Functor.toCatHom_toFunctor]
+    refine Functor.hext
+      (grothendieckTotalRoundTrip_obj C)
+      (fun x y f => ?_)
+    exact heq_of_eq rfl
+
 end TwGrothendieckFactorisation
 
 end GebLean
