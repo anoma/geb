@@ -17,6 +17,9 @@ is documented in `GebLean/Utilities/TwistedArrow.lean`.
    TwistedArrow' C ≌ Grothendieck (Under.mapFunctor C)`
 2. `opTwArrEquivGrothendieckUnderOp' :
    OpTwistedArrow' C ≌ (Grothendieck (Under.mapFunctor C))^op'`
+3. `twEquivTw' : TwistedArrow C ≌ TwistedArrow' C`
+   and `twIsoTw' : TwistedArrow C ≅Cat TwistedArrow' C`
+   (Section `TwistedArrowPrimedEquivalence` in `TwistedArrow.lean`)
 
 The remaining twisted arrow variants follow from existing isomorphisms combined
 with the above.

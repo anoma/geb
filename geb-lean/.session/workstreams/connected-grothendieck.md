@@ -210,6 +210,16 @@ associativity for free.
     - Maps objects to their underlying twisted arrow
     - Maps morphisms to their `twMorph` component
 
+6. TwGrothendieck abbreviations
+    - `TwGrothendieckObj C F` for `F : TwistedArrow C ⥤ Cat.{v, u}`
+      is `ConnGrothendieckObj C (tw'ToTw ⋙ F)`
+    - `TwGrothendieckHom C F` similarly
+    - Universe constraint: `ConnGrothendieckObj` ties `Cat.{v, u}` to
+      the category's universe levels, preventing use with functors
+      landing in `Cat.{max u v, max u v}` (e.g. `factorisationFunctor`).
+      Generalizing `ConnGrothendieckObj` to `Cat.{w, w'}` would fix
+      this but requires changes throughout the 6400-line file.
+
 ### Remaining Work
 
 1. Prove universal properties for copresheaf construction
@@ -217,6 +227,8 @@ associativity for free.
    `ConnectedGrothendieckAlt`:
    - Morphism correspondence for Alt construction is complete (item 13 above)
    - Compose equivalences to get Alt = Contra (remaining)
+3. Generalize `ConnGrothendieckObj` universe levels to `Cat.{w, w'}`
+   to allow `TwGrothendieckObj` with `factorisationFunctor`
 
 ### Functor Characterization (In Progress)
 

@@ -1,5 +1,6 @@
 import Mathlib.CategoryTheory.Category.Factorisation
 import GebLean.Utilities.TwistedArrow
+import GebLean.Utilities.ConnectedGrothendieck
 
 /-!
 # Factorization categories
@@ -33,6 +34,19 @@ sends each factorization to its midpoint.
   `TwistedArrow C ⥤ Cat` sending each arrow `f` to `Factorisation f`
   and each twisted arrow morphism to the induced functor between
   factorization categories.
+
+- `factorisationOpEquiv` / `factorisationOpIso`:
+  The equivalence and categorical isomorphism
+  `(Factorisation f)ᵒᵖ ≌ Factorisation (f.op)`.
+
+- `TotalFactObj`: The total factorization category, whose objects
+  are composable pairs `dom ──ι──▸ mid ──π──▸ cod` in `C`.
+
+- `totalFactToArrow`: The forgetful functor from `TotalFactObj C`
+  to `Arrow C` sending `(ι, π)` to `ι ≫ π`.
+
+- `factorisationToTotal`: The inclusion of a fiber
+  `Factorisation f` into the total factorization category.
 
 ## References
 
@@ -371,5 +385,208 @@ def factorisationOpIso :
     (opFactorisationRoundTrip_obj f)
 
 end OpFactorisation
+
+/-! ## The total factorization category
+
+The total factorization category collects all factorizations
+across all morphisms in `C`. An object is a morphism `f : a ⟶ b`
+together with a factorization `a ⟶ m ⟶ b` of `f`. A morphism
+is a commuting diagram of the form:
+
+```text
+a  ──ι──▸  m  ──π──▸  b
+│          │          │
+g          k          h
+▾          ▾          ▾
+a' ──ι'─▸  m' ──π'─▸  b'
+```
+
+satisfying `ι ≫ k = g ≫ ι'` and `k ≫ π' = π ≫ h`.
+-/
+
+section TotalFactorisation
+
+variable (C : Type u) [Category.{v} C]
+
+/-- An object of the total factorization category: a morphism
+`f : a ⟶ b` together with a factorization `a ──ι──▸ m ──π──▸ b`
+with `ι ≫ π = f`. -/
+@[ext]
+structure TotalFactObj where
+  /-- The domain of the arrow -/
+  dom : C
+  /-- The codomain of the arrow -/
+  cod : C
+  /-- The midpoint of the factorization -/
+  mid : C
+  /-- The first factor `ι : dom ⟶ mid` -/
+  ι : dom ⟶ mid
+  /-- The second factor `π : mid ⟶ cod` -/
+  π : mid ⟶ cod
+
+/-- The composed arrow `ι ≫ π` of a total factorization object. -/
+def TotalFactObj.arr (x : TotalFactObj C) : x.dom ⟶ x.cod :=
+  x.ι ≫ x.π
+
+/-- A morphism in the total factorization category: three
+morphisms `(domMorph, midMorph, codMorph)` making both squares
+commute. -/
+@[ext]
+structure TotalFactHom (x y : TotalFactObj C) where
+  /-- The morphism between domains -/
+  domMorph : x.dom ⟶ y.dom
+  /-- The morphism between midpoints -/
+  midMorph : x.mid ⟶ y.mid
+  /-- The morphism between codomains -/
+  codMorph : x.cod ⟶ y.cod
+  /-- The left square commutes: `ι ≫ midMorph = domMorph ≫ ι'` -/
+  ι_comm : x.ι ≫ midMorph = domMorph ≫ y.ι
+  /-- The right square commutes: `midMorph ≫ π' = π ≫ codMorph` -/
+  π_comm : midMorph ≫ y.π = x.π ≫ codMorph
+
+/-- The identity morphism in the total factorization category. -/
+def TotalFactHom.id (x : TotalFactObj C) :
+    TotalFactHom C x x where
+  domMorph := 𝟙 _
+  midMorph := 𝟙 _
+  codMorph := 𝟙 _
+  ι_comm := by simp
+  π_comm := by simp
+
+/-- Composition of morphisms in the total factorization
+category. -/
+def TotalFactHom.comp {x y z : TotalFactObj C}
+    (f : TotalFactHom C x y)
+    (g : TotalFactHom C y z) :
+    TotalFactHom C x z where
+  domMorph := f.domMorph ≫ g.domMorph
+  midMorph := f.midMorph ≫ g.midMorph
+  codMorph := f.codMorph ≫ g.codMorph
+  ι_comm := by
+    rw [Category.assoc, ← g.ι_comm,
+      ← Category.assoc, f.ι_comm, Category.assoc]
+  π_comm := by
+    rw [Category.assoc, g.π_comm,
+      ← Category.assoc, f.π_comm, Category.assoc]
+
+@[simp]
+lemma TotalFactHom.id_domMorph (x : TotalFactObj C) :
+    (TotalFactHom.id C x).domMorph = 𝟙 _ := rfl
+
+@[simp]
+lemma TotalFactHom.id_midMorph (x : TotalFactObj C) :
+    (TotalFactHom.id C x).midMorph = 𝟙 _ := rfl
+
+@[simp]
+lemma TotalFactHom.id_codMorph (x : TotalFactObj C) :
+    (TotalFactHom.id C x).codMorph = 𝟙 _ := rfl
+
+@[simp]
+lemma TotalFactHom.comp_domMorph
+    {x y z : TotalFactObj C}
+    (f : TotalFactHom C x y)
+    (g : TotalFactHom C y z) :
+    (TotalFactHom.comp C f g).domMorph =
+    f.domMorph ≫ g.domMorph := rfl
+
+@[simp]
+lemma TotalFactHom.comp_midMorph
+    {x y z : TotalFactObj C}
+    (f : TotalFactHom C x y)
+    (g : TotalFactHom C y z) :
+    (TotalFactHom.comp C f g).midMorph =
+    f.midMorph ≫ g.midMorph := rfl
+
+@[simp]
+lemma TotalFactHom.comp_codMorph
+    {x y z : TotalFactObj C}
+    (f : TotalFactHom C x y)
+    (g : TotalFactHom C y z) :
+    (TotalFactHom.comp C f g).codMorph =
+    f.codMorph ≫ g.codMorph := rfl
+
+instance : Category (TotalFactObj C) where
+  Hom := TotalFactHom C
+  id := TotalFactHom.id C
+  comp := TotalFactHom.comp C
+  id_comp _ := TotalFactHom.ext
+    (Category.id_comp _) (Category.id_comp _)
+    (Category.id_comp _)
+  comp_id _ := TotalFactHom.ext
+    (Category.comp_id _) (Category.comp_id _)
+    (Category.comp_id _)
+  assoc _ _ _ := TotalFactHom.ext
+    (Category.assoc _ _ _) (Category.assoc _ _ _)
+    (Category.assoc _ _ _)
+
+/-- The arrow `ι ≫ π` determined by a morphism of total
+factorization objects is natural:
+`arr x ≫ codMorph = domMorph ≫ arr y`. -/
+lemma TotalFactHom.arr_comm {x y : TotalFactObj C}
+    (f : TotalFactHom C x y) :
+    x.arr ≫ f.codMorph = f.domMorph ≫ y.arr := by
+  unfold TotalFactObj.arr
+  rw [Category.assoc, ← f.π_comm,
+    ← Category.assoc, f.ι_comm, Category.assoc]
+
+/-- The forgetful functor from the total factorization category
+to the arrow category, sending `(dom, mid, cod, ι, π)` to
+`ι ≫ π : dom ⟶ cod`. -/
+def totalFactToArrow :
+    TotalFactObj C ⥤ Arrow C where
+  obj x := Arrow.mk x.arr
+  map f := Arrow.homMk f.domMorph f.codMorph
+    (TotalFactHom.arr_comm C f).symm
+  map_id _ := by ext <;> rfl
+  map_comp _ _ := by ext <;> rfl
+
+/-- The inclusion of a fiber `Factorisation f` into the total
+factorization category. -/
+def factorisationToTotal {X Y : C} (f : X ⟶ Y) :
+    Factorisation f ⥤ TotalFactObj C where
+  obj d :=
+    { dom := X
+      cod := Y
+      mid := d.mid
+      ι := d.ι
+      π := d.π }
+  map g :=
+    { domMorph := 𝟙 _
+      midMorph := g.h
+      codMorph := 𝟙 _
+      ι_comm := by
+        simp only [Category.id_comp]
+        exact g.ι_h
+      π_comm := by
+        simp only [Category.comp_id]
+        exact g.h_π }
+  map_id _ := TotalFactHom.ext
+    rfl rfl rfl
+  map_comp _ _ := TotalFactHom.ext
+    (Category.id_comp _).symm rfl
+    (Category.id_comp _).symm
+
+/-- The forgetful functor from the total factorization category
+to `C`, sending each object to its midpoint. -/
+def totalFactForgetMid :
+    TotalFactObj C ⥤ C where
+  obj x := x.mid
+  map f := f.midMorph
+  map_id _ := rfl
+  map_comp _ _ := rfl
+
+end TotalFactorisation
+
+section TwGrothendieckFactorisation
+
+variable (C : Type u) [Category.{v} C]
+
+/-- The total factorization category as an instance of the connected
+Grothendieck construction. An object consists of an arrow
+`f : a ⟶ b` in `C` together with a factorization of `f`. -/
+abbrev TotalFactGrothendieck :=
+  TwGrothendieckObj C (factorisationFunctor C)
+
+end TwGrothendieckFactorisation
 
 end GebLean
