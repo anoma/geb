@@ -3653,6 +3653,104 @@ theorem profunctorOnTwistedArrow_sliceProf_obj
     coTwistedArrowOpEquivInverse_obj_cod]
 
 /-!
+## Coslice profunctor
+
+Given a difunctor `G : Cᵒᵖ ⥤ C ⥤ D` and an object
+`c : D`, we define the *coslice profunctor*
+`cosliceProfunctor G c : Cᵒᵖ ⥤ C ⥤ Type` by
+`(cosliceProfunctor G c)(A, B) := Hom_D(c, G(A, B))`.
+
+Note that unlike the slice profunctor, there is no
+argument swap: `G(A, B)` not `G(B, A)`. The covariant
+functor `Hom(c, -)` preserves the existing variance
+of `G`, whereas the contravariant functor `Hom(-, c)`
+in the slice profunctor reverses it, necessitating
+the swap.
+-/
+
+/-- The coslice profunctor for a difunctor
+`G : Cᵒᵖ ⥤ C ⥤ D` and object `c : D`.
+Defined as `(cosliceProfunctor G c)(A, B) := Hom_D(c, G(A, B))`.
+
+The covariant action (second argument): for
+`g : X → Y`, the map `Hom(c, G(A, X)) → Hom(c, G(A, Y))`
+is postcomposition by
+`G(A, g) : G(A, X) → G(A, Y)`.
+
+The contravariant action (first argument): for
+`f : A → B`, the map `Hom(c, G(B, X)) → Hom(c, G(A, X))`
+is postcomposition by
+`G(f, X) : G(B, X) → G(A, X)`. -/
+def cosliceProfunctor {D : Type w}
+    [Category.{v} D]
+    (G : Cᵒᵖ ⥤ C ⥤ D) (c : D) :
+    Cᵒᵖ ⥤ C ⥤ Type v where
+  obj A := {
+    obj := fun B => c ⟶ (G.obj A).obj B
+    map := fun g h => h ≫ (G.obj A).map g
+    map_id := fun _ => by
+      ext h
+      simp only [types_id_apply,
+        Functor.map_id, Category.comp_id]
+    map_comp := fun f g => by
+      ext h
+      simp only [types_comp_apply,
+        Functor.map_comp, Category.assoc]
+  }
+  map f := {
+    app := fun B h => h ≫ (G.map f).app B
+    naturality := fun X Y g => by
+      ext h
+      simp only [types_comp_apply]
+      rw [Category.assoc, Category.assoc]
+      congr 1
+      exact (G.map f).naturality g
+  }
+  map_id := fun A => by
+    ext B h
+    simp only [NatTrans.id_app, types_id_apply,
+      Functor.map_id, NatTrans.id_app,
+      Category.comp_id]
+  map_comp := fun f g => by
+    ext B h
+    simp only [NatTrans.comp_app, types_comp_apply,
+      Functor.map_comp, NatTrans.comp_app,
+      Category.assoc]
+
+/-- The object computation of the coslice
+profunctor. -/
+@[simp]
+theorem cosliceProfunctor_obj_obj {D : Type w}
+    [Category.{v} D] (G : Cᵒᵖ ⥤ C ⥤ D) (c : D)
+    (A : Cᵒᵖ) (X : C) :
+    ((cosliceProfunctor G c).obj A).obj X =
+      (c ⟶ (G.obj A).obj X) :=
+  rfl
+
+/-- The covariant map on the coslice profunctor is
+postcomposition with `(G.obj A).map`. -/
+@[simp]
+theorem cosliceProfunctor_obj_map {D : Type w}
+    [Category.{v} D] (G : Cᵒᵖ ⥤ C ⥤ D) (c : D)
+    (A : Cᵒᵖ)
+    {X Y : C} (f : X ⟶ Y)
+    (m : c ⟶ (G.obj A).obj X) :
+    ((cosliceProfunctor G c).obj A).map f m =
+      m ≫ (G.obj A).map f :=
+  rfl
+
+/-- The contravariant map on the coslice profunctor
+is postcomposition with `(G.map f).app`. -/
+@[simp]
+theorem cosliceProfunctor_map_app {D : Type w}
+    [Category.{v} D] (G : Cᵒᵖ ⥤ C ⥤ D) (c : D)
+    {A B : Cᵒᵖ} (f : A ⟶ B) (X : C)
+    (m : c ⟶ (G.obj A).obj X) :
+    ((cosliceProfunctor G c).map f).app X m =
+      m ≫ (G.map f).app X :=
+  rfl
+
+/-!
 ## Weighted coend elimination as weighted end
 
 The weighted coend elimination rule `Hom(∫^A W(A,A)·P(A,A), Y) ≅ ∫_A W(A,A)^Hom(P(A,A), Y)`
@@ -4943,6 +5041,458 @@ def restrictedCoendIsInitial :
 end HasRestrictedCoend
 
 end RestrictedCoends
+
+section RestrictedWedges
+
+/-!
+## Restricted wedges
+
+Given a difunctor `G : Cᵒᵖ ⥤ C ⥤ D` and a
+restriction functor `H : Cᵒᵖ ⥤ C ⥤ Type v`, a
+*restricted wedge* consists of an apex `pt : D` and
+a dinatural family
+`Φ_A : H(A, A) → Hom_D(pt, G(A, A))`.
+
+This is dual to restricted cowedges, which have
+families `Ψ_A : H(A, A) → Hom_D(G(A, A), pt)`.
+
+The families are valued in the coslice profunctor
+`(cosliceProfunctor G pt)(A, B) := Hom_D(pt, G(A, B))`, which is
+the dual of the slice profunctor
+`(G ⇓ pt)(A, B) := Hom_D(G(B, A), pt)`.
+
+The `H`-restricted `G`-wedges form a category where
+morphisms are arrows `h : pt → pt'` such that for
+all `A` and `a ∈ H(A, A)`:
+```
+h ≫ Ψ_A(a) = Φ_A(a)
+```
+-/
+
+variable {C : Type u} [Category.{v} C]
+
+/--
+An `H`-restricted `G`-wedge over a fixed point
+`pt` for a difunctor `G : Cᵒᵖ ⥤ C ⥤ D` and
+restriction functor `H : Cᵒᵖ ⥤ C ⥤ Type v`.
+
+This contains the family and dinaturality data
+without bundling the apex object.
+-/
+@[ext]
+structure RestrictedWedgeOver
+    {D : Type w} [Category.{v} D]
+    (G : Cᵒᵖ ⥤ C ⥤ D) (H : Cᵒᵖ ⥤ C ⥤ Type v)
+    (pt : D) where
+  family : ParanatSig H (cosliceProfunctor G pt)
+  isDinatural : IsDinatural H (cosliceProfunctor G pt) family
+
+/--
+An `H`-restricted `G`-wedge for a difunctor
+`G : Cᵒᵖ ⥤ C ⥤ D` and restriction functor
+`H : Cᵒᵖ ⥤ C ⥤ Type v`.
+
+This consists of an apex object and a
+`RestrictedWedgeOver G H pt`.
+-/
+@[ext]
+structure RestrictedWedge
+    {D : Type w} [Category.{v} D]
+    (G : Cᵒᵖ ⥤ C ⥤ D)
+    (H : Cᵒᵖ ⥤ C ⥤ Type v) where
+  pt : D
+  toRestrictedWedgeOver :
+    RestrictedWedgeOver G H pt
+
+namespace RestrictedWedge
+
+variable {D : Type w} [Category.{v} D]
+  {G : Cᵒᵖ ⥤ C ⥤ D}
+  {H : Cᵒᵖ ⥤ C ⥤ Type v}
+
+/-- The family of morphisms as a
+`ParanatSig H (cosliceProfunctor G pt)`. -/
+abbrev family (c : RestrictedWedge G H) :
+    ParanatSig H (cosliceProfunctor G c.pt) :=
+  c.toRestrictedWedgeOver.family
+
+/-- The dinaturality condition on the family. -/
+abbrev isDinatural (c : RestrictedWedge G H) :
+    IsDinatural H (cosliceProfunctor G c.pt) c.family :=
+  c.toRestrictedWedgeOver.isDinatural
+
+/-- Constructor with explicit point, family, and
+dinaturality arguments. -/
+@[match_pattern]
+def mk' (pt : D)
+    (family : ParanatSig H (cosliceProfunctor G pt))
+    (isDinatural :
+      IsDinatural H (cosliceProfunctor G pt) family) :
+    RestrictedWedge G H :=
+  ⟨pt, ⟨family, isDinatural⟩⟩
+
+/--
+A morphism between restricted wedges is an arrow
+in `D` that commutes with all family morphisms.
+-/
+@[ext]
+structure Hom (c d : RestrictedWedge G H) where
+  hom : c.pt ⟶ d.pt
+  comm (A : C)
+    (a : (H.obj (Opposite.op A)).obj A) :
+    hom ≫ d.family A a = c.family A a
+
+attribute [simp] Hom.comm
+
+/-- The identity morphism on a restricted
+wedge. -/
+@[simps]
+def Hom.id (c : RestrictedWedge G H) :
+    Hom c c where
+  hom := 𝟙 c.pt
+  comm _ _ := Category.id_comp _
+
+/-- Composition of restricted wedge
+morphisms. -/
+@[simps]
+def Hom.comp
+    {c d e : RestrictedWedge G H}
+    (f : Hom c d) (g : Hom d e) :
+    Hom c e where
+  hom := f.hom ≫ g.hom
+  comm A a := by
+    rw [Category.assoc, g.comm, f.comm]
+
+end RestrictedWedge
+
+/--
+The category of `H`-restricted `G`-wedges.
+
+Objects are restricted wedges `(pt, Phi)` and
+morphisms are arrows `h : pt → pt'` compatible
+with the family structure:
+`h ≫ Ψ_A(a) = Φ_A(a)`.
+
+The terminal object (when it exists) is the
+restricted end.
+-/
+instance RestrictedWedgeCat
+    {D : Type w} [Category.{v} D]
+    (G : Cᵒᵖ ⥤ C ⥤ D)
+    (H : Cᵒᵖ ⥤ C ⥤ Type v) :
+    Category (RestrictedWedge G H) where
+  Hom := RestrictedWedge.Hom
+  id := RestrictedWedge.Hom.id
+  comp := RestrictedWedge.Hom.comp
+  id_comp f := by
+    ext; simp [RestrictedWedge.Hom.comp,
+      RestrictedWedge.Hom.id]
+  comp_id f := by
+    ext; simp [RestrictedWedge.Hom.comp,
+      RestrictedWedge.Hom.id]
+  assoc f g h := by
+    ext; simp [RestrictedWedge.Hom.comp]
+
+@[simp]
+theorem RestrictedWedge.category_comp_hom
+    {D : Type w} [Category.{v} D]
+    {G : Cᵒᵖ ⥤ C ⥤ D}
+    {H : Cᵒᵖ ⥤ C ⥤ Type v}
+    {c₁ c₂ c₃ : RestrictedWedge G H}
+    (f : c₁ ⟶ c₂) (g : c₂ ⟶ c₃) :
+    (f ≫ g).hom = f.hom ≫ g.hom := rfl
+
+@[simp]
+theorem RestrictedWedge.category_id_hom
+    {D : Type w} [Category.{v} D]
+    {G : Cᵒᵖ ⥤ C ⥤ D}
+    {H : Cᵒᵖ ⥤ C ⥤ Type v}
+    (c : RestrictedWedge G H) :
+    (𝟙 c : c ⟶ c).hom = 𝟙 c.pt := rfl
+
+/-!
+### Strong restricted wedges
+
+A *strong restricted wedge* uses the paranaturality
+condition instead of dinaturality.
+-/
+
+/--
+An `H`-restricted `G`-wedge with the paranaturality
+condition over a fixed point `pt`.
+-/
+@[ext]
+structure StrongRestrictedWedgeOver
+    {D : Type w} [Category.{v} D]
+    (G : Cᵒᵖ ⥤ C ⥤ D)
+    (H : Cᵒᵖ ⥤ C ⥤ Type v)
+    (pt : D) where
+  family : ParanatSig H (cosliceProfunctor G pt)
+  isParanatural :
+    IsParanatural H (cosliceProfunctor G pt) family
+
+/--
+An `H`-restricted `G`-wedge with the paranaturality
+condition.
+-/
+@[ext]
+structure StrongRestrictedWedge
+    {D : Type w} [Category.{v} D]
+    (G : Cᵒᵖ ⥤ C ⥤ D)
+    (H : Cᵒᵖ ⥤ C ⥤ Type v) where
+  pt : D
+  toStrongRestrictedWedgeOver :
+    StrongRestrictedWedgeOver G H pt
+
+namespace StrongRestrictedWedge
+
+variable {D : Type w} [Category.{v} D]
+  {G : Cᵒᵖ ⥤ C ⥤ D}
+  {H : Cᵒᵖ ⥤ C ⥤ Type v}
+
+/-- The family of morphisms as a
+`ParanatSig H (cosliceProfunctor G pt)`. -/
+abbrev family
+    (c : StrongRestrictedWedge G H) :
+    ParanatSig H (cosliceProfunctor G c.pt) :=
+  c.toStrongRestrictedWedgeOver.family
+
+/-- The paranaturality condition on the
+family. -/
+abbrev isParanatural
+    (c : StrongRestrictedWedge G H) :
+    IsParanatural H (cosliceProfunctor G c.pt) c.family :=
+  c.toStrongRestrictedWedgeOver.isParanatural
+
+/-- Constructor with explicit point, family,
+and paranaturality arguments. -/
+@[match_pattern]
+def mk' (pt : D)
+    (family : ParanatSig H (cosliceProfunctor G pt))
+    (isParanatural :
+      IsParanatural H (cosliceProfunctor G pt) family) :
+    StrongRestrictedWedge G H :=
+  ⟨pt, ⟨family, isParanatural⟩⟩
+
+/--
+A morphism between strong restricted wedges is
+an arrow in `D` that commutes with all family
+morphisms.
+-/
+@[ext]
+structure Hom
+    (c d : StrongRestrictedWedge G H) where
+  hom : c.pt ⟶ d.pt
+  comm (A : C)
+    (a : (H.obj (Opposite.op A)).obj A) :
+    hom ≫ d.family A a = c.family A a
+
+attribute [simp] Hom.comm
+
+/-- The identity morphism on a strong restricted
+wedge. -/
+@[simps]
+def Hom.id
+    (c : StrongRestrictedWedge G H) :
+    Hom c c where
+  hom := 𝟙 c.pt
+  comm _ _ := Category.id_comp _
+
+/-- Composition of strong restricted wedge
+morphisms. -/
+@[simps]
+def Hom.comp
+    {c d e : StrongRestrictedWedge G H}
+    (f : Hom c d) (g : Hom d e) :
+    Hom c e where
+  hom := f.hom ≫ g.hom
+  comm A a := by
+    rw [Category.assoc, g.comm, f.comm]
+
+end StrongRestrictedWedge
+
+/-- Convert a StrongRestrictedWedgeOver to a
+RestrictedWedgeOver using the implication
+paranaturality → dinaturality. -/
+def StrongRestrictedWedgeOver.toRestrictedWedgeOver
+    {D : Type w} [Category.{v} D]
+    {G : Cᵒᵖ ⥤ C ⥤ D}
+    {H : Cᵒᵖ ⥤ C ⥤ Type v} {pt : D}
+    (c : StrongRestrictedWedgeOver G H pt) :
+    RestrictedWedgeOver G H pt :=
+  ⟨c.family,
+   paranatural_implies_dinatural
+     H (cosliceProfunctor G pt) c.family c.isParanatural⟩
+
+/-- Every strong restricted wedge is a restricted
+wedge, since paranaturality implies
+dinaturality. -/
+def StrongRestrictedWedge.toRestrictedWedge
+    {D : Type w} [Category.{v} D]
+    {G : Cᵒᵖ ⥤ C ⥤ D}
+    {H : Cᵒᵖ ⥤ C ⥤ Type v}
+    (c : StrongRestrictedWedge G H) :
+    RestrictedWedge G H where
+  pt := c.pt
+  toRestrictedWedgeOver := ⟨c.family,
+    paranatural_implies_dinatural
+      H (cosliceProfunctor G c.pt) c.family c.isParanatural⟩
+
+/--
+The category of `H`-restricted `G`-wedges with
+the paranaturality condition.
+-/
+instance StrongRestrictedWedgeCat
+    {D : Type w} [Category.{v} D]
+    (G : Cᵒᵖ ⥤ C ⥤ D)
+    (H : Cᵒᵖ ⥤ C ⥤ Type v) :
+    Category (StrongRestrictedWedge G H) where
+  Hom := StrongRestrictedWedge.Hom
+  id := StrongRestrictedWedge.Hom.id
+  comp := StrongRestrictedWedge.Hom.comp
+  id_comp f := by
+    ext; simp [StrongRestrictedWedge.Hom.comp,
+      StrongRestrictedWedge.Hom.id]
+  comp_id f := by
+    ext; simp [StrongRestrictedWedge.Hom.comp,
+      StrongRestrictedWedge.Hom.id]
+  assoc f g h := by
+    ext; simp [StrongRestrictedWedge.Hom.comp]
+
+@[simp]
+theorem StrongRestrictedWedge.category_comp_hom
+    {D : Type w} [Category.{v} D]
+    {G : Cᵒᵖ ⥤ C ⥤ D}
+    {H : Cᵒᵖ ⥤ C ⥤ Type v}
+    {c₁ c₂ c₃ : StrongRestrictedWedge G H}
+    (f : c₁ ⟶ c₂) (g : c₂ ⟶ c₃) :
+    (f ≫ g).hom = f.hom ≫ g.hom := rfl
+
+@[simp]
+theorem StrongRestrictedWedge.category_id_hom
+    {D : Type w} [Category.{v} D]
+    {G : Cᵒᵖ ⥤ C ⥤ D}
+    {H : Cᵒᵖ ⥤ C ⥤ Type v}
+    (c : StrongRestrictedWedge G H) :
+    (𝟙 c : c ⟶ c).hom = 𝟙 c.pt := rfl
+
+/-- The fully faithful inclusion functor from
+strong restricted wedges to restricted wedges. -/
+def StrongRestrictedWedge.inclusion
+    {D : Type w} [Category.{v} D]
+    (G : Cᵒᵖ ⥤ C ⥤ D)
+    (H : Cᵒᵖ ⥤ C ⥤ Type v) :
+    StrongRestrictedWedge G H ⥤
+      RestrictedWedge G H where
+  obj c := c.toRestrictedWedge
+  map f := ⟨f.hom, f.comm⟩
+  map_id _ := rfl
+  map_comp _ _ := rfl
+
+/-- The inclusion of strong restricted wedges into
+restricted wedges is fully faithful. -/
+def StrongRestrictedWedge.inclusion_fullyFaithful
+    {D : Type w} [Category.{v} D]
+    (G : Cᵒᵖ ⥤ C ⥤ D)
+    (H : Cᵒᵖ ⥤ C ⥤ Type v) :
+    (StrongRestrictedWedge.inclusion G H).FullyFaithful :=
+  Functor.FullyFaithful.mk
+    (fun {_ _} f => ⟨f.hom, f.comm⟩)
+
+/-!
+### Restricted ends
+
+A *restricted end* is an `H`-restricted `G`-wedge
+that is terminal in the category of restricted
+wedges.
+-/
+
+/-- An `H`-restricted `G`-end is a terminal
+restricted wedge. -/
+abbrev IsRestrictedEnd
+    {D : Type w} [Category.{v} D]
+    (G : Cᵒᵖ ⥤ C ⥤ D)
+    (H : Cᵒᵖ ⥤ C ⥤ Type v)
+    (c : RestrictedWedge G H) :=
+  Limits.IsTerminal c
+
+namespace IsRestrictedEnd
+
+variable {D : Type w} [Category.{v} D]
+  {G : Cᵒᵖ ⥤ C ⥤ D}
+  {H : Cᵒᵖ ⥤ C ⥤ Type v}
+  {c : RestrictedWedge G H}
+
+/-- The universal morphism from any restricted
+wedge to a restricted end. -/
+def lift (hc : IsRestrictedEnd G H c)
+    (d : RestrictedWedge G H) : d ⟶ c :=
+  hc.from d
+
+/-- The underlying morphism in `D` from any
+wedge to a restricted end. -/
+def liftHom (hc : IsRestrictedEnd G H c)
+    (d : RestrictedWedge G H) :
+    d.pt ⟶ c.pt :=
+  (hc.lift d).hom
+
+/-- Any two morphisms to a restricted end
+are equal (uniqueness). -/
+theorem homExt (hc : IsRestrictedEnd G H c)
+    {d : RestrictedWedge G H}
+    (f g : d ⟶ c) : f = g :=
+  Limits.IsTerminal.hom_ext hc f g
+
+/-- Two restricted ends are isomorphic. -/
+def toUniqueUpToIso
+    {c c' : RestrictedWedge G H}
+    (hc : IsRestrictedEnd G H c)
+    (hc' : IsRestrictedEnd G H c') :
+    c ≅ c' :=
+  Limits.IsTerminal.uniqueUpToIso hc hc'
+
+end IsRestrictedEnd
+
+/-- A restricted end cone bundles a wedge
+with the proof it is terminal. -/
+structure RestrictedEndCone
+    {D : Type w} [Category.{v} D]
+    (G : Cᵒᵖ ⥤ C ⥤ D)
+    (H : Cᵒᵖ ⥤ C ⥤ Type v) where
+  wedge : RestrictedWedge G H
+  isTerminal :
+    IsRestrictedEnd G H wedge
+
+/-- A restricted end exists if there is a
+terminal restricted wedge. -/
+class HasRestrictedEnd
+    {D : Type w} [Category.{v} D]
+    (G : Cᵒᵖ ⥤ C ⥤ D)
+    (H : Cᵒᵖ ⥤ C ⥤ Type v) where
+  cone : RestrictedEndCone G H
+
+namespace HasRestrictedEnd
+
+variable {D : Type w} [Category.{v} D]
+  (G : Cᵒᵖ ⥤ C ⥤ D)
+  (H : Cᵒᵖ ⥤ C ⥤ Type v)
+  [HasRestrictedEnd G H]
+
+/-- The restricted end object (apex of the
+terminal restricted wedge). -/
+def restrictedEnd :
+    RestrictedWedge G H :=
+  HasRestrictedEnd.cone.wedge
+
+/-- The restricted end is terminal. -/
+def restrictedEndIsTerminal :
+    IsRestrictedEnd G H
+      (restrictedEnd G H) :=
+  HasRestrictedEnd.cone.isTerminal
+
+end HasRestrictedEnd
+
+end RestrictedWedges
 
 section WeightedCowedgeEmbedding
 
