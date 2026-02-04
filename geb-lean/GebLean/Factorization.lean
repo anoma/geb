@@ -1,4 +1,5 @@
 import Mathlib.CategoryTheory.Category.Factorisation
+import Mathlib.CategoryTheory.Adjunction.Reflective
 import GebLean.Utilities.TwistedArrow
 import GebLean.Utilities.ConnectedGrothendieck
 
@@ -47,6 +48,21 @@ sends each factorization to its midpoint.
 
 - `factorisationToTotal`: The inclusion of a fiber
   `Factorisation f` into the total factorization category.
+
+- `factorisationUnderOverEquiv`: The equivalence
+  `Factorisation f ≌ Under (Over.mk f)`.
+
+- `factorisationOverUnderEquiv`: The equivalence
+  `Factorisation f ≌ Over (Under.mk f)`.
+
+- `factorisationToOverTw`: The fully faithful inclusion
+  `Factorisation f ⥤ Over (twObjMk f)`.
+
+- `overTwToFactorisation`: The reflector (left adjoint)
+  `Over (twObjMk f) ⥤ Factorisation f`.
+
+- `factorisationToOverTw_reflective`: The `Reflective`
+  instance for `factorisationToOverTw f`.
 
 ## References
 
@@ -713,5 +729,532 @@ def totalFactIsoGrothendieck :
     exact heq_of_eq rfl
 
 end TwGrothendieckFactorisation
+
+/-! ## Equivalence with Under-in-Over and Over-in-Under
+
+For `f : X ⟶ Y`, the factorization category `Factorisation f` is
+equivalent to `Under (Over.mk f)` (the under category of `f` viewed
+as an object of `Over Y`) and to `Over (Under.mk f)` (the over
+category of `f` viewed as an object of `Under X`).
+-/
+
+section FactorisationUnderOverEquiv
+
+variable {X Y : C} (f : X ⟶ Y)
+
+/-- The functor from `Factorisation f` to `Under (Over.mk f)`.
+Each factorization `(D, ι, π)` with `ι ≫ π = f` maps to the
+`Under`-object with target `Over.mk π : Over Y` and structure
+morphism `Over.homMk ι : Over.mk f ⟶ Over.mk π`. -/
+def factorisationToUnderOver :
+    Factorisation f ⥤ Under (Over.mk f : Over Y) where
+  obj d := Under.mk
+    (Over.homMk (U := Over.mk f) (V := Over.mk d.π)
+      d.ι d.ι_π)
+  map {d e} g := Under.homMk
+    (Over.homMk g.h g.h_π)
+    (by
+      apply Over.OverMorphism.ext
+      exact g.ι_h)
+  map_id _ := by
+    apply Under.UnderMorphism.ext
+    apply Over.OverMorphism.ext
+    rfl
+  map_comp _ _ := by
+    apply Under.UnderMorphism.ext
+    apply Over.OverMorphism.ext
+    rfl
+
+/-- The functor from `Under (Over.mk f)` to `Factorisation f`.
+Each `Under`-object with target `(D, π : D ⟶ Y)` and structure
+morphism `Over.homMk ι` maps to the factorization `(D, ι, π)`. -/
+def underOverToFactorisation :
+    Under (Over.mk f : Over Y) ⥤ Factorisation f where
+  obj u :=
+    { mid := u.right.left
+      ι := u.hom.left
+      π := u.right.hom
+      ι_π := Over.w u.hom }
+  map g :=
+    { h := g.right.left
+      ι_h := congrArg CommaMorphism.left (Under.w g)
+      h_π := Over.w g.right }
+  map_id _ := Factorisation.Hom.ext rfl
+  map_comp _ _ := Factorisation.Hom.ext rfl
+
+private lemma underOverRoundTrip_obj
+    (d : Factorisation f) :
+    (factorisationToUnderOver f ⋙
+      underOverToFactorisation f).obj d = d := by
+  cases d; rfl
+
+private lemma overUnderFactRoundTrip_obj
+    (u : Under (Over.mk f : Over Y)) :
+    (underOverToFactorisation f ⋙
+      factorisationToUnderOver f).obj u = u := by
+  cases u; congr 1
+
+private lemma underOverRoundTrip_map
+    {d e : Factorisation f}
+    (g : d ⟶ e) :
+    (factorisationToUnderOver f ⋙
+      underOverToFactorisation f).map g = g := by
+  apply Factorisation.Hom.ext; rfl
+
+private lemma overUnderFactRoundTrip_map
+    {u v : Under (Over.mk f : Over Y)}
+    (g : u ⟶ v) :
+    (underOverToFactorisation f ⋙
+      factorisationToUnderOver f).map g =
+    eqToHom (overUnderFactRoundTrip_obj f u).symm ≫
+    g ≫ eqToHom (overUnderFactRoundTrip_obj f v) := by
+  cases u; cases v
+  simp only [eqToHom_refl,
+    Category.id_comp, Category.comp_id]
+  apply Under.UnderMorphism.ext
+  apply Over.OverMorphism.ext; rfl
+
+/-- The equivalence
+`Factorisation f ≌ Under (Over.mk f : Over Y)`. -/
+def factorisationUnderOverEquiv :
+    Factorisation f ≌ Under (Over.mk f : Over Y) :=
+  CategoryTheory.Equivalence.mk
+    (factorisationToUnderOver f)
+    (underOverToFactorisation f)
+    (NatIso.ofComponents
+      (fun d => eqToIso
+        (underOverRoundTrip_obj f d).symm)
+      (fun {d e} g => by
+        simp only [eqToIso.hom, Functor.id_obj,
+          Functor.comp_obj, Functor.id_map]
+        rw [eqToHom_refl, eqToHom_refl,
+          Category.id_comp, Category.comp_id]
+        exact (underOverRoundTrip_map f g).symm))
+    (NatIso.ofComponents
+      (fun u => eqToIso
+        (overUnderFactRoundTrip_obj f u))
+      (fun {u v} g => by
+        simp only [eqToIso.hom, Functor.comp_obj,
+          Functor.id_obj, Functor.id_map]
+        rw [overUnderFactRoundTrip_map]
+        simp))
+
+end FactorisationUnderOverEquiv
+
+section FactorisationOverUnderEquiv
+
+variable {X Y : C} (f : X ⟶ Y)
+
+/-- The functor from `Factorisation f` to `Over (Under.mk f)`.
+Each factorization `(D, ι, π)` with `ι ≫ π = f` maps to the
+`Over`-object with source `Under.mk ι : Under X` and structure
+morphism `Under.homMk π : Under.mk ι ⟶ Under.mk f`. -/
+def factorisationToOverUnder :
+    Factorisation f ⥤ Over (Under.mk f : Under X) where
+  obj d := Over.mk
+    (Under.homMk (U := Under.mk d.ι)
+      (V := Under.mk f) d.π d.ι_π)
+  map {d e} g := Over.homMk
+    (Under.homMk g.h (by exact g.ι_h))
+    (by
+      apply Under.UnderMorphism.ext
+      exact g.h_π)
+  map_id _ := by
+    apply Over.OverMorphism.ext
+    apply Under.UnderMorphism.ext
+    rfl
+  map_comp _ _ := by
+    apply Over.OverMorphism.ext
+    apply Under.UnderMorphism.ext
+    rfl
+
+/-- The functor from `Over (Under.mk f)` to `Factorisation f`.
+Each `Over`-object with source `(D, ι : X ⟶ D)` and structure
+morphism `Under.homMk π` maps to the factorization
+`(D, ι, π)`. -/
+def overUnderToFactorisation :
+    Over (Under.mk f : Under X) ⥤ Factorisation f where
+  obj o :=
+    { mid := o.left.right
+      ι := o.left.hom
+      π := o.hom.right
+      ι_π := Under.w o.hom }
+  map g :=
+    { h := g.left.right
+      ι_h := Under.w g.left
+      h_π := congrArg CommaMorphism.right (Over.w g) }
+  map_id _ := Factorisation.Hom.ext rfl
+  map_comp _ _ := Factorisation.Hom.ext rfl
+
+private lemma overUnderRoundTrip_obj
+    (d : Factorisation f) :
+    (factorisationToOverUnder f ⋙
+      overUnderToFactorisation f).obj d = d := by
+  cases d; rfl
+
+private lemma factOverUnderRoundTrip_obj
+    (o : Over (Under.mk f : Under X)) :
+    (overUnderToFactorisation f ⋙
+      factorisationToOverUnder f).obj o = o := by
+  cases o; rename_i l h; cases l; congr 1
+
+private lemma overUnderRoundTrip_map
+    {d e : Factorisation f}
+    (g : d ⟶ e) :
+    (factorisationToOverUnder f ⋙
+      overUnderToFactorisation f).map g = g := by
+  apply Factorisation.Hom.ext; rfl
+
+private lemma factOverUnderRoundTrip_map
+    {o p : Over (Under.mk f : Under X)}
+    (g : o ⟶ p) :
+    (overUnderToFactorisation f ⋙
+      factorisationToOverUnder f).map g =
+    eqToHom (factOverUnderRoundTrip_obj f o).symm ≫
+    g ≫ eqToHom (factOverUnderRoundTrip_obj f p) := by
+  cases o; cases p
+  rename_i l₁ h₁ l₂ h₂
+  cases l₁; cases l₂
+  simp only [eqToHom_refl,
+    Category.id_comp, Category.comp_id]
+  apply Over.OverMorphism.ext
+  apply Under.UnderMorphism.ext; rfl
+
+/-- The equivalence
+`Factorisation f ≌ Over (Under.mk f : Under X)`. -/
+def factorisationOverUnderEquiv :
+    Factorisation f ≌ Over (Under.mk f : Under X) :=
+  CategoryTheory.Equivalence.mk
+    (factorisationToOverUnder f)
+    (overUnderToFactorisation f)
+    (NatIso.ofComponents
+      (fun d => eqToIso
+        (overUnderRoundTrip_obj f d).symm)
+      (fun {d e} g => by
+        simp only [eqToIso.hom, Functor.id_obj,
+          Functor.comp_obj, Functor.id_map]
+        rw [eqToHom_refl, eqToHom_refl,
+          Category.id_comp, Category.comp_id]
+        exact (overUnderRoundTrip_map f g).symm))
+    (NatIso.ofComponents
+      (fun o => eqToIso
+        (factOverUnderRoundTrip_obj f o))
+      (fun {o p} g => by
+        simp only [eqToIso.hom, Functor.comp_obj,
+          Functor.id_obj, Functor.id_map]
+        rw [factOverUnderRoundTrip_map]
+        simp))
+
+end FactorisationOverUnderEquiv
+
+/-! ## Reflective inclusion into the twisted arrow slice
+
+For `f : X ⟶ Y`, each factorization `(D, ι, π)` gives a
+twisted arrow `ι : X ⟶ D` equipped with a morphism
+`(𝟙 X, π) : twObjMk ι ⟶ twObjMk f`, hence an object of
+`Over (twObjMk f)`. This inclusion is fully faithful and
+has a left adjoint (the reflector), making `Factorisation f`
+a reflective subcategory of `Over (twObjMk f)`.
+-/
+
+section FactorisationReflectiveInclusion
+
+variable {X Y : C} (f : X ⟶ Y)
+
+/-- The structure morphism in `Over (twObjMk f)` for a
+factorization `d` of `f`. This is a twisted arrow morphism
+from `twObjMk d.ι` to `twObjMk f` with domain component
+`𝟙 X` and codomain component `d.π`. -/
+def factorisationToOverTwHom
+    (d : Factorisation f) :
+    twObjMk d.ι ⟶ (twObjMk f : TwistedArrow C) :=
+  twHomMk (x := twObjMk d.ι) (y := twObjMk f)
+    (𝟙 X) d.π (by
+      simp only [twObjMk_arr]
+      rw [d.ι_π]
+      exact Category.id_comp f)
+
+/-- The twisted arrow morphism underlying the functorial map
+of a factorisation morphism `g : d ⟶ e`. This goes from
+`twObjMk d.ι` to `twObjMk e.ι` with domain component
+`𝟙 X` and codomain component `g.h`. -/
+def factorisationToOverTwMapArr
+    {d e : Factorisation f} (g : d ⟶ e) :
+    twObjMk d.ι ⟶ (twObjMk e.ι : TwistedArrow C) :=
+  twHomMk (x := twObjMk d.ι) (y := twObjMk e.ι)
+    (𝟙 X) g.h (by
+      simp only [twObjMk_arr]
+      rw [g.ι_h]
+      exact Category.id_comp e.ι)
+
+private lemma factorisationToOverTw_over
+    {d e : Factorisation f} (g : d ⟶ e) :
+    factorisationToOverTwMapArr f g ≫
+      factorisationToOverTwHom f e =
+      factorisationToOverTwHom f d := by
+  apply twHom_ext
+  · change 𝟙 X ≫ 𝟙 X = 𝟙 X
+    exact Category.comp_id _
+  · exact g.h_π
+
+/-- The inclusion functor from `Factorisation f` to
+`Over (twObjMk f)` in `TwistedArrow C`. Each factorization
+`(D, ι, π)` maps to the twisted arrow `twObjMk ι` with
+structure morphism `twHomMk (𝟙 X) π`. -/
+def factorisationToOverTw :
+    Factorisation f ⥤
+      Over (twObjMk f : TwistedArrow C) where
+  obj d := Over.mk (factorisationToOverTwHom f d)
+  map g := Over.homMk
+    (factorisationToOverTwMapArr f g)
+    (factorisationToOverTw_over f g)
+  map_id _ := by
+    apply Over.OverMorphism.ext
+    exact Subtype.ext rfl
+  map_comp _ _ := by
+    apply Over.OverMorphism.ext
+    apply Subtype.ext
+    simp only [Over.comp_left, Over.homMk_left]
+    change ((𝟙 X).op, _) =
+      ((𝟙 X).op ≫ (𝟙 X).op, _)
+    congr 1
+    exact (Category.comp_id _).symm
+
+/-- The factorisation obtained from an object of
+`Over (twObjMk f)`. Given a twisted arrow `tw` with a morphism
+`φ : tw ⟶ twObjMk f`, the factorisation has
+`mid := twCod tw`, `ι := twDomArr φ ≫ twArr tw`,
+and `π := twCodArr φ`. -/
+def overTwToFactorisationObj
+    (o : Over (twObjMk f : TwistedArrow C)) :
+    Factorisation f where
+  mid := twCod o.left
+  ι := twDomArr o.hom ≫ twArr o.left
+  π := twCodArr o.hom
+  ι_π := by
+    rw [Category.assoc]
+    exact twHomComm o.hom
+
+private lemma overTwToFactorisation_ι_h
+    {o₁ o₂ : Over (twObjMk f : TwistedArrow C)}
+    (g : o₁ ⟶ o₂) :
+    (overTwToFactorisationObj f o₁).ι ≫
+      twCodArr g.left =
+      (overTwToFactorisationObj f o₂).ι := by
+  have hdom : twDomArr o₂.hom ≫ twDomArr g.left =
+      twDomArr o₁.hom :=
+    congrArg twDomArr (Over.w g)
+  simp only [overTwToFactorisationObj, Category.assoc,
+    ← hdom]
+  congr 1
+  exact twHomComm g.left
+
+private lemma overTwToFactorisation_h_π
+    {o₁ o₂ : Over (twObjMk f : TwistedArrow C)}
+    (g : o₁ ⟶ o₂) :
+    twCodArr g.left ≫
+      (overTwToFactorisationObj f o₂).π =
+      (overTwToFactorisationObj f o₁).π :=
+  congrArg twCodArr (Over.w g)
+
+/-- The reflector functor from `Over (twObjMk f)` to
+`Factorisation f`. Given a twisted arrow `g : A ⟶ B` with
+a morphism `(α, β) : g ⟶ f` satisfying `α ≫ g ≫ β = f`,
+the reflector produces the factorisation `(B, α ≫ g, β)`. -/
+def overTwToFactorisation :
+    Over (twObjMk f : TwistedArrow C) ⥤
+      Factorisation f where
+  obj o := overTwToFactorisationObj f o
+  map g :=
+    { h := twCodArr g.left
+      ι_h := overTwToFactorisation_ι_h f g
+      h_π := overTwToFactorisation_h_π f g }
+  map_id _ := Factorisation.Hom.ext rfl
+  map_comp _ _ := Factorisation.Hom.ext rfl
+
+private lemma factorisationToOverTw_domArr
+    {d e : Factorisation f}
+    (φ : (factorisationToOverTw f).obj d ⟶
+      (factorisationToOverTw f).obj e) :
+    twDomArr φ.left = 𝟙 X := by
+  have h := congrArg twDomArr (Over.w φ)
+  simp only [twDomArr_comp, factorisationToOverTw,
+    factorisationToOverTwHom] at h
+  exact (Category.id_comp _).symm.trans h
+
+private def factorisationToOverTw_preimage
+    {d e : Factorisation f}
+    (φ : (factorisationToOverTw f).obj d ⟶
+      (factorisationToOverTw f).obj e) :
+    d ⟶ e where
+  h := twCodArr φ.left
+  ι_h := by
+    have hdom := factorisationToOverTw_domArr f φ
+    have hcomm := twHomComm φ.left
+    change twDomArr φ.left ≫ d.ι ≫ twCodArr φ.left =
+      e.ι at hcomm
+    rw [hdom] at hcomm
+    exact (Category.id_comp _).symm.trans hcomm
+  h_π := congrArg twCodArr (Over.w φ)
+
+/-- The inclusion `factorisationToOverTw f` is fully faithful.
+A morphism in `Over (twObjMk f)` between images of the
+inclusion is determined by its codomain component, which
+equals the `h` of the underlying factorisation morphism. -/
+def factorisationToOverTw_fullyFaithful :
+    (factorisationToOverTw f).FullyFaithful where
+  preimage φ := factorisationToOverTw_preimage f φ
+  map_preimage φ := by
+    apply Over.OverMorphism.ext
+    apply twHom_ext
+    · exact (factorisationToOverTw_domArr f φ).symm
+    · rfl
+  preimage_map _ := Factorisation.Hom.ext rfl
+
+private def adjHomEquivForwardArr
+    (o : Over (twObjMk f : TwistedArrow C))
+    (d : Factorisation f)
+    (g : (overTwToFactorisation f).obj o ⟶ d) :
+    o.left ⟶ (twObjMk d.ι : TwistedArrow C) :=
+  let dom := twDomArr o.hom
+  twHomMk dom g.h (by
+    rw [← Category.assoc, twObjMk_arr]
+    exact g.ι_h)
+
+private lemma adjHomEquivForwardArr_over
+    (o : Over (twObjMk f : TwistedArrow C))
+    (d : Factorisation f)
+    (g : (overTwToFactorisation f).obj o ⟶ d) :
+    adjHomEquivForwardArr f o d g ≫
+      factorisationToOverTwHom f d = o.hom := by
+  have hdom : twDomArr
+      (adjHomEquivForwardArr f o d g ≫
+        factorisationToOverTwHom f d) =
+      twDomArr o.hom := by
+    simp only [twDomArr_comp]
+    exact Category.id_comp _
+  have hcod : twCodArr
+      (adjHomEquivForwardArr f o d g ≫
+        factorisationToOverTwHom f d) =
+      twCodArr o.hom := g.h_π
+  exact twHom_ext _ _ hdom hcod
+
+private def adjHomEquivForward
+    (o : Over (twObjMk f : TwistedArrow C))
+    (d : Factorisation f)
+    (g : (overTwToFactorisation f).obj o ⟶ d) :
+    o ⟶ (factorisationToOverTw f).obj d :=
+  Over.homMk
+    (adjHomEquivForwardArr f o d g)
+    (adjHomEquivForwardArr_over f o d g)
+
+private lemma overTw_round_trip_ι
+    (d : Factorisation f) :
+    ((overTwToFactorisation f).obj
+      ((factorisationToOverTw f).obj d)).ι =
+      d.ι := by
+  simp only [overTwToFactorisation,
+    factorisationToOverTw,
+    overTwToFactorisationObj,
+    factorisationToOverTwHom]
+  exact Category.id_comp _
+
+private lemma adjHomEquivInverse_ι_h
+    (o : Over (twObjMk f : TwistedArrow C))
+    (d : Factorisation f)
+    (φ : o ⟶ (factorisationToOverTw f).obj d) :
+    ((overTwToFactorisation f).obj o).ι ≫
+      twCodArr φ.left = d.ι :=
+  (overTwToFactorisation_ι_h f φ).trans
+    (overTw_round_trip_ι f d)
+
+private lemma adjHomEquivInverse_h_π
+    (o : Over (twObjMk f : TwistedArrow C))
+    (d : Factorisation f)
+    (φ : o ⟶ (factorisationToOverTw f).obj d) :
+    twCodArr φ.left ≫ d.π =
+      ((overTwToFactorisation f).obj o).π :=
+  overTwToFactorisation_h_π f φ
+
+private def adjHomEquivInverse
+    (o : Over (twObjMk f : TwistedArrow C))
+    (d : Factorisation f)
+    (φ : o ⟶ (factorisationToOverTw f).obj d) :
+    (overTwToFactorisation f).obj o ⟶ d where
+  h := twCodArr φ.left
+  ι_h := adjHomEquivInverse_ι_h f o d φ
+  h_π := adjHomEquivInverse_h_π f o d φ
+
+private lemma adjHomEquiv_left_inv
+    (o : Over (twObjMk f : TwistedArrow C))
+    (d : Factorisation f)
+    (g : (overTwToFactorisation f).obj o ⟶ d) :
+    adjHomEquivInverse f o d
+      (adjHomEquivForward f o d g) = g :=
+  Factorisation.Hom.ext rfl
+
+private lemma adjHomEquiv_right_inv
+    (o : Over (twObjMk f : TwistedArrow C))
+    (d : Factorisation f)
+    (φ : o ⟶ (factorisationToOverTw f).obj d) :
+    adjHomEquivForward f o d
+      (adjHomEquivInverse f o d φ) = φ := by
+  apply Over.OverMorphism.ext
+  apply twHom_ext
+  · change twDomArr o.hom = twDomArr φ.left
+    have h := congrArg twDomArr (Over.w φ)
+    simp only [twDomArr_comp,
+      factorisationToOverTw,
+      factorisationToOverTwHom] at h
+    exact ((Category.id_comp _).symm.trans h).symm
+  · rfl
+
+private def adjHomEquiv
+    (o : Over (twObjMk f : TwistedArrow C))
+    (d : Factorisation f) :
+    ((overTwToFactorisation f).obj o ⟶ d) ≃
+      (o ⟶ (factorisationToOverTw f).obj d) where
+  toFun := adjHomEquivForward f o d
+  invFun := adjHomEquivInverse f o d
+  left_inv := adjHomEquiv_left_inv f o d
+  right_inv := adjHomEquiv_right_inv f o d
+
+/-- The adjunction between the reflector
+`overTwToFactorisation f` and the inclusion
+`factorisationToOverTw f`. -/
+def overTwFactorisationAdj :
+    overTwToFactorisation f ⊣
+      factorisationToOverTw f :=
+  Adjunction.mkOfHomEquiv
+    { homEquiv := adjHomEquiv f
+      homEquiv_naturality_right := by
+        intro o d d' g h
+        apply Over.OverMorphism.ext
+        apply twHom_ext
+        · change twDomArr o.hom =
+            𝟙 X ≫ twDomArr o.hom
+          exact (Category.id_comp _).symm
+        · rfl }
+
+instance factorisationToOverTw_full :
+    (factorisationToOverTw f).Full :=
+  (factorisationToOverTw_fullyFaithful f).full
+
+instance factorisationToOverTw_faithful :
+    (factorisationToOverTw f).Faithful :=
+  (factorisationToOverTw_fullyFaithful f).faithful
+
+/-- The inclusion of `Factorisation f` into
+`Over (twObjMk f)` in `TwistedArrow C` is
+a reflective functor. The reflector sends a
+twisted arrow `g : A → B` over `f` (via
+`(α, β)`) to the factorisation
+`(B, α ≫ g, β)`. -/
+instance factorisationToOverTw_reflective :
+    Reflective (factorisationToOverTw f) where
+  L := overTwToFactorisation f
+  adj := overTwFactorisationAdj f
+
+end FactorisationReflectiveInclusion
 
 end GebLean
