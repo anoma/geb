@@ -23,7 +23,7 @@ See `docs/connected-grothendieck-construction.md` for the mathematical
 specification.
 -/
 
-universe v u
+universe v u w₁ w₂
 
 namespace GebLean
 
@@ -39,7 +39,7 @@ We define the objects and morphisms without using typeclasses, following
 the pattern in `GebLean.Utilities.Category`.
 -/
 
-variable (F : TwistedArrow' C ⥤ Cat.{v, u})
+variable (F : TwistedArrow' C ⥤ Cat.{w₁, w₂})
 
 /--
 An object of the connected Grothendieck construction `E(F)` consists of:
@@ -105,7 +105,7 @@ Given `square_comm : twArr' x.arrow ≫ codArr = domArr ≫ twArr' y.arrow`,
 this is `F(twObjMk' (twArr' x.arrow ≫ codArr))`.
 -/
 abbrev connGrothendieckFiberCat (x : ConnGrothendieckObj C F)
-    {b' : C} (codArr : twCod' x.arrow ⟶ b') : Cat.{v, u} :=
+    {b' : C} (codArr : twCod' x.arrow ⟶ b') : Cat.{w₁, w₂} :=
   F.obj (connGrothendieckDiag C x.arrow codArr)
 
 /--
@@ -161,7 +161,7 @@ section ConnectedGrothendieckCategory
 
 /-! ## Category structure on the connected Grothendieck construction -/
 
-variable (F : TwistedArrow' C ⥤ Cat.{v, u})
+variable (F : TwistedArrow' C ⥤ Cat.{w₁, w₂})
 
 /--
 When `codArr = 𝟙`, the diagonal equals the original arrow.
@@ -1216,7 +1216,7 @@ section ConnectedGrothendieckProjection
 
 /-! ## The projection functor to the arrow category -/
 
-variable (F : TwistedArrow' C ⥤ Cat.{v, u})
+variable (F : TwistedArrow' C ⥤ Cat.{w₁, w₂})
 
 /--
 Convert a twisted arrow object to an Arrow object.
@@ -6425,7 +6425,7 @@ as `ConnGrothendieckObj C (tw'ToTw ⋙ F)`, making the components
 accessible via the unprimed twisted arrow API.
 -/
 
-variable (F : TwistedArrow C ⥤ Cat.{v, u})
+variable (F : TwistedArrow C ⥤ Cat.{w₁, w₂})
 
 /-- The connected Grothendieck construction indexed by
 `TwistedArrow C` rather than `TwistedArrow' C`.
