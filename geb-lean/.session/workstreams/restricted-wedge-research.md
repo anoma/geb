@@ -31,32 +31,32 @@ not the other way. Reason: the fully faithful inclusion
 `StrongRestrictedCowedge -> RestrictedCowedge` means initiality in the
 larger category implies initiality in the smaller, but not conversely.
 
-### Q2: RestrictedWedge generalizes Wedge(powerProfunctor) - ASYMMETRIC RESULT
+### Q2: RestrictedWedge/Cowedge generalize Wedge/Cowedge of power/copower profunctors
 
 Define `RestrictedWedge G H` (dual of `RestrictedCowedge`):
 
 - `pt : D`
 - `family : (I : C) -> H(I,I) -> Hom_D(pt, G(I,I))`, dinatural
 
-**Original conjecture**: when `D` has powers, `RestrictedWedge G H` is
-equivalent to `Wedge` of a profunctor built from pointwise powers.
+**Result**: Both wedge and cowedge equivalences hold!
 
-**Result**: Asymmetric - wedge works, cowedge does not.
-
-For **wedges**: `RestrictedWedge G H ≃ Wedge (powerProfunctorProfArg G H)`
+For **wedges**: `RestrictedWedge G H ≌ Wedge (powerProfunctorProfArg G H)`
 via `restrictedToPowerWedge` and `powerWedgeToRestricted` using
 `Function.swap`. The wedge condition involves `H(I₁, I₀) → G(I₀, I₁)`,
 which matches the off-diagonals in RestrictedWedge dinaturality.
 
-For **cowedges**: No equivalence. The cowedge condition for
-`copowerProfunctorProfArg G H` at `f : I₀ ⟶ I₁` involves pairs
-`(h, g) : H(I₁, I₀) × G(I₁, I₀)`. But `RestrictedCowedge` dinaturality
-involves G-actions on `G(I₀, I₁)` (the opposite off-diagonal).
+For **cowedges**: `RestrictedCowedge G H ≌ Cowedge (copowerProfunctorProfArg G H)`
+via `restrictedToCopowerCowedge` and `copowerCowedgeToRestricted`.
+The cowedge condition for `copowerProfunctorProfArg G H` at `f : I₀ ⟶ I₁`
+involves pairs `(h, g) : H(I₁, I₀) × G(I₁, I₀)`, and after currying,
+the conditions align correctly with `RestrictedCowedge` dinaturality.
 
-The asymmetry arises because:
+Full categorical equivalences implemented:
 
-- Powers (function types) are contravariant in domain, swapping H's index
-- Copowers (products) are covariant in both factors, no swap occurs
+- `restrictedWedgePowerEquiv :`
+  `RestrictedWedge G H ≌ Wedge (powerProfunctorProfArg G H)`
+- `restrictedCowedgeCopowerEquiv :`
+  `RestrictedCowedge G H ≌ Cowedge (copowerProfunctorProfArg G H)`
 
 ### Q3: Diagonal elements give StrongRestrictedWedge
 
@@ -98,15 +98,13 @@ elements" characterization.
     - `covProfunctor F` for `F : C ⥤ Type v` gives `(I, J) ↦ F(J)`
     - `contravProfunctor F` for `F : Cᵒᵖ ⥤ Type v` gives `(I, J) ↦ F(I)`
   - Added consistency theorems in `Weighted.lean`
-  - **Result**: Asymmetric!
-    - `RestrictedWedge G H ≃ Wedge (powerProfunctorProfArg G H)` - POSITIVE
+  - **Result**: Both equivalences hold!
+    - `RestrictedWedge G H ≌ Wedge (powerProfunctorProfArg G H)` - DONE
       via `restrictedToPowerWedge` and `powerWedgeToRestricted`
-    - `RestrictedCowedge G H ≃ Cowedge (copowerProfunctorProfArg G H)` - NEGATIVE
-      The dinaturality conditions differ in which off-diagonal they use
-  - The wedge case works because the power's contravariance in domain swaps
-    the H argument, aligning it with RestrictedWedge's dinaturality condition
-  - The cowedge case fails because products are covariant in both factors,
-    so the off-diagonals don't align
+      Full categorical equivalence `restrictedWedgePowerEquiv`
+    - `RestrictedCowedge G H ≌ Cowedge (copowerProfunctorProfArg G H)` - DONE
+      via `restrictedToCopowerCowedge` and `copowerCowedgeToRestricted`
+      Full categorical equivalence `restrictedCowedgeCopowerEquiv`
 - Task #45: Prove StructuralCoend = initial StrongRestrictedCowedge (DONE)
   - General case: `CostructureIntegral H G` is the initial
     `StrongRestrictedCowedge G H` via `costructureIntegralCowedge_isInitial`
@@ -132,12 +130,16 @@ elements" characterization.
       `structuralCoendCowedgePolyHom_unique`.
 - Task #46: Investigate comparison: initial RestrictedCowedge -> initial
   StrongRestrictedCowedge
-- Task #47: Characterize RestrictedWedge/Cowedge as cones/cocones
+- Task #47: Characterize RestrictedWedge/Cowedge as cones/cocones (DONE)
   - Based on Task #44 analysis:
-    - `RestrictedWedge G H ≃ Wedge (powerProfunctorProfArg G H)` - DONE
-    - `RestrictedCowedge G H ≄ Cowedge (copowerProfunctorProfArg G H)` - NEGATIVE
-  - RestrictedCowedge may not have a clean cone/cocone characterization
-    because the dinaturality condition differs from plain cowedge conditions
+    - `RestrictedWedge G H ≌ Wedge (powerProfunctorProfArg G H)` - DONE
+      Full categorical equivalence `restrictedWedgePowerEquiv` implemented
+      with functors `restrictedToPowerWedgeFunctor` and
+      `powerWedgeToRestrictedFunctor`.
+    - `RestrictedCowedge G H ≌ Cowedge (copowerProfunctorProfArg G H)` - DONE
+      Full categorical equivalence `restrictedCowedgeCopowerEquiv` implemented
+      with functors `restrictedToCopowerCowedgeFunctor` and
+      `copowerCowedgeToRestrictedFunctor`.
 
 ## Related Files
 

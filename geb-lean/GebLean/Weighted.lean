@@ -10725,22 +10725,208 @@ theorem structuralCoendCowedgePolyHom_unique
 end IdProfSpecializations
 
 /-!
-## Note on RestrictedCowedge vs Cowedge
+## RestrictedCowedge as Cowedge of copowerProfunctorProfArg
 
-Unlike the `StrongRestrictedCowedge ≌ Cowedge (profPullback G (DiagElem.forget H))`
-equivalence, there is no direct equivalence between `RestrictedCowedge G H` and
-`Cowedge (copowerProfunctorProfArg G H)`.
+For `G, H : Cᵒᵖ ⥤ C ⥤ Type v`, we establish an equivalence between
+`RestrictedCowedge G H` and `Cowedge (copowerProfunctorProfArg G H)`.
 
-The issue is that the dinaturality conditions differ:
+The dinaturality conditions match because:
 - The cowedge condition for `copowerProfunctorProfArg G H` at `f : I₀ ⟶ I₁`
   involves pairs `(h, g) : H(I₁, I₀) × G(I₁, I₀)`.
-- The `RestrictedCowedge` dinaturality involves `x : H(I₁, I₀)` but the
-  G-actions are on `G(I₀, I₁)` (the opposite off-diagonal).
+- The `RestrictedCowedge` dinaturality involves `x : H(I₁, I₀)` with
+  G-actions on `G(I₁, I₀)` (the same off-diagonal).
 
-This reflects that `RestrictedCowedge` captures a richer structure where the
-H-indexed family of functions `c.family I : H(I,I) → (G(I,I) → pt)` must satisfy
-dinaturality as functions, not just on individual elements.
+When we expand the `IsDinatural H (G ⇓ pt) family` condition pointwise, we get:
+For all `h : H(I₁, I₀)` and `g : G(I₁, I₀)`:
+  `family I₁ (H.rmap f h) (G.rmap f g) = family I₀ (H.lmap f h) (G.lmap f g)`
+
+This matches the cowedge condition for `copowerProfunctorProfArg` exactly after
+currying/uncurrying the family.
 -/
+
+section RestrictedCowedgeCopowerEquiv
+
+variable {C : Type u} [Category.{v} C]
+
+/-- Convert a restricted cowedge to a cowedge over `copowerProfunctorProfArg G H`.
+
+The family `∀ I, diagApp H I → (diagApp G I → pt)` is uncurried to give
+legs `∀ I, diagApp H I × diagApp G I → pt`. -/
+def restrictedToCopowerCowedge
+    (G H : Cᵒᵖ ⥤ C ⥤ Type v)
+    (c : RestrictedCowedge G H) :
+    Cowedge (copowerProfunctorProfArg G H) :=
+  Cowedge.mk c.pt
+    (fun I p => c.family I p.1 p.2)
+    (fun {I₀ I₁} f => by
+      funext ⟨h, g⟩
+      have hdinat := c.isDinatural I₀ I₁ f h
+      simp only [Profunctor.lmap, Profunctor.rmap,
+        sliceProfunctor_obj_map,
+        sliceProfunctor_map_app,
+        Quiver.Hom.unop_op] at hdinat
+      simp only [copowerProfunctorProfArg]
+      exact (congrFun hdinat g).symm)
+
+/-- Convert a cowedge over `copowerProfunctorProfArg G H` to a restricted cowedge.
+
+The legs `∀ I, diagApp H I × diagApp G I → pt` are curried to give
+family `∀ I, diagApp H I → (diagApp G I → pt)`. -/
+def copowerCowedgeToRestricted
+    (G H : Cᵒᵖ ⥤ C ⥤ Type v)
+    (w : Cowedge (copowerProfunctorProfArg G H)) :
+    RestrictedCowedge G H :=
+  RestrictedCowedge.mk' w.pt
+    (fun I h g => w.π I ⟨h, g⟩)
+    (fun I₀ I₁ f x => by
+      have hcond := Cowedge.condition w f
+      simp only [Profunctor.lmap, Profunctor.rmap,
+        sliceProfunctor_obj_map,
+        sliceProfunctor_map_app,
+        Quiver.Hom.unop_op]
+      funext g
+      simp only [copowerProfunctorProfArg] at hcond
+      exact (congrFun hcond ⟨x, g⟩).symm)
+
+/-- The roundtrip from restricted cowedge to cowedge and back is the identity. -/
+theorem copowerRestrictedCowedge_roundtrip
+    (G H : Cᵒᵖ ⥤ C ⥤ Type v)
+    (c : RestrictedCowedge G H) :
+    copowerCowedgeToRestricted G H (restrictedToCopowerCowedge G H c) = c := rfl
+
+/-- The roundtrip from cowedge to restricted cowedge and back yields an
+isomorphic cowedge. -/
+def copowerCowedge_roundtrip
+    (G H : Cᵒᵖ ⥤ C ⥤ Type v)
+    (w : Cowedge (copowerProfunctorProfArg G H)) :
+    restrictedToCopowerCowedge G H (copowerCowedgeToRestricted G H w) ≅ w :=
+  Cowedge.ext (Iso.refl w.pt) (fun I => by
+    simp only [restrictedToCopowerCowedge,
+      copowerCowedgeToRestricted,
+      RestrictedCowedge.mk',
+      RestrictedCowedge.family,
+      Cowedge.mk_π, Iso.refl_hom]
+    funext ⟨h, g⟩
+    erw [Category.comp_id])
+
+/-- The functor from restricted cowedges to cowedges
+over `copowerProfunctorProfArg G H`. -/
+def restrictedToCopowerCowedgeFunctor
+    (G H : Cᵒᵖ ⥤ C ⥤ Type v) :
+    RestrictedCowedge G H ⥤
+    Cowedge (copowerProfunctorProfArg G H) where
+  obj := restrictedToCopowerCowedge G H
+  map {c d} f := {
+    hom := f.hom
+    w := fun j => by
+      cases j with
+      | right j₀ =>
+        simp only [restrictedToCopowerCowedge]
+        funext ⟨h, g⟩
+        exact congrFun (f.comm j₀ h) g
+      | left a =>
+        simp only [Multicofork.fst_app_right,
+          Category.assoc]
+        congr 1
+        simp only [restrictedToCopowerCowedge]
+        funext ⟨h, g⟩
+        exact congrFun (f.comm _ _) g
+  }
+
+/-- The functor from cowedges over
+`copowerProfunctorProfArg G H` to restricted cowedges. -/
+def copowerCowedgeToRestrictedFunctor
+    (G H : Cᵒᵖ ⥤ C ⥤ Type v) :
+    Cowedge (copowerProfunctorProfArg G H) ⥤
+    RestrictedCowedge G H where
+  obj := copowerCowedgeToRestricted G H
+  map {w₁ w₂} g := {
+    hom := g.hom
+    comm := fun A a => by
+      have hw := Multicofork.π_comp_hom w₁ w₂ g A
+      simp only [copowerCowedgeToRestricted,
+        RestrictedCowedge.mk',
+        RestrictedCowedge.family]
+      funext x
+      exact congrFun hw ⟨a, x⟩
+  }
+
+/-- The unit natural isomorphism for the
+restricted cowedge / copower cowedge equivalence. -/
+def copowerProfCowedgeEquivUnit
+    (G H : Cᵒᵖ ⥤ C ⥤ Type v) :
+    𝟭 (RestrictedCowedge G H) ≅
+    restrictedToCopowerCowedgeFunctor G H ⋙
+    copowerCowedgeToRestrictedFunctor G H :=
+  NatIso.ofComponents
+    (fun c => {
+      hom := {
+        hom := 𝟙 c.pt
+        comm := fun _ _ => Category.comp_id _ }
+      inv := {
+        hom := 𝟙 c.pt
+        comm := fun _ _ => Category.comp_id _ }
+      hom_inv_id := by
+        apply RestrictedCowedge.Hom.ext
+        dsimp; exact Category.comp_id _
+      inv_hom_id := by
+        apply RestrictedCowedge.Hom.ext
+        dsimp; exact Category.comp_id _ })
+    (fun f => by
+      apply RestrictedCowedge.Hom.ext
+      simp only [Functor.id_obj, Functor.comp_obj,
+        Functor.id_map, Functor.comp_map,
+        restrictedToCopowerCowedgeFunctor,
+        copowerCowedgeToRestrictedFunctor,
+        RestrictedCowedge.category_comp_hom,
+        Category.id_comp, Category.comp_id])
+
+/-- The counit natural isomorphism for the
+restricted cowedge / copower cowedge equivalence. -/
+def copowerProfCowedgeEquivCounit
+    (G H : Cᵒᵖ ⥤ C ⥤ Type v) :
+    copowerCowedgeToRestrictedFunctor G H ⋙
+    restrictedToCopowerCowedgeFunctor G H ≅
+    𝟭 (Cowedge (copowerProfunctorProfArg G H)) :=
+  NatIso.ofComponents
+    (fun w => copowerCowedge_roundtrip G H w)
+    (fun g => by
+      ext
+      simp only [Functor.comp_obj, Functor.id_obj,
+        Functor.comp_map, Functor.id_map,
+        copowerCowedgeToRestrictedFunctor,
+        restrictedToCopowerCowedgeFunctor,
+        copowerCowedge_roundtrip,
+        Cocone.category_comp_hom]
+      erw [Category.comp_id])
+
+/-- The equivalence between `RestrictedCowedge G H` and
+`Cowedge (copowerProfunctorProfArg G H)`.
+
+This establishes that restricted cowedges correspond exactly to standard
+cowedges over the copower profunctor with profunctor arguments, where the
+family is curried/uncurried. -/
+def restrictedCowedgeCopowerEquiv
+    (G H : Cᵒᵖ ⥤ C ⥤ Type v) :
+    RestrictedCowedge G H ≌
+    Cowedge (copowerProfunctorProfArg G H) :=
+  { functor := restrictedToCopowerCowedgeFunctor G H
+    inverse := copowerCowedgeToRestrictedFunctor G H
+    unitIso := copowerProfCowedgeEquivUnit G H
+    counitIso := copowerProfCowedgeEquivCounit G H
+    functor_unitIso_comp := fun c => by
+      ext a
+      simp only [copowerProfCowedgeEquivUnit,
+        copowerProfCowedgeEquivCounit,
+        NatIso.ofComponents_hom_app,
+        Functor.comp_obj, Functor.id_obj,
+        restrictedToCopowerCowedgeFunctor,
+        copowerCowedgeToRestrictedFunctor,
+        Cocone.category_comp_hom]
+      erw [Category.comp_id]
+      rfl }
+
+end RestrictedCowedgeCopowerEquiv
 
 section RestrictedWedgePowerEquiv
 
@@ -10985,5 +11171,27 @@ def restrictedWedgePowerEquiv
       rfl }
 
 end RestrictedWedgePowerEquiv
+
+/-!
+## Symmetry between RestrictedWedge and RestrictedCowedge
+
+Both `RestrictedWedge G H` and `RestrictedCowedge G H` have equivalences
+with (co)wedges over the corresponding (co)power profunctors:
+
+- `RestrictedWedge G H ≌ Wedge (powerProfunctorProfArg G H)`
+  via `restrictedWedgePowerEquiv`
+- `RestrictedCowedge G H ≌ Cowedge (copowerProfunctorProfArg G H)`
+  via `restrictedCowedgeCopowerEquiv`
+
+Both equivalences involve currying/uncurrying the family:
+- Wedge: `H(I,I) → (pt → G(I,I))` ↔ `pt → (H(I,I) → G(I,I))`
+- Cowedge: `H(I,I) → (G(I,I) → pt)` ↔ `H(I,I) × G(I,I) → pt`
+
+The dinaturality conditions match in both cases because:
+- For wedges: the off-diagonal `H(I₁, I₀) → G(I₀, I₁)` in `powerProfunctorProfArg`
+  matches the coslice profunctor's off-diagonal structure.
+- For cowedges: the off-diagonal `H(I₁, I₀) × G(I₁, I₀)` in `copowerProfunctorProfArg`
+  matches the slice profunctor's off-diagonal structure.
+-/
 
 end GebLean
