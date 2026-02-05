@@ -5998,7 +5998,7 @@ def strongRestrictedCowedgeEquiv
     (G : Cᵒᵖ ⥤ C ⥤ D)
     (H : Cᵒᵖ ⥤ C ⥤ Type v) :
     StrongRestrictedCowedge G H ≌
-    Cowedge (profPullback G
+    Cowedge (J := DiagElem H) (C := D) (profPullback G
       (DiagElem.forget H)) :=
   { functor :=
       strongRestrictedToCowedgeFunctor G H
@@ -6265,7 +6265,7 @@ def strongRestrictedWedgeEquiv
     (G : Cᵒᵖ ⥤ C ⥤ D)
     (H : Cᵒᵖ ⥤ C ⥤ Type v) :
     StrongRestrictedWedge G H ≌
-    Wedge (profPullback G
+    Wedge (J := DiagElem H) (C := D) (profPullback G
       (DiagElem.forget H)) :=
   { functor :=
       strongRestrictedToWedgeFunctor G H
