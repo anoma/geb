@@ -10724,4 +10724,104 @@ theorem structuralCoendCowedgePolyHom_unique
 
 end IdProfSpecializations
 
+/-!
+## Note on RestrictedCowedge vs Cowedge
+
+Unlike the `StrongRestrictedCowedge ≌ Cowedge (profPullback G (DiagElem.forget H))`
+equivalence, there is no direct equivalence between `RestrictedCowedge G H` and
+`Cowedge (copowerProfunctorProfArg G H)`.
+
+The issue is that the dinaturality conditions differ:
+- The cowedge condition for `copowerProfunctorProfArg G H` at `f : I₀ ⟶ I₁`
+  involves pairs `(h, g) : H(I₁, I₀) × G(I₁, I₀)`.
+- The `RestrictedCowedge` dinaturality involves `x : H(I₁, I₀)` but the
+  G-actions are on `G(I₀, I₁)` (the opposite off-diagonal).
+
+This reflects that `RestrictedCowedge` captures a richer structure where the
+H-indexed family of functions `c.family I : H(I,I) → (G(I,I) → pt)` must satisfy
+dinaturality as functions, not just on individual elements.
+-/
+
+section RestrictedWedgePowerEquiv
+
+/-!
+## RestrictedWedge as Wedge of powerProfunctorProfArg
+
+For `G, H : Cᵒᵖ ⥤ C ⥤ Type v`, we establish an equivalence between
+`RestrictedWedge G H` and `Wedge (powerProfunctorProfArg G H)`.
+
+Unlike the cowedge case, the wedge conditions DO match:
+- The wedge condition for `powerProfunctorProfArg G H` at `f : I₀ ⟶ I₁`
+  involves the off-diagonal `H(I₁, I₀) → G(I₀, I₁)`.
+- The `RestrictedWedge` dinaturality also involves `x : H(I₁, I₀)` with
+  G-actions producing elements in `G(I₀, I₁)`.
+
+The equivalence uses `Function.swap` to convert between:
+- `RestrictedWedge G H` family: `∀ I, H(I,I) → (pt → G(I,I))`
+- `Wedge` legs: `∀ I, pt → (H(I,I) → G(I,I))`
+-/
+
+variable {C : Type u} [Category.{v} C]
+
+/-- Convert a restricted wedge to a wedge over `powerProfunctorProfArg G H`.
+
+The family `∀ I, diagApp H I → (pt → diagApp G I)` is swapped to give
+legs `∀ I, pt → (diagApp H I → diagApp G I)`. -/
+def restrictedToPowerWedge
+    (G H : Cᵒᵖ ⥤ C ⥤ Type v)
+    (c : RestrictedWedge G H) :
+    Wedge (powerProfunctorProfArg G H) :=
+  Wedge.mk c.pt
+    (fun I x h => c.family I h x)
+    (fun {I₀ I₁} f => by
+      funext x h
+      have hdinat := c.isDinatural I₀ I₁ f h
+      simp only [Profunctor.lmap, Profunctor.rmap,
+        cosliceProfunctor_obj_map,
+        cosliceProfunctor_map_app] at hdinat
+      exact congrFun hdinat.symm x)
+
+/-- Convert a wedge over `powerProfunctorProfArg G H` to a restricted wedge.
+
+The legs `∀ I, pt → (diagApp H I → diagApp G I)` are swapped to give
+family `∀ I, diagApp H I → (pt → diagApp G I)`. -/
+def powerWedgeToRestricted
+    (G H : Cᵒᵖ ⥤ C ⥤ Type v)
+    (w : Wedge (powerProfunctorProfArg G H)) :
+    RestrictedWedge G H :=
+  RestrictedWedge.mk' w.pt
+    (fun I h x => w.ι I x h)
+    (fun I₀ I₁ f x => by
+      have hcond := Wedge.condition w f
+      simp only [Profunctor.lmap, Profunctor.rmap,
+        cosliceProfunctor_obj_map,
+        cosliceProfunctor_map_app]
+      funext y
+      exact (congrFun (congrFun hcond y) x).symm)
+
+/-- The roundtrip from restricted wedge to wedge and back is the identity. -/
+theorem restrictedWedge_roundtrip
+    (G H : Cᵒᵖ ⥤ C ⥤ Type v)
+    (c : RestrictedWedge G H) :
+    powerWedgeToRestricted G H (restrictedToPowerWedge G H c) = c := by
+  apply RestrictedWedge.ext
+  · rfl
+  · exact HEq.rfl
+
+/-- The roundtrip from wedge to restricted wedge and back yields an
+isomorphic wedge. -/
+def powerWedge_roundtrip
+    (G H : Cᵒᵖ ⥤ C ⥤ Type v)
+    (w : Wedge (powerProfunctorProfArg G H)) :
+    restrictedToPowerWedge G H (powerWedgeToRestricted G H w) ≅ w :=
+  Wedge.ext (Iso.refl w.pt) (fun I => by
+    simp only [restrictedToPowerWedge,
+      powerWedgeToRestricted,
+      RestrictedWedge.mk',
+      RestrictedWedge.family,
+      Wedge.mk_ι, Iso.refl_hom]
+    erw [Category.id_comp])
+
+end RestrictedWedgePowerEquiv
+
 end GebLean

@@ -31,20 +31,32 @@ not the other way. Reason: the fully faithful inclusion
 `StrongRestrictedCowedge -> RestrictedCowedge` means initiality in the
 larger category implies initiality in the smaller, but not conversely.
 
-### Q2: RestrictedWedge generalizes Wedge(powerProfunctor)
+### Q2: RestrictedWedge generalizes Wedge(powerProfunctor) - ASYMMETRIC RESULT
 
 Define `RestrictedWedge G H` (dual of `RestrictedCowedge`):
 
 - `pt : D`
 - `family : (I : C) -> H(I,I) -> Hom_D(pt, G(I,I))`, dinatural
 
-Conjecture: when `D` has powers, `RestrictedWedge G H` is equivalent to
-`Wedge` of a profunctor built from pointwise powers `G(I,J) ^. H(I,J)`.
-The power adjunction converts between morphisms to powers and families
-indexed by the exponent.
+**Original conjecture**: when `D` has powers, `RestrictedWedge G H` is
+equivalent to `Wedge` of a profunctor built from pointwise powers.
 
-Similarly, `StrongRestrictedWedge` generalizes `Wedge(powerProfunctor)`
-with the paranaturality condition.
+**Result**: Asymmetric - wedge works, cowedge does not.
+
+For **wedges**: `RestrictedWedge G H ≃ Wedge (powerProfunctorProfArg G H)`
+via `restrictedToPowerWedge` and `powerWedgeToRestricted` using
+`Function.swap`. The wedge condition involves `H(I₁, I₀) → G(I₀, I₁)`,
+which matches the off-diagonals in RestrictedWedge dinaturality.
+
+For **cowedges**: No equivalence. The cowedge condition for
+`copowerProfunctorProfArg G H` at `f : I₀ ⟶ I₁` involves pairs
+`(h, g) : H(I₁, I₀) × G(I₁, I₀)`. But `RestrictedCowedge` dinaturality
+involves G-actions on `G(I₀, I₁)` (the opposite off-diagonal).
+
+The asymmetry arises because:
+
+- Powers (function types) are contravariant in domain, swapping H's index
+- Copowers (products) are covariant in both factors, no swap occurs
 
 ### Q3: Diagonal elements give StrongRestrictedWedge
 
@@ -73,7 +85,7 @@ elements" characterization.
 - Task #43: Prove StrongRestrictedCowedge ≌ Cocone(DiagElem) (DONE)
   - `strongRestrictedCowedgeEquiv` in `Weighted.lean`
   - Uses `profPullback G (DiagElem.forget H)` as the profunctor
-- Task #44: Prove RestrictedWedge generalizes Wedge(powerProfunctor) (IN PROGRESS)
+- Task #44: Prove RestrictedWedge generalizes Wedge(powerProfunctor) (DONE)
   - Defined `powerProfunctorProfArg G H : Cᵒᵖ ⥤ C ⥤ Type v` where
     `(powerProfunctorProfArg G H)(I, J) = H(J, I) → G(I, J)`
     Note: H's arguments are swapped due to contravariance of → in domain.
@@ -85,18 +97,16 @@ elements" characterization.
   - Added forgetful profunctor utilities to `Profunctors.lean`:
     - `covProfunctor F` for `F : C ⥤ Type v` gives `(I, J) ↦ F(J)`
     - `contravProfunctor F` for `F : Cᵒᵖ ⥤ Type v` gives `(I, J) ↦ F(I)`
-  - Added consistency theorems in `Weighted.lean`:
-    - `powerProfunctorProfArg_covProfunctor_obj_obj`: shows that with
-      covariant profunctors, we get `W(I.unop) → F(J)` off-diagonal
-    - `diagApp_powerProfunctorProfArg_covProfunctor`: on diagonal gives
-      `W(I) → F(I)`, the expected function type
-    - Similar theorems for `copowerProfunctorProfArg`
-  - Next: Prove `RestrictedWedge G H ≃ Wedge (powerProfunctorProfArg G H)`
-    and `RestrictedCowedge G H ≃ Cowedge (copowerProfunctorProfArg G H)`
-  - Analysis: The equivalence involves `Function.swap` relating
-    `diagApp H I → (pt → diagApp G I)` (RestrictedWedge family) to
-    `pt → (diagApp H I → diagApp G I)` (Wedge leg). Need to verify
-    dinaturality conditions match through this correspondence.
+  - Added consistency theorems in `Weighted.lean`
+  - **Result**: Asymmetric!
+    - `RestrictedWedge G H ≃ Wedge (powerProfunctorProfArg G H)` - POSITIVE
+      via `restrictedToPowerWedge` and `powerWedgeToRestricted`
+    - `RestrictedCowedge G H ≃ Cowedge (copowerProfunctorProfArg G H)` - NEGATIVE
+      The dinaturality conditions differ in which off-diagonal they use
+  - The wedge case works because the power's contravariance in domain swaps
+    the H argument, aligning it with RestrictedWedge's dinaturality condition
+  - The cowedge case fails because products are covariant in both factors,
+    so the off-diagonals don't align
 - Task #45: Prove StructuralCoend = initial StrongRestrictedCowedge (DONE)
   - General case: `CostructureIntegral H G` is the initial
     `StrongRestrictedCowedge G H` via `costructureIntegralCowedge_isInitial`
@@ -123,6 +133,11 @@ elements" characterization.
 - Task #46: Investigate comparison: initial RestrictedCowedge -> initial
   StrongRestrictedCowedge
 - Task #47: Characterize RestrictedWedge/Cowedge as cones/cocones
+  - Based on Task #44 analysis:
+    - `RestrictedWedge G H ≃ Wedge (powerProfunctorProfArg G H)` - DONE
+    - `RestrictedCowedge G H ≄ Cowedge (copowerProfunctorProfArg G H)` - NEGATIVE
+  - RestrictedCowedge may not have a clean cone/cocone characterization
+    because the dinaturality condition differs from plain cowedge conditions
 
 ## Related Files
 
