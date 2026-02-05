@@ -73,7 +73,30 @@ elements" characterization.
 - Task #43: Prove StrongRestrictedCowedge ≌ Cocone(DiagElem) (DONE)
   - `strongRestrictedCowedgeEquiv` in `Weighted.lean`
   - Uses `profPullback G (DiagElem.forget H)` as the profunctor
-- Task #44: Prove RestrictedWedge generalizes Wedge(powerProfunctor)
+- Task #44: Prove RestrictedWedge generalizes Wedge(powerProfunctor) (IN PROGRESS)
+  - Defined `powerProfunctorProfArg G H : Cᵒᵖ ⥤ C ⥤ Type v` where
+    `(powerProfunctorProfArg G H)(I, J) = H(J, I) → G(I, J)`
+    Note: H's arguments are swapped due to contravariance of → in domain.
+  - On diagonal: `H(I, I) → G(I, I)`, matching `RestrictedWedge` families.
+  - Defined `copowerProfunctorProfArg G H : Cᵒᵖ ⥤ C ⥤ Type v` where
+    `(copowerProfunctorProfArg G H)(I, J) = H(I, J) × G(I, J)`
+    Note: No argument swap needed since × is covariant in both.
+  - On diagonal: `H(I, I) × G(I, I)`, matching `RestrictedCowedge` families.
+  - Added forgetful profunctor utilities to `Profunctors.lean`:
+    - `covProfunctor F` for `F : C ⥤ Type v` gives `(I, J) ↦ F(J)`
+    - `contravProfunctor F` for `F : Cᵒᵖ ⥤ Type v` gives `(I, J) ↦ F(I)`
+  - Added consistency theorems in `Weighted.lean`:
+    - `powerProfunctorProfArg_covProfunctor_obj_obj`: shows that with
+      covariant profunctors, we get `W(I.unop) → F(J)` off-diagonal
+    - `diagApp_powerProfunctorProfArg_covProfunctor`: on diagonal gives
+      `W(I) → F(I)`, the expected function type
+    - Similar theorems for `copowerProfunctorProfArg`
+  - Next: Prove `RestrictedWedge G H ≃ Wedge (powerProfunctorProfArg G H)`
+    and `RestrictedCowedge G H ≃ Cowedge (copowerProfunctorProfArg G H)`
+  - Analysis: The equivalence involves `Function.swap` relating
+    `diagApp H I → (pt → diagApp G I)` (RestrictedWedge family) to
+    `pt → (diagApp H I → diagApp G I)` (Wedge leg). Need to verify
+    dinaturality conditions match through this correspondence.
 - Task #45: Prove StructuralCoend = initial StrongRestrictedCowedge (DONE)
   - General case: `CostructureIntegral H G` is the initial
     `StrongRestrictedCowedge G H` via `costructureIntegralCowedge_isInitial`

@@ -5672,6 +5672,244 @@ theorem RestrictedWedge.category_id_hom
     (𝟙 c : c ⟶ c).hom = 𝟙 c.pt := rfl
 
 /-!
+### Power profunctor with profunctor arguments
+
+The power profunctor `powerProfunctorProfArg G H` takes two profunctors
+`G, H : Cᵒᵖ ⥤ C ⥤ Type v` and produces a profunctor whose wedges
+correspond to restricted wedges.
+
+To get the correct variance, we use `H` with swapped arguments:
+`P(I, J) = H(J, I) → G(I, J)`. This ensures:
+- Diagonal: `P(I, I) = H(I, I) → G(I, I)`
+- Contravariant in first arg via `H`'s covariant action and `G`'s
+  contravariant action
+- Covariant in second arg via `H`'s contravariant action and `G`'s
+  covariant action
+-/
+
+section PowerProfunctorProfArg
+
+variable {C : Type u} [Category.{v} C]
+
+/-- The power profunctor with profunctor arguments.
+
+For profunctors `G, H : Cᵒᵖ ⥤ C ⥤ Type v`:
+- `(powerProfunctorProfArg G H).obj (op I).obj J = H(J, I) → G(I, J)`
+- On the diagonal: `H(I, I) → G(I, I)`
+
+The variance is achieved by using `H` with swapped arguments:
+- Contravariant in `I`: precompose with `H`'s covariant action,
+  postcompose with `G`'s contravariant action
+- Covariant in `J`: precompose with `H`'s contravariant action,
+  postcompose with `G`'s covariant action -/
+def powerProfunctorProfArg
+    (G H : Cᵒᵖ ⥤ C ⥤ Type v) : Cᵒᵖ ⥤ C ⥤ Type v where
+  obj I := {
+    obj := fun J => (H.obj (Opposite.op J)).obj I.unop → (G.obj I).obj J
+    map := fun {J J'} g φ h =>
+      (G.obj I).map g (φ ((H.map g.op).app I.unop h))
+    map_id := fun J => by
+      ext φ h
+      simp only [types_id_apply, op_id, Functor.map_id,
+        NatTrans.id_app]
+    map_comp := fun {J J' J''} g g' => by
+      ext φ h
+      simp only [types_comp_apply, op_comp, Functor.map_comp,
+        NatTrans.comp_app]
+  }
+  map := fun {I I'} f => {
+    app := fun J φ h =>
+      (G.map f).app J (φ ((H.obj (Opposite.op J)).map f.unop h))
+    naturality := fun {J J'} g => by
+      ext φ h
+      simp only [types_comp_apply]
+      have natG : ∀ x, (G.obj I').map g ((G.map f).app J x) =
+          (G.map f).app J' ((G.obj I).map g x) :=
+        fun x => congrFun ((G.map f).naturality g).symm x
+      have natH : (H.map g.op).app I.unop ((H.obj (Opposite.op J')).map f.unop h) =
+          (H.obj (Opposite.op J)).map f.unop ((H.map g.op).app I'.unop h) :=
+        congrFun ((H.map g.op).naturality f.unop) h
+      rw [natG, natH]
+  }
+  map_id := fun I => by
+    ext J φ h
+    simp only [unop_id, Functor.map_id, NatTrans.id_app,
+      types_id_apply]
+  map_comp := fun {I I' I''} f f' => by
+    ext J φ h
+    simp only [unop_comp, Functor.map_comp, NatTrans.comp_app,
+      types_comp_apply]
+
+@[simp]
+theorem powerProfunctorProfArg_obj_obj
+    (G H : Cᵒᵖ ⥤ C ⥤ Type v) (I : Cᵒᵖ) (J : C) :
+    ((powerProfunctorProfArg G H).obj I).obj J =
+      ((H.obj (Opposite.op J)).obj I.unop → (G.obj I).obj J) :=
+  rfl
+
+@[simp]
+theorem powerProfunctorProfArg_obj_map
+    (G H : Cᵒᵖ ⥤ C ⥤ Type v) (I : Cᵒᵖ) {J J' : C} (g : J ⟶ J')
+    (φ : (H.obj (Opposite.op J)).obj I.unop → (G.obj I).obj J)
+    (h : (H.obj (Opposite.op J')).obj I.unop) :
+    ((powerProfunctorProfArg G H).obj I).map g φ h =
+      (G.obj I).map g (φ ((H.map g.op).app I.unop h)) :=
+  rfl
+
+@[simp]
+theorem powerProfunctorProfArg_map_app
+    (G H : Cᵒᵖ ⥤ C ⥤ Type v) {I I' : Cᵒᵖ} (f : I ⟶ I') (J : C)
+    (φ : (H.obj (Opposite.op J)).obj I.unop → (G.obj I).obj J)
+    (h : (H.obj (Opposite.op J)).obj I'.unop) :
+    ((powerProfunctorProfArg G H).map f).app J φ h =
+      (G.map f).app J (φ ((H.obj (Opposite.op J)).map f.unop h)) :=
+  rfl
+
+/-- The diagonal of `powerProfunctorProfArg G H` at `I` is `H(I,I) → G(I,I)`. -/
+theorem diagApp_powerProfunctorProfArg
+    (G H : Cᵒᵖ ⥤ C ⥤ Type v) (I : C) :
+    diagApp (powerProfunctorProfArg G H) I =
+      (diagApp H I → diagApp G I) :=
+  rfl
+
+/-- The copower profunctor with profunctor arguments (dual of power).
+
+For profunctors `G, H : Cᵒᵖ ⥤ C ⥤ Type v`:
+- `(copowerProfunctorProfArg G H).obj (op I).obj J = H(I, J) × G(I, J)`
+- On the diagonal: `H(I, I) × G(I, I)`
+
+Unlike `powerProfunctorProfArg` which swaps H's arguments (due to
+contravariance of function types in the domain), copower uses H directly
+since products are covariant in both components. -/
+def copowerProfunctorProfArg
+    (G H : Cᵒᵖ ⥤ C ⥤ Type v) : Cᵒᵖ ⥤ C ⥤ Type v where
+  obj I := {
+    obj := fun J => (H.obj I).obj J × (G.obj I).obj J
+    map := fun {J J'} g p =>
+      ⟨(H.obj I).map g p.1, (G.obj I).map g p.2⟩
+    map_id := fun J => by
+      funext ⟨h, x⟩
+      simp only [types_id_apply, Functor.map_id]
+    map_comp := fun {J J' J''} g g' => by
+      funext ⟨h, x⟩
+      simp only [types_comp_apply, Functor.map_comp]
+  }
+  map := fun {I I'} f => {
+    app := fun J p =>
+      ⟨(H.map f).app J p.1, (G.map f).app J p.2⟩
+    naturality := fun {J J'} g => by
+      funext ⟨h, x⟩
+      simp only [types_comp_apply]
+      have natH : (H.obj I').map g ((H.map f).app J h) =
+          (H.map f).app J' ((H.obj I).map g h) :=
+        congrFun ((H.map f).naturality g).symm h
+      have natG : (G.obj I').map g ((G.map f).app J x) =
+          (G.map f).app J' ((G.obj I).map g x) :=
+        congrFun ((G.map f).naturality g).symm x
+      exact Prod.ext natH.symm natG.symm
+  }
+  map_id := fun I => by
+    apply NatTrans.ext
+    funext J ⟨h, x⟩
+    simp only [Functor.map_id, NatTrans.id_app, types_id_apply]
+  map_comp := fun {I I' I''} f f' => by
+    apply NatTrans.ext
+    funext J ⟨h, x⟩
+    simp only [Functor.map_comp, NatTrans.comp_app, types_comp_apply]
+
+@[simp]
+theorem copowerProfunctorProfArg_obj_obj
+    (G H : Cᵒᵖ ⥤ C ⥤ Type v) (I : Cᵒᵖ) (J : C) :
+    ((copowerProfunctorProfArg G H).obj I).obj J =
+      ((H.obj I).obj J × (G.obj I).obj J) :=
+  rfl
+
+/-- The diagonal of `copowerProfunctorProfArg G H` at `I` is `H(I,I) × G(I,I)`. -/
+theorem diagApp_copowerProfunctorProfArg
+    (G H : Cᵒᵖ ⥤ C ⥤ Type v) (I : C) :
+    diagApp (copowerProfunctorProfArg G H) I =
+      (diagApp H I × diagApp G I) :=
+  rfl
+
+end PowerProfunctorProfArg
+
+section ProfArgConsistency
+
+/-!
+### Consistency with weighted (co)power profunctors
+
+When `powerProfunctorProfArg` and `copowerProfunctorProfArg` are applied
+to "forgetful" profunctors (built from functors that ignore one argument),
+they specialize to the expected function/product types matching the
+weighted (co)power construction.
+-/
+
+/-- `powerProfunctorProfArg` with covariant profunctors.
+
+For `W, F : C ⥤ Type v`, `powerProfunctorProfArg (covProfunctor F) (covProfunctor W)`
+at position `(I, J)` gives `W(I.unop) → F(J)`.
+
+This differs from `powerProfunctor` because:
+- `powerProfunctor W F` at `(op j₁, j₂)` gives `W(j₁) → F(j₂)` (same index pattern)
+- `powerProfunctorProfArg` swaps the H argument, giving `H(J, I.unop)` instead of `H(I.unop, J)` -/
+theorem powerProfunctorProfArg_covProfunctor_obj_obj
+    (W F : C ⥤ Type v) (I : Cᵒᵖ) (J : C) :
+    ((powerProfunctorProfArg (covProfunctor F) (covProfunctor W)).obj I).obj J =
+      (W.obj I.unop → F.obj J) := by
+  simp only [powerProfunctorProfArg_obj_obj, covProfunctor_obj_obj]
+
+/-- On the diagonal, `powerProfunctorProfArg` with covariant profunctors
+gives `W(I) → F(I)`. -/
+theorem diagApp_powerProfunctorProfArg_covProfunctor
+    (W F : C ⥤ Type v) (I : C) :
+    diagApp (powerProfunctorProfArg (covProfunctor F) (covProfunctor W)) I =
+      (W.obj I → F.obj I) := by
+  simp only [diagApp, powerProfunctorProfArg_covProfunctor_obj_obj]
+
+/-- `powerProfunctorProfArg` with contravariant profunctors.
+
+For `W, F : Cᵒᵖ ⥤ Type v`, `powerProfunctorProfArg (contravProfunctor F) (contravProfunctor W)`
+at position `(I, J)` gives `W(op J) → F(I)`. -/
+theorem powerProfunctorProfArg_contravProfunctor_obj_obj
+    (W F : Cᵒᵖ ⥤ Type v) (I : Cᵒᵖ) (J : C) :
+    ((powerProfunctorProfArg (contravProfunctor F) (contravProfunctor W)).obj I).obj J =
+      (W.obj (Opposite.op J) → F.obj I) := by
+  simp only [powerProfunctorProfArg_obj_obj, contravProfunctor_obj_obj]
+
+/-- `copowerProfunctorProfArg` with covariant profunctors.
+
+For `W, F : C ⥤ Type v`, `copowerProfunctorProfArg (covProfunctor F) (covProfunctor W)`
+at position `(I, J)` gives `W(J) × F(J)`.
+
+Unlike `powerProfunctorProfArg`, `copowerProfunctorProfArg` does not swap arguments,
+so both W and F are evaluated at J. -/
+theorem copowerProfunctorProfArg_covProfunctor_obj_obj
+    (W F : C ⥤ Type v) (I : Cᵒᵖ) (J : C) :
+    ((copowerProfunctorProfArg (covProfunctor F) (covProfunctor W)).obj I).obj J =
+      (W.obj J × F.obj J) := by
+  simp only [copowerProfunctorProfArg_obj_obj, covProfunctor_obj_obj]
+
+/-- On the diagonal, `copowerProfunctorProfArg` with covariant profunctors
+gives `W(I) × F(I)`. -/
+theorem diagApp_copowerProfunctorProfArg_covProfunctor
+    (W F : C ⥤ Type v) (I : C) :
+    diagApp (copowerProfunctorProfArg (covProfunctor F) (covProfunctor W)) I =
+      (W.obj I × F.obj I) := by
+  simp only [diagApp, copowerProfunctorProfArg_covProfunctor_obj_obj]
+
+/-- `copowerProfunctorProfArg` with contravariant profunctors.
+
+For `W, F : Cᵒᵖ ⥤ Type v`, `copowerProfunctorProfArg (contravProfunctor F) (contravProfunctor W)`
+at position `(I, J)` gives `W(I) × F(I)`. -/
+theorem copowerProfunctorProfArg_contravProfunctor_obj_obj
+    (W F : Cᵒᵖ ⥤ Type v) (I : Cᵒᵖ) (J : C) :
+    ((copowerProfunctorProfArg (contravProfunctor F) (contravProfunctor W)).obj I).obj J =
+      (W.obj I × F.obj I) := by
+  simp only [copowerProfunctorProfArg_obj_obj, contravProfunctor_obj_obj]
+
+end ProfArgConsistency
+
+/-!
 ### Strong restricted wedges
 
 A *strong restricted wedge* uses the paranaturality
@@ -9869,7 +10107,7 @@ This establishes that `restrictionFunctor wppHomProfunctor wppConstDiagramC`
 is not full: two cowedges can agree on diagonals but differ at
 (coTwLeft, wppWeightRight) by using `left` vs `right`, and the identity on
 their common restriction cannot lift. -/
-theorem cValued_restrictionFunctor_not_full_key_facts :
+theorem cValued_restrictionFunctor_not_full_lemma :
     (WalkingParallelPairHom.left ≠ WalkingParallelPairHom.right) ∧
     (∀ (_ : coTwIdZero ⟶ coTwLeft), False) ∧
     (∀ (_ : coTwIdOne ⟶ coTwLeft), False) :=
