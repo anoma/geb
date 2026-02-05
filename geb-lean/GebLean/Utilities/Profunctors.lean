@@ -427,4 +427,61 @@ lemma terminalProfunctor_obj_obj (A B : C) :
 
 end ConstantProfunctors
 
+section ForgetfulProfunctors
+
+/-!
+### Forgetful Profunctors
+
+Utilities for converting functors to profunctors that ignore one argument.
+
+- `covProfunctor F` for `F : C ⥤ Type v` gives profunctor `(I, J) ↦ F(J)`,
+  ignoring the contravariant argument.
+- `contravProfunctor F` for `F : Cᵒᵖ ⥤ Type v` gives profunctor `(I, J) ↦ F(I)`,
+  ignoring the covariant argument.
+-/
+
+variable {C : Type u} [Category.{v} C]
+
+/-- A profunctor built from a covariant functor `F : C ⥤ Type v`.
+The result ignores the contravariant argument:
+`(covProfunctor F).obj I = F` for all `I : Cᵒᵖ`. -/
+abbrev covProfunctor (F : C ⥤ Type v) : Cᵒᵖ ⥤ C ⥤ Type v :=
+  (Functor.const Cᵒᵖ).obj F
+
+@[simp]
+theorem covProfunctor_obj (F : C ⥤ Type v) (I : Cᵒᵖ) :
+    (covProfunctor F).obj I = F := rfl
+
+@[simp]
+theorem covProfunctor_obj_obj (F : C ⥤ Type v) (I : Cᵒᵖ) (J : C) :
+    ((covProfunctor F).obj I).obj J = F.obj J := rfl
+
+@[simp]
+theorem covProfunctor_obj_map (F : C ⥤ Type v) (I : Cᵒᵖ) {J J' : C} (g : J ⟶ J') :
+    ((covProfunctor F).obj I).map g = F.map g := rfl
+
+@[simp]
+theorem covProfunctor_map (F : C ⥤ Type v) {I I' : Cᵒᵖ} (f : I ⟶ I') :
+    (covProfunctor F).map f = 𝟙 F := rfl
+
+/-- A profunctor built from a contravariant functor `F : Cᵒᵖ ⥤ Type v`.
+The result ignores the covariant argument:
+`((contravProfunctor F).obj I).obj J = F.obj I` for all `J : C`. -/
+abbrev contravProfunctor (F : Cᵒᵖ ⥤ Type v) : Cᵒᵖ ⥤ C ⥤ Type v :=
+  F ⋙ (Functor.const C)
+
+@[simp]
+theorem contravProfunctor_obj_obj (F : Cᵒᵖ ⥤ Type v) (I : Cᵒᵖ) (J : C) :
+    ((contravProfunctor F).obj I).obj J = F.obj I := rfl
+
+@[simp]
+theorem contravProfunctor_obj_map (F : Cᵒᵖ ⥤ Type v) (I : Cᵒᵖ) {J J' : C} (g : J ⟶ J') :
+    ((contravProfunctor F).obj I).map g = id := rfl
+
+@[simp]
+theorem contravProfunctor_map_app (F : Cᵒᵖ ⥤ Type v) {I I' : Cᵒᵖ} (f : I ⟶ I') (J : C) :
+    ((contravProfunctor F).map f).app J = F.map f := rfl
+
+end ForgetfulProfunctors
+
 end GebLean
