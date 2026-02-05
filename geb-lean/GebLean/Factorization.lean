@@ -2175,4 +2175,169 @@ instance decFactCategory : Category (DecFactObj F tw) where
 
 end DecoratedFactorisation
 
+/-! ## Decorated factorisation functor
+
+The `Cat`-valued functor sending each twisted arrow `tw` to the
+decorated factorisation category `DecFactObj F tw`, generalizing
+`factorisationFunctor`. Since `factorisationMapObj` preserves
+midpoints and `factorisationMapHom` preserves the underlying
+morphism `h`, the fiber component is unchanged by the mapping.
+-/
+
+section DecoratedFactorisationFunctor
+
+universe w₁ w₂
+
+variable (F : TwistedArrow C ⥤ Cat.{w₁, w₂})
+
+/-- The image of a decorated factorisation object under a
+twisted arrow morphism. The factorisation component maps
+via `factorisationMapObj`; the fiber is unchanged since the
+midpoint is preserved. -/
+def decFactMapObj
+    {x y : TwistedArrow C} (φ : x ⟶ y)
+    (d : DecFactObj F x) : DecFactObj F y where
+  fact := factorisationMapObj φ d.fact
+  fiber := d.fiber
+
+/-- The image of a decorated factorisation morphism under a
+twisted arrow morphism. The factorisation morphism maps via
+`factorisationMapHom`; the fiber morphism is unchanged since
+`h` is preserved. -/
+def decFactMapHom
+    {x y : TwistedArrow C} (φ : x ⟶ y)
+    {d e : DecFactObj F x}
+    (m : DecFactHom F x d e) :
+    DecFactHom F y (decFactMapObj F φ d)
+      (decFactMapObj F φ e) where
+  factHom := factorisationMapHom φ m.factHom
+  fiberMorph := m.fiberMorph
+
+/-- The functor between decorated factorisation categories
+induced by a twisted arrow morphism. -/
+def decFactMap
+    {x y : TwistedArrow C} (φ : x ⟶ y) :
+    DecFactObj F x ⥤ DecFactObj F y where
+  obj := decFactMapObj F φ
+  map := decFactMapHom F φ
+  map_id d := by
+    apply decFactHom_ext F y
+    · exact Factorisation.Hom.ext rfl
+    · rfl
+  map_comp m n := by
+    apply decFactHom_ext F y
+    · exact Factorisation.Hom.ext rfl
+    · rfl
+
+@[simp]
+private lemma decFact_eqToHom_factHom
+    (tw : TwistedArrow C)
+    {d e : DecFactObj F tw}
+    (p : d = e) :
+    (eqToHom p :
+      DecFactHom F tw d e).factHom =
+    eqToHom (congrArg DecFactObj.fact p) := by
+  subst p; rfl
+
+@[simp]
+private lemma decFact_comp_factHom
+    (tw : TwistedArrow C)
+    {d e g : DecFactObj F tw}
+    (m : d ⟶ e) (n : e ⟶ g) :
+    (m ≫ n).factHom =
+    m.factHom ≫ n.factHom := rfl
+
+private lemma decFactMapObj_id
+    (tw : TwistedArrow C)
+    (d : DecFactObj F tw) :
+    decFactMapObj F (𝟙 tw) d = d := by
+  rcases d with ⟨⟨mid, ι, π, ι_π⟩, fiber⟩
+  simp only [decFactMapObj, factorisationMapObj,
+    DecFactObj.mk.injEq, Factorisation.mk.injEq,
+    heq_eq_eq, true_and]
+  exact ⟨⟨twDomArr_id tw ▸ Category.id_comp _,
+    twCodArr_id tw ▸ Category.comp_id _⟩,
+    trivial⟩
+
+private lemma decFactMapObj_comp
+    {x y z : TwistedArrow C}
+    (φ : x ⟶ y) (ψ : y ⟶ z)
+    (d : DecFactObj F x) :
+    decFactMapObj F (φ ≫ ψ) d =
+    decFactMapObj F ψ (decFactMapObj F φ d) := by
+  rcases d with ⟨⟨mid, ι, π, ι_π⟩, fiber⟩
+  simp only [decFactMapObj, factorisationMapObj,
+    DecFactObj.mk.injEq, Factorisation.mk.injEq,
+    heq_eq_eq, true_and]
+  exact ⟨⟨by rw [twDomArr_comp, Category.assoc],
+    by rw [twCodArr_comp, ← Category.assoc]⟩,
+    trivial⟩
+
+/-- When a morphism `f` is sandwiched between `eqToHom`
+terms, the fiber morphism is unchanged (up to HEq). -/
+private lemma decFact_eqToHom_sandwich_fiberMorph_heq
+    (tw : TwistedArrow C)
+    {d d' e e' : DecFactObj F tw}
+    (p : d' = d) (f : d ⟶ e) (q : e = e') :
+    f.fiberMorph ≍
+      (eqToHom p ≫ f ≫ eqToHom q).fiberMorph := by
+  subst p; subst q
+  have h : eqToHom rfl ≫ f ≫ eqToHom rfl = f := by
+    simp only [eqToHom_refl, Category.id_comp,
+      Category.comp_id]
+  rw [h]
+
+/-- The `Cat`-valued functor sending each twisted arrow `tw`
+to the decorated factorisation category `DecFactObj F tw`,
+and each twisted arrow morphism to the induced functor
+between decorated factorisation categories. Generalizes
+`factorisationFunctor` with the fiber data from `F`. -/
+def decFactFunctor :
+    TwistedArrow C ⥤
+      Cat.{max (max u v) w₁, max (max u v) w₂} where
+  obj tw := Cat.of (DecFactObj F tw)
+  map φ := (decFactMap F φ).toCatHom
+  map_id tw := by
+    apply Cat.Hom.ext
+    simp only [Functor.toCatHom_toFunctor,
+      Cat.Hom.id_toFunctor]
+    refine CategoryTheory.Functor.ext
+      (fun d ↦ decFactMapObj_id F tw d)
+      (fun d e f ↦ ?_)
+    · apply decFactHom_ext F tw
+      · apply Factorisation.Hom.ext
+        simp only [decFact_comp_factHom,
+          decFact_eqToHom_factHom,
+          factorisation_comp_h,
+          factorisation_eqToHom_h,
+          decFactMap, decFactMapHom,
+          factorisationMapHom,
+          Functor.id_map, eqToHom_refl,
+          Category.id_comp, Category.comp_id]
+      · exact decFact_eqToHom_sandwich_fiberMorph_heq
+            F tw _ f _
+  map_comp φ ψ := by
+    apply Cat.Hom.ext
+    simp only [Functor.toCatHom_toFunctor,
+      Cat.Hom.comp_toFunctor]
+    refine CategoryTheory.Functor.ext
+      (fun d ↦ decFactMapObj_comp F φ ψ d)
+      (fun d e f ↦ ?_)
+    · apply decFactHom_ext F _
+      · apply Factorisation.Hom.ext
+        simp only [decFact_comp_factHom,
+          decFact_eqToHom_factHom,
+          factorisation_comp_h,
+          factorisation_eqToHom_h,
+          decFactMap, decFactMapHom,
+          factorisationMapHom,
+          Functor.comp_map, eqToHom_refl,
+          Category.id_comp, Category.comp_id]
+      · exact decFact_eqToHom_sandwich_fiberMorph_heq
+            F _ _
+            ((decFactMap F φ ⋙ decFactMap F ψ).map f)
+            _
+
+end DecoratedFactorisationFunctor
+
 end GebLean
