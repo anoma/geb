@@ -53,7 +53,7 @@ Three-level hierarchy:
 | Elements category | Cone/Cocone | Result |
 | - | - | - |
 | Full `(profOnTwArr W).Elements` | Cone | WeightedWedge |
-| `DiagElem W` (identity twisted arrows) | Cone | StrongRestrictedWedge |
+| `DiagElem W` (identity TwArr) | Cone/Cocone | StrongRestrictedWedge/Cowedge |
 | ??? | Cone | RestrictedWedge |
 
 Morphisms in `DiagElem W` encode `DiagCompat`, which is the paranaturality
@@ -69,7 +69,10 @@ elements" characterization.
 ## Tasks
 
 - Task #42: Define RestrictedWedge and StrongRestrictedWedge as duals
-- Task #43: Prove StrongRestrictedCowedge ≌ Cocone(DiagElem)
+  (DONE)
+- Task #43: Prove StrongRestrictedCowedge ≌ Cocone(DiagElem) (DONE)
+  - `strongRestrictedCowedgeEquiv` in `Weighted.lean`
+  - Uses `profPullback G (DiagElem.forget H)` as the profunctor
 - Task #44: Prove RestrictedWedge generalizes Wedge(powerProfunctor)
 - Task #45: Prove StructuralCoend = initial StrongRestrictedCowedge
 - Task #46: Investigate comparison: initial RestrictedCowedge -> initial

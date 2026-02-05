@@ -5983,7 +5983,316 @@ def profPullbackCowedgeCounit
       exact (Category.comp_id g.hom).trans
         (Category.id_comp g.hom).symm)
 
+/-- Categorical equivalence between strong
+restricted cowedges and cowedges over the pullback
+profunctor along the diagonal-element forgetful
+functor.
+
+Given `G : Cᵒᵖ ⥤ C ⥤ D` and `H : Cᵒᵖ ⥤ C ⥤ Type v`,
+the paranaturality condition (over `C`) that defines
+`StrongRestrictedCowedge G H` corresponds to the
+dinaturality condition (over `DiagElem H`) for
+cowedges of `profPullback G (DiagElem.forget H)`. -/
+def strongRestrictedCowedgeEquiv
+    {D : Type w} [Category.{v} D]
+    (G : Cᵒᵖ ⥤ C ⥤ D)
+    (H : Cᵒᵖ ⥤ C ⥤ Type v) :
+    StrongRestrictedCowedge G H ≌
+    Cowedge (profPullback G
+      (DiagElem.forget H)) :=
+  { functor :=
+      strongRestrictedToCowedgeFunctor G H
+    inverse :=
+      cowedgeToStrongRestrictedFunctor G H
+    unitIso :=
+      profPullbackCowedgeUnit G H
+    counitIso :=
+      profPullbackCowedgeCounit G H
+    functor_unitIso_comp := fun X => by
+      apply CoconeMorphism.ext
+      dsimp only [
+        strongRestrictedToCowedgeFunctor,
+        cowedgeToStrongRestrictedFunctor,
+        profPullbackCowedgeUnit,
+        profPullbackCowedgeCounit,
+        strongRestricted_cowedge_roundtrip,
+        Functor.comp_map, Functor.id_map,
+        NatIso.ofComponents]
+      simp only [Functor.comp_obj,
+        Functor.id_obj,
+        Cocone.category_comp_hom,
+        Cowedge.ext_hom_hom, Iso.refl_hom]
+      erw [Category.comp_id]
+      rfl }
+
 end ProfunctorPullbackCowedge
+
+section ProfunctorPullbackWedge
+
+/-!
+## Profunctor pullback and wedge characterization
+
+Dual to `ProfunctorPullbackCowedge`. Wedges over
+`profPullback G (DiagElem.forget H)` are equivalent
+to strong restricted wedges for `G` with restriction
+`H`: dinaturality over `DiagElem H` encodes
+paranaturality over `C`.
+-/
+
+variable {C : Type u} [Category.{v} C]
+
+/-- Convert a strong restricted wedge to a wedge
+over the pullback profunctor.
+
+A `StrongRestrictedWedge G H` has a paranatural
+family indexed by `(I : C, d : H(I,I))`. This
+uncurries to wedge legs for
+`profPullback G (DiagElem.forget H)`, with
+paranaturality becoming dinaturality over
+`DiagElem H`. -/
+def strongRestrictedToWedge
+    {D : Type w} [Category.{v} D]
+    (G : Cᵒᵖ ⥤ C ⥤ D)
+    (H : Cᵒᵖ ⥤ C ⥤ Type v)
+    (c : StrongRestrictedWedge G H) :
+    Wedge (profPullback G
+      (DiagElem.forget H)) :=
+  Wedge.mk c.pt
+    (fun x => c.family x.base x.elem)
+    (fun {x₀ x₁} g => by
+      have hp :=
+        c.isParanatural
+          x₀.base x₁.base g.base
+          x₀.elem x₁.elem g.compat
+      simp only [DiagCompat,
+        cosliceProfunctor_obj_map,
+        cosliceProfunctor_map_app] at hp
+      dsimp only [profPullback,
+        DiagElem.forget,
+        Functor.comp_obj,
+        Functor.comp_map,
+        Functor.op_obj,
+        Functor.op_map,
+        Functor.whiskeringLeft]
+      exact hp)
+
+/-- Convert a wedge over the pullback profunctor
+to a strong restricted wedge.
+
+The j-th leg `w.ι ⟨I, d⟩` of a wedge over
+`profPullback G (DiagElem.forget H)` provides the
+family morphism at `(I, d)`, and the wedge
+dinaturality condition over `DiagElem H` yields
+the paranaturality condition. -/
+def wedgeToStrongRestricted
+    {D : Type w} [Category.{v} D]
+    (G : Cᵒᵖ ⥤ C ⥤ D)
+    (H : Cᵒᵖ ⥤ C ⥤ Type v)
+    (w : Wedge (profPullback G
+      (DiagElem.forget H))) :
+    StrongRestrictedWedge G H :=
+  StrongRestrictedWedge.mk' w.pt
+    (fun I d => w.ι ⟨I, d⟩)
+    (fun I₀ I₁ f d₀ d₁ hcompat => by
+      let x₀ : DiagElem H := ⟨I₀, d₀⟩
+      let x₁ : DiagElem H := ⟨I₁, d₁⟩
+      have hw := w.condition
+        (show x₀ ⟶ x₁ from ⟨f, hcompat⟩)
+      dsimp only [profPullback,
+        DiagElem.forget,
+        Functor.comp_obj,
+        Functor.comp_map,
+        Functor.op_obj,
+        Functor.op_map,
+        Functor.whiskeringLeft] at hw
+      simp only [DiagCompat,
+        cosliceProfunctor_obj_map,
+        cosliceProfunctor_map_app]
+      exact hw)
+
+/-- Round-trip: converting a strong restricted
+wedge to a wedge and back yields the original
+strong restricted wedge. -/
+theorem wedge_strongRestricted_roundtrip
+    {D : Type w} [Category.{v} D]
+    (G : Cᵒᵖ ⥤ C ⥤ D)
+    (H : Cᵒᵖ ⥤ C ⥤ Type v)
+    (c : StrongRestrictedWedge G H) :
+    wedgeToStrongRestricted G H
+      (strongRestrictedToWedge G H c) = c := by
+  apply StrongRestrictedWedge.ext
+  · rfl
+  · exact HEq.rfl
+
+/-- Round-trip: converting a wedge to a strong
+restricted wedge and back yields an isomorphic
+wedge (with the same point and legs). -/
+def strongRestricted_wedge_roundtrip
+    {D : Type w} [Category.{v} D]
+    (G : Cᵒᵖ ⥤ C ⥤ D)
+    (H : Cᵒᵖ ⥤ C ⥤ Type v)
+    (w : Wedge (profPullback G
+      (DiagElem.forget H))) :
+    strongRestrictedToWedge G H
+      (wedgeToStrongRestricted G H w)
+      ≅ w :=
+  Wedge.ext (Iso.refl w.pt) (fun j => by
+    simp only [strongRestrictedToWedge,
+      wedgeToStrongRestricted,
+      StrongRestrictedWedge.mk',
+      StrongRestrictedWedge.family,
+      Wedge.mk_ι, Iso.refl_hom]
+    erw [Category.id_comp])
+
+/-- The functor from strong restricted wedges to
+wedges over the pullback profunctor. -/
+def strongRestrictedToWedgeFunctor
+    {D : Type w} [Category.{v} D]
+    (G : Cᵒᵖ ⥤ C ⥤ D)
+    (H : Cᵒᵖ ⥤ C ⥤ Type v) :
+    StrongRestrictedWedge G H ⥤
+    Wedge (profPullback G
+      (DiagElem.forget H)) where
+  obj := strongRestrictedToWedge G H
+  map {c d} f := {
+    hom := f.hom
+    w := fun j => by
+      cases j with
+      | left j₀ =>
+        simp only [strongRestrictedToWedge]
+        exact f.comm j₀.base j₀.elem
+      | right a =>
+        simp only [
+          Multifork.app_right_eq_ι_comp_fst,
+          ← Category.assoc]
+        congr 1
+        simp only [strongRestrictedToWedge]
+        exact f.comm _ _
+  }
+
+/-- The functor from wedges over the pullback
+profunctor to strong restricted wedges. -/
+def wedgeToStrongRestrictedFunctor
+    {D : Type w} [Category.{v} D]
+    (G : Cᵒᵖ ⥤ C ⥤ D)
+    (H : Cᵒᵖ ⥤ C ⥤ Type v) :
+    Wedge (profPullback G
+      (DiagElem.forget H)) ⥤
+    StrongRestrictedWedge G H where
+  obj := wedgeToStrongRestricted G H
+  map {w₁ w₂} g := {
+    hom := g.hom
+    comm := fun A a =>
+      Multifork.hom_comp_ι w₁ w₂ g ⟨A, a⟩
+  }
+
+/-- The unit natural isomorphism: the composite
+`strong → wedge → strong` is naturally isomorphic
+to the identity. The roundtrip preserves `.pt` and
+`.family` definitionally, so all components use
+identity morphisms. -/
+def profPullbackWedgeUnit
+    {D : Type w} [Category.{v} D]
+    (G : Cᵒᵖ ⥤ C ⥤ D)
+    (H : Cᵒᵖ ⥤ C ⥤ Type v) :
+    𝟭 (StrongRestrictedWedge G H) ≅
+    strongRestrictedToWedgeFunctor G H ⋙
+    wedgeToStrongRestrictedFunctor G H :=
+  NatIso.ofComponents
+    (fun c => {
+      hom := {
+        hom := 𝟙 c.pt
+        comm := fun _ _ => Category.id_comp _ }
+      inv := {
+        hom := 𝟙 c.pt
+        comm := fun _ _ => Category.id_comp _ }
+      hom_inv_id := by
+        apply StrongRestrictedWedge.Hom.ext
+        dsimp; exact Category.comp_id _
+      inv_hom_id := by
+        apply StrongRestrictedWedge.Hom.ext
+        dsimp; exact Category.comp_id _
+    })
+    (fun {c d} f => by
+      apply StrongRestrictedWedge.Hom.ext
+      dsimp only [
+        wedgeToStrongRestrictedFunctor,
+        strongRestrictedToWedgeFunctor,
+        Functor.comp_map]
+      simp)
+
+/-- The counit natural isomorphism: the composite
+`wedge → strong → wedge` is naturally isomorphic
+to the identity. Uses the `Wedge.ext` isomorphism
+from the roundtrip. -/
+def profPullbackWedgeCounit
+    {D : Type w} [Category.{v} D]
+    (G : Cᵒᵖ ⥤ C ⥤ D)
+    (H : Cᵒᵖ ⥤ C ⥤ Type v) :
+    wedgeToStrongRestrictedFunctor G H ⋙
+    strongRestrictedToWedgeFunctor G H ≅
+    𝟭 (Wedge (profPullback G
+      (DiagElem.forget H))) :=
+  NatIso.ofComponents
+    (fun w =>
+      strongRestricted_wedge_roundtrip G H w)
+    (fun {w₁ w₂} g => by
+      apply ConeMorphism.ext
+      dsimp only [
+        strongRestricted_wedge_roundtrip,
+        strongRestrictedToWedgeFunctor,
+        wedgeToStrongRestrictedFunctor,
+        Functor.comp_map, Functor.id_map]
+      simp only [Functor.comp_obj, Functor.id_obj,
+        Cone.category_comp_hom,
+        Wedge.ext_hom_hom, Iso.refl_hom]
+      exact (Category.comp_id g.hom).trans
+        (Category.id_comp g.hom).symm)
+
+/-- Categorical equivalence between strong
+restricted wedges and wedges over the pullback
+profunctor along the diagonal-element forgetful
+functor.
+
+Given `G : Cᵒᵖ ⥤ C ⥤ D` and
+`H : Cᵒᵖ ⥤ C ⥤ Type v`, the paranaturality
+condition (over `C`) that defines
+`StrongRestrictedWedge G H` corresponds to the
+dinaturality condition (over `DiagElem H`) for
+wedges of `profPullback G (DiagElem.forget H)`. -/
+def strongRestrictedWedgeEquiv
+    {D : Type w} [Category.{v} D]
+    (G : Cᵒᵖ ⥤ C ⥤ D)
+    (H : Cᵒᵖ ⥤ C ⥤ Type v) :
+    StrongRestrictedWedge G H ≌
+    Wedge (profPullback G
+      (DiagElem.forget H)) :=
+  { functor :=
+      strongRestrictedToWedgeFunctor G H
+    inverse :=
+      wedgeToStrongRestrictedFunctor G H
+    unitIso :=
+      profPullbackWedgeUnit G H
+    counitIso :=
+      profPullbackWedgeCounit G H
+    functor_unitIso_comp := fun X => by
+      apply ConeMorphism.ext
+      dsimp only [
+        strongRestrictedToWedgeFunctor,
+        wedgeToStrongRestrictedFunctor,
+        profPullbackWedgeUnit,
+        profPullbackWedgeCounit,
+        strongRestricted_wedge_roundtrip,
+        Functor.comp_map, Functor.id_map,
+        NatIso.ofComponents]
+      simp only [Functor.comp_obj,
+        Functor.id_obj,
+        Cone.category_comp_hom,
+        Wedge.ext_hom_hom, Iso.refl_hom]
+      erw [Category.id_comp]
+      rfl }
+
+end ProfunctorPullbackWedge
 
 section WeightedCowedgeEmbedding
 
