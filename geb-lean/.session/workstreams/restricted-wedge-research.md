@@ -2,7 +2,30 @@
 
 ## Status
 
-Active
+Completed
+
+## Summary
+
+All three forms of restricted/weighted (co)wedges reduce to standard
+(co)wedges over different profunctors. Their initial/terminal objects
+are the corresponding (co)ends.
+
+| Structure | Profunctor | Universal |
+| --- | --- | --- |
+| `RestrictedWedge G H` | `powerProfunctorProfArg G H` | End |
+| `RestrictedCowedge G H` | `copowerProfunctorProfArg G H` | Coend |
+| `StrongRestrictedWedge G H` | `diagElemProf G H` | `StructureIntegral` |
+| `StrongRestrictedCowedge G H` | `diagElemProf G H` | `CostructureIntegral` |
+| `WeightedWedge W G` | `powerWeightedProfunctor W G` | End |
+| `WeightedCowedge W G` | `copowerWeightedProfunctor W G` | Coend |
+
+The profunctors are:
+
+- `powerProfunctorProfArg G H` at `(I,J)` = `H(J,I) → G(I,J)`
+- `copowerProfunctorProfArg G H` at `(I,J)` = `H(I,J) × G(I,J)`
+- `diagElemProf G H` = `profPullback G (DiagElem.forget H)`
+- `powerWeightedProfunctor W G` at `j` = `W(j) → G(j)`
+- `copowerWeightedProfunctor W G` at `j` = `W(j) × G(j)`
 
 ## Context
 
@@ -13,23 +36,19 @@ directions have emerged connecting structural (co)ends, restricted
 
 ## Research Questions
 
-### Q1: StructuralCoend = initial StrongRestrictedCowedge?
+### Q1: StructuralCoend = initial StrongRestrictedCowedge? (PROVEN)
 
-`StructuralCoend F = CostructureIntegral F IdProf` is built from the
-paranaturality quotient. `StrongRestrictedCowedge` requires paranatural
-families.
+**Result**: `CostructureIntegral H G` is the initial
+`StrongRestrictedCowedge G H` via `costructureIntegralCowedge_isInitial`.
+Dually, `StructureIntegral H G` is the terminal `StrongRestrictedWedge G H`
+via `structureIntegralWedge_isTerminal`.
 
-Conjecture: `StructuralCoend F` is the initial `StrongRestrictedCowedge
-F IdProf` (for `C = D = Type v`).
+For `G = IdProf`, this gives `StructuralCoend F` as initial
+`StrongRestrictedCowedge IdProf F` and `StructuralEnd F` as terminal
+`StrongRestrictedWedge IdProf F`.
 
-Dually: `StructuralEnd F` is the terminal `StrongRestrictedWedge F
-IdProf`.
-
-The comparison with Vene's restricted coend (initial `RestrictedCowedge`)
-goes: initial `RestrictedCowedge` -> initial `StrongRestrictedCowedge`,
-not the other way. Reason: the fully faithful inclusion
-`StrongRestrictedCowedge -> RestrictedCowedge` means initiality in the
-larger category implies initiality in the smaller, but not conversely.
+The results transfer via equivalences to give terminal/initial
+wedges/cowedges for `diagElemProf G H`.
 
 ### Q2: RestrictedWedge/Cowedge generalize Wedge/Cowedge of power/copower profunctors
 
