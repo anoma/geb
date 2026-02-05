@@ -10822,6 +10822,168 @@ def powerWedge_roundtrip
       Wedge.mk_ι, Iso.refl_hom]
     erw [Category.id_comp])
 
+/-- The functor from restricted wedges to wedges
+over `powerProfunctorProfArg G H`.
+
+Sends a restricted wedge with family
+`∀ I, H(I,I) → (pt → G(I,I))` to a wedge with legs
+`∀ I, pt → (H(I,I) → G(I,I))` via function swap.
+
+Morphisms are preserved: a morphism
+`f : c → d` in `RestrictedWedge G H` gives
+`f.hom : c.pt → d.pt`, which is exactly the
+underlying morphism for the corresponding wedge
+morphism. -/
+def restrictedToPowerWedgeFunctor
+    (G H : Cᵒᵖ ⥤ C ⥤ Type v) :
+    RestrictedWedge G H ⥤
+    Wedge (powerProfunctorProfArg G H) where
+  obj := restrictedToPowerWedge G H
+  map {c d} f := {
+    hom := f.hom
+    w := fun j => by
+      cases j with
+      | left j₀ =>
+        simp only [restrictedToPowerWedge]
+        funext x h
+        exact congrFun (f.comm j₀ h) x
+      | right a =>
+        simp only [
+          Multifork.app_right_eq_ι_comp_fst,
+          ← Category.assoc]
+        congr 1
+        simp only [restrictedToPowerWedge]
+        funext x h
+        exact congrFun (f.comm a.left h) x
+  }
+
+/-- The functor from wedges over
+`powerProfunctorProfArg G H` to restricted wedges.
+
+Sends a wedge with legs
+`∀ I, pt → (H(I,I) → G(I,I))` to a restricted
+wedge with family `∀ I, H(I,I) → (pt → G(I,I))`
+via function swap. -/
+def powerWedgeToRestrictedFunctor
+    (G H : Cᵒᵖ ⥤ C ⥤ Type v) :
+    Wedge (powerProfunctorProfArg G H) ⥤
+    RestrictedWedge G H where
+  obj := powerWedgeToRestricted G H
+  map {w₁ w₂} g := {
+    hom := g.hom
+    comm := fun A a => by
+      have hw := Multifork.hom_comp_ι w₁ w₂ g A
+      simp only [powerWedgeToRestricted,
+        RestrictedWedge.mk',
+        RestrictedWedge.family]
+      funext x
+      exact congrFun (congrFun hw x) a
+  }
+
+/-- The unit natural isomorphism: the composite
+`restricted → wedge → restricted` is naturally
+isomorphic to the identity.
+
+The roundtrip preserves `.pt` and `.family`
+definitionally, so all components use identity
+morphisms. -/
+def powerProfEquivUnit
+    (G H : Cᵒᵖ ⥤ C ⥤ Type v) :
+    𝟭 (RestrictedWedge G H) ≅
+    restrictedToPowerWedgeFunctor G H ⋙
+    powerWedgeToRestrictedFunctor G H :=
+  NatIso.ofComponents
+    (fun c => {
+      hom := {
+        hom := 𝟙 c.pt
+        comm := fun _ _ => Category.id_comp _ }
+      inv := {
+        hom := 𝟙 c.pt
+        comm := fun _ _ => Category.id_comp _ }
+      hom_inv_id := by
+        apply RestrictedWedge.Hom.ext
+        dsimp; exact Category.comp_id _
+      inv_hom_id := by
+        apply RestrictedWedge.Hom.ext
+        dsimp; exact Category.comp_id _
+    })
+    (fun {c d} f => by
+      apply RestrictedWedge.Hom.ext
+      dsimp only [
+        powerWedgeToRestrictedFunctor,
+        restrictedToPowerWedgeFunctor,
+        Functor.comp_map]
+      simp)
+
+/-- The counit natural isomorphism: the composite
+`wedge → restricted → wedge` is naturally
+isomorphic to the identity.
+
+Uses the `Wedge.ext` isomorphism from the
+roundtrip. -/
+def powerProfEquivCounit
+    (G H : Cᵒᵖ ⥤ C ⥤ Type v) :
+    powerWedgeToRestrictedFunctor G H ⋙
+    restrictedToPowerWedgeFunctor G H ≅
+    𝟭 (Wedge (powerProfunctorProfArg G H)) :=
+  NatIso.ofComponents
+    (fun w =>
+      powerWedge_roundtrip G H w)
+    (fun {w₁ w₂} g => by
+      apply ConeMorphism.ext
+      dsimp only [
+        powerWedge_roundtrip,
+        restrictedToPowerWedgeFunctor,
+        powerWedgeToRestrictedFunctor,
+        Functor.comp_map, Functor.id_map]
+      simp only [Functor.comp_obj, Functor.id_obj,
+        Cone.category_comp_hom,
+        Wedge.ext_hom_hom, Iso.refl_hom]
+      exact (Category.comp_id g.hom).trans
+        (Category.id_comp g.hom).symm)
+
+/-- Categorical equivalence between restricted
+wedges and wedges over `powerProfunctorProfArg`.
+
+Given `G, H : Cᵒᵖ ⥤ C ⥤ Type v`, the dinaturality
+condition that defines `RestrictedWedge G H`
+corresponds exactly to the wedge condition for
+`powerProfunctorProfArg G H`.
+
+The equivalence uses function swap to convert
+between:
+- `RestrictedWedge` family:
+  `∀ I, H(I,I) → (pt → G(I,I))`
+- `Wedge` legs: `∀ I, pt → (H(I,I) → G(I,I))` -/
+def restrictedWedgePowerEquiv
+    (G H : Cᵒᵖ ⥤ C ⥤ Type v) :
+    RestrictedWedge G H ≌
+    Wedge (powerProfunctorProfArg G H) :=
+  { functor :=
+      restrictedToPowerWedgeFunctor G H
+    inverse :=
+      powerWedgeToRestrictedFunctor G H
+    unitIso :=
+      powerProfEquivUnit G H
+    counitIso :=
+      powerProfEquivCounit G H
+    functor_unitIso_comp := fun X => by
+      apply ConeMorphism.ext
+      dsimp only [
+        restrictedToPowerWedgeFunctor,
+        powerWedgeToRestrictedFunctor,
+        powerProfEquivUnit,
+        powerProfEquivCounit,
+        powerWedge_roundtrip,
+        Functor.comp_map, Functor.id_map,
+        NatIso.ofComponents]
+      simp only [Functor.comp_obj,
+        Functor.id_obj,
+        Cone.category_comp_hom,
+        Wedge.ext_hom_hom, Iso.refl_hom]
+      erw [Category.comp_id]
+      rfl }
+
 end RestrictedWedgePowerEquiv
 
 end GebLean
