@@ -74,22 +74,29 @@ elements" characterization.
   - `strongRestrictedCowedgeEquiv` in `Weighted.lean`
   - Uses `profPullback G (DiagElem.forget H)` as the profunctor
 - Task #44: Prove RestrictedWedge generalizes Wedge(powerProfunctor)
-- Task #45: Prove StructuralCoend = initial StrongRestrictedCowedge
-  - PARTIALLY DONE: Proved `CostructureIntegral H G` is the initial
-    `StrongRestrictedCowedge G H` (general case, not just `IdProf`)
-    via `costructureIntegralCowedge_isInitial` in `Weighted.lean`.
+- Task #45: Prove StructuralCoend = initial StrongRestrictedCowedge (DONE)
+  - General case: `CostructureIntegral H G` is the initial
+    `StrongRestrictedCowedge G H` via `costructureIntegralCowedge_isInitial`
+    in `Weighted.lean`.
   - Dually: `StructureIntegral H G` is the terminal
-    `StrongRestrictedWedge G H` via
-    `structureIntegralWedge_isTerminal`.
+    `StrongRestrictedWedge G H` via `structureIntegralWedge_isTerminal`.
   - Transfer across equivalences:
     `structureIntegralWedge_isTerminal_transfer` and
     `costructureIntegralCowedge_isInitial_transfer` give
     terminal wedge / initial cowedge for `diagElemProf G H`.
-  - Universe constraint: requires `C : Type v` (objects and
-    morphisms in the same universe) so that
-    `StructureIntegral H G : Type v`.
-  - Remaining: specialize to `G = IdProf` and relate to
-    `StructuralEnd`/`StructuralCoend`.
+  - IdProf specialization via universe-polymorphic structures:
+    - `sliceProfunctorPoly` and `cosliceProfunctorPoly` allow apex in
+      any universe `Type p` while profunctors are valued in `Type w`.
+    - `StrongRestrictedWedgePoly` and `StrongRestrictedCowedgePoly`
+      allow `pt : Type p` independent of profunctor universes.
+    - `structuralEndWedgePoly : StrongRestrictedWedgePoly IdProf F
+      (StructuralEnd F)` with universal property:
+      `structuralEndWedgePolyHom`, `structuralEndWedgePolyHom_comm`,
+      `structuralEndWedgePolyHom_unique`.
+    - `structuralCoendCowedgePoly : StrongRestrictedCowedgePoly IdProf F
+      (StructuralCoend F)` with universal property:
+      `structuralCoendCowedgePolyHom`, `structuralCoendCowedgePolyHom_comm`,
+      `structuralCoendCowedgePolyHom_unique`.
 - Task #46: Investigate comparison: initial RestrictedCowedge -> initial
   StrongRestrictedCowedge
 - Task #47: Characterize RestrictedWedge/Cowedge as cones/cocones

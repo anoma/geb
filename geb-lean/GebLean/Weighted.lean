@@ -3416,6 +3416,83 @@ def sliceProfunctor {D : Type w} [Category.{v} D]
 /-- Notation for the slice profunctor. -/
 scoped infixl:70 " ⇓ " => sliceProfunctor
 
+universe p
+
+/-- Universe-polymorphic slice profunctor for Type-valued difunctors.
+
+When `G : Cᵒᵖ ⥤ C ⥤ Type w` and `c : Type p`, we can form the slice
+profunctor with codomain `Type (max w p)`. This generalizes `sliceProfunctor`
+by allowing the apex `c` to be in a different universe than `G`'s values.
+
+This is useful when the apex needs to be a "large" type like
+`StructuralCoend F : Type (v+1)` even when `G` is valued in `Type v`. -/
+def sliceProfunctorPoly
+    (G : Cᵒᵖ ⥤ C ⥤ Type w) (c : Type p) :
+    Cᵒᵖ ⥤ C ⥤ Type (max w p) where
+  obj A := {
+    obj := fun B =>
+      (G.obj (Opposite.op B)).obj A.unop → c
+    map := fun g h x =>
+      h ((G.map g.op).app A.unop x)
+    map_id := fun _ => by
+      ext h x
+      simp only [types_id_apply, op_id,
+        Functor.map_id, NatTrans.id_app]
+    map_comp := fun f g => by
+      ext h x
+      simp only [types_comp_apply, op_comp,
+        Functor.map_comp, NatTrans.comp_app]
+  }
+  map f := {
+    app := fun B h x =>
+      h ((G.obj (Opposite.op B)).map f.unop x)
+    naturality := fun X Y g => by
+      ext h x
+      simp only [types_comp_apply]
+      congr 1
+      exact congrFun ((G.map g.op).naturality f.unop) x
+  }
+  map_id := fun A => by
+    ext B h x
+    simp only [NatTrans.id_app, types_id_apply,
+      unop_id, Functor.map_id]
+  map_comp := fun f g => by
+    ext B h x
+    simp only [NatTrans.comp_app, types_comp_apply,
+      unop_comp, Functor.map_comp]
+
+@[simp]
+theorem sliceProfunctorPoly_obj_obj
+    (G : Cᵒᵖ ⥤ C ⥤ Type w) (c : Type p)
+    (A : Cᵒᵖ) (X : C) :
+    ((sliceProfunctorPoly G c).obj A).obj X =
+      ((G.obj (Opposite.op X)).obj A.unop → c) :=
+  rfl
+
+@[simp]
+theorem sliceProfunctorPoly_obj_map
+    (G : Cᵒᵖ ⥤ C ⥤ Type w) (c : Type p)
+    (A : Cᵒᵖ) {X Y : C} (g : X ⟶ Y)
+    (h : (G.obj (Opposite.op X)).obj A.unop → c) :
+    ((sliceProfunctorPoly G c).obj A).map g h =
+      fun x => h ((G.map g.op).app A.unop x) :=
+  rfl
+
+/-- The diagonal application of `sliceProfunctorPoly`. -/
+theorem diagApp_sliceProfunctorPoly
+    (G : Cᵒᵖ ⥤ C ⥤ Type w) (c : Type p) (I : C) :
+    diagApp (sliceProfunctorPoly G c) I =
+      (diagApp G I → c) :=
+  rfl
+
+/-- When the universes align, `sliceProfunctor` and `sliceProfunctorPoly`
+are definitionally equal. In `Type v`, morphisms `⟶` are functions `→`,
+so the two constructions coincide. -/
+theorem sliceProfunctor_eq_sliceProfunctorPoly
+    (G : Cᵒᵖ ⥤ C ⥤ Type v) (c : Type v) :
+    sliceProfunctor G c = sliceProfunctorPoly G c :=
+  rfl
+
 /-- The slice profunctor construction is functorial
 in `c : D`. Given `G : Cᵒᵖ ⥤ C ⥤ D`, this defines a
 functor `D ⥤ (Cᵒᵖ ⥤ C ⥤ Type v)`.
@@ -3719,6 +3796,75 @@ def cosliceProfunctor {D : Type w}
 
 /-- Notation for the coslice profunctor. -/
 scoped infixl:70 " ⇧ " => cosliceProfunctor
+
+/-- Universe-polymorphic coslice profunctor for Type-valued difunctors.
+
+When `G : Cᵒᵖ ⥤ C ⥤ Type w` and `c : Type p`, we can form the coslice
+profunctor with codomain `Type (max w p)`. This generalizes `cosliceProfunctor`
+by allowing the apex `c` to be in a different universe than `G`'s values.
+
+This is useful when the apex needs to be a "large" type like
+`StructuralEnd F : Type (v+1)` even when `G` is valued in `Type v`. -/
+def cosliceProfunctorPoly
+    (G : Cᵒᵖ ⥤ C ⥤ Type w) (c : Type p) :
+    Cᵒᵖ ⥤ C ⥤ Type (max w p) where
+  obj A := {
+    obj := fun B => c → (G.obj A).obj B
+    map := fun g h x => (G.obj A).map g (h x)
+    map_id := fun _ => by
+      ext h x
+      simp only [types_id_apply, Functor.map_id]
+    map_comp := fun f g => by
+      ext h x
+      simp only [types_comp_apply, Functor.map_comp]
+  }
+  map f := {
+    app := fun B h x => (G.map f).app B (h x)
+    naturality := fun X Y g => by
+      ext h x
+      simp only [types_comp_apply]
+      exact congrFun ((G.map f).naturality g) (h x)
+  }
+  map_id := fun A => by
+    ext B h x
+    simp only [NatTrans.id_app, types_id_apply,
+      Functor.map_id, NatTrans.id_app]
+  map_comp := fun f g => by
+    ext B h x
+    simp only [NatTrans.comp_app, types_comp_apply,
+      Functor.map_comp, NatTrans.comp_app]
+
+@[simp]
+theorem cosliceProfunctorPoly_obj_obj
+    (G : Cᵒᵖ ⥤ C ⥤ Type w) (c : Type p)
+    (A : Cᵒᵖ) (X : C) :
+    ((cosliceProfunctorPoly G c).obj A).obj X =
+      (c → (G.obj A).obj X) :=
+  rfl
+
+@[simp]
+theorem cosliceProfunctorPoly_obj_map
+    (G : Cᵒᵖ ⥤ C ⥤ Type w) (c : Type p)
+    (A : Cᵒᵖ) {X Y : C} (g : X ⟶ Y)
+    (h : c → (G.obj A).obj X) :
+    ((cosliceProfunctorPoly G c).obj A).map g h =
+      fun x => (G.obj A).map g (h x) :=
+  rfl
+
+/-- The diagonal application of `cosliceProfunctorPoly`. -/
+theorem diagApp_cosliceProfunctorPoly
+    (G : Cᵒᵖ ⥤ C ⥤ Type w) (c : Type p) (I : C) :
+    diagApp (cosliceProfunctorPoly G c) I =
+      (c → diagApp G I) :=
+  rfl
+
+/-- When the universes align, `cosliceProfunctor` and `cosliceProfunctorPoly`
+are definitionally equal. In `Type v`, morphisms `⟶` are functions `→`,
+so the two constructions coincide. -/
+theorem cosliceProfunctor_eq_cosliceProfunctorPoly
+    (G : Cᵒᵖ ⥤ C ⥤ Type v) (c : Type v) :
+    cosliceProfunctor G c = cosliceProfunctorPoly G c :=
+  rfl
 
 /-- The object computation:
 `((G ⇧ c).obj A).obj X = (c ⟶ (G.obj A).obj X)`.
@@ -5123,6 +5269,124 @@ def StrongRestrictedCowedge.inclusion_fullyFaithful
     (inclusion G H).FullyFaithful :=
   Functor.FullyFaithful.mk
     (fun {c d} f => ⟨f.hom, f.comm⟩)
+
+/-! ### Universe-polymorphic restricted cowedges for Type-valued profunctors
+
+When working with Type-valued profunctors `G : Cᵒᵖ ⥤ C ⥤ Type w` and
+`H : Cᵒᵖ ⥤ C ⥤ Type h`, we can define restricted cowedge structures with
+apex in any universe `p`. This is useful for cases like `StructuralCoend F`
+where the apex is in `Type (v+1)` but the profunctors are valued in `Type v`.
+-/
+
+universe h
+
+/-- The signature type for a family in a universe-polymorphic restricted
+cowedge. This is the type of functions from diagonal elements of `H` to
+the slice profunctor `sliceProfunctorPoly G pt`. -/
+abbrev ParanatSigPoly
+    (H : Cᵒᵖ ⥤ C ⥤ Type h)
+    (G : Cᵒᵖ ⥤ C ⥤ Type w)
+    (pt : Type p) :=
+  (I : C) → diagApp H I → diagApp (sliceProfunctorPoly G pt) I
+
+/-- The compatibility condition for diagonal elements, expressed using
+the contravariant and covariant actions as functions. -/
+def DiagCompatFn
+    (G : Cᵒᵖ ⥤ C ⥤ Type w)
+    {I₀ I₁ : C} (f : I₀ ⟶ I₁)
+    (d₀ : diagApp G I₀) (d₁ : diagApp G I₁) : Prop :=
+  (G.obj (Opposite.op I₀)).map f d₀ = (G.map f.op).app I₁ d₁
+
+/-- The paranaturality condition for a family in a universe-polymorphic
+restricted cowedge. Given compatible diagonal elements `d₀, d₁` of `H`,
+the images `family I₀ d₀` and `family I₁ d₁` must be compatible in `G ⇓ pt`.
+
+For all off-diagonal elements `x : G(I₁, I₀)`:
+- `family I₀ d₀ ((G.map f.op).app I₀ x) = family I₁ d₁ ((G.obj (op I₁)).map f x)`
+-/
+def IsParanaturalPoly
+    (H : Cᵒᵖ ⥤ C ⥤ Type h)
+    (G : Cᵒᵖ ⥤ C ⥤ Type w)
+    (pt : Type p)
+    (family : ParanatSigPoly H G pt) : Prop :=
+  ∀ (I₀ I₁ : C) (f : I₀ ⟶ I₁)
+    (d₀ : diagApp H I₀) (d₁ : diagApp H I₁),
+    DiagCompatFn H f d₀ d₁ →
+    ∀ (x : (G.obj (Opposite.op I₁)).obj I₀),
+      family I₀ d₀ ((G.map f.op).app I₀ x) =
+        family I₁ d₁ ((G.obj (Opposite.op I₁)).map f x)
+
+/-- A universe-polymorphic strong restricted cowedge for Type-valued
+profunctors. This allows the apex `pt` to be in a different universe
+than the profunctors `G` and `H`. -/
+@[ext]
+structure StrongRestrictedCowedgePoly
+    (G : Cᵒᵖ ⥤ C ⥤ Type w)
+    (H : Cᵒᵖ ⥤ C ⥤ Type h)
+    (pt : Type p) where
+  /-- The family of morphisms from diagonal elements of `H` to
+  `sliceProfunctorPoly G pt`. -/
+  family : ParanatSigPoly H G pt
+  /-- The paranaturality condition on the family. -/
+  isParanatural : IsParanaturalPoly H G pt family
+
+namespace StrongRestrictedCowedgePoly
+
+variable {G : Cᵒᵖ ⥤ C ⥤ Type w}
+  {H : Cᵒᵖ ⥤ C ⥤ Type h}
+  {pt : Type p}
+
+/-- Constructor with explicit arguments. -/
+@[match_pattern]
+def mk'
+    (family : ParanatSigPoly H G pt)
+    (isParanatural : IsParanaturalPoly H G pt family) :
+    StrongRestrictedCowedgePoly G H pt :=
+  ⟨family, isParanatural⟩
+
+end StrongRestrictedCowedgePoly
+
+/-- A universe-polymorphic strong restricted wedge for Type-valued
+profunctors. This allows the apex `pt` to be in a different universe
+than the profunctors `G` and `H`. -/
+@[ext]
+structure StrongRestrictedWedgePoly
+    (G : Cᵒᵖ ⥤ C ⥤ Type w)
+    (H : Cᵒᵖ ⥤ C ⥤ Type h)
+    (pt : Type p) where
+  /-- The family of morphisms from `pt` to diagonal elements of `G`,
+  indexed by diagonal elements of `H`. -/
+  family : (I : C) → diagApp H I →
+    diagApp (cosliceProfunctorPoly G pt) I
+  /-- The paranaturality condition on the family. -/
+  isParanatural : ∀ (I₀ I₁ : C) (f : I₀ ⟶ I₁)
+    (d₀ : diagApp H I₀) (d₁ : diagApp H I₁),
+    DiagCompatFn H f d₀ d₁ →
+    ∀ (x : pt),
+      (G.obj (Opposite.op I₀)).map f (family I₀ d₀ x) =
+        (G.map f.op).app I₁ (family I₁ d₁ x)
+
+namespace StrongRestrictedWedgePoly
+
+variable {G : Cᵒᵖ ⥤ C ⥤ Type w}
+  {H : Cᵒᵖ ⥤ C ⥤ Type h}
+  {pt : Type p}
+
+/-- Constructor with explicit arguments. -/
+@[match_pattern]
+def mk'
+    (family : (I : C) → diagApp H I →
+      diagApp (cosliceProfunctorPoly G pt) I)
+    (isParanatural : ∀ (I₀ I₁ : C) (f : I₀ ⟶ I₁)
+      (d₀ : diagApp H I₀) (d₁ : diagApp H I₁),
+      DiagCompatFn H f d₀ d₁ →
+      ∀ (x : pt),
+        (G.obj (Opposite.op I₀)).map f (family I₀ d₀ x) =
+          (G.map f.op).app I₁ (family I₁ d₁ x)) :
+    StrongRestrictedWedgePoly G H pt :=
+  ⟨family, isParanatural⟩
+
+end StrongRestrictedWedgePoly
 
 end RestrictedCowedges
 
@@ -10093,5 +10357,133 @@ abbrev IsStrongRestrictedCoend
   IsInitial c
 
 end StructureCostructureIntegralUniversal
+
+/-!
+## IdProf specializations (StructuralEnd/StructuralCoend)
+
+The definitions `StructuralEnd F` and `StructuralCoend F` (in Paranatural.lean)
+are specializations of `StructureIntegral` and `CostructureIntegral` to
+`G = IdProf`:
+- `StructuralEnd F = StructureIntegral F IdProf`
+- `StructuralCoend F = CostructureIntegral F IdProf`
+
+Using the universe-polymorphic `StrongRestrictedWedgePoly` and
+`StrongRestrictedCowedgePoly` structures, we can express `StructuralEnd F` as
+a terminal `StrongRestrictedWedgePoly IdProf F (StructuralEnd F)` and
+`StructuralCoend F` as an initial
+`StrongRestrictedCowedgePoly IdProf F (StructuralCoend F)`.
+
+The universe polymorphism is needed because:
+- For `F : (Type v)ᵒᵖ ⥤ Type v ⥤ Type v`, we have `DiagElem F : Type (v+1)`
+- Therefore `StructuralEnd F : Type (v+1)` and `StructuralCoend F : Type (v+1)`
+- The poly structures allow `pt : Type p` for any `p`, enabling this case.
+-/
+
+section IdProfSpecializations
+
+universe s q
+
+variable {F : (Type s)ᵒᵖ ⥤ Type s ⥤ Type s}
+
+/-- The structural end as a universe-polymorphic strong restricted wedge.
+The family maps `φ : StructuralEnd F` and `d : F(I, I)` to `φ.eval ⟨I, d⟩ : I`.
+-/
+def structuralEndWedgePoly :
+    StrongRestrictedWedgePoly IdProf F (StructuralEnd F) where
+  family I d φ := φ.eval ⟨I, d⟩
+  isParanatural I₀ I₁ f d₀ d₁ hcompat φ := by
+    have para := φ.paranatural
+      (⟨f, hcompat⟩ : (⟨I₀, d₀⟩ : DiagElem F) ⟶ ⟨I₁, d₁⟩)
+    simp only [covAction, contravAction] at para
+    exact para
+
+/-- The structural coend as a universe-polymorphic strong restricted cowedge.
+The family maps `d : F(I, I)` and `g : I` to the equivalence class of
+`(⟨I, d⟩, g)` in the costructure integral.
+-/
+def structuralCoendCowedgePoly :
+    StrongRestrictedCowedgePoly IdProf F (StructuralCoend F) where
+  family I d g := CostructureIntegral.mk ⟨I, d⟩ g
+  isParanatural I₀ I₁ f d₀ d₁ hcompat x := by
+    have sound := CostructureIntegral.sound
+      (⟨f, hcompat⟩ : (⟨I₀, d₀⟩ : DiagElem F) ⟶ ⟨I₁, d₁⟩)
+      x
+    simp only [covAction, contravAction] at sound
+    exact sound
+
+/-- Given a `StrongRestrictedWedgePoly IdProf F pt`, there exists a
+unique function `pt → StructuralEnd F` that commutes with the families.
+This is the hom-function from any wedge to `structuralEndWedgePoly`. -/
+def structuralEndWedgePolyHom
+    {pt : Type q}
+    (c : StrongRestrictedWedgePoly IdProf F pt) :
+    pt → StructuralEnd F :=
+  fun x => Paranat.toStructureIntegral F IdProf
+    { app := fun I d => c.family I d x
+      paranatural := fun I₀ I₁ f d₀ d₁ hc =>
+        c.isParanatural I₀ I₁ f d₀ d₁ hc x }
+
+/-- The hom-function commutes with the family components. -/
+theorem structuralEndWedgePolyHom_comm
+    {pt : Type q}
+    (c : StrongRestrictedWedgePoly IdProf F pt)
+    (I : Type s) (d : diagApp F I) (x : pt) :
+    (structuralEndWedgePoly (F := F)).family I d
+      (structuralEndWedgePolyHom c x) =
+    c.family I d x :=
+  rfl
+
+/-- The hom-function is unique: any function that commutes with
+the family components equals `structuralEndWedgePolyHom`. -/
+theorem structuralEndWedgePolyHom_unique
+    {pt : Type q}
+    (c : StrongRestrictedWedgePoly IdProf F pt)
+    (h : pt → StructuralEnd F)
+    (hcomm : ∀ (I : Type s) (d : diagApp F I) (x : pt),
+      (structuralEndWedgePoly (F := F)).family I d (h x) =
+        c.family I d x) :
+    h = structuralEndWedgePolyHom c := by
+  funext x
+  apply StructureIntegral.ext
+  funext ⟨I, d⟩
+  exact hcomm I d x
+
+/-- Given a `StrongRestrictedCowedgePoly IdProf F pt`, there exists a
+unique function `StructuralCoend F → pt` that commutes with the families.
+This is the hom-function from `structuralCoendCowedgePoly` to any cowedge. -/
+def structuralCoendCowedgePolyHom
+    {pt : Type q}
+    (c : StrongRestrictedCowedgePoly IdProf F pt) :
+    StructuralCoend F → pt :=
+  CostructureIntegral.lift
+    (fun x g => c.family x.base x.elem g)
+    (fun {x y} mor ψ =>
+      c.isParanatural x.base y.base mor.base x.elem y.elem mor.compat ψ)
+
+/-- The hom-function commutes with the family components. -/
+theorem structuralCoendCowedgePolyHom_comm
+    {pt : Type q}
+    (c : StrongRestrictedCowedgePoly IdProf F pt)
+    (I : Type s) (d : diagApp F I) (g : I) :
+    structuralCoendCowedgePolyHom c
+      ((structuralCoendCowedgePoly (F := F)).family I d g) =
+    c.family I d g :=
+  rfl
+
+/-- The hom-function is unique: any function that commutes with
+the family components equals `structuralCoendCowedgePolyHom`. -/
+theorem structuralCoendCowedgePolyHom_unique
+    {pt : Type q}
+    (c : StrongRestrictedCowedgePoly IdProf F pt)
+    (h : StructuralCoend F → pt)
+    (hcomm : ∀ (I : Type s) (d : diagApp F I) (g : I),
+      h ((structuralCoendCowedgePoly (F := F)).family I d g) =
+        c.family I d g) :
+    h = structuralCoendCowedgePolyHom c := by
+  funext z
+  induction z using Quotient.ind with
+  | _ p => exact hcomm p.1.base p.1.elem p.2
+
+end IdProfSpecializations
 
 end GebLean
