@@ -1266,6 +1266,18 @@ and morphisms that carry both a factorisation morphism and a
 fiber morphism in `F(twObjMk h.h)`.
 -/
 
+@[simp]
+lemma Factorisation.Hom_id_h
+    {X Y : C} {f : X ⟶ Y} (d : Factorisation f) :
+    Factorisation.Hom.h (𝟙 d) = 𝟙 d.mid := rfl
+
+@[simp]
+lemma Factorisation.Hom_comp_h
+    {X Y : C} {f : X ⟶ Y}
+    {d₁ d₂ d₃ : Factorisation f}
+    (g : d₁ ⟶ d₂) (h : d₂ ⟶ d₃) :
+    (g ≫ h).h = g.h ≫ h.h := rfl
+
 section DecoratedFactorisation
 
 universe w₁ w₂
@@ -1494,6 +1506,189 @@ instance : CategoryStruct (DecFactObj F tw) where
   Hom := DecFactHom F tw
   id := decFactId F tw
   comp := decFactComp F tw
+
+/-- When the first argument is identity,
+`twExtendDom (𝟙 A) g` equals `eqToHom` for the equality
+`twObjMk g = twObjMk (𝟙 A ≫ g)`. -/
+lemma twExtendDom_id_left {A B : C} (g : A ⟶ B) :
+    twExtendDom (𝟙 A) g =
+      eqToHom (congrArg twObjMk
+        (Category.id_comp g).symm) := by
+  apply twHom_ext
+  · simp only [twExtendDom_domArr, twDomArr_eqToHom]
+    rfl
+  · simp only [twExtendDom_codArr, twCodArr_eqToHom]
+    rfl
+
+/-- When the second argument is identity,
+`twExtendCod g (𝟙 B)` equals `eqToHom` for the equality
+`twObjMk g = twObjMk (g ≫ 𝟙 B)`. -/
+lemma twExtendCod_id_right {A B : C} (g : A ⟶ B) :
+    twExtendCod g (𝟙 B) =
+      eqToHom (congrArg twObjMk
+        (Category.comp_id g).symm) := by
+  apply twHom_ext
+  · simp only [twExtendCod_domArr, twDomArr_eqToHom]
+    rfl
+  · simp only [twExtendCod_codArr, twCodArr_eqToHom]
+    rfl
+
+/-- Extensionality for `DecFactHom`: two morphisms are
+equal if their factorisation morphisms are equal and their
+fiber morphisms are HEq. -/
+theorem decFactHom_ext {x y : DecFactObj F tw}
+    {m n : DecFactHom F tw x y}
+    (hFact : m.factHom = n.factHom)
+    (hFiber : HEq m.fiberMorph n.fiberMorph) :
+    m = n := by
+  rcases m with ⟨mf, mm⟩
+  rcases n with ⟨nf, nm⟩
+  obtain rfl := hFact
+  congr 1
+  exact eq_of_heq hFiber
+
+private lemma twObjMkFromIdentity_eqToHom
+    {A B : C} {g g' : A ⟶ B} (p : g = g') :
+    twObjMkFromIdentity g ≫
+      eqToHom (congrArg twObjMk p) =
+    twObjMkFromIdentity g' := by
+  subst p; simp
+
+private lemma twObjMkFromIdentityAtCod_eqToHom
+    {A B : C} {g g' : A ⟶ B} (p : g = g') :
+    twObjMkFromIdentityAtCod g ≫
+      eqToHom (congrArg twObjMk p) =
+    twObjMkFromIdentityAtCod g' := by
+  subst p; simp
+
+/-- Transport of a source object through an eqToHom
+functor: for `p : g = g'`, transporting
+`F.map(twObjMkFromIdentity g).obj a` through
+`eqToHom(congrArg F.obj (congrArg twObjMk p))`
+gives `F.map(twObjMkFromIdentity g').obj a`. -/
+private lemma eqToHom_obj_twObjMkFromIdentity
+    {A B : C} {g g' : A ⟶ B} (p : g = g')
+    (a : F.obj (twObjMk (𝟙 A))) :
+    (eqToHom (congrArg F.obj
+        (congrArg twObjMk p))).toFunctor.obj
+      ((F.map (twObjMkFromIdentity g)
+        ).toFunctor.obj a) =
+    (F.map (twObjMkFromIdentity g')
+      ).toFunctor.obj a := by
+  subst p; simp [eqToHom_refl,
+    Cat.Hom.id_toFunctor]
+
+/-- Transport of a target object through an eqToHom
+functor: for `p : g = g'`, transporting
+`F.map(twObjMkFromIdentityAtCod g).obj a` through
+`eqToHom(congrArg F.obj (congrArg twObjMk p))`
+gives `F.map(twObjMkFromIdentityAtCod g').obj a`. -/
+private lemma eqToHom_obj_twObjMkFromIdentityAtCod
+    {A B : C} {g g' : A ⟶ B} (p : g = g')
+    (a : F.obj (twObjMk (𝟙 B))) :
+    (eqToHom (congrArg F.obj
+        (congrArg twObjMk p))).toFunctor.obj
+      ((F.map (twObjMkFromIdentityAtCod g)
+        ).toFunctor.obj a) =
+    (F.map (twObjMkFromIdentityAtCod g')
+      ).toFunctor.obj a := by
+  subst p; simp [eqToHom_refl,
+    Cat.Hom.id_toFunctor]
+
+lemma twExtendCod_comp {A B E D : C}
+    (a : A ⟶ B) (b : B ⟶ E) (c : E ⟶ D) :
+    twExtendCod a b ≫ twExtendCod (a ≫ b) c =
+    twExtendCod a (b ≫ c) ≫
+      eqToHom (congrArg twObjMk
+        (Category.assoc a b c).symm) := by
+  apply twHom_ext
+  · rw [twDomArr_comp, twDomArr_comp,
+      twExtendCod_domArr, twExtendCod_domArr,
+      twExtendCod_domArr, twDomArr_eqToHom,
+      eqToHom_refl]
+    simp only [twObjMk_dom, Category.comp_id]
+  · rw [twCodArr_comp, twCodArr_comp,
+      twExtendCod_codArr, twExtendCod_codArr,
+      twExtendCod_codArr, twCodArr_eqToHom,
+      eqToHom_refl]
+    simp only [twObjMk_cod, Category.comp_id]
+
+lemma twExtendDom_comp {A B E D : C}
+    (a : A ⟶ B) (b : B ⟶ E) (c : E ⟶ D) :
+    twExtendDom b c ≫ twExtendDom a (b ≫ c) =
+    twExtendDom (a ≫ b) c ≫
+      eqToHom (congrArg twObjMk
+        (Category.assoc a b c)) := by
+  apply twHom_ext
+  · rw [twDomArr_comp, twDomArr_comp,
+      twExtendDom_domArr, twExtendDom_domArr,
+      twExtendDom_domArr, twDomArr_eqToHom,
+      eqToHom_refl]
+    simp only [twObjMk_dom, Category.id_comp]
+  · rw [twCodArr_comp, twCodArr_comp,
+      twExtendDom_codArr, twExtendDom_codArr,
+      twExtendDom_codArr, twCodArr_eqToHom,
+      eqToHom_refl]
+    simp only [twObjMk_cod, Category.comp_id]
+
+lemma twExtend_interchange {A B E D : C}
+    (a : A ⟶ B) (b : B ⟶ E) (c : E ⟶ D) :
+    twExtendDom a b ≫ twExtendCod (a ≫ b) c =
+    twExtendCod b c ≫ twExtendDom a (b ≫ c) ≫
+      eqToHom (congrArg twObjMk
+        (Category.assoc a b c).symm) := by
+  apply twHom_ext
+  · rw [twDomArr_comp, twDomArr_comp,
+      twDomArr_comp, twExtendCod_domArr,
+      twExtendDom_domArr, twExtendDom_domArr,
+      twExtendCod_domArr, twDomArr_eqToHom,
+      eqToHom_refl]
+    simp only [twObjMk_dom,
+      Category.id_comp, Category.comp_id]
+  · rw [twCodArr_comp, twCodArr_comp,
+      twCodArr_comp, twExtendDom_codArr,
+      twExtendCod_codArr, twExtendCod_codArr,
+      twExtendDom_codArr, twCodArr_eqToHom,
+      eqToHom_refl]
+    simp only [twObjMk_cod,
+      Category.id_comp, Category.comp_id]
+
+private theorem decFact_id_comp
+    {x y : DecFactObj F tw}
+    (f : DecFactHom F tw x y) :
+    decFactComp F tw (decFactId F tw x) f = f := by
+  rcases f with ⟨factHom, fiberMorph⟩
+  simp only [decFactComp, decFactId]
+  congr 1
+  · exact Category.id_comp factHom
+  · apply HEq.trans (eqToHom_comp_heq _ _)
+    conv_lhs => rw [eqToHom_map]
+    apply HEq.trans (eqToHom_comp_heq _ _)
+    apply HEq.trans (eqToHom_comp_heq _ _)
+    apply HEq.trans (comp_eqToHom_heq _ _)
+    change (F.map (twExtendDom (𝟙 x.fact.mid)
+        factHom.h)).toFunctor.map fiberMorph ≍
+      fiberMorph
+    rw [twExtendDom_id_left, eqToHom_map]
+    exact Cat.eqToHom_map_heq _ _
+
+private theorem decFact_comp_id
+    {x y : DecFactObj F tw}
+    (f : DecFactHom F tw x y) :
+    decFactComp F tw f (decFactId F tw y) = f := by
+  rcases f with ⟨factHom, fiberMorph⟩
+  simp only [decFactComp, decFactId]
+  congr 1
+  · exact Category.comp_id factHom
+  · apply HEq.trans (eqToHom_comp_heq _ _)
+    conv_lhs =>
+      rw [eqToHom_map, eqToHom_trans, eqToHom_trans]
+    apply HEq.trans (comp_eqToHom_heq _ _)
+    change (F.map (twExtendCod factHom.h
+        (𝟙 y.fact.mid))
+      ).toFunctor.map fiberMorph ≍ fiberMorph
+    rw [twExtendCod_id_right, eqToHom_map]
+    exact Cat.eqToHom_map_heq _ _
 
 end DecoratedFactorisation
 
