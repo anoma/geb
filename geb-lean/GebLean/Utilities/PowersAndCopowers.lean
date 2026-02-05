@@ -902,6 +902,45 @@ theorem powerProfunctor_map_app {j₁ j₂ : Jᵒᵖ} (f : j₁ ⟶ j₂) (j' : 
 
 end PowerProfunctor
 
+section ProfunctorProfArgConsistency
+
+/-!
+### Consistency with powerProfunctorProfArg and copowerProfunctorProfArg
+
+For `Type v` (where powers are function types and copowers are products),
+`powerProfunctor` and `copowerProfunctor` match `powerProfunctorProfArg` and
+`copowerProfunctorProfArg` when applied to covariant "forgetful" profunctors.
+-/
+
+variable {J : Type*} [Category.{v} J]
+
+/-- For `Type v`, `powerProfunctor W F` at object level equals
+`powerProfunctorProfArg (covProfunctor F) (covProfunctor W)`.
+
+This shows the two profunctor constructions give the same types:
+- Powers in `Type v` are function types `S → X`
+- `powerProfunctorProfArg` with covariant profunctors gives function types -/
+theorem powerProfunctor_obj_obj_eq_powerProfunctorProfArg
+    (W F : J ⥤ Type v) (j : Jᵒᵖ) (j' : J) :
+    ((powerProfunctor (C := Type v) W F).obj j).obj j' =
+      ((powerProfunctorProfArg (covProfunctor F) (covProfunctor W)).obj j).obj j' :=
+  rfl
+
+/-- For `Type v`, `copowerProfunctor W F` at object level equals
+`copowerProfunctorProfArg` with appropriate profunctors.
+
+This shows the two profunctor constructions give the same types:
+- Copowers in `Type v` are product types `S × X`
+- `copowerProfunctorProfArg` with covariant profunctors gives product types -/
+theorem copowerProfunctor_obj_obj_eq_copowerProfunctorProfArg
+    (W : Jᵒᵖ ⥤ Type v) (F : J ⥤ Type v) (j : Jᵒᵖ) (j' : J) :
+    ((copowerProfunctor (C := Type v) W F).obj j).obj j' =
+      ((copowerProfunctorProfArg (covProfunctor F)
+        (contravProfunctor W)).obj j).obj j' :=
+  rfl
+
+end ProfunctorProfArgConsistency
+
 /-!
 ### Weighted Cocones as Cocones over the Copower Diagram
 
