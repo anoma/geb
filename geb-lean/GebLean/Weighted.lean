@@ -9891,4 +9891,207 @@ theorem cValued_strongRestrictionFunctor_not_full :
 
 end WeightedRestrictedCorrespondence
 
+section StructureCostructureIntegralUniversal
+
+/-!
+## Structure/Costructure Integrals as Terminal/Initial Objects
+
+When `D = Type v`, the structure integral `StructureIntegral H G`
+is the terminal `StrongRestrictedWedge G H` and the costructure
+integral `CostructureIntegral H G` is the initial
+`StrongRestrictedCowedge G H`.
+-/
+
+variable {C : Type v} [Category.{v} C]
+
+/-- The profunctor obtained by pulling back `G` along the
+forgetful functor from diagonal elements of `H`. -/
+abbrev diagElemProf
+    {D : Type w} [Category.{v} D]
+    (G : Cᵒᵖ ⥤ C ⥤ D)
+    (H : Cᵒᵖ ⥤ C ⥤ Type v) :
+    (DiagElem H)ᵒᵖ ⥤ DiagElem H ⥤ D :=
+  profPullback G (DiagElem.forget H)
+
+/-- The structure integral `StructureIntegral H G` as a
+strong restricted wedge.  The family evaluates each
+structure integral element at the given H-structure. -/
+def structureIntegralWedge
+    (G H : Cᵒᵖ ⥤ C ⥤ Type v) :
+    StrongRestrictedWedge G H :=
+  StrongRestrictedWedge.mk'
+    (StructureIntegral H G)
+    (fun A a φ => φ.eval ⟨A, a⟩)
+    (fun I₀ I₁ f d₀ d₁ hcompat => by
+      rw [cosliceProfunctor_diagCompat_iff]
+      funext φ
+      let x : DiagElem H := ⟨I₀, d₀⟩
+      let y : DiagElem H := ⟨I₁, d₁⟩
+      exact φ.paranatural
+        (show x ⟶ y from ⟨f, hcompat⟩))
+
+/-- The morphism from any strong restricted wedge to
+the structure integral wedge.  Given `c : StrongRestrictedWedge G H`,
+the morphism sends `x : c.pt` to the structure integral element
+whose family is `c.family` evaluated at `x`. -/
+def structureIntegralWedgeHom
+    (G H : Cᵒᵖ ⥤ C ⥤ Type v)
+    (c : StrongRestrictedWedge G H) :
+    c ⟶ structureIntegralWedge G H :=
+  ⟨fun x =>
+    (Paranat.toStructureIntegral H G
+      { app := fun A a => c.family A a x
+        paranatural := fun I₀ I₁ f d₀ d₁ hc => by
+          have := c.isParanatural I₀ I₁ f d₀ d₁ hc
+          rw [cosliceProfunctor_diagCompat_iff]
+            at this
+          exact congrFun this x }),
+   fun _ _ => rfl⟩
+
+/-- The structure integral wedge is the terminal
+strong restricted wedge. -/
+def structureIntegralWedge_isTerminal
+    (G H : Cᵒᵖ ⥤ C ⥤ Type v) :
+    IsTerminal (structureIntegralWedge G H) :=
+  IsTerminal.ofUniqueHom
+    (structureIntegralWedgeHom G H)
+    (fun c m => by
+      apply StrongRestrictedWedge.Hom.ext
+      funext x
+      apply StructureIntegral.ext
+      funext ⟨A, a⟩
+      exact congrFun (m.comm A a) x)
+
+/-- The costructure integral `CostructureIntegral H G`
+as a strong restricted cowedge.  The family maps each
+`g : diagApp G A` to the equivalence class
+`CostructureIntegral.mk ⟨A, a⟩ g`. -/
+def costructureIntegralCowedge
+    (G H : Cᵒᵖ ⥤ C ⥤ Type v) :
+    StrongRestrictedCowedge G H :=
+  StrongRestrictedCowedge.mk'
+    (CostructureIntegral H G)
+    (fun A a g =>
+      CostructureIntegral.mk ⟨A, a⟩ g)
+    (fun I₀ I₁ f d₀ d₁ hcompat => by
+      rw [sliceProfunctor_diagCompat_iff]
+      funext ψ
+      exact CostructureIntegral.sound
+        (show (⟨I₀, d₀⟩ : DiagElem H) ⟶ ⟨I₁, d₁⟩
+          from ⟨f, hcompat⟩)
+        ψ)
+
+/-- The morphism from the costructure integral cowedge
+to any strong restricted cowedge.  Uses
+`CostructureIntegral.lift` to factor through the
+quotient. -/
+def costructureIntegralCowedgeHom
+    (G H : Cᵒᵖ ⥤ C ⥤ Type v)
+    (c : StrongRestrictedCowedge G H) :
+    costructureIntegralCowedge G H ⟶ c :=
+  ⟨CostructureIntegral.lift
+    (fun x g => c.family x.base x.elem g)
+    (fun {x y} f ψ => by
+      have := c.isParanatural x.base y.base
+        f.base x.elem y.elem f.compat
+      rw [sliceProfunctor_diagCompat_iff] at this
+      exact congrFun this ψ),
+   fun A a => rfl⟩
+
+/-- The costructure integral cowedge is the initial
+strong restricted cowedge. -/
+def costructureIntegralCowedge_isInitial
+    (G H : Cᵒᵖ ⥤ C ⥤ Type v) :
+    IsInitial (costructureIntegralCowedge G H) :=
+  IsInitial.ofUniqueHom
+    (costructureIntegralCowedgeHom G H)
+    (fun c m => by
+      apply StrongRestrictedCowedge.Hom.ext
+      funext q
+      apply Quotient.ind (motive := fun q =>
+        m.hom q =
+          (costructureIntegralCowedgeHom G H c).hom
+            q) _ q
+      intro ⟨⟨A, a⟩, g⟩
+      exact congrFun (m.comm A a) g)
+
+/-- The structure integral, viewed as a wedge of the
+pullback profunctor `diagElemProf G H` via the
+equivalence `strongRestrictedWedgeEquiv`, is a
+terminal wedge.
+
+The proof transfers terminality via the adjunction
+hom-set isomorphism of the equivalence. -/
+def structureIntegralWedge_isTerminal_transfer
+    (G H : Cᵒᵖ ⥤ C ⥤ Type v) :
+    IsTerminal
+      ((strongRestrictedWedgeEquiv G H).functor.obj
+        (structureIntegralWedge G H)) :=
+  let e := strongRestrictedWedgeEquiv G H
+  let t := structureIntegralWedge G H
+  let ht := structureIntegralWedge_isTerminal G H
+  let adj := e.symm.toAdjunction
+  IsTerminal.ofUniqueHom
+    (fun w =>
+      adj.homEquiv w t
+        (ht.from (e.inverse.obj w)))
+    (fun w m => by
+      have h : (adj.homEquiv w t).symm m =
+          ht.from (e.inverse.obj w) :=
+        ht.hom_ext _ _
+      exact (Equiv.apply_symm_apply
+        (adj.homEquiv w t) m).symm.trans
+        (congrArg (adj.homEquiv w t) h))
+
+/-- The costructure integral, viewed as a cowedge of
+the pullback profunctor `diagElemProf G H` via the
+equivalence `strongRestrictedCowedgeEquiv`, is an
+initial cowedge.
+
+The proof transfers initiality via the adjunction
+hom-set isomorphism of the equivalence. -/
+def costructureIntegralCowedge_isInitial_transfer
+    (G H : Cᵒᵖ ⥤ C ⥤ Type v) :
+    IsInitial
+      ((strongRestrictedCowedgeEquiv G H).functor.obj
+        (costructureIntegralCowedge G H)) :=
+  let e := strongRestrictedCowedgeEquiv G H
+  let t := costructureIntegralCowedge G H
+  let ht := costructureIntegralCowedge_isInitial G H
+  let adj := e.toAdjunction
+  IsInitial.ofUniqueHom
+    (fun w =>
+      (adj.homEquiv t w).symm (ht.to _))
+    (fun w m => by
+      have h : adj.homEquiv t w m =
+          ht.to (e.inverse.obj w) :=
+        ht.hom_ext _ _
+      calc m
+          = (adj.homEquiv t w).symm
+              (adj.homEquiv t w m) :=
+            (Equiv.symm_apply_apply _ m).symm
+        _ = (adj.homEquiv t w).symm
+              (ht.to _) := by
+            rw [h])
+
+/-- A strong restricted end is a terminal
+strong restricted wedge. -/
+abbrev IsStrongRestrictedEnd
+    {D : Type w} [Category.{v} D]
+    (G : Cᵒᵖ ⥤ C ⥤ D)
+    (H : Cᵒᵖ ⥤ C ⥤ Type v)
+    (c : StrongRestrictedWedge G H) :=
+  IsTerminal c
+
+/-- A strong restricted coend is an initial
+strong restricted cowedge. -/
+abbrev IsStrongRestrictedCoend
+    {D : Type w} [Category.{v} D]
+    (G : Cᵒᵖ ⥤ C ⥤ D)
+    (H : Cᵒᵖ ⥤ C ⥤ Type v)
+    (c : StrongRestrictedCowedge G H) :=
+  IsInitial c
+
+end StructureCostructureIntegralUniversal
+
 end GebLean
