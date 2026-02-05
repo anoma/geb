@@ -1653,6 +1653,205 @@ lemma twExtend_interchange {A B E D : C}
     simp only [twObjMk_cod,
       Category.id_comp, Category.comp_id]
 
+private lemma twExtendCod_comp_eqToHom
+    {A B E D : C}
+    (a : A ⟶ B) (b : B ⟶ E) (c : E ⟶ D) :
+    twExtendCod a b ≫ twExtendCod (a ≫ b) c ≫
+      eqToHom (congrArg twObjMk
+        (Category.assoc a b c)) =
+    twExtendCod a (b ≫ c) := by
+  apply twHom_ext
+  · rw [twDomArr_comp, twDomArr_comp, twExtendCod_domArr,
+      twExtendCod_domArr, twExtendCod_domArr, twDomArr_eqToHom,
+      eqToHom_refl]
+    simp only [twObjMk_dom, Category.comp_id]
+  · rw [twCodArr_comp, twCodArr_comp, twExtendCod_codArr,
+      twExtendCod_codArr, twExtendCod_codArr, twCodArr_eqToHom,
+      eqToHom_refl]
+    simp only [twObjMk_cod, Category.comp_id]
+
+private lemma twExtend_interchange_eqToHom
+    {A B E D : C}
+    (a : A ⟶ B) (b : B ⟶ E) (c : E ⟶ D) :
+    twExtendDom a b ≫ twExtendCod (a ≫ b) c ≫
+      eqToHom (congrArg twObjMk
+        (Category.assoc a b c)) =
+    twExtendCod b c ≫ twExtendDom a (b ≫ c) := by
+  apply twHom_ext
+  · rw [twDomArr_comp, twDomArr_comp, twExtendDom_domArr,
+      twExtendCod_domArr, twDomArr_eqToHom, eqToHom_refl,
+      twDomArr_comp, twExtendDom_domArr, twExtendCod_domArr]
+    simp only [twObjMk_dom, Category.comp_id, Category.id_comp]
+  · rw [twCodArr_comp, twCodArr_comp, twExtendDom_codArr,
+      twExtendCod_codArr, twCodArr_eqToHom, eqToHom_refl,
+      twCodArr_comp, twExtendDom_codArr, twExtendCod_codArr]
+    simp only [twObjMk_cod, Category.comp_id, Category.id_comp]
+
+private lemma twExtendDom_comp_eqToHom
+    {A B E D : C}
+    (a : A ⟶ B) (b : B ⟶ E) (c : E ⟶ D) :
+    twExtendDom (a ≫ b) c ≫
+      eqToHom (congrArg twObjMk
+        (Category.assoc a b c)) =
+    twExtendDom b c ≫ twExtendDom a (b ≫ c) :=
+  (twExtendDom_comp a b c).symm
+
+/-- Functor-level version of twExtendCod_comp_eqToHom. -/
+private lemma Fmap_twExtendCod_comp_eqToHom
+    {A B E D : C}
+    (a : A ⟶ B) (b : B ⟶ E) (c : E ⟶ D) :
+    F.map (twExtendCod a b) ≫ F.map (twExtendCod (a ≫ b) c) ≫
+      eqToHom (congrArg F.obj (congrArg twObjMk
+        (Category.assoc a b c))) =
+    F.map (twExtendCod a (b ≫ c)) := by
+  conv_lhs => rw [← eqToHom_map F (congrArg twObjMk
+        (Category.assoc a b c))]
+  rw [← Functor.map_comp, ← Functor.map_comp,
+    twExtendCod_comp_eqToHom]
+
+/-- Functor-level version of twExtend_interchange_eqToHom. -/
+private lemma Fmap_twExtend_interchange_eqToHom
+    {A B E D : C}
+    (a : A ⟶ B) (b : B ⟶ E) (c : E ⟶ D) :
+    F.map (twExtendDom a b) ≫ F.map (twExtendCod (a ≫ b) c) ≫
+      eqToHom (congrArg F.obj (congrArg twObjMk
+        (Category.assoc a b c))) =
+    F.map (twExtendCod b c) ≫ F.map (twExtendDom a (b ≫ c)) := by
+  conv_lhs => rw [← eqToHom_map F (congrArg twObjMk
+        (Category.assoc a b c))]
+  rw [← Functor.map_comp, ← Functor.map_comp,
+    twExtend_interchange_eqToHom, Functor.map_comp]
+
+/-- Functor-level version of twExtendDom_comp_eqToHom. -/
+private lemma Fmap_twExtendDom_comp_eqToHom
+    {A B E D : C}
+    (a : A ⟶ B) (b : B ⟶ E) (c : E ⟶ D) :
+    F.map (twExtendDom (a ≫ b) c) ≫
+      eqToHom (congrArg F.obj (congrArg twObjMk
+        (Category.assoc a b c))) =
+    F.map (twExtendDom b c) ≫ F.map (twExtendDom a (b ≫ c)) := by
+  conv_lhs => rw [← eqToHom_map F (congrArg twObjMk
+        (Category.assoc a b c))]
+  rw [← Functor.map_comp, twExtendDom_comp_eqToHom,
+    Functor.map_comp]
+
+/-- When two morphisms in Cat are equal, their functor maps are HEq. -/
+private lemma Cat_hom_map_heq {X Y : Cat} {G H : X ⟶ Y}
+    (h : G = H) {A B : X} (f : A ⟶ B) :
+    HEq (G.toFunctor.map f) (H.toFunctor.map f) := by
+  subst h
+  rfl
+
+/-- The fM component transforms correctly under associativity:
+`(twExtendCod (a≫b) c) ∘ (twExtendCod a b)` relates to `twExtendCod a (b≫c)`.
+Both sides are HEq since the types differ by `Category.assoc`. -/
+private lemma assoc_fM_transform
+    {A B E D : C}
+    (a : A ⟶ B) (b : B ⟶ E) (c : E ⟶ D)
+    {src tgt : F.obj (twObjMk a)}
+    (fM : src ⟶ tgt) :
+    (F.map (twExtendCod (a ≫ b) c)).toFunctor.map
+      ((F.map (twExtendCod a b)).toFunctor.map fM) ≍
+    (eqToHom (congrArg F.obj (congrArg twObjMk
+        (Category.assoc a b c)).symm)).toFunctor.map
+      ((F.map (twExtendCod a (b ≫ c))).toFunctor.map fM) := by
+  have h := Fmap_twExtendCod_comp_eqToHom F a b c
+  have h' : F.map (twExtendCod a b) ≫ F.map (twExtendCod (a ≫ b) c) =
+      F.map (twExtendCod a (b ≫ c)) ≫ eqToHom (congrArg F.obj
+        (congrArg twObjMk (Category.assoc a b c))).symm := by
+    rw [← h]
+    simp only [Category.assoc, eqToHom_trans, eqToHom_refl,
+      Category.comp_id]
+  -- Step 1: LHS = composition.toFunctor.map fM
+  have step1 : (F.map (twExtendCod (a ≫ b) c)).toFunctor.map
+        ((F.map (twExtendCod a b)).toFunctor.map fM) =
+      (F.map (twExtendCod a b) ≫ F.map (twExtendCod (a ≫ b) c)
+        ).toFunctor.map fM := by
+    simp only [Cat.Hom.comp_toFunctor, Functor.comp_map]
+  -- Step 2: RHS = (composition with eqToHom).toFunctor.map fM
+  have step2 : (eqToHom (congrArg F.obj (congrArg twObjMk
+        (Category.assoc a b c)).symm)).toFunctor.map
+      ((F.map (twExtendCod a (b ≫ c))).toFunctor.map fM) =
+    (F.map (twExtendCod a (b ≫ c)) ≫ eqToHom (congrArg F.obj
+        (congrArg twObjMk (Category.assoc a b c))).symm).toFunctor.map fM := by
+    simp only [Cat.Hom.comp_toFunctor, Functor.comp_map]
+  rw [step1, step2]
+  -- Now both sides have the same structure: (morphism).toFunctor.map fM
+  -- The morphisms in Cat are equal by h', so the maps are HEq
+  exact Cat_hom_map_heq h' fM
+
+/-- The gM component transforms correctly under associativity using interchange. -/
+private lemma assoc_gM_transform
+    {A B E D : C}
+    (a : A ⟶ B) (b : B ⟶ E) (c : E ⟶ D)
+    {src tgt : F.obj (twObjMk b)}
+    (gM : src ⟶ tgt) :
+    (F.map (twExtendCod (a ≫ b) c)).toFunctor.map
+      ((F.map (twExtendDom a b)).toFunctor.map gM) ≍
+    (eqToHom (congrArg F.obj (congrArg twObjMk
+        (Category.assoc a b c)).symm)).toFunctor.map
+      ((F.map (twExtendDom a (b ≫ c))).toFunctor.map
+        ((F.map (twExtendCod b c)).toFunctor.map gM)) := by
+  have h := Fmap_twExtend_interchange_eqToHom F a b c
+  -- h says: LHS ≫ eqToHom = RHS, so LHS = RHS ≫ eqToHom.symm
+  have h' : F.map (twExtendDom a b) ≫ F.map (twExtendCod (a ≫ b) c) =
+      F.map (twExtendCod b c) ≫ F.map (twExtendDom a (b ≫ c)) ≫
+        eqToHom (congrArg F.obj (congrArg twObjMk
+          (Category.assoc a b c))).symm := by
+    have step := congrArg (· ≫ eqToHom (congrArg F.obj (congrArg twObjMk
+        (Category.assoc a b c))).symm) h
+    simp only [Category.assoc, eqToHom_trans, eqToHom_refl,
+      Category.comp_id] at step
+    exact step
+  have step1 : (F.map (twExtendCod (a ≫ b) c)).toFunctor.map
+        ((F.map (twExtendDom a b)).toFunctor.map gM) =
+      (F.map (twExtendDom a b) ≫ F.map (twExtendCod (a ≫ b) c)
+        ).toFunctor.map gM := by
+    simp only [Cat.Hom.comp_toFunctor, Functor.comp_map]
+  have step2 : (eqToHom (congrArg F.obj (congrArg twObjMk
+        (Category.assoc a b c)).symm)).toFunctor.map
+      ((F.map (twExtendDom a (b ≫ c))).toFunctor.map
+        ((F.map (twExtendCod b c)).toFunctor.map gM)) =
+    (F.map (twExtendCod b c) ≫ F.map (twExtendDom a (b ≫ c)) ≫
+      eqToHom (congrArg F.obj (congrArg twObjMk
+        (Category.assoc a b c))).symm).toFunctor.map gM := by
+    simp only [Cat.Hom.comp_toFunctor, Functor.comp_map]
+  rw [step1, step2]
+  exact Cat_hom_map_heq h' gM
+
+/-- The hM component transforms correctly under associativity using twExtendDom_comp. -/
+private lemma assoc_hM_transform
+    {A B E D : C}
+    (a : A ⟶ B) (b : B ⟶ E) (c : E ⟶ D)
+    {src tgt : F.obj (twObjMk c)}
+    (hM : src ⟶ tgt) :
+    (F.map (twExtendDom (a ≫ b) c)).toFunctor.map hM ≍
+    (eqToHom (congrArg F.obj (congrArg twObjMk
+        (Category.assoc a b c)).symm)).toFunctor.map
+      ((F.map (twExtendDom a (b ≫ c))).toFunctor.map
+        ((F.map (twExtendDom b c)).toFunctor.map hM)) := by
+  have h := Fmap_twExtendDom_comp_eqToHom F a b c
+  -- h says: LHS ≫ eqToHom = RHS, so LHS = RHS ≫ eqToHom.symm
+  have h' : F.map (twExtendDom (a ≫ b) c) =
+      F.map (twExtendDom b c) ≫ F.map (twExtendDom a (b ≫ c)) ≫
+        eqToHom (congrArg F.obj (congrArg twObjMk
+          (Category.assoc a b c))).symm := by
+    have step := congrArg (· ≫ eqToHom (congrArg F.obj (congrArg twObjMk
+        (Category.assoc a b c))).symm) h
+    simp only [Category.assoc, eqToHom_trans, eqToHom_refl,
+      Category.comp_id] at step
+    exact step
+  have step2 : (eqToHom (congrArg F.obj (congrArg twObjMk
+        (Category.assoc a b c)).symm)).toFunctor.map
+      ((F.map (twExtendDom a (b ≫ c))).toFunctor.map
+        ((F.map (twExtendDom b c)).toFunctor.map hM)) =
+    (F.map (twExtendDom b c) ≫ F.map (twExtendDom a (b ≫ c)) ≫
+      eqToHom (congrArg F.obj (congrArg twObjMk
+        (Category.assoc a b c))).symm).toFunctor.map hM := by
+    simp only [Cat.Hom.comp_toFunctor, Functor.comp_map]
+  rw [step2]
+  exact Cat_hom_map_heq h' hM
+
 private theorem decFact_id_comp
     {x y : DecFactObj F tw}
     (f : DecFactHom F tw x y) :
@@ -1689,6 +1888,290 @@ private theorem decFact_comp_id
       ).toFunctor.map fiberMorph ≍ fiberMorph
     rw [twExtendCod_id_right, eqToHom_map]
     exact Cat.eqToHom_map_heq _ _
+
+/-- Step 1: After simp, LHS transforms to this form (with eqToHom at start/end). -/
+private lemma decFact_comp_assoc_fiber_lhs_simp
+    {W X Y Z : DecFactObj F tw}
+    (fH : W.fact ⟶ X.fact) (gH : X.fact ⟶ Y.fact) (hH : Y.fact ⟶ Z.fact)
+    (fM : (F.map (twObjMkFromIdentity fH.h)).toFunctor.obj W.fiber ⟶
+          (F.map (twObjMkFromIdentityAtCod fH.h)).toFunctor.obj X.fiber)
+    (gM : (F.map (twObjMkFromIdentity gH.h)).toFunctor.obj X.fiber ⟶
+          (F.map (twObjMkFromIdentityAtCod gH.h)).toFunctor.obj Y.fiber)
+    (hM : (F.map (twObjMkFromIdentity hH.h)).toFunctor.obj Y.fiber ⟶
+          (F.map (twObjMkFromIdentityAtCod hH.h)).toFunctor.obj Z.fiber) :
+    (decFactComp F tw (decFactComp F tw ⟨fH, fM⟩ ⟨gH, gM⟩) ⟨hH, hM⟩).fiberMorph ≍
+      (decFactComp F tw (decFactComp F tw ⟨fH, fM⟩ ⟨gH, gM⟩) ⟨hH, hM⟩).fiberMorph :=
+  HEq.refl _
+
+/-- Step 2: After simp, RHS transforms to this form (with eqToHom at start/end). -/
+private lemma decFact_comp_assoc_fiber_rhs_simp
+    {W X Y Z : DecFactObj F tw}
+    (fH : W.fact ⟶ X.fact) (gH : X.fact ⟶ Y.fact) (hH : Y.fact ⟶ Z.fact)
+    (fM : (F.map (twObjMkFromIdentity fH.h)).toFunctor.obj W.fiber ⟶
+          (F.map (twObjMkFromIdentityAtCod fH.h)).toFunctor.obj X.fiber)
+    (gM : (F.map (twObjMkFromIdentity gH.h)).toFunctor.obj X.fiber ⟶
+          (F.map (twObjMkFromIdentityAtCod gH.h)).toFunctor.obj Y.fiber)
+    (hM : (F.map (twObjMkFromIdentity hH.h)).toFunctor.obj Y.fiber ⟶
+          (F.map (twObjMkFromIdentityAtCod hH.h)).toFunctor.obj Z.fiber) :
+    (decFactComp F tw ⟨fH, fM⟩ (decFactComp F tw ⟨gH, gM⟩ ⟨hH, hM⟩)).fiberMorph ≍
+      (decFactComp F tw ⟨fH, fM⟩ (decFactComp F tw ⟨gH, gM⟩ ⟨hH, hM⟩)).fiberMorph :=
+  HEq.refl _
+
+/--
+HEq of compositions when categories are equal and objects match.
+Given equal categories, object equalities, and piece-wise morphism HEq,
+derives full composition HEq.
+-/
+private lemma heq_comp6_eq_cats
+    {C D : Cat}
+    (hCD : C = D)
+    {X1 X2 X3 X4 X5 X6 X7 : ↥C}
+    {Y1 Y2 Y3 Y4 Y5 Y6 Y7 : ↥D}
+    {a1 : X1 ⟶ X2} {e1 : X2 ⟶ X3} {a2 : X3 ⟶ X4} {e2 : X4 ⟶ X5}
+    {a3 : X5 ⟶ X6} {e3 : X6 ⟶ X7}
+    {b1 : Y1 ⟶ Y2} {f1 : Y2 ⟶ Y3} {b2 : Y3 ⟶ Y4} {f2 : Y4 ⟶ Y5}
+    {b3 : Y5 ⟶ Y6} {f3 : Y6 ⟶ Y7}
+    (hX1 : X1 ≍ Y1) (hX2 : X2 ≍ Y2) (hX3 : X3 ≍ Y3) (hX4 : X4 ≍ Y4)
+    (hX5 : X5 ≍ Y5) (hX6 : X6 ≍ Y6) (hX7 : X7 ≍ Y7)
+    (ha1 : a1 ≍ b1) (he1 : e1 ≍ f1) (ha2 : a2 ≍ b2)
+    (he2 : e2 ≍ f2) (ha3 : a3 ≍ b3) (he3 : e3 ≍ f3) :
+    a1 ≫ e1 ≫ a2 ≫ e2 ≫ a3 ≫ e3 ≍ b1 ≫ f1 ≫ b2 ≫ f2 ≫ b3 ≫ f3 := by
+  subst hCD
+  have eqX1 : X1 = Y1 := eq_of_heq hX1
+  have eqX2 : X2 = Y2 := eq_of_heq hX2
+  have eqX3 : X3 = Y3 := eq_of_heq hX3
+  have eqX4 : X4 = Y4 := eq_of_heq hX4
+  have eqX5 : X5 = Y5 := eq_of_heq hX5
+  have eqX6 : X6 = Y6 := eq_of_heq hX6
+  have eqX7 : X7 = Y7 := eq_of_heq hX7
+  subst eqX1 eqX2 eqX3 eqX4 eqX5 eqX6 eqX7
+  simp only [eq_of_heq ha1, eq_of_heq he1, eq_of_heq ha2,
+    eq_of_heq he2, eq_of_heq ha3, eq_of_heq he3]
+  exact HEq.refl _
+
+/--
+eqToHom terms with same source and target types are HEq (proof irrelevance).
+-/
+private lemma assoc_fiber_eqToHom_heq
+    {C : Type*} [Category C] {X Y X' Y' : C}
+    (p : X = Y) (q : X' = Y')
+    (hX : X = X') (hY : Y = Y') :
+    eqToHom p ≍ eqToHom q := by
+  subst hX hY
+  cases p
+  cases q
+  rfl
+
+/--
+Object HEq for hA1B1/hA2B2: the twExtendCod composition.
+-/
+private lemma assoc_obj_heq_extendCod
+    {A B E D : C}
+    (a : A ⟶ B) (b : B ⟶ E) (c : E ⟶ D)
+    (X : F.obj (twObjMk a)) :
+    (F.map (twExtendCod (a ≫ b) c)).toFunctor.obj
+      ((F.map (twExtendCod a b)).toFunctor.obj X) ≍
+    (F.map (twExtendCod a (b ≫ c))).toFunctor.obj X := by
+  -- From Fmap_twExtendCod_comp_eqToHom: G ≫ H ≫ eqToHom η = K
+  -- Rearrange to: G ≫ H = K ≫ eqToHom η.symm
+  have hEq := Fmap_twExtendCod_comp_eqToHom F a b c
+  let η := congrArg F.obj (congrArg twObjMk (Category.assoc a b c))
+  have hEq' : F.map (twExtendCod a b) ≫ F.map (twExtendCod (a ≫ b) c) =
+      F.map (twExtendCod a (b ≫ c)) ≫ eqToHom η.symm := by
+    rw [← hEq]
+    simp only [Category.assoc, eqToHom_trans, eqToHom_refl, Category.comp_id]
+  -- LHS = (G ≫ H).toFunctor.obj X
+  have step1 : (F.map (twExtendCod (a ≫ b) c)).toFunctor.obj
+      ((F.map (twExtendCod a b)).toFunctor.obj X) =
+    (F.map (twExtendCod a b) ≫ F.map (twExtendCod (a ≫ b) c)).toFunctor.obj X := by
+    simp only [Cat.Hom.comp_toFunctor, Functor.comp_obj]
+  -- After substitution: = (K ≫ eqToHom η.symm).toFunctor.obj X
+  rw [step1, hEq']
+  simp only [Cat.Hom.comp_toFunctor, Functor.comp_obj]
+  -- Now need: (eqToHom η.symm).toFunctor.obj Y ≍ Y
+  exact eqToHom_obj_heq _ _ η.symm _
+
+/--
+Object HEq for hA4B4: the interchange case.
+-/
+private lemma assoc_obj_heq_interchange
+    {A B E D : C}
+    (a : A ⟶ B) (b : B ⟶ E) (c : E ⟶ D)
+    (X : F.obj (twObjMk b)) :
+    (F.map (twExtendCod (a ≫ b) c)).toFunctor.obj
+      ((F.map (twExtendDom a b)).toFunctor.obj X) ≍
+    (F.map (twExtendDom a (b ≫ c))).toFunctor.obj
+      ((F.map (twExtendCod b c)).toFunctor.obj X) := by
+  -- From Fmap_twExtend_interchange_eqToHom:
+  -- LHS_comp ≫ eqToHom η = RHS_comp
+  have hEq := Fmap_twExtend_interchange_eqToHom F a b c
+  let η := congrArg F.obj (congrArg twObjMk (Category.assoc a b c))
+  -- From hEq: (eqToHom η).toFunctor.obj (LHS.obj X) = RHS.obj X
+  have step3 : (F.map (twExtendDom a b) ≫ F.map (twExtendCod (a ≫ b) c) ≫
+      eqToHom η).toFunctor.obj X =
+    (F.map (twExtendCod b c) ≫ F.map (twExtendDom a (b ≫ c))).toFunctor.obj X := by
+    rw [hEq]
+  simp only [Cat.Hom.comp_toFunctor, Functor.comp_obj] at step3
+  -- step3: (eqToHom η).toFunctor.obj (LHS.obj X) = RHS.obj X
+  -- where LHS.obj X = (F.map (twExtendCod (a ≫ b) c)).toFunctor.obj
+  --                    ((F.map (twExtendDom a b)).toFunctor.obj X)
+  -- Goal: LHS.obj X ≍ RHS.obj X
+  -- Use: LHS.obj X ≍ (eqToHom η).toFunctor.obj (LHS.obj X) = RHS.obj X
+  apply HEq.trans (HEq.symm (eqToHom_obj_heq _ _ η _))
+  exact heq_of_eq step3
+
+/--
+Object HEq for hA6B6: the twExtendDom composition.
+-/
+private lemma assoc_obj_heq_extendDom
+    {A B E D : C}
+    (a : A ⟶ B) (b : B ⟶ E) (c : E ⟶ D)
+    (X : F.obj (twObjMk c)) :
+    (F.map (twExtendDom (a ≫ b) c)).toFunctor.obj X ≍
+    (F.map (twExtendDom a (b ≫ c))).toFunctor.obj
+      ((F.map (twExtendDom b c)).toFunctor.obj X) := by
+  -- From Fmap_twExtendDom_comp_eqToHom:
+  -- LHS ≫ eqToHom η = RHS_comp
+  have hEq := Fmap_twExtendDom_comp_eqToHom F a b c
+  let η := congrArg F.obj (congrArg twObjMk (Category.assoc a b c))
+  -- From hEq: (eqToHom η).toFunctor.obj (LHS.obj X) = RHS_comp.obj X
+  have step3 : (F.map (twExtendDom (a ≫ b) c) ≫ eqToHom η).toFunctor.obj X =
+    (F.map (twExtendDom b c) ≫ F.map (twExtendDom a (b ≫ c))).toFunctor.obj X := by
+    rw [hEq]
+  simp only [Cat.Hom.comp_toFunctor, Functor.comp_obj] at step3
+  -- step3: (eqToHom η).toFunctor.obj (LHS.obj X) = RHS.obj X
+  -- Goal: LHS.obj X ≍ RHS.obj X
+  apply HEq.trans (HEq.symm (eqToHom_obj_heq _ _ η _))
+  exact heq_of_eq step3
+
+/--
+Helper for fiber associativity: given category equality, object HEqs, and
+piecewise morphism HEqs, proves the full 6-composition HEq.
+-/
+private lemma decFact_assoc_core
+    {D E : Cat.{v, u}}
+    (hCatEq : D = E)
+    {A1 A2 A3 A4 A5 A6 A7 : ↥D}
+    {B1 B2 B3 B4 B5 B6 B7 : ↥E}
+    (f1 : A1 ⟶ A2) (f2 : A3 ⟶ A4) (f3 : A5 ⟶ A6)
+    (g1 : B1 ⟶ B2) (g2 : B3 ⟶ B4) (g3 : B5 ⟶ B6)
+    (e1 : A2 = A3) (e2 : A4 = A5) (e3 : A6 = A7)
+    (e1' : B2 = B3) (e2' : B4 = B5) (e3' : B6 = B7)
+    (hf1 : f1 ≍ g1) (hf2 : f2 ≍ g2) (hf3 : f3 ≍ g3)
+    -- Explicit object HEqs needed for heq_comp
+    (hA1B1 : A1 ≍ B1) (hA2B2 : A2 ≍ B2) (hA4B4 : A4 ≍ B4) (hA6B6 : A6 ≍ B6) :
+    f1 ≫ eqToHom e1 ≫ f2 ≫ eqToHom e2 ≫ f3 ≫ eqToHom e3 ≍
+      g1 ≫ eqToHom e1' ≫ g2 ≫ eqToHom e2' ≫ g3 ≫ eqToHom e3' := by
+  subst hCatEq
+  cases e1; cases e2; cases e3; cases e1'; cases e2'; cases e3'
+  simp only [eqToHom_refl, Category.id_comp, Category.comp_id]
+  -- Goal: f1 ≫ f2 ≫ f3 ≍ g1 ≫ g2 ≫ g3
+  -- Convert object HEqs to equalities (now in same category)
+  have eq1 : A1 = B1 := eq_of_heq hA1B1
+  have eq2 : A2 = B2 := eq_of_heq hA2B2
+  have eq4 : A4 = B4 := eq_of_heq hA4B4
+  have eq6 : A6 = B6 := eq_of_heq hA6B6
+  exact heq_comp eq1 eq2 eq6 hf1 (heq_comp eq2 eq4 eq6 hf2 hf3)
+
+/-- Core lemma for fiber associativity with explicit morphism arguments.
+Takes the three factorisation morphisms and their fiber components as
+separate arguments to make the structure clearer. -/
+private lemma decFact_comp_assoc_fiber_explicit
+    {W X Y Z : DecFactObj F tw}
+    (fH : W.fact ⟶ X.fact) (gH : X.fact ⟶ Y.fact) (hH : Y.fact ⟶ Z.fact)
+    (fM : (F.map (twObjMkFromIdentity fH.h)).toFunctor.obj W.fiber ⟶
+          (F.map (twObjMkFromIdentityAtCod fH.h)).toFunctor.obj X.fiber)
+    (gM : (F.map (twObjMkFromIdentity gH.h)).toFunctor.obj X.fiber ⟶
+          (F.map (twObjMkFromIdentityAtCod gH.h)).toFunctor.obj Y.fiber)
+    (hM : (F.map (twObjMkFromIdentity hH.h)).toFunctor.obj Y.fiber ⟶
+          (F.map (twObjMkFromIdentityAtCod hH.h)).toFunctor.obj Z.fiber) :
+    (decFactComp F tw (decFactComp F tw ⟨fH, fM⟩ ⟨gH, gM⟩) ⟨hH, hM⟩).fiberMorph ≍
+      (decFactComp F tw ⟨fH, fM⟩ (decFactComp F tw ⟨gH, gM⟩ ⟨hH, hM⟩)).fiberMorph := by
+  simp only [decFactComp, Functor.map_comp, Category.assoc,
+    eqToHom_trans, eqToHom_trans_assoc, eqToHom_map]
+  apply HEq.trans (eqToHom_comp_heq _ _)
+  apply HEq.trans _ (HEq.symm (eqToHom_comp_heq _ _))
+  -- Goal: LHS composition ≍ RHS composition (without leading eqToHom on each)
+  -- Get all three transform lemmas
+  have hfM := assoc_fM_transform F fH.h gH.h hH.h fM
+  have hgM := assoc_gM_transform F fH.h gH.h hH.h gM
+  have hhM := assoc_hM_transform F fH.h gH.h hH.h hM
+  -- The common eqToHom from associativity
+  let η := congrArg F.obj (congrArg twObjMk (Category.assoc fH.h gH.h hH.h)).symm
+  -- Each piece: LHS_piece ≍ η.map(RHS_piece) ≍ RHS_piece
+  have hfM' : (F.map (twExtendCod (fH.h ≫ gH.h) hH.h)).toFunctor.map
+        ((F.map (twExtendCod fH.h gH.h)).toFunctor.map fM) ≍
+      (F.map (twExtendCod fH.h (gH.h ≫ hH.h))).toFunctor.map fM :=
+    HEq.trans hfM (Cat.eqToHom_map_heq η _)
+  have hgM' : (F.map (twExtendCod (fH.h ≫ gH.h) hH.h)).toFunctor.map
+        ((F.map (twExtendDom fH.h gH.h)).toFunctor.map gM) ≍
+      (F.map (twExtendDom fH.h (gH.h ≫ hH.h))).toFunctor.map
+        ((F.map (twExtendCod gH.h hH.h)).toFunctor.map gM) :=
+    HEq.trans hgM (Cat.eqToHom_map_heq η _)
+  have hhM' : (F.map (twExtendDom (fH.h ≫ gH.h) hH.h)).toFunctor.map hM ≍
+      (F.map (twExtendDom fH.h (gH.h ≫ hH.h))).toFunctor.map
+        ((F.map (twExtendDom gH.h hH.h)).toFunctor.map hM) :=
+    HEq.trans hhM (Cat.eqToHom_map_heq η _)
+  -- Convert goal to use fH.h ≫ gH.h instead of (fH ≫ gH).h
+  change (F.map (twExtendCod (fH.h ≫ gH.h) hH.h)).toFunctor.map
+        ((F.map (twExtendCod fH.h gH.h)).toFunctor.map fM) ≫
+        eqToHom _ ≫
+        (F.map (twExtendCod (fH.h ≫ gH.h) hH.h)).toFunctor.map
+          ((F.map (twExtendDom fH.h gH.h)).toFunctor.map gM) ≫
+        eqToHom _ ≫
+        (F.map (twExtendDom (fH.h ≫ gH.h) hH.h)).toFunctor.map hM ≫
+        eqToHom _ ≍
+      (F.map (twExtendCod fH.h (gH.h ≫ hH.h))).toFunctor.map fM ≫
+        eqToHom _ ≫
+        (F.map (twExtendDom fH.h (gH.h ≫ hH.h))).toFunctor.map
+          ((F.map (twExtendCod gH.h hH.h)).toFunctor.map gM) ≫
+        eqToHom _ ≫
+        (F.map (twExtendDom fH.h (gH.h ≫ hH.h))).toFunctor.map
+          ((F.map (twExtendDom gH.h hH.h)).toFunctor.map hM) ≫
+        eqToHom _
+  -- The category equality for transport
+  have hCatEq : F.obj (twObjMk ((fH.h ≫ gH.h) ≫ hH.h)) =
+                F.obj (twObjMk (fH.h ≫ (gH.h ≫ hH.h))) :=
+    congrArg F.obj (congrArg twObjMk (Category.assoc fH.h gH.h hH.h))
+  -- Object HEqs via helper lemmas
+  have hA1B1 := assoc_obj_heq_extendCod F fH.h gH.h hH.h
+    ((F.map (twObjMkFromIdentity fH.h)).toFunctor.obj W.fiber)
+  have hA2B2 := assoc_obj_heq_extendCod F fH.h gH.h hH.h
+    ((F.map (twObjMkFromIdentityAtCod fH.h)).toFunctor.obj X.fiber)
+  have hA4B4 := assoc_obj_heq_interchange F fH.h gH.h hH.h
+    ((F.map (twObjMkFromIdentityAtCod gH.h)).toFunctor.obj Y.fiber)
+  have hA6B6 := assoc_obj_heq_extendDom F fH.h gH.h hH.h
+    ((F.map (twObjMkFromIdentityAtCod hH.h)).toFunctor.obj Z.fiber)
+  exact decFact_assoc_core hCatEq _ _ _ _ _ _ _ _ _ _ _ _
+    hfM' hgM' hhM' hA1B1 hA2B2 hA4B4 hA6B6
+
+/-- The fiber component of associativity: the fiber morphisms are HEq
+under the two different associations. -/
+private lemma decFact_comp_assoc_fiber
+    {w x y z : DecFactObj F tw}
+    (f : DecFactHom F tw w x)
+    (g : DecFactHom F tw x y)
+    (h : DecFactHom F tw y z) :
+    (decFactComp F tw (decFactComp F tw f g) h).fiberMorph ≍
+      (decFactComp F tw f (decFactComp F tw g h)).fiberMorph :=
+  decFact_comp_assoc_fiber_explicit F tw
+    f.factHom g.factHom h.factHom f.fiberMorph g.fiberMorph h.fiberMorph
+
+private theorem decFact_comp_assoc
+    {w x y z : DecFactObj F tw}
+    (f : DecFactHom F tw w x)
+    (g : DecFactHom F tw x y)
+    (h : DecFactHom F tw y z) :
+    decFactComp F tw (decFactComp F tw f g) h =
+      decFactComp F tw f (decFactComp F tw g h) := by
+  apply decFactHom_ext F tw
+  · exact Category.assoc f.factHom g.factHom h.factHom
+  · exact decFact_comp_assoc_fiber F tw f g h
+
+instance decFactCategory : Category (DecFactObj F tw) where
+  id_comp := decFact_id_comp F tw
+  comp_id := decFact_comp_id F tw
+  assoc := decFact_comp_assoc F tw
 
 end DecoratedFactorisation
 
