@@ -1210,6 +1210,430 @@ lemma connGrothendieckTwMorphCod_map_comp_tgt (tw : TwistedArrow' C)
     (F.map (connGrothendieckTwMorphCod C tw (a ≫ b))).toFunctor.obj tgt :=
   connGrothendieckTwMorphCod_map_comp_src C F tw a b tgt
 
+/--
+Given equal Cat morphisms, their toFunctor.map results
+are HEq.
+-/
+private lemma connGrothendieck_Cat_hom_map_heq
+    {X Y : Cat.{w₁, w₂}} {G H : X ⟶ Y}
+    (h : G = H) {A B : X} (f : A ⟶ B) :
+    G.toFunctor.map f ≍ H.toFunctor.map f := by
+  subst h
+  rfl
+
+/--
+Given category equality and piecewise morphism/object HEqs,
+derives the full 6-composition HEq. Used to assemble the
+three piecewise HEq proofs.
+-/
+private lemma connGrothendieck_assoc_core
+    {D E : Cat.{w₁, w₂}}
+    (hCatEq : D = E)
+    {A1 A2 A3 A4 A5 A6 A7 : ↥D}
+    {B1 B2 B3 B4 B5 B6 B7 : ↥E}
+    (f1 : A1 ⟶ A2) (f2 : A3 ⟶ A4) (f3 : A5 ⟶ A6)
+    (g1 : B1 ⟶ B2) (g2 : B3 ⟶ B4) (g3 : B5 ⟶ B6)
+    (e1 : A2 = A3) (e2 : A4 = A5) (e3 : A6 = A7)
+    (e1' : B2 = B3) (e2' : B4 = B5)
+    (e3' : B6 = B7)
+    (hf1 : f1 ≍ g1) (hf2 : f2 ≍ g2)
+    (hf3 : f3 ≍ g3)
+    (hA1B1 : A1 ≍ B1) (hA2B2 : A2 ≍ B2)
+    (hA4B4 : A4 ≍ B4) (hA6B6 : A6 ≍ B6) :
+    f1 ≫ eqToHom e1 ≫ f2 ≫ eqToHom e2 ≫
+      f3 ≫ eqToHom e3 ≍
+    g1 ≫ eqToHom e1' ≫ g2 ≫ eqToHom e2' ≫
+      g3 ≫ eqToHom e3' := by
+  subst hCatEq
+  cases e1; cases e2; cases e3
+  cases e1'; cases e2'; cases e3'
+  simp only [eqToHom_refl, Category.id_comp,
+    Category.comp_id]
+  have eq1 : A1 = B1 := eq_of_heq hA1B1
+  have eq2 : A2 = B2 := eq_of_heq hA2B2
+  have eq4 : A4 = B4 := eq_of_heq hA4B4
+  have eq6 : A6 = B6 := eq_of_heq hA6B6
+  exact heq_comp eq1 eq2 eq6 hf1
+    (heq_comp eq2 eq4 eq6 hf2 hf3)
+
+/--
+W1W3 composition at the TwistedArrow' level:
+composing the W1W3 extension for (f,g) with W1W3 for
+(fg,h) equals W1W3 for (f,gh) up to eqToHom.
+-/
+private lemma connGrothendieckMorphW1W3_comp_tw
+    {w x y z : ConnGrothendieckObj C F}
+    (f : ConnGrothendieckHom C F w x)
+    (g : ConnGrothendieckHom C F x y)
+    (h : ConnGrothendieckHom C F y z) :
+    connGrothendieckMorphW1W3 C F f g ≫
+    connGrothendieckMorphW1W3 C F
+      (connGrothendieckComp C F f g) h =
+    connGrothendieckMorphW1W3 C F f
+      (connGrothendieckComp C F g h) ≫
+    eqToHom (connGrothendieckW3_assoc C F f g h
+      ).symm := by
+  apply twHom'_ext
+  · simp only [connGrothendieckMorphW1W3,
+      connGrothendieckComp, twDomArr'_comp,
+      twHomMk'_domArr, twDomArr'_eqToHom,
+      Category.comp_id,
+      connGrothendieckDiagCod, twObjMk'_dom,
+      eqToHom_refl]
+  · simp only [connGrothendieckMorphW1W3,
+      connGrothendieckComp, twCodArr'_comp,
+      twHomMk'_codArr, twCodArr'_eqToHom,
+      connGrothendieckDiagCod,
+      twObjMk'_cod, Category.comp_id, eqToHom_refl]
+
+/--
+W2W3 composition at the TwistedArrow' level:
+W2W3(fg,h) equals W2W3(g,h) composed with W2W3(f,gh)
+up to eqToHom.
+-/
+private lemma connGrothendieckMorphW2W3_comp_tw
+    {w x y z : ConnGrothendieckObj C F}
+    (f : ConnGrothendieckHom C F w x)
+    (g : ConnGrothendieckHom C F x y)
+    (h : ConnGrothendieckHom C F y z) :
+    connGrothendieckMorphW2W3 C F
+      (connGrothendieckComp C F f g) h =
+    connGrothendieckMorphW2W3 C F g h ≫
+    connGrothendieckMorphW2W3 C F f
+      (connGrothendieckComp C F g h) ≫
+    eqToHom (connGrothendieckW3_assoc C F f g h
+      ).symm := by
+  apply twHom'_ext
+  · simp only [connGrothendieckMorphW2W3,
+      connGrothendieckComp, twDomArr'_comp,
+      twDomArr'_eqToHom, connGrothendieckTwMorphDom,
+      twHomMk'_domArr, connGrothendieckDiagCod,
+      twObjMk'_dom, eqToHom_refl, Category.comp_id,
+      Category.id_comp, Category.assoc]
+  · simp only [connGrothendieckMorphW2W3,
+      connGrothendieckComp, twCodArr'_comp,
+      twCodArr'_eqToHom, connGrothendieckTwMorphDom,
+      twHomMk'_codArr, connGrothendieckDiagCod,
+      twObjMk'_cod, eqToHom_refl,
+      Category.comp_id]
+
+/--
+Middle coherence at the TwistedArrow' level:
+W2W3(f,g) composed with W1W3(fg,h) equals W1W3(g,h)
+composed with W2W3(f,gh), up to eqToHom.
+-/
+private lemma connGrothendieckMorphMiddle_comp_tw
+    {w x y z : ConnGrothendieckObj C F}
+    (f : ConnGrothendieckHom C F w x)
+    (g : ConnGrothendieckHom C F x y)
+    (h : ConnGrothendieckHom C F y z) :
+    connGrothendieckMorphW2W3 C F f g ≫
+    connGrothendieckMorphW1W3 C F
+      (connGrothendieckComp C F f g) h =
+    connGrothendieckMorphW1W3 C F g h ≫
+    connGrothendieckMorphW2W3 C F f
+      (connGrothendieckComp C F g h) ≫
+    eqToHom (connGrothendieckW3_assoc C F f g h
+      ).symm := by
+  apply twHom'_ext
+  · simp only [connGrothendieckMorphW2W3,
+      connGrothendieckMorphW1W3,
+      connGrothendieckComp, twDomArr'_comp,
+      twDomArr'_eqToHom, connGrothendieckTwMorphDom,
+      twHomMk'_domArr, connGrothendieckDiagCod,
+      twObjMk'_dom, eqToHom_refl, Category.comp_id,
+      Category.id_comp]
+  · simp only [connGrothendieckMorphW2W3,
+      connGrothendieckMorphW1W3,
+      connGrothendieckComp, twCodArr'_comp,
+      twCodArr'_eqToHom, connGrothendieckTwMorphDom,
+      twHomMk'_codArr, connGrothendieckDiagCod,
+      twObjMk'_cod, eqToHom_refl, Category.comp_id,
+      Category.id_comp]
+
+/--
+The fM piecewise HEq for associativity:
+`F.map(W1W3(fg,h)).map(F.map(W1W3(f,g)).map(fM))`
+is HEq to `F.map(W1W3(f,gh)).map(fM)`.
+-/
+private lemma connGrothendieckAssoc_fM_heq
+    {w x y z : ConnGrothendieckObj C F}
+    (f : ConnGrothendieckHom C F w x)
+    (g : ConnGrothendieckHom C F x y)
+    (h : ConnGrothendieckHom C F y z) :
+    (F.map (connGrothendieckMorphW1W3 C F
+        (connGrothendieckComp C F f g) h)
+      ).toFunctor.map
+      ((F.map (connGrothendieckMorphW1W3 C F f g)
+        ).toFunctor.map f.fiberMorph) ≍
+    (F.map (connGrothendieckMorphW1W3 C F f
+        (connGrothendieckComp C F g h))
+      ).toFunctor.map f.fiberMorph := by
+  have h' :
+      F.map (connGrothendieckMorphW1W3 C F f g) ≫
+      F.map (connGrothendieckMorphW1W3 C F
+        (connGrothendieckComp C F f g) h) =
+      F.map (connGrothendieckMorphW1W3 C F f
+        (connGrothendieckComp C F g h)) ≫
+      eqToHom (congrArg F.obj
+        (connGrothendieckW3_assoc C F f g h
+          ).symm) := by
+    rw [← F.map_comp,
+      connGrothendieckMorphW1W3_comp_tw,
+      F.map_comp, eqToHom_map]
+  have step1 :
+      (F.map (connGrothendieckMorphW1W3 C F
+          (connGrothendieckComp C F f g) h)
+        ).toFunctor.map
+        ((F.map (connGrothendieckMorphW1W3 C F f g)
+          ).toFunctor.map f.fiberMorph) =
+      (F.map (connGrothendieckMorphW1W3 C F f g) ≫
+        F.map (connGrothendieckMorphW1W3 C F
+          (connGrothendieckComp C F f g) h)
+        ).toFunctor.map f.fiberMorph := by
+    simp only [Cat.Hom.comp_toFunctor,
+      Functor.comp_map]
+  rw [step1]
+  exact HEq.trans
+    (connGrothendieck_Cat_hom_map_heq h' _)
+    (by simp only [Cat.Hom.comp_toFunctor,
+          Functor.comp_map]
+        exact Cat.eqToHom_map_heq _ _)
+
+/--
+The gM piecewise HEq for associativity:
+`F.map(W1W3(fg,h)).map(F.map(W2W3(f,g)).map(gM))`
+is HEq to
+`F.map(W2W3(f,gh)).map(F.map(W1W3(g,h)).map(gM))`.
+-/
+private lemma connGrothendieckAssoc_gM_heq
+    {w x y z : ConnGrothendieckObj C F}
+    (f : ConnGrothendieckHom C F w x)
+    (g : ConnGrothendieckHom C F x y)
+    (h : ConnGrothendieckHom C F y z) :
+    (F.map (connGrothendieckMorphW1W3 C F
+        (connGrothendieckComp C F f g) h)
+      ).toFunctor.map
+      ((F.map (connGrothendieckMorphW2W3 C F f g)
+        ).toFunctor.map g.fiberMorph) ≍
+    (F.map (connGrothendieckMorphW2W3 C F f
+        (connGrothendieckComp C F g h))
+      ).toFunctor.map
+      ((F.map (connGrothendieckMorphW1W3 C F g h)
+        ).toFunctor.map g.fiberMorph) := by
+  have h' :
+      F.map (connGrothendieckMorphW2W3 C F f g) ≫
+      F.map (connGrothendieckMorphW1W3 C F
+        (connGrothendieckComp C F f g) h) =
+      F.map (connGrothendieckMorphW1W3 C F g h) ≫
+      F.map (connGrothendieckMorphW2W3 C F f
+        (connGrothendieckComp C F g h)) ≫
+      eqToHom (congrArg F.obj
+        (connGrothendieckW3_assoc C F f g h
+          ).symm) := by
+    rw [← F.map_comp,
+      connGrothendieckMorphMiddle_comp_tw,
+      F.map_comp, F.map_comp, eqToHom_map]
+  have step1 :
+      (F.map (connGrothendieckMorphW1W3 C F
+          (connGrothendieckComp C F f g) h)
+        ).toFunctor.map
+        ((F.map (connGrothendieckMorphW2W3 C F f g)
+          ).toFunctor.map g.fiberMorph) =
+      (F.map (connGrothendieckMorphW2W3 C F f g) ≫
+        F.map (connGrothendieckMorphW1W3 C F
+          (connGrothendieckComp C F f g) h)
+        ).toFunctor.map g.fiberMorph := by
+    simp only [Cat.Hom.comp_toFunctor,
+      Functor.comp_map]
+  have step2 :
+      (F.map (connGrothendieckMorphW2W3 C F f
+          (connGrothendieckComp C F g h))
+        ).toFunctor.map
+        ((F.map (connGrothendieckMorphW1W3 C F g h)
+          ).toFunctor.map g.fiberMorph) =
+      (F.map (connGrothendieckMorphW1W3 C F g h) ≫
+        F.map (connGrothendieckMorphW2W3 C F f
+          (connGrothendieckComp C F g h))
+        ).toFunctor.map g.fiberMorph := by
+    simp only [Cat.Hom.comp_toFunctor,
+      Functor.comp_map]
+  rw [step1, step2]
+  exact HEq.trans
+    (connGrothendieck_Cat_hom_map_heq h' _)
+    (by simp only [Cat.Hom.comp_toFunctor,
+          Functor.comp_map]
+        exact Cat.eqToHom_map_heq _ _)
+
+/--
+The hM piecewise HEq for associativity:
+`F.map(W2W3(fg,h)).map(hM)` is HEq to
+`F.map(W2W3(f,gh)).map(F.map(W2W3(g,h)).map(hM))`.
+-/
+private lemma connGrothendieckAssoc_hM_heq
+    {w x y z : ConnGrothendieckObj C F}
+    (f : ConnGrothendieckHom C F w x)
+    (g : ConnGrothendieckHom C F x y)
+    (h : ConnGrothendieckHom C F y z) :
+    (F.map (connGrothendieckMorphW2W3 C F
+        (connGrothendieckComp C F f g) h)
+      ).toFunctor.map h.fiberMorph ≍
+    (F.map (connGrothendieckMorphW2W3 C F f
+        (connGrothendieckComp C F g h))
+      ).toFunctor.map
+      ((F.map (connGrothendieckMorphW2W3 C F g h)
+        ).toFunctor.map h.fiberMorph) := by
+  have h' :
+      F.map (connGrothendieckMorphW2W3 C F
+        (connGrothendieckComp C F f g) h) =
+      F.map (connGrothendieckMorphW2W3 C F g h) ≫
+      F.map (connGrothendieckMorphW2W3 C F f
+        (connGrothendieckComp C F g h)) ≫
+      eqToHom (congrArg F.obj
+        (connGrothendieckW3_assoc C F f g h
+          ).symm) := by
+    rw [connGrothendieckMorphW2W3_comp_tw,
+      F.map_comp, F.map_comp, eqToHom_map]
+  exact HEq.trans
+    (connGrothendieck_Cat_hom_map_heq h' _)
+    (by simp only [Cat.Hom.comp_toFunctor,
+          Functor.comp_map]
+        exact Cat.eqToHom_map_heq _ _)
+
+/--
+Given Cat morphisms `L = R ≫ eqToHom η`, applying
+`.toFunctor.obj` to both sides gives HEq of the
+resulting objects (across the category equality η).
+-/
+private lemma connGrothendieck_obj_heq_via_eqToHom
+    {A B D : Cat.{w₁, w₂}}
+    {L : A ⟶ D} {R : A ⟶ B}
+    {η : B = D}
+    (hEq : L = R ≫ eqToHom η)
+    (X : ↥A) :
+    L.toFunctor.obj X ≍
+    R.toFunctor.obj X := by
+  have step : L.toFunctor.obj X =
+      (eqToHom η).toFunctor.obj
+        (R.toFunctor.obj X) := by
+    rw [hEq]; rfl
+  exact HEq.trans (heq_of_eq step)
+    (eqToHom_obj_heq _ _ η _)
+
+/--
+The fiber component of associativity: the fiber morphisms
+are HEq under the two different associations.
+-/
+private lemma connGrothendieckComp_assoc_fiber
+    {w x y z : ConnGrothendieckObj C F}
+    (f : ConnGrothendieckHom C F w x)
+    (g : ConnGrothendieckHom C F x y)
+    (h : ConnGrothendieckHom C F y z) :
+    (connGrothendieckComp C F
+      (connGrothendieckComp C F f g) h).fiberMorph ≍
+    (connGrothendieckComp C F f
+      (connGrothendieckComp C F g h)).fiberMorph := by
+  simp only [connGrothendieckComp, Functor.map_comp,
+    Category.assoc, eqToHom_trans, eqToHom_trans_assoc,
+    eqToHom_map]
+  apply HEq.trans (eqToHom_comp_heq _ _)
+  apply HEq.trans _ (HEq.symm (eqToHom_comp_heq _ _))
+  have hW1W3 :
+      F.map (connGrothendieckMorphW1W3 C F f g) ≫
+      F.map (connGrothendieckMorphW1W3 C F
+        (connGrothendieckComp C F f g) h) =
+      F.map (connGrothendieckMorphW1W3 C F f
+        (connGrothendieckComp C F g h)) ≫
+      eqToHom (congrArg F.obj
+        (connGrothendieckW3_assoc C F f g h
+          ).symm) := by
+    rw [← F.map_comp,
+      connGrothendieckMorphW1W3_comp_tw,
+      F.map_comp, eqToHom_map]
+  have hMiddle :
+      F.map (connGrothendieckMorphW2W3 C F f g) ≫
+      F.map (connGrothendieckMorphW1W3 C F
+        (connGrothendieckComp C F f g) h) =
+      (F.map (connGrothendieckMorphW1W3 C F g h) ≫
+      F.map (connGrothendieckMorphW2W3 C F f
+        (connGrothendieckComp C F g h))) ≫
+      eqToHom (congrArg F.obj
+        (connGrothendieckW3_assoc C F f g h
+          ).symm) := by
+    rw [← F.map_comp,
+      connGrothendieckMorphMiddle_comp_tw,
+      F.map_comp, F.map_comp, eqToHom_map,
+      Category.assoc]
+  have hW2W3 :
+      F.map (connGrothendieckMorphW2W3 C F
+        (connGrothendieckComp C F f g) h) =
+      (F.map (connGrothendieckMorphW2W3 C F g h) ≫
+      F.map (connGrothendieckMorphW2W3 C F f
+        (connGrothendieckComp C F g h))) ≫
+      eqToHom (congrArg F.obj
+        (connGrothendieckW3_assoc C F f g h
+          ).symm) := by
+    rw [connGrothendieckMorphW2W3_comp_tw,
+      F.map_comp, F.map_comp, eqToHom_map,
+      Category.assoc]
+  exact connGrothendieck_assoc_core
+    (congrArg F.obj
+      (connGrothendieckW3_assoc C F f g h))
+    _ _ _ _ _ _ _ _ _ _ _ _
+    (connGrothendieckAssoc_fM_heq C F f g h)
+    (connGrothendieckAssoc_gM_heq C F f g h)
+    (connGrothendieckAssoc_hM_heq C F f g h)
+    (connGrothendieck_obj_heq_via_eqToHom
+      hW1W3 _)
+    (connGrothendieck_obj_heq_via_eqToHom
+      hW1W3 _)
+    (connGrothendieck_obj_heq_via_eqToHom
+      hMiddle _)
+    (connGrothendieck_obj_heq_via_eqToHom
+      hW2W3 _)
+
+/--
+Associativity of composition in the connected Grothendieck
+construction.
+-/
+theorem connGrothendieckComp_assoc
+    {w x y z : ConnGrothendieckObj C F}
+    (f : ConnGrothendieckHom C F w x)
+    (g : ConnGrothendieckHom C F x y)
+    (h : ConnGrothendieckHom C F y z) :
+    connGrothendieckComp C F
+      (connGrothendieckComp C F f g) h =
+    connGrothendieckComp C F f
+      (connGrothendieckComp C F g h) := by
+  apply connGrothendieckHom_ext
+  · exact Category.assoc _ _ _
+  · exact Category.assoc _ _ _
+  · exact connGrothendieckComp_assoc_fiber C F f g h
+
+/--
+Category data for the connected Grothendieck construction,
+packaging the operations and laws.
+-/
+def connGrothendieckCategoryData :
+    CategoryData (ConnGrothendieckObj C F)
+      (connGrothendieckHomSet C F) where
+  toCategoryOps := connGrothendieckCategoryOps C F
+  laws := {
+    assoc := connGrothendieckComp_assoc C F
+    id_laws := {
+      id_comp := connGrothendieckId_comp C F
+      comp_id := connGrothendieckComp_id C F
+    }
+  }
+
+/--
+Category instance for the connected Grothendieck
+construction `E(F)` over `Arr(C)`.
+-/
+instance connGrothendieckCategory :
+    Category (ConnGrothendieckObj C F) :=
+  CategoryOfData (connGrothendieckCategoryData C F)
+
 end ConnectedGrothendieckCategory
 
 section ConnectedGrothendieckProjection
