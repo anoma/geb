@@ -3,22 +3,25 @@ import GebLean.ParanatAlg
 import GebLean.Utilities.Profunctors
 
 /-!
-# The hexagon category of endo-profunctor transformations
+# The hexagon category of bifunctor transformations
 
-Given a category `C` and two endo-profunctors `P, Q : Cᵒᵖ × C ⥤ Type`,
-we define the "hexagon category" whose:
+Given a category `C`, a category `D`, and two bifunctors
+`P, Q : Cᵒᵖ × C ⥤ D`, we define the "hexagon category"
+whose:
 
-- **Objects** are pairs `(c, f)` where `c : C` and `f : P(c,c) ⟶ Q(c,c)`
+- **Objects** are pairs `(c, f)` where `c : C` and
+  `f : P(c,c) ⟶ Q(c,c)` in `D`
 
-- **Morphisms** from `(c, f)` to `(d, g)` are morphisms `m : c ⟶ d` in `C`
-  satisfying the hexagon condition:
+- **Morphisms** from `(c, f)` to `(d, g)` are morphisms
+  `m : c ⟶ d` in `C` satisfying the hexagon condition:
   ```
   P(m,1) ≫ f ≫ Q(1,m) = P(1,m) ≫ g ≫ Q(m,1)
   ```
-  Both sides are morphisms `P(d,c) ⟶ Q(c,d)`.
+  Both sides are morphisms `P(d,c) ⟶ Q(c,d)` in `D`.
 
-The name "hexagon" comes from the commutative diagram shape when drawn with
-all six morphisms arranged around a hexagon.
+The name "hexagon" comes from the commutative diagram
+shape when drawn with all six morphisms arranged around a
+hexagon.
 
 -/
 
@@ -26,14 +29,15 @@ namespace GebLean
 
 open CategoryTheory
 
-universe v u
+universe v u w w'
 
 
 variable {C : Type u} [Category.{v} C]
+  {D : Type w} [Category.{w'} D]
 
 section HexagonCategory
 
-variable (P Q : Cᵒᵖ × C ⥤ Type v)
+variable (P Q : Cᵒᵖ × C ⥤ D)
 
 /-- An object of the hexagon category: a pair `(c, f)` where `c : C` and
 `f : P(c,c) ⟶ Q(c,c)`. -/
@@ -69,9 +73,8 @@ theorem HexagonHom.ext' {X Y : HexagonObj P Q} {f g : HexagonHom X Y}
 def HexagonHom.id (X : HexagonObj P Q) : HexagonHom X X where
   hom := 𝟙 X.base
   condition := by
-    ext p
-    simp only [Prof.map₁, Prof.map₂]
-    rfl
+    unfold HexagonCondition Prof.map₁ Prof.map₂
+    simp only [op_id]
 
 /-- Composition of morphisms in the hexagon category. -/
 def HexagonHom.comp {X Y Z : HexagonObj P Q}
@@ -106,66 +109,84 @@ section ProfunctorDialgebraProfunctor
 /-!
 ### The profunctor-dialgebra profunctor
 
-For endo-profunctors `P, Q : Cᵒᵖ × C ⥤ Type v`, we define the "profunctor-dialgebra
-profunctor" `ProfDialgebraProf P Q : Cᵒᵖ ⥤ C ⥤ Type v` by:
+For bifunctors `P, Q : Cᵒᵖ × C ⥤ D`, we define the
+"profunctor-dialgebra profunctor"
+`ProfDialgebraProf P Q : Cᵒᵖ ⥤ C ⥤ Type w'` by:
 
 ```
 (ProfDialgebraProf P Q)(a, b) = (P(b, a) ⟶ Q(a, b))
 ```
 
-This is the profunctor-level analogue of the dialgebra profunctor for functors:
-- Dialgebra profunctor for `F, G : C ⥤ D`: `(x, y) ↦ Hom_D(F(x), G(y))`
-- Profunctor-dialgebra for `P, Q : Cᵒᵖ × C ⥤ Type`: `(a, b) ↦ (P(b, a) ⟶ Q(a, b))`
+where the hom-set is taken in `D`.
 
-The "twist" in P's arguments (using `P(b, a)` instead of `P(a, b)`) accounts for
-the mixed variance of profunctors.
+This is the profunctor-level analogue of the dialgebra
+profunctor for functors:
+- Dialgebra profunctor for `F, G : C ⥤ D`:
+  `(x, y) ↦ Hom_D(F(x), G(y))`
+- Profunctor-dialgebra for `P, Q : Cᵒᵖ × C ⥤ D`:
+  `(a, b) ↦ (P(b, a) ⟶ Q(a, b))`
 
-The diagonal elements of this profunctor are exactly the objects of the hexagon
-category, and the diagonal compatibility condition becomes the hexagon condition.
+The "twist" in P's arguments (using `P(b, a)` instead of
+`P(a, b)`) accounts for the mixed variance of profunctors.
+
+The diagonal elements of this profunctor are exactly the
+objects of the hexagon category, and the diagonal
+compatibility condition becomes the hexagon condition.
 -/
 
-variable (P Q : Cᵒᵖ × C ⥤ Type v)
+variable (P Q : Cᵒᵖ × C ⥤ D)
 
-/-- The profunctor-dialgebra profunctor for endo-profunctors `P` and `Q`.
-At objects `(a, b)`, this is the morphism type `P(b, a) ⟶ Q(a, b)`.
-Contravariant in `a` via `Q.map₁ ≫ _ ≫ P.map₂`, covariant in `b` via
-`Q.map₂ ≫ _ ≫ P.map₁`. -/
+/-- The profunctor-dialgebra profunctor for bifunctors
+`P` and `Q` valued in `D`. At objects `(a, b)`, this is the
+hom-type `P(b, a) ⟶ Q(a, b)` in `D`. Contravariant in `a`
+via `Prof.map₁ P ≫ _ ≫ Prof.map₁ Q`, covariant in `b` via
+`Prof.map₂ P ≫ _ ≫ Prof.map₂ Q` (note P is pre-composed
+contravariantly). -/
 @[simps]
-def ProfDialgebraProf : Cᵒᵖ ⥤ C ⥤ Type v where
+def ProfDialgebraProf : Cᵒᵖ ⥤ C ⥤ Type w' where
   obj a := {
-    obj := fun b => P.obj (Opposite.op b, a.unop) → Q.obj (Opposite.op a.unop, b)
-    map := fun {b b'} g φ p =>
-      Prof.map₂ Q g (φ (Prof.map₁ P g p))
+    obj := fun b =>
+      P.obj (Opposite.op b, a.unop) ⟶
+        Q.obj (Opposite.op a.unop, b)
+    map := fun {b b'} g φ =>
+      Prof.map₁ P g ≫ φ ≫ Prof.map₂ Q g
     map_id := fun b => by
-      ext φ p
-      simp only [Prof.map₁, Prof.map₂, types_id_apply, Opposite.op_unop, op_id]
-      -- The goal has (𝟙 a, 𝟙 b) which equals 𝟙 (a, b) definitionally
-      change Q.map (𝟙 (a, b)) (φ (P.map (𝟙 (Opposite.op b, Opposite.unop a)) p)) = φ p
-      simp only [Functor.map_id, types_id_apply]
+      ext φ
+      simp only [Prof.map₁, Prof.map₂, op_id,
+        types_id_apply]
+      change P.map (𝟙 _) ≫ φ ≫ Q.map (𝟙 _) = φ
+      simp only [Functor.map_id,
+        Category.id_comp, Category.comp_id]
     map_comp := fun {b₁ b₂ b₃} g₁ g₂ => by
-      ext φ p
-      simp only [Prof.map₁, Prof.map₂, types_comp_apply]
-      simp only [← FunctorToTypes.map_comp_apply, prod_comp, Category.id_comp, op_comp]
+      ext φ
+      simp only [types_comp_apply, Category.assoc]
+      slice_rhs 1 2 => rw [Prof.map₁_comp]
+      slice_rhs 3 4 => rw [Prof.map₂_comp]
   }
   map {a₁ a₂} f := {
-    app := fun b φ p =>
-      Prof.map₁ Q f.unop (φ (Prof.map₂ P f.unop p))
+    app := fun b φ =>
+      Prof.map₂ P f.unop ≫ φ ≫ Prof.map₁ Q f.unop
     naturality := fun {b₁ b₂} g => by
-      ext φ p
-      simp only [types_comp_apply, Prof.map₁, Prof.map₂]
-      simp only [← FunctorToTypes.map_comp_apply, prod_comp, Category.id_comp, Category.comp_id]
+      ext φ
+      simp only [types_comp_apply, Category.assoc]
+      slice_lhs 1 2 =>
+        rw [← Prof.map_comm P g f.unop]
+      slice_lhs 4 5 =>
+        rw [← Prof.map_comm Q f.unop g]
   }
   map_id a := by
-    ext b φ p
-    simp only [Prof.map₁, Prof.map₂, NatTrans.id_app, types_id_apply,
-      Opposite.op_unop, unop_id, op_id]
-    change Q.map (𝟙 (a, b)) (φ (P.map (𝟙 (Opposite.op b, Opposite.unop a)) p)) = φ p
-    simp only [Functor.map_id, types_id_apply]
+    ext b φ
+    simp only [Prof.map₁, Prof.map₂, NatTrans.id_app,
+      types_id_apply, unop_id, op_id]
+    change P.map (𝟙 _) ≫ φ ≫ Q.map (𝟙 _) = φ
+    simp only [Functor.map_id,
+      Category.id_comp, Category.comp_id]
   map_comp {a₁ a₂ a₃} f g := by
-    ext b φ p
-    simp only [Prof.map₁, Prof.map₂, NatTrans.comp_app, types_comp_apply,
-      ← FunctorToTypes.map_comp_apply, prod_comp, Category.id_comp,
-      unop_comp, op_comp]
+    ext b φ
+    simp only [NatTrans.comp_app, types_comp_apply,
+      unop_comp, Category.assoc]
+    slice_rhs 1 2 => rw [Prof.map₂_comp]
+    slice_rhs 3 4 => rw [Prof.map₁_comp]
 
 end ProfunctorDialgebraProfunctor
 
@@ -174,24 +195,30 @@ section HexagonDiagElemEquiv
 /-!
 ### Hexagon category as diagonal elements
 
-The hexagon category `HexagonObj P Q` is equivalent to the category of diagonal
-elements of the profunctor-dialgebra profunctor `ProfDialgebraProf P Q`.
+The hexagon category `HexagonObj P Q` is equivalent to
+the category of diagonal elements of the
+profunctor-dialgebra profunctor `ProfDialgebraProf P Q`.
 
-- Objects: A diagonal element `(c, φ)` where `φ ∈ (ProfDialgebraProf P Q)(c, c)`
-  corresponds to `φ : P(c, c) ⟶ Q(c, c)`, which is exactly a hexagon object.
+- Objects: A diagonal element `(c, φ)` where
+  `φ ∈ (ProfDialgebraProf P Q)(c, c)` corresponds to
+  `φ : P(c, c) ⟶ Q(c, c)`, which is exactly a hexagon
+  object.
 
-- Morphisms: The diagonal compatibility condition for `m : c ⟶ d` is:
+- Morphisms: The diagonal compatibility condition for
+  `m : c ⟶ d` is:
   ```
-  (ProfDialgebraProf P Q).map₂(m)(φ) = (ProfDialgebraProf P Q).map₁(m)(ψ)
+  (ProfDialgebraProf P Q).map₂(m)(φ)
+    = (ProfDialgebraProf P Q).map₁(m)(ψ)
   ```
-  which expands to: for all `p : P(d, c)`,
+  which expands to:
   ```
-  Q.map₂(m)(φ(P.map₁(m)(p))) = Q.map₁(m)(ψ(P.map₂(m)(p)))
+  Prof.map₁ P m ≫ φ ≫ Prof.map₂ Q m
+    = Prof.map₂ P m ≫ ψ ≫ Prof.map₁ Q m
   ```
   This is exactly the hexagon condition.
 -/
 
-variable (P Q : Cᵒᵖ × C ⥤ Type v)
+variable (P Q : Cᵒᵖ × C ⥤ D)
 
 /-- Convert a hexagon object to a diagonal element of the profunctor-dialgebra
 profunctor. -/
