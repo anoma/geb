@@ -2,6 +2,7 @@ import Mathlib.CategoryTheory.Elements
 import Mathlib.CategoryTheory.ConnectedComponents
 import Mathlib.CategoryTheory.Limits.Final
 import Mathlib.CategoryTheory.Functor.KanExtension.Pointwise
+import GebLean.Utilities.Elements
 
 /-!
 # Comprehensive factorization of a functor
@@ -83,6 +84,46 @@ instance elements_π_isDiscreteOpfibration
       rw [← hval]; exact g.property
     subst hprop
     exact Sigma.ext rfl (heq_of_eq (Subtype.ext hval))
+
+/-- The forgetful functor from the contravariant category
+of elements of a presheaf `F : Cᵒᵖ ⥤ Type w` is a
+discrete fibration. Given `op ⟨op c, x⟩ : F.ElementsPre`
+and `f : b ⟶ c` in `C`, the unique lift is
+`op ⟨op b, F.map f.op x⟩` with underlying morphism
+`(⟨f.op, rfl⟩).op`. -/
+private def elementsPre_lift
+    (F : Cᵒᵖ ⥤ Type w)
+    (e : F.ElementsPre) {b : C}
+    (f : b ⟶ (elementsPre_π F).obj e) :
+    (e' : F.ElementsPre) × (e' ⟶ e) :=
+  ⟨Opposite.op
+      ⟨Opposite.op b, F.map f.op e.unop.snd⟩,
+    Quiver.Hom.op
+      (⟨f.op, rfl⟩ :
+        e.unop ⟶ ⟨Opposite.op b,
+          F.map f.op e.unop.snd⟩)⟩
+
+instance elementsPre_π_isDiscreteFibration
+    (F : Cᵒᵖ ⥤ Type w) :
+    IsDiscreteFibration (elementsPre_π F) where
+  unique_lift := by
+    intro e b f
+    refine ⟨elementsPre_lift F e f,
+      ⟨rfl, by simp only [eqToHom_refl,
+        Category.id_comp]; rfl⟩, ?_⟩
+    rintro ⟨⟨⟨c_op, x⟩⟩, g⟩ ⟨h, hg⟩
+    simp only [elementsPre_π_obj] at h
+    subst h
+    simp only [eqToHom_refl, Category.id_comp,
+      elementsPre_π_map] at hg
+    have hval : g.unop.val = f.op := by
+      rw [← Quiver.Hom.op_unop g.unop.val, hg]
+    have hprop : F.map f.op e.unop.snd = x := by
+      rw [← hval]; exact g.unop.property
+    subst hprop
+    exact Sigma.ext rfl
+      (heq_of_eq (Quiver.Hom.unop_inj
+        (Subtype.ext hval)))
 
 end ElementsProperties
 
@@ -170,6 +211,103 @@ def comprehensiveE' :
     change F.map (f ≫ g) = F.map f ≫ F.map g
     exact F.map_comp f g
 
+/-- The discrete opfibration in the copresheaf comprehensive
+factorization. This is the forgetful functor from the
+category of elements of `comprehensiveCopresheaf F`,
+projecting `(d, [σ])` to `d`. -/
+abbrev comprehensiveM' :
+    (comprehensiveCopresheaf F).Elements ⥤ D :=
+  CategoryOfElements.π (comprehensiveCopresheaf F)
+
+/-- The copresheaf discrete opfibration: the forgetful
+functor from elements of `comprehensiveCopresheaf F` is a
+discrete opfibration. -/
+instance comprehensiveM'_isDiscreteOpfibration :
+    IsDiscreteOpfibration (comprehensiveM' F) :=
+  elements_π_isDiscreteOpfibration _
+
+/-- The copresheaf comprehensive factorization commutes:
+`comprehensiveE' F ⋙ comprehensiveM' F = F`. -/
+theorem comprehensiveFactorization'_comm :
+    comprehensiveE' F ⋙ comprehensiveM' F = F := by
+  apply CategoryTheory.Functor.ext
+  case h_obj => intro c; rfl
+  case h_map =>
+    intro c₁ c₂ f
+    simp [comprehensiveE', comprehensiveM',
+      eqToHom_refl]
+
 end ComprehensiveFactorization
+
+section ComprehensiveFactorizationPre
+
+variable {C : Type u₁} [Category.{v₁} C]
+  {D : Type u₂} [Category.{v₂} D]
+
+variable (F : C ⥤ D)
+
+/-- The final functor in the presheaf comprehensive
+factorization. Sends `c : C` to `op (op (F.obj c),
+[id_{F(c)}])` in `(comprehensivePresheaf F).ElementsPre`.
+
+The connected component `[id_{F(c)}]` is the class of the
+identity structured arrow
+`StructuredArrow.mk (𝟙 (F.obj c))`
+in `StructuredArrow (F.obj c) F`. -/
+def comprehensiveE :
+    C ⥤ (comprehensivePresheaf F).ElementsPre where
+  obj c :=
+    Opposite.op
+      ⟨Opposite.op (F.obj c),
+        Quotient.mk _
+          (StructuredArrow.mk (𝟙 (F.obj c)))⟩
+  map {c₁ c₂} f :=
+    Quiver.Hom.op
+      ⟨(F.map f).op, by
+        simp only [comprehensivePresheaf_map,
+          Functor.mapConnectedComponents_mk,
+          StructuredArrow.map_mk, Category.comp_id]
+        exact Quotient.sound
+          (Zigzag.of_inv
+            (StructuredArrow.homMk f (by simp)))⟩
+  map_id c := by
+    apply congrArg Quiver.Hom.op
+    ext
+    simp only [F.map_id, op_id]
+    rfl
+  map_comp f g := by
+    apply congrArg Quiver.Hom.op
+    ext
+    simp only [F.map_comp, op_comp]
+    rfl
+
+/-- The discrete fibration in the presheaf comprehensive
+factorization. This is the forgetful functor from the
+contravariant category of elements of
+`comprehensivePresheaf F`, projecting
+`op (op d, [σ])` to `d`. -/
+abbrev comprehensiveM :
+    (comprehensivePresheaf F).ElementsPre ⥤ D :=
+  elementsPre_π (comprehensivePresheaf F)
+
+/-- The presheaf discrete fibration: the forgetful functor
+from elements of `comprehensivePresheaf F` is a discrete
+fibration. -/
+instance comprehensiveM_isDiscreteFibration :
+    IsDiscreteFibration (comprehensiveM F) :=
+  elementsPre_π_isDiscreteFibration _
+
+/-- The presheaf comprehensive factorization commutes:
+`comprehensiveE F ⋙ comprehensiveM F = F`. -/
+theorem comprehensiveFactorization_comm :
+    comprehensiveE F ⋙ comprehensiveM F = F := by
+  apply CategoryTheory.Functor.ext
+  case h_obj => intro c; rfl
+  case h_map =>
+    intro c₁ c₂ f
+    simp [comprehensiveE, comprehensiveM,
+      eqToHom_refl]
+
+end ComprehensiveFactorizationPre
 
 end GebLean
