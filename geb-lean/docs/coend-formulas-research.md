@@ -241,6 +241,22 @@ This leaves `right` unreachable from any diagonal.
 **Theorem (`cValued_strongRestrictionFunctor_not_full`)**: The strong
 restriction functor is not full for this profunctor.
 
+#### Formalized Counterexample: Initial Cowedges Differ
+
+**Theorem (`wppInitialCowedges_pt_not_equiv`)**: For `WalkingParallelPair`
+with the Hom-profunctor and constant profunctor at `Unit`:
+
+- The initial `StrongRestrictedCowedge` has `pt ≃ Unit`
+  (via `costructureIntegralCowedge` and `wppCostructureIntegralEquivT`)
+- The initial `RestrictedCowedge` has `pt = Unit + Unit`
+  (via `wppRestrictedCowedgeSumT` and `wppRestrictedCowedgeSumT_isInitial`)
+- These are NOT equivalent (`wppUnitSumUnit_not_equiv_Unit`)
+
+**Mechanism**: Dinaturality conditions involve `H(one, zero) = ∅`, making
+them vacuous. Paranaturality uses `DiagElem` morphisms which exist (via
+`left` and `right`). So the paranaturality quotient identifies elements
+that dinaturality leaves distinct.
+
 #### Summary
 
 | Inclusion | Full? | Transfer of Terminal/Initial |
@@ -249,6 +265,21 @@ restriction functor is not full for this profunctor.
 | `Weighted → Strong` | N (in general) | If: weight maps jointly surjective |
 
 **Dual**: The same analysis applies for initial objects and cowedges.
+
+#### Implication: Weighted (Co)Ends Do Not Capture Initial Algebras
+
+**Conclusion**: Initial algebras correspond to `StructureIntegral`/
+`CostructureIntegral`, which are terminal/initial in the
+`StrongRestrictedWedge`/`Cowedge` categories. Since:
+
+1. `StrongRestricted` ≠ `Weighted` (different initial objects, as shown)
+2. `Weighted → StrongRestricted` is faithful but not full
+3. Initial algebras live in `StrongRestricted`, not `Weighted`
+
+The conjectured weighted (co)end formulas for initial algebras (Church
+numerals, etc.) do NOT hold. The `WeightedWedge`/`Cowedge` categories
+are "too small" — they lack morphisms needed to identify the correct
+universal object.
 
 ### Q3: 2-Categorical Structure from Composability
 

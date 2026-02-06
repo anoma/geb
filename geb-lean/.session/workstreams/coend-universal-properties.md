@@ -44,11 +44,18 @@ from `StrongRestrictedWedge`/`Cowedge` to `WeightedWedge`/`Cowedge`?
    Formalized as `isStrongRestrictedEnd_of_isRestrictedEnd` and
    `isStrongRestrictedCoend_of_isRestrictedCoend`.
 
-2. **Non-full case (Weighted → Strong)**: Transfer requires weight maps
-   from diagonals to be jointly surjective. Counterexample: the Hom-
-   profunctor on `WalkingParallelPair` (`wpp_weight_maps_not_surjective`).
+2. **Non-full case (Weighted → Strong)**: Transfer does NOT hold in general.
+   Formalized counterexample on `WalkingParallelPair`:
+   - `wppRestrictedCowedgeSumT_isInitial`: Initial RestrictedCowedge has
+     `pt = Unit + Unit`
+   - `costructureIntegralCowedge_isInitial`: Initial StrongRestrictedCowedge
+     has `pt ≃ Unit`
+   - `wppInitialCowedges_pt_not_equiv`: These are not equivalent
 
-**Dual**: Same analysis applies for initial objects and cowedges.
+**Implication**: Initial algebras (which are StructureIntegrals, hence
+terminal StrongRestrictedWedges) do NOT correspond to weighted ends.
+The WeightedWedge category is "too small" - it has fewer morphisms,
+so its terminal objects differ from those in StrongRestrictedWedge.
 
 ### Q3: 2-Categorical Structure
 
