@@ -555,6 +555,16 @@ This follows from `opToOp' ⋙ op'ToOp = 𝟭 Cᵒᵖ` (which holds by `rfl`):
 theorem elementsPreEqElementsContra (F : Cᵒᵖ ⥤ Type w) :
     F.ElementsPre = (op'ToOp ⋙ F).ElementsContra := rfl
 
+/-- The forgetful functor from the contravariant category
+of elements of a presheaf `F : Cᵒᵖ ⥤ Type w` to `C`.
+Sends `op ⟨op c, x⟩` to `c` and morphisms to their
+underlying morphism in `C` (reversing twice). -/
+@[simps]
+def elementsPre_π (F : Cᵒᵖ ⥤ Type w) :
+    F.ElementsPre ⥤ C where
+  obj p := p.unop.fst.unop
+  map f := f.unop.val.unop
+
 section CovariantCategoryOfElements
 
 variable {D : Type u} [Category.{v} D]
