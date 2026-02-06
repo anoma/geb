@@ -646,7 +646,362 @@ freeMDirIsoBwd pp (InPFM (PFCom i) dm) a ((p ** fp) ** dirFn) =
 ------------------------------------------------------------
 
 -- We have proven:
--- 1. FreeMDirPF: a polynomial functor characterizing directions at each
---    free monad position
--- 2. freeMDirIsoFwd/freeMDirIsoBwd: isomorphism between actual free monad
---    directions and InterpPolyFunc (FreeMDirPF pos) a
+-- 1. FreeMDirPF: a polynomial functor characterizing
+--    directions at each free monad position
+-- 2. freeMDirIsoFwd/freeMDirIsoBwd: isomorphism between
+--    actual free monad directions and
+--    InterpPolyFunc (FreeMDirPF pos) a
+
+------------------------------------------------------------
+------------------------------------------------------------
+---- Dirichlet Functor Connection ----
+------------------------------------------------------------
+------------------------------------------------------------
+
+-- A polynomial profunctor pp decomposes into:
+--   1. A "position Dirichlet functor" (I, E) where:
+--      - I = ppPos pp (the constructors)
+--      - E(i) = pfPos (ppDirPF pp i) (positive directions
+--        at constructor i = the "fields")
+--   2. A "negative direction family" F over the total
+--      space of (I, E):
+--      - F(i, j) = pfDir (ppDirPF pp i) j (the negative
+--        sub-directions at field j of constructor i)
+--
+-- The pair (I, E) is equivalent to MLDirichCatObj from
+-- MLDirichCat.idr (= DPair Type SliceObj), and the total
+-- space Sigma(i:I).E(i) is its category of elements.
+--
+-- This decomposition is the key insight connecting
+-- polynomial profunctors to the existing Dirichlet functor
+-- infrastructure in this codebase.
+
+-- The positive direction type at each position.
+-- Forms the direction family of the position Dirichlet
+-- functor.
+public export
+ppPosDirType : (pp : PolyProf) -> ppPos pp -> Type
+ppPosDirType pp i = pfPos (ppDirPF pp i)
+
+-- The position Dirichlet functor as a dependent pair,
+-- equivalent to MLDirichCatObj from MLDirichCat.idr.
+public export
+ppPosDirich : PolyProf -> DPair Type SliceObj
+ppPosDirich pp = (ppPos pp ** ppPosDirType pp)
+
+-- The total space of (positions, positive directions).
+-- This is the category of elements of the position
+-- Dirichlet functor.
+public export
+ppTot : PolyProf -> Type
+ppTot pp = DPair (ppPos pp) (ppPosDirType pp)
+
+-- The negative direction at each element of the total
+-- space. For each position i and positive direction j,
+-- this is the type of negative sub-directions at field j
+-- of constructor i.
+public export
+ppNegDir : (pp : PolyProf) -> ppTot pp -> Type
+ppNegDir pp (i ** j) = pfDir {p=ppDirPF pp i} j
+
+-- Reconstruct a polynomial profunctor from its Dirichlet
+-- functor decomposition: a position type, a positive
+-- direction family, and a negative direction family over
+-- the total space.
+public export
+ppFromDirichAndNeg :
+  (pos : Type) ->
+  (posDir : pos -> Type) ->
+  (negDir : DPair pos posDir -> Type) ->
+  PolyProf
+ppFromDirichAndNeg pos posDir negDir =
+  MkPolyProf pos
+    (\i => (posDir i ** \j => negDir (i ** j)))
+
+------------------------------------------------------------
+------------------------------------------------------------
+---- Embeddings into Polynomial Profunctors ----
+------------------------------------------------------------
+------------------------------------------------------------
+
+-- A polynomial endofunctor embeds as a polynomial
+-- profunctor with no negative occurrences. The direction
+-- polynomial at each position i has dir(i) as positions
+-- and Void as sub-directions, giving dir(i) many copies
+-- of y independent of x.
+public export
+polyFuncToPolyProf : PolyFunc -> PolyProf
+polyFuncToPolyProf (pos ** dir) =
+  MkPolyProf pos (\i => (dir i ** const Void))
+
+-- Interpretation formula: the profunctor interpretation
+-- of a polynomial endofunctor embedding is
+--   (i : pos ** (j : dir i ** Void -> x) -> y)
+-- which is isomorphic (not definitionally equal) to
+--   (i : pos ** dir i -> y) = InterpPolyFunc pf y.
+public export
+0 polyFuncProfInterpFormula :
+  (pf : PolyFunc) -> (x, y : Type) ->
+  InterpPolyProf (polyFuncToPolyProf pf) x y =
+  (i : pfPos pf **
+   (j : pfDir {p=pf} i ** Void -> x) -> y)
+polyFuncProfInterpFormula (pos ** dir) x y = Refl
+
+-- Forward conversion: polynomial functor to profunctor.
+public export
+polyFuncProfInterpTo :
+  (pf : PolyFunc) -> (x, y : Type) ->
+  InterpPolyFunc pf y ->
+  InterpPolyProf (polyFuncToPolyProf pf) x y
+polyFuncProfInterpTo (pos ** dir) x y (i ** f) =
+  (i ** \(j ** _) => f j)
+
+-- Backward conversion: profunctor to polynomial functor.
+public export
+polyFuncProfInterpFrom :
+  (pf : PolyFunc) -> (x, y : Type) ->
+  InterpPolyProf (polyFuncToPolyProf pf) x y ->
+  InterpPolyFunc pf y
+polyFuncProfInterpFrom (pos ** dir) x y (i ** g) =
+  (i ** \j => g (j ** voidF x))
+
+-- A Dirichlet functor embeds as a polynomial profunctor
+-- with one field per constructor and all-negative
+-- sub-directions. The direction polynomial at each
+-- position i has Unit as positions and dir(i) as
+-- sub-directions, giving the interpretation:
+--   (i : pos ** (dir i -> x) -> y).
+public export
+dirichToPolyProf :
+  DPair Type SliceObj -> PolyProf
+dirichToPolyProf (pos ** dir) =
+  MkPolyProf pos (\i => (Unit ** const (dir i)))
+
+-- Interpretation formula: the profunctor interpretation
+-- of a Dirichlet functor embedding is
+--   (i : pos ** (j : Unit ** dir i -> x) -> y)
+-- which is isomorphic to
+--   (i : pos ** (dir i -> x) -> y).
+public export
+0 dirichProfInterpFormula :
+  (d : DPair Type SliceObj) -> (x, y : Type) ->
+  InterpPolyProf (dirichToPolyProf d) x y =
+  (i : fst d **
+   (j : Unit ** snd d i -> x) -> y)
+dirichProfInterpFormula (pos ** dir) x y = Refl
+
+-- Forward conversion: (dir i -> x) -> y to profunctor.
+public export
+dirichProfInterpTo :
+  (d : DPair Type SliceObj) ->
+  (x, y : Type) ->
+  (i : fst d ** (snd d i -> x) -> y) ->
+  InterpPolyProf (dirichToPolyProf d) x y
+dirichProfInterpTo (pos ** dir) x y (i ** g) =
+  (i ** \el => g (snd el))
+
+-- Backward conversion: profunctor to (dir i -> x) -> y.
+public export
+dirichProfInterpFrom :
+  (d : DPair Type SliceObj) ->
+  (x, y : Type) ->
+  InterpPolyProf (dirichToPolyProf d) x y ->
+  (i : fst d ** (snd d i -> x) -> y)
+dirichProfInterpFrom (pos ** dir) x y (i ** g) =
+  (i ** \f => g (() ** f))
+
+------------------------------------------------------------
+------------------------------------------------------------
+---- Free Monad Profunctor and Initial Algebra ----
+------------------------------------------------------------
+------------------------------------------------------------
+
+-- The free monad of a polynomial profunctor, viewed as a
+-- polynomial profunctor itself.
+--
+-- For pp, the free monad at each type x is a polynomial
+-- endofunctor. The positions of this free monad (computed
+-- at Unit) give "tree shapes", and the direction polynomial
+-- at each position is FreeMDirPF.
+public export
+ppFreeMProf : PolyProf -> PolyProf
+ppFreeMProf pp =
+  MkPolyProf (ppFreeMPosUnit pp) (FreeMDirPF pp)
+
+-- The initial algebra of a polynomial profunctor,
+-- characterized as the end of the free monad profunctor.
+--
+-- An element consists of:
+-- 1. A position (tree shape) from the free monad at Unit
+-- 2. A section of the direction polynomial at that position
+--
+-- The section requirement automatically enforces closedness:
+-- at PFVar nodes, FreeMDirPF gives PFTerminalArena, whose
+-- sections require Unit -> Void (uninhabited). Thus only
+-- positions with no PFVar nodes admit sections.
+--
+-- This subsumes both polynomial endofunctor Mu (when there
+-- are no negative occurrences) and allows mixed-variance
+-- recursive datatypes (when there are negative occurrences).
+public export
+PolyProfMu : PolyProf -> Type
+PolyProfMu pp = PolyProfEnd (ppFreeMProf pp)
+
+-- Formula: PolyProfMu is a section over free monad
+-- positions.
+public export
+0 polyProfMuFormula : (pp : PolyProf) ->
+  PolyProfMu pp =
+  (pos : ppFreeMPosUnit pp **
+   PolySection (FreeMDirPF pp pos))
+polyProfMuFormula pp = Refl
+
+-- The PHOAS form of the initial algebra: a polymorphic
+-- family that gives, at each type x, a free monad element
+-- with variables of type x.
+--
+-- Elements should satisfy the wedge condition (naturality)
+-- to be true end elements. The section-based PolyProfMu
+-- automatically satisfies this.
+public export
+PolyProfMuPHOAS : PolyProf -> Type
+PolyProfMuPHOAS pp =
+  (x : Type) ->
+  InterpPolyFuncFreeM (ppToPolyFunc pp x) x
+
+-- Convert a section-based initial algebra element to the
+-- PHOAS form. At each type x, this:
+-- 1. Maps the position from Unit to x via ppFreeMPosMap
+-- 2. Applies the section composed with the direction
+--    isomorphism freeMDirIsoFwd
+public export
+polyProfMuToFamily : {pp : PolyProf} ->
+  PolyProfMu pp -> PolyProfMuPHOAS pp
+polyProfMuToFamily {pp} (pos ** section) x =
+  (ppFreeMPosMap pp x pos **
+   sectionApply {pf=FreeMDirPF pp pos} section x .
+     freeMDirIsoFwd pp pos x)
+
+------------------------------------------------------------
+------------------------------------------------------------
+---- Algebra and Catamorphism ----
+------------------------------------------------------------
+------------------------------------------------------------
+
+-- Algebra for a polynomial profunctor. Given a constructor
+-- at position i and a mapping from its direction space
+-- (evaluated at type a) to a, produce an a.
+--
+-- PolyProfAlg pp a
+--   = (i : ppPos pp **
+--      InterpPolyFunc (ppDirPF pp i) a -> a) -> a
+--
+-- The direction space InterpPolyFunc (ppDirPF pp i) a
+-- provides, for each positive direction j, a function
+-- from F(i,j) many negative occurrences of a into a.
+public export
+PolyProfAlg : PolyProf -> Type -> Type
+PolyProfAlg pp a = InterpPolyProf pp a a -> a
+
+-- Catamorphism on PHOAS terms. Evaluates the PHOAS term
+-- at type a, producing a free monad element, then folds
+-- it with the algebra (mapping variables to themselves via
+-- id).
+public export
+polyProfEndCata : {pp : PolyProf} -> {a : Type} ->
+  PolyProfAlg pp a -> PolyProfMuPHOAS pp -> a
+polyProfEndCata {pp} {a} alg el =
+  pfSubstCata {p=ppToPolyFunc pp a} {a=a} {b=a}
+    Prelude.id (\i, f => alg (i ** f)) (el a)
+
+-- Catamorphism on section-based initial algebra elements.
+-- Converts to PHOAS form, then applies the PHOAS cata.
+public export
+polyProfCata : {pp : PolyProf} -> {a : Type} ->
+  PolyProfAlg pp a -> PolyProfMu pp -> a
+polyProfCata {pp} {a} alg =
+  polyProfEndCata {pp} {a} alg .
+    polyProfMuToFamily {pp}
+
+------------------------------------------------------------
+------------------------------------------------------------
+---- PHOAS Constructors ----
+------------------------------------------------------------
+------------------------------------------------------------
+
+-- Roll one layer of the profunctor around sub-terms.
+-- Given position i and a family of sub-terms (one for each
+-- direction element at i), produce a PHOAS element.
+--
+-- The sub-terms argument provides, for each type x and
+-- each direction element (j ** f : F(i,j) -> x), a free
+-- monad term. This is the PHOAS encoding: negative
+-- occurrences appear as function parameters (the f), while
+-- positive occurrences appear as recursive sub-terms.
+public export
+polyProfMuRoll : {pp : PolyProf} ->
+  (i : ppPos pp) ->
+  ((x : Type) ->
+    InterpPolyFunc (ppDirPF pp i) x ->
+    InterpPolyFuncFreeM (ppToPolyFunc pp x) x) ->
+  PolyProfMuPHOAS pp
+polyProfMuRoll {pp} i subTerms x =
+  let dm : InterpPolyFunc (ppDirPF pp i) x ->
+           PolyFuncFreeMPos (ppToPolyFunc pp x)
+      dm d = fst (subTerms x d)
+  in (InPFM (PFCom i) dm **
+      \(d ** recDir) =>
+        snd (subTerms x d) recDir)
+
+-- The free monad PHOAS type for open terms. Given a
+-- variable type v, this produces, at each type x, a
+-- mapping from variable substitutions (v -> x) to free
+-- monad elements.
+--
+-- PolyProfMuPHOAS pp = PolyProfFreeMPHOAS pp Void
+-- (since Void -> x is trivial).
+public export
+PolyProfFreeMPHOAS : PolyProf -> Type -> Type
+PolyProfFreeMPHOAS pp v =
+  (x : Type) -> (v -> x) ->
+  InterpPolyFuncFreeM (ppToPolyFunc pp x) x
+
+-- Variable embedding into the free monad.
+-- Embeds a variable v into the free monad at any type x
+-- by substituting it via the given mapping.
+public export
+polyProfFreeMVar : {pp : PolyProf} -> {v : Type} ->
+  v -> PolyProfFreeMPHOAS pp v
+polyProfFreeMVar {pp} var x subst =
+  (InPFM (PFVar ()) (\ev => void ev) **
+   \() => subst var)
+
+-- Roll one layer around open sub-terms.
+public export
+polyProfFreeMRoll : {pp : PolyProf} ->
+  {v : Type} ->
+  (i : ppPos pp) ->
+  ((x : Type) -> (v -> x) ->
+    InterpPolyFunc (ppDirPF pp i) x ->
+    InterpPolyFuncFreeM (ppToPolyFunc pp x) x) ->
+  PolyProfFreeMPHOAS pp v
+polyProfFreeMRoll {pp} {v} i subTerms x subst =
+  let dm : InterpPolyFunc (ppDirPF pp i) x ->
+           PolyFuncFreeMPos (ppToPolyFunc pp x)
+      dm d = fst (subTerms x subst d)
+  in (InPFM (PFCom i) dm **
+      \(d ** recDir) =>
+        snd (subTerms x subst d) recDir)
+
+-- Catamorphism beta law: applying the catamorphism to a
+-- rolled term gives the algebra applied to the catamorphism
+-- of the sub-terms. This follows from the structure of
+-- pfSubstCata and the definitional beta of the free monad.
+--
+-- polyProfEndCata alg (polyProfMuRoll i subTerms)
+--   = alg (i ** \d =>
+--       polyProfEndCata alg (\x => subTerms x d))
+--
+-- This is not a definitional equality in Idris due to the
+-- free monad catamorphism's computation rules, but holds
+-- propositionally.
