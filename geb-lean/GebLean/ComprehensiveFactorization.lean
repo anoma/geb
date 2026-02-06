@@ -237,6 +237,172 @@ theorem comprehensiveFactorization'_comm :
     simp [comprehensiveE', comprehensiveM',
       eqToHom_refl]
 
+/-- Lift a costructured arrow `τ : CostructuredArrow F d`
+with `⟦τ⟧ = ⟦σ₀⟧` to an element of
+`CostructuredArrow (comprehensiveE' F) ⟨d, ⟦σ₀⟧⟩`.
+The underlying morphism is `τ.hom : F.obj τ.left ⟶ d`,
+and the copresheaf condition holds because
+`CostructuredArrow.mk τ.hom` is isomorphic to `τ` (by
+`CostructuredArrow.eta`), hence in the same connected
+component. -/
+private def liftCostArrow
+    {d : D} {σ₀ : CostructuredArrow F d}
+    (τ : CostructuredArrow F d)
+    (hτ : (⟦τ⟧ :
+      ConnectedComponents (CostructuredArrow F d)) =
+      ⟦σ₀⟧) :
+    CostructuredArrow (comprehensiveE' F)
+      (⟨d, ⟦σ₀⟧⟩ :
+        (comprehensiveCopresheaf F).Elements) :=
+  CostructuredArrow.mk (Y := τ.left)
+    ⟨τ.hom, by
+      simp only [comprehensiveCopresheaf_map]
+      dsimp [comprehensiveE']
+      simp only [Category.id_comp]
+      rw [← hτ]
+      exact Quotient.sound
+        (Zigzag.of_inv (CostructuredArrow.eta τ).hom)⟩
+
+/-- Lift a morphism `φ : τ₁ ⟶ τ₂` in `CostructuredArrow F d`
+to a morphism between the corresponding lifted costructured
+arrows in `CostructuredArrow (comprehensiveE' F) ⟨d, ⟦σ₀⟧⟩`.
+The underlying morphism `φ.left : τ₁.left ⟶ τ₂.left` is
+preserved, and the costructured arrow condition reduces to
+`φ.w` (that `F.map φ.left ≫ τ₂.hom = τ₁.hom`). -/
+private def liftCostArrowHom
+    {d : D} {σ₀ : CostructuredArrow F d}
+    {τ₁ τ₂ : CostructuredArrow F d}
+    (hτ₁ : (⟦τ₁⟧ :
+      ConnectedComponents (CostructuredArrow F d)) =
+      ⟦σ₀⟧)
+    (hτ₂ : (⟦τ₂⟧ :
+      ConnectedComponents (CostructuredArrow F d)) =
+      ⟦σ₀⟧)
+    (φ : τ₁ ⟶ τ₂) :
+    liftCostArrow F τ₁ hτ₁ ⟶ liftCostArrow F τ₂ hτ₂ :=
+  CostructuredArrow.homMk φ.left (by
+    ext
+    simp only [liftCostArrow, comprehensiveE',
+      CategoryOfElements.comp_val]
+    dsimp
+    simp only [CommaMorphism.w, Functor.const_obj_map]
+    exact Category.comp_id _)
+
+/-- Extract the component membership proof from a
+costructured arrow over `⟨d, ⟦σ₀⟧⟩`: the costructured
+arrow `CostructuredArrow.mk α.hom.val` lies in the
+connected component of `σ₀`. -/
+private lemma costArrowComponent
+    {d : D} {σ₀ : CostructuredArrow F d}
+    (α : CostructuredArrow (comprehensiveE' F)
+      (⟨d, ⟦σ₀⟧⟩ :
+        (comprehensiveCopresheaf F).Elements)) :
+    (⟦CostructuredArrow.mk (S := F) (T := d)
+      α.hom.val⟧ :
+      ConnectedComponents (CostructuredArrow F d)) =
+      ⟦σ₀⟧ := by
+  have hp := α.hom.property
+  simp only [comprehensiveCopresheaf_map] at hp
+  dsimp [comprehensiveE'] at hp
+  simp only [Category.id_comp] at hp
+  exact hp
+
+/-- Any costructured arrow `α` in
+`CostructuredArrow (comprehensiveE' F) ⟨d, ⟦σ₀⟧⟩` equals
+the lift of `CostructuredArrow.mk α.hom.val`. The
+underlying data are identical, and the proof component
+is propositionally irrelevant. -/
+private lemma compE'CostArrow_eq_lift
+    {d : D} {σ₀ : CostructuredArrow F d}
+    (α : CostructuredArrow (comprehensiveE' F)
+      (⟨d, ⟦σ₀⟧⟩ :
+        (comprehensiveCopresheaf F).Elements)) :
+    α = liftCostArrow F
+      (CostructuredArrow.mk (S := F) (T := d)
+        α.hom.val)
+      (costArrowComponent F α) := by
+  cases α
+  simp only [liftCostArrow, CostructuredArrow.mk]
+  congr 1
+
+/-- Lift a `Zag` step from `CostructuredArrow F d` to
+`CostructuredArrow (comprehensiveE' F) ⟨d, ⟦σ₀⟧⟩`. -/
+private lemma liftZag
+    {d : D} {σ₀ : CostructuredArrow F d}
+    {τ₁ τ₂ : CostructuredArrow F d}
+    (hτ₁ : (⟦τ₁⟧ :
+      ConnectedComponents (CostructuredArrow F d)) =
+      ⟦σ₀⟧)
+    (hτ₂ : (⟦τ₂⟧ :
+      ConnectedComponents (CostructuredArrow F d)) =
+      ⟦σ₀⟧)
+    (h : Zag τ₁ τ₂) :
+    Zag (liftCostArrow F τ₁ hτ₁)
+      (liftCostArrow F τ₂ hτ₂) := by
+  rcases h with ⟨⟨φ⟩⟩ | ⟨⟨φ⟩⟩
+  · exact Or.inl
+      ⟨liftCostArrowHom F hτ₁ hτ₂ φ⟩
+  · exact Or.inr
+      ⟨liftCostArrowHom F hτ₂ hτ₁ φ⟩
+
+/-- Lift a `Zigzag` from `CostructuredArrow F d` to
+`CostructuredArrow (comprehensiveE' F) ⟨d, ⟦σ₀⟧⟩`.
+The proof proceeds by induction on the zigzag,
+deriving component membership of intermediate objects
+from transitivity of connected components. -/
+private lemma liftZigzag
+    {d : D} {σ₀ : CostructuredArrow F d}
+    {τ₁ τ₂ : CostructuredArrow F d}
+    (hτ₁ : (⟦τ₁⟧ :
+      ConnectedComponents (CostructuredArrow F d)) =
+      ⟦σ₀⟧)
+    (hτ₂ : (⟦τ₂⟧ :
+      ConnectedComponents (CostructuredArrow F d)) =
+      ⟦σ₀⟧)
+    (h : Zigzag τ₁ τ₂) :
+    Zigzag (liftCostArrow F τ₁ hτ₁)
+      (liftCostArrow F τ₂ hτ₂) := by
+  induction h with
+  | refl => exact Relation.ReflTransGen.refl
+  | @tail b c hab hbc ih =>
+    have hb : (⟦b⟧ :
+        ConnectedComponents
+          (CostructuredArrow F d)) =
+        ⟦σ₀⟧ :=
+      (Quotient.sound
+        (Relation.ReflTransGen.single
+          hbc)).trans hτ₂
+    exact (ih hb).tail
+      (liftZag F hb hτ₂ hbc)
+
+/-- The copresheaf e-functor `comprehensiveE' F` is
+initial. For each element `⟨d, ⟦σ₀⟧⟩`, the costructured
+arrow category `CostructuredArrow (comprehensiveE' F) ⟨d, ⟦σ₀⟧⟩`
+is connected: every object corresponds to a costructured
+arrow `τ : CostructuredArrow F d` in the component of `σ₀`,
+and the zigzag from the component lifts via
+`liftCostArrowHom`. -/
+instance comprehensiveE'_initial :
+    Functor.Initial (comprehensiveE' F) where
+  out := by
+    intro ⟨d, x⟩
+    induction x using Quotient.inductionOn with
+    | h σ₀ =>
+      haveI : Nonempty
+          (CostructuredArrow (comprehensiveE' F)
+            ⟨d, ⟦σ₀⟧⟩) :=
+        ⟨liftCostArrow F σ₀ rfl⟩
+      apply zigzag_isConnected
+      intro α₁ α₂
+      rw [compE'CostArrow_eq_lift F α₁,
+        compE'CostArrow_eq_lift F α₂]
+      exact liftZigzag F
+        (costArrowComponent F α₁)
+        (costArrowComponent F α₂)
+        (Quotient.exact
+          ((costArrowComponent F α₁).trans
+            (costArrowComponent F α₂).symm))
+
 end ComprehensiveFactorization
 
 section ComprehensiveFactorizationPre
@@ -307,6 +473,182 @@ theorem comprehensiveFactorization_comm :
     intro c₁ c₂ f
     simp [comprehensiveE, comprehensiveM,
       eqToHom_refl]
+
+/-- Lift a structured arrow `σ : StructuredArrow d F` with
+`⟦σ⟧ = ⟦σ₀⟧` to an element of
+`StructuredArrow (op ⟨op d, ⟦σ₀⟧⟩) (comprehensiveE F)`.
+The structured arrow has `right := σ.right`, and its hom
+encodes `σ.hom : d ⟶ F.obj σ.right` as a morphism in
+`ElementsPre` (reversed through `op`). -/
+private def liftStrArrow
+    {d : D} {σ₀ : StructuredArrow d F}
+    (σ : StructuredArrow d F)
+    (hσ : (⟦σ⟧ :
+      ConnectedComponents (StructuredArrow d F)) =
+      ⟦σ₀⟧) :
+    StructuredArrow
+      (Opposite.op
+        ⟨Opposite.op d, ⟦σ₀⟧⟩ :
+        (comprehensivePresheaf F).ElementsPre)
+      (comprehensiveE F) :=
+  StructuredArrow.mk (Y := σ.right)
+    (Quiver.Hom.op
+      ⟨σ.hom.op, by
+        simp only [comprehensivePresheaf_map]
+        dsimp [comprehensiveE]
+        simp only [Category.comp_id]
+        rw [← hσ]
+        exact Quotient.sound
+          (Zigzag.of_inv
+            (StructuredArrow.eta σ).hom)⟩)
+
+/-- Lift a morphism `φ : σ₁ ⟶ σ₂` in `StructuredArrow d F`
+to a morphism between the corresponding lifted structured
+arrows in
+`StructuredArrow (op ⟨op d, ⟦σ₀⟧⟩) (comprehensiveE F)`. -/
+private def liftStrArrowHom
+    {d : D} {σ₀ : StructuredArrow d F}
+    {σ₁ σ₂ : StructuredArrow d F}
+    (hσ₁ : (⟦σ₁⟧ :
+      ConnectedComponents (StructuredArrow d F)) =
+      ⟦σ₀⟧)
+    (hσ₂ : (⟦σ₂⟧ :
+      ConnectedComponents (StructuredArrow d F)) =
+      ⟦σ₀⟧)
+    (φ : σ₁ ⟶ σ₂) :
+    liftStrArrow F σ₁ hσ₁ ⟶
+      liftStrArrow F σ₂ hσ₂ :=
+  StructuredArrow.homMk φ.right (by
+    apply Quiver.Hom.unop_inj
+    ext
+    dsimp [liftStrArrow, comprehensiveE]
+    change (F.map φ.right).op ≫ σ₁.hom.op =
+      σ₂.hom.op
+    simp only [← op_comp]
+    exact congrArg Opposite.op
+      ((CommaMorphism.w φ).symm.trans (by simp)))
+
+/-- Extract the component membership proof from a
+structured arrow over `op ⟨op d, ⟦σ₀⟧⟩`: the structured
+arrow `StructuredArrow.mk` of the underlying morphism lies
+in the connected component of `σ₀`. -/
+private lemma strArrowComponent
+    {d : D} {σ₀ : StructuredArrow d F}
+    (α : StructuredArrow
+      (Opposite.op
+        ⟨Opposite.op d, ⟦σ₀⟧⟩ :
+        (comprehensivePresheaf F).ElementsPre)
+      (comprehensiveE F)) :
+    (⟦StructuredArrow.mk (S := d) (T := F)
+      α.hom.unop.val.unop⟧ :
+      ConnectedComponents (StructuredArrow d F)) =
+      ⟦σ₀⟧ := by
+  have hp := α.hom.unop.property
+  simp only [comprehensivePresheaf_map] at hp
+  dsimp [comprehensiveE] at hp
+  simp only [Category.comp_id] at hp
+  exact hp
+
+/-- Any structured arrow `α` in
+`StructuredArrow (op ⟨op d, ⟦σ₀⟧⟩) (comprehensiveE F)`
+equals the lift of `StructuredArrow.mk α.hom.unop.val.unop`.
+The underlying data are identical, and the proof component
+is propositionally irrelevant. -/
+private lemma compEStrArrow_eq_lift
+    {d : D} {σ₀ : StructuredArrow d F}
+    (α : StructuredArrow
+      (Opposite.op
+        ⟨Opposite.op d, ⟦σ₀⟧⟩ :
+        (comprehensivePresheaf F).ElementsPre)
+      (comprehensiveE F)) :
+    α = liftStrArrow F
+      (StructuredArrow.mk (S := d) (T := F)
+        α.hom.unop.val.unop)
+      (strArrowComponent F α) := by
+  cases α
+  simp only [liftStrArrow, StructuredArrow.mk]
+  congr 1
+
+/-- Lift a `Zag` step from `StructuredArrow d F` to
+`StructuredArrow (op ⟨op d, ⟦σ₀⟧⟩) (comprehensiveE F)`. -/
+private lemma liftZagStr
+    {d : D} {σ₀ : StructuredArrow d F}
+    {τ₁ τ₂ : StructuredArrow d F}
+    (hτ₁ : (⟦τ₁⟧ :
+      ConnectedComponents (StructuredArrow d F)) =
+      ⟦σ₀⟧)
+    (hτ₂ : (⟦τ₂⟧ :
+      ConnectedComponents (StructuredArrow d F)) =
+      ⟦σ₀⟧)
+    (h : Zag τ₁ τ₂) :
+    Zag (liftStrArrow F τ₁ hτ₁)
+      (liftStrArrow F τ₂ hτ₂) := by
+  rcases h with ⟨⟨φ⟩⟩ | ⟨⟨φ⟩⟩
+  · exact Or.inl
+      ⟨liftStrArrowHom F hτ₁ hτ₂ φ⟩
+  · exact Or.inr
+      ⟨liftStrArrowHom F hτ₂ hτ₁ φ⟩
+
+/-- Lift a `Zigzag` from `StructuredArrow d F` to
+`StructuredArrow (op ⟨op d, ⟦σ₀⟧⟩) (comprehensiveE F)`.
+The proof proceeds by induction on the zigzag,
+deriving component membership of intermediate objects
+from transitivity of connected components. -/
+private lemma liftZigzagStr
+    {d : D} {σ₀ : StructuredArrow d F}
+    {τ₁ τ₂ : StructuredArrow d F}
+    (hτ₁ : (⟦τ₁⟧ :
+      ConnectedComponents (StructuredArrow d F)) =
+      ⟦σ₀⟧)
+    (hτ₂ : (⟦τ₂⟧ :
+      ConnectedComponents (StructuredArrow d F)) =
+      ⟦σ₀⟧)
+    (h : Zigzag τ₁ τ₂) :
+    Zigzag (liftStrArrow F τ₁ hτ₁)
+      (liftStrArrow F τ₂ hτ₂) := by
+  induction h with
+  | refl => exact Relation.ReflTransGen.refl
+  | @tail b c hab hbc ih =>
+    have hb : (⟦b⟧ :
+        ConnectedComponents
+          (StructuredArrow d F)) =
+        ⟦σ₀⟧ :=
+      (Quotient.sound
+        (Relation.ReflTransGen.single
+          hbc)).trans hτ₂
+    exact (ih hb).tail
+      (liftZagStr F hb hτ₂ hbc)
+
+/-- The presheaf e-functor `comprehensiveE F` is final.
+For each element `op ⟨op d, ⟦σ₀⟧⟩ : ElementsPre`, the
+structured arrow category
+`StructuredArrow (op ⟨op d, ⟦σ₀⟧⟩) (comprehensiveE F)` is
+connected: every object corresponds to a structured arrow
+`τ : StructuredArrow d F` in the component of `σ₀`, and the
+zigzag from the component lifts via `liftStrArrowHom`. -/
+instance comprehensiveE_final :
+    Functor.Final (comprehensiveE F) where
+  out := by
+    intro ⟨⟨d_op, x⟩⟩
+    induction x using Quotient.inductionOn with
+    | h σ₀ =>
+      haveI : Nonempty
+          (StructuredArrow
+            (Opposite.op
+              ⟨d_op, ⟦σ₀⟧⟩ :
+              (comprehensivePresheaf F).ElementsPre)
+            (comprehensiveE F)) :=
+        ⟨liftStrArrow F σ₀ rfl⟩
+      apply zigzag_isConnected
+      intro α₁ α₂
+      rw [compEStrArrow_eq_lift F α₁,
+        compEStrArrow_eq_lift F α₂]
+      exact liftZigzagStr F
+        (strArrowComponent F α₁)
+        (strArrowComponent F α₂)
+        (Quotient.exact
+          ((strArrowComponent F α₁).trans
+            (strArrowComponent F α₂).symm))
 
 end ComprehensiveFactorizationPre
 
