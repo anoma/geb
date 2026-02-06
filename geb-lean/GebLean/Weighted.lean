@@ -10594,6 +10594,54 @@ abbrev IsStrongRestrictedCoend
     (c : StrongRestrictedCowedge G H) :=
   IsInitial c
 
+/-! ### Transfer of terminality/initiality across full inclusions
+
+Since the inclusion `StrongRestrictedWedge.inclusion` is fully faithful,
+a terminal `RestrictedWedge` that is in the image of the inclusion is
+also terminal in `StrongRestrictedWedge`. This is an instance of the
+general theorem that fully faithful functors reflect terminal objects.
+-/
+
+/-- If a strong restricted wedge is terminal when viewed as a
+restricted wedge (via the fully faithful inclusion), then it is
+also terminal in the strong restricted wedge category.
+
+This follows from the general fact that fully faithful functors
+reflect terminal objects. We use the explicit preimage from
+`inclusion_fullyFaithful` to keep the proof computable. -/
+def isStrongRestrictedEnd_of_isRestrictedEnd
+    {D : Type w} [Category.{v} D]
+    (G : Cᵒᵖ ⥤ C ⥤ D)
+    (H : Cᵒᵖ ⥤ C ⥤ Type v)
+    (c : StrongRestrictedWedge G H)
+    (h : IsRestrictedEnd G H c.toRestrictedWedge) :
+    IsStrongRestrictedEnd G H c :=
+  let ff := StrongRestrictedWedge.inclusion_fullyFaithful G H
+  IsTerminal.ofUniqueHom
+    (fun Y => ff.preimage (h.from Y.toRestrictedWedge))
+    (fun Y f => ff.map_injective
+      (by rw [ff.map_preimage]; exact h.hom_ext _ _))
+
+/-- If a strong restricted cowedge is initial when viewed as a
+restricted cowedge (via the fully faithful inclusion), then it is
+also initial in the strong restricted cowedge category.
+
+This follows from the general fact that fully faithful functors
+reflect initial objects. We use the explicit preimage from
+`inclusion_fullyFaithful` to keep the proof computable. -/
+def isStrongRestrictedCoend_of_isRestrictedCoend
+    {D : Type w} [Category.{v} D]
+    (G : Cᵒᵖ ⥤ C ⥤ D)
+    (H : Cᵒᵖ ⥤ C ⥤ Type v)
+    (c : StrongRestrictedCowedge G H)
+    (h : IsRestrictedCoend G H c.toRestrictedCowedge) :
+    IsStrongRestrictedCoend G H c :=
+  let ff := StrongRestrictedCowedge.inclusion_fullyFaithful G H
+  IsInitial.ofUniqueHom
+    (fun Y => ff.preimage (h.to Y.toRestrictedCowedge))
+    (fun Y f => ff.map_injective
+      (by rw [ff.map_preimage]; exact h.hom_ext _ _))
+
 end StructureCostructureIntegralUniversal
 
 /-!
