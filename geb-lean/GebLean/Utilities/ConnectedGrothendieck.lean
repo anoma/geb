@@ -533,6 +533,26 @@ theorem connGrothendieckHom_ext {x y : ConnGrothendieckObj C F}
   congr 1
   exact eq_of_heq hFiber
 
+/-- Heterogeneous extensionality for `ConnGrothendieckHom`:
+if the source and target objects are equal and the domain arrows,
+codomain arrows, and fiber morphisms are HEq, then the
+morphisms are HEq. -/
+theorem connGrothendieckHom_heq
+    {x₁ x₂ y₁ y₂ : ConnGrothendieckObj C F}
+    (hx : x₁ = x₂) (hy : y₁ = y₂)
+    {m : ConnGrothendieckHom C F x₁ y₁}
+    {n : ConnGrothendieckHom C F x₂ y₂}
+    (hDom : HEq m.domArr n.domArr)
+    (hCod : HEq m.codArr n.codArr)
+    (hFiber : HEq m.fiberMorph n.fiberMorph) :
+    HEq m n := by
+  subst hx; subst hy
+  cases m; cases n
+  simp only [] at hDom hCod
+  subst hDom; subst hCod
+  congr 1
+  exact eq_of_heq hFiber
+
 /--
 Category operations for the connected Grothendieck construction.
 -/
