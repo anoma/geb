@@ -110,6 +110,8 @@ that is unavailable for `RestrictedWedge`?
 
 **Formalized** (in `GebLean/Weighted.lean`):
 
+Weight functoriality (contravariant for wedges, covariant for cowedges):
+
 - `weightPullbackFunctor`:
   `Paranat H₁ H₂ → (StrongRestrictedWedge G H₂ ⥤ StrongRestrictedWedge G H₁)`
 - `weightPullbackFunctor_id`:
@@ -120,9 +122,23 @@ that is unavailable for `RestrictedWedge`?
   `weightPullbackCowedgeFunctor_id`,
   `weightPullbackCowedgeFunctor_comp`
 
+Diagram functoriality (covariant for wedges, contravariant for cowedges):
+
+- `profPostcompFunctor`:
+  `(η : G₁ ⟶ G₂) → (StrongRestrictedWedge G₁ H ⥤ StrongRestrictedWedge G₂ H)`
+- `profPostcompFunctor_id`:
+  postcomposition by `𝟙 G` = identity functor
+- `profPostcompFunctor_comp`:
+  postcomposition by `η ≫ θ` = composition of postcomposition functors
+- `profPrecompCowedgeFunctor`:
+  `(η : G₁ ⟶ G₂) → (StrongRestrictedCowedge G₂ H ⥤ StrongRestrictedCowedge G₁ H)`
+- `profPrecompCowedgeFunctor_id`:
+  precomposition by `𝟙 G` = identity functor
+- `profPrecompCowedgeFunctor_comp`:
+  precomposition by `η ≫ θ` = composition of precomposition functors (reversed)
+
 **Remaining**:
 
-- Covariant functoriality in `G` (via `cosliceProfunctorPostcomp`)
 - Assembling the combined bifunctor
   `(Cᵒᵖ ⥤ C ⥤ D) × EndoProf^op → Cat`
 - Connection to `Para(C)` (requires profunctor composition)
@@ -132,7 +148,7 @@ that is unavailable for `RestrictedWedge`?
 - [x] Formalize AlgProf and Kan extension connection via sections (Q1)
 - [x] Formalize conditions for terminality transfer across non-full functors (Q2)
 - [x] Formalize weight pullback functors (Q3, partial)
-- [ ] Formalize covariant functoriality in G (Q3)
+- [x] Formalize covariant functoriality in G (Q3)
 - [ ] Assemble bifunctor structure (Q3)
 - [ ] Explore profunctor composition / Para(C) connection (Q3)
 - [x] Document findings in `docs/coend-formulas-research.md`

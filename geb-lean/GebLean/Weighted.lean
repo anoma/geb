@@ -5063,6 +5063,19 @@ instance StrongRestrictedCowedgeCat
     ext; simp [StrongRestrictedCowedge.Hom.comp]
 
 @[simp]
+theorem StrongRestrictedCowedge.eqToHom_hom
+    {D : Type w} [Category.{v} D]
+    {G : Cᵒᵖ ⥤ C ⥤ D}
+    {H : Cᵒᵖ ⥤ C ⥤ Type v}
+    {c c' : StrongRestrictedCowedge G H}
+    (h : c = c') :
+    (eqToHom h).hom =
+      eqToHom (congrArg
+        StrongRestrictedCowedge.pt h) := by
+  subst h
+  rfl
+
+@[simp]
 theorem StrongRestrictedCowedge.category_comp_hom
     {D : Type w} [Category.{v} D]
     {G : Cᵒᵖ ⥤ C ⥤ D}
@@ -6057,6 +6070,19 @@ instance StrongRestrictedWedgeCat
       StrongRestrictedWedge.Hom.id]
   assoc f g h := by
     ext; simp [StrongRestrictedWedge.Hom.comp]
+
+@[simp]
+theorem StrongRestrictedWedge.eqToHom_hom
+    {D : Type w} [Category.{v} D]
+    {G : Cᵒᵖ ⥤ C ⥤ D}
+    {H : Cᵒᵖ ⥤ C ⥤ Type v}
+    {c c' : StrongRestrictedWedge G H}
+    (h : c = c') :
+    (eqToHom h).hom =
+      eqToHom (congrArg
+        StrongRestrictedWedge.pt h) := by
+  subst h
+  rfl
 
 @[simp]
 theorem StrongRestrictedWedge.category_comp_hom
@@ -11661,5 +11687,321 @@ theorem weightPullbackCowedgeFunctor_comp
     exact StrongRestrictedCowedge.Hom.ext rfl)
 
 end WeightPullback
+
+section ProfPostcomp
+
+/-!
+## Profunctor postcomposition for strong restricted wedges
+
+A natural transformation `η : G₁ ⟶ G₂` between
+diagram profunctors induces a functor
+`StrongRestrictedWedge G₁ H ⥤ StrongRestrictedWedge G₂ H`
+by postcomposing each wedge's family with `η`.
+
+This parallels the covariant functoriality of
+weighted limits in the diagram: given `η : D₁ ⟶ D₂`,
+the weighted limit `lim^W D₁ → lim^W D₂`.
+-/
+
+variable {D : Type w} [Category.{v} D]
+  {G₁ G₂ : Cᵒᵖ ⥤ C ⥤ D}
+  (H : Cᵒᵖ ⥤ C ⥤ Type v)
+
+/-- Postcompose the family of a strong restricted
+wedge with a natural transformation on the diagram
+profunctor. -/
+def StrongRestrictedWedge.profPostcompObj
+    (η : G₁ ⟶ G₂)
+    (w : StrongRestrictedWedge G₁ H) :
+    StrongRestrictedWedge G₂ H :=
+  let composed :=
+    (Paranat.mk w.family w.isParanatural).comp
+      (Paranat.ofNatTrans (G₁ ⇧ w.pt)
+        (G₂ ⇧ w.pt)
+        (cosliceProfunctorPostcomp η w.pt))
+  StrongRestrictedWedge.mk' w.pt
+    composed.app composed.paranatural
+
+/-- The profunctor postcomposition action on
+morphisms. The apex morphism is unchanged;
+commutativity follows by associativity and the
+original commutativity condition. -/
+def StrongRestrictedWedge.profPostcompMap
+    (η : G₁ ⟶ G₂)
+    {w₁ w₂ : StrongRestrictedWedge G₁ H}
+    (f : w₁ ⟶ w₂) :
+    profPostcompObj H η w₁ ⟶
+      profPostcompObj H η w₂ where
+  hom := f.hom
+  comm A a := by
+    change f.hom ≫ w₂.family A a ≫
+      (η.app (Opposite.op A)).app A =
+      w₁.family A a ≫
+        (η.app (Opposite.op A)).app A
+    rw [← Category.assoc, f.comm]
+
+/-- Postcomposition with a natural transformation
+`η : G₁ ⟶ G₂` defines a functor from
+`StrongRestrictedWedge G₁ H` to
+`StrongRestrictedWedge G₂ H`. -/
+@[simps]
+def profPostcompFunctor (η : G₁ ⟶ G₂) :
+    StrongRestrictedWedge G₁ H ⥤
+      StrongRestrictedWedge G₂ H where
+  obj := StrongRestrictedWedge.profPostcompObj H η
+  map := StrongRestrictedWedge.profPostcompMap H η
+  map_id _ :=
+    StrongRestrictedWedge.Hom.ext rfl
+  map_comp _ _ :=
+    StrongRestrictedWedge.Hom.ext rfl
+
+private theorem profPostcompObj_id
+    (G : Cᵒᵖ ⥤ C ⥤ D)
+    (H : Cᵒᵖ ⥤ C ⥤ Type v)
+    (w : StrongRestrictedWedge G H) :
+    StrongRestrictedWedge.profPostcompObj
+      H (𝟙 G) w = w := by
+  apply StrongRestrictedWedge.ext
+  · rfl
+  · apply heq_of_eq
+    apply StrongRestrictedWedgeOver.ext
+    funext A a
+    simp only [
+      StrongRestrictedWedge.profPostcompObj,
+      Paranat.comp, Paranat.ofNatTrans,
+      NatTrans.restrict,
+      cosliceProfunctorPostcomp,
+      NatTrans.id_app,
+      StrongRestrictedWedge.mk']
+    simp only [Category.comp_id]
+
+/-- Postcomposition by the identity natural
+transformation gives the identity functor. -/
+theorem profPostcompFunctor_id
+    (G : Cᵒᵖ ⥤ C ⥤ D)
+    (H : Cᵒᵖ ⥤ C ⥤ Type v) :
+    profPostcompFunctor H (𝟙 G) =
+      𝟭 (StrongRestrictedWedge G H) :=
+  Functor.ext
+    (fun w => profPostcompObj_id G H w)
+    (fun _ _ _ => by
+      apply StrongRestrictedWedge.Hom.ext
+      simp only [
+        StrongRestrictedWedge.category_comp_hom,
+        StrongRestrictedWedge.eqToHom_hom,
+        eqToHom_refl, Category.id_comp,
+        Category.comp_id, Functor.id_map,
+        profPostcompFunctor,
+        StrongRestrictedWedge.profPostcompMap])
+
+variable {G₃ : Cᵒᵖ ⥤ C ⥤ D}
+
+private theorem profPostcompObj_comp
+    (η : G₁ ⟶ G₂) (θ : G₂ ⟶ G₃)
+    (H : Cᵒᵖ ⥤ C ⥤ Type v)
+    (w : StrongRestrictedWedge G₁ H) :
+    StrongRestrictedWedge.profPostcompObj
+      H (η ≫ θ) w =
+    StrongRestrictedWedge.profPostcompObj
+      H θ
+      (StrongRestrictedWedge.profPostcompObj
+        H η w) := by
+  apply StrongRestrictedWedge.ext
+  · rfl
+  · apply heq_of_eq
+    apply StrongRestrictedWedgeOver.ext
+    funext A a
+    simp only [
+      StrongRestrictedWedge.profPostcompObj,
+      Paranat.comp, Paranat.ofNatTrans,
+      NatTrans.restrict,
+      cosliceProfunctorPostcomp,
+      NatTrans.comp_app,
+      StrongRestrictedWedge.mk',
+      StrongRestrictedWedge.family]
+    simp only [Category.assoc]
+
+/-- Postcomposition respects composition of
+natural transformations (covariantly). -/
+theorem profPostcompFunctor_comp
+    (η : G₁ ⟶ G₂) (θ : G₂ ⟶ G₃)
+    (H : Cᵒᵖ ⥤ C ⥤ Type v) :
+    profPostcompFunctor H (η ≫ θ) =
+      profPostcompFunctor H η ⋙
+        profPostcompFunctor H θ :=
+  Functor.ext
+    (fun w => profPostcompObj_comp η θ H w)
+    (fun _ _ _ => by
+      apply StrongRestrictedWedge.Hom.ext
+      simp only [
+        StrongRestrictedWedge.category_comp_hom,
+        StrongRestrictedWedge.eqToHom_hom,
+        eqToHom_refl, Category.id_comp,
+        Category.comp_id, Functor.comp_map,
+        profPostcompFunctor,
+        StrongRestrictedWedge.profPostcompMap])
+
+end ProfPostcomp
+
+section ProfPrecompCowedge
+
+/-!
+## Profunctor precomposition for strong restricted
+cowedges
+
+A natural transformation `η : G₁ ⟶ G₂` between
+diagram profunctors induces a functor
+`StrongRestrictedCowedge G₂ H ⥤
+  StrongRestrictedCowedge G₁ H`
+by precomposing each cowedge's family with `η`.
+
+This is contravariant in the diagram, paralleling
+the way cowedge categories transform under
+natural transformations between diagrams.
+-/
+
+variable {D : Type w} [Category.{v} D]
+  {G₁ G₂ : Cᵒᵖ ⥤ C ⥤ D}
+  (H : Cᵒᵖ ⥤ C ⥤ Type v)
+
+/-- Precompose the family of a strong restricted
+cowedge with a natural transformation on the
+diagram profunctor. -/
+def StrongRestrictedCowedge.profPrecompObj
+    (η : G₁ ⟶ G₂)
+    (cw : StrongRestrictedCowedge G₂ H) :
+    StrongRestrictedCowedge G₁ H :=
+  let composed :=
+    (Paranat.mk cw.family cw.isParanatural).comp
+      (Paranat.ofNatTrans (G₂ ⇓ cw.pt)
+        (G₁ ⇓ cw.pt)
+        (sliceProfunctorPrecomp η cw.pt))
+  StrongRestrictedCowedge.mk' cw.pt
+    composed.app composed.paranatural
+
+/-- The profunctor precomposition action on
+morphisms. The apex morphism is unchanged. -/
+def StrongRestrictedCowedge.profPrecompMap
+    (η : G₁ ⟶ G₂)
+    {cw₁ cw₂ : StrongRestrictedCowedge G₂ H}
+    (f : cw₁ ⟶ cw₂) :
+    profPrecompObj H η cw₁ ⟶
+      profPrecompObj H η cw₂ where
+  hom := f.hom
+  comm A a := by
+    simp only [
+      StrongRestrictedCowedge.profPrecompObj,
+      Paranat.comp, Paranat.ofNatTrans,
+      NatTrans.restrict,
+      sliceProfunctorPrecomp,
+      StrongRestrictedCowedge.mk',
+      StrongRestrictedCowedge.family,
+      Category.assoc, f.comm]
+
+/-- Precomposition with a natural transformation
+`η : G₁ ⟶ G₂` defines a functor from
+`StrongRestrictedCowedge G₂ H` to
+`StrongRestrictedCowedge G₁ H`. -/
+@[simps]
+def profPrecompCowedgeFunctor (η : G₁ ⟶ G₂) :
+    StrongRestrictedCowedge G₂ H ⥤
+      StrongRestrictedCowedge G₁ H where
+  obj :=
+    StrongRestrictedCowedge.profPrecompObj H η
+  map :=
+    StrongRestrictedCowedge.profPrecompMap H η
+  map_id _ :=
+    StrongRestrictedCowedge.Hom.ext rfl
+  map_comp _ _ :=
+    StrongRestrictedCowedge.Hom.ext rfl
+
+private theorem profPrecompCowedgeObj_id
+    (G : Cᵒᵖ ⥤ C ⥤ D)
+    (H : Cᵒᵖ ⥤ C ⥤ Type v)
+    (cw : StrongRestrictedCowedge G H) :
+    StrongRestrictedCowedge.profPrecompObj
+      H (𝟙 G) cw = cw := by
+  apply StrongRestrictedCowedge.ext
+  · rfl
+  · apply heq_of_eq
+    apply StrongRestrictedCowedgeOver.ext
+    funext A a
+    simp only [
+      StrongRestrictedCowedge.profPrecompObj,
+      Paranat.comp, Paranat.ofNatTrans,
+      NatTrans.restrict,
+      sliceProfunctorPrecomp,
+      NatTrans.id_app,
+      StrongRestrictedCowedge.mk']
+    simp only [Category.id_comp]
+
+/-- Precomposition by the identity natural
+transformation gives the identity functor. -/
+theorem profPrecompCowedgeFunctor_id
+    (G : Cᵒᵖ ⥤ C ⥤ D)
+    (H : Cᵒᵖ ⥤ C ⥤ Type v) :
+    profPrecompCowedgeFunctor H (𝟙 G) =
+      𝟭 (StrongRestrictedCowedge G H) :=
+  Functor.ext
+    (fun cw => profPrecompCowedgeObj_id G H cw)
+    (fun _ _ _ => by
+      apply StrongRestrictedCowedge.Hom.ext
+      simp only [
+        StrongRestrictedCowedge.category_comp_hom,
+        StrongRestrictedCowedge.eqToHom_hom,
+        eqToHom_refl, Category.id_comp,
+        Category.comp_id, Functor.id_map,
+        profPrecompCowedgeFunctor,
+        StrongRestrictedCowedge.profPrecompMap])
+
+variable {G₃ : Cᵒᵖ ⥤ C ⥤ D}
+
+private theorem profPrecompCowedgeObj_comp
+    (η : G₁ ⟶ G₂) (θ : G₂ ⟶ G₃)
+    (H : Cᵒᵖ ⥤ C ⥤ Type v)
+    (cw : StrongRestrictedCowedge G₃ H) :
+    StrongRestrictedCowedge.profPrecompObj
+      H (η ≫ θ) cw =
+    StrongRestrictedCowedge.profPrecompObj
+      H η
+      (StrongRestrictedCowedge.profPrecompObj
+        H θ cw) := by
+  apply StrongRestrictedCowedge.ext
+  · rfl
+  · apply heq_of_eq
+    apply StrongRestrictedCowedgeOver.ext
+    funext A a
+    simp only [
+      StrongRestrictedCowedge.profPrecompObj,
+      Paranat.comp, Paranat.ofNatTrans,
+      NatTrans.restrict,
+      sliceProfunctorPrecomp,
+      NatTrans.comp_app,
+      StrongRestrictedCowedge.mk',
+      StrongRestrictedCowedge.family]
+    simp only [Category.assoc]
+
+/-- Precomposition respects composition of
+natural transformations (contravariantly). -/
+theorem profPrecompCowedgeFunctor_comp
+    (η : G₁ ⟶ G₂) (θ : G₂ ⟶ G₃)
+    (H : Cᵒᵖ ⥤ C ⥤ Type v) :
+    profPrecompCowedgeFunctor H (η ≫ θ) =
+      profPrecompCowedgeFunctor H θ ⋙
+        profPrecompCowedgeFunctor H η :=
+  Functor.ext
+    (fun cw =>
+      profPrecompCowedgeObj_comp η θ H cw)
+    (fun _ _ _ => by
+      apply StrongRestrictedCowedge.Hom.ext
+      simp only [
+        StrongRestrictedCowedge.category_comp_hom,
+        StrongRestrictedCowedge.eqToHom_hom,
+        eqToHom_refl, Category.id_comp,
+        Category.comp_id, Functor.comp_map,
+        profPrecompCowedgeFunctor,
+        StrongRestrictedCowedge.profPrecompMap])
+
+end ProfPrecompCowedge
 
 end GebLean
