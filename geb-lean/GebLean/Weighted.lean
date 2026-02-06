@@ -10642,6 +10642,264 @@ def isStrongRestrictedCoend_of_isRestrictedCoend
     (fun Y f => ff.map_injective
       (by rw [ff.map_preimage]; exact h.hom_ext _ _))
 
+/-!
+### Comparison Map Counterexample
+
+The comparison map from the initial RestrictedCowedge to the initial
+StrongRestrictedCowedge is NOT an isomorphism in general. This section
+provides a counterexample using WalkingParallelPair.
+
+For H = Hom profunctor and G = const T on WalkingParallelPair:
+- CostructureIntegral H G ≅ T (paranaturality identifies (zero, t) ~ (one, t))
+- Initial RestrictedCowedge ≅ T + T (dinaturality is vacuous)
+
+The difference is that dinaturality involves H(one, zero) = ∅, making it
+vacuous, while paranaturality involves DiagElem morphisms which do exist.
+-/
+
+/-- The constant profunctor at a type T. -/
+abbrev wppConstProfunctor (T : Type) :
+    WalkingParallelPairᵒᵖ ⥤ WalkingParallelPair ⥤ Type :=
+  constProfunctor (C := WalkingParallelPair) T
+
+/-- DiagElem of the Hom profunctor on WalkingParallelPair has two objects:
+(zero, id_zero) and (one, id_one). -/
+abbrev wppDiagElemZero : DiagElem wppHomProfunctor :=
+  ⟨WalkingParallelPair.zero, 𝟙 WalkingParallelPair.zero⟩
+
+abbrev wppDiagElemOne : DiagElem wppHomProfunctor :=
+  ⟨WalkingParallelPair.one, 𝟙 WalkingParallelPair.one⟩
+
+/-- There is a morphism in DiagElem from (zero, id_zero) to (one, id_one)
+via the `left` morphism. -/
+def wppDiagElemMorLeft : wppDiagElemZero ⟶ wppDiagElemOne where
+  base := WalkingParallelPairHom.left
+  compat := by
+    simp only [wppDiagElemZero, wppDiagElemOne, DiagCompat,
+      wppHomProfunctor, Functor.curry_obj_obj_obj, Functor.hom_obj,
+      Functor.curry_obj_obj_map, Functor.hom_map, Opposite.unop_op]
+    rfl
+
+/-- There is a morphism in DiagElem from (zero, id_zero) to (one, id_one)
+via the `right` morphism. -/
+def wppDiagElemMorRight : wppDiagElemZero ⟶ wppDiagElemOne where
+  base := WalkingParallelPairHom.right
+  compat := by
+    simp only [wppDiagElemZero, wppDiagElemOne, DiagCompat,
+      wppHomProfunctor, Functor.curry_obj_obj_obj, Functor.hom_obj,
+      Functor.curry_obj_obj_map, Functor.hom_map, Opposite.unop_op]
+    rfl
+
+/-- For the constant profunctor, the off-diagonal app is the constant type. -/
+theorem wppConstProfunctor_offDiagApp (T : Type)
+    (I J : WalkingParallelPair) :
+    offDiagApp (wppConstProfunctor T) I J = T := rfl
+
+/-- For the constant profunctor, contravAction is the identity. -/
+theorem wppConstProfunctor_contravAction (T : Type)
+    {I J : WalkingParallelPair} (f : I ⟶ J) (t : T) :
+    contravAction (wppConstProfunctor T) f I t = t := rfl
+
+/-- For the constant profunctor, covAction is the identity. -/
+theorem wppConstProfunctor_covAction (T : Type)
+    {I J : WalkingParallelPair} (f : I ⟶ J) (t : T) :
+    covAction (wppConstProfunctor T) J f t = t := rfl
+
+/-- The paranaturality quotient in CostructureIntegral identifies
+elements at zero with elements at one for constant profunctors.
+
+Specifically, for any t : T, we have:
+  mk wppDiagElemZero t = mk wppDiagElemOne t
+in CostructureIntegral wppHomProfunctor (wppConstProfunctor T). -/
+theorem wppCostructureIntegral_identifies_zero_one (T : Type) (t : T) :
+    CostructureIntegral.mk (G := wppConstProfunctor T) wppDiagElemZero t =
+    CostructureIntegral.mk wppDiagElemOne t := by
+  have h := CostructureIntegral.sound (G := wppConstProfunctor T)
+    wppDiagElemMorLeft t
+  simp only [wppConstProfunctor_contravAction, wppConstProfunctor_covAction] at h
+  exact h
+
+/-- Hom(one, zero) in WalkingParallelPair is empty. -/
+theorem wppHom_one_zero_empty :
+    IsEmpty (WalkingParallelPair.one ⟶ WalkingParallelPair.zero) :=
+  ⟨walkingParallelPair_one_zero_empty⟩
+
+/-- Any endomorphism of zero in WalkingParallelPair is the identity. -/
+theorem wppHom_zero_zero_eq_id (f : WalkingParallelPair.zero ⟶ WalkingParallelPair.zero) :
+    f = 𝟙 WalkingParallelPair.zero := by
+  cases f
+  rfl
+
+/-- Any endomorphism of one in WalkingParallelPair is the identity. -/
+theorem wppHom_one_one_eq_id (f : WalkingParallelPair.one ⟶ WalkingParallelPair.one) :
+    f = 𝟙 WalkingParallelPair.one := by
+  cases f
+  rfl
+
+/-- The off-diagonal H(one, zero) for the Hom profunctor is empty.
+This means dinaturality conditions at morphisms zero → one are vacuous. -/
+theorem wppHomProfunctor_offDiag_one_zero_empty :
+    IsEmpty (offDiagApp wppHomProfunctor WalkingParallelPair.one
+      WalkingParallelPair.zero) :=
+  wppHom_one_zero_empty
+
+/-- Every element of DiagElem wppHomProfunctor is either wppDiagElemZero
+or wppDiagElemOne. -/
+theorem wppDiagElem_cases (x : DiagElem wppHomProfunctor) :
+    x = wppDiagElemZero ∨ x = wppDiagElemOne := by
+  obtain ⟨base, elem⟩ := x
+  cases base with
+  | zero =>
+    left
+    simp only [wppHomProfunctor, diagApp, Functor.curry_obj_obj_obj,
+      Functor.hom_obj] at elem
+    have : elem = 𝟙 WalkingParallelPair.zero := wppHom_zero_zero_eq_id elem
+    subst this
+    rfl
+  | one =>
+    right
+    simp only [wppHomProfunctor, diagApp, Functor.curry_obj_obj_obj,
+      Functor.hom_obj] at elem
+    have : elem = 𝟙 WalkingParallelPair.one := wppHom_one_one_eq_id elem
+    subst this
+    rfl
+
+/-- The map from CostructureIntegral to T: extract the T component.
+This is well-defined because contravAction and covAction are both identity
+for the constant profunctor. -/
+def wppCostructureIntegralToT (T : Type) :
+    CostructureIntegral wppHomProfunctor (wppConstProfunctor T) → T :=
+  CostructureIntegral.lift
+    (fun _ t => t)
+    (fun {_ _} _ t => by
+      simp only [wppConstProfunctor_contravAction, wppConstProfunctor_covAction])
+
+/-- The map from T to CostructureIntegral: use the zero diagonal element. -/
+def wppTToCostructureIntegral (T : Type) :
+    T → CostructureIntegral wppHomProfunctor (wppConstProfunctor T) :=
+  fun t => CostructureIntegral.mk wppDiagElemZero t
+
+/-- The equivalence between CostructureIntegral and T. -/
+def wppCostructureIntegralEquivT (T : Type) :
+    CostructureIntegral wppHomProfunctor (wppConstProfunctor T) ≃ T where
+  toFun := wppCostructureIntegralToT T
+  invFun := wppTToCostructureIntegral T
+  left_inv := by
+    intro x
+    obtain ⟨⟨de, t⟩, hrep⟩ := Quotient.exists_rep x
+    simp only [wppCostructureIntegralToT, wppTToCostructureIntegral]
+    rw [← hrep]
+    have hcases := wppDiagElem_cases de
+    cases hcases with
+    | inl hzero =>
+      subst hzero
+      rfl
+    | inr hone =>
+      subst hone
+      exact wppCostructureIntegral_identifies_zero_one T t
+  right_inv := fun _ => rfl
+
+/-- The restricted cowedge with pt = T + T for the constant profunctor.
+The family sends elements at zero to the left summand and elements at one
+to the right summand. -/
+def wppRestrictedCowedgeSumT (T : Type) :
+    RestrictedCowedge (wppConstProfunctor T) wppHomProfunctor :=
+  RestrictedCowedge.mk' (T ⊕ T)
+    (fun A _ t =>
+      match A with
+      | WalkingParallelPair.zero => Sum.inl t
+      | WalkingParallelPair.one => Sum.inr t)
+    (fun I₀ I₁ f x => by
+      cases I₀ <;> cases I₁
+      · have hf := wppHom_zero_zero_eq_id f
+        have hx := wppHom_zero_zero_eq_id x
+        subst hf hx
+        rfl
+      · exact (walkingParallelPair_one_zero_empty x).elim
+      · exact (walkingParallelPair_one_zero_empty f).elim
+      · have hf := wppHom_one_one_eq_id f
+        have hx := wppHom_one_one_eq_id x
+        subst hf hx
+        rfl)
+
+/-- The restricted cowedge with pt = T + T is initial.
+For any other restricted cowedge c, the unique morphism sends:
+- inl t to c.family zero id_zero t
+- inr t to c.family one id_one t -/
+def wppRestrictedCowedgeSumT_isInitial (T : Type) :
+    IsInitial (wppRestrictedCowedgeSumT T) :=
+  IsInitial.ofUniqueHom
+    (fun c => ⟨fun x =>
+        match x with
+        | Sum.inl t => c.family WalkingParallelPair.zero
+            (𝟙 WalkingParallelPair.zero) t
+        | Sum.inr t => c.family WalkingParallelPair.one
+            (𝟙 WalkingParallelPair.one) t,
+      fun A d => by
+        funext t
+        simp only [wppRestrictedCowedgeSumT, RestrictedCowedge.family,
+          RestrictedCowedge.mk']
+        cases A with
+        | zero =>
+          simp only [wppHomProfunctor, Functor.curry_obj_obj_obj,
+            Functor.hom_obj] at d
+          simp only [wppHom_zero_zero_eq_id d]
+          rfl
+        | one =>
+          simp only [wppHomProfunctor, Functor.curry_obj_obj_obj,
+            Functor.hom_obj] at d
+          simp only [wppHom_one_one_eq_id d]
+          rfl⟩)
+    (fun c f => by
+      apply RestrictedCowedge.Hom.ext
+      funext x
+      cases x with
+      | inl t =>
+        have h := congrFun (f.comm WalkingParallelPair.zero
+          (𝟙 WalkingParallelPair.zero)) t
+        simp only [wppRestrictedCowedgeSumT, RestrictedCowedge.family,
+          RestrictedCowedge.mk'] at h
+        exact h
+      | inr t =>
+        have h := congrFun (f.comm WalkingParallelPair.one
+          (𝟙 WalkingParallelPair.one)) t
+        simp only [wppRestrictedCowedgeSumT, RestrictedCowedge.family,
+          RestrictedCowedge.mk'] at h
+        exact h)
+
+/-- Unit + Unit ≄ Unit, since any bijection would require injectivity
+that fails due to collapsing two elements to one. -/
+theorem wppUnitSumUnit_not_equiv_Unit :
+    ¬Nonempty (Unit ⊕ Unit ≃ Unit) := by
+  intro ⟨e⟩
+  have h1 : e (Sum.inl ()) = () := rfl
+  have h2 : e (Sum.inr ()) = () := rfl
+  have hinj := e.injective (h1.trans h2.symm)
+  exact Sum.inl_ne_inr hinj
+
+/-- The `pt` of the initial StrongRestrictedCowedge (CostructureIntegral)
+is equivalent to Unit. -/
+def wppStrongRestrictedCowedgePt_equiv_Unit :
+    (costructureIntegralCowedge (wppConstProfunctor Unit) wppHomProfunctor).pt ≃
+      Unit :=
+  wppCostructureIntegralEquivT Unit
+
+/-- The `pt` of the initial RestrictedCowedge is Unit + Unit. -/
+theorem wppRestrictedCowedgePt_eq :
+    (wppRestrictedCowedgeSumT Unit).pt = (Unit ⊕ Unit) := rfl
+
+/-- The `pt` fields of the initial StrongRestrictedCowedge and the initial
+RestrictedCowedge are NOT equivalent. This shows the comparison map between
+these cowedges cannot be an isomorphism. -/
+theorem wppInitialCowedges_pt_not_equiv :
+    ¬Nonempty ((wppRestrictedCowedgeSumT Unit).pt ≃
+      (costructureIntegralCowedge (wppConstProfunctor Unit)
+        wppHomProfunctor).pt) := by
+  intro ⟨e⟩
+  have e' : Unit ⊕ Unit ≃ Unit :=
+    e.trans wppStrongRestrictedCowedgePt_equiv_Unit
+  exact wppUnitSumUnit_not_equiv_Unit ⟨e'⟩
+
 end StructureCostructureIntegralUniversal
 
 /-!

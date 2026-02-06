@@ -367,16 +367,94 @@ mean equality.
                     └─────────────────────────────────────┘
 ```
 
-### Comparison Maps
+### Comparison Maps (Task #46)
 
-Since `StrongRestricted → Restricted` is fully faithful, we have:
+Since `StrongRestricted → Restricted` is fully faithful, initiality in the
+larger category (RestrictedCowedge) implies initiality in the smaller
+category (StrongRestrictedCowedge). This gives a canonical comparison map:
 
-- Terminal `StrongRestrictedWedge` ⊆ Terminal `RestrictedWedge` (when both exist)
-- Initial `StrongRestrictedCowedge` ⊆ Initial `RestrictedCowedge` (when both exist)
+`Σ(H,G) → CostructureIntegral H G`
 
-This means: `StructureIntegral H G → Σ(H, G)` (comparison to Vene's coend)
+(from the initial RestrictedCowedge to the initial StrongRestrictedCowedge)
 
-**Open**: Is this comparison an isomorphism? Under what conditions?
+**Question**: Is this comparison an isomorphism?
+
+**Answer**: NO, not in general.
+
+#### Analysis
+
+The comparison map exists by initiality of `Σ(H,G)`. For it to be an
+isomorphism, `CostructureIntegral H G` would also need to be initial in
+`RestrictedCowedge`.
+
+A morphism `h : CostructureIntegral H G → c.pt` (for RestrictedCowedge `c`)
+must satisfy:
+
+```lean
+h (CostructureIntegral.mk ⟨A, a⟩ g) = c.family A a g
+```
+
+This uniquely determines `h` on generators. But `CostructureIntegral` is a
+quotient by the **paranaturality** relation, which identifies:
+
+```text
+mk x (contravAction f ψ) ~ mk y (covAction f ψ)
+```
+
+for morphisms `f : x → y` in `DiagElem H`.
+
+For `h` to be well-defined, the target `c` must respect this identification.
+A merely **dinatural** family doesn't necessarily satisfy this stronger
+condition.
+
+#### Counterexample: WalkingParallelPair with Constant Profunctor
+
+**Setup**:
+
+- `C = WalkingParallelPair` (objects: `zero`, `one`; morphisms: `left, right`)
+- `H = Hom` profunctor
+- `G = const T` (constant profunctor at some type T)
+
+**DiagElem H**:
+
+- Objects: `(zero, id_zero)` and `(one, id_one)`
+- Morphisms: `(zero, id_zero) → (one, id_one)` via `left` and `right`
+
+**CostructureIntegral H G** (initial StrongRestrictedCowedge):
+
+- Generators: `(zero, t)` and `(one, t)` for `t : T`
+- Paranaturality quotient: since there exist morphisms in DiagElem H from
+  `(zero, id_zero)` to `(one, id_one)`, and G is constant (so contrav/cov
+  actions are identity), we get `(zero, t) ~ (one, t)` for all `t`
+- Result: **CostructureIntegral ≅ T**
+
+**Initial RestrictedCowedge** (Vene's `Σ(H,G)`):
+
+- Dinaturality at `left, right : zero → one` involves elements of
+  `H(one, zero) = ∅` (no morphisms from one to zero)
+- So dinaturality is **vacuously satisfied** - no identifications!
+- Result: **Σ(H,G) ≅ T + T** (disjoint union)
+
+**Conclusion**: For non-empty `T`, we have `T ≇ T + T`, so the comparison
+map `T + T → T` is NOT an isomorphism. It's a surjection (collapsing two
+copies), not an injection.
+
+#### When Do They Coincide?
+
+The comparison map is an isomorphism when every dinaturality identification
+is also a paranaturality identification. This happens when:
+
+1. **H(one, zero) generates enough identifications**: The off-diagonal
+   elements used in dinaturality must generate the same equivalence as
+   the DiagElem morphisms used in paranaturality.
+
+2. **DiagElem H has no non-trivial morphisms**: If DiagElem H is discrete
+   (only identity morphisms), then paranaturality adds no identifications
+   beyond dinaturality.
+
+3. **G is "faithful enough"**: If the contrav/cov actions of G distinguish
+   elements that are related by DiagElem morphisms, then paranaturality
+   may collapse to dinaturality.
 
 ## Implementation Status
 
@@ -394,7 +472,7 @@ This means: `StructureIntegral H G → Σ(H, G)` (comparison to Vene's coend)
 
 ### To Implement
 
-- Comparison map `StructureIntegral → Σ(H,G)` (Task #46)
+- Formalize WPP counterexample for comparison map (Task #46 - analysis complete)
 - Investigation of Kan extension connection (Q1)
 - 2-categorical structure exploration (Q3)
 
