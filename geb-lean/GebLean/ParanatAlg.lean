@@ -2,6 +2,7 @@ import GebLean.Paranatural
 import Mathlib.CategoryTheory.Category.Pointed
 import Mathlib.CategoryTheory.Endofunctor.Algebra
 import Mathlib.CategoryTheory.Limits.Shapes.Terminal
+import Mathlib.CategoryTheory.Limits.Types.Limits
 
 /-!
 # Paranatural transformations and initial algebras
@@ -828,6 +829,73 @@ def structuralEndEquivSections :
   right_inv _ := rfl
 
 end StructuralEndSections
+
+section StructuralEndIsLimit
+
+/-!
+### Structural end as a limit cone
+
+`StructuralEnd F` satisfies the universal property of the
+limit of the forgetful functor `DiagElem.forget F`, making
+it a limit in the formal sense of mathlib's `IsLimit`.
+
+Since `DiagElem F : Type (v+1)` while
+`DiagElem.forget F : DiagElem F ⥤ Type v`, the sections
+live in `Type (v+1)`. To form a cone in the correct
+universe, we compose with
+`uliftFunctor.{v+1, v} : Type v ⥤ Type (v+1)`.
+-/
+
+variable (F : (Type v)ᵒᵖ ⥤ Type v ⥤ Type v)
+
+/-- The structural end as the cone point of a limit cone
+for the universe-lifted forgetful functor on diagonal
+elements.  The projections extract components of the
+compatible family. -/
+def structuralEndLimitCone :
+    Limits.Cone
+      (DiagElem.forget F ⋙ uliftFunctor.{v + 1}) where
+  pt := StructuralEnd F
+  π :=
+    { app := fun x φ => ⟨φ.family x⟩
+      naturality := fun x y f => by
+        funext φ
+        simp only [
+          Functor.comp_obj,
+          Functor.const_obj_obj,
+          Functor.comp_map,
+          Functor.const_obj_map,
+          Category.id_comp,
+          uliftFunctor_obj,
+          DiagElem.forget_map
+        ]
+        exact congrArg ULift.up
+          (φ.paranatural f).symm }
+
+/-- The structural end limit cone is a limit: for any
+cone `s` over the lifted forgetful functor, there is a
+unique morphism `s.pt → StructuralEnd F` commuting with
+all projections. -/
+def structuralEndLimitCone_isLimit :
+    Limits.IsLimit (structuralEndLimitCone F) where
+  lift s p :=
+    { family := fun x => (s.π.app x p).down
+      equalizer := by
+        funext x y f
+        dsimp [structIntMapCov, structIntMapContrav,
+          covAction, contravAction]
+        exact congrArg ULift.down
+          (congr_fun (s.w f) p) }
+  fac s j := by
+    funext p
+    exact (ULift.up_down _).symm
+  uniq s m hm := by
+    funext p
+    exact StructureIntegral.ext
+      (funext fun x =>
+        congrArg ULift.down (congr_fun (hm x) p))
+
+end StructuralEndIsLimit
 
 section AlgebraSections
 

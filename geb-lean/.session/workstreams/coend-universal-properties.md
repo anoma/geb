@@ -26,6 +26,12 @@ the identity functor on `G-Alg` along the forgetful functor.
 - `structuralEndEquivSections`:
   `StructuralEnd F ≃ (DiagElem.forget F).sections`
   (structural end = limit of forgetful functor in `Type v`)
+- `structuralEndLimitCone`:
+  `Limits.Cone (DiagElem.forget F ⋙ uliftFunctor.{v+1})`
+  (limit cone with `pt = StructuralEnd F`)
+- `structuralEndLimitCone_isLimit`:
+  `Limits.IsLimit (structuralEndLimitCone F)`
+  (structural end satisfies mathlib's formal limit universal property)
 - `diagElemAlg_forget_eq`:
   `DiagElem.forget (AlgProf G) = diagElemToAlgFunctor G ⋙ Algebra.forget G`
   (uses mathlib's `Endofunctor.Algebra.forget`)
@@ -39,6 +45,14 @@ the identity functor on `G-Alg` along the forgetful functor.
 (diagElemToAlgFunctor G ⋙ Algebra.forget G).sections
   ≃ StructuralEnd (AlgProf G)
   ≃ μG.a
+```
+
+**Formal limit connection**:
+
+```text
+structuralEndLimitCone F : Cone (DiagElem.forget F ⋙ uliftFunctor)
+  pt = StructuralEnd F
+  IsLimit via structuralEndLimitCone_isLimit
 ```
 
 ### Q2: Transfer of Terminality/Initiality (COMPLETED)

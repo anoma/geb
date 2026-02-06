@@ -126,6 +126,17 @@ limit construction in `Type v`).
 This says: the limit of the diagram of G-algebras projected to their
 carriers is the carrier of the initial algebra.
 
+**Formal limit universal property**: The structural end also satisfies
+mathlib's formal `IsLimit` universal property:
+
+- `structuralEndLimitCone F` — a `Limits.Cone` for
+  `DiagElem.forget F ⋙ uliftFunctor.{v+1}` with cone point
+  `StructuralEnd F` (universe-lifted to match `DiagElem F : Type (v+1)`)
+- `structuralEndLimitCone_isLimit F` — the `Limits.IsLimit` proof:
+  for any cone `s` over the lifted forgetful functor, there is a
+  unique morphism `s.pt → StructuralEnd F` commuting with all
+  projections
+
 **Relationship to Kan extensions**: The right Kan extension
 `(Ran_U Id)(c)` computes (pointwise) as
 `lim (StructuredArrow.proj c U ⋙ Id)`, which is a limit over a slice
