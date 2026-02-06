@@ -12004,4 +12004,269 @@ theorem profPrecompCowedgeFunctor_comp
 
 end ProfPrecompCowedge
 
+section WedgeInterchange
+
+/-!
+## Interchange law for strong restricted wedges
+
+The two functorial actions on
+`StrongRestrictedWedge` -- weight pullback
+(contravariant in `H`) and diagram postcomposition
+(covariant in `G`) -- commute. This coherence
+condition is required for assembling them into a
+bifunctor valued in `Cat`.
+-/
+
+variable {D : Type w} [Category.{v} D]
+  {G₁ G₂ : Cᵒᵖ ⥤ C ⥤ D}
+  {H₁ H₂ : Cᵒᵖ ⥤ C ⥤ Type v}
+
+private theorem wedge_interchange_obj
+    (η : G₁ ⟶ G₂) (α : Paranat H₁ H₂)
+    (w : StrongRestrictedWedge G₁ H₂) :
+    StrongRestrictedWedge.weightPullbackObj G₂ α
+      (StrongRestrictedWedge.profPostcompObj
+        H₂ η w) =
+    StrongRestrictedWedge.profPostcompObj
+      H₁ η
+      (StrongRestrictedWedge.weightPullbackObj
+        G₁ α w) := by
+  apply StrongRestrictedWedge.ext
+  · rfl
+  · apply heq_of_eq
+    apply StrongRestrictedWedgeOver.ext
+    funext A a
+    simp only [
+      StrongRestrictedWedge.weightPullbackObj,
+      StrongRestrictedWedge.profPostcompObj,
+      Paranat.comp, Paranat.ofNatTrans,
+      NatTrans.restrict,
+      cosliceProfunctorPostcomp,
+      StrongRestrictedWedge.mk',
+      StrongRestrictedWedge.family]
+
+/-- The two functorial actions on strong restricted
+wedges commute: postcomposing the diagram then
+pulling back the weight equals pulling back the
+weight then postcomposing the diagram. -/
+theorem wedge_interchange
+    (η : G₁ ⟶ G₂) (α : Paranat H₁ H₂) :
+    profPostcompFunctor H₂ η ⋙
+      weightPullbackFunctor G₂ α =
+    weightPullbackFunctor G₁ α ⋙
+      profPostcompFunctor H₁ η :=
+  Functor.ext
+    (fun w => wedge_interchange_obj η α w)
+    (fun _ _ _ => by
+      apply StrongRestrictedWedge.Hom.ext
+      simp only [
+        eqToHom_refl, Category.id_comp,
+        Category.comp_id, Functor.comp_map,
+        profPostcompFunctor,
+        weightPullbackFunctor,
+        StrongRestrictedWedge.profPostcompMap,
+        StrongRestrictedWedge.weightPullbackMap])
+
+end WedgeInterchange
+
+section WedgeBifunctor
+
+/-!
+## Cat-valued bifunctor for strong restricted wedges
+
+Assembles the weight pullback and diagram
+postcomposition functors into a single bifunctor
+`(Cᵒᵖ ⥤ C ⥤ D) × (EndoProf C)ᵒᵖ ⥤ Cat`.
+-/
+
+variable {D : Type w} [Category.{v} D]
+
+/-- The Cat-valued bifunctor sending a pair
+`(G, Hᵒᵖ)` to
+`Cat.of (StrongRestrictedWedge G H)`.
+Covariant in the diagram profunctor `G` and
+contravariant in the weight `H`. -/
+def strongRestrictedWedgeBifunctor :
+    (Cᵒᵖ ⥤ C ⥤ D) ×
+      (EndoProf.{u, v, v} (C := C))ᵒᵖ ⥤
+      Cat.{v, max u v w} where
+  obj p :=
+    Cat.of (StrongRestrictedWedge p.1 p.2.unop)
+  map {X Y} f :=
+    (profPostcompFunctor X.2.unop f.1 ⋙
+      weightPullbackFunctor Y.1
+        f.2.unop).toCatHom
+  map_id X := by
+    apply Cat.Hom.ext
+    simp only [Functor.toCatHom_toFunctor,
+      Cat.Hom.id_toFunctor]
+    change profPostcompFunctor X.2.unop
+        (𝟙 X.1) ⋙
+      weightPullbackFunctor X.1
+        (Paranat.id (F := X.2.unop)) =
+      𝟭 _
+    rw [profPostcompFunctor_id,
+      weightPullbackFunctor_id]
+    exact Functor.id_comp _
+  map_comp {X Y Z} f g := by
+    apply Cat.Hom.ext
+    simp only [Functor.toCatHom_toFunctor,
+      Cat.Hom.comp_toFunctor]
+    conv_lhs =>
+      rw [show (f ≫ g).1 = f.1 ≫ g.1 from rfl,
+        show (f ≫ g).2.unop =
+          g.2.unop.comp f.2.unop from rfl]
+    rw [profPostcompFunctor_comp,
+      weightPullbackFunctor_comp]
+    rw [Functor.assoc,
+      ← Functor.assoc
+        (profPostcompFunctor X.2.unop g.1)
+        (weightPullbackFunctor Z.1 f.2.unop)
+        (weightPullbackFunctor Z.1 g.2.unop),
+      wedge_interchange g.1 f.2.unop,
+      Functor.assoc
+        (weightPullbackFunctor Y.1 f.2.unop)
+        (profPostcompFunctor Y.2.unop g.1)
+        (weightPullbackFunctor Z.1 g.2.unop),
+      ← Functor.assoc]
+
+end WedgeBifunctor
+
+section CowedgeInterchange
+
+/-!
+## Interchange law for strong restricted cowedges
+
+The two functorial actions on
+`StrongRestrictedCowedge` -- weight pullback
+(contravariant in `H`) and diagram precomposition
+(contravariant in `G`) -- commute.
+-/
+
+variable {D : Type w} [Category.{v} D]
+  {G₁ G₂ : Cᵒᵖ ⥤ C ⥤ D}
+  {H₁ H₂ : Cᵒᵖ ⥤ C ⥤ Type v}
+
+private theorem cowedge_interchange_obj
+    (η : G₁ ⟶ G₂) (α : Paranat H₁ H₂)
+    (cw : StrongRestrictedCowedge G₂ H₂) :
+    StrongRestrictedCowedge.weightPullbackObj G₁ α
+      (StrongRestrictedCowedge.profPrecompObj
+        H₂ η cw) =
+    StrongRestrictedCowedge.profPrecompObj
+      H₁ η
+      (StrongRestrictedCowedge.weightPullbackObj
+        G₂ α cw) := by
+  apply StrongRestrictedCowedge.ext
+  · rfl
+  · apply heq_of_eq
+    apply StrongRestrictedCowedgeOver.ext
+    funext A a
+    simp only [
+      StrongRestrictedCowedge.weightPullbackObj,
+      StrongRestrictedCowedge.profPrecompObj,
+      Paranat.comp, Paranat.ofNatTrans,
+      NatTrans.restrict,
+      sliceProfunctorPrecomp,
+      StrongRestrictedCowedge.mk',
+      StrongRestrictedCowedge.family]
+
+/-- The two functorial actions on strong restricted
+cowedges commute: precomposing the diagram then
+pulling back the weight equals pulling back the
+weight then precomposing the diagram. -/
+theorem cowedge_interchange
+    (η : G₁ ⟶ G₂) (α : Paranat H₁ H₂) :
+    profPrecompCowedgeFunctor H₂ η ⋙
+      weightPullbackCowedgeFunctor G₁ α =
+    weightPullbackCowedgeFunctor G₂ α ⋙
+      profPrecompCowedgeFunctor H₁ η :=
+  Functor.ext
+    (fun cw => cowedge_interchange_obj η α cw)
+    (fun _ _ _ => by
+      apply StrongRestrictedCowedge.Hom.ext
+      simp only [
+        eqToHom_refl, Category.id_comp,
+        Category.comp_id, Functor.comp_map,
+        profPrecompCowedgeFunctor,
+        weightPullbackCowedgeFunctor,
+        StrongRestrictedCowedge.profPrecompMap,
+        StrongRestrictedCowedge.weightPullbackMap])
+
+end CowedgeInterchange
+
+section CowedgeBifunctor
+
+/-!
+## Cat-valued bifunctor for strong restricted
+cowedges
+
+Assembles the weight pullback and diagram
+precomposition functors into a single bifunctor
+`((Cᵒᵖ ⥤ C ⥤ D) × EndoProf C)ᵒᵖ ⥤ Cat`.
+Both `G` and `H` act contravariantly.
+-/
+
+variable {D : Type w} [Category.{v} D]
+
+/-- The Cat-valued bifunctor sending a pair
+`op (G, H)` to
+`Cat.of (StrongRestrictedCowedge G H)`.
+Contravariant in both the diagram profunctor `G`
+and the weight `H`. -/
+def strongRestrictedCowedgeBifunctor :
+    ((Cᵒᵖ ⥤ C ⥤ D) ×
+      EndoProf.{u, v, v} (C := C))ᵒᵖ ⥤
+      Cat.{v, max u v w} where
+  obj p :=
+    Cat.of (StrongRestrictedCowedge
+      p.unop.1 p.unop.2)
+  map {X Y} f :=
+    (profPrecompCowedgeFunctor X.unop.2
+        f.unop.1 ⋙
+      weightPullbackCowedgeFunctor Y.unop.1
+        f.unop.2).toCatHom
+  map_id X := by
+    apply Cat.Hom.ext
+    simp only [Functor.toCatHom_toFunctor,
+      Cat.Hom.id_toFunctor]
+    change profPrecompCowedgeFunctor X.unop.2
+        (𝟙 X.unop.1) ⋙
+      weightPullbackCowedgeFunctor X.unop.1
+        (Paranat.id (F := X.unop.2)) =
+      𝟭 _
+    rw [profPrecompCowedgeFunctor_id,
+      weightPullbackCowedgeFunctor_id]
+    exact Functor.id_comp _
+  map_comp {X Y Z} f g := by
+    apply Cat.Hom.ext
+    simp only [Functor.toCatHom_toFunctor,
+      Cat.Hom.comp_toFunctor]
+    conv_lhs =>
+      rw [show (f ≫ g).unop.1 =
+          g.unop.1 ≫ f.unop.1 from rfl,
+        show (f ≫ g).unop.2 =
+          g.unop.2.comp f.unop.2 from rfl]
+    rw [profPrecompCowedgeFunctor_comp,
+      weightPullbackCowedgeFunctor_comp]
+    rw [Functor.assoc,
+      ← Functor.assoc
+        (profPrecompCowedgeFunctor X.unop.2
+          g.unop.1)
+        (weightPullbackCowedgeFunctor Z.unop.1
+          f.unop.2)
+        (weightPullbackCowedgeFunctor Z.unop.1
+          g.unop.2),
+      cowedge_interchange g.unop.1 f.unop.2,
+      Functor.assoc
+        (weightPullbackCowedgeFunctor Y.unop.1
+          f.unop.2)
+        (profPrecompCowedgeFunctor Y.unop.2
+          g.unop.1)
+        (weightPullbackCowedgeFunctor Z.unop.1
+          g.unop.2),
+      ← Functor.assoc]
+
+end CowedgeBifunctor
+
 end GebLean

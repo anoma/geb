@@ -137,10 +137,26 @@ Diagram functoriality (covariant for wedges, contravariant for cowedges):
 - `profPrecompCowedgeFunctor_comp`:
   precomposition by `η ≫ θ` = composition of precomposition functors (reversed)
 
+Interchange laws:
+
+- `wedge_interchange`:
+  `profPostcompFunctor H₂ η ⋙ weightPullbackFunctor G₂ α =
+   weightPullbackFunctor G₁ α ⋙ profPostcompFunctor H₁ η`
+- `cowedge_interchange`:
+  `profPrecompCowedgeFunctor H₂ η ⋙ weightPullbackCowedgeFunctor G₁ α =
+   weightPullbackCowedgeFunctor G₂ α ⋙ profPrecompCowedgeFunctor H₁ η`
+
+Bifunctors:
+
+- `strongRestrictedWedgeBifunctor`:
+  `(Cᵒᵖ ⥤ C ⥤ D) × EndoProf(C)ᵒᵖ ⥤ Cat`
+  (covariant in G, contravariant in H)
+- `strongRestrictedCowedgeBifunctor`:
+  `((Cᵒᵖ ⥤ C ⥤ D) × EndoProf(C))ᵒᵖ ⥤ Cat`
+  (contravariant in both G and H)
+
 **Remaining**:
 
-- Assembling the combined bifunctor
-  `(Cᵒᵖ ⥤ C ⥤ D) × EndoProf^op → Cat`
 - Connection to `Para(C)` (requires profunctor composition)
 
 ## Tasks
@@ -149,7 +165,7 @@ Diagram functoriality (covariant for wedges, contravariant for cowedges):
 - [x] Formalize conditions for terminality transfer across non-full functors (Q2)
 - [x] Formalize weight pullback functors (Q3, partial)
 - [x] Formalize covariant functoriality in G (Q3)
-- [ ] Assemble bifunctor structure (Q3)
+- [x] Assemble bifunctor structure (Q3)
 - [ ] Explore profunctor composition / Para(C) connection (Q3)
 - [x] Document findings in `docs/coend-formulas-research.md`
 
