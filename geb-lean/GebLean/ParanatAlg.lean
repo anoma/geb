@@ -762,4 +762,179 @@ def terminalCoalgebraStructuralCoendEquiv (νF : Endofunctor.Coalgebra F)
 
 end TerminalCoalgebraCorrespondence
 
+section StructuralEndSections
+
+/-!
+### Structural ends as sections of the forgetful functor
+
+The structural end `StructuralEnd F` is the type of families
+`(x : DiagElem F) → x.base` satisfying paranaturality:
+`f.base (φ x) = φ y` for all `f : x ⟶ y` in `DiagElem F`.
+
+This is equivalent to `(DiagElem.forget F).sections`, the
+sections of the forgetful functor `DiagElem F ⥤ Type v`.
+The sections of a functor `G : J ⥤ Type v` are the
+compatible families `(j : J) → G.obj j` satisfying
+`G.map f (u j) = u j'` for all morphisms `f : j ⟶ j'`.
+
+Since limits in `Type v` are computed by sections, this
+identifies `StructuralEnd F` with the limit of
+`DiagElem.forget F` in `Type v`.
+
+For `F = AlgProf G`, the equivalence
+`DiagElem (AlgProf G) ≌ Endofunctor.Algebra G` identifies
+`DiagElem.forget (AlgProf G)` with
+`Endofunctor.Algebra.forget G`, so:
+```
+StructuralEnd (AlgProf G) ≃ (Algebra.forget G).sections
+```
+connecting the paranatural end to the limit of the diagram
+of G-algebras projected to their carriers.
+-/
+
+variable (F : (Type v)ᵒᵖ ⥤ Type v ⥤ Type v)
+
+/-- The structural end maps to sections of the forgetful
+functor on diagonal elements. The family of a structural end
+element is a section because paranaturality gives exactly
+the sections compatibility condition. -/
+def structuralEndToSections
+    (φ : StructuralEnd F) :
+    (DiagElem.forget F).sections :=
+  ⟨φ.family, fun f => φ.paranatural f⟩
+
+/-- A section of the forgetful functor on diagonal elements
+gives a structural end element. The sections compatibility
+`f.base (u x) = u y` provides the equalizer condition. -/
+def sectionsToStructuralEnd
+    (s : (DiagElem.forget F).sections) :
+    StructuralEnd F where
+  family := s.val
+  equalizer := by
+    funext x y f
+    exact s.property f
+
+/-- The structural end `StructuralEnd F` is equivalent to
+sections of the forgetful functor `DiagElem.forget F`.
+Since limits in `Type v` are computed by sections, this
+identifies `StructuralEnd F` with
+`lim (DiagElem.forget F)`. -/
+def structuralEndEquivSections :
+    StructuralEnd F ≃
+      (DiagElem.forget F).sections where
+  toFun := structuralEndToSections F
+  invFun := sectionsToStructuralEnd F
+  left_inv _ := rfl
+  right_inv _ := rfl
+
+end StructuralEndSections
+
+section AlgebraSections
+
+/-!
+### Algebra forgetful functor sections
+
+The equivalence `DiagElem (AlgProf G) ≌ Endofunctor.Algebra G`
+identifies `DiagElem.forget (AlgProf G)` with
+`Endofunctor.Algebra.forget G`. Composing with
+`structuralEndEquivSections` connects the structural end
+to sections of mathlib's forgetful functor on algebras.
+-/
+
+variable (G : Type v ⥤ Type v)
+
+/-- The forgetful functor on `DiagElem (AlgProf G)` equals
+the composition of the equivalence functor with mathlib's
+algebra forgetful functor. -/
+theorem diagElemAlg_forget_eq :
+    DiagElem.forget (AlgProf G) =
+      diagElemToAlgFunctor G ⋙
+        Endofunctor.Algebra.forget G := by
+  refine Functor.ext (fun _ => rfl) (fun _ _ _ => ?_)
+  simp only [
+    eqToHom_refl,
+    Category.comp_id,
+    Category.id_comp,
+    DiagElem.forget_map,
+    Functor.comp_map,
+    Endofunctor.Algebra.forget,
+    diagElemToAlgFunctor,
+    diagElemHomToAlgHom
+  ]
+
+/-- The structural end of `AlgProf G` is equivalent to
+sections of mathlib's algebra forgetful functor
+composed with the `DiagElem`-to-`Algebra` equivalence.
+
+Composing with `initialAlgebraStructuralEndEquiv`, this
+gives:
+```
+(diagElemToAlgFunctor G ⋙ Algebra.forget G).sections
+  ≃ StructuralEnd (AlgProf G)
+  ≃ μG.a
+```
+connecting the limit of the diagram of G-algebras
+(projected to carriers) to the initial algebra carrier. -/
+def algSectionsEquivStructuralEnd :
+    (diagElemToAlgFunctor G ⋙
+      Endofunctor.Algebra.forget G).sections ≃
+    StructuralEnd (AlgProf G) :=
+  (Equiv.cast
+    (congrArg (↑·.sections)
+      (diagElemAlg_forget_eq G).symm)).trans
+    (structuralEndEquivSections (AlgProf G)).symm
+
+end AlgebraSections
+
+section CoalgebraSections
+
+/-!
+### Coalgebra forgetful functor sections
+
+The dual of the algebra case: the equivalence
+`DiagElem (CoalgProf G) ≌ Endofunctor.Coalgebra G`
+identifies `DiagElem.forget (CoalgProf G)` with
+`Endofunctor.Coalgebra.forget G`.
+-/
+
+variable (G : Type v ⥤ Type v)
+
+/-- The forgetful functor on `DiagElem (CoalgProf G)` equals
+the composition of the equivalence functor with mathlib's
+coalgebra forgetful functor. -/
+theorem diagElemCoalg_forget_eq :
+    DiagElem.forget (CoalgProf G) =
+      diagElemToCoalgFunctor G ⋙
+        Endofunctor.Coalgebra.forget G := by
+  refine Functor.ext (fun _ => rfl) (fun _ _ _ => ?_)
+  simp only [
+    eqToHom_refl,
+    Category.comp_id,
+    Category.id_comp,
+    DiagElem.forget_map,
+    Functor.comp_map,
+    Endofunctor.Coalgebra.forget,
+    diagElemToCoalgFunctor,
+    diagElemHomToCoalgHom
+  ]
+
+/-- The structural end of `CoalgProf G` is equivalent to
+sections of mathlib's coalgebra forgetful functor
+composed with the `DiagElem`-to-`Coalgebra` equivalence.
+
+Composing with `terminalCoalgebraStructuralCoendEquiv`,
+this connects the limit of the diagram of G-coalgebras
+(projected to carriers) to the terminal coalgebra carrier.
+-/
+def coalgSectionsEquivStructuralEnd :
+    (diagElemToCoalgFunctor G ⋙
+      Endofunctor.Coalgebra.forget G).sections ≃
+    StructuralEnd (CoalgProf G) :=
+  (Equiv.cast
+    (congrArg (↑·.sections)
+      (diagElemCoalg_forget_eq G).symm)).trans
+    (structuralEndEquivSections (CoalgProf G)).symm
+
+end CoalgebraSections
+
 end GebLean

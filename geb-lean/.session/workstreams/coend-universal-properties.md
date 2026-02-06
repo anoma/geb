@@ -12,26 +12,34 @@ investigate deeper connections to well-known categorical constructions.
 
 ## Research Questions
 
-### Q1: Kan Extensions and Initial Algebras
+### Q1: Kan Extensions and Initial Algebras (FORMALIZED)
 
 **Hypothesis**: The StructuralEnd construction for `AlgProf G` (which gives
 the initial algebra carrier) should connect to the right Kan extension of
 the identity functor on `G-Alg` along the forgetful functor.
 
-**Background**:
+**Result**: Connection formalized via `Functor.sections` (limits in
+`Type v`).
 
-- `G-Alg ≌ DiagElem (AlgProf G)`
-- Forgetful `U : G-Alg → C` corresponds to `DiagElem.forget`
-- When `U` has a left adjoint (free algebra), then `Ran_U Id ≅ F` (the
-  left adjoint)
-- `StructuralEnd (AlgProf G)` is a limit over `DiagElem (AlgProf G)`
+**Formalized equivalences** (in `GebLean/ParanatAlg.lean`):
 
-**To investigate**:
+- `structuralEndEquivSections`:
+  `StructuralEnd F ≃ (DiagElem.forget F).sections`
+  (structural end = limit of forgetful functor in `Type v`)
+- `diagElemAlg_forget_eq`:
+  `DiagElem.forget (AlgProf G) = diagElemToAlgFunctor G ⋙ Algebra.forget G`
+  (uses mathlib's `Endofunctor.Algebra.forget`)
+- `algSectionsEquivStructuralEnd`:
+  algebra forgetful functor sections ≃ structural end
+- Duals: `diagElemCoalg_forget_eq`, `coalgSectionsEquivStructuralEnd`
 
-- Precise relationship between `StructuralEnd` and `Ran_{forget} Id`
-- Whether the universal property of StructuralEnd derives from Kan
-  extension universal properties
-- Role of the free monad in this picture
+**Full chain**:
+
+```text
+(diagElemToAlgFunctor G ⋙ Algebra.forget G).sections
+  ≃ StructuralEnd (AlgProf G)
+  ≃ μG.a
+```
 
 ### Q2: Transfer of Terminality/Initiality (COMPLETED)
 
@@ -72,7 +80,7 @@ that is unavailable for `RestrictedWedge`?
 
 ## Tasks
 
-- [ ] Investigate AlgProf and Kan extension connection (Q1)
+- [x] Formalize AlgProf and Kan extension connection via sections (Q1)
 - [x] Formalize conditions for terminality transfer across non-full functors (Q2)
 - [ ] Explore 2-categorical structure possibilities (Q3)
 - [x] Document findings in `docs/coend-formulas-research.md`
@@ -80,6 +88,7 @@ that is unavailable for `RestrictedWedge`?
 ## Related Files
 
 - `docs/coend-formulas-research.md` - Main research document
+- `GebLean/ParanatAlg.lean` - Kan extension connection (Q1)
 - `GebLean/WeightedAlg.lean` - AlgProf, CoalgProf definitions
 - `GebLean/Weighted.lean` - (Co)wedge definitions
 

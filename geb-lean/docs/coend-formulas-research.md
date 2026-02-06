@@ -77,7 +77,7 @@ restriction of `G` along the terminal functor.
 
 ## Open Research Questions
 
-### Q1: Kan Extensions, Adjoints, and Initial Algebras
+### Q1: Kan Extensions, Adjoints, and Initial Algebras (FORMALIZED)
 
 **Background**: If a functor `U` has a left adjoint `F`, then `F` is the
 right Kan extension of the identity along `U`, preserved by `U`:
@@ -96,52 +96,42 @@ categories. For a functor `G : C → C`:
 1. `StructuralEnd (AlgProf G)` (which gives the initial algebra carrier)
 2. `Ran_{DiagElem.forget} Id` (right Kan extension of identity on algebras)
 
-The StructuralEnd is a limit over `DiagElem (AlgProf G)`. If the forgetful
-functor has a left adjoint (free monad), then `Ran_U Id` exists and equals
-that adjoint. How do these constructions relate?
+**Answer**: Y:  the connection is through `Functor.sections` (the
+limit construction in `Type v`).
 
-**Conjecture**: The carrier of the initial algebra (obtained from
-StructuralEnd) should be connected to the right Kan extension of the
-identity functor on the algebra category along the forgetful functor,
-evaluated at the initial algebra itself.
+**Formalized equivalences in `GebLean/ParanatAlg.lean`**:
 
-**Analysis sketch**:
+1. `structuralEndEquivSections` — for any endoprofunctor `F`:
+   `StructuralEnd F ≃ (DiagElem.forget F).sections`
+   Since limits in `Type v` are computed by sections, this identifies
+   the structural end with `lim (DiagElem.forget F)`.
 
-The right Kan extension formula is:
+2. `diagElemAlg_forget_eq` — the forgetful functors agree:
+   `DiagElem.forget (AlgProf G) = diagElemToAlgFunctor G ⋙ Algebra.forget G`
 
-`(Ran_U Id)(c) = ∫_{(A,α) : G-Alg} [C(c, U(A,α)), (A,α)]`
+3. `algSectionsEquivStructuralEnd` — combining (1) and (2):
+   algebra forgetful functor sections ≃ structural end
 
-When this end exists, it gives for each `c : C` the "universal" algebra
-whose carrier maps from `c`. At `c = μG.a` (initial algebra carrier):
+4. Dual: `diagElemCoalg_forget_eq` and `coalgSectionsEquivStructuralEnd`
+   for `CoalgProf G` and `Coalgebra.forget G`.
 
-`(Ran_U Id)(μG.a) = ∫_{(A,α)} [C(μG.a, A), (A,α)]`
+**The full chain** (for algebras, composing with existing results):
 
-Since `μG` is initial, `C(μG.a, A) ≅ G-Alg(μG, (A,α))` (the unique algebra
-morphism). So this end computes "the algebra that receives a unique map
-from every algebra" — which is the initial algebra itself.
+```text
+(diagElemToAlgFunctor G ⋙ Algebra.forget G).sections
+  ≃ StructuralEnd (AlgProf G)      -- algSectionsEquivStructuralEnd
+  ≃ μG.a                            -- initialAlgebraStructuralEndEquiv
+```
 
-Meanwhile, `StructuralEnd (AlgProf G)` computes:
+This says: the limit of the diagram of G-algebras projected to their
+carriers is the carrier of the initial algebra.
 
-`∫_{(A,α) : DiagElem(AlgProf G)} A`
-
-This is the equalizer of two maps involving the algebra actions. The
-universal property says: an element `x : StructuralEnd` gives, for each
-algebra `(A,α)`, an element of `A` that is "paranatural" in the algebra.
-
-**Connection hypothesis**: The StructuralEnd gives the carrier of the
-object that `Ran_U Id` produces at the initial algebra. The paranaturality
-condition captures the same universal property as the Kan extension, but
-expressed "pointwise" via diagonal elements rather than via the end over
-hom-objects.
-
-**To investigate**:
-
-- The precise relationship between structural ends and Kan extensions
-- Whether the universal property of StructuralEnd can be derived from
-  Kan extension universal properties
-- The role of the free monad in this picture
-- Whether there's a general theorem: `StructuralEnd F ≅ (Ran_U Id)(μ).a`
-  where `μ` is the initial object
+**Relationship to Kan extensions**: The right Kan extension
+`(Ran_U Id)(c)` computes (pointwise) as
+`lim (StructuredArrow.proj c U ⋙ Id)`, which is a limit over a slice
+category. When `c = μG.a`, this limit gives the full algebra `μG`, not
+just its carrier. The structural end gives only the carrier `μG.a`,
+which is the carrier projection of the Kan extension value
 
 ### Q2: Transfer of Terminality/Initiality Across Inclusions
 
