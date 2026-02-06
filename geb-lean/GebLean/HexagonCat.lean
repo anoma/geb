@@ -75,42 +75,20 @@ def HexagonHom.id (X : HexagonObj P Q) : HexagonHom X X where
 
 /-- Composition of morphisms in the hexagon category. -/
 def HexagonHom.comp {X Y Z : HexagonObj P Q}
-    (f : HexagonHom X Y) (g : HexagonHom Y Z) : HexagonHom X Z where
+    (f : HexagonHom X Y) (g : HexagonHom Y Z) :
+    HexagonHom X Z where
   hom := f.hom ≫ g.hom
   condition := by
-    ext p
-    have fc := f.condition
-    have gc := g.condition
-    let p_gY := Prof.map₁ P g.hom p
-    let p_fZ := Prof.map₂ P f.hom p
-    have Pnat : Prof.map₂ P f.hom p_gY = Prof.map₁ P g.hom p_fZ :=
-      Prof.map_comm P g.hom f.hom p
-    have Qnat : ∀ q, Prof.map₂ Q g.hom (Prof.map₁ Q f.hom q) =
-                     Prof.map₁ Q f.hom (Prof.map₂ Q g.hom q) :=
-      fun q => Prof.map_comm Q f.hom g.hom q
-    calc (Prof.map₂ Q (f.hom ≫ g.hom) ∘ X.diag ∘ Prof.map₁ P (f.hom ≫ g.hom)) p
-        = Prof.map₂ Q g.hom (Prof.map₂ Q f.hom
-            (X.diag (Prof.map₁ P f.hom (Prof.map₁ P g.hom p)))) := by
-          simp only [Function.comp_apply, Prof.map₁_comp, Prof.map₂_comp]
-        _ = Prof.map₂ Q g.hom
-              (Prof.map₁ Q f.hom (Y.diag (Prof.map₂ P f.hom p_gY))) := by
-          simp only [p_gY]
-          exact congrArg (Prof.map₂ Q g.hom) (congrFun fc p_gY)
-        _ = Prof.map₂ Q g.hom
-              (Prof.map₁ Q f.hom (Y.diag (Prof.map₁ P g.hom p_fZ))) := by
-          rw [Pnat]
-        _ = Prof.map₁ Q f.hom
-              (Prof.map₂ Q g.hom (Y.diag (Prof.map₁ P g.hom p_fZ))) := by
-          rw [Qnat]
-        _ = Prof.map₁ Q f.hom
-              (Prof.map₁ Q g.hom (Z.diag (Prof.map₂ P g.hom p_fZ))) := by
-          simp only [p_fZ]
-          exact congrArg (Prof.map₁ Q f.hom) (congrFun gc p_fZ)
-        _ = Prof.map₁ Q f.hom (Prof.map₁ Q g.hom
-              (Z.diag (Prof.map₂ P g.hom (Prof.map₂ P f.hom p)))) := by
-          simp only [p_fZ]
-        _ = (Prof.map₁ Q (f.hom ≫ g.hom) ∘ Z.diag ∘ Prof.map₂ P (f.hom ≫ g.hom)) p := by
-          simp only [Function.comp_apply, Prof.map₁_comp, Prof.map₂_comp]
+    unfold HexagonCondition
+    simp only [← Prof.map₁_comp,
+      ← Prof.map₂_comp, Category.assoc]
+    slice_lhs 2 4 => rw [f.condition]
+    slice_lhs 1 2 =>
+      rw [Prof.map_comm P g.hom f.hom]
+    slice_lhs 4 5 =>
+      rw [Prof.map_comm Q f.hom g.hom]
+    slice_lhs 2 4 => rw [g.condition]
+    simp only [Category.assoc]
 
 /-- The hexagon category as a category instance. -/
 instance HexagonCat : Category (HexagonObj P Q) where
