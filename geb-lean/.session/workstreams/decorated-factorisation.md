@@ -22,6 +22,35 @@ warnings, sorries, or underscores.
    - `decFactMap`: functor between decorated factorisation categories
 7. **Cat-valued functor**: `decFactFunctor : TwistedArrow C ⥤ Cat`
    generalizing `factorisationFunctor` with fiber data from `F`
+8. **Fiber accessors** (Phase 1):
+   - `DecFactObj.fiberAtι`: fiber transported to `F(twObjMk ι)`
+   - `DecFactObj.fiberAtπ`: fiber transported to `F(twObjMk π)`
+   - `DecFactObj.fiberToArrMorph`: twisted arrow morphism from
+     `twObjMk (𝟙 mid)` to `tw` via ι-path
+   - `DecFactObj.fiberToArrMorphViaπ`: same via π-path
+   - `DecFactObj.fiberAtArr`: fiber transported to `F(tw)`
+   - `DecFactObj.fiberToArrMorph_eq_viaπ`: two paths agree
+9. **Morphism accessors** (Phase 2):
+   - `DecFactHom.fiberMorphAtι`: fiberMorph transported via
+     `twExtendDom x.ι h`
+   - `DecFactHom.fiberMorphAtπ`: fiberMorph transported via
+     `twExtendCod h y.π`
+   - `DecFactHom.fiberMorphToArrMorph`: twisted arrow morphism
+     from `twObjMk h` to `tw`
+   - `DecFactHom.fiberMorphAtArr`: fiberMorph transported to
+     `F(tw)`
+10. **Total decorated factorisation category** (Phase 3):
+    - `TotalDecFactObj C F`: extends `TotalFactObj` with fiber
+    - `TotalDecFactHom C F`: extends `TotalFactHom` with
+      fiberMorph
+    - `totalDecFactCategory`: Category instance
+11. **Grothendieck equivalence** (Phase 4):
+    - `TotalDecFactGrothendieck C F`: abbreviation for
+      `TwGrothendieckObj C (decFactFunctor F)`
+    - `totalDecFactGrothendieckEquivObj`: type equivalence
+    - `totalDecFactToGrothendieck`, `grothendieckToTotalDecFact`:
+      functors
+    - `totalDecFactIsoGrothendieck`: Cat isomorphism
 
 ## Proof Technique Summary
 
