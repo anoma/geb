@@ -17,7 +17,7 @@ precomposition with equivalences, and then specializes to the hom functor
 `Hom : Cᵒᵖ × C ⥤ Type`.
 -/
 
-universe v u w
+universe v u w w'
 
 namespace GebLean
 
@@ -286,55 +286,65 @@ end HomPreOpComputation
 section ProfunctorMaps
 
 /-!
-### Profunctor partial maps
+### Bifunctor partial maps
 
-For a profunctor `P : Cᵒᵖ × C ⥤ Type w`, we define:
-- `Prof.map₁`: apply `P` to a morphism in the first (contravariant) argument
-- `Prof.map₂`: apply `P` to a morphism in the second (covariant) argument
+For a bifunctor `P : Cᵒᵖ × C ⥤ D`, we define:
+- `Prof.map₁`: apply `P` to a morphism in the first
+  (contravariant) argument
+- `Prof.map₂`: apply `P` to a morphism in the second
+  (covariant) argument
 
-These are the two "partial applications" of a bifunctor, and they satisfy
-composition laws and commute with each other (bifunctor naturality).
+These are the two "partial applications" of a bifunctor, and
+they satisfy composition laws and commute with each other
+(bifunctor naturality).
 -/
 
 variable {C : Type u} [Category.{v} C]
+  {D : Type w} [Category.{w'} D]
 
-/-- Apply a profunctor to a morphism in the first (contravariant) argument. -/
-abbrev Prof.map₁ (P : Cᵒᵖ × C ⥤ Type w) {c c' d : C} (f : c ⟶ c') :
-    P.obj (Opposite.op c', d) → P.obj (Opposite.op c, d) :=
+/-- Apply a bifunctor to a morphism in the first
+(contravariant) argument. -/
+abbrev Prof.map₁ (P : Cᵒᵖ × C ⥤ D) {c c' d : C}
+    (f : c ⟶ c') :
+    P.obj (Opposite.op c', d) ⟶
+      P.obj (Opposite.op c, d) :=
   P.map (f.op, 𝟙 d)
 
-/-- Apply a profunctor to a morphism in the second (covariant) argument. -/
-abbrev Prof.map₂ (P : Cᵒᵖ × C ⥤ Type w) {c d d' : C} (g : d ⟶ d') :
-    P.obj (Opposite.op c, d) → P.obj (Opposite.op c, d') :=
+/-- Apply a bifunctor to a morphism in the second
+(covariant) argument. -/
+abbrev Prof.map₂ (P : Cᵒᵖ × C ⥤ D) {c d d' : C}
+    (g : d ⟶ d') :
+    P.obj (Opposite.op c, d) ⟶
+      P.obj (Opposite.op c, d') :=
   P.map (𝟙 (Opposite.op c), g)
 
-/-- Composition law for Prof.map₁ (contravariant, so reverses). -/
+/-- Composition law for `Prof.map₁`
+(contravariant, so reverses). -/
 @[simp]
-theorem Prof.map₁_comp (P : Cᵒᵖ × C ⥤ Type w) {a b c d : C} (f : a ⟶ b) (g : b ⟶ c)
-    (p : P.obj (Opposite.op c, d)) :
-    Prof.map₁ P f (Prof.map₁ P g p) = Prof.map₁ P (f ≫ g) p := by
-  simp only [Prof.map₁, ← FunctorToTypes.map_comp_apply, prod_comp,
+theorem Prof.map₁_comp (P : Cᵒᵖ × C ⥤ D)
+    {a b c : C} (d : C) (f : a ⟶ b) (g : b ⟶ c) :
+    Prof.map₁ P g ≫ Prof.map₁ P f =
+      Prof.map₁ P (d := d) (f ≫ g) := by
+  simp only [Prof.map₁, ← P.map_comp, prod_comp,
     Category.id_comp, op_comp]
 
-/-- Composition law for Prof.map₂ (covariant). -/
+/-- Composition law for `Prof.map₂` (covariant). -/
 @[simp]
-theorem Prof.map₂_comp (P : Cᵒᵖ × C ⥤ Type w) {a b c d : C} (f : b ⟶ c) (g : c ⟶ d)
-    (p : P.obj (Opposite.op a, b)) :
-    Prof.map₂ P g (Prof.map₂ P f p) = Prof.map₂ P (f ≫ g) p := by
-  simp only [Prof.map₂, ← FunctorToTypes.map_comp_apply, prod_comp, Category.id_comp]
+theorem Prof.map₂_comp (P : Cᵒᵖ × C ⥤ D)
+    {b c d : C} (a : C) (f : b ⟶ c) (g : c ⟶ d) :
+    Prof.map₂ P f ≫ Prof.map₂ P g =
+      Prof.map₂ P (c := a) (f ≫ g) := by
+  simp only [Prof.map₂, ← P.map_comp, prod_comp,
+    Category.id_comp]
 
-/-- Profunctor naturality: Prof.map₁ and Prof.map₂ commute. -/
-theorem Prof.map_comm (P : Cᵒᵖ × C ⥤ Type w) {a b c d : C} (f : a ⟶ b) (g : c ⟶ d)
-    (p : P.obj (Opposite.op b, c)) :
-    Prof.map₂ P g (Prof.map₁ P f p) = Prof.map₁ P f (Prof.map₂ P g p) := by
-  simp only [Prof.map₁, Prof.map₂]
-  let m₁ : (Opposite.op b, c) ⟶ (Opposite.op a, c) := (f.op, 𝟙 c)
-  let m₂ : (Opposite.op a, c) ⟶ (Opposite.op a, d) := (𝟙 (Opposite.op a), g)
-  let n₁ : (Opposite.op b, c) ⟶ (Opposite.op b, d) := (𝟙 (Opposite.op b), g)
-  let n₂ : (Opposite.op b, d) ⟶ (Opposite.op a, d) := (f.op, 𝟙 d)
-  change P.map m₂ (P.map m₁ p) = P.map n₂ (P.map n₁ p)
-  rw [← FunctorToTypes.map_comp_apply, ← FunctorToTypes.map_comp_apply]
-  simp only [m₁, m₂, n₁, n₂, prod_comp, Category.id_comp, Category.comp_id]
+/-- Bifunctor naturality: `Prof.map₁` and `Prof.map₂`
+commute. -/
+theorem Prof.map_comm (P : Cᵒᵖ × C ⥤ D)
+    {a b c d : C} (f : a ⟶ b) (g : c ⟶ d) :
+    Prof.map₁ P f ≫ Prof.map₂ P g =
+      Prof.map₂ P g ≫ Prof.map₁ P f := by
+  simp only [Prof.map₁, Prof.map₂, ← P.map_comp,
+    prod_comp, Category.id_comp, Category.comp_id]
 
 end ProfunctorMaps
 
