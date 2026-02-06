@@ -47,12 +47,16 @@ the identity functor on `G-Alg` along the forgetful functor.
   ≃ μG.a
 ```
 
-**Formal limit connection**:
+**Formal limit/colimit connections**:
 
 ```text
 structuralEndLimitCone F : Cone (DiagElem.forget F ⋙ uliftFunctor)
   pt = StructuralEnd F
   IsLimit via structuralEndLimitCone_isLimit
+
+structuralCoendColimitCocone F : Cocone (DiagElem.forget F ⋙ uliftFunctor)
+  pt = StructuralCoend F
+  IsColimit via structuralCoendColimitCocone_isColimit
 ```
 
 ### Q2: Transfer of Terminality/Initiality (COMPLETED)

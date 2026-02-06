@@ -136,6 +136,12 @@ mathlib's formal `IsLimit` universal property:
   for any cone `s` over the lifted forgetful functor, there is a
   unique morphism `s.pt → StructuralEnd F` commuting with all
   projections
+- `structuralCoendColimitCocone F` — a `Limits.Cocone` for the same
+  lifted functor with cocone point `StructuralCoend F`, where
+  coprojections inject via `CostructureIntegral.mk`
+- `structuralCoendColimitCocone_isColimit F` — the `Limits.IsColimit`
+  proof: for any cocone `s`, there is a unique morphism
+  `StructuralCoend F → s.pt` commuting with all coprojections
 
 **Relationship to Kan extensions**: The right Kan extension
 `(Ran_U Id)(c)` computes (pointwise) as

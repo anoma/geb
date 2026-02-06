@@ -897,6 +897,66 @@ def structuralEndLimitCone_isLimit :
 
 end StructuralEndIsLimit
 
+section StructuralCoendIsColimit
+
+/-!
+### Structural coend as a colimit cocone
+
+`StructuralCoend F` satisfies the universal property of the
+colimit of the forgetful functor `DiagElem.forget F`, making
+it a colimit in the formal sense of mathlib's `IsColimit`.
+
+As with the limit case, we compose with
+`uliftFunctor.{v+1, v} : Type v ⥤ Type (v+1)` to match the
+universe of `DiagElem F : Type (v+1)`.
+-/
+
+variable (F : (Type v)ᵒᵖ ⥤ Type v ⥤ Type v)
+
+/-- The structural coend as the cocone point of a colimit
+cocone for the universe-lifted forgetful functor on diagonal
+elements.  The coprojections inject elements via the quotient
+map `CostructureIntegral.mk`. -/
+def structuralCoendColimitCocone :
+    Limits.Cocone
+      (DiagElem.forget F ⋙ uliftFunctor.{v + 1}) where
+  pt := StructuralCoend F
+  ι :=
+    { app := fun x a => CostructureIntegral.mk x a.down
+      naturality := fun x y f => by
+        funext a
+        simp only [
+          Functor.comp_obj,
+          Functor.const_obj_obj,
+          Functor.comp_map,
+          DiagElem.forget_map,
+          Functor.const_obj_map
+        ]
+        exact (structuralCoend_sound F f a.down).symm }
+
+/-- The structural coend colimit cocone is a colimit: for
+any cocone `s` over the lifted forgetful functor, there is a
+unique morphism `StructuralCoend F → s.pt` commuting with
+all coprojections. -/
+def structuralCoendColimitCocone_isColimit :
+    Limits.IsColimit
+      (structuralCoendColimitCocone F) where
+  desc s :=
+    CostructureIntegral.lift
+      (fun x a => s.ι.app x ⟨a⟩)
+      (fun {x y} f ψ => by
+        dsimp [contravAction, covAction]
+        exact (congr_fun (s.w f) ⟨ψ⟩).symm)
+  fac s j := by
+    funext a
+    change s.ι.app j ⟨a.down⟩ = s.ι.app j a
+    exact congrArg (s.ι.app j) (ULift.up_down a)
+  uniq s m hm :=
+    funext (Quotient.ind fun ⟨x, a⟩ =>
+      congr_fun (hm x) ⟨a⟩)
+
+end StructuralCoendIsColimit
+
 section AlgebraSections
 
 /-!
