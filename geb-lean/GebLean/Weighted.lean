@@ -11500,4 +11500,166 @@ The dinaturality conditions match in both cases because:
   matches the slice profunctor's off-diagonal structure.
 -/
 
+section WeightPullback
+
+/-!
+## Weight pullback for strong restricted wedges
+
+A paranatural transformation `α : Paranat H₁ H₂`
+induces a functor
+`StrongRestrictedWedge G H₂ ⥤ StrongRestrictedWedge G H₁`
+by precomposing each wedge's family with `α`.
+
+This functoriality in the weight parameter is
+specific to the `StrongRestricted` level:
+paranatural transformations compose, while
+dinatural transformations (used in `RestrictedWedge`)
+do not compose in general.
+-/
+
+variable {D : Type w} [Category.{v} D]
+  (G : Cᵒᵖ ⥤ C ⥤ D)
+  {H₁ H₂ : Cᵒᵖ ⥤ C ⥤ Type v}
+
+/-- Precompose the family of a strong restricted
+wedge with a paranatural transformation on the
+weight. -/
+def StrongRestrictedWedge.weightPullbackObj
+    (α : Paranat H₁ H₂)
+    (w : StrongRestrictedWedge G H₂) :
+    StrongRestrictedWedge G H₁ :=
+  StrongRestrictedWedge.mk' w.pt
+    (fun A a => w.family A (α.app A a))
+    (fun I₀ I₁ f d₀ d₁ h =>
+      w.isParanatural I₀ I₁ f _ _
+        (α.paranatural I₀ I₁ f d₀ d₁ h))
+
+/-- The weight pullback action on morphisms.
+The apex morphism is unchanged; commutativity
+transfers directly. -/
+def StrongRestrictedWedge.weightPullbackMap
+    (α : Paranat H₁ H₂)
+    {w₁ w₂ : StrongRestrictedWedge G H₂}
+    (f : w₁ ⟶ w₂) :
+    weightPullbackObj G α w₁ ⟶
+      weightPullbackObj G α w₂ where
+  hom := f.hom
+  comm A a := f.comm A (α.app A a)
+
+/-- The functor induced by pulling back
+the weight along a paranatural transformation
+`α : Paranat H₁ H₂`. -/
+@[simps]
+def weightPullbackFunctor
+    (α : Paranat H₁ H₂) :
+    StrongRestrictedWedge G H₂ ⥤
+      StrongRestrictedWedge G H₁ where
+  obj :=
+    StrongRestrictedWedge.weightPullbackObj G α
+  map :=
+    StrongRestrictedWedge.weightPullbackMap G α
+  map_id _ :=
+    StrongRestrictedWedge.Hom.ext rfl
+  map_comp _ _ :=
+    StrongRestrictedWedge.Hom.ext rfl
+
+/-- Pulling back along the identity paranatural
+transformation is the identity functor. -/
+theorem weightPullbackFunctor_id
+    (H : Cᵒᵖ ⥤ C ⥤ Type v) :
+    weightPullbackFunctor G (Paranat.id (F := H)) =
+      𝟭 (StrongRestrictedWedge G H) :=
+  Functor.ext (fun _ => rfl) (fun _ _ _ => by
+    simp only [eqToHom_refl, Category.id_comp,
+      Category.comp_id]
+    exact StrongRestrictedWedge.Hom.ext rfl)
+
+variable {H₃ : Cᵒᵖ ⥤ C ⥤ Type v}
+
+/-- Pulling back along a composition of paranatural
+transformations equals composing the individual
+pullback functors. -/
+theorem weightPullbackFunctor_comp
+    (α : Paranat H₁ H₂)
+    (β : Paranat H₂ H₃) :
+    weightPullbackFunctor G (α.comp β) =
+      weightPullbackFunctor G β ⋙
+        weightPullbackFunctor G α :=
+  Functor.ext (fun _ => rfl) (fun _ _ _ => by
+    simp only [eqToHom_refl, Category.id_comp,
+      Category.comp_id]
+    exact StrongRestrictedWedge.Hom.ext rfl)
+
+/-- Precompose the family of a strong restricted
+cowedge with a paranatural transformation on the
+weight. -/
+def StrongRestrictedCowedge.weightPullbackObj
+    (α : Paranat H₁ H₂)
+    (w : StrongRestrictedCowedge G H₂) :
+    StrongRestrictedCowedge G H₁ :=
+  StrongRestrictedCowedge.mk' w.pt
+    (fun A a => w.family A (α.app A a))
+    (fun I₀ I₁ f d₀ d₁ h =>
+      w.isParanatural I₀ I₁ f _ _
+        (α.paranatural I₀ I₁ f d₀ d₁ h))
+
+/-- The weight pullback action on cowedge
+morphisms. -/
+def StrongRestrictedCowedge.weightPullbackMap
+    (α : Paranat H₁ H₂)
+    {w₁ w₂ : StrongRestrictedCowedge G H₂}
+    (f : w₁ ⟶ w₂) :
+    StrongRestrictedCowedge.weightPullbackObj
+        G α w₁ ⟶
+      StrongRestrictedCowedge.weightPullbackObj
+        G α w₂ where
+  hom := f.hom
+  comm A a := f.comm A (α.app A a)
+
+/-- The functor induced by pulling back the weight
+of strong restricted cowedges along a paranatural
+transformation `α : Paranat H₁ H₂`. -/
+@[simps]
+def weightPullbackCowedgeFunctor
+    (α : Paranat H₁ H₂) :
+    StrongRestrictedCowedge G H₂ ⥤
+      StrongRestrictedCowedge G H₁ where
+  obj :=
+    StrongRestrictedCowedge.weightPullbackObj G α
+  map :=
+    StrongRestrictedCowedge.weightPullbackMap G α
+  map_id _ :=
+    StrongRestrictedCowedge.Hom.ext rfl
+  map_comp _ _ :=
+    StrongRestrictedCowedge.Hom.ext rfl
+
+/-- Pulling back cowedges along the identity
+paranatural transformation is the identity
+functor. -/
+theorem weightPullbackCowedgeFunctor_id
+    (H : Cᵒᵖ ⥤ C ⥤ Type v) :
+    weightPullbackCowedgeFunctor G
+      (Paranat.id (F := H)) =
+      𝟭 (StrongRestrictedCowedge G H) :=
+  Functor.ext (fun _ => rfl) (fun _ _ _ => by
+    simp only [eqToHom_refl, Category.id_comp,
+      Category.comp_id]
+    exact StrongRestrictedCowedge.Hom.ext rfl)
+
+/-- Pulling back cowedges along a composition of
+paranatural transformations equals composing the
+individual pullback functors. -/
+theorem weightPullbackCowedgeFunctor_comp
+    (α : Paranat H₁ H₂)
+    (β : Paranat H₂ H₃) :
+    weightPullbackCowedgeFunctor G (α.comp β) =
+      weightPullbackCowedgeFunctor G β ⋙
+        weightPullbackCowedgeFunctor G α :=
+  Functor.ext (fun _ => rfl) (fun _ _ _ => by
+    simp only [eqToHom_refl, Category.id_comp,
+      Category.comp_id]
+    exact StrongRestrictedCowedge.Hom.ext rfl)
+
+end WeightPullback
+
 end GebLean

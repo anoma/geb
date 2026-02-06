@@ -83,24 +83,58 @@ terminal StrongRestrictedWedges) do NOT correspond to weighted ends.
 The WeightedWedge category is "too small" - it has fewer morphisms,
 so its terminal objects differ from those in StrongRestrictedWedge.
 
-### Q3: 2-Categorical Structure
+### Q3: 2-Categorical Structure (IN PROGRESS)
 
 **Question**: Does composability of paranatural/natural transformations
 enable 2-categorical structure on `StrongRestrictedWedge`/`WeightedWedge`
 that is unavailable for `RestrictedWedge`?
 
-**Structures to explore**:
+**Analysis**:
 
-- 2-cells between wedge morphisms
-- Horizontal composition
-- Bicategorical or double categorical structure
-- Connection to `Para(C)` structure
+1. **Within each wedge category**: No non-trivial 2-cells exist.
+   Wedge morphisms are determined by their apex morphism plus a Prop
+   commutativity condition. The existing `Slice2Hom.paranat_eq`
+   result (Paranatural.lean) establishes that `EndoProf` is locally
+   discrete under the `Cat/C` embedding.
+
+2. **Between wedge categories (functoriality in the weight)**:
+   Composability of paranatural transformations gives a
+   contravariant functor
+   `StrongRestrictedWedge G (−) : EndoProf^op → Cat`
+   via weight pullback. This is unavailable for `RestrictedWedge`
+   because dinatural transformations do not compose in general.
+
+3. **Profunctor composition**: Mathlib does not currently formalize
+   profunctor composition or the bicategory of profunctors. A
+   connection to `Para(C)` would require this.
+
+**Formalized** (in `GebLean/Weighted.lean`):
+
+- `weightPullbackFunctor`:
+  `Paranat H₁ H₂ → (StrongRestrictedWedge G H₂ ⥤ StrongRestrictedWedge G H₁)`
+- `weightPullbackFunctor_id`:
+  pullback along `Paranat.id` = identity functor
+- `weightPullbackFunctor_comp`:
+  pullback along `α.comp β` = composition of pullback functors
+- Duals: `weightPullbackCowedgeFunctor`,
+  `weightPullbackCowedgeFunctor_id`,
+  `weightPullbackCowedgeFunctor_comp`
+
+**Remaining**:
+
+- Covariant functoriality in `G` (via `cosliceProfunctorPostcomp`)
+- Assembling the combined bifunctor
+  `(Cᵒᵖ ⥤ C ⥤ D) × EndoProf^op → Cat`
+- Connection to `Para(C)` (requires profunctor composition)
 
 ## Tasks
 
 - [x] Formalize AlgProf and Kan extension connection via sections (Q1)
 - [x] Formalize conditions for terminality transfer across non-full functors (Q2)
-- [ ] Explore 2-categorical structure possibilities (Q3)
+- [x] Formalize weight pullback functors (Q3, partial)
+- [ ] Formalize covariant functoriality in G (Q3)
+- [ ] Assemble bifunctor structure (Q3)
+- [ ] Explore profunctor composition / Para(C) connection (Q3)
 - [x] Document findings in `docs/coend-formulas-research.md`
 
 ## Related Files
