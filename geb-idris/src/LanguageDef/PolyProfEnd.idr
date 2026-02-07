@@ -2142,7 +2142,38 @@ polyProfDiNTComplete fext {pp} {qq}
     (dpEq12 (sym posEq)
       (rewrite posEq in
         funExt (\(k ** ds) =>
-          ?polyProfDiNTComplete_dir)))
+          let
+            paraEq = para
+              (InterpPolyFuncFreeM
+                (ppDirPF pp i)
+                (snd (ppDirPF qq
+                  (fst (alpha x
+                    (i ** h)))) k))
+              x
+              (pfSubstCata
+                {p=ppDirPF pp i}
+                ds
+                (PFAlgFromAlg
+                  {p=ppDirPF pp i} h))
+              (i **
+                PolyFreeAlgF
+                  (ppDirPF pp i)
+                  (snd (ppDirPF qq
+                    (fst (alpha x
+                      (i ** h)))) k))
+              (i ** h)
+              (dpEq12 Refl
+                (funExt (\el =>
+                  sym
+                    (pfSubstCataIsAlgHom
+                      fext
+                      {p=ppDirPF pp i}
+                      {a=snd (ppDirPF qq
+                        (fst (alpha x
+                          (i ** h)))) k}
+                      {b=x} ds h el))))
+          in
+          ?use_paraEq)))
 
 ------------------------------------------------------------
 ------------------------------------------------------------
