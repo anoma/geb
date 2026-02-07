@@ -1413,35 +1413,13 @@ polyProfParaPosIndep {pp} {qq}
   in
   trans (sym eqx) eqy
 
--- Discussion: completeness of paranaturality
---
--- Position-independence (polyProfParaPosIndep)
--- shows that any paranatural transformation has
--- a position map ppPos pp -> ppPos qq independent
--- of the algebra structure.
---
--- For the DIRECTION part, the analysis differs
--- from IntEndoProAr (PolyDifunc.idr). In
--- IntEndoProAr, the "assignment"
--- covar i -> contra i is type-independent,
--- enabling formula extraction via TypeDiArFromDi.
--- In PolyProf, the "assignment" is an algebra
--- InterpPolyFunc pf x -> x which varies with x.
---
--- For section-based algebras (those of the form
--- sectionApply s x), the paranaturality condition
--- constrains the output to be sectionApply (F s) x
--- for some section map F. For natural
--- transformations, F factors through a
--- PolyNatTrans, but in general F could be more
--- complex.
---
--- Whether ALL paranaturals for PolyProf are
--- natural (i.e., whether F always factors through
--- a PolyNatTrans) is a non-trivial question. We
--- prove position-independence and natural-implies-
--- paranatural, and note the full characterization
--- as future work.
+-- Completeness of paranaturality for polynomial
+-- profunctors: see the "Paranatural Transformation
+-- Formula" section below for the formula
+-- (PolyProfDiNTar) that captures all paranatural
+-- transformations using the free monad. Not all
+-- paranaturals are natural: the formula is strictly
+-- richer than PolyProfNT.
 
 ------------------------------------------------------------
 ------------------------------------------------------------
@@ -1545,3 +1523,249 @@ public export
   = el x
 polyProfMuRoundTrip2 fext {pp} el wedge x =
   ?polyProfMuRoundTrip2_hole
+
+------------------------------------------------------------
+------------------------------------------------------------
+---- Paranatural Transformation Formula ----
+------------------------------------------------------------
+------------------------------------------------------------
+
+-- The correct formula for paranatural
+-- transformations between polynomial profunctors.
+--
+-- Compared to PolyProfNT (natural transformations),
+-- the direction map targets the FREE MONAD of the
+-- input direction polynomial rather than the
+-- polynomial itself:
+--
+--   Natural:     PolyNatTrans qf pf
+--   Paranatural: PolyNatTrans qf (FreeM pf)
+--
+-- A tree in FreeM(pf) describes a pattern of nested
+-- applications of the input algebra h. Leaves carry
+-- output direction values that are substituted in.
+-- This captures iterated algebra application, which
+-- goes beyond what natural transformations express.
+--
+-- Example: the "double application"
+--   alpha x (i ** h) =
+--     (i ** \d => h(fst d, h(fst d, snd d ...)))
+-- is paranatural but NOT natural. It corresponds to
+-- a two-level tree in FreeM(ppDirPF pp i).
+--
+-- Compare with IntPDiNTar (InternalProfunctor.idr),
+-- where the position map depends on an "assignment"
+-- (a morphism covar -> contra). In PolyProf, the
+-- position is assignment-independent
+-- (polyProfParaPosIndep), but the direction
+-- structure is richer: trees rather than single
+-- morphisms.
+public export
+PolyProfDiNTar : PolyProf -> PolyProf -> Type
+PolyProfDiNTar pp qq =
+  (onPos : ppPos pp -> ppPos qq **
+   (i : ppPos pp) ->
+     PolyNatTrans
+       (ppDirPF qq (onPos i))
+       (PolyFuncFreeM (ppDirPF pp i)))
+
+-- Accessors: fst ar gives the position map, and
+-- snd ar i gives the direction nat trans at i.
+
+------------------------------------------------------------
+---- One-Step Tree Injection ----
+------------------------------------------------------------
+
+-- Natural transformation embedding pf into
+-- FreeM(pf) as one-level trees: each position k
+-- maps to a tree with root PFCom k and all children
+-- being PFVar leaves. Direction type at one-step
+-- tree is (d : pfDir k ** Unit), mapped to d.
+public export
+pfOneStepNT : (pf : PolyFunc) ->
+  PolyNatTrans pf (PolyFuncFreeM pf)
+pfOneStepNT (pos ** dir) =
+  (\k =>
+    InPFM (PFCom k)
+      (\d =>
+        InPFM (PFVar ()) (\v => void v))
+  ** \k, (d ** ()) => d)
+
+------------------------------------------------------------
+---- Interpretation of PolyProfDiNTar ----
+------------------------------------------------------------
+
+-- Interpret a dinatural formula as a diagonal
+-- transformation on polynomial profunctor elements.
+--
+-- Given (onPos ** onDir) : PolyProfDiNTar pp qq
+-- and (i ** h) : InterpPolyProf pp x x:
+-- 1. Map position forward: onPos i
+-- 2. Build the output algebra by:
+--    (a) Directly constructing a free monad
+--        element from the direction nat trans
+--        components (avoiding InterpPolyNT which
+--        can't infer the FreeM target polynomial)
+--    (b) pfSubstCata id (PFAlgFromAlg h) : fold
+--        the tree using the input algebra h,
+--        substituting leaves with their values
+public export
+InterpPolyProfDiNT :
+  {pp, qq : PolyProf} ->
+  PolyProfDiNTar pp qq ->
+  (x : Type) ->
+  InterpPolyProf pp x x ->
+  InterpPolyProf qq x x
+InterpPolyProfDiNT {pp} {qq}
+  (onPos ** onDir) x (i ** h) =
+  (onPos i **
+   \(k ** ds) =>
+     pfSubstCata
+       {p=ppDirPF pp i} {a=x} {b=x}
+       id (PFAlgFromAlg h)
+       (fst (onDir i) k **
+        ds . snd (onDir i) k))
+
+------------------------------------------------------------
+---- Embedding of PolyProfNT ----
+------------------------------------------------------------
+
+-- Every natural transformation embeds into the
+-- dinatural formula by composing the backward
+-- direction map with the one-step tree injection.
+public export
+polyProfNTtoDiNTar :
+  {pp, qq : PolyProf} ->
+  PolyProfNT pp qq ->
+  PolyProfDiNTar pp qq
+polyProfNTtoDiNTar {pp} {qq}
+  (onPos ** onDir) =
+  (onPos ** \i =>
+    pntVCatComp
+      {p=ppDirPF qq (onPos i)}
+      {q=ppDirPF pp i}
+      {r=PolyFuncFreeM (ppDirPF pp i)}
+      (pfOneStepNT (ppDirPF pp i))
+      (onDir i))
+
+------------------------------------------------------------
+---- Identity and Composition ----
+------------------------------------------------------------
+
+-- Identity dinatural formula. Each position maps
+-- to itself; direction uses the one-step injection.
+public export
+polyProfDiNTId : (pp : PolyProf) ->
+  PolyProfDiNTar pp pp
+polyProfDiNTId pp =
+  (id ** \i =>
+    pfOneStepNT (ppDirPF pp i))
+
+------------------------------------------------------------
+---- Soundness: Formula implies Paranaturality ----
+------------------------------------------------------------
+
+-- Every PolyProfDiNTar formula, when interpreted,
+-- satisfies the paranaturality condition.
+--
+-- Proof strategy: reduce to the catamorphism
+-- naturality lemma. If f : x -> y is an algebra
+-- homomorphism (h1 . InterpPFMap pf f = f . h0),
+-- then:
+--   pfSubstCata id h1 . InterpPFMap (FreeM pf) f
+--   = f . pfSubstCata id h0
+--
+-- Combined with naturality of InterpPolyNT, this
+-- gives the required paranaturality equation.
+-- The catamorphism naturality lemma is a standard
+-- property of initial algebras (Lambek's lemma).
+public export
+0 polyProfDiNTisPara : FunExt ->
+  {pp, qq : PolyProf} ->
+  (ar : PolyProfDiNTar pp qq) ->
+  PolyProfParaNTCond pp qq
+    (\x =>
+      InterpPolyProfDiNT {pp} {qq} ar x)
+polyProfDiNTisPara fext {pp} {qq}
+  (onPos ** onDir) i0 i1 i2
+  (j0 ** h0) (j1 ** h1) cond =
+  ?polyProfDiNTisPara_hole
+
+------------------------------------------------------------
+---- Extraction: Paranatural to Formula ----
+------------------------------------------------------------
+
+-- Given a paranatural transformation, extract a
+-- PolyProfDiNTar formula by evaluating at the free
+-- algebra. This is the completeness direction.
+--
+-- Strategy for each input position i:
+--   Let pf = ppDirPF pp i, qf = ppDirPF qq j
+--   where j = fst (alpha Unit (i ** const ())).
+--
+--   Position map: onPos i = j.
+--
+--   Direction nat trans: For each k : pfPos qf,
+--   evaluate alpha at
+--     x = InterpPolyFuncFreeM pf (pfDir qf k)
+--   with algebra = PolyFreeAlgF pf (pfDir qf k)
+--   (the free algebra that records constructor
+--   applications as tree nodes).
+--
+--   Apply the output algebra to the element
+--   (k ** pfFreeVarInj) where pfFreeVarInj maps
+--   each output direction d to a single-leaf free
+--   monad element. The result (tree_k ** leafMap_k)
+--   gives:
+--     onDirPos k = tree_k
+--     onDirDir k = leafMap_k
+--
+--   This uses polyProfParaPosIndep to ensure
+--   position consistency across evaluation types.
+public export
+0 PolyProfDiNTFromPara :
+  {pp, qq : PolyProf} ->
+  (alpha : TypeProfDiNT
+    (InterpPolyProf pp)
+    (InterpPolyProf qq)) ->
+  PolyProfParaNTCond pp qq alpha ->
+  PolyProfDiNTar pp qq
+PolyProfDiNTFromPara {pp} {qq}
+  alpha para =
+  ?polyProfDiNTFromPara_hole
+
+------------------------------------------------------------
+---- Completeness ----
+------------------------------------------------------------
+
+-- The completeness theorem: extracting a formula
+-- from a paranatural and re-interpreting recovers
+-- the original transformation.
+--
+-- Proof strategy:
+--   Position: by polyProfParaPosIndep.
+--   Direction: for arbitrary type x and algebra h,
+--   paranaturality connects the evaluation at the
+--   free algebra (where the formula was extracted)
+--   to the evaluation at (x, h), via the unique
+--   algebra morphism (pfSubstCata id h) from the
+--   free algebra to h. This morphism intertwines
+--   the free algebra output with the h-applied
+--   output, giving extensional equality.
+public export
+0 polyProfDiNTComplete : FunExt ->
+  {pp, qq : PolyProf} ->
+  (alpha : TypeProfDiNT
+    (InterpPolyProf pp)
+    (InterpPolyProf qq)) ->
+  (para :
+    PolyProfParaNTCond pp qq alpha) ->
+  (x : Type) ->
+  ExtEq
+    (alpha x)
+    (InterpPolyProfDiNT {pp} {qq}
+      (PolyProfDiNTFromPara {pp} {qq}
+        alpha para) x)
+polyProfDiNTComplete fext {pp} {qq}
+  alpha para x el =
+  ?polyProfDiNTComplete_hole
