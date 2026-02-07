@@ -1740,6 +1740,52 @@ pfSubstCataAlgHom fext
           go (ch di)
             (\dd => d (di ** dd)))))
 
+-- Substitution pre-composition: folding with
+-- substitution `subst` is the same as first
+-- mapping `subst` over the leaves (via
+-- InterpPFMap on FreeM) then folding with `id`.
+--
+-- Proof: by induction on the free monad tree.
+-- PFVar case: both sides reduce to subst (d ()).
+-- PFCom case: the algebra is the same on both
+-- sides, so only IH on subtrees is needed.
+public export
+0 pfSubstCataPrecomp : FunExt ->
+  {p : PolyFunc} -> {a, b : Type} ->
+  (subst : a -> b) ->
+  (alg : PFAlg p b) ->
+  ExtEq
+    (pfSubstCata {p} {a} {b} subst alg)
+    (pfSubstCata {p} {a=b} {b}
+      (Prelude.id {a=b}) alg
+      . InterpPFMap (PolyFuncFreeM p) subst)
+pfSubstCataPrecomp fext
+  {p=(pos ** dir)} {a} {b}
+  subst alg (mpos ** d) =
+  go mpos d
+  where
+  0 go :
+    (mpos : PolyFuncMu
+      (PFTranslate1 (pos ** dir))) ->
+    (d : PolyFuncFreeMDir
+      (pos ** dir) mpos -> a) ->
+    pfCata
+      (PFAlgToTranslate subst
+        (alg {- p=(pos**dir) a=b -}))
+      (PolyFMInterpToMuTranslateCurried
+        (pos ** dir) a mpos d)
+    = pfCata
+      (PFAlgToTranslate
+        (Prelude.id {a=b}) alg)
+      (PolyFMInterpToMuTranslateCurried
+        (pos ** dir) b mpos (subst . d))
+  go (InPFM (PFVar ()) dv) d = Refl
+  go (InPFM (PFCom i) ch) d =
+    cong (alg i)
+      (funExt (\di =>
+        go (ch di)
+          (\dd => d (di ** dd))))
+
 ------------------------------------------------------------
 ---- Soundness: Formula implies Paranaturality ----
 ------------------------------------------------------------
@@ -1979,9 +2025,75 @@ public export
     (InterpPolyProfDiNT {pp} {qq}
       (PolyProfDiNTFromPara {pp} {qq}
         alpha para) x)
+-- Helper: pfSubstIdCata is an algebra morphism
+-- from the free algebra to the target algebra.
+-- This is the universal property of free algebras.
+--
+-- Proof: by expansion of pfSubstCata on the
+-- free algebra constructor InFMCom. The
+-- one-step fold reduces to the algebra applied
+-- to the recursively folded children.
+public export
+0 pfSubstIdCataIsAlgHom : FunExt ->
+  {p : PolyFunc} -> {b : Type} ->
+  (alg : Algebra (InterpPolyFunc p) b) ->
+  PolyAlgCommutes p
+    (pfSubstIdCata {p} {b}
+      (PFAlgFromAlg {p} alg))
+    (PolyFreeAlgF p b)
+    alg
+pfSubstIdCataIsAlgHom fext
+  {p=(pos ** dir)} {b} alg (i ** d) =
+  cong (alg . MkDPair i)
+    (funExt (\di => go (d di)))
+  where
+  0 go :
+    (elem : InterpPolyFuncFreeM
+      (pos ** dir) b) ->
+    pfCata
+      (PFAlgToTranslate
+        (Prelude.id {a=b})
+        (PFAlgFromAlg {p=(pos ** dir)} alg))
+      (PolyFMInterpToMuTranslateCurried
+        (pos ** dir) b
+        (fst elem)
+        (\dd => snd elem dd))
+    = pfCata
+      (PFAlgToTranslate
+        (Prelude.id {a=b})
+        (PFAlgFromAlg {p=(pos ** dir)} alg))
+      (PolyFMInterpToMuTranslate
+        (pos ** dir) b elem)
+  go (mpos ** d) = Refl
+
 polyProfDiNTComplete fext {pp} {qq}
-  alpha para x el =
-  ?polyProfDiNTComplete_hole
+  alpha para x (i ** h) =
+  let
+    -- Paranaturality at (const () : x -> Unit)
+    -- gives position equality + direction info
+    pf = ppDirPF pp i
+    paraCU = para x Unit (const ())
+      (i ** h) (i ** const ())
+      (dpEq12 Refl
+        (funExt (\el =>
+          Refl)))
+    -- paraCU : lmap_qq (const ())
+    --   (alpha Unit (i ** const ()))
+    -- = rmap_qq (const ())
+    --   (alpha x (i ** h))
+    -- i.e. (j_unit **
+    --   snd (alpha Unit ...) .
+    --     InterpPFMap qf (const ()))
+    -- = (j_x ** const () . snd (alpha x ..))
+    posEq = ppDiNTExtractPosEq {pp} {qq}
+      alpha para i x h
+    -- posEq : j_unit = j_x
+  in
+  trans dpEqPat
+    (dpEq12 (sym posEq)
+      (rewrite posEq in
+        funExt (\(k ** ds) =>
+          ?polyProfDiNTComplete_dir)))
 
 ------------------------------------------------------------
 ------------------------------------------------------------
