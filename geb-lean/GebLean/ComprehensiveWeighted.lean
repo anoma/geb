@@ -215,6 +215,74 @@ def comprehensiveCoconeEquiv
   left_inv := comprehensiveCocone_backward_forward F G
   right_inv := comprehensiveCocone_forward_backward F G
 
+def comprehensiveCoconeForwardFunctor
+    (G : D ⥤ E) :
+    Limits.Cocone (F ⋙ G) ⥤
+    Limits.Cocone (comprehensiveM F ⋙ G) where
+  obj := comprehensiveCoconeForward F G
+  map {s₁ s₂} f := {
+    hom := f.hom
+    w := by
+      intro e
+      simp only [comprehensiveCoconeForward]
+      refine Quotient.inductionOn e.unop.snd
+        (fun σ => ?_)
+      simp only [Quotient.lift_mk, Category.assoc]
+      rw [← f.w σ.right] }
+
+def comprehensiveCoconeBackwardFunctor
+    (G : D ⥤ E) :
+    Limits.Cocone (comprehensiveM F ⋙ G) ⥤
+    Limits.Cocone (F ⋙ G) where
+  obj := comprehensiveCoconeBackward F G
+  map {t₁ t₂} g := {
+    hom := g.hom
+    w := fun c => by
+      simp only [comprehensiveCoconeBackward]
+      exact g.w ((comprehensiveE F).obj c) }
+
+def comprehensiveCoconeEquivalence
+    (G : D ⥤ E) :
+    Limits.Cocone (F ⋙ G) ≌
+    Limits.Cocone (comprehensiveM F ⋙ G) where
+  functor := comprehensiveCoconeForwardFunctor F G
+  inverse := comprehensiveCoconeBackwardFunctor F G
+  unitIso := NatIso.ofComponents
+    (fun s => eqToIso
+      (comprehensiveCocone_backward_forward
+        F G s).symm)
+    (fun f => by
+      apply Limits.CoconeMorphism.ext
+      simp only [Limits.Cocone.category_comp_hom,
+        GebLean.Cocone.eqToHom_hom, eqToIso.hom,
+        eqToHom_refl, Category.id_comp,
+        Category.comp_id,
+        comprehensiveCoconeForwardFunctor,
+        comprehensiveCoconeBackwardFunctor]
+      rfl)
+  counitIso := NatIso.ofComponents
+    (fun t => eqToIso
+      (comprehensiveCocone_forward_backward
+        F G t))
+    (fun g => by
+      apply Limits.CoconeMorphism.ext
+      simp only [Limits.Cocone.category_comp_hom,
+        GebLean.Cocone.eqToHom_hom, eqToIso.hom,
+        eqToHom_refl, Category.id_comp,
+        Category.comp_id,
+        comprehensiveCoconeForwardFunctor,
+        comprehensiveCoconeBackwardFunctor]
+      rfl)
+  functor_unitIso_comp s := by
+    apply Limits.CoconeMorphism.ext
+    simp only [Limits.Cocone.category_comp_hom,
+      Limits.Cocone.category_id_hom,
+      GebLean.Cocone.eqToHom_hom, eqToIso.hom,
+      NatIso.ofComponents, Functor.id_obj,
+      comprehensiveCoconeForwardFunctor,
+      comprehensiveCoconeForward,
+      eqToHom_refl, Category.comp_id]
+
 end ComprehensiveCoconeEquiv
 
 section ComprehensiveConeEquiv
@@ -382,6 +450,75 @@ def comprehensiveConeEquiv
   left_inv := comprehensiveCone_backward_forward F G
   right_inv := comprehensiveCone_forward_backward F G
 
+def comprehensiveConeForwardFunctor
+    (G : D ⥤ E) :
+    Limits.Cone (F ⋙ G) ⥤
+    Limits.Cone (comprehensiveM' F ⋙ G) where
+  obj := comprehensiveConeForward F G
+  map {s₁ s₂} f := {
+    hom := f.hom
+    w := by
+      intro e
+      simp only [comprehensiveConeForward]
+      refine Quotient.inductionOn e.snd
+        (fun τ => ?_)
+      simp only [Quotient.lift_mk,
+        ← Category.assoc]
+      rw [← f.w τ.left] }
+
+def comprehensiveConeBackwardFunctor
+    (G : D ⥤ E) :
+    Limits.Cone (comprehensiveM' F ⋙ G) ⥤
+    Limits.Cone (F ⋙ G) where
+  obj := comprehensiveConeBackward F G
+  map {t₁ t₂} g := {
+    hom := g.hom
+    w := fun c => by
+      simp only [comprehensiveConeBackward]
+      exact g.w ((comprehensiveE' F).obj c) }
+
+def comprehensiveConeEquivalence
+    (G : D ⥤ E) :
+    Limits.Cone (F ⋙ G) ≌
+    Limits.Cone (comprehensiveM' F ⋙ G) where
+  functor := comprehensiveConeForwardFunctor F G
+  inverse := comprehensiveConeBackwardFunctor F G
+  unitIso := NatIso.ofComponents
+    (fun s => eqToIso
+      (comprehensiveCone_backward_forward
+        F G s).symm)
+    (fun f => by
+      apply Limits.ConeMorphism.ext
+      simp only [Limits.Cone.category_comp_hom,
+        GebLean.Cone.eqToHom_hom, eqToIso.hom,
+        eqToHom_refl, Category.id_comp,
+        Category.comp_id,
+        comprehensiveConeForwardFunctor,
+        comprehensiveConeBackwardFunctor]
+      rfl)
+  counitIso := NatIso.ofComponents
+    (fun t => eqToIso
+      (comprehensiveCone_forward_backward
+        F G t))
+    (fun g => by
+      apply Limits.ConeMorphism.ext
+      simp only [Limits.Cone.category_comp_hom,
+        GebLean.Cone.eqToHom_hom, eqToIso.hom,
+        eqToHom_refl, Category.id_comp,
+        Category.comp_id,
+        comprehensiveConeForwardFunctor,
+        comprehensiveConeBackwardFunctor]
+      rfl)
+  functor_unitIso_comp s := by
+    apply Limits.ConeMorphism.ext
+    simp only [Limits.Cone.category_comp_hom,
+      Limits.Cone.category_id_hom,
+      GebLean.Cone.eqToHom_hom, eqToIso.hom,
+      NatIso.ofComponents, Functor.id_obj,
+      comprehensiveConeForwardFunctor,
+      comprehensiveConeForward,
+      eqToHom_refl, Category.comp_id]
+
 end ComprehensiveConeEquiv
 
 section StrongRestrictedCowedgeWeightedCocone
@@ -526,6 +663,25 @@ def strongRestrictedCowedge_weightedCocone_equiv :
     strongRestrictedCowedge_weightedCocone_fwd_bwd
       G H
 
+def strongRestrictedCowedge_weightedCocone_equivalence
+    :
+    StrongRestrictedCowedge G H ≌
+    WeightedCocone (cowedgeWeight H)
+      (profunctorOnCoTwistedArrow C G) :=
+  (strongRestrictedCowedgeEquiv G H)
+  |>.trans (cowedgeCoconeEquiv (diagElemProf G H))
+  |>.trans (Limits.Cocones.precomposeEquivalence
+    ((eqToIso (profOnCoTwArr_profPullback G
+      (DiagElem.forget H))).symm))
+  |>.trans (comprehensiveCoconeEquivalence
+    (coTwistedArrowMap (DiagElem.forget H))
+    (profunctorOnCoTwistedArrow C G))
+  |>.trans (Limits.Cocones.precomposeEquivalence
+    (eqToIso (weightedCoconeDiagram_eq
+      (cowedgeWeight H)
+      (profunctorOnCoTwistedArrow C G))))
+  |>.trans (weightedCoconeElementsEquiv _ _).symm
+
 end StrongRestrictedCowedgeWeightedCocone
 
 section StrongRestrictedWedgeWeightedCone
@@ -663,6 +819,20 @@ def strongRestrictedWedge_weightedCone_equiv :
   right_inv :=
     strongRestrictedWedge_weightedCone_fwd_bwd
       G H
+
+def strongRestrictedWedge_weightedCone_equivalence :
+    StrongRestrictedWedge G H ≌
+    WeightedCone (wedgeWeight H)
+      (profunctorOnTwistedArrow C G) :=
+  (strongRestrictedWedgeEquiv G H)
+  |>.trans (wedgeConeEquiv (diagElemProf G H))
+  |>.trans (Limits.Cones.postcomposeEquivalence
+    (eqToIso (profOnTwArr_profPullback G
+      (DiagElem.forget H))))
+  |>.trans (comprehensiveConeEquivalence
+    (twistedArrowMap (DiagElem.forget H))
+    (profunctorOnTwistedArrow C G))
+  |>.trans (weightedConeElementsEquiv _ _).symm
 
 end StrongRestrictedWedgeWeightedCone
 
