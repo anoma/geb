@@ -836,4 +836,87 @@ def strongRestrictedWedge_weightedCone_equivalence :
 
 end StrongRestrictedWedgeWeightedCone
 
+section ParanatWeightedLimit
+
+variable {C : Type v} [Category.{v} C]
+  (G H : Cᵒᵖ ⥤ C ⥤ Type v)
+
+/-- The image of the structure integral wedge
+under the equivalence to weighted cones is
+terminal. -/
+def structureIntegralWeightedCone_isTerminal :
+    Limits.IsTerminal
+      ((strongRestrictedWedge_weightedCone_equivalence
+        G H).functor.obj
+        (structureIntegralWedge G H)) :=
+  isTerminalOfEquivFunctor
+    (strongRestrictedWedge_weightedCone_equivalence
+      G H)
+    (structureIntegralWedge_isTerminal G H)
+
+/-- Isomorphism in the weighted cone category between
+the structure integral image and the natural
+transformation cone. -/
+def structureIntegralWeightedConeIso :
+    (strongRestrictedWedge_weightedCone_equivalence
+      G H).functor.obj
+      (structureIntegralWedge G H) ≅
+    natTransWeightedCone
+      (wedgeWeight H)
+      (profunctorOnTwistedArrow C G) :=
+  (structureIntegralWeightedCone_isTerminal
+    G H).uniqueUpToIso
+    natTransWeightedCone_isTerminal
+
+/-- Iso in `Type v` between `StructureIntegral H G`
+and `wedgeWeight H ⟶ profunctorOnTwistedArrow C G`,
+extracted from the weighted cone iso between
+terminal objects. -/
+def structureIntegralNatTransIso :
+    StructureIntegral H G ≅
+    (wedgeWeight H ⟶
+      profunctorOnTwistedArrow C G) where
+  hom :=
+    (structureIntegralWeightedConeIso G H).hom.hom
+  inv :=
+    (structureIntegralWeightedConeIso G H).inv.hom
+  hom_inv_id := by
+    have h :=
+      (structureIntegralWeightedConeIso
+        G H).hom_inv_id
+    have := congr_arg
+      WeightedCone.Hom.hom h
+    simp only [WeightedCone.category_comp_hom,
+      WeightedCone.category_id_hom] at this
+    exact this
+  inv_hom_id := by
+    have h :=
+      (structureIntegralWeightedConeIso
+        G H).inv_hom_id
+    have := congr_arg
+      WeightedCone.Hom.hom h
+    simp only [WeightedCone.category_comp_hom,
+      WeightedCone.category_id_hom] at this
+    exact this
+
+/-- Paranatural transformations `Paranat H G` are
+equivalent to natural transformations from the wedge
+weight to the profunctor on twisted arrows:
+`Paranat H G ≃
+  (wedgeWeight H ⟶ profunctorOnTwistedArrow C G)`.
+
+This characterizes paranaturality entirely in terms
+of ordinary naturality: a paranatural transformation
+from `H` to `G` is the same as a natural
+transformation between functors on `TwistedArrow C`.
+-/
+def paranatWeightedLimitEquiv :
+    Paranat H G ≃
+    (wedgeWeight H ⟶
+      profunctorOnTwistedArrow C G) :=
+  (structureIntegralEquivParanat H G).symm |>.trans
+    (structureIntegralNatTransIso G H).toEquiv
+
+end ParanatWeightedLimit
+
 end GebLean

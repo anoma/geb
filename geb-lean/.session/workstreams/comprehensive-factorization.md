@@ -2,10 +2,11 @@
 
 ## Status
 
-Phase 4 complete. Categorical equivalences (`≌`)
-established for both cowedge and wedge weighted
-constructions, upgrading the prior type-level
-equivalences (`≃`).
+Phase 5 complete. Paranatural transformations
+characterized as ordinary natural transformations
+via weighted limits:
+`Paranat H G ≃
+  (wedgeWeight H ⟶ profunctorOnTwistedArrow C G)`.
 
 ## Context
 
@@ -142,6 +143,25 @@ Completed definitions:
    WeightedCone (wedgeWeight H)
    (profunctorOnTwistedArrow C G)`
 
+### Phase 5: Paranat as Weighted Limit (COMPLETE)
+
+File: `GebLean/ComprehensiveWeighted.lean`
+
+Completed definitions:
+
+1. `structureIntegralWeightedCone_isTerminal G H`
+   -- terminality of the structure integral wedge
+   transferred to weighted cones
+2. `structureIntegralWeightedConeIso G H` -- iso
+   in `WeightedCone` between structure integral
+   image and natural transformation cone
+3. `structureIntegralNatTransIso G H` -- iso in
+   `Type v` between `StructureIntegral H G` and
+   `(wedgeWeight H ⟶ profunctorOnTwistedArrow C G)`
+4. `paranatWeightedLimitEquiv G H` --
+   `Paranat H G ≃
+   (wedgeWeight H ⟶ profunctorOnTwistedArrow C G)`
+
 ## Tasks
 
 - [x] Create `GebLean/ComprehensiveFactorization.lean`
@@ -161,6 +181,7 @@ Completed definitions:
 - [x] Review checkpoint
 - [x] Corrected weighted wedges/cowedges
 - [x] Categorical equivalences for weighted (co)wedges
+- [x] Paranat as weighted limit characterization
 
 ## Related Files
 
