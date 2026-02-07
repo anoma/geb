@@ -48,9 +48,15 @@ warnings, sorries, or underscores.
     - `TotalDecFactGrothendieck C F`: abbreviation for
       `TwGrothendieckObj C (decFactFunctor F)`
     - `totalDecFactGrothendieckEquivObj`: type equivalence
-    - `totalDecFactToGrothendieck`, `grothendieckToTotalDecFact`:
-      functors
-    - `totalDecFactIsoGrothendieck`: Cat isomorphism
+    - `totalDecFactToGrothendieck`,
+      `grothendieckToTotalDecFact`: functors
+    - `totalDecFactEquivGrothendieck`: `Equivalence`
+      (category equivalence, not just Cat isomorphism)
+    - `grothendieckHomToTotalDecFactHom`,
+      `totalDecFactHomToGrothendieckHom`: morphism
+      translations
+    - `decFact_hom_heq`: cross-type HEq for
+      `DecFactHom` across different twisted arrows
 
 ## Proof Technique Summary
 

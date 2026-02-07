@@ -3514,7 +3514,166 @@ def grothendieckToTotalDecFact :
         (TotalDecFactHom.id C F _).fiberMorph
       dsimp only [TotalDecFactHom.id]
       apply heq_of_eq; congr 1
-  map_comp m n := _
+  map_comp m n := by
+    apply TotalDecFactHom.ext
+    · rfl
+    · change (connGrothendieckComp C
+        (tw'ToTw ⋙ decFactFunctor F) m n
+        ).fiberMorph.factHom.h =
+        m.fiberMorph.factHom.h ≫
+          n.fiberMorph.factHom.h
+      simp only [connGrothendieckComp]
+      rw [decFact_comp_factHom,
+        decFact_comp_factHom,
+        decFact_comp_factHom,
+        decFact_comp_factHom,
+        decFact_eqToHom_factHom,
+        decFact_eqToHom_factHom,
+        decFact_eqToHom_factHom,
+        factorisation_comp_h,
+        factorisation_comp_h,
+        factorisation_comp_h,
+        factorisation_comp_h,
+        factorisation_eqToHom_h,
+        factorisation_eqToHom_h,
+        factorisation_eqToHom_h]
+      simp only [Functor.comp_map, Functor.comp_obj,
+        Functor.toCatHom_toFunctor,
+        decFactFunctor, decFactMap, decFactMapHom,
+        factorisationMapHom,
+        eqToHom_refl,
+        Category.id_comp, Category.comp_id]
+    · rfl
+    · symm
+      change
+        (TotalDecFactHom.comp C F
+          (grothendieckHomToTotalDecFactHom C F m)
+          (grothendieckHomToTotalDecFactHom C F n)
+          ).fiberMorph ≍ _
+      simp only [Functor.comp_map,
+        Functor.comp_obj,
+        decFactFunctor,
+        Functor.toCatHom_toFunctor,
+        decFactMap, decFactMapObj,
+        grothendieckHomToTotalDecFactHom]
+      dsimp only [TotalDecFactHom.comp]
+      exact
+        fFiber_fiveChain_heq_decFactHom_fiveChain
+          F _ _ _ _ _ rfl rfl rfl
+          HEq.rfl HEq.rfl HEq.rfl
+          HEq.rfl HEq.rfl HEq.rfl
+            HEq.rfl
+
+private theorem totalDecFactRoundTrip :
+    totalDecFactToGrothendieck C F ⋙
+      grothendieckToTotalDecFact C F =
+    𝟭 (TotalDecFactObj C F) := by
+  apply Functor.hext
+  · intro x; rfl
+  · intro x y f
+    exact heq_of_eq
+      (TotalDecFactHom.ext rfl rfl rfl
+        (heq_of_eq rfl))
+
+private lemma decFact_hom_heq
+    {X Y : C} {f g : X ⟶ Y}
+    {d₁ : DecFactObj F (twObjMk f)}
+    {e₁ : DecFactObj F (twObjMk f)}
+    {d₂ : DecFactObj F (twObjMk g)}
+    {e₂ : DecFactObj F (twObjMk g)}
+    (hd_mid : d₁.fact.mid = d₂.fact.mid)
+    (hd_ι : HEq d₁.fact.ι d₂.fact.ι)
+    (hd_π : HEq d₁.fact.π d₂.fact.π)
+    (hd_fiber : HEq d₁.fiber d₂.fiber)
+    (he_mid : e₁.fact.mid = e₂.fact.mid)
+    (he_ι : HEq e₁.fact.ι e₂.fact.ι)
+    (he_π : HEq e₁.fact.π e₂.fact.π)
+    (he_fiber : HEq e₁.fiber e₂.fiber)
+    {m : DecFactHom F (twObjMk f) d₁ e₁}
+    {n : DecFactHom F (twObjMk g) d₂ e₂}
+    (hh : HEq m.factHom.h n.factHom.h)
+    (hfm : HEq m.fiberMorph n.fiberMorph) :
+    HEq m n := by
+  obtain ⟨⟨_, _, _, pd₁⟩, _⟩ := d₁
+  obtain ⟨⟨_, _, _, pd₂⟩, _⟩ := d₂
+  obtain ⟨⟨_, _, _, pe₁⟩, _⟩ := e₁
+  obtain ⟨⟨_, _, _, pe₂⟩, _⟩ := e₂
+  dsimp at hd_mid he_mid
+  subst hd_mid; subst he_mid
+  rw [heq_iff_eq] at hd_ι hd_π he_ι he_π
+  subst hd_ι; subst hd_π; subst he_ι; subst he_π
+  rw [heq_iff_eq] at hd_fiber he_fiber
+  subst hd_fiber; subst he_fiber
+  have : f = g := pd₁.symm.trans pd₂
+  subst this
+  exact heq_of_eq
+    (decFactHom_ext F (twObjMk f)
+      (Factorisation.Hom.ext (eq_of_heq hh)) hfm)
+
+private theorem grothendieckDecFactRoundTrip :
+    grothendieckToTotalDecFact C F ⋙
+      totalDecFactToGrothendieck C F =
+    𝟭 (TotalDecFactGrothendieck C F) := by
+  apply Functor.hext
+  · intro x
+    exact
+      (totalDecFactGrothendieckEquivObj C F).left_inv
+        x
+  · intro x y f
+    apply connGrothendieckHom_heq (C := C)
+      (F := tw'ToTw ⋙ decFactFunctor F)
+      ((totalDecFactGrothendieckEquivObj C F
+        ).left_inv x)
+      ((totalDecFactGrothendieckEquivObj C F
+        ).left_inv y)
+    · exact HEq.rfl
+    · exact HEq.rfl
+    · simp only [Functor.comp_map,
+        grothendieckToTotalDecFact,
+        grothendieckHomToTotalDecFactHom,
+        totalDecFactToGrothendieck,
+        totalDecFactHomToGrothendieckHom,
+        Functor.id_map]
+      apply decFact_hom_heq C F <;> {
+        simp only [factorisationMapObj,
+          decFactMapObj,
+          connGrothendieckTwMorphCod,
+          connGrothendieckTwMorphDom,
+          connGrothendieckDiagCod,
+          connGrothendieckDiagDom,
+          tw'ToTw, twHomMk'_domArr,
+          twHomMk'_codArr,
+          twHomMk_domArr, twHomMk_codArr,
+          twDomArr'_comp, twDomArr'_eqToHom,
+          twCodArr'_comp, twCodArr'_eqToHom,
+          twObjMk'_dom, twObjMk'_cod,
+          twObjMk'_arr,
+          twObjMk_dom, twObjMk_cod,
+          eqToHom_refl,
+          Category.id_comp, Category.comp_id,
+          Functor.comp_map,
+          decFactFunctor,
+          Functor.toCatHom_toFunctor,
+          decFactMap,
+          totalDecFactGrothendieckEquivObj,
+          Equiv.coe_fn_symm_mk]
+        try rfl
+        try exact HEq.rfl
+      }
+
+/-- The total decorated factorisation category
+`TotalDecFactObj C F` is equivalent to the connected
+Grothendieck construction `TotalDecFactGrothendieck C F`
+over `decFactFunctor F`. -/
+def totalDecFactEquivGrothendieck :
+    TotalDecFactObj C F ≌
+      TotalDecFactGrothendieck C F where
+  functor := totalDecFactToGrothendieck C F
+  inverse := grothendieckToTotalDecFact C F
+  unitIso :=
+    eqToIso (totalDecFactRoundTrip C F).symm
+  counitIso :=
+    eqToIso (grothendieckDecFactRoundTrip C F)
 
 end TotalDecoratedFactorisation
 
