@@ -1005,3 +1005,543 @@ polyProfFreeMRoll {pp} {v} i subTerms x subst =
 -- This is not a definitional equality in Idris due to the
 -- free monad catamorphism's computation rules, but holds
 -- propositionally.
+
+------------------------------------------------------------
+------------------------------------------------------------
+---- Profunctor lmap/rmap for Polynomial Profunctors ----
+------------------------------------------------------------
+------------------------------------------------------------
+
+-- Left map (contravariant in first argument): given
+-- f : a -> s, transport P(s,t) to P(a,t) by precomposing
+-- the direction function with InterpPFMap.
+public export
+interpPolyProfLmap : (pp : PolyProf) ->
+  TypeLmapSig (InterpPolyProf pp)
+interpPolyProfLmap pp s t a mst (i ** f) =
+  (i ** f . InterpPFMap (ppDirPF pp i) mst)
+
+-- Right map (covariant in second argument): given
+-- f : t -> b, transport P(s,t) to P(s,b) by
+-- postcomposing f.
+public export
+interpPolyProfRmap : (pp : PolyProf) ->
+  TypeRmapSig (InterpPolyProf pp)
+interpPolyProfRmap pp s t b mtb (i ** f) =
+  (i ** mtb . f)
+
+------------------------------------------------------------
+------------------------------------------------------------
+---- Roll Constructor for Section-Based PolyProfMu ----
+------------------------------------------------------------
+------------------------------------------------------------
+
+-- Roll one layer of the profunctor around sub-terms in
+-- the section-based representation.
+--
+-- Given a position i and a sub-term for each positive
+-- direction (field) of the constructor at i, produce a
+-- PolyProfMu element.
+--
+-- The position is built by applying InPFM (PFCom i) with
+-- the sub-term positions. The section delegates to
+-- sub-term sections via Right, choosing the recursive
+-- direction at each node.
+public export
+polyProfMuRollSec : {pp : PolyProf} ->
+  (i : ppPos pp) ->
+  (subTerms : pfPos (ppDirPF pp i) ->
+    PolyProfMu pp) ->
+  PolyProfMu pp
+polyProfMuRollSec {pp} i subTerms =
+  let dm : InterpPolyFunc (ppDirPF pp i) Unit ->
+           ppFreeMPosUnit pp
+      dm jUnit = fst (subTerms (fst jUnit))
+      pos : ppFreeMPosUnit pp
+      pos = InPFM (PFCom i) dm
+      sec : PolySection (FreeMDirPF pp pos)
+      sec (p ** fp) =
+        Right (snd (subTerms p) fp)
+  in (pos ** sec)
+
+------------------------------------------------------------
+------------------------------------------------------------
+---- Infrastructure Lemmas ----
+------------------------------------------------------------
+------------------------------------------------------------
+
+------------------------------------------------------------
+---- InterpPFMap (const ()) is identity on Unit ----
+------------------------------------------------------------
+
+-- When the target type is Unit, mapping const () over a
+-- polynomial functor element is the identity, because all
+-- Unit-valued functions are equal (by unitUnique).
+public export
+interpPFMapConstUnit : FunExt ->
+  (pf : PolyFunc) ->
+  (el : InterpPolyFunc pf Unit) ->
+  InterpPFMap pf (const ()) el = el
+interpPFMapConstUnit fext (pos ** dir) (j ** f) =
+  dpEq12 Refl
+    (funExt (\x => unitUnique () (f x)))
+
+------------------------------------------------------------
+---- ppFreeMPosMap Unit is identity ----
+------------------------------------------------------------
+
+-- Mapping positions from Unit to Unit (via const ()) is
+-- the identity on free monad positions. This is the key
+-- lemma for the wedge condition: the Unit instantiation
+-- recovers the original position.
+--
+-- Proof by structural induction on pos, following the
+-- pattern of pfCataInId (PolyCat.idr:2530).
+-- PFVar case: both sides are InPFM (PFVar ()) with a
+--   Void -> X function, equal by funExt absurd.
+-- PFCom case: unfold catamorphism, apply
+--   interpPFMapConstUnit on the direction argument, then
+--   inductive hypothesis.
+public export
+ppFreeMPosMapUnit : FunExt ->
+  (pp : PolyProf) ->
+  (pos : ppFreeMPosUnit pp) ->
+  ppFreeMPosMap pp Unit pos = pos
+ppFreeMPosMapUnit fext pp (InPFM (PFVar ()) dm) =
+  cong (InPFM (PFVar ())) (funExt (\v => absurd v))
+ppFreeMPosMapUnit fext pp (InPFM (PFCom i) dm) =
+  cong (InPFM (PFCom i)) (funExt (\d =>
+    trans
+      (cong (\d' => ppFreeMPosMap pp Unit (dm d'))
+        (interpPFMapConstUnit fext
+          (ppDirPF pp i) d))
+      (ppFreeMPosMapUnit fext pp (dm d))))
+
+------------------------------------------------------------
+------------------------------------------------------------
+---- Wedge Condition and Mu Conversions ----
+------------------------------------------------------------
+------------------------------------------------------------
+
+------------------------------------------------------------
+---- Wedge condition for PHOAS elements ----
+------------------------------------------------------------
+
+-- The wedge condition says that the position at each type
+-- x is the position-mapped version of the position at
+-- Unit. This is the coherence condition that makes a PHOAS
+-- element a genuine end element.
+public export
+0 PolyProfMuPHOASWedge : (pp : PolyProf) ->
+  PolyProfMuPHOAS pp -> Type
+PolyProfMuPHOASWedge pp el =
+  (x : Type) ->
+    fst (el x) =
+    ppFreeMPosMap pp x (fst (el Unit))
+
+------------------------------------------------------------
+---- Section-based Mu satisfies the wedge condition ----
+------------------------------------------------------------
+
+-- Elements constructed from sections automatically satisfy
+-- the wedge condition, because the position at each type x
+-- is ppFreeMPosMap pp x pos, and the position at Unit is
+-- ppFreeMPosMap pp Unit pos = pos (by ppFreeMPosMapUnit).
+public export
+0 polyProfMuToFamilyWedge : FunExt ->
+  {pp : PolyProf} ->
+  (mu : PolyProfMu pp) ->
+  PolyProfMuPHOASWedge pp
+    (polyProfMuToFamily {pp} mu)
+polyProfMuToFamilyWedge fext {pp} (pos ** sec) x =
+  sym (cong (ppFreeMPosMap pp x)
+    (ppFreeMPosMapUnit fext pp pos))
+
+------------------------------------------------------------
+---- PHOAS family to section-based Mu ----
+------------------------------------------------------------
+
+-- Convert a PHOAS element satisfying the wedge condition
+-- to a section-based Mu element.
+--
+-- Position: fst (el Unit)
+-- Section: extracted via natTransToSection from the
+-- natural transformation built by composing snd (el x)
+-- with the direction isomorphism and wedge transport.
+public export
+polyProfFamilyToMu : FunExt ->
+  {pp : PolyProf} ->
+  (el : PolyProfMuPHOAS pp) ->
+  (0 wedge : PolyProfMuPHOASWedge pp el) ->
+  PolyProfMu pp
+polyProfFamilyToMu fext {pp} el wedge =
+  let pos : ppFreeMPosUnit pp
+      pos = fst (el Unit)
+      eta : (x : Type) ->
+        InterpPolyFunc (FreeMDirPF pp pos) x -> x
+      eta x elem =
+        snd (el x)
+          (replace
+            {p=PolyFuncFreeMDir (ppToPolyFunc pp x)}
+            (sym (wedge x))
+            (freeMDirIsoBwd pp pos x elem))
+  in (pos **
+      natTransToSection
+        {pf=FreeMDirPF pp pos} eta)
+
+------------------------------------------------------------
+------------------------------------------------------------
+---- Natural Transformations of Polynomial Profunctors ----
+------------------------------------------------------------
+------------------------------------------------------------
+
+-- A natural transformation between polynomial profunctors
+-- consists of a position map and a backward direction map.
+-- The direction goes backward because directions appear
+-- contravariantly: in P(x,y) = (i ** DirPF(i)(x) -> y),
+-- the DirPF(i)(x) is in the function domain.
+public export
+PolyProfNT : PolyProf -> PolyProf -> Type
+PolyProfNT pp qq =
+  (onPos : ppPos pp -> ppPos qq **
+   (i : ppPos pp) ->
+     PolyNatTrans
+       (ppDirPF qq (onPos i))
+       (ppDirPF pp i))
+
+------------------------------------------------------------
+---- Interpretation of PolyProfNT ----
+------------------------------------------------------------
+
+-- Interpret a PolyProfNT as a map on profunctor elements.
+-- Position maps forward; directions compose backward.
+public export
+InterpPolyProfNT :
+  {pp, qq : PolyProf} ->
+  PolyProfNT pp qq ->
+  (x, y : Type) ->
+  InterpPolyProf pp x y ->
+  InterpPolyProf qq x y
+InterpPolyProfNT {pp} {qq}
+  (onPos ** onDir) x y (i ** f) =
+  (onPos i **
+   f . InterpPolyNT (onDir i) x)
+
+------------------------------------------------------------
+---- Identity and Composition ----
+------------------------------------------------------------
+
+-- Identity natural transformation.
+public export
+polyProfNTId : (pp : PolyProf) ->
+  PolyProfNT pp pp
+polyProfNTId pp =
+  (id ** \i => pntId (ppDirPF pp i))
+
+-- Composition of natural transformations.
+-- Direction maps compose in reverse order (contravariant).
+public export
+polyProfNTComp :
+  {pp, qq, rr : PolyProf} ->
+  PolyProfNT qq rr ->
+  PolyProfNT pp qq ->
+  PolyProfNT pp rr
+polyProfNTComp {pp} {qq} {rr}
+  (gPos ** gDir) (fPos ** fDir) =
+  (gPos . fPos **
+   \i => pntVCatComp (fDir i) (gDir (fPos i)))
+
+------------------------------------------------------------
+---- Naturality of InterpPolyProfNT ----
+------------------------------------------------------------
+
+-- InterpPolyProfNT is natural in both variables.
+-- For f : a -> b and g : x -> y:
+--   NT . (lmap f . rmap g) = (lmap f . rmap g) . NT
+--
+-- After destructuring the direction element, the equality
+-- is definitional because function composition is
+-- associative and InterpPolyNT commutes with InterpPFMap.
+public export
+0 polyProfNTNatural :
+  FunExt ->
+  {pp, qq : PolyProf} ->
+  (nt : PolyProfNT pp qq) ->
+  (a, b, x, y : Type) ->
+  (f : a -> b) -> (g : x -> y) ->
+  (el : InterpPolyProf pp b x) ->
+  InterpPolyProfNT {pp} {qq} nt a y
+    (interpPolyProfRmap pp a x y g
+      (interpPolyProfLmap pp b x a f el))
+  = interpPolyProfLmap qq b y a f
+      (interpPolyProfRmap qq b x y g
+        (InterpPolyProfNT {pp} {qq} nt b x el))
+polyProfNTNatural fext {pp} {qq}
+  (onPos ** onDir) a b x y f g (i ** h) =
+  dpEq12 Refl
+    (funExt (\(p ** k) => Refl))
+
+------------------------------------------------------------
+---- Paranaturality of InterpPolyProfNT ----
+------------------------------------------------------------
+
+-- The paranaturality condition for polynomial
+-- profunctor transformations, i.e., the condition
+-- that a dinatural transformation between
+-- InterpPolyProf's is paranatural with respect to
+-- the profunctor lmap/rmap actions.
+public export
+0 PolyProfParaNTCond :
+  (pp, qq : PolyProf) ->
+  TypeProfDiNT (InterpPolyProf pp)
+    (InterpPolyProf qq) ->
+  Type
+PolyProfParaNTCond pp qq alpha =
+  TypeNTParanaturalityLR
+    (InterpPolyProf pp) (InterpPolyProf qq)
+    (interpPolyProfLmap pp)
+    (interpPolyProfRmap pp)
+    (interpPolyProfLmap qq)
+    (interpPolyProfRmap qq)
+    alpha
+
+-- Every polynomial profunctor natural transformation
+-- is paranatural. The proof works by:
+-- 1. Extracting position equality (j1 = j0) from
+--    the condition via mkDPairInjectiveFstHet
+-- 2. Extracting direction equality via
+--    mkDPairInjectiveSndHet (heterogeneous -> case
+--    match since types now agree)
+-- 3. After both unifications, the goal reduces to
+--    Refl at each element because InterpPolyNT and
+--    InterpPFMap commute definitionally at elements.
+public export
+0 polyProfNTisPara : FunExt ->
+  {pp, qq : PolyProf} ->
+  (nt : PolyProfNT pp qq) ->
+  PolyProfParaNTCond pp qq
+    (\x => InterpPolyProfNT {pp} {qq} nt x x)
+polyProfNTisPara fext {pp} {qq}
+  (onPos ** onDir) i0 i1 i2
+  (j0 ** h0) (j1 ** h1) cond =
+  case mkDPairInjectiveFstHet cond of
+    Refl =>
+      let heteq = mkDPairInjectiveSndHet cond
+      in dpEq12 Refl
+        (funExt (\(p ** k) =>
+          fcong heteq
+            {x=InterpPolyNT
+              (onDir j1) i0 (p ** k)}))
+
+-- Helper: lmap preserves the position (first
+-- component) of a polynomial profunctor element.
+public export
+interpPolyProfLmapFst : (qq : PolyProf) ->
+  (s, t, a : Type) -> (f : a -> s) ->
+  (el : InterpPolyProf qq s t) ->
+  fst (interpPolyProfLmap qq s t a f el) =
+  fst el
+interpPolyProfLmapFst qq s t a f (j ** g) =
+  Refl
+
+-- Helper: rmap preserves the position (first
+-- component) of a polynomial profunctor element.
+public export
+interpPolyProfRmapFst : (qq : PolyProf) ->
+  (s, t, b : Type) -> (f : t -> b) ->
+  (el : InterpPolyProf qq s t) ->
+  fst (interpPolyProfRmap qq s t b f el) =
+  fst el
+interpPolyProfRmapFst qq s t b f (j ** g) =
+  Refl
+
+-- Key theoretical result: for polynomial profunctors,
+-- the output position of any paranatural
+-- transformation is independent of the input algebra
+-- structure.
+--
+-- Proof: mediate through the unique algebra on Unit
+-- (const ()). Since const () . f = const () for
+-- any f (definitionally), the paranaturality
+-- condition for (const () : x -> Unit) is
+-- trivially satisfied. Paranaturality then gives
+-- fst (alpha Unit ...) = fst (alpha x ...) and
+-- similarly for y. By transitivity,
+-- fst (alpha x ...) = fst (alpha y ...).
+public export
+0 polyProfParaPosIndep :
+  {pp, qq : PolyProf} ->
+  (alpha : TypeProfDiNT (InterpPolyProf pp)
+    (InterpPolyProf qq)) ->
+  PolyProfParaNTCond pp qq alpha ->
+  (x, y : Type) ->
+  (i : ppPos pp) ->
+  (hx :
+    InterpPolyFunc (ppDirPF pp i) x -> x) ->
+  (hy :
+    InterpPolyFunc (ppDirPF pp i) y -> y) ->
+  fst (alpha x (i ** hx)) =
+  fst (alpha y (i ** hy))
+polyProfParaPosIndep {pp} {qq}
+  alpha para x y i hx hy =
+  let
+    -- Apply paranaturality at const () : x -> Unit
+    parax = para x Unit (const ())
+      (i ** hx) (i ** const ())
+      (dpEq12 Refl Refl)
+    -- Apply paranaturality at const () : y -> Unit
+    paray = para y Unit (const ())
+      (i ** hy) (i ** const ())
+      (dpEq12 Refl Refl)
+    -- lmap/rmap preserve first component
+    eqx = trans
+      (sym (interpPolyProfLmapFst qq
+        Unit Unit x (const ())
+        (alpha Unit (i ** const ()))))
+      (trans (dpeq1 parax)
+        (interpPolyProfRmapFst qq
+          x x Unit (const ())
+          (alpha x (i ** hx))))
+    eqy = trans
+      (sym (interpPolyProfLmapFst qq
+        Unit Unit y (const ())
+        (alpha Unit (i ** const ()))))
+      (trans (dpeq1 paray)
+        (interpPolyProfRmapFst qq
+          y y Unit (const ())
+          (alpha y (i ** hy))))
+  in
+  trans (sym eqx) eqy
+
+-- Discussion: completeness of paranaturality
+--
+-- Position-independence (polyProfParaPosIndep)
+-- shows that any paranatural transformation has
+-- a position map ppPos pp -> ppPos qq independent
+-- of the algebra structure.
+--
+-- For the DIRECTION part, the analysis differs
+-- from IntEndoProAr (PolyDifunc.idr). In
+-- IntEndoProAr, the "assignment"
+-- covar i -> contra i is type-independent,
+-- enabling formula extraction via TypeDiArFromDi.
+-- In PolyProf, the "assignment" is an algebra
+-- InterpPolyFunc pf x -> x which varies with x.
+--
+-- For section-based algebras (those of the form
+-- sectionApply s x), the paranaturality condition
+-- constrains the output to be sectionApply (F s) x
+-- for some section map F. For natural
+-- transformations, F factors through a
+-- PolyNatTrans, but in general F could be more
+-- complex.
+--
+-- Whether ALL paranaturals for PolyProf are
+-- natural (i.e., whether F always factors through
+-- a PolyNatTrans) is a non-trivial question. We
+-- prove position-independence and natural-implies-
+-- paranatural, and note the full characterization
+-- as future work.
+
+------------------------------------------------------------
+------------------------------------------------------------
+---- Direction Isomorphism Round-Trips ----
+------------------------------------------------------------
+------------------------------------------------------------
+
+-- freeMDirIsoFwd . freeMDirIsoBwd = id
+-- Proof by structural induction on pos.
+--
+-- PFVar case: both functions collapse to the unique
+-- element (() ** voidF a), so the round-trip is
+-- dpEq12 Refl (funExt absurd).
+--
+-- PFCom case: decompose el = ((p ** fp) ** dirFn),
+-- apply IH on recursive sub-position, then
+-- reconstruct using dpEq12 and funExt over Either.
+public export
+0 freeMDirIsoFwdBwd : FunExt ->
+  (pp : PolyProf) ->
+  (pos : ppFreeMPosUnit pp) ->
+  (a : Type) ->
+  (el : InterpFreeMDirPF pp pos a) ->
+  freeMDirIsoFwd pp pos a
+    (freeMDirIsoBwd pp pos a el) = el
+freeMDirIsoFwdBwd fext pp
+  (InPFM (PFVar ()) dm) a (() ** f) =
+  dpEq12 Refl (funExt (\v => absurd v))
+freeMDirIsoFwdBwd fext pp
+  (InPFM (PFCom i) dm) a
+    ((p ** fp) ** dirFn) =
+  -- The PFCom case requires matching through the
+  -- recursive structure of freeMDirIsoFwd's
+  -- internal let binding. The IH (on dm (p ** const
+  -- ())) gives the sub-result equality, but the
+  -- outer freeMDirIsoFwd's computation is opaque to
+  -- rewrite. Would require refactoring
+  -- freeMDirIsoFwd to use a with-clause for the
+  -- recursive call to make the sub-expression
+  -- visible.
+  ?freeMDirIsoFwdBwd_com
+
+-- freeMDirIsoFwd . freeMDirIsoBwd . freeMDirIsoFwd
+-- = freeMDirIsoFwd (the weaker retract property).
+--
+-- This follows from freeMDirIsoFwdBwd applied to
+-- the image of freeMDirIsoFwd.
+public export
+0 freeMDirIsoBwdFwd : FunExt ->
+  (pp : PolyProf) ->
+  (pos : ppFreeMPosUnit pp) ->
+  (a : Type) ->
+  (dir : PolyFuncFreeMDir
+    (ppToPolyFunc pp a)
+    (ppFreeMPosMap pp a pos)) ->
+  freeMDirIsoFwd pp pos a
+    (freeMDirIsoBwd pp pos a
+      (freeMDirIsoFwd pp pos a dir)) =
+  freeMDirIsoFwd pp pos a dir
+freeMDirIsoBwdFwd fext pp pos a dir =
+  freeMDirIsoFwdBwd fext pp pos a
+    (freeMDirIsoFwd pp pos a dir)
+
+------------------------------------------------------------
+------------------------------------------------------------
+---- Mu Round-Trip Proofs ----
+------------------------------------------------------------
+------------------------------------------------------------
+
+-- Round-trip 1: section-based Mu -> PHOAS -> Mu = id
+--
+-- Position: fst (el Unit) = ppFreeMPosMap pp Unit pos
+-- = pos (by ppFreeMPosMapUnit). The section is
+-- recovered by sectionRoundTrip composed with the
+-- direction iso round-trip.
+public export
+0 polyProfMuRoundTrip1 : (fext : FunExt) ->
+  {pp : PolyProf} ->
+  (mu : PolyProfMu pp) ->
+  polyProfFamilyToMu {pp} fext
+    (polyProfMuToFamily {pp} mu)
+    (polyProfMuToFamilyWedge {pp} fext mu)
+  = mu
+polyProfMuRoundTrip1 fext {pp} (pos ** sec) =
+  ?polyProfMuRoundTrip1_hole
+
+-- Round-trip 2: PHOAS+wedge -> Mu -> PHOAS = id
+--
+-- At each type x, the position is ppFreeMPosMap pp x
+-- (fst (el Unit)) = fst (el x) (by wedge). The
+-- direction part follows from the canonical
+-- round-trip and direction iso round-trip.
+public export
+0 polyProfMuRoundTrip2 : (fext : FunExt) ->
+  {pp : PolyProf} ->
+  (el : PolyProfMuPHOAS pp) ->
+  (0 wedge : PolyProfMuPHOASWedge pp el) ->
+  (x : Type) ->
+  polyProfMuToFamily {pp}
+    (polyProfFamilyToMu fext {pp} el wedge) x
+  = el x
+polyProfMuRoundTrip2 fext {pp} el wedge x =
+  ?polyProfMuRoundTrip2_hole
