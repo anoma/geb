@@ -2,8 +2,10 @@
 
 ## Status
 
-Phase 3 complete. Both cowedge and wedge weighted
-equivalences proved.
+Phase 4 complete. Categorical equivalences (`≌`)
+established for both cowedge and wedge weighted
+constructions, upgrading the prior type-level
+equivalences (`≃`).
 
 ## Context
 
@@ -113,6 +115,33 @@ Completed definitions:
    WeightedCone (wedgeWeight H)
    (profunctorOnTwistedArrow C G)`
 
+### Phase 4: Categorical Equivalences (COMPLETE)
+
+File: `GebLean/ComprehensiveWeighted.lean`
+
+Completed definitions:
+
+1. `comprehensiveCoconeForwardFunctor F G` --
+   `Cocone (F ⋙ G) ⥤ Cocone (comprehensiveM F ⋙ G)`
+2. `comprehensiveCoconeBackwardFunctor F G` --
+   `Cocone (comprehensiveM F ⋙ G) ⥤ Cocone (F ⋙ G)`
+3. `comprehensiveCoconeEquivalence F G` --
+   `Cocone (F ⋙ G) ≌ Cocone (comprehensiveM F ⋙ G)`
+4. `comprehensiveConeForwardFunctor F G` --
+   `Cone (F ⋙ G) ⥤ Cone (comprehensiveM' F ⋙ G)`
+5. `comprehensiveConeBackwardFunctor F G` --
+   `Cone (comprehensiveM' F ⋙ G) ⥤ Cone (F ⋙ G)`
+6. `comprehensiveConeEquivalence F G` --
+   `Cone (F ⋙ G) ≌ Cone (comprehensiveM' F ⋙ G)`
+7. `strongRestrictedCowedge_weightedCocone_equivalence`
+   -- `StrongRestrictedCowedge G H ≌
+   WeightedCocone (cowedgeWeight H)
+   (profunctorOnCoTwistedArrow C G)`
+8. `strongRestrictedWedge_weightedCone_equivalence`
+   -- `StrongRestrictedWedge G H ≌
+   WeightedCone (wedgeWeight H)
+   (profunctorOnTwistedArrow C G)`
+
 ## Tasks
 
 - [x] Create `GebLean/ComprehensiveFactorization.lean`
@@ -131,6 +160,7 @@ Completed definitions:
 - [x] Twisted arrow infrastructure
 - [x] Review checkpoint
 - [x] Corrected weighted wedges/cowedges
+- [x] Categorical equivalences for weighted (co)wedges
 
 ## Related Files
 
