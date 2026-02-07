@@ -2132,6 +2132,59 @@ pfSubstCataIsAlgHom fext
         (pos ** dir) a elem)
   go (mpos ** d) = Refl
 
+-- Apply a DPair equality to extract function
+-- equality with transport. Given (x1 ** f1)
+-- = (x2 ** f2), conclude
+-- f1 arg = f2 (replace (dpeq1 eq) arg).
+public export
+0 dpEqApply :
+  {0 a : Type} ->
+  {0 p : a -> Type} ->
+  {0 b : Type} ->
+  {x1 : a} -> {x2 : a} ->
+  {f1 : p x1 -> b} ->
+  {f2 : p x2 -> b} ->
+  (eq : MkDPair {p=(\j => p j -> b)}
+    x1 f1 =
+    MkDPair {p=(\j => p j -> b)}
+    x2 f2) ->
+  (arg : p x1) ->
+  f1 arg = f2 (replace {p} (dpeq1 eq) arg)
+dpEqApply Refl arg = Refl
+
+-- Replace on a function type: transporting a
+-- function f : p x2 -> b backward along
+-- eq : x1 = x2 and then applying to arg : p x1
+-- equals applying f to the forward transport
+-- of arg.
+public export
+0 replaceFunApp :
+  {0 a : Type} ->
+  {0 x1, x2 : a} ->
+  {0 p : a -> Type} ->
+  {0 b : Type} ->
+  (eq : x1 = x2) ->
+  (f : p x2 -> b) ->
+  (arg : p x1) ->
+  replace {p=(\j => p j -> b)}
+    (sym eq) f arg =
+  f (replace {p} eq arg)
+replaceFunApp Refl f arg = Refl
+
+-- Helper: pfSubstCata on a variable reduces to
+-- the substitution. This is definitional because
+-- pfSubstCata unfolds through PFVar to apply subst.
+public export
+0 pfSubstCataOnVar :
+  {p : PolyFunc} -> {a, b : Type} ->
+  (subst : a -> b) ->
+  (alg : PFAlg p b) ->
+  (v : a) ->
+  pfSubstCata {p} {a} {b}
+    subst alg (InFMVar {p} v) = subst v
+pfSubstCataOnVar {p=(pos ** dir)} {a} {b}
+  subst alg v = Refl
+
 polyProfDiNTComplete fext {pp} {qq}
   alpha para x (i ** h) =
   let
@@ -2151,8 +2204,7 @@ polyProfDiNTComplete fext {pp} {qq}
                     (i ** h)))) k))
               x
               (pfSubstCata
-                {p=ppDirPF pp i}
-                ds
+                {p=ppDirPF pp i} ds
                 (PFAlgFromAlg
                   {p=ppDirPF pp i} h))
               (i **
@@ -2172,8 +2224,58 @@ polyProfDiNTComplete fext {pp} {qq}
                         (fst (alpha x
                           (i ** h)))) k}
                       {b=x} ds h el))))
+            lmapEta =
+              interpPolyProfLmapEta
+                qq x x
+                (InterpPolyFuncFreeM
+                  (ppDirPF pp i)
+                  (snd (ppDirPF qq
+                    (fst (alpha x
+                      (i ** h)))) k))
+                (pfSubstCata
+                  {p=ppDirPF pp i} ds
+                  (PFAlgFromAlg
+                    {p=ppDirPF pp i} h))
+                (alpha x (i ** h))
+            rmapEta =
+              interpPolyProfRmapEta
+                qq
+                (InterpPolyFuncFreeM
+                  (ppDirPF pp i)
+                  (snd (ppDirPF qq
+                    (fst (alpha x
+                      (i ** h)))) k))
+                (InterpPolyFuncFreeM
+                  (ppDirPF pp i)
+                  (snd (ppDirPF qq
+                    (fst (alpha x
+                      (i ** h)))) k))
+                x
+                (pfSubstCata
+                  {p=ppDirPF pp i} ds
+                  (PFAlgFromAlg
+                    {p=ppDirPF pp i} h))
+                (alpha
+                  (InterpPolyFuncFreeM
+                    (ppDirPF pp i)
+                    (snd (ppDirPF qq
+                      (fst (alpha x
+                        (i ** h)))) k))
+                  (i **
+                    PolyFreeAlgF
+                      (ppDirPF pp i)
+                      (snd (ppDirPF qq
+                        (fst (alpha x
+                          (i ** h))))
+                        k)))
+            paraEtaEq =
+              trans (sym lmapEta)
+                (trans paraEq rmapEta)
+            step2 = dpEqApply
+              paraEtaEq
+              (k ** InFMVar {p=ppDirPF pp i})
           in
-          ?use_paraEq)))
+          ?use_step2)))
 
 ------------------------------------------------------------
 ------------------------------------------------------------
