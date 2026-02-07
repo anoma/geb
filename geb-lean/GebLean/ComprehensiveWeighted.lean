@@ -919,4 +919,100 @@ def paranatWeightedLimitEquiv :
 
 end ParanatWeightedLimit
 
+section ParanatCoTwistedArrow
+
+variable {C : Type v} [Category.{v} C]
+  (G H : Cᵒᵖ ⥤ C ⥤ Type v)
+
+/-- The wedge weight reindexed from `TwistedArrow C`
+to `(CoTwistedArrow C)ᵒᵖ` via the canonical
+equivalence. -/
+abbrev wedgeWeightCoTw :
+    (CoTwistedArrow C)ᵒᵖ ⥤ Type v :=
+  coTwistedArrowOpEquivTwistedArrow.functor ⋙
+    wedgeWeight H
+
+/-- Paranatural transformations `Paranat H G` are
+equivalent to natural transformations from the
+reindexed wedge weight to the profunctor on
+opposite co-twisted arrows:
+`Paranat H G ≃
+  (wedgeWeightCoTw H ⟶
+    profunctorOnOpCoTwistedArrow C G)`.
+
+This re-expresses `paranatWeightedLimitEquiv`
+using `(CoTwistedArrow C)ᵒᵖ` as the index
+category instead of `TwistedArrow C`. -/
+def paranatWeightedLimitEquivCoTw :
+    Paranat H G ≃
+    (wedgeWeightCoTw H ⟶
+      profunctorOnOpCoTwistedArrow C G) :=
+  let e := coTwistedArrowOpEquivTwistedArrow
+    (C := C)
+  let cl := e.symm.congrLeft (E := Type v)
+  (paranatWeightedLimitEquiv G H).trans
+    (cl.fullyFaithfulFunctor.homEquiv)
+
+end ParanatCoTwistedArrow
+
+section CostructureIntegralElimination
+
+variable {C : Type v} [Category.{v} C]
+  (G H : Cᵒᵖ ⥤ C ⥤ Type v)
+
+/-- The image of the costructure integral cowedge
+under the equivalence to weighted cocones is
+initial. -/
+def costructureIntegralWeightedCocone_isInitial :
+    Limits.IsInitial
+      ((strongRestrictedCowedge_weightedCocone_equivalence
+        G H).functor.obj
+        (costructureIntegralCowedge G H)) :=
+  isInitialOfEquivFunctor
+    (strongRestrictedCowedge_weightedCocone_equivalence
+      G H)
+    (costructureIntegralCowedge_isInitial G H)
+
+/-- The weighted cocone corresponding to the
+costructure integral has apex
+`CostructureIntegral H G`. -/
+theorem costructureIntegralWeightedCocone_pt :
+    ((strongRestrictedCowedge_weightedCocone_equivalence
+      G H).functor.obj
+      (costructureIntegralCowedge G H)).pt =
+    CostructureIntegral H G := rfl
+
+/-- The elimination rule for `CostructureIntegral`:
+maps from `CostructureIntegral H G` to any type `Y`
+correspond to natural transformations from
+`cowedgeWeight H` to `homToFunctor (profOnCoTwArr C G) Y`.
+
+Categorically, this expresses the weighted
+colimit-limit adjunction: `Hom(colim, Y) ≅ lim Hom(D(-), Y)`,
+specialized to `Type v` where the weighted limit
+is a natural transformation type. -/
+def costructureIntegralElimIso (Y : Type v) :
+    (CostructureIntegral H G → Y) ≅
+    (cowedgeWeight H ⟶
+      homToFunctor
+        (profunctorOnCoTwistedArrow C G) Y) :=
+  IsWeightedColimit.homIsoWeightedLimitApex
+    (costructureIntegralWeightedCocone_isInitial
+      G H)
+    Y
+    natTransWeightedCone_isTerminal
+
+/-- Maps from `CostructureIntegral H G` to any
+type `Y` are equivalent to natural transformations
+`cowedgeWeight H ⟶ homToFunctor (profOnCoTwArr C G) Y`.
+-/
+def costructureIntegralElimEquiv (Y : Type v) :
+    (CostructureIntegral H G → Y) ≃
+    (cowedgeWeight H ⟶
+      homToFunctor
+        (profunctorOnCoTwistedArrow C G) Y) :=
+  (costructureIntegralElimIso G H Y).toEquiv
+
+end CostructureIntegralElimination
+
 end GebLean
