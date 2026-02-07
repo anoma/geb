@@ -1738,6 +1738,142 @@ def toUniqueUpToIso {c c' : WeightedCocone W D}
 end IsWeightedColimit
 
 /-!
+### Weighted Cone/Cocone Op Duality
+
+A weighted cocone `WeightedCocone (W : Jᵒᵖ ⥤ Type v) (D : J ⥤ C)` with
+apex `c` provides for each `j : Jᵒᵖ` and `w : W.obj j` a morphism
+`D.obj j.unop ⟶ c` in C. This is the same data as a weighted cone
+`WeightedCone W D.op` with apex `op c` in `Cᵒᵖ`: each `j : Jᵒᵖ` and
+`w : W.obj j` gives `op c ⟶ D.op.obj j` in `Cᵒᵖ`, which is
+`D.obj j.unop ⟶ c` in C.
+
+Morphisms between cocones go `c₁.pt ⟶ c₂.pt` while the corresponding cone
+morphisms go `op c₂.pt ⟶ op c₁.pt` (reversed), giving the categorical
+equivalence `WeightedCocone W D ≌ (WeightedCone W D.op)ᵒᵖ`.
+-/
+
+section WeightedCoconeOpCone
+
+variable {J : Type u₁} [Category.{v₁, u₁} J]
+  {C : Type u} [Category.{v, u} C]
+  (W : Jᵒᵖ ⥤ Type v) (D : J ⥤ C)
+
+/-- Convert a weighted cocone to a weighted cone over the
+opposite diagram, with apex `op c.pt`. -/
+def weightedCoconeOpCone (c : WeightedCocone W D) :
+    WeightedCone W D.op where
+  pt := Opposite.op c.pt
+  toWeightedConeUnder := {
+    app := fun j w => (c.ι.app j w).op
+    naturality := by
+      intro j₁ j₂ f
+      funext w
+      simp only [types_comp_apply]
+      change (c.ι.app j₂ (W.map f w)).op =
+        (c.ι.app j₁ w).op ≫ D.op.map f
+      have nat := congr_fun (c.ι.naturality f) w
+      simp only [types_comp_apply] at nat
+      change c.ι.app j₂ (W.map f w) =
+        D.map f.unop ≫ c.ι.app j₁ w at nat
+      rw [nat, op_comp, Functor.op_map]
+  }
+
+/-- Convert a weighted cone over the opposite diagram
+to a weighted cocone. -/
+def weightedConeOpCocone
+    (d : WeightedCone W D.op) :
+    WeightedCocone W D where
+  pt := d.pt.unop
+  toWeightedCoconeOver := {
+    app := fun j w => (d.π.app j w).unop
+    naturality := by
+      intro j₁ j₂ f
+      funext w
+      simp only [types_comp_apply]
+      change (d.π.app j₂ (W.map f w)).unop =
+        D.map f.unop ≫ (d.π.app j₁ w).unop
+      have nat := congr_fun (d.π.naturality f) w
+      simp only [types_comp_apply] at nat
+      change d.π.app j₂ (W.map f w) =
+        d.π.app j₁ w ≫ D.op.map f at nat
+      rw [nat, unop_comp, Functor.op_map,
+        Quiver.Hom.unop_op]
+  }
+
+@[simp]
+theorem weightedConeOpCocone_weightedCoconeOpCone
+    (c : WeightedCocone W D) :
+    weightedConeOpCocone W D
+      (weightedCoconeOpCone W D c) = c :=
+  rfl
+
+@[simp]
+theorem weightedCoconeOpCone_weightedConeOpCocone
+    (d : WeightedCone W D.op) :
+    weightedCoconeOpCone W D
+      (weightedConeOpCocone W D d) = d :=
+  rfl
+
+/-- The forward functor from weighted cocones to the
+opposite of weighted cones over the opposite diagram. -/
+def weightedCoconeOpConeFunctor :
+    WeightedCocone W D ⥤
+      (WeightedCone W D.op)ᵒᵖ where
+  obj c := Opposite.op (weightedCoconeOpCone W D c)
+  map {c₁ c₂} f := Quiver.Hom.op
+    { hom := f.hom.op
+      w := fun j w => by
+        simp only [weightedCoconeOpCone,
+          WeightedCone.leg]
+        rw [← op_comp]
+        congr 1
+        exact f.w j.unop w }
+  map_id c := by
+    apply Quiver.Hom.unop_inj
+    exact WeightedCone.Hom.ext rfl
+  map_comp f g := by
+    apply Quiver.Hom.unop_inj
+    exact WeightedCone.Hom.ext rfl
+
+/-- The inverse functor from the opposite of weighted
+cones over the opposite diagram to weighted cocones. -/
+def weightedConeOpCoconeFunctor :
+    (WeightedCone W D.op)ᵒᵖ ⥤
+      WeightedCocone W D where
+  obj d := weightedConeOpCocone W D d.unop
+  map {d₁ d₂} g :=
+    let g' := g.unop
+    { hom := g'.hom.unop
+      w := fun j w => by
+        simp only [weightedConeOpCocone,
+          WeightedCocone.leg]
+        rw [← unop_comp]
+        congr 1
+        exact g'.w (Opposite.op j) w }
+  map_id d := WeightedCocone.Hom.ext rfl
+  map_comp g h := WeightedCocone.Hom.ext rfl
+
+/-- The categorical equivalence between weighted cocones
+and the opposite of weighted cones over the opposite
+diagram: morphisms between cocones (covariant in cone
+point) correspond to morphisms between cones with
+direction reversed. -/
+def weightedCoconeOpConeEquivalence :
+    WeightedCocone W D ≌
+      (WeightedCone W D.op)ᵒᵖ where
+  functor := weightedCoconeOpConeFunctor W D
+  inverse := weightedConeOpCoconeFunctor W D
+  unitIso := NatIso.ofComponents
+    (fun c => eqToIso rfl) (fun f => by
+      apply WeightedCocone.Hom.ext; simp)
+  counitIso := NatIso.ofComponents
+    (fun d => eqToIso rfl) (fun g => by
+      apply Quiver.Hom.unop_inj
+      apply WeightedCone.Hom.ext; simp)
+
+end WeightedCoconeOpCone
+
+/-!
 ### Weighted Colimit Elimination
 
 The elimination rule for weighted colimits: morphisms from a weighted colimit
