@@ -2605,4 +2605,83 @@ def coTwistedArrowForget : CoTwistedArrow C ⥤ Cᵒᵖᵒᵖ × Cᵒᵖ where
 
 end ForgetfulFunctors
 
+section InducedMapFunctors
+
+/-!
+## Induced functors on twisted arrow categories
+
+A functor `F : C ⥤ D` induces functors on twisted and co-twisted
+arrow categories by applying `F` to all components of an arrow.
+-/
+
+variable {C : Type u} [Category.{v} C]
+  {D : Type w} [Category.{v} D]
+
+/--
+The functor `TwistedArrow C ⥤ TwistedArrow D` induced by
+`F : C ⥤ D`. Maps `(a, b, f : a ⟶ b)` to
+`(F.obj a, F.obj b, F.map f)`.
+-/
+def twistedArrowMap (F : C ⥤ D) :
+    TwistedArrow C ⥤ TwistedArrow D where
+  obj tw := twObjMk (F.map (twArr tw))
+  map m := twHomMk (F.map (twDomArr m)) (F.map (twCodArr m))
+    (by
+      simp only [twObjMk_arr]
+      rw [← F.map_comp, ← F.map_comp]
+      exact congrArg F.map (twHomComm m))
+  map_id tw := by
+    apply twHom_ext
+    · simp only [twHomMk_domArr, twDomArr_id,
+        F.map_id, twObjMk_dom]
+    · simp only [twHomMk_codArr, twCodArr_id,
+        F.map_id, twObjMk_cod]
+  map_comp f g := by
+    apply twHom_ext
+    · simp only [twHomMk_domArr, twDomArr_comp,
+        F.map_comp]
+    · simp only [twHomMk_codArr, twCodArr_comp,
+        F.map_comp]
+
+/--
+The functor `CoTwistedArrow C ⥤ CoTwistedArrow D` induced by
+`F : C ⥤ D`. Maps `(dom, cod, f : cod ⟶ dom)` to
+`(F.obj dom, F.obj cod, F.map f)`.
+-/
+def coTwistedArrowMap (F : C ⥤ D) :
+    CoTwistedArrow C ⥤ CoTwistedArrow D where
+  obj tw := coTwObjMk (F.map (coTwArr tw))
+  map m := coTwHomMk (F.map (coTwDomArr m))
+    (F.map (coTwCodArr m))
+    (by
+      simp only [coTwObjMk_arr]
+      rw [← F.map_comp, ← F.map_comp]
+      exact congrArg F.map (coTwHomComm m))
+  map_id tw := by
+    apply coTwHom_ext
+    · simp only [coTwHomMk_domArr, coTwDomArr_id,
+        F.map_id, coTwObjMk_dom]
+    · simp only [coTwCodArr_coTwHomMk, coTwCodArr_id,
+        F.map_id, coTwObjMk_cod]
+  map_comp f g := by
+    apply coTwHom_ext
+    · simp only [coTwHomMk_domArr, coTwDomArr_comp,
+        F.map_comp, coTwObjMk_dom]
+    · simp only [coTwCodArr_coTwHomMk, coTwCodArr_comp,
+        F.map_comp, coTwObjMk_cod]
+
+@[simp]
+theorem twistedArrowMap_obj (F : C ⥤ D)
+    (tw : TwistedArrow C) :
+    (twistedArrowMap F).obj tw =
+      twObjMk (F.map (twArr tw)) := rfl
+
+@[simp]
+theorem coTwistedArrowMap_obj (F : C ⥤ D)
+    (tw : CoTwistedArrow C) :
+    (coTwistedArrowMap F).obj tw =
+      coTwObjMk (F.map (coTwArr tw)) := rfl
+
+end InducedMapFunctors
+
 end GebLean
