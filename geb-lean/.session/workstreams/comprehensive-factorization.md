@@ -292,19 +292,29 @@ Definitions:
 
 1. `costructureIntegralWeightedCocone_isInitial` --
    transfer initiality to weighted cocones
-2. `costructureIntegralElimEquiv` --
-   `(CostructureIntegral H G → Y) ≃
+2. `costructureIntegralElimIso` --
+   `(CostructureIntegral H G → Y) ≅
      (cowedgeWeight H ⟶
        homToFunctor (profOnCoTwArr C G) Y)`
+3. `costructureIntegralElimEquiv` -- `≃` version
+4. `homToFunctor_profOnCoTwArr_eq` --
+   `homToFunctor (profOnCoTwArr C G) Y =
+     profOnOpCoTwArr C (G ⇓ Y)` (definitional)
+5. `weightedCoendElimSlice` -- general coend-hom:
+   `(c.pt → Y) ≅
+     (profOnOpCoTwArr C W ⟶
+       profOnOpCoTwArr C (P ⇓ Y))`
+6. `coendHomAdjunction` -- direct coend-hom:
+   `(CostructureIntegral H G → Y) ≃
+     StructureIntegral H (G ⇓ Y)`
+7. `coendHomAdjunctionParanat` -- Paranat version
 
-This states: any hom-set with domain
-`CostructureIntegral H G` is a natural transformation
-type (a weighted limit). Combined with Phase 5
-(`Paranat H G ≃ (wedgeWeight H ⟶ profOnTwArr C G)`),
-this gives a complete picture: the structure integral
-(end) characterizes paranaturality, while the
-costructure integral (coend) is characterized by its
-elimination into weighted limits.
+The coend-hom adjunction relates the costructure
+integral (coend) to the structure integral (end)
+of the slice profunctor `G ⇓ Y`:
+elimination from a coend produces an end.
+The general version (5) works for arbitrary
+weighted coends, not only costructure integrals.
 
 ## Tasks
 
@@ -328,8 +338,9 @@ elimination into weighted limits.
 - [x] Paranat as weighted limit characterization
 - [x] Weighted cone/cocone op duality (Phase 6A)
 - [x] Connected components op equivalence (Phase 6B)
-- [ ] Comprehensive presheaf/copresheaf duality (Phase 6C)
-- [ ] CostructureIntegral duality research (Phase 6D)
+- [x] Comprehensive presheaf/copresheaf duality (Phase 6C)
+- [x] CostructureIntegral elimination rule (Phase 6D)
+- [x] Coend-hom adjunction via sliceProfunctor
 
 ## Related Files
 
