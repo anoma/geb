@@ -1327,6 +1327,173 @@ closedSectionToEndToClosedSection fext (i ** (closed, section)) cond =
 -- remaining believe_me calls are for adapter isomorphisms between
 -- structurally equivalent but not definitionally equal types.
 
+-----------------------------------------------------------
+-----------------------------------------------------------
+---- PolyProfDiNTar Tests (Paranatural Formulas) ----
+-----------------------------------------------------------
+-----------------------------------------------------------
+
+-- Test the generic PolyProfDiNTar infrastructure from
+-- PolyProfEnd.idr using the concrete polynomial
+-- profunctor NegPosMaybePolyProf.
+
+-- Correspondence: the generic ppToPolyFunc matches
+-- the ad-hoc NegPosMaybePP.
+public export
+0 npnpGenericMatch : (x : Type) ->
+  ppToPolyFunc NegPosMaybePolyProf x =
+  NegPosMaybePP x
+npnpGenericMatch x = Refl
+
+-- Correspondence: the ad-hoc NegPosNatRec is the
+-- free monad of the generic representation.
+public export
+0 npnpFreeMMatch : (x : Type) ->
+  NegPosNatRec x =
+  PolyFuncFreeM (ppToPolyFunc
+    NegPosMaybePolyProf x)
+npnpFreeMMatch x = Refl
+
+-- A concrete algebra at Nat, position FS FZ.
+-- Encodes the pair (S, 42): successor function and
+-- base value 42.
+public export
+NpnpTestAlgS42 :
+  InterpPolyFunc
+    (NegPosMaybePPdirPF (FS FZ)) Nat -> Nat
+NpnpTestAlgS42 (Left () ** ds) = S (ds ())
+NpnpTestAlgS42 (Right () ** ds) = 42
+
+-- The diagonal element (FS FZ, (S, 42)).
+public export
+NpnpTestElemS42 :
+  InterpPolyProf NegPosMaybePolyProf Nat Nat
+NpnpTestElemS42 = (FS FZ ** NpnpTestAlgS42)
+
+-- A concrete algebra encoding (S, 0): successor
+-- and zero.
+public export
+NpnpTestAlgS0 :
+  InterpPolyFunc
+    (NegPosMaybePPdirPF (FS FZ)) Nat -> Nat
+NpnpTestAlgS0 (Left () ** ds) = S (ds ())
+NpnpTestAlgS0 (Right () ** ds) = 0
+
+-- The diagonal element (FS FZ, (S, 0)).
+public export
+NpnpTestElemS0 :
+  InterpPolyProf NegPosMaybePolyProf Nat Nat
+NpnpTestElemS0 = (FS FZ ** NpnpTestAlgS0)
+
+-- The "zero" diagonal element (position FZ, no
+-- directions). This is the unique element at
+-- position FZ for any type.
+public export
+NpnpTestElemZ :
+  InterpPolyProf NegPosMaybePolyProf Nat Nat
+NpnpTestElemZ = (FZ ** \v => absurd (fst v))
+
+----------------------------------------------------
+---- "ApplyOnce" Paranatural Transformation ----
+----------------------------------------------------
+
+-- A concrete paranatural: "applyOnce".
+-- Maps (f, c) to (f, f(c)): applies the function
+-- to the constant once. At position FZ (no-arg
+-- constructor), acts as identity.
+--
+-- This is paranatural: given an algebra homomorphism
+-- g satisfying g . f_x = f_y . g and g(c_x) = c_y,
+-- we get g(f_x(c_x)) = f_y(g(c_x)) = f_y(c_y).
+--
+-- This is NOT a PolyProfNT (natural transformation)
+-- because the formula uses the function part twice
+-- (once in its original role, once applied to the
+-- constant), which cannot be expressed as a single
+-- backward direction map.
+public export
+NpnpApplyOnceAlg :
+  {x : Type} ->
+  (InterpPolyFunc
+    (NegPosMaybePPdirPF (FS FZ)) x -> x) ->
+  InterpPolyFunc
+    (NegPosMaybePPdirPF (FS FZ)) x -> x
+NpnpApplyOnceAlg h (Left () ** ds) =
+  h (Left () ** ds)
+NpnpApplyOnceAlg h (Right () ** ds) =
+  h (Left () ** const (h (Right () ** ds)))
+
+public export
+npnpApplyOnce :
+  (x : Type) ->
+  InterpPolyProf NegPosMaybePolyProf x x ->
+  InterpPolyProf NegPosMaybePolyProf x x
+npnpApplyOnce x (FZ ** h) = (FZ ** h)
+npnpApplyOnce x (FS FZ ** h) =
+  (FS FZ ** NpnpApplyOnceAlg h)
+
+-- Tests: applyOnce at (S, 42) gives (S, 43).
+-- Position preserved:
+public export
+0 npnpApplyOnceS42pos :
+  fst (npnpApplyOnce Nat NpnpTestElemS42) =
+  FS FZ
+npnpApplyOnceS42pos = Refl
+
+-- Test algebra directly (avoids DPair snd issue).
+-- Constant becomes f(c) = S(42) = 43:
+public export
+0 npnpApplyOnceS42const :
+  NpnpApplyOnceAlg NpnpTestAlgS42
+    (Right () ** voidF Nat) = 43
+npnpApplyOnceS42const = Refl
+
+-- "DoubleApply": maps (f, c) to (f, f(f(c))).
+-- Composition of applyOnce with itself. Also
+-- paranatural (composition of paranaturals).
+public export
+NpnpDoubleApplyAlg :
+  {x : Type} ->
+  (InterpPolyFunc
+    (NegPosMaybePPdirPF (FS FZ)) x -> x) ->
+  InterpPolyFunc
+    (NegPosMaybePPdirPF (FS FZ)) x -> x
+NpnpDoubleApplyAlg =
+  NpnpApplyOnceAlg . NpnpApplyOnceAlg
+
+public export
+npnpDoubleApply :
+  (x : Type) ->
+  InterpPolyProf NegPosMaybePolyProf x x ->
+  InterpPolyProf NegPosMaybePolyProf x x
+npnpDoubleApply x =
+  npnpApplyOnce x . npnpApplyOnce x
+
+----------------------------------------------------
+---- Algebra Extraction Helpers ----
+----------------------------------------------------
+
+-- Extract the constant from an FS FZ algebra.
+-- This is the value encoded at the Right ()
+-- position (no directions = constant).
+public export
+NpnpAlgConst :
+  (InterpPolyFunc
+    (NegPosMaybePPdirPF (FS FZ)) Nat ->
+    Nat) ->
+  Nat
+NpnpAlgConst h = h (Right () ** voidF Nat)
+
+-- Extract the function from an FS FZ algebra,
+-- applied to a given value.
+public export
+NpnpAlgFunc :
+  (InterpPolyFunc
+    (NegPosMaybePPdirPF (FS FZ)) Nat ->
+    Nat) ->
+  Nat -> Nat
+NpnpAlgFunc h v = h (Left () ** const v)
+
 ----------------------------------
 ----------------------------------
 ----- Exported test function -----
@@ -1340,6 +1507,54 @@ polyDifuncTest = do
   putStrLn "======================"
   putStrLn "Begin PolyDifuncTest:"
   putStrLn "----------------------"
+  putStrLn ""
+  -- applyOnce tests (runtime, complementing the
+  -- compile-time Refl proofs above).
+  let aoS42 = NpnpApplyOnceAlg NpnpTestAlgS42
+  putStrLn ("applyOnce(S,42) func 5 = "
+    ++ show (NpnpAlgFunc aoS42 5)
+    ++ " (expect 6)")
+  putStrLn ("applyOnce(S,42) const = "
+    ++ show (NpnpAlgConst aoS42)
+    ++ " (expect 43)")
+  -- doubleApply tests (runtime).
+  let daS42 = NpnpDoubleApplyAlg NpnpTestAlgS42
+  putStrLn ("doubleApply(S,42) const = "
+    ++ show (NpnpAlgConst daS42)
+    ++ " (expect 44)")
+  let daS0 = NpnpDoubleApplyAlg NpnpTestAlgS0
+  putStrLn ("doubleApply(S,0) const = "
+    ++ show (NpnpAlgConst daS0)
+    ++ " (expect 2)")
+  -- Identity formula tests (runtime).
+  -- InterpPolyProfDiNT goes through pfSubstCata
+  -- which doesn't fully reduce at compile time.
+  let idF = polyProfDiNTId NegPosMaybePolyProf
+  let idS42 = InterpPolyProfDiNT
+        {pp=NegPosMaybePolyProf}
+        {qq=NegPosMaybePolyProf}
+        idF Nat NpnpTestElemS42
+  case idS42 of
+    (FS FZ ** h) => do
+      putStrLn ("id(S,42) const = "
+        ++ show (NpnpAlgConst h)
+        ++ " (expect 42)")
+      putStrLn ("id(S,42) func 5 = "
+        ++ show (NpnpAlgFunc h 5)
+        ++ " (expect 6)")
+    _ => putStrLn "ERROR: id changed position"
+  -- Composition test: id . id = id (runtime).
+  let compIdId = interpPolyProfDiNTComp
+        {pp=NegPosMaybePolyProf}
+        {qq=NegPosMaybePolyProf}
+        {rr=NegPosMaybePolyProf}
+        idF idF Nat NpnpTestElemS42
+  case compIdId of
+    (FS FZ ** h) => do
+      putStrLn ("id.id(S,42) const = "
+        ++ show (NpnpAlgConst h)
+        ++ " (expect 42)")
+    _ => putStrLn "ERROR: id.id changed pos"
   putStrLn ""
   putStrLn "--------------------"
   putStrLn "End PolyDifuncTest."

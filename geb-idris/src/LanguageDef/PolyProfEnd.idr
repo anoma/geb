@@ -1662,23 +1662,96 @@ polyProfDiNTId pp =
     pfOneStepNT (ppDirPF pp i))
 
 ------------------------------------------------------------
+---- Catamorphism Naturality (Algebra Homomorphism) ----
+------------------------------------------------------------
+
+-- Key structural lemma: if f is an algebra
+-- homomorphism from ha to hb (i.e., f . ha = hb .
+-- InterpPFMap p f), then the catamorphism commutes
+-- with f:
+--   f . pfSubstCata id ha
+--   = pfSubstCata id hb . InterpPFMap (FreeM p) f
+--
+-- This is the universal property of the initial
+-- algebra: pfSubstCata id h is the unique algebra
+-- morphism from the free algebra to h. If f
+-- intertwines two algebras, it also intertwines
+-- their catamorphisms.
+--
+-- Proof: by induction on the free monad tree.
+-- PFVar case: both sides reduce to f applied to
+-- the leaf value (via id substitution).
+-- PFCom case: IH on subtrees gives the recursive
+-- step; the algebra homomorphism condition gives
+-- the outer step.
+public export
+0 pfSubstCataAlgHom : FunExt ->
+  {p : PolyFunc} -> {a, b : Type} ->
+  (f : a -> b) ->
+  (ha : Algebra (InterpPolyFunc p) a) ->
+  (hb : Algebra (InterpPolyFunc p) b) ->
+  PolyAlgCommutes p f ha hb ->
+  ExtEq
+    (f . pfSubstCata {p} {a} {b=a}
+      (Prelude.id {a})
+      (PFAlgFromAlg {p} {a} ha))
+    (pfSubstCata {p} {a=b} {b}
+      (Prelude.id {a=b})
+      (PFAlgFromAlg {p} {a=b} hb)
+      . InterpPFMap (PolyFuncFreeM p) f)
+pfSubstCataAlgHom fext
+  {p=(pos ** dir)} {a} {b}
+  f ha hb comm (mpos ** d) =
+  go mpos d
+  where
+  0 go :
+    (mpos : PolyFuncMu
+      (PFTranslate1 (pos ** dir))) ->
+    (d : PolyFuncFreeMDir
+      (pos ** dir) mpos -> a) ->
+    f (pfCata
+      (PFAlgToTranslate (Prelude.id {a})
+        (PFAlgFromAlg
+          {p=(pos ** dir)} ha))
+      (PolyFMInterpToMuTranslateCurried
+        (pos ** dir) a mpos d))
+    = pfCata
+      (PFAlgToTranslate
+        (Prelude.id {a=b})
+        (PFAlgFromAlg
+          {p=(pos ** dir)} hb))
+      (PolyFMInterpToMuTranslateCurried
+        (pos ** dir) b mpos (f . d))
+  go (InPFM (PFVar ()) dv) d = Refl
+  go (InPFM (PFCom i) ch) d =
+    trans
+      (comm
+        (i ** \di =>
+          pfCata
+            (PFAlgToTranslate
+              (Prelude.id {a})
+              (PFAlgFromAlg
+                {p=(pos ** dir)} ha))
+            (PolyFMInterpToMuTranslateCurried
+              (pos ** dir) a (ch di)
+              (\dd => d (di ** dd)))))
+      (cong (\g => hb (i ** g))
+        (funExt (\di =>
+          go (ch di)
+            (\dd => d (di ** dd)))))
+
+------------------------------------------------------------
 ---- Soundness: Formula implies Paranaturality ----
 ------------------------------------------------------------
 
 -- Every PolyProfDiNTar formula, when interpreted,
 -- satisfies the paranaturality condition.
 --
--- Proof strategy: reduce to the catamorphism
--- naturality lemma. If f : x -> y is an algebra
--- homomorphism (h1 . InterpPFMap pf f = f . h0),
--- then:
---   pfSubstCata id h1 . InterpPFMap (FreeM pf) f
---   = f . pfSubstCata id h0
---
--- Combined with naturality of InterpPolyNT, this
--- gives the required paranaturality equation.
--- The catamorphism naturality lemma is a standard
--- property of initial algebras (Lambek's lemma).
+-- Proof strategy: reduce to pfSubstCataAlgHom.
+-- The paranaturality condition on input algebras
+-- gives an algebra homomorphism, which by the
+-- catamorphism naturality lemma transfers through
+-- the free monad fold.
 public export
 0 polyProfDiNTisPara : FunExt ->
   {pp, qq : PolyProf} ->
@@ -1689,7 +1762,29 @@ public export
 polyProfDiNTisPara fext {pp} {qq}
   (onPos ** onDir) i0 i1 i2
   (j0 ** h0) (j1 ** h1) cond =
-  ?polyProfDiNTisPara_hole
+  -- cond : lmap i2 (j1 ** h1)
+  --      = rmap i2 (j0 ** h0)
+  -- i.e. (j1 ** h1 . InterpPFMap pf i2)
+  --    = (j0 ** i2 . h0)
+  case mkDPairInjectiveFstHet cond of
+    Refl =>
+      -- j1 = j0 forces j0 := j1
+      let
+        heq = mkDPairInjectiveSndHet cond
+        algHom :
+          PolyAlgCommutes
+            (ppDirPF pp j1) i2 h0 h1
+        algHom el =
+          sym (fcong heq {x=el})
+      in
+      dpEq12 Refl
+        (funExt (\(k ** ds) =>
+          sym (pfSubstCataAlgHom fext
+            {p=ppDirPF pp j1}
+            i2 h0 h1 algHom
+            (fst (onDir j1) k **
+             ds .
+               snd (onDir j1) k))))
 
 ------------------------------------------------------------
 ---- Extraction: Paranatural to Formula ----
@@ -1887,3 +1982,142 @@ public export
 polyProfDiNTComplete fext {pp} {qq}
   alpha para x el =
   ?polyProfDiNTComplete_hole
+
+------------------------------------------------------------
+------------------------------------------------------------
+---- Free Monad Kleisli Extension ----
+------------------------------------------------------------
+------------------------------------------------------------
+
+-- Interpretation-level Kleisli extension for the
+-- free monad. Given a natural transformation
+-- nt : q -> FreeM(p) (as a PolyNatTrans), extend
+-- it through FreeM to get:
+--   InterpPolyFuncFreeM q a
+--   -> InterpPolyFuncFreeM p a
+--
+-- This is the free monad's "bind": substitute each
+-- q-constructor node with the corresponding FreeM p
+-- tree from nt, then graft recursive results into
+-- the leaves.
+--
+-- Implementation: outer pfSubstCata on the q-tree:
+-- - Variables (leaves): inject via InFMVar
+-- - Constructor nodes (k ** children): apply nt at
+--   position k to get a FreeM p tree with leaves in
+--   pfDir q k, then pfSubstCata the children into
+--   those leaves using the free algebra.
+public export
+interpFreeMKleisli :
+  {p, q : PolyFunc} ->
+  PolyNatTrans q (PolyFuncFreeM p) ->
+  (a : Type) ->
+  InterpPolyFuncFreeM q a ->
+  InterpPolyFuncFreeM p a
+interpFreeMKleisli {p} {q} nt a =
+  pfSubstCata {p=q} {a} {b=InterpPolyFuncFreeM p a}
+    (InFMVar {p})
+    (\k, children =>
+      pfSubstCata
+        {p} {a=pfDir {p=q} k}
+        {b=InterpPolyFuncFreeM p a}
+        children
+        (PFAlgFromAlg {p} {a=InterpPolyFuncFreeM p a}
+          (PolyFreeAlgF p a))
+        (fst nt k ** snd nt k))
+
+------------------------------------------------------------
+------------------------------------------------------------
+---- Interpretation-Level Composition ----
+------------------------------------------------------------
+------------------------------------------------------------
+
+-- Composition of PolyProfDiNTar formulas at the
+-- interpretation level. The composed transformation
+-- first applies f (pp -> qq) then g (qq -> rr).
+--
+-- For the formula-level composition
+-- polyProfDiNTComp : PolyProfDiNTar qq rr ->
+--   PolyProfDiNTar pp qq -> PolyProfDiNTar pp rr
+-- one would need pfFreeMKleisliNT (a PolyNatTrans-
+-- level Kleisli extension), which requires grafting
+-- at the tree-position level. This is non-trivial
+-- due to the position-direction split in the
+-- polynomial functor representation and is left as
+-- future work.
+--
+-- However, the interpretation-level composition
+-- suffices for all computational purposes: it maps
+-- diagonal elements through the composed pipeline.
+public export
+interpPolyProfDiNTComp :
+  {pp, qq, rr : PolyProf} ->
+  PolyProfDiNTar qq rr ->
+  PolyProfDiNTar pp qq ->
+  (x : Type) ->
+  InterpPolyProf pp x x ->
+  InterpPolyProf rr x x
+interpPolyProfDiNTComp {pp} {qq} {rr}
+  g f x =
+  InterpPolyProfDiNT {pp=qq} {qq=rr} g x
+    . InterpPolyProfDiNT {pp} {qq} f x
+
+-- The composition equals sequential application:
+-- this holds definitionally (by construction).
+
+-- Paranaturality of the composition follows from
+-- composing two paranaturals (via IntParaNTcomp
+-- from InternalProfunctor.idr).
+public export
+0 interpPolyProfDiNTCompIsPara :
+  FunExt ->
+  {pp, qq, rr : PolyProf} ->
+  (g : PolyProfDiNTar qq rr) ->
+  (f : PolyProfDiNTar pp qq) ->
+  PolyProfParaNTCond pp rr
+    (\x =>
+      interpPolyProfDiNTComp
+        {pp} {qq} {rr} g f x)
+interpPolyProfDiNTCompIsPara
+  fext {pp} {qq} {rr} g f =
+  IntParaNTcomp Type TypeMor
+    (InterpPolyProf pp)
+    (InterpPolyProf qq)
+    (InterpPolyProf rr)
+    (interpPolyProfLmap pp)
+    (interpPolyProfRmap pp)
+    (interpPolyProfLmap qq)
+    (interpPolyProfRmap qq)
+    (interpPolyProfLmap rr)
+    (interpPolyProfRmap rr)
+    (\x =>
+      InterpPolyProfDiNT
+        {pp=qq} {qq=rr} g x)
+    (polyProfDiNTisPara fext {pp=qq}
+      {qq=rr} g)
+    (\x =>
+      InterpPolyProfDiNT {pp} {qq} f x)
+    (polyProfDiNTisPara fext
+      {pp} {qq} f)
+
+-- The formula-level composition can be recovered
+-- by applying PolyProfDiNTFromPara to
+-- interpPolyProfDiNTComp with the paranaturality
+-- proof above. The 0 annotation is forced by
+-- pfSubstCataAlgHom_hole; once that proof is
+-- completed, the 0 can be removed.
+public export
+0 polyProfDiNTComp :
+  FunExt ->
+  {pp, qq, rr : PolyProf} ->
+  PolyProfDiNTar qq rr ->
+  PolyProfDiNTar pp qq ->
+  PolyProfDiNTar pp rr
+polyProfDiNTComp fext {pp} {qq} {rr}
+  g f =
+  PolyProfDiNTFromPara {pp} {qq=rr}
+    (\x =>
+      interpPolyProfDiNTComp
+        {pp} {qq} {rr} g f x)
+    (interpPolyProfDiNTCompIsPara
+      fext {pp} {qq} {rr} g f)
