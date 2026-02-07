@@ -1200,4 +1200,87 @@ def elementsEquivOverToNatIso (e : ElementsEquivOver F G) : F ≅ G :=
 
 end ElementsEquivIso
 
+section ElementsEquivOfNatIso
+
+variable {J : Type u} [Category.{v} J]
+  {F G : J ⥤ Type w}
+
+/-- A natural transformation `F ⟶ G` induces a
+functor `F.Elements ⥤ G.Elements` that preserves
+the base object and applies the component at each
+fiber. -/
+def elementsMapFunctor (α : F ⟶ G) :
+    F.Elements ⥤ G.Elements where
+  obj p := ⟨p.1, α.app p.1 p.2⟩
+  map {p q} f := ⟨f.val, by
+    have nat :=
+      congrFun (α.naturality f.val) p.2
+    simp only [types_comp_apply] at nat
+    rw [f.property] at nat
+    exact nat.symm⟩
+  map_id _ := by ext; rfl
+  map_comp _ _ := by ext; rfl
+
+@[simp]
+theorem elementsMapFunctor_proj (α : F ⟶ G) :
+    elementsMapFunctor α ⋙
+      CategoryOfElements.π G =
+    CategoryOfElements.π F :=
+  rfl
+
+/-- A natural isomorphism `F ≅ G` induces an
+equivalence of categories of elements. -/
+def elementsEquivOfNatIso (α : F ≅ G) :
+    F.Elements ≌ G.Elements :=
+  { functor := elementsMapFunctor α.hom
+    inverse := elementsMapFunctor α.inv
+    unitIso := NatIso.ofComponents
+      (fun p => {
+        hom := ⟨𝟙 p.1, by
+          dsimp [elementsMapFunctor]
+          simp only [Functor.map_id, types_id_apply]
+          change p.snd =
+            (α.hom ≫ α.inv).app p.fst p.snd
+          simp⟩
+        inv := ⟨𝟙 p.1, by
+          dsimp [elementsMapFunctor]
+          simp only [Functor.map_id, types_id_apply]
+          change
+            (α.hom ≫ α.inv).app p.fst p.snd =
+            p.snd
+          simp⟩
+        hom_inv_id :=
+          Subtype.ext (Category.id_comp _)
+        inv_hom_id :=
+          Subtype.ext (Category.id_comp _) })
+      (fun f => Subtype.ext (by
+        dsimp [elementsMapFunctor]
+        simp [Category.id_comp, Category.comp_id]))
+    counitIso := NatIso.ofComponents
+      (fun q => {
+        hom := ⟨𝟙 q.1, by
+          dsimp [elementsMapFunctor]
+          simp only [Functor.map_id, types_id_apply]
+          change
+            (α.inv ≫ α.hom).app q.fst q.snd =
+            q.snd
+          simp⟩
+        inv := ⟨𝟙 q.1, by
+          dsimp [elementsMapFunctor]
+          simp only [Functor.map_id, types_id_apply]
+          change q.snd =
+            (α.inv ≫ α.hom).app q.fst q.snd
+          simp⟩
+        hom_inv_id :=
+          Subtype.ext (Category.id_comp _)
+        inv_hom_id :=
+          Subtype.ext (Category.id_comp _) })
+      (fun g => Subtype.ext (by
+        dsimp [elementsMapFunctor]
+        simp [Category.id_comp, Category.comp_id]))
+    functor_unitIso_comp := fun p =>
+      Subtype.ext (Category.id_comp _) }
+
+end ElementsEquivOfNatIso
+
 end CategoryTheory

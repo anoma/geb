@@ -1005,4 +1005,33 @@ def comprehensivePresheafCopresheafIso :
 
 end ComprehensivePresheafDuality
 
+section ComprehensiveFactorizationDuality
+
+variable {C : Type u₁} [Category.{v₁} C]
+  {D : Type u₂} [Category.{v₂} D]
+  (F : C ⥤ D)
+
+/-- The equivalence of element categories induced by
+`comprehensivePresheafCopresheafIso`. -/
+def comprehensiveElementsEquiv :
+    (comprehensivePresheaf F).Elements ≌
+    (comprehensiveCopresheaf F.op).Elements :=
+  elementsEquivOfNatIso
+    (comprehensivePresheafCopresheafIso F)
+
+/-- The element category equivalence commutes with
+projections: the discrete opfibration
+`comprehensiveM' (F.op)` composed with the
+equivalence functor equals the projection from
+`(comprehensivePresheaf F).Elements`. -/
+theorem comprehensiveElementsEquiv_proj :
+    (comprehensiveElementsEquiv F).functor ⋙
+      CategoryOfElements.π
+        (comprehensiveCopresheaf F.op) =
+    CategoryOfElements.π
+      (comprehensivePresheaf F) :=
+  elementsMapFunctor_proj _
+
+end ComprehensiveFactorizationDuality
+
 end GebLean
