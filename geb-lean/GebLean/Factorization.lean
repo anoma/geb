@@ -2616,51 +2616,68 @@ private lemma fFiber_fiveChain_congr
   exact HEq.rfl
 
 /-- Relates an explicit F-fiber 5-chain (parameterized by
-`h₁`, `h₂`, `fib₁`, `fib₂`) to the `.fiberMorph` of a
-`DecFactHom` 5-chain `eqToHom p ≫ φ ≫ eqToHom q ≫ ψ ≫
-eqToHom r`. The hypotheses `hh₁`, `hh₂`, `hfib₁`, `hfib₂`
-relate the parameters to the projections of `φ` and `ψ`.
-After substituting all hypotheses, both sides reduce to
+standalone `h₁`, `h₂`, `fib₁`, `fib₂` over `A`, `B`, `E`)
+to the `.fiberMorph` of a `DecFactHom` 5-chain
+`eqToHom p ≫ φ ≫ eqToHom q ≫ ψ ≫ eqToHom r`.
+The `hA`, `hB`, `hE` equalities bridge between the
+standalone midpoints and the `DecFactObj` midpoints;
+the remaining `HEq` hypotheses relate the standalone
+parameters to the projections of `φ` and `ψ`. After
+substituting all hypotheses, both sides reduce to
 `(decFactComp F tw φ ψ).fiberMorph`. -/
 private lemma
     fFiber_fiveChain_heq_decFactHom_fiveChain
+    {A B E : C}
+    {h₁ : A ⟶ B} {h₂ : B ⟶ E}
+    {fA : F.obj (twObjMk (𝟙 A))}
+    {fB : F.obj (twObjMk (𝟙 B))}
+    {fE : F.obj (twObjMk (𝟙 E))}
+    {fib₁ : (F.map
+        (twObjMkFromIdentity h₁)).toFunctor.obj
+        fA ⟶ (F.map
+        (twObjMkFromIdentityAtCod h₁)).toFunctor.obj
+        fB}
+    {fib₂ : (F.map
+        (twObjMkFromIdentity h₂)).toFunctor.obj
+        fB ⟶ (F.map
+        (twObjMkFromIdentityAtCod h₂)).toFunctor.obj
+        fE}
     {tw : TwistedArrow C}
     {a a' b c d d' : DecFactObj F tw}
-    {h₁ : a.fact.mid ⟶ b.fact.mid}
-    {h₂ : b.fact.mid ⟶ d.fact.mid}
-    {fib₁ :
-      (F.map (twObjMkFromIdentity h₁)).toFunctor.obj
-        a.fiber ⟶
-      (F.map (twObjMkFromIdentityAtCod h₁)).toFunctor.obj
-        b.fiber}
-    {fib₂ :
-      (F.map (twObjMkFromIdentity h₂)).toFunctor.obj
-        b.fiber ⟶
-      (F.map (twObjMkFromIdentityAtCod h₂)).toFunctor.obj
-        d.fiber}
     (p : a' = a) (φ : a ⟶ b) (q : b = c)
     (ψ : c ⟶ d) (r : d = d')
-    (hh₁ : h₁ = φ.factHom.h)
+    (hA : A = a.fact.mid)
+    (hB : B = b.fact.mid)
+    (hE : E = d.fact.mid)
+    (hfA : HEq fA a.fiber)
+    (hfB : HEq fB b.fiber)
+    (hfE : HEq fE d.fiber)
+    (hh₁ : HEq h₁ φ.factHom.h)
     (hh₂ : HEq h₂ ψ.factHom.h)
     (hfib₁ : HEq fib₁ φ.fiberMorph)
     (hfib₂ : HEq fib₂ ψ.fiberMorph) :
     HEq
       (eqToHom (decFactComp_src_eq F
-        h₁ h₂ a.fiber) ≫
+        h₁ h₂ fA) ≫
       (F.map (twExtendCod h₁ h₂)
         ).toFunctor.map fib₁ ≫
       eqToHom (decFactComp_mid_eq F
-        h₁ h₂ b.fiber) ≫
+        h₁ h₂ fB) ≫
       (F.map (twExtendDom h₁ h₂)
         ).toFunctor.map fib₂ ≫
       eqToHom (decFactComp_tgt_eq F
-        h₁ h₂ d.fiber).symm)
+        h₁ h₂ fE).symm)
       (eqToHom p ≫ φ ≫ eqToHom q ≫ ψ ≫
         eqToHom r).fiberMorph := by
-  subst p; subst r; subst q; subst hh₁
-  have hh₂_eq := eq_of_heq hh₂; subst hh₂_eq
-  have eq₁ := eq_of_heq hfib₁; subst eq₁
-  have eq₂ := eq_of_heq hfib₂; subst eq₂
+  subst p; subst r; subst q
+  subst hA; subst hB; subst hE
+  have := eq_of_heq hh₁; subst this
+  have := eq_of_heq hh₂; subst this
+  have := eq_of_heq hfA; subst this
+  have := eq_of_heq hfB; subst this
+  have := eq_of_heq hfE; subst this
+  have := eq_of_heq hfib₁; subst this
+  have := eq_of_heq hfib₂; subst this
   have h : eqToHom rfl ≫ φ ≫ eqToHom rfl ≫ ψ ≫
       eqToHom rfl = φ ≫ ψ := by
     simp only [eqToHom_refl,
@@ -3424,7 +3441,10 @@ private lemma
     factorisationMapHom, factorisationMapObj_mid,
     totalDecFactHomToGrothendieckHom]
   dsimp only [TotalDecFactHom.comp]
-  exact _
+  exact fFiber_fiveChain_heq_decFactHom_fiveChain
+    F _ _ _ _ _ rfl rfl rfl
+    HEq.rfl HEq.rfl HEq.rfl
+    HEq.rfl HEq.rfl HEq.rfl HEq.rfl
 
 /-- Functor from the total decorated factorisation category
 to the connected Grothendieck construction over
