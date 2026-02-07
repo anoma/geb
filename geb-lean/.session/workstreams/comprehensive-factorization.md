@@ -327,7 +327,7 @@ elimination into weighted limits.
 - [x] Categorical equivalences for weighted (co)wedges
 - [x] Paranat as weighted limit characterization
 - [x] Weighted cone/cocone op duality (Phase 6A)
-- [ ] Connected components op equivalence (Phase 6B)
+- [x] Connected components op equivalence (Phase 6B)
 - [ ] Comprehensive presheaf/copresheaf duality (Phase 6C)
 - [ ] CostructureIntegral duality research (Phase 6D)
 
@@ -341,6 +341,7 @@ elimination into weighted limits.
 - `GebLean/Paranatural.lean`
 - `GebLean/Weighted.lean`
 - `GebLean/Utilities/Category.lean`
+- `GebLean/Utilities/ConnectedComponents.lean`
 
 ## Related Workstreams
 
