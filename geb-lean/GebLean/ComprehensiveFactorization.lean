@@ -1032,6 +1032,16 @@ theorem comprehensiveElementsEquiv_proj :
       (comprehensivePresheaf F) :=
   elementsMapFunctor_proj _
 
+/-- The element equivalence maps the image of
+`comprehensiveE F` (under `unop`) to the image of
+`comprehensiveE' (F.op)`: both land at the identity
+(co)structured arrow component. -/
+theorem comprehensiveE_obj_eq (c : C) :
+    (comprehensiveElementsEquiv F).functor.obj
+      ((comprehensiveE F).obj c).unop =
+    (comprehensiveE' (F.op)).obj (Opposite.op c) :=
+  rfl
+
 end ComprehensiveFactorizationDuality
 
 end GebLean
