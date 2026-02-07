@@ -1713,17 +1713,127 @@ polyProfDiNTisPara fext {pp} {qq}
 --   applications as tree nodes).
 --
 --   Apply the output algebra to the element
---   (k ** pfFreeVarInj) where pfFreeVarInj maps
---   each output direction d to a single-leaf free
---   monad element. The result (tree_k ** leafMap_k)
---   gives:
+--   (k ** InFMVar) where InFMVar maps each output
+--   direction d to a variable leaf in the free
+--   monad. The result (tree_k ** leafMap_k) gives:
 --     onDirPos k = tree_k
 --     onDirDir k = leafMap_k
 --
---   This uses polyProfParaPosIndep to ensure
---   position consistency across evaluation types.
+--   Position consistency across evaluation types
+--   follows from paranaturality (same pattern as
+--   polyProfParaPosIndep).
+
+-- Helper: extract position equality proof.
+-- Shows fst (alpha Unit (i ** const ())) =
+--        fst (alpha x (i ** h))
+-- for any x, h, from paranaturality at const ().
 public export
-0 PolyProfDiNTFromPara :
+ppDiNTExtractPosEq :
+  {pp, qq : PolyProf} ->
+  (alpha : TypeProfDiNT
+    (InterpPolyProf pp)
+    (InterpPolyProf qq)) ->
+  PolyProfParaNTCond pp qq alpha ->
+  (i : ppPos pp) ->
+  (x : Type) ->
+  (h : InterpPolyFunc (ppDirPF pp i) x ->
+    x) ->
+  fst (alpha Unit (i ** const ())) =
+  fst (alpha x (i ** h))
+ppDiNTExtractPosEq {pp} {qq}
+  alpha para i x h =
+  let
+    pe = para x Unit (const ())
+      (i ** h) (i ** const ())
+      (dpEq12 Refl Refl)
+  in
+  trans
+    (sym (interpPolyProfLmapFst qq
+      Unit Unit x (const ())
+      (alpha Unit (i ** const ()))))
+    (trans (dpeq1 pe)
+      (interpPolyProfRmapFst qq
+        x x Unit (const ())
+        (alpha x (i ** h))))
+
+-- Extract a PolyProfDiNTar formula from a
+-- paranatural transformation by evaluating at the
+-- free algebra.
+--
+-- Position map: evaluate at Unit with const ().
+-- Direction nat trans at i: for each output
+-- direction position k, evaluate alpha at type
+--   x = InterpPolyFuncFreeM pf (pfDir qf k)
+-- with algebra = PolyFreeAlgF pf (pfDir qf k),
+-- apply output algebra to (k ** InFMVar).
+-- Position consistency via ppDiNTExtractPosEq.
+
+-- Helper: given i and k (output direction
+-- position), extract the free monad element by
+-- evaluating alpha at the free algebra and
+-- transporting via position equality.
+-- The return type uses snd (ppDirPF qq j) k
+-- for the leaf type of the free monad element.
+public export
+ppDiNTExtract :
+  {pp, qq : PolyProf} ->
+  (alpha : TypeProfDiNT
+    (InterpPolyProf pp)
+    (InterpPolyProf qq)) ->
+  PolyProfParaNTCond pp qq alpha ->
+  (i : ppPos pp) ->
+  (k : fst (ppDirPF qq
+    (fst (alpha Unit
+      (i ** const ()))))) ->
+  InterpPolyFuncFreeM (ppDirPF pp i)
+    (snd (ppDirPF qq
+      (fst (alpha Unit
+        (i ** const ())))) k)
+ppDiNTExtract {pp} {qq}
+  alpha para i k =
+  replace
+    {p=(\jj =>
+      InterpPolyFunc (ppDirPF qq jj)
+        (InterpPolyFuncFreeM
+          (ppDirPF pp i)
+          (snd (ppDirPF qq
+            (fst (alpha Unit
+              (i ** const ())))) k))
+        -> InterpPolyFuncFreeM
+          (ppDirPF pp i)
+          (snd (ppDirPF qq
+            (fst (alpha Unit
+              (i ** const ())))) k))}
+    (sym
+      (ppDiNTExtractPosEq {pp} {qq}
+        alpha para i
+        (InterpPolyFuncFreeM
+          (ppDirPF pp i)
+          (snd (ppDirPF qq
+            (fst (alpha Unit
+              (i ** const ())))) k))
+        (PolyFreeAlgF (ppDirPF pp i)
+          (snd (ppDirPF qq
+            (fst (alpha Unit
+              (i ** const ())))) k))))
+    (snd
+      (alpha
+        (InterpPolyFuncFreeM
+          (ppDirPF pp i)
+          (snd (ppDirPF qq
+            (fst (alpha Unit
+              (i ** const ())))) k))
+        (i **
+          PolyFreeAlgF (ppDirPF pp i)
+            (snd (ppDirPF qq
+              (fst (alpha Unit
+                (i ** const ()))))
+              k))))
+    (k **
+      InFMVar {p=ppDirPF pp i})
+
+public export
+PolyProfDiNTFromPara :
   {pp, qq : PolyProf} ->
   (alpha : TypeProfDiNT
     (InterpPolyProf pp)
@@ -1732,7 +1842,15 @@ public export
   PolyProfDiNTar pp qq
 PolyProfDiNTFromPara {pp} {qq}
   alpha para =
-  ?polyProfDiNTFromPara_hole
+  (\i =>
+    fst (alpha Unit (i ** const ()))
+  ** \i =>
+    (\k =>
+      fst (ppDiNTExtract {pp} {qq}
+        alpha para i k)
+    ** \k, d =>
+      snd (ppDiNTExtract {pp} {qq}
+        alpha para i k) d))
 
 ------------------------------------------------------------
 ---- Completeness ----
