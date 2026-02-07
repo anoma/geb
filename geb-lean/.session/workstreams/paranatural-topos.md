@@ -124,16 +124,25 @@ topos.
   is `Hom_{Tw(C)}(id_c, f)`, connecting the Kan
   extension formula to our formalized infrastructure
 - [x] `Lan_iota(F)(f) = colim over Factorisation(f) of F`
-  matches `decFactFunctor` in our codebase
+  matches `decFactFunctor` in our codebase:
+  `DecFactObj F tw` is the category of elements of the
+  Kan extension diagram at `tw`, and
+  `TotalDecFactObj C F` is the total space of the
+  `Cat`-valued Kan extension `Lan_iota(iota* F)`
 
 ## Experimental Plan
 
-### Phase 2a: Define the full subcategory I of Tw(C)
+### Phase 2a: Connect decFactFunctor to diagonalization
 
-Define the full subcategory `I` of `Tw(C)` on identity
-arrows `{id_c | c in C}` and its inclusion
-`iota : I -> Tw(C)`. Note that `I` is NOT equivalent
-to `C`: its morphisms are section-retraction pairs
+The formalized `decFactFunctor F` already computes the
+fiberwise `Cat`-valued left Kan extension
+`Lan_iota(iota* F)`: `DecFactObj F tw` is the category
+of elements of the Kan extension diagram at `tw`.
+Investigate whether this suffices for the diagonalization
+monad, or whether we also need the full subcategory `I`
+of `Tw(C)` on identity arrows as an explicit category.
+Note that `I` is NOT equivalent to `C`: its morphisms
+are section-retraction pairs
 `(alpha : d -> c, beta : c -> d)` with
 `beta . alpha = id_d`. There is a non-full,
 non-faithful functor `p : I -> C` sending

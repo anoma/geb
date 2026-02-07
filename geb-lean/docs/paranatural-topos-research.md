@@ -141,12 +141,25 @@ reflective subcategory of `Over (twObjMk f)` in
 `Tw(C)`. The reflector `overTwToFactorisation` sends
 a twisted arrow over `f` to its canonical factorization.
 
-The decorated factorization functor `decFactFunctor`
-assigns to each twisted arrow `f` a Grothendieck
-construction that "decorates" factorizations with data
-from a functor. When the decoration data comes from
-diagonal elements of a profunctor, this construction
-yields the diagonalized density formula.
+The decorated factorization functor
+`decFactFunctor F : Tw(C) -> Cat` (for
+`F : Tw(C) -> Cat`) assigns to each twisted arrow
+`tw` the category `DecFactObj F tw`, whose objects are
+pairs (factorization of `twArr tw`, element of
+`F(id_mid)`). A factorization of `f` through `mid` is
+a morphism `id_mid -> f` in `Tw(C)`, so `DecFactObj F tw`
+is the category of elements of the diagram
+`(factorizations of f) -> Cat` sending
+`(mid, iota, pi) |-> F(id_mid)`. This is exactly the
+fiber of `Lan_iota(iota* F)` at `f`, where
+`iota : I -> Tw(C)` is the full subcategory inclusion
+of identity arrows.
+
+The total category `TotalDecFactObj C F` (equivalently,
+`TotalDecFactGrothendieck C F`) gathers all decorated
+factorizations across all morphisms in `C`. It is the
+total space of `Lan_iota(iota* F)` viewed as a
+`Cat`-valued functor on `Tw(C)`.
 
 ### Mathlib infrastructure
 
@@ -238,12 +251,21 @@ all factorizations of `f` through `c`.
 ### Connections to formalized infrastructure
 
 - The factorization category of `f` through `c` is
-  `Hom_{Tw(C)}(id_c, f)`, already formalized.
+  `Hom_{Tw(C)}(id_c, f)`, already formalized as
+  `Factorisation f`.
 - The reflective inclusion of factorization categories
-  into over-categories of `Tw(C)` is formalized.
-- The decorated factorization Grothendieck construction
-  (`decFactFunctor`) directly implements the colimit
-  in the Kan extension formula.
+  into over-categories of `Tw(C)` is formalized as
+  `factorisationToOverTw`.
+- `decFactFunctor F` implements the fiberwise Kan
+  extension: its value at `tw` is the category of
+  elements of the Kan extension diagram, so
+  `DecFactObj F tw` computes `Lan_iota(iota* F)(tw)` as
+  a `Cat`-valued left Kan extension.
+- `TotalDecFactObj C F` (equivalently
+  `TotalDecFactGrothendieck C F`) is the total space
+  of this Kan extension across all twisted arrows.
+- Discrete (op)fibrations are formalized in
+  `ComprehensiveFactorization.lean`.
 
 ## Open Questions
 
