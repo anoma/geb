@@ -2421,6 +2421,19 @@ def decFactMapObj
   fact := factorisationMapObj φ d.fact
   fiber := d.fiber
 
+@[simp]
+private theorem decFactMapObj_fact
+    {x y : TwistedArrow C} (φ : x ⟶ y)
+    (d : DecFactObj F x) :
+    (decFactMapObj F φ d).fact =
+      factorisationMapObj φ d.fact := rfl
+
+@[simp]
+private theorem decFactMapObj_fiber
+    {x y : TwistedArrow C} (φ : x ⟶ y)
+    (d : DecFactObj F x) :
+    (decFactMapObj F φ d).fiber = d.fiber := rfl
+
 /-- The image of a decorated factorisation morphism under a
 twisted arrow morphism. The factorisation morphism maps via
 `factorisationMapHom`; the fiber morphism is unchanged since
@@ -2433,6 +2446,22 @@ def decFactMapHom
       (decFactMapObj F φ e) where
   factHom := factorisationMapHom φ m.factHom
   fiberMorph := m.fiberMorph
+
+@[simp]
+private theorem decFactMapHom_factHom
+    {x y : TwistedArrow C} (φ : x ⟶ y)
+    {d e : DecFactObj F x}
+    (m : DecFactHom F x d e) :
+    (decFactMapHom F φ m).factHom =
+      factorisationMapHom φ m.factHom := rfl
+
+@[simp]
+private theorem decFactMapHom_fiberMorph
+    {x y : TwistedArrow C} (φ : x ⟶ y)
+    {d e : DecFactObj F x}
+    (m : DecFactHom F x d e) :
+    (decFactMapHom F φ m).fiberMorph =
+      m.fiberMorph := rfl
 
 /-- The functor between decorated factorisation categories
 induced by a twisted arrow morphism. -/
@@ -2460,6 +2489,15 @@ private lemma decFact_eqToHom_factHom
     eqToHom (congrArg DecFactObj.fact p) := by
   subst p; rfl
 
+private lemma decFact_eqToHom_fiberMorph
+    (tw : TwistedArrow C)
+    {d e : DecFactObj F tw}
+    (p : d = e) :
+    HEq (eqToHom p :
+      DecFactHom F tw d e).fiberMorph
+    (eqToHom (decFactId_fiber_eq F tw d)) := by
+  subst p; exact HEq.rfl
+
 @[simp]
 private lemma decFact_comp_factHom
     (tw : TwistedArrow C)
@@ -2467,6 +2505,23 @@ private lemma decFact_comp_factHom
     (m : d ⟶ e) (n : e ⟶ g) :
     (m ≫ n).factHom =
     m.factHom ≫ n.factHom := rfl
+
+private lemma decFact_comp_fiberMorph
+    (tw : TwistedArrow C)
+    {d e g : DecFactObj F tw}
+    (m : d ⟶ e) (n : e ⟶ g) :
+    (m ≫ n).fiberMorph =
+    eqToHom (decFactComp_src_eq F
+      m.factHom.h n.factHom.h d.fiber) ≫
+    (F.map (twExtendCod m.factHom.h n.factHom.h)
+      ).toFunctor.map m.fiberMorph ≫
+    eqToHom (decFactComp_mid_eq F
+      m.factHom.h n.factHom.h e.fiber) ≫
+    (F.map (twExtendDom m.factHom.h n.factHom.h)
+      ).toFunctor.map n.fiberMorph ≫
+    eqToHom (decFactComp_tgt_eq F
+      m.factHom.h n.factHom.h g.fiber).symm :=
+  rfl
 
 private lemma decFactMapObj_id
     (tw : TwistedArrow C)
@@ -2507,6 +2562,197 @@ private lemma decFact_eqToHom_sandwich_fiberMorph_heq
     simp only [eqToHom_refl, Category.id_comp,
       Category.comp_id]
   rw [h]
+
+private lemma
+    decFact_fiveChain_comp_fiberMorph_heq
+    (tw : TwistedArrow C)
+    {a a' b c d d' : DecFactObj F tw}
+    (p : a' = a) (f : a ⟶ b) (q : b = c)
+    (g : c ⟶ d) (r : d = d') :
+    (f ≫ eqToHom q ≫ g).fiberMorph ≍
+    (eqToHom p ≫ f ≫ eqToHom q ≫ g ≫
+      eqToHom r).fiberMorph := by
+  subst p; subst r
+  have h : eqToHom rfl ≫ f ≫ eqToHom q ≫ g ≫
+      eqToHom rfl = f ≫ eqToHom q ≫ g := by
+    simp only [eqToHom_refl, Category.id_comp,
+      Category.comp_id]
+  rw [h]
+
+/-- Congruence lemma for the F-fiber 5-chain: given
+`h₂ = h₂'` and `HEq fib₂ fib₂'`, the two 5-chains
+with `(h₂, fib₂)` and `(h₂', fib₂')` are `HEq`. -/
+private lemma fFiber_fiveChain_congr
+    {A B E : C}
+    (h₁ : A ⟶ B) {h₂ h₂' : B ⟶ E}
+    (eq_h : h₂ = h₂')
+    {src_fiber mid_fiber tgt_fiber}
+    {fib₁} {fib₂} {fib₂'}
+    (heq_fib : HEq fib₂ fib₂') :
+    HEq
+      (eqToHom (decFactComp_src_eq F
+          h₁ h₂ src_fiber) ≫
+        (F.map (twExtendCod h₁ h₂)
+          ).toFunctor.map fib₁ ≫
+        eqToHom (decFactComp_mid_eq F
+          h₁ h₂ mid_fiber) ≫
+        (F.map (twExtendDom h₁ h₂)
+          ).toFunctor.map fib₂ ≫
+        eqToHom (decFactComp_tgt_eq F
+          h₁ h₂ tgt_fiber).symm)
+      (eqToHom (decFactComp_src_eq F
+          h₁ h₂' src_fiber) ≫
+        (F.map (twExtendCod h₁ h₂')
+          ).toFunctor.map fib₁ ≫
+        eqToHom (decFactComp_mid_eq F
+          h₁ h₂' mid_fiber) ≫
+        (F.map (twExtendDom h₁ h₂')
+          ).toFunctor.map fib₂' ≫
+        eqToHom (decFactComp_tgt_eq F
+          h₁ h₂' tgt_fiber).symm) := by
+  subst eq_h
+  have h := eq_of_heq heq_fib
+  subst h
+  exact HEq.rfl
+
+/-- Relates an explicit F-fiber 5-chain (parameterized by
+`h₁`, `h₂`, `fib₁`, `fib₂`) to the `.fiberMorph` of a
+`DecFactHom` 5-chain `eqToHom p ≫ φ ≫ eqToHom q ≫ ψ ≫
+eqToHom r`. The hypotheses `hh₁`, `hh₂`, `hfib₁`, `hfib₂`
+relate the parameters to the projections of `φ` and `ψ`.
+After substituting all hypotheses, both sides reduce to
+`(decFactComp F tw φ ψ).fiberMorph`. -/
+private lemma
+    fFiber_fiveChain_heq_decFactHom_fiveChain
+    {tw : TwistedArrow C}
+    {a a' b c d d' : DecFactObj F tw}
+    {h₁ : a.fact.mid ⟶ b.fact.mid}
+    {h₂ : b.fact.mid ⟶ d.fact.mid}
+    {fib₁ :
+      (F.map (twObjMkFromIdentity h₁)).toFunctor.obj
+        a.fiber ⟶
+      (F.map (twObjMkFromIdentityAtCod h₁)).toFunctor.obj
+        b.fiber}
+    {fib₂ :
+      (F.map (twObjMkFromIdentity h₂)).toFunctor.obj
+        b.fiber ⟶
+      (F.map (twObjMkFromIdentityAtCod h₂)).toFunctor.obj
+        d.fiber}
+    (p : a' = a) (φ : a ⟶ b) (q : b = c)
+    (ψ : c ⟶ d) (r : d = d')
+    (hh₁ : h₁ = φ.factHom.h)
+    (hh₂ : HEq h₂ ψ.factHom.h)
+    (hfib₁ : HEq fib₁ φ.fiberMorph)
+    (hfib₂ : HEq fib₂ ψ.fiberMorph) :
+    HEq
+      (eqToHom (decFactComp_src_eq F
+        h₁ h₂ a.fiber) ≫
+      (F.map (twExtendCod h₁ h₂)
+        ).toFunctor.map fib₁ ≫
+      eqToHom (decFactComp_mid_eq F
+        h₁ h₂ b.fiber) ≫
+      (F.map (twExtendDom h₁ h₂)
+        ).toFunctor.map fib₂ ≫
+      eqToHom (decFactComp_tgt_eq F
+        h₁ h₂ d.fiber).symm)
+      (eqToHom p ≫ φ ≫ eqToHom q ≫ ψ ≫
+        eqToHom r).fiberMorph := by
+  subst p; subst r; subst q; subst hh₁
+  have hh₂_eq := eq_of_heq hh₂; subst hh₂_eq
+  have eq₁ := eq_of_heq hfib₁; subst eq₁
+  have eq₂ := eq_of_heq hfib₂; subst eq₂
+  have h : eqToHom rfl ≫ φ ≫ eqToHom rfl ≫ ψ ≫
+      eqToHom rfl = φ ≫ ψ := by
+    simp only [eqToHom_refl,
+      Category.id_comp, Category.comp_id]
+  exact h ▸ HEq.rfl
+
+/-- Relates `.fiberMorph` of a `DecFactObj`-level 5-chain
+`eqToHom p ≫ φ ≫ eqToHom q ≫ ψ ≫ eqToHom r` to the
+`.fiberMorph` of the direct composition `φ ≫ (q ▸ ψ)`. -/
+private lemma
+    decFact_fiveChain_vs_comp_fiberMorph_heq
+    (tw : TwistedArrow C)
+    {a a' b c d d' : DecFactObj F tw}
+    (p : a' = a) (φ : a ⟶ b) (q : b = c)
+    (ψ : c ⟶ d) (r : d = d') :
+    HEq
+      (eqToHom p ≫ φ ≫ eqToHom q ≫ ψ ≫
+        eqToHom r).fiberMorph
+      (decFactComp F tw φ (q ▸ ψ)).fiberMorph := by
+  subst p; subst r; subst q
+  have h : eqToHom (Eq.refl a') ≫ φ ≫
+      eqToHom (Eq.refl b) ≫ ψ ≫
+      eqToHom (Eq.refl d) = φ ≫ ψ := by
+    simp only [eqToHom_refl,
+      Category.id_comp, Category.comp_id]
+  exact h ▸ HEq.rfl
+
+/-- Relates `.fiberMorph` of a `DecFactObj`-level
+5-chain `eqToHom p ≫ φ ≫ eqToHom q ≫ ψ ≫ eqToHom r`
+to the explicit F-fiber 5-chain using
+`decFactComp_src_eq`, `decFactComp_mid_eq`, and
+`decFactComp_tgt_eq`. Uses `q ▸ ψ` in the RHS
+to transport `ψ` to have source `b`, making the
+morphism arguments composable. -/
+private lemma decFact_fiveChain_fiberMorph_heq
+    {tw : TwistedArrow C}
+    {a a' b c d d' : DecFactObj F tw}
+    (p : a' = a) (φ : a ⟶ b) (q : b = c)
+    (ψ : c ⟶ d) (r : d = d') :
+    HEq
+      (eqToHom p ≫ φ ≫ eqToHom q ≫ ψ ≫
+        eqToHom r).fiberMorph
+      (eqToHom (decFactComp_src_eq F
+          φ.factHom.h (q ▸ ψ).factHom.h
+          a.fiber) ≫
+        (F.map (twExtendCod
+          φ.factHom.h (q ▸ ψ).factHom.h)
+          ).toFunctor.map φ.fiberMorph ≫
+        eqToHom (decFactComp_mid_eq F
+          φ.factHom.h (q ▸ ψ).factHom.h
+          b.fiber) ≫
+        (F.map (twExtendDom
+          φ.factHom.h (q ▸ ψ).factHom.h)
+          ).toFunctor.map (q ▸ ψ).fiberMorph ≫
+        eqToHom (decFactComp_tgt_eq F
+          φ.factHom.h (q ▸ ψ).factHom.h
+          d.fiber).symm) := by
+  subst p; subst r; subst q
+  have h : eqToHom (Eq.refl a') ≫ φ ≫
+      eqToHom (Eq.refl b) ≫ ψ ≫
+      eqToHom (Eq.refl d) = φ ≫ ψ := by
+    simp only [eqToHom_refl,
+      Category.id_comp, Category.comp_id]
+  exact h ▸ HEq.rfl
+
+private lemma decFact_fiveChain_heq_comp
+    {tw : TwistedArrow C}
+    {a a' b c d d' : DecFactObj F tw}
+    (p : a' = a) (φ : a ⟶ b) (q : b = c)
+    (ψ : c ⟶ d) (r : d = d') :
+    HEq
+      (φ ≫ (q ▸ ψ))
+      (eqToHom p ≫ φ ≫ eqToHom q ≫ ψ ≫
+        eqToHom r) := by
+  subst p; subst r; subst q
+  simp only [eqToHom_refl, Category.id_comp,
+    Category.comp_id]
+  exact HEq.rfl
+
+private lemma decFactHom_subst_factHom_h_heq
+    {tw : TwistedArrow C}
+    {a b c : DecFactObj F tw}
+    (q : a = b) (φ : b ⟶ c) :
+    HEq (q ▸ φ).factHom.h φ.factHom.h := by
+  subst q; exact HEq.rfl
+
+private lemma decFactHom_subst_fiberMorph_heq
+    {tw : TwistedArrow C}
+    {a b c : DecFactObj F tw}
+    (q : a = b) (φ : b ⟶ c) :
+    HEq (q ▸ φ).fiberMorph φ.fiberMorph := by
+  subst q; exact HEq.rfl
 
 /-- The `Cat`-valued functor sending each twisted arrow `tw`
 to the decorated factorisation category `DecFactObj F tw`,
@@ -3007,81 +3253,239 @@ def totalDecFactGrothendieckEquivObj :
         (hfib := HEq.refl _)
         (d := _) (e := _)
 
-private abbrev toTotalDecFact :=
-  totalDecFactGrothendieckEquivObj C F
-
-/-- The `Category` instance on
-`TotalDecFactGrothendieck C F`, transferred from
-`TotalDecFactObj C F` via the object equivalence.
-Morphisms from `x` to `y` are
-`TotalDecFactHom C F (e x) (e y)` where `e` is the
-object equivalence. -/
-instance : Category
-    (TotalDecFactGrothendieck C F) where
-  Hom x y :=
+/-- Translates a morphism in the connected Grothendieck
+construction over `decFactFunctor F` to a morphism in
+the total decorated factorisation category. Extracts
+`domArr`, `codArr`, and the factorisation and fiber
+morphism components from the `DecFactHom` fiber. -/
+def grothendieckHomToTotalDecFactHom
+    {x y : TotalDecFactGrothendieck C F}
+    (m : x ⟶ y) :
     TotalDecFactHom C F
-      (toTotalDecFact C F x) (toTotalDecFact C F y)
-  id x :=
-    TotalDecFactHom.id C F (toTotalDecFact C F x)
-  comp f g := TotalDecFactHom.comp C F f g
-  id_comp := totalDecFact_id_comp C F
-  comp_id := totalDecFact_comp_id C F
-  assoc := totalDecFact_comp_assoc C F
+      (totalDecFactGrothendieckEquivObj C F x)
+      (totalDecFactGrothendieckEquivObj C F y) where
+  domMorph := m.domArr
+  midMorph := m.fiberMorph.factHom.h
+  codMorph := m.codArr
+  ι_comm := by
+    have h := m.fiberMorph.factHom.ι_h
+    simp only [Functor.comp_map,
+      decFactFunctor,
+      decFactMap, decFactMapObj,
+      Functor.toCatHom_toFunctor,
+      factorisationMapObj_ι,
+      connGrothendieckTwMorphCod,
+      connGrothendieckTwMorphDom, tw'ToTw,
+      connGrothendieckDiagCod,
+      connGrothendieckDiagDom,
+      twHomMk'_domArr, twHomMk'_codArr,
+      twHomMk_domArr,
+      twDomArr'_comp, twDomArr'_eqToHom,
+      twObjMk'_dom, twObjMk'_arr,
+      twObjMk_dom,
+      eqToHom_refl, Category.id_comp] at h
+    exact h
+  π_comm := by
+    have h := m.fiberMorph.factHom.h_π
+    simp only [Functor.comp_map,
+      decFactFunctor,
+      decFactMap, decFactMapObj,
+      Functor.toCatHom_toFunctor,
+      factorisationMapObj_π,
+      connGrothendieckTwMorphCod,
+      connGrothendieckTwMorphDom, tw'ToTw,
+      connGrothendieckDiagCod,
+      connGrothendieckDiagDom,
+      twHomMk'_codArr, twHomMk'_domArr,
+      twHomMk_codArr,
+      twCodArr'_comp, twCodArr'_eqToHom,
+      twObjMk'_cod, twObjMk'_arr,
+      twObjMk_cod,
+      eqToHom_refl, Category.comp_id] at h
+    exact h
+  fiberMorph := m.fiberMorph.fiberMorph
 
-/-- The functor from `TotalDecFactObj C F` to
-`TotalDecFactGrothendieck C F`, given by the inverse of
-the object equivalence. -/
+/-- Translates a morphism in the total decorated
+factorisation category to a morphism in the connected
+Grothendieck construction over `decFactFunctor F`. Packs
+`domMorph`, `codMorph` as the arrow square, and constructs
+the `DecFactHom` fiber from `midMorph` and
+`fiberMorph`. -/
+def totalDecFactHomToGrothendieckHom
+    {x y : TotalDecFactObj C F}
+    (f : TotalDecFactHom C F x y) :
+    (totalDecFactGrothendieckEquivObj C F).symm x ⟶
+    (totalDecFactGrothendieckEquivObj C F).symm y where
+  domArr := f.domMorph
+  codArr := f.codMorph
+  square_comm := by
+    simp only [totalDecFactGrothendieckEquivObj,
+      Equiv.coe_fn_symm_mk, twObjMk'_arr]
+    rw [Category.assoc, ← f.π_comm,
+      ← Category.assoc, f.ι_comm, Category.assoc]
+  fiberMorph :=
+    { factHom :=
+        { h := f.midMorph
+          ι_h := by
+            simp only [Functor.comp_map,
+              decFactFunctor,
+              decFactMap, decFactMapObj,
+              Functor.toCatHom_toFunctor,
+              factorisationMapObj_ι,
+              connGrothendieckTwMorphCod,
+              connGrothendieckTwMorphDom, tw'ToTw,
+              connGrothendieckDiagCod,
+              connGrothendieckDiagDom,
+              twHomMk'_domArr, twHomMk'_codArr,
+              twHomMk_domArr,
+              twDomArr'_comp, twDomArr'_eqToHom,
+              twObjMk'_dom, twObjMk'_arr,
+              twObjMk_dom,
+              eqToHom_refl, Category.id_comp]
+            exact f.ι_comm
+          h_π := by
+            simp only [Functor.comp_map,
+              decFactFunctor,
+              decFactMap, decFactMapObj,
+              Functor.toCatHom_toFunctor,
+              factorisationMapObj_π,
+              connGrothendieckTwMorphCod,
+              connGrothendieckTwMorphDom, tw'ToTw,
+              connGrothendieckDiagCod,
+              connGrothendieckDiagDom,
+              twHomMk'_codArr, twHomMk'_domArr,
+              twHomMk_codArr,
+              twCodArr'_comp, twCodArr'_eqToHom,
+              twObjMk'_cod, twObjMk'_arr,
+              twObjMk_cod,
+              eqToHom_refl, Category.comp_id]
+            exact f.π_comm }
+      fiberMorph := f.fiberMorph }
+
+private lemma totalDecFact_map_comp_factHom_eq
+    {x y z : TotalDecFactObj C F}
+    (f : TotalDecFactHom C F x y)
+    (g : TotalDecFactHom C F y z) :
+    (totalDecFactHomToGrothendieckHom C F
+      (TotalDecFactHom.comp C F f g)
+        ).fiberMorph.factHom =
+    (connGrothendieckComp C
+      (tw'ToTw ⋙ decFactFunctor F)
+      (totalDecFactHomToGrothendieckHom C F f)
+      (totalDecFactHomToGrothendieckHom C F g)
+        ).fiberMorph.factHom := by
+  apply Factorisation.Hom.ext
+  simp only [totalDecFactHomToGrothendieckHom]
+  symm
+  change (connGrothendieckComp C
+    (tw'ToTw ⋙ decFactFunctor F)
+    (totalDecFactHomToGrothendieckHom C F f)
+    (totalDecFactHomToGrothendieckHom C F g)
+      ).fiberMorph.factHom.h = _
+  simp only [connGrothendieckComp]
+  rw [decFact_comp_factHom, decFact_comp_factHom,
+    decFact_comp_factHom, decFact_comp_factHom,
+    decFact_eqToHom_factHom, decFact_eqToHom_factHom,
+    decFact_eqToHom_factHom,
+    factorisation_comp_h, factorisation_comp_h,
+    factorisation_comp_h, factorisation_comp_h,
+    factorisation_eqToHom_h, factorisation_eqToHom_h,
+    factorisation_eqToHom_h]
+  simp only [Functor.comp_map, Functor.comp_obj,
+    Functor.toCatHom_toFunctor,
+    decFactFunctor, decFactMap, decFactMapHom,
+    factorisationMapHom,
+    totalDecFactHomToGrothendieckHom,
+    TotalDecFactHom.comp_midMorph,
+    eqToHom_refl,
+    Category.id_comp, Category.comp_id]
+
+private lemma
+    totalDecFact_map_comp_fiberMorph_heq
+    {x y z : TotalDecFactObj C F}
+    (f : TotalDecFactHom C F x y)
+    (g : TotalDecFactHom C F y z) :
+    HEq
+      (totalDecFactHomToGrothendieckHom C F
+        (TotalDecFactHom.comp C F f g)
+        ).fiberMorph.fiberMorph
+      (connGrothendieckComp C
+        (tw'ToTw ⋙ decFactFunctor F)
+        (totalDecFactHomToGrothendieckHom C F f)
+        (totalDecFactHomToGrothendieckHom C F g)
+        ).fiberMorph.fiberMorph := by
+  change
+    (TotalDecFactHom.comp C F f g).fiberMorph
+      ≍ _
+  simp only [connGrothendieckComp,
+    Functor.comp_map, Functor.comp_obj,
+    decFactFunctor, Functor.toCatHom_toFunctor,
+    decFactMap, decFactMapHom, decFactMapObj,
+    factorisationMapHom, factorisationMapObj_mid,
+    totalDecFactHomToGrothendieckHom]
+  dsimp only [TotalDecFactHom.comp]
+  exact _
+
+/-- Functor from the total decorated factorisation category
+to the connected Grothendieck construction over
+`decFactFunctor F`. -/
 def totalDecFactToGrothendieck :
     TotalDecFactObj C F ⥤
       TotalDecFactGrothendieck C F where
-  obj x := (toTotalDecFact C F).symm x
-  map f := f
-  map_id _ := rfl
-  map_comp _ _ := rfl
-
-/-- The functor from `TotalDecFactGrothendieck C F` to
-`TotalDecFactObj C F`, given by the object equivalence. -/
-def grothendieckToTotalDecFact :
-    TotalDecFactGrothendieck C F ⥤
-      TotalDecFactObj C F where
-  obj x := toTotalDecFact C F x
-  map f := f
-  map_id _ := rfl
-  map_comp _ _ := rfl
-
-/-- `grothendieckToTotalDecFact ⋙ totalDecFactToGrothendieck`
-is the identity on objects. -/
-private lemma grothendieckTotalDecFactRoundTrip_obj
-    (x : TotalDecFactGrothendieck C F) :
-    (totalDecFactToGrothendieck C F).obj
-      ((grothendieckToTotalDecFact C F).obj x) = x :=
-  (toTotalDecFact C F).left_inv x
-
-/-- `totalDecFactToGrothendieck ⋙ grothendieckToTotalDecFact`
-is the identity on objects. -/
-private lemma totalDecFactGrothendieckRoundTrip_obj
-    (x : TotalDecFactObj C F) :
-    (grothendieckToTotalDecFact C F).obj
-      ((totalDecFactToGrothendieck C F).obj x) = x :=
-  (toTotalDecFact C F).right_inv x
-
-/-- The categorical isomorphism
-`TotalDecFactObj C F ≅Cat TotalDecFactGrothendieck C F`. -/
-def totalDecFactIsoGrothendieck :
-    TotalDecFactObj C F ≅Cat
-      TotalDecFactGrothendieck C F where
-  hom := (totalDecFactToGrothendieck C F).toCatHom
-  inv := (grothendieckToTotalDecFact C F).toCatHom
-  hom_inv_id := rfl
-  inv_hom_id := by
-    apply Cat.Hom.ext
-    simp only [Cat.Hom.comp_toFunctor,
-      Cat.Hom.id_toFunctor,
-      Functor.toCatHom_toFunctor]
-    refine Functor.hext
-      (grothendieckTotalDecFactRoundTrip_obj C F)
-      (fun x y f => ?_)
-    exact heq_of_eq rfl
+  obj x :=
+    (totalDecFactGrothendieckEquivObj C F).symm x
+  map f := totalDecFactHomToGrothendieckHom C F f
+  map_id x := by
+    apply connGrothendieckHom_ext
+    · rfl
+    · rfl
+    · apply heq_of_eq
+      simp only [
+        totalDecFactHomToGrothendieckHom,
+        totalDecFactGrothendieckEquivObj,
+        Equiv.coe_fn_symm_mk]
+      symm
+      change (connGrothendieckId C
+        (tw'ToTw ⋙ decFactFunctor F)
+        ((totalDecFactGrothendieckEquivObj C F).symm
+          x)).fiberMorph = _
+      simp only [connGrothendieckId]
+      apply decFactHom_ext
+      · rw [decFact_eqToHom_factHom]
+        apply Factorisation.Hom.ext
+        rw [factorisation_eqToHom_h]
+        simp only [Functor.comp_map,
+          decFactFunctor,
+          Functor.toCatHom_toFunctor,
+          decFactMap, decFactMapObj,
+          factorisationMapObj_mid,
+          eqToHom_refl,
+          totalDecFactGrothendieckEquivObj,
+          Equiv.coe_fn_symm_mk]
+        rfl
+      · apply HEq.trans
+          (decFact_eqToHom_fiberMorph F _ _)
+        change eqToHom _ ≍
+          eqToHom (totalDecFactId_fiber_eq C F x)
+        apply heq_of_eq
+        congr 1
+  map_comp f g := by
+    change totalDecFactHomToGrothendieckHom C F
+        (TotalDecFactHom.comp C F f g) =
+      connGrothendieckComp C
+        (tw'ToTw ⋙ decFactFunctor F)
+        (totalDecFactHomToGrothendieckHom C F f)
+        (totalDecFactHomToGrothendieckHom C F g)
+    apply connGrothendieckHom_ext
+    · rfl
+    · rfl
+    · apply heq_of_eq
+      apply decFactHom_ext
+      · exact totalDecFact_map_comp_factHom_eq
+          C F f g
+      · exact
+          totalDecFact_map_comp_fiberMorph_heq
+            C F f g
 
 end TotalDecoratedFactorisation
 
