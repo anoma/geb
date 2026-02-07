@@ -1,8 +1,10 @@
+import Mathlib.CategoryTheory.Comma.StructuredArrow.Basic
 import Mathlib.CategoryTheory.Elements
 import Mathlib.CategoryTheory.ConnectedComponents
 import Mathlib.CategoryTheory.Limits.Final
 import Mathlib.CategoryTheory.Functor.KanExtension.Pointwise
 import Mathlib.CategoryTheory.Limits.IsConnected
+import GebLean.Utilities.ConnectedComponents
 import GebLean.Utilities.Elements
 
 /-!
@@ -914,5 +916,93 @@ def comprehensivePresheaf_isPointwiseLan :
                 (StructuredArrow.eta σ).hom)) }
 
 end ComprehensiveKanExtension
+
+section ComprehensivePresheafDuality
+
+open CategoryTheory Opposite
+
+variable {C : Type u₁} [Category.{v₁} C]
+  {D : Type u₂} [Category.{v₂} D]
+  (F : C ⥤ D)
+
+def comprehensivePresheafCopresheafEquiv
+    (d : Dᵒᵖ) :
+    (comprehensivePresheaf F).obj d ≃
+      (comprehensiveCopresheaf F.op).obj d :=
+  (connectedComponentsOpEquiv
+    (StructuredArrow d.unop F)).symm |>.trans
+    (connectedComponentsEquivOfEquiv
+      (structuredArrowOpEquivalence F d.unop))
+
+private def strArrToCostArr {d : D}
+    (σ : StructuredArrow d F) :
+    CostructuredArrow F.op (op d) :=
+  CostructuredArrow.mk (Y := op σ.right) σ.hom.op
+
+private theorem strArrToCostArr_zigzag {d : D}
+    {σ₁ σ₂ : StructuredArrow d F}
+    (h : Zigzag σ₁ σ₂) :
+    Zigzag (strArrToCostArr F σ₁)
+      (strArrToCostArr F σ₂) :=
+  h.lift (strArrToCostArr F) fun {a b} hab => by
+    rcases hab with ⟨⟨f⟩⟩ | ⟨⟨f⟩⟩
+    · exact Zag.of_inv (CostructuredArrow.homMk
+        f.right.op (by simp [strArrToCostArr,
+          ← op_comp]))
+    · exact Zag.of_hom (CostructuredArrow.homMk
+        f.right.op (by simp [strArrToCostArr,
+          ← op_comp]))
+
+private def costArrToStrArr {d : D}
+    (τ : CostructuredArrow F.op (op d)) :
+    StructuredArrow d F :=
+  StructuredArrow.mk (Y := τ.left.unop) τ.hom.unop
+
+private theorem costArrToStrArr_zigzag {d : D}
+    {τ₁ τ₂ : CostructuredArrow F.op (op d)}
+    (h : Zigzag τ₁ τ₂) :
+    Zigzag (costArrToStrArr F τ₁)
+      (costArrToStrArr F τ₂) :=
+  h.lift (costArrToStrArr F) fun {a b} hab => by
+    rcases hab with ⟨⟨f⟩⟩ | ⟨⟨f⟩⟩
+    · have hw : F.op.map f.left ≫ b.hom = a.hom :=
+        by simpa using f.w
+      exact Zag.of_inv (StructuredArrow.homMk
+        f.left.unop
+        (congrArg Quiver.Hom.unop hw))
+    · have hw : F.op.map f.left ≫ a.hom = b.hom :=
+        by simpa using f.w
+      exact Zag.of_hom (StructuredArrow.homMk
+        f.left.unop
+        (congrArg Quiver.Hom.unop hw))
+
+def comprehensivePresheafCopresheafIso :
+    comprehensivePresheaf F ≅
+      comprehensiveCopresheaf F.op :=
+  NatIso.ofComponents
+    (fun d => {
+      hom := Quotient.lift
+        (fun σ => ⟦strArrToCostArr F σ⟧)
+        (fun _ _ h =>
+          Quotient.sound (strArrToCostArr_zigzag F h))
+      inv := Quotient.lift
+        (fun τ => ⟦costArrToStrArr F τ⟧)
+        (fun _ _ h =>
+          Quotient.sound (costArrToStrArr_zigzag F h))
+      hom_inv_id := by
+        ext ⟨σ⟩
+        exact Quotient.sound (Zigzag.of_hom
+          (StructuredArrow.homMk (𝟙 _) (by
+            simp [strArrToCostArr, costArrToStrArr])))
+      inv_hom_id := by
+        ext ⟨τ⟩
+        exact Quotient.sound (Zigzag.of_hom
+          (CostructuredArrow.homMk (𝟙 _) (by
+            simp [strArrToCostArr, costArrToStrArr]))) })
+    (fun {d₁ d₂} f => by
+      ext ⟨σ⟩
+      rfl)
+
+end ComprehensivePresheafDuality
 
 end GebLean
