@@ -2,6 +2,7 @@ import Mathlib.CategoryTheory.Elements
 import Mathlib.CategoryTheory.ConnectedComponents
 import Mathlib.CategoryTheory.Limits.Final
 import Mathlib.CategoryTheory.Functor.KanExtension.Pointwise
+import Mathlib.CategoryTheory.Limits.IsConnected
 import GebLean.Utilities.Elements
 
 /-!
@@ -651,5 +652,267 @@ instance comprehensiveE_final :
             (strArrowComponent F α₂).symm))
 
 end ComprehensiveFactorizationPre
+
+section ComprehensiveKanExtension
+
+open Limits.Types
+
+variable {C : Type u₁} [Category.{v₁} C]
+  {D : Type u₂} [Category.{v₂} D]
+
+variable (F : C ⥤ D)
+
+/-- The unit of the copresheaf left extension. At `c : C`,
+sends `PUnit.unit` to the connected component of the
+identity costructured arrow `CostructuredArrow.mk (𝟙 _)`
+in `CostructuredArrow F (F.obj c)`. -/
+@[simps]
+def comprehensiveCopresheafUnit :
+    constPUnitFunctor.{max u₁ v₂} C ⟶
+      F ⋙ comprehensiveCopresheaf F where
+  app c _ :=
+    Quotient.mk _
+      (CostructuredArrow.mk (𝟙 (F.obj c)))
+  naturality c₁ c₂ f := by
+    ext ⟨⟩
+    simp only [types_comp_apply, constPUnitFunctor,
+      Functor.const_obj_map,
+      Functor.comp_map, comprehensiveCopresheaf_map,
+      Functor.mapConnectedComponents_mk,
+      CostructuredArrow.map_mk, Category.id_comp]
+    exact Quotient.sound
+      (Zigzag.of_inv
+        (CostructuredArrow.homMk f (by simp)))
+
+/-- The copresheaf comprehensive factorization as a left
+extension of the constant `PUnit` functor along `F`. -/
+def comprehensiveCopresheafLeftExt :
+    F.LeftExtension
+      (constPUnitFunctor.{max u₁ v₂} C) :=
+  Functor.LeftExtension.mk
+    (comprehensiveCopresheaf F)
+    (comprehensiveCopresheafUnit F)
+
+/-- For the constant `PUnit` diagram on
+`CostructuredArrow F d`, a morphism `φ : g₁ ⟶ g₂`
+implies `s.ι.app g₁ = s.ι.app g₂` for any cocone `s`,
+because the diagram maps are all `𝟙 PUnit`. -/
+private lemma coconeAppEqOfHom
+    {d : D}
+    (s : Limits.Cocone
+      (CostructuredArrow.proj F d ⋙
+        constPUnitFunctor.{max u₁ v₂} C))
+    {g₁ g₂ : CostructuredArrow F d}
+    (φ : g₁ ⟶ g₂) :
+    s.ι.app g₁ = s.ι.app g₂ := by
+  have h := s.ι.naturality φ
+  simp only [Functor.comp_map,
+    Functor.const_obj_map] at h
+  exact h.symm
+
+/-- For the constant `PUnit` diagram, zigzag-connected
+costructured arrows have equal cocone components. -/
+private lemma coconeAppEqOfZigzag
+    {d : D}
+    (s : Limits.Cocone
+      (CostructuredArrow.proj F d ⋙
+        constPUnitFunctor.{max u₁ v₂} C))
+    {g₁ g₂ : CostructuredArrow F d}
+    (h : Zigzag g₁ g₂) :
+    s.ι.app g₁ = s.ι.app g₂ := by
+  induction h with
+  | refl => rfl
+  | tail _ hbc ih =>
+    rw [ih]
+    rcases hbc with ⟨⟨φ⟩⟩ | ⟨⟨ψ⟩⟩
+    · exact coconeAppEqOfHom F s φ
+    · exact (coconeAppEqOfHom F s ψ).symm
+
+/-- The copresheaf comprehensive factorization is a
+pointwise left Kan extension: for each `d : D`, the cocone
+`(comprehensiveCopresheafLeftExt F).coconeAt d` is a colimit.
+
+The colimit property holds because the cocone maps each
+`g : CostructuredArrow F d` to its connected component
+`⟦g⟧`, and zigzag-connected costructured arrows are
+identified in `ConnectedComponents`. -/
+def comprehensiveCopresheaf_isPointwiseLan :
+    Functor.LeftExtension.IsPointwiseLeftKanExtension
+      (comprehensiveCopresheafLeftExt F) := by
+  intro d
+  exact
+    { desc := fun s =>
+        Quotient.lift (fun g => s.ι.app g PUnit.unit)
+          (fun g₁ g₂ h => by
+            have := coconeAppEqOfZigzag F s
+              (Quotient.exact (Quotient.sound h))
+            exact congrFun this PUnit.unit)
+      fac := fun s g => by
+        ext ⟨⟩
+        simp only [types_comp_apply]
+        change Quotient.lift _ _ _ = _
+        dsimp [Functor.LeftExtension.coconeAt,
+          comprehensiveCopresheafLeftExt,
+          Functor.LeftExtension.mk]
+        rw [Category.id_comp]
+        exact congrFun
+          (coconeAppEqOfHom F s
+            (CostructuredArrow.eta g).hom).symm _
+      uniq := fun s m hm => by
+        funext x
+        exact Quotient.inductionOn x fun g => by
+          rw [Quotient.lift_mk]
+          have h := congrFun (hm g) PUnit.unit
+          simp only [types_comp_apply] at h
+          dsimp [Functor.LeftExtension.coconeAt,
+            comprehensiveCopresheafLeftExt,
+            Functor.LeftExtension.mk] at h
+          rw [Category.id_comp] at h
+          rw [← h]
+          exact congrArg m
+            (Quotient.sound
+              (Zigzag.of_hom
+                (CostructuredArrow.eta g).hom))
+    }
+
+/-- The unit of the presheaf left extension. At `c : Cᵒᵖ`,
+sends `PUnit.unit` to the connected component of the
+identity structured arrow `StructuredArrow.mk (𝟙 _)` in
+`StructuredArrow c.unop F`. -/
+@[simps]
+def comprehensivePresheafUnit :
+    constPUnitFunctor.{max u₁ v₂} Cᵒᵖ ⟶
+      F.op ⋙ comprehensivePresheaf F where
+  app c _ :=
+    Quotient.mk _
+      (StructuredArrow.mk (𝟙 (F.obj c.unop)))
+  naturality c₁ c₂ f := by
+    ext ⟨⟩
+    simp only [types_comp_apply, constPUnitFunctor,
+      Functor.const_obj_map,
+      Functor.comp_map, Functor.op_map,
+      comprehensivePresheaf_map,
+      Functor.mapConnectedComponents_mk,
+      StructuredArrow.map_mk]
+    exact Quotient.sound
+      (Zigzag.of_hom
+        (StructuredArrow.homMk f.unop (by simp)))
+
+/-- The presheaf comprehensive factorization as a left
+extension of the constant `PUnit` functor along `F.op`. -/
+def comprehensivePresheafLeftExt :
+    F.op.LeftExtension
+      (constPUnitFunctor.{max u₁ v₂} Cᵒᵖ) :=
+  Functor.LeftExtension.mk
+    (comprehensivePresheaf F)
+    (comprehensivePresheafUnit F)
+
+/-- For the constant `PUnit` diagram on
+`CostructuredArrow F.op d`, a morphism `φ : g₁ ⟶ g₂`
+implies `s.ι.app g₁ = s.ι.app g₂` for any cocone `s`. -/
+private lemma coconeAppEqOfHomPre
+    {d : Dᵒᵖ}
+    (s : Limits.Cocone
+      (CostructuredArrow.proj F.op d ⋙
+        constPUnitFunctor.{max u₁ v₂} Cᵒᵖ))
+    {g₁ g₂ : CostructuredArrow F.op d}
+    (φ : g₁ ⟶ g₂) :
+    s.ι.app g₁ = s.ι.app g₂ := by
+  have h := s.ι.naturality φ
+  simp only [Functor.comp_map,
+    Functor.const_obj_map] at h
+  exact h.symm
+
+/-- Convert a structured arrow
+`σ : StructuredArrow d.unop F` to the corresponding
+costructured arrow `CostructuredArrow F.op d`. -/
+private def strToCostArr
+    {d : Dᵒᵖ}
+    (σ : StructuredArrow d.unop F) :
+    CostructuredArrow F.op d :=
+  CostructuredArrow.mk
+    (show F.op.obj (Opposite.op σ.right) ⟶ d
+      from σ.hom.op)
+
+/-- A morphism `φ : σ₁ ⟶ σ₂` in
+`StructuredArrow d.unop F` induces a reverse morphism
+`strToCostArr σ₂ ⟶ strToCostArr σ₁` in
+`CostructuredArrow F.op d`. -/
+private def strToCostArrHomRev
+    {d : Dᵒᵖ}
+    {σ₁ σ₂ : StructuredArrow d.unop F}
+    (φ : σ₁ ⟶ σ₂) :
+    strToCostArr F σ₂ ⟶ strToCostArr F σ₁ :=
+  CostructuredArrow.homMk φ.right.op (by
+    dsimp [strToCostArr]
+    simp only [← op_comp]
+    exact congrArg Opposite.op
+      (StructuredArrow.w φ))
+
+/-- The presheaf comprehensive factorization is a
+pointwise left Kan extension: for each `d : Dᵒᵖ`, the
+cocone `(comprehensivePresheafLeftExt F).coconeAt d` is a
+colimit.
+
+The diagram `CostructuredArrow.proj F.op d ⋙
+constPUnitFunctor Cᵒᵖ` maps each `g : CostructuredArrow
+F.op d` to `PUnit`. The cocone maps `g` to the connected
+component of the corresponding structured arrow in
+`StructuredArrow d.unop F`. -/
+def comprehensivePresheaf_isPointwiseLan :
+    Functor.LeftExtension.IsPointwiseLeftKanExtension
+      (comprehensivePresheafLeftExt F) := by
+  intro d
+  exact
+    { desc := fun s =>
+        Quotient.lift
+          (fun σ =>
+            s.ι.app (strToCostArr F σ) PUnit.unit)
+          (fun σ₁ σ₂ h => by
+            induction h with
+            | refl => rfl
+            | tail _ hbc ih =>
+              exact ih.trans (by
+                rcases hbc with ⟨⟨φ⟩⟩ | ⟨⟨ψ⟩⟩
+                · have hmor :=
+                    strToCostArrHomRev F φ
+                  exact congrFun
+                    (coconeAppEqOfHomPre
+                      F s hmor).symm _
+                · have hmor :=
+                    strToCostArrHomRev F ψ
+                  have h := s.ι.naturality hmor
+                  simp only [Functor.comp_map,
+                    Functor.const_obj_map] at h
+                  exact congrFun h.symm _))
+      fac := fun s g => by
+        ext ⟨⟩
+        simp only [types_comp_apply]
+        change Quotient.lift _ _ _ = _
+        dsimp [Functor.LeftExtension.coconeAt,
+          comprehensivePresheafLeftExt,
+          Functor.LeftExtension.mk]
+        rw [Category.comp_id]
+        exact congrFun
+          (coconeAppEqOfHomPre F s
+            (CostructuredArrow.eta g).hom).symm _
+      uniq := fun s m hm => by
+        funext x
+        exact Quotient.inductionOn x fun σ => by
+          rw [Quotient.lift_mk]
+          have h := congrFun
+            (hm (strToCostArr F σ)) PUnit.unit
+          simp only [types_comp_apply] at h
+          dsimp [Functor.LeftExtension.coconeAt,
+            comprehensivePresheafLeftExt,
+            Functor.LeftExtension.mk] at h
+          rw [Category.comp_id] at h
+          rw [← h]
+          exact congrArg m
+            (Quotient.sound
+              (Zigzag.of_hom
+                (StructuredArrow.eta σ).hom)) }
+
+end ComprehensiveKanExtension
 
 end GebLean

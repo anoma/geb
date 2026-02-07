@@ -2,7 +2,8 @@
 
 ## Status
 
-Active
+Phase 1 complete, including Kan extension characterization.
+Review checkpoint.
 
 ## Context
 
@@ -24,33 +25,54 @@ comprehensive factorization itself.
 
 ## Implementation Plan
 
-### Phase 1: Comprehensive Factorization
+### Phase 1: Comprehensive Factorization (COMPLETE)
 
 File: `GebLean/ComprehensiveFactorization.lean`
 
-Definitions to add (one at a time, building incrementally):
+Completed definitions:
 
 1. `IsDiscreteFibration p` -- for `p : E => B`
 2. `IsDiscreteOpfibration p` -- dual
-3. Standard property: `F.Elements` forgetful functor is a
-   discrete fibration (for any presheaf `F : B^op => Type v`)
-4. Standard property: discrete fibrations are faithful
-5. `comprehensivePresheaf F` -- the presheaf
-   `K(d) = ConnectedComponents (StructuredArrow d F)`
-   for `F : C => D`
-6. `comprehensiveCopresheaf F` -- the copresheaf
+3. `elements_π_isDiscreteOpfibration` -- covariant
+   elements forgetful functor is a discrete opfibration
+4. `elementsPre_π_isDiscreteFibration` -- contravariant
+   elements forgetful functor is a discrete fibration
+5. `comprehensiveCopresheaf F` -- the copresheaf
    `K'(d) = ConnectedComponents (CostructuredArrow F d)`
-7. `comprehensiveFactorizationE F` -- the functor `e : C => K.Elements`
-   sending `c` to `(F(c), [id_{F(c)}])`
-8. `comprehensiveFactorizationM F` -- the forgetful functor
-   `m : K.Elements => D`
-9. `comprehensiveFactorization_comm` --
-   `comprehensiveFactorizationE F >> comprehensiveFactorizationM F = F`
-10. `comprehensiveFactorizationE_final` --
-    `Functor.Final (comprehensiveFactorizationE F)`
-11. `comprehensiveFactorizationM_discreteFibration` --
-    `IsDiscreteFibration (comprehensiveFactorizationM F)`
-12. Dual versions (6-11 for the initial/opfibration case)
+6. `comprehensivePresheaf F` -- the presheaf
+   `K(d) = ConnectedComponents (StructuredArrow d F)`
+7. `comprehensiveE' F` -- initial functor
+   `C => (comprehensiveCopresheaf F).Elements`
+8. `comprehensiveM' F` -- discrete opfibration
+   `(comprehensiveCopresheaf F).Elements => D`
+9. `comprehensiveM'_isDiscreteOpfibration` -- proved
+10. `comprehensiveFactorization'_comm` --
+    `comprehensiveE' F >> comprehensiveM' F = F`
+11. `comprehensiveE'_initial` --
+    `Functor.Initial (comprehensiveE' F)`
+12. `comprehensiveE F` -- final functor
+    `C => (comprehensivePresheaf F).ElementsPre`
+13. `comprehensiveM F` -- discrete fibration
+    `(comprehensivePresheaf F).ElementsPre => D`
+14. `comprehensiveM_isDiscreteFibration` -- proved
+15. `comprehensiveFactorization_comm` --
+    `comprehensiveE F >> comprehensiveM F = F`
+16. `comprehensiveE_final` --
+    `Functor.Final (comprehensiveE F)`
+17. `comprehensiveCopresheafUnit` -- unit natural
+    transformation `constPUnitFunctor C ⟶ F ⋙ K'`
+18. `comprehensiveCopresheafLeftExt` -- left extension
+    structure `(K', unit)` for `Lan_F(!)`
+19. `comprehensiveCopresheaf_isPointwiseLan` -- proof
+    that `K' = Lan_F(!)` is a pointwise left Kan
+    extension
+20. `comprehensivePresheafUnit` -- unit natural
+    transformation `constPUnitFunctor Cᵒᵖ ⟶ F.op ⋙ K`
+21. `comprehensivePresheafLeftExt` -- left extension
+    structure `(K, unit)` for `Lan_{F.op}(!)`
+22. `comprehensivePresheaf_isPointwiseLan` -- proof
+    that `K = Lan_{F.op}(!)` is a pointwise left Kan
+    extension
 
 ### Phase 2: Twisted Arrow Infrastructure
 
@@ -72,16 +94,19 @@ equivalences with `StrongRestrictedWedge` /
 
 ## Tasks
 
-- [ ] Create `GebLean/ComprehensiveFactorization.lean`
-- [ ] Define `IsDiscreteFibration` and `IsDiscreteOpfibration`
-- [ ] Prove standard properties of discrete (op)fibrations
-- [ ] Define `comprehensivePresheaf` and dual
-- [ ] Build the factorization functors `e` and `m`
-- [ ] Prove commutativity (`e >> m = F`)
-- [ ] Prove `e` is final
-- [ ] Prove `m` is a discrete fibration
-- [ ] Dual versions
-- [ ] Review checkpoint
+- [x] Create `GebLean/ComprehensiveFactorization.lean`
+- [x] Define `IsDiscreteFibration` and `IsDiscreteOpfibration`
+- [x] Prove standard properties of discrete (op)fibrations
+- [x] Define `comprehensivePresheaf` and dual
+- [x] Build the factorization functors `e` and `m`
+- [x] Prove commutativity (`e >> m = F`)
+- [x] Prove `e'` is initial
+- [x] Prove `m'` is a discrete opfibration
+- [x] Prove `e` is final
+- [x] Prove `m` is a discrete fibration
+- [x] Review checkpoint
+- [x] Prove `comprehensiveCopresheaf` is `Lan_F(!)`
+- [x] Prove `comprehensivePresheaf` is `Lan_{F.op}(!)`
 - [ ] Twisted arrow infrastructure
 - [ ] Review checkpoint
 - [ ] Corrected weighted wedges/cowedges
@@ -89,7 +114,7 @@ equivalences with `StrongRestrictedWedge` /
 ## Related Files
 
 - `docs/comprehensive-factorization-research.md`
-- `GebLean/ComprehensiveFactorization.lean` (to be created)
+- `GebLean/ComprehensiveFactorization.lean`
 - `GebLean/Utilities/TwArrPresheaf.lean`
 - `GebLean/Paranatural.lean`
 - `GebLean/Weighted.lean`
