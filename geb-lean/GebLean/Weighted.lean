@@ -1864,12 +1864,19 @@ def weightedCoconeOpConeEquivalence :
   functor := weightedCoconeOpConeFunctor W D
   inverse := weightedConeOpCoconeFunctor W D
   unitIso := NatIso.ofComponents
-    (fun c => eqToIso rfl) (fun f => by
-      apply WeightedCocone.Hom.ext; simp)
+    (fun c => Iso.refl c) (fun f => by
+      apply WeightedCocone.Hom.ext
+      dsimp [weightedCoconeOpConeFunctor,
+        weightedConeOpCoconeFunctor, Iso.refl]
+      simp)
   counitIso := NatIso.ofComponents
-    (fun d => eqToIso rfl) (fun g => by
+    (fun d => Iso.refl d) (fun g => by
+      dsimp [Iso.refl]
       apply Quiver.Hom.unop_inj
-      apply WeightedCone.Hom.ext; simp)
+      apply WeightedCone.Hom.ext
+      dsimp [weightedCoconeOpConeFunctor,
+        weightedConeOpCoconeFunctor]
+      simp)
 
 end WeightedCoconeOpCone
 

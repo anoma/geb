@@ -326,7 +326,7 @@ elimination into weighted limits.
 - [x] Corrected weighted wedges/cowedges
 - [x] Categorical equivalences for weighted (co)wedges
 - [x] Paranat as weighted limit characterization
-- [ ] Weighted cone/cocone op duality (Phase 6A)
+- [x] Weighted cone/cocone op duality (Phase 6A)
 - [ ] Connected components op equivalence (Phase 6B)
 - [ ] Comprehensive presheaf/copresheaf duality (Phase 6C)
 - [ ] CostructureIntegral duality research (Phase 6D)
