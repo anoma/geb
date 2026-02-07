@@ -2066,6 +2066,45 @@ pfSubstIdCataIsAlgHom fext
         (pos ** dir) b elem)
   go (mpos ** d) = Refl
 
+-- pfSubstCata with any substitution is an
+-- algebra homomorphism from the free algebra
+-- to the target algebra. Generalizes
+-- pfSubstIdCataIsAlgHom to non-id subst.
+public export
+0 pfSubstCataIsAlgHom : FunExt ->
+  {p : PolyFunc} -> {a, b : Type} ->
+  (subst : a -> b) ->
+  (alg : Algebra (InterpPolyFunc p) b) ->
+  PolyAlgCommutes p
+    (pfSubstCata {p} {a} {b} subst
+      (PFAlgFromAlg {p} alg))
+    (PolyFreeAlgF p a)
+    alg
+pfSubstCataIsAlgHom fext
+  {p=(pos ** dir)} {a} {b}
+  subst alg (i ** d) =
+  cong (alg . MkDPair i)
+    (funExt (\di => go (d di)))
+  where
+  0 go :
+    (elem : InterpPolyFuncFreeM
+      (pos ** dir) a) ->
+    pfCata
+      (PFAlgToTranslate subst
+        (PFAlgFromAlg
+          {p=(pos ** dir)} alg))
+      (PolyFMInterpToMuTranslateCurried
+        (pos ** dir) a
+        (fst elem)
+        (\dd => snd elem dd))
+    = pfCata
+      (PFAlgToTranslate subst
+        (PFAlgFromAlg
+          {p=(pos ** dir)} alg))
+      (PolyFMInterpToMuTranslate
+        (pos ** dir) a elem)
+  go (mpos ** d) = Refl
+
 polyProfDiNTComplete fext {pp} {qq}
   alpha para x (i ** h) =
   let
