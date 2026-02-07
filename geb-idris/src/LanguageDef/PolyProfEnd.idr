@@ -1030,6 +1030,33 @@ interpPolyProfRmap : (pp : PolyProf) ->
 interpPolyProfRmap pp s t b mtb (i ** f) =
   (i ** mtb . f)
 
+-- Eta-expand lmap result: given an opaque element el,
+-- lmap f el = (fst el ** snd el . InterpPFMap _ f).
+-- Needed when el is a stuck term (e.g. alpha x ...).
+public export
+0 interpPolyProfLmapEta :
+  (pp : PolyProf) ->
+  (s, t, a : Type) -> (f : a -> s) ->
+  (el : InterpPolyProf pp s t) ->
+  interpPolyProfLmap pp s t a f el =
+  (fst el **
+   snd el .
+     InterpPFMap (ppDirPF pp (fst el)) f)
+interpPolyProfLmapEta pp s t a f
+  (i ** g) = Refl
+
+-- Eta-expand rmap result: given an opaque
+-- element el, rmap f el = (fst el ** f . snd el).
+public export
+0 interpPolyProfRmapEta :
+  (pp : PolyProf) ->
+  (s, t, b : Type) -> (f : t -> b) ->
+  (el : InterpPolyProf pp s t) ->
+  interpPolyProfRmap pp s t b f el =
+  (fst el ** f . snd el)
+interpPolyProfRmapEta pp s t b f
+  (i ** g) = Refl
+
 ------------------------------------------------------------
 ------------------------------------------------------------
 ---- Roll Constructor for Section-Based PolyProfMu ----
@@ -2108,25 +2135,8 @@ pfSubstCataIsAlgHom fext
 polyProfDiNTComplete fext {pp} {qq}
   alpha para x (i ** h) =
   let
-    -- Paranaturality at (const () : x -> Unit)
-    -- gives position equality + direction info
-    pf = ppDirPF pp i
-    paraCU = para x Unit (const ())
-      (i ** h) (i ** const ())
-      (dpEq12 Refl
-        (funExt (\el =>
-          Refl)))
-    -- paraCU : lmap_qq (const ())
-    --   (alpha Unit (i ** const ()))
-    -- = rmap_qq (const ())
-    --   (alpha x (i ** h))
-    -- i.e. (j_unit **
-    --   snd (alpha Unit ...) .
-    --     InterpPFMap qf (const ()))
-    -- = (j_x ** const () . snd (alpha x ..))
     posEq = ppDiNTExtractPosEq {pp} {qq}
       alpha para i x h
-    -- posEq : j_unit = j_x
   in
   trans dpEqPat
     (dpEq12 (sym posEq)
