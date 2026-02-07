@@ -665,8 +665,8 @@ def strongRestrictedCowedge_weightedCocone_equiv :
 
 def strongRestrictedCowedge_weightedCocone_equivalence
     :
-    StrongRestrictedCowedge G H ≌
-    WeightedCocone (cowedgeWeight H)
+    StrongRestrictedCowedge (C := C) (D := D) G H ≌
+    WeightedCocone (J := CoTwistedArrow C) (C := D) (cowedgeWeight H)
       (profunctorOnCoTwistedArrow C G) :=
   (strongRestrictedCowedgeEquiv G H)
   |>.trans (cowedgeCoconeEquiv (diagElemProf G H))
@@ -821,8 +821,8 @@ def strongRestrictedWedge_weightedCone_equiv :
       G H
 
 def strongRestrictedWedge_weightedCone_equivalence :
-    StrongRestrictedWedge G H ≌
-    WeightedCone (wedgeWeight H)
+    StrongRestrictedWedge (C := C) (D := D) G H ≌
+    WeightedCone (J := TwistedArrow C) (C := D) (wedgeWeight H)
       (profunctorOnTwistedArrow C G) :=
   (strongRestrictedWedgeEquiv G H)
   |>.trans (wedgeConeEquiv (diagElemProf G H))
