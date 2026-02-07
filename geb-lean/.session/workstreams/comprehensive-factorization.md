@@ -2,8 +2,8 @@
 
 ## Status
 
-Phase 1 complete, including Kan extension characterization.
-Review checkpoint.
+Phase 3 complete. Both cowedge and wedge weighted
+equivalences proved.
 
 ## Context
 
@@ -74,23 +74,44 @@ Completed definitions:
     that `K = Lan_{F.op}(!)` is a pointwise left Kan
     extension
 
-### Phase 2: Twisted Arrow Infrastructure
+### Phase 2: Twisted Arrow Infrastructure (COMPLETE)
 
-Files: `GebLean/Utilities/TwArrPresheaf.lean` and/or
-`GebLean/Paranatural.lean`
+Files: `GebLean/Utilities/TwistedArrow.lean`,
+`GebLean/Utilities/TwArrPresheaf.lean`
 
-Apply the comprehensive factorization to the twisted arrow
-functor `TwArr(forget_H)`, producing general infrastructure
-not specific to (co)wedges.
+Completed definitions:
 
-### Phase 3: Corrected Weighted Wedges
+1. `coTwistedArrowMap F` -- induced functor on
+   co-twisted arrows
+2. `twistedArrowMap F` -- induced functor on
+   twisted arrows
+3. `profOnCoTwArr_profPullback` -- compatibility
+4. `profOnTwArr_profPullback` -- dual compatibility
 
-File: `GebLean/Weighted.lean`
+### Phase 3: Weighted Equivalences (COMPLETE)
 
-Define weighted wedges/cowedges using the
-comprehensive-factorization weight, and prove categorical
-equivalences with `StrongRestrictedWedge` /
-`StrongRestrictedCowedge`.
+File: `GebLean/ComprehensiveWeighted.lean`
+
+Completed definitions:
+
+1. `comprehensiveCoconeEquiv F G` --
+   `Cocone (F ⋙ G) ≃ Cocone (comprehensiveM F ⋙ G)`
+2. `comprehensiveConeEquiv F G` --
+   `Cone (F ⋙ G) ≃ Cone (comprehensiveM' F ⋙ G)`
+3. `cowedgeWeight H` --
+   `comprehensivePresheaf (coTwistedArrowMap
+   (DiagElem.forget H))`
+4. `strongRestrictedCowedge_weightedCocone_equiv` --
+   `StrongRestrictedCowedge G H ≃
+   WeightedCocone (cowedgeWeight H)
+   (profunctorOnCoTwistedArrow C G)`
+5. `wedgeWeight H` --
+   `comprehensiveCopresheaf (twistedArrowMap
+   (DiagElem.forget H))`
+6. `strongRestrictedWedge_weightedCone_equiv` --
+   `StrongRestrictedWedge G H ≃
+   WeightedCone (wedgeWeight H)
+   (profunctorOnTwistedArrow C G)`
 
 ## Tasks
 
@@ -107,14 +128,16 @@ equivalences with `StrongRestrictedWedge` /
 - [x] Review checkpoint
 - [x] Prove `comprehensiveCopresheaf` is `Lan_F(!)`
 - [x] Prove `comprehensivePresheaf` is `Lan_{F.op}(!)`
-- [ ] Twisted arrow infrastructure
-- [ ] Review checkpoint
-- [ ] Corrected weighted wedges/cowedges
+- [x] Twisted arrow infrastructure
+- [x] Review checkpoint
+- [x] Corrected weighted wedges/cowedges
 
 ## Related Files
 
 - `docs/comprehensive-factorization-research.md`
 - `GebLean/ComprehensiveFactorization.lean`
+- `GebLean/ComprehensiveWeighted.lean`
+- `GebLean/Utilities/TwistedArrow.lean`
 - `GebLean/Utilities/TwArrPresheaf.lean`
 - `GebLean/Paranatural.lean`
 - `GebLean/Weighted.lean`
