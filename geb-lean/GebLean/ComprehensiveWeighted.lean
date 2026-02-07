@@ -1015,4 +1015,107 @@ def costructureIntegralElimEquiv (Y : Type v) :
 
 end CostructureIntegralElimination
 
+section WeightedCoendSliceElim
+
+variable {C : Type v} [Category.{v} C]
+  (G : Cᵒᵖ ⥤ C ⥤ Type v) (Y : Type v)
+
+theorem homToFunctor_profOnCoTwArr_eq :
+    homToFunctor
+      (profunctorOnCoTwistedArrow C G) Y =
+    profunctorOnOpCoTwistedArrow C (G ⇓ Y) :=
+  rfl
+
+variable {W : Cᵒᵖ ⥤ C ⥤ Type v}
+  {c : WeightedCowedge W G}
+
+/-- The general weighted coend elimination with
+slice profunctor.
+
+For a weighted coend `c` of `G` by `W`, maps from
+`c.pt` to `Y` correspond to natural transformations
+from `profOnOpCoTwArr C W` to
+`profOnOpCoTwArr C (G ⇓ Y)`.
+
+This follows from `homIsoWeightedLimitApex` and the
+definitional equality
+`homToFunctor (profOnCoTwArr C G) Y =
+  profOnOpCoTwArr C (G ⇓ Y)`. -/
+def weightedCoendElimSlice
+    (hc : IsWeightedCoend c)
+    (Y : Type v) :
+    (c.pt → Y) ≅
+    (profunctorOnOpCoTwistedArrow C W ⟶
+      profunctorOnOpCoTwistedArrow C
+        (G ⇓ Y)) :=
+  hc.homIsoWeightedLimitApex Y
+    natTransWeightedCone_isTerminal
+
+/-- Equiv version of `weightedCoendElimSlice`. -/
+def weightedCoendElimSliceEquiv
+    (hc : IsWeightedCoend c)
+    (Y : Type v) :
+    (c.pt → Y) ≃
+    (profunctorOnOpCoTwistedArrow C W ⟶
+      profunctorOnOpCoTwistedArrow C
+        (G ⇓ Y)) :=
+  (weightedCoendElimSlice G hc Y).toEquiv
+
+end WeightedCoendSliceElim
+
+section CoendHomAdjunction
+
+variable {C : Type v} [Category.{v} C]
+  (G H : Cᵒᵖ ⥤ C ⥤ Type v)
+
+/-- The coend-hom adjunction:
+maps from `CostructureIntegral H G` to `Y`
+correspond to elements of
+`StructureIntegral H (G ⇓ Y)`.
+
+The underlying data of both sides is the same:
+families `(x : DiagElem H) → (diagApp G x.base → Y)`.
+The slice profunctor `G ⇓ Y` reverses variance, so
+the cowedge condition for the costructure integral
+becomes the wedge/end condition for the structure
+integral. -/
+def coendHomAdjunction (Y : Type v) :
+    (CostructureIntegral H G → Y) ≃
+      StructureIntegral H (G ⇓ Y) where
+  toFun f := {
+    family := fun x g => f (CostructureIntegral.mk x g)
+    equalizer := by
+      funext x y fhom
+      simp only [structIntMapCov, structIntMapContrav]
+      funext ψ
+      simp only [covAction, contravAction,
+        sliceProfunctor, types_comp_apply]
+      exact congrArg f
+        (CostructureIntegral.sound fhom ψ)
+  }
+  invFun φ := CostructureIntegral.lift
+    (fun x g => φ.family x g) (by
+      intro x y fhom ψ
+      have h := φ.paranatural fhom
+      simp only [covAction, contravAction,
+        sliceProfunctor] at h
+      exact congrFun h ψ)
+  left_inv f := by
+    ext q
+    exact Quotient.inductionOn q
+      (fun ⟨_, _⟩ => rfl)
+  right_inv φ := by
+    ext x
+    rfl
+
+/-- The coend-hom adjunction expressed using
+`Paranat` instead of `StructureIntegral`. -/
+def coendHomAdjunctionParanat (Y : Type v) :
+    (CostructureIntegral H G → Y) ≃
+      Paranat H (G ⇓ Y) :=
+  (coendHomAdjunction G H Y).trans
+    (structureIntegralEquivParanat H (G ⇓ Y))
+
+end CoendHomAdjunction
+
 end GebLean
