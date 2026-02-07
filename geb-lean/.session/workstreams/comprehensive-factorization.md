@@ -162,6 +162,150 @@ Completed definitions:
    `Paranat H G ≃
    (wedgeWeight H ⟶ profunctorOnTwistedArrow C G)`
 
+### Phase 6: Op Duality (PLANNED)
+
+Three interconnected parts establishing duality relationships
+via opposite categories and functors.
+
+#### Phase 6A: Weighted Cone/Cocone Op Duality
+
+File: `GebLean/Weighted.lean`
+
+A `WeightedCocone (W : Jᵒᵖ ⥤ Type v) (D : J ⥤ C)` with
+point `c` provides morphisms `D.obj j ⟶ c` for each `j`
+and `w : W.obj (op j)`. A `WeightedCone W D.op` with
+point `op c` provides morphisms `op c ⟶ D.op.obj (op j)`
+in `Cᵒᵖ`, which is `D.obj j ⟶ c` in `C` -- the same
+data. Morphisms between cones/cocones reverse direction.
+
+Definitions:
+
+1. `weightedCoconeOpCone` -- object-level map
+   `WeightedCocone W D → WeightedCone W D.op`
+2. `weightedConeOpCocone` -- inverse map
+   `WeightedCone W D.op → WeightedCocone W D`
+3. `weightedCoconeOpConeFunctor` -- functorial lifting
+   (with direction reversal)
+4. `weightedCoconeOpConeEquivalence` --
+   `WeightedCocone W D ≌ (WeightedCone W D.op)ᵒᵖ`
+
+Analogous to mathlib's `coconeEquivalenceOpConeOp`.
+
+#### Phase 6B: Connected Components Op Equivalence
+
+File: `GebLean/Utilities/Category.lean`
+
+Connected components depend only on the zig-zag relation,
+which is invariant under op (since `f : a ⟶ b` in `C`
+gives `f.op : op b ⟶ op a` in `Cᵒᵖ`, and zig-zags go
+both ways).
+
+Definitions:
+
+1. `connectedComponentsOpEquiv` --
+   `ConnectedComponents Cᵒᵖ ≃ ConnectedComponents C`
+2. `connectedComponentsEquivOfEquiv` --
+   given `C ≌ D`, `ConnectedComponents C ≃
+     ConnectedComponents D`
+
+Mathlib has `isConnected_op_iff_isConnected` but no
+direct equivalence on the `ConnectedComponents` type.
+
+#### Phase 6C: Comprehensive Presheaf/Copresheaf Duality
+
+File: `GebLean/ComprehensiveFactorization.lean`
+
+The presheaf form uses
+`ConnectedComponents (StructuredArrow d F)`, while
+the copresheaf form uses
+`ConnectedComponents (CostructuredArrow F d)`.
+
+Mathlib provides:
+
+```text
+structuredArrowOpEquivalence :
+  (StructuredArrow d F)ᵒᵖ ≌
+    CostructuredArrow F.op (op d)
+```
+
+Composing with Phase 6B gives:
+
+```text
+ConnectedComponents (StructuredArrow d F)
+  ≃ ConnectedComponents ((StructuredArrow d F)ᵒᵖ)
+  ≃ ConnectedComponents
+      (CostructuredArrow F.op (op d))
+```
+
+Definitions:
+
+1. `comprehensivePresheafCopresheafIso` --
+   `comprehensivePresheaf F ≅
+     comprehensiveCopresheaf (F.op)`
+   as functors `Dᵒᵖ ⥤ Type _`
+2. `comprehensiveE_op_E'` -- relationship between
+   `comprehensiveE F` and `comprehensiveE' (F.op)`
+3. `comprehensiveM_op_M'` -- relationship between
+   `comprehensiveM F` and `comprehensiveM' (F.op)`
+
+Items 2-3 extend the presheaf/copresheaf iso to the
+factorization functors. The precise statements depend on
+the relationship between `P.ElementsPre` and
+`(P.Elements)ᵒᵖ` for `P : Dᵒᵖ ⥤ Type v`, which needs
+investigation during implementation.
+
+#### Phase 6D: CostructureIntegral Elimination Rule
+
+`CostructureIntegral H G ≃ Paranat H G` cannot hold
+with the same `H, G` since
+`StructureIntegral H G ≃ Paranat H G` already holds and
+`CostructureIntegral` (a quotient) is structurally
+different from `StructureIntegral` (a subtype).
+
+Instead, we characterize `CostructureIntegral H G`
+via its elimination rule (maps out of it), using the
+weighted colimit elimination infrastructure
+(`WeightedColimitElimination` in `Weighted.lean`).
+
+The chain of equivalences:
+
+1. `CostructureIntegral H G` is the `.pt` of the
+   initial `StrongRestrictedCowedge G H`
+   (`costructureIntegralCowedge_isInitial`)
+2. Transfer via
+   `strongRestrictedCowedge_weightedCocone_equivalence`
+   to an initial weighted cocone (weighted colimit)
+   with weight `cowedgeWeight H` and diagram
+   `profunctorOnCoTwistedArrow C G`
+3. Apply `homIsoWeightedLimitApex`: for any `Y`,
+   `(CostructureIntegral H G → Y) ≅ d.pt` where
+   `d` is the weighted limit of
+   `homToFunctor (profOnCoTwArr C G) Y` by
+   `cowedgeWeight H`
+4. In `Type v`, that weighted limit is
+   `NatTrans (cowedgeWeight H)
+     (homToFunctor (profOnCoTwArr C G) Y)`
+
+File: `GebLean/ComprehensiveWeighted.lean`
+
+Definitions:
+
+1. `costructureIntegralWeightedCocone_isInitial` --
+   transfer initiality to weighted cocones
+2. `costructureIntegralElimEquiv` --
+   `(CostructureIntegral H G → Y) ≃
+     (cowedgeWeight H ⟶
+       homToFunctor (profOnCoTwArr C G) Y)`
+
+This states: any hom-set with domain
+`CostructureIntegral H G` is a natural transformation
+type (a weighted limit). Combined with Phase 5
+(`Paranat H G ≃ (wedgeWeight H ⟶ profOnTwArr C G)`),
+this gives a complete picture: the structure integral
+(end) characterizes paranaturality, while the
+costructure integral (coend) is characterized by its
+elimination into weighted limits.
+
 ## Tasks
 
 - [x] Create `GebLean/ComprehensiveFactorization.lean`
@@ -182,6 +326,10 @@ Completed definitions:
 - [x] Corrected weighted wedges/cowedges
 - [x] Categorical equivalences for weighted (co)wedges
 - [x] Paranat as weighted limit characterization
+- [ ] Weighted cone/cocone op duality (Phase 6A)
+- [ ] Connected components op equivalence (Phase 6B)
+- [ ] Comprehensive presheaf/copresheaf duality (Phase 6C)
+- [ ] CostructureIntegral duality research (Phase 6D)
 
 ## Related Files
 
@@ -192,6 +340,7 @@ Completed definitions:
 - `GebLean/Utilities/TwArrPresheaf.lean`
 - `GebLean/Paranatural.lean`
 - `GebLean/Weighted.lean`
+- `GebLean/Utilities/Category.lean`
 
 ## Related Workstreams
 
