@@ -1683,6 +1683,192 @@ def factorisationToCostructuredArrow
         ⟶ tw
      from factorisationToTwMorph tw fact)
 
+/-- For a cocone over the diagram
+`CostructuredArrow.proj L tw ⋙ iotaRestriction P`,
+a single `LanDiagStep` from `x` to `y` implies that
+the cocone evaluations at the corresponding
+costructured arrows agree. The proof constructs the
+costructured arrow morphism from the
+section-retraction data and applies cocone
+naturality. -/
+private theorem coconeApp_eq_of_lanDiagStep
+    (P : Cᵒᵖ ⥤ C ⥤ Type w₁)
+    {tw : TwistedArrow C}
+    (s : Limits.Cocone
+      (CostructuredArrow.proj
+        (identityTwArrInclusion C) tw ⋙
+        iotaRestriction P))
+    {x y : DecFactSigma P tw}
+    (h : LanDiagStep P tw x y) :
+    s.ι.app
+        (factorisationToCostructuredArrow tw x.1)
+      (ULift.up x.2) =
+    s.ι.app
+        (factorisationToCostructuredArrow tw y.1)
+      (ULift.up y.2) := by
+  obtain ⟨sec, ret, hsr, hι, hπ, helem⟩ := h
+  have nat := congrFun
+    (s.ι.naturality
+      (CostructuredArrow.homMk
+        (show
+          (factorisationToCostructuredArrow
+            tw x.1).left ⟶
+          (factorisationToCostructuredArrow
+            tw y.1).left
+         from ⟨twHomMk sec ret (by
+           dsimp [factorisationToCostructuredArrow]
+           simp [hsr])⟩)
+        (by
+          apply twHom_ext
+          · simp only [twDomArr_comp]
+            exact hι
+          · simp only [twCodArr_comp]
+            exact hπ)))
+    (ULift.up x.2)
+  simp only [types_comp_apply,
+    Functor.const_obj_map, types_id_apply] at nat
+  rw [← nat]
+  apply congrArg
+    (s.ι.app
+      (factorisationToCostructuredArrow tw y.1))
+  dsimp [Functor.comp_map,
+    CostructuredArrow.proj_map,
+    iotaRestriction,
+    factorisationToCostructuredArrow,
+    identityTwArrInclusion,
+    isIdentityTwArrProp, ObjectProperty.ι,
+    inducedFunctor]
+  exact congrArg ULift.up helem.symm
+
+/-- Extension of `coconeApp_eq_of_lanDiagStep` to the
+full equivalence closure `EqvGen (LanDiagStep)`. -/
+private theorem coconeApp_eq_of_lanDiagSetoid
+    (P : Cᵒᵖ ⥤ C ⥤ Type w₁)
+    {tw : TwistedArrow C}
+    (s : Limits.Cocone
+      (CostructuredArrow.proj
+        (identityTwArrInclusion C) tw ⋙
+        iotaRestriction P))
+    {x y : DecFactSigma P tw}
+    (h : Relation.EqvGen
+      (LanDiagStep P tw) x y) :
+    s.ι.app
+        (factorisationToCostructuredArrow tw x.1)
+      (ULift.up x.2) =
+    s.ι.app
+        (factorisationToCostructuredArrow tw y.1)
+      (ULift.up y.2) := by
+  induction h with
+  | rel _ _ hr =>
+    exact coconeApp_eq_of_lanDiagStep P s hr
+  | refl => rfl
+  | symm _ _ _ ih => exact ih.symm
+  | trans _ _ _ _ _ ih₁ ih₂ =>
+    exact ih₁.trans ih₂
+
+/-- The left Kan extension `lanDiagLeftExt P` is
+pointwise: for each `tw : TwistedArrow C`, the
+cocone `(lanDiagLeftExt P).coconeAt tw` is a
+colimit. The colimit property holds because:
+- `desc`: elements of `LanDiag P tw` (quotient of
+  decorated factorisations) map to any cocone point
+  via `Quotient.lift`;
+- `fac`: the cocone leg at `g` sends each element
+  to the same quotient class as the corresponding
+  decorated factorisation;
+- `uniq`: any map from `LanDiag P tw` factoring
+  through the cocone must agree with `desc` on each
+  quotient representative. -/
+def lanDiag_isPointwiseLan
+    (P : Cᵒᵖ ⥤ C ⥤ Type w₁) :
+    Functor.LeftExtension.IsPointwiseLeftKanExtension
+      (lanDiagLeftExt P) := by
+  intro tw
+  exact
+    { desc := fun s =>
+        Quotient.lift
+          (fun x =>
+            s.ι.app
+              (factorisationToCostructuredArrow
+                tw x.1)
+              (ULift.up x.2))
+          (fun _ _ h =>
+            coconeApp_eq_of_lanDiagSetoid P s h)
+      fac := fun s g => by
+        obtain ⟨⟨_, ⟨c, rfl⟩⟩, ⟨⟨⟩⟩, ghom⟩ := g
+        ext ⟨d⟩
+        simp only [types_comp_apply]
+        dsimp only [
+          Functor.LeftExtension.coconeAt,
+          lanDiagLeftExt,
+          Functor.LeftExtension.mk]
+        simp only [StructuredArrow.mk_right,
+          StructuredArrow.mk_hom_eq_self,
+          types_comp_apply]
+        dsimp only [lanDiagUnit, lanDiagFunctor,
+          lanDiagUnitApp, lanDiagMap,
+          identityTwArr_dom_eq_cod]
+        simp only [Quotient.map_mk,
+          Quotient.lift_mk]
+        dsimp only [lanDiagMapSigma,
+          factorisationToCostructuredArrow,
+          factorisationToTwMorph,
+          factorisationMapObj,
+          Factorisation.initial,
+          identityTwArrInclusion,
+          isIdentityTwArrProp,
+          ObjectProperty.ι, inducedFunctor,
+          CostructuredArrow.mk]
+        simp only [twObjMk_dom, twObjMk_cod,
+          twObjMk_arr,
+          eqToHom_refl, (P.obj _).map_id,
+          types_id_apply]
+        convert rfl using 3
+        exact twHom_ext _ _
+          (Category.comp_id _).symm
+          (Category.id_comp _).symm
+      uniq := fun s m hm => by
+        funext q
+        exact Quotient.inductionOn q fun
+          ⟨fact, d⟩ => by
+          simp only [Quotient.lift_mk]
+          have h := congrFun
+            (hm (factorisationToCostructuredArrow
+              tw fact))
+            (ULift.up d)
+          simp only [types_comp_apply] at h
+          rw [← h]
+          congr 1
+          dsimp only [
+            Functor.LeftExtension.coconeAt,
+            lanDiagLeftExt,
+            Functor.LeftExtension.mk]
+          simp only [StructuredArrow.mk_right,
+            StructuredArrow.mk_hom_eq_self,
+            types_comp_apply]
+          dsimp only [lanDiagUnit, lanDiagFunctor,
+            lanDiagUnitApp, lanDiagMap,
+            identityTwArr_dom_eq_cod]
+          simp only [Quotient.map_mk]
+          dsimp only [lanDiagMapSigma,
+            factorisationToCostructuredArrow,
+            factorisationToTwMorph,
+            factorisationMapObj,
+            Factorisation.initial,
+            identityTwArrInclusion,
+            isIdentityTwArrProp,
+            ObjectProperty.ι, inducedFunctor,
+            CostructuredArrow.mk]
+          simp only [twObjMk_dom, twObjMk_cod,
+            twObjMk_arr,
+            twHomMk_domArr, twHomMk_codArr,
+            eqToHom_refl, (P.obj _).map_id,
+            types_id_apply]
+          convert rfl using 3
+          obtain ⟨_, _, _, _⟩ := fact
+          simp [Category.comp_id,
+            Category.id_comp] }
+
 end DiagonalizationMonad
 
 end GebLean
