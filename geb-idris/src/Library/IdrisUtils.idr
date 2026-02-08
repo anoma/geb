@@ -189,6 +189,15 @@ dpeq2 : {0 a : Type} -> {0 b : a -> Type} -> {0 dp, dp' : DPair a b} ->
   dp = dp' -> snd dp ~=~ snd dp'
 dpeq2 Refl = Refl
 
+-- Replacing forward then backward cancels.
+public export
+0 replaceCancelLeft :
+  {0 a : Type} -> {0 p : a -> Type} ->
+  {0 x, y : a} ->
+  (eq : x = y) -> (d : p x) ->
+  replace {p} (sym eq) (replace {p} eq d) = d
+replaceCancelLeft Refl d = Refl
+
 -- A predicate on a dependent pair which only holds when the first
 -- element of the pair matches a given one.
 public export
