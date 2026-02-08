@@ -26,9 +26,9 @@ fiber element into `F(tw)`. The resulting functor
 `DecFactObj F tw ⥤ F.obj tw` is the assembly functor.
 
 A functor `F` is diagonally determined at `tw` when
-this assembly functor is an equivalence: every object
-of `F(tw)` arises from a diagonal element transported
-along a factorization.
+this assembly functor is essentially surjective: every
+object of `F(tw)` is isomorphic to the image of some
+diagonal element transported along a factorization.
 -/
 
 namespace GebLean
@@ -311,11 +311,11 @@ def assemblyFunctor :
 
 /-- A `Cat`-valued functor `F` on the twisted arrow
 category is diagonally determined at `tw` when the
-assembly functor is an equivalence: every element of
-`F(tw)` arises uniquely (up to isomorphism) from a
-diagonal element transported along a factorization. -/
+assembly functor is essentially surjective: every
+object of `F(tw)` is isomorphic to the image of some
+decorated factorization. -/
 def IsDiagDetermined :=
-  (assemblyFunctor F tw).IsEquivalence
+  (assemblyFunctor F tw).EssSurj
 
 end AssemblyFunctor
 
@@ -326,7 +326,8 @@ variable (F : TwistedArrow C ⥤ Cat.{w₁, w₂})
 
 /-- A `Cat`-valued functor `F` on the twisted arrow
 category is diagonally determined when the assembly
-functor is an equivalence at every twisted arrow. -/
+functor is essentially surjective at every twisted
+arrow. -/
 def IsDiagDeterminedEverywhere :=
   ∀ (tw : TwistedArrow C),
     IsDiagDetermined F tw
@@ -451,6 +452,14 @@ def endoProfSnd :
   paranatural _ _ _ _ _ h :=
     congrArg Prod.snd h
 
+/-- The binary fan for `prodEndoProf F G` in `EndoProf`
+with projections `endoProfFst` and `endoProfSnd`. -/
+def endoProfBinaryFan :
+    @BinaryFan _ endoProfCategory F G :=
+  @BinaryFan.mk _ endoProfCategory _ _
+    (prodEndoProf F G)
+    (endoProfFst F G) (endoProfSnd F G)
+
 variable {F G}
 variable {H : Cᵒᵖ ⥤ C ⥤ Type w₃}
 
@@ -488,15 +497,19 @@ theorem endoProfPair_unique
   funext I d
   exact (Prod.mk.eta).symm
 
-/-!
-The proofs `endoProfPair_fst`, `endoProfPair_snd`,
-and `endoProfPair_unique` establish the universal
-property of binary products in `EndoProf` at the
-level of `Paranat` morphisms: `prodEndoProf F G`
-together with projections `endoProfFst` and
-`endoProfSnd` satisfies the unique factorization
-property.
--/
+/-- `endoProfBinaryFan` is a limit cone: the product
+universal property in `EndoProf`. -/
+def endoProfBinaryFan_isLimit :
+    @IsLimit _ _ _ endoProfCategory _
+      (endoProfBinaryFan F G) :=
+  @BinaryFan.IsLimit.mk _ endoProfCategory _ _
+    (endoProfBinaryFan F G)
+    (fun f g => endoProfPair f g)
+    (fun f g => endoProfPair_fst f g)
+    (fun f g => endoProfPair_snd f g)
+    (fun f g m hf hg => by
+      rw [endoProfPair_unique m]
+      exact congrArg₂ endoProfPair hf hg)
 
 end EndoProfLimits
 
@@ -605,5 +618,189 @@ def EqualizerWellDefined
     EqualizerClosedUnderContra α β
 
 end Equalizers
+
+section DiagDeterminedProf
+
+/-!
+## Diagonally determined profunctors (Type-valued)
+
+For a `Type`-valued profunctor `P : Cᵒᵖ ⥤ C ⥤ Type w`,
+the assembly map at a twisted arrow `tw` sends each
+decorated factorization `(fact, d)` with
+`d ∈ P(fact.mid, fact.mid)` to an element of
+`P(twDom tw, twCod tw)` by applying the contravariant
+action along `fact.ι` followed by the covariant action
+along `fact.π`.
+-/
+
+open CategoryTheory.Limits
+
+variable {C : Type u} [Category.{v} C]
+variable (P : Cᵒᵖ ⥤ C ⥤ Type w₁)
+variable (tw : TwistedArrow C)
+
+/-- The assembly map for a `Type`-valued profunctor at a
+twisted arrow `tw`. Sends a decorated factorization
+`⟨fact, d⟩` with `d ∈ P(mid, mid)` to an element of
+`P(twDom tw, twCod tw)` via the contravariant action
+along `fact.ι` and the covariant action along
+`fact.π`. -/
+def assemblyMapProf
+    (x : (fact : Factorisation (twArr tw)) ×
+      diagApp P fact.mid) :
+    (P.obj (Opposite.op (twDom tw))).obj
+      (twCod tw) :=
+  (P.obj (Opposite.op (twDom tw))).map x.1.π
+    ((P.map x.1.ι.op).app x.1.mid x.2)
+
+variable {tw}
+
+/-- A `Type`-valued profunctor `P` is diagonally
+determined when `assemblyMapProf P tw` is surjective
+for every twisted arrow `tw`: every element of
+`P(a, b)` arises from some diagonal element
+`d ∈ P(c, c)` transported along a factorization of
+`a → b` through `c`. -/
+def IsDiagDeterminedProf : Prop :=
+  ∀ (tw : TwistedArrow C),
+    Function.Surjective (assemblyMapProf P tw)
+
+variable {P}
+
+/-- `IsDiagDeterminedProf` as an `ObjectProperty` on
+`EndoProf`, for use with `ObjectProperty.FullSubcategory`
+to form the full subcategory of diagonally determined
+profunctors. -/
+def isDiagDeterminedProfProp :
+    @ObjectProperty
+      (EndoProf (C := C))
+      endoProfCategory.toCategoryStruct :=
+  fun Q => IsDiagDeterminedProf Q
+
+/-- The full subcategory of `EndoProf` consisting of
+diagonally determined profunctors. Morphisms are
+paranatural transformations (inherited from
+`endoProfCategory`). -/
+abbrev DiagDetProf :=
+  @ObjectProperty.FullSubcategory _
+    endoProfCategory
+    (isDiagDeterminedProfProp (C := C))
+
+end DiagDeterminedProf
+
+section DiagDetTerminal
+
+/-!
+## Terminal object in DiagDetProf
+
+The unit endoprofunctor is diagonally determined:
+`assemblyMapProf (unitEndoProf C) tw` maps into
+`PUnit`, so surjectivity holds for any factorization.
+-/
+
+variable (C : Type u) [Category.{v} C]
+
+theorem unitEndoProf_isDiagDetermined :
+    IsDiagDeterminedProf
+      (unitEndoProf.{u, v, w₁} C) :=
+  fun _ y => ⟨⟨Factorisation.initial, PUnit.unit⟩,
+    match y with | PUnit.unit => rfl⟩
+
+/-- The unit endoprofunctor as an object of
+`DiagDetProf`. -/
+def unitDiagDetProf :
+    DiagDetProf (C := C) :=
+  ⟨unitEndoProf.{u, v, w₁} C,
+    unitEndoProf_isDiagDetermined C⟩
+
+open CategoryTheory.Limits in
+instance unitDiagDetProf_isTerminal_unique
+    (F : DiagDetProf (C := C)) :
+    Unique (F ⟶ unitDiagDetProf C) where
+  default := ⟨endoProfToTerminal F.obj⟩
+  uniq α :=
+    ObjectProperty.hom_ext _
+      (endoProfToTerminal_unique F.obj α.hom)
+
+open CategoryTheory.Limits in
+def unitDiagDetProf_isTerminal :
+    IsTerminal (unitDiagDetProf C) :=
+  IsTerminal.ofUnique _
+
+end DiagDetTerminal
+
+section DiagDetProducts
+
+/-!
+## Products do not preserve diagonal determination
+
+The product `prodEndoProf F G` is not diagonally
+determined in general, even when both `F` and `G` are.
+
+The assembly map for `prodEndoProf F G` at a twisted
+arrow `tw` sends `⟨fact, (d_F, d_G)⟩` with
+`d_F ∈ F(mid, mid)` and `d_G ∈ G(mid, mid)` to
+`(F-action(d_F), G-action(d_G))` using the SAME
+factorization `fact` for both components. But when
+`F` and `G` are separately diag-determined, each
+off-diagonal element may require a DIFFERENT
+factorization, and the intersection of the diagonals
+at a common midpoint may be empty.
+
+Counterexample: Let `C` be the walking arrow
+`{0, 1, f : 0 → 1}`. Let `F` have `F(0,0) = {a}`,
+`F(1,1) = ∅`, `F(0,1) = {x}` (reached from `a` via
+the initial factorization of `f`). Let `G` have
+`G(0,0) = ∅`, `G(1,1) = {b}`, `G(0,1) = {y}`
+(reached from `b` via the terminal factorization of
+`f`). Then `F` and `G` are both diag-determined, but
+`(x, y) ∈ (F × G)(0, 1)` cannot arise from any single
+factorization: the initial factorization requires
+`G(0,0)` (which is empty) and the terminal
+factorization requires `F(1,1)` (which is empty).
+
+This means `DiagDetProf` does NOT have binary products
+inherited from `EndoProf`. The full subcategory may
+still have products via a different construction, or
+may lack them entirely.
+-/
+
+end DiagDetProducts
+
+section DiagDetEqualizers
+
+/-!
+## Equalizers and diagonal determination
+
+Diagonal determination does not imply
+`EqualizerClosedUnderCov` or
+`EqualizerClosedUnderContra`.
+
+Given `x ∈ F(a, b)` with `F` diag-determined, `x`
+arises from some `d ∈ F(c, c)` via a factorization of
+`twArr tw` through `c`. Applying the covariant action
+`(F.obj (op a)).map f` for `f : b ⟶ a` produces an
+element of `F(a, a)`, but this element need not lie in
+the diagonal equalizer `{d | α(a)(d) = β(a)(d)}`.
+
+The covariant action composes functorially:
+`(F.obj (op a)).map f (assemblyMapProf P tw ⟨fact, d⟩)`
+= `(F.obj (op a)).map (fact.π ≫ f)
+    ((F.map fact.ι.op).app fact.mid d)`.
+This is an element of `F(a, a)` arising from `d` via
+the factorization `(fact.ι, fact.π ≫ f)` of
+`twArr tw ≫ f`, not of `𝟙 a`. Diag-determination at
+`𝟙 a` tells us the result itself is reachable from
+some `d' ∈ F(c', c')`, but `α` and `β` need not agree
+on this `d'`.
+
+Thus `EqualizerClosedUnderCov` and
+`EqualizerClosedUnderContra` remain independent
+conditions, not implied by diag-determination.
+Thus `DiagDetProf` has a terminal object but may lack both
+products and equalizers from `EndoProf`.
+-/
+
+end DiagDetEqualizers
 
 end GebLean

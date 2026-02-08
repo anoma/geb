@@ -2,7 +2,7 @@
 
 ## Status
 
-Phase 2b done. Phase 2c next.
+Phase 2b+ done. Phase 2c next.
 
 ## Question
 
@@ -179,9 +179,59 @@ non-faithful functor `p : I -> C` sending
    under which the covariant/contravariant actions bring
    off-diagonal elements back to the diagonal equalizer.
    `EqualizerWellDefined` is their conjunction. These
-   conditions do not hold in general but might
-   hold for diagonally determined profunctors --
-   we need to investigate that.
+   conditions do not hold in general and do not follow
+   from diagonal determination (see Phase 2b+).
+
+### Phase 2b+: DiagDetProf full subcategory
+
+**Done**. In `ParanaturalTopos.lean`:
+
+1. **IsDiagDetermined fixed**: Changed from `IsEquivalence`
+   to `EssSurj` (essential surjectivity of the assembly
+   functor). The original `IsEquivalence` was too strong
+   since multiple factorisations can map to the same
+   element.
+
+2. **BinaryFan.IsLimit**: `endoProfBinaryFan_isLimit`
+   packages the binary product universal property as a
+   mathlib `BinaryFan.IsLimit`.
+
+3. **IsDiagDeterminedProf**: Type-valued form using
+   `Function.Surjective` on `assemblyMapProf`. The
+   assembly map sends `⟨fact, d⟩` with `d ∈ P(mid, mid)`
+   to `P(a, b)` via contravariant then covariant actions.
+
+4. **DiagDetProf full subcategory**: Defined via
+   `ObjectProperty.FullSubcategory` on `EndoProf` with
+   `endoProfCategory`. Morphisms are `Paranat` (wrapped
+   in `InducedCategory.Hom`).
+
+5. **Terminal object**: `unitEndoProf` is diag-determined
+   (trivially surjective into `PUnit`).
+   `unitDiagDetProf_isTerminal` proves it is terminal in
+   `DiagDetProf`.
+
+6. **Products do NOT preserve diag-determination**:
+   Concrete counterexample on the walking arrow category.
+   The product assembly requires a common factorization
+   for both components, but each component may require a
+   different one. `DiagDetProf` does not inherit products
+   from `EndoProf`.
+
+7. **Equalizers**: Diagonal determination does not imply
+   `EqualizerClosedUnderCov` or
+   `EqualizerClosedUnderContra`. The covariant action
+   maps off-diagonal elements to diagonal elements, but
+   there is no reason for `α` and `β` to agree on these
+   elements.
+
+**Implications**: The full subcategory `DiagDetProf` has
+a terminal object but may lack both products and
+equalizers. This is evidence against the hypothesis that
+diag-determined profunctors form a topos. The issue is
+that "diagonally determined" is too weak a condition:
+it governs reachability but not the compatibility of
+factorisations across components.
 
 ### Phase 2c: Investigate the diagonalization monad
 
