@@ -2,7 +2,7 @@
 
 ## Status
 
-Phase 1: Research complete. Planning experiments.
+Phase 2a in progress. Assembly functor formalized.
 
 ## Question
 
@@ -133,6 +133,15 @@ topos.
 ## Experimental Plan
 
 ### Phase 2a: Connect decFactFunctor to diagonalization
+
+**Done**: The assembly functor
+`assemblyFunctor F tw : DecFactObj F tw ⥤ F.obj tw`
+is formalized. It transports each decorated factorization
+`(d, x)` (where `x ∈ F(𝟙 mid)`) to `F(tw)` via
+`F.map(factToTwMorph tw d)`.
+
+The definition `IsDiagDetermined F tw` captures when
+this functor is an equivalence.
 
 The formalized `decFactFunctor F` already computes the
 fiberwise `Cat`-valued left Kan extension
