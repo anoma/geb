@@ -198,6 +198,31 @@ public export
   replace {p} (sym eq) (replace {p} eq d) = d
 replaceCancelLeft Refl d = Refl
 
+-- Replace on function types: replace acts on the
+-- domain contravariantly.
+public export
+0 replaceFun :
+  {0 a : Type} -> {0 p : a -> Type} ->
+  {0 b : Type} -> {0 x, y : a} ->
+  (eq : x = y) -> (f : p x -> b) ->
+  (d : p y) ->
+  replace {p=(\i => p i -> b)} eq f d =
+  f (replace {p} (sym eq) d)
+replaceFun Refl f d = Refl
+
+-- Dependent pair equality via transport: if
+-- transporting px along eq gives py, then the
+-- pairs are equal.
+public export
+0 dpReplaceEq :
+  {0 a : Type} -> {0 p : a -> Type} ->
+  {x, y : a} ->
+  {0 px : p x} -> {0 py : p y} ->
+  (eq : x = y) ->
+  replace {p} eq px = py ->
+  MkDPair {p} x px = MkDPair {p} y py
+dpReplaceEq Refl Refl = Refl
+
 -- A predicate on a dependent pair which only holds when the first
 -- element of the pair matches a given one.
 public export

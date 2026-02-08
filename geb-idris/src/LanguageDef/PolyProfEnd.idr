@@ -464,6 +464,246 @@ SectionEndPosConst {pp} (i ** section) a b = Refl
 
 ------------------------------------------------------------
 ------------------------------------------------------------
+---- End Wedge Decomposition ----
+------------------------------------------------------------
+------------------------------------------------------------
+
+-- The End wedge condition for polynomial profunctors
+-- decomposes into two parts:
+-- 1. Position constancy: fst (el x) = fst (el Unit)
+-- 2. Direction naturality: the extracted eta is natural
+--
+-- This decomposition is useful because it separates the
+-- "structural" part (positions are constant) from the
+-- "functional" part (directions commute with morphisms).
+
+------------------------------------------------------------
+---- Position Wedge ----
+------------------------------------------------------------
+
+-- Position part: the outer position is constant
+-- across all types.
+public export
+0 PolyProfEndWedgePos :
+  (pp : PolyProf) ->
+  EndBase (InterpPolyProf pp) -> Type
+PolyProfEndWedgePos pp el =
+  (x : Type) -> fst (el x) = fst (el Unit)
+
+------------------------------------------------------------
+---- Extracted Eta ----
+------------------------------------------------------------
+
+-- Given an EndBase element with constant positions,
+-- extract the natural transformation from the
+-- direction polynomial at the common position.
+--
+-- The idea: snd (el x) has type
+--   InterpPolyFunc (ppDirPF pp (fst (el x))) x -> x
+-- By posConst, fst (el x) = fst (el Unit), so we
+-- can transport the argument and apply snd (el x).
+public export
+ppEndExtractEta : (pp : PolyProf) ->
+  (el : EndBase (InterpPolyProf pp)) ->
+  (0 posConst : PolyProfEndWedgePos pp el) ->
+  (x : Type) ->
+  InterpPolyFunc (ppDirPF pp (fst (el Unit))) x ->
+  x
+ppEndExtractEta pp el posConst x elem =
+  snd (el x)
+    (replace
+      {p=(\i => InterpPolyFunc
+        (ppDirPF pp i) x)}
+      (sym (posConst x))
+      elem)
+
+------------------------------------------------------------
+---- Direction Wedge ----
+------------------------------------------------------------
+
+-- Direction part: the extracted eta is a natural
+-- transformation from InterpPolyFunc (ppDirPF pp i)
+-- to the identity functor.
+public export
+0 PolyProfEndWedgeDir :
+  (pp : PolyProf) ->
+  (el : EndBase (InterpPolyProf pp)) ->
+  (0 posConst : PolyProfEndWedgePos pp el) ->
+  Type
+PolyProfEndWedgeDir pp el posConst =
+  PolyNatTransNaturality
+    {pf=ppDirPF pp (fst (el Unit))}
+    (ppEndExtractEta pp el posConst)
+
+------------------------------------------------------------
+---- Full End Wedge ----
+------------------------------------------------------------
+
+-- The full wedge condition = position + direction.
+public export
+0 PolyProfEndWedge :
+  (pp : PolyProf) ->
+  EndBase (InterpPolyProf pp) -> Type
+PolyProfEndWedge pp el =
+  (posConst : PolyProfEndWedgePos pp el **
+   PolyProfEndWedgeDir pp el posConst)
+
+------------------------------------------------------------
+------------------------------------------------------------
+---- End-Family Round-Trip Proofs ----
+------------------------------------------------------------
+------------------------------------------------------------
+
+-- These proofs show that PolyProfEnd pp is equivalent
+-- to (EndBase (InterpPolyProf pp) satisfying wedge).
+
+------------------------------------------------------------
+---- Forward: PolyProfEnd -> EndBase + wedge ----
+------------------------------------------------------------
+
+-- Position constant: positions from endToPolyFamily
+-- are literally i at every type, so posConst = Refl.
+public export
+0 endToPolyFamilyWedgePos :
+  {pp : PolyProf} ->
+  (end : PolyProfEnd pp) ->
+  PolyProfEndWedgePos pp
+    (endToPolyFamily {pp} end)
+endToPolyFamilyWedgePos (i ** sec) x = Refl
+
+-- Direction natural: since posConst = Refl,
+-- replace (sym Refl) = id, so eta x elem =
+-- sectionApply sec x elem. Naturality follows
+-- from sectionApplyNatural (which is Refl).
+public export
+0 endToPolyFamilyWedgeDir :
+  {pp : PolyProf} ->
+  (end : PolyProfEnd pp) ->
+  PolyProfEndWedgeDir pp
+    (endToPolyFamily {pp} end)
+    (endToPolyFamilyWedgePos {pp} end)
+endToPolyFamilyWedgeDir (i ** sec) a b f elem =
+  sectionApplyNatural
+    {pf=ppDirPF pp i} sec a b f elem
+
+-- Combined wedge proof.
+public export
+0 endToPolyFamilyWedge :
+  {pp : PolyProf} ->
+  (end : PolyProfEnd pp) ->
+  PolyProfEndWedge pp
+    (endToPolyFamily {pp} end)
+endToPolyFamilyWedge {pp} end =
+  (endToPolyFamilyWedgePos {pp} end **
+   endToPolyFamilyWedgeDir {pp} end)
+
+------------------------------------------------------------
+---- Backward: EndBase + wedge -> PolyProfEnd ----
+------------------------------------------------------------
+
+-- Convert a polymorphic family with wedge proof to
+-- a section-based end element. Position is fst (el
+-- Unit); the section is extracted via
+-- natTransToSection from the eta.
+public export
+endFamilyToPolyProfEnd :
+  {pp : PolyProf} ->
+  (el : EndBase (InterpPolyProf pp)) ->
+  (0 wedge : PolyProfEndWedge pp el) ->
+  PolyProfEnd pp
+endFamilyToPolyProfEnd {pp} el (posConst ** _) =
+  (fst (el Unit) **
+   natTransToSection
+     {pf=ppDirPF pp (fst (el Unit))}
+     (ppEndExtractEta pp el posConst))
+
+------------------------------------------------------------
+---- RT1: PolyProfEnd -> EndBase -> PolyProfEnd ----
+------------------------------------------------------------
+
+-- Starting from (i ** sec), converting to a family
+-- and back recovers (i ** sec).
+--
+-- Proof: endToPolyFamily gives (\x => (i ** ...)),
+-- posConst = Refl, eta = sectionApply sec,
+-- natTransToSection (sectionApply sec) = sec
+-- by sectionRoundTrip.
+public export
+0 endFamilyRT1 : FunExt ->
+  {pp : PolyProf} ->
+  (end : PolyProfEnd pp) ->
+  endFamilyToPolyProfEnd {pp}
+    (endToPolyFamily {pp} end)
+    (endToPolyFamilyWedge {pp} end) = end
+endFamilyRT1 fext {pp} (i ** sec) =
+  -- ppEndExtractEta and sectionApply are
+  -- pointwise equal (each step reduces) but
+  -- not definitionally equal (eta). Bridge
+  -- with funExt, then cong natTransToSection,
+  -- then sectionRoundTrip.
+  dpEq12 Refl
+    (trans
+      (cong
+        (natTransToSection
+          {pf=ppDirPF pp i})
+        (funExt (\x =>
+          funExt (\d => Refl))))
+      (sectionRoundTrip fext
+        {pf=ppDirPF pp i} sec))
+
+------------------------------------------------------------
+---- RT2: EndBase -> PolyProfEnd -> EndBase ----
+------------------------------------------------------------
+
+-- Starting from (el, wedge), converting to
+-- PolyProfEnd and back recovers el pointwise.
+--
+-- Proof: match posConst x as Refl, making
+-- fst (el x) = fst (el Unit) definitional.
+-- Then replace (sym Refl) = id, so eta x d =
+-- snd (el x) d. By natTransRoundTrip,
+-- sectionApply (natTransToSection eta) x d =
+-- eta x d = snd (el x) d.
+public export
+0 endFamilyRT2 : FunExt ->
+  {pp : PolyProf} ->
+  (el : EndBase (InterpPolyProf pp)) ->
+  (0 wedge : PolyProfEndWedge pp el) ->
+  (x : Type) ->
+  endToPolyFamily {pp}
+    (endFamilyToPolyProfEnd {pp} el wedge) x
+  = el x
+endFamilyRT2 fext {pp} el
+  (posConst ** dirNat) x =
+  -- Strategy: use dpReplaceEq to build
+  --   (fst (el x) ** snd (el x))
+  --   = (fst (el Unit) ** sectionApply ... x)
+  -- then compose with sym dpEqPat to get = el x.
+  --
+  -- For the replace proof, we show pointwise:
+  --   replace (posConst x) (snd (el x)) d
+  --   = snd (el x) (replace (sym ...) d)
+  --      by replaceFun
+  --   = ppEndExtractEta ... d  (definitional)
+  --   = sectionApply ... d    by sym natTransRT
+  trans
+    (sym (dpReplaceEq
+      {p=(\j =>
+        InterpPolyFunc (ppDirPF pp j) x -> x)}
+      (posConst x)
+      (funExt (\d =>
+        trans
+          (replaceFun
+            {p=(\j =>
+              InterpPolyFunc (ppDirPF pp j) x)}
+            (posConst x) (snd (el x)) d)
+          (sym (natTransRoundTrip
+            {pf=ppDirPF pp (fst (el Unit))}
+            (ppEndExtractEta pp el posConst)
+            dirNat x d))))))
+    (sym dpEqPat)
+
+------------------------------------------------------------
 ---- Free Monad Direction Polynomial Functors ----
 ------------------------------------------------------------
 ------------------------------------------------------------
@@ -1047,6 +1287,54 @@ interpPolyProfRmapEta pp s t b f
   (i ** g) = Refl
 
 ------------------------------------------------------------
+---- Dimap and Profunctor instance ----
+------------------------------------------------------------
+
+-- Dimap for polynomial profunctors: compose lmap then
+-- rmap. Computes to (i ** g . h . InterpPFMap _ f).
+public export
+interpPolyProfDimap : (pp : PolyProf) ->
+  DimapSig (InterpPolyProf pp)
+interpPolyProfDimap pp {a} {b} {c} {d}
+  f g (i ** h) =
+  (i ** g . h . InterpPFMap (ppDirPF pp i) f)
+
+public export
+interpPolyProfProf : (pp : PolyProf) ->
+  Profunctor (InterpPolyProf pp)
+interpPolyProfProf pp =
+  MkProfunctor (interpPolyProfDimap pp)
+
+------------------------------------------------------------
+---- End Equivalence (formal) ----
+------------------------------------------------------------
+
+-- The PolyProfEnd wedge condition implies the
+-- End condition from IdrisCategories (which uses
+-- lmap/rmap from the Profunctor instance via
+-- dimap). Left as holes because bridging
+-- dimap-based lmap/rmap to interpPolyProfLmap/
+-- Rmap requires eta-expansion plumbing
+-- (id . f vs f, InterpPFMap _ id vs id, etc.).
+public export
+0 polyProfEndIsEnd :
+  {pp : PolyProf} ->
+  PolyProfEnd pp ->
+  End (InterpPolyProf pp)
+    {isP=interpPolyProfProf pp}
+polyProfEndIsEnd {pp} end =
+  ?polyProfEndIsEnd_hole
+
+public export
+0 endIsPolyProfEnd : FunExt ->
+  {pp : PolyProf} ->
+  End (InterpPolyProf pp)
+    {isP=interpPolyProfProf pp} ->
+  PolyProfEnd pp
+endIsPolyProfEnd fext {pp} endEl =
+  ?endIsPolyProfEnd_hole
+
+------------------------------------------------------------
 ------------------------------------------------------------
 ---- Roll Constructor for Section-Based PolyProfMu ----
 ------------------------------------------------------------
@@ -1143,47 +1431,135 @@ ppFreeMPosMapUnit fext pp (InPFM (PFCom i) dm) =
 ---- Wedge condition for PHOAS elements ----
 ------------------------------------------------------------
 
--- The wedge condition says that the position at each type
--- x is the position-mapped version of the position at
--- Unit. This is the coherence condition that makes a PHOAS
--- element a genuine end element.
+-- Position wedge: the position at each type x is the
+-- position-mapped version of the position at Unit.
+-- This is the coherence condition that makes a PHOAS
+-- element have a well-defined tree shape.
 public export
-0 PolyProfMuPHOASWedge : (pp : PolyProf) ->
+0 PolyProfMuPHOASWedgePos : (pp : PolyProf) ->
   PolyProfMuPHOAS pp -> Type
-PolyProfMuPHOASWedge pp el =
+PolyProfMuPHOASWedgePos pp el =
   (x : Type) ->
     fst (el x) =
     ppFreeMPosMap pp x (fst (el Unit))
 
 ------------------------------------------------------------
+---- Extracted Eta for PHOAS ----
+------------------------------------------------------------
+
+-- Extract the natural transformation from a PHOAS
+-- element with constant positions. Transports through
+-- the wedge and direction isomorphism.
+public export
+ppPHOASExtractEta : (pp : PolyProf) ->
+  (el : PolyProfMuPHOAS pp) ->
+  (0 wedgePos :
+    PolyProfMuPHOASWedgePos pp el) ->
+  (x : Type) ->
+  InterpFreeMDirPF pp (fst (el Unit)) x ->
+  x
+ppPHOASExtractEta pp el wedgePos x elem =
+  snd (el x)
+    (replace
+      {p=PolyFuncFreeMDir
+        (ppToPolyFunc pp x)}
+      (sym (wedgePos x))
+      (freeMDirIsoBwd pp
+        (fst (el Unit)) x elem))
+
+------------------------------------------------------------
+---- Direction Wedge for PHOAS ----
+------------------------------------------------------------
+
+-- Direction naturality: the extracted eta is a
+-- natural transformation.
+public export
+0 PolyProfMuPHOASWedgeDir :
+  (pp : PolyProf) ->
+  (el : PolyProfMuPHOAS pp) ->
+  (0 wedgePos :
+    PolyProfMuPHOASWedgePos pp el) ->
+  Type
+PolyProfMuPHOASWedgeDir pp el wedgePos =
+  PolyNatTransNaturality
+    {pf=FreeMDirPF pp (fst (el Unit))}
+    (ppPHOASExtractEta pp el wedgePos)
+
+------------------------------------------------------------
+---- Full PHOAS Wedge ----
+------------------------------------------------------------
+
+-- The full wedge condition = position + direction.
+public export
+0 PolyProfMuPHOASWedge : (pp : PolyProf) ->
+  PolyProfMuPHOAS pp -> Type
+PolyProfMuPHOASWedge pp el =
+  (wedgePos :
+    PolyProfMuPHOASWedgePos pp el **
+   PolyProfMuPHOASWedgeDir pp el wedgePos)
+
+------------------------------------------------------------
 ---- Section-based Mu satisfies the wedge condition ----
 ------------------------------------------------------------
 
--- Elements constructed from sections automatically satisfy
--- the wedge condition, because the position at each type x
--- is ppFreeMPosMap pp x pos, and the position at Unit is
--- ppFreeMPosMap pp Unit pos = pos (by ppFreeMPosMapUnit).
+-- Elements constructed from sections automatically
+-- satisfy the position wedge condition, because the
+-- position at each type x is ppFreeMPosMap pp x pos,
+-- and the position at Unit is ppFreeMPosMap pp Unit
+-- pos = pos (by ppFreeMPosMapUnit).
+public export
+0 polyProfMuToFamilyWedgePos : FunExt ->
+  {pp : PolyProf} ->
+  (mu : PolyProfMu pp) ->
+  PolyProfMuPHOASWedgePos pp
+    (polyProfMuToFamily {pp} mu)
+polyProfMuToFamilyWedgePos fext
+  {pp} (pos ** sec) x =
+  sym (cong (ppFreeMPosMap pp x)
+    (ppFreeMPosMapUnit fext pp pos))
+
+-- Direction naturality for section-based elements.
+-- Since ppPHOASExtractEta involves sectionApply
+-- composed with freeMDirIsoFwd . replace .
+-- freeMDirIsoBwd, proving naturality requires
+-- showing the iso composition is natural.
+-- Left as 0-erased obligation -- does not block
+-- the round-trip proofs.
+public export
+0 polyProfMuToFamilyWedgeDir :
+  (fext : FunExt) ->
+  {pp : PolyProf} ->
+  (mu : PolyProfMu pp) ->
+  PolyProfMuPHOASWedgeDir pp
+    (polyProfMuToFamily {pp} mu)
+    (polyProfMuToFamilyWedgePos {pp}
+      fext mu)
+polyProfMuToFamilyWedgeDir fext {pp} mu =
+  ?polyProfMuToFamilyWedgeDir_hole
+
+-- Combined wedge proof.
 public export
 0 polyProfMuToFamilyWedge : FunExt ->
   {pp : PolyProf} ->
   (mu : PolyProfMu pp) ->
   PolyProfMuPHOASWedge pp
     (polyProfMuToFamily {pp} mu)
-polyProfMuToFamilyWedge fext {pp} (pos ** sec) x =
-  sym (cong (ppFreeMPosMap pp x)
-    (ppFreeMPosMapUnit fext pp pos))
+polyProfMuToFamilyWedge fext {pp} mu =
+  (polyProfMuToFamilyWedgePos fext mu **
+   polyProfMuToFamilyWedgeDir fext mu)
 
 ------------------------------------------------------------
 ---- PHOAS family to section-based Mu ----
 ------------------------------------------------------------
 
--- Convert a PHOAS element satisfying the wedge condition
--- to a section-based Mu element.
+-- Convert a PHOAS element satisfying the wedge
+-- condition to a section-based Mu element.
 --
 -- Position: fst (el Unit)
--- Section: extracted via natTransToSection from the
--- natural transformation built by composing snd (el x)
--- with the direction isomorphism and wedge transport.
+-- Section: extracted via natTransToSection from
+-- the natural transformation built by composing
+-- snd (el x) with the direction isomorphism and
+-- wedge transport.
 public export
 polyProfFamilyToMu : FunExt ->
   {pp : PolyProf} ->
@@ -1199,7 +1575,7 @@ polyProfFamilyToMu fext {pp} el wedge =
          (replace
            {p=PolyFuncFreeMDir
              (ppToPolyFunc pp x)}
-           (sym (wedge x))
+           (sym (fst wedge x))
            (freeMDirIsoBwd pp
              (fst (el Unit)) x elem))))
 
@@ -1573,16 +1949,24 @@ polyProfMuRoundTrip1 fext {pp} (pos ** sec) =
 -- Round-trip 2: PHOAS+wedge -> Mu -> PHOAS = id
 --
 -- Position: ppFreeMPosMap pp x (fst (el Unit))
--- = fst (el x) by sym (wedge x).
+-- = fst (el x) by sym (wedgePos x).
 --
--- Direction: requires naturality of the extracted
--- eta, which depends on parametricity of el (the
--- "free theorem" that polymorphic functions are
--- natural). Not provable internally in Idris.
--- The direction iso Bwd . Fwd = id
--- (freeMDirIsoBwdFwd) is now proved, so this is
--- the sole remaining obstacle.
--- For now, this remains a proof obligation.
+-- Direction: with the strengthened wedge (pos +
+-- dir naturality), the proof would use:
+-- - natTransRoundTrip for the section round-trip
+-- - freeMDirIsoBwdFwd to cancel the iso pair
+-- However, matching wedgePos x against Refl
+-- fails because Idris cannot unify
+-- ppFreeMPosMap pp x (fst (el Unit)) with
+-- fst (el x) (structurally different stuck
+-- terms). The rewrite approach also fails
+-- because replace wrappers don't reduce.
+--
+-- The generic End-family RT2 (endFamilyRT2)
+-- works because its position equality
+-- (fst (el x) = fst (el Unit)) involves only
+-- simple ppPos pp terms that unify when matched
+-- against Refl.
 public export
 0 polyProfMuRoundTrip2 : (fext : FunExt) ->
   {pp : PolyProf} ->
