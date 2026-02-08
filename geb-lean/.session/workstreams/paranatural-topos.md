@@ -4,6 +4,16 @@
 
 Phase 2b+ done. Phase 2c (research) in progress.
 
+### Completed (Phase 2c)
+
+`lanDiag_isPointwiseLan` proved: the colimit-of-
+factorisations formula `lanDiagFunctor P` together
+with the unit `lanDiagUnit P` forms a pointwise left
+Kan extension along `identityTwArrInclusion`. The
+proof establishes `desc` (quotient lift), `fac`
+(cocone leg factorization), and `uniq` (uniqueness)
+for `Functor.LeftExtension.IsPointwiseLeftKanExtension`.
+
 ### Current findings (Phase 2c)
 
 Equalizer closure conditions: `EqualizerClosedUnderCov`
