@@ -14,6 +14,19 @@ proof establishes `desc` (quotient lift), `fac`
 (cocone leg factorization), and `uniq` (uniqueness)
 for `Functor.LeftExtension.IsPointwiseLeftKanExtension`.
 
+`lanDiagUnitApp_bijective` proved: the unit
+`lanDiagUnitApp P (identityTwArrObj C c)` is a
+bijection, i.e., `iota* ∘ Lan_iota ≅ id`. The
+proof uses:
+- `lanDiagStep_to_initial_at_identity`: every
+  decorated factorisation of `𝟙 c` is equivalent
+  (via `LanDiagStep`) to an `initial`-based one,
+  since `fact.ι ≫ fact.π = 𝟙 c`.
+- `lanDiagUnitInvApp`: the inverse map, defined
+  via assembly on quotient representatives.
+- `lanDiagUnitInvApp_comp_unitApp` (left inverse)
+  and `lanDiagUnitApp_comp_invApp` (right inverse).
+
 ### Current findings (Phase 2c)
 
 Equalizer closure conditions: `EqualizerClosedUnderCov`

@@ -1893,6 +1893,81 @@ theorem lanDiagStep_to_initial_at_identity
   · simp only [Factorisation.initial, twObjMk_arr,
       assemblyMapProf]
 
+/-- The inverse of the unit at an identity twisted
+arrow: sends a quotient element
+`q ∈ LanDiag P (twObjMk (𝟙 c))` to
+`ULift.up (assemblyMapProf P _ q')` where `q'` is any
+representative of `q`. Well-defined since the assembly
+map respects the equivalence relation. -/
+def lanDiagUnitInvApp
+    (P : Cᵒᵖ ⥤ C ⥤ Type w₁) (c : C) :
+    LanDiag P (twObjMk (𝟙 c)) →
+    (iotaRestriction P).obj
+      (identityTwArrObj C c) :=
+  Quotient.lift
+    (fun x => ULift.up
+      (assemblyMapProf P (twObjMk (𝟙 c)) x))
+    (fun _ _ h => congrArg ULift.up
+      (assemblyMapProf_respects_lanDiagSetoid
+        P h))
+
+/-- Left inverse: the inverse composed with the unit
+is the identity on
+`(iotaRestriction P).obj (identityTwArrObj C c)`. -/
+theorem lanDiagUnitInvApp_comp_unitApp
+    (P : Cᵒᵖ ⥤ C ⥤ Type w₁) (c : C)
+    (x : (iotaRestriction P).obj
+      (identityTwArrObj C c)) :
+    lanDiagUnitInvApp P c
+      (lanDiagUnitApp P (identityTwArrObj C c) x)
+    = x := by
+  obtain ⟨d⟩ := x
+  simp only [lanDiagUnitApp, lanDiagUnitInvApp,
+    identityTwArrObj, twObjMk_dom,
+    twObjMk_cod, eqToHom_refl,
+    (P.obj _).map_id, types_id_apply]
+  exact congrArg ULift.up
+    (assemblyMapProf_at_identity P c d)
+
+/-- Right inverse: the unit composed with the inverse
+is the identity on `LanDiag P (twObjMk (𝟙 c))`. For
+each representative `⟨fact, d⟩`, the composition sends
+it to `⟦⟨initial, assemblyMapProf(fact, d)⟩⟧`, which
+equals `⟦⟨fact, d⟩⟧` by `lanDiagStep_to_initial_at_identity`. -/
+theorem lanDiagUnitApp_comp_invApp
+    (P : Cᵒᵖ ⥤ C ⥤ Type w₁) (c : C)
+    (q : LanDiag P (twObjMk (𝟙 c))) :
+    lanDiagUnitApp P (identityTwArrObj C c)
+      (lanDiagUnitInvApp P c q)
+    = q := by
+  induction q using Quotient.inductionOn with
+  | h x =>
+    obtain ⟨fact, d⟩ := x
+    simp only [lanDiagUnitInvApp, lanDiagUnitApp,
+      Quotient.lift_mk, identityTwArrObj,
+      twObjMk_dom, twObjMk_cod, eqToHom_refl,
+      (P.obj _).map_id, types_id_apply]
+    exact (Quotient.sound
+      (Relation.EqvGen.rel _ _
+        (lanDiagStep_to_initial_at_identity
+          P c ⟨fact, d⟩))).symm
+
+/-- The unit of the Kan extension is a bijection at
+each identity twisted arrow. This is the standard
+property of Kan extensions along fully faithful
+functors: `iota* ∘ Lan_iota ≅ id`. -/
+theorem lanDiagUnitApp_bijective
+    (P : Cᵒᵖ ⥤ C ⥤ Type w₁) (c : C) :
+    Function.Bijective
+      (lanDiagUnitApp P
+        (identityTwArrObj C c)) :=
+  ⟨fun _ _ h =>
+    (lanDiagUnitInvApp_comp_unitApp P c _).symm.trans
+      (congrArg (lanDiagUnitInvApp P c) h |>.trans
+        (lanDiagUnitInvApp_comp_unitApp P c _)),
+   fun q => ⟨lanDiagUnitInvApp P c q,
+    lanDiagUnitApp_comp_invApp P c q⟩⟩
+
 end DiagonalizationMonad
 
 end GebLean
