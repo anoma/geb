@@ -4,6 +4,10 @@ import GebLean.ComprehensiveWeighted
 import GebLean.Factorization
 import GebLean.Utilities.TwistedArrow
 import GebLean.Utilities.TwArrPresheaf
+import Mathlib.CategoryTheory.Limits.Shapes.Terminal
+import Mathlib.CategoryTheory.Limits.Shapes.BinaryProducts
+import Mathlib.CategoryTheory.Limits.Preserves.FunctorCategory
+import Mathlib.CategoryTheory.Adjunction.Limits
 
 /-!
 # Paranatural Topos
@@ -328,5 +332,278 @@ def IsDiagDeterminedEverywhere :=
     IsDiagDetermined F tw
 
 end DiagDetermined
+
+section EndoProfLimits
+
+open CategoryTheory.Limits
+
+/-!
+## Topos operations in EndoProf
+
+`EndoProf` has products and a terminal object.
+Equalizers do not exist in general: the diagonal
+restriction `{d ∈ F(c,c) | α_c(d) = β_c(d)}` cannot
+extend to off-diagonal entries because the profunctor
+actions may not preserve the equalizer condition.
+-/
+
+universe w₃
+
+variable (C : Type u) [Category.{v} C]
+
+/-- The unit endoprofunctor, constant at `PUnit`.
+Terminal object in `EndoProf`. -/
+def unitEndoProf : Cᵒᵖ ⥤ C ⥤ Type w₃ :=
+  (Functor.const Cᵒᵖ).obj
+    ((Functor.const C).obj PUnit.{w₃ + 1})
+
+variable {C}
+variable (F : Cᵒᵖ ⥤ C ⥤ Type w₃)
+
+/-- The unique paranatural transformation from any
+endoprofunctor to the unit endoprofunctor. -/
+def endoProfToTerminal :
+    Paranat F (unitEndoProf C) where
+  app _ _ := PUnit.unit
+  paranatural _ _ _ _ _ _ := rfl
+
+theorem endoProfToTerminal_unique
+    (α : Paranat F (unitEndoProf C)) :
+    α = endoProfToTerminal F := by
+  apply Paranat.ext
+  funext I d
+  exact match α.app I d with | PUnit.unit => rfl
+
+instance endoProfToTerminalUnique
+    (G : Cᵒᵖ ⥤ C ⥤ Type w₃) :
+    @Unique (@Quiver.Hom _
+      endoProfCategory.toQuiver G (unitEndoProf C))
+    where
+  default := endoProfToTerminal G
+  uniq α := (endoProfToTerminal_unique G α).symm
+
+def endoProfTerminal_isTerminal :
+    @IsTerminal (Cᵒᵖ ⥤ C ⥤ Type w₃)
+      endoProfCategory (unitEndoProf C) :=
+  @IsTerminal.ofUnique _ endoProfCategory _
+    (fun G => endoProfToTerminalUnique G)
+
+variable (G : Cᵒᵖ ⥤ C ⥤ Type w₃)
+
+/-- The pointwise product of two endoprofunctors.
+`(prodEndoProf F G)(a, b) = F(a, b) × G(a, b)`,
+with componentwise covariant and contravariant
+actions. -/
+def prodEndoProf : Cᵒᵖ ⥤ C ⥤ Type w₃ where
+  obj a :=
+    { obj := fun b =>
+        (F.obj a).obj b × (G.obj a).obj b
+      map := fun f p =>
+        ((F.obj a).map f p.1,
+          (G.obj a).map f p.2)
+      map_id := by
+        intro b; funext ⟨x, y⟩
+        exact Prod.ext
+          (congrFun ((F.obj a).map_id b) x)
+          (congrFun ((G.obj a).map_id b) y)
+      map_comp := by
+        intro b₁ b₂ b₃ f g; funext ⟨x, y⟩
+        exact Prod.ext
+          (congrFun ((F.obj a).map_comp f g) x)
+          (congrFun ((G.obj a).map_comp f g) y) }
+  map {a₁ a₂} h :=
+    { app := fun b p =>
+        ((F.map h).app b p.1,
+          (G.map h).app b p.2)
+      naturality := by
+        intro b₁ b₂ f; funext ⟨x, y⟩
+        exact Prod.ext
+          (congrFun ((F.map h).naturality f) x)
+          (congrFun
+            ((G.map h).naturality f) y) }
+  map_id := by
+    intro a; ext b ⟨x, y⟩
+    · change (F.map (𝟙 a)).app b x = x
+      simp
+    · change (G.map (𝟙 a)).app b y = y
+      simp
+  map_comp := by
+    intro a₁ a₂ a₃ h₁ h₂; ext b ⟨x, y⟩
+    · change (F.map (h₁ ≫ h₂)).app b x =
+        (F.map h₂).app b ((F.map h₁).app b x)
+      simp [Functor.map_comp]
+    · change (G.map (h₁ ≫ h₂)).app b y =
+        (G.map h₂).app b ((G.map h₁).app b y)
+      simp [Functor.map_comp]
+
+/-- First projection from the product endoprofunctor. -/
+def endoProfFst :
+    Paranat (prodEndoProf F G) F where
+  app _ d := d.1
+  paranatural _ _ _ _ _ h :=
+    congrArg Prod.fst h
+
+/-- Second projection from the product
+endoprofunctor. -/
+def endoProfSnd :
+    Paranat (prodEndoProf F G) G where
+  app _ d := d.2
+  paranatural _ _ _ _ _ h :=
+    congrArg Prod.snd h
+
+variable {F G}
+variable {H : Cᵒᵖ ⥤ C ⥤ Type w₃}
+
+/-- Pairing of two paranatural transformations into the
+product endoprofunctor. -/
+def endoProfPair
+    (α : Paranat H F) (β : Paranat H G) :
+    Paranat H (prodEndoProf F G) where
+  app I d := (α.app I d, β.app I d)
+  paranatural I₀ I₁ f d₀ d₁ h :=
+    Prod.ext
+      (α.paranatural I₀ I₁ f d₀ d₁ h)
+      (β.paranatural I₀ I₁ f d₀ d₁ h)
+
+@[simp]
+theorem endoProfPair_fst
+    (α : Paranat H F) (β : Paranat H G) :
+    Paranat.comp (endoProfPair α β)
+      (endoProfFst F G) = α := by
+  apply Paranat.ext; rfl
+
+@[simp]
+theorem endoProfPair_snd
+    (α : Paranat H F) (β : Paranat H G) :
+    Paranat.comp (endoProfPair α β)
+      (endoProfSnd F G) = β := by
+  apply Paranat.ext; rfl
+
+theorem endoProfPair_unique
+    (α : Paranat H (prodEndoProf F G)) :
+    α = endoProfPair
+      (Paranat.comp α (endoProfFst F G))
+      (Paranat.comp α (endoProfSnd F G)) := by
+  apply Paranat.ext
+  funext I d
+  exact (Prod.mk.eta).symm
+
+/-!
+The proofs `endoProfPair_fst`, `endoProfPair_snd`,
+and `endoProfPair_unique` establish the universal
+property of binary products in `EndoProf` at the
+level of `Paranat` morphisms: `prodEndoProf F G`
+together with projections `endoProfFst` and
+`endoProfSnd` satisfies the unique factorization
+property.
+-/
+
+end EndoProfLimits
+
+section ProfOnTwArrPreservesLimits
+
+open CategoryTheory.Limits
+
+/-!
+## Limit preservation by profunctorOnTwistedArrowFunctor
+
+`profunctorOnTwistedArrowFunctor` decomposes as
+`Functor.uncurry ⋙ (whiskeringLeft ...).obj F`.
+`uncurry` is one half of the currying equivalence,
+hence preserves limits. `whiskeringLeft` preserves
+limits when the target category has the relevant
+limits. The composition preserves limits.
+-/
+
+variable {D : Type*} [Category D]
+variable {J : Type*} [Category J]
+
+instance uncurry_preservesLimitsOfShape
+    [HasLimitsOfShape J D] :
+    PreservesLimitsOfShape J
+      (Functor.uncurry
+        (C := Cᵒᵖ) (D := C) (E := D)) :=
+  show PreservesLimitsOfShape J
+    Functor.currying.functor from inferInstance
+
+instance whiskeringLeftTwForget_preservesLimitsOfShape
+    [HasLimitsOfShape J D] :
+    PreservesLimitsOfShape J
+      ((Functor.whiskeringLeft
+        (TwistedArrow C) (Cᵒᵖ × C) D).obj
+        (twistedArrowForget C)) :=
+  inferInstance
+
+instance profOnTwArr_preservesLimitsOfShape
+    [HasLimitsOfShape J D] :
+    PreservesLimitsOfShape J
+      (profunctorOnTwistedArrowFunctor C
+        (D := D)) := by
+  unfold profunctorOnTwistedArrowFunctor
+  infer_instance
+
+end ProfOnTwArrPreservesLimits
+
+section Equalizers
+
+/-!
+## Lack of equalizers in EndoProf
+
+The equalizer of two paranatural transformations
+`α, β : Paranat F G` would need a subprofunctor of `F`
+whose diagonal is `{d ∈ F(c,c) | α(c)(d) = β(c)(d)}`
+and which is closed under the profunctor actions. The
+profunctor actions can map off-diagonal elements back
+to the diagonal via `(F.obj (op a)).map f : F(a,b) →
+F(a,a)` when `f : b ⟶ a`, or `(F.map g.op).app a :
+F(b,a) → F(a,a)` when `g : a ⟶ b`. The resulting
+diagonal elements may not lie in the equalizer.
+-/
+
+universe w₄
+
+variable {C : Type u} [Category.{v} C]
+variable {F G : Cᵒᵖ ⥤ C ⥤ Type w₄}
+
+/-- The diagonal equalizer of two paranatural
+transformations at an object `I`. Elements of
+`diagApp F I` on which `α` and `β` agree. -/
+def diagEqualizer
+    (α β : Paranat F G) (I : C) : Type w₄ :=
+  { d : diagApp F I // α.app I d = β.app I d }
+
+/-- The covariant action `(F.obj (op a)).map f` for
+`f : b ⟶ a` sends `F(a,b) → F(a,a)`. For the
+diagonal equalizer to extend to a subprofunctor,
+the image of every element of `F(a,b)` under this
+map must land in `diagEqualizer α β a`. -/
+def EqualizerClosedUnderCov
+    (α β : Paranat F G) : Prop :=
+  ∀ (a b : C) (f : b ⟶ a)
+    (x : (F.obj (Opposite.op a)).obj b),
+    α.app a ((F.obj (Opposite.op a)).map f x) =
+    β.app a ((F.obj (Opposite.op a)).map f x)
+
+/-- The contravariant action `(F.map g.op).app a` for
+`g : a ⟶ b` sends `F(b,a) → F(a,a)`. For the
+diagonal equalizer to extend to a subprofunctor,
+the image of every element of `F(b,a)` under this
+map must land in `diagEqualizer α β a`. -/
+def EqualizerClosedUnderContra
+    (α β : Paranat F G) : Prop :=
+  ∀ (a b : C) (g : a ⟶ b)
+    (x : (F.obj (Opposite.op b)).obj a),
+    α.app a ((F.map g.op).app a x) =
+    β.app a ((F.map g.op).app a x)
+
+/-- The conjunction of closure under both the covariant
+and contravariant actions. When this holds, the diagonal
+equalizer extends to a subprofunctor of `F`. -/
+def EqualizerWellDefined
+    (α β : Paranat F G) : Prop :=
+  EqualizerClosedUnderCov α β ∧
+    EqualizerClosedUnderContra α β
+
+end Equalizers
 
 end GebLean

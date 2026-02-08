@@ -2,7 +2,7 @@
 
 ## Status
 
-Phase 2a in progress. Assembly functor formalized.
+Phase 2b done. Phase 2c next.
 
 ## Question
 
@@ -159,15 +159,29 @@ non-faithful functor `p : I -> C` sending
 
 ### Phase 2b: Analyze topos operations
 
-In `ParanaturalTopos.lean`, try to construct:
+**Done**. In `ParanaturalTopos.lean`:
 
-1. **Limits** of profunctors with paranaturals
-   (expected to work)
-2. **Colimits** (identify where they fail)
-3. **Internal hom / exponential** (expected to fail for
-   all profunctors; identify what goes wrong)
-4. Use the failure of (3) to identify the constraint
-   on profunctors needed for closure
+1. **Terminal object**: `unitEndoProf` (constant PUnit
+   profunctor), with `endoProfTerminal_isTerminal`.
+2. **Binary products**: `prodEndoProf F G` (pointwise
+   product), with projections `endoProfFst/Snd`, pairing
+   `endoProfPair`, and universal property proofs
+   `endoProfPair_fst/snd/unique`.
+3. **Limit preservation**: `profOnTwArr_preservesLimitsOfShape`
+   -- `profunctorOnTwistedArrowFunctor` preserves limits
+   of any shape `J` when `D` has limits of shape `J`.
+   Uses `show ... from inferInstance` to bridge the
+   definitional equality `Functor.uncurry =
+   Functor.currying.functor`.
+4. **Equalizers**: `diagEqualizer α β I` is the
+   diagonal equalizer subtype. `EqualizerClosedUnderCov`
+   and `EqualizerClosedUnderContra` capture the conditions
+   under which the covariant/contravariant actions bring
+   off-diagonal elements back to the diagonal equalizer.
+   `EqualizerWellDefined` is their conjunction. These
+   conditions do not hold in general but might
+   hold for diagonally determined profunctors --
+   we need to investigate that.
 
 ### Phase 2c: Investigate the diagonalization monad
 
