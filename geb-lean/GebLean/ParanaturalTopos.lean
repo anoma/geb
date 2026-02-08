@@ -617,6 +617,122 @@ def EqualizerWellDefined
   EqualizerClosedUnderCov α β ∧
     EqualizerClosedUnderContra α β
 
+/-- The covariant action of `G` away from the diagonal
+is injective: for every `a : C` and `g : a ⟶ b`, the
+map `(G.obj (op a)).map g : G(a, a) → G(a, b)` is
+injective. -/
+def CovActionInjective (G : Cᵒᵖ ⥤ C ⥤ Type w₄) :
+    Prop :=
+  ∀ (a b : C) (g : a ⟶ b),
+    Function.Injective ((G.obj (Opposite.op a)).map g)
+
+/-- Naturality of the contravariant action provides
+`DiagCompat` for the pair of elements obtained by
+applying the covariant and contravariant actions to an
+off-diagonal element. Given `x ∈ F(b, a)` and
+`g : a ⟶ b`, the contravariant transport
+`(F.map g.op).app a x ∈ F(a, a)` and covariant
+transport `(F.obj (op b)).map g x ∈ F(b, b)` satisfy
+`DiagCompat F a b g`. -/
+theorem diagCompat_of_offDiag
+    (a b : C) (g : a ⟶ b)
+    (x : (F.obj (Opposite.op b)).obj a) :
+    DiagCompat F a b g
+      ((F.map g.op).app a x)
+      ((F.obj (Opposite.op b)).map g x) := by
+  simp only [DiagCompat]
+  exact (congrFun ((F.map g.op).naturality g) x).symm
+
+/-- Variant of `diagCompat_of_offDiag` with the
+morphism reversed. Given `x ∈ F(a, b)` and
+`f : b ⟶ a`, the contravariant transport
+`(F.map f.op).app b x ∈ F(b, b)` and covariant
+transport `(F.obj (op a)).map f x ∈ F(a, a)` satisfy
+`DiagCompat F b a f`. -/
+theorem diagCompat_of_offDiag'
+    (a b : C) (f : b ⟶ a)
+    (x : (F.obj (Opposite.op a)).obj b) :
+    DiagCompat F b a f
+      ((F.map f.op).app b x)
+      ((F.obj (Opposite.op a)).map f x) := by
+  simp only [DiagCompat]
+  exact (congrFun ((F.map f.op).naturality f) x).symm
+
+/-- The contravariant action of `G` away from the
+diagonal is injective: for every `a : C` and
+`f : b ⟶ a`, the map
+`(G.map f.op).app a : G(a, a) → G(b, a)` is
+injective. -/
+def ContraActionInjective
+    (G : Cᵒᵖ ⥤ C ⥤ Type w₄) : Prop :=
+  ∀ (a b : C) (f : b ⟶ a),
+    Function.Injective ((G.map f.op).app a)
+
+/-- When `G`'s covariant action is injective at the
+diagonal, covariant closure of the equalizer implies
+contravariant closure. The proof applies paranaturality
+of `α` and `β` to the `DiagCompat` pair from
+`diagCompat_of_offDiag`, uses `EqualizerClosedUnderCov`
+to equate `α` and `β` on the covariant transport, and
+concludes via injectivity. -/
+theorem covClosed_of_covInjective
+    (α β : Paranat F G)
+    (hG : CovActionInjective G)
+    (hcov : EqualizerClosedUnderCov α β) :
+    EqualizerClosedUnderContra α β := by
+  intro a b g x
+  have hcompat := diagCompat_of_offDiag (F := F) a b g x
+  have hα := α.paranatural a b g _ _ hcompat
+  have hβ := β.paranatural a b g _ _ hcompat
+  have hd₁ : α.app b ((F.obj (Opposite.op b)).map g x)
+      = β.app b ((F.obj (Opposite.op b)).map g x) :=
+    hcov b a g x
+  simp only [DiagCompat] at hα hβ
+  have heq : (G.obj (Opposite.op a)).map g (α.app a
+      ((F.map g.op).app a x))
+      = (G.obj (Opposite.op a)).map g (β.app a
+        ((F.map g.op).app a x)) := by
+    rw [hα, hβ, hd₁]
+  exact hG a b g heq
+
+/-- When `G`'s contravariant action is injective at the
+diagonal, contravariant closure of the equalizer implies
+covariant closure. Symmetric to
+`covClosed_of_covInjective`. -/
+theorem contraClosed_of_contraInjective
+    (α β : Paranat F G)
+    (hG : ContraActionInjective G)
+    (hcontra : EqualizerClosedUnderContra α β) :
+    EqualizerClosedUnderCov α β := by
+  intro a b f x
+  have hcompat :=
+    diagCompat_of_offDiag' (F := F) a b f x
+  have hα := α.paranatural b a f _ _ hcompat
+  have hβ := β.paranatural b a f _ _ hcompat
+  have hd₀ :
+      α.app b ((F.map f.op).app b x)
+      = β.app b ((F.map f.op).app b x) :=
+    hcontra b a f x
+  simp only [DiagCompat] at hα hβ
+  have heq : (G.map f.op).app a
+      (α.app a ((F.obj (Opposite.op a)).map f x))
+      = (G.map f.op).app a
+        (β.app a ((F.obj (Opposite.op a)).map f x)) := by
+    rw [← hα, ← hβ, hd₀]
+  exact hG a b f heq
+
+/-- When both actions of `G` are injective away from the
+diagonal, the two equalizer closure conditions are
+equivalent. -/
+theorem equalizerClosure_iff_of_bothInjective
+    (α β : Paranat F G)
+    (hcov : CovActionInjective G)
+    (hcontra : ContraActionInjective G) :
+    EqualizerClosedUnderCov α β ↔
+      EqualizerClosedUnderContra α β :=
+  ⟨covClosed_of_covInjective α β hcov,
+    contraClosed_of_contraInjective α β hcontra⟩
+
 end Equalizers
 
 section DiagDeterminedProf
@@ -797,8 +913,15 @@ on this `d'`.
 Thus `EqualizerClosedUnderCov` and
 `EqualizerClosedUnderContra` remain independent
 conditions, not implied by diag-determination.
-Thus `DiagDetProf` has a terminal object but may lack both
+`DiagDetProf` has a terminal object but may lack both
 products and equalizers from `EndoProf`.
+
+However, `covClosed_of_covInjective` and
+`contraClosed_of_contraInjective` show that when G's
+actions away from the diagonal are injective, the two
+closure conditions imply each other. With both
+injectivity conditions, they are equivalent
+(`equalizerClosure_iff_of_bothInjective`).
 -/
 
 end DiagDetEqualizers

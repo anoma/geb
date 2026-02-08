@@ -2,7 +2,30 @@
 
 ## Status
 
-Phase 2b+ done. Phase 2c next.
+Phase 2b+ done. Phase 2c (research) in progress.
+
+### Current findings (Phase 2c)
+
+Equalizer closure conditions: `EqualizerClosedUnderCov`
+and `EqualizerClosedUnderContra` are independent in
+general, but `covClosed_of_covInjective` and
+`contraClosed_of_contraInjective` show they imply each
+other when the target profunctor G has injective
+actions away from the diagonal. With both injectivity
+conditions, they are equivalent.
+
+This does not yet yield a free-standing equalizer
+existence result: at least one closure condition must
+still be established independently.
+
+The inclusion `iota : C -> Tw(C)` via `c |-> id_c`
+is NOT functorial (a Tw(C) morphism from id_c to id_d
+requires both `d -> c` and `c -> d` with
+`(d -> c) >> (c -> d) = id_d`). The full subcategory
+`I` of Tw(C) on identity arrows has section-retraction
+pairs as morphisms, not C-morphisms. The Kan extension
+formulation still applies with `iota` as the full
+subcategory inclusion, but `I` is not isomorphic to `C`.
 
 ## Question
 
