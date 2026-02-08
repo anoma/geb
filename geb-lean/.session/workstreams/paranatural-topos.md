@@ -18,6 +18,7 @@ for `Functor.LeftExtension.IsPointwiseLeftKanExtension`.
 `lanDiagUnitApp P (identityTwArrObj C c)` is a
 bijection, i.e., `iota* ∘ Lan_iota ≅ id`. The
 proof uses:
+
 - `lanDiagStep_to_initial_at_identity`: every
   decorated factorisation of `𝟙 c` is equivalent
   (via `LanDiagStep`) to an `initial`-based one,
