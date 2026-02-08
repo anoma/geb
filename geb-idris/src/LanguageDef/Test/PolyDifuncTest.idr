@@ -1470,6 +1470,101 @@ npnpDoubleApply x =
   npnpApplyOnce x . npnpApplyOnce x
 
 ----------------------------------------------------
+---- "ApplyOnce" PolyProfDiNTar Formula ----
+----------------------------------------------------
+
+-- The "applyOnce" paranatural expressed as a
+-- PolyProfDiNTar formula (direction trees in the
+-- free monad). Non-trivial: paranatural but NOT
+-- natural (uses the algebra twice).
+--
+-- Position map: identity.
+-- Direction nat trans at FZ: trivial (Void source).
+-- Direction nat trans at FS FZ:
+--   Left ()  -> one-step tree (pass-through)
+--   Right () -> two-step tree h(L, const(h(R,_)))
+
+-- One-step tree for Left () at FS FZ.
+-- Fold gives: h(Left, \() => leaf) = h(Left, ds).
+public export
+npnpAO1TreeL :
+  PolyFuncFreeMPos
+    (NegPosMaybePPdirPF (FS FZ))
+npnpAO1TreeL =
+  InPFM (PFCom (Left ()))
+    (\() =>
+      InPFM (PFVar ()) (\v => void v))
+
+-- Two-step tree for Right () at FS FZ.
+-- Fold gives: h(Left, const(h(Right, absurd))).
+public export
+npnpAO1TreeR :
+  PolyFuncFreeMPos
+    (NegPosMaybePPdirPF (FS FZ))
+npnpAO1TreeR =
+  InPFM (PFCom (Left ()))
+    (\() =>
+      InPFM (PFCom (Right ()))
+        (\v => void v))
+
+-- Position map of direction nat trans at FS FZ.
+public export
+npnpAO1DirFSonPos :
+  fst (NegPosMaybePPdirPF (FS FZ)) ->
+  PolyFuncFreeMPos
+    (NegPosMaybePPdirPF (FS FZ))
+npnpAO1DirFSonPos (Left ()) =
+  npnpAO1TreeL
+npnpAO1DirFSonPos (Right ()) =
+  npnpAO1TreeR
+
+-- Direction backmap at FS FZ.
+-- Left (): tree dirs (Unit,Unit) -> Unit.
+-- Right (): tree dirs (Unit,(Void,...)) -> Void
+-- (uninhabited source: inner DPair Void).
+public export
+npnpAO1DirFSonDir :
+  (k : fst (NegPosMaybePPdirPF (FS FZ))) ->
+  PolyFuncFreeMDir
+    (NegPosMaybePPdirPF (FS FZ))
+    (npnpAO1DirFSonPos k) ->
+  snd (NegPosMaybePPdirPF (FS FZ)) k
+npnpAO1DirFSonDir (Left ()) _ = ()
+npnpAO1DirFSonDir (Right ())
+  (MkDPair () dv) = absurd (fst dv)
+
+-- Direction nat trans at FS FZ.
+public export
+npnpAO1DirFS :
+  PolyNatTrans
+    (NegPosMaybePPdirPF (FS FZ))
+    (PolyFuncFreeM
+      (NegPosMaybePPdirPF (FS FZ)))
+npnpAO1DirFS =
+  (npnpAO1DirFSonPos ** npnpAO1DirFSonDir)
+
+-- Direction nat trans at each position.
+public export
+npnpAO1DirNT :
+  (i : NegPosMaybePPpos) ->
+  PolyNatTrans
+    (NegPosMaybePPdirPF i)
+    (PolyFuncFreeM
+      (NegPosMaybePPdirPF i))
+npnpAO1DirNT FZ =
+  (\k => absurd k ** \k, _ => absurd k)
+npnpAO1DirNT (FS FZ) = npnpAO1DirFS
+
+-- Full PolyProfDiNTar formula for applyOnce.
+-- Non-trivial: paranatural but NOT natural.
+public export
+NpnpApplyOnceDiNTar :
+  PolyProfDiNTar NegPosMaybePolyProf
+    NegPosMaybePolyProf
+NpnpApplyOnceDiNTar =
+  (\i => i ** npnpAO1DirNT)
+
+----------------------------------------------------
 ---- Algebra Extraction Helpers ----
 ----------------------------------------------------
 
@@ -1555,6 +1650,34 @@ polyDifuncTest = do
         ++ show (NpnpAlgConst h)
         ++ " (expect 42)")
     _ => putStrLn "ERROR: id.id changed pos"
+  -- ApplyOnce formula tests (runtime).
+  -- Tests the hand-constructed PolyProfDiNTar
+  -- formula against expected applyOnce behavior.
+  let ao1F = NpnpApplyOnceDiNTar
+  let ao1S42 = InterpPolyProfDiNT
+        {pp=NegPosMaybePolyProf}
+        {qq=NegPosMaybePolyProf}
+        ao1F Nat NpnpTestElemS42
+  case ao1S42 of
+    (FS FZ ** h) => do
+      putStrLn ("ao1(S,42) const = "
+        ++ show (NpnpAlgConst h)
+        ++ " (expect 43)")
+      putStrLn ("ao1(S,42) func 5 = "
+        ++ show (NpnpAlgFunc h 5)
+        ++ " (expect 6)")
+    _ => putStrLn "ERROR: ao1 changed pos"
+  -- ApplyOnce at (S,0) element.
+  let ao1S0 = InterpPolyProfDiNT
+        {pp=NegPosMaybePolyProf}
+        {qq=NegPosMaybePolyProf}
+        ao1F Nat NpnpTestElemS0
+  case ao1S0 of
+    (FS FZ ** h) => do
+      putStrLn ("ao1(S,0) const = "
+        ++ show (NpnpAlgConst h)
+        ++ " (expect 1)")
+    _ => putStrLn "ERROR: ao1 S0 changed pos"
   putStrLn ""
   putStrLn "--------------------"
   putStrLn "End PolyDifuncTest."

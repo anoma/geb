@@ -604,21 +604,16 @@ freeMDirIsoFwd pp (InPFM (PFVar ()) dm) a dir =
   -- FreeMDir at PFVar is Unit
   -- InterpFreeMDirPF at PFVar is InterpPolyFunc PFTerminalArena a = (() ** Void -> a)
   (() ** voidF a)
-freeMDirIsoFwd pp (InPFM (PFCom i) dm) a (d ** recDir) =
-  -- d : InterpPolyFunc (ppDirPF pp i) a
-  -- recDir : recursive direction at dm (InterpPFMap ... (const ()) d)
-  -- The Unit-mapped version of d determines which subtree to recurse into
-  let dUnit : InterpPolyFunc (ppDirPF pp i) Unit
-      dUnit = InterpPFMap (ppDirPF pp i) (const ()) d
-      -- d has position fst d and direction function snd d : pfDir -> a
-      p : pfPos (ppDirPF pp i)
-      p = fst d
-      -- The recursive call is at dm (p ** const ())
-      recResult : InterpFreeMDirPF pp (dm (p ** const ())) a
-      recResult = freeMDirIsoFwd pp (dm (p ** const ())) a recDir
-  in ((p ** fst recResult) ** \dir => case dir of
-        Left pdir => snd d pdir
-        Right recD => snd recResult recD)
+freeMDirIsoFwd pp (InPFM (PFCom i) dm) a
+  ((p ** df) ** recDir)
+    with (freeMDirIsoFwd pp
+      (dm (p ** const ())) a recDir)
+  freeMDirIsoFwd pp (InPFM (PFCom i) dm) a
+    ((p ** df) ** recDir) | recResult =
+    ((p ** fst recResult) **
+     \dir => case dir of
+       Left pdir => df pdir
+       Right recD => snd recResult recD)
 
 -- Backward direction: InterpFreeMDirPF -> FreeMDir at mapped position
 public export
@@ -628,18 +623,12 @@ freeMDirIsoBwd : (pp : PolyProf) -> (pos : ppFreeMPosUnit pp) -> (a : Type) ->
 freeMDirIsoBwd pp (InPFM (PFVar ()) dm) a dir =
   -- InterpFreeMDirPF at PFVar is (() ** Void -> a), FreeMDir is Unit
   ()
-freeMDirIsoBwd pp (InPFM (PFCom i) dm) a ((p ** fp) ** dirFn) =
-  -- p : pfPos (ppDirPF pp i)
-  -- fp : pfPos (FreeMDirPF pp (dm (p ** const ())))
-  -- dirFn : Either (pfDir (ppDirPF pp i) p) (pfDir (FreeMDirPF ...) fp) -> a
-  let d : InterpPolyFunc (ppDirPF pp i) a
-      d = (p ** \pdir => dirFn (Left pdir))
-      recInput : InterpFreeMDirPF pp (dm (p ** const ())) a
-      recInput = (fp ** \recD => dirFn (Right recD))
-      recDir : PolyFuncFreeMDir (ppToPolyFunc pp a)
-                 (ppFreeMPosMap pp a (dm (p ** const ())))
-      recDir = freeMDirIsoBwd pp (dm (p ** const ())) a recInput
-  in (d ** recDir)
+freeMDirIsoBwd pp (InPFM (PFCom i) dm) a
+  ((p ** fp) ** dirFn) =
+  ((p ** \pdir => dirFn (Left pdir)) **
+   freeMDirIsoBwd pp
+     (dm (p ** const ())) a
+     (fp ** \recD => dirFn (Right recD)))
 
 ------------------------------------------------------------
 ---- Summary: Free Monad Direction Isomorphism ----
@@ -1202,19 +1191,17 @@ polyProfFamilyToMu : FunExt ->
   (0 wedge : PolyProfMuPHOASWedge pp el) ->
   PolyProfMu pp
 polyProfFamilyToMu fext {pp} el wedge =
-  let pos : ppFreeMPosUnit pp
-      pos = fst (el Unit)
-      eta : (x : Type) ->
-        InterpPolyFunc (FreeMDirPF pp pos) x -> x
-      eta x elem =
-        snd (el x)
-          (replace
-            {p=PolyFuncFreeMDir (ppToPolyFunc pp x)}
-            (sym (wedge x))
-            (freeMDirIsoBwd pp pos x elem))
-  in (pos **
-      natTransToSection
-        {pf=FreeMDirPF pp pos} eta)
+  (fst (el Unit) **
+   natTransToSection
+     {pf=FreeMDirPF pp (fst (el Unit))}
+     (\x, elem =>
+       snd (el x)
+         (replace
+           {p=PolyFuncFreeMDir
+             (ppToPolyFunc pp x)}
+           (sym (wedge x))
+           (freeMDirIsoBwd pp
+             (fst (el Unit)) x elem))))
 
 ------------------------------------------------------------
 ------------------------------------------------------------
@@ -1477,23 +1464,46 @@ freeMDirIsoFwdBwd fext pp
   dpEq12 Refl (funExt (\v => absurd v))
 freeMDirIsoFwdBwd fext pp
   (InPFM (PFCom i) dm) a
-    ((p ** fp) ** dirFn) =
-  -- The PFCom case requires matching through the
-  -- recursive structure of freeMDirIsoFwd's
-  -- internal let binding. The IH (on dm (p ** const
-  -- ())) gives the sub-result equality, but the
-  -- outer freeMDirIsoFwd's computation is opaque to
-  -- rewrite. Would require refactoring
-  -- freeMDirIsoFwd to use a with-clause for the
-  -- recursive call to make the sub-expression
-  -- visible.
-  ?freeMDirIsoFwdBwd_com
+    ((p ** fp) ** dirFn)
+  -- Match the with-scrutinee from freeMDirIsoFwd
+  -- (the recursive call on the sub-position).
+  -- The proof eq connects the scrutinee to the
+  -- matched variable recResult. Combined with the
+  -- IH, this gives recResult = (fp ** ...).
+  with (freeMDirIsoFwd pp
+    (dm (p ** const ())) a
+    (freeMDirIsoBwd pp
+      (dm (p ** const ())) a
+      (fp ** \recD => dirFn (Right recD))))
+    proof eq
+  freeMDirIsoFwdBwd fext pp
+    (InPFM (PFCom i) dm) a
+      ((p ** fp) ** dirFn)
+        | recResult =
+    let 0 ih : (recResult =
+          (fp ** \recD => dirFn (Right recD)))
+        ih = trans (sym eq)
+          (freeMDirIsoFwdBwd fext pp
+            (dm (p ** const ())) a
+            (fp ** \recD =>
+              dirFn (Right recD)))
+    in rewrite ih in
+       dpEq12 Refl
+         (funExt (\dir => case dir of
+           Left _ => Refl
+           Right _ => Refl))
 
--- freeMDirIsoFwd . freeMDirIsoBwd . freeMDirIsoFwd
--- = freeMDirIsoFwd (the weaker retract property).
+-- freeMDirIsoBwd . freeMDirIsoFwd = id
+-- The full inverse direction of the direction
+-- isomorphism. Together with freeMDirIsoFwdBwd,
+-- establishes a genuine isomorphism (not just
+-- retraction) between PolyFuncFreeMDir and
+-- InterpFreeMDirPF.
 --
--- This follows from freeMDirIsoFwdBwd applied to
--- the image of freeMDirIsoFwd.
+-- PFVar: dir : Unit, both maps are trivial.
+-- PFCom: freeMDirIsoBwd reconstructs with eta-
+-- expanded direction functions. We rewrite away
+-- the eta-expansion, then use cong + IH.
 public export
 0 freeMDirIsoBwdFwd : FunExt ->
   (pp : PolyProf) ->
@@ -1502,13 +1512,32 @@ public export
   (dir : PolyFuncFreeMDir
     (ppToPolyFunc pp a)
     (ppFreeMPosMap pp a pos)) ->
-  freeMDirIsoFwd pp pos a
-    (freeMDirIsoBwd pp pos a
-      (freeMDirIsoFwd pp pos a dir)) =
-  freeMDirIsoFwd pp pos a dir
-freeMDirIsoBwdFwd fext pp pos a dir =
-  freeMDirIsoFwdBwd fext pp pos a
-    (freeMDirIsoFwd pp pos a dir)
+  freeMDirIsoBwd pp pos a
+    (freeMDirIsoFwd pp pos a dir) = dir
+freeMDirIsoBwdFwd fext pp
+  (InPFM (PFVar ()) dm) a () = Refl
+freeMDirIsoBwdFwd fext pp
+  (InPFM (PFCom i) dm) a
+  ((p ** df) ** recDir)
+  with (freeMDirIsoFwd pp
+    (dm (p ** const ())) a recDir)
+    proof eq
+  freeMDirIsoBwdFwd fext pp
+    (InPFM (PFCom i) dm) a
+    ((p ** df) ** recDir)
+      | (rp ** rd) =
+    rewrite
+      funExt
+        {f=(\pdir => df pdir)} {g=df}
+        (\_ => Refl)
+    in rewrite
+      funExt
+        {f=(\recD => rd recD)} {g=rd}
+        (\_ => Refl)
+    in rewrite sym eq
+    in dpEq12 Refl
+      (freeMDirIsoBwdFwd fext pp
+        (dm (p ** const ())) a recDir)
 
 ------------------------------------------------------------
 ------------------------------------------------------------
@@ -1531,14 +1560,29 @@ public export
     (polyProfMuToFamilyWedge {pp} fext mu)
   = mu
 polyProfMuRoundTrip1 fext {pp} (pos ** sec) =
-  ?polyProfMuRoundTrip1_hole
+  rewrite ppFreeMPosMapUnit fext pp pos in
+  dpEq12 Refl (funExt (\i =>
+    cong
+      (sectionApply
+        {pf=FreeMDirPF pp pos} sec
+        (snd (FreeMDirPF pp pos) i))
+      (freeMDirIsoFwdBwd fext pp pos
+        (snd (FreeMDirPF pp pos) i)
+        (i ** id))))
 
 -- Round-trip 2: PHOAS+wedge -> Mu -> PHOAS = id
 --
--- At each type x, the position is ppFreeMPosMap pp x
--- (fst (el Unit)) = fst (el x) (by wedge). The
--- direction part follows from the canonical
--- round-trip and direction iso round-trip.
+-- Position: ppFreeMPosMap pp x (fst (el Unit))
+-- = fst (el x) by sym (wedge x).
+--
+-- Direction: requires naturality of the extracted
+-- eta, which depends on parametricity of el (the
+-- "free theorem" that polymorphic functions are
+-- natural). Not provable internally in Idris.
+-- The direction iso Bwd . Fwd = id
+-- (freeMDirIsoBwdFwd) is now proved, so this is
+-- the sole remaining obstacle.
+-- For now, this remains a proof obligation.
 public export
 0 polyProfMuRoundTrip2 : (fext : FunExt) ->
   {pp : PolyProf} ->
@@ -2577,9 +2621,10 @@ interpPolyProfDiNTCompIsPara
 -- The formula-level composition can be recovered
 -- by applying PolyProfDiNTFromPara to
 -- interpPolyProfDiNTComp with the paranaturality
--- proof above. The 0 annotation is forced by
--- pfSubstCataAlgHom_hole; once that proof is
--- completed, the 0 can be removed.
+-- proof above. The 0 annotation is inherent:
+-- polyProfDiNTisPara depends on pfSubstCataAlgHom
+-- which uses FunExt, forcing the entire chain
+-- to be 0-erased.
 public export
 0 polyProfDiNTComp :
   FunExt ->
