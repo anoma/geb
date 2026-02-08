@@ -1869,6 +1869,30 @@ def lanDiag_isPointwiseLan
           simp [Category.comp_id,
             Category.id_comp] }
 
+/-- At an identity arrow `twObjMk (𝟙 c)`, every
+decorated factorisation `⟨fact, d⟩` is related by a
+single `LanDiagStep` to
+`⟨initial, assemblyMapProf P _ ⟨fact, d⟩⟩`. The
+section-retraction pair is `(fact.ι, fact.π)`, which
+satisfies `fact.ι ≫ fact.π = 𝟙 c` since `fact`
+factorises `𝟙 c`. -/
+theorem lanDiagStep_to_initial_at_identity
+    (P : Cᵒᵖ ⥤ C ⥤ Type w₁) (c : C)
+    (x : DecFactSigma P (twObjMk (𝟙 c))) :
+    LanDiagStep P (twObjMk (𝟙 c)) x
+      ⟨Factorisation.initial,
+       assemblyMapProf P (twObjMk (𝟙 c)) x⟩ := by
+  obtain ⟨fact, d⟩ := x
+  refine ⟨fact.ι, fact.π, ?_, ?_, ?_, ?_⟩
+  · simp only [Factorisation.initial]
+    exact fact.ι_π
+  · simp only [Factorisation.initial,
+      Category.id_comp]
+  · simp only [Factorisation.initial, twObjMk_arr]
+    exact Category.comp_id _
+  · simp only [Factorisation.initial, twObjMk_arr,
+      assemblyMapProf]
+
 end DiagonalizationMonad
 
 end GebLean
