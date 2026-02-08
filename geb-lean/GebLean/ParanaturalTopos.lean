@@ -315,4 +315,18 @@ def IsDiagDetermined :=
 
 end AssemblyFunctor
 
+section DiagDetermined
+
+variable (C : Type u) [Category.{v} C]
+variable (F : TwistedArrow C ⥤ Cat.{w₁, w₂})
+
+/-- A `Cat`-valued functor `F` on the twisted arrow
+category is diagonally determined when the assembly
+functor is an equivalence at every twisted arrow. -/
+def IsDiagDeterminedEverywhere :=
+  ∀ (tw : TwistedArrow C),
+    IsDiagDetermined F tw
+
+end DiagDetermined
+
 end GebLean
