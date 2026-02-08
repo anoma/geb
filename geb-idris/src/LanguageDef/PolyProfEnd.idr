@@ -2132,6 +2132,17 @@ pfSubstCataIsAlgHom fext
         (pos ** dir) a elem)
   go (mpos ** d) = Refl
 
+-- Type family abbreviation:
+-- InterpPolyFunc (ppDirPF qq j) a, curried with
+-- the type parameter first so it can be used as
+-- a {p} argument for replace.
+public export
+ppDirIPF :
+  (qq : PolyProf) -> (a : Type) ->
+  ppPos qq -> Type
+ppDirIPF qq a j =
+  InterpPolyFunc (ppDirPF qq j) a
+
 -- Variant of dpEq12 using replace instead of
 -- rewrite. Given xeq : x = y and a proof that
 -- replace xeq px = py, conclude (x ** px) =
@@ -2224,6 +2235,18 @@ replaceIdByUip eq v =
   cong (\e => replace {p} e v)
     (uip {eq} {eq'=Refl})
 
+-- InterpPFMap as explicit DPair: unfolds
+-- InterpPFMap pf f el to (fst el ** f . snd el)
+-- by pattern matching on el.
+public export
+0 interpPFMapAsDPair :
+  {pf : PolyFunc} -> {a, b : Type} ->
+  (f : a -> b) ->
+  (el : InterpPolyFunc pf a) ->
+  InterpPFMap pf f el =
+  (fst el ** f . snd el)
+interpPFMapAsDPair f (pos ** dir) = Refl
+
 -- Replace commutes with InterpPFMap: transport
 -- and functorial map commute because InterpPFMap
 -- is defined via dpMapSnd (no pattern match on
@@ -2260,7 +2283,8 @@ polyProfDiNTComplete fext {pp} {qq}
   0 dirProof :
     (kds : InterpPolyFunc
       (ppDirPF qq
-        (fst (alpha Unit (i ** const ()))))
+        (fst (alpha Unit
+          (i ** const ()))))
       x) ->
     replace
       {p=(\j =>
@@ -2278,46 +2302,160 @@ polyProfDiNTComplete fext {pp} {qq}
       kds
   dirProof (k ** ds) =
     let
-      paraEq = para
-        (InterpPolyFuncFreeM
-          (ppDirPF pp i)
-          (snd (ppDirPF qq
-            (fst (alpha Unit
-              (i ** const ()))))
-            k))
-        x
-        (pfSubstCata ds (PFAlgFromAlg h))
+      posEq =
+        ppDiNTExtractPosEq
+          {pp} {qq}
+          alpha para i x h
+      peq = para _ x
+        (pfSubstCata ds
+          (PFAlgFromAlg h))
         (i ** PolyFreeAlgF
-          (ppDirPF pp i)
-          (snd (ppDirPF qq
-            (fst (alpha Unit
-              (i ** const ()))))
-            k))
+          (ppDirPF pp i) _)
         (i ** h)
         (dpEq12 Refl
           (funExt (\el =>
-            sym (pfSubstCataIsAlgHom
-              fext ds h el))))
-      etaEq = trans
-        (sym (interpPolyProfLmapEta qq
-          x x _ _
-          (alpha x (i ** h))))
-        (trans paraEq
-          (interpPolyProfRmapEta qq
-            _ _ x _
-            (alpha _ (i ** _))))
+            sym
+              (pfSubstCataIsAlgHom
+                fext ds h el))))
+      eeq = trans
+        (sym
+          (interpPolyProfLmapEta
+            qq x x _
+            (pfSubstCata ds
+              (PFAlgFromAlg h))
+            (alpha x (i ** h))))
+        (trans peq
+          (interpPolyProfRmapEta
+            qq _ _ x
+            (pfSubstCata ds
+              (PFAlgFromAlg h))
+            (alpha _
+              (i ** PolyFreeAlgF
+                (ppDirPF pp i)
+                _))))
     in
-    trans
-      (replaceFunApp
-        {p=(\j =>
-          InterpPolyFunc
-            (ppDirPF qq j) x)}
-        {b=x}
-        (ppDiNTExtractPosEq {pp} {qq}
-          alpha para i x h)
-        (snd (alpha x (i ** h)))
-        (k ** ds))
-      ?dir_hole4
+    -- s0: replaceFunApp
+    trans (replaceFunApp
+      {p=ppDirIPF qq x}
+      posEq
+      (snd (alpha x (i ** h)))
+      (k ** ds))
+    -- s1: bridge ds to g_k.InFMVar
+    (trans (cong
+      (\v =>
+        snd (alpha x (i ** h))
+          (replace {p=ppDirIPF qq x}
+            posEq v))
+      (dpEq12
+        {p=(\k' =>
+          snd (ppDirPF qq
+            (fst (alpha Unit
+              (i ** const ()))))
+            k' -> x)}
+        Refl
+        (funExt (\v =>
+          sym (pfSubstCataOnVar
+            {p=ppDirPF pp i}
+            ds (PFAlgFromAlg h)
+            v)))))
+    -- s2a: unfold InterpPFMap
+    (trans (cong
+      (\v =>
+        snd (alpha x (i ** h))
+          (replace {p=ppDirIPF qq x}
+            posEq v))
+      (sym
+        (interpPFMapAsDPair
+          (pfSubstCata ds
+            (PFAlgFromAlg h))
+          (k ** InFMVar
+            {p=ppDirPF pp i}))))
+    -- s2b: commute replace/PFMap
+    (trans (cong
+      (snd (alpha x (i ** h)))
+      (sym
+        (replaceInterpPFMapComm
+          {pf=ppDirPF qq}
+          posEq
+          (pfSubstCata ds
+            (PFAlgFromAlg h))
+          (k ** InFMVar
+            {p=ppDirPF pp i}))))
+    -- s3: paranaturality
+    (trans (dpEqApply eeq
+      (replace {p=ppDirIPF qq _}
+        posEq
+        (k ** InFMVar
+          {p=ppDirPF pp i})))
+    -- s4a: compose two replaces
+    (trans (cong
+      (\v =>
+        pfSubstCata ds
+          (PFAlgFromAlg h)
+          (snd (alpha _
+            (i ** PolyFreeAlgF
+              (ppDirPF pp i) _))
+            v))
+      (replaceTrans
+        {p=ppDirIPF qq _}
+        posEq (dpeq1 eeq)
+        (k ** InFMVar
+          {p=ppDirPF pp i})))
+    -- s4b: UIP for position eqs
+    (trans (cong
+      (\e =>
+        pfSubstCata ds
+          (PFAlgFromAlg h)
+          (snd (alpha _
+            (i ** PolyFreeAlgF
+              (ppDirPF pp i) _))
+            (replace
+              {p=ppDirIPF qq _}
+              e
+              (k ** InFMVar
+                {p=ppDirPF pp i}))))
+      (uip
+        {eq=trans posEq
+          (dpeq1 eeq)}
+        {eq'=ppDiNTExtractPosEq
+          {pp} {qq}
+          alpha para i _
+          (PolyFreeAlgF
+            (ppDirPF pp i) _)}))
+    -- s5: recover ek
+    (trans (cong
+      (pfSubstCata ds
+        (PFAlgFromAlg h))
+      (sym (replaceFunApp
+        {p=ppDirIPF qq _}
+        (ppDiNTExtractPosEq
+          {pp} {qq}
+          alpha para i _
+          (PolyFreeAlgF
+            (ppDirPF pp i) _))
+        (snd (alpha _
+          (i ** PolyFreeAlgF
+            (ppDirPF pp i) _)))
+        (k ** InFMVar
+          {p=ppDirPF pp i}))))
+    -- s6: pfSubstCata precomp
+    (trans (pfSubstCataPrecomp
+      fext ds (PFAlgFromAlg h)
+      (ppDiNTExtract {pp} {qq}
+        alpha para i k))
+    -- s7: unfold PFMap on ek
+    (cong
+      (pfSubstCata
+        {p=ppDirPF pp i}
+        {a=x} {b=x}
+        id (PFAlgFromAlg h))
+      (interpPFMapAsDPair
+        {pf=PolyFuncFreeM
+          (ppDirPF pp i)}
+        ds
+        (ppDiNTExtract {pp} {qq}
+          alpha para
+          i k)))))))))))
 
 ------------------------------------------------------------
 ------------------------------------------------------------
