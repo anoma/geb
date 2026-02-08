@@ -2,7 +2,7 @@
 
 ## Status
 
-Phase 2b+ done. Phase 2c (research) in progress.
+Phase 2c substantially complete.
 
 ### Completed (Phase 2c)
 
@@ -28,7 +28,76 @@ proof uses:
 - `lanDiagUnitInvApp_comp_unitApp` (left inverse)
   and `lanDiagUnitApp_comp_invApp` (right inverse).
 
+**Fixed-point characterization (formalized)**:
+
+- `IsLanDiagFixed P`: bijectivity of `lanDiagCounit`
+  at every twisted arrow.
+- `IsLanDiagFixed.isDiagDeterminedProf`: fixed points
+  are diag-determined (surjectivity half).
+- `isLanDiagFixed_iff`: `IsLanDiagFixed` is equivalent
+  to `IsDiagDeterminedProf` plus injectivity of the
+  counit.
+- `lanDiagCounit_bijective_at_identity`: the counit is
+  always bijective at identity arrows, establishing the
+  unit isomorphism `iota* . Lan_iota ≅ id` as a
+  corollary of the unit bijection.
+
+**Idempotence (mathematical)**:
+`Lan_iota . iota* . Lan_iota . iota* ≅ Lan_iota . iota*`
+follows from `iota* . Lan_iota ≅ id` (the unit
+isomorphism, formalized as `lanDiagUnitApp_bijective`
+and `lanDiagCounit_bijective_at_identity`). The
+idempotent monad `T = Lan_iota . iota*` has the
+property that `T . T ≅ T` via the middle isomorphism.
+Not formalized at the level of iterating `LanDiag`
+because `LanDiag` is defined for endoprofunctors, not
+Tw(C)-presheaves; doing so would require generalizing
+the Kan extension infrastructure.
+
+**Product comparison (formalized)**:
+
+- `lanDiagStep_fst`, `lanDiagStep_snd`: componentwise
+  projection of `LanDiagStep` on product profunctors.
+- `lanDiagProdComparison P Q tw`: the canonical map
+  from `LanDiag (prodEndoProf P Q) tw` to
+  `LanDiag P tw × LanDiag Q tw`.
+- `lanDiagCounit_prod_eq`: counit of the product
+  decomposes as individual counits on comparison
+  components.
+- `lanDiagProdComparison_surj_common_fact`: surjectivity
+  implies existence of a common factorisation for any
+  pair of quotient elements.
+
 ### Current findings (Phase 2c)
+
+**Lack of left-exactness**:
+`Lan_iota . iota*` does NOT preserve binary products.
+The product comparison map
+`lanDiagProdComparison P Q tw :
+  LanDiag (prodEndoProf P Q) tw ->
+  LanDiag P tw x LanDiag Q tw`
+sends `[<fact, (d_P, d_Q)>] |-> ([<fact, d_P>], [<fact, d_Q>])`.
+Surjectivity requires every pair `(q_P, q_Q)` to admit
+representatives sharing a common factorisation
+(`lanDiagProdComparison_surj_common_fact`).
+
+This fails when `twArr tw` is not an isomorphism:
+`isIso_of_lanDiagStep_initial_terminal` and
+`isIso_of_lanDiagStep_terminal_initial` show that a
+single `LanDiagStep` from an initial-based element to
+a terminal-based element (or vice versa) at `twObjMk f`
+implies `IsIso f`. For non-iso `f`, initial-based and
+terminal-based elements are in distinct connected
+components of the factorisation graph. The cross pair
+`([<initial, d_P>], [<terminal, d_Q>])` then has no
+common representative and is not in the image of the
+comparison map.
+
+Consequence: the diagonalization monad `Lan_iota . iota*`
+is NOT left-exact, so the fixed-point subcategory is
+NOT a Grothendieck topos via Giraud's theorem. This
+confirms and extends the Phase 2b+ finding that
+`DiagDetProf` lacks products.
 
 Equalizer closure conditions: `EqualizerClosedUnderCov`
 and `EqualizerClosedUnderContra` are independent in

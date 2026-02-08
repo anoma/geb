@@ -1968,6 +1968,251 @@ theorem lanDiagUnitApp_bijective
    fun q => ⟨lanDiagUnitInvApp P c q,
     lanDiagUnitApp_comp_invApp P c q⟩⟩
 
+section NotLeftExact
+
+variable {a b : C} (f : a ⟶ b)
+
+/-- A `LanDiagStep` from an initial-based element to
+a terminal-based element at `twObjMk f` yields an
+`IsIso f`. The step provides `s : b → a` and
+`r : a → b` with `s ≫ r = 𝟙 b`, `f ≫ s = 𝟙 a`,
+and `r = f`, from which `f ≫ s = 𝟙 a` and
+`s ≫ f = 𝟙 b`. -/
+theorem isIso_of_lanDiagStep_initial_terminal
+    (P : Cᵒᵖ ⥤ C ⥤ Type w₁)
+    {d₁ : diagApp P a} {d₂ : diagApp P b}
+    (h : LanDiagStep P (twObjMk f)
+      ⟨Factorisation.initial, d₁⟩
+      ⟨Factorisation.terminal, d₂⟩) :
+    IsIso f := by
+  obtain ⟨s, r, hsr, hι, hπ, _⟩ := h
+  simp only [Factorisation.terminal,
+    Factorisation.initial, twObjMk_arr] at hι
+  simp only [Factorisation.terminal,
+    Factorisation.initial, twObjMk_arr] at hπ
+  simp only [Factorisation.terminal] at hsr
+  have hr : r = f := by
+    rw [Category.comp_id] at hπ
+    exact hπ
+  rw [hr] at hsr
+  exact ⟨⟨s, hι, hsr⟩⟩
+
+/-- The reverse direction: a `LanDiagStep` from a
+terminal-based element to an initial-based element
+also yields `IsIso f`. The step provides
+`s : a → b` with `s = f` and `r : b → a` with
+`r ≫ f = 𝟙 a` and `f ≫ r = 𝟙 b`. -/
+theorem isIso_of_lanDiagStep_terminal_initial
+    (P : Cᵒᵖ ⥤ C ⥤ Type w₁)
+    {d₁ : diagApp P b} {d₂ : diagApp P a}
+    (h : LanDiagStep P (twObjMk f)
+      ⟨Factorisation.terminal, d₁⟩
+      ⟨Factorisation.initial, d₂⟩) :
+    IsIso f := by
+  obtain ⟨s, r, hsr, hι, hπ, _⟩ := h
+  simp only [Factorisation.initial,
+    Factorisation.terminal, twObjMk_arr,
+    twObjMk_dom, twObjMk_cod] at hι
+  simp only [Factorisation.initial,
+    Factorisation.terminal, twObjMk_arr,
+    twObjMk_dom, twObjMk_cod] at hπ
+  simp only [Factorisation.initial,
+    twObjMk_dom] at hsr
+  rw [Category.id_comp] at hι
+  rw [hι] at hsr
+  exact ⟨⟨r, hsr, hπ⟩⟩
+
+end NotLeftExact
+
+section ProductComparison
+
+variable (P Q : Cᵒᵖ ⥤ C ⥤ Type w₁)
+
+/-- A `LanDiagStep` on `prodEndoProf P Q` induces a
+`LanDiagStep` on the first component `P`. -/
+theorem lanDiagStep_fst
+    {tw : TwistedArrow C}
+    {x y : DecFactSigma (prodEndoProf P Q) tw}
+    (h : LanDiagStep (prodEndoProf P Q) tw x y) :
+    LanDiagStep P tw
+      ⟨x.1, x.2.1⟩ ⟨y.1, y.2.1⟩ := by
+  obtain ⟨s, r, hsr, hι, hπ, helem⟩ := h
+  exact ⟨s, r, hsr, hι, hπ,
+    congrArg Prod.fst helem⟩
+
+/-- A `LanDiagStep` on `prodEndoProf P Q` induces a
+`LanDiagStep` on the second component `Q`. -/
+theorem lanDiagStep_snd
+    {tw : TwistedArrow C}
+    {x y : DecFactSigma (prodEndoProf P Q) tw}
+    (h : LanDiagStep (prodEndoProf P Q) tw x y) :
+    LanDiagStep Q tw
+      ⟨x.1, x.2.2⟩ ⟨y.1, y.2.2⟩ := by
+  obtain ⟨s, r, hsr, hι, hπ, helem⟩ := h
+  exact ⟨s, r, hsr, hι, hπ,
+    congrArg Prod.snd helem⟩
+
+/-- The equivalence closure of `LanDiagStep` on
+`prodEndoProf P Q` induces the same on `P`. -/
+private theorem lanDiagSetoid_fst
+    {tw : TwistedArrow C}
+    {x y : DecFactSigma (prodEndoProf P Q) tw}
+    (h : Relation.EqvGen
+      (LanDiagStep (prodEndoProf P Q) tw) x y) :
+    Relation.EqvGen (LanDiagStep P tw)
+      ⟨x.1, x.2.1⟩ ⟨y.1, y.2.1⟩ := by
+  induction h with
+  | rel _ _ hr =>
+    exact .rel _ _ (lanDiagStep_fst P Q hr)
+  | refl => exact .refl _
+  | symm _ _ _ ih => exact .symm _ _ ih
+  | trans _ _ _ _ _ ih₁ ih₂ =>
+    exact .trans _ _ _ ih₁ ih₂
+
+/-- The equivalence closure of `LanDiagStep` on
+`prodEndoProf P Q` induces the same on `Q`. -/
+private theorem lanDiagSetoid_snd
+    {tw : TwistedArrow C}
+    {x y : DecFactSigma (prodEndoProf P Q) tw}
+    (h : Relation.EqvGen
+      (LanDiagStep (prodEndoProf P Q) tw) x y) :
+    Relation.EqvGen (LanDiagStep Q tw)
+      ⟨x.1, x.2.2⟩ ⟨y.1, y.2.2⟩ := by
+  induction h with
+  | rel _ _ hr =>
+    exact .rel _ _ (lanDiagStep_snd P Q hr)
+  | refl => exact .refl _
+  | symm _ _ _ ih => exact .symm _ _ ih
+  | trans _ _ _ _ _ ih₁ ih₂ =>
+    exact .trans _ _ _ ih₁ ih₂
+
+/-- The product comparison map: the canonical map from
+`LanDiag (prodEndoProf P Q) tw` to
+`LanDiag P tw × LanDiag Q tw`, projecting each
+component through the same factorisation. -/
+def lanDiagProdComparison
+    (tw : TwistedArrow C) :
+    LanDiag (prodEndoProf P Q) tw →
+    LanDiag P tw × LanDiag Q tw :=
+  Quotient.lift
+    (fun x => (⟦⟨x.1, x.2.1⟩⟧, ⟦⟨x.1, x.2.2⟩⟧))
+    (fun _ _ h =>
+      Prod.ext
+        (Quotient.sound (lanDiagSetoid_fst P Q h))
+        (Quotient.sound (lanDiagSetoid_snd P Q h)))
+
+/-- The product comparison map commutes with the
+assembly map: `lanDiagCounit (prodEndoProf P Q) tw`
+decomposes as the pair of individual counit maps
+on the comparison's components. -/
+theorem lanDiagCounit_prod_eq
+    (tw : TwistedArrow C)
+    (q : LanDiag (prodEndoProf P Q) tw) :
+    lanDiagCounit (prodEndoProf P Q) tw q =
+    ((lanDiagCounit P tw
+        (lanDiagProdComparison P Q tw q).1),
+     (lanDiagCounit Q tw
+        (lanDiagProdComparison P Q tw q).2)) := by
+  obtain ⟨x⟩ := q
+  rfl
+
+/-- Surjectivity of `lanDiagProdComparison` implies
+that every pair `(q_P, q_Q)` admits representatives
+sharing a common factorisation: there exist `fact`,
+`d_P`, `d_Q` such that
+`⟦⟨fact, d_P⟩⟧ = q_P` and `⟦⟨fact, d_Q⟩⟧ = q_Q`. -/
+theorem lanDiagProdComparison_surj_common_fact
+    {tw : TwistedArrow C}
+    (h : Function.Surjective
+      (lanDiagProdComparison P Q tw))
+    (q_P : LanDiag P tw)
+    (q_Q : LanDiag Q tw) :
+    ∃ (fact : Factorisation (twArr tw))
+      (d_P : diagApp P fact.mid)
+      (d_Q : diagApp Q fact.mid),
+      (⟦⟨fact, d_P⟩⟧ : LanDiag P tw) = q_P ∧
+      (⟦⟨fact, d_Q⟩⟧ : LanDiag Q tw) = q_Q := by
+  obtain ⟨pre, hpre⟩ := h (q_P, q_Q)
+  obtain ⟨⟨fact, d_P, d_Q⟩⟩ := pre
+  exact ⟨fact, d_P, d_Q,
+    congrArg Prod.fst hpre,
+    congrArg Prod.snd hpre⟩
+
+end ProductComparison
+
+section FixedPoints
+
+/-- A profunctor `P` is a fixed point of the
+diagonalization monad `Lan_iota . iota*` when the
+counit `lanDiagCounit P tw` is a bijection for every
+twisted arrow `tw`. This means `P` is fully determined
+by its diagonal elements in a bijective (not merely
+surjective) sense. -/
+def IsLanDiagFixed (P : Cᵒᵖ ⥤ C ⥤ Type w₁) : Prop :=
+  ∀ (tw : TwistedArrow C),
+    Function.Bijective (lanDiagCounit P tw)
+
+/-- A fixed point of the diagonalization monad is
+diagonally determined (surjectivity half of the
+counit bijection). -/
+theorem IsLanDiagFixed.isDiagDeterminedProf
+    {P : Cᵒᵖ ⥤ C ⥤ Type w₁}
+    (h : IsLanDiagFixed P) :
+    IsDiagDeterminedProf P :=
+  (isDiagDeterminedProf_iff_lanDiagCounit_surj P).mpr
+    (fun tw => (h tw).2)
+
+/-- The counit at an identity twisted arrow is a
+bijection for any profunctor: the counit at
+`twObjMk (𝟙 c)` sends a quotient element to
+`P(c, c)` and is invertible via the unit
+isomorphism. -/
+theorem lanDiagCounit_bijective_at_identity
+    (P : Cᵒᵖ ⥤ C ⥤ Type w₁) (c : C) :
+    Function.Bijective
+      (lanDiagCounit P (twObjMk (𝟙 c))) := by
+  constructor
+  · intro q₁ q₂ h
+    have : lanDiagUnitInvApp P c q₁ =
+        lanDiagUnitInvApp P c q₂ := by
+      simp only [lanDiagUnitInvApp]
+      induction q₁ using Quotient.inductionOn with
+      | h x₁ =>
+        induction q₂ using Quotient.inductionOn with
+        | h x₂ =>
+          simp only [Quotient.lift_mk,
+            lanDiagCounit, Quotient.lift_mk] at h
+          exact congrArg ULift.up h
+    rw [← lanDiagUnitApp_comp_invApp P c q₁,
+        ← lanDiagUnitApp_comp_invApp P c q₂]
+    exact congrArg
+      (lanDiagUnitApp P (identityTwArrObj C c))
+      this
+  · intro y
+    exact ⟨⟦⟨Factorisation.initial, y⟩⟧, by
+      simp only [lanDiagCounit, Quotient.lift_mk,
+        assemblyMapProf_at_identity]⟩
+
+/-- `IsLanDiagFixed` is equivalent to the conjunction
+of `IsDiagDeterminedProf` (surjectivity of the counit)
+and pointwise injectivity of the counit. -/
+theorem isLanDiagFixed_iff
+    (P : Cᵒᵖ ⥤ C ⥤ Type w₁) :
+    IsLanDiagFixed P ↔
+    IsDiagDeterminedProf P ∧
+    ∀ (tw : TwistedArrow C),
+      Function.Injective (lanDiagCounit P tw) := by
+  constructor
+  · intro h
+    exact ⟨h.isDiagDeterminedProf,
+      fun tw => (h tw).1⟩
+  · intro ⟨hS, hI⟩ tw
+    exact ⟨hI tw,
+      ((isDiagDeterminedProf_iff_lanDiagCounit_surj
+        P).mp hS) tw⟩
+
+end FixedPoints
+
 end DiagonalizationMonad
 
 end GebLean
