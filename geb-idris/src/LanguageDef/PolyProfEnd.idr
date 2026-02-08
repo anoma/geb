@@ -3024,3 +3024,162 @@ polyProfDiNTComp fext {pp} {qq} {rr}
         {pp} {qq} {rr} g f x)
     (interpPolyProfDiNTCompIsPara
       fext {pp} {qq} {rr} g f)
+
+------------------------------------------------------------
+------------------------------------------------------------
+---- Identity Polynomial Profunctor ----
+------------------------------------------------------------
+------------------------------------------------------------
+
+-- The identity for profunctor composition is the
+-- hom-profunctor HomProf x y = x -> y.
+--
+-- As a polynomial profunctor: one position, direction
+-- PF is PFIdentityArena = (Unit ** const Unit).
+-- InterpPolyFunc PFIdentityArena x = (() ** Unit -> x)
+-- so InterpPolyProf polyProfId x y
+--   = (() ** (() ** Unit -> x) -> y)
+--   ≅ (x -> y) = HomProf x y.
+public export %inline
+polyProfId : PolyProf
+polyProfId =
+  MkPolyProf Unit (\_ => PFIdentityArena)
+
+-- Forward: InterpPolyProf polyProfId -> HomProf.
+-- We extract a -> b by evaluating the direction
+-- function at (() ** \_ => x).
+public export
+polyProfIdToHomProf :
+  (a, b : Type) ->
+  InterpPolyProf
+    (MkPolyProf Unit (\_ => PFIdentityArena))
+    a b ->
+  HomProf a b
+polyProfIdToHomProf a b (_ ** h) =
+  \x => h (() ** \_ => x)
+
+-- Backward: HomProf -> InterpPolyProf polyProfId.
+-- Wrap the function: evaluate the direction
+-- function at () to get the input value.
+public export
+homProfToPolyProfId :
+  (a, b : Type) ->
+  HomProf a b ->
+  InterpPolyProf
+    (MkPolyProf Unit (\_ => PFIdentityArena))
+    a b
+homProfToPolyProfId a b f =
+  (() ** \el => f (snd el ()))
+
+-- Diagonal forward: identity on diagonal.
+public export
+polyProfDiIdToHomProf :
+  (x : Type) ->
+  InterpPolyProf
+    (MkPolyProf Unit (\_ => PFIdentityArena))
+    x x ->
+  HomProf x x
+polyProfDiIdToHomProf x = polyProfIdToHomProf x x
+
+-- Diagonal backward: identity on diagonal.
+public export
+homProfToPolyProfDiId :
+  (x : Type) ->
+  HomProf x x ->
+  InterpPolyProf
+    (MkPolyProf Unit (\_ => PFIdentityArena))
+    x x
+homProfToPolyProfDiId x = homProfToPolyProfId x x
+
+------------------------------------------------------------
+------------------------------------------------------------
+---- Composition of Polynomial Profunctors ----
+------------------------------------------------------------
+------------------------------------------------------------
+
+-- Composition via the coend formula:
+--   (Q ⊗ P)(a, b) = ∫^c Q(a, c) × P(c, b)
+--
+-- By the Yoneda lemma, the coend reduces to:
+--   (j : ppPos Q ** i : ppPos P **
+--    InterpPolyFunc
+--      (pfCompositionArena (ppDirPF P i)
+--                          (ppDirPF Q j)) a
+--    -> b)
+--
+-- Positions are pairs (ppPos Q, ppPos P).
+-- Direction PF at (j, i) is
+--   pfCompositionArena (ppDirPF P i) (ppDirPF Q j)
+-- i.e. outer = ppDirPF P i, inner = ppDirPF Q j.
+public export %inline
+polyProfComp : PolyProf -> PolyProf -> PolyProf
+polyProfComp q p =
+  MkPolyProf
+    (ppPos q, ppPos p)
+    (\ji =>
+      pfCompositionArena
+        (ppDirPF p (snd ji))
+        (ppDirPF q (fst ji)))
+
+-- Forward: interpretation of composition to
+-- composition of interpretations.
+--
+-- Given (ji ** h) where
+--   h : InterpPolyFunc (pfComp ...) a -> b
+-- Choose witness c = InterpPolyFunc (ppDirPF Q j) a.
+-- Then Q(a, c) uses position j and id, while
+-- P(c, b) uses position i and h . pfComposeInterp.
+public export
+polyProfCompToEndoComp :
+  (q, p : PolyProf) ->
+  (a, b : Type) ->
+  InterpPolyProf (polyProfComp q p) a b ->
+  EndoProfCompose
+    (InterpPolyProf q) (InterpPolyProf p) a b
+polyProfCompToEndoComp q p a b (ji ** h) =
+  (InterpPolyFunc (ppDirPF q (fst ji)) a **
+    ((fst ji ** id),
+     (snd ji ** h . pfComposeInterp)))
+
+-- Backward: composition of interpretations to
+-- interpretation of composition.
+--
+-- Given (c ** ((j ** qm), (i ** pm))) where
+--   qm : InterpPolyFunc (ppDirPF Q j) a -> c
+--   pm : InterpPolyFunc (ppDirPF P i) c -> b
+-- Build h = pm . PFMap qm . pfComposeInterpInv.
+public export
+endoCompToPolyProfComp :
+  (q, p : PolyProf) ->
+  (a, b : Type) ->
+  EndoProfCompose
+    (InterpPolyProf q) (InterpPolyProf p) a b ->
+  InterpPolyProf (polyProfComp q p) a b
+endoCompToPolyProfComp q p a b
+  (c ** ((j ** qm), (i ** pm))) =
+  ((j, i) **
+   pm .
+     InterpPFMap (ppDirPF p i) qm .
+     pfComposeInterpInv)
+
+-- Diagonal forward: composition on diagonal.
+public export
+polyProfDiCompToEndoComp :
+  (q, p : PolyProf) ->
+  (x : Type) ->
+  InterpPolyProf (polyProfComp q p) x x ->
+  EndoProfCompose
+    (InterpPolyProf q) (InterpPolyProf p) x x
+polyProfDiCompToEndoComp q p x =
+  polyProfCompToEndoComp q p x x
+
+-- Diagonal backward: composition on diagonal.
+public export
+endoDiCompToPolyProfComp :
+  (q, p : PolyProf) ->
+  (x : Type) ->
+  EndoProfCompose
+    (InterpPolyProf q) (InterpPolyProf p) x x ->
+  InterpPolyProf (polyProfComp q p) x x
+endoDiCompToPolyProfComp q p x =
+  endoCompToPolyProfComp q p x x
