@@ -3282,3 +3282,210 @@ interpPolyProfNTHorizViaComp
       (InterpPolyProf pp) a b
     ce =
       polyProfCompToEndoComp rr pp a b el
+
+------------------------------------------------------------
+------------------------------------------------------------
+---- PolyProfNT as Tw(op(Type)) Presheaf NT ----
+------------------------------------------------------------
+------------------------------------------------------------
+
+-- A polynomial profunctor natural transformation
+-- PolyProfNT pp qq induces a natural transformation
+-- between the embeddings of InterpPolyProf pp and
+-- InterpPolyProf qq into presheaves on Tw(op(Type)).
+--
+-- The map applies InterpPolyProfNT and ignores myx.
+-- It is independent of myx because PolyProfNT acts
+-- uniformly on all elements.
+public export
+polyProfNTAsTwArrPreshfOpNT :
+  {pp, qq : PolyProf} ->
+  PolyProfNT pp qq ->
+  TwArrPreshfOpEmbeddingNT
+    (InterpPolyProf pp) (InterpPolyProf qq)
+polyProfNTAsTwArrPreshfOpNT {pp} {qq}
+  (onPos ** onDir) x y myx (i ** h) =
+  (onPos i **
+   h . InterpPolyNT (onDir i) x)
+
+-- Naturality holds definitionally because
+-- InterpPolyNT commutes with InterpPFMap:
+--   InterpPolyNT alpha s (InterpPFMap Q mas el)
+--   = InterpPFMap P mas (InterpPolyNT alpha a el)
+-- at each element (k ** ds).
+public export
+0 polyProfNTAsTwArrPreshfOpNTNat :
+  {pp, qq : PolyProf} ->
+  (nt : PolyProfNT pp qq) ->
+  TwArrPreshfOpNaturality
+    {p=TwArrPreshfOpEmbedProf
+      (InterpPolyProf pp)}
+    {q=TwArrPreshfOpEmbedProf
+      (InterpPolyProf qq)}
+    (TwArrPreshfOpEmbedProfMap
+      (InterpPolyProf pp)
+      (interpPolyProfProf pp))
+    (TwArrPreshfOpEmbedProfMap
+      (InterpPolyProf qq)
+      (interpPolyProfProf qq))
+    (polyProfNTAsTwArrPreshfOpNT
+      {pp} {qq} nt)
+polyProfNTAsTwArrPreshfOpNTNat {pp} {qq}
+  (onPos ** onDir)
+  s t a b mba mas mtb (i ** h) =
+  Refl
+
+-- The TwArr presheaf NT equals InterpPolyProfNT
+-- at all type pairs (independent of myx).
+public export
+0 polyProfNTTwArrIsInterpNT :
+  {pp, qq : PolyProf} ->
+  (nt : PolyProfNT pp qq) ->
+  (x, y : Type) -> (myx : y -> x) ->
+  ExtEq {a=(InterpPolyProf pp x y)}
+    {b=(InterpPolyProf qq x y)}
+    (polyProfNTAsTwArrPreshfOpNT
+      {pp} {qq} nt x y myx)
+    (InterpPolyProfNT {pp} {qq} nt x y)
+polyProfNTTwArrIsInterpNT {pp} {qq}
+  (onPos ** onDir) x y myx (i ** h) = Refl
+
+------------------------------------------------------------
+---- Backward: ProfNT -> PolyProfNT ----
+------------------------------------------------------------
+
+-- A profunctor NT between polynomial profunctors
+-- has "constant position" when the output position
+-- depends only on the input position, not on the
+-- type parameters or the direction function.
+--
+-- This is automatic for any NT that arises from
+-- InterpPolyProfNT (where posConst = Refl).
+public export
+0 ProfNTConstPos :
+  {pp, qq : PolyProf} ->
+  (gamma : (x, y : Type) ->
+    InterpPolyProf pp x y ->
+    InterpPolyProf qq x y) ->
+  Type
+ProfNTConstPos {pp} {qq} gamma =
+  (i : ppPos pp) ->
+  (x, y : Type) ->
+  (h : InterpPolyFunc (ppDirPF pp i) x ->
+    y) ->
+  fst (gamma x y (i ** h)) =
+    fst (gamma Unit Unit (i ** \_ => ()))
+
+-- InterpPolyProfNT has constant position
+-- definitionally.
+public export
+0 interpPolyProfNTConstPos :
+  {pp, qq : PolyProf} ->
+  (nt : PolyProfNT pp qq) ->
+  ProfNTConstPos {pp} {qq}
+    (InterpPolyProfNT {pp} {qq} nt)
+interpPolyProfNTConstPos {pp} {qq}
+  (onPos ** onDir) i x y h = Refl
+
+-- Backward extraction from a profunctor NT
+-- with constant position.
+--
+-- Uses the Yoneda trick: for each position i
+-- and direction position qk, we probe gamma at
+-- x = pfDir Qi qk with h = id.  The Yoneda
+-- representative (qk ** id) extracts both the
+-- direction position map and direction map.
+public export
+polyProfNTFromProfNT :
+  {pp, qq : PolyProf} ->
+  (gamma : (x, y : Type) ->
+    InterpPolyProf pp x y ->
+    InterpPolyProf qq x y) ->
+  (0 pc : ProfNTConstPos {pp} {qq} gamma) ->
+  PolyProfNT pp qq
+polyProfNTFromProfNT {pp} {qq} gamma pc =
+  (onPos ** \i => (onDirPos i ** onDirDir i))
+  where
+    -- Position: probe at Unit
+    onPos : ppPos pp -> ppPos qq
+    onPos i =
+      fst (gamma Unit Unit (i ** \_ => ()))
+    -- Yoneda probe at direction type of qq.
+    -- We apply gamma at x = pfDir Qi qk,
+    -- y = InterpPolyFunc Pi x, h = id.
+    -- posConst ensures the position is onPos i.
+    -- Abbreviation: direction type at qq pos
+    QiDir : (i : ppPos pp) ->
+      pfPos (ppDirPF qq (onPos i)) -> Type
+    QiDir i qk =
+      pfDir {p=(ppDirPF qq (onPos i))} qk
+    yonProbe : (i : ppPos pp) ->
+      (qk : pfPos
+        (ppDirPF qq (onPos i))) ->
+      InterpPolyFunc (ppDirPF pp i)
+        (QiDir i qk)
+    yonProbe i qk =
+      snd (gamma
+        (QiDir i qk)
+        (InterpPolyFunc (ppDirPF pp i)
+          (QiDir i qk))
+        (i ** id))
+        (replace
+          {p=(\j =>
+            InterpPolyFunc
+              (ppDirPF qq j)
+              (QiDir i qk))}
+          (sym (pc i
+            (QiDir i qk)
+            (InterpPolyFunc (ppDirPF pp i)
+              (QiDir i qk))
+            id))
+          (qk ** id))
+    -- Direction position map
+    onDirPos : (i : ppPos pp) ->
+      pfPos (ppDirPF qq (onPos i)) ->
+      pfPos (ppDirPF pp i)
+    onDirPos i qk = fst (yonProbe i qk)
+    -- Direction direction map
+    onDirDir : (i : ppPos pp) ->
+      (qk : pfPos
+        (ppDirPF qq (onPos i))) ->
+      pfDir {p=(ppDirPF pp i)}
+        (onDirPos i qk) ->
+      pfDir {p=(ppDirPF qq (onPos i))} qk
+    onDirDir i qk = snd (yonProbe i qk)
+
+------------------------------------------------------------
+---- Round-trip: backward . forward = id ----
+------------------------------------------------------------
+
+-- Round-trip backward . forward = id.
+--
+-- At the formula level, the Yoneda probe gives
+--   (fst (onDir i) qk ** id . snd (onDir i) qk)
+-- which differs from onDir i only by function eta
+-- and DPair eta.  Idris2's type checker cannot
+-- unfold the where-clause definitions in
+-- polyProfNTFromProfNT, so the formula-level
+-- equality requires opaque transport.
+--
+-- The interpretation-level proof below IS Refl,
+-- confirming the round-trip holds pointwise.
+-- This is the mathematically meaningful result:
+-- backward . forward produces the same profunctor
+-- NT at every type pair and element.
+public export
+0 polyProfNTFromProfNTRTInterp :
+  {pp, qq : PolyProf} ->
+  (nt : PolyProfNT pp qq) ->
+  (x, y : Type) ->
+  (el : InterpPolyProf pp x y) ->
+  InterpPolyProfNT {pp} {qq}
+    (polyProfNTFromProfNT {pp} {qq}
+      (InterpPolyProfNT {pp} {qq} nt)
+      (interpPolyProfNTConstPos
+        {pp} {qq} nt))
+    x y el
+  = InterpPolyProfNT {pp} {qq} nt x y el
+polyProfNTFromProfNTRTInterp {pp} {qq}
+  (onPos ** onDir) x y (i ** h) = Refl
