@@ -2,7 +2,50 @@
 
 ## Status
 
-Phase 2c substantially complete.
+Phase 2c substantially complete. Phase 2d (functoriality
+of wedge weight) started.
+
+### Completed (Phase 2d -- wedge weight functoriality)
+
+**Variance analysis**: Factorisation coverage on Tw(C)
+gives a cosheaf condition (colimit = value, IsLanDiagFixed),
+not a sheaf condition. Cosheaf categories are not toposes.
+
+**f-sensitivity of wedgeWeight**: `wedgeWeight H` at
+`tw = (f : a -> b)` depends on the specific arrow `f`,
+not just `(a, b)`. It is NOT `profOnTwArr` of any
+profunctor. This is because the CostructuredArrow
+commutativity condition involves `f` explicitly.
+
+**connectedComponents functor**: Already exists in
+mathlib as `connectedComponents : Cat ⥤ Type` in
+`Mathlib.CategoryTheory.Category.Cat.Adjunction`, with
+`connectedComponents ⊣ typeToCat`.
+
+**twistedArrowMap functoriality** (TwistedArrow.lean):
+
+- `twistedArrowMap_comp`: composition law
+  `twistedArrowMap (F ⋙ G) =
+    twistedArrowMap F ⋙ twistedArrowMap G`
+- `twistedArrowMap_id`:
+  `twistedArrowMap (id C) = id (TwistedArrow C)`
+- Simp lemmas `twistedArrowMap_map_domArr`,
+  `twistedArrowMap_map_codArr`
+- Analogous lemmas for `coTwistedArrowMap`
+
+**wedgeWeightFunctor** (ComprehensiveWeighted.lean):
+`wedgeWeightFunctor C :
+  (C^op ⥤ C ⥤ Type v) ⥤ (TwistedArrow C ⥤ Type v)`
+sends `H ↦ wedgeWeight H` on objects and
+`η ↦ wedgeWeightMap η` on morphisms. The morphism
+map uses `wedgeWeightPreMap η tw`, which applies
+`twistedArrowMap (DiagElem.map η)` to costructured
+arrow sources. The `hom` is reused without transport
+because `DiagElem.map` preserves the base morphism
+definitionally. Functoriality (`map_id`, `map_comp`)
+follows from `DiagElem.map_id_nat` and
+`DiagElem.map_comp_nat` via definitional equality at
+the level of TwistedArrow objects.
 
 ### Completed (Phase 2c)
 

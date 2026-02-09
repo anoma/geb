@@ -2677,10 +2677,44 @@ theorem twistedArrowMap_obj (F : C ⥤ D)
       twObjMk (F.map (twArr tw)) := rfl
 
 @[simp]
+theorem twistedArrowMap_map_domArr (F : C ⥤ D)
+    {x y : TwistedArrow C} (m : x ⟶ y) :
+    twDomArr ((twistedArrowMap F).map m) =
+      F.map (twDomArr m) := rfl
+
+@[simp]
+theorem twistedArrowMap_map_codArr (F : C ⥤ D)
+    {x y : TwistedArrow C} (m : x ⟶ y) :
+    twCodArr ((twistedArrowMap F).map m) =
+      F.map (twCodArr m) := rfl
+
+theorem twistedArrowMap_comp
+    {E : Type*} [Category E]
+    (F : C ⥤ D) (G : D ⥤ E) :
+    twistedArrowMap (F ⋙ G) =
+      twistedArrowMap F ⋙ twistedArrowMap G :=
+  _root_.CategoryTheory.Functor.ext (fun _ => rfl)
+
+theorem twistedArrowMap_id :
+    twistedArrowMap (𝟭 C) = 𝟭 _ :=
+  _root_.CategoryTheory.Functor.ext (fun _ => rfl)
+
+@[simp]
 theorem coTwistedArrowMap_obj (F : C ⥤ D)
     (tw : CoTwistedArrow C) :
     (coTwistedArrowMap F).obj tw =
       coTwObjMk (F.map (coTwArr tw)) := rfl
+
+theorem coTwistedArrowMap_comp
+    {E : Type*} [Category E]
+    (F : C ⥤ D) (G : D ⥤ E) :
+    coTwistedArrowMap (F ⋙ G) =
+      coTwistedArrowMap F ⋙ coTwistedArrowMap G :=
+  _root_.CategoryTheory.Functor.ext (fun _ => rfl)
+
+theorem coTwistedArrowMap_id :
+    coTwistedArrowMap (𝟭 C) = 𝟭 _ :=
+  _root_.CategoryTheory.Functor.ext (fun _ => rfl)
 
 end InducedMapFunctors
 

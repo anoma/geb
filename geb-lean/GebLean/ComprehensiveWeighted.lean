@@ -955,6 +955,86 @@ def paranatWeightedLimitEquivCoTw :
 
 end ParanatCoTwistedArrow
 
+section WedgeWeightFunctoriality
+
+variable {C : Type v} [Category.{v} C]
+  (H G : Cᵒᵖ ⥤ C ⥤ Type v)
+
+/-- Given `η : H ⟶ G`, the induced functor between
+costructured arrow categories. At each `tw`, this
+sends a costructured arrow over
+`twistedArrowMap (DiagElem.forget H)` to one over
+`twistedArrowMap (DiagElem.forget G)` by applying
+`twistedArrowMap (DiagElem.map η)` to the source
+object. The `hom` is reused without transport because
+the forgetful functor agrees definitionally on objects
+and morphisms after applying `DiagElem.map η`. -/
+def wedgeWeightPreMap (η : H ⟶ G)
+    (tw : TwistedArrow C) :
+    CostructuredArrow
+      (twistedArrowMap (DiagElem.forget H)) tw ⥤
+    CostructuredArrow
+      (twistedArrowMap (DiagElem.forget G)) tw where
+  obj σ := CostructuredArrow.mk
+    (Y := (twistedArrowMap
+      (DiagElem.map η)).obj σ.left)
+    σ.hom
+  map f := CostructuredArrow.homMk
+    ((twistedArrowMap (DiagElem.map η)).map f.left)
+    (by
+      have h : (twistedArrowMap (DiagElem.forget G)).map
+          ((twistedArrowMap (DiagElem.map η)).map
+            f.left) =
+          (twistedArrowMap (DiagElem.forget H)).map
+            f.left := by
+        apply twHom_ext <;> rfl
+      rw [h]
+      exact CostructuredArrow.w f)
+
+/-- The natural transformation `wedgeWeight H ⟶ wedgeWeight G`
+induced by `η : H ⟶ G`. At each twisted arrow `tw`,
+applies `wedgeWeightPreMap η tw` to connected
+components. -/
+def wedgeWeightMap (η : H ⟶ G) :
+    wedgeWeight H ⟶ wedgeWeight G where
+  app tw :=
+    (wedgeWeightPreMap H G η tw).mapConnectedComponents
+  naturality {tw₁ tw₂} f := by
+    ext x
+    exact Quotient.inductionOn x fun σ => by
+      simp only [types_comp_apply, wedgeWeight,
+        comprehensiveCopresheaf_map,
+        Functor.mapConnectedComponents_mk,
+        wedgeWeightPreMap, CostructuredArrow.map_mk]
+      exact Quotient.sound (Zigzag.refl _)
+
+/-- The wedge weight construction is functorial in the
+source profunctor: a natural transformation `η : H ⟶ G`
+induces `wedgeWeight H ⟶ wedgeWeight G`. -/
+def wedgeWeightFunctor (C : Type v) [Category.{v} C] :
+    (Cᵒᵖ ⥤ C ⥤ Type v) ⥤
+      (TwistedArrow C ⥤ Type v) where
+  obj H := wedgeWeight H
+  map η := wedgeWeightMap _ _ η
+  map_id H := by
+    ext tw x
+    exact Quotient.inductionOn x fun σ => by
+      simp only [wedgeWeightMap, NatTrans.id_app,
+        types_id_apply,
+        Functor.mapConnectedComponents_mk,
+        wedgeWeightPreMap]
+      congr 1
+  map_comp {H G K} η θ := by
+    ext tw x
+    exact Quotient.inductionOn x fun σ => by
+      simp only [wedgeWeightMap, NatTrans.comp_app,
+        types_comp_apply,
+        Functor.mapConnectedComponents_mk,
+        wedgeWeightPreMap]
+      congr 1
+
+end WedgeWeightFunctoriality
+
 section CostructureIntegralElimination
 
 variable {C : Type v} [Category.{v} C]
