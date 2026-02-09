@@ -3183,3 +3183,102 @@ endoDiCompToPolyProfComp :
   InterpPolyProf (polyProfComp q p) x x
 endoDiCompToPolyProfComp q p x =
   endoCompToPolyProfComp q p x x
+
+------------------------------------------------------------
+------------------------------------------------------------
+---- Horizontal Composition of PolyProfNT ----
+------------------------------------------------------------
+------------------------------------------------------------
+
+-- Horizontal composition of natural transformations
+-- between polynomial profunctors.
+--
+-- Given α : P → Q and β : R → S (as PolyProfNTs),
+-- produce β⊗α : R⊗P → S⊗Q.
+--
+-- Position map: (k, i) ↦ (βPos k, αPos i).
+-- Direction: pntHProdComp (αDir i) (βDir k), the
+-- horizontal composition of polynomial functor NTs
+-- from PolyCat.idr. This uses:
+--   αDir i : DirPF_Q(αPos i) → DirPF_P(i)
+--   βDir k : DirPF_S(βPos k) → DirPF_R(k)
+-- to produce:
+--   DirPF_Q(αPos i) ∘ DirPF_S(βPos k)
+--     → DirPF_P(i) ∘ DirPF_R(k)
+public export
+polyProfNTHoriz :
+  {pp, qq, rr, ss : PolyProf} ->
+  PolyProfNT pp qq ->
+  PolyProfNT rr ss ->
+  PolyProfNT
+    (polyProfComp rr pp)
+    (polyProfComp ss qq)
+polyProfNTHoriz {pp} {qq} {rr} {ss}
+  (aPos ** aDir) (bPos ** bDir) =
+  (\ki => (bPos (fst ki), aPos (snd ki))
+  ** \ki =>
+    pntHProdComp (aDir (snd ki)) (bDir (fst ki)))
+
+-- Interpretation of horizontal composition:
+-- maps profunctor elements at any (a, b).
+public export
+interpPolyProfNTHoriz :
+  {pp, qq, rr, ss : PolyProf} ->
+  PolyProfNT pp qq ->
+  PolyProfNT rr ss ->
+  (a, b : Type) ->
+  InterpPolyProf (polyProfComp rr pp) a b ->
+  InterpPolyProf (polyProfComp ss qq) a b
+interpPolyProfNTHoriz {pp} {qq} {rr} {ss}
+  alpha beta a b =
+  InterpPolyProfNT
+    {pp=polyProfComp rr pp}
+    {qq=polyProfComp ss qq}
+    (polyProfNTHoriz alpha beta) a b
+
+-- Diagonal (paranatural) restriction of
+-- horizontal composition.
+public export
+interpPolyProfDiNTHoriz :
+  {pp, qq, rr, ss : PolyProf} ->
+  PolyProfNT pp qq ->
+  PolyProfNT rr ss ->
+  (x : Type) ->
+  InterpPolyProf (polyProfComp rr pp) x x ->
+  InterpPolyProf (polyProfComp ss qq) x x
+interpPolyProfDiNTHoriz {pp} {qq} {rr} {ss}
+  alpha beta x =
+  interpPolyProfNTHoriz alpha beta x x
+
+-- Alternative: via EndoProfCompose translations.
+-- This factors horizontal composition through the
+-- coend representation, showing compatibility with
+-- the profunctor composition structure.
+--
+-- The proof that these agree with the direct formula
+-- above is definitional (both reduce to applying
+-- pntHProdComp via InterpPolyNT).
+public export
+interpPolyProfNTHorizViaComp :
+  {pp, qq, rr, ss : PolyProf} ->
+  PolyProfNT pp qq ->
+  PolyProfNT rr ss ->
+  (a, b : Type) ->
+  InterpPolyProf (polyProfComp rr pp) a b ->
+  InterpPolyProf (polyProfComp ss qq) a b
+interpPolyProfNTHorizViaComp
+  {pp} {qq} {rr} {ss} alpha beta a b el =
+  endoCompToPolyProfComp ss qq a b
+    (fst ce **
+      (InterpPolyProfNT {pp=rr} {qq=ss}
+         beta a (fst ce)
+         (fst (snd ce)),
+       InterpPolyProfNT {pp} {qq}
+         alpha (fst ce) b
+         (snd (snd ce))))
+  where
+    ce : EndoProfCompose
+      (InterpPolyProf rr)
+      (InterpPolyProf pp) a b
+    ce =
+      polyProfCompToEndoComp rr pp a b el
