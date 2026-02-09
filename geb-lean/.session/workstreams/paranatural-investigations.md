@@ -2235,6 +2235,50 @@ at a to elements at b", which in Dial corresponds to the relation α.
 Paranaturality uses only relations from morphisms in C, while Dial
 uses all sub-presheaves — the gap is the non-representable relations.
 
+**Embedding PSh(C) into Dial(PSh(C)):**
+
+The embedding P ↦ (P, 1, ⊤) (terminal target, maximal relation) is
+full and faithful: Hom_Dial((P,1,⊤),(Q,1,⊤)) ≅ Hom_PSh(P,Q).
+
+This embedding does NOT preserve limits. Dial(PSh(C)) is a model of
+linear logic, not cartesian logic. The product of (P, 1, ⊤) and
+(Q, 1, ⊤) in Dial has target ≅ 1 + 1, not 1 — the extra component
+tracks which factor is being "challenged" in the relational
+interpretation. This non-preservation is mathematically correct: the
+relational interpretation of A × B tests A-components and
+B-components separately.
+
+Similarly, the Chu construction Chu(PSh(C), Ω) has products with
+target = coproduct of targets, not preserved by the (−, 1, ⊤)
+embedding.
+
+**Two approaches to mixing regular and parametric morphisms:**
+
+Approach 1 (forgetful + section): The forgetful functor
+U : Dial(PSh(C)) → PSh(C) sending (P, Q, α) ↦ P has a section
+P ↦ (P, 1, ⊤). Compose by embedding regular morphisms then
+composing in Dial. This is the linear-logic approach using the !
+modality (non-polymorphic types = "of-course" types).
+
+Approach 2 (parametricity as property): Stay in PSh(C) and define
+parametricity as a predicate on morphisms:
+
+```text
+IsParametric(f) := for all relations α, T̃(α)-related
+inputs map to S̃(α)-related outputs
+```
+
+The parametric morphisms form a wide subcategory of PSh(C)
+inheriting all the topos structure. This matches how Haskell works:
+the ambient category is Hask, the parametricity theorem says every
+definable morphism satisfies the relational interpretation.
+
+For Geb: Approach 2 is more natural. Work in PSh(C), extend type
+constructors via F.op.lan, and prove the parametricity theorem once
+("every morphism constructible from our combinators is parametric").
+Dial(PSh(C)) serves as the proof framework, not the ambient
+category.
+
 ### 25. Free Categories and Automatic Parametricity from Universal Properties
 
 The parametricity relation is inductive — its definition follows the
@@ -2280,6 +2324,83 @@ the initial algebra to any other T-algebra is forced by the universal
 property. This is the "free theorem" for catamorphisms: they commute
 with all natural transformations. The universal property = the
 parametricity condition here.
+
+### 26. Parametric Polymorphism as an Internal Type
+
+Rather than restricting to parametric polymorphism (living in
+Dial(PSh(C))) or proving parametricity as an external meta-theorem,
+the approach for Geb is to allow non-parametric polymorphism
+(typecase, reflection on types) and make ParamPoly(T, S) an explicit
+type in the language. This gives both ad-hoc dispatch and free
+theorems, with free theorems available as internal lemmas.
+
+**The polymorphic function type** (all, including non-parametric):
+
+```text
+Poly(T, S) = ∫_X [T(X), S(X)]    (end in PSh(C))
+```
+
+**The parametrically polymorphic function type** (subtype):
+
+```text
+ParamPoly(T, S) ↪ Poly(T, S)
+ParamPoly(T, S) = { f : Poly(T, S) |
+  ∀ (α : Sub(X × Y)),
+    relInterp(T, α)-related inputs →
+    relInterp(S, α)-related outputs }
+```
+
+This is a subobject of the polymorphic function type: a dependent
+pair of a function and a proof of parametricity. Since PSh(C) is a
+topos with subobject classifier Ω, this subobject exists as an
+object of PSh(C).
+
+**Reflective language structure:** In a dependently typed language
+that can express its own type system internally:
+
+- Type constructors are data (values of a type-of-types)
+- `relInterp` is a computable function on type syntax
+- `ParamPoly(T, S)` is a dependent subtype
+- Free theorems are ordinary lemmas, proved by applying the
+  parametricity witness to specific relations
+
+The recursion for `relInterp` follows Wadler:
+
+- `relInterp(A × B, α, β) = relInterp(A, α) × relInterp(B, β)`
+- `relInterp(A → B, α, β) = { (f,g) | ∀ (x,y) ∈ relInterp(A, α).
+  (f(x), g(y)) ∈ relInterp(B, β) }`
+- `relInterp(∀X. T(X), _) = { (f,g) | ∀ α : Rel(X,Y).
+  (f_X, g_Y) ∈ relInterp(T, α) }`
+- `relInterp(μX. T(X), α)` = least relation closed under
+  `relInterp(T, −)` (for initial algebras)
+
+**Requirements on PSh(C):**
+
+1. Internal type universe (object classifiers or subobject
+   classifier Ω)
+2. Internal relation type: Rel(X, Y) = Sub(X × Y)
+3. Internal relational interpretation: computable recursion on type
+   syntax
+4. Dependent types: to form the subtype ParamPoly(T, S)
+
+PSh(C) provides (1) and (2) as a topos. (3) requires reflecting the
+type syntax as data, standard in a dependently typed language. (4)
+is the dependent type structure of Geb itself.
+
+**Comparison with Haskell:**
+
+- Haskell forces all polymorphism to be parametric (no typecase),
+  gets free theorems as an external meta-theorem (Wadler 1989)
+- Geb allows non-parametric polymorphism (typecase, reflection),
+  gets free theorems as internal lemmas via ParamPoly type
+- Haskell restricts expressiveness for automatic parametricity;
+  Geb increases expressiveness while making parametricity opt-in
+
+**Analog:** Haskell's IO monad separates pure from effectful
+computation. Here, ParamPoly separates parametric from non-parametric
+polymorphism. Both are type-level distinctions that enable reasoning
+about the restricted class while allowing the unrestricted class to
+coexist.
 
 ### Completed Work
 
@@ -2352,3 +2473,9 @@ rather than low-level transport proofs.
     connectedness of E(Fact) (Question 25)
 23. Show catamorphism parametricity from initial-algebra
     universal property (Question 25)
+24. Define internal relInterp recursion on type syntax in
+    PSh(C) (Question 26)
+25. Define ParamPoly(T, S) as subobject of Poly(T, S) in
+    PSh(C) (Question 26)
+26. Prove internal free theorems for ParamPoly inhabitants
+    (Question 26)

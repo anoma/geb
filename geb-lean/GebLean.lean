@@ -18,6 +18,7 @@ import GebLean.FreeToposBT
 import GebLean.HexagonCat
 import GebLean.LayeredEquivalence
 import GebLean.Paranatural
+import GebLean.ParamPoly
 import GebLean.ParanaturalTopos
 import GebLean.ParanatAlg
 import GebLean.PLang
