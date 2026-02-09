@@ -310,6 +310,19 @@ might want to examine external libraries for ideas.
 
 - [Mathlib.CategoryTheory.Limits.Shapes.End (ends and coends)](https://leanprover-community.github.io/mathlib4_docs/Mathlib/CategoryTheory/Limits/Shapes/End.html)
 
+### Parametricity and Free Theorems
+
+- [Wadler, Theorems for free! (1989)](docs/.claude/wadler89-theorems-for-free.pdf)
+  - Types read as relations; parametricity proposition: (t,t) in
+    the relational interpretation of T. Application to rearrangement,
+    fold, sort, filter, map. Connection to lax natural
+    transformations noted.
+- [Reasonably Polymorphic: Review of Theorems for Free](https://reasonablypolymorphic.com/blog/theorems-for-free/)
+  - Relations specialized to functions become bifunctors;
+    function relation becomes naturality square f' . g = h . f;
+    conjecture: all Haskell laws are category laws in different
+    categories.
+
 ### Computability
 
 - [Mathlib.Computability.Primrec](https://leanprover-community.github.io/mathlib4_docs/Mathlib/Computability/Primrec.html)
