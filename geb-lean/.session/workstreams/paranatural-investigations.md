@@ -2188,7 +2188,7 @@ the canonical lift, given pointwise by the coend
 **Connections to parametricity:**
 
 | Concept | Mathlib | Parametricity role |
-|---------|---------|-------------------|
+| ------- | ------- | ----------------- |
 | RelCat | Exists | Target of relational interpretation |
 | graphFunctor | Exists | Embeds terms (functions) as relations |
 | RelCat self-duality | Exists | Handles mixed variance |
@@ -2223,7 +2223,7 @@ PSh(C) = [C^op, Type], subobjects are natural predicates
 Comparison with EndoProf(C) + paranaturality:
 
 | Aspect | Dial(PSh(C)) | EndoProf(C) |
-|--------|-------------|-------------|
+| ------ | ----------- | ----------- |
 | Objects | presheaves + relation | endoprofunctors |
 | Morphisms | (f, F, condition) | paranatural transformations |
 | Strength | full parametricity | paranaturality (weaker) |
