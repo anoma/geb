@@ -2497,6 +2497,7 @@ relations between the covariant and contravariant positions.
 Our span-based `ProfRelLift` should capture these relations.
 
 Sub-questions:
+
 - Does the definition handle arbitrarily deeply nested variance?
 - Is `ProfRelLift` compositional in the sense that nested type
   constructors compose relation liftings?
@@ -2510,6 +2511,7 @@ have? System F's parametric polymorphism suggests at least
 products, coproducts, and exponentials.
 
 Sub-questions:
+
 - Does `ParamEndoProf` have all finite products? (Likely yes:
   product projections should be parametric.)
 - Does `ParamEndoProf` have all finite coproducts?
@@ -2540,6 +2542,7 @@ which by Yoneda is `Hom(c, d)`. So:
 `Hom_{ParamEndoProf}(y(c), y(d)) ≅ Hom_C(c, d)`
 
 This embedding provides:
+
 - Ground types from `C` inside the parametric type theory
 - Full faithfulness means `C` is recovered exactly
 - This is the profunctor version of "Yoneda is fully faithful"
@@ -2559,6 +2562,38 @@ relation lifting agree with composing the individual liftings?
 This is needed to handle deeply nested type constructors (Q29)
 and to understand the categorical structure of the relation
 lifting operation itself.
+
+### 33. Parametric (Co)Wedges for D-Valued Profunctors
+
+**Question**: Can parametric polymorphism be generalized to
+`D`-valued profunctors `P : Cᵒᵖ ⥤ C ⥤ D` via "parametric
+(co)wedges", analogous to how `StrongRestrictedWedge` and
+`StrongRestrictedCowedge` generalize paranaturality to the
+`D`-valued setting?
+
+The current `IsParamPoly` is defined for `Type v`-valued
+profunctors. The weighted-limit formulation of paranatural
+transformations (via `StrongRestrictedWedge`) already works
+for arbitrary `D`. A parametric analogue would replace the
+graph-span compatibility condition with full span-based
+relation lifting in a `D`-enriched sense.
+
+Sub-questions:
+
+- What is the correct `D`-valued analogue of `ProfRelLift`?
+  For `Type`-valued profunctors, the witness `e ∈ F(R,R)` is
+  an element; for `D`-valued profunctors, it would be a
+  morphism from a terminal object or a structured cone.
+- Does the `D`-valued parametric condition collapse to
+  paranaturality when `D` has enough structure (e.g., is a
+  topos)?
+- Can the relation-lifting be expressed as a (co)limit
+  condition in `D`, making it compatible with the weighted
+  (co)limit formulation of paranatural transformations?
+
+This investigation should follow the universal-property
+investigation (Q30), since the categorical structure of
+`ParamEndoProf` informs what properties we need from `D`.
 
 ### Proposed Implementation Path
 
@@ -2596,14 +2631,21 @@ lifting operation itself.
     PSh(C) (Question 26)
 26. Prove internal free theorems for ParamPoly inhabitants
     (Question 26)
-27. Prove copresheaf/presheaf reduction: IsParamPoly for
-    single-variance profunctors = naturality (Question 27)
-28. Prove IsParamPoly = IsParanatural for hom-profunctor
-    and algebra profunctors with initial algebras (Question 28)
+27. DONE. Copresheaf/presheaf reduction: IsParamPoly for
+    single-variance profunctors = naturality (Question 27).
+    Both presheaf and copresheaf versions proved in
+    ParamPoly.lean.
+28. PARTIAL. For presheaf-profunctors, IsParanatural implies
+    IsParamPoly (isParanatural_presheafAsProf_implies_isParamPoly).
+    Hom-profunctor and algebra profunctor cases still open
+    (Question 28).
 29. Verify IsParamPoly excludes Neumann's counterexample
     and handles nested types (Question 29)
 30. Investigate products/coproducts/exponentials/limits/colimits
     and subobject classifier for ParamEndoProf (Question 30)
 31. Prove functoriality of ProfRelLift in spans (Question 31)
-32. Define yonedaProf embedding and prove full faithfulness
-    (Question 32)
+32. DONE. yonedaEndoProf : C ⥤ EndoProf is fully faithful
+    (yonedaEndoProf_fullyFaithful). Uses Q27 reduction and
+    paranaturality=parametricity for presheaf-profunctors.
+33. Generalize parametric polymorphism to D-valued
+    profunctors via parametric (co)wedges (Question 33)

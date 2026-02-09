@@ -368,6 +368,12 @@ def presheafAsProfFunctor :
   (Functor.whiskeringRight Cᵒᵖ (Type v)
     (C ⥤ Type v)).obj (Functor.const C)
 
+@[simp]
+theorem presheafAsProfFunctor_obj (Q : Cᵒᵖ ⥤ Type v) :
+    presheafAsProfFunctor.obj Q =
+      presheafAsProf (C := C) Q :=
+  rfl
+
 /-- `copresheafAsProf` as a functor from copresheaves
 to profunctors. The constant functor
 `Functor.const Cᵒᵖ` sends `Q : C ⥤ Type v` to the
@@ -375,6 +381,13 @@ profunctor `(a, b) ↦ Q(b)`. -/
 def copresheafAsProfFunctor :
     (C ⥤ Type v) ⥤ (Cᵒᵖ ⥤ C ⥤ Type v) :=
   Functor.const Cᵒᵖ
+
+@[simp]
+theorem copresheafAsProfFunctor_obj
+    (Q : C ⥤ Type v) :
+    copresheafAsProfFunctor.obj Q =
+      copresheafAsProf (C := C) Q :=
+  rfl
 
 /-- The Yoneda embedding composed with
 `presheafAsProfFunctor`, sending `c : C` to the
@@ -425,6 +438,113 @@ def yonedaProfParanat {c₁ c₂ : C} (f : c₁ ⟶ c₂) :
   paranatural :=
     isParamPoly_implies_isParanatural _ _
       (yonedaProfMap_isParamPoly f)
+
+theorem yonedaProfParanat_id (c : C) :
+    yonedaProfParanat (𝟙 c) =
+      @Paranat.id C _ (yonedaProf c) := by
+  apply Paranat.ext
+  funext I g
+  simp [yonedaProfParanat, yonedaProfMap,
+    Paranat.id]
+
+theorem yonedaProfParanat_comp
+    {c₁ c₂ c₃ : C} (f : c₁ ⟶ c₂) (g : c₂ ⟶ c₃) :
+    yonedaProfParanat (f ≫ g) =
+      (yonedaProfParanat f).comp
+        (yonedaProfParanat g) := by
+  apply Paranat.ext
+  funext I h
+  simp [yonedaProfParanat, yonedaProfMap,
+    Paranat.comp, Category.assoc]
+
+/-- The Yoneda embedding into `EndoProf`, sending
+`c : C` to the profunctor `(a, b) ↦ Hom(a, c)` and
+`f : c₁ ⟶ c₂` to the paranatural transformation
+given by postcomposition with `f`. -/
+def yonedaEndoProf :
+    @CategoryTheory.Functor C _
+      (EndoProf (C := C))
+      endoProfCategory where
+  obj c := yonedaProf c
+  map f := yonedaProfParanat f
+  map_id c := yonedaProfParanat_id c
+  map_comp f g := yonedaProfParanat_comp f g
+
+/-- For presheaf-as-profunctors, paranaturality already
+implies parametric polymorphism. The DiagCompat
+condition for `presheafAsProf Q` at `f : I₀ ⟶ I₁`
+gives `d₀ = Q.map f.op d₁`, so paranaturality yields
+naturality of the family. -/
+theorem isParanatural_presheafAsProf_implies_isParamPoly
+    (Q Q' : Cᵒᵖ ⥤ Type v)
+    {α : ParanatSig (presheafAsProf Q)
+      (presheafAsProf Q')}
+    (hα : IsParanatural (presheafAsProf Q)
+      (presheafAsProf Q') α) :
+    IsParamPoly (presheafAsProf Q)
+      (presheafAsProf Q') α := by
+  rw [isParamPoly_presheafAsProf_iff]
+  intro I₀ I₁ f d
+  have hcompat : DiagCompat (presheafAsProf Q)
+      I₁ I₀ f (Q.map f.op d) d := by
+    simp [DiagCompat, presheafAsProf,
+      Functor.comp_obj, Functor.const_obj_obj,
+      Functor.comp_map, Functor.const_map_app,
+      Functor.const_obj_map]
+  have h := hα I₁ I₀ f _ _ hcompat
+  simp [DiagCompat, presheafAsProf,
+    Functor.comp_obj, Functor.const_obj_obj,
+    Functor.comp_map, Functor.const_map_app,
+    Functor.const_obj_map] at h
+  exact h.symm
+
+/-- Evaluating the Yoneda paranatural transformation at
+`c₁` on `𝟙 c₁` recovers the original morphism. -/
+theorem yonedaProfParanat_preimage_map
+    {c₁ c₂ : C} (f : c₁ ⟶ c₂) :
+    (yonedaProfParanat f).app c₁ (𝟙 c₁) = f := by
+  simp [yonedaProfParanat, yonedaProfMap]
+
+/-- A paranatural transformation between Yoneda
+profunctors is determined by its value at the identity:
+`α I g = g ≫ α c₁ (𝟙 c₁)`. This uses the fact that
+paranaturality implies naturality for presheaf-as-
+profunctors. -/
+theorem yonedaProfParanat_map_preimage
+    {c₁ c₂ : C}
+    (α : @Paranat C _ (yonedaProf c₁)
+      (yonedaProf c₂)) :
+    yonedaProfParanat (α.app c₁ (𝟙 c₁)) = α := by
+  apply Paranat.ext
+  funext I g
+  simp only [yonedaProfParanat, yonedaProfMap]
+  have hpara : IsParanatural
+      (presheafAsProf (yoneda.obj c₁))
+      (presheafAsProf (yoneda.obj c₂)) α.app :=
+    α.paranatural
+  have hparam :
+      IsParamPoly
+        (presheafAsProf (yoneda.obj c₁))
+        (presheafAsProf (yoneda.obj c₂)) α.app :=
+    isParanatural_presheafAsProf_implies_isParamPoly
+      (yoneda.obj c₁) (yoneda.obj c₂) hpara
+  rw [isParamPoly_presheafAsProf_iff] at hparam
+  have hnat := hparam g (𝟙 c₁)
+  simp only [yoneda_obj_map, Quiver.Hom.unop_op,
+    Category.comp_id] at hnat
+  exact hnat
+
+/-- The Yoneda embedding into `EndoProf` is fully
+faithful: the map `Hom(c₁, c₂) → Paranat(yonedaProf c₁,
+yonedaProf c₂)` is a bijection with inverse given by
+evaluation at `𝟙 c₁`. -/
+def yonedaEndoProf_fullyFaithful :
+    yonedaEndoProf (C := C).FullyFaithful where
+  preimage α := α.app _ (𝟙 _)
+  map_preimage α :=
+    yonedaProfParanat_map_preimage α
+  preimage_map f :=
+    yonedaProfParanat_preimage_map f
 
 end YonedaEmbedding
 
