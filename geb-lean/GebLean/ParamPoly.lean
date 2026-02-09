@@ -1,4 +1,5 @@
 import GebLean.Paranatural
+import Mathlib.CategoryTheory.Widesubcategory
 
 /-!
 # Parametric polymorphism for endoprofunctors
@@ -166,6 +167,63 @@ theorem isParamPoly_comp
     IsParamPoly F H (fun I d => β I (α I d)) := by
   intro I₀ I₁ R π₁ π₂ d₀ d₁ h
   exact hβ π₁ π₂ (α I₀ d₀) (α I₁ d₁) (hα π₁ π₂ d₀ d₁ h)
+
+/-- The morphism property on `EndoProf` selecting those
+paranatural transformations that are parametrically
+polymorphic. -/
+def paramPolyMorphProp :
+    @MorphismProperty
+      (EndoProf (C := C))
+      endoProfCategory.toCategoryStruct :=
+  fun {F G} (α : Paranat F G) =>
+    IsParamPoly F G α.app
+
+instance : @MorphismProperty.ContainsIdentities
+    (EndoProf (C := C))
+    endoProfCategory
+    paramPolyMorphProp where
+  id_mem F := by
+    intro I₀ I₁ R π₁ π₂ d₀ d₁ h
+    exact h
+
+instance : @MorphismProperty.IsStableUnderComposition
+    (EndoProf (C := C))
+    endoProfCategory
+    paramPolyMorphProp where
+  comp_mem {F G H} f g hf hg := by
+    intro I₀ I₁ R π₁ π₂ d₀ d₁ h
+    exact hg π₁ π₂ _ _ (hf π₁ π₂ d₀ d₁ h)
+
+instance : @MorphismProperty.IsMultiplicative
+    (EndoProf (C := C))
+    endoProfCategory
+    paramPolyMorphProp where
+
+/-- The wide subcategory of `EndoProf` consisting of
+all endoprofunctors with parametrically polymorphic
+paranatural transformations as morphisms.
+
+The category instance and faithful inclusion functor
+into `EndoProf` are provided by mathlib's
+`WideSubcategory` infrastructure. -/
+abbrev ParamEndoProf :=
+  @WideSubcategory
+    (EndoProf (C := C))
+    endoProfCategory
+    paramPolyMorphProp
+    inferInstance
+
+/-- The faithful inclusion of the parametrically
+polymorphic subcategory into the full paranatural
+category. -/
+abbrev paramEndoProfInclusion :
+    ParamEndoProf (C := C) ⥤
+      EndoProf (C := C) :=
+  @wideSubcategoryInclusion
+    (EndoProf (C := C))
+    endoProfCategory
+    paramPolyMorphProp
+    inferInstance
 
 end ParametricPolymorphism
 
