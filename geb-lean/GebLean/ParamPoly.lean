@@ -1,5 +1,6 @@
 import GebLean.Paranatural
 import Mathlib.CategoryTheory.Widesubcategory
+import Mathlib.CategoryTheory.Whiskering
 
 /-!
 # Parametric polymorphism for endoprofunctors
@@ -226,5 +227,205 @@ abbrev paramEndoProfInclusion :
     inferInstance
 
 end ParametricPolymorphism
+
+section PresheafReduction
+
+/-- A presheaf `Q : Cᵒᵖ ⥤ Type v` viewed as a profunctor
+that ignores its covariant argument. The profunctor
+`presheafAsProf Q` sends `(a, b) ↦ Q(a)`, constant in
+`b`. -/
+def presheafAsProf (Q : Cᵒᵖ ⥤ Type v) :
+    Cᵒᵖ ⥤ C ⥤ Type v :=
+  Q ⋙ Functor.const C
+
+/-- The profunctor relation lifting for a presheaf-as-
+profunctor simplifies: the covariant projections become
+trivial (identity), so the lifting reduces to the
+presheaf actions agreeing on a common element. -/
+theorem profRelLift_presheafAsProf_iff
+    (Q : Cᵒᵖ ⥤ Type v)
+    {I₀ I₁ R : C} (π₁ : R ⟶ I₀) (π₂ : R ⟶ I₁)
+    (d₀ : diagApp (presheafAsProf Q) I₀)
+    (d₁ : diagApp (presheafAsProf Q) I₁) :
+    ProfRelLift (presheafAsProf Q) π₁ π₂ d₀ d₁ ↔
+      Q.map π₁.op d₀ = Q.map π₂.op d₁ := by
+  simp only [ProfRelLift, presheafAsProf,
+    Functor.comp_obj, Functor.const_obj_obj,
+    Functor.comp_map, Functor.const_map_app,
+    Functor.const_obj_map, types_id]
+  constructor
+  · rintro ⟨e, h₁, h₂⟩
+    rw [h₁, h₂]
+  · intro h
+    exact ⟨Q.map π₁.op d₀, rfl, h.symm⟩
+
+/-- For presheaf-as-profunctors, `IsParamPoly` is equivalent
+to naturality of the family as a presheaf transformation.
+
+For `g : op I₀ ⟶ op I₁` in `Cᵒᵖ` (equivalently
+`g.unop : I₁ ⟶ I₀` in `C`), the naturality condition is
+`Q'.map g ∘ α_{I₀} = α_{I₁} ∘ Q.map g`. -/
+theorem isParamPoly_presheafAsProf_iff
+    (Q Q' : Cᵒᵖ ⥤ Type v)
+    (α : ParanatSig (presheafAsProf Q)
+      (presheafAsProf Q')) :
+    IsParamPoly (presheafAsProf Q)
+      (presheafAsProf Q') α ↔
+      (∀ {I₀ I₁ : C} (f : I₁ ⟶ I₀)
+        (d : diagApp (presheafAsProf Q) I₀),
+        Q'.map f.op (α I₀ d) =
+          α I₁ (Q.map f.op d)) := by
+  constructor
+  · intro hparam I₀ I₁ f d
+    have hlift := hparam f (𝟙 I₁) d
+      (Q.map f.op d)
+      ((profRelLift_presheafAsProf_iff Q f
+        (𝟙 I₁) d (Q.map f.op d)).mpr (by simp))
+    rw [profRelLift_presheafAsProf_iff] at hlift
+    simp only [op_id, Functor.map_id, types_id,
+      id_eq] at hlift
+    exact hlift
+  · intro hnat I₀ I₁ R π₁ π₂ d₀ d₁ hlift
+    rw [profRelLift_presheafAsProf_iff] at hlift ⊢
+    rw [hnat π₁, hnat π₂, hlift]
+
+end PresheafReduction
+
+section CopresheafReduction
+
+/-- A copresheaf `Q : C ⥤ Type v` viewed as a profunctor
+that ignores its contravariant argument. The profunctor
+`copresheafAsProf Q` sends `(a, b) ↦ Q(b)`, constant
+in `a`. -/
+def copresheafAsProf (Q : C ⥤ Type v) :
+    Cᵒᵖ ⥤ C ⥤ Type v :=
+  (Functor.const Cᵒᵖ).obj Q
+
+/-- The profunctor relation lifting for a copresheaf-as-
+profunctor simplifies: the contravariant projections
+become trivial, so the lifting reduces to the existence
+of a common preimage under the covariant action. -/
+theorem profRelLift_copresheafAsProf_iff
+    (Q : C ⥤ Type v)
+    {I₀ I₁ R : C} (π₁ : R ⟶ I₀) (π₂ : R ⟶ I₁)
+    (d₀ : diagApp (copresheafAsProf Q) I₀)
+    (d₁ : diagApp (copresheafAsProf Q) I₁) :
+    ProfRelLift (copresheafAsProf Q) π₁ π₂ d₀ d₁ ↔
+      ∃ (e : Q.obj R),
+        Q.map π₁ e = d₀ ∧ Q.map π₂ e = d₁ := by
+  simp only [ProfRelLift, copresheafAsProf,
+    Functor.const_obj_obj, Functor.const_obj_map]
+  constructor
+  · rintro ⟨e, h₁, h₂⟩
+    exact ⟨e, h₁.symm, h₂.symm⟩
+  · rintro ⟨e, h₁, h₂⟩
+    exact ⟨e, h₁.symm, h₂.symm⟩
+
+/-- For copresheaf-as-profunctors, `IsParamPoly` is
+equivalent to naturality of the family as a copresheaf
+transformation: `Q'.map f ∘ α = α ∘ Q.map f` for all
+`f : I₀ ⟶ I₁` in `C`. -/
+theorem isParamPoly_copresheafAsProf_iff
+    (Q Q' : C ⥤ Type v)
+    (α : ParanatSig (copresheafAsProf Q)
+      (copresheafAsProf Q')) :
+    IsParamPoly (copresheafAsProf Q)
+      (copresheafAsProf Q') α ↔
+      (∀ {I₀ I₁ : C} (f : I₀ ⟶ I₁)
+        (d : diagApp (copresheafAsProf Q) I₀),
+        Q'.map f (α I₀ d) =
+          α I₁ (Q.map f d)) := by
+  constructor
+  · intro hparam I₀ I₁ f d
+    have hlift := hparam (𝟙 I₀) f d (Q.map f d)
+      ((profRelLift_copresheafAsProf_iff Q
+        (𝟙 I₀) f d (Q.map f d)).mpr
+        ⟨d, by simp, rfl⟩)
+    rw [profRelLift_copresheafAsProf_iff] at hlift
+    obtain ⟨e', h₁, h₂⟩ := hlift
+    simp only [Functor.map_id, types_id, id_eq]
+      at h₁
+    rw [← h₁, h₂]
+  · intro hnat I₀ I₁ R π₁ π₂ d₀ d₁ hlift
+    rw [profRelLift_copresheafAsProf_iff] at hlift ⊢
+    obtain ⟨e, he₀, he₁⟩ := hlift
+    exact ⟨α R e,
+      by rw [hnat π₁, he₀],
+      by rw [hnat π₂, he₁]⟩
+
+end CopresheafReduction
+
+section YonedaEmbedding
+
+open Opposite
+
+/-- `presheafAsProf` as a functor from presheaves to
+profunctors. Postcomposition with `Functor.const C`
+sends `Q : Cᵒᵖ ⥤ Type v` to the profunctor
+`Q ⋙ Functor.const C : (a, b) ↦ Q(a)`. -/
+def presheafAsProfFunctor :
+    (Cᵒᵖ ⥤ Type v) ⥤ (Cᵒᵖ ⥤ C ⥤ Type v) :=
+  (Functor.whiskeringRight Cᵒᵖ (Type v)
+    (C ⥤ Type v)).obj (Functor.const C)
+
+/-- `copresheafAsProf` as a functor from copresheaves
+to profunctors. The constant functor
+`Functor.const Cᵒᵖ` sends `Q : C ⥤ Type v` to the
+profunctor `(a, b) ↦ Q(b)`. -/
+def copresheafAsProfFunctor :
+    (C ⥤ Type v) ⥤ (Cᵒᵖ ⥤ C ⥤ Type v) :=
+  Functor.const Cᵒᵖ
+
+/-- The Yoneda embedding composed with
+`presheafAsProfFunctor`, sending `c : C` to the
+profunctor `(a, b) ↦ Hom(a, c)`. -/
+def yonedaProfFunctor :
+    C ⥤ (Cᵒᵖ ⥤ C ⥤ Type v) :=
+  yoneda ⋙ presheafAsProfFunctor
+
+/-- The profunctor `(a, b) ↦ Hom(a, c)`, i.e., the
+Yoneda embedding of `c` viewed as an endoprofunctor
+that ignores its covariant argument. -/
+def yonedaProf (c : C) : Cᵒᵖ ⥤ C ⥤ Type v :=
+  yonedaProfFunctor.obj c
+
+/-- The diagonal elements of `yonedaProf c` at `I`
+are `Hom(I, c)`. -/
+theorem diagApp_yonedaProf (c I : C) :
+    diagApp (yonedaProf c) I = (unop (op I) ⟶ c) :=
+  rfl
+
+/-- The paranatural family induced by `f : c₁ ⟶ c₂`
+between Yoneda profunctors: postcomposition with `f`
+at each component. -/
+def yonedaProfMap {c₁ c₂ : C} (f : c₁ ⟶ c₂) :
+    ParanatSig (yonedaProf c₁)
+      (yonedaProf (C := C) c₂) :=
+  fun I (g : unop (op I) ⟶ c₁) => g ≫ f
+
+theorem yonedaProfMap_isParamPoly
+    {c₁ c₂ : C} (f : c₁ ⟶ c₂) :
+    IsParamPoly (yonedaProf c₁)
+      (yonedaProf (C := C) c₂)
+      (yonedaProfMap f) := by
+  change IsParamPoly
+    (presheafAsProf (yoneda.obj c₁))
+    (presheafAsProf (yoneda.obj c₂))
+    (yonedaProfMap f)
+  rw [isParamPoly_presheafAsProf_iff]
+  intro I₀ I₁ g d
+  simp only [yonedaProfMap, yoneda_obj_map]
+  simp only [Category.assoc]
+
+/-- The `Paranat` morphism in `EndoProf` induced by
+`f : c₁ ⟶ c₂`. -/
+def yonedaProfParanat {c₁ c₂ : C} (f : c₁ ⟶ c₂) :
+    @Paranat C _ (yonedaProf c₁) (yonedaProf c₂) where
+  app := yonedaProfMap f
+  paranatural :=
+    isParamPoly_implies_isParanatural _ _
+      (yonedaProfMap_isParamPoly f)
+
+end YonedaEmbedding
 
 end GebLean

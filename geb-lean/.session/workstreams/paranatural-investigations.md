@@ -2443,6 +2443,123 @@ This refactoring eliminates custom structure definitions in favor of mathlib's
 categorical infrastructure, supporting the goal of using universal properties
 rather than low-level transport proofs.
 
+### 27. Copresheaf/Presheaf Reduction of Parametricity
+
+**Question**: For profunctors that ignore one variance direction,
+does parametric polymorphism reduce to naturality?
+
+Specifically: if `P, Q : C^op ⥤ C ⥤ Type v` factor through the
+projection (i.e., `P(a, b)` does not depend on `a`), then `P` is
+effectively a copresheaf `C ⥤ Type v`. A diagonal family
+`α_I : P(I,I) → Q(I,I)` becomes a family `α_I : P(I) → Q(I)`.
+The claim is that `IsParamPoly` for such families reduces to
+naturality as copresheaf transformations.
+
+Dually, if `P(a, b)` does not depend on `b`, then `IsParamPoly`
+should reduce to naturality as presheaf transformations.
+
+This would confirm that profunctor parametricity correctly
+specializes to the single-variance case.
+
+**Formalization approach**: Define a "constant in first argument"
+profunctor as `constProf Q := Functor.const C^op ⋙ Q` for
+`Q : C ⥤ Type v`, and prove `IsParamPoly` for families between
+such profunctors is equivalent to naturality of `Q ⟶ Q'`.
+
+### 28. Parametricity in "Right" Cases (Hom, Algebras)
+
+**Question**: In cases where paranaturality already gives the
+"right" answer (hom-profunctor endo-transformations, algebra
+profunctors with initial algebras), does `IsParamPoly` coincide
+with `IsParanatural`?
+
+For the hom-profunctor `Hom(-, =)`, paranatural
+endo-transformations correspond to elements of the center of C
+(or identity if C has no nontrivial center elements). If these
+are all parametric, then `IsParamPoly = IsParanatural` for the
+hom-profunctor.
+
+For algebra profunctors with initial algebras, the universal
+property should force all paranatural transformations (which are
+catamorphisms) to be parametric, since catamorphisms are
+determined by their algebra structure maps.
+
+### 29. Neumann's Counterexample and Parametric Correction
+
+**Question**: Does `IsParamPoly` correctly exclude the "bad"
+paranatural transformations in Neumann's counterexample
+(type `∀X.((X → X) → X) → X`)?
+
+Neumann shows a paranatural transformation that violates the
+expected free theorem. The counterexample exploits the
+exponential structure `(X → X) → X` which creates nontrivial
+relations between the covariant and contravariant positions.
+Our span-based `ProfRelLift` should capture these relations.
+
+Sub-questions:
+- Does the definition handle arbitrarily deeply nested variance?
+- Is `ProfRelLift` compositional in the sense that nested type
+  constructors compose relation liftings?
+- Does `ProfRelLift` for spans compose with itself (a span of
+  spans gives a composed relation lifting)?
+
+### 30. Universal Properties of ParamEndoProf
+
+**Question**: What categorical structure does `ParamEndoProf`
+have? System F's parametric polymorphism suggests at least
+products, coproducts, and exponentials.
+
+Sub-questions:
+- Does `ParamEndoProf` have all finite products? (Likely yes:
+  product projections should be parametric.)
+- Does `ParamEndoProf` have all finite coproducts?
+- Does `ParamEndoProf` have exponentials (is it CCC)?
+- Does `ParamEndoProf` have all limits? (Restricting morphisms
+  tends to help with limits since fewer morphisms means fewer
+  conditions to satisfy for universal properties.)
+- Does `ParamEndoProf` have all colimits?
+- Does `ParamEndoProf` have a subobject classifier?
+- Is `ParamEndoProf` a topos?
+
+Note: `EndoProf` (with paranatural morphisms) has terminal
+objects and binary products but lacks equalizers. The stronger
+parametric condition might restore equalizers.
+
+### 32. Yoneda Embedding into ParamEndoProf
+
+**Question**: The Yoneda embedding `y : C → Psh(C)` can be
+viewed as a profunctor `y(c)(a, b) = Hom(a, c)` that ignores
+its covariant argument. Does this give a fully faithful
+embedding `C ↪ ParamEndoProf`?
+
+**Expected answer**: Yes. Since `y(c)` ignores the covariant
+argument, `IsParamPoly` for transformations `y(c) → y(d)`
+reduces to naturality of presheaf maps `Hom(-, c) → Hom(-, d)`,
+which by Yoneda is `Hom(c, d)`. So:
+
+`Hom_{ParamEndoProf}(y(c), y(d)) ≅ Hom_C(c, d)`
+
+This embedding provides:
+- Ground types from `C` inside the parametric type theory
+- Full faithfulness means `C` is recovered exactly
+- This is the profunctor version of "Yoneda is fully faithful"
+
+**Formalization**: Define `yonedaProf : C ⥤ ParamEndoProf`
+as the composition of the Yoneda embedding with the
+"ignore covariant argument" functor `Psh(C) → EndoProf`.
+Prove full faithfulness using Q27's reduction result.
+
+### 31. Functoriality of ProfRelLift in Spans
+
+**Question**: Is `ProfRelLift` functorial in the span? That is,
+given composable spans `(R₁, π₁, π₂)` and `(R₂, ρ₁, ρ₂)` (with
+a "composition" via pullback or similar), does the composed
+relation lifting agree with composing the individual liftings?
+
+This is needed to handle deeply nested type constructors (Q29)
+and to understand the categorical structure of the relation
+lifting operation itself.
+
 ### Proposed Implementation Path
 
 1. Implement Dialgebra category and prove equivalences (Question 1)
@@ -2479,3 +2596,14 @@ rather than low-level transport proofs.
     PSh(C) (Question 26)
 26. Prove internal free theorems for ParamPoly inhabitants
     (Question 26)
+27. Prove copresheaf/presheaf reduction: IsParamPoly for
+    single-variance profunctors = naturality (Question 27)
+28. Prove IsParamPoly = IsParanatural for hom-profunctor
+    and algebra profunctors with initial algebras (Question 28)
+29. Verify IsParamPoly excludes Neumann's counterexample
+    and handles nested types (Question 29)
+30. Investigate products/coproducts/exponentials/limits/colimits
+    and subobject classifier for ParamEndoProf (Question 30)
+31. Prove functoriality of ProfRelLift in spans (Question 31)
+32. Define yonedaProf embedding and prove full faithfulness
+    (Question 32)
