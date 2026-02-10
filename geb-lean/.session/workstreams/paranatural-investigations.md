@@ -2874,7 +2874,7 @@ not encode.
 
 #### Neumann's proposed responses
 
-Neumann lists three options (slide 11):
+Neumann lists three possibilities (slide 11):
 
 1. Give up.
 
@@ -2896,7 +2896,7 @@ Neumann lists three options (slide 11):
 What we have proved:
 
 - `IsParamPoly ↔ IsParanatural` (Q28): our span-based
-  `IsParamPoly` was an incorrect definition of parametricity.
+  `IsParamPoly` is not parametricity.
   It is equivalent to paranaturality.
 
 - For types where paranaturality coincides with
