@@ -2466,9 +2466,12 @@ profunctor as `constProf Q := Functor.const C^op ⋙ Q` for
 `Q : C ⥤ Type v`, and prove `IsParamPoly` for families between
 such profunctors is equivalent to naturality of `Q ⟶ Q'`.
 
-### 28. Parametricity in "Right" Cases (Hom, Algebras)
+### 28. IsParamPoly Is Equivalent to IsParanatural
 
 **Result**: `IsParamPoly ↔ IsParanatural` for ALL profunctors.
+This means our `IsParamPoly` definition was wrong: it does
+not capture parametric polymorphism, it just recaptures
+paranaturality.
 
 The `ProfRelLift` at a span `(R, π₁, π₂)` decomposes
 definitionally as `∃ e, DiagCompat F R I₀ π₁ e d₀ ∧
@@ -2481,24 +2484,27 @@ Proved in `ParamPoly.lean`:
 - `isParanatural_implies_isParamPoly`
 - `isParamPoly_iff_isParanatural`
 
-Consequence: `ParamEndoProf` (the wide subcategory of
-parametrically polymorphic transformations) equals `EndoProf`.
-The `paramPolyMorphProp` selects all morphisms.
+Consequence: `ParamEndoProf` = `EndoProf`. The span-based
+`ProfRelLift` definition operates on profunctors alone,
+not on type expressions, and therefore cannot distinguish
+paranaturality from parametricity.
 
 ### 29. Neumann's Counterexample and Parametric Correction
 
 **Result**: `IsParamPoly` does NOT exclude Neumann's
 counterexample, because `IsParamPoly ↔ IsParanatural` (Q28).
-The span-based `ProfRelLift` definition, while natural, is
-equivalent to paranaturality — it tests relation lifting only
-on the profunctor level, not on the type-expression level.
+Our definition was wrong.
 
 The Q14/Q20/Q21 analysis already identified that the
 gap between paranaturality and full parametricity is
 syntax-dependent: different type expressions can yield
 isomorphic profunctors but different relational
 interpretations. Our `ProfRelLift` operates on profunctors
-alone and thus captures paranaturality.
+alone and thus captures only paranaturality.
+
+See Q34 for a detailed analysis of Neumann's counterexample,
+spelling out the type, the two conditions, the gap between
+them, and a concrete counterexample to the diYoneda lemma.
 
 To achieve stronger-than-paranaturality parametricity,
 the candidates from our earlier analysis are:
@@ -2510,25 +2516,14 @@ the candidates from our earlier analysis are:
 ### 30. Universal Properties of ParamEndoProf
 
 **Question**: What categorical structure does `ParamEndoProf`
-have? System F's parametric polymorphism suggests at least
-products, coproducts, and exponentials.
+have?
 
-Sub-questions:
+SUPERSEDED: since `IsParamPoly ↔ IsParanatural` (Q28),
+`ParamEndoProf = EndoProf`, and this question reduces to
+studying universal properties of `EndoProf` (Phase 2).
 
-- Does `ParamEndoProf` have all finite products? (Likely y:
-  product projections should be parametric.)
-- Does `ParamEndoProf` have all finite coproducts?
-- Does `ParamEndoProf` have exponentials (is it CCC)?
-- Does `ParamEndoProf` have all limits? (Restricting morphisms
-  tends to help with limits since fewer morphisms means fewer
-  conditions to satisfy for universal properties.)
-- Does `ParamEndoProf` have all colimits?
-- Does `ParamEndoProf` have a subobject classifier?
-- Is `ParamEndoProf` a topos?
-
-Note: `EndoProf` (with paranatural morphisms) has terminal
-objects and binary products but lacks equalizers. The stronger
-parametric condition might restore equalizers.
+`EndoProf` (with paranatural morphisms) has terminal
+objects and binary products but lacks equalizers.
 
 ### 32. Yoneda Embedding into ParamEndoProf
 
@@ -2598,6 +2593,330 @@ This investigation should follow the universal-property
 investigation (Q30), since the categorical structure of
 `ParamEndoProf` informs what properties we need from `D`.
 
+### 34. Neumann's Counterexample: Detailed Analysis
+
+This section spells out, in detail, the divergence between
+paranaturality (strong dinaturality) and Reynolds-style
+parametricity, as presented in Neumann's TYPES 2024 talk
+(slides 10-15).
+
+#### The type
+
+In Haskell-like syntax:
+
+```haskell
+phi :: forall x. ((x -> x) -> x) -> x
+```
+
+This is the type of a "recursion scheme" or "Church-style
+iterator" that, given a way to produce an `x` from an
+endomorphism `x -> x`, extracts a plain `x`. Inhabitants
+include `\p -> p id` (apply the producer to the identity)
+and `\p -> p (\x -> p (\_ -> x))` (apply twice with a
+reset), among others.
+
+#### The profunctor
+
+The type expression `((X -> X) -> X) -> X` determines a
+profunctor `T : C^op x C -> Set` by substituting `a` for
+negative-variance occurrences of `X` and `b` for
+positive-variance occurrences.
+
+Tracking variance through the nesting:
+
+```text
+((X -> X) -> X) -> X
+  -    +    -     +
+```
+
+Position 1 (`X -> ...`): negative (argument of `->`,
+inside argument of `->`, inside argument of outer `->`)
+Position 2 (`... -> X`): positive (result of `->`,
+inside argument of `->`, inside argument of outer `->`)
+Position 3 (`... -> X` in `(X->X)->X`): negative
+(result of inner `->`, inside argument of outer `->`)
+Position 4 (outermost `X`): positive (result of outer `->`)
+
+So:
+
+```text
+T(a, b) = ((a -> b) -> a) -> b
+```
+
+A polymorphic function `phi : forall X. T(X,X)` is a family
+`(phi_I : ((I -> I) -> I) -> I)` indexed by sets I, subject
+to a coherence condition.
+
+#### Free theorem (Reynolds parametricity)
+
+The Reynolds free theorem for this type says:
+
+For all `f : I -> J`, `p : (I -> I) -> I`,
+`q : (J -> J) -> J`:
+
+If for all `h : I -> I` and `k : J -> J` such that
+`f . h = k . f`:
+
+```text
+f(p(h)) = q(k)
+```
+
+then:
+
+```text
+f(phi_I(p)) = phi_J(q)
+```
+
+The hypothesis relates `p` and `q` via `f`: whenever
+endomorphisms `h` on `I` and `k` on `J` form a commuting
+square with `f` (i.e. `f . h = k . f`), then `p` and `q`
+send them to `f`-related outputs. This quantifies over
+**independent pairs** `(h, k)` satisfying the commutation
+condition.
+
+The conclusion says `phi` preserves this relatedness: if
+the inputs `p, q` are `f`-related, the outputs
+`phi_I(p), phi_J(q)` are also `f`-related.
+
+#### Strong dinaturality (paranaturality)
+
+The paranaturality condition for the same type says:
+
+For all `f : I -> J`, `p : (I -> I) -> I`,
+`q : (J -> J) -> J`:
+
+If for all `r : J -> I`:
+
+```text
+f(p(r . f)) = q(f . r)
+```
+
+then:
+
+```text
+f(phi_I(p)) = phi_J(q)
+```
+
+Given `r : J -> I`, set `h := r . f : I -> I` and
+`k := f . r : J -> J`. These automatically satisfy
+`f . h = f . r . f = k . f`. So the paranaturality
+hypothesis is a specialization of the parametricity
+hypothesis to pairs of the form `(r . f, f . r)`.
+
+#### The gap
+
+The parametricity hypothesis quantifies over all pairs
+`(h, k)` satisfying `f . h = k . f`.
+
+The paranaturality hypothesis quantifies only over pairs
+`(r . f, f . r)` for a single morphism `r : J -> I`.
+
+Every pair `(r . f, f . r)` satisfies the commutation
+condition, but not every commuting pair `(h, k)` has the
+form `(r . f, f . r)` for some `r`. For `(h, k)` to have
+this form, we would need a single `r` such that both
+`h = r . f` and `k = f . r`. Given `h` and `k` with
+`f . h = k . f`, we can try `r` such that `h = r . f`,
+but then `k` must equal `f . r`, which may not hold:
+from `f . r . f = k . f` we get `f . r = k` only if
+`f` is an epimorphism (right-cancellable), which it need
+not be.
+
+Since the paranaturality hypothesis is weaker (fewer
+pairs must satisfy the compatibility), it is easier for
+a pair `(p, q)` to pass the paranaturality gate. So
+paranaturality gives the conclusion for more `(p, q)`
+pairs than parametricity does. This means paranaturality
+is a **stronger condition on phi**: every paranatural
+`phi` is parametric, but a parametric `phi` might fail
+to be paranatural.
+
+This is consistent with our Q28 proof: paranaturality
+implies `IsParamPoly` (our span-based formulation).
+The converse also holds because our `IsParamPoly` was
+itself equivalent to paranaturality.
+
+#### The counterexample to the diYoneda lemma
+
+On slide 15, Neumann gives a concrete counterexample
+showing that paranaturality does not determine a
+transformation by its diagonal values. This refutes the
+"diYoneda lemma," the profunctor analogue of the Yoneda
+lemma.
+
+The diYoneda lemma would claim: for `F : C^op x C -> Set`,
+
+```text
+F(I, I)  <-->  strong-end_K  C(I,K) x C(K,I) x F(K,K)
+```
+
+where the strong end is over `K` and the integrand is
+a profunctor in `(I, J)` (Neumann's "diYoneda embedding"
+`yy(I,J)(K,L) = C(I,L) x C(K,J)`).
+
+The candidate maps are:
+
+Forward (evaluate at identity):
+`phi |-> phi_I(id, id)`
+
+Backward (reconstruct from diagonal value):
+`x |-> (K, a, b) |-> F(b, a)(x)`
+
+The round-trip `x |-> x` works (forward-then-backward):
+
+```text
+x |-> phi where phi_K(a,b) = F(b,a)(x)
+  |-> phi_I(id, id) = F(id, id)(x) = x
+```
+
+But the round-trip `phi |-> phi` fails
+(backward-then-forward):
+
+```text
+phi |-> phi_I(id, id) = x
+    |-> psi where psi_K(a,b) = F(b,a)(x)
+```
+
+This `psi` may differ from the original `phi`.
+
+**Concrete counterexample**: Take `F = Hom_Set` (so
+`F(K,K) = (K -> K)`) and `I` an arbitrary set. Define:
+
+```text
+phi_K(a : I -> K, b : K -> I) = (b . a)^2 = b.a.b.a
+```
+
+This is an element of the strong end
+`strong-end_K Set(I,K) x Set(K,I) x Hom(K,K)`.
+It is strongly dinatural (paranatural) in `K`.
+
+Applying the round-trip:
+
+```text
+phi_I(id, id) = (id . id)^2 = id
+```
+
+Then the reconstructed transformation is:
+
+```text
+psi_K(a, b) = Hom(b, a)(id) = b . id . a = b . a
+```
+
+But `b . a /= (b . a)^2` in general (e.g., when
+`b . a` is not idempotent). So `psi /= phi`:
+
+```text
+phi_K(a, b) = (b . a)^2
+psi_K(a, b) = b . a
+```
+
+The function `(b . a)^2` is paranatural but is NOT
+determined by its diagonal value `phi_I(id, id) = id`.
+It "sees" off-diagonal information (the interaction
+between `a` and `b` through a nontrivial `K`) that
+cannot be recovered from the diagonal alone.
+
+#### Why our span-based formulation failed
+
+Our `ProfRelLift` definition in `ParamPoly.lean`
+defines parametricity as: for every span
+`(R, pi1 : R -> I0, pi2 : R -> I1)`, if
+`ProfRelLift F pi1 pi2 d0 d1` then
+`ProfRelLift G pi1 pi2 (alpha d0) (alpha d1)`.
+
+The `ProfRelLift` condition decomposes as:
+
+```text
+exists e in F(R,R),
+  F(id, pi1)(e) = F(pi1^op, id)(d0)   -- DiagCompat
+  F(id, pi2)(e) = F(pi2^op, id)(d1)   -- DiagCompat
+```
+
+Each leg is an independent `DiagCompat` condition.
+Paranaturality preserves each leg separately using the
+same witness `alpha(R)(e)`, giving:
+
+```text
+exists (alpha(R)(e)) in G(R,R),
+  G(id, pi1)(alpha(R)(e)) = G(pi1^op, id)(alpha(d0))
+  G(id, pi2)(alpha(R)(e)) = G(pi2^op, id)(alpha(d1))
+```
+
+This works because the span's two projections are
+handled independently. In contrast, Reynolds-style
+parametricity for types like `((X -> X) -> X) -> X`
+involves relations on function spaces, where the
+hypothesis `f . h = k . f` correlates `h` and `k`
+through `f` in a way that need not factor through
+any single span witness. The profunctor-level span
+decomposition loses this correlation.
+
+In short: the span-based formulation tests whether
+`alpha` respects the two-legged structure of profunctor
+relations, but Reynolds parametricity for higher-order
+types involves relational constraints within the type
+expression's structure that the profunctor alone does
+not encode.
+
+#### Neumann's proposed responses
+
+Neumann lists three options (slide 11):
+
+1. Give up.
+
+2. Rule out types like `forall X. ((X -> X) -> X) -> X`.
+   Hackett and Hutton [HH15] write: "parametricity of all
+   System F types entails strong dinaturality. For the
+   purposes of this paper, we assume all recursion operators
+   of interest are strongly dinatural; in practice, we are
+   not aware of any such operators in common use where this
+   assumption fails."
+
+3. Give difunctors a true exponential (the approach
+   Neumann pursues in the rest of the talk, leading to the
+   diYoneda embedding and the discovery that the diYoneda
+   lemma is false).
+
+#### Relationship to our formalization
+
+What we have proved:
+
+- `IsParamPoly ↔ IsParanatural` (Q28): our span-based
+  `IsParamPoly` was an incorrect definition of parametricity.
+  It is equivalent to paranaturality.
+
+- For types where paranaturality coincides with
+  parametricity (linear types: Church numerals, initial
+  algebras mu(F), terminal coalgebras nu(F)), our existing
+  `EndoProf` category with paranatural morphisms is
+  adequate.
+
+- For types where paranaturality diverges from
+  parametricity (types with nested higher-order iteration
+  like `((X -> X) -> X) -> X`), a different formulation
+  is needed. The candidates identified in Q20-Q22 remain:
+  Arr(C)-level testing, E(Fact)-parametricity, and the
+  iterated arrow category tower.
+
+#### Open questions from this analysis
+
+1. Is there an actual function `phi : forall X.
+   ((X -> X) -> X) -> X` that is paranatural but not
+   parametric? The gap between the conditions is
+   structural, but Neumann does not exhibit such a `phi`.
+   Hackett-Hutton claim no practical examples exist.
+
+2. Does the diYoneda counterexample `(b . a)^2`
+   correspond to a specific `phi` of the above type that
+   violates parametricity? Or is it a separate phenomenon
+   (failure of the Yoneda principle for strong ends, which
+   is related but distinct)?
+
+3. Can the "linear type" condition (types where
+   paranaturality = parametricity) be characterized
+   precisely? This would tell us exactly when `EndoProf`
+   suffices and when we need a stronger formulation.
+
 ### Proposed Implementation Path
 
 1. Implement Dialgebra category and prove equivalences (Question 1)
@@ -2638,16 +2957,15 @@ investigation (Q30), since the categorical structure of
     single-variance profunctors = naturality (Question 27).
     Both presheaf and copresheaf versions proved in
     ParamPoly.lean.
-28. DONE. IsParamPoly ↔ IsParanatural for ALL profunctors
-    (isParanatural_implies_isParamPoly,
-    isParamPoly_iff_isParanatural). The ProfRelLift conditions
-    decompose as two DiagCompat conditions sharing a witness;
-    paranaturality transforms each leg independently. This
-    subsumes the presheaf case and answers Q28 for HomProf
-    and AlgProf. ParamEndoProf = EndoProf as a consequence.
+28. DONE. IsParamPoly ↔ IsParanatural for ALL profunctors.
+    Our definition of parametricity was wrong: the span-based
+    ProfRelLift decomposes as two DiagCompat conditions
+    sharing a witness, which is what paranaturality preserves.
+    ParamEndoProf = EndoProf as a consequence.
 29. RESOLVED. IsParamPoly = IsParanatural (Q28), so
     ProfRelLift does NOT exclude Neumann's counterexample.
-    Stronger parametricity requires syntax-dependent notions
+    See Q34 for detailed counterexample analysis. Stronger
+    parametricity requires syntax-dependent notions
     (Arr-level, E(Fact), iterated tower).
 30. SUPERSEDED. ParamEndoProf = EndoProf (Q28), so Q30
     reduces to studying universal properties of EndoProf
