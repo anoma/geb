@@ -3034,3 +3034,19 @@ true = false.
     `divApplyId` is parametric but not paranatural.
     Three candidates tested, all fail paranaturality via
     Bool witness (f=const true, p=q=(. false)).
+36. DONE. DiagCompat decomposition of parametricity and
+    paranaturality (Q36). Both conditions decompose as:
+    "under a gate condition on (p,q), the pair
+    (phi I₀ p, phi I₁ q) is DiagCompat for divTarget."
+    The gate differs:
+    - Paranaturality: DiagCompat divSource (= the source
+      profunctor's own compatibility), which coincides
+      with `Paranat divSource divTarget`.
+    - Parametricity: "preserves DiagCompat from
+      divHomProf to divTarget" (a higher-order condition
+      using the hom-profunctor).
+    Formalized as DivParametricBundled/DivParanaturalBundled
+    with equivalences to subtype forms. Bundled paranaturality
+    is definitionally Paranat divSource divTarget (rfl).
+    `divHomProf_diagCompat_eq` shows DiagCompat for the
+    hom-profunctor reduces to f . h = k . f (rfl).

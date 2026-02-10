@@ -2444,6 +2444,120 @@ theorem divIterThree_not_paranatural :
     (fun _ => rfl)
   exact absurd this (by decide)
 
+/-- The hom-profunctor on `Type`, sending `(A, B)`
+to `A → B`. The curried form of
+`Functor.hom Type`. -/
+abbrev divHomProf : Typeᵒᵖ ⥤ Type ⥤ Type :=
+  Functor.curry.obj (Functor.hom Type)
+
+theorem divHomProf_diagCompat_eq
+    {I₀ I₁ : Type} (f : I₀ → I₁)
+    (h : I₀ → I₀) (k : I₁ → I₁) :
+    DiagCompat divHomProf I₀ I₁ f h k =
+    (f ∘ h = k ∘ f) :=
+  rfl
+
+/-- The subtype of `ParanatSig divSource divTarget`
+satisfying the parametricity condition
+`DivParametric`. -/
+def DivParametricSub :=
+  { phi : ParanatSig divSource divTarget //
+    DivParametric phi }
+
+/-- Bundled version of the parametricity condition:
+a family `app I : ((I → I) → I) → I` such that for
+every `f : I₀ → I₁` and `(p, q)` preserving
+`DiagCompat` from `divHomProf` to `divTarget`, the
+pair `(app I₀ p, app I₁ q)` is `DiagCompat` for
+`divTarget`. -/
+@[ext]
+structure DivParametricBundled where
+  app : ∀ (I : Type), ((I → I) → I) → I
+  parametric :
+    ∀ (I₀ I₁ : Type) (f : I₀ → I₁)
+      (p : (I₀ → I₀) → I₀)
+      (q : (I₁ → I₁) → I₁),
+      (∀ (h : I₀ → I₀) (k : I₁ → I₁),
+        DiagCompat divHomProf I₀ I₁ f h k →
+        DiagCompat divTarget I₀ I₁ f (p h) (q k)) →
+      DiagCompat divTarget I₀ I₁ f
+        (app I₀ p) (app I₁ q)
+
+/-- The subtype and bundled formulations of
+parametricity are equivalent: `DivParametric phi`
+holds if and only if the `DiagCompat` preservation
+condition in `DivParametricBundled` holds. -/
+def divParametricEquiv :
+    DivParametricSub ≃ DivParametricBundled where
+  toFun phi :=
+    { app := phi.val
+      parametric := phi.property }
+  invFun b :=
+    ⟨b.app, b.parametric⟩
+  left_inv _ := rfl
+  right_inv _ := rfl
+
+/-- The subtype of `ParanatSig divSource divTarget`
+satisfying the paranaturality condition
+`DivParanatural`. -/
+def DivParanaturalSub :=
+  { phi : ParanatSig divSource divTarget //
+    DivParanatural phi }
+
+/-- Bundled version of the paranaturality condition:
+a family `app I : ((I → I) → I) → I` such that for
+every `f : I₀ → I₁` and `(p, q)` satisfying
+`DiagCompat divSource`, the pair
+`(app I₀ p, app I₁ q)` is `DiagCompat` for
+`divTarget`. -/
+@[ext]
+structure DivParanaturalBundled where
+  app : ∀ (I : Type), ((I → I) → I) → I
+  paranatural :
+    ∀ (I₀ I₁ : Type) (f : I₀ → I₁)
+      (p : (I₀ → I₀) → I₀)
+      (q : (I₁ → I₁) → I₁),
+      DiagCompat divSource I₀ I₁ f p q →
+      DiagCompat divTarget I₀ I₁ f
+        (app I₀ p) (app I₁ q)
+
+/-- The subtype and bundled formulations of
+paranaturality are equivalent: `DivParanatural phi`
+holds if and only if the `DiagCompat`-preservation
+condition in `DivParanaturalBundled` holds. The
+only difference is pointwise vs function equality
+in the `divSource` compatibility condition. -/
+def divParanaturalEquiv :
+    DivParanaturalSub ≃ DivParanaturalBundled where
+  toFun phi :=
+    { app := phi.val
+      paranatural :=
+        fun I₀ I₁ f p q hcompat =>
+          phi.property I₀ I₁ f p q
+            (congr_fun hcompat) }
+  invFun b :=
+    ⟨b.app,
+     fun I₀ I₁ f p q hpw =>
+       b.paranatural I₀ I₁ f p q (funext hpw)⟩
+  left_inv _ := Subtype.ext rfl
+  right_inv _ := DivParanaturalBundled.ext rfl
+
+/-- `DivParanaturalBundled` coincides with
+`Paranat divSource divTarget`: the `DiagCompat`
+condition in the bundled form is
+`IsParanatural divSource divTarget`. -/
+def divParanaturalBundledEquivParanat :
+    DivParanaturalBundled ≃
+    Paranat divSource divTarget where
+  toFun b :=
+    { app := b.app
+      paranatural := b.paranatural }
+  invFun α :=
+    { app := α.app
+      paranatural := α.paranatural }
+  left_inv _ := rfl
+  right_inv _ := rfl
+
 end ParametricityDivergence
 
 end GebLean
