@@ -2647,6 +2647,20 @@ A polymorphic function `phi : forall X. T(X,X)` is a family
 `(phi_I : ((I -> I) -> I) -> I)` indexed by sets I, subject
 to a coherence condition.
 
+For the `ParanatSig` decomposition, the outer `->` becomes
+the `ParanatSig` arrow, splitting `T` into:
+
+- Source: `P(a, b) = (b -> a) -> b` (variance tracked
+  within `(X -> X) -> X` alone; the outer `->`'s variance
+  flip is NOT included)
+- Target: `Q(a, b) = b` (the identity profunctor `IdProf`)
+
+The relationship between `T` and `P, Q` is:
+`T(a, b) = P(b, a) -> Q(a, b)`, where `P`'s variables
+are swapped because P appears in negative position.
+Formalized in `ParanaturalTopos.lean` as `divSource`
+and `divTarget`.
+
 #### Free theorem (Reynolds parametricity)
 
 The Reynolds free theorem for this type says:
@@ -2898,13 +2912,42 @@ What we have proved:
   Arr(C)-level testing, E(Fact)-parametricity, and the
   iterated arrow category tower.
 
+#### Formalization results (ParametricityDivergence section)
+
+In `ParanaturalTopos.lean` section `ParametricityDivergence`:
+
+- `divSource : Type^op ⥤ Type ⥤ Type` where
+  `P(a,b) = (b -> a) -> b`
+- `divTarget = IdProf : Type^op ⥤ Type ⥤ Type` where
+  `Q(a,b) = b`
+- `divParanatSig_eq : ParanatSig divSource divTarget =
+  ((I : Type) -> ((I -> I) -> I) -> I)` (by rfl)
+- `DivParanatural` and `DivParametric`: spelled-out Props
+- `divParanatural_iff_isParanatural`: equivalence
+- `divParanatural_implies_divParametric`: paranaturality
+  implies parametricity
+- `divApplyId = fun I p => p id`:
+  - `divApplyId_parametric`: IS parametric
+  - `divApplyId_not_paranatural`: NOT paranatural
+  (Bool witness: f = const true, p = q = (. false))
+- `divParametric_not_implies_divParanatural`: the
+  converse of the implication fails
+- `divIterOnce`, `divIterThree`: additional candidates,
+  all parametric but not paranatural via the same Bool
+  witness
+
+The Bool witness works because: const-true makes the
+LHS of the paranaturality hypothesis always `true`,
+and `(. false)` applied to any parametrically-built
+endomorphism yields `false`. So the hypothesis holds
+trivially (true = true) but the conclusion requires
+true = false.
+
 #### Open questions from this analysis
 
-1. Is there an actual function `phi : forall X.
-   ((X -> X) -> X) -> X` that is paranatural but not
-   parametric? The gap between the conditions is
-   structural, but Neumann does not exhibit such a `phi`.
-   Hackett-Hutton claim no practical examples exist.
+1. ANSWERED (Q35). The gap goes the other direction:
+   `divApplyId` is parametric but NOT paranatural.
+   Paranaturality is the stronger condition.
 
 2. Does the diYoneda counterexample `(b . a)^2`
    correspond to a specific `phi` of the above type that
@@ -2916,6 +2959,12 @@ What we have proved:
    paranaturality = parametricity) be characterized
    precisely? This would tell us exactly when `EndoProf`
    suffices and when we need a stronger formulation.
+
+4. Are there ANY paranatural elements of this type?
+   Three tested candidates (divApplyId, divIterOnce,
+   divIterThree) all fail paranaturality via the same
+   Bool witness. In a parametric model, the conjecture
+   is that the type has no paranatural inhabitants.
 
 ### Proposed Implementation Path
 
@@ -2976,3 +3025,12 @@ What we have proved:
     paranaturality=parametricity for presheaf-profunctors.
 33. Generalize parametric polymorphism to D-valued
     profunctors via parametric (co)wedges (Question 33)
+34. DONE. Neumann's counterexample analysis (Q34).
+    Profunctors formalized as divSource/divTarget.
+    DivParanatural/DivParametric Props defined and
+    equivalence with IsParanatural proved.
+35. DONE. Formal separation: paranaturality strictly
+    stronger than parametricity for `((X->X)->X)->X`.
+    `divApplyId` is parametric but not paranatural.
+    Three candidates tested, all fail paranaturality via
+    Bool witness (f=const true, p=q=(. false)).

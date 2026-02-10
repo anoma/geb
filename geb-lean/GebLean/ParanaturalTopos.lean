@@ -2215,4 +2215,235 @@ end FixedPoints
 
 end DiagonalizationMonad
 
+section ParametricityDivergence
+
+/-!
+## Parametricity divergence
+
+The profunctors arising in the type
+`phi : forall X. ((X -> X) -> X) -> X`, the standard
+example where paranaturality (strong dinaturality) and
+Reynolds parametricity diverge (Neumann, TYPES 2024).
+The outer `->` is the `ParanatSig` arrow, giving source
+profunctor `P(a, b) = (b -> a) -> b` and target
+profunctor `Q(a, b) = b` (which is `IdProf`).
+-/
+
+/-- The covariant part of `divSource` for fixed
+contravariant argument `a`: sends `b` to
+`(b -> a) -> b`, with covariant action
+`g : b -> b'` sending `p` to `fun h => g (p (h . g))`. -/
+def divSourceInner (a : Type) : Type ⥤ Type where
+  obj b := (b → a) → b
+  map g p h := g (p (h ∘ g))
+
+/-- The source profunctor for the parametricity
+divergence type: `P : Type^op x Type -> Type` sending
+`(a, b)` to `(b -> a) -> b`. On the diagonal,
+`P(I, I) = (I -> I) -> I`. The contravariant action
+of `f : a' -> a` sends `p : (b -> a) -> b` to
+`fun h => p (f . h)`. -/
+def divSource : Typeᵒᵖ ⥤ Type ⥤ Type where
+  obj a := divSourceInner a.unop
+  map f :=
+    { app := fun _ p h => p (f.unop ∘ h)
+      naturality := fun _ _ _ => rfl }
+
+@[simp]
+theorem divSource_obj_obj (a b : Type) :
+    (divSource.obj (Opposite.op a)).obj b =
+    ((b → a) → b) :=
+  rfl
+
+theorem divSource_diag (I : Type) :
+    diagApp divSource I = ((I → I) → I) :=
+  rfl
+
+/-- The target profunctor for the parametricity
+divergence type: `Q(a, b) = b`, ignoring the
+contravariant argument. This is `IdProf`. -/
+abbrev divTarget : Typeᵒᵖ ⥤ Type ⥤ Type :=
+  IdProf (C := Type)
+
+@[simp]
+theorem divTarget_obj_obj (a b : Type) :
+    (divTarget.obj (Opposite.op a)).obj b = b :=
+  rfl
+
+theorem divTarget_diag (I : Type) :
+    diagApp divTarget I = I :=
+  rfl
+
+/-- The `ParanatSig` for the parametricity divergence
+profunctors gives the type
+`forall I. ((I -> I) -> I) -> I`. -/
+theorem divParanatSig_eq :
+    ParanatSig divSource divTarget =
+    ((I : Type) → ((I → I) → I) → I) :=
+  rfl
+
+/-- `DiagCompat` for the source profunctor `divSource`
+reduces to: for all `r : I₁ -> I₀`,
+`f (p (r . f)) = q (f . r)`. -/
+theorem divSource_diagCompat_eq
+    {I₀ I₁ : Type} (f : I₀ → I₁)
+    (p : (I₀ → I₀) → I₀) (q : (I₁ → I₁) → I₁) :
+    DiagCompat divSource I₀ I₁ f p q =
+    ((fun r : I₁ → I₀ => f (p (r ∘ f))) =
+     (fun r : I₁ → I₀ => q (f ∘ r))) :=
+  rfl
+
+/-- `DiagCompat` for the target profunctor `divTarget`
+(= `IdProf`) reduces to `f x = y`. -/
+theorem divTarget_diagCompat_eq
+    {I₀ I₁ : Type} (f : I₀ → I₁)
+    (x : I₀) (y : I₁) :
+    DiagCompat divTarget I₀ I₁ f x y =
+    (f x = y) :=
+  rfl
+
+/-- The paranaturality (strong dinaturality) condition
+for `phi : forall I. ((I -> I) -> I) -> I`, spelled
+out: for all `f : I -> J`, `p`, `q`, if
+`forall r : J -> I, f (p (r . f)) = q (f . r)` then
+`f (phi p) = phi q`. -/
+def DivParanatural
+    (phi : ParanatSig divSource divTarget) : Prop :=
+  ∀ (I₀ I₁ : Type) (f : I₀ → I₁)
+    (p : (I₀ → I₀) → I₀)
+    (q : (I₁ → I₁) → I₁),
+    (∀ r : I₁ → I₀,
+      f (p (r ∘ f)) = q (f ∘ r)) →
+    f (phi I₀ p) = phi I₁ q
+
+/-- The Reynolds parametricity free theorem for
+`phi : forall I. ((I -> I) -> I) -> I`: for all
+`f : I -> J`, `p`, `q`, if for all `h : I -> I` and
+`k : J -> J` with `f . h = k . f` we have
+`f (p h) = q k`, then `f (phi p) = phi q`.
+
+The hypothesis quantifies over independent pairs
+`(h, k)` satisfying the commutation condition
+`f . h = k . f`, unlike `DivParanatural` which
+restricts to pairs `(r . f, f . r)`. -/
+def DivParametric
+    (phi : ParanatSig divSource divTarget) : Prop :=
+  ∀ (I₀ I₁ : Type) (f : I₀ → I₁)
+    (p : (I₀ → I₀) → I₀)
+    (q : (I₁ → I₁) → I₁),
+    (∀ (h : I₀ → I₀) (k : I₁ → I₁),
+      f ∘ h = k ∘ f →
+      f (p h) = q k) →
+    f (phi I₀ p) = phi I₁ q
+
+/-- `DivParanatural` is equivalent to
+`IsParanatural divSource divTarget`. The only
+difference is that `DiagCompat` for `divSource` uses
+function equality while `DivParanatural` uses
+pointwise equality. -/
+theorem divParanatural_iff_isParanatural
+    (phi : ParanatSig divSource divTarget) :
+    DivParanatural phi ↔
+    IsParanatural divSource divTarget phi := by
+  constructor
+  · intro h I₀ I₁ f p q hcompat
+    exact h I₀ I₁ f p q (congr_fun hcompat)
+  · intro h I₀ I₁ f p q hpw
+    exact h I₀ I₁ f p q (funext hpw)
+
+/-- Paranaturality implies parametricity: every
+paranatural `phi` satisfies the Reynolds free theorem.
+The `DivParanatural` hypothesis tests all `r : J -> I`,
+generating pairs `(r . f, f . r)`. The `DivParametric`
+hypothesis tests all `(h, k)` with `f . h = k . f`,
+which includes the `r`-generated pairs as a special
+case (taking `r` such that `h = r . f`). Since the
+paranaturality gate admits more `(p, q)` pairs
+(weaker hypothesis), its conclusion covers more
+cases. -/
+theorem divParanatural_implies_divParametric
+    {phi : ParanatSig divSource divTarget}
+    (h : DivParanatural phi) :
+    DivParametric phi := by
+  intro I₀ I₁ f p q hrel
+  apply h I₀ I₁ f p q
+  intro r
+  exact hrel (r ∘ f) (f ∘ r) (by ext x; rfl)
+
+/-- The element `fun I p => p id` of
+`ParanatSig divSource divTarget`.
+At each type `I`, applies the given
+`p : (I -> I) -> I` to the identity
+endomorphism. -/
+def divApplyId : ParanatSig divSource divTarget :=
+  fun _ p => p id
+
+theorem divApplyId_parametric :
+    DivParametric divApplyId := by
+  intro I₀ I₁ f p q hrel
+  exact hrel id id rfl
+
+/-- `divApplyId` is not paranatural. Witness:
+`I₀ = I₁ = Bool`, `f = const true`,
+`p = q = (· false)`. The paranaturality hypothesis
+`∀ r, f (p (r ∘ f)) = q (f ∘ r)` holds since both
+sides reduce to `true`, but `f (p id) = true` while
+`q id = false`. -/
+theorem divApplyId_not_paranatural :
+    ¬ DivParanatural divApplyId := by
+  intro hpn
+  have := hpn Bool Bool (fun _ => true)
+    (fun g => g false) (fun g => g false)
+    (fun _ => rfl)
+  exact absurd this (by decide)
+
+/-- Parametricity does not imply paranaturality:
+`divApplyId` witnesses the separation. -/
+theorem divParametric_not_implies_divParanatural :
+    ¬ (∀ phi : ParanatSig divSource divTarget,
+      DivParametric phi → DivParanatural phi) :=
+  fun h => divApplyId_not_paranatural
+    (h divApplyId divApplyId_parametric)
+
+/-- Candidate paranatural element:
+`fun I p => p (fun x => p (fun _ => x))`.
+Applies `p` to the function that replaces its
+argument with the fixpoint-like iterate
+`p (const x)`. -/
+def divIterOnce : ParanatSig divSource divTarget :=
+  fun _ p => p (fun x => p (fun _ => x))
+
+theorem divIterOnce_parametric :
+    DivParametric divIterOnce := by
+  intro I₀ I₁ f p q hrel
+  simp only [divIterOnce]
+  apply hrel
+  ext x
+  exact hrel (fun _ => x) (fun _ => f x) rfl
+
+theorem divIterOnce_not_paranatural :
+    ¬ DivParanatural divIterOnce := by
+  intro hpn
+  have := hpn Bool Bool (fun _ => true)
+    (fun g => g false) (fun g => g false)
+    (fun _ => rfl)
+  exact absurd this (by decide)
+
+/-- Candidate `fun I p => p (fun _ => p (fun _ => p id))`,
+three-deep iteration. -/
+def divIterThree :
+    ParanatSig divSource divTarget :=
+  fun _ p =>
+    p (fun _ => p (fun _ => p id))
+
+theorem divIterThree_not_paranatural :
+    ¬ DivParanatural divIterThree := by
+  intro hpn
+  have := hpn Bool Bool (fun _ => true)
+    (fun g => g false) (fun g => g false)
+    (fun _ => rfl)
+  exact absurd this (by decide)
+
+end ParametricityDivergence
+
 end GebLean
