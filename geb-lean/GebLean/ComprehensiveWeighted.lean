@@ -913,7 +913,7 @@ transformation between functors on `TwistedArrow C`.
 def paranatWeightedLimitEquiv :
     Paranat H G ≃
     (wedgeWeight H ⟶
-      profunctorOnTwistedArrow C G) :=
+      profunctorOnTwistedArrow (D := Type v) C G) :=
   (structureIntegralEquivParanat H G).symm |>.trans
     (structureIntegralNatTransIso G H).toEquiv
 
