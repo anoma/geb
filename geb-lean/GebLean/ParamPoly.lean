@@ -111,6 +111,42 @@ theorem isParamPoly_implies_isParanatural
     ((profRelLift_graph_iff_diagCompat F f d₀ d₁).mpr
       hcompat)
 
+/-- Paranaturality implies parametric polymorphism.
+The witness `e` in a `ProfRelLift` satisfies
+`DiagCompat F R I₀ π₁ e d₀` and
+`DiagCompat F R I₁ π₂ e d₁` (one per leg of the
+span). Applying paranaturality to each leg
+independently yields the two output conditions with
+witness `α R e`. -/
+theorem isParanatural_implies_isParamPoly
+    {α : ParanatSig F G}
+    (hα : IsParanatural F G α) :
+    IsParamPoly F G α := by
+  intro I₀ I₁ R π₁ π₂ d₀ d₁ ⟨e, h₁, h₂⟩
+  exact ⟨α R e,
+    (hα R I₀ π₁ e d₀ h₁.symm).symm,
+    (hα R I₁ π₂ e d₁ h₂.symm).symm⟩
+
+/-- Parametric polymorphism and paranaturality are
+equivalent for all endoprofunctors. The forward
+direction holds because graph spans are a special
+case of arbitrary spans; the reverse because each
+leg of a span-based relation lifting is a
+`DiagCompat` condition. -/
+theorem isParamPoly_iff_isParanatural
+    (α : ParanatSig F G) :
+    IsParamPoly F G α ↔ IsParanatural F G α := by
+  constructor
+  · intro h I₀ I₁ f d₀ d₁ hcompat
+    rw [← profRelLift_graph_iff_diagCompat]
+    exact h (𝟙 I₀) f d₀ d₁
+      ((profRelLift_graph_iff_diagCompat F f
+        d₀ d₁).mpr hcompat)
+  · intro h I₀ I₁ R π₁ π₂ d₀ d₁ ⟨e, h₁, h₂⟩
+    exact ⟨α R e,
+      (h R I₀ π₁ e d₀ h₁.symm).symm,
+      (h R I₁ π₂ e d₁ h₂.symm).symm⟩
+
 /-- The diagonal restriction of a natural transformation
 between endoprofunctors is parametrically polymorphic.
 

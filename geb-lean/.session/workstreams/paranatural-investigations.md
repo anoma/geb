@@ -390,7 +390,7 @@ on both sides, but here paranaturality might propagate. This needs investigation
 
 #### Question 6: Costructure Integral via Opposite Categories
 
-**Finding**: YES, StructuralCoend can be expressed as a colimit using (DiagElem F)ᵒᵖ.
+**Finding**: Y, StructuralCoend can be expressed as a colimit using (DiagElem F)ᵒᵖ.
 
 The reason for the oppositization is that:
 
@@ -2468,41 +2468,44 @@ such profunctors is equivalent to naturality of `Q ⟶ Q'`.
 
 ### 28. Parametricity in "Right" Cases (Hom, Algebras)
 
-**Question**: In cases where paranaturality already gives the
-"right" answer (hom-profunctor endo-transformations, algebra
-profunctors with initial algebras), does `IsParamPoly` coincide
-with `IsParanatural`?
+**Result**: `IsParamPoly ↔ IsParanatural` for ALL profunctors.
 
-For the hom-profunctor `Hom(-, =)`, paranatural
-endo-transformations correspond to elements of the center of C
-(or identity if C has no nontrivial center elements). If these
-are all parametric, then `IsParamPoly = IsParanatural` for the
-hom-profunctor.
+The `ProfRelLift` at a span `(R, π₁, π₂)` decomposes
+definitionally as `∃ e, DiagCompat F R I₀ π₁ e d₀ ∧
+DiagCompat F R I₁ π₂ e d₁`. Given a paranatural `α` and
+witness `e`, applying paranaturality to each leg independently
+with the same witness `α R e` gives the output conditions.
 
-For algebra profunctors with initial algebras, the universal
-property should force all paranatural transformations (which are
-catamorphisms) to be parametric, since catamorphisms are
-determined by their algebra structure maps.
+Proved in `ParamPoly.lean`:
+
+- `isParanatural_implies_isParamPoly`
+- `isParamPoly_iff_isParanatural`
+
+Consequence: `ParamEndoProf` (the wide subcategory of
+parametrically polymorphic transformations) equals `EndoProf`.
+The `paramPolyMorphProp` selects all morphisms.
 
 ### 29. Neumann's Counterexample and Parametric Correction
 
-**Question**: Does `IsParamPoly` correctly exclude the "bad"
-paranatural transformations in Neumann's counterexample
-(type `∀X.((X → X) → X) → X`)?
+**Result**: `IsParamPoly` does NOT exclude Neumann's
+counterexample, because `IsParamPoly ↔ IsParanatural` (Q28).
+The span-based `ProfRelLift` definition, while natural, is
+equivalent to paranaturality — it tests relation lifting only
+on the profunctor level, not on the type-expression level.
 
-Neumann shows a paranatural transformation that violates the
-expected free theorem. The counterexample exploits the
-exponential structure `(X → X) → X` which creates nontrivial
-relations between the covariant and contravariant positions.
-Our span-based `ProfRelLift` should capture these relations.
+The Q14/Q20/Q21 analysis already identified that the
+gap between paranaturality and full parametricity is
+syntax-dependent: different type expressions can yield
+isomorphic profunctors but different relational
+interpretations. Our `ProfRelLift` operates on profunctors
+alone and thus captures paranaturality.
 
-Sub-questions:
+To achieve stronger-than-paranaturality parametricity,
+the candidates from our earlier analysis are:
 
-- Does the definition handle arbitrarily deeply nested variance?
-- Is `ProfRelLift` compositional in the sense that nested type
-  constructors compose relation liftings?
-- Does `ProfRelLift` for spans compose with itself (a span of
-  spans gives a composed relation lifting)?
+- Arr(C)-level testing (Q20)
+- E(Fact)-parametricity (Q21)
+- The iterated arrow category tower (Q22)
 
 ### 30. Universal Properties of ParamEndoProf
 
@@ -2512,7 +2515,7 @@ products, coproducts, and exponentials.
 
 Sub-questions:
 
-- Does `ParamEndoProf` have all finite products? (Likely yes:
+- Does `ParamEndoProf` have all finite products? (Likely y:
   product projections should be parametric.)
 - Does `ParamEndoProf` have all finite coproducts?
 - Does `ParamEndoProf` have exponentials (is it CCC)?
@@ -2534,7 +2537,7 @@ viewed as a profunctor `y(c)(a, b) = Hom(a, c)` that ignores
 its covariant argument. Does this give a fully faithful
 embedding `C ↪ ParamEndoProf`?
 
-**Expected answer**: Yes. Since `y(c)` ignores the covariant
+**Expected answer**: Y. Since `y(c)` ignores the covariant
 argument, `IsParamPoly` for transformations `y(c) → y(d)`
 reduces to naturality of presheaf maps `Hom(-, c) → Hom(-, d)`,
 which by Yoneda is `Hom(c, d)`. So:
@@ -2635,14 +2638,20 @@ investigation (Q30), since the categorical structure of
     single-variance profunctors = naturality (Question 27).
     Both presheaf and copresheaf versions proved in
     ParamPoly.lean.
-28. PARTIAL. For presheaf-profunctors, IsParanatural implies
-    IsParamPoly (isParanatural_presheafAsProf_implies_isParamPoly).
-    Hom-profunctor and algebra profunctor cases still open
-    (Question 28).
-29. Verify IsParamPoly excludes Neumann's counterexample
-    and handles nested types (Question 29)
-30. Investigate products/coproducts/exponentials/limits/colimits
-    and subobject classifier for ParamEndoProf (Question 30)
+28. DONE. IsParamPoly ↔ IsParanatural for ALL profunctors
+    (isParanatural_implies_isParamPoly,
+    isParamPoly_iff_isParanatural). The ProfRelLift conditions
+    decompose as two DiagCompat conditions sharing a witness;
+    paranaturality transforms each leg independently. This
+    subsumes the presheaf case and answers Q28 for HomProf
+    and AlgProf. ParamEndoProf = EndoProf as a consequence.
+29. RESOLVED. IsParamPoly = IsParanatural (Q28), so
+    ProfRelLift does NOT exclude Neumann's counterexample.
+    Stronger parametricity requires syntax-dependent notions
+    (Arr-level, E(Fact), iterated tower).
+30. SUPERSEDED. ParamEndoProf = EndoProf (Q28), so Q30
+    reduces to studying universal properties of EndoProf
+    (which is the existing Phase 2 investigation).
 31. Prove functoriality of ProfRelLift in spans (Question 31)
 32. DONE. yonedaEndoProf : C ⥤ EndoProf is fully faithful
     (yonedaEndoProf_fullyFaithful). Uses Q27 reduction and
