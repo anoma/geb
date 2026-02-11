@@ -578,11 +578,27 @@ theorem elementsPreEqElementsContra (F : Cᵒᵖ ⥤ Type w) :
 of elements of a presheaf `F : Cᵒᵖ ⥤ Type w` to `C`.
 Sends `op ⟨op c, x⟩` to `c` and morphisms to their
 underlying morphism in `C` (reversing twice). -/
-@[simps]
 def elementsPre_π (F : Cᵒᵖ ⥤ Type w) :
-    F.ElementsPre ⥤ C where
-  obj p := p.unop.fst.unop
-  map f := f.unop.val.unop
+    F.ElementsPre ⥤ C :=
+  (CategoryOfElements.π F).op ⋙
+    (opOpEquivalence C).functor
+
+@[simp]
+theorem elementsPre_π_obj (F : Cᵒᵖ ⥤ Type w)
+    (p : F.ElementsPre) :
+    (elementsPre_π F).obj p = p.unop.fst.unop :=
+  rfl
+
+@[simp]
+theorem elementsPre_π_map (F : Cᵒᵖ ⥤ Type w)
+    {p q : F.ElementsPre} (f : p ⟶ q) :
+    (elementsPre_π F).map f = f.unop.val.unop :=
+  rfl
+
+def sliceEquivPre (F : Cᵒᵖ ⥤ Type w) :
+    Over F ≌ (F.ElementsPreᵒᵖ ⥤ Type w) :=
+  (sliceEquivCopresheaf (C := Cᵒᵖ) F).trans
+    (opOpEquivalence F.Elements).congrLeft.symm
 
 section CovariantCategoryOfElements
 

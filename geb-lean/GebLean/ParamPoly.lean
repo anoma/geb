@@ -645,6 +645,32 @@ theorem yonedaProdElem_obj (X Y : C) :
       ((yonedaProd.obj X).obj Y).ElementsPre :=
   rfl
 
+/-- The slice category of `PSh(C)` over
+`yonedaProd X Y`, bifunctorial in `X` and `Y`.
+
+For fixed `(X, Y)`, the resulting category is
+`Over (yonedaProd X Y)`, whose objects are
+morphisms `G ⟶ yonedaProd X Y` in `PSh(C)` and
+whose morphisms are commuting triangles.  By the
+equivalence `sliceEquivCopresheaf`, this is
+equivalent to copresheaves on the (covariant)
+category of elements of `yonedaProd X Y`, i.e.
+presheaves on the category of spans from `X` to `Y`.
+
+Constructed as `yonedaProd` post-composed (via
+`whiskeringRight`) with mathlib's `Over.mapFunctor`,
+the functorial slice construction. -/
+def yonedaProdSlice : C ⥤ C ⥤ Cat :=
+  yonedaProd ⋙
+    (Functor.whiskeringRight C _ _).obj
+      (Over.mapFunctor (Cᵒᵖ ⥤ Type v))
+
+theorem yonedaProdSlice_obj (X Y : C) :
+    (yonedaProdSlice.obj X).obj Y =
+    Cat.of
+      (Over ((yonedaProd.obj X).obj Y)) :=
+  rfl
+
 end PresheafRelations
 
 end GebLean
