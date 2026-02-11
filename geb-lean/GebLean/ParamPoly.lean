@@ -1,6 +1,9 @@
 import GebLean.Paranatural
 import Mathlib.CategoryTheory.Widesubcategory
 import Mathlib.CategoryTheory.Whiskering
+import Mathlib.CategoryTheory.Products.Basic
+import Mathlib.CategoryTheory.Limits.Types.Products
+import Mathlib.CategoryTheory.Functor.Currying
 
 /-!
 # Parametric polymorphism for endoprofunctors
@@ -583,5 +586,44 @@ def yonedaEndoProf_fullyFaithful :
     yonedaProfParanat_preimage_map f
 
 end YonedaEmbedding
+
+section PresheafRelations
+
+/-!
+## Presheaf representation of relations
+
+The presheaf `yoneda(X) × yoneda(Y)` represents "coherent
+pairs of generalized elements": its category of elements
+has objects `(T, a : T ⟶ X, b : T ⟶ Y)` (spans from `X`
+to `Y`) and morphisms given by stage-change maps `s : T' ⟶ T`
+compatible with both components.
+
+A proof-relevant relation from `X` to `Y` is a presheaf on
+this category of elements, or equivalently (by the standard
+equivalence `PSh(∫F) ≃ PSh(C)/F`) a morphism into
+`yoneda(X) × yoneda(Y)` in `PSh(C)`.
+
+The construction `(X, Y) ↦ yoneda(X) × yoneda(Y)` is
+bifunctorial in `X` and `Y`, arising as a composition of
+existing higher-order functors: the Yoneda embedding
+applied to each component, the functorial pairing into
+a product functor category, and the pointwise application
+of the binary product on types.
+-/
+
+open Limits.Types in
+/-- The presheaf `T ↦ Hom(T, X) × Hom(T, Y)`, bifunctorial
+in `X` and `Y`, constructed as a composition of the Yoneda
+embedding, the functorial pairing
+`prodFunctorToFunctorProd`, and the pointwise binary
+product on types. -/
+def yonedaProd : C ⥤ C ⥤ (Cᵒᵖ ⥤ Type v) :=
+  Functor.curry.obj
+    ((yoneda (C := C)).prod (yoneda (C := C)) ⋙
+     prodFunctorToFunctorProd Cᵒᵖ (Type v) (Type v) ⋙
+     (Functor.whiskeringRight Cᵒᵖ _ _).obj
+       (Functor.uncurry.obj binaryProductFunctor))
+
+end PresheafRelations
 
 end GebLean
