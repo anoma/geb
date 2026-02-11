@@ -625,6 +625,16 @@ def yonedaProd : C ⥤ C ⥤ (Cᵒᵖ ⥤ Type v) :=
      (Functor.whiskeringRight Cᵒᵖ _ _).obj
        (Functor.uncurry.obj binaryProductFunctor))
 
+abbrev yonedaProdPresheaf (X Y : C) :
+    Cᵒᵖ ⥤ Type v :=
+  (yonedaProd.obj X).obj Y
+
+/-- A proof-relevant relation from `X` to `Y` in
+`PSh(C)`: an object of the slice category over the
+product presheaf `yoneda(X) × yoneda(Y)`. -/
+abbrev YonedaRel (X Y : C) :=
+  Over (yonedaProdPresheaf (C := C) X Y)
+
 /-- The category of elements of `yonedaProd X Y`,
 bifunctorial in `X` and `Y`.  The resulting category
 (for fixed `X` and `Y`) has objects `(T, a, b)` with
@@ -643,7 +653,7 @@ def yonedaProdElem : C ⥤ C ⥤ Cat :=
 theorem yonedaProdElem_obj (X Y : C) :
     (yonedaProdElem.obj X).obj Y =
     Cat.of
-      ((yonedaProd.obj X).obj Y).ElementsPre :=
+      (yonedaProdPresheaf X Y).ElementsPre :=
   rfl
 
 /-- The slice category of `PSh(C)` over
@@ -668,8 +678,7 @@ def yonedaProdSlice : C ⥤ C ⥤ Cat :=
 
 theorem yonedaProdSlice_obj (X Y : C) :
     (yonedaProdSlice.obj X).obj Y =
-    Cat.of
-      (Over ((yonedaProd.obj X).obj Y)) :=
+    Cat.of (YonedaRel X Y) :=
   rfl
 
 /-- The presheaf category on the category of elements
@@ -681,7 +690,8 @@ For a bifunctorial version, use `yonedaProdSlice`,
 which is equivalent pointwise via `sliceEquivPre`. -/
 def yonedaProdElemPresheaf (X Y : C) : Cat :=
   Cat.of
-    (((yonedaProd.obj X).obj Y).ElementsPreᵒᵖ ⥤ Type v)
+    ((yonedaProdPresheaf X Y).ElementsPreᵒᵖ ⥤
+      Type v)
 
 /-- The slice category `Over (yonedaProd X Y)` in
 `PSh(C)` is equivalent to the presheaf category on
@@ -693,21 +703,22 @@ presheaf topos `PSh(∫(yoneda(X) × yoneda(Y)))`. -/
 def yonedaProdSlice_equiv (X Y : C) :
     ((yonedaProdSlice.obj X).obj Y).α ≌
     (yonedaProdElemPresheaf X Y).α :=
-  sliceEquivPre ((yonedaProd.obj X).obj Y)
+  sliceEquivPre (yonedaProdPresheaf X Y)
 
 /-- `(yonedaProd.obj X).obj Y` is the explicit
 `FunctorToTypes` product of `yoneda.obj X` and
 `yoneda.obj Y`. -/
 theorem yonedaProd_eq_prod (X Y : C) :
-    (yonedaProd.obj X).obj Y =
-    FunctorToTypes.prod (yoneda.obj X) (yoneda.obj Y) :=
+    yonedaProdPresheaf X Y =
+    FunctorToTypes.prod
+      (yoneda.obj X) (yoneda.obj Y) :=
   rfl
 
 /-- First projection from the product presheaf
 `yonedaProd X Y` to `yoneda X`, via
 `FunctorToTypes.prod.fst`. -/
 abbrev yonedaProdFst (X Y : C) :
-    (yonedaProd.obj X).obj Y ⟶ yoneda.obj X :=
+    yonedaProdPresheaf X Y ⟶ yoneda.obj X :=
   @FunctorToTypes.prod.fst
     _ _ (yoneda.obj X) (yoneda.obj Y)
 
@@ -715,7 +726,7 @@ abbrev yonedaProdFst (X Y : C) :
 `yonedaProd X Y` to `yoneda Y`, via
 `FunctorToTypes.prod.snd`. -/
 abbrev yonedaProdSnd (X Y : C) :
-    (yonedaProd.obj X).obj Y ⟶ yoneda.obj Y :=
+    yonedaProdPresheaf X Y ⟶ yoneda.obj Y :=
   @FunctorToTypes.prod.snd
     _ _ (yoneda.obj X) (yoneda.obj Y)
 
@@ -725,8 +736,14 @@ via `FunctorToTypes.prod.lift`. -/
 abbrev yonedaProdLift {P : Cᵒᵖ ⥤ Type v} (X Y : C)
     (f : P ⟶ yoneda.obj X)
     (g : P ⟶ yoneda.obj Y) :
-    P ⟶ (yonedaProd.obj X).obj Y :=
+    P ⟶ yonedaProdPresheaf X Y :=
   FunctorToTypes.prod.lift f g
+
+/-- The identity relation on `X`, given by the
+diagonal `yoneda(X) → yoneda(X) × yoneda(X)`. -/
+def relId (X : C) : YonedaRel X X :=
+  Over.mk (yonedaProdLift X X
+    (𝟙 (yoneda.obj X)) (𝟙 (yoneda.obj X)))
 
 /-- Composition of proof-relevant relations.
 
@@ -736,10 +753,10 @@ over `yoneda Y` (matching the second component of `R`
 with the first component of `S`), then projecting the
 first component from `R` and the second from `S` into
 `yonedaProd X Z`. -/
-def relComp (X Y Z : C)
-    (R : Over ((yonedaProd.obj X).obj Y))
-    (S : Over ((yonedaProd.obj Y).obj Z)) :
-    Over ((yonedaProd.obj X).obj Z) :=
+def relComp {X Y Z : C}
+    (R : YonedaRel X Y)
+    (S : YonedaRel Y Z) :
+    YonedaRel X Z :=
   Over.mk
     (yonedaProdLift X Z
       (presheafPullbackFst
