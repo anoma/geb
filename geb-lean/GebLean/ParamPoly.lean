@@ -756,6 +756,17 @@ theorem yonedaProdPresheaf_hom_ext
     (congr_fun (NatTrans.congr_app hfst T) x)
     (congr_fun (NatTrans.congr_app hsnd T) x)
 
+@[simp]
+theorem yonedaProdLift_fst_snd
+    {P : Cᵒᵖ ⥤ Type v} (X Y : C)
+    (h : P ⟶ yonedaProdPresheaf X Y) :
+    yonedaProdLift X Y
+      (h ≫ yonedaProdFst X Y)
+      (h ≫ yonedaProdSnd X Y) = h :=
+  yonedaProdPresheaf_hom_ext
+    (by simp [yonedaProdLift])
+    (by simp [yonedaProdLift])
+
 /-- The identity relation on `X` in the over category,
 given by the diagonal
 `yoneda(X) → yoneda(X) × yoneda(X)`. -/
@@ -763,6 +774,20 @@ def yonedaProdOverId (X : C) :
     YonedaProdOver X X :=
   Over.mk (yonedaProdLift X X
     (𝟙 (yoneda.obj X)) (𝟙 (yoneda.obj X)))
+
+@[simp]
+theorem yonedaProdOverId_fst (X : C) :
+    (yonedaProdOverId X).hom ≫
+      yonedaProdFst X X =
+    𝟙 (yoneda.obj X) :=
+  rfl
+
+@[simp]
+theorem yonedaProdOverId_snd (X : C) :
+    (yonedaProdOverId X).hom ≫
+      yonedaProdSnd X X =
+    𝟙 (yoneda.obj X) :=
+  rfl
 
 /-- Composition of proof-relevant relations in the over
 category.
@@ -835,6 +860,67 @@ def yonedaProdOverComp_iso {X Y Z : C}
     simp only [Functor.mapIso_hom, Over.forget_map,
       ← Category.assoc, hS]
 
+/-- Left identity for `yonedaProdOverComp`: composing
+with the identity relation on `X` yields an isomorphic
+relation. -/
+def yonedaProdOverComp_id_left
+    {X Y : C} (R : YonedaProdOver X Y) :
+    yonedaProdOverComp (yonedaProdOverId X) R ≅
+      R :=
+  Over.isoMk
+    (presheafPullbackIdLeftIso
+      (R.hom ≫ yonedaProdFst X Y))
+    (by
+      simp only [yonedaProdOverComp, Over.mk_hom]
+      apply yonedaProdPresheaf_hom_ext
+      · simp only [Category.assoc,
+          presheafPullbackIdLeftIso]
+        have := presheafPullbackCondition
+          (𝟙 (yoneda.obj X))
+          (R.hom ≫ yonedaProdFst X Y)
+        simp only [Category.comp_id] at this
+        exact this.symm
+      · rfl)
+
+/-- Right identity for `yonedaProdOverComp`: composing
+with the identity relation on `Y` yields an isomorphic
+relation. -/
+def yonedaProdOverComp_id_right
+    {X Y : C} (R : YonedaProdOver X Y) :
+    yonedaProdOverComp R (yonedaProdOverId Y) ≅
+      R :=
+  Over.isoMk
+    (presheafPullbackIdRightIso
+      (R.hom ≫ yonedaProdSnd X Y))
+    (by
+      simp only [yonedaProdOverComp, Over.mk_hom]
+      apply yonedaProdPresheaf_hom_ext
+      · rfl
+      · simp only [Category.assoc,
+          presheafPullbackIdRightIso]
+        exact presheafPullbackCondition _ _)
+
+/-- Associativity for `yonedaProdOverComp`:
+`(R ; S) ; T ≅ R ; (S ; T)`. -/
+def yonedaProdOverComp_assoc
+    {X Y Z W : C}
+    (R : YonedaProdOver X Y)
+    (S : YonedaProdOver Y Z)
+    (T : YonedaProdOver Z W) :
+    yonedaProdOverComp
+      (yonedaProdOverComp R S) T ≅
+    yonedaProdOverComp
+      R (yonedaProdOverComp S T) :=
+  Over.isoMk
+    (presheafPullbackAssocIso
+      (R.hom ≫ yonedaProdSnd X Y)
+      (S.hom ≫ yonedaProdFst Y Z)
+      (S.hom ≫ yonedaProdSnd Y Z)
+      (T.hom ≫ yonedaProdFst Z W))
+    (by
+      simp only [yonedaProdOverComp, Over.mk_hom]
+      apply yonedaProdPresheaf_hom_ext <;> rfl)
+
 /-- Composition of relations up to isomorphism:
 applies `yonedaProdOverComp` via `Skeleton.lift₂`,
 using `yonedaProdOverComp_iso` for
@@ -849,6 +935,60 @@ def relComp {X Y Z : C} :
       toSkeleton_eq_iff.mpr
         ⟨yonedaProdOverComp_iso αR αS⟩)
 
+theorem relComp_relId_left
+    {X Y : C} (R : YonedaRel X Y) :
+    relComp (relId X) R = R := by
+  induction R using Quotient.inductionOn with
+  | h R' =>
+    exact toSkeleton_eq_iff.mpr
+      ⟨yonedaProdOverComp_id_left R'⟩
+
+theorem relComp_relId_right
+    {X Y : C} (R : YonedaRel X Y) :
+    relComp R (relId Y) = R := by
+  induction R using Quotient.inductionOn with
+  | h R' =>
+    exact toSkeleton_eq_iff.mpr
+      ⟨yonedaProdOverComp_id_right R'⟩
+
+theorem relComp_assoc
+    {X Y Z W : C}
+    (R : YonedaRel X Y)
+    (S : YonedaRel Y Z)
+    (T : YonedaRel Z W) :
+    relComp (relComp R S) T =
+      relComp R (relComp S T) := by
+  induction R using Quotient.inductionOn with
+  | h R' =>
+  induction S using Quotient.inductionOn with
+  | h S' =>
+  induction T using Quotient.inductionOn with
+  | h T' =>
+    exact toSkeleton_eq_iff.mpr
+      ⟨yonedaProdOverComp_assoc R' S' T'⟩
+
 end PresheafRelations
+
+section YonedaRelCategory
+
+/-- Wrapper type for objects of `C` whose morphisms
+are Yoneda relations (`YonedaRel`). Using a
+`structure` prevents the existing `Category` instance
+on `C` from leaking through. -/
+@[ext]
+structure YonedaRelCat (C : Type u)
+    [Category.{v} C] where
+  obj : C
+
+instance : Category.{max u (v + 1)}
+    (YonedaRelCat C) where
+  Hom X Y := YonedaRel X.obj Y.obj
+  id X := relId X.obj
+  comp R S := relComp R S
+  id_comp := relComp_relId_left
+  comp_id := relComp_relId_right
+  assoc := relComp_assoc
+
+end YonedaRelCategory
 
 end GebLean

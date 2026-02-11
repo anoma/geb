@@ -261,6 +261,193 @@ theorem presheafPullbackIsoOfIso_hom_snd
   simp only [presheafPullbackIsoOfIso,
     PullbackCone.IsLimit.lift_snd]
 
+@[simp]
+theorem presheafPullbackCondition
+    (f : F ⟶ H) (g : G ⟶ H) :
+    presheafPullbackFst f g ≫ f =
+      presheafPullbackSnd f g ≫ g :=
+  (presheafPullbackCone f g).condition
+
+/-- When the first morphism is the identity, the
+presheaf pullback is isomorphic to the second source
+via the second projection. -/
+def presheafPullbackIdLeftIso
+    (g : G ⟶ H) :
+    presheafPullback (𝟙 H) g ≅ G where
+  hom := presheafPullbackSnd (𝟙 H) g
+  inv := presheafPullbackLift (𝟙 H) g
+    g (𝟙 G) (by simp)
+  hom_inv_id := by
+    apply PullbackCone.IsLimit.hom_ext
+      (presheafPullbackIsLimit ..)
+    · have := presheafPullbackCondition (𝟙 H) g
+      simp only [Category.comp_id] at this
+      simp only [Category.assoc, Category.id_comp,
+        PullbackCone.IsLimit.lift_fst]
+      exact this.symm
+    · simp only [Category.assoc,
+        PullbackCone.IsLimit.lift_snd,
+        Category.comp_id, Category.id_comp]
+  inv_hom_id := by simp [presheafPullbackLift]
+
+@[reassoc (attr := simp)]
+theorem presheafPullbackIdLeftIso_inv_fst
+    (g : G ⟶ H) :
+    (presheafPullbackIdLeftIso g).inv ≫
+      presheafPullbackFst (𝟙 H) g = g := by
+  simp [presheafPullbackIdLeftIso,
+    presheafPullbackLift]
+
+/-- When the second morphism is the identity, the
+presheaf pullback is isomorphic to the first source
+via the first projection. -/
+def presheafPullbackIdRightIso
+    (f : F ⟶ H) :
+    presheafPullback f (𝟙 H) ≅ F where
+  hom := presheafPullbackFst f (𝟙 H)
+  inv := presheafPullbackLift f (𝟙 H)
+    (𝟙 F) f (by simp)
+  hom_inv_id := by
+    apply PullbackCone.IsLimit.hom_ext
+      (presheafPullbackIsLimit ..)
+    · simp only [Category.assoc,
+        PullbackCone.IsLimit.lift_fst,
+        Category.comp_id, Category.id_comp]
+    · have := presheafPullbackCondition f (𝟙 H)
+      simp only [Category.comp_id] at this
+      simp only [Category.assoc, Category.id_comp,
+        PullbackCone.IsLimit.lift_snd]
+      exact this
+  inv_hom_id := by simp [presheafPullbackLift]
+
+@[reassoc (attr := simp)]
+theorem presheafPullbackIdRightIso_inv_snd
+    (f : F ⟶ H) :
+    (presheafPullbackIdRightIso f).inv ≫
+      presheafPullbackSnd f (𝟙 H) = f := by
+  simp [presheafPullbackIdRightIso,
+    presheafPullbackLift]
+
+variable {F' G' H' K : C ⥤ Type w}
+
+/-- Associativity isomorphism for iterated presheaf
+pullbacks.  Given `f : F ⟶ H`, `g : G ⟶ H`,
+`f' : G ⟶ H'`, `g' : K ⟶ H'`, there is a canonical
+isomorphism between pulling back the outer pair with
+`f'` composed via `snd`, and pulling back the outer
+pair with `g` composed via `fst`. -/
+def presheafPullbackAssocIso
+    (f : F ⟶ H) (g : G ⟶ H)
+    (f' : G ⟶ H') (g' : K ⟶ H') :
+    presheafPullback
+      (presheafPullbackSnd f g ≫ f') g' ≅
+    presheafPullback
+      f (presheafPullbackFst f' g' ≫ g) where
+  hom :=
+    presheafPullbackLift
+      f (presheafPullbackFst f' g' ≫ g)
+      (presheafPullbackFst
+        (presheafPullbackSnd f g ≫ f') g' ≫
+        presheafPullbackFst f g)
+      (presheafPullbackLift f' g'
+        (presheafPullbackFst
+          (presheafPullbackSnd f g ≫ f') g' ≫
+          presheafPullbackSnd f g)
+        (presheafPullbackSnd
+          (presheafPullbackSnd f g ≫ f') g')
+        (by
+          simp only [Category.assoc]
+          exact presheafPullbackCondition
+            (presheafPullbackSnd f g ≫ f') g'))
+      (by
+        simp only [Category.assoc,
+          presheafPullbackCondition f g,
+          PullbackCone.IsLimit.lift_fst_assoc])
+  inv :=
+    presheafPullbackLift
+      (presheafPullbackSnd f g ≫ f') g'
+      (presheafPullbackLift f g
+        (presheafPullbackFst
+          f (presheafPullbackFst f' g' ≫ g))
+        (presheafPullbackSnd
+          f (presheafPullbackFst f' g' ≫ g) ≫
+          presheafPullbackFst f' g')
+        (by
+          simp only [Category.assoc]
+          exact presheafPullbackCondition
+            f (presheafPullbackFst f' g' ≫ g)))
+      (presheafPullbackSnd
+        f (presheafPullbackFst f' g' ≫ g) ≫
+        presheafPullbackSnd f' g')
+      (by
+        simp only [Category.assoc,
+          PullbackCone.IsLimit.lift_snd_assoc,
+          presheafPullbackCondition f' g'])
+  hom_inv_id := by
+    apply PullbackCone.IsLimit.hom_ext
+      (presheafPullbackIsLimit ..)
+    · apply PullbackCone.IsLimit.hom_ext
+        (presheafPullbackIsLimit f g) <;>
+      simp only [Category.assoc, Category.id_comp,
+        PullbackCone.IsLimit.lift_fst,
+        PullbackCone.IsLimit.lift_snd,
+        PullbackCone.IsLimit.lift_snd_assoc]
+    · simp only [Category.assoc, Category.id_comp,
+        PullbackCone.IsLimit.lift_snd,
+        PullbackCone.IsLimit.lift_snd_assoc]
+  inv_hom_id := by
+    apply PullbackCone.IsLimit.hom_ext
+      (presheafPullbackIsLimit ..)
+    · simp only [Category.assoc, Category.id_comp,
+        PullbackCone.IsLimit.lift_fst,
+        PullbackCone.IsLimit.lift_fst_assoc]
+    · apply PullbackCone.IsLimit.hom_ext
+        (presheafPullbackIsLimit f' g') <;>
+      simp only [Category.assoc, Category.id_comp,
+        PullbackCone.IsLimit.lift_fst,
+        PullbackCone.IsLimit.lift_snd,
+        PullbackCone.IsLimit.lift_fst_assoc]
+
+@[reassoc (attr := simp)]
+theorem presheafPullbackAssocIso_hom_fst
+    (f : F ⟶ H) (g : G ⟶ H)
+    (f' : G ⟶ H') (g' : K ⟶ H') :
+    (presheafPullbackAssocIso f g f' g').hom ≫
+      presheafPullbackFst
+        f (presheafPullbackFst f' g' ≫ g) =
+    presheafPullbackFst
+      (presheafPullbackSnd f g ≫ f') g' ≫
+      presheafPullbackFst f g := by
+  simp [presheafPullbackAssocIso,
+    presheafPullbackLift]
+
+@[reassoc (attr := simp)]
+theorem presheafPullbackAssocIso_hom_snd_fst
+    (f : F ⟶ H) (g : G ⟶ H)
+    (f' : G ⟶ H') (g' : K ⟶ H') :
+    (presheafPullbackAssocIso f g f' g').hom ≫
+      presheafPullbackSnd
+        f (presheafPullbackFst f' g' ≫ g) ≫
+      presheafPullbackFst f' g' =
+    presheafPullbackFst
+      (presheafPullbackSnd f g ≫ f') g' ≫
+      presheafPullbackSnd f g := by
+  simp [presheafPullbackAssocIso,
+    presheafPullbackLift]
+
+@[reassoc (attr := simp)]
+theorem presheafPullbackAssocIso_hom_snd_snd
+    (f : F ⟶ H) (g : G ⟶ H)
+    (f' : G ⟶ H') (g' : K ⟶ H') :
+    (presheafPullbackAssocIso f g f' g').hom ≫
+      presheafPullbackSnd
+        f (presheafPullbackFst f' g' ≫ g) ≫
+      presheafPullbackSnd f' g' =
+    presheafPullbackSnd
+      (presheafPullbackSnd f g ≫ f') g' := by
+  simp [presheafPullbackAssocIso,
+    presheafPullbackLift]
+
 end PresheafPullback
 
 end GebLean
