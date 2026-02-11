@@ -1,4 +1,5 @@
 import GebLean.Paranatural
+import GebLean.Utilities.Skeleton
 import Mathlib.CategoryTheory.Widesubcategory
 import Mathlib.CategoryTheory.Whiskering
 import Mathlib.CategoryTheory.Products.Basic
@@ -632,7 +633,7 @@ abbrev yonedaProdPresheaf (X Y : C) :
 /-- A proof-relevant relation from `X` to `Y` in
 `PSh(C)`: an object of the slice category over the
 product presheaf `yoneda(X) × yoneda(Y)`. -/
-abbrev YonedaRel (X Y : C) :=
+abbrev YonedaProdOver (X Y : C) :=
   Over (yonedaProdPresheaf (C := C) X Y)
 
 /-- The category of elements of `yonedaProd X Y`,
@@ -678,7 +679,7 @@ def yonedaProdSlice : C ⥤ C ⥤ Cat :=
 
 theorem yonedaProdSlice_obj (X Y : C) :
     (yonedaProdSlice.obj X).obj Y =
-    Cat.of (YonedaRel X Y) :=
+    Cat.of (YonedaProdOver X Y) :=
   rfl
 
 /-- The presheaf category on the category of elements
@@ -741,7 +742,7 @@ abbrev yonedaProdLift {P : Cᵒᵖ ⥤ Type v} (X Y : C)
 
 /-- The identity relation on `X`, given by the
 diagonal `yoneda(X) → yoneda(X) × yoneda(X)`. -/
-def relId (X : C) : YonedaRel X X :=
+def relId (X : C) : YonedaProdOver X X :=
   Over.mk (yonedaProdLift X X
     (𝟙 (yoneda.obj X)) (𝟙 (yoneda.obj X)))
 
@@ -754,9 +755,9 @@ with the first component of `S`), then projecting the
 first component from `R` and the second from `S` into
 `yonedaProd X Z`. -/
 def relComp {X Y Z : C}
-    (R : YonedaRel X Y)
-    (S : YonedaRel Y Z) :
-    YonedaRel X Z :=
+    (R : YonedaProdOver X Y)
+    (S : YonedaProdOver Y Z) :
+    YonedaProdOver X Z :=
   Over.mk
     (yonedaProdLift X Z
       (presheafPullbackFst
@@ -767,6 +768,12 @@ def relComp {X Y Z : C}
           (R.hom ≫ yonedaProdSnd X Y)
           (S.hom ≫ yonedaProdFst Y Z) ≫
         S.hom ≫ yonedaProdSnd Y Z))
+
+/-- A relation from `X` to `Y` up to isomorphism:
+an isomorphism class in the over category
+`Over (yonedaProdPresheaf X Y)`. -/
+abbrev YonedaRel (X Y : C) :=
+  Skeleton (YonedaProdOver X Y)
 
 end PresheafRelations
 
