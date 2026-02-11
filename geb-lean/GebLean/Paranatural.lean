@@ -241,13 +241,27 @@ condition. -/
 def ParanatSig : Type (max u w) :=
   (I : C) → diagApp F I → diagApp G I
 
-/-- The paranaturality condition for a family of functions between diagonal
-elements of two endoprofunctors. A family `α` is paranatural if whenever
-the covariant and contravariant actions of a morphism agree on elements of `F`,
-then the same morphism's actions agree on the images under `α` in `G`. -/
+/-- The paranaturality condition at a single
+morphism `f : I₀ ⟶ I₁` for components `α₀` and
+`α₁`: whenever the covariant and contravariant
+actions of `f` agree on elements of `F`, the same
+actions agree on images under `α₀` and `α₁`
+in `G`. -/
+def IsParanaturalAt
+    {I₀ I₁ : C} (f : I₀ ⟶ I₁)
+    (α₀ : diagApp F I₀ → diagApp G I₀)
+    (α₁ : diagApp F I₁ → diagApp G I₁) : Prop :=
+  ∀ (d₀ : diagApp F I₀) (d₁ : diagApp F I₁),
+    DiagCompat F I₀ I₁ f d₀ d₁ →
+    DiagCompat G I₀ I₁ f (α₀ d₀) (α₁ d₁)
+
+/-- The paranaturality condition for a family of
+functions between diagonal elements of two
+endoprofunctors. A family `α` is paranatural if
+`IsParanaturalAt` holds at every morphism. -/
 def IsParanatural (α : ParanatSig F G) : Prop :=
-  ∀ (I₀ I₁ : C) (f : I₀ ⟶ I₁) (d₀ : diagApp F I₀) (d₁ : diagApp F I₁),
-    DiagCompat F I₀ I₁ f d₀ d₁ → DiagCompat G I₀ I₁ f (α I₀ d₀) (α I₁ d₁)
+  ∀ (I₀ I₁ : C) (f : I₀ ⟶ I₁),
+    IsParanaturalAt F G f (α I₀) (α I₁)
 
 /-- A paranatural transformation between two endoprofunctors `F` and `G` on `C`.
 A family of functions on diagonal elements that preserves the compatibility

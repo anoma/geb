@@ -2466,10 +2466,15 @@ def DivParametricSub :=
 
 /-- Bundled version of the parametricity condition:
 a family `app I : ((I → I) → I) → I` such that for
-every `f : I₀ → I₁` and `(p, q)` preserving
-`DiagCompat` from `divHomProf` to `divTarget`, the
-pair `(app I₀ p, app I₁ q)` is `DiagCompat` for
-`divTarget`. -/
+every `f : I₀ → I₁` and `(p, q)` that are
+paranatural at `f` from `divHomProf` to `divTarget`,
+the pair `(app I₀ p, app I₁ q)` is `DiagCompat` for
+`divTarget`.
+
+The gate condition `IsParanaturalAt divHomProf
+divTarget f p q` captures the iterated paranaturality:
+`(p, q)` preserves `DiagCompat` from the
+hom-profunctor to the identity profunctor at `f`. -/
 @[ext]
 structure DivParametricBundled where
   app : ∀ (I : Type), ((I → I) → I) → I
@@ -2477,9 +2482,7 @@ structure DivParametricBundled where
     ∀ (I₀ I₁ : Type) (f : I₀ → I₁)
       (p : (I₀ → I₀) → I₀)
       (q : (I₁ → I₁) → I₁),
-      (∀ (h : I₀ → I₀) (k : I₁ → I₁),
-        DiagCompat divHomProf I₀ I₁ f h k →
-        DiagCompat divTarget I₀ I₁ f (p h) (q k)) →
+      IsParanaturalAt divHomProf divTarget f p q →
       DiagCompat divTarget I₀ I₁ f
         (app I₀ p) (app I₁ q)
 
@@ -2505,21 +2508,23 @@ def DivParanaturalSub :=
     DivParanatural phi }
 
 /-- Bundled version of the paranaturality condition:
-a family `app I : ((I → I) → I) → I` such that for
-every `f : I₀ → I₁` and `(p, q)` satisfying
-`DiagCompat divSource`, the pair
-`(app I₀ p, app I₁ q)` is `DiagCompat` for
-`divTarget`. -/
+`app` is paranatural at every `f` from `divSource`
+to `divTarget`.
+
+Parallel with `DivParametricBundled`: both say
+`app` preserves `DiagCompat` for `divTarget`, but
+the paranaturality form requires this directly
+(`IsParanaturalAt divSource divTarget`), while the
+parametric form requires it only for `(p, q)` that
+are themselves paranatural at `f` from `divHomProf`
+to `divTarget`. -/
 @[ext]
 structure DivParanaturalBundled where
   app : ∀ (I : Type), ((I → I) → I) → I
   paranatural :
-    ∀ (I₀ I₁ : Type) (f : I₀ → I₁)
-      (p : (I₀ → I₀) → I₀)
-      (q : (I₁ → I₁) → I₁),
-      DiagCompat divSource I₀ I₁ f p q →
-      DiagCompat divTarget I₀ I₁ f
-        (app I₀ p) (app I₁ q)
+    ∀ (I₀ I₁ : Type) (f : I₀ → I₁),
+      IsParanaturalAt divSource divTarget f
+        (app I₀) (app I₁)
 
 /-- The subtype and bundled formulations of
 paranaturality are equivalent: `DivParanatural phi`
