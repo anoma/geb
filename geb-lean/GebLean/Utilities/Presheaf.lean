@@ -168,6 +168,18 @@ abbrev presheafPullbackSnd
     presheafPullback f g ⟶ G :=
   (presheafPullbackCone f g).snd
 
+/-- The universal morphism into the presheaf pullback,
+given morphisms into the two factors whose compositions
+with `f` and `g` agree. -/
+abbrev presheafPullbackLift
+    (f : F ⟶ H) (g : G ⟶ H)
+    {P : C ⥤ Type w}
+    (h₁ : P ⟶ F) (h₂ : P ⟶ G)
+    (w : h₁ ≫ f = h₂ ≫ g) :
+    P ⟶ presheafPullback f g :=
+  (presheafPullbackIsLimit f g).lift
+    (PullbackCone.mk h₁ h₂ w)
+
 end PresheafPullback
 
 end GebLean
