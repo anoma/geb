@@ -671,6 +671,33 @@ theorem yonedaProdSlice_obj (X Y : C) :
       (Over ((yonedaProd.obj X).obj Y)) :=
   rfl
 
+/-- The presheaf category on the category of elements
+of `yonedaProd X Y`.  For fixed `(X, Y)`, this is
+`PSh(∫(yoneda(X) × yoneda(Y)))`, whose objects are
+presheaves on spans from `X` to `Y`.
+
+This is not itself a functor `C ⥤ C ⥤ Cat` because
+the assignment `D ↦ PSh(D)` cannot be made into a
+computable covariant endofunctor on `Cat` (it requires
+left Kan extension, which uses Classical choice).
+For the bifunctorial version, use `yonedaProdSlice`,
+which is equivalent pointwise via `sliceEquivPre`. -/
+def yonedaProdElemPresheaf (X Y : C) : Cat :=
+  Cat.of
+    (((yonedaProd.obj X).obj Y).ElementsPreᵒᵖ ⥤ Type v)
+
+/-- The slice category `Over (yonedaProd X Y)` in
+`PSh(C)` is equivalent to the presheaf category on
+the category of elements of `yonedaProd X Y`.
+
+This is `sliceEquivPre` applied to `yonedaProd X Y`,
+witnessing that `yonedaProdSlice` is pointwise the
+presheaf topos `PSh(∫(yoneda(X) × yoneda(Y)))`. -/
+def yonedaProdSlice_equiv (X Y : C) :
+    ((yonedaProdSlice.obj X).obj Y).α ≌
+    (yonedaProdElemPresheaf X Y).α :=
+  sliceEquivPre ((yonedaProd.obj X).obj Y)
+
 end PresheafRelations
 
 end GebLean
