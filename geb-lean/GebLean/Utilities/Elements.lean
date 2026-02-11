@@ -2,6 +2,7 @@ import Mathlib.CategoryTheory.Elements
 import Mathlib.CategoryTheory.Yoneda
 import Mathlib.CategoryTheory.Comma.Over.Basic
 import Mathlib.CategoryTheory.Whiskering
+import Mathlib.CategoryTheory.Category.Cat.Op
 import GebLean.Utilities.Equalities
 import GebLean.Utilities.Opposites
 
@@ -528,19 +529,37 @@ elements treats `F` as a copresheaf on `Cᵒᵖ`. The standard "contravariant
 category of elements" for presheaves reverses morphism direction.
 -/
 
-/--
-The (contravariant) category of elements for a presheaf `F : Cᵒᵖ ⥤ Type w`.
+/-- The functorial contravariant category of elements:
+sends a copresheaf `F : D ⥤ Type w` to the opposite of
+its (covariant) category of elements.  This is the
+composition of mathlib's `elementsFunctor` with the
+oppositization endofunctor on `Cat`. -/
+def ElementsPreF (D : Type*) [Category D] :
+    (D ⥤ Type w) ⥤ Cat :=
+  Functor.elementsFunctor ⋙ Cat.opFunctor
 
-This is the standard construction: take mathlib's category of elements (which
-treats F as a copresheaf on `Cᵒᵖ`), then take its opposite to get the
-conventional presheaf category of elements where:
-- Objects: pairs `(X, x)` with `X : C` and `x : F.obj (op X)`
-- Morphisms `(X, x) → (Y, y)`: maps `f : X ⟶ Y` in `C` with `F.map f.op y = x`
+/--
+The (contravariant) category of elements for a presheaf
+`F : Cᵒᵖ ⥤ Type w`.
+
+This is the standard construction: take mathlib's category
+of elements (which treats `F` as a copresheaf on `Cᵒᵖ`),
+then take its opposite to get the conventional presheaf
+category of elements where:
+- Objects: pairs `(X, x)` with `X : C` and
+  `x : F.obj (op X)`
+- Morphisms `(X, x) → (Y, y)`: maps `f : X ⟶ Y` in `C`
+  with `F.map f.op y = x`
 -/
 def Functor.ElementsPre (F : Cᵒᵖ ⥤ Type w) := F.Elementsᵒᵖ
 
 instance (F : Cᵒᵖ ⥤ Type w) : Category F.ElementsPre :=
   inferInstanceAs (Category F.Elementsᵒᵖ)
+
+theorem elementsPreF_obj (F : Cᵒᵖ ⥤ Type w) :
+    (ElementsPreF Cᵒᵖ).obj F =
+    Cat.of F.ElementsPre :=
+  rfl
 
 /--
 `ElementsPre F` equals `ElementsContra (op'ToOp ⋙ F)` definitionally.

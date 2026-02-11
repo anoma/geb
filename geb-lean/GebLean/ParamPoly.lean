@@ -624,6 +624,27 @@ def yonedaProd : C ⥤ C ⥤ (Cᵒᵖ ⥤ Type v) :=
      (Functor.whiskeringRight Cᵒᵖ _ _).obj
        (Functor.uncurry.obj binaryProductFunctor))
 
+/-- The category of elements of `yonedaProd X Y`,
+bifunctorial in `X` and `Y`.  The resulting category
+(for fixed `X` and `Y`) has objects `(T, a, b)` with
+`a : T ⟶ X` and `b : T ⟶ Y` (spans from `X` to `Y`),
+and morphisms `s : T' ⟶ T` compatible with both
+components.
+
+Constructed as `yonedaProd` post-composed (via
+`whiskeringRight`) with the functorial contravariant
+category of elements `ElementsPreF`. -/
+def yonedaProdElem : C ⥤ C ⥤ Cat :=
+  yonedaProd ⋙
+    (Functor.whiskeringRight C _ _).obj
+      (ElementsPreF Cᵒᵖ)
+
+theorem yonedaProdElem_obj (X Y : C) :
+    (yonedaProdElem.obj X).obj Y =
+    Cat.of
+      ((yonedaProd.obj X).obj Y).ElementsPre :=
+  rfl
+
 end PresheafRelations
 
 end GebLean
