@@ -991,4 +991,118 @@ instance : Category.{max u (v + 1)}
 
 end YonedaRelCategory
 
+section RelatedMorphisms
+
+/-- The bifunctorial action of a pair of morphisms
+`(f, f')` on the product presheaf
+`yoneda(A) × yoneda(A')`. At stage `T`, this sends
+`(a : T ⟶ A, a' : T ⟶ A')` to
+`(a ≫ f : T ⟶ B, a' ≫ f' : T ⟶ B')`. -/
+abbrev yonedaProdMap {A A' B B' : C}
+    (f : A ⟶ B) (f' : A' ⟶ B') :
+    yonedaProdPresheaf A A' ⟶
+      yonedaProdPresheaf B B' :=
+  yonedaProdLift B B'
+    (yonedaProdFst A A' ≫ yoneda.map f)
+    (yonedaProdSnd A A' ≫ yoneda.map f')
+
+@[simp]
+theorem yonedaProdMap_fst {A A' B B' : C}
+    (f : A ⟶ B) (f' : A' ⟶ B') :
+    yonedaProdMap f f' ≫ yonedaProdFst B B' =
+      yonedaProdFst A A' ≫ yoneda.map f := by
+  simp [yonedaProdMap, yonedaProdLift]
+
+@[simp]
+theorem yonedaProdMap_snd {A A' B B' : C}
+    (f : A ⟶ B) (f' : A' ⟶ B') :
+    yonedaProdMap f f' ≫ yonedaProdSnd B B' =
+      yonedaProdSnd A A' ≫ yoneda.map f' := by
+  simp [yonedaProdMap, yonedaProdLift]
+
+@[simp]
+theorem yonedaProdMap_id (A A' : C) :
+    yonedaProdMap (𝟙 A) (𝟙 A') =
+      𝟙 (yonedaProdPresheaf A A') := by
+  apply yonedaProdPresheaf_hom_ext <;>
+    simp [yoneda]
+
+theorem yonedaProdMap_comp
+    {A A' B B' D D' : C}
+    (f : A ⟶ B) (f' : A' ⟶ B')
+    (g : B ⟶ D) (g' : B' ⟶ D') :
+    yonedaProdMap (f ≫ g) (f' ≫ g') =
+      yonedaProdMap f f' ≫
+        yonedaProdMap g g' := by
+  apply yonedaProdPresheaf_hom_ext <;> {
+    simp only [Category.assoc,
+      yonedaProdMap_fst, yonedaProdMap_snd]
+    simp only [← Category.assoc,
+      yonedaProdMap_fst, yonedaProdMap_snd]
+    simp only [Category.assoc, yoneda.map_comp]
+  }
+
+/-- Two morphisms `f : A ⟶ B` and `f' : A' ⟶ B'` are
+`(R, S)`-related at the `YonedaProdOver` level when
+there exists a lift `φ : R.left ⟶ S.left` making the
+square commute:
+```
+  R.left ---φ---> S.left
+    |                |
+    R.hom           S.hom
+    v                v
+  yonedaProd A A' -> yonedaProd B B'
+         (yonedaProdMap f f')
+```
+-/
+def YonedaProdOverRelated
+    {A A' B B' : C}
+    (R : YonedaProdOver A A')
+    (S : YonedaProdOver B B')
+    (f : A ⟶ B) (f' : A' ⟶ B') : Prop :=
+  ∃ (φ : R.left ⟶ S.left),
+    φ ≫ S.hom =
+      R.hom ≫ yonedaProdMap f f'
+
+/-- `YonedaProdOverRelated` is invariant under
+isomorphism in both relation arguments. -/
+theorem yonedaProdOverRelated_iso
+    {A A' B B' : C}
+    {R₁ R₂ : YonedaProdOver A A'}
+    {S₁ S₂ : YonedaProdOver B B'}
+    (αR : R₁ ≅ R₂) (αS : S₁ ≅ S₂)
+    {f : A ⟶ B} {f' : A' ⟶ B'} :
+    YonedaProdOverRelated R₁ S₁ f f' ↔
+      YonedaProdOverRelated R₂ S₂ f f' := by
+  constructor
+  · rintro ⟨φ, hφ⟩
+    exact ⟨αR.inv.left ≫ φ ≫ αS.hom.left, by
+      simp only [Category.assoc, Over.w αS.hom]
+      rw [hφ, ← Category.assoc,
+        Over.w αR.inv]⟩
+  · rintro ⟨φ, hφ⟩
+    exact ⟨αR.hom.left ≫ φ ≫ αS.inv.left, by
+      simp only [Category.assoc, Over.w αS.inv]
+      rw [hφ, ← Category.assoc,
+        Over.w αR.hom]⟩
+
+/-- Two morphisms `f : A ⟶ B` and `f' : A' ⟶ B'` in
+`C` are `(R, S)`-related (where `R : YonedaRel A A'` and
+`S : YonedaRel B B'`) when they admit a lifting at the
+`YonedaProdOver` level. This descends through the
+skeleton quotient via `Skeleton.lift₂`, using
+`yonedaProdOverRelated_iso` for well-definedness. -/
+def relRelated
+    {A A' B B' : C}
+    (f : A ⟶ B) (f' : A' ⟶ B') :
+    YonedaRel A A' → YonedaRel B B' → Prop :=
+  Skeleton.lift₂
+    (fun R S =>
+      YonedaProdOverRelated R S f f')
+    (fun _ _ _ _ ⟨αR⟩ ⟨αS⟩ =>
+      propext
+        (yonedaProdOverRelated_iso αR αS))
+
+end RelatedMorphisms
+
 end GebLean
