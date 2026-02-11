@@ -177,8 +177,89 @@ abbrev presheafPullbackLift
     (h₁ : P ⟶ F) (h₂ : P ⟶ G)
     (w : h₁ ≫ f = h₂ ≫ g) :
     P ⟶ presheafPullback f g :=
-  (presheafPullbackIsLimit f g).lift
-    (PullbackCone.mk h₁ h₂ w)
+  PullbackCone.IsLimit.lift
+    (presheafPullbackIsLimit f g) h₁ h₂ w
+
+/-- Isomorphism of presheaf pullbacks induced by
+isomorphisms on the sources.  Given `α : F₁ ≅ F₂` and
+`β : G₁ ≅ G₂` with `f₁ = α.hom ≫ f₂` and
+`g₁ = β.hom ≫ g₂`, the pullbacks of `(f₁, g₁)` and
+`(f₂, g₂)` over `H` are isomorphic. -/
+def presheafPullbackIsoOfIso
+    {F₁ F₂ G₁ G₂ : C ⥤ Type w}
+    {f₁ : F₁ ⟶ H} {f₂ : F₂ ⟶ H}
+    {g₁ : G₁ ⟶ H} {g₂ : G₂ ⟶ H}
+    (α : F₁ ≅ F₂) (β : G₁ ≅ G₂)
+    (hf : f₁ = α.hom ≫ f₂)
+    (hg : g₁ = β.hom ≫ g₂) :
+    presheafPullback f₁ g₁ ≅
+      presheafPullback f₂ g₂ where
+  hom :=
+    presheafPullbackLift f₂ g₂
+      (presheafPullbackFst f₁ g₁ ≫ α.hom)
+      (presheafPullbackSnd f₁ g₁ ≫ β.hom)
+      (by
+        rw [Category.assoc, Category.assoc,
+          ← hf, ← hg]
+        exact
+          (presheafPullbackCone f₁ g₁).condition)
+  inv :=
+    presheafPullbackLift f₁ g₁
+      (presheafPullbackFst f₂ g₂ ≫ α.inv)
+      (presheafPullbackSnd f₂ g₂ ≫ β.inv)
+      (by
+        simp only [Category.assoc, hf, hg,
+          Iso.inv_hom_id_assoc]
+        exact
+          (presheafPullbackCone f₂ g₂).condition)
+  hom_inv_id := by
+    apply PullbackCone.IsLimit.hom_ext
+      (presheafPullbackIsLimit f₁ g₁) <;>
+    simp only [Category.id_comp,
+      Category.assoc,
+      PullbackCone.IsLimit.lift_fst,
+      PullbackCone.IsLimit.lift_fst_assoc,
+      PullbackCone.IsLimit.lift_snd,
+      PullbackCone.IsLimit.lift_snd_assoc,
+      Iso.hom_inv_id, Category.comp_id]
+  inv_hom_id := by
+    apply PullbackCone.IsLimit.hom_ext
+      (presheafPullbackIsLimit f₂ g₂) <;>
+    simp only [Category.id_comp,
+      Category.assoc,
+      PullbackCone.IsLimit.lift_fst,
+      PullbackCone.IsLimit.lift_fst_assoc,
+      PullbackCone.IsLimit.lift_snd,
+      PullbackCone.IsLimit.lift_snd_assoc,
+      Iso.inv_hom_id, Category.comp_id]
+
+@[reassoc (attr := simp)]
+theorem presheafPullbackIsoOfIso_hom_fst
+    {F₁ F₂ G₁ G₂ : C ⥤ Type w}
+    {f₁ : F₁ ⟶ H} {f₂ : F₂ ⟶ H}
+    {g₁ : G₁ ⟶ H} {g₂ : G₂ ⟶ H}
+    (α : F₁ ≅ F₂) (β : G₁ ≅ G₂)
+    (hf : f₁ = α.hom ≫ f₂)
+    (hg : g₁ = β.hom ≫ g₂) :
+    (presheafPullbackIsoOfIso α β hf hg).hom ≫
+      presheafPullbackFst f₂ g₂ =
+    presheafPullbackFst f₁ g₁ ≫ α.hom := by
+  simp only [presheafPullbackIsoOfIso,
+    PullbackCone.IsLimit.lift_fst]
+
+@[reassoc (attr := simp)]
+theorem presheafPullbackIsoOfIso_hom_snd
+    {F₁ F₂ G₁ G₂ : C ⥤ Type w}
+    {f₁ : F₁ ⟶ H} {f₂ : F₂ ⟶ H}
+    {g₁ : G₁ ⟶ H} {g₂ : G₂ ⟶ H}
+    (α : F₁ ≅ F₂) (β : G₁ ≅ G₂)
+    (hf : f₁ = α.hom ≫ f₂)
+    (hg : g₁ = β.hom ≫ g₂) :
+    (presheafPullbackIsoOfIso α β hf hg).hom ≫
+      presheafPullbackSnd f₂ g₂ =
+    presheafPullbackSnd f₁ g₁ ≫ β.hom := by
+  simp only [presheafPullbackIsoOfIso,
+    PullbackCone.IsLimit.lift_snd]
 
 end PresheafPullback
 

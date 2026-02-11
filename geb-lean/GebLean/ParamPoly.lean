@@ -740,13 +740,32 @@ abbrev yonedaProdLift {P : Cᵒᵖ ⥤ Type v} (X Y : C)
     P ⟶ yonedaProdPresheaf X Y :=
   FunctorToTypes.prod.lift f g
 
-/-- The identity relation on `X`, given by the
-diagonal `yoneda(X) → yoneda(X) × yoneda(X)`. -/
-def relId (X : C) : YonedaProdOver X X :=
+/-- Two morphisms into `yonedaProdPresheaf X Y` are
+equal iff their compositions with the two projections
+agree. -/
+theorem yonedaProdPresheaf_hom_ext
+    {P : Cᵒᵖ ⥤ Type v} {X Y : C}
+    {h₁ h₂ : P ⟶ yonedaProdPresheaf X Y}
+    (hfst : h₁ ≫ yonedaProdFst X Y =
+      h₂ ≫ yonedaProdFst X Y)
+    (hsnd : h₁ ≫ yonedaProdSnd X Y =
+      h₂ ≫ yonedaProdSnd X Y) :
+    h₁ = h₂ := by
+  ext T x
+  exact Prod.ext
+    (congr_fun (NatTrans.congr_app hfst T) x)
+    (congr_fun (NatTrans.congr_app hsnd T) x)
+
+/-- The identity relation on `X` in the over category,
+given by the diagonal
+`yoneda(X) → yoneda(X) × yoneda(X)`. -/
+def yonedaProdOverId (X : C) :
+    YonedaProdOver X X :=
   Over.mk (yonedaProdLift X X
     (𝟙 (yoneda.obj X)) (𝟙 (yoneda.obj X)))
 
-/-- Composition of proof-relevant relations.
+/-- Composition of proof-relevant relations in the over
+category.
 
 Given `R ⟶ yonedaProd X Y` and `S ⟶ yonedaProd Y Z`,
 their composite is obtained by pulling back `R` and `S`
@@ -754,7 +773,7 @@ over `yoneda Y` (matching the second component of `R`
 with the first component of `S`), then projecting the
 first component from `R` and the second from `S` into
 `yonedaProd X Z`. -/
-def relComp {X Y Z : C}
+def yonedaProdOverComp {X Y Z : C}
     (R : YonedaProdOver X Y)
     (S : YonedaProdOver Y Z) :
     YonedaProdOver X Z :=
@@ -774,6 +793,61 @@ an isomorphism class in the over category
 `Over (yonedaProdPresheaf X Y)`. -/
 abbrev YonedaRel (X Y : C) :=
   Skeleton (YonedaProdOver X Y)
+
+/-- The identity relation on `X`, up to isomorphism. -/
+def relId (X : C) : YonedaRel X X :=
+  toSkeleton _ (yonedaProdOverId X)
+
+/-- `yonedaProdOverComp` respects isomorphisms: given
+isomorphisms `R₁ ≅ R₂` and `S₁ ≅ S₂` in the over
+categories, their compositions are isomorphic. -/
+def yonedaProdOverComp_iso {X Y Z : C}
+    {R₁ R₂ : YonedaProdOver X Y}
+    {S₁ S₂ : YonedaProdOver Y Z}
+    (αR : R₁ ≅ R₂) (αS : S₁ ≅ S₂) :
+    yonedaProdOverComp R₁ S₁ ≅
+      yonedaProdOverComp R₂ S₂ := by
+  have hR := Over.w αR.hom
+  have hS := Over.w αS.hom
+  refine Over.isoMk
+    (presheafPullbackIsoOfIso
+      ((Over.forget _).mapIso αR)
+      ((Over.forget _).mapIso αS)
+      (by simp only [Functor.mapIso_hom,
+        Over.forget_map, ← Category.assoc, hR])
+      (by simp only [Functor.mapIso_hom,
+        Over.forget_map, ← Category.assoc, hS]))
+    ?_
+  simp only [yonedaProdOverComp, Over.mk_hom]
+  apply yonedaProdPresheaf_hom_ext
+  · -- fst projection
+    open Limits in
+    simp only [Category.assoc,
+      FunctorToTypes.prod.lift_fst]
+    rw [presheafPullbackIsoOfIso_hom_fst_assoc]
+    simp only [Functor.mapIso_hom, Over.forget_map,
+      ← Category.assoc, hR]
+  · -- snd projection
+    open Limits in
+    simp only [Category.assoc,
+      FunctorToTypes.prod.lift_snd]
+    rw [presheafPullbackIsoOfIso_hom_snd_assoc]
+    simp only [Functor.mapIso_hom, Over.forget_map,
+      ← Category.assoc, hS]
+
+/-- Composition of relations up to isomorphism:
+applies `yonedaProdOverComp` via `Skeleton.lift₂`,
+using `yonedaProdOverComp_iso` for
+well-definedness. -/
+def relComp {X Y Z : C} :
+    YonedaRel X Y → YonedaRel Y Z →
+    YonedaRel X Z :=
+  Skeleton.lift₂
+    (fun R S =>
+      toSkeleton _ (yonedaProdOverComp R S))
+    (fun _ _ _ _ ⟨αR⟩ ⟨αS⟩ =>
+      toSkeleton_eq_iff.mpr
+        ⟨yonedaProdOverComp_iso αR αS⟩)
 
 end PresheafRelations
 
