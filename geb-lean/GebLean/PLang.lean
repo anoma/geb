@@ -1,3 +1,4 @@
+import GebLean.PLang.Syntax
 import GebLean.PLang.CatJudgment
 import GebLean.PLang.CatJudgmentAdjunction
 import GebLean.PLang.CatJudgGrothendieck
