@@ -107,4 +107,58 @@ def presheafConstruction :
     apply Cat.Hom.ext
     rfl
 
+/-! ### Pullbacks of presheaf morphisms
+
+Computable pullback for morphisms in functor categories.
+-/
+
+section PresheafPullback
+
+universe w
+
+variable {C : Type u} [Category.{v} C]
+  {F G H : C ⥤ Type w}
+
+/-- The pullback of two presheaf morphisms with common
+target, computed pointwise: at object `T`, the fiber is
+`{ (a, b) : F(T) × G(T) | f(a) = g(b) }`. -/
+def presheafPullback
+    (f : F ⟶ H) (g : G ⟶ H) :
+    C ⥤ Type w where
+  obj T :=
+    { p : F.obj T × G.obj T //
+      f.app T p.1 = g.app T p.2 }
+  map h p :=
+    ⟨(F.map h p.val.1, G.map h p.val.2), by
+      have nf := congr_fun (f.naturality h) p.val.1
+      have ng := congr_fun (g.naturality h) p.val.2
+      simp only [types_comp_apply] at nf ng
+      rw [nf, p.property, ng]⟩
+  map_id _ := by
+    funext ⟨p, _⟩
+    exact Subtype.ext (Prod.ext
+      (congr_fun (F.map_id _) p.1)
+      (congr_fun (G.map_id _) p.2))
+  map_comp f g := by
+    funext ⟨p, _⟩
+    exact Subtype.ext (Prod.ext
+      (congr_fun (F.map_comp f g) p.1)
+      (congr_fun (G.map_comp f g) p.2))
+
+/-- First projection from the presheaf pullback. -/
+def presheafPullbackFst
+    (f : F ⟶ H) (g : G ⟶ H) :
+    presheafPullback f g ⟶ F where
+  app _ p := p.val.1
+  naturality _ _ _ := rfl
+
+/-- Second projection from the presheaf pullback. -/
+def presheafPullbackSnd
+    (f : F ⟶ H) (g : G ⟶ H) :
+    presheafPullback f g ⟶ G where
+  app _ p := p.val.2
+  naturality _ _ _ := rfl
+
+end PresheafPullback
+
 end GebLean

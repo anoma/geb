@@ -3,6 +3,7 @@ import Mathlib.CategoryTheory.Widesubcategory
 import Mathlib.CategoryTheory.Whiskering
 import Mathlib.CategoryTheory.Products.Basic
 import Mathlib.CategoryTheory.Limits.Types.Products
+import Mathlib.CategoryTheory.Limits.Shapes.FunctorToTypes
 import Mathlib.CategoryTheory.Functor.Currying
 
 /-!
@@ -676,11 +677,7 @@ of `yonedaProd X Y`.  For fixed `(X, Y)`, this is
 `PSh(∫(yoneda(X) × yoneda(Y)))`, whose objects are
 presheaves on spans from `X` to `Y`.
 
-This is not itself a functor `C ⥤ C ⥤ Cat` because
-the assignment `D ↦ PSh(D)` cannot be made into a
-computable covariant endofunctor on `Cat` (it requires
-left Kan extension, which uses Classical choice).
-For the bifunctorial version, use `yonedaProdSlice`,
+For a bifunctorial version, use `yonedaProdSlice`,
 which is equivalent pointwise via `sliceEquivPre`. -/
 def yonedaProdElemPresheaf (X Y : C) : Cat :=
   Cat.of
@@ -697,6 +694,62 @@ def yonedaProdSlice_equiv (X Y : C) :
     ((yonedaProdSlice.obj X).obj Y).α ≌
     (yonedaProdElemPresheaf X Y).α :=
   sliceEquivPre ((yonedaProd.obj X).obj Y)
+
+/-- `(yonedaProd.obj X).obj Y` is the explicit
+`FunctorToTypes` product of `yoneda.obj X` and
+`yoneda.obj Y`. -/
+theorem yonedaProd_eq_prod (X Y : C) :
+    (yonedaProd.obj X).obj Y =
+    FunctorToTypes.prod (yoneda.obj X) (yoneda.obj Y) :=
+  rfl
+
+/-- First projection from the product presheaf
+`yonedaProd X Y` to `yoneda X`, via
+`FunctorToTypes.prod.fst`. -/
+abbrev yonedaProdFst (X Y : C) :
+    (yonedaProd.obj X).obj Y ⟶ yoneda.obj X :=
+  @FunctorToTypes.prod.fst
+    _ _ (yoneda.obj X) (yoneda.obj Y)
+
+/-- Second projection from the product presheaf
+`yonedaProd X Y` to `yoneda Y`, via
+`FunctorToTypes.prod.snd`. -/
+abbrev yonedaProdSnd (X Y : C) :
+    (yonedaProd.obj X).obj Y ⟶ yoneda.obj Y :=
+  @FunctorToTypes.prod.snd
+    _ _ (yoneda.obj X) (yoneda.obj Y)
+
+/-- Pairing of morphisms into representables to a
+morphism into the product presheaf `yonedaProd X Y`,
+via `FunctorToTypes.prod.lift`. -/
+abbrev yonedaProdLift {P : Cᵒᵖ ⥤ Type v} (X Y : C)
+    (f : P ⟶ yoneda.obj X)
+    (g : P ⟶ yoneda.obj Y) :
+    P ⟶ (yonedaProd.obj X).obj Y :=
+  FunctorToTypes.prod.lift f g
+
+/-- Composition of proof-relevant relations.
+
+Given `R ⟶ yonedaProd X Y` and `S ⟶ yonedaProd Y Z`,
+their composite is obtained by pulling back `R` and `S`
+over `yoneda Y` (matching the second component of `R`
+with the first component of `S`), then projecting the
+first component from `R` and the second from `S` into
+`yonedaProd X Z`. -/
+def relComp (X Y Z : C)
+    (R : Over ((yonedaProd.obj X).obj Y))
+    (S : Over ((yonedaProd.obj Y).obj Z)) :
+    Over ((yonedaProd.obj X).obj Z) :=
+  Over.mk
+    (yonedaProdLift X Z
+      (presheafPullbackFst
+          (R.hom ≫ yonedaProdSnd X Y)
+          (S.hom ≫ yonedaProdFst Y Z) ≫
+        R.hom ≫ yonedaProdFst X Y)
+      (presheafPullbackSnd
+          (R.hom ≫ yonedaProdSnd X Y)
+          (S.hom ≫ yonedaProdFst Y Z) ≫
+        S.hom ≫ yonedaProdSnd Y Z))
 
 end PresheafRelations
 
