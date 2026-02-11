@@ -2074,7 +2074,7 @@ When `β = 𝟙 b`, `fiberFunctorTransition C F (𝟙 b)` equals the identity fu
 -/
 theorem fiberFunctorTransition_id {b : C} :
     fiberFunctorTransition C F (𝟙 b) = 𝟭 (Grothendieck (restrictToFiber C F b)) := by
-  apply Functor.ext
+  apply _root_.CategoryTheory.Functor.ext
   case h_obj => exact fiberFunctorTransitionObj_id C F
   case h_map =>
     intro x y f
@@ -2151,7 +2151,7 @@ When `β = 𝟙 b`, `fiberFunctorTransitionOp C F (𝟙 b)` equals the identity 
 theorem fiberFunctorTransitionOp_id {b : C} :
     fiberFunctorTransitionOp C F (𝟙 b) =
     𝟭 (Grothendieck (restrictToFiberOp C F b)) := by
-  apply Functor.ext
+  apply _root_.CategoryTheory.Functor.ext
   case h_obj => exact fiberFunctorTransitionObjOp_id C F
   case h_map =>
     intro x y f
@@ -2214,7 +2214,7 @@ composing the transitions by `β` and `γ`.
 theorem fiberFunctorTransition_comp {b d e : C} (β : b ⟶ d) (γ : d ⟶ e) :
     fiberFunctorTransition C F (β ≫ γ) =
     fiberFunctorTransition C F β ⋙ fiberFunctorTransition C F γ := by
-  apply Functor.ext
+  apply _root_.CategoryTheory.Functor.ext
   case h_obj => exact fiberFunctorTransitionObj_comp C F β γ
   case h_map =>
     intro x y f
@@ -2272,7 +2272,7 @@ The oppositized transition functor respects composition.
 theorem fiberFunctorTransitionOp_comp {b d e : C} (β : b ⟶ d) (γ : d ⟶ e) :
     fiberFunctorTransitionOp C F (β ≫ γ) =
     fiberFunctorTransitionOp C F β ⋙ fiberFunctorTransitionOp C F γ := by
-  apply Functor.ext
+  apply _root_.CategoryTheory.Functor.ext
   case h_obj => exact fiberFunctorTransitionObjOp_comp C F β γ
   case h_map =>
     intro x y f
@@ -2442,7 +2442,7 @@ theorem innerFiberContraTransitionObj_id {b : C} (x : innerFiberContra C F b) :
 
 theorem innerFiberContraTransition_id (b : C) :
     innerFiberContraTransition C F (𝟙 b) = 𝟭 (innerFiberContra C F b) := by
-  fapply Functor.ext
+  fapply _root_.CategoryTheory.Functor.ext
   · exact innerFiberContraTransitionObj_id C F
   · intro x y f
     refine GrothendieckContra'.ext _ _ ?w_base ?w_fiber
@@ -2483,7 +2483,7 @@ theorem innerFiberContraTransitionObj_comp {b d e : C} (β : b ⟶ d) (γ : d �
 theorem innerFiberContraTransition_comp {b d e : C} (β : b ⟶ d) (γ : d ⟶ e) :
     innerFiberContraTransition C F (β ≫ γ) =
     innerFiberContraTransition C F β ⋙ innerFiberContraTransition C F γ := by
-  fapply Functor.ext
+  fapply _root_.CategoryTheory.Functor.ext
   · exact innerFiberContraTransitionObj_comp C F β γ
   · intro x y f
     refine GrothendieckContra'.ext _ _ ?w_base ?w_fiber
@@ -3479,7 +3479,7 @@ def fiberFunctorContraNatTrans (α : F ⟶ G) :
   naturality {b d} β := by
     apply Cat.Hom.ext
     simp only [Cat.Hom.comp_toFunctor, Functor.toCatHom_toFunctor]
-    fapply Functor.ext
+    fapply _root_.CategoryTheory.Functor.ext
     · intro x
       exact innerFiberContraMap_natural_obj C α β x
     · intro X Y f
@@ -3572,7 +3572,7 @@ The map functor commutes with the projection to `Arrow C`.
 theorem connGrothendieckContraMap_comp_projection (α : F ⟶ G) :
     connGrothendieckContraMap C α ⋙ connGrothendieckContraProjection C G =
     connGrothendieckContraProjection C F := by
-  fapply Functor.ext
+  fapply _root_.CategoryTheory.Functor.ext
   · intro x
     simp only [Functor.comp_obj, connGrothendieckContraProjection,
       connGrothendieckContraMap_obj, connGrothendieckContraObjToArrow,
@@ -3759,7 +3759,7 @@ theorem ext {X Y : ConnGrothendieckPresheafObj C G}
 
 end ConnGrothendieckPresheafHom
 
-attribute [local simp] eqToHom_map Functor.map_id
+attribute [local simp] eqToHom_map CategoryTheory.Functor.map_id
 
 instance connGrothendieckPresheafCategory :
     Category (ConnGrothendieckPresheafObj C G) where
@@ -4295,7 +4295,7 @@ Identity law for `innerFiberAltTransition`.
 -/
 theorem innerFiberAltTransition_id (a : C) :
     innerFiberAltTransition C F (𝟙 a) = 𝟭 (innerFiberAlt C F a) := by
-  apply Functor.ext
+  apply _root_.CategoryTheory.Functor.ext
   case h_obj => exact innerFiberAltTransitionObj_id C F
   case h_map =>
     intro x y f
@@ -4467,7 +4467,7 @@ Composition law for `innerFiberAltTransition`.
 theorem innerFiberAltTransition_comp {a c e : C} (α : c ⟶ a) (γ : e ⟶ c) :
     innerFiberAltTransition C F (γ ≫ α) =
     innerFiberAltTransition C F α ⋙ innerFiberAltTransition C F γ := by
-  apply Functor.ext
+  apply _root_.CategoryTheory.Functor.ext
   case h_obj => exact innerFiberAltTransitionObj_comp C F α γ
   case h_map =>
     intro x y f
@@ -4661,7 +4661,7 @@ def domainFiberFunctorNatTrans (α : F ⟶ G) :
   app a := (innerFiberAltMap C α a).toCatHom
   naturality {a c} γ := by
     apply Cat.Hom.ext
-    fapply Functor.ext
+    fapply _root_.CategoryTheory.Functor.ext
     · intro x
       exact innerFiberAltMap_natural_obj C α γ x
     · intro X Y f
@@ -5594,7 +5594,7 @@ The Alt map functor commutes with the projection to `Arrow C`.
 theorem connGrothendieckAltMap_comp_projection (α : F ⟶ G) :
     connGrothendieckAltMap C α ⋙ connGrothendieckAltProjection C G =
     connGrothendieckAltProjection C F := by
-  fapply Functor.ext
+  fapply _root_.CategoryTheory.Functor.ext
   · intro x
     simp only [Functor.comp_obj, connGrothendieckAltProjection,
       connGrothendieckAltMap_obj, connGrothendieckAltObjToArrow]
@@ -5946,7 +5946,8 @@ For identity morphisms, the diagonal target equals the original twisted arrow.
 lemma functorToConnGrothendieckTarget_id (d : D) :
     functorToConnGrothendieckTarget (arrFun := arrFun) (𝟙 d) =
     arrowToTwisted (arrFun.obj d) := by
-  simp only [functorToConnGrothendieckTarget, Functor.map_id, arrowDiagonalTwisted_id]
+  simp only [functorToConnGrothendieckTarget]
+  simp [arrowDiagonalTwisted_id]
 
 /--
 The fiber category for the diagonal at identity.
@@ -6288,7 +6289,7 @@ lemma functorToConnGrothendieckDomainTransportTargetTw_id (d : D) :
       ((Under.map (data.arrFun.map (𝟙 d)).left).obj (arrowToUnder (data.arrFun.obj d))) =
     arrowToTwisted (data.arrFun.obj d) := by
   rw [functorToConnGrothendieckDomainTransportTargetTw]
-  simp only [Functor.map_id, arrowDiagonalTwisted_id]
+  simp only [CategoryTheory.Functor.map_id, arrowDiagonalTwisted_id]
 
 /--
 The domain fiber transport twisted arrow morphism equals `twMorphToDiagonalRight`
@@ -6551,7 +6552,7 @@ Step 1: The base component of the identity map is the identity.
 -/
 lemma functorToConnGrothendieckAltBase_id (d : D) :
     functorToConnGrothendieckAltBase data (𝟙 d) = 𝟙 (data.arrFun.obj d).left := by
-  simp only [functorToConnGrothendieckAltBase, Functor.map_id, Arrow.id_left]
+  simp only [functorToConnGrothendieckAltBase, CategoryTheory.Functor.map_id, Arrow.id_left]
 
 /--
 Step 2: The transported target when g = 𝟙 d equals the source fiber.
@@ -6568,7 +6569,7 @@ Step 3: The diagonal twisted arrow for the identity Arrow morphism.
 -/
 lemma functorToConnGrothendieck_arrowDiagonalTwisted_id (d : D) :
     arrowDiagonalTwisted (data.arrFun.map (𝟙 d)) = arrowToTwisted (data.arrFun.obj d) := by
-  simp only [Functor.map_id, arrowDiagonalTwisted_id]
+  simp only [CategoryTheory.Functor.map_id, arrowDiagonalTwisted_id]
 
 /--
 Step 4: The transported target Under object when g = 𝟙 d.
@@ -6576,7 +6577,7 @@ Step 4: The transported target Under object when g = 𝟙 d.
 lemma functorToConnGrothendieckInnerBase_tgt_eq_id (d : D) :
     (Under.map (data.arrFun.map (𝟙 d)).left).obj (arrowToUnder (data.arrFun.obj d)) =
     arrowToUnder (data.arrFun.obj d) := by
-  simp only [Functor.map_id, Arrow.id_left]
+  simp only [CategoryTheory.Functor.map_id, Arrow.id_left]
   have h := Under.mapId_eq (data.arrFun.obj d).left
   exact congrFun (congrArg Functor.obj h) (arrowToUnder (data.arrFun.obj d))
 
@@ -6586,7 +6587,7 @@ Step 5: The inner base morphism when g = 𝟙 d equals eqToHom of a refl equalit
 lemma functorToConnGrothendieckInnerBase_id (d : D) :
     functorToConnGrothendieckInnerBase data (𝟙 d) =
     eqToHom (functorToConnGrothendieckInnerBase_tgt_eq_id data d).symm := by
-  simp only [functorToConnGrothendieckInnerBase, Functor.map_id, Arrow.id_right]
+  simp only [functorToConnGrothendieckInnerBase, CategoryTheory.Functor.map_id, Arrow.id_right]
   apply Under.UnderMorphism.ext
   simp only [Under.eqToHom_right, Under.homMk_right]
   rfl
@@ -6692,7 +6693,7 @@ lemma functorToConnGrothendieck_transportedTgt_id_eq (d : D) :
       (functorToConnGrothendieckObjMap data d).fiber := by
   unfold Cat.Hom.toFunctor
   simp only [functorToConnGrothendieckTransportedTgt, functorToConnGrothendieckAltBase,
-    Functor.map_id, Arrow.id_left, GrothendieckContra'.id,
+    CategoryTheory.Functor.map_id, Arrow.id_left, GrothendieckContra'.id,
     functorToConnGrothendieckObjMap_base]
 
 /--

@@ -142,7 +142,7 @@ def totalSpace (G : F.Elements ⥤ Type w) : C ⥤ Type w where
       have : G.map ⟨𝟙 X, hx⟩ gx = G.map (𝟙 ⟨X, x⟩) gx := by
         congr 1
       rw [this]
-      simp only [Functor.map_id, types_id_apply]
+      simp only [CategoryTheory.Functor.map_id, types_id_apply]
     refine Sigma.ext hx ?_
     simp only [types_id_apply]
     convert heq_of_eq h using 2 <;> try exact sigma_ext_rfl_heq hx
@@ -451,7 +451,7 @@ is the identity functor on `F.ElementsContra'`.
 -/
 lemma elementsContra'_roundtrip_eq_id (F : Cᵒᵖ' ⥤ Type w) :
     elementsContra'ToElementsContra F ⋙ elementsContraToElementsContra' F = 𝟭 _ := by
-  apply Functor.ext
+  apply _root_.CategoryTheory.Functor.ext
   case h_obj =>
     -- Objects: ⟨X, x⟩ → op ⟨op X, x⟩ → ⟨X, x⟩ = ⟨X, x⟩
     intro X
@@ -474,7 +474,7 @@ is the identity functor on `F.ElementsContra`.
 -/
 lemma elementsContra_roundtrip_eq_id (F : Cᵒᵖ' ⥤ Type w) :
     elementsContraToElementsContra' F ⋙ elementsContra'ToElementsContra F = 𝟭 _ := by
-  apply Functor.ext
+  apply _root_.CategoryTheory.Functor.ext
   case h_obj =>
     intro X
     simp only [Functor.comp_obj, Functor.id_obj,
@@ -1273,13 +1273,13 @@ def elementsEquivOfNatIso (α : F ≅ G) :
       (fun p => {
         hom := ⟨𝟙 p.1, by
           dsimp [elementsMapFunctor]
-          simp only [Functor.map_id, types_id_apply]
+          simp only [CategoryTheory.Functor.map_id, types_id_apply]
           change p.snd =
             (α.hom ≫ α.inv).app p.fst p.snd
           simp⟩
         inv := ⟨𝟙 p.1, by
           dsimp [elementsMapFunctor]
-          simp only [Functor.map_id, types_id_apply]
+          simp only [CategoryTheory.Functor.map_id, types_id_apply]
           change
             (α.hom ≫ α.inv).app p.fst p.snd =
             p.snd
@@ -1295,14 +1295,14 @@ def elementsEquivOfNatIso (α : F ≅ G) :
       (fun q => {
         hom := ⟨𝟙 q.1, by
           dsimp [elementsMapFunctor]
-          simp only [Functor.map_id, types_id_apply]
+          simp only [CategoryTheory.Functor.map_id, types_id_apply]
           change
             (α.inv ≫ α.hom).app q.fst q.snd =
             q.snd
           simp⟩
         inv := ⟨𝟙 q.1, by
           dsimp [elementsMapFunctor]
-          simp only [Functor.map_id, types_id_apply]
+          simp only [CategoryTheory.Functor.map_id, types_id_apply]
           change q.snd =
             (α.inv ≫ α.hom).app q.fst q.snd
           simp⟩

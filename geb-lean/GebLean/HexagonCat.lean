@@ -155,7 +155,7 @@ def ProfDialgebraProf : Cᵒᵖ ⥤ C ⥤ Type w' where
       simp only [Prof.map₁, Prof.map₂, op_id,
         types_id_apply]
       change P.map (𝟙 _) ≫ φ ≫ Q.map (𝟙 _) = φ
-      simp only [Functor.map_id,
+      simp only [CategoryTheory.Functor.map_id,
         Category.id_comp, Category.comp_id]
     map_comp := fun {b₁ b₂ b₃} g₁ g₂ => by
       ext φ
@@ -179,7 +179,7 @@ def ProfDialgebraProf : Cᵒᵖ ⥤ C ⥤ Type w' where
     simp only [Prof.map₁, Prof.map₂, NatTrans.id_app,
       types_id_apply, unop_id, op_id]
     change P.map (𝟙 _) ≫ φ ≫ Q.map (𝟙 _) = φ
-    simp only [Functor.map_id,
+    simp only [CategoryTheory.Functor.map_id,
       Category.id_comp, Category.comp_id]
   map_comp {a₁ a₂ a₃} f g := by
     ext b φ
@@ -279,7 +279,7 @@ def hexagonDiagElemIsoCat :
     apply Cat.Hom.ext
     unfold Cat.Hom.toFunctor Functor.toCatHom
     simp only [Cat.Hom.comp_toFunctor, Cat.Hom.id_toFunctor]
-    apply Functor.ext
+    apply _root_.CategoryTheory.Functor.ext
     case h_obj => intro x; rfl
     case h_map =>
       intro x y f
@@ -290,7 +290,7 @@ def hexagonDiagElemIsoCat :
     apply Cat.Hom.ext
     unfold Cat.Hom.toFunctor Functor.toCatHom
     simp only [Cat.Hom.comp_toFunctor, Cat.Hom.id_toFunctor]
-    apply Functor.ext
+    apply _root_.CategoryTheory.Functor.ext
     case h_obj => intro x; apply DiagElem.ext <;> rfl
     case h_map =>
       intro x y f

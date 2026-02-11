@@ -1157,7 +1157,7 @@ Notes:
 theorem leftTriangle :
     LFunctor.map (unitGr X) ≫ (counitGr (LObj X)).toCatHom = 𝟙 (LObj X) := by
   apply Cat.Hom.ext
-  apply Functor.ext
+  apply _root_.CategoryTheory.Functor.ext
   case h_obj =>
     intro a
     -- Goal: (LFunctor.map (unitGr X) ≫ counitGr (LObj X)).obj a = (𝟙 (LObj X)).obj a
@@ -1319,7 +1319,7 @@ def compWitGrHomToFunctor
 /-- PhiFunctor.map followed by compWitGrHomToFunctor is the identity. -/
 theorem preimage_map (F : C ⥤ D) :
     compWitGrHomToFunctor (PhiFunctor.map F.toCatHom) = F := by
-  apply Functor.ext
+  apply _root_.CategoryTheory.Functor.ext
   case h_obj => intro a; rfl
   case h_map =>
     intro a b f

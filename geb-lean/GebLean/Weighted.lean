@@ -233,7 +233,7 @@ theorem cone_satisfies_wedge_condition (P : Cᵒᵖ ⥤ C ⥤ D)
       (P.map f.op).app j := by
     simp only [profunctorOnTwistedArrow_map, dom_eq, cod_eq, twObjMk_cod,
       twObjMk_dom]
-    simp only [Functor.map_id, Category.comp_id]
+    simp only [CategoryTheory.Functor.map_id, Category.comp_id]
   -- Use naturality
   have nat_j := c.π.naturality morph_j
   simp only [Functor.const_obj_map] at nat_j
@@ -374,7 +374,7 @@ theorem wedgeToCone_coneToWedge (P : Cᵒᵖ ⥤ C ⥤ D) (w : Wedge P) :
   -- Decompose w as a Cone and show field-by-field equality
   cases w with | mk pt π =>
   unfold coneToWedge wedgeToCone coneToWedgeComponents wedgeToConeπApp
-  simp only [twObjMk_dom, twObjMk_arr, Functor.map_id, Category.comp_id]
+  simp only [twObjMk_dom, twObjMk_arr, CategoryTheory.Functor.map_id, Category.comp_id]
   -- Goal: Wedge.mk pt (fun j => Multifork.ι ⟨pt, π⟩ j) _ = ⟨pt, π⟩
   -- This is an eta expansion - Wedge.mk using extracted components gives back original
   -- Use Cone.mk.injEq to decompose into point equality and π heq
@@ -626,7 +626,7 @@ theorem coconeToCowedge_cowedgeToCocone (P : Cᵒᵖ ⥤ C ⥤ D)
     simp only [Functor.const_obj_obj, Functor.const_obj_map, Category.comp_id] at nat
     rw [← nat]
     simp only [morph, profunctorOnCoTwistedArrow_map, coTwDomArr_coTwHomMk, coTwCodArr_coTwHomMk,
-      coTwObjMk_cod, coTwObjMk_dom, Functor.map_id, Category.comp_id]
+      coTwObjMk_cod, coTwObjMk_dom, CategoryTheory.Functor.map_id, Category.comp_id]
 
 /--
 Round-trip: converting a cowedge to a cocone and back yields the original cowedge.
@@ -1409,7 +1409,7 @@ def elementsPreToWeightedConeFunctor :
 theorem weightedConeToFrom_eq_id :
     (weightedConeToElementsPreFunctor W D ⋙
       elementsPreToWeightedConeFunctor W D) = 𝟭 _ := by
-  refine Functor.ext ?h_obj ?h_map
+  refine _root_.CategoryTheory.Functor.ext ?h_obj ?h_map
   case h_obj => intro c; exact weightedConeOfElement_toElement W D c
   case h_map =>
     intro c₁ c₂ f
@@ -1420,7 +1420,7 @@ theorem weightedConeToFrom_eq_id :
 theorem weightedConeFromTo_eq_id :
     (elementsPreToWeightedConeFunctor W D ⋙
       weightedConeToElementsPreFunctor W D) = 𝟭 _ := by
-  refine Functor.ext ?h_obj ?h_map
+  refine _root_.CategoryTheory.Functor.ext ?h_obj ?h_map
   case h_obj =>
     intro e
     simp only [Functor.comp_obj, Functor.id_obj,
@@ -1599,7 +1599,7 @@ cocones. -/
 theorem weightedCoconeToFrom_eq_id' :
     (weightedCoconeToElementsFunctor W D ⋙
       elementsToWeightedCoconeFunctor W D) = 𝟭 _ := by
-  refine Functor.ext ?h_obj ?h_map
+  refine _root_.CategoryTheory.Functor.ext ?h_obj ?h_map
   case h_obj => intro c; exact weightedCoconeOfElement_toElement W D c
   case h_map =>
     intro c₁ c₂ f
@@ -1610,7 +1610,7 @@ theorem weightedCoconeToFrom_eq_id' :
 theorem weightedCoconeFromTo_eq_id' :
     (elementsToWeightedCoconeFunctor W D ⋙
       weightedCoconeToElementsFunctor W D) = 𝟭 _ := by
-  refine Functor.ext ?h_obj ?h_map
+  refine _root_.CategoryTheory.Functor.ext ?h_obj ?h_map
   case h_obj =>
     intro e
     simp only [Functor.comp_obj, Functor.id_obj,
@@ -1925,7 +1925,7 @@ theorem WeightedCocone.postcompose_app (c : WeightedCocone W D) {Y : C}
 @[simp]
 theorem WeightedCocone.postcompose_id (c : WeightedCocone W D) :
     c.postcompose (𝟙 c.pt) = c.ι := by
-  simp only [postcompose, Functor.map_id, Category.comp_id]
+  simp only [postcompose, CategoryTheory.Functor.map_id, Category.comp_id]
 
 /-- Post-composition is functorial: `postcompose (f ≫ g) = postcompose f ≫ map g`. -/
 theorem WeightedCocone.postcompose_comp (c : WeightedCocone W D) {Y Z : C}
@@ -3529,7 +3529,7 @@ def sliceProfunctor {D : Type w} [Category.{v} D]
     map_id := fun _ => by
       ext h
       simp only [types_id_apply, op_id,
-        Functor.map_id, NatTrans.id_app,
+        CategoryTheory.Functor.map_id, NatTrans.id_app,
         Category.id_comp]
     map_comp := fun f g => by
       ext h
@@ -3550,7 +3550,7 @@ def sliceProfunctor {D : Type w} [Category.{v} D]
   map_id := fun A => by
     ext B h
     simp only [NatTrans.id_app, types_id_apply,
-      unop_id, Functor.map_id, Category.id_comp]
+      unop_id, CategoryTheory.Functor.map_id, Category.id_comp]
   map_comp := fun f g => by
     ext B h
     simp only [NatTrans.comp_app, types_comp_apply,
@@ -3580,7 +3580,7 @@ def sliceProfunctorPoly
     map_id := fun _ => by
       ext h x
       simp only [types_id_apply, op_id,
-        Functor.map_id, NatTrans.id_app]
+        CategoryTheory.Functor.map_id, NatTrans.id_app]
     map_comp := fun f g => by
       ext h x
       simp only [types_comp_apply, op_comp,
@@ -3598,7 +3598,7 @@ def sliceProfunctorPoly
   map_id := fun A => by
     ext B h x
     simp only [NatTrans.id_app, types_id_apply,
-      unop_id, Functor.map_id]
+      unop_id, CategoryTheory.Functor.map_id]
   map_comp := fun f g => by
     ext B h x
     simp only [NatTrans.comp_app, types_comp_apply,
@@ -3911,7 +3911,7 @@ def cosliceProfunctor {D : Type w}
     map_id := fun _ => by
       ext h
       simp only [types_id_apply,
-        Functor.map_id, Category.comp_id]
+        CategoryTheory.Functor.map_id, Category.comp_id]
     map_comp := fun f g => by
       ext h
       simp only [types_comp_apply,
@@ -3929,7 +3929,7 @@ def cosliceProfunctor {D : Type w}
   map_id := fun A => by
     ext B h
     simp only [NatTrans.id_app, types_id_apply,
-      Functor.map_id, NatTrans.id_app,
+      CategoryTheory.Functor.map_id, NatTrans.id_app,
       Category.comp_id]
   map_comp := fun f g => by
     ext B h
@@ -3956,7 +3956,7 @@ def cosliceProfunctorPoly
     map := fun g h x => (G.obj A).map g (h x)
     map_id := fun _ => by
       ext h x
-      simp only [types_id_apply, Functor.map_id]
+      simp only [types_id_apply, CategoryTheory.Functor.map_id]
     map_comp := fun f g => by
       ext h x
       simp only [types_comp_apply, Functor.map_comp]
@@ -3971,7 +3971,7 @@ def cosliceProfunctorPoly
   map_id := fun A => by
     ext B h x
     simp only [NatTrans.id_app, types_id_apply,
-      Functor.map_id, NatTrans.id_app]
+      CategoryTheory.Functor.map_id, NatTrans.id_app]
   map_comp := fun f g => by
     ext B h x
     simp only [NatTrans.comp_app, types_comp_apply,
@@ -4502,7 +4502,7 @@ def homWeightedWedge_isWeightedEnd {c : WeightedCowedge W P}
         simp only [twDomArr_eqToHom, twCodArr_eqToHom]
         -- (eqToHom h).op = eqToHom (...), eqToHom_refl turns into id
         simp only [eqToHom_refl]
-        simp only [op_id, Functor.map_id]
+        simp only [op_id, CategoryTheory.Functor.map_id]
         simp
         rfl⟩)
     (fun d f => by
@@ -5866,7 +5866,7 @@ def powerProfunctorProfArg
       (G.obj I).map g (φ ((H.map g.op).app I.unop h))
     map_id := fun J => by
       ext φ h
-      simp only [types_id_apply, op_id, Functor.map_id,
+      simp only [types_id_apply, op_id, CategoryTheory.Functor.map_id,
         NatTrans.id_app]
     map_comp := fun {J J' J''} g g' => by
       ext φ h
@@ -5889,7 +5889,7 @@ def powerProfunctorProfArg
   }
   map_id := fun I => by
     ext J φ h
-    simp only [unop_id, Functor.map_id, NatTrans.id_app,
+    simp only [unop_id, CategoryTheory.Functor.map_id, NatTrans.id_app,
       types_id_apply]
   map_comp := fun {I I' I''} f f' => by
     ext J φ h
@@ -5945,7 +5945,7 @@ def copowerProfunctorProfArg
       ⟨(H.obj I).map g p.1, (G.obj I).map g p.2⟩
     map_id := fun J => by
       funext ⟨h, x⟩
-      simp only [types_id_apply, Functor.map_id]
+      simp only [types_id_apply, CategoryTheory.Functor.map_id]
     map_comp := fun {J J' J''} g g' => by
       funext ⟨h, x⟩
       simp only [types_comp_apply, Functor.map_comp]
@@ -5967,7 +5967,7 @@ def copowerProfunctorProfArg
   map_id := fun I => by
     apply NatTrans.ext
     funext J ⟨h, x⟩
-    simp only [Functor.map_id, NatTrans.id_app, types_id_apply]
+    simp only [CategoryTheory.Functor.map_id, NatTrans.id_app, types_id_apply]
   map_comp := fun {I I' I''} f f' => by
     apply NatTrans.ext
     funext J ⟨h, x⟩
@@ -8193,7 +8193,7 @@ theorem diagram_map_coTwToIdentityAtSource (G : Cᵒᵖ ⥤ C ⥤ C)
   unfold coTwToIdentityAtSource
   rw [profunctorOnCoTwistedArrow_map]
   simp only [coTwDomArr_coTwHomMk, coTwCodArr_coTwHomMk, coTwObjMk_cod,
-    idCoTwistedArrow, coTwObjMk_dom, Functor.map_id, Category.comp_id]
+    idCoTwistedArrow, coTwObjMk_dom, CategoryTheory.Functor.map_id, Category.comp_id]
 
 /-- The diagram functor map along `coTwToIdentityAtTarget` equals the
 covariant profunctor action. -/
@@ -8204,7 +8204,7 @@ theorem diagram_map_coTwToIdentityAtTarget (G : Cᵒᵖ ⥤ C ⥤ C)
   unfold coTwToIdentityAtTarget
   rw [profunctorOnCoTwistedArrow_map]
   simp only [coTwDomArr_coTwHomMk, coTwCodArr_coTwHomMk, coTwObjMk_cod,
-    idCoTwistedArrow, coTwObjMk_dom, op_id, Functor.map_id, NatTrans.id_app,
+    idCoTwistedArrow, coTwObjMk_dom, op_id, CategoryTheory.Functor.map_id, NatTrans.id_app,
     Category.id_comp]
 
 /-!
@@ -8336,7 +8336,7 @@ theorem profunctor_map_coTwToIdentityAtTarget_diag (H : Cᵒᵖ ⥤ C ⥤ Type v
     equiv_map_coTwToIdentityAtTarget_twDomArr, equiv_map_coTwToIdentityAtTarget_twCodArr,
     diagAppToWeightAtIdentity, cast_eq]
   change ((H.map f.op).app I₁ ≫ (H.obj (Opposite.op I₀)).map (𝟙 I₁)) y = (H.map f.op).app I₁ y
-  simp only [Functor.map_id, Category.comp_id]
+  simp only [CategoryTheory.Functor.map_id, Category.comp_id]
 
 /-- Computing the profunctor map along `coTwToIdentityAtSource f` on an element
 from the diagonal at I₀. The result is `(H.obj (Opposite.op I₀)).map f y` at
@@ -8354,7 +8354,7 @@ theorem profunctor_map_coTwToIdentityAtSource_diag (H : Cᵒᵖ ⥤ C ⥤ Type v
     diagAppToWeightAtIdentity, cast_eq]
   change ((H.map (𝟙 I₀).op).app I₀ ≫ (H.obj (Opposite.op I₀)).map f) y =
          (H.obj (Opposite.op I₀)).map f y
-  simp only [op_id, Functor.map_id, NatTrans.id_app, Category.id_comp]
+  simp only [op_id, CategoryTheory.Functor.map_id, NatTrans.id_app, Category.id_comp]
 
 /-- The weight functor map along `coTwToIdentityAtTarget` and `coTwToIdentityAtSource`
 give the same result. This is the weight coherence condition. -/
@@ -8379,7 +8379,7 @@ theorem weight_map_coTwToIdentity_coherence (H : Cᵒᵖ ⥤ C ⥤ Type v)
     change ((H.map f.op).app I₁ ≫ (H.obj (Opposite.op I₀)).map (𝟙 I₁))
            ((H.obj (Opposite.op I₁)).map f x) =
            (H.map f.op).app I₁ ((H.obj (Opposite.op I₁)).map f x)
-    simp only [Functor.map_id, Category.comp_id]
+    simp only [CategoryTheory.Functor.map_id, Category.comp_id]
   have rhs_eq : (profunctorOnOpCoTwistedArrow C H).map (coTwToIdentityAtSource f).op
       (diagAppToWeightAtIdentity H I₀ ((H.map f.op).app I₀ x)) =
       (H.obj (Opposite.op I₀)).map f ((H.map f.op).app I₀ x) := by
@@ -8389,7 +8389,7 @@ theorem weight_map_coTwToIdentity_coherence (H : Cᵒᵖ ⥤ C ⥤ Type v)
     change ((H.map (𝟙 I₀).op).app I₀ ≫ (H.obj (Opposite.op I₀)).map f)
            ((H.map f.op).app I₀ x) =
            (H.obj (Opposite.op I₀)).map f ((H.map f.op).app I₀ x)
-    simp only [op_id, Functor.map_id, NatTrans.id_app, Category.id_comp]
+    simp only [op_id, CategoryTheory.Functor.map_id, NatTrans.id_app, Category.id_comp]
   rw [lhs_eq, rhs_eq, heq]
 
 /-!
@@ -8607,7 +8607,7 @@ theorem restrictionFunctor_eq_inclusion_comp_strong (H : Cᵒᵖ ⥤ C ⥤ Type 
     (G : Cᵒᵖ ⥤ C ⥤ C) :
     restrictionFunctor H G =
       strongRestrictionFunctor H G ⋙ StrongRestrictedCowedge.inclusion G H := by
-  apply Functor.ext
+  apply _root_.CategoryTheory.Functor.ext
   · intro wc₁ wc₂ f
     simp only [Functor.comp_map, eqToHom_refl, Category.id_comp, Category.comp_id]
     apply RestrictedCowedge.Hom.ext
@@ -9959,7 +9959,7 @@ def wppModifiedLegNatTrans :
       have hf_id : f = 𝟙 (Opposite.op coTwLeft) := by
         apply Quiver.Hom.unop_inj
         exact coTwLeft_endo_is_id f.unop
-      simp only [dite_true, hf_id, Functor.map_id, types_id_apply]
+      simp only [dite_true, hf_id, CategoryTheory.Functor.map_id, types_id_apply]
     · -- Case: x.unop = coTwLeft, y.unop ≠ coTwLeft (contradiction)
       exfalso
       have hf : y.unop ⟶ coTwLeft := hx ▸ f.unop
@@ -10355,7 +10355,7 @@ def cValuedRightAtRightNatTrans :
         have hf_id : f = 𝟙 (Opposite.op coTwLeft) := by
           apply Quiver.Hom.unop_inj
           exact coTwLeft_endo_is_id f.unop
-        simp only [hf_id, Functor.map_id, types_id_apply]
+        simp only [hf_id, CategoryTheory.Functor.map_id, types_id_apply]
         rfl
       · -- x is coTwLeft, y is not: no morphism y.unop → coTwLeft
         exfalso
@@ -11738,7 +11738,7 @@ theorem weightPullbackFunctor_id
     (H : Cᵒᵖ ⥤ C ⥤ Type v) :
     weightPullbackFunctor G (Paranat.id (F := H)) =
       𝟭 (StrongRestrictedWedge G H) :=
-  Functor.ext (fun _ => rfl) (fun _ _ _ => by
+  _root_.CategoryTheory.Functor.ext (fun _ => rfl) (fun _ _ _ => by
     simp only [eqToHom_refl, Category.id_comp,
       Category.comp_id]
     exact StrongRestrictedWedge.Hom.ext rfl)
@@ -11754,7 +11754,7 @@ theorem weightPullbackFunctor_comp
     weightPullbackFunctor G (α.comp β) =
       weightPullbackFunctor G β ⋙
         weightPullbackFunctor G α :=
-  Functor.ext (fun _ => rfl) (fun _ _ _ => by
+  _root_.CategoryTheory.Functor.ext (fun _ => rfl) (fun _ _ _ => by
     simp only [eqToHom_refl, Category.id_comp,
       Category.comp_id]
     exact StrongRestrictedWedge.Hom.ext rfl)
@@ -11810,7 +11810,7 @@ theorem weightPullbackCowedgeFunctor_id
     weightPullbackCowedgeFunctor G
       (Paranat.id (F := H)) =
       𝟭 (StrongRestrictedCowedge G H) :=
-  Functor.ext (fun _ => rfl) (fun _ _ _ => by
+  _root_.CategoryTheory.Functor.ext (fun _ => rfl) (fun _ _ _ => by
     simp only [eqToHom_refl, Category.id_comp,
       Category.comp_id]
     exact StrongRestrictedCowedge.Hom.ext rfl)
@@ -11824,7 +11824,7 @@ theorem weightPullbackCowedgeFunctor_comp
     weightPullbackCowedgeFunctor G (α.comp β) =
       weightPullbackCowedgeFunctor G β ⋙
         weightPullbackCowedgeFunctor G α :=
-  Functor.ext (fun _ => rfl) (fun _ _ _ => by
+  _root_.CategoryTheory.Functor.ext (fun _ => rfl) (fun _ _ _ => by
     simp only [eqToHom_refl, Category.id_comp,
       Category.comp_id]
     exact StrongRestrictedCowedge.Hom.ext rfl)
@@ -11925,7 +11925,7 @@ theorem profPostcompFunctor_id
     (H : Cᵒᵖ ⥤ C ⥤ Type v) :
     profPostcompFunctor H (𝟙 G) =
       𝟭 (StrongRestrictedWedge G H) :=
-  Functor.ext
+  _root_.CategoryTheory.Functor.ext
     (fun w => profPostcompObj_id G H w)
     (fun _ _ _ => by
       apply StrongRestrictedWedge.Hom.ext
@@ -11972,7 +11972,7 @@ theorem profPostcompFunctor_comp
     profPostcompFunctor H (η ≫ θ) =
       profPostcompFunctor H η ⋙
         profPostcompFunctor H θ :=
-  Functor.ext
+  _root_.CategoryTheory.Functor.ext
     (fun w => profPostcompObj_comp η θ H w)
     (fun _ _ _ => by
       apply StrongRestrictedWedge.Hom.ext
@@ -12085,7 +12085,7 @@ theorem profPrecompCowedgeFunctor_id
     (H : Cᵒᵖ ⥤ C ⥤ Type v) :
     profPrecompCowedgeFunctor H (𝟙 G) =
       𝟭 (StrongRestrictedCowedge G H) :=
-  Functor.ext
+  _root_.CategoryTheory.Functor.ext
     (fun cw => profPrecompCowedgeObj_id G H cw)
     (fun _ _ _ => by
       apply StrongRestrictedCowedge.Hom.ext
@@ -12132,7 +12132,7 @@ theorem profPrecompCowedgeFunctor_comp
     profPrecompCowedgeFunctor H (η ≫ θ) =
       profPrecompCowedgeFunctor H θ ⋙
         profPrecompCowedgeFunctor H η :=
-  Functor.ext
+  _root_.CategoryTheory.Functor.ext
     (fun cw =>
       profPrecompCowedgeObj_comp η θ H cw)
     (fun _ _ _ => by
@@ -12198,7 +12198,7 @@ theorem wedge_interchange
       weightPullbackFunctor G₂ α =
     weightPullbackFunctor G₁ α ⋙
       profPostcompFunctor H₁ η :=
-  Functor.ext
+  _root_.CategoryTheory.Functor.ext
     (fun w => wedge_interchange_obj η α w)
     (fun _ _ _ => by
       apply StrongRestrictedWedge.Hom.ext
@@ -12324,7 +12324,7 @@ theorem cowedge_interchange
       weightPullbackCowedgeFunctor G₁ α =
     weightPullbackCowedgeFunctor G₂ α ⋙
       profPrecompCowedgeFunctor H₁ η :=
-  Functor.ext
+  _root_.CategoryTheory.Functor.ext
     (fun cw => cowedge_interchange_obj η α cw)
     (fun _ _ _ => by
       apply StrongRestrictedCowedge.Hom.ext

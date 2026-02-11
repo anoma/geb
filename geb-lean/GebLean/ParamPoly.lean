@@ -322,7 +322,7 @@ theorem isParamPoly_presheafAsProf_iff
       ((profRelLift_presheafAsProf_iff Q f
         (𝟙 I₁) d (Q.map f.op d)).mpr (by simp))
     rw [profRelLift_presheafAsProf_iff] at hlift
-    simp only [op_id, Functor.map_id, types_id,
+    simp only [op_id, CategoryTheory.Functor.map_id, types_id,
       id_eq] at hlift
     exact hlift
   · intro hnat I₀ I₁ R π₁ π₂ d₀ d₁ hlift
@@ -383,7 +383,7 @@ theorem isParamPoly_copresheafAsProf_iff
         ⟨d, by simp, rfl⟩)
     rw [profRelLift_copresheafAsProf_iff] at hlift
     obtain ⟨e', h₁, h₂⟩ := hlift
-    simp only [Functor.map_id, types_id, id_eq]
+    simp only [CategoryTheory.Functor.map_id, types_id, id_eq]
       at h₁
     rw [← h₁, h₂]
   · intro hnat I₀ I₁ R π₁ π₂ d₀ d₁ hlift

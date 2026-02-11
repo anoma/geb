@@ -1034,7 +1034,7 @@ theorem extendMendlerLeg_at_identity (pt : C)
     rc.family A (weightAtIdentityToDiagApp (HomToProf pt) A γ) := by
   unfold extendMendlerLeg idCoTwistedArrow
   simp only [coTwObjMk_arr, coTwObjMk_cod, coTwObjMk_dom]
-  simp only [op_id, Functor.map_id, NatTrans.id_app]
+  simp only [op_id, CategoryTheory.Functor.map_id, NatTrans.id_app]
   simp only [diagonalToIdentityHom, profunctorOnCoTwistedArrow_at_identity,
     eqToHom_refl, Category.id_comp]
   simp only [weightAtIdentityToDiagApp, cast_eq]
@@ -1062,7 +1062,7 @@ theorem extendMendlerLeg'_at_identity (wpt apt : C)
     rc.family A (weightAtIdentityToDiagApp (HomToProf wpt) A γ) := by
   unfold extendMendlerLeg' idCoTwistedArrow
   simp only [coTwObjMk_arr, coTwObjMk_cod, coTwObjMk_dom]
-  simp only [op_id, Functor.map_id, NatTrans.id_app]
+  simp only [op_id, CategoryTheory.Functor.map_id, NatTrans.id_app]
   simp only [diagonalToIdentityHom, profunctorOnCoTwistedArrow_at_identity,
     eqToHom_refl, Category.id_comp]
   simp only [weightAtIdentityToDiagApp, cast_eq]
@@ -1582,7 +1582,7 @@ theorem MendlerAlgebra.eqToHom_hom' {G' : Cᵒᵖ ⥤ C ⥤ C} {m₁ m₂ : Mend
 /-- floor ∘ ceil = id on the conventional algebra category. -/
 theorem floorFunctor_comp_ceilFunctor :
     ceilFunctor G ⋙ floorFunctor G = 𝟭 _ :=
-  Functor.ext (floor_ceil G) (fun a₁ a₂ f => by
+  _root_.CategoryTheory.Functor.ext (floor_ceil G) (fun a₁ a₂ f => by
     simp only [Functor.comp_map, Functor.id_map, floorFunctor_map, ceilFunctor_map]
     apply Endofunctor.Algebra.Hom.ext
     simp only [floorHom, ceilHom]
@@ -1597,7 +1597,7 @@ theorem floorFunctor_comp_ceilFunctor :
 /-- ceil ∘ floor = id on the Mendler algebra category. -/
 theorem ceilFunctor_comp_floorFunctor :
     floorFunctor G ⋙ ceilFunctor G = 𝟭 _ :=
-  Functor.ext (ceil_floor G) (fun m₁ m₂ f => by
+  _root_.CategoryTheory.Functor.ext (ceil_floor G) (fun m₁ m₂ f => by
     simp only [Functor.comp_map, Functor.id_map, floorFunctor_map, ceilFunctor_map]
     apply MendlerAlgebraHom.ext
     simp only [ceilHom, floorHom]

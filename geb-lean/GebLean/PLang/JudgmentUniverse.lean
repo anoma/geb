@@ -170,7 +170,7 @@ theorem JudgmentLevel.Hom.toCatHom_id.{uJ} (j : JudgmentLevel) :
 theorem JudgmentLevel.forgetCatToObj_eq_comp.{uJ} :
     JudgmentLevel.forgetCatToObjAsCat.{uJ} =
     JudgmentLevel.forgetCatToQuivAsCat.{uJ} ⋙ JudgmentLevel.forgetQuivToObjAsCat.{uJ} := by
-  apply Functor.ext
+  apply _root_.CategoryTheory.Functor.ext
   · intro X Y f
     rfl
   · intro X

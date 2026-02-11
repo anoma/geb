@@ -1043,7 +1043,7 @@ States that `hom (𝟙 c)` equals the canonical isomorphism from `F.map_id`.
 -/
 abbrev FunctorFromHomId (fib : FunctorFromFib F (E := E))
     (hom : FunctorFromHom F fib) :=
-  ∀ c, hom (𝟙 c) = eqToHom (by simp only [Functor.map_id]; rfl)
+  ∀ c, hom (𝟙 c) = eqToHom (by simp only [CategoryTheory.Functor.map_id]; rfl)
 
 /--
 The composition coherence property for `Grothendieck.functorFrom`.
@@ -1099,7 +1099,7 @@ def ofFunctorFrom : FunctorFromData F (E := E) where
     simp only [Functor.comp_obj, Grothendieck.ι_obj, Functor.whiskerRight_app, eqToHom_app,
       Grothendieck.ιNatTrans]
     have heq : (⟨c, x⟩ : Grothendieck F) = ⟨c, (F.map (𝟙 c)).toFunctor.obj x⟩ := by
-      simp only [Functor.map_id]
+      simp only [CategoryTheory.Functor.map_id]
       rfl
     have h : (Grothendieck.Hom.mk (base := 𝟙 c)
         (fiber := 𝟙 ((F.map (𝟙 c)).toFunctor.obj x)) :
@@ -1125,7 +1125,7 @@ def ofFunctorFrom : FunctorFromData F (E := E) where
 Round-trip: constructing a functor from extracted data gives back the original functor.
 -/
 theorem functorFromData_ofFunctorFrom : functorFromData F (ofFunctorFrom H) = H := by
-  fapply Functor.ext
+  fapply _root_.CategoryTheory.Functor.ext
   · intro X
     rfl
   · intro X Y f
@@ -1142,7 +1142,7 @@ Round-trip: the fiber functors from extracted data equal the original fiber func
 theorem ofFunctorFrom_functorFromData_fib :
     (ofFunctorFrom (functorFromData F data)).fib = data.fib := by
   funext c
-  fapply Functor.ext
+  fapply _root_.CategoryTheory.Functor.ext
   · intro x
     simp only [ofFunctorFrom, functorFromData, Grothendieck.functorFrom_obj,
       Functor.comp_obj, Grothendieck.ι_obj]
@@ -1173,7 +1173,7 @@ theorem ofFunctorFrom_functorFromData_hom_app {c c' : C} (f : c ⟶ c') (x : F.o
         ((F.map f).toFunctor.obj x)).symm := by
   simp only [ofFunctorFrom, Functor.whiskerRight_app, functorFromData,
     Grothendieck.ιNatTrans, Grothendieck.ι_obj, Grothendieck.functorFrom_map]
-  simp only [Functor.map_id, Category.id_comp, Category.comp_id, eqToHom_refl]
+  simp only [CategoryTheory.Functor.map_id, Category.id_comp, Category.comp_id, eqToHom_refl]
   convert Category.comp_id ((data.hom f).app x) using 2
 
 end FunctorFromData
@@ -1264,7 +1264,7 @@ def ofNatTransFrom : NatTransFromData F dataG dataH where
     have nat := α.naturality ((Grothendieck.ιNatTrans (F := F) f).app x)
     simp only [functorFromData, Grothendieck.functorFrom_map,
       Grothendieck.ιNatTrans, Grothendieck.ι_obj, Functor.comp_obj] at nat
-    simp only [Functor.map_id, Category.comp_id] at nat
+    simp only [CategoryTheory.Functor.map_id, Category.comp_id] at nat
     simp only [eqToHom_refl', Category.id_comp, Category.comp_id, Grothendieck.ι_obj]
     exact nat
 
@@ -1651,7 +1651,7 @@ def comp {X Y Z : GrothendieckContra' F'} (f : Hom X Y) (g : Hom Y Z) : Hom X Z 
   fiber := f.fiber ≫ (F'.map f.base).toFunctor.map g.fiber ≫
     eqToHom (comp_fiber_cod_eq f g)
 
-attribute [local simp] eqToHom_map Functor.map_id
+attribute [local simp] eqToHom_map CategoryTheory.Functor.map_id
 
 instance GrothendieckContraInst' : Category (GrothendieckContra' F') where
   Hom X Y := GrothendieckContra'.Hom X Y
@@ -1961,7 +1961,7 @@ def grothendieckContraIsoInv :
 
 theorem grothendieckContraIsoHomInvId :
     grothendieckContraIsoHom ⋙ grothendieckContraIsoInv = 𝟭 (GrothendieckContraCat F') := by
-  fapply Functor.ext
+  fapply _root_.CategoryTheory.Functor.ext
   · intro X
     cases X
     rfl
@@ -1972,7 +1972,7 @@ theorem grothendieckContraIsoHomInvId :
 
 theorem grothendieckContraIsoInvHomId :
     grothendieckContraIsoInv ⋙ grothendieckContraIsoHom = 𝟭 (GrothendieckContra' F') := by
-  fapply Functor.ext
+  fapply _root_.CategoryTheory.Functor.ext
   · intro X
     cases X
     rfl
@@ -2210,7 +2210,7 @@ theorem transferFromCov_map_id {E : Type uₑ} [Category.{vₑ} E] {E' : Type u�
     (F_cov : GrothendieckContraCat G' ⥤ GrothendieckContraCat H')
     (X : GrothendieckContra' G') :
     (transferFromCov F_cov).map (𝟙 X) = transferredId F_cov X := by
-  exact Functor.map_id (transferFromCov F_cov) X
+  exact CategoryTheory.Functor.map_id (transferFromCov F_cov) X
 
 /--
 The transferred functor maps composition to the explicitly constructed composition.
@@ -2457,7 +2457,7 @@ theorem catHom_comp_forget {α : F' ⟶ G'} :
 
 @[simp]
 theorem map_id_eq : map (𝟙 F') = 𝟭 (GrothendieckContra' F') := by
-  fapply Functor.ext
+  fapply _root_.CategoryTheory.Functor.ext
   · intro X
     rfl
   · intro X Y f
@@ -2470,7 +2470,7 @@ def mapIdIso : map (𝟙 F') ≅ 𝟭 (GrothendieckContra' F') :=
 @[simp]
 theorem map_comp_eq (α : F' ⟶ G') (β : G' ⟶ H') :
     map (α ≫ β) = map α ⋙ map β := by
-  fapply Functor.ext
+  fapply _root_.CategoryTheory.Functor.ext
   · intro X
     rfl
   · intro X Y f
@@ -3102,7 +3102,7 @@ def ιNatTrans {c d : C} (f : c ⟶ d) : (F'.map f).toFunctor ⋙ ι c ⟶ ι d 
       simp
     case w_fiber =>
       -- fiber component: involves eqToHom and functoriality
-      simp only [Category.id_comp, Functor.map_id, Category.assoc]
+      simp only [Category.id_comp, CategoryTheory.Functor.map_id, Category.assoc]
       change ((F'.map f).toFunctor.map g ≫ _) ≫ _ ≫ _ =
         (F'.map f).toFunctor.map (g ≫ _) ≫ _
       rw [Functor.map_comp]
@@ -3311,7 +3311,7 @@ def ofFunctorFrom : FunctorFromData (F' := F') (T := T) where
 Round-trip: constructing a functor from extracted data gives back the original functor.
 -/
 theorem functorFromData_ofFunctorFrom : functorFromData (ofFunctorFrom H) = H := by
-  fapply Functor.ext
+  fapply _root_.CategoryTheory.Functor.ext
   · intro X
     rfl
   · intro X Y f
@@ -3350,7 +3350,7 @@ Round-trip: the fiber functors from extracted data equal the original fiber func
 theorem ofFunctorFrom_functorFromData_fib :
     (ofFunctorFrom (functorFromData data)).fib' = data.fib' := by
   funext c
-  fapply Functor.ext
+  fapply _root_.CategoryTheory.Functor.ext
   · intro x
     simp only [ofFunctorFrom, functorFromData, functorFrom,
       Functor.comp_obj, ι_obj]
@@ -3381,7 +3381,7 @@ theorem ofFunctorFrom_functorFromData_hom_app {c d : C} (f : c ⟶ d) (x : F'.ob
       (congrFun (ofFunctorFrom_functorFromData_fib data) d)) x).symm := by
   simp only [ofFunctorFrom, Functor.whiskerRight_app, functorFromData, functorFrom,
     ιNatTrans, ι_obj]
-  simp only [Functor.map_id, Category.id_comp]
+  simp only [CategoryTheory.Functor.map_id, Category.id_comp]
   simp only [eqToHom_refl', Category.id_comp, Category.comp_id]
 
 section FunctorFromDataCategory
@@ -3468,7 +3468,7 @@ def ofNatTransFromData : NatTransFromData (F' := F') dataG dataH where
     have nat := α.naturality ((ιNatTrans (F' := F') f).app x)
     simp only [functorFromData, functorFrom,
       ιNatTrans, ι_obj, Functor.comp_obj] at nat
-    simp only [Functor.map_id, Category.id_comp] at nat
+    simp only [CategoryTheory.Functor.map_id, Category.id_comp] at nat
     simp only [eqToHom_refl', Category.id_comp, Category.comp_id, ι_obj]
     exact nat.symm
 
@@ -4141,7 +4141,7 @@ theorem FunctorToData.functorTo_eq_toFunctorViaPreContra (data : FunctorToData F
     functorTo data =
       FunctorToData.toFunctorViaPreContra F' data.baseFunc
         (FunctorToData.toSigmaSectionDataContra F' data).2 := by
-  refine Functor.ext ?h_obj ?h_map
+  refine _root_.CategoryTheory.Functor.ext ?h_obj ?h_map
   case h_obj => intro d; rfl
   case h_map =>
     intro d d' f
@@ -4791,7 +4791,7 @@ Identity coherence for the outer FunctorFrom construction.
 -/
 theorem functorBetweenHomNat_id (c : C) :
     functorBetweenHomNat G F data (𝟙 c) =
-      eqToHom (by simp only [Functor.map_id]; rfl) := by
+      eqToHom (by simp only [CategoryTheory.Functor.map_id]; rfl) := by
   ext x
   refine Grothendieck.ext _ _ ?_ ?_
   · simp only [functorBetweenHomNat, functorBetweenHomNatApp, data.baseFib.map_id, eqToHom_app,
@@ -5438,7 +5438,7 @@ def LaxNatTransData.id (G : C ⥤ Cat.{vF, uF}) : LaxNatTransData G G where
   laxId c x := rfl
   laxComp {c c' c''} f g x := by
     unfold Cat.Hom.toFunctor
-    simp only [Functor.id_obj, eqToHom_refl, Category.id_comp, Functor.map_id,
+    simp only [Functor.id_obj, eqToHom_refl, Category.id_comp, CategoryTheory.Functor.map_id,
       eqToHom_trans]
 
 /--
@@ -5707,7 +5707,7 @@ def LaxNatTransData.grothendieckTransition {c c' : C} (f : c ⟶ c') :
   map_id X := by
     refine Grothendieck.ext _ _ ?_ ?_
     · simp only [grothendieckTransitionHom, grothendieckTransitionObj, Grothendieck.id_base,
-        Functor.map_id]
+        CategoryTheory.Functor.map_id]
     · simp only [grothendieckTransitionHom, grothendieckTransitionObj, Grothendieck.id_fiber,
         Functor.comp_obj, eqToHom_map, eqToHom_trans]
   map_comp {X Y Z} g h := by
@@ -5908,7 +5908,7 @@ def LaxNatTransData.grothendieckFunctor : C ⥤ Cat.{vF, uF} where
   map_id c := by
     apply Cat.Hom.ext
     simp only [Functor.toCatHom_toFunctor, Cat.id_eq_id]
-    apply Functor.ext
+    apply _root_.CategoryTheory.Functor.ext
     case h_obj =>
       intro X
       simp only [grothendieckTransition, grothendieckTransitionObj, Functor.id_obj]
@@ -5945,7 +5945,7 @@ def LaxNatTransData.grothendieckFunctor : C ⥤ Cat.{vF, uF} where
   map_comp {c c' c''} f g := by
     apply Cat.Hom.ext
     simp only [Cat.Hom.comp_toFunctor, Functor.toCatHom_toFunctor]
-    apply Functor.ext
+    apply _root_.CategoryTheory.Functor.ext
     case h_obj => exact α.grothendieckFunctor_map_comp_obj D H f g
     case h_map => exact α.grothendieckFunctor_map_comp_map D H f g
 
@@ -6005,7 +6005,7 @@ theorem LaxNatTransData.id_comp {G H : C ⥤ Cat.{vC, uC}}
   simp only [LaxNatTransData.comp, LaxNatTransData.id]
   congr 1
   funext c f g y
-  simp only [Functor.id_obj, eqToHom_refl, Functor.map_id, Category.comp_id]
+  simp only [Functor.id_obj, eqToHom_refl, CategoryTheory.Functor.map_id, Category.comp_id]
 
 /-- Right identity for lax natural transformation composition. -/
 theorem LaxNatTransData.comp_id {G H : C ⥤ Cat.{vC, uC}}
@@ -6416,7 +6416,7 @@ def OplaxNatTransData.id (G' : Cᵒᵖ' ⥤ Cat.{vF, uF}) : OplaxNatTransData G'
     simp only [Functor.id_map, eqToHom_naturality]
   oplaxId c x := rfl
   oplaxComp f g x := by
-    simp only [Functor.map_id, Category.id_comp, eqToHom_trans, eqToHom_refl]
+    simp only [CategoryTheory.Functor.map_id, Category.id_comp, eqToHom_trans, eqToHom_refl]
 
 /--
 Composition of oplax natural transformations.
@@ -6700,7 +6700,7 @@ theorem OplaxNatTransData.id_comp {G' H' : Cᵒᵖ' ⥤ Cat.{vC, uC}}
   simp only [OplaxNatTransData.comp, OplaxNatTransData.id]
   congr 1
   funext c f g y'
-  simp only [Functor.id_obj, eqToHom_refl, Functor.map_id]
+  simp only [Functor.id_obj, eqToHom_refl, CategoryTheory.Functor.map_id]
   exact Category.id_comp _
 
 /-- Right identity for oplax natural transformation composition. -/

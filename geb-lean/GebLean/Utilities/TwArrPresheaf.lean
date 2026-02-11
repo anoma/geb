@@ -1683,8 +1683,10 @@ theorem profunctorOnCoTwistedArrow_map_to_dom (P : Cᵒᵖ ⥤ C ⥤ D)
       (P.map f.op).app i := by
   intro morph_to_i
   rw [profunctorOnCoTwistedArrow_map]
-  simp only [morph_to_i, coTwDomArr_coTwHomMk, coTwCodArr_coTwHomMk,
-    coTwObjMk_cod, coTwObjMk_dom, Functor.map_id, Category.comp_id]
+  simp only [morph_to_i, coTwDomArr_coTwHomMk,
+    coTwCodArr_coTwHomMk, coTwObjMk_cod,
+    coTwObjMk_dom]
+  simp
 
 /--
 The functor map from a general arrow to the codomain identity via covariant.
@@ -1702,9 +1704,10 @@ theorem profunctorOnCoTwistedArrow_map_to_cod (P : Cᵒᵖ ⥤ C ⥤ D)
       (P.obj (Opposite.op j)).map f := by
   intro morph_to_j
   rw [profunctorOnCoTwistedArrow_map]
-  simp only [morph_to_j, coTwDomArr_coTwHomMk, coTwCodArr_coTwHomMk,
-    coTwObjMk_cod, coTwObjMk_dom, op_id, Functor.map_id, NatTrans.id_app,
-    Category.id_comp]
+  simp only [morph_to_j, coTwDomArr_coTwHomMk,
+    coTwCodArr_coTwHomMk, coTwObjMk_cod,
+    coTwObjMk_dom, op_id]
+  simp
 
 /--
 Functorial version of `profunctorOnCoTwistedArrow`: a functor from profunctors

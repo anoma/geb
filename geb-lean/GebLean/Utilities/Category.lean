@@ -1458,7 +1458,7 @@ lemma eqToHomMapEqToHomApp {E : Type*} [Category E] (F : E ⥤ Type v)
     {X Y : E} (p : Y = X) (q : F.obj X = F.obj Y) (a : F.obj X) :
     F.map (eqToHom p) (eqToHom q a) = a := by
   cases p
-  simp only [eqToHom_refl, Functor.map_id, types_id_apply]
+  simp only [eqToHom_refl, CategoryTheory.Functor.map_id, types_id_apply]
 
 /--
 Variant of `eqToHomMapEqToHomApp` where the equality proof for the morphism
@@ -1469,7 +1469,7 @@ lemma eqToHomMapEqToHomApp' {E : Type*} [Category E] (F : E ⥤ Type v)
     {X Y : E} (p : X = Y) (q : F.obj X = F.obj Y) (a : F.obj X) :
     F.map (eqToHom p.symm) (eqToHom q a) = a := by
   cases p
-  simp only [eqToHom_refl, Functor.map_id, types_id_apply]
+  simp only [eqToHom_refl, CategoryTheory.Functor.map_id, types_id_apply]
 
 /--
 Variant where the element is from `F.obj Y` and we use the symmetric equality.
@@ -1480,7 +1480,7 @@ lemma eqToHomMapEqToHomApp'' {E : Type*} [Category E] (F : E ⥤ Type v)
     {X Y : E} (p : X = Y) (q : F.obj X = F.obj Y) (a : F.obj Y) :
     F.map (eqToHom p) (eqToHom q.symm a) = a := by
   cases p
-  simp only [eqToHom_refl, Functor.map_id, types_id_apply]
+  simp only [eqToHom_refl, CategoryTheory.Functor.map_id, types_id_apply]
 
 /--
 When applying F.map to an eqToHom morphism and an arbitrary eqToHom on
@@ -1489,7 +1489,7 @@ elements, if the element types are equal, the result equals the original.
 lemma eqToHomMapEqToHomAppRefl {E : Type*} [Category E] (F : E ⥤ Type v)
     {X : E} (p : X = X) (q : F.obj X = F.obj X) (a : F.obj X) :
     F.map (eqToHom p) (eqToHom q a) = a := by
-  simp only [eqToHom_refl, Functor.map_id, types_id_apply]
+  simp only [eqToHom_refl, CategoryTheory.Functor.map_id, types_id_apply]
 
 /--
 Generalized version that handles arbitrary proof terms by using proof
@@ -1506,7 +1506,7 @@ lemma eqToHomMapEqToHomApp_of_eq {E : Type*} [Category E] (F : E ⥤ Type v)
     {X Y : E} (p : Y = X) (q : F.obj X = F.obj Y) (a : F.obj X)
     (hXY : X = Y) : F.map (eqToHom p) (eqToHom q a) = a := by
   subst hXY
-  simp only [eqToHom_refl, Functor.map_id, types_id_apply]
+  simp only [eqToHom_refl, CategoryTheory.Functor.map_id, types_id_apply]
 
 /--
 Heterogeneous variant of previous lemma.
@@ -1515,7 +1515,7 @@ lemma eqToHomMapEqToHomApp_of_heq {E : Type*} [Category E] (F : E ⥤ Type v)
     {X Y : E} (p : Y = X) (q : F.obj X = F.obj Y) (a : F.obj X)
     (hXY : HEq X Y) : F.map (eqToHom p) (eqToHom q a) = a := by
   cases eq_of_heq hXY
-  simp only [eqToHom_refl, Functor.map_id, types_id_apply]
+  simp only [eqToHom_refl, CategoryTheory.Functor.map_id, types_id_apply]
 
 /--
 Most flexible variant: when the eqToHom proofs come from an expression that
@@ -1526,7 +1526,7 @@ lemma eqToHomMapEqToHomApp_of_cast {E : Type*} [Category E] (F : E ⥤ Type v)
     {X Y : E} (p : Y = X) (q : F.obj X = F.obj Y) (a : F.obj X)
     (h : X = Y) : F.map (eqToHom p) (eqToHom q a) = a := by
   cases h
-  simp only [eqToHom_refl, Functor.map_id, types_id_apply]
+  simp only [eqToHom_refl, CategoryTheory.Functor.map_id, types_id_apply]
 
 /--
 Variant where we transport from `F.obj X` through `F.obj Y` back to `F.obj X`.
@@ -1538,7 +1538,7 @@ lemma eqToHomMapCastSymm {E : Type*} [Category E] (F : E ⥤ Type v)
     {X Y : E} (p : X = Y) (q : F.obj X = F.obj Y) (a : F.obj X) :
     F.map (eqToHom p.symm) (cast q a) = a := by
   cases p
-  simp only [eqToHom_refl, Functor.map_id, types_id_apply, cast_eq]
+  simp only [eqToHom_refl, CategoryTheory.Functor.map_id, types_id_apply, cast_eq]
 
 /--
 General lemma: applying F.map to an eqToHom and eqToHom on elements
@@ -1555,7 +1555,7 @@ lemma eqToHomMapEqToHomAppRoundTrip {E : Type*} [Category E] (F : E ⥤ Type v)
     {X Y : E} (p : Y = X) (a : F.obj X) :
     F.map (eqToHom p) (eqToHom (congrArg F.obj p).symm a) = a := by
   cases p
-  simp only [eqToHom_refl, Functor.map_id, types_id_apply]
+  simp only [eqToHom_refl, CategoryTheory.Functor.map_id, types_id_apply]
 
 /--
 Symmetric version of round-trip lemma.
@@ -1567,7 +1567,7 @@ lemma eqToHomMapEqToHomAppRoundTrip' {E : Type*} [Category E] (F : E ⥤ Type v)
     {X Y : E} (p : X = Y) (a : F.obj Y) :
     F.map (eqToHom p) (eqToHom (congrArg F.obj p.symm) a) = a := by
   cases p
-  simp only [eqToHom_refl, Functor.map_id, types_id_apply]
+  simp only [eqToHom_refl, CategoryTheory.Functor.map_id, types_id_apply]
 
 /--
 Transport of a morphism in its domain equals composition with eqToHom.
@@ -1833,7 +1833,7 @@ def functorFromCat : Cat.{v', u'} ⥤ BundledCategoryData.{v', u'} where
     on `BundledCategoryData`. -/
 theorem functorToCat_comp_functorFromCat :
     functorToCat.{v', u'} ⋙ functorFromCat = 𝟭 BundledCategoryData.{v', u'} := by
-  apply Functor.ext
+  apply _root_.CategoryTheory.Functor.ext
   · intro X Y f
     rfl
   · intro X
@@ -1843,7 +1843,7 @@ theorem functorToCat_comp_functorFromCat :
     on `Cat`. -/
 theorem functorFromCat_comp_functorToCat :
     functorFromCat.{v', u'} ⋙ functorToCat = 𝟭 Cat.{v', u'} := by
-  apply Functor.ext
+  apply _root_.CategoryTheory.Functor.ext
   · intro X Y f
     apply Cat.Hom.ext
     rfl

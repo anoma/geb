@@ -1819,7 +1819,7 @@ def twistedArrowIsoTwistedArrowOp' : TwistedArrow' C ≅Cat TwistedArrowOp' C wh
   hom := twistedArrowToTwistedArrowOp'.toCatHom
   inv := twistedArrowOp'ToTwistedArrow.toCatHom
   hom_inv_id := Cat.Hom.ext <| by
-    fapply Functor.ext
+    fapply _root_.CategoryTheory.Functor.ext
     · exact twistedArrow'RoundTrip_obj
     · intros tw tw' f
       apply twHom'_ext
@@ -1830,7 +1830,7 @@ def twistedArrowIsoTwistedArrowOp' : TwistedArrow' C ≅Cat TwistedArrowOp' C wh
         simp only [eqToHom_refl, Category.id_comp, Category.comp_id]
         rfl
   inv_hom_id := Cat.Hom.ext <| by
-    fapply Functor.ext
+    fapply _root_.CategoryTheory.Functor.ext
     · exact twistedArrowOp'RoundTrip_obj
     · intros tw tw' f
       apply twOpHom'_ext
@@ -1909,7 +1909,7 @@ def opTwistedArrowIsoCoTwistedArrow' : OpTwistedArrow' C ≅Cat CoTwistedArrow' 
   hom := opTwistedArrowToCoTwistedArrow'.toCatHom
   inv := coTwistedArrowToOpTwistedArrow.toCatHom
   hom_inv_id := Cat.Hom.ext <| by
-    fapply Functor.ext
+    fapply _root_.CategoryTheory.Functor.ext
     · exact opTwistedArrowRoundTrip_obj
     · intros tw tw' f
       apply opTwHom'_ext
@@ -1920,7 +1920,7 @@ def opTwistedArrowIsoCoTwistedArrow' : OpTwistedArrow' C ≅Cat CoTwistedArrow' 
         simp only [eqToHom_refl, Category.id_comp, Category.comp_id]
         rfl
   inv_hom_id := Cat.Hom.ext <| by
-    fapply Functor.ext
+    fapply _root_.CategoryTheory.Functor.ext
     · exact coTwistedArrowRoundTrip_obj
     · intros tw tw' f
       apply coTwHom'_ext
@@ -2536,14 +2536,14 @@ def arrowIsoArrowOpOp' : Arrow C ≅Cat (ArrowOp' C)ᵒᵖ' where
   hom := arrowToArrowOpOp'.toCatHom
   inv := arrowOpOp'ToArrow.toCatHom
   hom_inv_id := Cat.Hom.ext <| by
-    fapply Functor.ext
+    fapply _root_.CategoryTheory.Functor.ext
     · exact arrowRoundTrip_obj
     · intros x y f
       apply Arrow.hom_ext <;>
         dsimp [arrowToArrowOpOp', arrowOpOp'ToArrow] <;>
         simp only [Category.id_comp, Category.comp_id]
   inv_hom_id := Cat.Hom.ext <| by
-    fapply Functor.ext
+    fapply _root_.CategoryTheory.Functor.ext
     · exact arrowOpOp'RoundTrip_obj
     · intros x y f
       change (arrowOpOp'ToArrow ⋙ arrowToArrowOpOp').map f = _

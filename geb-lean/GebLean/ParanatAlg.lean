@@ -978,7 +978,7 @@ theorem diagElemAlg_forget_eq :
     DiagElem.forget (AlgProf G) =
       diagElemToAlgFunctor G ⋙
         Endofunctor.Algebra.forget G := by
-  refine Functor.ext (fun _ => rfl) (fun _ _ _ => ?_)
+  refine _root_.CategoryTheory.Functor.ext (fun _ => rfl) (fun _ _ _ => ?_)
   simp only [
     eqToHom_refl,
     Category.comp_id,
@@ -1034,7 +1034,7 @@ theorem diagElemCoalg_forget_eq :
     DiagElem.forget (CoalgProf G) =
       diagElemToCoalgFunctor G ⋙
         Endofunctor.Coalgebra.forget G := by
-  refine Functor.ext (fun _ => rfl) (fun _ _ _ => ?_)
+  refine _root_.CategoryTheory.Functor.ext (fun _ => rfl) (fun _ _ _ => ?_)
   simp only [
     eqToHom_refl,
     Category.comp_id,

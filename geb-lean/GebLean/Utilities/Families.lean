@@ -1491,7 +1491,7 @@ def fcToCcrOp : FreeCoprodCompletionCat.{u, v, w} C ⥤ CoprodCovarRepCat.{u, v,
 
 @[simp]
 lemma ccrOpToFc_fcToCcrOp : ccrOpToFc ⋙ fcToCcrOp = 𝟭 (CoprodCovarRepCat.{u, v, w} Cᵒᵖ) := by
-  fapply Functor.ext
+  fapply _root_.CategoryTheory.Functor.ext
   · intro P
     simp only [Functor.comp_obj, Functor.id_obj, ccrOpToFc, fcToCcrOp]
     simp only [ccrObjMk, fcObjMk, fcIndex, ccrIndex, fcFamily, ccrFamily]
@@ -1511,7 +1511,7 @@ lemma ccrOpToFc_fcToCcrOp : ccrOpToFc ⋙ fcToCcrOp = 𝟭 (CoprodCovarRepCat.{u
 
 @[simp]
 lemma fcToCcrOp_ccrOpToFc : fcToCcrOp ⋙ ccrOpToFc = 𝟭 (FreeCoprodCompletionCat.{u, v, w} C) := by
-  fapply Functor.ext
+  fapply _root_.CategoryTheory.Functor.ext
   · intro P
     simp only [Functor.comp_obj, Functor.id_obj, fcToCcrOp, ccrOpToFc]
     simp only [fcObjMk, ccrObjMk, ccrIndex, fcIndex, ccrFamily, fcFamily]

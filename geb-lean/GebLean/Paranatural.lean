@@ -148,7 +148,7 @@ def map (η : F ⟶ G) : DiagElem F ⥤ DiagElem G where
 /-- `DiagElem.map` sends the identity natural transformation to the identity functor. -/
 @[simp]
 theorem map_id_nat : map (𝟙 F) = 𝟭 (DiagElem F) := by
-  refine Functor.ext (fun x => ?_) (fun x y f => ?_)
+  refine _root_.CategoryTheory.Functor.ext (fun x => ?_) (fun x y f => ?_)
   · apply DiagElem.ext <;> rfl
   · simp only [Functor.id_map, eqToHom_refl, Category.comp_id, Category.id_comp]
     apply Hom.ext; rfl
@@ -159,7 +159,7 @@ variable {H : Cᵒᵖ ⥤ C ⥤ Type w}
 @[simp]
 theorem map_comp_nat (η : F ⟶ G) (θ : G ⟶ H) :
     map (η ≫ θ) = map η ⋙ map θ := by
-  refine Functor.ext (fun x => ?_) (fun x y f => ?_)
+  refine _root_.CategoryTheory.Functor.ext (fun x => ?_) (fun x y f => ?_)
   · apply DiagElem.ext <;> rfl
   · simp only [Functor.comp_map, eqToHom_refl, Category.comp_id, Category.id_comp]
     apply Hom.ext; rfl
@@ -191,7 +191,7 @@ DiagElem F --map η--> DiagElem G
 ```
 commutes. -/
 theorem map_forget (η : F ⟶ G) : map η ⋙ forget G = forget F := by
-  refine Functor.ext (fun x => ?_) (fun x y f => ?_)
+  refine _root_.CategoryTheory.Functor.ext (fun x => ?_) (fun x y f => ?_)
   · rfl
   · simp only [Functor.comp_map, eqToHom_refl, Category.comp_id, Category.id_comp,
       map_map_base, forget_map]
@@ -361,7 +361,7 @@ def Paranat.toFunctor (α : Paranat F G) : DiagElem F ⥤ DiagElem G where
 forgetful functors to `C`. -/
 theorem Paranat.toFunctor_forget (α : Paranat F G) :
     α.toFunctor ⋙ DiagElem.forget G = DiagElem.forget F := by
-  refine Functor.ext (fun x => ?_) (fun x y f => ?_)
+  refine _root_.CategoryTheory.Functor.ext (fun x => ?_) (fun x y f => ?_)
   · rfl
   · simp only [Functor.comp_map, eqToHom_refl, Category.comp_id, Category.id_comp,
       toFunctor_map_base, DiagElem.forget_map]
@@ -455,7 +455,7 @@ theorem Paranat.toOverHom_ofOverHom
   apply Over.OverMorphism.ext
   apply Cat.Hom.ext
   simp only [toOverHom, Over.homMk_left, Functor.toCatHom_toFunctor]
-  refine Functor.ext ?h_obj ?h_map
+  refine _root_.CategoryTheory.Functor.ext ?h_obj ?h_map
   case h_obj =>
     intro x
     apply DiagElem.ext
@@ -502,7 +502,7 @@ variable (C : Type u) [Category.{v} C]
 @[simp]
 theorem Paranat.toFunctor_id (F : Cᵒᵖ ⥤ C ⥤ Type u) :
     (Paranat.id (F := F)).toFunctor = 𝟭 (DiagElem F) := by
-  refine Functor.ext (fun x => ?_) (fun x y f => ?_)
+  refine _root_.CategoryTheory.Functor.ext (fun x => ?_) (fun x y f => ?_)
   · rfl
   · simp only [Functor.id_map, eqToHom_refl, Category.comp_id, Category.id_comp]
     rfl
@@ -523,7 +523,7 @@ the composition of the induced functors. -/
 theorem Paranat.toFunctor_comp {F G H : Cᵒᵖ ⥤ C ⥤ Type u}
     (α : Paranat F G) (β : Paranat G H) :
     (α.comp β).toFunctor = α.toFunctor ⋙ β.toFunctor := by
-  refine Functor.ext (fun x => ?_) (fun x y f => ?_)
+  refine _root_.CategoryTheory.Functor.ext (fun x => ?_) (fun x y f => ?_)
   · rfl
   · simp only [Functor.comp_map, eqToHom_refl, Category.comp_id, Category.id_comp]
     rfl
@@ -641,7 +641,7 @@ theorem Slice2Hom.elem_eq (θ : Slice2Hom C α β) (x : DiagElem F) :
   have hcompat := mor.compat
   simp only [DiagCompat, Paranat.toFunctor_obj_base, Paranat.toFunctor_obj_elem] at hcompat
   rw [hbase] at hcompat
-  simp only [op_id, Functor.map_id, NatTrans.id_app, types_id_apply] at hcompat
+  simp only [op_id, CategoryTheory.Functor.map_id, NatTrans.id_app, types_id_apply] at hcompat
   exact hcompat
 
 /-- Any two paranatural transformations admitting a slice 2-morphism between
@@ -875,12 +875,12 @@ theorem offDiagApp_diag (I : C) : offDiagApp G I I = diagApp G I := rfl
 
 @[simp]
 theorem covAction_id (K I : C) : covAction G K (𝟙 I) = id := by
-  simp only [covAction, Functor.map_id]
+  simp only [covAction, CategoryTheory.Functor.map_id]
   rfl
 
 @[simp]
 theorem contravAction_id (I K : C) : contravAction G (𝟙 I) K = id := by
-  simp only [contravAction, op_id, Functor.map_id, NatTrans.id_app]
+  simp only [contravAction, op_id, CategoryTheory.Functor.map_id, NatTrans.id_app]
   rfl
 
 /-! ### Structure integral (equalizer definition) -/
@@ -1272,13 +1272,13 @@ def diagElemCopresheafIso : DiagElem (copresheafToProf P) ≅Cat P.Elements wher
   hom_inv_id := by
     apply Cat.Hom.ext
     simp only [Functor.toCatHom_toFunctor, Cat.Hom.comp_toFunctor, Cat.Hom.id_toFunctor]
-    apply Functor.ext
+    apply _root_.CategoryTheory.Functor.ext
     case h_obj => intro x; apply DiagElem.ext <;> rfl
     case h_map => intro x y f; apply DiagElem.Hom.ext; simp
   inv_hom_id := by
     apply Cat.Hom.ext
     simp only [Functor.toCatHom_toFunctor, Cat.Hom.comp_toFunctor, Cat.Hom.id_toFunctor]
-    apply Functor.ext
+    apply _root_.CategoryTheory.Functor.ext
     case h_obj => intro p; rfl
     case h_map =>
       intro p q f
@@ -1346,13 +1346,13 @@ def diagElemPresheafIso : DiagElem (presheafToProf Q) ≅Cat Q.ElementsPre where
   hom_inv_id := by
     apply Cat.Hom.ext
     simp only [Functor.toCatHom_toFunctor, Cat.Hom.comp_toFunctor, Cat.Hom.id_toFunctor]
-    apply Functor.ext
+    apply _root_.CategoryTheory.Functor.ext
     case h_obj => intro x; apply DiagElem.ext <;> rfl
     case h_map => intro x y f; apply DiagElem.Hom.ext; simp
   inv_hom_id := by
     apply Cat.Hom.ext
     simp only [Functor.toCatHom_toFunctor, Cat.Hom.comp_toFunctor, Cat.Hom.id_toFunctor]
-    apply Functor.ext
+    apply _root_.CategoryTheory.Functor.ext
     case h_obj => intro p; rfl
     case h_map =>
       intro p q f
@@ -2893,7 +2893,7 @@ lemma profToTwCopr_map_arrToDiagFromTarget_id {I₀ I₁ : C} (f : I₀ ⟶ I₁
     opIsoOp', catOfOp'ToOp, op'ToOp, twObjMk', arrDiag]
   simp only [CategoryOfElements.π_obj, hom', Functor.id_obj, Arrow.mk_left,
     Arrow.mk_right, Functor.prod_obj, Functor.toCatHom_toFunctor,
-    Functor.map_id, Category.comp_id]
+    CategoryTheory.Functor.map_id, Category.comp_id]
   rfl
 
 /-- `DiagCompat` for a morphism `f` is equivalent to `TwArrCompat` for the
@@ -3069,7 +3069,7 @@ lemma twArrCompat_isIdentity_to_diagCompat {arr₁ arr₂ : Arrow C}
     exact hw.symm
   change (P.obj (Opposite.op l₁)).map φ.right ((P.map (𝟙 l₁).op).app l₁ e₁) =
          (P.map φ.left.op).app l₂ e₂ at hcompat
-  simp only [op_id, Functor.map_id, NatTrans.id_app, types_id_apply] at hcompat
+  simp only [op_id, CategoryTheory.Functor.map_id, NatTrans.id_app, types_id_apply] at hcompat
   rw [hφ_eq] at hcompat
   exact hcompat
 

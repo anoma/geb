@@ -293,7 +293,7 @@ def idWitFunctor.{uObj, uMor, uWit} :
   map h := (IdWitBundle.pushforwardFunctor h).toCatHom
   map_id Q := by
     apply Cat.Hom.ext
-    apply Functor.ext
+    apply _root_.CategoryTheory.Functor.ext
     · intro B Y f
       simp only [eqToHom_refl, Category.id_comp, Category.comp_id]
       apply IdWitBundle.Hom.ext
@@ -301,7 +301,7 @@ def idWitFunctor.{uObj, uMor, uWit} :
     · intro B; rfl
   map_comp f g := by
     apply Cat.Hom.ext
-    apply Functor.ext
+    apply _root_.CategoryTheory.Functor.ext
     · intro B Y φ
       simp only [eqToHom_refl, Category.id_comp, Category.comp_id]
       apply IdWitBundle.Hom.ext
@@ -539,7 +539,7 @@ def compWitFunctor.{uObj, uMor, uWit, uCWit} :
   map h := (CompWitBundle.pushforwardFunctor h).toCatHom
   map_id I := by
     apply Cat.Hom.ext
-    apply Functor.ext
+    apply _root_.CategoryTheory.Functor.ext
     · intro B Y f
       simp only [eqToHom_refl, Category.id_comp, Category.comp_id]
       apply CompWitBundle.Hom.ext
@@ -547,7 +547,7 @@ def compWitFunctor.{uObj, uMor, uWit, uCWit} :
     · intro B; rfl
   map_comp f g := by
     apply Cat.Hom.ext
-    apply Functor.ext
+    apply _root_.CategoryTheory.Functor.ext
     · intro B Y φ
       simp only [eqToHom_refl, Category.id_comp, Category.comp_id]
       apply CompWitBundle.Hom.ext

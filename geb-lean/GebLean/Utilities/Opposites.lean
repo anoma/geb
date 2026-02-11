@@ -580,7 +580,7 @@ isomorphism, our `opFunctor'` is involutive on the nose because
 `(Cᵒᵖ')ᵒᵖ' = C` definitionally.
 -/
 theorem opFunctor'_comp_self_eq_id : opFunctor'.{v, u} ⋙ opFunctor'.{v, u} = 𝟭 _ := by
-  apply Functor.ext
+  apply _root_.CategoryTheory.Functor.ext
   case h_obj => intro C; rfl
   case h_map =>
     intros C D F
@@ -623,7 +623,7 @@ def opFunctorIsoOpFunctor' : Cat.opFunctor.{v, u} ≅ opFunctor'.{v, u} where
     naturality := by
       intros C D F
       apply Cat.Hom.ext
-      apply Functor.ext
+      apply _root_.CategoryTheory.Functor.ext
       case h_obj =>
         intro X
         rfl
@@ -637,7 +637,7 @@ def opFunctorIsoOpFunctor' : Cat.opFunctor.{v, u} ≅ opFunctor'.{v, u} where
     naturality := by
       intros C D F
       apply Cat.Hom.ext
-      apply Functor.ext
+      apply _root_.CategoryTheory.Functor.ext
       case h_obj =>
         intro X
         rfl

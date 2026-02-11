@@ -380,7 +380,7 @@ def copowerProfInner (H : Cᵒᵖ ⥤ C ⥤ Type v) (G : Cᵒᵖ ⥤ C ⥤ C) (A
     C ⥤ C where
   obj B := copower ((H.obj A).obj B) ((G.obj A).obj B)
   map {B₁ B₂} g := bimap ((H.obj A).map g) ((G.obj A).map g)
-  map_id B := by simp only [Functor.map_id]; exact bimap_id
+  map_id B := by simp only [CategoryTheory.Functor.map_id]; exact bimap_id
   map_comp {B₁ B₂ B₃} f g := by
     simp only [Functor.map_comp]
     exact bimap_comp _ _ _ _
@@ -410,7 +410,7 @@ def copowerProf (H : Cᵒᵖ ⥤ C ⥤ Type v) (G : Cᵒᵖ ⥤ C ⥤ C) : Cᵒ�
   }
   map_id A := by
     ext B
-    simp only [Functor.map_id, NatTrans.id_app, copowerProfInner]
+    simp only [CategoryTheory.Functor.map_id, NatTrans.id_app, copowerProfInner]
     exact bimap_id
   map_comp {A₁ A₂ A₃} f g := by
     ext B
@@ -1860,7 +1860,7 @@ theorem constFirstArgProfUniversalCowedge_isInitial (F : C ⥤ C) (pt : C)
     exact dinat
   · intro f hf
     specialize hf pt (𝟙 pt)
-    simp only [constFirstArgProfUniversalCowedge_family, Functor.map_id] at hf
+    simp only [constFirstArgProfUniversalCowedge_family, CategoryTheory.Functor.map_id] at hf
     calc f = 𝟙 (F.obj pt) ≫ f := (Category.id_comp f).symm
       _ = cwedge.family pt (𝟙 pt) := hf
 
@@ -2261,7 +2261,7 @@ theorem coendToNatTrans_natTransToCoend (P : Cᵒᵖ ⥤ C ⥤ Type w)
               (P.obj (op dom)).map arr x := by
             rw [profunctorOnCoTwistedArrow_map]
             simp only [coTwToDomDiag, coTwDomArr_coTwHomMk, coTwCodArr_coTwHomMk,
-              diagCoTwArr_dom, op_id, Functor.map_id, NatTrans.id_app,
+              diagCoTwArr_dom, op_id, CategoryTheory.Functor.map_id, NatTrans.id_app,
               Category.id_comp]
             rfl
           rw [H_map]
@@ -2334,13 +2334,13 @@ theorem coendInj_dinat (P : Cᵒᵖ ⥤ C ⥤ Type w)
       (P.map f.op).app i x := by
     simp only [to_i, tw, profunctorOnCoTwistedArrow_map, types_comp_apply,
       coTwObjMkToIdentity_domArr, coTwObjMkToIdentity_codArr,
-      coTwObjMk_cod, diagCoTwArr_dom, Functor.map_id, types_id_apply]
+      coTwObjMk_cod, diagCoTwArr_dom, CategoryTheory.Functor.map_id, types_id_apply]
   have eq_j : (profunctorOnCoTwistedArrow C P).map to_j x =
       (P.obj (Opposite.op j)).map f x := by
     simp only [to_j, tw, profunctorOnCoTwistedArrow_map, types_comp_apply,
       coTwObjMkToIdentityAtDom_domArr, coTwObjMkToIdentityAtDom_codArr,
       coTwObjMk_cod, diagCoTwArr_dom, op_id]
-    have h : P.map (𝟙 (op j)) = 𝟙 (P.obj (op j)) := Functor.map_id P (op j)
+    have h : P.map (𝟙 (op j)) = 𝟙 (P.obj (op j)) := CategoryTheory.Functor.map_id P (op j)
     simp only [h, NatTrans.id_app, types_id_apply]
   rw [← eq_i, ← eq_j]
   have nat_i := congrFun (congrFun (c.ι.naturality (Opposite.op to_i))
@@ -2517,13 +2517,13 @@ def SimplifiedCowedge.ofWeightedCowedge {P : Cᵒᵖ ⥤ C ⥤ Type w'} {Y : Typ
       rw [profunctorOnCoTwistedArrow_map]
       simp only [coTwObjMkToIdentity_domArr, coTwObjMkToIdentity_codArr,
         coTwObjMk_dom, coTwObjMk_cod,
-        Functor.map_id, types_comp_apply, types_id_apply]
+        CategoryTheory.Functor.map_id, types_comp_apply, types_id_apply]
     have prof_B : (profunctorOnCoTwistedArrow C P).map
         (coTwObjMkToIdentityAtDom f) x = (P.obj (Opposite.op B)).map f x := by
       rw [profunctorOnCoTwistedArrow_map]
       simp only [coTwObjMkToIdentityAtDom_domArr, coTwObjMkToIdentityAtDom_codArr,
         coTwObjMk_dom, coTwObjMk_cod,
-        op_id, Functor.map_id, NatTrans.id_app, types_comp_apply, types_id_apply]
+        op_id, CategoryTheory.Functor.map_id, NatTrans.id_app, types_comp_apply, types_id_apply]
     rw [← prof_A, ← prof_B]
     exact nat_A.symm.trans nat_B
 
@@ -2561,7 +2561,7 @@ lemma SimplifiedCowedge.toWeightedCowedge_naturality_core
   -- Expand the profunctor maps at coTwToDomDiag
   simp only [coTwToDomDiag, profunctorOnCoTwistedArrow_map,
     coTwDomArr_coTwHomMk, coTwCodArr_coTwHomMk, diagCoTwArr_dom, diagCoTwArr_cod,
-    op_id, Functor.map_id, NatTrans.id_app, Category.id_comp]
+    op_id, CategoryTheory.Functor.map_id, NatTrans.id_app, Category.id_comp]
   -- Now the goal involves cw.leg at dom' and dom, with P actions
   -- LHS: cw.leg dom' ((P.obj (op dom')).map arr' x)
   -- RHS: cw.leg dom ((P.obj (op dom)).map arr
@@ -2604,7 +2604,7 @@ lemma SimplifiedCowedge.ofWeightedCowedge_toWeightedCowedge
   simp only [ofWeightedCowedge, toWeightedCowedge]
   simp only [coTwToDomDiag, diagCoTwArr_dom, diagCoTwArr_arr,
     profunctorOnCoTwistedArrow_map, coTwDomArr_coTwHomMk, coTwCodArr_coTwHomMk,
-    diagCoTwArr_cod, op_id, Functor.map_id, types_comp_apply,
+    diagCoTwArr_cod, op_id, CategoryTheory.Functor.map_id, types_comp_apply,
     NatTrans.id_app, types_id_apply]
 
 /-- Round-trip from weighted to simplified to weighted is the identity. -/
