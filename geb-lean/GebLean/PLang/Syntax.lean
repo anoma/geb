@@ -197,6 +197,38 @@ def polyProdNatIso :
 
 end PolyProdNatIso
 
+/-! ## Free monad and cofree comonad of the product -/
+
+section FreeCofree
+
+variable (X : Type u)
+
+/--
+The free monad of the product polynomial endofunctor,
+represented as a polynomial endofunctor on `Over X`.
+
+Evaluation at `A : Over X` produces labeled binary trees:
+at each fiber `x`, positions are binary tree shapes over `x`,
+and the representable assigns a leaf in `A` to each leaf
+position in the shape.
+-/
+abbrev polyProdFreeM : PolyEndo X :=
+  polyFreeMPoly (polyProd X)
+
+/--
+The cofree comonad of the product polynomial endofunctor,
+represented as a polynomial endofunctor on `Over X`.
+
+Evaluation at `A : Over X` produces annotated binary streams:
+at each fiber `x`, positions are infinite binary tree shapes
+over `x`, and the representable assigns an annotation in `A`
+to each node in the shape.
+-/
+abbrev polyProdCofreeM : PolyEndo X :=
+  polyCofreeMPoly (polyProd X)
+
+end FreeCofree
+
 /-! ## PUnit specialization -/
 
 section PUnitSpecialization
