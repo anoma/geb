@@ -1,4 +1,5 @@
 import Mathlib.CategoryTheory.Comma.Over.Basic
+import Mathlib.CategoryTheory.Limits.Constructions.Over.Products
 import GebLean.Utilities.Opposites
 import GebLean.Utilities.Presheaf
 
@@ -18,6 +19,8 @@ categories, including equivalences involving opposite categories.
 * `OverCopresheaf` - Copresheaves on `Over y`
 * `overCopresheafFunctor` - Functor `Cᵒᵖ' ⥤ Cat` sending `y` to copresheaves on
   `Over y`
+* `overSelfProd` - Constructive self-product `A ×_X A` in `Over X`
+* `overSelfProdFunctor` - The self-product functor `A ↦ A ×_X A`
 -/
 
 universe v u
@@ -280,5 +283,157 @@ def overCopresheafFunctor : Cᵒᵖ' ⥤ Cat :=
   Functor.op' (Over.mapFunctor C) ⋙ copresheafConstruction
 
 end OverOpFunctors
+
+/-! ## Constructive self-product in Over X
+
+Products in `Over X` are pullbacks in the base category.
+For `A : Over X`, the self-product `A ×_X A` has underlying
+type `{ p : A.left × A.left // A.hom p.1 = A.hom p.2 }`.
+
+We build the product constructively using:
+- `Types.pullbackCone` / `Types.pullbackLimitCone` for
+  the computable pullback in `Type`
+- `pullbackConeEquivBinaryFan` to convert to a binary fan
+  in `Over X`
+- `IsLimit.pullbackConeEquivBinaryFanFunctor` to transfer
+  the limit property
+-/
+
+section OverSelfProd
+
+open Limits
+
+variable {X : Type u}
+
+/--
+The pullback cone for `A.hom` with itself in `Type`.
+-/
+def overSelfPullbackCone (A : Over X) :
+    PullbackCone A.hom A.hom :=
+  Types.pullbackCone A.hom A.hom
+
+/--
+The pullback cone `overSelfPullbackCone A` is a limit.
+-/
+def overSelfPullbackIsLimit (A : Over X) :
+    IsLimit (overSelfPullbackCone A) :=
+  (Types.pullbackLimitCone A.hom A.hom).isLimit
+
+/--
+The binary fan in `Over X` corresponding to the self-pullback
+of `A`.
+-/
+def overSelfProdFan (A : Over X) :
+    BinaryFan A A :=
+  pullbackConeEquivBinaryFan.functor.obj
+    (overSelfPullbackCone A)
+
+/--
+The binary fan `overSelfProdFan A` is a limit in `Over X`.
+-/
+def overSelfProdIsLimit (A : Over X) :
+    IsLimit (overSelfProdFan A) :=
+  IsLimit.pullbackConeEquivBinaryFanFunctor
+    (overSelfPullbackIsLimit A)
+
+/--
+The self-product object `A ×_X A` in `Over X`.
+-/
+abbrev overSelfProd (A : Over X) : Over X :=
+  (overSelfProdFan A).pt
+
+/--
+First projection `A ×_X A ⟶ A`.
+-/
+abbrev overSelfProdFst (A : Over X) :
+    overSelfProd A ⟶ A :=
+  (overSelfProdFan A).fst
+
+/--
+Second projection `A ×_X A ⟶ A`.
+-/
+abbrev overSelfProdSnd (A : Over X) :
+    overSelfProd A ⟶ A :=
+  (overSelfProdFan A).snd
+
+/--
+Lift a morphism `f : A ⟶ B` to the self-product via the
+universal property: `(fst ≫ f, snd ≫ f)`.
+-/
+def overSelfProdMap {A B : Over X} (f : A ⟶ B) :
+    overSelfProd A ⟶ overSelfProd B :=
+  (overSelfProdIsLimit B).lift
+    (BinaryFan.mk
+      (overSelfProdFst A ≫ f)
+      (overSelfProdSnd A ≫ f))
+
+end OverSelfProd
+
+/-! ## The self-product functor -/
+
+section OverSelfProdFunctor
+
+open Limits
+
+variable (X : Type u)
+
+/--
+The self-product functor `A ↦ A ×_X A` on `Over X`.
+
+On morphisms, `f : A ⟶ B` maps to the universal lift of
+`(fst ≫ f, snd ≫ f)` into `B ×_X B`.
+-/
+def overSelfProdFunctor : Over X ⥤ Over X where
+  obj := overSelfProd
+  map := overSelfProdMap
+  map_id := fun A => by
+    apply (overSelfProdIsLimit A).hom_ext
+    intro ⟨j⟩
+    simp only [Category.id_comp]
+    exact (overSelfProdIsLimit A).fac _ _
+  map_comp := fun {A B C} f g => by
+    symm
+    apply (overSelfProdIsLimit C).hom_ext
+    intro ⟨j⟩
+    simp only [overSelfProdMap, Category.assoc,
+      (overSelfProdIsLimit C).fac,
+      BinaryFan.mk]
+    cases j
+    all_goals {
+      simp only []
+      rw [← Category.assoc,
+        (overSelfProdIsLimit B).fac]
+      simp only [Category.assoc]
+    }
+
+end OverSelfProdFunctor
+
+/-! ## PUnit specialization
+
+When `X = PUnit`, the fiber condition `A.hom a₁ = A.hom a₂`
+is trivially satisfied, so the self-product reduces to the
+ordinary product.
+-/
+
+section PUnitSpecialization
+
+/--
+When `X = PUnit`, the self-product type is equivalent to
+the ordinary product, since the fiber condition is trivially
+satisfied.
+-/
+def overSelfProd_punit_equiv
+    (A : Over PUnit.{u + 1}) :
+    (overSelfProd A).left ≃ A.left × A.left where
+  toFun := fun ⟨⟨a₁, a₂⟩, _⟩ => (a₁, a₂)
+  invFun := fun ⟨a₁, a₂⟩ =>
+    ⟨⟨a₁, a₂⟩, by
+      have : ∀ (x y : PUnit.{u + 1}), x = y :=
+        fun x y => by cases x; cases y; rfl
+      exact this _ _⟩
+  left_inv := fun ⟨_, _⟩ => rfl
+  right_inv := fun _ => rfl
+
+end PUnitSpecialization
 
 end GebLean
