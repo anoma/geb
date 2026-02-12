@@ -120,7 +120,9 @@ See `VertTransOps.interchange` and `HorTransOps.interchange`.
 
 ### Examples
 
-- [ ] Rel (relations as horizontal, functions as vertical)
+- [x] YonedaRel double category (YonedaRelDouble.lean):
+      Yoneda relations as vertical morphisms, C-morphisms as horizontal,
+      relRelated as Prop-valued squares. DoubleCategoryData instance.
 - [ ] Span (spans as horizontal, functions as vertical)
 - [ ] Commutative squares in a category
 - [ ] Quintets in a 2-category
