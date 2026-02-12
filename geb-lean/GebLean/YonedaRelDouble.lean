@@ -37,14 +37,13 @@ universe u v
 
 variable {C : Type u} [Category.{v} C]
 
-/-- The square type family for the Yoneda relation double
-category. Given vertical morphisms `R : YonedaRel A C`,
-`S : YonedaRel B D` and horizontal morphisms `f : A ⟶ B`,
-`f' : C ⟶ D`, the square is `relRelated f f' R S`. -/
+/-- The square type family for the Yoneda relation
+double category. Given vertical morphisms
+`R : YonedaRel A C`, `S : YonedaRel B D` and
+horizontal morphisms `f : A ⟶ B`, `f' : C ⟶ D`,
+the square is `relRelated f f' R S`. -/
 abbrev yonedaRelSQS :
-    @SquareSet C
-      (fun (A B : C) => YonedaRel A B)
-      (fun (A B : C) => (A ⟶ B)) :=
+    @SquareSet C YonedaRel (homSetOfQuiver C) :=
   fun R S f f' => relRelated f f' R S
 
 @[reassoc (attr := simp)]
@@ -203,10 +202,8 @@ theorem relRelatedVComp
 /-- Operations for the Yoneda relation double category
 on objects of `C`. -/
 def yonedaRelDoubleOps :
-    DoubleCategoryOps C
-      (fun (A B : C) => YonedaRel A B)
-      (fun (A B : C) => (A ⟶ B))
-      yonedaRelSQS where
+    DoubleCategoryOps C YonedaRel
+      (homSetOfQuiver C) yonedaRelSQS where
   vComp := fun R S => relComp R S
   hComp := fun f g => f ≫ g
   vId := fun A => relId A
@@ -280,10 +277,8 @@ theorem yonedaRelDoubleLaws :
 objects of `C`: operations and laws bundled
 together. -/
 def yonedaRelDoubleData :
-    DoubleCategoryData C
-      (fun (A B : C) => YonedaRel A B)
-      (fun (A B : C) => (A ⟶ B))
-      yonedaRelSQS where
+    DoubleCategoryData C YonedaRel
+      (homSetOfQuiver C) yonedaRelSQS where
   toDoubleCategoryOps := yonedaRelDoubleOps
   laws := yonedaRelDoubleLaws
 
