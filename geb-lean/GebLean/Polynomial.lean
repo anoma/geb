@@ -2656,6 +2656,34 @@ private lemma ccrReindex_inv_hom_cancel
   rwa [ccrComp_reindex, ccrId_reindex] at this
 
 /--
+Fiber-level roundtrip: the fiber morphism of the
+composed inner morphism `αf.hom y ≫ αf.inv y` at
+index `i` is HEq to that of the identity.
+-/
+private lemma ccrFiberMor_hom_inv_cancel
+    {f₁ f₂ : PolyFunctorBetweenCat X Y}
+    (αf : f₁ ≅ f₂) (y : Y)
+    (i : ccrIndex (f₁ y)) :
+    HEq (ccrFiberMor (αf.hom y ≫ αf.inv y) i)
+         (ccrFiberMor (𝟙 (f₁ y)) i) :=
+  congr_arg_heq (fun f => ccrFiberMor f i)
+    (congrFun αf.hom_inv_id y)
+
+/--
+Fiber-level roundtrip: the fiber morphism of the
+composed inner morphism `αf.inv y ≫ αf.hom y` at
+index `i` is HEq to that of the identity.
+-/
+private lemma ccrFiberMor_inv_hom_cancel
+    {f₁ f₂ : PolyFunctorBetweenCat X Y}
+    (αf : f₁ ≅ f₂) (y : Y)
+    (i : ccrIndex (f₂ y)) :
+    HEq (ccrFiberMor (αf.inv y ≫ αf.hom y) i)
+         (ccrFiberMor (𝟙 (f₂ y)) i) :=
+  congr_arg_heq (fun f => ccrFiberMor f i)
+    (congrFun αf.inv_hom_id y)
+
+/--
 Base component of the forward-then-backward roundtrip:
 the composed base map is the identity base map.
 -/
@@ -2684,6 +2712,9 @@ private lemma polyCompGObj_iso_hom_inv_fiber
            polyCompGObj_isoInv αf G).fiber
          (GrothendieckContra'.id
            (polyCompGObj f₁ G)).fiber := by
+  apply GrothendieckContra'.ext_fiber_heq
+    (polyCompGObj_iso_hom_inv_base αf G)
+  funext ⟨ig, pf⟩
   _
 
 /--
