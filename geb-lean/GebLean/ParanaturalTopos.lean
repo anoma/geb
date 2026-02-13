@@ -2512,6 +2512,20 @@ abbrev divFullRel {I₀ I₁ : Type}
     (((I₁ → I₁) → I₁) → I₁) → Prop :=
   arrowRel (divArgRel f) (graphRel f)
 
+/-- `divFullRel` expands to a nested application of
+`arrowRel` and `graphRel`, with one `arrowRel` per
+`→` and one `graphRel f` per `X` in the type
+expression `((X → X) → X) → X`. -/
+theorem divFullRel_expand
+    {I₀ I₁ : Type} (f : I₀ → I₁) :
+    @divFullRel I₀ I₁ f =
+    arrowRel
+      (arrowRel
+        (arrowRel (graphRel f) (graphRel f))
+        (graphRel f))
+      (graphRel f) :=
+  rfl
+
 /-- `divEndoRel f h k` is equivalent to
 `DiagCompat divHomProf I₀ I₁ f h k`, which
 reduces to `f ∘ h = k ∘ f`. The relational
@@ -2607,22 +2621,22 @@ def DivParametricSub :=
 
 /-- Bundled parametricity for `((X → X) → X) → X`.
 A family `app I : ((I → I) → I) → I` together with
-the condition that for every `f : I₀ → I₁`, the
-pair `(app I₀, app I₁)` lies in `divFullRel f`:
-the Wadler relational interpretation of
-`((X → X) → X) → X` at the graph of `f`.
-
-`divFullRel` decomposes as
-`arrowRel (divArgRel f) (graphRel f)`, where
-`divArgRel f = arrowRel (divEndoRel f) (graphRel f)`
-and `divEndoRel f = arrowRel (graphRel f) (graphRel f)`,
-mirroring the nesting of `→` in the type. -/
+the Wadler relational interpretation at the graph of
+every `f : I₀ → I₁`. The `parametric` field expands
+`divFullRel` into its constituent `arrowRel` and
+`graphRel` applications, one `arrowRel` per `→` and
+one `graphRel f` per `X` in `((X → X) → X) → X`. -/
 @[ext]
 structure DivParametricBundled where
   app : ∀ (I : Type), ((I → I) → I) → I
   parametric :
     ∀ (I₀ I₁ : Type) (f : I₀ → I₁),
-      divFullRel f (app I₀) (app I₁)
+      arrowRel
+        (arrowRel
+          (arrowRel (graphRel f) (graphRel f))
+          (graphRel f))
+        (graphRel f)
+        (app I₀) (app I₁)
 
 /-- The subtype and bundled formulations of
 parametricity are equivalent:
