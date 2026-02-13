@@ -2457,6 +2457,147 @@ theorem divHomProf_diagCompat_eq
     (f ∘ h = k ∘ f) :=
   rfl
 
+/-- The graph of a function, viewed as a relation.
+`graphRel f a b` holds iff `f a = b`. This is the
+relational interpretation of the base type variable
+`X` at the graph of `f`, following Wadler's
+construction (section 3, "Theorems for free!"). -/
+def graphRel {A B : Type} (f : A → B)
+    (a : A) (b : B) : Prop :=
+  f a = b
+
+/-- The relational interpretation of the function
+type constructor. Given a relation `R` on inputs
+and `S` on outputs, `arrowRel R S g₀ g₁` holds
+iff `g₀` and `g₁` map `R`-related inputs to
+`S`-related outputs. This is Wadler's `[[A → B]]`
+(section 3, "Theorems for free!"). -/
+def arrowRel
+    {A₀ A₁ B₀ B₁ : Type}
+    (R : A₀ → A₁ → Prop)
+    (S : B₀ → B₁ → Prop)
+    (g₀ : A₀ → B₀) (g₁ : A₁ → B₁) : Prop :=
+  ∀ (a₀ : A₀) (a₁ : A₁),
+    R a₀ a₁ → S (g₀ a₀) (g₁ a₁)
+
+/-- The relational interpretation of the
+sub-expression `X → X` in `((X → X) → X) → X`
+at the graph of `f`. A pair `(h, k)` of
+endomorphisms is related iff `f`-related inputs
+are sent to `f`-related outputs. -/
+abbrev divEndoRel {I₀ I₁ : Type}
+    (f : I₀ → I₁) :
+    (I₀ → I₀) → (I₁ → I₁) → Prop :=
+  arrowRel (graphRel f) (graphRel f)
+
+/-- The relational interpretation of the
+sub-expression `(X → X) → X` at the graph of `f`.
+A pair `(p, q)` is related iff
+`divEndoRel`-related endomorphism pairs are sent
+to `graphRel f`-related value pairs. -/
+abbrev divArgRel {I₀ I₁ : Type}
+    (f : I₀ → I₁) :
+    ((I₀ → I₀) → I₀) → ((I₁ → I₁) → I₁) →
+    Prop :=
+  arrowRel (divEndoRel f) (graphRel f)
+
+/-- The relational interpretation of the full
+type `((X → X) → X) → X` at the graph of `f`.
+A pair `(phi₀, phi₁)` is related iff
+`divArgRel`-related argument pairs are sent to
+`graphRel f`-related value pairs. -/
+abbrev divFullRel {I₀ I₁ : Type}
+    (f : I₀ → I₁) :
+    (((I₀ → I₀) → I₀) → I₀) →
+    (((I₁ → I₁) → I₁) → I₁) → Prop :=
+  arrowRel (divArgRel f) (graphRel f)
+
+/-- `divEndoRel f h k` is equivalent to
+`DiagCompat divHomProf I₀ I₁ f h k`, which
+reduces to `f ∘ h = k ∘ f`. The relational
+form quantifies pointwise over `graphRel f`;
+the `DiagCompat` form uses function equality. -/
+theorem divEndoRel_iff_diagCompat
+    {I₀ I₁ : Type} (f : I₀ → I₁)
+    (h : I₀ → I₀) (k : I₁ → I₁) :
+    divEndoRel f h k ↔
+    DiagCompat divHomProf I₀ I₁ f h k := by
+  rw [divHomProf_diagCompat_eq]
+  constructor
+  · intro hrel
+    ext a
+    exact hrel a (f a) rfl
+  · intro heq a₀ a₁ ha
+    change f (h a₀) = k a₁
+    rw [← ha]
+    exact congr_fun heq a₀
+
+/-- `divArgRel f p q` is equivalent to
+`DivParametric`'s gate condition on `(p, q)`:
+for all `(h, k)` with `f ∘ h = k ∘ f`,
+`f (p h) = q k`. -/
+theorem divArgRel_iff_isParanaturalAt
+    {I₀ I₁ : Type} (f : I₀ → I₁)
+    (p : (I₀ → I₀) → I₀)
+    (q : (I₁ → I₁) → I₁) :
+    divArgRel f p q ↔
+    IsParanaturalAt
+      divHomProf divTarget f p q := by
+  constructor
+  · intro hrel h k hcompat
+    exact hrel h k
+      ((divEndoRel_iff_diagCompat f h k).mpr
+        hcompat)
+  · intro hpn h k hendo
+    exact hpn h k
+      ((divEndoRel_iff_diagCompat f h k).mp
+        hendo)
+
+/-- `divFullRel f phi₀ phi₁` is equivalent to
+`DivParametric`'s condition on `(phi₀, phi₁)`:
+for all `(p, q)` satisfying the gate,
+`f (phi₀ p) = phi₁ q`. -/
+theorem divFullRel_iff_divParametric
+    {I₀ I₁ : Type} (f : I₀ → I₁)
+    (phi₀ : ((I₀ → I₀) → I₀) → I₀)
+    (phi₁ : ((I₁ → I₁) → I₁) → I₁) :
+    divFullRel f phi₀ phi₁ ↔
+    (∀ (p : (I₀ → I₀) → I₀)
+       (q : (I₁ → I₁) → I₁),
+      IsParanaturalAt
+        divHomProf divTarget f p q →
+      DiagCompat divTarget I₀ I₁ f
+        (phi₀ p) (phi₁ q)) := by
+  constructor
+  · intro hrel p q hpn
+    exact hrel p q
+      ((divArgRel_iff_isParanaturalAt
+        f p q).mpr hpn)
+  · intro hpn p q harg
+    exact hpn p q
+      ((divArgRel_iff_isParanaturalAt
+        f p q).mp harg)
+
+/-- `DivParametric phi` is equivalent to
+`∀ I₀ I₁ f, divFullRel f (phi I₀) (phi I₁)`:
+the Wadler relational interpretation of
+`((X → X) → X) → X` at the graph of `f` holds
+for the pair `(phi I₀, phi I₁)`. -/
+theorem divParametric_iff_divFullRel
+    (phi : ParanatSig divSource divTarget) :
+    DivParametric phi ↔
+    ∀ (I₀ I₁ : Type) (f : I₀ → I₁),
+      divFullRel f (phi I₀) (phi I₁) := by
+  constructor
+  · intro hparam I₀ I₁ f
+    exact (divFullRel_iff_divParametric
+      f (phi I₀) (phi I₁)).mpr
+      (hparam I₀ I₁ f)
+  · intro hfull I₀ I₁ f
+    exact (divFullRel_iff_divParametric
+      f (phi I₀) (phi I₁)).mp
+      (hfull I₀ I₁ f)
+
 /-- The subtype of `ParanatSig divSource divTarget`
 satisfying the parametricity condition
 `DivParametric`. -/
