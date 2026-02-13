@@ -2605,40 +2605,43 @@ def DivParametricSub :=
   { phi : ParanatSig divSource divTarget //
     DivParametric phi }
 
-/-- Bundled version of the parametricity condition:
-a family `app I : ((I → I) → I) → I` such that for
-every `f : I₀ → I₁` and `(p, q)` that are
-paranatural at `f` from `divHomProf` to `divTarget`,
-the pair `(app I₀ p, app I₁ q)` is `DiagCompat` for
-`divTarget`.
+/-- Bundled parametricity for `((X → X) → X) → X`.
+A family `app I : ((I → I) → I) → I` together with
+the condition that for every `f : I₀ → I₁`, the
+pair `(app I₀, app I₁)` lies in `divFullRel f`:
+the Wadler relational interpretation of
+`((X → X) → X) → X` at the graph of `f`.
 
-The gate condition `IsParanaturalAt divHomProf
-divTarget f p q` captures the iterated paranaturality:
-`(p, q)` preserves `DiagCompat` from the
-hom-profunctor to the identity profunctor at `f`. -/
+`divFullRel` decomposes as
+`arrowRel (divArgRel f) (graphRel f)`, where
+`divArgRel f = arrowRel (divEndoRel f) (graphRel f)`
+and `divEndoRel f = arrowRel (graphRel f) (graphRel f)`,
+mirroring the nesting of `→` in the type. -/
 @[ext]
 structure DivParametricBundled where
   app : ∀ (I : Type), ((I → I) → I) → I
   parametric :
-    ∀ (I₀ I₁ : Type) (f : I₀ → I₁)
-      (p : (I₀ → I₀) → I₀)
-      (q : (I₁ → I₁) → I₁),
-      IsParanaturalAt divHomProf divTarget f p q →
-      DiagCompat divTarget I₀ I₁ f
-        (app I₀ p) (app I₁ q)
+    ∀ (I₀ I₁ : Type) (f : I₀ → I₁),
+      divFullRel f (app I₀) (app I₁)
 
 /-- The subtype and bundled formulations of
-parametricity are equivalent: `DivParametric phi`
-holds if and only if the `DiagCompat` preservation
-condition in `DivParametricBundled` holds. -/
+parametricity are equivalent:
+`divParametric_iff_divFullRel` bridges between
+`DivParametric` (using `IsParanaturalAt` and
+`DiagCompat`) and `divFullRel` (using `arrowRel`
+and `graphRel`). -/
 def divParametricEquiv :
     DivParametricSub ≃ DivParametricBundled where
   toFun phi :=
     { app := phi.val
-      parametric := phi.property }
+      parametric := fun I₀ I₁ f =>
+        (divParametric_iff_divFullRel phi.val).mp
+          phi.property I₀ I₁ f }
   invFun b :=
-    ⟨b.app, b.parametric⟩
-  left_inv _ := rfl
+    ⟨b.app,
+     (divParametric_iff_divFullRel b.app).mpr
+       b.parametric⟩
+  left_inv _ := Subtype.ext rfl
   right_inv _ := rfl
 
 /-- The subtype of `ParanatSig divSource divTarget`
