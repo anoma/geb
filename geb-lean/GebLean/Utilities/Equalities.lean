@@ -899,6 +899,35 @@ lemma sigma_cast_eq_mk.{u, v} {I : Type u} {F : I → Type v}
   simp only [cast_eq]
 
 /--
+For sigma types with the same index type, casting
+a constructor `⟨i, x⟩` along any equality of the
+sigma types preserves the index.
+-/
+lemma cast_sigma_eq.{u, v} {I : Type u}
+    {F G : I → Type v}
+    (hFG : F = G)
+    (i : I) (x : F i) :
+    cast (congrArg (Sigma (β := ·)) hFG)
+      ⟨i, x⟩ =
+      ⟨i, cast (congrFun hFG i) x⟩ := by
+  cases hFG; rfl
+
+/--
+Variant of `cast_sigma_eq` that takes any proof
+of the sigma type equality, using proof
+irrelevance to match the canonical form.
+-/
+@[simp] lemma cast_sigma_eq'.{u, v} {I : Type u}
+    {F G : I → Type v}
+    (h : (Σ i, F i) = (Σ i, G i))
+    (hFG : F = G)
+    (i : I) (x : F i) :
+    cast h ⟨i, x⟩ =
+      ⟨i, cast (congrFun hFG i) x⟩ := by
+  cases hFG
+  rfl
+
+/--
 When the sigma type depends on an outer index, casting along an equality of
 indices preserves the first component of the sigma.
 -/

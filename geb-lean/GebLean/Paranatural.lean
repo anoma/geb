@@ -2404,13 +2404,6 @@ lemma cast_eq_self_of_heq {A B : Type u} (h : A = B) (x : A)
   subst h
   rfl
 
-/-- In the Types category, `eqToHom h x = h ▸ x`. This follows from
-the definition of `eqToHom` in the Types category. -/
-lemma types_eqToHom_eq_subst {A B : Type u} (h : A = B) (x : A) :
-    (eqToHom h : A ⟶ B) x = h ▸ x := by
-  subst h
-  rfl
-
 /-- When `h : A = A`, `h ▸ x = x` by proof irrelevance (since `h = rfl`). -/
 lemma eq_subst_self {A : Type u} (h : A = A) (x : A) : h ▸ x = x := by
   have : h = rfl := Subsingleton.elim h rfl

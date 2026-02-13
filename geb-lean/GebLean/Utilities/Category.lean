@@ -2485,3 +2485,15 @@ namespace CategoryTheory
 notation C " ≅Cat " D => Cat.of C ≅ Cat.of D
 
 end CategoryTheory
+
+/-! ### Type-level eqToHom -/
+
+/--
+In the `Type` category, `eqToHom h` applied to a
+value `x` equals `cast h x`.
+-/
+lemma CategoryTheory.types_eqToHom_eq_cast.{w}
+    {A B : Type w} (h : A = B) (x : A) :
+    (eqToHom (C := Type w) h) x =
+      cast h x := by
+  subst h; rfl

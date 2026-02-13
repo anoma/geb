@@ -4,8 +4,10 @@ import Mathlib.CategoryTheory.Elements
 import Mathlib.CategoryTheory.Pi.Basic
 import Mathlib.CategoryTheory.Limits.Shapes.Products
 import Mathlib.CategoryTheory.Limits.Over
+import GebLean.Utilities.Category
 import GebLean.Utilities.Equalities
 import GebLean.Utilities.Families
+import GebLean.Utilities.Skeleton
 import GebLean.Utilities.Slice
 
 /-!
@@ -1616,6 +1618,1209 @@ def polyBetweenComp_eval_fiberEquiv (g : PolyFunctorBetweenCat Y Z)
       exact mor_to_pbe_fiber_heq_raw h eg
 
 end CompositionInterpretation
+
+/-! ## Horizontal Category of Polynomial Functors
+
+Polynomial functors `Over X → Over Y` compose via `polyBetweenComp` with
+identity `polyBetweenId`. The composition satisfies the category laws up to
+isomorphism (not strict equality), because the index types of composed
+polynomials are wrapped in `Σ PUnit, PUnit → _` which is isomorphic but not
+definitionally equal to the unwrapped type.
+
+We quotient by isomorphism using `Skeleton` to obtain a category
+`PolyHorizontalCat` whose objects are types and whose morphisms are
+isomorphism classes of polynomial functors.
+-/
+
+section PolyHorizontalCategory
+
+variable {X Y Z W : Type u}
+
+/--
+At each `y : Y`, the forward base map for the left identity iso sends
+`⟨_, pf⟩ : Σ (_ : PUnit), PUnit → ccrIndex (f y)` to `pf PUnit.unit`.
+-/
+def polyIdLeftFwdBase
+    (f : PolyFunctorBetweenCat X Y) (y : Y) :
+    ccrIndex (polyBetweenComp (polyBetweenId Y) f y) →
+    ccrIndex (f y) :=
+  fun ⟨_, pf⟩ => pf PUnit.unit
+
+/--
+At each `y : Y`, the forward fiber morphism for the left identity iso
+at index `i` sends `a : (ccrFamily (f y) (i.2 PUnit.unit)).left` to
+`⟨PUnit.unit, a⟩` in the sigma fiber of the composition.
+-/
+def polyIdLeftFwdFiber
+    (f : PolyFunctorBetweenCat X Y) (y : Y)
+    (i : ccrIndex
+      (polyBetweenComp (polyBetweenId Y) f y)) :
+    ccrFamily (f y) (polyIdLeftFwdBase f y i) ⟶
+    ccrFamily
+      (polyBetweenComp (polyBetweenId Y) f y) i :=
+  Over.homMk (fun a => ⟨PUnit.unit, a⟩) rfl
+
+/--
+At each `y : Y`, the backward base map for the left identity iso sends
+`i : ccrIndex (f y)` to `⟨PUnit.unit, fun _ => i⟩`.
+-/
+def polyIdLeftInvBase
+    (f : PolyFunctorBetweenCat X Y) (y : Y) :
+    ccrIndex (f y) →
+    ccrIndex
+      (polyBetweenComp (polyBetweenId Y) f y) :=
+  fun i => ⟨PUnit.unit, fun _ => i⟩
+
+/--
+At each `y : Y`, the backward fiber morphism for the left identity iso
+at index `i` projects out the PUnit sigma component.
+-/
+def polyIdLeftInvFiber
+    (f : PolyFunctorBetweenCat X Y) (y : Y)
+    (i : ccrIndex (f y)) :
+    ccrFamily
+      (polyBetweenComp (polyBetweenId Y) f y)
+      (polyIdLeftInvBase f y i) ⟶
+    ccrFamily (f y) i :=
+  Over.homMk (fun ⟨_, a⟩ => a) rfl
+
+/--
+Forward morphism for the pointwise left identity iso at `y`.
+-/
+def polyIdLeftFwd
+    (f : PolyFunctorBetweenCat X Y) (y : Y) :
+    polyBetweenComp (polyBetweenId Y) f y ⟶ f y :=
+  ccrHomMk
+    (polyIdLeftFwdBase f y)
+    (polyIdLeftFwdFiber f y)
+
+/--
+Backward morphism for the pointwise left identity iso at `y`.
+-/
+def polyIdLeftInv
+    (f : PolyFunctorBetweenCat X Y) (y : Y) :
+    f y ⟶ polyBetweenComp (polyBetweenId Y) f y :=
+  ccrHomMk
+    (polyIdLeftInvBase f y)
+    (polyIdLeftInvFiber f y)
+
+lemma polyIdLeft_hom_inv
+    (f : PolyFunctorBetweenCat X Y) (y : Y) :
+    polyIdLeftFwd f y ≫ polyIdLeftInv f y =
+      𝟙 (polyBetweenComp (polyBetweenId Y) f y) := by
+  ext
+  · -- base (pointwise, after ext did funext)
+    rename_i a
+    obtain ⟨⟨⟩, pf⟩ := a
+    dsimp [polyIdLeftFwd, polyIdLeftInv,
+      ccrHomMk, polyIdLeftFwdBase,
+      polyIdLeftInvBase,
+      GrothendieckContra'.comp,
+      GrothendieckContra'.id]
+    exact Sigma.ext rfl
+      (heq_of_eq (funext fun _ => rfl))
+  · -- fiber (with eqToHom transport)
+    dsimp only [polyIdLeftFwd, polyIdLeftInv,
+      ccrHomMk, polyIdLeftFwdFiber,
+      polyIdLeftInvFiber,
+      GrothendieckContra'.comp,
+      GrothendieckContra'.id]
+    simp only [eqToHom_refl, Category.comp_id]
+    funext ⟨⟨⟩, pf⟩
+    dsimp
+    apply Over.OverMorphism.ext
+    funext ⟨⟨⟩, a⟩
+    rfl
+
+lemma polyIdLeft_inv_hom
+    (f : PolyFunctorBetweenCat X Y) (y : Y) :
+    polyIdLeftInv f y ≫ polyIdLeftFwd f y =
+      𝟙 (f y) := rfl
+
+/--
+Pointwise isomorphism for left identity at `y`: the composition
+`polyBetweenComp (polyBetweenId Y) f` evaluated at `y` is
+isomorphic to `f y` in `CoprodCovarRepCat (Over X)`.
+-/
+def polyIdLeftIsoAt
+    (f : PolyFunctorBetweenCat X Y) (y : Y) :
+    polyBetweenComp (polyBetweenId Y) f y ≅
+      f y where
+  hom := polyIdLeftFwd f y
+  inv := polyIdLeftInv f y
+  hom_inv_id := polyIdLeft_hom_inv f y
+  inv_hom_id := polyIdLeft_inv_hom f y
+
+/--
+Left identity isomorphism: composing with the identity
+polynomial on the left yields an isomorphic polynomial.
+-/
+def polyBetweenComp_id_left_iso
+    (f : PolyFunctorBetweenCat X Y) :
+    polyBetweenComp (polyBetweenId Y) f ≅ f :=
+  Pi.isoMk (fun y => polyIdLeftIsoAt f y)
+
+/-! #### Right identity isomorphism -/
+
+def polyIdRightFwdBase
+    (g : PolyFunctorBetweenCat X Y) (y : Y) :
+    ccrIndex
+      (polyBetweenComp g (polyBetweenId X) y) →
+    ccrIndex (g y) :=
+  fun ⟨ig, _⟩ => ig
+
+def polyIdRightFwdFiber
+    (g : PolyFunctorBetweenCat X Y) (y : Y)
+    (i : ccrIndex
+      (polyBetweenComp g (polyBetweenId X) y)) :
+    ccrFamily (g y) (polyIdRightFwdBase g y i) ⟶
+    ccrFamily
+      (polyBetweenComp g (polyBetweenId X) y) i :=
+  Over.homMk (fun eg => ⟨eg, PUnit.unit⟩) rfl
+
+def polyIdRightInvBase
+    (g : PolyFunctorBetweenCat X Y) (y : Y) :
+    ccrIndex (g y) →
+    ccrIndex
+      (polyBetweenComp g (polyBetweenId X) y) :=
+  fun ig => ⟨ig, fun _ => PUnit.unit⟩
+
+def polyIdRightInvFiber
+    (g : PolyFunctorBetweenCat X Y) (y : Y)
+    (j : ccrIndex (g y)) :
+    ccrFamily
+      (polyBetweenComp g (polyBetweenId X) y)
+      (polyIdRightInvBase g y j) ⟶
+    ccrFamily (g y) j :=
+  Over.homMk (fun ⟨eg, _⟩ => eg) rfl
+
+def polyIdRightFwd
+    (g : PolyFunctorBetweenCat X Y) (y : Y) :
+    polyBetweenComp g (polyBetweenId X) y ⟶
+      g y :=
+  ccrHomMk (polyIdRightFwdBase g y)
+    (polyIdRightFwdFiber g y)
+
+def polyIdRightInv
+    (g : PolyFunctorBetweenCat X Y) (y : Y) :
+    g y ⟶
+      polyBetweenComp g (polyBetweenId X) y :=
+  ccrHomMk (polyIdRightInvBase g y)
+    (polyIdRightInvFiber g y)
+
+lemma polyIdRight_hom_inv
+    (g : PolyFunctorBetweenCat X Y) (y : Y) :
+    polyIdRightFwd g y ≫ polyIdRightInv g y =
+      𝟙 (polyBetweenComp g
+        (polyBetweenId X) y) := by
+  ext
+  · rename_i a
+    obtain ⟨ig, pf⟩ := a
+    dsimp [polyIdRightFwd, polyIdRightInv,
+      ccrHomMk, polyIdRightFwdBase,
+      polyIdRightInvBase,
+      GrothendieckContra'.comp,
+      GrothendieckContra'.id]
+    exact Sigma.ext rfl (heq_of_eq
+      (funext fun x => by
+        cases pf x; rfl))
+  · dsimp only [polyIdRightFwd, polyIdRightInv,
+      ccrHomMk, polyIdRightFwdFiber,
+      polyIdRightInvFiber,
+      GrothendieckContra'.comp,
+      GrothendieckContra'.id]
+    simp only [eqToHom_refl, Category.comp_id]
+    funext ⟨ig, pf⟩
+    dsimp
+    apply Over.OverMorphism.ext
+    funext ⟨eg, ⟨⟩⟩
+    rfl
+
+lemma polyIdRight_inv_hom
+    (g : PolyFunctorBetweenCat X Y) (y : Y) :
+    polyIdRightInv g y ≫ polyIdRightFwd g y =
+      𝟙 (g y) := rfl
+
+def polyIdRightIsoAt
+    (g : PolyFunctorBetweenCat X Y) (y : Y) :
+    polyBetweenComp g (polyBetweenId X) y ≅
+      g y where
+  hom := polyIdRightFwd g y
+  inv := polyIdRightInv g y
+  hom_inv_id := polyIdRight_hom_inv g y
+  inv_hom_id := polyIdRight_inv_hom g y
+
+def polyBetweenComp_id_right_iso
+    (g : PolyFunctorBetweenCat X Y) :
+    polyBetweenComp g (polyBetweenId X) ≅ g :=
+  Pi.isoMk (fun y => polyIdRightIsoAt g y)
+
+/-! #### Associativity isomorphism -/
+
+variable {W : Type u}
+
+/--
+Forward base map for associativity: reassociates the
+nested sigma/forall from `(h ∘ g) ∘ f` to `h ∘ (g ∘ f)`.
+-/
+def polyAssocFwdBase
+    (h : PolyFunctorBetweenCat Z W)
+    (g : PolyFunctorBetweenCat Y Z)
+    (f : PolyFunctorBetweenCat X Y) (w : W) :
+    ccrIndex (polyBetweenComp
+      (polyBetweenComp h g) f w) →
+    ccrIndex (polyBetweenComp
+      h (polyBetweenComp g f) w) :=
+  fun ⟨⟨ih, pg⟩, pf⟩ =>
+    ⟨ih, fun eh => ⟨pg eh, fun eg => pf ⟨eh, eg⟩⟩⟩
+
+/--
+Backward base map for associativity: reassociates from
+`h ∘ (g ∘ f)` to `(h ∘ g) ∘ f`.
+-/
+def polyAssocInvBase
+    (h : PolyFunctorBetweenCat Z W)
+    (g : PolyFunctorBetweenCat Y Z)
+    (f : PolyFunctorBetweenCat X Y) (w : W) :
+    ccrIndex (polyBetweenComp
+      h (polyBetweenComp g f) w) →
+    ccrIndex (polyBetweenComp
+      (polyBetweenComp h g) f w) :=
+  fun ⟨ih, pgf⟩ =>
+    ⟨⟨ih, fun eh => (pgf eh).1⟩,
+     fun ⟨eh, eg⟩ => (pgf eh).2 eg⟩
+
+def polyAssocFwdFiber
+    (h : PolyFunctorBetweenCat Z W)
+    (g : PolyFunctorBetweenCat Y Z)
+    (f : PolyFunctorBetweenCat X Y) (w : W)
+    (i : ccrIndex (polyBetweenComp
+      (polyBetweenComp h g) f w)) :
+    ccrFamily (polyBetweenComp
+      h (polyBetweenComp g f) w)
+      (polyAssocFwdBase h g f w i) ⟶
+    ccrFamily (polyBetweenComp
+      (polyBetweenComp h g) f w) i :=
+  Over.homMk (fun ⟨eh, ⟨eg, ef⟩⟩ =>
+    ⟨⟨eh, eg⟩, ef⟩) rfl
+
+def polyAssocInvFiber
+    (h : PolyFunctorBetweenCat Z W)
+    (g : PolyFunctorBetweenCat Y Z)
+    (f : PolyFunctorBetweenCat X Y) (w : W)
+    (j : ccrIndex (polyBetweenComp
+      h (polyBetweenComp g f) w)) :
+    ccrFamily (polyBetweenComp
+      (polyBetweenComp h g) f w)
+      (polyAssocInvBase h g f w j) ⟶
+    ccrFamily (polyBetweenComp
+      h (polyBetweenComp g f) w) j :=
+  Over.homMk (fun ⟨⟨eh, eg⟩, ef⟩ =>
+    ⟨eh, ⟨eg, ef⟩⟩) rfl
+
+def polyAssocFwd
+    (h : PolyFunctorBetweenCat Z W)
+    (g : PolyFunctorBetweenCat Y Z)
+    (f : PolyFunctorBetweenCat X Y) (w : W) :
+    polyBetweenComp (polyBetweenComp h g) f w ⟶
+    polyBetweenComp h (polyBetweenComp g f) w :=
+  ccrHomMk (polyAssocFwdBase h g f w)
+    (polyAssocFwdFiber h g f w)
+
+def polyAssocInv
+    (h : PolyFunctorBetweenCat Z W)
+    (g : PolyFunctorBetweenCat Y Z)
+    (f : PolyFunctorBetweenCat X Y) (w : W) :
+    polyBetweenComp h (polyBetweenComp g f) w ⟶
+    polyBetweenComp (polyBetweenComp h g) f w :=
+  ccrHomMk (polyAssocInvBase h g f w)
+    (polyAssocInvFiber h g f w)
+
+lemma polyAssoc_hom_inv
+    (h : PolyFunctorBetweenCat Z W)
+    (g : PolyFunctorBetweenCat Y Z)
+    (f : PolyFunctorBetweenCat X Y) (w : W) :
+    polyAssocFwd h g f w ≫
+      polyAssocInv h g f w =
+    𝟙 (polyBetweenComp
+      (polyBetweenComp h g) f w) := rfl
+
+lemma polyAssoc_inv_hom
+    (h : PolyFunctorBetweenCat Z W)
+    (g : PolyFunctorBetweenCat Y Z)
+    (f : PolyFunctorBetweenCat X Y) (w : W) :
+    polyAssocInv h g f w ≫
+      polyAssocFwd h g f w =
+    𝟙 (polyBetweenComp
+      h (polyBetweenComp g f) w) := rfl
+
+def polyAssocIsoAt
+    (h : PolyFunctorBetweenCat Z W)
+    (g : PolyFunctorBetweenCat Y Z)
+    (f : PolyFunctorBetweenCat X Y) (w : W) :
+    polyBetweenComp (polyBetweenComp h g) f w ≅
+    polyBetweenComp h (polyBetweenComp g f) w
+    where
+  hom := polyAssocFwd h g f w
+  inv := polyAssocInv h g f w
+  hom_inv_id := polyAssoc_hom_inv h g f w
+  inv_hom_id := polyAssoc_inv_hom h g f w
+
+def polyBetweenComp_assoc_iso
+    (h : PolyFunctorBetweenCat Z W)
+    (g : PolyFunctorBetweenCat Y Z)
+    (f : PolyFunctorBetweenCat X Y) :
+    polyBetweenComp (polyBetweenComp h g) f ≅
+    polyBetweenComp h (polyBetweenComp g f) :=
+  Pi.isoMk (fun w => polyAssocIsoAt h g f w)
+
+/-! #### Composition as a functor in the outer
+    polynomial -/
+
+/--
+Transport lemma: when `h : y₁ = y₂`, the fiber
+left-types at `h.symm ▸ idx` and `idx` are equal.
+Used for the dependent type transport in the
+composition functor's fiber map.
+-/
+private def overWTransportLeft
+    (f : PolyFunctorBetweenCat X Y)
+    {y₁ y₂ : Y}
+    (h : y₁ = y₂)
+    (idx : ccrIndex (f y₁)) :
+    (ccrFamily (f y₂)
+      (h.symm ▸ idx)).left =
+    (ccrFamily (f y₁) idx).left :=
+  @Eq.rec Y y₁
+    (fun y (h' : y₁ = y) =>
+      (ccrFamily (f y)
+        (h'.symm ▸ idx)).left =
+      (ccrFamily (f y₁) idx).left)
+    rfl y₂ h
+
+private lemma overWTransportHom
+    (f : PolyFunctorBetweenCat X Y)
+    {y₁ y₂ : Y}
+    (h : y₁ = y₂)
+    (idx : ccrIndex (f y₁))
+    (ef : (ccrFamily (f y₂)
+      (h.symm ▸ idx)).left) :
+    (ccrFamily (f y₁) idx).hom
+      (cast (overWTransportLeft f h idx)
+        ef) =
+    (ccrFamily (f y₂)
+      (h.symm ▸ idx)).hom ef :=
+  @Eq.rec Y y₁
+    (fun y (h' : y₁ = y) =>
+      ∀ (ef' : (ccrFamily (f y)
+        (h'.symm ▸ idx)).left),
+      (ccrFamily (f y₁) idx).hom
+        (cast (overWTransportLeft f h' idx)
+          ef') =
+      (ccrFamily (f y)
+        (h'.symm ▸ idx)).hom ef')
+    (fun _ => rfl) y₂ h ef
+
+/--
+The `.left` component of a composed fiber morphism
+equals the composition of the `.left` components.
+-/
+lemma ccrComp_fiberMor_left
+    {P Q R : CoprodCovarRepCat (Over Y)}
+    (φ : P ⟶ Q) (ψ : Q ⟶ R)
+    (i : ccrIndex P)
+    (e : (ccrFamily R
+      (ccrReindex (φ ≫ ψ) i)).left) :
+    (ccrFiberMor (φ ≫ ψ) i).left e =
+    (ccrFiberMor φ i).left
+      ((ccrFiberMor ψ
+        (ccrReindex φ i)).left e) :=
+  congrFun (congrArg (·.left)
+    (ccrComp_fiberMor φ ψ i)) e
+
+def polyCompGObj
+    (f : PolyFunctorBetweenCat X Y)
+    (G : CoprodCovarRepCat (Over Y)) :
+    CoprodCovarRepCat (Over X) :=
+  ccrObjMk
+    (fun (p : Σ (ig : ccrIndex G),
+      ∀ (e : (ccrFamily G ig).left),
+        ccrIndex
+          (f ((ccrFamily G ig).hom e))) =>
+    Over.mk (fun (e : Σ (eg :
+        (ccrFamily G p.1).left),
+      (ccrFamily
+        (f ((ccrFamily G p.1).hom eg))
+        (p.2 eg)).left) =>
+    (ccrFamily
+      (f ((ccrFamily G p.1).hom e.1))
+      (p.2 e.1)).hom e.2))
+
+def polyCompGMap
+    (f : PolyFunctorBetweenCat X Y)
+    {G₁ G₂ : CoprodCovarRepCat (Over Y)}
+    (φ : G₁ ⟶ G₂) :
+    polyCompGObj f G₁ ⟶ polyCompGObj f G₂ :=
+  ccrHomMk
+    (fun ⟨ig, pf⟩ =>
+      let ψ := ccrFiberMor φ ig
+      let h := fun e₂ =>
+        congrFun (Over.w ψ) e₂
+      ⟨ccrReindex φ ig,
+       fun e₂ => (h e₂).symm ▸
+         pf (ψ.left e₂)⟩)
+    (fun ⟨ig, pf⟩ =>
+      let ψ := ccrFiberMor φ ig
+      let h := fun e₂ =>
+        congrFun (Over.w ψ) e₂
+      Over.homMk
+        (fun ⟨e₂, ef⟩ =>
+          ⟨ψ.left e₂,
+           cast (overWTransportLeft f
+             (h e₂) (pf (ψ.left e₂))) ef⟩)
+        (by
+          funext ⟨e₂, ef⟩
+          exact (overWTransportHom f (h e₂)
+            (pf (ψ.left e₂)) ef)))
+
+lemma polyCompGMap_id
+    (f : PolyFunctorBetweenCat X Y)
+    (G : CoprodCovarRepCat (Over Y)) :
+    polyCompGMap f (𝟙 G) =
+      𝟙 (polyCompGObj f G) := rfl
+
+/--
+If two `GrothendieckContra'.Hom` values have equal
+`.base` and the `.rec`-cast of one `.fiber` equals
+the other, then the `.fiber` values are `HEq`.
+-/
+private lemma GrothendieckContra'.ext_fiber_heq
+    {C : Type*} [Category C] {F' : Cᵒᵖ' ⥤ Cat}
+    {X Y : GrothendieckContra' F'}
+    {f g : GrothendieckContra'.Hom X Y}
+    (hb : f.base = g.base)
+    (hf : hb.rec f.fiber = g.fiber) :
+    HEq f.fiber g.fiber := by
+  cases f; cases g; dsimp at hb
+  subst hb; exact heq_of_eq hf
+
+/--
+For `GrothendieckContra'.Hom`, two morphisms are
+equal if their bases are equal and fibers are HEq.
+-/
+private lemma GrothendieckContra'.ext_of_heq
+    {C : Type*} [Category C] {F' : Cᵒᵖ' ⥤ Cat}
+    {X Y : GrothendieckContra' F'}
+    (f g : GrothendieckContra'.Hom X Y)
+    (hb : f.base = g.base)
+    (hf : HEq f.fiber g.fiber) :
+    f = g := by
+  cases f; cases g; dsimp at hb
+  subst hb; exact congrArg _ (eq_of_heq hf)
+
+/--
+For a dependent function `pf : ∀ e, M (g e)`, if
+`x₁ = x₂` then any `▸`-transports of `pf x₁` and
+`pf x₂` to a common target type are equal,
+regardless of the transport paths used (single-step
+vs multi-step).
+-/
+private lemma dep_fun_transport_eq
+    {T : Type*} {Y : Type*} {g : T → Y}
+    {M : Y → Type*}
+    (pf : ∀ e : T, M (g e))
+    {x₁ x₂ : T} (hx : x₁ = x₂)
+    {y₂ y₃ : Y}
+    (h_single : g x₁ = y₃)
+    (h_inner : g x₂ = y₂)
+    (h_outer : y₂ = y₃) :
+    (h_single ▸ pf x₁ : M y₃) =
+    h_outer ▸ h_inner ▸ pf x₂ := by
+  subst hx; subst h_inner; subst h_outer
+  rfl
+
+private lemma polyCompGMap_comp_base_inner
+    (f : PolyFunctorBetweenCat X Y)
+    {G₁ G₂ G₃ : CoprodCovarRepCat (Over Y)}
+    (φ : G₁ ⟶ G₂) (ψ : G₂ ⟶ G₃)
+    (ig : ccrIndex G₁)
+    (pf : ∀ e : (ccrFamily G₁ ig).left,
+      ccrIndex (f ((ccrFamily G₁ ig).hom e)))
+    (e₃ : (ccrFamily G₃
+      (ccrReindex (φ ≫ ψ) ig)).left) :
+    ((polyCompGMap f (φ ≫ ψ)).base
+      ⟨ig, pf⟩).2 e₃ =
+    ((polyCompGMap f ψ).base
+      ((polyCompGMap f φ).base
+        ⟨ig, pf⟩)).2 e₃ := by
+  dsimp only [polyCompGMap, ccrHomMk]
+  exact dep_fun_transport_eq
+    (M := fun y => ccrIndex (f y)) pf
+    (ccrComp_fiberMor_left φ ψ ig e₃)
+    _ _ _
+
+lemma polyCompGMap_comp_base
+    (f : PolyFunctorBetweenCat X Y)
+    {G₁ G₂ G₃ : CoprodCovarRepCat (Over Y)}
+    (φ : G₁ ⟶ G₂) (ψ : G₂ ⟶ G₃) :
+    (polyCompGMap f (φ ≫ ψ)).base =
+    (polyCompGMap f φ ≫
+      polyCompGMap f ψ).base := by
+  change (polyCompGMap f (φ ≫ ψ)).base =
+    (polyCompGMap f ψ).base ∘
+      (polyCompGMap f φ).base
+  funext ⟨ig, pf⟩
+  dsimp only [Function.comp, polyCompGMap,
+    ccrHomMk]
+  exact Sigma.ext rfl (heq_of_eq
+    (funext fun e₂ =>
+      polyCompGMap_comp_base_inner
+        f φ ψ ig pf e₂))
+
+/--
+To show `h ▸ x = y` where `h : α = β`, `x : C α`,
+`y : C β`, it suffices to show `HEq x y`.
+-/
+private lemma eq_rec_of_heq
+    {α : Sort*} {C : α → Sort*}
+    {a b : α} (h : a = b)
+    {x : C a} {y : C b}
+    (hxy : HEq x y) :
+    h ▸ x = y := by
+  subst h; exact eq_of_heq hxy
+
+/--
+In `Over X`, `(f ≫ g).left x = g.left (f.left x)`.
+-/
+private lemma over_comp_left_apply
+    {X : Type*} {A B C : Over X}
+    (f : A ⟶ B) (g : B ⟶ C)
+    (x : A.left) :
+    (f ≫ g).left x = g.left (f.left x) :=
+  rfl
+
+/--
+The base value of `polyCompGMap f (φ ≫ ψ)` at
+index `⟨ig, pf⟩`.
+-/
+private abbrev compBaseAt
+    (f : PolyFunctorBetweenCat X Y)
+    {G₁ G₂ G₃ : CoprodCovarRepCat (Over Y)}
+    (φ : G₁ ⟶ G₂) (ψ : G₂ ⟶ G₃)
+    (ig : ccrIndex G₁)
+    (pf : ∀ e : (ccrFamily G₁ ig).left,
+      ccrIndex
+        (f ((ccrFamily G₁ ig).hom e))) :
+    ccrIndex (polyCompGObj f G₃) :=
+  (polyCompGMap f (φ ≫ ψ)).base ⟨ig, pf⟩
+
+/--
+The base value of the sequential composition
+`polyCompGMap f φ ≫ polyCompGMap f ψ` at index
+`⟨ig, pf⟩`.
+-/
+private abbrev seqBaseAt
+    (f : PolyFunctorBetweenCat X Y)
+    {G₁ G₂ G₃ : CoprodCovarRepCat (Over Y)}
+    (φ : G₁ ⟶ G₂) (ψ : G₂ ⟶ G₃)
+    (ig : ccrIndex G₁)
+    (pf : ∀ e : (ccrFamily G₁ ig).left,
+      ccrIndex
+        (f ((ccrFamily G₁ ig).hom e))) :
+    ccrIndex (polyCompGObj f G₃) :=
+  (polyCompGMap f φ ≫
+    polyCompGMap f ψ).base ⟨ig, pf⟩
+
+/--
+The pointwise base equality at `⟨ig, pf⟩`.
+-/
+private lemma baseAtEq
+    (f : PolyFunctorBetweenCat X Y)
+    {G₁ G₂ G₃ : CoprodCovarRepCat (Over Y)}
+    (φ : G₁ ⟶ G₂) (ψ : G₂ ⟶ G₃)
+    (ig : ccrIndex G₁)
+    (pf : ∀ e : (ccrFamily G₁ ig).left,
+      ccrIndex
+        (f ((ccrFamily G₁ ig).hom e))) :
+    compBaseAt f φ ψ ig pf =
+      seqBaseAt f φ ψ ig pf :=
+  congrFun
+    (polyCompGMap_comp_base f φ ψ)
+    ⟨ig, pf⟩
+
+private abbrev fiberLeftAt
+    (f : PolyFunctorBetweenCat X Y)
+    (G₃ : CoprodCovarRepCat (Over Y))
+    (p : ccrIndex (polyCompGObj f G₃)) :
+    Type u :=
+  (ccrFamily (polyCompGObj f G₃) p).left
+
+private lemma fiberLeftCastEq
+    (f : PolyFunctorBetweenCat X Y)
+    {G₁ G₂ G₃ : CoprodCovarRepCat (Over Y)}
+    (φ : G₁ ⟶ G₂) (ψ : G₂ ⟶ G₃)
+    (ig : ccrIndex G₁)
+    (pf : ∀ e : (ccrFamily G₁ ig).left,
+      ccrIndex
+        (f ((ccrFamily G₁ ig).hom e))) :
+    fiberLeftAt f G₃
+      (compBaseAt f φ ψ ig pf) =
+    fiberLeftAt f G₃
+      (seqBaseAt f φ ψ ig pf) :=
+  congrArg (fiberLeftAt f G₃)
+    (baseAtEq f φ ψ ig pf)
+
+/--
+The outer element type of the composite fiber
+sigma at a given base index.
+-/
+private abbrev fiberOuterAt
+    (f : PolyFunctorBetweenCat X Y)
+    (G₃ : CoprodCovarRepCat (Over Y))
+    (p : ccrIndex (polyCompGObj f G₃)) :
+    Type u :=
+  (ccrFamily G₃ p.fst).left
+
+/--
+The inner element type of the composite fiber
+sigma at a given outer element.
+-/
+private abbrev fiberInnerAt
+    (f : PolyFunctorBetweenCat X Y)
+    (G₃ : CoprodCovarRepCat (Over Y))
+    (p : ccrIndex (polyCompGObj f G₃))
+    (eg : fiberOuterAt f G₃ p) :
+    Type u :=
+  (ccrFamily
+    (f ((ccrFamily G₃ p.fst).hom eg))
+    (p.snd eg)).left
+
+/--
+The result element type (in the domain fiber).
+-/
+private abbrev domFiberLeftAt
+    (f : PolyFunctorBetweenCat X Y)
+    (G₁ : CoprodCovarRepCat (Over Y))
+    (ig : ccrIndex G₁)
+    (pf : ∀ e : (ccrFamily G₁ ig).left,
+      ccrIndex
+        (f ((ccrFamily G₁ ig).hom e))) :
+    Type u :=
+  (ccrFamily (polyCompGObj f G₁)
+    ⟨ig, pf⟩).left
+
+/--
+The LHS sigma element: apply `ccrFiberMor (φ ≫ ψ)`
+to the cast of `⟨e₃, ef⟩`. This is what the
+composed fiber morphism produces.
+-/
+private abbrev compFiberResult
+    (f : PolyFunctorBetweenCat X Y)
+    {G₁ G₂ G₃ : CoprodCovarRepCat (Over Y)}
+    (φ : G₁ ⟶ G₂) (ψ : G₂ ⟶ G₃)
+    (ig : ccrIndex G₁)
+    (pf : ∀ e : (ccrFamily G₁ ig).left,
+      ccrIndex
+        (f ((ccrFamily G₁ ig).hom e)))
+    (e₃ : fiberOuterAt f G₃
+      (seqBaseAt f φ ψ ig pf))
+    (ef : fiberInnerAt f G₃
+      (seqBaseAt f φ ψ ig pf) e₃) :
+    domFiberLeftAt f G₁ ig pf :=
+  (ccrFiberMor (polyCompGMap f (φ ≫ ψ))
+    ⟨ig, pf⟩).left
+    ((eqToHom (show
+      ccrFamily (polyCompGObj f G₃)
+        ((polyCompGMap f φ ≫
+          polyCompGMap f ψ).base
+          ⟨ig, pf⟩) =
+      ccrFamily (polyCompGObj f G₃)
+        ((polyCompGMap f (φ ≫ ψ)).base
+          ⟨ig, pf⟩)
+      by rw [polyCompGMap_comp_base])).left
+      ⟨e₃, ef⟩)
+
+/--
+The RHS sigma element: apply sequential
+`ccrFiberMor` to `⟨e₃, ef⟩`.
+-/
+private abbrev seqFiberResult
+    (f : PolyFunctorBetweenCat X Y)
+    {G₁ G₂ G₃ : CoprodCovarRepCat (Over Y)}
+    (φ : G₁ ⟶ G₂) (ψ : G₂ ⟶ G₃)
+    (ig : ccrIndex G₁)
+    (pf : ∀ e : (ccrFamily G₁ ig).left,
+      ccrIndex
+        (f ((ccrFamily G₁ ig).hom e)))
+    (e₃ : fiberOuterAt f G₃
+      (seqBaseAt f φ ψ ig pf))
+    (ef : fiberInnerAt f G₃
+      (seqBaseAt f φ ψ ig pf) e₃) :
+    domFiberLeftAt f G₁ ig pf :=
+  (ccrFiberMor (polyCompGMap f φ)
+    ⟨ig, pf⟩).left
+    ((ccrFiberMor (polyCompGMap f ψ)
+      ((polyCompGMap f φ).base
+        ⟨ig, pf⟩)).left ⟨e₃, ef⟩)
+
+private lemma polyCompGMap_comp_cast_elim
+    (f : PolyFunctorBetweenCat X Y)
+    {G₁ G₂ G₃ : CoprodCovarRepCat (Over Y)}
+    (φ : G₁ ⟶ G₂) (ψ : G₂ ⟶ G₃)
+    (ig : ccrIndex G₁)
+    (pf : ∀ e : (ccrFamily G₁ ig).left,
+      ccrIndex
+        (f ((ccrFamily G₁ ig).hom e)))
+    (e₃ : fiberOuterAt f G₃
+      (seqBaseAt f φ ψ ig pf))
+    (ef : fiberInnerAt f G₃
+      (seqBaseAt f φ ψ ig pf) e₃) :
+    (ccrFiberMor (polyCompGMap f (φ ≫ ψ))
+      ⟨ig, pf⟩).left
+      (cast (fiberLeftCastEq
+        f φ ψ ig pf).symm
+        ⟨e₃, ef⟩) =
+    (ccrFiberMor (polyCompGMap f φ)
+      ⟨ig, pf⟩).left
+      ((ccrFiberMor (polyCompGMap f ψ)
+        ((polyCompGMap f φ).base
+          ⟨ig, pf⟩)).left ⟨e₃, ef⟩) := by
+  -- The cast goes between two sigma types with
+  -- the same outer type (since compBaseAt.fst =
+  -- seqBaseAt.fst definitionally) but different
+  -- inner families (because .snd differs).
+  -- The cast direction is .symm: from seq to comp.
+  -- We decompose using cast_sigma_eq'.
+  have h := baseAtEq f φ ψ ig pf
+  have h_snd : HEq
+    (compBaseAt f φ ψ ig pf).snd
+    (seqBaseAt f φ ψ ig pf).snd :=
+    (Sigma.ext_iff.mp h).2
+  have h_snd_eq := eq_of_heq h_snd
+  -- The inner family equality (seq → comp direction)
+  have hFG : (fun eg =>
+    (ccrFamily
+      (f ((ccrFamily G₃
+        (seqBaseAt f φ ψ ig pf).fst).hom eg))
+      ((seqBaseAt f φ ψ ig pf).snd eg)).left) =
+    (fun eg =>
+    (ccrFamily
+      (f ((ccrFamily G₃
+        (compBaseAt f φ ψ ig pf).fst).hom eg))
+      ((compBaseAt f φ ψ ig pf).snd eg)).left) :=
+    funext fun eg => congrArg (fun s =>
+      (ccrFamily
+        (f ((ccrFamily G₃
+          (seqBaseAt f φ ψ ig pf).fst).hom eg))
+        (s eg)).left) h_snd_eq.symm
+  -- Decompose the outer cast
+  dsimp only [polyCompGMap, ccrHomMk,
+    ccrFiberMor, ccrReindex,
+    fiberLeftCastEq, fiberLeftAt,
+    compBaseAt, seqBaseAt]
+  -- Use the sigma cast decomposition
+  rw [cast_sigma_eq' _ hFG e₃ ef]
+  -- Now the goal has ⟨e₃, cast ... ef⟩ on the
+  -- LHS and the sequential application on the RHS.
+  -- Both produce sigma pairs.
+  apply Sigma.ext
+  · -- fst: composition of .left functions
+    rfl
+  · -- snd: cast compositions
+    refine heq_of_eq ?_
+    simp only [Over.homMk_left]
+    -- Goal: cast ⋯ (cast ⋯ ef) = cast ⋯ (cast ⋯ ef)
+    -- Both are double-casts with different proofs.
+    -- Collapse each to a single cast, then they
+    -- are equal by proof irrelevance.
+    simp only [cast_cast]
+
+private lemma polyCompGMap_comp_cast_step
+    (f : PolyFunctorBetweenCat X Y)
+    {G₁ G₂ G₃ : CoprodCovarRepCat (Over Y)}
+    (φ : G₁ ⟶ G₂) (ψ : G₂ ⟶ G₃)
+    (ig : ccrIndex G₁)
+    (pf : ∀ e : (ccrFamily G₁ ig).left,
+      ccrIndex
+        (f ((ccrFamily G₁ ig).hom e)))
+    (e₃ : fiberOuterAt f G₃
+      (seqBaseAt f φ ψ ig pf))
+    (ef : fiberInnerAt f G₃
+      (seqBaseAt f φ ψ ig pf) e₃) :
+    compFiberResult f φ ψ ig pf e₃ ef =
+    seqFiberResult f φ ψ ig pf e₃ ef := by
+  dsimp only [compFiberResult,
+    seqFiberResult]
+  rw [Over.eqToHom_left,
+    types_eqToHom_eq_cast]
+  -- Goal:
+  -- (ccrFiberMor (polyCompGMap f (φ ≫ ψ))
+  --   ⟨ig, pf⟩).left (cast ⋯ ⟨e₃, ef⟩) =
+  -- (ccrFiberMor (polyCompGMap f φ)
+  --   ⟨ig, pf⟩).left
+  --   ((ccrFiberMor (polyCompGMap f ψ)
+  --     ...).left ⟨e₃, ef⟩)
+  --
+  -- Factor: eliminate the cast on ⟨e₃, ef⟩.
+  exact polyCompGMap_comp_cast_elim
+    f φ ψ ig pf e₃ ef
+
+private lemma polyCompGMap_comp_fiber_at_elem
+    (f : PolyFunctorBetweenCat X Y)
+    {G₁ G₂ G₃ : CoprodCovarRepCat (Over Y)}
+    (φ : G₁ ⟶ G₂) (ψ : G₂ ⟶ G₃)
+    (ig : ccrIndex G₁)
+    (pf : ∀ e : (ccrFamily G₁ ig).left,
+      ccrIndex
+        (f ((ccrFamily G₁ ig).hom e)))
+    (e₃ : (ccrFamily G₃
+      ((polyCompGMap f φ ≫
+        polyCompGMap f ψ).base
+        ⟨ig, pf⟩).fst).left)
+    (ef : (ccrFamily
+      (f ((ccrFamily G₃
+        ((polyCompGMap f φ ≫
+          polyCompGMap f ψ).base
+          ⟨ig, pf⟩).fst).hom e₃))
+      (((polyCompGMap f φ ≫
+        polyCompGMap f ψ).base
+        ⟨ig, pf⟩).snd e₃)).left) :
+    (ccrFiberMor
+      (polyCompGMap f (φ ≫ ψ)) ⟨ig, pf⟩).left
+      ((eqToHom (show
+        ccrFamily (polyCompGObj f G₃)
+          ((polyCompGMap f φ ≫
+            polyCompGMap f ψ).base
+            ⟨ig, pf⟩) =
+        ccrFamily (polyCompGObj f G₃)
+          ((polyCompGMap f (φ ≫ ψ)).base
+            ⟨ig, pf⟩)
+        by rw [polyCompGMap_comp_base])).left
+        ⟨e₃, ef⟩) =
+    (ccrFiberMor (polyCompGMap f φ)
+      ⟨ig, pf⟩).left
+      ((ccrFiberMor (polyCompGMap f ψ)
+        ((polyCompGMap f φ).base
+          ⟨ig, pf⟩)).left
+        ⟨e₃, ef⟩) := by
+  exact polyCompGMap_comp_cast_step
+    f φ ψ ig pf e₃ ef
+
+private lemma polyCompGMap_comp_fiber_at
+    (f : PolyFunctorBetweenCat X Y)
+    {G₁ G₂ G₃ : CoprodCovarRepCat (Over Y)}
+    (φ : G₁ ⟶ G₂) (ψ : G₂ ⟶ G₃)
+    (ig : ccrIndex G₁)
+    (pf : ∀ e : (ccrFamily G₁ ig).left,
+      ccrIndex
+        (f ((ccrFamily G₁ ig).hom e))) :
+    eqToHom (show
+      ccrFamily (polyCompGObj f G₃)
+        ((polyCompGMap f φ ≫
+          polyCompGMap f ψ).base
+          ⟨ig, pf⟩) =
+      ccrFamily (polyCompGObj f G₃)
+        ((polyCompGMap f (φ ≫ ψ)).base
+          ⟨ig, pf⟩)
+      by rw [polyCompGMap_comp_base]) ≫
+    ccrFiberMor
+      (polyCompGMap f (φ ≫ ψ)) ⟨ig, pf⟩ =
+    ccrFiberMor (polyCompGMap f φ ≫
+      polyCompGMap f ψ) ⟨ig, pf⟩ := by
+  rw [ccrComp_fiberMor]
+  apply Over.OverMorphism.ext
+  funext ⟨e₃, ef⟩
+  rw [over_comp_left_apply,
+    over_comp_left_apply]
+  exact polyCompGMap_comp_fiber_at_elem
+    f φ ψ ig pf e₃ ef
+
+lemma polyCompGMap_comp
+    (f : PolyFunctorBetweenCat X Y)
+    {G₁ G₂ G₃ : CoprodCovarRepCat (Over Y)}
+    (φ : G₁ ⟶ G₂) (ψ : G₂ ⟶ G₃) :
+    polyCompGMap f (φ ≫ ψ) =
+    polyCompGMap f φ ≫
+      polyCompGMap f ψ :=
+  GrothendieckContra'.ext _ _
+    (polyCompGMap_comp_base f φ ψ) (by
+    funext ⟨ig, pf⟩
+    rw [piOp'_fiber_comp_eqToHom_at_idx]
+    dsimp only [ccrFiberMor]
+    exact polyCompGMap_comp_fiber_at
+      f φ ψ ig pf)
+
+/--
+Composition of polynomial functors, viewed as a
+functor in the outer polynomial `G`.
+-/
+def polyCompGFunctor
+    (f : PolyFunctorBetweenCat X Y) :
+    CoprodCovarRepCat (Over Y) ⥤
+      CoprodCovarRepCat (Over X) where
+  obj := polyCompGObj f
+  map := polyCompGMap f
+  map_id := polyCompGMap_id f
+  map_comp := polyCompGMap_comp f
+
+/--
+Forward morphism for `polyCompGObj` functoriality
+in the inner polynomial `f`: at each fiber point,
+apply `αf.hom` to reindex and transport.
+-/
+private def polyCompGObj_isoHom
+    {f₁ f₂ : PolyFunctorBetweenCat X Y}
+    (αf : f₁ ≅ f₂)
+    (G : CoprodCovarRepCat (Over Y)) :
+    polyCompGObj f₁ G ⟶ polyCompGObj f₂ G :=
+  ccrHomMk
+    (fun ⟨ig, pf⟩ =>
+      ⟨ig, fun e =>
+        ccrReindex (αf.hom
+          ((ccrFamily G ig).hom e))
+          (pf e)⟩)
+    (fun ⟨ig, pf⟩ =>
+      Over.homMk
+        (fun ⟨e, ef⟩ =>
+          ⟨e, (ccrFiberMor (αf.hom
+            ((ccrFamily G ig).hom e))
+            (pf e)).left ef⟩)
+        (by
+          funext ⟨e, ef⟩
+          exact congrFun (Over.w
+            (ccrFiberMor (αf.hom
+              ((ccrFamily G ig).hom e))
+              (pf e))) ef))
+
+/--
+Backward morphism for `polyCompGObj` functoriality
+in the inner polynomial `f`: at each fiber point,
+apply `αf.inv` to reindex and transport.
+-/
+private def polyCompGObj_isoInv
+    {f₁ f₂ : PolyFunctorBetweenCat X Y}
+    (αf : f₁ ≅ f₂)
+    (G : CoprodCovarRepCat (Over Y)) :
+    polyCompGObj f₂ G ⟶ polyCompGObj f₁ G :=
+  ccrHomMk
+    (fun ⟨ig, pf⟩ =>
+      ⟨ig, fun e =>
+        ccrReindex (αf.inv
+          ((ccrFamily G ig).hom e))
+          (pf e)⟩)
+    (fun ⟨ig, pf⟩ =>
+      Over.homMk
+        (fun ⟨e, ef⟩ =>
+          ⟨e, (ccrFiberMor (αf.inv
+            ((ccrFamily G ig).hom e))
+            (pf e)).left ef⟩)
+        (by
+          funext ⟨e, ef⟩
+          exact congrFun (Over.w
+            (ccrFiberMor (αf.inv
+              ((ccrFamily G ig).hom e))
+              (pf e))) ef))
+
+/--
+Reindex roundtrip: applying `αf.hom` then `αf.inv`
+at the same fiber point recovers the original index.
+-/
+private lemma ccrReindex_hom_inv_cancel
+    {f₁ f₂ : PolyFunctorBetweenCat X Y}
+    (αf : f₁ ≅ f₂) (y : Y)
+    (i : ccrIndex (f₁ y)) :
+    ccrReindex (αf.inv y)
+      (ccrReindex (αf.hom y) i) = i := by
+  have h : αf.hom y ≫ αf.inv y = 𝟙 (f₁ y) :=
+    congrFun αf.hom_inv_id y
+  have := congrFun (show ccrReindex (αf.hom y ≫
+      αf.inv y) = ccrReindex (𝟙 (f₁ y))
+    from congrArg ccrReindex h) i
+  rwa [ccrComp_reindex, ccrId_reindex] at this
+
+/--
+Reindex roundtrip: applying `αf.inv` then `αf.hom`
+at the same fiber point recovers the original index.
+-/
+private lemma ccrReindex_inv_hom_cancel
+    {f₁ f₂ : PolyFunctorBetweenCat X Y}
+    (αf : f₁ ≅ f₂) (y : Y)
+    (i : ccrIndex (f₂ y)) :
+    ccrReindex (αf.hom y)
+      (ccrReindex (αf.inv y) i) = i := by
+  have h : αf.inv y ≫ αf.hom y = 𝟙 (f₂ y) :=
+    congrFun αf.inv_hom_id y
+  have := congrFun (show ccrReindex (αf.inv y ≫
+      αf.hom y) = ccrReindex (𝟙 (f₂ y))
+    from congrArg ccrReindex h) i
+  rwa [ccrComp_reindex, ccrId_reindex] at this
+
+/--
+The forward-then-backward roundtrip is the identity.
+-/
+private lemma polyCompGObj_iso_hom_inv
+    {f₁ f₂ : PolyFunctorBetweenCat X Y}
+    (αf : f₁ ≅ f₂)
+    (G : CoprodCovarRepCat (Over Y)) :
+    polyCompGObj_isoHom αf G ≫
+      polyCompGObj_isoInv αf G =
+    𝟙 (polyCompGObj f₁ G) := by
+  ext
+  · -- base: roundtrip of reindex is identity
+    rename_i a
+    obtain ⟨ig, pf⟩ := a
+    dsimp [polyCompGObj_isoHom,
+      polyCompGObj_isoInv,
+      ccrHomMk,
+      GrothendieckContra'.comp,
+      GrothendieckContra'.id]
+    exact Sigma.ext rfl (heq_of_eq
+      (funext fun e =>
+        ccrReindex_hom_inv_cancel αf _ _))
+  · -- fiber: roundtrip of fiber morphisms
+    rw [GrothendieckContra'.cat_comp_fiber,
+      GrothendieckContra'.cat_id_fiber]
+    simp only [polyCompGObj_isoHom, polyCompGObj_isoInv, ccrHomMk,
+      ccrFiberMor, ccrReindex,
+      Category.assoc, eqToHom_refl, Category.comp_id]
+    exact ?hom_inv_fiber_goal
+
+/--
+The backward-then-forward roundtrip is the identity.
+-/
+private lemma polyCompGObj_iso_inv_hom
+    {f₁ f₂ : PolyFunctorBetweenCat X Y}
+    (αf : f₁ ≅ f₂)
+    (G : CoprodCovarRepCat (Over Y)) :
+    polyCompGObj_isoInv αf G ≫
+      polyCompGObj_isoHom αf G =
+    𝟙 (polyCompGObj f₂ G) := by
+  ext
+  · -- base: roundtrip of reindex is identity
+    rename_i a
+    obtain ⟨ig, pf⟩ := a
+    dsimp [polyCompGObj_isoHom,
+      polyCompGObj_isoInv,
+      ccrHomMk,
+      GrothendieckContra'.comp,
+      GrothendieckContra'.id]
+    exact Sigma.ext rfl (heq_of_eq
+      (funext fun e =>
+        ccrReindex_inv_hom_cancel αf _ _))
+  · -- fiber: roundtrip of fiber morphisms
+    rw [GrothendieckContra'.cat_comp_fiber,
+      GrothendieckContra'.cat_id_fiber]
+    simp only [polyCompGObj_isoHom, polyCompGObj_isoInv, ccrHomMk,
+      ccrFiberMor, ccrReindex,
+      Category.assoc, eqToHom_refl, Category.comp_id]
+    exact ?inv_hom_fiber_goal
+
+private lemma polyBetweenComp_nonempty_iso
+    {f₁ f₂ : PolyFunctorBetweenCat X Y}
+    {g₁ g₂ : PolyFunctorBetweenCat Y Z}
+    (αf : f₁ ≅ f₂) (αg : g₁ ≅ g₂) :
+    Nonempty (polyBetweenComp g₁ f₁ ≅
+      polyBetweenComp g₂ f₂) := by
+  -- polyBetweenComp g f z = polyCompGObj f (g z)
+  -- Factor: vary f with g₁ fixed, then vary g
+  -- with f₂ fixed.
+  have hg : ∀ z, polyCompGObj f₂ (g₁ z) ≅
+      polyCompGObj f₂ (g₂ z) :=
+    fun z =>
+      (polyCompGFunctor f₂).mapIso
+        ⟨αg.hom z, αg.inv z,
+         congrFun αg.hom_inv_id z,
+         congrFun αg.inv_hom_id z⟩
+  have hf_iso : ∀ G, polyCompGObj f₁ G ≅
+      polyCompGObj f₂ G :=
+    fun G =>
+      ⟨polyCompGObj_isoHom αf G,
+       polyCompGObj_isoInv αf G,
+       polyCompGObj_iso_hom_inv αf G,
+       polyCompGObj_iso_inv_hom αf G⟩
+  exact ⟨⟨fun z => ((hf_iso (g₁ z)).trans
+      (hg z)).hom,
+    fun z => ((hf_iso (g₁ z)).trans
+      (hg z)).inv,
+    funext fun z => ((hf_iso (g₁ z)).trans
+      (hg z)).hom_inv_id,
+    funext fun z => ((hf_iso (g₁ z)).trans
+      (hg z)).inv_hom_id⟩⟩
+
+/-! #### Quotient-level operations -/
+
+/--
+Morphisms in the horizontal category: isomorphism
+classes of polynomial functors `Over X → Over Y`.
+-/
+abbrev PolyHorizontalHom (X Y : Type u) :=
+  Skeleton
+    (↑(PolyFunctorBetweenCat X Y))
+
+def polyHorizId (X : Type u) :
+    PolyHorizontalHom X X :=
+  toSkeleton
+    (↑(PolyFunctorBetweenCat X X))
+    (polyBetweenId X)
+
+def polyHorizComp :
+    PolyHorizontalHom X Y →
+    PolyHorizontalHom Y Z →
+    PolyHorizontalHom X Z :=
+  Skeleton.lift₂
+    (fun f g =>
+      toSkeleton _ (polyBetweenComp g f))
+    (fun _ _ _ _ ⟨αf⟩ ⟨αg⟩ =>
+      toSkeleton_eq_iff.mpr
+        (polyBetweenComp_nonempty_iso αf αg))
+
+theorem polyHorizComp_id_left
+    (f : PolyHorizontalHom X Y) :
+    polyHorizComp (polyHorizId X) f = f := by
+  induction f using Quotient.inductionOn with
+  | h f' =>
+    exact toSkeleton_eq_iff.mpr
+      ⟨polyBetweenComp_id_right_iso f'⟩
+
+theorem polyHorizComp_id_right
+    (g : PolyHorizontalHom X Y) :
+    polyHorizComp g (polyHorizId Y) = g := by
+  induction g using Quotient.inductionOn with
+  | h g' =>
+    exact toSkeleton_eq_iff.mpr
+      ⟨polyBetweenComp_id_left_iso g'⟩
+
+theorem polyHorizComp_assoc
+    (f : PolyHorizontalHom X Y)
+    (g : PolyHorizontalHom Y Z)
+    (h : PolyHorizontalHom Z W) :
+    polyHorizComp (polyHorizComp f g) h =
+      polyHorizComp f (polyHorizComp g h) := by
+  induction f using Quotient.inductionOn with
+  | h f' =>
+  induction g using Quotient.inductionOn with
+  | h g' =>
+  induction h using Quotient.inductionOn with
+  | h h' =>
+    exact toSkeleton_eq_iff.mpr
+      ⟨(polyBetweenComp_assoc_iso h' g' f').symm⟩
+
+/-! #### Category instance -/
+
+@[ext]
+structure PolyHorizontalCat where
+  obj : Type u
+
+instance : Category.{max u (u + 1)}
+    PolyHorizontalCat.{u} where
+  Hom X Y := PolyHorizontalHom X.obj Y.obj
+  id X := polyHorizId X.obj
+  comp f g := polyHorizComp f g
+  id_comp := polyHorizComp_id_left
+  comp_id := polyHorizComp_id_right
+  assoc := polyHorizComp_assoc
+
+end PolyHorizontalCategory
 
 /-! ## W-Type Diagrams
 

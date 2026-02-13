@@ -145,9 +145,86 @@ category (which is also a framed bicategory) of slice polynomial functors.
 - `GebLean.Utilities.Grothendieck` - Connected Grothendieck construction
 - `GebLean.Utilities.TwistedArrow` - Twisted arrow categories
 
-## Current Status (2025-12-22)
+## Current Status (2026-02-12)
 
-### Cleanup Complete - Ready for Grothendieck Refactoring
+### Polynomial Composition Category
+
+Working on filling holes in `GebLean/Polynomial.lean` for the
+polynomial composition category (`polyCompGFunctor` and
+`PolyHorizontalCat`).
+
+#### Completed
+
+- Cleaned up proof chain: removed `_rec_at_rhs`,
+  `_rec_at_lhs_fst`, `_rec_at_lhs`, `_rec_at`,
+  `pi_transport`, `grothendieckContra'_rec_fiber`,
+  `polyCompGMap_comp_fiber`, `polyCompGMap_comp_rec_eq`,
+  `polyCompGMap_comp_fiber_heq`
+- Added `GrothendieckContra'.ext_of_heq` (lines ~2115):
+  structure ext using HEq instead of eqToHom
+- `polyCompGMap_comp` (line ~2191) uses `ext_of_heq` with
+  base = `polyCompGMap_comp_base` and fiber = `_` (HEq hole)
+- `polyBetweenComp_nonempty_iso` (line ~2232): forward/inverse
+  morphisms `hf_hom`/`hf_inv` compile; iso laws are `_` holes
+
+#### Remaining Holes (3 total)
+
+1. **`polyCompGMap_comp` fiber HEq** (line ~2203):
+
+   ```lean
+   (polyCompGMap f (φ ≫ ψ)).fiber ≍
+     (polyCompGMap f φ ≫ polyCompGMap f ψ).fiber
+   ```
+
+   After `dsimp [polyCompGMap]`, the LHS is an explicit
+   function using `ccrFiberMor (φ ≫ ψ)`. The RHS has
+   `(ccrHomMk ≫ ccrHomMk).fiber` which is the
+   GrothendieckContra' composition. The two live in
+   different types (dependent on different base `.snd`).
+
+2. **`hf_hom_inv`** (line ~2293): `hf_hom G ≫ hf_inv G = 𝟙`
+3. **`hf_inv_hom`** (line ~2295): `hf_inv G ≫ hf_hom G = 𝟙`
+
+All three reduce to the same pattern: HEq or Eq of
+`GrothendieckContra'.Hom` fiber functions where base `.fst`
+agrees definitionally but base `.snd` differs.
+
+#### Obstacle
+
+The fiber type of `GrothendieckContra'.Hom` depends on the
+WHOLE base function, not just `.fst`. Since base `.snd`
+differs propositionally (not definitionally), the fiber
+types genuinely differ. Approaches that fail include:
+
+- `rfl`: not definitionally equal (base `.snd` differs)
+- `heq_of_eq`: types not definitionally equal
+- `cast_cast + cast_heq`: HEq chains don't terminate
+  because the `eqToHom`/`≫` in the fiber category doesn't
+  decompose at the sigma element level
+- `set + clear_value + subst` on `.base`: only replaces
+  the variable, not the `.fiber` field of the same structure
+- `Functor.eqToHom_proj`: applies to Pi-category eqToHom
+  but the fiber category involves `Cat.opFunctor'` which
+  wraps it differently
+
+#### Path Forward
+
+Write a dedicated lemma in `Families.lean` (near
+`CoprodCovarRepCat` definitions) that states: for `ccrHomMk`
+morphisms in `CoprodCovarRepCat (Over X)`, if the base
+`.fst` (index reindexing) agrees definitionally and the
+fiber `Over.homMk` `.left` functions produce pointwise equal
+sigma elements (with `.fst` equal by `ccrComp_fiberMor_left`
+and `.snd` equal by `cast_cast` + proof irrelevance), then
+the morphisms are equal.
+
+This is the "instantiation by substitution" approach: factor
+the general principle about `CoprodCovarRepCat` morphism
+equality, then instantiate for each of the 3 holes.
+
+### Previous Status (2025-12-22)
+
+#### Cleanup Complete - Ready for Grothendieck Refactoring
 
 All incomplete code containing low-level transport proofs has been removed from
 `GebLean/PolyAlg.lean`. The following definitions were removed:
