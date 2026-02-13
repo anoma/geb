@@ -2701,6 +2701,26 @@ private lemma polyCompGObj_iso_hom_inv_base
     (funext fun e => ccrReindex_hom_inv_cancel αf _ _))
 
 /--
+Transported fiber equality for the forward-then-backward roundtrip:
+transporting the composed fiber along the base equality gives
+the identity fiber.
+-/
+private lemma polyCompGObj_iso_hom_inv_fiber_cond
+    {f₁ f₂ : PolyFunctorBetweenCat X Y}
+    (αf : f₁ ≅ f₂)
+    (G : CoprodCovarRepCat (Over Y)) :
+    (polyCompGObj_isoHom αf G ≫
+      polyCompGObj_isoInv αf G).fiber ≫
+    eqToHom (congrArg
+      (fun b => ((familyFunctor (Over X) ⋙
+        Cat.opFunctor').map b).toFunctor.obj
+          (polyCompGObj f₁ G).fiber)
+      (polyCompGObj_iso_hom_inv_base αf G)) =
+    (GrothendieckContra'.id
+      (polyCompGObj f₁ G)).fiber := by
+  _
+
+/--
 Fiber component of the forward-then-backward roundtrip:
 the composed fiber NatTrans is HEq to the identity fiber NatTrans.
 -/
@@ -2712,10 +2732,12 @@ private lemma polyCompGObj_iso_hom_inv_fiber
            polyCompGObj_isoInv αf G).fiber
          (GrothendieckContra'.id
            (polyCompGObj f₁ G)).fiber := by
-  apply GrothendieckContra'.ext_fiber_heq
-    (polyCompGObj_iso_hom_inv_base αf G)
-  funext ⟨ig, pf⟩
-  _
+  have h := polyCompGObj_iso_hom_inv_fiber_cond αf G
+  -- h : (hom ≫ inv).fiber ≫ eqToHom _ = (𝟙 x).fiber
+  -- This is exactly the fiber condition for ext.
+  -- We can derive HEq from it via heq_iff_comp_eqToHom:
+  rw [heq_iff_comp_eqToHom]
+  convert h using 1
 
 /--
 Base component of the backward-then-forward roundtrip:
@@ -2735,6 +2757,26 @@ private lemma polyCompGObj_iso_inv_hom_base
     (funext fun e => ccrReindex_inv_hom_cancel αf _ _))
 
 /--
+Transported fiber equality for the backward-then-forward roundtrip:
+transporting the composed fiber along the base equality gives
+the identity fiber.
+-/
+private lemma polyCompGObj_iso_inv_hom_fiber_cond
+    {f₁ f₂ : PolyFunctorBetweenCat X Y}
+    (αf : f₁ ≅ f₂)
+    (G : CoprodCovarRepCat (Over Y)) :
+    (polyCompGObj_isoInv αf G ≫
+      polyCompGObj_isoHom αf G).fiber ≫
+    eqToHom (congrArg
+      (fun b => ((familyFunctor (Over X) ⋙
+        Cat.opFunctor').map b).toFunctor.obj
+          (polyCompGObj f₂ G).fiber)
+      (polyCompGObj_iso_inv_hom_base αf G)) =
+    (GrothendieckContra'.id
+      (polyCompGObj f₂ G)).fiber := by
+  _
+
+/--
 Fiber component of the backward-then-forward roundtrip:
 the composed fiber NatTrans is HEq to the identity fiber NatTrans.
 -/
@@ -2746,7 +2788,9 @@ private lemma polyCompGObj_iso_inv_hom_fiber
            polyCompGObj_isoHom αf G).fiber
          (GrothendieckContra'.id
            (polyCompGObj f₂ G)).fiber := by
-  _
+  have h := polyCompGObj_iso_inv_hom_fiber_cond αf G
+  rw [heq_iff_comp_eqToHom]
+  convert h using 1
 
 /--
 The forward-then-backward roundtrip is the identity.
