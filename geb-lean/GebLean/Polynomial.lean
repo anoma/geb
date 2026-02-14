@@ -5290,4 +5290,196 @@ def wTypePolyBetweenEquiv : WTypeDiagramCat X Y ≌ PolyFunctorBetweenCat X Y wh
 
 end WTypePolyBetweenEquiv
 
+/-! ## Polynomial Double Category
+
+The bicategory of polynomial functors extends to a double category
+(a framed bicategory) with:
+
+- Objects: types
+- Vertical morphisms: functions
+- Horizontal morphisms: polynomial functors
+- 2-cells: natural transformations from pushouts
+
+See `SlicePolyCat.idr` (`SPFpoDoubleCat`) for the Idris reference.
+-/
+
+/-! ### Pushout of Polynomial Functors
+
+Given functions `bcl : X → X'` and `bcr : Y → Y'`, the pushout
+`polyPushout bcl bcr f` pushes a polynomial `f : Over X → Over Y`
+forward to `Over X' → Over Y'` by:
+
+- Pushing positions forward along `bcr` (fiber of the codomain map)
+- Post-composing fiber maps with `bcl`
+-/
+
+section PolyPushout
+
+variable {X X' Y Y' : Type u}
+
+/--
+The index type of the pushout at `y' : Y'`.
+
+Positions of `polyPushout bcl bcr f` at `y'` are pairs of a preimage
+`y` of `y'` under `bcr` together with a position of `f` at `y`.
+-/
+def polyPushoutIndex (bcr : Y → Y')
+    (f : PolyFunctorBetweenCat X Y) (y' : Y') : Type u :=
+  Σ (p : { y : Y // bcr y = y' }), ccrIndex (f p.val)
+
+/--
+The family of the pushout at a given position.
+
+At position `⟨⟨y, _⟩, i⟩`, the `Over X'` object has the same
+underlying type as `ccrFamily (f y) i` but with structure map
+post-composed with `bcl`.
+-/
+def polyPushoutFamily (bcl : X → X')
+    (bcr : Y → Y') (f : PolyFunctorBetweenCat X Y) (y' : Y')
+    (p : polyPushoutIndex bcr f y') : Over X' :=
+  Over.mk (fun e => bcl ((ccrFamily (f p.1.val) p.2).hom e))
+
+/--
+Pushout of a polynomial functor along domain and codomain functions.
+
+`polyPushout bcl bcr f` is the polynomial `Over X' → Over Y'` obtained
+by pushing `f : Over X → Over Y` forward along `bcl : X → X'` and
+`bcr : Y → Y'`.
+-/
+def polyPushout (bcl : X → X') (bcr : Y → Y')
+    (f : PolyFunctorBetweenCat X Y) :
+    PolyFunctorBetweenCat X' Y' :=
+  fun y' => ccrObjMk (polyPushoutFamily bcl bcr f y')
+
+lemma polyPushout_index (bcl : X → X') (bcr : Y → Y')
+    (f : PolyFunctorBetweenCat X Y) (y' : Y') :
+    ccrIndex (polyPushout bcl bcr f y') =
+      polyPushoutIndex bcr f y' := rfl
+
+lemma polyPushout_family (bcl : X → X') (bcr : Y → Y')
+    (f : PolyFunctorBetweenCat X Y) (y' : Y')
+    (p : polyPushoutIndex bcr f y') :
+    ccrFamily (polyPushout bcl bcr f y') p =
+      polyPushoutFamily bcl bcr f y' p := rfl
+
+end PolyPushout
+
+/-! ### 2-Cells via Pushout
+
+A 2-cell in the polynomial double category is a morphism
+(natural transformation) from the pushout of the domain polynomial
+to the codomain polynomial, both viewed in `PolyFunctorBetweenCat X' Y'`.
+-/
+
+section PolyCells
+
+variable {X X' Y Y' : Type u}
+
+/--
+A 2-cell (square) in the polynomial double category.
+
+Given vertical morphisms `bcl : X → X'` and `bcr : Y → Y'` and
+horizontal morphisms `f : PolyFunctorBetweenCat X Y` and
+`g : PolyFunctorBetweenCat X' Y'`, a `PolyCell` is a morphism
+from `polyPushout bcl bcr f` to `g` in `PolyFunctorBetweenCat X' Y'`.
+
+```
+  X ───f───▶ Y
+  │          │
+  bcl        bcr
+  ▼          ▼
+  X' ──g──▶ Y'
+```
+-/
+abbrev PolyCell (bcl : X → X') (bcr : Y → Y')
+    (f : PolyFunctorBetweenCat X Y)
+    (g : PolyFunctorBetweenCat X' Y') :=
+  polyPushout bcl bcr f ⟶ g
+
+/-! #### Vertical identity 2-cell
+
+When both vertical morphisms are `id`, the pushout
+`polyPushout id id f` has positions `Σ (p : { y // y = y' }), I_y`
+and the same families (since `id ∘ hom = hom`). The identity 2-cell
+maps this to `f` by extracting the preimage witness.
+-/
+
+/--
+The on-positions map of the vertical identity 2-cell at `y`.
+
+Maps `⟨⟨y₀, hy₀⟩, i⟩ : polyPushoutIndex id f y` to an index of
+`f y` by transporting `i` along `hy₀ : id y₀ = y`.
+-/
+def polyCellVIdBase
+    (f : PolyFunctorBetweenCat X X) (y : X)
+    (p : polyPushoutIndex id f y) : ccrIndex (f y) :=
+  p.1.prop ▸ p.2
+
+/--
+The on-directions map of the vertical identity 2-cell at `y`.
+-/
+def polyCellVIdFiber
+    (f : PolyFunctorBetweenCat X X) (y : X)
+    (p : polyPushoutIndex id f y) :
+    ccrFamily (f y) (polyCellVIdBase f y p) ⟶
+      polyPushoutFamily id id f y p := by
+  obtain ⟨⟨y₀, rfl⟩, i⟩ := p
+  exact 𝟙 _
+
+/--
+The vertical identity 2-cell: `PolyCell id id f f`.
+
+When both vertical morphisms are identity functions, there is a
+canonical 2-cell from `polyPushout id id f` to `f`.
+-/
+def polyCellVId
+    (f : PolyFunctorBetweenCat X X) :
+    PolyCell id id f f := fun y =>
+  ccrHomMk (polyCellVIdBase f y) (polyCellVIdFiber f y)
+
+/-! #### Horizontal identity 2-cell
+
+When both horizontal morphisms are `polyBetweenId`, a 2-cell with
+vertical morphism `bcw : X → X'` maps
+`polyPushout bcw bcw (polyBetweenId X)` to `polyBetweenId X'`.
+The pushout at `x' : X'` has positions
+`Σ (p : { x // bcw x = x' }), PUnit` and the identity has
+positions `PUnit`, so the on-positions map discards the preimage.
+-/
+
+/--
+The on-positions map of the horizontal identity 2-cell.
+-/
+def polyCellHIdBase
+    (bcw : X → X') (x' : X')
+    (_p : polyPushoutIndex bcw (polyBetweenId X) x') :
+    ccrIndex (polyBetweenId X' x') :=
+  PUnit.unit
+
+/--
+The on-directions map of the horizontal identity 2-cell.
+-/
+def polyCellHIdFiber
+    (bcw : X → X') (x' : X')
+    (p : polyPushoutIndex bcw (polyBetweenId X) x') :
+    ccrFamily (polyBetweenId X' x') (polyCellHIdBase bcw x' p) ⟶
+      polyPushoutFamily bcw bcw (polyBetweenId X) x' p := by
+  obtain ⟨⟨x, rfl⟩, ⟨⟩⟩ := p
+  exact 𝟙 _
+
+/--
+The horizontal identity 2-cell: `PolyCell bcw bcw (polyBetweenId X) (polyBetweenId X')`.
+
+For a vertical morphism `bcw : X → X'`, this fills the square
+whose horizontal edges are identity polynomials.
+-/
+def polyCellHId
+    (bcw : X → X') :
+    PolyCell bcw bcw (polyBetweenId X)
+      (polyBetweenId X') := fun x' =>
+  ccrHomMk (polyCellHIdBase bcw x')
+    (polyCellHIdFiber bcw x')
+
+end PolyCells
+
 end GebLean
