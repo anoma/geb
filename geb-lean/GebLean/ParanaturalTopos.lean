@@ -2884,6 +2884,142 @@ structure ParametricFamily (T : TypeExpr) where
     ∀ (I₀ I₁ : Type) (f : I₀ → I₁),
     T.relInterp f (app I₀) (app I₁)
 
+/-- The relational interpretation of a type
+expression relates the covariant and contravariant
+projections of off-diagonal elements, and implies
+the profunctor wedge condition. Both properties
+are proved simultaneously by induction.
+
+`relInterp_of_offDiag`: for `c : T.interp I₁ I₀`,
+the pair `(T.profMap f id c, T.profMap id f c)` is
+related by `T.relInterp f`. This is the analogue
+of `diagCompat_of_offDiag` for `TypeExpr`.
+
+`relInterp_implies_wedge`: if `T.relInterp f`
+relates `x₀` and `x₁`, then
+`T.profMap id f x₀ = T.profMap f id x₁`.
+The converse holds for type expressions without
+nested arrows (leaves and single-level arrows),
+but fails for nested arrows such as
+`((X → X) → X) → X` -- this is the
+parametricity/paranaturality gap. -/
+private theorem TypeExpr.relInterp_wedge_aux
+    (T : TypeExpr) :
+    (∀ {I₀ I₁ : Type} (f : I₀ → I₁)
+      (c : T.interp I₁ I₀),
+      T.relInterp f (T.profMap f id c)
+        (T.profMap id f c)) ∧
+    (∀ {I₀ I₁ : Type} (f : I₀ → I₁)
+      (x₀ : T.interp I₀ I₀)
+      (x₁ : T.interp I₁ I₁),
+      T.relInterp f x₀ x₁ →
+      T.profMap id f x₀ =
+        T.profMap f id x₁) := by
+  induction T with
+  | var =>
+    exact ⟨fun _ _ => rfl, fun _ _ _ h => h⟩
+  | app F T ih =>
+    obtain ⟨ih_od, ih_w⟩ := ih
+    constructor
+    · intro I₀ I₁ f c
+      change functorRelLift F (T.relInterp f)
+        (F.map (T.profMap f id) c)
+        (F.map (T.profMap id f) c)
+      let lift : T.interp I₁ I₀ →
+          { p : T.interp I₀ I₀ ×
+            T.interp I₁ I₁ //
+            T.relInterp f p.1 p.2 } :=
+        fun x => ⟨⟨T.profMap f id x,
+          T.profMap id f x⟩, ih_od f x⟩
+      exact ⟨F.map lift c,
+        (FunctorToTypes.map_comp_apply F
+          lift (fun s => s.val.1) c).symm,
+        (FunctorToTypes.map_comp_apply F
+          lift (fun s => s.val.2) c).symm⟩
+    · intro I₀ I₁ f x₀ x₁ hrel
+      change F.map (T.profMap id f) x₀ =
+        F.map (T.profMap f id) x₁
+      obtain ⟨w, hw₁, hw₂⟩ := hrel
+      have heq :
+          (fun (s : { p : T.interp I₀ I₀ ×
+            T.interp I₁ I₁ //
+            T.relInterp f p.1 p.2 }) =>
+            T.profMap id f s.val.1) =
+          (fun s =>
+            T.profMap f id s.val.2) := by
+        funext ⟨⟨a₀, a₁⟩, hr⟩
+        exact ih_w f a₀ a₁ hr
+      have lhs :
+          F.map (T.profMap id f) x₀ =
+          F.map
+            (fun s => T.profMap id f s.val.1)
+            w := by
+        rw [← hw₁]
+        exact (FunctorToTypes.map_comp_apply F
+          (fun s => s.val.1)
+          (T.profMap id f) w).symm
+      have rhs :
+          F.map
+            (fun s => T.profMap f id s.val.2)
+            w =
+          F.map (T.profMap f id) x₁ := by
+        rw [← hw₂]
+        exact FunctorToTypes.map_comp_apply F
+          (fun s => s.val.2)
+          (T.profMap f id) w
+      rw [lhs, heq, rhs]
+  | arrow T₁ T₂ ih₁ ih₂ =>
+    obtain ⟨ih₁_od, ih₁_w⟩ := ih₁
+    obtain ⟨ih₂_od, ih₂_w⟩ := ih₂
+    constructor
+    · intro I₀ I₁ f c a₀ a₁ hrel₁
+      change T₂.relInterp f
+        (T₂.profMap f id
+          (c (T₁.profMap id f a₀)))
+        (T₂.profMap id f
+          (c (T₁.profMap f id a₁)))
+      rw [ih₁_w f a₀ a₁ hrel₁]
+      exact ih₂_od f (c (T₁.profMap f id a₁))
+    · intro I₀ I₁ f x₀ x₁ hrel
+      funext c
+      exact ih₂_w f _ _
+        (hrel _ _ (ih₁_od f c))
+
+/-- Off-diagonal elements produce related pairs:
+`(T.profMap f id c, T.profMap id f c)` is related
+by `T.relInterp f`. -/
+theorem TypeExpr.relInterp_of_offDiag
+    (T : TypeExpr) {I₀ I₁ : Type}
+    (f : I₀ → I₁) (c : T.interp I₁ I₀) :
+    T.relInterp f (T.profMap f id c)
+      (T.profMap id f c) :=
+  T.relInterp_wedge_aux.1 f c
+
+/-- The relational interpretation implies the
+profunctor wedge condition. -/
+theorem TypeExpr.relInterp_implies_wedge
+    (T : TypeExpr) {I₀ I₁ : Type}
+    (f : I₀ → I₁)
+    (x₀ : T.interp I₀ I₀)
+    (x₁ : T.interp I₁ I₁)
+    (hrel : T.relInterp f x₀ x₁) :
+    T.profMap id f x₀ =
+      T.profMap f id x₁ :=
+  T.relInterp_wedge_aux.2 f x₀ x₁ hrel
+
+/-- Every parametric family satisfies the
+profunctor wedge condition: for each
+`f : I₀ → I₁`,
+`T.profMap id f (p.app I₀) =
+T.profMap f id (p.app I₁)`. -/
+theorem ParametricFamily.wedge
+    {T : TypeExpr} (p : ParametricFamily T)
+    {I₀ I₁ : Type} (f : I₀ → I₁) :
+    T.profMap id f (p.app I₀) =
+      T.profMap f id (p.app I₁) :=
+  T.relInterp_implies_wedge f
+    (p.app I₀) (p.app I₁) (p.parametric I₀ I₁ f)
+
 theorem idProf_diagCompat_eq
     {I₀ I₁ : Type} (f : I₀ → I₁)
     (x₀ : I₀) (x₁ : I₁) :

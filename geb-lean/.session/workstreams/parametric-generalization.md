@@ -81,25 +81,46 @@ alongside paranatural transformations.
 
 ## Workstream items
 
-### W1. ParametricFamily as an end
+### W1. ParametricFamily and the profunctor end
 
-Show that `ParametricFamily T` is an end of the profunctor
-`T.interp : Typeᵒᵖ × Type → Type` (or more precisely, the
-end of the functor that sends `I` to `T.interp I I`, with
-the morphism condition being the wedge condition).
+#### W1a. Relationship between relInterp and wedge (done)
 
-This involves:
+Proved two mutually dependent results by induction on
+`TypeExpr` (`relInterp_wedge_aux`):
 
-- Defining `T.interp` as a profunctor (functor
-  `Typeᵒᵖ × Type → Type`) and verifying its functoriality
-  from `TypeExpr.relInterp`.
-- Showing that `ParametricFamily T` is the set of wedge
-  elements for this profunctor, i.e., that the
-  parametricity condition `T.relInterp f` is the wedge
-  condition for the end.
-- Relating this to the existing `StructuralEnd`
-  construction (which is the end for paranatural
-  transformations).
+- `TypeExpr.relInterp_of_offDiag`: For
+  `c : T.interp I₁ I₀`, the pair
+  `(T.profMap f id c, T.profMap id f c)` satisfies
+  `T.relInterp f`. Analogue of `diagCompat_of_offDiag`.
+- `TypeExpr.relInterp_implies_wedge`: If
+  `T.relInterp f x₀ x₁`, then
+  `T.profMap id f x₀ = T.profMap f id x₁`.
+- `ParametricFamily.wedge`: Every parametric family
+  satisfies the profunctor wedge condition.
+
+The converse of `relInterp_implies_wedge` does NOT hold
+in general: for nested arrows like `((X → X) → X) → X`,
+`relInterp` tests all commuting pairs `(h, k)` while the
+wedge tests only pairs `(T₁.profMap f id c,
+T₁.profMap id f c)` arising from off-diagonal elements.
+This is the parametricity/paranaturality gap:
+
+- `relInterp` = parametricity (stronger)
+- wedge = paranaturality (weaker)
+
+So `ParametricFamily T` is NOT the end of `T.toProfunctor`.
+Every parametric family is a wedge element (end element),
+but not every wedge element is parametric.
+
+#### W1b. Characterize when the converse holds
+
+The converse holds when all related pairs `(a₀, a₁)` in
+the domain arise as projections of off-diagonal elements.
+This is the case for leaves and single-level arrows
+(algebra profunctor, hom profunctor) but fails for nested
+arrows. Formalizing this characterization would give a
+structural criterion on `TypeExpr` for when
+parametricity = paranaturality.
 
 ### W2. Generalized ParametricExpr via YonedaRel
 

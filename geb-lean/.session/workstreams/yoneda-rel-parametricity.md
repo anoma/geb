@@ -37,6 +37,15 @@ mathematical analysis.
   (`ℕ ≃ ParametricFamily dinaturalTypeExpr`)
 - [x] Refactored `divEndoRel`, `divArgRel`, `divFullRel` as
   `TypeExpr.relInterp` of named sub-type-expressions
+- [x] Generalized `TypeExpr` from `{leaf, arrow}` to
+  `{var, app F T, arrow}` supporting functor application
+  on arbitrary subexpressions (e.g., `F(X → X)`)
+- [x] `functorRelLift` (canonical relation lifting for
+  functors) and `functorRelLift_graphRel`
+- [x] `relInterp_of_offDiag`, `relInterp_implies_wedge`,
+  `ParametricFamily.wedge`: parametricity implies the
+  profunctor wedge condition (but not conversely for
+  nested arrows -- the wedge is paranaturality)
 
 ## Continuation
 
