@@ -25,6 +25,25 @@ mathematical analysis.
 - [x] Formal separation of paranaturality and parametricity
   for the divergence type (`ParanaturalTopos.lean`,
   `ParametricityDivergence` section)
+- [x] `TypeExpr` inductive type for type expressions over
+  `Type` with `relInterp` (relational interpretation)
+- [x] `ParametricFamily T` structure bundling a polymorphic
+  family with its parametricity proof
+- [x] Bridge equivalences: `algebraParametricEquivParanat`,
+  `dinaturalParametricEquivParanat`
+- [x] Chained equivalences: `initialAlgebraParametricEquiv`
+  (`μF.a ≃ ParametricFamily (algebraTypeExpr F)`),
+  `dinaturalNumbersParametricEquiv`
+  (`ℕ ≃ ParametricFamily dinaturalTypeExpr`)
+- [x] Refactored `divEndoRel`, `divArgRel`, `divFullRel` as
+  `TypeExpr.relInterp` of named sub-type-expressions
+
+## Continuation
+
+The generalization of `TypeExpr`/`ParametricFamily` from
+`Type` to arbitrary categories, and the embedding of
+parametric transformations into the twisted-arrow topos,
+are tracked in `parametric-generalization.md`.
 
 ## Implementation plan
 
