@@ -42,6 +42,7 @@ import GebLean.Utilities.Grothendieck
 import GebLean.Utilities.Opposites
 import GebLean.Utilities.Sigma
 import GebLean.Utilities.TwistedArrow
+import GebLean.WedgeWeightComputation
 import GebLean.Weighted
 import GebLean.WeightedAlg
 import GebLean.YonedaRelDouble
