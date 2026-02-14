@@ -2724,6 +2724,78 @@ private lemma polyComp_fiberMor_roundtrip_inv
   rw [eq_of_heq_eqToHom heq, Category.comp_id]
 
 /--
+The composition of the two fiber `Over.homMk` morphisms
+from `polyCompGObj_isoInv` and `polyCompGObj_isoHom`
+equals `eqToHom` (no leading transport).
+-/
+private lemma polyComp_homMk_inv_hom
+    {f₁ f₂ : PolyFunctorBetweenCat X Y}
+    (αf : f₁ ≅ f₂)
+    (G : CoprodCovarRepCat (Over Y))
+    (ig : ccrIndex G)
+    (pf : (e : (ccrFamily G ig).left) →
+      ccrIndex
+        (f₁ ((ccrFamily G ig).hom e))) :
+    ∀ (h : _ = _),
+    (polyCompGObj_isoInv αf G).fiber
+      ((polyCompGObj_isoHom αf G).base
+        ⟨ig, pf⟩) ≫
+    (polyCompGObj_isoHom αf G).fiber
+      ⟨ig, pf⟩ =
+    eqToHom h := by
+  intro h
+  dsimp only [polyCompGObj_isoHom,
+    polyCompGObj_isoInv, ccrHomMk]
+  ext ⟨e, ef⟩
+  simp only [Over.comp_left, Over.homMk_left,
+    types_comp_apply]
+  have rt := polyComp_fiberMor_roundtrip αf
+    ((ccrFamily G ig).hom e) (pf e)
+  have rt_left : ((ccrFiberMor
+      (αf.inv ((ccrFamily G ig).hom e))
+      (ccrReindex
+        (αf.hom ((ccrFamily G ig).hom e))
+        (pf e))).left ≫
+    (ccrFiberMor
+      (αf.hom ((ccrFamily G ig).hom e))
+      (pf e)).left) ef =
+    (eqToHom
+      (congrArg
+        (ccrFamily (f₁ ((ccrFamily G ig).hom e)))
+        (ccrReindex_hom_inv_cancel αf
+          ((ccrFamily G ig).hom e)
+          (pf e)))).left ef := by
+    rw [← Over.comp_left, rt]
+  simp only [types_comp_apply] at rt_left
+  rw [rt_left, Over.eqToHom_left,
+    types_eqToHom_eq_cast, Over.eqToHom_left,
+    types_eqToHom_eq_cast]
+  symm
+  exact cast_sigma_eq' _ (funext fun e =>
+    congrArg (fun i =>
+      (ccrFamily
+        (f₁ ((ccrFamily G ig).hom e)) i).left)
+      (ccrReindex_hom_inv_cancel αf
+        ((ccrFamily G ig).hom e) (pf e))) e ef
+
+/--
+Base component of the forward-then-backward roundtrip:
+the composed base map is the identity base map.
+-/
+private lemma polyCompGObj_iso_hom_inv_base
+    {f₁ f₂ : PolyFunctorBetweenCat X Y}
+    (αf : f₁ ≅ f₂)
+    (G : CoprodCovarRepCat (Over Y)) :
+    (polyCompGObj_isoHom αf G ≫
+      polyCompGObj_isoInv αf G).base =
+    (GrothendieckContra'.id (polyCompGObj f₁ G)).base := by
+  dsimp [polyCompGObj_isoHom, polyCompGObj_isoInv, ccrHomMk,
+    GrothendieckContra'.comp, GrothendieckContra'.id]
+  funext ⟨ig, pf⟩
+  exact Sigma.ext rfl (heq_of_eq
+    (funext fun e => ccrReindex_hom_inv_cancel αf _ _))
+
+/--
 Per-index fiber equality for the `hom ≫ inv` roundtrip: at each
 index, the composed fiber morphism preceded by its `eqToHom`
 transport equals the identity fiber morphism.
@@ -2743,7 +2815,91 @@ private lemma polyComp_hom_inv_at_idx
     (GrothendieckContra'.id
       (polyCompGObj f₁ G)).fiber idx := by
   intro h
-  _
+  let ⟨ig, pf⟩ := idx
+  rw [polyComp_homMk_inv_hom αf G ig pf,
+    eqToHom_trans,
+    GrothendieckContra'.id_fiber_val,
+    eqToHom_catOp_pi_at_idx]
+  simp [polyCompGObj_isoHom,
+    polyCompGObj_isoInv, ccrHomMk,
+    ccrReindex_hom_inv_cancel]
+
+/--
+The composition of the two fiber `Over.homMk` morphisms
+from `polyCompGObj_isoHom` and `polyCompGObj_isoInv`
+equals `eqToHom` (no leading transport).
+-/
+private lemma polyComp_homMk_hom_inv
+    {f₁ f₂ : PolyFunctorBetweenCat X Y}
+    (αf : f₁ ≅ f₂)
+    (G : CoprodCovarRepCat (Over Y))
+    (ig : ccrIndex G)
+    (pf : (e : (ccrFamily G ig).left) →
+      ccrIndex
+        (f₂ ((ccrFamily G ig).hom e))) :
+    ∀ (h : _ = _),
+    (polyCompGObj_isoHom αf G).fiber
+      ((polyCompGObj_isoInv αf G).base
+        ⟨ig, pf⟩) ≫
+    (polyCompGObj_isoInv αf G).fiber
+      ⟨ig, pf⟩ =
+    eqToHom h := by
+  intro h
+  dsimp only [polyCompGObj_isoHom,
+    polyCompGObj_isoInv, ccrHomMk]
+  ext ⟨e, ef⟩
+  simp only [Over.comp_left, Over.homMk_left,
+    types_comp_apply]
+  have rt := polyComp_fiberMor_roundtrip_inv αf
+    ((ccrFamily G ig).hom e) (pf e)
+  have rt_left : ((ccrFiberMor
+      (αf.hom ((ccrFamily G ig).hom e))
+      (ccrReindex
+        (αf.inv ((ccrFamily G ig).hom e))
+        (pf e))).left ≫
+    (ccrFiberMor
+      (αf.inv ((ccrFamily G ig).hom e))
+      (pf e)).left) ef =
+    (eqToHom
+      (congrArg
+        (ccrFamily
+          (f₂ ((ccrFamily G ig).hom e)))
+        (ccrReindex_inv_hom_cancel αf
+          ((ccrFamily G ig).hom e)
+          (pf e)))).left ef := by
+    rw [← Over.comp_left, rt]
+  simp only [types_comp_apply] at rt_left
+  rw [rt_left, Over.eqToHom_left,
+    types_eqToHom_eq_cast, Over.eqToHom_left,
+    types_eqToHom_eq_cast]
+  symm
+  exact cast_sigma_eq' _ (funext fun e =>
+    congrArg (fun i =>
+      (ccrFamily
+        (f₂ ((ccrFamily G ig).hom e)) i).left)
+      (ccrReindex_inv_hom_cancel αf
+        ((ccrFamily G ig).hom e) (pf e))) e ef
+
+/--
+Base component of the backward-then-forward roundtrip:
+the composed base map is the identity base map.
+-/
+private lemma polyCompGObj_iso_inv_hom_base
+    {f₁ f₂ : PolyFunctorBetweenCat X Y}
+    (αf : f₁ ≅ f₂)
+    (G : CoprodCovarRepCat (Over Y)) :
+    (polyCompGObj_isoInv αf G ≫
+      polyCompGObj_isoHom αf G).base =
+    (GrothendieckContra'.id
+      (polyCompGObj f₂ G)).base := by
+  dsimp [polyCompGObj_isoHom,
+    polyCompGObj_isoInv, ccrHomMk,
+    GrothendieckContra'.comp,
+    GrothendieckContra'.id]
+  funext ⟨ig, pf⟩
+  exact Sigma.ext rfl (heq_of_eq
+    (funext fun e =>
+      ccrReindex_inv_hom_cancel αf _ _))
 
 /--
 Per-index fiber equality for the `inv ≫ hom` roundtrip.
@@ -2763,24 +2919,14 @@ private lemma polyComp_inv_hom_at_idx
     (GrothendieckContra'.id
       (polyCompGObj f₂ G)).fiber idx := by
   intro h
-  _
-
-/--
-Base component of the forward-then-backward roundtrip:
-the composed base map is the identity base map.
--/
-private lemma polyCompGObj_iso_hom_inv_base
-    {f₁ f₂ : PolyFunctorBetweenCat X Y}
-    (αf : f₁ ≅ f₂)
-    (G : CoprodCovarRepCat (Over Y)) :
-    (polyCompGObj_isoHom αf G ≫
-      polyCompGObj_isoInv αf G).base =
-    (GrothendieckContra'.id (polyCompGObj f₁ G)).base := by
-  dsimp [polyCompGObj_isoHom, polyCompGObj_isoInv, ccrHomMk,
-    GrothendieckContra'.comp, GrothendieckContra'.id]
-  funext ⟨ig, pf⟩
-  exact Sigma.ext rfl (heq_of_eq
-    (funext fun e => ccrReindex_hom_inv_cancel αf _ _))
+  let ⟨ig, pf⟩ := idx
+  rw [polyComp_homMk_hom_inv αf G ig pf,
+    eqToHom_trans,
+    GrothendieckContra'.id_fiber_val,
+    eqToHom_catOp_pi_at_idx]
+  simp [polyCompGObj_isoHom,
+    polyCompGObj_isoInv, ccrHomMk,
+    ccrReindex_inv_hom_cancel]
 
 /--
 Transported fiber equality for the forward-then-backward roundtrip:
@@ -2849,23 +2995,6 @@ private lemma polyCompGObj_iso_hom_inv_fiber
   -- We can derive HEq from it via heq_iff_comp_eqToHom:
   rw [heq_iff_comp_eqToHom]
   convert h using 1
-
-/--
-Base component of the backward-then-forward roundtrip:
-the composed base map is the identity base map.
--/
-private lemma polyCompGObj_iso_inv_hom_base
-    {f₁ f₂ : PolyFunctorBetweenCat X Y}
-    (αf : f₁ ≅ f₂)
-    (G : CoprodCovarRepCat (Over Y)) :
-    (polyCompGObj_isoInv αf G ≫
-      polyCompGObj_isoHom αf G).base =
-    (GrothendieckContra'.id (polyCompGObj f₂ G)).base := by
-  dsimp [polyCompGObj_isoHom, polyCompGObj_isoInv, ccrHomMk,
-    GrothendieckContra'.comp, GrothendieckContra'.id]
-  funext ⟨ig, pf⟩
-  exact Sigma.ext rfl (heq_of_eq
-    (funext fun e => ccrReindex_inv_hom_cancel αf _ _))
 
 /--
 Transported fiber equality for the backward-then-forward roundtrip:
