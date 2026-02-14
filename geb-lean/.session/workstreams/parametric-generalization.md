@@ -14,13 +14,27 @@ alongside paranatural transformations.
 ### Existing infrastructure
 
 - `TypeExpr` (`ParanaturalTopos.lean`): Inductive type
-  with `.leaf (F : Type ⥤ Type)` and `.arrow T₁ T₂`,
-  representing type expressions in one variable over `Type`.
-- `TypeExpr.relInterp`: Relational interpretation replacing
-  leaves with `graphRel (F.map f)` and arrows with `arrowRel`.
+  with `.var`, `.app (F : Type ⥤ Type) (T : TypeExpr)`,
+  and `.arrow T₁ T₂`, representing type expressions in
+  one variable over `Type`.
+- `TypeExpr.relInterp`: Relational interpretation
+  replacing `var` with the given relation, `app` with
+  `functorRelLift F`, and `arrow` with `arrowRel`.
+- `TypeExpr.profMap`: Profunctor action (covariant and
+  contravariant maps) on `T.interp`.
 - `ParametricFamily T` (`ParanaturalTopos.lean`): A
   `Type`-indexed family `app : (I : Type) → T.interp I I`
   with `T.relInterp f (app I₀) (app I₁)` for all `f`.
+- `TypeExpr.relInterp_of_offDiag`: Off-diagonal elements
+  produce related pairs via `relInterp`.
+- `TypeExpr.relInterp_implies_wedge`: The relational
+  interpretation implies the profunctor wedge condition.
+- `ParametricFamily.wedge`: Every parametric family
+  satisfies the profunctor wedge condition.
+- `strongRestrictedWedge_weightedCone_equivalence`
+  (`ComprehensiveWeighted.lean`): Characterizes strong
+  restricted wedges as weighted cones in the
+  twisted-arrow category.
 - `StrongRestrictedWedge G H` (`Weighted.lean`):
   Generalizes paranatural transformations via weighted limits
   to arbitrary codomain `D`. Parametrized by
@@ -122,13 +136,83 @@ arrows. Formalizing this characterization would give a
 structural criterion on `TypeExpr` for when
 parametricity = paranaturality.
 
-### W2. Generalized ParametricExpr via YonedaRel
+### W2. ParametricFamily as weighted cones
+
+Since `ParametricFamily T` is not the end of
+`T.toProfunctor` (W1a), it cannot be characterized as
+the standard wedge weight. However, ends are a special
+case of weighted cones in twisted-arrow categories
+(`strongRestrictedWedge_weightedCone_equivalence`
+characterizes paranatural wedges this way). The question
+is whether `ParametricFamily` admits a characterization
+as weighted cones for a different weight.
+
+#### W2a. Compute wedgeWeight for standard profunctors
+
+Expand the `wedgeWeight` construction for the three cases
+where paranaturality gives the right answer:
+
+- `AlgProf F` (algebra profunctor of an endofunctor `F`)
+- `CoalgProf F` (coalgebra profunctor)
+- `HomProf` (hom profunctor, for dinatural numbers)
+
+In each case, determine what the twisted-arrow copresheaf
+`wedgeWeight G H : TwistedArrow C ⥤ Type v` looks like
+concretely. This yields reference examples for what a
+"correct" weight functor should produce.
+
+#### W2b. Find a weight for ParametricFamily
+
+Using the concrete descriptions from W2a as guidance,
+find a weight functor
+`parametricFamilyWeight T : TwistedArrow Type ⥤ Type v`
+such that weighted cones with this weight correspond to
+parametric families. The weight must differ from
+`wedgeWeight` in the arrow case, encoding the full
+relational condition `T.relInterp` rather than the
+weaker `DiagCompat` condition.
+
+#### W2c. Comparison with wedgeWeight
+
+For type expressions where paranaturality and
+parametricity agree, `parametricFamilyWeight T` should
+be isomorphic to the corresponding `wedgeWeight`. For
+the divergence type, they should differ. Construct the
+comparison map and characterize when it is an
+isomorphism.
+
+### W3. Parametric cowedges and terminal coalgebras
+
+The dual of the initial algebra result: parametric
+families applied to `AlgProf F` give initial algebras.
+The question is whether parametric cowedges (the dual
+construction) applied to `CoalgProf F` give terminal
+coalgebras.
+
+#### W3a. Define parametric cowedges
+
+Define `ParametricCofamily T` (or a similar structure)
+dualizing `ParametricFamily`: a `Type`-indexed family
+with the coparametricity condition (the dual of
+`T.relInterp`). This should be the analogue for
+parametricity of what `StrongRestrictedCowedge` (if
+defined) would be for paranaturality.
+
+#### W3b. Terminal coalgebra characterization
+
+Show that for an endofunctor `F : Type ⥤ Type` with a
+terminal coalgebra `νF`, there is an equivalence
+`νF.a ≃ ParametricCofamily (coalgebraTypeExpr F)`.
+This would be the dual of
+`initialAlgebraParametricEquiv`.
+
+### W4. Generalized ParametricExpr via YonedaRel
 
 Define a generalized version of `TypeExpr` (tentatively
 `ParametricExpr`) that works over an arbitrary category
 `C` using `YonedaRel` instead of function graphs.
 
-#### W2a. ParametricExpr definition
+#### W4a. ParametricExpr definition
 
 An analogue of `TypeExpr` where:
 
@@ -146,13 +230,13 @@ to the graph of `F.map` applied to the underlying
 relation. The arrow case uses the exponential
 (internal hom) in the presheaf category.
 
-#### W2b. TypeExpr as a special case
+#### W4b. TypeExpr as a special case
 
 Show that when `C = Type`, `ParametricExpr` specializes to
 `TypeExpr`. This requires showing that the Yoneda relation
 lifting agrees with the `graphRel`/`arrowRel` construction.
 
-#### W2c. Internal relations lift to YonedaRel
+#### W4c. Internal relations lift to YonedaRel
 
 For any category `C`, show that an internal relation
 (a monomorphism or span `R → X × Y` in `C`) lifts to a
@@ -172,20 +256,20 @@ Since `y` is fully faithful, it preserves monomorphisms,
 so proof-irrelevant relations (subobjects) in `C` lift
 faithfully.
 
-#### W2d. Equivalence via transitivity
+#### W4d. Equivalence via transitivity
 
 Chain the results: `TypeExpr` produces an internal
 relation in `Type`; internal relations in `C` lift to
 `YonedaRel`; therefore `TypeExpr.relInterp` agrees with
 `ParametricExpr.relInterp` when `C = Type`.
 
-### W3. Parametric wedges
+### W5. Parametric wedges
 
 Define a "parametric wedge" construction analogous to
 `StrongRestrictedWedge`, using the parametric condition
 instead of the paranatural condition.
 
-#### W3a. StrongParametricWedge structure
+#### W5a. StrongParametricWedge structure
 
 Define `StrongParametricWedge G H T` where:
 
@@ -199,19 +283,19 @@ Define `StrongParametricWedge G H T` where:
   than the `DiagCompat` condition used by
   `StrongRestrictedWedge`.
 
-#### W3b. Specialization to StrongRestrictedWedge
+#### W5b. Specialization to StrongRestrictedWedge
 
 For type expressions where paranaturality and parametricity
 agree (algebra profunctor, hom profunctor, etc.),
 `StrongParametricWedge` should specialize to
 `StrongRestrictedWedge`.
 
-### W4. Twisted-arrow parametric embedding
+### W6. Twisted-arrow parametric embedding
 
 Embed parametric transformations into the twisted-arrow
 copresheaf topos alongside paranatural transformations.
 
-#### W4a. Parametric weight functor
+#### W6a. Parametric weight functor
 
 Define a `parametricWeight G H T : TwistedArrow C ⥤ Type v`
 analogous to `wedgeWeight G H`, such that natural
@@ -225,7 +309,7 @@ way it handles the arrow case of the type expression:
 all pairs `(h, k)` with `f ∘ h = k ∘ f` (or their
 `YonedaRel` analogue).
 
-#### W4b. Comparison map
+#### W6b. Comparison map
 
 Construct a natural transformation
 `wedgeWeight G H → parametricWeight G H T` (or the
@@ -234,7 +318,7 @@ stronger). For type expressions where paranaturality
 implies parametricity, this should be an epimorphism;
 for the divergence type, it should not be an isomorphism.
 
-#### W4c. Topos-level analysis
+#### W6c. Topos-level analysis
 
 Both `wedgeWeight` and `parametricWeight` live in the
 copresheaf topos `[TwistedArrow C, Type v]`. The
@@ -244,27 +328,30 @@ copresheaves. Characterize this difference.
 
 ## Open questions
 
-1. For W2a, the arrow case requires the exponential
+1. For W4a, the arrow case requires the exponential
    (internal hom) in the presheaf category. `PSh(C)` is
    always a topos and thus has exponentials, but we may
    need to formalize or import the exponential
    construction. Does mathlib provide `Closed` or
    `CartesianClosed` instances for presheaf categories?
 
-2. For W4a, the parametric weight needs to encode the
+2. For W6a, the parametric weight needs to encode the
    type expression `T` into the weight functor. The
    recursive structure of `T` must be reflected in
    the copresheaf. The right construction may involve
    iterated exponentials in the copresheaf category
    itself.
 
-3. The relationship between W1 (ParametricFamily as end)
-   and W3 (parametric wedges) should be clarified: the
-   end is the universal parametric wedge, and
-   `ParametricFamily T` should be the set of elements of
-   this end.
+3. Since `ParametricFamily T` is NOT the end of
+   `T.toProfunctor` (W1a), the relationship between
+   `ParametricFamily` and weighted cones (W2) is the
+   central question. If `ParametricFamily` can be
+   expressed as weighted cones for a suitable weight,
+   then `StrongParametricWedge` (W5) should be the
+   generalization of that weighted-cone characterization
+   to arbitrary codomain `D`.
 
-4. For W2c, the statement that internal relations lift
+4. For W4c, the statement that internal relations lift
    faithfully to `YonedaRel` depends on the Yoneda
    embedding preserving the relevant limits. For
    products and pullbacks this is standard (Yoneda
@@ -273,6 +360,14 @@ copresheaves. Characterize this difference.
    not preserve exponentials in general (it sends them
    to different exponentials in the presheaf category).
    This may affect the arrow case of the lifting.
+
+5. For W3, the dual of `relInterp` needs to be defined.
+   The standard dual of a relation `R(x₀, x₁)` replaces
+   universal quantification with existential, so the
+   coparametricity condition would state that there
+   exist witnesses rather than that all witnesses
+   satisfy the condition. The correct formulation needs
+   to be determined.
 
 ## Dependencies
 
