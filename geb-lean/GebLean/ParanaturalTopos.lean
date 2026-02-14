@@ -2482,52 +2482,6 @@ def arrowRel
   ∀ (a₀ : A₀) (a₁ : A₁),
     R a₀ a₁ → S (g₀ a₀) (g₁ a₁)
 
-/-- The relational interpretation of the
-sub-expression `X → X` in `((X → X) → X) → X`
-at the graph of `f`. A pair `(h, k)` of
-endomorphisms is related iff `f`-related inputs
-are sent to `f`-related outputs. -/
-abbrev divEndoRel {I₀ I₁ : Type}
-    (f : I₀ → I₁) :
-    (I₀ → I₀) → (I₁ → I₁) → Prop :=
-  arrowRel (graphRel f) (graphRel f)
-
-/-- The relational interpretation of the
-sub-expression `(X → X) → X` at the graph of `f`.
-A pair `(p, q)` is related iff
-`divEndoRel`-related endomorphism pairs are sent
-to `graphRel f`-related value pairs. -/
-abbrev divArgRel {I₀ I₁ : Type}
-    (f : I₀ → I₁) :
-    ((I₀ → I₀) → I₀) → ((I₁ → I₁) → I₁) →
-    Prop :=
-  arrowRel (divEndoRel f) (graphRel f)
-
-/-- The relational interpretation of the full
-type `((X → X) → X) → X` at the graph of `f`.
-A pair `(phi₀, phi₁)` is related iff
-`divArgRel`-related argument pairs are sent to
-`graphRel f`-related value pairs. -/
-abbrev divFullRel {I₀ I₁ : Type}
-    (f : I₀ → I₁) :
-    (((I₀ → I₀) → I₀) → I₀) →
-    (((I₁ → I₁) → I₁) → I₁) → Prop :=
-  arrowRel (divArgRel f) (graphRel f)
-
-/-- `divFullRel` expands to a nested application of
-`arrowRel` and `graphRel`, with one `arrowRel` per
-`→` and one `graphRel f` per `X` in the type
-expression `((X → X) → X) → X`. -/
-theorem divFullRel_expand
-    {I₀ I₁ : Type} (f : I₀ → I₁) :
-    @divFullRel I₀ I₁ f =
-    arrowRel
-      (arrowRel
-        (arrowRel (graphRel f) (graphRel f))
-        (graphRel f))
-      (graphRel f) :=
-  rfl
-
 /-- A type expression in a single variable,
 built from covariant functors at the leaves and
 function spaces at the inner nodes. The relational
@@ -2643,20 +2597,65 @@ def TypeExpr.relInterp
   | .arrow T₁ T₂ =>
     arrowRel (T₁.relInterp f) (T₂.relInterp f)
 
+/-- The type expression for the sub-expression
+`X → X` (endomorphisms) in the divergence type. -/
+def divEndoTypeExpr : TypeExpr :=
+  let x := TypeExpr.leaf (𝟭 Type)
+  .arrow x x
+
+/-- The type expression for the sub-expression
+`(X → X) → X` in the divergence type. -/
+def divArgTypeExpr : TypeExpr :=
+  .arrow divEndoTypeExpr (.leaf (𝟭 Type))
+
 /-- The type expression for the divergence type
 `((X → X) → X) → X`, with the identity functor
 at each leaf. -/
 def divTypeExpr : TypeExpr :=
-  let x := TypeExpr.leaf (𝟭 Type)
-  .arrow (.arrow (.arrow x x) x) x
+  .arrow divArgTypeExpr (.leaf (𝟭 Type))
 
-/-- The relational interpretation of `divTypeExpr`
-at a morphism `f` equals `divFullRel f`. -/
-theorem divTypeExpr_relInterp
+/-- The relational interpretation of the
+sub-expression `X → X` at the graph of `f`.
+A pair `(h, k)` of endomorphisms is related iff
+`f`-related inputs are sent to `f`-related
+outputs. -/
+abbrev divEndoRel {I₀ I₁ : Type}
+    (f : I₀ → I₁) :=
+  divEndoTypeExpr.relInterp f
+
+/-- The relational interpretation of the
+sub-expression `(X → X) → X` at the graph of
+`f`. A pair `(p, q)` is related iff
+`divEndoRel`-related endomorphism pairs are sent
+to `graphRel f`-related value pairs. -/
+abbrev divArgRel {I₀ I₁ : Type}
+    (f : I₀ → I₁) :=
+  divArgTypeExpr.relInterp f
+
+/-- The relational interpretation of the full
+type `((X → X) → X) → X` at the graph of `f`.
+A pair `(phi₀, phi₁)` is related iff
+`divArgRel`-related argument pairs are sent to
+`graphRel f`-related value pairs. -/
+abbrev divFullRel {I₀ I₁ : Type}
+    (f : I₀ → I₁) :=
+  divTypeExpr.relInterp f
+
+/-- `divFullRel` expands to a nested application
+of `arrowRel` and `graphRel`, with one `arrowRel`
+per `→` and one `graphRel f` per `X` in the type
+expression `((X → X) → X) → X`. -/
+theorem divFullRel_expand
     {I₀ I₁ : Type} (f : I₀ → I₁) :
-    divTypeExpr.relInterp f = divFullRel f := by
-  simp only [divTypeExpr, TypeExpr.relInterp,
-    Functor.id_map]
+    @divFullRel I₀ I₁ f =
+    arrowRel
+      (arrowRel
+        (arrowRel (graphRel f) (graphRel f))
+        (graphRel f))
+      (graphRel f) := by
+  simp only [divFullRel, divTypeExpr,
+    divArgTypeExpr, divEndoTypeExpr,
+    TypeExpr.relInterp, Functor.id_map]
 
 /-- The type expression for a dialgebra
 `F(X) → G(X)` with covariant `F` and `G`. -/
