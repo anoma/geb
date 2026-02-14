@@ -2526,6 +2526,162 @@ theorem divFullRel_expand
       (graphRel f) :=
   rfl
 
+/-- A type expression in a single variable,
+built from covariant functors at the leaves and
+function spaces at the inner nodes. The relational
+interpretation (`TypeExpr.relInterp`) replaces each
+`arrow` with `arrowRel` and each `leaf F` with
+`graphRel (F.map f)`. -/
+inductive TypeExpr : Type 1 where
+  | leaf : (Type ⥤ Type) → TypeExpr
+  | arrow : TypeExpr → TypeExpr → TypeExpr
+
+/-- The interpretation of a type expression as a
+profunctor: `interp T A B` assigns a type to each
+pair `(A, B)`, where `A` is contravariant and `B`
+is covariant. Leaves apply their functor to the
+covariant parameter; `arrow` swaps the parameters
+for the domain (flipping variance). On the diagonal,
+`interp T A A` recovers the standard interpretation
+of `T` at the type `A`. -/
+def TypeExpr.interp :
+    TypeExpr → Type → Type → Type
+  | .leaf F, _, B => F.obj B
+  | .arrow T₁ T₂, A, B =>
+    T₁.interp B A → T₂.interp A B
+
+/-- The profunctor map for a type expression:
+given `f : A' → A` (contravariant) and
+`g : B → B'` (covariant), maps
+`T.interp A B → T.interp A' B'`. For leaves,
+this is `F.map g`. For `arrow T₁ T₂`, this
+precomposes with `T₁.profMap g f` (swapped,
+since `T₁` has flipped variance) and
+postcomposes with `T₂.profMap f g`. -/
+def TypeExpr.profMap
+    (T : TypeExpr) {A A' B B' : Type}
+    (f : A' → A) (g : B → B') :
+    T.interp A B → T.interp A' B' :=
+  match T with
+  | .leaf F => F.map g
+  | .arrow T₁ T₂ => fun h =>
+    T₂.profMap f g ∘ h ∘ T₁.profMap g f
+
+theorem TypeExpr.profMap_id
+    (T : TypeExpr) (A B : Type) :
+    T.profMap (id : A → A) (id : B → B) = id := by
+  induction T generalizing A B with
+  | leaf F =>
+    ext x
+    exact FunctorToTypes.map_id_apply F x
+  | arrow T₁ T₂ ih₁ ih₂ =>
+    ext h
+    change T₂.profMap id id ∘ h ∘ T₁.profMap id id
+      = h
+    rw [ih₁, ih₂, Function.comp_id,
+      Function.id_comp]
+
+theorem TypeExpr.profMap_comp
+    (T : TypeExpr)
+    {A A' A'' B B' B'' : Type}
+    (f : A' → A) (f' : A'' → A')
+    (g : B → B') (g' : B' → B'') :
+    T.profMap (f ∘ f') (g' ∘ g) =
+    T.profMap f' g' ∘ T.profMap f g := by
+  induction T generalizing A A' A'' B B' B'' with
+  | leaf F =>
+    ext x
+    exact FunctorToTypes.map_comp_apply F g g' x
+  | arrow T₁ T₂ ih₁ ih₂ =>
+    have h₁ : T₁.profMap (g' ∘ g) (f ∘ f') =
+        T₁.profMap g f ∘ T₁.profMap g' f' :=
+      ih₁ (A := B'') (A' := B') (A'' := B)
+        (B := A'') (B' := A') (B'' := A)
+        g' g f' f
+    have h₂ : T₂.profMap (f ∘ f') (g' ∘ g) =
+        T₂.profMap f' g' ∘ T₂.profMap f g :=
+      ih₂ f f' g g'
+    ext h
+    simp only [profMap, Function.comp, h₁, h₂]
+    rfl
+
+/-- The profunctor associated to a type expression:
+a functor `Typeᵒᵖ × Type ⥤ Type` defined by
+`T.interp` on objects and `T.profMap` on
+morphisms. -/
+def TypeExpr.toProfunctor
+    (T : TypeExpr) : Typeᵒᵖ × Type ⥤ Type where
+  obj p := T.interp p.1.unop p.2
+  map {p q} fg :=
+    T.profMap fg.1.unop fg.2
+  map_id p := by
+    change T.profMap id id = id
+    exact T.profMap_id p.1.unop p.2
+  map_comp {_p _q _r} fg gh := by
+    simp only [types_comp, prod_comp, unop_comp]
+    exact @TypeExpr.profMap_comp T
+      _p.1.unop _q.1.unop _r.1.unop
+      _p.2 _q.2 _r.2
+      fg.1.unop gh.1.unop fg.2 gh.2
+
+/-- The relational interpretation of a type
+expression at a morphism `f : I₀ → I₁`. Each
+leaf `F` contributes `graphRel (F.map f)` and each
+`arrow` contributes `arrowRel`. The types align
+because `interp` is a profunctor: `arrow` swaps
+the parameters for the domain, matching the
+contravariance of `arrowRel` in its first
+argument. -/
+def TypeExpr.relInterp
+    (T : TypeExpr) {I₀ I₁ : Type}
+    (f : I₀ → I₁) :
+    T.interp I₀ I₀ → T.interp I₁ I₁ → Prop :=
+  match T with
+  | .leaf F => graphRel (F.map f)
+  | .arrow T₁ T₂ =>
+    arrowRel (T₁.relInterp f) (T₂.relInterp f)
+
+/-- The type expression for the divergence type
+`((X → X) → X) → X`, with the identity functor
+at each leaf. -/
+def divTypeExpr : TypeExpr :=
+  let x := TypeExpr.leaf (𝟭 Type)
+  .arrow (.arrow (.arrow x x) x) x
+
+/-- The relational interpretation of `divTypeExpr`
+at a morphism `f` equals `divFullRel f`. -/
+theorem divTypeExpr_relInterp
+    {I₀ I₁ : Type} (f : I₀ → I₁) :
+    divTypeExpr.relInterp f = divFullRel f := by
+  simp only [divTypeExpr, TypeExpr.relInterp,
+    Functor.id_map]
+
+/-- The type expression for a dialgebra
+`F(X) → G(X)` with covariant `F` and `G`. -/
+def dialgebraTypeExpr
+    (F G : Type ⥤ Type) : TypeExpr :=
+  .arrow (.leaf F) (.leaf G)
+
+/-- The relational interpretation of a dialgebra
+type expression at a morphism `f` is equivalent
+to the naturality square
+`G.map f ∘ α = β ∘ F.map f`. -/
+theorem dialgebraTypeExpr_relInterp_iff
+    (F G : Type ⥤ Type)
+    {I₀ I₁ : Type} (f : I₀ → I₁)
+    (α : F.obj I₀ → G.obj I₀)
+    (β : F.obj I₁ → G.obj I₁) :
+    (dialgebraTypeExpr F G).relInterp f α β ↔
+    G.map f ∘ α = β ∘ F.map f := by
+  constructor
+  · intro hrel
+    ext a₀
+    exact hrel a₀ (F.map f a₀) rfl
+  · intro heq a₀ a₁ ha
+    change G.map f (α a₀) = β a₁
+    rw [← ha]
+    exact congr_fun heq a₀
+
 /-- `divEndoRel f h k` is equivalent to
 `DiagCompat divHomProf I₀ I₁ f h k`, which
 reduces to `f ∘ h = k ∘ f`. The relational
