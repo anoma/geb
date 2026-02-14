@@ -2482,36 +2482,97 @@ def arrowRel
   ∀ (a₀ : A₀) (a₁ : A₁),
     R a₀ a₁ → S (g₀ a₀) (g₁ a₁)
 
+/-- The canonical relation lifting for a functor
+`F : Type ⥤ Type`. Given a relation `R` between
+types `A` and `B`, `functorRelLift F R` relates
+`x : F.obj A` and `y : F.obj B` iff there exists
+a witness `w : F.obj {p : A × B // R p.1 p.2}`
+whose projections under `F.map` give `x` and `y`.
+-/
+def functorRelLift
+    (F : Type ⥤ Type) {A B : Type}
+    (R : A → B → Prop) :
+    F.obj A → F.obj B → Prop :=
+  fun x y =>
+    ∃ (w : F.obj { p : A × B // R p.1 p.2 }),
+      F.map (fun s => s.val.1) w = x ∧
+      F.map (fun s => s.val.2) w = y
+
+/-- When the relation is the graph of a function
+`g`, the relation lifting reduces to the graph
+of `F.map g`. -/
+@[simp]
+theorem functorRelLift_graphRel
+    (F : Type ⥤ Type) {A B : Type}
+    (g : A → B) :
+    functorRelLift F (graphRel g) =
+    graphRel (F.map g) := by
+  ext x y
+  simp only [functorRelLift, graphRel]
+  constructor
+  · rintro ⟨w, hw₁, hw₂⟩
+    rw [← hw₁, ← hw₂]
+    have h₁ : (fun s : { p : A × B //
+        g p.1 = p.2 } => s.val.2) =
+        g ∘ (fun s => s.val.1) := by
+      ext ⟨⟨a, _⟩, h⟩; exact h.symm
+    conv_rhs => rw [h₁]
+    exact (FunctorToTypes.map_comp_apply F
+      (fun s => s.val.1) g w).symm
+  · intro h
+    let e : A → { p : A × B // g p.1 = p.2 } :=
+      fun a => ⟨⟨a, g a⟩, rfl⟩
+    refine ⟨F.map e x, ?_, ?_⟩
+    · show F.map (fun s => s.val.1)
+        (F.map e x) = x
+      rw [← FunctorToTypes.map_comp_apply]
+      exact FunctorToTypes.map_id_apply F x
+    · show F.map (fun s => s.val.2)
+        (F.map e x) = y
+      rw [← FunctorToTypes.map_comp_apply]
+      exact h
+
 /-- A type expression in a single variable,
-built from covariant functors at the leaves and
-function spaces at the inner nodes. The relational
-interpretation (`TypeExpr.relInterp`) replaces each
-`arrow` with `arrowRel` and each `leaf F` with
-`graphRel (F.map f)`. -/
+built from a variable, covariant functor
+application, and function spaces. The relational
+interpretation (`TypeExpr.relInterp`) replaces
+each `var` with `graphRel f`, each `app F T`
+with `functorRelLift F (T.relInterp f)`, and
+each `arrow` with `arrowRel`. -/
 inductive TypeExpr : Type 1 where
-  | leaf : (Type ⥤ Type) → TypeExpr
+  | var : TypeExpr
+  | app : (Type ⥤ Type) → TypeExpr → TypeExpr
   | arrow : TypeExpr → TypeExpr → TypeExpr
+
+/-- A covariant functor applied to the bare
+variable. Equivalent to `.app F .var`. -/
+abbrev TypeExpr.leaf
+    (F : Type ⥤ Type) : TypeExpr :=
+  .app F .var
 
 /-- The interpretation of a type expression as a
 profunctor: `interp T A B` assigns a type to each
 pair `(A, B)`, where `A` is contravariant and `B`
-is covariant. Leaves apply their functor to the
-covariant parameter; `arrow` swaps the parameters
-for the domain (flipping variance). On the diagonal,
+is covariant. `var` gives the covariant parameter;
+`app F T` applies `F` to the interpretation of
+`T`; `arrow` swaps the parameters for the domain
+(flipping variance). On the diagonal,
 `interp T A A` recovers the standard interpretation
 of `T` at the type `A`. -/
 def TypeExpr.interp :
     TypeExpr → Type → Type → Type
-  | .leaf F, _, B => F.obj B
+  | .var, _, B => B
+  | .app F T, A, B => F.obj (T.interp A B)
   | .arrow T₁ T₂, A, B =>
     T₁.interp B A → T₂.interp A B
 
 /-- The profunctor map for a type expression:
 given `f : A' → A` (contravariant) and
 `g : B → B'` (covariant), maps
-`T.interp A B → T.interp A' B'`. For leaves,
-this is `F.map g`. For `arrow T₁ T₂`, this
-precomposes with `T₁.profMap g f` (swapped,
+`T.interp A B → T.interp A' B'`. For `var`,
+this is `g`. For `app F T`, this is
+`F.map (T.profMap f g)`. For `arrow T₁ T₂`,
+this precomposes with `T₁.profMap g f` (swapped,
 since `T₁` has flipped variance) and
 postcomposes with `T₂.profMap f g`. -/
 def TypeExpr.profMap
@@ -2519,7 +2580,8 @@ def TypeExpr.profMap
     (f : A' → A) (g : B → B') :
     T.interp A B → T.interp A' B' :=
   match T with
-  | .leaf F => F.map g
+  | .var => g
+  | .app F T => F.map (T.profMap f g)
   | .arrow T₁ T₂ => fun h =>
     T₂.profMap f g ∘ h ∘ T₁.profMap g f
 
@@ -2527,8 +2589,11 @@ theorem TypeExpr.profMap_id
     (T : TypeExpr) (A B : Type) :
     T.profMap (id : A → A) (id : B → B) = id := by
   induction T generalizing A B with
-  | leaf F =>
+  | var => rfl
+  | app F T ih =>
     ext x
+    change F.map (T.profMap id id) x = x
+    rw [ih]
     exact FunctorToTypes.map_id_apply F x
   | arrow T₁ T₂ ih₁ ih₂ =>
     ext h
@@ -2545,9 +2610,15 @@ theorem TypeExpr.profMap_comp
     T.profMap (f ∘ f') (g' ∘ g) =
     T.profMap f' g' ∘ T.profMap f g := by
   induction T generalizing A A' A'' B B' B'' with
-  | leaf F =>
+  | var => rfl
+  | app F T ih =>
     ext x
-    exact FunctorToTypes.map_comp_apply F g g' x
+    change F.map (T.profMap (f ∘ f') (g' ∘ g)) x =
+      F.map (T.profMap f' g')
+        (F.map (T.profMap f g) x)
+    rw [ih]
+    exact FunctorToTypes.map_comp_apply F
+      (T.profMap f g) (T.profMap f' g') x
   | arrow T₁ T₂ ih₁ ih₂ =>
     have h₁ : T₁.profMap (g' ∘ g) (f ∘ f') =
         T₁.profMap g f ∘ T₁.profMap g' f' :=
@@ -2582,20 +2653,29 @@ def TypeExpr.toProfunctor
 
 /-- The relational interpretation of a type
 expression at a morphism `f : I₀ → I₁`. Each
-leaf `F` contributes `graphRel (F.map f)` and each
-`arrow` contributes `arrowRel`. The types align
-because `interp` is a profunctor: `arrow` swaps
-the parameters for the domain, matching the
-contravariance of `arrowRel` in its first
-argument. -/
+`var` contributes `graphRel f`, each `app F T`
+contributes `functorRelLift F (T.relInterp f)`,
+and each `arrow` contributes `arrowRel`. -/
 def TypeExpr.relInterp
     (T : TypeExpr) {I₀ I₁ : Type}
     (f : I₀ → I₁) :
     T.interp I₀ I₀ → T.interp I₁ I₁ → Prop :=
   match T with
-  | .leaf F => graphRel (F.map f)
+  | .var => graphRel f
+  | .app F T =>
+    functorRelLift F (T.relInterp f)
   | .arrow T₁ T₂ =>
     arrowRel (T₁.relInterp f) (T₂.relInterp f)
+
+/-- The relational interpretation of a leaf
+`app F var` reduces to `graphRel (F.map f)`. -/
+@[simp]
+theorem TypeExpr.leaf_relInterp
+    (F : Type ⥤ Type) {I₀ I₁ : Type}
+    (f : I₀ → I₁) :
+    (TypeExpr.leaf F).relInterp f =
+    graphRel (F.map f) :=
+  functorRelLift_graphRel F f
 
 /-- The type expression for the sub-expression
 `X → X` (endomorphisms) in the divergence type. -/
@@ -2641,6 +2721,30 @@ abbrev divFullRel {I₀ I₁ : Type}
     (f : I₀ → I₁) :=
   divTypeExpr.relInterp f
 
+/-- `divEndoRel` expands to
+`arrowRel (graphRel f) (graphRel f)`. -/
+theorem divEndoRel_expand
+    {I₀ I₁ : Type} (f : I₀ → I₁) :
+    @divEndoRel I₀ I₁ f =
+    arrowRel (graphRel f) (graphRel f) := by
+  simp only [divEndoRel, divEndoTypeExpr,
+    TypeExpr.relInterp,
+    functorRelLift_graphRel, Functor.id_map]
+
+/-- `divArgRel` expands to
+`arrowRel (arrowRel (graphRel f) (graphRel f))
+  (graphRel f)`. -/
+theorem divArgRel_expand
+    {I₀ I₁ : Type} (f : I₀ → I₁) :
+    @divArgRel I₀ I₁ f =
+    arrowRel
+      (arrowRel (graphRel f) (graphRel f))
+      (graphRel f) := by
+  simp only [divArgRel, divArgTypeExpr,
+    divEndoTypeExpr,
+    TypeExpr.relInterp,
+    functorRelLift_graphRel, Functor.id_map]
+
 /-- `divFullRel` expands to a nested application
 of `arrowRel` and `graphRel`, with one `arrowRel`
 per `→` and one `graphRel f` per `X` in the type
@@ -2655,7 +2759,8 @@ theorem divFullRel_expand
       (graphRel f) := by
   simp only [divFullRel, divTypeExpr,
     divArgTypeExpr, divEndoTypeExpr,
-    TypeExpr.relInterp, Functor.id_map]
+    TypeExpr.relInterp,
+    functorRelLift_graphRel, Functor.id_map]
 
 /-- The type expression for a dialgebra
 `F(X) → G(X)` with covariant `F` and `G`. -/
@@ -2674,6 +2779,8 @@ theorem dialgebraTypeExpr_relInterp_iff
     (β : F.obj I₁ → G.obj I₁) :
     (dialgebraTypeExpr F G).relInterp f α β ↔
     G.map f ∘ α = β ∘ F.map f := by
+  simp only [dialgebraTypeExpr, TypeExpr.relInterp,
+    functorRelLift_graphRel, graphRel, arrowRel]
   constructor
   · intro hrel
     ext a₀
@@ -2710,6 +2817,7 @@ theorem algebraTypeExpr_relInterp_iff
       f ∘ α = β ∘ F.map f →
       f (φ₀ α) = φ₁ β := by
   simp only [algebraTypeExpr, TypeExpr.relInterp,
+    functorRelLift_graphRel, graphRel, arrowRel,
     Functor.id_map]
   constructor
   · intro hrel α β hab
@@ -2743,6 +2851,7 @@ theorem dinaturalTypeExpr_relInterp_iff
       f ∘ h = k ∘ f →
       f ∘ φ₀ h = φ₁ k ∘ f := by
   simp only [dinaturalTypeExpr, TypeExpr.relInterp,
+    functorRelLift_graphRel, graphRel, arrowRel,
     Functor.id_map]
   constructor
   · intro hrel h k hhk
@@ -2885,7 +2994,8 @@ theorem divEndoRel_iff_diagCompat
     (h : I₀ → I₀) (k : I₁ → I₁) :
     divEndoRel f h k ↔
     DiagCompat divHomProf I₀ I₁ f h k := by
-  rw [divHomProf_diagCompat_eq]
+  rw [divHomProf_diagCompat_eq,
+    divEndoRel_expand]
   constructor
   · intro hrel
     ext a
@@ -2906,15 +3016,17 @@ theorem divArgRel_iff_isParanaturalAt
     divArgRel f p q ↔
     IsParanaturalAt
       divHomProf divTarget f p q := by
+  rw [divArgRel_expand]
   constructor
   · intro hrel h k hcompat
     exact hrel h k
-      ((divEndoRel_iff_diagCompat f h k).mpr
-        hcompat)
+      (divEndoRel_expand f ▸
+        (divEndoRel_iff_diagCompat f h k).mpr
+          hcompat)
   · intro hpn h k hendo
     exact hpn h k
       ((divEndoRel_iff_diagCompat f h k).mp
-        hendo)
+        (divEndoRel_expand f ▸ hendo))
 
 /-- `divFullRel f phi₀ phi₁` is equivalent to
 `DivParametric`'s condition on `(phi₀, phi₁)`:
@@ -2931,15 +3043,18 @@ theorem divFullRel_iff_divParametric
         divHomProf divTarget f p q →
       DiagCompat divTarget I₀ I₁ f
         (phi₀ p) (phi₁ q)) := by
+  rw [divFullRel_expand]
   constructor
   · intro hrel p q hpn
     exact hrel p q
-      ((divArgRel_iff_isParanaturalAt
-        f p q).mpr hpn)
+      (divArgRel_expand f ▸
+        (divArgRel_iff_isParanaturalAt
+          f p q).mpr hpn)
   · intro hpn p q harg
     exact hpn p q
       ((divArgRel_iff_isParanaturalAt
-        f p q).mp harg)
+        f p q).mp
+        (divArgRel_expand f ▸ harg))
 
 /-- `DivParametric phi` is equivalent to
 `∀ I₀ I₁ f, divFullRel f (phi I₀) (phi I₁)`:
@@ -2970,22 +3085,14 @@ def DivParametricSub :=
 
 /-- Bundled parametricity for `((X → X) → X) → X`.
 A family `app I : ((I → I) → I) → I` together with
-the Wadler relational interpretation at the graph of
-every `f : I₀ → I₁`. The `parametric` field expands
-`divFullRel` into its constituent `arrowRel` and
-`graphRel` applications, one `arrowRel` per `→` and
-one `graphRel f` per `X` in `((X → X) → X) → X`. -/
+the relational interpretation `divFullRel` at the
+graph of every `f : I₀ → I₁`. -/
 @[ext]
 structure DivParametricBundled where
   app : ∀ (I : Type), ((I → I) → I) → I
   parametric :
     ∀ (I₀ I₁ : Type) (f : I₀ → I₁),
-      arrowRel
-        (arrowRel
-          (arrowRel (graphRel f) (graphRel f))
-          (graphRel f))
-        (graphRel f)
-        (app I₀) (app I₁)
+      divFullRel f (app I₀) (app I₁)
 
 /-- The subtype and bundled formulations of
 parametricity are equivalent:
