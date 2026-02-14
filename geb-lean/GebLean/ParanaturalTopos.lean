@@ -2,6 +2,8 @@ import GebLean.Paranatural
 import GebLean.Weighted
 import GebLean.ComprehensiveWeighted
 import GebLean.Factorization
+import GebLean.ParanatAlg
+import GebLean.DinaturalNumbers
 import GebLean.Utilities.TwistedArrow
 import GebLean.Utilities.TwArrPresheaf
 import Mathlib.CategoryTheory.Limits.Shapes.Terminal
@@ -2758,6 +2760,121 @@ theorem dinaturalTypeExpr_relInterp_iff
       ext x
       exact hhk x (f x) rfl
     exact congr_fun (hpn h k this) a₀
+
+/-- A parametric family for a type expression
+`T` is a family of elements
+`app I : T.interp I I` indexed by types `I`,
+such that for every function `f : I₀ → I₁`, the
+relational interpretation `T.relInterp f` relates
+`app I₀` to `app I₁`. -/
+@[ext]
+structure ParametricFamily (T : TypeExpr) where
+  /-- The component at each type -/
+  app : (I : Type) → T.interp I I
+  /-- The parametricity condition -/
+  parametric :
+    ∀ (I₀ I₁ : Type) (f : I₀ → I₁),
+    T.relInterp f (app I₀) (app I₁)
+
+theorem idProf_diagCompat_eq
+    {I₀ I₁ : Type} (f : I₀ → I₁)
+    (x₀ : I₀) (x₁ : I₁) :
+    DiagCompat IdProf I₀ I₁ f x₀ x₁ =
+    (f x₀ = x₁) :=
+  rfl
+
+theorem algProf_diagCompat_eq
+    (F : Type ⥤ Type) {I₀ I₁ : Type}
+    (f : I₀ → I₁)
+    (d₀ : F.obj I₀ → I₀)
+    (d₁ : F.obj I₁ → I₁) :
+    DiagCompat (AlgProf F) I₀ I₁ f d₀ d₁ =
+    (f ∘ d₀ = d₁ ∘ F.map f) :=
+  rfl
+
+/-- Parametric families for the algebra type
+expression `(F(X) → X) → X` are equivalent to
+paranatural transformations from `AlgProf F` to
+`IdProf`. -/
+def algebraParametricEquivParanat
+    (F : Type ⥤ Type) :
+    ParametricFamily (algebraTypeExpr F) ≃
+    Paranat (AlgProf F) IdProf where
+  toFun p :=
+    { app := p.app
+      paranatural := fun I₀ I₁ f d₀ d₁ hdc => by
+        rw [algProf_diagCompat_eq] at hdc
+        rw [idProf_diagCompat_eq]
+        exact (algebraTypeExpr_relInterp_iff
+          F f (p.app I₀) (p.app I₁)).mp
+          (p.parametric I₀ I₁ f) d₀ d₁ hdc }
+  invFun q :=
+    { app := q.app
+      parametric := fun I₀ I₁ f => by
+        rw [algebraTypeExpr_relInterp_iff]
+        intro α β hcomp
+        have hdc : DiagCompat (AlgProf F)
+            I₀ I₁ f α β := by
+          rw [algProf_diagCompat_eq]; exact hcomp
+        have := q.paranatural I₀ I₁ f α β hdc
+        rw [idProf_diagCompat_eq] at this
+        exact this }
+  left_inv _ := by ext; rfl
+  right_inv _ := by ext; rfl
+
+/-- Elements of an initial F-algebra are in
+bijection with parametric families for the
+type expression `(F(X) → X) → X`. -/
+def initialAlgebraParametricEquiv
+    (F : Type ⥤ Type)
+    (μF : Endofunctor.Algebra F)
+    (hμF : Limits.IsInitial μF) :
+    μF.a ≃ ParametricFamily (algebraTypeExpr F) :=
+  (initialAlgebraParanatEquiv F μF hμF).trans
+    (algebraParametricEquivParanat F).symm
+
+theorem homProf_diagCompat_eq
+    {I₀ I₁ : Type} (f : I₀ → I₁)
+    (h : I₀ → I₀) (k : I₁ → I₁) :
+    DiagCompat HomProf I₀ I₁ f h k =
+    (f ∘ h = k ∘ f) :=
+  rfl
+
+/-- Parametric families for the dinatural type
+expression `(X → X) → (X → X)` are equivalent
+to endo-paranatural transformations of
+`HomProf`. -/
+def dinaturalParametricEquivParanat :
+    ParametricFamily dinaturalTypeExpr ≃
+    Paranat HomProf HomProf where
+  toFun p :=
+    { app := p.app
+      paranatural := fun I₀ I₁ f d₀ d₁ hdc => by
+        rw [homProf_diagCompat_eq] at hdc ⊢
+        exact (dinaturalTypeExpr_relInterp_iff
+          f (p.app I₀) (p.app I₁)).mp
+          (p.parametric I₀ I₁ f) d₀ d₁ hdc }
+  invFun q :=
+    { app := q.app
+      parametric := fun I₀ I₁ f => by
+        rw [dinaturalTypeExpr_relInterp_iff]
+        intro h k hcomp
+        have hdc : DiagCompat HomProf
+            I₀ I₁ f h k := by
+          rw [homProf_diagCompat_eq]; exact hcomp
+        have := q.paranatural I₀ I₁ f h k hdc
+        rw [homProf_diagCompat_eq] at this
+        exact this }
+  left_inv _ := by ext; rfl
+  right_inv _ := by ext; rfl
+
+/-- Natural numbers are in bijection with
+parametric families for the dinatural type
+expression `(X → X) → (X → X)`. -/
+def dinaturalNumbersParametricEquiv :
+    ℕ ≃ ParametricFamily dinaturalTypeExpr :=
+  dinaturalNumbersEquiv.trans
+    dinaturalParametricEquivParanat.symm
 
 /-- `divEndoRel f h k` is equivalent to
 `DiagCompat divHomProf I₀ I₁ f h k`, which
