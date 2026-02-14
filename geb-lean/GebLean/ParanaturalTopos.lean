@@ -2682,6 +2682,83 @@ theorem dialgebraTypeExpr_relInterp_iff
     rw [← ha]
     exact congr_fun heq a₀
 
+/-- The type expression for `(F(X) → X) → X`
+(the initial algebra / catamorphism type). -/
+def algebraTypeExpr
+    (F : Type ⥤ Type) : TypeExpr :=
+  let x := TypeExpr.leaf (𝟭 Type)
+  .arrow (.arrow (.leaf F) x) x
+
+/-- The relational interpretation of the algebra
+type expression agrees with paranaturality:
+given F-algebra morphism pairs `(α, β)` with
+`f ∘ α = β ∘ F.map f`, the conclusion is
+`f(φ₀ α) = φ₁ β`.
+
+For single-arrow sources, DiagCompat of the
+profunctor and relInterp coincide, so
+paranaturality and parametricity agree. -/
+theorem algebraTypeExpr_relInterp_iff
+    (F : Type ⥤ Type)
+    {I₀ I₁ : Type} (f : I₀ → I₁)
+    (φ₀ : (F.obj I₀ → I₀) → I₀)
+    (φ₁ : (F.obj I₁ → I₁) → I₁) :
+    (algebraTypeExpr F).relInterp f φ₀ φ₁ ↔
+    ∀ (α : F.obj I₀ → I₀)
+      (β : F.obj I₁ → I₁),
+      f ∘ α = β ∘ F.map f →
+      f (φ₀ α) = φ₁ β := by
+  simp only [algebraTypeExpr, TypeExpr.relInterp,
+    Functor.id_map]
+  constructor
+  · intro hrel α β hab
+    exact hrel α β fun a₀ a₁ ha =>
+      show f (α a₀) = β a₁ by
+        rw [← ha]; exact congr_fun hab a₀
+  · intro hpn α β hab
+    have : f ∘ α = β ∘ F.map f := by
+      ext a₀
+      exact hab a₀ (F.map f a₀) rfl
+    exact hpn α β this
+
+/-- The type expression for
+`(X → X) → (X → X)` (the dinatural number
+type). -/
+def dinaturalTypeExpr : TypeExpr :=
+  let x := TypeExpr.leaf (𝟭 Type)
+  .arrow (.arrow x x) (.arrow x x)
+
+/-- The relational interpretation of the
+dinatural type expression agrees with
+paranaturality: given endomorphism pairs
+`(h, k)` with `f ∘ h = k ∘ f`, the conclusion
+is `f ∘ φ₀ h = φ₁ k ∘ f`. -/
+theorem dinaturalTypeExpr_relInterp_iff
+    {I₀ I₁ : Type} (f : I₀ → I₁)
+    (φ₀ : (I₀ → I₀) → (I₀ → I₀))
+    (φ₁ : (I₁ → I₁) → (I₁ → I₁)) :
+    dinaturalTypeExpr.relInterp f φ₀ φ₁ ↔
+    ∀ (h : I₀ → I₀) (k : I₁ → I₁),
+      f ∘ h = k ∘ f →
+      f ∘ φ₀ h = φ₁ k ∘ f := by
+  simp only [dinaturalTypeExpr, TypeExpr.relInterp,
+    Functor.id_map]
+  constructor
+  · intro hrel h k hhk
+    ext a₀
+    exact hrel h k
+      (fun a₀' a₁' ha =>
+        show f (h a₀') = k a₁' by
+          rw [← ha]; exact congr_fun hhk a₀')
+      a₀ (f a₀) rfl
+  · intro hpn h k hhk a₀ a₁ ha
+    change f (φ₀ h a₀) = φ₁ k a₁
+    rw [← ha]
+    have : f ∘ h = k ∘ f := by
+      ext x
+      exact hhk x (f x) rfl
+    exact congr_fun (hpn h k this) a₀
+
 /-- `divEndoRel f h k` is equivalent to
 `DiagCompat divHomProf I₀ I₁ f h k`, which
 reduces to `f ∘ h = k ∘ f`. The relational
