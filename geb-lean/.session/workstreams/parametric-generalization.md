@@ -180,14 +180,29 @@ concretely. This yields reference examples for what a
 - `diagApp_algProf`: `diagApp (AlgProf F) I = (F.obj I ⟶ I)`
 - `diagApp_coalgProf`: `diagApp (CoalgProf F) I = (I ⟶ F.obj I)`
 
+##### Analysis (docs/wedge-weight-factorization-analysis.md)
+
+- General factorization characterization: for any
+  profunctor `H`, `(wedgeWeight H).obj tw` at
+  `tw = (f : A ⟶ B)` is the set of connected components
+  of factorizations of `f` through a `DiagElem(H)` morphism.
+- Surjectivity of `wedgeWeightIdentityMap` likely fails in
+  general; it may hold for specific profunctors via
+  universal properties.
+- Natural transformations to `IdProf` are determined by
+  values at identity twisted arrows.
+- Dual characterization for `cowedgeWeight`: connected
+  components of factorizations through `DiagElem(H)`
+  morphisms in the co-twisted-arrow direction.
+
 ##### Remaining for W2a
 
-- Concrete descriptions of `(wedgeWeight H).obj tw` for
-  non-identity twisted arrows `(f : A ⟶ B)` for the
-  three standard profunctors.
-- Surjectivity of `wedgeWeightIdentityMap` (showing the
-  wedge weight at identity IS exactly `diagApp H I`, not
-  just that it injects).
+- Formalize `WedgeWeightFactorization` as an explicit
+  structure and show it matches `CostructuredArrow` data.
+- Define `typeExprWeight : TypeExpr → (TwistedArrow Type ⥤ Type)`
+  recursively using `relInterp` pairs.
+- Construct comparison natural transformation
+  `typeExprWeight T → wedgeWeight (T.toProfunctor)`.
 
 #### W2b. Find a weight for ParametricFamily
 
