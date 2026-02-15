@@ -147,7 +147,7 @@ characterizes paranatural wedges this way). The question
 is whether `ParametricFamily` admits a characterization
 as weighted cones for a different weight.
 
-#### W2a. Compute wedgeWeight for standard profunctors
+#### W2a. Compute wedgeWeight for standard profunctors (in progress)
 
 Expand the `wedgeWeight` construction for the three cases
 where paranaturality gives the right answer:
@@ -160,6 +160,34 @@ In each case, determine what the twisted-arrow copresheaf
 `wedgeWeight G H : TwistedArrow C ⥤ Type v` looks like
 concretely. This yields reference examples for what a
 "correct" weight functor should produce.
+
+##### Completed results (WedgeWeightComputation.lean)
+
+- `wedgeWeightIdentityMap H I`: canonical map from
+  `diagApp H I` to `(wedgeWeight H).obj (twObjMk (𝟙 I))`
+- `wedgeWeightExtract H I`: extraction function from
+  costructured arrows over the identity twisted arrow
+  back to diagonal elements
+- `wedgeWeightExtract_canonical`: extraction sends
+  canonical arrows to their diagonal elements
+- `wedgeWeightExtract_invariant`: extraction is invariant
+  under costructured arrow morphisms (the main technical
+  lemma)
+- `wedgeWeightExtractLifted H I`: extraction lifted to
+  connected components via `Quotient.lift`
+- `wedgeWeightIdentityMap_injective`: the canonical map
+  is injective (proved via left inverse)
+- `diagApp_algProf`: `diagApp (AlgProf F) I = (F.obj I ⟶ I)`
+- `diagApp_coalgProf`: `diagApp (CoalgProf F) I = (I ⟶ F.obj I)`
+
+##### Remaining for W2a
+
+- Concrete descriptions of `(wedgeWeight H).obj tw` for
+  non-identity twisted arrows `(f : A ⟶ B)` for the
+  three standard profunctors.
+- Surjectivity of `wedgeWeightIdentityMap` (showing the
+  wedge weight at identity IS exactly `diagApp H I`, not
+  just that it injects).
 
 #### W2b. Find a weight for ParametricFamily
 
