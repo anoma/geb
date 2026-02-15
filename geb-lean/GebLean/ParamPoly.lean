@@ -1273,4 +1273,374 @@ theorem yonedaProdOverRelated_graph_iff
 
 end RelatedMorphisms
 
+section FunctorRelationLifting
+
+/-- Predicate asserting that an element `p` of
+`yonedaProdPresheaf (F.obj A) (F.obj A')` at test
+object `T` lies in the relation lifted through `F`
+from `R : YonedaProdOver A A'`.
+
+Concretely, `p = (g, h)` satisfies the predicate when
+there exist `S : C`, `e : R.left.obj (op S)`, and
+`t : T.unop ⟶ F.obj S` such that
+`t ≫ F.map r = g` and `t ≫ F.map r' = h`, where
+`r` and `r'` are the first and second projections of
+the image of `e` under `R.hom`. -/
+def functorYPOLiftPred
+    {A A' : C} (F : C ⥤ C)
+    (R : YonedaProdOver A A')
+    (T : Cᵒᵖ)
+    (p : (yonedaProdPresheaf
+      (F.obj A) (F.obj A')).obj T) :
+    Prop :=
+  ∃ (S : C)
+    (e : R.left.obj (Opposite.op S))
+    (t : T.unop ⟶ F.obj S),
+    t ≫ F.map ((R.hom ≫ yonedaProdFst A A').app
+      (Opposite.op S) e) =
+      (yonedaProdFst (F.obj A) (F.obj A')).app
+        T p ∧
+    t ≫ F.map ((R.hom ≫ yonedaProdSnd A A').app
+      (Opposite.op S) e) =
+      (yonedaProdSnd (F.obj A) (F.obj A')).app
+        T p
+
+theorem functorYPOLiftPred_map
+    {A A' : C} (F : C ⥤ C)
+    (R : YonedaProdOver A A')
+    {T' T : Cᵒᵖ} (s : T' ⟶ T)
+    {p : (yonedaProdPresheaf
+      (F.obj A) (F.obj A')).obj T'}
+    (hp : functorYPOLiftPred F R T' p) :
+    functorYPOLiftPred F R T
+      ((yonedaProdPresheaf
+        (F.obj A) (F.obj A')).map s p) := by
+  obtain ⟨S, e, t, hfst, hsnd⟩ := hp
+  refine ⟨S, e, s.unop ≫ t, ?_, ?_⟩
+  · rw [Category.assoc, hfst]; rfl
+  · rw [Category.assoc, hsnd]; rfl
+
+/-- The subtype presheaf whose elements at `T` are
+pairs `(g, h)` in
+`yonedaProdPresheaf (F.obj A) (F.obj A')` satisfying
+`functorYPOLiftPred F R T`. Functoriality follows
+from `functorYPOLiftPred_map`. -/
+def functorYPOLiftPresheaf
+    {A A' : C} (F : C ⥤ C)
+    (R : YonedaProdOver A A') :
+    Cᵒᵖ ⥤ Type v where
+  obj T := { p : (yonedaProdPresheaf
+    (F.obj A) (F.obj A')).obj T //
+    functorYPOLiftPred F R T p }
+  map s x := ⟨(yonedaProdPresheaf
+    (F.obj A) (F.obj A')).map s x.val,
+    functorYPOLiftPred_map F R s x.property⟩
+  map_id T := by
+    ext ⟨x, hx⟩
+    simp
+  map_comp s t := by
+    ext ⟨x, hx⟩
+    simp [FunctorToTypes.map_comp_apply]
+
+/-- The forgetful natural transformation from the
+subtype presheaf `functorYPOLiftPresheaf F R` to
+`yonedaProdPresheaf (F.obj A) (F.obj A')`. -/
+def functorYPOLiftProj
+    {A A' : C} (F : C ⥤ C)
+    (R : YonedaProdOver A A') :
+    functorYPOLiftPresheaf F R ⟶
+      yonedaProdPresheaf (F.obj A) (F.obj A') where
+  app _ x := x.val
+  naturality _ _ _ := rfl
+
+/-- Lifting a relation `R : YonedaProdOver A A'`
+through an endofunctor `F : C ⥤ C`. The underlying
+presheaf consists of pairs `(g, h)` in
+`yoneda(F A) × yoneda(F A')` that factor through
+`F` applied to a witness span from `R`. -/
+def functorYPOLift
+    {A A' : C} (F : C ⥤ C)
+    (R : YonedaProdOver A A') :
+    YonedaProdOver (F.obj A) (F.obj A') :=
+  Over.mk (functorYPOLiftProj F R)
+
+/-- For graph relations, the lifted predicate forces
+the second component to equal the first composed with
+`F.map f`. -/
+theorem functorYPOLiftPred_graph_snd
+    {A A' : C} (F : C ⥤ C) (f : A ⟶ A')
+    (T : Cᵒᵖ)
+    (p : (yonedaProdPresheaf
+      (F.obj A) (F.obj A')).obj T)
+    (hp : functorYPOLiftPred F
+      (yonedaProdOverGraph f) T p) :
+    (yonedaProdSnd (F.obj A) (F.obj A')).app T p =
+      (yonedaProdFst (F.obj A) (F.obj A')).app
+        T p ≫ F.map f := by
+  obtain ⟨S, e, t, hfst, hsnd⟩ := hp
+  simp only [yonedaProdOverGraph_fst] at hfst
+  simp only [yonedaProdOverGraph_snd] at hsnd
+  rw [← hsnd, ← hfst, Category.assoc, ← F.map_comp]
+  simp [yoneda]
+
+/-- For any `g : T.unop ⟶ F.obj A`, the pair
+`(g, g ≫ F.map f)` satisfies the lifted predicate
+for the graph of `f`, witnessed by
+`S = A, e = 𝟙 A, t = g`. -/
+theorem functorYPOLiftPred_graph_inv
+    {A A' : C} (F : C ⥤ C) (f : A ⟶ A')
+    (T : Cᵒᵖ)
+    (g : (yoneda.obj (F.obj A)).obj T) :
+    functorYPOLiftPred F (yonedaProdOverGraph f) T
+      ((yonedaProdLift (F.obj A) (F.obj A')
+        (𝟙 (yoneda.obj (F.obj A)))
+        (yoneda.map (F.map f))).app T g) := by
+  refine ⟨A, 𝟙 A, g, ?_, ?_⟩
+  · simp [yoneda, F.map_id]
+  · simp [yoneda]
+
+/-- The presheaf underlying
+`functorYPOLift F (yonedaProdOverGraph f)` is
+naturally isomorphic to `yoneda.obj (F.obj A)`:
+the lifted graph relation is representable. -/
+def functorYPOLiftPresheaf_graphIso
+    {A A' : C} (F : C ⥤ C) (f : A ⟶ A') :
+    functorYPOLiftPresheaf F
+      (yonedaProdOverGraph f) ≅
+      yoneda.obj (F.obj A) :=
+  NatIso.ofComponents
+    (fun T => {
+      hom := fun ⟨p, _⟩ =>
+        (yonedaProdFst (F.obj A) (F.obj A')).app
+          T p
+      inv := fun g =>
+        ⟨(yonedaProdLift (F.obj A) (F.obj A')
+          (𝟙 (yoneda.obj (F.obj A)))
+          (yoneda.map (F.map f))).app T g,
+        functorYPOLiftPred_graph_inv F f T g⟩
+      hom_inv_id := by
+        ext ⟨p, hp⟩
+        simp only [types_comp_apply, types_id_apply]
+        exact Subtype.ext (Prod.ext rfl
+          (functorYPOLiftPred_graph_snd
+            F f T p hp).symm)
+      inv_hom_id := by
+        ext g
+        simp [types_comp_apply, types_id_apply]
+    })
+    (by intro T' T s; ext ⟨p, hp⟩; rfl)
+
+/-- The lifted graph relation in the Over category is
+isomorphic to the graph of `F.map f`. -/
+def functorYPOLift_graphIso
+    {A A' : C} (F : C ⥤ C) (f : A ⟶ A') :
+    functorYPOLift F (yonedaProdOverGraph f) ≅
+      yonedaProdOverGraph (F.map f) :=
+  Over.isoMk
+    (functorYPOLiftPresheaf_graphIso F f)
+    (by
+      ext T ⟨p, hp⟩
+      exact Prod.ext rfl
+        (functorYPOLiftPred_graph_snd
+          F f T p hp).symm)
+
+/-- The lifted predicate is preserved by Over
+morphisms: if `φ : R₁ ⟶ R₂` and
+`functorYPOLiftPred F R₁ T p`, then
+`functorYPOLiftPred F R₂ T p`.
+The witness `(S, e, t)` transforms to
+`(S, φ.left.app (op S) e, t)`. -/
+theorem functorYPOLiftPred_of_over_hom
+    {A A' : C} (F : C ⥤ C)
+    {R₁ R₂ : YonedaProdOver A A'}
+    (φ : R₁ ⟶ R₂)
+    (T : Cᵒᵖ)
+    (p : (yonedaProdPresheaf
+      (F.obj A) (F.obj A')).obj T)
+    (hp : functorYPOLiftPred F R₁ T p) :
+    functorYPOLiftPred F R₂ T p := by
+  obtain ⟨S, e, t, hfst, hsnd⟩ := hp
+  have hR := Over.w φ
+  have hR_fst :
+      (R₂.hom ≫ yonedaProdFst A A').app
+        (Opposite.op S)
+        (φ.left.app (Opposite.op S) e) =
+      (R₁.hom ≫ yonedaProdFst A A').app
+        (Opposite.op S) e := by
+    change ((φ.left ≫ R₂.hom) ≫
+      yonedaProdFst A A').app
+        (Opposite.op S) e = _
+    rw [hR]
+  have hR_snd :
+      (R₂.hom ≫ yonedaProdSnd A A').app
+        (Opposite.op S)
+        (φ.left.app (Opposite.op S) e) =
+      (R₁.hom ≫ yonedaProdSnd A A').app
+        (Opposite.op S) e := by
+    change ((φ.left ≫ R₂.hom) ≫
+      yonedaProdSnd A A').app
+        (Opposite.op S) e = _
+    rw [hR]
+  exact ⟨S, φ.left.app (Opposite.op S) e, t,
+    by rw [hR_fst, hfst],
+    by rw [hR_snd, hsnd]⟩
+
+/-- `functorYPOLift F` preserves isomorphisms in the
+Over category: if `R₁ ≅ R₂`, then
+`functorYPOLift F R₁ ≅ functorYPOLift F R₂`.
+The underlying element is unchanged; only the
+predicate proof is transported. -/
+def functorYPOLift_iso
+    {A A' : C} (F : C ⥤ C)
+    {R₁ R₂ : YonedaProdOver A A'}
+    (α : R₁ ≅ R₂) :
+    functorYPOLift F R₁ ≅
+      functorYPOLift F R₂ :=
+  Over.isoMk
+    (NatIso.ofComponents
+      (fun T => {
+        hom := fun ⟨p, hp⟩ =>
+          ⟨p, functorYPOLiftPred_of_over_hom
+            F α.hom T p hp⟩
+        inv := fun ⟨p, hp⟩ =>
+          ⟨p, functorYPOLiftPred_of_over_hom
+            F α.inv T p hp⟩
+        hom_inv_id := by ext; rfl
+        inv_hom_id := by ext; rfl
+      })
+      (by intros; ext; rfl))
+    (by ext; rfl)
+
+/-- Lifting a relation from `YonedaRel A A'`
+through an endofunctor `F : C ⥤ C`. Descends through
+the skeleton quotient using `Skeleton.lift` and
+`functorYPOLift_iso` for well-definedness. -/
+def functorYonedaRelLift
+    {A A' : C} (F : C ⥤ C)
+    (R : YonedaRel A A') :
+    YonedaRel (F.obj A) (F.obj A') :=
+  Skeleton.lift
+    (fun R' => toSkeleton _ (functorYPOLift F R'))
+    (fun _ _ ⟨α⟩ =>
+      toSkeleton_eq_iff.mpr
+        ⟨functorYPOLift_iso F α⟩) R
+
+/-- Lifting the graph of `f` through `F` yields the
+graph of `F.map f`. -/
+theorem functorYonedaRelLift_graph
+    {A A' : C} (F : C ⥤ C) (f : A ⟶ A') :
+    functorYonedaRelLift F (yonedaRelGraph f) =
+      yonedaRelGraph (F.map f) :=
+  toSkeleton_eq_iff.mpr
+    ⟨functorYPOLift_graphIso F f⟩
+
+/-- The lifted predicate for `S` is satisfied by
+`yonedaProdMap (F.map f) (F.map f')` applied to an
+element satisfying the predicate for `R`, given a
+lift `φ : R.left ⟶ S.left` witnessing
+`YonedaProdOverRelated R S f f'`. -/
+theorem functorYPOLiftPred_related_map
+    {A A' B B' : C} (F : C ⥤ C)
+    {R : YonedaProdOver A A'}
+    {S : YonedaProdOver B B'}
+    {f : A ⟶ B} {f' : A' ⟶ B'}
+    (φ : R.left ⟶ S.left)
+    (hφ : φ ≫ S.hom =
+      R.hom ≫ yonedaProdMap f f')
+    (T : Cᵒᵖ)
+    (p : (yonedaProdPresheaf
+      (F.obj A) (F.obj A')).obj T)
+    (hp : functorYPOLiftPred F R T p) :
+    functorYPOLiftPred F S T
+      ((yonedaProdMap (F.map f)
+        (F.map f')).app T p) := by
+  obtain ⟨S₀, e, t, hfst, hsnd⟩ := hp
+  refine ⟨S₀, φ.app (Opposite.op S₀) e,
+    t, ?_, ?_⟩
+  · have hkey :
+        (S.hom ≫ yonedaProdFst B B').app
+          (Opposite.op S₀)
+          (φ.app (Opposite.op S₀) e) =
+        (R.hom ≫ yonedaProdFst A A').app
+          (Opposite.op S₀) e ≫ f := by
+      change ((φ ≫ S.hom) ≫
+        yonedaProdFst B B').app
+          (Opposite.op S₀) e = _
+      rw [hφ]
+      simp only [Category.assoc,
+        yonedaProdMap_fst]
+      rfl
+    rw [hkey, F.map_comp,
+      ← Category.assoc, hfst]
+    rfl
+  · have hkey :
+        (S.hom ≫ yonedaProdSnd B B').app
+          (Opposite.op S₀)
+          (φ.app (Opposite.op S₀) e) =
+        (R.hom ≫ yonedaProdSnd A A').app
+          (Opposite.op S₀) e ≫ f' := by
+      change ((φ ≫ S.hom) ≫
+        yonedaProdSnd B B').app
+          (Opposite.op S₀) e = _
+      rw [hφ]
+      simp only [Category.assoc,
+        yonedaProdMap_snd]
+      rfl
+    rw [hkey, F.map_comp,
+      ← Category.assoc, hsnd]
+    rfl
+
+/-- `functorYPOLift` preserves 2-cell relatedness:
+if morphisms `(f, f')` are `(R, S)`-related, then
+`(F.map f, F.map f')` are
+`(functorYPOLift F R, functorYPOLift F S)`-related. -/
+theorem functorYPOLift_related
+    {A A' B B' : C} (F : C ⥤ C)
+    {R : YonedaProdOver A A'}
+    {S : YonedaProdOver B B'}
+    {f : A ⟶ B} {f' : A' ⟶ B'}
+    (h : YonedaProdOverRelated R S f f') :
+    YonedaProdOverRelated
+      (functorYPOLift F R)
+      (functorYPOLift F S)
+      (F.map f) (F.map f') := by
+  obtain ⟨φ, hφ⟩ := h
+  refine ⟨{
+    app := fun T ⟨p, hp⟩ =>
+      ⟨(yonedaProdMap (F.map f)
+        (F.map f')).app T p,
+      functorYPOLiftPred_related_map
+        F φ hφ T p hp⟩
+    naturality := by
+      intro T' T s
+      ext ⟨p, hp⟩
+      refine Subtype.ext ?_
+      exact congr_fun
+        ((yonedaProdMap (F.map f)
+          (F.map f')).naturality s) p
+  }, ?_⟩
+  ext T ⟨p, hp⟩
+  rfl
+
+/-- `functorYPOLift_related` descends through the
+skeleton quotient: if `f` and `f'` are
+`(R, S)`-related at the `YonedaRel` level,
+then `F.map f` and `F.map f'` are
+`(functorYonedaRelLift F R,
+functorYonedaRelLift F S)`-related. -/
+theorem functorYonedaRelLift_related
+    {A A' B B' : C} (F : C ⥤ C)
+    {f : A ⟶ B} {f' : A' ⟶ B'}
+    {R : YonedaRel A A'} {S : YonedaRel B B'}
+    (h : relRelated f f' R S) :
+    relRelated (F.map f) (F.map f')
+      (functorYonedaRelLift F R)
+      (functorYonedaRelLift F S) := by
+  revert h
+  refine Quotient.inductionOn₂ R S ?_
+  intro R₀ S₀ h
+  exact functorYPOLift_related F h
+
+end FunctorRelationLifting
+
 end GebLean
