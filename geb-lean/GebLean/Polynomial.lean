@@ -8,6 +8,7 @@ import GebLean.Utilities.Category
 import GebLean.Utilities.Equalities
 import GebLean.Utilities.Families
 import GebLean.Utilities.Skeleton
+import GebLean.Utilities.DoubleCategory
 import GebLean.Utilities.Slice
 
 /-!
@@ -5411,7 +5412,8 @@ Maps `⟨⟨y₀, hy₀⟩, i⟩ : polyPushoutIndex id f y` to an index of
 `f y` by transporting `i` along `hy₀ : id y₀ = y`.
 -/
 def polyCellVIdBase
-    (f : PolyFunctorBetweenCat X X) (y : X)
+    {X Y : Type u}
+    (f : PolyFunctorBetweenCat X Y) (y : Y)
     (p : polyPushoutIndex id f y) : ccrIndex (f y) :=
   p.1.prop ▸ p.2
 
@@ -5419,7 +5421,8 @@ def polyCellVIdBase
 The on-directions map of the vertical identity 2-cell at `y`.
 -/
 def polyCellVIdFiber
-    (f : PolyFunctorBetweenCat X X) (y : X)
+    {X Y : Type u}
+    (f : PolyFunctorBetweenCat X Y) (y : Y)
     (p : polyPushoutIndex id f y) :
     ccrFamily (f y) (polyCellVIdBase f y p) ⟶
       polyPushoutFamily id id f y p := by
@@ -5433,7 +5436,8 @@ When both vertical morphisms are identity functions, there is a
 canonical 2-cell from `polyPushout id id f` to `f`.
 -/
 def polyCellVId
-    (f : PolyFunctorBetweenCat X X) :
+    {X Y : Type u}
+    (f : PolyFunctorBetweenCat X Y) :
     PolyCell id id f f := fun y =>
   ccrHomMk (polyCellVIdBase f y) (polyCellVIdFiber f y)
 
@@ -5480,6 +5484,377 @@ def polyCellHId
   ccrHomMk (polyCellHIdBase bcw x')
     (polyCellHIdFiber bcw x')
 
+/-! #### Vertical composition of 2-cells
+
+Given `alpha : PolyCell bcl bcr f g` and
+`beta : PolyCell bcl' bcr' g h`, vertical composition produces
+`PolyCell (bcl' ∘ bcl) (bcr' ∘ bcr) f h`.
+-/
+
+section PolyCellVComp
+
+variable {X X' X'' Y Y' Y'' : Type u}
+variable {bcl : X → X'} {bcl' : X' → X''}
+variable {bcr : Y → Y'} {bcr' : Y' → Y''}
+variable {f : PolyFunctorBetweenCat X Y}
+variable {g : PolyFunctorBetweenCat X' Y'}
+variable {h : PolyFunctorBetweenCat X'' Y''}
+
+/--
+The on-positions map of the vertical composite 2-cell.
+
+Given a pushout position `⟨⟨y, hy⟩, i⟩` of `f` at `y''`, first
+apply `alpha` to get a position of `g` at `bcr y`, then apply
+`beta` to get a position of `h` at `bcr' (bcr y) = y''`.
+-/
+def polyCellVCompBase
+    (beta : PolyCell bcl' bcr' g h)
+    (alpha : PolyCell bcl bcr f g) (y'' : Y'')
+    (p : polyPushoutIndex (bcr' ∘ bcr) f y'') :
+    ccrIndex (h y'') := by
+  obtain ⟨⟨y, rfl⟩, i⟩ := p
+  let alphaIdx := ccrReindex (alpha (bcr y))
+    (⟨⟨y, rfl⟩, i⟩ : polyPushoutIndex bcr f (bcr y))
+  exact ccrReindex (beta (bcr' (bcr y)))
+    (⟨⟨bcr y, rfl⟩, alphaIdx⟩ :
+      polyPushoutIndex bcr' g (bcr' (bcr y)))
+
+/--
+The on-directions map of the vertical composite 2-cell.
+
+The fiber morphism composes the underlying `.left` functions of
+the `alpha` and `beta` fiber morphisms. Since `alpha` is a morphism
+in `Over X'` and `beta` in `Over X''`, we compose at the level of
+underlying functions and verify the `Over X''` commutativity.
+-/
+def polyCellVCompFiber
+    (beta : PolyCell bcl' bcr' g h)
+    (alpha : PolyCell bcl bcr f g) (y'' : Y'')
+    (p : polyPushoutIndex (bcr' ∘ bcr) f y'') :
+    ccrFamily (h y'') (polyCellVCompBase beta alpha y'' p) ⟶
+      polyPushoutFamily (bcl' ∘ bcl) (bcr' ∘ bcr)
+        f y'' p := by
+  obtain ⟨⟨y, rfl⟩, i⟩ := p
+  let pf : polyPushoutIndex bcr f (bcr y) := ⟨⟨y, rfl⟩, i⟩
+  let alphaIdx := ccrReindex (alpha (bcr y)) pf
+  let pg : polyPushoutIndex bcr' g (bcr' (bcr y)) :=
+    ⟨⟨bcr y, rfl⟩, alphaIdx⟩
+  let betaFib := ccrFiberMor (beta (bcr' (bcr y))) pg
+  let alphaFib := ccrFiberMor (alpha (bcr y)) pf
+  refine Over.homMk (alphaFib.left ∘ betaFib.left) ?_
+  funext e
+  have hb := congrFun (Over.w betaFib) e
+  have ha := congrFun (Over.w alphaFib) (betaFib.left e)
+  simp only [types_comp_apply] at hb ha
+  change bcl (((f y).fiber i).hom
+    (alphaFib.left (betaFib.left e))) =
+    ((g (bcr y)).fiber alphaIdx).hom
+      (betaFib.left e) at ha
+  change bcl' (((g (bcr y)).fiber alphaIdx).hom
+    (betaFib.left e)) =
+    ((h (bcr' (bcr y))).fiber
+      (ccrReindex (beta (bcr' (bcr y))) pg)).hom e at hb
+  simp only [types_comp_apply, Function.comp_apply]
+  dsimp only [polyPushoutFamily, ccrFamily, polyPushout,
+    ccrObjMk, Over.mk_hom]
+  unfold Function.comp
+  rw [ha, hb]
+  rfl
+
+/--
+Vertical composition of 2-cells.
+
+Given `alpha : PolyCell bcl bcr f g` and
+`beta : PolyCell bcl' bcr' g h`, produces
+`PolyCell (bcl' ∘ bcl) (bcr' ∘ bcr) f h`.
+-/
+def polyCellVComp
+    (beta : PolyCell bcl' bcr' g h)
+    (alpha : PolyCell bcl bcr f g) :
+    PolyCell (bcl' ∘ bcl) (bcr' ∘ bcr) f h :=
+  fun y'' => ccrHomMk
+    (polyCellVCompBase beta alpha y'')
+    (polyCellVCompFiber beta alpha y'')
+
+end PolyCellVComp
+
+/-! #### Horizontal composition of 2-cells
+
+Given `alpha : PolyCell bcw bcx f g` (left square) and
+`beta : PolyCell bcx bcz f' g'` (right square), horizontal
+composition produces
+`PolyCell bcw bcz (polyBetweenComp f' f) (polyBetweenComp g' g)`.
+
+```
+  X ──f──▶ W ──f'──▶ Z
+  │        │         │
+  bcw      bcx       bcz
+  ▼        ▼         ▼
+  X' ─g──▶ W' ─g'──▶ Z'
+```
+-/
+
+section PolyCellHComp
+
+variable {X X' W W' Z Z' : Type u}
+variable {bcw : X → X'} {bcx : W → W'} {bcz : Z → Z'}
+variable {f : PolyFunctorBetweenCat X W}
+variable {f' : PolyFunctorBetweenCat W Z}
+variable {g : PolyFunctorBetweenCat X' W'}
+variable {g' : PolyFunctorBetweenCat W' Z'}
+
+/--
+The on-positions map of the horizontal composite 2-cell.
+
+Given a position `⟨⟨z, _⟩, ⟨ig', ef⟩⟩` of the pushout of the
+composite `polyBetweenComp f' f`:
+
+1. Apply `beta` to get `ig_g'` = a position of `g'` at `z'`
+2. For each direction `e'` of `g'` at `ig_g'`, apply `beta`'s
+   fiber map to get a direction of `f'`, then use `ef` to get a
+   position of `f`, then apply `alpha` to get a position of `g`
+-/
+def polyCellHCompBase
+    (beta : PolyCell bcx bcz f' g')
+    (alpha : PolyCell bcw bcx f g) (z' : Z')
+    (p : polyPushoutIndex bcz (polyBetweenComp f' f) z') :
+    ccrIndex (polyBetweenComp g' g z') := by
+  obtain ⟨⟨z, rfl⟩, ig', ef⟩ := p
+  let pbeta : polyPushoutIndex bcz f' (bcz z) :=
+    ⟨⟨z, rfl⟩, ig'⟩
+  let ig_g' := ccrReindex (beta (bcz z)) pbeta
+  refine ⟨ig_g', fun e' => ?_⟩
+  let betaFib := ccrFiberMor (beta (bcz z)) pbeta
+  let betaDir := betaFib.left e'
+  let w : W := (ccrFamily (f' z) ig').hom betaDir
+  have hw : bcx w =
+      (ccrFamily (g' (bcz z)) ig_g').hom e' := by
+    have h := congrFun (Over.w betaFib) e'
+    simp only [types_comp_apply] at h
+    exact h
+  let palpha : polyPushoutIndex bcx f
+      ((ccrFamily (g' (bcz z)) ig_g').hom e') :=
+    ⟨⟨w, hw⟩, ef betaDir⟩
+  exact ccrReindex (alpha _) palpha
+
+/--
+The on-directions map of the horizontal composite 2-cell.
+-/
+def polyCellHCompFiber
+    (beta : PolyCell bcx bcz f' g')
+    (alpha : PolyCell bcw bcx f g) (z' : Z')
+    (p : polyPushoutIndex bcz (polyBetweenComp f' f) z') :
+    ccrFamily (polyBetweenComp g' g z')
+        (polyCellHCompBase beta alpha z' p) ⟶
+      polyPushoutFamily bcw bcz
+        (polyBetweenComp f' f) z' p := by
+  obtain ⟨⟨z, rfl⟩, ig', ef⟩ := p
+  let pbeta : polyPushoutIndex bcz f' (bcz z) :=
+    ⟨⟨z, rfl⟩, ig'⟩
+  let ig_g' := ccrReindex (beta (bcz z)) pbeta
+  let betaFib := ccrFiberMor (beta (bcz z)) pbeta
+  refine Over.homMk ?func ?proof
+  case func =>
+    intro ⟨eg', eg⟩
+    let betaDir := betaFib.left eg'
+    let w : W := (ccrFamily (f' z) ig').hom betaDir
+    have hw : bcx w =
+        (ccrFamily (g' (bcz z)) ig_g').hom eg' := by
+      have h := congrFun (Over.w betaFib) eg'
+      simp only [types_comp_apply] at h
+      exact h
+    let palpha : polyPushoutIndex bcx f
+        ((ccrFamily (g' (bcz z)) ig_g').hom eg') :=
+      ⟨⟨w, hw⟩, ef betaDir⟩
+    let alphaFib := ccrFiberMor (alpha _) palpha
+    exact ⟨betaDir, alphaFib.left eg⟩
+  case proof =>
+    funext ⟨eg', eg⟩
+    simp only [types_comp_apply]
+    dsimp only [polyPushoutFamily, polyBetweenComp,
+      polyBetweenCompFamily, ccrFamily, ccrObjMk,
+      Over.mk_hom]
+    let betaDir := betaFib.left eg'
+    let w := (ccrFamily (f' z) ig').hom betaDir
+    have hw : bcx w =
+        (ccrFamily (g' (bcz z)) ig_g').hom eg' := by
+      have h := congrFun (Over.w betaFib) eg'
+      simp only [types_comp_apply] at h
+      exact h
+    let palpha : polyPushoutIndex bcx f
+        ((ccrFamily (g' (bcz z)) ig_g').hom eg') :=
+      ⟨⟨w, hw⟩, ef betaDir⟩
+    let alphaFib := ccrFiberMor (alpha _) palpha
+    have ha := congrFun (Over.w alphaFib) eg
+    simp only [types_comp_apply] at ha
+    dsimp only [polyPushoutFamily, ccrFamily, polyPushout,
+      ccrObjMk, Over.mk_hom, Subtype.val] at ha
+    exact ha
+
+/--
+Horizontal composition of 2-cells.
+
+Given `alpha : PolyCell bcw bcx f g` (left square) and
+`beta : PolyCell bcx bcz f' g'` (right square), produces
+`PolyCell bcw bcz (polyBetweenComp f' f) (polyBetweenComp g' g)`.
+-/
+def polyCellHComp
+    (beta : PolyCell bcx bcz f' g')
+    (alpha : PolyCell bcw bcx f g) :
+    PolyCell bcw bcz (polyBetweenComp f' f)
+      (polyBetweenComp g' g) :=
+  fun z' => ccrHomMk
+    (polyCellHCompBase beta alpha z')
+    (polyCellHCompFiber beta alpha z')
+
+end PolyCellHComp
+
 end PolyCells
+
+/-! ### Polynomial Double Category
+
+Strict double category structure on polynomial functors, with:
+
+- Objects: `Type u`
+- Vertical morphisms: functions
+- Horizontal morphisms: `PolyHorizontalHom` (isomorphism classes)
+- Squares: `Prop`-valued (existence of a concrete 2-cell)
+-/
+
+section PolyDoubleCategory
+
+/--
+The square type for the polynomial double category.
+
+A square exists between vertical morphisms `bcl, bcr` and
+horizontal morphisms `fq, gq` (in `PolyHorizontalHom`) when
+for all representatives `f, g` of the equivalence classes
+`fq, gq`, there exists a concrete 2-cell
+`PolyCell bcl bcr f g`.
+-/
+def polyDoubleSqs : @SquareSet (Type u)
+    (fun X Y => X → Y)
+    (fun X Y => PolyHorizontalHom X Y) :=
+  fun {_A _B _C _D} (bcl : _A → _C)
+    (bcr : _B → _D)
+    (fq : PolyHorizontalHom _A _B)
+    (gq : PolyHorizontalHom _C _D) =>
+  ∃ (f : PolyFunctorBetweenCat _A _B)
+    (g : PolyFunctorBetweenCat _C _D),
+    toSkeleton _ f = fq ∧
+    toSkeleton _ g = gq ∧
+    Nonempty (PolyCell bcl bcr f g)
+
+lemma polyHorizComp_mk
+    {X Y Z : Type u}
+    (f : PolyFunctorBetweenCat X Y)
+    (g : PolyFunctorBetweenCat Y Z) :
+    polyHorizComp
+      (toSkeleton _ f) (toSkeleton _ g) =
+    toSkeleton _
+      (polyBetweenComp g f) := rfl
+
+/--
+Operations for the polynomial double category.
+-/
+def polyDoubleOps : @DoubleCategoryOps (Type u)
+    (fun X Y => X → Y)
+    (fun X Y => PolyHorizontalHom X Y)
+    polyDoubleSqs where
+  vComp f g := g ∘ f
+  hComp := polyHorizComp
+  vId _ := id
+  hId := polyHorizId
+  sqVComp := fun {_A _B _C _D _E _F}
+      {v₁} {v₂} {v₁'} {v₂'} {h₁} {h₂} {h₃}
+      α β => by
+    obtain ⟨f₀, g₀, hf₀, hg₀, ⟨c₁⟩⟩ := α
+    obtain ⟨g₁, h₀, hg₁, hh₀, ⟨c₂⟩⟩ := β
+    have hiso : Nonempty (g₀ ≅ g₁) :=
+      toSkeleton_eq_iff.mp (hg₀.trans hg₁.symm)
+    obtain ⟨iso⟩ := hiso
+    exact ⟨f₀, h₀, hf₀, hh₀,
+      ⟨polyCellVComp c₂ (c₁ ≫ iso.hom)⟩⟩
+  sqHComp := fun {_A _B _C _D _E _F}
+      {v₁} {v₂} {v₃} {h₁} {h₂} {h₃} {h₄}
+      α β => by
+    obtain ⟨f₀, g₀, hf₀, hg₀, ⟨c₁⟩⟩ := α
+    obtain ⟨f'₀, g'₀, hf'₀, hg'₀, ⟨c₂⟩⟩ := β
+    refine ⟨polyBetweenComp f'₀ f₀,
+      polyBetweenComp g'₀ g₀, ?_, ?_,
+      ⟨polyCellHComp c₂ c₁⟩⟩
+    · rw [← hf₀, ← hf'₀]; rfl
+    · rw [← hg₀, ← hg'₀]; rfl
+  sqVertId := fun {_A _B} hq => by
+    obtain ⟨f₀, rfl⟩ :=
+      Quotient.exists_rep (s := isIsomorphicSetoid _)
+        hq
+    exact ⟨f₀, f₀, rfl, rfl,
+      ⟨polyCellVId f₀⟩⟩
+  sqHorId := fun {_A _C} v =>
+    ⟨polyBetweenId _A, polyBetweenId _C,
+      rfl, rfl, ⟨polyCellHId v⟩⟩
+
+/--
+Laws for the polynomial double category.
+
+The vertical category laws hold because function composition
+is definitionally associative and unital. The horizontal
+category laws are `polyHorizComp_assoc`,
+`polyHorizComp_id_left`, and `polyHorizComp_id_right`.
+All square laws hold because the square type
+`polyDoubleSqs` is `Prop`-valued, so elements of the same
+proposition are equal by proof irrelevance.
+-/
+theorem polyDoubleLaws :
+    DoubleCategoryLaws polyDoubleOps where
+  vertLaws := {
+    assoc := fun _ _ _ => rfl
+    id_laws := {
+      id_comp := fun _ => rfl
+      comp_id := fun _ => rfl
+    }
+  }
+  horLaws := {
+    assoc := polyHorizComp_assoc
+    id_laws := {
+      id_comp := polyHorizComp_id_left
+      comp_id := polyHorizComp_id_right
+    }
+  }
+  sqLaws := {
+    sqVAssoc := fun _ _ _ =>
+      proof_irrel_heq _ _
+    sqHAssoc := fun _ _ _ =>
+      proof_irrel_heq _ _
+    sqVIdComp := fun _ =>
+      proof_irrel_heq _ _
+    sqVCompId := fun _ =>
+      proof_irrel_heq _ _
+    sqHIdComp := fun _ =>
+      proof_irrel_heq _ _
+    sqHCompId := fun _ =>
+      proof_irrel_heq _ _
+    interchange := fun _ _ _ _ =>
+      Subsingleton.elim _ _
+    vertIdVComp := fun _ _ =>
+      Subsingleton.elim _ _
+    horIdHComp := fun _ _ =>
+      Subsingleton.elim _ _
+    idOnId := fun _ =>
+      Subsingleton.elim _ _
+  }
+
+/--
+The polynomial double category: operations and laws bundled.
+-/
+def polyDoubleData : DoubleCategoryData (Type u)
+    (fun X Y => X → Y)
+    (fun X Y => PolyHorizontalHom X Y)
+    polyDoubleSqs where
+  toDoubleCategoryOps := polyDoubleOps
+  laws := polyDoubleLaws
+
+end PolyDoubleCategory
 
 end GebLean

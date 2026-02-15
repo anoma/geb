@@ -2,7 +2,7 @@
 
 ## Status
 
-Active
+Complete (Phases 1-4)
 
 ## Context
 
@@ -76,36 +76,36 @@ The Idris implementation is in `.claude/docs/SlicePolyCat.idr`:
 
 ### Phase 1: Pushout and 2-cell definitions
 
-- [ ] Define `polyPushout bcl bcr f` (pushforward of polynomial along
+- [x] Define `polyPushout bcl bcr f` (pushforward of polynomial along
       domain/codomain functions); corresponds to `spfPushout` in Idris
-- [ ] Define `PolyCell bcl bcr f g` (2-cell as morphism from pushout
+- [x] Define `PolyCell bcl bcr f g` (2-cell as morphism from pushout
       to target); corresponds to `SPFpoCell`
 
 ### Phase 2: Concrete 2-cell operations
 
-- [ ] Define `polyCellVId f` (vertical identity: cell with both
+- [x] Define `polyCellVId f` (vertical identity: cell with both
       vertical morphisms = id); corresponds to `spocVid`
-- [ ] Define `polyCellHId bcw` (horizontal identity: cell with both
+- [x] Define `polyCellHId bcw` (horizontal identity: cell with both
       horizontal morphisms = polyBetweenId); corresponds to `spocHid`
-- [ ] Define `polyCellVComp` (vertical composition of cells);
+- [x] Define `polyCellVComp` (vertical composition of cells);
       corresponds to `spocVcomp`
-- [ ] Define `polyCellHComp` (horizontal composition of cells);
+- [x] Define `polyCellHComp` (horizontal composition of cells);
       corresponds to `spocHcomp`
 
 ### Phase 3: DoubleCategoryOps
 
-- [ ] Define the `Prop`-valued square type on `PolyHorizontalHom`
+- [x] Define the `Prop`-valued square type on `PolyHorizontalHom`
       (lifting through the skeleton quotient)
-- [ ] Define `polyDoubleCatOps : DoubleCategoryOps (Type u)
+- [x] Define `polyDoubleOps : DoubleCategoryOps (Type u)
       (fun X Y => X -> Y) (fun X Y => PolyHorizontalHom X Y) sqs`
 
 ### Phase 4: DoubleCategoryLaws
 
-- [ ] Prove vertical category laws (functions: trivial)
-- [ ] Prove horizontal category laws (PolyHorizontalCat: already done)
-- [ ] Prove square laws (Prop-valued: by Subsingleton.elim or
-      proof irrelevance)
-- [ ] Assemble `DoubleCategoryData`
+- [x] Prove vertical category laws (functions: `rfl`)
+- [x] Prove horizontal category laws (`polyHorizComp_assoc` etc.)
+- [x] Prove square laws (`proof_irrel_heq` for HEq laws,
+      `Subsingleton.elim` for Eq laws)
+- [x] Assemble `polyDoubleData : DoubleCategoryData`
 
 ### Phase 5: Adjunction bijection (stretch goal)
 
@@ -140,8 +140,14 @@ difficult lemmas. The proofs in `PolyBetweenCat` and
 
 ### Proof strategy for Prop-valued squares
 
-With `Prop`-valued 2-cells (`Nonempty (PolyCell ...)`), the square
-laws reduce to showing that certain compositions preserve nonemptiness
-of cells. Associativity and identity laws hold by
-`Subsingleton.elim` (as in the `YonedaRelDouble` example), since
-`Prop` is a subsingleton type.
+With `Prop`-valued 2-cells (existentials over concrete cells), the
+square laws split into two categories:
+
+- **HEq laws** (sqVAssoc, sqHAssoc, sqVIdComp, sqVCompId, sqHIdComp,
+  sqHCompId): Use `proof_irrel_heq _ _`, which establishes
+  `HEq hp hq` for any proofs `hp : p` and `hq : q` of any two
+  propositions, via propositional extensionality and proof
+  irrelevance.
+- **Eq laws** (interchange, vertIdVComp, horIdHComp, idOnId): Use
+  `Subsingleton.elim _ _`, since both sides have the same type and
+  `Prop` is a subsingleton.
