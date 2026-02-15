@@ -132,11 +132,11 @@ theorem wedgeWeightExtract_invariant (I : C)
   dsimp at nat_eq
   rw [nat_eq, (twDomArr φ.left).compat.symm,
     ← FunctorToTypes.map_comp_apply]
-  have key :=
+  have comm :=
     congrArg (· ≫ twCodArr σ₂.hom) htw
-  dsimp at key
-  simp only [Category.assoc] at key
-  simp only [key]
+  dsimp at comm
+  simp only [Category.assoc] at comm
+  simp only [comm]
 
 /-- The extraction function lifted to connected
 components. Since the extraction is invariant under
