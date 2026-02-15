@@ -2541,6 +2541,185 @@ theorem arrowRel_graphRel_iff_yonedaRelSQS
   arrowRel_graphRel_iff_yonedaProdOverRelated
     f f' g₀ g₁
 
+/-- The presheaf encoding a `Prop`-valued binary
+relation `R : A → B → Prop` as a functor
+`Type^op ⥤ Type`. At test object `T`, an element
+is a triple `(a : T → A, b : T → B)` together
+with a proof that `∀ t, R (a t) (b t)`. The
+restriction action precomposes both function
+components with the stage-change map. -/
+def propRelPresheaf {A B : Type}
+    (R : A → B → Prop) : Typeᵒᵖ ⥤ Type where
+  obj T :=
+    { p : (T.unop → A) × (T.unop → B) //
+      ∀ t, R (p.1 t) (p.2 t) }
+  map {T T'} s p :=
+    ⟨(p.val.1 ∘ s.unop, p.val.2 ∘ s.unop),
+     fun t => p.property (s.unop t)⟩
+
+/-- Natural transformation from `propRelPresheaf R`
+to `yonedaProdPresheaf A B` that forgets the
+relation proof, retaining only the pair of
+functions. -/
+def propRelProj {A B : Type}
+    (R : A → B → Prop) :
+    propRelPresheaf R ⟶
+      yonedaProdPresheaf (C := Type) A B where
+  app T p := p.val
+
+/-- A `Prop`-valued relation `R : A → B → Prop`,
+viewed as an object of the slice category
+`Over (yonedaProdPresheaf A B)`, i.e., as
+a `YonedaProdOver A B` in `PSh(Type)`. The
+underlying presheaf is `propRelPresheaf R` and
+the structure map projects out the function
+pair, forgetting the relation proof. -/
+def propRelToYonedaProdOver {A B : Type}
+    (R : A → B → Prop) :
+    YonedaProdOver (C := Type) A B :=
+  Over.mk (propRelProj R)
+
+/-- Natural isomorphism between the presheaf
+encoding of a graph relation and the representable
+presheaf on the domain. At stage `T`, the forward
+map extracts the first component of the pair
+(the second is determined by the graph condition),
+and the inverse reconstructs the pair using
+post-composition. -/
+def propRelPresheaf_graphRel_iso
+    {X Y : Type} (f : X → Y) :
+    propRelPresheaf (graphRel f) ≅
+      yoneda.obj (C := Type) X :=
+  NatIso.ofComponents
+    (fun T => {
+      hom := fun p => p.val.1
+      inv := fun a =>
+        ⟨(a, f ∘ a), fun _ => rfl⟩
+      hom_inv_id := by
+        ext ⟨⟨a, b⟩, h⟩
+        simp only [graphRel] at h
+        exact Subtype.ext
+          (Prod.ext rfl (funext h))
+      inv_hom_id := rfl })
+    (fun _ => rfl)
+
+/-- The `YonedaProdOver` encoding of a graph
+relation `graphRel f` is isomorphic to
+`yonedaProdOverGraph f`. -/
+def propRelToYonedaProdOver_graphRel
+    {X Y : Type} (f : X → Y) :
+    propRelToYonedaProdOver (graphRel f) ≅
+      yonedaProdOverGraph (C := Type) f :=
+  Over.isoMk (propRelPresheaf_graphRel_iso f)
+    (by
+      ext T ⟨⟨a, b⟩, h⟩
+      simp only [propRelPresheaf_graphRel_iso,
+        propRelToYonedaProdOver, propRelProj,
+        yonedaProdOverGraph,
+        Over.mk_hom, NatIso.ofComponents,
+        NatTrans.comp_app,
+        FunctorToTypes.prod.lift]
+      simp only [graphRel] at h
+      exact Prod.ext rfl (funext h))
+
+/-- `arrowRel R S g₀ g₁` holds if and only if
+`YonedaProdOverRelated` holds for the presheaf
+encodings of `R` and `S`. The forward direction
+constructs a presheaf morphism from the pointwise
+condition; the reverse evaluates at `PUnit` with
+constant functions. -/
+theorem arrowRel_iff_yonedaProdOverRelated_propRel
+    {A₀ A₁ B₀ B₁ : Type}
+    (R : A₀ → A₁ → Prop)
+    (S : B₀ → B₁ → Prop)
+    (g₀ : A₀ → B₀) (g₁ : A₁ → B₁) :
+    arrowRel R S g₀ g₁ ↔
+    YonedaProdOverRelated (C := Type)
+      (propRelToYonedaProdOver R)
+      (propRelToYonedaProdOver S)
+      g₀ g₁ := by
+  constructor
+  · intro h
+    refine ⟨⟨fun T p =>
+      ⟨(g₀ ∘ p.val.1, g₁ ∘ p.val.2),
+       fun t => h _ _ (p.property t)⟩, ?_⟩,
+      ?_⟩
+    · intro T T' s
+      ext ⟨⟨a, b⟩, hr⟩
+      rfl
+    · ext T ⟨⟨a, b⟩, hr⟩
+      rfl
+  · rintro ⟨φ, hφ⟩ a₀ a₁ hr
+    let T := Opposite.op PUnit
+    let elem : (propRelPresheaf R).obj T :=
+      ⟨(fun _ => a₀, fun _ => a₁),
+       fun _ => hr⟩
+    let img := φ.app T elem
+    have hcomm :
+        img.val =
+        (propRelProj R ≫
+          yonedaProdMap (C := Type) g₀ g₁).app
+          T elem := by
+      change (φ.app T ≫
+        (propRelProj S).app T) elem =
+        ((propRelProj R).app T ≫
+        (yonedaProdMap (C := Type)
+          g₀ g₁).app T) elem
+      exact congr_fun
+        (NatTrans.congr_app hφ T) elem
+    simp only [propRelProj,
+      NatTrans.comp_app,
+      yonedaProdMap, yonedaProdLift,
+      FunctorToTypes.prod.lift,
+      yonedaProdFst, yonedaProdSnd,
+      FunctorToTypes.prod.fst,
+      FunctorToTypes.prod.snd] at hcomm
+    have h₁ : img.val.1 () = g₀ a₀ :=
+      congr_fun (congr_arg Prod.fst hcomm) ()
+    have h₂ : img.val.2 () = g₁ a₁ :=
+      congr_fun (congr_arg Prod.snd hcomm) ()
+    exact h₁ ▸ h₂ ▸ img.property ()
+
+/-- A `Prop`-valued relation `R : A → B → Prop`,
+viewed as a `YonedaRel` (isomorphism class of
+`YonedaProdOver` objects). -/
+def propRelToYonedaRel {A B : Type}
+    (R : A → B → Prop) :
+    YonedaRel (C := Type) A B :=
+  toSkeleton _ (propRelToYonedaProdOver R)
+
+/-- `arrowRel R S g₀ g₁` holds iff the presheaf
+encodings of `R` and `S` are `relRelated` in the
+`YonedaRel` framework. -/
+theorem arrowRel_iff_relRelated_propRel
+    {A₀ A₁ B₀ B₁ : Type}
+    (R : A₀ → A₁ → Prop)
+    (S : B₀ → B₁ → Prop)
+    (g₀ : A₀ → B₀) (g₁ : A₁ → B₁) :
+    arrowRel R S g₀ g₁ ↔
+    relRelated (C := Type) g₀ g₁
+      (propRelToYonedaRel R)
+      (propRelToYonedaRel S) := by
+  rw [arrowRel_iff_yonedaProdOverRelated_propRel]
+  simp only [propRelToYonedaRel,
+    relRelated, Skeleton.lift₂, toSkeleton,
+    Quotient.lift₂_mk]
+
+/-- `arrowRel R S g₀ g₁` holds iff `yonedaRelSQS`
+holds for the Yoneda relation encodings of `R` and
+`S` as vertical morphisms. -/
+theorem arrowRel_iff_yonedaRelSQS_propRel
+    {A₀ A₁ B₀ B₁ : Type}
+    (R : A₀ → A₁ → Prop)
+    (S : B₀ → B₁ → Prop)
+    (g₀ : A₀ → B₀) (g₁ : A₁ → B₁) :
+    arrowRel R S g₀ g₁ ↔
+    yonedaRelSQS (C := Type)
+      (propRelToYonedaRel R)
+      (propRelToYonedaRel S)
+      g₀ g₁ :=
+  arrowRel_iff_relRelated_propRel R S g₀ g₁
+
 /-- The canonical relation lifting for a functor
 `F : Type ⥤ Type`. Given a relation `R` between
 types `A` and `B`, `functorRelLift F R` relates
