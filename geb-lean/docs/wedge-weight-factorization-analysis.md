@@ -337,3 +337,81 @@ Construct a natural transformation
 `typeExprWeight T -> wedgeWeight (T.toProfunctor)` and show it is
 an isomorphism for leaves and the algebra/coalgebra profunctor case,
 but not for the divergence type `((X -> X) -> X) -> X`.
+
+## 7. Composition analysis of relInterp (RelInterpComposition.lean)
+
+### 7.1. Motivation
+
+Defining a "parametric diagonal element" category `ParamDiagElem T`
+(with morphisms using `T.relInterp` instead of `DiagCompat`) requires
+`T.relInterp` to compose transitively. This section characterizes
+when composition holds.
+
+### 7.2. Arrow-free types and graph relations
+
+For type expressions built from `var` and `app` only (no `arrow`
+constructor), the relational interpretation reduces to a graph
+relation: `T.relInterp f = graphRel (arrowFreeMap T haf f)` where
+`arrowFreeMap` is the covariant map. Graph relations compose and
+decompose, so arrow-free types have both properties.
+
+### 7.3. Arrow case: conditional composition
+
+For `arrow T_1 T_2`, composition requires:
+
+- **Decomposition of T_1**: given `T_1.relInterp (g . f) a_0 a_2`,
+  find `a_1` with `T_1.relInterp f a_0 a_1` and
+  `T_1.relInterp g a_1 a_2`.
+- **Composition of T_2**: given `T_2.relInterp f b_0 b_1` and
+  `T_2.relInterp g b_1 b_2`, conclude
+  `T_2.relInterp (g . f) b_0 b_2`.
+
+The asymmetry: the domain only needs decomposition (which requires
+being arrow-free), while the codomain only needs composition (which
+is weaker, allowing nested arrows with arrow-free domains).
+
+### 7.4. Counterexample: decomposition fails for `X -> X`
+
+Using `I_0 = Unit`, `I_1 = Bool`, `I_2 = Fin 3`:
+
+- `f : Unit -> Bool` maps `() |-> false`
+- `g : Bool -> Fin 3` maps `false |-> 0, true |-> 1`
+- `h_0 = id`, `h_2 : Fin 3 -> Fin 3` maps `0 |-> 0, else |-> 2`
+
+The composed condition `arrowRel (graphRel (g . f)) (graphRel (g . f))`
+holds for `(h_0, h_2)`, but no intermediate `h_1 : Bool -> Bool` can
+satisfy both `arrowRel (graphRel f) (graphRel f)` and
+`arrowRel (graphRel g) (graphRel g)`. The first forces
+`h_1 false = false`; the second requires `g (h_1 true) = 2`, but
+`Im(g) = {0, 1}`.
+
+### 7.5. Structural characterization
+
+`hasRelInterpComp T` holds iff every `arrow` node in `T` has an
+arrow-free domain. Classification:
+
+| Type expression | `hasRelInterpComp` |
+| --- | --- |
+| `var` (X) | true |
+| `leaf F` (F(X)) | true |
+| `arrow (leaf F) (leaf G)` (F(X) -> G(X)) | true |
+| `arrow var var` (X -> X) | true |
+| `arrow (arrow var var) (arrow var var)` | false |
+| `arrow (arrow (leaf F) var) var` | false |
+| `arrow (arrow (arrow var var) var) var` | false |
+
+The algebra type `(F(X) -> X) -> X`, dinatural type
+`(X -> X) -> (X -> X)`, and divergence type `((X -> X) -> X) -> X`
+all fail the criterion.
+
+### 7.6. Implications for ParamDiagElem
+
+Defining `ParamDiagElem T` as a category using `T.relInterp` for
+morphisms fails for most type expressions. For the algebra
+and dinatural types where parametricity and paranaturality are known
+to agree, the composability of `relInterp` relies on the specific
+structure of the relational interpretation (e.g., naturality squares
+compose by functoriality) rather than the generic type-expression
+criterion. A "parametric weight" construction based on
+`ParamDiagElem` would need to be formulated differently from the
+naive approach of paralleling `wedgeWeight`.

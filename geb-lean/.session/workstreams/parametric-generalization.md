@@ -195,6 +195,56 @@ concretely. This yields reference examples for what a
   components of factorizations through `DiagElem(H)`
   morphisms in the co-twisted-arrow direction.
 
+##### relInterp composition (RelInterpComposition.lean)
+
+Structural analysis of when `T.relInterp` composes
+transitively (prerequisite for defining `ParamDiagElem T`
+as a category):
+
+- `graphRel_comp`, `graphRel_decomp`: graph relations
+  compose and decompose.
+- `TypeExpr.isArrowFree`: predicate for type expressions
+  built from `var` and `app` only (no `arrow`).
+- `TypeExpr.arrowFreeMap`: the covariant map for
+  arrow-free types; `arrowFreeMap_comp` proves
+  functorial composition.
+- `TypeExpr.relInterp_eq_graphRel`: for arrow-free T,
+  `T.relInterp f = graphRel (arrowFreeMap T haf f)`.
+- `relInterp_comp_of_isArrowFree`,
+  `relInterp_decomp_of_isArrowFree`: composition and
+  decomposition for arrow-free types.
+- `arrowRel_comp`: conditional composition for
+  `arrowRel` given domain decomposition and codomain
+  composition.
+- `TypeExpr.hasRelInterpComp`: structural predicate
+  classifying which type expressions have composable
+  `relInterp`. Satisfied when every `arrow` node has
+  an arrow-free domain.
+- `relInterp_comp_of_hasComp`: composition for types
+  satisfying `hasRelInterpComp`.
+- Classification of standard examples:
+  - `dialgebraTypeExpr F G` (`F(X) → G(X)`): has comp
+  - `homTypeExpr` (`X → X`): has comp
+  - `dinaturalTypeExpr` (`(X → X) → (X → X)`): no comp
+    (domain `X → X` is not arrow-free)
+  - `algebraTypeExpr F` (`(F(X) → X) → X`): no comp
+    (domain `F(X) → X` is not arrow-free)
+  - `divTypeExpr` (`((X → X) → X) → X`): no comp
+- `relInterp_decomp_homTypeExpr_fails`: counterexample
+  proving decomposition fails for `arrow var var` using
+  `Unit`, `Bool`, `Fin 3`.
+
+The structural result: `hasRelInterpComp` is very
+restrictive, holding only for "shallow" arrows where
+no arrow appears in a domain position. For the
+algebra and dinatural types where parametricity and
+paranaturality are known to agree, the composability
+of `relInterp` relies on the specific relational
+structure rather than the generic type-expression
+criterion. Defining `ParamDiagElem` as a category
+using `relInterp` morphisms fails for most
+type expressions of interest.
+
 ##### Remaining for W2a
 
 - Formalize `WedgeWeightFactorization` as an explicit
