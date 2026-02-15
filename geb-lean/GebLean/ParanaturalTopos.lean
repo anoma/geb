@@ -2484,6 +2484,63 @@ def arrowRel
   ∀ (a₀ : A₀) (a₁ : A₁),
     R a₀ a₁ → S (g₀ a₀) (g₁ a₁)
 
+/-- For graph relations, `arrowRel` reduces to the
+commutativity of the naturality square
+`g₀ ≫ f' = f ≫ g₁`, i.e., `f' . g₀ = g₁ . f`.
+This is the `Type`-level analogue of
+`yonedaProdOverRelated_graph_iff`. -/
+theorem arrowRel_graphRel_iff
+    {A A' B B' : Type}
+    (f : A → A') (f' : B → B')
+    (g₀ : A → B) (g₁ : A' → B') :
+    arrowRel (graphRel f) (graphRel f')
+      g₀ g₁ ↔
+    f' ∘ g₀ = g₁ ∘ f := by
+  constructor
+  · intro h
+    funext a
+    exact h a (f a) rfl
+  · intro h a₀ a₁ hrel
+    simp only [graphRel] at hrel
+    subst hrel
+    exact congr_fun h a₀
+
+/-- `arrowRel` applied to graph relations coincides
+with `YonedaProdOverRelated` applied to graph objects
+in the presheaf category. Both reduce to the
+naturality-square condition `f' . g₀ = g₁ . f`. -/
+theorem arrowRel_graphRel_iff_yonedaProdOverRelated
+    {A A' B B' : Type}
+    (f : A → A') (f' : B → B')
+    (g₀ : A → B) (g₁ : A' → B') :
+    arrowRel (graphRel f) (graphRel f')
+      g₀ g₁ ↔
+    YonedaProdOverRelated (C := Type)
+      (yonedaProdOverGraph f)
+      (yonedaProdOverGraph f')
+      g₀ g₁ :=
+  (arrowRel_graphRel_iff f f' g₀ g₁).trans
+    (yonedaProdOverRelated_graph_iff
+      (C := Type) f f' g₀ g₁).symm
+
+/-- `arrowRel` applied to graph relations coincides
+with the 2-cell condition `yonedaRelSQS` in the
+Yoneda relation double category, applied to the
+graph embeddings of `f` and `f'` as vertical
+morphisms. -/
+theorem arrowRel_graphRel_iff_yonedaRelSQS
+    {A A' B B' : Type}
+    (f : A → A') (f' : B → B')
+    (g₀ : A → B) (g₁ : A' → B') :
+    arrowRel (graphRel f) (graphRel f')
+      g₀ g₁ ↔
+    yonedaRelSQS (C := Type)
+      (yonedaRelGraph f)
+      (yonedaRelGraph f')
+      g₀ g₁ :=
+  arrowRel_graphRel_iff_yonedaProdOverRelated
+    f f' g₀ g₁
+
 /-- The canonical relation lifting for a functor
 `F : Type ⥤ Type`. Given a relation `R` between
 types `A` and `B`, `functorRelLift F R` relates
