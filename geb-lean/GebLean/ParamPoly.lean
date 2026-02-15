@@ -817,6 +817,27 @@ theorem yonedaProdOverGraph_snd
     yoneda.map f :=
   rfl
 
+theorem yonedaProdOverGraph_snd_assoc
+    {X Y : C} (f : X ⟶ Y)
+    {P : Cᵒᵖ ⥤ Type v}
+    (k : yoneda.obj Y ⟶ P) :
+    (yonedaProdOverGraph f).hom ≫
+      yonedaProdSnd X Y ≫ k =
+    yoneda.map f ≫ k := by
+  rw [← Category.assoc,
+    yonedaProdOverGraph_snd]
+
+theorem yonedaProdOverGraph_fst_assoc
+    {X Y : C} (f : X ⟶ Y)
+    {P : Cᵒᵖ ⥤ Type v}
+    (k : yoneda.obj X ⟶ P) :
+    (yonedaProdOverGraph f).hom ≫
+      yonedaProdFst X Y ≫ k =
+    k := by
+  rw [← Category.assoc,
+    yonedaProdOverGraph_fst]
+  exact Category.id_comp k
+
 theorem yonedaProdOverGraph_id (X : C) :
     yonedaProdOverGraph (𝟙 X) =
       yonedaProdOverId X := by
@@ -1197,6 +1218,58 @@ def relRelated
     (fun _ _ _ _ ⟨αR⟩ ⟨αS⟩ =>
       propext
         (yonedaProdOverRelated_iso αR αS))
+
+/-- For graph relations, `YonedaProdOverRelated`
+reduces to commutativity of the naturality square.
+The forward direction extracts the square from the
+lift; the reverse constructs a lift from the commuting
+square using `yoneda.map g₀`. -/
+theorem yonedaProdOverRelated_graph_iff
+    {A A' B B' : C}
+    (f : A ⟶ A') (f' : B ⟶ B')
+    (g₀ : A ⟶ B) (g₁ : A' ⟶ B') :
+    YonedaProdOverRelated
+      (yonedaProdOverGraph f)
+      (yonedaProdOverGraph f')
+      g₀ g₁ ↔
+    g₀ ≫ f' = f ≫ g₁ := by
+  constructor
+  · rintro ⟨φ, hφ⟩
+    have hfst : φ = yoneda.map g₀ := by
+      have h :=
+        congr_arg (· ≫ yonedaProdFst B B') hφ
+      simp only [Category.assoc,
+        yonedaProdOverGraph_fst,
+        yonedaProdOverGraph_fst_assoc,
+        yonedaProdMap_fst] at h
+      exact h
+    have hsnd : φ ≫ yoneda.map f' =
+        yoneda.map f ≫ yoneda.map g₁ := by
+      have h :=
+        congr_arg (· ≫ yonedaProdSnd B B') hφ
+      simp only [Category.assoc,
+        yonedaProdOverGraph_snd,
+        yonedaProdOverGraph_snd_assoc,
+        yonedaProdMap_snd] at h
+      exact h
+    rw [hfst] at hsnd
+    rw [← yoneda.map_comp,
+      ← yoneda.map_comp] at hsnd
+    exact yoneda.map_injective hsnd
+  · intro hsq
+    refine ⟨yoneda.map g₀, ?_⟩
+    apply yonedaProdPresheaf_hom_ext
+    · simp only [Category.assoc,
+        yonedaProdOverGraph_fst,
+        yonedaProdOverGraph_fst_assoc,
+        yonedaProdMap_fst]
+      exact Category.comp_id _
+    · simp only [Category.assoc,
+        yonedaProdOverGraph_snd,
+        yonedaProdOverGraph_snd_assoc,
+        yonedaProdMap_snd]
+      rw [← yoneda.map_comp, hsq,
+        yoneda.map_comp]
 
 end RelatedMorphisms
 
