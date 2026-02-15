@@ -4,6 +4,8 @@ import GebLean.ComprehensiveWeighted
 import GebLean.Factorization
 import GebLean.ParanatAlg
 import GebLean.DinaturalNumbers
+import GebLean.ParamPoly
+import GebLean.YonedaRelDouble
 import GebLean.Utilities.TwistedArrow
 import GebLean.Utilities.TwArrPresheaf
 import Mathlib.CategoryTheory.Limits.Shapes.Terminal
