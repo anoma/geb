@@ -789,6 +789,40 @@ theorem yonedaProdOverId_snd (X : C) :
     𝟙 (yoneda.obj X) :=
   rfl
 
+/-- The graph of a morphism `f : X ⟶ Y` as a
+proof-relevant relation. The underlying presheaf is
+`yoneda(X)`, with first projection the identity and
+second projection `yoneda.map f`. At each test object
+`T`, a pair `(a : T ⟶ X, b : T ⟶ Y)` is in the graph
+iff `b = f ≫ a`. This generalizes `graphRel` from
+`Type` to an arbitrary category `C`. -/
+def yonedaProdOverGraph {X Y : C} (f : X ⟶ Y) :
+    YonedaProdOver X Y :=
+  Over.mk (yonedaProdLift X Y
+    (𝟙 (yoneda.obj X)) (yoneda.map f))
+
+@[simp]
+theorem yonedaProdOverGraph_fst
+    {X Y : C} (f : X ⟶ Y) :
+    (yonedaProdOverGraph f).hom ≫
+      yonedaProdFst X Y =
+    𝟙 (yoneda.obj X) :=
+  rfl
+
+@[simp]
+theorem yonedaProdOverGraph_snd
+    {X Y : C} (f : X ⟶ Y) :
+    (yonedaProdOverGraph f).hom ≫
+      yonedaProdSnd X Y =
+    yoneda.map f :=
+  rfl
+
+theorem yonedaProdOverGraph_id (X : C) :
+    yonedaProdOverGraph (𝟙 X) =
+      yonedaProdOverId X := by
+  simp [yonedaProdOverGraph, yonedaProdOverId,
+    yoneda]
+
 /-- Composition of proof-relevant relations in the over
 category.
 
@@ -921,6 +955,37 @@ def yonedaProdOverComp_assoc
       simp only [yonedaProdOverComp, Over.mk_hom]
       apply yonedaProdPresheaf_hom_ext <;> rfl)
 
+/-- The composite of two graph relations
+`graph(f) ; graph(g)` is isomorphic to `graph(f ≫ g)`.
+The pullback that defines relational composition
+matches `yoneda.map f` with `𝟙 (yoneda Y)`, giving
+back `yoneda X` via `presheafPullbackIdRightIso`. -/
+def yonedaProdOverGraph_comp
+    {X Y Z : C} (f : X ⟶ Y) (g : Y ⟶ Z) :
+    yonedaProdOverComp
+      (yonedaProdOverGraph f)
+      (yonedaProdOverGraph g) ≅
+    yonedaProdOverGraph (f ≫ g) :=
+  Over.isoMk
+    (presheafPullbackIdRightIso (yoneda.map f))
+    (by
+      simp only [yonedaProdOverComp,
+        yonedaProdOverGraph, Over.mk_hom]
+      apply yonedaProdPresheaf_hom_ext
+      · simp [presheafPullbackIdRightIso,
+          presheafPullbackLift]
+      · simp only [Category.assoc,
+          FunctorToTypes.prod.lift_snd,
+          FunctorToTypes.prod.lift_fst]
+        have hpb := presheafPullbackCondition
+          (yoneda.map f) (𝟙 (yoneda.obj Y))
+        simp only [Category.comp_id] at hpb
+        change presheafPullbackFst
+          (yoneda.map f) (𝟙 _) ≫
+          yoneda.map (f ≫ g) = _
+        rw [yoneda.map_comp,
+          ← Category.assoc, hpb])
+
 /-- Composition of relations up to isomorphism:
 applies `yonedaProdOverComp` via `Skeleton.lift₂`,
 using `yonedaProdOverComp_iso` for
@@ -967,6 +1032,24 @@ theorem relComp_assoc
     exact toSkeleton_eq_iff.mpr
       ⟨yonedaProdOverComp_assoc R' S' T'⟩
 
+/-- The graph of a morphism as a `YonedaRel`
+(isomorphism class of `YonedaProdOver`). -/
+def yonedaRelGraph {X Y : C} (f : X ⟶ Y) :
+    YonedaRel X Y :=
+  toSkeleton _ (yonedaProdOverGraph f)
+
+theorem yonedaRelGraph_eq_relId (X : C) :
+    yonedaRelGraph (𝟙 X) = relId (C := C) X := by
+  simp [yonedaRelGraph, relId,
+    yonedaProdOverGraph_id]
+
+theorem yonedaRelGraph_comp
+    {X Y Z : C} (f : X ⟶ Y) (g : Y ⟶ Z) :
+    relComp (yonedaRelGraph f) (yonedaRelGraph g) =
+      yonedaRelGraph (f ≫ g) :=
+  toSkeleton_eq_iff.mpr
+    ⟨yonedaProdOverGraph_comp f g⟩
+
 end PresheafRelations
 
 section YonedaRelCategory
@@ -988,6 +1071,18 @@ instance : Category.{max u (v + 1)}
   id_comp := relComp_relId_left
   comp_id := relComp_relId_right
   assoc := relComp_assoc
+
+/-- Functor sending each morphism `f : X ⟶ Y` in
+`C` to its graph relation `yonedaRelGraph f` in
+`YonedaRelCat C`. This is the categorical
+generalization of the assignment `f ↦ graphRel f`
+from `Type` to an arbitrary category. -/
+def yonedaRelGraphFunctor :
+    C ⥤ YonedaRelCat C where
+  obj X := ⟨X⟩
+  map f := yonedaRelGraph f
+  map_id X := yonedaRelGraph_eq_relId X
+  map_comp f g := (yonedaRelGraph_comp f g).symm
 
 end YonedaRelCategory
 
