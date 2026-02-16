@@ -703,6 +703,87 @@ def typeWeightedColimitCocone_isWeightedColimit
     (typeCoendCowedge_isInitial
       (copowerProfunctor (C := Type v) W F))
 
+/-- The functorial action of the power profunctor in `F`:
+given `α : F ⟶ G`, produces a natural transformation
+`powerProfunctor W F ⟶ powerProfunctor W G` by
+post-composing with `α` at each component. -/
+def powerProfunctorMapF (W : J ⥤ Type v)
+    {F G : J ⥤ Type v} (α : F ⟶ G) :
+    powerProfunctor (C := Type v) W F ⟶
+      powerProfunctor (C := Type v) W G where
+  app j :=
+    { app := fun j' => HasPowers.mapVal (α.app j')
+      naturality := fun {j₁ j₂} g => by
+        simp only [powerProfunctor_obj_map,
+          ← HasPowers.mapVal_comp]
+        congr 1
+        exact α.naturality g
+    }
+  naturality := fun {j₁ j₂} f => by
+    ext j'
+    simp only [NatTrans.comp_app, powerProfunctor_map_app]
+    rw [← HasPowers.bimap_eq_mapIdx_mapVal,
+      ← HasPowers.bimap_eq_mapVal_mapIdx]
+
+/-- The weighted limit functor `(J ⥤ Type v) ⥤ Type v`
+for a fixed weight `W`, sending `F` to the end of the
+power profunctor `powerProfunctor W F`. -/
+def typeWeightedLimitFunctor (W : J ⥤ Type v) :
+    (J ⥤ Type v) ⥤ Type v where
+  obj F := typeWeightedLimit W F
+  map α := typeEnd.map J (powerProfunctorMapF W α)
+  map_id F := by
+    ext ⟨x, hx⟩
+    simp only [typeWeightedLimit, typeEnd.map,
+      powerProfunctorMapF, types_id_apply]
+    apply Subtype.ext; ext j
+    simp only [NatTrans.id_app, HasPowers.mapVal_id,
+      types_id_apply]
+  map_comp {F G H} α β := by
+    ext ⟨x, hx⟩
+    simp only [typeWeightedLimit, typeEnd.map,
+      powerProfunctorMapF, types_comp_apply]
+    apply Subtype.ext; ext j
+    simp only [NatTrans.comp_app,
+      HasPowers.mapVal_comp, types_comp_apply]
+
+/-- The functorial action of the copower profunctor in `F`:
+given `α : F ⟶ G`, produces a natural transformation
+`copowerProfunctor W F ⟶ copowerProfunctor W G` by
+applying `α` to the second component of each copower. -/
+def copowerProfunctorMapF (W : Jᵒᵖ ⥤ Type v)
+    {F G : J ⥤ Type v} (α : F ⟶ G) :
+    copowerProfunctor (C := Type v) W F ⟶
+      copowerProfunctor (C := Type v) W G where
+  app j :=
+    { app := fun j' =>
+        HasCopowers.mapVal (α.app j')
+      naturality := fun {j₁ j₂} g => by
+        simp only [copowerProfunctor_obj_map,
+          ← HasCopowers.mapVal_comp]
+        congr 1
+        exact α.naturality g
+    }
+  naturality := fun {j₁ j₂} f => by
+    ext j'
+    simp only [NatTrans.comp_app,
+      copowerProfunctor_map_app]
+    rw [← HasCopowers.bimap_eq_mapIdx_mapVal,
+      ← HasCopowers.bimap_eq_mapVal_mapIdx]
+
+/-- The weighted colimit functor `(J ⥤ Type v) ⥤ Type v`
+for a fixed weight `W`, sending `F` to the coend of the
+copower profunctor `copowerProfunctor W F`. -/
+def typeWeightedColimitFunctor (W : Jᵒᵖ ⥤ Type v) :
+    (J ⥤ Type v) ⥤ Type v where
+  obj F := typeWeightedColimit W F
+  map α :=
+    typeCoend.map J (copowerProfunctorMapF W α)
+  map_id _ := by
+    ext ⟨_, _⟩; rfl
+  map_comp _ _ := by
+    ext ⟨_, _⟩; rfl
+
 end TypeWeightedLimits
 
 end GebLean
