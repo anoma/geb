@@ -1,5 +1,6 @@
 import Mathlib.CategoryTheory.Limits.Shapes.End
 import Mathlib.CategoryTheory.Types.Basic
+import GebLean.Utilities.PowersAndCopowers
 
 /-!
 # Explicit Ends and Coends in Type
@@ -391,7 +392,7 @@ def typeEndAdj.homEquiv
     apply Subtype.ext; ext j
     dsimp only [typeEndAdj.homEquivToFun,
       typeEndAdj.homEquivInvFun]
-    simp only [Functor.map_id, types_id_apply]
+    simp
 
 /-- The end functor is right adjoint to the
 functor sending `Y` to the profunctor
@@ -577,7 +578,7 @@ def typeCoendAdj.homEquiv
     change f (Quot.mk _ ⟨j,
       (P.obj (Opposite.op j)).map (𝟙 j) x⟩) =
       f (Quot.mk _ ⟨j, x⟩)
-    simp only [Functor.map_id, types_id_apply]
+    simp
   right_inv := by
     intro α; ext a b x; funext h
     dsimp only [typeCoendAdj.homEquivToFun,
@@ -635,5 +636,73 @@ instance typeHasInitialCowedge
   (typeCoendCowedge_isInitial F).hasInitial
 
 end TypeInstances
+
+/-!
+## Type-Valued Weighted (Co)Limits via (Co)Ends
+
+A weighted limit in `Type v` is computed by the formula
+`{W, F} = end_j F(j)^{W(j)}` (end of the power profunctor),
+and a weighted colimit by `W * F = coend^j W(j) . F(j)`
+(coend of the copower profunctor).
+-/
+
+section TypeWeightedLimits
+
+variable {J : Type v} [Category.{v} J]
+
+/-- The weighted limit of `F : J ⥤ Type v` weighted by
+`W : J ⥤ Type v`, computed as the end of the power
+profunctor `(op j₁, j₂) ↦ W(j₁) → F(j₂)`. -/
+def typeWeightedLimit
+    (W : J ⥤ Type v) (F : J ⥤ Type v) : Type v :=
+  typeEnd (powerProfunctor (C := Type v) W F)
+
+/-- The weighted colimit of `F : J ⥤ Type v` weighted by
+`W : Jᵒᵖ ⥤ Type v`, computed as the coend of the copower
+profunctor `(op j₁, j₂) ↦ W(j₁) × F(j₂)`. -/
+def typeWeightedColimit
+    (W : Jᵒᵖ ⥤ Type v) (F : J ⥤ Type v) : Type v :=
+  typeCoend (copowerProfunctor (C := Type v) W F)
+
+/-- The weighted cone over `F` with weight `W` whose apex is
+`typeWeightedLimit W F`, obtained by transporting the terminal
+end wedge through the cone-wedge equivalence. -/
+def typeWeightedLimitCone
+    (W : J ⥤ Type v) (F : J ⥤ Type v) :
+    WeightedCone (C := Type v) W F :=
+  (weightedConeWedgeEquiv W F).inverse.obj
+    (typeEndWedge (powerProfunctor (C := Type v) W F))
+
+/-- The weighted cone `typeWeightedLimitCone W F` is a
+weighted limit. -/
+def typeWeightedLimitCone_isWeightedLimit
+    (W : J ⥤ Type v) (F : J ⥤ Type v) :
+    IsWeightedLimit (typeWeightedLimitCone W F) :=
+  isWeightedLimitOfIsTerminalPowerWedge W F
+    (typeEndWedge_isTerminal
+      (powerProfunctor (C := Type v) W F))
+
+/-- The weighted cocone over `F` with weight `W` whose apex
+is `typeWeightedColimit W F`, obtained by transporting the
+initial coend cowedge through the cocone-cowedge
+equivalence. -/
+def typeWeightedColimitCocone
+    (W : Jᵒᵖ ⥤ Type v) (F : J ⥤ Type v) :
+    WeightedCocone (C := Type v) W F :=
+  (weightedCoconeCowedgeEquiv W F).inverse.obj
+    (typeCoendCowedge
+      (copowerProfunctor (C := Type v) W F))
+
+/-- The weighted cocone `typeWeightedColimitCocone W F` is
+a weighted colimit. -/
+def typeWeightedColimitCocone_isWeightedColimit
+    (W : Jᵒᵖ ⥤ Type v) (F : J ⥤ Type v) :
+    IsWeightedColimit
+      (typeWeightedColimitCocone W F) :=
+  isWeightedColimitOfIsInitialCopowerCowedge W F
+    (typeCoendCowedge_isInitial
+      (copowerProfunctor (C := Type v) W F))
+
+end TypeWeightedLimits
 
 end GebLean
