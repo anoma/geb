@@ -38,6 +38,7 @@ import GebLean.Utilities
 import GebLean.Utilities.Category
 import GebLean.Utilities.DoubleCategory
 import GebLean.Utilities.Elements
+import GebLean.Utilities.EndsAndCoends
 import GebLean.Utilities.Equalities
 import GebLean.Utilities.Families
 import GebLean.Utilities.Fintype

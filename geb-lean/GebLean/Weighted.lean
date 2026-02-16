@@ -2221,6 +2221,106 @@ end IsWeightedColimit
 
 end WeightedLimitInType
 
+section WeightedLimitColimitFunctors
+
+variable {J : Type v} [Category.{v} J]
+variable {C : Type u} [Category.{v} C]
+
+/-- The copresheaf `C ⥤ Type v` sending `Y` to the weighted
+limit `{W', C(D(-), Y)}`, i.e., the set of natural
+transformations `W' ⟶ homToFunctor D Y`.
+
+This is the composite of `homToFunctorBifunctor.obj (op D)`,
+which sends `Y` to the presheaf `C(D(-), Y)`, with
+`coyoneda.obj (op W')`, which sends a presheaf `P` to the
+hom-set `(W' ⟶ P)`.
+
+A weighted colimit `W' * D` represents this functor:
+`C(W' * D, Y) ≅ {W', C(D(-), Y)}`. -/
+def weightedLimitFunctor
+    (W' : Jᵒᵖ ⥤ Type v) (D : J ⥤ C) : C ⥤ Type v :=
+  homToFunctorBifunctor.obj (Opposite.op D) ⋙
+    coyoneda.obj (Opposite.op W')
+
+/-- The presheaf `Cᵒᵖ ⥤ Type v` sending `X` to the weighted
+limit `{W, C(X, D(-))}`, i.e., the set of natural
+transformations `W ⟶ homFromFunctor D X`.
+
+This is the composite of `homFromFunctorBifunctor.obj D`,
+which sends `op X` to the copresheaf `C(X, D(-))`, with
+`coyoneda.obj (op W)`, which sends a copresheaf `P` to the
+hom-set `(W ⟶ P)`.
+
+A weighted limit `{W, D}` represents this presheaf:
+`C(X, {W, D}) ≅ {W, C(X, D(-))}`. -/
+def weightedColimitFunctor
+    (W : J ⥤ Type v) (D : J ⥤ C) : Cᵒᵖ ⥤ Type v :=
+  homFromFunctorBifunctor.obj D ⋙
+    coyoneda.obj (Opposite.op W)
+
+/-- The natural isomorphism between the representable
+copresheaf `coyoneda.obj (op c.pt)` and the weighted limit
+functor `weightedLimitFunctor W' D`, given a weighted
+colimit `c` of `D` by `W'`.
+
+Components at `Y` are the equivalence
+`(c.pt ⟶ Y) ≃ (W' ⟶ homToFunctor D Y)`.
+Naturality follows from `homEquivWeightedCoconeOver_naturality`.
+
+This establishes that `weightedLimitFunctor W' D` is
+representable, represented by the weighted colimit `c.pt`. -/
+def IsWeightedColimit.homNatIsoWeightedLimit
+    {W' : Jᵒᵖ ⥤ Type v} {D : J ⥤ C}
+    {c : WeightedCocone W' D}
+    (hc : IsWeightedColimit c) :
+    coyoneda.obj (Opposite.op c.pt) ≅
+      weightedLimitFunctor W' D :=
+  NatIso.ofComponents
+    (fun Y => (homEquivWeightedLimit hc Y).toIso)
+    (fun g => by
+      ext f
+      simp only [types_comp_apply]
+      change homEquivWeightedCoconeOver hc _ (f ≫ g) =
+        homEquivWeightedCoconeOver hc _ f ≫
+          ((homToFunctorBifunctor (J := J) (C := C)).obj
+            (Opposite.op D)).map g
+      exact
+        homEquivWeightedCoconeOver_naturality hc f g)
+
+/-- Given a weighted colimit `c` of `D` by `W'`, natural
+transformations from `weightedLimitFunctor W' D` to any
+copresheaf `G` correspond to elements of `G.obj c.pt`.
+
+This follows from the Yoneda lemma applied to the natural
+isomorphism `coyoneda.obj (op c.pt) ≅ weightedLimitFunctor
+W' D`. -/
+def IsWeightedColimit.weightedColimitRepresentable
+    {W' : Jᵒᵖ ⥤ Type v} {D : J ⥤ C}
+    {c : WeightedCocone W' D}
+    (hc : IsWeightedColimit c) (G : C ⥤ Type v) :
+    (weightedLimitFunctor W' D ⟶ G) ≃ G.obj c.pt :=
+  coyonedaEquivOfNatIso
+    (homNatIsoWeightedLimit hc).symm
+
+/-- Given a weighted colimit `c` of a diagram
+`D : J ⥤ Type v` by `W' : Jᵒᵖ ⥤ Type v`, elements of the
+colimit apex `c.pt` correspond to natural transformations
+from `weightedLimitFunctor W' D` to the identity functor
+on `Type v`.
+
+This is the impredicative characterization of weighted
+colimits: a weighted colimit is "that which can be
+eliminated by a weighted limit." -/
+def IsWeightedColimit.weightedColimitImpredicative
+    {W' : Jᵒᵖ ⥤ Type v} {D : J ⥤ Type v}
+    {c : WeightedCocone W' D}
+    (hc : IsWeightedColimit c) :
+    (weightedLimitFunctor W' D ⟶ 𝟭 (Type v)) ≃ c.pt :=
+  coyonedaEquivOfNatIsoTypeId
+    (homNatIsoWeightedLimit hc).symm
+
+end WeightedLimitColimitFunctors
+
 /-- A weighted colimit cone bundles a cocone with the proof it is initial.
 This is the data-carrying version, analogous to mathlib's `ColimitCocone`. -/
 structure WeightedColimitCocone (W : Jᵒᵖ ⥤ Type v) (D : J ⥤ C) where
