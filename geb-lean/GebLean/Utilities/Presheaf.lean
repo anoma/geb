@@ -838,13 +838,13 @@ def yonedaExtDesc (F : C ⥤ D)
       (G.map α).app T
         (yonedaExtDescTriple F β P T x)
     dsimp [yonedaExtDescTriple]
-    have key :
+    have comm :
         yonedaEquiv.symm
           (α.app (Opposite.op x.1) x.2.1)
         = yonedaEquiv.symm x.2.1 ≫ α := by
       apply yonedaEquiv.injective
       simp [yonedaEquiv_comp]
-    rw [key, G.map_comp]
+    rw [comm, G.map_comp]
     rfl
 
 /-- The descent map factorizes through the unit:
