@@ -1169,6 +1169,57 @@ def pshIhomFunctor
     ext c φ; exact Subtype.ext
       (by funext d k a; rfl)
 
+/-- The profunctor map for `pshIhom`. Given
+`f : A' ⟶ A` and `g : B ⟶ B'`, produces
+`pshIhom A B ⟶ pshIhom A' B'` by precomposing
+with `f` and postcomposing with `g`. -/
+def pshIhomProfMap
+    {A A' B B' : Dᵒᵖ ⥤ Type w}
+    (f : A' ⟶ A) (g : B ⟶ B') :
+    pshIhom A B ⟶ pshIhom A' B' where
+  app c φ :=
+    ⟨fun d h a' =>
+       g.app d (φ.val d h (f.app d a')),
+     fun d e k h a' => by
+       dsimp only
+       have hg : g.app e
+           (B.map k (φ.val d h (f.app d a')))
+           = B'.map k
+             (g.app d
+               (φ.val d h (f.app d a')))
+           := congr_fun (g.naturality k) _
+       have hf : A.map k (f.app d a')
+           = f.app e (A'.map k a')
+           := (congr_fun
+                 (f.naturality k) a').symm
+       rw [← hg, φ.property d e k h, hf]⟩
+  naturality c₁ c₂ k := by
+    funext φ
+    exact Subtype.ext
+      (by funext d h a'; rfl)
+
+/-- Identity law for `pshIhomProfMap`. -/
+@[simp]
+theorem pshIhomProfMap_id
+    {A B : Dᵒᵖ ⥤ Type w} :
+    pshIhomProfMap (𝟙 A) (𝟙 B) =
+      𝟙 (pshIhom A B) := by
+  ext c φ
+  exact Subtype.ext
+    (by funext d h a; rfl)
+
+/-- Composition law for `pshIhomProfMap`. -/
+theorem pshIhomProfMap_comp
+    {A A' A'' B B' B'' : Dᵒᵖ ⥤ Type w}
+    (f₁ : A' ⟶ A) (f₂ : A'' ⟶ A')
+    (g₁ : B ⟶ B') (g₂ : B' ⟶ B'') :
+    pshIhomProfMap (f₂ ≫ f₁) (g₁ ≫ g₂) =
+      pshIhomProfMap f₁ g₁ ≫
+        pshIhomProfMap f₂ g₂ := by
+  ext c φ
+  exact Subtype.ext
+    (by funext d h a; rfl)
+
 /-- The curry/uncurry equivalence of hom-sets:
 `(X × A ⟶ B) ≃ (X ⟶ pshIhom A B)`. -/
 def pshCurryEquiv
@@ -1404,6 +1455,84 @@ def pshArrowRelSkel
     (fun _ _ _ _ ⟨α⟩ ⟨β⟩ =>
       toSkeleton_eq_iff.mpr
         ⟨pshArrowRel_iso α β⟩) R S
+
+/-- The arrow relation preserves relatedness: if
+the input morphisms `(α₁, α₂)` are
+`(R₂, R₁)`-related (note the reversal from
+contravariance) and the output morphisms
+`(β₁, β₂)` are `(S₁, S₂)`-related, then
+`pshIhomProfMap α₁ β₁` and
+`pshIhomProfMap α₂ β₂` are
+`(pshArrowRel R₁ S₁, pshArrowRel R₂ S₂)`-related.
+-/
+theorem pshArrowRel_related
+    {A₁ A₂ A₁' A₂' B₁ B₂ B₁' B₂' :
+      Dᵒᵖ ⥤ Type w}
+    {R₁ : PshProdOver A₁ A₂}
+    {R₂ : PshProdOver A₁' A₂'}
+    {S₁ : PshProdOver B₁ B₂}
+    {S₂ : PshProdOver B₁' B₂'}
+    {α₁ : A₁' ⟶ A₁} {α₂ : A₂' ⟶ A₂}
+    {β₁ : B₁ ⟶ B₁'} {β₂ : B₂ ⟶ B₂'}
+    (hα : PshProdOverRelated R₂ R₁ α₁ α₂)
+    (hβ : PshProdOverRelated S₁ S₂ β₁ β₂) :
+    PshProdOverRelated
+      (pshArrowRel R₁ S₁)
+      (pshArrowRel R₂ S₂)
+      (pshIhomProfMap α₁ β₁)
+      (pshIhomProfMap α₂ β₂) := by
+  obtain ⟨φ_α, hα_eq⟩ := hα
+  obtain ⟨φ_β, hβ_eq⟩ := hβ
+  refine ⟨{
+    app := fun c g => ⟨
+      ((pshIhomProfMap α₁ β₁).app c g.val.1,
+       (pshIhomProfMap α₂ β₂).app c g.val.2),
+      fun d h w' => ?_⟩
+    naturality := fun c₁ c₂ k => by
+      funext g; exact Subtype.ext rfl
+  }, ?_⟩
+  · obtain ⟨s, hs⟩ :=
+      g.property d h (φ_α.app d w')
+    refine ⟨φ_β.app d s, ?_⟩
+    have hS := congr_fun
+      (NatTrans.congr_app hβ_eq d) s
+    have hR := congr_fun
+      (NatTrans.congr_app hα_eq d) w'
+    simp only [NatTrans.comp_app,
+      types_comp_apply] at hS hR
+    rw [hS, hs, hR]
+    simp [pshProdMap, pshProdLift,
+      pshIhomProfMap]
+  · apply pshProdPresheaf_hom_ext <;>
+    (ext c g; rfl)
+
+/-- Skeleton-level version of
+`pshArrowRel_related`: the arrow relation
+preserves relatedness at the `PshRel` level. -/
+theorem pshArrowRelSkel_related
+    {A₁ A₂ A₁' A₂' B₁ B₂ B₁' B₂' :
+      Dᵒᵖ ⥤ Type w}
+    {α₁ : A₁' ⟶ A₁} {α₂ : A₂' ⟶ A₂}
+    {β₁ : B₁ ⟶ B₁'} {β₂ : B₂ ⟶ B₂'}
+    {R₁ : PshRel A₁ A₂}
+    {R₂ : PshRel A₁' A₂'}
+    {S₁ : PshRel B₁ B₂}
+    {S₂ : PshRel B₁' B₂'}
+    (hα : pshRelRelated α₁ α₂ R₂ R₁)
+    (hβ : pshRelRelated β₁ β₂ S₁ S₂) :
+    pshRelRelated
+      (pshIhomProfMap α₁ β₁)
+      (pshIhomProfMap α₂ β₂)
+      (pshArrowRelSkel R₁ S₁)
+      (pshArrowRelSkel R₂ S₂) := by
+  revert hα hβ
+  exact Quotient.ind₂
+    (fun R₁' S₁' =>
+      Quotient.ind₂
+        (fun R₂' S₂' hα hβ =>
+          pshArrowRel_related hα hβ)
+        R₂ S₂)
+    R₁ S₁
 
 end PshInternalHom
 

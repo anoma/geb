@@ -91,31 +91,6 @@ def PshTypeExpr.relInterp :
       (T₁.relInterp α)
       (T₂.relInterp α)
 
-/-- The profunctor map for `pshIhom`. Given
-`f : A' ⟶ A` and `g : B ⟶ B'`, produces
-`pshIhom A B ⟶ pshIhom A' B'` by precomposing
-with `f` and postcomposing with `g`. -/
-def pshIhomProfMap
-    {A A' B B' : Cᵒᵖ ⥤ Type v}
-    (f : A' ⟶ A) (g : B ⟶ B') :
-    pshIhom A B ⟶ pshIhom A' B' where
-  app c φ :=
-    ⟨fun d h a' => g.app d (φ.val d h (f.app d a')),
-     fun d e k h a' => by
-       dsimp only
-       have hg : g.app e
-           (B.map k (φ.val d h (f.app d a')))
-           = B'.map k
-             (g.app d (φ.val d h (f.app d a')))
-           := congr_fun (g.naturality k) _
-       have hf : A.map k (f.app d a')
-           = f.app e (A'.map k a')
-           := (congr_fun (f.naturality k) a').symm
-       rw [← hg, φ.property d e k h, hf]⟩
-  naturality c₁ c₂ k := by
-    funext φ
-    exact Subtype.ext (by funext d h a'; rfl)
-
 /-- The profunctor map for a type expression:
 given `f : P' ⟶ P` (contravariant) and
 `g : Q ⟶ Q'` (covariant), maps
@@ -132,6 +107,76 @@ def PshTypeExpr.profMap :
     pshIhomProfMap
       (T₁.profMap g f)
       (T₂.profMap f g)
+
+/-- Identity law for `PshTypeExpr.profMap`. -/
+@[simp]
+theorem PshTypeExpr.profMap_id
+    (T : PshTypeExpr C)
+    (P Q : Cᵒᵖ ⥤ Type v) :
+    T.profMap (𝟙 P) (𝟙 Q) =
+      𝟙 (T.interp P Q) := by
+  induction T generalizing P Q with
+  | var => rfl
+  | app G T ih =>
+    change G.map (T.profMap (𝟙 P) (𝟙 Q)) = _
+    rw [ih]
+    exact G.map_id _
+  | arrow T₁ T₂ ih₁ ih₂ =>
+    change pshIhomProfMap
+      (T₁.profMap (𝟙 Q) (𝟙 P))
+      (T₂.profMap (𝟙 P) (𝟙 Q)) = _
+    rw [ih₁, ih₂, pshIhomProfMap_id]
+    rfl
+
+/-- Composition law for `PshTypeExpr.profMap`. -/
+theorem PshTypeExpr.profMap_comp
+    (T : PshTypeExpr C)
+    {P P' P'' Q Q' Q'' : Cᵒᵖ ⥤ Type v}
+    (f : P' ⟶ P) (f' : P'' ⟶ P')
+    (g : Q ⟶ Q') (g' : Q' ⟶ Q'') :
+    T.profMap (f' ≫ f) (g ≫ g') =
+      T.profMap f g ≫ T.profMap f' g' := by
+  induction T generalizing P P' P'' Q Q' Q'' with
+  | var => rfl
+  | app G T ih =>
+    change G.map (T.profMap (f' ≫ f) (g ≫ g')) =
+      G.map (T.profMap f g) ≫
+        G.map (T.profMap f' g')
+    rw [ih, G.map_comp]
+  | arrow T₁ T₂ ih₁ ih₂ =>
+    change pshIhomProfMap
+        (T₁.profMap (g ≫ g') (f' ≫ f))
+        (T₂.profMap (f' ≫ f) (g ≫ g')) =
+      pshIhomProfMap
+        (T₁.profMap g f)
+        (T₂.profMap f g) ≫
+      pshIhomProfMap
+        (T₁.profMap g' f')
+        (T₂.profMap f' g')
+    rw [ih₁ (P := Q'') (P' := Q')
+        (P'' := Q) (Q := P'') (Q' := P')
+        (Q'' := P) g' g f' f,
+      ih₂ f f' g g',
+      pshIhomProfMap_comp]
+
+/-- The profunctor associated to a type expression:
+a functor
+`(Cᵒᵖ ⥤ Type v)ᵒᵖ × (Cᵒᵖ ⥤ Type v) ⥤ (Cᵒᵖ ⥤ Type v)`
+defined by `T.interp` on objects and `T.profMap`
+on morphisms. -/
+def PshTypeExpr.toProfunctor
+    (T : PshTypeExpr C) :
+    (Cᵒᵖ ⥤ Type v)ᵒᵖ × (Cᵒᵖ ⥤ Type v) ⥤
+      (Cᵒᵖ ⥤ Type v) where
+  obj p := T.interp p.1.unop p.2
+  map {p q} fg := T.profMap fg.1.unop fg.2
+  map_id p := by
+    change T.profMap (𝟙 _) (𝟙 _) = _
+    exact T.profMap_id p.1.unop p.2
+  map_comp {_p _q _r} fg gh := by
+    simp only [prod_comp, unop_comp]
+    exact T.profMap_comp fg.1.unop gh.1.unop
+      fg.2 gh.2
 
 /-- The relational interpretation of a leaf
 `app G var` reduces to `pshBarrLiftSkel G` applied
