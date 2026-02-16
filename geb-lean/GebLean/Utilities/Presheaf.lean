@@ -2,6 +2,7 @@ import GebLean.Utilities.Opposites
 import Mathlib.CategoryTheory.Whiskering
 import Mathlib.CategoryTheory.Limits.FunctorCategory.Shapes.Pullbacks
 import Mathlib.CategoryTheory.Limits.Types.Pullbacks
+import Mathlib.CategoryTheory.Yoneda
 
 /-!
 # Presheaf and Copresheaf Construction Functors
@@ -22,6 +23,13 @@ precomposition induces functors in the opposite direction:
   precomposition with `F`.
 - The induced functor on presheaves is `(Dᵒᵖ' ⥤ Type v) ⥤ (Cᵒᵖ' ⥤ Type v)` via
   precomposition with `F.op'`.
+
+## Covariant Yoneda equivalences
+
+* `coyonedaEquivOfNatIso` - If a copresheaf `F` is naturally isomorphic
+  to the covariant hom-functor of `A`, then `(F ⟶ G) ≃ G.obj A`
+* `coyonedaEquivOfNatIsoTypeId` - Specialization to `C = Type v` with
+  `G = 𝟭 (Type v)`, giving `(F ⟶ 𝟭 (Type v)) ≃ A`
 -/
 
 universe v u
@@ -449,5 +457,40 @@ theorem presheafPullbackAssocIso_hom_snd_snd
     presheafPullbackLift]
 
 end PresheafPullback
+
+section CoyonedaIso
+
+open Opposite
+
+/--
+If a copresheaf `F` is naturally isomorphic to the covariant
+hom-functor of `A`, then natural transformations from `F` to
+any copresheaf `G` correspond to elements of `G.obj A`.
+
+This composes the bijection `(F ⟶ G) ≃ (coyoneda.obj (op A) ⟶ G)`
+induced by the natural isomorphism with the covariant Yoneda
+equivalence `(coyoneda.obj (op A) ⟶ G) ≃ G.obj A`.
+-/
+def coyonedaEquivOfNatIso
+    {C : Type u} [Category.{v} C]
+    {A : C} {F G : C ⥤ Type v}
+    (i : F ≅ coyoneda.obj (op A)) :
+    (F ⟶ G) ≃ G.obj A :=
+  i.homFromEquiv.trans coyonedaEquiv
+
+/--
+Specialization of `coyonedaEquivOfNatIso` to `C = Type v` with
+`G` the identity functor: if a copresheaf `F : Type v ⥤ Type v`
+is naturally isomorphic to the covariant hom-functor of
+`A : Type v`, then natural transformations from `F` to the
+identity functor correspond to elements of `A`.
+-/
+def coyonedaEquivOfNatIsoTypeId
+    {A : Type v} {F : Type v ⥤ Type v}
+    (i : F ≅ coyoneda.obj (op A)) :
+    (F ⟶ 𝟭 (Type v)) ≃ A :=
+  coyonedaEquivOfNatIso i
+
+end CoyonedaIso
 
 end GebLean
