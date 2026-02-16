@@ -828,6 +828,243 @@ def typeWeightedLimitFunctor.natIso
       ext ⟨x, hx⟩
       rfl)
 
+/-- Yoneda lemma for weighted limits: when the weight is
+the representable functor `coyoneda.obj (op j)`, the
+weighted limit evaluates to `F.obj j`.
+
+This composes `natTransEquiv` (which identifies
+`typeWeightedLimit W F` with `W ⟶ F`) with the
+covariant Yoneda equivalence
+`(coyoneda.obj (op j) ⟶ F) ≃ F.obj j`. -/
+def typeWeightedLimit.yonedaEquiv
+    (j : J) (F : J ⥤ Type v) :
+    typeWeightedLimit (coyoneda.obj (Opposite.op j)) F
+      ≃ F.obj j :=
+  (natTransEquiv (coyoneda.obj (Opposite.op j)) F).trans
+    coyonedaEquiv
+
+/-- Forward direction of the co-Yoneda equivalence for
+weighted colimits: sends a class `[k, (h, y)]` in the
+coend to `F.map h y : F.obj j`. -/
+def typeWeightedColimit.yonedaEquivFwd
+    (j : J) (F : J ⥤ Type v) :
+    typeWeightedColimit (yoneda.obj j) F →
+      F.obj j :=
+  Quot.lift
+    (fun ⟨k, z⟩ => F.map z.1 z.2)
+    (fun _ _ r => by
+      cases r with
+      | @intro i k f x =>
+        simp only [copowerProfunctor_map_app,
+          copowerProfunctor_obj_map,
+          typesHasCopowers, HasCopowers.mapIdx,
+          HasCopowers.desc, HasCopowers.inj,
+          HasCopowers.mapVal,
+          yoneda_obj_map, Quiver.Hom.unop_op]
+        simp only [types_comp_apply]
+        exact congrFun (F.map_comp f x.1) x.2)
+
+/-- Backward direction of the co-Yoneda equivalence for
+weighted colimits: sends `y : F.obj j` to the class of
+`⟨j, (𝟙 j, y)⟩`. -/
+def typeWeightedColimit.yonedaEquivInv
+    (j : J) (F : J ⥤ Type v) :
+    F.obj j → typeWeightedColimit (yoneda.obj j) F :=
+  fun y => Quot.mk _ ⟨j, (𝟙 j, y)⟩
+
+/-- Co-Yoneda lemma for weighted colimits: when the weight
+is the representable functor `yoneda.obj j : Jᵒᵖ ⥤ Type v`,
+the weighted colimit evaluates to `F.obj j`.
+
+Forward: `[k, (h, y)] ↦ F.map h y`.
+Backward: `y ↦ [j, (𝟙 j, y)]`. -/
+def typeWeightedColimit.yonedaEquiv
+    (j : J) (F : J ⥤ Type v) :
+    typeWeightedColimit (yoneda.obj j) F ≃ F.obj j where
+  toFun := yonedaEquivFwd j F
+  invFun := yonedaEquivInv j F
+  left_inv := by
+    intro x
+    induction x using Quot.ind with
+    | mk a =>
+      obtain ⟨k, h, y⟩ := a
+      simp only [yonedaEquivFwd, yonedaEquivInv]
+      symm
+      apply Quot.sound
+      have := typeCoendRel.intro (F :=
+        copowerProfunctor (yoneda.obj j) F) h
+        (show ((copowerProfunctor
+          (yoneda.obj j) F).obj
+            (Opposite.op j)).obj k from
+          (𝟙 j, y))
+      simp only [copowerProfunctor_map_app,
+        copowerProfunctor_obj_map,
+        typesHasCopowers, HasCopowers.mapIdx,
+        HasCopowers.mapVal, HasCopowers.desc,
+        HasCopowers.inj,
+        yoneda_obj_map, Quiver.Hom.unop_op,
+        types_comp_apply, Opposite.unop_op,
+        Category.comp_id] at this
+      exact this
+  right_inv := by
+    intro y
+    simp only [yonedaEquivInv, yonedaEquivFwd]
+    exact congrFun (F.map_id j) y
+
+/-- The contravariant action of the power profunctor in
+the weight `W`: given `α : W ⟶ W'`, produces
+`powerProfunctor W' F ⟶ powerProfunctor W F` by
+pre-composing with `α` at each component. -/
+def powerProfunctorMapW (F : J ⥤ Type v)
+    {W W' : J ⥤ Type v} (α : W ⟶ W') :
+    powerProfunctor (C := Type v) W' F ⟶
+      powerProfunctor (C := Type v) W F where
+  app j :=
+    { app := fun j' =>
+        HasPowers.mapIdx (α.app j.unop)
+      naturality := fun {j₁ j₂} g => by
+        simp only [powerProfunctor_obj_map]
+        rw [← HasPowers.bimap_eq_mapVal_mapIdx,
+          ← HasPowers.bimap_eq_mapIdx_mapVal]
+    }
+  naturality := fun {j₁ j₂} f => by
+    ext j' x
+    simp only [NatTrans.comp_app,
+      powerProfunctor_map_app, types_comp_apply]
+    simp only [typesHasPowers, HasPowers.mapIdx,
+      HasPowers.lift]
+    funext w
+    exact congrArg x
+      (congrFun (α.naturality f.unop) w).symm
+
+/-- The contravariant weighted limit functor in the weight:
+for fixed `F`, sends `W ↦ typeWeightedLimit W F`.
+Contravariant because the power profunctor is contravariant
+in its indexing set. -/
+def typeWeightedLimitFunctorInW (F : J ⥤ Type v) :
+    (J ⥤ Type v)ᵒᵖ ⥤ Type v where
+  obj W := typeWeightedLimit W.unop F
+  map f :=
+    typeEnd.map J (powerProfunctorMapW F f.unop)
+  map_id W := by
+    ext ⟨x, hx⟩
+    simp only [typeWeightedLimit, typeEnd.map,
+      powerProfunctorMapW, types_id_apply,
+      Opposite.unop_op]
+    apply Subtype.ext; ext j
+    simp only [unop_id, NatTrans.id_app,
+      typesHasPowers, HasPowers.mapIdx,
+      HasPowers.lift, types_id_apply]
+  map_comp {W₁ W₂ W₃} f g := by
+    ext ⟨x, hx⟩
+    simp only [typeWeightedLimit, typeEnd.map,
+      powerProfunctorMapW, types_comp_apply,
+      Opposite.unop_op]
+    apply Subtype.ext; ext j
+    simp only [unop_comp, NatTrans.comp_app,
+      typesHasPowers, HasPowers.mapIdx,
+      HasPowers.lift, types_comp_apply]
+
+/-- The covariant action of the copower profunctor in
+the weight `W`: given `α : W ⟶ W'`, produces
+`copowerProfunctor W F ⟶ copowerProfunctor W' F` by
+applying `α` to the first component of each copower. -/
+def copowerProfunctorMapW (F : J ⥤ Type v)
+    {W W' : Jᵒᵖ ⥤ Type v} (α : W ⟶ W') :
+    copowerProfunctor (C := Type v) W F ⟶
+      copowerProfunctor (C := Type v) W' F where
+  app j :=
+    { app := fun j' =>
+        HasCopowers.mapIdx (α.app j)
+      naturality := fun {j₁ j₂} g => by
+        simp only [copowerProfunctor_obj_map]
+        rw [← HasCopowers.bimap_eq_mapVal_mapIdx,
+          ← HasCopowers.bimap_eq_mapIdx_mapVal]
+    }
+  naturality := fun {j₁ j₂} f => by
+    ext j' x
+    simp only [NatTrans.comp_app,
+      copowerProfunctor_map_app, types_comp_apply]
+    simp only [typesHasCopowers, HasCopowers.mapIdx,
+      HasCopowers.desc, HasCopowers.inj]
+    exact congrArg (fun w => (w, x.2))
+      (congrFun (α.naturality f) x.1)
+
+/-- The covariant weighted colimit functor in the weight:
+for fixed `F`, sends `W ↦ typeWeightedColimit W F`. -/
+def typeWeightedColimitFunctorInW (F : J ⥤ Type v) :
+    (Jᵒᵖ ⥤ Type v) ⥤ Type v where
+  obj W := typeWeightedColimit W F
+  map α :=
+    typeCoend.map J (copowerProfunctorMapW F α)
+  map_id _ := by
+    ext ⟨_, _⟩; rfl
+  map_comp _ _ := by
+    ext ⟨_, _⟩; rfl
+
+/-- The weighted limit bifunctor
+`(J ⥤ Type v)ᵒᵖ ⥤ (J ⥤ Type v) ⥤ Type v`, sending
+`(W, F) ↦ typeWeightedLimit W F`. Contravariant in `W`,
+covariant in `F`. -/
+def typeWeightedLimitBifunctor :
+    (J ⥤ Type v)ᵒᵖ ⥤ (J ⥤ Type v) ⥤ Type v where
+  obj W := typeWeightedLimitFunctor W.unop
+  map f :=
+    { app := fun F =>
+        typeEnd.map J (powerProfunctorMapW F f.unop)
+      naturality := fun {F G} α => by
+        ext ⟨x, hx⟩
+        simp only [typeWeightedLimitFunctor,
+          typeWeightedLimit, typeEnd.map,
+          powerProfunctorMapW, powerProfunctorMapF,
+          types_comp_apply]
+        apply Subtype.ext; ext j
+        simp only [typesHasPowers, HasPowers.mapIdx,
+          HasPowers.mapVal, HasPowers.lift,
+          types_comp_apply]
+    }
+  map_id W := by
+    ext F ⟨x, hx⟩
+    simp only [typeWeightedLimitFunctor,
+      typeWeightedLimit, typeEnd.map,
+      powerProfunctorMapW, NatTrans.id_app,
+      types_id_apply]
+    apply Subtype.ext; ext j
+    simp only [unop_id, NatTrans.id_app,
+      typesHasPowers, HasPowers.mapIdx,
+      HasPowers.lift, types_id_apply]
+  map_comp {W₁ W₂ W₃} f g := by
+    ext F ⟨x, hx⟩
+    simp only [typeWeightedLimitFunctor]
+    change typeEnd.map J
+        (powerProfunctorMapW F (f ≫ g).unop) ⟨x, hx⟩ =
+      typeEnd.map J (powerProfunctorMapW F g.unop)
+        (typeEnd.map J
+          (powerProfunctorMapW F f.unop) ⟨x, hx⟩)
+    simp only [typeEnd.map, powerProfunctorMapW]
+    apply Subtype.ext; ext j
+    simp only [unop_comp, NatTrans.comp_app,
+      typesHasPowers, HasPowers.mapIdx,
+      HasPowers.lift, types_comp_apply]
+
+/-- The weighted colimit bifunctor
+`(Jᵒᵖ ⥤ Type v) ⥤ (J ⥤ Type v) ⥤ Type v`, sending
+`(W, F) ↦ typeWeightedColimit W F`. Covariant in both
+arguments. -/
+def typeWeightedColimitBifunctor :
+    (Jᵒᵖ ⥤ Type v) ⥤ (J ⥤ Type v) ⥤ Type v where
+  obj W := typeWeightedColimitFunctor W
+  map α :=
+    { app := fun F =>
+        typeCoend.map J (copowerProfunctorMapW F α)
+      naturality := fun {F G} β => by
+        ext ⟨_, _⟩; rfl
+    }
+  map_id _ := by
+    ext F ⟨_, _⟩; rfl
+  map_comp _ _ := by
+    ext F ⟨_, _⟩; rfl
+
 end TypeWeightedLimits
 
 end GebLean
