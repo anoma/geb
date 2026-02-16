@@ -1045,6 +1045,189 @@ def pshIhom (A B : Dᵒᵖ ⥤ Type w) :
       simp only [types_comp_apply,
         Category.assoc])
 
+/-- Currying: given a morphism
+`f : pshProdPresheaf X A ⟶ B`, produce a morphism
+`X ⟶ pshIhom A B`. At stage `c` and element
+`x : X.obj c`, the resulting family maps each
+`(d, k : c ⟶ d, a : A.obj d)` to
+`f.app d (X.map k x, a)`. -/
+def pshCurry
+    {X A B : Dᵒᵖ ⥤ Type w}
+    (f : pshProdPresheaf X A ⟶ B) :
+    X ⟶ pshIhom A B where
+  app c x :=
+    ⟨fun d k a => f.app d (X.map k x, a),
+     fun d e g k a => by
+       have hnat :
+           f.app e (X.map g (X.map k x),
+             A.map g a)
+           = B.map g (f.app d (X.map k x, a))
+           := congr_fun (f.naturality g)
+             (X.map k x, a)
+       exact hnat.symm.trans
+         (congr_arg (f.app e)
+           (Prod.ext
+             (FunctorToTypes.map_comp_apply
+               X k g x).symm rfl))⟩
+  naturality c₁ c₂ k := by
+    funext x; apply Subtype.ext
+    funext d h a
+    simp only [types_comp_apply]
+    dsimp [pshIhom]
+    rw [FunctorToTypes.map_comp_apply]
+
+/-- Uncurrying: given a morphism
+`g : X ⟶ pshIhom A B`, produce a morphism
+`pshProdPresheaf X A ⟶ B`. At stage `d` and
+pair `(x, a)`, the result is
+`(g.app d x).val d (𝟙 d) a`. -/
+def pshUncurry
+    {X A B : Dᵒᵖ ⥤ Type w}
+    (g : X ⟶ pshIhom A B) :
+    pshProdPresheaf X A ⟶ B where
+  app d p := (g.app d p.1).val d (𝟙 d) p.2
+  naturality d e k := by
+    funext ⟨x, a⟩
+    change (g.app e (X.map k x)).val
+        e (𝟙 e) (A.map k a)
+      = B.map k ((g.app d x).val
+        d (𝟙 d) a)
+    have hg : (g.app e (X.map k x)).val
+        = ((pshIhom A B).map k
+          (g.app d x)).val :=
+      congr_arg Subtype.val
+        (congr_fun (g.naturality k) x)
+    rw [hg]
+    dsimp [pshIhom]
+    rw [Category.comp_id]
+    have := (g.app d x).property
+      d e k (𝟙 d) a
+    rw [Category.id_comp] at this
+    exact this.symm
+
+/-- Evaluation: the counit of the
+currying adjunction. Evaluates an element of
+`pshIhom A B` at the identity morphism. -/
+def pshEval
+    (A B : Dᵒᵖ ⥤ Type w) :
+    pshProdPresheaf (pshIhom A B) A ⟶ B :=
+  pshUncurry (𝟙 _)
+
+/-- Currying then uncurrying yields the original
+morphism. -/
+theorem pshUncurry_pshCurry
+    {X A B : Dᵒᵖ ⥤ Type w}
+    (f : pshProdPresheaf X A ⟶ B) :
+    pshUncurry (pshCurry f) = f := by
+  ext d ⟨x, a⟩
+  dsimp [pshCurry, pshUncurry]
+  simp only [FunctorToTypes.map_id_apply]
+
+/-- Uncurrying then currying yields the original
+morphism. -/
+theorem pshCurry_pshUncurry
+    {X A B : Dᵒᵖ ⥤ Type w}
+    (g : X ⟶ pshIhom A B) :
+    pshCurry (pshUncurry g) = g := by
+  ext c x
+  apply Subtype.ext
+  funext d k a
+  change (g.app d (X.map k x)).val
+      d (𝟙 d) a
+    = (g.app c x).val d k a
+  have hg : (g.app d (X.map k x)).val
+      = ((pshIhom A B).map k
+        (g.app c x)).val :=
+    congr_arg Subtype.val
+      (congr_fun (g.naturality k) x)
+  rw [hg]
+  dsimp [pshIhom]
+  rw [Category.comp_id]
+
+/-- The functor `pshIhom A _` on presheaf
+categories. Given `A`, this maps `B` to
+`pshIhom A B` and postcomposes morphisms. -/
+def pshIhomFunctor
+    (A : Dᵒᵖ ⥤ Type w) :
+    (Dᵒᵖ ⥤ Type w) ⥤ (Dᵒᵖ ⥤ Type w) where
+  obj B := pshIhom A B
+  map {B B'} g :=
+    { app := fun c φ =>
+        ⟨fun d k a => g.app d (φ.val d k a),
+         fun d e h k a =>
+           (congr_fun (g.naturality h)
+             (φ.val d k a)).symm.trans
+             (congr_arg (g.app e)
+               (φ.property d e h k a))⟩
+      naturality := fun c₁ c₂ k => by
+        funext φ; exact Subtype.ext
+          (by funext d h a; rfl) }
+  map_id B := by
+    ext c φ; exact Subtype.ext
+      (by funext d k a; rfl)
+  map_comp g₁ g₂ := by
+    ext c φ; exact Subtype.ext
+      (by funext d k a; rfl)
+
+/-- The curry/uncurry equivalence of hom-sets:
+`(X × A ⟶ B) ≃ (X ⟶ pshIhom A B)`. -/
+def pshCurryEquiv
+    (X A B : Dᵒᵖ ⥤ Type w) :
+    (pshProdPresheaf X A ⟶ B) ≃
+      (X ⟶ pshIhom A B) where
+  toFun := pshCurry
+  invFun := pshUncurry
+  left_inv := pshUncurry_pshCurry
+  right_inv := pshCurry_pshUncurry
+
+/-- The functor `_ × A` on presheaf categories.
+The left factor varies covariantly while `A` is
+fixed. -/
+def pshProdWithFunctor
+    (A : Dᵒᵖ ⥤ Type w) :
+    (Dᵒᵖ ⥤ Type w) ⥤ (Dᵒᵖ ⥤ Type w) where
+  obj X := pshProdPresheaf X A
+  map f := pshProdMap f (𝟙 A)
+  map_id X := pshProdMap_id X A
+  map_comp f g := by
+    rw [show 𝟙 A = 𝟙 A ≫ 𝟙 A from
+      (Category.comp_id _).symm]
+    exact (pshProdMap_comp f (𝟙 A) g (𝟙 A)).symm
+
+/-- Left naturality of uncurrying: precomposing with
+a morphism on the first factor commutes with
+uncurrying. -/
+theorem pshUncurry_precomp
+    {X' X A B : Dᵒᵖ ⥤ Type w}
+    (f : X' ⟶ X) (g : X ⟶ pshIhom A B) :
+    pshUncurry (f ≫ g) =
+      pshProdMap f (𝟙 A) ≫ pshUncurry g := by
+  ext d ⟨x', a⟩; rfl
+
+/-- Right naturality of currying: postcomposing
+with a morphism commutes with currying. -/
+theorem pshCurry_postcomp
+    {X A B B' : Dᵒᵖ ⥤ Type w}
+    (f : pshProdPresheaf X A ⟶ B)
+    (g : B ⟶ B') :
+    pshCurry (f ≫ g) =
+      pshCurry f ≫ (pshIhomFunctor A).map g := by
+  ext c x
+  exact Subtype.ext (by funext d k a; rfl)
+
+/-- The product-exponential adjunction:
+`_ × A ⊣ pshIhom A _`. -/
+def pshProdIhomAdj
+    (A : Dᵒᵖ ⥤ Type w) :
+    pshProdWithFunctor A ⊣ pshIhomFunctor A :=
+  Adjunction.mkOfHomEquiv {
+    homEquiv := fun X B => pshCurryEquiv X A B
+    homEquiv_naturality_left_symm :=
+      fun f g => pshUncurry_precomp f g
+    homEquiv_naturality_right :=
+      fun f g => pshCurry_postcomp f g
+  }
+
 /-- The predicate defining when a pair of elements
 of the internal hom presheaves are related by the
 arrow relation. Given relations `R` on inputs and
