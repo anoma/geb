@@ -2617,8 +2617,7 @@ def propRelToYonedaProdOver_graphRel
         propRelToYonedaProdOver, propRelProj,
         yonedaProdOverGraph,
         Over.mk_hom, NatIso.ofComponents,
-        NatTrans.comp_app,
-        FunctorToTypes.prod.lift]
+        NatTrans.comp_app]
       simp only [graphRel] at h
       exact Prod.ext rfl (funext h))
 
@@ -2669,9 +2668,8 @@ theorem arrowRel_iff_yonedaProdOverRelated_propRel
         (NatTrans.congr_app hφ T) elem
     simp only [propRelProj,
       NatTrans.comp_app,
-      yonedaProdMap, yonedaProdLift,
+      yonedaProdMap,
       FunctorToTypes.prod.lift,
-      yonedaProdFst, yonedaProdSnd,
       FunctorToTypes.prod.fst,
       FunctorToTypes.prod.snd] at hcomm
     have h₁ : img.val.1 () = g₀ a₀ :=
@@ -2702,8 +2700,8 @@ theorem arrowRel_iff_relRelated_propRel
       (propRelToYonedaRel S) := by
   rw [arrowRel_iff_yonedaProdOverRelated_propRel]
   simp only [propRelToYonedaRel,
-    relRelated, Skeleton.lift₂, toSkeleton,
-    Quotient.lift₂_mk]
+    relRelated, pshRelRelated, Skeleton.lift₂,
+    toSkeleton, Quotient.lift₂_mk]
 
 /-- `arrowRel R S g₀ g₁` holds iff `yonedaRelSQS`
 holds for the Yoneda relation encodings of `R` and

@@ -648,11 +648,12 @@ def functorYPOLiftPresheaf
     (F.obj A) (F.obj A')).map s x.val,
     functorYPOLiftPred_map F R s x.property⟩
   map_id T := by
-    ext ⟨x, hx⟩
-    simp
+    funext ⟨x, hx⟩
+    exact Subtype.ext (by simp)
   map_comp s t := by
-    ext ⟨x, hx⟩
-    simp [FunctorToTypes.map_comp_apply]
+    funext ⟨x, hx⟩
+    exact Subtype.ext
+      (by simp [FunctorToTypes.map_comp_apply])
 
 /-- The forgetful natural transformation from the
 subtype presheaf `functorYPOLiftPresheaf F R` to

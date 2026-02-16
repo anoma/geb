@@ -1,11 +1,7 @@
+import GebLean.PshRelDouble
 import GebLean.Utilities.Elements
-import GebLean.Utilities.Skeleton
-import GebLean.Utilities.Presheaf
-import GebLean.Utilities.DoubleCategory
 import Mathlib.CategoryTheory.Functor.Currying
 import Mathlib.CategoryTheory.Products.Basic
-import Mathlib.CategoryTheory.Limits.Types.Products
-import Mathlib.CategoryTheory.Limits.Shapes.FunctorToTypes
 
 /-!
 # Yoneda Relations and the Yoneda Relation Double Category
@@ -81,7 +77,7 @@ def yonedaProd : C ⥤ C ⥤ (Cᵒᵖ ⥤ Type v) :=
 
 abbrev yonedaProdPresheaf (X Y : C) :
     Cᵒᵖ ⥤ Type v :=
-  (yonedaProd.obj X).obj Y
+  pshProdPresheaf (yoneda.obj X) (yoneda.obj Y)
 
 /-- A proof-relevant relation from `X` to `Y` in
 `PSh(C)`: an object of the slice category over the
@@ -203,11 +199,8 @@ theorem yonedaProdPresheaf_hom_ext
       h₂ ≫ yonedaProdFst X Y)
     (hsnd : h₁ ≫ yonedaProdSnd X Y =
       h₂ ≫ yonedaProdSnd X Y) :
-    h₁ = h₂ := by
-  ext T x
-  exact Prod.ext
-    (congr_fun (NatTrans.congr_app hfst T) x)
-    (congr_fun (NatTrans.congr_app hsnd T) x)
+    h₁ = h₂ :=
+  pshProdPresheaf_hom_ext hfst hsnd
 
 @[simp]
 theorem yonedaProdLift_fst_snd
@@ -216,31 +209,28 @@ theorem yonedaProdLift_fst_snd
     yonedaProdLift X Y
       (h ≫ yonedaProdFst X Y)
       (h ≫ yonedaProdSnd X Y) = h :=
-  yonedaProdPresheaf_hom_ext
-    (by simp [yonedaProdLift])
-    (by simp [yonedaProdLift])
+  pshProdLift_fst_snd h
 
 /-- The identity relation on `X` in the over category,
 given by the diagonal
 `yoneda(X) → yoneda(X) × yoneda(X)`. -/
-def yonedaProdOverId (X : C) :
+abbrev yonedaProdOverId (X : C) :
     YonedaProdOver X X :=
-  Over.mk (yonedaProdLift X X
-    (𝟙 (yoneda.obj X)) (𝟙 (yoneda.obj X)))
+  pshProdOverId (yoneda.obj X)
 
 @[simp]
 theorem yonedaProdOverId_fst (X : C) :
     (yonedaProdOverId X).hom ≫
       yonedaProdFst X X =
     𝟙 (yoneda.obj X) :=
-  rfl
+  pshProdOverId_fst (yoneda.obj X)
 
 @[simp]
 theorem yonedaProdOverId_snd (X : C) :
     (yonedaProdOverId X).hom ≫
       yonedaProdSnd X X =
     𝟙 (yoneda.obj X) :=
-  rfl
+  pshProdOverId_snd (yoneda.obj X)
 
 /-- The graph of a morphism `f : X ⟶ Y` as a
 proof-relevant relation. The underlying presheaf is
@@ -249,10 +239,9 @@ second projection `yoneda.map f`. At each test object
 `T`, a pair `(a : T ⟶ X, b : T ⟶ Y)` is in the graph
 iff `b = f ≫ a`. This generalizes `graphRel` from
 `Type` to an arbitrary category `C`. -/
-def yonedaProdOverGraph {X Y : C} (f : X ⟶ Y) :
-    YonedaProdOver X Y :=
-  Over.mk (yonedaProdLift X Y
-    (𝟙 (yoneda.obj X)) (yoneda.map f))
+abbrev yonedaProdOverGraph {X Y : C}
+    (f : X ⟶ Y) : YonedaProdOver X Y :=
+  pshProdOverGraph (yoneda.map f)
 
 @[simp]
 theorem yonedaProdOverGraph_fst
@@ -260,7 +249,7 @@ theorem yonedaProdOverGraph_fst
     (yonedaProdOverGraph f).hom ≫
       yonedaProdFst X Y =
     𝟙 (yoneda.obj X) :=
-  rfl
+  pshProdOverGraph_fst (yoneda.map f)
 
 @[simp]
 theorem yonedaProdOverGraph_snd
@@ -268,7 +257,7 @@ theorem yonedaProdOverGraph_snd
     (yonedaProdOverGraph f).hom ≫
       yonedaProdSnd X Y =
     yoneda.map f :=
-  rfl
+  pshProdOverGraph_snd (yoneda.map f)
 
 theorem yonedaProdOverGraph_snd_assoc
     {X Y : C} (f : X ⟶ Y)
@@ -276,9 +265,8 @@ theorem yonedaProdOverGraph_snd_assoc
     (k : yoneda.obj Y ⟶ P) :
     (yonedaProdOverGraph f).hom ≫
       yonedaProdSnd X Y ≫ k =
-    yoneda.map f ≫ k := by
-  rw [← Category.assoc,
-    yonedaProdOverGraph_snd]
+    yoneda.map f ≫ k :=
+  pshProdOverGraph_snd_assoc (yoneda.map f) k
 
 theorem yonedaProdOverGraph_fst_assoc
     {X Y : C} (f : X ⟶ Y)
@@ -286,16 +274,14 @@ theorem yonedaProdOverGraph_fst_assoc
     (k : yoneda.obj X ⟶ P) :
     (yonedaProdOverGraph f).hom ≫
       yonedaProdFst X Y ≫ k =
-    k := by
-  rw [← Category.assoc,
-    yonedaProdOverGraph_fst]
-  exact Category.id_comp k
+    k :=
+  pshProdOverGraph_fst_assoc (yoneda.map f) k
 
 theorem yonedaProdOverGraph_id (X : C) :
     yonedaProdOverGraph (𝟙 X) =
       yonedaProdOverId X := by
   simp [yonedaProdOverGraph, yonedaProdOverId,
-    yoneda]
+    pshProdOverGraph, pshProdOverId, yoneda]
 
 /-- Composition of proof-relevant relations in the over
 category.
@@ -306,20 +292,11 @@ over `yoneda Y` (matching the second component of `R`
 with the first component of `S`), then projecting the
 first component from `R` and the second from `S` into
 `yonedaProd X Z`. -/
-def yonedaProdOverComp {X Y Z : C}
+abbrev yonedaProdOverComp {X Y Z : C}
     (R : YonedaProdOver X Y)
     (S : YonedaProdOver Y Z) :
     YonedaProdOver X Z :=
-  Over.mk
-    (yonedaProdLift X Z
-      (presheafPullbackFst
-          (R.hom ≫ yonedaProdSnd X Y)
-          (S.hom ≫ yonedaProdFst Y Z) ≫
-        R.hom ≫ yonedaProdFst X Y)
-      (presheafPullbackSnd
-          (R.hom ≫ yonedaProdSnd X Y)
-          (S.hom ≫ yonedaProdFst Y Z) ≫
-        S.hom ≫ yonedaProdSnd Y Z))
+  pshProdOverComp R S
 
 /-- A relation from `X` to `Y` up to isomorphism:
 an isomorphism class in the over category
@@ -328,89 +305,41 @@ abbrev YonedaRel (X Y : C) :=
   Skeleton (YonedaProdOver X Y)
 
 /-- The identity relation on `X`, up to isomorphism. -/
-def relId (X : C) : YonedaRel X X :=
-  toSkeleton _ (yonedaProdOverId X)
+abbrev relId (X : C) : YonedaRel X X :=
+  pshRelId (yoneda.obj X)
 
 /-- `yonedaProdOverComp` respects isomorphisms: given
 isomorphisms `R₁ ≅ R₂` and `S₁ ≅ S₂` in the over
 categories, their compositions are isomorphic. -/
-def yonedaProdOverComp_iso {X Y Z : C}
+abbrev yonedaProdOverComp_iso {X Y Z : C}
     {R₁ R₂ : YonedaProdOver X Y}
     {S₁ S₂ : YonedaProdOver Y Z}
     (αR : R₁ ≅ R₂) (αS : S₁ ≅ S₂) :
     yonedaProdOverComp R₁ S₁ ≅
-      yonedaProdOverComp R₂ S₂ := by
-  have hR := Over.w αR.hom
-  have hS := Over.w αS.hom
-  refine Over.isoMk
-    (presheafPullbackIsoOfIso
-      ((Over.forget _).mapIso αR)
-      ((Over.forget _).mapIso αS)
-      (by simp only [Functor.mapIso_hom,
-        Over.forget_map, ← Category.assoc, hR])
-      (by simp only [Functor.mapIso_hom,
-        Over.forget_map, ← Category.assoc, hS]))
-    ?_
-  simp only [yonedaProdOverComp, Over.mk_hom]
-  apply yonedaProdPresheaf_hom_ext
-  · -- fst projection
-    open Limits in
-    simp only [Category.assoc,
-      FunctorToTypes.prod.lift_fst]
-    rw [presheafPullbackIsoOfIso_hom_fst_assoc]
-    simp only [Functor.mapIso_hom, Over.forget_map,
-      ← Category.assoc, hR]
-  · -- snd projection
-    open Limits in
-    simp only [Category.assoc,
-      FunctorToTypes.prod.lift_snd]
-    rw [presheafPullbackIsoOfIso_hom_snd_assoc]
-    simp only [Functor.mapIso_hom, Over.forget_map,
-      ← Category.assoc, hS]
+      yonedaProdOverComp R₂ S₂ :=
+  pshProdOverComp_iso αR αS
 
 /-- Left identity for `yonedaProdOverComp`: composing
 with the identity relation on `X` yields an isomorphic
 relation. -/
-def yonedaProdOverComp_id_left
+abbrev yonedaProdOverComp_id_left
     {X Y : C} (R : YonedaProdOver X Y) :
     yonedaProdOverComp (yonedaProdOverId X) R ≅
       R :=
-  Over.isoMk
-    (presheafPullbackIdLeftIso
-      (R.hom ≫ yonedaProdFst X Y))
-    (by
-      simp only [yonedaProdOverComp, Over.mk_hom]
-      apply yonedaProdPresheaf_hom_ext
-      · simp only [Category.assoc,
-          presheafPullbackIdLeftIso]
-        have := presheafPullbackCondition
-          (𝟙 (yoneda.obj X))
-          (R.hom ≫ yonedaProdFst X Y)
-        simp only [Category.comp_id] at this
-        exact this.symm
-      · rfl)
+  pshProdOverComp_id_left R
 
 /-- Right identity for `yonedaProdOverComp`: composing
 with the identity relation on `Y` yields an isomorphic
 relation. -/
-def yonedaProdOverComp_id_right
+abbrev yonedaProdOverComp_id_right
     {X Y : C} (R : YonedaProdOver X Y) :
     yonedaProdOverComp R (yonedaProdOverId Y) ≅
       R :=
-  Over.isoMk
-    (presheafPullbackIdRightIso
-      (R.hom ≫ yonedaProdSnd X Y))
-    (by
-      simp only [yonedaProdOverComp, Over.mk_hom]
-      apply yonedaProdPresheaf_hom_ext
-      · rfl
-      · simp only [Category.assoc,
-          presheafPullbackIdRightIso]
-        exact presheafPullbackCondition _ _)
+  pshProdOverComp_id_right R
 
 /-- Associativity for `yonedaProdOverComp`:
 `(R ; S) ; T ≅ R ; (S ; T)`. -/
-def yonedaProdOverComp_assoc
+abbrev yonedaProdOverComp_assoc
     {X Y Z W : C}
     (R : YonedaProdOver X Y)
     (S : YonedaProdOver Y Z)
@@ -419,76 +348,42 @@ def yonedaProdOverComp_assoc
       (yonedaProdOverComp R S) T ≅
     yonedaProdOverComp
       R (yonedaProdOverComp S T) :=
-  Over.isoMk
-    (presheafPullbackAssocIso
-      (R.hom ≫ yonedaProdSnd X Y)
-      (S.hom ≫ yonedaProdFst Y Z)
-      (S.hom ≫ yonedaProdSnd Y Z)
-      (T.hom ≫ yonedaProdFst Z W))
-    (by
-      simp only [yonedaProdOverComp, Over.mk_hom]
-      apply yonedaProdPresheaf_hom_ext <;> rfl)
+  pshProdOverComp_assoc R S T
 
 /-- The composite of two graph relations
 `graph(f) ; graph(g)` is isomorphic to `graph(f ≫ g)`.
 The pullback that defines relational composition
 matches `yoneda.map f` with `𝟙 (yoneda Y)`, giving
 back `yoneda X` via `presheafPullbackIdRightIso`. -/
-def yonedaProdOverGraph_comp
+abbrev yonedaProdOverGraph_comp
     {X Y Z : C} (f : X ⟶ Y) (g : Y ⟶ Z) :
     yonedaProdOverComp
       (yonedaProdOverGraph f)
       (yonedaProdOverGraph g) ≅
     yonedaProdOverGraph (f ≫ g) :=
-  Over.isoMk
-    (presheafPullbackIdRightIso (yoneda.map f))
-    (by
-      simp only [yonedaProdOverComp,
-        yonedaProdOverGraph, Over.mk_hom]
-      apply yonedaProdPresheaf_hom_ext
-      · simp [presheafPullbackIdRightIso,
-          presheafPullbackLift]
-      · simp only [Category.assoc,
-          FunctorToTypes.prod.lift_snd,
-          FunctorToTypes.prod.lift_fst]
-        have hpb := presheafPullbackCondition
-          (yoneda.map f) (𝟙 (yoneda.obj Y))
-        simp only [Category.comp_id] at hpb
-        change presheafPullbackFst
-          (yoneda.map f) (𝟙 _) ≫
-          yoneda.map (f ≫ g) = _
-        rw [yoneda.map_comp,
-          ← Category.assoc, hpb])
+  pshProdOverGraph_comp (yoneda.map f)
+    (yoneda.map g) ≪≫
+  eqToIso (by simp [yonedaProdOverGraph,
+    pshProdOverGraph, yoneda.map_comp])
 
 /-- Composition of relations up to isomorphism:
 applies `yonedaProdOverComp` via `Skeleton.lift₂`,
 using `yonedaProdOverComp_iso` for
 well-definedness. -/
-def relComp {X Y Z : C} :
+abbrev relComp {X Y Z : C} :
     YonedaRel X Y → YonedaRel Y Z →
     YonedaRel X Z :=
-  Skeleton.lift₂
-    (fun R S =>
-      toSkeleton _ (yonedaProdOverComp R S))
-    (fun _ _ _ _ ⟨αR⟩ ⟨αS⟩ =>
-      toSkeleton_eq_iff.mpr
-        ⟨yonedaProdOverComp_iso αR αS⟩)
+  pshRelComp
 
 theorem relComp_relId_left
     {X Y : C} (R : YonedaRel X Y) :
-    relComp (relId X) R = R := by
-  induction R using Quotient.inductionOn with
-  | h R' =>
-    exact toSkeleton_eq_iff.mpr
-      ⟨yonedaProdOverComp_id_left R'⟩
+    relComp (relId X) R = R :=
+  pshRelComp_id_left R
 
 theorem relComp_relId_right
     {X Y : C} (R : YonedaRel X Y) :
-    relComp R (relId Y) = R := by
-  induction R using Quotient.inductionOn with
-  | h R' =>
-    exact toSkeleton_eq_iff.mpr
-      ⟨yonedaProdOverComp_id_right R'⟩
+    relComp R (relId Y) = R :=
+  pshRelComp_id_right R
 
 theorem relComp_assoc
     {X Y Z W : C}
@@ -496,33 +391,29 @@ theorem relComp_assoc
     (S : YonedaRel Y Z)
     (T : YonedaRel Z W) :
     relComp (relComp R S) T =
-      relComp R (relComp S T) := by
-  induction R using Quotient.inductionOn with
-  | h R' =>
-  induction S using Quotient.inductionOn with
-  | h S' =>
-  induction T using Quotient.inductionOn with
-  | h T' =>
-    exact toSkeleton_eq_iff.mpr
-      ⟨yonedaProdOverComp_assoc R' S' T'⟩
+      relComp R (relComp S T) :=
+  pshRelComp_assoc R S T
 
 /-- The graph of a morphism as a `YonedaRel`
 (isomorphism class of `YonedaProdOver`). -/
 def yonedaRelGraph {X Y : C} (f : X ⟶ Y) :
     YonedaRel X Y :=
-  toSkeleton _ (yonedaProdOverGraph f)
+  pshRelGraph (yoneda.map f)
 
 theorem yonedaRelGraph_eq_relId (X : C) :
     yonedaRelGraph (𝟙 X) = relId (C := C) X := by
   simp [yonedaRelGraph, relId,
-    yonedaProdOverGraph_id]
+    pshRelGraph, pshRelId,
+    pshProdOverGraph, pshProdOverId, yoneda]
 
 theorem yonedaRelGraph_comp
     {X Y Z : C} (f : X ⟶ Y) (g : Y ⟶ Z) :
     relComp (yonedaRelGraph f) (yonedaRelGraph g) =
-      yonedaRelGraph (f ≫ g) :=
-  toSkeleton_eq_iff.mpr
-    ⟨yonedaProdOverGraph_comp f g⟩
+      yonedaRelGraph (f ≫ g) := by
+  simp only [yonedaRelGraph, relComp,
+    yoneda.map_comp]
+  exact pshRelGraph_comp (yoneda.map f)
+    (yoneda.map g)
 
 end PresheafRelations
 
@@ -571,30 +462,29 @@ abbrev yonedaProdMap {A A' B B' : C}
     (f : A ⟶ B) (f' : A' ⟶ B') :
     yonedaProdPresheaf A A' ⟶
       yonedaProdPresheaf B B' :=
-  yonedaProdLift B B'
-    (yonedaProdFst A A' ≫ yoneda.map f)
-    (yonedaProdSnd A A' ≫ yoneda.map f')
+  pshProdMap (yoneda.map f) (yoneda.map f')
 
 @[simp]
 theorem yonedaProdMap_fst {A A' B B' : C}
     (f : A ⟶ B) (f' : A' ⟶ B') :
     yonedaProdMap f f' ≫ yonedaProdFst B B' =
-      yonedaProdFst A A' ≫ yoneda.map f := by
-  simp [yonedaProdMap, yonedaProdLift]
+      yonedaProdFst A A' ≫ yoneda.map f :=
+  pshProdMap_fst (yoneda.map f) (yoneda.map f')
 
 @[simp]
 theorem yonedaProdMap_snd {A A' B B' : C}
     (f : A ⟶ B) (f' : A' ⟶ B') :
     yonedaProdMap f f' ≫ yonedaProdSnd B B' =
-      yonedaProdSnd A A' ≫ yoneda.map f' := by
-  simp [yonedaProdMap, yonedaProdLift]
+      yonedaProdSnd A A' ≫ yoneda.map f' :=
+  pshProdMap_snd (yoneda.map f) (yoneda.map f')
 
 @[simp]
 theorem yonedaProdMap_id (A A' : C) :
     yonedaProdMap (𝟙 A) (𝟙 A') =
       𝟙 (yonedaProdPresheaf A A') := by
-  apply yonedaProdPresheaf_hom_ext <;>
-    simp [yoneda]
+  simp only [yonedaProdMap, yoneda.map_id]
+  exact pshProdMap_id
+    (yoneda.obj A) (yoneda.obj A')
 
 theorem yonedaProdMap_comp
     {A A' B B' D D' : C}
@@ -603,13 +493,10 @@ theorem yonedaProdMap_comp
     yonedaProdMap (f ≫ g) (f' ≫ g') =
       yonedaProdMap f f' ≫
         yonedaProdMap g g' := by
-  apply yonedaProdPresheaf_hom_ext <;> {
-    simp only [Category.assoc,
-      yonedaProdMap_fst, yonedaProdMap_snd]
-    simp only [← Category.assoc,
-      yonedaProdMap_fst, yonedaProdMap_snd]
-    simp only [Category.assoc, yoneda.map_comp]
-  }
+  simp only [yonedaProdMap, yoneda.map_comp]
+  exact pshProdMap_comp
+    (yoneda.map f) (yoneda.map f')
+    (yoneda.map g) (yoneda.map g')
 
 /-- Two morphisms `f : A ⟶ B` and `f' : A' ⟶ B'` are
 `(R, S)`-related at the `YonedaProdOver` level when
@@ -624,14 +511,13 @@ square commute:
          (yonedaProdMap f f')
 ```
 -/
-def YonedaProdOverRelated
+abbrev YonedaProdOverRelated
     {A A' B B' : C}
     (R : YonedaProdOver A A')
     (S : YonedaProdOver B B')
     (f : A ⟶ B) (f' : A' ⟶ B') : Prop :=
-  ∃ (φ : R.left ⟶ S.left),
-    φ ≫ S.hom =
-      R.hom ≫ yonedaProdMap f f'
+  PshProdOverRelated R S
+    (yoneda.map f) (yoneda.map f')
 
 /-- `YonedaProdOverRelated` is invariant under
 isomorphism in both relation arguments. -/
@@ -642,18 +528,8 @@ theorem yonedaProdOverRelated_iso
     (αR : R₁ ≅ R₂) (αS : S₁ ≅ S₂)
     {f : A ⟶ B} {f' : A' ⟶ B'} :
     YonedaProdOverRelated R₁ S₁ f f' ↔
-      YonedaProdOverRelated R₂ S₂ f f' := by
-  constructor
-  · rintro ⟨φ, hφ⟩
-    exact ⟨αR.inv.left ≫ φ ≫ αS.hom.left, by
-      simp only [Category.assoc, Over.w αS.hom]
-      rw [hφ, ← Category.assoc,
-        Over.w αR.inv]⟩
-  · rintro ⟨φ, hφ⟩
-    exact ⟨αR.hom.left ≫ φ ≫ αS.inv.left, by
-      simp only [Category.assoc, Over.w αS.inv]
-      rw [hφ, ← Category.assoc,
-        Over.w αR.hom]⟩
+      YonedaProdOverRelated R₂ S₂ f f' :=
+  pshProdOverRelated_iso αR αS
 
 /-- Two morphisms `f : A ⟶ B` and `f' : A' ⟶ B'` in
 `C` are `(R, S)`-related (where `R : YonedaRel A A'`
@@ -661,16 +537,11 @@ and `S : YonedaRel B B'`) when they admit a lifting at
 the `YonedaProdOver` level. This descends through the
 skeleton quotient via `Skeleton.lift₂`, using
 `yonedaProdOverRelated_iso` for well-definedness. -/
-def relRelated
+abbrev relRelated
     {A A' B B' : C}
     (f : A ⟶ B) (f' : A' ⟶ B') :
     YonedaRel A A' → YonedaRel B B' → Prop :=
-  Skeleton.lift₂
-    (fun R S =>
-      YonedaProdOverRelated R S f f')
-    (fun _ _ _ _ ⟨αR⟩ ⟨αS⟩ =>
-      propext
-        (yonedaProdOverRelated_iso αR αS))
+  pshRelRelated (yoneda.map f) (yoneda.map f')
 
 /-- For graph relations, `YonedaProdOverRelated`
 reduces to commutativity of the naturality square.
@@ -686,43 +557,22 @@ theorem yonedaProdOverRelated_graph_iff
       (yonedaProdOverGraph f')
       g₀ g₁ ↔
     g₀ ≫ f' = f ≫ g₁ := by
+  rw [show YonedaProdOverRelated
+    (yonedaProdOverGraph f)
+    (yonedaProdOverGraph f') g₀ g₁ =
+    PshProdOverRelated
+      (pshProdOverGraph (yoneda.map f))
+      (pshProdOverGraph (yoneda.map f'))
+      (yoneda.map g₀) (yoneda.map g₁) from rfl]
+  rw [pshProdOverRelated_graph_iff]
   constructor
-  · rintro ⟨φ, hφ⟩
-    have hfst : φ = yoneda.map g₀ := by
-      have h :=
-        congr_arg (· ≫ yonedaProdFst B B') hφ
-      simp only [Category.assoc,
-        yonedaProdOverGraph_fst,
-        yonedaProdOverGraph_fst_assoc,
-        yonedaProdMap_fst] at h
-      exact h
-    have hsnd : φ ≫ yoneda.map f' =
-        yoneda.map f ≫ yoneda.map g₁ := by
-      have h :=
-        congr_arg (· ≫ yonedaProdSnd B B') hφ
-      simp only [Category.assoc,
-        yonedaProdOverGraph_snd,
-        yonedaProdOverGraph_snd_assoc,
-        yonedaProdMap_snd] at h
-      exact h
-    rw [hfst] at hsnd
+  · intro h
     rw [← yoneda.map_comp,
-      ← yoneda.map_comp] at hsnd
-    exact yoneda.map_injective hsnd
+      ← yoneda.map_comp] at h
+    exact yoneda.map_injective h
   · intro hsq
-    refine ⟨yoneda.map g₀, ?_⟩
-    apply yonedaProdPresheaf_hom_ext
-    · simp only [Category.assoc,
-        yonedaProdOverGraph_fst,
-        yonedaProdOverGraph_fst_assoc,
-        yonedaProdMap_fst]
-      exact Category.comp_id _
-    · simp only [Category.assoc,
-        yonedaProdOverGraph_snd,
-        yonedaProdOverGraph_snd_assoc,
-        yonedaProdMap_snd]
-      rw [← yoneda.map_comp, hsq,
-        yoneda.map_comp]
+    rw [← yoneda.map_comp, hsq,
+      yoneda.map_comp]
 
 end RelatedMorphisms
 
@@ -744,8 +594,8 @@ theorem yonedaProdOverComp_fst {X Y Z : C}
     presheafPullbackFst
       (R.hom ≫ yonedaProdSnd X Y)
       (S.hom ≫ yonedaProdFst Y Z) ≫
-    R.hom ≫ yonedaProdFst X Y := by
-  simp [yonedaProdOverComp, yonedaProdLift]
+    R.hom ≫ yonedaProdFst X Y :=
+  pshProdOverComp_fst R S
 
 @[reassoc (attr := simp)]
 theorem yonedaProdOverComp_snd {X Y Z : C}
@@ -756,8 +606,8 @@ theorem yonedaProdOverComp_snd {X Y Z : C}
     presheafPullbackSnd
       (R.hom ≫ yonedaProdSnd X Y)
       (S.hom ≫ yonedaProdFst Y Z) ≫
-    S.hom ≫ yonedaProdSnd Y Z := by
-  simp [yonedaProdOverComp, yonedaProdLift]
+    S.hom ≫ yonedaProdSnd Y Z :=
+  pshProdOverComp_snd R S
 
 /-- Horizontal composition of relatedness squares.
 
@@ -779,18 +629,11 @@ theorem relRelatedHComp
     (α : relRelated f g R S)
     (β : relRelated f' g' S T) :
     relRelated (f ≫ f') (g ≫ g') R T := by
-  induction R using Quotient.inductionOn with
-  | h R₀ =>
-  induction S using Quotient.inductionOn with
-  | h S₀ =>
-  induction T using Quotient.inductionOn with
-  | h T₀ =>
-  obtain ⟨φ₁, hφ₁⟩ := α
-  obtain ⟨φ₂, hφ₂⟩ := β
-  exact ⟨φ₁ ≫ φ₂, by
-    rw [Category.assoc, hφ₂,
-      ← Category.assoc, hφ₁, Category.assoc,
-      yonedaProdMap_comp]⟩
+  change pshRelRelated
+    (yoneda.map (f ≫ f'))
+    (yoneda.map (g ≫ g')) R T
+  simp only [yoneda.map_comp]
+  exact pshRelRelatedHComp α β
 
 /-- Horizontal identity square: for each vertical
 morphism `R : YonedaRel A B`, the pair `(𝟙 A, 𝟙 B)` is
@@ -802,10 +645,11 @@ theorem relRelatedSqHorId
     {A B : C}
     (R : YonedaRel (C := C) A B) :
     relRelated (𝟙 A) (𝟙 B) R R := by
-  induction R using Quotient.inductionOn with
-  | h R₀ =>
-  exact ⟨𝟙 R₀.left, by
-    simp [yonedaProdMap_id]⟩
+  change pshRelRelated
+    (yoneda.map (𝟙 A))
+    (yoneda.map (𝟙 B)) R R
+  simp only [yoneda.map_id]
+  exact pshRelRelatedSqHorId R
 
 /-- Vertical identity square: for each horizontal
 morphism `f : A ⟶ B`, the pair `(relId A, relId B)` is
@@ -817,12 +661,8 @@ theorem relRelatedSqVertId
     {A B : C}
     (f : A ⟶ B) :
     relRelated f f
-      (relId (C := C) A) (relId B) := by
-  change YonedaProdOverRelated
-    (yonedaProdOverId A) (yonedaProdOverId B) f f
-  refine ⟨yoneda.map f, ?_⟩
-  ext T x
-  exact Prod.ext rfl rfl
+      (relId (C := C) A) (relId B) :=
+  pshRelRelatedSqVertId (yoneda.map f)
 
 /-- Vertical composition of relatedness squares.
 
@@ -844,49 +684,8 @@ theorem relRelatedVComp
     (α : relRelated f g R S)
     (β : relRelated g h R' S') :
     relRelated f h (relComp R R')
-      (relComp S S') := by
-  induction R using Quotient.inductionOn with
-  | h R₀ =>
-  induction S using Quotient.inductionOn with
-  | h S₀ =>
-  induction R' using Quotient.inductionOn with
-  | h R₀' =>
-  induction S' using Quotient.inductionOn with
-  | h S₀' =>
-  obtain ⟨φ₁, hφ₁⟩ := α
-  obtain ⟨φ₂, hφ₂⟩ := β
-  have hφ₁_r := reassoc_of% hφ₁
-  have hφ₂_r := reassoc_of% hφ₂
-  have pbcondR := presheafPullbackCondition
-    (R₀.hom ≫ yonedaProdSnd A₁ A₂)
-    (R₀'.hom ≫ yonedaProdFst A₂ A₃)
-  have pbcondR_r := reassoc_of% pbcondR
-  refine ⟨presheafPullbackLift
-    (S₀.hom ≫ yonedaProdSnd B₁ B₂)
-    (S₀'.hom ≫ yonedaProdFst B₂ B₃)
-    (presheafPullbackFst
-      (R₀.hom ≫ yonedaProdSnd A₁ A₂)
-      (R₀'.hom ≫ yonedaProdFst A₂ A₃) ≫ φ₁)
-    (presheafPullbackSnd
-      (R₀.hom ≫ yonedaProdSnd A₁ A₂)
-      (R₀'.hom ≫ yonedaProdFst A₂ A₃) ≫ φ₂)
-    ?_, ?_⟩
-  · -- Pullback condition for the lift
-    simp only [Category.assoc, hφ₁_r,
-      yonedaProdMap_snd, hφ₂_r,
-      yonedaProdMap_fst]
-    exact pbcondR_r _
-  · -- Commutativity
-    apply yonedaProdPresheaf_hom_ext <;>
-    simp only [Category.assoc,
-      yonedaProdOverComp_fst,
-      yonedaProdOverComp_fst_assoc,
-      yonedaProdOverComp_snd,
-      yonedaProdOverComp_snd_assoc,
-      yonedaProdMap_fst, yonedaProdMap_snd,
-      PullbackCone.IsLimit.lift_fst_assoc,
-      PullbackCone.IsLimit.lift_snd_assoc,
-      hφ₁_r, hφ₂_r]
+      (relComp S S') :=
+  pshRelRelatedVComp α β
 
 /-- Operations for the Yoneda relation double category
 on objects of `C`. -/
