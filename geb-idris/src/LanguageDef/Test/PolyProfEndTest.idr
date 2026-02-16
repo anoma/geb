@@ -115,6 +115,31 @@ ExpFRoundTrip (Left (b1, b2)) = Refl
 ExpFRoundTrip (Right h) = Refl
 
 ------------------------------------------------------------
+---- Round trip: Prof -> ExpF -> Prof = id ----
+------------------------------------------------------------
+
+-- The reverse direction needs FunExt because:
+-- App case: any (Void -> a) function equals absurd,
+--   so each (j ** f) collapses to (j ** absurd).
+-- Lam case: (\() => f ()) = f (eta for Unit).
+public export
+0 ExpProfRoundTrip : FunExt -> {a, b : Type} ->
+  (ep : InterpPolyProf ExpProf a b) ->
+  ExpFToExpProf (ExpProfToExpF ep) = ep
+ExpProfRoundTrip fext (True ** g) =
+  dpEq12 Refl
+    (funExt (\(j ** f) => case j of
+      True => cong g
+        (dpEq12 Refl (funExt (\v => absurd v)))
+      False => cong g
+        (dpEq12 Refl (funExt (\v => absurd v)))))
+ExpProfRoundTrip fext (False ** g) =
+  dpEq12 Refl
+    (funExt (\(() ** f) =>
+      cong g
+        (dpEq12 Refl (funExt (\() => Refl)))))
+
+------------------------------------------------------------
 ------------------------------------------------------------
 ---- HOAS Class Encoding (for End computation) ----
 ------------------------------------------------------------
