@@ -145,6 +145,7 @@ modules =
     , LanguageDef.Test.DiprofunctorTest
     , LanguageDef.Test.TreeCalculusTest
     , LanguageDef.Test.FinCatPRATest
+    , LanguageDef.Test.PolyProfEndTest
     , LanguageDef.Test.SlicePolyDifuncTest
 
 depends = contrib, network, test

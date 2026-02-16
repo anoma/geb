@@ -73,6 +73,7 @@ import LanguageDef.Test.EmbeddedTest
 import LanguageDef.Test.PolyIndTypesTest
 import LanguageDef.Test.TreeCalculusTest
 import LanguageDef.Test.FinCatPRATest
+import LanguageDef.Test.PolyProfEndTest
 import LanguageDef.Test.SlicePolyDifuncTest
 
 %default total
@@ -152,6 +153,7 @@ totalTests = do
   LanguageDef.Test.TreeCalculusTest.treeCalculusTest
   LanguageDef.Test.FinCatPRATest.finCatPRATest
   LanguageDef.Test.PolyDifuncTest.polyDifuncTest
+  LanguageDef.Test.PolyProfEndTest.polyProfEndTest
   LanguageDef.Test.SlicePolyDifuncTest.slicePolyDifuncTest
 
 export
