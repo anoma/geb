@@ -462,6 +462,46 @@ copresheaves. Characterize this difference.
    satisfy the condition. The correct formulation needs
    to be determined.
 
+## Completed infrastructure for generalization
+
+### PshRelDouble.lean additions
+
+- `pshIhom` (internal hom presheaf): for
+  `D : Type w, Category.{w} D` (same universe for
+  objects and morphisms)
+- `pshCurry`, `pshUncurry`: adjunction morphisms
+- `pshIhomProfMap`: profunctor structure on `pshIhom`
+- `pshBarrLift`, `pshBarrLiftSkel`: Barr extension
+  (canonical relation lifting through functors)
+- `pshArrowRel`, `pshArrowRelSkel`: arrow relation
+  for internal hom in presheaf categories
+- `PshExponentialData A B E`: data witnessing `E` as
+  exponential of `A` and `B` via evaluation/currying
+- `pshIhomYonedaRepresentableBy`: `pshIhom (y A) (y B)`
+  is representable by `E`, given `PshExponentialData`
+- `pshIhomYonedaIso`: the isomorphism
+  `yoneda.obj E ≅ pshIhom (yoneda.obj A) (yoneda.obj B)`
+
+### PshTypeExpr.lean
+
+- `PshTypeExpr C`: type expressions for presheaf
+  categories, generalizing `TypeExpr` from `Type` to
+  `PSh(C)`
+- `PshTypeExpr.interp`, `profMap`, `relInterp`:
+  interpretation as profunctor, profunctor action, and
+  relational interpretation
+
+### Universe constraint for bridge
+
+`pshIhom` requires `Category.{w} D` (same universe for
+objects and morphisms). `Type v` has objects in
+`Type (v+1)` and morphisms in `Type v`, so `pshIhom`
+does not apply to `D = Type v`. The bridge from
+`TypeExpr` (over `Type`) to `PshTypeExpr` (over
+`PSh(C)`) is deferred until `pshIhom` is generalized
+to separate universe levels or a different approach is
+found.
+
 ## Dependencies
 
 - `YonedaRelDouble.lean` (complete)
@@ -469,3 +509,6 @@ copresheaves. Characterize this difference.
 - `ComprehensiveWeighted.lean` (wedgeWeight)
 - `Weighted.lean` (StrongRestrictedWedge)
 - `ParamPoly.lean` (YonedaRel, relComp, etc.)
+- `PshRelDouble.lean` (Barr extension, arrow relation,
+  Yoneda-exponential preservation)
+- `PshTypeExpr.lean` (generalized type expressions)

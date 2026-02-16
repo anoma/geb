@@ -1536,4 +1536,103 @@ theorem pshArrowRelSkel_related
 
 end PshInternalHom
 
+section YonedaPreservesIhom
+
+universe w
+
+variable {D : Type w} [Category.{w} D]
+
+/-- Data witnessing that `E` is an exponential of `A`
+and `B` in `D`, in the form of an evaluation function
+`evApp` and a currying function `curryApp` satisfying
+the expected roundtrip conditions. -/
+structure PshExponentialData
+    (A B E : D) where
+  evApp :
+    ∀ {X : D}, (X ⟶ E) → (X ⟶ A) → (X ⟶ B)
+  evApp_nat :
+    ∀ {X Y : D} (g : Y ⟶ X)
+      (e : X ⟶ E) (a : X ⟶ A),
+      g ≫ evApp e a = evApp (g ≫ e) (g ≫ a)
+  curryApp :
+    ∀ (X : D),
+      (∀ {Y : D}, (Y ⟶ X) →
+        (Y ⟶ A) → (Y ⟶ B)) →
+      (X ⟶ E)
+  ev_curry :
+    ∀ (X : D)
+      (f : ∀ {Y : D}, (Y ⟶ X) →
+        (Y ⟶ A) → (Y ⟶ B))
+      {Z : D} (h : Z ⟶ X) (a : Z ⟶ A),
+      evApp (h ≫ curryApp X f) a = f h a
+  curry_ev :
+    ∀ (X : D) (e : X ⟶ E),
+      curryApp X
+        (fun h a => evApp (h ≫ e) a) = e
+
+variable {A B E : D}
+
+/-- Forward map: given exponential data for `E` and
+a morphism `e : X ⟶ E`, produce an element of
+`pshIhom (yoneda.obj A) (yoneda.obj B)` at stage
+`op X`. -/
+def pshIhomYonedaFwd
+    (ed : PshExponentialData A B E)
+    {X : D} (e : X ⟶ E) :
+    (pshIhom (yoneda.obj A)
+      (yoneda.obj B)).obj (Opposite.op X) :=
+  ⟨fun d h a => ed.evApp (h.unop ≫ e) a,
+   fun d d' g h a => by
+     dsimp only [yoneda_obj_map]
+     rw [ed.evApp_nat g.unop]
+     congr 1
+     simp only [unop_comp, Category.assoc]⟩
+
+/-- Backward map: given an element of
+`pshIhom (yoneda.obj A) (yoneda.obj B)` at stage
+`op X`, produce a morphism `X ⟶ E` by currying
+the family restricted to the identity. -/
+def pshIhomYonedaInv
+    (ed : PshExponentialData A B E)
+    {X : D}
+    (f : (pshIhom (yoneda.obj A)
+      (yoneda.obj B)).obj (Opposite.op X)) :
+    X ⟶ E :=
+  ed.curryApp X (fun h a => f.val (Opposite.op _)
+    h.op a)
+
+/-- The presheaf `pshIhom (yoneda.obj A) (yoneda.obj B)`
+is representable by the exponential object `E`, given
+exponential data `ed`. -/
+def pshIhomYonedaRepresentableBy
+    (ed : PshExponentialData A B E) :
+    (pshIhom (yoneda.obj A)
+      (yoneda.obj B)).RepresentableBy E where
+  homEquiv :=
+    { toFun := pshIhomYonedaFwd ed
+      invFun := pshIhomYonedaInv ed
+      left_inv := fun e => ed.curry_ev _ e
+      right_inv := fun f => by
+        apply Subtype.ext
+        funext d h a
+        exact ed.ev_curry _ _ h.unop a }
+  homEquiv_comp := fun f g => by
+    apply Subtype.ext
+    funext d h a
+    dsimp only [pshIhomYonedaFwd, pshIhom,
+      Equiv.coe_fn_mk]
+    simp only [unop_comp, Category.assoc]
+    rfl
+
+/-- The Yoneda embedding preserves exponentials:
+`yoneda.obj E ≅ pshIhom (yoneda.obj A) (yoneda.obj B)`
+when `E` is an exponential of `A` and `B`. -/
+def pshIhomYonedaIso
+    (ed : PshExponentialData A B E) :
+    yoneda.obj E ≅
+      pshIhom (yoneda.obj A) (yoneda.obj B) :=
+  (pshIhomYonedaRepresentableBy ed).toIso
+
+end YonedaPreservesIhom
+
 end GebLean
