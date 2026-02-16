@@ -784,6 +784,50 @@ def typeWeightedColimitFunctor (W : Jᵒᵖ ⥤ Type v) :
   map_comp _ _ := by
     ext ⟨_, _⟩; rfl
 
+/-- The type-valued weighted limit `typeWeightedLimit W F`
+is equivalent to the type of natural transformations
+`W ⟶ F`.
+
+The end of the power profunctor `(op j₁, j₂) ↦ W(j₁) → F(j₂)`
+consists of families `x : (j : J) → W(j) → F(j)` satisfying
+the wedge condition, which in `Type v` is exactly the naturality
+condition for a natural transformation `W ⟶ F`. -/
+def typeWeightedLimit.natTransEquiv
+    (W F : J ⥤ Type v) :
+    typeWeightedLimit W F ≃ (W ⟶ F) where
+  toFun := fun ⟨x, hx⟩ =>
+    { app := x
+      naturality := fun {_ _} f => (hx f).symm }
+  invFun := fun η =>
+    ⟨η.app, fun {_ _} f => (η.naturality f).symm⟩
+  left_inv := fun ⟨_, _⟩ => rfl
+  right_inv := fun _ => rfl
+
+/-- The component isomorphism in `Type v` from
+`natTransEquiv`: `typeWeightedLimit W F ≅ (W ⟶ F)`. -/
+def typeWeightedLimit.natTransIso
+    (W F : J ⥤ Type v) :
+    typeWeightedLimit W F ≅ (W ⟶ F) where
+  hom := (natTransEquiv W F).toFun
+  inv := (natTransEquiv W F).invFun
+  hom_inv_id := by
+    ext ⟨_, _⟩; rfl
+  inv_hom_id := by
+    ext _; rfl
+
+/-- The explicit end-based weighted limit functor
+`typeWeightedLimitFunctor W` is naturally isomorphic to
+`coyoneda.obj (op W)`, which sends `F ↦ (W ⟶ F)`. -/
+def typeWeightedLimitFunctor.natIso
+    (W : J ⥤ Type v) :
+    typeWeightedLimitFunctor W ≅
+      coyoneda.obj (Opposite.op W) :=
+  NatIso.ofComponents
+    (fun F => typeWeightedLimit.natTransIso W F)
+    (fun {F G} α => by
+      ext ⟨x, hx⟩
+      rfl)
+
 end TypeWeightedLimits
 
 end GebLean
