@@ -29,6 +29,7 @@ import GebLean.PolyPresentation
 import GebLean.PolyPresentationEquiv
 import GebLean.PolyTwCoprType
 import GebLean.ProfAlg
+import GebLean.PshRelDouble
 import GebLean.RelInterpComposition
 import GebLean.RestrictedCoendAsColimit
 import GebLean.Semicategory
