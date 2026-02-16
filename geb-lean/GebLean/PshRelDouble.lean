@@ -842,4 +842,386 @@ def pshRelDoubleData :
 
 end PshRelDoubleCategory
 
+section PshBarrExtension
+
+/-- The Barr extension of a functor `G` applied to a
+proof-relevant relation `R : PshProdOver P Q`. The
+result is a relation over `G.obj P × G.obj Q` whose
+underlying presheaf is `G.obj R.left`, with projections
+given by applying `G.map` to the two legs of the span.
+-/
+def pshBarrLift
+    {P Q : Cᵒᵖ ⥤ Type v}
+    (G : (Cᵒᵖ ⥤ Type v) ⥤ (Cᵒᵖ ⥤ Type v))
+    (R : PshProdOver P Q) :
+    PshProdOver (G.obj P) (G.obj Q) :=
+  Over.mk (pshProdLift
+    (G.map (R.hom ≫ pshProdFst P Q))
+    (G.map (R.hom ≫ pshProdSnd P Q)))
+
+@[simp]
+theorem pshBarrLift_fst
+    {P Q : Cᵒᵖ ⥤ Type v}
+    (G : (Cᵒᵖ ⥤ Type v) ⥤ (Cᵒᵖ ⥤ Type v))
+    (R : PshProdOver P Q) :
+    (pshBarrLift G R).hom ≫
+      pshProdFst (G.obj P) (G.obj Q) =
+    G.map (R.hom ≫ pshProdFst P Q) :=
+  rfl
+
+@[simp]
+theorem pshBarrLift_snd
+    {P Q : Cᵒᵖ ⥤ Type v}
+    (G : (Cᵒᵖ ⥤ Type v) ⥤ (Cᵒᵖ ⥤ Type v))
+    (R : PshProdOver P Q) :
+    (pshBarrLift G R).hom ≫
+      pshProdSnd (G.obj P) (G.obj Q) =
+    G.map (R.hom ≫ pshProdSnd P Q) :=
+  rfl
+
+/-- The Barr extension preserves isomorphisms in the
+Over category: an isomorphism `α : R ≅ S` in
+`PshProdOver P Q` induces an isomorphism
+`pshBarrLift G R ≅ pshBarrLift G S`. -/
+def pshBarrLift_iso
+    {P Q : Cᵒᵖ ⥤ Type v}
+    (G : (Cᵒᵖ ⥤ Type v) ⥤ (Cᵒᵖ ⥤ Type v))
+    {R S : PshProdOver P Q}
+    (α : R ≅ S) :
+    pshBarrLift G R ≅ pshBarrLift G S :=
+  Over.isoMk (G.mapIso
+    { hom := α.hom.left,
+      inv := α.inv.left,
+      hom_inv_id := by
+        have := congrArg CommaMorphism.left
+          α.hom_inv_id
+        dsimp at this; exact this
+      inv_hom_id := by
+        have := congrArg CommaMorphism.left
+          α.inv_hom_id
+        dsimp at this; exact this })
+    (by
+      apply pshProdPresheaf_hom_ext <;> (
+        simp only [Category.assoc,
+          pshBarrLift_fst, pshBarrLift_snd,
+          Functor.mapIso_hom]
+        rw [← G.map_comp, ← Category.assoc,
+          Over.w α.hom]))
+
+/-- The Barr extension on skeleton-level relations.
+Given `G : PSh(C) ⥤ PSh(C)` and `R : PshRel P Q`,
+produces `PshRel (G.obj P) (G.obj Q)` by descending
+`pshBarrLift` through the skeleton quotient. -/
+def pshBarrLiftSkel
+    {P Q : Cᵒᵖ ⥤ Type v}
+    (G : (Cᵒᵖ ⥤ Type v) ⥤ (Cᵒᵖ ⥤ Type v))
+    (R : PshRel P Q) :
+    PshRel (G.obj P) (G.obj Q) :=
+  Skeleton.lift
+    (fun R' =>
+      toSkeleton _ (pshBarrLift G R'))
+    (fun _ _ ⟨α⟩ =>
+      toSkeleton_eq_iff.mpr
+        ⟨pshBarrLift_iso G α⟩) R
+
+/-- The Barr extension of a graph relation `pshRelGraph α`
+equals `pshRelGraph (G.map α)`. -/
+theorem pshBarrLiftSkel_graph
+    {P Q : Cᵒᵖ ⥤ Type v}
+    (G : (Cᵒᵖ ⥤ Type v) ⥤ (Cᵒᵖ ⥤ Type v))
+    (α : P ⟶ Q) :
+    pshBarrLiftSkel G (pshRelGraph α) =
+      pshRelGraph (G.map α) := by
+  change toSkeleton _ (pshBarrLift G
+    (pshProdOverGraph α)) =
+    toSkeleton _ (pshProdOverGraph (G.map α))
+  rw [toSkeleton_eq_iff]
+  exact ⟨Over.isoMk (Iso.refl _) (by
+    apply pshProdPresheaf_hom_ext
+    · simp [pshBarrLift, pshProdOverGraph,
+        pshProdLift, G.map_id]
+    · simp [pshBarrLift, pshProdOverGraph,
+        pshProdLift])⟩
+
+/-- The Barr extension preserves relatedness: if
+`α` and `β` are `(R, S)`-related at the `PshProdOver`
+level, then `G.map α` and `G.map β` are
+`(pshBarrLift G R, pshBarrLift G S)`-related. -/
+theorem pshBarrLift_related
+    {P P' Q Q' : Cᵒᵖ ⥤ Type v}
+    (G : (Cᵒᵖ ⥤ Type v) ⥤ (Cᵒᵖ ⥤ Type v))
+    {R : PshProdOver P P'}
+    {S : PshProdOver Q Q'}
+    {α : P ⟶ Q} {β : P' ⟶ Q'}
+    (h : PshProdOverRelated R S α β) :
+    PshProdOverRelated
+      (pshBarrLift G R) (pshBarrLift G S)
+      (G.map α) (G.map β) := by
+  obtain ⟨φ, hφ⟩ := h
+  have hfst := congr_arg
+    (· ≫ pshProdFst Q Q') hφ
+  have hsnd := congr_arg
+    (· ≫ pshProdSnd Q Q') hφ
+  simp only [Category.assoc, pshProdMap_fst,
+    pshProdMap_snd] at hfst hsnd
+  refine ⟨G.map φ, pshProdPresheaf_hom_ext ?_ ?_⟩
+  · calc G.map φ ≫ G.map
+          (S.hom ≫ pshProdFst Q Q')
+        = G.map (φ ≫ S.hom ≫ pshProdFst Q Q')
+          := by rw [← G.map_comp]
+      _ = G.map
+          (R.hom ≫ pshProdFst P P' ≫ α)
+          := by rw [hfst]
+      _ = G.map (R.hom ≫ pshProdFst P P') ≫
+          G.map α
+          := by rw [← Category.assoc,
+                  G.map_comp]
+  · calc G.map φ ≫ G.map
+          (S.hom ≫ pshProdSnd Q Q')
+        = G.map (φ ≫ S.hom ≫ pshProdSnd Q Q')
+          := by rw [← G.map_comp]
+      _ = G.map
+          (R.hom ≫ pshProdSnd P P' ≫ β)
+          := by rw [hsnd]
+      _ = G.map (R.hom ≫ pshProdSnd P P') ≫
+          G.map β
+          := by rw [← Category.assoc,
+                  G.map_comp]
+
+/-- The skeleton-level version of
+`pshBarrLift_related`: relatedness at the `PshRel`
+level is preserved by `pshBarrLiftSkel`. -/
+theorem pshBarrLiftSkel_related
+    {P P' Q Q' : Cᵒᵖ ⥤ Type v}
+    (G : (Cᵒᵖ ⥤ Type v) ⥤ (Cᵒᵖ ⥤ Type v))
+    {α : P ⟶ Q} {β : P' ⟶ Q'}
+    {R : PshRel P P'} {S : PshRel Q Q'}
+    (h : pshRelRelated α β R S) :
+    pshRelRelated (G.map α) (G.map β)
+      (pshBarrLiftSkel G R)
+      (pshBarrLiftSkel G S) := by
+  revert h
+  exact Quotient.ind₂
+    (fun R' S' h => pshBarrLift_related G h)
+    R S
+
+end PshBarrExtension
+
+section PshInternalHom
+
+universe w
+
+variable {D : Type w} [Category.{w} D]
+
+/-- The internal hom presheaf in a presheaf category
+`Dᵒᵖ ⥤ Type w` (where `D` has morphisms in the same
+universe `w` as the presheaf values). At stage
+`c : Dᵒᵖ`, an element is a natural family of
+functions from `A` to `B` parameterized by morphisms
+out of `c`. -/
+def pshIhom (A B : Dᵒᵖ ⥤ Type w) :
+    Dᵒᵖ ⥤ Type w where
+  obj c :=
+    { f : ∀ (d : Dᵒᵖ), (c ⟶ d) →
+        A.obj d → B.obj d //
+      ∀ (d e : Dᵒᵖ) (g : d ⟶ e)
+        (h : c ⟶ d) (a : A.obj d),
+        B.map g (f d h a) =
+          f e (h ≫ g) (A.map g a) }
+  map k x :=
+    ⟨fun d h' => x.val d (k ≫ h'),
+     fun d e g h' a => by
+       dsimp only
+       simp only [← Category.assoc]
+       exact x.property d e g (k ≫ h') a⟩
+  map_id c := by
+    funext x; exact Subtype.ext (by
+      funext d h a
+      simp only [types_id_apply,
+        Category.id_comp])
+  map_comp k₁ k₂ := by
+    funext x; exact Subtype.ext (by
+      funext d h a
+      simp only [types_comp_apply,
+        Category.assoc])
+
+/-- The predicate defining when a pair of elements
+of the internal hom presheaves are related by the
+arrow relation. Given relations `R` on inputs and
+`S` on outputs, `(g₁, g₂)` are arrow-related at
+stage `c` iff for all morphisms `h : c ⟶ d` and
+all `w` in the relation `R` at stage `d`, the
+outputs `g₁(h, π₁ w)` and `g₂(h, π₂ w)` are
+`S`-related. -/
+def pshArrowRelPred
+    {A₁ A₂ B₁ B₂ : Dᵒᵖ ⥤ Type w}
+    (R : PshProdOver A₁ A₂)
+    (S : PshProdOver B₁ B₂)
+    (c : Dᵒᵖ)
+    (g : (pshIhom A₁ B₁).obj c ×
+         (pshIhom A₂ B₂).obj c) :
+    Prop :=
+  ∀ (d : Dᵒᵖ) (h : c ⟶ d)
+    (w : R.left.obj d),
+    ∃ s : S.left.obj d,
+      S.hom.app d s =
+        (g.1.val d h (R.hom.app d w).1,
+         g.2.val d h (R.hom.app d w).2)
+
+/-- The presheaf underlying the arrow relation.
+At stage `c`, an element is a pair
+`(g₁, g₂) ∈ pshIhom A₁ B₁ × pshIhom A₂ B₂`
+satisfying `pshArrowRelPred R S c (g₁, g₂)`. -/
+def pshArrowRelPresheaf
+    {A₁ A₂ B₁ B₂ : Dᵒᵖ ⥤ Type w}
+    (R : PshProdOver A₁ A₂)
+    (S : PshProdOver B₁ B₂) :
+    Dᵒᵖ ⥤ Type w where
+  obj c :=
+    { g : (pshIhom A₁ B₁).obj c ×
+          (pshIhom A₂ B₂).obj c //
+      pshArrowRelPred R S c g }
+  map k g :=
+    ⟨((pshIhom A₁ B₁).map k g.val.1,
+      (pshIhom A₂ B₂).map k g.val.2),
+     fun d h' w => g.property d (k ≫ h') w⟩
+  map_id c := by
+    funext g; simp only [types_id_apply]
+    apply Subtype.ext; apply Prod.ext <;>
+      simp only [FunctorToTypes.map_id_apply]
+  map_comp k₁ k₂ := by
+    funext g; simp only [types_comp_apply]
+    apply Subtype.ext; apply Prod.ext <;>
+      simp only
+        [FunctorToTypes.map_comp_apply]
+
+/-- The arrow relation as a `PshProdOver`. Given
+relations `R` on the inputs and `S` on the outputs,
+`pshArrowRel R S` is a relation on the internal hom
+presheaves `pshIhom A₁ B₁` and `pshIhom A₂ B₂`.
+The underlying presheaf is `pshArrowRelPresheaf R S`
+with projections given by `.val.1` and `.val.2`. -/
+def pshArrowRelFst
+    {A₁ A₂ B₁ B₂ : Dᵒᵖ ⥤ Type w}
+    (R : PshProdOver A₁ A₂)
+    (S : PshProdOver B₁ B₂) :
+    pshArrowRelPresheaf R S ⟶ pshIhom A₁ B₁
+    where
+  app c g := g.val.1
+  naturality _ _ _ := by funext; rfl
+
+def pshArrowRelSnd
+    {A₁ A₂ B₁ B₂ : Dᵒᵖ ⥤ Type w}
+    (R : PshProdOver A₁ A₂)
+    (S : PshProdOver B₁ B₂) :
+    pshArrowRelPresheaf R S ⟶ pshIhom A₂ B₂
+    where
+  app c g := g.val.2
+  naturality _ _ _ := by funext; rfl
+
+/-- The arrow relation as a `PshProdOver`. Given
+relations `R` on the inputs and `S` on the outputs,
+`pshArrowRel R S` is a relation on the internal hom
+presheaves `pshIhom A₁ B₁` and `pshIhom A₂ B₂`.
+The underlying presheaf is `pshArrowRelPresheaf R S`
+with projections given by `.val.1` and `.val.2`. -/
+def pshArrowRel
+    {A₁ A₂ B₁ B₂ : Dᵒᵖ ⥤ Type w}
+    (R : PshProdOver A₁ A₂)
+    (S : PshProdOver B₁ B₂) :
+    PshProdOver (pshIhom A₁ B₁)
+      (pshIhom A₂ B₂) :=
+  Over.mk (pshProdLift
+    (pshArrowRelFst R S)
+    (pshArrowRelSnd R S))
+
+/-- The arrow relation predicate is preserved when
+the input and output relations are replaced by
+morphic images (via Over morphisms). -/
+private theorem pshArrowRelPred_transport
+    {A₁ A₂ B₁ B₂ : Dᵒᵖ ⥤ Type w}
+    {R₁ R₂ : PshProdOver A₁ A₂}
+    {S₁ S₂ : PshProdOver B₁ B₂}
+    (αinv : R₂ ⟶ R₁) (βhom : S₁ ⟶ S₂)
+    {c : Dᵒᵖ}
+    {g : (pshIhom A₁ B₁).obj c ×
+         (pshIhom A₂ B₂).obj c}
+    (h : pshArrowRelPred R₁ S₁ c g) :
+    pshArrowRelPred R₂ S₂ c g := by
+  intro d hd w₂
+  have hR : R₁.hom.app d (αinv.left.app d w₂)
+      = R₂.hom.app d w₂ :=
+    congr_fun (NatTrans.congr_app
+      (Over.w αinv) d) w₂
+  obtain ⟨s₁, hs₁⟩ :=
+    h d hd (αinv.left.app d w₂)
+  have hS : S₂.hom.app d (βhom.left.app d s₁)
+      = S₁.hom.app d s₁ :=
+    congr_fun (NatTrans.congr_app
+      (Over.w βhom) d) s₁
+  exact ⟨βhom.left.app d s₁,
+    by rw [hS, hs₁, hR]⟩
+
+/-- The presheaf isomorphism underlying an arrow
+relation isomorphism. Given Over-isomorphisms
+`α : R₁ ≅ R₂` and `β : S₁ ≅ S₂`, the arrow
+relation presheaf is unchanged (identity on the
+`.val` component) with proof transported via
+`pshArrowRelPred_transport`. -/
+private def pshArrowRelPresheafIso
+    {A₁ A₂ B₁ B₂ : Dᵒᵖ ⥤ Type w}
+    {R₁ R₂ : PshProdOver A₁ A₂}
+    {S₁ S₂ : PshProdOver B₁ B₂}
+    (α : R₁ ≅ R₂) (β : S₁ ≅ S₂) :
+    pshArrowRelPresheaf R₁ S₁ ≅
+      pshArrowRelPresheaf R₂ S₂ where
+  hom :=
+    { app := fun c g => ⟨g.val,
+        pshArrowRelPred_transport
+          α.inv β.hom g.property⟩
+      naturality := fun _ _ _ => by
+        funext; exact Subtype.ext rfl }
+  inv :=
+    { app := fun c g => ⟨g.val,
+        pshArrowRelPred_transport
+          α.hom β.inv g.property⟩
+      naturality := fun _ _ _ => by
+        funext; exact Subtype.ext rfl }
+  hom_inv_id := by
+    ext c g; exact Subtype.ext rfl
+  inv_hom_id := by
+    ext c g; exact Subtype.ext rfl
+
+/-- Isomorphic input/output relations yield
+isomorphic arrow relations. -/
+def pshArrowRel_iso
+    {A₁ A₂ B₁ B₂ : Dᵒᵖ ⥤ Type w}
+    {R₁ R₂ : PshProdOver A₁ A₂}
+    {S₁ S₂ : PshProdOver B₁ B₂}
+    (α : R₁ ≅ R₂) (β : S₁ ≅ S₂) :
+    pshArrowRel R₁ S₁ ≅
+      pshArrowRel R₂ S₂ :=
+  Over.isoMk (pshArrowRelPresheafIso α β)
+    (by ext c g; rfl)
+
+/-- The arrow relation on skeleton-level relations.
+Given `R : PshRel A₁ A₂` and `S : PshRel B₁ B₂`,
+produces `PshRel (pshIhom A₁ B₁) (pshIhom A₂ B₂)`
+by descending `pshArrowRel` through the skeleton
+quotient in both arguments. -/
+def pshArrowRelSkel
+    {A₁ A₂ B₁ B₂ : Dᵒᵖ ⥤ Type w}
+    (R : PshRel A₁ A₂)
+    (S : PshRel B₁ B₂) :
+    PshRel (pshIhom A₁ B₁)
+      (pshIhom A₂ B₂) :=
+  Skeleton.lift₂
+    (fun R' S' =>
+      toSkeleton _ (pshArrowRel R' S'))
+    (fun _ _ _ _ ⟨α⟩ ⟨β⟩ =>
+      toSkeleton_eq_iff.mpr
+        ⟨pshArrowRel_iso α β⟩) R S
+
+end PshInternalHom
+
 end GebLean
