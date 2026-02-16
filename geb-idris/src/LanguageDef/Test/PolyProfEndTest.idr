@@ -140,13 +140,137 @@ ExpProfRoundTrip fext (False ** g) =
         (dpEq12 Refl (funExt (\() => Refl)))))
 
 ------------------------------------------------------------
----- Runtime test helpers ----
+------------------------------------------------------------
+---- Free monad and initial algebra of ExpProf ----
+------------------------------------------------------------
 ------------------------------------------------------------
 
 public export
-HOASPairFn : Nat -> Nat -> Bool -> Nat
-HOASPairFn a b True = a
-HOASPairFn a b False = b
+ExpFreeM : Type -> PolyFunc
+ExpFreeM = ppFreeM ExpProf
+
+public export
+ExpMu : Type
+ExpMu = PolyProfMu ExpProf
+
+------------------------------------------------------------
+---- Constructors (roll) ----
+------------------------------------------------------------
+
+-- polyProfMuRollSec {pp=ExpProf} i subTerms
+--   expects subTerms : pfPos (ppDirPF ExpProf i) -> ExpMu
+--
+-- App (i = True):
+--   pfPos ExpAppDirPF = Bool
+--   subTerms : Bool -> ExpMu (two sub-terms)
+--
+-- Lam (i = False):
+--   pfPos ExpLamDirPF = Unit
+--   subTerms : Unit -> ExpMu (one sub-term)
+
+-- Helper: dispatch two sub-terms by Bool.
+public export
+ExpAppSubTerms : ExpMu -> ExpMu ->
+  Bool -> ExpMu
+ExpAppSubTerms t1 t2 True = t1
+ExpAppSubTerms t1 t2 False = t2
+
+-- App: wraps two sub-terms.
+public export
+ExpApp : ExpMu -> ExpMu -> ExpMu
+ExpApp t1 t2 =
+  polyProfMuRollSec True
+    (ExpAppSubTerms t1 t2)
+
+-- Lam: wraps one sub-term (the body).
+-- Note: polyProfMuRollSec composes existing
+-- terms but cannot introduce variable bindings.
+-- For terms with binding, construct (pos ** sec)
+-- directly (see ExpIdent below).
+public export
+ExpLam : ExpMu -> ExpMu
+ExpLam body =
+  polyProfMuRollSec False (\() => body)
+
+-- Lam(x.x): the identity function.
+-- Built manually because the body is a bound
+-- variable, not an existing ExpMu sub-term.
+--
+-- Position tree: a Lam node (PFCom False) whose
+-- single child is a variable leaf (PFVar).
+--
+-- Section: Left () at the only direction,
+-- meaning "this variable is bound to the
+-- enclosing lambda's input."
+public export
+ExpIdentPos : ppFreeMPosUnit ExpProf
+ExpIdentPos = InPFM (PFCom False)
+  (\_ => InPFM (PFVar ()) absurd)
+
+public export
+ExpIdentSec :
+  PolySection (FreeMDirPF ExpProf ExpIdentPos)
+ExpIdentSec (() ** ()) = Left ()
+
+public export
+ExpIdent : ExpMu
+ExpIdent = (ExpIdentPos ** ExpIdentSec)
+
+------------------------------------------------------------
+---- Catamorphism (cata) ----
+------------------------------------------------------------
+
+-- PolyProfAlg ExpProf a
+--   = InterpPolyProf ExpProf a a -> a
+--   = (i : Bool **
+--      InterpPolyFunc (ExpProfDirPF i) a -> a)
+--     -> a
+--
+-- App (i = True):
+--   InterpPolyFunc ExpAppDirPF a
+--     = (j : Bool ** Void -> a) ~ Bool
+--   Handler f provides two recursive results:
+--     f (True ** absurd), f (False ** absurd).
+--   Simplified algebra: a -> a -> a.
+--
+-- Lam (i = False):
+--   InterpPolyFunc ExpLamDirPF a
+--     = (j : Unit ** Unit -> a) ~ a
+--   The cata substitutes id for variables, so
+--     (\v => f (() ** \() => v)) : a -> a
+--   gives the body result at each variable value.
+--   Simplified algebra: (a -> a) -> a.
+
+public export
+ExpAlg : {a : Type} ->
+  (a -> a -> a) -> ((a -> a) -> a) ->
+  PolyProfAlg ExpProf a
+ExpAlg appAlg lamAlg (True ** f) =
+  appAlg
+    (f (True ** absurd))
+    (f (False ** absurd))
+ExpAlg appAlg lamAlg (False ** f) =
+  lamAlg (\v => f (() ** \() => v))
+
+public export
+ExpCata : {a : Type} ->
+  (a -> a -> a) -> ((a -> a) -> a) ->
+  ExpMu -> a
+ExpCata appAlg lamAlg =
+  polyProfCata (ExpAlg appAlg lamAlg)
+
+------------------------------------------------------------
+---- Example: node count via catamorphism ----
+------------------------------------------------------------
+
+-- Count nodes:
+-- App contributes 1 + children.
+-- Lam contributes 1 + body (variable = 0).
+public export
+ExpNodeCount : ExpMu -> Nat
+ExpNodeCount = ExpCata
+  (\n1, n2 => 1 + n1 + n2)
+  (\f => 1 + f 0)
 
 ------------------------------------------------------------
 ---- Runtime tests ----
@@ -177,6 +301,15 @@ polyProfEndTest = do
     Right f => putStrLn $
       "Lam (+1) round-trip at 9: " ++
         show (f 9)
+  putStrLn "-------------------------"
+  -- Initial algebra: node counts
+  putStrLn $
+    "nodes(Lam x.x) = " ++
+      show (ExpNodeCount ExpIdent)
+  putStrLn $
+    "nodes(App (Lam x.x) (Lam x.x)) = " ++
+      show (ExpNodeCount
+        (ExpApp ExpIdent ExpIdent))
   putStrLn "-------------------------"
   putStrLn "End PolyProfEndTest."
   putStrLn "========================="
