@@ -3,6 +3,7 @@ import Mathlib.CategoryTheory.Whiskering
 import Mathlib.CategoryTheory.Limits.FunctorCategory.Shapes.Pullbacks
 import Mathlib.CategoryTheory.Limits.Types.Pullbacks
 import Mathlib.CategoryTheory.Yoneda
+import Mathlib.CategoryTheory.Functor.KanExtension.Basic
 
 /-!
 # Presheaf and Copresheaf Construction Functors
@@ -730,6 +731,212 @@ def yonedaExtRepresentableIso
   inv := yonedaExtUnit F X
   hom_inv_id := yonedaExtCounit_unit F X
   inv_hom_id := yonedaExtUnit_counit F X
+
+/-- The unit of the Yoneda extension as a natural
+transformation from `F ⋙ yoneda` to
+`yoneda ⋙ yonedaExt F`. At each `X : C`, this is
+`yonedaExtUnit F X`. -/
+def yonedaExtUnitNatTrans (F : C ⥤ D) :
+    F ⋙ yoneda ⟶
+      yoneda ⋙ yonedaExt F where
+  app X := yonedaExtUnit F X
+  naturality X Y g := by
+    ext T t
+    change Quot.mk
+        (YonedaExtStep F (yoneda.obj Y) T)
+        ⟨Y, 𝟙 Y, t ≫ F.map g⟩
+      = Quot.mk
+        (YonedaExtStep F (yoneda.obj Y) T)
+        ⟨X, (yoneda.map g).app
+          (Opposite.op X) (𝟙 X), t⟩
+    exact Quot.sound ⟨g, by
+      simp [yoneda_map_app], rfl⟩
+
+/-- The pointwise action of the descent map on a
+single triple `(S, p, t)`. Sends it to the element
+`(G.map (yonedaEquiv.symm p)).app T (β_S(t))` of
+`(G.obj P).obj T`. -/
+def yonedaExtDescTriple (F : C ⥤ D)
+    {G : (Cᵒᵖ ⥤ Type v) ⥤ (Dᵒᵖ ⥤ Type v)}
+    (β : F ⋙ yoneda ⟶ yoneda ⋙ G)
+    (P : Cᵒᵖ ⥤ Type v) (T : Dᵒᵖ)
+    (x : YonedaExtSigma F P T) :
+    (G.obj P).obj T :=
+  (G.map (yonedaEquiv.symm x.2.1)).app T
+    ((β.app x.1).app T x.2.2)
+
+/-- `yonedaExtDescTriple` respects the identification
+relation: identified triples map to the same
+element. -/
+theorem yonedaExtDescTriple_step (F : C ⥤ D)
+    {G : (Cᵒᵖ ⥤ Type v) ⥤ (Dᵒᵖ ⥤ Type v)}
+    (β : F ⋙ yoneda ⟶ yoneda ⋙ G)
+    (P : Cᵒᵖ ⥤ Type v) (T : Dᵒᵖ)
+    {x y : YonedaExtSigma F P T}
+    (h : YonedaExtStep F P T x y) :
+    yonedaExtDescTriple F β P T x =
+      yonedaExtDescTriple F β P T y := by
+  obtain ⟨g, hp, ht⟩ := h
+  dsimp [yonedaExtDescTriple]
+  rw [← ht]
+  have nat_β :=
+    congr_fun (congr_app (β.naturality g) T)
+      y.2.2
+  dsimp [yoneda_map_app] at nat_β
+  rw [nat_β]
+  have hp' : yoneda.map g ≫
+      yonedaEquiv.symm x.2.1 =
+      yonedaEquiv.symm y.2.1 := by
+    ext T' t
+    change P.map (t ≫ g).op x.2.1 =
+      P.map t.op y.2.1
+    rw [op_comp, P.map_comp]
+    change P.map t.op (P.map g.op x.2.1) = _
+    rw [hp]
+  change ((G.map (yoneda.map g) ≫
+    G.map (yonedaEquiv.symm x.2.1)).app T)
+    ((β.app y.1).app T y.2.2) = _
+  rw [← G.map_comp, hp']
+
+/-- The descent map from `yonedaExt F` to `G` induced
+by `β : F ⋙ yoneda ⟶ yoneda ⋙ G`. For each presheaf
+`P` and `T : Dᵒᵖ`, the map sends the equivalence class
+of `(S, p, t)` to `(G.map (yonedaEquiv.symm p)).app T
+((β.app S).app T t)`. -/
+def yonedaExtDesc (F : C ⥤ D)
+    {G : (Cᵒᵖ ⥤ Type v) ⥤ (Dᵒᵖ ⥤ Type v)}
+    (β : F ⋙ yoneda ⟶ yoneda ⋙ G) :
+    yonedaExt F ⟶ G where
+  app P :=
+    { app := fun T =>
+        Quot.lift
+          (yonedaExtDescTriple F β P T)
+          (fun _ _ h =>
+            yonedaExtDescTriple_step F β P T h)
+      naturality := fun T₁ T₂ k => by
+        funext q
+        induction q using Quot.inductionOn
+        rename_i x
+        change yonedaExtDescTriple F β P T₂
+            ⟨x.1, x.2.1, k.unop ≫ x.2.2⟩ =
+          (G.obj P).map k
+            (yonedaExtDescTriple F β P T₁ x)
+        dsimp only [yonedaExtDescTriple]
+        have := congr_fun
+          ((β.app x.1 ≫ G.map
+            (yonedaEquiv.symm x.2.1)
+            ).naturality k) x.2.2
+        dsimp at this ⊢
+        exact this }
+  naturality P Q α := by
+    ext T q
+    induction q using Quot.inductionOn
+    rename_i x
+    change yonedaExtDescTriple F β Q T
+        ⟨x.1, α.app (Opposite.op x.1)
+          x.2.1, x.2.2⟩ =
+      (G.map α).app T
+        (yonedaExtDescTriple F β P T x)
+    dsimp [yonedaExtDescTriple]
+    have key :
+        yonedaEquiv.symm
+          (α.app (Opposite.op x.1) x.2.1)
+        = yonedaEquiv.symm x.2.1 ≫ α := by
+      apply yonedaEquiv.injective
+      simp [yonedaEquiv_comp]
+    rw [key, G.map_comp]
+    rfl
+
+/-- The descent map factorizes through the unit:
+`yonedaExtUnitNatTrans F ≫ Functor.whiskerLeft
+yoneda (yonedaExtDesc F β) = β`. -/
+theorem yonedaExtDesc_fac (F : C ⥤ D)
+    {G : (Cᵒᵖ ⥤ Type v) ⥤ (Dᵒᵖ ⥤ Type v)}
+    (β : F ⋙ yoneda ⟶ yoneda ⋙ G) :
+    yonedaExtUnitNatTrans F ≫
+      Functor.whiskerLeft yoneda
+        (yonedaExtDesc F β) = β := by
+  ext X T t
+  change yonedaExtDescTriple F β
+      (yoneda.obj X) T ⟨X, 𝟙 X, t⟩ =
+    (β.app X).app T t
+  dsimp only [yonedaExtDescTriple]
+  have h : (yonedaEquiv (F := yoneda.obj X)
+      ).symm (𝟙 X) = 𝟙 (yoneda.obj X) := by
+    apply yonedaEquiv.injective
+    rw [Equiv.apply_symm_apply]
+    simp [yonedaEquiv]
+  rw [h, G.map_id]
+  rfl
+
+/-- The descent map is the unique natural
+transformation factorizing through the unit. -/
+theorem yonedaExtDesc_uniq (F : C ⥤ D)
+    {G : (Cᵒᵖ ⥤ Type v) ⥤ (Dᵒᵖ ⥤ Type v)}
+    (β : F ⋙ yoneda ⟶ yoneda ⋙ G)
+    (σ : yonedaExt F ⟶ G)
+    (hσ : yonedaExtUnitNatTrans F ≫
+      Functor.whiskerLeft yoneda σ = β) :
+    σ = yonedaExtDesc F β := by
+  ext P T q
+  induction q using Quot.inductionOn
+  rename_i x
+  change (σ.app P).app T (Quot.mk _ x) =
+    yonedaExtDescTriple F β P T x
+  dsimp only [yonedaExtDescTriple]
+  have himg : Quot.mk (YonedaExtStep F P T) x =
+      ((yonedaExt F).map
+        (yonedaEquiv.symm x.2.1)).app T
+        (Quot.mk _ ⟨x.1, 𝟙 x.1, x.2.2⟩) := by
+    change _ = Quot.mk _
+      (⟨x.1, (yonedaEquiv.symm x.2.1).app
+        (Opposite.op x.1) (𝟙 x.1),
+        x.2.2⟩ : YonedaExtSigma F P T)
+    have h : (yonedaEquiv.symm x.2.1).app
+        (Opposite.op x.1) (𝟙 x.1) = x.2.1 :=
+      congr_fun (P.map_id _) x.2.1
+    rw [h]
+  rw [himg]
+  have hnat := congr_fun (congr_app
+      (σ.naturality
+        (yonedaEquiv.symm x.2.1)) T)
+    (Quot.mk _ ⟨x.1, 𝟙 x.1, x.2.2⟩)
+  dsimp at hnat
+  rw [hnat]
+  have hfac := congr_fun
+    (congr_app (congr_app hσ x.1) T) x.2.2
+  change (σ.app (yoneda.obj x.1)).app T
+    (Quot.mk _ ⟨x.1, 𝟙 x.1, x.2.2⟩) =
+    (β.app x.1).app T x.2.2 at hfac
+  exact congrArg
+    ((G.map (yonedaEquiv.symm x.2.1)).app T)
+    hfac
+
+instance yonedaExtLeftExtUnique (F : C ⥤ D)
+    (s : Functor.LeftExtension yoneda
+      (F ⋙ yoneda)) :
+    Unique (Functor.LeftExtension.mk
+      (yonedaExt F)
+      (yonedaExtUnitNatTrans F) ⟶ s) where
+  default := StructuredArrow.homMk
+    (yonedaExtDesc F s.hom)
+    (yonedaExtDesc_fac F s.hom)
+  uniq f := by
+    apply StructuredArrow.ext
+    exact yonedaExtDesc_uniq F s.hom
+      f.right (StructuredArrow.w f)
+
+/-- The Yoneda extension is a left Kan extension
+of `F ⋙ yoneda` along `yoneda`. -/
+instance yonedaExt_isLeftKanExtension
+    (F : C ⥤ D) :
+    (yonedaExt F).IsLeftKanExtension
+      (yonedaExtUnitNatTrans F) where
+  nonempty_isUniversal :=
+    ⟨Limits.IsInitial.ofUnique
+      (X := Functor.LeftExtension.mk
+        (yonedaExt F)
+        (yonedaExtUnitNatTrans F))⟩
 
 end YonedaExtension
 
