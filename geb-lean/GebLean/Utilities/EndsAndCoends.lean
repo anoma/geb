@@ -474,6 +474,166 @@ def typeCoendRAdjFunctor :
   map_id := by intros; rfl
   map_comp := by intros; rfl
 
+/-- Forward direction of the hom-set bijection:
+given `f : typeCoend P → Y`, produce a nat trans
+`P ⟶ typeCoendRAdj.obj J Y` by composing `f` with
+injections into the coend. -/
+def typeCoendAdj.homEquivToFun
+    (P : Jᵒᵖ ⥤ J ⥤ Type v) (Y : Type v)
+    (f : typeCoend P → Y) :
+    P ⟶ typeCoendRAdj.obj J Y where
+  app a :=
+    { app := fun b x h =>
+        f (Quot.mk _ ⟨a.unop,
+          (P.obj a).map h x⟩)
+      naturality := by
+        intro b b' g; ext x; funext h
+        simp only [types_comp_apply]
+        change f (Quot.mk _ ⟨a.unop,
+          (P.obj a).map h ((P.obj a).map g x)⟩) =
+          f (Quot.mk _ ⟨a.unop,
+            (P.obj a).map (g ≫ h) x⟩)
+        simp only [Functor.map_comp,
+          types_comp_apply]
+    }
+  naturality := by
+    intro a a' g; ext b x; funext h
+    simp only [NatTrans.comp_app,
+      types_comp_apply]
+    change f (Quot.mk _ ⟨a'.unop,
+      (P.obj a').map h
+        ((P.map g).app b x)⟩) =
+      f (Quot.mk _ ⟨a.unop,
+        (P.obj a).map (h ≫ g.unop) x⟩)
+    have h_nat := congr_fun
+      ((P.map g).naturality h) x
+    simp only [types_comp_apply] at h_nat
+    have h_comp := congr_fun
+      ((P.obj a).map_comp h g.unop) x
+    simp only [types_comp_apply] at h_comp
+    rw [← h_nat, h_comp]
+    exact congr_arg f (Quot.sound
+      (typeCoendRel.intro g.unop
+        ((P.obj a).map h x)))
+
+/-- Backward direction of the hom-set bijection:
+given a nat trans `P ⟶ typeCoendRAdj.obj J Y`,
+produce `typeCoend P → Y` via the universal property
+of quotients. -/
+def typeCoendAdj.homEquivInvFun
+    (P : Jᵒᵖ ⥤ J ⥤ Type v) (Y : Type v)
+    (α : P ⟶ typeCoendRAdj.obj J Y) :
+    typeCoend P → Y :=
+  Quot.lift
+    (fun ⟨j, x⟩ =>
+      (α.app (Opposite.op j)).app j x (𝟙 j))
+    (by
+      intro ⟨_, _⟩ ⟨_, _⟩ r
+      cases r with
+      | intro f z =>
+        dsimp only []
+        rename_i i j
+        trans (α.app (Opposite.op j)).app i z f
+        · have h1 := congr_fun
+            (congr_fun
+              (congr_app (α.naturality f.op) i)
+              z)
+            (𝟙 i)
+          simp only [NatTrans.comp_app,
+            types_comp_apply] at h1
+          rw [h1]
+          change (α.app (Opposite.op j)).app i
+            z (𝟙 i ≫ f.op.unop) =
+            (α.app (Opposite.op j)).app i z f
+          simp only [Category.id_comp,
+            Quiver.Hom.unop_op]
+        · symm
+          have h2 := congr_fun
+            (congr_fun
+              ((α.app (Opposite.op j)).naturality
+                f)
+              z)
+            (𝟙 j)
+          simp only [types_comp_apply] at h2
+          rw [h2]
+          change (α.app (Opposite.op j)).app i
+            z (f ≫ 𝟙 j) =
+            (α.app (Opposite.op j)).app i z f
+          simp only [Category.comp_id])
+
+/-- The hom-set equivalence for the coend
+adjunction: functions `typeCoend P → Y` correspond
+to nat trans `P ⟶ typeCoendRAdj.obj J Y`. -/
+def typeCoendAdj.homEquiv
+    (P : Jᵒᵖ ⥤ J ⥤ Type v) (Y : Type v) :
+    (typeCoend P → Y) ≃
+      (P ⟶ typeCoendRAdj.obj J Y) where
+  toFun := typeCoendAdj.homEquivToFun J P Y
+  invFun := typeCoendAdj.homEquivInvFun J P Y
+  left_inv := by
+    intro f; ext ⟨j, x⟩
+    dsimp only [typeCoendAdj.homEquivToFun,
+      typeCoendAdj.homEquivInvFun]
+    change f (Quot.mk _ ⟨j,
+      (P.obj (Opposite.op j)).map (𝟙 j) x⟩) =
+      f (Quot.mk _ ⟨j, x⟩)
+    simp only [Functor.map_id, types_id_apply]
+  right_inv := by
+    intro α; ext a b x; funext h
+    dsimp only [typeCoendAdj.homEquivToFun,
+      typeCoendAdj.homEquivInvFun]
+    change (α.app a).app a.unop
+      ((P.obj a).map h x) (𝟙 a.unop) =
+      (α.app a).app b x h
+    have := congr_fun
+      (congr_fun
+        ((α.app a).naturality h) x)
+      (𝟙 a.unop)
+    simp only [types_comp_apply] at this
+    rw [this]
+    change (α.app a).app b x
+      (h ≫ 𝟙 a.unop) =
+      (α.app a).app b x h
+    simp only [Category.comp_id]
+
+/-- The coend functor is left adjoint to the
+functor sending `Y` to the profunctor
+`(a, b) ↦ (b ⟶ a.unop) → Y`. -/
+def typeCoendAdj :
+    typeCoendFunctor J ⊣ typeCoendRAdjFunctor J :=
+  Adjunction.mkOfHomEquiv
+    { homEquiv := typeCoendAdj.homEquiv J
+      homEquiv_naturality_left_symm := by
+        intro _ _ _ f g
+        ext ⟨j, x⟩; rfl
+      homEquiv_naturality_right := by
+        intro _ _ _ f g
+        ext _ _ _; funext _; rfl }
+
 end CoendAdjunction
+
+/-!
+## Terminal Wedges and Initial Cowedges in Type
+
+Every profunctor `F : Jᵒᵖ ⥤ J ⥤ Type v` has a terminal wedge
+(given by `typeEndWedge`) and an initial cowedge (given by
+`typeCoendCowedge`).
+-/
+
+section TypeInstances
+
+variable {J : Type v} [Category.{v} J]
+
+instance typeHasTerminalWedge
+    (F : Jᵒᵖ ⥤ J ⥤ Type v) :
+    HasTerminal (Wedge F) :=
+  (typeEndWedge_isTerminal F).hasTerminal
+
+instance typeHasInitialCowedge
+    (F : Jᵒᵖ ⥤ J ⥤ Type v) :
+    HasInitial (Cowedge F) :=
+  (typeCoendCowedge_isInitial F).hasInitial
+
+end TypeInstances
 
 end GebLean
