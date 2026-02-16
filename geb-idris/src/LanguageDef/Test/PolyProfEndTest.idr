@@ -7,7 +7,116 @@ import LanguageDef.PolyProfEnd
 
 ------------------------------------------------------------
 ------------------------------------------------------------
----- HOAS as a Polynomial Profunctor ----
+---- ExpF as a Polynomial Profunctor ----
+------------------------------------------------------------
+------------------------------------------------------------
+
+-- ExpF from Kmett's PHOAS
+-- (schoolofhaskell.com/user/edwardk/phoas):
+--
+--   data ExpF a b = App b b | Lam (a -> b)
+--
+-- As a type alias:
+public export
+ExpF : Type -> Type -> Type
+ExpF a b = Either (b, b) (a -> b)
+
+------------------------------------------------------------
+---- Direction polynomial functors for ExpF ----
+------------------------------------------------------------
+
+-- For App b b: no dependence on a; produces a
+-- pair of b's.  The direction functor is the
+-- constant-Bool functor:
+--   InterpPolyFunc ExpAppDirPF a
+--     = (j : Bool ** Void -> a) ~ Bool
+-- Then (Bool -> b) ~ (b, b).
+public export
+ExpAppDirPF : PolyFunc
+ExpAppDirPF = (Bool ** \_ => Void)
+
+-- For Lam (a -> b): one a in, one b out.
+-- The direction functor is the identity:
+--   InterpPolyFunc ExpLamDirPF a
+--     = (j : Unit ** Unit -> a) ~ a
+-- Then (a -> b).
+public export
+ExpLamDirPF : PolyFunc
+ExpLamDirPF = (Unit ** \() => Unit)
+
+------------------------------------------------------------
+---- ExpF polynomial profunctor ----
+------------------------------------------------------------
+
+public export
+ExpProfDirPF : Bool -> PolyFunc
+ExpProfDirPF True = ExpAppDirPF
+ExpProfDirPF False = ExpLamDirPF
+
+public export
+ExpProf : PolyProf
+ExpProf = MkPolyProf Bool ExpProfDirPF
+
+------------------------------------------------------------
+------------------------------------------------------------
+---- Isomorphism: InterpPolyProf ExpProf ~ ExpF ----
+------------------------------------------------------------
+------------------------------------------------------------
+
+-- Forward: profunctor representation -> ExpF.
+-- App: extract (b, b) by applying at both Bool
+--   positions with the trivial Void -> a function.
+-- Lam: curry (Unit ** Unit -> a) -> b into a -> b.
+public export
+ExpProfToExpF : {a, b : Type} ->
+  InterpPolyProf ExpProf a b -> ExpF a b
+ExpProfToExpF (True ** g) =
+  Left
+    (g (True ** absurd), g (False ** absurd))
+ExpProfToExpF (False ** g) =
+  Right (\x => g (() ** \() => x))
+
+-- Helper for backward App case: dispatch on
+-- the Bool position, ignoring the Void -> a proof.
+public export
+ExpAppBackward : {a, b : Type} ->
+  b -> b -> InterpPolyFunc ExpAppDirPF a -> b
+ExpAppBackward b1 b2 (True ** _) = b1
+ExpAppBackward b1 b2 (False ** _) = b2
+
+-- Helper for backward Lam case: apply h to the
+-- extracted a value.
+public export
+ExpLamBackward : {a, b : Type} ->
+  (a -> b) -> InterpPolyFunc ExpLamDirPF a -> b
+ExpLamBackward h (() ** f) = h (f ())
+
+-- Backward: ExpF -> profunctor representation.
+public export
+ExpFToExpProf : {a, b : Type} ->
+  ExpF a b -> InterpPolyProf ExpProf a b
+ExpFToExpProf (Left (b1, b2)) =
+  (True ** ExpAppBackward b1 b2)
+ExpFToExpProf (Right h) =
+  (False ** ExpLamBackward h)
+
+------------------------------------------------------------
+---- Round trip: ExpF -> Prof -> ExpF = id ----
+------------------------------------------------------------
+
+-- The Left case reduces by case-split on the Bool
+-- positions.  The Right case reduces by beta
+-- and eta.
+public export
+0 ExpFRoundTrip : {a, b : Type} ->
+  (ef : ExpF a b) ->
+  ExpProfToExpF (ExpFToExpProf ef) = ef
+ExpFRoundTrip (Left (b1, b2)) = Refl
+ExpFRoundTrip (Right h) = Refl
+
+------------------------------------------------------------
+------------------------------------------------------------
+---- HOAS Class Encoding (for End computation) ----
 ------------------------------------------------------------
 ------------------------------------------------------------
 
@@ -18,57 +127,45 @@ import LanguageDef.PolyProfEnd
 --     app :: rep (a -> b) -> rep a -> rep b
 --     lam :: (rep a -> rep b) -> rep (a -> b)
 --
--- Encoding as a polynomial profunctor
--- P(x, y) = Sigma(i : I)(Dir_i(x) -> y):
---
---   app: Dir(x) = x * x  (pair functor, Bool -> x)
+-- A different polynomial profunctor encoding:
+--   app: Dir(x) = x * x  (pair: Bool -> x)
 --     P_app(x, y) = (x * x) -> y
---
---   lam: Dir(x) = x  (identity functor, Unit -> x)
+--   lam: Dir(x) = x  (identity: Unit -> x)
 --     P_lam(x, y) = x -> y
+--
+-- Note: this is NOT the same as ExpF!
+-- InterpPolyProf HOASProf a b
+--   ~ ((a * a) -> b) + (a -> b)
+-- whereas ExpF a b ~ (b * b) + (a -> b).
 
-------------------------------------------------------------
----- Direction polynomial functors ----
-------------------------------------------------------------
-
--- InterpPolyFunc AppDirPF x
---   = (j : Unit ** Bool -> x) ~ Bool -> x ~ x * x
 public export
-AppDirPF : PolyFunc
-AppDirPF = (Unit ** \() => Bool)
+HOASAppDirPF : PolyFunc
+HOASAppDirPF = (Unit ** \() => Bool)
 
--- InterpPolyFunc LamDirPF x
---   = (j : Unit ** Unit -> x) ~ Unit -> x ~ x
 public export
-LamDirPF : PolyFunc
-LamDirPF = (Unit ** \() => Unit)
-
-------------------------------------------------------------
----- HOAS polynomial profunctor ----
-------------------------------------------------------------
+HOASLamDirPF : PolyFunc
+HOASLamDirPF = (Unit ** \() => Unit)
 
 public export
 HOASProfDirPF : Bool -> PolyFunc
-HOASProfDirPF True = AppDirPF
-HOASProfDirPF False = LamDirPF
+HOASProfDirPF True = HOASAppDirPF
+HOASProfDirPF False = HOASLamDirPF
 
 public export
 HOASProf : PolyProf
 HOASProf = MkPolyProf Bool HOASProfDirPF
 
 ------------------------------------------------------------
-------------------------------------------------------------
 ---- End of HOAS Polynomial Profunctor ----
-------------------------------------------------------------
 ------------------------------------------------------------
 
 -- PolyProfEnd HOASProf
 --   = (i : Bool ** PolySection (HOASProfDirPF i))
 --
--- For app (True):
---   PolySection AppDirPF = (() -> Bool) ~ Bool
--- For lam (False):
---   PolySection LamDirPF = (() -> Unit) ~ Unit
+-- app (True):
+--   PolySection HOASAppDirPF = (() -> Bool) ~ Bool
+-- lam (False):
+--   PolySection HOASLamDirPF = (() -> Unit) ~ Unit
 --
 -- Three canonical elements:
 --   (True ** \() => True)  -- first projection
@@ -88,36 +185,27 @@ HOASEndId : PolyProfEnd HOASProf
 HOASEndId = (False ** \() => ())
 
 ------------------------------------------------------------
----- Compile-time tests ----
+---- Compile-time tests (HOAS sections) ----
 ------------------------------------------------------------
 
--- endToPolyFamily converts an end element (i ** sec)
--- to (i ** sectionApply sec x) at each type x.
--- We test sectionApply directly, since Idris has
--- difficulty reducing snd of the endToPolyFamily
--- dependent pair.
-
--- First projection: sectionApply picks f True.
 public export
 0 TestFstSection :
   (x : Type) -> (f : Bool -> x) ->
-  sectionApply {pf=AppDirPF}
+  sectionApply {pf=HOASAppDirPF}
     (\() => True) x (() ** f) = f True
 TestFstSection x f = Refl
 
--- Second projection: sectionApply picks f False.
 public export
 0 TestSndSection :
   (x : Type) -> (f : Bool -> x) ->
-  sectionApply {pf=AppDirPF}
+  sectionApply {pf=HOASAppDirPF}
     (\() => False) x (() ** f) = f False
 TestSndSection x f = Refl
 
--- Identity: sectionApply picks f ().
 public export
 0 TestIdSection :
   (x : Type) -> (f : Unit -> x) ->
-  sectionApply {pf=LamDirPF}
+  sectionApply {pf=HOASLamDirPF}
     (\() => ()) x (() ** f) = f ()
 TestIdSection x f = Refl
 
@@ -125,8 +213,6 @@ TestIdSection x f = Refl
 ---- Runtime test helpers ----
 ------------------------------------------------------------
 
--- Encode a pair (a, b) via the app direction PF.
--- A pair is (() ** g) where g True = a, g False = b.
 public export
 HOASPairFn : Nat -> Nat -> Bool -> Nat
 HOASPairFn a b True = a
@@ -143,19 +229,37 @@ polyProfEndTest = do
   putStrLn "========================="
   putStrLn "Begin PolyProfEndTest:"
   putStrLn "-------------------------"
-  -- Pair (42, 7) as (() ** HOASPairFn 42 7).
-  let fstR = sectionApply {pf=AppDirPF}
+  -- ExpF isomorphism: App round-trip
+  let appProf =
+        ExpFToExpProf {a=Nat} {b=Nat}
+          (Left (42, 7))
+  case ExpProfToExpF appProf of
+    Left (x, y) => putStrLn $
+      "App (42,7) round-trip: (" ++
+        show x ++ ", " ++ show y ++ ")"
+    Right _ => pure ()
+  -- ExpF isomorphism: Lam round-trip
+  let lamProf =
+        ExpFToExpProf {a=Nat} {b=Nat}
+          (Right (+ 1))
+  case ExpProfToExpF lamProf of
+    Left _ => pure ()
+    Right f => putStrLn $
+      "Lam (+1) round-trip at 9: " ++
+        show (f 9)
+  putStrLn "-------------------------"
+  -- HOAS end element tests
+  let fstR = sectionApply {pf=HOASAppDirPF}
         (snd HOASEndFst) Nat
         (() ** HOASPairFn 42 7)
   putStrLn $
     "fst (42, 7) = " ++ show fstR
-  let sndR = sectionApply {pf=AppDirPF}
+  let sndR = sectionApply {pf=HOASAppDirPF}
         (snd HOASEndSnd) Nat
         (() ** HOASPairFn 42 7)
   putStrLn $
     "snd (42, 7) = " ++ show sndR
-  -- Value 99 as (() ** const 99).
-  let idR = sectionApply {pf=LamDirPF}
+  let idR = sectionApply {pf=HOASLamDirPF}
         (snd HOASEndId) Nat
         (() ** \() => 99)
   putStrLn $
