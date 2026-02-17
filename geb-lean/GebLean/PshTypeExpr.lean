@@ -67,7 +67,7 @@ def PshTypeExpr.interp :
   | .var, _, Q => Q
   | .app G T, P, Q => G.obj (T.interp P Q)
   | .arrow T₁ T₂, P, Q =>
-    pshIhom (T₁.interp Q P) (T₂.interp P Q)
+    (T₁.interp Q P).functorHom (T₂.interp P Q)
 
 /-- The relational interpretation of a type
 expression. Given a morphism `α : P ⟶ Q`, lifts it

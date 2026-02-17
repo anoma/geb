@@ -3,6 +3,7 @@ import GebLean.Utilities.Presheaf
 import GebLean.Utilities.DoubleCategory
 import Mathlib.CategoryTheory.Limits.Types.Products
 import Mathlib.CategoryTheory.Limits.Shapes.FunctorToTypes
+import Mathlib.CategoryTheory.Monoidal.Closed.FunctorToTypes
 
 /-!
 # Internal Relations in PSh(C)
@@ -1013,200 +1014,43 @@ universe w
 
 variable {D : Type w} [Category.{w} D]
 
-/-- The internal hom presheaf in a presheaf category
-`Dᵒᵖ ⥤ Type w` (where `D` has morphisms in the same
-universe `w` as the presheaf values). At stage
-`c : Dᵒᵖ`, an element is a natural family of
-functions from `A` to `B` parameterized by morphisms
-out of `c`. -/
-def pshIhom (A B : Dᵒᵖ ⥤ Type w) :
-    Dᵒᵖ ⥤ Type w where
-  obj c :=
-    { f : ∀ (d : Dᵒᵖ), (c ⟶ d) →
-        A.obj d → B.obj d //
-      ∀ (d e : Dᵒᵖ) (g : d ⟶ e)
-        (h : c ⟶ d) (a : A.obj d),
-        B.map g (f d h a) =
-          f e (h ≫ g) (A.map g a) }
-  map k x :=
-    ⟨fun d h' => x.val d (k ≫ h'),
-     fun d e g h' a => by
-       dsimp only
-       simp only [← Category.assoc]
-       exact x.property d e g (k ≫ h') a⟩
-  map_id c := by
-    funext x; exact Subtype.ext (by
-      funext d h a
-      simp only [types_id_apply,
-        Category.id_comp])
-  map_comp k₁ k₂ := by
-    funext x; exact Subtype.ext (by
-      funext d h a
-      simp only [types_comp_apply,
-        Category.assoc])
-
-/-- Currying: given a morphism
-`f : pshProdPresheaf X A ⟶ B`, produce a morphism
-`X ⟶ pshIhom A B`. At stage `c` and element
-`x : X.obj c`, the resulting family maps each
-`(d, k : c ⟶ d, a : A.obj d)` to
-`f.app d (X.map k x, a)`. -/
-def pshCurry
-    {X A B : Dᵒᵖ ⥤ Type w}
-    (f : pshProdPresheaf X A ⟶ B) :
-    X ⟶ pshIhom A B where
-  app c x :=
-    ⟨fun d k a => f.app d (X.map k x, a),
-     fun d e g k a => by
-       have hnat :
-           f.app e (X.map g (X.map k x),
-             A.map g a)
-           = B.map g (f.app d (X.map k x, a))
-           := congr_fun (f.naturality g)
-             (X.map k x, a)
-       exact hnat.symm.trans
-         (congr_arg (f.app e)
-           (Prod.ext
-             (FunctorToTypes.map_comp_apply
-               X k g x).symm rfl))⟩
-  naturality c₁ c₂ k := by
-    funext x; apply Subtype.ext
-    funext d h a
-    simp only [types_comp_apply]
-    dsimp [pshIhom]
-    rw [FunctorToTypes.map_comp_apply]
-
-/-- Uncurrying: given a morphism
-`g : X ⟶ pshIhom A B`, produce a morphism
-`pshProdPresheaf X A ⟶ B`. At stage `d` and
-pair `(x, a)`, the result is
-`(g.app d x).val d (𝟙 d) a`. -/
-def pshUncurry
-    {X A B : Dᵒᵖ ⥤ Type w}
-    (g : X ⟶ pshIhom A B) :
-    pshProdPresheaf X A ⟶ B where
-  app d p := (g.app d p.1).val d (𝟙 d) p.2
-  naturality d e k := by
-    funext ⟨x, a⟩
-    change (g.app e (X.map k x)).val
-        e (𝟙 e) (A.map k a)
-      = B.map k ((g.app d x).val
-        d (𝟙 d) a)
-    have hg : (g.app e (X.map k x)).val
-        = ((pshIhom A B).map k
-          (g.app d x)).val :=
-      congr_arg Subtype.val
-        (congr_fun (g.naturality k) x)
-    rw [hg]
-    dsimp [pshIhom]
-    rw [Category.comp_id]
-    have := (g.app d x).property
-      d e k (𝟙 d) a
-    rw [Category.id_comp] at this
-    exact this.symm
-
-/-- Evaluation: the counit of the
-currying adjunction. Evaluates an element of
-`pshIhom A B` at the identity morphism. -/
-def pshEval
-    (A B : Dᵒᵖ ⥤ Type w) :
-    pshProdPresheaf (pshIhom A B) A ⟶ B :=
-  pshUncurry (𝟙 _)
-
-/-- Currying then uncurrying yields the original
-morphism. -/
-theorem pshUncurry_pshCurry
-    {X A B : Dᵒᵖ ⥤ Type w}
-    (f : pshProdPresheaf X A ⟶ B) :
-    pshUncurry (pshCurry f) = f := by
-  ext d ⟨x, a⟩
-  dsimp [pshCurry, pshUncurry]
-  simp only [FunctorToTypes.map_id_apply]
-
-/-- Uncurrying then currying yields the original
-morphism. -/
-theorem pshCurry_pshUncurry
-    {X A B : Dᵒᵖ ⥤ Type w}
-    (g : X ⟶ pshIhom A B) :
-    pshCurry (pshUncurry g) = g := by
-  ext c x
-  apply Subtype.ext
-  funext d k a
-  change (g.app d (X.map k x)).val
-      d (𝟙 d) a
-    = (g.app c x).val d k a
-  have hg : (g.app d (X.map k x)).val
-      = ((pshIhom A B).map k
-        (g.app c x)).val :=
-    congr_arg Subtype.val
-      (congr_fun (g.naturality k) x)
-  rw [hg]
-  dsimp [pshIhom]
-  rw [Category.comp_id]
-
-/-- The functor `pshIhom A _` on presheaf
-categories. Given `A`, this maps `B` to
-`pshIhom A B` and postcomposes morphisms. -/
-def pshIhomFunctor
-    (A : Dᵒᵖ ⥤ Type w) :
-    (Dᵒᵖ ⥤ Type w) ⥤ (Dᵒᵖ ⥤ Type w) where
-  obj B := pshIhom A B
-  map {B B'} g :=
-    { app := fun c φ =>
-        ⟨fun d k a => g.app d (φ.val d k a),
-         fun d e h k a =>
-           (congr_fun (g.naturality h)
-             (φ.val d k a)).symm.trans
-             (congr_arg (g.app e)
-               (φ.property d e h k a))⟩
-      naturality := fun c₁ c₂ k => by
-        funext φ; exact Subtype.ext
-          (by funext d h a; rfl) }
-  map_id B := by
-    ext c φ; exact Subtype.ext
-      (by funext d k a; rfl)
-  map_comp g₁ g₂ := by
-    ext c φ; exact Subtype.ext
-      (by funext d k a; rfl)
-
-/-- The profunctor map for `pshIhom`. Given
-`f : A' ⟶ A` and `g : B ⟶ B'`, produces
-`pshIhom A B ⟶ pshIhom A' B'` by precomposing
-with `f` and postcomposing with `g`. -/
+/-- The profunctor map for the internal hom
+`A.functorHom B`. Given `f : A' ⟶ A` and
+`g : B ⟶ B'`, produces
+`A.functorHom B ⟶ A'.functorHom B'` by
+precomposing with `f` and postcomposing with `g`. -/
 def pshIhomProfMap
     {A A' B B' : Dᵒᵖ ⥤ Type w}
     (f : A' ⟶ A) (g : B ⟶ B') :
-    pshIhom A B ⟶ pshIhom A' B' where
+    A.functorHom B ⟶ A'.functorHom B' where
   app c φ :=
-    ⟨fun d h a' =>
-       g.app d (φ.val d h (f.app d a')),
-     fun d e k h a' => by
-       dsimp only
-       have hg : g.app e
-           (B.map k (φ.val d h (f.app d a')))
-           = B'.map k
-             (g.app d
-               (φ.val d h (f.app d a')))
-           := congr_fun (g.naturality k) _
-       have hf : A.map k (f.app d a')
-           = f.app e (A'.map k a')
-           := (congr_fun
-                 (f.naturality k) a').symm
-       rw [← hg, φ.property d e k h, hf]⟩
+    { app := fun d h a' =>
+        g.app d (φ.app d h (f.app d a'))
+      naturality := fun {d e} k h => by
+        ext a'
+        simp only [types_comp_apply]
+        have hf := congr_fun
+          (f.naturality k) a'
+        simp only [types_comp_apply] at hf
+        have hφ := congr_fun
+          (φ.naturality k h) (f.app d a')
+        simp only [types_comp_apply] at hφ
+        rw [← hf] at hφ; rw [hφ]
+        have hg := congr_fun
+          (g.naturality k)
+          (φ.app d h (f.app d a'))
+        simp only [types_comp_apply] at hg
+        exact hg }
   naturality c₁ c₂ k := by
-    funext φ
-    exact Subtype.ext
-      (by funext d h a'; rfl)
+    ext c φ d h; rfl
 
 /-- Identity law for `pshIhomProfMap`. -/
 @[simp]
 theorem pshIhomProfMap_id
     {A B : Dᵒᵖ ⥤ Type w} :
     pshIhomProfMap (𝟙 A) (𝟙 B) =
-      𝟙 (pshIhom A B) := by
-  ext c φ
-  exact Subtype.ext
-    (by funext d h a; rfl)
+      𝟙 (A.functorHom B) := by
+  ext c φ d h a; rfl
 
 /-- Composition law for `pshIhomProfMap`. -/
 theorem pshIhomProfMap_comp
@@ -1216,68 +1060,7 @@ theorem pshIhomProfMap_comp
     pshIhomProfMap (f₂ ≫ f₁) (g₁ ≫ g₂) =
       pshIhomProfMap f₁ g₁ ≫
         pshIhomProfMap f₂ g₂ := by
-  ext c φ
-  exact Subtype.ext
-    (by funext d h a; rfl)
-
-/-- The curry/uncurry equivalence of hom-sets:
-`(X × A ⟶ B) ≃ (X ⟶ pshIhom A B)`. -/
-def pshCurryEquiv
-    (X A B : Dᵒᵖ ⥤ Type w) :
-    (pshProdPresheaf X A ⟶ B) ≃
-      (X ⟶ pshIhom A B) where
-  toFun := pshCurry
-  invFun := pshUncurry
-  left_inv := pshUncurry_pshCurry
-  right_inv := pshCurry_pshUncurry
-
-/-- The functor `_ × A` on presheaf categories.
-The left factor varies covariantly while `A` is
-fixed. -/
-def pshProdWithFunctor
-    (A : Dᵒᵖ ⥤ Type w) :
-    (Dᵒᵖ ⥤ Type w) ⥤ (Dᵒᵖ ⥤ Type w) where
-  obj X := pshProdPresheaf X A
-  map f := pshProdMap f (𝟙 A)
-  map_id X := pshProdMap_id X A
-  map_comp f g := by
-    rw [show 𝟙 A = 𝟙 A ≫ 𝟙 A from
-      (Category.comp_id _).symm]
-    exact (pshProdMap_comp f (𝟙 A) g (𝟙 A)).symm
-
-/-- Left naturality of uncurrying: precomposing with
-a morphism on the first factor commutes with
-uncurrying. -/
-theorem pshUncurry_precomp
-    {X' X A B : Dᵒᵖ ⥤ Type w}
-    (f : X' ⟶ X) (g : X ⟶ pshIhom A B) :
-    pshUncurry (f ≫ g) =
-      pshProdMap f (𝟙 A) ≫ pshUncurry g := by
-  ext d ⟨x', a⟩; rfl
-
-/-- Right naturality of currying: postcomposing
-with a morphism commutes with currying. -/
-theorem pshCurry_postcomp
-    {X A B B' : Dᵒᵖ ⥤ Type w}
-    (f : pshProdPresheaf X A ⟶ B)
-    (g : B ⟶ B') :
-    pshCurry (f ≫ g) =
-      pshCurry f ≫ (pshIhomFunctor A).map g := by
-  ext c x
-  exact Subtype.ext (by funext d k a; rfl)
-
-/-- The product-exponential adjunction:
-`_ × A ⊣ pshIhom A _`. -/
-def pshProdIhomAdj
-    (A : Dᵒᵖ ⥤ Type w) :
-    pshProdWithFunctor A ⊣ pshIhomFunctor A :=
-  Adjunction.mkOfHomEquiv {
-    homEquiv := fun X B => pshCurryEquiv X A B
-    homEquiv_naturality_left_symm :=
-      fun f g => pshUncurry_precomp f g
-    homEquiv_naturality_right :=
-      fun f g => pshCurry_postcomp f g
-  }
+  ext c φ d h a; rfl
 
 /-- The predicate defining when a pair of elements
 of the internal hom presheaves are related by the
@@ -1292,19 +1075,19 @@ def pshArrowRelPred
     (R : PshProdOver A₁ A₂)
     (S : PshProdOver B₁ B₂)
     (c : Dᵒᵖ)
-    (g : (pshIhom A₁ B₁).obj c ×
-         (pshIhom A₂ B₂).obj c) :
+    (g : (A₁.functorHom B₁).obj c ×
+         (A₂.functorHom B₂).obj c) :
     Prop :=
   ∀ (d : Dᵒᵖ) (h : c ⟶ d)
     (w : R.left.obj d),
     ∃ s : S.left.obj d,
       S.hom.app d s =
-        (g.1.val d h (R.hom.app d w).1,
-         g.2.val d h (R.hom.app d w).2)
+        (g.1.app d h (R.hom.app d w).1,
+         g.2.app d h (R.hom.app d w).2)
 
 /-- The presheaf underlying the arrow relation.
 At stage `c`, an element is a pair
-`(g₁, g₂) ∈ pshIhom A₁ B₁ × pshIhom A₂ B₂`
+`(g₁, g₂) ∈ A₁.functorHom B₁ × A₂.functorHom B₂`
 satisfying `pshArrowRelPred R S c (g₁, g₂)`. -/
 def pshArrowRelPresheaf
     {A₁ A₂ B₁ B₂ : Dᵒᵖ ⥤ Type w}
@@ -1312,12 +1095,12 @@ def pshArrowRelPresheaf
     (S : PshProdOver B₁ B₂) :
     Dᵒᵖ ⥤ Type w where
   obj c :=
-    { g : (pshIhom A₁ B₁).obj c ×
-          (pshIhom A₂ B₂).obj c //
+    { g : (A₁.functorHom B₁).obj c ×
+          (A₂.functorHom B₂).obj c //
       pshArrowRelPred R S c g }
   map k g :=
-    ⟨((pshIhom A₁ B₁).map k g.val.1,
-      (pshIhom A₂ B₂).map k g.val.2),
+    ⟨((A₁.functorHom B₁).map k g.val.1,
+      (A₂.functorHom B₂).map k g.val.2),
      fun d h' w => g.property d (k ≫ h') w⟩
   map_id c := by
     funext g; simp only [types_id_apply]
@@ -1332,14 +1115,15 @@ def pshArrowRelPresheaf
 /-- The arrow relation as a `PshProdOver`. Given
 relations `R` on the inputs and `S` on the outputs,
 `pshArrowRel R S` is a relation on the internal hom
-presheaves `pshIhom A₁ B₁` and `pshIhom A₂ B₂`.
-The underlying presheaf is `pshArrowRelPresheaf R S`
-with projections given by `.val.1` and `.val.2`. -/
+presheaves `A₁.functorHom B₁` and
+`A₂.functorHom B₂`. The underlying presheaf is
+`pshArrowRelPresheaf R S` with projections given
+by `.val.1` and `.val.2`. -/
 def pshArrowRelFst
     {A₁ A₂ B₁ B₂ : Dᵒᵖ ⥤ Type w}
     (R : PshProdOver A₁ A₂)
     (S : PshProdOver B₁ B₂) :
-    pshArrowRelPresheaf R S ⟶ pshIhom A₁ B₁
+    pshArrowRelPresheaf R S ⟶ A₁.functorHom B₁
     where
   app c g := g.val.1
   naturality _ _ _ := by funext; rfl
@@ -1348,7 +1132,7 @@ def pshArrowRelSnd
     {A₁ A₂ B₁ B₂ : Dᵒᵖ ⥤ Type w}
     (R : PshProdOver A₁ A₂)
     (S : PshProdOver B₁ B₂) :
-    pshArrowRelPresheaf R S ⟶ pshIhom A₂ B₂
+    pshArrowRelPresheaf R S ⟶ A₂.functorHom B₂
     where
   app c g := g.val.2
   naturality _ _ _ := by funext; rfl
@@ -1356,15 +1140,16 @@ def pshArrowRelSnd
 /-- The arrow relation as a `PshProdOver`. Given
 relations `R` on the inputs and `S` on the outputs,
 `pshArrowRel R S` is a relation on the internal hom
-presheaves `pshIhom A₁ B₁` and `pshIhom A₂ B₂`.
-The underlying presheaf is `pshArrowRelPresheaf R S`
-with projections given by `.val.1` and `.val.2`. -/
+presheaves `A₁.functorHom B₁` and
+`A₂.functorHom B₂`. The underlying presheaf is
+`pshArrowRelPresheaf R S` with projections given
+by `.val.1` and `.val.2`. -/
 def pshArrowRel
     {A₁ A₂ B₁ B₂ : Dᵒᵖ ⥤ Type w}
     (R : PshProdOver A₁ A₂)
     (S : PshProdOver B₁ B₂) :
-    PshProdOver (pshIhom A₁ B₁)
-      (pshIhom A₂ B₂) :=
+    PshProdOver (A₁.functorHom B₁)
+      (A₂.functorHom B₂) :=
   Over.mk (pshProdLift
     (pshArrowRelFst R S)
     (pshArrowRelSnd R S))
@@ -1378,8 +1163,8 @@ private theorem pshArrowRelPred_transport
     {S₁ S₂ : PshProdOver B₁ B₂}
     (αinv : R₂ ⟶ R₁) (βhom : S₁ ⟶ S₂)
     {c : Dᵒᵖ}
-    {g : (pshIhom A₁ B₁).obj c ×
-         (pshIhom A₂ B₂).obj c}
+    {g : (A₁.functorHom B₁).obj c ×
+         (A₂.functorHom B₂).obj c}
     (h : pshArrowRelPred R₁ S₁ c g) :
     pshArrowRelPred R₂ S₂ c g := by
   intro d hd w₂
@@ -1440,15 +1225,16 @@ def pshArrowRel_iso
 
 /-- The arrow relation on skeleton-level relations.
 Given `R : PshRel A₁ A₂` and `S : PshRel B₁ B₂`,
-produces `PshRel (pshIhom A₁ B₁) (pshIhom A₂ B₂)`
+produces
+`PshRel (A₁.functorHom B₁) (A₂.functorHom B₂)`
 by descending `pshArrowRel` through the skeleton
 quotient in both arguments. -/
 def pshArrowRelSkel
     {A₁ A₂ B₁ B₂ : Dᵒᵖ ⥤ Type w}
     (R : PshRel A₁ A₂)
     (S : PshRel B₁ B₂) :
-    PshRel (pshIhom A₁ B₁)
-      (pshIhom A₂ B₂) :=
+    PshRel (A₁.functorHom B₁)
+      (A₂.functorHom B₂) :=
   Skeleton.lift₂
     (fun R' S' =>
       toSkeleton _ (pshArrowRel R' S'))
@@ -1574,63 +1360,72 @@ variable {A B E : D}
 
 /-- Forward map: given exponential data for `E` and
 a morphism `e : X ⟶ E`, produce an element of
-`pshIhom (yoneda.obj A) (yoneda.obj B)` at stage
-`op X`. -/
+`(yoneda.obj A).functorHom (yoneda.obj B)` at
+stage `op X`. -/
 def pshIhomYonedaFwd
     (ed : PshExponentialData A B E)
     {X : D} (e : X ⟶ E) :
-    (pshIhom (yoneda.obj A)
+    ((yoneda.obj A).functorHom
       (yoneda.obj B)).obj (Opposite.op X) :=
-  ⟨fun d h a => ed.evApp (h.unop ≫ e) a,
-   fun d d' g h a => by
-     dsimp only [yoneda_obj_map]
-     rw [ed.evApp_nat g.unop]
-     congr 1
-     simp only [unop_comp, Category.assoc]⟩
+  { app := fun d h a =>
+      ed.evApp (h.unop ≫ e) a
+    naturality := fun {d d'} g h => by
+      ext a
+      simp only [types_comp_apply,
+        yoneda_obj_map]
+      rw [ed.evApp_nat g.unop]
+      congr 1
+      dsimp
+      simp only [Category.assoc] }
 
 /-- Backward map: given an element of
-`pshIhom (yoneda.obj A) (yoneda.obj B)` at stage
-`op X`, produce a morphism `X ⟶ E` by currying
-the family restricted to the identity. -/
+`(yoneda.obj A).functorHom (yoneda.obj B)` at
+stage `op X`, produce a morphism `X ⟶ E` by
+currying the family restricted to the identity. -/
 def pshIhomYonedaInv
     (ed : PshExponentialData A B E)
     {X : D}
-    (f : (pshIhom (yoneda.obj A)
+    (f : ((yoneda.obj A).functorHom
       (yoneda.obj B)).obj (Opposite.op X)) :
     X ⟶ E :=
-  ed.curryApp X (fun h a => f.val (Opposite.op _)
-    h.op a)
+  ed.curryApp X (fun h a =>
+    f.app (Opposite.op _) h.op a)
 
-/-- The presheaf `pshIhom (yoneda.obj A) (yoneda.obj B)`
-is representable by the exponential object `E`, given
+/-- The presheaf
+`(yoneda.obj A).functorHom (yoneda.obj B)` is
+representable by the exponential object `E`, given
 exponential data `ed`. -/
 def pshIhomYonedaRepresentableBy
     (ed : PshExponentialData A B E) :
-    (pshIhom (yoneda.obj A)
+    ((yoneda.obj A).functorHom
       (yoneda.obj B)).RepresentableBy E where
   homEquiv :=
     { toFun := pshIhomYonedaFwd ed
       invFun := pshIhomYonedaInv ed
       left_inv := fun e => ed.curry_ev _ e
       right_inv := fun f => by
-        apply Subtype.ext
-        funext d h a
-        exact ed.ev_curry _ _ h.unop a }
+        exact Functor.functorHom_ext
+          fun d h => by
+          ext a
+          exact ed.ev_curry _ _ h.unop a }
   homEquiv_comp := fun f g => by
-    apply Subtype.ext
-    funext d h a
-    dsimp only [pshIhomYonedaFwd, pshIhom,
-      Equiv.coe_fn_mk]
-    simp only [unop_comp, Category.assoc]
-    rfl
+    exact Functor.functorHom_ext
+      fun d h => by
+      ext a
+      dsimp [pshIhomYonedaFwd,
+        Functor.functorHom, Functor.comp_map,
+        Functor.homObjFunctor, Functor.rightOp,
+        coyoneda]
+      simp only [Category.assoc]
 
 /-- The Yoneda embedding preserves exponentials:
-`yoneda.obj E ≅ pshIhom (yoneda.obj A) (yoneda.obj B)`
+`yoneda.obj E ≅ (yoneda.obj A).functorHom (yoneda.obj B)`
 when `E` is an exponential of `A` and `B`. -/
 def pshIhomYonedaIso
     (ed : PshExponentialData A B E) :
     yoneda.obj E ≅
-      pshIhom (yoneda.obj A) (yoneda.obj B) :=
+      (yoneda.obj A).functorHom
+        (yoneda.obj B) :=
   (pshIhomYonedaRepresentableBy ed).toIso
 
 end YonedaPreservesIhom

@@ -938,6 +938,82 @@ instance yonedaExt_isLeftKanExtension
         (yonedaExt F)
         (yonedaExtUnitNatTrans F))⟩
 
+/-- Map a `YonedaExtSigma` triple along a natural
+transformation `α : F ⟶ G` by postcomposing the
+morphism component with `α.app`. -/
+def yonedaExtSigmaAlpha
+    {F G : C ⥤ D} (α : F ⟶ G)
+    (P : Cᵒᵖ ⥤ Type v) (T : Dᵒᵖ)
+    (x : YonedaExtSigma F P T) :
+    YonedaExtSigma G P T :=
+  ⟨x.1, x.2.1, x.2.2 ≫ α.app x.1⟩
+
+/-- `yonedaExtSigmaAlpha` preserves the step
+relation. -/
+theorem yonedaExtSigmaAlpha_step
+    {F G : C ⥤ D} (α : F ⟶ G)
+    (P : Cᵒᵖ ⥤ Type v) (T : Dᵒᵖ)
+    {x y : YonedaExtSigma F P T}
+    (h : YonedaExtStep F P T x y) :
+    YonedaExtStep G P T
+      (yonedaExtSigmaAlpha α P T x)
+      (yonedaExtSigmaAlpha α P T y) := by
+  obtain ⟨g, hp, ht⟩ := h
+  exact ⟨g, hp, by
+    dsimp [yonedaExtSigmaAlpha]
+    rw [Category.assoc,
+      ← α.naturality g,
+      ← Category.assoc, ht]⟩
+
+/-- The Yoneda extension as a functor from
+`(C ⥤ D)` to `((Cᵒᵖ ⥤ Type v) ⥤ (Dᵒᵖ ⥤ Type v))`.
+On objects, this is `yonedaExt`. On morphisms, a
+natural transformation `α : F ⟶ G` induces a
+map by postcomposing the morphism component of
+each triple with `α`. -/
+def yonedaExtFunctor :
+    (C ⥤ D) ⥤
+      ((Cᵒᵖ ⥤ Type v) ⥤
+        (Dᵒᵖ ⥤ Type v)) where
+  obj := yonedaExt
+  map {F G} α :=
+    { app := fun P =>
+        { app := fun T =>
+            Quot.map
+              (yonedaExtSigmaAlpha α P T)
+              (fun _ _ h =>
+                yonedaExtSigmaAlpha_step
+                  α P T h)
+          naturality := fun T₁ T₂ k => by
+            funext q
+            induction q using Quot.inductionOn
+            rename_i x
+            change Quot.mk _ _ = Quot.mk _ _
+            congr 1
+            dsimp [yonedaExtSigmaAlpha,
+              yonedaExtSigmaMap]
+            simp only [Category.assoc] }
+      naturality := fun P Q β => by
+        ext T q
+        induction q using Quot.inductionOn
+        rfl }
+  map_id F := by
+    ext P T q
+    induction q using Quot.inductionOn
+    rename_i x
+    change Quot.mk _ _ = Quot.mk _ _
+    congr 1
+    dsimp [yonedaExtSigmaAlpha]
+    simp only [Category.comp_id]
+  map_comp {F G H} α β := by
+    ext P T q
+    induction q using Quot.inductionOn
+    rename_i x
+    change Quot.mk _ _ = Quot.mk _ _
+    congr 1
+    dsimp [yonedaExtSigmaAlpha]
+    simp only [Category.assoc]
+
 end YonedaExtension
 
 end GebLean
