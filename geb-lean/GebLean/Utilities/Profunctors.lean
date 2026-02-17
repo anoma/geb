@@ -172,6 +172,17 @@ The hom functor viewed as a presheaf on `(Cᵒᵖ × C)`.
 def homPre : (opProdSym C)ᵒᵖ ⥤ Type v :=
   profunctorPre (C := C) (Functor.hom C)
 
+@[simp]
+theorem homPre_obj {k : Cᵒᵖ × C} :
+    homPre.obj (Opposite.op k) = (k.2 ⟶ k.1.unop) :=
+  rfl
+
+@[simp]
+theorem homPre_map {k₁ k₂ : Cᵒᵖ × C}
+    (g : k₁ ⟶ k₂)
+    (w : homPre.obj (Opposite.op k₂)) :
+    homPre.map g.op w = g.2 ≫ w ≫ g.1.unop := rfl
+
 /--
 The hom functor viewed as a presheaf on `(Cᵒᵖ' × C)`.
 -/

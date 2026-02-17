@@ -1067,4 +1067,457 @@ def typeWeightedColimitBifunctor :
 
 end TypeWeightedLimits
 
+/-!
+## Ninja Yoneda and Co-Ninja Yoneda
+
+The ninja Yoneda lemma expresses the end of a profunctor
+as a weighted limit by the hom-profunctor, and dually, the
+co-ninja Yoneda lemma expresses the coend as a weighted
+colimit by the dual hom-profunctor.
+-/
+
+section NinjaYoneda
+
+variable {J : Type v} [Category.{v} J]
+
+/-- The end of a profunctor is equivalent to natural
+transformations from the hom-profunctor to the uncurried
+profunctor. This is the "expanded" form of the ninja
+Yoneda lemma, identifying `typeEnd P` with
+`Functor.hom J ⟶ Functor.uncurry.obj P`. -/
+def typeEnd.homNatTransEquiv
+    (P : Jᵒᵖ ⥤ J ⥤ Type v) :
+    typeEnd P ≃
+      (Functor.hom J ⟶ Functor.uncurry.obj P) where
+  toFun x :=
+    { app := fun ⟨a, k⟩ w =>
+        (P.obj a).map w (x.val a.unop)
+      naturality := fun {i j} f => by
+        ext w
+        simp only [Functor.hom_obj, types_comp_apply,
+          Functor.hom_map, Functor.uncurry_obj_obj,
+          Functor.uncurry_obj_map]
+        conv_lhs => rw [Functor.map_comp,
+          types_comp_apply, Functor.map_comp,
+          types_comp_apply,
+          x.property f.1.unop]
+        rw [show f.1.unop.op = f.1 from
+          Quiver.Hom.unop_op f.1]
+        apply congrArg ((P.obj j.1).map f.2)
+        exact (congr_fun ((P.map f.1).naturality w)
+          (x.val i.1.unop)).symm
+    }
+  invFun α :=
+    ⟨fun j => α.app (Opposite.op j, j) (𝟙 j),
+     fun {i j} f => by
+      have h1 := congr_fun
+        (α.naturality (show (Opposite.op i, i) ⟶
+          (Opposite.op i, j) from (𝟙 _, f)))
+        (𝟙 i)
+      simp only [Functor.hom_obj, types_comp_apply,
+        Functor.hom_map, Functor.uncurry_obj_obj,
+        Functor.uncurry_obj_map,
+        Opposite.unop_op, unop_id,
+        Category.id_comp] at h1
+      rw [P.map_id, NatTrans.id_app] at h1
+      simp only [types_id_apply] at h1
+      have h2 := congr_fun
+        (α.naturality (show (Opposite.op j, j) ⟶
+          (Opposite.op i, j) from (f.op, 𝟙 _)))
+        (𝟙 j)
+      simp only [Functor.hom_obj, types_comp_apply,
+        Functor.hom_map, Functor.uncurry_obj_obj,
+        Functor.uncurry_obj_map,
+        Opposite.unop_op,
+        Quiver.Hom.unop_op,
+        Category.comp_id] at h2
+      rw [(P.obj (Opposite.op i)).map_id] at h2
+      simp only [types_id_apply] at h2
+      exact h1.symm.trans h2⟩
+  left_inv x := by
+    apply Subtype.ext; ext j
+    change (P.obj (Opposite.op j)).map (𝟙 j)
+      (x.val j) = x.val j
+    rw [show (P.obj (Opposite.op j)).map (𝟙 j) =
+      𝟙 _ from (P.obj (Opposite.op j)).map_id j]
+    rfl
+  right_inv α := by
+    ext ⟨a, k⟩ w
+    dsimp only []
+    simp only [Opposite.op_unop]
+    have h := congr_fun
+      (α.naturality (show (a, a.unop) ⟶ (a, k)
+        from (𝟙 _, w))) (𝟙 a.unop)
+    simp only [Functor.hom_obj, types_comp_apply,
+      Functor.hom_map, Functor.uncurry_obj_obj,
+      Functor.uncurry_obj_map,
+      unop_id, Category.id_comp] at h
+    rw [P.map_id, NatTrans.id_app] at h
+    simp only [types_id_apply] at h
+    exact h.symm
+
+/-- The ninja Yoneda lemma: the end of a profunctor
+`P : Jᵒᵖ ⥤ J ⥤ Type v` equals the weighted limit of
+`Functor.uncurry.obj P` weighted by the hom-profunctor
+`Functor.hom J`, over the product category `Jᵒᵖ × J`. -/
+def typeEnd.ninjaYonedaEquiv
+    (P : Jᵒᵖ ⥤ J ⥤ Type v) :
+    typeEnd P ≃ typeWeightedLimit
+      (Functor.hom J) (Functor.uncurry.obj P) :=
+  (typeEnd.homNatTransEquiv P).trans
+    (typeWeightedLimit.natTransEquiv
+      (Functor.hom J)
+      (Functor.uncurry.obj P)).symm
+
+/-- The ninja Yoneda lemma expressed as a natural
+isomorphism of functors
+`(Jᵒᵖ ⥤ J ⥤ Type v) ⥤ Type v`:
+`typeEndFunctor J ≅ Functor.uncurry ⋙
+  typeWeightedLimitFunctor (Functor.hom J)`. -/
+def typeEndFunctor.ninjaYonedaNatIso :
+    typeEndFunctor J ≅
+      Functor.uncurry ⋙
+        typeWeightedLimitFunctor (Functor.hom J) :=
+  NatIso.ofComponents
+    (fun P => (typeEnd.ninjaYonedaEquiv P).toIso)
+    (fun {P Q} α => by
+      ext ⟨x, hx⟩
+      change (typeEnd.ninjaYonedaEquiv Q)
+        (typeEnd.map J α ⟨x, hx⟩) =
+        typeEnd.map _ (powerProfunctorMapF
+          (Functor.hom J) (Functor.uncurry.map α))
+          ((typeEnd.ninjaYonedaEquiv P) ⟨x, hx⟩)
+      apply Subtype.ext; ext ⟨a, k⟩
+      funext w
+      change (Q.obj a).map w
+        ((α.app a).app a.unop (x a.unop)) =
+        (α.app a).app k
+          ((P.obj a).map w (x a.unop))
+      exact (FunctorToTypes.naturality
+        (P.obj a) (Q.obj a) (α.app a) w
+        (x a.unop)).symm)
+
+/-- The co-ninja Yoneda lemma: the coend of a profunctor
+`P : Jᵒᵖ ⥤ J ⥤ Type v` equals the weighted colimit of
+`Functor.uncurry.obj P` weighted by the dual
+hom-profunctor `homPre`, over `Jᵒᵖ × J`.
+
+Forward: `⟨j, x⟩ ↦ ⟨(op j, j), (𝟙 j, x)⟩`.
+Backward: `⟨(a, b), (w, y)⟩ ↦ ⟨a.unop, (P.obj a).map w y⟩`.
+-/
+def typeCoend.coNinjaYonedaEquiv
+    (P : Jᵒᵖ ⥤ J ⥤ Type v) :
+    typeCoend P ≃ typeWeightedColimit
+      (homPre (C := J)) (Functor.uncurry.obj P) where
+  toFun := Quot.lift
+    (fun ⟨j, x⟩ => Quot.mk _
+      ⟨(Opposite.op j, j), (𝟙 j, x)⟩)
+    (fun _ _ r => by
+      cases r with
+      | @intro i j f x =>
+        dsimp only []
+        let cpf := copowerProfunctor
+          (homPre (C := J)) (Functor.uncurry.obj P)
+        have h1 := Quot.sound
+          (typeCoendRel.intro (F := cpf)
+            (show (Opposite.op j, i) ⟶
+              (Opposite.op i, i) from (f.op, 𝟙 i))
+            (show (cpf.obj
+              (Opposite.op (Opposite.op i, i))).obj
+                (Opposite.op j, i) from (𝟙 i, x)))
+        simp only [cpf, copowerProfunctor_map_app,
+          copowerProfunctor_obj_map,
+          typesHasCopowers, HasCopowers.mapIdx,
+          HasCopowers.mapVal, HasCopowers.desc,
+          HasCopowers.inj,
+          homPre_map, Functor.uncurry_obj_map,
+          types_comp_apply,
+          Quiver.Hom.unop_op,
+          Category.id_comp,
+          FunctorToTypes.map_id_apply] at h1
+        have h2 := Quot.sound
+          (typeCoendRel.intro (F := cpf)
+            (show (Opposite.op j, i) ⟶
+              (Opposite.op j, j) from (𝟙 _, f))
+            (show (cpf.obj
+              (Opposite.op (Opposite.op j, j))).obj
+                (Opposite.op j, i) from (𝟙 j, x)))
+        simp only [cpf, copowerProfunctor_map_app,
+          copowerProfunctor_obj_map,
+          typesHasCopowers, HasCopowers.mapIdx,
+          HasCopowers.mapVal, HasCopowers.desc,
+          HasCopowers.inj,
+          homPre_map, Functor.uncurry_obj_map,
+          types_comp_apply,
+          unop_id,
+          Category.id_comp, Category.comp_id,
+          P.map_id, NatTrans.id_app] at h2
+        exact h1.symm.trans h2)
+  invFun := Quot.lift
+    (fun ⟨⟨a, b⟩, w, y⟩ => Quot.mk _
+      ⟨a.unop, (P.obj a).map w y⟩)
+    (fun _ _ r => by
+      cases r with
+      | @intro k₁ k₂ g z =>
+        obtain ⟨a₁, b₁⟩ := k₁
+        obtain ⟨a₂, b₂⟩ := k₂
+        obtain ⟨g₁, g₂⟩ := g
+        obtain ⟨w, y⟩ := z
+        simp only [copowerProfunctor_map_app,
+          copowerProfunctor_obj_map,
+          typesHasCopowers, HasCopowers.mapIdx,
+          HasCopowers.mapVal, HasCopowers.desc,
+          HasCopowers.inj,
+          homPre_map, Functor.uncurry_obj_map,
+          types_comp_apply]
+        let r := typeCoendRel P
+        calc Quot.mk r ⟨a₁.unop,
+              (P.obj a₁).map
+                (g₂ ≫ w ≫ g₁.unop) y⟩
+            = Quot.mk r ⟨a₁.unop,
+              (P.obj a₁).map g₁.unop
+                ((P.obj a₁).map (g₂ ≫ w)
+                  y)⟩ := by
+              simp only [Functor.map_comp,
+                types_comp_apply]
+          _ = Quot.mk r ⟨a₂.unop,
+              (P.map g₁).app a₂.unop
+                ((P.obj a₁).map (g₂ ≫ w)
+                  y)⟩ :=
+              (Quot.sound
+                (typeCoendRel.intro g₁.unop
+                  ((P.obj a₁).map
+                    (g₂ ≫ w) y))).symm
+          _ = Quot.mk r ⟨a₂.unop,
+              (P.obj a₂).map (g₂ ≫ w)
+                ((P.map g₁).app b₁ y)⟩ := by
+              simp only
+                [FunctorToTypes.naturality]
+          _ = Quot.mk r ⟨a₂.unop,
+              (P.obj a₂).map w
+                ((P.obj a₂).map g₂
+                  ((P.map g₁).app b₁
+                    y))⟩ := by
+              simp only [Functor.map_comp,
+                types_comp_apply])
+  left_inv := by
+    intro x
+    induction x using Quot.ind with
+    | mk a =>
+      obtain ⟨j, x⟩ := a
+      simp only [Opposite.unop_op]
+      exact congrArg (Quot.mk _)
+        (Sigma.ext rfl
+          (by rw [heq_eq_eq,
+            show (P.obj (Opposite.op j)).map
+              (𝟙 j) x = x from
+              FunctorToTypes.map_id_apply
+                (F := P.obj (Opposite.op j))
+                x]))
+  right_inv := by
+    intro x
+    induction x using Quot.ind with
+    | mk a =>
+      obtain ⟨⟨a, b⟩, w, y⟩ := a
+      dsimp only []
+      simp only [Opposite.op_unop]
+      let cpf := copowerProfunctor
+        (homPre (C := J)) (Functor.uncurry.obj P)
+      symm
+      have h := Quot.sound
+        (typeCoendRel.intro (F := cpf)
+          (show (a, b) ⟶ (a, a.unop)
+            from (𝟙 a, w))
+          (show (cpf.obj
+            (Opposite.op (a, a.unop))).obj
+              (a, b) from (𝟙 a.unop, y)))
+      simp only [cpf, copowerProfunctor_map_app,
+        copowerProfunctor_obj_map,
+        typesHasCopowers, HasCopowers.mapIdx,
+        HasCopowers.mapVal, HasCopowers.desc,
+        HasCopowers.inj,
+        homPre_map, Functor.uncurry_obj_map,
+        types_comp_apply,
+        unop_id, Category.id_comp,
+        Category.comp_id,
+        P.map_id, NatTrans.id_app] at h
+      exact h
+
+/-- The co-ninja Yoneda lemma expressed as a natural
+isomorphism of functors
+`(Jᵒᵖ ⥤ J ⥤ Type v) ⥤ Type v`:
+`typeCoendFunctor J ≅ Functor.uncurry ⋙
+  typeWeightedColimitFunctor (homPre (C := J))`. -/
+def typeCoendFunctor.coNinjaYonedaNatIso :
+    typeCoendFunctor J ≅
+      Functor.uncurry ⋙
+        typeWeightedColimitFunctor
+          (homPre (C := J)) :=
+  NatIso.ofComponents
+    (fun P =>
+      (typeCoend.coNinjaYonedaEquiv P).toIso)
+    (fun {P Q} α => by
+      ext ⟨j, x⟩
+      rfl)
+
+/-- The right adjoint profunctor of the coend
+adjunction at `Y` equals the slice profunctor of the
+coyoneda embedding at `Y`: both send `(op j, k)` to
+the function type `(k ⟶ j) → Y`. -/
+theorem typeCoendRAdj_eq_sliceProfunctorPoly
+    (Y : Type v) :
+    typeCoendRAdj.obj J Y =
+      sliceProfunctorPoly coyoneda Y := rfl
+
+/-- Maps-out characterization of the coend:
+`(typeCoend P → X) ≃ (P ⟶ sliceProfunctorPoly coyoneda X)`.
+This restates the coend adjunction using the
+coyoneda slice profunctor. -/
+def typeCoend.mapsOutEquiv
+    (P : Jᵒᵖ ⥤ J ⥤ Type v) (X : Type v) :
+    (typeCoend P → X) ≃
+      (P ⟶ sliceProfunctorPoly coyoneda X) :=
+  (typeCoendAdj.homEquiv J P X).trans
+    (Equiv.cast (by
+      rw [typeCoendRAdj_eq_sliceProfunctorPoly]))
+
+/-- The impredicative characterization of weighted
+colimits in `Type v`: elements of
+`typeWeightedColimit W F` correspond to natural
+transformations from `weightedLimitFunctor W F`
+to the identity functor `𝟭 (Type v)`. -/
+def typeWeightedColimit.impredicative
+    (W : Jᵒᵖ ⥤ Type v) (F : J ⥤ Type v) :
+    (weightedLimitFunctor W F ⟶ 𝟭 (Type v)) ≃
+      typeWeightedColimit W F :=
+  (typeWeightedColimitCocone_isWeightedColimit
+    W F).weightedColimitImpredicative
+
+/-- The representable characterization of weighted
+colimits in `Type v`: natural transformations from
+`weightedLimitFunctor W F` to `G` correspond to
+`G.obj (typeWeightedColimit W F)`. -/
+def typeWeightedColimit.representable
+    (W : Jᵒᵖ ⥤ Type v) (F : J ⥤ Type v)
+    (G : Type v ⥤ Type v) :
+    (weightedLimitFunctor W F ⟶ G) ≃
+      G.obj (typeWeightedColimit W F) :=
+  (typeWeightedColimitCocone_isWeightedColimit
+    W F).weightedColimitRepresentable G
+
+/-- Introduction rule for weighted limits: a function
+`X → typeWeightedLimit W F` is equivalent to a weighted
+limit of `homFromFunctor F X`, where
+`homFromFunctor F X` sends `j ↦ X → F.obj j`. -/
+def typeWeightedLimit.introEquiv
+    (X : Type v) (W F : J ⥤ Type v) :
+    (X → typeWeightedLimit W F) ≃
+      typeWeightedLimit W
+        (homFromFunctor F X) where
+  toFun g :=
+    ⟨fun j w x => (g x).val j w,
+     fun {i j} f => by
+       funext w; funext x
+       exact congr_fun ((g x).property f) w⟩
+  invFun h x :=
+    ⟨fun j w => (h.val j w) x,
+     fun {i j} f => by
+       funext w
+       exact congr_fun
+         (congr_fun (h.property f) w) x⟩
+  left_inv g := by ext x; rfl
+  right_inv h := by rfl
+
+/-- Introduction rule for ends: a function
+`X → typeEnd P` is equivalent to the end of the
+profunctor `P` post-composed with the internal-hom
+functor `coyoneda.obj (op X) : Type v ⥤ Type v`,
+which sends `Y ↦ X → Y`. -/
+def typeEnd.introEquiv
+    (X : Type v) (P : Jᵒᵖ ⥤ J ⥤ Type v) :
+    (X → typeEnd P) ≃
+      typeEnd (P ⋙ (Functor.whiskeringRight J
+        (Type v) (Type v)).obj
+        (coyoneda.obj (Opposite.op X))) where
+  toFun g :=
+    ⟨fun j x => (g x).val j,
+     fun {i j} f => by
+       funext x
+       exact (g x).property f⟩
+  invFun h x :=
+    ⟨fun j => (h.val j) x,
+     fun {i j} f => by
+       exact congr_fun (h.property f) x⟩
+  left_inv g := by ext x; rfl
+  right_inv h := by rfl
+
+/-- Currying equivalence for natural transformations
+of Type-valued functors: pointwise functions into nat
+trans correspond to nat trans into the post-composed
+functor. For `X : Type v` and functors
+`W F : K ⥤ Type v`, this gives
+`(X → (W ⟶ F)) ≃ (W ⟶ F ⋙ coyoneda.obj (op X))`. -/
+def natTransIntroEquiv
+    {K : Type v} [Category.{v} K]
+    (X : Type v)
+    (W F : K ⥤ Type v) :
+    (X → (W ⟶ F)) ≃
+      (W ⟶ F ⋙ coyoneda.obj
+        (Opposite.op X)) where
+  toFun g :=
+    { app := fun k w x => (g x).app k w
+      naturality := fun {k₁ k₂} f => by
+        funext w; funext x
+        exact congr_fun
+          ((g x).naturality f) w }
+  invFun α x :=
+    { app := fun k w => (α.app k w) x
+      naturality := fun {k₁ k₂} f => by
+        funext w
+        exact congr_fun
+          (congr_fun (α.naturality f) w) x }
+  left_inv g := by ext x; rfl
+  right_inv α := by rfl
+
+/-- `Functor.uncurry` commutes with post-composition
+by `coyoneda.obj (op X)`. -/
+theorem uncurry_comp_coyoneda_eq
+    (X : Type v) (P : Jᵒᵖ ⥤ J ⥤ Type v) :
+    Functor.uncurry.obj P ⋙
+      coyoneda.obj (Opposite.op X) =
+    Functor.uncurry.obj
+      (P ⋙ (Functor.whiskeringRight J
+        (Type v) (Type v)).obj
+        (coyoneda.obj (Opposite.op X))) := rfl
+
+/-- The end introduction equivalence factors through
+the hom-nat-trans equivalence: its forward map agrees
+with `homNatTransEquiv.symm ∘ natTransIntroEquiv ∘
+(homNatTransEquiv ∘ ·)`. -/
+theorem typeEnd.introEquiv_toFun_eq
+    (X : Type v) (P : Jᵒᵖ ⥤ J ⥤ Type v)
+    (g : X → typeEnd P) :
+    let P' := P ⋙ (Functor.whiskeringRight J
+      (Type v) (Type v)).obj
+      (coyoneda.obj (Opposite.op X))
+    (typeEnd.introEquiv X P) g =
+      (typeEnd.homNatTransEquiv P').symm
+        ((uncurry_comp_coyoneda_eq X P).symm ▸
+          (natTransIntroEquiv X
+            (Functor.hom J)
+            (Functor.uncurry.obj P))
+          (fun x =>
+            (typeEnd.homNatTransEquiv P)
+              (g x))) := by
+  apply Subtype.ext
+  ext j
+  simp only [introEquiv, homNatTransEquiv,
+    natTransIntroEquiv, Equiv.symm]
+  change (fun x => (g x).val j) =
+    (fun x => ((P.obj (Opposite.op j)).map (𝟙 j))
+      ((g x).val j))
+  simp only [FunctorToTypes.map_id_apply]
+
+end NinjaYoneda
+
 end GebLean
