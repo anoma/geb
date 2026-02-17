@@ -1544,6 +1544,173 @@ theorem typeEnd.introEquiv_toFun_eq
       ((g x).val j))
   simp only [FunctorToTypes.map_id_apply]
 
+/-- Impredicative characterization of coends: elements
+of `typeCoend P` correspond to natural transformations
+from `weightedLimitFunctor (homPre) (uncurry.obj P)` to
+the identity functor on `Type v`.
+
+Obtained by composing
+`typeWeightedColimit.impredicative` with the co-ninja
+Yoneda equivalence. -/
+def typeCoend.impredicative
+    (P : Jᵒᵖ ⥤ J ⥤ Type v) :
+    (weightedLimitFunctor (homPre (C := J))
+      (Functor.uncurry.obj P) ⟶ 𝟭 (Type v)) ≃
+        typeCoend P :=
+  (typeWeightedColimit.impredicative
+    (homPre (C := J))
+    (Functor.uncurry.obj P)).trans
+    (typeCoend.coNinjaYonedaEquiv P).symm
+
+/-- Representable characterization of coends: natural
+transformations from
+`weightedLimitFunctor (homPre) (uncurry.obj P)` to a
+functor `G : Type v ⥤ Type v` correspond to
+`G.obj (typeCoend P)`.
+
+Obtained by composing
+`typeWeightedColimit.representable` with `G` applied
+to the co-ninja Yoneda equivalence. -/
+def typeCoend.representable
+    (P : Jᵒᵖ ⥤ J ⥤ Type v)
+    (G : Type v ⥤ Type v) :
+    (weightedLimitFunctor (homPre (C := J))
+      (Functor.uncurry.obj P) ⟶ G) ≃
+        G.obj (typeCoend P) :=
+  let e := (typeCoend.coNinjaYonedaEquiv P).symm
+  (typeWeightedColimit.representable
+    (homPre (C := J))
+    (Functor.uncurry.obj P) G).trans
+    ((G.mapIso e.toIso).toEquiv)
+
+/-- Functoriality of `sliceProfunctorPoly P` in the
+target type: a morphism `φ : Y → Z` induces a nat trans
+`sliceProfunctorPoly P Y ⟶ sliceProfunctorPoly P Z`
+by post-composition. -/
+def sliceProfunctorPoly.mapNatTrans
+    (P : Jᵒᵖ ⥤ J ⥤ Type v)
+    {Y Z : Type v} (φ : Y → Z) :
+    sliceProfunctorPoly P Y ⟶
+      sliceProfunctorPoly P Z where
+  app a :=
+    { app := fun _ h => φ ∘ h
+      naturality := by intros; rfl }
+  naturality := by intros; rfl
+
+/-- The functor `Type v ⥤ (Jᵒᵖ ⥤ J ⥤ Type v)` sending
+`Y` to `sliceProfunctorPoly P Y`, the profunctor
+`(op j, k) ↦ P(op k, j) → Y`.
+
+This is functorial in `Y` by post-composition.
+It is the analogue for profunctor `P` of
+`typeCoendRAdjFunctor J` (which is the special
+case `P = coyoneda`). -/
+def sliceProfunctorPolyFunctor
+    (P : Jᵒᵖ ⥤ J ⥤ Type v) :
+    Type v ⥤ (Jᵒᵖ ⥤ J ⥤ Type v) where
+  obj Y := sliceProfunctorPoly P Y
+  map φ := sliceProfunctorPoly.mapNatTrans P φ
+  map_id := by intros; rfl
+  map_comp := by intros; rfl
+
+/-- The copresheaf on `Type v` sending `Y` to
+`typeEnd (sliceProfunctorPoly P Y)`, the end of
+the profunctor `(op j, k) ↦ P(op k, j) → Y`.
+
+This is the coend analogue of `weightedLimitFunctor`,
+with `typeEndFunctor` playing the role of the weighted
+limit: elements of `typeEnd (sliceProfunctorPoly P Y)`
+are families `∀ j, P(op j, j) → Y` satisfying the
+(dual) wedge condition. -/
+def endLimitFunctor
+    (P : Jᵒᵖ ⥤ J ⥤ Type v) :
+    Type v ⥤ Type v :=
+  sliceProfunctorPolyFunctor P ⋙ typeEndFunctor J
+
+/-- The mapping-out formula for coends in terms of ends
+(Milewski): `(typeCoend P → Y) ≃
+typeEnd (sliceProfunctorPoly P Y)`.
+
+An element of the right side is a family
+`∀ j, P(op j, j) → Y` satisfying the dual wedge
+condition, which is exactly the data of a function
+from the coend quotient `typeCoend P` to `Y`. -/
+def typeCoend.endEquiv
+    (P : Jᵒᵖ ⥤ J ⥤ Type v) (Y : Type v) :
+    (typeCoend P → Y) ≃
+      typeEnd (sliceProfunctorPoly P Y) where
+  toFun g :=
+    ⟨fun j x => g (Quot.mk _ ⟨j, x⟩),
+     fun {i j} f => by
+       funext x
+       exact congr_arg g (Quot.sound
+         (typeCoendRel.intro f x))⟩
+  invFun h :=
+    Quot.lift
+      (fun ⟨j, x⟩ => h.val j x)
+      (fun _ _ r => by
+        cases r with
+        | intro f x =>
+          exact congr_fun (h.property f) x)
+  left_inv g := by
+    funext q
+    exact Quot.inductionOn q (fun _ => rfl)
+  right_inv h := by
+    apply Subtype.ext; ext j; rfl
+
+/-- The natural isomorphism between
+`endLimitFunctor P` and `coyoneda.obj (op (typeCoend P))`
+as copresheaves on `Type v`.
+
+Components at `Y` are `typeCoend.endEquiv P Y`, which
+identifies `typeEnd (sliceProfunctorPoly P Y)` with
+`typeCoend P → Y`.
+
+This is the coend analogue of
+`IsWeightedColimit.homNatIsoWeightedLimit`. -/
+def coendHomNatIsoEnd
+    (P : Jᵒᵖ ⥤ J ⥤ Type v) :
+    endLimitFunctor P ≅
+      coyoneda.obj (Opposite.op (typeCoend P)) :=
+  NatIso.ofComponents
+    (fun Y => (typeCoend.endEquiv P Y).symm.toIso)
+    (fun {Y Z} f => by
+      ext ⟨val, _⟩
+      funext q
+      exact Quot.inductionOn q (fun _ => rfl))
+
+/-- Representable characterization of coends via ends:
+natural transformations from `endLimitFunctor P` to a
+functor `G : Type v ⥤ Type v` correspond to
+`G.obj (typeCoend P)`.
+
+This is the coend analogue of
+`IsWeightedColimit.weightedColimitRepresentable`,
+with `endLimitFunctor P` (sending
+`Y ↦ typeEnd (sliceProfunctorPoly P Y)`) playing the
+role of `weightedLimitFunctor W D`. -/
+def typeCoend.endRepresentable
+    (P : Jᵒᵖ ⥤ J ⥤ Type v)
+    (G : Type v ⥤ Type v) :
+    (endLimitFunctor P ⟶ G) ≃
+      G.obj (typeCoend P) :=
+  coyonedaEquivOfNatIso
+    (coendHomNatIsoEnd P)
+
+/-- Impredicative characterization of coends via ends:
+elements of `typeCoend P` correspond to natural
+transformations from `endLimitFunctor P` to the
+identity functor on `Type v`.
+
+This is the coend analogue of
+`IsWeightedColimit.weightedColimitImpredicative`. -/
+def typeCoend.endImpredicative
+    (P : Jᵒᵖ ⥤ J ⥤ Type v) :
+    (endLimitFunctor P ⟶ 𝟭 (Type v)) ≃
+      typeCoend P :=
+  coyonedaEquivOfNatIsoTypeId
+    (coendHomNatIsoEnd P)
+
 end NinjaYoneda
 
 end GebLean
