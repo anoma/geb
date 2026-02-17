@@ -1,5 +1,6 @@
 import GebLean
 import Mathlib.CategoryTheory.Category.Cat
+import Counterexamples.Girard
 
 /-!
 # Basic Tests
@@ -85,5 +86,14 @@ instance elc.{u, v, w} (C : Type u) [Category.{v, u} C] (F : C ⥤ Type w) :
 instance coprel.{u, v, w, w'} (C : Type u) [Category.{v, u} C] (F : C ⥤ Type w) :
   Category.{max u w w', max u v w (w' + 1)} (F.Elements ⥤ Type w') :=
     inferInstance
+
+abbrev Pi.{u, v} : (Type u → Type v) → Type (max (u + 1) v) :=
+  fun A ↦ ∀ (α : Type u), A α
+
+abbrev Sigma.{u, v} : (Type u → Type v) → Type (max (u + 1) v) :=
+  fun A ↦ Σ (α : Type u), A α
+
+abbrev girard.{u} :=
+  Counterexample.girard.{u}
 
 end UniverseIllustrations
