@@ -35,6 +35,10 @@ private instance toLarge.{u} (C : Cat.{u, u + 1}) :
   LargeCategory C.α :=
     C.str
 
+private def propCat : Cat.{0, 0} := Cat.of Prop
+
+private def typeCat.{u} : Cat.{u, u + 1} := Cat.of (Type u)
+
 end InstanceIllustrations
 
 namespace UniverseIllustrations
