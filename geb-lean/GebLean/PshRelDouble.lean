@@ -3,6 +3,7 @@ import GebLean.Utilities.Presheaf
 import GebLean.Utilities.DoubleCategory
 import Mathlib.CategoryTheory.Limits.Types.Products
 import Mathlib.CategoryTheory.Limits.Shapes.FunctorToTypes
+import Mathlib.CategoryTheory.Monoidal.Closed.Cartesian
 import Mathlib.CategoryTheory.Monoidal.Closed.FunctorToTypes
 
 /-!
@@ -1328,106 +1329,105 @@ section YonedaPreservesIhom
 universe w₁
 
 variable {D : Type w₁} [Category.{w₁} D]
+variable [CartesianMonoidalCategory D]
+  [MonoidalClosed D]
+variable (A B : D)
 
-/-- Data witnessing that `E` is an exponential of `A`
-and `B` in `D`, in the form of an evaluation function
-`evApp` and a currying function `curryApp` satisfying
-the expected roundtrip conditions. -/
-structure PshExponentialData
-    (A B E : D) where
-  evApp :
-    ∀ {X : D}, (X ⟶ E) → (X ⟶ A) → (X ⟶ B)
-  evApp_nat :
-    ∀ {X Y : D} (g : Y ⟶ X)
-      (e : X ⟶ E) (a : X ⟶ A),
-      g ≫ evApp e a = evApp (g ≫ e) (g ≫ a)
-  curryApp :
-    ∀ (X : D),
-      (∀ {Y : D}, (Y ⟶ X) →
-        (Y ⟶ A) → (Y ⟶ B)) →
-      (X ⟶ E)
-  ev_curry :
-    ∀ (X : D)
-      (f : ∀ {Y : D}, (Y ⟶ X) →
-        (Y ⟶ A) → (Y ⟶ B))
-      {Z : D} (h : Z ⟶ X) (a : Z ⟶ A),
-      evApp (h ≫ curryApp X f) a = f h a
-  curry_ev :
-    ∀ (X : D) (e : X ⟶ E),
-      curryApp X
-        (fun h a => evApp (h ≫ e) a) = e
+open CartesianMonoidalCategory MonoidalClosed
+open scoped MonoidalCategory
 
-variable {A B E : D}
-
-/-- Forward map: given exponential data for `E` and
-a morphism `e : X ⟶ E`, produce an element of
+/-- Forward map: given a morphism
+`e : X ⟶ (ihom A).obj B`, produce an element of
 `(yoneda.obj A).functorHom (yoneda.obj B)` at
-stage `op X`. -/
+stage `op X`, using evaluation of the
+exponential. -/
 def pshIhomYonedaFwd
-    (ed : PshExponentialData A B E)
-    {X : D} (e : X ⟶ E) :
+    {X : D} (e : X ⟶ (ihom A).obj B) :
     ((yoneda.obj A).functorHom
       (yoneda.obj B)).obj (Opposite.op X) :=
   { app := fun d h a =>
-      ed.evApp (h.unop ≫ e) a
+      lift a (h.unop ≫ e) ≫
+        (ihom.ev A).app B
     naturality := fun {d d'} g h => by
       ext a
       simp only [types_comp_apply,
         yoneda_obj_map]
-      rw [ed.evApp_nat g.unop]
+      rw [← Category.assoc, comp_lift]
       congr 1
       dsimp
       simp only [Category.assoc] }
 
 /-- Backward map: given an element of
 `(yoneda.obj A).functorHom (yoneda.obj B)` at
-stage `op X`, produce a morphism `X ⟶ E` by
-currying the family restricted to the identity. -/
+stage `op X`, produce a morphism
+`X ⟶ (ihom A).obj B` by currying the evaluation
+at the universal element. -/
 def pshIhomYonedaInv
-    (ed : PshExponentialData A B E)
     {X : D}
     (f : ((yoneda.obj A).functorHom
       (yoneda.obj B)).obj (Opposite.op X)) :
-    X ⟶ E :=
-  ed.curryApp X (fun h a =>
-    f.app (Opposite.op _) h.op a)
+    X ⟶ (ihom A).obj B :=
+  curry
+    (f.app (Opposite.op (A ⊗ X))
+      (Quiver.Hom.op (snd A X)) (fst A X))
 
 /-- The presheaf
 `(yoneda.obj A).functorHom (yoneda.obj B)` is
-representable by the exponential object `E`, given
-exponential data `ed`. -/
-def pshIhomYonedaRepresentableBy
-    (ed : PshExponentialData A B E) :
+representable by `(ihom A).obj B`. -/
+def pshIhomYonedaRepresentableBy :
     ((yoneda.obj A).functorHom
-      (yoneda.obj B)).RepresentableBy E where
+      (yoneda.obj B)).RepresentableBy
+        ((ihom A).obj B) where
   homEquiv :=
-    { toFun := pshIhomYonedaFwd ed
-      invFun := pshIhomYonedaInv ed
-      left_inv := fun e => ed.curry_ev _ e
+    { toFun := pshIhomYonedaFwd A B
+      invFun := pshIhomYonedaInv A B
+      left_inv := fun e => by
+        dsimp only [pshIhomYonedaInv,
+          pshIhomYonedaFwd]
+        simp only [Quiver.Hom.unop_op]
+        rw [← Category.comp_id (fst A _),
+          lift_fst_comp_snd_comp,
+          MonoidalCategory.id_tensorHom,
+          ← uncurry_eq]
+        exact curry_uncurry e
       right_inv := fun f => by
-        exact Functor.functorHom_ext
-          fun d h => by
-          ext a
-          exact ed.ev_curry _ _ h.unop a }
+        apply Functor.functorHom_ext
+        intro d g
+        ext a
+        dsimp only [pshIhomYonedaFwd,
+          pshIhomYonedaInv]
+        rw [← lift_whiskerLeft]
+        rw [Category.assoc, ← uncurry_eq,
+          uncurry_curry]
+        have hnat := congr_fun
+          (f.naturality
+            (Quiver.Hom.op (lift a g.unop))
+            (Quiver.Hom.op (snd A _)))
+          (fst A _)
+        dsimp at hnat
+        simp only [lift_fst, ← op_comp,
+          lift_snd, Quiver.Hom.op_unop] at hnat
+        exact hnat.symm
+    }
   homEquiv_comp := fun f g => by
-    exact Functor.functorHom_ext
-      fun d h => by
-      ext a
-      dsimp [pshIhomYonedaFwd,
-        Functor.functorHom, Functor.comp_map,
-        Functor.homObjFunctor, Functor.rightOp,
-        coyoneda]
-      simp only [Category.assoc]
+    apply Functor.functorHom_ext
+    intro d h
+    ext a
+    change (pshIhomYonedaFwd A B (f ≫ g)).app
+        d h a =
+      (pshIhomYonedaFwd A B g).app d
+        (f.op ≫ h) a
+    dsimp [pshIhomYonedaFwd]
+    simp only [Category.assoc]
 
 /-- The Yoneda embedding preserves exponentials:
-`yoneda.obj E ≅ (yoneda.obj A).functorHom (yoneda.obj B)`
-when `E` is an exponential of `A` and `B`. -/
-def pshIhomYonedaIso
-    (ed : PshExponentialData A B E) :
-    yoneda.obj E ≅
+`yoneda.obj ((ihom A).obj B) ≅
+(yoneda.obj A).functorHom (yoneda.obj B)`. -/
+def pshIhomYonedaIso :
+    yoneda.obj ((ihom A).obj B) ≅
       (yoneda.obj A).functorHom
         (yoneda.obj B) :=
-  (pshIhomYonedaRepresentableBy ed).toIso
+  (pshIhomYonedaRepresentableBy A B).toIso
 
 end YonedaPreservesIhom
 
