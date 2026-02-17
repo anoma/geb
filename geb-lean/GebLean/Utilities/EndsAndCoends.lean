@@ -1,4 +1,6 @@
+import Mathlib.CategoryTheory.Adjunction.Whiskering
 import Mathlib.CategoryTheory.Limits.Shapes.End
+import Mathlib.CategoryTheory.Monoidal.Closed.Types
 import Mathlib.CategoryTheory.Types.Basic
 import GebLean.Utilities.PowersAndCopowers
 
@@ -1428,6 +1430,18 @@ def typeWeightedLimit.introEquiv
   left_inv g := by ext x; rfl
   right_inv h := by rfl
 
+/-- Post-compose a profunctor `P : Jᵒᵖ ⥤ J ⥤ Type v`
+with the internal-hom functor
+`coyoneda.obj (op X) : Type v ⥤ Type v`
+(sending `Y ↦ X → Y`), yielding a new profunctor
+whose value at `(op j, k)` is `X → (P.obj (op j)).obj k`. -/
+abbrev profunctorPower
+    (P : Jᵒᵖ ⥤ J ⥤ Type v) (X : Type v) :
+    Jᵒᵖ ⥤ J ⥤ Type v :=
+  P ⋙ (Functor.whiskeringRight J
+    (Type v) (Type v)).obj
+    (coyoneda.obj (Opposite.op X))
+
 /-- Introduction rule for ends: a function
 `X → typeEnd P` is equivalent to the end of the
 profunctor `P` post-composed with the internal-hom
@@ -1436,9 +1450,7 @@ which sends `Y ↦ X → Y`. -/
 def typeEnd.introEquiv
     (X : Type v) (P : Jᵒᵖ ⥤ J ⥤ Type v) :
     (X → typeEnd P) ≃
-      typeEnd (P ⋙ (Functor.whiskeringRight J
-        (Type v) (Type v)).obj
-        (coyoneda.obj (Opposite.op X))) where
+      typeEnd (profunctorPower P X) where
   toFun g :=
     ⟨fun j x => (g x).val j,
      fun {i j} f => by
@@ -1451,11 +1463,36 @@ def typeEnd.introEquiv
   left_inv g := by ext x; rfl
   right_inv h := by rfl
 
-/-- Currying equivalence for natural transformations
-of Type-valued functors: pointwise functions into nat
-trans correspond to nat trans into the post-composed
-functor. For `X : Type v` and functors
-`W F : K ⥤ Type v`, this gives
+/-- Currying at the nat-trans level: a family
+`X → (W ⟶ F)` corresponds to a single nat trans
+`W ⋙ tensorLeft X ⟶ F`, where the tensor acts as
+pointwise product `X × W(k)`. -/
+def natTransCurryEquiv
+    {K : Type v} [Category.{v} K]
+    (X : Type v)
+    (W F : K ⥤ Type v) :
+    (X → (W ⟶ F)) ≃
+      (W ⋙ MonoidalCategory.tensorLeft X ⟶ F) where
+  toFun g :=
+    { app := fun k ⟨x, w⟩ => (g x).app k w
+      naturality := fun {k₁ k₂} f => by
+        funext ⟨x, w⟩
+        exact congr_fun ((g x).naturality f) w }
+  invFun α x :=
+    { app := fun k w => α.app k (x, w)
+      naturality := fun {k₁ k₂} f => by
+        funext w
+        exact congr_fun (α.naturality f) (x, w) }
+  left_inv g := by ext x; rfl
+  right_inv α := by ext k ⟨x, w⟩; rfl
+
+/-- The tensor-hom adjunction
+`Types.tensorProductAdjunction X`, whiskered to the
+functor category `K ⥤ Type v`, gives
+`(W ⋙ tensorLeft X ⟶ F) ≃
+  (W ⟶ F ⋙ coyoneda.obj (op X))`.
+Composing with `natTransCurryEquiv` yields the
+introduction equivalence
 `(X → (W ⟶ F)) ≃ (W ⟶ F ⋙ coyoneda.obj (op X))`. -/
 def natTransIntroEquiv
     {K : Type v} [Category.{v} K]
@@ -1463,32 +1500,23 @@ def natTransIntroEquiv
     (W F : K ⥤ Type v) :
     (X → (W ⟶ F)) ≃
       (W ⟶ F ⋙ coyoneda.obj
-        (Opposite.op X)) where
-  toFun g :=
-    { app := fun k w x => (g x).app k w
-      naturality := fun {k₁ k₂} f => by
-        funext w; funext x
-        exact congr_fun
-          ((g x).naturality f) w }
-  invFun α x :=
-    { app := fun k w => (α.app k w) x
-      naturality := fun {k₁ k₂} f => by
-        funext w
-        exact congr_fun
-          (congr_fun (α.naturality f) w) x }
-  left_inv g := by ext x; rfl
-  right_inv α := by rfl
+        (Opposite.op X)) :=
+  (natTransCurryEquiv X W F).trans
+    (Adjunction.homEquiv
+      (Adjunction.whiskerRight K
+        (Types.tensorProductAdjunction X))
+      W F)
 
-/-- `Functor.uncurry` commutes with post-composition
-by `coyoneda.obj (op X)`. -/
-theorem uncurry_comp_coyoneda_eq
+/-- `Functor.uncurry` commutes with `profunctorPower`:
+uncurrying and then post-composing with
+`coyoneda.obj (op X)` equals uncurrying the
+profunctor power. -/
+theorem uncurry_profunctorPower_eq
     (X : Type v) (P : Jᵒᵖ ⥤ J ⥤ Type v) :
     Functor.uncurry.obj P ⋙
       coyoneda.obj (Opposite.op X) =
     Functor.uncurry.obj
-      (P ⋙ (Functor.whiskeringRight J
-        (Type v) (Type v)).obj
-        (coyoneda.obj (Opposite.op X))) := rfl
+      (profunctorPower P X) := rfl
 
 /-- The end introduction equivalence factors through
 the hom-nat-trans equivalence: its forward map agrees
@@ -1497,12 +1525,10 @@ with `homNatTransEquiv.symm ∘ natTransIntroEquiv ∘
 theorem typeEnd.introEquiv_toFun_eq
     (X : Type v) (P : Jᵒᵖ ⥤ J ⥤ Type v)
     (g : X → typeEnd P) :
-    let P' := P ⋙ (Functor.whiskeringRight J
-      (Type v) (Type v)).obj
-      (coyoneda.obj (Opposite.op X))
     (typeEnd.introEquiv X P) g =
-      (typeEnd.homNatTransEquiv P').symm
-        ((uncurry_comp_coyoneda_eq X P).symm ▸
+      (typeEnd.homNatTransEquiv
+        (profunctorPower P X)).symm
+        ((uncurry_profunctorPower_eq X P).symm ▸
           (natTransIntroEquiv X
             (Functor.hom J)
             (Functor.uncurry.obj P))
