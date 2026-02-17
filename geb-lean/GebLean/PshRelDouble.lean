@@ -9,12 +9,12 @@ import Mathlib.CategoryTheory.Monoidal.Closed.FunctorToTypes
 # Internal Relations in PSh(C)
 
 The double category of internal relations in the presheaf
-category `PSh(C) = Cᵒᵖ ⥤ Type v`.
+category `PSh(C) = Cᵒᵖ ⥤ Type w`.
 
 ## Presheaf representation of relations
 
 The presheaf `P × Q` (pointwise product) for
-`P Q : Cᵒᵖ ⥤ Type v` represents pairs of generalized
+`P Q : Cᵒᵖ ⥤ Type w` represents pairs of generalized
 elements of `P` and `Q`.
 
 A proof-relevant relation from `P` to `Q` is a morphism
@@ -23,7 +23,7 @@ category `Over (P × Q)`.
 
 ## Double category structure
 
-- Objects: presheaves `P : Cᵒᵖ ⥤ Type v`
+- Objects: presheaves `P : Cᵒᵖ ⥤ Type w`
 - Horizontal morphisms: natural transformations
 - Vertical morphisms: `PshRel P Q` (isomorphism classes
   of objects over `P × Q`)
@@ -34,7 +34,7 @@ namespace GebLean
 
 open CategoryTheory Limits
 
-universe u v
+universe u v w
 
 variable {C : Type u} [Category.{v} C]
 
@@ -43,34 +43,34 @@ section PshRelations
 /-- The product presheaf `P × Q`, constructed as
 `FunctorToTypes.prod P Q`. -/
 abbrev pshProdPresheaf
-    (P Q : Cᵒᵖ ⥤ Type v) : Cᵒᵖ ⥤ Type v :=
+    (P Q : Cᵒᵖ ⥤ Type w) : Cᵒᵖ ⥤ Type w :=
   FunctorToTypes.prod P Q
 
 /-- A proof-relevant relation from `P` to `Q` in
 `PSh(C)`: an object of the over category
 `Over (pshProdPresheaf P Q)`. -/
 abbrev PshProdOver
-    (P Q : Cᵒᵖ ⥤ Type v) :=
+    (P Q : Cᵒᵖ ⥤ Type w) :=
   Over (pshProdPresheaf P Q)
 
 /-- First projection from the product presheaf
 `P × Q` to `P`. -/
 abbrev pshProdFst
-    (P Q : Cᵒᵖ ⥤ Type v) :
+    (P Q : Cᵒᵖ ⥤ Type w) :
     pshProdPresheaf P Q ⟶ P :=
   @FunctorToTypes.prod.fst _ _ P Q
 
 /-- Second projection from the product presheaf
 `P × Q` to `Q`. -/
 abbrev pshProdSnd
-    (P Q : Cᵒᵖ ⥤ Type v) :
+    (P Q : Cᵒᵖ ⥤ Type w) :
     pshProdPresheaf P Q ⟶ Q :=
   @FunctorToTypes.prod.snd _ _ P Q
 
 /-- Pairing of morphisms into `P` and `Q` to a
 morphism into the product presheaf `P × Q`. -/
 abbrev pshProdLift
-    {R P Q : Cᵒᵖ ⥤ Type v}
+    {R P Q : Cᵒᵖ ⥤ Type w}
     (f : R ⟶ P) (g : R ⟶ Q) :
     R ⟶ pshProdPresheaf P Q :=
   FunctorToTypes.prod.lift f g
@@ -79,7 +79,7 @@ abbrev pshProdLift
 equal iff their compositions with the two projections
 agree. -/
 theorem pshProdPresheaf_hom_ext
-    {R P Q : Cᵒᵖ ⥤ Type v}
+    {R P Q : Cᵒᵖ ⥤ Type w}
     {h₁ h₂ : R ⟶ pshProdPresheaf P Q}
     (hfst : h₁ ≫ pshProdFst P Q =
       h₂ ≫ pshProdFst P Q)
@@ -94,7 +94,7 @@ theorem pshProdPresheaf_hom_ext
 
 @[simp]
 theorem pshProdLift_fst_snd
-    {R P Q : Cᵒᵖ ⥤ Type v}
+    {R P Q : Cᵒᵖ ⥤ Type w}
     (h : R ⟶ pshProdPresheaf P Q) :
     pshProdLift
       (h ≫ pshProdFst P Q)
@@ -106,19 +106,19 @@ theorem pshProdLift_fst_snd
 /-- The identity relation on `P` in the over category,
 given by the diagonal `P → P × P`. -/
 def pshProdOverId
-    (P : Cᵒᵖ ⥤ Type v) : PshProdOver P P :=
+    (P : Cᵒᵖ ⥤ Type w) : PshProdOver P P :=
   Over.mk (pshProdLift (𝟙 P) (𝟙 P))
 
 @[simp]
 theorem pshProdOverId_fst
-    (P : Cᵒᵖ ⥤ Type v) :
+    (P : Cᵒᵖ ⥤ Type w) :
     (pshProdOverId P).hom ≫ pshProdFst P P =
     𝟙 P :=
   rfl
 
 @[simp]
 theorem pshProdOverId_snd
-    (P : Cᵒᵖ ⥤ Type v) :
+    (P : Cᵒᵖ ⥤ Type w) :
     (pshProdOverId P).hom ≫ pshProdSnd P P =
     𝟙 P :=
   rfl
@@ -128,13 +128,13 @@ as a proof-relevant relation. The underlying presheaf
 is `P`, with first projection the identity and second
 projection `α`. -/
 def pshProdOverGraph
-    {P Q : Cᵒᵖ ⥤ Type v} (α : P ⟶ Q) :
+    {P Q : Cᵒᵖ ⥤ Type w} (α : P ⟶ Q) :
     PshProdOver P Q :=
   Over.mk (pshProdLift (𝟙 P) α)
 
 @[simp]
 theorem pshProdOverGraph_fst
-    {P Q : Cᵒᵖ ⥤ Type v} (α : P ⟶ Q) :
+    {P Q : Cᵒᵖ ⥤ Type w} (α : P ⟶ Q) :
     (pshProdOverGraph α).hom ≫
       pshProdFst P Q =
     𝟙 P :=
@@ -142,14 +142,14 @@ theorem pshProdOverGraph_fst
 
 @[simp]
 theorem pshProdOverGraph_snd
-    {P Q : Cᵒᵖ ⥤ Type v} (α : P ⟶ Q) :
+    {P Q : Cᵒᵖ ⥤ Type w} (α : P ⟶ Q) :
     (pshProdOverGraph α).hom ≫
       pshProdSnd P Q = α :=
   rfl
 
 theorem pshProdOverGraph_snd_assoc
-    {P Q : Cᵒᵖ ⥤ Type v} (α : P ⟶ Q)
-    {R : Cᵒᵖ ⥤ Type v}
+    {P Q : Cᵒᵖ ⥤ Type w} (α : P ⟶ Q)
+    {R : Cᵒᵖ ⥤ Type w}
     (k : Q ⟶ R) :
     (pshProdOverGraph α).hom ≫
       pshProdSnd P Q ≫ k =
@@ -157,8 +157,8 @@ theorem pshProdOverGraph_snd_assoc
   rw [← Category.assoc, pshProdOverGraph_snd]
 
 theorem pshProdOverGraph_fst_assoc
-    {P Q : Cᵒᵖ ⥤ Type v} (α : P ⟶ Q)
-    {R : Cᵒᵖ ⥤ Type v}
+    {P Q : Cᵒᵖ ⥤ Type w} (α : P ⟶ Q)
+    {R : Cᵒᵖ ⥤ Type w}
     (k : P ⟶ R) :
     (pshProdOverGraph α).hom ≫
       pshProdFst P Q ≫ k =
@@ -167,7 +167,7 @@ theorem pshProdOverGraph_fst_assoc
   exact Category.id_comp k
 
 theorem pshProdOverGraph_id
-    (P : Cᵒᵖ ⥤ Type v) :
+    (P : Cᵒᵖ ⥤ Type w) :
     pshProdOverGraph (𝟙 P) =
       pshProdOverId P := by
   simp [pshProdOverGraph, pshProdOverId]
@@ -181,7 +181,7 @@ is obtained by pulling back `R` and `S` over `Q`
 component of `S`), then projecting the first component
 from `R` and the second from `S` into `P × W`. -/
 def pshProdOverComp
-    {P Q W : Cᵒᵖ ⥤ Type v}
+    {P Q W : Cᵒᵖ ⥤ Type w}
     (R : PshProdOver P Q)
     (S : PshProdOver Q W) :
     PshProdOver P W :=
@@ -200,20 +200,20 @@ def pshProdOverComp
 an isomorphism class in the over category
 `Over (pshProdPresheaf P Q)`. -/
 abbrev PshRel
-    (P Q : Cᵒᵖ ⥤ Type v) :=
+    (P Q : Cᵒᵖ ⥤ Type w) :=
   Skeleton (PshProdOver P Q)
 
 /-- The identity relation on `P`, up to
 isomorphism. -/
 def pshRelId
-    (P : Cᵒᵖ ⥤ Type v) : PshRel P P :=
+    (P : Cᵒᵖ ⥤ Type w) : PshRel P P :=
   toSkeleton _ (pshProdOverId P)
 
 /-- `pshProdOverComp` respects isomorphisms: given
 isomorphisms `R₁ ≅ R₂` and `S₁ ≅ S₂` in the over
 categories, their compositions are isomorphic. -/
 def pshProdOverComp_iso
-    {P Q W : Cᵒᵖ ⥤ Type v}
+    {P Q W : Cᵒᵖ ⥤ Type w}
     {R₁ R₂ : PshProdOver P Q}
     {S₁ S₂ : PshProdOver Q W}
     (αR : R₁ ≅ R₂) (αS : S₁ ≅ S₂) :
@@ -249,7 +249,7 @@ def pshProdOverComp_iso
 with the identity relation on `P` yields an
 isomorphic relation. -/
 def pshProdOverComp_id_left
-    {P Q : Cᵒᵖ ⥤ Type v}
+    {P Q : Cᵒᵖ ⥤ Type w}
     (R : PshProdOver P Q) :
     pshProdOverComp (pshProdOverId P) R ≅ R :=
   Over.isoMk
@@ -270,7 +270,7 @@ def pshProdOverComp_id_left
 with the identity relation on `Q` yields an
 isomorphic relation. -/
 def pshProdOverComp_id_right
-    {P Q : Cᵒᵖ ⥤ Type v}
+    {P Q : Cᵒᵖ ⥤ Type w}
     (R : PshProdOver P Q) :
     pshProdOverComp R (pshProdOverId Q) ≅ R :=
   Over.isoMk
@@ -287,7 +287,7 @@ def pshProdOverComp_id_right
 /-- Associativity for `pshProdOverComp`:
 `(R ; S) ; T ≅ R ; (S ; T)`. -/
 def pshProdOverComp_assoc
-    {P Q W X : Cᵒᵖ ⥤ Type v}
+    {P Q W X : Cᵒᵖ ⥤ Type w}
     (R : PshProdOver P Q)
     (S : PshProdOver Q W)
     (T : PshProdOver W X) :
@@ -309,7 +309,7 @@ def pshProdOverComp_assoc
 `graph(α) ; graph(β)` is isomorphic to
 `graph(α ≫ β)`. -/
 def pshProdOverGraph_comp
-    {P Q W : Cᵒᵖ ⥤ Type v}
+    {P Q W : Cᵒᵖ ⥤ Type w}
     (α : P ⟶ Q) (β : Q ⟶ W) :
     pshProdOverComp
       (pshProdOverGraph α)
@@ -339,7 +339,7 @@ applies `pshProdOverComp` via `Skeleton.lift₂`,
 using `pshProdOverComp_iso` for
 well-definedness. -/
 def pshRelComp
-    {P Q W : Cᵒᵖ ⥤ Type v} :
+    {P Q W : Cᵒᵖ ⥤ Type w} :
     PshRel P Q → PshRel Q W →
     PshRel P W :=
   Skeleton.lift₂
@@ -350,7 +350,7 @@ def pshRelComp
         ⟨pshProdOverComp_iso αR αS⟩)
 
 theorem pshRelComp_id_left
-    {P Q : Cᵒᵖ ⥤ Type v}
+    {P Q : Cᵒᵖ ⥤ Type w}
     (R : PshRel P Q) :
     pshRelComp (pshRelId P) R = R := by
   induction R using Quotient.inductionOn with
@@ -359,7 +359,7 @@ theorem pshRelComp_id_left
       ⟨pshProdOverComp_id_left R'⟩
 
 theorem pshRelComp_id_right
-    {P Q : Cᵒᵖ ⥤ Type v}
+    {P Q : Cᵒᵖ ⥤ Type w}
     (R : PshRel P Q) :
     pshRelComp R (pshRelId Q) = R := by
   induction R using Quotient.inductionOn with
@@ -368,7 +368,7 @@ theorem pshRelComp_id_right
       ⟨pshProdOverComp_id_right R'⟩
 
 theorem pshRelComp_assoc
-    {P Q W X : Cᵒᵖ ⥤ Type v}
+    {P Q W X : Cᵒᵖ ⥤ Type w}
     (R : PshRel P Q)
     (S : PshRel Q W)
     (T : PshRel W X) :
@@ -386,18 +386,18 @@ theorem pshRelComp_assoc
 /-- The graph of a natural transformation as a
 `PshRel` (isomorphism class of `PshProdOver`). -/
 def pshRelGraph
-    {P Q : Cᵒᵖ ⥤ Type v} (α : P ⟶ Q) :
+    {P Q : Cᵒᵖ ⥤ Type w} (α : P ⟶ Q) :
     PshRel P Q :=
   toSkeleton _ (pshProdOverGraph α)
 
 theorem pshRelGraph_eq_id
-    (P : Cᵒᵖ ⥤ Type v) :
+    (P : Cᵒᵖ ⥤ Type w) :
     pshRelGraph (𝟙 P) = pshRelId P := by
   simp [pshRelGraph, pshRelId,
     pshProdOverGraph_id]
 
 theorem pshRelGraph_comp
-    {P Q W : Cᵒᵖ ⥤ Type v}
+    {P Q W : Cᵒᵖ ⥤ Type w}
     (α : P ⟶ Q) (β : Q ⟶ W) :
     pshRelComp (pshRelGraph α)
       (pshRelGraph β) =
@@ -412,15 +412,15 @@ section PshRelCategory
 /-- Wrapper type for presheaves on `C` whose
 morphisms are presheaf relations (`PshRel`).
 Using a `structure` prevents the existing
-`Category` instance on `Cᵒᵖ ⥤ Type v` from
+`Category` instance on `Cᵒᵖ ⥤ Type w` from
 leaking through. -/
 @[ext]
 structure PshRelCat (C : Type u)
     [Category.{v} C] where
-  obj : Cᵒᵖ ⥤ Type v
+  obj : Cᵒᵖ ⥤ Type w
 
-instance : Category.{max u (v + 1)}
-    (PshRelCat (C := C)) where
+instance : Category.{max u v (w + 1)}
+    (PshRelCat.{u, v, w} (C := C)) where
   Hom X Y := PshRel X.obj Y.obj
   id X := pshRelId X.obj
   comp R S := pshRelComp R S
@@ -432,7 +432,8 @@ instance : Category.{max u (v + 1)}
 `α : P ⟶ Q` to its graph relation
 `pshRelGraph α` in `PshRelCat C`. -/
 def pshRelGraphFunctor :
-    (Cᵒᵖ ⥤ Type v) ⥤ PshRelCat (C := C) where
+    (Cᵒᵖ ⥤ Type w) ⥤
+      PshRelCat.{u, v, w} (C := C) where
   obj P := ⟨P⟩
   map α := pshRelGraph α
   map_id P := pshRelGraph_eq_id P
@@ -447,7 +448,7 @@ transformations `(α, β)` on the product presheaf
 `P × P'`. At stage `T`, this sends `(a, a')` to
 `(α(a), β(a'))`. -/
 abbrev pshProdMap
-    {P P' Q Q' : Cᵒᵖ ⥤ Type v}
+    {P P' Q Q' : Cᵒᵖ ⥤ Type w}
     (α : P ⟶ Q) (β : P' ⟶ Q') :
     pshProdPresheaf P P' ⟶
       pshProdPresheaf Q Q' :=
@@ -457,7 +458,7 @@ abbrev pshProdMap
 
 @[simp]
 theorem pshProdMap_fst
-    {P P' Q Q' : Cᵒᵖ ⥤ Type v}
+    {P P' Q Q' : Cᵒᵖ ⥤ Type w}
     (α : P ⟶ Q) (β : P' ⟶ Q') :
     pshProdMap α β ≫ pshProdFst Q Q' =
       pshProdFst P P' ≫ α := by
@@ -465,7 +466,7 @@ theorem pshProdMap_fst
 
 @[simp]
 theorem pshProdMap_snd
-    {P P' Q Q' : Cᵒᵖ ⥤ Type v}
+    {P P' Q Q' : Cᵒᵖ ⥤ Type w}
     (α : P ⟶ Q) (β : P' ⟶ Q') :
     pshProdMap α β ≫ pshProdSnd Q Q' =
       pshProdSnd P P' ≫ β := by
@@ -473,14 +474,14 @@ theorem pshProdMap_snd
 
 @[simp]
 theorem pshProdMap_id
-    (P P' : Cᵒᵖ ⥤ Type v) :
+    (P P' : Cᵒᵖ ⥤ Type w) :
     pshProdMap (𝟙 P) (𝟙 P') =
       𝟙 (pshProdPresheaf P P') := by
   apply pshProdPresheaf_hom_ext <;>
     simp [pshProdMap, pshProdLift]
 
 theorem pshProdMap_comp
-    {P P' Q Q' W W' : Cᵒᵖ ⥤ Type v}
+    {P P' Q Q' W W' : Cᵒᵖ ⥤ Type w}
     (α : P ⟶ Q) (β : P' ⟶ Q')
     (γ : Q ⟶ W) (δ : Q' ⟶ W') :
     pshProdMap (α ≫ γ) (β ≫ δ) =
@@ -507,7 +508,7 @@ theorem pshProdMap_comp
 ```
 -/
 def PshProdOverRelated
-    {P P' Q Q' : Cᵒᵖ ⥤ Type v}
+    {P P' Q Q' : Cᵒᵖ ⥤ Type w}
     (R : PshProdOver P P')
     (S : PshProdOver Q Q')
     (α : P ⟶ Q) (β : P' ⟶ Q') : Prop :=
@@ -518,7 +519,7 @@ def PshProdOverRelated
 /-- `PshProdOverRelated` is invariant under
 isomorphism in both relation arguments. -/
 theorem pshProdOverRelated_iso
-    {P P' Q Q' : Cᵒᵖ ⥤ Type v}
+    {P P' Q Q' : Cᵒᵖ ⥤ Type w}
     {R₁ R₂ : PshProdOver P P'}
     {S₁ S₂ : PshProdOver Q Q'}
     (αR : R₁ ≅ R₂) (αS : S₁ ≅ S₂)
@@ -545,7 +546,7 @@ This descends through the skeleton quotient via
 `Skeleton.lift₂`, using `pshProdOverRelated_iso`
 for well-definedness. -/
 def pshRelRelated
-    {P P' Q Q' : Cᵒᵖ ⥤ Type v}
+    {P P' Q Q' : Cᵒᵖ ⥤ Type w}
     (α : P ⟶ Q) (β : P' ⟶ Q') :
     PshRel P P' → PshRel Q Q' → Prop :=
   Skeleton.lift₂
@@ -561,7 +562,7 @@ The forward direction extracts the square from the
 lift; the reverse constructs a lift from the
 commuting square. -/
 theorem pshProdOverRelated_graph_iff
-    {P P' Q Q' : Cᵒᵖ ⥤ Type v}
+    {P P' Q Q' : Cᵒᵖ ⥤ Type w}
     (α : P ⟶ P') (β : Q ⟶ Q')
     (γ : P ⟶ Q) (δ : P' ⟶ Q') :
     PshProdOverRelated
@@ -605,13 +606,13 @@ section PshRelDoubleCategory
 /-- The square type family for the presheaf relation
 double category. -/
 abbrev pshRelSQS :
-    @SquareSet (Cᵒᵖ ⥤ Type v) PshRel
-      (homSetOfQuiver (Cᵒᵖ ⥤ Type v)) :=
+    @SquareSet (Cᵒᵖ ⥤ Type w) PshRel
+      (homSetOfQuiver (Cᵒᵖ ⥤ Type w)) :=
   fun R S α β => pshRelRelated α β R S
 
 @[reassoc (attr := simp)]
 theorem pshProdOverComp_fst
-    {P Q W : Cᵒᵖ ⥤ Type v}
+    {P Q W : Cᵒᵖ ⥤ Type w}
     (R : PshProdOver P Q)
     (S : PshProdOver Q W) :
     (pshProdOverComp R S).hom ≫
@@ -624,7 +625,7 @@ theorem pshProdOverComp_fst
 
 @[reassoc (attr := simp)]
 theorem pshProdOverComp_snd
-    {P Q W : Cᵒᵖ ⥤ Type v}
+    {P Q W : Cᵒᵖ ⥤ Type w}
     (R : PshProdOver P Q)
     (S : PshProdOver Q W) :
     (pshProdOverComp R S).hom ≫
@@ -642,7 +643,7 @@ Given `pshRelRelated α γ R S` and
 top `α ≫ α'`, bottom `γ ≫ γ'`, left `R`,
 right `T`. -/
 theorem pshRelRelatedHComp
-    {P₁ P₂ P₃ Q₁ Q₂ Q₃ : Cᵒᵖ ⥤ Type v}
+    {P₁ P₂ P₃ Q₁ Q₂ Q₃ : Cᵒᵖ ⥤ Type w}
     {R : PshRel P₁ Q₁}
     {S : PshRel P₂ Q₂}
     {T : PshRel P₃ Q₃}
@@ -668,7 +669,7 @@ theorem pshRelRelatedHComp
 morphism `R : PshRel P Q`, the pair `(𝟙 P, 𝟙 Q)`
 is `(R, R)`-related. -/
 theorem pshRelRelatedSqHorId
-    {P Q : Cᵒᵖ ⥤ Type v}
+    {P Q : Cᵒᵖ ⥤ Type w}
     (R : PshRel P Q) :
     pshRelRelated (𝟙 P) (𝟙 Q) R R := by
   induction R using Quotient.inductionOn with
@@ -681,7 +682,7 @@ morphism `α : P ⟶ Q`, the pair
 `(pshRelId P, pshRelId Q)` is
 `(α, α)`-related. -/
 theorem pshRelRelatedSqVertId
-    {P Q : Cᵒᵖ ⥤ Type v}
+    {P Q : Cᵒᵖ ⥤ Type w}
     (α : P ⟶ Q) :
     pshRelRelated α α
       (pshRelId P) (pshRelId Q) := by
@@ -698,7 +699,7 @@ Given `pshRelRelated α γ R S` and
 top `α`, bottom `δ`, left `pshRelComp R R'`,
 right `pshRelComp S S'`. -/
 theorem pshRelRelatedVComp
-    {P₁ P₂ P₃ Q₁ Q₂ Q₃ : Cᵒᵖ ⥤ Type v}
+    {P₁ P₂ P₃ Q₁ Q₂ Q₃ : Cᵒᵖ ⥤ Type w}
     {R : PshRel P₁ P₂}
     {S : PshRel Q₁ Q₂}
     {R' : PshRel P₂ P₃}
@@ -753,8 +754,8 @@ theorem pshRelRelatedVComp
 /-- Operations for the presheaf relation double
 category on presheaves over `C`. -/
 def pshRelDoubleOps :
-    DoubleCategoryOps (Cᵒᵖ ⥤ Type v) PshRel
-      (homSetOfQuiver (Cᵒᵖ ⥤ Type v))
+    DoubleCategoryOps (Cᵒᵖ ⥤ Type w) PshRel
+      (homSetOfQuiver (Cᵒᵖ ⥤ Type w))
       pshRelSQS where
   vComp := fun R S => pshRelComp R S
   hComp := fun α β => α ≫ β
@@ -835,8 +836,8 @@ theorem pshRelDoubleLaws :
 /-- The presheaf relation double category data:
 operations and laws bundled together. -/
 def pshRelDoubleData :
-    DoubleCategoryData (Cᵒᵖ ⥤ Type v) PshRel
-      (homSetOfQuiver (Cᵒᵖ ⥤ Type v))
+    DoubleCategoryData (Cᵒᵖ ⥤ Type w) PshRel
+      (homSetOfQuiver (Cᵒᵖ ⥤ Type w))
       pshRelSQS where
   toDoubleCategoryOps := pshRelDoubleOps
   laws := pshRelDoubleLaws
@@ -852,8 +853,8 @@ underlying presheaf is `G.obj R.left`, with projections
 given by applying `G.map` to the two legs of the span.
 -/
 def pshBarrLift
-    {P Q : Cᵒᵖ ⥤ Type v}
-    (G : (Cᵒᵖ ⥤ Type v) ⥤ (Cᵒᵖ ⥤ Type v))
+    {P Q : Cᵒᵖ ⥤ Type w}
+    (G : (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w))
     (R : PshProdOver P Q) :
     PshProdOver (G.obj P) (G.obj Q) :=
   Over.mk (pshProdLift
@@ -862,8 +863,8 @@ def pshBarrLift
 
 @[simp]
 theorem pshBarrLift_fst
-    {P Q : Cᵒᵖ ⥤ Type v}
-    (G : (Cᵒᵖ ⥤ Type v) ⥤ (Cᵒᵖ ⥤ Type v))
+    {P Q : Cᵒᵖ ⥤ Type w}
+    (G : (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w))
     (R : PshProdOver P Q) :
     (pshBarrLift G R).hom ≫
       pshProdFst (G.obj P) (G.obj Q) =
@@ -872,8 +873,8 @@ theorem pshBarrLift_fst
 
 @[simp]
 theorem pshBarrLift_snd
-    {P Q : Cᵒᵖ ⥤ Type v}
-    (G : (Cᵒᵖ ⥤ Type v) ⥤ (Cᵒᵖ ⥤ Type v))
+    {P Q : Cᵒᵖ ⥤ Type w}
+    (G : (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w))
     (R : PshProdOver P Q) :
     (pshBarrLift G R).hom ≫
       pshProdSnd (G.obj P) (G.obj Q) =
@@ -885,8 +886,8 @@ Over category: an isomorphism `α : R ≅ S` in
 `PshProdOver P Q` induces an isomorphism
 `pshBarrLift G R ≅ pshBarrLift G S`. -/
 def pshBarrLift_iso
-    {P Q : Cᵒᵖ ⥤ Type v}
-    (G : (Cᵒᵖ ⥤ Type v) ⥤ (Cᵒᵖ ⥤ Type v))
+    {P Q : Cᵒᵖ ⥤ Type w}
+    (G : (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w))
     {R S : PshProdOver P Q}
     (α : R ≅ S) :
     pshBarrLift G R ≅ pshBarrLift G S :=
@@ -914,8 +915,8 @@ Given `G : PSh(C) ⥤ PSh(C)` and `R : PshRel P Q`,
 produces `PshRel (G.obj P) (G.obj Q)` by descending
 `pshBarrLift` through the skeleton quotient. -/
 def pshBarrLiftSkel
-    {P Q : Cᵒᵖ ⥤ Type v}
-    (G : (Cᵒᵖ ⥤ Type v) ⥤ (Cᵒᵖ ⥤ Type v))
+    {P Q : Cᵒᵖ ⥤ Type w}
+    (G : (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w))
     (R : PshRel P Q) :
     PshRel (G.obj P) (G.obj Q) :=
   Skeleton.lift
@@ -928,8 +929,8 @@ def pshBarrLiftSkel
 /-- The Barr extension of a graph relation `pshRelGraph α`
 equals `pshRelGraph (G.map α)`. -/
 theorem pshBarrLiftSkel_graph
-    {P Q : Cᵒᵖ ⥤ Type v}
-    (G : (Cᵒᵖ ⥤ Type v) ⥤ (Cᵒᵖ ⥤ Type v))
+    {P Q : Cᵒᵖ ⥤ Type w}
+    (G : (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w))
     (α : P ⟶ Q) :
     pshBarrLiftSkel G (pshRelGraph α) =
       pshRelGraph (G.map α) := by
@@ -949,8 +950,8 @@ theorem pshBarrLiftSkel_graph
 level, then `G.map α` and `G.map β` are
 `(pshBarrLift G R, pshBarrLift G S)`-related. -/
 theorem pshBarrLift_related
-    {P P' Q Q' : Cᵒᵖ ⥤ Type v}
-    (G : (Cᵒᵖ ⥤ Type v) ⥤ (Cᵒᵖ ⥤ Type v))
+    {P P' Q Q' : Cᵒᵖ ⥤ Type w}
+    (G : (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w))
     {R : PshProdOver P P'}
     {S : PshProdOver Q Q'}
     {α : P ⟶ Q} {β : P' ⟶ Q'}
@@ -993,8 +994,8 @@ theorem pshBarrLift_related
 `pshBarrLift_related`: relatedness at the `PshRel`
 level is preserved by `pshBarrLiftSkel`. -/
 theorem pshBarrLiftSkel_related
-    {P P' Q Q' : Cᵒᵖ ⥤ Type v}
-    (G : (Cᵒᵖ ⥤ Type v) ⥤ (Cᵒᵖ ⥤ Type v))
+    {P P' Q Q' : Cᵒᵖ ⥤ Type w}
+    (G : (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w))
     {α : P ⟶ Q} {β : P' ⟶ Q'}
     {R : PshRel P P'} {S : PshRel Q Q'}
     (h : pshRelRelated α β R S) :
@@ -1010,9 +1011,9 @@ end PshBarrExtension
 
 section PshInternalHom
 
-universe w
+universe u₁ v₁
 
-variable {D : Type w} [Category.{w} D]
+variable {D : Type u₁} [Category.{v₁} D]
 
 /-- The profunctor map for the internal hom
 `A.functorHom B`. Given `f : A' ⟶ A` and
@@ -1020,7 +1021,7 @@ variable {D : Type w} [Category.{w} D]
 `A.functorHom B ⟶ A'.functorHom B'` by
 precomposing with `f` and postcomposing with `g`. -/
 def pshIhomProfMap
-    {A A' B B' : Dᵒᵖ ⥤ Type w}
+    {A A' B B' : Dᵒᵖ ⥤ Type (max u₁ v₁)}
     (f : A' ⟶ A) (g : B ⟶ B') :
     A.functorHom B ⟶ A'.functorHom B' where
   app c φ :=
@@ -1047,14 +1048,14 @@ def pshIhomProfMap
 /-- Identity law for `pshIhomProfMap`. -/
 @[simp]
 theorem pshIhomProfMap_id
-    {A B : Dᵒᵖ ⥤ Type w} :
+    {A B : Dᵒᵖ ⥤ Type (max u₁ v₁)} :
     pshIhomProfMap (𝟙 A) (𝟙 B) =
       𝟙 (A.functorHom B) := by
   ext c φ d h a; rfl
 
 /-- Composition law for `pshIhomProfMap`. -/
 theorem pshIhomProfMap_comp
-    {A A' A'' B B' B'' : Dᵒᵖ ⥤ Type w}
+    {A A' A'' B B' B'' : Dᵒᵖ ⥤ Type (max u₁ v₁)}
     (f₁ : A' ⟶ A) (f₂ : A'' ⟶ A')
     (g₁ : B ⟶ B') (g₂ : B' ⟶ B'') :
     pshIhomProfMap (f₂ ≫ f₁) (g₁ ≫ g₂) =
@@ -1071,7 +1072,7 @@ all `w` in the relation `R` at stage `d`, the
 outputs `g₁(h, π₁ w)` and `g₂(h, π₂ w)` are
 `S`-related. -/
 def pshArrowRelPred
-    {A₁ A₂ B₁ B₂ : Dᵒᵖ ⥤ Type w}
+    {A₁ A₂ B₁ B₂ : Dᵒᵖ ⥤ Type (max u₁ v₁)}
     (R : PshProdOver A₁ A₂)
     (S : PshProdOver B₁ B₂)
     (c : Dᵒᵖ)
@@ -1090,10 +1091,10 @@ At stage `c`, an element is a pair
 `(g₁, g₂) ∈ A₁.functorHom B₁ × A₂.functorHom B₂`
 satisfying `pshArrowRelPred R S c (g₁, g₂)`. -/
 def pshArrowRelPresheaf
-    {A₁ A₂ B₁ B₂ : Dᵒᵖ ⥤ Type w}
+    {A₁ A₂ B₁ B₂ : Dᵒᵖ ⥤ Type (max u₁ v₁)}
     (R : PshProdOver A₁ A₂)
     (S : PshProdOver B₁ B₂) :
-    Dᵒᵖ ⥤ Type w where
+    Dᵒᵖ ⥤ Type (max u₁ v₁) where
   obj c :=
     { g : (A₁.functorHom B₁).obj c ×
           (A₂.functorHom B₂).obj c //
@@ -1120,7 +1121,7 @@ presheaves `A₁.functorHom B₁` and
 `pshArrowRelPresheaf R S` with projections given
 by `.val.1` and `.val.2`. -/
 def pshArrowRelFst
-    {A₁ A₂ B₁ B₂ : Dᵒᵖ ⥤ Type w}
+    {A₁ A₂ B₁ B₂ : Dᵒᵖ ⥤ Type (max u₁ v₁)}
     (R : PshProdOver A₁ A₂)
     (S : PshProdOver B₁ B₂) :
     pshArrowRelPresheaf R S ⟶ A₁.functorHom B₁
@@ -1129,7 +1130,7 @@ def pshArrowRelFst
   naturality _ _ _ := by funext; rfl
 
 def pshArrowRelSnd
-    {A₁ A₂ B₁ B₂ : Dᵒᵖ ⥤ Type w}
+    {A₁ A₂ B₁ B₂ : Dᵒᵖ ⥤ Type (max u₁ v₁)}
     (R : PshProdOver A₁ A₂)
     (S : PshProdOver B₁ B₂) :
     pshArrowRelPresheaf R S ⟶ A₂.functorHom B₂
@@ -1145,7 +1146,7 @@ presheaves `A₁.functorHom B₁` and
 `pshArrowRelPresheaf R S` with projections given
 by `.val.1` and `.val.2`. -/
 def pshArrowRel
-    {A₁ A₂ B₁ B₂ : Dᵒᵖ ⥤ Type w}
+    {A₁ A₂ B₁ B₂ : Dᵒᵖ ⥤ Type (max u₁ v₁)}
     (R : PshProdOver A₁ A₂)
     (S : PshProdOver B₁ B₂) :
     PshProdOver (A₁.functorHom B₁)
@@ -1158,7 +1159,7 @@ def pshArrowRel
 the input and output relations are replaced by
 morphic images (via Over morphisms). -/
 private theorem pshArrowRelPred_transport
-    {A₁ A₂ B₁ B₂ : Dᵒᵖ ⥤ Type w}
+    {A₁ A₂ B₁ B₂ : Dᵒᵖ ⥤ Type (max u₁ v₁)}
     {R₁ R₂ : PshProdOver A₁ A₂}
     {S₁ S₂ : PshProdOver B₁ B₂}
     (αinv : R₂ ⟶ R₁) (βhom : S₁ ⟶ S₂)
@@ -1188,7 +1189,7 @@ relation presheaf is unchanged (identity on the
 `.val` component) with proof transported via
 `pshArrowRelPred_transport`. -/
 private def pshArrowRelPresheafIso
-    {A₁ A₂ B₁ B₂ : Dᵒᵖ ⥤ Type w}
+    {A₁ A₂ B₁ B₂ : Dᵒᵖ ⥤ Type (max u₁ v₁)}
     {R₁ R₂ : PshProdOver A₁ A₂}
     {S₁ S₂ : PshProdOver B₁ B₂}
     (α : R₁ ≅ R₂) (β : S₁ ≅ S₂) :
@@ -1214,7 +1215,7 @@ private def pshArrowRelPresheafIso
 /-- Isomorphic input/output relations yield
 isomorphic arrow relations. -/
 def pshArrowRel_iso
-    {A₁ A₂ B₁ B₂ : Dᵒᵖ ⥤ Type w}
+    {A₁ A₂ B₁ B₂ : Dᵒᵖ ⥤ Type (max u₁ v₁)}
     {R₁ R₂ : PshProdOver A₁ A₂}
     {S₁ S₂ : PshProdOver B₁ B₂}
     (α : R₁ ≅ R₂) (β : S₁ ≅ S₂) :
@@ -1230,7 +1231,7 @@ produces
 by descending `pshArrowRel` through the skeleton
 quotient in both arguments. -/
 def pshArrowRelSkel
-    {A₁ A₂ B₁ B₂ : Dᵒᵖ ⥤ Type w}
+    {A₁ A₂ B₁ B₂ : Dᵒᵖ ⥤ Type (max u₁ v₁)}
     (R : PshRel A₁ A₂)
     (S : PshRel B₁ B₂) :
     PshRel (A₁.functorHom B₁)
@@ -1253,7 +1254,7 @@ contravariance) and the output morphisms
 -/
 theorem pshArrowRel_related
     {A₁ A₂ A₁' A₂' B₁ B₂ B₁' B₂' :
-      Dᵒᵖ ⥤ Type w}
+      Dᵒᵖ ⥤ Type (max u₁ v₁)}
     {R₁ : PshProdOver A₁ A₂}
     {R₂ : PshProdOver A₁' A₂'}
     {S₁ : PshProdOver B₁ B₂}
@@ -1297,7 +1298,7 @@ theorem pshArrowRel_related
 preserves relatedness at the `PshRel` level. -/
 theorem pshArrowRelSkel_related
     {A₁ A₂ A₁' A₂' B₁ B₂ B₁' B₂' :
-      Dᵒᵖ ⥤ Type w}
+      Dᵒᵖ ⥤ Type (max u₁ v₁)}
     {α₁ : A₁' ⟶ A₁} {α₂ : A₂' ⟶ A₂}
     {β₁ : B₁ ⟶ B₁'} {β₂ : B₂ ⟶ B₂'}
     {R₁ : PshRel A₁ A₂}
@@ -1324,9 +1325,9 @@ end PshInternalHom
 
 section YonedaPreservesIhom
 
-universe w
+universe w₁
 
-variable {D : Type w} [Category.{w} D]
+variable {D : Type w₁} [Category.{w₁} D]
 
 /-- Data witnessing that `E` is an exponential of `A`
 and `B` in `D`, in the form of an evaluation function

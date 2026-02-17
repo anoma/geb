@@ -4,7 +4,8 @@ import GebLean.PshRelDouble
 # Type Expressions for Presheaf Categories
 
 Generalization of `TypeExpr` (in `ParanaturalTopos.lean`)
-from `Type` to presheaf categories `PSh(C) = Cᵒᵖ ⥤ Type v`.
+from `Type` to presheaf categories
+`PSh(C) = Cᵒᵖ ⥤ Type (max u v)`.
 Each `PshTypeExpr` describes a type constructor
 built from a variable using arrows and functor
 applications.
@@ -23,9 +24,9 @@ namespace GebLean
 
 open CategoryTheory
 
-universe v
+universe u v
 
-variable {C : Type v} [Category.{v} C]
+variable {C : Type u} [Category.{v} C]
 
 /-- A type expression for presheaf categories. Each
 constructor describes how a type is built from a
@@ -34,11 +35,12 @@ variable:
 - `app G T`: apply a presheaf endofunctor `G` to `T`
 - `arrow T₁ T₂`: the internal hom `T₁ → T₂` -/
 inductive PshTypeExpr
-    (C : Type v) [Category.{v} C] :
-    Type (v + 1) where
+    (C : Type u) [Category.{v} C] :
+    Type (max (u + 1) (v + 1)) where
   | var : PshTypeExpr C
   | app :
-    ((Cᵒᵖ ⥤ Type v) ⥤ (Cᵒᵖ ⥤ Type v)) →
+    ((Cᵒᵖ ⥤ Type (max u v)) ⥤
+      (Cᵒᵖ ⥤ Type (max u v))) →
     PshTypeExpr C → PshTypeExpr C
   | arrow :
     PshTypeExpr C →
@@ -47,8 +49,8 @@ inductive PshTypeExpr
 /-- A covariant endofunctor applied to the bare
 variable. Equivalent to `.app G .var`. -/
 abbrev PshTypeExpr.leaf
-    (G : (Cᵒᵖ ⥤ Type v) ⥤
-         (Cᵒᵖ ⥤ Type v)) :
+    (G : (Cᵒᵖ ⥤ Type (max u v)) ⥤
+         (Cᵒᵖ ⥤ Type (max u v))) :
     PshTypeExpr C :=
   .app G .var
 
@@ -62,8 +64,9 @@ contravariant and `Q` is covariant.
   (with swapped variance) to `T₂` -/
 def PshTypeExpr.interp :
     PshTypeExpr C →
-    (Cᵒᵖ ⥤ Type v) → (Cᵒᵖ ⥤ Type v) →
-    (Cᵒᵖ ⥤ Type v)
+    (Cᵒᵖ ⥤ Type (max u v)) →
+    (Cᵒᵖ ⥤ Type (max u v)) →
+    (Cᵒᵖ ⥤ Type (max u v))
   | .var, _, Q => Q
   | .app G T, P, Q => G.obj (T.interp P Q)
   | .arrow T₁ T₂, P, Q =>
@@ -80,7 +83,7 @@ to a relation between `T.interp P P` and
   relational interpretations of `T₁` and `T₂` -/
 def PshTypeExpr.relInterp :
     (T : PshTypeExpr C) →
-    {P Q : Cᵒᵖ ⥤ Type v} →
+    {P Q : Cᵒᵖ ⥤ Type (max u v)} →
     (α : P ⟶ Q) →
     PshRel (T.interp P P) (T.interp Q Q)
   | .var, _, _, α => pshRelGraph α
@@ -97,7 +100,7 @@ given `f : P' ⟶ P` (contravariant) and
 `T.interp P Q ⟶ T.interp P' Q'`. -/
 def PshTypeExpr.profMap :
     (T : PshTypeExpr C) →
-    {P P' Q Q' : Cᵒᵖ ⥤ Type v} →
+    {P P' Q Q' : Cᵒᵖ ⥤ Type (max u v)} →
     (f : P' ⟶ P) → (g : Q ⟶ Q') →
     T.interp P Q ⟶ T.interp P' Q'
   | .var, _, _, _, _, _, g => g
@@ -112,7 +115,7 @@ def PshTypeExpr.profMap :
 @[simp]
 theorem PshTypeExpr.profMap_id
     (T : PshTypeExpr C)
-    (P Q : Cᵒᵖ ⥤ Type v) :
+    (P Q : Cᵒᵖ ⥤ Type (max u v)) :
     T.profMap (𝟙 P) (𝟙 Q) =
       𝟙 (T.interp P Q) := by
   induction T generalizing P Q with
@@ -131,7 +134,8 @@ theorem PshTypeExpr.profMap_id
 /-- Composition law for `PshTypeExpr.profMap`. -/
 theorem PshTypeExpr.profMap_comp
     (T : PshTypeExpr C)
-    {P P' P'' Q Q' Q'' : Cᵒᵖ ⥤ Type v}
+    {P P' P'' Q Q' Q'' :
+      Cᵒᵖ ⥤ Type (max u v)}
     (f : P' ⟶ P) (f' : P'' ⟶ P')
     (g : Q ⟶ Q') (g' : Q' ⟶ Q'') :
     T.profMap (f' ≫ f) (g ≫ g') =
@@ -161,13 +165,15 @@ theorem PshTypeExpr.profMap_comp
 
 /-- The profunctor associated to a type expression:
 a functor
-`(Cᵒᵖ ⥤ Type v)ᵒᵖ × (Cᵒᵖ ⥤ Type v) ⥤ (Cᵒᵖ ⥤ Type v)`
+`(Cᵒᵖ ⥤ Type (max u v))ᵒᵖ × (Cᵒᵖ ⥤ Type (max u v))
+⥤ (Cᵒᵖ ⥤ Type (max u v))`
 defined by `T.interp` on objects and `T.profMap`
 on morphisms. -/
 def PshTypeExpr.toProfunctor
     (T : PshTypeExpr C) :
-    (Cᵒᵖ ⥤ Type v)ᵒᵖ × (Cᵒᵖ ⥤ Type v) ⥤
-      (Cᵒᵖ ⥤ Type v) where
+    (Cᵒᵖ ⥤ Type (max u v))ᵒᵖ ×
+      (Cᵒᵖ ⥤ Type (max u v)) ⥤
+      (Cᵒᵖ ⥤ Type (max u v)) where
   obj p := T.interp p.1.unop p.2
   map {p q} fg := T.profMap fg.1.unop fg.2
   map_id p := by
@@ -183,9 +189,9 @@ def PshTypeExpr.toProfunctor
 to the graph relation of `α`. -/
 @[simp]
 theorem PshTypeExpr.leaf_relInterp
-    (G : (Cᵒᵖ ⥤ Type v) ⥤
-         (Cᵒᵖ ⥤ Type v))
-    {P Q : Cᵒᵖ ⥤ Type v}
+    (G : (Cᵒᵖ ⥤ Type (max u v)) ⥤
+         (Cᵒᵖ ⥤ Type (max u v)))
+    {P Q : Cᵒᵖ ⥤ Type (max u v)}
     (α : P ⟶ Q) :
     (PshTypeExpr.leaf G).relInterp α =
       pshBarrLiftSkel G (pshRelGraph α) :=
