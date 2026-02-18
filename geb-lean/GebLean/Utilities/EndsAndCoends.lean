@@ -1871,6 +1871,201 @@ theorem pointwiseTypeCoendFunctor_obj
       pointwiseTypeCoend P :=
   rfl
 
+/-!
+### Lifted Adjunctions
+
+The type-level adjunctions `typeEndAdj` and `typeCoendAdj`
+lift to presheaf categories via `Adjunction.whiskerRight`,
+then compose with `profunctorDoubleFlipEquiv` to obtain
+adjunctions with the natural profunctor domain
+`Kᵒᵖ ⥤ K ⥤ (E ⥤ Type v)`.
+
+The resulting left adjoint of the pointwise end sends
+`G : E ⥤ Type v` to the profunctor whose value at
+`(a, b)` is the presheaf `e ↦ (a.unop ⟶ b) × G.obj e`,
+the pointwise product of the constant presheaf at
+`a.unop ⟶ b` with `G`.
+
+Dually, the right adjoint of the pointwise coend sends
+`G : E ⥤ Type v` to the profunctor whose value at
+`(a, b)` is the presheaf `e ↦ (b ⟶ a.unop) → G.obj e`,
+the pointwise exponential in `E ⥤ Type v`.
+-/
+
+variable (K)
+
+/-- The end adjunction lifted to presheaf categories
+via post-composition: `typeEndAdj K` applied
+pointwise at each `e : E`. -/
+def pointwiseTypeEndAdjWhiskered :
+    (Functor.whiskeringRight E (Type v)
+      (Kᵒᵖ ⥤ K ⥤ Type v)).obj
+      (typeEndLAdjFunctor K) ⊣
+    (Functor.whiskeringRight E
+      (Kᵒᵖ ⥤ K ⥤ Type v) (Type v)).obj
+      (typeEndFunctor K) :=
+  (typeEndAdj K).whiskerRight E
+
+/-- The left adjoint of `pointwiseTypeEndFunctor`:
+sends `G : E ⥤ Type v` to the profunctor in
+`Kᵒᵖ ⥤ K ⥤ (E ⥤ Type v)` whose value at `(a, b)`
+is the presheaf `e ↦ (a.unop ⟶ b) × G.obj e`. -/
+def pointwiseTypeEndLAdjFunctor :
+    (E ⥤ Type v) ⥤
+      (Kᵒᵖ ⥤ K ⥤ (E ⥤ Type v)) :=
+  (Functor.whiskeringRight E (Type v)
+    (Kᵒᵖ ⥤ K ⥤ Type v)).obj
+    (typeEndLAdjFunctor K) ⋙
+    (profunctorDoubleFlipEquiv (K := K)
+      (E := E)).inverse
+
+/-- The pointwise end adjunction with natural domain:
+`pointwiseTypeEndLAdjFunctor K ⊣
+  pointwiseTypeEndFunctor`.
+
+Obtained by composing the whiskered end adjunction
+with the double-flip equivalence. -/
+def pointwiseTypeEndAdj :
+    pointwiseTypeEndLAdjFunctor K (E := E) ⊣
+    pointwiseTypeEndFunctor (K := K) (E := E) :=
+  (pointwiseTypeEndAdjWhiskered K (E := E)).comp
+    ((profunctorDoubleFlipEquiv (K := K)
+      (E := E)).symm.toAdjunction)
+
+/-- The coend adjunction lifted to presheaf categories
+via post-composition: `typeCoendAdj K` applied
+pointwise at each `e : E`. -/
+def pointwiseTypeCoendAdjWhiskered :
+    (Functor.whiskeringRight E
+      (Kᵒᵖ ⥤ K ⥤ Type v) (Type v)).obj
+      (typeCoendFunctor K) ⊣
+    (Functor.whiskeringRight E (Type v)
+      (Kᵒᵖ ⥤ K ⥤ Type v)).obj
+      (typeCoendRAdjFunctor K) :=
+  (typeCoendAdj K).whiskerRight E
+
+/-- The right adjoint of `pointwiseTypeCoendFunctor`:
+sends `G : E ⥤ Type v` to the profunctor in
+`Kᵒᵖ ⥤ K ⥤ (E ⥤ Type v)` whose value at `(a, b)`
+is the presheaf `e ↦ (b ⟶ a.unop) → G.obj e`. -/
+def pointwiseTypeCoendRAdjFunctor :
+    (E ⥤ Type v) ⥤
+      (Kᵒᵖ ⥤ K ⥤ (E ⥤ Type v)) :=
+  (Functor.whiskeringRight E (Type v)
+    (Kᵒᵖ ⥤ K ⥤ Type v)).obj
+    (typeCoendRAdjFunctor K) ⋙
+    (profunctorDoubleFlipEquiv (K := K)
+      (E := E)).inverse
+
+/-- The pointwise coend adjunction with natural domain:
+`pointwiseTypeCoendFunctor ⊣
+  pointwiseTypeCoendRAdjFunctor K`.
+
+Obtained by composing the double-flip equivalence
+with the whiskered coend adjunction. -/
+def pointwiseTypeCoendAdj :
+    pointwiseTypeCoendFunctor
+      (K := K) (E := E) ⊣
+    pointwiseTypeCoendRAdjFunctor K (E := E) :=
+  ((profunctorDoubleFlipEquiv (K := K)
+    (E := E)).toAdjunction).comp
+    (pointwiseTypeCoendAdjWhiskered K (E := E))
+
+/-!
+### Pointwise Characterization and Universal Properties
+-/
+
+variable {K}
+
+/-- At each `e : E`, the pointwise end evaluates to the
+type-level end of the profunctor obtained by evaluating
+at `e` after the double flip. -/
+theorem pointwiseTypeEnd_obj_eq
+    (P : Kᵒᵖ ⥤ K ⥤ (E ⥤ Type v)) (e : E) :
+    (pointwiseTypeEnd P).obj e =
+      typeEnd
+        ((profunctorDoubleFlipEquiv (K := K)
+          (E := E)).functor.obj P |>.obj e) :=
+  rfl
+
+/-- At each `e : E`, the pointwise weighted limit
+evaluates to the type-level weighted limit of the
+diagram restricted to `e`. -/
+theorem pointwiseTypeWeightedLimit_obj_eq
+    (W : K ⥤ Type v)
+    (D : K ⥤ (E ⥤ Type v)) (e : E) :
+    (pointwiseTypeWeightedLimit W D).obj e =
+      typeWeightedLimit W (D.flip.obj e) :=
+  rfl
+
+/-- At each `e : E`, the pointwise coend evaluates to
+the type-level coend of the profunctor obtained by
+evaluating at `e` after the double flip. -/
+theorem pointwiseTypeCoend_obj_eq
+    (P : Kᵒᵖ ⥤ K ⥤ (E ⥤ Type v)) (e : E) :
+    (pointwiseTypeCoend P).obj e =
+      typeCoend
+        ((profunctorDoubleFlipEquiv (K := K)
+          (E := E)).functor.obj P |>.obj e) :=
+  rfl
+
+/-- At each `e : E`, the pointwise weighted colimit
+evaluates to the type-level weighted colimit of the
+diagram restricted to `e`. -/
+theorem pointwiseTypeWeightedColimit_obj_eq
+    (W : Kᵒᵖ ⥤ Type v)
+    (D : K ⥤ (E ⥤ Type v)) (e : E) :
+    (pointwiseTypeWeightedColimit W D).obj e =
+      typeWeightedColimit W (D.flip.obj e) :=
+  rfl
+
+variable (K)
+
+/-- The adjunction-derived universal property of the
+pointwise end in the presheaf category: natural
+transformations from the profunctor
+`(a, b) ↦ (a.unop ⟶ b) × G(e)` to `P` correspond
+to natural transformations from `G` to the pointwise
+end presheaf of `P`. -/
+def pointwiseTypeEnd.universalProperty
+    (G : E ⥤ Type v)
+    (P : Kᵒᵖ ⥤ K ⥤ (E ⥤ Type v)) :
+    ((pointwiseTypeEndLAdjFunctor K).obj G ⟶
+      P) ≃
+    (G ⟶ (pointwiseTypeEndFunctor (K := K)
+      (E := E)).obj P) :=
+  (pointwiseTypeEndAdj K (E := E)).homEquiv G P
+
+/-- The adjunction-derived universal property of the
+pointwise coend in the presheaf category: natural
+transformations from the pointwise coend presheaf
+of `P` to `G` correspond to natural transformations
+from `P` to the profunctor
+`(a, b) ↦ (b ⟶ a.unop) → G(e)`. -/
+def pointwiseTypeCoend.universalProperty
+    (P : Kᵒᵖ ⥤ K ⥤ (E ⥤ Type v))
+    (G : E ⥤ Type v) :
+    ((pointwiseTypeCoendFunctor (K := K)
+      (E := E)).obj P ⟶ G) ≃
+    (P ⟶ (pointwiseTypeCoendRAdjFunctor K
+      (E := E)).obj G) :=
+  (pointwiseTypeCoendAdj K (E := E)).homEquiv
+    P G
+
+variable {K}
+
+/-- At each `e : E`, the pointwise weighted limit is
+equivalent to the set of natural transformations
+from the weight `W` to the diagram restricted to
+`e`. -/
+def pointwiseTypeWeightedLimit.natTransEquiv
+    (W : K ⥤ Type v)
+    (D : K ⥤ (E ⥤ Type v)) (e : E) :
+    (pointwiseTypeWeightedLimit W D).obj e ≃
+      (W ⟶ D.flip.obj e) :=
+  typeWeightedLimit.natTransEquiv W
+    (D.flip.obj e)
+
 end PointwisePresheaf
 
 end GebLean
