@@ -1431,4 +1431,130 @@ def pshIhomYonedaIso :
 
 end YonedaPreservesIhom
 
+section YonedaPreservesIhomULift
+
+universe u₂ v₂
+
+variable {D : Type u₂} [Category.{v₂} D]
+variable [CartesianMonoidalCategory D]
+  [MonoidalClosed D]
+variable (A B : D)
+
+open CartesianMonoidalCategory MonoidalClosed
+open scoped MonoidalCategory
+
+/-- Forward map for the ULift version: given
+`⟨e⟩ : ULift (X ⟶ (ihom A).obj B)`, produce an
+element of
+`(yonedaULift A).functorHom (yonedaULift B)` at
+stage `op X`. -/
+def pshIhomYonedaULiftFwd
+    {X : D}
+    (e : ULift (X ⟶ (ihom A).obj B)) :
+    ((yonedaULift A).functorHom
+      (yonedaULift B)).obj (Opposite.op X) :=
+  { app := fun d h a =>
+      ⟨lift a.down (h.unop ≫ e.down) ≫
+        (ihom.ev A).app B⟩
+    naturality := fun {d d'} g h => by
+      ext ⟨a⟩
+      apply ULift.ext
+      simp only [types_comp_apply,
+        yonedaULift, Functor.comp_map,
+        uliftFunctor_map, yoneda_obj_map]
+      rw [← Category.assoc, comp_lift]
+      congr 1
+      dsimp
+      simp only [Category.assoc] }
+
+/-- Backward map for the ULift version: given an
+element of
+`(yonedaULift A).functorHom (yonedaULift B)` at
+stage `op X`, produce `⟨e⟩ : ULift (X ⟶ _)` by
+currying the evaluation at the universal element. -/
+def pshIhomYonedaULiftInv
+    {X : D}
+    (f : ((yonedaULift A).functorHom
+      (yonedaULift B)).obj (Opposite.op X)) :
+    ULift (X ⟶ (ihom A).obj B) :=
+  ⟨curry
+    ((f.app (Opposite.op (A ⊗ X))
+      (Quiver.Hom.op (snd A X))
+      ⟨fst A X⟩).down)⟩
+
+/-- `pshIhomYonedaULiftInv ≫ pshIhomYonedaULiftFwd`
+is the identity. -/
+theorem pshIhomYonedaULift_left_inv
+    {X : D}
+    (e : ULift (X ⟶ (ihom A).obj B)) :
+    pshIhomYonedaULiftInv A B
+      (pshIhomYonedaULiftFwd A B e) = e := by
+  apply ULift.ext
+  dsimp only [pshIhomYonedaULiftInv,
+    pshIhomYonedaULiftFwd]
+  simp only [Quiver.Hom.unop_op]
+  rw [← Category.comp_id (fst A _),
+    lift_fst_comp_snd_comp,
+    MonoidalCategory.id_tensorHom,
+    ← uncurry_eq]
+  exact curry_uncurry e.down
+
+/-- `pshIhomYonedaULiftFwd ≫ pshIhomYonedaULiftInv`
+is the identity. -/
+theorem pshIhomYonedaULift_right_inv
+    {X : D}
+    (f : ((yonedaULift A).functorHom
+      (yonedaULift B)).obj (Opposite.op X)) :
+    pshIhomYonedaULiftFwd A B
+      (pshIhomYonedaULiftInv A B f) = f := by
+  apply Functor.functorHom_ext
+  intro d g
+  ext ⟨a⟩
+  apply ULift.ext
+  dsimp only [pshIhomYonedaULiftFwd,
+    pshIhomYonedaULiftInv]
+  rw [← lift_whiskerLeft]
+  rw [Category.assoc, ← uncurry_eq,
+    uncurry_curry]
+  have hnat := congr_fun
+    (f.naturality
+      (Quiver.Hom.op (lift a g.unop))
+      (Quiver.Hom.op (snd A _)))
+    ⟨fst A _⟩
+  simp only [types_comp_apply] at hnat
+  have hnat' := congrArg ULift.down hnat
+  simp only [yonedaULift, Functor.comp_map,
+    uliftFunctor_map, yoneda_obj_map] at hnat'
+  convert hnat'.symm using 2
+  simp [← op_comp, lift_snd]
+
+/-- The Yoneda embedding preserves exponentials
+(ULift version):
+`yonedaULift ((ihom A).obj B) ≅
+(yonedaULift A).functorHom (yonedaULift B)`. -/
+def pshIhomYonedaULiftIso :
+    yonedaULift ((ihom A).obj B) ≅
+      (yonedaULift A).functorHom
+        (yonedaULift B) :=
+  NatIso.ofComponents
+    (fun X => {
+      hom := pshIhomYonedaULiftFwd A B
+      inv := pshIhomYonedaULiftInv A B
+      hom_inv_id := funext
+        (pshIhomYonedaULift_left_inv A B)
+      inv_hom_id := funext
+        (pshIhomYonedaULift_right_inv A B) })
+    (fun {X Y} f => funext fun ⟨e⟩ => by
+      apply Functor.functorHom_ext
+      intro d h
+      ext ⟨a⟩
+      apply ULift.ext
+      dsimp [pshIhomYonedaULiftFwd,
+        yonedaULift, Functor.functorHom,
+        Functor.homObjFunctor,
+        Functor.HomObj.map]
+      simp only [Category.assoc])
+
+end YonedaPreservesIhomULift
+
 end GebLean
