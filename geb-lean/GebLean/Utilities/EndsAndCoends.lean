@@ -2327,6 +2327,118 @@ def pointwiseTypeCoend.endImpredicative
   coyonedaEquivOfNatIsoTypeId
     (pointwiseTypeCoend.coendHomNatIsoEnd P e)
 
+/-!
+### Pointwise Impredicative and Representable Coends
+
+The Type-level impredicative characterizations of
+coends and weighted colimits lift pointwise.
+-/
+
+/-- Pointwise impredicative weighted colimits: at each
+`e : E`, natural transformations from
+`weightedLimitFunctor W (D.flip.obj e)` to the
+identity on `Type v` correspond to elements of
+`(pointwiseTypeWeightedColimit W D).obj e`. -/
+def pointwiseTypeWeightedColimit.impredicative
+    (W : Kᵒᵖ ⥤ Type v)
+    (D : K ⥤ (E ⥤ Type v)) (e : E) :
+    (weightedLimitFunctor W (D.flip.obj e) ⟶
+      𝟭 (Type v)) ≃
+      (pointwiseTypeWeightedColimit W D).obj e :=
+  typeWeightedColimit.impredicative W
+    (D.flip.obj e)
+
+/-- Pointwise representable weighted colimits: at each
+`e : E`, natural transformations from
+`weightedLimitFunctor W (D.flip.obj e)` to
+`G : Type v ⥤ Type v` correspond to
+`G.obj ((pointwiseTypeWeightedColimit W D).obj e)`.
+-/
+def pointwiseTypeWeightedColimit.representable
+    (W : Kᵒᵖ ⥤ Type v)
+    (D : K ⥤ (E ⥤ Type v)) (e : E)
+    (G : Type v ⥤ Type v) :
+    (weightedLimitFunctor W (D.flip.obj e) ⟶
+      G) ≃
+      G.obj
+        ((pointwiseTypeWeightedColimit W D).obj
+          e) :=
+  typeWeightedColimit.representable W
+    (D.flip.obj e) G
+
+/-- Pointwise impredicative coends via weighted
+colimits: at each `e : E`, natural transformations from
+`weightedLimitFunctor (homPre) (uncurry.obj P_e)` to
+the identity on `Type v` correspond to elements of
+`(pointwiseTypeCoend P).obj e`.
+
+This uses the co-ninja Yoneda equivalence to relate
+coends to weighted colimits. -/
+def pointwiseTypeCoend.impredicative
+    (P : Kᵒᵖ ⥤ K ⥤ (E ⥤ Type v)) (e : E) :
+    let P_e : Kᵒᵖ ⥤ K ⥤ Type v :=
+      (((profunctorDoubleFlipEquiv (K := K)
+        (E := E)).functor.obj P).obj e)
+    (weightedLimitFunctor (homPre (C := K))
+      (Functor.uncurry.obj P_e) ⟶
+      𝟭 (Type v)) ≃
+        typeCoend P_e :=
+  let P_e : Kᵒᵖ ⥤ K ⥤ Type v :=
+    (((profunctorDoubleFlipEquiv (K := K)
+      (E := E)).functor.obj P).obj e)
+  typeCoend.impredicative P_e
+
+/-- Pointwise representable coends via weighted
+colimits: at each `e : E`, natural transformations from
+`weightedLimitFunctor (homPre) (uncurry.obj P_e)` to
+`G : Type v ⥤ Type v` correspond to
+`G.obj ((pointwiseTypeCoend P).obj e)`. -/
+def pointwiseTypeCoend.representable
+    (P : Kᵒᵖ ⥤ K ⥤ (E ⥤ Type v)) (e : E)
+    (G : Type v ⥤ Type v) :
+    let P_e : Kᵒᵖ ⥤ K ⥤ Type v :=
+      (((profunctorDoubleFlipEquiv (K := K)
+        (E := E)).functor.obj P).obj e)
+    (weightedLimitFunctor (homPre (C := K))
+      (Functor.uncurry.obj P_e) ⟶ G) ≃
+        G.obj (typeCoend P_e) :=
+  let P_e : Kᵒᵖ ⥤ K ⥤ Type v :=
+    (((profunctorDoubleFlipEquiv (K := K)
+      (E := E)).functor.obj P).obj e)
+  typeCoend.representable P_e G
+
+/-!
+### Pointwise Yoneda and Co-Yoneda Lemmas
+
+The (co-)Yoneda lemmas for weighted (co)limits lift
+pointwise: when the weight is representable,
+the pointwise weighted (co)limit evaluates to the
+diagram at the representing object.
+-/
+
+/-- Pointwise Yoneda lemma for weighted limits: at
+each `e : E`, the weighted limit with representable
+weight `coyoneda.obj (op j)` evaluates to
+`(D.obj j).obj e`. -/
+def pointwiseTypeWeightedLimit.yonedaEquiv
+    (j : K) (D : K ⥤ (E ⥤ Type v)) (e : E) :
+    (pointwiseTypeWeightedLimit
+      (coyoneda.obj (Opposite.op j)) D).obj e ≃
+      (D.obj j).obj e :=
+  typeWeightedLimit.yonedaEquiv j (D.flip.obj e)
+
+/-- Pointwise co-Yoneda lemma for weighted colimits:
+at each `e : E`, the weighted colimit with
+representable weight `yoneda.obj j` evaluates to
+`(D.obj j).obj e`. -/
+def pointwiseTypeWeightedColimit.yonedaEquiv
+    (j : K) (D : K ⥤ (E ⥤ Type v)) (e : E) :
+    (pointwiseTypeWeightedColimit
+      (yoneda.obj j) D).obj e ≃
+      (D.obj j).obj e :=
+  typeWeightedColimit.yonedaEquiv j
+    (D.flip.obj e)
+
 end PointwisePresheaf
 
 end GebLean
