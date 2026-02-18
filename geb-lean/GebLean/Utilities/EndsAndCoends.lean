@@ -2439,6 +2439,138 @@ def pointwiseTypeWeightedColimit.yonedaEquiv
   typeWeightedColimit.yonedaEquiv j
     (D.flip.obj e)
 
+/-- The pointwise weighted limit bifunctor
+`(K ⥤ Type v)ᵒᵖ ⥤ (K ⥤ (E ⥤ Type v)) ⥤ (E ⥤ Type v)`,
+sending `(W, D) ↦ pointwiseTypeWeightedLimit W D`.
+Contravariant in `W`, covariant in `D`.
+
+Built by composing the Type-valued bifunctor with
+whisker-right (to post-compose each evaluation with
+the limit functor) and whisker-left (to pre-compose
+with flipping). -/
+def pointwiseTypeWeightedLimitBifunctor :
+    (K ⥤ Type v)ᵒᵖ ⥤
+      (K ⥤ (E ⥤ Type v)) ⥤ (E ⥤ Type v) :=
+  typeWeightedLimitBifunctor (J := K) ⋙
+    (Functor.whiskeringRight E (K ⥤ Type v)
+      (Type v)) ⋙
+    (Functor.whiskeringLeft (K ⥤ (E ⥤ Type v))
+      (E ⥤ K ⥤ Type v) (E ⥤ Type v)).obj
+      Functor.flipping.functor
+
+/-- The pointwise weighted colimit bifunctor
+`(Kᵒᵖ ⥤ Type v) ⥤ (K ⥤ (E ⥤ Type v)) ⥤ (E ⥤ Type v)`,
+sending `(W, D) ↦ pointwiseTypeWeightedColimit W D`.
+Covariant in both arguments. -/
+def pointwiseTypeWeightedColimitBifunctor :
+    (Kᵒᵖ ⥤ Type v) ⥤
+      (K ⥤ (E ⥤ Type v)) ⥤ (E ⥤ Type v) :=
+  typeWeightedColimitBifunctor (J := K) ⋙
+    (Functor.whiskeringRight E (K ⥤ Type v)
+      (Type v)) ⋙
+    (Functor.whiskeringLeft (K ⥤ (E ⥤ Type v))
+      (E ⥤ K ⥤ Type v) (E ⥤ Type v)).obj
+      Functor.flipping.functor
+
+/-- The pointwise contravariant weighted limit functor
+in the weight: for fixed `D : K ⥤ (E ⥤ Type v)`, sends
+`W ↦ pointwiseTypeWeightedLimit W D`. -/
+def pointwiseTypeWeightedLimitFunctorInW
+    (D : K ⥤ (E ⥤ Type v)) :
+    (K ⥤ Type v)ᵒᵖ ⥤ (E ⥤ Type v) :=
+  typeWeightedLimitBifunctor (J := K) ⋙
+    (Functor.whiskeringLeft E (K ⥤ Type v)
+      (Type v)).obj D.flip
+
+/-- The pointwise covariant weighted colimit functor
+in the weight: for fixed `D : K ⥤ (E ⥤ Type v)`, sends
+`W ↦ pointwiseTypeWeightedColimit W D`. -/
+def pointwiseTypeWeightedColimitFunctorInW
+    (D : K ⥤ (E ⥤ Type v)) :
+    (Kᵒᵖ ⥤ Type v) ⥤ (E ⥤ Type v) :=
+  typeWeightedColimitBifunctor (J := K) ⋙
+    (Functor.whiskeringLeft E (K ⥤ Type v)
+      (Type v)).obj D.flip
+
+theorem
+    pointwiseTypeWeightedLimitBifunctor_obj_obj
+    (W : (K ⥤ Type v)ᵒᵖ)
+    (D : K ⥤ (E ⥤ Type v)) :
+    (pointwiseTypeWeightedLimitBifunctor.obj
+      W).obj D =
+      pointwiseTypeWeightedLimit W.unop D := by
+  simp only [pointwiseTypeWeightedLimitBifunctor,
+    Functor.comp_obj,
+    Functor.whiskeringLeft_obj_obj,
+    Functor.whiskeringRight_obj_obj,
+    typeWeightedLimitBifunctor,
+    pointwiseTypeWeightedLimit]
+  congr 1
+
+theorem
+    pointwiseTypeWeightedColimitBifunctor_obj_obj
+    (W : Kᵒᵖ ⥤ Type v)
+    (D : K ⥤ (E ⥤ Type v)) :
+    (pointwiseTypeWeightedColimitBifunctor.obj
+      W).obj D =
+      pointwiseTypeWeightedColimit W D := by
+  simp only [
+    pointwiseTypeWeightedColimitBifunctor,
+    Functor.comp_obj,
+    Functor.whiskeringLeft_obj_obj,
+    Functor.whiskeringRight_obj_obj,
+    typeWeightedColimitBifunctor,
+    pointwiseTypeWeightedColimit]
+  congr 1
+
+theorem
+    pointwiseTypeWeightedLimitFunctorInW_obj
+    (D : K ⥤ (E ⥤ Type v))
+    (W : (K ⥤ Type v)ᵒᵖ) :
+    (pointwiseTypeWeightedLimitFunctorInW D).obj
+      W =
+      pointwiseTypeWeightedLimit W.unop D := by
+  simp only [
+    pointwiseTypeWeightedLimitFunctorInW,
+    Functor.comp_obj,
+    Functor.whiskeringLeft_obj_obj,
+    typeWeightedLimitBifunctor,
+    pointwiseTypeWeightedLimit]
+
+theorem
+    pointwiseTypeWeightedColimitFunctorInW_obj
+    (D : K ⥤ (E ⥤ Type v))
+    (W : Kᵒᵖ ⥤ Type v) :
+    (pointwiseTypeWeightedColimitFunctorInW D).obj
+      W =
+      pointwiseTypeWeightedColimit W D := by
+  simp only [
+    pointwiseTypeWeightedColimitFunctorInW,
+    Functor.comp_obj,
+    Functor.whiskeringLeft_obj_obj,
+    typeWeightedColimitBifunctor,
+    pointwiseTypeWeightedColimit]
+
+/-- Lifting the type-level natural isomorphism
+`typeWeightedLimitFunctor W ≅ coyoneda.obj (op W)`
+to presheaf-valued diagrams: at each
+`D : K ⥤ (E ⥤ Type v)`, the pointwise weighted
+limit presheaf is naturally isomorphic to
+`D.flip ⋙ coyoneda.obj (op W)`, which at `e : E`
+gives the nat-trans type `(W ⟶ D.flip.obj e)`. -/
+def pointwiseTypeWeightedLimitFunctor.natIso
+    (W : K ⥤ Type v) :
+    pointwiseTypeWeightedLimitFunctor (E := E) W ≅
+      Functor.flipping.functor ⋙
+        (Functor.whiskeringRight E (K ⥤ Type v)
+          (Type v)).obj
+          (coyoneda.obj (Opposite.op W)) :=
+  Functor.isoWhiskerLeft
+    Functor.flipping.functor
+    ((Functor.whiskeringRight E (K ⥤ Type v)
+      (Type v)).mapIso
+      (typeWeightedLimitFunctor.natIso W))
+
 end PointwisePresheaf
 
 end GebLean
