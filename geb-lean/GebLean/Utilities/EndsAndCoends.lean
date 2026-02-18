@@ -1713,4 +1713,62 @@ def typeCoend.endImpredicative
 
 end NinjaYoneda
 
+section PointwisePresheaf
+
+universe u₁
+
+variable
+  {K : Type v} [Category.{v} K]
+  {E : Type u₁} [Category.{v} E]
+
+/-- The pointwise weighted limit presheaf: given
+`D : K ⥤ (E ⥤ Type v)` with weight `W : K ⥤ Type v`,
+produces the presheaf
+`e ↦ typeWeightedLimit W (D.flip.obj e)` in
+`E ⥤ Type v`.
+
+At each `e : E`, `D.flip.obj e : K ⥤ Type v` sends
+`j ↦ (D.obj j).obj e`, and the weighted limit
+consists of families `(j : K) → W.obj j → D(j)(e)`
+satisfying the wedge condition. -/
+def pointwiseTypeWeightedLimit
+    (W : K ⥤ Type v)
+    (D : K ⥤ (E ⥤ Type v)) : E ⥤ Type v :=
+  D.flip ⋙ typeWeightedLimitFunctor W
+
+/-- The pointwise weighted colimit presheaf: given
+`D : K ⥤ (E ⥤ Type v)` with weight
+`W : Kᵒᵖ ⥤ Type v`, produces the presheaf
+`e ↦ typeWeightedColimit W (D.flip.obj e)` in
+`E ⥤ Type v`. -/
+def pointwiseTypeWeightedColimit
+    (W : Kᵒᵖ ⥤ Type v)
+    (D : K ⥤ (E ⥤ Type v)) : E ⥤ Type v :=
+  D.flip ⋙ typeWeightedColimitFunctor W
+
+/-- The pointwise end presheaf: given
+`P : Kᵒᵖ ⥤ K ⥤ (E ⥤ Type v)`, produces the presheaf
+`e ↦ typeEnd (P(−)(−)(e))` in `E ⥤ Type v`.
+
+At each `e : E`, the profunctor sends
+`(op j, k) ↦ (P.obj (op j)).obj k |>.obj e`, and the
+end consists of compatible families satisfying the
+wedge condition at `e`. -/
+def pointwiseTypeEnd
+    (P : Kᵒᵖ ⥤ K ⥤ (E ⥤ Type v)) :
+    E ⥤ Type v :=
+  (P ⋙ flipFunctor K E (Type v)).flip ⋙
+    typeEndFunctor K
+
+/-- The pointwise coend presheaf: given
+`P : Kᵒᵖ ⥤ K ⥤ (E ⥤ Type v)`, produces the presheaf
+`e ↦ typeCoend (P(−)(−)(e))` in `E ⥤ Type v`. -/
+def pointwiseTypeCoend
+    (P : Kᵒᵖ ⥤ K ⥤ (E ⥤ Type v)) :
+    E ⥤ Type v :=
+  (P ⋙ flipFunctor K E (Type v)).flip ⋙
+    typeCoendFunctor K
+
+end PointwisePresheaf
+
 end GebLean
