@@ -153,22 +153,20 @@ theorem functorToData_mkFunctor {C : Type*} [Category C] (data : FunctorData C) 
 theorem mkFunctor_functorToData {C : Type*} [Category C] (F : Obj ⥤ C) :
     mkFunctor (functorToData F) = F := by
   apply CategoryTheory.Functor.ext
-  case h_obj =>
-    intro X
-    cases X <;> rfl
+  case h_obj => intro X; cases X <;> rfl
   case h_map =>
     intro X Y f
     cases f with
     | id =>
-      cases X
-      all_goals
-        simp only [mkFunctor, functorToData, objMap, eqToHom_refl,
-          Category.comp_id, Category.id_comp]
-        exact (F.map_id _).symm
+      cases X <;>
+        (change _ = 𝟙 _ ≫ _ ≫ 𝟙 _;
+         simp only [Category.comp_id, Category.id_comp];
+         exact (F.map_id _).symm)
     | hom g =>
       cases g <;>
-      simp only [mkFunctor, functorToData, mapSemiHom, eqToHom_refl,
-        Category.comp_id, Category.id_comp]
+        (change _ = 𝟙 _ ≫ _ ≫ 𝟙 _;
+         simp only [Category.comp_id, Category.id_comp,
+           mkFunctor, functorToData, mapSemiHom])
 
 @[ext]
 structure NatTransData {C : Type*} [Category C] (F G : FunctorData C) where
@@ -242,7 +240,11 @@ theorem mkNatTrans_natTransToData {C : Type*} [Category C] {F G : Obj ⥤ C}
     eqToHom (mkFunctor_functorToData F) ≫ α ≫
     eqToHom (mkFunctor_functorToData G).symm := by
   ext X
-  cases X <;> simp [mkNatTrans, natTransToData]
+  cases X <;>
+    simp only [mkNatTrans, natTransToData,
+      NatTrans.comp_app, eqToHom_app] <;>
+    (change _ = 𝟙 _ ≫ _ ≫ 𝟙 _;
+     simp only [Category.comp_id, Category.id_comp])
 
 /-- The functor from FunctorData to the functor category. -/
 def functorDataToFunctor {C : Type*} [Category C] : FunctorData C ⥤ (Obj ⥤ C) where
@@ -290,7 +292,9 @@ theorem functorDataToFunctor_comp_functorToFunctorData {C : Type*} [Category C] 
     intro F G α
     simp only [Functor.comp_obj, Functor.comp_map, Functor.id_obj,
       Functor.id_map, functorToFunctorData, functorDataToFunctor,
-      natTransToData_mkNatTrans, eqToHom_refl, Category.comp_id, Category.id_comp]
+      natTransToData_mkNatTrans]
+    change _ = 𝟙 _ ≫ _ ≫ 𝟙 _
+    simp only [Category.comp_id, Category.id_comp]
 
 /-- The categorical isomorphism between FunctorData C and Obj ⥤ C. -/
 def functorDataIsoCat {C : Type*} [Category C] : FunctorData C ≅Cat (Obj ⥤ C) where

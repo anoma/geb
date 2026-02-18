@@ -99,7 +99,7 @@ end AcyclicCategoryHom
 /-- Data for an acyclic category: combines quiver, order,
     acyclicity, and composition structure. -/
 structure AcyclicCategoryData (V : Type u) where
-  homSet : HomSet.{v + 1, u} V
+  homSet : HomSet.{v, u} V
   order : TopologicalOrder V
   edgesIncrease : @QuiverEdgesIncrease V homSet order
   semicat : SemicategoryStruct V homSet
@@ -120,7 +120,7 @@ open CategoryTheory
 instance : CoeSort (AcyclicCategoryCat.Large.{u, v}) (Type u) where
   coe V := V.carrier
 
-instance (V : AcyclicCategoryCat.Large.{u, v}) : Quiver.{v + 1} V.carrier where
+instance (V : AcyclicCategoryCat.Large.{u, v}) : Quiver.{v} V.carrier where
   Hom := V.wit.homSet
 
 instance (V : AcyclicCategoryCat.Large.{u, v}) : TopologicalOrder V.carrier :=

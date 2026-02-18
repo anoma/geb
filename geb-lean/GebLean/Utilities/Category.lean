@@ -68,7 +68,7 @@ open CategoryTheory
 universe v u
 
 /-- The data of a quiver: a family of types indexed by pairs of vertices. -/
-abbrev HomSet (U : Type u) := U → U → Sort v
+abbrev HomSet (U : Type u) := U → U → Type v
 
 /-- Extract a `Quiver` typeclass instance from a `HomSet`. -/
 instance {U : Type u} (hs : HomSet.{v, u} U) : Quiver.{v, u} U where
@@ -169,9 +169,8 @@ macro_rules | `($f ≫[$ops] $g) => `(($ops).comp $f $g)
 scoped syntax:max "𝟙[" term "] " term : term
 macro_rules | `(𝟙[$ops] $a) => `(($ops).id $a)
 
-/-- Build a `CategoryStruct` typeclass instance from category operations.
-    Note: This only works when the HomSet is in Type (not general Sort). -/
-instance {U : Type u} (hs : HomSet.{v + 1, u} U)
+/-- Build a `CategoryStruct` typeclass instance from category operations. -/
+instance {U : Type u} (hs : HomSet.{v, u} U)
     (ops : CategoryOps hs) : CategoryStruct.{v, u} U where
   Hom := hs
   id := ops.id
@@ -214,9 +213,8 @@ variable {U : Type u} {hs : HomSet.{v, u} U}
 
 end CategoryData
 
-/-- Build a `Category` typeclass instance from category data.
-    Note: This only works when the HomSet is in Type (not general Sort). -/
-def CategoryOfData {U : Type u} {hs : HomSet.{v + 1, u} U}
+/-- Build a `Category` typeclass instance from category data. -/
+def CategoryOfData {U : Type u} {hs : HomSet.{v, u} U}
     (data : CategoryData U hs) : Category.{v, u} U where
   Hom := hs
   id := data.id
@@ -236,7 +234,7 @@ class HasCategoryData (U : Type u) (hs : outParam (HomSet.{v, u} U)) where
     `HasCategoryData`, mathlib's category notation (`⟶`, `≫`, `𝟙`) is
     available. -/
 instance (priority := low) instCategoryOfHasCategoryData
-    {U : Type u} {hs : HomSet.{v + 1, u} U} [hcd : HasCategoryData U hs] :
+    {U : Type u} {hs : HomSet.{v, u} U} [hcd : HasCategoryData U hs] :
     Category.{v, u} U :=
   CategoryOfData hcd.data
 
@@ -256,7 +254,7 @@ abbrev categoryDataOfCategory (U : Type u) [Category.{v, u} U] :
 /-- Round-trip from `CategoryData` to `Category` and back yields the original
     data. -/
 theorem categoryDataOfCategory_of_CategoryOfData {U : Type u}
-    {hs : HomSet.{v + 1, u} U} (data : CategoryData U hs) :
+    {hs : HomSet.{v, u} U} (data : CategoryData U hs) :
     @categoryDataOfCategory U (CategoryOfData data) = data := rfl
 
 /-- Round-trip from `Category` to `CategoryData` and back yields the original
@@ -392,7 +390,7 @@ compatible operations. -/
     2. `CategoryData.ofCompatible` to transfer the laws to U
     3. `CategoryOfData` to build a new `Category` instance on U -/
 def categoryOfCompatible {U : Type u} {V : Type u} (e : U ≃ V)
-    {hsU : HomSet.{v + 1, u} U}
+    {hsU : HomSet.{v, u} U}
     [catV : Category.{v, u} V]
     (he : HomSetEquiv e hsU (homSetOfQuiver V))
     (opsU : CategoryOps hsU)
@@ -406,7 +404,7 @@ def categoryOfCompatible {U : Type u} {V : Type u} (e : U ≃ V)
     A simplified version of `CategoryOpsCompatible` for the common case where
     we have a `Category` instance on V and want compatible ops on U. -/
 structure CategoryOpsCompatibleWithCategory {U : Type u} {V : Type u}
-    (e : U ≃ V) {hsU : HomSet.{v + 1, u} U} [Category.{v, u} V]
+    (e : U ≃ V) {hsU : HomSet.{v, u} U} [Category.{v, u} V]
     (he : HomSetEquiv e hsU (homSetOfQuiver V))
     (opsU : CategoryOps hsU) : Prop where
   /-- Identity agrees with transported identity -/
@@ -418,7 +416,7 @@ structure CategoryOpsCompatibleWithCategory {U : Type u} {V : Type u}
 /-- Convert `CategoryOpsCompatibleWithCategory` to `CategoryOpsCompatible`. -/
 def CategoryOpsCompatibleWithCategory.toCategoryOpsCompatible
     {U : Type u} {V : Type u} {e : U ≃ V}
-    {hsU : HomSet.{v + 1, u} U} [Category.{v, u} V]
+    {hsU : HomSet.{v, u} U} [Category.{v, u} V]
     {he : HomSetEquiv e hsU (homSetOfQuiver V)}
     {opsU : CategoryOps hsU}
     (compat : CategoryOpsCompatibleWithCategory e he opsU) :
@@ -430,7 +428,7 @@ def CategoryOpsCompatibleWithCategory.toCategoryOpsCompatible
     `CategoryOpsCompatibleWithCategory`), derive a new `Category` instance
     on U. -/
 def categoryOfCompatibleWithCategory {U : Type u} {V : Type u} (e : U ≃ V)
-    {hsU : HomSet.{v + 1, u} U}
+    {hsU : HomSet.{v, u} U}
     [catV : Category.{v, u} V]
     (he : HomSetEquiv e hsU (homSetOfQuiver V))
     (opsU : CategoryOps hsU)
@@ -599,10 +597,9 @@ def FunctorData.idFunctor {C : Type u} {hsC : HomSet.{v, u} C}
     map_comp := fun _ _ => rfl
   }
 
-/-- Build a `CategoryTheory.Functor` from `FunctorData`.
-    Note: This only works when the HomSets are in Type (not general Sort). -/
+/-- Build a `CategoryTheory.Functor` from `FunctorData`. -/
 def FunctorOfData {C : Type u} {D : Type u₁}
-    {hsC : HomSet.{v + 1, u} C} {hsD : HomSet.{v₁ + 1, u₁} D}
+    {hsC : HomSet.{v, u} C} {hsD : HomSet.{v₁, u₁} D}
     {dataC : CategoryData C hsC} {dataD : CategoryData D hsD}
     (fd : FunctorData dataC dataD) :
     @CategoryTheory.Functor C (CategoryOfData dataC) D
@@ -626,7 +623,7 @@ abbrev functorDataOfFunctor {C : Type u} {D : Type u₁}
 /-- Round-trip from `FunctorData` to `CategoryTheory.Functor` and back yields
     the original data. -/
 theorem functorDataOfFunctor_of_FunctorOfData {C : Type u} {D : Type u₁}
-    {hsC : HomSet.{v + 1, u} C} {hsD : HomSet.{v₁ + 1, u₁} D}
+    {hsC : HomSet.{v, u} C} {hsD : HomSet.{v₁, u₁} D}
     {dataC : CategoryData C hsC} {dataD : CategoryData D hsD}
     (fd : FunctorData dataC dataD) :
     @functorDataOfFunctor C D (CategoryOfData dataC)
@@ -863,10 +860,9 @@ def NatTransData.withCompatibleApp {C : Type u} {D : Type u₁}
     NatTransData F G :=
   NatTransData.ofCompatible α.laws compat
 
-/-- Build a `CategoryTheory.NatTrans` from `NatTransData`.
-    Note: This only works when the HomSets are in Type (not general Sort). -/
+/-- Build a `CategoryTheory.NatTrans` from `NatTransData`. -/
 def NatTransOfData {C : Type u} {D : Type u₁}
-    {hsC : HomSet.{v + 1, u} C} {hsD : HomSet.{v₁ + 1, u₁} D}
+    {hsC : HomSet.{v, u} C} {hsD : HomSet.{v₁, u₁} D}
     {dataC : CategoryData C hsC} {dataD : CategoryData D hsD}
     {F G : FunctorData dataC dataD}
     (α : NatTransData F G) :
@@ -880,7 +876,7 @@ def NatTransOfData {C : Type u} {D : Type u₁}
 /-- Extract `NatTransData` from a `CategoryTheory.NatTrans` when the Category
     instances are explicitly provided via `CategoryOfData`. -/
 def natTransDataOfNatTrans' {C : Type u} {D : Type u₁}
-    {hsC : HomSet.{v + 1, u} C} {hsD : HomSet.{v₁ + 1, u₁} D}
+    {hsC : HomSet.{v, u} C} {hsD : HomSet.{v₁, u₁} D}
     {dataC : CategoryData C hsC} {dataD : CategoryData D hsD}
     {F G : FunctorData dataC dataD}
     (α : @CategoryTheory.NatTrans C (CategoryOfData dataC) D (CategoryOfData dataD)
@@ -902,7 +898,7 @@ def natTransDataOfNatTrans {C : Type u} {D : Type u₁}
 /-- Round-trip from `NatTransData` to `NatTrans` and back yields the original
     data. -/
 theorem natTransDataOfNatTrans'_of_NatTransOfData {C : Type u} {D : Type u₁}
-    {hsC : HomSet.{v + 1, u} C} {hsD : HomSet.{v₁ + 1, u₁} D}
+    {hsC : HomSet.{v, u} C} {hsD : HomSet.{v₁, u₁} D}
     {dataC : CategoryData C hsC} {dataD : CategoryData D hsD}
     {F G : FunctorData dataC dataD} (α : NatTransData F G) :
     natTransDataOfNatTrans' (NatTransOfData α) = α := by
@@ -912,7 +908,7 @@ theorem natTransDataOfNatTrans'_of_NatTransOfData {C : Type u} {D : Type u₁}
 /-- Round-trip from `NatTrans` to `NatTransData` and back yields the original
     natural transformation. -/
 theorem NatTransOfData_of_natTransDataOfNatTrans' {C : Type u} {D : Type u₁}
-    {hsC : HomSet.{v + 1, u} C} {hsD : HomSet.{v₁ + 1, u₁} D}
+    {hsC : HomSet.{v, u} C} {hsD : HomSet.{v₁, u₁} D}
     {dataC : CategoryData C hsC} {dataD : CategoryData D hsD}
     {F G : FunctorData dataC dataD}
     (α : @CategoryTheory.NatTrans C (CategoryOfData dataC) D (CategoryOfData dataD)
@@ -1126,23 +1122,22 @@ theorem NatTransData.hcomp_eq_hcomp' {C : Type u} {D : Type u₁} {E : Type u₂
 /-! ### Functor Category Data
 
 We define the category structure on `FunctorData` with `NatTransData` as morphisms.
-This requires the hom-sets of the source and target categories to be in `Type`
-(not general `Sort`), so that `FunctorData` and `NatTransData` are also in `Type`. -/
+-/
 
 /-- The hom-set for the functor category: natural transformations between
-    functors. When `hsC : HomSet.{v + 1, u}` and `hsD : HomSet.{v₁ + 1, u₁}`,
+    functors. When `hsC : HomSet.{v, u}` and `hsD : HomSet.{v₁, u₁}`,
     we have `FunctorData dataC dataD : Type (max (max (max u u₁) v) v₁)` and
     `NatTransData F G : Type (max u v₁)`. -/
 abbrev FunctorHomSet {C : Type u} {D : Type u₁}
-    {hsC : HomSet.{v + 1, u} C} {hsD : HomSet.{v₁ + 1, u₁} D}
+    {hsC : HomSet.{v, u} C} {hsD : HomSet.{v₁, u₁} D}
     (dataC : CategoryData C hsC) (dataD : CategoryData D hsD) :
-    HomSet.{max u v₁ + 1, max (max (max u u₁) v) v₁}
+    HomSet.{max u v₁, max (max (max u u₁) v) v₁}
       (FunctorData dataC dataD) :=
   NatTransData
 
 /-- Category operations for the functor category. -/
 def functorCategoryOps {C : Type u} {D : Type u₁}
-    {hsC : HomSet.{v + 1, u} C} {hsD : HomSet.{v₁ + 1, u₁} D}
+    {hsC : HomSet.{v, u} C} {hsD : HomSet.{v₁, u₁} D}
     (dataC : CategoryData C hsC) (dataD : CategoryData D hsD) :
     CategoryOps (FunctorHomSet dataC dataD) where
   comp := NatTransData.vcomp
@@ -1150,7 +1145,7 @@ def functorCategoryOps {C : Type u} {D : Type u₁}
 
 /-- Category laws for the functor category. -/
 def functorCategoryLaws {C : Type u} {D : Type u₁}
-    {hsC : HomSet.{v + 1, u} C} {hsD : HomSet.{v₁ + 1, u₁} D}
+    {hsC : HomSet.{v, u} C} {hsD : HomSet.{v₁, u₁} D}
     (dataC : CategoryData C hsC) (dataD : CategoryData D hsD) :
     CategoryLaws (FunctorHomSet dataC dataD) (functorCategoryOps dataC dataD) where
   assoc := NatTransData.vcomp_assoc
@@ -1161,7 +1156,7 @@ def functorCategoryLaws {C : Type u} {D : Type u₁}
 
 /-- Category data for the functor category. -/
 def functorCategoryData {C : Type u} {D : Type u₁}
-    {hsC : HomSet.{v + 1, u} C} {hsD : HomSet.{v₁ + 1, u₁} D}
+    {hsC : HomSet.{v, u} C} {hsD : HomSet.{v₁, u₁} D}
     (dataC : CategoryData C hsC) (dataD : CategoryData D hsD) :
     CategoryData (FunctorData dataC dataD) (FunctorHomSet dataC dataD) where
   toCategoryOps := functorCategoryOps dataC dataD
@@ -1175,7 +1170,7 @@ when both are instantiated from the same `CategoryData`. -/
 /-- The functor from our functor category data to mathlib's functor category.
     Maps `FunctorData` to `Functor` and `NatTransData` to `NatTrans`. -/
 def functorCategoryToMathlib {C : Type u} {D : Type u₁}
-    {hsC : HomSet.{v + 1, u} C} {hsD : HomSet.{v₁ + 1, u₁} D}
+    {hsC : HomSet.{v, u} C} {hsD : HomSet.{v₁, u₁} D}
     (dataC : CategoryData C hsC) (dataD : CategoryData D hsD) :
     @CategoryTheory.Functor
       (FunctorData dataC dataD) (CategoryOfData (functorCategoryData dataC dataD))
@@ -1191,7 +1186,7 @@ def functorCategoryToMathlib {C : Type u} {D : Type u₁}
 /-- The functor from mathlib's functor category to our functor category data.
     Maps `Functor` to `FunctorData` and `NatTrans` to `NatTransData`. -/
 def mathlibToFunctorCategory {C : Type u} {D : Type u₁}
-    {hsC : HomSet.{v + 1, u} C} {hsD : HomSet.{v₁ + 1, u₁} D}
+    {hsC : HomSet.{v, u} C} {hsD : HomSet.{v₁, u₁} D}
     (dataC : CategoryData C hsC) (dataD : CategoryData D hsD) :
     @CategoryTheory.Functor
       (@CategoryTheory.Functor C (CategoryOfData dataC) D (CategoryOfData dataD))
@@ -1209,7 +1204,7 @@ def mathlibToFunctorCategory {C : Type u} {D : Type u₁}
 /-- Round-trip: going to mathlib and back is the identity on objects. -/
 theorem mathlibToFunctorCategory_obj_functorCategoryToMathlib_obj
     {C : Type u} {D : Type u₁}
-    {hsC : HomSet.{v + 1, u} C} {hsD : HomSet.{v₁ + 1, u₁} D}
+    {hsC : HomSet.{v, u} C} {hsD : HomSet.{v₁, u₁} D}
     (dataC : CategoryData C hsC) (dataD : CategoryData D hsD)
     (F : FunctorData dataC dataD) :
     letI : Category (FunctorData dataC dataD) :=
@@ -1220,7 +1215,7 @@ theorem mathlibToFunctorCategory_obj_functorCategoryToMathlib_obj
 /-- Round-trip: going from mathlib and back is the identity on objects. -/
 theorem functorCategoryToMathlib_obj_mathlibToFunctorCategory_obj
     {C : Type u} {D : Type u₁}
-    {hsC : HomSet.{v + 1, u} C} {hsD : HomSet.{v₁ + 1, u₁} D}
+    {hsC : HomSet.{v, u} C} {hsD : HomSet.{v₁, u₁} D}
     (dataC : CategoryData C hsC) (dataD : CategoryData D hsD)
     (F : @CategoryTheory.Functor C (CategoryOfData dataC) D (CategoryOfData dataD)) :
     letI : Category (FunctorData dataC dataD) :=
@@ -1232,7 +1227,7 @@ theorem functorCategoryToMathlib_obj_mathlibToFunctorCategory_obj
     the identity functor. -/
 theorem functorCategoryToMathlib_comp_mathlibToFunctorCategory
     {C : Type u} {D : Type u₁}
-    {hsC : HomSet.{v + 1, u} C} {hsD : HomSet.{v₁ + 1, u₁} D}
+    {hsC : HomSet.{v, u} C} {hsD : HomSet.{v₁, u₁} D}
     (dataC : CategoryData C hsC) (dataD : CategoryData D hsD) :
     @CategoryTheory.Functor.comp _ (CategoryOfData (functorCategoryData dataC dataD))
       _
@@ -1246,7 +1241,7 @@ theorem functorCategoryToMathlib_comp_mathlibToFunctorCategory
     the identity functor. -/
 theorem mathlibToFunctorCategory_comp_functorCategoryToMathlib
     {C : Type u} {D : Type u₁}
-    {hsC : HomSet.{v + 1, u} C} {hsD : HomSet.{v₁ + 1, u₁} D}
+    {hsC : HomSet.{v, u} C} {hsD : HomSet.{v₁, u₁} D}
     (dataC : CategoryData C hsC) (dataD : CategoryData D hsD) :
     @CategoryTheory.Functor.comp
       _
@@ -1261,7 +1256,7 @@ theorem mathlibToFunctorCategory_comp_functorCategoryToMathlib
 
 /-- The isomorphism between our functor category and mathlib's functor category. -/
 def functorCategoryIsoMathlib {C : Type u} {D : Type u₁}
-    {hsC : HomSet.{v + 1, u} C} {hsD : HomSet.{v₁ + 1, u₁} D}
+    {hsC : HomSet.{v, u} C} {hsD : HomSet.{v₁, u₁} D}
     (dataC : CategoryData C hsC) (dataD : CategoryData D hsD) :
     @CategoryTheory.Iso Cat
       Cat.category
@@ -1711,7 +1706,7 @@ structure BundledCategoryData where
   /-- The underlying type of objects -/
   Obj : Type u'
   /-- The hom-set (in Type v') -/
-  Hom : HomSet.{v' + 1, u'} Obj
+  Hom : HomSet.{v', u'} Obj
   /-- The category data -/
   data : CategoryData Obj Hom
 
@@ -1762,7 +1757,7 @@ theorem comp_idFunctorData {C D : BundledCategoryData.{v', u'}}
 
 /-- The hom-set for the category of bundled category data: functors between
     the underlying categories. -/
-def homSet : HomSet.{max v' u' + 1, max (v' + 1) (u' + 1)}
+def homSet : HomSet.{max v' u', max (v' + 1) (u' + 1)}
     BundledCategoryData.{v', u'} :=
   fun C D => FunctorData C.data D.data
 
@@ -2295,7 +2290,7 @@ are natural transformations. -/
 /-- The HomSet for the functor category: natural transformations. -/
 def OverFunctorHomSet {Q₁ Q₂ : OverQuiver.{vOver, uOver}}
     (C₁ : OverCategoryData Q₁) (C₂ : OverCategoryData Q₂) :
-    HomSet.{(max vOver uOver) + 1} (OverFunctorData C₁ C₂) :=
+    HomSet.{max vOver uOver} (OverFunctorData C₁ C₂) :=
   fun F G => OverNatTransData F G
 
 /-- Category operations for the functor category. -/
@@ -2372,7 +2367,7 @@ theorem comp_idOverFunctorData {C D : BundledOverCategoryData.{vBOver, uBOver}}
 
 /-- The hom-set for the category of BundledOverCategoryData: OverFunctorData
     between the underlying categories. -/
-def homSet : HomSet.{(max vBOver uBOver) + 1}
+def homSet : HomSet.{max vBOver uBOver}
     BundledOverCategoryData.{vBOver, uBOver} :=
   fun C D => OverFunctorData C.data D.data
 
@@ -2455,11 +2450,34 @@ def isTerminalOfEquivFunctor {C' : Type*} [Category C'] {D' : Type*} [Category D
   IsTerminal.ofUniqueHom
     (fun Y ↦ e.counitInv.app Y ≫ e.functor.map (hX.from (e.inverse.obj Y)))
     (fun Y f ↦ by
-      change f = e.counitInv.app Y ≫ e.functor.map (hX.from (e.inverse.obj Y))
-      have h : e.inverse.map f ≫ e.unitInv.app X = hX.from (e.inverse.obj Y) :=
+      change f =
+        e.counitInv.app Y ≫
+          e.functor.map
+            (hX.from (e.inverse.obj Y))
+      have h :
+          e.inverse.map f ≫ e.unitInv.app X =
+            hX.from (e.inverse.obj Y) :=
         hX.hom_ext _ _
-      rw [← h, Functor.map_comp, ← Category.assoc, e.counitInv_naturality, Category.assoc,
-        e.counitInv_functor_comp, Category.comp_id])
+      have h₂ :
+          e.functor.map
+              (hX.from (e.inverse.obj Y)) =
+            e.functor.map (e.inverse.map f) ≫
+              e.functor.map
+                (e.unitInv.app X) :=
+        (congrArg e.functor.map h.symm).trans
+          (e.functor.map_comp _ _)
+      exact ((congrArg
+        (e.counitInv.app Y ≫ ·) h₂
+        |>.trans (Category.assoc _ _ _).symm
+        |>.trans (congrArg
+          (fun x ↦ x ≫
+            e.functor.map (e.unitInv.app X))
+          (e.counitInv_naturality f))
+        |>.trans (Category.assoc _ _ _)
+        |>.trans (congrArg (f ≫ ·)
+          (e.counitInv_functor_comp X))
+        |>.trans (Category.comp_id f)
+        ).symm))
 
 open Limits in
 /-- Transfer `IsInitial` across an equivalence's functor (computably).
@@ -2471,11 +2489,33 @@ def isInitialOfEquivFunctor {C' : Type*} [Category C'] {D' : Type*} [Category D'
   IsInitial.ofUniqueHom
     (fun Y ↦ e.functor.map (hX.to (e.inverse.obj Y)) ≫ e.counit.app Y)
     (fun Y f ↦ by
-      change f = e.functor.map (hX.to (e.inverse.obj Y)) ≫ e.counit.app Y
-      have h : e.unit.app X ≫ e.inverse.map f = hX.to (e.inverse.obj Y) :=
+      change f =
+        e.functor.map
+          (hX.to (e.inverse.obj Y)) ≫
+          e.counit.app Y
+      have h :
+          e.unit.app X ≫ e.inverse.map f =
+            hX.to (e.inverse.obj Y) :=
         hX.hom_ext _ _
-      rw [← h, Functor.map_comp, Category.assoc, e.counit_naturality, ← Category.assoc,
-        e.functor_unit_comp, Category.id_comp])
+      have h₂ :
+          e.functor.map
+              (hX.to (e.inverse.obj Y)) =
+            e.functor.map (e.unit.app X) ≫
+              e.functor.map
+                (e.inverse.map f) :=
+        (congrArg e.functor.map h.symm).trans
+          (e.functor.map_comp _ _)
+      exact ((congrArg
+        (fun x ↦ x ≫ e.counit.app Y) h₂
+        |>.trans (Category.assoc _ _ _)
+        |>.trans (congrArg
+          (e.functor.map (e.unit.app X) ≫ ·)
+          (e.counit_naturality f))
+        |>.trans (Category.assoc _ _ _).symm
+        |>.trans (congrArg (fun x ↦ x ≫ f)
+          (e.functor_unit_comp X))
+        |>.trans (Category.id_comp f)
+        ).symm))
 
 end GebLean
 

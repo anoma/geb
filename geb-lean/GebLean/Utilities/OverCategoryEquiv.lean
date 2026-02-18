@@ -41,7 +41,7 @@ universe v u
 
 section QuiverEquiv
 
-variable {U : Type u} (hs : HomSet.{v + 1, u} U)
+variable {U : Type u} (hs : HomSet.{v, u} U)
 
 /-! ### From HomSet to OverQuiver -/
 
@@ -79,7 +79,7 @@ variable (Q : OverQuiver.{v, u})
 
 /-- Extract fibers from an OverQuiver as a HomSet.
     The hom-set from `a` to `b` is the fiber of the endpoint map over `(a, b)`. -/
-def OverQuiver.toHomSet : HomSet.{v + 1, u} Q.Obj :=
+def OverQuiver.toHomSet : HomSet.{v, u} Q.Obj :=
   fun a b => { f : Q.MorType // Q.src f = a ∧ Q.tgt f = b }
 
 /-- A morphism in the fiber with its source proof. -/
@@ -155,17 +155,17 @@ end QuiverEquiv
 
 section CategoryEquiv
 
-variable {U : Type u} {hs : HomSet.{v + 1, u} U}
+variable {U : Type u} {hs : HomSet.{v, u} U}
 
 /-! ### From CategoryData to OverCategoryData -/
 
 /-- Helper: extract the composability equation in explicit form. -/
-theorem HomSet.compPair_mid_eq (hs : HomSet.{v + 1, u} U)
+theorem HomSet.compPair_mid_eq (hs : HomSet.{v, u} U)
     (p : hs.toOverQuiver.ComposablePairsType) :
     p.val.1.2.1 = p.val.2.1 := p.property
 
 /-- Helper lemma for sigma equality. -/
-theorem HomSet.sigma_eq {U : Type u} {hs : HomSet.{v + 1, u} U}
+theorem HomSet.sigma_eq {U : Type u} {hs : HomSet.{v, u} U}
     {a₁ a₂ b₁ b₂ : U} {f₁ : hs a₁ b₁} {f₂ : hs a₂ b₂}
     (ha : a₁ = a₂) (hb : b₁ = b₂) (hf : ha ▸ hb ▸ f₁ = f₂) :
     (⟨a₁, b₁, f₁⟩ : hs.SigmaMor) = ⟨a₂, b₂, f₂⟩ := by
@@ -258,7 +258,7 @@ theorem HomSet.fiber_equiv_extractComp (data : CategoryData U hs)
       (OverCategoryData.extractComp data.toOverCategoryData
         ⟨⟨a, b, f⟩, ⟨rfl, rfl⟩⟩ ⟨⟨b, c, g⟩, ⟨rfl, rfl⟩⟩) =
       data.comp f g := by
-  rw [OverCategoryData.extractComp_toOverCategoryData]
+  rw [Equiv.apply_eq_iff_eq_symm_apply]
   rfl
 
 /-- Helper lemma for nested sigma equality with subtypes.
@@ -374,7 +374,7 @@ end CategoryEquiv
 section FunctorEquiv
 
 variable {U : Type u} {V : Type u}
-variable {hsC : HomSet.{v + 1, u} U} {hsD : HomSet.{v + 1, u} V}
+variable {hsC : HomSet.{v, u} U} {hsD : HomSet.{v, u} V}
 variable {dataC : CategoryData U hsC} {dataD : CategoryData V hsD}
 
 /-! ### From FunctorData to OverFunctorData -/
@@ -481,12 +481,16 @@ theorem FunctorData.roundtrip_map_fiber_equiv (fd : FunctorData dataC dataD)
     hsD.fiber_equiv (fd.obj a) (fd.obj b)
       (fd.toOverFunctorData.toFunctorData.map f) =
       fd.map (hsC.fiber_equiv a b f) := by
+  rw [Equiv.apply_eq_iff_eq_symm_apply]
   rcases f with ⟨⟨a', b', g⟩, ⟨rfl, rfl⟩⟩
-  simp only [HomSet.toOverQuiver_src, HomSet.toOverQuiver_tgt,
-    HomSet.fiber_equiv_rfl,
-    FunctorData.toOverFunctorData, OverFunctorData.toFunctorData,
-    OverFunctorData.toFunctorOps, OverFunctorData.extractMap,
+  simp only [HomSet.fiber_equiv,
+    HomSet.toOverQuiver_src, HomSet.toOverQuiver_tgt,
+    FunctorData.toOverFunctorData,
+    OverFunctorData.toFunctorData,
+    OverFunctorData.toFunctorOps,
+    OverFunctorData.extractMap,
     FunctorOps.toOverQuiverMorphism]
+  rfl
 
 /-- The symmetric version of roundtrip_map_fiber_equiv: applying fiber_equiv.symm
     to fd.map f equals the roundtrip map applied to fiber_equiv.symm f.
@@ -528,7 +532,7 @@ end FunctorEquiv
 section NatTransEquiv
 
 variable {U : Type u} {V : Type u}
-variable {hsC : HomSet.{v + 1, u} U} {hsD : HomSet.{v + 1, u} V}
+variable {hsC : HomSet.{v, u} U} {hsD : HomSet.{v, u} V}
 variable {dataC : CategoryData U hsC} {dataD : CategoryData V hsD}
 variable {F G : FunctorData dataC dataD}
 
@@ -614,8 +618,8 @@ establishing equivalences between the two representations.
 
 Universe level behavior:
 - `OverQuiver.{v, u}` has `MorType : Type v` and `Obj : Type u`
-- `OverQuiver.toHomSet` produces `HomSet.{v + 1, u}` (fibers are subtypes)
-- `HomSet.{v + 1, u}` has morphisms `hs a b : Type v`
+- `OverQuiver.toHomSet` produces `HomSet.{v, u}` (fibers are subtypes)
+- `HomSet.{v, u}` has morphisms `hs a b : Type v`
 - `HomSet.toOverQuiver` produces `OverQuiver.{max v u, u}`
 
 The sigma construction `Σ (a b : U), hs a b` lives in `Type (max u v)` because
@@ -632,8 +636,8 @@ universe level without any constraint. -/
 section BundledEquiv
 
 /-- Convert a BundledOverCategoryData to a BundledCategoryData.
-    An OverQuiver.{v, u} produces a HomSet.{v + 1, u} via toHomSet, which
-    corresponds to BundledCategoryData.{v, u} (since Hom : HomSet.{v + 1, u}).
+    An OverQuiver.{v, u} produces a HomSet.{v, u} via toHomSet, which
+    corresponds to BundledCategoryData.{v, u} (since Hom : HomSet.{v, u}).
     This direction always preserves universe levels. -/
 def BundledOverCategoryData.toBundledCategoryData
     (C : BundledOverCategoryData.{v, u}) :
@@ -643,7 +647,7 @@ def BundledOverCategoryData.toBundledCategoryData
   data := C.data.toCategoryData
 
 /-- Convert a BundledCategoryData to a BundledOverCategoryData.
-    A BundledCategoryData.{v, u} has HomSet.{v + 1, u} with morphisms in Type v.
+    A BundledCategoryData.{v, u} has HomSet.{v, u} with morphisms in Type v.
     The sigma type SigmaMor lives in Type (max v u), giving
     OverQuiver.{max v u, u}. When v ≥ u, this equals OverQuiver.{v, u}. -/
 def BundledCategoryData.toBundledOverCategoryData
@@ -656,7 +660,7 @@ def BundledCategoryData.toBundledOverCategoryData
     using fiber_equiv to project back to the original universe level.
     This works for any universe parameters {v, u} without constraints. -/
 def BundledCategoryData.roundtripHomSet (C : BundledCategoryData.{v, u}) :
-    HomSet.{v + 1, u} C.Obj :=
+    HomSet.{v, u} C.Obj :=
   fun a b => C.Hom a b
 
 /-- The round-trip HomSet equals the original. -/

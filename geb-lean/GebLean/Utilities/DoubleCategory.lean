@@ -1679,16 +1679,32 @@ theorem interchange_app {Obj₁ : Type u₁}
     ((τ.vComp ops₂ τ').hComp ops₃ (σ.vComp ops₃ σ')).app A
     = ((τ.hComp ops₃ σ).vComp ops₃ (τ'.hComp ops₃ σ')).app A := by
   simp only [VertTransOps.hComp, VertTransOps.vComp]
-  rw [klaws.map_vComp]
-  rw [vComp_assoc ops₃ laws₃ (K.vertMap (τ.app A)) (K.vertMap (τ'.app A))
-        (ops₃.vComp (σ.app (H.objMap A)) (σ'.app (H.objMap A)))]
-  rw [← vComp_assoc ops₃ laws₃ (K.vertMap (τ'.app A)) (σ.app (H.objMap A))
-        (σ'.app (H.objMap A))]
+  conv_lhs =>
+    simp only [klaws.map_vComp, DoubleFunctorOps.comp]
+  show ops₃.vComp
+      (ops₃.vComp (K.vertMap (τ.app A))
+        (K.vertMap (τ'.app A)))
+      (ops₃.vComp (σ.app (H.objMap A))
+        (σ'.app (H.objMap A)))
+    = ops₃.vComp
+      (ops₃.vComp (K.vertMap (τ.app A))
+        (σ.app (G.objMap A)))
+      (ops₃.vComp (L.vertMap (τ'.app A))
+        (σ'.app (H.objMap A)))
+  rw [vComp_assoc ops₃ laws₃ (K.vertMap (τ.app A))
+    (K.vertMap (τ'.app A))
+    (ops₃.vComp (σ.app (H.objMap A))
+      (σ'.app (H.objMap A)))]
+  rw [← vComp_assoc ops₃ laws₃
+    (K.vertMap (τ'.app A)) (σ.app (H.objMap A))
+    (σ'.app (H.objMap A))]
   rw [← σNat (τ'.app A)]
-  rw [vComp_assoc ops₃ laws₃ (σ.app (G.objMap A)) (L.vertMap (τ'.app A))
-        (σ'.app (H.objMap A))]
-  rw [← vComp_assoc ops₃ laws₃ (K.vertMap (τ.app A)) (σ.app (G.objMap A))
-        (ops₃.vComp (L.vertMap (τ'.app A)) (σ'.app (H.objMap A)))]
+  rw [vComp_assoc ops₃ laws₃ (σ.app (G.objMap A))
+    (L.vertMap (τ'.app A)) (σ'.app (H.objMap A))]
+  rw [← vComp_assoc ops₃ laws₃
+    (K.vertMap (τ.app A)) (σ.app (G.objMap A))
+    (ops₃.vComp (L.vertMap (τ'.app A))
+      (σ'.app (H.objMap A)))]
 
 theorem VertTransOps.interchange {Obj₁ : Type u₁}
     {vhs₁ : VertHomSet Obj₁} {hhs₁ : HorHomSet Obj₁} {sqs₁ : SquareSet vhs₁ hhs₁}
@@ -2066,16 +2082,32 @@ theorem interchange_app_hor {Obj₁ : Type u₁}
     ((τ.hComp ops₂ τ').vComp ops₃ (σ.hComp ops₃ σ')).app A
     = ((τ.vComp ops₃ σ).hComp ops₃ (τ'.vComp ops₃ σ')).app A := by
   simp only [HorTransOps.vComp, HorTransOps.hComp]
-  rw [klaws.map_hComp]
-  rw [hComp_assoc ops₃ laws₃ (K.horMap (τ.app A)) (K.horMap (τ'.app A))
-        (ops₃.hComp (σ.app (H.objMap A)) (σ'.app (H.objMap A)))]
-  rw [← hComp_assoc ops₃ laws₃ (K.horMap (τ'.app A)) (σ.app (H.objMap A))
-        (σ'.app (H.objMap A))]
+  conv_lhs =>
+    simp only [klaws.map_hComp, DoubleFunctorOps.comp]
+  show ops₃.hComp
+      (ops₃.hComp (K.horMap (τ.app A))
+        (K.horMap (τ'.app A)))
+      (ops₃.hComp (σ.app (H.objMap A))
+        (σ'.app (H.objMap A)))
+    = ops₃.hComp
+      (ops₃.hComp (K.horMap (τ.app A))
+        (σ.app (G.objMap A)))
+      (ops₃.hComp (L.horMap (τ'.app A))
+        (σ'.app (H.objMap A)))
+  rw [hComp_assoc ops₃ laws₃ (K.horMap (τ.app A))
+    (K.horMap (τ'.app A))
+    (ops₃.hComp (σ.app (H.objMap A))
+      (σ'.app (H.objMap A)))]
+  rw [← hComp_assoc ops₃ laws₃
+    (K.horMap (τ'.app A)) (σ.app (H.objMap A))
+    (σ'.app (H.objMap A))]
   rw [← σNat (τ'.app A)]
-  rw [hComp_assoc ops₃ laws₃ (σ.app (G.objMap A)) (L.horMap (τ'.app A))
-        (σ'.app (H.objMap A))]
-  rw [← hComp_assoc ops₃ laws₃ (K.horMap (τ.app A)) (σ.app (G.objMap A))
-        (ops₃.hComp (L.horMap (τ'.app A)) (σ'.app (H.objMap A)))]
+  rw [hComp_assoc ops₃ laws₃ (σ.app (G.objMap A))
+    (L.horMap (τ'.app A)) (σ'.app (H.objMap A))]
+  rw [← hComp_assoc ops₃ laws₃
+    (K.horMap (τ.app A)) (σ.app (G.objMap A))
+    (ops₃.hComp (L.horMap (τ'.app A))
+      (σ'.app (H.objMap A)))]
 
 /-- Interchange law for horizontal transformations.
 

@@ -44,7 +44,7 @@ structure CategoryPresentation where
   /-- The type of vertices (generators) -/
   generators : Type u
   /-- The quiver structure on generators -/
-  generatorQuiver : Quiver.{v + 1} generators
+  generatorQuiver : Quiver.{v} generators
   /-- Relations on paths in the free category -/
   relations : let _ := generatorQuiver; @HomRel (Paths generators) _
 
@@ -53,7 +53,7 @@ namespace CategoryPresentation
 variable (P : CategoryPresentation.{v, u})
 
 /-- Make the quiver instance available as a typeclass instance (wrapper) -/
-instance : Quiver.{v + 1} P.generators := P.generatorQuiver
+instance : Quiver.{v} P.generators := P.generatorQuiver
 
 /-- The free category on the generators has Paths as morphisms -/
 abbrev FreeCategory := Paths P.generators

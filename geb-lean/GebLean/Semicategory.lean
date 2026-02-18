@@ -37,26 +37,26 @@ namespace Quiver
 
 /-- A compositional structure provides a way to compose morphisms in a
     quiver. This delegates to the `HomSet`-based definition. -/
-abbrev CompositionalStruct (V : Type u) [Quiver.{v + 1} V] :=
+abbrev CompositionalStruct (V : Type u) [Quiver.{v} V] :=
   GebLean.CompositionalStruct (homSetOfQuiver V)
 
 /-- An associativity law states that composition is associative. This
     delegates to the `HomSet`-based definition. -/
-abbrev AssociativityLaw (V : Type u) [Quiver.{v + 1} V]
+abbrev AssociativityLaw (V : Type u) [Quiver.{v} V]
     (comp : CompositionalStruct V) :=
   GebLean.AssociativityLaw (homSetOfQuiver V) comp
 
 /-- The structure of a semicategory: composition and associativity,
     without requiring identity morphisms. This delegates to the
     `HomSet`-based definition. -/
-abbrev SemicategoryStruct (V : Type u) [Quiver.{v + 1} V] :=
+abbrev SemicategoryStruct (V : Type u) [Quiver.{v} V] :=
   GebLean.SemicategoryStruct V (homSetOfQuiver V)
 
 end Quiver
 
 /-- A semicategory is a quiver with associative composition but no
     identity morphisms. -/
-class Semicategory (V : Type u) extends Quiver.{v + 1} V where
+class Semicategory (V : Type u) extends Quiver.{v} V where
   toSemicategoryStruct : Quiver.SemicategoryStruct V := by infer_instance
 
 instance {V : Type u} [h : Semicategory V] :
@@ -374,7 +374,6 @@ def toCat : SemicategoryCat ⥤ Cat where
     · intro x
       rfl
     · intro x y f
-      simp only [eqToHom_refl, Category.comp_id, Category.id_comp]
       cases f <;> rfl
   map_comp {U V W} F G := by
     apply Cat.Hom.ext
@@ -382,7 +381,6 @@ def toCat : SemicategoryCat ⥤ Cat where
     · intro x
       rfl
     · intro x y f
-      simp only [eqToHom_refl, Category.comp_id, Category.id_comp]
       cases f <;> rfl
 
 end Semicategory

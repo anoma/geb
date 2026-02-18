@@ -202,19 +202,19 @@ instance acyclicPresentationOrder (P : AcyclicPresentation.{v, u}) :
     exact @le_antisymm P.generators P.generatorAcyclicWitness.order _ _ hxy hyx
 
 /-- The length of a path is the number of edges it contains. -/
-def pathLength {V : Type u} [Quiver.{v + 1} V] {a b : V} :
+def pathLength {V : Type u} [Quiver.{v} V] {a b : V} :
     Quiver.Path a b → ℕ
   | .nil => 0
   | .cons p _ => pathLength p + 1
 
 /-- Extract the list of vertices visited by a path (including start and end). -/
-def pathVertices {V : Type u} [Quiver.{v + 1} V] {a b : V} :
+def pathVertices {V : Type u} [Quiver.{v} V] {a b : V} :
     Quiver.Path a b → List V
   | .nil => [a]
   | .cons p _ => pathVertices p ++ [b]
 
 /-- The vertices in a path from a to b include both a and b. -/
-theorem pathVertices_nonempty {V : Type u} [Quiver.{v + 1} V] {a b : V}
+theorem pathVertices_nonempty {V : Type u} [Quiver.{v} V] {a b : V}
     (p : Quiver.Path a b) : pathVertices p ≠ [] := by
   cases p <;> simp [pathVertices]
 
@@ -259,7 +259,7 @@ theorem pathVertices_nodup {V : Type u} [inst : AcyclicQuiver.{u, v} V]
       exact lt_irrefl _ (lt_of_le_of_lt c_le_mid mid_lt_c)
 
 /-- The length of pathVertices is pathLength + 1. -/
-theorem pathVertices_length {V : Type u} [Quiver.{v + 1} V] {a b : V}
+theorem pathVertices_length {V : Type u} [Quiver.{v} V] {a b : V}
     (p : Quiver.Path a b) :
     (pathVertices p).length = pathLength p + 1 := by
   induction p with
@@ -285,7 +285,7 @@ theorem path_length_bounded {V : Type u} [inst : AcyclicQuiver.{u, v} V]
   omega
 
 /-- Decidable instance for path length comparison. -/
-instance pathLengthDecidable {V : Type u} [Quiver.{v + 1} V]
+instance pathLengthDecidable {V : Type u} [Quiver.{v} V]
     {a b : V} (p : Quiver.Path a b) (n : ℕ) :
     Decidable (pathLength p ≤ n) :=
   inferInstanceAs (Decidable (pathLength p ≤ n))
@@ -295,7 +295,7 @@ instance pathLengthDecidable {V : Type u} [Quiver.{v + 1} V]
 Note: Lean's standard library provides `Quiver.Path.instDecidableEq` for paths
 (from `Mathlib.Combinatorics.Quiver.Path`), which this instance uses via `decEq`.
 Subtype decidability then follows automatically. -/
-instance decEqBoundedPath {V : Type u} [Quiver.{v + 1} V]
+instance decEqBoundedPath {V : Type u} [Quiver.{v} V]
     [DecidableEq V] [∀ a b : V, DecidableEq (a ⟶ b)]
     {a b : V} (n : ℕ) :
     DecidableEq {p : Quiver.Path a b // pathLength p ≤ n} :=
@@ -320,7 +320,7 @@ constructs the set of all paths from `a` to `b` with length at most `n`.
 
 Following mathlib's approach (see `SimpleGraph.finsetWalkLength`), this is a
 direct `Finset` construction with no typeclass synthesis in the recursion. -/
-def finsetPathsBounded {V : Type u} [Quiver.{v + 1} V] [Fintype V] [DecidableEq V]
+def finsetPathsBounded {V : Type u} [Quiver.{v} V] [Fintype V] [DecidableEq V]
     [∀ a b : V, DecidableEq (a ⟶ b)] [∀ a b : V, Fintype (a ⟶ b)]
     (a b : V) (n : ℕ) : Finset {p : Quiver.Path a b // pathLength p ≤ n} :=
   match n with
@@ -344,7 +344,7 @@ def finsetPathsBounded {V : Type u} [Quiver.{v + 1} V] [Fintype V] [DecidableEq 
     baseCase ∪ consCase
 
 /-- The finset contains exactly the paths of bounded length. -/
-theorem mem_finsetPathsBounded_iff {V : Type u} [Quiver.{v + 1} V] [Fintype V] [DecidableEq V]
+theorem mem_finsetPathsBounded_iff {V : Type u} [Quiver.{v} V] [Fintype V] [DecidableEq V]
     [∀ a b : V, DecidableEq (a ⟶ b)] [∀ a b : V, Fintype (a ⟶ b)]
     {a b : V} {n : ℕ} (p : {p : Quiver.Path a b // pathLength p ≤ n}) :
     p ∈ finsetPathsBounded a b n := by
@@ -381,7 +381,7 @@ theorem mem_finsetPathsBounded_iff {V : Type u} [Quiver.{v + 1} V] [Fintype V] [
         mem_finsetPathsBounded_iff ⟨p', by simp [pathLength] at hp; omega⟩, f, rfl⟩
 
 /-- Fintype instance for paths of bounded length, derived from the finset. -/
-instance fintypePathsBounded {V : Type u} [Quiver.{v + 1} V] [Fintype V] [DecidableEq V]
+instance fintypePathsBounded {V : Type u} [Quiver.{v} V] [Fintype V] [DecidableEq V]
     [∀ a b : V, DecidableEq (a ⟶ b)] [∀ a b : V, Fintype (a ⟶ b)]
     (a b : V) (n : ℕ) : Fintype {p : Quiver.Path a b // pathLength p ≤ n} :=
   ⟨finsetPathsBounded a b n, fun p => mem_finsetPathsBounded_iff p⟩

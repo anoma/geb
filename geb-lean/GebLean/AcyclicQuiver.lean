@@ -34,14 +34,14 @@ abbrev TopologicalOrder := PartialOrder
 
 /-- The property that every edge in a quiver goes from a smaller vertex
     to a larger vertex with respect to a topological order. -/
-abbrev QuiverEdgesIncrease (V : Type u) (hs : HomSet.{v + 1, u} V)
+abbrev QuiverEdgesIncrease (V : Type u) (hs : HomSet.{v, u} V)
     [TopologicalOrder V] :=
   ∀ {a b : V}, hs a b → a < b
 
 /-- Witness that a quiver is acyclic: a partial order on vertices such
     that every edge goes from a smaller to a larger vertex. This provides
     a topological sort, which proves the quiver is acyclic. -/
-structure AcyclicQuiverWitness (V : Type u) (hs : HomSet.{v + 1, u} V) where
+structure AcyclicQuiverWitness (V : Type u) (hs : HomSet.{v, u} V) where
   /-- The topological order on vertices -/
   order : TopologicalOrder V
   /-- Proof that every edge respects the order -/
@@ -49,7 +49,7 @@ structure AcyclicQuiverWitness (V : Type u) (hs : HomSet.{v + 1, u} V) where
 
 /-- An acyclic quiver bundles a quiver with a witness of acyclicity.
     This is the typeclass version that extends Quiver. -/
-class AcyclicQuiver (V : Type u) extends Quiver.{v + 1} V,
+class AcyclicQuiver (V : Type u) extends Quiver.{v} V,
     TopologicalOrder V where
   edgesIncrease : QuiverEdgesIncrease V (homSetOfQuiver V) := by infer_instance
 

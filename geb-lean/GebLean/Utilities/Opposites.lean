@@ -521,24 +521,34 @@ def opHomIsoOpHom' :
     app := fun F => 𝟙 _
     naturality := by
       intros X Y f
-      ext Z
-      simp
-      rfl
+      have h1 := Category.comp_id
+        ((op'ToOp ⋙ Functor.opHom C D ⋙
+          biCompToOp').map f)
+      have h2 := Category.id_comp (opHom'.map f)
+      exact h1.trans ((by ext Z; rfl : _ = _).trans
+        h2.symm)
   }
   inv := {
     app := fun F => 𝟙 _
     naturality := by
       intros X Y f
-      ext Z
-      simp
-      rfl
+      have h1 := Category.comp_id (opHom'.map f)
+      have h2 := Category.id_comp
+        ((op'ToOp ⋙ Functor.opHom C D ⋙
+          biCompToOp').map f)
+      exact h1.trans ((by ext Z; rfl : _ = _).trans
+        h2.symm)
   }
   hom_inv_id := by
     ext F Z
-    simp
+    simp only [NatTrans.comp_app,
+      CategoryTheory.NatTrans.id_app]
+    exact Category.comp_id _
   inv_hom_id := by
     ext F Z
-    simp
+    simp only [NatTrans.comp_app,
+      CategoryTheory.NatTrans.id_app]
+    exact Category.comp_id _
 
 end Functor
 
@@ -629,7 +639,8 @@ def opFunctorIsoOpFunctor' : Cat.opFunctor.{v, u} ≅ opFunctor'.{v, u} where
         rfl
       case h_map =>
         intros X Y f
-        simp only [eqToHom_refl, Category.comp_id, Category.id_comp]
+        change _ = 𝟙 _ ≫ _ ≫ 𝟙 _
+        simp only [Category.comp_id, Category.id_comp]
         rfl
   }
   inv := {
@@ -643,7 +654,8 @@ def opFunctorIsoOpFunctor' : Cat.opFunctor.{v, u} ≅ opFunctor'.{v, u} where
         rfl
       case h_map =>
         intros X Y f
-        simp only [eqToHom_refl, Category.comp_id, Category.id_comp]
+        change _ = 𝟙 _ ≫ _ ≫ 𝟙 _
+        simp only [Category.comp_id, Category.id_comp]
         rfl
   }
   hom_inv_id := by

@@ -24,7 +24,7 @@ universe u v
 namespace GebLean
 
 /-- A proof of finiteness of a quiver. -/
-structure FinQuiverWitness (V : Type u) (hs : HomSet.{v + 1, u} V) where
+structure FinQuiverWitness (V : Type u) (hs : HomSet.{v, u} V) where
   /-- The vertex set is finite -/
   fintypeVertex : FintypeData V
   /-- Each edge set is finite -/
@@ -34,22 +34,22 @@ attribute [instance] FinQuiverWitness.fintypeVertex
   FinQuiverWitness.fintypeEdge
 
 /-- Build a `Quiver` typeclass instance from a `FinQuiverWitness`. -/
-instance {V : Type u} (hs : HomSet.{v + 1, u} V)
-    (_wit : FinQuiverWitness V hs) : Quiver.{v + 1, u} V where
+instance {V : Type u} (hs : HomSet.{v, u} V)
+    (_wit : FinQuiverWitness V hs) : Quiver.{v, u} V where
   Hom := hs
 
 /-- A finite quiver has finitely many vertices and finitely many edges
     between each pair of vertices. This requires morphisms to be in
     Type (not Prop). -/
-class FiniteQuiver (V : Type u) [Quiver.{v + 1} V] where
+class FiniteQuiver (V : Type u) [Quiver.{v} V] where
   toFiniteness : FinQuiverWitness V (homSetOfQuiver V) := by infer_instance
 
 /-- Extract the `FinQuiverWitness` from a `FiniteQuiver` typeclass instance. -/
-abbrev finQuiverWitnessOfFiniteQuiver (V : Type u) [Quiver.{v + 1} V]
+abbrev finQuiverWitnessOfFiniteQuiver (V : Type u) [Quiver.{v} V]
     [h : FiniteQuiver V] : FinQuiverWitness V (homSetOfQuiver V) :=
   h.toFiniteness
 
-instance {V : Type u} [Quiver.{v + 1} V] [h : FiniteQuiver V] :
+instance {V : Type u} [Quiver.{v} V] [h : FiniteQuiver V] :
     FinQuiverWitness V (homSetOfQuiver V) := h.toFiniteness
 
 open CategoryTheory

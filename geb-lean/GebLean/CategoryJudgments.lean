@@ -99,7 +99,7 @@ theorem SemiHom.assoc : ∀ {W X Y Z : Obj} (f : SemiHom W X) (g : SemiHom X Y)
   cases f <;> cases g <;> cases h
 
 /-- Quiver instance for CategoryJudgments.Obj -/
-instance QuiverI.{u, w} : Quiver.{w + 1, u} Obj.{u} where
+instance QuiverI.{u, w} : Quiver.{w, u} Obj.{u} where
   Hom := SemiHom.{u, u, w}
 
 /-- Semicategory structure on CategoryJudgments.Obj -/
@@ -384,8 +384,14 @@ def mkFunctor (data : FunctorData C) : Obj ⥤ C where
       | hom g' =>
         change mapSemiHom data (SemiHom.comp f' g') =
                mapSemiHom data f' ≫ mapSemiHom data g'
-        cases f' <;> cases g' <;> simp [mapSemiHom, SemiHom.comp,
-          data.h_id_endo, data.h_comp_match, data.h_comp_dom, data.h_comp_cod]
+        cases f' <;> cases g' <;>
+          simp [mapSemiHom, SemiHom.comp]
+          <;> first
+            | rfl
+            | exact data.h_id_endo
+            | exact data.h_comp_match
+            | exact data.h_comp_dom.symm
+            | exact data.h_comp_cod.symm
 
 /-- Construct a copresheaf (covariant functor into Type) from
     CategoryJudgments from minimal category data. -/
@@ -467,23 +473,16 @@ theorem mkFunctor_functorToData (F : Obj ⥤ C) :
     cases f with
     | id =>
       cases X <;>
-      (simp only [mkFunctor, functorToData, eqToHom_refl, Category.comp_id,
-        Category.id_comp]; exact (F.map_id _).symm)
+        (change _ = 𝟙 _ ≫ _ ≫ 𝟙 _;
+         simp only [Category.comp_id, Category.id_comp];
+         simp only [mkFunctor, functorToData];
+         exact (F.map_id _).symm)
     | hom f' =>
-      cases f' <;> simp only [mkFunctor, functorToData, mapSemiHom,
-        eqToHom_refl, Category.comp_id, Category.id_comp]
-      case idObj =>
-        rw [← F.map_comp]
-        exact congrArg F.map rfl
-      case intermediate =>
-        rw [← F.map_comp]
-        exact congrArg F.map rfl
-      case compositeDom =>
-        rw [← F.map_comp]
-        exact congrArg F.map rfl
-      case compositeCod =>
-        rw [← F.map_comp]
-        exact congrArg F.map rfl
+      cases f' <;>
+        (change _ = 𝟙 _ ≫ _ ≫ 𝟙 _;
+         simp only [Category.comp_id, Category.id_comp,
+           mkFunctor, functorToData, mapSemiHom]) <;>
+        exact (F.map_comp _ _).symm
 
 theorem functorToData_mkFunctor (data : FunctorData C) :
     functorToData (mkFunctor data) = data := by
@@ -593,7 +592,10 @@ theorem mkNatTrans_natTransToData {F G : Obj ⥤ C} (α : F ⟶ G) :
     eqToHom (mkFunctor_functorToData F) ≫ α ≫
     eqToHom (mkFunctor_functorToData G).symm := by
   ext X
-  cases X <;> simp [mkNatTrans, natTransToData]
+  cases X <;>
+    simp [mkNatTrans, natTransToData] <;>
+    (change _ = 𝟙 _ ≫ _ ≫ 𝟙 _;
+     simp only [Category.comp_id, Category.id_comp])
 
 /-- The functor from FunctorData to the functor category that sends
     FunctorData to the corresponding functor via mkFunctor. -/
@@ -643,8 +645,9 @@ theorem functorDataToFunctor_comp_functorToFunctorData :
     intro F G α
     simp only [Functor.comp_obj, Functor.comp_map, Functor.id_obj,
       Functor.id_map, functorToFunctorData, functorDataToFunctor,
-      natTransToData_mkNatTrans, eqToHom_refl, Category.comp_id,
-      Category.id_comp]
+      natTransToData_mkNatTrans]
+    change _ = 𝟙 _ ≫ _ ≫ 𝟙 _
+    simp only [Category.comp_id, Category.id_comp]
 
 /-- The two functors form a categorical isomorphism: they compose to the
     identity functor in both directions. -/
