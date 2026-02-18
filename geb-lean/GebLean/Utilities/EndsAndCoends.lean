@@ -2571,6 +2571,70 @@ def pointwiseTypeWeightedLimitFunctor.natIso
       (Type v)).mapIso
       (typeWeightedLimitFunctor.natIso W))
 
+/-!
+### Weighted (Co)Limits as (Co)Ends of Power/Copower
+Profunctors
+
+The pointwise weighted limit of `D : K ⥤ (E ⥤ Type v)`
+equals the pointwise end of the power profunctor built
+using presheaf-valued powers. Dually for colimits and
+coends.
+-/
+
+/-- The pointwise weighted limit equals the pointwise
+end of the power profunctor. -/
+theorem pointwiseTypeWeightedLimit_eq_end
+    (W : K ⥤ Type v)
+    (D : K ⥤ (E ⥤ Type v)) :
+    pointwiseTypeWeightedLimit W D =
+      pointwiseTypeEnd
+        (powerProfunctor
+          (C := E ⥤ Type v) W D) :=
+  rfl
+
+/-- The pointwise weighted colimit equals the pointwise
+coend of the copower profunctor. -/
+theorem pointwiseTypeWeightedColimit_eq_coend
+    (W : Kᵒᵖ ⥤ Type v)
+    (D : K ⥤ (E ⥤ Type v)) :
+    pointwiseTypeWeightedColimit W D =
+      pointwiseTypeCoend
+        (copowerProfunctor
+          (C := E ⥤ Type v) W D) :=
+  rfl
+
+/-- The pointwise end of the power profunctor has the
+nat-trans universal property: at each `e : E`, its
+elements are in bijection with natural transformations
+`W ⟶ D.flip.obj e`.
+
+This follows from
+`pointwiseTypeWeightedLimit_eq_end` (which is `rfl`)
+combined with
+`pointwiseTypeWeightedLimit.natTransEquiv`. -/
+def pointwiseTypeEnd.powerNatTransEquiv
+    (W : K ⥤ Type v)
+    (D : K ⥤ (E ⥤ Type v)) (e : E) :
+    (pointwiseTypeEnd
+      (powerProfunctor
+        (C := E ⥤ Type v) W D)).obj e ≃
+      (W ⟶ D.flip.obj e) :=
+  pointwiseTypeWeightedLimit.natTransEquiv W D e
+
+/-- The pointwise coend of the copower profunctor has
+the colimit universal property: at each `e : E`, its
+elements are in bijection with cowedge data, i.e.,
+quotients of `Σ j, W.obj (op j) × (D.flip.obj e).obj j`
+by the coend relation. -/
+def pointwiseTypeCoend.copowerEquiv
+    (W : Kᵒᵖ ⥤ Type v)
+    (D : K ⥤ (E ⥤ Type v)) (e : E) :
+    (pointwiseTypeCoend
+      (copowerProfunctor
+        (C := E ⥤ Type v) W D)).obj e ≃
+      (pointwiseTypeWeightedColimit W D).obj e :=
+  Equiv.refl _
+
 end PointwisePresheaf
 
 end GebLean

@@ -372,6 +372,56 @@ instance typesHasPowers : HasPowers (Type u) where
     funext y s
     exact congrFun (h s) y
 
+section PresheafPowersAndCopowers
+
+universe u₁ v₁
+
+variable {E : Type u₁} [Category.{v₁} E]
+
+/-- Presheaf categories have copowers:
+the copower `S ·. G` is the functor `e ↦ S × G.obj e`. -/
+instance presheafHasCopowers :
+    HasCopowers (E ⥤ Type v₁) where
+  copower (S : Type v₁) (G : E ⥤ Type v₁) :=
+    { obj := fun e => S × G.obj e
+      map := fun f ⟨s, x⟩ => (s, G.map f x) }
+  inj S G s :=
+    { app := fun e x => (s, x)
+      naturality := by intros; funext; rfl }
+  desc f :=
+    { app := fun e ⟨s, x⟩ => (f s).app e x
+      naturality := by
+        intro e₁ e₂ g; funext ⟨s, x⟩
+        exact congrFun ((f s).naturality g) x }
+  fac f s := by ext e x; rfl
+  uniq f g h := by
+    ext e ⟨s, x⟩
+    exact congrFun
+      (congr_arg (fun α => α.app e) (h s)) x
+
+/-- Presheaf categories have powers:
+the power `G ^. S` is the functor `e ↦ (S → G.obj e)`. -/
+instance presheafHasPowers :
+    HasPowers (E ⥤ Type v₁) where
+  power (G : E ⥤ Type v₁) (S : Type v₁) :=
+    { obj := fun e => S → G.obj e
+      map := fun f h s => G.map f (h s) }
+  proj G S s :=
+    { app := fun e f => f s
+      naturality := by intros; funext; rfl }
+  lift f :=
+    { app := fun e y s => (f s).app e y
+      naturality := by
+        intro e₁ e₂ g; funext y s
+        exact congrFun ((f s).naturality g) y }
+  fac f s := by ext e y; rfl
+  uniq f g h := by
+    ext e y s
+    exact congrFun
+      (congr_arg (fun α => α.app e) (h s)) y
+
+end PresheafPowersAndCopowers
+
 /-!
 ## Copowers as Weighted Colimits over the Terminal Category
 
