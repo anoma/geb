@@ -2148,6 +2148,185 @@ def pointwiseTypeCoend.coNinjaYonedaEquiv
     ((profunctorDoubleFlipEquiv (K := K)
       (E := E)).functor.obj P |>.obj e)
 
+/-!
+### Pointwise Introduction Rules
+
+The Type-level introduction rules for ends and weighted
+limits lift pointwise: at each evaluation point `e : E`,
+mapping into the end/weighted-limit presheaf from
+`G.obj e` is equivalent to an end/weighted-limit of
+a powered profunctor/diagram.
+
+The full presheaf-level introduction (as a nat trans
+`G ⟶ pointwiseTypeEnd P`) is already provided by
+the adjunction `pointwiseTypeEndAdj`.
+-/
+
+/-- Pointwise introduction rule for ends: at each
+`e : E`, a function from `G.obj e` into the pointwise
+end is equivalent to the end of the profunctor
+post-composed with `coyoneda.obj (op (G.obj e))`. -/
+def pointwiseTypeEnd.introEquiv
+    (G : E ⥤ Type v)
+    (P : Kᵒᵖ ⥤ K ⥤ (E ⥤ Type v))
+    (e : E) :
+    (G.obj e → (pointwiseTypeEnd P).obj e) ≃
+      typeEnd (profunctorPower
+        ((profunctorDoubleFlipEquiv (K := K)
+          (E := E)).functor.obj P |>.obj e)
+        (G.obj e)) :=
+  typeEnd.introEquiv (G.obj e)
+    ((profunctorDoubleFlipEquiv (K := K)
+      (E := E)).functor.obj P |>.obj e)
+
+/-- Pointwise introduction rule for weighted limits:
+at each `e : E`, a function from `G.obj e` into the
+pointwise weighted limit is equivalent to the weighted
+limit of the diagram `homFromFunctor (D.flip.obj e)
+(G.obj e)`, which sends `j ↦ G.obj e → D(j)(e)`. -/
+def pointwiseTypeWeightedLimit.introEquiv
+    (G : E ⥤ Type v)
+    (W : K ⥤ Type v)
+    (D : K ⥤ (E ⥤ Type v))
+    (e : E) :
+    (G.obj e →
+      (pointwiseTypeWeightedLimit W D).obj e) ≃
+      typeWeightedLimit W
+        (homFromFunctor (D.flip.obj e)
+          (G.obj e)) :=
+  typeWeightedLimit.introEquiv
+    (G.obj e) W (D.flip.obj e)
+
+/-- Pointwise introduction via nat trans: at each
+`e : E`, a function from `G.obj e` into the space of
+natural transformations `W ⟶ D.flip.obj e` is
+equivalent to a nat trans
+`W ⟶ D.flip.obj e ⋙ coyoneda.obj (op (G.obj e))`,
+which sends `j ↦ G.obj e → D(j)(e)`. -/
+def pointwiseNatTransIntroEquiv
+    (G : E ⥤ Type v)
+    (W : K ⥤ Type v)
+    (D : K ⥤ (E ⥤ Type v))
+    (e : E) :
+    (G.obj e → (W ⟶ D.flip.obj e)) ≃
+      (W ⟶ D.flip.obj e ⋙
+        coyoneda.obj
+          (Opposite.op (G.obj e))) :=
+  natTransIntroEquiv (G.obj e) W
+    (D.flip.obj e)
+
+/-!
+### Pointwise Maps-Out and Coend-End Equivalences
+
+The Type-level maps-out formula
+`typeCoend.endEquiv : (typeCoend P → Y) ≃
+  typeEnd (sliceProfunctorPoly P Y)`
+lifts pointwise: at each `e : E`, functions from the
+pointwise coend to `G.obj e` correspond to the end of
+`sliceProfunctorPoly` applied to the double-flipped
+profunctor at `e`.
+
+Similarly, `typeCoend.mapsOutEquiv`,
+`coendHomNatIsoEnd`, `typeCoend.endRepresentable`,
+and `typeCoend.endImpredicative` all lift pointwise.
+-/
+
+/-- Pointwise maps-out characterization of the coend:
+at each `e : E`, functions from `(pointwiseTypeCoend P).obj e`
+to `G.obj e` correspond to nat trans from `P_e` to
+`sliceProfunctorPoly coyoneda (G.obj e)`. -/
+def pointwiseTypeCoend.mapsOutEquiv
+    (P : Kᵒᵖ ⥤ K ⥤ (E ⥤ Type v))
+    (G : E ⥤ Type v) (e : E) :
+    ((pointwiseTypeCoend P).obj e →
+      G.obj e) ≃
+      (((profunctorDoubleFlipEquiv (K := K)
+        (E := E)).functor.obj P).obj e ⟶
+        sliceProfunctorPoly coyoneda
+          (G.obj e)) :=
+  typeCoend.mapsOutEquiv
+    (((profunctorDoubleFlipEquiv (K := K)
+      (E := E)).functor.obj P).obj e)
+    (G.obj e)
+
+/-- Pointwise coend-end equivalence: at each `e : E`,
+functions from `(pointwiseTypeCoend P).obj e` to
+`G.obj e` correspond to the end of
+`sliceProfunctorPoly P_e (G.obj e)`, where `P_e` is
+the profunctor obtained by evaluating at `e` after
+the double flip.
+
+An element of the right side is a family
+`∀ j, P_e(op j, j) → G.obj e` satisfying the dual
+wedge condition. -/
+def pointwiseTypeCoend.endEquiv
+    (P : Kᵒᵖ ⥤ K ⥤ (E ⥤ Type v))
+    (G : E ⥤ Type v) (e : E) :
+    ((pointwiseTypeCoend P).obj e →
+      G.obj e) ≃
+      typeEnd (sliceProfunctorPoly
+        (((profunctorDoubleFlipEquiv (K := K)
+          (E := E)).functor.obj P).obj e)
+        (G.obj e)) :=
+  typeCoend.endEquiv
+    (((profunctorDoubleFlipEquiv (K := K)
+      (E := E)).functor.obj P).obj e)
+    (G.obj e)
+
+/-- Pointwise coend-end natural isomorphism: at each
+`e : E`, `endLimitFunctor P_e` is naturally isomorphic
+to `coyoneda.obj (op ((pointwiseTypeCoend P).obj e))`
+as copresheaves on `Type v`. -/
+def pointwiseTypeCoend.coendHomNatIsoEnd
+    (P : Kᵒᵖ ⥤ K ⥤ (E ⥤ Type v)) (e : E) :
+    let P_e : Kᵒᵖ ⥤ K ⥤ Type v :=
+      (((profunctorDoubleFlipEquiv (K := K)
+        (E := E)).functor.obj P).obj e)
+    endLimitFunctor P_e ≅
+      coyoneda.obj
+        (Opposite.op (typeCoend P_e)) :=
+  let P_e : Kᵒᵖ ⥤ K ⥤ Type v :=
+    (((profunctorDoubleFlipEquiv (K := K)
+      (E := E)).functor.obj P).obj e)
+  NatIso.ofComponents
+    (fun Y =>
+      (typeCoend.endEquiv P_e Y).symm.toIso)
+    (fun {Y Z} f => by
+      ext ⟨val, _⟩
+      funext q
+      exact Quot.inductionOn q (fun _ => rfl))
+
+/-- Pointwise representable characterization of coends
+via ends: at each `e : E`, natural transformations from
+`endLimitFunctor P_e` to `G : Type v ⥤ Type v`
+correspond to `G.obj ((pointwiseTypeCoend P).obj e)`.
+-/
+def pointwiseTypeCoend.endRepresentable
+    (P : Kᵒᵖ ⥤ K ⥤ (E ⥤ Type v)) (e : E)
+    (G : Type v ⥤ Type v) :
+    let P_e : Kᵒᵖ ⥤ K ⥤ Type v :=
+      (((profunctorDoubleFlipEquiv (K := K)
+        (E := E)).functor.obj P).obj e)
+    (endLimitFunctor P_e ⟶ G) ≃
+      G.obj (typeCoend P_e) :=
+  coyonedaEquivOfNatIso
+    (pointwiseTypeCoend.coendHomNatIsoEnd P e)
+
+/-- Pointwise impredicative characterization of coends
+via ends: at each `e : E`, natural transformations from
+`endLimitFunctor P_e` to the identity functor on
+`Type v` correspond to elements of
+`(pointwiseTypeCoend P).obj e`. -/
+def pointwiseTypeCoend.endImpredicative
+    (P : Kᵒᵖ ⥤ K ⥤ (E ⥤ Type v)) (e : E) :
+    let P_e : Kᵒᵖ ⥤ K ⥤ Type v :=
+      (((profunctorDoubleFlipEquiv (K := K)
+        (E := E)).functor.obj P).obj e)
+    (endLimitFunctor P_e ⟶ 𝟭 (Type v)) ≃
+      typeCoend P_e :=
+  coyonedaEquivOfNatIsoTypeId
+    (pointwiseTypeCoend.coendHomNatIsoEnd P e)
+
 end PointwisePresheaf
 
 end GebLean
