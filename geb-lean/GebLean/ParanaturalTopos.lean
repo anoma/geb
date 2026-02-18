@@ -2768,6 +2768,233 @@ theorem functorRelLift_graphRel
       rw [← FunctorToTypes.map_comp_apply]
       exact h
 
+/-- The canonical relation lifting for a
+profunctor `G : Typeᵒᵖ × Type ⥤ Type`.
+Given relations `R` between `A₁, A₂` and
+`S` between `B₁, B₂`,
+`profunctorRelLift G R S x y` holds iff there
+exists a witness `w : G.obj (op SubR, SubS)`
+whose covariant projections match the
+contravariant pullbacks of `x` and `y`.
+
+This generalizes both `functorRelLift`
+(when `G = ProjProf Type F`) and `arrowRel`
+(when `G = Functor.hom Type`). -/
+def profunctorRelLift
+    (G : Typeᵒᵖ × Type ⥤ Type)
+    {A₁ A₂ B₁ B₂ : Type}
+    (R : A₁ → A₂ → Prop)
+    (S : B₁ → B₂ → Prop)
+    (x : G.obj (Opposite.op A₁, B₁))
+    (y : G.obj (Opposite.op A₂, B₂)) :
+    Prop :=
+  let SubR :=
+    { p : A₁ × A₂ // R p.1 p.2 }
+  let SubS :=
+    { q : B₁ × B₂ // S q.1 q.2 }
+  let pi₁ : SubR → A₁ := fun s => s.val.1
+  let pi₂ : SubR → A₂ := fun s => s.val.2
+  let rho₁ : SubS → B₁ := fun s => s.val.1
+  let rho₂ : SubS → B₂ := fun s => s.val.2
+  ∃ (w : G.obj (Opposite.op SubR, SubS)),
+    G.map (show (Opposite.op SubR, SubS) ⟶
+        (Opposite.op SubR, B₁) from
+      (𝟙 (Opposite.op SubR), rho₁)) w =
+      G.map (show (Opposite.op A₁, B₁) ⟶
+          (Opposite.op SubR, B₁) from
+        (Quiver.Hom.op pi₁, 𝟙 B₁)) x ∧
+    G.map (show (Opposite.op SubR, SubS) ⟶
+        (Opposite.op SubR, B₂) from
+      (𝟙 (Opposite.op SubR), rho₂)) w =
+      G.map (show (Opposite.op A₂, B₂) ⟶
+          (Opposite.op SubR, B₂) from
+        (Quiver.Hom.op pi₂, 𝟙 B₂)) y
+
+/-- When `G = ProjProf Type F` (the projection
+profunctor ignoring the contravariant argument),
+`profunctorRelLift` reduces to `functorRelLift`:
+the contravariant component plays no role, so the
+witness and conditions depend only on `S`. -/
+theorem profunctorRelLift_proj_eq
+    (F : Type ⥤ Type)
+    {A₁ A₂ B₁ B₂ : Type}
+    (R : A₁ → A₂ → Prop)
+    (S : B₁ → B₂ → Prop)
+    (x : F.obj B₁) (y : F.obj B₂) :
+    profunctorRelLift (ProjProf Type F)
+      R S x y ↔
+    functorRelLift F S x y := by
+  simp only [profunctorRelLift,
+    functorRelLift, ProjProf_obj, ProjProf_map,
+    CategoryTheory.Functor.map_id]
+  rfl
+
+/-- When `G = Functor.hom Type` (the hom
+profunctor), `profunctorRelLift` reduces to
+`arrowRel`: the witness encodes a function
+from `R`-related inputs to `S`-related
+outputs. -/
+theorem profunctorRelLift_hom_eq
+    {A₁ A₂ B₁ B₂ : Type}
+    (R : A₁ → A₂ → Prop)
+    (S : B₁ → B₂ → Prop)
+    (x : A₁ → B₁) (y : A₂ → B₂) :
+    profunctorRelLift (Functor.hom Type)
+      R S x y ↔
+    arrowRel R S x y := by
+  simp only [profunctorRelLift,
+    Functor.hom_map, Quiver.Hom.unop_op,
+    unop_id_op, Category.id_comp,
+    Category.comp_id]
+  constructor
+  · rintro ⟨w, hw₁, hw₂⟩ a₁ a₂ hr
+    have h₁ := congr_fun hw₁ ⟨⟨a₁, a₂⟩, hr⟩
+    have h₂ := congr_fun hw₂ ⟨⟨a₁, a₂⟩, hr⟩
+    simp only [types_comp_apply] at h₁ h₂
+    rw [← h₁, ← h₂]
+    exact (w ⟨⟨a₁, a₂⟩, hr⟩).property
+  · intro h
+    exact ⟨fun ⟨⟨a₁, a₂⟩, hr⟩ =>
+      ⟨⟨x a₁, y a₂⟩, h a₁ a₂ hr⟩,
+      rfl, rfl⟩
+
+/-- When both relations are graph relations,
+`profunctorRelLift` reduces to a wedge
+condition: `G.map (𝟙, g) x = G.map (f^op, 𝟙) y`.
+This is the profunctor analogue of the wedge
+condition for ends. -/
+theorem profunctorRelLift_graphRel
+    (G : Typeᵒᵖ × Type ⥤ Type)
+    {A₁ A₂ B₁ B₂ : Type}
+    (f : A₁ → A₂) (g : B₁ → B₂)
+    (x : G.obj (Opposite.op A₁, B₁))
+    (y : G.obj (Opposite.op A₂, B₂)) :
+    profunctorRelLift G
+      (graphRel f) (graphRel g) x y ↔
+    G.map (show (Opposite.op A₁, B₁) ⟶
+        (Opposite.op A₁, B₂) from
+      (𝟙 (Opposite.op A₁), g)) x =
+    G.map (show (Opposite.op A₂, B₂) ⟶
+        (Opposite.op A₁, B₂) from
+      (Quiver.Hom.op f, 𝟙 B₂)) y := by
+  simp only [profunctorRelLift]
+  let pi₁ : {p : A₁ × A₂ //
+      graphRel f p.1 p.2} → A₁ :=
+    fun s => s.val.1
+  let pi₂ : {p : A₁ × A₂ //
+      graphRel f p.1 p.2} → A₂ :=
+    fun s => s.val.2
+  let rho₁ : {q : B₁ × B₂ //
+      graphRel g q.1 q.2} → B₁ :=
+    fun s => s.val.1
+  let rho₂ : {q : B₁ × B₂ //
+      graphRel g q.1 q.2} → B₂ :=
+    fun s => s.val.2
+  let ιR : A₁ →
+      {p : A₁ × A₂ // graphRel f p.1 p.2} :=
+    fun a => ⟨(a, f a), rfl⟩
+  let ιS : B₁ →
+      {q : B₁ × B₂ // graphRel g q.1 q.2} :=
+    fun b => ⟨(b, g b), rfl⟩
+  have rho_eq :
+      rho₂ = fun s => g (rho₁ s) := by
+    funext ⟨⟨_, _⟩, h⟩; exact h.symm
+  have pi_eq :
+      pi₂ = fun s => f (pi₁ s) := by
+    funext ⟨⟨_, _⟩, h⟩; exact h.symm
+  constructor
+  · rintro ⟨w, hw₁, hw₂⟩
+    have key₁ := congr_arg
+      (G.map (show (Opposite.op
+        {p : A₁ × A₂ //
+          graphRel f p.1 p.2}, B₁) ⟶
+        (Opposite.op A₁, B₁) from
+        (Quiver.Hom.op ιR, 𝟙 B₁))) hw₁
+    rw [← FunctorToTypes.map_comp_apply,
+      ← FunctorToTypes.map_comp_apply]
+      at key₁
+    change G.map (show _ ⟶ _ from
+        (Quiver.Hom.op ιR, rho₁)) w =
+      G.map (𝟙 _) x at key₁
+    simp only [G.map_id, types_id_apply]
+      at key₁
+    have key₂ := congr_arg
+      (G.map (show (Opposite.op
+        {p : A₁ × A₂ //
+          graphRel f p.1 p.2}, B₂) ⟶
+        (Opposite.op A₁, B₂) from
+        (Quiver.Hom.op ιR, 𝟙 B₂))) hw₂
+    rw [← FunctorToTypes.map_comp_apply,
+      ← FunctorToTypes.map_comp_apply]
+      at key₂
+    change G.map (show _ ⟶ _ from
+        (Quiver.Hom.op ιR, rho₂)) w =
+      G.map (show
+        (Opposite.op A₂, B₂) ⟶
+          (Opposite.op A₁, B₂) from
+        (Quiver.Hom.op f, 𝟙 B₂)) y
+      at key₂
+    rw [← key₁,
+      ← FunctorToTypes.map_comp_apply]
+    change G.map (show _ ⟶ _ from
+        (Quiver.Hom.op ιR,
+          fun s => g (rho₁ s))) w =
+      G.map (show
+        (Opposite.op A₂, B₂) ⟶
+          (Opposite.op A₁, B₂) from
+        (Quiver.Hom.op f, 𝟙 B₂)) y
+    rw [← rho_eq]
+    exact key₂
+  · intro hm
+    refine ⟨G.map (show
+        (Opposite.op A₁, B₁) ⟶
+        (Opposite.op
+          {p : A₁ × A₂ //
+            graphRel f p.1 p.2},
+          {q : B₁ × B₂ //
+            graphRel g q.1 q.2}) from
+        (Quiver.Hom.op pi₁, ιS)) x,
+      ?_, ?_⟩
+    · rw [←
+        FunctorToTypes.map_comp_apply]
+      rfl
+    · rw [←
+        FunctorToTypes.map_comp_apply]
+      change G.map (show _ ⟶ _ from
+          (Quiver.Hom.op pi₁, g)) x =
+        G.map (show
+          (Opposite.op A₂, B₂) ⟶
+            (Opposite.op
+              {p : A₁ × A₂ //
+                graphRel f p.1 p.2},
+              B₂) from
+          (Quiver.Hom.op pi₂,
+            𝟙 B₂)) y
+      have key := congr_arg
+        (G.map (show
+          (Opposite.op A₁, B₂) ⟶
+          (Opposite.op
+            {p : A₁ × A₂ //
+              graphRel f p.1 p.2},
+            B₂) from
+          (Quiver.Hom.op pi₁,
+            𝟙 B₂))) hm
+      rw [← FunctorToTypes.map_comp_apply,
+        ← FunctorToTypes.map_comp_apply]
+        at key
+      simp only [prod_comp,
+        Category.id_comp,
+        Category.comp_id] at key
+      have hfpi :
+          Quiver.Hom.op f ≫
+            Quiver.Hom.op pi₁ =
+          (Quiver.Hom.op pi₂ :
+            Opposite.op A₂ ⟶ _) := by
+        rw [← op_comp]
+        exact congrArg _ pi_eq.symm
+      rw [hfpi] at key
+      exact key
+
 /-- A type expression in a single variable,
 built from a variable, covariant functor
 application, and function spaces. The relational
