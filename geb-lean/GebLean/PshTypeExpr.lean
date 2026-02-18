@@ -1,4 +1,6 @@
 import GebLean.PshRelDouble
+import GebLean.ParanaturalTopos
+import Mathlib.CategoryTheory.Monoidal.Closed.Types
 
 /-!
 # Type Expressions for Presheaf Categories
@@ -18,6 +20,10 @@ applications.
   relation on `T.interp P P` and `T.interp Q Q` via
   Barr extension for functor application and the
   arrow relation for function spaces.
+
+- `TypeExpr.toPshTypeExpr` embeds the universe-0
+  type expressions into `PshTypeExpr (Type 0)` via
+  the Yoneda extension.
 -/
 
 namespace GebLean
@@ -196,5 +202,76 @@ theorem PshTypeExpr.leaf_relInterp
     (PshTypeExpr.leaf G).relInterp α =
       pshBarrLiftSkel G (pshRelGraph α) :=
   rfl
+
+/-- Embeds a universe-0 type expression into the
+presheaf type expression `PshTypeExpr (Type 0)`.
+The `.app F T` case lifts `F : Type ⥤ Type` to an
+endofunctor on `(Type 0)ᵒᵖ ⥤ Type 1` presheaves
+via the Yoneda extension `yonedaExt F`. -/
+def TypeExpr.toPshTypeExpr :
+    TypeExpr → PshTypeExpr (Type 0)
+  | .var => .var
+  | .app F T => .app (yonedaExt F) T.toPshTypeExpr
+  | .arrow T₁ T₂ =>
+    .arrow T₁.toPshTypeExpr T₂.toPshTypeExpr
+
+@[simp]
+theorem TypeExpr.toPshTypeExpr_var :
+    (TypeExpr.var).toPshTypeExpr =
+      (PshTypeExpr.var : PshTypeExpr (Type 0)) :=
+  rfl
+
+@[simp]
+theorem TypeExpr.toPshTypeExpr_app
+    (F : Type ⥤ Type) (T : TypeExpr) :
+    (TypeExpr.app F T).toPshTypeExpr =
+      PshTypeExpr.app (yonedaExt F)
+        T.toPshTypeExpr :=
+  rfl
+
+@[simp]
+theorem TypeExpr.toPshTypeExpr_arrow
+    (T₁ T₂ : TypeExpr) :
+    (TypeExpr.arrow T₁ T₂).toPshTypeExpr =
+      PshTypeExpr.arrow T₁.toPshTypeExpr
+        T₂.toPshTypeExpr :=
+  rfl
+
+open MonoidalClosed
+
+/-- The interpretation of a `TypeExpr` via
+`toPshTypeExpr` at ULift-Yoneda representables
+recovers the original interpretation via the
+ULift-Yoneda embedding. -/
+def TypeExpr.toPshTypeExpr_interp_iso
+    (T : TypeExpr) (A B : Type) :
+    T.toPshTypeExpr.interp
+      (yonedaULift A) (yonedaULift B) ≅
+      yonedaULift (T.interp A B) :=
+  match T with
+  | .var => Iso.refl _
+  | .app F T' =>
+    (yonedaExt F).mapIso
+      (T'.toPshTypeExpr_interp_iso A B) ≪≫
+    yonedaExtRepresentableULiftIso F
+      (T'.interp A B)
+  | .arrow T₁ T₂ =>
+    { hom := pshIhomProfMap
+        (T₁.toPshTypeExpr_interp_iso B A).inv
+        (T₂.toPshTypeExpr_interp_iso A B).hom
+      inv := pshIhomProfMap
+        (T₁.toPshTypeExpr_interp_iso B A).hom
+        (T₂.toPshTypeExpr_interp_iso A B).inv
+      hom_inv_id := by
+        rw [← pshIhomProfMap_comp]
+        simp only [Iso.hom_inv_id]
+        exact pshIhomProfMap_id
+      inv_hom_id := by
+        rw [← pshIhomProfMap_comp]
+        simp only [Iso.inv_hom_id]
+        exact pshIhomProfMap_id } ≪≫
+    (pshIhomYonedaULiftIso
+      (T₁.interp B A)
+      (T₂.interp A B)).symm
 
 end GebLean
