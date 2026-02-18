@@ -2904,7 +2904,7 @@ theorem profunctorRelLift_graphRel
     funext ⟨⟨_, _⟩, h⟩; exact h.symm
   constructor
   · rintro ⟨w, hw₁, hw₂⟩
-    have key₁ := congr_arg
+    have comm₁ := congr_arg
       (G.map (show (Opposite.op
         {p : A₁ × A₂ //
           graphRel f p.1 p.2}, B₁) ⟶
@@ -2912,13 +2912,13 @@ theorem profunctorRelLift_graphRel
         (Quiver.Hom.op ιR, 𝟙 B₁))) hw₁
     rw [← FunctorToTypes.map_comp_apply,
       ← FunctorToTypes.map_comp_apply]
-      at key₁
+      at comm₁
     change G.map (show _ ⟶ _ from
         (Quiver.Hom.op ιR, rho₁)) w =
-      G.map (𝟙 _) x at key₁
+      G.map (𝟙 _) x at comm₁
     simp only [G.map_id, types_id_apply]
-      at key₁
-    have key₂ := congr_arg
+      at comm₁
+    have comm₂ := congr_arg
       (G.map (show (Opposite.op
         {p : A₁ × A₂ //
           graphRel f p.1 p.2}, B₂) ⟶
@@ -2926,15 +2926,15 @@ theorem profunctorRelLift_graphRel
         (Quiver.Hom.op ιR, 𝟙 B₂))) hw₂
     rw [← FunctorToTypes.map_comp_apply,
       ← FunctorToTypes.map_comp_apply]
-      at key₂
+      at comm₂
     change G.map (show _ ⟶ _ from
         (Quiver.Hom.op ιR, rho₂)) w =
       G.map (show
         (Opposite.op A₂, B₂) ⟶
           (Opposite.op A₁, B₂) from
         (Quiver.Hom.op f, 𝟙 B₂)) y
-      at key₂
-    rw [← key₁,
+      at comm₂
+    rw [← comm₁,
       ← FunctorToTypes.map_comp_apply]
     change G.map (show _ ⟶ _ from
         (Quiver.Hom.op ιR,
@@ -2944,7 +2944,7 @@ theorem profunctorRelLift_graphRel
           (Opposite.op A₁, B₂) from
         (Quiver.Hom.op f, 𝟙 B₂)) y
     rw [← rho_eq]
-    exact key₂
+    exact comm₂
   · intro hm
     refine ⟨G.map (show
         (Opposite.op A₁, B₁) ⟶
@@ -2970,7 +2970,7 @@ theorem profunctorRelLift_graphRel
               B₂) from
           (Quiver.Hom.op pi₂,
             𝟙 B₂)) y
-      have key := congr_arg
+      have comm := congr_arg
         (G.map (show
           (Opposite.op A₁, B₂) ⟶
           (Opposite.op
@@ -2981,10 +2981,10 @@ theorem profunctorRelLift_graphRel
             𝟙 B₂))) hm
       rw [← FunctorToTypes.map_comp_apply,
         ← FunctorToTypes.map_comp_apply]
-        at key
+        at comm
       simp only [prod_comp,
         Category.id_comp,
-        Category.comp_id] at key
+        Category.comp_id] at comm
       have hfpi :
           Quiver.Hom.op f ≫
             Quiver.Hom.op pi₁ =
@@ -2992,8 +2992,8 @@ theorem profunctorRelLift_graphRel
             Opposite.op A₂ ⟶ _) := by
         rw [← op_comp]
         exact congrArg _ pi_eq.symm
-      rw [hfpi] at key
-      exact key
+      rw [hfpi] at comm
+      exact comm
 
 /-- A type expression in a single variable,
 built from a variable, covariant functor
