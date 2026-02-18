@@ -2066,6 +2066,88 @@ def pointwiseTypeWeightedLimit.natTransEquiv
   typeWeightedLimit.natTransEquiv W
     (D.flip.obj e)
 
+/-!
+### Pointwise Ninja Yoneda
+
+The ninja Yoneda lemma lifts to presheaf categories:
+the pointwise end functor is naturally isomorphic to
+the pointwise weighted limit functor weighted by the
+hom-profunctor, precomposed with uncurrying.
+
+Dually, the pointwise coend functor is naturally
+isomorphic to the pointwise weighted colimit functor
+weighted by the dual hom-profunctor `homPre`.
+-/
+
+/-- The pointwise ninja Yoneda lemma as a natural
+isomorphism of functors
+`(Kᵒᵖ ⥤ K ⥤ (E ⥤ Type v)) ⥤ (E ⥤ Type v)`:
+`pointwiseTypeEndFunctor ≅
+  Functor.uncurry ⋙
+    pointwiseTypeWeightedLimitFunctor
+      (Functor.hom K)`.
+
+Obtained by whiskering the Type-level ninja Yoneda
+natural isomorphism on `E` and precomposing with
+the double-flip equivalence. -/
+def pointwiseTypeEndFunctor.ninjaYonedaNatIso :
+    pointwiseTypeEndFunctor (K := K) (E := E) ≅
+    Functor.uncurry (C := Kᵒᵖ) (D := K)
+      (E := E ⥤ Type v) ⋙
+    pointwiseTypeWeightedLimitFunctor
+      (Functor.hom K) :=
+  (profunctorDoubleFlipEquiv (K := K)
+    (E := E)).functor.isoWhiskerLeft
+    ((Functor.whiskeringRight E _ _).mapIso
+      (typeEndFunctor.ninjaYonedaNatIso
+        (J := K)))
+
+/-- The pointwise co-ninja Yoneda lemma as a natural
+isomorphism of functors
+`(Kᵒᵖ ⥤ K ⥤ (E ⥤ Type v)) ⥤ (E ⥤ Type v)`:
+`pointwiseTypeCoendFunctor ≅
+  Functor.uncurry ⋙
+    pointwiseTypeWeightedColimitFunctor
+      (homPre (C := K))`. -/
+def pointwiseTypeCoendFunctor.coNinjaYonedaNatIso :
+    pointwiseTypeCoendFunctor
+      (K := K) (E := E) ≅
+    Functor.uncurry (C := Kᵒᵖ) (D := K)
+      (E := E ⥤ Type v) ⋙
+    pointwiseTypeWeightedColimitFunctor
+      (homPre (C := K)) :=
+  (profunctorDoubleFlipEquiv (K := K)
+    (E := E)).functor.isoWhiskerLeft
+    ((Functor.whiskeringRight E _ _).mapIso
+      (typeCoendFunctor.coNinjaYonedaNatIso
+        (J := K)))
+
+/-- The pointwise ninja Yoneda equivalence at a
+given profunctor and evaluation point: the end at
+`e` equals the weighted limit at `e`. -/
+def pointwiseTypeEnd.ninjaYonedaEquiv
+    (P : Kᵒᵖ ⥤ K ⥤ (E ⥤ Type v)) (e : E) :
+    (pointwiseTypeEnd P).obj e ≃
+      (pointwiseTypeWeightedLimit
+        (Functor.hom K)
+        (Functor.uncurry.obj P)).obj e :=
+  typeEnd.ninjaYonedaEquiv
+    ((profunctorDoubleFlipEquiv (K := K)
+      (E := E)).functor.obj P |>.obj e)
+
+/-- The pointwise co-ninja Yoneda equivalence at a
+given profunctor and evaluation point: the coend at
+`e` equals the weighted colimit at `e`. -/
+def pointwiseTypeCoend.coNinjaYonedaEquiv
+    (P : Kᵒᵖ ⥤ K ⥤ (E ⥤ Type v)) (e : E) :
+    (pointwiseTypeCoend P).obj e ≃
+      (pointwiseTypeWeightedColimit
+        (homPre (C := K))
+        (Functor.uncurry.obj P)).obj e :=
+  typeCoend.coNinjaYonedaEquiv
+    ((profunctorDoubleFlipEquiv (K := K)
+      (E := E)).functor.obj P |>.obj e)
+
 end PointwisePresheaf
 
 end GebLean
