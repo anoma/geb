@@ -509,10 +509,30 @@ triples are identified when they are connected by a
 morphism in `C` making the evident diagrams commute.
 -/
 
+/-- The large Yoneda embedding: composes `yoneda`
+with `uliftFunctor` to produce presheaves valued in
+`Type (max u v)` rather than `Type v`. For
+`C = Type v` (where `u = v + 1`), this gives
+`(Type v)ᵒᵖ ⥤ Type (v + 1)` presheaves, matching
+the presheaf universe of `PshTypeExpr (Type v)`. -/
+def yonedaULift {C : Type u} [Category.{v} C] :
+    C → (Cᵒᵖ ⥤ Type (max u v)) :=
+  fun X => yoneda.obj X ⋙ uliftFunctor.{u}
+
+/-- `yonedaULift X` evaluated at `op Y` gives
+`ULift (Y ⟶ X)`. -/
+@[simp]
+theorem yonedaULift_obj
+    {C : Type u} [Category.{v} C]
+    (X : C) (Y : Cᵒᵖ) :
+    (yonedaULift X).obj Y =
+      ULift.{u} (Y.unop ⟶ X) :=
+  rfl
+
 section YonedaExtension
 
-variable {C : Type v} [Category.{v} C]
-variable {D : Type v} [Category.{v} D]
+variable {C : Type u} [Category.{v} C]
+variable {D : Type u} [Category.{v} D]
 
 /-- A triple `(S, p, t)` representing a generator
 of the Yoneda extension colimit. Here `S : C` is a
@@ -520,7 +540,8 @@ witness object, `p : P.obj (op S)` is an element of
 the presheaf at `S`, and `t : T.unop ⟶ F.obj S` is
 a morphism in `D` factoring through `F`. -/
 abbrev YonedaExtSigma
-    (F : C ⥤ D) (P : Cᵒᵖ ⥤ Type v)
+    (F : C ⥤ D)
+    (P : Cᵒᵖ ⥤ Type (max u v))
     (T : Dᵒᵖ) :=
   Σ (S : C), P.obj (Opposite.op S) ×
     (T.unop ⟶ F.obj S)
@@ -530,7 +551,8 @@ abbrev YonedaExtSigma
 there exists `g : S₂ ⟶ S₁` such that `P.map g.op`
 sends `p₁` to `p₂` and `t₂ ≫ F.map g = t₁`. -/
 def YonedaExtStep
-    (F : C ⥤ D) (P : Cᵒᵖ ⥤ Type v)
+    (F : C ⥤ D)
+    (P : Cᵒᵖ ⥤ Type (max u v))
     (T : Dᵒᵖ)
     (x y : YonedaExtSigma F P T) : Prop :=
   ∃ (g : y.1 ⟶ x.1),
@@ -543,7 +565,8 @@ in `C`). The witness `S` and element `p` are
 unchanged; the morphism `t` is precomposed with
 `k.unop`. -/
 def yonedaExtSigmaMap
-    (F : C ⥤ D) (P : Cᵒᵖ ⥤ Type v)
+    (F : C ⥤ D)
+    (P : Cᵒᵖ ⥤ Type (max u v))
     {T₁ T₂ : Dᵒᵖ} (k : T₁ ⟶ T₂)
     (x : YonedaExtSigma F P T₁) :
     YonedaExtSigma F P T₂ :=
@@ -552,7 +575,8 @@ def yonedaExtSigmaMap
 /-- `yonedaExtSigmaMap` preserves the step
 relation. -/
 theorem yonedaExtSigmaMap_step
-    (F : C ⥤ D) (P : Cᵒᵖ ⥤ Type v)
+    (F : C ⥤ D)
+    (P : Cᵒᵖ ⥤ Type (max u v))
     {T₁ T₂ : Dᵒᵖ} (k : T₁ ⟶ T₂)
     {x y : YonedaExtSigma F P T₁}
     (h : YonedaExtStep F P T₁ x y) :
@@ -568,8 +592,9 @@ theorem yonedaExtSigmaMap_step
 an element is an equivalence class of triples
 `(S, p, t)` under the identification relation. -/
 def yonedaExtObj
-    (F : C ⥤ D) (P : Cᵒᵖ ⥤ Type v) :
-    Dᵒᵖ ⥤ Type v where
+    (F : C ⥤ D)
+    (P : Cᵒᵖ ⥤ Type (max u v)) :
+    Dᵒᵖ ⥤ Type (max u v) where
   obj T := Quot (YonedaExtStep F P T)
   map k := Quot.map
     (yonedaExtSigmaMap F P k)
@@ -598,7 +623,8 @@ def yonedaExtObj
 element component, leaving the witness object and
 morphism unchanged. -/
 def yonedaExtSigmaMapNat
-    (F : C ⥤ D) {P Q : Cᵒᵖ ⥤ Type v}
+    (F : C ⥤ D)
+    {P Q : Cᵒᵖ ⥤ Type (max u v)}
     (α : P ⟶ Q) (T : Dᵒᵖ)
     (x : YonedaExtSigma F P T) :
     YonedaExtSigma F Q T :=
@@ -607,7 +633,8 @@ def yonedaExtSigmaMapNat
 /-- `yonedaExtSigmaMapNat` preserves the step
 relation. -/
 theorem yonedaExtSigmaMapNat_step
-    (F : C ⥤ D) {P Q : Cᵒᵖ ⥤ Type v}
+    (F : C ⥤ D)
+    {P Q : Cᵒᵖ ⥤ Type (max u v)}
     (α : P ⟶ Q) (T : Dᵒᵖ)
     {x y : YonedaExtSigma F P T}
     (h : YonedaExtStep F P T x y) :
@@ -626,7 +653,8 @@ transformation `yonedaExtObj F P ⟶ yonedaExtObj F Q`
 by applying `α` to the element component of each
 triple. -/
 def yonedaExtMap
-    (F : C ⥤ D) {P Q : Cᵒᵖ ⥤ Type v}
+    (F : C ⥤ D)
+    {P Q : Cᵒᵖ ⥤ Type (max u v)}
     (α : P ⟶ Q) :
     yonedaExtObj F P ⟶ yonedaExtObj F Q where
   app T := Quot.map
@@ -637,14 +665,14 @@ def yonedaExtMap
     funext q; induction q using Quot.inductionOn
     rfl
 
-/-- The Yoneda extension functor: given an
+/-- The Yoneda extension functor: given a
 functor `F : C ⥤ D`, produces a functor between
-presheaf categories `(Cᵒᵖ ⥤ Type v) ⥤
-(Dᵒᵖ ⥤ Type v)`. This is the left Kan extension
+presheaf categories. This is the left Kan extension
 `Lan_{F.op}`, computed pointwise as a colimit of
 sigma types. -/
 def yonedaExt (F : C ⥤ D) :
-    (Cᵒᵖ ⥤ Type v) ⥤ (Dᵒᵖ ⥤ Type v) where
+    (Cᵒᵖ ⥤ Type (max u v)) ⥤
+      (Dᵒᵖ ⥤ Type (max u v)) where
   obj P := yonedaExtObj F P
   map α := yonedaExtMap F α
   map_id P := by
@@ -653,6 +681,170 @@ def yonedaExt (F : C ⥤ D) :
   map_comp α β := by
     ext T q; induction q using Quot.inductionOn
     rfl
+
+/-- Map a `YonedaExtSigma` triple along a natural
+transformation `α : F ⟶ G` by postcomposing the
+morphism component with `α.app`. -/
+def yonedaExtSigmaAlpha
+    {F G : C ⥤ D} (α : F ⟶ G)
+    (P : Cᵒᵖ ⥤ Type (max u v)) (T : Dᵒᵖ)
+    (x : YonedaExtSigma F P T) :
+    YonedaExtSigma G P T :=
+  ⟨x.1, x.2.1, x.2.2 ≫ α.app x.1⟩
+
+/-- `yonedaExtSigmaAlpha` preserves the step
+relation. -/
+theorem yonedaExtSigmaAlpha_step
+    {F G : C ⥤ D} (α : F ⟶ G)
+    (P : Cᵒᵖ ⥤ Type (max u v)) (T : Dᵒᵖ)
+    {x y : YonedaExtSigma F P T}
+    (h : YonedaExtStep F P T x y) :
+    YonedaExtStep G P T
+      (yonedaExtSigmaAlpha α P T x)
+      (yonedaExtSigmaAlpha α P T y) := by
+  obtain ⟨g, hp, ht⟩ := h
+  exact ⟨g, hp, by
+    dsimp [yonedaExtSigmaAlpha]
+    rw [Category.assoc,
+      ← α.naturality g,
+      ← Category.assoc, ht]⟩
+
+/-- The Yoneda extension as a functor from
+`(C ⥤ D)` to presheaf functor categories.
+On objects, this is `yonedaExt`. On morphisms, a
+natural transformation `α : F ⟶ G` induces a
+map by postcomposing the morphism component of
+each triple with `α`. -/
+def yonedaExtFunctor :
+    (C ⥤ D) ⥤
+      ((Cᵒᵖ ⥤ Type (max u v)) ⥤
+        (Dᵒᵖ ⥤ Type (max u v))) where
+  obj := yonedaExt
+  map {F G} α :=
+    { app := fun P =>
+        { app := fun T =>
+            Quot.map
+              (yonedaExtSigmaAlpha α P T)
+              (fun _ _ h =>
+                yonedaExtSigmaAlpha_step
+                  α P T h)
+          naturality := fun T₁ T₂ k => by
+            funext q
+            induction q using Quot.inductionOn
+            rename_i x
+            change Quot.mk _ _ = Quot.mk _ _
+            congr 1
+            dsimp [yonedaExtSigmaAlpha,
+              yonedaExtSigmaMap]
+            simp only [Category.assoc] }
+      naturality := fun P Q β => by
+        ext T q
+        induction q using Quot.inductionOn
+        rfl }
+  map_id F := by
+    ext P T q
+    induction q using Quot.inductionOn
+    rename_i x
+    change Quot.mk _ _ = Quot.mk _ _
+    congr 1
+    dsimp [yonedaExtSigmaAlpha]
+    simp only [Category.comp_id]
+  map_comp {F G H} α β := by
+    ext P T q
+    induction q using Quot.inductionOn
+    rename_i x
+    change Quot.mk _ _ = Quot.mk _ _
+    congr 1
+    dsimp [yonedaExtSigmaAlpha]
+    simp only [Category.assoc]
+
+/-- The counit of the Yoneda extension at a
+large-Yoneda representable presheaf: maps
+`(yonedaExt F).obj (yonedaULift X)` to
+`yonedaULift (F.obj X)`. Sends a triple
+`(S, ⟨f⟩, t)` to `⟨t ≫ F.map f⟩`. -/
+def yonedaExtCounitULift (F : C ⥤ D) (X : C) :
+    (yonedaExt F).obj (yonedaULift X) ⟶
+      yonedaULift (F.obj X) where
+  app T := Quot.lift
+    (fun x => ⟨x.2.2 ≫ F.map x.2.1.down⟩)
+    (fun x y ⟨g, hp, ht⟩ => by
+      have hp' : g ≫ x.2.1.down = y.2.1.down :=
+        congrArg ULift.down hp
+      change (⟨x.2.2 ≫ F.map x.2.1.down⟩ :
+        ULift.{u} _) =
+          ⟨y.2.2 ≫ F.map y.2.1.down⟩
+      congr 1
+      rw [← ht, Category.assoc,
+        ← F.map_comp, hp'])
+  naturality T₁ T₂ k := by
+    funext q; induction q using Quot.inductionOn
+    rename_i x
+    exact ULift.ext _ _ (Category.assoc _ _ _)
+
+/-- The unit of the Yoneda extension at a
+large-Yoneda representable presheaf: embeds
+`yonedaULift (F.obj X)` into
+`(yonedaExt F).obj (yonedaULift X)`. Sends
+`⟨t⟩` to the equivalence class of
+`(X, ⟨𝟙 X⟩, t)`. -/
+def yonedaExtUnitULift (F : C ⥤ D) (X : C) :
+    yonedaULift (F.obj X) ⟶
+      (yonedaExt F).obj (yonedaULift X) where
+  app T t := Quot.mk _ ⟨X, ⟨𝟙 X⟩, t.down⟩
+  naturality T₁ T₂ k := by
+    funext t; rfl
+
+/-- `yonedaExtUnitULift ≫ yonedaExtCounitULift = 𝟙`.
+Each `⟨t⟩` maps to `(X, ⟨𝟙 X⟩, t)` then to
+`⟨t ≫ F.map (𝟙 X)⟩ = ⟨t⟩`. -/
+theorem yonedaExtUnitULift_counit
+    (F : C ⥤ D) (X : C) :
+    yonedaExtUnitULift F X ≫
+      yonedaExtCounitULift F X =
+        𝟙 (yonedaULift (F.obj X)) := by
+  ext T t
+  change (⟨t.down ≫ F.map (𝟙 X)⟩ :
+    ULift.{u} _) = t
+  simp [ULift.ext_iff]
+
+/-- `yonedaExtCounitULift ≫ yonedaExtUnitULift = 𝟙`.
+Each triple `(S, ⟨f⟩, t)` maps to
+`⟨t ≫ F.map f⟩` then to `(X, ⟨𝟙 X⟩, t ≫ F.map f)`,
+which is identified with `(S, ⟨f⟩, t)` via `f`. -/
+theorem yonedaExtCounitULift_unit
+    (F : C ⥤ D) (X : C) :
+    yonedaExtCounitULift F X ≫
+      yonedaExtUnitULift F X =
+        𝟙 ((yonedaExt F).obj (yonedaULift X)) := by
+  ext T q; induction q using Quot.inductionOn
+  rename_i x
+  change Quot.mk _
+      ⟨X, ⟨𝟙 X⟩, x.2.2 ≫ F.map x.2.1.down⟩
+    = Quot.mk _ x
+  exact Quot.sound ⟨x.2.1.down, by
+    simp [yonedaULift, uliftFunctor], by simp⟩
+
+/-- The Yoneda extension at a large-Yoneda
+representable presheaf `yonedaULift X` is
+isomorphic to `yonedaULift (F.obj X)`. This
+generalizes `yonedaExtRepresentableIso` from
+the small-category case. -/
+def yonedaExtRepresentableULiftIso
+    (F : C ⥤ D) (X : C) :
+    (yonedaExt F).obj (yonedaULift X) ≅
+      yonedaULift (F.obj X) where
+  hom := yonedaExtCounitULift F X
+  inv := yonedaExtUnitULift F X
+  hom_inv_id := yonedaExtCounitULift_unit F X
+  inv_hom_id := yonedaExtUnitULift_counit F X
+
+end YonedaExtension
+
+section YonedaExtensionKan
+
+variable {C : Type v} [Category.{v} C]
+variable {D : Type v} [Category.{v} D]
 
 /-- The unit of the Yoneda extension at a
 representable presheaf: embeds `yoneda.obj (F.obj X)`
@@ -938,82 +1130,6 @@ instance yonedaExt_isLeftKanExtension
         (yonedaExt F)
         (yonedaExtUnitNatTrans F))⟩
 
-/-- Map a `YonedaExtSigma` triple along a natural
-transformation `α : F ⟶ G` by postcomposing the
-morphism component with `α.app`. -/
-def yonedaExtSigmaAlpha
-    {F G : C ⥤ D} (α : F ⟶ G)
-    (P : Cᵒᵖ ⥤ Type v) (T : Dᵒᵖ)
-    (x : YonedaExtSigma F P T) :
-    YonedaExtSigma G P T :=
-  ⟨x.1, x.2.1, x.2.2 ≫ α.app x.1⟩
-
-/-- `yonedaExtSigmaAlpha` preserves the step
-relation. -/
-theorem yonedaExtSigmaAlpha_step
-    {F G : C ⥤ D} (α : F ⟶ G)
-    (P : Cᵒᵖ ⥤ Type v) (T : Dᵒᵖ)
-    {x y : YonedaExtSigma F P T}
-    (h : YonedaExtStep F P T x y) :
-    YonedaExtStep G P T
-      (yonedaExtSigmaAlpha α P T x)
-      (yonedaExtSigmaAlpha α P T y) := by
-  obtain ⟨g, hp, ht⟩ := h
-  exact ⟨g, hp, by
-    dsimp [yonedaExtSigmaAlpha]
-    rw [Category.assoc,
-      ← α.naturality g,
-      ← Category.assoc, ht]⟩
-
-/-- The Yoneda extension as a functor from
-`(C ⥤ D)` to `((Cᵒᵖ ⥤ Type v) ⥤ (Dᵒᵖ ⥤ Type v))`.
-On objects, this is `yonedaExt`. On morphisms, a
-natural transformation `α : F ⟶ G` induces a
-map by postcomposing the morphism component of
-each triple with `α`. -/
-def yonedaExtFunctor :
-    (C ⥤ D) ⥤
-      ((Cᵒᵖ ⥤ Type v) ⥤
-        (Dᵒᵖ ⥤ Type v)) where
-  obj := yonedaExt
-  map {F G} α :=
-    { app := fun P =>
-        { app := fun T =>
-            Quot.map
-              (yonedaExtSigmaAlpha α P T)
-              (fun _ _ h =>
-                yonedaExtSigmaAlpha_step
-                  α P T h)
-          naturality := fun T₁ T₂ k => by
-            funext q
-            induction q using Quot.inductionOn
-            rename_i x
-            change Quot.mk _ _ = Quot.mk _ _
-            congr 1
-            dsimp [yonedaExtSigmaAlpha,
-              yonedaExtSigmaMap]
-            simp only [Category.assoc] }
-      naturality := fun P Q β => by
-        ext T q
-        induction q using Quot.inductionOn
-        rfl }
-  map_id F := by
-    ext P T q
-    induction q using Quot.inductionOn
-    rename_i x
-    change Quot.mk _ _ = Quot.mk _ _
-    congr 1
-    dsimp [yonedaExtSigmaAlpha]
-    simp only [Category.comp_id]
-  map_comp {F G H} α β := by
-    ext P T q
-    induction q using Quot.inductionOn
-    rename_i x
-    change Quot.mk _ _ = Quot.mk _ _
-    congr 1
-    dsimp [yonedaExtSigmaAlpha]
-    simp only [Category.assoc]
-
-end YonedaExtension
+end YonedaExtensionKan
 
 end GebLean
