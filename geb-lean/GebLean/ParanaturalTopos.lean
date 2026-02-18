@@ -2797,22 +2797,18 @@ def profunctorRelLift
   let rho₁ : SubS → B₁ := fun s => s.val.1
   let rho₂ : SubS → B₂ := fun s => s.val.2
   ∃ (w : G.obj (Opposite.op SubR, SubS)),
-    G.map
-      (X := (Opposite.op SubR, SubS))
-      (Y := (Opposite.op SubR, B₁))
-      (𝟙 (Opposite.op SubR), rho₁) w =
-    G.map
-      (X := (Opposite.op A₁, B₁))
-      (Y := (Opposite.op SubR, B₁))
-      (Quiver.Hom.op pi₁, 𝟙 B₁) x ∧
-    G.map
-      (X := (Opposite.op SubR, SubS))
-      (Y := (Opposite.op SubR, B₂))
-      (𝟙 (Opposite.op SubR), rho₂) w =
-    G.map
-      (X := (Opposite.op A₂, B₂))
-      (Y := (Opposite.op SubR, B₂))
-      (Quiver.Hom.op pi₂, 𝟙 B₂) y
+    G.map (show (Opposite.op SubR, SubS) ⟶
+        (Opposite.op SubR, B₁) from
+      (𝟙 (Opposite.op SubR), rho₁)) w =
+      G.map (show (Opposite.op A₁, B₁) ⟶
+          (Opposite.op SubR, B₁) from
+        (Quiver.Hom.op pi₁, 𝟙 B₁)) x ∧
+    G.map (show (Opposite.op SubR, SubS) ⟶
+        (Opposite.op SubR, B₂) from
+      (𝟙 (Opposite.op SubR), rho₂)) w =
+      G.map (show (Opposite.op A₂, B₂) ⟶
+          (Opposite.op SubR, B₂) from
+        (Quiver.Hom.op pi₂, 𝟙 B₂)) y
 
 /-- When `G = ProjProf Type F` (the projection
 profunctor ignoring the contravariant argument),
@@ -2872,7 +2868,8 @@ theorem profunctorRelLift_hom
     profunctorRelLift (Functor.hom Type) R S =
     arrowRel R S := by
   funext x y
-  exact propext (profunctorRelLift_hom_eq R S x y)
+  exact propext
+    (profunctorRelLift_hom_eq R S x y)
 
 /-- `profunctorRelLift` with the projection
 profunctor equals `functorRelLift`. -/
@@ -3026,35 +3023,16 @@ theorem profunctorRelLift_graphRel
       exact comm
 
 /-- A type expression in a single variable,
-built from a variable and profunctor application.
-The `app2 G T₁ T₂` constructor applies a profunctor
-`G : Typeᵒᵖ × Type ⥤ Type` to two sub-expressions,
-with `T₁` in contravariant position and `T₂`
-in covariant position.
-
-The relational interpretation
-(`TypeExpr.relInterp`) replaces each `var` with
-`graphRel f` and each `app2` with
-`profunctorRelLift`. -/
+built from a variable, covariant functor
+application, and function spaces. The relational
+interpretation (`TypeExpr.relInterp`) replaces
+each `var` with `graphRel f`, each `app F T`
+with `functorRelLift F (T.relInterp f)`, and
+each `arrow` with `arrowRel`. -/
 inductive TypeExpr : Type 1 where
   | var : TypeExpr
-  | app2 : (Typeᵒᵖ × Type ⥤ Type) →
-      TypeExpr → TypeExpr → TypeExpr
-
-/-- The function space `T₁ → T₂`, defined as
-`app2 (Functor.hom Type) T₁ T₂`. -/
-abbrev TypeExpr.arrow
-    (T₁ T₂ : TypeExpr) : TypeExpr :=
-  .app2 (Functor.hom Type) T₁ T₂
-
-/-- A covariant functor `F` applied to `T`,
-defined as `app2 (ProjProf Type F) var T`. The
-contravariant sub-expression is trivially `var`,
-so `ProjProf` ignores it. -/
-abbrev TypeExpr.app
-    (F : Type ⥤ Type) (T : TypeExpr) :
-    TypeExpr :=
-  .app2 (ProjProf Type F) .var T
+  | app : (Type ⥤ Type) → TypeExpr → TypeExpr
+  | arrow : TypeExpr → TypeExpr → TypeExpr
 
 /-- A covariant functor applied to the bare
 variable. Equivalent to `.app F .var`. -/
@@ -3065,54 +3043,54 @@ abbrev TypeExpr.leaf
 /-- The interpretation of a type expression as a
 profunctor: `interp T A B` assigns a type to each
 pair `(A, B)`, where `A` is contravariant and `B`
-is covariant.
-
-For `var`, returns the covariant parameter.
-For `app2 G T₁ T₂`, applies the profunctor `G`
-to the interpretations of `T₁` (with swapped
-variance) and `T₂`. On the diagonal,
-`interp T A A` recovers the standard
-interpretation of `T` at the type `A`. -/
+is covariant. `var` gives the covariant parameter;
+`app F T` applies `F` to the interpretation of
+`T`; `arrow` swaps the parameters for the domain
+(flipping variance). On the diagonal,
+`interp T A A` recovers the standard interpretation
+of `T` at the type `A`. -/
 def TypeExpr.interp :
     TypeExpr → Type → Type → Type
   | .var, _, B => B
-  | .app2 G T₁ T₂, A, B =>
-    G.obj (Opposite.op (T₁.interp B A),
-      T₂.interp A B)
+  | .app F T, A, B => F.obj (T.interp A B)
+  | .arrow T₁ T₂, A, B =>
+    T₁.interp B A → T₂.interp A B
 
 /-- The profunctor map for a type expression:
 given `f : A' → A` (contravariant) and
 `g : B → B'` (covariant), maps
-`T.interp A B → T.interp A' B'`.
-
-For `var`, this is `g`. For `app2 G T₁ T₂`,
-this applies `G.map` to the profunctor maps
-of `T₁` (with swapped arguments, since `T₁`
-has flipped variance) and `T₂`. -/
+`T.interp A B → T.interp A' B'`. For `var`,
+this is `g`. For `app F T`, this is
+`F.map (T.profMap f g)`. For `arrow T₁ T₂`,
+this precomposes with `T₁.profMap g f` (swapped,
+since `T₁` has flipped variance) and
+postcomposes with `T₂.profMap f g`. -/
 def TypeExpr.profMap
     (T : TypeExpr) {A A' B B' : Type}
     (f : A' → A) (g : B → B') :
     T.interp A B → T.interp A' B' :=
   match T with
   | .var => g
-  | .app2 G T₁ T₂ =>
-    G.map
-      (X := (Opposite.op (T₁.interp B A),
-        T₂.interp A B))
-      (Y := (Opposite.op (T₁.interp B' A'),
-        T₂.interp A' B'))
-      (Quiver.Hom.op (T₁.profMap g f),
-        T₂.profMap f g)
+  | .app F T => F.map (T.profMap f g)
+  | .arrow T₁ T₂ => fun h =>
+    T₂.profMap f g ∘ h ∘ T₁.profMap g f
 
 theorem TypeExpr.profMap_id
     (T : TypeExpr) (A B : Type) :
     T.profMap (id : A → A) (id : B → B) = id := by
   induction T generalizing A B with
   | var => rfl
-  | app2 G T₁ T₂ ih₁ ih₂ =>
+  | app F T ih =>
     ext x
-    simp only [TypeExpr.profMap, ih₁, ih₂]
-    exact FunctorToTypes.map_id_apply G x
+    change F.map (T.profMap id id) x = x
+    rw [ih]
+    exact FunctorToTypes.map_id_apply F x
+  | arrow T₁ T₂ ih₁ ih₂ =>
+    ext h
+    change T₂.profMap id id ∘ h ∘ T₁.profMap id id
+      = h
+    rw [ih₁, ih₂, Function.comp_id,
+      Function.id_comp]
 
 theorem TypeExpr.profMap_comp
     (T : TypeExpr)
@@ -3123,7 +3101,15 @@ theorem TypeExpr.profMap_comp
     T.profMap f' g' ∘ T.profMap f g := by
   induction T generalizing A A' A'' B B' B'' with
   | var => rfl
-  | app2 G T₁ T₂ ih₁ ih₂ =>
+  | app F T ih =>
+    ext x
+    change F.map (T.profMap (f ∘ f') (g' ∘ g)) x =
+      F.map (T.profMap f' g')
+        (F.map (T.profMap f g) x)
+    rw [ih]
+    exact FunctorToTypes.map_comp_apply F
+      (T.profMap f g) (T.profMap f' g') x
+  | arrow T₁ T₂ ih₁ ih₂ =>
     have h₁ : T₁.profMap (g' ∘ g) (f ∘ f') =
         T₁.profMap g f ∘ T₁.profMap g' f' :=
       ih₁ (A := B'') (A' := B') (A'' := B)
@@ -3132,20 +3118,9 @@ theorem TypeExpr.profMap_comp
     have h₂ : T₂.profMap (f ∘ f') (g' ∘ g) =
         T₂.profMap f' g' ∘ T₂.profMap f g :=
       ih₂ f f' g g'
-    ext x
-    simp only [TypeExpr.profMap, Function.comp_apply,
-      h₁, h₂]
-    exact congrFun (G.map_comp
-      (X := (Opposite.op (T₁.interp B A),
-        T₂.interp A B))
-      (Y := (Opposite.op (T₁.interp B' A'),
-        T₂.interp A' B'))
-      (Z := (Opposite.op (T₁.interp B'' A''),
-        T₂.interp A'' B''))
-      (Quiver.Hom.op (T₁.profMap g f),
-        T₂.profMap f g)
-      (Quiver.Hom.op (T₁.profMap g' f'),
-        T₂.profMap f' g')) x
+    ext h
+    simp only [profMap, Function.comp, h₁, h₂]
+    rfl
 
 /-- The profunctor associated to a type expression:
 a functor `Typeᵒᵖ × Type ⥤ Type` defined by
@@ -3168,19 +3143,19 @@ def TypeExpr.toProfunctor
 
 /-- The relational interpretation of a type
 expression at a morphism `f : I₀ → I₁`. Each
-`var` contributes `graphRel f`; each
-`app2 G T₁ T₂` contributes
-`profunctorRelLift G` applied to the relational
-interpretations of `T₁` and `T₂`. -/
+`var` contributes `graphRel f`, each `app F T`
+contributes `functorRelLift F (T.relInterp f)`,
+and each `arrow` contributes `arrowRel`. -/
 def TypeExpr.relInterp
     (T : TypeExpr) {I₀ I₁ : Type}
     (f : I₀ → I₁) :
     T.interp I₀ I₀ → T.interp I₁ I₁ → Prop :=
   match T with
   | .var => graphRel f
-  | .app2 G T₁ T₂ =>
-    profunctorRelLift G
-      (T₁.relInterp f) (T₂.relInterp f)
+  | .app F T =>
+    functorRelLift F (T.relInterp f)
+  | .arrow T₁ T₂ =>
+    arrowRel (T₁.relInterp f) (T₂.relInterp f)
 
 /-- The relational interpretation of a leaf
 `app F var` reduces to `graphRel (F.map f)`. -/
@@ -3189,11 +3164,8 @@ theorem TypeExpr.leaf_relInterp
     (F : Type ⥤ Type) {I₀ I₁ : Type}
     (f : I₀ → I₁) :
     (TypeExpr.leaf F).relInterp f =
-    graphRel (F.map f) := by
-  change profunctorRelLift (ProjProf Type F)
-    (graphRel f) (graphRel f) = _
-  rw [profunctorRelLift_proj]
-  exact functorRelLift_graphRel F f
+    graphRel (F.map f) :=
+  functorRelLift_graphRel F f
 
 /-- The type expression for the sub-expression
 `X → X` (endomorphisms) in the divergence type. -/
@@ -3247,7 +3219,6 @@ theorem divEndoRel_expand
     arrowRel (graphRel f) (graphRel f) := by
   simp only [divEndoRel, divEndoTypeExpr,
     TypeExpr.relInterp,
-    profunctorRelLift_hom, profunctorRelLift_proj,
     functorRelLift_graphRel, Functor.id_map]
 
 /-- `divArgRel` expands to
@@ -3262,7 +3233,6 @@ theorem divArgRel_expand
   simp only [divArgRel, divArgTypeExpr,
     divEndoTypeExpr,
     TypeExpr.relInterp,
-    profunctorRelLift_hom, profunctorRelLift_proj,
     functorRelLift_graphRel, Functor.id_map]
 
 /-- `divFullRel` expands to a nested application
@@ -3280,7 +3250,6 @@ theorem divFullRel_expand
   simp only [divFullRel, divTypeExpr,
     divArgTypeExpr, divEndoTypeExpr,
     TypeExpr.relInterp,
-    profunctorRelLift_hom, profunctorRelLift_proj,
     functorRelLift_graphRel, Functor.id_map]
 
 /-- The type expression for a dialgebra
@@ -3301,7 +3270,6 @@ theorem dialgebraTypeExpr_relInterp_iff
     (dialgebraTypeExpr F G).relInterp f α β ↔
     G.map f ∘ α = β ∘ F.map f := by
   simp only [dialgebraTypeExpr, TypeExpr.relInterp,
-    profunctorRelLift_hom, profunctorRelLift_proj,
     functorRelLift_graphRel, graphRel, arrowRel]
   constructor
   · intro hrel
@@ -3339,7 +3307,6 @@ theorem algebraTypeExpr_relInterp_iff
       f ∘ α = β ∘ F.map f →
       f (φ₀ α) = φ₁ β := by
   simp only [algebraTypeExpr, TypeExpr.relInterp,
-    profunctorRelLift_hom, profunctorRelLift_proj,
     functorRelLift_graphRel, graphRel, arrowRel,
     Functor.id_map]
   constructor
@@ -3374,7 +3341,6 @@ theorem dinaturalTypeExpr_relInterp_iff
       f ∘ h = k ∘ f →
       f ∘ φ₀ h = φ₁ k ∘ f := by
   simp only [dinaturalTypeExpr, TypeExpr.relInterp,
-    profunctorRelLift_hom, profunctorRelLift_proj,
     functorRelLift_graphRel, graphRel, arrowRel,
     Functor.id_map]
   constructor
@@ -3442,136 +3408,72 @@ private theorem TypeExpr.relInterp_wedge_aux
   induction T with
   | var =>
     exact ⟨fun _ _ => rfl, fun _ _ _ h => h⟩
-  | app2 G T₁ T₂ ih₁ ih₂ =>
+  | app F T ih =>
+    obtain ⟨ih_od, ih_w⟩ := ih
+    constructor
+    · intro I₀ I₁ f c
+      change functorRelLift F (T.relInterp f)
+        (F.map (T.profMap f id) c)
+        (F.map (T.profMap id f) c)
+      let lift : T.interp I₁ I₀ →
+          { p : T.interp I₀ I₀ ×
+            T.interp I₁ I₁ //
+            T.relInterp f p.1 p.2 } :=
+        fun x => ⟨⟨T.profMap f id x,
+          T.profMap id f x⟩, ih_od f x⟩
+      exact ⟨F.map lift c,
+        (FunctorToTypes.map_comp_apply F
+          lift (fun s => s.val.1) c).symm,
+        (FunctorToTypes.map_comp_apply F
+          lift (fun s => s.val.2) c).symm⟩
+    · intro I₀ I₁ f x₀ x₁ hrel
+      change F.map (T.profMap id f) x₀ =
+        F.map (T.profMap f id) x₁
+      obtain ⟨w, hw₁, hw₂⟩ := hrel
+      have heq :
+          (fun (s : { p : T.interp I₀ I₀ ×
+            T.interp I₁ I₁ //
+            T.relInterp f p.1 p.2 }) =>
+            T.profMap id f s.val.1) =
+          (fun s =>
+            T.profMap f id s.val.2) := by
+        funext ⟨⟨a₀, a₁⟩, hr⟩
+        exact ih_w f a₀ a₁ hr
+      have lhs :
+          F.map (T.profMap id f) x₀ =
+          F.map
+            (fun s => T.profMap id f s.val.1)
+            w := by
+        rw [← hw₁]
+        exact (FunctorToTypes.map_comp_apply F
+          (fun s => s.val.1)
+          (T.profMap id f) w).symm
+      have rhs :
+          F.map
+            (fun s => T.profMap f id s.val.2)
+            w =
+          F.map (T.profMap f id) x₁ := by
+        rw [← hw₂]
+        exact FunctorToTypes.map_comp_apply F
+          (fun s => s.val.2)
+          (T.profMap f id) w
+      rw [lhs, heq, rhs]
+  | arrow T₁ T₂ ih₁ ih₂ =>
     obtain ⟨ih₁_od, ih₁_w⟩ := ih₁
     obtain ⟨ih₂_od, ih₂_w⟩ := ih₂
     constructor
-    · intro I₀ I₁ f c
-      change profunctorRelLift G
-        (T₁.relInterp f) (T₂.relInterp f) _ _
-      let SubR :=
-        { p : T₁.interp I₀ I₀ ×
-            T₁.interp I₁ I₁ //
-          T₁.relInterp f p.1 p.2 }
-      let SubS :=
-        { q : T₂.interp I₀ I₀ ×
-            T₂.interp I₁ I₁ //
-          T₂.relInterp f q.1 q.2 }
-      let wedgeR : SubR → T₁.interp I₀ I₁ :=
-        fun ⟨⟨a₀, _⟩, _⟩ =>
-          T₁.profMap id f a₀
-      let liftS : T₂.interp I₁ I₀ → SubS :=
-        fun x => ⟨⟨T₂.profMap f id x,
-          T₂.profMap id f x⟩, ih₂_od f x⟩
-      have wedgeR_alt :
-          ∀ s : SubR,
-          wedgeR s =
-            T₁.profMap f id s.val.2 := by
-        intro ⟨⟨a₀, a₁⟩, hr⟩
-        exact ih₁_w f a₀ a₁ hr
-      refine ⟨G.map
-          (X := (Opposite.op (T₁.interp I₀ I₁),
-            T₂.interp I₁ I₀))
-          (Y := (Opposite.op SubR, SubS))
-          (Quiver.Hom.op wedgeR, liftS) c,
-        ?_, ?_⟩
-      · change G.map _ (G.map _ c) =
-            G.map _ (G.map _ c)
-        rw [← FunctorToTypes.map_comp_apply,
-          ← FunctorToTypes.map_comp_apply]
-        rfl
-      · change G.map _ (G.map _ c) =
-            G.map _ (G.map _ c)
-        simp only [show wedgeR =
-          fun s : SubR =>
-            T₁.profMap f id s.val.2 from
-          funext wedgeR_alt]
-        rw [← FunctorToTypes.map_comp_apply,
-          ← FunctorToTypes.map_comp_apply]
-        rfl
+    · intro I₀ I₁ f c a₀ a₁ hrel₁
+      change T₂.relInterp f
+        (T₂.profMap f id
+          (c (T₁.profMap id f a₀)))
+        (T₂.profMap id f
+          (c (T₁.profMap f id a₁)))
+      rw [ih₁_w f a₀ a₁ hrel₁]
+      exact ih₂_od f (c (T₁.profMap f id a₁))
     · intro I₀ I₁ f x₀ x₁ hrel
-      obtain ⟨w, hw₁, hw₂⟩ := hrel
-      let SubR :=
-        { p : T₁.interp I₀ I₀ ×
-            T₁.interp I₁ I₁ //
-          T₁.relInterp f p.1 p.2 }
-      let SubS :=
-        { q : T₂.interp I₀ I₀ ×
-            T₂.interp I₁ I₁ //
-          T₂.relInterp f q.1 q.2 }
-      let liftR : T₁.interp I₁ I₀ →
-          SubR :=
-        fun c =>
-          ⟨⟨T₁.profMap f id c,
-            T₁.profMap id f c⟩,
-            ih₁_od f c⟩
-      change G.map _ x₀ = G.map _ x₁
-      let mor_l :
-          (Opposite.op SubR,
-            T₂.interp I₀ I₀) ⟶
-          (Opposite.op (T₁.interp I₁ I₀),
-            T₂.interp I₀ I₁) :=
-        (Quiver.Hom.op liftR,
-          T₂.profMap id f)
-      let mor_r :
-          (Opposite.op SubR,
-            T₂.interp I₁ I₁) ⟶
-          (Opposite.op (T₁.interp I₁ I₀),
-            T₂.interp I₀ I₁) :=
-        (Quiver.Hom.op liftR,
-          T₂.profMap f id)
-      let proj₁ :
-          (Opposite.op SubR, SubS) ⟶
-          (Opposite.op SubR,
-            T₂.interp I₀ I₀) :=
-        (𝟙 (Opposite.op SubR),
-          fun s : SubS => s.val.1)
-      let proj₂ :
-          (Opposite.op SubR, SubS) ⟶
-          (Opposite.op SubR,
-            T₂.interp I₁ I₁) :=
-        (𝟙 (Opposite.op SubR),
-          fun s : SubS => s.val.2)
-      have decomp_l :=
-        FunctorToTypes.map_comp_apply G
-          (Quiver.Hom.op
-            (fun s : SubR => s.val.1),
-            𝟙 (T₂.interp I₀ I₀))
-          mor_l x₀
-      have sub_l :=
-        congrArg (G.map mor_l)
-          hw₁.symm
-      have recomp_l :=
-        (FunctorToTypes.map_comp_apply G
-          proj₁ mor_l w).symm
-      have pair_eq :
-          proj₁ ≫ mor_l =
-            proj₂ ≫ mor_r := by
-        apply Prod.ext
-        · rfl
-        · exact funext fun (s : SubS) =>
-            ih₂_w f s.val.1 s.val.2
-              s.property
-      have morph_eq :=
-        congrFun
-          (congrArg G.map pair_eq) w
-      have recomp_r :=
-        FunctorToTypes.map_comp_apply G
-          proj₂ mor_r w
-      have sub_r :=
-        congrArg (G.map mor_r) hw₂
-      have decomp_r :=
-        (FunctorToTypes.map_comp_apply G
-          (Quiver.Hom.op
-            (fun s : SubR => s.val.2),
-            𝟙 (T₂.interp I₁ I₁))
-          mor_r x₁).symm
-      exact decomp_l.trans
-        (sub_l.trans
-        (recomp_l.trans
-        (morph_eq.trans
-        (recomp_r.trans
-        (sub_r.trans decomp_r)))))
+      funext c
+      exact ih₂_w f _ _
+        (hrel _ _ (ih₁_od f c))
 
 /-- Off-diagonal elements produce related pairs:
 `(T.profMap f id c, T.profMap id f c)` is related
