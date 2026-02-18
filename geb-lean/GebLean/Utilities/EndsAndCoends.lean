@@ -1769,6 +1769,105 @@ def pointwiseTypeCoend
   (P ⋙ flipFunctor K E (Type v)).flip ⋙
     typeCoendFunctor K
 
+/-- The equivalence that rearranges a triply-nested
+functor category by moving the evaluation parameter
+from innermost to outermost position:
+`(Kᵒᵖ ⥤ K ⥤ (E ⥤ Type v)) ≌
+  (E ⥤ Kᵒᵖ ⥤ K ⥤ Type v)`.
+
+Built from two applications of `Functor.flipping`:
+first an inner flip (via `congrRight`) swapping
+`K` and `E`, then an outer flip swapping `Kᵒᵖ`
+and `E`. -/
+def profunctorDoubleFlipEquiv :
+    (Kᵒᵖ ⥤ K ⥤ (E ⥤ Type v)) ≌
+      (E ⥤ Kᵒᵖ ⥤ K ⥤ Type v) :=
+  (Functor.flipping (C := K) (D := E)
+    (E := Type v)).congrRight.trans
+    Functor.flipping
+
+/-- The functorial pointwise weighted limit: a functor
+from the diagram category `K ⥤ (E ⥤ Type v)` to the
+presheaf category `E ⥤ Type v`, sending
+`D ↦ D.flip ⋙ typeWeightedLimitFunctor W`.
+
+At each `e : E`, this evaluates to the weighted limit
+`typeWeightedLimit W (D.flip.obj e)`. -/
+def pointwiseTypeWeightedLimitFunctor
+    (W : K ⥤ Type v) :
+    (K ⥤ (E ⥤ Type v)) ⥤ (E ⥤ Type v) :=
+  Functor.flipping.functor ⋙
+    (Functor.whiskeringRight E (K ⥤ Type v)
+      (Type v)).obj (typeWeightedLimitFunctor W)
+
+theorem pointwiseTypeWeightedLimitFunctor_obj
+    (W : K ⥤ Type v)
+    (D : K ⥤ (E ⥤ Type v)) :
+    (pointwiseTypeWeightedLimitFunctor W).obj D =
+      pointwiseTypeWeightedLimit W D :=
+  rfl
+
+/-- The functorial pointwise weighted colimit: a functor
+from the diagram category `K ⥤ (E ⥤ Type v)` to the
+presheaf category `E ⥤ Type v`, sending
+`D ↦ D.flip ⋙ typeWeightedColimitFunctor W`. -/
+def pointwiseTypeWeightedColimitFunctor
+    (W : Kᵒᵖ ⥤ Type v) :
+    (K ⥤ (E ⥤ Type v)) ⥤ (E ⥤ Type v) :=
+  Functor.flipping.functor ⋙
+    (Functor.whiskeringRight E (K ⥤ Type v)
+      (Type v)).obj (typeWeightedColimitFunctor W)
+
+theorem pointwiseTypeWeightedColimitFunctor_obj
+    (W : Kᵒᵖ ⥤ Type v)
+    (D : K ⥤ (E ⥤ Type v)) :
+    (pointwiseTypeWeightedColimitFunctor W).obj D =
+      pointwiseTypeWeightedColimit W D :=
+  rfl
+
+/-- The functorial pointwise end: a functor from the
+profunctor category `Kᵒᵖ ⥤ K ⥤ (E ⥤ Type v)` to the
+presheaf category `E ⥤ Type v`, sending
+`P ↦ pointwiseTypeEnd P`.
+
+Built by composing the double-flip equivalence with
+post-composition by `typeEndFunctor K`. -/
+def pointwiseTypeEndFunctor :
+    (Kᵒᵖ ⥤ K ⥤ (E ⥤ Type v)) ⥤
+      (E ⥤ Type v) :=
+  (profunctorDoubleFlipEquiv (K := K)
+    (E := E)).functor ⋙
+    (Functor.whiskeringRight E
+      (Kᵒᵖ ⥤ K ⥤ Type v) (Type v)).obj
+      (typeEndFunctor K)
+
+theorem pointwiseTypeEndFunctor_obj
+    (P : Kᵒᵖ ⥤ K ⥤ (E ⥤ Type v)) :
+    (pointwiseTypeEndFunctor
+      (K := K) (E := E)).obj P =
+      pointwiseTypeEnd P :=
+  rfl
+
+/-- The functorial pointwise coend: a functor from the
+profunctor category `Kᵒᵖ ⥤ K ⥤ (E ⥤ Type v)` to the
+presheaf category `E ⥤ Type v`, sending
+`P ↦ pointwiseTypeCoend P`. -/
+def pointwiseTypeCoendFunctor :
+    (Kᵒᵖ ⥤ K ⥤ (E ⥤ Type v)) ⥤
+      (E ⥤ Type v) :=
+  (profunctorDoubleFlipEquiv (K := K)
+    (E := E)).functor ⋙
+    (Functor.whiskeringRight E
+      (Kᵒᵖ ⥤ K ⥤ Type v) (Type v)).obj
+      (typeCoendFunctor K)
+
+theorem pointwiseTypeCoendFunctor_obj
+    (P : Kᵒᵖ ⥤ K ⥤ (E ⥤ Type v)) :
+    (pointwiseTypeCoendFunctor
+      (K := K) (E := E)).obj P =
+      pointwiseTypeCoend P :=
+  rfl
+
 end PointwisePresheaf
 
 end GebLean
