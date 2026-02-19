@@ -13,6 +13,7 @@ autoImplicit = false
 relaxedAutoImplicit = false
 weak.linter.mathlibStandardSet = true
 maxSynthPendingDepth = 3
+backward.isDefEq.respectTransparency = false
 
 [[require]]
 name = "mathlib"
