@@ -195,7 +195,7 @@ def underOverOp'Op'CounitIso :
       apply Over.OverMorphism.ext
       simp only [underToOverOp'Op', overOp'Op'ToUnder, Under.homMk_right]
       unfold CategoryOp'Inst CategoryStruct.comp at *
-      simp only [commaCategory, instCategoryOver, Over.homMk_left]
+      simp only []
       change 𝟙 p.left ≫ f.left = f.left ≫ 𝟙 o.left
       simp only [Category.comp_id, Category.id_comp])
 
@@ -216,10 +216,8 @@ def underEquivOverOp'Op' : Under X ≌ (@Over Dᵒᵖ' _ X)ᵒᵖ' where
       underOverOp'Op'CounitIso, underOverOp'Op'CounitComponent, Iso.refl_hom]
     apply Over.OverMorphism.ext
     simp only [underToOverOp'Op', overOp'Op'ToUnder, Under.isoMk_hom_right, Iso.refl_hom]
-    unfold CategoryOp'Inst CategoryStruct.comp at *
-    simp only [commaCategory, instCategoryOver, Over.homMk_left]
-    change 𝟙 _ ≫ 𝟙 _ = 𝟙 _
-    simp only [Category.comp_id]
+    congr 1
+    exact Category.comp_id _
 
 end UnderOverEquivalence
 
@@ -401,9 +399,8 @@ def overSelfProdFunctor : Over X ⥤ Over X where
     cases j
     all_goals {
       simp only []
-      rw [← Category.assoc,
+      erw [← Category.assoc,
         (overSelfProdIsLimit B).fac]
-      simp only [Category.assoc]
     }
 
 end OverSelfProdFunctor
