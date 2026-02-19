@@ -106,10 +106,7 @@ def sliceToCopresheaf : Over F ⥤ (F.Elements ⥤ Type w) where
       have hy := y.property
       have h : α.left.app p.fst ≫ η₂.hom.app p.fst = η₁.hom.app p.fst :=
         congrFun (congrArg NatTrans.app α.w) p.fst
-      calc η₂.hom.app p.fst (α.left.app p.fst y.val)
-          = (α.left.app p.fst ≫ η₂.hom.app p.fst) y.val := rfl
-        _ = η₁.hom.app p.fst y.val := congrFun h y.val
-        _ = p.snd := hy⟩
+      exact (congrFun h y.val).trans hy⟩
     naturality := by
       intros p q f
       ext y
@@ -285,7 +282,7 @@ def sliceCopresheafCounitIso :
           dsimp [Fiber, totalSpace, totalSpaceProj]
           apply Subtype.ext
           refine Sigma.ext hx.symm ?_
-          simp
+          exact eqRec_heq _ gx
         inv_hom_id := by
           ext gx
           dsimp [Fiber, totalSpace, totalSpaceProj]})
@@ -450,44 +447,36 @@ The composition `elementsContra'ToElementsContra ⋙ elementsContraToElementsCon
 is the identity functor on `F.ElementsContra'`.
 -/
 lemma elementsContra'_roundtrip_eq_id (F : Cᵒᵖ' ⥤ Type w) :
-    elementsContra'ToElementsContra F ⋙ elementsContraToElementsContra' F = 𝟭 _ := by
-  apply _root_.CategoryTheory.Functor.ext
-  case h_obj =>
-    -- Objects: ⟨X, x⟩ → op ⟨op X, x⟩ → ⟨X, x⟩ = ⟨X, x⟩
-    intro X
-    simp only [Functor.comp_obj, Functor.id_obj,
-               elementsContra'ToElementsContra, elementsContraToElementsContra']
-    -- Goal is now ⟨X.fst, X.snd⟩ = X, which is sigma eta
-    cases X
-    rfl
-  case h_map =>
-    intro X Y f
-    simp only [eqToHom_refl, Category.id_comp, Category.comp_id, Functor.id_map]
-    apply Subtype.ext
-    simp only [Functor.comp_map,
-               elementsContra'ToElementsContra, elementsContraToElementsContra']
-    rfl
+    elementsContra'ToElementsContra F ⋙ elementsContraToElementsContra' F = 𝟭 _ :=
+  _root_.CategoryTheory.Functor.hext
+    (fun _ => rfl)
+    (by
+      intros X Y f
+      simp only [Functor.comp_map, Functor.id_map,
+        elementsContra'ToElementsContra,
+        elementsContraToElementsContra',
+        opToOp', op'ToOp,
+        Quiver.Hom.op, Quiver.Hom.unop,
+        Opposite.unop_op, Opposite.op_unop]
+      exact HEq.rfl)
 
 /--
 The composition `elementsContraToElementsContra' ⋙ elementsContra'ToElementsContra`
 is the identity functor on `F.ElementsContra`.
 -/
 lemma elementsContra_roundtrip_eq_id (F : Cᵒᵖ' ⥤ Type w) :
-    elementsContraToElementsContra' F ⋙ elementsContra'ToElementsContra F = 𝟭 _ := by
-  apply _root_.CategoryTheory.Functor.ext
-  case h_obj =>
-    intro X
-    simp only [Functor.comp_obj, Functor.id_obj,
-               elementsContraToElementsContra', elementsContra'ToElementsContra]
-    rfl
-  case h_map =>
-    intro X Y f
-    simp only [eqToHom_refl, Category.id_comp, Category.comp_id, Functor.id_map]
-    apply Quiver.Hom.unop_inj
-    apply Subtype.ext
-    simp only [Functor.comp_map,
-               elementsContraToElementsContra', elementsContra'ToElementsContra]
-    rfl
+    elementsContraToElementsContra' F ⋙ elementsContra'ToElementsContra F = 𝟭 _ :=
+  _root_.CategoryTheory.Functor.hext
+    (fun _ => rfl)
+    (by
+      intros X Y f
+      simp only [Functor.comp_map, Functor.id_map,
+        elementsContra'ToElementsContra,
+        elementsContraToElementsContra',
+        opToOp', op'ToOp,
+        Quiver.Hom.op, Quiver.Hom.unop,
+        Opposite.unop_op, Opposite.op_unop]
+      exact heq_of_eq (Opposite.op_unop f))
 
 def elementsContraIso (F : Cᵒᵖ' ⥤ Type w) :
     F.ElementsContra' ≅Cat F.ElementsContra where
@@ -728,9 +717,11 @@ def isoMk {F : Cᵒᵖ' ⥤ Type w} (x y : F.ElementsContra')
     (he : F.map e.hom y.snd = x.snd) :
     x ≅ y :=
   Iso.symm <|
-    (CategoryOfElements.isoMk (C := Cᵒᵖ') (F := F) y x (Iso.symm e))
+    isoToOp' <|
+    (CategoryOfElements.isoMk (C := Cᵒᵖ') (F := F) y x
+      (Iso.symm e))
     (by unfold isoToOp'
-        simp only [CategoryOp'.eq_1, CategoryOp'Inst.eq_1, CategoryOpQuivInst.eq_1, Iso.symm_mk]
+        simp only [CategoryOp'.eq_1, CategoryOp'Inst.eq_1]
         exact he)
 
 end CategoryOfElementsContra'
@@ -757,10 +748,9 @@ abbrev map {F G : Cᵒᵖ' ⥤ Type w} (α : F ⟶ G) :
 
 @[simp]
 theorem map_π {F G : Cᵒᵖ' ⥤ Type w} (α : F ⟶ G) :
-    map α ⋙ π G = π F := by
-  unfold map NatTrans.mapElementsContra' π
-  rw [← Functor.op'_comp]
-  rfl
+    map α ⋙ π G = π F :=
+  _root_.CategoryTheory.Functor.hext
+    (fun _ => rfl) (fun _ _ _ => HEq.rfl)
 
 end CategoryOfElementsContra'
 
@@ -825,12 +815,12 @@ def overElementsUnitIso :
       simp [overToElements, elementsToOver])
 
 private lemma counit_hom_comp_inv (p : (coyoneda'.obj X).ElementsContra') :
-    (𝟙 p.fst ≫ 𝟙 p.fst : p.fst ⟶ p.fst) = 𝟙 p.fst := by
-  simp
+    (𝟙 p.fst ≫ 𝟙 p.fst : p.fst ⟶ p.fst) = 𝟙 p.fst :=
+  Category.id_comp (𝟙 p.fst)
 
 private lemma counit_inv_comp_hom (p : (coyoneda'.obj X).ElementsContra') :
-    (𝟙 p.fst ≫ 𝟙 p.fst : p.fst ⟶ p.fst) = 𝟙 p.fst := by
-  simp
+    (𝟙 p.fst ≫ 𝟙 p.fst : p.fst ⟶ p.fst) = 𝟙 p.fst :=
+  Category.id_comp (𝟙 p.fst)
 
 private lemma counit_naturality_val (X : C) {p q : (coyoneda'.obj X).ElementsContra'}
     (g : p ⟶ q) :
@@ -1050,7 +1040,7 @@ private theorem natTrans_naturality_aux (e : ElementsEquivOver F G) {j k : J}
     _ = G.map (eqToHom hj ≫ f ≫ eqToHom hk.symm ≫ eqToHom hk) qj.snd := by
         rw [morphG_val_eq]; simp only [Category.assoc]
     _ = G.map (eqToHom hj ≫ f) qj.snd := by
-        simp only [eqToHom_trans, eqToHom_refl, Category.comp_id]
+        rw [eqToHom_trans, eqToHom_refl, Category.comp_id]
     _ = G.map f (G.map (eqToHom hj) qj.snd) := by
         rw [FunctorToTypes.map_comp_apply]
     _ = G.map f (cast (congrArg G.obj hj) qj.snd) := by
@@ -1092,10 +1082,10 @@ theorem natTransInv_naturality (e : ElementsEquivOver F G) {j k : J}
         rw [eqToHom_map F hk, eqToHom_eq_cast]
     _ = F.map (morphF.val ≫ eqToHom hk) pj.snd := by
         rw [← FunctorToTypes.map_comp_apply]
-    _ = F.map (eqToHom hj ≫ f ≫ eqToHom hk.symm ≫ eqToHom hk) pj.snd := by
-        rw [morphF_val_eq]; simp only [Category.assoc]
     _ = F.map (eqToHom hj ≫ f) pj.snd := by
-        simp only [eqToHom_trans, eqToHom_refl, Category.comp_id]
+        rw [morphF_val_eq, Category.assoc,
+          Category.assoc, eqToHom_trans,
+          eqToHom_refl, Category.comp_id]
     _ = F.map f (F.map (eqToHom hj) pj.snd) := by
         rw [FunctorToTypes.map_comp_apply]
     _ = F.map f (cast (congrArg F.obj hj) pj.snd) := by
@@ -1203,13 +1193,13 @@ theorem natTrans_comp_inv (e : ElementsEquivOver F G) :
       simp only [← Iso.app_hom, IsIso.Iso.inv_hom, Iso.app_inv]
     rw [inv_eq] at cat_inv_val
     convert cat_inv_val using 1
-  calc cast (congrArg F.obj hp) (e.equiv.inverse.obj q).snd
-      = F.map (eqToHom hp) (e.equiv.inverse.obj q).snd := by
-          rw [eqToHom_map, eqToHom_eq_cast]
-    _ = F.map (e.equiv.unitIso.inv.app p).val (e.equiv.inverse.obj q).snd := by
-          rw [morph_eq]
-    _ = p.snd := unit_inv_prop
-    _ = x := rfl
+  rw [show cast (congrArg F.obj hp)
+        (e.equiv.inverse.obj q).snd =
+      F.map (eqToHom hp)
+        (e.equiv.inverse.obj q).snd from
+    by rw [eqToHom_map, eqToHom_eq_cast]]
+  rw [← morph_eq]
+  exact unit_inv_prop
 
 /--
 The natural isomorphism from F to G induced by an equivalence of their
