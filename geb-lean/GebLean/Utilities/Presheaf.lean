@@ -1055,9 +1055,9 @@ theorem yonedaExtDesc_fac (F : C ⥤ D)
   dsimp only [yonedaExtDescTriple]
   have h : (yonedaEquiv (F := yoneda.obj X)
       ).symm (𝟙 X) = 𝟙 (yoneda.obj X) := by
-    apply yonedaEquiv.injective
-    rw [Equiv.apply_symm_apply]
-    simp [yonedaEquiv]
+    rw [← yonedaEquiv_yoneda_map (𝟙 X),
+      Equiv.symm_apply_apply]
+    exact yoneda.map_id X
   rw [h, G.map_id]
   rfl
 
@@ -1093,7 +1093,7 @@ theorem yonedaExtDesc_uniq (F : C ⥤ D)
       (σ.naturality
         (yonedaEquiv.symm x.2.1)) T)
     (Quot.mk _ ⟨x.1, 𝟙 x.1, x.2.2⟩)
-  dsimp at hnat
+  dsimp at hnat ⊢
   rw [hnat]
   have hfac := congr_fun
     (congr_app (congr_app hσ x.1) T) x.2.2
