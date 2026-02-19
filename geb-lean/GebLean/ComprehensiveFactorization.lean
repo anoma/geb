@@ -112,15 +112,15 @@ instance elementsPre_π_isDiscreteFibration
   unique_lift := by
     intro e b f
     refine ⟨elementsPre_lift F e f,
-      ⟨rfl, by simp only [eqToHom_refl,
+      ⟨rfl, by erw [eqToHom_refl,
         Category.id_comp]; rfl⟩, ?_⟩
     rintro ⟨⟨⟨c_op, x⟩⟩, g⟩ ⟨h, hg⟩
     simp only [elementsPre_π_obj] at h
     subst h
-    simp only [eqToHom_refl, Category.id_comp,
-      elementsPre_π_map] at hg
+    simp only [elementsPre_π_map] at hg
+    erw [eqToHom_refl, Category.id_comp] at hg
     have hval : g.unop.val = f.op := by
-      rw [← Quiver.Hom.op_unop g.unop.val, hg]
+      rw [← Quiver.Hom.op_unop g.unop.val, hg]; rfl
     have hprop : F.map f.op e.unop.snd = x := by
       rw [← hval]; exact g.unop.property
     subst hprop
@@ -261,7 +261,9 @@ private def liftCostArrow
     ⟨τ.hom, by
       simp only [comprehensiveCopresheaf_map]
       dsimp [comprehensiveE']
-      simp only [Category.id_comp]
+      erw [Functor.mapConnectedComponents_mk]
+      dsimp [CostructuredArrow.map, Comma.mapRight]
+      erw [Category.id_comp]
       rw [← hτ]
       exact Quotient.sound
         (Zigzag.of_inv (CostructuredArrow.eta τ).hom)⟩
@@ -288,7 +290,7 @@ private def liftCostArrowHom
     simp only [liftCostArrow, comprehensiveE',
       CategoryOfElements.comp_val]
     dsimp
-    simp only [CommaMorphism.w, Functor.const_obj_map]
+    erw [CommaMorphism.w, Functor.const_obj_map]
     exact Category.comp_id _)
 
 /-- Extract the component membership proof from a
@@ -307,7 +309,9 @@ private lemma costArrowComponent
   have hp := α.hom.property
   simp only [comprehensiveCopresheaf_map] at hp
   dsimp [comprehensiveE'] at hp
-  simp only [Category.id_comp] at hp
+  erw [Functor.mapConnectedComponents_mk] at hp
+  dsimp [CostructuredArrow.map, Comma.mapRight] at hp
+  erw [Category.id_comp] at hp
   exact hp
 
 /-- Any costructured arrow `α` in
@@ -549,7 +553,9 @@ private lemma strArrowComponent
   have hp := α.hom.unop.property
   simp only [comprehensivePresheaf_map] at hp
   dsimp [comprehensiveE] at hp
-  simp only [Category.comp_id] at hp
+  erw [Functor.mapConnectedComponents_mk] at hp
+  dsimp [StructuredArrow.map, Comma.mapLeft] at hp
+  erw [Category.comp_id] at hp
   exact hp
 
 /-- Any structured arrow `α` in
@@ -635,23 +641,23 @@ instance comprehensiveE_final :
     intro ⟨⟨d_op, x⟩⟩
     induction x using Quotient.inductionOn with
     | h σ₀ =>
-      haveI : Nonempty
+      have hne : Nonempty
           (StructuredArrow
             (Opposite.op
               ⟨d_op, ⟦σ₀⟧⟩ :
               (comprehensivePresheaf F).ElementsPre)
             (comprehensiveE F)) :=
         ⟨liftStrArrow F σ₀ rfl⟩
-      apply zigzag_isConnected
-      intro α₁ α₂
-      rw [compEStrArrow_eq_lift F α₁,
-        compEStrArrow_eq_lift F α₂]
-      exact liftZigzagStr F
-        (strArrowComponent F α₁)
-        (strArrowComponent F α₂)
-        (Quotient.exact
-          ((strArrowComponent F α₁).trans
-            (strArrowComponent F α₂).symm))
+      exact @zigzag_isConnected _ _ hne
+        fun α₁ α₂ => by
+          rw [compEStrArrow_eq_lift F α₁,
+            compEStrArrow_eq_lift F α₂]
+          exact liftZigzagStr F
+            (strArrowComponent F α₁)
+            (strArrowComponent F α₂)
+            (Quotient.exact
+              ((strArrowComponent F α₁).trans
+                (strArrowComponent F α₂).symm))
 
 end ComprehensiveFactorizationPre
 
@@ -894,7 +900,10 @@ def comprehensivePresheaf_isPointwiseLan :
         dsimp [Functor.LeftExtension.coconeAt,
           comprehensivePresheafLeftExt,
           Functor.LeftExtension.mk]
-        rw [Category.comp_id]
+        erw [Functor.mapConnectedComponents_mk,
+          Quotient.lift_mk]
+        dsimp [StructuredArrow.map, Comma.mapLeft]
+        erw [Category.comp_id]
         exact congrFun
           (coconeAppEqOfHomPre F s
             (CostructuredArrow.eta g).hom).symm _
@@ -908,7 +917,10 @@ def comprehensivePresheaf_isPointwiseLan :
           dsimp [Functor.LeftExtension.coconeAt,
             comprehensivePresheafLeftExt,
             Functor.LeftExtension.mk] at h
-          rw [Category.comp_id] at h
+          erw [Functor.mapConnectedComponents_mk] at h
+          dsimp [StructuredArrow.map,
+            Comma.mapLeft] at h
+          erw [Category.comp_id] at h
           rw [← h]
           exact congrArg m
             (Quotient.sound
@@ -947,11 +959,19 @@ private theorem strArrToCostArr_zigzag {d : D}
   h.lift (strArrToCostArr F) fun {a b} hab => by
     rcases hab with ⟨⟨f⟩⟩ | ⟨⟨f⟩⟩
     · exact Zag.of_inv (CostructuredArrow.homMk
-        f.right.op (by simp [strArrToCostArr,
-          ← op_comp]))
+        f.right.op (by
+          dsimp [strArrToCostArr]
+          rw [← op_comp]
+          congr 1
+          exact (f.w.symm.trans
+            (Category.id_comp _))))
     · exact Zag.of_hom (CostructuredArrow.homMk
-        f.right.op (by simp [strArrToCostArr,
-          ← op_comp]))
+        f.right.op (by
+          dsimp [strArrToCostArr]
+          rw [← op_comp]
+          congr 1
+          exact (f.w.symm.trans
+            (Category.id_comp _))))
 
 private def costArrToStrArr {d : D}
     (τ : CostructuredArrow F.op (op d)) :
