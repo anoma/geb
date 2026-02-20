@@ -735,6 +735,18 @@ theorem FreeMor.comp_cast_eq_cast_comp_partial {Q : OverQuiver.{v, u}}
   subst ha hb
   simp only [congrArg₂, cast_eq]
 
+/-- HEq congruence for FreeMor.comp:
+    if the index equalities hold and g₁ ≅ g₂, f₁ ≅ f₂,
+    then g₁.comp f₁ ≅ g₂.comp f₂. -/
+theorem FreeMor.heq_comp {Q : OverQuiver.{v, u}}
+    {a₁ b₁ c₁ a₂ b₂ c₂ : Q.Obj}
+    (ha : a₁ = a₂) (hb : b₁ = b₂) (hc : c₁ = c₂)
+    {g₁ : FreeMor Q b₁ c₁} {g₂ : FreeMor Q b₂ c₂}
+    {f₁ : FreeMor Q a₁ b₁} {f₂ : FreeMor Q a₂ b₂}
+    (hg : HEq g₁ g₂) (hf : HEq f₁ f₂) :
+    HEq (g₁.comp f₁) (g₂.comp f₂) := by
+  subst ha hb hc
+  rw [eq_of_heq hg, eq_of_heq hf]
 
 /-- mapQuiver of a casted var. When we map a casted variable through F,
     the result is a cast of var applied to the mapped morphism. -/
@@ -874,10 +886,6 @@ theorem FreeMor.mapQuiver_respects_gen
       -- Try native_decide or decide for this goal
       have h := F.compLeft_comm c
       have h' := F.compRight_comm c
-      -- Try congrArg₂ with FreeMor.comp directly
-      -- Goal: (cast _ (var g₁)).comp (cast _ (var f₁)) = cast _ ((cast _ (var g₂)).comp (var f₂))
-      -- where g₁ = g₂ (by h) and f₁ = f₂ (by h')
-      -- Use Eq.rec to transport var through the equality
       have var_eq_L : FreeMor.var (F.quiverMor.morFn (D₁.compLeft c)) =
           h ▸ FreeMor.var (D₂.compLeft (F.compWitMap c)) :=
         h.symm.rec rfl
@@ -885,24 +893,32 @@ theorem FreeMor.mapQuiver_respects_gen
           h' ▸ FreeMor.var (D₂.compRight (F.compWitMap c)) :=
         h'.symm.rec rfl
       simp only [var_eq_L, var_eq_R]
-      -- Now both sides have the same vars; the casts use proof irrelevance
-      -- Use cast_subst_var to get the vars into the same form
       rw [cast_subst_var h _ _ _ _, cast_subst_var h' _ _ _ _]
-      -- 8 proof obligations for the cast_subst_var arguments, plus main composition goal
-      -- Main goal: (cast _ g).comp (cast _ f) = cast _ ((cast _ g).comp f)
-      on_goal 1 => grind
+      on_goal 1 =>
+        apply eq_of_heq
+        refine (FreeMor.heq_comp ?ha ?hb ?hc
+          ((cast_heq _ _).trans (cast_heq _ _).symm)
+          (cast_heq _ _)).trans (cast_heq _ _).symm
       all_goals first
           | exact F.quiverMor.src_comm _
           | exact F.quiverMor.tgt_comm _
           | exact ha
           | exact hb
+          | exact ha.symm
+          | exact hb.symm
+          | exact (F.quiverMor.tgt_comm _).symm.trans
+              (congrArg D₂.quiver.tgt (F.compRight_comm c))
           | exact (D₂.comp_match _).symm
           | exact (D₂.comp_match _).trans
-              ((congrArg D₂.quiver.tgt (F.compRight_comm c).symm).trans
+              ((congrArg D₂.quiver.tgt
+                (F.compRight_comm c).symm).trans
                 (F.quiverMor.tgt_comm _))
-          | exact ((congrArg D₂.quiver.src (F.compLeft_comm c).symm).trans
-                (F.quiverMor.src_comm _)).trans (congrArg _ (D₁.comp_match c).symm)
-          | exact (congrArg D₂.quiver.tgt (F.compRight_comm c).symm).trans
+          | exact ((congrArg D₂.quiver.src
+                (F.compLeft_comm c).symm).trans
+                (F.quiverMor.src_comm _)).trans
+              (congrArg _ (D₁.comp_match c).symm)
+          | exact (congrArg D₂.quiver.tgt
+              (F.compRight_comm c).symm).trans
               (F.quiverMor.tgt_comm _)
           | exact (F.quiverMor.src_comm _).trans
               (congrArg _ (D₁.comp_match c).symm)
