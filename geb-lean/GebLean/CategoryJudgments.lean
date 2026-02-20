@@ -385,7 +385,7 @@ def mkFunctor (data : FunctorData C) : Obj ⥤ C where
         change mapSemiHom data (SemiHom.comp f' g') =
                mapSemiHom data f' ≫ mapSemiHom data g'
         cases f' <;> cases g' <;>
-          simp [mapSemiHom, SemiHom.comp]
+          simp only [mapSemiHom, SemiHom.comp]
           <;> first
             | rfl
             | exact data.h_id_endo
@@ -593,9 +593,7 @@ theorem mkNatTrans_natTransToData {F G : Obj ⥤ C} (α : F ⟶ G) :
     eqToHom (mkFunctor_functorToData G).symm := by
   ext X
   cases X <;>
-    simp [mkNatTrans, natTransToData] <;>
-    (change _ = 𝟙 _ ≫ _ ≫ 𝟙 _;
-     simp only [Category.comp_id, Category.id_comp])
+    simp [mkNatTrans, natTransToData]
 
 /-- The functor from FunctorData to the functor category that sends
     FunctorData to the corresponding functor via mkFunctor. -/

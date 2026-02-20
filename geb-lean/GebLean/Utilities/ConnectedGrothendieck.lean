@@ -2449,8 +2449,10 @@ theorem innerFiberContraTransition_id (b : C) :
     case w_base =>
       simp only [innerFiberContraTransition, innerFiberContraTransitionHom, Functor.id_map]
       rw [Functor.congr_hom (Over.mapId_eq b) f.base, Functor.id_map]
-      simp only [innerFiberContraCategory, GrothendieckContra'.GrothendieckContraInst',
-                 GrothendieckContra'.comp_base]
+      simp +instances only [
+        innerFiberContraCategory,
+        GrothendieckContra'.GrothendieckContraInst',
+        GrothendieckContra'.comp_base]
       conv_rhs => rw [GrothendieckContra'.base_eqToHom, GrothendieckContra'.base_eqToHom]
     case w_fiber =>
       simp only [innerFiberContraTransition, innerFiberContraTransitionHom, Functor.id_map]
@@ -2491,8 +2493,10 @@ theorem innerFiberContraTransition_comp {b d e : C} (β : b ⟶ d) (γ : d ⟶ e
       unfold innerFiberContraTransition innerFiberContraTransitionHom
       simp only [Functor.comp_map]
       rw [Functor.congr_hom (Over.mapComp_eq β γ) f.base, Functor.comp_map]
-      simp only [innerFiberContraCategory, GrothendieckContra'.GrothendieckContraInst',
-                 GrothendieckContra'.comp_base]
+      simp +instances only [
+        innerFiberContraCategory,
+        GrothendieckContra'.GrothendieckContraInst',
+        GrothendieckContra'.comp_base]
       conv_rhs => rw [GrothendieckContra'.base_eqToHom, GrothendieckContra'.base_eqToHom]
     case w_fiber =>
       unfold innerFiberContraTransition innerFiberContraTransitionHom
@@ -3389,8 +3393,10 @@ theorem fiberFunctorContraNatTrans_rhs_base_eq (α : F ⟶ G) {b d : C} (β : b 
       ((innerFiberContraMap C α b).map f) ≫ eqToHom hY.symm).base =
     (Over.map β).map f.base := by
   -- Unfold category structure and apply comp_base
-  simp only [innerFiberContraCategory, GrothendieckContra'.GrothendieckContraInst',
-             GrothendieckContra'.comp_base]
+  simp +instances only [
+    innerFiberContraCategory,
+    GrothendieckContra'.GrothendieckContraInst',
+    GrothendieckContra'.comp_base]
   -- Apply base_eqToHom to the eqToHom terms
   conv_lhs => rw [GrothendieckContra'.base_eqToHom, GrothendieckContra'.base_eqToHom]
   -- Simplify toCatHom.toFunctor back to underlying functor and apply fiberFunctorContra
@@ -6820,8 +6826,9 @@ lemma functorToConnGrothendieck_map_comp_fiber_base {d d' d'' : D}
   simp only [id_eq]
   rw [Grothendieck.comp_base, Comma.comp_right]
   simp only [functorToConnGrothendieckObjMap_base, functorToConnGrothendieckObjMap_fiber_base,
-    Under.mk_right, Functor.id_obj, CategoryOp'.eq_1, CategoryOp'Inst.eq_1, CategoryOpQuivInst.eq_1,
-    Functor.toCatHom_toFunctor, TwistedArrow'.eq_1, Functor.comp_obj,
+    Under.mk_right, Functor.id_obj, CategoryOp'.eq_1,
+    Functor.toCatHom_toFunctor, TwistedArrow'.eq_1,
+    Functor.comp_obj,
     functorToConnGrothendieckObjMap_fiber_fiber, eqToHom_refl, Cat.Hom.id_toFunctor,
     Cat.Hom.comp_toFunctor, eq_mpr_eq_cast, GrothendieckContra'.comp_base, Functor.map_comp,
     functor_map_eqToHom, congrArg_cast_hom_right, cast_cast, innerFiberAltTransition_map]

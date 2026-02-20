@@ -586,7 +586,6 @@ theorem PolyPresentation.coeqSetoidAt_map
     (h : (X.coeqSetoidAt A).r y₁ y₂) :
     (X.coeqSetoidAt B).r (ccrEvalMap f y₁) (ccrEvalMap f y₂) := by
   unfold coeqSetoidAt at h ⊢
-  simp only [Relation.EqvGen.setoid] at h ⊢
   induction h with
   | rel _ _ hr => exact Relation.EqvGen.rel _ _ (X.coeqRelAt_map f hr)
   | refl _ => exact Relation.EqvGen.refl _

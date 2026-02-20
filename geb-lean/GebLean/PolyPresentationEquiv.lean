@@ -730,19 +730,24 @@ theorem densityCoeq_eq_of_toFunctor_eq (F : D ⥤ Type (max u w v)) (A : D)
   -- Unfold toCopresheafπ to get the component-level π
   -- functorCoequalizerData.π unfolds to functorCoeqπ which applies
   -- the Type-level π at each component
-  simp only [PolyPresentation.toCopresheafπ, functorCoequalizerData, functorCoeqπ]
-  -- Now the goal has CoequalizerData.π (fst.app A) (snd.app A) applied to x and y
+  simp only [PolyPresentation.toCopresheafπ]
   have hfac := CoequalizerData.fac
     ((ccrToFunctorMap (densityPresentation F).fst).app A)
     ((ccrToFunctorMap (densityPresentation F).snd).app A)
     (densityToFunctorApp F A)
     (densityToFunctorApp_coequalizes F A)
-  -- hfac : π ≫ desc = densityToFunctorApp F A
-  -- Apply pointwise: desc (π x) = densityToFunctorApp F A x
   have h1 := congrFun hfac x
   have h2 := congrFun hfac y
   simp only [types_comp_apply] at h1 h2
-  rw [h1, h2]
+  have h1' : ∀ z, (CoequalizerData.π
+    (ccrToFunctorMap (densityPresentation F).fst)
+    (ccrToFunctorMap (densityPresentation F).snd)
+    ).app A z =
+    CoequalizerData.π
+    ((ccrToFunctorMap (densityPresentation F).fst).app A)
+    ((ccrToFunctorMap (densityPresentation F).snd).app A)
+    z := fun _ => rfl
+  rw [h1' x, h1' y, h1, h2]
   exact h
 
 /--
@@ -1342,7 +1347,6 @@ theorem setoidInverseTgtHom_respects :
   --                           ccrToFunctorMapApp X.snd A x = y₂
   -- These are definitionally equal
   -- Use Quot.eqvGen_sound via the coeqRelAt relation
-  simp only [PolyPresentation.coeqSetoidAt, Relation.EqvGen.setoid] at transported
   simp only [ccrEvalMap] at transported
   -- The goal is to show EqvGen of typeCoeqRel, but transported gives EqvGen of coeqRelAt
   -- These relations are the same, so we need to bridge them
@@ -1843,8 +1847,8 @@ theorem setoidComparisonLoc_inverseLoc_id :
     setoidComparisonLoc X ≫ setoidInverseLoc X = 𝟙 (setoidComparisonSrc X) := by
   unfold setoidComparisonLoc setoidInverseLoc setoidComparisonSrc
   unfold PolyPresentationLoc.Hom.mk'
-  simp only [PolyPresentationLoc.category, PolyPresentationLoc.Hom.comp',
-    PolyPresentationLoc.Hom.id']
+  dsimp only [CategoryStruct.comp, CategoryStruct.id,
+    PolyPresentationLoc.category]
   apply Quot.sound
   exact setoidComparisonQ_inverseQ_equiv X
 
@@ -1856,8 +1860,8 @@ theorem setoidInverseLoc_comparisonLoc_id :
     setoidInverseLoc X ≫ setoidComparisonLoc X = 𝟙 (setoidComparisonTgt X) := by
   unfold setoidInverseLoc setoidComparisonLoc setoidComparisonTgt
   unfold PolyPresentationLoc.Hom.mk'
-  simp only [PolyPresentationLoc.category, PolyPresentationLoc.Hom.comp',
-    PolyPresentationLoc.Hom.id']
+  dsimp only [CategoryStruct.comp, CategoryStruct.id,
+    PolyPresentationLoc.category]
   apply Quot.sound
   exact setoidInverseQ_comparisonQ_equiv X
 
@@ -1974,7 +1978,7 @@ def setoidCounitForward_witness (A : D) (x y : (F.obj A).carrier)
   have hSym : (F.obj A).rel.r y x := (F.obj A).rel.symm h
   let mapIdCompat : (F.obj A).rel.r ((F.map (𝟙 A)).toFun y) x := by
     have hMapId : F.map (𝟙 A) = 𝟙 (F.obj A) := F.map_id A
-    simp only [hMapId, SetoidCat, SetoidHom.id_apply]
+    simp only [hMapId]
     exact hSym
   let homData : SetoidElementsHom srcElem tgtElem := ⟨𝟙 A, mapIdCompat⟩
   let mIdx : SetoidMorphismIndex F := ⟨tgtElem, srcElem, homData⟩
@@ -2049,7 +2053,6 @@ theorem setoidCounitInverseRaw_preserves_base (A : D)
   have heq : (F.map g).toFun ((F.map homData.hom).toFun srcElem) =
              (F.map (homData.hom ≫ g)).toFun srcElem := by
     have hcomp := F.map_comp homData.hom g
-    simp only [SetoidCat] at hcomp
     exact congrFun (congrArg SetoidHom.toFun hcomp.symm) srcElem
   rw [heq] at h
   exact (F.obj A).rel.symm h
@@ -2085,7 +2088,8 @@ theorem setoidCounit_inverse_forward (A : D) (x : (F.obj A).carrier) :
     setoidCounitInverseRaw F A (setoidCounitForwardRaw F A x) = x := by
   simp only [setoidCounitForwardRaw, setoidCounitInverseRaw, SetoidElements.elem]
   have h : F.map (𝟙 A) = 𝟙 (F.obj A) := F.map_id A
-  simp only [h, SetoidCat, SetoidHom.id_apply]
+  simp only [h]
+  rfl
 
 /--
 Round-trip: forward ∘ inverse ≈ id on ccrEval (setoidDensityTgt F) A.
@@ -2234,7 +2238,8 @@ theorem setoidCounitInverseHom_natural {A B : D} (f : A ⟶ B) :
     PolyPresentation.toSetoidCopresheafMap, PolyPresentation.toSetoidCopresheafMapFun,
     ccrEvalMap, SetoidElements.elem]
   have h : F.map (g ≫ f) = F.map g ≫ F.map f := F.map_comp g f
-  simp only [h, SetoidCat, SetoidHom.comp_apply]
+  simp only [h]
+  rfl
 
 /-! ### Quotient-Level Isomorphism
 
@@ -2387,7 +2392,7 @@ theorem setoidCounitQuotientInverse_natural {A B : D} (f : A ⟶ B) :
   simp only [ccrToFunctor, ccrEvalMap, setoidCounitInverseRaw, SetoidElements.elem]
   -- Goal: (F.obj B).rel.r ((F.map (g ≫ f)) z) ((F.map f) ((F.map g) z))
   have hcomp : F.map (g ≫ f) = F.map g ≫ F.map f := F.map_comp g f
-  simp only [hcomp, SetoidCat, SetoidHom.comp_apply]
+  simp only [hcomp]
   exact (F.obj B).rel.refl _
 
 /--
@@ -2736,7 +2741,8 @@ theorem typeComparisonLoc_eq :
     typeComparisonLoc X = setoidComparisonLoc X ≫ setoidToTypeDensityLoc X := by
   unfold typeComparisonLoc setoidComparisonLoc setoidToTypeDensityLoc typeComparisonQ
   unfold PolyPresentationLoc.Hom.mk'
-  simp only [PolyPresentationLoc.category, PolyPresentationLoc.Hom.comp']
+  dsimp only [CategoryStruct.comp,
+    PolyPresentationLoc.category]
   apply Quot.sound
   unfold PolyPresentationQ.Hom.equiv
   rfl

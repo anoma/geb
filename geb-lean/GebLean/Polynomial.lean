@@ -2949,8 +2949,8 @@ private lemma polyCompGObj_iso_hom_inv_fiber_cond
       (polyCompGObj f₁ G)).fiber := by
   funext ⟨ig, pf⟩
   rw [piOp'_fiber_comp_eqToHom_at_idx]
-  simp only [CategoryOp'.eq_1, CategoryOp'Inst.eq_1,
-    CategoryOpQuivInst.eq_1, familyFunctor.eq_1,
+  simp only [CategoryOp'.eq_1,
+    familyFunctor.eq_1,
     FamilyCat.eq_1, Cat.of_α, familyMap.eq_1,
     Cat.opFunctor'.eq_1, Functor.op'.eq_1,
     functorOp'Obj.eq_1, Functor.comp_obj,
@@ -3017,8 +3017,8 @@ private lemma polyCompGObj_iso_inv_hom_fiber_cond
       (polyCompGObj f₂ G)).fiber := by
   funext ⟨ig, pf⟩
   rw [piOp'_fiber_comp_eqToHom_at_idx]
-  simp only [CategoryOp'.eq_1, CategoryOp'Inst.eq_1,
-    CategoryOpQuivInst.eq_1, familyFunctor.eq_1,
+  simp only [CategoryOp'.eq_1,
+    familyFunctor.eq_1,
     FamilyCat.eq_1, Cat.of_α, familyMap.eq_1,
     Cat.opFunctor'.eq_1, Functor.op'.eq_1,
     functorOp'Obj.eq_1, Functor.comp_obj,

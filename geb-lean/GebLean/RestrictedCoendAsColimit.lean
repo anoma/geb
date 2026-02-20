@@ -932,9 +932,13 @@ def homRestrictedCopowerUnitIso (G : Cᵒᵖ ⥤ C ⥤ C) (pt : C) :
         homRestrictedToCopowerFunctor, copowerToHomRestrictedFunctor,
         restrictedCowedgeToCopowerCowedgeHom, copowerCowedgeToRestrictedCowedgeHom,
         eqToIso.hom]
-      simp only [RestrictedCowedgeCat, RestrictedCowedge.Hom.comp_hom,
-        RestrictedCowedge_eqToHom_hom, copowerCowedgeToRestrictedCowedge_pt,
-        restrictedCowedgeToCopowerCowedge_pt, eqToHom_refl, Category.id_comp, Category.comp_id])
+      simp only [
+        RestrictedCowedge.category_comp_hom,
+        RestrictedCowedge_eqToHom_hom,
+        copowerCowedgeToRestrictedCowedge_pt,
+        restrictedCowedgeToCopowerCowedge_pt,
+        eqToHom_refl,
+        Category.id_comp, Category.comp_id])
 
 /-- The counit isomorphism for the equivalence. -/
 def homRestrictedCopowerCounitIso (G : Cᵒᵖ ⥤ C ⥤ C) (pt : C) :
@@ -1095,9 +1099,13 @@ def homRestrictedWeightedUnitIso :
         homRestrictedToWeightedFunctor, weightedToHomRestrictedFunctor,
         restrictedCowedgeToWeightedCowedgeHom, weightedCowedgeToRestrictedCowedgeHom,
         eqToIso.hom]
-      simp only [RestrictedCowedgeCat, RestrictedCowedge.Hom.comp_hom,
-        RestrictedCowedge_eqToHom_hom, weightedCowedgeToRestrictedCowedge_pt,
-        restrictedCowedgeToWeightedCowedge_pt, eqToHom_refl, Category.id_comp, Category.comp_id])
+      simp only [
+        RestrictedCowedge.category_comp_hom,
+        RestrictedCowedge_eqToHom_hom,
+        weightedCowedgeToRestrictedCowedge_pt,
+        restrictedCowedgeToWeightedCowedge_pt,
+        eqToHom_refl,
+        Category.id_comp, Category.comp_id])
 
 /-- The counit isomorphism for the equivalence. -/
 def homRestrictedWeightedCounitIso :
@@ -1307,12 +1315,15 @@ def homRestrictedStrongUnitIso :
     (fun rc => eqToIso (inclusion_upgrade_roundtrip G pt rc).symm)
     (fun {rc₁ rc₂} f => by
       apply RestrictedCowedge.Hom.ext
-      simp only [Functor.id_obj, Functor.comp_obj, Functor.id_map, Functor.comp_map,
-        homRestrictedToStrongFunctor, restrictedCowedgeToStrongCowedgeHom,
-        StrongRestrictedCowedge.inclusion, eqToIso.hom, RestrictedCowedgeCat,
-        RestrictedCowedge.Hom.comp_hom, RestrictedCowedge.Hom.id_hom,
-        upgradeToStrongRestrictedCowedge, eqToHom_refl, Category.comp_id,
-        Category.id_comp])
+      simp only [Functor.id_obj, Functor.comp_obj,
+        Functor.id_map, Functor.comp_map,
+        homRestrictedToStrongFunctor,
+        restrictedCowedgeToStrongCowedgeHom,
+        StrongRestrictedCowedge.inclusion,
+        eqToIso.hom, RestrictedCowedgeCat,
+        upgradeToStrongRestrictedCowedge,
+        eqToHom_refl,
+        Category.comp_id, Category.id_comp])
 
 /-- The counit isomorphism for the equivalence. -/
 def homRestrictedStrongCounitIso :
@@ -1322,12 +1333,15 @@ def homRestrictedStrongCounitIso :
     (fun src => eqToIso (upgrade_inclusion_roundtrip G pt src))
     (fun {src₁ src₂} f => by
       apply StrongRestrictedCowedge.Hom.ext
-      simp only [Functor.comp_obj, Functor.id_obj, Functor.comp_map, Functor.id_map,
-        homRestrictedToStrongFunctor, StrongRestrictedCowedge.inclusion,
-        restrictedCowedgeToStrongCowedgeHom, eqToIso.hom, StrongRestrictedCowedgeCat,
-        StrongRestrictedCowedge.Hom.comp_hom, StrongRestrictedCowedge.Hom.id_hom,
-        StrongRestrictedCowedge.toRestrictedCowedge, upgradeToStrongRestrictedCowedge,
-        eqToHom_refl, Category.comp_id, Category.id_comp])
+      simp only [Functor.comp_obj, Functor.id_obj,
+        Functor.comp_map, Functor.id_map,
+        homRestrictedToStrongFunctor,
+        StrongRestrictedCowedge.inclusion,
+        restrictedCowedgeToStrongCowedgeHom,
+        eqToIso.hom, StrongRestrictedCowedgeCat,
+        upgradeToStrongRestrictedCowedge,
+        eqToHom_refl,
+        Category.comp_id, Category.id_comp])
 
 /-- The categorical equivalence between restricted cowedges with weight
 `HomToProf pt` and strong restricted cowedges with the same weight.
@@ -1346,10 +1360,12 @@ def homRestrictedStrongEquiv :
       homRestrictedToStrongFunctor, NatIso.ofComponents_hom_app,
       eqToIso.hom, Functor.comp_obj, Functor.id_obj,
       restrictedCowedgeToStrongCowedgeHom, StrongRestrictedCowedge.inclusion]
-    simp only [StrongRestrictedCowedgeCat, RestrictedCowedgeCat,
-      StrongRestrictedCowedge.Hom.comp_hom, StrongRestrictedCowedge.Hom.id_hom,
-      RestrictedCowedge.Hom.id_hom, StrongRestrictedCowedge.toRestrictedCowedge,
-      upgradeToStrongRestrictedCowedge, eqToHom_refl, Category.comp_id]
+    simp only [
+      StrongRestrictedCowedge.category_id_hom,
+      RestrictedCowedge.category_id_hom,
+      StrongRestrictedCowedge.toRestrictedCowedge,
+      upgradeToStrongRestrictedCowedge,
+      eqToHom_refl, Category.comp_id]
 
 /-- The categorical isomorphism between restricted cowedges with weight
 `HomToProf pt` and strong restricted cowedges with the same weight.

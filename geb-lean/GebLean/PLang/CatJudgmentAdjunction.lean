@@ -1043,15 +1043,15 @@ theorem adjHomSet_comp_val_eq {a b c : s.obj}
       a b c (embedQuotMorAsHom s qm1) (embedQuotMorAsHom s qm2)).val =
     ⟨a, c, (adjCQD s).quotComp qm2 qm1⟩ := by
   unfold adjCatInst catJudgCoprToCat' BundledCategoryData.toCatObj
-  simp only [CategoryOfData]
   unfold catJudgCoprToBundledCategoryData'
   simp only [BundledOverCategoryData.toBundledCategoryData]
-  unfold catJudgCoprToBundledOverCategoryData' catJudgCoprToOverCategoryData'
-  simp only [CategoryQuotientData.toOverCategoryData, OverCategoryData.toCategoryData,
-    OverCategoryData.toCategoryOps, OverCategoryData.extractComp]
-  simp only [CategoryQuotientData.quotCategoryOps, CategoryQuotientData.quotCompFn,
-    CategoryQuotientData.bundleQuotMor, CategoryQuotientData.quotQuiver,
+  unfold catJudgCoprToBundledOverCategoryData'
+    catJudgCoprToOverCategoryData'
+  simp only [CategoryQuotientData.toOverCategoryData]
+  simp only [CategoryQuotientData.bundleQuotMor,
+    CategoryQuotientData.quotQuiver,
     embedQuotMorAsHom]
+  rfl
 
 /-- Transport swap for quotComp.
 
@@ -1130,14 +1130,11 @@ theorem adjHomSet_comp_cod_eq {a b c : s.obj}
     (@CategoryStruct.comp (catJudgCoprToCat' s) (adjCatInst s).toCategoryStruct
       a b c m n).val.snd.fst = c := by
   unfold adjCatInst catJudgCoprToCat' BundledCategoryData.toCatObj
-  simp only [CategoryOfData]
   unfold catJudgCoprToBundledCategoryData'
   simp only [BundledOverCategoryData.toBundledCategoryData]
   unfold catJudgCoprToBundledOverCategoryData' catJudgCoprToOverCategoryData'
-  simp only [CategoryQuotientData.toOverCategoryData, OverCategoryData.toCategoryData,
-    OverCategoryData.toCategoryOps, OverCategoryData.extractComp]
-  simp only [CategoryQuotientData.quotCategoryOps, CategoryQuotientData.quotCompFn,
-    CategoryQuotientData.quotQuiver]
+  simp only [CategoryQuotientData.toOverCategoryData]
+  simp only [CategoryQuotientData.quotQuiver]
   exact n.property.2
 
 /-- The QuotMor of a composition in the adjoint category.
@@ -1154,14 +1151,12 @@ theorem adjHomSet_comp_quotMor_eq {a b c : s.obj}
       a b c m n).val.snd.snd =
     D.quotComp n.val.snd.snd (composable ▸ m.val.snd.snd) := by
   unfold adjCatInst catJudgCoprToCat' BundledCategoryData.toCatObj
-  simp only [CategoryOfData]
   unfold catJudgCoprToBundledCategoryData'
   simp only [BundledOverCategoryData.toBundledCategoryData]
   unfold catJudgCoprToBundledOverCategoryData' catJudgCoprToOverCategoryData'
-  simp only [CategoryQuotientData.toOverCategoryData, OverCategoryData.toCategoryData,
-    OverCategoryData.toCategoryOps, OverCategoryData.extractComp]
-  simp only [CategoryQuotientData.quotCategoryOps, CategoryQuotientData.quotCompFn,
-    CategoryQuotientData.quotQuiver]
+  simp only [CategoryQuotientData.toOverCategoryData]
+  simp only [CategoryQuotientData.quotQuiver]
+  rfl
 
 /-- Subtype transport on adjHomSet preserves `.val`.
 
@@ -1277,15 +1272,14 @@ theorem unitNaturalityComposite : Mor.CatJudgNaturalityComposite (unitCatJudgMap
   simp only [ComposablePair.src, ComposablePair.tgt, ComposablePair.fstMor, ComposablePair.sndMor]
   simp only [unitMorAsHom, embedQuotMorAsHom, unitMorEmbed]
   unfold catJudgCoprToCat' BundledCategoryData.toCatObj
-  simp only [CategoryOfData]
   unfold catJudgCoprToBundledCategoryData'
   simp only [BundledOverCategoryData.toBundledCategoryData]
   unfold catJudgCoprToBundledOverCategoryData' catJudgCoprToOverCategoryData'
-  simp only [CategoryQuotientData.toOverCategoryData, OverCategoryData.toCategoryData,
-    OverCategoryData.toCategoryOps, OverCategoryData.extractComp]
-  simp only [CategoryQuotientData.quotCategoryOps, CategoryQuotientData.quotCompFn,
-    CategoryQuotientData.bundleQuotMor, CategoryQuotientData.quotQuiver]
-  simp only [catJudgCoprToCategoryQuotientData', catJudgCoprToOverQuiver]
+  simp only [CategoryQuotientData.toOverCategoryData]
+  simp only [CategoryQuotientData.bundleQuotMor,
+    CategoryQuotientData.quotQuiver]
+  simp only [catJudgCoprToCategoryQuotientData',
+    catJudgCoprToOverQuiver]
   simp only [BundledHom.mk]
   let qm_right := D.quotMor (@FreeMor.var D.quiver (s.right c))
   let qm_left := D.quotMor (@FreeMor.var D.quiver (s.left c))
@@ -1370,14 +1364,12 @@ theorem unitNaturalityComposite : Mor.CatJudgNaturalityComposite (unitCatJudgMap
                CategoryQuotientData.quotComp, CategoryQuotientData.quotMor] at *
     symm
     unfold adjCatInst catJudgCoprToCat' BundledCategoryData.toCatObj at *
-    simp only [CategoryOfData] at *
     unfold catJudgCoprToBundledCategoryData' at *
     simp only [BundledOverCategoryData.toBundledCategoryData] at *
     unfold catJudgCoprToBundledOverCategoryData' catJudgCoprToOverCategoryData' at *
-    simp only [CategoryQuotientData.toOverCategoryData, OverCategoryData.toCategoryData,
-      OverCategoryData.toCategoryOps, OverCategoryData.extractComp] at *
-    simp only [CategoryQuotientData.quotCategoryOps, CategoryQuotientData.quotCompFn,
-      CategoryQuotientData.bundleQuotMor, CategoryQuotientData.quotQuiver,
+    simp only [CategoryQuotientData.toOverCategoryData] at *
+    simp only [CategoryQuotientData.bundleQuotMor,
+      CategoryQuotientData.quotQuiver,
       embedQuotMorAsHom] at *
     let qm_right_transported : D.QuotMor (s.dom (s.right c)) (s.dom (s.left c)) :=
       h_match ▸ qm_right
@@ -1667,13 +1659,11 @@ theorem extractQuotMor_id (C : Type (uAdj + 1)) [Category.{uAdj + 1} C]
     (counitCQD C).quotId a := by
   simp only [extractQuotMor]
   unfold adjCatInst catJudgCoprToCat' BundledCategoryData.toCatObj
-  simp only [CategoryOfData, CategoryStruct.id]
   unfold catJudgCoprToBundledCategoryData'
   simp only [BundledOverCategoryData.toBundledCategoryData]
   unfold catJudgCoprToBundledOverCategoryData' catJudgCoprToOverCategoryData'
-  simp only [CategoryQuotientData.toOverCategoryData, OverCategoryData.toCategoryData,
-    OverCategoryData.toCategoryOps]
-  simp only [CategoryQuotientData.quotCategoryOps, CategoryQuotientData.quotQuiver]
+  simp only [CategoryQuotientData.toOverCategoryData]
+  simp only [CategoryQuotientData.quotQuiver]
   rfl
 
 /-- Composition in catJudgCoprToCat' relates to quotComp. -/
@@ -1686,14 +1676,12 @@ theorem extractQuotMor_comp (C : Type (uAdj + 1)) [Category.{uAdj + 1} C]
     (counitCQD C).quotComp (extractQuotMor C g) (extractQuotMor C f) := by
   simp only [extractQuotMor]
   unfold adjCatInst catJudgCoprToCat' BundledCategoryData.toCatObj at *
-  simp only [CategoryOfData, CategoryStruct.comp] at *
   unfold catJudgCoprToBundledCategoryData' at *
   simp only [BundledOverCategoryData.toBundledCategoryData] at *
   unfold catJudgCoprToBundledOverCategoryData' catJudgCoprToOverCategoryData' at *
-  simp only [CategoryQuotientData.toOverCategoryData, OverCategoryData.toCategoryData,
-    OverCategoryData.toCategoryOps, OverCategoryData.extractComp] at *
-  simp only [CategoryQuotientData.quotCategoryOps, CategoryQuotientData.quotQuiver] at *
-  unfold CategoryQuotientData.quotCompFn counitCQD at *
+  simp only [CategoryQuotientData.toOverCategoryData] at *
+  simp only [CategoryQuotientData.quotQuiver] at *
+  unfold counitCQD at *
   simp only [CategoryQuotientData.quotComp]
   rcases f with ⟨⟨fa, fb, fqm⟩, hfa, hfb⟩
   rcases g with ⟨⟨ga, gb, gqm⟩, hga, hgb⟩

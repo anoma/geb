@@ -112,12 +112,8 @@ def TwArrCopresheaf.slicePresheaf (F : TwArrCopresheaf C) (y : C) :
     · -- codArr: Both sides reduce to 𝟙 y
       simp only
         [twCodArr', twHomMk', CategoryOfElements.homMk,
-         CategoryStruct.comp, Category.toCategoryStruct,
-         instCategoryTwistedArrow']
-      unfold id
-      simp only [categoryOfElements]
-      simp only [prod_comp]
-      simp
+         CategoryStruct.comp]
+      exact (Category.comp_id _).symm
 
 /--
 For a `TwArrCopresheaf F` and object `y : C`, this gives the object in the
@@ -154,19 +150,13 @@ def TwArrCopresheaf.sliceNatTrans (F : TwArrCopresheaf C) {y y' : C}
     congr 1
     apply twHom'_ext
     · simp only
-        [twDomArr', twHomMk', CategoryOfElements.homMk,
-         Category.toCategoryStruct, instCategoryTwistedArrow']
-      unfold id
-      simp only [categoryOfElements]
-      simp only [prod_comp]
-      simp
+        [twDomArr', twHomMk', CategoryOfElements.homMk]
+      exact (Category.comp_id _).trans
+        (Category.id_comp _).symm
     · simp only
-        [twCodArr', twHomMk', CategoryOfElements.homMk,
-         Category.toCategoryStruct, instCategoryTwistedArrow']
-      unfold id
-      simp only [categoryOfElements]
-      simp only [prod_comp]
-      simp
+        [twCodArr', twHomMk', CategoryOfElements.homMk]
+      exact (Category.id_comp _).trans
+        (Category.comp_id _).symm
 
 /--
 Given a morphism `h : y ⟶ y'` in `C`, we get a morphism in
@@ -288,7 +278,7 @@ lemma TwArrCopresheaf.sliceGrothendieck_hom_comp (F : TwArrCopresheaf C) :
       (((Cat.postCompOpFunctor'.obj (Over.mapFunctor C)).map g).toFunctor.obj f).left =
         f.left := rfl
   apply Prod.ext
-  · simp only [CategoryOp'Inst, prod_comp]
+  · simp only [prod_comp]
     change 𝟙 f.left = 𝟙 f.left ≫ 𝟙 f.left ≫ 𝟙 f.left
     simp only [Category.comp_id]
   · simp only [prod_comp, Category.comp_id]
@@ -530,16 +520,15 @@ def TwArrPresheaf.sliceCopresheaf (F : TwArrPresheaf C) (y : C) :
     · simp only [opTwDomArr']
       rfl
     · simp only
-        [opTwCodArr', opTwObjMk', opTwHomMk', CategoryOfElements.homMk,
-         CategoryStruct.comp, Category.toCategoryStruct,
-         instCategoryOpTwistedArrow', OpProdInst']
-      unfold id CategoryStruct.id
-      simp only [CategoryOp'.eq_1, CategoryOp'Inst.eq_1, CategoryOpQuivInst.eq_1,
-        prod_Hom, OpTwistedArrow'.eq_1, CategoryOfElementsContra'.comp_val]
+        [opTwCodArr', opTwObjMk', opTwHomMk',
+         CategoryOfElements.homMk,
+         CategoryStruct.comp]
+      simp only [CategoryOp'.eq_1,
+        OpTwistedArrow'.eq_1,
+        CategoryOfElementsContra'.comp_val]
       unfold OpProdInst'
-      simp only [CategoryOp'.eq_1, CategoryOp'Inst.eq_1, CategoryOpQuivInst.eq_1]
-      unfold
-        CategoryStruct.id CategoryStruct.comp Category.toCategoryStruct
+        CategoryStruct.id CategoryStruct.comp
+        Category.toCategoryStruct
         opProd' uniformProd
       simp only [CategoryOp'.eq_1]
       exact (Category.id_comp (𝟙 y)).symm
@@ -577,14 +566,16 @@ def TwArrPresheaf.sliceNatTrans (F : TwArrPresheaf C) {y y' : C}
     congr 1
     apply opTwHom'_ext
     · simp only
-        [opTwDomArr', opTwHomMk', CategoryOfElements.homMk,
-         Category.toCategoryStruct, instCategoryOpTwistedArrow', OpProdInst']
-      change (h ≫ 𝟙 y', g.left ≫ 𝟙 f'.left).2 = (𝟙 y ≫ h, 𝟙 f.left ≫ g.left).2
+        [opTwDomArr', opTwHomMk',
+         CategoryOfElements.homMk]
+      change (h ≫ 𝟙 y', g.left ≫ 𝟙 f'.left).2 =
+        (𝟙 y ≫ h, 𝟙 f.left ≫ g.left).2
       simp only [Category.id_comp, Category.comp_id]
     · simp only
-        [opTwCodArr', opTwHomMk', CategoryOfElements.homMk,
-         Category.toCategoryStruct, instCategoryOpTwistedArrow', OpProdInst']
-      change (h ≫ 𝟙 y', g.left ≫ 𝟙 f'.left).1 = (𝟙 y ≫ h, 𝟙 f.left ≫ g.left).1
+        [opTwCodArr', opTwHomMk',
+         CategoryOfElements.homMk]
+      change (h ≫ 𝟙 y', g.left ≫ 𝟙 f'.left).1 =
+        (𝟙 y ≫ h, 𝟙 f.left ≫ g.left).1
       simp only [Category.id_comp, Category.comp_id]
 
 /--
@@ -708,8 +699,7 @@ lemma TwArrPresheaf.sliceGrothendieck_hom_comp (F : TwArrPresheaf C) :
   simp only [Over.map_obj_left]
   apply Prod.ext
   · rfl
-  · simp only [CategoryOp'Inst, prod_comp]
-    simp [opTwObjMk', CategoryStruct.id, CategoryStruct.comp]
+  · simp [opTwObjMk', CategoryStruct.comp]
 
 /--
 Bundled data for constructing a functor from `Cᵒᵖ'` into the Grothendieck
@@ -906,12 +896,8 @@ def TwArrOpCopresheaf.slicePresheaf (F : TwArrOpCopresheaf C) (x : C) :
     apply twOpHom'_ext
     · simp only
         [twOpDomArr', twOpHomMk', CategoryOfElements.homMk,
-         CategoryStruct.comp, Category.toCategoryStruct,
-         instCategoryTwistedArrowOp']
-      unfold id
-      simp only [categoryOfElements]
-      simp only [prod_comp]
-      simp
+         CategoryStruct.comp]
+      exact (Category.comp_id _).symm
     · simp only [hcomp, twOpCodArr']
       rfl
 
@@ -950,19 +936,13 @@ def TwArrOpCopresheaf.sliceNatTrans (F : TwArrOpCopresheaf C) {x x' : C}
     congr 1
     apply twOpHom'_ext
     · simp only
-        [twOpDomArr', twOpHomMk', CategoryOfElements.homMk,
-         Category.toCategoryStruct, instCategoryTwistedArrowOp']
-      unfold id
-      simp only [categoryOfElements]
-      simp only [prod_comp]
-      simp
+        [twOpDomArr', twOpHomMk', CategoryOfElements.homMk]
+      exact (Category.id_comp _).trans
+        (Category.comp_id _).symm
     · simp only
-        [twOpCodArr', twOpHomMk', CategoryOfElements.homMk,
-         Category.toCategoryStruct, instCategoryTwistedArrowOp']
-      unfold id
-      simp only [categoryOfElements]
-      simp only [prod_comp]
-      simp
+        [twOpCodArr', twOpHomMk', CategoryOfElements.homMk]
+      exact (Category.comp_id _).trans
+        (Category.id_comp _).symm
 
 /--
 Given a morphism `h : x ⟶ x'` in `C`, we get a morphism in
@@ -1085,7 +1065,7 @@ lemma TwArrOpCopresheaf.sliceGrothendieck_hom_comp (F : TwArrOpCopresheaf C) :
         f.left := rfl
   apply Prod.ext
   · simp only [prod_comp, Category.comp_id]
-  · simp only [CategoryOp'Inst, prod_comp]
+  · simp only [prod_comp]
     change 𝟙 f.left = 𝟙 f.left ≫ 𝟙 f.left ≫ 𝟙 f.left
     simp only [Category.comp_id]
 
@@ -1277,10 +1257,10 @@ def TwArrOpPresheaf.sliceCopresheaf (F : TwArrOpPresheaf C) (x : C) :
     apply coTwHom'_ext
     · simp only
         [coTwDomArr', coTwHomMk', CategoryOfElements.homMk,
-         CategoryStruct.comp, Category.toCategoryStruct,
-         CategoryOp'Inst, prod_comp]
-      simp only [CategoryOp'.eq_1, CategoryOpQuivInst.eq_1, prod_Hom,
-        CoTwistedArrow'.eq_1, CategoryOfElementsContra'.comp_val]
+         CategoryStruct.comp]
+      simp only [CategoryOp'.eq_1, prod_Hom,
+        CoTwistedArrow'.eq_1,
+        CategoryOfElementsContra'.comp_val]
       exact (Category.id_comp (𝟙 x)).symm
     · simp only [coTwCodArr']
       rfl
@@ -1319,14 +1299,16 @@ def TwArrOpPresheaf.sliceNatTrans (F : TwArrOpPresheaf C) {x x' : C}
     congr 1
     apply coTwHom'_ext
     · simp only
-        [coTwDomArr', coTwHomMk', CategoryOfElements.homMk,
-         Category.toCategoryStruct, instCategoryCoTwistedArrow', CategoryOp'Inst]
-      change (h ≫ 𝟙 x', g.left ≫ 𝟙 f'.left).1 = (𝟙 x ≫ h, 𝟙 f.left ≫ g.left).1
+        [coTwDomArr', coTwHomMk',
+         CategoryOfElements.homMk]
+      change (h ≫ 𝟙 x', g.left ≫ 𝟙 f'.left).1 =
+        (𝟙 x ≫ h, 𝟙 f.left ≫ g.left).1
       simp only [Category.id_comp, Category.comp_id]
     · simp only
-        [coTwCodArr', coTwHomMk', CategoryOfElements.homMk,
-         Category.toCategoryStruct, instCategoryCoTwistedArrow', CategoryOp'Inst]
-      change (h ≫ 𝟙 x', g.left ≫ 𝟙 f'.left).2 = (𝟙 x ≫ h, 𝟙 f.left ≫ g.left).2
+        [coTwCodArr', coTwHomMk',
+         CategoryOfElements.homMk]
+      change (h ≫ 𝟙 x', g.left ≫ 𝟙 f'.left).2 =
+        (𝟙 x ≫ h, 𝟙 f.left ≫ g.left).2
       simp only [Category.id_comp, Category.comp_id]
 
 /--
@@ -1449,8 +1431,7 @@ lemma TwArrOpPresheaf.sliceGrothendieck_hom_comp (F : TwArrOpPresheaf C) :
   unfold functorOp'Obj at *
   simp only [Over.map_obj_left]
   apply Prod.ext
-  · simp only [CategoryOp'Inst, prod_comp]
-    exact (Category.id_comp _).symm
+  · exact (Category.id_comp _).symm
   · rfl
 
 /--

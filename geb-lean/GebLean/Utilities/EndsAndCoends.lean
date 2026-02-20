@@ -859,7 +859,7 @@ def typeWeightedColimit.yonedaEquivFwd
       | @intro i k f x =>
         simp only [copowerProfunctor_map_app,
           copowerProfunctor_obj_map,
-          typesHasCopowers, HasCopowers.mapIdx,
+          HasCopowers.mapIdx,
           HasCopowers.desc, HasCopowers.inj,
           HasCopowers.mapVal,
           yoneda_obj_map, Quiver.Hom.unop_op]
@@ -901,7 +901,7 @@ def typeWeightedColimit.yonedaEquiv
           (𝟙 j, y))
       simp only [copowerProfunctor_map_app,
         copowerProfunctor_obj_map,
-        typesHasCopowers, HasCopowers.mapIdx,
+        HasCopowers.mapIdx,
         HasCopowers.mapVal, HasCopowers.desc,
         HasCopowers.inj,
         yoneda_obj_map, Quiver.Hom.unop_op,
@@ -933,8 +933,7 @@ def powerProfunctorMapW (F : J ⥤ Type v)
     ext j' x
     simp only [NatTrans.comp_app,
       powerProfunctor_map_app, types_comp_apply]
-    simp only [typesHasPowers, HasPowers.mapIdx,
-      HasPowers.lift]
+    simp only [HasPowers.mapIdx, HasPowers.lift]
     funext w
     exact congrArg x
       (congrFun (α.naturality f.unop) w).symm
@@ -955,8 +954,8 @@ def typeWeightedLimitFunctorInW (F : J ⥤ Type v) :
       Opposite.unop_op]
     apply Subtype.ext; ext j
     simp only [unop_id, NatTrans.id_app,
-      typesHasPowers, HasPowers.mapIdx,
-      HasPowers.lift, types_id_apply]
+      HasPowers.mapIdx, HasPowers.lift,
+      HasPowers.proj, types_id_apply]
   map_comp {W₁ W₂ W₃} f g := by
     ext ⟨x, hx⟩
     simp only [typeWeightedLimit, typeEnd.map,
@@ -964,8 +963,8 @@ def typeWeightedLimitFunctorInW (F : J ⥤ Type v) :
       Opposite.unop_op]
     apply Subtype.ext; ext j
     simp only [unop_comp, NatTrans.comp_app,
-      typesHasPowers, HasPowers.mapIdx,
-      HasPowers.lift, types_comp_apply]
+      HasPowers.mapIdx, HasPowers.lift,
+      HasPowers.proj, types_comp_apply]
 
 /-- The covariant action of the copower profunctor in
 the weight `W`: given `α : W ⟶ W'`, produces
@@ -987,7 +986,7 @@ def copowerProfunctorMapW (F : J ⥤ Type v)
     ext j' x
     simp only [NatTrans.comp_app,
       copowerProfunctor_map_app, types_comp_apply]
-    simp only [typesHasCopowers, HasCopowers.mapIdx,
+    simp only [HasCopowers.mapIdx,
       HasCopowers.desc, HasCopowers.inj]
     exact congrArg (fun w => (w, x.2))
       (congrFun (α.naturality f) x.1)
@@ -1021,9 +1020,9 @@ def typeWeightedLimitBifunctor :
           powerProfunctorMapW, powerProfunctorMapF,
           types_comp_apply]
         apply Subtype.ext; ext j
-        simp only [typesHasPowers, HasPowers.mapIdx,
+        simp only [HasPowers.mapIdx,
           HasPowers.mapVal, HasPowers.lift,
-          types_comp_apply]
+          HasPowers.proj, types_comp_apply]
     }
   map_id W := by
     ext F ⟨x, hx⟩
@@ -1033,21 +1032,25 @@ def typeWeightedLimitBifunctor :
       types_id_apply]
     apply Subtype.ext; ext j
     simp only [unop_id, NatTrans.id_app,
-      typesHasPowers, HasPowers.mapIdx,
-      HasPowers.lift, types_id_apply]
+      HasPowers.mapIdx, HasPowers.lift,
+      HasPowers.proj, types_id_apply]
   map_comp {W₁ W₂ W₃} f g := by
     ext F ⟨x, hx⟩
     simp only [typeWeightedLimitFunctor]
     change typeEnd.map J
-        (powerProfunctorMapW F (f ≫ g).unop) ⟨x, hx⟩ =
-      typeEnd.map J (powerProfunctorMapW F g.unop)
+        (powerProfunctorMapW F (f ≫ g).unop)
+          ⟨x, hx⟩ =
+      typeEnd.map J
+        (powerProfunctorMapW F g.unop)
         (typeEnd.map J
-          (powerProfunctorMapW F f.unop) ⟨x, hx⟩)
-    simp only [typeEnd.map, powerProfunctorMapW]
+          (powerProfunctorMapW F f.unop)
+            ⟨x, hx⟩)
+    simp only [typeEnd.map,
+      powerProfunctorMapW]
     apply Subtype.ext; ext j
     simp only [unop_comp, NatTrans.comp_app,
-      typesHasPowers, HasPowers.mapIdx,
-      HasPowers.lift, types_comp_apply]
+      HasPowers.mapIdx, HasPowers.lift,
+      HasPowers.proj, types_comp_apply]
 
 /-- The weighted colimit bifunctor
 `(Jᵒᵖ ⥤ Type v) ⥤ (J ⥤ Type v) ⥤ Type v`, sending
@@ -1229,7 +1232,7 @@ def typeCoend.coNinjaYonedaEquiv
                 (Opposite.op j, i) from (𝟙 i, x)))
         simp only [cpf, copowerProfunctor_map_app,
           copowerProfunctor_obj_map,
-          typesHasCopowers, HasCopowers.mapIdx,
+          HasCopowers.mapIdx,
           HasCopowers.mapVal, HasCopowers.desc,
           HasCopowers.inj,
           homPre_map, Functor.uncurry_obj_map,
@@ -1246,7 +1249,7 @@ def typeCoend.coNinjaYonedaEquiv
                 (Opposite.op j, i) from (𝟙 j, x)))
         simp only [cpf, copowerProfunctor_map_app,
           copowerProfunctor_obj_map,
-          typesHasCopowers, HasCopowers.mapIdx,
+          HasCopowers.mapIdx,
           HasCopowers.mapVal, HasCopowers.desc,
           HasCopowers.inj,
           homPre_map, Functor.uncurry_obj_map,
@@ -1267,7 +1270,7 @@ def typeCoend.coNinjaYonedaEquiv
         obtain ⟨w, y⟩ := z
         simp only [copowerProfunctor_map_app,
           copowerProfunctor_obj_map,
-          typesHasCopowers, HasCopowers.mapIdx,
+          HasCopowers.mapIdx,
           HasCopowers.mapVal, HasCopowers.desc,
           HasCopowers.inj,
           homPre_map, Functor.uncurry_obj_map,
@@ -1335,7 +1338,7 @@ def typeCoend.coNinjaYonedaEquiv
               (a, b) from (𝟙 a.unop, y)))
       simp only [cpf, copowerProfunctor_map_app,
         copowerProfunctor_obj_map,
-        typesHasCopowers, HasCopowers.mapIdx,
+        HasCopowers.mapIdx,
         HasCopowers.mapVal, HasCopowers.desc,
         HasCopowers.inj,
         homPre_map, Functor.uncurry_obj_map,

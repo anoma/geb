@@ -2551,7 +2551,7 @@ def arrowIsoArrowOpOp' : Arrow C ≅Cat (ArrowOp' C)ᵒᵖ' where
       dsimp only [arrowToArrowOpOp', arrowOpOp'ToArrow]
       simp only [Arrow.homMk_left, Arrow.homMk_right]
       unfold ArrowOp' CategoryOp'
-      simp only [CategoryOp'Inst.eq_1, CategoryOp'.eq_1, CategoryOpQuivInst.eq_1,
+      simp only [CategoryOp'Inst.eq_1, CategoryOp'.eq_1,
         Functor.id_obj, Functor.comp_obj, Arrow.mk_right, Arrow.mk_left, Arrow.mk_hom,
         Cat.of_α, Cat.Hom.comp_toFunctor, Functor.toCatHom_toFunctor,
         Cat.Hom.id_toFunctor, eqToHom_refl, Functor.id_map]

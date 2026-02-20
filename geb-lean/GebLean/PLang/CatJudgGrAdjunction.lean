@@ -1503,8 +1503,8 @@ theorem unitGr_naturality (X Y : AdjCompWitGr.{uObj, uMor}) (f : X ⟶ Y) :
         LMorFunctor, functorToCompWitGrHom, functorToIdWitGrHom, functorToIdWitBundleHom,
         Groth.idWitFunctor, Groth.IdWitBundle.pushforwardFunctor, Groth.IdWitBundle.pushforward,
         Groth.IdWitBundle.Hom.pushforward, Groth.CompWitGr.idBundle]
-      simp only [CategoryStruct.comp, Groth.IdWitBundle.instCategory,
-        Groth.IdWitBundle.Hom.comp, Groth.CompWitGr.idWitGr]
+      simp only [CategoryStruct.comp,
+        Groth.CompWitGr.idWitGr]
       -- LHS: f.base.base.base (X.base.fiber.witObj x)
       -- RHS: Y.base.fiber.witObj (f.base.fiber.witMap x)
       -- f.base.fiber.witObj_eq gives the pushforward-based equality

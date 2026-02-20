@@ -1681,7 +1681,7 @@ theorem interchange_app {Obj₁ : Type u₁}
   simp only [VertTransOps.hComp, VertTransOps.vComp]
   conv_lhs =>
     simp only [klaws.map_vComp, DoubleFunctorOps.comp]
-  show ops₃.vComp
+  change ops₃.vComp
       (ops₃.vComp (K.vertMap (τ.app A))
         (K.vertMap (τ'.app A)))
       (ops₃.vComp (σ.app (H.objMap A))
@@ -2084,7 +2084,7 @@ theorem interchange_app_hor {Obj₁ : Type u₁}
   simp only [HorTransOps.vComp, HorTransOps.hComp]
   conv_lhs =>
     simp only [klaws.map_hComp, DoubleFunctorOps.comp]
-  show ops₃.hComp
+  change ops₃.hComp
       (ops₃.hComp (K.horMap (τ.app A))
         (K.horMap (τ'.app A)))
       (ops₃.hComp (σ.app (H.objMap A))
