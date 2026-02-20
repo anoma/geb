@@ -120,7 +120,7 @@ instance elementsPre_π_isDiscreteFibration
     simp only [elementsPre_π_map] at hg
     erw [eqToHom_refl, Category.id_comp] at hg
     have hval : g.unop.val = f.op := by
-      rw [← Quiver.Hom.op_unop g.unop.val, hg]; rfl
+      rw [← Quiver.Hom.op_unop g.unop.val, hg]
     have hprop : F.map f.op e.unop.snd = x := by
       rw [← hval]; exact g.unop.property
     subst hprop
@@ -261,8 +261,6 @@ private def liftCostArrow
     ⟨τ.hom, by
       simp only [comprehensiveCopresheaf_map]
       dsimp [comprehensiveE']
-      erw [Functor.mapConnectedComponents_mk]
-      dsimp [CostructuredArrow.map, Comma.mapRight]
       erw [Category.id_comp]
       rw [← hτ]
       exact Quotient.sound
@@ -309,8 +307,6 @@ private lemma costArrowComponent
   have hp := α.hom.property
   simp only [comprehensiveCopresheaf_map] at hp
   dsimp [comprehensiveE'] at hp
-  erw [Functor.mapConnectedComponents_mk] at hp
-  dsimp [CostructuredArrow.map, Comma.mapRight] at hp
   erw [Category.id_comp] at hp
   exact hp
 
@@ -553,8 +549,6 @@ private lemma strArrowComponent
   have hp := α.hom.unop.property
   simp only [comprehensivePresheaf_map] at hp
   dsimp [comprehensiveE] at hp
-  erw [Functor.mapConnectedComponents_mk] at hp
-  dsimp [StructuredArrow.map, Comma.mapLeft] at hp
   erw [Category.comp_id] at hp
   exact hp
 
@@ -900,9 +894,6 @@ def comprehensivePresheaf_isPointwiseLan :
         dsimp [Functor.LeftExtension.coconeAt,
           comprehensivePresheafLeftExt,
           Functor.LeftExtension.mk]
-        erw [Functor.mapConnectedComponents_mk,
-          Quotient.lift_mk]
-        dsimp [StructuredArrow.map, Comma.mapLeft]
         erw [Category.comp_id]
         exact congrFun
           (coconeAppEqOfHomPre F s
@@ -917,9 +908,6 @@ def comprehensivePresheaf_isPointwiseLan :
           dsimp [Functor.LeftExtension.coconeAt,
             comprehensivePresheafLeftExt,
             Functor.LeftExtension.mk] at h
-          erw [Functor.mapConnectedComponents_mk] at h
-          dsimp [StructuredArrow.map,
-            Comma.mapLeft] at h
           erw [Category.comp_id] at h
           rw [← h]
           exact congrArg m
