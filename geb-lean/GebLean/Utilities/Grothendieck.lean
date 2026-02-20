@@ -102,7 +102,7 @@ def GrothendieckContraCatStructInst.{u, v, u₂, v₂} {C : Type u} [CI : Catego
 @[simp]
 def GrothendieckContraQuivInst.{u, v, u₂, v₂} {C : Type u} [CI : Category.{v, u} C]
   (F' : Cᵒᵖ' ⥤ Cat.{v₂, u₂}) :
-    Quiver.{max v v₂ + 1, max u u₂}
+    Quiver.{max v v₂, max u u₂}
       (GrothendieckContra.{u, v, u₂, v₂} (C := C) (CI := CI) F') :=
   (GrothendieckContraCatStructInst.{u, v, u₂, v₂} (C := C) (CI := CI) F').toQuiver
 
@@ -1411,15 +1411,13 @@ def functorCatToFunctorFromData : (Grothendieck F ⥤ E) ⥤ FunctorFromData F (
     apply NatTransFromData.ext
     funext c
     ext x
-    unfold CategoryStruct.comp
-    simp only [functorFromDataCategory, NatTransFromData.comp, ofNatTransFrom, ofNatTransFromFibNat]
-    simp only [NatTrans.comp_app, Functor.whiskerLeft_app, eqToHom_app]
-    simp only [eqToHom_refl', Category.id_comp, Category.comp_id, Grothendieck.ι_obj]
-    exact eqToHom_comp_natTrans_comp_app
-      (functorFromData_ofFunctorFrom G)
-      (functorFromData_ofFunctorFrom H)
-      (functorFromData_ofFunctorFrom K)
-      α β ⟨c, x⟩
+    dsimp only [functorFromDataCategory, CategoryStruct.comp,
+      NatTransFromData.comp]
+    simp only [ofNatTransFrom, ofNatTransFromFibNat,
+      NatTrans.vcomp_app, NatTrans.comp_app,
+      Functor.whiskerLeft_app, eqToHom_app,
+      eqToHom_refl', Category.id_comp, Category.comp_id,
+      Grothendieck.ι_obj]
 
 /--
 Counit isomorphism for the equivalence: the round-trip through `FunctorFromData` gives
@@ -1816,7 +1814,7 @@ theorem grothendieckContraIsoHomMapComp_base_components
     (grothendieckContraIsoHomMap f ≫ grothendieckContraIsoHomMap g).base := by
   simp only [grothendieckContraIsoHomMap, grothendieckContraIsoHomObj]
   rw [gcf_comp_base]
-  simp
+  rfl
 
 theorem grothendieckContraIsoHomMapComp_fiber_eq
     {X Y Z : GrothendieckContra F'} (f : gcHom F' X Y) (g : gcHom F' Y Z) :
@@ -1824,11 +1822,25 @@ theorem grothendieckContraIsoHomMapComp_fiber_eq
       ((Cat.postCompOpFunctor'.obj F').map f.base).toFunctor.map g.fiber ≫ f.fiber =
     (grothendieckContraIsoHomMap f ≫ grothendieckContraIsoHomMap g).fiber := by
   unfold Cat.Hom.toFunctor
-  simp only [CategoryOp'.eq_1, CategoryOp'Inst, CategoryOpQuivInst.eq_1, Cat.postCompOpFunctor',
-    Cat.opFunctor'.eq_1, Cat.str, Functor.op'.eq_1, functorOp'Obj.eq_1,
-    Functor.whiskeringRight_obj_obj, Functor.comp_obj, Cat.opFunctorObj', Cat.of, Bundled.of,
-    CategoryStruct.comp, Functor.comp_map, Functor.toCatHom_toFunctor, Category.assoc,
-    grothendieckContraIsoHomObj, GrothendieckContraInst', grothendieckContraIsoHomMap, comp_fiber]
+  simp only [CategoryOp'.eq_1, CategoryOp'Inst,
+    Cat.postCompOpFunctor',
+    Cat.opFunctor'.eq_1,
+    Functor.op'.eq_1, functorOp'Obj.eq_1,
+    Functor.whiskeringRight_obj_obj, Functor.comp_obj,
+    Cat.opFunctorObj', Cat.of, Bundled.of,
+    CategoryStruct.comp, Functor.comp_map,
+    Functor.toCatHom_toFunctor,
+    grothendieckContraIsoHomObj,
+    grothendieckContraIsoHomMap, comp_fiber]
+  unfold Cat.Hom.toFunctor
+  simp +instances only [CategoryOp'.eq_1, CategoryOp'Inst,
+    Cat.postCompOpFunctor',
+    Cat.opFunctor'.eq_1,
+    Functor.op'.eq_1, functorOp'Obj.eq_1,
+    Functor.whiskeringRight_obj_obj, Functor.comp_obj,
+    Cat.opFunctorObj', Cat.of, Bundled.of,
+    CategoryStruct.comp,
+    Category.assoc]
   apply congrArg
   apply congrArg
   apply Cat.eqToHom_postCompOp_eq
@@ -1841,7 +1853,6 @@ theorem grothendieckContraIsoHomMapComp_fiber_components
     (grothendieckContraIsoHomMap f ≫ grothendieckContraIsoHomMap g).fiber := by
   simp only [grothendieckContraIsoHomMap, grothendieckContraIsoHomObj]
   rw [gcf_comp_fiber]
-  simp only [Cat.str]
   exact grothendieckContraIsoHomMapComp_fiber_eq f g
 
 theorem grothendieckContraIsoHomMapComp
@@ -1885,7 +1896,7 @@ theorem grothendieckContraIsoInvMapId_fiber_components
   cases X with | mk base fiber =>
   simp only
     [grothendieckContraIsoInvMap, grothendieckContraIsoInvObj,
-     Cat.str, cat_id_fiber, gcf_id_fiber]
+     cat_id_fiber, gcf_id_fiber]
   exact (Cat.eqToHom_postCompOp_eq F' base _ _).symm
 
 theorem grothendieckContraIsoInvMapId
@@ -1901,13 +1912,9 @@ theorem grothendieckContraIsoInvMapComp_base_components
     {X Y Z : GrothendieckContra' F'} (f : X ⟶ Y) (g : Y ⟶ Z) :
     (grothendieckContraIsoInvMap (f ≫ g)).base =
     (gcComp F' (grothendieckContraIsoInvMap f) (grothendieckContraIsoInvMap g)).base := by
-  simp only [grothendieckContraIsoInvMap, grothendieckContraIsoInvObj]
-  unfold GrothendieckContraInst'
-  unfold CategoryStruct.comp
-  simp only []
-  rw [comp_base]
-  rw [gcf_comp_base]
-  simp
+  simp only [grothendieckContraIsoInvMap,
+    grothendieckContraIsoInvObj]
+  rfl
 
 theorem grothendieckContraIsoInvMapComp_fiber_eq
     {X Y Z : GrothendieckContra' F'} (f : X ⟶ Y) (g : Y ⟶ Z) :
@@ -1917,12 +1924,18 @@ theorem grothendieckContraIsoInvMapComp_fiber_eq
     ((Cat.postCompOpFunctor'.obj F').map (grothendieckContraIsoInvMap f).base).toFunctor.map
       (grothendieckContraIsoInvMap g).fiber ≫
     (grothendieckContraIsoInvMap f).fiber := by
-  simp only [grothendieckContraIsoInvMap, grothendieckContraIsoInvObj,
+  simp +instances only [
+    grothendieckContraIsoInvMap,
+    grothendieckContraIsoInvObj,
     CategoryStruct.comp,
-    Cat.postCompOpFunctor', Cat.opFunctorObj', Cat.of, Cat.str, Bundled.of,
-    CategoryOp'.eq_1, CategoryOp'Inst, CategoryOpQuivInst.eq_1,
-    Cat.opFunctor'.eq_1, Functor.op'.eq_1, functorOp'Obj.eq_1,
-    Functor.whiskeringRight_obj_obj, Functor.comp_obj, Functor.comp_map,
+    Cat.postCompOpFunctor', Cat.opFunctorObj',
+    Cat.of, Cat.str, Bundled.of,
+    CategoryOp'.eq_1, CategoryOp'Inst,
+    CategoryOpQuivInst.eq_1,
+    Cat.opFunctor'.eq_1,
+    Functor.op'.eq_1, functorOp'Obj.eq_1,
+    Functor.whiskeringRight_obj_obj,
+    Functor.comp_obj, Functor.comp_map,
     Functor.toCatHom_toFunctor, Category.assoc]
   apply congrArg
   apply congrArg
@@ -2433,8 +2446,8 @@ theorem map_map (α : F' ⟶ G') {X Y : GrothendieckContra' F'} (f : X ⟶ Y) :
   unfold map
   simp only [transferFromCov_map, transferredMap]
   rw [map_cov_map]
-  simp only [transferFromCov_obj, CategoryOp'.eq_1, CategoryOp'Inst.eq_1,
-    CategoryOpQuivInst.eq_1, Cat.postCompOpFunctor'.eq_1, Cat.opFunctor'.eq_1,
+  simp only [transferFromCov_obj, CategoryOp'.eq_1,
+    Cat.postCompOpFunctor'.eq_1, Cat.opFunctor'.eq_1,
     Functor.op'.eq_1, functorOp'Obj.eq_1, Functor.whiskeringRight_obj_obj,
     GrothendieckContraCat, GrothendieckContraCatOp, GrothendieckCat, map_cov_obj_base,
     Functor.comp_obj, Functor.comp_map, Functor.toCatHom_toFunctor, map_cov_obj_fiber,
@@ -2571,10 +2584,13 @@ theorem compAsSmallFunctorEquivalenceInverse_map
     ⟨f.base,
      eqToHom (compAsSmallFunctorEquivalenceInverse_obj_fiber X) ≫
      AsSmall.up.map f.fiber⟩ := by
-  simp only [CategoryOp'.eq_1, CategoryOp'Inst.eq_1, CategoryOpQuivInst.eq_1, Functor.comp_obj,
-    Cat.asSmallFunctor_obj, Cat.of_α, compAsSmallFunctorEquivalenceInverse_obj_fiber,
-    Functor.comp_map, Cat.asSmallFunctor_map, Functor.toCatHom_toFunctor, AsSmall.down_obj,
-    AsSmall.up_obj_down, eqToHom_refl, Category.id_comp]
+  simp only [CategoryOp'.eq_1, Functor.comp_obj,
+    Cat.asSmallFunctor_obj, Cat.of_α,
+    compAsSmallFunctorEquivalenceInverse_obj_fiber,
+    Functor.comp_map, Cat.asSmallFunctor_map,
+    Functor.toCatHom_toFunctor, AsSmall.down_obj,
+    AsSmall.up_obj_down, eqToHom_refl,
+    Category.id_comp]
   unfold compAsSmallFunctorEquivalenceInverse
   simp only [transferFromCov_map, transferredMap,
     compAsSmallFunctorEquivalenceInverse_cov_map]
@@ -2721,14 +2737,22 @@ def grothendieckTypeToCat :
     (fun X ↦ Iso.refl _)
     (fun f ↦ by
       refine ext _ _ ?_ ?_
-      · simp only [CategoryOp'.eq_1, CategoryOp'Inst.eq_1, CategoryOpQuivInst.eq_1,
-          Functor.id_obj, Functor.comp_obj, Iso.refl_hom, Functor.comp_map,
-          typeToCat_map, Functor.toCatHom_toFunctor, Discrete.functor_obj_eq_as,
-          Function.comp_apply, Functor.id_map, Category.comp_id, Category.id_comp,
-          grothendieckTypeToCatFunctor, grothendieckTypeToCatInverse]
-      · simp only [CategoryOp'.eq_1, CategoryOp'Inst.eq_1, CategoryOpQuivInst.eq_1,
-          Functor.id_obj, Functor.comp_obj, Iso.refl_hom, Functor.comp_map,
-          typeToCat_map, Functor.toCatHom_toFunctor, Discrete.functor_obj_eq_as,
+      · simp only [CategoryOp'.eq_1,
+          Functor.id_obj, Functor.comp_obj,
+          Iso.refl_hom, Functor.comp_map,
+          typeToCat_map,
+          Functor.toCatHom_toFunctor,
+          Discrete.functor_obj_eq_as,
+          Function.comp_apply, Functor.id_map,
+          Category.comp_id, Category.id_comp,
+          grothendieckTypeToCatFunctor,
+          grothendieckTypeToCatInverse]
+      · simp only [CategoryOp'.eq_1,
+          Functor.id_obj, Functor.comp_obj,
+          Iso.refl_hom, Functor.comp_map,
+          typeToCat_map,
+          Functor.toCatHom_toFunctor,
+          Discrete.functor_obj_eq_as,
           Function.comp_apply, Functor.id_map]
         apply @Subsingleton.elim _ (Discrete.instSubsingletonDiscreteHom _ _))
   counitIso := NatIso.ofComponents
@@ -3038,7 +3062,7 @@ def ι_obj (c : C) (d : F'.obj c) :
 
 def ι_map_fiber (c : C) {d : F'.obj c} :
   d = (F'.map (𝟙 c)).toFunctor.obj ((ι c).obj d).fiber := by
-    simp only [CategoryOp'.eq_1, CategoryOp'Inst.eq_1, CategoryOpQuivInst.eq_1, Cat.of_α]
+    simp only [CategoryOp'.eq_1, Cat.of_α]
     have map_id_func := congrArg Cat.Hom.toFunctor (F'.map_id c)
     have deq := (congrFun (congrArg Functor.obj map_id_func) d).symm
     simp only [Cat.id_eq_id, Functor.id_obj] at deq
@@ -3046,7 +3070,7 @@ def ι_map_fiber (c : C) {d : F'.obj c} :
 
 def ι_map (c : C) {d d' : F'.obj c} (f : d ⟶ d') :
   (ι c).map f = ⟨𝟙 c, f ≫ eqToHom (ι_map_fiber c (d := d'))⟩ := by
-    simp only [Cat.of_α, CategoryOp'.eq_1, CategoryOp'Inst.eq_1, CategoryOpQuivInst.eq_1]
+    simp only [Cat.of_α, CategoryOp'.eq_1]
     unfold ι
     unfold gr_ι_flip
     apply ext
@@ -3093,7 +3117,7 @@ def ιNatTrans {c d : C} (f : c ⟶ d) : (F'.map f).toFunctor ⋙ ι c ⟶ ι d 
     unfold Category.toCategoryStruct
     unfold GrothendieckContraCat'
     unfold Cat.of Cat.str Bundled.of
-    simp only [CategoryOp'.eq_1, CategoryOp'Inst.eq_1, CategoryOpQuivInst.eq_1]
+    simp only [CategoryOp'.eq_1]
     unfold GrothendieckContraInst'
     unfold comp
     apply ext
@@ -3142,9 +3166,11 @@ def functorFrom : GrothendieckContra' F' ⥤ T where
     rw [Functor.map_comp, Functor.map_comp]
     -- Use hom_comp to expand hom (f.base ≫ g.base)
     rw [hom_comp]
-    simp only [CategoryOp'.eq_1, CategoryOp'Inst.eq_1, CategoryOpQuivInst.eq_1,
-      functor_map_eqToHom, Cat.Hom.comp_toFunctor, NatTrans.comp_app, Functor.comp_obj,
-      eqToHom_app, Functor.whiskerLeft_app, Category.assoc, eqToHom_trans_assoc,
+    simp only [CategoryOp'.eq_1,
+      functor_map_eqToHom, Cat.Hom.comp_toFunctor,
+      NatTrans.comp_app, Functor.comp_obj,
+      eqToHom_app, Functor.whiskerLeft_app,
+      Category.assoc, eqToHom_trans_assoc,
       eqToHom_refl, Category.id_comp]
     congr 1
     -- The goal is now showing naturality of hom f.base
@@ -3167,9 +3193,10 @@ def ιCompFunctorFrom (c : C) :
   NatIso.ofComponents
     (fun _ => Iso.refl _)
     (fun f => by
-      simp only [CategoryOp'.eq_1, CategoryOp'Inst.eq_1, CategoryOpQuivInst.eq_1, Cat.of_α,
-        Functor.comp_obj, Functor.comp_map, Iso.refl_hom, Category.comp_id, Category.id_comp,
-        functorFrom, ι_obj]
+      simp only [CategoryOp'.eq_1, Cat.of_α,
+        Functor.comp_obj, Functor.comp_map,
+        Iso.refl_hom, Category.comp_id,
+        Category.id_comp, functorFrom, ι_obj]
       rw [ι_map]
       simp only [hom_id, eqToHom_app, Functor.map_comp, Category.assoc]
       simp only [eqToHom_map, eqToHom_trans, eqToHom_refl, Category.comp_id]
@@ -3304,8 +3331,8 @@ def ofFunctorFrom : FunctorFromData (F' := F') (T := T) where
     congr 1
     -- Prove equality of morphisms in GrothendieckContra' F'
     apply ext
-    · simp [GrothendieckContraInst', comp_base, base_eqToHom, Category.id_comp]
-    · simp [GrothendieckContraInst', Category.id_comp, eqToHom_refl]
+    · simp [base_eqToHom, Category.id_comp]
+    · simp [Category.id_comp, eqToHom_refl]
 
 /--
 Round-trip: constructing a functor from extracted data gives back the original functor.
@@ -3327,22 +3354,12 @@ theorem functorFromData_ofFunctorFrom : functorFromData (ofFunctorFrom H) = H :=
         Bundled.of GrothendieckContraInst' comp ιNatTrans
       simp only [Category.id_comp]
     refine ext _ _ w_base ?_
-    simp only [GrothendieckContraInst', comp_fiber, ιNatTrans, Category.assoc]
-    -- Goal: f.fiber ≫ eqToHom _ ≫ (F'.map (𝟙 X.base)).map (𝟙 _) ≫ eqToHom _ ≫ eqToHom _ = f.fiber
-    -- Use the fact that (F'.map (𝟙 X.base)).map (𝟙 _) = 𝟙 _
-    have h_map_id : (F'.map (𝟙 X.base)).toFunctor.map
-        (𝟙 (((F'.map f.base).toFunctor ⋙ ι X.base).obj Y.fiber).fiber) =
-        𝟙 ((F'.map (𝟙 X.base)).toFunctor.obj
-          (((F'.map f.base).toFunctor ⋙ ι X.base).obj Y.fiber).fiber) :=
-      (F'.map (𝟙 X.base)).toFunctor.map_id _
-    rw [h_map_id]
-    -- Goal: f.fiber ≫ eqToHom A ≫ 𝟙 X ≫ eqToHom B = f.fiber
-    -- Use convert to get: ... = f.fiber ≫ 𝟙 _
-    convert Category.comp_id f.fiber using 1
-    -- Now: f.fiber ≫ eqToHom A ≫ 𝟙 X ≫ eqToHom B = f.fiber ≫ 𝟙 _
-    congr 1
-    simp only [eqToHom_trans]
-    exact eqToHom_comp_id_comp_eqToHom _ _
+    simp only [ιNatTrans, cat_comp_fiber,
+      Functor.comp_obj, ι_obj]
+    simp only [CategoryTheory.Functor.map_id,
+      Category.id_comp, Category.assoc,
+      eqToHom_trans, eqToHom_refl,
+      Category.comp_id]
 
 /--
 Round-trip: the fiber functors from extracted data equal the original fiber functors.
@@ -3624,16 +3641,14 @@ def functorCatToFunctorFromData :
     apply NatTransFromData.ext
     funext c
     ext x
-    unfold CategoryStruct.comp
-    simp only [functorFromDataCategory, NatTransFromData.comp,
+    simp +instances only [
+      CategoryStruct.comp,
+      NatTransFromData.comp,
       ofNatTransFromData, ofNatTransFromDataFibNat]
-    simp only [NatTrans.comp_app, Functor.whiskerLeft_app, eqToHom_app]
-    simp only [eqToHom_refl', Category.id_comp, Category.comp_id, ι_obj]
-    exact eqToHom_comp_natTrans_comp_app'
-      (functorFromData_ofFunctorFrom G)
-      (functorFromData_ofFunctorFrom H)
-      (functorFromData_ofFunctorFrom K)
-      α β ⟨c, x⟩
+    simp only [NatTrans.vcomp_app,
+      Functor.whiskerLeft_app, eqToHom_app]
+    simp only [eqToHom_refl', Category.id_comp,
+      Category.comp_id, ι_obj]
 
 /--
 Counit isomorphism for the equivalence: the round-trip through `FunctorFromData` gives
@@ -4241,7 +4256,7 @@ def natTransTo : functorTo dataG ⟶ functorTo dataH where
         (nat.baseNat.app e ≫ dataH.baseFunc.map f) :=
       nat.baseNat.naturality f
     refine ext _ _ w_base ?_
-    simp only [GrothendieckContraInst', comp_fiber, functorTo]
+    simp only [functorTo]
     have h := @nat.fibNat e e' f
     cat_disch
 
@@ -4270,7 +4285,7 @@ def ofNatTrans : NatTransToData F' dataG dataH where
     have h := α.naturality f
     simp only [functorTo] at h
     have hbase := congrArg Hom.base h
-    simp only [GrothendieckContraInst', comp_base] at hbase
+    simp only [] at hbase
     exact Functor.congr_obj (congrArg (fun x => (F'.map x).toFunctor) hbase.symm)
       (dataH.fib e')
   fibNat {e e'} f := by
@@ -4278,7 +4293,7 @@ def ofNatTrans : NatTransToData F' dataG dataH where
     have h := α.naturality f
     simp only [functorTo] at h
     have hfiber := congr h
-    simp only [GrothendieckContraInst', comp_fiber] at hfiber
+    simp only [] at hfiber
     calc _ = _ := by cat_disch
       _ = _ := hfiber
       _ = _ := by cat_disch
