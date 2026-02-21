@@ -536,4 +536,161 @@ theorem overCoeq_epi {T : Over X}
 
 end OverCoequalizer
 
+/-! ## Wide products in Over X
+
+Given a family `F : I → Over X`, the product has underlying type
+`Σ x : X, (i : I) → { a : (F i).left // (F i).hom a = x }`,
+with projection to `X` given by `Sigma.fst`.
+-/
+
+section OverProduct
+
+variable {X : Type u} {I : Type u} (F : I → Over X)
+
+/--
+The fiber of the wide product over a point `x : X`:
+tuples `(a_i)_{i:I}` with each `a_i` in the fiber of
+`(F i).hom` over `x`.
+-/
+def overProdFiber (x : X) : Type u :=
+  (i : I) → { a : (F i).left // (F i).hom a = x }
+
+/--
+The total type of the wide product: pairs `(x, f)` where
+`x : X` and `f` is a tuple in `overProdFiber F x`.
+-/
+def overProdType : Type u :=
+  Σ x : X, overProdFiber F x
+
+/--
+The wide product object in `Over X`.
+-/
+def overProdObj : Over X :=
+  Over.mk (Sigma.fst : overProdType F → X)
+
+/--
+The `i`-th projection from the wide product.
+-/
+def overProdπ (i : I) : overProdObj F ⟶ F i :=
+  Over.homMk
+    (fun ⟨_, f⟩ => (f i).val)
+    (by funext ⟨_, f⟩; exact (f i).property)
+
+/--
+Universal lift into the wide product: given a cone
+`(π_i : S ⟶ F i)`, produce `S ⟶ overProdObj F`.
+-/
+def overProdLift {S : Over X}
+    (π : ∀ i, S ⟶ F i) : S ⟶ overProdObj F :=
+  Over.homMk
+    (fun s => (⟨S.hom s,
+      fun i => ⟨(π i).left s,
+        congrFun (Over.w (π i)) s⟩⟩ :
+      overProdType F))
+
+/--
+Factorization: composing the lift with a projection
+recovers the original morphism.
+-/
+theorem overProd_fac {S : Over X}
+    (π : ∀ i, S ⟶ F i) (i : I) :
+    overProdLift F π ≫ overProdπ F i = π i := by
+  ext s; rfl
+
+/--
+Uniqueness of the lift into the wide product.
+-/
+theorem overProd_uniq {S : Over X}
+    (π : ∀ i, S ⟶ F i)
+    (m : S ⟶ overProdObj F)
+    (hm : ∀ i, m ≫ overProdπ F i = π i) :
+    m = overProdLift F π := by
+  apply Over.OverMorphism.ext
+  funext s
+  have h_base : (m.left s).1 = S.hom s :=
+    congrFun (Over.w m) s
+  have h_comp : ∀ i,
+      ((m.left s).2 i).val = (π i).left s :=
+    fun i =>
+      congrFun (congrArg (·.left) (hm i)) s
+  revert h_base h_comp
+  generalize m.left s = ms
+  intro h_base h_comp
+  obtain ⟨x, f⟩ := ms
+  dsimp at h_base h_comp
+  subst h_base
+  congr 1
+  funext i
+  exact Subtype.ext (h_comp i)
+
+end OverProduct
+
+/-! ## Equalizers in Over X
+
+Given morphisms `f g : A ⟶ B` in `Over X`, the equalizer has
+underlying type `{ a : A.left // f.left a = g.left a }`, with
+the structure map inherited from `A.hom`.
+-/
+
+section OverEqualizer
+
+variable {X : Type u} {A B : Over X} (f g : A ⟶ B)
+
+/--
+The equalizer object in `Over X`: the subtype of `A.left`
+on which `f` and `g` agree.
+-/
+def overEqObj : Over X :=
+  Over.mk (A.hom ∘ Subtype.val :
+    { a : A.left // f.left a = g.left a } → X)
+
+/--
+The inclusion morphism from the equalizer into `A`.
+-/
+def overEqι : overEqObj f g ⟶ A :=
+  Over.homMk Subtype.val
+
+/--
+The equalizer condition:
+`overEqι ≫ f = overEqι ≫ g`.
+-/
+theorem overEq_condition :
+    overEqι f g ≫ f = overEqι f g ≫ g := by
+  ext ⟨_, h⟩; exact h
+
+/--
+Universal lift into the equalizer: given `h : S ⟶ A`
+with `h ≫ f = h ≫ g`, produce `S ⟶ overEqObj f g`.
+-/
+def overEqLift {S : Over X} (h : S ⟶ A)
+    (w : h ≫ f = h ≫ g) : S ⟶ overEqObj f g :=
+  Over.homMk
+    (fun s => ⟨h.left s,
+      congrFun (congrArg (·.left) w) s⟩)
+    (by funext s; exact congrFun (Over.w h) s)
+
+/--
+Factorization: composing the lift with the inclusion
+recovers the original morphism.
+-/
+theorem overEq_fac {S : Over X} (h : S ⟶ A)
+    (w : h ≫ f = h ≫ g) :
+    overEqLift f g h w ≫ overEqι f g = h := by
+  ext s; rfl
+
+/--
+Uniqueness of the lift into the equalizer.
+-/
+theorem overEq_uniq {S : Over X} (h : S ⟶ A)
+    (w : h ≫ f = h ≫ g)
+    (m : S ⟶ overEqObj f g)
+    (hm : m ≫ overEqι f g = h) :
+    m = overEqLift f g h w := by
+  apply Over.OverMorphism.ext
+  funext s
+  exact Subtype.ext
+    (congrFun (congrArg (·.left) hm) s)
+
+end OverEqualizer
+
 end GebLean
