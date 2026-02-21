@@ -198,13 +198,13 @@ The hom-object `[p, q]` is constructed in stages:
 ## Tasks
 
 - [x] Create `PolyUMorph.lean` and add import to `GebLean.lean`
-- [ ] Implement arbitrary-indexed products with `IsLimit` proof
+- [x] Implement arbitrary-indexed products with `IsLimit` proof
   - [x] Product object (Pos, Dir, Prod)
   - [x] Projection morphism (Reindex, Fiber, Proj)
   - [x] Lift morphism (Reindex, Fiber, Lift)
   - [x] Factorization proof (lift ≫ proj = m)
   - [x] Uniqueness proof
-  - [ ] `IsLimit` / `Fan` / `mkFanLimit` assembly
+  - [x] `IsLimit` / `Fan` / `mkFanLimit` / `HasProducts` assembly
 - [ ] Implement arbitrary-indexed coproducts with `IsColimit` proof
 - [ ] Implement binary equalizers with `IsLimit` proof
 - [ ] Implement binary coequalizers with `IsColimit` proof

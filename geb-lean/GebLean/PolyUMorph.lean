@@ -345,6 +345,34 @@ theorem polyBetweenProdLift_unique (I : Type u)
     (fun q => polyBetweenProdLift_unique_fiber
       I F Q m h hfac y q hbase)
 
+/--
+The product fan for a family of polynomial functors.
+-/
+def polyBetweenFan (I : Type u)
+    (F : I → PolyFunctorBetweenCat X Y) : Fan F :=
+  Fan.mk (polyBetweenProd I F) (polyBetweenProj I F)
+
+/--
+The product fan is a limit fan.
+-/
+def polyBetweenIsLimitFan (I : Type u)
+    (F : I → PolyFunctorBetweenCat X Y) :
+    IsLimit (polyBetweenFan I F) :=
+  mkFanLimit (polyBetweenFan I F)
+    (fun s => polyBetweenProdLift I F s.pt s.proj)
+    (fun s j =>
+      polyBetweenProdLift_proj I F s.pt s.proj j)
+    (fun s m hm =>
+      polyBetweenProdLift_unique I F s.pt s.proj
+        m hm)
+
+instance : HasProducts.{u}
+    (↑(PolyFunctorBetweenCat X Y :
+      Cat.{u, u + 1})) :=
+  hasProducts_of_limit_fans
+    (fun F => polyBetweenFan _ F)
+    (fun F => polyBetweenIsLimitFan _ F)
+
 end Products
 
 end GebLean
