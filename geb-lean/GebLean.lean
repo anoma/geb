@@ -35,6 +35,7 @@ import GebLean.PolyAlg
 import GebLean.PolyPresentation
 import GebLean.PolyPresentationEquiv
 import GebLean.PolyTwCoprType
+import GebLean.PolyUMorph
 import GebLean.Polynomial
 import GebLean.ProfAlg
 import GebLean.PshRelDouble
