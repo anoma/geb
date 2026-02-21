@@ -2,6 +2,7 @@ import GebLean.Polynomial
 import GebLean.Utilities.Equalities
 import Mathlib.CategoryTheory.Limits.Shapes.Products
 import Mathlib.CategoryTheory.Limits.Shapes.Equalizers
+import Mathlib.CategoryTheory.Limits.Shapes.FiniteProducts
 
 /-!
 # Universal Morphisms for Polynomial Functors
@@ -593,5 +594,19 @@ instance : HasCoproducts.{u}
     (fun F => polyBetweenIsColimitCofan _ F)
 
 end Coproducts
+
+section FiniteLimitsColimits
+
+variable {X Y : Type u}
+
+instance : HasFiniteProducts
+    (PolyFunctorBetweenCat.{u, u} X Y) :=
+  hasFiniteProducts_of_hasProducts _
+
+instance : HasFiniteCoproducts
+    (PolyFunctorBetweenCat.{u, u} X Y) :=
+  hasFiniteCoproducts_of_hasCoproducts _
+
+end FiniteLimitsColimits
 
 end GebLean
