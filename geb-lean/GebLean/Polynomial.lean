@@ -455,7 +455,7 @@ producing a family `Y → Type`.
 For each `y : Y`, we evaluate the polynomial `P(y)` at `A`:
 `P(A)(y) = Σ (i : positions at y), Hom_D(F_y(i), A)`
 -/
-def polyToOverEvalFamily (P : PolyToOverCat (D := D) Y) (A : D) : Y → Type u :=
+def polyToOverEvalFamily (P : PolyToOverCat (D := D) Y) (A : D) :=
   fun y => ccrEval (P y) A
 
 /--
@@ -988,8 +988,7 @@ Specialization of `polyToOverEvalFamily`.
 For each `y : Y`, we evaluate the polynomial `P(y)` at `A`:
 `P(A)(y) = Σ (i : positions at y), Hom_{Over X}(F_y(i), A)`
 -/
-def polyBetweenEvalFamily (P : PolyFunctorBetweenCat X Y) (A : Over X) :
-    Y → Type u :=
+def polyBetweenEvalFamily (P : PolyFunctorBetweenCat X Y) (A : Over X) :=
   polyToOverEvalFamily Y P A
 
 /--
