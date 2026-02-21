@@ -413,4 +413,199 @@ def TypeExpr.toPshTypeExpr_interp_iso
       (T₁.interp B A)
       (T₂.interp A B)).symm
 
+/-- Lift a morphism `f : A → B` in `Type 0` to a
+natural transformation
+`yonedaULift A ⟶ yonedaULift B` in
+`(Type 0)ᵒᵖ ⥤ Type 1`, given by post-composition
+with `f`. -/
+def yonedaULiftMap {A B : Type} (f : A → B) :
+    yonedaULift A ⟶ yonedaULift B :=
+  CategoryTheory.Functor.whiskerRight
+    (yoneda.map f) uliftFunctor
+
+/-- `yonedaULiftMap` at stage `T` sends
+`⟨g⟩ : ULift (T → A)` to `⟨f ∘ g⟩`. -/
+@[simp]
+theorem yonedaULiftMap_app
+    {A B : Type} (f : A → B) (T : (Type 0)ᵒᵖ)
+    (x : (yonedaULift A).obj T) :
+    (yonedaULiftMap f).app T x =
+      ⟨f ∘ x.down⟩ := by
+  simp only [yonedaULiftMap,
+    CategoryTheory.Functor.whiskerRight_app]
+  rfl
+
+/-- Presheaf of related pairs for a binary
+relation `R : A → B → Prop`, living over
+`yonedaULift A × yonedaULift B`. At stage `T`,
+elements are `ULift`-wrapped pairs of functions
+`(f : T → A, g : T → B)` satisfying `R` pointwise,
+with functorial action by precomposition. -/
+def yonedaULiftRelPsh {A B : Type}
+    (R : A → B → Prop) :
+    (Type 0)ᵒᵖ ⥤ Type 1 where
+  obj T := ULift
+    { p : (T.unop → A) × (T.unop → B) //
+      ∀ t, R (p.1 t) (p.2 t) }
+  map f x := ⟨⟨(x.down.val.1 ∘ f.unop,
+    x.down.val.2 ∘ f.unop),
+    fun t => x.down.property (f.unop t)⟩⟩
+  map_id _ := by
+    ext ⟨⟨⟨_, _⟩, _⟩⟩ <;> simp [Function.comp]
+  map_comp _ _ := by
+    ext ⟨⟨⟨_, _⟩, _⟩⟩ <;> simp [Function.comp]
+
+/-- The projection from the relation presheaf
+`yonedaULiftRelPsh R` into the product presheaf
+`yonedaULift A × yonedaULift B`, extracting the
+two components. -/
+def yonedaULiftRelProj {A B : Type}
+    (R : A → B → Prop) :
+    yonedaULiftRelPsh R ⟶
+      pshProdPresheaf (yonedaULift A)
+        (yonedaULift B) :=
+  pshProdLift
+    { app := fun T x => ⟨x.down.val.1⟩
+      naturality := fun _ _ _ => by
+        ext ⟨⟨⟨_, _⟩, _⟩⟩; rfl }
+    { app := fun T x => ⟨x.down.val.2⟩
+      naturality := fun _ _ _ => by
+        ext ⟨⟨⟨_, _⟩, _⟩⟩; rfl }
+
+/-- A binary relation `R : A → B → Prop` as an
+over-object of the product of ULift-Yoneda
+representables. -/
+def yonedaULiftRelOver {A B : Type}
+    (R : A → B → Prop) :
+    PshProdOver (yonedaULift A) (yonedaULift B) :=
+  Over.mk (yonedaULiftRelProj R)
+
+/-- A binary relation `R : A → B → Prop` lifted to
+a presheaf relation `PshRel` between ULift-Yoneda
+representables. -/
+def yonedaULiftRel {A B : Type}
+    (R : A → B → Prop) :
+    PshRel (yonedaULift A) (yonedaULift B) :=
+  toSkeleton _ (yonedaULiftRelOver R)
+
+/-- Convert an element `a : X` into a section of
+`yonedaULift X`. At each stage `T`, the section
+returns the constant function `fun _ => a`. -/
+def yonedaULiftSection {X : Type} (a : X) :
+    (yonedaULift X).sections :=
+  ⟨fun _ => ⟨fun _ => a⟩,
+   fun _ => rfl⟩
+
+/-- Convert a section of `P` to a section of `Q`
+along a natural transformation `P ⟶ Q`. -/
+def sectionMap
+    {P Q : (Type 0)ᵒᵖ ⥤ Type 1}
+    (α : P ⟶ Q) (s : P.sections) :
+    Q.sections :=
+  ⟨fun c => α.app c (s.val c),
+   fun {c c'} f => by
+    change Q.map f (α.app c (s.val c)) =
+      α.app c' (s.val c')
+    have nat := congr_fun (α.naturality f)
+      (s.val c)
+    simp only [types_comp_apply] at nat
+    rw [← nat, s.property f]⟩
+
+/-- An element `a : T.interp X X` gives rise to a
+section of `T.toPshTypeExpr.interp (yonedaULift X)
+(yonedaULift X)` via the inverse of the bridge
+isomorphism `toPshTypeExpr_interp_iso`. -/
+def TypeExpr.toInterpSection
+    (T : TypeExpr) {X : Type} (a : T.interp X X) :
+    (T.toPshTypeExpr.interp
+      (yonedaULift X) (yonedaULift X)).sections :=
+  sectionMap
+    (T.toPshTypeExpr_interp_iso X X).inv
+    (yonedaULiftSection a)
+
+/-- Reduction lemma: `pshRelSectionsRelated` at a
+concrete `toSkeleton` reduces to `sectionsRelated`
+of the underlying over-object. -/
+@[simp]
+theorem sectionMap_id
+    {P : (Type 0)ᵒᵖ ⥤ Type 1}
+    (s : P.sections) :
+    sectionMap (𝟙 P) s = s := by
+  ext c
+  simp [sectionMap]
+
+@[simp]
+theorem pshRelSectionsRelated_toSkeleton
+    {F G : (Type 0)ᵒᵖ ⥤ Type 1}
+    (R : PshProdOver F G)
+    (s₀ : F.sections) (s₁ : G.sections) :
+    pshRelSectionsRelated (toSkeleton _ R) s₀ s₁ ↔
+      R.sectionsRelated s₀ s₁ := by
+  constructor
+  · exact id
+  · exact id
+
+/-- A binary relation `R` holds at `(a₀, a₁)` iff
+the corresponding sections of the ULift-Yoneda
+representables are related by
+`yonedaULiftRelOver R`. -/
+theorem yonedaULiftRelOver_sectionsRelated_iff
+    {A B : Type} (R : A → B → Prop)
+    (a₀ : A) (a₁ : B) :
+    (yonedaULiftRelOver R).sectionsRelated
+      (yonedaULiftSection a₀)
+      (yonedaULiftSection a₁) ↔
+    R a₀ a₁ := by
+  constructor
+  · rintro ⟨r, hr⟩
+    set rPU := (r.val (Opposite.op PUnit)).down
+    have rel := rPU.property PUnit.unit
+    have h₁ := (hr (Opposite.op PUnit)).1
+    have h₂ := (hr (Opposite.op PUnit)).2
+    simp only [yonedaULiftRelOver, Over.mk_hom,
+      yonedaULiftRelProj, pshProdLift,
+      yonedaULiftSection] at h₁ h₂
+    have eq₁ : rPU.val.1 = fun _ => a₀ :=
+      congr_arg ULift.down h₁
+    have eq₂ : rPU.val.2 = fun _ => a₁ :=
+      congr_arg ULift.down h₂
+    rw [congr_fun eq₁ PUnit.unit,
+      congr_fun eq₂ PUnit.unit] at rel
+    exact rel
+  · intro h
+    exact ⟨⟨fun c => ⟨⟨(fun _ => a₀, fun _ => a₁),
+      fun _ => h⟩⟩, fun _ => rfl⟩,
+      fun c => ⟨rfl, rfl⟩⟩
+
+/-- In the `var` case, `toInterpSection` reduces to
+`yonedaULiftSection`. -/
+@[simp]
+theorem TypeExpr.toInterpSection_var
+    {X : Type} (a : X) :
+    TypeExpr.var.toInterpSection a =
+      yonedaULiftSection a := by
+  simp only [toInterpSection,
+    toPshTypeExpr_interp_iso]
+  exact sectionMap_id _
+
+/-- Bridge for the `var` case: the Type-level
+relational interpretation at `var` agrees with the
+presheaf-level relational interpretation at `var`
+through the ULift-Yoneda embedding. -/
+theorem TypeExpr.fullRelInterp_bridge_var
+    {A B : Type} (R : A → B → Prop)
+    (a₀ : A) (a₁ : B) :
+    TypeExpr.var.fullRelInterp R a₀ a₁ ↔
+      pshRelSectionsRelated
+        (TypeExpr.var.toPshTypeExpr.fullRelInterp
+          (yonedaULiftRel R))
+        (TypeExpr.var.toInterpSection a₀)
+        (TypeExpr.var.toInterpSection a₁) := by
+  simp only [TypeExpr.fullRelInterp,
+    TypeExpr.toPshTypeExpr_var,
+    PshTypeExpr.fullRelInterp,
+    toInterpSection_var]
+  exact (yonedaULiftRelOver_sectionsRelated_iff
+    R a₀ a₁).symm
+
 end GebLean

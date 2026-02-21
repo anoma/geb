@@ -502,6 +502,84 @@ does not apply to `D = Type v`. The bridge from
 to separate universe levels or a different approach is
 found.
 
+### Full relational interpretation and type abstractions
+
+#### ParanaturalTopos.lean additions
+
+- `TypeExpr.fullRelInterp T R`: generalization of
+  `relInterp` from function graphs (`graphRel f`) to
+  arbitrary binary relations `R : I₀ → I₁ → Prop`
+- `TypeExpr.fullRelInterp_graphRel`: `fullRelInterp`
+  at `graphRel f` coincides with `relInterp f`
+- `TypeAbs T`: type abstractions
+  `(I : Type) → T.interp I I`, following Wadler's
+  `∀X. T(X)` (Theorems for Free, 1989)
+- `typeAbsRel T t₀ t₁`: relatedness of type
+  abstractions under the full relational
+  interpretation — two abstractions are related if
+  for all types `I₀, I₁` and all relations
+  `R : I₀ → I₁ → Prop`, the specializations are
+  related by `T.fullRelInterp R`
+- `typeAbsRel_self_implies_parametric`: self-relatedness
+  under `typeAbsRel` implies parametricity (the
+  condition of `ParametricFamily`)
+- `ParametricFamily.ofTypeAbsRel`: constructor for
+  `ParametricFamily` from a self-related type
+  abstraction
+
+#### PshTypeExpr.lean additions (presheaf-level)
+
+- `PshTypeExpr.fullRelInterp T R`: presheaf-level
+  full relational interpretation for arbitrary
+  `R : PshRel P Q`
+- `PshTypeExpr.fullRelInterp_graph`:
+  `fullRelInterp (pshRelGraph α) = relInterp α`
+- `PshProdOver.sectionsRelated R s₀ s₁`: predicate
+  relating two sections `s₀, s₁` of presheaves `F, G`
+  via a `PshProdOver F G` witness
+- `pshRelSectionsRelated R s₀ s₁`: relating sections
+  via `PshRel` (well-defined on isomorphism classes)
+- `PshTypeAbs T`: presheaf type abstractions,
+  `(P : PSh(C)) → (T.interp P P).sections`
+- `pshTypeAbsRel T t₀ t₁`: presheaf-level relatedness
+
+#### PshTypeExpr.lean additions (Type↔presheaf bridge)
+
+- `yonedaULiftMap f`: lifts `f : A → B` to
+  `yonedaULift A ⟶ yonedaULift B` via whiskerRight
+- `yonedaULiftRelPsh R`: presheaf of `R`-related
+  pairs at ULift-Yoneda representables
+- `yonedaULiftRelOver R`, `yonedaULiftRel R`:
+  lifts `R : A → B → Prop` to
+  `PshRel (yonedaULift A) (yonedaULift B)`
+- `yonedaULiftSection a`: converts `a : X` to a
+  section of `yonedaULift X` (constant family)
+- `sectionMap α s`: transports a section along a
+  natural transformation
+- `TypeExpr.toInterpSection T a`: converts
+  `a : T.interp X X` to a section of
+  `T.toPshTypeExpr.interp (yonedaULift X) ...`
+  via `toPshTypeExpr_interp_iso`
+- `yonedaULiftRelOver_sectionsRelated_iff`:
+  `(yonedaULiftRelOver R).sectionsRelated
+    (yonedaULiftSection a₀) (yonedaULiftSection a₁)
+    ↔ R a₀ a₁` — the lifting of relations is
+  faithful at the level of constant sections
+- `fullRelInterp_bridge_var`: the `var` case of the
+  bridge, showing `fullRelInterp` at the Type level
+  corresponds to `fullRelInterp` at the presheaf
+  level through the ULift-Yoneda embedding
+
+##### Remaining for bridge
+
+The `app` and `arrow` induction cases of
+`fullRelInterp_bridge` require relating
+`functorRelLift F` to `pshBarrLiftSkel (yonedaExt F)`
+and `arrowRel` to `pshArrowRelSkel` through
+`toPshTypeExpr_interp_iso`. These form the substance
+of the general bridge between `typeAbsRel` and
+`pshTypeAbsRel`.
+
 ## Dependencies
 
 - `YonedaRelDouble.lean` (complete)
