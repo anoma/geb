@@ -898,6 +898,590 @@ instance : HasEqualizers
 
 end Equalizers
 
+section Coequalizers
+
+variable {X Y : Type u}
+  {P Q : PolyFunctorBetweenCat.{u, u} X Y}
+  (s t : P ⟶ Q)
+
+/--
+The edge relation on Q-positions: `j₁` and `j₂` are related
+when there exists a P-position `i` with `s` mapping `i` to
+`j₁` and `t` mapping `i` to `j₂`.
+-/
+def polyBetweenCoeqRel (y : Y) :
+    ccrIndex (Q y) → ccrIndex (Q y) → Prop :=
+  fun j₁ j₂ => ∃ i : ccrIndex (P y),
+    ccrReindex (s y) i = j₁ ∧
+    ccrReindex (t y) i = j₂
+
+/--
+Coequalizer positions: connected components of the graph
+whose vertices are Q-positions and whose edges connect
+`ccrReindex (s y) i` to `ccrReindex (t y) i` for each
+P-position `i`.
+-/
+def polyBetweenCoeqPos (y : Y) : Type u :=
+  Quot (polyBetweenCoeqRel s t y)
+
+/--
+Vertices of the graph in component `c`: Q-positions
+mapping to `c` under the quotient.
+-/
+def polyBetweenCoeqVert (y : Y)
+    (c : polyBetweenCoeqPos s t y) : Type u :=
+  { j : ccrIndex (Q y) //
+    Quot.mk (polyBetweenCoeqRel s t y) j = c }
+
+/--
+Edges of the graph in component `c`: P-positions whose
+source (via `s`) maps to `c`.
+-/
+def polyBetweenCoeqEdge (y : Y)
+    (c : polyBetweenCoeqPos s t y) : Type u :=
+  { i : ccrIndex (P y) //
+    Quot.mk (polyBetweenCoeqRel s t y)
+      (ccrReindex (s y) i) = c }
+
+/--
+The target endpoint of an edge also maps to the same
+component `c`.
+-/
+theorem polyBetweenCoeqEdge_target (y : Y)
+    (c : polyBetweenCoeqPos s t y)
+    (e : polyBetweenCoeqEdge s t y c) :
+    Quot.mk (polyBetweenCoeqRel s t y)
+      (ccrReindex (t y) e.val) = c :=
+  (Quot.sound ⟨e.val, rfl, rfl⟩).symm.trans
+    e.property
+
+/--
+The Q-family indexed by vertices in component `c`.
+-/
+def polyBetweenCoeqVertFamily (y : Y)
+    (c : polyBetweenCoeqPos s t y) :
+    polyBetweenCoeqVert s t y c → Over X :=
+  fun v => ccrFamily (Q y) v.val
+
+/--
+The P-family indexed by edges in component `c`.
+-/
+def polyBetweenCoeqEdgeFamily (y : Y)
+    (c : polyBetweenCoeqPos s t y) :
+    polyBetweenCoeqEdge s t y c → Over X :=
+  fun e => ccrFamily (P y) e.val
+
+/--
+Product of Q-fibers over vertices in component `c`.
+-/
+def polyBetweenCoeqVertProd (y : Y)
+    (c : polyBetweenCoeqPos s t y) : Over X :=
+  overProdObj (polyBetweenCoeqVertFamily s t y c)
+
+/--
+Product of P-fibers over edges in component `c`.
+-/
+def polyBetweenCoeqEdgeProd (y : Y)
+    (c : polyBetweenCoeqPos s t y) : Over X :=
+  overProdObj (polyBetweenCoeqEdgeFamily s t y c)
+
+/--
+The source vertex of an edge `e` in component `c`,
+as an element of `polyBetweenCoeqVert`.
+-/
+def polyBetweenCoeqEdgeSrc (y : Y)
+    (c : polyBetweenCoeqPos s t y)
+    (e : polyBetweenCoeqEdge s t y c) :
+    polyBetweenCoeqVert s t y c :=
+  ⟨ccrReindex (s y) e.val, e.property⟩
+
+/--
+The target vertex of an edge `e` in component `c`,
+as an element of `polyBetweenCoeqVert`.
+-/
+def polyBetweenCoeqEdgeTgt (y : Y)
+    (c : polyBetweenCoeqPos s t y)
+    (e : polyBetweenCoeqEdge s t y c) :
+    polyBetweenCoeqVert s t y c :=
+  ⟨ccrReindex (t y) e.val,
+    polyBetweenCoeqEdge_target s t y c e⟩
+
+/--
+The `s`-induced map from vertex product to edge product:
+projects to the source vertex, then applies `ccrFiberMor s`.
+-/
+def polyBetweenCoeqMapS (y : Y)
+    (c : polyBetweenCoeqPos s t y) :
+    polyBetweenCoeqVertProd s t y c ⟶
+    polyBetweenCoeqEdgeProd s t y c :=
+  overProdLift
+    (polyBetweenCoeqEdgeFamily s t y c)
+    (fun e =>
+      overProdπ
+        (polyBetweenCoeqVertFamily s t y c)
+        (polyBetweenCoeqEdgeSrc s t y c e) ≫
+      ccrFiberMor (s y) e.val)
+
+/--
+The `t`-induced map from vertex product to edge product:
+projects to the target vertex, then applies `ccrFiberMor t`.
+-/
+def polyBetweenCoeqMapT (y : Y)
+    (c : polyBetweenCoeqPos s t y) :
+    polyBetweenCoeqVertProd s t y c ⟶
+    polyBetweenCoeqEdgeProd s t y c :=
+  overProdLift
+    (polyBetweenCoeqEdgeFamily s t y c)
+    (fun e =>
+      overProdπ
+        (polyBetweenCoeqVertFamily s t y c)
+        (polyBetweenCoeqEdgeTgt s t y c e) ≫
+      ccrFiberMor (t y) e.val)
+
+/--
+Coequalizer directions at component `c`: the equalizer
+of the two maps `s*` and `t*` between the vertex and
+edge products. This is an object of `Over X`.
+-/
+def polyBetweenCoeqDir (y : Y)
+    (c : polyBetweenCoeqPos s t y) : Over X :=
+  overEqObj
+    (polyBetweenCoeqMapS s t y c)
+    (polyBetweenCoeqMapT s t y c)
+
+/--
+The coequalizer object in `PolyFunctorBetweenCat X Y`.
+-/
+def polyBetweenCoeq :
+    PolyFunctorBetweenCat.{u, u} X Y :=
+  fun y => ccrObjMk (polyBetweenCoeqDir s t y)
+
+/--
+Reindex component of the projection `Q ⟶ polyBetweenCoeq`:
+sends a Q-position to its connected component.
+-/
+def polyBetweenCoeqProjReindex (y : Y) :
+    ccrIndex (Q y) → polyBetweenCoeqPos s t y :=
+  Quot.mk (polyBetweenCoeqRel s t y)
+
+/--
+Fiber component of the projection `Q ⟶ polyBetweenCoeq`:
+at Q-position `j`, the direction map goes from the
+equalizer (at component of `j`) to `ccrFamily (Q y) j`.
+
+Concretely, this composes the equalizer inclusion with
+the projection to the vertex `⟨j, rfl⟩`.
+-/
+def polyBetweenCoeqProjFiber (y : Y)
+    (j : ccrIndex (Q y)) :
+    polyBetweenCoeqDir s t y
+      (polyBetweenCoeqProjReindex s t y j) ⟶
+    ccrFamily (Q y) j :=
+  overEqι
+    (polyBetweenCoeqMapS s t y _)
+    (polyBetweenCoeqMapT s t y _) ≫
+  overProdπ
+    (polyBetweenCoeqVertFamily s t y _)
+    ⟨j, rfl⟩
+
+/--
+The projection morphism `Q ⟶ polyBetweenCoeq s t`.
+-/
+def polyBetweenCoeqProj :
+    Q ⟶ polyBetweenCoeq s t :=
+  fun y => ccrHomMk
+    (polyBetweenCoeqProjReindex s t y)
+    (polyBetweenCoeqProjFiber s t y)
+
+theorem polyBetweenCoeqProj_base_eq (y : Y)
+    (i : ccrIndex (P y)) :
+    polyBetweenCoeqProjReindex s t y
+      (ccrReindex (s y) i) =
+    polyBetweenCoeqProjReindex s t y
+      (ccrReindex (t y) i) :=
+  Quot.sound ⟨i, rfl, rfl⟩
+
+private lemma polyBetweenCoeq_transport (y : Y)
+    (j : ccrIndex (Q y))
+    {c₁ c₂ : polyBetweenCoeqPos s t y}
+    (hj₁ : Quot.mk
+      (polyBetweenCoeqRel s t y) j = c₁)
+    (hj₂ : Quot.mk
+      (polyBetweenCoeqRel s t y) j = c₂)
+    (hc : c₁ = c₂) :
+    overEqι
+      (polyBetweenCoeqMapS s t y c₁)
+      (polyBetweenCoeqMapT s t y c₁) ≫
+    overProdπ
+      (polyBetweenCoeqVertFamily s t y c₁)
+      ⟨j, hj₁⟩ =
+    eqToHom
+      (congrArg
+        (polyBetweenCoeqDir s t y) hc) ≫
+    overEqι
+      (polyBetweenCoeqMapS s t y c₂)
+      (polyBetweenCoeqMapT s t y c₂) ≫
+    overProdπ
+      (polyBetweenCoeqVertFamily s t y c₂)
+      ⟨j, hj₂⟩ := by
+  subst hc
+  simp only [eqToHom_refl, Category.id_comp]
+
+private lemma polyBetweenCoeq_edge_eq (y : Y)
+    (c : polyBetweenCoeqPos s t y)
+    (e : polyBetweenCoeqEdge s t y c) :
+    overEqι
+      (polyBetweenCoeqMapS s t y c)
+      (polyBetweenCoeqMapT s t y c) ≫
+    overProdπ
+      (polyBetweenCoeqVertFamily s t y c)
+      (polyBetweenCoeqEdgeSrc s t y c e) ≫
+    ccrFiberMor (s y) e.val =
+    overEqι
+      (polyBetweenCoeqMapS s t y c)
+      (polyBetweenCoeqMapT s t y c) ≫
+    overProdπ
+      (polyBetweenCoeqVertFamily s t y c)
+      (polyBetweenCoeqEdgeTgt s t y c e) ≫
+    ccrFiberMor (t y) e.val := by
+  have h := overEq_condition
+    (polyBetweenCoeqMapS s t y c)
+    (polyBetweenCoeqMapT s t y c)
+  have h' := congrArg
+    (· ≫ overProdπ
+      (polyBetweenCoeqEdgeFamily s t y c) e) h
+  simp only [Category.assoc] at h' ⊢
+  dsimp only [polyBetweenCoeqMapS,
+    polyBetweenCoeqMapT] at h'
+  simp only [overProd_fac] at h'
+  exact h'
+
+private lemma polyBetweenCoeqProj_fiber_eq
+    (y : Y) (i : ccrIndex (P y)) :
+    polyBetweenCoeqProjFiber s t y
+      (ccrReindex (s y) i) ≫
+    ccrFiberMor (s y) i =
+    eqToHom (congrArg
+      (polyBetweenCoeqDir s t y)
+      (polyBetweenCoeqProj_base_eq s t y i)) ≫
+    polyBetweenCoeqProjFiber s t y
+      (ccrReindex (t y) i) ≫
+    ccrFiberMor (t y) i := by
+  dsimp only [polyBetweenCoeqProjFiber,
+    polyBetweenCoeqProjReindex]
+  simp only [Category.assoc]
+  have h_eq :=
+    polyBetweenCoeq_edge_eq s t y _ ⟨i, rfl⟩
+  dsimp only [polyBetweenCoeqEdgeSrc,
+    polyBetweenCoeqEdgeTgt,
+    polyBetweenCoeqProjReindex] at h_eq
+  rw [h_eq]
+  have h_tr := polyBetweenCoeq_transport s t y
+    (ccrReindex (t y) i)
+    (polyBetweenCoeqProj_base_eq s t y i).symm
+    rfl
+    (polyBetweenCoeqProj_base_eq s t y i)
+  dsimp only [polyBetweenCoeqProjReindex] at h_tr
+  conv_lhs => rw [← Category.assoc]
+  rw [h_tr]
+  simp only [Category.assoc]
+
+/--
+The coequalizer condition:
+`s ≫ polyBetweenCoeqProj = t ≫ polyBetweenCoeqProj`.
+-/
+theorem polyBetweenCoeqProj_condition :
+    s ≫ polyBetweenCoeqProj s t =
+    t ≫ polyBetweenCoeqProj s t := by
+  funext y
+  change s y ≫ polyBetweenCoeqProj s t y =
+    t y ≫ polyBetweenCoeqProj s t y
+  refine ccrHom_ext_subst _ _ ?_ ?_
+  · funext i
+    exact polyBetweenCoeqProj_base_eq s t y i
+  · intro i
+    simp only [ccrComp_fiberMor]
+    exact polyBetweenCoeqProj_fiber_eq s t y i
+
+def polyBetweenCoeqLiftReindex
+    {R : PolyFunctorBetweenCat.{u, u} X Y}
+    (h : Q ⟶ R) (w : s ≫ h = t ≫ h)
+    (y : Y) :
+    polyBetweenCoeqPos s t y →
+    ccrIndex (R y) :=
+  Quot.lift (ccrReindex (h y))
+    (fun _ _ ⟨i, hs, ht⟩ => by
+      subst hs; subst ht
+      exact congrFun
+        (congrArg ccrReindex (congrFun w y)) i)
+
+private lemma polyBetweenCoeqLiftReindex_eq
+    {R : PolyFunctorBetweenCat.{u, u} X Y}
+    (h : Q ⟶ R) (w : s ≫ h = t ≫ h)
+    (y : Y) (j : ccrIndex (Q y))
+    {c : polyBetweenCoeqPos s t y}
+    (hj : Quot.mk
+      (polyBetweenCoeqRel s t y) j = c) :
+    polyBetweenCoeqLiftReindex s t h w y c =
+    ccrReindex (h y) j := by
+  subst hj; rfl
+
+def polyBetweenCoeqLiftVertex
+    {R : PolyFunctorBetweenCat.{u, u} X Y}
+    (h : Q ⟶ R) (w : s ≫ h = t ≫ h)
+    (y : Y) (c : polyBetweenCoeqPos s t y)
+    (v : polyBetweenCoeqVert s t y c) :
+    ccrFamily (R y)
+      (polyBetweenCoeqLiftReindex
+        s t h w y c) ⟶
+    ccrFamily (Q y) v.val :=
+  eqToHom (congrArg (ccrFamily (R y))
+    (polyBetweenCoeqLiftReindex_eq
+      s t h w y v.val v.property)) ≫
+  ccrFiberMor (h y) v.val
+
+def polyBetweenCoeqLiftProd
+    {R : PolyFunctorBetweenCat.{u, u} X Y}
+    (h : Q ⟶ R) (w : s ≫ h = t ≫ h)
+    (y : Y) (c : polyBetweenCoeqPos s t y) :
+    ccrFamily (R y)
+      (polyBetweenCoeqLiftReindex
+        s t h w y c) ⟶
+    polyBetweenCoeqVertProd s t y c :=
+  overProdLift
+    (polyBetweenCoeqVertFamily s t y c)
+    (polyBetweenCoeqLiftVertex s t h w y c)
+
+private lemma overProd_hom_ext
+    {X' : Type u} {I' : Type u}
+    (F' : I' → Over X') {S' : Over X'}
+    (f' g' : S' ⟶ overProdObj F')
+    (h' : ∀ i,
+      f' ≫ overProdπ F' i =
+      g' ≫ overProdπ F' i) :
+    f' = g' :=
+  (overProd_uniq F' _ f' (fun _ => rfl)).trans
+    (overProd_uniq F' _ g'
+      (fun i => (h' i).symm)).symm
+
+private theorem polyBetweenCoeqLiftProd_eq
+    {R : PolyFunctorBetweenCat.{u, u} X Y}
+    (h : Q ⟶ R) (w : s ≫ h = t ≫ h)
+    (y : Y) (c : polyBetweenCoeqPos s t y) :
+    polyBetweenCoeqLiftProd s t h w y c ≫
+      polyBetweenCoeqMapS s t y c =
+    polyBetweenCoeqLiftProd s t h w y c ≫
+      polyBetweenCoeqMapT s t y c := by
+  apply overProd_hom_ext
+  intro e
+  simp only [Category.assoc]
+  dsimp only [polyBetweenCoeqMapS,
+    polyBetweenCoeqMapT]
+  simp only [overProd_fac]
+  simp only [← Category.assoc]
+  dsimp only [polyBetweenCoeqLiftProd]
+  simp only [overProd_fac]
+  dsimp only [polyBetweenCoeqLiftVertex,
+    polyBetweenCoeqEdgeSrc,
+    polyBetweenCoeqEdgeTgt]
+  simp only [Category.assoc]
+  rw [← ccrComp_fiberMor (s y) (h y) e.val,
+    ← ccrComp_fiberMor (t y) (h y) e.val]
+  change eqToHom _ ≫ ccrFiberMor ((s ≫ h) y) e.val =
+    eqToHom _ ≫ ccrFiberMor ((t ≫ h) y) e.val
+  rw [ccrFiberMor_congr (congrFun w y) e.val]
+  simp only [eqToHom_trans_assoc]
+
+def polyBetweenCoeqLiftFiber
+    {R : PolyFunctorBetweenCat.{u, u} X Y}
+    (h : Q ⟶ R) (w : s ≫ h = t ≫ h)
+    (y : Y) (c : polyBetweenCoeqPos s t y) :
+    ccrFamily (R y)
+      (polyBetweenCoeqLiftReindex
+        s t h w y c) ⟶
+    polyBetweenCoeqDir s t y c :=
+  overEqLift
+    (polyBetweenCoeqMapS s t y c)
+    (polyBetweenCoeqMapT s t y c)
+    (polyBetweenCoeqLiftProd s t h w y c)
+    (polyBetweenCoeqLiftProd_eq s t h w y c)
+
+def polyBetweenCoeqLift
+    {R : PolyFunctorBetweenCat.{u, u} X Y}
+    (h : Q ⟶ R) (w : s ≫ h = t ≫ h) :
+    polyBetweenCoeq s t ⟶ R :=
+  fun y => ccrHomMk
+    (polyBetweenCoeqLiftReindex s t h w y)
+    (polyBetweenCoeqLiftFiber s t h w y)
+
+theorem polyBetweenCoeqLift_fac
+    {R : PolyFunctorBetweenCat.{u, u} X Y}
+    (h : Q ⟶ R) (w : s ≫ h = t ≫ h) :
+    polyBetweenCoeqProj s t ≫
+      polyBetweenCoeqLift s t h w = h := by
+  funext y
+  refine ccrHom_ext_subst _ _ rfl ?_
+  intro q
+  change ccrFiberMor
+    (polyBetweenCoeqProj s t y ≫
+      polyBetweenCoeqLift s t h w y) q =
+    eqToHom _ ≫ ccrFiberMor (h y) q
+  rw [ccrComp_fiberMor]
+  dsimp only [polyBetweenCoeqLift,
+    polyBetweenCoeqProj,
+    polyBetweenCoeqProjFiber,
+    polyBetweenCoeqLiftFiber]
+  simp only [ccrHomMk, ccrFiberMor, ccrReindex]
+  dsimp only [polyBetweenCoeqProjReindex,
+    polyBetweenCoeqProjFiber,
+    polyBetweenCoeqLiftFiber]
+  simp only [← Category.assoc]
+  rw [overEq_fac]
+  dsimp only [polyBetweenCoeqLiftProd]
+  rw [overProd_fac]
+  dsimp only [polyBetweenCoeqLiftVertex]
+  rfl
+
+private lemma polyBetweenCoeqLift_base_unique
+    {R : PolyFunctorBetweenCat.{u, u} X Y}
+    (h : Q ⟶ R) (w : s ≫ h = t ≫ h)
+    (m : polyBetweenCoeq s t ⟶ R)
+    (hm : polyBetweenCoeqProj s t ≫ m = h)
+    (y : Y) (c : polyBetweenCoeqPos s t y) :
+    ccrReindex (m y) c =
+    polyBetweenCoeqLiftReindex s t h w y c := by
+  induction c using Quot.ind with
+  | mk j =>
+    exact congrFun
+      (congrArg ccrReindex (congrFun hm y)) j
+
+private lemma coeq_fiber_ι_vertex
+    {R : PolyFunctorBetweenCat.{u, u} X Y}
+    (h : Q ⟶ R) (w : s ≫ h = t ≫ h)
+    (m : polyBetweenCoeq s t ⟶ R)
+    (hm : polyBetweenCoeqProj s t ≫ m = h)
+    (y : Y)
+    (c : polyBetweenCoeqPos s t y)
+    (j : ccrIndex (Q y))
+    (hj : Quot.mk
+      (polyBetweenCoeqRel s t y) j = c) :
+    ccrFiberMor (m y) c ≫
+      overEqι
+        (polyBetweenCoeqMapS s t y c)
+        (polyBetweenCoeqMapT s t y c) ≫
+      overProdπ
+        (polyBetweenCoeqVertFamily s t y c)
+        ⟨j, hj⟩ =
+    eqToHom (congrArg (ccrFamily (R y))
+      (polyBetweenCoeqLift_base_unique
+        s t h w m hm y c)) ≫
+    polyBetweenCoeqLiftProd s t h w y c ≫
+      overProdπ
+        (polyBetweenCoeqVertFamily s t y c)
+        ⟨j, hj⟩ := by
+  subst hj
+  change ccrFiberMor
+    (polyBetweenCoeqProj s t y ≫ m y) j =
+    eqToHom _ ≫ ccrFiberMor (h y) j
+  exact ccrFiberMor_congr (congrFun hm y) j
+
+private lemma polyBetweenCoeqLift_fiber_unique
+    {R : PolyFunctorBetweenCat.{u, u} X Y}
+    (h : Q ⟶ R) (w : s ≫ h = t ≫ h)
+    (m : polyBetweenCoeq s t ⟶ R)
+    (hm : polyBetweenCoeqProj s t ≫ m = h)
+    (y : Y) (q : ccrIndex (Q y)) :
+    ccrFiberMor (m y)
+      (Quot.mk (polyBetweenCoeqRel s t y) q) =
+    eqToHom (congrArg (ccrFamily (R y))
+      (polyBetweenCoeqLift_base_unique
+        s t h w m hm y
+        (Quot.mk _ q))) ≫
+    polyBetweenCoeqLiftFiber s t h w y
+      (Quot.mk _ q) := by
+  set c := Quot.mk (polyBetweenCoeqRel s t y) q
+  set mapS' :=
+    polyBetweenCoeqMapS s t y c
+  set mapT' :=
+    polyBetweenCoeqMapT s t y c
+  set lp :=
+    polyBetweenCoeqLiftProd s t h w y c
+  set be := polyBetweenCoeqLift_base_unique
+    s t h w m hm y c
+  set h₀ :=
+    eqToHom (congrArg (ccrFamily (R y)) be) ≫
+    lp
+  have w₀ : h₀ ≫ mapS' = h₀ ≫ mapT' := by
+    simp only [h₀, Category.assoc]
+    exact congrArg (eqToHom _ ≫ ·)
+      (polyBetweenCoeqLiftProd_eq
+        s t h w y c)
+  have step1 : ccrFiberMor (m y) c ≫
+      overEqι mapS' mapT' = h₀ := by
+    apply overProd_hom_ext
+    intro ⟨j, hj⟩
+    simp only [Category.assoc]
+    exact coeq_fiber_ι_vertex
+      s t h w m hm y c j hj
+  calc ccrFiberMor (m y) c
+      = overEqLift mapS' mapT' h₀ w₀ := by
+        exact overEq_uniq mapS' mapT'
+          h₀ w₀ _ step1
+    _ = eqToHom _ ≫
+        polyBetweenCoeqLiftFiber s t h w y
+          c := by
+        symm
+        exact overEq_uniq mapS' mapT'
+          h₀ w₀ _
+          (by have : polyBetweenCoeqLiftFiber
+                s t h w y c =
+                overEqLift mapS' mapT' lp
+                  (polyBetweenCoeqLiftProd_eq
+                    s t h w y c) := rfl
+              rw [Category.assoc, this,
+                overEq_fac])
+
+theorem polyBetweenCoeqLift_unique
+    {R : PolyFunctorBetweenCat.{u, u} X Y}
+    (h : Q ⟶ R) (w : s ≫ h = t ≫ h)
+    (m : polyBetweenCoeq s t ⟶ R)
+    (hm : polyBetweenCoeqProj s t ≫ m = h) :
+    m = polyBetweenCoeqLift s t h w := by
+  funext y
+  refine ccrHom_ext_subst _ _ ?_ ?_
+  · funext c
+    exact polyBetweenCoeqLift_base_unique
+      s t h w m hm y c
+  · intro c
+    induction c using Quot.ind with
+    | mk q =>
+      exact polyBetweenCoeqLift_fiber_unique
+        s t h w m hm y q
+
+def polyBetweenCofork : Cofork s t :=
+  Cofork.ofπ (polyBetweenCoeqProj s t)
+    (polyBetweenCoeqProj_condition s t)
+
+def polyBetweenIsColimitCofork :
+    IsColimit (polyBetweenCofork s t) :=
+  Cofork.IsColimit.mk (polyBetweenCofork s t)
+    (fun c => polyBetweenCoeqLift s t c.π c.condition)
+    (fun c =>
+      polyBetweenCoeqLift_fac s t c.π c.condition)
+    (fun c m hm =>
+      polyBetweenCoeqLift_unique s t
+        c.π c.condition m hm)
+
+instance : HasCoequalizer s t :=
+  HasColimit.mk ⟨polyBetweenCofork s t,
+    polyBetweenIsColimitCofork s t⟩
+
+instance : HasCoequalizers
+    (PolyFunctorBetweenCat.{u, u} X Y) :=
+  hasCoequalizers_of_hasColimit_parallelPair _
+
+end Coequalizers
+
 section LimitsColimits
 
 variable {X Y : Type u}
@@ -917,6 +1501,14 @@ instance : HasFiniteLimits
 instance : HasLimitsOfSize.{u, u}
     (PolyFunctorBetweenCat.{u, u} X Y) :=
   has_limits_of_hasEqualizers_and_products
+
+instance : HasFiniteColimits
+    (PolyFunctorBetweenCat.{u, u} X Y) :=
+  hasFiniteColimits_of_hasCoequalizers_and_finite_coproducts
+
+instance : HasColimitsOfSize.{u, u}
+    (PolyFunctorBetweenCat.{u, u} X Y) :=
+  has_colimits_of_hasCoequalizers_and_coproducts
 
 end LimitsColimits
 
