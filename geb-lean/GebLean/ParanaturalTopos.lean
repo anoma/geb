@@ -3157,6 +3157,44 @@ def TypeExpr.relInterp
   | .arrow T₁ T₂ =>
     arrowRel (T₁.relInterp f) (T₂.relInterp f)
 
+/-- The full relational interpretation of a type
+expression at an arbitrary relation
+`R : I₀ → I₁ → Prop`. This generalizes `relInterp`,
+which only accepts function graphs (`graphRel f`).
+Each `var` contributes `R` itself, each `app F T`
+contributes `functorRelLift F (T.fullRelInterp R)`,
+and each `arrow` contributes `arrowRel`.
+
+This is the relational interpretation from
+Wadler's "Theorems for free!" (section 2) in its
+full generality, where the relation at each type
+variable is an arbitrary relation rather than the
+graph of a function. -/
+def TypeExpr.fullRelInterp
+    (T : TypeExpr) {I₀ I₁ : Type}
+    (R : I₀ → I₁ → Prop) :
+    T.interp I₀ I₀ → T.interp I₁ I₁ → Prop :=
+  match T with
+  | .var => R
+  | .app F T =>
+    functorRelLift F (T.fullRelInterp R)
+  | .arrow T₁ T₂ =>
+    arrowRel (T₁.fullRelInterp R)
+      (T₂.fullRelInterp R)
+
+/-- `fullRelInterp` applied to the graph of a
+function `f` coincides with `relInterp f`. -/
+theorem TypeExpr.fullRelInterp_graphRel
+    (T : TypeExpr) {I₀ I₁ : Type}
+    (f : I₀ → I₁) :
+    T.fullRelInterp (graphRel f) = T.relInterp f := by
+  induction T with
+  | var => rfl
+  | app F T ih =>
+    simp only [fullRelInterp, relInterp, ih]
+  | arrow T₁ T₂ ih₁ ih₂ =>
+    simp only [fullRelInterp, relInterp, ih₁, ih₂]
+
 /-- The relational interpretation of a leaf
 `app F var` reduces to `graphRel (F.map f)`. -/
 @[simp]
@@ -3373,6 +3411,53 @@ structure ParametricFamily (T : TypeExpr) where
   parametric :
     ∀ (I₀ I₁ : Type) (f : I₀ → I₁),
     T.relInterp f (app I₀) (app I₁)
+
+/-- A type abstraction for a type expression `T`
+is a family of elements indexed by types, with no
+condition imposed. This is Wadler's `∀X. T(X)` as
+a type: an element of `TypeAbs T` assigns to each
+type `I` an element of `T.interp I I`. -/
+abbrev TypeAbs (T : TypeExpr) :=
+  (I : Type) → T.interp I I
+
+/-- Relatedness of type abstractions under the
+full relational interpretation. Two type
+abstractions `t₀` and `t₁` for a type expression
+`T` are related if for every relation `R` between
+types `I₀` and `I₁`, the elements `t₀ I₀` and
+`t₁ I₁` are related by `T.fullRelInterp R`.
+
+This is Wadler's relational interpretation of
+`∀X. T(X)` ("Theorems for free!", section 2):
+"polymorphic functions are related if they take
+related types into related results". -/
+def typeAbsRel (T : TypeExpr) (t₀ t₁ : TypeAbs T) :
+    Prop :=
+  ∀ (I₀ I₁ : Type) (R : I₀ → I₁ → Prop),
+    T.fullRelInterp R (t₀ I₀) (t₁ I₁)
+
+/-- Wadler's parametricity proposition restricted
+to function graphs: self-relatedness under
+`typeAbsRel` implies the `ParametricFamily`
+condition. -/
+theorem typeAbsRel_self_implies_parametric
+    {T : TypeExpr} {t : TypeAbs T}
+    (h : typeAbsRel T t t) :
+    ∀ (I₀ I₁ : Type) (f : I₀ → I₁),
+      T.relInterp f (t I₀) (t I₁) :=
+  fun I₀ I₁ f =>
+    T.fullRelInterp_graphRel f ▸
+      h I₀ I₁ (graphRel f)
+
+/-- A `ParametricFamily` from a self-related
+type abstraction under `typeAbsRel`. -/
+def ParametricFamily.ofTypeAbsRel
+    {T : TypeExpr} (t : TypeAbs T)
+    (h : typeAbsRel T t t) :
+    ParametricFamily T where
+  app := t
+  parametric :=
+    typeAbsRel_self_implies_parametric h
 
 /-- The relational interpretation of a type
 expression relates the covariant and contravariant

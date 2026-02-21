@@ -21,6 +21,20 @@ applications.
   Barr extension for functor application and the
   arrow relation for function spaces.
 
+- `fullRelInterp T R` generalizes `relInterp` to
+  accept an arbitrary `PshRel P Q` (not just a
+  morphism graph). This is the full relational
+  interpretation from Wadler's "Theorems for free!".
+
+- `PshTypeAbs T` is the type of presheaf-level type
+  abstractions: families assigning to each presheaf
+  `P` a section of `T.interp P P`.
+
+- `pshTypeAbsRel T t₀ t₁` is Wadler's relational
+  interpretation of `∀X. T(X)`: type abstractions
+  are related if they map related presheaves to
+  related sections.
+
 - `TypeExpr.toPshTypeExpr` embeds the universe-0
   type expressions into `PshTypeExpr (Type 0)` via
   the Yoneda extension.
@@ -99,6 +113,45 @@ def PshTypeExpr.relInterp :
     pshArrowRelSkel
       (T₁.relInterp α)
       (T₂.relInterp α)
+
+/-- The full relational interpretation of a
+presheaf type expression at an arbitrary relation
+`R : PshRel P Q`. This generalizes `relInterp`,
+which only accepts morphism graphs
+(`pshRelGraph α`). Each `var` contributes `R`
+itself, each `app G T` contributes
+`pshBarrLiftSkel G (T.fullRelInterp R)`, and each
+`arrow` contributes `pshArrowRelSkel`.
+
+This is the presheaf-category generalization of
+`TypeExpr.fullRelInterp`. -/
+def PshTypeExpr.fullRelInterp :
+    (T : PshTypeExpr C) →
+    {P Q : Cᵒᵖ ⥤ Type (max u v)} →
+    (R : PshRel P Q) →
+    PshRel (T.interp P P) (T.interp Q Q)
+  | .var, _, _, R => R
+  | .app G T, _, _, R =>
+    pshBarrLiftSkel G (T.fullRelInterp R)
+  | .arrow T₁ T₂, _, _, R =>
+    pshArrowRelSkel
+      (T₁.fullRelInterp R)
+      (T₂.fullRelInterp R)
+
+/-- `fullRelInterp` applied to the graph of a
+morphism `α` coincides with `relInterp α`. -/
+theorem PshTypeExpr.fullRelInterp_graph
+    (T : PshTypeExpr C)
+    {P Q : Cᵒᵖ ⥤ Type (max u v)}
+    (α : P ⟶ Q) :
+    T.fullRelInterp (pshRelGraph α) =
+      T.relInterp α := by
+  induction T with
+  | var => rfl
+  | app G T ih =>
+    simp only [fullRelInterp, relInterp, ih]
+  | arrow T₁ T₂ ih₁ ih₂ =>
+    simp only [fullRelInterp, relInterp, ih₁, ih₂]
 
 /-- The profunctor map for a type expression:
 given `f : P' ⟶ P` (contravariant) and
@@ -189,6 +242,92 @@ def PshTypeExpr.toProfunctor
     simp only [prod_comp, unop_comp]
     exact T.profMap_comp fg.1.unop gh.1.unop
       fg.2 gh.2
+
+/-- Two sections of presheaves `F` and `G` are
+related by `R : PshProdOver F G` if there exists a
+section of `R` that projects to the given sections
+at each stage. -/
+def PshProdOver.sectionsRelated
+    {F G : Cᵒᵖ ⥤ Type (max u v)}
+    (R : PshProdOver F G)
+    (s₀ : F.sections) (s₁ : G.sections) : Prop :=
+  ∃ (r : R.left.sections),
+    ∀ (c : Cᵒᵖ),
+      (R.hom.app c (r.val c)).1 = s₀.val c ∧
+      (R.hom.app c (r.val c)).2 = s₁.val c
+
+/-- Transporting `sectionsRelated` along an
+isomorphism of over-objects: if `R ≅ R'` in
+`Over (F × G)`, then a witness in `R` transfers to
+one in `R'`, and conversely. -/
+private theorem PshProdOver.sectionsRelated_iso
+    {F G : Cᵒᵖ ⥤ Type (max u v)}
+    {R R' : PshProdOver F G}
+    (iso : R ≅ R')
+    (s₀ : F.sections) (s₁ : G.sections) :
+    R.sectionsRelated s₀ s₁ ↔
+      R'.sectionsRelated s₀ s₁ := by
+  suffices ∀ {A B : PshProdOver F G}
+      (_ : A ≅ B),
+      A.sectionsRelated s₀ s₁ →
+      B.sectionsRelated s₀ s₁ from
+    ⟨this iso, this iso.symm⟩
+  intro A B φ ⟨r, hr⟩
+  refine ⟨⟨fun c => φ.hom.left.app c (r.val c),
+    fun {c c'} f => ?_⟩, fun c => ?_⟩
+  · have h := congr_fun
+      (φ.hom.left.naturality f) (r.val c)
+    simp only [types_comp_apply] at h
+    rw [r.property f] at h; exact h.symm
+  · have comm : B.hom.app c
+        (φ.hom.left.app c (r.val c)) =
+        A.hom.app c (r.val c) :=
+      congr_fun (congr_app (Over.w φ.hom) c)
+        (r.val c)
+    constructor
+    · rw [comm]; exact (hr c).1
+    · rw [comm]; exact (hr c).2
+
+/-- Two sections of presheaves are related by a
+`PshRel` if they are related by some representative
+of the isomorphism class. -/
+def pshRelSectionsRelated
+    {F G : Cᵒᵖ ⥤ Type (max u v)}
+    (R : PshRel F G)
+    (s₀ : F.sections) (s₁ : G.sections) : Prop :=
+  R.lift
+    (fun (R : PshProdOver F G) =>
+      R.sectionsRelated s₀ s₁)
+    (fun _ _ ⟨iso⟩ => propext
+      (PshProdOver.sectionsRelated_iso iso s₀ s₁))
+
+/-- A type abstraction for a presheaf type
+expression `T` is a family assigning to each
+presheaf `P` a section of the diagonal presheaf
+`T.interp P P`. This is the presheaf-category
+generalization of `TypeAbs`. -/
+abbrev PshTypeAbs (T : PshTypeExpr C) :=
+  (P : Cᵒᵖ ⥤ Type (max u v)) →
+    (T.interp P P).sections
+
+/-- Relatedness of presheaf type abstractions
+under the full relational interpretation. Two
+type abstractions `t₀` and `t₁` for `T` are
+related if for every pair of presheaves `P`, `Q`
+and every relation `R : PshRel P Q`, the sections
+`t₀ P` and `t₁ Q` are related by
+`T.fullRelInterp R`.
+
+This is the presheaf-category generalization of
+`typeAbsRel`, implementing Wadler's relational
+interpretation of `∀X. T(X)` in arbitrary presheaf
+categories. -/
+def pshTypeAbsRel (T : PshTypeExpr C)
+    (t₀ t₁ : PshTypeAbs T) : Prop :=
+  ∀ (P Q : Cᵒᵖ ⥤ Type (max u v))
+    (R : PshRel P Q),
+    pshRelSectionsRelated
+      (T.fullRelInterp R) (t₀ P) (t₁ Q)
 
 /-- The relational interpretation of a leaf
 `app G var` reduces to `pshBarrLiftSkel G` applied
