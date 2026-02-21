@@ -438,7 +438,7 @@ def polyToOverAt (P : PolyToOverCat (D := D) Y) (y : Y) : CoprodCovarRepCat D :=
 /--
 The index type (positions) at a specific codomain point.
 -/
-def polyToOverIndex (P : PolyToOverCat (D := D) Y) (y : Y) : Type u :=
+def polyToOverIndex (P : PolyToOverCat (D := D) Y) (y : Y) :=
   ccrIndex (P y)
 
 /--
@@ -962,7 +962,7 @@ def polyBetweenAt (P : PolyFunctorBetweenCat X Y) (y : Y) : PolyFunctorCat X :=
 The index type (positions) at a specific codomain point.
 Specialization of `polyToOverIndex`.
 -/
-def polyBetweenIndex (P : PolyFunctorBetweenCat X Y) (y : Y) : Type u :=
+def polyBetweenIndex (P : PolyFunctorBetweenCat X Y) (y : Y) :=
   polyToOverIndex Y P y
 
 /--

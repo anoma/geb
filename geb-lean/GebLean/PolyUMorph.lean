@@ -367,8 +367,7 @@ def polyBetweenIsLimitFan (I : Type u)
         m hm)
 
 instance : HasProducts.{u}
-    (↑(PolyFunctorBetweenCat X Y :
-      Cat.{u, u + 1})) :=
+    (PolyFunctorBetweenCat.{u, u} X Y) :=
   hasProducts_of_limit_fans
     (fun F => polyBetweenFan _ F)
     (fun F => polyBetweenIsLimitFan _ F)
