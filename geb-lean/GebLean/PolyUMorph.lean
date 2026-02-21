@@ -1001,7 +1001,7 @@ instance : HasEqualizers
 
 end Equalizers
 
-section FiniteLimitsColimits
+section LimitsColimits
 
 variable {X Y : Type u}
 
@@ -1017,6 +1017,10 @@ instance : HasFiniteLimits
     (PolyFunctorBetweenCat.{u, u} X Y) :=
   hasFiniteLimits_of_hasEqualizers_and_finite_products
 
-end FiniteLimitsColimits
+instance : HasLimitsOfSize.{u, u}
+    (PolyFunctorBetweenCat.{u, u} X Y) :=
+  has_limits_of_hasEqualizers_and_products
+
+end LimitsColimits
 
 end GebLean
