@@ -3,6 +3,7 @@ import GebLean.Utilities.Equalities
 import Mathlib.CategoryTheory.Limits.Shapes.Products
 import Mathlib.CategoryTheory.Limits.Shapes.Equalizers
 import Mathlib.CategoryTheory.Limits.Shapes.FiniteProducts
+import Mathlib.CategoryTheory.Limits.Constructions.LimitsOfProductsAndEqualizers
 
 /-!
 # Universal Morphisms for Polynomial Functors
@@ -210,7 +211,7 @@ theorem polyBetweenProdLift_proj (I : Type u)
   dsimp [CoprodData.inj, CoprodData.ι,
     polyBetweenProdLiftFiberLeft]
 
-private lemma ccrHom_ext_subst
+lemma ccrHom_ext_subst
     {C' : Type*} [Category C']
     {x y : CoprodCovarRepCat C'}
     (f g : x ⟶ y)
@@ -227,7 +228,7 @@ private lemma ccrHom_ext_subst
   simp only [eqToHom_refl, Category.id_comp] at hfiber
   exact hfiber i
 
-private lemma ccrFiberMor_congr
+lemma ccrFiberMor_congr
     {C' : Type*} [Category C']
     {x y : CoprodCovarRepCat C'}
     {f g : x ⟶ y} (h : f = g) (q : ccrIndex x) :
@@ -247,7 +248,7 @@ private lemma eqToHom_coprod_inj
       CoprodData.inj g j := by
   subst heq; simp
 
-private lemma overCoprod_hom_ext
+lemma overCoprod_hom_ext
     {I : Type u} {X : Type u}
     {f : I → Over X} {T : Over X}
     (g₁ g₂ : (∐' f : Over X) ⟶ T)
@@ -595,6 +596,411 @@ instance : HasCoproducts.{u}
 
 end Coproducts
 
+/-! ## Coequalizers in Over X
+
+Given morphisms `α β : A ⟶ B` in `Over X`, the coequalizer is the
+quotient of `B.left` by the relation identifying `α.left a` with
+`β.left a` for all `a : A.left`, equipped with the induced map to `X`.
+-/
+
+section OverCoequalizer
+
+variable {X : Type u} {A B : Over X} (α β : A ⟶ B)
+
+/--
+The generating relation on `B.left` for the coequalizer of `α`
+and `β` in `Over X`: `b₁ ~ b₂` when there exists `a : A.left`
+with `α.left a = b₁` and `β.left a = b₂`.
+-/
+def overCoeqRel : B.left → B.left → Prop :=
+  fun b₁ b₂ => ∃ a : A.left, α.left a = b₁ ∧ β.left a = b₂
+
+/--
+Well-definedness: `B.hom` respects `overCoeqRel α β`.
+-/
+private theorem overCoeqObj_wd (b₁ b₂ : B.left)
+    (h : overCoeqRel α β b₁ b₂) :
+    B.hom b₁ = B.hom b₂ := by
+  obtain ⟨a, rfl, rfl⟩ := h
+  have hα := congrFun (Over.w α) a
+  have hβ := congrFun (Over.w β) a
+  dsimp at hα hβ; rw [hα, hβ]
+
+/--
+The coequalizer object in `Over X`. The underlying type is
+`Quot (overCoeqRel α β)`, with the structure map induced
+from `B.hom`.
+-/
+def overCoeqObj : Over X :=
+  Over.mk (Quot.lift B.hom (overCoeqObj_wd α β) :
+    Quot (overCoeqRel α β) → X)
+
+/--
+The projection morphism `B ⟶ overCoeqObj α β` in `Over X`,
+given by `Quot.mk`.
+-/
+def overCoeqπ : B ⟶ overCoeqObj α β :=
+  Over.homMk (Quot.mk (overCoeqRel α β))
+
+/--
+The coequalizer condition: `α ≫ overCoeqπ α β = β ≫ overCoeqπ α β`.
+-/
+theorem overCoeq_condition :
+    α ≫ overCoeqπ α β = β ≫ overCoeqπ α β := by
+  ext a
+  exact Quot.sound ⟨a, rfl, rfl⟩
+
+/--
+Universal factorization through the coequalizer. Given
+`h : B ⟶ T` with `α ≫ h = β ≫ h`, produce
+`overCoeqObj α β ⟶ T`.
+-/
+def overCoeqDesc {T : Over X} (h : B ⟶ T)
+    (w : α ≫ h = β ≫ h) : overCoeqObj α β ⟶ T :=
+  Over.homMk
+    (Quot.lift h.left (fun b₁ b₂ ⟨a, h₁, h₂⟩ => by
+      rw [← h₁, ← h₂]
+      exact congrFun (congrArg (·.left) w) a))
+    (by
+      funext q; revert q; apply Quot.ind; intro b
+      exact congrFun (Over.w h) b)
+
+/--
+Factorization property: `overCoeqπ ≫ overCoeqDesc = h`.
+-/
+theorem overCoeq_fac {T : Over X} (h : B ⟶ T)
+    (w : α ≫ h = β ≫ h) :
+    overCoeqπ α β ≫ overCoeqDesc α β h w = h := by
+  ext b; rfl
+
+/--
+Uniqueness: any `m : overCoeqObj α β ⟶ T` satisfying
+`overCoeqπ ≫ m = h` equals `overCoeqDesc α β h w`.
+-/
+theorem overCoeq_uniq {T : Over X} (h : B ⟶ T)
+    (w : α ≫ h = β ≫ h)
+    (m : overCoeqObj α β ⟶ T)
+    (hm : overCoeqπ α β ≫ m = h) :
+    m = overCoeqDesc α β h w := by
+  ext q; revert q; apply Quot.ind; intro b
+  exact congrFun (congrArg (·.left) hm) b
+
+/--
+The coequalizer projection is an epimorphism: if
+`overCoeqπ ≫ f₁ = overCoeqπ ≫ f₂` then `f₁ = f₂`.
+-/
+theorem overCoeq_epi {T : Over X}
+    (f₁ f₂ : overCoeqObj α β ⟶ T)
+    (heq : overCoeqπ α β ≫ f₁ =
+      overCoeqπ α β ≫ f₂) :
+    f₁ = f₂ := by
+  ext q; revert q; apply Quot.ind; intro b
+  exact congrFun (congrArg (·.left) heq) b
+
+end OverCoequalizer
+
+/-! ## Equalizers of polynomial functors
+
+For morphisms `f, g : P ⟶ Q` in `PolyFunctorBetweenCat X Y`, the
+equalizer has:
+
+- **Positions** at `y`: `{ i : ccrIndex (P y) | ccrReindex (f y) i =
+  ccrReindex (g y) i }` (positions where `f` and `g` agree on
+  reindexing)
+- **Directions** at `⟨i, h⟩`: coequalizer of the two fiber
+  morphisms from `ccrFamily (Q y) (ccrReindex (f y) i)` to
+  `ccrFamily (P y) i`
+-/
+
+section Equalizers
+
+variable {X Y : Type u}
+variable {P Q : PolyFunctorBetweenCat.{u, u} X Y}
+  (f g : P ⟶ Q)
+
+/--
+The position type of the equalizer: positions of `P` at `y`
+where `f` and `g` agree on reindexing.
+-/
+def polyBetweenEqPos (y : Y) : Type u :=
+  { i : ccrIndex (P y) //
+    ccrReindex (f y) i = ccrReindex (g y) i }
+
+/--
+The first fiber morphism for the equalizer's direction
+coequalizer: `ccrFiberMor (f y) i`.
+-/
+def polyBetweenEqFiberα (y : Y)
+    (ip : polyBetweenEqPos f g y) :
+    ccrFamily (Q y) (ccrReindex (f y) ip.val) ⟶
+    ccrFamily (P y) ip.val :=
+  ccrFiberMor (f y) ip.val
+
+/--
+The second fiber morphism for the equalizer's direction
+coequalizer: `eqToHom (h) ≫ ccrFiberMor (g y) i`, where
+`h` transports along the position equality.
+-/
+def polyBetweenEqFiberβ (y : Y)
+    (ip : polyBetweenEqPos f g y) :
+    ccrFamily (Q y) (ccrReindex (f y) ip.val) ⟶
+    ccrFamily (P y) ip.val :=
+  eqToHom (congrArg (ccrFamily (Q y)) ip.property) ≫
+    ccrFiberMor (g y) ip.val
+
+/--
+The direction (family) of the equalizer at position `ip`:
+the coequalizer of the two fiber morphisms in `Over X`.
+-/
+def polyBetweenEqDir (y : Y)
+    (ip : polyBetweenEqPos f g y) : Over X :=
+  overCoeqObj
+    (polyBetweenEqFiberα f g y ip)
+    (polyBetweenEqFiberβ f g y ip)
+
+/--
+The equalizer polynomial functor for morphisms `f g : P ⟶ Q`.
+-/
+def polyBetweenEq : PolyFunctorBetweenCat X Y :=
+  fun y => ccrObjMk (polyBetweenEqDir f g y)
+
+/--
+The inclusion morphism's action on positions: subtype
+projection.
+-/
+def polyBetweenEqInclReindex (y : Y)
+    (ip : polyBetweenEqPos f g y) :
+    ccrIndex (P y) :=
+  ip.val
+
+/--
+The inclusion morphism's action on directions: the
+coequalizer projection.
+-/
+def polyBetweenEqInclFiber (y : Y)
+    (ip : polyBetweenEqPos f g y) :
+    ccrFamily (P y) (polyBetweenEqInclReindex f g y ip) ⟶
+    polyBetweenEqDir f g y ip :=
+  overCoeqπ
+    (polyBetweenEqFiberα f g y ip)
+    (polyBetweenEqFiberβ f g y ip)
+
+/--
+The inclusion morphism from the equalizer into `P`.
+-/
+def polyBetweenEqIncl : polyBetweenEq f g ⟶ P :=
+  fun y => ccrHomMk
+    (polyBetweenEqInclReindex f g y)
+    (polyBetweenEqInclFiber f g y)
+
+/--
+The fork condition: `polyBetweenEqIncl f g ≫ f =
+polyBetweenEqIncl f g ≫ g`.
+-/
+theorem polyBetweenEqIncl_condition :
+    polyBetweenEqIncl f g ≫ f =
+      polyBetweenEqIncl f g ≫ g := by
+  funext y
+  change polyBetweenEqIncl f g y ≫ f y =
+    polyBetweenEqIncl f g y ≫ g y
+  refine ccrHom_ext_subst _ _ ?_ ?_
+  · funext ip
+    exact ip.property
+  · intro ip
+    simp only [ccrComp_fiberMor]
+    dsimp [polyBetweenEqIncl,
+      polyBetweenEqInclReindex,
+      polyBetweenEqInclFiber]
+    exact overCoeq_condition
+      (polyBetweenEqFiberα f g y ip)
+      (polyBetweenEqFiberβ f g y ip)
+
+/--
+The lift's action on positions: builds a position in the
+equalizer from the hypothesis that `h ≫ f = h ≫ g`.
+-/
+def polyBetweenEqLiftReindex
+    {R : PolyFunctorBetweenCat.{u, u} X Y}
+    (h : R ⟶ P) (w : h ≫ f = h ≫ g)
+    (y : Y) (q : ccrIndex (R y)) :
+    polyBetweenEqPos f g y :=
+  ⟨ccrReindex (h y) q,
+    congrFun (congrArg ccrReindex
+      (congrFun w y)) q⟩
+
+/--
+The fiber morphism `ccrFiberMor (h y) q` coequalizes the
+two fiber morphisms of the equalizer.
+-/
+private theorem polyBetweenEqLiftFiber_coeq
+    {R : PolyFunctorBetweenCat.{u, u} X Y}
+    (h : R ⟶ P) (w : h ≫ f = h ≫ g)
+    (y : Y) (q : ccrIndex (R y)) :
+    polyBetweenEqFiberα f g y
+      (polyBetweenEqLiftReindex f g h w y q) ≫
+      ccrFiberMor (h y) q =
+    polyBetweenEqFiberβ f g y
+      (polyBetweenEqLiftReindex f g h w y q) ≫
+      ccrFiberMor (h y) q := by
+  dsimp [polyBetweenEqFiberα, polyBetweenEqFiberβ,
+    polyBetweenEqLiftReindex]
+  rw [Category.assoc,
+    ← ccrComp_fiberMor (h y) (f y),
+    ← ccrComp_fiberMor (h y) (g y)]
+  exact ccrFiberMor_congr (congrFun w y) q
+
+/--
+The lift's action on directions: factors `ccrFiberMor (h y) q`
+through the coequalizer.
+-/
+def polyBetweenEqLiftFiber
+    {R : PolyFunctorBetweenCat.{u, u} X Y}
+    (h : R ⟶ P) (w : h ≫ f = h ≫ g)
+    (y : Y) (q : ccrIndex (R y)) :
+    polyBetweenEqDir f g y
+      (polyBetweenEqLiftReindex f g h w y q) ⟶
+    ccrFamily (R y) q :=
+  overCoeqDesc
+    (polyBetweenEqFiberα f g y _)
+    (polyBetweenEqFiberβ f g y _)
+    (ccrFiberMor (h y) q)
+    (polyBetweenEqLiftFiber_coeq f g h w y q)
+
+/--
+The universal lift into the equalizer.
+-/
+def polyBetweenEqLift
+    {R : PolyFunctorBetweenCat.{u, u} X Y}
+    (h : R ⟶ P) (w : h ≫ f = h ≫ g) :
+    R ⟶ polyBetweenEq f g :=
+  fun y => ccrHomMk
+    (polyBetweenEqLiftReindex f g h w y)
+    (polyBetweenEqLiftFiber f g h w y)
+
+/--
+Factorization: `polyBetweenEqLift h w ≫ polyBetweenEqIncl f g = h`.
+-/
+theorem polyBetweenEqLift_incl
+    {R : PolyFunctorBetweenCat.{u, u} X Y}
+    (h : R ⟶ P) (w : h ≫ f = h ≫ g) :
+    polyBetweenEqLift f g h w ≫
+      polyBetweenEqIncl f g = h := by
+  funext y
+  change polyBetweenEqLift f g h w y ≫
+    polyBetweenEqIncl f g y = h y
+  refine ccrHom_ext _ _ rfl ?_
+  simp only [eqToHom_refl, Category.comp_id]
+  funext q
+  change ccrFiberMor
+    (polyBetweenEqLift f g h w y ≫
+      polyBetweenEqIncl f g y) q =
+    ccrFiberMor (h y) q
+  simp only [ccrComp_fiberMor]
+  dsimp [polyBetweenEqLift, polyBetweenEqIncl,
+    polyBetweenEqLiftReindex,
+    polyBetweenEqLiftFiber,
+    polyBetweenEqInclReindex,
+    polyBetweenEqInclFiber]
+  exact overCoeq_fac _ _ _ _
+
+/--
+Naturality of `overCoeqπ` with respect to `eqToHom`
+transport along the equalizer position.
+-/
+private theorem overCoeqπ_eqToHom_transport
+    {y : Y} {ip₁ ip₂ : polyBetweenEqPos f g y}
+    (hip : ip₁ = ip₂) :
+    overCoeqπ
+        (polyBetweenEqFiberα f g y ip₁)
+        (polyBetweenEqFiberβ f g y ip₁) ≫
+      eqToHom (congrArg
+        (polyBetweenEqDir f g y) hip) =
+    eqToHom (congrArg
+        (fun ip => ccrFamily (P y) ip.val)
+        hip) ≫
+      overCoeqπ
+        (polyBetweenEqFiberα f g y ip₂)
+        (polyBetweenEqFiberβ f g y ip₂) := by
+  subst hip; simp
+
+/--
+Uniqueness of the lift into the equalizer.
+-/
+theorem polyBetweenEqLift_unique
+    {R : PolyFunctorBetweenCat.{u, u} X Y}
+    (h : R ⟶ P) (w : h ≫ f = h ≫ g)
+    (m : R ⟶ polyBetweenEq f g)
+    (hm : m ≫ polyBetweenEqIncl f g = h) :
+    m = polyBetweenEqLift f g h w := by
+  suffices ∀ y, m y = polyBetweenEqLift
+      f g h w y by funext y; exact this y
+  intro y
+  have hbase : (m y).base =
+      (polyBetweenEqLift f g h w y).base := by
+    funext q
+    exact Subtype.ext
+      (congrFun (congrArg ccrReindex
+        (congrFun hm y)) q)
+  refine ccrHom_ext_subst _ _ hbase ?_
+  intro q
+  dsimp [polyBetweenEqLift,
+    polyBetweenEqLiftReindex,
+    polyBetweenEqLiftFiber]
+  apply overCoeq_epi
+    (polyBetweenEqFiberα f g y
+      (ccrReindex (m y) q))
+    (polyBetweenEqFiberβ f g y
+      (ccrReindex (m y) q))
+  have h_comp :=
+    ccrFiberMor_congr (congrFun hm y) q
+  change ccrFiberMor
+    (m y ≫ polyBetweenEqIncl f g y) q =
+    _ at h_comp
+  rw [ccrComp_fiberMor] at h_comp
+  dsimp [polyBetweenEqIncl,
+    polyBetweenEqInclReindex,
+    polyBetweenEqInclFiber] at h_comp
+  rw [h_comp]
+  symm
+  rw [← Category.assoc]
+  simp only [ccrReindex]
+  rw [overCoeqπ_eqToHom_transport f g
+      (congrFun hbase q)]
+  dsimp only [polyBetweenEqLift, ccrHomMk,
+    polyBetweenEqLiftReindex, ccrReindex]
+  rw [Category.assoc, overCoeq_fac]
+
+/--
+The fork for the equalizer of `f` and `g` in
+`PolyFunctorBetweenCat`.
+-/
+def polyBetweenFork : Fork f g :=
+  Fork.ofι (polyBetweenEqIncl f g)
+    (polyBetweenEqIncl_condition f g)
+
+/--
+The fork for the equalizer is a limit cone.
+-/
+def polyBetweenIsLimitFork :
+    IsLimit (polyBetweenFork f g) :=
+  Fork.IsLimit.mk (polyBetweenFork f g)
+    (fun s => polyBetweenEqLift f g s.ι s.condition)
+    (fun s =>
+      polyBetweenEqLift_incl f g s.ι s.condition)
+    (fun s m hm =>
+      polyBetweenEqLift_unique f g
+        s.ι s.condition m hm)
+
+instance : HasEqualizer f g :=
+  HasLimit.mk ⟨polyBetweenFork f g,
+    polyBetweenIsLimitFork f g⟩
+
+instance : HasEqualizers
+    (PolyFunctorBetweenCat.{u, u} X Y) :=
+  hasEqualizers_of_hasLimit_parallelPair _
+
+end Equalizers
+
 section FiniteLimitsColimits
 
 variable {X Y : Type u}
@@ -606,6 +1012,10 @@ instance : HasFiniteProducts
 instance : HasFiniteCoproducts
     (PolyFunctorBetweenCat.{u, u} X Y) :=
   hasFiniteCoproducts_of_hasCoproducts _
+
+instance : HasFiniteLimits
+    (PolyFunctorBetweenCat.{u, u} X Y) :=
+  hasFiniteLimits_of_hasEqualizers_and_finite_products
 
 end FiniteLimitsColimits
 
