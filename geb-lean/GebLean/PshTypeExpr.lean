@@ -697,39 +697,39 @@ theorem functorRelLift_yonedaULift_bridge
           s.val.1)) h₀ = a₀
       rw [← CategoryTheory.Functor.map_comp]
       change F.map q.val.1 h₀ = a₀
-      have key₁ := spec₁
+      have comm₁ := spec₁
       dsimp [pshBarrLift, pshProdLift,
         sectionMap, yonedaULiftSection,
-        yonedaExtRepresentableULiftIso] at key₁
-      have key₁' := congr_arg
+        yonedaExtRepresentableULiftIso] at comm₁
+      have comm₁' := congr_arg
         (fun x =>
           ((yonedaExtCounitULift F A).app
             (Opposite.op PUnit) x).down
-            PUnit.unit) key₁
+            PUnit.unit) comm₁
       simp only [yonedaExtCounitULift,
         yonedaExtUnitULift,
         CategoryTheory.Functor.map_id,
-        Category.comp_id] at key₁'
-      exact key₁'
+        Category.comp_id] at comm₁'
+      exact comm₁'
     · change (F.map g ≫ F.map
         (fun s : { p : A × B // R p.1 p.2 } =>
           s.val.2)) h₀ = a₁
       rw [← CategoryTheory.Functor.map_comp]
       change F.map q.val.2 h₀ = a₁
-      have key₂ := spec₂
+      have comm₂ := spec₂
       dsimp [pshBarrLift, pshProdLift,
         sectionMap, yonedaULiftSection,
-        yonedaExtRepresentableULiftIso] at key₂
-      have key₂' := congr_arg
+        yonedaExtRepresentableULiftIso] at comm₂
+      have comm₂' := congr_arg
         (fun x =>
           ((yonedaExtCounitULift F B).app
             (Opposite.op PUnit) x).down
-            PUnit.unit) key₂
+            PUnit.unit) comm₂
       simp only [yonedaExtCounitULift,
         yonedaExtUnitULift,
         CategoryTheory.Functor.map_id,
-        Category.comp_id] at key₂'
-      exact key₂'
+        Category.comp_id] at comm₂'
+      exact comm₂'
 
 /-- Canonical representative of the full relational
 interpretation at `yonedaULiftRel R`: a concrete
@@ -1034,21 +1034,21 @@ theorem TypeExpr.relInterp_bridges
           rw [←
             CategoryTheory.Functor.map_comp]
           change F.map f₀' (t₀ t) = f₀ t
-          have key₁ := hw₁
+          have comm₁ := hw₁
           dsimp [pshBarrLift, pshProdLift,
             TypeExpr.fullRelInterpPshRep,
             yonedaExtRepresentableULiftIso]
-            at key₁
+            at comm₁
           set iso :=
             (TypeExpr.app F T'
               ).toPshTypeExpr_interp_iso
               A A
-          have key₁' := congr_arg
+          have comm₁' := congr_arg
             (fun x =>
               (iso.hom.app d x).down t)
-            key₁
+            comm₁
           simp only [FunctorToTypes.inv_hom_id_app_apply]
-            at key₁'
+            at comm₁'
           dsimp [iso,
             TypeExpr.toPshTypeExpr_interp_iso,
             Iso.trans,
@@ -1057,29 +1057,29 @@ theorem TypeExpr.relInterp_bridges
             yonedaExt, yonedaExtMap,
             yonedaExtSigmaMapNat,
             yonedaExtCounitULift,
-            Quot.map] at key₁'
-          exact key₁'
+            Quot.map] at comm₁'
+          exact comm₁'
         · change (F.map gs ≫ F.map
             (fun s => s.val.2))
               (t₀ t) = f₁ t
           rw [←
             CategoryTheory.Functor.map_comp]
           change F.map f₁' (t₀ t) = f₁ t
-          have key₂ := hw₂
+          have comm₂ := hw₂
           dsimp [pshBarrLift, pshProdLift,
             TypeExpr.fullRelInterpPshRep,
             yonedaExtRepresentableULiftIso]
-            at key₂
+            at comm₂
           set iso₂ :=
             (TypeExpr.app F T'
               ).toPshTypeExpr_interp_iso
               B B
-          have key₂' := congr_arg
+          have comm₂' := congr_arg
             (fun x =>
               (iso₂.hom.app d x).down t)
-            key₂
+            comm₂
           simp only [FunctorToTypes.inv_hom_id_app_apply]
-            at key₂'
+            at comm₂'
           dsimp [iso₂,
             TypeExpr.toPshTypeExpr_interp_iso,
             Iso.trans,
@@ -1088,8 +1088,8 @@ theorem TypeExpr.relInterp_bridges
             yonedaExt, yonedaExtMap,
             yonedaExtSigmaMapNat,
             yonedaExtCounitULift,
-            Quot.map] at key₂'
-          exact key₂',
+            Quot.map] at comm₂'
+          exact comm₂',
     fun a₀ a₁ => by
       constructor
       · intro h
@@ -1235,23 +1235,23 @@ theorem TypeExpr.relInterp_bridges
               s.val.1)) h₀ = a₀
           rw [← CategoryTheory.Functor.map_comp]
           change F.map f₀' h₀ = a₀
-          have key₁ := spec₁
+          have comm₁ := spec₁
           dsimp [pshBarrLift, pshProdLift,
             TypeExpr.toInterpSection,
             sectionMap, yonedaULiftSection,
             TypeExpr.fullRelInterpPshRep,
             yonedaExtRepresentableULiftIso
-            ] at key₁
+            ] at comm₁
           set iso := (TypeExpr.app F T'
             ).toPshTypeExpr_interp_iso A A
-          have key₁' := congr_arg
+          have comm₁' := congr_arg
             (fun x =>
               (iso.hom.app
                 (Opposite.op PUnit) x).down
-                PUnit.unit) key₁
+                PUnit.unit) comm₁
           simp only [
             FunctorToTypes.inv_hom_id_app_apply
-            ] at key₁'
+            ] at comm₁'
           dsimp [iso,
             TypeExpr.toPshTypeExpr_interp_iso,
             Iso.trans,
@@ -1260,8 +1260,8 @@ theorem TypeExpr.relInterp_bridges
             yonedaExt, yonedaExtMap,
             yonedaExtSigmaMapNat,
             yonedaExtCounitULift,
-            Quot.map] at key₁'
-          exact key₁'
+            Quot.map] at comm₁'
+          exact comm₁'
         · change (F.map g ≫ F.map
             (fun s : { p : T'.interp A A ×
               T'.interp B B //
@@ -1269,23 +1269,23 @@ theorem TypeExpr.relInterp_bridges
               s.val.2)) h₀ = a₁
           rw [← CategoryTheory.Functor.map_comp]
           change F.map f₁' h₀ = a₁
-          have key₂ := spec₂
+          have comm₂ := spec₂
           dsimp [pshBarrLift, pshProdLift,
             TypeExpr.toInterpSection,
             sectionMap, yonedaULiftSection,
             TypeExpr.fullRelInterpPshRep,
             yonedaExtRepresentableULiftIso
-            ] at key₂
+            ] at comm₂
           set iso₂ := (TypeExpr.app F T'
             ).toPshTypeExpr_interp_iso B B
-          have key₂' := congr_arg
+          have comm₂' := congr_arg
             (fun x =>
               (iso₂.hom.app
                 (Opposite.op PUnit) x).down
-                PUnit.unit) key₂
+                PUnit.unit) comm₂
           simp only [
             FunctorToTypes.inv_hom_id_app_apply
-            ] at key₂'
+            ] at comm₂'
           dsimp [iso₂,
             TypeExpr.toPshTypeExpr_interp_iso,
             Iso.trans,
@@ -1294,8 +1294,8 @@ theorem TypeExpr.relInterp_bridges
             yonedaExt, yonedaExtMap,
             yonedaExtSigmaMapNat,
             yonedaExtCounitULift,
-            Quot.map] at key₂'
-          exact key₂'⟩
+            Quot.map] at comm₂'
+          exact comm₂'⟩
   | arrow T₁ T₂ ih₁ ih₂ =>
     exact ⟨fun d f₀ f₁ => by
       constructor
