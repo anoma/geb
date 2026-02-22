@@ -535,6 +535,15 @@ theorem sectionMap_id
   simp [sectionMap]
 
 @[simp]
+theorem sectionMap_comp
+    {P Q R : (Type 0)ᵒᵖ ⥤ Type 1}
+    (α : P ⟶ Q) (β : Q ⟶ R) (s : P.sections) :
+    sectionMap (α ≫ β) s =
+      sectionMap β (sectionMap α s) := by
+  ext c
+  simp [sectionMap]
+
+@[simp]
 theorem pshRelSectionsRelated_toSkeleton
     {F G : (Type 0)ᵒᵖ ⥤ Type 1}
     (R : PshProdOver F G)
@@ -607,5 +616,535 @@ theorem TypeExpr.fullRelInterp_bridge_var
     toInterpSection_var]
   exact (yonedaULiftRelOver_sectionsRelated_iff
     R a₀ a₁).symm
+
+/-- The presheaf `yonedaULiftRelPsh R` is
+isomorphic to `yonedaULift { p // R p.1 p.2 }`
+via currying/uncurrying the product structure.
+At each stage `T`, this sends
+`⟨⟨(f, g), proof⟩⟩` to `⟨fun t => ⟨(f t, g t),
+proof t⟩⟩` and conversely. -/
+def yonedaULiftRelPshIso
+    {A B : Type} (R : A → B → Prop) :
+    yonedaULiftRelPsh R ≅
+      yonedaULift { p : A × B // R p.1 p.2 } where
+  hom := {
+    app := fun T x =>
+      ⟨fun t => ⟨(x.down.val.1 t,
+        x.down.val.2 t),
+        x.down.property t⟩⟩
+    naturality := fun _ _ _ => by
+      ext ⟨⟨⟨_, _⟩, _⟩⟩; rfl }
+  inv := {
+    app := fun T x =>
+      ⟨⟨(fun t => (x.down t).val.1,
+        fun t => (x.down t).val.2),
+        fun t => (x.down t).property⟩⟩
+    naturality := fun _ _ _ => by
+      ext ⟨_⟩; rfl }
+  hom_inv_id := by
+    ext T ⟨⟨⟨_, _⟩, _⟩⟩; rfl
+  inv_hom_id := by
+    ext T ⟨_⟩
+    simp only [NatTrans.comp_app, types_comp_apply,
+      NatTrans.id_app, types_id_apply]
+
+/-- The Barr lift of `yonedaULiftRelOver R` via
+`yonedaExt F` faithfully reflects `functorRelLift`
+at constant sections. -/
+theorem functorRelLift_yonedaULift_bridge
+    (F : Type ⥤ Type) {A B : Type}
+    (R : A → B → Prop)
+    (a₀ : F.obj A) (a₁ : F.obj B) :
+    functorRelLift F R a₀ a₁ ↔
+      (pshBarrLift (yonedaExt F)
+        (yonedaULiftRelOver R)).sectionsRelated
+        (sectionMap
+          (yonedaExtRepresentableULiftIso F A).inv
+          (yonedaULiftSection a₀))
+        (sectionMap
+          (yonedaExtRepresentableULiftIso F B).inv
+          (yonedaULiftSection a₁)) := by
+  constructor
+  · rintro ⟨w, hw₁, hw₂⟩
+    refine ⟨⟨fun c =>
+      Quot.mk _ ⟨{ p : A × B // R p.1 p.2 },
+        ⟨⟨(fun s => s.val.1,
+          fun s => s.val.2),
+          fun s => s.property⟩⟩,
+        fun _ => w⟩,
+      fun {c c'} f => rfl⟩, fun c => ⟨?_, ?_⟩⟩
+    · exact (Quot.sound
+        ⟨fun s => s.val.1, rfl,
+          funext (fun _ => hw₁)⟩).symm
+    · exact (Quot.sound
+        ⟨fun s => s.val.2, rfl,
+          funext (fun _ => hw₂)⟩).symm
+  · rintro ⟨r, hr⟩
+    have spec₁ := (hr (Opposite.op PUnit)).1
+    have spec₂ := (hr (Opposite.op PUnit)).2
+    revert spec₁ spec₂
+    refine Quot.inductionOn
+      (r.val (Opposite.op PUnit))
+      (fun ⟨S, p, h⟩ spec₁ spec₂ => ?_)
+    set h₀ := h PUnit.unit with h₀_def
+    set q := p.down with q_def
+    set g : S → { p : A × B // R p.1 p.2 } :=
+      fun s => ⟨(q.val.1 s, q.val.2 s),
+        q.property s⟩ with g_def
+    refine ⟨F.map g h₀, ?_, ?_⟩
+    · change (F.map g ≫ F.map
+        (fun s : { p : A × B // R p.1 p.2 } =>
+          s.val.1)) h₀ = a₀
+      rw [← CategoryTheory.Functor.map_comp]
+      change F.map q.val.1 h₀ = a₀
+      have key₁ := spec₁
+      dsimp [pshBarrLift, pshProdLift,
+        sectionMap, yonedaULiftSection,
+        yonedaExtRepresentableULiftIso] at key₁
+      have key₁' := congr_arg
+        (fun x =>
+          ((yonedaExtCounitULift F A).app
+            (Opposite.op PUnit) x).down
+            PUnit.unit) key₁
+      simp only [yonedaExtCounitULift,
+        yonedaExtUnitULift,
+        CategoryTheory.Functor.map_id,
+        Category.comp_id] at key₁'
+      exact key₁'
+    · change (F.map g ≫ F.map
+        (fun s : { p : A × B // R p.1 p.2 } =>
+          s.val.2)) h₀ = a₁
+      rw [← CategoryTheory.Functor.map_comp]
+      change F.map q.val.2 h₀ = a₁
+      have key₂ := spec₂
+      dsimp [pshBarrLift, pshProdLift,
+        sectionMap, yonedaULiftSection,
+        yonedaExtRepresentableULiftIso] at key₂
+      have key₂' := congr_arg
+        (fun x =>
+          ((yonedaExtCounitULift F B).app
+            (Opposite.op PUnit) x).down
+            PUnit.unit) key₂
+      simp only [yonedaExtCounitULift,
+        yonedaExtUnitULift,
+        CategoryTheory.Functor.map_id,
+        Category.comp_id] at key₂'
+      exact key₂'
+
+/-- Canonical representative of the full relational
+interpretation at `yonedaULiftRel R`: a concrete
+`PshProdOver` (before the Skeleton quotient) for
+each type expression. -/
+def TypeExpr.fullRelInterpPshRep
+    (T : TypeExpr) {A B : Type}
+    (R : A → B → Prop) :
+    PshProdOver
+      (T.toPshTypeExpr.interp
+        (yonedaULift A) (yonedaULift A))
+      (T.toPshTypeExpr.interp
+        (yonedaULift B) (yonedaULift B)) :=
+  match T with
+  | .var => yonedaULiftRelOver R
+  | .app F T' =>
+    pshBarrLift (yonedaExt F)
+      (T'.fullRelInterpPshRep R)
+  | .arrow T₁ T₂ =>
+    pshArrowRel
+      (T₁.fullRelInterpPshRep R)
+      (T₂.fullRelInterpPshRep R)
+
+/-- The presheaf-level full relational interpretation
+at `yonedaULiftRel R` equals the Skeleton class of
+the canonical representative `fullRelInterpPshRep`. -/
+theorem TypeExpr.fullRelInterp_pshRep_eq
+    (T : TypeExpr) {A B : Type}
+    (R : A → B → Prop) :
+    T.toPshTypeExpr.fullRelInterp
+      (yonedaULiftRel R) =
+      toSkeleton _ (T.fullRelInterpPshRep R) := by
+  induction T with
+  | var => rfl
+  | app F T' ih =>
+    change pshBarrLiftSkel (yonedaExt F)
+      (T'.toPshTypeExpr.fullRelInterp
+        (yonedaULiftRel R)) =
+      toSkeleton _ (pshBarrLift (yonedaExt F)
+        (T'.fullRelInterpPshRep R))
+    simp only [ih, pshBarrLiftSkel, Skeleton.lift,
+      toSkeleton]; rfl
+  | arrow T₁ T₂ ih₁ ih₂ =>
+    change pshArrowRelSkel
+      (T₁.toPshTypeExpr.fullRelInterp
+        (yonedaULiftRel R))
+      (T₂.toPshTypeExpr.fullRelInterp
+        (yonedaULiftRel R)) =
+      toSkeleton _ (pshArrowRel
+        (T₁.fullRelInterpPshRep R)
+        (T₂.fullRelInterpPshRep R))
+    simp only [ih₁, ih₂, pshArrowRelSkel,
+      Skeleton.lift₂, toSkeleton]; rfl
+
+/-- Two stage-level elements of the presheaf
+interpretation are related at stage `d` if there
+exists a witness in the relation presheaf at that
+stage. -/
+def TypeExpr.stageRelated
+    (T : TypeExpr) {A B : Type}
+    (R : A → B → Prop)
+    (d : (Type 0)ᵒᵖ)
+    (x : (T.toPshTypeExpr.interp
+      (yonedaULift A) (yonedaULift A)).obj d)
+    (y : (T.toPshTypeExpr.interp
+      (yonedaULift B) (yonedaULift B)).obj d) :
+    Prop :=
+  ∃ w : (T.fullRelInterpPshRep R).left.obj d,
+    ((T.fullRelInterpPshRep R).hom.app d w).1 =
+      x ∧
+    ((T.fullRelInterpPshRep R).hom.app d w).2 =
+      y
+
+/-- Combined bridge theorem relating the Type-level
+full relational interpretation to the presheaf-level
+interpretation through the ULift-Yoneda embedding.
+
+Part 1 (stage-level): pointwise Type-level
+relatedness at functions `f₀, f₁ : d.unop → ...`
+is equivalent to stage-level relatedness at `d`.
+
+Part 2 (section-level): Type-level relatedness of
+elements `a₀, a₁` is equivalent to section-level
+relatedness of their presheaf representatives.
+
+These results are proved simultaneously because
+the arrow case of the section-level bridge requires
+the stage-level bridge for its subterms. -/
+theorem TypeExpr.relInterp_bridges
+    (T : TypeExpr) {A B : Type}
+    (R : A → B → Prop) :
+    (∀ (d : (Type 0)ᵒᵖ)
+      (f₀ : d.unop → T.interp A A)
+      (f₁ : d.unop → T.interp B B),
+      (∀ t, T.fullRelInterp R (f₀ t) (f₁ t)) ↔
+        T.stageRelated R d
+          ((T.toPshTypeExpr_interp_iso A A
+            ).inv.app d ⟨f₀⟩)
+          ((T.toPshTypeExpr_interp_iso B B
+            ).inv.app d ⟨f₁⟩))
+    ∧
+    (∀ (a₀ : T.interp A A) (a₁ : T.interp B B),
+      T.fullRelInterp R a₀ a₁ ↔
+        (T.fullRelInterpPshRep R
+          ).sectionsRelated
+          (T.toInterpSection a₀)
+          (T.toInterpSection a₁)) := by
+  induction T with
+  | var =>
+    exact ⟨fun d f₀ f₁ => by
+      constructor
+      · intro h
+        exact ⟨⟨⟨(f₀, f₁), h⟩⟩, rfl, rfl⟩
+      · rintro ⟨w, h₁, h₂⟩ t
+        convert w.down.property t using 1
+        · exact congr_fun
+            (congr_arg ULift.down h₁.symm) t
+        · exact congr_fun
+            (congr_arg ULift.down h₂.symm) t,
+    fun a₀ a₁ => by
+      simp only [TypeExpr.fullRelInterp,
+        TypeExpr.fullRelInterpPshRep,
+        TypeExpr.toInterpSection,
+        TypeExpr.toPshTypeExpr_interp_iso]
+      dsimp only [PshTypeExpr.interp,
+        TypeExpr.toPshTypeExpr, Iso.refl,
+        sectionMap]
+      exact (yonedaULiftRelOver_sectionsRelated_iff
+        R a₀ a₁).symm⟩
+  | app F T' ih => _
+  | arrow T₁ T₂ ih₁ ih₂ =>
+    exact ⟨fun d f₀ f₁ => by
+      constructor
+      · intro H
+        refine ⟨⟨(_, _),
+          fun e h w_R => ?_⟩, rfl, rfl⟩
+        set p₁ := ((T₁.fullRelInterpPshRep R
+          ).hom.app e w_R).1
+        set p₂ := ((T₁.fullRelInterpPshRep R
+          ).hom.app e w_R).2
+        set a₁ := ((T₁.toPshTypeExpr_interp_iso
+          A A).hom.app e p₁).down
+        set a₂ := ((T₁.toPshTypeExpr_interp_iso
+          B B).hom.app e p₂).down
+        have h_T₁ :
+            ∀ t', T₁.fullRelInterp R
+              (a₁ t') (a₂ t') :=
+          (ih₁.1 e a₁ a₂).mpr ⟨w_R,
+            (congr_fun (Iso.hom_inv_id_app
+              (T₁.toPshTypeExpr_interp_iso A A)
+              e) p₁).symm,
+            (congr_fun (Iso.hom_inv_id_app
+              (T₁.toPshTypeExpr_interp_iso B B)
+              e) p₂).symm⟩
+        have h_T₂ : ∀ t',
+            T₂.fullRelInterp R
+              (f₀ (h.unop t') (a₁ t'))
+              (f₁ (h.unop t') (a₂ t')) :=
+          fun t' => H (h.unop t') _ _ (h_T₁ t')
+        obtain ⟨s, hs₁, hs₂⟩ :=
+          (ih₂.1 e _ _).mp h_T₂
+        exact ⟨s, Prod.ext
+          (hs₁.trans (by rfl))
+          (hs₂.trans (by rfl))⟩
+      · intro ⟨w, hw₁, hw₂⟩ t a₀ a₁ hR
+        set e₀ := Opposite.op PUnit
+        set const_a₀ :
+            e₀.unop → T₁.interp A A :=
+          fun _ => a₀
+        set const_a₁ :
+            e₀.unop → T₁.interp B B :=
+          fun _ => a₁
+        have h₁ : ∀ u, T₁.fullRelInterp R
+            (const_a₀ u) (const_a₁ u) :=
+          fun _ => hR
+        obtain ⟨w_R, hw_R₁, hw_R₂⟩ :=
+          (ih₁.1 e₀ const_a₀ const_a₁).mp h₁
+        set h_t : d ⟶ e₀ :=
+          Quiver.Hom.op (fun (_ : PUnit) => t)
+        obtain ⟨s_T₂, hs_T₂⟩ :=
+          w.property e₀ h_t w_R
+        set x₁ := ((T₂.toPshTypeExpr_interp_iso
+          A A).hom.app e₀
+            (Prod.fst
+              (((T₂.fullRelInterpPshRep R
+                ).hom.app e₀ s_T₂)))).down
+        set x₂ := ((T₂.toPshTypeExpr_interp_iso
+          B B).hom.app e₀
+            (Prod.snd
+              (((T₂.fullRelInterpPshRep R
+                ).hom.app e₀ s_T₂)))).down
+        have h₂ : ∀ u, T₂.fullRelInterp R
+            (x₁ u) (x₂ u) :=
+          (ih₂.1 e₀ x₁ x₂).mpr ⟨s_T₂,
+            (congr_fun (Iso.hom_inv_id_app
+              (T₂.toPshTypeExpr_interp_iso A A)
+              e₀) _).symm,
+            (congr_fun (Iso.hom_inv_id_app
+              (T₂.toPshTypeExpr_interp_iso B B)
+              e₀) _).symm⟩
+        have wval₁_eq : w.val.1 =
+            ((T₁.arrow T₂
+              ).toPshTypeExpr_interp_iso A A
+              ).inv.app d ⟨f₀⟩ := hw₁
+        have wval₂_eq : w.val.2 =
+            ((T₁.arrow T₂
+              ).toPshTypeExpr_interp_iso B B
+              ).inv.app d ⟨f₁⟩ := hw₂
+        suffices heq₁ :
+            x₁ PUnit.unit = f₀ t a₀ by
+          suffices heq₂ :
+              x₂ PUnit.unit = f₁ t a₁ by
+            exact heq₁ ▸ heq₂ ▸ h₂ PUnit.unit
+          simp only [x₂,
+            congr_arg Prod.snd hs_T₂,
+            wval₂_eq, hw_R₂,
+            TypeExpr.toPshTypeExpr_interp_iso,
+            Iso.trans_inv, Iso.symm_inv,
+            NatTrans.comp_app,
+            types_comp_apply,
+            pshIhomProfMap,
+            FunctorToTypes.inv_hom_id_app_apply]
+          rfl
+        simp only [x₁,
+          congr_arg Prod.fst hs_T₂,
+          wval₁_eq, hw_R₁,
+          TypeExpr.toPshTypeExpr_interp_iso,
+          Iso.trans_inv, Iso.symm_inv,
+          NatTrans.comp_app,
+          types_comp_apply,
+          pshIhomProfMap,
+          FunctorToTypes.inv_hom_id_app_apply]
+        rfl,
+    fun a₀ a₁ => by
+      set s₀ := (T₁.arrow T₂).toInterpSection a₀
+      set s₁ := (T₁.arrow T₂).toInterpSection a₁
+      constructor
+      · intro H
+        refine ⟨⟨fun c =>
+          ⟨(s₀.val c, s₁.val c),
+           fun d h w_R => ?_⟩,
+          ?_⟩, fun c => ?_⟩
+        · -- Predicate: construct T₂ witness
+          set p₁ := ((T₁.fullRelInterpPshRep R
+            ).hom.app d w_R).1
+          set p₂ := ((T₁.fullRelInterpPshRep R
+            ).hom.app d w_R).2
+          set f₀_T₁ :=
+            ((T₁.toPshTypeExpr_interp_iso A A
+              ).hom.app d p₁).down
+          set f₁_T₁ :=
+            ((T₁.toPshTypeExpr_interp_iso B B
+              ).hom.app d p₂).down
+          have h_T₁ : ∀ t',
+              T₁.fullRelInterp R
+                (f₀_T₁ t') (f₁_T₁ t') :=
+            (ih₁.1 d f₀_T₁ f₁_T₁).mpr
+              ⟨w_R,
+               (congr_fun (Iso.hom_inv_id_app
+                 (T₁.toPshTypeExpr_interp_iso
+                   A A) d) p₁).symm,
+               (congr_fun (Iso.hom_inv_id_app
+                 (T₁.toPshTypeExpr_interp_iso
+                   B B) d) p₂).symm⟩
+          set f₀_T₂ : d.unop → T₂.interp A A :=
+            fun t' => a₀ (f₀_T₁ t')
+          set f₁_T₂ : d.unop → T₂.interp B B :=
+            fun t' => a₁ (f₁_T₁ t')
+          have h_T₂ : ∀ t',
+              T₂.fullRelInterp R
+                (f₀_T₂ t') (f₁_T₂ t') :=
+            fun t' => H _ _ (h_T₁ t')
+          obtain ⟨s_T₂, hs_T₂_1, hs_T₂_2⟩ :=
+            (ih₂.1 d f₀_T₂ f₁_T₂).mp h_T₂
+          exact ⟨s_T₂, Prod.ext
+            (hs_T₂_1.trans (by rfl))
+            (hs_T₂_2.trans (by rfl))⟩
+        · -- Section compatibility
+          intro c c' f
+          apply Subtype.ext
+          exact Prod.ext
+            (s₀.property f) (s₁.property f)
+        · -- Projections
+          exact ⟨rfl, rfl⟩
+      · -- Backward: sectionsRelated → arrowRel
+        intro ⟨r, hr⟩ x₀ x₁ hR
+        set e₀ := Opposite.op PUnit
+        -- T₁ section-level relatedness
+        obtain ⟨r₁, hr₁⟩ :=
+          (ih₁.2 x₀ x₁).mp hR
+        -- Evaluate at op PUnit
+        set w_R₁ := r₁.val e₀
+        -- Apply arrow predicate at e₀
+        have hr_e₀ := (hr e₀).1
+        have hr_e₀_2 := (hr e₀).2
+        set h_id : e₀ ⟶ e₀ := 𝟙 e₀
+        obtain ⟨s_T₂, hs_T₂⟩ :=
+          (r.val e₀).property e₀ h_id w_R₁
+        -- Decode T₂ witness at op PUnit
+        set q₁ := ((T₂.fullRelInterpPshRep R
+          ).hom.app e₀ s_T₂).1
+        set q₂ := ((T₂.fullRelInterpPshRep R
+          ).hom.app e₀ s_T₂).2
+        set g₀ := ((T₂.toPshTypeExpr_interp_iso
+          A A).hom.app e₀ q₁).down
+        set g₁ := ((T₂.toPshTypeExpr_interp_iso
+          B B).hom.app e₀ q₂).down
+        have h_T₂ : ∀ u,
+            T₂.fullRelInterp R
+              (g₀ u) (g₁ u) :=
+          (ih₂.1 e₀ g₀ g₁).mpr ⟨s_T₂,
+            (congr_fun (Iso.hom_inv_id_app
+              (T₂.toPshTypeExpr_interp_iso A A)
+              e₀) _).symm,
+            (congr_fun (Iso.hom_inv_id_app
+              (T₂.toPshTypeExpr_interp_iso B B)
+              e₀) _).symm⟩
+        -- Show g₀ PUnit.unit = a₀ x₀
+        suffices heq₁ :
+            g₀ PUnit.unit = a₀ x₀ by
+          suffices heq₂ :
+              g₁ PUnit.unit = a₁ x₁ by
+            exact heq₁ ▸ heq₂ ▸
+              h_T₂ PUnit.unit
+          have hr_val₂ :
+              (r.val e₀).val.2 =
+                s₁.val e₀ :=
+            hr_e₀_2
+          have hr₁_val₂ :
+              ((T₁.fullRelInterpPshRep R
+                ).hom.app e₀ w_R₁).2 =
+              (T₁.toInterpSection x₁
+                ).val e₀ :=
+            (hr₁ e₀).2
+          simp only [g₁, q₂,
+            congr_arg Prod.snd hs_T₂,
+            hr_val₂, hr₁_val₂,
+            TypeExpr.toInterpSection,
+            sectionMap, s₁,
+            TypeExpr.toPshTypeExpr_interp_iso,
+            Iso.trans_inv, Iso.symm_inv,
+            NatTrans.comp_app,
+            types_comp_apply,
+            pshIhomProfMap,
+            FunctorToTypes.inv_hom_id_app_apply]
+          dsimp only [pshIhomYonedaULiftIso,
+            NatIso.ofComponents,
+            pshIhomYonedaULiftFwd,
+            yonedaULiftSection, h_id, e₀]
+          simp only [types_comp_apply,
+            CartesianMonoidalCategory.lift_apply]
+          dsimp only [ihom.ev, ihom.adjunction,
+            Closed.adj,
+            Types.tensorProductAdjunction]
+        have hr_val₁ :
+            (r.val e₀).val.1 =
+              s₀.val e₀ :=
+          hr_e₀
+        have hr₁_val₁ :
+            ((T₁.fullRelInterpPshRep R
+              ).hom.app e₀ w_R₁).1 =
+            (T₁.toInterpSection x₀
+              ).val e₀ :=
+          (hr₁ e₀).1
+        simp only [g₀, q₁,
+          congr_arg Prod.fst hs_T₂,
+          hr_val₁, hr₁_val₁,
+          TypeExpr.toInterpSection,
+          sectionMap, s₀,
+          TypeExpr.toPshTypeExpr_interp_iso,
+          Iso.trans_inv, Iso.symm_inv,
+          NatTrans.comp_app,
+          types_comp_apply,
+          pshIhomProfMap,
+          FunctorToTypes.inv_hom_id_app_apply]
+        dsimp only [pshIhomYonedaULiftIso,
+          NatIso.ofComponents,
+          pshIhomYonedaULiftFwd,
+          yonedaULiftSection, h_id, e₀]
+        simp only [types_comp_apply,
+          CartesianMonoidalCategory.lift_apply]
+        dsimp only [ihom.ev, ihom.adjunction,
+          Closed.adj,
+          Types.tensorProductAdjunction]⟩
+
+/-- Section-level bridge: Type-level relatedness
+of elements is equivalent to section-level
+relatedness of their presheaf representatives
+through the ULift-Yoneda embedding. -/
+theorem TypeExpr.fullRelInterp_bridge
+    (T : TypeExpr) {A B : Type}
+    (R : A → B → Prop)
+    (a₀ : T.interp A A) (a₁ : T.interp B B) :
+    T.fullRelInterp R a₀ a₁ ↔
+      (T.fullRelInterpPshRep R
+        ).sectionsRelated
+        (T.toInterpSection a₀)
+        (T.toInterpSection a₁) :=
+  (T.relInterp_bridges R).2 a₀ a₁
+
+/-- Stage-level bridge: pointwise Type-level
+relatedness at functions `f₀, f₁ : d.unop → ...`
+is equivalent to stage-level relatedness at `d`. -/
+theorem TypeExpr.pointwise_bridge
+    (T : TypeExpr) {A B : Type}
+    (R : A → B → Prop)
+    (d : (Type 0)ᵒᵖ)
+    (f₀ : d.unop → T.interp A A)
+    (f₁ : d.unop → T.interp B B) :
+    (∀ t, T.fullRelInterp R (f₀ t) (f₁ t)) ↔
+      T.stageRelated R d
+        ((T.toPshTypeExpr_interp_iso A A
+          ).inv.app d ⟨f₀⟩)
+        ((T.toPshTypeExpr_interp_iso B B
+          ).inv.app d ⟨f₁⟩) :=
+  (T.relInterp_bridges R).1 d f₀ f₁
 
 end GebLean

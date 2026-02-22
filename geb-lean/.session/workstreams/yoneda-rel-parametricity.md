@@ -46,6 +46,14 @@ mathematical analysis.
   `ParametricFamily.wedge`: parametricity implies the
   profunctor wedge condition (but not conversely for
   nested arrows -- the wedge is paranaturality)
+- [x] `relInterp_bridges` combined bridge theorem
+  proving stage-level and section-level bridges
+  simultaneously by induction on `TypeExpr`,
+  for var and arrow cases (app case blocked by AC)
+- [x] `fullRelInterp_bridge` corollary: Type-level
+  relatedness ↔ presheaf section-level relatedness
+- [x] `pointwise_bridge` corollary: pointwise
+  Type-level relatedness ↔ stage-level relatedness
 
 ## Continuation
 
