@@ -49,7 +49,10 @@ mathematical analysis.
 - [x] `relInterp_bridges` combined bridge theorem
   proving stage-level and section-level bridges
   simultaneously by induction on `TypeExpr`,
-  for var and arrow cases (app case blocked by AC)
+  for all cases (var, app, arrow). The app case
+  uses a parameterized `choice` hypothesis
+  (`∀ {α}, Nonempty α → α`) for the forward
+  direction; the backward direction is constructive.
 - [x] `fullRelInterp_bridge` corollary: Type-level
   relatedness ↔ presheaf section-level relatedness
 - [x] `pointwise_bridge` corollary: pointwise

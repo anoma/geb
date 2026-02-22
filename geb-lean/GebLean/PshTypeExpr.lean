@@ -820,7 +820,8 @@ the arrow case of the section-level bridge requires
 the stage-level bridge for its subterms. -/
 theorem TypeExpr.relInterp_bridges
     (T : TypeExpr) {A B : Type}
-    (R : A → B → Prop) :
+    (R : A → B → Prop)
+    (choice : ∀ {α : Type}, Nonempty α → α) :
     (∀ (d : (Type 0)ᵒᵖ)
       (f₀ : d.unop → T.interp A A)
       (f₁ : d.unop → T.interp B B),
@@ -859,7 +860,442 @@ theorem TypeExpr.relInterp_bridges
         sectionMap]
       exact (yonedaULiftRelOver_sectionsRelated_iff
         R a₀ a₁).symm⟩
-  | app F T' ih => _
+  | app F T' ih =>
+    exact ⟨fun d f₀ f₁ => by
+      constructor
+      · intro H
+        set S := { q : T'.interp A A ×
+          T'.interp B B //
+          T'.fullRelInterp R q.1 q.2 }
+        have hne : ∀ t : d.unop, Nonempty
+            { wt : F.obj S //
+              F.map (fun s => s.val.1)
+                wt = f₀ t ∧
+              F.map (fun s => s.val.2)
+                wt = f₁ t } :=
+          fun t => by
+            obtain ⟨wt, hwt₁, hwt₂⟩ := H t
+            exact ⟨⟨wt, hwt₁, hwt₂⟩⟩
+        obtain ⟨p₀, hp₀_1, hp₀_2⟩ :=
+          (ih.1 (Opposite.op S)
+            (fun s => s.val.1)
+            (fun s => s.val.2)).mp
+            (fun s => s.property)
+        refine ⟨Quot.mk _
+          ⟨S, p₀, fun t =>
+            (choice (hne t)).val⟩,
+          ?_, ?_⟩
+        · -- fst projection via Quot.sound
+          set P₁ := T'.toPshTypeExpr.interp
+            (yonedaULift A) (yonedaULift A)
+          set g : S → T'.interp A A :=
+            fun s => s.val.1
+          change Quot.mk _
+            (yonedaExtSigmaMapNat F
+              ((T'.fullRelInterpPshRep R
+                ).hom ≫
+                pshProdFst _ _) d
+              ⟨S, p₀, fun t =>
+                (choice (hne t)).val⟩) =
+            Quot.mk _
+              (yonedaExtSigmaMapNat F
+                (T'.toPshTypeExpr_interp_iso
+                  A A).inv d
+                ⟨T'.interp A A,
+                  ⟨𝟙 _⟩, f₀⟩)
+          dsimp only [yonedaExtSigmaMapNat]
+          have psh_cond :
+              P₁.map (Quiver.Hom.op g)
+              ((T'.toPshTypeExpr_interp_iso
+                A A).inv.app
+                (Opposite.op (T'.interp A A))
+                ⟨𝟙 _⟩) =
+              ((T'.fullRelInterpPshRep R
+                ).hom.app
+                (Opposite.op S) p₀).1 := by
+            have nat := congr_fun
+              ((T'.toPshTypeExpr_interp_iso
+                A A).inv.naturality
+                (Quiver.Hom.op g)) ⟨𝟙 _⟩
+            simp only [types_comp_apply]
+              at nat
+            simp only [Opposite.unop_op]
+            rw [← nat, hp₀_1]
+            congr 1
+          exact (Quot.sound
+            ⟨g, psh_cond,
+              funext fun t =>
+                (choice (hne t)
+                  ).property.1⟩).symm
+        · -- snd projection via Quot.sound
+          set P₂ := T'.toPshTypeExpr.interp
+            (yonedaULift B) (yonedaULift B)
+          set g₂ : S → T'.interp B B :=
+            fun s => s.val.2
+          change Quot.mk _
+            (yonedaExtSigmaMapNat F
+              ((T'.fullRelInterpPshRep R
+                ).hom ≫
+                pshProdSnd _ _) d
+              ⟨S, p₀, fun t =>
+                (choice (hne t)).val⟩) =
+            Quot.mk _
+              (yonedaExtSigmaMapNat F
+                (T'.toPshTypeExpr_interp_iso
+                  B B).inv d
+                ⟨T'.interp B B,
+                  ⟨𝟙 _⟩, f₁⟩)
+          dsimp only [yonedaExtSigmaMapNat]
+          have psh_cond₂ :
+              P₂.map (Quiver.Hom.op g₂)
+              ((T'.toPshTypeExpr_interp_iso
+                B B).inv.app
+                (Opposite.op (T'.interp B B))
+                ⟨𝟙 _⟩) =
+              ((T'.fullRelInterpPshRep R
+                ).hom.app
+                (Opposite.op S) p₀).2 := by
+            have nat := congr_fun
+              ((T'.toPshTypeExpr_interp_iso
+                B B).inv.naturality
+                (Quiver.Hom.op g₂)) ⟨𝟙 _⟩
+            simp only [types_comp_apply]
+              at nat
+            simp only [Opposite.unop_op]
+            rw [← nat, hp₀_2]
+            congr 1
+          exact (Quot.sound
+            ⟨g₂, psh_cond₂,
+              funext fun t =>
+                (choice (hne t)
+                  ).property.2⟩).symm
+      · intro ⟨w, hw₁, hw₂⟩
+        revert hw₁ hw₂
+        refine Quot.inductionOn w
+          (fun ⟨S₀, p₀, t₀⟩
+            hw₁ hw₂ => ?_)
+        set q₁ := ((T'.fullRelInterpPshRep R
+          ).hom.app
+          (Opposite.op S₀) p₀).1
+        set q₂ := ((T'.fullRelInterpPshRep R
+          ).hom.app
+          (Opposite.op S₀) p₀).2
+        set f₀' :=
+          ((T'.toPshTypeExpr_interp_iso
+            A A).hom.app
+            (Opposite.op S₀) q₁).down
+        set f₁' :=
+          ((T'.toPshTypeExpr_interp_iso
+            B B).hom.app
+            (Opposite.op S₀) q₂).down
+        have round₁ :
+            (T'.toPshTypeExpr_interp_iso
+              A A).inv.app
+              (Opposite.op S₀) ⟨f₀'⟩ =
+              q₁ := by
+          have := congr_fun
+            ((T'.toPshTypeExpr_interp_iso
+              A A).hom_inv_id_app
+              (Opposite.op S₀)) q₁
+          simp only [types_comp_apply,
+            types_id_apply] at this
+          exact this
+        have round₂ :
+            (T'.toPshTypeExpr_interp_iso
+              B B).inv.app
+              (Opposite.op S₀) ⟨f₁'⟩ =
+              q₂ := by
+          have := congr_fun
+            ((T'.toPshTypeExpr_interp_iso
+              B B).hom_inv_id_app
+              (Opposite.op S₀)) q₂
+          simp only [types_comp_apply,
+            types_id_apply] at this
+          exact this
+        have hrel : ∀ s,
+            T'.fullRelInterp R
+              (f₀' s) (f₁' s) :=
+          (ih.1 (Opposite.op S₀)
+            f₀' f₁').mpr
+            ⟨p₀, round₁.symm,
+              round₂.symm⟩
+        set gs : S₀ →
+            { p : T'.interp A A ×
+              T'.interp B B //
+              T'.fullRelInterp R
+                p.1 p.2 } :=
+          fun s =>
+            ⟨(f₀' s, f₁' s), hrel s⟩
+        intro t
+        refine ⟨F.map gs (t₀ t), ?_, ?_⟩
+        · change (F.map gs ≫ F.map
+            (fun s => s.val.1))
+              (t₀ t) = f₀ t
+          rw [←
+            CategoryTheory.Functor.map_comp]
+          change F.map f₀' (t₀ t) = f₀ t
+          have key₁ := hw₁
+          dsimp [pshBarrLift, pshProdLift,
+            TypeExpr.fullRelInterpPshRep,
+            yonedaExtRepresentableULiftIso]
+            at key₁
+          set iso :=
+            (TypeExpr.app F T'
+              ).toPshTypeExpr_interp_iso
+              A A
+          have key₁' := congr_arg
+            (fun x =>
+              (iso.hom.app d x).down t)
+            key₁
+          simp only [FunctorToTypes.inv_hom_id_app_apply]
+            at key₁'
+          dsimp [iso,
+            TypeExpr.toPshTypeExpr_interp_iso,
+            Iso.trans,
+            CategoryTheory.Functor.mapIso,
+            yonedaExtRepresentableULiftIso,
+            yonedaExt, yonedaExtMap,
+            yonedaExtSigmaMapNat,
+            yonedaExtCounitULift,
+            Quot.map] at key₁'
+          exact key₁'
+        · change (F.map gs ≫ F.map
+            (fun s => s.val.2))
+              (t₀ t) = f₁ t
+          rw [←
+            CategoryTheory.Functor.map_comp]
+          change F.map f₁' (t₀ t) = f₁ t
+          have key₂ := hw₂
+          dsimp [pshBarrLift, pshProdLift,
+            TypeExpr.fullRelInterpPshRep,
+            yonedaExtRepresentableULiftIso]
+            at key₂
+          set iso₂ :=
+            (TypeExpr.app F T'
+              ).toPshTypeExpr_interp_iso
+              B B
+          have key₂' := congr_arg
+            (fun x =>
+              (iso₂.hom.app d x).down t)
+            key₂
+          simp only [FunctorToTypes.inv_hom_id_app_apply]
+            at key₂'
+          dsimp [iso₂,
+            TypeExpr.toPshTypeExpr_interp_iso,
+            Iso.trans,
+            CategoryTheory.Functor.mapIso,
+            yonedaExtRepresentableULiftIso,
+            yonedaExt, yonedaExtMap,
+            yonedaExtSigmaMapNat,
+            yonedaExtCounitULift,
+            Quot.map] at key₂'
+          exact key₂',
+    fun a₀ a₁ => by
+      constructor
+      · intro h
+        set S := { q : T'.interp A A ×
+          T'.interp B B //
+          T'.fullRelInterp R q.1 q.2 }
+        obtain ⟨w, hw₁, hw₂⟩ := h
+        obtain ⟨p₀, hp₀_1, hp₀_2⟩ :=
+          (ih.1 (Opposite.op S)
+            (fun s => s.val.1)
+            (fun s => s.val.2)).mp
+            (fun s => s.property)
+        refine ⟨⟨fun c => Quot.mk _
+          ⟨S, p₀, fun _ => w⟩,
+          fun {_c _c'} _f => ?_⟩,
+          fun c => ⟨?_, ?_⟩⟩
+        · rfl
+        · -- fst projection via Quot.sound
+          set P₁ := T'.toPshTypeExpr.interp
+            (yonedaULift A) (yonedaULift A)
+          set g : S → T'.interp A A :=
+            fun s => s.val.1
+          change Quot.mk _ (yonedaExtSigmaMapNat
+            F ((T'.fullRelInterpPshRep R).hom ≫
+              pshProdFst _ _) c
+            ⟨S, p₀, fun _ => w⟩) =
+            Quot.mk _ (yonedaExtSigmaMapNat
+              F (T'.toPshTypeExpr_interp_iso A A
+                ).inv c
+              ⟨T'.interp A A, ⟨𝟙 _⟩,
+                fun _ => a₀⟩)
+          dsimp only [yonedaExtSigmaMapNat]
+          have psh_cond : P₁.map (Quiver.Hom.op g)
+              ((T'.toPshTypeExpr_interp_iso A A
+                ).inv.app
+                (Opposite.op (T'.interp A A))
+                ⟨𝟙 _⟩) =
+              ((T'.fullRelInterpPshRep R
+                ).hom.app (Opposite.op S) p₀
+                ).1 := by
+            have nat := congr_fun
+              ((T'.toPshTypeExpr_interp_iso A A
+                ).inv.naturality
+                  (Quiver.Hom.op g)) ⟨𝟙 _⟩
+            simp only [types_comp_apply] at nat
+            simp only [Opposite.unop_op]
+            rw [← nat, hp₀_1]
+            congr 1
+          exact (Quot.sound
+            ⟨g, psh_cond,
+              funext fun _ => hw₁⟩).symm
+        · -- snd projection via Quot.sound
+          set P₂ := T'.toPshTypeExpr.interp
+            (yonedaULift B) (yonedaULift B)
+          set g₂ : S → T'.interp B B :=
+            fun s => s.val.2
+          change Quot.mk _ (yonedaExtSigmaMapNat
+            F ((T'.fullRelInterpPshRep R).hom ≫
+              pshProdSnd _ _) c
+            ⟨S, p₀, fun _ => w⟩) =
+            Quot.mk _ (yonedaExtSigmaMapNat
+              F (T'.toPshTypeExpr_interp_iso B B
+                ).inv c
+              ⟨T'.interp B B, ⟨𝟙 _⟩,
+                fun _ => a₁⟩)
+          dsimp only [yonedaExtSigmaMapNat]
+          have psh_cond₂ :
+              P₂.map (Quiver.Hom.op g₂)
+              ((T'.toPshTypeExpr_interp_iso B B
+                ).inv.app
+                (Opposite.op (T'.interp B B))
+                ⟨𝟙 _⟩) =
+              ((T'.fullRelInterpPshRep R
+                ).hom.app (Opposite.op S) p₀
+                ).2 := by
+            have nat := congr_fun
+              ((T'.toPshTypeExpr_interp_iso B B
+                ).inv.naturality
+                  (Quiver.Hom.op g₂)) ⟨𝟙 _⟩
+            simp only [types_comp_apply] at nat
+            simp only [Opposite.unop_op]
+            rw [← nat, hp₀_2]
+            congr 1
+          exact (Quot.sound
+            ⟨g₂, psh_cond₂,
+              funext fun _ => hw₂⟩).symm
+      · intro ⟨r, hr⟩
+        have spec₁ := (hr (Opposite.op PUnit)).1
+        have spec₂ := (hr (Opposite.op PUnit)).2
+        revert spec₁ spec₂
+        refine Quot.inductionOn
+          (r.val (Opposite.op PUnit))
+          (fun ⟨S₀, p₀, t₀⟩ spec₁ spec₂ => ?_)
+        set h₀ := t₀ PUnit.unit
+        set q₁ := ((T'.fullRelInterpPshRep R
+          ).hom.app (Opposite.op S₀) p₀).1
+        set q₂ := ((T'.fullRelInterpPshRep R
+          ).hom.app (Opposite.op S₀) p₀).2
+        set f₀' := ((T'.toPshTypeExpr_interp_iso
+          A A).hom.app (Opposite.op S₀) q₁).down
+        set f₁' := ((T'.toPshTypeExpr_interp_iso
+          B B).hom.app (Opposite.op S₀) q₂).down
+        have round₁ :
+            (T'.toPshTypeExpr_interp_iso A A
+            ).inv.app (Opposite.op S₀)
+            ((T'.toPshTypeExpr_interp_iso A A
+            ).hom.app (Opposite.op S₀) q₁) =
+              q₁ := by
+          have := congr_fun
+            ((T'.toPshTypeExpr_interp_iso A A
+              ).hom_inv_id_app
+              (Opposite.op S₀)) q₁
+          simp only [types_comp_apply,
+            types_id_apply] at this
+          exact this
+        have round₂ :
+            (T'.toPshTypeExpr_interp_iso B B
+            ).inv.app (Opposite.op S₀)
+            ((T'.toPshTypeExpr_interp_iso B B
+            ).hom.app (Opposite.op S₀) q₂) =
+              q₂ := by
+          have := congr_fun
+            ((T'.toPshTypeExpr_interp_iso B B
+              ).hom_inv_id_app
+              (Opposite.op S₀)) q₂
+          simp only [types_comp_apply,
+            types_id_apply] at this
+          exact this
+        have hrel :
+            ∀ s, T'.fullRelInterp R (f₀' s)
+              (f₁' s) :=
+          (ih.1 (Opposite.op S₀) f₀' f₁').mpr
+            ⟨p₀, round₁.symm, round₂.symm⟩
+        set g : S₀ → { p : T'.interp A A ×
+            T'.interp B B //
+            T'.fullRelInterp R p.1 p.2 } :=
+          fun s => ⟨(f₀' s, f₁' s), hrel s⟩
+        refine ⟨F.map g h₀, ?_, ?_⟩
+        · change (F.map g ≫ F.map
+            (fun s : { p : T'.interp A A ×
+              T'.interp B B //
+              T'.fullRelInterp R p.1 p.2 } =>
+              s.val.1)) h₀ = a₀
+          rw [← CategoryTheory.Functor.map_comp]
+          change F.map f₀' h₀ = a₀
+          have key₁ := spec₁
+          dsimp [pshBarrLift, pshProdLift,
+            TypeExpr.toInterpSection,
+            sectionMap, yonedaULiftSection,
+            TypeExpr.fullRelInterpPshRep,
+            yonedaExtRepresentableULiftIso
+            ] at key₁
+          set iso := (TypeExpr.app F T'
+            ).toPshTypeExpr_interp_iso A A
+          have key₁' := congr_arg
+            (fun x =>
+              (iso.hom.app
+                (Opposite.op PUnit) x).down
+                PUnit.unit) key₁
+          simp only [
+            FunctorToTypes.inv_hom_id_app_apply
+            ] at key₁'
+          dsimp [iso,
+            TypeExpr.toPshTypeExpr_interp_iso,
+            Iso.trans,
+            CategoryTheory.Functor.mapIso,
+            yonedaExtRepresentableULiftIso,
+            yonedaExt, yonedaExtMap,
+            yonedaExtSigmaMapNat,
+            yonedaExtCounitULift,
+            Quot.map] at key₁'
+          exact key₁'
+        · change (F.map g ≫ F.map
+            (fun s : { p : T'.interp A A ×
+              T'.interp B B //
+              T'.fullRelInterp R p.1 p.2 } =>
+              s.val.2)) h₀ = a₁
+          rw [← CategoryTheory.Functor.map_comp]
+          change F.map f₁' h₀ = a₁
+          have key₂ := spec₂
+          dsimp [pshBarrLift, pshProdLift,
+            TypeExpr.toInterpSection,
+            sectionMap, yonedaULiftSection,
+            TypeExpr.fullRelInterpPshRep,
+            yonedaExtRepresentableULiftIso
+            ] at key₂
+          set iso₂ := (TypeExpr.app F T'
+            ).toPshTypeExpr_interp_iso B B
+          have key₂' := congr_arg
+            (fun x =>
+              (iso₂.hom.app
+                (Opposite.op PUnit) x).down
+                PUnit.unit) key₂
+          simp only [
+            FunctorToTypes.inv_hom_id_app_apply
+            ] at key₂'
+          dsimp [iso₂,
+            TypeExpr.toPshTypeExpr_interp_iso,
+            Iso.trans,
+            CategoryTheory.Functor.mapIso,
+            yonedaExtRepresentableULiftIso,
+            yonedaExt, yonedaExtMap,
+            yonedaExtSigmaMapNat,
+            yonedaExtCounitULift,
+            Quot.map] at key₂'
+          exact key₂'⟩
   | arrow T₁ T₂ ih₁ ih₂ =>
     exact ⟨fun d f₀ f₁ => by
       constructor
@@ -1122,13 +1558,14 @@ through the ULift-Yoneda embedding. -/
 theorem TypeExpr.fullRelInterp_bridge
     (T : TypeExpr) {A B : Type}
     (R : A → B → Prop)
+    (choice : ∀ {α : Type}, Nonempty α → α)
     (a₀ : T.interp A A) (a₁ : T.interp B B) :
     T.fullRelInterp R a₀ a₁ ↔
       (T.fullRelInterpPshRep R
         ).sectionsRelated
         (T.toInterpSection a₀)
         (T.toInterpSection a₁) :=
-  (T.relInterp_bridges R).2 a₀ a₁
+  (T.relInterp_bridges R choice).2 a₀ a₁
 
 /-- Stage-level bridge: pointwise Type-level
 relatedness at functions `f₀, f₁ : d.unop → ...`
@@ -1136,6 +1573,7 @@ is equivalent to stage-level relatedness at `d`. -/
 theorem TypeExpr.pointwise_bridge
     (T : TypeExpr) {A B : Type}
     (R : A → B → Prop)
+    (choice : ∀ {α : Type}, Nonempty α → α)
     (d : (Type 0)ᵒᵖ)
     (f₀ : d.unop → T.interp A A)
     (f₁ : d.unop → T.interp B B) :
@@ -1145,6 +1583,6 @@ theorem TypeExpr.pointwise_bridge
           ).inv.app d ⟨f₀⟩)
         ((T.toPshTypeExpr_interp_iso B B
           ).inv.app d ⟨f₁⟩) :=
-  (T.relInterp_bridges R).1 d f₀ f₁
+  (T.relInterp_bridges R choice).1 d f₀ f₁
 
 end GebLean
