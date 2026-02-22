@@ -1512,4 +1512,789 @@ instance : HasColimitsOfSize.{u, u}
 
 end LimitsColimits
 
+/-! ## Left Kan Extensions
+
+Given `q : PolyFunctorBetweenCat X Z` and
+`p : PolyFunctorBetweenCat X Y`, the left Kan extension
+`Lan_q(p) : PolyFunctorBetweenCat Z Y` has at each `y : Y`:
+- Positions: `ccrIndex (p y)`
+- Family at `ip`: `polyBetweenEval q (ccrFamily (p y) ip)`
+-/
+
+section LeftKanExtension
+
+variable {X Y Z : Type u}
+  (q : PolyFunctorBetweenCat.{u, u} X Z)
+
+/--
+The object part of the left Kan extension along `q`.
+At each `y : Y`, positions are those of `p y`, and the
+family at position `ip` evaluates `q` at the `ip`-fiber
+of `p`.
+-/
+def polyBetweenLKanObj
+    (p : PolyFunctorBetweenCat.{u, u} X Y) :
+    PolyFunctorBetweenCat.{u, u} Z Y :=
+  fun y => ccrObjMk
+    (fun ip => polyBetweenEval X Z q
+      (ccrFamily (p y) ip))
+
+/--
+The action on morphisms of the left Kan extension along `q`.
+Given `alpha : p ⟶ p'`, the reindexing at `y` is
+`ccrReindex (alpha y)`, and the fiber morphism at `ip`
+applies `polyBetweenEvalMap q` to `ccrFiberMor (alpha y) ip`.
+-/
+def polyBetweenLKanMap
+    {p p' : PolyFunctorBetweenCat.{u, u} X Y}
+    (alpha : p ⟶ p') :
+    polyBetweenLKanObj q p ⟶
+      polyBetweenLKanObj q p' :=
+  fun y => ccrHomMk
+    (fun ip => ccrReindex (alpha y) ip)
+    (fun ip => polyBetweenEvalMap X Z q
+      (ccrFiberMor (alpha y) ip))
+
+@[simp]
+lemma polyBetweenLKanMap_id
+    (p : PolyFunctorBetweenCat.{u, u} X Y) :
+    polyBetweenLKanMap q (𝟙 p) =
+      𝟙 (polyBetweenLKanObj q p) := by
+  funext y
+  simp only [polyBetweenLKanMap]
+  rfl
+
+@[simp]
+lemma polyBetweenLKanMap_comp
+    {p p' p'' : PolyFunctorBetweenCat.{u, u} X Y}
+    (alpha : p ⟶ p') (beta : p' ⟶ p'') :
+    polyBetweenLKanMap q (alpha ≫ beta) =
+      polyBetweenLKanMap q alpha ≫
+        polyBetweenLKanMap q beta := by
+  funext y
+  simp only [polyBetweenLKanMap]
+  rfl
+
+/--
+The left Kan extension functor along `q`:
+`PolyFunctorBetweenCat X Y ⥤ PolyFunctorBetweenCat Z Y`.
+-/
+def polyBetweenLKanFunctor :
+    PolyFunctorBetweenCat.{u, u} X Y ⥤
+      PolyFunctorBetweenCat.{u, u} Z Y where
+  obj := polyBetweenLKanObj q
+  map := polyBetweenLKanMap q
+  map_id := polyBetweenLKanMap_id q
+  map_comp := polyBetweenLKanMap_comp q
+
+lemma cast_ccrFamily_left
+    (q' : PolyFunctorBetweenCat.{u, u} X Z)
+    {z z' : Z} (hz : z = z')
+    {ip : ccrIndex (q' z)} :
+    (ccrFamily (q' z')
+      (cast (congrArg (fun z => ccrIndex (q' z)) hz)
+        ip)).left =
+    (ccrFamily (q' z) ip).left := by
+  subst hz; rfl
+
+lemma cast_ccrFamily_hom
+    (q' : PolyFunctorBetweenCat.{u, u} X Z)
+    {z z' : Z} (hz : z = z')
+    {ip : ccrIndex (q' z)}
+    (e : (ccrFamily (q' z')
+      (cast (congrArg (fun z => ccrIndex (q' z)) hz)
+        ip)).left) :
+    (ccrFamily (q' z) ip).hom
+      (cast (cast_ccrFamily_left q' hz) e) =
+    (ccrFamily (q' z')
+      (cast (congrArg (fun z => ccrIndex (q' z)) hz)
+        ip)).hom e := by
+  subst hz; rfl
+
+/--
+The reindexing for right whiskering: given `alpha : r ⟶ r'`
+and a composed position `⟨ir, pf⟩`, produces a composed
+position in `r' ∘ q` by applying `alpha`'s reindex to `ir`
+and transporting `pf` through `alpha`'s fiber morphism.
+-/
+def polyBetweenWhiskerRightReindex
+    {r r' : PolyFunctorBetweenCat.{u, u} Z Y}
+    (alpha : r ⟶ r') (y : Y)
+    (p : polyBetweenCompIndex r q y) :
+    polyBetweenCompIndex r' q y :=
+  let fib := ccrFiberMor (alpha y) p.1
+  ⟨ccrReindex (alpha y) p.1,
+   fun e' =>
+    cast (congrArg (fun z => ccrIndex (q z))
+      (congrFun (Over.w fib) e'))
+    (p.2 (fib.left e'))⟩
+
+/--
+The underlying function for the fiber morphism
+of right whiskering. Maps directions `⟨e', eq'⟩`
+from the target composition to directions in the
+source composition via `alpha`'s fiber morphism.
+-/
+def polyBetweenWhiskerRightFiberLeft
+    {r r' : PolyFunctorBetweenCat.{u, u} Z Y}
+    (alpha : r ⟶ r') (y : Y)
+    (p : polyBetweenCompIndex r q y)
+    (d : (polyBetweenCompFamily r' q y
+      (polyBetweenWhiskerRightReindex
+        q alpha y p)).left) :
+    (polyBetweenCompFamily r q y p).left :=
+  let fib := ccrFiberMor (alpha y) p.1
+  let hz := congrFun (Over.w fib) d.1
+  ⟨fib.left d.1,
+   cast (cast_ccrFamily_left q hz) d.2⟩
+
+theorem polyBetweenWhiskerRightFiberComm
+    {r r' : PolyFunctorBetweenCat.{u, u} Z Y}
+    (alpha : r ⟶ r') (y : Y)
+    (p : polyBetweenCompIndex r q y) :
+    (polyBetweenCompFamily r q y p).hom ∘
+      polyBetweenWhiskerRightFiberLeft
+        q alpha y p =
+    (polyBetweenCompFamily r' q y
+      (polyBetweenWhiskerRightReindex
+        q alpha y p)).hom := by
+  let fib := ccrFiberMor (alpha y) p.1
+  let hz := congrFun (Over.w fib)
+  funext ⟨e', eq'⟩
+  change (ccrFamily (q _) (p.2 (fib.left e'))).hom
+    (cast (cast_ccrFamily_left q (hz e')) eq') =
+    (ccrFamily (q _)
+      (cast _ (p.2 (fib.left e')))).hom eq'
+  exact cast_ccrFamily_hom q (hz e') eq'
+
+/--
+The fiber morphism for right whiskering at a
+composed position `p`.
+-/
+def polyBetweenWhiskerRightFiber
+    {r r' : PolyFunctorBetweenCat.{u, u} Z Y}
+    (alpha : r ⟶ r') (y : Y)
+    (p : polyBetweenCompIndex r q y) :
+    polyBetweenCompFamily r' q y
+      (polyBetweenWhiskerRightReindex
+        q alpha y p) ⟶
+    polyBetweenCompFamily r q y p :=
+  Over.homMk
+    (polyBetweenWhiskerRightFiberLeft
+      q alpha y p)
+    (polyBetweenWhiskerRightFiberComm
+      q alpha y p)
+
+/--
+Right whiskering: given `alpha : r ⟶ r'` in
+`PolyFunctorBetweenCat Z Y`, produce
+`r ∘ q ⟶ r' ∘ q` in `PolyFunctorBetweenCat X Y`.
+-/
+def polyBetweenWhiskerRight
+    {r r' : PolyFunctorBetweenCat.{u, u} Z Y}
+    (alpha : r ⟶ r') :
+    polyBetweenComp r q ⟶
+      polyBetweenComp r' q :=
+  fun y => ccrHomMk
+    (polyBetweenWhiskerRightReindex
+      q alpha y)
+    (polyBetweenWhiskerRightFiber
+      q alpha y)
+
+@[simp]
+lemma polyBetweenWhiskerRight_id
+    (r : PolyFunctorBetweenCat.{u, u} Z Y) :
+    polyBetweenWhiskerRight q (𝟙 r) =
+      𝟙 (polyBetweenComp r q) := by
+  funext y
+  change polyBetweenWhiskerRight q (𝟙 r) y =
+    𝟙 (polyBetweenComp r q y)
+  simp only [polyBetweenWhiskerRight, ccrId_mk]
+  refine ccrHom_ext_subst _ _ ?_ ?_
+  · funext ⟨ir, pf⟩
+    rfl
+  · intro i
+    simp only [ccrHomMk_fiberMor, ccrHomMk_reindex,
+      eqToHom_refl, Category.id_comp]
+    ext ⟨e, d⟩
+    rfl
+
+lemma polyBetweenWhiskerRightReindex_comp
+    {r r' r'' : PolyFunctorBetweenCat.{u, u} Z Y}
+    (alpha : r ⟶ r') (beta : r' ⟶ r'')
+    (y : Y) :
+    polyBetweenWhiskerRightReindex q (alpha ≫ beta) y =
+      polyBetweenWhiskerRightReindex q beta y ∘
+        polyBetweenWhiskerRightReindex q alpha y := by
+  funext ⟨ir, pf⟩
+  dsimp [polyBetweenWhiskerRightReindex,
+    ccrFiberMor, ccrReindex]
+  congr 1
+  funext e'
+  simp only [cast_cast]
+  rfl
+
+private lemma eqToHom_compFamily_fst
+    {r : PolyFunctorBetweenCat.{u, u} Z Y}
+    {y : Y}
+    {p₁ p₂ : ccrIndex (polyBetweenComp r q y)}
+    (hp : p₁ = p₂)
+    (ed : (ccrFamily
+      (polyBetweenComp r q y) p₁).left) :
+    ((eqToHom (congrArg
+      (ccrFamily (polyBetweenComp r q y))
+        hp)).left ed).fst =
+    cast (congrArg (fun p =>
+      (ccrFamily (r y) p.fst).left)
+        hp) ed.fst := by
+  subst hp; rfl
+
+private lemma eqToHom_compFamily_snd_heq
+    {r : PolyFunctorBetweenCat.{u, u} Z Y}
+    {y : Y}
+    {p₁ p₂ : ccrIndex (polyBetweenComp r q y)}
+    (hp : p₁ = p₂)
+    (ed : (ccrFamily
+      (polyBetweenComp r q y) p₁).left) :
+    HEq
+      ((eqToHom (congrArg
+        (ccrFamily (polyBetweenComp r q y))
+          hp)).left ed).snd
+      ed.snd := by
+  subst hp; rfl
+
+@[simp]
+lemma polyBetweenWhiskerRight_comp
+    {r r' r'' : PolyFunctorBetweenCat.{u, u} Z Y}
+    (alpha : r ⟶ r') (beta : r' ⟶ r'') :
+    polyBetweenWhiskerRight q (alpha ≫ beta) =
+      polyBetweenWhiskerRight q alpha ≫
+        polyBetweenWhiskerRight q beta := by
+  funext y
+  change polyBetweenWhiskerRight q (alpha ≫ beta) y =
+    (polyBetweenWhiskerRight q alpha y ≫
+      polyBetweenWhiskerRight q beta y)
+  simp only [polyBetweenWhiskerRight, ccrComp_mk]
+  refine ccrHom_ext_subst _ _ ?_ ?_
+  · exact polyBetweenWhiskerRightReindex_comp
+      q alpha beta y
+  · intro i
+    simp only [ccrHomMk_fiberMor, ccrHomMk_reindex,
+      polyBetweenWhiskerRightFiber]
+    ext ⟨e, d⟩
+    simp only [Over.comp_left, types_comp_apply,
+      Over.homMk_left,
+      polyBetweenWhiskerRightFiberLeft,
+      polyBetweenWhiskerRightReindex]
+    congr 1
+    · have htf := eqToHom_compFamily_fst q
+        (congrFun
+          (polyBetweenWhiskerRightReindex_comp
+            q alpha beta y) i) ⟨e, d⟩
+      rw [htf]
+      simp only [FamilyCat.eq_1,
+        CoprodCovarRepCat.eq_1,
+        CategoryOp'.eq_1,
+        familyFunctor.eq_1, Cat.of_α,
+        familyMap.eq_1,
+        Cat.opFunctor'.eq_1,
+        Functor.op'.eq_1,
+        functorOp'Obj.eq_1,
+        Pi.comp_apply,
+        Function.comp_apply, cast_eq]
+      rw [ccrComp_fiberMor (alpha y) (beta y)
+        i.fst, Over.comp_left, types_comp_apply]
+    · have hts := eqToHom_compFamily_snd_heq q
+        (congrFun
+          (polyBetweenWhiskerRightReindex_comp
+            q alpha beta y) i) ⟨e, d⟩
+      simp only [FamilyCat.eq_1,
+        CoprodCovarRepCat.eq_1,
+        CategoryOp'.eq_1,
+        familyFunctor.eq_1, Cat.of_α,
+        familyMap.eq_1,
+        Cat.opFunctor'.eq_1,
+        Functor.op'.eq_1,
+        functorOp'Obj.eq_1,
+        Pi.comp_apply,
+        Function.comp_apply, cast_cast,
+        heq_cast_iff_heq,
+        cast_heq_iff_heq]
+      exact hts.symm
+
+def polyBetweenPrecompObj
+    (r : PolyFunctorBetweenCat.{u, u} Z Y) :
+    PolyFunctorBetweenCat.{u, u} X Y :=
+  polyBetweenComp r q
+
+def polyBetweenPrecompFunctor :
+    ↑(PolyFunctorBetweenCat.{u, u} Z Y) ⥤
+      ↑(PolyFunctorBetweenCat.{u, u} X Y) where
+  obj r := polyBetweenPrecompObj q r
+  map alpha := polyBetweenWhiskerRight q alpha
+  map_id r := polyBetweenWhiskerRight_id q r
+  map_comp f g :=
+    polyBetweenWhiskerRight_comp q f g
+
+section Adjunction
+
+variable
+  {p : PolyFunctorBetweenCat.{u, u} X Y}
+  {r : PolyFunctorBetweenCat.{u, u} Z Y}
+
+private def lkanLAdjFiberW
+    (alpha : polyBetweenLKanObj q p ⟶ r)
+    (y : Y) (ip : ccrIndex (p y))
+    (e : (ccrFamily (r y)
+      (ccrReindex (alpha y) ip)).left) :
+    ((ccrFiberMor (alpha y) ip).left e).fst =
+      (ccrFamily (r y)
+        (ccrReindex (alpha y) ip)).hom e :=
+  congrFun (Over.w (ccrFiberMor (alpha y) ip)) e
+
+private def lkanLAdjReindex
+    (alpha : polyBetweenLKanObj q p ⟶ r)
+    (y : Y) (ip : ccrIndex (p y)) :
+    ccrIndex (polyBetweenComp r q y) :=
+  ⟨ccrReindex (alpha y) ip,
+   fun e => cast
+     (congrArg (fun z => ccrIndex (q z))
+       (lkanLAdjFiberW q alpha y ip e))
+     ((ccrFiberMor (alpha y) ip).left e).2.1⟩
+
+private def lkanLAdjFiberLeft
+    (alpha : polyBetweenLKanObj q p ⟶ r)
+    (y : Y) (ip : ccrIndex (p y))
+    (ed : (polyBetweenCompFamily r q y
+      (lkanLAdjReindex q alpha y ip)).left) :
+    (ccrFamily (p y) ip).left :=
+  let val := (ccrFiberMor (alpha y) ip).left ed.1
+  val.snd.snd.left
+    (cast (cast_ccrFamily_left q
+      (lkanLAdjFiberW q alpha y ip ed.1)) ed.2)
+
+private lemma lkanLAdjFiberComm
+    (alpha : polyBetweenLKanObj q p ⟶ r)
+    (y : Y) (ip : ccrIndex (p y))
+    (ed : (polyBetweenCompFamily r q y
+      (lkanLAdjReindex q alpha y ip)).left) :
+    (ccrFamily (p y) ip).hom
+      (lkanLAdjFiberLeft q alpha y ip ed) =
+    (polyBetweenCompFamily r q y
+      (lkanLAdjReindex q alpha y ip)).hom ed := by
+  simp only [lkanLAdjFiberLeft]
+  exact (congrFun (Over.w
+    ((ccrFiberMor (alpha y) ip).left ed.1).snd.snd)
+    _).trans
+    (cast_ccrFamily_hom q
+      (lkanLAdjFiberW q alpha y ip ed.1)
+      ed.2)
+
+private def lkanLAdjFiber
+    (alpha : polyBetweenLKanObj q p ⟶ r)
+    (y : Y) (ip : ccrIndex (p y)) :
+    polyBetweenCompFamily r q y
+      (lkanLAdjReindex q alpha y ip) ⟶
+    ccrFamily (p y) ip :=
+  Over.homMk (lkanLAdjFiberLeft q alpha y ip)
+    (funext (lkanLAdjFiberComm q alpha y ip))
+
+def polyBetweenLKanLAdj
+    (alpha : polyBetweenLKanObj q p ⟶ r) :
+    p ⟶ polyBetweenPrecompObj q r :=
+  fun y => ccrHomMk
+    (lkanLAdjReindex q alpha y)
+    (lkanLAdjFiber q alpha y)
+
+private def lkanRAdjReindex
+    (beta : p ⟶ polyBetweenPrecompObj q r)
+    (y : Y) (ip : ccrIndex (p y)) :
+    ccrIndex (r y) :=
+  (ccrReindex (beta y) ip).fst
+
+private def lkanRAdjFiberMor
+    (beta : p ⟶ polyBetweenPrecompObj q r)
+    (y : Y) (ip : ccrIndex (p y))
+    (e : (ccrFamily (r y)
+      (lkanRAdjReindex q beta y ip)).left) :
+    ccrFamily
+      (q ((ccrFamily (r y)
+        (lkanRAdjReindex q beta y ip)).hom e))
+      ((ccrReindex (beta y) ip).snd e) ⟶
+    ccrFamily (p y) ip :=
+  Over.homMk
+    (fun d =>
+      (ccrFiberMor (beta y) ip).left ⟨e, d⟩)
+    (funext fun d =>
+      congrFun (Over.w (ccrFiberMor (beta y) ip))
+        ⟨e, d⟩)
+
+private def lkanRAdjFiberLeft
+    (beta : p ⟶ polyBetweenPrecompObj q r)
+    (y : Y) (ip : ccrIndex (p y))
+    (e : (ccrFamily (r y)
+      (lkanRAdjReindex q beta y ip)).left) :
+    (ccrFamily
+      (polyBetweenLKanObj q p y) ip).left :=
+  ⟨(ccrFamily (r y)
+      (lkanRAdjReindex q beta y ip)).hom e,
+   (ccrReindex (beta y) ip).snd e,
+   lkanRAdjFiberMor q beta y ip e⟩
+
+private def lkanRAdjFiber
+    (beta : p ⟶ polyBetweenPrecompObj q r)
+    (y : Y) (ip : ccrIndex (p y)) :
+    ccrFamily (r y)
+      (lkanRAdjReindex q beta y ip) ⟶
+    ccrFamily (polyBetweenLKanObj q p y) ip :=
+  Over.homMk
+    (lkanRAdjFiberLeft q beta y ip)
+    rfl
+
+def polyBetweenLKanRAdj
+    (beta : p ⟶ polyBetweenPrecompObj q r) :
+    polyBetweenLKanObj q p ⟶ r :=
+  fun y => ccrHomMk
+    (lkanRAdjReindex q beta y)
+    (lkanRAdjFiber q beta y)
+
+lemma polyBetweenLKanLAdj_RAdj
+    (beta : p ⟶ polyBetweenPrecompObj q r) :
+    polyBetweenLKanLAdj q
+      (polyBetweenLKanRAdj q beta) = beta := by
+  rfl
+
+private lemma lkanRoundtripFiber_left_eq
+    (alpha : polyBetweenLKanObj q p ⟶ r)
+    (y : Y) (ip : ccrIndex (p y))
+    (e : (ccrFamily (r y)
+      (ccrReindex (alpha y) ip)).left) :
+    (ccrFiberMor
+      (polyBetweenLKanRAdj q
+        (polyBetweenLKanLAdj q alpha) y) ip).left
+      e =
+    (ccrFiberMor (alpha y) ip).left e := by
+  change lkanRAdjFiberLeft q
+    (polyBetweenLKanLAdj q alpha) y ip e =
+    (ccrFiberMor (alpha y) ip).left e
+  simp only [lkanRAdjFiberLeft, lkanRAdjReindex,
+    polyBetweenLKanLAdj, ccrHomMk_reindex,
+    ccrHomMk_fiberMor, lkanLAdjReindex,
+    lkanRAdjFiberMor, lkanLAdjFiber,
+    Over.homMk_left, lkanLAdjFiberLeft]
+  set val := (ccrFiberMor (alpha y) ip).left e
+  suffices h : ∀ (z : Z) (hz : val.fst = z),
+      (⟨z,
+        cast (congrArg
+          (fun z => ccrIndex (q z)) hz)
+          val.snd.fst,
+        Over.homMk
+          (fun d => val.snd.snd.left
+            (cast (cast_ccrFamily_left q hz) d))
+          (by subst hz
+              exact Over.w val.snd.snd)⟩ :
+        (ccrFamily
+          (polyBetweenLKanObj q p y) ip).left) =
+      val from
+    h _ (lkanLAdjFiberW q alpha y ip e)
+  intro z hz
+  subst hz
+  exact Sigma.ext rfl
+    (heq_of_eq (Sigma.ext rfl
+      (heq_of_eq (Over.OverMorphism.ext rfl))))
+
+lemma polyBetweenLKanRAdj_LAdj
+    (alpha : polyBetweenLKanObj q p ⟶ r) :
+    polyBetweenLKanRAdj q
+      (polyBetweenLKanLAdj q alpha) = alpha := by
+  funext y
+  refine ccrHom_ext_subst _ _ rfl ?_
+  intro ip
+  simp only [eqToHom_refl, Category.id_comp]
+  apply Over.OverMorphism.ext
+  funext e
+  exact lkanRoundtripFiber_left_eq q alpha y ip e
+
+def polyBetweenLKanHomEquiv
+    (p : ↑(PolyFunctorBetweenCat.{u, u} X Y))
+    (r : ↑(PolyFunctorBetweenCat.{u, u} Z Y)) :
+    ((polyBetweenLKanFunctor q).obj p ⟶ r) ≃
+      (p ⟶ (polyBetweenPrecompFunctor q).obj r) where
+  toFun := polyBetweenLKanLAdj q
+  invFun := polyBetweenLKanRAdj q
+  left_inv := polyBetweenLKanRAdj_LAdj q
+  right_inv := polyBetweenLKanLAdj_RAdj q
+
+private lemma eqToHom_polyBetweenComp_fst
+    {r' : PolyFunctorBetweenCat.{u, u} Z Y}
+    {y : Y}
+    {idx₁ idx₂ :
+      polyBetweenCompIndex r' q y}
+    (h : idx₁ = idx₂)
+    (d : (polyBetweenCompFamily r' q y
+      idx₁).left) :
+    ((eqToHom (congrArg
+      (ccrFamily (polyBetweenComp r' q y))
+        h)).left d).fst =
+    cast (congrArg
+      (fun idx =>
+        (ccrFamily (r' y) idx.fst).left)
+      h) d.fst := by
+  subst h; rfl
+
+@[simp]
+private lemma eqToHom_polyBetweenComp_left_id
+    {r' : PolyFunctorBetweenCat.{u, u} Z Y}
+    {y : Y}
+    {idx₁ idx₂ :
+      polyBetweenCompIndex r' q y}
+    (h : idx₁ = idx₂)
+    (d : (polyBetweenCompFamily r' q y
+      idx₁).left) :
+    (eqToHom (congrArg
+      (ccrFamily (polyBetweenComp r' q y))
+        h)).left d =
+    cast (congrArg
+      (fun idx =>
+        (polyBetweenCompFamily r' q y
+          idx).left)
+      h) d := by
+  subst h; rfl
+
+private lemma
+    cast_polyBetweenCompFamily_sigma_fst
+    {r' : PolyFunctorBetweenCat.{u, u} Z Y}
+    {y : Y}
+    {fst₁ : ccrIndex (r' y)}
+    {snd₁ snd₂ :
+      ∀ (e : (ccrFamily (r' y) fst₁).left),
+        ccrIndex
+          (q ((ccrFamily (r' y) fst₁).hom e))}
+    (h : (⟨fst₁, snd₁⟩ :
+      polyBetweenCompIndex r' q y) =
+      ⟨fst₁, snd₂⟩)
+    (d : (polyBetweenCompFamily r' q y
+      ⟨fst₁, snd₁⟩).left) :
+    (cast (congrArg
+      (fun idx =>
+        (polyBetweenCompFamily r' q y
+          idx).left)
+      h) d).fst = d.fst := by
+  have hsnd : snd₁ = snd₂ :=
+    eq_of_heq (Sigma.mk.inj h).2
+  subst hsnd
+  rfl
+
+private lemma
+    cast_polyBetweenCompFamily_sigma_snd_heq
+    {r' : PolyFunctorBetweenCat.{u, u} Z Y}
+    {y : Y}
+    {fst₁ : ccrIndex (r' y)}
+    {snd₁ snd₂ :
+      ∀ (e : (ccrFamily (r' y) fst₁).left),
+        ccrIndex
+          (q ((ccrFamily (r' y) fst₁).hom e))}
+    (h : (⟨fst₁, snd₁⟩ :
+      polyBetweenCompIndex r' q y) =
+      ⟨fst₁, snd₂⟩)
+    (d : (polyBetweenCompFamily r' q y
+      ⟨fst₁, snd₁⟩).left) :
+    HEq
+      (cast (congrArg
+        (fun idx =>
+          (polyBetweenCompFamily r' q y
+            idx).left)
+        h) d).snd
+      d.snd := by
+  have hsnd : snd₁ = snd₂ :=
+    eq_of_heq (Sigma.mk.inj h).2
+  subst hsnd
+  exact HEq.rfl
+
+private lemma lkanLAdj_naturality_right_base_eq
+    {r' : PolyFunctorBetweenCat.{u, u} Z Y}
+    (alpha : polyBetweenLKanObj q p ⟶ r)
+    (beta : r ⟶ r') (y : Y)
+    (ip : ccrIndex (p y)) :
+    lkanLAdjReindex q (alpha ≫ beta) y ip =
+    polyBetweenWhiskerRightReindex q beta y
+      (lkanLAdjReindex q alpha y ip) := by
+  simp only [lkanLAdjReindex,
+    polyBetweenWhiskerRightReindex]
+  refine Sigma.ext rfl ?_
+  simp only [heq_eq_eq]
+  funext e
+  have hfib :=
+    ccrComp_fiberMor
+      (f := alpha y) (g := beta y) (i := ip)
+  have hleft := congrArg
+    (fun (f : ccrFamily (r' y)
+      (ccrReindex (beta y)
+        (ccrReindex (alpha y) ip)) ⟶
+      ccrFamily
+        (polyBetweenLKanObj q p y) ip) =>
+      f.left e) hfib
+  simp only [Over.comp_left,
+    types_comp_apply] at hleft
+  rw [cast_cast]
+  congr 1
+
+private lemma lkanLAdj_fiber_combined_helper
+    {r' : PolyFunctorBetweenCat.{u, u} Z Y}
+    (alpha : polyBetweenLKanObj q p ⟶ r)
+    (beta : r ⟶ r') (y : Y)
+    (ip : ccrIndex (p y))
+    {m : ccrFamily (r' y)
+      (ccrReindex (beta y)
+        (ccrReindex (alpha y) ip)) ⟶
+      ccrFamily
+        (polyBetweenLKanObj q p y) ip}
+    (hm : m = ccrFiberMor (beta y)
+      (ccrReindex (alpha y) ip) ≫
+      ccrFiberMor (alpha y) ip)
+    (e : (ccrFamily (r' y)
+      (ccrReindex (beta y)
+        (ccrReindex (alpha y) ip))).left)
+    (s_cast :
+      (ccrFamily
+        (q (m.left e).fst)
+        (m.left e).snd.fst).left)
+    {e' : (ccrFamily (r' y)
+      (ccrReindex (beta y)
+        (ccrReindex (alpha y) ip))).left}
+    (he : e' = e)
+    {s_cast' :
+      (ccrFamily
+        (q ((ccrFiberMor (beta y)
+          (ccrReindex (alpha y) ip) ≫
+          ccrFiberMor (alpha y) ip).left
+            e').fst)
+        ((ccrFiberMor (beta y)
+          (ccrReindex (alpha y) ip) ≫
+          ccrFiberMor (alpha y) ip).left
+            e').snd.fst).left}
+    (hs : HEq s_cast' s_cast) :
+    (m.left e).snd.snd.left s_cast =
+    ((ccrFiberMor (alpha y) ip).left
+      ((ccrFiberMor (beta y)
+        (ccrReindex (alpha y) ip)).left
+          e')).snd.snd.left s_cast' := by
+  subst hm
+  subst he
+  have hse := eq_of_heq hs
+  subst hse
+  rfl
+
+private lemma
+    lkanLAdj_naturality_right_fiber_elem
+    {r' : PolyFunctorBetweenCat.{u, u} Z Y}
+    (alpha : polyBetweenLKanObj q p ⟶ r)
+    (beta : r ⟶ r') (y : Y)
+    (ip : ccrIndex (p y))
+    (d : (polyBetweenCompFamily r' q y
+      (lkanLAdjReindex q
+        (alpha ≫ beta) y ip)).left) :
+    lkanLAdjFiberLeft q (alpha ≫ beta)
+      y ip d =
+    lkanLAdjFiberLeft q alpha y ip
+      (polyBetweenWhiskerRightFiberLeft
+        q beta y
+        (lkanLAdjReindex q alpha y ip)
+        (cast (congrArg
+          (fun idx =>
+            (polyBetweenCompFamily r' q y
+              idx).left)
+          (lkanLAdj_naturality_right_base_eq
+            q alpha beta y ip)) d)) := by
+  obtain ⟨e, s⟩ := d
+  simp only [lkanLAdjFiberLeft,
+    polyBetweenWhiskerRightFiberLeft]
+  refine lkanLAdj_fiber_combined_helper
+    q alpha beta y ip
+    (ccrComp_fiberMor
+      (f := alpha y) (g := beta y)
+      (i := ip))
+    e _
+    (cast_polyBetweenCompFamily_sigma_fst
+      q
+      (lkanLAdj_naturality_right_base_eq
+        q alpha beta y ip)
+      ⟨e, s⟩)
+    ?_
+  exact (cast_heq _ _).trans
+    ((cast_heq _ _).trans
+      ((cast_polyBetweenCompFamily_sigma_snd_heq
+        q
+        (lkanLAdj_naturality_right_base_eq
+          q alpha beta y ip)
+        ⟨e, s⟩).trans
+        (cast_heq _ s).symm))
+
+private lemma
+    polyBetweenLKanHomEquiv_naturality_right
+    {r' : PolyFunctorBetweenCat.{u, u} Z Y}
+    (alpha : polyBetweenLKanObj q p ⟶ r)
+    (beta : r ⟶ r') (y : Y) :
+    polyBetweenLKanLAdj q (alpha ≫ beta) y =
+    polyBetweenLKanLAdj q alpha y ≫
+      polyBetweenWhiskerRight q beta y := by
+  simp only [polyBetweenLKanLAdj,
+    polyBetweenWhiskerRight, ccrComp_mk,
+    ccrHomMk_reindex, ccrHomMk_fiberMor]
+  have hbase :
+      (ccrHomMk
+        (lkanLAdjReindex q (alpha ≫ beta) y)
+        (lkanLAdjFiber q
+          (alpha ≫ beta) y)).base =
+      (ccrHomMk
+        (polyBetweenWhiskerRightReindex
+          q beta y ∘
+          lkanLAdjReindex q alpha y)
+        (fun i =>
+          polyBetweenWhiskerRightFiber
+            q beta y
+            (lkanLAdjReindex q alpha y i) ≫
+          lkanLAdjFiber q alpha y i)).base :=
+    funext
+      (lkanLAdj_naturality_right_base_eq
+        q alpha beta y)
+  refine ccrHom_ext_subst _ _ hbase ?_
+  intro ip
+  simp only [ccrHomMk_fiberMor]
+  simp only [lkanLAdjFiber,
+    polyBetweenWhiskerRightFiber]
+  ext d
+  simp only [Over.homMk_left, Over.comp_left,
+    types_comp_apply]
+  rw [eqToHom_polyBetweenComp_left_id]
+  swap
+  · exact congrFun hbase ip
+  exact lkanLAdj_naturality_right_fiber_elem
+    q alpha beta y ip d
+
+def polyBetweenLKanCoreHomEquiv :
+    Adjunction.CoreHomEquiv
+      (polyBetweenLKanFunctor (Y := Y) q)
+      (polyBetweenPrecompFunctor (Y := Y) q) where
+  homEquiv := polyBetweenLKanHomEquiv q
+  homEquiv_naturality_left_symm := by
+    intro p₁ p₂ r f g
+    rfl
+  homEquiv_naturality_right := by
+    intro p r r' alpha beta
+    funext y
+    exact
+      polyBetweenLKanHomEquiv_naturality_right
+        q alpha beta y
+
+def polyBetweenLKanAdj :
+    polyBetweenLKanFunctor (Y := Y) q ⊣
+    polyBetweenPrecompFunctor (Y := Y) q :=
+  Adjunction.mkOfHomEquiv
+    (polyBetweenLKanCoreHomEquiv q)
+
+end Adjunction
+
+end LeftKanExtension
+
 end GebLean
