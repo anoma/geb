@@ -1585,4 +1585,123 @@ theorem TypeExpr.pointwise_bridge
           ).inv.app d ⟨f₁⟩) :=
   (T.relInterp_bridges R choice).1 d f₀ f₁
 
+/-- Self-relatedness under `pshTypeAbsRel` implies
+the morphism-graph parametricity condition: for
+every morphism `α : P ⟶ Q`, the sections `t P` and
+`t Q` are related by `T.relInterp α`. This is the
+presheaf-category generalization of
+`typeAbsRel_self_implies_parametric`. -/
+theorem pshTypeAbsRel_self_implies_parametric
+    {T : PshTypeExpr C}
+    {t : PshTypeAbs T}
+    (h : pshTypeAbsRel T t t) :
+    ∀ (P Q : Cᵒᵖ ⥤ Type (max u v))
+      (α : P ⟶ Q),
+    pshRelSectionsRelated
+      (T.relInterp α) (t P) (t Q) :=
+  fun P Q α =>
+    T.fullRelInterp_graph α ▸
+      h P Q (pshRelGraph α)
+
+/-- A parametric family for a presheaf type
+expression `T` is a family of sections
+`app P : (T.interp P P).sections` indexed by
+presheaves `P`, such that for every morphism
+`α : P ⟶ Q`, the relational interpretation
+`T.relInterp α` relates `app P` to `app Q`.
+This is the presheaf-category generalization of
+`ParametricFamily`. -/
+@[ext]
+structure PshParametricFamily
+    (T : PshTypeExpr C) where
+  /-- The component at each presheaf -/
+  app : (P : Cᵒᵖ ⥤ Type (max u v)) →
+    (T.interp P P).sections
+  /-- The parametricity condition -/
+  parametric :
+    ∀ (P Q : Cᵒᵖ ⥤ Type (max u v))
+      (α : P ⟶ Q),
+    pshRelSectionsRelated
+      (T.relInterp α) (app P) (app Q)
+
+/-- A `PshParametricFamily` from a self-related
+type abstraction under `pshTypeAbsRel`.
+This is the presheaf-category generalization of
+`ParametricFamily.ofTypeAbsRel`. -/
+def PshParametricFamily.ofPshTypeAbsRel
+    {T : PshTypeExpr C}
+    (t : PshTypeAbs T)
+    (h : pshTypeAbsRel T t t) :
+    PshParametricFamily T where
+  app := t
+  parametric :=
+    pshTypeAbsRel_self_implies_parametric h
+
+/-- The two ways of lifting a function
+`f : A → B` to a presheaf relation agree:
+lifting the graph relation `graphRel f` via
+`yonedaULiftRel` equals the graph of the
+presheaf morphism `yonedaULiftMap f` via
+`pshRelGraph`. -/
+theorem yonedaULiftRel_graphRel
+    {A B : Type} (f : A → B) :
+    yonedaULiftRel (graphRel f) =
+      pshRelGraph (yonedaULiftMap f) :=
+  toSkeleton_eq_iff.mpr ⟨Over.isoMk
+    ({ hom :=
+        { app := fun T x => ⟨x.down.val.1⟩
+          naturality := fun _ _ _ => by
+            ext ⟨⟨⟨_, _⟩, _⟩⟩; rfl }
+       inv :=
+        { app := fun T x =>
+            ⟨⟨(x.down, f ∘ x.down),
+              fun _ => rfl⟩⟩
+          naturality := fun _ _ _ => by
+            ext ⟨_⟩; rfl }
+       hom_inv_id := by
+        ext T ⟨⟨⟨g₁, g₂⟩, h⟩⟩
+        exact congr_arg ULift.up
+          (Subtype.ext
+            (Prod.ext rfl (funext h)))
+       inv_hom_id := by ext T ⟨_⟩; rfl })
+    (by
+      apply pshProdPresheaf_hom_ext
+      · ext T ⟨⟨⟨_, _⟩, _⟩⟩; rfl
+      · ext T ⟨⟨⟨g₁, g₂⟩, h⟩⟩
+        change (yonedaULiftMap f).app T
+          ⟨g₁⟩ = ⟨g₂⟩
+        simp only [yonedaULiftMap_app]
+        exact congr_arg ULift.up
+          (funext h))⟩
+
+/-- Bridge from Type-level parametricity to
+presheaf-level relatedness at representable
+presheaves: given a `ParametricFamily` for a
+`TypeExpr`, the presheaf-level relational
+interpretation at `yonedaULiftMap f` relates
+the section representatives of the components
+at `I₀` and `I₁`. -/
+theorem ParametricFamily.toPshParametricAtRep
+    (T : TypeExpr)
+    (p : ParametricFamily T)
+    (choice : ∀ {α : Type}, Nonempty α → α)
+    {I₀ I₁ : Type} (f : I₀ → I₁) :
+    pshRelSectionsRelated
+      (T.toPshTypeExpr.relInterp
+        (yonedaULiftMap f))
+      (T.toInterpSection (p.app I₀))
+      (T.toInterpSection (p.app I₁)) := by
+  have h₁ : T.fullRelInterp (graphRel f)
+      (p.app I₀) (p.app I₁) := by
+    rw [T.fullRelInterp_graphRel]
+    exact p.parametric I₀ I₁ f
+  have h₂ := (T.fullRelInterp_bridge
+    (graphRel f) choice
+    (p.app I₀) (p.app I₁)).mp h₁
+  rw [← T.toPshTypeExpr.fullRelInterp_graph,
+    ← yonedaULiftRel_graphRel,
+    T.fullRelInterp_pshRep_eq]
+  exact (pshRelSectionsRelated_toSkeleton
+    _ _ _).mpr h₂
+
 end GebLean

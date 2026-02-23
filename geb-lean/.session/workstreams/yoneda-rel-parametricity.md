@@ -57,6 +57,18 @@ mathematical analysis.
   relatedness ↔ presheaf section-level relatedness
 - [x] `pointwise_bridge` corollary: pointwise
   Type-level relatedness ↔ stage-level relatedness
+- [x] `PshParametricFamily`: presheaf-level parametric
+  family structure bundling `PshTypeAbs` with morphism-graph
+  parametricity condition (`PshTypeExpr.lean`)
+- [x] `pshTypeAbsRel_self_implies_parametric`: self-relatedness
+  under `pshTypeAbsRel` implies morphism-graph parametricity
+- [x] `PshParametricFamily.ofPshTypeAbsRel`: constructor from
+  self-related presheaf type abstraction
+- [x] `yonedaULiftRel_graphRel`: lifting a function graph via
+  `yonedaULiftRel` agrees with `pshRelGraph (yonedaULiftMap f)`
+- [x] `ParametricFamily.toPshParametricAtRep`: bridge from
+  Type-level parametricity to presheaf-level relatedness at
+  representable presheaves (requires `choice` hypothesis)
 
 ## Continuation
 
