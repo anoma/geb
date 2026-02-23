@@ -3103,7 +3103,7 @@ private lemma pbCurryDirBundle_fst_fst_inl
     ((pbCurryDirBundle Q R S alpha
       y ir iq eg).fst.fst : PUnit ⊕ PUnit) =
     Sum.inr PUnit.unit := by
-  have key : ∀ (d : (ccrFamily
+  have comm : ∀ (d : (ccrFamily
         (pbBinaryProdObj Q R y)
         (pbProdPos Q R y iq ir)).left)
       (hg : (ccrFamily
@@ -3117,7 +3117,7 @@ private lemma pbCurryDirBundle_fst_fst_inl
         y ir iq eg d hg).fst.fst =
       Sum.inr PUnit.unit := by
     intro d hg heq; subst heq; rfl
-  exact key _ _ hd
+  exact comm _ _ hd
 
 private lemma pbCurryDirBundle_fst_fst_inr
     (Q R S : PolyFunctorBetweenCat.{u, u} X Y)
@@ -3139,7 +3139,7 @@ private lemma pbCurryDirBundle_fst_fst_inr
     ((pbCurryDirBundle Q R S alpha
       y ir iq eg).fst.fst : PUnit ⊕ PUnit) =
     Sum.inl PUnit.unit := by
-  have key : ∀ (d : (ccrFamily
+  have comm : ∀ (d : (ccrFamily
         (pbBinaryProdObj Q R y)
         (pbProdPos Q R y iq ir)).left)
       (hg : (ccrFamily
@@ -3153,7 +3153,7 @@ private lemma pbCurryDirBundle_fst_fst_inr
         y ir iq eg d hg).fst.fst =
       Sum.inl PUnit.unit := by
     intro d hg heq; subst heq; rfl
-  exact key _ _ hd
+  exact comm _ _ hd
 
 private lemma pbUncurry_curry_fiber_val
     (Q R S : PolyFunctorBetweenCat.{u, u} X Y)
@@ -3191,7 +3191,7 @@ private lemma pbUncurry_curry_fiber_val
         Subsingleton.elim _ _
       subst h_pu
       refine Sigma.ext rfl (heq_of_eq ?_)
-      have key_fst : ∀ (d : (ccrFamily
+      have comm_fst : ∀ (d : (ccrFamily
             (pbBinaryProdObj Q R y)
             (pbProdPos Q R y iq ir)).left)
           (hg : (ccrFamily
@@ -3209,8 +3209,8 @@ private lemma pbUncurry_curry_fiber_val
             ⟨w, pf⟩⟩ := by
         intro d hg hdq; subst hdq
         exact ⟨_, rfl⟩
-      obtain ⟨_, hkey⟩ := key_fst _ _ hd
-      have h := heq.symm.trans hkey
+      obtain ⟨_, hcomm⟩ := comm_fst _ _ hd
+      have h := heq.symm.trans hcomm
       cases h; rfl
   · rename_i pu_outer
     have h_pu_out : pu_outer = PUnit.unit :=
@@ -3223,7 +3223,7 @@ private lemma pbUncurry_curry_fiber_val
       have h_pu_in : pu_inner = PUnit.unit :=
         Subsingleton.elim _ _
       subst h_pu_in
-      have key_fiber : ∀ (d : (ccrFamily
+      have comm_fiber : ∀ (d : (ccrFamily
             (pbBinaryProdObj Q R y)
             (pbProdPos Q R y iq ir)).left)
           (hg : (ccrFamily
@@ -3240,7 +3240,7 @@ private lemma pbUncurry_curry_fiber_val
           w := by
         intro d hg hdq; subst hdq; intro x; rfl
       exact Sigma.ext rfl
-        (heq_of_eq (key_fiber _ _ hd _))
+        (heq_of_eq (comm_fiber _ _ hd _))
     · exfalso
       have h_fst :
           (pbCurryDirBundle Q R S alpha y
@@ -3275,7 +3275,7 @@ private lemma pbCurry_uncurry_dir
     ((ccrReindex (beta y) ir) iq).2 eg
   unfold pbUncurryFiberLeft pbUncurryDirBundle
   simp only [pbProdPos]
-  have key : ∀ (d : (ccrFamily
+  have comm : ∀ (d : (ccrFamily
         (pbBinaryProdObj Q R y)
         (pbProdPos Q R y iq ir)).left)
       (hg : (ccrFamily
@@ -3305,7 +3305,7 @@ private lemma pbCurry_uncurry_dir
       intro hg
       conv_rhs => rw [hef]
       cases u; cases x
-      have key3 : ∀ (d : (ccrFamily
+      have comm3 : ∀ (d : (ccrFamily
             (pbBinaryProdObj Q R y)
             (pbProdPos Q R y iq ir)).left)
           (hg' : (ccrFamily
@@ -3323,11 +3323,11 @@ private lemma pbCurry_uncurry_dir
             d hg').fst =
           ⟨Sum.inl PUnit.unit, PUnit.unit⟩ := by
         intro d hg' w hd'; subst hd'; rfl
-      exact key3 _ hg _ rfl
+      exact comm3 _ hg _ rfl
     · rename_i u v hv hef
       intro hg
       rw [hef]
-  exact key _ _ rfl
+  exact comm _ _ rfl
 
 theorem pbUncurry_curry
     (Q R S : PolyFunctorBetweenCat.{u, u} X Y)
@@ -3504,7 +3504,7 @@ private lemma pbCurry_uncurry_fiber_inl
         ⟨iq, ⟨eg, d⟩⟩)
   unfold pbUncurryFiberLeft
   intro d
-  have key_lhs : ∀ (dp : (ccrFamily
+  have comm_lhs : ∀ (dp : (ccrFamily
         (pbBinaryProdObj Q R y)
         (pbProdPos Q R y iq ir)).left)
       (hg : (ccrFamily
@@ -3556,7 +3556,7 @@ private lemma pbCurry_uncurry_fiber_inl
     · rename_i u' x' hef'
       intro hg; cases u; cases x; cases u'; cases x'
       intro d'
-      have key3 : ∀ (dp : (ccrFamily
+      have comm3 : ∀ (dp : (ccrFamily
             (pbBinaryProdObj Q R y)
             (pbProdPos Q R y iq ir)).left)
           (hg' : (ccrFamily
@@ -3583,13 +3583,13 @@ private lemma pbCurry_uncurry_fiber_inl
             dp hg').snd.val d' = w := by
         intro dp hg' w hdp; subst hdp
         intro d'; rfl
-      exact key3 _ hg _ rfl d'
+      exact comm3 _ hg _ rfl d'
     · rename_i u' v' hv' hef'
       intro hg d'
       exact absurd (congrArg Sigma.fst
         (hef.symm.trans hef'))
         (by simp)
-  have step1 := key_lhs _ _ rfl d
+  have step1 := comm_lhs _ _ rfl d
   have step2 :
       (ccrFiberMor (beta y) ir).left
         ⟨iq, eg, d_inner⟩ =

@@ -689,9 +689,9 @@ Task 1 (Terminal CCR) ──> Task 2 (Const)
 
 ## Risk Areas
 
-1. **Universe levels**: The interplay of `u`, `u+1` in CCR
-   indices/families and `Over X` may require careful attention.
-   Use `_` placeholders to let Lean infer, and check with
+1. **Universe levels**: To handle he interplay of `u`, `u+1`
+   in CCR indices/families and `Over X`,
+   use `_` placeholders to let Lean infer, and check with
    `lean_goal` when stuck.
 
 2. **Lan-product isomorphism** (Task 7): The most technically
@@ -708,9 +708,7 @@ Task 1 (Terminal CCR) ──> Task 2 (Const)
 
 4. **CartesianMonoidalCategory setup** (Task 10 Step 2):
    Getting the explicit product cones into the right form for
-   `ofChosenFiniteProducts` may be tedious. Consider whether
-   `noncomputable` can be accepted for just this instance, or
-   whether custom `ChosenFiniteProducts` data is needed.
+   `ofChosenFiniteProducts` may be tedious.
 
 5. **Definitional vs propositional equality**: Many steps should
    be definitional (`rfl`), but Lean may not reduce through
