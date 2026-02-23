@@ -40,6 +40,7 @@ hypothesis needed).
 
 Together with `ParametricFamily.toPshParametricAtRep` (which
 requires `choice`), this would establish:
+
 - Choice-free: `PshParametricFamily T.toPshTypeExpr →
   ParametricFamily T`
 - With choice: `ParametricFamily T →
@@ -52,6 +53,7 @@ every `PshParametricFamily` satisfies the presheaf profunctor
 wedge condition.
 
 Requires presheaf-level versions of:
+
 - `PshTypeExpr.relInterp_of_offDiag`: off-diagonal elements
   produce related pairs via `relInterp`
 - `PshTypeExpr.relInterp_implies_wedge`: `relInterp`-related
@@ -114,7 +116,8 @@ File: `ParanaturalTopos.lean`
 ### F6. Composition of fullRelInterp at PshRel level
 
 Does `T.fullRelInterp` preserve `pshRelComp`? That is:
-```
+
+```lean
 T.fullRelInterp (pshRelComp R S)
   = pshRelComp (T.fullRelInterp R) (T.fullRelInterp S)
 ```
@@ -144,6 +147,7 @@ extension argument, yielding a `PshParametricFamily
 T.toPshTypeExpr` without requiring `choice`.
 
 The construction:
+
 - For a general presheaf `P`, write `P` as a colimit
   `colim (yonedaULift ∘ diagram)` (via the co-Yoneda
   lemma / density theorem)
@@ -166,6 +170,7 @@ Define `typeExprWeight : TypeExpr → (TwistedArrow Type
 ⥤ Type)` recursively from `relInterp` pairs.
 
 At a twisted arrow `(f : I₀ → I₁)`:
+
 - `var`: the graph `{ (a, b) | f a = b }`, equivalently
   just `I₀`
 - `app F T`: `F`-image of `T.typeExprWeight` at `f`
@@ -205,16 +210,20 @@ File: `ParanaturalTopos.lean`
 ## Priority
 
 ### Completed (F3, F4)
+
 Concrete free theorems that directly formalize Wadler.
 
 ### Short-term (F1, F2)
+
 Complete the presheaf-level theory and the Type/presheaf
 bridge.
 
 ### Medium-term (F5, F6)
+
 Additional free theorems and structural analysis of
 relational interpretation.
 
 ### Long-term (F7, F8, F9)
+
 Yoneda extension, twisted-arrow weights, and coalgebra
 duality -- new territory requiring more infrastructure.
