@@ -69,6 +69,18 @@ mathematical analysis.
 - [x] `ParametricFamily.toPshParametricAtRep`: bridge from
   Type-level parametricity to presheaf-level relatedness at
   representable presheaves (requires `choice` hypothesis)
+- [x] `homTypeExpr`: type expression for `X → X`
+  (`ParanaturalTopos.lean`)
+- [x] `homTypeExpr_parametric_is_id`: every parametric
+  family for `X → X` is the identity
+  (`ParanaturalTopos.lean`)
+- [x] `homParametricEquivUnit`:
+  `ParametricFamily homTypeExpr ≃ Unit` -- the identity
+  free theorem (`ParanaturalTopos.lean`)
+- [x] `dialgebraParametricEquivNatTrans`:
+  `ParametricFamily (dialgebraTypeExpr F G) ≃ (F ⟶ G)` --
+  parametric families for `F(X) → G(X)` are natural
+  transformations (`ParanaturalTopos.lean`)
 
 ## Continuation
 

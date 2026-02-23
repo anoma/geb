@@ -3695,6 +3695,73 @@ def dinaturalNumbersParametricEquiv :
   dinaturalNumbersEquiv.trans
     dinaturalParametricEquivParanat.symm
 
+/-- The type expression for `X → X` (the
+identity / hom type). -/
+abbrev homTypeExpr : TypeExpr :=
+  .arrow .var .var
+
+/-- Every parametric family for `homTypeExpr`
+(`X → X`) is the identity: specializing
+parametricity at `f = (fun _ => a) : Unit → I`
+forces `app I a = a`. -/
+theorem homTypeExpr_parametric_is_id
+    (p : ParametricFamily homTypeExpr)
+    (I : Type) : p.app I = id := by
+  funext a
+  have h := p.parametric Unit I (fun _ => a)
+  simp only [TypeExpr.relInterp,
+    graphRel, arrowRel] at h
+  exact (h () a rfl).symm
+
+/-- Parametric families for `homTypeExpr`
+(`X → X`) are equivalent to `Unit`: the identity
+is the unique parametric inhabitant.
+
+This is Wadler's "Theorems for free!" identity
+free theorem: `∀X. X → X ≅ 1`. -/
+def homParametricEquivUnit :
+    ParametricFamily homTypeExpr ≃ Unit where
+  toFun _ := ()
+  invFun _ :=
+    { app := fun _ => id
+      parametric := fun _ _ f => by
+        simp only [TypeExpr.relInterp,
+          graphRel, arrowRel]
+        exact fun _ _ h => h }
+  left_inv p :=
+    ParametricFamily.ext
+      (funext fun I =>
+        (homTypeExpr_parametric_is_id p I).symm)
+  right_inv u := by cases u; rfl
+
+/-- Parametric families for the dialgebra type
+expression `F(X) → G(X)` are equivalent to
+natural transformations `F ⟶ G`.
+
+The parametricity condition at a morphism
+`f : I₀ → I₁` reduces (via
+`dialgebraTypeExpr_relInterp_iff`) to the
+naturality square
+`G.map f ∘ app I₀ = app I₁ ∘ F.map f`. -/
+def dialgebraParametricEquivNatTrans
+    (F G : Type ⥤ Type) :
+    ParametricFamily (dialgebraTypeExpr F G) ≃
+    (F ⟶ G) where
+  toFun p :=
+    { app := p.app
+      naturality := fun {I₀ I₁} f =>
+        ((dialgebraTypeExpr_relInterp_iff
+          F G f (p.app I₀) (p.app I₁)).mp
+          (p.parametric I₀ I₁ f)).symm }
+  invFun η :=
+    { app := η.app
+      parametric := fun I₀ I₁ f =>
+        (dialgebraTypeExpr_relInterp_iff
+          F G f (η.app I₀) (η.app I₁)).mpr
+          (η.naturality f).symm }
+  left_inv _ := by ext; rfl
+  right_inv _ := by ext; rfl
+
 /-- `divEndoRel f h k` is equivalent to
 `DiagCompat divHomProf I₀ I₁ f h k`, which
 reduces to `f ∘ h = k ∘ f`. The relational

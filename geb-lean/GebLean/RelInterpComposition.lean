@@ -282,10 +282,6 @@ theorem TypeExpr.relInterp_decomp_of_isArrowFree
   rw [T.arrowFreeMap_comp haf f g] at h
   exact graphRel_decomp h
 
-/-- The hom type expression `X → X`. -/
-abbrev homTypeExpr : TypeExpr :=
-  TypeExpr.arrow TypeExpr.var TypeExpr.var
-
 /-- A type expression has composable `relInterp`
 when every `arrow` node has an arrow-free domain.
 Arrow-free types compose via graph-relation
