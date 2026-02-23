@@ -3042,7 +3042,7 @@ abbrev TypeExpr.leaf
   .app F .var
 
 /-- The profunctor associated to a type expression,
-constructed from categorical building blocks:
+constructed from induction on profunctors:
 - `var` maps to `IdProf` (the identity profunctor),
 - `app F T` post-composes `T.toProfunctor` with `F`
   via `whiskeringRight`,
