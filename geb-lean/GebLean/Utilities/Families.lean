@@ -522,6 +522,29 @@ The injection into the coproduct in `Over X` pairs the index with the element.
 lemma coprodData_over_ι_left {I : Type w} (F : I → Over X) (i : I) (a : (F i).left) :
     (CoprodData.inj F i).left a = ⟨i, a⟩ := rfl
 
+def overCoprodMap {I : Type w} {F G : I → Over X}
+    (α : ∀ i, F i ⟶ G i) :
+    ∐' F ⟶ ∐' G :=
+  Over.homMk
+    (fun ⟨i, x⟩ => ⟨i, (α i).left x⟩)
+    (by ext ⟨i, x⟩; exact congrFun (Over.w (α i)) x)
+
+@[simp]
+lemma overCoprodMap_id {I : Type w}
+    (F : I → Over X) :
+    overCoprodMap (fun i => 𝟙 (F i)) = 𝟙 (∐' F) :=
+  rfl
+
+@[simp]
+lemma overCoprodMap_comp {I : Type w}
+    {F G H : I → Over X}
+    (α : ∀ i, F i ⟶ G i) (β : ∀ i, G i ⟶ H i) :
+    overCoprodMap (fun i => α i ≫ β i) =
+      overCoprodMap α ≫ overCoprodMap β := by
+  apply Over.OverMorphism.ext
+  ext ⟨i, x⟩
+  rfl
+
 end CoprodDataOver
 
 /-! ## Product Data Typeclass
@@ -606,6 +629,24 @@ lemma prodData_over_π_left {I : Type w} (F : I → Over X) (i : I)
     (p : (∏' F).left) : (ProdData.proj F i).left p = p.val.2 i := rfl
 
 end ProdDataOver
+
+/-! ### ProdData for (Over X)^op'
+
+Products in `(Over X)ᵒᵖ'` are coproducts in `Over X`.
+-/
+
+section ProdDataOverOp
+
+universe w
+
+variable {X : Type w}
+
+instance overOpProdData : ProdData.{w} ((Over X)ᵒᵖ') where
+  prod F := CoprodData.coprod (D := Over X) F
+  π F i := CoprodData.inj (D := Over X) F i
+
+end ProdDataOverOp
+
 
 /-! ## Coproducts in FreeCoprodCompletionCat
 
