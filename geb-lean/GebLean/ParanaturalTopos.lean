@@ -1,4 +1,5 @@
 import GebLean.Paranatural
+import GebLean.HexagonCat
 import GebLean.Weighted
 import GebLean.ComprehensiveWeighted
 import GebLean.Factorization
@@ -3075,71 +3076,26 @@ def TypeExpr.profMap
   | .arrow T₁ T₂ => fun h =>
     T₂.profMap f g ∘ h ∘ T₁.profMap g f
 
-theorem TypeExpr.profMap_id
-    (T : TypeExpr) (A B : Type) :
-    T.profMap (id : A → A) (id : B → B) = id := by
-  induction T generalizing A B with
-  | var => rfl
-  | app F T ih =>
-    ext x
-    change F.map (T.profMap id id) x = x
-    rw [ih]
-    exact FunctorToTypes.map_id_apply F x
-  | arrow T₁ T₂ ih₁ ih₂ =>
-    ext h
-    change T₂.profMap id id ∘ h ∘ T₁.profMap id id
-      = h
-    rw [ih₁, ih₂, Function.comp_id,
-      Function.id_comp]
+/-- The profunctor associated to a type expression,
+constructed from categorical building blocks:
+- `var` maps to `IdProf` (the identity profunctor),
+- `app F T` post-composes `T.toProfunctor` with `F`
+  via `whiskeringRight`,
+- `arrow T₁ T₂` uses `ProfDialgebraProf` on the
+  uncurried forms of `T₁` and `T₂`.
 
-theorem TypeExpr.profMap_comp
-    (T : TypeExpr)
-    {A A' A'' B B' B'' : Type}
-    (f : A' → A) (f' : A'' → A')
-    (g : B → B') (g' : B' → B'') :
-    T.profMap (f ∘ f') (g' ∘ g) =
-    T.profMap f' g' ∘ T.profMap f g := by
-  induction T generalizing A A' A'' B B' B'' with
-  | var => rfl
-  | app F T ih =>
-    ext x
-    change F.map (T.profMap (f ∘ f') (g' ∘ g)) x =
-      F.map (T.profMap f' g')
-        (F.map (T.profMap f g) x)
-    rw [ih]
-    exact FunctorToTypes.map_comp_apply F
-      (T.profMap f g) (T.profMap f' g') x
-  | arrow T₁ T₂ ih₁ ih₂ =>
-    have h₁ : T₁.profMap (g' ∘ g) (f ∘ f') =
-        T₁.profMap g f ∘ T₁.profMap g' f' :=
-      ih₁ (A := B'') (A' := B') (A'' := B)
-        (B := A'') (B' := A') (B'' := A)
-        g' g f' f
-    have h₂ : T₂.profMap (f ∘ f') (g' ∘ g) =
-        T₂.profMap f' g' ∘ T₂.profMap f g :=
-      ih₂ f f' g g'
-    ext h
-    simp only [profMap, Function.comp, h₁, h₂]
-    rfl
-
-/-- The profunctor associated to a type expression:
-a functor `Typeᵒᵖ × Type ⥤ Type` defined by
-`T.interp` on objects and `T.profMap` on
-morphisms. -/
-def TypeExpr.toProfunctor
-    (T : TypeExpr) : Typeᵒᵖ × Type ⥤ Type where
-  obj p := T.interp p.1.unop p.2
-  map {p q} fg :=
-    T.profMap fg.1.unop fg.2
-  map_id p := by
-    change T.profMap id id = id
-    exact T.profMap_id p.1.unop p.2
-  map_comp {_p _q _r} fg gh := by
-    simp only [types_comp, prod_comp, unop_comp]
-    exact @TypeExpr.profMap_comp T
-      _p.1.unop _q.1.unop _r.1.unop
-      _p.2 _q.2 _r.2
-      fg.1.unop gh.1.unop fg.2 gh.2
+The functor laws hold by composition of the
+constituent functors. -/
+def TypeExpr.toProfunctor :
+    TypeExpr → (Typeᵒᵖ ⥤ Type ⥤ Type)
+  | .var => IdProf
+  | .app F T =>
+    T.toProfunctor ⋙
+      (Functor.whiskeringRight Type Type Type).obj F
+  | .arrow T₁ T₂ =>
+    ProfDialgebraProf
+      (Functor.uncurry.obj T₁.toProfunctor)
+      (Functor.uncurry.obj T₂.toProfunctor)
 
 /-- The relational interpretation of a type
 expression at a morphism `f : I₀ → I₁`. Each
