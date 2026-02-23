@@ -3041,41 +3041,6 @@ abbrev TypeExpr.leaf
     (F : Type ⥤ Type) : TypeExpr :=
   .app F .var
 
-/-- The interpretation of a type expression as a
-profunctor: `interp T A B` assigns a type to each
-pair `(A, B)`, where `A` is contravariant and `B`
-is covariant. `var` gives the covariant parameter;
-`app F T` applies `F` to the interpretation of
-`T`; `arrow` swaps the parameters for the domain
-(flipping variance). On the diagonal,
-`interp T A A` recovers the standard interpretation
-of `T` at the type `A`. -/
-def TypeExpr.interp :
-    TypeExpr → Type → Type → Type
-  | .var, _, B => B
-  | .app F T, A, B => F.obj (T.interp A B)
-  | .arrow T₁ T₂, A, B =>
-    T₁.interp B A → T₂.interp A B
-
-/-- The profunctor map for a type expression:
-given `f : A' → A` (contravariant) and
-`g : B → B'` (covariant), maps
-`T.interp A B → T.interp A' B'`. For `var`,
-this is `g`. For `app F T`, this is
-`F.map (T.profMap f g)`. For `arrow T₁ T₂`,
-this precomposes with `T₁.profMap g f` (swapped,
-since `T₁` has flipped variance) and
-postcomposes with `T₂.profMap f g`. -/
-def TypeExpr.profMap
-    (T : TypeExpr) {A A' B B' : Type}
-    (f : A' → A) (g : B → B') :
-    T.interp A B → T.interp A' B' :=
-  match T with
-  | .var => g
-  | .app F T => F.map (T.profMap f g)
-  | .arrow T₁ T₂ => fun h =>
-    T₂.profMap f g ∘ h ∘ T₁.profMap g f
-
 /-- The profunctor associated to a type expression,
 constructed from categorical building blocks:
 - `var` maps to `IdProf` (the identity profunctor),
@@ -3096,6 +3061,76 @@ def TypeExpr.toProfunctor :
     ProfDialgebraProf
       (Functor.uncurry.obj T₁.toProfunctor)
       (Functor.uncurry.obj T₂.toProfunctor)
+
+/-- The interpretation of a type expression as a
+profunctor: `interp T A B` extracts the object
+map from `T.toProfunctor`, assigning a type to
+each pair `(A, B)` where `A` is contravariant and
+`B` is covariant. `var` gives the covariant
+parameter; `app F T` applies `F` to the
+interpretation of `T`; `arrow` swaps the
+parameters for the domain (flipping variance).
+On the diagonal, `interp T A A` recovers the
+standard interpretation of `T` at the type `A`. -/
+abbrev TypeExpr.interp
+    (T : TypeExpr) (A B : Type) : Type :=
+  (T.toProfunctor.obj (Opposite.op A)).obj B
+
+/-- The profunctor map for a type expression:
+given `f : A' → A` (contravariant) and
+`g : B → B'` (covariant), maps
+`T.interp A B → T.interp A' B'`. For `var`,
+this is `g`. For `app F T`, this is
+`F.map (T.profMap f g)`. For `arrow T₁ T₂`,
+this precomposes with `T₁.profMap g f` (swapped,
+since `T₁` has flipped variance) and
+postcomposes with `T₂.profMap f g`. -/
+def TypeExpr.profMap
+    (T : TypeExpr) {A A' B B' : Type}
+    (f : A' → A) (g : B → B') :
+    T.interp A B → T.interp A' B' :=
+  match T with
+  | .var => g
+  | .app F T => F.map (T.profMap f g)
+  | .arrow T₁ T₂ => fun h =>
+    T₂.profMap f g ∘ h ∘ T₁.profMap g f
+
+/-- `profMap` agrees with the morphism action of
+`toProfunctor`: the recursive definition computes
+the same function as the uncurried functor map. -/
+theorem TypeExpr.profMap_eq_toProfunctorMap
+    (T : TypeExpr) {A A' B B' : Type}
+    (f : A' → A) (g : B → B') :
+    T.profMap f g =
+      (T.toProfunctor.map (Quiver.Hom.op f)).app B ≫
+        (T.toProfunctor.obj (Opposite.op A')).map g := by
+  induction T generalizing A A' B B' with
+  | var => simp [profMap, toProfunctor, IdProf]
+  | app F T ih =>
+    simp only [profMap, toProfunctor]
+    rw [ih f g, CategoryTheory.Functor.map_comp]
+    congr 1
+  | arrow T₁ T₂ ih₁ ih₂ =>
+    ext h
+    simp only [profMap, toProfunctor,
+      types_comp_apply,
+      ProfDialgebraProf_map_app,
+      ProfDialgebraProf_obj_map,
+      Opposite.unop_op, Quiver.Hom.unop_op]
+    funext x
+    simp only [Function.comp_apply,
+      types_comp_apply, Prof.map₁, Prof.map₂,
+      Functor.uncurry_obj_map,
+      CategoryTheory.Functor.map_id,
+      NatTrans.id_app, Category.id_comp,
+      Category.comp_id]
+    have h₁ := congr_fun (ih₁ g f) x
+    simp only [types_comp_apply] at h₁
+    rw [h₁.symm]
+    have h₂ := congr_fun (ih₂ f g)
+      (h (T₁.profMap g f x))
+    simp only [types_comp_apply] at h₂
+    exact h₂
 
 /-- The relational interpretation of a type
 expression at a morphism `f : I₀ → I₁`. Each

@@ -399,6 +399,37 @@ factorisations across components.
 3. Check left-exactness
 4. Identify fixed points
 
+### Research direction: ParametricFamily as an end or equalizer
+
+`ParametricFamily T` requires `T.relInterp f (app I₀) (app I₁)`
+for all `f : I₀ → I₁`. The end of
+`Functor.uncurry.obj T.toProfunctor` requires the wedge
+condition `T.profMap id f (app I₀) = T.profMap f id (app I₁)`.
+
+`relInterp_implies_wedge` gives parametricity => wedge.
+The converse holds for type expressions without nested arrows
+but fails for nested arrows (documented in
+`relInterp_wedge_aux`).
+
+For specific type expressions, `ParametricFamily T` is
+equivalent to `Paranat P Q` (see
+`algebraParametricEquivParanat`,
+`dinaturalParametricEquivParanat`,
+`dialgebraParametricEquivNatTrans`), and
+`Paranat P Q ≃ StructureIntegral P Q` which is an equalizer.
+
+Open questions:
+
+1. Is there a general construction producing profunctors
+   `P(T)`, `Q(T)` such that
+   `ParametricFamily T ≃ Paranat P(T) Q(T)` for all `T`?
+2. Can `relInterp` be expressed as an equalizer of the
+   lmap and rmap of some profunctor derived from
+   `T.toProfunctor`?
+3. Can the parametricity condition be understood as an
+   end taken in a Rel-enriched category (where morphisms
+   are relations rather than functions)?
+
 ## Related Files
 
 - `GebLean/ParanaturalTopos.lean` (experiments)
