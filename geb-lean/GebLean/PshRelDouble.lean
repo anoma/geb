@@ -1557,4 +1557,187 @@ def pshIhomYonedaULiftIso :
 
 end YonedaPreservesIhomULift
 
+section TypeRelations
+
+/-!
+## Type relations as presheaf relations
+
+`Type v` embeds fully faithfully into
+`PSh(Discrete PUnit) = (Discrete PUnit)ᵒᵖ ⥤ Type v`
+via the constant-presheaf functor. All presheaf
+relation constructions (`PshRel`, `pshRelGraph`,
+`pshBarrLiftSkel`, `pshArrowRelSkel`, the double
+category) specialize to give a double category on
+`Type v` with:
+- Objects: types in `Type v`
+- Horizontal morphisms: functions
+- Vertical morphisms: relations (up to iso)
+- Squares: relatedness (`Prop`-valued)
+-/
+
+/-- The constant-presheaf embedding
+`Type v ⥤ (Discrete PUnit)ᵒᵖ ⥤ Type v`,
+sending each type to the presheaf constant at
+that type. -/
+abbrev typeToPsh : Type v ⥤
+    ((Discrete PUnit)ᵒᵖ ⥤ Type v) :=
+  Functor.const (Discrete PUnit)ᵒᵖ
+
+/-- A proof-relevant relation from type `A` to
+type `B`: an object of the over category
+`Over (typeToPsh.obj A × typeToPsh.obj B)`. -/
+abbrev TypeProdOver (A B : Type v) :=
+  PshProdOver (typeToPsh.obj A) (typeToPsh.obj B)
+
+/-- A relation from type `A` to type `B` up to
+isomorphism: an isomorphism class of
+`TypeProdOver A B`. -/
+abbrev TypeRel (A B : Type v) :=
+  PshRel (typeToPsh.obj A) (typeToPsh.obj B)
+
+/-- The identity relation on a type. -/
+abbrev typeRelId (A : Type v) : TypeRel A A :=
+  pshRelId (typeToPsh.obj A)
+
+/-- The graph relation of a function `f : A → B`,
+obtained by applying `pshRelGraph` to
+`typeToPsh.map f`. -/
+abbrev typeRelGraph {A B : Type v}
+    (f : A → B) : TypeRel A B :=
+  pshRelGraph (typeToPsh.map f)
+
+/-- Composition of type relations, obtained from
+`pshRelComp`. -/
+abbrev typeRelComp {A B C : Type v} :
+    TypeRel A B → TypeRel B C →
+    TypeRel A C :=
+  pshRelComp
+
+theorem typeRelComp_id_left {A B : Type v}
+    (R : TypeRel A B) :
+    typeRelComp (typeRelId A) R = R :=
+  pshRelComp_id_left R
+
+theorem typeRelComp_id_right {A B : Type v}
+    (R : TypeRel A B) :
+    typeRelComp R (typeRelId B) = R :=
+  pshRelComp_id_right R
+
+theorem typeRelComp_assoc {A B C D : Type v}
+    (R : TypeRel A B) (S : TypeRel B C)
+    (T : TypeRel C D) :
+    typeRelComp (typeRelComp R S) T =
+      typeRelComp R (typeRelComp S T) :=
+  pshRelComp_assoc R S T
+
+theorem typeRelGraph_eq_id (A : Type v) :
+    typeRelGraph (id : A → A) =
+      typeRelId A := by
+  change pshRelGraph (typeToPsh.map (𝟙 A)) =
+    pshRelId (typeToPsh.obj A)
+  rw [typeToPsh.map_id]
+  exact pshRelGraph_eq_id (typeToPsh.obj A)
+
+theorem typeRelGraph_comp {A B C : Type v}
+    (f : A → B) (g : B → C) :
+    typeRelComp (typeRelGraph f)
+      (typeRelGraph g) =
+      typeRelGraph (g ∘ f) :=
+  pshRelGraph_comp
+    (typeToPsh.map f) (typeToPsh.map g)
+
+/-- The category of types with relations as
+morphisms, obtained by specializing `PshRelCat`
+to the terminal base category. -/
+abbrev TypeRelCat :=
+  PshRelCat.{0, 0, v} (C := Discrete PUnit)
+
+/-- Functor sending each function `f : A → B` to
+its graph relation in `TypeRelCat`. -/
+abbrev typeRelGraphFunctor :
+    Type v ⥤ TypeRelCat.{v} :=
+  typeToPsh ⋙
+    @pshRelGraphFunctor (Discrete PUnit) _
+
+/-- Evaluation at the single object of
+`Discrete PUnit`, giving a functor from
+presheaves to types. This is a left inverse of
+`typeToPsh`. -/
+abbrev typeEvalUnit :
+    ((Discrete PUnit)ᵒᵖ ⥤ Type v) ⥤ Type v :=
+  (evaluation _ _).obj
+    (Opposite.op ⟨PUnit.unit⟩)
+
+/-- `typeToPsh` is fully faithful: natural
+transformations between constant presheaves
+over `Discrete PUnit` correspond to
+functions. -/
+theorem typeToPsh_map_eq_iff
+    {A B : Type v}
+    (α : typeToPsh.obj A ⟶ typeToPsh.obj B) :
+    typeToPsh.map
+      (typeEvalUnit.map α) = α := by
+  ext ⟨⟨⟩⟩; rfl
+
+/-- Relatedness of functions by a pair of type
+relations: given `R : TypeProdOver A A'` and
+`S : TypeProdOver B B'`, `f : A → B` and
+`f' : A' → B'` are `(R, S)`-related iff
+`pshProdOverRelated` holds. -/
+abbrev TypeProdOverRelated
+    {A A' B B' : Type v}
+    (R : TypeProdOver A A')
+    (S : TypeProdOver B B')
+    (f : A → B) (f' : A' → B') :=
+  PshProdOverRelated R S
+    (typeToPsh.map f)
+    (typeToPsh.map f')
+
+/-- Skeleton-level relatedness: given
+`R : TypeRel A A'` and `S : TypeRel B B'`,
+`f` and `f'` are `(R, S)`-related iff
+`pshRelRelated` holds. -/
+abbrev typeRelRelated
+    {A A' B B' : Type v}
+    (R : TypeRel A A')
+    (S : TypeRel B B')
+    (f : A → B) (f' : A' → B') :=
+  pshRelRelated
+    (typeToPsh.map f)
+    (typeToPsh.map f')
+    R S
+
+/-- Lift a type endofunctor to a presheaf
+endofunctor on `PSh(Discrete PUnit)` via
+`typeEvalUnit ⋙ G ⋙ typeToPsh`. -/
+abbrev typeFunctorToPsh
+    (G : Type v ⥤ Type v) :
+    ((Discrete PUnit)ᵒᵖ ⥤ Type v) ⥤
+      ((Discrete PUnit)ᵒᵖ ⥤ Type v) :=
+  typeEvalUnit ⋙ G ⋙ typeToPsh
+
+/-- `typeFunctorToPsh G` computes correctly on
+objects from `typeToPsh`: applying it to a
+constant presheaf at `A` gives the constant
+presheaf at `G.obj A`. -/
+theorem typeFunctorToPsh_obj
+    (G : Type v ⥤ Type v) (A : Type v) :
+    (typeFunctorToPsh G).obj
+      (typeToPsh.obj A) =
+    typeToPsh.obj (G.obj A) :=
+  rfl
+
+/-- The Barr extension of a type endofunctor
+`G : Type v ⥤ Type v` applied to a type
+relation `R : TypeRel A B`, producing
+`TypeRel (G.obj A) (G.obj B)`. -/
+abbrev typeBarrLiftSkel
+    (G : Type v ⥤ Type v)
+    {A B : Type v}
+    (R : TypeRel A B) :
+    TypeRel (G.obj A) (G.obj B) :=
+  pshBarrLiftSkel (typeFunctorToPsh G) R
+
+end TypeRelations
+
 end GebLean

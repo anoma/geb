@@ -770,4 +770,38 @@ def yonedaRelDoubleData :
   toDoubleCategoryOps := yonedaRelDoubleOps
   laws := yonedaRelDoubleLaws
 
+section TerminalCategorySpecialization
+
+/-!
+## Specialization to the terminal category
+
+For `C = Discrete PUnit`, the Yoneda relation
+double category is trivial: there is a single
+object `PUnit.unit` and the only relation is the
+identity.
+
+The double category of relations on `Type v`
+arises instead at the presheaf level
+(`PshRelDouble`), where `Type v` embeds into
+`PSh(Discrete PUnit)` via the constant-presheaf
+functor `typeToPsh`. See `TypeRel`,
+`typeRelGraphFunctor`, and related definitions in
+`PshRelDouble`.
+
+The Yoneda relation double category specialized to
+`Discrete PUnit` connects to the Type-level double
+category as follows: `typeToPsh` factors as
+`typeRelGraphFunctor` followed by the forgetful
+functor from `TypeRelCat` to the presheaf relation
+category.
+-/
+
+/-- The Yoneda relation double category
+specialized to the terminal category
+`Discrete PUnit`. -/
+abbrev terminalYonedaRelDoubleData :=
+  @yonedaRelDoubleData (Discrete PUnit) _
+
+end TerminalCategorySpecialization
+
 end GebLean
