@@ -3244,71 +3244,71 @@ theorem TypeExpr.fullRelInterp_graphRel
   | arrow T₁ T₂ ih₁ ih₂ =>
     simp only [fullRelInterp, relInterp, ih₁, ih₂]
 
-/-- The profunctorial relational interpretation of
-a type expression `T`. Given a contravariant
-relation `R : A → A' → Prop` and a covariant
-relation `S : B → B' → Prop`,
-`T.profRelInterp R S` is a relation
-`T.interp A B → T.interp A' B' → Prop`. This
-generalizes both `fullRelInterp` (diagonal case:
-`profRelInterp R R = fullRelInterp R`) and
-`profMap` (graph case: see
-`profRelInterp_graphRel`). -/
-def TypeExpr.profRelInterp
+/-- The relational interpretation of a type
+expression `T` with separate relations for the
+contravariant and covariant positions. Given
+`R : A → A' → Prop` and `S : B → B' → Prop`,
+`T.biRelInterp R S` is a relation
+`T.interp A B → T.interp A' B' → Prop`.
+This specializes to `fullRelInterp` when both
+arguments coincide (`biRelInterp R R = fullRelInterp R`,
+see `biRelInterp_diag`) and to `profMap` at graph
+relations (see `biRelInterp_graphRel`). -/
+def TypeExpr.biRelInterp
     (T : TypeExpr) {A A' B B' : Type}
     (R : A → A' → Prop) (S : B → B' → Prop) :
     T.interp A B → T.interp A' B' → Prop :=
   match T with
   | .var => S
   | .app F T' =>
-    functorRelLift F (T'.profRelInterp R S)
+    functorRelLift F (T'.biRelInterp R S)
   | .arrow T₁ T₂ =>
-    arrowRel (T₁.profRelInterp S R)
-      (T₂.profRelInterp R S)
+    arrowRel (T₁.biRelInterp S R)
+      (T₂.biRelInterp R S)
 
-/-- The diagonal specialization of `profRelInterp`:
+/-- The diagonal specialization of `biRelInterp`:
 when both arguments are the same relation `R`,
-`profRelInterp R R` equals `fullRelInterp R`. -/
-theorem TypeExpr.profRelInterp_diag
+`biRelInterp R R` equals `fullRelInterp R`. -/
+theorem TypeExpr.biRelInterp_diag
     (T : TypeExpr) {I₀ I₁ : Type}
     (R : I₀ → I₁ → Prop) :
-    T.profRelInterp R R = T.fullRelInterp R := by
+    T.biRelInterp R R = T.fullRelInterp R := by
   induction T with
   | var => rfl
   | app F T' ih =>
-    simp only [profRelInterp, fullRelInterp, ih]
+    simp only [biRelInterp, fullRelInterp, ih]
   | arrow T₁ T₂ ih₁ ih₂ =>
-    simp only [profRelInterp, fullRelInterp,
+    simp only [biRelInterp, fullRelInterp,
       ih₁, ih₂]
 
-/-- The graph specialization of `profRelInterp`:
+/-- The graph specialization of `biRelInterp`:
 at `graphRelOp f` and `graphRel g`,
-`profRelInterp` recovers `profMap f g`. The dual
+`biRelInterp` recovers `profMap f g`. The dual
 statement with swapped arguments is proved
 simultaneously, as the two are mutually dependent
 in the `arrow` case. -/
-theorem TypeExpr.profRelInterp_graphRel
+theorem TypeExpr.biRelInterp_graphRel
     (T : TypeExpr) {A A' B B' : Type}
     (f : A' → A) (g : B → B') :
-    T.profRelInterp (graphRelOp f) (graphRel g) =
+    T.biRelInterp (graphRelOp f) (graphRel g) =
         graphRel (T.profMap f g) ∧
-    T.profRelInterp (graphRel g) (graphRelOp f) =
+    T.biRelInterp (graphRel g) (graphRelOp f) =
         graphRelOp (T.profMap g f) := by
   induction T generalizing A A' B B' with
   | var => exact ⟨rfl, rfl⟩
   | app F T' ih =>
     obtain ⟨ih1, ih2⟩ := ih f g
     exact ⟨
-      by simp only [profRelInterp, profMap, ih1,
+      by simp only [biRelInterp, profMap, ih1,
           functorRelLift_graphRel],
-      by simp only [profRelInterp, profMap, ih2,
+      by simp only [biRelInterp, profMap, ih2,
           functorRelLift_graphRelOp]⟩
   | arrow T₁ T₂ ih₁ ih₂ =>
     obtain ⟨ih₁1, ih₁2⟩ := ih₁ f g
     obtain ⟨ih₂1, ih₂2⟩ := ih₂ f g
     refine ⟨?_, ?_⟩
     · ext h₀ h₁
-      simp only [profRelInterp, arrowRel, ih₁2,
+      simp only [biRelInterp, arrowRel, ih₁2,
         ih₂1, graphRelOp, graphRel, profMap]
       constructor
       · intro hrel
@@ -3318,7 +3318,7 @@ theorem TypeExpr.profRelInterp_graphRel
         rw [← ha]
         exact congr_fun heq a₁
     · ext h₀ h₁
-      simp only [profRelInterp, arrowRel, ih₁1,
+      simp only [biRelInterp, arrowRel, ih₁1,
         ih₂2, graphRel, graphRelOp, profMap]
       constructor
       · intro hrel
@@ -3327,6 +3327,19 @@ theorem TypeExpr.profRelInterp_graphRel
       · intro heq a₀ a₁ ha
         rw [← ha]
         exact congr_fun heq a₀
+
+/-- The relational interpretation of a type
+expression `T` with profunctor-convention
+relations. Given `R : A' → A → Prop` (the first
+relation in the opposite direction) and a covariant
+relation `S : B → B' → Prop`,
+`T.profRelInterp R S` is
+`T.biRelInterp (Function.swap R) S`. -/
+def TypeExpr.profRelInterp
+    (T : TypeExpr) {A A' B B' : Type}
+    (R : A' → A → Prop) (S : B → B' → Prop) :
+    T.interp A B → T.interp A' B' → Prop :=
+  T.biRelInterp (Function.swap R) S
 
 /-- The relational interpretation of a leaf
 `app F var` reduces to `graphRel (F.map f)`. -/
