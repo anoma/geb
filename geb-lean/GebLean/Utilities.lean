@@ -1,4 +1,5 @@
 import GebLean.Utilities.Category
+import GebLean.Utilities.DaggerCategory
 import GebLean.Utilities.ConnectedComponents
 import GebLean.Utilities.ConnectedGrothendieck
 import GebLean.Utilities.EndsAndCoends
