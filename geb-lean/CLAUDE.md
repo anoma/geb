@@ -44,6 +44,9 @@ When making changes to Lean code:
    Never use `lake clean` -- Lake is good at figuring out dependencies;
    `lake clean` would just undo the mathlib build and make the next
    build take a huge amount of time rebuilding mathlib needlessly.
+   Never use `lake env lean`; it fails to pick up options from
+   our `lakefile`.  It will produce spurious errors.  Always use
+   `lake build` and `lake test`.
 2. **Iterate on errors**: If the build fails, fix errors yourself and rebuild
    before proposing a change.
 3. **No warnings or sorry**: Code must build **without any warnings**,
