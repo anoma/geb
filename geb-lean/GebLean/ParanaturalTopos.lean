@@ -2474,6 +2474,13 @@ def graphRel {A B : Type} (f : A → B)
     (a : A) (b : B) : Prop :=
   f a = b
 
+/-- The opposite graph of a function `f : B → A`,
+viewed as a relation `A → B → Prop`.
+`graphRelOp f a b` holds iff `f b = a`. -/
+def graphRelOp {A B : Type} (f : B → A)
+    (a : A) (b : B) : Prop :=
+  f b = a
+
 /-- The relational interpretation of the function
 type constructor. Given a relation `R` on inputs
 and `S` on outputs, `arrowRel R S g₀ g₁` holds
@@ -2771,6 +2778,41 @@ theorem functorRelLift_graphRel
         (F.map e x) = y
       rw [← FunctorToTypes.map_comp_apply]
       exact h
+
+/-- When the relation is the opposite graph of a
+function `f : B → A`, the relation lifting reduces
+to the opposite graph of `F.map f`. -/
+@[simp]
+theorem functorRelLift_graphRelOp
+    (F : Type ⥤ Type) {A B : Type}
+    (f : B → A) :
+    functorRelLift F (graphRelOp f) =
+    graphRelOp (F.map f) := by
+  ext x y
+  simp only [functorRelLift, graphRelOp]
+  constructor
+  · rintro ⟨w, hw₁, hw₂⟩
+    rw [← hw₁, ← hw₂]
+    have h₁ : (fun s : { p : A × B //
+        f p.2 = p.1 } => s.val.1) =
+        f ∘ fun s => s.val.2 := by
+      ext ⟨⟨_, _⟩, h⟩; exact h.symm
+    conv_rhs => rw [h₁]
+    exact (FunctorToTypes.map_comp_apply F
+      (fun s => s.val.2) f w).symm
+  · intro h
+    let e : B → { p : A × B //
+        f p.2 = p.1 } :=
+      fun b => ⟨⟨f b, b⟩, rfl⟩
+    refine ⟨F.map e y, ?_, ?_⟩
+    · show F.map (fun s => s.val.1)
+          (F.map e y) = x
+      rw [← FunctorToTypes.map_comp_apply]
+      exact h
+    · show F.map (fun s => s.val.2)
+          (F.map e y) = y
+      rw [← FunctorToTypes.map_comp_apply]
+      exact FunctorToTypes.map_id_apply F y
 
 /-- The identity functor `𝟭 Type` does not change
 the relation: `functorRelLift (𝟭 Type) R = R`. -/
@@ -3201,6 +3243,90 @@ theorem TypeExpr.fullRelInterp_graphRel
     simp only [fullRelInterp, relInterp, ih]
   | arrow T₁ T₂ ih₁ ih₂ =>
     simp only [fullRelInterp, relInterp, ih₁, ih₂]
+
+/-- The profunctorial relational interpretation of
+a type expression `T`. Given a contravariant
+relation `R : A → A' → Prop` and a covariant
+relation `S : B → B' → Prop`,
+`T.profRelInterp R S` is a relation
+`T.interp A B → T.interp A' B' → Prop`. This
+generalizes both `fullRelInterp` (diagonal case:
+`profRelInterp R R = fullRelInterp R`) and
+`profMap` (graph case: see
+`profRelInterp_graphRel`). -/
+def TypeExpr.profRelInterp
+    (T : TypeExpr) {A A' B B' : Type}
+    (R : A → A' → Prop) (S : B → B' → Prop) :
+    T.interp A B → T.interp A' B' → Prop :=
+  match T with
+  | .var => S
+  | .app F T' =>
+    functorRelLift F (T'.profRelInterp R S)
+  | .arrow T₁ T₂ =>
+    arrowRel (T₁.profRelInterp S R)
+      (T₂.profRelInterp R S)
+
+/-- The diagonal specialization of `profRelInterp`:
+when both arguments are the same relation `R`,
+`profRelInterp R R` equals `fullRelInterp R`. -/
+theorem TypeExpr.profRelInterp_diag
+    (T : TypeExpr) {I₀ I₁ : Type}
+    (R : I₀ → I₁ → Prop) :
+    T.profRelInterp R R = T.fullRelInterp R := by
+  induction T with
+  | var => rfl
+  | app F T' ih =>
+    simp only [profRelInterp, fullRelInterp, ih]
+  | arrow T₁ T₂ ih₁ ih₂ =>
+    simp only [profRelInterp, fullRelInterp,
+      ih₁, ih₂]
+
+/-- The graph specialization of `profRelInterp`:
+at `graphRelOp f` and `graphRel g`,
+`profRelInterp` recovers `profMap f g`. The dual
+statement with swapped arguments is proved
+simultaneously, as the two are mutually dependent
+in the `arrow` case. -/
+theorem TypeExpr.profRelInterp_graphRel
+    (T : TypeExpr) {A A' B B' : Type}
+    (f : A' → A) (g : B → B') :
+    T.profRelInterp (graphRelOp f) (graphRel g) =
+        graphRel (T.profMap f g) ∧
+    T.profRelInterp (graphRel g) (graphRelOp f) =
+        graphRelOp (T.profMap g f) := by
+  induction T generalizing A A' B B' with
+  | var => exact ⟨rfl, rfl⟩
+  | app F T' ih =>
+    obtain ⟨ih1, ih2⟩ := ih f g
+    exact ⟨
+      by simp only [profRelInterp, profMap, ih1,
+          functorRelLift_graphRel],
+      by simp only [profRelInterp, profMap, ih2,
+          functorRelLift_graphRelOp]⟩
+  | arrow T₁ T₂ ih₁ ih₂ =>
+    obtain ⟨ih₁1, ih₁2⟩ := ih₁ f g
+    obtain ⟨ih₂1, ih₂2⟩ := ih₂ f g
+    refine ⟨?_, ?_⟩
+    · ext h₀ h₁
+      simp only [profRelInterp, arrowRel, ih₁2,
+        ih₂1, graphRelOp, graphRel, profMap]
+      constructor
+      · intro hrel
+        funext a₁
+        exact hrel (T₁.profMap g f a₁) a₁ rfl
+      · intro heq a₀ a₁ ha
+        rw [← ha]
+        exact congr_fun heq a₁
+    · ext h₀ h₁
+      simp only [profRelInterp, arrowRel, ih₁1,
+        ih₂2, graphRel, graphRelOp, profMap]
+      constructor
+      · intro hrel
+        funext a₀
+        exact hrel a₀ (T₁.profMap f g a₀) rfl
+      · intro heq a₀ a₁ ha
+        rw [← ha]
+        exact congr_fun heq a₀
 
 /-- The relational interpretation of a leaf
 `app F var` reduces to `graphRel (F.map f)`. -/
