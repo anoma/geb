@@ -275,18 +275,18 @@ already taken, while the other (D ⥤ SetoidBundle) tracks equivalences explicit
 structure SetoidEquivalence (D : Type*) [Category D]
     (P : Type*) [Category P] where
   /-- The functor from P to setoid-valued copresheaves. -/
-  toSetoidCopresheaf : P ⥤ (D ⥤ SetoidBundle)
+  toSetoidCopresheaf : P ⥤ (D ⥤ SetoidBundle.{u})
   /-- The density functor from setoid-valued copresheaves to P. -/
-  fromSetoidCopresheaf : (D ⥤ SetoidBundle) ⥤ P
+  fromSetoidCopresheaf : (D ⥤ SetoidBundle.{u}) ⥤ P
   /-- The counit is a strict natural isomorphism (P has quotients). -/
   counitIso : toSetoidCopresheaf ⋙ fromSetoidCopresheaf ≅ 𝟭 P
   /-- The unit component for each functor F is a setoid natural isomorphism. -/
-  unitIso : ∀ F : D ⥤ SetoidBundle,
+  unitIso : ∀ F : D ⥤ SetoidBundle.{u},
     SetoidNatIso F (toSetoidCopresheaf.obj (fromSetoidCopresheaf.obj F))
   /-- Naturality of the unit with respect to morphisms in D ⥤ SetoidBundle,
       up to setoid equivalence. For α : F ⟶ G and each object A : D,
       the diagram commutes up to the setoid relation on the target. -/
-  unit_naturality_rel : ∀ {F G : D ⥤ SetoidBundle} (α : F ⟶ G) (A : D)
+  unit_naturality_rel : ∀ {F G : D ⥤ SetoidBundle.{u}} (α : F ⟶ G) (A : D)
     (x : (F.obj A).carrier),
     ((toSetoidCopresheaf.obj (fromSetoidCopresheaf.obj G)).obj A).rel.r
       (((unitIso G).hom.app A).comp (α.app A) x)

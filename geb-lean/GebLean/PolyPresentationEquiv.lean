@@ -2290,7 +2290,6 @@ theorem setoidCounitQuotient_inv_hom_id (A : D) :
       CoequalizerData.π, typeCoeqπ]
     apply Quotient.sound
     rw [setoidCounit_inverse_forward]
-    exact (F.obj A).rel.refl x
 
 /--
 Round-trip: forward ∘ inverse = id at quotient level.
