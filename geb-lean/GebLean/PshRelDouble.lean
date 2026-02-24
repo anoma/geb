@@ -1,3 +1,4 @@
+import GebLean.Utilities.DaggerCategory
 import GebLean.Utilities.Skeleton
 import GebLean.Utilities.Presheaf
 import GebLean.Utilities.DoubleCategory
@@ -441,6 +442,156 @@ def pshRelGraphFunctor :
   map_comp α β := (pshRelGraph_comp α β).symm
 
 end PshRelCategory
+
+section PshRelDagger
+
+/-- The swap natural transformation `P × Q ⟶ Q × P`. -/
+def pshProdSwap
+    (P Q : Cᵒᵖ ⥤ Type w) :
+    pshProdPresheaf P Q ⟶
+      pshProdPresheaf Q P :=
+  pshProdLift (pshProdSnd P Q) (pshProdFst P Q)
+
+@[simp]
+theorem pshProdSwap_fst
+    (P Q : Cᵒᵖ ⥤ Type w) :
+    pshProdSwap P Q ≫ pshProdFst Q P =
+      pshProdSnd P Q := by
+  simp [pshProdSwap, pshProdLift]
+
+@[simp]
+theorem pshProdSwap_snd
+    (P Q : Cᵒᵖ ⥤ Type w) :
+    pshProdSwap P Q ≫ pshProdSnd Q P =
+      pshProdFst P Q := by
+  simp [pshProdSwap, pshProdLift]
+
+@[simp]
+theorem pshProdSwap_comp
+    (P Q : Cᵒᵖ ⥤ Type w) :
+    pshProdSwap P Q ≫ pshProdSwap Q P =
+      𝟙 (pshProdPresheaf P Q) := by
+  apply pshProdPresheaf_hom_ext <;>
+  simp [pshProdSwap, pshProdLift]
+
+/-- The dagger of an object in `PshProdOver P Q`:
+reorder the two projections to get an object of
+`PshProdOver Q P`. -/
+def pshProdOverDagger
+    {P Q : Cᵒᵖ ⥤ Type w}
+    (R : PshProdOver P Q) :
+    PshProdOver Q P :=
+  Over.mk (R.hom ≫ pshProdSwap P Q)
+
+/-- `pshProdOverDagger` sends isomorphisms to
+isomorphisms. -/
+def pshProdOverDagger_iso
+    {P Q : Cᵒᵖ ⥤ Type w}
+    {R₁ R₂ : PshProdOver P Q}
+    (α : R₁ ≅ R₂) :
+    pshProdOverDagger R₁ ≅
+      pshProdOverDagger R₂ :=
+  Over.isoMk ((Over.forget _).mapIso α) (by
+    simp only [pshProdOverDagger, Over.mk_hom,
+      Functor.mapIso_hom, Over.forget_map,
+      ← Category.assoc, Over.w α.hom])
+
+/-- The dagger at the `PshProdOver` level is
+involutive. -/
+theorem pshProdOverDagger_dagger
+    {P Q : Cᵒᵖ ⥤ Type w}
+    (R : PshProdOver P Q) :
+    pshProdOverDagger (pshProdOverDagger R) = R := by
+  simp only [pshProdOverDagger, Over.mk_hom,
+    Category.assoc, pshProdSwap_comp]
+  rfl
+
+/-- The dagger of the identity span is the identity
+span. -/
+theorem pshProdOverDagger_id
+    (P : Cᵒᵖ ⥤ Type w) :
+    pshProdOverDagger (pshProdOverId P) =
+      pshProdOverId P := by
+  simp only [pshProdOverDagger, pshProdOverId,
+    Over.mk_hom]
+  congr 1
+
+/-- The dagger reverses composition, up to
+isomorphism. -/
+def pshProdOverDagger_comp
+    {P Q W : Cᵒᵖ ⥤ Type w}
+    (R : PshProdOver P Q)
+    (S : PshProdOver Q W) :
+    pshProdOverDagger (pshProdOverComp R S) ≅
+      pshProdOverComp
+        (pshProdOverDagger S)
+        (pshProdOverDagger R) :=
+  Over.isoMk
+    (presheafPullbackSymIso
+      (R.hom ≫ pshProdSnd P Q)
+      (S.hom ≫ pshProdFst Q W))
+    (by
+      simp only [pshProdOverDagger, pshProdOverComp,
+        Over.mk_hom, Category.assoc,
+        pshProdSwap_fst, pshProdSwap_snd]
+      apply pshProdPresheaf_hom_ext
+      · exact presheafPullbackSymIso_hom_fst_assoc
+            (R.hom ≫ pshProdSnd P Q)
+            (S.hom ≫ pshProdFst Q W)
+            (S.hom ≫ pshProdSnd Q W)
+      · exact presheafPullbackSymIso_hom_snd_assoc
+            (R.hom ≫ pshProdSnd P Q)
+            (S.hom ≫ pshProdFst Q W)
+            (R.hom ≫ pshProdFst P Q))
+
+/-- The dagger operation on `PshRel P Q`:
+swaps the two presheaves to give `PshRel Q P`. -/
+def pshRelDagger
+    {P Q : Cᵒᵖ ⥤ Type w} :
+    PshRel P Q → PshRel Q P :=
+  Skeleton.lift
+    (fun R => toSkeleton _ (pshProdOverDagger R))
+    (fun _ _ ⟨α⟩ =>
+      toSkeleton_eq_iff.mpr ⟨pshProdOverDagger_iso α⟩)
+
+theorem pshRelDagger_dagger
+    {P Q : Cᵒᵖ ⥤ Type w}
+    (R : PshRel P Q) :
+    pshRelDagger (pshRelDagger R) = R := by
+  induction R using Quotient.inductionOn with
+  | h R' =>
+    exact toSkeleton_eq_iff.mpr
+      ⟨eqToIso (pshProdOverDagger_dagger R')⟩
+
+theorem pshRelDagger_id
+    (P : Cᵒᵖ ⥤ Type w) :
+    pshRelDagger (pshRelId P) = pshRelId P := by
+  exact toSkeleton_eq_iff.mpr
+    ⟨eqToIso (pshProdOverDagger_id P)⟩
+
+theorem pshRelDagger_comp
+    {P Q W : Cᵒᵖ ⥤ Type w}
+    (R : PshRel P Q) (S : PshRel Q W) :
+    pshRelDagger (pshRelComp R S) =
+      pshRelComp (pshRelDagger S)
+        (pshRelDagger R) := by
+  induction R using Quotient.inductionOn with
+  | h R' =>
+  induction S using Quotient.inductionOn with
+  | h S' =>
+    exact toSkeleton_eq_iff.mpr
+      ⟨pshProdOverDagger_comp R' S'⟩
+
+/-- `PshRelCat C` is a dagger category, with the
+dagger given by `pshRelDagger`. -/
+instance : DaggerCategory
+    (PshRelCat.{u, v, w} (C := C)) where
+  dagger R := pshRelDagger R
+  dagger_id X := pshRelDagger_id X.obj
+  dagger_comp R S := pshRelDagger_comp R S
+  dagger_involutive R := pshRelDagger_dagger R
+
+end PshRelDagger
 
 section PshRelatedMorphisms
 

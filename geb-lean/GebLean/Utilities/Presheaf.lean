@@ -457,6 +457,53 @@ theorem presheafPullbackAssocIso_hom_snd_snd
   simp [presheafPullbackAssocIso,
     presheafPullbackLift]
 
+/-- Symmetry of the presheaf pullback:
+`pullback f g ≅ pullback g f`. -/
+def presheafPullbackSymIso
+    (f : F ⟶ H) (g : G ⟶ H) :
+    presheafPullback f g ≅
+      presheafPullback g f where
+  hom :=
+    presheafPullbackLift g f
+      (presheafPullbackSnd f g)
+      (presheafPullbackFst f g)
+      (presheafPullbackCondition f g).symm
+  inv :=
+    presheafPullbackLift f g
+      (presheafPullbackSnd g f)
+      (presheafPullbackFst g f)
+      (presheafPullbackCondition g f).symm
+  hom_inv_id := by
+    apply PullbackCone.IsLimit.hom_ext
+      (presheafPullbackIsLimit f g) <;>
+    simp only [Category.id_comp, Category.assoc,
+      PullbackCone.IsLimit.lift_fst,
+      PullbackCone.IsLimit.lift_snd]
+  inv_hom_id := by
+    apply PullbackCone.IsLimit.hom_ext
+      (presheafPullbackIsLimit g f) <;>
+    simp only [Category.id_comp, Category.assoc,
+      PullbackCone.IsLimit.lift_fst,
+      PullbackCone.IsLimit.lift_snd]
+
+@[reassoc (attr := simp)]
+theorem presheafPullbackSymIso_hom_fst
+    (f : F ⟶ H) (g : G ⟶ H) :
+    (presheafPullbackSymIso f g).hom ≫
+      presheafPullbackFst g f =
+    presheafPullbackSnd f g := by
+  simp only [presheafPullbackSymIso,
+    PullbackCone.IsLimit.lift_fst]
+
+@[reassoc (attr := simp)]
+theorem presheafPullbackSymIso_hom_snd
+    (f : F ⟶ H) (g : G ⟶ H) :
+    (presheafPullbackSymIso f g).hom ≫
+      presheafPullbackSnd g f =
+    presheafPullbackFst f g := by
+  simp only [presheafPullbackSymIso,
+    PullbackCone.IsLimit.lift_snd]
+
 end PresheafPullback
 
 section CoyonedaIso
