@@ -205,9 +205,9 @@ The hom-object `[p, q]` is constructed in stages:
   - [x] Factorization proof (lift ≫ proj = m)
   - [x] Uniqueness proof
   - [x] `IsLimit` / `Fan` / `mkFanLimit` / `HasProducts` assembly
-- [ ] Implement arbitrary-indexed coproducts with `IsColimit` proof
-- [ ] Implement binary equalizers with `IsLimit` proof
-- [ ] Implement binary coequalizers with `IsColimit` proof
-- [ ] Derive `HasLimits` / `HasColimits` instances
-- [ ] Implement exponential objects with `Closed` instance
-- [ ] Implement left Kan extensions with `IsLeftKanExtension` proof
+- [x] Implement arbitrary-indexed coproducts with `IsColimit` proof
+- [x] Implement binary equalizers with `IsLimit` proof
+- [x] Implement binary coequalizers with `IsColimit` proof
+- [x] Derive `HasLimits` / `HasColimits` instances
+- [x] Implement exponential objects with `Closed` instance
+- [x] Implement left Kan extensions with adjunction proof

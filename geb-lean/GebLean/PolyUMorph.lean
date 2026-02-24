@@ -3728,4 +3728,520 @@ theorem pbCurry_uncurry
 
 end CurryingAdjunction
 
+section MonoidalClosedInstance
+
+variable {X Y : Type u}
+
+def pbHomEquiv
+    (Q R S : PolyFunctorBetweenCat.{u, u} X Y) :
+    ((MonoidalCategory.tensorLeft Q).obj R ⟶ S)
+      ≃
+    (R ⟶ (polyBetweenHomFunctor Q).obj S) where
+  toFun := pbCurry Q R S
+  invFun := pbUncurry Q R S
+  left_inv := pbUncurry_curry Q R S
+  right_inv := pbCurry_uncurry Q R S
+
+private lemma cast_flipEither_fst
+    (a : Over X) {x1 x2 : X} (hx : x1 = x2)
+    {h : ccrIndex (polyBetweenFlipEither a x1) =
+      ccrIndex (polyBetweenFlipEither a x2)}
+    (d : ccrIndex
+      (polyBetweenFlipEither a x1)) :
+    (cast h d).fst = d.fst := by
+  subst hx; rfl
+
+private lemma cast_flipEither_inl
+    (a : Over X) {x1 x2 : X} (hx : x1 = x2)
+    {h : ccrIndex (polyBetweenFlipEither a x1) =
+      ccrIndex (polyBetweenFlipEither a x2)} :
+    cast h
+      ⟨Sum.inl PUnit.unit, PUnit.unit⟩ =
+    (⟨Sum.inl PUnit.unit, PUnit.unit⟩ :
+      ccrIndex
+        (polyBetweenFlipEither a x2)) := by
+  subst hx; rfl
+
+private lemma cast_flipEither_inr
+    (a : Over X) {x1 x2 : X} (hx : x1 = x2)
+    (v : a.left)
+    {hpf1 : a.hom v = x1}
+    {hpf2 : a.hom v = x2}
+    {h : ccrIndex (polyBetweenFlipEither a x1) =
+      ccrIndex (polyBetweenFlipEither a x2)} :
+    cast h
+      ⟨Sum.inr PUnit.unit, ⟨v, hpf1⟩⟩ =
+    (⟨Sum.inr PUnit.unit, ⟨v, hpf2⟩⟩ :
+      ccrIndex
+        (polyBetweenFlipEither a x2)) := by
+  subst hx; rfl
+
+private lemma pbHomEquiv_nat_right_base
+    (Q : PolyFunctorBetweenCat.{u, u} X Y)
+    {R S S' : PolyFunctorBetweenCat.{u, u} X Y}
+    (alpha :
+      (MonoidalCategory.tensorLeft Q).obj R ⟶ S)
+    (g : S ⟶ S') (y : Y) :
+    (pbCurry Q R S' (alpha ≫ g) y).base =
+    ((pbCurry Q R S alpha ≫
+      polyBetweenHomMap Q g) y).base := by
+  change pbCurryReindex Q R S'
+    (alpha ≫ g) y =
+    pbCurryReindex Q R S alpha y ≫
+      ccrReindex (ccrCoprHomMap (Q y) (g y))
+  funext ir
+  simp only [types_comp_apply]
+  funext iq
+  dsimp only [ccrCoprHomMap, ccrRepHomMap,
+    polyBetweenWhiskerRight, ccrHomMk,
+    ccrReindex]
+  simp only [pbCurryReindex,
+    polyBetweenWhiskerRightReindex]
+  refine Sigma.ext rfl ?_
+  simp only [heq_eq_eq]
+  funext eg
+  simp only [pbCurryDirBundle, pbCurryDirBundleAux]
+  have hd :
+    (ccrFiberMor ((alpha ≫ g) y)
+      (pbProdPos Q R y iq ir)).left eg =
+    (ccrFiberMor (alpha y)
+      (pbProdPos Q R y iq ir)).left
+      ((ccrFiberMor (g y)
+        (ccrReindex (alpha y)
+          (pbProdPos Q R y iq ir))).left
+        eg) :=
+    congrFun
+      (congrArg (·.left)
+        (ccrComp_fiberMor (alpha y) (g y)
+          (pbProdPos Q R y iq ir)))
+      eg
+  split
+  · rename_i x_eq d_eq hg_eq val_L v_L hcomm_L
+      heq_d heq_hg
+    split
+    · rename_i _ _ _ val_R v_R hcomm_R
+        heq_d_R _
+      have h_sigma := heq_d.symm.trans
+        (hd.trans heq_d_R)
+      have h_v := eq_of_heq
+        (Sigma.mk.inj h_sigma).2
+      subst h_v
+      have hv := Subsingleton.elim val_L val_R
+      subst hv
+      have hx' := hcomm_L.symm.trans hcomm_R
+      simp only []
+      exact (cast_flipEither_inr
+        (ccrFamily (Q y) iq) hx'.symm v_L).symm
+    · rename_i _ _ _ _ w_R hcomm_R heq_d_R _
+      have h := heq_d.symm.trans
+        (hd.trans heq_d_R)
+      exact absurd
+        (congrArg (fun x => x.1) h)
+        (by simp)
+  · rename_i x_eq d_eq hg_eq val_L w_L hcomm_L
+      heq_d heq_hg
+    split
+    · rename_i _ _ _ _ v_R hcomm_R heq_d_R _
+      have h := heq_d.symm.trans
+        (hd.trans heq_d_R)
+      exact absurd
+        (congrArg (fun x => x.1) h)
+        (by simp)
+    · rename_i _ _ _ val_R w_R hcomm_R
+        heq_d_R _
+      have h_sigma := heq_d.symm.trans
+        (hd.trans heq_d_R)
+      have h_w := eq_of_heq
+        (Sigma.mk.inj h_sigma).2
+      subst h_w
+      have hv := Subsingleton.elim val_L val_R
+      subst hv
+      have hx' := hcomm_L.symm.trans hcomm_R
+      simp only []
+      exact (cast_flipEither_inl
+        (ccrFamily (Q y) iq) hx'.symm).symm
+
+private lemma pbCurryDirBundleAux_val_eq
+    (Q R : PolyFunctorBetweenCat.{u, u} X Y)
+    {S S' : PolyFunctorBetweenCat.{u, u} X Y}
+    {alpha : pbBinaryProdObj Q R ⟶ S}
+    {alpha' : pbBinaryProdObj Q R ⟶ S'}
+    {y : Y} {ir : ccrIndex (R y)}
+    {iq : ccrIndex (Q y)}
+    {eg₁ : (ccrFamily (S y)
+      (ccrReindex (alpha y)
+        (pbProdPos Q R y iq ir))).left}
+    {eg₂ : (ccrFamily (S' y)
+      (ccrReindex (alpha' y)
+        (pbProdPos Q R y iq ir))).left}
+    (d : (ccrFamily (pbBinaryProdObj Q R y)
+      (pbProdPos Q R y iq ir)).left)
+    {hg₁ : (ccrFamily (pbBinaryProdObj Q R y)
+      (pbProdPos Q R y iq ir)).hom d =
+      (ccrFamily (S y)
+        (ccrReindex (alpha y)
+          (pbProdPos Q R y iq ir))).hom eg₁}
+    {hg₂ : (ccrFamily (pbBinaryProdObj Q R y)
+      (pbProdPos Q R y iq ir)).hom d =
+      (ccrFamily (S' y)
+        (ccrReindex (alpha' y)
+          (pbProdPos Q R y iq ir))).hom eg₂}
+    (x₁ : (ccrFamily
+      (polyBetweenFlipEither
+        (ccrFamily (Q y) iq)
+        ((ccrFamily (S y)
+          (ccrReindex (alpha y)
+            (pbProdPos Q R y iq ir))).hom
+              eg₁))
+      (pbCurryDirBundleAux Q R S alpha
+        y ir iq eg₁ d hg₁).fst).left)
+    (x₂ : (ccrFamily
+      (polyBetweenFlipEither
+        (ccrFamily (Q y) iq)
+        ((ccrFamily (S' y)
+          (ccrReindex (alpha' y)
+            (pbProdPos Q R y iq ir))).hom
+              eg₂))
+      (pbCurryDirBundleAux Q R S' alpha'
+        y ir iq eg₂ d hg₂).fst).left) :
+    (pbCurryDirBundleAux Q R S alpha
+      y ir iq eg₁ d hg₁).snd.val x₁ =
+    (pbCurryDirBundleAux Q R S' alpha'
+      y ir iq eg₂ d hg₂).snd.val x₂ := by
+  match d with
+  | ⟨Sum.inl _, _⟩ => exact PEmpty.elim x₁
+  | ⟨Sum.inr _, _⟩ => rfl
+
+private lemma pbUncurry_comp_homMap_fiber_aux
+    (Q R S : PolyFunctorBetweenCat.{u, u} X Y)
+    {S' : PolyFunctorBetweenCat.{u, u} X Y}
+    (beta : R ⟶ polyBetweenHomObj Q S)
+    (g : S ⟶ S') (y : Y)
+    (p : ccrIndex (pbBinaryProdObj Q R y)) :
+    ccrFiberMor
+      (pbUncurry Q R S'
+        (beta ≫ polyBetweenHomMap Q g) y) p =
+    ccrFiberMor (g y)
+      (pbUncurryReindex Q R S beta y p) ≫
+    ccrFiberMor
+      (pbUncurry Q R S beta y) p := by
+  ext eg
+  change (pbUncurryDirBundle Q R S'
+      (beta ≫ polyBetweenHomMap Q g) y p eg).val =
+    (pbUncurryDirBundle Q R S beta y p
+      ((ccrFiberMor (g y)
+        (pbUncurryReindex Q R S beta y p)).left
+        eg)).val
+  set iq := p (Sum.inl PUnit.unit)
+  set ir := p (Sum.inr PUnit.unit)
+  set pos := ((ccrReindex (beta y) ir) iq).fst
+  set eg' := (ccrFiberMor (g y) pos).left eg
+  have h_disc :
+      ((ccrReindex
+        ((beta ≫ polyBetweenHomMap Q g) y) ir)
+        iq).snd eg =
+      cast (congrArg (fun z =>
+        ccrIndex (polyBetweenFlipEither
+          (ccrFamily (Q y) iq) z))
+        (congrFun (Over.w
+          (ccrFiberMor (g y) pos)) eg))
+      (((ccrReindex (beta y) ir) iq).snd eg') := by
+    change (polyBetweenWhiskerRightReindex
+      (polyBetweenFlipEither
+        (ccrFamily (Q y) iq))
+      (fun _ => (g y)) PUnit.unit
+      ((ccrReindex (beta y) ir) iq)).snd eg =
+      _
+    unfold polyBetweenWhiskerRightReindex
+    rfl
+  have h_fst :
+      (((ccrReindex
+        ((beta ≫ polyBetweenHomMap Q g) y) ir)
+        iq).snd eg).fst =
+      (((ccrReindex (beta y) ir)
+        iq).snd eg').fst := by
+    have := congrArg Sigma.fst h_disc
+    rwa [cast_flipEither_fst
+      (ccrFamily (Q y) iq)
+      (congrFun (Over.w
+        (ccrFiberMor (g y) pos)) eg)] at this
+  unfold pbUncurryDirBundle
+  dsimp only []
+  split <;> split
+  · rename_i _ _ heqL _ _ heqR
+    refine Sigma.ext rfl (heq_of_eq ?_)
+    change (ccrFiberMor
+      ((beta ≫ polyBetweenHomMap Q g) y)
+      (p (Sum.inr PUnit.unit))).left
+      ⟨p (Sum.inl PUnit.unit),
+        ⟨eg, _⟩⟩ =
+      (ccrFiberMor (beta y)
+      (p (Sum.inr PUnit.unit))).left
+      ⟨p (Sum.inl PUnit.unit),
+        ⟨eg', _⟩⟩
+    conv_lhs =>
+      rw [show ccrFiberMor
+        ((beta ≫ polyBetweenHomMap Q g) y)
+        (p (Sum.inr PUnit.unit)) =
+        ccrFiberMor (ccrCoprHomMap (Q y) (g y))
+          (ccrReindex (beta y)
+            (p (Sum.inr PUnit.unit))) ≫
+        ccrFiberMor (beta y)
+          (p (Sum.inr PUnit.unit)) from
+        ccrComp_fiberMor _ _ _]
+    change (ccrFiberMor (beta y) ir).left
+      ((ccrFiberMor (ccrCoprHomMap (Q y) (g y))
+        (ccrReindex (beta y) ir)).left
+        ⟨iq, ⟨eg, _⟩⟩) =
+      (ccrFiberMor (beta y) ir).left
+        ⟨iq, ⟨eg', _⟩⟩
+    apply congrArg
+      ((ccrFiberMor (beta y)
+        (p (Sum.inr PUnit.unit))).left)
+    simp only [ccrCoprHomMap_fiberMor]
+    unfold overCoprodMap
+    simp only [Over.homMk_left]
+    congr 1
+    change polyBetweenWhiskerRightFiberLeft
+      (polyBetweenFlipEither (ccrFamily (Q y) iq))
+      (fun _ : PUnit.{u + 1} => g y)
+      PUnit.unit
+      (ccrReindex (beta y) ir iq)
+      ⟨eg, _⟩ = ⟨eg', _⟩
+    unfold polyBetweenWhiskerRightFiberLeft
+    dsimp only []
+    congr 1
+    simp only [eq_mpr_eq_cast]
+    rw [cast_cast]
+  · rename_i _ _ heqL _ _ _ heqR
+    exfalso
+    have h1 := h_fst
+    rw [show (((ccrReindex
+        ((beta ≫ polyBetweenHomMap Q g) y)
+        (p (Sum.inr PUnit.unit)))
+        (p (Sum.inl PUnit.unit))).snd eg).fst =
+        Sum.inl PUnit.unit from
+      congrArg Sigma.fst heqL] at h1
+    rw [show (((ccrReindex (beta y)
+        (p (Sum.inr PUnit.unit)))
+        (p (Sum.inl PUnit.unit))).snd eg').fst =
+        Sum.inr PUnit.unit from
+      congrArg Sigma.fst heqR] at h1
+    exact absurd h1
+      (by intro h; exact nomatch h)
+  · rename_i _ _ _ heqL _ _ heqR
+    exfalso
+    have h1 := h_fst
+    rw [show (((ccrReindex
+        ((beta ≫ polyBetweenHomMap Q g) y)
+        (p (Sum.inr PUnit.unit)))
+        (p (Sum.inl PUnit.unit))).snd eg).fst =
+        Sum.inr PUnit.unit from
+      congrArg Sigma.fst heqL] at h1
+    rw [show (((ccrReindex (beta y)
+        (p (Sum.inr PUnit.unit)))
+        (p (Sum.inl PUnit.unit))).snd eg').fst =
+        Sum.inl PUnit.unit from
+      congrArg Sigma.fst heqR] at h1
+    exact absurd h1
+      (by intro h; exact nomatch h)
+  · rename_i _ v₁ _ heqL _ v₂ hv₂ heqR
+    have h1 := h_disc
+    rw [show ((ccrReindex
+        ((beta ≫ polyBetweenHomMap Q g) y)
+        (p (Sum.inr PUnit.unit)))
+        (p (Sum.inl PUnit.unit))).snd eg =
+        ⟨Sum.inr PUnit.unit, ⟨v₁, _⟩⟩ from
+      heqL] at h1
+    rw [show ((ccrReindex (beta y)
+        (p (Sum.inr PUnit.unit)))
+        (p (Sum.inl PUnit.unit))).snd eg' =
+        ⟨Sum.inr PUnit.unit, ⟨v₂, _⟩⟩ from
+      heqR] at h1
+    rw [cast_flipEither_inr
+      (ccrFamily (Q y) iq)
+      (congrFun (Over.w
+        (ccrFiberMor (g y) pos)) eg)
+      v₂
+      (hpf1 := hv₂)
+      (hpf2 := hv₂.trans (congrFun (Over.w
+        (ccrFiberMor (g y) pos)) eg))] at h1
+    have h_v : v₁ = v₂ :=
+      congrArg Subtype.val
+        (eq_of_heq (Sigma.mk.inj h1).2)
+    subst h_v; rfl
+
+private lemma pbUncurry_comp_homMap_base
+    (Q R S : PolyFunctorBetweenCat.{u, u} X Y)
+    {S' : PolyFunctorBetweenCat.{u, u} X Y}
+    (beta : R ⟶ polyBetweenHomObj Q S)
+    (g : S ⟶ S') (y : Y) :
+    pbUncurryReindex Q R S'
+      (beta ≫ polyBetweenHomMap Q g) y =
+    ccrReindex (g y) ∘
+      pbUncurryReindex Q R S beta y := by
+  funext p
+  simp only [Function.comp_apply,
+    pbUncurryReindex]
+  rfl
+
+private lemma pbUncurry_comp_homMap_fiber
+    (Q R S : PolyFunctorBetweenCat.{u, u} X Y)
+    {S' : PolyFunctorBetweenCat.{u, u} X Y}
+    (beta : R ⟶ polyBetweenHomObj Q S)
+    (g : S ⟶ S') (y : Y)
+    (p : ccrIndex (pbBinaryProdObj Q R y)) :
+    ccrFiberMor
+      (pbUncurry Q R S'
+        (beta ≫ polyBetweenHomMap Q g) y) p =
+    eqToHom (congrArg
+      (ccrFamily (S' y))
+      (congrFun
+        (pbUncurry_comp_homMap_base
+          Q R S beta g y) p)) ≫
+    ccrFiberMor (g y)
+      (pbUncurryReindex Q R S beta y p) ≫
+    ccrFiberMor
+      (pbUncurry Q R S beta y) p := by
+  rw [eqToHom_refl, Category.id_comp]
+  exact pbUncurry_comp_homMap_fiber_aux
+    Q R S beta g y p
+
+private lemma pbUncurry_comp_homMap
+    (Q R S : PolyFunctorBetweenCat.{u, u} X Y)
+    {S' : PolyFunctorBetweenCat.{u, u} X Y}
+    (beta : R ⟶ polyBetweenHomObj Q S)
+    (g : S ⟶ S') :
+    pbUncurry Q R S'
+      (beta ≫ polyBetweenHomMap Q g) =
+    pbUncurry Q R S beta ≫ g := by
+  funext y
+  exact ccrHom_ext_subst _ _
+    (pbUncurry_comp_homMap_base
+      Q R S beta g y)
+    (pbUncurry_comp_homMap_fiber
+      Q R S beta g y)
+
+theorem pbHomEquiv_naturality_right
+    (Q : PolyFunctorBetweenCat.{u, u} X Y)
+    {R S S' : PolyFunctorBetweenCat.{u, u} X Y}
+    (alpha :
+      (MonoidalCategory.tensorLeft Q).obj R ⟶ S)
+    (g : S ⟶ S') :
+    (pbHomEquiv Q R S') (alpha ≫ g) =
+    (pbHomEquiv Q R S) alpha ≫
+      (polyBetweenHomFunctor Q).map g := by
+  apply (pbHomEquiv Q R S').symm.injective
+  simp only [Equiv.symm_apply_apply]
+  change alpha ≫ g =
+    pbUncurry Q R S'
+      (pbCurry Q R S alpha ≫
+        polyBetweenHomMap Q g)
+  rw [pbUncurry_comp_homMap]
+  simp only [pbUncurry_curry]
+
+private lemma tensorLeft_map_eq
+    (Q : PolyFunctorBetweenCat.{u, u} X Y)
+    {R' R : PolyFunctorBetweenCat.{u, u} X Y}
+    (f : R' ⟶ R) :
+    (MonoidalCategory.tensorLeft Q).map f =
+    pbBinaryLift Q R
+      (pbBinaryFst Q R') (pbBinarySnd Q R' ≫ f) := by
+  symm
+  apply pbBinaryLift_unique
+  · exact CartesianMonoidalCategory.whiskerLeft_fst
+      Q f
+  · exact CartesianMonoidalCategory.whiskerLeft_snd
+      Q f
+
+private lemma pbUncurry_comp_lift_fiber
+    (Q : PolyFunctorBetweenCat.{u, u} X Y)
+    {R' R S : PolyFunctorBetweenCat.{u, u} X Y}
+    (f : R' ⟶ R)
+    (g : R ⟶ polyBetweenHomObj Q S)
+    (y : Y)
+    (p : ccrIndex (pbBinaryProdObj Q R' y)) :
+    ccrFiberMor (pbUncurry Q R' S (f ≫ g) y) p =
+    eqToHom (congrArg (ccrFamily (S y))
+      (congrFun rfl p)) ≫
+    ccrFiberMor
+      ((pbBinaryLift Q R (pbBinaryFst Q R')
+        (pbBinarySnd Q R' ≫ f)) y ≫
+      (pbUncurry Q R S g) y) p := by
+  rw [eqToHom_refl, Category.id_comp]
+  rw [ccrComp_fiberMor]
+  ext eg
+  simp only [Over.comp_left, CategoryTheory.types_comp,
+    Function.comp_apply]
+  dsimp only [pbUncurry, pbBinaryLift,
+    polyBetweenProdLift, ccrHomMk_fiberMor,
+    ccrHomMk_reindex, pbUncurryFiberMor,
+    pbUncurryFiberLeft, polyBetweenProdLiftFiber,
+    CategoryTheory.Over.homMk,
+    CategoryTheory.CostructuredArrow.homMk]
+  set iq := p (Sum.inl PUnit.unit)
+  set ir := p (Sum.inr PUnit.unit)
+  unfold pbUncurryDirBundle
+  dsimp only []
+  split <;> split
+  · unfold polyBetweenProdLiftFiberLeft
+    rfl
+  · rename_i _ _ heqL _ _ _ heqR
+    exact absurd (heqL.symm.trans heqR)
+      (by intro h; nomatch congrArg Sigma.fst h)
+  · rename_i _ _ _ heqL _ _ heqR
+    exact absurd (heqL.symm.trans heqR)
+      (by intro h; nomatch congrArg Sigma.fst h)
+  · rename_i _ v₁ _ heqL _ v₂ _ heqR
+    have h_v : v₁ = v₂ :=
+      congrArg Subtype.val
+        (eq_of_heq (Sigma.mk.inj
+          (heqL.symm.trans heqR)).2)
+    subst h_v
+    unfold polyBetweenProdLiftFiberLeft
+    rfl
+
+theorem pbHomEquiv_naturality_left_symm
+    (Q : PolyFunctorBetweenCat.{u, u} X Y)
+    {R' R S : PolyFunctorBetweenCat.{u, u} X Y}
+    (f : R' ⟶ R)
+    (g : R ⟶ (polyBetweenHomFunctor Q).obj S) :
+    (pbHomEquiv Q R' S).symm (f ≫ g) =
+    (MonoidalCategory.tensorLeft Q).map f ≫
+      (pbHomEquiv Q R S).symm g := by
+  rw [tensorLeft_map_eq]
+  change pbUncurry Q R' S (f ≫ g) =
+    pbBinaryLift Q R
+      (pbBinaryFst Q R') (pbBinarySnd Q R' ≫ f) ≫
+      pbUncurry Q R S g
+  funext y
+  refine ccrHom_ext_subst _ _ rfl ?_
+  intro p
+  rw [eqToHom_refl, Category.id_comp]
+  exact pbUncurry_comp_lift_fiber Q f g y p
+
+def pbClosedAdj
+    (Q : PolyFunctorBetweenCat.{u, u} X Y) :
+    MonoidalCategory.tensorLeft Q ⊣
+      polyBetweenHomFunctor Q :=
+  Adjunction.mkOfHomEquiv {
+    homEquiv := pbHomEquiv Q
+    homEquiv_naturality_left_symm :=
+      pbHomEquiv_naturality_left_symm Q
+    homEquiv_naturality_right :=
+      pbHomEquiv_naturality_right Q
+  }
+
+instance pbClosed
+    (Q : PolyFunctorBetweenCat.{u, u} X Y) :
+    Closed Q where
+  rightAdj := polyBetweenHomFunctor Q
+  adj := pbClosedAdj Q
+
+instance : MonoidalClosed
+    (PolyFunctorBetweenCat.{u, u} X Y) where
+  closed := pbClosed
+
+end MonoidalClosedInstance
+
 end GebLean
