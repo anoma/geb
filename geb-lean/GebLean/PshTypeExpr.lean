@@ -1585,30 +1585,31 @@ theorem TypeExpr.pointwise_bridge
           ).inv.app d ⟨f₁⟩) :=
   (T.relInterp_bridges R choice).1 d f₀ f₁
 
-/-- Self-relatedness under `pshTypeAbsRel` implies
-the morphism-graph parametricity condition: for
-every morphism `α : P ⟶ Q`, the sections `t P` and
-`t Q` are related by `T.relInterp α`. This is the
-presheaf-category generalization of
-`typeAbsRel_self_implies_parametric`. -/
+/-- Self-relatedness under `pshTypeAbsRel` is
+equivalent to the `PshParametricFamily`
+parametricity condition, since both quantify
+over all `PshRel` with `fullRelInterp`. -/
 theorem pshTypeAbsRel_self_implies_parametric
     {T : PshTypeExpr C}
     {t : PshTypeAbs T}
     (h : pshTypeAbsRel T t t) :
     ∀ (P Q : Cᵒᵖ ⥤ Type (max u v))
-      (α : P ⟶ Q),
+      (R : PshRel P Q),
     pshRelSectionsRelated
-      (T.relInterp α) (t P) (t Q) :=
-  fun P Q α =>
-    T.fullRelInterp_graph α ▸
-      h P Q (pshRelGraph α)
+      (T.fullRelInterp R) (t P) (t Q) :=
+  h
 
 /-- A parametric family for a presheaf type
 expression `T` is a family of sections
 `app P : (T.interp P P).sections` indexed by
-presheaves `P`, such that for every morphism
-`α : P ⟶ Q`, the relational interpretation
-`T.relInterp α` relates `app P` to `app Q`.
+presheaves `P`, such that for every presheaf
+relation `R : PshRel P Q`, the full relational
+interpretation `T.fullRelInterp R` relates
+`app P` to `app Q`.
+
+This is Wadler's parametricity condition at
+presheaf level, with arbitrary presheaf
+relations (not restricted to morphism graphs).
 This is the presheaf-category generalization of
 `ParametricFamily`. -/
 @[ext]
@@ -1620,9 +1621,24 @@ structure PshParametricFamily
   /-- The parametricity condition -/
   parametric :
     ∀ (P Q : Cᵒᵖ ⥤ Type (max u v))
-      (α : P ⟶ Q),
+      (R : PshRel P Q),
     pshRelSectionsRelated
-      (T.relInterp α) (app P) (app Q)
+      (T.fullRelInterp R) (app P) (app Q)
+
+/-- Specialization of
+`PshParametricFamily.parametric` to the graph
+of a morphism: `T.fullRelInterp` at
+`pshRelGraph α` coincides with `T.relInterp α`.
+-/
+theorem PshParametricFamily.parametric_graphRel
+    {T : PshTypeExpr C}
+    (p : PshParametricFamily T)
+    {P Q : Cᵒᵖ ⥤ Type (max u v)}
+    (α : P ⟶ Q) :
+    pshRelSectionsRelated
+      (T.relInterp α) (p.app P) (p.app Q) :=
+  T.fullRelInterp_graph α ▸
+    p.parametric P Q (pshRelGraph α)
 
 /-- A `PshParametricFamily` from a self-related
 type abstraction under `pshTypeAbsRel`.
@@ -1634,8 +1650,7 @@ def PshParametricFamily.ofPshTypeAbsRel
     (h : pshTypeAbsRel T t t) :
     PshParametricFamily T where
   app := t
-  parametric :=
-    pshTypeAbsRel_self_implies_parametric h
+  parametric := h
 
 /-- The two ways of lifting a function
 `f : A → B` to a presheaf relation agree:
@@ -1692,9 +1707,8 @@ theorem ParametricFamily.toPshParametricAtRep
       (T.toInterpSection (p.app I₀))
       (T.toInterpSection (p.app I₁)) := by
   have h₁ : T.fullRelInterp (graphRel f)
-      (p.app I₀) (p.app I₁) := by
-    rw [T.fullRelInterp_graphRel]
-    exact p.parametric I₀ I₁ f
+      (p.app I₀) (p.app I₁) :=
+    p.parametric I₀ I₁ (graphRel f)
   have h₂ := (T.fullRelInterp_bridge
     (graphRel f) choice
     (p.app I₀) (p.app I₁)).mp h₁

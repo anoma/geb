@@ -77,7 +77,8 @@ def factHomToTwMorph
     (f : x ⟶ y) :
     twObjMk f.h ⟶ tw :=
   twHomMk x.ι y.π (by
-    simp [twObjMk_arr])
+    change x.ι ≫ f.h ≫ y.π = twArr tw
+    rw [f.h_π, x.ι_π])
 
 @[simp]
 lemma factHomToTwMorph_domArr
@@ -116,7 +117,8 @@ lemma factToTwMorph_eq_fromIdentity_comp
     exact (Category.comp_id _).symm
   · simp only [factToTwMorph_codArr,
       twCodArr_comp, factHomToTwMorph_codArr,
-      twObjMkFromIdentity_codArr, f.h_π]
+      twObjMkFromIdentity_codArr]
+    exact f.h_π.symm
 
 /-- `factToTwMorph` factors through `factHomToTwMorph`
 via `twObjMkFromIdentityAtCod h` on the codomain
@@ -130,7 +132,8 @@ lemma factToTwMorph_eq_fromIdentityAtCod_comp
   apply twHom_ext
   · simp only [factToTwMorph_domArr,
       twDomArr_comp, factHomToTwMorph_domArr,
-      twObjMkFromIdentityAtCod_domArr, f.ι_h]
+      twObjMkFromIdentityAtCod_domArr]
+    exact f.ι_h.symm
   · simp only [factToTwMorph_codArr,
       twCodArr_comp, factHomToTwMorph_codArr,
       twObjMkFromIdentityAtCod_codArr]
@@ -193,7 +196,7 @@ lemma factHomToTwMorph_id
     (d : Factorisation (twArr tw)) :
     factHomToTwMorph tw (𝟙 d) =
       factToTwMorph tw d := by
-  apply twHom_ext <;> simp
+  apply twHom_ext <;> rfl
 
 lemma assemblyMap_id
     (x : DecFactObj F tw) :
@@ -201,10 +204,10 @@ lemma assemblyMap_id
       𝟙 (assemblyObj F tw x) := by
   change assemblyMap F tw (decFactId F tw x) =
     𝟙 (assemblyObj F tw x)
-  simp only [assemblyMap, decFactId, eqToHom_refl]
-  rw [CategoryTheory.Functor.map_id,
-    Category.id_comp]
-  simp only [eqToHom_trans, eqToHom_refl]
+  simp only [assemblyMap, decFactId]
+  simp only [CategoryTheory.Functor.map_id,
+    Category.id_comp,
+    eqToHom_trans, eqToHom_refl]
 
 /-- Composing `twExtendCod` with `factHomToTwMorph` of a
 composed factorization morphism yields `factHomToTwMorph`
@@ -2769,6 +2772,19 @@ theorem functorRelLift_graphRel
       rw [← FunctorToTypes.map_comp_apply]
       exact h
 
+/-- The identity functor `𝟭 Type` does not change
+the relation: `functorRelLift (𝟭 Type) R = R`. -/
+@[simp]
+theorem functorRelLift_id {A B : Type}
+    (R : A → B → Prop) :
+    functorRelLift (𝟭 Type) R = R := by
+  ext a b
+  constructor
+  · rintro ⟨⟨⟨_, _⟩, hab⟩, rfl, rfl⟩
+    exact hab
+  · intro h
+    exact ⟨⟨(a, b), h⟩, rfl, rfl⟩
+
 /-- The canonical relation lifting for a
 profunctor `G : Typeᵒᵖ × Type ⥤ Type`.
 Given relations `R` between `A₁, A₂` and
@@ -3391,17 +3407,32 @@ theorem dinaturalTypeExpr_relInterp_iff
 /-- A parametric family for a type expression
 `T` is a family of elements
 `app I : T.interp I I` indexed by types `I`,
-such that for every function `f : I₀ → I₁`, the
-relational interpretation `T.relInterp f` relates
-`app I₀` to `app I₁`. -/
+such that for every relation `R : I₀ → I₁ → Prop`,
+the full relational interpretation
+`T.fullRelInterp R` relates `app I₀` to `app I₁`.
+
+This is Wadler's parametricity condition in its
+full generality, where the relation at each type
+variable is arbitrary (not restricted to function
+graphs). -/
 @[ext]
 structure ParametricFamily (T : TypeExpr) where
   /-- The component at each type -/
   app : (I : Type) → T.interp I I
   /-- The parametricity condition -/
   parametric :
-    ∀ (I₀ I₁ : Type) (f : I₀ → I₁),
-    T.relInterp f (app I₀) (app I₁)
+    ∀ (I₀ I₁ : Type) (R : I₀ → I₁ → Prop),
+    T.fullRelInterp R (app I₀) (app I₁)
+
+/-- Specialization of `ParametricFamily.parametric`
+to the graph of a function: `T.fullRelInterp` at
+`graphRel f` coincides with `T.relInterp f`. -/
+theorem ParametricFamily.parametric_graphRel
+    {T : TypeExpr} (p : ParametricFamily T)
+    {I₀ I₁ : Type} (f : I₀ → I₁) :
+    T.relInterp f (p.app I₀) (p.app I₁) :=
+  T.fullRelInterp_graphRel f ▸
+    p.parametric I₀ I₁ (graphRel f)
 
 /-- A type abstraction for a type expression `T`
 is a family of elements indexed by types, with no
@@ -3427,18 +3458,16 @@ def typeAbsRel (T : TypeExpr) (t₀ t₁ : TypeAbs T) :
   ∀ (I₀ I₁ : Type) (R : I₀ → I₁ → Prop),
     T.fullRelInterp R (t₀ I₀) (t₁ I₁)
 
-/-- Wadler's parametricity proposition restricted
-to function graphs: self-relatedness under
-`typeAbsRel` implies the `ParametricFamily`
-condition. -/
+/-- Self-relatedness under `typeAbsRel` is
+equivalent to the `ParametricFamily` parametricity
+condition, since both quantify over all relations
+with `fullRelInterp`. -/
 theorem typeAbsRel_self_implies_parametric
     {T : TypeExpr} {t : TypeAbs T}
     (h : typeAbsRel T t t) :
-    ∀ (I₀ I₁ : Type) (f : I₀ → I₁),
-      T.relInterp f (t I₀) (t I₁) :=
-  fun I₀ I₁ f =>
-    T.fullRelInterp_graphRel f ▸
-      h I₀ I₁ (graphRel f)
+    ∀ (I₀ I₁ : Type) (R : I₀ → I₁ → Prop),
+      T.fullRelInterp R (t I₀) (t I₁) :=
+  h
 
 /-- A `ParametricFamily` from a self-related
 type abstraction under `typeAbsRel`. -/
@@ -3447,8 +3476,7 @@ def ParametricFamily.ofTypeAbsRel
     (h : typeAbsRel T t t) :
     ParametricFamily T where
   app := t
-  parametric :=
-    typeAbsRel_self_implies_parametric h
+  parametric := h
 
 /-- The relational interpretation of a type
 expression relates the covariant and contravariant
@@ -3584,7 +3612,8 @@ theorem ParametricFamily.wedge
     T.profMap id f (p.app I₀) =
       T.profMap f id (p.app I₁) :=
   T.relInterp_implies_wedge f
-    (p.app I₀) (p.app I₁) (p.parametric I₀ I₁ f)
+    (p.app I₀) (p.app I₁)
+    (p.parametric_graphRel f)
 
 theorem idProf_diagCompat_eq
     {I₀ I₁ : Type} (f : I₀ → I₁)
@@ -3617,18 +3646,30 @@ def algebraParametricEquivParanat
         rw [idProf_diagCompat_eq]
         exact (algebraTypeExpr_relInterp_iff
           F f (p.app I₀) (p.app I₁)).mp
-          (p.parametric I₀ I₁ f) d₀ d₁ hdc }
+          (p.parametric_graphRel f) d₀ d₁ hdc }
   invFun q :=
     { app := q.app
-      parametric := fun I₀ I₁ f => by
-        rw [algebraTypeExpr_relInterp_iff]
-        intro α β hcomp
-        have hdc : DiagCompat (AlgProf F)
-            I₀ I₁ f α β := by
-          rw [algProf_diagCompat_eq]; exact hcomp
-        have := q.paranatural I₀ I₁ f α β hdc
-        rw [idProf_diagCompat_eq] at this
-        exact this }
+      parametric := fun I₀ I₁ R α β hrel => by
+        simp only [TypeExpr.fullRelInterp,
+          functorRelLift_id] at hrel ⊢
+        let S := { p : I₀ × I₁ // R p.1 p.2 }
+        let π₁ : S → I₀ := fun s => s.val.1
+        let π₂ : S → I₁ := fun s => s.val.2
+        let γ : F.obj S → S := fun w =>
+          ⟨(α (F.map π₁ w), β (F.map π₂ w)),
+           hrel _ _ ⟨w, rfl, rfl⟩⟩
+        have hc₁ : DiagCompat (AlgProf F)
+            S I₀ π₁ γ α := by
+          rw [algProf_diagCompat_eq]; rfl
+        have hp₁ := q.paranatural S I₀ π₁ γ α hc₁
+        rw [idProf_diagCompat_eq] at hp₁
+        have hc₂ : DiagCompat (AlgProf F)
+            S I₁ π₂ γ β := by
+          rw [algProf_diagCompat_eq]; rfl
+        have hp₂ := q.paranatural S I₁ π₂ γ β hc₂
+        rw [idProf_diagCompat_eq] at hp₂
+        rw [← hp₁, ← hp₂]
+        exact (q.app S γ).property }
   left_inv _ := by ext; rfl
   right_inv _ := by ext; rfl
 
@@ -3663,18 +3704,37 @@ def dinaturalParametricEquivParanat :
         rw [homProf_diagCompat_eq] at hdc ⊢
         exact (dinaturalTypeExpr_relInterp_iff
           f (p.app I₀) (p.app I₁)).mp
-          (p.parametric I₀ I₁ f) d₀ d₁ hdc }
+          (p.parametric_graphRel f) d₀ d₁ hdc }
   invFun q :=
     { app := q.app
-      parametric := fun I₀ I₁ f => by
-        rw [dinaturalTypeExpr_relInterp_iff]
-        intro h k hcomp
-        have hdc : DiagCompat HomProf
-            I₀ I₁ f h k := by
-          rw [homProf_diagCompat_eq]; exact hcomp
-        have := q.paranatural I₀ I₁ f h k hdc
-        rw [homProf_diagCompat_eq] at this
-        exact this }
+      parametric := fun I₀ I₁ R h₀ h₁ hrel
+          x₀ x₁ hx => by
+        simp only [TypeExpr.leaf,
+          TypeExpr.fullRelInterp,
+          functorRelLift_id] at hrel hx ⊢
+        let S := { p : I₀ × I₁ // R p.1 p.2 }
+        let π₁ : S → I₀ := fun s => s.val.1
+        let π₂ : S → I₁ := fun s => s.val.2
+        let hS : S → S := fun s =>
+          ⟨(h₀ s.val.1, h₁ s.val.2),
+           hrel s.val.1 s.val.2 s.property⟩
+        have hc₁ : DiagCompat HomProf
+            S I₀ π₁ hS h₀ := by
+          rw [homProf_diagCompat_eq]; rfl
+        have hp₁ := q.paranatural S I₀ π₁
+          hS h₀ hc₁
+        rw [homProf_diagCompat_eq] at hp₁
+        have hc₂ : DiagCompat HomProf
+            S I₁ π₂ hS h₁ := by
+          rw [homProf_diagCompat_eq]; rfl
+        have hp₂ := q.paranatural S I₁ π₂
+          hS h₁ hc₂
+        rw [homProf_diagCompat_eq] at hp₂
+        let s : S := ⟨(x₀, x₁), hx⟩
+        change R ((q.app I₀ h₀ ∘ π₁) s)
+          ((q.app I₁ h₁ ∘ π₂) s)
+        rw [← hp₁, ← hp₂]
+        exact (q.app S hS s).property }
   left_inv _ := by ext; rfl
   right_inv _ := by ext; rfl
 
@@ -3699,7 +3759,8 @@ theorem homTypeExpr_parametric_is_id
     (p : ParametricFamily homTypeExpr)
     (I : Type) : p.app I = id := by
   funext a
-  have h := p.parametric Unit I (fun _ => a)
+  have h := p.parametric_graphRel
+    (fun (_ : Unit) => a)
   simp only [TypeExpr.relInterp,
     graphRel, arrowRel] at h
   exact (h () a rfl).symm
@@ -3715,9 +3776,8 @@ def homParametricEquivUnit :
   toFun _ := ()
   invFun _ :=
     { app := fun _ => id
-      parametric := fun _ _ f => by
-        simp only [TypeExpr.relInterp,
-          graphRel, arrowRel]
+      parametric := fun _ _ R => by
+        simp only [TypeExpr.fullRelInterp, arrowRel]
         exact fun _ _ h => h }
   left_inv p :=
     ParametricFamily.ext
@@ -3743,13 +3803,17 @@ def dialgebraParametricEquivNatTrans
       naturality := fun {I₀ I₁} f =>
         ((dialgebraTypeExpr_relInterp_iff
           F G f (p.app I₀) (p.app I₁)).mp
-          (p.parametric I₀ I₁ f)).symm }
+          (p.parametric_graphRel f)).symm }
   invFun η :=
     { app := η.app
-      parametric := fun I₀ I₁ f =>
-        (dialgebraTypeExpr_relInterp_iff
-          F G f (η.app I₀) (η.app I₁)).mpr
-          (η.naturality f).symm }
+      parametric := fun I₀ I₁ R a₀ a₁ ha => by
+        simp only [TypeExpr.fullRelInterp] at ha ⊢
+        obtain ⟨w, hw₁, hw₂⟩ := ha
+        exact ⟨η.app _ w,
+          by rw [← FunctorToTypes.naturality,
+            hw₁]; rfl,
+          by rw [← FunctorToTypes.naturality,
+            hw₂]; rfl⟩ }
   left_inv _ := by ext; rfl
   right_inv _ := by ext; rfl
 
