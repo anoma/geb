@@ -3228,6 +3228,21 @@ theorem TypeExpr.profMap_eq_toProfunctorMap
     simp only [types_comp_apply] at h₂
     exact h₂
 
+/-- `profMap id id` is the identity function. -/
+@[simp]
+theorem TypeExpr.profMap_id_id
+    (T : TypeExpr) {I : Type} :
+    T.profMap (id : I → I) (id : I → I) = id := by
+  induction T generalizing I with
+  | var => rfl
+  | app F T ih =>
+    simp only [profMap, ih]
+    exact F.map_id _
+  | arrow T₁ T₂ ih₁ ih₂ =>
+    ext h
+    simp only [profMap, ih₁, ih₂]
+    rfl
+
 /-- The relational interpretation of a type
 expression at a morphism `f : I₀ → I₁`. Each
 `var` contributes `graphRel f`, each `app F T`
@@ -4116,6 +4131,159 @@ theorem ParametricWedge.toParametricFamily_unique
   funext fun w =>
     ParametricFamily.ext (funext fun I => hf w I)
 
+/-- The relational fiber of `T` at `R`: the
+subtype of pairs `(x, y)` satisfying
+`fullRelInterp T R x y`. -/
+def TypeExpr.relFiber
+    (T : TypeExpr) {I₀ I₁ : Type}
+    (R : I₀ → I₁ → Prop) :=
+  { p : T.interp I₀ I₀ × T.interp I₁ I₁ //
+    T.fullRelInterp R p.1 p.2 }
+
+/-- For the diagonal (equality) relation, the two
+components of a relational fiber element
+coincide. -/
+theorem TypeExpr.relFiber_diag_eq
+    (T : TypeExpr) {I : Type}
+    (p : T.relFiber
+      (fun (a : I) (b : I) => a = b)) :
+    p.val.1 = p.val.2 := by
+  have hp : T.fullRelInterp
+      (fun (a : I) (b : I) => a = b)
+      p.val.1 p.val.2 :=
+    p.property
+  have heq :
+      (fun (a : I) (b : I) => a = b) =
+        graphRel id := by
+    ext a b; simp [graphRel]
+  have hp' : T.relInterp id p.val.1 p.val.2 :=
+    (T.fullRelInterp_graphRel id ▸ heq ▸ hp)
+  have hw := T.relInterp_implies_wedge
+    id p.val.1 p.val.2 hp'
+  simp only [profMap_id_id] at hw
+  exact hw
+
+/-- A parametric cone for `T : TypeExpr` has
+projections indexed by relations rather than types.
+For each relation `R : I₀ → I₁ → Prop`, the
+projection gives a pair of diagonal elements
+satisfying the relational condition, with
+compatibility: projections at different relations
+sharing an endpoint agree on that endpoint. -/
+@[ext]
+structure ParametricCone
+    (T : TypeExpr) where
+  /-- The vertex type -/
+  pt : Type u_pw
+  /-- For each relation, a pair of diagonal
+  elements satisfying the relational condition -/
+  proj : ∀ {I₀ I₁ : Type}
+    (R : I₀ → I₁ → Prop),
+    pt → T.relFiber R
+  /-- Compatibility at the source: for relations
+  sharing a source type, the first components
+  agree. -/
+  compatFst :
+    ∀ {I₀ I₁ I₁' : Type}
+    (R : I₀ → I₁ → Prop)
+    (S : I₀ → I₁' → Prop) (w : pt),
+    (proj R w).val.1 = (proj S w).val.1
+  /-- Compatibility at the target: for relations
+  sharing a target type, the second components
+  agree. -/
+  compatSnd :
+    ∀ {I₀ I₀' I₁ : Type}
+    (R : I₀ → I₁ → Prop)
+    (S : I₀' → I₁ → Prop) (w : pt),
+    (proj R w).val.2 = (proj S w).val.2
+
+/-- A morphism of parametric cones: a function
+on vertices that commutes with all
+relation-indexed projections. -/
+@[ext]
+structure ParametricConeMorphism
+    {T : TypeExpr}
+    (C₁ C₂ : ParametricCone.{u_pw} T) where
+  /-- The underlying function on vertices -/
+  func : C₁.pt → C₂.pt
+  /-- Commutativity with projections -/
+  comm :
+    ∀ {I₀ I₁ : Type}
+    (R : I₀ → I₁ → Prop) (w : C₁.pt),
+    C₂.proj R (func w) = C₁.proj R w
+
+/-- Conversion from parametric wedge to
+parametric cone. -/
+def ParametricWedge.toCone
+    {T : TypeExpr}
+    (W : ParametricWedge.{u_pw} T) :
+    ParametricCone.{u_pw} T where
+  pt := W.pt
+  proj R w :=
+    ⟨(W.proj _ w, W.proj _ w),
+     W.parametric w _ _ R⟩
+  compatFst _ _ _ := rfl
+  compatSnd _ _ _ := rfl
+
+/-- Conversion from parametric cone to
+parametric wedge: extract the diagonal
+projection from any self-relation, with
+the parametric condition from the
+relation-indexed projections. -/
+def ParametricCone.toWedge
+    {T : TypeExpr}
+    (C : ParametricCone.{u_pw} T) :
+    ParametricWedge.{u_pw} T where
+  pt := C.pt
+  proj I w := (C.proj (fun a b => a = b) w).val.1
+  parametric w I₀ I₁ R := by
+    have hfst :
+      (C.proj (fun (a : I₀) (b : I₀) =>
+        a = b) w).val.1 =
+      (C.proj R w).val.1 :=
+      (C.compatFst
+        (fun a b => a = b) R w)
+    have hdiag :
+      (C.proj (fun (a : I₁) (b : I₁) =>
+        a = b) w).val.1 =
+      (C.proj (fun (a : I₁) (b : I₁) =>
+        a = b) w).val.2 :=
+      T.relFiber_diag_eq
+        (C.proj (fun a b => a = b) w)
+    have hsnd :
+      (C.proj (fun (a : I₁) (b : I₁) =>
+        a = b) w).val.2 =
+      (C.proj R w).val.2 :=
+      C.compatSnd (fun a b => a = b) R w
+    rw [hfst, hdiag, hsnd]
+    exact (C.proj R w).property
+
+/-- Converting a wedge to a cone and back gives
+the original wedge. -/
+theorem ParametricCone.toWedge_toCone
+    {T : TypeExpr}
+    (W : ParametricWedge.{u_pw} T) :
+    W.toCone.toWedge = W := by
+  cases W; rfl
+
+/-- Converting a cone to a wedge and back gives
+the original cone. -/
+theorem ParametricWedge.toCone_toWedge
+    {T : TypeExpr}
+    (C : ParametricCone.{u_pw} T) :
+    C.toWedge.toCone = C := by
+  cases C with | mk pt proj cFst cSnd =>
+  simp only [ParametricCone.toWedge,
+    ParametricWedge.toCone]
+  congr 1
+  funext I₀ I₁ R w
+  apply Subtype.ext
+  apply Prod.ext
+  · exact cFst (fun a b => a = b) R w
+  · exact (T.relFiber_diag_eq
+      (proj (fun a b => a = b) w)).trans
+      (cSnd (fun a b => a = b) R w)
+
 /-- A morphism of parametric wedges from `W₁` to
 `W₂`: a function on vertices that commutes with
 the projections. -/
@@ -4184,6 +4352,199 @@ def parametricWedge_isTerminal
     (fun W f =>
       ParametricWedge.toTerminal_unique
         W f)
+
+instance (T : TypeExpr) :
+    Category (ParametricCone.{u_pw} T) where
+  Hom := ParametricConeMorphism
+  id C :=
+    { func := id
+      comm := fun _ _ => rfl }
+  comp f g :=
+    { func := g.func ∘ f.func
+      comm := fun R w => by
+        simp only [Function.comp_apply,
+          g.comm, f.comm] }
+  id_comp _ :=
+    ParametricConeMorphism.ext rfl
+  comp_id _ :=
+    ParametricConeMorphism.ext rfl
+  assoc _ _ _ :=
+    ParametricConeMorphism.ext rfl
+
+/-- The functor from parametric wedges to
+parametric cones, applying `toCone` on objects
+and transporting morphisms. -/
+def parametricWedgeToCone
+    (T : TypeExpr) :
+    ParametricWedge.{u_pw} T ⥤
+      ParametricCone.{u_pw} T where
+  obj W := W.toCone
+  map f :=
+    { func := f.func
+      comm := fun R w => by
+        simp only [ParametricWedge.toCone]
+        exact Subtype.ext (Prod.ext
+          (f.comm _ w)
+          (f.comm _ w)) }
+  map_id _ :=
+    ParametricConeMorphism.ext rfl
+  map_comp _ _ :=
+    ParametricConeMorphism.ext rfl
+
+/-- The functor from parametric cones to
+parametric wedges, applying `toWedge` on objects
+and transporting morphisms. -/
+def parametricConeToWedge
+    (T : TypeExpr) :
+    ParametricCone.{u_pw} T ⥤
+      ParametricWedge.{u_pw} T where
+  obj C := C.toWedge
+  map f :=
+    { func := f.func
+      comm := fun I w => by
+        simp only [ParametricCone.toWedge]
+        have := f.comm
+          (fun (a : I) (b : I) => a = b) w
+        exact congrArg
+          (fun p => p.val.1)
+          this }
+  map_id _ :=
+    ParametricWedgeMorphism.ext rfl
+  map_comp _ _ :=
+    ParametricWedgeMorphism.ext rfl
+
+/-- The categories `ParametricWedge T` and
+`ParametricCone T` are equivalent.  The functors
+`toCone` and `toWedge` are mutually inverse:
+the unit is the identity (wedge-to-cone-to-wedge
+is definitionally equal), and the counit uses
+`relFiber_diag_eq` and the compatibility
+conditions. -/
+def parametricWedgeConeEquivalence
+    (T : TypeExpr) :
+    ParametricWedge.{u_pw} T ≌
+      ParametricCone.{u_pw} T where
+  functor := parametricWedgeToCone T
+  inverse := parametricConeToWedge T
+  unitIso := NatIso.ofComponents
+    (fun W => {
+      hom :=
+        { func := id
+          comm := fun I w => by
+            dsimp [parametricConeToWedge,
+              parametricWedgeToCone,
+              ParametricWedge.toCone,
+              ParametricCone.toWedge] }
+      inv :=
+        { func := id
+          comm := fun I w => by
+            dsimp [parametricConeToWedge,
+              parametricWedgeToCone,
+              ParametricWedge.toCone,
+              ParametricCone.toWedge] }
+      hom_inv_id :=
+        ParametricWedgeMorphism.ext rfl
+      inv_hom_id :=
+        ParametricWedgeMorphism.ext rfl })
+    (fun f =>
+      ParametricWedgeMorphism.ext rfl)
+  counitIso := NatIso.ofComponents
+    (fun C => {
+      hom :=
+        { func := id
+          comm := fun R w => by
+            dsimp [parametricWedgeToCone,
+              parametricConeToWedge,
+              ParametricWedge.toCone,
+              ParametricCone.toWedge]
+            exact (Subtype.ext (Prod.ext
+              (C.compatFst
+                (fun a b => a = b) R w)
+              ((T.relFiber_diag_eq _).trans
+                (C.compatSnd
+                  (fun a b => a = b)
+                  R w)))).symm }
+      inv :=
+        { func := id
+          comm := fun R w => by
+            dsimp [parametricWedgeToCone,
+              parametricConeToWedge,
+              ParametricWedge.toCone,
+              ParametricCone.toWedge]
+            exact Subtype.ext (Prod.ext
+              (C.compatFst
+                (fun a b => a = b) R w)
+              ((T.relFiber_diag_eq _).trans
+                (C.compatSnd
+                  (fun a b => a = b)
+                  R w))) }
+      hom_inv_id :=
+        ParametricConeMorphism.ext rfl
+      inv_hom_id :=
+        ParametricConeMorphism.ext rfl })
+    (fun f =>
+      ParametricConeMorphism.ext rfl)
+
+/-- The composite functor
+`parametricWedgeToCone ⋙ parametricConeToWedge`
+equals the identity on `ParametricWedge T`. -/
+theorem parametricWedgeToCone_comp_toWedge
+    (T : TypeExpr) :
+    parametricWedgeToCone T ⋙
+      parametricConeToWedge T =
+    𝟭 (ParametricWedge.{u_pw} T) :=
+  _root_.CategoryTheory.Functor.ext
+    (fun W =>
+      ParametricCone.toWedge_toCone W)
+
+/-- The composite functor
+`parametricConeToWedge ⋙ parametricWedgeToCone`
+equals the identity on `ParametricCone T`. -/
+theorem parametricConeToWedge_comp_toCone
+    (T : TypeExpr) :
+    parametricConeToWedge T ⋙
+      parametricWedgeToCone T =
+    𝟭 (ParametricCone.{u_pw} T) :=
+  _root_.CategoryTheory.Functor.ext
+    (fun C =>
+      ParametricWedge.toCone_toWedge C)
+    (fun _X _Y f =>
+      ParametricConeMorphism.ext
+        (funext fun w => by
+          have eqToHom_func :
+            ∀ (A B : ParametricCone.{u_pw} T)
+            (h : A = B) (x : A.pt),
+            (eqToHom h).func x =
+              cast (congrArg
+                ParametricCone.pt
+                h) x := by
+            intro A B h x; subst h; rfl
+          have comp_func :
+            ∀ (A B C :
+              ParametricCone.{u_pw} T)
+            (g : A ⟶ B) (h : B ⟶ C)
+            (x : A.pt),
+            (g ≫ h).func x =
+              h.func (g.func x) := by
+            intros; rfl
+          change f.func w = _
+          simp only [Functor.id_map,
+            comp_func, eqToHom_func,
+            cast_eq]))
+
+/-- The categories `ParametricWedge T` and
+`ParametricCone T` are isomorphic
+in `Cat`. -/
+def parametricWedgeConeIso
+    (T : TypeExpr) :
+    ParametricWedge.{u_pw} T ≅Cat
+      ParametricCone.{u_pw} T where
+  hom := (parametricWedgeToCone T).toCatHom
+  inv := (parametricConeToWedge T).toCatHom
+  hom_inv_id := Cat.Hom.ext
+    (parametricWedgeToCone_comp_toWedge T)
+  inv_hom_id := Cat.Hom.ext
+    (parametricConeToWedge_comp_toCone T)
 
 end ParametricWedges
 
