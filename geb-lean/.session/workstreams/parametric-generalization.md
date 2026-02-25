@@ -1,15 +1,55 @@
 # Parametric Generalization
 
-## Status: Ready for profRelInterp functoriality
+## Status: TypeExprCat complete; HomInd characterization next
+
+### TypeExprCat (completed)
+
+`TypeExprCat` is a category whose objects are `TypeExpr` and
+whose morphisms `T₁ → T₂` are
+`ParametricFamily (.arrow T₁ T₂)` — relation-preserving
+polymorphic functions.  Identity is `id`, composition is
+pointwise function composition with proofs composed by modus
+ponens.  Category laws are definitional (`rfl`).
+
+`ParametricFamily T ≅ Hom(unit, T)` where
+`TypeExpr.unit = .app ((Functor.const Type).obj PUnit) .var`.
+This makes `ParametricFamily` representable.
+
+Existing free theorems restated as `Hom` computations:
+
+- `typeExprHom_var_var : Hom(var, var) ≃ Unit`
+- `typeExprHom_leaf_leaf F G : Hom(leaf F, leaf G) ≃ (F ⟶ G)`
+- `typeExprHomUnit_algebra : Hom(unit, algebraTypeExpr F) ≃ μF.a`
+
+`ParametricWedge T` defined with `ParametricFamily T` as its
+terminal object.
 
 ### PshRel subobject refactoring (completed)
 
 `PshRel` has been changed from `Skeleton (PshProdOver P Q)` to
-`Subfunctor (pshProdPresheaf P Q)`.  This resolves the obstacle
-to making `TypeExpr.profRelInterp` into a functor on
-`TypeRelCat`.  The next step is defining
-`TypeExpr.profRelInterp` as the morphism-map of an
-endoprofunctor `TypeRelCat^op => TypeRelCat => TypeRelCat`.
+`Subfunctor (pshProdPresheaf P Q)`.
+
+### Analysis results
+
+`profRelInterp` / `biRelMap` are oplax on `TypeRelCat` (the
+composition inclusion goes
+`biRelMap T R₁ S₁ ∘ biRelMap T R₂ S₂ ⊆
+biRelMap T (R₂ ∘ R₁) (S₁ ∘ S₂)` but not equality).
+The arrow case is not strictly functorial because
+`arrowRel` requires a uniform intermediate function while
+existential composition provides only pointwise witnesses.
+
+`TypeExprCat` avoids this: its morphisms carry
+relation-preservation proofs intrinsically, so composition
+uses modus ponens rather than existential quantification.
+
+### Next: Inductive morphism characterization (HomInd)
+
+Define `HomInd(T₁, T₂)` by recursion on pairs of `TypeExpr`,
+with structural proof content (naturality, commuting diagrams)
+rather than semantic (`fullRelInterp` for all `R`).  The
+equivalence `HomInd ≅ Hom` is the general free theorem.
+See `docs/plans/2026-02-25-typeexprcat-design.md`.
 
 ## Goal
 

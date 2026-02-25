@@ -3126,6 +3126,12 @@ abbrev TypeExpr.leaf
     (F : Type ⥤ Type) : TypeExpr :=
   .app F .var
 
+/-- The unit type expression: a constant functor
+applied to the variable, yielding `PUnit` at every
+diagonal interpretation. -/
+abbrev TypeExpr.unit : TypeExpr :=
+  .app ((Functor.const Type).obj PUnit) .var
+
 /-- The profunctor associated to a type expression,
 constructed from induction on profunctors:
 - `var` maps to `IdProf` (the identity profunctor),
@@ -3160,6 +3166,11 @@ standard interpretation of `T` at the type `A`. -/
 abbrev TypeExpr.interp
     (T : TypeExpr) (A B : Type) : Type :=
   (T.toProfunctor.obj (Opposite.op A)).obj B
+
+@[simp]
+theorem TypeExpr.unit_interp (I : Type) :
+    TypeExpr.unit.interp I I = PUnit :=
+  rfl
 
 /-- The profunctor map for a type expression:
 given `f : A' → A` (contravariant) and
@@ -3257,6 +3268,15 @@ def TypeExpr.fullRelInterp
   | .arrow T₁ T₂ =>
     arrowRel (T₁.fullRelInterp R)
       (T₂.fullRelInterp R)
+
+@[simp]
+theorem TypeExpr.unit_fullRelInterp
+    {I₀ I₁ : Type} (R : I₀ → I₁ → Prop)
+    (x y : PUnit) :
+    TypeExpr.unit.fullRelInterp R x y := by
+  simp only [TypeExpr.fullRelInterp,
+    functorRelLift]
+  exact ⟨PUnit.unit, rfl, rfl⟩
 
 /-- `fullRelInterp` applied to the graph of a
 function `f` coincides with `relInterp f`. -/
@@ -3982,6 +4002,206 @@ def dialgebraParametricEquivNatTrans
             hw₂]; rfl⟩ }
   left_inv _ := by ext; rfl
   right_inv _ := by ext; rfl
+
+section ParametricWedges
+
+universe u_pw
+
+/-- A wedge into the parametric-family end for a
+type expression `T`. The vertex is a type `pt`,
+equipped with projections into each diagonal
+`T.interp I I` satisfying the full relational
+parametricity condition. -/
+structure ParametricWedge
+    (T : TypeExpr) where
+  /-- The vertex type -/
+  pt : Type u_pw
+  /-- The projection at each type -/
+  proj : (I : Type) → pt → T.interp I I
+  /-- The parametricity condition -/
+  parametric :
+    ∀ (w : pt) (I₀ I₁ : Type)
+      (R : I₀ → I₁ → Prop),
+    T.fullRelInterp R (proj I₀ w) (proj I₁ w)
+
+/-- `ParametricFamily T` forms a `ParametricWedge T`
+with projections given by `ParametricFamily.app`. -/
+def ParametricFamily.toWedge
+    (T : TypeExpr) : ParametricWedge T where
+  pt := ParametricFamily T
+  proj I p := p.app I
+  parametric w := w.parametric
+
+/-- The mediating morphism from any wedge to
+`ParametricFamily T`. -/
+def ParametricWedge.toParametricFamily
+    {T : TypeExpr} (W : ParametricWedge T)
+    (w : W.pt) : ParametricFamily T where
+  app I := W.proj I w
+  parametric := W.parametric w
+
+@[simp]
+theorem ParametricWedge.toParametricFamily_app
+    {T : TypeExpr} (W : ParametricWedge T)
+    (w : W.pt) (I : Type) :
+    (W.toParametricFamily w).app I =
+      W.proj I w :=
+  rfl
+
+/-- Any map `f : W.pt → ParametricFamily T`
+commuting with projections equals
+`W.toParametricFamily`. -/
+theorem ParametricWedge.toParametricFamily_unique
+    {T : TypeExpr} (W : ParametricWedge T)
+    (f : W.pt → ParametricFamily T)
+    (hf : ∀ (w : W.pt) (I : Type),
+      (f w).app I = W.proj I w) :
+    f = W.toParametricFamily :=
+  funext fun w =>
+    ParametricFamily.ext (funext fun I => hf w I)
+
+end ParametricWedges
+
+section TypeExprCategory
+
+/-- Wrapper around `TypeExpr` to serve as
+the object type for the category of type
+expressions with parametric families as
+morphisms. -/
+@[ext]
+structure TypeExprCat where
+  /-- The underlying type expression. -/
+  expr : TypeExpr
+
+/-- The identity morphism in the category of
+type expressions: a parametric family for
+`.arrow T T` whose component at each type `I`
+is the identity function. -/
+def typeExprId (T : TypeExpr) :
+    ParametricFamily (.arrow T T) where
+  app _ := id
+  parametric _ _ R := by
+    simp only [TypeExpr.fullRelInterp, arrowRel]
+    exact fun _ _ h => h
+
+/-- Composition of morphisms in the category of
+type expressions: given parametric families
+`η : ParametricFamily (.arrow T₁ T₂)` and
+`μ : ParametricFamily (.arrow T₂ T₃)`, their
+composite is the pointwise composition
+`μ.app I ∘ η.app I` at each type `I`. -/
+def typeExprComp {T₁ T₂ T₃ : TypeExpr}
+    (η : ParametricFamily (.arrow T₁ T₂))
+    (μ : ParametricFamily (.arrow T₂ T₃)) :
+    ParametricFamily (.arrow T₁ T₃) where
+  app I := μ.app I ∘ η.app I
+  parametric I₀ I₁ R := by
+    simp only [TypeExpr.fullRelInterp, arrowRel]
+    intro x₀ x₁ h
+    have hη := η.parametric I₀ I₁ R
+    simp only [TypeExpr.fullRelInterp,
+      arrowRel] at hη
+    have hμ := μ.parametric I₀ I₁ R
+    simp only [TypeExpr.fullRelInterp,
+      arrowRel] at hμ
+    exact hμ _ _ (hη x₀ x₁ h)
+
+/-- The category of type expressions, with
+morphisms given by parametric families.
+A morphism from `T₁` to `T₂` is a
+`ParametricFamily (.arrow T₁ T₂)`: a family
+of functions `T₁.interp I I → T₂.interp I I`
+indexed by types `I`, satisfying the full
+parametricity condition. -/
+instance : Category TypeExprCat where
+  Hom T₁ T₂ :=
+    ParametricFamily (.arrow T₁.expr T₂.expr)
+  id T := typeExprId T.expr
+  comp η μ := typeExprComp η μ
+  id_comp _ :=
+    ParametricFamily.ext (funext fun _ => rfl)
+  comp_id _ :=
+    ParametricFamily.ext (funext fun _ => rfl)
+  assoc _ _ _ :=
+    ParametricFamily.ext (funext fun _ => rfl)
+
+/-- The unit object of the category of type
+expressions. Its underlying type expression
+interprets as `PUnit` at every type. -/
+def typeExprUnit : TypeExprCat :=
+  ⟨TypeExpr.unit⟩
+
+/-- Morphisms from the unit object to `⟨T⟩`
+in the category of type expressions are in
+bijection with parametric families for `T`.
+A morphism `typeExprUnit ⟶ ⟨T⟩` is a
+`ParametricFamily (.arrow .unit T)`, which
+assigns to each type `I` a function
+`PUnit → T.interp I I`. Evaluating at
+`PUnit.unit` extracts the element, and
+wrapping an element as a constant function
+inverts this. -/
+def typeExprHomUnitEquiv
+    (T : TypeExpr) :
+    (typeExprUnit ⟶ ⟨T⟩) ≃
+      ParametricFamily T where
+  toFun η :=
+    { app := fun I => η.app I PUnit.unit
+      parametric := fun I₀ I₁ R =>
+        η.parametric I₀ I₁ R
+          PUnit.unit PUnit.unit
+          (TypeExpr.unit_fullRelInterp
+            R PUnit.unit PUnit.unit) }
+  invFun p :=
+    { app := fun I _ => p.app I
+      parametric := fun I₀ I₁ R =>
+        fun _ _ _ => p.parametric I₀ I₁ R }
+  left_inv η :=
+    ParametricFamily.ext (funext fun I =>
+      funext fun u => by cases u; rfl)
+  right_inv _ :=
+    ParametricFamily.ext (funext fun _ => rfl)
+
+/-- `Hom(var, var)` in the category of type
+expressions is equivalent to `Unit`: the
+identity is the unique parametric family for
+`X → X`. -/
+def typeExprHom_var_var :
+    ((TypeExprCat.mk .var) ⟶
+      (TypeExprCat.mk .var)) ≃ Unit :=
+  homParametricEquivUnit
+
+/-- `Hom(leaf F, leaf G)` in the category of
+type expressions is equivalent to `F ⟶ G`:
+parametric families for the dialgebra type
+expression `F(X) → G(X)` correspond to
+natural transformations from `F` to `G`. -/
+def typeExprHom_leaf_leaf
+    (F G : Type ⥤ Type) :
+    ((TypeExprCat.mk (.leaf F)) ⟶
+      (TypeExprCat.mk (.leaf G))) ≃
+        (F ⟶ G) :=
+  dialgebraParametricEquivNatTrans F G
+
+/-- `Hom(unit, algebraTypeExpr F)` in the
+category of type expressions is equivalent
+to the carrier of any initial `F`-algebra:
+via the unit representability equivalence
+composed with the parametric-family
+characterization of initial algebra elements.
+-/
+def typeExprHomUnit_algebra
+    (F : Type ⥤ Type)
+    (μF : Endofunctor.Algebra F)
+    (hμF : Limits.IsInitial μF) :
+    (typeExprUnit ⟶
+      TypeExprCat.mk (algebraTypeExpr F)) ≃
+        μF.a :=
+  (typeExprHomUnitEquiv _).trans
+    (initialAlgebraParametricEquiv
+      F μF hμF).symm
+
+end TypeExprCategory
 
 /-- `divEndoRel f h k` is equivalent to
 `DiagCompat divHomProf I₀ I₁ f h k`, which
