@@ -3388,6 +3388,62 @@ def TypeExpr.profRelInterp
     T.interp A B → T.interp A' B' → Prop :=
   T.biRelInterp (Function.swap R) S
 
+/-- The two-parameter morphism interpretation of a
+type expression. Given `f : A → A'` and
+`g : B → B'`, `T.biMorphInterp f g` is a relation
+`T.interp A B → T.interp A' B' → Prop`.
+
+For `var`, this is `graphRel g`. For `app F T'`,
+this lifts `T'.biMorphInterp f g` through `F`. For
+`arrow T₁ T₂`, this is the `arrowRel` of the
+sub-expression interpretations with swapped
+parameters on the domain.
+
+On the diagonal (`f = g`), this recovers
+`relInterp f` (see `biMorphInterp_diag`). -/
+def TypeExpr.biMorphInterp
+    (T : TypeExpr) {A A' B B' : Type}
+    (f : A → A') (g : B → B') :
+    T.interp A B → T.interp A' B' → Prop :=
+  match T with
+  | .var => graphRel g
+  | .app F T' =>
+    functorRelLift F (T'.biMorphInterp f g)
+  | .arrow T₁ T₂ =>
+    arrowRel (T₁.biMorphInterp g f)
+      (T₂.biMorphInterp f g)
+
+/-- On the diagonal, `biMorphInterp` recovers
+`relInterp`: `biMorphInterp f f = relInterp f`. -/
+theorem TypeExpr.biMorphInterp_diag
+    (T : TypeExpr) {I₀ I₁ : Type}
+    (f : I₀ → I₁) :
+    T.biMorphInterp f f = T.relInterp f := by
+  induction T with
+  | var => rfl
+  | app F T' ih =>
+    simp only [biMorphInterp, relInterp, ih]
+  | arrow T₁ T₂ ih₁ ih₂ =>
+    simp only [biMorphInterp, relInterp,
+      ih₁, ih₂]
+
+/-- `biMorphInterp` is the specialization of
+`biRelInterp` to graph relations:
+`biMorphInterp f g =
+  biRelInterp (graphRel f) (graphRel g)`. -/
+theorem TypeExpr.biMorphInterp_eq_biRelInterp
+    (T : TypeExpr) {A A' B B' : Type}
+    (f : A → A') (g : B → B') :
+    T.biMorphInterp f g =
+    T.biRelInterp (graphRel f) (graphRel g) := by
+  induction T generalizing A A' B B' with
+  | var => rfl
+  | app F T' ih =>
+    simp only [biMorphInterp, biRelInterp, ih]
+  | arrow T₁ T₂ ih₁ ih₂ =>
+    simp only [biMorphInterp, biRelInterp,
+      ih₁, ih₂]
+
 /-- The relational interpretation of a leaf
 `app F var` reduces to `graphRel (F.map f)`. -/
 @[simp]
