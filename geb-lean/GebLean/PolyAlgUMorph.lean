@@ -150,6 +150,36 @@ def coalgPushforward
   V := c.V
   str := c.str ≫ polyEndoMorphEval α c.V
 
+/--
+An algebra homomorphism between Q-algebras is also a
+homomorphism between the pulled-back P-algebras.
+-/
+def algPullbackHom
+    {P Q : PolyEndo X} (α : P ⟶ Q)
+    {a₁ a₂ : PolyAlg Q} (h : a₁ ⟶ a₂) :
+    algPullback α a₁ ⟶ algPullback α a₂ :=
+  Endofunctor.Algebra.Hom.mk h.f (by
+    simp only [algPullback]
+    rw [← Category.assoc,
+      ← polyEndoMorphEval_natural α h.f,
+      Category.assoc, h.h,
+      ← Category.assoc])
+
+/--
+A coalgebra homomorphism between P-coalgebras is also a
+homomorphism between the pushed-forward Q-coalgebras.
+-/
+def coalgPushforwardHom
+    {P Q : PolyEndo X} (α : P ⟶ Q)
+    {c₁ c₂ : PolyCoalg P} (h : c₁ ⟶ c₂) :
+    coalgPushforward α c₁ ⟶ coalgPushforward α c₂ :=
+  Endofunctor.Coalgebra.Hom.mk h.f (by
+    simp only [coalgPushforward]
+    rw [Category.assoc,
+      polyEndoMorphEval_natural α h.f,
+      ← Category.assoc, h.h,
+      Category.assoc])
+
 end AlgPullback
 
 end GebLean
