@@ -1,8 +1,17 @@
 # YonedaRel Category Instance
 
-## Status: Complete
+## Status: Refactoring in progress
 
-## Summary
+## Refactoring
+
+`PshRel` (and therefore `YonedaRel`) is being changed from
+`Skeleton (PshProdOver P Q)` (isomorphism classes of spans) to
+`Subfunctor (pshProdPresheaf P Q)` (subobjects of the product
+presheaf).  This enables functoriality of `profRelInterp` on
+`TypeRelCat`.  See `docs/plans/2026-02-24-pshrel-subobject-design.md`
+and `docs/plans/2026-02-24-pshrel-subobject-plan.md`.
+
+## Summary (pre-refactoring)
 
 Built a `Category` instance on `YonedaRelCat C`, a wrapper
 type whose morphisms are `YonedaRel X Y = Skeleton (YonedaProdOver X Y)`.

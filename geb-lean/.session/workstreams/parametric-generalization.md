@@ -1,6 +1,16 @@
 # Parametric Generalization
 
-## Status: Planning
+## Status: Planning (PshRel refactoring prerequisite in progress)
+
+### PshRel subobject refactoring
+
+`PshRel` is being changed from `Skeleton (PshProdOver P Q)` to
+`Subfunctor (pshProdPresheaf P Q)`.  This resolves the obstacle
+to making `TypeExpr.profRelInterp` into a functor on
+`TypeRelCat`.  Once the refactoring is complete, the next step
+is defining `TypeExpr.profRelInterp` as the morphism-map of an
+endoprofunctor `TypeRelCat^op => TypeRelCat => TypeRelCat`.
+See `docs/plans/2026-02-24-pshrel-subobject-plan.md`.
 
 ## Goal
 
