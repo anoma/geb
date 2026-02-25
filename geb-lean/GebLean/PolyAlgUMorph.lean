@@ -244,4 +244,33 @@ theorem coalgPushforwardFunctor_forget
 
 end AlgPullback
 
+section CoprodAlgebra
+
+variable {X : Type u}
+
+/--
+Construct an algebra for a coproduct of polynomial
+endofunctors from compatible algebras with a shared
+carrier. Given structure maps `str_i : F_i(A) ⟶ A`
+for each `i`, the coproduct algebra has structure map
+`(∐ F_i)(A) ⟶ A` that dispatches each tagged element
+to the appropriate component's structure map.
+-/
+def algCoprodDesc
+    {I : Type u} {F : I → PolyEndo X}
+    (A : Over X)
+    (strs : ∀ i,
+      (polyEndoFunctor X (F i)).obj A ⟶ A) :
+    PolyAlg (polyBetweenCoprod I F) where
+  a := A
+  str := Over.homMk
+    (fun ⟨x, ⟨⟨i, p⟩, f⟩⟩ =>
+      (strs i).left ⟨x, ⟨p, f⟩⟩)
+    (by
+      funext ⟨x, ⟨⟨i, p⟩, f⟩⟩
+      exact congrFun (Over.w (strs i))
+        ⟨x, ⟨p, f⟩⟩)
+
+end CoprodAlgebra
+
 end GebLean
