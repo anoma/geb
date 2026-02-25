@@ -2548,9 +2548,20 @@ theorem arrowRel_graphRel_iff_yonedaRelSQS
     yonedaRelSQS (C := Type)
       (yonedaRelGraph f)
       (yonedaRelGraph f')
-      g₀ g₁ :=
-  arrowRel_graphRel_iff_yonedaProdOverRelated
-    f f' g₀ g₁
+      g₀ g₁ := by
+  constructor
+  · intro h
+    rw [arrowRel_graphRel_iff f f' g₀ g₁] at h
+    intro c p p' (hp : p ≫ f = p')
+    rw [← hp]
+    exact congrArg (p ≫ ·) h
+  · intro h
+    rw [arrowRel_graphRel_iff f f' g₀ g₁]
+    funext a
+    have := h (Opposite.op A)
+      (𝟙 A) (𝟙 A ≫ f) rfl
+    simp only [Category.id_comp] at this
+    exact congr_fun this a
 
 /-- The presheaf encoding a `Prop`-valued binary
 relation `R : A → B → Prop` as a functor
@@ -2690,12 +2701,12 @@ theorem arrowRel_iff_yonedaProdOverRelated_propRel
     exact h₁ ▸ h₂ ▸ img.property ()
 
 /-- A `Prop`-valued relation `R : A → B → Prop`,
-viewed as a `YonedaRel` (isomorphism class of
-`YonedaProdOver` objects). -/
+viewed as a `YonedaRel` (subfunctor of the
+product presheaf). -/
 def propRelToYonedaRel {A B : Type}
     (R : A → B → Prop) :
     YonedaRel (C := Type) A B :=
-  toSkeleton _ (propRelToYonedaProdOver R)
+  pshProdOverToRel (propRelToYonedaProdOver R)
 
 /-- `arrowRel R S g₀ g₁` holds iff the presheaf
 encodings of `R` and `S` are `relRelated` in the
@@ -2709,10 +2720,26 @@ theorem arrowRel_iff_relRelated_propRel
     relRelated (C := Type) g₀ g₁
       (propRelToYonedaRel R)
       (propRelToYonedaRel S) := by
-  rw [arrowRel_iff_yonedaProdOverRelated_propRel]
-  simp only [propRelToYonedaRel,
-    relRelated, pshRelRelated, Skeleton.lift₂,
-    toSkeleton, Quotient.lift₂_mk]
+  constructor
+  · intro harr
+    rw [arrowRel_iff_yonedaProdOverRelated_propRel
+      R S g₀ g₁] at harr
+    exact pshProdOverRelated_topshRelRelated
+      harr
+  · intro hrel a₀ a₁ hR
+    have hobj := hrel (Opposite.op PUnit)
+      (fun _ => a₀) (fun _ => a₁)
+      ⟨⟨(fun _ => a₀, fun _ => a₁),
+        fun _ => hR⟩, rfl⟩
+    obtain ⟨⟨⟨b₀fun, b₁fun⟩, hs⟩,
+      hval⟩ := hobj
+    have h1 : b₀fun = g₀ ∘ fun _ => a₀ :=
+      congr_arg Prod.fst hval
+    have h2 : b₁fun = g₁ ∘ fun _ => a₁ :=
+      congr_arg Prod.snd hval
+    have := hs ()
+    rw [h1, h2] at this
+    exact this
 
 /-- `arrowRel R S g₀ g₁` holds iff `yonedaRelSQS`
 holds for the Yoneda relation encodings of `R` and

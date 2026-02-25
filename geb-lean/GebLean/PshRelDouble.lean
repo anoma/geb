@@ -1,11 +1,12 @@
 import GebLean.Utilities.DaggerCategory
-import GebLean.Utilities.Skeleton
 import GebLean.Utilities.Presheaf
 import GebLean.Utilities.DoubleCategory
 import Mathlib.CategoryTheory.Limits.Types.Products
 import Mathlib.CategoryTheory.Limits.Shapes.FunctorToTypes
 import Mathlib.CategoryTheory.Monoidal.Closed.Cartesian
 import Mathlib.CategoryTheory.Monoidal.Closed.FunctorToTypes
+import Mathlib.CategoryTheory.Subfunctor.Basic
+import Mathlib.CategoryTheory.Subfunctor.Image
 
 /-!
 # Internal Relations in PSh(C)
@@ -198,18 +199,30 @@ def pshProdOverComp
           (S.hom ≫ pshProdFst Q W) ≫
         S.hom ≫ pshProdSnd Q W))
 
-/-- A relation from `P` to `Q` up to isomorphism:
-an isomorphism class in the over category
-`Over (pshProdPresheaf P Q)`. -/
+/-- A relation from `P` to `Q` as a subfunctor
+of the product presheaf `P × Q`: a family of
+subsets of `P(c) × Q(c)` closed under
+restriction. -/
 abbrev PshRel
     (P Q : Cᵒᵖ ⥤ Type w) :=
-  Skeleton (PshProdOver P Q)
+  Subfunctor (pshProdPresheaf P Q)
 
-/-- The identity relation on `P`, up to
-isomorphism. -/
+/-- The identity relation on `P`: the diagonal
+subfunctor of `P × P`. -/
 def pshRelId
-    (P : Cᵒᵖ ⥤ Type w) : PshRel P P :=
-  toSkeleton _ (pshProdOverId P)
+    (P : Cᵒᵖ ⥤ Type w) : PshRel P P where
+  obj c := { pp | pp.1 = pp.2 }
+  map f := by
+    rintro ⟨_, _⟩ h
+    exact congrArg (P.map f) h
+
+/-- Projection from a proof-relevant relation
+(span into `P × Q`) to a subfunctor of `P × Q`,
+given by the image of the span morphism. -/
+def pshProdOverToRel
+    {P Q : Cᵒᵖ ⥤ Type w}
+    (R : PshProdOver P Q) : PshRel P Q :=
+  Subfunctor.range R.hom
 
 /-- `pshProdOverComp` respects isomorphisms: given
 isomorphisms `R₁ ≅ R₂` and `S₁ ≅ S₂` in the over
@@ -336,38 +349,52 @@ def pshProdOverGraph_comp
             α) ≫ β = _
         rw [hpb])
 
-/-- Composition of relations up to isomorphism:
-applies `pshProdOverComp` via `Skeleton.lift₂`,
-using `pshProdOverComp_iso` for
-well-definedness. -/
+/-- Composition of relations as subfunctors:
+the composite of `R ⊆ P × Q` and `S ⊆ Q × W`
+is the subfunctor of `P × W` whose elements
+are pairs `(p, w)` such that there exists
+`q : Q(c)` with `(p, q) ∈ R` and
+`(q, w) ∈ S`. -/
 def pshRelComp
-    {P Q W : Cᵒᵖ ⥤ Type w} :
-    PshRel P Q → PshRel Q W →
-    PshRel P W :=
-  Skeleton.lift₂
-    (fun R S =>
-      toSkeleton _ (pshProdOverComp R S))
-    (fun _ _ _ _ ⟨αR⟩ ⟨αS⟩ =>
-      toSkeleton_eq_iff.mpr
-        ⟨pshProdOverComp_iso αR αS⟩)
+    {P Q W : Cᵒᵖ ⥤ Type w}
+    (R : PshRel P Q) (S : PshRel Q W) :
+    PshRel P W where
+  obj c := { pw |
+    ∃ q : Q.obj c,
+      (pw.1, q) ∈ R.obj c ∧
+        (q, pw.2) ∈ S.obj c }
+  map f := by
+    rintro ⟨_, _⟩ ⟨q, hR, hS⟩
+    exact ⟨Q.map f q,
+      R.map f hR, S.map f hS⟩
 
 theorem pshRelComp_id_left
     {P Q : Cᵒᵖ ⥤ Type w}
     (R : PshRel P Q) :
     pshRelComp (pshRelId P) R = R := by
-  induction R using Quotient.inductionOn with
-  | h R' =>
-    exact toSkeleton_eq_iff.mpr
-      ⟨pshProdOverComp_id_left R'⟩
+  ext c x
+  change (∃ q, x.1 = q ∧
+    (q, x.2) ∈ R.obj c) ↔ _
+  constructor
+  · rintro ⟨_, rfl, hR⟩
+    rwa [Prod.eta] at hR
+  · intro hx
+    refine ⟨x.1, rfl, ?_⟩
+    rw [Prod.eta]; exact hx
 
 theorem pshRelComp_id_right
     {P Q : Cᵒᵖ ⥤ Type w}
     (R : PshRel P Q) :
     pshRelComp R (pshRelId Q) = R := by
-  induction R using Quotient.inductionOn with
-  | h R' =>
-    exact toSkeleton_eq_iff.mpr
-      ⟨pshProdOverComp_id_right R'⟩
+  ext c x
+  change (∃ q, (x.1, q) ∈ R.obj c ∧
+    q = x.2) ↔ _
+  constructor
+  · rintro ⟨_, hR, rfl⟩
+    rwa [Prod.eta] at hR
+  · intro hx
+    refine ⟨x.2, ?_, rfl⟩
+    rw [Prod.eta]; exact hx
 
 theorem pshRelComp_assoc
     {P Q W X : Cᵒᵖ ⥤ Type w}
@@ -376,36 +403,45 @@ theorem pshRelComp_assoc
     (T : PshRel W X) :
     pshRelComp (pshRelComp R S) T =
       pshRelComp R (pshRelComp S T) := by
-  induction R using Quotient.inductionOn with
-  | h R' =>
-  induction S using Quotient.inductionOn with
-  | h S' =>
-  induction T using Quotient.inductionOn with
-  | h T' =>
-    exact toSkeleton_eq_iff.mpr
-      ⟨pshProdOverComp_assoc R' S' T'⟩
+  ext c x
+  constructor
+  · rintro ⟨w, ⟨q, hR, hS⟩, hT⟩
+    exact ⟨q, hR, w, hS, hT⟩
+  · rintro ⟨q, hR, w, hS, hT⟩
+    exact ⟨w, ⟨q, hR, hS⟩, hT⟩
 
 /-- The graph of a natural transformation as a
-`PshRel` (isomorphism class of `PshProdOver`). -/
+subfunctor of `P × Q`: elements `(p, q)` such
+that `α(p) = q`. -/
 def pshRelGraph
     {P Q : Cᵒᵖ ⥤ Type w} (α : P ⟶ Q) :
-    PshRel P Q :=
-  toSkeleton _ (pshProdOverGraph α)
+    PshRel P Q where
+  obj c := { pq | α.app c pq.1 = pq.2 }
+  map {c d} f := by
+    rintro ⟨p, q⟩ (h : α.app c p = q)
+    change α.app d (P.map f p) = Q.map f q
+    rw [← h]
+    exact congr_fun (α.naturality f) p
 
 theorem pshRelGraph_eq_id
     (P : Cᵒᵖ ⥤ Type w) :
     pshRelGraph (𝟙 P) = pshRelId P := by
-  simp [pshRelGraph, pshRelId,
-    pshProdOverGraph_id]
+  ext c x
+  constructor <;> (intro h; exact h)
 
 theorem pshRelGraph_comp
     {P Q W : Cᵒᵖ ⥤ Type w}
     (α : P ⟶ Q) (β : Q ⟶ W) :
     pshRelComp (pshRelGraph α)
       (pshRelGraph β) =
-      pshRelGraph (α ≫ β) :=
-  toSkeleton_eq_iff.mpr
-    ⟨pshProdOverGraph_comp α β⟩
+      pshRelGraph (α ≫ β) := by
+  ext c x
+  change (∃ q, α.app c x.1 = q ∧
+    β.app c q = x.2) ↔
+    β.app c (α.app c x.1) = x.2
+  constructor
+  · rintro ⟨_, rfl, hβ⟩; exact hβ
+  · intro h; exact ⟨α.app c x.1, rfl, h⟩
 
 end PshRelations
 
@@ -421,7 +457,7 @@ structure PshRelCat (C : Type u)
     [Category.{v} C] where
   obj : Cᵒᵖ ⥤ Type w
 
-instance : Category.{max u v (w + 1)}
+instance : Category.{max u w}
     (PshRelCat.{u, v, w} (C := C)) where
   Hom X Y := PshRel X.obj Y.obj
   id X := pshRelId X.obj
@@ -483,19 +519,6 @@ def pshProdOverDagger
     PshProdOver Q P :=
   Over.mk (R.hom ≫ pshProdSwap P Q)
 
-/-- `pshProdOverDagger` sends isomorphisms to
-isomorphisms. -/
-def pshProdOverDagger_iso
-    {P Q : Cᵒᵖ ⥤ Type w}
-    {R₁ R₂ : PshProdOver P Q}
-    (α : R₁ ≅ R₂) :
-    pshProdOverDagger R₁ ≅
-      pshProdOverDagger R₂ :=
-  Over.isoMk ((Over.forget _).mapIso α) (by
-    simp only [pshProdOverDagger, Over.mk_hom,
-      Functor.mapIso_hom, Over.forget_map,
-      ← Category.assoc, Over.w α.hom])
-
 /-- The dagger at the `PshProdOver` level is
 involutive. -/
 theorem pshProdOverDagger_dagger
@@ -506,68 +529,29 @@ theorem pshProdOverDagger_dagger
     Category.assoc, pshProdSwap_comp]
   rfl
 
-/-- The dagger of the identity span is the identity
-span. -/
-theorem pshProdOverDagger_id
-    (P : Cᵒᵖ ⥤ Type w) :
-    pshProdOverDagger (pshProdOverId P) =
-      pshProdOverId P := by
-  simp only [pshProdOverDagger, pshProdOverId,
-    Over.mk_hom]
-  congr 1
-
-/-- The dagger reverses composition, up to
-isomorphism. -/
-def pshProdOverDagger_comp
-    {P Q W : Cᵒᵖ ⥤ Type w}
-    (R : PshProdOver P Q)
-    (S : PshProdOver Q W) :
-    pshProdOverDagger (pshProdOverComp R S) ≅
-      pshProdOverComp
-        (pshProdOverDagger S)
-        (pshProdOverDagger R) :=
-  Over.isoMk
-    (presheafPullbackSymIso
-      (R.hom ≫ pshProdSnd P Q)
-      (S.hom ≫ pshProdFst Q W))
-    (by
-      simp only [pshProdOverDagger, pshProdOverComp,
-        Over.mk_hom, Category.assoc,
-        pshProdSwap_fst, pshProdSwap_snd]
-      apply pshProdPresheaf_hom_ext
-      · exact presheafPullbackSymIso_hom_fst_assoc
-            (R.hom ≫ pshProdSnd P Q)
-            (S.hom ≫ pshProdFst Q W)
-            (S.hom ≫ pshProdSnd Q W)
-      · exact presheafPullbackSymIso_hom_snd_assoc
-            (R.hom ≫ pshProdSnd P Q)
-            (S.hom ≫ pshProdFst Q W)
-            (R.hom ≫ pshProdFst P Q))
-
 /-- The dagger operation on `PshRel P Q`:
-swaps the two presheaves to give `PshRel Q P`. -/
+swaps the two components to give
+`PshRel Q P`. -/
 def pshRelDagger
-    {P Q : Cᵒᵖ ⥤ Type w} :
-    PshRel P Q → PshRel Q P :=
-  Skeleton.lift
-    (fun R => toSkeleton _ (pshProdOverDagger R))
-    (fun _ _ ⟨α⟩ =>
-      toSkeleton_eq_iff.mpr ⟨pshProdOverDagger_iso α⟩)
+    {P Q : Cᵒᵖ ⥤ Type w}
+    (R : PshRel P Q) : PshRel Q P where
+  obj c := { qp | (qp.2, qp.1) ∈ R.obj c }
+  map f := by rintro ⟨_, _⟩ h; exact R.map f h
 
 theorem pshRelDagger_dagger
     {P Q : Cᵒᵖ ⥤ Type w}
     (R : PshRel P Q) :
     pshRelDagger (pshRelDagger R) = R := by
-  induction R using Quotient.inductionOn with
-  | h R' =>
-    exact toSkeleton_eq_iff.mpr
-      ⟨eqToIso (pshProdOverDagger_dagger R')⟩
+  ext c ⟨p, q⟩
+  exact Iff.rfl
 
 theorem pshRelDagger_id
     (P : Cᵒᵖ ⥤ Type w) :
     pshRelDagger (pshRelId P) = pshRelId P := by
-  exact toSkeleton_eq_iff.mpr
-    ⟨eqToIso (pshProdOverDagger_id P)⟩
+  ext c x
+  simp only [pshRelDagger, pshRelId,
+    Set.mem_setOf_eq]
+  exact ⟨Eq.symm, Eq.symm⟩
 
 theorem pshRelDagger_comp
     {P Q W : Cᵒᵖ ⥤ Type w}
@@ -575,12 +559,12 @@ theorem pshRelDagger_comp
     pshRelDagger (pshRelComp R S) =
       pshRelComp (pshRelDagger S)
         (pshRelDagger R) := by
-  induction R using Quotient.inductionOn with
-  | h R' =>
-  induction S using Quotient.inductionOn with
-  | h S' =>
-    exact toSkeleton_eq_iff.mpr
-      ⟨pshProdOverDagger_comp R' S'⟩
+  ext c x
+  simp only [pshRelDagger, pshRelComp,
+    Set.mem_setOf_eq]
+  constructor
+  · rintro ⟨q, hR, hS⟩; exact ⟨q, hS, hR⟩
+  · rintro ⟨q, hS, hR⟩; exact ⟨q, hR, hS⟩
 
 /-- `PshRelCat C` is a dagger category, with the
 dagger given by `pshRelDagger`. -/
@@ -693,20 +677,16 @@ theorem pshProdOverRelated_iso
 /-- Two natural transformations `α : P ⟶ Q` and
 `β : P' ⟶ Q'` are `(R, S)`-related (where
 `R : PshRel P P'` and `S : PshRel Q Q'`) when
-they admit a lifting at the `PshProdOver` level.
-This descends through the skeleton quotient via
-`Skeleton.lift₂`, using `pshProdOverRelated_iso`
-for well-definedness. -/
+`α` and `β` map `R`-related pairs to
+`S`-related pairs. -/
 def pshRelRelated
     {P P' Q Q' : Cᵒᵖ ⥤ Type w}
-    (α : P ⟶ Q) (β : P' ⟶ Q') :
-    PshRel P P' → PshRel Q Q' → Prop :=
-  Skeleton.lift₂
-    (fun R S =>
-      PshProdOverRelated R S α β)
-    (fun _ _ _ _ ⟨αR⟩ ⟨αS⟩ =>
-      propext
-        (pshProdOverRelated_iso αR αS))
+    (α : P ⟶ Q) (β : P' ⟶ Q')
+    (R : PshRel P P') (S : PshRel Q Q') :
+    Prop :=
+  ∀ (c : Cᵒᵖ) (p : P.obj c) (p' : P'.obj c),
+    (p, p') ∈ R.obj c →
+      (α.app c p, β.app c p') ∈ S.obj c
 
 /-- For graph relations, `PshProdOverRelated`
 reduces to commutativity of the naturality square.
@@ -803,19 +783,9 @@ theorem pshRelRelatedHComp
     {γ : Q₁ ⟶ Q₂} {γ' : Q₂ ⟶ Q₃}
     (sq₁ : pshRelRelated α γ R S)
     (sq₂ : pshRelRelated α' γ' S T) :
-    pshRelRelated (α ≫ α') (γ ≫ γ') R T := by
-  induction R using Quotient.inductionOn with
-  | h R₀ =>
-  induction S using Quotient.inductionOn with
-  | h S₀ =>
-  induction T using Quotient.inductionOn with
-  | h T₀ =>
-  obtain ⟨φ₁, hφ₁⟩ := sq₁
-  obtain ⟨φ₂, hφ₂⟩ := sq₂
-  exact ⟨φ₁ ≫ φ₂, by
-    rw [Category.assoc, hφ₂,
-      ← Category.assoc, hφ₁, Category.assoc,
-      pshProdMap_comp]⟩
+    pshRelRelated (α ≫ α') (γ ≫ γ') R T :=
+  fun c p q hR =>
+    sq₂ c (α.app c p) (γ.app c q) (sq₁ c p q hR)
 
 /-- Horizontal identity square: for each vertical
 morphism `R : PshRel P Q`, the pair `(𝟙 P, 𝟙 Q)`
@@ -823,11 +793,8 @@ is `(R, R)`-related. -/
 theorem pshRelRelatedSqHorId
     {P Q : Cᵒᵖ ⥤ Type w}
     (R : PshRel P Q) :
-    pshRelRelated (𝟙 P) (𝟙 Q) R R := by
-  induction R using Quotient.inductionOn with
-  | h R₀ =>
-  exact ⟨𝟙 R₀.left, by
-    simp [pshProdMap_id]⟩
+    pshRelRelated (𝟙 P) (𝟙 Q) R R :=
+  fun _ _ _ h => h
 
 /-- Vertical identity square: for each horizontal
 morphism `α : P ⟶ Q`, the pair
@@ -837,12 +804,8 @@ theorem pshRelRelatedSqVertId
     {P Q : Cᵒᵖ ⥤ Type w}
     (α : P ⟶ Q) :
     pshRelRelated α α
-      (pshRelId P) (pshRelId Q) := by
-  change PshProdOverRelated
-    (pshProdOverId P) (pshProdOverId Q) α α
-  refine ⟨α, ?_⟩
-  ext T x
-  exact Prod.ext rfl rfl
+      (pshRelId P) (pshRelId Q) :=
+  fun _ _ _ (h : _ = _) => congrArg (α.app _) h
 
 /-- Vertical composition of relatedness squares.
 
@@ -862,46 +825,10 @@ theorem pshRelRelatedVComp
     (sq₂ : pshRelRelated γ δ R' S') :
     pshRelRelated α δ (pshRelComp R R')
       (pshRelComp S S') := by
-  induction R using Quotient.inductionOn with
-  | h R₀ =>
-  induction S using Quotient.inductionOn with
-  | h S₀ =>
-  induction R' using Quotient.inductionOn with
-  | h R₀' =>
-  induction S' using Quotient.inductionOn with
-  | h S₀' =>
-  obtain ⟨φ₁, hφ₁⟩ := sq₁
-  obtain ⟨φ₂, hφ₂⟩ := sq₂
-  have hφ₁_r := reassoc_of% hφ₁
-  have hφ₂_r := reassoc_of% hφ₂
-  have pbcondR := presheafPullbackCondition
-    (R₀.hom ≫ pshProdSnd P₁ P₂)
-    (R₀'.hom ≫ pshProdFst P₂ P₃)
-  have pbcondR_r := reassoc_of% pbcondR
-  refine ⟨presheafPullbackLift
-    (S₀.hom ≫ pshProdSnd Q₁ Q₂)
-    (S₀'.hom ≫ pshProdFst Q₂ Q₃)
-    (presheafPullbackFst
-      (R₀.hom ≫ pshProdSnd P₁ P₂)
-      (R₀'.hom ≫ pshProdFst P₂ P₃) ≫ φ₁)
-    (presheafPullbackSnd
-      (R₀.hom ≫ pshProdSnd P₁ P₂)
-      (R₀'.hom ≫ pshProdFst P₂ P₃) ≫ φ₂)
-    ?_, ?_⟩
-  · simp only [Category.assoc, hφ₁_r,
-      pshProdMap_snd, hφ₂_r,
-      pshProdMap_fst]
-    exact pbcondR_r _
-  · apply pshProdPresheaf_hom_ext <;>
-    simp only [Category.assoc,
-      pshProdOverComp_fst,
-      pshProdOverComp_fst_assoc,
-      pshProdOverComp_snd,
-      pshProdOverComp_snd_assoc,
-      pshProdMap_fst, pshProdMap_snd,
-      PullbackCone.IsLimit.lift_fst_assoc,
-      PullbackCone.IsLimit.lift_snd_assoc,
-      hφ₁_r, hφ₂_r]
+  intro c p p₃ hcomp
+  obtain ⟨p₂, hR, hR'⟩ := hcomp
+  exact ⟨γ.app c p₂,
+    sq₁ c p p₂ hR, sq₂ c p₂ p₃ hR'⟩
 
 /-- Operations for the presheaf relation double
 category on presheaves over `C`. -/
@@ -1062,40 +989,237 @@ def pshBarrLift_iso
         rw [← G.map_comp, ← Category.assoc,
           Over.w α.hom]))
 
-/-- The Barr extension on skeleton-level relations.
-Given `G : PSh(C) ⥤ PSh(C)` and `R : PshRel P Q`,
-produces `PshRel (G.obj P) (G.obj Q)` by descending
-`pshBarrLift` through the skeleton quotient. -/
+/-- The Barr extension on subfunctor-level
+relations. Given `G : PSh(C) ⥤ PSh(C)` and
+`R : PshRel P Q`, produces
+`PshRel (G.obj P) (G.obj Q)` by applying
+`pshBarrLift` to the Over object `Over.mk R.ι`
+and projecting to a subfunctor via
+`pshProdOverToRel`. -/
 def pshBarrLiftSkel
     {P Q : Cᵒᵖ ⥤ Type w}
     (G : (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w))
     (R : PshRel P Q) :
     PshRel (G.obj P) (G.obj Q) :=
-  Skeleton.lift
-    (fun R' =>
-      toSkeleton _ (pshBarrLift G R'))
-    (fun _ _ ⟨α⟩ =>
-      toSkeleton_eq_iff.mpr
-        ⟨pshBarrLift_iso G α⟩) R
+  pshProdOverToRel
+    (pshBarrLift G (Over.mk R.ι))
 
-/-- The Barr extension of a graph relation `pshRelGraph α`
-equals `pshRelGraph (G.map α)`. -/
+/-- The range of `pshBarrLift G S` is contained
+in `pshBarrLiftSkel G (pshProdOverToRel S)`:
+every element in the image of the Barr lift
+is also in the Barr lift of the range. -/
+theorem pshProdOverToRel_pshBarrLift_le
+    {P Q : Cᵒᵖ ⥤ Type w}
+    (G : (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w))
+    (S : PshProdOver P Q) :
+    pshProdOverToRel (pshBarrLift G S) ≤
+      pshBarrLiftSkel G
+        (pshProdOverToRel S) := by
+  simp only [pshBarrLiftSkel, pshProdOverToRel]
+  intro c x hx
+  simp only [Subfunctor.range,
+    Set.mem_range] at hx ⊢
+  obtain ⟨w, hw⟩ := hx
+  have hfact : S.hom =
+      Subfunctor.toRange S.hom ≫
+        (Subfunctor.range S.hom).ι :=
+    (Subfunctor.toRange_ι S.hom).symm
+  have hlift :
+      (pshBarrLift G S).hom =
+      G.map (Subfunctor.toRange S.hom) ≫
+        (pshBarrLift G (Over.mk
+          (Subfunctor.range S.hom).ι)
+          ).hom := by
+    apply pshProdPresheaf_hom_ext
+    · simp only [pshBarrLift_fst,
+        Category.assoc, pshBarrLift_fst]
+      conv_lhs =>
+        rw [hfact, Category.assoc]
+      exact G.map_comp _ _
+    · simp only [pshBarrLift_snd,
+        Category.assoc, pshBarrLift_snd]
+      conv_lhs =>
+        rw [hfact, Category.assoc]
+      exact G.map_comp _ _
+  refine ⟨(G.map
+    (Subfunctor.toRange S.hom)).app c w,
+    ?_⟩
+  have step := congr_fun
+    (NatTrans.congr_app hlift c) w
+  simp only [NatTrans.comp_app,
+    types_comp_apply] at step
+  exact step ▸ hw
+
+/-- `pshBarrLiftSkel G` is monotone with respect
+to the `≤` ordering on subfunctors. -/
+theorem pshBarrLiftSkel_mono
+    {P Q : Cᵒᵖ ⥤ Type w}
+    (G : (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w))
+    {R S : PshRel P Q} (h : R ≤ S) :
+    pshBarrLiftSkel G R ≤
+      pshBarrLiftSkel G S := by
+  simp only [pshBarrLiftSkel, pshProdOverToRel]
+  intro c x hx
+  simp only [Subfunctor.range,
+    Set.mem_range] at hx ⊢
+  obtain ⟨w, hw⟩ := hx
+  have hι : R.ι = Subfunctor.homOfLe h ≫
+      S.ι := Subfunctor.homOfLe_ι h
+  have hfst :
+      G.map (R.ι ≫ pshProdFst P Q) =
+      G.map (Subfunctor.homOfLe h) ≫
+        G.map (S.ι ≫ pshProdFst P Q) := by
+    rw [hι, Category.assoc, G.map_comp]
+  have hsnd :
+      G.map (R.ι ≫ pshProdSnd P Q) =
+      G.map (Subfunctor.homOfLe h) ≫
+        G.map (S.ι ≫ pshProdSnd P Q) := by
+    rw [hι, Category.assoc, G.map_comp]
+  have hlift :
+      (pshBarrLift G (Over.mk R.ι)).hom =
+      G.map (Subfunctor.homOfLe h) ≫
+        (pshBarrLift G
+          (Over.mk S.ι)).hom := by
+    apply pshProdPresheaf_hom_ext
+    · change G.map (R.ι ≫ pshProdFst P Q) =
+        G.map (Subfunctor.homOfLe h) ≫
+          G.map (S.ι ≫ pshProdFst P Q)
+      exact hfst
+    · change G.map (R.ι ≫ pshProdSnd P Q) =
+        G.map (Subfunctor.homOfLe h) ≫
+          G.map (S.ι ≫ pshProdSnd P Q)
+      exact hsnd
+  refine ⟨(G.map
+    (Subfunctor.homOfLe h)).app c w, ?_⟩
+  have step := congr_fun
+    (NatTrans.congr_app hlift c) w
+  simp only [NatTrans.comp_app,
+    types_comp_apply] at step
+  exact step ▸ hw
+
+/-- The inclusion of a graph subfunctor composed
+with the first projection is an isomorphism: the
+graph of `α : P ⟶ Q` projects isomorphically
+onto `P`. -/
+def pshRelGraph_ι_fst_iso
+    {P Q : Cᵒᵖ ⥤ Type w} (α : P ⟶ Q) :
+    (pshRelGraph α).toFunctor ≅ P where
+  hom := (pshRelGraph α).ι ≫ pshProdFst P Q
+  inv :=
+    { app := fun c p =>
+        ⟨(p, α.app c p), rfl⟩
+      naturality := fun c d f => by
+        ext p; apply Subtype.ext
+        change (P.map f p,
+            α.app d (P.map f p)) =
+          (P.map f p,
+            Q.map f (α.app c p))
+        exact Prod.ext rfl
+          (congr_fun
+            (α.naturality f) p) }
+  hom_inv_id := by
+    ext c ⟨⟨p, q⟩, (h : α.app c p = q)⟩
+    exact Subtype.ext
+      (Prod.ext rfl h)
+  inv_hom_id := by ext; rfl
+
+/-- The inclusion of a graph subfunctor composed
+with the second projection equals the first
+projection composed with `α`. -/
+theorem pshRelGraph_ι_snd
+    {P Q : Cᵒᵖ ⥤ Type w} (α : P ⟶ Q) :
+    (pshRelGraph α).ι ≫ pshProdSnd P Q =
+      ((pshRelGraph α).ι ≫
+        pshProdFst P Q) ≫ α := by
+  ext c ⟨⟨p, q⟩, (h : α.app c p = q)⟩
+  exact h.symm
+
+/-- Isomorphic Over objects have the same range
+as subfunctors. -/
+theorem pshProdOverToRel_iso
+    {P Q : Cᵒᵖ ⥤ Type w}
+    {R S : PshProdOver P Q}
+    (α : R ≅ S) :
+    pshProdOverToRel R =
+      pshProdOverToRel S := by
+  ext c x
+  simp only [pshProdOverToRel,
+    Subfunctor.range_obj, Set.mem_range]
+  constructor
+  · rintro ⟨r, hr⟩
+    exact ⟨α.hom.left.app c r, by
+      rw [← hr, ← NatTrans.congr_app
+        (Over.w α.hom) c]
+      rfl⟩
+  · rintro ⟨s, hs⟩
+    exact ⟨α.inv.left.app c s, by
+      rw [← hs, ← NatTrans.congr_app
+        (Over.w α.inv) c]
+      rfl⟩
+
+/-- The range of the graph Over object equals
+the graph subfunctor. -/
+theorem pshProdOverToRel_graph
+    {P Q : Cᵒᵖ ⥤ Type w} (α : P ⟶ Q) :
+    pshProdOverToRel (pshProdOverGraph α) =
+      pshRelGraph α := by
+  ext c ⟨p, q⟩
+  simp only [pshProdOverToRel,
+    pshProdOverGraph,
+    Subfunctor.range_obj, Set.mem_range,
+    pshRelGraph, Set.mem_setOf_eq,
+    Over.mk_hom]
+  constructor
+  · rintro ⟨r, hr⟩
+    have h1 := congr_arg Prod.fst hr
+    have h2 := congr_arg Prod.snd hr
+    dsimp [pshProdLift] at h1 h2
+    rw [← h1, ← h2]
+  · intro (h : α.app c p = q)
+    exact ⟨p, by
+      dsimp [pshProdLift]
+      exact Prod.ext rfl h⟩
+
+/-- The Barr extension of a graph relation
+`pshRelGraph α` equals
+`pshRelGraph (G.map α)`. -/
 theorem pshBarrLiftSkel_graph
     {P Q : Cᵒᵖ ⥤ Type w}
     (G : (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w))
     (α : P ⟶ Q) :
     pshBarrLiftSkel G (pshRelGraph α) =
       pshRelGraph (G.map α) := by
-  change toSkeleton _ (pshBarrLift G
-    (pshProdOverGraph α)) =
-    toSkeleton _ (pshProdOverGraph (G.map α))
-  rw [toSkeleton_eq_iff]
-  exact ⟨Over.isoMk (Iso.refl _) (by
-    apply pshProdPresheaf_hom_ext
-    · simp [pshBarrLift, pshProdOverGraph,
-        pshProdLift, G.map_id]
-    · simp [pshBarrLift, pshProdOverGraph,
-        pshProdLift])⟩
+  have hOverIso :
+    Over.mk (pshRelGraph α).ι ≅
+      pshProdOverGraph α :=
+    Over.isoMk
+      (pshRelGraph_ι_fst_iso α)
+      (by
+        ext c ⟨⟨p, q⟩,
+          (h : α.app c p = q)⟩
+        simp only [Over.mk_hom,
+          pshProdOverGraph,
+          pshRelGraph_ι_fst_iso,
+          NatTrans.comp_app,
+          types_comp_apply,
+          Subfunctor.ι_app]
+        exact Prod.ext rfl h)
+  have hBarrIso :
+    pshBarrLift G (pshProdOverGraph α) ≅
+    pshProdOverGraph (G.map α) :=
+    Over.isoMk (Iso.refl _) (by
+      apply pshProdPresheaf_hom_ext
+      · simp [pshBarrLift,
+          pshProdOverGraph,
+          pshProdLift, G.map_id]
+      · simp [pshBarrLift,
+          pshProdOverGraph,
+          pshProdLift])
+  rw [pshBarrLiftSkel,
+    pshProdOverToRel_iso
+      ((pshBarrLift_iso G hOverIso).trans
+        hBarrIso),
+    pshProdOverToRel_graph]
 
 /-- The Barr extension preserves relatedness: if
 `α` and `β` are `(R, S)`-related at the `PshProdOver`
@@ -1142,9 +1266,54 @@ theorem pshBarrLift_related
           := by rw [← Category.assoc,
                   G.map_comp]
 
-/-- The skeleton-level version of
-`pshBarrLift_related`: relatedness at the `PshRel`
-level is preserved by `pshBarrLiftSkel`. -/
+/-- `pshRelRelated` lifts to `PshProdOverRelated`
+for the canonical Over objects. -/
+theorem pshRelRelated_toPshProdOverRelated
+    {P P' Q Q' : Cᵒᵖ ⥤ Type w}
+    {α : P ⟶ Q} {β : P' ⟶ Q'}
+    {R : PshRel P P'} {S : PshRel Q Q'}
+    (h : pshRelRelated α β R S) :
+    PshProdOverRelated (Over.mk R.ι)
+      (Over.mk S.ι) α β := by
+  refine ⟨{
+    app := fun c x => ⟨(α.app c x.val.1,
+      β.app c x.val.2), h c _ _ x.prop⟩
+    naturality := fun c d f => by
+      ext ⟨⟨p, p'⟩, hR⟩
+      exact Subtype.ext
+        (Prod.ext
+          (congr_fun (α.naturality f) p)
+          (congr_fun
+            (β.naturality f) p')) },
+    ?_⟩
+  ext c ⟨⟨p, p'⟩, hR⟩
+  exact Prod.ext rfl rfl
+
+/-- `PshProdOverRelated` descends to
+`pshRelRelated` on ranges. -/
+theorem pshProdOverRelated_topshRelRelated
+    {P P' Q Q' : Cᵒᵖ ⥤ Type w}
+    {R : PshProdOver P P'}
+    {S : PshProdOver Q Q'}
+    {α : P ⟶ Q} {β : P' ⟶ Q'}
+    (h : PshProdOverRelated R S α β) :
+    pshRelRelated α β
+      (pshProdOverToRel R)
+      (pshProdOverToRel S) := by
+  obtain ⟨φ, hφ⟩ := h
+  intro c p p' ⟨r, hr⟩
+  refine ⟨φ.app c r, ?_⟩
+  have := congr_fun
+    (NatTrans.congr_app hφ c) r
+  simp only [NatTrans.comp_app,
+    types_comp_apply] at this
+  rw [this, hr]
+  rfl
+
+/-- The subfunctor-level version of
+`pshBarrLift_related`: relatedness at the
+`PshRel` level is preserved by
+`pshBarrLiftSkel`. -/
 theorem pshBarrLiftSkel_related
     {P P' Q Q' : Cᵒᵖ ⥤ Type w}
     (G : (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w))
@@ -1153,11 +1322,11 @@ theorem pshBarrLiftSkel_related
     (h : pshRelRelated α β R S) :
     pshRelRelated (G.map α) (G.map β)
       (pshBarrLiftSkel G R)
-      (pshBarrLiftSkel G S) := by
-  revert h
-  exact Quotient.ind₂
-    (fun R' S' h => pshBarrLift_related G h)
-    R S
+      (pshBarrLiftSkel G S) :=
+  pshProdOverRelated_topshRelRelated
+    (pshBarrLift_related G
+      (pshRelRelated_toPshProdOverRelated
+        h))
 
 end PshBarrExtension
 
@@ -1376,24 +1545,91 @@ def pshArrowRel_iso
   Over.isoMk (pshArrowRelPresheafIso α β)
     (by ext c g; rfl)
 
-/-- The arrow relation on skeleton-level relations.
-Given `R : PshRel A₁ A₂` and `S : PshRel B₁ B₂`,
-produces
-`PshRel (A₁.functorHom B₁) (A₂.functorHom B₂)`
-by descending `pshArrowRel` through the skeleton
-quotient in both arguments. -/
+/-- The arrow relation on subfunctor-level
+relations. Given `R : PshRel A₁ A₂` and
+`S : PshRel B₁ B₂`, produces
+`PshRel (A₁.functorHom B₁)
+  (A₂.functorHom B₂)` by applying
+`pshArrowRel` to the canonical Over objects
+and projecting to a subfunctor. -/
 def pshArrowRelSkel
-    {A₁ A₂ B₁ B₂ : Dᵒᵖ ⥤ Type (max u₁ v₁)}
+    {A₁ A₂ B₁ B₂ :
+      Dᵒᵖ ⥤ Type (max u₁ v₁)}
     (R : PshRel A₁ A₂)
     (S : PshRel B₁ B₂) :
     PshRel (A₁.functorHom B₁)
       (A₂.functorHom B₂) :=
-  Skeleton.lift₂
-    (fun R' S' =>
-      toSkeleton _ (pshArrowRel R' S'))
-    (fun _ _ _ _ ⟨α⟩ ⟨β⟩ =>
-      toSkeleton_eq_iff.mpr
-        ⟨pshArrowRel_iso α β⟩) R S
+  pshProdOverToRel
+    (pshArrowRel (Over.mk R.ι)
+      (Over.mk S.ι))
+
+/-- The range of `pshArrowRel R S` is contained
+in `pshArrowRelSkel (pshProdOverToRel R)
+(pshProdOverToRel S)`. -/
+theorem pshProdOverToRel_pshArrowRel_le
+    {A₁ A₂ B₁ B₂ :
+      Dᵒᵖ ⥤ Type (max u₁ v₁)}
+    (R : PshProdOver A₁ A₂)
+    (S : PshProdOver B₁ B₂) :
+    pshProdOverToRel (pshArrowRel R S) ≤
+      pshArrowRelSkel
+        (pshProdOverToRel R)
+        (pshProdOverToRel S) := by
+  simp only [pshArrowRelSkel, pshProdOverToRel]
+  intro c x hx
+  simp only [Subfunctor.range,
+    Set.mem_range] at hx ⊢
+  obtain ⟨⟨g, hg⟩, hw⟩ := hx
+  refine ⟨⟨g, fun d hd w' => ?_⟩, ?_⟩
+  · obtain ⟨r, hr⟩ := w'.property
+    obtain ⟨s, hs⟩ := hg d hd r
+    have hw'1 : (R.hom.app d r).1 = w'.val.1 :=
+      congr_arg Prod.fst hr
+    have hw'2 : (R.hom.app d r).2 = w'.val.2 :=
+      congr_arg Prod.snd hr
+    rw [hw'1, hw'2] at hs
+    exact ⟨⟨S.hom.app d s, ⟨s, rfl⟩⟩, hs⟩
+  · exact hw
+
+/-- The arrow relation on `pshProdOverToRel`s
+equals the `pshProdOverToRel` of the arrow
+relation: the predicate `pshArrowRelPred`
+depends only on the ranges of the over-object
+hom morphisms. -/
+theorem pshArrowRelSkel_pshProdOverToRel
+    {A₁ A₂ B₁ B₂ :
+      Dᵒᵖ ⥤ Type (max u₁ v₁)}
+    (R : PshProdOver A₁ A₂)
+    (S : PshProdOver B₁ B₂) :
+    pshArrowRelSkel
+      (pshProdOverToRel R)
+      (pshProdOverToRel S) =
+      pshProdOverToRel (pshArrowRel R S) := by
+  simp only [pshArrowRelSkel, pshProdOverToRel]
+  ext c x
+  simp only [Subfunctor.range,
+    Set.mem_range]
+  constructor
+  · rintro ⟨⟨g, hg⟩, hw⟩
+    refine ⟨⟨g, fun d hd w => ?_⟩, hw⟩
+    set w' : (Subfunctor.range R.hom
+        ).toFunctor.obj d :=
+      ⟨R.hom.app d w, ⟨w, rfl⟩⟩
+    obtain ⟨s', hs'⟩ := hg d hd w'
+    obtain ⟨s_inner, hs_inner⟩ :=
+      s'.property
+    exact ⟨s_inner, by
+      rw [hs_inner]; exact hs'⟩
+  · rintro ⟨⟨g, hg⟩, hw⟩
+    refine ⟨⟨g, fun d hd w' => ?_⟩, hw⟩
+    obtain ⟨r, hr⟩ := w'.property
+    obtain ⟨s, hs⟩ := hg d hd r
+    have hw'1 : (R.hom.app d r).1 = w'.val.1 :=
+      congr_arg Prod.fst hr
+    have hw'2 : (R.hom.app d r).2 = w'.val.2 :=
+      congr_arg Prod.snd hr
+    rw [hw'1, hw'2] at hs
+    exact ⟨⟨S.hom.app d s, ⟨s, rfl⟩⟩, hs⟩
 
 /-- The arrow relation preserves relatedness: if
 the input morphisms `(α₁, α₂)` are
@@ -1445,9 +1681,8 @@ theorem pshArrowRel_related
   · apply pshProdPresheaf_hom_ext <;>
     (ext c g; rfl)
 
-/-- Skeleton-level version of
-`pshArrowRel_related`: the arrow relation
-preserves relatedness at the `PshRel` level. -/
+/-- The arrow relation preserves relatedness
+at the `PshRel` level. -/
 theorem pshArrowRelSkel_related
     {A₁ A₂ A₁' A₂' B₁ B₂ B₁' B₂' :
       Dᵒᵖ ⥤ Type (max u₁ v₁)}
@@ -1463,15 +1698,13 @@ theorem pshArrowRelSkel_related
       (pshIhomProfMap α₁ β₁)
       (pshIhomProfMap α₂ β₂)
       (pshArrowRelSkel R₁ S₁)
-      (pshArrowRelSkel R₂ S₂) := by
-  revert hα hβ
-  exact Quotient.ind₂
-    (fun R₁' S₁' =>
-      Quotient.ind₂
-        (fun R₂' S₂' hα hβ =>
-          pshArrowRel_related hα hβ)
-        R₂ S₂)
-    R₁ S₁
+      (pshArrowRelSkel R₂ S₂) :=
+  pshProdOverRelated_topshRelRelated
+    (pshArrowRel_related
+      (pshRelRelated_toPshProdOverRelated
+        hα)
+      (pshRelRelated_toPshProdOverRelated
+        hβ))
 
 end PshInternalHom
 
@@ -1844,10 +2077,9 @@ abbrev TypeProdOverRelated
     (typeToPsh.map f)
     (typeToPsh.map f')
 
-/-- Skeleton-level relatedness: given
-`R : TypeRel A A'` and `S : TypeRel B B'`,
-`f` and `f'` are `(R, S)`-related iff
-`pshRelRelated` holds. -/
+/-- Given `R : TypeRel A A'` and
+`S : TypeRel B B'`, `f` and `f'` are
+`(R, S)`-related iff `pshRelRelated` holds. -/
 abbrev typeRelRelated
     {A A' B B' : Type v}
     (R : TypeRel A A')

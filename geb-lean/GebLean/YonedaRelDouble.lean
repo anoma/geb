@@ -298,13 +298,14 @@ abbrev yonedaProdOverComp {X Y Z : C}
     YonedaProdOver X Z :=
   pshProdOverComp R S
 
-/-- A relation from `X` to `Y` up to isomorphism:
-an isomorphism class in the over category
-`Over (yonedaProdPresheaf X Y)`. -/
+/-- A relation from `X` to `Y` as a subfunctor
+of the product presheaf
+`yoneda(X) × yoneda(Y)`. -/
 abbrev YonedaRel (X Y : C) :=
-  Skeleton (YonedaProdOver X Y)
+  PshRel (yoneda.obj X) (yoneda.obj Y)
 
-/-- The identity relation on `X`, up to isomorphism. -/
+/-- The identity relation on `X`: the diagonal
+subfunctor of `yoneda(X) × yoneda(X)`. -/
 abbrev relId (X : C) : YonedaRel X X :=
   pshRelId (yoneda.obj X)
 
@@ -366,10 +367,10 @@ abbrev yonedaProdOverGraph_comp
   eqToIso (by simp [yonedaProdOverGraph,
     pshProdOverGraph, yoneda.map_comp])
 
-/-- Composition of relations up to isomorphism:
-applies `yonedaProdOverComp` via `Skeleton.lift₂`,
-using `yonedaProdOverComp_iso` for
-well-definedness. -/
+/-- Composition of Yoneda relations: the composite
+of `R` and `S` is the subfunctor of pairs `(a, c)`
+such that there exists `b` with `(a, b) ∈ R` and
+`(b, c) ∈ S`. -/
 abbrev relComp {X Y Z : C} :
     YonedaRel X Y → YonedaRel Y Z →
     YonedaRel X Z :=
@@ -394,21 +395,22 @@ theorem relComp_assoc
       relComp R (relComp S T) :=
   pshRelComp_assoc R S T
 
-/-- The graph of a morphism as a `YonedaRel`
-(isomorphism class of `YonedaProdOver`). -/
+/-- The graph of a morphism `f : X ⟶ Y` as a
+`YonedaRel`: the subfunctor of pairs `(a, b)`
+such that `yoneda.map f (a) = b`. -/
 def yonedaRelGraph {X Y : C} (f : X ⟶ Y) :
     YonedaRel X Y :=
   pshRelGraph (yoneda.map f)
 
 theorem yonedaRelGraph_eq_relId (X : C) :
     yonedaRelGraph (𝟙 X) = relId (C := C) X := by
-  simp [yonedaRelGraph, relId,
-    pshRelGraph, pshRelId,
-    pshProdOverGraph, pshProdOverId, yoneda]
+  simp only [yonedaRelGraph, yoneda.map_id]
+  exact pshRelGraph_eq_id (yoneda.obj X)
 
 theorem yonedaRelGraph_comp
     {X Y Z : C} (f : X ⟶ Y) (g : Y ⟶ Z) :
-    relComp (yonedaRelGraph f) (yonedaRelGraph g) =
+    relComp (yonedaRelGraph f)
+      (yonedaRelGraph g) =
       yonedaRelGraph (f ≫ g) := by
   simp only [yonedaRelGraph, relComp,
     yoneda.map_comp]
@@ -428,7 +430,7 @@ structure YonedaRelCat (C : Type u)
     [Category.{v} C] where
   obj : C
 
-instance : Category.{max u (v + 1)}
+instance : Category.{max u v}
     (YonedaRelCat C) where
   Hom X Y := YonedaRel X.obj Y.obj
   id X := relId X.obj
@@ -531,12 +533,11 @@ theorem yonedaProdOverRelated_iso
       YonedaProdOverRelated R₂ S₂ f f' :=
   pshProdOverRelated_iso αR αS
 
-/-- Two morphisms `f : A ⟶ B` and `f' : A' ⟶ B'` in
-`C` are `(R, S)`-related (where `R : YonedaRel A A'`
-and `S : YonedaRel B B'`) when they admit a lifting at
-the `YonedaProdOver` level. This descends through the
-skeleton quotient via `Skeleton.lift₂`, using
-`yonedaProdOverRelated_iso` for well-definedness. -/
+/-- Two morphisms `f : A ⟶ B` and `f' : A' ⟶ B'`
+in `C` are `(R, S)`-related (where
+`R : YonedaRel A A'` and `S : YonedaRel B B'`)
+when `yoneda.map f` and `yoneda.map f'` map
+`R`-related pairs to `S`-related pairs. -/
 abbrev relRelated
     {A A' B B' : C}
     (f : A ⟶ B) (f' : A' ⟶ B') :

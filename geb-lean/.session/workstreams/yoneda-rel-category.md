@@ -1,20 +1,95 @@
 # YonedaRel Category Instance
 
-## Status: Refactoring in progress
+## Status: Refactoring complete
 
-## Refactoring
+## Refactoring (completed)
 
-`PshRel` (and therefore `YonedaRel`) is being changed from
+`PshRel` (and therefore `YonedaRel`) has been changed from
 `Skeleton (PshProdOver P Q)` (isomorphism classes of spans) to
 `Subfunctor (pshProdPresheaf P Q)` (subobjects of the product
-presheaf).  This enables functoriality of `profRelInterp` on
-`TypeRelCat`.  See `docs/plans/2026-02-24-pshrel-subobject-design.md`
-and `docs/plans/2026-02-24-pshrel-subobject-plan.md`.
+presheaf).  All downstream files compile with no warnings.
 
-## Summary (pre-refactoring)
+### Completed in PshRelDouble.lean
 
-Built a `Category` instance on `YonedaRelCat C`, a wrapper
-type whose morphisms are `YonedaRel X Y = Skeleton (YonedaProdOver X Y)`.
+- Core definitions (`PshRel`, `pshRelId`, `pshRelComp`,
+  `pshRelGraph`, `pshRelDagger`, `pshRelRelated`) rewritten
+  to use `Subfunctor`.
+- `pshBarrLiftSkel`: changed from `Skeleton.lift` to
+  `pshProdOverToRel (pshBarrLift G (Over.mk R.ι))`.
+- `pshBarrLiftSkel_graph`: rewritten using
+  `pshProdOverToRel_iso` and `pshProdOverToRel_graph`.
+- `pshBarrLiftSkel_related`: rewritten using
+  `pshRelRelated_toPshProdOverRelated` and
+  `pshProdOverRelated_topshRelRelated` helpers.
+- `pshArrowRelSkel`: changed from `Skeleton.lift2` to
+  `pshProdOverToRel (pshArrowRel ...)`.
+- `pshArrowRelSkel_related`: rewritten using the same
+  helper lemmas.
+- Helper lemmas added: `pshRelGraph_ι_fst_iso`,
+  `pshRelGraph_ι_snd`, `pshProdOverToRel_iso`,
+  `pshProdOverToRel_graph`,
+  `pshRelRelated_toPshProdOverRelated`,
+  `pshProdOverRelated_topshRelRelated`.
+
+### Completed in YonedaRelDouble.lean
+
+- `YonedaRel X Y` changed from
+  `Skeleton (YonedaProdOver X Y)` to
+  `PshRel (yoneda.obj X) (yoneda.obj Y)`.
+- `relId`, `relComp`, `yonedaRelGraph` now
+  delegate directly to `pshRelId`, `pshRelComp`,
+  `pshRelGraph`.
+- `relRelated` now delegates to `pshRelRelated`.
+- `YonedaRelCat` category instance changed from
+  `Category.{max u (v + 1)}` to
+  `Category.{max u v}`.
+- All proofs updated and compiling.
+
+### Completed in ParamPoly.lean
+
+- `functorYonedaRelLift` rewritten from
+  `Skeleton.lift` to
+  `pshProdOverToRel (functorYPOLift F (Over.mk R.ι))`.
+- `functorYonedaRelLift_graph` rewritten using
+  `pshProdOverToRel_iso` and
+  `pshProdOverToRel_graph`.
+- `functorYonedaRelLift_related` rewritten using
+  `pshProdOverRelated_topshRelRelated` and
+  `pshRelRelated_toPshProdOverRelated`.
+
+### Completed in ParanaturalTopos.lean
+
+- `propRelToYonedaRel` changed from
+  `toSkeleton` to `pshProdOverToRel`.
+- `arrowRel_graphRel_iff_yonedaRelSQS` rewritten
+  with direct proof via `arrowRel_graphRel_iff`.
+- `arrowRel_iff_relRelated_propRel` rewritten
+  using `pshProdOverRelated_topshRelRelated` and
+  direct backward proof.
+
+### Completed in PshTypeExpr.lean
+
+- `pshRelSectionsRelated` rewritten as direct
+  membership in `Subfunctor`: `∀ c, (s₀.val c,
+  s₁.val c) ∈ R.obj c`.
+- `yonedaULiftRel` changed from `toSkeleton` to
+  `pshProdOverToRel (yonedaULiftRelOver R)`.
+- `fullRelInterp_pshRep_eq` rewritten by induction
+  using `pshProdOverToRel_pshBarrLift_le`,
+  `pshBarrLiftSkel_mono`, and
+  `pshArrowRelSkel_pshProdOverToRel`.
+- `yonedaULiftRel_graphRel` rewritten using
+  `Subfunctor.ext` and `Set.mem_range`.
+- New bridge lemmas:
+  `pshProdOverToRel_pshBarrLift_le`,
+  `pshBarrLiftSkel_mono`,
+  `pshArrowRelSkel_pshProdOverToRel`.
+
+## Summary
+
+`Category` instance on `YonedaRelCat C`, a wrapper type
+whose morphisms are
+`YonedaRel X Y = Subfunctor (pshProdPresheaf (yoneda.obj X) (yoneda.obj Y))`.
 
 ## What was added
 

@@ -289,17 +289,15 @@ private theorem PshProdOver.sectionsRelated_iso
     · rw [comm]; exact (hr c).2
 
 /-- Two sections of presheaves are related by a
-`PshRel` if they are related by some representative
-of the isomorphism class. -/
+`PshRel` if the pair of section values belongs
+to the relation at every stage. -/
 def pshRelSectionsRelated
     {F G : Cᵒᵖ ⥤ Type (max u v)}
     (R : PshRel F G)
-    (s₀ : F.sections) (s₁ : G.sections) : Prop :=
-  R.lift
-    (fun (R : PshProdOver F G) =>
-      R.sectionsRelated s₀ s₁)
-    (fun _ _ ⟨iso⟩ => propext
-      (PshProdOver.sectionsRelated_iso iso s₀ s₁))
+    (s₀ : F.sections) (s₁ : G.sections) :
+    Prop :=
+  ∀ (c : Cᵒᵖ),
+    (s₀.val c, s₁.val c) ∈ R.obj c
 
 /-- A type abstraction for a presheaf type
 expression `T` is a family assigning to each
@@ -486,7 +484,7 @@ representables. -/
 def yonedaULiftRel {A B : Type}
     (R : A → B → Prop) :
     PshRel (yonedaULift A) (yonedaULift B) :=
-  toSkeleton _ (yonedaULiftRelOver R)
+  pshProdOverToRel (yonedaULiftRelOver R)
 
 /-- Convert an element `a : X` into a section of
 `yonedaULift X`. At each stage `T`, the section
@@ -543,16 +541,19 @@ theorem sectionMap_comp
   ext c
   simp [sectionMap]
 
-@[simp]
-theorem pshRelSectionsRelated_toSkeleton
+/-- If sections are related by a `PshProdOver`, they
+are related by the corresponding `PshRel` obtained
+via `pshProdOverToRel`. -/
+theorem sectionsRelated_to_pshRelSectionsRelated
     {F G : (Type 0)ᵒᵖ ⥤ Type 1}
     (R : PshProdOver F G)
-    (s₀ : F.sections) (s₁ : G.sections) :
-    pshRelSectionsRelated (toSkeleton _ R) s₀ s₁ ↔
-      R.sectionsRelated s₀ s₁ := by
-  constructor
-  · exact id
-  · exact id
+    (s₀ : F.sections) (s₁ : G.sections)
+    (h : R.sectionsRelated s₀ s₁) :
+    pshRelSectionsRelated
+      (pshProdOverToRel R) s₀ s₁ := by
+  obtain ⟨r, hr⟩ := h
+  intro c
+  exact ⟨r.val c, Prod.ext (hr c).1 (hr c).2⟩
 
 /-- A binary relation `R` holds at `(a₀, a₁)` iff
 the corresponding sections of the ULift-Yoneda
@@ -597,6 +598,37 @@ theorem TypeExpr.toInterpSection_var
     toPshTypeExpr_interp_iso]
   exact sectionMap_id _
 
+/-- `pshRelSectionsRelated (yonedaULiftRel R)` at
+constant sections is equivalent to `R`. -/
+theorem yonedaULiftRel_sectionsRelated_iff
+    {A B : Type} (R : A → B → Prop)
+    (a₀ : A) (a₁ : B) :
+    pshRelSectionsRelated (yonedaULiftRel R)
+      (yonedaULiftSection a₀)
+      (yonedaULiftSection a₁) ↔
+    R a₀ a₁ := by
+  simp only [pshRelSectionsRelated,
+    yonedaULiftRel, pshProdOverToRel,
+    Subfunctor.range, yonedaULiftRelOver,
+    Over.mk_hom, yonedaULiftRelProj,
+    pshProdLift, yonedaULiftSection,
+    Set.mem_range]
+  constructor
+  · intro h
+    obtain ⟨w, hw⟩ := h (Opposite.op PUnit)
+    set wd := w.down
+    have h₁ : wd.val.1 = fun _ => a₀ :=
+      congr_arg ULift.down (congr_arg Prod.fst hw)
+    have h₂ : wd.val.2 = fun _ => a₁ :=
+      congr_arg ULift.down (congr_arg Prod.snd hw)
+    have rel := wd.property PUnit.unit
+    rw [congr_fun h₁ PUnit.unit,
+      congr_fun h₂ PUnit.unit] at rel
+    exact rel
+  · intro h c
+    exact ⟨⟨⟨(fun _ => a₀, fun _ => a₁),
+      fun _ => h⟩⟩, rfl⟩
+
 /-- Bridge for the `var` case: the Type-level
 relational interpretation at `var` agrees with the
 presheaf-level relational interpretation at `var`
@@ -614,7 +646,7 @@ theorem TypeExpr.fullRelInterp_bridge_var
     TypeExpr.toPshTypeExpr_var,
     PshTypeExpr.fullRelInterp,
     toInterpSection_var]
-  exact (yonedaULiftRelOver_sectionsRelated_iff
+  exact (yonedaULiftRel_sectionsRelated_iff
     R a₀ a₁).symm
 
 /-- The presheaf `yonedaULiftRelPsh R` is
@@ -753,36 +785,100 @@ def TypeExpr.fullRelInterpPshRep
       (T₁.fullRelInterpPshRep R)
       (T₂.fullRelInterpPshRep R)
 
-/-- The presheaf-level full relational interpretation
-at `yonedaULiftRel R` equals the Skeleton class of
-the canonical representative `fullRelInterpPshRep`. -/
+/-- `fullRelInterp (yonedaULiftRel R)` equals
+`pshProdOverToRel (fullRelInterpPshRep R)`. -/
 theorem TypeExpr.fullRelInterp_pshRep_eq
     (T : TypeExpr) {A B : Type}
     (R : A → B → Prop) :
     T.toPshTypeExpr.fullRelInterp
       (yonedaULiftRel R) =
-      toSkeleton _ (T.fullRelInterpPshRep R) := by
+      pshProdOverToRel
+        (T.fullRelInterpPshRep R) := by
   induction T with
   | var => rfl
   | app F T' ih =>
-    change pshBarrLiftSkel (yonedaExt F)
-      (T'.toPshTypeExpr.fullRelInterp
-        (yonedaULiftRel R)) =
-      toSkeleton _ (pshBarrLift (yonedaExt F)
+    simp only [TypeExpr.toPshTypeExpr,
+      PshTypeExpr.fullRelInterp,
+      TypeExpr.fullRelInterpPshRep, ih]
+    exact le_antisymm
+      (by
+        simp only [pshBarrLiftSkel,
+          pshProdOverToRel]
+        intro c x hx
+        simp only [Subfunctor.range,
+          Set.mem_range] at hx ⊢
+        obtain ⟨w, hw⟩ := hx
+        revert hw
+        refine Quot.inductionOn w
+          (fun ⟨E, p, h⟩ hw => ?_)
+        obtain ⟨r, hr⟩ := p.property
+        refine ⟨Quot.mk _ ⟨E, r, h⟩, ?_⟩
+        rw [← hw]
+        have heq1 :
+          ((T'.fullRelInterpPshRep R
+            ).hom.app
+            (Opposite.op E) r).1 =
+          p.val.1 := congr_arg Prod.fst hr
+        have heq2 :
+          ((T'.fullRelInterpPshRep R
+            ).hom.app
+            (Opposite.op E) r).2 =
+          p.val.2 := congr_arg Prod.snd hr
+        change (pshBarrLift (yonedaExt F)
+            (T'.fullRelInterpPshRep R)
+            ).hom.app c
+            (Quot.mk _ ⟨E, r, h⟩) =
+          (pshBarrLift (yonedaExt F)
+            (Over.mk (Subfunctor.range
+              (T'.fullRelInterpPshRep R
+                ).hom).ι)
+              ).hom.app c
+            (Quot.mk _ ⟨E, p, h⟩)
+        simp only [pshBarrLift, Over.mk_hom,
+          pshProdLift]
+        change ((yonedaExt F).map
+            ((T'.fullRelInterpPshRep R
+              ).hom ≫ pshProdFst _ _)
+              |>.app c (Quot.mk _ ⟨E, r, h⟩),
+          (yonedaExt F).map
+            ((T'.fullRelInterpPshRep R
+              ).hom ≫ pshProdSnd _ _)
+              |>.app c (Quot.mk _ ⟨E, r, h⟩))
+          =
+          ((yonedaExt F).map
+            ((Subfunctor.range
+              (T'.fullRelInterpPshRep R
+                ).hom).ι ≫ pshProdFst _ _)
+              |>.app c (Quot.mk _ ⟨E, p, h⟩),
+          (yonedaExt F).map
+            ((Subfunctor.range
+              (T'.fullRelInterpPshRep R
+                ).hom).ι ≫ pshProdSnd _ _)
+              |>.app c (Quot.mk _ ⟨E, p, h⟩))
+        apply Prod.ext <;> {
+          apply congr_arg (Quot.mk _)
+          simp only [
+            yonedaExtSigmaMapNat,
+            NatTrans.comp_app,
+            types_comp_apply]
+          have h₁ := congr_arg Prod.fst hr
+          have h₂ := congr_arg Prod.snd hr
+          dsimp at h₁ h₂ ⊢
+          congr 1
+          first
+          | exact congr_arg (·, h) h₁
+          | exact congr_arg (·, h) h₂
+        })
+      (pshProdOverToRel_pshBarrLift_le
+        (yonedaExt F)
         (T'.fullRelInterpPshRep R))
-    simp only [ih, pshBarrLiftSkel, Skeleton.lift,
-      toSkeleton]; rfl
   | arrow T₁ T₂ ih₁ ih₂ =>
-    change pshArrowRelSkel
-      (T₁.toPshTypeExpr.fullRelInterp
-        (yonedaULiftRel R))
-      (T₂.toPshTypeExpr.fullRelInterp
-        (yonedaULiftRel R)) =
-      toSkeleton _ (pshArrowRel
-        (T₁.fullRelInterpPshRep R)
-        (T₂.fullRelInterpPshRep R))
-    simp only [ih₁, ih₂, pshArrowRelSkel,
-      Skeleton.lift₂, toSkeleton]; rfl
+    simp only [TypeExpr.toPshTypeExpr,
+      PshTypeExpr.fullRelInterp,
+      TypeExpr.fullRelInterpPshRep, ih₁, ih₂]
+    exact pshArrowRelSkel_pshProdOverToRel
+      (T₁.fullRelInterpPshRep R)
+      (T₂.fullRelInterpPshRep R)
 
 /-- Two stage-level elements of the presheaf
 interpretation are related at stage `d` if there
@@ -1661,33 +1757,29 @@ presheaf morphism `yonedaULiftMap f` via
 theorem yonedaULiftRel_graphRel
     {A B : Type} (f : A → B) :
     yonedaULiftRel (graphRel f) =
-      pshRelGraph (yonedaULiftMap f) :=
-  toSkeleton_eq_iff.mpr ⟨Over.isoMk
-    ({ hom :=
-        { app := fun T x => ⟨x.down.val.1⟩
-          naturality := fun _ _ _ => by
-            ext ⟨⟨⟨_, _⟩, _⟩⟩; rfl }
-       inv :=
-        { app := fun T x =>
-            ⟨⟨(x.down, f ∘ x.down),
-              fun _ => rfl⟩⟩
-          naturality := fun _ _ _ => by
-            ext ⟨_⟩; rfl }
-       hom_inv_id := by
-        ext T ⟨⟨⟨g₁, g₂⟩, h⟩⟩
-        exact congr_arg ULift.up
-          (Subtype.ext
-            (Prod.ext rfl (funext h)))
-       inv_hom_id := by ext T ⟨_⟩; rfl })
-    (by
-      apply pshProdPresheaf_hom_ext
-      · ext T ⟨⟨⟨_, _⟩, _⟩⟩; rfl
-      · ext T ⟨⟨⟨g₁, g₂⟩, h⟩⟩
-        change (yonedaULiftMap f).app T
-          ⟨g₁⟩ = ⟨g₂⟩
-        simp only [yonedaULiftMap_app]
-        exact congr_arg ULift.up
-          (funext h))⟩
+      pshRelGraph (yonedaULiftMap f) := by
+  ext c ⟨p, q⟩
+  simp only [yonedaULiftRel,
+    pshProdOverToRel, Subfunctor.range,
+    Set.mem_range, yonedaULiftRelOver,
+    Over.mk_hom, yonedaULiftRelProj,
+    pshProdLift, pshRelGraph,
+    Set.mem_setOf_eq]
+  constructor
+  · rintro ⟨w, hw⟩
+    have h₁ := congr_arg Prod.fst hw
+    have h₂ := congr_arg Prod.snd hw
+    dsimp at h₁ h₂
+    rw [← h₁, ← h₂]
+    simp only [yonedaULiftMap_app]
+    exact congr_arg ULift.up
+      (funext (w.down.property))
+  · intro (h : (yonedaULiftMap f).app c p = q)
+    exact ⟨⟨⟨(p.down, f ∘ p.down),
+      fun _ => rfl⟩⟩,
+      Prod.ext rfl (by
+        simp only [yonedaULiftMap_app] at h
+        exact h)⟩
 
 /-- Bridge from Type-level parametricity to
 presheaf-level relatedness at representable
@@ -1715,7 +1807,7 @@ theorem ParametricFamily.toPshParametricAtRep
   rw [← T.toPshTypeExpr.fullRelInterp_graph,
     ← yonedaULiftRel_graphRel,
     T.fullRelInterp_pshRep_eq]
-  exact (pshRelSectionsRelated_toSkeleton
-    _ _ _).mpr h₂
+  exact sectionsRelated_to_pshRelSectionsRelated
+    _ _ _ h₂
 
 end GebLean

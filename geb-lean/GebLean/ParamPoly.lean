@@ -825,27 +825,43 @@ def functorYPOLift_iso
     (by ext; rfl)
 
 /-- Lifting a relation from `YonedaRel A A'`
-through an endofunctor `F : C ⥤ C`. Descends through
-the skeleton quotient using `Skeleton.lift` and
-`functorYPOLift_iso` for well-definedness. -/
+through an endofunctor `F : C ⥤ C`. Projects
+`R` to its canonical Over object, applies
+`functorYPOLift F`, and takes the range as a
+subfunctor. -/
 def functorYonedaRelLift
     {A A' : C} (F : C ⥤ C)
     (R : YonedaRel A A') :
     YonedaRel (F.obj A) (F.obj A') :=
-  Skeleton.lift
-    (fun R' => toSkeleton _ (functorYPOLift F R'))
-    (fun _ _ ⟨α⟩ =>
-      toSkeleton_eq_iff.mpr
-        ⟨functorYPOLift_iso F α⟩) R
+  pshProdOverToRel
+    (functorYPOLift F (Over.mk R.ι))
 
 /-- Lifting the graph of `f` through `F` yields the
 graph of `F.map f`. -/
 theorem functorYonedaRelLift_graph
     {A A' : C} (F : C ⥤ C) (f : A ⟶ A') :
     functorYonedaRelLift F (yonedaRelGraph f) =
-      yonedaRelGraph (F.map f) :=
-  toSkeleton_eq_iff.mpr
-    ⟨functorYPOLift_graphIso F f⟩
+      yonedaRelGraph (F.map f) := by
+  unfold functorYonedaRelLift yonedaRelGraph
+  have hOverIso :
+      Over.mk (pshRelGraph (yoneda.map f)).ι ≅
+        yonedaProdOverGraph f :=
+    Over.isoMk
+      (pshRelGraph_ι_fst_iso (yoneda.map f))
+      (by
+        ext c ⟨⟨p, q⟩,
+          (h : (yoneda.map f).app c p = q)⟩
+        simp only [Over.mk_hom,
+          pshProdOverGraph,
+          pshRelGraph_ι_fst_iso,
+          NatTrans.comp_app,
+          types_comp_apply,
+          Subfunctor.ι_app]
+        exact Prod.ext rfl h)
+  rw [pshProdOverToRel_iso
+      ((functorYPOLift_iso F hOverIso).trans
+        (functorYPOLift_graphIso F f)),
+    pshProdOverToRel_graph]
 
 /-- The lifted predicate for `S` is satisfied by
 `yonedaProdMap (F.map f) (F.map f')` applied to an
@@ -935,8 +951,8 @@ theorem functorYPOLift_related
   ext T ⟨p, hp⟩
   rfl
 
-/-- `functorYPOLift_related` descends through the
-skeleton quotient: if `f` and `f'` are
+/-- `functorYPOLift_related` descends to the
+subfunctor level: if `f` and `f'` are
 `(R, S)`-related at the `YonedaRel` level,
 then `F.map f` and `F.map f'` are
 `(functorYonedaRelLift F R,
@@ -948,11 +964,10 @@ theorem functorYonedaRelLift_related
     (h : relRelated f f' R S) :
     relRelated (F.map f) (F.map f')
       (functorYonedaRelLift F R)
-      (functorYonedaRelLift F S) := by
-  revert h
-  refine Quotient.inductionOn₂ R S ?_
-  intro R₀ S₀ h
-  exact functorYPOLift_related F h
+      (functorYonedaRelLift F S) :=
+  pshProdOverRelated_topshRelRelated
+    (functorYPOLift_related F
+      (pshRelRelated_toPshProdOverRelated h))
 
 end FunctorRelationLifting
 
