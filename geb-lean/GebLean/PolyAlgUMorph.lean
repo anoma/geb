@@ -180,6 +180,68 @@ def coalgPushforwardHom
       ← Category.assoc, h.h,
       Category.assoc])
 
+/--
+Functor from Q-algebras to P-algebras induced by
+`α : P ⟶ Q`.
+-/
+def algPullbackFunctor
+    {P Q : PolyEndo X} (α : P ⟶ Q) :
+    PolyAlg Q ⥤ PolyAlg P where
+  obj := algPullback α
+  map := algPullbackHom α
+  map_id _ :=
+    Endofunctor.Algebra.Hom.ext rfl
+  map_comp _ _ :=
+    Endofunctor.Algebra.Hom.ext rfl
+
+/--
+Functor from P-coalgebras to Q-coalgebras induced by
+`α : P ⟶ Q`.
+-/
+def coalgPushforwardFunctor
+    {P Q : PolyEndo X} (α : P ⟶ Q) :
+    PolyCoalg P ⥤ PolyCoalg Q where
+  obj := coalgPushforward α
+  map := coalgPushforwardHom α
+  map_id _ :=
+    Endofunctor.Coalgebra.Hom.ext rfl
+  map_comp _ _ :=
+    Endofunctor.Coalgebra.Hom.ext rfl
+
+/--
+Pulling back algebras commutes with forgetting to
+`Over X`.
+-/
+theorem algPullbackFunctor_forget
+    {P Q : PolyEndo X} (α : P ⟶ Q) :
+    algPullbackFunctor α ⋙ PolyAlg.forget P =
+      PolyAlg.forget Q := by
+  apply _root_.CategoryTheory.Functor.ext
+  case h_obj => intro _; rfl
+  case h_map =>
+    intro _ _ _
+    simp [algPullbackFunctor, algPullbackHom,
+      PolyAlg.forget,
+      Endofunctor.Algebra.forget]
+
+/--
+Pushing forward coalgebras commutes with forgetting to
+`Over X`.
+-/
+theorem coalgPushforwardFunctor_forget
+    {P Q : PolyEndo X} (α : P ⟶ Q) :
+    coalgPushforwardFunctor α ⋙
+      PolyCoalg.forget Q =
+      PolyCoalg.forget P := by
+  apply _root_.CategoryTheory.Functor.ext
+  case h_obj => intro _; rfl
+  case h_map =>
+    intro _ _ _
+    simp [coalgPushforwardFunctor,
+      coalgPushforwardHom,
+      PolyCoalg.forget,
+      Endofunctor.Coalgebra.forget]
+
 end AlgPullback
 
 end GebLean
