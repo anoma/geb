@@ -119,4 +119,37 @@ theorem polyEndoMorphEval_natural
 
 end PolyEndoMorphEval
 
+section AlgPullback
+
+variable {X : Type u}
+
+/--
+Pull back an algebra along a morphism of polynomial
+endofunctors. Given `α : P ⟶ Q` and a Q-algebra `a`,
+produce a P-algebra with the same carrier by precomposing
+the structure map with `polyEndoMorphEval α a.a`.
+-/
+def algPullback
+    {P Q : PolyEndo X} (α : P ⟶ Q)
+    (a : PolyAlg Q) :
+    PolyAlg P where
+  a := a.a
+  str := polyEndoMorphEval α a.a ≫ a.str
+
+/--
+Push forward a coalgebra along a morphism of polynomial
+endofunctors. Given `α : P ⟶ Q` and a P-coalgebra `c`,
+produce a Q-coalgebra with the same carrier by
+postcomposing the structure map with
+`polyEndoMorphEval α c.V`.
+-/
+def coalgPushforward
+    {P Q : PolyEndo X} (α : P ⟶ Q)
+    (c : PolyCoalg P) :
+    PolyCoalg Q where
+  V := c.V
+  str := c.str ≫ polyEndoMorphEval α c.V
+
+end AlgPullback
+
 end GebLean
