@@ -4060,6 +4060,75 @@ theorem ParametricWedge.toParametricFamily_unique
   funext fun w =>
     ParametricFamily.ext (funext fun I => hf w I)
 
+/-- A morphism of parametric wedges from `W₁` to
+`W₂`: a function on vertices that commutes with
+the projections. -/
+@[ext]
+structure ParametricWedgeMorphism
+    {T : TypeExpr}
+    (W₁ W₂ : ParametricWedge.{u_pw} T) where
+  /-- The underlying function on vertices -/
+  func : W₁.pt → W₂.pt
+  /-- Commutativity with projections -/
+  comm :
+    ∀ (I : Type) (w : W₁.pt),
+    W₂.proj I (func w) = W₁.proj I w
+
+/-- The morphism from any wedge (at universe 1)
+to `ParametricFamily.toWedge`, given by
+`toParametricFamily`. -/
+def ParametricWedge.toTerminal
+    {T : TypeExpr}
+    (W : ParametricWedge.{1} T) :
+    ParametricWedgeMorphism W
+      (ParametricFamily.toWedge T) where
+  func := W.toParametricFamily
+  comm _ _ := rfl
+
+/-- `toTerminal` is the unique morphism to
+`ParametricFamily.toWedge`: any morphism
+`f : W ⟶ ParametricFamily.toWedge T` equals
+`toTerminal`. -/
+theorem ParametricWedge.toTerminal_unique
+    {T : TypeExpr}
+    (W : ParametricWedge.{1} T)
+    (f : ParametricWedgeMorphism W
+      (ParametricFamily.toWedge T)) :
+    f = W.toTerminal := by
+  ext w
+  exact ParametricFamily.ext
+    (funext fun I => f.comm I w)
+
+instance (T : TypeExpr) :
+    Category (ParametricWedge.{u_pw} T) where
+  Hom := ParametricWedgeMorphism
+  id W :=
+    { func := id
+      comm := fun _ _ => rfl }
+  comp f g :=
+    { func := g.func ∘ f.func
+      comm := fun I w => by
+        simp only [Function.comp_apply,
+          g.comm, f.comm] }
+  id_comp _ := ParametricWedgeMorphism.ext rfl
+  comp_id _ := ParametricWedgeMorphism.ext rfl
+  assoc _ _ _ :=
+    ParametricWedgeMorphism.ext rfl
+
+/-- `ParametricFamily.toWedge T` is the terminal
+object in the category of parametric wedges
+(at universe 1). -/
+def parametricWedge_isTerminal
+    (T : TypeExpr) :
+    Limits.IsTerminal
+      (ParametricFamily.toWedge T) :=
+  Limits.IsTerminal.ofUniqueHom
+    (fun W =>
+      ParametricWedge.toTerminal W)
+    (fun W f =>
+      ParametricWedge.toTerminal_unique
+        W f)
+
 end ParametricWedges
 
 section TypeExprCategory
