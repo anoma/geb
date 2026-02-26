@@ -752,4 +752,126 @@ instance covariantEmbedding_full :
     covariantEmbedding.Full :=
   covariantEmbedding_fullyFaithful.full
 
+/-- The contravariant relation lifting for a
+functor `F : Typeᵒᵖ ⥤ Type`. Given a relation
+`R : I₀ → I₁ → Prop`,
+`contravariantRelLift F R a b` holds iff
+`F.map (op π₁) a = F.map (op π₂) b` in
+`F.obj (op (relType R))`: the pullback
+condition. -/
+def contravariantRelLift
+    (F : Typeᵒᵖ ⥤ Type) {I₀ I₁ : Type}
+    (R : I₀ → I₁ → Prop) :
+    F.obj (Opposite.op I₀) →
+    F.obj (Opposite.op I₁) → Prop :=
+  fun a b =>
+    F.map (Opposite.op
+      (fun s : relType R => s.val.1)) a =
+    F.map (Opposite.op
+      (fun s : relType R => s.val.2)) b
+
+/-- The subtype of
+`F.obj (op I₀) × F.obj (op I₁)` consisting
+of pairs in the contravariant relation lifting
+of `R` through `F`. -/
+def contraRelImage
+    (F : Typeᵒᵖ ⥤ Type) {I₀ I₁ : Type}
+    (R : I₀ → I₁ → Prop) :=
+  { p : F.obj (Opposite.op I₀) ×
+        F.obj (Opposite.op I₁) //
+    contravariantRelLift F R p.1 p.2 }
+
+/-- Transport a `contraRelImage` element along
+a natural transformation `α : F ⟶ G`. -/
+def contraRelImage.map
+    {F G : Typeᵒᵖ ⥤ Type}
+    (α : F ⟶ G) {I₀ I₁ : Type}
+    {R : I₀ → I₁ → Prop}
+    (p : contraRelImage F R) :
+    contraRelImage G R :=
+  let π₁ : relType R → I₀ :=
+    fun s => s.val.1
+  let π₂ : relType R → I₁ :=
+    fun s => s.val.2
+  ⟨(α.app (Opposite.op I₀) p.val.1,
+    α.app (Opposite.op I₁) p.val.2), by
+    simp only [contravariantRelLift]
+    have h₁ := congr_fun
+      (α.naturality (Opposite.op π₁))
+      p.val.1
+    have h₂ := congr_fun
+      (α.naturality (Opposite.op π₂))
+      p.val.2
+    simp only [types_comp_apply] at h₁ h₂
+    rw [← h₁, ← h₂]
+    exact congr_arg
+      (α.app (Opposite.op (relType R)))
+      p.property⟩
+
+/-- The contravariant embedding maps a
+presheaf `F : Typeᵒᵖ ⥤ Type` to a parametric
+functor. Type-nodes map to
+`ULift (F.obj (op I))`; relation-nodes map to
+`ULift (contraRelImage F R)`, the pullback of
+`F.map (op π₁)` and `F.map (op π₂)`.
+Projections extract the pair components. -/
+def contravariantEmbedding :
+    (Typeᵒᵖ ⥤ Type) ⥤ ParametricFunctor where
+  obj F :=
+    { obj := fun X =>
+        match X with
+        | .typeNode I =>
+          ULift.{1} (F.obj (Opposite.op I))
+        | .relNode I₀ I₁ R =>
+          ULift.{1} (contraRelImage F R)
+      map := fun {X Y} f =>
+        match X, Y, f with
+        | _, _, .id _ => id
+        | _, _, .fstProj I₀ I₁ R =>
+          fun ⟨p⟩ => ⟨p.val.1⟩
+        | _, _, .sndProj I₀ I₁ R =>
+          fun ⟨p⟩ => ⟨p.val.2⟩
+      map_id := by
+        intro X; cases X <;> rfl
+      map_comp := by
+        intro X Y Z f g
+        cases f <;> cases g <;> rfl }
+  map {F G} (α : F ⟶ G) :=
+    { app := fun X =>
+        match X with
+        | .typeNode I =>
+          ULift.up ∘
+            α.app (Opposite.op I) ∘
+            ULift.down
+        | .relNode I₀ I₁ R =>
+          fun ⟨p⟩ =>
+            ⟨contraRelImage.map α p⟩
+      naturality := by
+        intro X Y f
+        match X, Y, f with
+        | _, _, .id _ => rfl
+        | _, _, .fstProj I₀ I₁ R =>
+          funext ⟨p⟩; rfl
+        | _, _, .sndProj I₀ I₁ R =>
+          funext ⟨p⟩; rfl }
+  map_id F := by
+    apply NatTrans.ext; funext X
+    cases X with
+    | typeNode I => funext ⟨_⟩; rfl
+    | relNode I₀ I₁ R =>
+      funext ⟨p⟩
+      apply ULift.ext
+      apply Subtype.ext
+      simp [contraRelImage.map]
+  map_comp {F G H}
+      (α : F ⟶ G) (β : G ⟶ H) := by
+    apply NatTrans.ext; funext X
+    cases X with
+    | typeNode I => funext ⟨_⟩; rfl
+    | relNode I₀ I₁ R =>
+      funext ⟨p⟩
+      apply ULift.ext
+      apply Subtype.ext
+      simp [contraRelImage.map]
+
 end GebLean
