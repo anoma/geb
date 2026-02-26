@@ -5,6 +5,7 @@ import GebLean.CatJudgmentAdjunction
 import GebLean.CatValuedFunctor
 import GebLean.CategoryJudgments
 import GebLean.CategoryPresentation
+import GebLean.CofreeCategory
 import GebLean.ComprehensiveFactorization
 import GebLean.ComprehensiveWeighted
 import GebLean.DepCategoryAdjunction
