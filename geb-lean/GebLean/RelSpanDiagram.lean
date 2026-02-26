@@ -618,4 +618,22 @@ def covariantEmbedding_preimage
     rw [← h, ← G.map_comp]
     exact congr_fun hcomp.symm m
 
+/-- The covariant embedding is faithful:
+if two natural transformations `α β : F ⟶ G`
+have the same image under
+`covariantEmbedding`, then `α = β`. The
+image at `typeNode I` is
+`ULift.up ∘ α.app I ∘ ULift.down`, so
+equality of images gives
+`α.app I = β.app I` for all `I`. -/
+instance covariantEmbedding_faithful :
+    covariantEmbedding.Faithful where
+  map_injective {F G α β} h := by
+    apply NatTrans.ext; funext I x
+    have := congr_arg ULift.down
+      (congr_fun (congr_fun (congrArg
+        NatTrans.app h) (.typeNode I))
+        ⟨x⟩)
+    exact this
+
 end GebLean
