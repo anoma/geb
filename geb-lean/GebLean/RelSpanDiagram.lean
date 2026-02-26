@@ -1,4 +1,5 @@
 import GebLean.Utilities.Profunctors
+import Mathlib.CategoryTheory.Functor.FullyFaithful
 
 /-!
 # Relational Span Category
