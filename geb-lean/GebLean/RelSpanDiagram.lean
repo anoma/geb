@@ -359,4 +359,22 @@ def wedgeRelSpanConeEquivalence
       wedgeRelSpanConeUnitIso,
       wedgeRelSpanConeCounitIso]
 
+theorem wedge_roundtrip
+    {T : TypeExpr}
+    (W : ParametricWedge.{1} T) :
+    (relSpanConeToWedge T).obj
+      ((wedgeToRelSpanCone T).obj W) = W :=
+  rfl
+
+/-- The equivalence between `ParametricWedge.{1} T`
+and `RelSpanCone T` is a categorical isomorphism:
+the composites of the two functors are (propositionally)
+equal to the respective identity functors. -/
+def wedgeRelSpanConeIso (T : TypeExpr) :
+    ParametricWedge.{1} T ≅Cat RelSpanCone T :=
+  Cat.isoOfEquiv
+    (wedgeRelSpanConeEquivalence T)
+    (fun W => wedge_roundtrip W)
+    (fun s => relSpanCone_roundtrip s)
+
 end GebLean
