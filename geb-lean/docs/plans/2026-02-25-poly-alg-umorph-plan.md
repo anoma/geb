@@ -1,4 +1,3 @@
-<!-- markdownlint-disable MD024 -->
 # Polynomial Algebra/Coalgebra Combinators Implementation Plan
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans
@@ -253,7 +252,7 @@ Build and verify. The proof may need adjustment based on what
 `simp` can handle; the mathematical content is just
 associativity.
 
-#### Step 4: Commit**
+#### Step 4: Commit Task 2**
 
 ```text
 feat(PolyAlgUMorph): pointwise evaluation of endofunctor morphisms
@@ -377,7 +376,7 @@ def coalgPushforwardHom
 
 Build and verify.
 
-#### Step 3: Commit**
+#### Step 3: Commit Task 4**
 
 ```text
 feat(PolyAlgUMorph): algebra/coalgebra homomorphism combinators
@@ -460,7 +459,7 @@ theorem coalgPushforwardFunctor_forget
 
 Build and verify.
 
-#### Step 4: Commit**
+#### Step 4: Commit Task 5**
 
 ```text
 feat(PolyAlgUMorph): functorial pullback/pushforward
@@ -563,7 +562,7 @@ commuting over `X`.
 Run: `lake build`
 Expected: PASS
 
-#### Step 3: Commit**
+#### Step 3: Commit Task 6**
 
 ```text
 feat(PolyAlgUMorph): coproduct algebra combinator
@@ -616,12 +615,12 @@ Build and verify. The proof strategy: both sides dispatch
 by tag `i`, then the commutativity for tag `i` follows from
 `hcomm i`.
 
-#### Step 2: Build and verify**
+#### Step 2: Build and verify Task 7**
 
 Run: `lake build`
 Expected: PASS
 
-#### Step 3: Commit**
+#### Step 3: Commit Task 7**
 
 ```text
 feat(PolyAlgUMorph): coproduct algebra homomorphism combinator
@@ -700,12 +699,12 @@ Build and verify. This definition may need adjustment based
 on the exact types -- implement with underscores first to
 discover the types, then fill in.
 
-#### Step 2: Build and verify**
+#### Step 2: Build and verify Task 8**
 
 Run: `lake build`
 Expected: PASS (may need iteration)
 
-#### Step 3: Commit**
+#### Step 3: Commit Task 8**
 
 ```text
 feat(PolyAlgUMorph): product coalgebra combinator
@@ -752,12 +751,12 @@ The proof will require showing that the product structure
 maps compose correctly. Use underscore to discover goal,
 then apply component-wise reasoning using `hcomm`.
 
-#### Step 2: Build and verify**
+#### Step 2: Build and verify Task 9**
 
 Run: `lake build`
 Expected: PASS (may need iteration)
 
-#### Step 3: Commit**
+#### Step 3: Commit Task 9**
 
 ```text
 feat(PolyAlgUMorph): product coalgebra homomorphism combinator
@@ -814,7 +813,7 @@ def algEqRestrictHom
 
 Build and verify.
 
-#### Step 3: Commit**
+#### Step 3: Commit Task 10**
 
 ```text
 feat(PolyAlgUMorph): equalizer algebra restriction
@@ -872,7 +871,7 @@ def coalgCoeqExtendHom
 
 Build and verify.
 
-#### Step 3: Commit**
+#### Step 3: Commit Task 11**
 
 ```text
 feat(PolyAlgUMorph): coequalizer coalgebra extension
@@ -950,7 +949,7 @@ goals, then fill in proofs.
 Run: `lake build`
 Expected: PASS (may need iteration on proof terms)
 
-#### Step 4: Commit**
+#### Step 4: Commit Task 12**
 
 ```text
 feat(PolyAlgUMorph): factorization properties
