@@ -1267,6 +1267,89 @@ lemma mor_to_pbe_fiber_mor_homMk_rfl {X Y : Type u} {P : PolyFunctorBetweenCat X
         (funext (fun _ => rfl))) b = pbefMor (fn b) :=
   mor_to_ptoe_fiber_mor_homMk_rfl Y fn b
 
+/-! #### Morphism evaluation
+
+A morphism `α : P ⟶ Q` in `PolyFunctorBetweenCat X Y`
+induces a natural transformation between the evaluated
+functors `polyBetweenEvalFunctor X Y P` and
+`polyBetweenEvalFunctor X Y Q`.
+-/
+
+/--
+Pointwise evaluation of a polynomial functor morphism
+at a fiber. Given `α : P ⟶ Q` and `A : Over X`, at
+fiber `y` the map sends `(i, f)` to
+`(ccrReindex (α y) i, ccrFiberMor (α y) i ≫ f)`.
+-/
+def polyBetweenMorphEvalAt
+    {P Q : PolyFunctorBetweenCat X Y}
+    (α : P ⟶ Q) (A : Over X) (y : Y) :
+    polyBetweenEvalFamily X Y P A y →
+    polyBetweenEvalFamily X Y Q A y :=
+  fun ev => ptoefMk Y
+    (ccrReindex (α y) (ptoefIndex Y ev))
+    (ccrFiberMor (α y) (ptoefIndex Y ev) ≫
+      ptoefMor Y ev)
+
+/--
+Evaluation of a polynomial functor morphism. Given
+`α : P ⟶ Q` and `A : Over X`, produce a morphism
+`(polyBetweenEvalFunctor X Y P).obj A ⟶
+  (polyBetweenEvalFunctor X Y Q).obj A`
+in `Over Y`.
+-/
+def polyBetweenMorphEval
+    {P Q : PolyFunctorBetweenCat X Y}
+    (α : P ⟶ Q) (A : Over X) :
+    (polyBetweenEvalFunctor X Y P).obj A ⟶
+    (polyBetweenEvalFunctor X Y Q).obj A :=
+  (familySliceForward Y).map
+    (fun y =>
+      polyBetweenMorphEvalAt X Y α A y)
+
+theorem polyBetweenMorphEval_natural
+    {P Q : PolyFunctorBetweenCat X Y}
+    (α : P ⟶ Q)
+    {A B : Over X} (f : A ⟶ B) :
+    polyBetweenMorphEval X Y α A ≫
+      (polyBetweenEvalFunctor X Y Q).map f =
+    (polyBetweenEvalFunctor X Y P).map f ≫
+      polyBetweenMorphEval X Y α B := by
+  apply Over.OverMorphism.ext
+  funext ⟨y, i, g⟩
+  dsimp [polyBetweenMorphEval,
+    polyBetweenMorphEvalAt,
+    polyBetweenEvalFunctor,
+    polyToOverFunctor, polyToOverEvalMap,
+    familySliceForward, familySliceForwardMap,
+    polyToOverEvalFamilyMap,
+    ptoefMk, ptoefIndex, ptoefMor,
+    ccrEvalMap, ccrEvalMk, ccrEvalIndex,
+    ccrEvalMor, Over.comp_left]
+  simp only [Category.assoc]
+
+@[simp]
+theorem polyBetweenMorphEval_id
+    (P : PolyFunctorBetweenCat X Y)
+    (A : Over X) :
+    polyBetweenMorphEval X Y (𝟙 P) A =
+      𝟙 ((polyBetweenEvalFunctor X Y P).obj
+        A) := by
+  unfold polyBetweenMorphEval
+    polyBetweenMorphEvalAt
+  exact (familySliceForward Y).map_id _
+
+@[simp]
+theorem polyBetweenMorphEval_comp
+    {P Q R : PolyFunctorBetweenCat X Y}
+    (α : P ⟶ Q) (β : Q ⟶ R) (A : Over X) :
+    polyBetweenMorphEval X Y (α ≫ β) A =
+      polyBetweenMorphEval X Y α A ≫
+        polyBetweenMorphEval X Y β A := by
+  unfold polyBetweenMorphEval
+  rw [← (familySliceForward Y).map_comp]
+  rfl
+
 end PolyFunctorBetween
 
 /-! ### Identity Polynomial Functor
