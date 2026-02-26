@@ -8143,4 +8143,194 @@ def polyFreeMonadIso (P : PolyEndo X) :
 
 end FreeNaturality
 
+/-! ## Free Monoid Structure
+
+The free monad polynomial `polyFreeMPoly P` carries
+a monoid structure in the monoidal category of
+polynomial endofunctors (with composition as tensor
+product).  Dual to the cofree comonoid.
+-/
+
+section FreeMonoid
+
+variable {X : Type u}
+
+/--
+The unit of the free monoid as a polynomial morphism
+`polyBetweenId X ⟶ polyFreeMPoly P`.
+At each fiber `x`, this embeds the single identity
+position as the leaf shape `polyFreeMShapeLeaf P x`.
+-/
+def polyFreeMPolyUnit (P : PolyEndo X) :
+    polyBetweenId X ⟶ polyFreeMPoly P :=
+  fun _ => ccrHomMk
+    (fun _ => polyFreeMShapeLeaf P _)
+    (fun _ => Over.homMk id rfl)
+
+/--
+Graft tree shapes: given an outer shape `s` and a shape
+for each leaf, produce the combined shape by replacing
+each leaf with its assigned shape.
+-/
+def polyFreeMShapeGraft (P : PolyEndo X) {x : X}
+    (s : PolyFreeMShape P x)
+    (leafShapes : ∀ pos : PolyFreeMLeafPos P s,
+      PolyFreeMShape P
+        (PolyFreeMLeafFiber P s pos)) :
+    PolyFreeMShape P x :=
+  polyFreeMGraft (overTerminal X) P s leafShapes
+
+/--
+Embed a composite leaf position (outer leaf + inner
+leaf) into the grafted shape.
+-/
+def polyFreeMLeafPosGraft (P : PolyEndo X)
+    {x : X}
+    (s : PolyFreeMShape P x)
+    (leafShapes : ∀ pos : PolyFreeMLeafPos P s,
+      PolyFreeMShape P
+        (PolyFreeMLeafFiber P s pos))
+    (outerPos : PolyFreeMLeafPos P s)
+    (innerPos : PolyFreeMLeafPos P
+      (leafShapes outerPos)) :
+    PolyFreeMLeafPos P
+      (polyFreeMShapeGraft P s leafShapes) :=
+  match s with
+  | PolyFix.mk _ (Sum.inl _) _ => innerPos
+  | PolyFix.mk _ (Sum.inr _) children =>
+    let ⟨e, rest⟩ := outerPos
+    ⟨e, polyFreeMLeafPosGraft P
+      (children e)
+      (fun pos => leafShapes ⟨e, pos⟩)
+      rest innerPos⟩
+
+/--
+The fiber of a grafted leaf position equals the fiber
+of the inner position in its assigned shape.
+-/
+theorem polyFreeMLeafFiber_graft
+    (P : PolyEndo X)
+    {x : X}
+    (s : PolyFreeMShape P x)
+    (leafShapes : ∀ pos : PolyFreeMLeafPos P s,
+      PolyFreeMShape P
+        (PolyFreeMLeafFiber P s pos))
+    (outerPos : PolyFreeMLeafPos P s)
+    (innerPos : PolyFreeMLeafPos P
+      (leafShapes outerPos)) :
+    PolyFreeMLeafFiber P
+      (polyFreeMShapeGraft P s leafShapes)
+      (polyFreeMLeafPosGraft P s
+        leafShapes outerPos innerPos) =
+    PolyFreeMLeafFiber P
+      (leafShapes outerPos) innerPos := by
+  induction s with
+  | mk y idx children ih =>
+    cases idx with
+    | inl _ => rfl
+    | inr p =>
+      obtain ⟨e, rest⟩ := outerPos
+      exact ih e
+        (fun pos => leafShapes ⟨e, pos⟩)
+        rest innerPos
+
+/--
+Split a leaf position in a grafted shape into an outer
+leaf position and an inner leaf position.
+-/
+def polyFreeMLeafPosSplit (P : PolyEndo X)
+    {x : X}
+    (s : PolyFreeMShape P x)
+    (leafShapes : ∀ pos : PolyFreeMLeafPos P s,
+      PolyFreeMShape P
+        (PolyFreeMLeafFiber P s pos))
+    (graftedPos : PolyFreeMLeafPos P
+      (polyFreeMShapeGraft P s leafShapes)) :
+    Σ (outerPos : PolyFreeMLeafPos P s),
+      PolyFreeMLeafPos P
+        (leafShapes outerPos) :=
+  match s with
+  | PolyFix.mk _ (Sum.inl _) _ =>
+    ⟨PUnit.unit, graftedPos⟩
+  | PolyFix.mk _ (Sum.inr _) children =>
+    let ⟨e, subPos⟩ := graftedPos
+    let ⟨outerSub, innerSub⟩ :=
+      polyFreeMLeafPosSplit P (children e)
+        (fun pos => leafShapes ⟨e, pos⟩)
+        subPos
+    ⟨⟨e, outerSub⟩, innerSub⟩
+
+/--
+The fiber of a split position: the fiber of the
+grafted position equals the fiber of the inner
+position in its assigned shape.
+-/
+theorem polyFreeMLeafFiber_split
+    (P : PolyEndo X)
+    {x : X}
+    (s : PolyFreeMShape P x)
+    (leafShapes : ∀ pos : PolyFreeMLeafPos P s,
+      PolyFreeMShape P
+        (PolyFreeMLeafFiber P s pos))
+    (graftedPos : PolyFreeMLeafPos P
+      (polyFreeMShapeGraft P s leafShapes)) :
+    let split := polyFreeMLeafPosSplit P s
+      leafShapes graftedPos
+    PolyFreeMLeafFiber P
+      (polyFreeMShapeGraft P s leafShapes)
+      graftedPos =
+    PolyFreeMLeafFiber P
+      (leafShapes split.1) split.2 := by
+  induction s with
+  | mk y idx children ih =>
+    cases idx with
+    | inl _ => rfl
+    | inr p =>
+      obtain ⟨e, subPos⟩ := graftedPos
+      exact ih e
+        (fun pos => leafShapes ⟨e, pos⟩)
+        subPos
+
+/--
+The fiber morphism for the free multiplication at
+a given composite index.
+-/
+def polyFreeMPolyMultFiber (P : PolyEndo X)
+    {x : X}
+    (s : PolyFreeMShape P x)
+    (leafShapes : ∀ pos : PolyFreeMLeafPos P s,
+      PolyFreeMShape P
+        (PolyFreeMLeafFiber P s pos)) :
+    polyFreeMFamily P x
+      (polyFreeMShapeGraft P s leafShapes) ⟶
+    polyBetweenCompFamily (polyFreeMPoly P)
+      (polyFreeMPoly P) x ⟨s, leafShapes⟩ :=
+  Over.homMk
+    (fun graftedPos =>
+      polyFreeMLeafPosSplit P s
+        leafShapes graftedPos)
+    (funext fun graftedPos =>
+      (polyFreeMLeafFiber_split P s
+        leafShapes graftedPos).symm)
+
+/--
+The multiplication of the free monoid as a polynomial
+morphism
+`polyBetweenComp (polyFreeMPoly P)
+  (polyFreeMPoly P) ⟶ polyFreeMPoly P`.
+At each fiber `x`, the reindexing grafts the inner
+shapes at the outer leaves, and the fiber morphism
+splits grafted leaf positions into composite positions.
+-/
+def polyFreeMPolyMult (P : PolyEndo X) :
+    polyBetweenComp (polyFreeMPoly P)
+      (polyFreeMPoly P) ⟶
+    polyFreeMPoly P :=
+  fun _ => ccrHomMk
+    (fun p => polyFreeMShapeGraft P p.1 p.2)
+    (fun p =>
+      polyFreeMPolyMultFiber P p.1 p.2)
+
+end FreeMonoid
+
 end GebLean
