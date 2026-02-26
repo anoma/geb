@@ -26,9 +26,9 @@ The comonad-first approach:
    monoidal category of polynomial endofunctors.
 4. Extract the cofree category from the comonoid.
 
-The comonad and natural isomorphism are defined in
-`PolyAlg.lean` (`polyCofreeComonad`, `polyCofreeComonadIso`)
-as they apply to all cofree comonads.
+The comonad, natural isomorphism, and comonoid structure
+are defined in `PolyAlg.lean` as they apply to all cofree
+comonads.
 -/
 
 namespace GebLean

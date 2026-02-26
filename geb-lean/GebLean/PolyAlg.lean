@@ -7577,6 +7577,127 @@ def polyCofreeComonadIso (P : PolyEndo X) :
 
 end CofreeNaturality
 
+/-! ## Cofree Comonoid Structure
+
+The cofree comonad polynomial `polyCofreeMPoly P` carries
+a comonoid structure in the monoidal category of
+polynomial endofunctors (with composition as tensor
+product).
+-/
+
+section CofreeComonoid
+
+variable {X : Type u}
+
+/--
+Extract the subtree shape at a given depth and position
+within a cofree shape.
+-/
+def polyCofreeSubtreeAt (P : PolyEndo X)
+    {x : X} (s : PolyCofreeShape P x) :
+    (n : Nat) →
+    (pos : PolyCofreeAnnotPosAt P s n) →
+    PolyCofreeShape P
+      (PolyCofreeAnnotFiberAt P s n pos)
+  | 0, _ => s
+  | n + 1, ⟨e, rest⟩ =>
+    polyCofreeSubtreeAt P (s.children e) n rest
+
+/--
+Extract the subtree shape at a given position within
+a cofree shape.
+-/
+def polyCofreeSubtree (P : PolyEndo X)
+    {x : X} (s : PolyCofreeShape P x)
+    (pos : PolyCofreeAnnotPos P s) :
+    PolyCofreeShape P
+      (PolyCofreeAnnotFiber P s pos) :=
+  polyCofreeSubtreeAt P s pos.1 pos.2
+
+/--
+Concatenate two positions in a cofree shape: a position
+at depth `n` in `s` followed by a position in the
+subtree at that location.
+-/
+def polyCofreeAnnotPosConcat (P : PolyEndo X)
+    {x : X} (s : PolyCofreeShape P x) :
+    (n : Nat) →
+    (pos : PolyCofreeAnnotPosAt P s n) →
+    PolyCofreeAnnotPos P
+      (polyCofreeSubtreeAt P s n pos) →
+    PolyCofreeAnnotPos P s
+  | 0, _, subpos => subpos
+  | n + 1, ⟨e, rest⟩, subpos =>
+    let sub := polyCofreeAnnotPosConcat P
+      (s.children e) n rest subpos
+    ⟨sub.1 + 1, ⟨e, sub.2⟩⟩
+
+/--
+The fiber of a concatenated position equals the fiber
+of the second position in the subtree.
+-/
+theorem polyCofreeAnnotFiber_concat
+    (P : PolyEndo X)
+    {x : X} (s : PolyCofreeShape P x)
+    (n : Nat)
+    (pos : PolyCofreeAnnotPosAt P s n)
+    (subpos : PolyCofreeAnnotPos P
+      (polyCofreeSubtreeAt P s n pos)) :
+    PolyCofreeAnnotFiber P s
+      (polyCofreeAnnotPosConcat P s
+        n pos subpos) =
+    PolyCofreeAnnotFiber P
+      (polyCofreeSubtreeAt P s n pos)
+      subpos := by
+  induction n generalizing x s with
+  | zero => rfl
+  | succ n ih =>
+    obtain ⟨e, rest⟩ := pos
+    exact ih (s.children e) rest subpos
+
+/--
+The counit of the cofree comonoid as a polynomial
+morphism `polyCofreeMPoly P ⟶ polyBetweenId X`.
+At each fiber `x` and shape `s`, this selects the root
+annotation position `⟨0, PUnit.unit⟩`.
+-/
+def polyCofreeMPolyCounit (P : PolyEndo X) :
+    polyCofreeMPoly P ⟶ polyBetweenId X :=
+  fun _ => ccrHomMk
+    (fun _ => PUnit.unit)
+    (fun s => Over.homMk
+      (fun _ => (⟨0, PUnit.unit⟩ :
+        PolyCofreeAnnotPos P s))
+      rfl)
+
+/--
+The comultiplication of the cofree comonoid as a
+polynomial morphism
+`polyCofreeMPoly P ⟶
+  polyBetweenComp (polyCofreeMPoly P)
+    (polyCofreeMPoly P)`.
+At each fiber `x` and shape `s`, the reindexing maps
+`s` to `⟨s, polyCofreeSubtree⟩` (the shape with all
+its subtrees), and the fiber morphism concatenates
+positions.
+-/
+def polyCofreeMPolyComult (P : PolyEndo X) :
+    polyCofreeMPoly P ⟶
+    polyBetweenComp (polyCofreeMPoly P)
+      (polyCofreeMPoly P) :=
+  fun _ => ccrHomMk
+    (fun s => ⟨s, fun pos =>
+      polyCofreeSubtree P s pos⟩)
+    (fun s => Over.homMk
+      (fun ⟨pos, subpos⟩ =>
+        polyCofreeAnnotPosConcat P s
+          pos.1 pos.2 subpos)
+      (funext fun ⟨pos, subpos⟩ =>
+        polyCofreeAnnotFiber_concat P s
+          pos.1 pos.2 subpos))
+
+end CofreeComonoid
+
 /-! ## Free Monad Monad and Cofree Comonad Comonad
 
 The construction `P ↦ polyFreeMPoly P` (free monad) is itself a monad on the
