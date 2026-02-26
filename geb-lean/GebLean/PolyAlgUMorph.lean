@@ -254,6 +254,32 @@ def algCoprodDesc
       exact congrFun (Over.w (strs i))
         ⟨x, ⟨p, f⟩⟩)
 
+/--
+A morphism that is simultaneously a homomorphism for each
+component algebra is a homomorphism for the coproduct
+algebra.
+-/
+def algCoprodDescHom
+    {I : Type u} {F : I → PolyEndo X}
+    {A B : Over X}
+    {strsA : ∀ i,
+      (polyEndoFunctor X (F i)).obj A ⟶ A}
+    {strsB : ∀ i,
+      (polyEndoFunctor X (F i)).obj B ⟶ B}
+    (h : A ⟶ B)
+    (hcomm : ∀ i,
+      (polyEndoFunctor X (F i)).map h ≫
+        strsB i = strsA i ≫ h) :
+    algCoprodDesc A strsA ⟶
+      algCoprodDesc B strsB :=
+  Endofunctor.Algebra.Hom.mk h (by
+    apply Over.OverMorphism.ext
+    funext ⟨x, ⟨⟨i, p⟩, f⟩⟩
+    exact congrFun
+      (congrArg CommaMorphism.left
+        (hcomm i))
+      ⟨x, ⟨p, f⟩⟩)
+
 end CoprodAlgebra
 
 end GebLean
