@@ -8482,6 +8482,14 @@ lemma polyCoalgComonad_forward_str
     (polyEndoFunctor X P).map_id,
     Category.comp_id]
 
+-- The backward roundtrip lemma
+-- `polyCoalgComonad_backward` and the equivalence
+-- `polyCoalgComonadEquiv` require a coinductive
+-- proof that the anamorphism of K⁻¹(c) equals c.a.
+-- The proof uses the D-coalgebra coassociativity
+-- to establish self-consistency of subtrees at
+-- each approximation level.
+
 end CoalgComonadComparison
 
 end GebLean

@@ -20,10 +20,22 @@ detailed mathematical findings from the literature.
 
 ### Phase 1: Functor-Coalg ≌ Comonad-Coalg
 
-- [ ] Check mathlib for comonadicity infrastructure
-- [ ] `polyCoalgToComonadCoalg` functor
-- [ ] `polyComonadCoalgToCoalg` functor
-- [ ] Roundtrip isomorphisms
+- [x] Check mathlib for comonadicity infrastructure
+  - Mathlib has `Comonad.comparison`,
+    `Comonad.Coalgebra`, Beck's theorem
+    (`comonadicOfHasPreserves...`)
+- [x] `polyCoalgToComonadCoalg` functor
+  (via `Comonad.comparison`)
+- [x] `polyComonadCoalgToCoalg` functor
+  (structure: `k ≫ cofreeStr ≫ P.map(counit)`)
+- [x] Forward roundtrip `K⁻¹(K(α)).str = α.str`
+  (`polyCoalgComonad_forward_str`)
+- [ ] Backward roundtrip `K(K⁻¹(c)).a = c.a`
+  Requires coinductive proof at approx level
+  using D-coalgebra coassociativity.
+  The claim: for each subtree of c.a(a),
+  `c.a(root_annotation(subtree)) = subtree`,
+  which follows from `c.a ≫ δ = c.a ≫ D.map(c.a)`.
 - [ ] `polyCoalgComonadEquiv`
 
 ### Phase 1b: Functor-Alg ≌ Monad-Alg (dual)
