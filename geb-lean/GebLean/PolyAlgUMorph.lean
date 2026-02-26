@@ -333,6 +333,158 @@ def coalgProdLift
     (by funext _; rfl)
 
 
+private lemma ccrEvalMap_cast_comm
+    {I : Type u} {F : I → PolyEndo X}
+    {A B : Over X} (h : A ⟶ B)
+    (i : I) {x₁ x₂ : X} (hx : x₁ = x₂)
+    (ev : ccrEval ((F i) x₁) A) :
+    ccrEvalMap h
+      (cast
+        (congrArg
+          (fun y => ccrEval ((F i) y) A) hx)
+        ev) =
+    cast
+      (congrArg
+        (fun y => ccrEval ((F i) y) B) hx)
+      (ccrEvalMap h ev) := by
+  cases hx; rfl
+
+private lemma coalgProdLiftAt_ccrEvalMap
+    {I : Type u} {F : I → PolyEndo X}
+    {A B : Over X} (h : A ⟶ B)
+    (x : X)
+    (evs : ∀ i, ccrEval ((F i) x) A) :
+    ccrEvalMap h (coalgProdLiftAt x evs) =
+      coalgProdLiftAt x
+        (fun i => ccrEvalMap h (evs i)) := by
+  simp only [ccrEvalMap, coalgProdLiftAt]
+  congr 1
+
+private lemma coalgProdLiftAt_heq
+    {I : Type u} {F : I → PolyEndo X}
+    {A : Over X} {x₁ x₂ : X} (hx : x₁ = x₂)
+    {evs₁ : ∀ i, ccrEval ((F i) x₁) A}
+    {evs₂ : ∀ i, ccrEval ((F i) x₂) A}
+    (hevs : ∀ i, evs₁ i ≍ evs₂ i) :
+    coalgProdLiftAt x₁ evs₁ ≍
+      coalgProdLiftAt x₂ evs₂ := by
+  cases hx
+  have : evs₁ = evs₂ :=
+    funext (fun i => eq_of_heq (hevs i))
+  cases this
+  rfl
+
+private lemma hcomm_component_cast_heq
+    {I : Type u} {F : I → PolyEndo X}
+    {A B : Over X}
+    {strsA : ∀ i,
+      A ⟶ (polyEndoFunctor X (F i)).obj A}
+    {strsB : ∀ i,
+      B ⟶ (polyEndoFunctor X (F i)).obj B}
+    (h : A ⟶ B)
+    (hcomm : ∀ i,
+      strsA i ≫ (polyEndoFunctor X (F i)).map h =
+        h ≫ strsB i)
+    (i : I) (a : A.left) :
+    cast
+      (congrArg
+        (fun y => ccrEval ((F i) y) B)
+        (congrFun (Over.w (strsA i)) a))
+      (ccrEvalMap h ((strsA i).left a).snd)
+    ≍ cast
+      (congrArg
+        (fun y => ccrEval ((F i) y) B)
+        (congrFun (Over.w (strsB i))
+          (h.left a)))
+      ((strsB i).left (h.left a)).snd := by
+  have happ :=
+    congrFun
+      (congrArg CommaMorphism.left (hcomm i)) a
+  simp only [Over.comp_left,
+    types_comp_apply] at happ
+  have hsnd := sigma_snd_heq_of_eq happ
+  exact (cast_heq _ _).trans
+    (hsnd.trans (cast_heq _ _).symm)
+
+private lemma coalgProdLiftHom_snd_heq
+    {I : Type u} {F : I → PolyEndo X}
+    {A B : Over X}
+    {strsA : ∀ i,
+      A ⟶ (polyEndoFunctor X (F i)).obj A}
+    {strsB : ∀ i,
+      B ⟶ (polyEndoFunctor X (F i)).obj B}
+    (h : A ⟶ B)
+    (hcomm : ∀ i,
+      strsA i ≫ (polyEndoFunctor X (F i)).map h =
+        h ≫ strsB i)
+    (a : A.left) :
+    ccrEvalMap h
+      (coalgProdLiftAt (A.hom a)
+        (fun i =>
+          cast
+            (congrArg
+              (fun y => ccrEval ((F i) y) A)
+              (congrFun (Over.w (strsA i)) a))
+            ((strsA i).left a).snd))
+    ≍ coalgProdLiftAt (B.hom (h.left a))
+        (fun i =>
+          cast
+            (congrArg
+              (fun y => ccrEval ((F i) y) B)
+              (congrFun (Over.w (strsB i))
+                (h.left a)))
+            ((strsB i).left (h.left a)).snd) := by
+  have step1 :=
+    heq_of_eq
+      (coalgProdLiftAt_ccrEvalMap h (A.hom a)
+        (fun i =>
+          cast
+            (congrArg
+              (fun y => ccrEval ((F i) y) A)
+              (congrFun (Over.w (strsA i)) a))
+            ((strsA i).left a).snd))
+  have step2 :=
+    heq_of_eq
+      (congrArg
+        (coalgProdLiftAt (A.hom a))
+        (funext (fun i =>
+          ccrEvalMap_cast_comm h i
+            (congrFun (Over.w (strsA i)) a)
+            ((strsA i).left a).snd)))
+  have step3 :=
+    coalgProdLiftAt_heq
+      (congrFun (Over.w h) a).symm
+      (fun i =>
+        hcomm_component_cast_heq h hcomm i a)
+  exact step1.trans (step2.trans step3)
+
+/--
+A morphism that is simultaneously a homomorphism for each
+component coalgebra is a homomorphism for the product
+coalgebra.
+-/
+def coalgProdLiftHom
+    {I : Type u} {F : I → PolyEndo X}
+    {A B : Over X}
+    {strsA : ∀ i,
+      A ⟶ (polyEndoFunctor X (F i)).obj A}
+    {strsB : ∀ i,
+      B ⟶ (polyEndoFunctor X (F i)).obj B}
+    (h : A ⟶ B)
+    (hcomm : ∀ i,
+      strsA i ≫ (polyEndoFunctor X (F i)).map h =
+        h ≫ strsB i) :
+    coalgProdLift A strsA ⟶
+      coalgProdLift B strsB :=
+  Endofunctor.Coalgebra.Hom.mk h (by
+    apply Over.OverMorphism.ext
+    funext a
+    simp only [Over.comp_left, types_comp_apply,
+      coalgProdLift, Over.homMk_left]
+    exact sigma_eq_of_fst_eq_snd_heq
+      (congrFun (Over.w h) a).symm
+      (coalgProdLiftHom_snd_heq h hcomm a))
+
 end ProdCoalgebra
 
 section EqAlgebra
