@@ -546,4 +546,59 @@ def coalgCoeqExtendHom
 
 end CoeqCoalgebra
 
+section Factorization
+
+variable {X : Type u}
+
+/--
+Pulling back a coproduct algebra along the `j`-th
+injection recovers the `j`-th component algebra.
+-/
+theorem algCoprodDesc_pullback_inj
+    {I : Type u} {F : I → PolyEndo X}
+    (A : Over X)
+    (strs : ∀ i,
+      (polyEndoFunctor X (F i)).obj A ⟶ A)
+    (j : I) :
+    algPullback (polyBetweenInj I F j)
+      (algCoprodDesc A strs) =
+    ⟨A, strs j⟩ := by
+  simp only [algPullback, algCoprodDesc,
+    polyEndoMorphEval, polyBetweenMorphEval]
+  congr 1
+
+/--
+Pushing forward a product coalgebra along the `j`-th
+projection recovers the `j`-th component coalgebra.
+-/
+theorem coalgProdLift_pushforward_proj
+    {I : Type u} {F : I → PolyEndo X}
+    (A : Over X)
+    (strs : ∀ i,
+      A ⟶ (polyEndoFunctor X (F i)).obj A)
+    (j : I) :
+    coalgPushforward (polyBetweenProj I F j)
+      (coalgProdLift A strs) =
+    ⟨A, strs j⟩ := by
+  simp only [coalgPushforward, coalgProdLift,
+    polyEndoMorphEval, polyBetweenMorphEval]
+  congr 1
+  apply Over.OverMorphism.ext
+  funext a
+  simp only [Over.comp_left, types_comp_apply,
+    Over.homMk_left,
+    familySliceForward,
+    familySliceForwardMap]
+  apply sigma_eq_of_fst_eq_snd_heq
+  · exact (congrFun (Over.w (strs j)) a).symm
+  · simp only [polyBetweenMorphEvalAt,
+      polyBetweenProj, coalgProdLiftAt,
+      ccrReindex, ccrFiberMor, ccrHomMk,
+      ptoefMk, ptoefIndex, ptoefMor,
+      polyBetweenProjReindex,
+      polyBetweenProjFiber]
+    exact cast_heq _ _
+
+end Factorization
+
 end GebLean
