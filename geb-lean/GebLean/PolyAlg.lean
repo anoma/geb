@@ -8333,4 +8333,155 @@ def polyFreeMPolyMult (P : PolyEndo X) :
 
 end FreeMonoid
 
+/-! ## Coalgebra-Comonad Comparison
+
+The comparison functor from P-coalgebras (endofunctor
+coalgebras) to Eilenberg-Moore coalgebras of the cofree
+comonad, and its inverse.  Together these form an
+equivalence
+`PolyCoalg P ≌ Comonad.Coalgebra (polyCofreeComonad P)`.
+-/
+
+section CoalgComonadComparison
+
+variable (X : Type u)
+
+/--
+The comparison functor from P-coalgebras to
+Eilenberg-Moore coalgebras of the cofree comonad.
+Sends `α : PolyCoalg P` to the comonad coalgebra with
+carrier `α.V` and structure map given by the
+anamorphism `α.V ⟶ D(α.V)`.
+-/
+abbrev polyCoalgToComonadCoalg (P : PolyEndo X) :
+    PolyCoalg P ⥤
+    Comonad.Coalgebra (polyCofreeComonad X P) :=
+  Comonad.comparison (polyForgetCofreeAdjunction P)
+
+variable {X}
+
+/--
+Extract a P-coalgebra structure from a comonad
+coalgebra.  Given `c : Comonad.Coalgebra D` where
+`D = polyCofreeComonad P`, the structure map on
+`c.A` is `c.a` composed with the cofree P-structure
+and `P` applied to the counit.
+-/
+def polyComonadCoalgStr {P : PolyEndo X}
+    (c : Comonad.Coalgebra
+      (polyCofreeComonad X P)) :
+    c.A ⟶ (polyEndoFunctor X P).obj c.A :=
+  c.a ≫ (polyCofreeCoalg c.A P).str ≫
+    (polyEndoFunctor X P).map
+      ((polyCofreeComonad X P).ε.app c.A)
+
+/--
+The inverse of the comparison functor: sends an
+Eilenberg-Moore coalgebra of the cofree comonad to
+a P-coalgebra.  The carrier is `c.A` and the
+P-structure is extracted via the cofree coalgebra's
+structure map.
+-/
+def polyComonadCoalgToCoalgObj {P : PolyEndo X}
+    (c : Comonad.Coalgebra
+      (polyCofreeComonad X P)) :
+    PolyCoalg P where
+  V := c.A
+  str := polyComonadCoalgStr c
+
+/--
+A comonad coalgebra morphism yields a P-coalgebra
+morphism: `f.f` commutes with the extracted
+P-structure.
+-/
+lemma polyComonadCoalgToCoalg_map_comm
+    {P : PolyEndo X}
+    {c₁ c₂ : Comonad.Coalgebra
+      (polyCofreeComonad X P)}
+    (f : c₁ ⟶ c₂) :
+    polyComonadCoalgStr c₁ ≫
+      (polyEndoFunctor X P).map f.f =
+    f.f ≫ polyComonadCoalgStr c₂ := by
+  simp only [polyComonadCoalgStr, Category.assoc]
+  -- Bridge between comonad map and cofree functor
+  -- map for rewriting purposes.
+  have comonad_map_eq :
+      (polyCofreeComonad X P).map f.f =
+      ((polyCofreeFunctor P).map f.f).f :=
+    rfl
+  -- Step 1: Replace P.map(ε₁) ≫ P.map(f.f) with
+  -- P.map(D.map f.f) ≫ P.map(ε₂).
+  have natε :
+    (polyEndoFunctor X P).map
+      ((polyCofreeComonad X P).ε.app c₁.A) ≫
+    (polyEndoFunctor X P).map f.f =
+    (polyEndoFunctor X P).map
+      ((polyCofreeComonad X P).map f.f) ≫
+    (polyEndoFunctor X P).map
+      ((polyCofreeComonad X P).ε.app c₂.A) := by
+    rw [← (polyEndoFunctor X P).map_comp,
+      ← (polyEndoFunctor X P).map_comp]
+    congr 1
+    exact ((polyCofreeComonad X P).ε.naturality
+      f.f).symm
+  rw [natε]; clear natε
+  -- Step 2: Use cofreeStr₁ ≫ P.map(D.map f.f)
+  -- = D.map(f.f) ≫ cofreeStr₂
+  rw [comonad_map_eq]
+  have cofree_str_nat :
+      (polyCofreeCoalg c₁.A P).str ≫
+        (polyEndoFunctor X P).map
+          (((polyCofreeFunctor P).map f.f).f) =
+      ((polyCofreeFunctor P).map f.f).f ≫
+        (polyCofreeCoalg c₂.A P).str :=
+    ((polyCofreeFunctor P).map f.f).h
+  rw [← Category.assoc
+    ((polyCofreeCoalg c₁.A P).str) _ _,
+    cofree_str_nat, Category.assoc]
+  -- Step 3: Use c₁.a ≫ D.map(f.f) = f.f ≫ c₂.a
+  rw [← comonad_map_eq,
+    ← Category.assoc c₁.a _ _,
+    f.h, Category.assoc]
+
+/--
+The inverse of the comparison functor: sends
+Eilenberg-Moore coalgebras of the cofree comonad
+to P-coalgebras.
+-/
+def polyComonadCoalgToCoalg (P : PolyEndo X) :
+    Comonad.Coalgebra (polyCofreeComonad X P) ⥤
+    PolyCoalg P where
+  obj := polyComonadCoalgToCoalgObj
+  map := fun f =>
+    ⟨f.f, polyComonadCoalgToCoalg_map_comm f⟩
+  map_id := fun _ => by
+    ext; simp
+  map_comp := fun _ _ => by
+    ext; simp
+
+/--
+Forward roundtrip: K⁻¹(K(α)).str = α.str.
+The extracted P-structure from the comparison
+coalgebra recovers the original structure.
+-/
+lemma polyCoalgComonad_forward_str
+    {P : PolyEndo X}
+    (α : PolyCoalg P) :
+    polyComonadCoalgStr
+      ((polyCoalgToComonadCoalg X P).obj α) =
+    α.str := by
+  change polyCoalgUnit P α ≫
+    polyCofreeStr α.V P ≫
+    (polyEndoFunctor X P).map
+      (polyCofreeCounit α.V P) = α.str
+  rw [← Category.assoc,
+    ← polyCoalgUnit_coalg_comm P α,
+    Category.assoc,
+    ← (polyEndoFunctor X P).map_comp,
+    polyCofree_left_triangle,
+    (polyEndoFunctor X P).map_id,
+    Category.comp_id]
+
+end CoalgComonadComparison
+
 end GebLean
