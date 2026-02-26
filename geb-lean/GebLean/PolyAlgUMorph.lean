@@ -282,4 +282,56 @@ def algCoprodDescHom
 
 end CoprodAlgebra
 
+section ProdCoalgebra
+
+variable {X : Type u}
+
+/--
+Assemble component evaluations into a product
+evaluation. Given evaluations `evs i : ccrEval (F_i x) A`
+for each `i`, produce `ccrEval ((∏ F_i) x) A`.
+-/
+private def coalgProdLiftAt
+    {I : Type u} {F : I → PolyEndo X}
+    {A : Over X} (x : X)
+    (evs : ∀ i, ccrEval ((F i) x) A) :
+    ccrEval ((polyBetweenProd I F) x) A :=
+  ⟨fun i => (evs i).fst,
+    Over.homMk
+      (fun ⟨i, e⟩ => (evs i).snd.left e)
+      (by
+        funext ⟨i, e⟩
+        exact congrFun
+          (Over.w (evs i).snd) e)⟩
+
+/--
+Construct a coalgebra for a product of polynomial
+endofunctors from compatible coalgebras with a shared
+carrier. Given structure maps `str_i : A ⟶ F_i(A)` for
+each `i`, the product coalgebra has structure map
+`A ⟶ (∏ F_i)(A)` that tuples the component structure
+maps.
+-/
+def coalgProdLift
+    {I : Type u} {F : I → PolyEndo X}
+    (A : Over X)
+    (strs : ∀ i,
+      A ⟶ (polyEndoFunctor X (F i)).obj A) :
+    PolyCoalg (polyBetweenProd I F) where
+  V := A
+  str := Over.homMk
+    (fun a =>
+      ⟨A.hom a,
+        coalgProdLiftAt (A.hom a)
+          (fun i =>
+            cast
+              (congrArg
+                (fun y => ccrEval ((F i) y) A)
+                (congrFun
+                  (Over.w (strs i)) a))
+              ((strs i).left a).snd)⟩)
+    (by funext _; rfl)
+
+end ProdCoalgebra
+
 end GebLean
