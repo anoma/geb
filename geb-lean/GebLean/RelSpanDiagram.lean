@@ -655,20 +655,6 @@ def covariantEmbedding :
       apply Subtype.ext
       simp [covRelImage.map]
 
-/-- The covariant embedding is faithful:
-if two natural transformations `α β : F ⟶ G`
-have the same image under
-`covariantEmbedding`, then `α = β`. -/
-instance covariantEmbedding_faithful :
-    covariantEmbedding.Faithful where
-  map_injective {F G α β} h := by
-    apply NatTrans.ext; funext I x
-    have := congr_arg ULift.down
-      (congr_fun (congr_fun (congrArg
-        NatTrans.app h) (.typeNode I))
-        ⟨x⟩)
-    exact this
-
 /-- The covariant embedding is fully faithful.
 The preimage extracts `typeNode` components;
 fullness follows from the `relNode` component
@@ -757,5 +743,13 @@ def covariantEmbedding_fullyFaithful :
       apply Prod.ext
       · exact hfst.symm
       · exact hsnd.symm
+
+instance covariantEmbedding_faithful :
+    covariantEmbedding.Faithful :=
+  covariantEmbedding_fullyFaithful.faithful
+
+instance covariantEmbedding_full :
+    covariantEmbedding.Full :=
+  covariantEmbedding_fullyFaithful.full
 
 end GebLean
