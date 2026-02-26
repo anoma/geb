@@ -505,4 +505,207 @@ theorem contravProfunctor_map_app (F : Cᵒᵖ ⥤ Type v) {I I' : Cᵒᵖ} (f :
 
 end ForgetfulProfunctors
 
+section Collage
+
+universe u₁ u₂ v₁ v₂
+
+variable {C : Type u₁} [Category.{v₁} C]
+variable {D : Type u₂} [Category.{v₂} D]
+
+/-- The collage (or cograph) of a profunctor
+`P : Cᵒᵖ × D ⥤ Type w`.  Objects are the
+disjoint union `C ⊕ D`; morphisms within `C`
+and within `D` are inherited, cross-morphisms
+from `C` to `D` are elements of `P`, and there
+are no morphisms from `D` to `C`. -/
+structure Collage
+    (P : Cᵒᵖ × D ⥤ Type w) where
+  val : C ⊕ D
+
+/-- Inject a `C`-object into the collage. -/
+def Collage.inl
+    {P : Cᵒᵖ × D ⥤ Type w}
+    (c : C) : Collage P :=
+  ⟨.inl c⟩
+
+/-- Inject a `D`-object into the collage. -/
+def Collage.inr
+    {P : Cᵒᵖ × D ⥤ Type w}
+    (d : D) : Collage P :=
+  ⟨.inr d⟩
+
+/-- Morphisms in the collage of `P`.  Within each
+component, morphisms are inherited from `C` or `D`;
+cross-morphisms from `C` to `D` are elements of `P`;
+there are no morphisms from `D` to `C`.  All branches
+are `ULift`ed to a common universe. -/
+def Collage.Hom
+    (P : Cᵒᵖ × D ⥤ Type w) :
+    Collage P → Collage P →
+    Type (max v₁ v₂ w) :=
+  fun X Y =>
+    match X.val, Y.val with
+    | .inl c₁, .inl c₂ =>
+      ULift.{max v₁ v₂ w} (c₁ ⟶ c₂)
+    | .inr d₁, .inr d₂ =>
+      ULift.{max v₁ v₂ w} (d₁ ⟶ d₂)
+    | .inl c, .inr d =>
+      ULift.{max v₁ v₂ w}
+        (P.obj (Opposite.op c, d))
+    | .inr _, .inl _ => PEmpty
+
+variable (P : Cᵒᵖ × D ⥤ Type w) in
+/-- Identity morphism in the collage. -/
+def Collage.Hom.id :
+    (X : Collage P) → Collage.Hom P X X :=
+  fun X =>
+    match X with
+    | ⟨.inl c⟩ => ⟨𝟙 c⟩
+    | ⟨.inr d⟩ => ⟨𝟙 d⟩
+
+variable (P : Cᵒᵖ × D ⥤ Type w) in
+/-- Composition of morphisms in the collage. -/
+def Collage.Hom.comp :
+    {X Y Z : Collage P} →
+    Collage.Hom P X Y →
+    Collage.Hom P Y Z →
+    Collage.Hom P X Z :=
+  fun {X Y Z} f g =>
+    match X, Y, Z, f, g with
+    | ⟨.inl _⟩, ⟨.inl _⟩, ⟨.inl _⟩,
+      f, g => ⟨f.down ≫ g.down⟩
+    | ⟨.inl _⟩, ⟨.inl _⟩, ⟨.inr d⟩,
+      f, h =>
+        ⟨P.map (f.down.op, 𝟙 d) h.down⟩
+    | ⟨.inl c⟩, ⟨.inr _⟩, ⟨.inr _⟩,
+      h, g =>
+        ⟨P.map
+          (𝟙 (Opposite.op c), g.down)
+          h.down⟩
+    | ⟨.inr _⟩, ⟨.inr _⟩, ⟨.inr _⟩,
+      f, g => ⟨f.down ≫ g.down⟩
+    | ⟨.inr _⟩, ⟨.inl _⟩, _,
+      f, _ => f.elim
+    | ⟨.inl _⟩, ⟨.inr _⟩, ⟨.inl _⟩,
+      _, g => g.elim
+    | ⟨.inr _⟩, ⟨.inr _⟩, ⟨.inl _⟩,
+      _, g => g.elim
+
+variable (P : Cᵒᵖ × D ⥤ Type w) in
+instance : CategoryStruct (Collage P) where
+  Hom := Collage.Hom P
+  id := Collage.Hom.id P
+  comp := Collage.Hom.comp P
+
+variable (P : Cᵒᵖ × D ⥤ Type w) in
+theorem Collage.Hom.id_comp
+    {X Y : Collage P}
+    (f : Collage.Hom P X Y) :
+    Collage.Hom.comp P
+      (Collage.Hom.id P X) f = f := by
+  match X, Y, f with
+  | ⟨.inl _⟩, ⟨.inl _⟩, f =>
+    exact ULift.ext _ _ (Category.id_comp _)
+  | ⟨.inl c⟩, ⟨.inr d⟩, h =>
+    apply ULift.ext
+    change P.map
+      (𝟙 (Opposite.op c, d)) h.down =
+      h.down
+    exact congr_fun (P.map_id _) h.down
+  | ⟨.inr _⟩, ⟨.inr _⟩, f =>
+    exact ULift.ext _ _ (Category.id_comp _)
+  | ⟨.inr _⟩, ⟨.inl _⟩, f => exact f.elim
+
+variable (P : Cᵒᵖ × D ⥤ Type w) in
+theorem Collage.Hom.comp_id
+    {X Y : Collage P}
+    (f : Collage.Hom P X Y) :
+    Collage.Hom.comp P f
+      (Collage.Hom.id P Y) = f := by
+  match X, Y, f with
+  | ⟨.inl _⟩, ⟨.inl _⟩, f =>
+    exact ULift.ext _ _ (Category.comp_id _)
+  | ⟨.inl c⟩, ⟨.inr d⟩, h =>
+    apply ULift.ext
+    change P.map
+      (𝟙 (Opposite.op c, d)) h.down =
+      h.down
+    exact congr_fun (P.map_id _) h.down
+  | ⟨.inr _⟩, ⟨.inr _⟩, f =>
+    exact ULift.ext _ _ (Category.comp_id _)
+  | ⟨.inr _⟩, ⟨.inl _⟩, f => exact f.elim
+
+variable (P : Cᵒᵖ × D ⥤ Type w) in
+theorem Collage.Hom.assoc
+    {W X Y Z : Collage P}
+    (f : Collage.Hom P W X)
+    (g : Collage.Hom P X Y)
+    (h : Collage.Hom P Y Z) :
+    Collage.Hom.comp P
+      (Collage.Hom.comp P f g) h =
+    Collage.Hom.comp P f
+      (Collage.Hom.comp P g h) := by
+  match W, X, Y, Z, f, g, h with
+  | ⟨.inl _⟩, ⟨.inl _⟩, ⟨.inl _⟩, ⟨.inl _⟩,
+    f, g, h =>
+    exact ULift.ext _ _
+      (Category.assoc _ _ _)
+  | ⟨.inl _⟩, ⟨.inl _⟩, ⟨.inl _⟩, ⟨.inr _⟩,
+    f, g, h =>
+    apply ULift.ext
+    simp only [Collage.Hom.comp, op_comp,
+      ← FunctorToTypes.map_comp_apply,
+      prod_comp]; simp
+  | ⟨.inl _⟩, ⟨.inl _⟩, ⟨.inr _⟩, ⟨.inr _⟩,
+    f, h, g =>
+    apply ULift.ext
+    simp only [Collage.Hom.comp,
+      ← FunctorToTypes.map_comp_apply,
+      prod_comp]; simp
+  | ⟨.inl _⟩, ⟨.inr _⟩, ⟨.inr _⟩, ⟨.inr _⟩,
+    h, g₁, g₂ =>
+    apply ULift.ext
+    simp only [Collage.Hom.comp,
+      ← FunctorToTypes.map_comp_apply,
+      prod_comp]; simp
+  | ⟨.inr _⟩, ⟨.inr _⟩, ⟨.inr _⟩, ⟨.inr _⟩,
+    f, g, h =>
+    exact ULift.ext _ _
+      (Category.assoc _ _ _)
+  | ⟨.inr _⟩, ⟨.inl _⟩, _, _, f, _, _ =>
+    exact f.elim
+  | _, _, ⟨.inr _⟩, ⟨.inl _⟩, _, _, h =>
+    exact h.elim
+  | ⟨.inl _⟩, ⟨.inr _⟩, ⟨.inl _⟩, _, _, g, _ =>
+    exact g.elim
+
+variable (P : Cᵒᵖ × D ⥤ Type w) in
+instance : Category.{max v₁ v₂ w}
+    (Collage P) where
+  id_comp := Collage.Hom.id_comp P
+  comp_id := Collage.Hom.comp_id P
+  assoc := Collage.Hom.assoc P
+
+/-- The inclusion functor from `C` into the
+collage, sending `c` to `Collage.inl c`. -/
+def Collage.inlFunctor
+    (P : Cᵒᵖ × D ⥤ Type w) :
+    C ⥤ Collage P where
+  obj c := Collage.inl c
+  map f := ⟨f⟩
+  map_id _ := ULift.ext _ _ rfl
+  map_comp _ _ := ULift.ext _ _ rfl
+
+/-- The inclusion functor from `D` into the
+collage, sending `d` to `Collage.inr d`. -/
+def Collage.inrFunctor
+    (P : Cᵒᵖ × D ⥤ Type w) :
+    D ⥤ Collage P where
+  obj d := Collage.inr d
+  map f := ⟨f⟩
+  map_id _ := ULift.ext _ _ rfl
+  map_comp _ _ := ULift.ext _ _ rfl
+
+end Collage
+
 end GebLean
