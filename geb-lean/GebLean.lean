@@ -41,6 +41,7 @@ import GebLean.ProfAlg
 import GebLean.PshRelDouble
 import GebLean.PshTypeExpr
 import GebLean.RelInterpComposition
+import GebLean.RelSpanDiagram
 import GebLean.RestrictedCoendAsColimit
 import GebLean.Semicategory
 import GebLean.Utilities
