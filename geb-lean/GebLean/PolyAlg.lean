@@ -1,6 +1,7 @@
 import GebLean.PolyAdjunctions
 import GebLean.Utilities.Equalities
 import Mathlib.CategoryTheory.Endofunctor.Algebra
+import Mathlib.CategoryTheory.Monad.Adjunction
 
 /-!
 # Algebras of Polynomial Endofunctors
@@ -7260,6 +7261,321 @@ def polyForgetCofreeAdjunction (P : PolyEndo X) :
   }
 
 end Adjunctions
+
+/-! ## Naturality of the Cofree Comonad Equivalence
+
+The equivalence `polyCofreeEquiv A P x` between the M-type
+representation `PolyCofreeM A P x` and the polynomial
+evaluation `PolyCofreePolyEval A P x` is natural in `A`.
+-/
+
+section CofreeNaturality
+
+variable {X : Type u}
+
+/--
+Mapping annotations preserves shape at the approximation
+level: stripping annotations after mapping gives the same
+result as stripping annotations directly.
+-/
+lemma polyCofreeApproxToShape_map
+    (A B : Over X) (P : PolyEndo X)
+    (f : A ⟶ B) {n : Nat} {x : X}
+    (a : PolyCofixApprox (polyScale A P) n x) :
+    polyCofreeApproxToShape B P
+      (polyCofreeMapApprox A B P f a) =
+    polyCofreeApproxToShape A P a := by
+  induction a with
+  | «continue» y => rfl
+  | intro y idx children ih =>
+    obtain ⟨aVal, pIdx⟩ := idx
+    dsimp only [polyCofreeMapApprox,
+      polyCofreeApproxToShape]
+    congr 1
+    funext e
+    exact ih e
+
+/--
+Mapping annotations preserves shape: the shape of a
+mapped M-type equals the shape of the original.
+-/
+theorem polyCofreeToShape_map
+    (A B : Over X) (P : PolyEndo X)
+    (f : A ⟶ B) {x : X}
+    (m : PolyCofreeM A P x) :
+    polyCofreeToShape B P
+      (polyCofreeMapAt A B P f m) =
+    polyCofreeToShape A P m := by
+  apply PolyCofix.ext
+  intro n
+  exact polyCofreeApproxToShape_map A B P f
+    (m.approx n)
+
+/--
+The result of `polyCofreeFromShapeAndDataApprox`
+depends only on the data function, not on its proof
+of fiber compatibility.
+-/
+lemma polyCofreeFromShapeAndDataApprox_proof_irrel
+    (A : Over X) (P : PolyEndo X) {x : X}
+    (shape : PolyCofreeShape P x)
+    (f : (pos : PolyCofreeAnnotPos P shape) →
+      A.left)
+    (hf1 hf2 : ∀ pos, A.hom (f pos) =
+      PolyCofreeAnnotFiber P shape pos)
+    (n : Nat) :
+    polyCofreeFromShapeAndDataApprox A P
+      shape f hf1 n =
+    polyCofreeFromShapeAndDataApprox A P
+      shape f hf2 n := by
+  induction n generalizing x shape f hf1 hf2 with
+  | zero => rfl
+  | succ n ih =>
+    unfold polyCofreeFromShapeAndDataApprox
+    congr 1
+
+/--
+Mapping by `g` commutes with building from shape and
+data at the approximation level: re-annotating with
+`g` then converting equals converting with
+`g.left ∘ f`.
+-/
+lemma polyCofreeFromShapeAndDataApprox_map
+    (A B : Over X) (P : PolyEndo X)
+    (g : A ⟶ B) {x : X}
+    (shape : PolyCofreeShape P x)
+    (f : (pos : PolyCofreeAnnotPos P shape) →
+      A.left)
+    (hf : ∀ pos, A.hom (f pos) =
+      PolyCofreeAnnotFiber P shape pos)
+    (n : Nat) :
+    polyCofreeMapApprox A B P g
+      (polyCofreeFromShapeAndDataApprox A P
+        shape f hf n) =
+    polyCofreeFromShapeAndDataApprox B P shape
+      (g.left ∘ f)
+      (fun pos =>
+        (overMor_w g (f pos)).trans (hf pos))
+      n := by
+  induction n generalizing x shape f hf with
+  | zero => rfl
+  | succ n ih =>
+    unfold polyCofreeFromShapeAndDataApprox
+      polyCofreeMapApprox
+    dsimp only [polyCofreeFromShapeAndDataApprox,
+      polyCofreeMapApprox]
+    congr 1
+    funext e
+    rw [ih (shape.children e)
+      (polyCofreeChildAnnotFn A P shape f e)
+      (polyCofreeChildAnnotFn_fiber
+        A P shape f hf e)]
+    exact
+      polyCofreeFromShapeAndDataApprox_proof_irrel
+        B P (shape.children e) _ _ _ _
+
+/--
+Mapping by `g` commutes with building from shape and
+data at the M-type level.
+-/
+theorem polyCofreeFromShapeAndData_map
+    (A B : Over X) (P : PolyEndo X)
+    (g : A ⟶ B) {x : X}
+    (shape : PolyCofreeShape P x)
+    (f : (pos : PolyCofreeAnnotPos P shape) →
+      A.left)
+    (hf : ∀ pos, A.hom (f pos) =
+      PolyCofreeAnnotFiber P shape pos) :
+    polyCofreeMapAt A B P g
+      (polyCofreeFromShapeAndData A P
+        shape f hf) =
+    polyCofreeFromShapeAndData B P shape
+      (g.left ∘ f)
+      (fun pos =>
+        (overMor_w g (f pos)).trans
+          (hf pos)) := by
+  apply PolyCofix.ext
+  intro n
+  exact polyCofreeFromShapeAndDataApprox_map
+    A B P g shape f hf n
+
+/--
+The result of `polyCofreeFromShapeAndData` depends only
+on the data function, not on its proof.
+-/
+theorem polyCofreeFromShapeAndData_proof_irrel
+    (A : Over X) (P : PolyEndo X) {x : X}
+    (shape : PolyCofreeShape P x)
+    (f : (pos : PolyCofreeAnnotPos P shape) →
+      A.left)
+    (hf1 hf2 : ∀ pos, A.hom (f pos) =
+      PolyCofreeAnnotFiber P shape pos) :
+    polyCofreeFromShapeAndData A P
+      shape f hf1 =
+    polyCofreeFromShapeAndData A P
+      shape f hf2 := by
+  apply PolyCofix.ext
+  intro n
+  exact
+    polyCofreeFromShapeAndDataApprox_proof_irrel
+      A P shape f hf1 hf2 n
+
+/--
+The inverse of `polyCofreeEquiv` is natural in `A`:
+mapping by `g` then converting from poly eval form
+equals converting from (post-composed) poly eval form.
+-/
+theorem polyCofreePolyEval_to_M_natural
+    (A B : Over X) (P : PolyEndo X)
+    (g : A ⟶ B) {x : X}
+    (eval : PolyCofreePolyEval A P x) :
+    polyCofreeMapAt A B P g
+      (polyCofreePolyEval_to_polyCofreeM
+        A P eval) =
+    polyCofreePolyEval_to_polyCofreeM B P
+      (ccrEvalMap g eval) := by
+  obtain ⟨shape, mor⟩ := eval
+  simp only [polyCofreePolyEval_to_polyCofreeM,
+    ccrEvalMap]
+  rw [polyCofreeFromShapeAndData_map
+    A B P g shape mor.left
+    (fun pos => overMor_w mor pos)]
+  exact polyCofreeFromShapeAndData_proof_irrel
+    B P shape (g.left ∘ mor.left) _ _
+
+/--
+Forward naturality of `polyCofreeEquiv`:
+converting to poly eval form then mapping by `g`
+equals mapping by `g` then converting.
+Derived from inverse naturality + roundtrips.
+-/
+theorem polyCofreeM_to_polyCofreePolyEval_natural
+    (A B : Over X) (P : PolyEndo X)
+    (g : A ⟶ B) {x : X}
+    (m : PolyCofreeM A P x) :
+    ccrEvalMap g
+      (polyCofreeM_to_polyCofreePolyEval
+        A P m) =
+    polyCofreeM_to_polyCofreePolyEval B P
+      (polyCofreeMapAt A B P g m) := by
+  calc ccrEvalMap g
+        (polyCofreeM_to_polyCofreePolyEval
+          A P m)
+      = polyCofreeM_to_polyCofreePolyEval B P
+          (polyCofreePolyEval_to_polyCofreeM
+            B P
+            (ccrEvalMap g
+              (polyCofreeM_to_polyCofreePolyEval
+                A P m))) := by
+          rw [polyCofreePolyEval_roundtrip]
+    _ = polyCofreeM_to_polyCofreePolyEval B P
+          (polyCofreeMapAt A B P g
+            (polyCofreePolyEval_to_polyCofreeM
+              A P
+              (polyCofreeM_to_polyCofreePolyEval
+                A P m))) := by
+          rw [polyCofreePolyEval_to_M_natural]
+    _ = polyCofreeM_to_polyCofreePolyEval B P
+          (polyCofreeMapAt A B P g m) := by
+          rw [polyCofreeM_roundtrip]
+
+/--
+The forward component of the pointwise isomorphism:
+cofree carrier to polynomial evaluation.
+-/
+def polyCofreeCarrierToEval (A : Over X)
+    (P : PolyEndo X) :
+    polyCofreeCarrier A P ⟶
+    polyBetweenEval X X (polyCofreeMPoly P) A :=
+  Over.homMk
+    (fun ⟨x, m⟩ =>
+      ⟨x, polyCofreeM_to_polyCofreePolyEval
+        A P m⟩)
+    rfl
+
+/--
+The inverse component: polynomial evaluation to cofree
+carrier.
+-/
+def polyCofreeEvalToCarrier (A : Over X)
+    (P : PolyEndo X) :
+    polyBetweenEval X X (polyCofreeMPoly P) A ⟶
+    polyCofreeCarrier A P :=
+  Over.homMk
+    (fun ⟨x, eval⟩ =>
+      ⟨x, polyCofreePolyEval_to_polyCofreeM
+        A P eval⟩)
+    rfl
+
+/--
+The pointwise isomorphism between the cofree comonad
+carrier and the polynomial evaluation, as an `Over X`
+isomorphism.
+-/
+def polyCofreeCarrierIso (A : Over X)
+    (P : PolyEndo X) :
+    polyCofreeCarrier A P ≅
+    polyBetweenEval X X
+      (polyCofreeMPoly P) A where
+  hom := polyCofreeCarrierToEval A P
+  inv := polyCofreeEvalToCarrier A P
+  hom_inv_id := by
+    apply Over.OverMorphism.ext
+    funext ⟨x, m⟩
+    exact Sigma.ext rfl
+      (heq_of_eq
+        (polyCofreeM_roundtrip A P m))
+  inv_hom_id := by
+    apply Over.OverMorphism.ext
+    funext ⟨x, eval⟩
+    exact Sigma.ext rfl
+      (heq_of_eq
+        (polyCofreePolyEval_roundtrip
+          A P eval))
+
+variable (X : Type u)
+
+/--
+The comonad on `Over X` arising from the
+`Forget ⊣ Cofree` adjunction on P-coalgebras.
+The underlying functor sends `A : Over X` to
+`polyCofreeCarrier A P`.
+-/
+def polyCofreeComonad (P : PolyEndo X) :
+    Comonad (Over X) :=
+  (polyForgetCofreeAdjunction P).toComonad
+
+/--
+The comonad's underlying functor is naturally isomorphic
+to the evaluation of the cofree comonad polynomial.
+-/
+def polyCofreeComonadIso (P : PolyEndo X) :
+    (polyCofreeComonad X P).toFunctor ≅
+    polyEndoFunctor X (polyCofreeMPoly P) :=
+  NatIso.ofComponents
+    (fun A => polyCofreeCarrierIso A P)
+    (fun {A B} g => by
+      apply Over.OverMorphism.ext
+      funext ⟨x, m⟩
+      change
+        ((polyCofreeComonad X P).toFunctor.map
+            g ≫
+          (polyCofreeCarrierIso B P).hom).left
+          ⟨x, m⟩ =
+        ((polyCofreeCarrierIso A P).hom ≫
+          (polyEndoFunctor X
+            (polyCofreeMPoly P)).map g).left
+          ⟨x, m⟩
+      simp only [Over.comp_left]
+      dsimp only [polyCofreeCarrierIso,
+        polyCofreeCarrierToEval,
+        polyCofreeComonad,
+        Adjunction.toComonad]
+      exact congrArg (Sigma.mk x)
+        ((polyCofreeM_to_polyCofreePolyEval_natural
+          A B P g m).symm))
+
+end CofreeNaturality
 
 /-! ## Free Monad Monad and Cofree Comonad Comonad
 
