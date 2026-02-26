@@ -263,4 +263,106 @@ theorem PolyCofreeCatHom.comp_id
   · exact (Sigma.ext_iff.mp comm).2
 
 
+/--
+Associativity of path concatenation, stated as an
+equality of `PolyCofreeAnnotPos` sigma pairs.
+Proved by induction on the first position's depth.
+-/
+theorem polyCofreeAnnotPosConcat_assoc
+    {P : PolyEndo X} {x : X}
+    (s : PolyCofreeShape P x) :
+    ∀ (n1 : Nat)
+    (p1 : PolyCofreeAnnotPosAt P s n1)
+    (n2 : Nat)
+    (p2 : PolyCofreeAnnotPosAt P
+      (polyCofreeSubtreeAt P s n1 p1) n2)
+    (n3 : Nat)
+    (p3 : PolyCofreeAnnotPosAt P
+      (polyCofreeSubtreeAt P
+        (polyCofreeSubtreeAt P s n1 p1)
+        n2 p2) n3),
+    polyCofreeAnnotPosConcat P s n1 p1
+      (polyCofreeAnnotPosConcat P
+        (polyCofreeSubtreeAt P s n1 p1)
+        n2 p2 ⟨n3, p3⟩) =
+    polyCofreeAnnotPosConcat P s
+      (polyCofreeAnnotPosConcat P s
+        n1 p1 ⟨n2, p2⟩).1
+      (polyCofreeAnnotPosConcat P s
+        n1 p1 ⟨n2, p2⟩).2
+      ⟨n3, cast
+        (polyCofreeAnnotPosAt_cast_fiber
+          (polyCofreeAnnotFiber_concat P s
+            n1 p1 ⟨n2, p2⟩)
+          (polyCofreeSubtreeAt_concat P s
+            n1 p1 ⟨n2, p2⟩)
+          n3).symm p3⟩ := by
+  intro n1
+  induction n1 generalizing x s with
+  | zero =>
+    intro _ n2 p2 n3 p3
+    simp only [polyCofreeAnnotPosConcat,
+      polyCofreeSubtreeAt, cast_eq]
+  | succ n1 ih =>
+    intro ⟨e, rest⟩ n2 p2 n3 p3
+    change PolyCofreeAnnotPosAt P
+      (polyCofreeSubtreeAt P
+        (s.children e) n1 rest) n2 at p2
+    change PolyCofreeAnnotPosAt P
+      (polyCofreeSubtreeAt P
+        (polyCofreeSubtreeAt P
+          (s.children e) n1 rest)
+        n2 p2) n3 at p3
+    simp only [polyCofreeAnnotPosConcat,
+      polyCofreeSubtreeAt]
+    exact congrArg
+      (fun (r : PolyCofreeAnnotPos P
+        (s.children e)) =>
+        (⟨r.1 + 1, ⟨e, r.2⟩⟩ :
+          PolyCofreeAnnotPos P s))
+      (ih (s.children e) rest n2 p2 n3 p3)
+
+theorem PolyCofreeCatHom.comp_assoc
+    {P : PolyEndo X}
+    {a b c d : PolyCofreeCat P}
+    (f : PolyCofreeCatHom P a b)
+    (g : PolyCofreeCatHom P b c)
+    (h : PolyCofreeCatHom P c d) :
+    (f.comp g).comp h = f.comp (g.comp h) := by
+  obtain ⟨_, _⟩ := b
+  obtain ⟨_, _⟩ := c
+  obtain ⟨_, _⟩ := d
+  obtain ⟨fn, fp, hff, hfs⟩ := f
+  obtain ⟨gn, gp, hgf, hgs⟩ := g
+  obtain ⟨hn, hp, hhf, hhs⟩ := h
+  dsimp at hff hfs hgf hgs hhf hhs
+  subst hff hgf hhf
+  cases eq_of_heq hfs
+  cases eq_of_heq hgs
+  cases eq_of_heq hhs
+  have comm := (polyCofreeAnnotPosConcat_assoc
+    a.shape fn fp gn gp hn hp).symm
+  simp only [PolyCofreeCatHom.comp,
+    polyCofreeCatComp_depth,
+    polyCofreeCatComp_pos,
+    polyCofreeCatComp_result,
+    polyCofreeCatComp_subpos,
+    polyCofreeCatComp_castPos,
+    cast_eq] at comm ⊢
+  ext
+  · exact congrArg Sigma.fst comm
+  · exact (Sigma.ext_iff.mp comm).2
+
+/-! ## Category Instance -/
+
+instance polyCofreeCatCategory
+    (P : PolyEndo X) :
+    Category (PolyCofreeCat P) where
+  Hom := PolyCofreeCatHom P
+  id := PolyCofreeCatHom.id P
+  comp := PolyCofreeCatHom.comp
+  id_comp := PolyCofreeCatHom.id_comp
+  comp_id := PolyCofreeCatHom.comp_id
+  assoc := PolyCofreeCatHom.comp_assoc
+
 end GebLean
