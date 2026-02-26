@@ -874,4 +874,139 @@ def contravariantEmbedding :
       apply Subtype.ext
       simp [contraRelImage.map]
 
+/-- The contravariant embedding is fully
+faithful. The preimage extracts typeNode
+components; fullness follows from the relNode
+component being a subtype of the product,
+determined by its projections via
+naturality. -/
+def contravariantEmbedding_fullyFaithful :
+    contravariantEmbedding.FullyFaithful where
+  preimage {F G} β :=
+    { app := fun opI x =>
+        (β.app (.typeNode opI.unop)
+          ⟨x⟩).down
+      naturality := fun {opI₀ opI₁} opf => by
+        let f := opf.unop
+        let I₀ := opI₁.unop
+        let I₁ := opI₀.unop
+        funext x
+        simp only [types_comp_apply]
+        let π₁ : relType (graphRel f) → I₀ :=
+          fun s => s.val.1
+        let π₂ : relType (graphRel f) → I₁ :=
+          fun s => s.val.2
+        have hpb :
+            F.map (Opposite.op π₁)
+              (F.map opf x) =
+            F.map (Opposite.op π₂) x := by
+          have h := congr_fun
+            (F.map_comp opf
+              (Opposite.op π₁)) x
+          simp only [types_comp_apply] at h
+          rw [← h]
+          have heq : opf ≫ Opposite.op π₁ =
+              Opposite.op π₂ := by
+            apply Quiver.Hom.unop_inj
+            funext s
+            exact s.property
+          rw [heq]
+        let p₀ : contraRelImage F
+            (graphRel f) :=
+          ⟨(F.map opf x, x), hpb⟩
+        let m := (β.app (.relNode I₀ I₁
+          (graphRel f)) ⟨p₀⟩).down
+        have hfst :
+            m.val.1 =
+              (β.app (.typeNode I₀)
+                ⟨F.map opf x⟩).down :=
+          (congr_arg ULift.down
+            (congr_fun (β.naturality
+              (RelSpanHom.fstProj I₀ I₁
+                (graphRel f))) ⟨p₀⟩)).symm
+        have hsnd :
+            m.val.2 =
+              (β.app (.typeNode I₁)
+                ⟨x⟩).down :=
+          (congr_arg ULift.down
+            (congr_fun (β.naturality
+              (RelSpanHom.sndProj I₀ I₁
+                (graphRel f))) ⟨p₀⟩)).symm
+        -- Apply G.map (op e) to m.property
+        -- where e a = ⟨(a, f a), rfl⟩
+        let e : I₀ → relType (graphRel f) :=
+          fun a => ⟨⟨a, f a⟩, rfl⟩
+        have h := congr_arg
+          (G.map (Opposite.op e))
+          m.property
+        -- G.map (op e) ∘ G.map (op π₁)
+        --   = G.map (op π₁ ≫ op e)
+        --   = G.map (op (e ∘ π₁))
+        --   = G.map (op id)
+        --   = id
+        have hcomp₁ : Opposite.op π₁ ≫
+            Opposite.op e =
+            𝟙 (Opposite.op I₀) := by
+          apply Quiver.Hom.unop_inj
+          funext _; rfl
+        have hcomp₂ : Opposite.op π₂ ≫
+            Opposite.op e = opf := by
+          apply Quiver.Hom.unop_inj
+          rfl
+        have lhs :
+            G.map (Opposite.op e)
+              (G.map (Opposite.op π₁)
+                m.val.1) = m.val.1 := by
+          have := congr_fun
+            (G.map_comp (Opposite.op π₁)
+              (Opposite.op e)) m.val.1
+          simp only [types_comp_apply] at this
+          rw [hcomp₁,
+            congr_fun (G.map_id _)]
+              at this
+          exact this.symm
+        have rhs :
+            G.map (Opposite.op e)
+              (G.map (Opposite.op π₂)
+                m.val.2) =
+            G.map opf m.val.2 := by
+          have := congr_fun
+            (G.map_comp (Opposite.op π₂)
+              (Opposite.op e)) m.val.2
+          simp only [types_comp_apply] at this
+          rw [hcomp₂] at this
+          exact this.symm
+        rw [lhs, rhs] at h
+        rw [← hfst, ← hsnd]
+        exact h }
+  map_preimage {F G} β := by
+    apply NatTrans.ext; funext X
+    cases X with
+    | typeNode I => funext ⟨_⟩; rfl
+    | relNode I₀ I₁ R =>
+      funext ⟨p⟩
+      apply ULift.ext
+      apply Subtype.ext
+      have hfst :=
+        (congr_arg ULift.down
+          (congr_fun (β.naturality
+            (RelSpanHom.fstProj I₀ I₁ R))
+            ⟨p⟩)).symm
+      have hsnd :=
+        (congr_arg ULift.down
+          (congr_fun (β.naturality
+            (RelSpanHom.sndProj I₀ I₁ R))
+            ⟨p⟩)).symm
+      apply Prod.ext
+      · exact hfst.symm
+      · exact hsnd.symm
+
+instance contravariantEmbedding_faithful :
+    contravariantEmbedding.Faithful :=
+  contravariantEmbedding_fullyFaithful.faithful
+
+instance contravariantEmbedding_full :
+    contravariantEmbedding.Full :=
+  contravariantEmbedding_fullyFaithful.full
+
 end GebLean
