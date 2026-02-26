@@ -511,6 +511,30 @@ copresheaves. Characterize this difference.
    satisfy the condition. The correct formulation needs
    to be determined.
 
+6. Both covariant functors `(Type ⥤ Type)` and
+   contravariant functors `(Typeᵒᵖ ⥤ Type)` embed
+   fully faithfully into `ParametricFunctor`
+   (`RelSpanObj ⥤ Type 1`). What is the
+   relationship between `ParametricFunctor` and
+   profunctors `(Typeᵒᵖ × Type ⥤ Type)`? Is there
+   a faithful embedding of profunctors into
+   `ParametricFunctor`, or of `ParametricFunctor`
+   into profunctors, or neither? The covariant
+   embedding uses the Barr extension
+   (`covRelImage`/`functorRelLift`) at relNodes,
+   while the contravariant uses a pullback
+   (`contraRelImage`/`contravariantRelLift`). A
+   profunctor has both covariant and contravariant
+   arguments, so its embedding would need to
+   combine both constructions. The relNode type
+   for a profunctor `P` at relation `R` might be
+   `{ (a, b) : P(I₀, I₀) × P(I₁, I₁) //
+   ∃ w : P(I₀, I₁), ... }` or a pullback/image
+   hybrid. Understanding this would clarify how
+   `ParametricFunctor` relates to the
+   twisted-arrow copresheaf topos where paranatural
+   transformations live.
+
 ## Completed infrastructure for generalization
 
 ### PshRelDouble.lean additions
