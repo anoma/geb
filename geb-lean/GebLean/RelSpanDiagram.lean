@@ -393,4 +393,82 @@ def relSpanCollageIso :
         | ⟨.inr _⟩, ⟨.inl _⟩, f =>
           exact PEmpty.elim f)
 
+/-- The category of parametric functors:
+copresheaves on `RelSpanObj`. -/
+abbrev ParametricFunctor := RelSpanObj ⥤ Type 1
+
+/-- The type of related pairs under a relation
+`R : I₀ → I₁ → Prop`. -/
+def relType {I₀ I₁ : Type}
+    (R : I₀ → I₁ → Prop) :=
+  { p : I₀ × I₁ // R p.1 p.2 }
+
+/-- The covariant embedding maps an endofunctor
+`F : Type ⥤ Type` to a parametric functor.
+Type-nodes map to `ULift (F.obj I)`;
+relation-nodes map to
+`ULift (F.obj (relType R))`; projections are
+induced by `F.map` applied to the component
+projections of `relType R`. -/
+def covariantEmbedding :
+    (Type ⥤ Type) ⥤ ParametricFunctor where
+  obj F :=
+    { obj := fun X =>
+        match X with
+        | .typeNode I => ULift.{1} (F.obj I)
+        | .relNode I₀ I₁ R =>
+          ULift.{1} (F.obj (relType R))
+      map := fun {X Y} f =>
+        match X, Y, f with
+        | _, _, .id _ => id
+        | _, _, .fstProj I₀ I₁ R =>
+          ULift.up ∘ F.map
+            (fun (s : relType R) => s.val.1) ∘
+            ULift.down
+        | _, _, .sndProj I₀ I₁ R =>
+          ULift.up ∘ F.map
+            (fun (s : relType R) => s.val.2) ∘
+            ULift.down
+      map_id := by
+        intro X; cases X <;> rfl
+      map_comp := by
+        intro X Y Z f g
+        cases f <;> cases g <;> rfl }
+  map {F G} (α : F ⟶ G) :=
+    { app := fun X =>
+        match X with
+        | .typeNode I =>
+          ULift.up ∘ α.app I ∘ ULift.down
+        | .relNode I₀ I₁ R =>
+          ULift.up ∘ α.app (relType R) ∘
+            ULift.down
+      naturality := by
+        intro X Y f
+        cases f with
+        | id => rfl
+        | fstProj I₀ I₁ R =>
+          funext ⟨x⟩
+          change ULift.up (α.app I₀
+            (F.map _ x)) =
+            ULift.up (G.map _
+              (α.app _ x))
+          congr 1
+          exact congr_fun
+            (α.naturality _) x
+        | sndProj I₀ I₁ R =>
+          funext ⟨x⟩
+          change ULift.up (α.app I₁
+            (F.map _ x)) =
+            ULift.up (G.map _
+              (α.app _ x))
+          congr 1
+          exact congr_fun
+            (α.naturality _) x }
+  map_id F := by
+    ext X x
+    cases X <;> simp
+  map_comp {F G H} (α : F ⟶ G) (β : G ⟶ H) := by
+    ext X x
+    cases X <;> simp
+
 end GebLean
