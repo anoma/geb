@@ -7858,4 +7858,168 @@ theorem polyFreeMFromShape_map (A B : Over X) (P : PolyEndo X) (f : A ⟶ B) {x 
 
 end FreeMonadMonad
 
+/-! ## Naturality of the Free Monad Equivalence
+
+The equivalence `polyFreeMEquivPolyEval A P x` between
+`PolyFreeM A P x` and `PolyFreeMPolyEval A P x` is
+natural in `A`.
+-/
+
+section FreeNaturality
+
+variable {X : Type u}
+
+/--
+The inverse of `polyFreeMEquivPolyEval` is natural
+in `A`: mapping by `g` then converting from poly eval
+form equals converting from (post-composed) poly eval
+form.
+-/
+theorem polyFreeMPolyEval_to_M_natural
+    (A B : Over X) (P : PolyEndo X)
+    (g : A ⟶ B) {x : X}
+    (eval : PolyFreeMPolyEval A P x) :
+    polyFreeMapAt A B P g x
+      (polyFreeMPolyEval_to_polyFreeM
+        A P eval) =
+    polyFreeMPolyEval_to_polyFreeM B P
+      (ccrEvalMap g eval) := by
+  obtain ⟨shape, mor⟩ := eval
+  simp only [polyFreeMPolyEval_to_polyFreeM,
+    ccrEvalMap]
+  exact (polyFreeMFromShape_map A B P g
+    shape _).symm
+
+/--
+Forward naturality of `polyFreeMEquivPolyEval`:
+converting to poly eval form then mapping by `g`
+equals mapping by `g` then converting.
+Derived from inverse naturality + roundtrips.
+-/
+theorem polyFreeM_to_polyFreeMPolyEval_natural
+    (A B : Over X) (P : PolyEndo X)
+    (g : A ⟶ B) {x : X}
+    (t : PolyFreeM A P x) :
+    ccrEvalMap g
+      (polyFreeM_to_polyFreeMPolyEval A P t) =
+    polyFreeM_to_polyFreeMPolyEval B P
+      (polyFreeMapAt A B P g x t) := by
+  let eval := polyFreeM_to_polyFreeMPolyEval A P t
+  have round_l : polyFreeMPolyEval_to_polyFreeM
+      A P eval = t :=
+    polyFreeM_roundtrip A P t
+  have inv_nat :=
+    polyFreeMPolyEval_to_M_natural A B P g eval
+  have step1 : polyFreeMapAt A B P g x t =
+      polyFreeMPolyEval_to_polyFreeM B P
+        (ccrEvalMap g eval) := by
+    rw [← round_l]; exact inv_nat
+  have round_r :
+      polyFreeM_to_polyFreeMPolyEval B P
+        (polyFreeMPolyEval_to_polyFreeM B P
+          (ccrEvalMap g eval)) =
+      ccrEvalMap g eval := by
+    obtain ⟨shape, mor⟩ := ccrEvalMap g eval
+    exact polyFreeMPolyEval_roundtrip
+      B P shape mor
+  rw [step1, round_r]
+
+/--
+The forward component of the pointwise isomorphism:
+free carrier to polynomial evaluation.
+-/
+def polyFreeCarrierToEval (A : Over X)
+    (P : PolyEndo X) :
+    polyFreeMCarrier A P ⟶
+    polyBetweenEval X X (polyFreeMPoly P) A :=
+  Over.homMk
+    (fun ⟨x, t⟩ =>
+      ⟨x, polyFreeM_to_polyFreeMPolyEval
+        A P t⟩)
+    rfl
+
+/--
+The inverse component: polynomial evaluation to free
+carrier.
+-/
+def polyFreeEvalToCarrier (A : Over X)
+    (P : PolyEndo X) :
+    polyBetweenEval X X (polyFreeMPoly P) A ⟶
+    polyFreeMCarrier A P :=
+  Over.homMk
+    (fun ⟨x, eval⟩ =>
+      ⟨x, polyFreeMPolyEval_to_polyFreeM
+        A P eval⟩)
+    rfl
+
+/--
+The pointwise isomorphism between the free monad
+carrier and the polynomial evaluation, as an `Over X`
+isomorphism.
+-/
+def polyFreeCarrierIso (A : Over X)
+    (P : PolyEndo X) :
+    polyFreeMCarrier A P ≅
+    polyBetweenEval X X
+      (polyFreeMPoly P) A where
+  hom := polyFreeCarrierToEval A P
+  inv := polyFreeEvalToCarrier A P
+  hom_inv_id := by
+    apply Over.OverMorphism.ext
+    funext ⟨x, t⟩
+    exact Sigma.ext rfl
+      (heq_of_eq
+        (polyFreeM_roundtrip A P t))
+  inv_hom_id := by
+    apply Over.OverMorphism.ext
+    funext ⟨x, eval⟩
+    obtain ⟨shape, mor⟩ := eval
+    exact Sigma.ext rfl
+      (heq_of_eq
+        (polyFreeMPolyEval_roundtrip
+          A P shape mor))
+
+variable (X : Type u)
+
+/--
+The monad on `Over X` arising from the
+`Free ⊣ Forget` adjunction on P-algebras.
+The underlying functor sends `A : Over X` to
+`polyFreeMCarrier A P`.
+-/
+def polyFreeMonad (P : PolyEndo X) :
+    Monad (Over X) :=
+  (polyFreeForgetAdjunction P).toMonad
+
+/--
+The monad's underlying functor is naturally isomorphic
+to the evaluation of the free monad polynomial.
+-/
+def polyFreeMonadIso (P : PolyEndo X) :
+    (polyFreeMonad X P).toFunctor ≅
+    polyEndoFunctor X (polyFreeMPoly P) :=
+  NatIso.ofComponents
+    (fun A => polyFreeCarrierIso A P)
+    (fun {A B} g => by
+      apply Over.OverMorphism.ext
+      funext ⟨x, t⟩
+      change
+        ((polyFreeMonad X P).toFunctor.map g ≫
+          (polyFreeCarrierIso B P).hom).left
+          ⟨x, t⟩ =
+        ((polyFreeCarrierIso A P).hom ≫
+          (polyEndoFunctor X
+            (polyFreeMPoly P)).map g).left
+          ⟨x, t⟩
+      simp only [Over.comp_left]
+      dsimp only [polyFreeCarrierIso,
+        polyFreeCarrierToEval,
+        polyFreeMonad,
+        Adjunction.toMonad]
+      exact congrArg (Sigma.mk x)
+        ((polyFreeM_to_polyFreeMPolyEval_natural
+          A B P g t).symm))
+
+end FreeNaturality
+
 end GebLean
