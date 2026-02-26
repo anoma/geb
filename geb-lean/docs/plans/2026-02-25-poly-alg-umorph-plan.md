@@ -55,7 +55,8 @@ So `α` induces a map on eval:
 - Line length: 80 characters max
 - All code under `namespace GebLean`
 - `autoImplicit = false` -- write all binders explicitly
-- No `sorry`, no warnings
+- No placeholders of any kind (underscores, etc. --
+  the absence of errors and warnings should ensure this)
 - Follow existing naming: `polyAlg*` / `polyCoalg*` prefix
 - One definition at a time, build and verify after each
 
