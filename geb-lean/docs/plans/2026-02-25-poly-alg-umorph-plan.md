@@ -499,7 +499,7 @@ def algCoprodDesc
     _   -- placeholder; see note below
 ```
 
-Wait -- this approach is wrong. The coproduct descent goes
+The above approach is wrong. The coproduct descent goes
 *out of* the coproduct, not *into* it. Let me reconsider.
 
 The correct approach: we have injections
@@ -951,8 +951,8 @@ candidate: given a `(Q × P)`-algebra, curry the structure
 map component to get a `[Q, P]`-related construction.
 
 This task may be deferred if the types don't work out
-cleanly. Evaluate by attempting the definition with
-underscores and examining the resulting goals.
+cleanly. Evaluate by implementing the definition at first
+with underscores and examining the resulting goals.
 
 **Files:**
 - Modify: `GebLean/PolyAlgUMorph.lean`
@@ -1002,6 +1002,7 @@ After all tasks:
 2. `lake test` passes
 3. All definitions have docstrings
 4. Line length <= 80 characters
-5. No `sorry`, no `_` placeholders
+5. No placeholders of any kind (underscores, etc. --
+   the absence of errors and warnings should ensure this)
 6. All section variables are used
 7. File is imported in `GebLean.lean`
