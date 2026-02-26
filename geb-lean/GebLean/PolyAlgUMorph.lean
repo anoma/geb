@@ -332,6 +332,66 @@ def coalgProdLift
               ((strs i).left a).snd)⟩)
     (by funext _; rfl)
 
+
 end ProdCoalgebra
+
+section EqAlgebra
+
+variable {X : Type u}
+
+/--
+Restrict an algebra to an equalizer subfunctor. Given
+`f, g : P ⟶ Q` and a P-algebra, produce an algebra for
+`polyBetweenEq f g` by pulling back along the equalizer
+inclusion.
+-/
+def algEqRestrict
+    {P Q : PolyEndo X} {f g : P ⟶ Q}
+    (a : PolyAlg P) :
+    PolyAlg (polyBetweenEq f g) :=
+  algPullback (polyBetweenEqIncl f g) a
+
+/--
+An algebra homomorphism between P-algebras restricts to a
+homomorphism between the equalizer algebras.
+-/
+def algEqRestrictHom
+    {P Q : PolyEndo X} {f g : P ⟶ Q}
+    {a₁ a₂ : PolyAlg P} (h : a₁ ⟶ a₂) :
+    algEqRestrict (f := f) (g := g) a₁ ⟶
+      algEqRestrict (f := f) (g := g) a₂ :=
+  algPullbackHom (polyBetweenEqIncl f g) h
+
+end EqAlgebra
+
+section CoeqCoalgebra
+
+variable {X : Type u}
+
+/--
+Extend a coalgebra to a coequalizer quotient functor.
+Given `s, t : P ⟶ Q` and a Q-coalgebra, produce a
+coalgebra for `polyBetweenCoeq s t` by pushing forward
+along the coequalizer projection.
+-/
+def coalgCoeqExtend
+    {P Q : PolyEndo X} {s t : P ⟶ Q}
+    (c : PolyCoalg Q) :
+    PolyCoalg (polyBetweenCoeq s t) :=
+  coalgPushforward (polyBetweenCoeqProj s t) c
+
+/--
+A coalgebra homomorphism between Q-coalgebras extends to
+a homomorphism between the coequalizer coalgebras.
+-/
+def coalgCoeqExtendHom
+    {P Q : PolyEndo X} {s t : P ⟶ Q}
+    {c₁ c₂ : PolyCoalg Q} (h : c₁ ⟶ c₂) :
+    coalgCoeqExtend (s := s) (t := t) c₁ ⟶
+      coalgCoeqExtend (s := s) (t := t) c₂ :=
+  coalgPushforwardHom
+    (polyBetweenCoeqProj s t) h
+
+end CoeqCoalgebra
 
 end GebLean
