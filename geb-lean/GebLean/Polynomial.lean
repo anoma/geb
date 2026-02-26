@@ -1350,6 +1350,34 @@ theorem polyBetweenMorphEval_comp
   rw [← (familySliceForward Y).map_comp]
   rfl
 
+/--
+The evaluation functor from `PolyFunctorBetweenCat X Y`
+to the functor category `Over X ⥤ Over Y`.
+
+Maps a polynomial functor `P` to the evaluated functor
+`polyBetweenEvalFunctor X Y P`, and a morphism `α : P ⟶ Q`
+to the induced natural transformation.
+-/
+def polyBetweenEvalCatFunctor :
+    PolyFunctorBetweenCat X Y ⥤
+      (Over X ⥤ Over Y) where
+  obj := polyBetweenEvalFunctor X Y
+  map α :=
+    { app := fun A =>
+        polyBetweenMorphEval X Y α A
+      naturality := fun _ _ f =>
+        (polyBetweenMorphEval_natural
+          X Y α f).symm }
+  map_id P := by
+    apply NatTrans.ext
+    funext A
+    exact polyBetweenMorphEval_id X Y P A
+  map_comp α β := by
+    apply NatTrans.ext
+    funext A
+    exact polyBetweenMorphEval_comp
+      X Y α β A
+
 end PolyFunctorBetween
 
 /-! ### Identity Polynomial Functor
