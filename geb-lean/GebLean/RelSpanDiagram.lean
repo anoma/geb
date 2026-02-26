@@ -400,77 +400,10 @@ abbrev ParametricFunctor := RelSpanObj ⥤ Type 1
 
 /-- The type of related pairs under a relation
 `R : I₀ → I₁ → Prop`. -/
+@[reducible]
 def relType {I₀ I₁ : Type}
     (R : I₀ → I₁ → Prop) :=
   { p : I₀ × I₁ // R p.1 p.2 }
-
-/-- The covariant embedding maps an endofunctor
-`F : Type ⥤ Type` to a parametric functor.
-Type-nodes map to `ULift (F.obj I)`;
-relation-nodes map to
-`ULift (F.obj (relType R))`; projections are
-induced by `F.map` applied to the component
-projections of `relType R`. -/
-def covariantEmbedding :
-    (Type ⥤ Type) ⥤ ParametricFunctor where
-  obj F :=
-    { obj := fun X =>
-        match X with
-        | .typeNode I => ULift.{1} (F.obj I)
-        | .relNode I₀ I₁ R =>
-          ULift.{1} (F.obj (relType R))
-      map := fun {X Y} f =>
-        match X, Y, f with
-        | _, _, .id _ => id
-        | _, _, .fstProj I₀ I₁ R =>
-          ULift.up ∘ F.map
-            (fun (s : relType R) => s.val.1) ∘
-            ULift.down
-        | _, _, .sndProj I₀ I₁ R =>
-          ULift.up ∘ F.map
-            (fun (s : relType R) => s.val.2) ∘
-            ULift.down
-      map_id := by
-        intro X; cases X <;> rfl
-      map_comp := by
-        intro X Y Z f g
-        cases f <;> cases g <;> rfl }
-  map {F G} (α : F ⟶ G) :=
-    { app := fun X =>
-        match X with
-        | .typeNode I =>
-          ULift.up ∘ α.app I ∘ ULift.down
-        | .relNode I₀ I₁ R =>
-          ULift.up ∘ α.app (relType R) ∘
-            ULift.down
-      naturality := by
-        intro X Y f
-        cases f with
-        | id => rfl
-        | fstProj I₀ I₁ R =>
-          funext ⟨x⟩
-          change ULift.up (α.app I₀
-            (F.map _ x)) =
-            ULift.up (G.map _
-              (α.app _ x))
-          congr 1
-          exact congr_fun
-            (α.naturality _) x
-        | sndProj I₀ I₁ R =>
-          funext ⟨x⟩
-          change ULift.up (α.app I₁
-            (F.map _ x)) =
-            ULift.up (G.map _
-              (α.app _ x))
-          congr 1
-          exact congr_fun
-            (α.naturality _) x }
-  map_id F := by
-    ext X x
-    cases X <;> simp
-  map_comp {F G H} (α : F ⟶ G) (β : G ⟶ H) := by
-    ext X x
-    cases X <;> simp
 
 /-- The graph relation of `f : I₀ → I₁`:
 `graphRel f a b ↔ f a = b`. -/
@@ -525,107 +458,207 @@ theorem relType_graphRel_snd_eq_comp_fst
     s.val.2 = f s.val.1 :=
   s.property.symm
 
-/-- The preimage of a natural transformation
-`β : covariantEmbedding.obj F ⟶
-covariantEmbedding.obj G` is a natural
-transformation `F ⟶ G`, extracted from the
-typeNode components. -/
-def covariantEmbedding_preimage
-    {F G : Type ⥤ Type}
-    (β : covariantEmbedding.obj F ⟶
-      covariantEmbedding.obj G) :
-    F ⟶ G where
-  app I x :=
-    (β.app (.typeNode I) ⟨x⟩).down
-  naturality {I₀ I₁} f := by
-    funext x
-    simp only [types_comp_apply]
-    -- m is the relational witness
-    set y := F.map (graphRelInj f) x
-    set m := (β.app
-      (.relNode I₀ I₁ (graphRel f))
-      ⟨y⟩).down with hm_def
-    -- fstProj naturality of β
-    have hfst := congr_arg ULift.down
-      (congr_fun (β.naturality
-        (RelSpanHom.fstProj I₀ I₁
-          (graphRel f))) ⟨y⟩)
-    simp only [types_comp_apply,
-      covariantEmbedding,
-      Function.comp] at hfst
-    -- F.map π₁ y = x
-    have hfst_y :
-        F.map (fun s : relType
-          (graphRel f) => s.val.1) y =
-        x := by
-      change (F.map (graphRelInj f) ≫
-        F.map _) x = x
-      rw [← F.map_comp,
-        show (graphRelInj f ≫
-          (fun s : relType (graphRel f) =>
-            s.val.1)) = 𝟙 I₀ from rfl,
-        F.map_id]
-      rfl
-    -- sndProj naturality of β
-    have hsnd := congr_arg ULift.down
-      (congr_fun (β.naturality
-        (RelSpanHom.sndProj I₀ I₁
-          (graphRel f))) ⟨y⟩)
-    simp only [types_comp_apply,
-      covariantEmbedding,
-      Function.comp] at hsnd
-    -- F.map π₂ y = F.map f x
-    have hsnd_y :
-        F.map (fun s : relType
-          (graphRel f) => s.val.2) y =
-        F.map f x := by
-      change (F.map (graphRelInj f) ≫
-        F.map _) x = F.map f x
-      rw [← F.map_comp,
-        show (graphRelInj f ≫
-          (fun s : relType (graphRel f) =>
-            s.val.2)) = f from rfl]
-    -- G.map (f ∘ π₁) = G.map π₂
-    have hcomp : G.map
-        (fun s : relType (graphRel f) =>
-          f s.val.1) =
-        G.map
-          (fun s : relType (graphRel f) =>
-            s.val.2) := by
-      congr 1; funext s
-      exact (relType_graphRel_snd_eq_comp_fst
-        f s).symm
-    -- Combine: goal is β(.typeNode I₁)(F.map f x)
-    --   = G.map f (β(.typeNode I₀)(x))
-    -- From hfst: β(.typeNode I₀)(π₁ y)
-    --   = G.map π₁ m
-    -- From hsnd: β(.typeNode I₁)(π₂ y)
-    --   = G.map π₂ m
-    -- With hfst_y: π₁ y = x, hsnd_y: π₂ y = f x
-    conv_lhs =>
-      rw [← hsnd_y]
-      rw [hsnd]
-    conv_rhs =>
-      rw [← hfst_y]
-      rw [hfst]
-    -- Goal: G.map π₂ m = G.map f (G.map π₁ m)
-    have h :
-        (G.map (fun s : relType
-          (graphRel f) => s.val.1) ≫
-          G.map f) m =
-        G.map f (G.map (fun s =>
-          s.val.1) m) := rfl
-    rw [← h, ← G.map_comp]
-    exact congr_fun hcomp.symm m
+/-- The opposite graph of a function `f : B → A`,
+viewed as a relation `A → B → Prop`.
+`graphRelOp f a b` holds iff `f b = a`. -/
+def graphRelOp {A B : Type} (f : B → A)
+    (a : A) (b : B) : Prop :=
+  f b = a
+
+/-- The canonical relation lifting for a functor
+`F : Type ⥤ Type`. Given a relation `R` between
+types `A` and `B`, `functorRelLift F R` relates
+`x : F.obj A` and `y : F.obj B` iff there exists
+a witness `w : F.obj {p : A × B // R p.1 p.2}`
+whose projections under `F.map` give `x`
+and `y`. -/
+def functorRelLift
+    (F : Type ⥤ Type) {A B : Type}
+    (R : A → B → Prop) :
+    F.obj A → F.obj B → Prop :=
+  fun x y =>
+    ∃ (w : F.obj (relType R)),
+      F.map (fun s : relType R =>
+        s.val.1) w = x ∧
+      F.map (fun s : relType R =>
+        s.val.2) w = y
+
+/-- When the relation is the graph of a function
+`g`, the relation lifting reduces to the graph
+of `F.map g`. -/
+@[simp]
+theorem functorRelLift_graphRel
+    (F : Type ⥤ Type) {A B : Type}
+    (g : A → B) :
+    functorRelLift F (graphRel g) =
+    graphRel (F.map g) := by
+  ext x y
+  simp only [functorRelLift, graphRel]
+  constructor
+  · rintro ⟨w, hw₁, hw₂⟩
+    rw [← hw₁, ← hw₂]
+    have h₁ : (fun s : relType
+        (graphRel g) => s.val.2) =
+        g ∘ (fun s => s.val.1) := by
+      ext ⟨⟨a, _⟩, h⟩; exact h.symm
+    conv_rhs => rw [h₁]
+    exact (FunctorToTypes.map_comp_apply F
+      (fun s => s.val.1) g w).symm
+  · intro h
+    let e : A → relType (graphRel g) :=
+      fun a => ⟨⟨a, g a⟩, rfl⟩
+    refine ⟨F.map e x, ?_, ?_⟩
+    · change F.map (fun s => s.val.1)
+        (F.map e x) = x
+      rw [← FunctorToTypes.map_comp_apply]
+      exact FunctorToTypes.map_id_apply F x
+    · change F.map (fun s => s.val.2)
+        (F.map e x) = y
+      rw [← FunctorToTypes.map_comp_apply]
+      exact h
+
+/-- When the relation is the opposite graph of
+a function `f : B → A`, the relation lifting
+reduces to the opposite graph of
+`F.map f`. -/
+@[simp]
+theorem functorRelLift_graphRelOp
+    (F : Type ⥤ Type) {A B : Type}
+    (f : B → A) :
+    functorRelLift F (graphRelOp f) =
+    graphRelOp (F.map f) := by
+  ext x y
+  simp only [functorRelLift, graphRelOp]
+  constructor
+  · rintro ⟨w, hw₁, hw₂⟩
+    rw [← hw₁, ← hw₂]
+    have h₁ : (fun s : relType
+        (graphRelOp f) => s.val.1) =
+        f ∘ fun s => s.val.2 := by
+      ext ⟨⟨_, _⟩, h⟩; exact h.symm
+    conv_rhs => rw [h₁]
+    exact (FunctorToTypes.map_comp_apply F
+      (fun s => s.val.2) f w).symm
+  · intro h
+    let e : B → relType (graphRelOp f) :=
+      fun b => ⟨⟨f b, b⟩, rfl⟩
+    refine ⟨F.map e y, ?_, ?_⟩
+    · change F.map (fun s => s.val.1)
+          (F.map e y) = x
+      rw [← FunctorToTypes.map_comp_apply]
+      exact h
+    · change F.map (fun s => s.val.2)
+          (F.map e y) = y
+      rw [← FunctorToTypes.map_comp_apply]
+      exact FunctorToTypes.map_id_apply F y
+
+/-- The identity functor `𝟭 Type` does not
+change the relation:
+`functorRelLift (𝟭 Type) R = R`. -/
+@[simp]
+theorem functorRelLift_id {A B : Type}
+    (R : A → B → Prop) :
+    functorRelLift (𝟭 Type) R = R := by
+  ext a b
+  constructor
+  · rintro ⟨⟨⟨_, _⟩, hab⟩, rfl, rfl⟩
+    exact hab
+  · intro h
+    exact ⟨⟨(a, b), h⟩, rfl, rfl⟩
+
+/-- The subtype of `F.obj I₀ × F.obj I₁`
+consisting of pairs in the relation lifting
+of `R` through `F`. -/
+def covRelImage
+    (F : Type ⥤ Type) {I₀ I₁ : Type}
+    (R : I₀ → I₁ → Prop) :=
+  { p : F.obj I₀ × F.obj I₁ //
+    functorRelLift F R p.1 p.2 }
+
+/-- Transport a `covRelImage` element along a
+natural transformation `α : F ⟶ G`. -/
+def covRelImage.map {F G : Type ⥤ Type}
+    (α : F ⟶ G) {I₀ I₁ : Type}
+    {R : I₀ → I₁ → Prop}
+    (p : covRelImage F R) :
+    covRelImage G R :=
+  ⟨(α.app I₀ p.val.1, α.app I₁ p.val.2),
+    p.property.elim fun w ⟨h₁, h₂⟩ =>
+      ⟨α.app (relType R) w,
+        (congr_fun (α.naturality
+          (fun s : relType R =>
+            s.val.1)) w).symm.trans
+          (congr_arg (α.app I₀) h₁),
+        (congr_fun (α.naturality
+          (fun s : relType R =>
+            s.val.2)) w).symm.trans
+          (congr_arg (α.app I₁) h₂)⟩⟩
+
+/-- The covariant embedding maps an endofunctor
+`F : Type ⥤ Type` to a parametric functor.
+Type-nodes map to `ULift (F.obj I)`;
+relation-nodes map to
+`ULift (covRelImage F R)`. Projections
+extract the pair components. -/
+def covariantEmbedding :
+    (Type ⥤ Type) ⥤ ParametricFunctor where
+  obj F :=
+    { obj := fun X =>
+        match X with
+        | .typeNode I => ULift.{1} (F.obj I)
+        | .relNode I₀ I₁ R =>
+          ULift.{1} (covRelImage F R)
+      map := fun {X Y} f =>
+        match X, Y, f with
+        | _, _, .id _ => id
+        | _, _, .fstProj I₀ I₁ R =>
+          fun ⟨p⟩ => ⟨p.val.1⟩
+        | _, _, .sndProj I₀ I₁ R =>
+          fun ⟨p⟩ => ⟨p.val.2⟩
+      map_id := by
+        intro X; cases X <;> rfl
+      map_comp := by
+        intro X Y Z f g
+        cases f <;> cases g <;> rfl }
+  map {F G} (α : F ⟶ G) :=
+    { app := fun X =>
+        match X with
+        | .typeNode I =>
+          ULift.up ∘ α.app I ∘ ULift.down
+        | .relNode I₀ I₁ R =>
+          fun ⟨p⟩ => ⟨covRelImage.map α p⟩
+      naturality := by
+        intro X Y f
+        match X, Y, f with
+        | _, _, .id _ => rfl
+        | _, _, .fstProj I₀ I₁ R =>
+          funext ⟨p⟩; rfl
+        | _, _, .sndProj I₀ I₁ R =>
+          funext ⟨p⟩; rfl }
+  map_id F := by
+    apply NatTrans.ext; funext X
+    cases X with
+    | typeNode I => funext ⟨_⟩; rfl
+    | relNode I₀ I₁ R =>
+      funext ⟨p⟩
+      apply ULift.ext
+      apply Subtype.ext
+      simp [covRelImage.map]
+  map_comp {F G H}
+      (α : F ⟶ G) (β : G ⟶ H) := by
+    apply NatTrans.ext; funext X
+    cases X with
+    | typeNode I => funext ⟨_⟩; rfl
+    | relNode I₀ I₁ R =>
+      funext ⟨p⟩
+      apply ULift.ext
+      apply Subtype.ext
+      simp [covRelImage.map]
 
 /-- The covariant embedding is faithful:
 if two natural transformations `α β : F ⟶ G`
 have the same image under
-`covariantEmbedding`, then `α = β`. The
-image at `typeNode I` is
-`ULift.up ∘ α.app I ∘ ULift.down`, so
-equality of images gives
-`α.app I = β.app I` for all `I`. -/
+`covariantEmbedding`, then `α = β`. -/
 instance covariantEmbedding_faithful :
     covariantEmbedding.Faithful where
   map_injective {F G α β} h := by
@@ -635,5 +668,94 @@ instance covariantEmbedding_faithful :
         NatTrans.app h) (.typeNode I))
         ⟨x⟩)
     exact this
+
+/-- The covariant embedding is fully faithful.
+The preimage extracts `typeNode` components;
+fullness follows from the `relNode` component
+being a subtype of the product, determined by
+its projections via naturality. -/
+def covariantEmbedding_fullyFaithful :
+    covariantEmbedding.FullyFaithful where
+  preimage {F G} β :=
+    { app := fun I x =>
+        (β.app (.typeNode I) ⟨x⟩).down
+      naturality := fun {I₀ I₁} f => by
+        funext x
+        simp only [types_comp_apply]
+        let e : I₀ → relType (graphRel f) :=
+          fun a => ⟨⟨a, f a⟩, rfl⟩
+        let p₀ : covRelImage F
+            (graphRel f) :=
+          ⟨(x, F.map f x),
+            F.map e x,
+            FunctorToTypes.map_comp_apply
+              F e (fun s : relType
+                (graphRel f) =>
+                s.val.1) x |>.symm |>.trans
+              (FunctorToTypes.map_id_apply
+                F x),
+            FunctorToTypes.map_comp_apply
+              F e (fun s : relType
+                (graphRel f) =>
+                s.val.2) x |>.symm⟩
+        let m := (β.app (.relNode I₀ I₁
+          (graphRel f)) ⟨p₀⟩).down
+        have hfst :
+            m.val.1 =
+              (β.app (.typeNode I₀)
+                ⟨x⟩).down := by
+          have := congr_fun (β.naturality
+            (RelSpanHom.fstProj I₀ I₁
+              (graphRel f))) ⟨p₀⟩
+          exact (congr_arg ULift.down
+            this).symm
+        have hsnd :
+            m.val.2 =
+              (β.app (.typeNode I₁)
+                ⟨F.map f x⟩).down := by
+          have := congr_fun (β.naturality
+            (RelSpanHom.sndProj I₀ I₁
+              (graphRel f))) ⟨p₀⟩
+          exact (congr_arg ULift.down
+            this).symm
+        obtain ⟨w', hw'₁, hw'₂⟩ :=
+          m.property
+        rw [← hfst, ← hw'₁,
+          ← hsnd, ← hw'₂]
+        have : (fun s : relType
+            (graphRel f) => s.val.1) ≫
+            f = fun s => s.val.2 :=
+          funext fun s => s.property
+        rw [← FunctorToTypes.map_comp_apply
+          G _ f, this] }
+  map_preimage {F G} β := by
+    apply NatTrans.ext; funext X
+    cases X with
+    | typeNode I => funext ⟨_⟩; rfl
+    | relNode I₀ I₁ R =>
+      funext ⟨p⟩
+      apply ULift.ext
+      apply Subtype.ext
+      have hfst :
+          (β.app (.relNode I₀ I₁ R)
+            ⟨p⟩).down.val.1 =
+          (β.app (.typeNode I₀)
+            ⟨p.val.1⟩).down := by
+        exact (congr_arg ULift.down
+          (congr_fun (β.naturality
+            (RelSpanHom.fstProj I₀ I₁ R))
+            ⟨p⟩)).symm
+      have hsnd :
+          (β.app (.relNode I₀ I₁ R)
+            ⟨p⟩).down.val.2 =
+          (β.app (.typeNode I₁)
+            ⟨p.val.2⟩).down := by
+        exact (congr_arg ULift.down
+          (congr_fun (β.naturality
+            (RelSpanHom.sndProj I₀ I₁ R))
+            ⟨p⟩)).symm
+      apply Prod.ext
+      · exact hfst.symm
+      · exact hsnd.symm
 
 end GebLean

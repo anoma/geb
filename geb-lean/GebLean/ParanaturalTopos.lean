@@ -2467,13 +2467,6 @@ theorem divHomProf_diagCompat_eq
     (f ∘ h = k ∘ f) :=
   rfl
 
-/-- The opposite graph of a function `f : B → A`,
-viewed as a relation `A → B → Prop`.
-`graphRelOp f a b` holds iff `f b = a`. -/
-def graphRelOp {A B : Type} (f : B → A)
-    (a : A) (b : B) : Prop :=
-  f b = a
-
 /-- The relational interpretation of the function
 type constructor. Given a relation `R` on inputs
 and `S` on outputs, `arrowRel R S g₀ g₁` holds
@@ -2748,104 +2741,6 @@ theorem arrowRel_iff_yonedaRelSQS_propRel
       (propRelToYonedaRel S)
       g₀ g₁ :=
   arrowRel_iff_relRelated_propRel R S g₀ g₁
-
-/-- The canonical relation lifting for a functor
-`F : Type ⥤ Type`. Given a relation `R` between
-types `A` and `B`, `functorRelLift F R` relates
-`x : F.obj A` and `y : F.obj B` iff there exists
-a witness `w : F.obj {p : A × B // R p.1 p.2}`
-whose projections under `F.map` give `x` and `y`.
--/
-def functorRelLift
-    (F : Type ⥤ Type) {A B : Type}
-    (R : A → B → Prop) :
-    F.obj A → F.obj B → Prop :=
-  fun x y =>
-    ∃ (w : F.obj { p : A × B // R p.1 p.2 }),
-      F.map (fun s => s.val.1) w = x ∧
-      F.map (fun s => s.val.2) w = y
-
-/-- When the relation is the graph of a function
-`g`, the relation lifting reduces to the graph
-of `F.map g`. -/
-@[simp]
-theorem functorRelLift_graphRel
-    (F : Type ⥤ Type) {A B : Type}
-    (g : A → B) :
-    functorRelLift F (graphRel g) =
-    graphRel (F.map g) := by
-  ext x y
-  simp only [functorRelLift, graphRel]
-  constructor
-  · rintro ⟨w, hw₁, hw₂⟩
-    rw [← hw₁, ← hw₂]
-    have h₁ : (fun s : { p : A × B //
-        g p.1 = p.2 } => s.val.2) =
-        g ∘ (fun s => s.val.1) := by
-      ext ⟨⟨a, _⟩, h⟩; exact h.symm
-    conv_rhs => rw [h₁]
-    exact (FunctorToTypes.map_comp_apply F
-      (fun s => s.val.1) g w).symm
-  · intro h
-    let e : A → { p : A × B // g p.1 = p.2 } :=
-      fun a => ⟨⟨a, g a⟩, rfl⟩
-    refine ⟨F.map e x, ?_, ?_⟩
-    · show F.map (fun s => s.val.1)
-        (F.map e x) = x
-      rw [← FunctorToTypes.map_comp_apply]
-      exact FunctorToTypes.map_id_apply F x
-    · show F.map (fun s => s.val.2)
-        (F.map e x) = y
-      rw [← FunctorToTypes.map_comp_apply]
-      exact h
-
-/-- When the relation is the opposite graph of a
-function `f : B → A`, the relation lifting reduces
-to the opposite graph of `F.map f`. -/
-@[simp]
-theorem functorRelLift_graphRelOp
-    (F : Type ⥤ Type) {A B : Type}
-    (f : B → A) :
-    functorRelLift F (graphRelOp f) =
-    graphRelOp (F.map f) := by
-  ext x y
-  simp only [functorRelLift, graphRelOp]
-  constructor
-  · rintro ⟨w, hw₁, hw₂⟩
-    rw [← hw₁, ← hw₂]
-    have h₁ : (fun s : { p : A × B //
-        f p.2 = p.1 } => s.val.1) =
-        f ∘ fun s => s.val.2 := by
-      ext ⟨⟨_, _⟩, h⟩; exact h.symm
-    conv_rhs => rw [h₁]
-    exact (FunctorToTypes.map_comp_apply F
-      (fun s => s.val.2) f w).symm
-  · intro h
-    let e : B → { p : A × B //
-        f p.2 = p.1 } :=
-      fun b => ⟨⟨f b, b⟩, rfl⟩
-    refine ⟨F.map e y, ?_, ?_⟩
-    · show F.map (fun s => s.val.1)
-          (F.map e y) = x
-      rw [← FunctorToTypes.map_comp_apply]
-      exact h
-    · show F.map (fun s => s.val.2)
-          (F.map e y) = y
-      rw [← FunctorToTypes.map_comp_apply]
-      exact FunctorToTypes.map_id_apply F y
-
-/-- The identity functor `𝟭 Type` does not change
-the relation: `functorRelLift (𝟭 Type) R = R`. -/
-@[simp]
-theorem functorRelLift_id {A B : Type}
-    (R : A → B → Prop) :
-    functorRelLift (𝟭 Type) R = R := by
-  ext a b
-  constructor
-  · rintro ⟨⟨⟨_, _⟩, hab⟩, rfl, rfl⟩
-    exact hab
-  · intro h
-    exact ⟨⟨(a, b), h⟩, rfl, rfl⟩
 
 /-- The canonical relation lifting for a
 profunctor `G : Typeᵒᵖ × Type ⥤ Type`.
