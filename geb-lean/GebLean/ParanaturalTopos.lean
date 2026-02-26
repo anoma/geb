@@ -2467,15 +2467,6 @@ theorem divHomProf_diagCompat_eq
     (f ∘ h = k ∘ f) :=
   rfl
 
-/-- The graph of a function, viewed as a relation.
-`graphRel f a b` holds iff `f a = b`. This is the
-relational interpretation of the base type variable
-`X` at the graph of `f`, following Wadler's
-construction (section 3, "Theorems for free!"). -/
-def graphRel {A B : Type} (f : A → B)
-    (a : A) (b : B) : Prop :=
-  f a = b
-
 /-- The opposite graph of a function `f : B → A`,
 viewed as a relation `A → B → Prop`.
 `graphRelOp f a b` holds iff `f b = a`. -/

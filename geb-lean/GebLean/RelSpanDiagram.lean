@@ -471,4 +471,150 @@ def covariantEmbedding :
     ext X x
     cases X <;> simp
 
+/-- The graph relation of `f : I₀ → I₁`:
+`graphRel f a b ↔ f a = b`. -/
+def graphRel {I₀ I₁ : Type} (f : I₀ → I₁) :
+    I₀ → I₁ → Prop :=
+  fun a b => f a = b
+
+/-- The canonical isomorphism between `I₀` and
+`relType (graphRel f)`: every `a : I₀` maps to
+`⟨(a, f a), rfl⟩`. -/
+def graphRelEquiv {I₀ I₁ : Type}
+    (f : I₀ → I₁) :
+    I₀ ≃ relType (graphRel f) where
+  toFun a := ⟨(a, f a), rfl⟩
+  invFun s := s.val.1
+  left_inv _ := rfl
+  right_inv s := by
+    apply Subtype.ext
+    apply Prod.ext
+    · rfl
+    · exact s.property
+
+/-- The canonical map from `I₀` to
+`relType (graphRel f)`. -/
+def graphRelInj {I₀ I₁ : Type}
+    (f : I₀ → I₁) :
+    I₀ → relType (graphRel f) :=
+  fun a => ⟨(a, f a), rfl⟩
+
+/-- Composition of `graphRelInj f` with the
+first projection is the identity. -/
+theorem graphRelInj_comp_fst
+    {I₀ I₁ : Type} (f : I₀ → I₁) :
+    (fun (s : relType (graphRel f)) =>
+      s.val.1) ∘ graphRelInj f = id :=
+  rfl
+
+/-- Composition of `graphRelInj f` with the
+second projection is `f`. -/
+theorem graphRelInj_comp_snd
+    {I₀ I₁ : Type} (f : I₀ → I₁) :
+    (fun (s : relType (graphRel f)) =>
+      s.val.2) ∘ graphRelInj f = f :=
+  rfl
+
+/-- On `relType (graphRel f)`, the second
+projection equals `f` composed with the first
+projection. -/
+theorem relType_graphRel_snd_eq_comp_fst
+    {I₀ I₁ : Type} (f : I₀ → I₁)
+    (s : relType (graphRel f)) :
+    s.val.2 = f s.val.1 :=
+  s.property.symm
+
+/-- The preimage of a natural transformation
+`β : covariantEmbedding.obj F ⟶
+covariantEmbedding.obj G` is a natural
+transformation `F ⟶ G`, extracted from the
+typeNode components. -/
+def covariantEmbedding_preimage
+    {F G : Type ⥤ Type}
+    (β : covariantEmbedding.obj F ⟶
+      covariantEmbedding.obj G) :
+    F ⟶ G where
+  app I x :=
+    (β.app (.typeNode I) ⟨x⟩).down
+  naturality {I₀ I₁} f := by
+    funext x
+    simp only [types_comp_apply]
+    -- m is the relational witness
+    set y := F.map (graphRelInj f) x
+    set m := (β.app
+      (.relNode I₀ I₁ (graphRel f))
+      ⟨y⟩).down with hm_def
+    -- fstProj naturality of β
+    have hfst := congr_arg ULift.down
+      (congr_fun (β.naturality
+        (RelSpanHom.fstProj I₀ I₁
+          (graphRel f))) ⟨y⟩)
+    simp only [types_comp_apply,
+      covariantEmbedding,
+      Function.comp] at hfst
+    -- F.map π₁ y = x
+    have hfst_y :
+        F.map (fun s : relType
+          (graphRel f) => s.val.1) y =
+        x := by
+      change (F.map (graphRelInj f) ≫
+        F.map _) x = x
+      rw [← F.map_comp,
+        show (graphRelInj f ≫
+          (fun s : relType (graphRel f) =>
+            s.val.1)) = 𝟙 I₀ from rfl,
+        F.map_id]
+      rfl
+    -- sndProj naturality of β
+    have hsnd := congr_arg ULift.down
+      (congr_fun (β.naturality
+        (RelSpanHom.sndProj I₀ I₁
+          (graphRel f))) ⟨y⟩)
+    simp only [types_comp_apply,
+      covariantEmbedding,
+      Function.comp] at hsnd
+    -- F.map π₂ y = F.map f x
+    have hsnd_y :
+        F.map (fun s : relType
+          (graphRel f) => s.val.2) y =
+        F.map f x := by
+      change (F.map (graphRelInj f) ≫
+        F.map _) x = F.map f x
+      rw [← F.map_comp,
+        show (graphRelInj f ≫
+          (fun s : relType (graphRel f) =>
+            s.val.2)) = f from rfl]
+    -- G.map (f ∘ π₁) = G.map π₂
+    have hcomp : G.map
+        (fun s : relType (graphRel f) =>
+          f s.val.1) =
+        G.map
+          (fun s : relType (graphRel f) =>
+            s.val.2) := by
+      congr 1; funext s
+      exact (relType_graphRel_snd_eq_comp_fst
+        f s).symm
+    -- Combine: goal is β(.typeNode I₁)(F.map f x)
+    --   = G.map f (β(.typeNode I₀)(x))
+    -- From hfst: β(.typeNode I₀)(π₁ y)
+    --   = G.map π₁ m
+    -- From hsnd: β(.typeNode I₁)(π₂ y)
+    --   = G.map π₂ m
+    -- With hfst_y: π₁ y = x, hsnd_y: π₂ y = f x
+    conv_lhs =>
+      rw [← hsnd_y]
+      rw [hsnd]
+    conv_rhs =>
+      rw [← hfst_y]
+      rw [hfst]
+    -- Goal: G.map π₂ m = G.map f (G.map π₁ m)
+    have h :
+        (G.map (fun s : relType
+          (graphRel f) => s.val.1) ≫
+          G.map f) m =
+        G.map f (G.map (fun s =>
+          s.val.1) m) := rfl
+    rw [← h, ← G.map_comp]
+    exact congr_fun hcomp.symm m
+
 end GebLean
