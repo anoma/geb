@@ -4939,6 +4939,73 @@ def relSpanDiagramFunctor :
   map_comp η μ :=
     relSpanDiagramMap_comp η μ
 
+/-- `relSpanDiagramFunctor` is fully faithful.
+The preimage extracts `typeNode` components;
+parametricity follows from `β.naturality` at
+relation-node projections. Fullness follows
+from `relFiber` being a subtype of the
+product, determined by its projections. -/
+def relSpanDiagramFunctor_fullyFaithful :
+    relSpanDiagramFunctor.FullyFaithful where
+  preimage {T₁ T₂} β :=
+    { app := fun I a =>
+        (β.app (.typeNode I) ⟨a⟩).down
+      parametric := fun I₀ I₁ R a₁ a₂ h =>
+        by
+        let fiber : T₁.expr.relFiber R :=
+          ⟨(a₁, a₂), h⟩
+        let m := (β.app
+          (.relNode I₀ I₁ R)
+          ⟨fiber⟩).down
+        have hfst : m.val.1 =
+            (β.app (.typeNode I₀)
+              ⟨a₁⟩).down := by
+          exact (congr_arg ULift.down
+            (congr_fun (β.naturality
+              (RelSpanHom.fstProj I₀ I₁ R))
+              ⟨fiber⟩)).symm
+        have hsnd : m.val.2 =
+            (β.app (.typeNode I₁)
+              ⟨a₂⟩).down := by
+          exact (congr_arg ULift.down
+            (congr_fun (β.naturality
+              (RelSpanHom.sndProj I₀ I₁ R))
+              ⟨fiber⟩)).symm
+        change T₂.expr.fullRelInterp R
+          (β.app (.typeNode I₀) ⟨a₁⟩).down
+          (β.app (.typeNode I₁) ⟨a₂⟩).down
+        rw [← hfst, ← hsnd]
+        exact m.property }
+  map_preimage {T₁ T₂} β := by
+    apply NatTrans.ext; funext X
+    cases X with
+    | typeNode I => funext ⟨_⟩; rfl
+    | relNode I₀ I₁ R =>
+      funext ⟨p⟩
+      apply ULift.ext
+      apply Subtype.ext
+      have hfst :=
+        (congr_arg ULift.down
+          (congr_fun (β.naturality
+            (RelSpanHom.fstProj I₀ I₁ R))
+            ⟨p⟩)).symm
+      have hsnd :=
+        (congr_arg ULift.down
+          (congr_fun (β.naturality
+            (RelSpanHom.sndProj I₀ I₁ R))
+            ⟨p⟩)).symm
+      apply Prod.ext
+      · exact hfst.symm
+      · exact hsnd.symm
+
+instance relSpanDiagramFunctor_faithful :
+    relSpanDiagramFunctor.Faithful :=
+  relSpanDiagramFunctor_fullyFaithful.faithful
+
+instance relSpanDiagramFunctor_full :
+    relSpanDiagramFunctor.Full :=
+  relSpanDiagramFunctor_fullyFaithful.full
+
 end RelSpanDiagram
 
 /-- `divEndoRel f h k` is equivalent to
