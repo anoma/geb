@@ -1,14 +1,17 @@
 # Workstream: Cofree Category
 
 ## Status
+
 Active
 
 ## Context
+
 Constructing the cofree category C_P for a polynomial
 endofunctor P, such that the category of P-coalgebras is
 equivalent to the copresheaf topos Set^{C_P}.
 
 ## Completed
+
 - Comonad from adjunction (`polyCofreeComonad`)
 - Natural isomorphism (`polyCofreeComonadIso`)
 - Free monad analog (`polyFreeMonad`, `polyFreeMonadIso`)
@@ -30,9 +33,10 @@ equivalent to the copresheaf topos Set^{C_P}.
 - Right identity (`comp_id`)
 
 ## Tasks
+
 - [ ] Associativity (`comp_assoc`)
-  The obstruction: `polyCofreeSubtreeAt_concat` gives
-  HEq between shapes at DIFFERENT fibers
+  Current status: `polyCofreeSubtreeAt_concat` gives
+  HEq between shapes at different fibers
   (`PolyCofreeShape P x1` vs `PolyCofreeShape P x2`
   where `x1`, `x2` are both fiber-at-concat results).
   `eq_of_heq` cannot be applied. Need to transport `p3`

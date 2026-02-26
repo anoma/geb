@@ -256,11 +256,11 @@ theorem PolyCofreeCatHom.comp_id
     polyCofreeCatId_depth,
     polyCofreeCatId_pos,
     cast_eq]
-  have key := polyCofreeAnnotPosConcat_id_right
+  have comm := polyCofreeAnnotPosConcat_id_right
     P src.shape fn fp
   ext
-  · exact congrArg Sigma.fst key
-  · exact (Sigma.ext_iff.mp key).2
+  · exact congrArg Sigma.fst comm
+  · exact (Sigma.ext_iff.mp comm).2
 
 
 end GebLean
