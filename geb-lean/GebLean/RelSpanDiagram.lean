@@ -1009,4 +1009,187 @@ instance contravariantEmbedding_full :
     contravariantEmbedding.Full :=
   contravariantEmbedding_fullyFaithful.full
 
+/-- The canonical relation lifting for a
+profunctor `G : Typeᵒᵖ × Type ⥤ Type`. Given
+a relation `R` between types `A₁` and `A₂`,
+`profRelLift G R x y` holds iff there exists
+a witness `w : G.obj (op (relType R), relType R)`
+whose projections match `x` and `y`. -/
+def profRelLift
+    (G : Typeᵒᵖ × Type ⥤ Type)
+    {I₀ I₁ : Type}
+    (R : I₀ → I₁ → Prop)
+    (x : G.obj (Opposite.op I₀, I₀))
+    (y : G.obj (Opposite.op I₁, I₁)) :
+    Prop :=
+  let π₁ : relType R → I₀ := fun s => s.val.1
+  let π₂ : relType R → I₁ := fun s => s.val.2
+  let SubR := relType R
+  ∃ (w : G.obj (Opposite.op SubR, SubR)),
+    G.map (show (Opposite.op SubR, SubR) ⟶
+        (Opposite.op SubR, I₀) from
+      (𝟙 _, π₁)) w =
+      G.map (show (Opposite.op I₀, I₀) ⟶
+          (Opposite.op SubR, I₀) from
+        (Quiver.Hom.op π₁, 𝟙 _)) x ∧
+    G.map (show (Opposite.op SubR, SubR) ⟶
+        (Opposite.op SubR, I₁) from
+      (𝟙 _, π₂)) w =
+      G.map (show (Opposite.op I₁, I₁) ⟶
+          (Opposite.op SubR, I₁) from
+        (Quiver.Hom.op π₂, 𝟙 _)) y
+
+/-- The subtype of
+`G.obj (op I₀, I₀) × G.obj (op I₁, I₁)`
+consisting of diagonal pairs in the
+profunctor relation lifting of `R`
+through `G`. -/
+def profRelImage
+    (G : Typeᵒᵖ × Type ⥤ Type)
+    {I₀ I₁ : Type}
+    (R : I₀ → I₁ → Prop) :=
+  { p : G.obj (Opposite.op I₀, I₀) ×
+        G.obj (Opposite.op I₁, I₁) //
+    profRelLift G R p.1 p.2 }
+
+/-- Transport a `profRelImage` element along
+a natural transformation `α : G ⟶ H`. -/
+def profRelImage.map
+    {G H : Typeᵒᵖ × Type ⥤ Type}
+    (α : G ⟶ H) {I₀ I₁ : Type}
+    {R : I₀ → I₁ → Prop}
+    (p : profRelImage G R) :
+    profRelImage H R :=
+  let π₁ : relType R → I₀ := fun s => s.val.1
+  let π₂ : relType R → I₁ := fun s => s.val.2
+  let SubR := relType R
+  ⟨(α.app (Opposite.op I₀, I₀) p.val.1,
+    α.app (Opposite.op I₁, I₁) p.val.2),
+    p.property.elim fun w ⟨hw₁, hw₂⟩ =>
+      ⟨α.app (Opposite.op SubR, SubR) w, by
+        let f₁ : (Opposite.op SubR, SubR) ⟶
+            (Opposite.op SubR, I₀) :=
+          (𝟙 _, π₁)
+        let g₁ : (Opposite.op I₀, I₀) ⟶
+            (Opposite.op SubR, I₀) :=
+          (Quiver.Hom.op π₁, 𝟙 _)
+        let f₂ : (Opposite.op SubR, SubR) ⟶
+            (Opposite.op SubR, I₁) :=
+          (𝟙 _, π₂)
+        let g₂ : (Opposite.op I₁, I₁) ⟶
+            (Opposite.op SubR, I₁) :=
+          (Quiver.Hom.op π₂, 𝟙 _)
+        have nat_f₁ := congr_fun
+          (α.naturality f₁) w
+        have nat_g₁ := congr_fun
+          (α.naturality g₁) p.val.1
+        have nat_f₂ := congr_fun
+          (α.naturality f₂) w
+        have nat_g₂ := congr_fun
+          (α.naturality g₂) p.val.2
+        simp only [types_comp_apply]
+          at nat_f₁ nat_g₁ nat_f₂ nat_g₂
+        exact ⟨
+          nat_f₁.symm.trans
+            ((congr_arg _ hw₁).trans
+              nat_g₁),
+          nat_f₂.symm.trans
+            ((congr_arg _ hw₂).trans
+              nat_g₂)⟩⟩⟩
+
+/-- The profunctor embedding maps a profunctor
+`G : Typeᵒᵖ × Type ⥤ Type` to a parametric
+functor. Type-nodes map to the diagonal
+`ULift (G.obj (op I, I))`; relation-nodes map
+to `ULift (profRelImage G R)`. -/
+def profunctorEmbedding :
+    (Typeᵒᵖ × Type ⥤ Type) ⥤
+    ParametricFunctor where
+  obj G :=
+    { obj := fun X =>
+        match X with
+        | .typeNode I =>
+          ULift.{1}
+            (G.obj (Opposite.op I, I))
+        | .relNode I₀ I₁ R =>
+          ULift.{1} (profRelImage G R)
+      map := fun {X Y} f =>
+        match X, Y, f with
+        | _, _, .id _ => id
+        | _, _, .fstProj I₀ I₁ R =>
+          fun ⟨p⟩ => ⟨p.val.1⟩
+        | _, _, .sndProj I₀ I₁ R =>
+          fun ⟨p⟩ => ⟨p.val.2⟩
+      map_id := by
+        intro X; cases X <;> rfl
+      map_comp := by
+        intro X Y Z f g
+        cases f <;> cases g <;> rfl }
+  map {G H} (α : G ⟶ H) :=
+    { app := fun X =>
+        match X with
+        | .typeNode I =>
+          ULift.up ∘
+            α.app (Opposite.op I, I) ∘
+            ULift.down
+        | .relNode I₀ I₁ R =>
+          fun ⟨p⟩ =>
+            ⟨profRelImage.map α p⟩
+      naturality := by
+        intro X Y f
+        match X, Y, f with
+        | _, _, .id _ => rfl
+        | _, _, .fstProj I₀ I₁ R =>
+          funext ⟨p⟩; rfl
+        | _, _, .sndProj I₀ I₁ R =>
+          funext ⟨p⟩; rfl }
+  map_id G := by
+    apply NatTrans.ext; funext X
+    cases X with
+    | typeNode I => funext ⟨_⟩; rfl
+    | relNode I₀ I₁ R =>
+      funext ⟨p⟩
+      apply ULift.ext
+      apply Subtype.ext
+      simp [profRelImage.map]
+  map_comp {G H K}
+      (α : G ⟶ H) (β : H ⟶ K) := by
+    apply NatTrans.ext; funext X
+    cases X with
+    | typeNode I => funext ⟨_⟩; rfl
+    | relNode I₀ I₁ R =>
+      funext ⟨p⟩
+      apply ULift.ext
+      apply Subtype.ext
+      simp [profRelImage.map]
+
+-- Analysis of faithfulness/fullness for
+-- profunctorEmbedding:
+--
+-- The typeNode components of the parametric
+-- functor see G.obj (op I, I) -- the DIAGONAL
+-- of the profunctor. A natural transformation
+-- α : G ⟶ H has components α.app (op A, B)
+-- for all (op A, B), not just diagonal ones.
+--
+-- Faithfulness asks: does agreement on
+-- diagonals imply agreement everywhere?
+-- Via naturality at (op id, g) : (op A, A) ⟶
+-- (op A, B), α.app (op A, B) is constrained
+-- by α.app (op A, A) but not determined
+-- unless G.map (op id, g) is surjective.
+-- So faithfulness does not hold in general.
+--
+-- Fullness similarly fails: the diagonal
+-- components do not determine a full natural
+-- transformation.
+--
+-- The profunctor embedding is therefore
+-- neither full nor faithful in general, but
+-- it is a valid functor embedding
+-- profunctors into parametric functors.
+-- The relationship between profunctors and
+-- parametric functors is richer than a
+-- simple subcategory inclusion.
+
 end GebLean
