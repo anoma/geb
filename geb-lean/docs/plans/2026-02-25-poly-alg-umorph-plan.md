@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD024 -->
 # Polynomial Algebra/Coalgebra Combinators Implementation Plan
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans
@@ -38,6 +39,7 @@ universal morphisms from `PolyUMorph.lean`.
 
 A morphism `α : P ⟶ Q` in `PolyEndo X` is `∀ x, P x ⟶ Q x` in
 `CoprodCovarRepCat (Over X)`. At each `x`, it has:
+
 - `ccrReindex (α x) : polyBetweenIndex P x → polyBetweenIndex Q x`
 - `ccrFiberMor (α x) i :
     polyBetweenFamily Q x (ccrReindex (α x) i) ⟶
@@ -64,11 +66,12 @@ So `α` induces a map on eval:
 
 ### Task 1: Create skeleton file and add import
 
-**Files:**
+Files:
+
 - Create: `GebLean/PolyAlgUMorph.lean`
 - Modify: `GebLean.lean`
 
-**Step 1: Create the file with imports and module docstring**
+#### Step 1: Create the file with imports and module docstring**
 
 ```lean
 import GebLean.PolyAlg
@@ -139,19 +142,19 @@ universe u
 end GebLean
 ```
 
-**Step 2: Add import to GebLean.lean**
+#### Step 2: Add import to GebLean.lean**
 
 Add `import GebLean.PolyAlgUMorph` after `import GebLean.PolyAlg`
 in `GebLean.lean`.
 
-**Step 3: Build**
+#### Step 3: Build**
 
 Run: `lake build`
 Expected: PASS with no warnings
 
-**Step 4: Commit**
+#### Step 4: Commit**
 
-```
+```text
 feat: scaffold PolyAlgUMorph.lean
 ```
 
@@ -165,10 +168,11 @@ endofunctor applied to a morphism of carriers; rather, it is a
 natural transformation component at `A`. We need to construct
 this as a morphism in `Over X`.
 
-**Files:**
-- Modify: `GebLean/PolyAlgUMorph.lean`
+Files:
 
-**Step 1: Define polyEndoMorphEvalAt**
+-Modify: `GebLean/PolyAlgUMorph.lean`
+
+#### Step 1: Define polyEndoMorphEvalAt**
 
 The pointwise map on `polyBetweenEvalFamily`:
 
@@ -197,7 +201,7 @@ def polyEndoMorphEvalAt
 Build and verify. This should reduce to
 `fun ⟨i, f⟩ => ⟨ccrReindex (α x) i, ccrFiberMor (α x) i ≫ f⟩`.
 
-**Step 2: Define polyEndoMorphEval**
+#### Step 2: Define polyEndoMorphEval**
 
 The full morphism `P(A) ⟶ Q(A)` in `Over X`:
 
@@ -217,7 +221,7 @@ def polyEndoMorphEval
 
 Build and verify.
 
-**Step 3: Prove naturality**
+#### Step 3: Prove naturality**
 
 The naturality square: for `f : A ⟶ B`,
 `polyEndoMorphEval α A ≫ (polyEndoFunctor X Q).map f =
@@ -249,9 +253,9 @@ Build and verify. The proof may need adjustment based on what
 `simp` can handle; the mathematical content is just
 associativity.
 
-**Step 4: Commit**
+#### Step 4: Commit**
 
-```
+```text
 feat(PolyAlgUMorph): pointwise evaluation of endofunctor morphisms
 ```
 
@@ -259,10 +263,11 @@ feat(PolyAlgUMorph): pointwise evaluation of endofunctor morphisms
 
 ### Task 3: Algebra pullback and coalgebra pushforward
 
-**Files:**
-- Modify: `GebLean/PolyAlgUMorph.lean`
+Files:
 
-**Step 1: Define algPullback**
+-Modify: `GebLean/PolyAlgUMorph.lean`
+
+#### Step 1: Define algPullback**
 
 ```lean
 end PolyEndoMorphEval
@@ -286,7 +291,7 @@ def algPullback
 
 Build and verify.
 
-**Step 2: Define coalgPushforward**
+#### Step 2: Define coalgPushforward**
 
 ```lean
 /--
@@ -306,9 +311,9 @@ def coalgPushforward
 
 Build and verify.
 
-**Step 3: Commit**
+#### Step 3: Commit**
 
-```
+```text
 feat(PolyAlgUMorph): algebra pullback and coalgebra pushforward
 ```
 
@@ -316,10 +321,11 @@ feat(PolyAlgUMorph): algebra pullback and coalgebra pushforward
 
 ### Task 4: Algebra and coalgebra homomorphism combinators
 
-**Files:**
-- Modify: `GebLean/PolyAlgUMorph.lean`
+Files:
 
-**Step 1: Define algPullbackHom**
+-Modify: `GebLean/PolyAlgUMorph.lean`
+
+#### Step 1: Define algPullbackHom**
 
 An algebra homomorphism `h : a₁ ⟶ a₂` (between Q-algebras)
 is also a homomorphism between the pulled-back P-algebras.
@@ -349,7 +355,7 @@ Build and verify. The proof uses naturality to commute
 `polyEndoMorphEval` past `F_P.map h.f`, then the original
 homomorphism condition `h.h`.
 
-**Step 2: Define coalgPushforwardHom**
+#### Step 2: Define coalgPushforwardHom**
 
 ```lean
 /--
@@ -371,9 +377,9 @@ def coalgPushforwardHom
 
 Build and verify.
 
-**Step 3: Commit**
+#### Step 3: Commit**
 
-```
+```text
 feat(PolyAlgUMorph): algebra/coalgebra homomorphism combinators
 ```
 
@@ -381,10 +387,11 @@ feat(PolyAlgUMorph): algebra/coalgebra homomorphism combinators
 
 ### Task 5: Functorial versions of pullback and pushforward
 
-**Files:**
-- Modify: `GebLean/PolyAlgUMorph.lean`
+Files:
 
-**Step 1: Define algPullbackFunctor**
+-Modify: `GebLean/PolyAlgUMorph.lean`
+
+#### Step 1: Define algPullbackFunctor**
 
 ```lean
 /--
@@ -404,7 +411,7 @@ def algPullbackFunctor
 
 Build and verify.
 
-**Step 2: Define coalgPushforwardFunctor**
+#### Step 2: Define coalgPushforwardFunctor**
 
 ```lean
 /--
@@ -424,7 +431,7 @@ def coalgPushforwardFunctor
 
 Build and verify.
 
-**Step 3: Prove these commute with the forgetful functors**
+#### Step 3: Prove these commute with the forgetful functors**
 
 ```lean
 /--
@@ -453,9 +460,9 @@ theorem coalgPushforwardFunctor_forget
 
 Build and verify.
 
-**Step 4: Commit**
+#### Step 4: Commit**
 
-```
+```text
 feat(PolyAlgUMorph): functorial pullback/pushforward
 ```
 
@@ -463,10 +470,11 @@ feat(PolyAlgUMorph): functorial pullback/pushforward
 
 ### Task 6: Coproduct algebra combinator
 
-**Files:**
-- Modify: `GebLean/PolyAlgUMorph.lean`
+Files:
 
-**Step 1: Define algCoprodDesc**
+-Modify: `GebLean/PolyAlgUMorph.lean`
+
+#### Step 1: Define algCoprodDesc**
 
 Given algebras `a_i : PolyAlg (F i)` all with the same
 carrier, construct an algebra for `polyBetweenCoprod I F`.
@@ -550,14 +558,14 @@ Build and verify. The proof obligation is that the structure
 map commutes over `X`, which follows from each `strs i`
 commuting over `X`.
 
-**Step 2: Build and verify**
+#### Step 2: Build and verify**
 
 Run: `lake build`
 Expected: PASS
 
-**Step 3: Commit**
+#### Step 3: Commit**
 
-```
+```text
 feat(PolyAlgUMorph): coproduct algebra combinator
 ```
 
@@ -565,10 +573,11 @@ feat(PolyAlgUMorph): coproduct algebra combinator
 
 ### Task 7: Coproduct algebra homomorphism combinator
 
-**Files:**
-- Modify: `GebLean/PolyAlgUMorph.lean`
+Files:
 
-**Step 1: Define algCoprodDescHom**
+-Modify: `GebLean/PolyAlgUMorph.lean`
+
+#### Step 1: Define algCoprodDescHom**
 
 Given a morphism `h : A ⟶ B` that is simultaneously a
 homomorphism for each `F i`-algebra, it is also a
@@ -607,14 +616,14 @@ Build and verify. The proof strategy: both sides dispatch
 by tag `i`, then the commutativity for tag `i` follows from
 `hcomm i`.
 
-**Step 2: Build and verify**
+#### Step 2: Build and verify**
 
 Run: `lake build`
 Expected: PASS
 
-**Step 3: Commit**
+#### Step 3: Commit**
 
-```
+```text
 feat(PolyAlgUMorph): coproduct algebra homomorphism combinator
 ```
 
@@ -622,10 +631,11 @@ feat(PolyAlgUMorph): coproduct algebra homomorphism combinator
 
 ### Task 8: Product coalgebra combinator
 
-**Files:**
-- Modify: `GebLean/PolyAlgUMorph.lean`
+Files:
 
-**Step 1: Define coalgProdLift**
+-Modify: `GebLean/PolyAlgUMorph.lean`
+
+#### Step 1: Define coalgProdLift**
 
 Dual to `algCoprodDesc`. Given coalgebras with the same
 carrier for each component `F i`, construct a coalgebra for
@@ -690,14 +700,14 @@ Build and verify. This definition may need adjustment based
 on the exact types -- implement with underscores first to
 discover the types, then fill in.
 
-**Step 2: Build and verify**
+#### Step 2: Build and verify**
 
 Run: `lake build`
 Expected: PASS (may need iteration)
 
-**Step 3: Commit**
+#### Step 3: Commit**
 
-```
+```text
 feat(PolyAlgUMorph): product coalgebra combinator
 ```
 
@@ -705,10 +715,11 @@ feat(PolyAlgUMorph): product coalgebra combinator
 
 ### Task 9: Product coalgebra homomorphism combinator
 
-**Files:**
-- Modify: `GebLean/PolyAlgUMorph.lean`
+Files:
 
-**Step 1: Define coalgProdLiftHom**
+-Modify: `GebLean/PolyAlgUMorph.lean`
+
+#### Step 1: Define coalgProdLiftHom**
 
 Dual to `algCoprodDescHom`.
 
@@ -741,14 +752,14 @@ The proof will require showing that the product structure
 maps compose correctly. Use underscore to discover goal,
 then apply component-wise reasoning using `hcomm`.
 
-**Step 2: Build and verify**
+#### Step 2: Build and verify**
 
 Run: `lake build`
 Expected: PASS (may need iteration)
 
-**Step 3: Commit**
+#### Step 3: Commit**
 
-```
+```text
 feat(PolyAlgUMorph): product coalgebra homomorphism combinator
 ```
 
@@ -756,10 +767,11 @@ feat(PolyAlgUMorph): product coalgebra homomorphism combinator
 
 ### Task 10: Equalizer algebra restriction
 
-**Files:**
-- Modify: `GebLean/PolyAlgUMorph.lean`
+Files:
 
-**Step 1: Define algEqRestrict**
+-Modify: `GebLean/PolyAlgUMorph.lean`
+
+#### Step 1: Define algEqRestrict**
 
 This is just `algPullback` applied to the equalizer
 inclusion.
@@ -786,7 +798,7 @@ def algEqRestrict
 
 Build and verify.
 
-**Step 2: Define algEqRestrictHom**
+#### Step 2: Define algEqRestrictHom**
 
 ```lean
 /--
@@ -802,9 +814,9 @@ def algEqRestrictHom
 
 Build and verify.
 
-**Step 3: Commit**
+#### Step 3: Commit**
 
-```
+```text
 feat(PolyAlgUMorph): equalizer algebra restriction
 ```
 
@@ -812,10 +824,11 @@ feat(PolyAlgUMorph): equalizer algebra restriction
 
 ### Task 11: Coequalizer coalgebra extension
 
-**Files:**
-- Modify: `GebLean/PolyAlgUMorph.lean`
+Files:
 
-**Step 1: Define coalgCoeqExtend**
+-Modify: `GebLean/PolyAlgUMorph.lean`
+
+#### Step 1: Define coalgCoeqExtend**
 
 This is `coalgPushforward` applied to the coequalizer
 projection.
@@ -842,7 +855,7 @@ def coalgCoeqExtend
 
 Build and verify.
 
-**Step 2: Define coalgCoeqExtendHom**
+#### Step 2: Define coalgCoeqExtendHom**
 
 ```lean
 /--
@@ -859,9 +872,9 @@ def coalgCoeqExtendHom
 
 Build and verify.
 
-**Step 3: Commit**
+#### Step 3: Commit**
 
-```
+```text
 feat(PolyAlgUMorph): coequalizer coalgebra extension
 ```
 
@@ -872,10 +885,11 @@ feat(PolyAlgUMorph): coequalizer coalgebra extension
 These theorems state that the specialized combinators
 interact correctly with the universal morphisms.
 
-**Files:**
-- Modify: `GebLean/PolyAlgUMorph.lean`
+Files:
 
-**Step 1: Coproduct factorization**
+-Modify: `GebLean/PolyAlgUMorph.lean`
+
+#### Step 1: Coproduct factorization**
 
 Pulling back a coproduct algebra along `ι_j` recovers the
 `j`-th component algebra.
@@ -904,7 +918,7 @@ theorem algCoprodDesc_pullback_inj
   _
 ```
 
-**Step 2: Product factorization**
+#### Step 2: Product factorization**
 
 Pushing forward a product coalgebra along `π_j` recovers
 the `j`-th component coalgebra.
@@ -931,14 +945,14 @@ universal morphism with the inclusion/projection
 recovers the component. Build with underscores, examine
 goals, then fill in proofs.
 
-**Step 3: Build and verify**
+#### Step 3: Build and verify**
 
 Run: `lake build`
 Expected: PASS (may need iteration on proof terms)
 
-**Step 4: Commit**
+#### Step 4: Commit**
 
-```
+```text
 feat(PolyAlgUMorph): factorization properties
 ```
 
@@ -955,10 +969,11 @@ This task may be deferred if the types don't work out
 cleanly. Evaluate by implementing the definition at first
 with underscores and examining the resulting goals.
 
-**Files:**
-- Modify: `GebLean/PolyAlgUMorph.lean`
+Files:
 
-**Step 1: Explore the types**
+-Modify: `GebLean/PolyAlgUMorph.lean`
+
+#### Step 1: Explore the types**
 
 Define with underscores:
 
@@ -982,14 +997,14 @@ align (the exponential of polynomial functors operates
 at the functor level, not the carrier level), document
 why and close this task.
 
-**Step 2: Build and evaluate**
+#### Step 2: Build and evaluate**
 
 Run: `lake build`
 Evaluate based on the goals.
 
-**Step 3: Commit (if implemented)**
+#### Step 3: Commit (if implemented)**
 
-```
+```text
 feat(PolyAlgUMorph): exponential algebra combinator
 ```
 
