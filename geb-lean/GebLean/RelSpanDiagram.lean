@@ -89,120 +89,6 @@ instance : Category RelSpanObj where
   comp_id := RelSpanHom.comp_id
   assoc := RelSpanHom.assoc
 
-/-- The diagram functor for a type expression `T`.
-Maps type-nodes to `ULift (T.interp I I)` and
-relation-nodes to `ULift (T.relFiber R)`. -/
-def relSpanDiagram (T : TypeExpr) :
-    RelSpanObj ⥤ Type 1 where
-  obj
-    | .typeNode I => ULift.{1} (T.interp I I)
-    | .relNode I₀ I₁ R =>
-      ULift.{1} (T.relFiber R)
-  map {X Y} f :=
-    match X, Y, f with
-    | _, _, .id _ => id
-    | _, _, .fstProj _ _ _ =>
-      fun ⟨p⟩ => ⟨p.val.1⟩
-    | _, _, .sndProj _ _ _ =>
-      fun ⟨p⟩ => ⟨p.val.2⟩
-  map_id := by
-    intro X
-    cases X <;> rfl
-  map_comp := by
-    intro X Y Z f g
-    cases f <;> cases g <;> rfl
-
-abbrev RelSpanCone (T : TypeExpr) :=
-  Limits.Cone (relSpanDiagram T)
-
-/-- The cone over `relSpanDiagram T` with vertex
-`ULift (ParametricFamily T)`.  The type-node
-projections extract `p.app I`; the relation-node
-projections extract the relational fiber
-witness `⟨(p.app I₀, p.app I₁), p.parametric⟩`. -/
-def parametricFamilyCone (T : TypeExpr) :
-    RelSpanCone T where
-  pt := ULift.{1} (ParametricFamily T)
-  π :=
-    { app := fun X =>
-        match X with
-        | .typeNode I =>
-          fun ⟨p⟩ => ⟨p.app I⟩
-        | .relNode I₀ I₁ R =>
-          fun ⟨p⟩ =>
-            ⟨⟨(p.app I₀, p.app I₁),
-              p.parametric I₀ I₁ R⟩⟩
-      naturality := by
-        intro X Y f
-        cases f <;> rfl }
-
-/-- Auxiliary: given a cone `s` over
-`relSpanDiagram T` and a point `x : s.pt`,
-the parametricity condition holds for the
-components extracted from type-node
-projections. -/
-theorem relSpanCone_parametric
-    {T : TypeExpr}
-    (s : RelSpanCone T)
-    (x : s.pt)
-    (I₀ I₁ : Type) (R : I₀ → I₁ → Prop) :
-    T.fullRelInterp R
-      (s.π.app (.typeNode I₀) x).down
-      (s.π.app (.typeNode I₁) x).down := by
-  have hw₁ := congr_fun (s.w
-    (RelSpanHom.fstProj I₀ I₁ R)) x
-  have hw₂ := congr_fun (s.w
-    (RelSpanHom.sndProj I₀ I₁ R)) x
-  simp only [types_comp_apply] at hw₁ hw₂
-  let fiber := (s.π.app (.relNode I₀ I₁ R) x).down
-  have hfib := fiber.property
-  have h₁ : fiber.val.1 =
-      (s.π.app (.typeNode I₀) x).down := by
-    exact congr_arg ULift.down hw₁
-  have h₂ : fiber.val.2 =
-      (s.π.app (.typeNode I₁) x).down := by
-    exact congr_arg ULift.down hw₂
-  rw [← h₁, ← h₂]
-  exact hfib
-
-/-- `ParametricFamily T` is the limit of
-`relSpanDiagram T`.  The lift extracts
-type-node components; parametricity follows
-from the cone's naturality at projection
-morphisms. -/
-def parametricFamilyIsLimit (T : TypeExpr) :
-    Limits.IsLimit
-      (parametricFamilyCone T) :=
-  Limits.IsLimit.mk
-    (fun s => fun x =>
-      ⟨{ app := fun I => (s.π.app (.typeNode I) x).down
-         parametric := fun I₀ I₁ R =>
-           relSpanCone_parametric s x I₀ I₁ R }⟩)
-    (by
-      intro s j
-      cases j with
-      | typeNode I => rfl
-      | relNode I₀ I₁ R =>
-        funext x
-        apply ULift.ext
-        apply Subtype.ext
-        apply Prod.ext
-        · exact (congr_arg ULift.down
-            (congr_fun (s.w
-              (RelSpanHom.fstProj I₀ I₁ R))
-              x)).symm
-        · exact (congr_arg ULift.down
-            (congr_fun (s.w
-              (RelSpanHom.sndProj I₀ I₁ R))
-              x)).symm)
-    (by
-      intro s m hm
-      funext x
-      apply ULift.ext
-      ext I
-      exact congr_arg ULift.down
-        (congr_fun (hm (.typeNode I)) x))
-
 /-- Index type for relation-nodes: a triple
 `(I₀, I₁, R)` where `R : I₀ → I₁ → Prop`. -/
 abbrev RelIndex :=
@@ -512,6 +398,120 @@ def relSpanCollageIso :
               rfl
         | ⟨.inr _⟩, ⟨.inl _⟩, f =>
           exact PEmpty.elim f)
+
+/-- The diagram functor for a type expression `T`.
+Maps type-nodes to `ULift (T.interp I I)` and
+relation-nodes to `ULift (T.relFiber R)`. -/
+def relSpanDiagram (T : TypeExpr) :
+    RelSpanObj ⥤ Type 1 where
+  obj
+    | .typeNode I => ULift.{1} (T.interp I I)
+    | .relNode I₀ I₁ R =>
+      ULift.{1} (T.relFiber R)
+  map {X Y} f :=
+    match X, Y, f with
+    | _, _, .id _ => id
+    | _, _, .fstProj _ _ _ =>
+      fun ⟨p⟩ => ⟨p.val.1⟩
+    | _, _, .sndProj _ _ _ =>
+      fun ⟨p⟩ => ⟨p.val.2⟩
+  map_id := by
+    intro X
+    cases X <;> rfl
+  map_comp := by
+    intro X Y Z f g
+    cases f <;> cases g <;> rfl
+
+abbrev RelSpanCone (T : TypeExpr) :=
+  Limits.Cone (relSpanDiagram T)
+
+/-- The cone over `relSpanDiagram T` with vertex
+`ULift (ParametricFamily T)`.  The type-node
+projections extract `p.app I`; the relation-node
+projections extract the relational fiber
+witness `⟨(p.app I₀, p.app I₁), p.parametric⟩`. -/
+def parametricFamilyCone (T : TypeExpr) :
+    RelSpanCone T where
+  pt := ULift.{1} (ParametricFamily T)
+  π :=
+    { app := fun X =>
+        match X with
+        | .typeNode I =>
+          fun ⟨p⟩ => ⟨p.app I⟩
+        | .relNode I₀ I₁ R =>
+          fun ⟨p⟩ =>
+            ⟨⟨(p.app I₀, p.app I₁),
+              p.parametric I₀ I₁ R⟩⟩
+      naturality := by
+        intro X Y f
+        cases f <;> rfl }
+
+/-- Auxiliary: given a cone `s` over
+`relSpanDiagram T` and a point `x : s.pt`,
+the parametricity condition holds for the
+components extracted from type-node
+projections. -/
+theorem relSpanCone_parametric
+    {T : TypeExpr}
+    (s : RelSpanCone T)
+    (x : s.pt)
+    (I₀ I₁ : Type) (R : I₀ → I₁ → Prop) :
+    T.fullRelInterp R
+      (s.π.app (.typeNode I₀) x).down
+      (s.π.app (.typeNode I₁) x).down := by
+  have hw₁ := congr_fun (s.w
+    (RelSpanHom.fstProj I₀ I₁ R)) x
+  have hw₂ := congr_fun (s.w
+    (RelSpanHom.sndProj I₀ I₁ R)) x
+  simp only [types_comp_apply] at hw₁ hw₂
+  let fiber := (s.π.app (.relNode I₀ I₁ R) x).down
+  have hfib := fiber.property
+  have h₁ : fiber.val.1 =
+      (s.π.app (.typeNode I₀) x).down := by
+    exact congr_arg ULift.down hw₁
+  have h₂ : fiber.val.2 =
+      (s.π.app (.typeNode I₁) x).down := by
+    exact congr_arg ULift.down hw₂
+  rw [← h₁, ← h₂]
+  exact hfib
+
+/-- `ParametricFamily T` is the limit of
+`relSpanDiagram T`.  The lift extracts
+type-node components; parametricity follows
+from the cone's naturality at projection
+morphisms. -/
+def parametricFamilyIsLimit (T : TypeExpr) :
+    Limits.IsLimit
+      (parametricFamilyCone T) :=
+  Limits.IsLimit.mk
+    (fun s => fun x =>
+      ⟨{ app := fun I => (s.π.app (.typeNode I) x).down
+         parametric := fun I₀ I₁ R =>
+           relSpanCone_parametric s x I₀ I₁ R }⟩)
+    (by
+      intro s j
+      cases j with
+      | typeNode I => rfl
+      | relNode I₀ I₁ R =>
+        funext x
+        apply ULift.ext
+        apply Subtype.ext
+        apply Prod.ext
+        · exact (congr_arg ULift.down
+            (congr_fun (s.w
+              (RelSpanHom.fstProj I₀ I₁ R))
+              x)).symm
+        · exact (congr_arg ULift.down
+            (congr_fun (s.w
+              (RelSpanHom.sndProj I₀ I₁ R))
+              x)).symm)
+    (by
+      intro s m hm
+      funext x
+      apply ULift.ext
+      ext I
+      exact congr_arg ULift.down
+        (congr_fun (hm (.typeNode I)) x))
 
 /-- The functor from `ParametricWedge.{1} T` to
 `RelSpanCone T`, sending a wedge to the cone
