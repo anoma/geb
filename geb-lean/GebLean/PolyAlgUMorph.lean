@@ -70,33 +70,26 @@ section PolyEndoMorphEval
 variable {X : Type u}
 
 /--
-Pointwise evaluation of a polynomial endofunctor morphism
-at a fiber. Given `α : P ⟶ Q` and `A : Over X`, at
-fiber `x` the map sends `(i, f)` to
-`(ccrReindex (α x) i, ccrFiberMor (α x) i ≫ f)`.
+Specialization of `polyBetweenMorphEvalAt` to
+endofunctors (`Y = X`).
 -/
-def polyEndoMorphEvalAt
+abbrev polyEndoMorphEvalAt
     {P Q : PolyEndo X} (α : P ⟶ Q) (A : Over X)
     (x : X) :
     polyBetweenEvalFamily X X P A x →
     polyBetweenEvalFamily X X Q A x :=
-  fun ev => ptoefMk X
-    (ccrReindex (α x) (ptoefIndex X ev))
-    (ccrFiberMor (α x) (ptoefIndex X ev) ≫
-      ptoefMor X ev)
+  polyBetweenMorphEvalAt X X α A x
 
 /--
-Evaluation of a polynomial endofunctor morphism. Given
-`α : P ⟶ Q` and `A : Over X`, produce
-`(polyEndoFunctor X P).obj A ⟶
-  (polyEndoFunctor X Q).obj A`.
+Specialization of `polyBetweenMorphEval` to
+endofunctors (`Y = X`).
 -/
-def polyEndoMorphEval
-    {P Q : PolyEndo X} (α : P ⟶ Q) (A : Over X) :
+abbrev polyEndoMorphEval
+    {P Q : PolyEndo X} (α : P ⟶ Q)
+    (A : Over X) :
     (polyEndoFunctor X P).obj A ⟶
     (polyEndoFunctor X Q).obj A :=
-  (familySliceForward X).map
-    (fun x => polyEndoMorphEvalAt α A x)
+  polyBetweenMorphEval X X α A
 
 theorem polyEndoMorphEval_natural
     {P Q : PolyEndo X} (α : P ⟶ Q)
@@ -104,18 +97,8 @@ theorem polyEndoMorphEval_natural
     polyEndoMorphEval α A ≫
       (polyEndoFunctor X Q).map f =
     (polyEndoFunctor X P).map f ≫
-      polyEndoMorphEval α B := by
-  apply Over.OverMorphism.ext
-  funext ⟨x, i, g⟩
-  dsimp [polyEndoMorphEval, polyEndoMorphEvalAt,
-    polyEndoFunctor, polyBetweenEvalFunctor,
-    polyToOverFunctor, polyToOverEvalMap,
-    familySliceForward, familySliceForwardMap,
-    polyToOverEvalFamilyMap,
-    ptoefMk, ptoefIndex, ptoefMor,
-    ccrEvalMap, ccrEvalMk, ccrEvalIndex,
-    ccrEvalMor, Over.comp_left]
-  simp only [Category.assoc]
+      polyEndoMorphEval α B :=
+  polyBetweenMorphEval_natural X X α f
 
 end PolyEndoMorphEval
 
