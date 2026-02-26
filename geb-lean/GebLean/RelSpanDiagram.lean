@@ -687,4 +687,54 @@ def wedgeRelSpanConeIso (T : TypeExpr) :
     (fun W => wedge_roundtrip W)
     (fun s => relSpanCone_roundtrip s)
 
+/-- A morphism of type expressions induces a
+natural transformation between the corresponding
+relational span diagrams.  At type-nodes, the
+morphism applies the arrow component; at
+relation-nodes, it maps relational fibers using
+the parametricity condition. -/
+def relSpanDiagramMap
+    {T₁ T₂ : TypeExpr}
+    (η : ParametricFamily (.arrow T₁ T₂)) :
+    relSpanDiagram T₁ ⟶ relSpanDiagram T₂ where
+  app j :=
+    match j with
+    | .typeNode I =>
+      fun ⟨a⟩ => ⟨η.app I a⟩
+    | .relNode I₀ I₁ R =>
+      fun ⟨⟨(a₁, a₂), h⟩⟩ =>
+        ⟨⟨(η.app I₀ a₁, η.app I₁ a₂),
+          η.parametric I₀ I₁ R a₁ a₂ h⟩⟩
+  naturality := by
+    intro X Y f
+    cases f <;> rfl
+
+theorem relSpanDiagramMap_id
+    (T : TypeExpr) :
+    relSpanDiagramMap (typeExprId T) =
+    𝟙 (relSpanDiagram T) := by
+  ext j x
+  cases j <;> rfl
+
+theorem relSpanDiagramMap_comp
+    {T₁ T₂ T₃ : TypeExpr}
+    (η : ParametricFamily (.arrow T₁ T₂))
+    (μ : ParametricFamily (.arrow T₂ T₃)) :
+    relSpanDiagramMap (typeExprComp η μ) =
+    relSpanDiagramMap η ≫
+      relSpanDiagramMap μ := by
+  ext j x
+  cases j <;> rfl
+
+/-- The relational span diagram construction is
+functorial: it defines a functor from the category
+of type expressions to the functor category
+`RelSpanObj ⥤ Type 1`. -/
+def relSpanDiagramFunctor :
+    TypeExprCat ⥤ (RelSpanObj ⥤ Type 1) where
+  obj T := relSpanDiagram T.expr
+  map η := relSpanDiagramMap η
+  map_id T := relSpanDiagramMap_id T.expr
+  map_comp η μ := relSpanDiagramMap_comp η μ
+
 end GebLean
