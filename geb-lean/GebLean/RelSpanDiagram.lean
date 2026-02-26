@@ -60,7 +60,7 @@ def RelSpanHom.comp :
   | _, _, _, .id _, g => g
   | _, _, _, f, .id _ => f
 
-instance : CategoryStruct RelSpanObj where
+instance RelSpanCatStruct : CategoryStruct RelSpanObj where
   Hom := RelSpanHom
   id := RelSpanHom.id
   comp := RelSpanHom.comp
@@ -84,7 +84,7 @@ theorem RelSpanHom.assoc
     RelSpanHom.comp f (RelSpanHom.comp g h) := by
   cases f <;> cases g <;> cases h <;> rfl
 
-instance : Category RelSpanObj where
+instance RelSpanCat : Category RelSpanObj where
   id_comp := RelSpanHom.id_comp
   comp_id := RelSpanHom.comp_id
   assoc := RelSpanHom.assoc
