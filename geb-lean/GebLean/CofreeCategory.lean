@@ -365,4 +365,93 @@ instance polyCofreeCatCategory
   comp_id := PolyCofreeCatHom.comp_id
   assoc := PolyCofreeCatHom.comp_assoc
 
+/-! ## Connection Lemmas -/
+
+/--
+The target object determined by a position in a shape.
+-/
+def PolyCofreeCat.tgtAt {P : PolyEndo X}
+    (obj : PolyCofreeCat P)
+    (n : Nat)
+    (pos : PolyCofreeAnnotPosAt P
+      obj.shape n) :
+    PolyCofreeCat P :=
+  ⟨PolyCofreeAnnotFiberAt P obj.shape n pos,
+    polyCofreeSubtreeAt P obj.shape n pos⟩
+
+/--
+Every depth-position pair in the source shape
+determines a morphism in the cofree category.
+-/
+def polyCofreeCatHomOfPos {P : PolyEndo X}
+    (obj : PolyCofreeCat P)
+    (n : Nat)
+    (pos : PolyCofreeAnnotPosAt P
+      obj.shape n) :
+    PolyCofreeCatHom P obj (obj.tgtAt n pos) :=
+  { depth := n
+    pos := pos
+    fiber_eq := rfl
+    subtree_eq := HEq.rfl }
+
+/--
+Every morphism in the cofree category arises from a
+position in the source shape via `polyCofreeCatHomOfPos`.
+-/
+theorem polyCofreeCatHom_eq_homOfPos
+    {P : PolyEndo X}
+    {src tgt : PolyCofreeCat P}
+    (f : PolyCofreeCatHom P src tgt) :
+    tgt = src.tgtAt f.depth f.pos ∧
+    HEq f (polyCofreeCatHomOfPos src
+      f.depth f.pos) := by
+  obtain ⟨_, _⟩ := tgt
+  obtain ⟨n, pos, hff, hfs⟩ := f
+  dsimp at hff hfs
+  subst hff
+  cases eq_of_heq hfs
+  exact ⟨rfl, HEq.rfl⟩
+
+/--
+The total space of morphisms out of an object is
+equivalent to the annotation positions in its shape.
+This is the hom-set correspondence:
+`(Σ tgt, Hom obj tgt) ≃ PolyCofreeAnnotPos P obj.shape`.
+-/
+def polyCofreeCatHomEquiv {P : PolyEndo X}
+    (obj : PolyCofreeCat P) :
+    (Σ tgt, PolyCofreeCatHom P obj tgt) ≃
+    PolyCofreeAnnotPos P obj.shape where
+  toFun := fun ⟨_, f⟩ => ⟨f.depth, f.pos⟩
+  invFun := fun ⟨n, pos⟩ =>
+    ⟨obj.tgtAt n pos,
+      polyCofreeCatHomOfPos obj n pos⟩
+  left_inv := fun ⟨tgt, f⟩ => by
+    obtain ⟨_, _⟩ := tgt
+    obtain ⟨n, pos, hff, hfs⟩ := f
+    dsimp at hff hfs
+    subst hff
+    cases eq_of_heq hfs
+    rfl
+  right_inv := fun ⟨_, _⟩ => rfl
+
+/--
+The family of the cofree polynomial at a shape `s`
+has positions `PolyCofreeAnnotPos P s` and fiber map
+`PolyCofreeAnnotFiber P s`.  A morphism in the cofree
+category from `⟨x, s⟩` to `⟨y, t⟩` is a position
+`pos` in this family such that
+`PolyCofreeAnnotFiber P s pos = y` and the subtree at
+`pos` is `t`.
+-/
+theorem polyCofreeCatHom_as_family_element
+    {P : PolyEndo X}
+    {src : PolyCofreeCat P}
+    (n : Nat)
+    (pos : PolyCofreeAnnotPosAt P
+      src.shape n) :
+    (polyCofreeFamily P src.fiber
+      src.shape).hom ⟨n, pos⟩ =
+    (src.tgtAt n pos).fiber := rfl
+
 end GebLean
