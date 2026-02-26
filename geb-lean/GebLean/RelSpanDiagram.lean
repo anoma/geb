@@ -112,13 +112,16 @@ def relSpanDiagram (T : TypeExpr) :
     intro X Y Z f g
     cases f <;> cases g <;> rfl
 
+abbrev RelSpanCone (T : TypeExpr) :=
+  Limits.Cone (relSpanDiagram T)
+
 /-- The cone over `relSpanDiagram T` with vertex
 `ULift (ParametricFamily T)`.  The type-node
 projections extract `p.app I`; the relation-node
 projections extract the relational fiber
 witness `⟨(p.app I₀, p.app I₁), p.parametric⟩`. -/
 def parametricFamilyCone (T : TypeExpr) :
-    Limits.Cone (relSpanDiagram T) where
+    RelSpanCone T where
   pt := ULift.{1} (ParametricFamily T)
   π :=
     { app := fun X =>
@@ -140,7 +143,7 @@ components extracted from type-node
 projections. -/
 theorem relSpanCone_parametric
     {T : TypeExpr}
-    (s : Limits.Cone (relSpanDiagram T))
+    (s : RelSpanCone T)
     (x : s.pt)
     (I₀ I₁ : Type) (R : I₀ → I₁ → Prop) :
     T.fullRelInterp R
@@ -168,7 +171,8 @@ type-node components; parametricity follows
 from the cone's naturality at projection
 morphisms. -/
 def parametricFamilyIsLimit (T : TypeExpr) :
-    Limits.IsLimit (parametricFamilyCone T) :=
+    Limits.IsLimit
+      (parametricFamilyCone T) :=
   Limits.IsLimit.mk
     (fun s => fun x =>
       ⟨{ app := fun I => (s.π.app (.typeNode I) x).down
@@ -198,5 +202,161 @@ def parametricFamilyIsLimit (T : TypeExpr) :
       ext I
       exact congr_arg ULift.down
         (congr_fun (hm (.typeNode I)) x))
+
+/-- The functor from `ParametricWedge.{1} T` to
+`RelSpanCone T`, sending a wedge to the cone
+whose type-node projections are `ULift`-wrapped
+wedge projections and whose relation-node
+projections pair the projections with the
+parametricity witness. -/
+def wedgeToRelSpanCone (T : TypeExpr) :
+    ParametricWedge.{1} T ⥤ RelSpanCone T where
+  obj W :=
+    { pt := W.pt
+      π :=
+        { app := fun X =>
+            match X with
+            | .typeNode I =>
+              fun w => ⟨W.proj I w⟩
+            | .relNode I₀ I₁ R =>
+              fun w =>
+                ⟨⟨(W.proj I₀ w, W.proj I₁ w),
+                  W.parametric w I₀ I₁ R⟩⟩
+          naturality := by
+            intro X Y f
+            cases f <;> rfl } }
+  map f :=
+    { hom := f.func
+      w := by
+        intro j
+        cases j with
+        | typeNode I =>
+          funext w
+          simp only [types_comp_apply]
+          exact congrArg ULift.up (f.comm I w)
+        | relNode I₀ I₁ R =>
+          funext w
+          simp only [types_comp_apply]
+          apply ULift.ext
+          apply Subtype.ext
+          apply Prod.ext
+          · exact f.comm I₀ w
+          · exact f.comm I₁ w }
+  map_id _ := by
+    apply Limits.ConeMorphism.ext; rfl
+  map_comp _ _ := by
+    apply Limits.ConeMorphism.ext; rfl
+
+/-- The functor from `RelSpanCone T` to
+`ParametricWedge.{1} T`, extracting wedge
+projections from the type-node components of
+the cone via `ULift.down`, with parametricity
+from `relSpanCone_parametric`. -/
+def relSpanConeToWedge (T : TypeExpr) :
+    RelSpanCone T ⥤ ParametricWedge.{1} T where
+  obj s :=
+    { pt := s.pt
+      proj := fun I w =>
+        (s.π.app (.typeNode I) w).down
+      parametric := fun w I₀ I₁ R =>
+        relSpanCone_parametric s w I₀ I₁ R }
+  map f :=
+    { func := f.hom
+      comm := fun I w => by
+        exact congr_arg ULift.down
+          (congr_fun (f.w (.typeNode I)) w) }
+  map_id _ := ParametricWedgeMorphism.ext rfl
+  map_comp _ _ := ParametricWedgeMorphism.ext rfl
+
+/-- The composite
+`wedgeToRelSpanCone T ⋙ relSpanConeToWedge T`
+is naturally isomorphic to the identity on
+`ParametricWedge.{1} T`. -/
+def wedgeRelSpanConeUnitIso (T : TypeExpr) :
+    𝟭 (ParametricWedge.{1} T) ≅
+    wedgeToRelSpanCone T ⋙
+      relSpanConeToWedge T :=
+  NatIso.ofComponents
+    (fun _ => Iso.refl _)
+    (fun _ => ParametricWedgeMorphism.ext rfl)
+
+/-- The composite cone
+`relSpanConeToWedge T ⋙ wedgeToRelSpanCone T`
+applied to `s` equals `s`. -/
+theorem relSpanCone_roundtrip_π
+    {T : TypeExpr}
+    (s : RelSpanCone T) (j : RelSpanObj) :
+    ((wedgeToRelSpanCone T).obj
+      ((relSpanConeToWedge T).obj s)).π.app j =
+    s.π.app j := by
+  cases j with
+  | typeNode I =>
+    funext x
+    simp only [wedgeToRelSpanCone,
+      relSpanConeToWedge]
+    exact ULift.ext _ _
+      (ULift.down_up _)
+  | relNode I₀ I₁ R =>
+    funext x
+    simp only [wedgeToRelSpanCone,
+      relSpanConeToWedge]
+    apply ULift.ext
+    apply Subtype.ext
+    apply Prod.ext
+    · simp only []
+      exact (congr_arg ULift.down
+        (congr_fun (s.w
+          (RelSpanHom.fstProj I₀ I₁ R))
+          x)).symm
+    · simp only []
+      exact (congr_arg ULift.down
+        (congr_fun (s.w
+          (RelSpanHom.sndProj I₀ I₁ R))
+          x)).symm
+
+theorem relSpanCone_roundtrip
+    {T : TypeExpr} (s : RelSpanCone T) :
+    (wedgeToRelSpanCone T).obj
+      ((relSpanConeToWedge T).obj s) = s := by
+  cases s with
+  | mk pt π =>
+    simp only [wedgeToRelSpanCone,
+      relSpanConeToWedge]
+    congr 1
+    exact NatTrans.ext (funext fun j =>
+      relSpanCone_roundtrip_π ⟨pt, π⟩ j)
+
+/-- The composite
+`relSpanConeToWedge T ⋙ wedgeToRelSpanCone T`
+is naturally isomorphic to the identity on
+`RelSpanCone T`. -/
+def wedgeRelSpanConeCounitIso (T : TypeExpr) :
+    relSpanConeToWedge T ⋙
+      wedgeToRelSpanCone T ≅
+    𝟭 (RelSpanCone T) :=
+  NatIso.ofComponents
+    (fun s =>
+      eqToIso (relSpanCone_roundtrip s))
+    (fun {s₁ s₂} f => by
+      apply Limits.ConeMorphism.ext
+      simp [wedgeToRelSpanCone,
+        relSpanConeToWedge])
+
+/-- `ParametricWedge.{1} T` is equivalent as a
+category to `RelSpanCone T`, the category of
+cones over the relational span diagram. -/
+def wedgeRelSpanConeEquivalence
+    (T : TypeExpr) :
+    ParametricWedge.{1} T ≌ RelSpanCone T where
+  functor := wedgeToRelSpanCone T
+  inverse := relSpanConeToWedge T
+  unitIso := wedgeRelSpanConeUnitIso T
+  counitIso := wedgeRelSpanConeCounitIso T
+  functor_unitIso_comp W := by
+    apply Limits.ConeMorphism.ext
+    simp [wedgeToRelSpanCone,
+      relSpanConeToWedge,
+      wedgeRelSpanConeUnitIso,
+      wedgeRelSpanConeCounitIso]
 
 end GebLean
