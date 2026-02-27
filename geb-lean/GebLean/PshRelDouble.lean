@@ -1480,6 +1480,50 @@ theorem pshBarrLiftSkelMap_comp
 
 end PshBarrExtension
 
+section PshContraBarrExtension
+
+/-- The contravariant Barr extension (pullback
+relation). Given a contravariant endofunctor
+`F : (PSh(C))ᵒᵖ ⥤ PSh(C)` and a relation
+`R : PshRel P Q`, the pullback relation consists
+of pairs `(a, b)` in `F.obj(op P) × F.obj(op Q)`
+whose images in `F.obj(op R.toFunctor)` under the
+two projection maps agree:
+`F.map (R.ι ≫ pshProdFst P Q).op a =
+ F.map (R.ι ≫ pshProdSnd P Q).op b`. -/
+def pshContraBarrLiftSkel
+    {P Q : Cᵒᵖ ⥤ Type w}
+    (F :
+      (Cᵒᵖ ⥤ Type w)ᵒᵖ ⥤
+        (Cᵒᵖ ⥤ Type w))
+    (R : PshRel P Q) :
+    PshRel (F.obj (Opposite.op P))
+      (F.obj (Opposite.op Q)) where
+  obj c :=
+    { x |
+      (F.map (R.ι ≫
+        pshProdFst P Q).op).app c x.1 =
+      (F.map (R.ι ≫
+        pshProdSnd P Q).op).app c x.2 }
+  map {c d} k := by
+    intro ⟨a, b⟩ hx
+    change (F.map (R.ι ≫
+        pshProdFst P Q).op).app d
+        ((F.obj (Opposite.op P)).map k a) =
+      (F.map (R.ι ≫
+        pshProdSnd P Q).op).app d
+        ((F.obj (Opposite.op Q)).map k b)
+    have h1 := congr_fun
+      ((F.map (R.ι ≫
+        pshProdFst P Q).op).naturality k) a
+    have h2 := congr_fun
+      ((F.map (R.ι ≫
+        pshProdSnd P Q).op).naturality k) b
+    simp only [types_comp_apply] at h1 h2
+    rw [h1, h2, hx]
+
+end PshContraBarrExtension
+
 section PshInternalHom
 
 universe u₁ v₁
