@@ -5103,21 +5103,52 @@ def paranaturalProfEmbedding :
       apply ULift.ext; apply Subtype.ext
       rfl
 
--- The FullyFaithful proof for
--- `paranaturalProfEmbedding` requires
--- constructing a `diagRelImage` witness from
--- `DiagCompat` data, which involves
--- transporting diagonal elements across
--- `graphRelEquiv`. This is structurally
--- parallel to the covariant case but involves
--- the profunctor's mixed-variance maps.
--- Faithful should hold (paranatural
--- transformations are determined by diagonal
--- components). Full requires the
--- `diagRelImage` subtype condition to match
--- the paranaturality condition, which it
--- should since both are formulated in terms
--- of `DiagCompat`.
+/-- `paranaturalProfEmbedding` is faithful:
+paranatural transformations are determined
+by their components `η.app I`, which the
+embedding preserves at typeNodes. -/
+instance paranaturalProfEmbedding_faithful :
+    paranaturalProfEmbedding.Faithful where
+  map_injective {G H η μ} h := by
+    apply Paranat.ext; funext I x
+    have := congr_arg ULift.down
+      (congr_fun (congr_fun (congrArg
+        NatTrans.app h) (.typeNode I))
+        ⟨x⟩)
+    exact this
+
+-- Fullness analysis:
+--
+-- Given β on the copresheaf, the preimage
+-- η.app I x := (β.app (.typeNode I) ⟨x⟩).down
+-- extracts diagonal components. Paranaturality
+-- of η requires: given DiagCompat G I₀ I₁ f
+-- d₀ d₁, show DiagCompat H I₀ I₁ f
+-- (η.app I₀ d₀) (η.app I₁ d₁).
+--
+-- From the diagRelImage at graphRel f, we can
+-- construct a witness w at relType (graphRel f)
+-- and derive the two DiagCompat conditions at
+-- π₁ and π₂. To recover DiagCompat at f, one
+-- shows:
+--   (H.map (op π₁)).app I₁
+--     ((H.obj (op I₀)).map f (η.app I₀ d₀))
+--   = (H.map (op π₁)).app I₁
+--     ((H.map (op f)).app I₁ (η.app I₁ d₁))
+--
+-- This follows from the witness conditions and
+-- f ∘ π₁ = π₂ on relType (graphRel f). But
+-- cancelling (H.map (op π₁)).app I₁ requires
+-- it to be injective, which does not hold for
+-- all profunctors. So fullness is not
+-- guaranteed in general.
+--
+-- No natural functor exists in the other
+-- direction (ParametricFunctor → EndoProf)
+-- either: RelSpanObj has no morphisms between
+-- typeNodes, so the profunctor's
+-- covariant/contravariant transport maps
+-- cannot be defined.
 
 end ParanaturalProfunctorEmbedding
 
