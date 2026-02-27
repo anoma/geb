@@ -5925,6 +5925,44 @@ lemma polyCofreeMapAt_head_snd (A B : Over X) (P : PolyEndo X) (f : A ⟶ B)
   exact polyCofreeMapApprox_index_snd A B P f (m.approx 1)
 
 /--
+Mapping annotations does not change the shape
+at the approximation level.
+-/
+lemma polyCofreeApproxToShape_mapApprox
+    (A B : Over X) (P : PolyEndo X) (f : A ⟶ B)
+    {n : Nat} {x : X}
+    (a : PolyCofixApprox (polyScale A P) n x) :
+    polyCofreeApproxToShape B P
+      (polyCofreeMapApprox A B P f a) =
+    polyCofreeApproxToShape A P a := by
+  induction a with
+  | «continue» y => rfl
+  | «intro» y idx children ih =>
+    obtain ⟨aVal, pIdx⟩ := idx
+    simp only [polyCofreeMapApprox,
+      polyCofreeApproxToShape]
+    exact congrArg _ (funext ih)
+
+/--
+Mapping annotations on an M-type preserves
+the shape: `polyCofreeToShape` commutes with
+`polyCofreeMapAt`.
+-/
+lemma polyCofreeToShape_mapAt
+    (A B : Over X) (P : PolyEndo X)
+    (f : A ⟶ B) {x : X}
+    (m : PolyCofreeM A P x) :
+    polyCofreeToShape B P
+      (polyCofreeMapAt A B P f m) =
+    polyCofreeToShape A P m := by
+  apply PolyCofix.ext
+  intro n
+  simp only [polyCofreeToShape,
+    polyCofreeMapAt]
+  exact polyCofreeApproxToShape_mapApprox
+    A B P f (m.approx n)
+
+/--
 Mapping commutes with `childApproxAt_succ_aux` for `.intro` nodes.
 
 When we have an `.intro y idx children` approximation for `polyScale A P`, mapping
