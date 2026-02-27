@@ -454,4 +454,409 @@ theorem polyCofreeCatHom_as_family_element
       src.shape).hom ⟨n, pos⟩ =
     (src.tgtAt n pos).fiber := rfl
 
+/-! ## Transport Lemmas for PolyCofreeCat -/
+
+/--
+Transport lemma for `polyCofreeSubtreeAt`:
+the subtree at a position is preserved when
+transporting along fiber equality and shape HEq,
+with the position cast accordingly.
+-/
+lemma polyCofreeSubtreeAt_transport
+    {P : PolyEndo X} {y1 y2 : X}
+    (hfiber : y1 = y2)
+    {s1 : PolyCofreeShape P y1}
+    {s2 : PolyCofreeShape P y2}
+    (hshape : HEq s1 s2)
+    (n : Nat)
+    (pos : PolyCofreeAnnotPosAt P s1 n) :
+    HEq
+      (polyCofreeSubtreeAt P s1 n pos)
+      (polyCofreeSubtreeAt P s2 n
+        (cast (polyCofreeAnnotPosAt_cast_fiber
+          hfiber hshape n) pos)) := by
+  subst hfiber
+  have h := eq_of_heq hshape
+  subst h
+  exact HEq.rfl
+
+/--
+The `tgtAt` function is preserved when
+transporting along a `PolyCofreeCat` equality:
+if `obj1 = obj2`, then `tgtAt` at any position
+in `obj1` equals `tgtAt` at the cast position
+in `obj2`.
+-/
+lemma PolyCofreeCat.tgtAt_transport
+    {P : PolyEndo X}
+    {obj1 obj2 : PolyCofreeCat P}
+    (h : obj1 = obj2)
+    (n : Nat)
+    (pos : PolyCofreeAnnotPosAt P
+      obj1.shape n) :
+    obj1.tgtAt n pos =
+    obj2.tgtAt n
+      (cast (congrArg
+        (fun obj => PolyCofreeAnnotPosAt P
+          obj.shape n) h) pos) := by
+  subst h
+  rfl
+
+/-! ## Coalgebra Copresheaf -/
+
+/--
+The shape of the M-type tree associated to an element
+of a comonad coalgebra, transported to the element's
+fiber.  For `a : c.A.left`, the coalgebra structure
+map `c.a` produces an M-type tree
+`(c.a.left a).2 : PolyCofreeM c.A P (c.a.left a).1`.
+This extracts its shape and transports it along the
+fiber equality `(c.a.left a).1 = c.A.hom a`.
+-/
+def coalgCopresheafShapeAt {P : PolyEndo X}
+    (c : Comonad.Coalgebra
+      (polyCofreeComonad X P))
+    (a : c.A.left) :
+    PolyCofreeShape P (c.A.hom a) :=
+  (comonadCoalgFiberEq c a) ▸
+    polyCofreeToShape c.A P (c.a.left a).2
+
+/--
+The cofree category object determined by an element
+of a comonad coalgebra: the pair of its fiber and
+transported shape.
+-/
+def coalgCopresheafTarget {P : PolyEndo X}
+    (c : Comonad.Coalgebra
+      (polyCofreeComonad X P))
+    (a : c.A.left) : PolyCofreeCat P :=
+  ⟨c.A.hom a, coalgCopresheafShapeAt c a⟩
+
+/--
+The copresheaf value at a cofree category object
+`obj`: the set of elements `a` of the coalgebra
+carrier whose fiber and shape match `obj`.
+-/
+def coalgCopresheafObj {P : PolyEndo X}
+    (c : Comonad.Coalgebra
+      (polyCofreeComonad X P))
+    (obj : PolyCofreeCat P) : Type u :=
+  { a : c.A.left //
+    coalgCopresheafTarget c a = obj }
+
+/--
+The transported shape is HEq to the raw M-type shape.
+-/
+lemma coalgCopresheafShapeAt_heq
+    {P : PolyEndo X}
+    (c : Comonad.Coalgebra
+      (polyCofreeComonad X P))
+    (a : c.A.left) :
+    HEq (coalgCopresheafShapeAt c a)
+      (polyCofreeToShape c.A P
+        (c.a.left a).2) := by
+  let h := comonadCoalgFiberEq c a
+  change HEq (h ▸ polyCofreeToShape c.A P
+    (c.a.left a).2)
+    (polyCofreeToShape c.A P (c.a.left a).2)
+  exact eqRec_heq h _
+
+/--
+Cast a position from the transported shape to the
+raw M-type shape.
+-/
+def coalgCopresheafCastPos
+    {P : PolyEndo X}
+    (c : Comonad.Coalgebra
+      (polyCofreeComonad X P))
+    (a : c.A.left) (n : Nat)
+    (pos : PolyCofreeAnnotPosAt P
+      (coalgCopresheafShapeAt c a) n) :
+    PolyCofreeAnnotPosAt P
+      (polyCofreeToShape c.A P
+        (c.a.left a).2) n :=
+  cast (polyCofreeAnnotPosAt_cast_fiber
+    (comonadCoalgFiberEq c a).symm
+    (coalgCopresheafShapeAt_heq c a) n)
+    pos
+
+/--
+Extract the annotation value from an element's M-type
+tree at a position given in terms of the transported
+shape.
+-/
+def coalgCopresheafExtractVal
+    {P : PolyEndo X}
+    (c : Comonad.Coalgebra
+      (polyCofreeComonad X P))
+    (a : c.A.left) (n : Nat)
+    (pos : PolyCofreeAnnotPosAt P
+      (coalgCopresheafShapeAt c a) n) :
+    c.A.left :=
+  (polyCofreeGetAnnotAt c.A P
+    (c.a.left a).2 n
+    (coalgCopresheafCastPos c a n pos)).val
+
+/--
+The fiber of the extracted annotation equals the
+annotation fiber at the given position.
+-/
+lemma coalgCopresheafExtractVal_fiber
+    {P : PolyEndo X}
+    (c : Comonad.Coalgebra
+      (polyCofreeComonad X P))
+    (a : c.A.left) (n : Nat)
+    (pos : PolyCofreeAnnotPosAt P
+      (coalgCopresheafShapeAt c a) n) :
+    c.A.hom
+      (coalgCopresheafExtractVal c a n pos) =
+    PolyCofreeAnnotFiberAt P
+      (coalgCopresheafShapeAt c a) n pos := by
+  simp only [coalgCopresheafExtractVal]
+  rw [polyCofreeAnnotFiberAt_transport
+    (comonadCoalgFiberEq c a).symm
+    (coalgCopresheafShapeAt_heq c a)
+    n pos]
+  exact (polyCofreeGetAnnotAt c.A P
+    (c.a.left a).2 n
+    (coalgCopresheafCastPos c a n pos)).property
+
+/--
+The depth-1 child annotation: given an edge
+`e_m` in the M-type tree's children, extract
+the root annotation of the child subtree.
+-/
+def coalgCopresheafChild
+    {P : PolyEndo X}
+    (c : Comonad.Coalgebra
+      (polyCofreeComonad X P))
+    (a : c.A.left)
+    (e_m : (polyBetweenFamily X X
+      (polyScale c.A P) (c.a.left a).1
+      (c.a.left a).2.head).left) :
+    c.A.left :=
+  (polyCofreeExtract c.A P
+    ((c.a.left a).2.children e_m)).val
+
+/--
+Self-consistency at depth 1: the coalgebra
+structure map applied to the child annotation
+gives back the child M-type subtree.
+-/
+lemma coalgCopresheafChild_consistent
+    {P : PolyEndo X}
+    (c : Comonad.Coalgebra
+      (polyCofreeComonad X P))
+    (a : c.A.left)
+    (e_m : (polyBetweenFamily X X
+      (polyScale c.A P) (c.a.left a).1
+      (c.a.left a).2.head).left) :
+    c.a.left (coalgCopresheafChild c a e_m) =
+    ⟨(polyBetweenFamily X X
+      (polyScale c.A P) (c.a.left a).1
+      (c.a.left a).2.head).hom e_m,
+      (c.a.left a).2.children e_m⟩ :=
+  comonadCoalgSelfconsistent c a e_m
+
+/--
+The fiber of the child annotation, derived from
+the self-consistency property.
+-/
+lemma coalgCopresheafChild_fiber
+    {P : PolyEndo X}
+    (c : Comonad.Coalgebra
+      (polyCofreeComonad X P))
+    (a : c.A.left)
+    (e_m : (polyBetweenFamily X X
+      (polyScale c.A P) (c.a.left a).1
+      (c.a.left a).2.head).left) :
+    (c.a.left
+      (coalgCopresheafChild c a e_m)).1 =
+    (polyBetweenFamily X X
+      (polyScale c.A P) (c.a.left a).1
+      (c.a.left a).2.head).hom e_m :=
+  congrArg Sigma.fst
+    (coalgCopresheafChild_consistent c a e_m)
+
+/--
+The M-type tree of the child annotation is
+the parent's child subtree.
+-/
+lemma coalgCopresheafChild_mtype
+    {P : PolyEndo X}
+    (c : Comonad.Coalgebra
+      (polyCofreeComonad X P))
+    (a : c.A.left)
+    (e_m : (polyBetweenFamily X X
+      (polyScale c.A P) (c.a.left a).1
+      (c.a.left a).2.head).left) :
+    HEq (c.a.left
+      (coalgCopresheafChild c a e_m)).2
+    ((c.a.left a).2.children e_m) := by
+  have h := coalgCopresheafChild_consistent
+    c a e_m
+  exact (Sigma.ext_iff.mp h).2
+
+/--
+The copresheaf shape at the child annotation
+is HEq to the shape of the parent's child
+M-type subtree.
+-/
+lemma coalgCopresheafChild_shape_heq
+    {P : PolyEndo X}
+    (c : Comonad.Coalgebra
+      (polyCofreeComonad X P))
+    (a : c.A.left)
+    (e_m : (polyBetweenFamily X X
+      (polyScale c.A P) (c.a.left a).1
+      (c.a.left a).2.head).left) :
+    HEq
+      (polyCofreeToShape c.A P
+        (c.a.left
+          (coalgCopresheafChild c a e_m)).2)
+      (polyCofreeToShape c.A P
+        ((c.a.left a).2.children e_m)) := by
+  let toShape :=
+    fun (p : Σ x, PolyCofreeM c.A P x) =>
+      (⟨p.1, polyCofreeToShape c.A P p.2⟩ :
+        Σ x, PolyCofreeShape P x)
+  have h := congrArg toShape
+    (coalgCopresheafChild_consistent c a e_m)
+  exact (Sigma.ext_iff.mp h).2
+
+-- The copresheaf morphism action and functor laws
+-- require the depth-1 target equality
+-- (coalgCopresheafChild_depth1_target) which relates
+-- the child annotation's copresheaf target to the
+-- parent's child shape. This is developed below
+-- using the sigma-pair infrastructure.
+
+/--
+The "raw shape pair" function: maps the
+coalgebra structure output to a sigma pair
+of fiber and shape, without the
+`comonadCoalgFiberEq` transport.
+-/
+def coalgCopresheafTargetRaw {P : PolyEndo X}
+    (c : Comonad.Coalgebra
+      (polyCofreeComonad X P))
+    (a : c.A.left) : Σ x, PolyCofreeShape P x :=
+  ⟨(c.a.left a).1,
+    polyCofreeToShape c.A P (c.a.left a).2⟩
+
+/--
+The raw target equals the transported target
+as a sigma pair via the fiber equality.
+-/
+lemma coalgCopresheafTargetRaw_eq
+    {P : PolyEndo X}
+    (c : Comonad.Coalgebra
+      (polyCofreeComonad X P))
+    (a : c.A.left) :
+    coalgCopresheafTargetRaw c a =
+    ⟨c.A.hom a,
+      coalgCopresheafShapeAt c a⟩ :=
+  Sigma.ext (congrFun (Over.w c.a) a)
+    (coalgCopresheafShapeAt_heq c a).symm
+
+/--
+The raw shape pair of the child annotation at
+M-type edge `e_m` equals the pair consisting of
+the child fiber and the shape of the parent's
+child M-type subtree.
+-/
+lemma coalgCopresheafChild_rawTarget
+    {P : PolyEndo X}
+    (c : Comonad.Coalgebra
+      (polyCofreeComonad X P))
+    (a : c.A.left)
+    (e_m : (polyBetweenFamily X X
+      (polyScale c.A P) (c.a.left a).1
+      (c.a.left a).2.head).left) :
+    coalgCopresheafTargetRaw c
+      (coalgCopresheafChild c a e_m) =
+    ⟨(polyBetweenFamily X X (polyScale c.A P)
+        (c.a.left a).1
+        (c.a.left a).2.head).hom e_m,
+      polyCofreeToShape c.A P
+        ((c.a.left a).2.children e_m)⟩ := by
+  simp only [coalgCopresheafTargetRaw]
+  let toShape :=
+    fun (p : Σ x, PolyCofreeM c.A P x) =>
+      (⟨p.1, polyCofreeToShape c.A P p.2⟩ :
+        Σ x, PolyCofreeShape P x)
+  exact congrArg toShape
+    (coalgCopresheafChild_consistent c a e_m)
+
+/--
+The transported target of the child annotation,
+stated in terms of the raw shape pair.
+Combines `coalgCopresheafChild_rawTarget` with
+`coalgCopresheafTargetRaw_eq` to give the
+transported target as a sigma pair equality.
+-/
+lemma coalgCopresheafChild_target_sigma
+    {P : PolyEndo X}
+    (c : Comonad.Coalgebra
+      (polyCofreeComonad X P))
+    (a : c.A.left)
+    (e_m : (polyBetweenFamily X X
+      (polyScale c.A P) (c.a.left a).1
+      (c.a.left a).2.head).left) :
+    (⟨c.A.hom (coalgCopresheafChild c a e_m),
+      coalgCopresheafShapeAt c
+        (coalgCopresheafChild c a e_m)⟩ :
+      Σ x, PolyCofreeShape P x) =
+    ⟨(polyBetweenFamily X X (polyScale c.A P)
+        (c.a.left a).1
+        (c.a.left a).2.head).hom e_m,
+      polyCofreeToShape c.A P
+        ((c.a.left a).2.children e_m)⟩ :=
+  (coalgCopresheafTargetRaw_eq c
+    (coalgCopresheafChild c a e_m)).symm.trans
+    (coalgCopresheafChild_rawTarget c a e_m)
+
+/--
+Fiber component of the child target sigma
+equality: the fiber of the child annotation
+equals the hom of the M-type edge.
+-/
+lemma coalgCopresheafChild_target_fiber
+    {P : PolyEndo X}
+    (c : Comonad.Coalgebra
+      (polyCofreeComonad X P))
+    (a : c.A.left)
+    (e_m : (polyBetweenFamily X X
+      (polyScale c.A P) (c.a.left a).1
+      (c.a.left a).2.head).left) :
+    c.A.hom (coalgCopresheafChild c a e_m) =
+    (polyBetweenFamily X X (polyScale c.A P)
+      (c.a.left a).1
+      (c.a.left a).2.head).hom e_m :=
+  congrArg Sigma.fst
+    (coalgCopresheafChild_target_sigma c a e_m)
+
+/--
+Shape component of the child target sigma
+equality: the transported shape of the child
+annotation is HEq to the shape of the parent's
+child M-type subtree.
+-/
+lemma coalgCopresheafChild_target_shape
+    {P : PolyEndo X}
+    (c : Comonad.Coalgebra
+      (polyCofreeComonad X P))
+    (a : c.A.left)
+    (e_m : (polyBetweenFamily X X
+      (polyScale c.A P) (c.a.left a).1
+      (c.a.left a).2.head).left) :
+    HEq
+      (coalgCopresheafShapeAt c
+        (coalgCopresheafChild c a e_m))
+      (polyCofreeToShape c.A P
+        ((c.a.left a).2.children e_m)) :=
+  (Sigma.ext_iff.mp
+    (coalgCopresheafChild_target_sigma
+      c a e_m)).2
+
 end GebLean
