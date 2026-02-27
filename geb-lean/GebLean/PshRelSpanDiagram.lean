@@ -536,20 +536,31 @@ def relSpanPshRelSpanIso :
     exact relSpanPshRelSpan_counit
 
 /-- The equivalence between
-`ParametricCopresheaf`
-(`RelSpanObj ⥤ Type 1`) and
-`PshParametricCopresheaf` over the terminal
+`ParametricFunctor E` and
+`PshParametricFunctor (Discrete PUnit) E`,
+obtained from the categorical isomorphism
+`relSpanPshRelSpanIso` between `RelSpanObj`
+and `PshRelSpanObj (Discrete PUnit)`. -/
+def parametricFunctorEquiv
+    (E : Type u'') [Category.{v''} E] :
+    ParametricFunctor E ≌
+    PshParametricFunctor.{0, 0, 0}
+      (Discrete PUnit) E :=
+  (Cat.equivOfIso
+    relSpanPshRelSpanIso).congrLeft (E := E)
+
+/-- The equivalence between
+`ParametricCopresheaf` (`RelSpanObj ⥤ Type 1`)
+and `PshParametricCopresheaf` over the terminal
 category, obtained by chaining:
-1. `relSpanPshRelSpanIso` (source categories)
+1. `parametricFunctorEquiv` (source categories)
 2. The presheaf-type equivalence on `Type 1`
    (target category). -/
-def parametricFunctorEquiv :
+def parametricCopresheafEquiv :
     ParametricCopresheaf ≌
     PshParametricCopresheaf.{0, 0, 0, 0, 0, 1}
       (Discrete PUnit) (Discrete PUnit) :=
-  (Cat.equivOfIso
-    relSpanPshRelSpanIso).congrLeft
-    (E := Type 1) |>.trans
+  (parametricFunctorEquiv (Type 1)).trans
     (((Discrete.opposite PUnit).congrLeft
       (E := Type 1) |>.trans
       (CategoryTheory.Functor.equiv
