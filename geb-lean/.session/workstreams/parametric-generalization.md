@@ -535,6 +535,17 @@ copresheaves. Characterize this difference.
    twisted-arrow copresheaf topos where paranatural
    transformations live.
 
+   Resolved: `profunctorEmbedding` is a functor
+   (via `profRelImage`) but neither full nor
+   faithful (only sees diagonal). No natural
+   embedding from ParametricFunctor to profunctors
+   or twisted-arrow copresheaves (RelSpanObj too
+   discrete). No embedding from TwArr copresheaves
+   to ParametricFunctor either (would need
+   left-totality of all relations). The
+   relationship is at the level of specific
+   limits, not category-wide functors.
+
 ## Completed infrastructure for generalization
 
 ### PshRelDouble.lean additions

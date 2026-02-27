@@ -1163,33 +1163,21 @@ def profunctorEmbedding :
       apply Subtype.ext
       simp [profRelImage.map]
 
--- Analysis of faithfulness/fullness for
--- profunctorEmbedding:
+-- `profunctorEmbedding` is neither full nor
+-- faithful: a natural transformation
+-- `α : G ⟶ H` of profunctors has components
+-- at all `(op A, B)`, but the embedding only
+-- sees the diagonal `(op I, I)`. Naturality
+-- constrains but does not determine the
+-- off-diagonal components from the diagonal.
 --
--- The typeNode components of the parametric
--- functor see G.obj (op I, I) -- the DIAGONAL
--- of the profunctor. A natural transformation
--- α : G ⟶ H has components α.app (op A, B)
--- for all (op A, B), not just diagonal ones.
---
--- Faithfulness asks: does agreement on
--- diagonals imply agreement everywhere?
--- Via naturality at (op id, g) : (op A, A) ⟶
--- (op A, B), α.app (op A, B) is constrained
--- by α.app (op A, A) but not determined
--- unless G.map (op id, g) is surjective.
--- So faithfulness does not hold in general.
---
--- Fullness similarly fails: the diagonal
--- components do not determine a full natural
--- transformation.
---
--- The profunctor embedding is therefore
--- neither full nor faithful in general, but
--- it is a valid functor embedding
--- profunctors into parametric functors.
--- The relationship between profunctors and
--- parametric functors is richer than a
--- simple subcategory inclusion.
+-- No natural embedding exists in the other
+-- direction either (ParametricFunctor →
+-- profunctors): `RelSpanObj` has no morphisms
+-- between typeNodes, so there is no transport
+-- structure to build profunctor maps from.
+-- Similarly, no natural functor connects
+-- `ParametricFunctor` with twisted-arrow
+-- copresheaves in either direction.
 
 end GebLean
