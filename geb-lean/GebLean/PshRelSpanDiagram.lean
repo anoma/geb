@@ -570,4 +570,66 @@ def parametricCopresheafEquiv :
 
 end RelSpanPshRelSpanEquiv
 
+section PshCovariantEmbedding
+
+variable {C : Type u} [Category.{v} C]
+
+/-- The covariant embedding maps an
+endofunctor `G` on `PSh(C)` to a parametric
+functor `PshRelSpanObj C ⥤ (Cᵒᵖ ⥤ Type w)`.
+Type-nodes map to `G.obj P`; relation-nodes
+map to `(pshBarrLiftSkel G R).toFunctor`.
+Projections are the subfunctor inclusion
+composed with the product projections. -/
+def pshCovariantEmbedding :
+    ((Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w)) ⥤
+    PshParametricFunctor.{u, v, w}
+      C (Cᵒᵖ ⥤ Type w) where
+  obj G :=
+    { obj := fun X =>
+        match X with
+        | .typeNode P => G.obj P
+        | .relNode P Q R =>
+          (pshBarrLiftSkel G R).toFunctor
+      map := fun {X Y} f =>
+        match X, Y, f with
+        | _, _, .id _ => 𝟙 _
+        | _, _, .fstProj P Q R =>
+          (pshBarrLiftSkel G R).ι ≫
+            pshProdFst (G.obj P) (G.obj Q)
+        | _, _, .sndProj P Q R =>
+          (pshBarrLiftSkel G R).ι ≫
+            pshProdSnd (G.obj P) (G.obj Q)
+      map_id := by
+        intro X; cases X <;> rfl
+      map_comp := by
+        intro X Y Z f g
+        cases f <;> cases g <;> rfl }
+  map {G H} α :=
+    { app := fun X =>
+        match X with
+        | .typeNode P => α.app P
+        | .relNode P Q R =>
+          pshBarrLiftSkelMap α R
+      naturality := by
+        intro X Y f
+        match X, Y, f with
+        | _, _, .id _ => simp
+        | _, _, .fstProj P Q R =>
+          simp [pshBarrLiftSkelMap_ι_fst]
+        | _, _, .sndProj P Q R =>
+          simp [pshBarrLiftSkelMap_ι_snd] }
+  map_id G := by
+    apply NatTrans.ext; funext X
+    cases X with
+    | typeNode P => simp
+    | relNode P Q R => simp
+  map_comp {G H K} α β := by
+    apply NatTrans.ext; funext X
+    cases X with
+    | typeNode P => simp
+    | relNode P Q R => simp
+
+end PshCovariantEmbedding
+
 end GebLean

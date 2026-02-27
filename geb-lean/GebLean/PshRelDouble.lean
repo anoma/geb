@@ -1397,6 +1397,65 @@ def pshBarrLiftSkelMap
           types_comp_apply] at nat
         rw [← nat, hw₂])
 
+@[simp]
+theorem pshBarrLiftSkelMap_id
+    {P Q : Cᵒᵖ ⥤ Type w}
+    (G : (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w))
+    (R : PshRel P Q) :
+    pshBarrLiftSkelMap (𝟙 G) R =
+      𝟙 (pshBarrLiftSkel G R).toFunctor := by
+  ext c ⟨x, hx⟩
+  simp [pshBarrLiftSkelMap, Subfunctor.lift,
+    pshProdLift, FunctorToTypes.prod.lift]
+
+@[simp]
+theorem pshBarrLiftSkelMap_ι_fst
+    {P Q : Cᵒᵖ ⥤ Type w}
+    {G H :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w)}
+    (α : G ⟶ H)
+    (R : PshRel P Q) :
+    pshBarrLiftSkelMap α R ≫
+      (pshBarrLiftSkel H R).ι ≫
+      pshProdFst (H.obj P) (H.obj Q) =
+    (pshBarrLiftSkel G R).ι ≫
+      pshProdFst (G.obj P) (G.obj Q) ≫
+      α.app P := by
+  ext c ⟨x, hx⟩
+  simp [pshBarrLiftSkelMap, Subfunctor.lift,
+    pshProdLift, FunctorToTypes.prod.lift]
+
+@[simp]
+theorem pshBarrLiftSkelMap_ι_snd
+    {P Q : Cᵒᵖ ⥤ Type w}
+    {G H :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w)}
+    (α : G ⟶ H)
+    (R : PshRel P Q) :
+    pshBarrLiftSkelMap α R ≫
+      (pshBarrLiftSkel H R).ι ≫
+      pshProdSnd (H.obj P) (H.obj Q) =
+    (pshBarrLiftSkel G R).ι ≫
+      pshProdSnd (G.obj P) (G.obj Q) ≫
+      α.app Q := by
+  ext c ⟨x, hx⟩
+  simp [pshBarrLiftSkelMap, Subfunctor.lift,
+    pshProdLift, FunctorToTypes.prod.lift]
+
+@[simp]
+theorem pshBarrLiftSkelMap_comp
+    {P Q : Cᵒᵖ ⥤ Type w}
+    {G H K :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w)}
+    (α : G ⟶ H) (β : H ⟶ K)
+    (R : PshRel P Q) :
+    pshBarrLiftSkelMap (α ≫ β) R =
+      pshBarrLiftSkelMap α R ≫
+        pshBarrLiftSkelMap β R := by
+  ext c ⟨x, hx⟩
+  simp [pshBarrLiftSkelMap, Subfunctor.lift,
+    pshProdLift, FunctorToTypes.prod.lift]
+
 end PshBarrExtension
 
 section PshInternalHom
