@@ -58,15 +58,33 @@ detailed mathematical findings from the literature.
 - [x] `coalgCopresheafChild_fiber` : child fiber
 - [x] `coalgCopresheafChild_mtype` : child M-type HEq
 - [x] `coalgCopresheafChild_shape_heq` : child shape HEq
+- [x] `coalgCopresheafChild_rawTarget`
+- [x] `coalgCopresheafChild_target_sigma`
+- [x] `coalgCopresheafChild_target_fiber`
+- [x] `coalgCopresheafChild_target_shape`
+- [x] `coalgCopresheafChild_rawShape_heq`
+- [x] `coalgCopresheafShapeAt_children_heq`
+- [x] `coalgCopresheafChild_rawToShape`
+- [x] `coalgCopresheafChild_shapeToTransported`
+- [x] `coalgCopresheafTargetRaw` / `_eq`
 - [ ] `coalgCopresheafChild_depth1_target` :
-      depth-1 target equality for child annotation.
-      This is the remaining blocker. It requires
-      relating the M-type edge (from self-consistency)
-      to the shape edge (in the transported shape).
-      The sigma pair approach via
-      `coalgCopresheafChild_target_sigma` gives the
-      child's target in M-type coordinates; need to
-      convert to the parent's child shape coordinates.
+      depth-1 target equality. Three sigma pair
+      chain steps (target_sigma, rawToShape,
+      shapeToTransported) give the result. The
+      blocker is extracting `.fst` HEq from
+      `cast_heq` on sigma pairs (Lean's `cast`
+      on sigma types doesn't reduce `.fst`). The
+      `generalize+subst` technique fails because
+      the transport proof in
+      `coalgCopresheafShapeAt` creates an
+      `a`-dependency that survives generalization.
+      Possible approaches:
+      1. Define a helper `sigma_fst_cast_heq` by
+         `Eq.rec` (but `.fst` on type var fails)
+      2. Restructure `shapeToTransported` to accept
+         the full-pair HEq instead of the `.fst` HEq
+      3. Define the copresheaf map using a different
+         approach that avoids the CastPos chain
 - [ ] `coalgCopresheafMapByDepth` : recursive morphism
       action (uses depth-1 target + tgtAt_transport)
 - [ ] `coalgCopresheafMap` : morphism action

@@ -859,4 +859,194 @@ lemma coalgCopresheafChild_target_shape
     (coalgCopresheafChild_target_sigma
       c a e_m)).2
 
+/--
+The shape of the parent's child M-type subtree
+is HEq to the children of the raw M-type shape.
+This is just `polyCofreeToShape_children_heq`
+applied to the specific M-type edge `e_m` obtained
+from the shape edge via `polyCofreeShapePosToMPos`.
+-/
+lemma coalgCopresheafChild_rawShape_heq
+    {P : PolyEndo X}
+    (c : Comonad.Coalgebra
+      (polyCofreeComonad X P))
+    (a : c.A.left)
+    (e_raw : (polyBetweenFamily X X P
+      (c.a.left a).1
+      (polyCofreeToShape c.A P
+        (c.a.left a).2).head.2).left) :
+    let m := (c.a.left a).2
+    let e_m := polyCofreeShapePosToMPos
+      c.A P m e_raw
+    HEq
+      (polyCofreeToShape c.A P
+        (m.children e_m))
+      ((polyCofreeToShape c.A P m).children
+        e_raw) :=
+  (polyCofreeToShape_children_heq c.A P
+    (c.a.left a).2 e_raw).symm
+
+/--
+The children of the transported shape at edge
+`e_shape` are HEq to the children of the raw
+M-type shape at the corresponding edge.
+-/
+lemma coalgCopresheafShapeAt_children_heq
+    {P : PolyEndo X}
+    (c : Comonad.Coalgebra
+      (polyCofreeComonad X P))
+    (a : c.A.left)
+    (e_shape : (polyBetweenFamily X X P (c.A.hom a)
+      (coalgCopresheafShapeAt c a).head.2).left)
+    (e_raw : (polyBetweenFamily X X P (c.a.left a).1
+      (polyCofreeToShape c.A P
+        (c.a.left a).2).head.2).left)
+    (he : HEq e_shape e_raw) :
+    HEq
+      ((coalgCopresheafShapeAt c a).children
+        e_shape)
+      ((polyCofreeToShape c.A P
+        (c.a.left a).2).children e_raw) := by
+  let h_fib := comonadCoalgFiberEq c a
+  let h_shape := coalgCopresheafShapeAt_heq c a
+  exact PolyCofix.children_heq h_fib.symm
+    h_shape he
+
+/--
+The M-type child shape pair (fiber + shape of
+`m.children e_m`) equals the raw shape children
+pair (fiber + children at `e_raw`), as sigma pairs.
+-/
+lemma coalgCopresheafChild_rawToShape
+    {P : PolyEndo X}
+    (c : Comonad.Coalgebra
+      (polyCofreeComonad X P))
+    (a : c.A.left)
+    (e_raw : (polyBetweenFamily X X P (c.a.left a).1
+      (polyCofreeToShape c.A P
+        (c.a.left a).2).head.2).left) :
+    let m := (c.a.left a).2
+    let e_m := polyCofreeShapePosToMPos
+      c.A P m e_raw
+    (⟨(polyBetweenFamily X X (polyScale c.A P)
+        (c.a.left a).1 m.head).hom e_m,
+      polyCofreeToShape c.A P
+        (m.children e_m)⟩ :
+      Σ x, PolyCofreeShape P x) =
+    ⟨(polyBetweenFamily X X P (c.a.left a).1
+        (polyCofreeToShape c.A P m).head.2
+        ).hom e_raw,
+      (polyCofreeToShape c.A P m).children
+        e_raw⟩ := by
+  let m := (c.a.left a).2
+  let e_m := polyCofreeShapePosToMPos
+    c.A P m e_raw
+  exact Sigma.ext
+    (polyCofreeShapePosToMPos_fiber c.A P
+      m e_raw).symm
+    (coalgCopresheafChild_rawShape_heq
+      c a e_raw)
+
+/--
+The raw shape children pair equals the transported
+shape children pair, via the fiber equality.
+-/
+lemma coalgCopresheafChild_shapeToTransported
+    {P : PolyEndo X}
+    (c : Comonad.Coalgebra
+      (polyCofreeComonad X P))
+    (a : c.A.left)
+    (e_shape : (polyBetweenFamily X X P (c.A.hom a)
+      (coalgCopresheafShapeAt c a).head.2).left)
+    (e_raw : (polyBetweenFamily X X P (c.a.left a).1
+      (polyCofreeToShape c.A P
+        (c.a.left a).2).head.2).left)
+    (he : HEq e_shape e_raw) :
+    let m := (c.a.left a).2
+    (⟨(polyBetweenFamily X X P (c.a.left a).1
+        (polyCofreeToShape c.A P m).head.2
+        ).hom e_raw,
+      (polyCofreeToShape c.A P m).children
+        e_raw⟩ :
+      Σ x, PolyCofreeShape P x) =
+    ⟨(polyBetweenFamily X X P (c.A.hom a)
+        (coalgCopresheafShapeAt c a).head.2
+        ).hom e_shape,
+      (coalgCopresheafShapeAt c a).children
+        e_shape⟩ := by
+  -- Generalize c.a.left a to collapse the
+  -- fiber transport. First revert everything
+  -- that depends on it.
+  revert e_raw he
+  generalize hca : c.a.left a = ca
+  obtain ⟨xv, mv⟩ := ca
+  intro e_raw he
+  have hfib : xv = c.A.hom a :=
+    (congrArg Sigma.fst hca).symm.trans
+      (comonadCoalgFiberEq c a)
+  subst hfib
+  -- Now mv : PolyCofix ... (c.A.hom a).
+  -- Prove coalgCopresheafShapeAt c a =
+  -- polyCofreeToShape c.A P mv using hca.
+  have hmv_heq :
+      HEq (c.a.left a).2 mv :=
+    (Sigma.ext_iff.mp hca).2
+  have h_shapeAt_eq :
+      coalgCopresheafShapeAt c a =
+      polyCofreeToShape c.A P mv := by
+    -- Use the sigma pair chain:
+    -- ⟨c.A.hom a, polyCofreeToShape mv⟩
+    -- = toShape ⟨c.A.hom a, mv⟩
+    -- = toShape (c.a.left a)    [by hca.symm]
+    -- = coalgCopresheafTargetRaw_eq
+    -- = ⟨c.A.hom a, coalgCopresheafShapeAt c a⟩
+    let toShape := fun (p :
+        Σ x, PolyCofreeM c.A P x) =>
+      (⟨p.1, polyCofreeToShape c.A P p.2⟩ :
+        Σ x, PolyCofreeShape P x)
+    have h1 : toShape (c.a.left a) =
+        (⟨c.A.hom a,
+          polyCofreeToShape c.A P mv⟩ :
+          Σ x, PolyCofreeShape P x) :=
+      congrArg toShape hca
+    have h2 := coalgCopresheafTargetRaw_eq c a
+    -- h2 : ⟨(c.a.left a).1, toShape...⟩ =
+    --   ⟨c.A.hom a, coalgCopresheafShapeAt c a⟩
+    have h3 : (⟨c.A.hom a,
+        polyCofreeToShape c.A P mv⟩ :
+        Σ x, PolyCofreeShape P x) =
+      ⟨c.A.hom a,
+        coalgCopresheafShapeAt c a⟩ :=
+      h1.symm.trans h2
+    exact (eq_of_heq
+      (Sigma.ext_iff.mp h3).2).symm
+  -- Set coalgCopresheafShapeAt c a as a variable
+  -- so we can subst it.
+  dsimp only at e_raw
+  revert e_shape he
+  rw [h_shapeAt_eq]
+  intro e_shape he
+  -- Now e_shape and e_raw have the same type.
+  have he_eq := eq_of_heq he
+  subst he_eq
+  rfl
+
+-- The depth-1 target equality
+-- (`coalgCopresheafChild_depth1_target`) is the
+-- remaining blocker. It requires relating the
+-- child annotation's copresheaf target to the
+-- parent's tgtAt at depth 1. The sigma pair
+-- chain (target_sigma + rawToShape +
+-- shapeToTransported) gives the equality, but
+-- the edge HEq between the transported shape edge
+-- and the raw shape edge requires extracting
+-- `.fst` from a cast sigma pair, which Lean's
+-- `cast` doesn't reduce for.
+-- The `revert + generalize + subst + rw` technique
+-- handles this for standalone lemmas but the
+-- `generalize` fails here because the transport
+-- proof in `coalgCopresheafShapeAt` creates a
+-- dependency on `a` that survives the
+-- generalization.
+
 end GebLean
