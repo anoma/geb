@@ -20,7 +20,7 @@ open CategoryTheory
 
 namespace GebLean
 
-universe u v w u' v' w'
+universe u v w u' v' w' u'' v''
 
 variable (C : Type u) [Category.{v} C]
 
@@ -106,9 +106,15 @@ instance PshRelSpanCat :
   comp_id := PshRelSpanHom.comp_id C
   assoc := PshRelSpanHom.assoc C
 
-/-- Presheaf-valued parametric functors on
-`PshRelSpanObj C`: functors from
-`PshRelSpanObj C` to the presheaf category
+/-- Functors from `PshRelSpanObj C` to an
+arbitrary target category `E`. -/
+abbrev PshParametricFunctor
+    (E : Type u'') [Category.{v''} E] :=
+  PshRelSpanObj.{u, v, w} C ⥤ E
+
+/-- Copresheaf-valued parametric functors on
+`PshRelSpanObj C`: `PshParametricFunctor`
+specialized to the presheaf category
 `Dᵒᵖ ⥤ Type w'`.
 
 By uncurrying, this is equivalent to
@@ -116,23 +122,24 @@ By uncurrying, this is equivalent to
 presheaf topos. The case `D` = discrete
 unit category recovers `Type w'`-valued
 parametric functors. -/
-abbrev PshParametricFunctor
+abbrev PshParametricCopresheaf
     (D : Type u') [Category.{v'} D] :=
-  PshRelSpanObj.{u, v, w} C ⥤
-    (Dᵒᵖ ⥤ Type w')
+  PshParametricFunctor.{u, v, w, max u' v' (w' + 1), max u' w'}
+    C (Dᵒᵖ ⥤ Type w')
 
 /-- The currying equivalence identifying
-presheaf-valued parametric functors with
+copresheaf-valued parametric functors with
 copresheaves on the product category
 `PshRelSpanObj C × Dᵒᵖ`. -/
 def pshParametricCatAsCopresheaf
     (D : Type u') [Category.{v'} D] :
-    (PshParametricFunctor.{u, v, w, u', v', w'} C D) ≌
-    (PshRelSpanObj.{u, v, w} C × Dᵒᵖ ⥤ Type w') :=
+    (PshParametricCopresheaf C D) ≌
+    (PshRelSpanObj.{u, v, w} C × Dᵒᵖ ⥤
+      Type w') :=
   Functor.currying
 
 /-- The presheaf-category equivalence: the
-category of presheaf-valued parametric
+category of copresheaf-valued parametric
 functors is equivalent to a presheaf
 topos on `(PshRelSpanObj C)ᵒᵖ × D`.
 
@@ -141,12 +148,15 @@ equivalence with precomposition by
 `pshRelSpanProdOpFwd`. -/
 def pshParametricCatAsPresheaf
     (D : Type u') [Category.{v'} D] :
-    (PshParametricFunctor.{u, v, w, u', v', w'} C D) ≌
-    (((PshRelSpanObj.{u, v, w} C)ᵒᵖ × D)ᵒᵖ ⥤ Type w') :=
+    (PshParametricCopresheaf C D) ≌
+    (((PshRelSpanObj.{u, v, w} C)ᵒᵖ × D)ᵒᵖ ⥤
+      Type w') :=
   CategoryTheory.Equivalence.trans
     (pshParametricCatAsCopresheaf C D)
-    ((opProdOpProdOpEquiv.{max u v (w + 1), max u v (w + 1), v', u'}
-      (PshRelSpanObj C) D).congrLeft (E := Type w')).symm
+    ((opProdOpProdOpEquiv.{max u v (w + 1),
+        max u v (w + 1), v', u'}
+      (PshRelSpanObj C) D).congrLeft
+        (E := Type w')).symm
 
 section RelSpanPshRelSpanEquiv
 
@@ -525,16 +535,17 @@ def relSpanPshRelSpanIso :
     congr 1
     exact relSpanPshRelSpan_counit
 
-/-- The equivalence between `ParametricFunctor`
+/-- The equivalence between
+`ParametricCopresheaf`
 (`RelSpanObj ⥤ Type 1`) and
-`PshParametricFunctor` over the terminal
+`PshParametricCopresheaf` over the terminal
 category, obtained by chaining:
 1. `relSpanPshRelSpanIso` (source categories)
 2. The presheaf-type equivalence on `Type 1`
    (target category). -/
 def parametricFunctorEquiv :
-    ParametricFunctor ≌
-    PshParametricFunctor.{0, 0, 0, 0, 0, 1}
+    ParametricCopresheaf ≌
+    PshParametricCopresheaf.{0, 0, 0, 0, 0, 1}
       (Discrete PUnit) (Discrete PUnit) :=
   (Cat.equivOfIso
     relSpanPshRelSpanIso).congrLeft

@@ -5029,14 +5029,15 @@ def diagRelImage
 
 /-- The embedding of the endoprofunctor
 category (with paranatural morphisms) into
-`ParametricFunctor`. Type-nodes map to
+`ParametricCopresheaf`. Type-nodes map to
 diagonal elements `ULift (diagApp G I)`;
-relation-nodes map to `ULift (diagRelImage G R)`.
+relation-nodes map to
+`ULift (diagRelImage G R)`.
 Morphisms are paranatural transformations,
 transported via `DiagCompat` preservation. -/
 def paranaturalProfEmbedding :
     EndoProf.{1, 0, 0} (C := Type) ⥤
-    ParametricFunctor where
+    ParametricCopresheaf where
   obj G :=
     { obj := fun X =>
         match X with
@@ -5144,7 +5145,7 @@ instance paranaturalProfEmbedding_faithful :
 -- guaranteed in general.
 --
 -- No natural functor exists in the other
--- direction (ParametricFunctor → EndoProf)
+-- direction (ParametricCopresheaf → EndoProf)
 -- either: RelSpanObj has no morphisms between
 -- typeNodes, so the profunctor's
 -- covariant/contravariant transport maps

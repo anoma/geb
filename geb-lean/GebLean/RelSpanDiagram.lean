@@ -394,9 +394,17 @@ def relSpanCollageIso :
         | ⟨.inr _⟩, ⟨.inl _⟩, f =>
           exact PEmpty.elim f)
 
-/-- The category of parametric functors:
-copresheaves on `RelSpanObj`. -/
-abbrev ParametricFunctor := RelSpanObj ⥤ Type 1
+universe u₁ v₁ in
+/-- Functors from `RelSpanObj` to an arbitrary
+target category `E`. -/
+abbrev ParametricFunctor
+    (E : Type u₁) [Category.{v₁} E] :=
+  RelSpanObj ⥤ E
+
+/-- Copresheaves on `RelSpanObj`:
+`ParametricFunctor` specialized to `Type 1`. -/
+abbrev ParametricCopresheaf :=
+  ParametricFunctor (Type 1)
 
 /-- The type of related pairs under a relation
 `R : I₀ → I₁ → Prop`. -/
@@ -601,7 +609,7 @@ relation-nodes map to
 `ULift (covRelImage F R)`. Projections
 extract the pair components. -/
 def covariantEmbedding :
-    (Type ⥤ Type) ⥤ ParametricFunctor where
+    (Type ⥤ Type) ⥤ ParametricCopresheaf where
   obj F :=
     { obj := fun X =>
         match X with
@@ -816,7 +824,7 @@ functor. Type-nodes map to
 `F.map (op π₁)` and `F.map (op π₂)`.
 Projections extract the pair components. -/
 def contravariantEmbedding :
-    (Typeᵒᵖ ⥤ Type) ⥤ ParametricFunctor where
+    (Typeᵒᵖ ⥤ Type) ⥤ ParametricCopresheaf where
   obj F :=
     { obj := fun X =>
         match X with
@@ -1104,7 +1112,7 @@ functor. Type-nodes map to the diagonal
 to `ULift (profRelImage G R)`. -/
 def profunctorEmbedding :
     (Typeᵒᵖ × Type ⥤ Type) ⥤
-    ParametricFunctor where
+    ParametricCopresheaf where
   obj G :=
     { obj := fun X =>
         match X with
@@ -1178,7 +1186,7 @@ def profunctorEmbedding :
 -- diagonal components, and the paranaturality
 -- condition (`DiagCompat` preservation)
 -- matches the `profRelLift` transport.
--- The embedding to `ParametricFunctor` using
+-- The embedding to `ParametricCopresheaf` using
 -- paranatural morphisms is analyzed in
 -- `ParanaturalTopos.lean`.
 
