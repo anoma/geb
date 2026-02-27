@@ -18,7 +18,7 @@ open CategoryTheory
 
 namespace GebLean
 
-universe u v w
+universe u v w u' v' w'
 
 variable (C : Type u) [Category.{v} C]
 
@@ -104,10 +104,19 @@ instance PshRelSpanCat :
   comp_id := PshRelSpanHom.comp_id C
   assoc := PshRelSpanHom.assoc C
 
-/-- The category of presheaf parametric functors:
-copresheaves on `PshRelSpanObj C`. -/
-abbrev PshParametricFunctor :=
+/-- Presheaf-valued parametric functors on
+`PshRelSpanObj C`: functors from
+`PshRelSpanObj C` to the presheaf category
+`Dᵒᵖ ⥤ Type w'`.
+
+By uncurrying, this is equivalent to
+`(PshRelSpanObj C × D)ᵒᵖ ⥤ Type w'`, a
+presheaf topos. The case `D` = discrete
+unit category recovers `Type w'`-valued
+parametric functors. -/
+abbrev PshParametricFunctor
+    (D : Type u') [Category.{v'} D] :=
   PshRelSpanObj.{u, v, w} C ⥤
-    Type (max u v (w + 1))
+    (Dᵒᵖ ⥤ Type w')
 
 end GebLean
