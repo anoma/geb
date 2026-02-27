@@ -3206,6 +3206,23 @@ def polyCofreeExtract (A : Over X) (P : PolyEndo X) {x : X}
   head.1
 
 /--
+HEq M-types in the cofree comonad have equal
+root annotation values.
+-/
+lemma polyCofreeExtract_val_of_heq
+    (A : Over X) (P : PolyEndo X) {x y : X}
+    (hxy : x = y)
+    {m1 : PolyCofreeM A P x}
+    {m2 : PolyCofreeM A P y}
+    (hm : HEq m1 m2) :
+    (polyCofreeExtract A P m1).val =
+    (polyCofreeExtract A P m2).val := by
+  subst hxy
+  exact congrArg
+    (fun m => (polyCofreeExtract A P m).val)
+    (eq_of_heq hm)
+
+/--
 The head of a cofree comonad tree gives both the label and the P-index.
 -/
 def polyCofreeHead (A : Over X) (P : PolyEndo X) {x : X}
@@ -6256,6 +6273,20 @@ lemma polyCofreeCounit_naturality (A B : Over X) (P : PolyEndo X) (f : A ⟶ B) 
   rw [polyCofreeMapApprox_getIndex]
 
 /--
+Extracting the root annotation from a mapped cofree
+value gives `f` applied to the original root annotation.
+-/
+lemma polyCofreeExtract_mapAt_val
+    (A B : Over X) (P : PolyEndo X) (f : A ⟶ B)
+    {x : X} (m : PolyCofreeM A P x) :
+    (polyCofreeExtract B P
+      (polyCofreeMapAt A B P f m)).val =
+    f.left (polyCofreeExtract A P m).val := by
+  simp only [polyCofreeExtract, polyCofreeMapAt,
+    PolyCofix.head]
+  rw [polyCofreeMapApprox_getIndex]
+
+/--
 The counit as a natural transformation.
 -/
 def polyCofreeCounitNat (P : PolyEndo X) :
@@ -8482,13 +8513,698 @@ lemma polyCoalgComonad_forward_str
     (polyEndoFunctor X P).map_id,
     Category.comp_id]
 
--- The backward roundtrip lemma
--- `polyCoalgComonad_backward` and the equivalence
--- `polyCoalgComonadEquiv` require a coinductive
--- proof that the anamorphism of K⁻¹(c) equals c.a.
--- The proof uses the D-coalgebra coassociativity
--- to establish self-consistency of subtrees at
--- each approximation level.
+/--
+The fiber of `c.a` at an element `a` agrees with
+the fiber of `a` itself: the X-component of the
+cofree carrier maps to `c.A.hom a`.
+-/
+lemma comonadCoalgFiberEq
+    {P : PolyEndo X}
+    (c : Comonad.Coalgebra
+      (polyCofreeComonad X P))
+    (a : c.A.left) :
+    (c.a.left a).1 = c.A.hom a :=
+  congrFun (Over.w c.a) a
+
+/--
+The counit of the cofree comonad, applied at
+an element `a` through the coalgebra structure
+map `c.a`, recovers `a` as the root annotation.
+-/
+lemma comonadCoalgCounitAt
+    {P : PolyEndo X}
+    (c : Comonad.Coalgebra
+      (polyCofreeComonad X P))
+    (a : c.A.left) :
+    (polyCofreeExtract c.A P
+      (c.a.left a).2).val = a := by
+  have h := congrFun
+    (congrArg (·.left) c.counit) a
+  simp only [Over.comp_left,
+    types_comp_apply, Over.id_left,
+    types_id_apply] at h
+  change
+    ((polyCofreeComonad X P).ε.app
+      c.A).left (c.a.left a) = a
+  exact h
+
+/--
+Coassociativity of a comonad coalgebra at an
+element: the coalgebra structure map composed with
+the comultiplication equals the structure map
+composed with the comonad's map of the structure.
+-/
+lemma comonadCoalgCoassocAt
+    {P : PolyEndo X}
+    (c : Comonad.Coalgebra
+      (polyCofreeComonad X P))
+    (a : c.A.left) :
+    (c.a ≫ (polyCofreeComonad X P).δ.app
+      c.A).left a =
+    (c.a ≫ (polyCofreeComonad X P).map
+      c.a).left a :=
+  congrFun (congrArg (·.left) c.coassoc) a
+
+/--
+The coassociativity gives an M-type equality:
+the anamorphism on the cofree coalgebra at
+`c.a(a)` equals the cofree map of `c.a` applied
+to `(c.a(a)).2`.
+-/
+lemma comonadCoalgCoassoc_mtype
+    {P : PolyEndo X}
+    (c : Comonad.Coalgebra
+      (polyCofreeComonad X P))
+    (a : c.A.left) :
+    polyCoalgUnitAt P (polyCofreeCoalg c.A P)
+      ((c.a.left a).1)
+      ⟨c.a.left a, rfl⟩ =
+    polyCofreeMapAt c.A
+      (polyCofreeCarrier c.A P) P c.a
+      ((c.a.left a).2) := by
+  have hcoassoc := comonadCoalgCoassocAt c a
+  simp only [Over.comp_left, types_comp_apply]
+    at hcoassoc
+  -- hcoassoc relates δ(c.a(a)) to D.map(c.a)(c.a(a))
+  -- as sigma pairs.  Both have .1 = (c.a.left a).1.
+  -- We need the .2 component (M-type equality).
+  have h1 : ((polyCofreeComonad X P).δ.app
+    c.A).left (c.a.left a) =
+    polyCoalgUnitLeft P (polyCofreeCoalg c.A P)
+      (c.a.left a) := by
+    dsimp only [polyCofreeComonad,
+      Adjunction.toComonad,
+      Functor.whiskerRight_app,
+      Functor.whiskerLeft_app,
+      polyForgetCofreeAdjunction,
+      Adjunction.mkOfUnitCounit,
+      polyCoalgForgetFunctor,
+      Endofunctor.Coalgebra.forget_map,
+      polyCoalgUnitNat, polyCoalgUnitHom,
+      polyCoalgUnit, Over.homMk_left,
+      polyCofreeFunctor]
+  have h2 : ((polyCofreeComonad X P).map
+    c.a).left (c.a.left a) =
+    polyCofreeMapLeft c.A
+      (polyCofreeCarrier c.A P) P c.a
+      (c.a.left a) := by
+    simp only [polyCofreeComonad,
+      Adjunction.toComonad,
+      Functor.comp_map, Functor.comp_obj,
+      polyForgetCofreeAdjunction,
+      Adjunction.mkOfUnitCounit,
+      polyCoalgForgetFunctor,
+      Endofunctor.Coalgebra.forget_map,
+      Endofunctor.Coalgebra.forget_obj,
+      polyCofreeFunctor, polyCofreeCoalgMap,
+      polyCofreeMap, Over.homMk_left,
+      polyCofreeCoalg]
+  rw [h1, h2] at hcoassoc
+  simp only [polyCoalgUnitLeft,
+    polyCofreeMapLeft] at hcoassoc
+  exact Sigma.ext_iff.mp hcoassoc |>.2
+    |> eq_of_heq
+
+/--
+The counit of the cofree comonad applied to the
+coalgebra structure map gives the identity, as a
+direct morphism equality (not through the comonad
+abstraction).
+-/
+lemma comonadCoalgCounit_eq
+    {P : PolyEndo X}
+    (c : Comonad.Coalgebra
+      (polyCofreeComonad X P)) :
+    c.a ≫ polyCofreeCounit c.A P = 𝟙 c.A := by
+  have h := c.counit
+  dsimp only [polyCofreeComonad,
+    Adjunction.toComonad,
+    polyForgetCofreeAdjunction,
+    Adjunction.mkOfUnitCounit,
+    polyCofreeCounitNat] at h
+  exact h
+
+/--
+The cofree map by `c.a` followed by the counit
+equals the identity on M-types.  This is the
+pointwise version of `c.a ≫ ε = id` applied to
+M-types via functoriality.
+-/
+lemma comonadCoalgCofreeMap_counit_eq
+    {P : PolyEndo X}
+    (c : Comonad.Coalgebra
+      (polyCofreeComonad X P))
+    {x : X} (m : PolyCofreeM c.A P x) :
+    polyCofreeMapAt (polyCofreeCarrier c.A P)
+      c.A P (polyCofreeCounit c.A P)
+      (polyCofreeMapAt c.A
+        (polyCofreeCarrier c.A P) P c.a m) =
+    m := by
+  rw [← polyCofreeMapAt_comp]
+  rw [comonadCoalgCounit_eq c]
+  exact polyCofreeMapAt_id c.A P _
+
+/--
+Self-consistency of the comonad coalgebra:
+`c.a` applied to the root annotation of the
+`e`-th child of `c.a(a)` gives back that child
+as a sigma pair in the cofree carrier.
+
+Extracted from the coassociativity at
+approximation level 2 of the comultiplication.
+-/
+lemma comonadCoalgSelfconsistent
+    {P : PolyEndo X}
+    (c : Comonad.Coalgebra
+      (polyCofreeComonad X P))
+    (a : c.A.left)
+    (e : (polyBetweenFamily X X
+      (polyScale c.A P) (c.a.left a).1
+      (c.a.left a).2.head).left) :
+    c.a.left ((polyCofreeExtract c.A P
+      ((c.a.left a).2.children e)).val) =
+    ⟨(polyBetweenFamily X X
+      (polyScale c.A P) (c.a.left a).1
+      (c.a.left a).2.head).hom e,
+      (c.a.left a).2.children e⟩ := by
+  have hmtype := comonadCoalgCoassoc_mtype c a
+  let m := (c.a.left a).2
+  let xv := (c.a.left a).1
+  let B := polyCofreeCarrier c.A P
+  let β := polyCofreeCoalg c.A P
+  let childExtract :
+      PolyCofreeM B P xv →
+      Σ (idx : (P xv).base),
+        (polyBetweenFamily X X P xv idx).left
+          → B.left :=
+    fun t => ⟨t.head.2,
+      fun e =>
+        (polyCofreeExtract B P
+          (t.children e)).val⟩
+  have hce := congrArg childExtract hmtype
+  have hrhs :
+      childExtract (polyCofreeMapAt c.A B P
+        c.a m) =
+      ⟨m.head.2, fun e =>
+        c.a.left
+          (polyCofreeExtract c.A P
+            (m.children e)).val⟩ := by
+    have hidxEq :=
+      polyCofreeMapAt_head_snd c.A B P c.a m
+    let mapped :=
+      polyCofreeMapAt c.A B P c.a m
+    have hdomEq :
+      (polyBetweenFamily X X P xv
+        mapped.head.2).left =
+      (polyBetweenFamily X X P xv
+        m.head.2).left := by
+      rw [hidxEq]
+    refine Sigma.ext hidxEq ?_
+    apply funext_heq hdomEq rfl
+    intro e1 e2 he
+    have hch :=
+      polyCofreeMapAt_children_heq c.A B P
+        c.a m e2 e1 he.symm
+    have hnat :=
+      polyCofreeExtract_mapAt_val c.A B P
+        c.a (m.children e2)
+    apply heq_of_eq
+    simp only [childExtract]
+    have hfibEq :
+      (polyBetweenFamily X X P xv
+        m.head.2).hom e2 =
+      (polyBetweenFamily X X P xv
+        mapped.head.2).hom e1 := by
+      exact overType_hom_heq
+        (congrArg (polyBetweenFamily X X P xv)
+          hidxEq.symm) e2 e1 he.symm
+    rw [polyCofreeExtract_val_of_heq B P
+      hfibEq.symm hch.symm, hnat]
+  have hlhs :
+      childExtract (polyCoalgUnitAt P β xv
+        ⟨c.a.left a, rfl⟩) =
+      ⟨m.head.2, fun e =>
+        ⟨(polyBetweenFamily X X
+          (polyScale c.A P) xv
+          m.head).hom e,
+          m.children e⟩⟩ := by
+    let ana :=
+      polyCoalgUnitAt P β xv ⟨c.a.left a, rfl⟩
+    have hidxEqLhs :
+      ana.head.2 = m.head.2 := by
+      have h := congrArg (fun t => t.1)
+        (congrArg childExtract hmtype)
+      simp only [childExtract] at h
+      exact h.trans
+        (polyCofreeMapAt_head_snd c.A B P
+          c.a m)
+    have hdomEqLhs :
+      (polyBetweenFamily X X P xv
+        ana.head.2).left =
+      (polyBetweenFamily X X P xv
+        m.head.2).left := by
+      rw [hidxEqLhs]
+    refine Sigma.ext hidxEqLhs ?_
+    apply funext_heq hdomEqLhs rfl
+    intro e1 e2 he
+    apply heq_of_eq
+    simp only [childExtract]
+    have hleftTriPt :=
+      congrFun (congrArg (fun f =>
+        f.left) (polyCofree_left_triangle
+          P β))
+    simp only [Over.comp_left, polyCoalgUnit,
+      Over.homMk_left, polyCoalgUnitLeft,
+      polyCofreeCounit, polyCofreeCounitLeft,
+      types_comp_apply, Over.id_left,
+      types_id_apply] at hleftTriPt
+    let childState :=
+      (polyCofreeChildrenMor c.A P m).left e2
+    have hChildFib :
+      B.hom childState =
+      (polyBetweenFamily X X P xv
+        m.head.2).hom e2 :=
+      congrFun (Over.w
+        (polyCofreeChildrenMor c.A P m)) e2
+    have hfamEq :=
+      polyCoalgUnit_family_eq P β
+        (c.a.left a)
+    have hCastE2 :
+      cast (congrArg (fun F => F.left)
+        hfamEq) e2 = e1 := by
+      apply eq_of_heq
+      exact (cast_heq _ e2).trans he.symm
+    have hfibEq :
+      β.V.hom
+        ((β.str.left (c.a.left a)).2.2.left
+          e2) =
+      (polyBetweenFamily X X P (β.V.hom
+          (c.a.left a))
+        (ana.head.2)).hom
+        (cast (congrArg (fun F => F.left)
+          hfamEq) e2) := by
+      simp only [β, polyCofreeCoalg,
+        polyCofreeStr, Over.homMk_left,
+        polyCofreeStrLeft, polyCofreeStrFamily,
+        polyCofreeChildrenMor]
+      let hdom := congrArg
+        (fun F => F.left) hfamEq
+      exact overType_hom_heq hfamEq e2
+        (cast hdom e2)
+        (cast_heq hdom e2).symm
+    have hchild :=
+      polyCoalgUnitAt_children_heq P β
+        (c.a.left a) e2 hfibEq
+    rw [hCastE2] at hchild
+    have hfibEq2 :
+      (polyBetweenFamily X X P xv
+        ana.head.2).hom e1 =
+      β.V.hom childState := by
+      simp only [childState,
+        polyCofreeChildrenMor, Over.homMk_left,
+        polyCofreeCarrier]
+      exact overType_hom_heq
+        (congrArg (polyBetweenFamily X X P xv)
+          hidxEqLhs) e1 e2 he
+    calc (polyCofreeExtract B P
+            (ana.children e1)).val
+        = (polyCofreeExtract B P
+            (polyCoalgUnitAt P β
+              (β.V.hom childState)
+              ⟨childState, rfl⟩)).val :=
+          polyCofreeExtract_val_of_heq
+            B P hfibEq2 hchild.symm
+      _ = childState :=
+          hleftTriPt childState
+      _ = _ := by
+          simp only [childState,
+            polyCofreeChildrenMor,
+            Over.homMk_left]
+          rfl
+  have hcombine := hlhs.symm.trans (hce.trans
+    hrhs)
+  have hfun := (Sigma.ext_iff.mp hcombine).2
+  have hfun_eq := eq_of_heq hfun
+  exact (congrFun hfun_eq e).symm
+
+/--
+The extracted P-coalgebra structure map at `a`
+decomposes as the cofree structure applied to
+`c.a(a)` followed by the counit on children.
+-/
+lemma polyComonadCoalgStr_left_eq
+    {P : PolyEndo X}
+    (c : Comonad.Coalgebra
+      (polyCofreeComonad X P))
+    (a : c.A.left) :
+    (polyComonadCoalgStr c).left a =
+    let xm := c.a.left a
+    ⟨xm.1, ⟨xm.2.head.2,
+      polyCofreeChildrenMor c.A P xm.2 ≫
+      (polyCofreeComonad X P).ε.app c.A⟩⟩ := by
+  simp only [polyComonadCoalgStr, Over.comp_left,
+    types_comp_apply, polyCofreeStr,
+    polyCofreeCoalg, Over.homMk_left,
+    polyEndoFunctor, polyBetweenEvalFunctor,
+    polyToOverFunctor, polyToOverEvalMap,
+    familySliceForward, familySliceForwardMap,
+    polyToOverEvalFamilyMap, ccrEvalMap]
+  obtain ⟨xv, m⟩ := c.a.left a
+  simp only [polyCofreeStrLeft,
+    polyCofreeStrFamily,
+    polyCofreeChildrenMor]
+
+/--
+At each approximation level, the anamorphism
+from the extracted P-coalgebra at `a` produces
+the same approximation as the M-type component
+of `c.a.left a` (after transporting along the
+fiber equality).
+-/
+lemma polyCoalgComonad_backward_approx
+    {P : PolyEndo X}
+    (c : Comonad.Coalgebra
+      (polyCofreeComonad X P))
+    (n : Nat)
+    (a : c.A.left) :
+    HEq (polyCoalgUnitApprox P
+      (polyComonadCoalgToCoalgObj c)
+      n (c.A.hom a) ⟨a, rfl⟩)
+    ((c.a.left a).2.approx n) := by
+  induction n generalizing a with
+  | zero =>
+    simp only [polyCoalgUnitApprox]
+    have hrhs :
+        (c.a.left a).2.approx 0 =
+        .continue (c.a.left a).1 :=
+      PolyCofixApprox.approx_zero_eq_continue _
+    rw [hrhs]
+    exact PolyCofixApprox.continue_heq
+      (comonadCoalgFiberEq c a).symm
+  | succ n ih =>
+    let α' := polyComonadCoalgToCoalgObj c
+    let m := (c.a.left a).2
+    let xv := (c.a.left a).1
+    simp only [polyCoalgUnitApprox]
+    have hfib : c.A.hom a = xv :=
+      (comonadCoalgFiberEq c a).symm
+    have hstr_fst :
+        (α'.str.left a).1 = xv := by
+      have h := congrFun (Over.w α'.str) a
+      simp only [types_comp_apply] at h
+      exact h.trans hfib
+    have hstr_pIdx :
+        (α'.str.left a).2.1 = m.head.2 := by
+      simp only [α', polyComonadCoalgToCoalgObj,
+        polyComonadCoalgStr, Over.comp_left,
+        types_comp_apply, polyCofreeStr,
+        Over.homMk_left, polyCofreeStrLeft,
+        polyCofreeStrFamily, polyCofreeCoalg,
+        polyCofreeChildrenMor,
+        polyEndoFunctor, polyBetweenEvalFunctor,
+        polyToOverFunctor, polyToOverEvalMap,
+        familySliceForward, familySliceForwardMap,
+        polyToOverEvalFamilyMap, ccrEvalMap]
+      rfl
+    match hma : m.approx (n + 1) with
+    | .intro _ mIdx mChildren =>
+      have hmIdxEq : mIdx = m.head := by
+        have h := m.index_eq_head n
+        simp only [PolyCofixApprox.getIndex]
+          at h
+        rw [hma] at h
+        exact h
+      let hx' : (α'.str.left a).1 =
+          c.A.hom a :=
+        hstr_fst.trans hfib.symm
+      apply PolyCofixApprox.intro_cast_heq'
+        hx' rfl hfib hstr_fst
+      · rw [hmIdxEq]
+        have hhead1_val :
+            m.head.1.val = a :=
+          comonadCoalgCounitAt c a
+        apply prod_mk_heq
+        · apply subtype_heq_of_val_eq
+          · exact congrArg
+              (fun x => (fun b =>
+                c.A.hom b = x)) hstr_fst
+          · exact hhead1_val.symm
+        · exact heq_of_eq hstr_pIdx
+      · subst hmIdxEq
+        have hdomEq :
+            (polyBetweenFamily X X
+              (polyScale α'.V P)
+              (α'.str.left a).1
+              (⟨⟨a, hx'.symm⟩,
+                (α'.str.left a).2.1⟩)).left =
+            (polyBetweenFamily X X
+              (polyScale c.A P) xv
+              m.head).left := by
+          simp only [polyBetweenFamily,
+            polyToOverFamily, ccrFamily,
+            polyScale, polyScaleAt]
+          exact eq_of_heq
+            (polyBetweenFamily_left_heq
+              hstr_fst _ _
+              (heq_of_eq hstr_pIdx))
+        have hCodEq :
+            ∀ (e1 : (polyBetweenFamily X X
+                  (polyScale α'.V P)
+                  (α'.str.left a).1
+                  (⟨⟨a, hx'.symm⟩,
+                    (α'.str.left a).2.1⟩)).left)
+              (e2 : (polyBetweenFamily X X
+                  (polyScale c.A P) xv
+                  m.head).left),
+              HEq e1 e2 →
+              PolyCofixApprox (polyScale c.A P) n
+                ((polyBetweenFamily X X
+                  (polyScale α'.V P)
+                  (α'.str.left a).1
+                  (⟨⟨a, hx'.symm⟩,
+                    (α'.str.left a).2.1⟩)).hom
+                  e1) =
+              PolyCofixApprox (polyScale c.A P) n
+                ((polyBetweenFamily X X
+                  (polyScale c.A P) xv
+                  m.head).hom e2) := by
+          intro e1 e2 he12
+          congr 1
+          simp only [polyBetweenFamily,
+            polyToOverFamily, ccrFamily,
+            polyScale, polyScaleAt]
+          exact polyBetweenFamily_hom_eq_of_heq
+            hstr_fst _ _
+            (heq_of_eq hstr_pIdx) e1 e2 he12
+        apply funext_heq_dep hdomEq hCodEq
+        intro e1 e2 he
+        have he2Cast :
+            e2 = cast hdomEq e1 := by
+          exact eq_of_heq
+            (he.symm.trans
+              (cast_heq hdomEq e1).symm)
+        let childVal :=
+          (α'.str.left a).2.2.left e1
+        have hChildFib :
+            c.A.hom childVal =
+            (polyBetweenFamily X X P
+              (α'.str.left a).1
+              (α'.str.left a).2.1).hom e1 :=
+          congrFun
+            (Over.w (α'.str.left a).2.2) e1
+        have hFibLhs :
+            (polyBetweenFamily X X
+              (polyScale α'.V P)
+              (α'.str.left a).1
+              (⟨⟨a, hx'.symm⟩,
+                (α'.str.left a).2.1⟩)).hom
+              e1 =
+            c.A.hom childVal :=
+          hChildFib.symm
+        have hIH := ih childVal
+        have hLhsHeq :=
+          polyCoalgUnitApprox_heq P α' n
+            _ _ hFibLhs
+            ⟨childVal, hChildFib⟩
+            ⟨childVal, rfl⟩ rfl
+        have hRhsHeq :
+            (c.a.left childVal).2.approx n
+              ≍ mChildren e2 := by
+          have hSC :=
+            comonadCoalgSelfconsistent c a e2
+          have hSCfib :=
+            congrArg (·.1) hSC
+          have hSCsnd :
+              HEq
+                (c.a.left
+                  ((polyCofreeExtract c.A P
+                    (m.children e2)).val)).2
+                (m.children e2) :=
+            (Sigma.ext_iff.mp hSC).2
+          have hChildValEq :
+              childVal =
+              (polyCofreeExtract c.A P
+                (m.children e2)).val := by
+            have hStrEq :=
+              polyComonadCoalgStr_left_eq c a
+            have hStrSnd :=
+              (Sigma.ext_iff.mp hStrEq).2
+            have hStrMorHeq :
+                HEq (α'.str.left a).2.2
+                (polyCofreeChildrenMor c.A P
+                  m ≫
+                (polyCofreeComonad X P).ε.app
+                  c.A) := by
+              have hSndEq :=
+                eq_of_heq hStrSnd
+              exact (Sigma.ext_iff.mp
+                hSndEq).2
+            change (α'.str.left a).2.2.left
+              e1 = _
+            let ε := (polyCofreeComonad X P).ε.app
+              c.A
+            let childMor :=
+              polyCofreeChildrenMor c.A P m ≫ ε
+            have hFamEq :
+                polyBetweenFamily X X P
+                  (α'.str.left a).1
+                  (α'.str.left a).2.1 =
+                polyBetweenFamily X X P
+                  xv m.head.2 := by
+              simp only [polyBetweenFamily,
+                polyToOverFamily, ccrFamily]
+              congr 1
+            have hDomCast :
+                (polyBetweenFamily X X P
+                  (α'.str.left a).1
+                  (α'.str.left a).2.1 ⟶ c.A) =
+                (polyBetweenFamily X X P
+                  xv m.head.2 ⟶ c.A) := by
+              rw [hFamEq]
+            have hMorEq :
+                (α'.str.left a).2.2 =
+                cast hDomCast.symm childMor :=
+              eq_of_heq (hStrMorHeq.trans
+                (cast_heq hDomCast.symm
+                  childMor).symm)
+            have hMorLeftHeq :
+                HEq
+                  (α'.str.left a).2.2.left
+                  childMor.left := by
+              cases hMorEq
+              exact HEq.rfl
+            exact congr_heq hMorLeftHeq he
+              |>.trans (by
+                simp only [childMor, ε,
+                  Over.comp_left,
+                  types_comp_apply,
+                  polyCofreeChildrenMor,
+                  Over.homMk_left,
+                  polyCofreeComonad,
+                  Adjunction.toComonad,
+                  polyForgetCofreeAdjunction,
+                  Adjunction.mkOfUnitCounit,
+                  polyCofreeCounitNat,
+                  polyCofreeCounit,
+                  polyCofreeCounitLeft,
+                  polyCofreeExtract])
+          rw [hChildValEq]
+          have hFibEq :
+              (c.a.left
+                ((polyCofreeExtract c.A P
+                  (m.children e2)).val)).1 =
+              (polyBetweenFamily X X
+                (polyScale c.A P)
+                (c.a.left a).1
+                (c.a.left a).2.head).hom e2 :=
+            hSCfib
+          have hChildApproxEq :
+              (m.children e2).approx n =
+              mChildren e2 := by
+            simp only [PolyCofix.children,
+              PolyCofix.childApproxAt]
+            cases n with
+            | zero =>
+              simp only [
+                PolyCofix.childApproxAt_zero]
+              have := PolyCofixApprox.approx_zero_eq_continue
+                (mChildren e2)
+              exact this.symm
+            | succ k' =>
+              simp only [
+                PolyCofix.childApproxAt_succ]
+              have heq1 :
+                  (m.approx
+                    (k' + 2)).getIndex =
+                  m.head :=
+                m.index_eq_head (k' + 1)
+              conv_lhs =>
+                rw [PolyCofix.childApproxAt_succ_aux_proof_irrel
+                  m.head (m.approx (k' + 2))
+                  (m.index_eq_head (k' + 1))
+                  heq1 e2]
+              generalize haa :
+                m.approx (k' + 2) = aa
+                at heq1
+              rw [hma] at haa
+              subst haa
+              conv_lhs =>
+                rw [PolyCofix.childApproxAt_succ_aux_proof_irrel
+                  m.head
+                  (.intro xv m.head mChildren)
+                  heq1 rfl e2]
+              exact PolyCofix.childApproxAt_succ_aux_intro
+                m.head mChildren e2
+          exact (PolyCofix.approx_heq hFibEq
+            hSCsnd n).trans
+            (heq_of_eq hChildApproxEq)
+        exact hLhsHeq.trans (hIH.trans hRhsHeq)
+
+/--
+The M-type produced by the anamorphism from the
+extracted P-coalgebra structure at a point `a` is
+HEq to the M-type component of `c.a.left a`.
+-/
+lemma polyCoalgComonad_backward_mtype
+    {P : PolyEndo X}
+    (c : Comonad.Coalgebra
+      (polyCofreeComonad X P))
+    (a : c.A.left) :
+    HEq (polyCoalgUnitAt P
+      (polyComonadCoalgToCoalgObj c)
+      (c.A.hom a) ⟨a, rfl⟩)
+    (c.a.left a).2 := by
+  let α' := polyComonadCoalgToCoalgObj c
+  have hfib : c.A.hom a = (c.a.left a).1 :=
+    (comonadCoalgFiberEq c a).symm
+  apply PolyCofix.heq_of_approx_heq hfib
+  intro n
+  exact polyCoalgComonad_backward_approx c n a
+
+/--
+Backward roundtrip: the comparison functor applied
+to the inverse gives back the original coalgebra
+structure map.
+-/
+lemma polyCoalgComonad_backward
+    {P : PolyEndo X}
+    (c : Comonad.Coalgebra
+      (polyCofreeComonad X P)) :
+    ((polyCoalgToComonadCoalg X P).obj
+      (polyComonadCoalgToCoalgObj c)).a = c.a := by
+  change polyCoalgUnit P (polyComonadCoalgToCoalgObj c)
+    = c.a
+  ext a
+  simp only [polyCoalgUnit, Over.homMk_left,
+    polyCoalgUnitLeft]
+  let α' := polyComonadCoalgToCoalgObj c
+  have hfib : α'.V.hom a = (c.a.left a).1 :=
+    (comonadCoalgFiberEq c a).symm
+  refine Sigma.ext hfib ?_
+  change HEq
+    (polyCoalgUnitAt P α' (α'.V.hom a) ⟨a, rfl⟩)
+    (c.a.left a).2
+  exact polyCoalgComonad_backward_mtype c a
 
 end CoalgComonadComparison
 
