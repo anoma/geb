@@ -1,4 +1,5 @@
 import GebLean.PshRelDouble
+import GebLean.RelSpanDiagram
 import GebLean.Utilities.Profunctors
 import Mathlib.CategoryTheory.Functor.FullyFaithful
 
@@ -146,5 +147,384 @@ def pshParametricCatAsPresheaf
     (pshParametricCatAsCopresheaf C D)
     ((opProdOpProdOpEquiv.{max u v (w + 1), max u v (w + 1), v', u'}
       (PshRelSpanObj C) D).congrLeft (E := Type w')).symm
+
+section RelSpanPshRelSpanEquiv
+
+/-- Convert a `Prop`-valued relation to a
+`TypeRel`, i.e., a subfunctor of the product
+presheaf over `Discrete PUnit`. The subfunctor
+assigns `{ p | R p.1 p.2 }` at every object;
+the restriction condition is trivial since the
+only morphism in `(Discrete PUnit)ᵒᵖ` is the
+identity. -/
+def propRelToTypeRel {I₀ I₁ : Type}
+    (R : I₀ → I₁ → Prop) :
+    TypeRel I₀ I₁ where
+  obj _ := { p | R p.1 p.2 }
+  map {U V} i x hx := by
+    have hi : i = 𝟙 U := by
+      obtain ⟨⟨⟩⟩ := U
+      obtain ⟨⟨⟩⟩ := V
+      exact Subsingleton.elim _ _
+    subst hi
+    simp only [Set.mem_preimage]
+    exact hx
+
+/-- Convert a `TypeRel` (subfunctor of the
+product presheaf over `Discrete PUnit`) back to
+a `Prop`-valued relation by evaluating at the
+single object `op ⟨PUnit.unit⟩`. -/
+def typeRelToPropRel {I₀ I₁ : Type}
+    (S : TypeRel I₀ I₁) :
+    I₀ → I₁ → Prop :=
+  fun a b =>
+    (a, b) ∈ S.obj (Opposite.op ⟨PUnit.unit⟩)
+
+@[simp]
+theorem typeRelToPropRel_propRelToTypeRel
+    {I₀ I₁ : Type}
+    (R : I₀ → I₁ → Prop) :
+    typeRelToPropRel (propRelToTypeRel R) = R :=
+  rfl
+
+@[simp]
+theorem propRelToTypeRel_typeRelToPropRel
+    {I₀ I₁ : Type}
+    (S : TypeRel I₀ I₁) :
+    propRelToTypeRel (typeRelToPropRel S) = S := by
+  ext ⟨⟨⟩⟩
+  rfl
+
+/-- Functor embedding `RelSpanObj` into
+`PshRelSpanObj (Discrete PUnit)` by sending
+each type to its constant presheaf and each
+`Prop`-valued relation to the corresponding
+subfunctor via `propRelToTypeRel`. -/
+def relSpanToPshRelSpan :
+    RelSpanObj ⥤
+    PshRelSpanObj.{0, 0, 0}
+      (Discrete PUnit) where
+  obj
+    | .typeNode I =>
+      .typeNode (typeToPsh.obj I)
+    | .relNode I₀ I₁ R =>
+      .relNode _ _ (propRelToTypeRel R)
+  map {X Y} f :=
+    match X, Y, f with
+    | _, _, .id _ => .id _
+    | _, _, .fstProj I₀ I₁ R =>
+      .fstProj _ _ (propRelToTypeRel R)
+    | _, _, .sndProj I₀ I₁ R =>
+      .sndProj _ _ (propRelToTypeRel R)
+  map_id X := by cases X <;> rfl
+  map_comp {X Y Z} f g := by
+    cases f <;> cases g <;> rfl
+
+/-- Extract a `Prop`-valued relation from a
+`PshRel` over `Discrete PUnit` by evaluating
+the subfunctor at the single object. -/
+def pshRelToPropRel
+    {P Q : (Discrete PUnit)ᵒᵖ ⥤ Type}
+    (R : PshRel P Q) :
+    typeEvalUnit.obj P →
+    typeEvalUnit.obj Q → Prop :=
+  fun a b =>
+    (a, b) ∈
+      R.obj (Opposite.op ⟨PUnit.unit⟩)
+
+/-- Functor from
+`PshRelSpanObj (Discrete PUnit)` to
+`RelSpanObj`, sending each presheaf to its
+evaluation at the single object and each
+`PshRel` to its extracted `Prop`-valued
+relation. -/
+def pshRelSpanToRelSpan :
+    PshRelSpanObj.{0, 0, 0}
+      (Discrete PUnit) ⥤
+    RelSpanObj where
+  obj
+    | .typeNode P =>
+      .typeNode (typeEvalUnit.obj P)
+    | .relNode P Q R =>
+      .relNode _ _ (pshRelToPropRel R)
+  map {X Y} f :=
+    match X, Y, f with
+    | _, _, .id _ => .id _
+    | _, _, .fstProj P Q R =>
+      .fstProj _ _ (pshRelToPropRel R)
+    | _, _, .sndProj P Q R =>
+      .sndProj _ _ (pshRelToPropRel R)
+  map_id X := by cases X <;> rfl
+  map_comp {X Y Z} f g := by
+    cases f <;> cases g <;> rfl
+
+/-- The round-trip
+`relSpanToPshRelSpan ⋙ pshRelSpanToRelSpan`
+acts as the identity on objects of
+`RelSpanObj`. -/
+theorem relSpanPshRelSpan_unitObj
+    (X : RelSpanObj) :
+    pshRelSpanToRelSpan.obj
+      (relSpanToPshRelSpan.obj X) = X := by
+  cases X with
+  | typeNode I => rfl
+  | relNode I₀ I₁ R => rfl
+
+/-- A presheaf on `(Discrete PUnit)ᵒᵖ` is
+equal to the constant presheaf at its value
+on the single object. -/
+theorem pshOnUnit_eq_const
+    (P : (Discrete PUnit)ᵒᵖ ⥤ Type) :
+    typeToPsh.obj (typeEvalUnit.obj P) = P :=
+  _root_.CategoryTheory.Functor.ext
+    (fun ⟨⟨⟨⟩⟩⟩ => rfl)
+    (fun ⟨⟨⟨⟩⟩⟩ ⟨⟨⟨⟩⟩⟩ f => by
+      simp only [eqToHom_refl,
+        Category.id_comp, Category.comp_id]
+      have : f = 𝟙 _ := Subsingleton.elim _ _
+      rw [this, P.map_id]; rfl)
+
+/-- Congruence lemma for `PshRelSpanObj.relNode`
+with heterogeneous equality for the relation
+argument. -/
+theorem PshRelSpanObj.relNode_heq_congr
+    {P₁ P₂ Q₁ Q₂ :
+      (Discrete PUnit)ᵒᵖ ⥤ Type}
+    {R₁ : PshRel P₁ Q₁}
+    {R₂ : PshRel P₂ Q₂}
+    (hP : P₁ = P₂) (hQ : Q₁ = Q₂)
+    (hR : HEq R₁ R₂) :
+    PshRelSpanObj.relNode P₁ Q₁ R₁ =
+    PshRelSpanObj.relNode P₂ Q₂ R₂ := by
+  cases hP; cases hQ; cases hR; rfl
+
+theorem relSpanPshRelSpan_counitObj
+    (X : PshRelSpanObj.{0, 0, 0}
+      (Discrete PUnit)) :
+    relSpanToPshRelSpan.obj
+      (pshRelSpanToRelSpan.obj X) = X := by
+  cases X with
+  | typeNode P =>
+    exact congrArg PshRelSpanObj.typeNode
+      (pshOnUnit_eq_const P)
+  | relNode P Q R =>
+    change PshRelSpanObj.relNode
+      (typeToPsh.obj (typeEvalUnit.obj P))
+      (typeToPsh.obj (typeEvalUnit.obj Q))
+      (propRelToTypeRel (pshRelToPropRel R))
+    = PshRelSpanObj.relNode P Q R
+    exact @Eq.ndrec _
+      (typeToPsh.obj (typeEvalUnit.obj P))
+      (fun X => ∀ (S : PshRel X Q),
+        PshRelSpanObj.relNode
+          (typeToPsh.obj
+            (typeEvalUnit.obj X))
+          (typeToPsh.obj
+            (typeEvalUnit.obj Q))
+          (propRelToTypeRel
+            (pshRelToPropRel S))
+        = PshRelSpanObj.relNode X Q S)
+      (@Eq.ndrec _
+        (typeToPsh.obj
+          (typeEvalUnit.obj Q))
+        (fun Y =>
+          ∀ (S : PshRel
+            (typeToPsh.obj
+              (typeEvalUnit.obj P)) Y),
+          PshRelSpanObj.relNode
+            (typeToPsh.obj
+              (typeEvalUnit.obj
+                (typeToPsh.obj
+                  (typeEvalUnit.obj P))))
+            (typeToPsh.obj
+              (typeEvalUnit.obj Y))
+            (propRelToTypeRel
+              (pshRelToPropRel S))
+          = PshRelSpanObj.relNode
+            (typeToPsh.obj
+              (typeEvalUnit.obj P)) Y S)
+        (fun S => congrArg
+          (PshRelSpanObj.relNode _ _)
+          (propRelToTypeRel_typeRelToPropRel
+            S))
+        Q
+        (pshOnUnit_eq_const Q))
+      P
+      (pshOnUnit_eq_const P)
+      R
+
+/-- The equivalence
+`RelSpanObj ≌ PshRelSpanObj (Discrete PUnit)`,
+witnessing that `RelSpanObj` is the special
+case of the presheaf relational span category
+over the terminal category. -/
+theorem relSpanPshRelSpan_unit :
+    relSpanToPshRelSpan ⋙
+      pshRelSpanToRelSpan = 𝟭 _ :=
+  _root_.CategoryTheory.Functor.ext
+    relSpanPshRelSpan_unitObj
+    (fun {X Y} f => by
+      cases f with
+      | id X => cases X <;> rfl
+      | fstProj => rfl
+      | sndProj => rfl)
+
+/-- `fstProj` is invariant under propositional
+equality of its arguments. -/
+theorem PshRelSpanHom.fstProj_heq
+    {P₁ P₂ Q₁ Q₂ :
+      (Discrete PUnit)ᵒᵖ ⥤ Type}
+    {R₁ : PshRel P₁ Q₁}
+    {R₂ : PshRel P₂ Q₂}
+    (hP : P₁ = P₂) (hQ : Q₁ = Q₂)
+    (hR : HEq R₁ R₂) :
+    HEq (PshRelSpanHom.fstProj P₁ Q₁ R₁)
+      (PshRelSpanHom.fstProj P₂ Q₂ R₂) := by
+  cases hP; cases hQ; cases hR; rfl
+
+/-- `sndProj` is invariant under propositional
+equality of its arguments. -/
+theorem PshRelSpanHom.sndProj_heq
+    {P₁ P₂ Q₁ Q₂ :
+      (Discrete PUnit)ᵒᵖ ⥤ Type}
+    {R₁ : PshRel P₁ Q₁}
+    {R₂ : PshRel P₂ Q₂}
+    (hP : P₁ = P₂) (hQ : Q₁ = Q₂)
+    (hR : HEq R₁ R₂) :
+    HEq (PshRelSpanHom.sndProj P₁ Q₁ R₁)
+      (PshRelSpanHom.sndProj P₂ Q₂ R₂) := by
+  cases hP; cases hQ; cases hR; rfl
+
+/-- The `HEq` between `propRelToTypeRel
+(pshRelToPropRel R)` and `R`, used for the
+counit morphism compatibility. -/
+theorem propRelToTypeRel_pshRelToPropRel_heq
+    (P Q : (Discrete PUnit)ᵒᵖ ⥤ Type)
+    (R : PshRel P Q) :
+    HEq (propRelToTypeRel (pshRelToPropRel R))
+      R := by
+  have hP := pshOnUnit_eq_const P
+  have hQ := pshOnUnit_eq_const Q
+  exact @Eq.ndrec _
+    (typeToPsh.obj (typeEvalUnit.obj P))
+    (fun X => ∀ (S : PshRel X Q),
+      HEq (propRelToTypeRel
+        (pshRelToPropRel S)) S)
+    (@Eq.ndrec _
+      (typeToPsh.obj (typeEvalUnit.obj Q))
+      (fun Y => ∀ (S : PshRel
+          (typeToPsh.obj
+            (typeEvalUnit.obj P)) Y),
+        HEq (propRelToTypeRel
+          (pshRelToPropRel S)) S)
+      (fun S => heq_of_eq
+        (propRelToTypeRel_typeRelToPropRel S))
+      Q hQ)
+    P hP R
+
+@[simp]
+theorem counit_map_fstProj
+    (P Q : (Discrete PUnit)ᵒᵖ ⥤ Type)
+    (R : PshRel P Q) :
+    relSpanToPshRelSpan.map
+      (pshRelSpanToRelSpan.map
+        (PshRelSpanHom.fstProj P Q R)) =
+    PshRelSpanHom.fstProj _ _
+      (propRelToTypeRel
+        (pshRelToPropRel R)) := rfl
+
+@[simp]
+theorem counit_map_sndProj
+    (P Q : (Discrete PUnit)ᵒᵖ ⥤ Type)
+    (R : PshRel P Q) :
+    relSpanToPshRelSpan.map
+      (pshRelSpanToRelSpan.map
+        (PshRelSpanHom.sndProj P Q R)) =
+    PshRelSpanHom.sndProj _ _
+      (propRelToTypeRel
+        (pshRelToPropRel R)) := rfl
+
+/-- The round-trip
+`pshRelSpanToRelSpan ⋙ relSpanToPshRelSpan`
+acts as the identity on morphisms of
+`PshRelSpanObj (Discrete PUnit)`, up to
+`eqToHom` transport from the object-level
+equality. -/
+theorem relSpanPshRelSpan_counit_map
+    {X Y : PshRelSpanObj.{0, 0, 0}
+      (Discrete PUnit)}
+    (f : X ⟶ Y) :
+    relSpanToPshRelSpan.map
+      (pshRelSpanToRelSpan.map f) =
+    eqToHom
+      (relSpanPshRelSpan_counitObj X) ≫
+      f ≫
+      eqToHom
+        (relSpanPshRelSpan_counitObj Y).symm
+      := by
+  match X, Y, f with
+  | _, _, .id (.typeNode P) =>
+    symm
+    rw [← heq_iff_comp_eqToHom_comp]
+    exact congr_arg_heq PshRelSpanHom.id
+      (relSpanPshRelSpan_counitObj
+        (.typeNode P)).symm
+  | _, _, .id (.relNode P Q R) =>
+    symm
+    rw [← heq_iff_comp_eqToHom_comp]
+    exact congr_arg_heq PshRelSpanHom.id
+      (relSpanPshRelSpan_counitObj
+        (.relNode P Q R)).symm
+  | _, _, .fstProj P Q R =>
+    simp only [counit_map_fstProj]
+    symm
+    rw [← heq_iff_comp_eqToHom_comp]
+    exact PshRelSpanHom.fstProj_heq
+      (pshOnUnit_eq_const P).symm
+      (pshOnUnit_eq_const Q).symm
+      (propRelToTypeRel_pshRelToPropRel_heq
+        P Q R).symm
+  | _, _, .sndProj P Q R =>
+    simp only [counit_map_sndProj]
+    symm
+    rw [← heq_iff_comp_eqToHom_comp]
+    exact PshRelSpanHom.sndProj_heq
+      (pshOnUnit_eq_const P).symm
+      (pshOnUnit_eq_const Q).symm
+      (propRelToTypeRel_pshRelToPropRel_heq
+        P Q R).symm
+
+theorem relSpanPshRelSpan_counit :
+    pshRelSpanToRelSpan ⋙
+      relSpanToPshRelSpan =
+    𝟭 (PshRelSpanObj.{0, 0, 0}
+      (Discrete PUnit)) :=
+  _root_.CategoryTheory.Functor.ext
+    relSpanPshRelSpan_counitObj
+    (fun {_ _} f =>
+      relSpanPshRelSpan_counit_map f)
+
+/-- `RelSpanObj` is categorically isomorphic
+to `PshRelSpanObj (Discrete PUnit)`. -/
+def relSpanPshRelSpanIso :
+    RelSpanObj ≅Cat
+    PshRelSpanObj.{0, 0, 0}
+      (Discrete PUnit) where
+  hom := relSpanToPshRelSpan.toCatHom
+  inv := pshRelSpanToRelSpan.toCatHom
+  hom_inv_id := by
+    change (relSpanToPshRelSpan ⋙
+      pshRelSpanToRelSpan).toCatHom =
+      (𝟭 _).toCatHom
+    congr 1
+    exact relSpanPshRelSpan_unit
+  inv_hom_id := by
+    change (pshRelSpanToRelSpan ⋙
+      relSpanToPshRelSpan).toCatHom =
+      (𝟭 _).toCatHom
+    congr 1
+    exact relSpanPshRelSpan_counit
+
+end RelSpanPshRelSpanEquiv
 
 end GebLean

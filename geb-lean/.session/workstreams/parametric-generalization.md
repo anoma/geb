@@ -29,6 +29,33 @@ terminal object.
 `PshRel` has been changed from `Skeleton (PshProdOver P Q)` to
 `Subfunctor (pshProdPresheaf P Q)`.
 
+### RelSpanObj ≅Cat PshRelSpanObj (Discrete PUnit) (completed)
+
+`PshRelSpanDiagram.lean` now contains a categorical isomorphism
+`relSpanPshRelSpanIso` witnessing that `RelSpanObj` is the
+terminal-category specialization of `PshRelSpanObj C`.
+
+Definitions added:
+- `propRelToTypeRel` / `typeRelToPropRel`: convert between
+  `Prop`-valued relations and `TypeRel` (subfunctor-based)
+- `pshRelToPropRel`: extract `Prop`-valued relation from `PshRel`
+- `pshOnUnit_eq_const`: presheaves on `(Discrete PUnit)ᵒᵖ` are
+  constant
+- `relSpanToPshRelSpan` / `pshRelSpanToRelSpan`: mutually inverse
+  functors
+- `relSpanPshRelSpan_unit` / `relSpanPshRelSpan_counit`: both
+  round-trip composites equal the identity (as functor equalities
+  via `Functor.ext`)
+- `relSpanPshRelSpanIso : RelSpanObj ≅Cat PshRelSpanObj (Discrete
+  PUnit)`: the `Cat`-isomorphism
+
+The counit object equality for the `relNode` case uses a double
+`@Eq.ndrec` to handle the dependent type in
+`PshRelSpanObj.relNode`. The counit morphism compatibility uses
+`heq_iff_comp_eqToHom_comp` with factored-out HEq lemmas
+(`fstProj_heq`, `sndProj_heq`,
+`propRelToTypeRel_pshRelToPropRel_heq`).
+
 ### Analysis results
 
 `profRelInterp` / `biRelMap` are oplax on `TypeRelCat` (the
