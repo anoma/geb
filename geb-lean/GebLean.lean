@@ -41,6 +41,7 @@ import GebLean.PolyUMorph
 import GebLean.Polynomial
 import GebLean.ProfAlg
 import GebLean.PshRelDouble
+import GebLean.PshRelSpanDiagram
 import GebLean.PshTypeExpr
 import GebLean.RelInterpComposition
 import GebLean.RelSpanDiagram
