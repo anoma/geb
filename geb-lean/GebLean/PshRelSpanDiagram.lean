@@ -119,4 +119,16 @@ abbrev PshParametricFunctor
   PshRelSpanObj.{u, v, w} C ⥤
     (Dᵒᵖ ⥤ Type w')
 
+/-- The currying equivalence identifying
+presheaf-valued parametric functors with
+copresheaves on the product category
+`PshRelSpanObj C × Dᵒᵖ`. -/
+def pshParametricCurrying
+    (D : Type u') [Category.{v'} D] :
+    PshParametricFunctor.{u, v, w, u', v', w'}
+      C D ≌
+    (PshRelSpanObj.{u, v, w} C × Dᵒᵖ ⥤
+      Type w') :=
+  Functor.currying
+
 end GebLean
