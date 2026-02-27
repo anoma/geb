@@ -1328,6 +1328,75 @@ theorem pshBarrLiftSkel_related
       (pshRelRelated_toPshProdOverRelated
         h))
 
+/-- Transport a `pshBarrLiftSkel` along a
+natural transformation `α : G ⟶ H`. Maps
+each related pair `(x, y)` in the Barr lift
+through `G` to `(α x, α y)` in the Barr lift
+through `H`, using `α` on the witness. -/
+def pshBarrLiftSkelMap
+    {P Q : Cᵒᵖ ⥤ Type w}
+    {G H :
+      (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w)}
+    (α : G ⟶ H)
+    (R : PshRel P Q) :
+    (pshBarrLiftSkel G R).toFunctor ⟶
+      (pshBarrLiftSkel H R).toFunctor :=
+  Subfunctor.lift
+    (pshProdLift
+      ((pshBarrLiftSkel G R).ι ≫
+        pshProdFst (G.obj P) (G.obj Q) ≫
+        α.app P)
+      ((pshBarrLiftSkel G R).ι ≫
+        pshProdSnd (G.obj P) (G.obj Q) ≫
+        α.app Q))
+    (by
+      intro c _ hx
+      simp only [Subfunctor.range_obj,
+        Set.mem_range] at hx ⊢
+      obtain ⟨⟨pq, hpq⟩, heq⟩ := hx
+      obtain ⟨w, hw⟩ := hpq
+      simp only [pshBarrLiftSkel,
+        pshProdOverToRel,
+        Subfunctor.range_obj,
+        Set.mem_range]
+      refine ⟨(α.app R.toFunctor).app c w,
+        ?_⟩
+      have hw₁ : (G.map (R.ι ≫
+          pshProdFst P Q)).app c w = pq.1 :=
+        congr_arg Prod.fst hw
+      have hw₂ : (G.map (R.ι ≫
+          pshProdSnd P Q)).app c w = pq.2 :=
+        congr_arg Prod.snd hw
+      rw [← heq]
+      simp only [pshBarrLift, Over.mk,
+        pshProdLift, FunctorToTypes.prod.lift,
+        NatTrans.comp_app, types_comp_apply,
+        pshBarrLiftSkel, pshProdOverToRel,
+        Subfunctor.range]
+      apply Prod.ext
+      · change (H.map (R.ι ≫
+              pshProdFst P Q)).app c
+            ((α.app R.toFunctor).app c w) =
+          (α.app P).app c pq.1
+        have nat := congr_fun
+          (congr_app
+            (α.naturality
+              (R.ι ≫ pshProdFst P Q)) c) w
+        simp only [NatTrans.comp_app,
+          types_comp_apply] at nat
+        rw [← nat, hw₁]
+      · change (H.map (R.ι ≫
+              pshProdSnd P Q)).app c
+            ((α.app R.toFunctor).app c w) =
+          (α.app Q).app c pq.2
+        have nat := congr_fun
+          (congr_app
+            (α.naturality
+              (R.ι ≫ pshProdSnd P Q)) c) w
+        simp only [NatTrans.comp_app,
+          types_comp_apply] at nat
+        rw [← nat, hw₂])
+
 end PshBarrExtension
 
 section PshInternalHom
