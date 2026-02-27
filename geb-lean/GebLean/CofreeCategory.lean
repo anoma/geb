@@ -724,12 +724,7 @@ lemma coalgCopresheafChild_shape_heq
     (coalgCopresheafChild_consistent c a e_m)
   exact (Sigma.ext_iff.mp h).2
 
--- The copresheaf morphism action and functor laws
--- require the depth-1 target equality
--- (coalgCopresheafChild_depth1_target) which relates
--- the child annotation's copresheaf target to the
--- parent's child shape. This is developed below
--- using the sigma-pair infrastructure.
+/-! ### Sigma-Pair Infrastructure -/
 
 /--
 The "raw shape pair" function: maps the
@@ -974,9 +969,10 @@ lemma coalgCopresheafChild_shapeToTransported
         ).hom e_shape,
       (coalgCopresheafShapeAt c a).children
         e_shape⟩ := by
-  -- Generalize c.a.left a to collapse the
-  -- fiber transport. First revert everything
-  -- that depends on it.
+  -- Generalize `c.a.left a`, decompose into
+  -- fiber and M-type, subst the fiber equality,
+  -- derive the shape equality, rw to collapse
+  -- the transport, then `rfl`.
   revert e_raw he
   generalize hca : c.a.left a = ca
   obtain ⟨xv, mv⟩ := ca
@@ -985,68 +981,119 @@ lemma coalgCopresheafChild_shapeToTransported
     (congrArg Sigma.fst hca).symm.trans
       (comonadCoalgFiberEq c a)
   subst hfib
-  -- Now mv : PolyCofix ... (c.A.hom a).
-  -- Prove coalgCopresheafShapeAt c a =
-  -- polyCofreeToShape c.A P mv using hca.
-  have hmv_heq :
-      HEq (c.a.left a).2 mv :=
-    (Sigma.ext_iff.mp hca).2
   have h_shapeAt_eq :
       coalgCopresheafShapeAt c a =
       polyCofreeToShape c.A P mv := by
-    -- Use the sigma pair chain:
-    -- ⟨c.A.hom a, polyCofreeToShape mv⟩
-    -- = toShape ⟨c.A.hom a, mv⟩
-    -- = toShape (c.a.left a)    [by hca.symm]
-    -- = coalgCopresheafTargetRaw_eq
-    -- = ⟨c.A.hom a, coalgCopresheafShapeAt c a⟩
     let toShape := fun (p :
         Σ x, PolyCofreeM c.A P x) =>
       (⟨p.1, polyCofreeToShape c.A P p.2⟩ :
         Σ x, PolyCofreeShape P x)
-    have h1 : toShape (c.a.left a) =
-        (⟨c.A.hom a,
-          polyCofreeToShape c.A P mv⟩ :
-          Σ x, PolyCofreeShape P x) :=
-      congrArg toShape hca
-    have h2 := coalgCopresheafTargetRaw_eq c a
-    -- h2 : ⟨(c.a.left a).1, toShape...⟩ =
-    --   ⟨c.A.hom a, coalgCopresheafShapeAt c a⟩
-    have h3 : (⟨c.A.hom a,
-        polyCofreeToShape c.A P mv⟩ :
-        Σ x, PolyCofreeShape P x) =
-      ⟨c.A.hom a,
-        coalgCopresheafShapeAt c a⟩ :=
-      h1.symm.trans h2
+    have h1 := congrArg toShape hca
+    have h3 := h1.symm.trans
+      (coalgCopresheafTargetRaw_eq c a)
     exact (eq_of_heq
       (Sigma.ext_iff.mp h3).2).symm
-  -- Set coalgCopresheafShapeAt c a as a variable
-  -- so we can subst it.
   dsimp only at e_raw
   revert e_shape he
   rw [h_shapeAt_eq]
   intro e_shape he
-  -- Now e_shape and e_raw have the same type.
   have he_eq := eq_of_heq he
   subst he_eq
   rfl
 
--- The depth-1 target equality
--- (`coalgCopresheafChild_depth1_target`) is the
--- remaining blocker. It requires relating the
--- child annotation's copresheaf target to the
--- parent's tgtAt at depth 1. The sigma pair
--- chain (target_sigma + rawToShape +
--- shapeToTransported) gives the equality, but
--- the edge HEq between the transported shape edge
--- and the raw shape edge requires extracting
--- `.fst` from a cast sigma pair, which Lean's
--- `cast` doesn't reduce for.
--- The `revert + generalize + subst + rw` technique
--- handles this for standalone lemmas but the
--- `generalize` fails here because the transport
--- proof in `coalgCopresheafShapeAt` creates a
--- dependency on `a` that survives the
--- generalization.
+/--
+The `CastPos` at depth 1 is HEq to the input
+position. The cast between the transported and
+raw position types is an identity up to HEq.
+-/
+lemma coalgCopresheafCastPos1_collapse
+    {P : PolyEndo X}
+    (c : Comonad.Coalgebra
+      (polyCofreeComonad X P))
+    (a : c.A.left)
+    (e_shape : (polyBetweenFamily X X P (c.A.hom a)
+      (coalgCopresheafShapeAt c a).head.2).left) :
+    HEq
+      (coalgCopresheafCastPos c a 1
+        ⟨e_shape, PUnit.unit⟩)
+      (⟨e_shape, PUnit.unit⟩ :
+        PolyCofreeAnnotPosAt P
+          (coalgCopresheafShapeAt c a) 1) :=
+  by simp only [coalgCopresheafCastPos]
+     exact cast_heq _ _
+
+/--
+The depth-1 target equality: the copresheaf
+target of the child annotation at a shape edge
+equals `tgtAt 1` of the parent's target.
+Chains `target_sigma`, `rawToShape`, and
+`tgtAt_transport`, using `CastPos1_collapse`
+for the cast round-trip.
+-/
+lemma coalgCopresheafChild_depth1_target
+    {P : PolyEndo X}
+    (c : Comonad.Coalgebra
+      (polyCofreeComonad X P))
+    (a : c.A.left)
+    (e_shape : (polyBetweenFamily X X P (c.A.hom a)
+      (coalgCopresheafShapeAt c a).head.2).left) :
+    let e_raw := (coalgCopresheafCastPos c a 1
+      ⟨e_shape, PUnit.unit⟩).1
+    let e_m := polyCofreeShapePosToMPos c.A P
+      (c.a.left a).2 e_raw
+    coalgCopresheafTarget c
+      (coalgCopresheafChild c a e_m) =
+    (coalgCopresheafTarget c a).tgtAt 1
+      ⟨e_shape, PUnit.unit⟩ := by
+  intro e_raw e_m
+  have h_collapse :=
+    coalgCopresheafCastPos1_collapse c a e_shape
+  -- The raw target object (using the M-type
+  -- fiber instead of c.A.hom a).
+  let rawObj : PolyCofreeCat P :=
+    ⟨(c.a.left a).1,
+      polyCofreeToShape c.A P (c.a.left a).2⟩
+  have h_raw_eq : rawObj =
+      coalgCopresheafTarget c a := by
+    let h := coalgCopresheafTargetRaw_eq c a
+    exact PolyCofreeCat.ext
+      (congrArg Sigma.fst h)
+      (Sigma.ext_iff.mp h).2
+  -- Chain `target_sigma` and `rawToShape` to
+  -- get the child target in raw coordinates.
+  have h_raw_tgt :
+      coalgCopresheafTarget c
+        (coalgCopresheafChild c a e_m) =
+      rawObj.tgtAt 1
+        ⟨e_raw, PUnit.unit⟩ := by
+    simp only [coalgCopresheafTarget,
+      PolyCofreeCat.tgtAt, PolyCofreeAnnotFiberAt,
+      polyCofreeSubtreeAt]
+    have h_chain :=
+      (coalgCopresheafChild_target_sigma
+        c a e_m).trans
+      (coalgCopresheafChild_rawToShape
+        c a e_raw)
+    exact PolyCofreeCat.ext
+      (congrArg Sigma.fst h_chain)
+      (Sigma.ext_iff.mp h_chain).2
+  -- Convert from raw to transported coordinates
+  -- using `tgtAt_transport`.
+  rw [h_raw_tgt,
+    PolyCofreeCat.tgtAt_transport h_raw_eq]
+  congr 1
+  -- The `CastPos` (transported → raw) composed
+  -- with `tgtAt_transport` (raw → transported)
+  -- is the identity, by `cast_cast` + `cast_eq`.
+  -- ⟨e_raw, ()⟩ = CastPos c a 1 ⟨e_shape, ()⟩
+  -- because e_raw = (.1) and .2 = PUnit.unit.
+  have h_era :
+      (⟨e_raw, PUnit.unit⟩ :
+        PolyCofreeAnnotPosAt P rawObj.shape 1) =
+      coalgCopresheafCastPos c a 1
+        ⟨e_shape, PUnit.unit⟩ := by
+    rfl
+  simp only [h_era, coalgCopresheafCastPos,
+    cast_cast, cast_eq]
 
 end GebLean
