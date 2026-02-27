@@ -541,16 +541,17 @@ copresheaves. Characterize this difference.
 
 6. Both covariant functors `(Type ⥤ Type)` and
    contravariant functors `(Typeᵒᵖ ⥤ Type)` embed
-   fully faithfully into `ParametricFunctor`
+   fully faithfully into `ParametricCopresheaf`
    (`RelSpanObj ⥤ Type 1`). What is the
-   relationship between `ParametricFunctor` and
+   relationship between `ParametricCopresheaf` and
    profunctors `(Typeᵒᵖ × Type ⥤ Type)`? Is there
    a faithful embedding of profunctors into
-   `ParametricFunctor`, or of `ParametricFunctor`
-   into profunctors, or neither? The covariant
-   embedding uses the Barr extension
-   (`covRelImage`/`functorRelLift`) at relNodes,
-   while the contravariant uses a pullback
+   `ParametricCopresheaf`, or of
+   `ParametricCopresheaf` into profunctors, or
+   neither? The covariant embedding uses the Barr
+   extension (`covRelImage`/`functorRelLift`) at
+   relNodes, while the contravariant uses a
+   pullback
    (`contraRelImage`/`contravariantRelLift`). A
    profunctor has both covariant and contravariant
    arguments, so its embedding would need to
@@ -559,23 +560,24 @@ copresheaves. Characterize this difference.
    `{ (a, b) : P(I₀, I₀) × P(I₁, I₁) //
    ∃ w : P(I₀, I₁), ... }` or a pullback/image
    hybrid. Understanding this would clarify how
-   `ParametricFunctor` relates to the
+   `ParametricCopresheaf` relates to the
    twisted-arrow copresheaf topos where paranatural
    transformations live.
 
    Resolved: `profunctorEmbedding` is a functor
    (via `profRelImage`) but neither full nor
    faithful (only sees diagonal). No natural
-   embedding from ParametricFunctor to profunctors
-   or twisted-arrow copresheaves (RelSpanObj too
-   discrete). No embedding from TwArr copresheaves
-   to ParametricFunctor either (would need
+   embedding from ParametricCopresheaf to
+   profunctors or twisted-arrow copresheaves
+   (RelSpanObj too discrete). No embedding from
+   TwArr copresheaves to ParametricCopresheaf
+   either (would need
    left-totality of all relations). The
    relationship is at the level of specific
    limits, not category-wide functors.
 
    Update: `paranaturalProfEmbedding` (profunctors
-   with PARANATURAL morphisms → ParametricFunctor)
+   with PARANATURAL morphisms → ParametricCopresheaf)
    is a valid functor. The FullyFaithful proof
    is in progress -- the embedding functor
    compiles, and the structure matches
@@ -585,7 +587,7 @@ copresheaves. Characterize this difference.
    diagonal components). Full should hold
    (`diagRelImage` is a product subtype). This
    would make `endoProfCategory` a full
-   subcategory of `ParametricFunctor`.
+   subcategory of `ParametricCopresheaf`.
 
 7. Generalize `RelSpanDiagram.lean` to presheaves
    on arbitrary `C` (creating
@@ -595,7 +597,7 @@ copresheaves. Characterize this difference.
    subobject. The current `RelSpanDiagram` would be
    the special case `C = terminal category`.
 
-8. Research question: does `ParametricFunctor`
+8. Research question: does `ParametricCopresheaf`
    have a universal property within `Cat`?
    Written up in
    `docs/parametric-functor-universal-property.md`.
