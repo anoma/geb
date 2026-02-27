@@ -17,52 +17,73 @@ precomposition with equivalences, and then specializes to the hom functor
 `Hom : Cᵒᵖ × C ⥤ Type`.
 -/
 
-universe v u w w'
+universe v u v' u' w w'
 
 namespace GebLean
 
 open CategoryTheory
 
-abbrev opProd (C D : Type u) [Category C] [Category D] := Cᵒᵖ × D
+abbrev opProd (C : Type u) (D : Type u') [Category.{v} C] [Category.{v'} D] :=
+  Cᵒᵖ × D
 
 abbrev opProdSym (C : Type u) [Category C] := opProd C C
 
-abbrev opProd' (C D : Type u) [Category C] [Category D] := Cᵒᵖ' × D
+abbrev opProd' (C : Type u) (D : Type u') [Category.{v} C] [Category.{v'} D] :=
+  Cᵒᵖ' × D
 
-instance OpProdInst' (C D : Type u) [Category C] [Category D] :
-  Category (opProd' C D) := inferInstance
+instance OpProdInst'
+  (C : Type u) (D : Type u') [Category.{v} C] [Category.{v'} D] :
+    Category (opProd' C D) :=
+  inferInstance
 
 abbrev opProdSym' (C : Type u) [Category C] := opProd' C C
 
-def opProdEquiv (C D : Type u) [Category C] [Category D] :
+def opProdEquiv (C : Type u) (D : Type u') [Category.{v} C] [Category.{v'} D] :
     opProd C D ≌ opProd' C D :=
   Equivalence.prod opEquivOp' CategoryTheory.Equivalence.refl
 
-def opOpProdEquiv (C D : Type u) [Category C] [Category D] :
+def opOpProdEquiv (C : Type u) (D : Type u') [Category.{v} C] [Category.{v'} D] :
     Cᵒᵖᵒᵖ × D ≌ C × D :=
   Equivalence.prod (opOpEquivalence C) CategoryTheory.Equivalence.refl
 
-def opOpProdEquiv' (C D : Type u) [Category C] [Category D] :
+def opOpProdEquiv' (C : Type u) (D : Type u') [Category.{v} C] [Category.{v'} D] :
     (Cᵒᵖ'ᵒᵖ' × D) ≌ (C × D) :=
   Equivalence.prod CategoryTheory.Equivalence.refl CategoryTheory.Equivalence.refl
 
-abbrev prodOp (C D : Type u) [Category C] [Category D] := C × Dᵒᵖ
+abbrev prodOp (C : Type u) (D : Type u') [Category.{v} C] [Category.{v'} D] :=
+  C × Dᵒᵖ
 
-abbrev prodOp' (C D : Type u) [Category C] [Category D] := C × Dᵒᵖ'
+abbrev prodOp' (C : Type u) (D : Type u') [Category.{v} C] [Category.{v'} D] :=
+  C × Dᵒᵖ'
 
-def prodOpProdOp'Equiv (C D : Type u) [Category C] [Category D] :
+def opProdProdOpOpEquiv (C : Type u) (D : Type u')
+  [CInst : Category.{v} C] [DInst : Category.{v'} D] :
+    opProd C D ≌ (prodOp C D)ᵒᵖ :=
+  CategoryTheory.Equivalence.trans
+    (Equivalence.prod CategoryTheory.Equivalence.refl (opOpEquivalence D).symm)
+    (CategoryTheory.prodOpEquiv C (D := Dᵒᵖ).symm)
+
+def opProdOpProdOpEquiv (C : Type u) (D : Type u')
+  [CInst : Category.{v} C] [DInst : Category.{v'} D] :
+    (opProd C D)ᵒᵖ ≌ prodOp C D :=
+  CategoryTheory.Equivalence.trans
+    (CategoryTheory.prodOpEquiv (C := Cᵒᵖ) (D := D))
+    (Equivalence.prod (opOpEquivalence C) CategoryTheory.Equivalence.refl)
+
+def prodOpProdOp'Equiv (C : Type u) (D : Type u')
+  [Category.{v} C] [Category.{v'} D] :
     prodOp C D ≌ prodOp' C D :=
   Equivalence.prod CategoryTheory.Equivalence.refl opEquivOp'
 
-def opProdProdOpEquiv (C : Type u) [Category C] :
+def opProdProdOpEquiv (C : Type u) [Category.{v} C] :
     opProd C C ≌ prodOp C C :=
   CategoryTheory.Prod.braiding Cᵒᵖ C
 
-def opProdProdOpEquiv' (C : Type u) [Category C] :
+def opProdProdOpEquiv' (C : Type u) [Category.{v} C] :
     opProd' C C ≌ prodOp' C C :=
   CategoryTheory.Prod.braiding Cᵒᵖ' C
 
-def opProdSymSelfDual (C : Type u) [Category C] :
+def opProdSymSelfDual (C : Type u) [Category.{v} C] :
     (opProd C C)ᵒᵖ ≌ (opProd C C) :=
   CategoryTheory.Equivalence.trans
     (CategoryTheory.prodOpEquiv Cᵒᵖ)
@@ -70,7 +91,7 @@ def opProdSymSelfDual (C : Type u) [Category C] :
       (opOpProdEquiv C Cᵒᵖ)
       (opProdProdOpEquiv C).symm)
 
-def opProdSymSelfDual' (C : Type u) [Category C] :
+def opProdSymSelfDual' (C : Type u) [Category.{v} C] :
     (opProd' C C)ᵒᵖ' ≌ (opProd' C C) :=
   CategoryTheory.Equivalence.trans
     (prodOpEquiv' (C := Cᵒᵖ') (D := C))

@@ -1,4 +1,5 @@
 import GebLean.PshRelDouble
+import GebLean.Utilities.Profunctors
 import Mathlib.CategoryTheory.Functor.FullyFaithful
 
 /-!
@@ -99,7 +100,7 @@ theorem PshRelSpanHom.assoc
   cases f <;> cases g <;> cases h <;> rfl
 
 instance PshRelSpanCat :
-    Category (PshRelSpanObj.{u, v, w} C) where
+    SmallCategory.{max u v (w + 1)} (PshRelSpanObj.{u, v, w} C) where
   id_comp := PshRelSpanHom.id_comp C
   comp_id := PshRelSpanHom.comp_id C
   assoc := PshRelSpanHom.assoc C
@@ -123,12 +124,27 @@ abbrev PshParametricFunctor
 presheaf-valued parametric functors with
 copresheaves on the product category
 `PshRelSpanObj C × Dᵒᵖ`. -/
-def pshParametricCurrying
+def pshParametricCatAsCopresheaf
     (D : Type u') [Category.{v'} D] :
-    PshParametricFunctor.{u, v, w, u', v', w'}
-      C D ≌
-    (PshRelSpanObj.{u, v, w} C × Dᵒᵖ ⥤
-      Type w') :=
+    (PshParametricFunctor.{u, v, w, u', v', w'} C D) ≌
+    (PshRelSpanObj.{u, v, w} C × Dᵒᵖ ⥤ Type w') :=
   Functor.currying
+
+/-- The presheaf-category equivalence: the
+category of presheaf-valued parametric
+functors is equivalent to a presheaf
+topos on `(PshRelSpanObj C)ᵒᵖ × D`.
+
+Constructed by composing the currying
+equivalence with precomposition by
+`pshRelSpanProdOpFwd`. -/
+def pshParametricCatAsPresheaf
+    (D : Type u') [Category.{v'} D] :
+    (PshParametricFunctor.{u, v, w, u', v', w'} C D) ≌
+    (((PshRelSpanObj.{u, v, w} C)ᵒᵖ × D)ᵒᵖ ⥤ Type w') :=
+  CategoryTheory.Equivalence.trans
+    (pshParametricCatAsCopresheaf C D)
+    ((opProdOpProdOpEquiv.{max u v (w + 1), max u v (w + 1), v', u'}
+      (PshRelSpanObj C) D).congrLeft (E := Type w')).symm
 
 end GebLean

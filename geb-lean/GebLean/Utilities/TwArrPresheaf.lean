@@ -529,7 +529,7 @@ def TwArrPresheaf.sliceCopresheaf (F : TwArrPresheaf C) (y : C) :
       unfold OpProdInst'
         CategoryStruct.id CategoryStruct.comp
         Category.toCategoryStruct
-        opProd' uniformProd
+        opProd'
       simp only [CategoryOp'.eq_1]
       exact (Category.id_comp (𝟙 y)).symm
 
