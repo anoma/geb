@@ -36,6 +36,7 @@ terminal object.
 terminal-category specialization of `PshRelSpanObj C`.
 
 Definitions added:
+
 - `propRelToTypeRel` / `typeRelToPropRel`: convert between
   `Prop`-valued relations and `TypeRel` (subfunctor-based)
 - `pshRelToPropRel`: extract `Prop`-valued relation from `PshRel`

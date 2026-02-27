@@ -525,6 +525,27 @@ def relSpanPshRelSpanIso :
     congr 1
     exact relSpanPshRelSpan_counit
 
+/-- The equivalence between `ParametricFunctor`
+(`RelSpanObj ⥤ Type 1`) and
+`PshParametricFunctor` over the terminal
+category, obtained by chaining:
+1. `relSpanPshRelSpanIso` (source categories)
+2. The presheaf-type equivalence on `Type 1`
+   (target category). -/
+def parametricFunctorEquiv :
+    ParametricFunctor ≌
+    PshParametricFunctor.{0, 0, 0, 0, 0, 1}
+      (Discrete PUnit) (Discrete PUnit) :=
+  (Cat.equivOfIso
+    relSpanPshRelSpanIso).congrLeft
+    (E := Type 1) |>.trans
+    (((Discrete.opposite PUnit).congrLeft
+      (E := Type 1) |>.trans
+      (CategoryTheory.Functor.equiv
+        (C := Type 1))).symm.congrRight
+      (E := PshRelSpanObj.{0, 0, 0}
+        (Discrete PUnit)))
+
 end RelSpanPshRelSpanEquiv
 
 end GebLean
