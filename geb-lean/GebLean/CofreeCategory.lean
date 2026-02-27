@@ -1096,4 +1096,189 @@ lemma coalgCopresheafChild_depth1_target
   simp only [h_era, coalgCopresheafCastPos,
     cast_cast, cast_eq]
 
+/-! ### Copresheaf Morphism Action -/
+
+/--
+The copresheaf morphism action at a given depth
+and position, defined by induction on depth.
+At depth 0, the element is returned unchanged.
+At depth n+1, the child annotation is extracted
+via self-consistency, and the function recurses
+at depth n.
+-/
+def coalgCopresheafMapByDepth {P : PolyEndo X}
+    (c : Comonad.Coalgebra
+      (polyCofreeComonad X P))
+    (a : c.A.left) :
+    (n : Nat) →
+    (pos : PolyCofreeAnnotPosAt P
+      (coalgCopresheafShapeAt c a) n) →
+    coalgCopresheafObj c
+      ((coalgCopresheafTarget c a).tgtAt
+        n pos)
+  | 0, _ => ⟨a, rfl⟩
+  | n + 1, ⟨e_shape, rest⟩ => by
+    let m := (c.a.left a).2
+    let e_raw := (coalgCopresheafCastPos c a 1
+      ⟨e_shape, PUnit.unit⟩).1
+    let e_m := polyCofreeShapePosToMPos
+      c.A P m e_raw
+    let child := coalgCopresheafChild c a e_m
+    have h_child_target :=
+      coalgCopresheafChild_depth1_target
+        c a e_shape
+    let rest_child :
+        PolyCofreeAnnotPosAt P
+          (coalgCopresheafShapeAt c child)
+          n :=
+      cast (congrArg
+        (fun obj => PolyCofreeAnnotPosAt P
+          obj.shape n)
+        h_child_target.symm) rest
+    let ⟨a', h'⟩ :=
+      coalgCopresheafMapByDepth c child n
+        rest_child
+    exact ⟨a', h'.trans
+      ((PolyCofreeCat.tgtAt_transport
+        h_child_target n rest_child).trans
+        (by simp only [rest_child, cast_cast,
+          cast_eq]; rfl))⟩
+
+/--
+The copresheaf morphism action: given a morphism
+`f : src ⟶ tgt` in the cofree category and an
+element of the copresheaf at `src`, extract the
+annotation at the position determined by `f`.
+-/
+def coalgCopresheafMap {P : PolyEndo X}
+    (c : Comonad.Coalgebra
+      (polyCofreeComonad X P))
+    {src tgt : PolyCofreeCat P}
+    (f : src ⟶ tgt)
+    (elem : coalgCopresheafObj c src) :
+    coalgCopresheafObj c tgt :=
+  let ⟨a, ha⟩ := elem
+  let posInShape :
+      PolyCofreeAnnotPosAt P
+        (coalgCopresheafShapeAt c a)
+        f.depth :=
+    cast (congrArg (fun obj =>
+      PolyCofreeAnnotPosAt P obj.shape
+        f.depth) ha.symm)
+      f.pos
+  let ⟨a', h'⟩ :=
+    coalgCopresheafMapByDepth c a
+      f.depth posInShape
+  ⟨a', h'.trans (by
+    -- (target c a).tgtAt f.depth posInShape = tgt
+    -- posInShape = cast ha.symm f.pos, so
+    -- (target c a).tgtAt posInShape
+    -- = src.tgtAt f.pos  (by tgtAt_transport)
+    -- = tgt  (by f.fiber_eq + f.subtree_eq)
+    rw [PolyCofreeCat.tgtAt_transport
+      ha f.depth posInShape]
+    simp only [posInShape, cast_cast, cast_eq]
+    exact PolyCofreeCat.ext f.fiber_eq
+      f.subtree_eq)⟩
+
+/--
+Composition law for the copresheaf map:
+extraction at a composed morphism equals
+sequential extraction.
+-/
+lemma coalgCopresheafMap_comp {P : PolyEndo X}
+    (c : Comonad.Coalgebra
+      (polyCofreeComonad X P))
+    {src mid tgt : PolyCofreeCat P}
+    (f : src ⟶ mid) (g : mid ⟶ tgt)
+    (elem : coalgCopresheafObj c src) :
+    (coalgCopresheafMap c (f ≫ g) elem).val =
+    (coalgCopresheafMap c g
+      (coalgCopresheafMap c f elem)).val := by
+  obtain ⟨a, ha⟩ := elem
+  -- Induction on f.depth, relating composed
+  -- extraction to sequential extraction via
+  -- the recursive structure.
+  -- At depth 0: f is the identity, and
+  -- f ≫ g = g, so both sides equal
+  -- coalgCopresheafMap c g elem.
+  -- At depth n+1: f decomposes into a child
+  -- step + depth-n recursion.
+  obtain ⟨_, _⟩ := mid
+  obtain ⟨_, _⟩ := tgt
+  obtain ⟨fn, fp, hff, hfs⟩ := f
+  obtain ⟨gn, gp, hgf, hgs⟩ := g
+  dsimp at hff hfs hgf hgs
+  subst hff hgf
+  cases eq_of_heq hfs
+  cases eq_of_heq hgs
+  -- After subst, f and g have rfl proofs.
+  -- The composition uses path concatenation.
+  -- Induction on fn (depth of f).
+  induction fn generalizing src a with
+  | zero => rfl
+  | succ fn ih =>
+    subst ha
+    obtain ⟨e_shape, rest_fp⟩ := fp
+    let e_raw := (coalgCopresheafCastPos c a 1
+      ⟨e_shape, PUnit.unit⟩).1
+    let e_m := polyCofreeShapePosToMPos
+      c.A P (c.a.left a).2 e_raw
+    let child := coalgCopresheafChild c a e_m
+    let h_child :=
+      coalgCopresheafChild_depth1_target
+        c a e_shape
+    exact ih child h_child rest_fp
+      HEq.rfl gp HEq.rfl
+
+/--
+Identity law for the copresheaf map:
+mapping by the identity morphism returns the
+original element.
+-/
+lemma coalgCopresheafMap_id {P : PolyEndo X}
+    (c : Comonad.Coalgebra
+      (polyCofreeComonad X P))
+    (obj : PolyCofreeCat P)
+    (elem : coalgCopresheafObj c obj) :
+    coalgCopresheafMap c (𝟙 obj) elem = elem := by
+  obtain ⟨a, ha⟩ := elem
+  subst ha
+  rfl
+
+/--
+Functorial composition law: mapping by `f ≫ g`
+equals the composition of mapping by `f` then `g`.
+-/
+lemma coalgCopresheaf_map_comp {P : PolyEndo X}
+    (c : Comonad.Coalgebra
+      (polyCofreeComonad X P))
+    {src mid tgt : PolyCofreeCat P}
+    (f : src ⟶ mid) (g : mid ⟶ tgt)
+    (elem : coalgCopresheafObj c src) :
+    coalgCopresheafMap c (f ≫ g) elem =
+    coalgCopresheafMap c g
+      (coalgCopresheafMap c f elem) :=
+  Subtype.ext (coalgCopresheafMap_comp c f g elem)
+
+/--
+The copresheaf functor for a P-coalgebra `c`:
+a functor from the cofree category to `Type u`
+sending each object to the fiber of the
+coalgebra carrier over that object, and each
+morphism to the extraction map.
+-/
+def coalgCopresheaf {P : PolyEndo X}
+    (c : Comonad.Coalgebra
+      (polyCofreeComonad X P)) :
+    PolyCofreeCat P ⥤ Type u where
+  obj := coalgCopresheafObj c
+  map f := coalgCopresheafMap c f
+  map_id obj := by
+    ext elem
+    exact coalgCopresheafMap_id c obj elem
+  map_comp f g := by
+    ext elem
+    exact coalgCopresheaf_map_comp c f g elem
+
 end GebLean

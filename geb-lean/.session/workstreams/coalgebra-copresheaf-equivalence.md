@@ -67,26 +67,16 @@ detailed mathematical findings from the literature.
 - [x] `coalgCopresheafChild_rawToShape`
 - [x] `coalgCopresheafChild_shapeToTransported`
 - [x] `coalgCopresheafTargetRaw` / `_eq`
-- [ ] `coalgCopresheafChild_depth1_target` :
-      depth-1 target equality. Three sigma pair
-      chain steps (target_sigma, rawToShape,
-      shapeToTransported) give the result. The
-      blocker is extracting `.fst` HEq from
-      `cast_heq` on sigma pairs (Lean's `cast`
-      on sigma types doesn't reduce `.fst`). The
-      `generalize+subst` technique fails because
-      the transport proof in
-      `coalgCopresheafShapeAt` creates an
-      `a`-dependency that survives generalization.
-      Possible approaches:
-      1. Define a helper `sigma_fst_cast_heq` by
-         `Eq.rec` (but `.fst` on type var fails)
-      2. Restructure `shapeToTransported` to accept
-         the full-pair HEq instead of the `.fst` HEq
-      3. Define the copresheaf map using a different
-         approach that avoids the CastPos chain
-- [ ] `coalgCopresheafMapByDepth` : recursive morphism
-      action (uses depth-1 target + tgtAt_transport)
+- [x] `coalgCopresheafCastPos1_collapse`
+- [x] `coalgCopresheafChild_depth1_target`
+- [x] `coalgCopresheafMapByDepth`
+- [x] `coalgCopresheafMap`
+- [ ] `coalgCopresheafMap_comp` : composition law.
+      Base case (depth 0) done. Succ case requires
+      induction on f.depth, showing extraction at
+      concatenated position = sequential extraction.
+      Both sides step into the child at the same
+      edge; by IH at depth fn, they agree.
 - [ ] `coalgCopresheafMap` : morphism action
 - [ ] `coalgCopresheaf_map_id` : identity pres.
 - [ ] `coalgCopresheaf_map_comp` : composition pres.
