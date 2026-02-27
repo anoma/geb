@@ -630,6 +630,113 @@ def pshCovariantEmbedding :
     | typeNode P => simp
     | relNode P Q R => simp
 
+/-- The preimage extracts `typeNode` components
+from a natural transformation between
+embedded endofunctors. Naturality uses
+`pshRelGraph` and `pshBarrLiftSkel_graph`
+to connect the projections. -/
+def pshCovariantEmbedding_fullyFaithful :
+    (pshCovariantEmbedding
+      (C := C)).FullyFaithful where
+  preimage {G H} β :=
+    { app := fun P => β.app (.typeNode P)
+      naturality := fun {P Q} f => by
+        have nf :=
+          β.naturality
+            (.fstProj P Q (pshRelGraph f))
+        have ns :=
+          β.naturality
+            (.sndProj P Q (pshRelGraph f))
+        dsimp [pshCovariantEmbedding]
+          at nf ns
+        ext c x
+        simp only [NatTrans.comp_app,
+          types_comp_apply]
+        let w := (G.map
+          (pshRelGraph_ι_fst_iso f).inv
+          ).app c x
+        have hw :
+          (pshBarrLift G (Over.mk
+            (pshRelGraph f).ι)).hom.app
+            c w =
+          (x, (G.map f).app c x) := by
+          apply Prod.ext
+          · change (G.map ((pshRelGraph f).ι ≫
+              pshProdFst P Q)).app c w = x
+            exact congr_fun (congr_app
+              (G.mapIso
+                (pshRelGraph_ι_fst_iso f)
+              ).inv_hom_id c) x
+          · change (G.map ((pshRelGraph f).ι ≫
+              pshProdSnd P Q)).app c w =
+              (G.map f).app c x
+            rw [pshRelGraph_ι_snd]
+            let gIso := pshRelGraph_ι_fst_iso f
+            exact congr_fun (congr_app
+              (show G.map gIso.inv ≫
+                G.map (gIso.hom ≫ f) =
+                G.map f from by
+                rw [G.map_comp,
+                  ← Category.assoc,
+                  ← G.map_comp,
+                  gIso.inv_hom_id,
+                  G.map_id,
+                  Category.id_comp])
+              c) x
+        let e : (pshBarrLiftSkel G
+          (pshRelGraph f)).toFunctor.obj
+            c :=
+          ⟨(x, (G.map f).app c x), w, hw⟩
+        let m := (β.app (.relNode P Q
+          (pshRelGraph f))).app c e
+        have hfst :=
+          congr_fun (congr_app nf c) e
+        have hsnd :=
+          congr_fun (congr_app ns c) e
+        simp only [NatTrans.comp_app,
+          types_comp_apply] at hfst hsnd
+        dsimp [pshProdFst, pshProdSnd,
+          FunctorToTypes.prod.fst,
+          FunctorToTypes.prod.snd]
+          at hfst hsnd
+        have hgraph :=
+          congr_fun (congr_app
+            (pshBarrLiftSkel_graph_ι_snd
+              H f) c) m
+        dsimp [pshProdFst, pshProdSnd,
+          FunctorToTypes.prod.fst,
+          FunctorToTypes.prod.snd]
+          at hgraph
+        rw [hsnd, hfst, ← hgraph]
+    }
+  map_preimage {G H} β := by
+    apply NatTrans.ext; funext X
+    cases X with
+    | typeNode P => rfl
+    | relNode P Q R =>
+      dsimp [pshCovariantEmbedding]
+      apply (cancel_mono
+        (pshBarrLiftSkel H R).ι).mp
+      apply pshProdPresheaf_hom_ext
+      · simp only [Category.assoc,
+          pshBarrLiftSkelMap_ι_fst]
+        have := β.naturality
+          (.fstProj P Q R)
+        dsimp [pshCovariantEmbedding]
+          at this
+        simp only [Category.assoc]
+          at this
+        exact this
+      · simp only [Category.assoc,
+          pshBarrLiftSkelMap_ι_snd]
+        have := β.naturality
+          (.sndProj P Q R)
+        dsimp [pshCovariantEmbedding]
+          at this
+        simp only [Category.assoc]
+          at this
+        exact this
+
 end PshCovariantEmbedding
 
 end GebLean

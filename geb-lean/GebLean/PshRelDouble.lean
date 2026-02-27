@@ -1221,6 +1221,28 @@ theorem pshBarrLiftSkel_graph
         hBarrIso),
     pshProdOverToRel_graph]
 
+/-- The second projection of the Barr extension
+of a graph relation equals the first projection
+composed with `G.map α`. This avoids the
+dependent-type rewriting obstacle that arises
+when applying `pshBarrLiftSkel_graph`
+to membership predicates. -/
+theorem pshBarrLiftSkel_graph_ι_snd
+    {P Q : Cᵒᵖ ⥤ Type w}
+    (G :
+      (Cᵒᵖ ⥤ Type w) ⥤
+        (Cᵒᵖ ⥤ Type w))
+    (α : P ⟶ Q) :
+    (pshBarrLiftSkel G
+      (pshRelGraph α)).ι ≫
+      pshProdSnd (G.obj P) (G.obj Q) =
+    (pshBarrLiftSkel G
+      (pshRelGraph α)).ι ≫
+      pshProdFst (G.obj P) (G.obj Q) ≫
+        G.map α := by
+  rw [pshBarrLiftSkel_graph]
+  exact pshRelGraph_ι_snd (G.map α)
+
 /-- The Barr extension preserves relatedness: if
 `α` and `β` are `(R, S)`-related at the `PshProdOver`
 level, then `G.map α` and `G.map β` are
