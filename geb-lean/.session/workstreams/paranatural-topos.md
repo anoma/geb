@@ -444,3 +444,5 @@ Open questions:
 
 - `comprehensive-factorization.md` (weighted limit
   characterization of paranatural transformations)
+- `parametricity-free-theorems.md` (unified parametricity
+  workstream; references topos results from here)
