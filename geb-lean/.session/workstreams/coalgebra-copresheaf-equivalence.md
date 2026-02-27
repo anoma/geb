@@ -30,13 +30,12 @@ detailed mathematical findings from the literature.
   (structure: `k ≫ cofreeStr ≫ P.map(counit)`)
 - [x] Forward roundtrip `K⁻¹(K(α)).str = α.str`
   (`polyCoalgComonad_forward_str`)
-- [ ] Backward roundtrip `K(K⁻¹(c)).a = c.a`
-  Requires coinductive proof at approx level
-  using D-coalgebra coassociativity.
-  The claim: for each subtree of c.a(a),
-  `c.a(root_annotation(subtree)) = subtree`,
-  which follows from `c.a ≫ δ = c.a ≫ D.map(c.a)`.
-- [ ] `polyCoalgComonadEquiv`
+- [x] Backward roundtrip `K(K⁻¹(c)).a = c.a`
+  (`polyCoalgComonad_backward`)
+  Proven coinductively using self-consistency
+  (`comonadCoalgSelfconsistent`) derived from
+  coassociativity.
+- [x] `polyCoalgComonadEquiv`
 
 ### Phase 1b: Functor-Alg ≌ Monad-Alg (dual)
 

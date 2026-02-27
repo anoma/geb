@@ -9206,6 +9206,101 @@ lemma polyCoalgComonad_backward
     (c.a.left a).2
   exact polyCoalgComonad_backward_mtype c a
 
+/--
+Forward roundtrip for objects: the composite
+`K⁻¹ ∘ K` returns an isomorphic P-coalgebra.
+-/
+lemma polyCoalgComonad_forward_obj
+    {P : PolyEndo X}
+    (α : PolyCoalg P) :
+    (polyComonadCoalgToCoalg P).obj
+      ((polyCoalgToComonadCoalg X P).obj α) =
+    α := by
+  cases α
+  simp only [polyComonadCoalgToCoalg,
+    polyCoalgToComonadCoalg,
+    polyComonadCoalgToCoalgObj,
+    Comonad.comparison,
+    polyCoalgForgetFunctor,
+    Endofunctor.Coalgebra.forget_obj]
+  congr 1
+  exact polyCoalgComonad_forward_str _
+
+/--
+Backward roundtrip for objects: the composite
+`K ∘ K⁻¹` returns an isomorphic comonad coalgebra.
+-/
+lemma polyCoalgComonad_backward_obj
+    {P : PolyEndo X}
+    (c : Comonad.Coalgebra
+      (polyCofreeComonad X P)) :
+    (polyCoalgToComonadCoalg X P).obj
+      ((polyComonadCoalgToCoalg P).obj c) = c := by
+  have h := polyCoalgComonad_backward c
+  cases c with | mk A a =>
+  simp only [polyComonadCoalgToCoalg,
+    polyCoalgToComonadCoalg,
+    polyComonadCoalgToCoalgObj,
+    Comonad.comparison,
+    polyCoalgForgetFunctor,
+    Endofunctor.Coalgebra.forget_obj,
+    Endofunctor.Coalgebra.forget_map] at h ⊢
+  congr 1
+
+@[simp]
+private theorem polyCoalg_eqToHom_f
+    {P : PolyEndo X}
+    {α β : PolyCoalg P} (h : α = β) :
+    (eqToHom h).f =
+    eqToHom (congrArg Endofunctor.Coalgebra.V h) :=
+  by subst h; rfl
+
+@[simp]
+private theorem comonadCoalg_eqToHom_f
+    {P : PolyEndo X}
+    {c d : Comonad.Coalgebra
+      (polyCofreeComonad X P)}
+    (h : c = d) :
+    (eqToHom h).f =
+    eqToHom (congrArg Comonad.Coalgebra.A h) :=
+  by subst h; rfl
+
+/--
+The equivalence between P-coalgebras and
+Eilenberg-Moore coalgebras of the cofree comonad:
+`PolyCoalg P ≌ Comonad.Coalgebra D` where
+`D = polyCofreeComonad X P`.
+-/
+def polyCoalgComonadEquiv (P : PolyEndo X) :
+    PolyCoalg P ≌
+    Comonad.Coalgebra
+      (polyCofreeComonad X P) :=
+  CategoryTheory.Equivalence.mk
+    (polyCoalgToComonadCoalg X P)
+    (polyComonadCoalgToCoalg P)
+    (NatIso.ofComponents
+      (fun α => eqToIso
+        (polyCoalgComonad_forward_obj α).symm)
+      (fun {α β} f => by
+        simp only [eqToIso.hom, Functor.id_obj,
+          Functor.comp_obj, Functor.id_map]
+        apply Endofunctor.Coalgebra.Hom.ext
+        simp [polyCoalg_eqToHom_f,
+          polyComonadCoalgToCoalg,
+          polyComonadCoalgToCoalgObj,
+          Comonad.comparison]))
+    (NatIso.ofComponents
+      (fun c => eqToIso
+        (polyCoalgComonad_backward_obj c))
+      (fun {c₁ c₂} f => by
+        simp only [eqToIso.hom, Functor.comp_obj,
+          Functor.id_obj, Functor.id_map]
+        apply Comonad.Coalgebra.Hom.ext
+        simp [comonadCoalg_eqToHom_f,
+          polyComonadCoalgToCoalg,
+          polyComonadCoalgToCoalgObj,
+          Comonad.comparison]))
+
 end CoalgComonadComparison
 
 end GebLean
