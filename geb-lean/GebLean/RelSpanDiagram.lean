@@ -1163,21 +1163,23 @@ def profunctorEmbedding :
       apply Subtype.ext
       simp [profRelImage.map]
 
+-- When profunctors are equipped with NATURAL
+-- transformations as morphisms,
 -- `profunctorEmbedding` is neither full nor
--- faithful: a natural transformation
--- `α : G ⟶ H` of profunctors has components
--- at all `(op A, B)`, but the embedding only
--- sees the diagonal `(op I, I)`. Naturality
--- constrains but does not determine the
--- off-diagonal components from the diagonal.
+-- faithful (only sees diagonal components, and
+-- natural transformations have independent
+-- off-diagonal data).
 --
--- No natural embedding exists in the other
--- direction either (ParametricFunctor →
--- profunctors): `RelSpanObj` has no morphisms
--- between typeNodes, so there is no transport
--- structure to build profunctor maps from.
--- Similarly, no natural functor connects
--- `ParametricFunctor` with twisted-arrow
--- copresheaves in either direction.
+-- When profunctors are equipped with
+-- PARANATURAL transformations as morphisms
+-- (the category `endoProfCategory` from
+-- `Paranatural.lean`), the situation improves:
+-- paranatural transformations have only
+-- diagonal components, and the paranaturality
+-- condition (`DiagCompat` preservation)
+-- matches the `profRelLift` transport.
+-- The embedding to `ParametricFunctor` using
+-- paranatural morphisms is analyzed in
+-- `ParanaturalTopos.lean`.
 
 end GebLean

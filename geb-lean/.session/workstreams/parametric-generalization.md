@@ -546,6 +546,32 @@ copresheaves. Characterize this difference.
    relationship is at the level of specific
    limits, not category-wide functors.
 
+   Update: `paranaturalProfEmbedding` (profunctors
+   with PARANATURAL morphisms → ParametricFunctor)
+   is a valid functor. The FullyFaithful proof
+   is in progress -- the embedding functor
+   compiles, and the structure matches
+   (paranaturality = `DiagCompat` preservation =
+   `diagRelImage` transport). Faithful should hold
+   (paranatural transformations determined by
+   diagonal components). Full should hold
+   (`diagRelImage` is a product subtype). This
+   would make `endoProfCategory` a full
+   subcategory of `ParametricFunctor`.
+
+7. Generalize `RelSpanDiagram.lean` to presheaves
+   on arbitrary `C` (creating
+   `PshRelSpanDiagram.lean`). Replace `Type` with
+   `PSh(C)`, `R : I₀ → I₁ → Prop` with `PshRel`,
+   `relType R` with the corresponding presheaf
+   subobject. The current `RelSpanDiagram` would be
+   the special case `C = terminal category`.
+
+8. Research question: does `ParametricFunctor`
+   have a universal property within `Cat`?
+   Written up in
+   `docs/parametric-functor-universal-property.md`.
+
 ## Completed infrastructure for generalization
 
 ### PshRelDouble.lean additions

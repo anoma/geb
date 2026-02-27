@@ -5008,6 +5008,119 @@ instance relSpanDiagramFunctor_full :
 
 end RelSpanDiagram
 
+section ParanaturalProfunctorEmbedding
+
+/-- The subtype of `diagApp G I₀ × diagApp G I₁`
+consisting of diagonal pairs related by
+`DiagCompat` through a witness at
+`relType R`. -/
+def diagRelImage
+    (G : Typeᵒᵖ ⥤ Type ⥤ Type)
+    {I₀ I₁ : Type}
+    (R : I₀ → I₁ → Prop) :=
+  { p : diagApp G I₀ × diagApp G I₁ //
+    ∃ (w : diagApp G (relType R)),
+      DiagCompat G (relType R) I₀
+        (fun s : relType R => s.val.1)
+        w p.1 ∧
+      DiagCompat G (relType R) I₁
+        (fun s : relType R => s.val.2)
+        w p.2 }
+
+/-- The embedding of the endoprofunctor
+category (with paranatural morphisms) into
+`ParametricFunctor`. Type-nodes map to
+diagonal elements `ULift (diagApp G I)`;
+relation-nodes map to `ULift (diagRelImage G R)`.
+Morphisms are paranatural transformations,
+transported via `DiagCompat` preservation. -/
+def paranaturalProfEmbedding :
+    EndoProf.{1, 0, 0} (C := Type) ⥤
+    ParametricFunctor where
+  obj G :=
+    { obj := fun X =>
+        match X with
+        | .typeNode I =>
+          ULift.{1} (diagApp G I)
+        | .relNode I₀ I₁ R =>
+          ULift.{1} (diagRelImage G R)
+      map := fun {X Y} f =>
+        match X, Y, f with
+        | _, _, .id _ => id
+        | _, _, .fstProj I₀ I₁ R =>
+          fun ⟨p⟩ => ⟨p.val.1⟩
+        | _, _, .sndProj I₀ I₁ R =>
+          fun ⟨p⟩ => ⟨p.val.2⟩
+      map_id := by
+        intro X; cases X <;> rfl
+      map_comp := by
+        intro X Y Z f g
+        cases f <;> cases g <;> rfl }
+  map η :=
+    { app := fun X =>
+        match X with
+        | .typeNode I =>
+          fun ⟨x⟩ => ⟨η.app I x⟩
+        | .relNode I₀ I₁ R =>
+          fun ⟨p⟩ =>
+            ⟨⟨(η.app I₀ p.val.1,
+               η.app I₁ p.val.2),
+              p.property.elim
+                fun w ⟨hw₁, hw₂⟩ =>
+                  ⟨η.app (relType R) w,
+                    η.paranatural
+                      (relType R) I₀
+                      (fun s : relType R =>
+                        s.val.1)
+                      w p.val.1 hw₁,
+                    η.paranatural
+                      (relType R) I₁
+                      (fun s : relType R =>
+                        s.val.2)
+                      w p.val.2 hw₂⟩⟩⟩
+      naturality := by
+        intro X Y f
+        match X, Y, f with
+        | _, _, .id _ => rfl
+        | _, _, .fstProj I₀ I₁ R =>
+          funext ⟨_⟩; rfl
+        | _, _, .sndProj I₀ I₁ R =>
+          funext ⟨_⟩; rfl }
+  map_id G := by
+    apply NatTrans.ext; funext X
+    cases X with
+    | typeNode I => funext ⟨_⟩; rfl
+    | relNode I₀ I₁ R =>
+      funext ⟨⟨_, _⟩⟩
+      apply ULift.ext; apply Subtype.ext
+      rfl
+  map_comp η μ := by
+    apply NatTrans.ext; funext X
+    cases X with
+    | typeNode I => funext ⟨_⟩; rfl
+    | relNode I₀ I₁ R =>
+      funext ⟨⟨_, _⟩⟩
+      apply ULift.ext; apply Subtype.ext
+      rfl
+
+-- The FullyFaithful proof for
+-- `paranaturalProfEmbedding` requires
+-- constructing a `diagRelImage` witness from
+-- `DiagCompat` data, which involves
+-- transporting diagonal elements across
+-- `graphRelEquiv`. This is structurally
+-- parallel to the covariant case but involves
+-- the profunctor's mixed-variance maps.
+-- Faithful should hold (paranatural
+-- transformations are determined by diagonal
+-- components). Full requires the
+-- `diagRelImage` subtype condition to match
+-- the paranaturality condition, which it
+-- should since both are formulated in terms
+-- of `DiagCompat`.
+
+end ParanaturalProfunctorEmbedding
+
 /-- `divEndoRel f h k` is equivalent to
 `DiagCompat divHomProf I₀ I₁ f h k`, which
 reduces to `f ∘ h = k ∘ f`. The relational
