@@ -288,11 +288,63 @@ type `∀X. ((X → X) → X) → X` separates them:
 
 ### Topos-theoretic context
 
-The left Kan extension monad `Lan_ι ∘ ι*` is NOT left-exact
-(`lanDiagProdComparison_surj_common_fact` shows product
-comparison surjectivity fails). Therefore `DiagDetProf` is
-NOT a Grothendieck topos, and the paranatural category is
-not Cartesian closed (consistent with Uustalu 2010).
+`PshParametricCopresheaf C` (= `PshRelSpanObj C ⥤ Type`)
+is a copresheaf category and therefore a Grothendieck topos.
+This resolves the former search for a topos of profunctors
+with paranatural morphisms: rather than restricting
+profunctors to a subcategory, the parametric copresheaf
+category provides a topos that receives fully faithful
+embeddings from covariant functors, contravariant functors,
+and type expressions (at the Type level; presheaf-level
+embeddings are Phase 1 tasks).
+
+Earlier negative results on other candidate toposes remain
+as context:
+
+- `DiagDetProf` (profunctors determined by their diagonal)
+  is NOT a Grothendieck topos: it lacks binary products
+  (counterexample on the walking arrow category), and the
+  diagonalization monad `Lan_ι ∘ ι*` is not left-exact
+  (`lanDiagProdComparison_surj_common_fact`).
+- The paranatural category is not Cartesian closed
+  (Uustalu 2010).
+- Neumann's di-Yoneda lemma (arXiv:2307.09289) has an
+  error and is not true; hom-objects derived from it do
+  not work. The standard Yoneda lemma via reduction to
+  natural transformations on `[Tw(C)ᵒᵖ, Type v]` applies
+  instead.
+
+### ParametricFamily as an end or equalizer
+
+`ParametricFamily T` requires `T.relInterp f (app I₀)
+(app I₁)` for all `f : I₀ → I₁`. The end of
+`Functor.uncurry.obj T.toProfunctor` requires the wedge
+condition `T.profMap id f (app I₀) =
+T.profMap f id (app I₁)`.
+
+`relInterp_implies_wedge` gives parametricity => wedge.
+The converse holds for type expressions without nested
+arrows but fails for nested arrows.
+
+For specific type expressions, `ParametricFamily T` is
+equivalent to `Paranat P Q` (see
+`algebraParametricEquivParanat`,
+`dinaturalParametricEquivParanat`,
+`dialgebraParametricEquivNatTrans`), and
+`Paranat P Q ≃ StructureIntegral P Q` which is an
+equalizer.
+
+Open questions (connected to Phase 4 tasks):
+
+1. Is there a general construction producing profunctors
+   `P(T)`, `Q(T)` such that
+   `ParametricFamily T ≃ Paranat P(T) Q(T)` for all `T`?
+2. Can `relInterp` be expressed as an equalizer of the
+   lmap and rmap of some profunctor derived from
+   `T.toProfunctor`?
+3. Can the parametricity condition be understood as an
+   end taken in a Rel-enriched category (where morphisms
+   are relations rather than functions)?
 
 ### Blog post observation
 
@@ -303,12 +355,25 @@ laws in different categories." Our generalization to arbitrary
 `PshRelDouble` provides the ambient framework in which
 "category laws" live.
 
+### Literature
+
+- Paranaturals compose (Mulry 1992, Pare-Roman 1998)
+- Not Cartesian closed (Uustalu 2010)
+- Tambara modules = presheaves on "double" (Pastro-Street
+  2008)
+- Neumann-Licata POPL 2026: directed type theory via
+  dinaturality
+- `connectedComponents : Cat ⥤ Type` exists in mathlib
+  (`Mathlib.CategoryTheory.Category.Cat.Adjunction`)
+
 ### Reference documents
 
-- `docs/.claude/wadler89-theorems-for-free.pdf`: Original paper
+- `docs/.claude/wadler89-theorems-for-free.pdf`: Original
+  paper
 - `docs/ParametricityViaYonedaRelations.md`: Mathematical
   analysis of the Reynolds/Wadler → YonedaRel connection
-- `docs/parametric-functor-embeddings.md`: Embedding analysis
+- `docs/parametric-functor-embeddings.md`: Embedding
+  analysis
 - `docs/parametric-functor-universal-property.md`: Universal
   property investigation
 - `docs/paranatural-topos-research.md`: Topos structure
