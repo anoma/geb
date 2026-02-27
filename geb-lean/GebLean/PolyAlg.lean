@@ -3130,6 +3130,18 @@ lemma polyFreeMPure_fiber_heq (A : Over X) (P : PolyEndo X) {x y : X}
   rfl
 
 /--
+Transport of `polyFreeMPure` along a fiber equality:
+`h ▸ polyFreeMPure A P ⟨v, hv⟩ = polyFreeMPure A P ⟨v, hv.trans h⟩`.
+-/
+lemma polyFreeMPure_transport
+    (A : Over X) (P : PolyEndo X)
+    {x y : X} (h : x = y)
+    (v : A.left) (hv : A.hom v = x) :
+    h ▸ polyFreeMPure A P ⟨v, hv⟩ =
+    polyFreeMPure A P ⟨v, hv.trans h⟩ := by
+  subst h; rfl
+
+/--
 The bind operation for the free monad: substitute at leaves.
 Recursively traverses the tree, replacing leaves with subtrees computed by f.
 -/
@@ -9302,5 +9314,458 @@ def polyCoalgComonadEquiv (P : PolyEndo X) :
           Comonad.comparison]))
 
 end CoalgComonadComparison
+
+/-! ## Algebra-Monad Comparison
+
+The dual of the coalgebra-comonad comparison above:
+an equivalence `PolyAlg P ≌ Monad.Algebra T` where
+`T = polyFreeMonad X P` is the free monad on `P`.
+-/
+
+section AlgMonadComparison
+
+variable (X : Type u)
+
+/--
+The comparison functor from P-algebras to
+Eilenberg-Moore algebras of the free monad.
+Sends `α : PolyAlg P` to the monad algebra with
+carrier `α.a` and structure map given by the
+catamorphism `T(α.a) ⟶ α.a`.
+-/
+abbrev polyAlgToMonadAlg (P : PolyEndo X) :
+    PolyAlg P ⥤
+    (polyFreeMonad X P).Algebra :=
+  Monad.comparison (polyFreeForgetAdjunction P)
+
+variable {X}
+
+/--
+Extract a P-algebra structure from a monad algebra.
+Given `c : (polyFreeMonad X P).Algebra`, the
+structure map on `c.A` is obtained by embedding
+P-nodes as single-layer trees via the unit, applying
+the free algebra structure, then folding via `c.a`:
+
+`P(c.A) --P(η)--> P(T(c.A)) --freeStr--> T(c.A)
+  --c.a--> c.A`
+-/
+def polyMonadAlgStr {P : PolyEndo X}
+    (c : (polyFreeMonad X P).Algebra) :
+    (polyEndoFunctor X P).obj c.A ⟶ c.A :=
+  (polyEndoFunctor X P).map
+    ((polyFreeMonad X P).η.app c.A) ≫
+  (polyFreeAlg c.A P).str ≫ c.a
+
+/--
+The object part of the inverse comparison: sends
+an Eilenberg-Moore algebra of the free monad to a
+P-algebra.  The carrier is `c.A` and the P-structure
+is extracted via `polyMonadAlgStr`.
+-/
+def polyMonadAlgToAlgObj {P : PolyEndo X}
+    (c : (polyFreeMonad X P).Algebra) :
+    PolyAlg P where
+  a := c.A
+  str := polyMonadAlgStr c
+
+/--
+A monad algebra morphism yields a P-algebra
+morphism: `f.f` commutes with the extracted
+P-structure.
+-/
+lemma polyMonadAlgToAlg_map_comm
+    {P : PolyEndo X}
+    {c₁ c₂ : (polyFreeMonad X P).Algebra}
+    (f : c₁ ⟶ c₂) :
+    (polyEndoFunctor X P).map f.f ≫
+      polyMonadAlgStr c₂ =
+    polyMonadAlgStr c₁ ≫ f.f := by
+  let PF := polyEndoFunctor X P
+  let T := polyFreeMonad X P
+  let η := T.η
+  let Free := polyFreeFunctor P
+  simp only [polyMonadAlgStr]
+  -- Goal: PF.map(f.f) ≫ PF.map(η c₂.A) ≫
+  --   (Free c₂.A).str ≫ c₂.a =
+  --   PF.map(η c₁.A) ≫ (Free c₁.A).str ≫ c₁.a ≫ f.f
+  -- Step 1: PF.map(f.f) ≫ PF.map(η c₂.A) =
+  --   PF.map(f.f ≫ η c₂.A) =
+  --   PF.map(η c₁.A ≫ T.map f.f) =
+  --   PF.map(η c₁.A) ≫ PF.map(T.map f.f)
+  have step1 :
+      PF.map f.f ≫ PF.map (η.app c₂.A) =
+      PF.map (η.app c₁.A) ≫
+        PF.map (T.toFunctor.map f.f) := by
+    rw [← PF.map_comp, ← PF.map_comp]
+    congr 1
+    exact η.naturality f.f
+  -- Step 2: PF.map(T.map f.f) ≫ (Free c₂.A).str =
+  --   (Free c₁.A).str ≫ T.map f.f
+  have step2 :
+      PF.map (T.toFunctor.map f.f) ≫
+        (Free.obj c₂.A).str =
+      (Free.obj c₁.A).str ≫
+        T.toFunctor.map f.f :=
+    (Free.map f.f).h
+  -- Step 3: T.map f.f ≫ c₂.a = c₁.a ≫ f.f
+  have step3 :
+      T.toFunctor.map f.f ≫ c₂.a =
+      c₁.a ≫ f.f :=
+    f.h
+  calc PF.map f.f ≫ PF.map (η.app c₂.A) ≫
+        (Free.obj c₂.A).str ≫ c₂.a
+    _ = (PF.map (η.app c₁.A) ≫
+          PF.map (T.toFunctor.map f.f)) ≫
+        (Free.obj c₂.A).str ≫ c₂.a := by
+      rw [← step1, Category.assoc]
+    _ = PF.map (η.app c₁.A) ≫
+        (PF.map (T.toFunctor.map f.f) ≫
+          (Free.obj c₂.A).str) ≫ c₂.a := by
+      simp only [Category.assoc]
+    _ = PF.map (η.app c₁.A) ≫
+        ((Free.obj c₁.A).str ≫
+          T.toFunctor.map f.f) ≫ c₂.a := by
+      rw [step2]
+    _ = PF.map (η.app c₁.A) ≫
+        (Free.obj c₁.A).str ≫
+        (T.toFunctor.map f.f ≫ c₂.a) := by
+      simp only [Category.assoc]
+    _ = PF.map (η.app c₁.A) ≫
+        (Free.obj c₁.A).str ≫
+        c₁.a ≫ f.f := by
+      rw [step3]
+
+/--
+The inverse comparison functor: sends
+Eilenberg-Moore algebras of the free monad
+to P-algebras.
+-/
+def polyMonadAlgToAlg (P : PolyEndo X) :
+    (polyFreeMonad X P).Algebra ⥤
+    PolyAlg P where
+  obj := polyMonadAlgToAlgObj
+  map := fun f =>
+    ⟨f.f, polyMonadAlgToAlg_map_comm f⟩
+  map_id := fun _ => by
+    ext; simp
+  map_comp := fun _ _ => by
+    ext; simp
+
+/--
+Forward roundtrip: K⁻¹(K(α)).str = α.str.
+The extracted P-structure from the comparison
+algebra recovers the original structure.
+-/
+lemma polyAlgMonad_forward_str
+    {P : PolyEndo X}
+    (α : PolyAlg P) :
+    polyMonadAlgStr
+      ((polyAlgToMonadAlg X P).obj α) =
+    α.str := by
+  -- K(α).a = Forget.map(ε_α) = polyFreeCounitFold
+  -- Unfold to expose polyFreeCounitFold
+  have counit_eq :
+      ((polyFreeForgetAdjunction P).counit.app
+        α).f =
+      polyFreeCounitFold P α :=
+    rfl
+  simp only [polyMonadAlgStr,
+    Monad.comparison,
+    polyForgetFunctor,
+    Endofunctor.Algebra.forget_map,
+    counit_eq]
+  -- Goal has forget.obj α; reduce to α.a
+  change
+    (polyEndoFunctor X P).map
+      ((polyFreeMonad X P).η.app α.a) ≫
+    (polyFreeAlg α.a P).str ≫
+    polyFreeCounitFold P α = α.str
+  -- polyFreeCounitFold_comm:
+  --   P.map(fold) ≫ α.str = freeStr ≫ fold
+  -- Use .symm to rewrite freeStr ≫ fold ->
+  --   P.map(fold) ≫ α.str
+  rw [(polyFreeCounitFold_comm P α).symm,
+    ← Category.assoc]
+  -- Goal: P.map(η ≫ fold) ≫ α.str = α.str
+  -- Left triangle: η ≫ Forget.map(ε) = 𝟙
+  have unit_fold :
+      (polyFreeMonad X P).η.app α.a ≫
+      polyFreeCounitFold P α = 𝟙 α.a :=
+    polyFree_left_triangle P α
+  rw [← (polyEndoFunctor X P).map_comp,
+    unit_fold]
+  simp
+
+/--
+Forward roundtrip on objects:
+`K⁻¹(K(α)) = α` as P-algebras.
+-/
+lemma polyAlgMonad_forward_obj
+    {P : PolyEndo X}
+    (α : PolyAlg P) :
+    polyMonadAlgToAlgObj
+      ((polyAlgToMonadAlg X P).obj α) = α := by
+  unfold polyMonadAlgToAlgObj
+  cases α with | mk a str =>
+  congr 1
+  exact polyAlgMonad_forward_str
+    (Endofunctor.Algebra.mk a str)
+
+/--
+Backward roundtrip: the fold of `polyMonadAlgToAlgObj c`
+agrees pointwise with `c.a` on W-type trees.
+By structural induction on the tree:
+- Leaf case: fold returns the leaf value; `c.a`
+  applied to a leaf (= η(a)) returns `a` by `c.unit`.
+- Node case: fold recursively folds children then
+  applies `polyMonadAlgStr c`. By the induction
+  hypothesis and `c.assoc`, this agrees with `c.a`
+  applied to the original node.
+-/
+lemma polyAlgMonad_backward_at
+    {P : PolyEndo X}
+    (c : (polyFreeMonad X P).Algebra)
+    (x : X)
+    (t : PolyFreeM c.A P x) :
+    (polyFreeCounitFoldAt P
+      (polyMonadAlgToAlgObj c) x t).val =
+    c.a.left ⟨x, t⟩ := by
+  induction t with
+  | mk y i children ih =>
+    cases i with
+    | inl a =>
+      simp only [polyFreeCounitFoldAt]
+      -- c.unit gives c.a(η(v)) = v pointwise.
+      have h := congrFun
+        (congrArg (·.left) c.unit) a.val
+      simp only [Over.comp_left,
+        types_comp_apply, Over.id_left,
+        types_id_apply] at h
+      suffices hsuff :
+          c.a.left ⟨y,
+            PolyFix.mk y (Sum.inl a) children⟩ =
+          c.a.left
+            (((polyFreeMonad X P).η.app c.A).left
+              a.val) by
+        rw [hsuff]; exact h.symm
+      obtain ⟨av, rfl⟩ := a
+      apply congrArg c.a.left
+      exact Sigma.ext rfl (by
+        simp only [heq_eq_eq]; congr 1
+        exact funext fun e => PEmpty.elim e)
+    | inr p =>
+      -- Build w in T(T(c.A)) with leaf children.
+      let fam := polyBetweenFamily X X P y p
+      let TCA := polyFreeMCarrier c.A P
+      let w_children :
+          (e : fam.left) →
+          PolyFreeM TCA P (fam.hom e) :=
+        fun e =>
+          polyFreeMPure TCA P
+            ⟨⟨fam.hom e, children e⟩, rfl⟩
+      let w : (polyFreeMCarrier TCA P).left :=
+        ⟨y, PolyFix.mk y (Sum.inr p) w_children⟩
+      -- c.assoc at w gives
+      --   c.a(mu(w)) = c.a(T.map(c.a)(w)).
+      have assoc_w :=
+        congrFun (congrArg (·.left) c.assoc) w
+      simp only [Over.comp_left,
+        types_comp_apply] at assoc_w
+      -- mu(w) flattens to the original node.
+      have mu_w :
+          ((polyFreeMonad X P).μ.app c.A).left
+            w =
+          ⟨y, PolyFix.mk y (Sum.inr p)
+            children⟩ := by
+        change
+          (polyFreeCounitFold P
+            (polyFreeAlg c.A P)).left w =
+          ⟨y, PolyFix.mk y (Sum.inr p) children⟩
+        simp only [w, polyFreeCounitFold,
+          Over.homMk_left, polyFreeCounitFoldLeft,
+          polyFreeCounitFoldAt, polyFreeMPure,
+          w_children, TCA, fam]
+        simp only [polyFreeAlg, polyFreeMStr,
+          Over.homMk_left, polyFreeMStrLeft,
+          polyFreeMStrFamily, pbefIndex, pbefMor]
+        simp only [ptoefIndex, ptoefMor,
+          ccrEvalIndex, ccrEvalMor,
+          Over.homMk_left]
+      simp only [polyFreeCounitFoldAt]
+      simp only [polyMonadAlgToAlgObj,
+        polyMonadAlgStr, Over.comp_left,
+        types_comp_apply]
+      -- Rewrite via c.assoc and mu_w.
+      rw [show c.a.left
+        ⟨y, PolyFix.mk y (Sum.inr p) children⟩ =
+        c.a.left
+          (((polyFreeMonad X P).map c.a).left w)
+        from by rw [← assoc_w, mu_w]]
+      apply congrArg c.a.left
+      change _ =
+        (polyFreeMap TCA c.A P c.a).left w
+      simp only [
+        w, polyFreeMap, Over.homMk_left,
+        polyFreeMapLeft, polyFreeMapAt,
+        polyFreeMBind, w_children, TCA, fam,
+        polyFreeMPure]
+      -- Rewrite fold values using the IH.
+      have ih_val : ∀ (e : fam.left),
+          (polyFreeCounitFoldAt P
+            (polyMonadAlgToAlgObj c)
+            (fam.hom e)
+            (children e)).val =
+          c.a.left ⟨fam.hom e, children e⟩ :=
+        ih
+      -- Replace the expanded algebra with the
+      -- named form so simp can apply ih_val.
+      change (polyFreeAlg c.A P).str.left
+        (((polyEndoFunctor X P).map
+          ((polyFreeMonad X P).η.app c.A)).left
+        ⟨y,
+          ⟨p,
+            Over.homMk
+              (fun e =>
+                (polyFreeCounitFoldAt P
+                    (polyMonadAlgToAlgObj c)
+                    (fam.hom e) (children e)).val)
+              _⟩⟩) =
+        ⟨y,
+          PolyFix.mk y (Sum.inr p) fun e =>
+            PolyFix.mk
+              ((polyBetweenFamily X X
+                (polyTranslate c.A P) y
+                (Sum.inr p)).hom e)
+              (Sum.inl
+                ⟨c.a.left
+                  ⟨fam.hom e, children e⟩, _⟩)
+              fun e₁ => PEmpty.elim e₁⟩
+      simp only [ih_val]
+      -- Unfold the endofunctor map.
+      simp only [polyEndoFunctor,
+        polyBetweenEvalFunctor,
+        polyToOverFunctor, polyToOverEvalMap,
+        familySliceForward, familySliceForwardMap,
+        familySliceForwardObj,
+        polyToOverEvalFamilyMap,
+        ccrEvalMap, Over.homMk_left]
+      -- Unfold the free algebra structure.
+      simp only [polyFreeAlg, polyFreeMStr,
+        Over.homMk_left, polyFreeMStrLeft,
+        polyFreeMStrFamily, pbefIndex, pbefMor,
+        ptoefIndex, ptoefMor,
+        ccrEvalIndex, ccrEvalMor]
+      -- Reduce to per-child equality.
+      congr 1; congr 1; funext e
+      simp only [Over.comp_left, types_comp_apply,
+        Over.homMk_left]
+      -- Unfold eta to polyFreeUnit.
+      simp only [polyFreeMonad,
+        Adjunction.toMonad,
+        polyFreeForgetAdjunction,
+        Adjunction.mkOfUnitCounit,
+        polyFreeUnitNat, polyFreeUnit,
+        Over.homMk_left, polyFreeUnitLeft]
+      -- Both sides are polyFreeMPure at the same
+      -- underlying value, connected by transport.
+      change _ =
+        polyFreeMPure c.A P
+          ⟨c.a.left ⟨fam.hom e, children e⟩,
+            congrFun (Over.w c.a) _⟩
+      rw [polyFreeMPure_transport]
+
+/--
+Backward roundtrip on morphisms: the fold
+using the extracted P-algebra recovers `c.a`.
+-/
+lemma polyAlgMonad_backward
+    {P : PolyEndo X}
+    (c : (polyFreeMonad X P).Algebra) :
+    polyFreeCounitFold P
+      (polyMonadAlgToAlgObj c) = c.a := by
+  apply Over.OverMorphism.ext
+  funext ⟨x, t⟩
+  simp only [polyFreeCounitFold, Over.homMk_left,
+    polyFreeCounitFoldLeft]
+  exact polyAlgMonad_backward_at c x t
+
+/--
+Backward roundtrip on objects:
+`K(K⁻¹(c)) = c` as monad algebras.
+-/
+lemma polyAlgMonad_backward_obj
+    {P : PolyEndo X}
+    (c : (polyFreeMonad X P).Algebra) :
+    (polyAlgToMonadAlg X P).obj
+      ((polyMonadAlgToAlg P).obj c) = c := by
+  have h := polyAlgMonad_backward c
+  cases c with | mk A a =>
+  simp only [polyMonadAlgToAlg,
+    polyAlgToMonadAlg,
+    polyMonadAlgToAlgObj,
+    Monad.comparison,
+    polyForgetFunctor,
+    Endofunctor.Algebra.forget_obj,
+    Endofunctor.Algebra.forget_map] at h ⊢
+  congr 1
+
+@[simp]
+private theorem polyAlg_eqToHom_f
+    {P : PolyEndo X}
+    {α β : PolyAlg P} (h : α = β) :
+    (eqToHom h).f =
+    eqToHom
+      (congrArg Endofunctor.Algebra.a h) :=
+  by subst h; rfl
+
+@[simp]
+private theorem monadAlg_eqToHom_f
+    {P : PolyEndo X}
+    {c d : (polyFreeMonad X P).Algebra}
+    (h : c = d) :
+    (eqToHom h).f =
+    eqToHom
+      (congrArg Monad.Algebra.A h) :=
+  by subst h; rfl
+
+variable (X : Type u)
+
+/--
+The equivalence between P-algebras and
+Eilenberg-Moore algebras of the free monad:
+`PolyAlg P ≌ Monad.Algebra T` where
+`T = polyFreeMonad X P`.
+-/
+def polyAlgMonadEquiv (P : PolyEndo X) :
+    PolyAlg P ≌
+    (polyFreeMonad X P).Algebra :=
+  CategoryTheory.Equivalence.mk
+    (polyAlgToMonadAlg X P)
+    (polyMonadAlgToAlg P)
+    (NatIso.ofComponents
+      (fun α => eqToIso
+        (polyAlgMonad_forward_obj α).symm)
+      (fun {α β} f => by
+        simp only [eqToIso.hom, Functor.id_obj,
+          Functor.comp_obj, Functor.id_map]
+        apply Endofunctor.Algebra.Hom.ext
+        simp [polyAlg_eqToHom_f,
+          polyMonadAlgToAlg,
+          polyMonadAlgToAlgObj,
+          Monad.comparison]))
+    (NatIso.ofComponents
+      (fun c => eqToIso
+        (polyAlgMonad_backward_obj c))
+      (fun {c₁ c₂} f => by
+        simp only [eqToIso.hom, Functor.comp_obj,
+          Functor.id_obj, Functor.id_map]
+        apply Monad.Algebra.Hom.ext
+        simp [monadAlg_eqToHom_f,
+          polyMonadAlgToAlg,
+          polyMonadAlgToAlgObj,
+          Monad.comparison]))
+
+end AlgMonadComparison
 
 end GebLean
