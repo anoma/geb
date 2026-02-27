@@ -169,8 +169,8 @@ works over `PSh(C)` for arbitrary `C`).
 - [ ] **P2a. Reverse bridge: PshParametricFamily →
   ParametricFamily.** Restrict a `PshParametricFamily
   T.toPshTypeExpr` to representable presheaves to recover
-  `ParametricFamily T`. This is choice-free (no classical
-  axioms needed). (Former F1.)
+  `ParametricFamily T`. This is choice-free (purely
+  constructive). (Former F1.)
 
 - [ ] **P2b. PshParametricFamily.wedge.** Prove every
   `PshParametricFamily` satisfies the presheaf profunctor
