@@ -1810,4 +1810,87 @@ theorem ParametricFamily.toPshParametricAtRep
   exact sectionsRelated_to_pshRelSectionsRelated
     _ _ _ h₂
 
+section PshTypeExprCategory
+
+variable {C : Type u} [Category.{v} C]
+
+/-- A morphism between presheaf type expressions:
+a family of natural transformations
+`T₁.interp P P ⟶ T₂.interp P P` indexed by
+presheaves `P`, satisfying a pointwise
+parametricity condition. This is the
+presheaf-level generalization of
+`ParametricFamily (.arrow T₁ T₂)`. -/
+@[ext]
+structure PshTypeExprHom
+    (T₁ T₂ : PshTypeExpr.{u, v} C) where
+  /-- The natural transformation component at
+  each presheaf. -/
+  app : ∀ (P : Cᵒᵖ ⥤ Type (max u v)),
+    T₁.interp P P ⟶ T₂.interp P P
+  /-- Parametricity: for each relation `R`,
+  the components preserve
+  `fullRelInterp R` pointwise. -/
+  parametric :
+    ∀ (P Q : Cᵒᵖ ⥤ Type (max u v))
+      (R : PshRel P Q) (c : Cᵒᵖ)
+      (p : (T₁.interp P P).obj c)
+      (q : (T₁.interp Q Q).obj c),
+      (p, q) ∈ (T₁.fullRelInterp R).obj c →
+      ((app P).app c p,
+        (app Q).app c q) ∈
+        (T₂.fullRelInterp R).obj c
+
+/-- The identity morphism for presheaf type
+expressions: the identity natural transformation
+at each presheaf. -/
+def pshTypeExprId
+    (T : PshTypeExpr.{u, v} C) :
+    PshTypeExprHom T T where
+  app _ := 𝟙 _
+  parametric _ _ _ _ _ _ h := by
+    simp only [NatTrans.id_app, types_id_apply]
+    exact h
+
+/-- Composition of presheaf type expression
+morphisms: pointwise composition of natural
+transformations. -/
+def pshTypeExprComp
+    {T₁ T₂ T₃ : PshTypeExpr.{u, v} C}
+    (η : PshTypeExprHom T₁ T₂)
+    (μ : PshTypeExprHom T₂ T₃) :
+    PshTypeExprHom T₁ T₃ where
+  app P := η.app P ≫ μ.app P
+  parametric P Q R c p q h := by
+    simp only [NatTrans.comp_app,
+      types_comp_apply]
+    exact μ.parametric P Q R c _ _
+      (η.parametric P Q R c p q h)
+
+/-- Wrapper around `PshTypeExpr` to serve as
+the object type for the category of presheaf
+type expressions with parametric morphisms. -/
+@[ext]
+structure PshTypeExprCat
+    (C : Type u) [Category.{v} C] where
+  /-- The underlying presheaf type expression. -/
+  expr : PshTypeExpr.{u, v} C
+
+/-- The category of presheaf type expressions,
+with morphisms given by `PshTypeExprHom`:
+families of natural transformations satisfying
+the full parametricity condition. -/
+instance : Category (PshTypeExprCat C) where
+  Hom T₁ T₂ := PshTypeExprHom T₁.expr T₂.expr
+  id T := pshTypeExprId T.expr
+  comp η μ := pshTypeExprComp η μ
+  id_comp _ := PshTypeExprHom.ext
+    (funext fun _ => Category.id_comp _)
+  comp_id _ := PshTypeExprHom.ext
+    (funext fun _ => Category.comp_id _)
+  assoc _ _ _ := PshTypeExprHom.ext
+    (funext fun _ => Category.assoc _ _ _)
+
+end PshTypeExprCategory
+
 end GebLean
