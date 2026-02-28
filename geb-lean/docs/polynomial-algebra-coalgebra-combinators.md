@@ -49,6 +49,158 @@ Our codebase provides the following for polynomial endofunctors
 
 ---
 
+## G. Fixed Points as Chain (Co)limits
+
+### G: References
+
+- Adamek, "Free algebras and automata realizations in the
+  language of categories and functors" (CMJ 1974)
+- [nLab: initial algebra of an endofunctor](https://ncatlab.org/nlab/show/initial+algebra+of+an+endofunctor)
+- [nLab: terminal coalgebra for an endofunctor](https://ncatlab.org/nlab/show/terminal+coalgebra+for+an+endofunctor)
+
+### G: Mathematical Background
+
+#### The iteration chain
+
+Given an endofunctor `F : C -> C` and an initial object
+`0 : C`, the *iteration chain* is the diagram
+`ℕ -> C` defined by:
+
+- `F^0(0) = 0`
+- `F^{n+1}(0) = F(F^n(0))`
+
+with connecting morphisms `F^n(!) : F^n(0) -> F^{n+1}(0)`,
+where `! : 0 -> F(0)` is the unique morphism from the initial
+object.
+
+**Theorem (Adamek).** If `C` has colimits of ω-chains and `F`
+preserves them, then the colimit of the iteration chain
+`0 -> F(0) -> F^2(0) -> ...` carries a canonical F-algebra
+structure, and this algebra is the initial F-algebra.
+
+Dually, given a terminal object `1 : C`, the *coiteration
+chain* is the diagram `ℕ^op -> C`:
+
+- `F^0(1) = 1`
+- `F^{n+1}(1) = F(F^n(1))`
+
+with connecting morphisms `F^n(!) : F^{n+1}(1) -> F^n(1)`.
+
+**Dual theorem.** If `C` has limits of ω^op-chains and `F`
+preserves them, then the limit of the coiteration chain
+`... -> F^2(1) -> F(1) -> 1` carries a canonical F-coalgebra
+structure, and this coalgebra is the terminal F-coalgebra.
+
+#### Directed and filtered (co)limits
+
+A directed colimit is indexed by a directed poset: a
+nonempty partially ordered set in which every pair of
+elements has an upper bound.
+
+A filtered colimit is indexed by a filtered category:
+a nonempty category where every finite diagram has a cocone.
+
+Every directed poset is a filtered category (mathlib:
+`isFiltered_of_directed_le_nonempty`). Conversely, every
+filtered category has a cofinal directed poset (mathlib:
+`IsFiltered.exists_directed`, the Deligne construction from
+SGA 4 I 8.1.6). So for purposes of computing colimits,
+directed and filtered are equivalent.
+
+The poset `(ℕ, ≤)` is directed and nonempty. Therefore:
+
+- The iteration chain `0 -> F(0) -> F^2(0) -> ...` is a
+  **filtered colimit** (equivalently, a directed colimit).
+- The coiteration chain `... -> F^2(1) -> F(1) -> 1` is a
+  **cofiltered limit** (equivalently, a codirected limit).
+
+#### Preservation consequences
+
+**Theorem.** If `G` preserves filtered colimits and `A` is
+the initial algebra of `F` (expressed as the colimit of the
+iteration chain), then `G` preserves `A` — that is,
+`G(A) ≅ colim G(F^n(0))`.
+
+This does not say that `G(A)` is an initial algebra of
+anything; it says that `G` commutes with the colimit
+construction that produces `A`. The practical consequence
+is: functors that preserve filtered colimits (in particular,
+finitary polynomial endofunctors) commute with initial
+algebra constructions. This applies to our pullback,
+pushforward, and composition functors.
+
+Dually, functors preserving cofiltered limits commute
+with terminal coalgebra constructions.
+
+### G: Relation to Our Codebase
+
+Our `PolyFix P` is defined as an inductive type (W-type),
+and `PolyCofix P` is defined via depth-indexed approximations
+(`PolyCofixApprox`) with a consistency relation. Neither is
+currently expressed as a categorical (co)limit of an iteration
+chain.
+
+Bridging this gap requires:
+
+1. Constructing the iteration chain as a functor
+   `ℕ ⥤ Over X` using `polyEndoFunctor P` applied
+   iteratively to the initial object of `Over X`.
+2. Proving that `polyFixAlg P` (our initial algebra) is
+   the colimit of this chain.
+3. Dually, constructing the coiteration chain as a functor
+   `ℕᵒᵖ ⥤ Over X` and proving that `polyCofixCoalg P`
+   is the limit.
+
+Step 2 connects the inductive definition to the categorical
+colimit, and step 3 connects the coinductive definition to
+the categorical limit. Once established, the preservation
+theorems above apply automatically.
+
+### G: Mathlib Infrastructure
+
+- `Mathlib.CategoryTheory.Functor.OfSequence`:
+  `Functor.ofSequence` builds `ℕ ⥤ C` from a sequence of
+  morphisms `X n ⟶ X (n + 1)`
+- `Mathlib.CategoryTheory.Filtered.Basic`:
+  `isFiltered_of_directed_le_nonempty` (directed => filtered),
+  `IsFiltered.isDirectedOrder` (filtered => directed for
+  preorders)
+- `Mathlib.CategoryTheory.Presentable.Directed`:
+  `IsFiltered.exists_directed` (every filtered category has a
+  cofinal directed poset)
+- `Mathlib.CategoryTheory.Limits.Preserves.Filtered`:
+  `PreservesFilteredColimitsOfSize`
+- `Mathlib.CategoryTheory.Endofunctor.Algebra`:
+  `Algebra.Initial.str_isIso` (Lambek's lemma for initial
+  algebras), `Coalgebra.Terminal.str_isIso` (dual)
+
+### G: Proposals
+
+**G0. Iteration chain functor.** Construct the functor
+`polyIterChain P : ℕ ⥤ Over X` sending
+`n ↦ (polyEndoFunctor P)^n(initial)`, using
+`Functor.ofSequence`. Dually, construct the coiteration
+chain `polyCoiterChain P : ℕᵒᵖ ⥤ Over X` sending
+`n ↦ (polyEndoFunctor P)^n(terminal)`.
+
+**G1. Initial algebra as chain colimit.** Prove that
+`polyFixAlg P` is the colimit of `polyIterChain P`.
+This connects our inductive W-type definition to the
+categorical colimit construction.
+
+**G2. Terminal coalgebra as chain limit.** Prove that
+`polyCofixCoalg P` is the limit of `polyCoiterChain P`.
+This connects our coinductive M-type definition to the
+categorical limit construction.
+
+**G3. Preservation corollaries.** Derive that any functor
+preserving filtered colimits preserves our initial algebras,
+and any functor preserving cofiltered limits preserves our
+terminal coalgebras. Instantiate for finitary polynomial
+endofunctors.
+
+---
+
 ## A. Colimits for Polynomial Algebras
 
 ### A: References
@@ -540,18 +692,32 @@ relationship to the copresheaf topos.
 
 ### External References
 
+- [nLab: initial algebra of an endofunctor](https://ncatlab.org/nlab/show/initial+algebra+of+an+endofunctor)
+- [nLab: terminal coalgebra for an endofunctor](https://ncatlab.org/nlab/show/terminal+coalgebra+for+an+endofunctor)
 - [nLab: colimits in categories of algebras](https://ncatlab.org/nlab/show/colimits+in+categories+of+algebras)
 - [nLab: reflexive coequalizer](https://ncatlab.org/nlab/show/reflexive+coequalizer)
 - [nLab: sifted colimit](https://ncatlab.org/nlab/show/sifted+colimit)
 - [nLab: finitary monad](https://ncatlab.org/nlab/show/finitary+monad)
 - [nLab: polynomial monad](https://ncatlab.org/nlab/show/polynomial+monad)
+- Adamek, "Free algebras and automata realizations in the
+  language of categories and functors" (CMJ 1974)
 - Borceux, *Handbook of Categorical Algebra* Vol. 2
 - Barr and Wells, *Toposes, Triples, and Theories*
-- Adamek and Rosicky, *Locally Presentable and Accessible Categories*
-- Adamek, Rosicky, and Vitale, "What are sifted colimits?" (TAC 2010)
+- Adamek and Rosicky, *Locally Presentable and Accessible
+  Categories*
+- Adamek, Rosicky, and Vitale, "What are sifted colimits?"
+  (TAC 2010)
 
 ### Mathlib Modules
 
+- `Mathlib.CategoryTheory.Functor.OfSequence` --
+  `Functor.ofSequence` (build `ℕ ⥤ C` from morphism sequence)
+- `Mathlib.CategoryTheory.Filtered.Basic` --
+  `IsFiltered`, `isFiltered_of_directed_le_nonempty`
+- `Mathlib.CategoryTheory.Presentable.Directed` --
+  `IsFiltered.exists_directed` (Deligne construction)
+- `Mathlib.CategoryTheory.Limits.Preserves.Filtered` --
+  `PreservesFilteredColimitsOfSize`
 - `Mathlib.CategoryTheory.Monad.Basic` -- Monad, Comonad
 - `Mathlib.CategoryTheory.Monad.Algebra` -- Monad.Algebra,
   Comonad.Coalgebra

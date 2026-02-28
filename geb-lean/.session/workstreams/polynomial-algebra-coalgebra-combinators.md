@@ -22,6 +22,10 @@ usefulness (Use).
 
 | ID | Proposal | Diff | Use |
 | -- | -------- | ---- | --- |
+| G0 | Iteration/coiteration chain functors | 2 | 4 |
+| G1 | Initial algebra as chain colimit | 3 | 5 |
+| G2 | Terminal coalgebra as chain limit | 3 | 5 |
+| G3 | Preservation corollaries | 2 | 5 |
 | A0 | Finitariness predicate for polynomials | 1 | 4 |
 | A1 | `HasColimitsOfSize (PolyAlg P)` (finitary) | 3 | 5 |
 | A2 | Beck coequalizer for PolyAlg | 1 | 3 |
@@ -41,11 +45,27 @@ usefulness (Use).
 
 ## Tasks
 
-### Phase 1: Algebra Colimits
+### Phase 1: Fixed Points and Algebra Colimits
 
-Build on the limit instances just added to complete the
-(co)limit picture for finitary polynomial algebras.
+Express initial algebras and terminal coalgebras as chain
+(co)limits, then build on the limit instances to complete
+the (co)limit picture for finitary polynomial algebras.
 
+- [ ] G0: Construct `polyIterChain P : ℕ ⥤ Over X` sending
+  `n ↦ P^n(initial)` via `Functor.ofSequence`, and dually
+  `polyCoiterChain P : ℕᵒᵖ ⥤ Over X` sending
+  `n ↦ P^n(terminal)`
+- [ ] G1: Prove `polyFixAlg P` (our W-type initial algebra)
+  is the colimit of `polyIterChain P`, connecting the
+  inductive definition to the categorical colimit
+- [ ] G2: Prove `polyCofixCoalg P` (our M-type terminal
+  coalgebra) is the limit of `polyCoiterChain P`,
+  connecting the coinductive definition to the categorical
+  limit
+- [ ] G3: Derive preservation corollaries: any functor
+  preserving filtered colimits preserves initial algebras,
+  and dually for cofiltered limits and terminal coalgebras.
+  Instantiate for finitary polynomial endofunctors.
 - [ ] A0: Define `PolyBetweenFinitary` for arbitrary polynomial
   functors between slices (all direction-set fibers are finite),
   and `PolyEndoFinitary` as the endofunctor specialization
@@ -108,8 +128,13 @@ currently planned for implementation.
 
 ## Notes
 
-- Phase 1 depends on mathlib's reflexive coequalizer
-  infrastructure (`Monad.Coequalizer`, `Limits.Shapes.Reflexive`)
+- Phase 1 items G0-G3 use `Functor.ofSequence` and the
+  directed/filtered equivalence from mathlib; G1 and G2
+  connect our inductive/coinductive definitions to
+  categorical (co)limits
+- Phase 1 items A0-A2 depend on mathlib's reflexive
+  coequalizer infrastructure
+  (`Monad.Coequalizer`, `Limits.Shapes.Reflexive`)
 - Phase 2 is entirely new category theory (no mathlib precedent
   for distributive laws of monads over comonads)
 - Phase 3 connects the abstract framework to our concrete
