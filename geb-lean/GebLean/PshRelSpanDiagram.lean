@@ -172,12 +172,13 @@ abbrev PshRelIndex
 
 /-- The type of endpoint projections from a
 presheaf relation with endpoints `P`, `Q` to a
-presheaf `T`.  An element witnesses that `T`
+presheaf.  An element witnesses that the target
 is one of the endpoints. -/
 inductive PshEndpointProj
-    (P Q T : Cᵒᵖ ⥤ Type w) : Type where
-  | fst : P = T → PshEndpointProj P Q T
-  | snd : Q = T → PshEndpointProj P Q T
+    (P Q : Cᵒᵖ ⥤ Type w) :
+    (Cᵒᵖ ⥤ Type w) → Type where
+  | fst : PshEndpointProj P Q P
+  | snd : PshEndpointProj P Q Q
 
 /-- The profunctor whose collage is the presheaf
 relational span category.  Maps
@@ -221,9 +222,9 @@ def pshRelSpanToCollage :
     | .typeNode _, _, .id _ => ⟨𝟙 _⟩
     | .relNode _ _ _, _, .id _ => ⟨𝟙 _⟩
     | _, _, .fstProj P Q R =>
-      ⟨⟨PshEndpointProj.fst rfl⟩⟩
+      ⟨⟨PshEndpointProj.fst⟩⟩
     | _, _, .sndProj P Q R =>
-      ⟨⟨PshEndpointProj.snd rfl⟩⟩
+      ⟨⟨PshEndpointProj.snd⟩⟩
   map_id := by intro X; cases X <;> rfl
   map_comp := by
     intro X Y Z f g
@@ -263,11 +264,9 @@ def pshCollageToRelSpanMap
     have h : T = T' := f.down.down.down
     subst h; exact .id _
   | ⟨.inl ⟨⟨P, Q, R⟩⟩⟩, ⟨.inr ⟨T⟩⟩, f =>
-    have p : PshEndpointProj P Q T :=
-      f.down.down
-    exact p.casesOn
-      (fun h => h ▸ .fstProj P Q R)
-      (fun h => h ▸ .sndProj P Q R)
+    exact match T, f.down.down with
+    | _, .fst => PshRelSpanHom.fstProj P Q R
+    | _, .snd => PshRelSpanHom.sndProj P Q R
   | ⟨.inr _⟩, ⟨.inl _⟩, f =>
     exact PEmpty.elim f
 
@@ -298,7 +297,7 @@ theorem pshCollageToRelSpanMap_fst
         (P := pshRelSpanProfunctor (C := C))
         ⟨⟨P, Q, R⟩⟩ ⟶
         Collage.inr ⟨P⟩
-        from ⟨⟨PshEndpointProj.fst rfl⟩⟩) =
+        from ⟨⟨PshEndpointProj.fst⟩⟩) =
     .fstProj P Q R := rfl
 
 @[simp]
@@ -310,7 +309,7 @@ theorem pshCollageToRelSpanMap_snd
         (P := pshRelSpanProfunctor (C := C))
         ⟨⟨P, Q, R⟩⟩ ⟶
         Collage.inr ⟨Q⟩
-        from ⟨⟨PshEndpointProj.snd rfl⟩⟩) =
+        from ⟨⟨PshEndpointProj.snd⟩⟩) =
     .sndProj P Q R := rfl
 
 /-- Functor from the collage of
@@ -344,16 +343,23 @@ def pshCollageToRelSpan :
       ⟨f⟩, ⟨h⟩ =>
       have := f.down.down
       subst_vars
-      have p : PshEndpointProj _ _ _ :=
-        h.down
-      cases p <;> rfl
-    | .inl ⟨_⟩, .inr ⟨_⟩, .inr ⟨_⟩,
+      match h.down with
+      | .fst => rfl
+      | .snd => rfl
+    | .inl ⟨⟨P, Q, R⟩⟩,
+      .inr ⟨T⟩, .inr ⟨T'⟩,
       ⟨h⟩, ⟨g⟩ =>
-      have := g.down.down
-      subst_vars
-      have p : PshEndpointProj _ _ _ :=
-        h.down
-      cases p <;>
+      have heq : T = T' := g.down.down
+      subst heq
+      match h.down with
+      | .fst =>
+        simp [pshCollageToRelSpanMap,
+          pshCollageToRelSpanObj,
+          Collage.Hom.comp,
+          CategoryStruct.comp,
+          PshRelSpanHom.comp,
+          pshRelSpanProfunctor]
+      | .snd =>
         simp [pshCollageToRelSpanMap,
           pshCollageToRelSpanObj,
           Collage.Hom.comp,
@@ -453,22 +459,18 @@ def pshRelSpanCollageIso :
             pshRelSpanCollage_inv_hom_obj]
           rfl
         | ⟨.inl ⟨⟨P, Q, R⟩⟩⟩,
-          ⟨.inr ⟨_⟩⟩, ⟨h⟩ =>
+          ⟨.inr ⟨T⟩⟩, ⟨h⟩ =>
           simp only [
             eqToHom_refl, Category.id_comp,
             Category.comp_id, Functor.id_map,
             Functor.comp_map]
-          cases h with
-          | up p =>
-            cases p with
-            | fst hp =>
-              cases hp
-              simp only [pshCollageToRelSpan]
-              rfl
-            | snd hp =>
-              cases hp
-              simp only [pshCollageToRelSpan]
-              rfl
+          match T, h with
+          | _, ⟨.fst⟩ =>
+            simp only [pshCollageToRelSpan]
+            rfl
+          | _, ⟨.snd⟩ =>
+            simp only [pshCollageToRelSpan]
+            rfl
         | ⟨.inr _⟩, ⟨.inl _⟩, f =>
           exact PEmpty.elim f)
 
