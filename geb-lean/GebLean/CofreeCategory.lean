@@ -1814,4 +1814,769 @@ def coalgCopresheafFunctor (P : PolyEndo X) :
     simp only [CategoryStruct.comp]
     exact Subtype.ext rfl
 
+/-! ## Copresheaf to Coalgebra (Inverse) -/
+
+/--
+The carrier of the coalgebra associated to a
+copresheaf: the total space over all cofree
+category objects.
+-/
+def copresheafCoalgCarrier (P : PolyEndo X)
+    (F : PolyCofreeCat P ⥤ Type u) :
+    Over X :=
+  Over.mk (fun ⟨obj, _⟩ => obj.fiber :
+    (Σ obj : PolyCofreeCat P, F.obj obj) → X)
+
+/--
+The child object in the cofree category at a
+given edge of the root shape.
+-/
+def polyCofreeCatChild (P : PolyEndo X)
+    (obj : PolyCofreeCat P)
+    (e : (polyBetweenFamily X X P obj.fiber
+      obj.shape.head.2).left) :
+    PolyCofreeCat P where
+  fiber := (polyBetweenFamily X X P obj.fiber
+    obj.shape.head.2).hom e
+  shape := obj.shape.children e
+
+/--
+The depth-1 morphism in the cofree category
+from an object to its child at a given edge.
+-/
+def polyCofreeCatEdge (P : PolyEndo X)
+    (obj : PolyCofreeCat P)
+    (e : (polyBetweenFamily X X P obj.fiber
+      obj.shape.head.2).left) :
+    obj ⟶ polyCofreeCatChild P obj e where
+  depth := 1
+  pos := ⟨e, PUnit.unit⟩
+  fiber_eq := rfl
+  subtree_eq := HEq.rfl
+
+/--
+The approximation at depth n for the M-type tree
+constructed from a copresheaf. At each node, the
+annotation is a copresheaf element pushed forward
+along the edge morphism.
+-/
+def copresheafCoalgApprox (P : PolyEndo X)
+    (F : PolyCofreeCat P ⥤ Type u)
+    (obj : PolyCofreeCat P)
+    (elem : F.obj obj) :
+    ∀ n, PolyCofixApprox
+      (polyScale (copresheafCoalgCarrier P F) P)
+      n obj.fiber
+  | 0 => .continue obj.fiber
+  | n + 1 => .intro obj.fiber
+      ⟨⟨⟨obj, elem⟩, rfl⟩, obj.shape.head.2⟩
+      (fun e => copresheafCoalgApprox P F
+        (polyCofreeCatChild P obj e)
+        (F.map (polyCofreeCatEdge P obj e) elem)
+        n)
+
+/--
+Successive approximations from a copresheaf agree.
+-/
+lemma copresheafCoalgApprox_agree (P : PolyEndo X)
+    (F : PolyCofreeCat P ⥤ Type u)
+    (obj : PolyCofreeCat P)
+    (elem : F.obj obj) :
+    ∀ n, PolyCofixAgree
+      (polyScale (copresheafCoalgCarrier P F) P)
+      (copresheafCoalgApprox P F obj elem n)
+      (copresheafCoalgApprox P F obj elem (n + 1))
+  | 0 => .continue _ _
+  | n + 1 => .intro _ _
+      (fun e => copresheafCoalgApprox_agree P F
+        (polyCofreeCatChild P obj e)
+        (F.map (polyCofreeCatEdge P obj e) elem)
+        n)
+
+/--
+The M-type tree constructed from a copresheaf
+element. Each node is annotated with the
+copresheaf element pushed forward along the path
+from the root.
+-/
+def copresheafCoalgMType (P : PolyEndo X)
+    (F : PolyCofreeCat P ⥤ Type u)
+    (obj : PolyCofreeCat P)
+    (elem : F.obj obj) :
+    PolyCofreeM (copresheafCoalgCarrier P F) P
+      obj.fiber where
+  approx := copresheafCoalgApprox P F obj elem
+  consistent :=
+    copresheafCoalgApprox_agree P F obj elem
+
+/--
+The underlying function of the structure map
+for the comonad coalgebra constructed from a
+copresheaf.
+-/
+def copresheafCoalgStrLeft (P : PolyEndo X)
+    (F : PolyCofreeCat P ⥤ Type u) :
+    (copresheafCoalgCarrier P F).left →
+    (polyCofreeCarrier
+      (copresheafCoalgCarrier P F) P).left :=
+  fun ⟨obj, elem⟩ =>
+    ⟨obj.fiber, copresheafCoalgMType P F obj elem⟩
+
+/--
+The structure map commutes with projections to X.
+-/
+lemma copresheafCoalgStr_comm (P : PolyEndo X)
+    (F : PolyCofreeCat P ⥤ Type u) :
+    copresheafCoalgStrLeft P F ≫
+    (polyCofreeCarrier
+      (copresheafCoalgCarrier P F) P).hom =
+    (copresheafCoalgCarrier P F).hom := rfl
+
+/--
+The structure map as a morphism in Over X,
+targeting the comonad's carrier.
+-/
+def copresheafCoalgStr (P : PolyEndo X)
+    (F : PolyCofreeCat P ⥤ Type u) :
+    copresheafCoalgCarrier P F ⟶
+    (polyCofreeComonad X P).toFunctor.obj
+      (copresheafCoalgCarrier P F) :=
+  Over.homMk (copresheafCoalgStrLeft P F)
+    (copresheafCoalgStr_comm P F)
+
+/-! ### P-Coalgebra from Copresheaf
+
+Given a copresheaf `F : PolyCofreeCat P ⥤ Type u`,
+the total space `copresheafCoalgCarrier P F` carries
+a natural P-coalgebra structure: the shape at
+`⟨obj, elem⟩` is the shape of `obj` in the cofree
+category, and children are obtained by applying
+`F.map` along edge morphisms.
+-/
+
+/--
+The children morphism for the P-coalgebra structure
+map: at each edge of the root shape, the child
+carrier element is the cofree category child object
+paired with the pushed-forward copresheaf element.
+-/
+def copresheafPolyCoalgChildrenMor
+    (P : PolyEndo X)
+    (F : PolyCofreeCat P ⥤ Type u)
+    (obj : PolyCofreeCat P)
+    (elem : F.obj obj) :
+    polyBetweenFamily X X P obj.fiber
+      obj.shape.head.2 ⟶
+    copresheafCoalgCarrier P F :=
+  Over.homMk
+    (fun e => ⟨polyCofreeCatChild P obj e,
+      F.map (polyCofreeCatEdge P obj e) elem⟩)
+    rfl
+
+/--
+The evaluation family for the P-coalgebra structure
+map at a carrier element.
+-/
+def copresheafPolyCoalgStrFamily
+    (P : PolyEndo X)
+    (F : PolyCofreeCat P ⥤ Type u)
+    (obj : PolyCofreeCat P)
+    (elem : F.obj obj) :
+    polyBetweenEvalFamily X X P
+      (copresheafCoalgCarrier P F) obj.fiber :=
+  ⟨obj.shape.head.2,
+    copresheafPolyCoalgChildrenMor P F obj elem⟩
+
+/--
+The P-coalgebra structure map on the copresheaf
+carrier.
+-/
+def copresheafPolyCoalgStr
+    (P : PolyEndo X)
+    (F : PolyCofreeCat P ⥤ Type u) :
+    copresheafCoalgCarrier P F ⟶
+    (polyEndoFunctor X P).obj
+      (copresheafCoalgCarrier P F) :=
+  Over.homMk
+    (fun ⟨obj, elem⟩ =>
+      ⟨obj.fiber,
+        copresheafPolyCoalgStrFamily P F
+          obj elem⟩)
+    rfl
+
+/--
+The P-coalgebra constructed from a copresheaf.
+-/
+def copresheafToPolyCoalg
+    (P : PolyEndo X)
+    (F : PolyCofreeCat P ⥤ Type u) :
+    PolyCoalg P where
+  V := copresheafCoalgCarrier P F
+  str := copresheafPolyCoalgStr P F
+
+/--
+The comonad coalgebra constructed from a copresheaf,
+via the comparison functor applied to the
+P-coalgebra.
+-/
+def copresheafToComonadCoalg
+    (P : PolyEndo X)
+    (F : PolyCofreeCat P ⥤ Type u) :
+    Comonad.Coalgebra (polyCofreeComonad X P) :=
+  (polyCoalgToComonadCoalg X P).obj
+    (copresheafToPolyCoalg P F)
+
+/--
+A natural transformation between copresheaves
+induces a morphism of Over X objects on the
+carriers.
+-/
+def copresheafNatTransMor
+    (P : PolyEndo X)
+    {F G : PolyCofreeCat P ⥤ Type u}
+    (η : F ⟶ G) :
+    copresheafCoalgCarrier P F ⟶
+    copresheafCoalgCarrier P G :=
+  Over.homMk
+    (fun ⟨obj, elem⟩ => ⟨obj, η.app obj elem⟩)
+    rfl
+
+/--
+The morphism induced by a natural transformation
+is a P-coalgebra homomorphism.
+-/
+lemma copresheafNatTransMor_comm
+    (P : PolyEndo X)
+    {F G : PolyCofreeCat P ⥤ Type u}
+    (η : F ⟶ G) :
+    copresheafPolyCoalgStr P F ≫
+    (polyEndoFunctor X P).map
+      (copresheafNatTransMor P η) =
+    copresheafNatTransMor P η ≫
+    copresheafPolyCoalgStr P G := by
+  apply Over.OverMorphism.ext
+  funext ⟨obj, elem⟩
+  simp only [Over.comp_left, types_comp_apply,
+    copresheafPolyCoalgStr, Over.homMk_left,
+    copresheafNatTransMor,
+    copresheafPolyCoalgStrFamily]
+  dsimp only [polyEndoFunctor,
+    polyBetweenEvalFunctor, polyBetweenEvalMap,
+    polyToOverEvalMap, polyToOverFunctor,
+    familySliceForward, familySliceForwardMap,
+    polyToOverEval, polyToOverEvalFamilyMap,
+    ccrEvalMap, Functor.comp_map,
+    Functor.comp_obj, Over.homMk_left]
+  congr 1; congr 1
+  apply Over.OverMorphism.ext
+  funext e
+  simp only [Over.comp_left, Over.homMk_left,
+    types_comp_apply,
+    copresheafPolyCoalgChildrenMor]
+  congr 1
+  exact congrFun
+    (η.naturality
+      (polyCofreeCatEdge P obj e)) elem
+
+/--
+A natural transformation between copresheaves induces
+a P-coalgebra homomorphism on the corresponding
+carriers.
+-/
+def copresheafNatTransHom
+    (P : PolyEndo X)
+    {F G : PolyCofreeCat P ⥤ Type u}
+    (η : F ⟶ G) :
+    copresheafToPolyCoalg P F ⟶
+    copresheafToPolyCoalg P G :=
+  Endofunctor.Coalgebra.Hom.mk
+    (copresheafNatTransMor P η)
+    (copresheafNatTransMor_comm P η)
+
+/--
+The identity natural transformation maps to the
+identity coalgebra homomorphism.
+-/
+lemma copresheafNatTransHom_id
+    (P : PolyEndo X)
+    (F : PolyCofreeCat P ⥤ Type u) :
+    copresheafNatTransHom P (𝟙 F) =
+    𝟙 (copresheafToPolyCoalg P F) := by
+  apply Endofunctor.Coalgebra.Hom.ext
+  apply Over.OverMorphism.ext
+  funext ⟨_, _⟩
+  rfl
+
+/--
+Composition of natural transformations maps to
+composition of coalgebra homomorphisms.
+-/
+lemma copresheafNatTransHom_comp
+    (P : PolyEndo X)
+    {F G H : PolyCofreeCat P ⥤ Type u}
+    (η : F ⟶ G) (θ : G ⟶ H) :
+    copresheafNatTransHom P (η ≫ θ) =
+    copresheafNatTransHom P η ≫
+    copresheafNatTransHom P θ := by
+  apply Endofunctor.Coalgebra.Hom.ext
+  apply Over.OverMorphism.ext
+  funext ⟨_, _⟩
+  rfl
+
+/-! ### Copresheaf-to-Coalgebra Functor
+
+The assignment `F ↦ copresheafToPolyCoalg P F` is
+functorial: copresheaves on the cofree category map
+to P-coalgebras contravariantly (natural
+transformations go to coalgebra homomorphisms in the
+same direction because the carrier total space
+construction is covariant in the copresheaf).
+-/
+
+/--
+The functor from copresheaves on the cofree
+category to P-coalgebras.
+-/
+def copresheafToPolyCoalgFunctor
+    (P : PolyEndo X) :
+    (PolyCofreeCat P ⥤ Type u) ⥤
+    PolyCoalg P where
+  obj := copresheafToPolyCoalg P
+  map := copresheafNatTransHom P
+  map_id F := copresheafNatTransHom_id P F
+  map_comp η θ := copresheafNatTransHom_comp P η θ
+
+/-! ### Composed Functors -/
+
+/--
+The composed functor from P-coalgebras to
+copresheaves: apply the comparison functor to
+get a comonad coalgebra, then construct the
+copresheaf.
+-/
+def polyCoalgToCopresheafFunctor
+    (P : PolyEndo X) :
+    PolyCoalg P ⥤
+    (PolyCofreeCat P ⥤ Type u) :=
+  polyCoalgToComonadCoalg X P ⋙
+    coalgCopresheafFunctor P
+
+/-! ### Forward-Backward Roundtrip
+
+Starting with a P-coalgebra `α`, applying the
+forward functor (comparison then copresheaf) and
+then the backward functor (copresheaf to P-coalgebra)
+yields a P-coalgebra isomorphic to `α`.  The
+carrier isomorphism is the sigma-subtype fiber
+decomposition.
+-/
+
+/--
+The forward map of the carrier isomorphism for the
+forward-backward roundtrip: sends `a : α.V.left`
+to the pair of its target cofree category object
+and the element with its membership proof.
+-/
+def roundtripFBCarrierFwd (P : PolyEndo X)
+    (α : PolyCoalg P) :
+    α.V.left →
+    (copresheafCoalgCarrier P
+      ((polyCoalgToCopresheafFunctor P).obj α)
+    ).left :=
+  fun a =>
+    let c := (polyCoalgToComonadCoalg X P).obj α
+    ⟨coalgCopresheafTarget c a, ⟨a, rfl⟩⟩
+
+/--
+The backward map of the carrier isomorphism:
+projects out the element from the sigma-subtype
+pair.
+-/
+def roundtripFBCarrierBwd (P : PolyEndo X)
+    (α : PolyCoalg P) :
+    (copresheafCoalgCarrier P
+      ((polyCoalgToCopresheafFunctor P).obj α)
+    ).left →
+    α.V.left :=
+  fun ⟨_, ⟨a, _⟩⟩ => a
+
+lemma roundtripFBCarrier_comm_fwd (P : PolyEndo X)
+    (α : PolyCoalg P) :
+    roundtripFBCarrierFwd P α ≫
+    (copresheafCoalgCarrier P
+      ((polyCoalgToCopresheafFunctor P).obj α)
+    ).hom = α.V.hom := rfl
+
+lemma roundtripFBCarrier_comm_bwd (P : PolyEndo X)
+    (α : PolyCoalg P) :
+    roundtripFBCarrierBwd P α ≫ α.V.hom =
+    (copresheafCoalgCarrier P
+      ((polyCoalgToCopresheafFunctor P).obj α)
+    ).hom := by
+  funext ⟨_, ⟨a, ha⟩⟩
+  simp only [types_comp_apply,
+    roundtripFBCarrierBwd,
+    copresheafCoalgCarrier, Over.mk_hom]
+  exact ha.symm ▸ rfl
+
+lemma roundtripFBCarrier_bwd_fwd (P : PolyEndo X)
+    (α : PolyCoalg P) (a : α.V.left) :
+    roundtripFBCarrierBwd P α
+      (roundtripFBCarrierFwd P α a) = a := rfl
+
+/--
+The carrier of the forward-backward roundtrip
+result.
+-/
+abbrev roundtripFBResultCarrier
+    (P : PolyEndo X) (α : PolyCoalg P) : Over X :=
+  copresheafCoalgCarrier P
+    ((polyCoalgToCopresheafFunctor P).obj α)
+
+lemma roundtripFBCarrier_fwd_bwd (P : PolyEndo X)
+    (α : PolyCoalg P)
+    (x : (roundtripFBResultCarrier P α).left) :
+    roundtripFBCarrierFwd P α
+      (roundtripFBCarrierBwd P α x) = x := by
+  obtain ⟨obj, ⟨a, rfl⟩⟩ := x
+  rfl
+
+/--
+The forward Over X morphism for the
+forward-backward roundtrip carrier isomorphism.
+-/
+def roundtripFBCarrierMorFwd (P : PolyEndo X)
+    (α : PolyCoalg P) :
+    α.V ⟶ roundtripFBResultCarrier P α :=
+  Over.homMk (roundtripFBCarrierFwd P α)
+    (roundtripFBCarrier_comm_fwd P α)
+
+/--
+The backward Over X morphism for the
+forward-backward roundtrip carrier isomorphism.
+-/
+def roundtripFBCarrierMorBwd (P : PolyEndo X)
+    (α : PolyCoalg P) :
+    roundtripFBResultCarrier P α ⟶ α.V :=
+  Over.homMk (roundtripFBCarrierBwd P α)
+    (roundtripFBCarrier_comm_bwd P α)
+
+/--
+The carrier morphisms form an isomorphism.
+-/
+def roundtripFBCarrierIso (P : PolyEndo X)
+    (α : PolyCoalg P) :
+    α.V ≅ roundtripFBResultCarrier P α where
+  hom := roundtripFBCarrierMorFwd P α
+  inv := roundtripFBCarrierMorBwd P α
+  hom_inv_id := by
+    apply Over.OverMorphism.ext
+    funext a
+    exact roundtripFBCarrier_bwd_fwd P α a
+  inv_hom_id := by
+    apply Over.OverMorphism.ext
+    funext x
+    exact roundtripFBCarrier_fwd_bwd P α x
+
+/--
+The forward carrier morphism is a P-coalgebra
+homomorphism.
+-/
+-- To prove this, we need to relate the
+-- comparison functor's output to the original
+-- P-coalgebra structure.
+-- Factor out: the first component of the
+-- target matches the structure map's first
+-- component.
+lemma roundtripFB_target_fiber
+    (P : PolyEndo X) (α : PolyCoalg P)
+    (a : α.V.left) :
+    (coalgCopresheafTarget
+      ((polyCoalgToComonadCoalg X P).obj α)
+      a).fiber = (α.str.left a).1 := by
+  simp only [coalgCopresheafTarget]
+  -- Goal: c.A.hom a = (α.str.left a).1
+  -- where c = comparison.obj α, so c.A = L.obj α
+  -- L = polyForgetFunctor, so c.A.hom = α.V.hom
+  change α.V.hom a = (α.str.left a).1
+  exact (congrFun (Over.w α.str) a).symm
+
+-- The structure map equality for the
+-- forward-backward roundtrip at a point.
+-- This expresses that reading the copresheaf
+-- structure from the M-type tree (which the
+-- anamorphism builds from α.str) and projecting
+-- back gives α.str.
+-- The copresheaf-derived P-coalgebra structure
+-- agrees with polyComonadCoalgStr (which extracts
+-- the P-structure from a comonad coalgebra via
+-- c.a ≫ cofreeStr ≫ P.map(counit)).
+-- By polyCoalgComonad_forward_str, the latter
+-- equals α.str for comparison outputs.
+-- So it suffices to show:
+-- copresheafPolyCoalgStr composed with bwd
+-- = roundtripFBCarrierBwd composed with
+--   polyComonadCoalgStr c
+-- That is, reading the P-structure from the
+-- copresheaf (via M-type head/children) and
+-- projecting back gives the same as projecting
+-- first and then reading from the comonad
+-- coalgebra's extracted P-structure.
+--
+-- An alternative approach: use the Phase 1 result
+-- polyCoalgComonad_forward_str to avoid unfolding
+-- the M-type tree entirely.  Instead, show the
+-- backward map is a P-coalgebra homomorphism by
+-- relating it to the Phase 1 inverse comparison.
+lemma coalgCopresheafMap_edge_val
+    {P : PolyEndo X}
+    (c : Comonad.Coalgebra
+      (polyCofreeComonad X P))
+    (a : c.A.left) :
+    let target := coalgCopresheafTarget c a
+    let m := (c.a.left a).2
+    let e_m := fun (e : (polyBetweenFamily X X
+        P (c.A.hom a)
+        target.shape.head.2).left) =>
+      polyCofreeShapePosToMPos c.A P m
+        ((coalgCopresheafCastPos c a 1
+          ⟨e, PUnit.unit⟩).1)
+    ∀ (e : (polyBetweenFamily X X P (c.A.hom a)
+        target.shape.head.2).left),
+    ((coalgCopresheaf c).map
+      (polyCofreeCatEdge P target e)
+      ⟨a, rfl⟩).val =
+    coalgCopresheafChild c a (e_m e) := by
+  intro target m e_m e
+  simp only [coalgCopresheaf, coalgCopresheafMap,
+    coalgCopresheafChild, polyCofreeCatEdge]
+  rfl
+
+lemma polyCofreeAnnotPosAt1_cast_fst_heq
+    {P : PolyEndo X} {x : X}
+    {s1 s2 : PolyCofreeShape P x}
+    (h : s1 = s2)
+    (e : (polyBetweenFamily X X P x
+      s1.head.2).left) :
+    HEq
+      (cast (polyCofreeAnnotPosAt_cast h 1)
+        ⟨e, PUnit.unit⟩).fst
+      e := by
+  subst h
+  rfl
+
+lemma polyCofreeAnnotPosAt1_cast_fiber_fst_heq
+    {P : PolyEndo X} {x y : X}
+    (hxy : x = y)
+    {s1 : PolyCofreeShape P x}
+    {s2 : PolyCofreeShape P y}
+    (hs : HEq s1 s2)
+    (e : (polyBetweenFamily X X P x
+      s1.head.2).left) :
+    HEq
+      (cast (polyCofreeAnnotPosAt_cast_fiber
+        hxy hs 1) ⟨e, PUnit.unit⟩).fst
+      e := by
+  subst hxy
+  exact polyCofreeAnnotPosAt1_cast_fst_heq
+    (eq_of_heq hs) e
+
+lemma coalgCopresheafCastPos1_fst_heq
+    {P : PolyEndo X}
+    (c : Comonad.Coalgebra
+      (polyCofreeComonad X P))
+    (a : c.A.left) :
+    let target := coalgCopresheafTarget c a
+    ∀ (e : (polyBetweenFamily X X P
+        (c.A.hom a)
+        target.shape.head.2).left),
+    HEq (coalgCopresheafCastPos c a 1
+      ⟨e, PUnit.unit⟩).fst e := by
+  intro target e
+  exact polyCofreeAnnotPosAt1_cast_fiber_fst_heq
+    (comonadCoalgFiberEq c a).symm
+    (coalgCopresheafShapeAt_heq c a) e
+
+lemma roundtripFBStr_eq
+    (P : PolyEndo X) (α : PolyCoalg P)
+    (a : α.V.left) :
+    let c := (polyCoalgToComonadCoalg X P).obj α
+    let target := coalgCopresheafTarget c a
+    let F :=
+      (polyCoalgToCopresheafFunctor P).obj α
+    (⟨target.fiber,
+      ⟨(PolyCofix.head target.shape).2,
+        copresheafPolyCoalgChildrenMor P F
+            target ⟨a, rfl⟩ ≫
+          Over.homMk
+            (roundtripFBCarrierBwd P α)
+            (roundtripFBCarrier_comm_bwd
+              P α)⟩⟩ :
+      (x : X) ×
+        polyBetweenEvalFamily X X P α.V x) =
+    α.str.left a := by
+  intro c target F
+  -- Rewrite α.str using the Phase 1 result:
+  -- polyCoalgComonad_forward_str shows that
+  -- extracting the P-structure from c gives α.str.
+  rw [show α.str =
+    polyComonadCoalgStr c from
+    (polyCoalgComonad_forward_str α).symm]
+  simp only [polyComonadCoalgStr, Over.comp_left,
+    types_comp_apply]
+  simp only [polyCofreeCoalg, polyCofreeStr,
+    polyCofreeStrLeft, Over.homMk_left]
+  dsimp only [polyEndoFunctor,
+    polyBetweenEvalFunctor, polyBetweenEvalMap,
+    polyToOverEvalMap, polyToOverFunctor,
+    familySliceForward, familySliceForwardMap,
+    polyToOverEval, polyToOverEvalFamilyMap,
+    ccrEvalMap, Functor.comp_map,
+    Functor.comp_obj, Over.homMk_left]
+  set ca := c.a.left a with hca_def
+  obtain ⟨x_fib, m_tree⟩ := ca
+  simp only [polyCofreeStrFamily]
+  have hfib : x_fib = c.A.hom a := by
+    have h := comonadCoalgFiberEq c a
+    rw [show c.a.left a = ⟨x_fib, m_tree⟩
+      from hca_def.symm] at h
+    exact h
+  subst hfib
+  congr 1
+  -- Goal: inner pair equality
+  -- First need to show target.shape relates to m_tree
+  have hshape : target.shape =
+      polyCofreeToShape c.A P m_tree := by
+    simp only [target, coalgCopresheafTarget,
+      coalgCopresheafShapeAt]
+    -- coalgCopresheafShapeAt c a =
+    -- (comonadCoalgFiberEq c a) ▸
+    --   polyCofreeToShape c.A P (c.a.left a).2
+    -- After subst, comonadCoalgFiberEq c a is
+    -- a proof of c.A.hom a = c.A.hom a. Use
+    -- proof irrelevance to replace it by rfl,
+    -- making the transport trivial.
+    conv_lhs =>
+      rw [show comonadCoalgFiberEq c a =
+        rfl from Subsingleton.elim _ _]
+    -- Now the ▸ rfl reduces away
+    -- Still need (c.a.left a).2 = m_tree
+    -- Since hca_def : ⟨c.A.hom a, m_tree⟩ = c.a.left a
+    -- we get (c.a.left a).2 ≍ m_tree by Sigma.mk.inj
+    exact congrArg (polyCofreeToShape c.A P)
+      (eq_of_heq (Sigma.mk.inj hca_def).2.symm)
+  apply Sigma.ext
+  · -- First component: index equality
+    change (PolyCofix.head target.shape).2 =
+      m_tree.head.2
+    rw [hshape,
+      polyCofreeToShape_head_index c.A P m_tree]
+  · -- Second component: children HEq
+    dsimp only
+    have hsrc :
+        polyBetweenFamily X X P (c.A.hom a)
+          (PolyCofix.head target.shape).2 =
+        polyBetweenFamily X X P (c.A.hom a)
+          m_tree.head.2 := by
+      congr 1
+      rw [hshape,
+        polyCofreeToShape_head_index c.A P
+          m_tree]
+    apply overHomHEqOfSrcEq hsrc
+    -- HEq of .left functions
+    simp only [Over.comp_left, Over.homMk_left]
+    apply funext_heq
+      (congrArg (·.left) hsrc) rfl
+    intro e e' hee'
+    simp only [copresheafPolyCoalgChildrenMor,
+      Over.homMk_left,
+      polyCofreeChildrenMor]
+    simp only [heq_iff_eq]
+    simp only [types_comp_apply]
+    change (F.map (polyCofreeCatEdge P target e)
+          ⟨a, rfl⟩).val =
+        ((polyCofreeComonad X P).ε.app c.A).left
+          ⟨(polyBetweenFamily X X P (c.A.hom a)
+              m_tree.head.2).hom e',
+            m_tree.children e'⟩
+    simp only [polyCofreeComonad,
+      Adjunction.toComonad,
+      polyForgetCofreeAdjunction,
+      Adjunction.mkOfUnitCounit,
+      polyCofreeCounitNat,
+      polyCofreeCounit, Over.homMk_left,
+      polyCofreeCounitLeft]
+    change ((coalgCopresheaf c).map
+        (polyCofreeCatEdge P
+          (coalgCopresheafTarget c a) e)
+        ⟨a, rfl⟩).val =
+      (polyCofreeExtract c.A P
+        (m_tree.children e')).val
+    rw [coalgCopresheafMap_edge_val c a e]
+    simp only [coalgCopresheafChild]
+    -- Goal: polyCofreeExtract at
+    --   (c.a.left a).snd.children e_m
+    -- = polyCofreeExtract at
+    --   m_tree.children e'
+    -- Related by h_snd_heq and position HEq.
+    have h_snd_heq :
+        HEq (c.a.left a).2 m_tree :=
+      (Sigma.ext_iff.mp hca_def.symm).2
+    have h_snd_eq := eq_of_heq h_snd_heq
+    subst h_snd_eq
+    have h_pos_eq :
+        polyCofreeShapePosToMPos c.A P
+          (c.a.left a).snd
+          (coalgCopresheafCastPos c a 1
+            ⟨e, PUnit.unit⟩).fst =
+        e' := by
+      exact eq_of_heq
+        (((polyCofreeShapePosToMPos_heq c.A P
+          (c.a.left a).snd
+          (coalgCopresheafCastPos c a 1
+            ⟨e, PUnit.unit⟩).fst).symm.trans
+          (coalgCopresheafCastPos1_fst_heq
+            c a e)).trans hee')
+    rw [h_pos_eq]
+
+-- The backward carrier morphism is a P-coalgebra
+-- homomorphism: the structure map of the roundtrip
+-- result, composed with the backward projection,
+-- equals the backward projection composed with the
+-- original structure map.
+-- We prove this first, then derive the forward.
+lemma roundtripFBCarrierMorBwd_comm
+    (P : PolyEndo X) (α : PolyCoalg P) :
+    copresheafPolyCoalgStr P
+      ((polyCoalgToCopresheafFunctor P).obj α) ≫
+    (polyEndoFunctor X P).map
+      (roundtripFBCarrierMorBwd P α) =
+    roundtripFBCarrierMorBwd P α ≫ α.str := by
+  apply Over.OverMorphism.ext
+  funext ⟨obj, ⟨a, ha⟩⟩
+  simp only [Over.comp_left, types_comp_apply]
+  simp only [copresheafPolyCoalgStr,
+    roundtripFBCarrierMorBwd,
+    roundtripFBCarrierBwd, Over.homMk_left,
+    copresheafPolyCoalgStrFamily]
+  dsimp only [polyEndoFunctor,
+    polyBetweenEvalFunctor, polyBetweenEvalMap,
+    polyToOverEvalMap, polyToOverFunctor,
+    familySliceForward, familySliceForwardMap,
+    polyToOverEval, polyToOverEvalFamilyMap,
+    ccrEvalMap, Functor.comp_map,
+    Functor.comp_obj, Over.homMk_left]
+  subst ha
+  -- The goal says the copresheaf-derived structure
+  -- at a, projected back, equals α.str.left a.
+  -- We need to relate the copresheaf structure
+  -- (which reads from the M-type tree) to α.str.
+  -- The M-type tree is built by the anamorphism.
+  -- The first level of the anamorphism encodes
+  -- α.str by polyCofixUnfold_coalg_comm_eq.
+  --
+  -- We factor into named lemmas to manage the
+  -- complexity of the dependent type equalities.
+  exact roundtripFBStr_eq P α a
+
 end GebLean

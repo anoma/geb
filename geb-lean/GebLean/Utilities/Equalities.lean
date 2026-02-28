@@ -1117,6 +1117,19 @@ lemma overHomHEqOfTargetEq {X : Type*} {S T1 T2 : Over X}
   exact heq_of_eq (Over.OverMorphism.ext this)
 
 /--
+Over morphisms with sources propositionally equal are heterogeneously equal
+if their left functions are HEq.
+-/
+lemma overHomHEqOfSrcEq {X : Type*}
+    {S1 S2 T : Over X} (hS : S1 = S2)
+    {f : S1 ⟶ T} {g : S2 ⟶ T}
+    (hfg : HEq f.left g.left) :
+    HEq f g := by
+  cases hS
+  exact heq_of_eq
+    (Over.OverMorphism.ext (eq_of_heq hfg))
+
+/--
 Extract `.left` HEq from HEq of Over morphisms with same source and target.
 -/
 lemma overMorphismLeftHEqOfHEq {X : Type*} {S T : Over X}
