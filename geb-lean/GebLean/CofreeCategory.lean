@@ -2662,9 +2662,6 @@ lemma roundtripFBCarrierMorBwd_comm
   -- The M-type tree is built by the anamorphism.
   -- The first level of the anamorphism encodes
   -- α.str by polyCofixUnfold_coalg_comm_eq.
-  --
-  -- We factor into named lemmas to manage the
-  -- complexity of the dependent type equalities.
   exact roundtripFBStr_eq P α a
 
 -- The forward carrier morphism is a P-coalgebra
@@ -3305,7 +3302,7 @@ def polyCoalgCopresheafUnit (P : PolyEndo X) :
             ((polyCoalgToComonadCoalg X P).obj α)
             a := by
         convert h_tgt using 2
-      have key : ∀ (t : PolyCofreeCat P)
+      have comm : ∀ (t : PolyCofreeCat P)
           (p : coalgCopresheafTarget
             ((polyCoalgToComonadCoalg X P).obj β)
             (f.f.left a) = t),
@@ -3318,7 +3315,7 @@ def polyCoalgCopresheafUnit (P : PolyEndo X) :
               obj) =
           ⟨t, ⟨f.f.left a, p⟩⟩ := by
         intro t p; subst p; rfl
-      exact key _ h_tgt')
+      exact comm _ h_tgt')
 
 /--
 The category of P-coalgebras is equivalent to the
