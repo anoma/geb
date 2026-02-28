@@ -4,6 +4,9 @@ import Mathlib.CategoryTheory.Limits.FunctorCategory.Shapes.Pullbacks
 import Mathlib.CategoryTheory.Limits.Types.Pullbacks
 import Mathlib.CategoryTheory.Yoneda
 import Mathlib.CategoryTheory.Functor.KanExtension.Basic
+import Mathlib.CategoryTheory.Topos.Classifier
+import Mathlib.CategoryTheory.Subfunctor.Image
+import Mathlib.CategoryTheory.Subfunctor.Sieves
 
 /-!
 # Presheaf and Copresheaf Construction Functors
@@ -505,6 +508,297 @@ theorem presheafPullbackSymIso_hom_snd
     PullbackCone.IsLimit.lift_snd]
 
 end PresheafPullback
+
+section PshClassifier
+
+open Limits Opposite
+
+variable (C : Type u) [Category.{v} C]
+
+/-- The sieve presheaf on `C`: sends each `c` to the
+type of sieves on `c`, with restriction given by sieve
+pullback. -/
+def pshSieveFunctor : Cᵒᵖ ⥤ Type (max u v) where
+  obj c := Sieve c.unop
+  map f S := S.pullback f.unop
+  map_id _ := by
+    funext S
+    exact S.pullback_id
+  map_comp f g := by
+    funext S
+    simp only [unop_comp]
+    exact S.pullback_comp
+
+/-- The terminal presheaf: the constant functor
+to `PUnit`. -/
+def pshTerminal : Cᵒᵖ ⥤ Type (max u v) :=
+  (Functor.const Cᵒᵖ).obj PUnit
+
+instance pshTerminalUnique
+    (P : Cᵒᵖ ⥤ Type (max u v)) :
+    Unique (P ⟶ pshTerminal C) where
+  default :=
+    { app := fun _ _ => PUnit.unit }
+  uniq f := by
+    ext T x
+    dsimp [pshTerminal]
+    exact Subsingleton.elim _ _
+
+/-- `pshTerminal C` is a terminal object. -/
+def pshTerminalIsTerminal :
+    IsTerminal (pshTerminal C) :=
+  IsTerminal.ofUnique _
+
+/-- The truth morphism: sends the unique element
+of the terminal presheaf to the maximal sieve at
+each stage. -/
+def pshSieveTruth :
+    pshTerminal C ⟶ pshSieveFunctor C where
+  app c _ := (⊤ : Sieve c.unop)
+  naturality _ _ _ := by
+    funext _
+    exact Sieve.pullback_top.symm
+
+/-- The characteristic map of a monomorphism
+`m : U ⟶ X` in the presheaf category: at stage
+`c`, sends `x : X.obj c` to the sieve of morphisms
+along which `x` restricts into the range of `m`. -/
+def pshSieveCharMap
+    {U X : Cᵒᵖ ⥤ Type (max u v)}
+    (m : U ⟶ X) :
+    X ⟶ pshSieveFunctor C where
+  app c x :=
+    (Subfunctor.range m).sieveOfSection x
+  naturality c₁ c₂ g := by
+    funext x
+    apply Sieve.ext
+    intro V f
+    dsimp [Subfunctor.sieveOfSection,
+      Subfunctor.range, pshSieveFunctor]
+    simp only [
+      FunctorToTypes.map_comp_apply]
+
+variable {C}
+
+/-- The sieve of a section in the range of `m`
+is the maximal sieve. -/
+theorem pshSieveCharMap_of_range
+    {U X : Cᵒᵖ ⥤ Type (max u v)}
+    (m : U ⟶ X) (c : Cᵒᵖ) (u : U.obj c) :
+    (Subfunctor.range m).sieveOfSection
+      (m.app c u) = ⊤ := by
+  apply Sieve.ext
+  intro V f
+  simp only [Sieve.top_apply, iff_true]
+  dsimp [Subfunctor.sieveOfSection,
+    Subfunctor.range]
+  refine ⟨U.map f.op u, ?_⟩
+  have := congr_fun (m.naturality f.op) u
+  dsimp at this
+  exact this
+
+/-- If the sieve of a section equals `⊤`, the section
+is in the range of `m` at that stage. -/
+theorem pshSieveCharMap_top_mem_range
+    {U X : Cᵒᵖ ⥤ Type (max u v)}
+    (m : U ⟶ X) (c : Cᵒᵖ) (x : X.obj c)
+    (h : (Subfunctor.range m).sieveOfSection x =
+      ⊤) :
+    x ∈ Set.range (m.app c) := by
+  have hmem :
+      ((Subfunctor.range m).sieveOfSection x).arrows
+        (𝟙 c.unop) := by
+    rw [h]
+    trivial
+  dsimp [Subfunctor.sieveOfSection,
+    Subfunctor.range] at hmem
+  simp only [FunctorToTypes.map_id_apply] at hmem
+  exact hmem
+
+/-- A monomorphism in a presheaf category over `Type`
+is pointwise injective. -/
+theorem pshMono_app_injective
+    {U X : Cᵒᵖ ⥤ Type (max u v)}
+    (m : U ⟶ X) [Mono m] (c : Cᵒᵖ) :
+    Function.Injective (m.app c) :=
+  (mono_iff_injective (m.app c)).mp
+    ((NatTrans.mono_iff_mono_app m).mp
+      inferInstance c)
+
+/-- The commutativity condition of a pullback cone
+implies at each stage that the section is in the range
+of `m`. -/
+theorem pshSieveConeMemRange
+    {U X W : Cᵒᵖ ⥤ Type (max u v)}
+    (m : U ⟶ X) (s_fst : W ⟶ X)
+    (s_snd : W ⟶ pshTerminal C)
+    (cond : s_fst ≫ pshSieveCharMap C m =
+      s_snd ≫ pshSieveTruth C)
+    (c : Cᵒᵖ) (w : W.obj c) :
+    s_fst.app c w ∈ Set.range (m.app c) := by
+  apply pshSieveCharMap_top_mem_range
+  have := congr_fun (congr_app cond c) w
+  dsimp at this
+  exact this
+
+/-- The classifier square commutes: `m ≫ χ(m)` equals
+the composite through the terminal object and truth. -/
+theorem pshClassifierComm
+    {U X : Cᵒᵖ ⥤ Type (max u v)}
+    (m : U ⟶ X) :
+    m ≫ pshSieveCharMap C m =
+      (pshTerminalIsTerminal C).from U ≫
+        pshSieveTruth C := by
+  ext c u
+  exact pshSieveCharMap_of_range m c u
+
+/-- The subobject classifier square is a pullback:
+the natural transformation `m` is the pullback of
+`truth` along `χ(m)`. -/
+theorem pshSieveIsPullback
+    {U X : Cᵒᵖ ⥤ Type (max u v)}
+    (m : U ⟶ X) [Mono m] :
+    IsPullback m
+      ((pshTerminalIsTerminal C).from U)
+      (pshSieveCharMap C m)
+      (pshSieveTruth C) where
+  w := pshClassifierComm m
+  isLimit' := by
+    have hmem : ∀ (s : PullbackCone
+        (pshSieveCharMap C m) (pshSieveTruth C))
+        (c : Cᵒᵖ) (w : s.pt.obj c),
+        s.fst.app c w ∈
+          Set.range (m.app c) :=
+      fun s c w => pshSieveConeMemRange m
+        s.fst s.snd s.condition c w
+    have hinj := pshMono_app_injective m
+    refine ⟨PullbackCone.isLimitAux'
+      (PullbackCone.mk m
+        ((pshTerminalIsTerminal C).from U)
+        (pshClassifierComm m))
+      fun s =>
+      ⟨{ app := fun c w => (hmem s c w).choose
+         naturality := fun c₁ c₂ f => by
+           ext w
+           apply hinj c₂
+           have h1 := (hmem s c₂
+             (s.pt.map f w)).choose_spec
+           have h2 := (hmem s c₁ w).choose_spec
+           have nat_m :=
+             congr_fun (m.naturality f)
+               ((hmem s c₁ w).choose)
+           have nat_s :=
+             congr_fun (s.fst.naturality f) w
+           dsimp at h1 h2 nat_m nat_s
+           change m.app c₂
+             ((hmem s c₂
+               (s.pt.map f w)).choose) =
+             m.app c₂
+               (U.map f
+                 ((hmem s c₁ w).choose))
+           rw [h1, nat_m, h2]
+           exact nat_s },
+       ?_, ?_, ?_⟩⟩
+    · ext c w
+      exact (hmem s c w).choose_spec
+    · ext c w
+      dsimp [pshTerminal]
+      exact Subsingleton.elim _ _
+    · intro l h₁ _
+      ext c w
+      apply hinj c
+      have h1a :=
+        congr_fun (congr_app h₁ c) w
+      change m.app c (l.app c w) =
+        s.fst.app c w at h1a
+      rw [h1a]
+      exact (hmem s c w).choose_spec.symm
+
+/-- If `χ'` forms a pullback square with `m`,
+`truth`, and the terminal map, and if `χ'.app d y`
+equals the maximal sieve, then `y` is in the range
+of `m.app d`. -/
+theorem pshSieveTopImpliesRange
+    {U X : Cᵒᵖ ⥤ Type (max u v)}
+    (m : U ⟶ X) [Mono m]
+    (χ' : X ⟶ pshSieveFunctor C)
+    (hpb : IsPullback m
+      ((pshTerminalIsTerminal C).from U)
+      χ' (pshSieveTruth C))
+    (d : Cᵒᵖ) (y : X.obj d)
+    (htop : χ'.app d y =
+      (⊤ : Sieve d.unop)) :
+    y ∈ Set.range (m.app d) := by
+  have hpb_d := hpb.map
+    ((evaluation Cᵒᵖ
+      (Type (max u v))).obj d)
+  have hcond : (fun _ :
+      (pshTerminal C).obj d => y) ≫
+      χ'.app d =
+    (fun _ => PUnit.unit) ≫
+      (pshSieveTruth C).app d := by
+    ext ⟨⟩
+    dsimp [pshSieveTruth]
+    exact htop
+  obtain ⟨l, hl, _⟩ := hpb_d.exists_lift
+    (fun _ : (pshTerminal C).obj d => y)
+    (fun _ => PUnit.unit) hcond
+  exact ⟨l PUnit.unit,
+    congr_fun hl PUnit.unit⟩
+
+/-- The characteristic map of a pullback square
+for `truth` is uniquely determined: any `χ'` that
+forms a pullback with `m` and `truth` equals
+`pshSieveCharMap C m`. -/
+theorem pshSieveCharMap_uniq
+    {U X : Cᵒᵖ ⥤ Type (max u v)}
+    (m : U ⟶ X) [Mono m]
+    (χ' : X ⟶ pshSieveFunctor C)
+    (hpb : IsPullback m
+      ((pshTerminalIsTerminal C).from U)
+      χ' (pshSieveTruth C)) :
+    χ' = pshSieveCharMap C m := by
+  ext d y
+  apply Sieve.ext
+  intro V f
+  dsimp [pshSieveCharMap, Subfunctor.sieveOfSection,
+    Subfunctor.range]
+  have hnat :=
+    congr_fun (χ'.naturality f.op) y
+  dsimp [pshSieveFunctor] at hnat
+  constructor
+  · intro hf
+    have htop : (χ'.app d y).pullback f =
+        (⊤ : Sieve V) :=
+      (Sieve.mem_iff_pullback_eq_top f).mp hf
+    rw [← hnat] at htop
+    exact pshSieveTopImpliesRange m χ' hpb
+      (op V) (X.map f.op y) htop
+  · rintro ⟨u, hu⟩
+    have hcomm :=
+      congr_fun (congr_app hpb.w (op V)) u
+    dsimp [pshSieveTruth, pshSieveFunctor]
+      at hcomm
+    rw [Sieve.mem_iff_pullback_eq_top f]
+    rw [← hnat, ← hu]
+    exact hcomm
+
+instance PshClassifier :
+    HasClassifier (Cᵒᵖ ⥤ Type (max u v)) :=
+  ⟨⟨Classifier.mkOfTerminalΩ₀
+    (pshTerminal C)
+    (pshTerminalIsTerminal C)
+    (pshSieveFunctor C)
+    (pshSieveTruth C)
+    (χ := fun m _ => pshSieveCharMap C m)
+    (isPullback :=
+      fun m _ => pshSieveIsPullback m)
+    (uniq :=
+      fun m _ χ' hpb =>
+        pshSieveCharMap_uniq m χ' hpb)
+  ⟩⟩
+
+end PshClassifier
 
 section CoyonedaIso
 
