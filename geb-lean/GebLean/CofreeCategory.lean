@@ -1281,4 +1281,537 @@ def coalgCopresheaf {P : PolyEndo X}
     ext elem
     exact coalgCopresheaf_map_comp c f g elem
 
+/-! ## Copresheaf Functor: Morphism Action -/
+
+/--
+A comonad coalgebra morphism preserves the fiber
+component of the copresheaf target: if `h : c₁ ⟶ c₂`
+is a coalgebra morphism, then `c₂.A.hom (h.f.left a)`
+equals `c₁.A.hom a`.
+-/
+lemma coalgCopresheafFunctor_fiber {P : PolyEndo X}
+    {c₁ c₂ : Comonad.Coalgebra
+      (polyCofreeComonad X P)}
+    (h : c₁ ⟶ c₂) (a : c₁.A.left) :
+    c₂.A.hom (h.f.left a) = c₁.A.hom a := by
+  have := congrFun (Over.w h.f) a
+  simp only [types_comp_apply] at this
+  exact this
+
+/--
+The coalgebra morphism condition evaluated at an
+element: `c₂.a` applied to `h.f.left a` equals the
+comonad map of `h.f` applied to `c₁.a.left a`.
+The comonad map sends `⟨x, m⟩` to
+`⟨x, polyCofreeMapAt m⟩`.
+-/
+lemma coalgMorphism_structure_eq {P : PolyEndo X}
+    {c₁ c₂ : Comonad.Coalgebra
+      (polyCofreeComonad X P)}
+    (h : c₁ ⟶ c₂) (a : c₁.A.left) :
+    c₂.a.left (h.f.left a) =
+    polyCofreeMapLeft c₁.A c₂.A P h.f
+      (c₁.a.left a) := by
+  have hcomm := congrFun
+    (Over.OverMorphism.ext_iff.mp h.h) a
+  simp only [Over.comp_left, types_comp_apply,
+    polyCofreeComonad, Adjunction.toComonad]
+      at hcomm
+  change
+    ((polyCofreeFunctor P ⋙
+      polyCoalgForgetFunctor P).map h.f).left
+      (c₁.a.left a) =
+    c₂.a.left (h.f.left a) at hcomm
+  simp only [Functor.comp_map,
+    polyCofreeFunctor,
+    Endofunctor.Coalgebra.forget,
+    polyCofreeCoalgMap,
+    polyCofreeMap] at hcomm
+  exact hcomm.symm
+
+/--
+The `.1` component of the structure equation:
+`(c₂.a.left (h.f.left a)).1 = (c₁.a.left a).1`.
+-/
+lemma coalgMorphism_structure_fst {P : PolyEndo X}
+    {c₁ c₂ : Comonad.Coalgebra
+      (polyCofreeComonad X P)}
+    (h : c₁ ⟶ c₂) (a : c₁.A.left) :
+    (c₂.a.left (h.f.left a)).1 =
+    (c₁.a.left a).1 :=
+  congrArg Sigma.fst
+    (coalgMorphism_structure_eq h a)
+
+/--
+The `.2` component of the structure equation:
+the M-type of `h.f.left a` under `c₂` is HEq to the
+mapped M-type of `a` under `c₁`.
+-/
+lemma coalgMorphism_structure_snd {P : PolyEndo X}
+    {c₁ c₂ : Comonad.Coalgebra
+      (polyCofreeComonad X P)}
+    (h : c₁ ⟶ c₂) (a : c₁.A.left) :
+    HEq (c₂.a.left (h.f.left a)).2
+      (polyCofreeMapAt c₁.A c₂.A P h.f
+        (c₁.a.left a).2) :=
+  (Sigma.ext_iff.mp
+    (coalgMorphism_structure_eq h a)).2
+
+/--
+The raw target sigma pair is preserved by a
+coalgebra morphism: applying the raw shape
+extraction to `h.f.left a` under `c₂` gives the
+same sigma pair as applying it to `a` under `c₁`.
+-/
+lemma coalgMorphism_rawTarget_eq {P : PolyEndo X}
+    {c₁ c₂ : Comonad.Coalgebra
+      (polyCofreeComonad X P)}
+    (h : c₁ ⟶ c₂) (a : c₁.A.left) :
+    coalgCopresheafTargetRaw c₂ (h.f.left a) =
+    coalgCopresheafTargetRaw c₁ a := by
+  simp only [coalgCopresheafTargetRaw]
+  have h_eq := coalgMorphism_structure_eq h a
+  have h_fst := coalgMorphism_structure_fst h a
+  have h_snd := coalgMorphism_structure_snd h a
+  have h_map := polyCofreeToShape_map
+    c₁.A c₂.A P h.f (c₁.a.left a).2
+  -- The raw targets are both sigma pairs
+  -- (fiber, shape). We show each component:
+  -- fst: by coalgMorphism_structure_fst
+  -- snd: by transport through the mapped M-type
+  --   and polyCofreeToShape_map.
+  have h_shape_heq : HEq
+      (polyCofreeToShape c₂.A P
+        (c₂.a.left (h.f.left a)).2)
+      (polyCofreeToShape c₁.A P
+        (c₁.a.left a).2) := by
+    have : (c₂.a.left (h.f.left a)) =
+        polyCofreeMapLeft c₁.A c₂.A P h.f
+          (c₁.a.left a) := h_eq
+    rw [this]
+    simp only [polyCofreeMapLeft]
+    exact heq_of_eq h_map
+  exact Sigma.ext h_fst h_shape_heq
+
+/--
+A coalgebra morphism preserves the copresheaf
+target: `coalgCopresheafTarget c₂ (h.f.left a)`
+equals `coalgCopresheafTarget c₁ a`.
+-/
+lemma coalgMorphism_target_eq {P : PolyEndo X}
+    {c₁ c₂ : Comonad.Coalgebra
+      (polyCofreeComonad X P)}
+    (h : c₁ ⟶ c₂) (a : c₁.A.left) :
+    coalgCopresheafTarget c₂ (h.f.left a) =
+    coalgCopresheafTarget c₁ a := by
+  have h1 := coalgCopresheafTargetRaw_eq c₂
+    (h.f.left a)
+  have h2 := coalgCopresheafTargetRaw_eq c₁ a
+  have h3 := coalgMorphism_rawTarget_eq h a
+  simp only [coalgCopresheafTarget]
+  exact (PolyCofreeCat.ext
+    (congrArg Sigma.fst (h1.symm.trans h3 |>.trans h2))
+    ((Sigma.ext_iff.mp
+      (h1.symm.trans h3 |>.trans h2)).2))
+
+/--
+The component of the natural transformation induced
+by a coalgebra morphism: sends `⟨a, ha⟩` to
+`⟨h.f.left a, ...⟩`.
+-/
+def coalgCopresheafFunctor_app {P : PolyEndo X}
+    {c₁ c₂ : Comonad.Coalgebra
+      (polyCofreeComonad X P)}
+    (h : c₁ ⟶ c₂)
+    (obj : PolyCofreeCat P) :
+    coalgCopresheafObj c₁ obj →
+    coalgCopresheafObj c₂ obj :=
+  fun ⟨a, ha⟩ =>
+    ⟨h.f.left a,
+      (coalgMorphism_target_eq h a).trans ha⟩
+
+/--
+A coalgebra morphism preserves the copresheaf
+shape: the transported shape at `h.f.left a`
+under `c₂` equals the transported shape at `a`
+under `c₁`.
+-/
+lemma coalgMorphism_shape_eq {P : PolyEndo X}
+    {c₁ c₂ : Comonad.Coalgebra
+      (polyCofreeComonad X P)}
+    (h : c₁ ⟶ c₂) (a : c₁.A.left) :
+    HEq (coalgCopresheafShapeAt c₂
+        (h.f.left a))
+      (coalgCopresheafShapeAt c₁ a) := by
+  have h_eq := coalgMorphism_target_eq h a
+  simp only [coalgCopresheafTarget] at h_eq
+  exact ((PolyCofreeCat.mk.injEq _ _ _ _).mp
+    h_eq).2
+
+/--
+`coalgCopresheafMapByDepth` at `.val` is invariant
+under transport of the carrier element along an
+equality: if `a₁ = a₂` and positions are HEq,
+then the extracted values coincide.
+-/
+lemma coalgCopresheafMapByDepth_cast_a
+    {P : PolyEndo X}
+    (c : Comonad.Coalgebra
+      (polyCofreeComonad X P))
+    {a₁ a₂ : c.A.left} (ha : a₁ = a₂)
+    (n : Nat)
+    (pos₁ : PolyCofreeAnnotPosAt P
+      (coalgCopresheafShapeAt c a₁) n)
+    (pos₂ : PolyCofreeAnnotPosAt P
+      (coalgCopresheafShapeAt c a₂) n)
+    (hpos : HEq pos₁ pos₂) :
+    (coalgCopresheafMapByDepth c a₁ n pos₁).val =
+    (coalgCopresheafMapByDepth c a₂ n pos₂).val := by
+  subst ha
+  exact congrArg
+    (fun pos =>
+      (coalgCopresheafMapByDepth c a₁ n pos).val)
+    (eq_of_heq hpos)
+
+/--
+A coalgebra morphism maps the child annotation
+of `c₁` at `a` to the child annotation of `c₂`
+at `h.f.left a`, when the M-type edges are HEq.
+This follows from the coalgebra morphism condition
+(structure equation), `polyCofreeExtract_mapAt_val`,
+and `polyCofreeMapAt_children_heq`.
+-/
+lemma coalgMorphism_child_val_eq {P : PolyEndo X}
+    {c₁ c₂ : Comonad.Coalgebra
+      (polyCofreeComonad X P)}
+    (h : c₁ ⟶ c₂) (a : c₁.A.left)
+    (e₁ : (polyBetweenFamily X X
+      (polyScale c₁.A P) (c₁.a.left a).1
+      (c₁.a.left a).2.head).left)
+    (e₂ : (polyBetweenFamily X X
+      (polyScale c₂.A P)
+      (c₂.a.left (h.f.left a)).1
+      (c₂.a.left (h.f.left a)).2.head).left)
+    (he : HEq e₁ e₂) :
+    h.f.left (coalgCopresheafChild c₁ a e₁) =
+    coalgCopresheafChild c₂ (h.f.left a) e₂ := by
+  simp only [coalgCopresheafChild]
+  rw [← polyCofreeExtract_mapAt_val c₁.A c₂.A P
+    h.f ((c₁.a.left a).2.children e₁)]
+  -- Generalize the sigma pairs and subst the
+  -- structure equation to expose polyCofreeMapAt.
+  revert e₁ e₂ he
+  have h_str := coalgMorphism_structure_eq h a
+  generalize c₁.a.left a = ca₁ at h_str ⊢
+  generalize c₂.a.left (h.f.left a) = ca₂ at *
+  subst h_str
+  obtain ⟨x₁, m₁⟩ := ca₁
+  simp only [polyCofreeMapLeft]
+  intro e₁ e₂ he
+  apply polyCofreeExtract_val_of_heq c₂.A P
+    (overType_hom_heq
+      (congrArg (polyBetweenFamily X X P x₁)
+        (polyCofreeMapAt_head_snd c₁.A c₂.A P
+          h.f m₁).symm) e₁ e₂ he)
+    (polyCofreeMapAt_children_heq c₁.A c₂.A P
+      h.f m₁ e₁ e₂ he)
+
+/--
+The `.fst` of a cast of `⟨e, PUnit.unit⟩`
+through `polyCofreeAnnotPosAt_cast_fiber` at
+depth 1 is HEq to `e`.
+-/
+lemma polyCofreeAnnotPosAt_cast_fst_heq
+    {P : PolyEndo X} {y₁ y₂ : X}
+    (hfiber : y₁ = y₂)
+    {s₁ : PolyCofreeShape P y₁}
+    {s₂ : PolyCofreeShape P y₂}
+    (hshape : HEq s₁ s₂)
+    (e : (polyBetweenFamily X X P y₁
+      s₁.head.2).left) :
+    HEq
+      (cast (polyCofreeAnnotPosAt_cast_fiber
+        hfiber hshape 1)
+        ⟨e, PUnit.unit⟩).fst
+      e := by
+  subst hfiber
+  have hs_eq := eq_of_heq hshape
+  subst hs_eq
+  rfl
+
+/--
+The shape-to-M-type edge conversion preserves
+HEq: a shape edge is HEq to the M-type edge
+obtained by applying `coalgCopresheafCastPos`
+and `polyCofreeShapePosToMPos`.
+-/
+lemma coalgCopresheafShapeToMEdge_heq
+    {P : PolyEndo X}
+    (c : Comonad.Coalgebra
+      (polyCofreeComonad X P))
+    (a : c.A.left)
+    (e_shape : (polyBetweenFamily X X P
+      (c.A.hom a)
+      (coalgCopresheafShapeAt c
+        a).head.2).left) :
+    HEq e_shape
+      (polyCofreeShapePosToMPos c.A P
+        (c.a.left a).2
+        ((coalgCopresheafCastPos c a 1
+          ⟨e_shape, PUnit.unit⟩).1)) :=
+  (polyCofreeAnnotPosAt_cast_fst_heq
+    (comonadCoalgFiberEq c a).symm
+    (coalgCopresheafShapeAt_heq c a)
+    e_shape).symm.trans
+  (polyCofreeShapePosToMPos_heq c.A P
+    (c.a.left a).2 _)
+
+lemma coalgMorphism_child_val_eq_shape
+    {P : PolyEndo X}
+    {c₁ c₂ : Comonad.Coalgebra
+      (polyCofreeComonad X P)}
+    (h : c₁ ⟶ c₂) (a : c₁.A.left)
+    (e₁ : (polyBetweenFamily X X P (c₁.A.hom a)
+      (coalgCopresheafShapeAt c₁ a).head.2).left)
+    (e₂ : (polyBetweenFamily X X P
+      (c₂.A.hom (h.f.left a))
+      ((coalgCopresheafShapeAt c₂
+        (h.f.left a)).head.2)).left)
+    (he : HEq e₁ e₂) :
+    let e_raw₁ := (coalgCopresheafCastPos
+      c₁ a 1 ⟨e₁, PUnit.unit⟩).1
+    let e_m₁ := polyCofreeShapePosToMPos
+      c₁.A P (c₁.a.left a).2 e_raw₁
+    let e_raw₂ := (coalgCopresheafCastPos
+      c₂ (h.f.left a) 1
+      ⟨e₂, PUnit.unit⟩).1
+    let e_m₂ := polyCofreeShapePosToMPos
+      c₂.A P (c₂.a.left (h.f.left a)).2
+      e_raw₂
+    h.f.left
+      (coalgCopresheafChild c₁ a e_m₁) =
+    coalgCopresheafChild c₂
+      (h.f.left a) e_m₂ := by
+  dsimp only []
+  apply coalgMorphism_child_val_eq h a
+  exact (coalgCopresheafShapeToMEdge_heq
+    c₁ a e₁).symm.trans
+    (he.trans
+      (coalgCopresheafShapeToMEdge_heq
+        c₂ (h.f.left a) e₂))
+
+/--
+Extract the first component HEq from a
+sigma-typed position HEq at successor depth.
+-/
+lemma polyCofreeAnnotPosAt_succ_fst_heq
+    {P : PolyEndo X} {y₁ y₂ : X}
+    {s₁ : PolyCofreeShape P y₁}
+    {s₂ : PolyCofreeShape P y₂}
+    (hy : y₁ = y₂) (hs : HEq s₁ s₂)
+    {n : Nat}
+    {p₁ : PolyCofreeAnnotPosAt P s₁ (n + 1)}
+    {p₂ : PolyCofreeAnnotPosAt P s₂ (n + 1)}
+    (hp : HEq p₁ p₂) :
+    HEq p₁.1 p₂.1 := by
+  subst hy
+  have hs_eq := eq_of_heq hs; subst hs_eq
+  have hp_eq := eq_of_heq hp; subst hp_eq
+  rfl
+
+/--
+Extract the second component HEq from a
+sigma-typed position HEq at successor depth.
+-/
+lemma polyCofreeAnnotPosAt_succ_snd_heq
+    {P : PolyEndo X} {y₁ y₂ : X}
+    {s₁ : PolyCofreeShape P y₁}
+    {s₂ : PolyCofreeShape P y₂}
+    (hy : y₁ = y₂) (hs : HEq s₁ s₂)
+    {n : Nat}
+    {p₁ : PolyCofreeAnnotPosAt P s₁ (n + 1)}
+    {p₂ : PolyCofreeAnnotPosAt P s₂ (n + 1)}
+    (hp : HEq p₁ p₂) :
+    HEq p₁.2 p₂.2 := by
+  subst hy
+  have hs_eq := eq_of_heq hs; subst hs_eq
+  have hp_eq := eq_of_heq hp; subst hp_eq
+  rfl
+
+/--
+The coalgebra morphism commutes with
+applying `h.f.left` to the result of extracting
+from `c₁`'s tree equals extracting from `c₂`'s
+tree (with transported position).
+-/
+lemma coalgCopresheafFunctor_nat_byDepth
+    {P : PolyEndo X}
+    {c₁ c₂ : Comonad.Coalgebra
+      (polyCofreeComonad X P)}
+    (h : c₁ ⟶ c₂) (a : c₁.A.left)
+    (n : Nat)
+    (pos₁ : PolyCofreeAnnotPosAt P
+      (coalgCopresheafShapeAt c₁ a) n)
+    (pos₂ : PolyCofreeAnnotPosAt P
+      (coalgCopresheafShapeAt c₂
+        (h.f.left a)) n)
+    (hpos : HEq pos₁ pos₂) :
+    h.f.left
+      (coalgCopresheafMapByDepth c₁ a
+        n pos₁).val =
+    (coalgCopresheafMapByDepth c₂
+      (h.f.left a) n pos₂).val := by
+  induction n generalizing a with
+  | zero =>
+    simp only [coalgCopresheafMapByDepth]
+  | succ n ih =>
+    obtain ⟨e₁, rest₁⟩ := pos₁
+    obtain ⟨e₂, rest₂⟩ := pos₂
+    -- c₁ side: mirror the MapByDepth definition
+    let m₁ := (c₁.a.left a).2
+    let e_raw₁ := (coalgCopresheafCastPos c₁ a 1
+      ⟨e₁, PUnit.unit⟩).1
+    let e_m₁ := polyCofreeShapePosToMPos
+      c₁.A P m₁ e_raw₁
+    let child₁ := coalgCopresheafChild c₁ a e_m₁
+    let h_child₁ :=
+      coalgCopresheafChild_depth1_target c₁ a e₁
+    -- c₂ side
+    let m₂ := (c₂.a.left (h.f.left a)).2
+    let e_raw₂ := (coalgCopresheafCastPos c₂
+      (h.f.left a) 1 ⟨e₂, PUnit.unit⟩).1
+    let e_m₂ := polyCofreeShapePosToMPos
+      c₂.A P m₂ e_raw₂
+    let child₂ := coalgCopresheafChild
+      c₂ (h.f.left a) e_m₂
+    let h_child₂ :=
+      coalgCopresheafChild_depth1_target c₂
+        (h.f.left a) e₂
+    let rest₁' : PolyCofreeAnnotPosAt P
+        (coalgCopresheafShapeAt c₁ child₁) n :=
+      cast (congrArg (fun obj =>
+        PolyCofreeAnnotPosAt P obj.shape n)
+        h_child₁.symm) rest₁
+    have h_lhs_reduce :
+        (coalgCopresheafMapByDepth c₁ a
+          (n + 1) ⟨e₁, rest₁⟩).val =
+        (coalgCopresheafMapByDepth c₁ child₁ n
+          rest₁').val := by
+      rfl
+    let rest₂' : PolyCofreeAnnotPosAt P
+        (coalgCopresheafShapeAt c₂ child₂) n :=
+      cast (congrArg (fun obj =>
+        PolyCofreeAnnotPosAt P obj.shape n)
+        h_child₂.symm) rest₂
+    have h_rhs_reduce :
+        (coalgCopresheafMapByDepth c₂
+          (h.f.left a) (n + 1) ⟨e₂, rest₂⟩).val =
+        (coalgCopresheafMapByDepth c₂ child₂ n
+          rest₂').val := by
+      rfl
+    rw [h_lhs_reduce, h_rhs_reduce]
+    -- Extract edge HEq from position HEq
+    have he : HEq e₁ e₂ :=
+      polyCofreeAnnotPosAt_succ_fst_heq
+        ((congrFun (Over.w h.f) a).symm)
+        ((coalgMorphism_shape_eq h a).symm)
+        hpos
+    -- Child equality from edge HEq
+    have h_child_eq :=
+      coalgMorphism_child_val_eq_shape
+        h a e₁ e₂ he
+    -- Extract rest HEq from position HEq
+    have h_rest_heq : HEq rest₁ rest₂ :=
+      polyCofreeAnnotPosAt_succ_snd_heq
+        ((congrFun (Over.w h.f) a).symm)
+        ((coalgMorphism_shape_eq h a).symm)
+        hpos
+    -- Cast rest₂' to h.f.left child₁
+    let rest₂_h : PolyCofreeAnnotPosAt P
+        (coalgCopresheafShapeAt c₂
+          (h.f.left child₁)) n :=
+      cast (congrArg (fun b =>
+        PolyCofreeAnnotPosAt P
+          (coalgCopresheafShapeAt c₂ b) n)
+        h_child_eq.symm) rest₂'
+    -- Chain cast_heq for rest positions
+    have h_rest_ih : HEq rest₁' rest₂_h :=
+      (cast_heq _ rest₁).trans
+        (h_rest_heq.trans
+          ((cast_heq _ rest₂).symm.trans
+            (cast_heq _ rest₂').symm))
+    -- Combine IH at child₁ with cast_a
+    calc h.f.left
+          (coalgCopresheafMapByDepth c₁
+            child₁ n rest₁').val
+        = (coalgCopresheafMapByDepth c₂
+            (h.f.left child₁) n rest₂_h).val :=
+          ih child₁ rest₁' rest₂_h h_rest_ih
+      _ = (coalgCopresheafMapByDepth c₂
+            child₂ n rest₂').val :=
+          coalgCopresheafMapByDepth_cast_a c₂
+            h_child_eq n rest₂_h rest₂'
+            (cast_heq _ rest₂')
+
+/--
+Naturality of the copresheaf transformation
+induced by a coalgebra morphism: the `.val`
+component of the result commutes with the
+copresheaf map action.
+-/
+lemma coalgCopresheafFunctor_naturality_val
+    {P : PolyEndo X}
+    {c₁ c₂ : Comonad.Coalgebra
+      (polyCofreeComonad X P)}
+    (h : c₁ ⟶ c₂)
+    {src tgt : PolyCofreeCat P}
+    (f : src ⟶ tgt)
+    (elem : coalgCopresheafObj c₁ src) :
+    (coalgCopresheafFunctor_app h tgt
+      (coalgCopresheafMap c₁ f elem)).val =
+    (coalgCopresheafMap c₂ f
+      (coalgCopresheafFunctor_app h src
+        elem)).val := by
+  obtain ⟨a, ha⟩ := elem
+  exact coalgCopresheafFunctor_nat_byDepth
+    h a f.depth _ _
+    ((cast_heq _ f.pos).trans
+      (cast_heq _ f.pos).symm)
+
+/--
+A coalgebra morphism induces a natural
+transformation between the copresheaf functors.
+-/
+def coalgCopresheafFunctor_natTrans
+    {P : PolyEndo X}
+    {c₁ c₂ : Comonad.Coalgebra
+      (polyCofreeComonad X P)}
+    (h : c₁ ⟶ c₂) :
+    coalgCopresheaf c₁ ⟶ coalgCopresheaf c₂ where
+  app obj := coalgCopresheafFunctor_app h obj
+  naturality src tgt f := by
+    ext elem
+    exact Subtype.ext
+      (coalgCopresheafFunctor_naturality_val
+        h f elem)
+
+/--
+The copresheaf functor from the category of
+P-coalgebras to the copresheaf topos on the
+cofree category.
+-/
+def coalgCopresheafFunctor (P : PolyEndo X) :
+    Comonad.Coalgebra (polyCofreeComonad X P) ⥤
+    (PolyCofreeCat P ⥤ Type u) where
+  obj c := coalgCopresheaf c
+  map h := coalgCopresheafFunctor_natTrans h
+  map_id c := by
+    ext obj elem
+    simp only [CategoryStruct.id]
+    exact Subtype.ext rfl
+  map_comp f g := by
+    ext obj elem
+    simp only [CategoryStruct.comp]
+    exact Subtype.ext rfl
+
 end GebLean

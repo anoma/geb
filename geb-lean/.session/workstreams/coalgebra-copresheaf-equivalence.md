@@ -71,17 +71,19 @@ detailed mathematical findings from the literature.
 - [x] `coalgCopresheafChild_depth1_target`
 - [x] `coalgCopresheafMapByDepth`
 - [x] `coalgCopresheafMap`
-- [ ] `coalgCopresheafMap_comp` : composition law.
-      Base case (depth 0) done. Succ case requires
-      induction on f.depth, showing extraction at
-      concatenated position = sequential extraction.
-      Both sides step into the child at the same
-      edge; by IH at depth fn, they agree.
-- [ ] `coalgCopresheafMap` : morphism action
-- [ ] `coalgCopresheaf_map_id` : identity pres.
-- [ ] `coalgCopresheaf_map_comp` : composition pres.
-- [ ] `coalgCopresheaf` : the copresheaf functor
-- [ ] `coalgCopresheafFunctor` : functorial in c
+- [x] `coalgCopresheafMap_comp` : composition law
+- [x] `coalgCopresheafMap` : morphism action
+- [x] `coalgCopresheaf_map_id` : identity pres.
+- [x] `coalgCopresheaf_map_comp` : composition pres.
+- [x] `coalgCopresheaf` : the copresheaf functor
+- [x] `coalgCopresheafFunctor_app` : morphism action
+- [x] `coalgCopresheafFunctor_nat_byDepth` :
+      naturality by depth induction
+- [x] `coalgCopresheafFunctor_naturality_val` :
+      naturality at `.val`
+- [x] `coalgCopresheafFunctor_natTrans` :
+      natural transformation from coalg morphism
+- [x] `coalgCopresheafFunctor` : functorial in c
 
 ### Phase 3: Comonad-Coalg ≌ Copresheaves
 
