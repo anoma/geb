@@ -1,4 +1,7 @@
 import GebLean.PolyAlg
+import Mathlib.CategoryTheory.Adjunction.Limits
+import Mathlib.CategoryTheory.Limits.FunctorCategory.Basic
+import Mathlib.CategoryTheory.Limits.Types.Limits
 
 /-!
 # Cofree Category of a Polynomial Endofunctor
@@ -3340,5 +3343,47 @@ def comonadCoalgCopresheafEquiv (P : PolyEndo X) :
     (PolyCofreeCat P ⥤ Type u) :=
   (polyCoalgComonadEquiv P).symm.trans
     (polyCoalgCopresheafEquiv P)
+
+/-! ## Limits and Colimits in Coalgebra Categories
+
+The category `PolyCoalg P` has all limits and colimits
+of size `(u, u)`. These transfer from the copresheaf
+topos `PolyCofreeCat P ⥤ Type u` through the equivalence
+`polyCoalgCopresheafEquiv`. The comonad coalgebra
+category inherits these via `polyCoalgComonadEquiv`.
+-/
+
+section CoalgLimits
+
+open Limits
+
+instance polyCoalgHasLimitsOfSize (P : PolyEndo X) :
+    HasLimitsOfSize.{u, u} (PolyCoalg P) :=
+  Adjunction.has_limits_of_equivalence
+    (polyCoalgCopresheafEquiv P).functor
+
+instance polyCoalgHasColimitsOfSize
+    (P : PolyEndo X) :
+    HasColimitsOfSize.{u, u} (PolyCoalg P) :=
+  Adjunction.has_colimits_of_equivalence
+    (polyCoalgCopresheafEquiv P).functor
+
+instance comonadCoalgHasLimitsOfSize
+    (P : PolyEndo X) :
+    HasLimitsOfSize.{u, u}
+      (Comonad.Coalgebra
+        (polyCofreeComonad X P)) :=
+  Adjunction.has_limits_of_equivalence
+    (polyCoalgComonadEquiv P).symm.functor
+
+instance comonadCoalgHasColimitsOfSize
+    (P : PolyEndo X) :
+    HasColimitsOfSize.{u, u}
+      (Comonad.Coalgebra
+        (polyCofreeComonad X P)) :=
+  Adjunction.has_colimits_of_equivalence
+    (polyCoalgComonadEquiv P).symm.functor
+
+end CoalgLimits
 
 end GebLean

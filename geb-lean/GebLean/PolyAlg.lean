@@ -1,7 +1,12 @@
 import GebLean.PolyAdjunctions
 import GebLean.Utilities.Equalities
+import Mathlib.CategoryTheory.Adjunction.Limits
 import Mathlib.CategoryTheory.Endofunctor.Algebra
+import Mathlib.CategoryTheory.Limits.Creates
+import Mathlib.CategoryTheory.Limits.Types.Limits
 import Mathlib.CategoryTheory.Monad.Adjunction
+import Mathlib.CategoryTheory.Monad.Limits
+import Mathlib.CategoryTheory.WithTerminal.Cone
 
 /-!
 # Algebras of Polynomial Endofunctors
@@ -9805,5 +9810,32 @@ def polyAlgMonadEquiv (P : PolyEndo X) :
           Monad.comparison]))
 
 end AlgMonadComparison
+
+/-! ## Limits in Polynomial Algebra Categories
+
+The category `PolyAlg P` has all limits of size
+`(u, u)`. The derivation transfers limits from
+`Type u` through `Over X` and the Eilenberg-Moore
+category of the free monad, then across the
+equivalence `polyAlgMonadEquiv`.
+-/
+
+section AlgLimits
+
+open Limits
+
+variable (X : Type u)
+
+instance polyAlgHasLimitsOfSize
+    (P : PolyEndo X) :
+    HasLimitsOfSize.{u, u} (PolyAlg P) :=
+  haveI : HasLimitsOfSize.{u, u}
+      (polyFreeMonad X P).Algebra :=
+    hasLimits_of_hasLimits_createsLimits
+      (Monad.forget (polyFreeMonad X P))
+  Adjunction.has_limits_of_equivalence
+    (polyAlgMonadEquiv X P).functor
+
+end AlgLimits
 
 end GebLean
