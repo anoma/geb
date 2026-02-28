@@ -69,12 +69,14 @@ the (co)limit picture for finitary polynomial algebras.
   preserving filtered colimits preserves initial algebras,
   and dually for cofiltered limits and terminal coalgebras.
   Instantiate for finitary polynomial endofunctors.
-- [ ] A0: Define `PolyBetweenFinitary` for arbitrary polynomial
+- [x] A0: Define `PolyBetweenFinitary` for arbitrary polynomial
   functors between slices (all direction-set fibers are finite),
   and `PolyEndoFinitary` as the endofunctor specialization
-- [ ] A2: Instantiate Beck coequalizer (`beckAlgebraCoequalizer`)
+- [x] A2: Instantiate Beck coequalizer (`beckAlgebraCoequalizer`)
   for `polyFreeMonad X P` to show every P-algebra is a reflexive
-  coequalizer of free P-algebras (no finitariness needed)
+  coequalizer of free P-algebras (no finitariness needed);
+  also added `OfAlg` variants taking `PolyAlg P` and
+  transferring via `polyAlgMonadEquiv`
 - [ ] A3: Prove that `polyFreeMonad X P` preserves filtered
   colimits when `PolyEndoFinitary P` holds (the free monad
   on a finitary functor is finitary)
