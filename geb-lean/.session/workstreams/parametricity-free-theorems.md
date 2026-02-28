@@ -175,11 +175,19 @@ works over `PSh(C)` for arbitrary `C`).
 
 ### Phase 2: Complete presheaf-level parametricity bridge
 
-- [ ] **P2a. Reverse bridge: PshParametricFamily →
+- [x] **P2a. Reverse bridge: PshParametricFamily →
   ParametricFamily.** Restrict a `PshParametricFamily
   T.toPshTypeExpr` to representable presheaves to recover
-  `ParametricFamily T`. This is choice-free (purely
-  constructive). (Former F1.)
+  `ParametricFamily T`. Requires a `choice` parameter
+  (for Barr lift witnesses in the `app`/`arrow`
+  interaction); not choice-free as originally expected.
+  Implemented via specialization at `op PUnit` using
+  the stage-level bridge (`pointwise_bridge`).
+  Includes `yonedaULiftSectionEquiv`,
+  `TypeExpr.interpSectionEquiv`, `yonRelSpanEmbed`,
+  `TypeExpr.fullRelInterp_bridge_rev`,
+  `yonRelSpanEmbed_typeNode_sections`, and
+  projection compatibility theorems. (Former F1.)
 
 - [x] **P2b. PshParametricFamily.wedge.** Prove every
   `PshParametricFamily` satisfies the presheaf profunctor

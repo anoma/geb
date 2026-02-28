@@ -1811,6 +1811,143 @@ theorem ParametricFamily.toPshParametricAtRep
   exact sectionsRelated_to_pshRelSectionsRelated
     _ _ _ h₂
 
+/-- Equivalence between `X` and
+`(yonedaULift X).sections`. The forward direction
+sends `a : X` to the constant section; the backward
+direction evaluates at `op PUnit` and extracts the
+underlying element. -/
+def yonedaULiftSectionEquiv (X : Type) :
+    X ≃ (yonedaULift X).sections where
+  toFun := yonedaULiftSection
+  invFun s :=
+    (s.val (Opposite.op PUnit)).down PUnit.unit
+  left_inv _ := rfl
+  right_inv s := by
+    ext c
+    simp only [yonedaULiftSection, yonedaULift,
+      Functor.comp_obj, yoneda_obj_obj,
+      uliftFunctor_obj]
+    ext t
+    have h := congr_arg ULift.down
+      (s.property
+        (Quiver.Hom.op (fun _ : PUnit => t) :
+          c ⟶ Opposite.op PUnit))
+    simp only [yonedaULift, Functor.comp_map,
+      yoneda_obj_map, uliftFunctor_map] at h
+    exact (congr_fun h PUnit.unit).symm
+
+/-- Equivalence between `T.interp I I` and
+sections of `T.toPshTypeExpr.interp
+(yonedaULift I) (yonedaULift I)`. The forward
+direction is `toInterpSection`; the backward
+direction maps sections through the bridge
+isomorphism `toPshTypeExpr_interp_iso` and
+then extracts via `yonedaULiftSectionEquiv`. -/
+def TypeExpr.interpSectionEquiv
+    (T : TypeExpr) (I : Type) :
+    T.interp I I ≃
+    (T.toPshTypeExpr.interp
+      (yonedaULift I) (yonedaULift I)).sections :=
+  (yonedaULiftSectionEquiv (T.interp I I)).trans
+    (Equiv.mk
+      (sectionMap
+        (T.toPshTypeExpr_interp_iso I I).inv)
+      (sectionMap
+        (T.toPshTypeExpr_interp_iso I I).hom)
+      (fun s => by
+        rw [← sectionMap_comp,
+          Iso.inv_hom_id]
+        exact sectionMap_id s)
+      (fun s => by
+        rw [← sectionMap_comp,
+          Iso.hom_inv_id]
+        exact sectionMap_id s))
+
+/-- Functor embedding `RelSpanObj` into
+`PshRelSpanObj (Type 0)` via the ULift-Yoneda
+embedding `yonedaULift` on types and
+`yonedaULiftRel` on relations. -/
+def yonRelSpanEmbed :
+    RelSpanObj ⥤
+    PshRelSpanObj.{1, 0, 1} (Type 0) where
+  obj
+    | .typeNode I =>
+      .typeNode (yonedaULift I)
+    | .relNode I₀ I₁ R =>
+      .relNode _ _ (yonedaULiftRel R)
+  map {X Y} f :=
+    match X, Y, f with
+    | _, _, .id _ => .id _
+    | _, _, .fstProj I₀ I₁ R =>
+      .fstProj _ _ (yonedaULiftRel R)
+    | _, _, .sndProj I₀ I₁ R =>
+      .sndProj _ _ (yonedaULiftRel R)
+  map_id X := by cases X <;> rfl
+  map_comp {X Y Z} f g := by
+    cases f <;> cases g <;> rfl
+
+/-- Backward direction of the section-level
+bridge: presheaf-level section-relatedness
+implies Type-level relatedness. Extracted from
+`relInterp_bridges`. -/
+theorem TypeExpr.fullRelInterp_bridge_rev
+    (T : TypeExpr) {A B : Type}
+    (R : A → B → Prop)
+    (choice : ∀ {α : Type}, Nonempty α → α)
+    (a₀ : T.interp A A) (a₁ : T.interp B B)
+    (h : (T.fullRelInterpPshRep R).sectionsRelated
+      (T.toInterpSection a₀)
+      (T.toInterpSection a₁)) :
+    T.fullRelInterp R a₀ a₁ :=
+  (T.fullRelInterp_bridge R choice a₀ a₁).mpr h
+
+/-- Backward bridge from presheaf-level to
+type-level parametric families. Given a
+`PshParametricFamily` for `T.toPshTypeExpr`,
+restricts along the ULift-Yoneda embedding to
+obtain a type-level `ParametricFamily` for `T`.
+The `choice` parameter is used for the Barr lift
+witnesses in the `app` case of the relational
+bridge. -/
+def PshParametricFamily.toParametricFamily
+    (T : TypeExpr)
+    (p : PshParametricFamily T.toPshTypeExpr)
+    (choice : ∀ {α : Type}, Nonempty α → α) :
+    ParametricFamily T where
+  app I :=
+    (T.interpSectionEquiv I).symm
+      (p.app (yonedaULift I))
+  parametric I₀ I₁ R := by
+    set a₀ := (T.interpSectionEquiv I₀).symm
+      (p.app (yonedaULift I₀))
+    set a₁ := (T.interpSectionEquiv I₁).symm
+      (p.app (yonedaULift I₁))
+    have hrt₀ : T.toInterpSection a₀ =
+        p.app (yonedaULift I₀) :=
+      (T.interpSectionEquiv I₀).right_inv _
+    have hrt₁ : T.toInterpSection a₁ =
+        p.app (yonedaULift I₁) :=
+      (T.interpSectionEquiv I₁).right_inv _
+    have hp := p.parametric _ _
+      (yonedaULiftRel R) (Opposite.op PUnit)
+    rw [T.fullRelInterp_pshRep_eq] at hp
+    rw [← hrt₀, ← hrt₁] at hp
+    have hsr : T.stageRelated R
+        (Opposite.op PUnit)
+        ((T.toInterpSection a₀).val
+          (Opposite.op PUnit))
+        ((T.toInterpSection a₁).val
+          (Opposite.op PUnit)) := by
+      simp only [pshProdOverToRel,
+        Subfunctor.range, Set.mem_range] at hp
+      obtain ⟨w, hw⟩ := hp
+      exact ⟨w, congr_arg Prod.fst hw,
+        congr_arg Prod.snd hw⟩
+    exact (T.pointwise_bridge
+      R choice (Opposite.op PUnit)
+      (fun _ => a₀)
+      (fun _ => a₁)).mpr hsr PUnit.unit
+
 /-- Mutual induction for the off-diagonal and
 wedge properties of `relInterp`. The off-diagonal
 component constructs related pairs from
@@ -2145,6 +2282,69 @@ def pshRelSpanDiagram
   map_comp := by
     intro X Y Z f g
     cases f <;> cases g <;> rfl
+
+/-- The presheaf diagram `pshRelSpanDiagram
+T.toPshTypeExpr` restricted to `yonRelSpanEmbed`
+at a type node recovers the type-level diagonal
+interpretation up to `ULift`, via the section
+equivalence `interpSectionEquiv`. -/
+def yonRelSpanEmbed_typeNode_sections
+    (T : TypeExpr) (I : Type) :
+    ((pshRelSpanDiagram
+      T.toPshTypeExpr).obj
+      (yonRelSpanEmbed.obj
+        (.typeNode I))).sections ≃
+    ULift.{1} (T.interp I I) :=
+  (T.interpSectionEquiv I).symm.trans
+    Equiv.ulift.symm
+
+/-- The presheaf-level fstProj, when applied to
+a section of the relation-node presheaf and
+restricted via `yonRelSpanEmbed_typeNode_sections`,
+recovers the first component of the pair at
+`PUnit` through the bridge isomorphism. -/
+theorem yonRelSpanEmbed_fstProj_compat
+    (T : TypeExpr) {I₀ I₁ : Type}
+    (R : I₀ → I₁ → Prop)
+    (s : ((pshRelSpanDiagram
+      T.toPshTypeExpr).obj
+      (yonRelSpanEmbed.obj
+        (.relNode I₀ I₁ R))).sections) :
+    (yonRelSpanEmbed_typeNode_sections T I₀)
+      (sectionMap
+        ((pshRelSpanDiagram T.toPshTypeExpr).map
+          (yonRelSpanEmbed.map
+            (RelSpanHom.fstProj I₀ I₁ R)))
+        s) =
+    ⟨((T.toPshTypeExpr_interp_iso I₀ I₀).hom.app
+        (Opposite.op PUnit)
+        (s.val (Opposite.op PUnit)).val.1
+      ).down PUnit.unit⟩ := by
+  rfl
+
+/-- The presheaf-level sndProj, when applied to
+a section of the relation-node presheaf and
+restricted via `yonRelSpanEmbed_typeNode_sections`,
+recovers the second component of the pair at
+`PUnit` through the bridge isomorphism. -/
+theorem yonRelSpanEmbed_sndProj_compat
+    (T : TypeExpr) {I₀ I₁ : Type}
+    (R : I₀ → I₁ → Prop)
+    (s : ((pshRelSpanDiagram
+      T.toPshTypeExpr).obj
+      (yonRelSpanEmbed.obj
+        (.relNode I₀ I₁ R))).sections) :
+    (yonRelSpanEmbed_typeNode_sections T I₁)
+      (sectionMap
+        ((pshRelSpanDiagram T.toPshTypeExpr).map
+          (yonRelSpanEmbed.map
+            (RelSpanHom.sndProj I₀ I₁ R)))
+        s) =
+    ⟨((T.toPshTypeExpr_interp_iso I₁ I₁).hom.app
+        (Opposite.op PUnit)
+        (s.val (Opposite.op PUnit)).val.2
+      ).down PUnit.unit⟩ := by
+  rfl
 
 /-- A `PshTypeExprHom` induces a natural
 transformation between the corresponding
