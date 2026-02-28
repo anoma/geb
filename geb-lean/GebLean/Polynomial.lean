@@ -981,6 +981,18 @@ def polyBetweenFamily (P : PolyFunctorBetweenCat X Y) (y : Y)
   polyToOverFamily Y P y i
 
 /--
+A polynomial functor `Over X → Over Y` is finitary when
+each family fiber has finitely many elements.  That is,
+for every codomain point `y : Y` and position
+`i : polyBetweenIndex X Y P y`, the carrier type of the
+family `polyBetweenFamily X Y P y i` is finite.
+-/
+def PolyBetweenFinitary
+    (P : PolyFunctorBetweenCat X Y) : Prop :=
+  ∀ (y : Y) (i : polyBetweenIndex X Y P y),
+    Finite (polyBetweenFamily X Y P y i).left
+
+/--
 Evaluate a polynomial functor `Over X → Over Y` at an object `A : Over X`,
 producing a family `Y → Type`.
 Specialization of `polyToOverEvalFamily`.

@@ -5,6 +5,7 @@ import Mathlib.CategoryTheory.Endofunctor.Algebra
 import Mathlib.CategoryTheory.Limits.Creates
 import Mathlib.CategoryTheory.Limits.Types.Limits
 import Mathlib.CategoryTheory.Monad.Adjunction
+import Mathlib.CategoryTheory.Monad.Coequalizer
 import Mathlib.CategoryTheory.Monad.Limits
 import Mathlib.CategoryTheory.WithTerminal.Cone
 
@@ -47,6 +48,14 @@ covariant representables (Grothendieck construction style).
 An object is an `X`-indexed family of polynomial functors `Over X → Type`.
 -/
 abbrev PolyEndo : Cat := PolyFunctorBetweenCat X X
+
+/--
+A polynomial endofunctor on `Over X` is finitary when
+its underlying polynomial functor `Over X → Over X` is
+finitary.
+-/
+abbrev PolyEndoFinitary (P : PolyEndo X) : Prop :=
+  PolyBetweenFinitary X X P
 
 /--
 Polynomial endofunctors on `Over X`, represented via W-type diagrams.
@@ -9837,5 +9846,50 @@ instance polyAlgHasLimitsOfSize
     (polyAlgMonadEquiv X P).functor
 
 end AlgLimits
+
+/-! ## Beck Coequalizer
+
+Every algebra of the free monad on a polynomial
+endofunctor is a split coequalizer of free algebras.
+This specializes
+`Monad.beckSplitCoequalizer` and
+`Monad.beckAlgebraCoequalizer` to our polynomial
+free monad.
+-/
+
+section BeckCoequalizer
+
+open Limits
+
+variable (X : Type u)
+
+/--
+For a monad algebra `α` of the free monad on `P`,
+the structure map `α.a : T(α.A) → α.A` is a split
+coequalizer of `T(α.a)` and `μ_{α.A}` in `Over X`.
+Being split, this coequalizer is absolute (preserved
+by any functor).
+-/
+def polyAlgBeckSplitCoequalizer
+    (P : PolyEndo X)
+    (α : (polyFreeMonad X P).Algebra) :
+    IsSplitCoequalizer
+      ((polyFreeMonad X P).toFunctor.map α.a)
+      ((polyFreeMonad X P).μ.app α.A)
+      α.a :=
+  Monad.beckSplitCoequalizer α
+
+/--
+Every monad algebra `α` of the free monad on `P` is
+a coequalizer in the algebra category: the Beck
+cofork `T²(α.A) ⇉ T(α.A) → α.A` is a colimit.
+-/
+def polyAlgBeckCoequalizer
+    (P : PolyEndo X)
+    (α : (polyFreeMonad X P).Algebra) :
+    IsColimit (Monad.beckAlgebraCofork α) :=
+  Monad.beckAlgebraCoequalizer α
+
+end BeckCoequalizer
 
 end GebLean
