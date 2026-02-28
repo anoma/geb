@@ -185,10 +185,13 @@ works over `PSh(C)` for arbitrary `C`).
   `relInterp_of_offDiag` and `relInterp_implies_wedge`.
   (Former F2.)
 
-- [ ] **P2c. Complete fullRelInterp_bridge induction.**
+- [x] **P2c. Complete fullRelInterp_bridge induction.**
   The `app` and `arrow` induction cases of
   `fullRelInterp_bridge` (connecting Type-level and
-  presheaf-level relational interpretations) remain open.
+  presheaf-level relational interpretations) are
+  complete. `relInterp_bridges` in `PshTypeExpr.lean`
+  handles all three cases (`var`, `app`, `arrow`)
+  in a single mutual induction.
 
 ### Phase 3: Additional Wadler free theorems
 
