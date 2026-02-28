@@ -996,7 +996,7 @@ relations. Given `G : PSh(C) ⥤ PSh(C)` and
 `pshBarrLift` to the Over object `Over.mk R.ι`
 and projecting to a subfunctor via
 `pshProdOverToRel`. -/
-def pshBarrLiftSkel
+def pshBarrLiftRel
     {P Q : Cᵒᵖ ⥤ Type w}
     (G : (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w))
     (R : PshRel P Q) :
@@ -1005,7 +1005,7 @@ def pshBarrLiftSkel
     (pshBarrLift G (Over.mk R.ι))
 
 /-- The range of `pshBarrLift G S` is contained
-in `pshBarrLiftSkel G (pshProdOverToRel S)`:
+in `pshBarrLiftRel G (pshProdOverToRel S)`:
 every element in the image of the Barr lift
 is also in the Barr lift of the range. -/
 theorem pshProdOverToRel_pshBarrLift_le
@@ -1013,9 +1013,9 @@ theorem pshProdOverToRel_pshBarrLift_le
     (G : (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w))
     (S : PshProdOver P Q) :
     pshProdOverToRel (pshBarrLift G S) ≤
-      pshBarrLiftSkel G
+      pshBarrLiftRel G
         (pshProdOverToRel S) := by
-  simp only [pshBarrLiftSkel, pshProdOverToRel]
+  simp only [pshBarrLiftRel, pshProdOverToRel]
   intro c x hx
   simp only [Subfunctor.range,
     Set.mem_range] at hx ⊢
@@ -1050,15 +1050,15 @@ theorem pshProdOverToRel_pshBarrLift_le
     types_comp_apply] at step
   exact step ▸ hw
 
-/-- `pshBarrLiftSkel G` is monotone with respect
+/-- `pshBarrLiftRel G` is monotone with respect
 to the `≤` ordering on subfunctors. -/
-theorem pshBarrLiftSkel_mono
+theorem pshBarrLiftRel_mono
     {P Q : Cᵒᵖ ⥤ Type w}
     (G : (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w))
     {R S : PshRel P Q} (h : R ≤ S) :
-    pshBarrLiftSkel G R ≤
-      pshBarrLiftSkel G S := by
-  simp only [pshBarrLiftSkel, pshProdOverToRel]
+    pshBarrLiftRel G R ≤
+      pshBarrLiftRel G S := by
+  simp only [pshBarrLiftRel, pshProdOverToRel]
   intro c x hx
   simp only [Subfunctor.range,
     Set.mem_range] at hx ⊢
@@ -1183,11 +1183,11 @@ theorem pshProdOverToRel_graph
 /-- The Barr extension of a graph relation
 `pshRelGraph α` equals
 `pshRelGraph (G.map α)`. -/
-theorem pshBarrLiftSkel_graph
+theorem pshBarrLiftRel_graph
     {P Q : Cᵒᵖ ⥤ Type w}
     (G : (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w))
     (α : P ⟶ Q) :
-    pshBarrLiftSkel G (pshRelGraph α) =
+    pshBarrLiftRel G (pshRelGraph α) =
       pshRelGraph (G.map α) := by
   have hOverIso :
     Over.mk (pshRelGraph α).ι ≅
@@ -1215,7 +1215,7 @@ theorem pshBarrLiftSkel_graph
       · simp [pshBarrLift,
           pshProdOverGraph,
           pshProdLift])
-  rw [pshBarrLiftSkel,
+  rw [pshBarrLiftRel,
     pshProdOverToRel_iso
       ((pshBarrLift_iso G hOverIso).trans
         hBarrIso),
@@ -1225,22 +1225,22 @@ theorem pshBarrLiftSkel_graph
 of a graph relation equals the first projection
 composed with `G.map α`. This avoids the
 dependent-type rewriting obstacle that arises
-when applying `pshBarrLiftSkel_graph`
+when applying `pshBarrLiftRel_graph`
 to membership predicates. -/
-theorem pshBarrLiftSkel_graph_ι_snd
+theorem pshBarrLiftRel_graph_ι_snd
     {P Q : Cᵒᵖ ⥤ Type w}
     (G :
       (Cᵒᵖ ⥤ Type w) ⥤
         (Cᵒᵖ ⥤ Type w))
     (α : P ⟶ Q) :
-    (pshBarrLiftSkel G
+    (pshBarrLiftRel G
       (pshRelGraph α)).ι ≫
       pshProdSnd (G.obj P) (G.obj Q) =
-    (pshBarrLiftSkel G
+    (pshBarrLiftRel G
       (pshRelGraph α)).ι ≫
       pshProdFst (G.obj P) (G.obj Q) ≫
         G.map α := by
-  rw [pshBarrLiftSkel_graph]
+  rw [pshBarrLiftRel_graph]
   exact pshRelGraph_ι_snd (G.map α)
 
 /-- The Barr extension preserves relatedness: if
@@ -1335,40 +1335,40 @@ theorem pshProdOverRelated_topshRelRelated
 /-- The subfunctor-level version of
 `pshBarrLift_related`: relatedness at the
 `PshRel` level is preserved by
-`pshBarrLiftSkel`. -/
-theorem pshBarrLiftSkel_related
+`pshBarrLiftRel`. -/
+theorem pshBarrLiftRel_related
     {P P' Q Q' : Cᵒᵖ ⥤ Type w}
     (G : (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w))
     {α : P ⟶ Q} {β : P' ⟶ Q'}
     {R : PshRel P P'} {S : PshRel Q Q'}
     (h : pshRelRelated α β R S) :
     pshRelRelated (G.map α) (G.map β)
-      (pshBarrLiftSkel G R)
-      (pshBarrLiftSkel G S) :=
+      (pshBarrLiftRel G R)
+      (pshBarrLiftRel G S) :=
   pshProdOverRelated_topshRelRelated
     (pshBarrLift_related G
       (pshRelRelated_toPshProdOverRelated
         h))
 
-/-- Transport a `pshBarrLiftSkel` along a
+/-- Transport a `pshBarrLiftRel` along a
 natural transformation `α : G ⟶ H`. Maps
 each related pair `(x, y)` in the Barr lift
 through `G` to `(α x, α y)` in the Barr lift
 through `H`, using `α` on the witness. -/
-def pshBarrLiftSkelMap
+def pshBarrLiftRelMap
     {P Q : Cᵒᵖ ⥤ Type w}
     {G H :
       (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w)}
     (α : G ⟶ H)
     (R : PshRel P Q) :
-    (pshBarrLiftSkel G R).toFunctor ⟶
-      (pshBarrLiftSkel H R).toFunctor :=
+    (pshBarrLiftRel G R).toFunctor ⟶
+      (pshBarrLiftRel H R).toFunctor :=
   Subfunctor.lift
     (pshProdLift
-      ((pshBarrLiftSkel G R).ι ≫
+      ((pshBarrLiftRel G R).ι ≫
         pshProdFst (G.obj P) (G.obj Q) ≫
         α.app P)
-      ((pshBarrLiftSkel G R).ι ≫
+      ((pshBarrLiftRel G R).ι ≫
         pshProdSnd (G.obj P) (G.obj Q) ≫
         α.app Q))
     (by
@@ -1377,7 +1377,7 @@ def pshBarrLiftSkelMap
         Set.mem_range] at hx ⊢
       obtain ⟨⟨pq, hpq⟩, heq⟩ := hx
       obtain ⟨w, hw⟩ := hpq
-      simp only [pshBarrLiftSkel,
+      simp only [pshBarrLiftRel,
         pshProdOverToRel,
         Subfunctor.range_obj,
         Set.mem_range]
@@ -1393,7 +1393,7 @@ def pshBarrLiftSkelMap
       simp only [pshBarrLift, Over.mk,
         pshProdLift, FunctorToTypes.prod.lift,
         NatTrans.comp_app, types_comp_apply,
-        pshBarrLiftSkel, pshProdOverToRel,
+        pshBarrLiftRel, pshProdOverToRel,
         Subfunctor.range]
       apply Prod.ext
       · change (H.map (R.ι ≫
@@ -1420,62 +1420,62 @@ def pshBarrLiftSkelMap
         rw [← nat, hw₂])
 
 @[simp]
-theorem pshBarrLiftSkelMap_id
+theorem pshBarrLiftRelMap_id
     {P Q : Cᵒᵖ ⥤ Type w}
     (G : (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w))
     (R : PshRel P Q) :
-    pshBarrLiftSkelMap (𝟙 G) R =
-      𝟙 (pshBarrLiftSkel G R).toFunctor := by
+    pshBarrLiftRelMap (𝟙 G) R =
+      𝟙 (pshBarrLiftRel G R).toFunctor := by
   ext c ⟨x, hx⟩
-  simp [pshBarrLiftSkelMap, Subfunctor.lift,
+  simp [pshBarrLiftRelMap, Subfunctor.lift,
     pshProdLift, FunctorToTypes.prod.lift]
 
 @[simp]
-theorem pshBarrLiftSkelMap_ι_fst
+theorem pshBarrLiftRelMap_ι_fst
     {P Q : Cᵒᵖ ⥤ Type w}
     {G H :
       (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w)}
     (α : G ⟶ H)
     (R : PshRel P Q) :
-    pshBarrLiftSkelMap α R ≫
-      (pshBarrLiftSkel H R).ι ≫
+    pshBarrLiftRelMap α R ≫
+      (pshBarrLiftRel H R).ι ≫
       pshProdFst (H.obj P) (H.obj Q) =
-    (pshBarrLiftSkel G R).ι ≫
+    (pshBarrLiftRel G R).ι ≫
       pshProdFst (G.obj P) (G.obj Q) ≫
       α.app P := by
   ext c ⟨x, hx⟩
-  simp [pshBarrLiftSkelMap, Subfunctor.lift,
+  simp [pshBarrLiftRelMap, Subfunctor.lift,
     pshProdLift, FunctorToTypes.prod.lift]
 
 @[simp]
-theorem pshBarrLiftSkelMap_ι_snd
+theorem pshBarrLiftRelMap_ι_snd
     {P Q : Cᵒᵖ ⥤ Type w}
     {G H :
       (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w)}
     (α : G ⟶ H)
     (R : PshRel P Q) :
-    pshBarrLiftSkelMap α R ≫
-      (pshBarrLiftSkel H R).ι ≫
+    pshBarrLiftRelMap α R ≫
+      (pshBarrLiftRel H R).ι ≫
       pshProdSnd (H.obj P) (H.obj Q) =
-    (pshBarrLiftSkel G R).ι ≫
+    (pshBarrLiftRel G R).ι ≫
       pshProdSnd (G.obj P) (G.obj Q) ≫
       α.app Q := by
   ext c ⟨x, hx⟩
-  simp [pshBarrLiftSkelMap, Subfunctor.lift,
+  simp [pshBarrLiftRelMap, Subfunctor.lift,
     pshProdLift, FunctorToTypes.prod.lift]
 
 @[simp]
-theorem pshBarrLiftSkelMap_comp
+theorem pshBarrLiftRelMap_comp
     {P Q : Cᵒᵖ ⥤ Type w}
     {G H K :
       (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w)}
     (α : G ⟶ H) (β : H ⟶ K)
     (R : PshRel P Q) :
-    pshBarrLiftSkelMap (α ≫ β) R =
-      pshBarrLiftSkelMap α R ≫
-        pshBarrLiftSkelMap β R := by
+    pshBarrLiftRelMap (α ≫ β) R =
+      pshBarrLiftRelMap α R ≫
+        pshBarrLiftRelMap β R := by
   ext c ⟨x, hx⟩
-  simp [pshBarrLiftSkelMap, Subfunctor.lift,
+  simp [pshBarrLiftRelMap, Subfunctor.lift,
     pshProdLift, FunctorToTypes.prod.lift]
 
 end PshBarrExtension
@@ -1491,7 +1491,7 @@ whose images in `F.obj(op R.toFunctor)` under the
 two projection maps agree:
 `F.map (R.ι ≫ pshProdFst P Q).op a =
  F.map (R.ι ≫ pshProdSnd P Q).op b`. -/
-def pshContraBarrLiftSkel
+def pshContraBarrLiftRel
     {P Q : Cᵒᵖ ⥤ Type w}
     (F :
       (Cᵒᵖ ⥤ Type w)ᵒᵖ ⥤
@@ -1522,21 +1522,21 @@ def pshContraBarrLiftSkel
     simp only [types_comp_apply] at h1 h2
     rw [h1, h2, hx]
 
-/-- Transport a `pshContraBarrLiftSkel` along
+/-- Transport a `pshContraBarrLiftRel` along
 a natural transformation `α : F ⟶ G` between
 contravariant endofunctors. Maps each related
 pair `(a, b)` in the pullback relation through
 `F` to `(α a, α b)` in the pullback relation
 through `G`, using naturality of `α`. -/
-def pshContraBarrLiftSkelMap
+def pshContraBarrLiftRelMap
     {P Q : Cᵒᵖ ⥤ Type w}
     {F G :
       (Cᵒᵖ ⥤ Type w)ᵒᵖ ⥤
         (Cᵒᵖ ⥤ Type w)}
     (α : F ⟶ G)
     (R : PshRel P Q) :
-    (pshContraBarrLiftSkel F R).toFunctor ⟶
-      (pshContraBarrLiftSkel G R).toFunctor
+    (pshContraBarrLiftRel F R).toFunctor ⟶
+      (pshContraBarrLiftRel G R).toFunctor
     where
   app c x :=
     ⟨((α.app (Opposite.op P)).app c x.val.1,
@@ -1574,61 +1574,61 @@ def pshContraBarrLiftSkelMap
           k) b
 
 @[simp]
-theorem pshContraBarrLiftSkelMap_ι_fst
+theorem pshContraBarrLiftRelMap_ι_fst
     {P Q : Cᵒᵖ ⥤ Type w}
     {F G :
       (Cᵒᵖ ⥤ Type w)ᵒᵖ ⥤
         (Cᵒᵖ ⥤ Type w)}
     (α : F ⟶ G)
     (R : PshRel P Q) :
-    pshContraBarrLiftSkelMap α R ≫
-      (pshContraBarrLiftSkel G R).ι ≫
+    pshContraBarrLiftRelMap α R ≫
+      (pshContraBarrLiftRel G R).ι ≫
       pshProdFst
         (G.obj (Opposite.op P))
         (G.obj (Opposite.op Q)) =
-    (pshContraBarrLiftSkel F R).ι ≫
+    (pshContraBarrLiftRel F R).ι ≫
       pshProdFst
         (F.obj (Opposite.op P))
         (F.obj (Opposite.op Q)) ≫
       α.app (Opposite.op P) := by
   ext c ⟨⟨_, _⟩, _⟩
-  simp [pshContraBarrLiftSkelMap,
-    pshContraBarrLiftSkel, pshProdFst,
+  simp [pshContraBarrLiftRelMap,
+    pshContraBarrLiftRel, pshProdFst,
     FunctorToTypes.prod.fst]
 
 @[simp]
-theorem pshContraBarrLiftSkelMap_ι_snd
+theorem pshContraBarrLiftRelMap_ι_snd
     {P Q : Cᵒᵖ ⥤ Type w}
     {F G :
       (Cᵒᵖ ⥤ Type w)ᵒᵖ ⥤
         (Cᵒᵖ ⥤ Type w)}
     (α : F ⟶ G)
     (R : PshRel P Q) :
-    pshContraBarrLiftSkelMap α R ≫
-      (pshContraBarrLiftSkel G R).ι ≫
+    pshContraBarrLiftRelMap α R ≫
+      (pshContraBarrLiftRel G R).ι ≫
       pshProdSnd
         (G.obj (Opposite.op P))
         (G.obj (Opposite.op Q)) =
-    (pshContraBarrLiftSkel F R).ι ≫
+    (pshContraBarrLiftRel F R).ι ≫
       pshProdSnd
         (F.obj (Opposite.op P))
         (F.obj (Opposite.op Q)) ≫
       α.app (Opposite.op Q) := by
   ext c ⟨⟨_, _⟩, _⟩
-  simp [pshContraBarrLiftSkelMap,
-    pshContraBarrLiftSkel, pshProdSnd,
+  simp [pshContraBarrLiftRelMap,
+    pshContraBarrLiftRel, pshProdSnd,
     FunctorToTypes.prod.snd]
 
 /-- The contravariant Barr lift of a graph
 relation `pshRelGraph f` is the dagger of the
 graph of `F.map f.op`. -/
-theorem pshContraBarrLiftSkel_graph
+theorem pshContraBarrLiftRel_graph
     {P Q : Cᵒᵖ ⥤ Type w}
     (F :
       (Cᵒᵖ ⥤ Type w)ᵒᵖ ⥤
         (Cᵒᵖ ⥤ Type w))
     (f : P ⟶ Q) :
-    pshContraBarrLiftSkel F (pshRelGraph f) =
+    pshContraBarrLiftRel F (pshRelGraph f) =
       pshRelDagger
         (pshRelGraph (F.map f.op)) := by
   ext c ⟨a, b⟩
@@ -1649,7 +1649,7 @@ theorem pshContraBarrLiftSkel_graph
       hfst_eq,
       (pshRelGraph_ι_fst_iso f).inv_hom_id,
       op_id, F.map_id]
-  simp only [pshContraBarrLiftSkel,
+  simp only [pshContraBarrLiftRel,
     pshRelDagger, Set.mem_setOf_eq]
   constructor
   · intro h
@@ -1681,24 +1681,24 @@ theorem pshContraBarrLiftSkel_graph
     exact congrArg
       ((F.map fst.op).app c) h.symm
 
-theorem pshContraBarrLiftSkel_graph_ι_fst
+theorem pshContraBarrLiftRel_graph_ι_fst
     {P Q : Cᵒᵖ ⥤ Type w}
     (F :
       (Cᵒᵖ ⥤ Type w)ᵒᵖ ⥤
         (Cᵒᵖ ⥤ Type w))
     (f : P ⟶ Q) :
-    (pshContraBarrLiftSkel F
+    (pshContraBarrLiftRel F
       (pshRelGraph f)).ι ≫
       pshProdFst
         (F.obj (Opposite.op P))
         (F.obj (Opposite.op Q)) =
-    ((pshContraBarrLiftSkel F
+    ((pshContraBarrLiftRel F
       (pshRelGraph f)).ι ≫
       pshProdSnd
         (F.obj (Opposite.op P))
         (F.obj (Opposite.op Q))) ≫
         F.map f.op := by
-  rw [pshContraBarrLiftSkel_graph]
+  rw [pshContraBarrLiftRel_graph]
   ext c ⟨⟨_, _⟩, hpf⟩
   simp only [NatTrans.comp_app,
     types_comp_apply]
@@ -1711,7 +1711,7 @@ end PshContraBarrExtension
 
 section PshProfBarrExtension
 
-def pshProfBarrLiftSkel
+def pshProfBarrLiftRel
     {P Q : Cᵒᵖ ⥤ Type w}
     (G :
       (Cᵒᵖ ⥤ Type w)ᵒᵖ ×
@@ -1789,12 +1789,12 @@ def pshProfBarrLiftSkel
       simp only [types_comp_apply] at n1 n2
       rw [n1, n2]; exact congrArg _ hw₂
 
-/-- Transport a `pshProfBarrLiftSkel` along a
+/-- Transport a `pshProfBarrLiftRel` along a
 natural transformation `β : G ⟶ H` between
 profunctor-valued endofunctors. Maps each related
 pair `(a, b)` through `β` componentwise, with the
 witness transported by `β.app (op R, R)`. -/
-def pshProfBarrLiftSkelMap
+def pshProfBarrLiftRelMap
     {P Q : Cᵒᵖ ⥤ Type w}
     {G H :
       (Cᵒᵖ ⥤ Type w)ᵒᵖ ×
@@ -1802,8 +1802,8 @@ def pshProfBarrLiftSkelMap
         (Cᵒᵖ ⥤ Type w)}
     (β : G ⟶ H)
     (R : PshRel P Q) :
-    (pshProfBarrLiftSkel G R).toFunctor ⟶
-      (pshProfBarrLiftSkel H R).toFunctor
+    (pshProfBarrLiftRel G R).toFunctor ⟶
+      (pshProfBarrLiftRel H R).toFunctor
     where
   app c x :=
     let RT := R.toFunctor
@@ -1884,7 +1884,7 @@ def pshProfBarrLiftSkelMap
           k) b
 
 @[simp]
-theorem pshProfBarrLiftSkelMap_ι_fst
+theorem pshProfBarrLiftRelMap_ι_fst
     {P Q : Cᵒᵖ ⥤ Type w}
     {G H :
       (Cᵒᵖ ⥤ Type w)ᵒᵖ ×
@@ -1892,23 +1892,23 @@ theorem pshProfBarrLiftSkelMap_ι_fst
         (Cᵒᵖ ⥤ Type w)}
     (β : G ⟶ H)
     (R : PshRel P Q) :
-    pshProfBarrLiftSkelMap β R ≫
-      (pshProfBarrLiftSkel H R).ι ≫
+    pshProfBarrLiftRelMap β R ≫
+      (pshProfBarrLiftRel H R).ι ≫
       pshProdFst
         (H.obj (Opposite.op P, P))
         (H.obj (Opposite.op Q, Q)) =
-    (pshProfBarrLiftSkel G R).ι ≫
+    (pshProfBarrLiftRel G R).ι ≫
       pshProdFst
         (G.obj (Opposite.op P, P))
         (G.obj (Opposite.op Q, Q)) ≫
       β.app (Opposite.op P, P) := by
   ext c ⟨⟨_, _⟩, _⟩
-  simp [pshProfBarrLiftSkelMap,
-    pshProfBarrLiftSkel, pshProdFst,
+  simp [pshProfBarrLiftRelMap,
+    pshProfBarrLiftRel, pshProdFst,
     FunctorToTypes.prod.fst]
 
 @[simp]
-theorem pshProfBarrLiftSkelMap_ι_snd
+theorem pshProfBarrLiftRelMap_ι_snd
     {P Q : Cᵒᵖ ⥤ Type w}
     {G H :
       (Cᵒᵖ ⥤ Type w)ᵒᵖ ×
@@ -1916,19 +1916,19 @@ theorem pshProfBarrLiftSkelMap_ι_snd
         (Cᵒᵖ ⥤ Type w)}
     (β : G ⟶ H)
     (R : PshRel P Q) :
-    pshProfBarrLiftSkelMap β R ≫
-      (pshProfBarrLiftSkel H R).ι ≫
+    pshProfBarrLiftRelMap β R ≫
+      (pshProfBarrLiftRel H R).ι ≫
       pshProdSnd
         (H.obj (Opposite.op P, P))
         (H.obj (Opposite.op Q, Q)) =
-    (pshProfBarrLiftSkel G R).ι ≫
+    (pshProfBarrLiftRel G R).ι ≫
       pshProdSnd
         (G.obj (Opposite.op P, P))
         (G.obj (Opposite.op Q, Q)) ≫
       β.app (Opposite.op Q, Q) := by
   ext c ⟨⟨_, _⟩, _⟩
-  simp [pshProfBarrLiftSkelMap,
-    pshProfBarrLiftSkel, pshProdSnd,
+  simp [pshProfBarrLiftRelMap,
+    pshProfBarrLiftRel, pshProdSnd,
     FunctorToTypes.prod.snd]
 
 end PshProfBarrExtension
@@ -2039,7 +2039,7 @@ def pshArrowRelPresheaf
 
 /-- The arrow relation as a `PshProdOver`. Given
 relations `R` on the inputs and `S` on the outputs,
-`pshArrowRel R S` is a relation on the internal hom
+`pshArrowRelOver R S` is a relation on the internal hom
 presheaves `A₁.functorHom B₁` and
 `A₂.functorHom B₂`. The underlying presheaf is
 `pshArrowRelPresheaf R S` with projections given
@@ -2064,12 +2064,12 @@ def pshArrowRelSnd
 
 /-- The arrow relation as a `PshProdOver`. Given
 relations `R` on the inputs and `S` on the outputs,
-`pshArrowRel R S` is a relation on the internal hom
+`pshArrowRelOver R S` is a relation on the internal hom
 presheaves `A₁.functorHom B₁` and
 `A₂.functorHom B₂`. The underlying presheaf is
 `pshArrowRelPresheaf R S` with projections given
 by `.val.1` and `.val.2`. -/
-def pshArrowRel
+def pshArrowRelOver
     {A₁ A₂ B₁ B₂ : Dᵒᵖ ⥤ Type (max u₁ v₁)}
     (R : PshProdOver A₁ A₂)
     (S : PshProdOver B₁ B₂) :
@@ -2138,13 +2138,13 @@ private def pshArrowRelPresheafIso
 
 /-- Isomorphic input/output relations yield
 isomorphic arrow relations. -/
-def pshArrowRel_iso
+def pshArrowRelOver_iso
     {A₁ A₂ B₁ B₂ : Dᵒᵖ ⥤ Type (max u₁ v₁)}
     {R₁ R₂ : PshProdOver A₁ A₂}
     {S₁ S₂ : PshProdOver B₁ B₂}
     (α : R₁ ≅ R₂) (β : S₁ ≅ S₂) :
-    pshArrowRel R₁ S₁ ≅
-      pshArrowRel R₂ S₂ :=
+    pshArrowRelOver R₁ S₁ ≅
+      pshArrowRelOver R₂ S₂ :=
   Over.isoMk (pshArrowRelPresheafIso α β)
     (by ext c g; rfl)
 
@@ -2153,9 +2153,9 @@ relations. Given `R : PshRel A₁ A₂` and
 `S : PshRel B₁ B₂`, produces
 `PshRel (A₁.functorHom B₁)
   (A₂.functorHom B₂)` by applying
-`pshArrowRel` to the canonical Over objects
+`pshArrowRelOver` to the canonical Over objects
 and projecting to a subfunctor. -/
-def pshArrowRelSkel
+def pshArrowRel
     {A₁ A₂ B₁ B₂ :
       Dᵒᵖ ⥤ Type (max u₁ v₁)}
     (R : PshRel A₁ A₂)
@@ -2163,22 +2163,22 @@ def pshArrowRelSkel
     PshRel (A₁.functorHom B₁)
       (A₂.functorHom B₂) :=
   pshProdOverToRel
-    (pshArrowRel (Over.mk R.ι)
+    (pshArrowRelOver (Over.mk R.ι)
       (Over.mk S.ι))
 
-/-- The range of `pshArrowRel R S` is contained
-in `pshArrowRelSkel (pshProdOverToRel R)
+/-- The range of `pshArrowRelOver R S` is contained
+in `pshArrowRel (pshProdOverToRel R)
 (pshProdOverToRel S)`. -/
-theorem pshProdOverToRel_pshArrowRel_le
+theorem pshProdOverToRel_pshArrowRelOver_le
     {A₁ A₂ B₁ B₂ :
       Dᵒᵖ ⥤ Type (max u₁ v₁)}
     (R : PshProdOver A₁ A₂)
     (S : PshProdOver B₁ B₂) :
-    pshProdOverToRel (pshArrowRel R S) ≤
-      pshArrowRelSkel
+    pshProdOverToRel (pshArrowRelOver R S) ≤
+      pshArrowRel
         (pshProdOverToRel R)
         (pshProdOverToRel S) := by
-  simp only [pshArrowRelSkel, pshProdOverToRel]
+  simp only [pshArrowRel, pshProdOverToRel]
   intro c x hx
   simp only [Subfunctor.range,
     Set.mem_range] at hx ⊢
@@ -2199,16 +2199,16 @@ equals the `pshProdOverToRel` of the arrow
 relation: the predicate `pshArrowRelPred`
 depends only on the ranges of the over-object
 hom morphisms. -/
-theorem pshArrowRelSkel_pshProdOverToRel
+theorem pshArrowRel_pshProdOverToRel
     {A₁ A₂ B₁ B₂ :
       Dᵒᵖ ⥤ Type (max u₁ v₁)}
     (R : PshProdOver A₁ A₂)
     (S : PshProdOver B₁ B₂) :
-    pshArrowRelSkel
+    pshArrowRel
       (pshProdOverToRel R)
       (pshProdOverToRel S) =
-      pshProdOverToRel (pshArrowRel R S) := by
-  simp only [pshArrowRelSkel, pshProdOverToRel]
+      pshProdOverToRel (pshArrowRelOver R S) := by
+  simp only [pshArrowRel, pshProdOverToRel]
   ext c x
   simp only [Subfunctor.range,
     Set.mem_range]
@@ -2241,9 +2241,9 @@ contravariance) and the output morphisms
 `(β₁, β₂)` are `(S₁, S₂)`-related, then
 `pshIhomProfMap α₁ β₁` and
 `pshIhomProfMap α₂ β₂` are
-`(pshArrowRel R₁ S₁, pshArrowRel R₂ S₂)`-related.
+`(pshArrowRelOver R₁ S₁, pshArrowRelOver R₂ S₂)`-related.
 -/
-theorem pshArrowRel_related
+theorem pshArrowRelOver_related
     {A₁ A₂ A₁' A₂' B₁ B₂ B₁' B₂' :
       Dᵒᵖ ⥤ Type (max u₁ v₁)}
     {R₁ : PshProdOver A₁ A₂}
@@ -2255,8 +2255,8 @@ theorem pshArrowRel_related
     (hα : PshProdOverRelated R₂ R₁ α₁ α₂)
     (hβ : PshProdOverRelated S₁ S₂ β₁ β₂) :
     PshProdOverRelated
-      (pshArrowRel R₁ S₁)
-      (pshArrowRel R₂ S₂)
+      (pshArrowRelOver R₁ S₁)
+      (pshArrowRelOver R₂ S₂)
       (pshIhomProfMap α₁ β₁)
       (pshIhomProfMap α₂ β₂) := by
   obtain ⟨φ_α, hα_eq⟩ := hα
@@ -2286,7 +2286,7 @@ theorem pshArrowRel_related
 
 /-- The arrow relation preserves relatedness
 at the `PshRel` level. -/
-theorem pshArrowRelSkel_related
+theorem pshArrowRel_related
     {A₁ A₂ A₁' A₂' B₁ B₂ B₁' B₂' :
       Dᵒᵖ ⥤ Type (max u₁ v₁)}
     {α₁ : A₁' ⟶ A₁} {α₂ : A₂' ⟶ A₂}
@@ -2300,10 +2300,10 @@ theorem pshArrowRelSkel_related
     pshRelRelated
       (pshIhomProfMap α₁ β₁)
       (pshIhomProfMap α₂ β₂)
-      (pshArrowRelSkel R₁ S₁)
-      (pshArrowRelSkel R₂ S₂) :=
+      (pshArrowRel R₁ S₁)
+      (pshArrowRel R₂ S₂) :=
   pshProdOverRelated_topshRelRelated
-    (pshArrowRel_related
+    (pshArrowRelOver_related
       (pshRelRelated_toPshProdOverRelated
         hα)
       (pshRelRelated_toPshProdOverRelated
@@ -2553,7 +2553,7 @@ section TypeRelations
 `PSh(Discrete PUnit) = (Discrete PUnit)ᵒᵖ ⥤ Type v`
 via the constant-presheaf functor. All presheaf
 relation constructions (`PshRel`, `pshRelGraph`,
-`pshBarrLiftSkel`, `pshArrowRelSkel`, the double
+`pshBarrLiftRel`, `pshArrowRel`, the double
 category) specialize to give a double category on
 `Type v` with:
 - Objects: types in `Type v`
@@ -2717,12 +2717,12 @@ theorem typeFunctorToPsh_obj
 `G : Type v ⥤ Type v` applied to a type
 relation `R : TypeRel A B`, producing
 `TypeRel (G.obj A) (G.obj B)`. -/
-abbrev typeBarrLiftSkel
+abbrev typeBarrLiftRel
     (G : Type v ⥤ Type v)
     {A B : Type v}
     (R : TypeRel A B) :
     TypeRel (G.obj A) (G.obj B) :=
-  pshBarrLiftSkel (typeFunctorToPsh G) R
+  pshBarrLiftRel (typeFunctorToPsh G) R
 
 end TypeRelations
 

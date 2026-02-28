@@ -109,9 +109,9 @@ def PshTypeExpr.relInterp :
     PshRel (T.interp P P) (T.interp Q Q)
   | .var, _, _, α => pshRelGraph α
   | .app G T, _, _, α =>
-    pshBarrLiftSkel G (T.relInterp α)
+    pshBarrLiftRel G (T.relInterp α)
   | .arrow T₁ T₂, _, _, α =>
-    pshArrowRelSkel
+    pshArrowRel
       (T₁.relInterp α)
       (T₂.relInterp α)
 
@@ -121,8 +121,8 @@ presheaf type expression at an arbitrary relation
 which only accepts morphism graphs
 (`pshRelGraph α`). Each `var` contributes `R`
 itself, each `app G T` contributes
-`pshBarrLiftSkel G (T.fullRelInterp R)`, and each
-`arrow` contributes `pshArrowRelSkel`.
+`pshBarrLiftRel G (T.fullRelInterp R)`, and each
+`arrow` contributes `pshArrowRel`.
 
 This is the presheaf-category generalization of
 `TypeExpr.fullRelInterp`. -/
@@ -133,9 +133,9 @@ def PshTypeExpr.fullRelInterp :
     PshRel (T.interp P P) (T.interp Q Q)
   | .var, _, _, R => R
   | .app G T, _, _, R =>
-    pshBarrLiftSkel G (T.fullRelInterp R)
+    pshBarrLiftRel G (T.fullRelInterp R)
   | .arrow T₁ T₂, _, _, R =>
-    pshArrowRelSkel
+    pshArrowRel
       (T₁.fullRelInterp R)
       (T₂.fullRelInterp R)
 
@@ -329,7 +329,7 @@ def pshTypeAbsRel (T : PshTypeExpr C)
       (T.fullRelInterp R) (t₀ P) (t₁ Q)
 
 /-- The relational interpretation of a leaf
-`app G var` reduces to `pshBarrLiftSkel G` applied
+`app G var` reduces to `pshBarrLiftRel G` applied
 to the graph relation of `α`. -/
 @[simp]
 theorem PshTypeExpr.leaf_relInterp
@@ -338,7 +338,7 @@ theorem PshTypeExpr.leaf_relInterp
     {P Q : Cᵒᵖ ⥤ Type (max u v)}
     (α : P ⟶ Q) :
     (PshTypeExpr.leaf G).relInterp α =
-      pshBarrLiftSkel G (pshRelGraph α) :=
+      pshBarrLiftRel G (pshRelGraph α) :=
   rfl
 
 /-- Embeds a universe-0 type expression into the
@@ -766,7 +766,7 @@ theorem functorRelLift_yonedaULift_bridge
 
 /-- Canonical representative of the full relational
 interpretation at `yonedaULiftRel R`: a concrete
-`PshProdOver` (before the Skeleton quotient) for
+`PshProdOver` (before the subfunctor projection) for
 each type expression. -/
 def TypeExpr.fullRelInterpPshRep
     (T : TypeExpr) {A B : Type}
@@ -782,7 +782,7 @@ def TypeExpr.fullRelInterpPshRep
     pshBarrLift (yonedaExt F)
       (T'.fullRelInterpPshRep R)
   | .arrow T₁ T₂ =>
-    pshArrowRel
+    pshArrowRelOver
       (T₁.fullRelInterpPshRep R)
       (T₂.fullRelInterpPshRep R)
 
@@ -803,7 +803,7 @@ theorem TypeExpr.fullRelInterp_pshRep_eq
       TypeExpr.fullRelInterpPshRep, ih]
     exact le_antisymm
       (by
-        simp only [pshBarrLiftSkel,
+        simp only [pshBarrLiftRel,
           pshProdOverToRel]
         intro c x hx
         simp only [Subfunctor.range,
@@ -877,7 +877,7 @@ theorem TypeExpr.fullRelInterp_pshRep_eq
     simp only [TypeExpr.toPshTypeExpr,
       PshTypeExpr.fullRelInterp,
       TypeExpr.fullRelInterpPshRep, ih₁, ih₂]
-    exact pshArrowRelSkel_pshProdOverToRel
+    exact pshArrowRel_pshProdOverToRel
       (T₁.fullRelInterpPshRep R)
       (T₂.fullRelInterpPshRep R)
 
@@ -1980,9 +1980,9 @@ private theorem PshTypeExpr.pshRelInterp_wedge_aux
       change
         ((G.map (T.profMap α (𝟙 P))).app c x,
          (G.map (T.profMap (𝟙 Q) α)).app c x)
-          ∈ (pshBarrLiftSkel G
+          ∈ (pshBarrLiftRel G
             (T.relInterp α)).obj c
-      simp only [pshBarrLiftSkel,
+      simp only [pshBarrLiftRel,
         pshProdOverToRel, Subfunctor.range_obj,
         Set.mem_range]
       let lift : T.interp Q P ⟶
@@ -2026,9 +2026,9 @@ private theorem PshTypeExpr.pshRelInterp_wedge_aux
       change (G.map (T.profMap (𝟙 P) α)).app c
         x₀ =
         (G.map (T.profMap α (𝟙 Q))).app c x₁
-      change (x₀, x₁) ∈ (pshBarrLiftSkel G
+      change (x₀, x₁) ∈ (pshBarrLiftRel G
         (T.relInterp α)).obj c at hrel
-      simp only [pshBarrLiftSkel,
+      simp only [pshBarrLiftRel,
         pshProdOverToRel, Subfunctor.range_obj,
         Set.mem_range] at hrel
       obtain ⟨w, hw⟩ := hrel
@@ -2069,10 +2069,10 @@ private theorem PshTypeExpr.pshRelInterp_wedge_aux
     obtain ⟨ih₂_od, ih₂_w⟩ := ih₂
     constructor
     · intro P Q α c x
-      change _ ∈ (pshArrowRelSkel
+      change _ ∈ (pshArrowRel
         (T₁.relInterp α)
         (T₂.relInterp α)).obj c
-      simp only [pshArrowRelSkel,
+      simp only [pshArrowRel,
         pshProdOverToRel, Subfunctor.range_obj,
         Set.mem_range]
       refine ⟨⟨(((T₁.arrow T₂).profMap α
@@ -2085,10 +2085,10 @@ private theorem PshTypeExpr.pshRelInterp_wedge_aux
       rw [ih₁_w α d _ _ w'.property]
       exact ⟨⟨_, ih₂_od α d _⟩, rfl⟩
     · intro P Q α c x₀ x₁ hrel
-      change (x₀, x₁) ∈ (pshArrowRelSkel
+      change (x₀, x₁) ∈ (pshArrowRel
         (T₁.relInterp α)
         (T₂.relInterp α)).obj c at hrel
-      simp only [pshArrowRelSkel,
+      simp only [pshArrowRel,
         pshProdOverToRel, Subfunctor.range_obj,
         Set.mem_range] at hrel
       obtain ⟨wrel, hwrel⟩ := hrel
