@@ -115,7 +115,9 @@ This workstream unifies the former:
   `yonedaULiftRel`, bridge infrastructure,
   `fullRelInterp_pshRep_eq`,
   `PshTypeExprHom`, `PshTypeExprCat` (category of type
-  expressions with parametric morphisms)
+  expressions with parametric morphisms),
+  `pshRelInterp_of_offDiag`, `pshRelInterp_implies_wedge`,
+  `PshParametricFamily.wedge`
 
 ### Paranatural topos results (relevant here)
 
@@ -179,9 +181,9 @@ works over `PSh(C)` for arbitrary `C`).
   `ParametricFamily T`. This is choice-free (purely
   constructive). (Former F1.)
 
-- [ ] **P2b. PshParametricFamily.wedge.** Prove every
+- [x] **P2b. PshParametricFamily.wedge.** Prove every
   `PshParametricFamily` satisfies the presheaf profunctor
-  wedge condition. Requires presheaf-level analogues of
+  wedge condition. Includes presheaf-level analogues of
   `relInterp_of_offDiag` and `relInterp_implies_wedge`.
   (Former F2.)
 

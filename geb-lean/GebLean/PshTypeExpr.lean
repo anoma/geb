@@ -1983,6 +1983,51 @@ private theorem PshTypeExpr.pshRelInterp_wedge_aux
       rw [← hs₁, ← hs₂]
       exact ih₂_w α d _ _ s.property
 
+/-- Off-diagonal profunctor maps produce related
+pairs under `relInterp`. Extraction of the first
+conjunct from `pshRelInterp_wedge_aux`. -/
+theorem PshTypeExpr.pshRelInterp_of_offDiag
+    (T : PshTypeExpr.{u, v} C)
+    {P Q : Cᵒᵖ ⥤ Type (max u v)}
+    (α : P ⟶ Q) (c : Cᵒᵖ)
+    (x : (T.interp Q P).obj c) :
+    ((T.profMap α (𝟙 P)).app c x,
+     (T.profMap (𝟙 Q) α).app c x) ∈
+      (T.relInterp α).obj c :=
+  T.pshRelInterp_wedge_aux.1 α c x
+
+/-- Relatedness under `relInterp` implies the
+profunctor wedge equation. Extraction of the
+second conjunct from
+`pshRelInterp_wedge_aux`. -/
+theorem PshTypeExpr.pshRelInterp_implies_wedge
+    (T : PshTypeExpr.{u, v} C)
+    {P Q : Cᵒᵖ ⥤ Type (max u v)}
+    (α : P ⟶ Q) (c : Cᵒᵖ)
+    (x₀ : (T.interp P P).obj c)
+    (x₁ : (T.interp Q Q).obj c)
+    (hrel : (x₀, x₁) ∈
+      (T.relInterp α).obj c) :
+    (T.profMap (𝟙 P) α).app c x₀ =
+      (T.profMap α (𝟙 Q)).app c x₁ :=
+  T.pshRelInterp_wedge_aux.2 α c x₀ x₁ hrel
+
+/-- Every `PshParametricFamily` satisfies the
+presheaf profunctor wedge condition: for any
+morphism `α : P ⟶ Q`, the two composites
+through `T.profMap` agree at each stage. -/
+theorem PshParametricFamily.wedge
+    {T : PshTypeExpr.{u, v} C}
+    (p : PshParametricFamily T)
+    {P Q : Cᵒᵖ ⥤ Type (max u v)}
+    (α : P ⟶ Q) (c : Cᵒᵖ) :
+    (T.profMap (𝟙 P) α).app c
+      ((p.app P).val c) =
+    (T.profMap α (𝟙 Q)).app c
+      ((p.app Q).val c) :=
+  T.pshRelInterp_implies_wedge α c _ _
+    (p.parametric_graphRel α c)
+
 section PshTypeExprCategory
 
 variable {C : Type u} [Category.{v} C]
