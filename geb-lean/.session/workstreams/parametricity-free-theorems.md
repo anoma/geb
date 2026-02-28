@@ -163,7 +163,7 @@ works over `PSh(C)` for arbitrary `C`).
 - [x] **P1e. Presheaf profunctor embedding.** Define
   `pshProfunctorEmbedding` generalizing `profunctorEmbedding`.
 
-- [ ] **P1f. Presheaf paranatural embedding.** Define
+- [x] **P1f. Presheaf paranatural embedding.** Define
   `pshParanaturalProfEmbedding` and prove it faithful,
   generalizing `paranaturalProfEmbedding`.
 

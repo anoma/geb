@@ -1,3 +1,4 @@
+import GebLean.Paranatural
 import GebLean.PshRelDouble
 import GebLean.RelSpanDiagram
 import GebLean.Utilities.Profunctors
@@ -1290,5 +1291,123 @@ def pshProfunctorEmbedding :
       simp [pshProfBarrLiftSkelMap]
 
 end PshProfunctorEmbedding
+
+section PshParanaturalEmbedding
+
+variable {C : Type u} [Category.{v} C]
+
+/-- The subtype of
+`diagApp G P × diagApp G Q` consisting of
+diagonal pairs related by `DiagCompat`
+through a witness at the total space
+`R.toFunctor` of a `PshRel P Q`.
+Generalizes `diagRelImage` from `Type`-level
+relations to presheaf relations. -/
+def pshDiagRelImage
+    (G : (Cᵒᵖ ⥤ Type w)ᵒᵖ ⥤
+      (Cᵒᵖ ⥤ Type w) ⥤ Type w')
+    {P Q : Cᵒᵖ ⥤ Type w}
+    (R : PshRel P Q) :=
+  { p : diagApp G P × diagApp G Q //
+    ∃ (s : diagApp G R.toFunctor),
+      DiagCompat G R.toFunctor P
+        (R.ι ≫ pshProdFst P Q) s p.1 ∧
+      DiagCompat G R.toFunctor Q
+        (R.ι ≫ pshProdSnd P Q) s p.2 }
+
+/-- The embedding of the endoprofunctor
+category on `Cᵒᵖ ⥤ Type w` (with paranatural
+morphisms) into `PshParametricFunctor`.
+Type-nodes map to diagonal elements
+`ULift (diagApp G P)`; relation-nodes map to
+`ULift (pshDiagRelImage G R)`.
+Generalizes `paranaturalProfEmbedding`. -/
+def pshParanaturalProfEmbedding :
+    EndoProf.{max u v (w + 1), max u w, w'}
+      (C := Cᵒᵖ ⥤ Type w) ⥤
+    PshRelSpanObj.{u, v, w} C ⥤
+      Type (max u v (w + 1) w') where
+  obj G :=
+    { obj := fun X =>
+        match X with
+        | .typeNode P =>
+          ULift.{max u v (w + 1)}
+            (diagApp G P)
+        | .relNode P Q R =>
+          ULift.{max u v (w + 1)}
+            (pshDiagRelImage G R)
+      map := fun {X Y} f =>
+        match X, Y, f with
+        | _, _, .id _ => id
+        | _, _, .fstProj P Q R =>
+          fun ⟨p⟩ => ⟨p.val.1⟩
+        | _, _, .sndProj P Q R =>
+          fun ⟨p⟩ => ⟨p.val.2⟩
+      map_id := by
+        intro X; cases X <;> rfl
+      map_comp := by
+        intro X Y Z f g
+        cases f <;> cases g <;> rfl }
+  map η :=
+    { app := fun X =>
+        match X with
+        | .typeNode P =>
+          fun ⟨x⟩ => ⟨η.app P x⟩
+        | .relNode P Q R =>
+          fun ⟨p⟩ =>
+            ⟨⟨(η.app P p.val.1,
+               η.app Q p.val.2),
+              p.property.elim
+                fun s ⟨hs₁, hs₂⟩ =>
+                  ⟨η.app R.toFunctor s,
+                    η.paranatural
+                      R.toFunctor P
+                      (R.ι ≫ pshProdFst P Q)
+                      s p.val.1 hs₁,
+                    η.paranatural
+                      R.toFunctor Q
+                      (R.ι ≫ pshProdSnd P Q)
+                      s p.val.2 hs₂⟩⟩⟩
+      naturality := by
+        intro X Y f
+        match X, Y, f with
+        | _, _, .id _ => rfl
+        | _, _, .fstProj P Q R =>
+          funext ⟨_⟩; rfl
+        | _, _, .sndProj P Q R =>
+          funext ⟨_⟩; rfl }
+  map_id G := by
+    apply NatTrans.ext; funext X
+    cases X with
+    | typeNode P => funext ⟨_⟩; rfl
+    | relNode P Q R =>
+      funext ⟨⟨_, _⟩⟩
+      apply ULift.ext; apply Subtype.ext
+      rfl
+  map_comp η μ := by
+    apply NatTrans.ext; funext X
+    cases X with
+    | typeNode P => funext ⟨_⟩; rfl
+    | relNode P Q R =>
+      funext ⟨⟨_, _⟩⟩
+      apply ULift.ext; apply Subtype.ext
+      rfl
+
+/-- `pshParanaturalProfEmbedding` is faithful:
+paranatural transformations are determined
+by their components `η.app P`, which the
+embedding preserves at type-nodes. -/
+instance pshParanaturalProfEmbedding_faithful :
+    (pshParanaturalProfEmbedding.{u, v, w, w'}
+      (C := C)).Faithful where
+  map_injective {G H η μ} h := by
+    apply Paranat.ext; funext P x
+    have := congr_arg ULift.down
+      (congr_fun (congr_fun (congrArg
+        NatTrans.app h) (.typeNode P))
+        ⟨x⟩)
+    exact this
+
+end PshParanaturalEmbedding
 
 end GebLean
