@@ -82,21 +82,58 @@ coequalizer of the reflexive fork `FUFUc => FUc -> (c, xi)`. The
 underlying fork in `C` is a split coequalizer (hence absolute,
 preserved by any functor).
 
+### A: Finitariness of Polynomial Functors
+
+A polynomial functor `P : Over X -> Over Y` given by the diagram
+`X <-s E ->pi B ->t Y` acts by:
+
+```text
+P(A) at fiber y = Sigma (b : t^{-1}(y)),
+                    Pi (e : pi^{-1}(b)), A_{s(e)}
+```
+
+The coproduct over positions `b` always commutes with filtered
+colimits. The product `Pi (e : pi^{-1}(b))` commutes with
+filtered colimits in `Set` if and only if the indexing set
+`pi^{-1}(b)` is finite. So `P` preserves filtered colimits
+iff every direction set is finite. The base types `X`, `Y`,
+the position set `B`, and the total space `E` can all be
+infinite; only the fibers of `pi : E -> B` matter.
+
+This motivates the finitariness predicate, defined for
+arbitrary polynomial functors between slices (not just
+endofunctors):
+
+```lean
+def PolyBetweenFinitary
+    (P : PolyFunctorBetweenCat X Y) : Prop :=
+  forall (y : Y) (i : polyBetweenIndex X Y P y),
+    Finite (polyBetweenFamily X Y P y i)
+
+abbrev PolyEndoFinitary (P : PolyEndo X) : Prop :=
+  PolyBetweenFinitary P
+```
+
 ### A: Application to Our Setting
 
-Our polynomial endofunctors on `Over X` are finitary: each operation
-has argument positions indexed by a fiber type, which is finite in the
-finiteness sense relevant to filtered colimit preservation. The free
-monad `polyFreeMonad X P` is thus an accessible monad on `Over X`.
+For a finitary polynomial endofunctor `P` (one satisfying
+`PolyEndoFinitary P`), the free monad `polyFreeMonad X P`
+preserves filtered colimits, and by the theorems above the
+algebra category is cocomplete.
 
 The chain for deriving colimits:
 
-1. `polyEndoFunctor` preserves filtered colimits (finitary)
-2. `polyFreeMonad X P` preserves filtered colimits
-3. `HasReflexiveCoequalizers ((polyFreeMonad X P).Algebra)` (from
-   creation of preserved colimits)
-4. `HasColimitsOfSize ((polyFreeMonad X P).Algebra)` (Linton)
-5. `HasColimitsOfSize (PolyAlg P)` (transfer via `polyAlgMonadEquiv`)
+1. `PolyEndoFinitary P` (hypothesis)
+2. `polyEndoFunctor` preserves filtered colimits
+3. `polyFreeMonad X P` preserves filtered colimits
+4. `HasReflexiveCoequalizers ((polyFreeMonad X P).Algebra)`
+   (from creation of preserved colimits)
+5. `HasColimitsOfSize ((polyFreeMonad X P).Algebra)` (Linton)
+6. `HasColimitsOfSize (PolyAlg P)` (via `polyAlgMonadEquiv`)
+
+For non-finitary polynomial endofunctors (those with infinite
+direction sets), the algebra category still has all limits
+(via `polyAlgHasLimitsOfSize`) but may not have all colimits.
 
 ### A: Mathlib Infrastructure
 
@@ -109,14 +146,21 @@ The chain for deriving colimits:
 
 ### A: Proposals
 
-**A1. `HasColimitsOfSize (PolyAlg P)`.** Prove cocompleteness of the
-polynomial algebra category. The main work is showing the polynomial
-endofunctor preserves filtered colimits.
+**A0. Finitariness predicate.** Define `PolyBetweenFinitary`
+for arbitrary polynomial functors between slices, and
+`PolyEndoFinitary` as the specialization to endofunctors.
+
+**A1. `HasColimitsOfSize (PolyAlg P)` for finitary `P`.**
+Prove cocompleteness of the polynomial algebra category under
+the hypothesis `[PolyEndoFinitary P]`. The main work is showing
+that a finitary polynomial endofunctor preserves filtered
+colimits (finite products commute with filtered colimits).
 
 **A2. Beck coequalizer instantiation.** Specialize
-`beckAlgebraCoequalizer` to our polynomial free monad to get: for
-any `alpha : PolyAlg P`, there is a reflexive coequalizer diagram
-`F(F(U(alpha))) => F(U(alpha)) -> alpha` in `PolyAlg P`.
+`beckAlgebraCoequalizer` to our polynomial free monad to get:
+for any `alpha : PolyAlg P`, there is a reflexive coequalizer
+diagram `F(F(U(alpha))) => F(U(alpha)) -> alpha` in
+`PolyAlg P`. (This does not require finitariness.)
 
 ---
 

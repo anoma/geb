@@ -21,8 +21,9 @@ Each item is rated on a 1-5 scale for difficulty (Diff) and
 usefulness (Use).
 
 | ID | Proposal | Diff | Use |
-|----|----------|------|-----|
-| A1 | `HasColimitsOfSize (PolyAlg P)` | 3 | 5 |
+| -- | -------- | ---- | --- |
+| A0 | Finitariness predicate for polynomials | 1 | 4 |
+| A1 | `HasColimitsOfSize (PolyAlg P)` (finitary) | 3 | 5 |
 | A2 | Beck coequalizer for PolyAlg | 1 | 3 |
 | B1 | Copresheaves as unary algebra variety | 3 | 4 |
 | B2 | Fiber decomposition over terminal coalgebra | 2 | 2 |
@@ -43,14 +44,19 @@ usefulness (Use).
 ### Phase 1: Algebra Colimits
 
 Build on the limit instances just added to complete the
-(co)limit picture for polynomial algebras.
+(co)limit picture for finitary polynomial algebras.
 
+- [ ] A0: Define `PolyBetweenFinitary` for arbitrary polynomial
+  functors between slices (all direction-set fibers are finite),
+  and `PolyEndoFinitary` as the endofunctor specialization
 - [ ] A2: Instantiate Beck coequalizer (`beckAlgebraCoequalizer`)
   for `polyFreeMonad X P` to show every P-algebra is a reflexive
-  coequalizer of free P-algebras
-- [ ] A1: Prove `HasColimitsOfSize.{u, u} (PolyAlg P)` by showing
-  `polyEndoFunctor` preserves filtered colimits (finitary), then
-  applying Linton's theorem via the monad equivalence
+  coequalizer of free P-algebras (no finitariness needed)
+- [ ] A1: Prove `HasColimitsOfSize.{u, u} (PolyAlg P)` under the
+  hypothesis `[PolyEndoFinitary P]`, by showing a finitary
+  polynomial endofunctor preserves filtered colimits (finite
+  products commute with filtered colimits), then applying
+  Linton's theorem via the monad equivalence
 
 ### Phase 2: Distributive Law Framework
 
