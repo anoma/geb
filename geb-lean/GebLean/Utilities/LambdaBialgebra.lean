@@ -105,6 +105,21 @@ def comp
       ← Category.assoc, f.coalgebra_comm,
       Category.assoc, ← D.toFunctor.map_comp]
 
+def toMonadAlgebraHom
+    {A B : LambdaBialgebra law}
+    (f : Hom A B) :
+    A.toMonadAlgebra.Hom B.toMonadAlgebra where
+  f := f.hom
+  h := f.algebra_comm.symm
+
+def toComonadCoalgebraHom
+    {A B : LambdaBialgebra law}
+    (f : Hom A B) :
+    A.toComonadCoalgebra.Hom
+      B.toComonadCoalgebra where
+  f := f.hom
+  h := f.coalgebra_comm.symm
+
 end Hom
 
 instance : CategoryStruct
