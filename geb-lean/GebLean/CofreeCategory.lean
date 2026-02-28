@@ -3329,4 +3329,16 @@ def polyCoalgCopresheafEquiv (P : PolyEndo X) :
     (polyCoalgCopresheafUnit P)
     (polyCoalgCopresheafCounit P)
 
+/--
+The Eilenberg-Moore coalgebra category of the cofree
+comonad is equivalent to the copresheaf topos on the
+cofree category. Composed from `polyCoalgComonadEquiv`
+and `polyCoalgCopresheafEquiv`.
+-/
+def comonadCoalgCopresheafEquiv (P : PolyEndo X) :
+    Comonad.Coalgebra (polyCofreeComonad X P) ≌
+    (PolyCofreeCat P ⥤ Type u) :=
+  (polyCoalgComonadEquiv P).symm.trans
+    (polyCoalgCopresheafEquiv P)
+
 end GebLean
