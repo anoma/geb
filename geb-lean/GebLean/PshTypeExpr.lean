@@ -1811,6 +1811,178 @@ theorem ParametricFamily.toPshParametricAtRep
   exact sectionsRelated_to_pshRelSectionsRelated
     _ _ _ h₂
 
+/-- Mutual induction for the off-diagonal and
+wedge properties of `relInterp`. The off-diagonal
+component constructs related pairs from
+off-diagonal profunctor maps; the wedge component
+derives the profunctor wedge equation from
+relatedness. -/
+private theorem PshTypeExpr.pshRelInterp_wedge_aux
+    (T : PshTypeExpr.{u, v} C) :
+    (∀ {P Q : Cᵒᵖ ⥤ Type (max u v)}
+      (α : P ⟶ Q) (c : Cᵒᵖ)
+      (x : (T.interp Q P).obj c),
+      ((T.profMap α (𝟙 P)).app c x,
+       (T.profMap (𝟙 Q) α).app c x) ∈
+        (T.relInterp α).obj c) ∧
+    (∀ {P Q : Cᵒᵖ ⥤ Type (max u v)}
+      (α : P ⟶ Q) (c : Cᵒᵖ)
+      (x₀ : (T.interp P P).obj c)
+      (x₁ : (T.interp Q Q).obj c),
+      (x₀, x₁) ∈ (T.relInterp α).obj c →
+      (T.profMap (𝟙 P) α).app c x₀ =
+        (T.profMap α (𝟙 Q)).app c x₁) := by
+  induction T with
+  | var =>
+    exact ⟨fun _ _ _ => rfl,
+      fun _ _ _ _ h => h⟩
+  | app G T ih =>
+    obtain ⟨ih_od, ih_w⟩ := ih
+    constructor
+    · intro P Q α c x
+      change
+        ((G.map (T.profMap α (𝟙 P))).app c x,
+         (G.map (T.profMap (𝟙 Q) α)).app c x)
+          ∈ (pshBarrLiftSkel G
+            (T.relInterp α)).obj c
+      simp only [pshBarrLiftSkel,
+        pshProdOverToRel, Subfunctor.range_obj,
+        Set.mem_range]
+      let lift : T.interp Q P ⟶
+          (T.relInterp α).toFunctor :=
+        { app := fun c' y =>
+            ⟨((T.profMap α (𝟙 P)).app c' y,
+              (T.profMap (𝟙 Q) α).app c' y),
+             ih_od α c' y⟩
+          naturality := fun {_c₁ _c₂} f => by
+            ext y; apply Subtype.ext
+            exact Prod.ext
+              (congr_fun
+                ((T.profMap α
+                  (𝟙 P)).naturality f) y)
+              (congr_fun
+                ((T.profMap (𝟙 Q)
+                  α).naturality f) y) }
+      have h_fst :
+          lift ≫ (T.relInterp α).ι ≫
+            pshProdFst (T.interp P P)
+              (T.interp Q Q) =
+            T.profMap α (𝟙 P) := by
+        ext c' y; rfl
+      have h_snd :
+          lift ≫ (T.relInterp α).ι ≫
+            pshProdSnd (T.interp P P)
+              (T.interp Q Q) =
+            T.profMap (𝟙 Q) α := by
+        ext c' y; rfl
+      refine ⟨(G.map lift).app c x,
+        Prod.ext ?_ ?_⟩
+      · change ((G.map lift ≫
+            G.map ((T.relInterp α).ι ≫
+              pshProdFst _ _)).app c) x = _
+        rw [← G.map_comp, h_fst]
+      · change ((G.map lift ≫
+            G.map ((T.relInterp α).ι ≫
+              pshProdSnd _ _)).app c) x = _
+        rw [← G.map_comp, h_snd]
+    · intro P Q α c x₀ x₁ hrel
+      change (G.map (T.profMap (𝟙 P) α)).app c
+        x₀ =
+        (G.map (T.profMap α (𝟙 Q))).app c x₁
+      change (x₀, x₁) ∈ (pshBarrLiftSkel G
+        (T.relInterp α)).obj c at hrel
+      simp only [pshBarrLiftSkel,
+        pshProdOverToRel, Subfunctor.range_obj,
+        Set.mem_range] at hrel
+      obtain ⟨w, hw⟩ := hrel
+      have hw₁ :
+          (G.map ((T.relInterp α).ι ≫
+            pshProdFst (T.interp P P)
+              (T.interp Q Q))).app c w = x₀ :=
+        congr_arg Prod.fst hw
+      have hw₂ :
+          (G.map ((T.relInterp α).ι ≫
+            pshProdSnd (T.interp P P)
+              (T.interp Q Q))).app c w = x₁ :=
+        congr_arg Prod.snd hw
+      have h_wedge :
+          (T.relInterp α).ι ≫
+            pshProdFst (T.interp P P)
+              (T.interp Q Q) ≫
+            T.profMap (𝟙 P) α =
+          (T.relInterp α).ι ≫
+            pshProdSnd (T.interp P P)
+              (T.interp Q Q) ≫
+            T.profMap α (𝟙 Q) := by
+        ext c' ⟨⟨a₀, a₁⟩, ha⟩
+        exact ih_w α c' a₀ a₁ ha
+      rw [← hw₁, ← hw₂]
+      change ((G.map ((T.relInterp α).ι ≫
+              pshProdFst _ _) ≫
+            G.map (T.profMap (𝟙 P) α)).app c)
+            w =
+          ((G.map ((T.relInterp α).ι ≫
+              pshProdSnd _ _) ≫
+            G.map (T.profMap α (𝟙 Q))).app c)
+            w
+      rw [← G.map_comp, ← G.map_comp,
+        Category.assoc, Category.assoc, h_wedge]
+  | arrow T₁ T₂ ih₁ ih₂ =>
+    obtain ⟨ih₁_od, ih₁_w⟩ := ih₁
+    obtain ⟨ih₂_od, ih₂_w⟩ := ih₂
+    constructor
+    · intro P Q α c x
+      change _ ∈ (pshArrowRelSkel
+        (T₁.relInterp α)
+        (T₂.relInterp α)).obj c
+      simp only [pshArrowRelSkel,
+        pshProdOverToRel, Subfunctor.range_obj,
+        Set.mem_range]
+      refine ⟨⟨(((T₁.arrow T₂).profMap α
+        (𝟙 P)).app c x,
+        ((T₁.arrow T₂).profMap (𝟙 Q)
+          α).app c x),
+        fun d h w' => ?_⟩, rfl⟩
+      dsimp [PshTypeExpr.profMap,
+        pshIhomProfMap]
+      rw [ih₁_w α d _ _ w'.property]
+      exact ⟨⟨_, ih₂_od α d _⟩, rfl⟩
+    · intro P Q α c x₀ x₁ hrel
+      change (x₀, x₁) ∈ (pshArrowRelSkel
+        (T₁.relInterp α)
+        (T₂.relInterp α)).obj c at hrel
+      simp only [pshArrowRelSkel,
+        pshProdOverToRel, Subfunctor.range_obj,
+        Set.mem_range] at hrel
+      obtain ⟨wrel, hwrel⟩ := hrel
+      have hwrel₁ : wrel.val.1 = x₀ :=
+        congr_arg Prod.fst hwrel
+      have hwrel₂ : wrel.val.2 = x₁ :=
+        congr_arg Prod.snd hwrel
+      dsimp [PshTypeExpr.profMap]
+      apply Functor.functorHom_ext
+      intro d h; funext a
+      dsimp [pshIhomProfMap]
+      let w_in :
+          (T₁.relInterp α).toFunctor.obj d :=
+        ⟨((T₁.profMap α (𝟙 P)).app d a,
+          (T₁.profMap (𝟙 Q) α).app d a),
+         ih₁_od α d a⟩
+      obtain ⟨s, hs⟩ :=
+        wrel.property d h w_in
+      have hs₁ : s.val.1 =
+          wrel.val.1.app d h
+            ((T₁.profMap α (𝟙 P)).app d a) :=
+        congr_arg Prod.fst hs
+      have hs₂ : s.val.2 =
+          wrel.val.2.app d h
+            ((T₁.profMap (𝟙 Q) α).app d a) :=
+        congr_arg Prod.snd hs
+      rw [hwrel₁] at hs₁
+      rw [hwrel₂] at hs₂
+      rw [← hs₁, ← hs₂]
+      exact ih₂_w α d _ _ s.property
+
 section PshTypeExprCategory
 
 variable {C : Type u} [Category.{v} C]
