@@ -57,6 +57,9 @@ Our codebase provides the following for polynomial endofunctors
   language of categories and functors" (CMJ 1974)
 - [nLab: initial algebra of an endofunctor](https://ncatlab.org/nlab/show/initial+algebra+of+an+endofunctor)
 - [nLab: terminal coalgebra for an endofunctor](https://ncatlab.org/nlab/show/terminal+coalgebra+for+an+endofunctor)
+- [1Lab: Adamek's fixpoint theorem](https://1lab.dev/Cat.Functor.Algebra.html#ad%C3%A1meks-fixpoint-theorem)
+  (Agda/Cubical formalization; usable as a guide for our
+  Lean formalization)
 
 ### G: Mathematical Background
 
@@ -694,6 +697,8 @@ relationship to the copresheaf topos.
 
 - [nLab: initial algebra of an endofunctor](https://ncatlab.org/nlab/show/initial+algebra+of+an+endofunctor)
 - [nLab: terminal coalgebra for an endofunctor](https://ncatlab.org/nlab/show/terminal+coalgebra+for+an+endofunctor)
+- [1Lab: Adamek's fixpoint theorem](https://1lab.dev/Cat.Functor.Algebra.html#ad%C3%A1meks-fixpoint-theorem)
+  (Agda/Cubical formalization)
 - [nLab: colimits in categories of algebras](https://ncatlab.org/nlab/show/colimits+in+categories+of+algebras)
 - [nLab: reflexive coequalizer](https://ncatlab.org/nlab/show/reflexive+coequalizer)
 - [nLab: sifted colimit](https://ncatlab.org/nlab/show/sifted+colimit)
