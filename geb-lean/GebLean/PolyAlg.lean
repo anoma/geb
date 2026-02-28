@@ -2,6 +2,7 @@ import GebLean.PolyAdjunctions
 import GebLean.Utilities.Equalities
 import Mathlib.CategoryTheory.Adjunction.Limits
 import Mathlib.CategoryTheory.Endofunctor.Algebra
+import Mathlib.CategoryTheory.Functor.OfSequence
 import Mathlib.CategoryTheory.Limits.Creates
 import Mathlib.CategoryTheory.Limits.Types.Limits
 import Mathlib.CategoryTheory.Monad.Adjunction
@@ -2593,10 +2594,40 @@ The empty object in `Over X` (initial object).
 def overInitial (X : Type u) : Over X := overEmpty X
 
 /--
+The initial object in `Over X` is initial: for any
+`A : Over X`, there is a unique morphism from the
+empty-fibered object.
+-/
+def overInitial_isInitial (X : Type u) :
+    Limits.IsInitial (overInitial X) :=
+  Limits.IsInitial.ofUniqueHom
+    (fun A =>
+      Over.homMk (fun e => PEmpty.elim e)
+        (funext fun e => PEmpty.elim e))
+    (fun _ f => by
+      apply Over.OverMorphism.ext
+      funext e
+      exact PEmpty.elim e)
+
+/--
 The terminal object in `Over X` is `X` itself with the identity morphism.
 -/
 def overTerminal (X : Type u) : Over X :=
   Over.mk (f := @id X)
+
+/--
+The identity-fibered object `overTerminal X` is terminal
+in `Over X`: for any `A : Over X`, the unique morphism
+sends each element to its fiber index.
+-/
+def overTerminal_isTerminal (X : Type u) :
+    Limits.IsTerminal (overTerminal X) :=
+  Limits.IsTerminal.ofUniqueHom
+    (fun A => Over.homMk A.hom rfl)
+    (fun _ f => by
+      apply Over.OverMorphism.ext
+      funext a
+      exact congrFun (Over.w f) a)
 
 /-! ### Index Equivalences
 
@@ -9819,6 +9850,132 @@ def polyAlgMonadEquiv (P : PolyEndo X) :
           Monad.comparison]))
 
 end AlgMonadComparison
+
+/-! ## Iteration and Coiteration Chains
+
+The Adamek iteration chain of a polynomial endofunctor
+`P` on `Over X` is the functor `ℕ ⥤ Over X` sending
+`n ↦ P^n(⊥)` where `⊥` is the initial object.  Dually,
+the coiteration chain sends `n ↦ P^n(⊤)` as a functor
+`ℕᵒᵖ ⥤ Over X`.
+
+The initial algebra `polyFixAlg P` is the colimit of the
+iteration chain, and the terminal coalgebra
+`polyCofixCoalg P` is the limit of the coiteration chain.
+-/
+
+section IterationChain
+
+variable (X : Type u)
+
+/--
+The objects of the Adamek iteration chain: `P^n(⊥)`.
+-/
+def polyIterObj (P : PolyEndo X) : ℕ → Over X
+  | 0 => overInitial X
+  | n + 1 => (polyEndoFunctor X P).obj (polyIterObj P n)
+
+/--
+The connecting morphisms of the iteration chain:
+`P^n(!) : P^n(⊥) ⟶ P^{n+1}(⊥)` where `! : ⊥ ⟶ P(⊥)`
+is the unique morphism from the initial object.
+-/
+def polyIterMor (P : PolyEndo X) :
+    ∀ (n : ℕ),
+      polyIterObj X P n ⟶ polyIterObj X P (n + 1)
+  | 0 => (overInitial_isInitial X).to _
+  | n + 1 =>
+    (polyEndoFunctor X P).map (polyIterMor P n)
+
+/--
+The Adamek iteration chain `ℕ ⥤ Over X` sending
+`n ↦ P^n(⊥)` with connecting morphisms `P^n(!)`.
+-/
+def polyIterChain (P : PolyEndo X) : ℕ ⥤ Over X :=
+  Functor.ofSequence (polyIterMor X P)
+
+/--
+The objects of the coiteration chain: `P^n(⊤)`.
+-/
+def polyCoiterObj (P : PolyEndo X) : ℕ → Over X
+  | 0 => overTerminal X
+  | n + 1 =>
+    (polyEndoFunctor X P).obj (polyCoiterObj P n)
+
+/--
+The connecting morphisms of the coiteration chain:
+`P^n(!) : P^{n+1}(⊤) ⟶ P^n(⊤)` where `! : P(⊤) ⟶ ⊤`
+is the unique morphism to the terminal object.
+-/
+def polyCoiterMor (P : PolyEndo X) :
+    ∀ (n : ℕ),
+      polyCoiterObj X P (n + 1) ⟶ polyCoiterObj X P n
+  | 0 => (overTerminal_isTerminal X).from _
+  | n + 1 =>
+    (polyEndoFunctor X P).map (polyCoiterMor P n)
+
+/--
+The coiteration chain `ℕᵒᵖ ⥤ Over X` sending
+`n ↦ P^n(⊤)` with connecting morphisms `P^n(!)`.
+-/
+def polyCoiterChain (P : PolyEndo X) :
+    ℕᵒᵖ ⥤ Over X :=
+  Functor.ofOpSequence (polyCoiterMor X P)
+
+/--
+Cocone injections for the iteration chain into the
+initial algebra carrier: `ι_n : P^n(⊥) ⟶ polyFixCarrier P`.
+-/
+def polyIterCoconeMap (P : PolyEndo X) :
+    ∀ (n : ℕ), polyIterObj X P n ⟶ polyFixCarrier P
+  | 0 => (overInitial_isInitial X).to _
+  | n + 1 =>
+    (polyEndoFunctor X P).map
+      (polyIterCoconeMap P n) ≫ polyFixStr P
+
+/--
+The cocone injections are compatible with the chain
+morphisms: `polyIterMor n ≫ ι_{n+1} = ι_n`.
+-/
+lemma polyIterCoconeMap_naturality
+    (P : PolyEndo X) (n : ℕ) :
+    polyIterMor X P n ≫
+      polyIterCoconeMap X P (n + 1) =
+    polyIterCoconeMap X P n := by
+  induction n with
+  | zero =>
+    apply (overInitial_isInitial X).hom_ext
+  | succ n ih =>
+    -- P.map(iterMor n) ≫ (P.map(ι_{n+1}) ≫ str)
+    --   = P.map(ι_n) ≫ str
+    change
+      (polyEndoFunctor X P).map
+        (polyIterMor X P n) ≫
+      ((polyEndoFunctor X P).map
+        (polyIterCoconeMap X P (n + 1)) ≫
+        polyFixStr P) =
+      (polyEndoFunctor X P).map
+        (polyIterCoconeMap X P n) ≫
+      polyFixStr P
+    rw [← Category.assoc,
+      ← (polyEndoFunctor X P).map_comp, ih]
+
+/--
+The cocone over the iteration chain with apex
+`polyFixCarrier P` (the W-type initial algebra carrier).
+-/
+def polyIterCocone (P : PolyEndo X) :
+    Limits.Cocone (polyIterChain X P) :=
+  Limits.Cocone.mk (polyFixCarrier P)
+    (NatTrans.ofSequence
+      (fun n => polyIterCoconeMap X P n)
+      (fun n => by
+        simp only [polyIterChain,
+          Functor.ofSequence_map_homOfLE_succ,
+          Functor.const_obj_map]
+        exact polyIterCoconeMap_naturality X P n))
+
+end IterationChain
 
 /-! ## Limits in Polynomial Algebra Categories
 
