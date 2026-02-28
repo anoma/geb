@@ -54,17 +54,26 @@ Express initial algebras and terminal coalgebras as chain
 (co)limits, then build on the limit instances to complete
 the (co)limit picture for finitary polynomial algebras.
 
-- [ ] G0: Construct `polyIterChain P : ℕ ⥤ Over X` sending
+- [x] G0: Construct `polyIterChain P : ℕ ⥤ Over X` sending
   `n ↦ P^n(initial)` via `Functor.ofSequence`, and dually
   `polyCoiterChain P : ℕᵒᵖ ⥤ Over X` sending
-  `n ↦ P^n(terminal)`
+  `n ↦ P^n(terminal)`.  Also added `overInitial_isInitial`,
+  `overTerminal_isTerminal`, `polyIterCocone` (cocone over
+  the iteration chain with apex the W-type carrier), and
+  `polyIterCoconeMap_naturality`.
 - [ ] G1: Prove `polyFixAlg P` (our W-type initial algebra)
-  is the colimit of `polyIterChain P`, connecting the
-  inductive definition to the categorical colimit
+  is the colimit of `polyIterChain P`.  Requires
+  `PolyEndoFinitary P`: non-finitary functors can produce
+  well-founded trees of unbounded depth (every path finite
+  but no global depth bound), which lie outside all
+  `P^n(⊥)`.  König's lemma gives bounded depth for
+  finite-branching trees.
 - [ ] G2: Prove `polyCofixCoalg P` (our M-type terminal
-  coalgebra) is the limit of `polyCoiterChain P`,
-  connecting the coinductive definition to the categorical
-  limit
+  coalgebra) is the limit of `polyCoiterChain P`.
+  Should hold unconditionally since `PolyCofix` is defined
+  as compatible approximation sequences, but requires
+  establishing fiber equivalences between
+  `PolyCofixApprox P n x` and `polyCoiterObj X P n`.
 - [ ] G3: Derive preservation corollaries: any functor
   preserving filtered colimits preserves initial algebras,
   and dually for cofiltered limits and terminal coalgebras.
@@ -147,6 +156,9 @@ currently planned for implementation.
   directed/filtered equivalence from mathlib; G1 and G2
   connect our inductive/coinductive definitions to
   categorical (co)limits
+- G1 requires `PolyEndoFinitary P` (König's lemma argument);
+  G2 should hold unconditionally but needs fiber equivalences
+  between `PolyCofixApprox` and iterated functor evaluation
 - Phase 1 items A0-A2 depend on mathlib's reflexive
   coequalizer infrastructure
   (`Monad.Coequalizer`, `Limits.Shapes.Reflexive`)

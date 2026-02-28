@@ -51,6 +51,7 @@ import GebLean.Utilities
 import GebLean.Utilities.Category
 import GebLean.Utilities.ConnectedComponents
 import GebLean.Utilities.ConnectedGrothendieck
+import GebLean.Utilities.DistributiveLaw
 import GebLean.Utilities.DoubleCategory
 import GebLean.Utilities.Elements
 import GebLean.Utilities.EndsAndCoends
