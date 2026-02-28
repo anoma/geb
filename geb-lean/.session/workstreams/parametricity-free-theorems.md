@@ -144,16 +144,16 @@ works over `PSh(C)` for arbitrary `C`).
   to the presheaf setting. These should use the Barr extension
   infrastructure already in `PshRelDouble.lean`.
 
-- [ ] **P1c. Presheaf covariant embedding.** Define
+- [x] **P1c. Presheaf covariant embedding.** Define
   `pshCovariantEmbedding : (PSh(C) ⥤ PSh(C)) ⥤
   PshParametricCopresheaf C` and prove it fully faithful,
   generalizing `covariantEmbedding`.
 
-- [ ] **P1d. Presheaf contravariant embedding.** Define
+- [x] **P1d. Presheaf contravariant embedding.** Define
   `pshContravariantEmbedding` and prove it fully faithful,
   generalizing `contravariantEmbedding`.
 
-- [ ] **P1e. Presheaf profunctor embedding.** Define
+- [x] **P1e. Presheaf profunctor embedding.** Define
   `pshProfunctorEmbedding` generalizing `profunctorEmbedding`.
 
 - [ ] **P1f. Presheaf paranatural embedding.** Define

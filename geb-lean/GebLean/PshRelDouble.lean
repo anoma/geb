@@ -1522,7 +1522,416 @@ def pshContraBarrLiftSkel
     simp only [types_comp_apply] at h1 h2
     rw [h1, h2, hx]
 
+/-- Transport a `pshContraBarrLiftSkel` along
+a natural transformation `α : F ⟶ G` between
+contravariant endofunctors. Maps each related
+pair `(a, b)` in the pullback relation through
+`F` to `(α a, α b)` in the pullback relation
+through `G`, using naturality of `α`. -/
+def pshContraBarrLiftSkelMap
+    {P Q : Cᵒᵖ ⥤ Type w}
+    {F G :
+      (Cᵒᵖ ⥤ Type w)ᵒᵖ ⥤
+        (Cᵒᵖ ⥤ Type w)}
+    (α : F ⟶ G)
+    (R : PshRel P Q) :
+    (pshContraBarrLiftSkel F R).toFunctor ⟶
+      (pshContraBarrLiftSkel G R).toFunctor
+    where
+  app c x :=
+    ⟨((α.app (Opposite.op P)).app c x.val.1,
+      (α.app (Opposite.op Q)).app c x.val.2),
+     by
+      change (G.map (R.ι ≫
+          pshProdFst P Q).op).app c
+          ((α.app (Opposite.op P)).app c
+            x.val.1) =
+        (G.map (R.ι ≫
+          pshProdSnd P Q).op).app c
+          ((α.app (Opposite.op Q)).app c
+            x.val.2)
+      have nat₁ := congr_fun (congr_app
+        (α.naturality
+          (R.ι ≫ pshProdFst P Q).op) c)
+        x.val.1
+      have nat₂ := congr_fun (congr_app
+        (α.naturality
+          (R.ι ≫ pshProdSnd P Q).op) c)
+        x.val.2
+      simp only [NatTrans.comp_app,
+        types_comp_apply] at nat₁ nat₂
+      rw [← nat₁, ← nat₂, x.property]⟩
+  naturality c d k := by
+    ext ⟨⟨a, b⟩, _⟩
+    simp only [types_comp_apply]
+    apply Subtype.ext
+    apply Prod.ext
+    · exact congr_fun
+        ((α.app (Opposite.op P)).naturality
+          k) a
+    · exact congr_fun
+        ((α.app (Opposite.op Q)).naturality
+          k) b
+
+@[simp]
+theorem pshContraBarrLiftSkelMap_ι_fst
+    {P Q : Cᵒᵖ ⥤ Type w}
+    {F G :
+      (Cᵒᵖ ⥤ Type w)ᵒᵖ ⥤
+        (Cᵒᵖ ⥤ Type w)}
+    (α : F ⟶ G)
+    (R : PshRel P Q) :
+    pshContraBarrLiftSkelMap α R ≫
+      (pshContraBarrLiftSkel G R).ι ≫
+      pshProdFst
+        (G.obj (Opposite.op P))
+        (G.obj (Opposite.op Q)) =
+    (pshContraBarrLiftSkel F R).ι ≫
+      pshProdFst
+        (F.obj (Opposite.op P))
+        (F.obj (Opposite.op Q)) ≫
+      α.app (Opposite.op P) := by
+  ext c ⟨⟨_, _⟩, _⟩
+  simp [pshContraBarrLiftSkelMap,
+    pshContraBarrLiftSkel, pshProdFst,
+    FunctorToTypes.prod.fst]
+
+@[simp]
+theorem pshContraBarrLiftSkelMap_ι_snd
+    {P Q : Cᵒᵖ ⥤ Type w}
+    {F G :
+      (Cᵒᵖ ⥤ Type w)ᵒᵖ ⥤
+        (Cᵒᵖ ⥤ Type w)}
+    (α : F ⟶ G)
+    (R : PshRel P Q) :
+    pshContraBarrLiftSkelMap α R ≫
+      (pshContraBarrLiftSkel G R).ι ≫
+      pshProdSnd
+        (G.obj (Opposite.op P))
+        (G.obj (Opposite.op Q)) =
+    (pshContraBarrLiftSkel F R).ι ≫
+      pshProdSnd
+        (F.obj (Opposite.op P))
+        (F.obj (Opposite.op Q)) ≫
+      α.app (Opposite.op Q) := by
+  ext c ⟨⟨_, _⟩, _⟩
+  simp [pshContraBarrLiftSkelMap,
+    pshContraBarrLiftSkel, pshProdSnd,
+    FunctorToTypes.prod.snd]
+
+/-- The contravariant Barr lift of a graph
+relation `pshRelGraph f` is the dagger of the
+graph of `F.map f.op`. -/
+theorem pshContraBarrLiftSkel_graph
+    {P Q : Cᵒᵖ ⥤ Type w}
+    (F :
+      (Cᵒᵖ ⥤ Type w)ᵒᵖ ⥤
+        (Cᵒᵖ ⥤ Type w))
+    (f : P ⟶ Q) :
+    pshContraBarrLiftSkel F (pshRelGraph f) =
+      pshRelDagger
+        (pshRelGraph (F.map f.op)) := by
+  ext c ⟨a, b⟩
+  let gIso := pshRelGraph_ι_fst_iso f
+  let fst := (pshRelGraph f).ι ≫
+    pshProdFst P Q
+  let snd := (pshRelGraph f).ι ≫
+    pshProdSnd P Q
+  have hfst_eq : fst = gIso.hom := rfl
+  have hsnd_eq : snd = fst ≫ f :=
+    pshRelGraph_ι_snd f
+  have hFsnd : F.map snd.op =
+      F.map f.op ≫ F.map fst.op := by
+    rw [hsnd_eq, op_comp, F.map_comp]
+  have hinv : F.map fst.op ≫
+      F.map gIso.inv.op = 𝟙 _ := by
+    rw [← F.map_comp, ← op_comp,
+      hfst_eq,
+      (pshRelGraph_ι_fst_iso f).inv_hom_id,
+      op_id, F.map_id]
+  simp only [pshContraBarrLiftSkel,
+    pshRelDagger, Set.mem_setOf_eq]
+  constructor
+  · intro h
+    have h' :
+        (F.map fst.op).app c a =
+        (F.map fst.op).app c
+          ((F.map f.op).app c b) := by
+      have := congr_fun
+        (congr_app hFsnd c) b
+      simp only [NatTrans.comp_app,
+        types_comp_apply] at this
+      rw [this] at h; exact h
+    have hinvc :=
+      congr_fun (congr_app hinv c)
+    simp only [NatTrans.comp_app,
+      types_comp_apply, NatTrans.id_app,
+      types_id_apply] at hinvc
+    change (F.map f.op).app c b = a
+    rw [← hinvc a, ← hinvc
+      ((F.map f.op).app c b)]
+    exact congrArg
+      ((F.map gIso.inv.op).app c) h'.symm
+  · intro h
+    have := congr_fun
+      (congr_app hFsnd c) b
+    simp only [NatTrans.comp_app,
+      types_comp_apply] at this
+    rw [this]
+    exact congrArg
+      ((F.map fst.op).app c) h.symm
+
+theorem pshContraBarrLiftSkel_graph_ι_fst
+    {P Q : Cᵒᵖ ⥤ Type w}
+    (F :
+      (Cᵒᵖ ⥤ Type w)ᵒᵖ ⥤
+        (Cᵒᵖ ⥤ Type w))
+    (f : P ⟶ Q) :
+    (pshContraBarrLiftSkel F
+      (pshRelGraph f)).ι ≫
+      pshProdFst
+        (F.obj (Opposite.op P))
+        (F.obj (Opposite.op Q)) =
+    ((pshContraBarrLiftSkel F
+      (pshRelGraph f)).ι ≫
+      pshProdSnd
+        (F.obj (Opposite.op P))
+        (F.obj (Opposite.op Q))) ≫
+        F.map f.op := by
+  rw [pshContraBarrLiftSkel_graph]
+  ext c ⟨⟨_, _⟩, hpf⟩
+  simp only [NatTrans.comp_app,
+    types_comp_apply]
+  dsimp [pshProdFst, pshProdSnd,
+    FunctorToTypes.prod.fst,
+    FunctorToTypes.prod.snd]
+  exact hpf.symm
+
 end PshContraBarrExtension
+
+section PshProfBarrExtension
+
+def pshProfBarrLiftSkel
+    {P Q : Cᵒᵖ ⥤ Type w}
+    (G :
+      (Cᵒᵖ ⥤ Type w)ᵒᵖ ×
+        (Cᵒᵖ ⥤ Type w) ⥤
+        (Cᵒᵖ ⥤ Type w))
+    (R : PshRel P Q) :
+    PshRel (G.obj (Opposite.op P, P))
+      (G.obj (Opposite.op Q, Q)) where
+  obj c :=
+    let RT := R.toFunctor
+    let fst := R.ι ≫ pshProdFst P Q
+    let snd := R.ι ≫ pshProdSnd P Q
+    { x |
+      ∃ (w : (G.obj
+          (Opposite.op RT, RT)).obj c),
+        (G.map ((𝟙 (Opposite.op RT), fst) :
+            (Opposite.op RT, RT) ⟶
+            (Opposite.op RT, P))).app c w =
+        (G.map ((fst.op, 𝟙 P) :
+            (Opposite.op P, P) ⟶
+            (Opposite.op RT, P))).app c x.1 ∧
+        (G.map ((𝟙 (Opposite.op RT), snd) :
+            (Opposite.op RT, RT) ⟶
+            (Opposite.op RT, Q))).app c w =
+        (G.map ((snd.op, 𝟙 Q) :
+            (Opposite.op Q, Q) ⟶
+            (Opposite.op RT, Q))).app c x.2 }
+  map {c d} k := by
+    intro ⟨a, b⟩ ⟨w, hw₁, hw₂⟩
+    let RT := R.toFunctor
+    let fst := R.ι ≫ pshProdFst P Q
+    let snd := R.ι ≫ pshProdSnd P Q
+    change ∃ (w' : (G.obj
+        (Opposite.op RT, RT)).obj d),
+      (G.map ((𝟙 (Opposite.op RT), fst) :
+          (Opposite.op RT, RT) ⟶
+          (Opposite.op RT, P))).app d w' =
+      (G.map ((fst.op, 𝟙 P) :
+          (Opposite.op P, P) ⟶
+          (Opposite.op RT, P))).app d
+        ((G.obj (Opposite.op P, P)).map
+          k a) ∧
+      (G.map ((𝟙 (Opposite.op RT), snd) :
+          (Opposite.op RT, RT) ⟶
+          (Opposite.op RT, Q))).app d w' =
+      (G.map ((snd.op, 𝟙 Q) :
+          (Opposite.op Q, Q) ⟶
+          (Opposite.op RT, Q))).app d
+        ((G.obj (Opposite.op Q, Q)).map
+          k b)
+    refine ⟨(G.obj (Opposite.op RT,
+      RT)).map k w, ?_, ?_⟩
+    · have n1 := congr_fun
+        ((G.map ((𝟙 (Opposite.op RT), fst) :
+            (Opposite.op RT, RT) ⟶
+            (Opposite.op RT, P))).naturality
+          k) w
+      have n2 := congr_fun
+        ((G.map ((fst.op, 𝟙 P) :
+            (Opposite.op P, P) ⟶
+            (Opposite.op RT, P))).naturality
+          k) a
+      simp only [types_comp_apply] at n1 n2
+      rw [n1, n2]; exact congrArg _ hw₁
+    · have n1 := congr_fun
+        ((G.map ((𝟙 (Opposite.op RT), snd) :
+            (Opposite.op RT, RT) ⟶
+            (Opposite.op RT, Q))).naturality
+          k) w
+      have n2 := congr_fun
+        ((G.map ((snd.op, 𝟙 Q) :
+            (Opposite.op Q, Q) ⟶
+            (Opposite.op RT, Q))).naturality
+          k) b
+      simp only [types_comp_apply] at n1 n2
+      rw [n1, n2]; exact congrArg _ hw₂
+
+/-- Transport a `pshProfBarrLiftSkel` along a
+natural transformation `β : G ⟶ H` between
+profunctor-valued endofunctors. Maps each related
+pair `(a, b)` through `β` componentwise, with the
+witness transported by `β.app (op R, R)`. -/
+def pshProfBarrLiftSkelMap
+    {P Q : Cᵒᵖ ⥤ Type w}
+    {G H :
+      (Cᵒᵖ ⥤ Type w)ᵒᵖ ×
+        (Cᵒᵖ ⥤ Type w) ⥤
+        (Cᵒᵖ ⥤ Type w)}
+    (β : G ⟶ H)
+    (R : PshRel P Q) :
+    (pshProfBarrLiftSkel G R).toFunctor ⟶
+      (pshProfBarrLiftSkel H R).toFunctor
+    where
+  app c x :=
+    let RT := R.toFunctor
+    let fst := R.ι ≫ pshProdFst P Q
+    let snd := R.ι ≫ pshProdSnd P Q
+    ⟨((β.app (Opposite.op P, P)).app c
+        x.val.1,
+      (β.app (Opposite.op Q, Q)).app c
+        x.val.2),
+     by
+      obtain ⟨w, hw₁, hw₂⟩ := x.property
+      refine ⟨(β.app (Opposite.op RT,
+        RT)).app c w, ?_, ?_⟩
+      · change
+          (H.map ((𝟙 (Opposite.op RT),
+            fst) : (Opposite.op RT, RT) ⟶
+            (Opposite.op RT, P))).app c
+            ((β.app (Opposite.op RT,
+              RT)).app c w) =
+          (H.map ((fst.op, 𝟙 P) :
+            (Opposite.op P, P) ⟶
+            (Opposite.op RT, P))).app c
+            ((β.app (Opposite.op P,
+              P)).app c x.val.1)
+        have nat₁ := congr_fun (congr_app
+          (β.naturality
+            ((𝟙 (Opposite.op RT), fst) :
+              (Opposite.op RT, RT) ⟶
+              (Opposite.op RT,
+                P))).symm c) w
+        have nat₂ := congr_fun (congr_app
+          (β.naturality
+            ((fst.op, 𝟙 P) :
+              (Opposite.op P, P) ⟶
+              (Opposite.op RT,
+                P))).symm c) x.val.1
+        simp only [NatTrans.comp_app,
+          types_comp_apply] at nat₁ nat₂
+        rw [nat₁, nat₂]
+        exact congrArg _ hw₁
+      · change
+          (H.map ((𝟙 (Opposite.op RT),
+            snd) : (Opposite.op RT, RT) ⟶
+            (Opposite.op RT, Q))).app c
+            ((β.app (Opposite.op RT,
+              RT)).app c w) =
+          (H.map ((snd.op, 𝟙 Q) :
+            (Opposite.op Q, Q) ⟶
+            (Opposite.op RT, Q))).app c
+            ((β.app (Opposite.op Q,
+              Q)).app c x.val.2)
+        have nat₁ := congr_fun (congr_app
+          (β.naturality
+            ((𝟙 (Opposite.op RT), snd) :
+              (Opposite.op RT, RT) ⟶
+              (Opposite.op RT,
+                Q))).symm c) w
+        have nat₂ := congr_fun (congr_app
+          (β.naturality
+            ((snd.op, 𝟙 Q) :
+              (Opposite.op Q, Q) ⟶
+              (Opposite.op RT,
+                Q))).symm c) x.val.2
+        simp only [NatTrans.comp_app,
+          types_comp_apply] at nat₁ nat₂
+        rw [nat₁, nat₂]
+        exact congrArg _ hw₂⟩
+  naturality c d k := by
+    ext ⟨⟨a, b⟩, _⟩
+    simp only [types_comp_apply]
+    apply Subtype.ext
+    apply Prod.ext
+    · exact congr_fun
+        ((β.app (Opposite.op P, P)).naturality
+          k) a
+    · exact congr_fun
+        ((β.app (Opposite.op Q, Q)).naturality
+          k) b
+
+@[simp]
+theorem pshProfBarrLiftSkelMap_ι_fst
+    {P Q : Cᵒᵖ ⥤ Type w}
+    {G H :
+      (Cᵒᵖ ⥤ Type w)ᵒᵖ ×
+        (Cᵒᵖ ⥤ Type w) ⥤
+        (Cᵒᵖ ⥤ Type w)}
+    (β : G ⟶ H)
+    (R : PshRel P Q) :
+    pshProfBarrLiftSkelMap β R ≫
+      (pshProfBarrLiftSkel H R).ι ≫
+      pshProdFst
+        (H.obj (Opposite.op P, P))
+        (H.obj (Opposite.op Q, Q)) =
+    (pshProfBarrLiftSkel G R).ι ≫
+      pshProdFst
+        (G.obj (Opposite.op P, P))
+        (G.obj (Opposite.op Q, Q)) ≫
+      β.app (Opposite.op P, P) := by
+  ext c ⟨⟨_, _⟩, _⟩
+  simp [pshProfBarrLiftSkelMap,
+    pshProfBarrLiftSkel, pshProdFst,
+    FunctorToTypes.prod.fst]
+
+@[simp]
+theorem pshProfBarrLiftSkelMap_ι_snd
+    {P Q : Cᵒᵖ ⥤ Type w}
+    {G H :
+      (Cᵒᵖ ⥤ Type w)ᵒᵖ ×
+        (Cᵒᵖ ⥤ Type w) ⥤
+        (Cᵒᵖ ⥤ Type w)}
+    (β : G ⟶ H)
+    (R : PshRel P Q) :
+    pshProfBarrLiftSkelMap β R ≫
+      (pshProfBarrLiftSkel H R).ι ≫
+      pshProdSnd
+        (H.obj (Opposite.op P, P))
+        (H.obj (Opposite.op Q, Q)) =
+    (pshProfBarrLiftSkel G R).ι ≫
+      pshProdSnd
+        (G.obj (Opposite.op P, P))
+        (G.obj (Opposite.op Q, Q)) ≫
+      β.app (Opposite.op Q, Q) := by
+  ext c ⟨⟨_, _⟩, _⟩
+  simp [pshProfBarrLiftSkelMap,
+    pshProfBarrLiftSkel, pshProdSnd,
+    FunctorToTypes.prod.snd]
+
+end PshProfBarrExtension
 
 section PshInternalHom
 

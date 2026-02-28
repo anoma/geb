@@ -739,4 +739,237 @@ def pshCovariantEmbedding_fullyFaithful :
 
 end PshCovariantEmbedding
 
+section PshContravariantEmbedding
+
+variable {C : Type u} [Category.{v} C]
+
+/-- The contravariant embedding maps a
+contravariant endofunctor `F` on `PSh(C)` to a
+parametric functor `PshRelSpanObj C ⥤ PSh(C)`.
+Type-nodes map to `F.obj (op P)`; relation-nodes
+map to `(pshContraBarrLiftSkel F R).toFunctor`.
+-/
+def pshContravariantEmbedding :
+    ((Cᵒᵖ ⥤ Type w)ᵒᵖ ⥤
+      (Cᵒᵖ ⥤ Type w)) ⥤
+    PshParametricFunctor.{u, v, w}
+      C (Cᵒᵖ ⥤ Type w) where
+  obj F :=
+    { obj := fun X =>
+        match X with
+        | .typeNode P => F.obj (Opposite.op P)
+        | .relNode P Q R =>
+          (pshContraBarrLiftSkel F R).toFunctor
+      map := fun {X Y} f =>
+        match X, Y, f with
+        | _, _, .id _ => 𝟙 _
+        | _, _, .fstProj P Q R =>
+          (pshContraBarrLiftSkel F R).ι ≫
+            pshProdFst
+              (F.obj (Opposite.op P))
+              (F.obj (Opposite.op Q))
+        | _, _, .sndProj P Q R =>
+          (pshContraBarrLiftSkel F R).ι ≫
+            pshProdSnd
+              (F.obj (Opposite.op P))
+              (F.obj (Opposite.op Q))
+      map_id := by
+        intro X; cases X <;> rfl
+      map_comp := by
+        intro X Y Z f g
+        cases f <;> cases g <;> rfl }
+  map {F G} α :=
+    { app := fun X =>
+        match X with
+        | .typeNode P =>
+          α.app (Opposite.op P)
+        | .relNode P Q R =>
+          pshContraBarrLiftSkelMap α R
+      naturality := by
+        intro X Y f
+        match X, Y, f with
+        | _, _, .id _ => simp
+        | _, _, .fstProj P Q R =>
+          simp [pshContraBarrLiftSkelMap_ι_fst]
+        | _, _, .sndProj P Q R =>
+          simp [pshContraBarrLiftSkelMap_ι_snd]
+    }
+  map_id F := by
+    apply NatTrans.ext; funext X
+    cases X with
+    | typeNode P => simp
+    | relNode P Q R =>
+      apply NatTrans.ext
+      funext c ⟨⟨_, _⟩, _⟩
+      simp [pshContraBarrLiftSkelMap]
+  map_comp {F G H} α β := by
+    apply NatTrans.ext; funext X
+    cases X with
+    | typeNode P => simp
+    | relNode P Q R =>
+      apply NatTrans.ext
+      funext c ⟨⟨_, _⟩, _⟩
+      simp [pshContraBarrLiftSkelMap]
+
+def pshContravariantEmbedding_fullyFaithful :
+    (pshContravariantEmbedding
+      (C := C)).FullyFaithful where
+  preimage {F G} β :=
+    { app := fun opP =>
+        β.app (.typeNode opP.unop)
+      naturality := fun {opP₁ opP₂} g => by
+        let f := g.unop
+        let P := opP₂.unop
+        let Q := opP₁.unop
+        have nf :=
+          β.naturality
+            (.fstProj P Q (pshRelGraph f))
+        have ns :=
+          β.naturality
+            (.sndProj P Q (pshRelGraph f))
+        dsimp [pshContravariantEmbedding]
+          at nf ns
+        ext c x
+        simp only [NatTrans.comp_app,
+          types_comp_apply]
+        have hgraph_cond :
+            (F.map ((pshRelGraph f).ι ≫
+              pshProdFst P Q).op).app c
+              ((F.map g).app c x) =
+            (F.map ((pshRelGraph f).ι ≫
+              pshProdSnd P Q).op).app c
+              x := by
+          conv_rhs =>
+            rw [pshRelGraph_ι_snd, op_comp,
+              F.map_comp, NatTrans.comp_app,
+              types_comp_apply]
+          rfl
+        let e :
+          (pshContraBarrLiftSkel F
+            (pshRelGraph f)).toFunctor.obj
+            c :=
+          ⟨((F.map g).app c x, x),
+            hgraph_cond⟩
+        let m := (β.app (.relNode P Q
+          (pshRelGraph f))).app c e
+        have hfst :=
+          congr_fun (congr_app nf c) e
+        have hsnd :=
+          congr_fun (congr_app ns c) e
+        simp only [NatTrans.comp_app,
+          types_comp_apply] at hfst hsnd
+        dsimp [pshProdFst, pshProdSnd,
+          FunctorToTypes.prod.fst,
+          FunctorToTypes.prod.snd]
+          at hfst hsnd
+        have hgraph :=
+          congr_fun (congr_app
+            (pshContraBarrLiftSkel_graph_ι_fst
+              G f) c) m
+        dsimp [pshProdFst, pshProdSnd,
+          FunctorToTypes.prod.fst,
+          FunctorToTypes.prod.snd]
+          at hgraph
+        rw [hfst, hgraph, hsnd]; rfl
+    }
+  map_preimage {F G} β := by
+    apply NatTrans.ext; funext X
+    cases X with
+    | typeNode P => rfl
+    | relNode P Q R =>
+      dsimp [pshContravariantEmbedding]
+      apply (cancel_mono
+        (pshContraBarrLiftSkel G R).ι).mp
+      apply pshProdPresheaf_hom_ext
+      · simp only [Category.assoc,
+          pshContraBarrLiftSkelMap_ι_fst]
+        have := β.naturality
+          (.fstProj P Q R)
+        dsimp [pshContravariantEmbedding]
+          at this
+        simp only [Category.assoc]
+          at this
+        exact this
+      · simp only [Category.assoc,
+          pshContraBarrLiftSkelMap_ι_snd]
+        have := β.naturality
+          (.sndProj P Q R)
+        dsimp [pshContravariantEmbedding]
+          at this
+        simp only [Category.assoc]
+          at this
+        exact this
+
+end PshContravariantEmbedding
+
+section PshProfunctorEmbedding
+
+variable {C : Type u} [Category.{v} C]
+
+def pshProfunctorEmbedding :
+    ((Cᵒᵖ ⥤ Type w)ᵒᵖ ×
+      (Cᵒᵖ ⥤ Type w) ⥤
+      (Cᵒᵖ ⥤ Type w)) ⥤
+    PshParametricFunctor.{u, v, w}
+      C (Cᵒᵖ ⥤ Type w) where
+  obj G :=
+    { obj := fun X =>
+        match X with
+        | .typeNode P =>
+          G.obj (Opposite.op P, P)
+        | .relNode P Q R =>
+          (pshProfBarrLiftSkel G R).toFunctor
+      map := fun {X Y} f =>
+        match X, Y, f with
+        | _, _, .id _ => 𝟙 _
+        | _, _, .fstProj P Q R =>
+          (pshProfBarrLiftSkel G R).ι ≫
+            pshProdFst
+              (G.obj (Opposite.op P, P))
+              (G.obj (Opposite.op Q, Q))
+        | _, _, .sndProj P Q R =>
+          (pshProfBarrLiftSkel G R).ι ≫
+            pshProdSnd
+              (G.obj (Opposite.op P, P))
+              (G.obj (Opposite.op Q, Q))
+      map_id := by
+        intro X; cases X <;> rfl
+      map_comp := by
+        intro X Y Z f g
+        cases f <;> cases g <;> rfl }
+  map {G H} β :=
+    { app := fun X =>
+        match X with
+        | .typeNode P =>
+          β.app (Opposite.op P, P)
+        | .relNode P Q R =>
+          pshProfBarrLiftSkelMap β R
+      naturality := by
+        intro X Y f
+        match X, Y, f with
+        | _, _, .id _ => simp
+        | _, _, .fstProj P Q R =>
+          simp [pshProfBarrLiftSkelMap_ι_fst]
+        | _, _, .sndProj P Q R =>
+          simp [pshProfBarrLiftSkelMap_ι_snd]
+    }
+  map_id G := by
+    apply NatTrans.ext; funext X
+    cases X with
+    | typeNode P => simp
+    | relNode P Q R =>
+      apply NatTrans.ext
+      funext c ⟨⟨_, _⟩, _⟩
+      simp [pshProfBarrLiftSkelMap]
+  map_comp {G H K} β γ := by
+    apply NatTrans.ext; funext X
+    cases X with
+    | typeNode P => simp
+    | relNode P Q R =>
+      apply NatTrans.ext
+      funext c ⟨⟨_, _⟩, _⟩
+      simp [pshProfBarrLiftSkelMap]
+
+end PshProfunctorEmbedding
+
 end GebLean
