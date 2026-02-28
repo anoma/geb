@@ -107,13 +107,18 @@ the (co)limit picture for finitary polynomial algebras.
 Define the abstract categorical structures for distributive
 laws and bialgebras (not specific to polynomial functors).
 
-- [ ] C1: Define `DistributiveLaw (T : Monad C) (D : Comonad C)`
+- [x] C1: Define `DistributiveLaw (T : Monad C) (D : Comonad C)`
   with four coherence axioms (unit, multiplication, counit,
-  comultiplication)
-- [ ] C2: Define the category of lambda-bialgebras for a given
-  distributive law, with the pentagonal compatibility law.
-  Construct initial object (operational model) and final object
-  (denotational model) via the free/cofree adjunctions
+  comultiplication).  In `GebLean/Utilities/DistributiveLaw.lean`.
+- [x] C2: Define the category of lambda-bialgebras for a given
+  distributive law, with the pentagonal compatibility law;
+  includes `LambdaBialgebra` structure, `Hom` with `@[ext]`,
+  `Category` instance, forgetful functor to `C` (faithful),
+  and conversions to `T.Algebra`/`D.Coalgebra`.
+  In `GebLean/Utilities/LambdaBialgebra.lean`.
+- [ ] C2a: Construct initial object (operational model) and
+  final object (denotational model) of the lambda-bialgebra
+  category via the free/cofree adjunctions
 
 ### Phase 3: Polynomial Distributive Law
 

@@ -3,6 +3,7 @@ import GebLean.Utilities.DaggerCategory
 import GebLean.Utilities.ConnectedComponents
 import GebLean.Utilities.ConnectedGrothendieck
 import GebLean.Utilities.DistributiveLaw
+import GebLean.Utilities.LambdaBialgebra
 import GebLean.Utilities.EndsAndCoends
 import GebLean.Utilities.Equalities
 import GebLean.Utilities.Families
