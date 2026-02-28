@@ -59,28 +59,67 @@ Our codebase provides the following for polynomial endofunctors
 
 ### A: Mathematical Background
 
-Limits in Eilenberg-Moore categories are straightforward: the
-forgetful functor `U : C^T -> C` creates all limits that exist in
-`C`. We already have this via `polyAlgHasLimitsOfSize`.
+#### Limits (all polynomial functors)
 
-Colimits are more involved. The forgetful functor does not in general
-create or preserve colimits. The results are:
+The forgetful functor `U : C^T -> C` creates all limits that
+exist in `C`. This holds for any monad `T` on any category `C`,
+with no finitariness hypothesis. We already have this via
+`polyAlgHasLimitsOfSize`.
 
-**Linton's theorem.** If `C` is cocomplete and `C^T` has reflexive
-coequalizers, then `C^T` is cocomplete.
+#### Beck coequalizer (all polynomial functors)
 
-**Colimit creation.** If the monad `T` preserves `J`-shaped colimits,
-then `U : C^T -> C` creates `J`-shaped colimits.
+Every T-algebra is a reflexive coequalizer of free T-algebras.
+Concretely, for any `(c, xi : Tc -> c)`, there is a reflexive
+fork `FUFUc => FUc -> (c, xi)` whose underlying fork in `C` is a
+split coequalizer (hence absolute, preserved by any functor).
 
-**Finitary/accessible case.** If `C` is cocomplete and `T` preserves
-filtered colimits (equivalently, `T` is finitary/accessible), then
-`C^T` is cocomplete.
+This holds for any monad `T`, with no finitariness hypothesis.
+In particular, `C^T` always has reflexive coequalizers.
 
-**Beck coequalizer.** Every T-algebra is a reflexive coequalizer of
-free T-algebras. Concretely, any `(c, xi : Tc -> c)` is the
-coequalizer of the reflexive fork `FUFUc => FUc -> (c, xi)`. The
-underlying fork in `C` is a split coequalizer (hence absolute,
-preserved by any functor).
+#### Filtered colimit creation (finitary only)
+
+If the monad `T` preserves `J`-shaped colimits and `C` has
+`J`-shaped colimits, then `U : C^T -> C` creates `J`-shaped
+colimits.
+
+In particular, if `T` preserves filtered colimits (i.e. `T` is
+finitary), then `C^T` has filtered colimits (created by `U`).
+
+This is the step that requires finitariness: a polynomial
+endofunctor preserves filtered colimits if and only if all its
+direction-set fibers are finite.
+
+#### Linton's theorem (cocompleteness from parts)
+
+**Theorem.** If `C^T` has reflexive coequalizers **and** `C^T`
+has filtered colimits, then `C^T` has all colimits.
+
+The construction: an arbitrary colimit is built from filtered
+colimits and finite colimits; finite colimits are built from
+finite coproducts and coequalizers; coequalizers are reflexive
+coequalizers of reflexive pairs.
+
+For the algebra category of any monad over a cocomplete base:
+
+- Reflexive coequalizers: provided by Beck (all monads).
+- Finite coproducts: created by `U` (all monads over
+  cocomplete base).
+- Filtered colimits: created by `U` **only if `T` is
+  finitary**.
+
+So the chain is: Beck gives reflexive coequalizers for free,
+but getting from reflexive coequalizers to all colimits still
+requires filtered colimits, which is where finitariness enters.
+
+#### Summary
+
+| Property | Requires finitariness? |
+| - | - |
+| All limits | N |
+| Reflexive coequalizers | N |
+| Finite coproducts | N |
+| Filtered colimits | Y |
+| All colimits | Y |
 
 ### A: Finitariness of Polynomial Functors
 
@@ -116,24 +155,43 @@ abbrev PolyEndoFinitary (P : PolyEndo X) : Prop :=
 
 ### A: Application to Our Setting
 
-For a finitary polynomial endofunctor `P` (one satisfying
-`PolyEndoFinitary P`), the free monad `polyFreeMonad X P`
-preserves filtered colimits, and by the theorems above the
-algebra category is cocomplete.
+**All polynomial endofunctors `P : PolyEndo X`** (no
+finitariness hypothesis):
 
-The chain for deriving colimits:
+- `PolyAlg P` has all limits (via `polyAlgHasLimitsOfSize`)
+- `PolyAlg P` has reflexive coequalizers (Beck)
+- `PolyAlg P` has finite coproducts (created by forgetful
+  functor from `Over X`)
 
-1. `PolyEndoFinitary P` (hypothesis)
-2. `polyEndoFunctor` preserves filtered colimits
-3. `polyFreeMonad X P` preserves filtered colimits
-4. `HasReflexiveCoequalizers ((polyFreeMonad X P).Algebra)`
-   (from creation of preserved colimits)
-5. `HasColimitsOfSize ((polyFreeMonad X P).Algebra)` (Linton)
-6. `HasColimitsOfSize (PolyAlg P)` (via `polyAlgMonadEquiv`)
+**Finitary polynomial endofunctors** (those satisfying
+`PolyEndoFinitary P`, meaning all direction-set fibers are
+finite):
 
-For non-finitary polynomial endofunctors (those with infinite
-direction sets), the algebra category still has all limits
-(via `polyAlgHasLimitsOfSize`) but may not have all colimits.
+- `PolyAlg P` has filtered colimits
+- `PolyAlg P` has all colimits
+
+The derivation chain for all colimits in the finitary case:
+
+1. `PolyEndoFinitary P` (hypothesis: each `pi^{-1}(b)` is
+   finite)
+2. `polyEndoFunctor P` preserves filtered colimits (finite
+   products commute with filtered colimits in `Set`)
+3. `polyFreeMonad X P` preserves filtered colimits (free
+   monad on a filtered-colimit-preserving functor inherits
+   the property)
+4. `(polyFreeMonad X P).Algebra` has filtered colimits
+   (created by the forgetful functor, since the monad
+   preserves them)
+5. `(polyFreeMonad X P).Algebra` has reflexive coequalizers
+   (Beck, no finitariness needed)
+6. `(polyFreeMonad X P).Algebra` has all colimits (Linton,
+   combining steps 4 and 5)
+7. `PolyAlg P` has all colimits (transferred via
+   `polyAlgMonadEquiv`)
+
+Step 4 is the only step requiring finitariness. Without it,
+the chain stops: we have reflexive coequalizers but not
+filtered colimits, and Linton's theorem cannot be applied.
 
 ### A: Mathlib Infrastructure
 
