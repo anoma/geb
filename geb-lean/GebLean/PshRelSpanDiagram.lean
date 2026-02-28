@@ -406,7 +406,8 @@ theorem pshRelSpanCollage_inv_hom_obj
       (C := C) :
       (Discrete (PshRelIndex.{u, v, w}
         C))ᵒᵖ ×
-      Discrete (Cᵒᵖ ⥤ Type w) ⥤ _)) :
+      Discrete (Cᵒᵖ ⥤ Type w) ⥤
+      Type (max u v (w + 1)))) :
     pshRelSpanToCollage.obj
       (pshCollageToRelSpanObj X) = X := by
   match X with
@@ -419,7 +420,8 @@ def pshRelSpanCollageIso :
       (C := C) :
       (Discrete (PshRelIndex.{u, v, w}
         C))ᵒᵖ ×
-      Discrete (Cᵒᵖ ⥤ Type w) ⥤ _) where
+      Discrete (Cᵒᵖ ⥤ Type w) ⥤
+      Type (max u v (w + 1))) where
   hom := pshRelSpanToCollage.toCatHom
   inv := pshCollageToRelSpan.toCatHom
   hom_inv_id := by
