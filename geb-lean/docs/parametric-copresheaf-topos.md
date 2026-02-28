@@ -48,7 +48,7 @@ Presheaf relations form a double category `PshRelDouble`:
 Operations and laws:
 
 | Operation | Code | Line |
-|-----------|------|------|
+| --------- | ---- | ---- |
 | Identity relation | `pshRelId` | 212 |
 | Relation composition | `pshRelComp` | 358 |
 | Graph of nat. trans. | `pshRelGraph` | 416 |
@@ -73,7 +73,7 @@ for `w` in the Barr lift of `R` through `G`.
 Variants:
 
 | Variant | Functor type | Code | Line |
-|---------|-------------|------|------|
+| ------- | ----------- | ---- | ---- |
 | Covariant | `PSh(C) => PSh(C)` | `pshBarrLiftSkel` | 999 |
 | Contravariant | `PSh(C)^op => PSh(C)` | `pshContraBarrLiftSkel` | 1494 |
 | Profunctor | `PSh(C)^op x PSh(C) => PSh(C)` | `pshProfBarrLiftSkel` | 1714 |
@@ -277,7 +277,7 @@ standard type formers are available and automatically
 respect parametricity:
 
 | Type former | Topos operation | Parametricity |
-|------------|----------------|---------------|
+| ---------- | -------------- | ------------- |
 | `forall X. T(X)` | Limit (end) | Sections of limits are limits of sections |
 | `exists X. T(X)` | Colimit (coend) | Standard |
 | `T_1 -> T_2` | Exponential `[F, G]` | Internal hom in topos |
@@ -361,7 +361,7 @@ At `C = Discrete PUnit`, all embeddings specialize to
 their type-level counterparts in `RelSpanDiagram.lean`:
 
 | Presheaf | Type | Code |
-|----------|------|------|
+| -------- | ---- | ---- |
 | `pshCovariantEmbedding` | `covariantEmbedding` | L611 |
 | `pshContravariantEmbedding` | `contravariantEmbedding` | L826 |
 | `pshProfunctorEmbedding` | `profunctorEmbedding` | L1113 |
@@ -517,7 +517,7 @@ notion of morphism.
 ### 9.1 File map
 
 | File | Content |
-|------|---------|
+| ---- | ------- |
 | `PshRelDouble.lean` | Double category of presheaf relations |
 | `YonedaRelDouble.lean` | Yoneda-based relations and double category |
 | `PshRelSpanDiagram.lean` | `PshRelSpanObj`, embeddings, full faithfulness |
@@ -529,7 +529,7 @@ notion of morphism.
 ### 9.2 Equivalences with the type level
 
 | Presheaf level | Type level |
-|---------------|-----------|
+| ------------- | --------- |
 | `PshRelSpanObj (Discrete PUnit)` | `RelSpanObj` |
 | `PshParametricFunctor .. E` | `ParametricFunctor E` |
 | `PshParametricCopresheaf ..` | `ParametricCopresheaf` |
