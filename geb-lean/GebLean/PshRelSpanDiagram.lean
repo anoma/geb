@@ -159,6 +159,321 @@ def pshParametricCatAsPresheaf
       (PshRelSpanObj C) D).congrLeft
         (E := Type w')).symm
 
+section PshRelSpanCollage
+
+variable {C : Type u} [Category.{v} C]
+
+/-- Index type for presheaf relation-nodes: a
+triple `(P, Q, R)` where `P Q : Cᵒᵖ ⥤ Type w`
+and `R : PshRel P Q`. -/
+abbrev PshRelIndex
+    (C : Type u) [Category.{v} C] :=
+  Σ (P Q : Cᵒᵖ ⥤ Type w), PshRel P Q
+
+/-- The type of endpoint projections from a
+presheaf relation with endpoints `P`, `Q` to a
+presheaf `T`.  An element witnesses that `T`
+is one of the endpoints. -/
+inductive PshEndpointProj
+    (P Q T : Cᵒᵖ ⥤ Type w) : Type where
+  | fst : P = T → PshEndpointProj P Q T
+  | snd : Q = T → PshEndpointProj P Q T
+
+/-- The profunctor whose collage is the presheaf
+relational span category.  Maps
+`(op ⟨r⟩, ⟨T⟩)` to the type of endpoint
+projections from `r` to `T`, lifted to
+`Type (max u v (w + 1))`. -/
+def pshRelSpanProfunctor :
+    (Discrete (PshRelIndex.{u, v, w} C))ᵒᵖ ×
+    (Discrete (Cᵒᵖ ⥤ Type w)) ⥤
+    Type (max u v (w + 1)) where
+  obj p :=
+    ULift.{max u v (w + 1)}
+      (PshEndpointProj
+        p.1.unop.as.1 p.1.unop.as.2.1
+        p.2.as)
+  map {p q} f := eqToHom (by
+    obtain ⟨⟨⟨r₁⟩⟩, ⟨T₁⟩⟩ := p
+    obtain ⟨⟨⟨r₂⟩⟩, ⟨T₂⟩⟩ := q
+    have h₁ : r₂ = r₁ :=
+      Discrete.eq_of_hom f.1.unop
+    have h₂ : T₁ = T₂ :=
+      Discrete.eq_of_hom f.2
+    subst h₁; subst h₂; rfl)
+  map_id _ := by simp
+  map_comp _ _ := by simp
+
+/-- Functor from `PshRelSpanObj C` to the collage
+of `pshRelSpanProfunctor`, sending type-nodes to
+the right component and relation-nodes to the
+left component. -/
+def pshRelSpanToCollage :
+    PshRelSpanObj.{u, v, w} C ⥤
+    Collage (pshRelSpanProfunctor
+      (C := C)) where
+  obj
+    | .typeNode P => Collage.inr ⟨P⟩
+    | .relNode P Q R =>
+      Collage.inl ⟨⟨P, Q, R⟩⟩
+  map {X Y} f :=
+    match X, Y, f with
+    | .typeNode _, _, .id _ => ⟨𝟙 _⟩
+    | .relNode _ _ _, _, .id _ => ⟨𝟙 _⟩
+    | _, _, .fstProj P Q R =>
+      ⟨⟨PshEndpointProj.fst rfl⟩⟩
+    | _, _, .sndProj P Q R =>
+      ⟨⟨PshEndpointProj.snd rfl⟩⟩
+  map_id := by intro X; cases X <;> rfl
+  map_comp := by
+    intro X Y Z f g
+    cases f <;> cases g
+    all_goals
+      first
+      | (cases ‹PshRelSpanObj C›
+         all_goals rfl)
+      | (simp only [CategoryStruct.comp,
+           PshRelSpanHom.comp]
+         apply ULift.ext
+         dsimp [Collage.Hom.comp,
+           Collage.inl, Collage.inr]
+         simp [pshRelSpanProfunctor])
+
+/-- Object map for `pshCollageToRelSpan`. -/
+def pshCollageToRelSpanObj :
+    Collage (pshRelSpanProfunctor
+      (C := C)) →
+    PshRelSpanObj.{u, v, w} C
+  | ⟨.inl ⟨⟨P, Q, R⟩⟩⟩ =>
+    .relNode P Q R
+  | ⟨.inr ⟨T⟩⟩ => .typeNode T
+
+/-- Morphism map for `pshCollageToRelSpan`. -/
+def pshCollageToRelSpanMap
+    {X Y : Collage (pshRelSpanProfunctor
+      (C := C))}
+    (f : X ⟶ Y) :
+    pshCollageToRelSpanObj X ⟶
+    pshCollageToRelSpanObj Y := by
+  match X, Y, f with
+  | ⟨.inl ⟨r⟩⟩, ⟨.inl ⟨r'⟩⟩, f =>
+    have h : r = r' := f.down.down.down
+    subst h; exact .id _
+  | ⟨.inr ⟨T⟩⟩, ⟨.inr ⟨T'⟩⟩, f =>
+    have h : T = T' := f.down.down.down
+    subst h; exact .id _
+  | ⟨.inl ⟨⟨P, Q, R⟩⟩⟩, ⟨.inr ⟨T⟩⟩, f =>
+    have p : PshEndpointProj P Q T :=
+      f.down.down
+    exact p.casesOn
+      (fun h => h ▸ .fstProj P Q R)
+      (fun h => h ▸ .sndProj P Q R)
+  | ⟨.inr _⟩, ⟨.inl _⟩, f =>
+    exact PEmpty.elim f
+
+@[simp]
+theorem pshCollageToRelSpanMap_id_inl
+    (r : PshRelIndex.{u, v, w} C) :
+    pshCollageToRelSpanMap
+      (𝟙 (Collage.inl
+        (P := pshRelSpanProfunctor (C := C))
+        ⟨r⟩)) =
+    .id (.relNode r.1 r.2.1 r.2.2) := rfl
+
+@[simp]
+theorem pshCollageToRelSpanMap_id_inr
+    (T : Cᵒᵖ ⥤ Type w) :
+    pshCollageToRelSpanMap
+      (𝟙 (Collage.inr
+        (P := pshRelSpanProfunctor (C := C))
+        ⟨T⟩)) =
+    .id (.typeNode T) := rfl
+
+@[simp]
+theorem pshCollageToRelSpanMap_fst
+    (P Q : Cᵒᵖ ⥤ Type w)
+    (R : PshRel P Q) :
+    pshCollageToRelSpanMap
+      (show Collage.inl
+        (P := pshRelSpanProfunctor (C := C))
+        ⟨⟨P, Q, R⟩⟩ ⟶
+        Collage.inr ⟨P⟩
+        from ⟨⟨PshEndpointProj.fst rfl⟩⟩) =
+    .fstProj P Q R := rfl
+
+@[simp]
+theorem pshCollageToRelSpanMap_snd
+    (P Q : Cᵒᵖ ⥤ Type w)
+    (R : PshRel P Q) :
+    pshCollageToRelSpanMap
+      (show Collage.inl
+        (P := pshRelSpanProfunctor (C := C))
+        ⟨⟨P, Q, R⟩⟩ ⟶
+        Collage.inr ⟨Q⟩
+        from ⟨⟨PshEndpointProj.snd rfl⟩⟩) =
+    .sndProj P Q R := rfl
+
+/-- Functor from the collage of
+`pshRelSpanProfunctor` back to
+`PshRelSpanObj C`. -/
+def pshCollageToRelSpan :
+    Collage (pshRelSpanProfunctor
+      (C := C)) ⥤
+    PshRelSpanObj.{u, v, w} C where
+  obj := pshCollageToRelSpanObj
+  map := pshCollageToRelSpanMap
+  map_id := by
+    intro ⟨X⟩
+    match X with
+    | .inl ⟨_⟩ => rfl
+    | .inr ⟨_⟩ => rfl
+  map_comp := by
+    intro ⟨X⟩ ⟨Y⟩ ⟨Z⟩ f g
+    match X, Y, Z, f, g with
+    | .inl ⟨_⟩, .inl ⟨_⟩, .inl ⟨_⟩,
+      ⟨f⟩, ⟨g⟩ =>
+      have := f.down.down
+      have := g.down.down
+      subst_vars; rfl
+    | .inr ⟨_⟩, .inr ⟨_⟩, .inr ⟨_⟩,
+      ⟨f⟩, ⟨g⟩ =>
+      have := f.down.down
+      have := g.down.down
+      subst_vars; rfl
+    | .inl ⟨_⟩, .inl ⟨_⟩, .inr ⟨_⟩,
+      ⟨f⟩, ⟨h⟩ =>
+      have := f.down.down
+      subst_vars
+      have p : PshEndpointProj _ _ _ :=
+        h.down
+      cases p <;> rfl
+    | .inl ⟨_⟩, .inr ⟨_⟩, .inr ⟨_⟩,
+      ⟨h⟩, ⟨g⟩ =>
+      have := g.down.down
+      subst_vars
+      have p : PshEndpointProj _ _ _ :=
+        h.down
+      cases p <;>
+        simp [pshCollageToRelSpanMap,
+          pshCollageToRelSpanObj,
+          Collage.Hom.comp,
+          CategoryStruct.comp,
+          PshRelSpanHom.comp,
+          pshRelSpanProfunctor]
+    | .inr _, .inl _, _, f, _ =>
+      exact PEmpty.elim f
+    | .inl _, .inr _, .inl _,
+      _, g => exact PEmpty.elim g
+    | .inr _, .inr _, .inl _,
+      _, g => exact PEmpty.elim g
+
+theorem pshRelSpanCollage_hom_inv_obj
+    (X : PshRelSpanObj.{u, v, w} C) :
+    pshCollageToRelSpanObj
+      (pshRelSpanToCollage.obj X) = X := by
+  cases X <;> rfl
+
+theorem pshRelSpanCollage_hom_inv_map
+    {X Y : PshRelSpanObj.{u, v, w} C}
+    (f : X ⟶ Y) :
+    pshCollageToRelSpanMap
+      (pshRelSpanToCollage.map f) =
+    eqToHom
+      (pshRelSpanCollage_hom_inv_obj X) ≫
+      f ≫
+      eqToHom
+        (pshRelSpanCollage_hom_inv_obj
+          Y).symm := by
+  cases f with
+  | id X =>
+    simp only [pshRelSpanToCollage]
+    cases X <;> rfl
+  | fstProj P Q R =>
+    simp only [pshRelSpanToCollage]
+    exact pshCollageToRelSpanMap_fst P Q R
+  | sndProj P Q R =>
+    simp only [pshRelSpanToCollage]
+    exact pshCollageToRelSpanMap_snd P Q R
+
+theorem pshRelSpanCollage_inv_hom_obj
+    (X : Collage (pshRelSpanProfunctor
+      (C := C) :
+      (Discrete (PshRelIndex.{u, v, w}
+        C))ᵒᵖ ×
+      Discrete (Cᵒᵖ ⥤ Type w) ⥤ _)) :
+    pshRelSpanToCollage.obj
+      (pshCollageToRelSpanObj X) = X := by
+  match X with
+  | ⟨.inl ⟨_⟩⟩ => rfl
+  | ⟨.inr ⟨_⟩⟩ => rfl
+
+def pshRelSpanCollageIso :
+    PshRelSpanObj.{u, v, w} C ≅Cat
+    Collage (pshRelSpanProfunctor
+      (C := C) :
+      (Discrete (PshRelIndex.{u, v, w}
+        C))ᵒᵖ ×
+      Discrete (Cᵒᵖ ⥤ Type w) ⥤ _) where
+  hom := pshRelSpanToCollage.toCatHom
+  inv := pshCollageToRelSpan.toCatHom
+  hom_inv_id := by
+    change (pshRelSpanToCollage ⋙
+      pshCollageToRelSpan).toCatHom =
+      (𝟭 _).toCatHom
+    congr 1
+    exact _root_.CategoryTheory.Functor.ext
+      (pshRelSpanCollage_hom_inv_obj)
+      (fun {X Y} f =>
+        pshRelSpanCollage_hom_inv_map f)
+  inv_hom_id := by
+    change (pshCollageToRelSpan ⋙
+      pshRelSpanToCollage).toCatHom =
+      (𝟭 _).toCatHom
+    congr 1
+    exact _root_.CategoryTheory.Functor.ext
+      (pshRelSpanCollage_inv_hom_obj)
+      (fun {X Y} f => by
+        match X, Y, f with
+        | ⟨.inl ⟨_⟩⟩, ⟨.inl ⟨_⟩⟩, ⟨g⟩ =>
+          have := g.down.down
+          subst_vars
+          dsimp [pshCollageToRelSpan,
+            pshCollageToRelSpanMap,
+            pshCollageToRelSpanObj,
+            pshRelSpanToCollage,
+            pshRelSpanCollage_inv_hom_obj]
+          rfl
+        | ⟨.inr ⟨_⟩⟩, ⟨.inr ⟨_⟩⟩, ⟨g⟩ =>
+          have := g.down.down
+          subst_vars
+          dsimp [pshCollageToRelSpan,
+            pshCollageToRelSpanMap,
+            pshCollageToRelSpanObj,
+            pshRelSpanToCollage,
+            pshRelSpanCollage_inv_hom_obj]
+          rfl
+        | ⟨.inl ⟨⟨P, Q, R⟩⟩⟩,
+          ⟨.inr ⟨_⟩⟩, ⟨h⟩ =>
+          simp only [
+            eqToHom_refl, Category.id_comp,
+            Category.comp_id, Functor.id_map,
+            Functor.comp_map]
+          cases h with
+          | up p =>
+            cases p with
+            | fst hp =>
+              cases hp
+              simp only [pshCollageToRelSpan]
+              rfl
+            | snd hp =>
+              cases hp
+              simp only [pshCollageToRelSpan]
+              rfl
+        | ⟨.inr _⟩, ⟨.inl _⟩, f =>
+          exact PEmpty.elim f)
+
+end PshRelSpanCollage
+
 section RelSpanPshRelSpanEquiv
 
 /-- Convert a `Prop`-valued relation to a

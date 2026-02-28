@@ -101,14 +101,21 @@ This workstream unifies the former:
   `PshParametricFunctor`, `PshParametricCopresheaf`,
   `relSpanPshRelSpanIso :
   RelSpanObj ≅Cat PshRelSpanObj (Discrete PUnit)`,
-  `parametricFunctorEquiv`, `parametricCopresheafEquiv`
+  `parametricFunctorEquiv`, `parametricCopresheafEquiv`,
+  `pshRelSpanProfunctor`, `pshRelSpanCollageIso`,
+  `pshCovariantEmbedding` (fully faithful),
+  `pshContravariantEmbedding` (fully faithful),
+  `pshProfunctorEmbedding`,
+  `pshRelSpanDiagramFunctor` (fully faithful)
 - `PshTypeExpr.lean`: `PshTypeExpr` (`.var`, `.app`, `.arrow`),
   `.interp`, `.relInterp`, `.fullRelInterp`, `.toProfunctor`,
   `PshProdOver.sectionsRelated`, `pshRelSectionsRelated`,
   `PshTypeAbs`, `pshTypeAbsRel`,
   `TypeExpr.toPshTypeExpr` with interp isomorphism,
   `yonedaULiftRel`, bridge infrastructure,
-  `fullRelInterp_pshRep_eq`
+  `fullRelInterp_pshRep_eq`,
+  `PshTypeExprHom`, `PshTypeExprCat` (category of type
+  expressions with parametric morphisms)
 
 ### Paranatural topos results (relevant here)
 
@@ -133,16 +140,16 @@ Port the embedding infrastructure from `RelSpanDiagram.lean`
 (which works over `Type`) to `PshRelSpanDiagram.lean` (which
 works over `PSh(C)` for arbitrary `C`).
 
-- [ ] **P1a. Presheaf collage isomorphism.** Define
+- [x] **P1a. Presheaf collage isomorphism.** Define
   `pshRelSpanProfunctor` and prove `PshRelSpanObj C` is
   isomorphic to the collage of this profunctor, generalizing
   `relSpanCollageIso`.
 
-- [ ] **P1b. Presheaf graph/relation infrastructure.** Define
-  `pshGraphRel`, `pshGraphRelEquiv`, `pshFunctorRelLift`
-  generalizing `graphRel`, `graphRelEquiv`, `functorRelLift`
-  to the presheaf setting. These should use the Barr extension
-  infrastructure already in `PshRelDouble.lean`.
+- [x] **P1b. Presheaf graph/relation infrastructure.**
+  Already present: `pshRelGraph` = `graphRel`,
+  `pshRelGraph_ι_fst_iso` = `graphRelEquiv`,
+  `pshBarrLiftSkel` = `functorRelLift`,
+  `pshBarrLiftSkel_graph` = `functorRelLift_graphRel`.
 
 - [x] **P1c. Presheaf covariant embedding.** Define
   `pshCovariantEmbedding : (PSh(C) ⥤ PSh(C)) ⥤
@@ -160,7 +167,7 @@ works over `PSh(C)` for arbitrary `C`).
   `pshParanaturalProfEmbedding` and prove it faithful,
   generalizing `paranaturalProfEmbedding`.
 
-- [ ] **P1g. Presheaf relSpanDiagram functor.** Define
+- [x] **P1g. Presheaf relSpanDiagram functor.** Define
   `pshRelSpanDiagramFunctor` (analogous to
   `relSpanDiagramFunctor`) and prove it fully faithful.
 
