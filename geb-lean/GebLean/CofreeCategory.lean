@@ -2579,4 +2579,96 @@ lemma roundtripFBCarrierMorBwd_comm
   -- complexity of the dependent type equalities.
   exact roundtripFBStr_eq P α a
 
+-- The forward carrier morphism is a P-coalgebra
+-- homomorphism.  Derived from backward commutativity
+-- and the carrier isomorphism: precomposing the
+-- backward comm with `fwd` and postcomposing with
+-- `F.map fwd`, then cancelling via the iso.
+lemma roundtripFBCarrierMorFwd_comm
+    (P : PolyEndo X) (α : PolyCoalg P) :
+    α.str ≫ (polyEndoFunctor X P).map
+      (roundtripFBCarrierMorFwd P α) =
+    roundtripFBCarrierMorFwd P α ≫
+    copresheafPolyCoalgStr P
+      ((polyCoalgToCopresheafFunctor P).obj α) := by
+  have h_bwd := roundtripFBCarrierMorBwd_comm P α
+  have h_hom_inv :
+      roundtripFBCarrierMorFwd P α ≫
+      roundtripFBCarrierMorBwd P α = 𝟙 _ :=
+    (roundtripFBCarrierIso P α).hom_inv_id
+  have h_inv_hom :
+      roundtripFBCarrierMorBwd P α ≫
+      roundtripFBCarrierMorFwd P α = 𝟙 _ :=
+    (roundtripFBCarrierIso P α).inv_hom_id
+  have step1 :
+      roundtripFBCarrierMorFwd P α ≫
+      copresheafPolyCoalgStr P
+        ((polyCoalgToCopresheafFunctor P).obj α) ≫
+      (polyEndoFunctor X P).map
+        (roundtripFBCarrierMorBwd P α) =
+      α.str := by
+    rw [h_bwd, ← Category.assoc,
+      h_hom_inv, Category.id_comp]
+  calc α.str ≫ (polyEndoFunctor X P).map
+        (roundtripFBCarrierMorFwd P α)
+      = (roundtripFBCarrierMorFwd P α ≫
+        copresheafPolyCoalgStr P
+          ((polyCoalgToCopresheafFunctor P).obj α) ≫
+        (polyEndoFunctor X P).map
+          (roundtripFBCarrierMorBwd P α)) ≫
+        (polyEndoFunctor X P).map
+          (roundtripFBCarrierMorFwd P α) := by
+        rw [step1]
+    _ = roundtripFBCarrierMorFwd P α ≫
+        copresheafPolyCoalgStr P
+          ((polyCoalgToCopresheafFunctor P).obj
+            α) := by
+        simp only [Category.assoc,
+          ← (polyEndoFunctor X P).map_comp,
+          h_inv_hom,
+          (polyEndoFunctor X P).map_id,
+          Category.comp_id]
+
+/--
+The forward coalgebra homomorphism for the
+forward-backward roundtrip: `α ⟶ Psi(Phi(α))`.
+-/
+def roundtripFBCoalgHomFwd (P : PolyEndo X)
+    (α : PolyCoalg P) :
+    α ⟶ copresheafToPolyCoalg P
+      ((polyCoalgToCopresheafFunctor P).obj α) :=
+  Endofunctor.Coalgebra.Hom.mk
+    (roundtripFBCarrierMorFwd P α)
+    (roundtripFBCarrierMorFwd_comm P α)
+
+/--
+The backward coalgebra homomorphism for the
+forward-backward roundtrip: `Psi(Phi(α)) ⟶ α`.
+-/
+def roundtripFBCoalgHomBwd (P : PolyEndo X)
+    (α : PolyCoalg P) :
+    copresheafToPolyCoalg P
+      ((polyCoalgToCopresheafFunctor P).obj α) ⟶
+    α :=
+  Endofunctor.Coalgebra.Hom.mk
+    (roundtripFBCarrierMorBwd P α)
+    (roundtripFBCarrierMorBwd_comm P α)
+
+/--
+The coalgebra isomorphism for the forward-backward
+roundtrip: `α ≅ Psi(Phi(α))` in `PolyCoalg P`.
+-/
+def roundtripFBCoalgIso (P : PolyEndo X)
+    (α : PolyCoalg P) :
+    α ≅ copresheafToPolyCoalg P
+      ((polyCoalgToCopresheafFunctor P).obj α) where
+  hom := roundtripFBCoalgHomFwd P α
+  inv := roundtripFBCoalgHomBwd P α
+  hom_inv_id := by
+    apply Endofunctor.Coalgebra.Hom.ext
+    exact (roundtripFBCarrierIso P α).hom_inv_id
+  inv_hom_id := by
+    apply Endofunctor.Coalgebra.Hom.ext
+    exact (roundtripFBCarrierIso P α).inv_hom_id
+
 end GebLean
