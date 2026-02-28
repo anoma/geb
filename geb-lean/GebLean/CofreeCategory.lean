@@ -1910,6 +1910,94 @@ def copresheafCoalgMType (P : PolyEndo X)
     copresheafCoalgApprox_agree P F obj elem
 
 /--
+The head of the copresheaf M-type is the
+copresheaf index.
+-/
+lemma copresheafCoalgMType_head (P : PolyEndo X)
+    (F : PolyCofreeCat P ⥤ Type u)
+    (obj : PolyCofreeCat P)
+    (elem : F.obj obj) :
+    (copresheafCoalgMType P F obj elem).head =
+    ⟨⟨⟨obj, elem⟩, rfl⟩, obj.shape.head.2⟩ := rfl
+
+/--
+The child approximation of the copresheaf M-type
+at position `e` and depth `n` equals the copresheaf
+approximation for the child.
+-/
+lemma copresheafCoalgMType_childApprox
+    (P : PolyEndo X)
+    (F : PolyCofreeCat P ⥤ Type u)
+    (obj : PolyCofreeCat P)
+    (elem : F.obj obj)
+    (e : (polyBetweenFamily X X P obj.fiber
+      obj.shape.head.2).left)
+    (n : Nat) :
+    (copresheafCoalgMType P F obj elem
+      ).childApproxAt e n =
+    copresheafCoalgApprox P F
+      (polyCofreeCatChild P obj e)
+      (F.map (polyCofreeCatEdge P obj e) elem)
+      n := by
+  match n with
+  | 0 => rfl
+  | n + 1 =>
+    simp only [PolyCofix.childApproxAt,
+      PolyCofix.childApproxAt_succ]
+    let m := copresheafCoalgMType P F obj elem
+    have h :=
+      PolyCofix.childApproxAt_succ_aux_proof_irrel
+        m.head (m.approx (n + 2))
+        (m.index_eq_head (n + 1)) rfl e
+    rw [h]
+    rfl
+
+/--
+The children of the copresheaf M-type at position
+`e` equals the copresheaf M-type for the child.
+-/
+lemma copresheafCoalgMType_children
+    (P : PolyEndo X)
+    (F : PolyCofreeCat P ⥤ Type u)
+    (obj : PolyCofreeCat P)
+    (elem : F.obj obj)
+    (e : (polyBetweenFamily X X P obj.fiber
+      obj.shape.head.2).left) :
+    (copresheafCoalgMType P F obj elem
+      ).children e =
+    copresheafCoalgMType P F
+      (polyCofreeCatChild P obj e)
+      (F.map (polyCofreeCatEdge P obj e) elem)
+    := by
+  apply PolyCofix.ext
+  intro n
+  exact copresheafCoalgMType_childApprox
+    P F obj elem e n
+
+/--
+Extracting the child annotation from the copresheaf
+M-type at position `e` yields the child copresheaf
+element.
+-/
+lemma copresheafCoalgMType_extract
+    (P : PolyEndo X)
+    (F : PolyCofreeCat P ⥤ Type u)
+    (obj : PolyCofreeCat P)
+    (elem : F.obj obj)
+    (e : (polyBetweenFamily X X P obj.fiber
+      obj.shape.head.2).left) :
+    (polyCofreeExtract
+      (copresheafCoalgCarrier P F) P
+      ((copresheafCoalgMType P F obj elem
+        ).children e)).val =
+    ⟨polyCofreeCatChild P obj e,
+      F.map (polyCofreeCatEdge P obj e)
+        elem⟩ := by
+  simp only [polyCofreeExtract,
+    copresheafCoalgMType_children,
+    copresheafCoalgMType_head]
+
+/--
 The underlying function of the structure map
 for the comonad coalgebra constructed from a
 copresheaf.
@@ -2670,5 +2758,578 @@ def roundtripFBCoalgIso (P : PolyEndo X)
   inv_hom_id := by
     apply Endofunctor.Coalgebra.Hom.ext
     exact (roundtripFBCarrierIso P α).inv_hom_id
+
+/-! ### M-type Approximation Reconstruction
+
+An M-type approximation at depth n+1 decomposes as an
+`.intro` node whose index is the head and whose children
+are the child approximations.
+-/
+
+/--
+An M-type approximation at depth `n + 1` equals the
+`.intro` node with the head index and children given by
+the child approximations at depth `n`.
+-/
+lemma polyCofixApprox_succ_eq
+    {Q : PolyEndo X} {x : X}
+    (m : PolyCofix Q x) (n : Nat) :
+    m.approx (n + 1) = .intro x m.head
+      (fun e => (m.children e).approx n) := by
+  have hhead :
+      (m.approx (n + 1)).getIndex = m.head :=
+    m.index_eq_head n
+  generalize ha : m.approx (n + 1) = a
+  match a with
+  | .intro _ idx ch =>
+    have hidx : idx = m.head := by
+      rw [ha] at hhead; exact hhead
+    subst hidx
+    congr 1
+    funext e
+    match n with
+    | 0 =>
+      match ch e with
+      | .continue _ => rfl
+    | n + 1 =>
+      simp only [PolyCofix.children,
+        PolyCofix.childApproxAt,
+        PolyCofix.childApproxAt_succ]
+      conv_rhs =>
+        rw [PolyCofix.childApproxAt_succ_aux_proof_irrel
+          m.head (m.approx (n + 2))
+          (m.index_eq_head (n + 1))
+          (by rw [ha]; rfl) e]
+      simp only [ha,
+        PolyCofix.childApproxAt_succ_aux_intro]
+
+/-! ### Backward-Forward Roundtrip
+
+Starting with a copresheaf `F : PolyCofreeCat P ⥤ Type u`,
+applying the backward functor (copresheaf to P-coalgebra)
+and then the forward functor (comparison then copresheaf)
+yields a copresheaf isomorphic to `F`. The pointwise
+isomorphism sends `elem : F.obj obj` to the pair
+`⟨⟨obj, elem⟩, target_self_eq⟩` where `target_self_eq`
+proves the copresheaf target recovers `obj`.
+-/
+
+/--
+The unit approximation for the copresheaf P-coalgebra
+equals the directly-constructed copresheaf approximation
+at each depth.
+-/
+lemma copresheafUnitApproxEq (P : PolyEndo X)
+    (F : PolyCofreeCat P ⥤ Type u)
+    (obj : PolyCofreeCat P)
+    (elem : F.obj obj) :
+    ∀ n, polyCoalgUnitApprox P
+      (copresheafToPolyCoalg P F) n
+      obj.fiber ⟨⟨obj, elem⟩, rfl⟩ =
+    copresheafCoalgApprox P F obj elem n := by
+  intro n
+  induction n generalizing obj elem with
+  | zero => rfl
+  | succ n ih =>
+    simp only [polyCoalgUnitApprox,
+      copresheafCoalgApprox]
+    congr 1
+    funext e
+    exact ih (polyCofreeCatChild P obj e)
+      (F.map (polyCofreeCatEdge P obj e) elem)
+
+/--
+The M-type built by the unit construction from a
+copresheaf P-coalgebra equals the directly-constructed
+copresheaf M-type.
+-/
+lemma copresheafUnitMTypeEq (P : PolyEndo X)
+    (F : PolyCofreeCat P ⥤ Type u)
+    (obj : PolyCofreeCat P)
+    (elem : F.obj obj) :
+    polyCoalgUnitAt P (copresheafToPolyCoalg P F)
+      obj.fiber ⟨⟨obj, elem⟩, rfl⟩ =
+    copresheafCoalgMType P F obj elem := by
+  apply PolyCofix.ext
+  intro n
+  exact copresheafUnitApproxEq P F obj elem n
+
+/--
+The head of the M-type built by the unit construction
+from a copresheaf P-coalgebra equals the copresheaf
+index at the root.
+-/
+lemma copresheafUnitHead (P : PolyEndo X)
+    (F : PolyCofreeCat P ⥤ Type u)
+    (obj : PolyCofreeCat P)
+    (elem : F.obj obj) :
+    (polyCoalgUnitAt P (copresheafToPolyCoalg P F)
+      obj.fiber ⟨⟨obj, elem⟩, rfl⟩).head =
+    ⟨⟨⟨obj, elem⟩, rfl⟩, obj.shape.head.2⟩ := by
+  change (polyCoalgUnitApprox P
+    (copresheafToPolyCoalg P F) 1
+    obj.fiber ⟨⟨obj, elem⟩, rfl⟩).getIndex = _
+  rw [copresheafUnitApproxEq P F obj elem 1]
+  rfl
+
+/--
+Congruence: if two annotated M-types are equal,
+extraction from their children at HEq positions
+gives equal `.val` results.
+-/
+lemma polyCofreeExtract_children_val_congr
+    (A : Over X) (P : PolyEndo X) {x : X}
+    {m1 m2 : PolyCofreeM A P x}
+    (h : m1 = m2)
+    {e1 : (polyBetweenFamily X X
+      (polyScale A P) x m1.head).left}
+    {e2 : (polyBetweenFamily X X
+      (polyScale A P) x m2.head).left}
+    (he : HEq e1 e2) :
+    (polyCofreeExtract A P
+      (m1.children e1)).val =
+    (polyCofreeExtract A P
+      (m2.children e2)).val := by
+  subst h
+  have := eq_of_heq he
+  subst this
+  rfl
+
+/--
+Extracting the child annotation from the unit
+M-type at position `e` yields the child copresheaf
+element.
+-/
+lemma copresheafUnitExtract (P : PolyEndo X)
+    (F : PolyCofreeCat P ⥤ Type u)
+    (obj : PolyCofreeCat P)
+    (elem : F.obj obj)
+    (e : (polyBetweenFamily X X P obj.fiber
+      obj.shape.head.2).left) :
+    (polyCofreeExtract
+      (copresheafCoalgCarrier P F) P
+      ((polyCoalgUnitAt P
+        (copresheafToPolyCoalg P F) obj.fiber
+        ⟨⟨obj, elem⟩, rfl⟩).children
+        e)).val =
+    ⟨polyCofreeCatChild P obj e,
+      F.map (polyCofreeCatEdge P obj e)
+        elem⟩ :=
+  (polyCofreeExtract_children_val_congr
+    (copresheafCoalgCarrier P F) P
+    (copresheafUnitMTypeEq P F obj elem)
+    HEq.rfl).trans
+    (copresheafCoalgMType_extract
+      P F obj elem e)
+
+/--
+The shape of the M-type built by `polyCoalgUnitApprox`
+from a copresheaf P-coalgebra, after stripping annotations,
+agrees with the original shape at each approximation depth.
+-/
+lemma copresheafUnitShapeApprox (P : PolyEndo X)
+    (F : PolyCofreeCat P ⥤ Type u)
+    (obj : PolyCofreeCat P)
+    (elem : F.obj obj) :
+    ∀ n, polyCofreeApproxToShape
+      (copresheafCoalgCarrier P F) P
+      (polyCoalgUnitApprox P
+        (copresheafToPolyCoalg P F) n
+        obj.fiber ⟨⟨obj, elem⟩, rfl⟩) =
+    obj.shape.approx n := by
+  intro n
+  induction n generalizing obj elem with
+  | zero =>
+    simp only [polyCoalgUnitApprox,
+      polyCofreeApproxToShape]
+    cases h : obj.shape.approx 0
+    · rfl
+  | succ n ih =>
+    simp only [polyCoalgUnitApprox,
+      polyCofreeApproxToShape]
+    rw [polyCofixApprox_succ_eq obj.shape n]
+    congr 1
+    · exact Prod.ext
+        (Subtype.ext obj.shape.head.1.property.symm)
+        rfl
+    · funext e
+      exact ih (polyCofreeCatChild P obj e)
+        (F.map (polyCofreeCatEdge P obj e) elem)
+
+/--
+The shape of the M-type built by `polyCoalgUnit`
+from a copresheaf P-coalgebra, after stripping
+annotations, equals the original shape.
+-/
+lemma copresheafUnitShapeEq (P : PolyEndo X)
+    (F : PolyCofreeCat P ⥤ Type u)
+    (obj : PolyCofreeCat P)
+    (elem : F.obj obj) :
+    polyCofreeToShape (copresheafCoalgCarrier P F)
+      P (polyCoalgUnitAt P
+        (copresheafToPolyCoalg P F)
+        obj.fiber ⟨⟨obj, elem⟩, rfl⟩) =
+    obj.shape := by
+  apply PolyCofix.ext
+  intro n
+  exact copresheafUnitShapeApprox P F obj elem n
+
+/--
+The copresheaf target of the comparison coalgebra at
+a copresheaf carrier element `⟨obj, elem⟩` recovers
+`obj` itself.
+-/
+lemma copresheafTargetSelfEq (P : PolyEndo X)
+    (F : PolyCofreeCat P ⥤ Type u)
+    (obj : PolyCofreeCat P)
+    (elem : F.obj obj) :
+    coalgCopresheafTarget
+      ((polyCoalgToComonadCoalg X P).obj
+        (copresheafToPolyCoalg P F))
+      ⟨obj, elem⟩ = obj := by
+  simp only [coalgCopresheafTarget,
+    coalgCopresheafShapeAt]
+  ext
+  · rfl
+  · exact heq_of_eq
+      (copresheafUnitShapeEq P F obj elem)
+
+/-! ### Backward-Forward Roundtrip
+
+Starting from a copresheaf `F : PolyCofreeCat P ⥤ Type u`,
+applying the backward functor (copresheaf to P-coalgebra)
+then the forward functor (comparison then copresheaf
+functor) yields a copresheaf pointwise isomorphic to `F`.
+The copresheaf value at `obj` is `coalgCopresheafObj c obj`,
+which is the subtype of `c.A.left` projecting to `obj`.
+Since `c.A.left = Σ obj', F.obj obj'` and
+`copresheafTargetSelfEq` shows the target is always `obj'`
+itself, this subtype collapses to `F.obj obj`.
+-/
+
+/--
+The forward component of the BF roundtrip isomorphism:
+sends `elem : F.obj obj` to the pair `⟨obj, elem⟩`
+together with the proof that its copresheaf target
+is `obj`.
+-/
+def copresheafBFRoundtripFwd (P : PolyEndo X)
+    (F : PolyCofreeCat P ⥤ Type u)
+    (obj : PolyCofreeCat P) :
+    F.obj obj →
+    coalgCopresheafObj
+      ((polyCoalgToComonadCoalg X P).obj
+        (copresheafToPolyCoalg P F)) obj :=
+  fun elem =>
+    ⟨⟨obj, elem⟩, copresheafTargetSelfEq P F obj elem⟩
+
+/--
+The backward component of the BF roundtrip isomorphism:
+given a subtype element `⟨⟨obj', elem'⟩, h⟩` where
+`h : coalgCopresheafTarget c ⟨obj', elem'⟩ = obj`,
+derives `obj' = obj` from `copresheafTargetSelfEq` and
+transports `elem'` along this equality.
+-/
+def copresheafBFRoundtripBwd (P : PolyEndo X)
+    (F : PolyCofreeCat P ⥤ Type u)
+    (obj : PolyCofreeCat P) :
+    coalgCopresheafObj
+      ((polyCoalgToComonadCoalg X P).obj
+        (copresheafToPolyCoalg P F)) obj →
+    F.obj obj :=
+  fun ⟨⟨obj', elem'⟩, h⟩ =>
+    let p : obj' = obj :=
+      (copresheafTargetSelfEq P F obj' elem').symm
+        |>.trans h
+    F.map (eqToHom p) elem'
+
+/--
+Forward then backward is the identity.
+-/
+lemma copresheafBFRoundtrip_fwd_bwd
+    (P : PolyEndo X)
+    (F : PolyCofreeCat P ⥤ Type u)
+    (obj : PolyCofreeCat P)
+    (elem : F.obj obj) :
+    copresheafBFRoundtripBwd P F obj
+      (copresheafBFRoundtripFwd P F obj elem) =
+    elem := by
+  simp only [copresheafBFRoundtripFwd,
+    copresheafBFRoundtripBwd,
+    eqToHom_refl, F.map_id,
+    CategoryTheory.types_id_apply]
+
+/--
+Backward then forward is the identity.
+-/
+lemma copresheafBFRoundtrip_bwd_fwd
+    (P : PolyEndo X)
+    (F : PolyCofreeCat P ⥤ Type u)
+    (obj : PolyCofreeCat P)
+    (x : coalgCopresheafObj
+      ((polyCoalgToComonadCoalg X P).obj
+        (copresheafToPolyCoalg P F)) obj) :
+    copresheafBFRoundtripFwd P F obj
+      (copresheafBFRoundtripBwd P F obj x) =
+    x := by
+  obtain ⟨⟨obj', elem'⟩, h⟩ := x
+  simp only [copresheafBFRoundtripBwd,
+    copresheafBFRoundtripFwd]
+  have p : obj' = obj :=
+    (copresheafTargetSelfEq P F obj' elem').symm
+      |>.trans h
+  subst p
+  simp only [eqToHom_refl, F.map_id,
+    CategoryTheory.types_id_apply]
+
+/--
+Naturality of the BF roundtrip forward map at
+the `.val` level: extraction from the unit M-type
+at a morphism `f` yields the copresheaf applied
+to `f`.
+-/
+lemma copresheafBF_naturality_val
+    (P : PolyEndo X)
+    (F : PolyCofreeCat P ⥤ Type u)
+    {obj₁ obj₂ : PolyCofreeCat P}
+    (f : obj₁ ⟶ obj₂)
+    (elem : F.obj obj₁) :
+    (coalgCopresheafMap
+      ((polyCoalgToComonadCoalg X P).obj
+        (copresheafToPolyCoalg P F)) f
+      (copresheafBFRoundtripFwd
+        P F obj₁ elem)).val =
+    (copresheafBFRoundtripFwd P F obj₂
+      (F.map f elem)).val := by
+  simp only [copresheafBFRoundtripFwd]
+  obtain ⟨_, _⟩ := obj₂
+  obtain ⟨fn, fp, hff, hfs⟩ := f
+  dsimp at hff hfs
+  subst hff
+  cases eq_of_heq hfs
+  let c := (polyCoalgToComonadCoalg X P).obj
+    (copresheafToPolyCoalg P F)
+  induction fn generalizing obj₁ elem with
+  | zero =>
+    cases fp
+    -- The depth-0 morphism is the identity.
+    let f₀ : obj₁ ⟶ obj₁ :=
+      ⟨0, PUnit.unit, rfl, hfs⟩
+    change (coalgCopresheafMap c f₀
+      ⟨⟨obj₁, elem⟩, _⟩).val =
+      ⟨obj₁, F.map f₀ elem⟩
+    have hf_id : f₀ = 𝟙 obj₁ := by
+      apply PolyCofreeCatHom.ext <;> rfl
+    rw [hf_id, coalgCopresheafMap_id]
+    simp only [F.map_id,
+      CategoryTheory.types_id_apply]
+  | succ fn ih =>
+    obtain ⟨e_shape, rest_fp⟩ := fp
+    let childObj :=
+      polyCofreeCatChild P obj₁ e_shape
+    let edge := polyCofreeCatEdge P obj₁ e_shape
+    let childElem := F.map edge elem
+    let tgt : PolyCofreeCat P :=
+      ⟨PolyCofreeAnnotFiberAt P obj₁.shape
+          (fn + 1) ⟨e_shape, rest_fp⟩,
+        polyCofreeSubtreeAt P obj₁.shape
+          (fn + 1) ⟨e_shape, rest_fp⟩⟩
+    let rest : childObj ⟶ tgt :=
+      ⟨fn, rest_fp, rfl, HEq.rfl⟩
+    let f₁ : obj₁ ⟶ tgt :=
+      ⟨fn + 1, ⟨e_shape, rest_fp⟩, rfl, hfs⟩
+    let ha := copresheafTargetSelfEq
+      P F obj₁ elem
+    let ha_child := copresheafTargetSelfEq
+      P F childObj childElem
+    have hf_eq : f₁ = edge ≫ rest := by
+      apply PolyCofreeCatHom.ext <;> rfl
+    have h_edge_val :
+        (coalgCopresheafMap c edge
+          ⟨⟨obj₁, elem⟩, ha⟩).val =
+        ⟨childObj, childElem⟩ :=
+      rfl
+    have h_edge_eq :
+        coalgCopresheafMap c edge
+          ⟨⟨obj₁, elem⟩, ha⟩ =
+        ⟨⟨childObj, childElem⟩, ha_child⟩ :=
+      Subtype.ext h_edge_val
+    have h_fmap :
+        F.map f₁ elem =
+        F.map rest childElem := by
+      change F.map f₁ elem =
+        F.map rest (F.map edge elem)
+      conv_lhs => rw [hf_eq]
+      exact congrFun
+        (F.map_comp edge rest) elem
+    change (coalgCopresheafMap c f₁
+      ⟨⟨obj₁, elem⟩, ha⟩).val =
+      ⟨tgt, F.map f₁ elem⟩
+    rw [h_fmap]
+    calc (coalgCopresheafMap c f₁
+            ⟨⟨obj₁, elem⟩, ha⟩).val
+        = (coalgCopresheafMap c (edge ≫ rest)
+            ⟨⟨obj₁, elem⟩, ha⟩).val := by
+          simp only [hf_eq]
+      _ = (coalgCopresheafMap c rest
+            (coalgCopresheafMap c edge
+              ⟨⟨obj₁, elem⟩, ha⟩)).val :=
+          coalgCopresheafMap_comp
+            c edge rest ⟨⟨obj₁, elem⟩, ha⟩
+      _ = (coalgCopresheafMap c rest
+            ⟨⟨childObj, childElem⟩,
+              ha_child⟩).val := by
+          rw [h_edge_eq]
+      _ = ⟨tgt,
+            F.map rest childElem⟩ :=
+          ih childElem rest_fp HEq.rfl
+
+/--
+Naturality of the backward-forward roundtrip
+forward map: given `f : obj₁ ⟶ obj₂`, applying
+`f` via the copresheaf then extracting equals
+extracting then applying `F.map f`.
+-/
+lemma copresheafBF_naturality (P : PolyEndo X)
+    (F : PolyCofreeCat P ⥤ Type u)
+    {obj₁ obj₂ : PolyCofreeCat P}
+    (f : obj₁ ⟶ obj₂)
+    (elem : F.obj obj₁) :
+    let c := (polyCoalgToComonadCoalg X P).obj
+      (copresheafToPolyCoalg P F)
+    coalgCopresheafMap c f
+      (copresheafBFRoundtripFwd P F obj₁ elem) =
+    copresheafBFRoundtripFwd P F obj₂
+      (F.map f elem) :=
+  Subtype.ext
+    (copresheafBF_naturality_val P F f elem)
+
+/--
+The backward-forward roundtrip natural
+isomorphism: `F ≅ coalgCopresheaf (Psi(F))`
+where `Psi = copresheafToComonadCoalg`.
+-/
+def copresheafBFNatIso (P : PolyEndo X)
+    (F : PolyCofreeCat P ⥤ Type u) :
+    F ≅ coalgCopresheaf
+      ((polyCoalgToComonadCoalg X P).obj
+        (copresheafToPolyCoalg P F)) :=
+  CategoryTheory.NatIso.ofComponents
+    (fun obj => {
+      hom := copresheafBFRoundtripFwd P F obj
+      inv := copresheafBFRoundtripBwd P F obj
+      hom_inv_id := by
+        ext elem
+        exact copresheafBFRoundtrip_fwd_bwd
+          P F obj elem
+      inv_hom_id := by
+        ext x
+        exact copresheafBFRoundtrip_bwd_fwd
+          P F obj x
+    })
+    (fun f => by
+      ext elem
+      exact (copresheafBF_naturality
+        P F f elem).symm)
+
+/--
+The counit of the copresheaf equivalence:
+`Psi ⋙ Phi ≅ 𝟭 _` where
+`Phi = polyCoalgToCopresheafFunctor P` and
+`Psi = copresheafToPolyCoalgFunctor P`.
+The naturality in `F` holds because the forward
+map `copresheafBFRoundtripFwd` acts independently
+of the coalgebra structure.
+-/
+def polyCoalgCopresheafCounit (P : PolyEndo X) :
+    copresheafToPolyCoalgFunctor P ⋙
+      polyCoalgToCopresheafFunctor P ≅
+    𝟭 (PolyCofreeCat P ⥤ Type u) :=
+  CategoryTheory.NatIso.ofComponents
+    (fun F => (copresheafBFNatIso P F).symm)
+    (fun {F G} η => by
+      ext obj ⟨⟨obj', elem'⟩, h⟩
+      subst h
+      simp only [CategoryTheory.Iso.symm_hom,
+        CategoryTheory.NatIso.ofComponents_inv_app,
+        CategoryTheory.Functor.id_map,
+        CategoryTheory.FunctorToTypes.comp,
+        copresheafBFNatIso]
+      simp only [copresheafBFRoundtripBwd]
+      dsimp [polyCoalgToCopresheafFunctor,
+        copresheafToPolyCoalgFunctor,
+        CategoryTheory.Functor.comp_map,
+        coalgCopresheafFunctor,
+        coalgCopresheafFunctor_natTrans,
+        coalgCopresheafFunctor_app,
+        copresheafNatTransHom,
+        copresheafNatTransMor]
+      exact (congrFun
+        (η.naturality (eqToHom _)) elem').symm)
+
+/--
+The unit of the copresheaf equivalence:
+`𝟭 (PolyCoalg P) ≅ Phi ⋙ Psi` where
+`Phi = polyCoalgToCopresheafFunctor P` and
+`Psi = copresheafToPolyCoalgFunctor P`.
+-/
+def polyCoalgCopresheafUnit (P : PolyEndo X) :
+    𝟭 (PolyCoalg P) ≅
+    polyCoalgToCopresheafFunctor P ⋙
+      copresheafToPolyCoalgFunctor P :=
+  CategoryTheory.NatIso.ofComponents
+    (fun α => roundtripFBCoalgIso P α)
+    (fun {α β} f => by
+      apply Endofunctor.Coalgebra.Hom.ext
+      apply Over.OverMorphism.ext
+      funext a
+      dsimp [roundtripFBCoalgIso,
+        roundtripFBCoalgHomFwd,
+        roundtripFBCarrierMorFwd,
+        roundtripFBCarrierFwd,
+        copresheafToPolyCoalgFunctor,
+        polyCoalgToCopresheafFunctor,
+        copresheafNatTransHom,
+        copresheafNatTransMor,
+        coalgCopresheafFunctor,
+        coalgCopresheafFunctor_natTrans,
+        coalgCopresheafFunctor_app]
+      have h_tgt := coalgMorphism_target_eq
+        ((polyCoalgToComonadCoalg X P).map f)
+        a
+      have h_tgt' :
+          coalgCopresheafTarget
+            ((polyCoalgToComonadCoalg X P).obj β)
+            (f.f.left a) =
+          coalgCopresheafTarget
+            ((polyCoalgToComonadCoalg X P).obj α)
+            a := by
+        convert h_tgt using 2
+      have key : ∀ (t : PolyCofreeCat P)
+          (p : coalgCopresheafTarget
+            ((polyCoalgToComonadCoalg X P).obj β)
+            (f.f.left a) = t),
+          (⟨coalgCopresheafTarget
+              ((polyCoalgToComonadCoalg X P).obj β)
+              (f.f.left a),
+            ⟨f.f.left a, rfl⟩⟩ :
+            Σ obj, coalgCopresheafObj
+              ((polyCoalgToComonadCoalg X P).obj β)
+              obj) =
+          ⟨t, ⟨f.f.left a, p⟩⟩ := by
+        intro t p; subst p; rfl
+      exact key _ h_tgt')
+
+/--
+The category of P-coalgebras is equivalent to the
+copresheaf topos on the cofree category of P.
+-/
+def polyCoalgCopresheafEquiv (P : PolyEndo X) :
+    PolyCoalg P ≌ (PolyCofreeCat P ⥤ Type u) :=
+  CategoryTheory.Equivalence.mk
+    (polyCoalgToCopresheafFunctor P)
+    (copresheafToPolyCoalgFunctor P)
+    (polyCoalgCopresheafUnit P)
+    (polyCoalgCopresheafCounit P)
 
 end GebLean

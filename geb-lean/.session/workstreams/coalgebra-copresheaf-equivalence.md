@@ -2,7 +2,7 @@
 
 ## Status
 
-Active
+Complete
 
 ## Context
 
@@ -85,13 +85,15 @@ detailed mathematical findings from the literature.
       natural transformation from coalg morphism
 - [x] `coalgCopresheafFunctor` : functorial in c
 
-### Phase 3: Comonad-Coalg ≌ Copresheaves
+### Phase 3: Roundtrip Isomorphisms
 
-- [ ] `comonadCoalgToCopresheaf` (Phi)
-- [ ] `copresheafToComonadCoalg` (Psi)
-- [ ] Roundtrip isomorphisms
-- [ ] `comonadCoalgCopresheafEquiv`
+- [x] `polyCoalgToCopresheafFunctor` (Phi)
+- [x] `copresheafToPolyCoalgFunctor` (Psi)
+- [x] FB roundtrip: `roundtripFBCoalgIso`
+- [x] BF roundtrip: `copresheafBFNatIso`
+- [x] `polyCoalgCopresheafUnit` (unit NatIso)
+- [x] `polyCoalgCopresheafCounit` (counit NatIso)
 
-### Phase 4: Compose
+### Phase 4: Equivalence
 
-- [ ] `polyCoalgCopresheafEquiv`
+- [x] `polyCoalgCopresheafEquiv`
