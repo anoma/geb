@@ -348,6 +348,39 @@ Step 4 is the only step requiring finitariness. Without it,
 the chain stops: we have reflexive coequalizers but not
 filtered colimits, and Linton's theorem cannot be applied.
 
+#### Finitariness of the free monad (finitary only)
+
+Step 3 above asserts that the free monad on a finitary
+functor is itself finitary. This is a general fact: if
+`F` preserves filtered colimits, then the free monad
+`T_F` on `F` also preserves filtered colimits.
+
+The argument: `T_F` is the colimit of the iteration chain
+`Id → Id + F → Id + F + F² → ...` in the functor category.
+Each finite iterate `Id + F + ... + F^n` preserves filtered
+colimits (since `F` does, and composition and finite
+coproducts of filtered-colimit-preserving functors are
+filtered-colimit-preserving). The colimit of the chain is
+a filtered colimit (indexed by ℕ), and filtered colimits
+commute with filtered colimits. So `T_F` preserves
+filtered colimits.
+
+Mathlib provides:
+
+- `comp_preservesFilteredColimits`: composition of
+  filtered-colimit-preserving functors preserves filtered
+  colimits
+- `PreservesFilteredColimitsOfSize`: the typeclass for
+  filtered colimit preservation
+
+The main work for proving this in our setting is showing
+that `polyFreeMonad X P` (as a monad on `Over X`) preserves
+filtered colimits when `P` satisfies `PolyEndoFinitary P`.
+This can be done either by the iteration argument above
+or by showing that the underlying functor of the monad
+agrees with the filtered colimit of the iteration chain
+and applying the preservation results.
+
 ### A: Mathlib Infrastructure
 
 - `Mathlib.CategoryTheory.Limits.Shapes.Reflexive`:
@@ -374,6 +407,129 @@ colimits (finite products commute with filtered colimits).
 for any `alpha : PolyAlg P`, there is a reflexive coequalizer
 diagram `F(F(U(alpha))) => F(U(alpha)) -> alpha` in
 `PolyAlg P`. (This does not require finitariness.)
+
+**A3. Finitary free monad.** Prove that if
+`PolyEndoFinitary P`, then `polyFreeMonad X P` (viewed as a
+functor on `Over X`) preserves filtered colimits. This is
+step 3 in the colimit derivation chain and a reusable result
+for any construction that needs the free monad to be
+finitary.
+
+---
+
+## H. Connected Limit Preservation
+
+### H: References
+
+- Carboni, Lack, and Walters, "Introduction to extensive
+  and distributive categories" (JPAA 1993)
+- [nLab: connected limit](https://ncatlab.org/nlab/show/connected+limit)
+- [nLab: extensive category](https://ncatlab.org/nlab/show/extensive+category)
+
+### H: Mathematical Background
+
+A *connected limit* is a limit indexed by a connected
+category (nonempty, and every pair of objects is joined by
+a zigzag of morphisms). Examples:
+
+- Equalizers (indexed by `WalkingParallelPair`)
+- Pullbacks and wide pullbacks
+  (indexed by `WidePullbackShape`)
+- Kernel pairs
+
+Connected limits exclude:
+
+- Terminal objects (empty indexing category)
+- Binary products (discrete 2-element indexing category)
+
+#### Products preserve connected limits (all functors)
+
+In any category, the product functor `(X × -)` preserves
+all connected limits. This holds without any hypothesis on
+the category or the functor.
+
+#### Coproducts preserve connected limits (extensive)
+
+In a finitary extensive category (one where finite
+coproducts are van Kampen colimits — `Type u` is the
+primary example), coproducts commute with connected limits.
+That is, if `f_i : J → C` is a family of diagrams indexed
+by `i : I` and `J` is connected, then
+`lim_j (Sigma_i f_i(j)) ≅ Sigma_i (lim_j f_i(j))`.
+
+#### Polynomial functors preserve connected limits
+
+**Theorem.** Every polynomial functor on a slice of `Type u`
+preserves connected limits. No finitariness hypothesis is
+needed.
+
+**Proof sketch.** A polynomial functor
+`P(A)_y = Sigma_{b : t^{-1}(y)} Pi_{e : pi^{-1}(b)} A_{s(e)}`
+is composed of:
+
+1. The product `Pi_{e : pi^{-1}(b)} A_{s(e)}` — a limit
+   of representables, hence preserves all limits (including
+   connected ones).
+2. The coproduct `Sigma_{b : t^{-1}(y)}` — preserves
+   connected limits because `Type u` is finitary extensive.
+
+The composition preserves connected limits.
+
+#### Consequences for our setting
+
+Since all polynomial endofunctors preserve connected
+limits, they preserve in particular:
+
+| Shape | Connected? | Preserved? |
+| - | - | - |
+| Equalizers | Y | Y |
+| Pullbacks | Y | Y |
+| Weak pullbacks | Y | Y |
+| Wide pullbacks | Y | Y |
+| Terminal object | N | Not in general |
+| Binary products | N | Not in general |
+
+The weak pullback preservation is directly relevant to
+the distributive law framework (section C): Turi-Plotkin's
+full abstraction result (Corollary 7.4) requires the
+behavior functor to preserve weak pullbacks. For
+polynomial behavior functors, this holds automatically.
+
+### H: Mathlib Infrastructure
+
+- `Mathlib.CategoryTheory.IsConnected`:
+  `IsConnected`, `IsPreconnected`
+- `Mathlib.CategoryTheory.Limits.Connected`:
+  `prod_preservesConnectedLimits`
+- `Mathlib.CategoryTheory.Limits.Shapes.Connected`:
+  `widePullbackShape_connected`,
+  `parallel_pair_connected`
+- `Mathlib.CategoryTheory.Limits.Constructions.Over.Connected`:
+  `preservesLimitsOfShape_forget_of_isConnected`
+  (Over category forgetful functor preserves connected
+  limits)
+- `Mathlib.CategoryTheory.Extensive`:
+  `FinitaryExtensive` (Type is an instance)
+- `Mathlib.CategoryTheory.Limits.VanKampen`:
+  `IsVanKampenColimit` (coproducts commute with
+  connected limits in extensive categories)
+- `Mathlib.CategoryTheory.Limits.Preserves.Filtered`:
+  `PreservesLimitsOfShape J F` with `[IsConnected J]`
+  (no standalone `PreservesConnectedLimits` typeclass;
+  expressed via shape-indexed preservation)
+
+### H: Proposals
+
+**H0. Polynomial functors preserve connected limits.**
+Prove `PreservesLimitsOfShape J (polyEndoFunctor P)` for
+any `[IsConnected J]`, using the extensive property of
+`Type u` and the product/coproduct decomposition. This
+requires no finitariness hypothesis.
+
+**H1. Weak pullback preservation corollary.** Instantiate
+H0 for `WidePullbackShape` to get pullback preservation,
+and derive the weak pullback preservation needed by the
+Turi-Plotkin results in section C.
 
 ---
 
@@ -699,6 +855,8 @@ relationship to the copresheaf topos.
 - [nLab: terminal coalgebra for an endofunctor](https://ncatlab.org/nlab/show/terminal+coalgebra+for+an+endofunctor)
 - [1Lab: Adamek's fixpoint theorem](https://1lab.dev/Cat.Functor.Algebra.html#ad%C3%A1meks-fixpoint-theorem)
   (Agda/Cubical formalization)
+- [nLab: connected limit](https://ncatlab.org/nlab/show/connected+limit)
+- [nLab: extensive category](https://ncatlab.org/nlab/show/extensive+category)
 - [nLab: colimits in categories of algebras](https://ncatlab.org/nlab/show/colimits+in+categories+of+algebras)
 - [nLab: reflexive coequalizer](https://ncatlab.org/nlab/show/reflexive+coequalizer)
 - [nLab: sifted colimit](https://ncatlab.org/nlab/show/sifted+colimit)
@@ -706,6 +864,8 @@ relationship to the copresheaf topos.
 - [nLab: polynomial monad](https://ncatlab.org/nlab/show/polynomial+monad)
 - Adamek, "Free algebras and automata realizations in the
   language of categories and functors" (CMJ 1974)
+- Carboni, Lack, and Walters, "Introduction to extensive
+  and distributive categories" (JPAA 1993)
 - Borceux, *Handbook of Categorical Algebra* Vol. 2
 - Barr and Wells, *Toposes, Triples, and Theories*
 - Adamek and Rosicky, *Locally Presentable and Accessible
@@ -723,6 +883,19 @@ relationship to the copresheaf topos.
   `IsFiltered.exists_directed` (Deligne construction)
 - `Mathlib.CategoryTheory.Limits.Preserves.Filtered` --
   `PreservesFilteredColimitsOfSize`
+- `Mathlib.CategoryTheory.IsConnected` --
+  `IsConnected`, `IsPreconnected`
+- `Mathlib.CategoryTheory.Limits.Connected` --
+  `prod_preservesConnectedLimits`
+- `Mathlib.CategoryTheory.Limits.Shapes.Connected` --
+  `widePullbackShape_connected`,
+  `parallel_pair_connected`
+- `Mathlib.CategoryTheory.Limits.Constructions.Over.Connected`
+  -- `preservesLimitsOfShape_forget_of_isConnected`
+- `Mathlib.CategoryTheory.Extensive` --
+  `FinitaryExtensive`
+- `Mathlib.CategoryTheory.Limits.VanKampen` --
+  `IsVanKampenColimit`
 - `Mathlib.CategoryTheory.Monad.Basic` -- Monad, Comonad
 - `Mathlib.CategoryTheory.Monad.Algebra` -- Monad.Algebra,
   Comonad.Coalgebra

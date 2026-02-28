@@ -29,6 +29,9 @@ usefulness (Use).
 | A0 | Finitariness predicate for polynomials | 1 | 4 |
 | A1 | `HasColimitsOfSize (PolyAlg P)` (finitary) | 3 | 5 |
 | A2 | Beck coequalizer for PolyAlg | 1 | 3 |
+| A3 | Finitary free monad preservation | 3 | 5 |
+| H0 | Poly functors preserve connected limits | 3 | 5 |
+| H1 | Weak pullback preservation corollary | 1 | 4 |
 | B1 | Copresheaves as unary algebra variety | 3 | 4 |
 | B2 | Fiber decomposition over terminal coalgebra | 2 | 2 |
 | C1 | Distributive law structure (monad/comonad) | 2 | 5 |
@@ -72,11 +75,21 @@ the (co)limit picture for finitary polynomial algebras.
 - [ ] A2: Instantiate Beck coequalizer (`beckAlgebraCoequalizer`)
   for `polyFreeMonad X P` to show every P-algebra is a reflexive
   coequalizer of free P-algebras (no finitariness needed)
+- [ ] A3: Prove that `polyFreeMonad X P` preserves filtered
+  colimits when `PolyEndoFinitary P` holds (the free monad
+  on a finitary functor is finitary)
 - [ ] A1: Prove `HasColimitsOfSize.{u, u} (PolyAlg P)` under the
   hypothesis `[PolyEndoFinitary P]`, by showing a finitary
   polynomial endofunctor preserves filtered colimits (finite
   products commute with filtered colimits), then applying
   Linton's theorem via the monad equivalence
+- [ ] H0: Prove `PreservesLimitsOfShape J (polyEndoFunctor P)`
+  for any `[IsConnected J]` (polynomial functors preserve
+  connected limits; no finitariness needed). Uses extensive
+  property of `Type u` and product/coproduct decomposition.
+- [ ] H1: Instantiate H0 for pullbacks/wide pullbacks and
+  derive weak pullback preservation (needed by Turi-Plotkin
+  results in Phase 2/3)
 
 ### Phase 2: Distributive Law Framework
 
