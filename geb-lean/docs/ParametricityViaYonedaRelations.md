@@ -21,6 +21,10 @@ parametricity that:
   `https://reasonablypolymorphic.com/blog/theorems-for-free/`
 - Neumann, "Paranatural Category Theory" and TYPES 2024 talk --
   `docs/updates-on-paranatural-category-theory-*.pdf`
+- nLab, "Rel: Relations and spans" --
+  `https://ncatlab.org/nlab/show/Rel#relations_and_spans`
+- nLab, "Rel: In the double category of relations" --
+  `https://ncatlab.org/nlab/show/Rel#in_the_double_category_of_relations`
 - Codebase: `GebLean/ParamPoly.lean`,
   `GebLean/ParanaturalTopos.lean` (ParametricityDivergence
   section), `GebLean/YonedaRelDouble.lean`
@@ -96,6 +100,29 @@ reason: each span decomposes into two independent `DiagCompat`
 conditions sharing a common witness, and paranaturality handles
 each leg separately. There is no cross-leg interaction in the
 span-based formulation.
+
+### Relations and spans
+
+There is a pseudofunctor `|-| : Span -> Rel` that sends a
+span `X <- S -> Y` to its image relation in `X x Y`.
+Concretely, a relation from `X` to `Y` is a subobject of
+the terminal span `X <- X x Y -> Y`, and the pseudofunctor
+extracts this subobject from any span. This pseudofunctor
+preserves composition: `|R x_B S| = |R| . |S|`.
+
+Our formalization works with both categories: spans (via
+`PshProdOver`, which is a morphism into a product presheaf)
+and relations (via `PshRel` = `Subfunctor`, which is a
+sub-presheaf of the product). The projection
+`pshProdOverToRel` from `PshProdOver` to `PshRel` is the
+presheaf-level analogue of the pseudofunctor `|-|`.
+
+The span-based `IsParamPoly` quantifies over all spans
+`(R, pi_1, pi_2)`, while the relational parametricity
+condition quantifies over all relations (= subfunctors of
+the product). The pseudofunctor connecting these two
+categories may give a route to relating the span-based and
+relation-based formulations more precisely.
 
 ### Where paranaturality is correct
 
@@ -212,6 +239,35 @@ such that `phi >> S.hom = R.hom >> yonedaProdMap f f'`.
 The Yoneda relation double category thus provides a
 categorical generalization of the "relations and commuting
 squares" structure that underlies Reynolds parametricity.
+
+### Limits and colimits in the double category
+
+The bicategory Rel has limited (co)limit structure, but
+when embedded in the double category RRel (with sets as
+objects, functions as horizontal morphisms, relations as
+vertical morphisms, and commuting squares as 2-cells), the
+double category has all double limits and colimits. In
+particular:
+
+- The cartesian product `a x b : X x Y -> X' x Y'`
+  serves as a product in the double category.
+- The disjoint sum `a + b : X + Y -> X' + Y'` serves as
+  a coproduct in the double category.
+
+This is an instance of a general phenomenon: bicategories
+of spans, cospans, relations, and profunctors may have
+limited (co)limits, but their embeddings in double
+categories (with the same objects, strict morphisms, same
+loose morphisms, and suitable double cells) can have all
+limits and colimits.
+
+Our presheaf relation double category (`PshRelDouble`)
+is the presheaf-level analogue of RRel. The existence
+of double categorical (co)limits may be relevant for
+constructing parametric functors, since the relational
+interpretation of type constructors (products, coproducts,
+function spaces) may correspond to (co)limit constructions
+in the double category.
 
 ## Toward a definition of parametricity
 
