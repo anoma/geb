@@ -9890,6 +9890,40 @@ def polyAlgBeckCoequalizer
     IsColimit (Monad.beckAlgebraCofork α) :=
   Monad.beckAlgebraCoequalizer α
 
+/--
+Variant of `polyAlgBeckSplitCoequalizer` taking an
+endofunctor algebra `α : PolyAlg P` instead of a monad
+algebra.  Transfers `α` across `polyAlgMonadEquiv` to
+obtain the monad algebra, then applies the Beck split
+coequalizer.
+-/
+def polyAlgBeckSplitCoequalizerOfAlg
+    (P : PolyEndo X)
+    (α : PolyAlg P) :
+    let mα := (polyAlgMonadEquiv X P).functor.obj α
+    IsSplitCoequalizer
+      ((polyFreeMonad X P).toFunctor.map mα.a)
+      ((polyFreeMonad X P).μ.app mα.A)
+      mα.a :=
+  polyAlgBeckSplitCoequalizer X P
+    ((polyAlgMonadEquiv X P).functor.obj α)
+
+/--
+Variant of `polyAlgBeckCoequalizer` taking an
+endofunctor algebra `α : PolyAlg P` instead of a monad
+algebra.  Transfers `α` across `polyAlgMonadEquiv` to
+obtain the monad algebra, then applies the Beck algebra
+coequalizer.
+-/
+def polyAlgBeckCoequalizerOfAlg
+    (P : PolyEndo X)
+    (α : PolyAlg P) :
+    IsColimit
+      (Monad.beckAlgebraCofork
+        ((polyAlgMonadEquiv X P).functor.obj α)) :=
+  polyAlgBeckCoequalizer X P
+    ((polyAlgMonadEquiv X P).functor.obj α)
+
 end BeckCoequalizer
 
 end GebLean
