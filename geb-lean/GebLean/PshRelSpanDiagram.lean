@@ -231,6 +231,24 @@ def pshRelSpanGraphSpanEquiv :
     eqToIso
       graphSpan_pshRelSpan_comp_eq_id
 
+/-- Isomorphism in `Cat` between
+`PshRelSpanObj C` and
+`GraphSpanObj (Cᵒᵖ ⥤ Type w) PshRel`.
+Upgraded from the equivalence via
+`Cat.isoOfEquiv`. -/
+def pshRelSpanGraphSpanIso :
+    Cat.of (PshRelSpanObj.{u, v, w} C) ≅
+    Cat.of
+      (GraphSpanObj (Cᵒᵖ ⥤ Type w)
+        PshRel) :=
+  Cat.isoOfEquiv pshRelSpanGraphSpanEquiv
+    (fun X => by cases X <;> rfl)
+    (fun Y => by cases Y <;> rfl)
+    (fun X => eqToHom_app
+      pshRelSpan_graphSpan_comp_eq_id.symm X)
+    (fun Y => eqToHom_app
+      graphSpan_pshRelSpan_comp_eq_id Y)
+
 end PshRelSpanGraphSpanEquiv
 
 /-- Functors from `PshRelSpanObj C` to an

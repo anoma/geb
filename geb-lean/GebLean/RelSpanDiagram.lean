@@ -206,6 +206,21 @@ def relSpanGraphSpanEquiv :
   counitIso :=
     eqToIso graphSpan_relSpan_comp_eq_id
 
+/-- Isomorphism in `Cat` between `RelSpanObj`
+and `GraphSpanObj Type relSpanEdge`.  Upgraded
+from the equivalence via `Cat.isoOfEquiv`. -/
+def relSpanGraphSpanIso :
+    Cat.of RelSpanObj ≅
+    Cat.of
+      (GraphSpanObj Type relSpanEdge) :=
+  Cat.isoOfEquiv relSpanGraphSpanEquiv
+    (fun X => by cases X <;> rfl)
+    (fun Y => by cases Y <;> rfl)
+    (fun X => eqToHom_app
+      relSpan_graphSpan_comp_eq_id.symm X)
+    (fun Y => eqToHom_app
+      graphSpan_relSpan_comp_eq_id Y)
+
 end RelSpanGraphSpanEquiv
 
 /-- Index type for relation-nodes: a triple
