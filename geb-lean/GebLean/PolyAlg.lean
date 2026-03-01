@@ -10470,12 +10470,12 @@ lemma polyCofixCone_uniq
     at hmn
   rw [← hb_def] at hmn
   simp only at hmn
-  have key : polyCofixApproxToCoiterFiber X P n
+  have comm : polyCofixApproxToCoiterFiber X P n
       (s.pt.hom a) (mx.approx n) =
       coneFiberAt X s n a :=
     Subtype.ext hmn
   rw [← polyCofixApproxToCoiterFiber_inv
-    X P n (s.pt.hom a) (mx.approx n), key]
+    X P n (s.pt.hom a) (mx.approx n), comm]
 
 /--
 The cone over the coiteration chain with apex
