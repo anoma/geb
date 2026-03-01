@@ -783,9 +783,13 @@ theorem pshSieveCharMap_uniq
     rw [← hnat, ← hu]
     exact hcomm
 
-instance PshClassifier :
-    HasClassifier (Cᵒᵖ ⥤ Type (max u v)) :=
-  ⟨⟨Classifier.mkOfTerminalΩ₀
+/-- The subobject classifier data for the presheaf
+category `Cᵒᵖ ⥤ Type (max u v)`: the sieve functor
+as `Ω`, the maximal-sieve map as `truth`, and the
+sieve characteristic map as `χ`. -/
+def pshClassifierData :
+    Classifier (Cᵒᵖ ⥤ Type (max u v)) :=
+  Classifier.mkOfTerminalΩ₀
     (pshTerminal C)
     (pshTerminalIsTerminal C)
     (pshSieveFunctor C)
@@ -796,9 +800,66 @@ instance PshClassifier :
     (uniq :=
       fun m _ χ' hpb =>
         pshSieveCharMap_uniq m χ' hpb)
-  ⟩⟩
+
+instance PshClassifier :
+    HasClassifier (Cᵒᵖ ⥤ Type (max u v)) :=
+  ⟨⟨pshClassifierData⟩⟩
 
 end PshClassifier
+
+section CoPshClassifier
+
+open Limits Opposite
+
+variable (C : Type u) [Category.{v} C]
+
+/-- Precomposition with `opOp C`, mapping functors
+on `Cᵒᵖᵒᵖ` to functors on `C`. -/
+private abbrev coPshΦ :=
+  (Functor.whiskeringLeft C Cᵒᵖᵒᵖ
+    (Type (max u v))).obj (opOp C)
+
+/-- Precomposition with `unopUnop C`, mapping
+functors on `C` to functors on `Cᵒᵖᵒᵖ`. -/
+private abbrev coPshΨ :=
+  (Functor.whiskeringLeft Cᵒᵖᵒᵖ C
+    (Type (max u v))).obj (unopUnop C)
+
+private def coPshClassifierData :
+    Classifier (C ⥤ Type (max u v)) :=
+  let c := pshClassifierData (C := Cᵒᵖ)
+  let Φ := coPshΦ C
+  let Ψ := coPshΨ C
+  Classifier.mkOfTerminalΩ₀
+    (Φ.obj c.Ω₀)
+    (@IsTerminal.ofUnique _ _ (Φ.obj c.Ω₀)
+      (fun P => {
+        default :=
+          { app := fun _ _ => PUnit.unit }
+        uniq := fun f => by
+          ext d x
+          change PUnit.unit = f.app d x
+          exact (PUnit.eq_punit _).symm }))
+    (Φ.obj c.Ω)
+    (Φ.map c.truth)
+    (χ := fun m _ => Φ.map (c.χ (Ψ.map m)))
+    (isPullback := fun m _ =>
+      (c.isPullback (Ψ.map m)).map Φ)
+    (uniq := fun m _ χ' hpb => by
+      conv_lhs => rw [show χ' = Φ.map (Ψ.map χ')
+        from rfl]
+      exact congrArg Φ.map
+        (c.uniq (Ψ.map m) (hpb.map Ψ)))
+
+/-- The subobject classifier for the copresheaf
+category `C ⥤ Type (max u v)`, transferred from
+`PshClassifier` on `Cᵒᵖ` via precomposition with the
+double-opposite equivalence `opOp C : C ⥤ Cᵒᵖᵒᵖ`. -/
+instance CoPshClassifier :
+    HasClassifier (C ⥤ Type (max u v)) :=
+  ⟨⟨coPshClassifierData C⟩⟩
+
+end CoPshClassifier
 
 section CoyonedaIso
 
