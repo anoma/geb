@@ -1063,6 +1063,21 @@ def universalSemantics
   (initialBialgebra_isInitial law hX₀).to
     (finalBialgebra law hX₁)
 
+def universalSemantics'
+    {X₀ : C} (hX₀ : IsInitial X₀)
+    {X₁ : C} (hX₁ : IsTerminal X₁) :
+    initialBialgebra law hX₀ ⟶
+    finalBialgebra law hX₁ :=
+  (finalBialgebra_isTerminal law hX₁).from
+    (initialBialgebra law hX₀)
+
+theorem universalSemantics_eq
+    {X₀ : C} (hX₀ : IsInitial X₀)
+    {X₁ : C} (hX₁ : IsTerminal X₁) :
+    universalSemantics law hX₀ hX₁ =
+    universalSemantics' law hX₀ hX₁ :=
+  (initialBialgebra_isInitial law hX₀).hom_ext _ _
+
 end InitialFinal
 
 end FreeCofree
