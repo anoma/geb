@@ -115,6 +115,14 @@ laws and bialgebras (not specific to polynomial functors).
   includes `LambdaBialgebra` structure, `Hom` with `@[ext]`,
   `Category` instance, forgetful functor to `C` (faithful),
   and conversions to `T.Algebra`/`D.Coalgebra`.
+  Also: `liftedComonad : Comonad T.Algebra` (lifting D
+  through the distributive law) and
+  `liftedMonad : Monad D.Coalgebra` (lifting T through the
+  distributive law), with all endofunctor, unit/counit, and
+  multiplication/comultiplication components.
+  Category equivalence
+  `lambdaBialgebraEquivLiftedComonadCoalgebra :
+  LambdaBialgebra law ≌ (liftedComonad law).Coalgebra`.
   In `GebLean/Utilities/LambdaBialgebra.lean`.
 - [ ] C2a: Construct initial object (operational model) and
   final object (denotational model) of the lambda-bialgebra
