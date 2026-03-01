@@ -9977,6 +9977,524 @@ def polyIterCocone (P : PolyEndo X) :
 
 end IterationChain
 
+/-! ## Terminal Coalgebra as Coiteration Chain Limit
+
+The terminal coalgebra `polyCofixCoalg P` is the limit
+of the coiteration chain `polyCoiterChain P : ℕᵒᵖ ⥤ Over X`.
+
+The bridge is fiber equivalences between
+`PolyCofixApprox P n x` and the fibers of
+`polyCoiterObj P n` at `x`.
+-/
+
+section CoiterationLimit
+
+variable (X : Type u)
+
+/--
+Convert an approximation at depth `n` to an element
+in the fiber of `polyCoiterObj X P n` at `x`.
+
+At depth 0, the fiber of the terminal object at `x`
+is the singleton `⟨x, rfl⟩`. At depth `n + 1`, the
+index and recursively-converted children assemble
+into a fiber of `P^{n+1}(⊤)`.
+-/
+def polyCofixApproxToCoiterFiber (P : PolyEndo X)
+    (n : ℕ) (x : X)
+    (a : PolyCofixApprox P n x) :
+    { p : (polyCoiterObj X P n).left //
+      (polyCoiterObj X P n).hom p = x } :=
+  match n with
+  | 0 => ⟨x, rfl⟩
+  | n + 1 =>
+    let i := a.getIndex
+    let ch := a.getChildren
+    let childMor :
+        polyBetweenFamily X X P x i ⟶
+        polyCoiterObj X P n :=
+      Over.homMk
+        (fun e =>
+          (polyCofixApproxToCoiterFiber P n
+            ((polyBetweenFamily X X P x i).hom e)
+            (ch e)).val)
+        (funext fun e =>
+          (polyCofixApproxToCoiterFiber P n
+            ((polyBetweenFamily X X P x i).hom e)
+            (ch e)).property)
+    ⟨⟨x, ⟨i, childMor⟩⟩, rfl⟩
+
+/--
+Convert an element in the fiber of `polyCoiterObj X P n`
+at `x` to an approximation at depth `n`.
+
+Inverse of `polyCofixApproxToCoiterFiber`.
+-/
+def polyCoiterFiberToApprox (P : PolyEndo X)
+    (n : ℕ) (x : X)
+    (p : { q : (polyCoiterObj X P n).left //
+      (polyCoiterObj X P n).hom q = x }) :
+    PolyCofixApprox P n x :=
+  match n with
+  | 0 => .continue x
+  | n + 1 =>
+    let elem : polyBetweenEvalFamily X X P
+        (polyCoiterObj X P n)
+        ((polyCoiterObj X P (n + 1)).hom p.val) :=
+      p.val.2
+    let i : polyBetweenIndex X X P
+        ((polyCoiterObj X P (n + 1)).hom p.val) :=
+      elem.1
+    let childMor :
+        polyBetweenFamily X X P
+          ((polyCoiterObj X P (n + 1)).hom p.val) i ⟶
+        polyCoiterObj X P n :=
+      elem.2
+    p.property ▸ .intro
+      ((polyCoiterObj X P (n + 1)).hom p.val)
+      i
+      (fun e =>
+        polyCoiterFiberToApprox P n
+          ((polyBetweenFamily X X P
+            ((polyCoiterObj X P (n + 1)).hom p.val)
+            i).hom e)
+          ⟨childMor.left e, congrFun (Over.w childMor) e⟩)
+
+/--
+Characterization of `polyCoiterFiberToApprox` at depth
+`n + 1` when the fiber element has the form `⟨⟨x, ef⟩, rfl⟩`.
+-/
+lemma polyCoiterFiberToApprox_succ
+    (P : PolyEndo X)
+    (n : ℕ) (x : X)
+    (ef : polyBetweenEvalFamily X X P
+      (polyCoiterObj X P n) x) :
+    polyCoiterFiberToApprox X P (n + 1) x
+      ⟨⟨x, ef⟩, rfl⟩ =
+    .intro x ef.1 (fun e =>
+      polyCoiterFiberToApprox X P n
+        ((polyBetweenFamily X X P x ef.1).hom e)
+        ⟨ef.2.left e,
+         congrFun (Over.w ef.2) e⟩) := by
+  rfl
+
+/--
+Variant of `polyCoiterFiberToApprox_succ` with the
+sigma unpacked to index and child morphism.
+-/
+lemma polyCoiterFiberToApprox_succ'
+    (P : PolyEndo X)
+    (n : ℕ) (x : X)
+    (i : polyBetweenIndex X X P x)
+    (h : polyBetweenFamily X X P x i ⟶
+      polyCoiterObj X P n) :
+    polyCoiterFiberToApprox X P (n + 1) x
+      ⟨⟨x, ⟨i, h⟩⟩, rfl⟩ =
+    .intro x i (fun e =>
+      polyCoiterFiberToApprox X P n
+        ((polyBetweenFamily X X P x i).hom e)
+        ⟨h.left e, congrFun (Over.w h) e⟩) := by
+  rfl
+
+/--
+Roundtrip: converting an approximation to a fiber
+and back yields the original approximation.
+-/
+lemma polyCofixApproxToCoiterFiber_inv
+    (P : PolyEndo X)
+    (n : ℕ) (x : X)
+    (a : PolyCofixApprox P n x) :
+    polyCoiterFiberToApprox X P n x
+      (polyCofixApproxToCoiterFiber X P n x a) = a :=
+  match n, a with
+  | 0, .continue _ => rfl
+  | n + 1, .intro _ i children => by
+    simp only [polyCofixApproxToCoiterFiber,
+      PolyCofixApprox.getIndex,
+      PolyCofixApprox.getChildren]
+    rw [polyCoiterFiberToApprox_succ']
+    congr 1
+    funext e
+    simp only [Over.homMk_left]
+    let y := (polyBetweenFamily X X P x i).hom e
+    let fwd :=
+      polyCofixApproxToCoiterFiber X P n y
+        (children e)
+    change polyCoiterFiberToApprox X P n y
+      ⟨fwd.val, _⟩ = children e
+    calc polyCoiterFiberToApprox X P n y
+          ⟨fwd.val, _⟩
+      _ = polyCoiterFiberToApprox X P n y fwd :=
+        congrArg _ (Subtype.ext rfl)
+      _ = children e :=
+        polyCofixApproxToCoiterFiber_inv P n y
+          (children e)
+
+/--
+Roundtrip: converting a fiber element to an
+approximation and back yields the original fiber.
+-/
+lemma polyCoiterFiberToApprox_inv
+    (P : PolyEndo X)
+    (n : ℕ) (x : X)
+    (p : { q : (polyCoiterObj X P n).left //
+      (polyCoiterObj X P n).hom q = x }) :
+    polyCofixApproxToCoiterFiber X P n x
+      (polyCoiterFiberToApprox X P n x p) = p :=
+  match n with
+  | 0 => Subtype.ext (p.property.symm)
+  | n + 1 => by
+    obtain ⟨⟨x', ⟨i, childMor⟩⟩, rfl⟩ := p
+    change polyCofixApproxToCoiterFiber X P (n + 1)
+        x'
+        (polyCoiterFiberToApprox X P (n + 1) x'
+          ⟨⟨x', ⟨i, childMor⟩⟩, rfl⟩) =
+      ⟨⟨x', ⟨i, childMor⟩⟩, rfl⟩
+    rw [polyCoiterFiberToApprox_succ']
+    simp only [polyCofixApproxToCoiterFiber,
+      PolyCofixApprox.getIndex,
+      PolyCofixApprox.getChildren]
+    congr 1
+    congr 1
+    congr 1
+    ext e
+    simp only [Over.homMk_left]
+    exact congrArg Subtype.val
+      (polyCoiterFiberToApprox_inv P n
+        ((polyBetweenFamily X X P x' i).hom e)
+        ⟨childMor.left e,
+          congrFun (Over.w childMor) e⟩)
+
+/--
+Push a fiber element through a morphism in `Over X`.
+-/
+def overFiberMap {A B : Over X}
+    (f : A ⟶ B) (x : X)
+    (p : { q : A.left // A.hom q = x }) :
+    { q : B.left // B.hom q = x } :=
+  ⟨f.left p.val, by
+    have h := congrFun (Over.w f) p.val
+    simp only [Functor.const_obj_obj,
+      CategoryTheory.types_comp_apply] at h
+    rw [h, p.property]⟩
+
+/--
+The connecting morphism of the coiteration chain
+preserves agreement of approximations: if `p` is a
+fiber element at depth `n + 1`, then its image under
+`polyCoiterMor` converted to an approximation at depth
+`n` agrees with the approximation at depth `n + 1`.
+-/
+lemma polyCofixAgree_of_coiterMor
+    (P : PolyEndo X)
+    (n : ℕ) (x : X)
+    (p : { q : (polyCoiterObj X P (n + 1)).left //
+      (polyCoiterObj X P (n + 1)).hom q = x }) :
+    PolyCofixAgree P
+      (polyCoiterFiberToApprox X P n x
+        (overFiberMap X (polyCoiterMor X P n)
+          x p))
+      (polyCoiterFiberToApprox X P (n + 1) x p) :=
+  match n with
+  | 0 => by
+    obtain ⟨⟨x', ef⟩, rfl⟩ := p
+    exact .continue _ _
+  | n + 1 => by
+    obtain ⟨⟨x', ⟨i, childMor⟩⟩, rfl⟩ := p
+    change PolyCofixAgree P
+      (polyCoiterFiberToApprox X P (n + 1) x'
+        (overFiberMap X (polyCoiterMor X P (n + 1))
+          x' ⟨⟨x', ⟨i, childMor⟩⟩, rfl⟩))
+      (polyCoiterFiberToApprox X P (n + 1 + 1) x'
+        ⟨⟨x', ⟨i, childMor⟩⟩, rfl⟩)
+    simp only [overFiberMap, polyCoiterMor]
+    change PolyCofixAgree P
+      (polyCoiterFiberToApprox X P (n + 1) x'
+        ⟨⟨x', ⟨i, childMor ≫
+          polyCoiterMor X P n⟩⟩, rfl⟩)
+      (polyCoiterFiberToApprox X P (n + 1 + 1) x'
+        ⟨⟨x', ⟨i, childMor⟩⟩, rfl⟩)
+    rw [polyCoiterFiberToApprox_succ' X P n x' i
+      (childMor ≫ polyCoiterMor X P n)]
+    rw [polyCoiterFiberToApprox_succ' X P (n + 1)
+      x' i childMor]
+    exact .intro _ _ (fun e => by
+      let y := (polyBetweenFamily X X P x' i).hom e
+      let q : { q : (polyCoiterObj X P (n + 1)).left
+            // (polyCoiterObj X P (n + 1)).hom q =
+            y } :=
+        ⟨childMor.left e,
+          congrFun (Over.w childMor) e⟩
+      change PolyCofixAgree P
+        (polyCoiterFiberToApprox X P n y
+          (overFiberMap X (polyCoiterMor X P n)
+            y q))
+        (polyCoiterFiberToApprox X P (n + 1) y q)
+      exact polyCofixAgree_of_coiterMor P n y q)
+
+/--
+If two approximations agree, then converting the
+deeper one to a fiber element and pushing through
+the connecting morphism gives the same fiber element
+as converting the shallower one directly.
+-/
+lemma polyCofixApproxToCoiterFiber_agree
+    (P : PolyEndo X) (n : ℕ) (x : X)
+    (a : PolyCofixApprox P n x)
+    (a' : PolyCofixApprox P (n + 1) x)
+    (h : PolyCofixAgree P a a') :
+    overFiberMap X (polyCoiterMor X P n) x
+      (polyCofixApproxToCoiterFiber X P
+        (n + 1) x a') =
+    polyCofixApproxToCoiterFiber X P n x a := by
+  cases h with
+  | «continue» x' y =>
+    simp only [overFiberMap, polyCoiterMor,
+      polyCofixApproxToCoiterFiber]
+    exact Subtype.ext rfl
+  | intro f f' hc =>
+    rename_i n i
+    have ih : ∀ e,
+        overFiberMap X (polyCoiterMor X P n)
+          ((polyBetweenFamily X X P x i).hom e)
+          (polyCofixApproxToCoiterFiber X P
+            (n + 1)
+            ((polyBetweenFamily X X P x i).hom e)
+            (f' e)) =
+        polyCofixApproxToCoiterFiber X P n
+          ((polyBetweenFamily X X P x i).hom e)
+          (f e) :=
+      fun e =>
+        polyCofixApproxToCoiterFiber_agree P n
+          ((polyBetweenFamily X X P x i).hom e)
+          (f e) (f' e) (hc e)
+    simp only [polyCofixApproxToCoiterFiber,
+      PolyCofixApprox.getIndex,
+      PolyCofixApprox.getChildren]
+    apply Subtype.ext
+    simp only [overFiberMap, polyCoiterMor,
+      polyEndoFunctor, polyBetweenEvalFunctor,
+      polyToOverFunctor, polyToOverEvalMap,
+      polyToOverEvalFamilyMap,
+      familySliceForward, familySliceForwardMap,
+      Over.homMk_left, ccrEvalMap]
+    congr 1; congr 1
+    ext e
+    simp only [Over.comp_left, Over.homMk_left,
+      CategoryTheory.types_comp_apply]
+    exact congrArg Subtype.val (ih e)
+
+/--
+Projection from the terminal coalgebra carrier to the
+n-th stage of the coiteration chain, sending each
+cofixed point to its n-th approximation viewed as a
+fiber element.
+-/
+def polyCofixConeMap (P : PolyEndo X) (n : ℕ) :
+    polyCofixCarrier P ⟶ polyCoiterObj X P n :=
+  Over.homMk
+    (fun ⟨x, m⟩ =>
+      (polyCofixApproxToCoiterFiber X P n x
+        (m.approx n)).val)
+    (funext fun ⟨x, m⟩ =>
+      (polyCofixApproxToCoiterFiber X P n x
+        (m.approx n)).property)
+
+/--
+The cone projections commute with the connecting
+morphisms: projecting to stage `n + 1` and then
+applying the connecting morphism yields the
+projection to stage `n`.
+-/
+lemma polyCofixConeMap_naturality
+    (P : PolyEndo X) (n : ℕ) :
+    polyCofixConeMap X P (n + 1) ≫
+      polyCoiterMor X P n =
+    polyCofixConeMap X P n := by
+  apply Over.OverMorphism.ext
+  funext ⟨x, m⟩
+  simp only [polyCofixConeMap, Over.comp_left,
+    Over.homMk_left,
+    CategoryTheory.types_comp_apply]
+  exact congrArg Subtype.val
+    (polyCofixApproxToCoiterFiber_agree X P n x
+      (m.approx n) (m.approx (n + 1))
+      (m.consistent n))
+
+/--
+The cone over the coiteration chain with apex the
+terminal coalgebra carrier.
+-/
+def polyCofixCone (P : PolyEndo X) :
+    CategoryTheory.Limits.Cone
+      (polyCoiterChain X P) where
+  pt := polyCofixCarrier P
+  π := NatTrans.ofOpSequence
+    (fun n => polyCofixConeMap X P n)
+    (fun n => by
+      simp only [
+        CategoryTheory.Functor.const_obj_map,
+        polyCoiterChain, Functor.ofOpSequence_map_homOfLE_succ]
+      exact (polyCofixConeMap_naturality X P n).symm)
+
+/--
+The fiber at `x` of the n-th cone projection, viewed
+as an element of `(polyCoiterObj X P n).left`.
+-/
+def coneFiberAt
+    {P : PolyEndo X}
+    (s : CategoryTheory.Limits.Cone
+      (polyCoiterChain X P))
+    (n : ℕ) (a : s.pt.left) :
+    { q : (polyCoiterObj X P n).left //
+      (polyCoiterObj X P n).hom q =
+      s.pt.hom a } :=
+  ⟨(s.π.app ⟨n⟩).left a,
+    congrFun (Over.w (s.π.app ⟨n⟩)) a⟩
+
+/--
+Cone naturality: the connecting morphism applied to the
+(n+1)-th cone fiber gives the n-th cone fiber.
+-/
+lemma coneFiberAt_naturality
+    {P : PolyEndo X}
+    (s : CategoryTheory.Limits.Cone
+      (polyCoiterChain X P))
+    (n : ℕ) (a : s.pt.left) :
+    overFiberMap X (polyCoiterMor X P n)
+      (s.pt.hom a) (coneFiberAt X s (n + 1) a) =
+    coneFiberAt X s n a := by
+  apply Subtype.ext
+  simp only [overFiberMap, coneFiberAt]
+  have nat := s.π.naturality
+    (CategoryTheory.homOfLE
+      (Nat.le_add_right n 1)).op
+  simp only [polyCoiterChain,
+    Functor.ofOpSequence_map_homOfLE_succ,
+    CategoryTheory.Functor.const_obj_map] at nat
+  have nat' := congrFun (congrArg
+    CategoryTheory.CommaMorphism.left nat) a
+  simp only [Over.comp_left,
+    CategoryTheory.types_comp_apply] at nat'
+  exact nat'.symm
+
+/--
+Lift from an arbitrary cone to the terminal
+coalgebra carrier: each element of the cone apex
+determines a consistent sequence of approximations
+via the cone projections.
+-/
+def polyCofixConeLift
+    (P : PolyEndo X)
+    (s : CategoryTheory.Limits.Cone
+      (polyCoiterChain X P)) :
+    s.pt ⟶ polyCofixCarrier P :=
+  Over.homMk
+    (fun a =>
+      let x := s.pt.hom a
+      ⟨x, {
+        approx := fun n =>
+          polyCoiterFiberToApprox X P n x
+            (coneFiberAt X s n a)
+        consistent := fun n => by
+          rw [← coneFiberAt_naturality X s n a]
+          exact polyCofixAgree_of_coiterMor X P n x
+            (coneFiberAt X s (n + 1) a)
+      }⟩)
+    rfl
+
+/--
+The lift followed by the cone projection equals the
+original cone's projection: the construction is a
+roundtrip through fiber equivalences.
+-/
+lemma polyCofixCone_fac
+    (P : PolyEndo X)
+    (s : CategoryTheory.Limits.Cone
+      (polyCoiterChain X P))
+    (j : ℕᵒᵖ) :
+    polyCofixConeLift X P s ≫
+      (polyCofixCone X P).π.app j =
+    s.π.app j := by
+  obtain ⟨n⟩ := j
+  apply Over.OverMorphism.ext
+  funext a
+  simp only [Over.comp_left,
+    CategoryTheory.types_comp_apply,
+    polyCofixConeLift, Over.homMk_left,
+    polyCofixCone, NatTrans.ofOpSequence_app,
+    polyCofixConeMap, coneFiberAt]
+  exact congrArg Subtype.val
+    (polyCoiterFiberToApprox_inv X P n
+      (s.pt.hom a)
+      ⟨(s.π.app ⟨n⟩).left a,
+        congrFun (Over.w (s.π.app ⟨n⟩)) a⟩)
+
+/--
+Any morphism that factors through the cone
+projections equals the lift: the lift is uniquely
+determined by the factorization property.
+-/
+lemma polyCofixCone_uniq
+    (P : PolyEndo X)
+    (s : CategoryTheory.Limits.Cone
+      (polyCoiterChain X P))
+    (m : s.pt ⟶ polyCofixCarrier P)
+    (hm : ∀ j, m ≫ (polyCofixCone X P).π.app j =
+      s.π.app j) :
+    m = polyCofixConeLift X P s := by
+  apply Over.OverMorphism.ext
+  funext a
+  simp only [polyCofixConeLift, Over.homMk_left]
+  set b := m.left a with hb_def
+  obtain ⟨x, mx⟩ := b
+  have hw : x = s.pt.hom a := by
+    have := congrFun (Over.w m) a
+    simp only [CategoryTheory.types_comp_apply,
+      polyCofixCarrier, familySliceForward,
+      familySliceForwardObj] at this
+    rw [← hb_def] at this
+    exact this
+  subst hw
+  congr 1
+  ext n
+  change mx.approx n =
+    polyCoiterFiberToApprox X P n
+      (s.pt.hom a) (coneFiberAt X s n a)
+  have hmn := congrFun
+    (congrArg CommaMorphism.left (hm ⟨n⟩)) a
+  simp only [Over.comp_left,
+    CategoryTheory.types_comp_apply,
+    polyCofixCone, NatTrans.ofOpSequence_app,
+    polyCofixConeMap, Over.homMk_left]
+    at hmn
+  rw [← hb_def] at hmn
+  simp only at hmn
+  have key : polyCofixApproxToCoiterFiber X P n
+      (s.pt.hom a) (mx.approx n) =
+      coneFiberAt X s n a :=
+    Subtype.ext hmn
+  rw [← polyCofixApproxToCoiterFiber_inv
+    X P n (s.pt.hom a) (mx.approx n), key]
+
+/--
+The cone over the coiteration chain with apex
+`polyCofixCarrier P` is a limit cone: the terminal
+coalgebra is the limit of `P^n(⊤)`.
+-/
+def polyCofixCone_isLimit
+    (P : PolyEndo X) :
+    CategoryTheory.Limits.IsLimit
+      (polyCofixCone X P) where
+  lift := polyCofixConeLift X P
+  fac s j :=
+    polyCofixCone_fac X P s j
+  uniq s m hm :=
+    polyCofixCone_uniq X P s m
+      (fun j => hm j)
+
+end CoiterationLimit
+
 /-! ## Limits in Polynomial Algebra Categories
 
 The category `PolyAlg P` has all limits of size

@@ -68,12 +68,9 @@ the (co)limit picture for finitary polynomial algebras.
   but no global depth bound), which lie outside all
   `P^n(⊥)`.  König's lemma gives bounded depth for
   finite-branching trees.
-- [ ] G2: Prove `polyCofixCoalg P` (our M-type terminal
+- [x] G2: Prove `polyCofixCoalg P` (our M-type terminal
   coalgebra) is the limit of `polyCoiterChain P`.
-  Should hold unconditionally since `PolyCofix` is defined
-  as compatible approximation sequences, but requires
-  establishing fiber equivalences between
-  `PolyCofixApprox P n x` and `polyCoiterObj X P n`.
+  Done: `polyCofixCone_isLimit` in `PolyAlg.lean`.
 - [ ] G3: Derive preservation corollaries: any functor
   preserving filtered colimits preserves initial algebras,
   and dually for cofiltered limits and terminal coalgebras.
