@@ -1,3 +1,4 @@
+import GebLean.Utilities.Graph
 import GebLean.Utilities.Profunctors
 import Mathlib.CategoryTheory.Functor.FullyFaithful
 
@@ -83,6 +84,129 @@ instance RelSpanCat : Category RelSpanObj where
   id_comp := RelSpanHom.id_comp
   comp_id := RelSpanHom.comp_id
   assoc := RelSpanHom.assoc
+
+section RelSpanGraphSpanEquiv
+
+/-- The edge family for `RelSpanObj`: an edge
+from `I₀` to `I₁` is a relation
+`I₀ → I₁ → Prop`. -/
+abbrev relSpanEdge (I₀ I₁ : Type) : Type :=
+  I₀ → I₁ → Prop
+
+/-- Object mapping from `RelSpanObj` to
+`GraphSpanObj Type relSpanEdge`. -/
+def relSpanToGraphSpanObj :
+    RelSpanObj →
+    GraphSpanObj Type relSpanEdge
+  | .typeNode I => .vertexNode I
+  | .relNode I₀ I₁ R => .edgeNode I₀ I₁ R
+
+/-- Morphism mapping from `RelSpanObj` to
+`GraphSpanObj Type relSpanEdge`. -/
+def relSpanToGraphSpanMap
+    {X Y : RelSpanObj}
+    (f : X ⟶ Y) :
+    relSpanToGraphSpanObj X ⟶
+    relSpanToGraphSpanObj Y :=
+  match X, Y, f with
+  | _, _, RelSpanHom.id X =>
+    @GraphSpanHom.id Type relSpanEdge
+      (relSpanToGraphSpanObj X)
+  | _, _, RelSpanHom.fstProj I₀ I₁ R =>
+    @GraphSpanHom.fstProj Type relSpanEdge
+      I₀ I₁ R
+  | _, _, RelSpanHom.sndProj I₀ I₁ R =>
+    @GraphSpanHom.sndProj Type relSpanEdge
+      I₀ I₁ R
+
+/-- Functor from `RelSpanObj` to the graph
+span diagram category instantiated at
+`Type` and `relSpanEdge`. -/
+def relSpanToGraphSpan :
+    RelSpanObj ⥤
+    GraphSpanObj Type relSpanEdge where
+  obj := relSpanToGraphSpanObj
+  map := relSpanToGraphSpanMap
+  map_id := by
+    intro X; cases X <;> rfl
+  map_comp := by
+    intro X Y Z f g
+    cases f <;> cases g <;> rfl
+
+/-- Object mapping from
+`GraphSpanObj Type relSpanEdge` to
+`RelSpanObj`. -/
+def graphSpanToRelSpanObj :
+    GraphSpanObj Type relSpanEdge →
+    RelSpanObj
+  | .vertexNode I => .typeNode I
+  | .edgeNode I₀ I₁ R => .relNode I₀ I₁ R
+
+/-- Morphism mapping from
+`GraphSpanObj Type relSpanEdge` to
+`RelSpanObj`. -/
+def graphSpanToRelSpanMap
+    {X Y : GraphSpanObj Type relSpanEdge}
+    (f : X ⟶ Y) :
+    graphSpanToRelSpanObj X ⟶
+    graphSpanToRelSpanObj Y :=
+  match X, Y, f with
+  | _, _, GraphSpanHom.id X =>
+    @RelSpanHom.id
+      (graphSpanToRelSpanObj X)
+  | _, _, GraphSpanHom.fstProj I₀ I₁ R =>
+    @RelSpanHom.fstProj I₀ I₁ R
+  | _, _, GraphSpanHom.sndProj I₀ I₁ R =>
+    @RelSpanHom.sndProj I₀ I₁ R
+
+/-- Functor from the graph span diagram
+category instantiated at `Type` and
+`relSpanEdge` to `RelSpanObj`. -/
+def graphSpanToRelSpan :
+    GraphSpanObj Type relSpanEdge ⥤
+    RelSpanObj where
+  obj := graphSpanToRelSpanObj
+  map := graphSpanToRelSpanMap
+  map_id := by
+    intro X; cases X <;> rfl
+  map_comp := by
+    intro X Y Z f g
+    cases f <;> cases g <;> rfl
+
+theorem relSpan_graphSpan_comp_eq_id :
+    relSpanToGraphSpan ⋙ graphSpanToRelSpan =
+    𝟭 RelSpanObj :=
+  _root_.CategoryTheory.Functor.ext
+    (fun X => by cases X <;> rfl)
+    (fun _ _ f => by
+      cases f <;>
+        first | rfl
+              | (rename_i X; cases X <;> rfl))
+
+theorem graphSpan_relSpan_comp_eq_id :
+    graphSpanToRelSpan ⋙ relSpanToGraphSpan =
+    𝟭 (GraphSpanObj Type relSpanEdge) :=
+  _root_.CategoryTheory.Functor.ext
+    (fun Y => by cases Y <;> rfl)
+    (fun _ _ f => by
+      cases f <;>
+        first | rfl
+              | (rename_i X; cases X <;> rfl))
+
+/-- Equivalence between `RelSpanObj` and the
+graph span diagram category instantiated at
+`Type` and `relSpanEdge`. -/
+def relSpanGraphSpanEquiv :
+    RelSpanObj ≌
+    GraphSpanObj Type relSpanEdge where
+  functor := relSpanToGraphSpan
+  inverse := graphSpanToRelSpan
+  unitIso :=
+    eqToIso relSpan_graphSpan_comp_eq_id.symm
+  counitIso :=
+    eqToIso graphSpan_relSpan_comp_eq_id
+
+end RelSpanGraphSpanEquiv
 
 /-- Index type for relation-nodes: a triple
 `(I₀, I₁, R)` where `R : I₀ → I₁ → Prop`. -/

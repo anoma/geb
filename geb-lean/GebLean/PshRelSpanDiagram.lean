@@ -107,6 +107,132 @@ instance PshRelSpanCat :
   comp_id := PshRelSpanHom.comp_id C
   assoc := PshRelSpanHom.assoc C
 
+section PshRelSpanGraphSpanEquiv
+
+variable {C : Type u} [Category.{v} C]
+
+/-- Object mapping from `PshRelSpanObj C` to
+`GraphSpanObj (Cᵒᵖ ⥤ Type w) PshRel`. -/
+def pshRelSpanToGraphSpanObj :
+    PshRelSpanObj.{u, v, w} C →
+    GraphSpanObj (Cᵒᵖ ⥤ Type w) PshRel
+  | .typeNode P => .vertexNode P
+  | .relNode P Q R => .edgeNode P Q R
+
+/-- Morphism mapping from `PshRelSpanObj C` to
+`GraphSpanObj (Cᵒᵖ ⥤ Type w) PshRel`. -/
+def pshRelSpanToGraphSpanMap
+    {X Y : PshRelSpanObj.{u, v, w} C}
+    (f : X ⟶ Y) :
+    pshRelSpanToGraphSpanObj X ⟶
+    pshRelSpanToGraphSpanObj Y :=
+  match X, Y, f with
+  | _, _, PshRelSpanHom.id X =>
+    @GraphSpanHom.id
+      (Cᵒᵖ ⥤ Type w) PshRel
+      (pshRelSpanToGraphSpanObj X)
+  | _, _, PshRelSpanHom.fstProj P Q R =>
+    @GraphSpanHom.fstProj
+      (Cᵒᵖ ⥤ Type w) PshRel P Q R
+  | _, _, PshRelSpanHom.sndProj P Q R =>
+    @GraphSpanHom.sndProj
+      (Cᵒᵖ ⥤ Type w) PshRel P Q R
+
+/-- Functor from `PshRelSpanObj C` to the graph
+span diagram category instantiated at presheaves
+and presheaf relations. -/
+def pshRelSpanToGraphSpan :
+    PshRelSpanObj.{u, v, w} C ⥤
+    GraphSpanObj (Cᵒᵖ ⥤ Type w) PshRel where
+  obj := pshRelSpanToGraphSpanObj
+  map := pshRelSpanToGraphSpanMap
+  map_id := by
+    intro X; cases X <;> rfl
+  map_comp := by
+    intro X Y Z f g
+    cases f <;> cases g <;> rfl
+
+/-- Object mapping from
+`GraphSpanObj (Cᵒᵖ ⥤ Type w) PshRel` to
+`PshRelSpanObj C`. -/
+def graphSpanToPshRelSpanObj :
+    GraphSpanObj (Cᵒᵖ ⥤ Type w) PshRel →
+    PshRelSpanObj.{u, v, w} C
+  | .vertexNode P => .typeNode P
+  | .edgeNode P Q R => .relNode P Q R
+
+/-- Morphism mapping from
+`GraphSpanObj (Cᵒᵖ ⥤ Type w) PshRel` to
+`PshRelSpanObj C`. -/
+def graphSpanToPshRelSpanMap
+    {X Y :
+      GraphSpanObj (Cᵒᵖ ⥤ Type w) PshRel}
+    (f : X ⟶ Y) :
+    graphSpanToPshRelSpanObj X ⟶
+    graphSpanToPshRelSpanObj Y :=
+  match X, Y, f with
+  | _, _, GraphSpanHom.id X =>
+    @PshRelSpanHom.id C _
+      (graphSpanToPshRelSpanObj X)
+  | _, _, GraphSpanHom.fstProj P Q R =>
+    @PshRelSpanHom.fstProj C _ P Q R
+  | _, _, GraphSpanHom.sndProj P Q R =>
+    @PshRelSpanHom.sndProj C _ P Q R
+
+/-- Functor from the graph span diagram
+category instantiated at presheaves and
+presheaf relations to `PshRelSpanObj C`. -/
+def graphSpanToPshRelSpan :
+    GraphSpanObj (Cᵒᵖ ⥤ Type w) PshRel ⥤
+    PshRelSpanObj.{u, v, w} C where
+  obj := graphSpanToPshRelSpanObj
+  map := graphSpanToPshRelSpanMap
+  map_id := by
+    intro X; cases X <;> rfl
+  map_comp := by
+    intro X Y Z f g
+    cases f <;> cases g <;> rfl
+
+theorem pshRelSpan_graphSpan_comp_eq_id :
+    pshRelSpanToGraphSpan ⋙
+      graphSpanToPshRelSpan =
+    𝟭 (PshRelSpanObj.{u, v, w} C) :=
+  _root_.CategoryTheory.Functor.ext
+    (fun X => by cases X <;> rfl)
+    (fun _ _ f => by
+      cases f <;>
+        first | rfl
+              | (rename_i X; cases X <;> rfl))
+
+theorem graphSpan_pshRelSpan_comp_eq_id :
+    graphSpanToPshRelSpan ⋙
+      pshRelSpanToGraphSpan =
+    𝟭 (GraphSpanObj (Cᵒᵖ ⥤ Type w)
+      PshRel) :=
+  _root_.CategoryTheory.Functor.ext
+    (fun Y => by cases Y <;> rfl)
+    (fun _ _ f => by
+      cases f <;>
+        first | rfl
+              | (rename_i X; cases X <;> rfl))
+
+/-- Equivalence between `PshRelSpanObj C` and
+the graph span diagram category instantiated at
+presheaves and presheaf relations. -/
+def pshRelSpanGraphSpanEquiv :
+    PshRelSpanObj.{u, v, w} C ≌
+    GraphSpanObj (Cᵒᵖ ⥤ Type w) PshRel where
+  functor := pshRelSpanToGraphSpan
+  inverse := graphSpanToPshRelSpan
+  unitIso :=
+    eqToIso
+      pshRelSpan_graphSpan_comp_eq_id.symm
+  counitIso :=
+    eqToIso
+      graphSpan_pshRelSpan_comp_eq_id
+
+end PshRelSpanGraphSpanEquiv
+
 /-- Functors from `PshRelSpanObj C` to an
 arbitrary target category `E`. -/
 abbrev PshParametricFunctor

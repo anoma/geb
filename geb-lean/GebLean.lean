@@ -60,6 +60,7 @@ import GebLean.Utilities.EndsAndCoends
 import GebLean.Utilities.Equalities
 import GebLean.Utilities.Families
 import GebLean.Utilities.Fintype
+import GebLean.Utilities.Graph
 import GebLean.Utilities.Grothendieck
 import GebLean.Utilities.Opposites
 import GebLean.Utilities.OverCategoryEquiv
