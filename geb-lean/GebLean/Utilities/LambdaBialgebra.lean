@@ -1,9 +1,10 @@
 import Mathlib.CategoryTheory.Monad.Algebra
+import Mathlib.CategoryTheory.Limits.Shapes.Terminal
 import GebLean.Utilities.DistributiveLaw
 
 namespace GebLean
 
-open CategoryTheory
+open CategoryTheory Limits
 
 universe v u
 
@@ -755,5 +756,315 @@ def lambdaBialgebraEquivLiftedComonadCoalgebra :
     exact Category.id_comp _
 
 end Equivalences
+
+section FreeCofree
+
+variable
+  {C : Type u} [Category.{v} C]
+  {T : Monad C} {D : Comonad C}
+  (law : DistributiveLaw T D)
+
+/--
+The free lambda-bialgebra on a `D`-coalgebra `(X, k)`.
+The carrier is `TX`, equipped with the free `T`-algebra
+structure `μ_X` and the `D`-coalgebra structure
+`T(k) ≫ dist_X`.
+-/
+def freeBialgebra (coal : D.Coalgebra) :
+    LambdaBialgebra law where
+  carrier := T.toFunctor.obj coal.A
+  algebra := T.μ.app coal.A
+  coalgebra :=
+    T.toFunctor.map coal.a ≫ law.dist.app coal.A
+  algebra_unit := T.left_unit coal.A
+  algebra_assoc := (T.assoc coal.A).symm
+  coalgebra_counit := by
+    rw [Category.assoc, law.counit,
+      ← T.toFunctor.map_comp, coal.counit,
+      T.toFunctor.map_id]
+  coalgebra_coassoc := by
+    simp only [Category.assoc, D.toFunctor.map_comp]
+    rw [← law.comul coal.A,
+      ← T.toFunctor.map_comp_assoc,
+      coal.coassoc,
+      T.toFunctor.map_comp_assoc,
+      reassoc_of% (law.dist.naturality coal.a)]
+  compat := by
+    rw [T.toFunctor.map_comp]
+    conv_lhs => rw [Category.assoc, ← law.mul coal.A]
+    rw [← Category.assoc]
+    have h := T.μ.naturality coal.a
+    change T.toFunctor.map (T.toFunctor.map coal.a) ≫
+      T.μ.app (D.toFunctor.obj coal.A) =
+      T.μ.app coal.A ≫ T.toFunctor.map coal.a at h
+    rw [h, Category.assoc]
+
+/--
+The functorial action of the free bialgebra construction
+on `D`-coalgebra morphisms.  The underlying map is `T(f)`.
+-/
+def freeBialgebraHom
+    {c₁ c₂ : D.Coalgebra} (f : c₁ ⟶ c₂) :
+    freeBialgebra law c₁ ⟶ freeBialgebra law c₂ where
+  hom := T.toFunctor.map f.f
+  algebra_comm := by
+    simp only [freeBialgebra]
+    have h := (T.μ.naturality f.f).symm
+    change T.μ.app c₁.A ≫ T.toFunctor.map f.f =
+      T.toFunctor.map (T.toFunctor.map f.f) ≫
+      T.μ.app c₂.A at h
+    exact h
+  coalgebra_comm := by
+    simp only [freeBialgebra]
+    rw [← T.toFunctor.map_comp_assoc, ← f.h,
+      T.toFunctor.map_comp_assoc, Category.assoc]
+    have h := law.dist.naturality f.f
+    change T.toFunctor.map (D.toFunctor.map f.f) ≫
+      law.dist.app c₂.A =
+      law.dist.app c₁.A ≫
+      D.toFunctor.map (T.toFunctor.map f.f) at h
+    rw [h]
+
+/--
+The cofree lambda-bialgebra on a `T`-algebra `(X, h)`.
+The carrier is `DX`, equipped with the cofree `D`-coalgebra
+structure `δ_X` and the `T`-algebra structure
+`dist_X ≫ D(h)`.
+-/
+def cofreeBialgebra (alg : T.Algebra) :
+    LambdaBialgebra law where
+  carrier := D.toFunctor.obj alg.A
+  algebra :=
+    law.dist.app alg.A ≫ D.toFunctor.map alg.a
+  coalgebra := D.δ.app alg.A
+  algebra_unit := by
+    rw [reassoc_of% (law.unit alg.A),
+      ← D.toFunctor.map_comp, alg.unit,
+      D.toFunctor.map_id]
+  algebra_assoc := by
+    rw [reassoc_of% (law.mul alg.A)]
+    rw [← D.toFunctor.map_comp, alg.assoc,
+      D.toFunctor.map_comp]
+    rw [← reassoc_of% (law.dist.naturality alg.a)]
+    rw [← T.toFunctor.map_comp_assoc]
+  coalgebra_counit := D.left_counit alg.A
+  coalgebra_coassoc := (D.coassoc alg.A).symm
+  compat := by
+    change T.toFunctor.map (D.δ.app alg.A) ≫
+      law.dist.app (D.toFunctor.obj alg.A) ≫
+      D.toFunctor.map (law.dist.app alg.A ≫
+        D.toFunctor.map alg.a) =
+      (law.dist.app alg.A ≫ D.toFunctor.map alg.a) ≫
+      D.δ.app alg.A
+    rw [D.toFunctor.map_comp]
+    simp only [Category.assoc]
+    rw [reassoc_of% (law.comul alg.A)]
+    have h := (D.δ.naturality alg.a).symm
+    change D.δ.app (T.toFunctor.obj alg.A) ≫
+      D.toFunctor.map (D.toFunctor.map alg.a) =
+      D.toFunctor.map alg.a ≫ D.δ.app alg.A at h
+    rw [h]
+
+def cofreeBialgebraHom
+    {a₁ a₂ : T.Algebra} (f : a₁ ⟶ a₂) :
+    cofreeBialgebra law a₁ ⟶ cofreeBialgebra law a₂ where
+  hom := D.toFunctor.map f.f
+  algebra_comm := by
+    simp only [cofreeBialgebra, Category.assoc]
+    rw [← D.toFunctor.map_comp,
+      ← f.h, D.toFunctor.map_comp]
+    have h := (law.dist.naturality f.f).symm
+    change law.dist.app a₁.A ≫
+      D.toFunctor.map (T.toFunctor.map f.f) =
+      T.toFunctor.map (D.toFunctor.map f.f) ≫
+      law.dist.app a₂.A at h
+    rw [reassoc_of% h]
+  coalgebra_comm := by
+    simp only [cofreeBialgebra]
+    have h := D.δ.naturality f.f
+    change D.toFunctor.map f.f ≫ D.δ.app a₂.A =
+      D.δ.app a₁.A ≫
+      D.toFunctor.map (D.toFunctor.map f.f) at h
+    exact h
+
+section InitialFinal
+
+def initialCoalgebra
+    {X : C} (hX : IsInitial X) : D.Coalgebra where
+  A := X
+  a := hX.to (D.toFunctor.obj X)
+  counit := hX.hom_ext _ _
+  coassoc := hX.hom_ext _ _
+
+def initialCoalgebra_isInitial
+    {X : C} (hX : IsInitial X) :
+    IsInitial (initialCoalgebra (D := D) hX) :=
+  IsInitial.ofUniqueHom
+    (fun Y => ⟨hX.to Y.A, hX.hom_ext _ _⟩)
+    (fun _ _ => Comonad.Coalgebra.Hom.ext
+      (hX.hom_ext _ _))
+
+def terminalAlgebra
+    {X : C} (hX : IsTerminal X) : T.Algebra where
+  A := X
+  a := hX.from (T.toFunctor.obj X)
+  unit := hX.hom_ext _ _
+  assoc := hX.hom_ext _ _
+
+def terminalAlgebra_isTerminal
+    {X : C} (hX : IsTerminal X) :
+    IsTerminal (terminalAlgebra (T := T) hX) :=
+  IsTerminal.ofUniqueHom
+    (fun Y => ⟨hX.from Y.A, hX.hom_ext _ _⟩)
+    (fun _ _ => Monad.Algebra.Hom.ext
+      (hX.hom_ext _ _))
+
+def initialBialgebra
+    {X : C} (hX : IsInitial X) :
+    LambdaBialgebra law :=
+  freeBialgebra law (initialCoalgebra (D := D) hX)
+
+private def initialBialgebraTo
+    {X : C} (hX : IsInitial X)
+    (B : LambdaBialgebra law) :
+    initialBialgebra law hX ⟶ B where
+  hom := T.toFunctor.map (hX.to B.carrier) ≫
+    B.algebra
+  algebra_comm := by
+    simp only [initialBialgebra, freeBialgebra,
+      initialCoalgebra]
+    rw [T.toFunctor.map_comp]
+    simp only [Category.assoc]
+    rw [← B.algebra_assoc]
+    have h := (T.μ.naturality (hX.to B.carrier)).symm
+    change T.μ.app X ≫
+      T.toFunctor.map (hX.to B.carrier) =
+      T.toFunctor.map (T.toFunctor.map
+        (hX.to B.carrier)) ≫
+      T.μ.app B.carrier at h
+    rw [reassoc_of% h]
+  coalgebra_comm := by
+    simp only [initialBialgebra, freeBialgebra,
+      initialCoalgebra]
+    rw [Category.assoc, ← B.compat,
+      D.toFunctor.map_comp]
+    simp only [Category.assoc]
+    rw [← T.toFunctor.map_comp_assoc]
+    have hX_eq : hX.to B.carrier ≫ B.coalgebra =
+        hX.to (D.toFunctor.obj X) ≫
+        D.toFunctor.map (hX.to B.carrier) :=
+      hX.hom_ext _ _
+    rw [hX_eq, T.toFunctor.map_comp_assoc]
+    have h := law.dist.naturality
+      (hX.to B.carrier)
+    change T.toFunctor.map (D.toFunctor.map
+        (hX.to B.carrier)) ≫
+      law.dist.app B.carrier =
+      law.dist.app X ≫
+      D.toFunctor.map (T.toFunctor.map
+        (hX.to B.carrier)) at h
+    rw [reassoc_of% h]
+
+def initialBialgebra_isInitial
+    {X : C} (hX : IsInitial X) :
+    IsInitial (initialBialgebra law hX) :=
+  IsInitial.ofUniqueHom
+    (initialBialgebraTo law hX)
+    (fun B m => by
+      have h_hom : m.hom =
+          T.toFunctor.map (hX.to B.carrier) ≫
+          B.algebra := by
+        have h_alg := m.algebra_comm
+        simp only [initialBialgebra, freeBialgebra,
+          initialCoalgebra] at h_alg
+        have roundtrip :
+            T.toFunctor.map (T.η.app X ≫ m.hom) ≫
+            B.algebra = m.hom := by
+          rw [T.toFunctor.map_comp, Category.assoc,
+            ← h_alg, ← Category.assoc,
+            T.right_unit, Category.id_comp]
+        rw [← roundtrip,
+          hX.hom_ext (T.η.app X ≫ m.hom)
+            (hX.to B.carrier)]
+      exact LambdaBialgebra.Hom.ext h_hom)
+
+def finalBialgebra
+    {X : C} (hX : IsTerminal X) :
+    LambdaBialgebra law :=
+  cofreeBialgebra law (terminalAlgebra (T := T) hX)
+
+private def finalBialgebraFrom
+    {X : C} (hX : IsTerminal X)
+    (B : LambdaBialgebra law) :
+    B ⟶ finalBialgebra law hX where
+  hom := B.coalgebra ≫
+    D.toFunctor.map (hX.from B.carrier)
+  algebra_comm := by
+    simp only [finalBialgebra, cofreeBialgebra,
+      terminalAlgebra]
+    rw [← reassoc_of% B.compat,
+      ← D.toFunctor.map_comp,
+      T.toFunctor.map_comp]
+    simp only [Category.assoc]
+    have h := law.dist.naturality (hX.from B.carrier)
+    change T.toFunctor.map (D.toFunctor.map
+        (hX.from B.carrier)) ≫
+      law.dist.app X =
+      law.dist.app B.carrier ≫
+      D.toFunctor.map (T.toFunctor.map
+        (hX.from B.carrier)) at h
+    rw [reassoc_of% h]
+    congr 2
+    rw [← D.toFunctor.map_comp]
+    congr 1
+    exact hX.hom_ext _ _
+  coalgebra_comm := by
+    simp only [finalBialgebra, cofreeBialgebra,
+      terminalAlgebra, Category.assoc,
+      D.toFunctor.map_comp]
+    have h := D.δ.naturality (hX.from B.carrier)
+    change D.toFunctor.map (hX.from B.carrier) ≫
+      D.δ.app X =
+      D.δ.app B.carrier ≫
+      D.toFunctor.map (D.toFunctor.map
+        (hX.from B.carrier)) at h
+    rw [h, reassoc_of% B.coalgebra_coassoc]
+
+def finalBialgebra_isTerminal
+    {X : C} (hX : IsTerminal X) :
+    IsTerminal (finalBialgebra law hX) :=
+  IsTerminal.ofUniqueHom
+    (finalBialgebraFrom law hX)
+    (fun B m => by
+      have h_hom : m.hom =
+          B.coalgebra ≫
+          D.toFunctor.map (hX.from B.carrier) := by
+        have h_coalg := m.coalgebra_comm
+        simp only [finalBialgebra, cofreeBialgebra,
+          terminalAlgebra] at h_coalg
+        have roundtrip :
+            B.coalgebra ≫
+            D.toFunctor.map (m.hom ≫
+              D.ε.app X) = m.hom := by
+          rw [D.toFunctor.map_comp,
+            ← Category.assoc, ← h_coalg,
+            Category.assoc, D.right_counit,
+            Category.comp_id]
+        rw [← roundtrip,
+          hX.hom_ext (m.hom ≫ D.ε.app X)
+            (hX.from B.carrier)]
+      exact LambdaBialgebra.Hom.ext h_hom)
+
+def universalSemantics
+    {X₀ : C} (hX₀ : IsInitial X₀)
+    {X₁ : C} (hX₁ : IsTerminal X₁) :
+    initialBialgebra law hX₀ ⟶
+    finalBialgebra law hX₁ :=
+  (initialBialgebra_isInitial law hX₀).to
+    (finalBialgebra law hX₁)
+
+end InitialFinal
+
+end FreeCofree
 
 end GebLean
