@@ -5,7 +5,8 @@ import Mathlib.CategoryTheory.IsConnected
 # Connected Components Utilities
 
 Equivalence between connected components of a category
-and its opposite.
+and its opposite, and `IsInhabitedConnected` (the data-level
+analogue of `IsConnected`).
 -/
 
 namespace CategoryTheory
@@ -13,6 +14,21 @@ namespace CategoryTheory
 open Opposite
 
 universe w₁ w₂
+
+/--
+A category is inhabited-connected if it is preconnected and
+`Inhabited`.  This is the data-level strengthening of
+`IsConnected` (which uses `Nonempty`): the distinguished
+object is provided as data rather than a `Prop` witness.
+-/
+class IsInhabitedConnected (J : Type w₁)
+    [Category.{w₂} J]
+    extends IsPreconnected J, Inhabited J
+
+instance (priority := 100) IsInhabitedConnected.isConnected
+    (J : Type w₁) [Category.{w₂} J]
+    [IsInhabitedConnected J] : IsConnected J where
+  is_nonempty := ⟨default⟩
 
 variable {J : Type w₁} [Category.{w₂} J]
 

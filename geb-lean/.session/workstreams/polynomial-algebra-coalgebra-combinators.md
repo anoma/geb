@@ -94,13 +94,18 @@ the (co)limit picture for finitary polynomial algebras.
   polynomial endofunctor preserves filtered colimits (finite
   products commute with filtered colimits), then applying
   Linton's theorem via the monad equivalence
-- [ ] H0: Prove `PreservesLimitsOfShape J (polyEndoFunctor P)`
+- [x] H0: Prove `PreservesLimitsOfShape J (polyEndoFunctor P)`
   for any `[IsConnected J]` (polynomial functors preserve
-  connected limits; no finitariness needed). Uses extensive
-  property of `Type u` and product/coproduct decomposition.
-- [ ] H1: Instantiate H0 for pullbacks/wide pullbacks and
-  derive weak pullback preservation (needed by Turi-Plotkin
-  results in Phase 2/3)
+  connected limits; no finitariness needed).  Proved for all
+  polynomial functors between slices, not just endofunctors.
+  In `GebLean/PolyLimits.lean`.
+- [x] H1: Instantiate H0 for wide pullbacks
+  (`polyBetweenPreservesWidePullbacks`).  The `WalkingCospan`
+  specialization is omitted due to a universe constraint:
+  `WalkingCospan : Type 0` while the theorem chain requires
+  `J : Type u` matching the category universe (from
+  `Pi.coneOfConeEvalIsLimit`).
+  In `GebLean/PolyLimits.lean`.
 
 ### Phase 2: Distributive Law Framework
 
