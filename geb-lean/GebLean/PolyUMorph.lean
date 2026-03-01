@@ -4244,4 +4244,275 @@ instance : MonoidalClosed
 
 end MonoidalClosedInstance
 
+/-! ## Dirichlet product
+
+The Dirichlet product (parallel product) is a monoidal
+structure on polynomial functors distinct from composition
+and the categorical product. Given polynomials
+`P, Q : PolyFunctorBetweenCat X Y`, the Dirichlet product
+pairs positions and takes fiberwise products (pullbacks
+in `Over X`) of directions.
+
+The Dirichlet product is the Day convolution on
+`Poly ≅ Σ(Set^op)` with respect to the cartesian monoidal
+structure on `Set^op`. It is determined by its values on
+representables: `y^A ⊗ y^B ≅ y^(A × B)`.
+-/
+
+section DirichletProduct
+
+variable {X Y : Type u}
+
+/--
+The position type of the Dirichlet product at `y`.
+-/
+def polyBetweenDirichletPos
+    (P Q : PolyFunctorBetweenCat X Y) (y : Y) :=
+  polyBetweenIndex X Y P y × polyBetweenIndex X Y Q y
+
+/--
+The family (directions) of the Dirichlet product at
+position `(ip, iq)`: the pullback of the two families
+in `Over X`.
+-/
+def polyBetweenDirichletFamily
+    (P Q : PolyFunctorBetweenCat X Y) (y : Y)
+    (p : polyBetweenDirichletPos P Q y) : Over X :=
+  overPullback
+    (polyBetweenFamily X Y P y p.1)
+    (polyBetweenFamily X Y Q y p.2)
+
+/--
+The Dirichlet product of polynomial functors.
+-/
+def polyBetweenDirichlet
+    (P Q : PolyFunctorBetweenCat X Y) :
+    PolyFunctorBetweenCat X Y :=
+  fun y => ccrObjMk (polyBetweenDirichletFamily P Q y)
+
+/--
+The Dirichlet product's reindexing action at a fixed
+`y`: pairs the reindexing functions of `α` and `β`.
+-/
+def polyBetweenDirichletMapReindex
+    {P P' Q Q' : PolyFunctorBetweenCat X Y}
+    (α : P ⟶ P') (β : Q ⟶ Q') (y : Y)
+    (p : polyBetweenDirichletPos P Q y) :
+    polyBetweenDirichletPos P' Q' y :=
+  (ccrReindex (α y) p.1, ccrReindex (β y) p.2)
+
+/--
+The Dirichlet product's fiber morphism at a fixed
+`y` and position: the pullback of the two fiber morphisms.
+-/
+def polyBetweenDirichletMapFiber
+    {P P' Q Q' : PolyFunctorBetweenCat X Y}
+    (α : P ⟶ P') (β : Q ⟶ Q') (y : Y)
+    (p : polyBetweenDirichletPos P Q y) :
+    polyBetweenDirichletFamily P' Q' y
+      (polyBetweenDirichletMapReindex α β y p) ⟶
+    polyBetweenDirichletFamily P Q y p :=
+  overPullbackMap
+    (ccrFiberMor (α y) p.1)
+    (ccrFiberMor (β y) p.2)
+
+/--
+Bifunctorial action of the Dirichlet product on
+morphisms of polynomial functors.
+-/
+def polyBetweenDirichletMap
+    {P P' Q Q' : PolyFunctorBetweenCat X Y}
+    (α : P ⟶ P') (β : Q ⟶ Q') :
+    polyBetweenDirichlet P Q ⟶
+    polyBetweenDirichlet P' Q' :=
+  fun y => ccrHomMk
+    (polyBetweenDirichletMapReindex α β y)
+    (polyBetweenDirichletMapFiber α β y)
+
+/--
+The unit for the Dirichlet product.
+-/
+def polyBetweenDirichletUnit :
+    PolyFunctorBetweenCat X Y :=
+  fun _ => ccrObjMk (fun (_ : PUnit) => Over.mk id)
+
+end DirichletProduct
+
+/-! ## Dirichlet closure (internal hom)
+
+The Dirichlet closure `[P, Q]` is the internal hom for the
+Dirichlet monoidal structure. It is characterized by the
+adjunction `Hom(R ⊗ P, Q) ≅ Hom(R, [P, Q])`.
+
+Concretely, `[P, Q]` is the categorical product
+`Π_{ip} [y^{P.fam(ip)}, Q]` of representable Dirichlet
+closures. The representable closure `[y^A, Q]` has
+positions `Σ (iq : Pos_Q), (Q.fam(iq) ⟶ A)` and family
+`Q.fam(iq)`.
+
+Unfolding the categorical product, the combined closure
+has:
+- Positions: `(α : Pos_P → Pos_Q) ×
+  (∀ ip, Q.fam(α ip) ⟶ P.fam(ip))`
+- Family at `(α, g)`: `∐' (fun ip => Q.fam(α ip))`
+-/
+
+section DirichletClosure
+
+variable {X Y : Type u}
+
+/--
+The position type of the Dirichlet closure at `y`:
+a function from `P`-positions to `Q`-positions together
+with a family of `Over X` morphisms from `Q`-directions
+to `P`-directions.
+-/
+def polyBetweenDirichletClosurePos
+    (P Q : PolyFunctorBetweenCat X Y) (y : Y) :=
+  (α : polyBetweenIndex X Y P y →
+       polyBetweenIndex X Y Q y) ×
+  (∀ (ip : polyBetweenIndex X Y P y),
+    polyBetweenFamily X Y Q y (α ip) ⟶
+    polyBetweenFamily X Y P y ip)
+
+/--
+The family (directions) of the Dirichlet closure at
+position `(α, g)`: the coproduct over `P`-positions of
+`Q`-directions at the corresponding `Q`-position.
+-/
+def polyBetweenDirichletClosureFamily
+    (P Q : PolyFunctorBetweenCat X Y) (y : Y)
+    (p : polyBetweenDirichletClosurePos P Q y) :
+    Over X :=
+  ∐' (fun (ip : polyBetweenIndex X Y P y) =>
+    polyBetweenFamily X Y Q y (p.1 ip))
+
+/--
+The Dirichlet closure (internal hom) of polynomial
+functors.
+-/
+def polyBetweenDirichletClosure
+    (P Q : PolyFunctorBetweenCat X Y) :
+    PolyFunctorBetweenCat X Y :=
+  fun y => ccrObjMk
+    (polyBetweenDirichletClosureFamily P Q y)
+
+end DirichletClosure
+
+/-! ## Dirichlet evaluation and currying
+
+The evaluation morphism
+`eval : [P, Q] ⊗ P ⟶ Q`
+and currying
+`curry : (R ⊗ P ⟶ Q) → (R ⟶ [P, Q])`
+witness the adjunction
+`Hom(R ⊗ P, Q) ≅ Hom(R, [P, Q])`.
+-/
+
+section DirichletEvalAndCurry
+
+variable {X Y : Type u}
+
+/--
+The evaluation morphism's reindexing: applies the
+position function to the `P`-position.
+-/
+def polyBetweenDirichletEvalReindex
+    (P Q : PolyFunctorBetweenCat X Y) (y : Y)
+    (p : polyBetweenDirichletPos
+      (polyBetweenDirichletClosure P Q) P y) :
+    polyBetweenIndex X Y Q y :=
+  p.1.1 p.2
+
+/--
+The evaluation morphism's fiber map: given
+`q ∈ Q.fam(α(ip))`, inject `q` into the closure family's
+coproduct at component `ip`, and apply the fiber morphism
+`g(ip)` to produce the `P`-family element, forming a
+pullback pair.
+-/
+def polyBetweenDirichletEvalFiber
+    (P Q : PolyFunctorBetweenCat X Y) (y : Y)
+    (p : polyBetweenDirichletPos
+      (polyBetweenDirichletClosure P Q) P y) :
+    polyBetweenFamily X Y Q y
+      (polyBetweenDirichletEvalReindex P Q y p) ⟶
+    polyBetweenDirichletFamily
+      (polyBetweenDirichletClosure P Q) P y p :=
+  Over.homMk
+    (fun q =>
+      let ip := p.2
+      let g := p.1.2
+      ⟨(⟨ip, q⟩, (g ip).left q),
+        (congrFun (Over.w (g ip)) q).symm⟩)
+    rfl
+
+/--
+The evaluation morphism
+`[P, Q] ⊗ P ⟶ Q`.
+-/
+def polyBetweenDirichletEval
+    (P Q : PolyFunctorBetweenCat X Y) :
+    polyBetweenDirichlet
+      (polyBetweenDirichletClosure P Q) P ⟶ Q :=
+  fun y => ccrHomMk
+    (polyBetweenDirichletEvalReindex P Q y)
+    (polyBetweenDirichletEvalFiber P Q y)
+
+/--
+The currying operation's reindexing: given
+`f : R ⊗ P ⟶ Q` and a position `ir` of `R`, produce
+a closure position `(α, g)` where
+`α(ip) = f.reindex(ir, ip)` and `g(ip)` is the
+`P`-projection of `f`'s fiber map.
+-/
+def polyBetweenDirichletCurryReindex
+    (P Q R : PolyFunctorBetweenCat X Y)
+    (f : polyBetweenDirichlet R P ⟶ Q)
+    (y : Y)
+    (ir : polyBetweenIndex X Y R y) :
+    polyBetweenDirichletClosurePos P Q y :=
+  ⟨fun ip => ccrReindex (f y) ⟨ir, ip⟩,
+   fun ip =>
+     ccrFiberMor (f y) ⟨ir, ip⟩ ≫
+       overPullbackSnd _ _⟩
+
+/--
+The currying operation's fiber map: given
+`(ip, q)` in the closure family's coproduct, apply `f`'s
+fiber map to `q` and project to the `R`-family.
+-/
+def polyBetweenDirichletCurryFiber
+    (P Q R : PolyFunctorBetweenCat X Y)
+    (f : polyBetweenDirichlet R P ⟶ Q)
+    (y : Y)
+    (ir : polyBetweenIndex X Y R y) :
+    polyBetweenDirichletClosureFamily P Q y
+      (polyBetweenDirichletCurryReindex
+        P Q R f y ir) ⟶
+    polyBetweenFamily X Y R y ir :=
+  Over.homMk
+    (fun ⟨ip, q⟩ =>
+      (ccrFiberMor (f y) ⟨ir, ip⟩ ≫
+        overPullbackFst _ _).left q)
+    (by
+      funext ⟨ip, q⟩
+      exact congrFun
+        (Over.w (ccrFiberMor (f y) ⟨ir, ip⟩ ≫
+          overPullbackFst _ _)) q)
+
+/--
+Currying: given `f : R ⊗ P ⟶ Q`, produce
+`R ⟶ [P, Q]`.
+-/
+def polyBetweenDirichletCurry
+    (P Q R : PolyFunctorBetweenCat X Y)
+    (f : polyBetweenDirichlet R P ⟶ Q) :
+    R ⟶ polyBetweenDirichletClosure P Q :=
+  fun y => ccrHomMk
+    (polyBetweenDirichletCurryReindex P Q R f y)
+    (polyBetweenDirichletCurryFiber P Q R f y)
+
+end DirichletEvalAndCurry
+
 end GebLean

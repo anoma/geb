@@ -693,4 +693,62 @@ theorem overEq_uniq {S : Over X} (h : S ⟶ A)
 
 end OverEqualizer
 
+/-! ## Binary pullback in Over X
+
+The binary pullback of `A, B : Over X` is the fiber
+product `{ (a, b) | A.hom a = B.hom b }` with the common
+projection to `X`.
+-/
+
+section OverPullback
+
+variable {X : Type u}
+
+/--
+The underlying type of the binary pullback in `Over X`:
+pairs `(a, b)` whose projections to `X` agree.
+-/
+def overPullbackType (A B : Over X) : Type u :=
+  { ab : A.left × B.left // A.hom ab.1 = B.hom ab.2 }
+
+/--
+The binary pullback (fiber product) in `Over X`.
+-/
+def overPullback (A B : Over X) : Over X :=
+  Over.mk (fun (p : overPullbackType A B) =>
+    A.hom p.val.1)
+
+/--
+First projection from the pullback.
+-/
+def overPullbackFst (A B : Over X) :
+    overPullback A B ⟶ A :=
+  Over.homMk (fun p => p.val.1) rfl
+
+/--
+Second projection from the pullback.
+-/
+def overPullbackSnd (A B : Over X) :
+    overPullback A B ⟶ B :=
+  Over.homMk (fun p => p.val.2)
+    (by funext p; exact p.property.symm)
+
+/--
+Functorial action of the pullback on morphisms in
+`Over X`.
+-/
+def overPullbackMap {A A' B B' : Over X}
+    (fA : A ⟶ A') (fB : B ⟶ B') :
+    overPullback A B ⟶ overPullback A' B' :=
+  Over.homMk
+    (fun p =>
+      let a' := fA.left p.val.1
+      let b' := fB.left p.val.2
+      let hA := congrFun (Over.w fA) p.val.1
+      let hB := congrFun (Over.w fB) p.val.2
+      ⟨(a', b'), hA.trans (p.property.trans hB.symm)⟩)
+    (by funext p; exact congrFun (Over.w fA) p.val.1)
+
+end OverPullback
+
 end GebLean
