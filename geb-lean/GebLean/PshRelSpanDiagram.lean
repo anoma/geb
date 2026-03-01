@@ -478,6 +478,30 @@ def pshRelSpanCollageIso :
 
 end PshRelSpanCollage
 
+section PshGraphRelSpan
+
+variable (C : Type u) [Category.{v} C]
+
+/-- The property selecting objects of the
+presheaf relational span category whose
+relation-nodes are graph relations. -/
+def pshGraphRelSpanProp :
+    ObjectProperty
+      (PshRelSpanObj.{u, v, w} C) :=
+  fun X => match X with
+  | .typeNode _ => True
+  | .relNode P Q R =>
+    ∃ f : P ⟶ Q, R = pshRelGraph f
+
+/-- The full subcategory of the presheaf
+relational span category on type-nodes and
+graph-relation-nodes. -/
+abbrev PshGraphRelSpan :=
+  (pshGraphRelSpanProp.{u, v, w}
+    C).FullSubcategory
+
+end PshGraphRelSpan
+
 section RelSpanPshRelSpanEquiv
 
 /-- Convert a `Prop`-valued relation to a
@@ -1057,6 +1081,144 @@ def pshCovariantEmbedding_fullyFaithful :
           at this
         exact this
 
+/-- The covariant embedding restricted to the
+graph-relation subcategory. -/
+def pshGraphCovariantEmbedding :
+    ((Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w)) ⥤
+    (PshGraphRelSpan.{u, v, w} C ⥤
+      (Cᵒᵖ ⥤ Type w)) :=
+  pshCovariantEmbedding ⋙
+    (Functor.whiskeringLeft
+      (PshGraphRelSpan C)
+      (PshRelSpanObj C)
+      (Cᵒᵖ ⥤ Type w)).obj
+    (pshGraphRelSpanProp.{u, v, w} C).ι
+
+/-- The restricted covariant embedding is
+fully faithful: naturality of a presheaf
+morphism is determined by graph relations
+alone. -/
+def pshGraphCovariantEmbedding_fullyFaithful :
+    (pshGraphCovariantEmbedding
+      (C := C)).FullyFaithful where
+  preimage {G H} β :=
+    { app := fun P =>
+        β.app ⟨.typeNode P, trivial⟩
+      naturality := fun {P Q} f => by
+        have nf :=
+          β.naturality
+            (X := ⟨.relNode P Q
+              (pshRelGraph f), ⟨f, rfl⟩⟩)
+            (Y := ⟨.typeNode P, trivial⟩)
+            ⟨.fstProj P Q (pshRelGraph f)⟩
+        have ns :=
+          β.naturality
+            (X := ⟨.relNode P Q
+              (pshRelGraph f), ⟨f, rfl⟩⟩)
+            (Y := ⟨.typeNode Q, trivial⟩)
+            ⟨.sndProj P Q (pshRelGraph f)⟩
+        dsimp [pshGraphCovariantEmbedding,
+          pshCovariantEmbedding] at nf ns
+        ext c x
+        simp only [NatTrans.comp_app,
+          types_comp_apply]
+        let w := (G.map
+          (pshRelGraph_ι_fst_iso f).inv
+          ).app c x
+        have hw :
+          (pshBarrLift G (Over.mk
+            (pshRelGraph f).ι)).hom.app
+            c w =
+          (x, (G.map f).app c x) := by
+          apply Prod.ext
+          · change (G.map ((pshRelGraph f).ι ≫
+              pshProdFst P Q)).app c w = x
+            exact congr_fun (congr_app
+              (G.mapIso
+                (pshRelGraph_ι_fst_iso f)
+              ).inv_hom_id c) x
+          · change (G.map ((pshRelGraph f).ι ≫
+              pshProdSnd P Q)).app c w =
+              (G.map f).app c x
+            rw [pshRelGraph_ι_snd]
+            let gIso :=
+              pshRelGraph_ι_fst_iso f
+            exact congr_fun (congr_app
+              (show G.map gIso.inv ≫
+                G.map (gIso.hom ≫ f) =
+                G.map f from by
+                rw [G.map_comp,
+                  ← Category.assoc,
+                  ← G.map_comp,
+                  gIso.inv_hom_id,
+                  G.map_id,
+                  Category.id_comp])
+              c) x
+        let e : (pshBarrLiftRel G
+          (pshRelGraph f)).toFunctor.obj
+            c :=
+          ⟨(x, (G.map f).app c x), w, hw⟩
+        let m := (β.app
+          ⟨.relNode P Q (pshRelGraph f),
+            ⟨f, rfl⟩⟩).app c e
+        have hfst :=
+          congr_fun (congr_app nf c) e
+        have hsnd :=
+          congr_fun (congr_app ns c) e
+        simp only [NatTrans.comp_app,
+          types_comp_apply] at hfst hsnd
+        dsimp [pshProdFst, pshProdSnd,
+          FunctorToTypes.prod.fst,
+          FunctorToTypes.prod.snd]
+          at hfst hsnd
+        have hgraph :=
+          congr_fun (congr_app
+            (pshBarrLiftRel_graph_ι_snd
+              H f) c) m
+        dsimp [pshProdFst, pshProdSnd,
+          FunctorToTypes.prod.fst,
+          FunctorToTypes.prod.snd]
+          at hgraph
+        rw [hsnd, hfst, ← hgraph]
+    }
+  map_preimage {G H} β := by
+    apply NatTrans.ext; funext ⟨X, hX⟩
+    cases X with
+    | typeNode P => rfl
+    | relNode P Q R =>
+      obtain ⟨f, hR⟩ := hX
+      subst hR
+      dsimp [pshGraphCovariantEmbedding,
+        pshCovariantEmbedding]
+      apply (cancel_mono
+        (pshBarrLiftRel H
+          (pshRelGraph f)).ι).mp
+      apply pshProdPresheaf_hom_ext
+      · simp only [Category.assoc,
+          pshBarrLiftRelMap_ι_fst]
+        have := β.naturality
+          (X := ⟨.relNode P Q
+            (pshRelGraph f), ⟨f, rfl⟩⟩)
+          (Y := ⟨.typeNode P, trivial⟩)
+          ⟨.fstProj P Q (pshRelGraph f)⟩
+        dsimp [pshGraphCovariantEmbedding,
+          pshCovariantEmbedding] at this
+        simp only [Category.assoc]
+          at this
+        exact this
+      · simp only [Category.assoc,
+          pshBarrLiftRelMap_ι_snd]
+        have := β.naturality
+          (X := ⟨.relNode P Q
+            (pshRelGraph f), ⟨f, rfl⟩⟩)
+          (Y := ⟨.typeNode Q, trivial⟩)
+          ⟨.sndProj P Q (pshRelGraph f)⟩
+        dsimp [pshGraphCovariantEmbedding,
+          pshCovariantEmbedding] at this
+        simp only [Category.assoc]
+          at this
+        exact this
+
 end PshCovariantEmbedding
 
 section PshContravariantEmbedding
@@ -1216,6 +1378,131 @@ def pshContravariantEmbedding_fullyFaithful :
           (.sndProj P Q R)
         dsimp [pshContravariantEmbedding]
           at this
+        simp only [Category.assoc]
+          at this
+        exact this
+
+/-- The contravariant embedding restricted to the
+graph-relation subcategory. -/
+def pshGraphContravariantEmbedding :
+    ((Cᵒᵖ ⥤ Type w)ᵒᵖ ⥤
+      (Cᵒᵖ ⥤ Type w)) ⥤
+    (PshGraphRelSpan.{u, v, w} C ⥤
+      (Cᵒᵖ ⥤ Type w)) :=
+  pshContravariantEmbedding ⋙
+    (Functor.whiskeringLeft
+      (PshGraphRelSpan C)
+      (PshRelSpanObj C)
+      (Cᵒᵖ ⥤ Type w)).obj
+    (pshGraphRelSpanProp.{u, v, w} C).ι
+
+/-- The restricted contravariant embedding is
+fully faithful: naturality of a presheaf
+morphism is determined by graph relations
+alone. -/
+def pshGraphContravariantEmbedding_fullyFaithful
+    :
+    (pshGraphContravariantEmbedding
+      (C := C)).FullyFaithful where
+  preimage {F G} β :=
+    { app := fun opP =>
+        β.app ⟨.typeNode opP.unop, trivial⟩
+      naturality := fun {opP₁ opP₂} g => by
+        let f := g.unop
+        let P := opP₂.unop
+        let Q := opP₁.unop
+        have nf :=
+          β.naturality
+            (X := ⟨.relNode P Q
+              (pshRelGraph f), ⟨f, rfl⟩⟩)
+            (Y := ⟨.typeNode P, trivial⟩)
+            ⟨.fstProj P Q (pshRelGraph f)⟩
+        have ns :=
+          β.naturality
+            (X := ⟨.relNode P Q
+              (pshRelGraph f), ⟨f, rfl⟩⟩)
+            (Y := ⟨.typeNode Q, trivial⟩)
+            ⟨.sndProj P Q (pshRelGraph f)⟩
+        dsimp [pshGraphContravariantEmbedding,
+          pshContravariantEmbedding] at nf ns
+        ext c x
+        simp only [NatTrans.comp_app,
+          types_comp_apply]
+        have hgraph_cond :
+            (F.map ((pshRelGraph f).ι ≫
+              pshProdFst P Q).op).app c
+              ((F.map g).app c x) =
+            (F.map ((pshRelGraph f).ι ≫
+              pshProdSnd P Q).op).app c
+              x := by
+          conv_rhs =>
+            rw [pshRelGraph_ι_snd, op_comp,
+              F.map_comp, NatTrans.comp_app,
+              types_comp_apply]
+          rfl
+        let e :
+          (pshContraBarrLiftRel F
+            (pshRelGraph f)).toFunctor.obj
+            c :=
+          ⟨((F.map g).app c x, x),
+            hgraph_cond⟩
+        let m := (β.app
+          ⟨.relNode P Q (pshRelGraph f),
+            ⟨f, rfl⟩⟩).app c e
+        have hfst :=
+          congr_fun (congr_app nf c) e
+        have hsnd :=
+          congr_fun (congr_app ns c) e
+        simp only [NatTrans.comp_app,
+          types_comp_apply] at hfst hsnd
+        dsimp [pshProdFst, pshProdSnd,
+          FunctorToTypes.prod.fst,
+          FunctorToTypes.prod.snd]
+          at hfst hsnd
+        have hgraph :=
+          congr_fun (congr_app
+            (pshContraBarrLiftRel_graph_ι_fst
+              G f) c) m
+        dsimp [pshProdFst, pshProdSnd,
+          FunctorToTypes.prod.fst,
+          FunctorToTypes.prod.snd]
+          at hgraph
+        rw [hfst, hgraph, hsnd]; rfl
+    }
+  map_preimage {F G} β := by
+    apply NatTrans.ext; funext ⟨X, hX⟩
+    cases X with
+    | typeNode P => rfl
+    | relNode P Q R =>
+      obtain ⟨f, hR⟩ := hX
+      subst hR
+      dsimp [pshGraphContravariantEmbedding,
+        pshContravariantEmbedding]
+      apply (cancel_mono
+        (pshContraBarrLiftRel G
+          (pshRelGraph f)).ι).mp
+      apply pshProdPresheaf_hom_ext
+      · simp only [Category.assoc,
+          pshContraBarrLiftRelMap_ι_fst]
+        have := β.naturality
+          (X := ⟨.relNode P Q
+            (pshRelGraph f), ⟨f, rfl⟩⟩)
+          (Y := ⟨.typeNode P, trivial⟩)
+          ⟨.fstProj P Q (pshRelGraph f)⟩
+        dsimp [pshGraphContravariantEmbedding,
+          pshContravariantEmbedding] at this
+        simp only [Category.assoc]
+          at this
+        exact this
+      · simp only [Category.assoc,
+          pshContraBarrLiftRelMap_ι_snd]
+        have := β.naturality
+          (X := ⟨.relNode P Q
+            (pshRelGraph f), ⟨f, rfl⟩⟩)
+          (Y := ⟨.typeNode Q, trivial⟩)
+          ⟨.sndProj P Q (pshRelGraph f)⟩
+        dsimp [pshGraphContravariantEmbedding,
+          pshContravariantEmbedding] at this
         simp only [Category.assoc]
           at this
         exact this
