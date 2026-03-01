@@ -124,9 +124,21 @@ laws and bialgebras (not specific to polynomial functors).
   `lambdaBialgebraEquivLiftedComonadCoalgebra :
   LambdaBialgebra law ≌ (liftedComonad law).Coalgebra`.
   In `GebLean/Utilities/LambdaBialgebra.lean`.
-- [ ] C2a: Construct initial object (operational model) and
-  final object (denotational model) of the lambda-bialgebra
-  category via the free/cofree adjunctions
+- [x] C2a: Construct initial and final lambda-bialgebra
+  objects (operational and denotational models).  Includes
+  `freeBialgebra` / `cofreeBialgebra` (free bialgebra on a
+  D-coalgebra / cofree bialgebra on a T-algebra),
+  `freeBialgebraHom` / `cofreeBialgebraHom` (functoriality),
+  `initialCoalgebra` / `terminalAlgebra` with initiality /
+  terminality proofs, `initialBialgebra` /
+  `finalBialgebra` with `IsInitial` / `IsTerminal` proofs,
+  `universalSemantics` (unique morphism from operational to
+  denotational model), and `universalSemantics_eq` (the
+  morphism obtained via initiality equals the one via
+  terminality).  Parameterized by `IsInitial` / `IsTerminal`
+  witnesses rather than `HasInitial` / `HasTerminal` to
+  remain constructive.
+  In `GebLean/Utilities/LambdaBialgebra.lean`.
 
 ### Phase 3: Polynomial Distributive Law
 
@@ -148,8 +160,8 @@ currently planned for implementation.
   unary algebras (algebra side of Adamek intersection theorem)
 - [ ] B2: Make explicit the fiber decomposition of the copresheaf
   functor over the terminal coalgebra anamorphism
-- [ ] D1: Define Dirichlet/parallel product `P ⊗ Q` of polynomial
-  endofunctors
+- [x] D1: Define Dirichlet/parallel product `P ⊗ Q` of polynomial
+  endofunctors (in `GebLean/Utilities/SlicePolynomial.lean`)
 - [ ] D2: Construct interaction map
   `Xi : m_P ⊗ c_Q -> m_{P ⊗ Q}` (pattern runs on matter)
 - [ ] D3: Verify module structure of free monad functor over
@@ -179,6 +191,6 @@ currently planned for implementation.
   for distributive laws of monads over comonads)
 - Phase 3 connects the abstract framework to our concrete
   polynomial endofunctors
-- The Deferred items from D (Libkind-Spivak) and F (two topoi)
-  require infrastructure not yet in our codebase (Dirichlet
-  product, topology on tree spaces)
+- D1 (Dirichlet product) is now available; D2/D3 can build
+  on it.  The Deferred items from F (two topoi) require
+  topology on tree spaces not yet in our codebase
