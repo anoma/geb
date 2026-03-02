@@ -33,6 +33,7 @@ import GebLean.Paranatural
 import GebLean.ParanaturalTopos
 import GebLean.PolyAdjunctions
 import GebLean.PolyAlg
+import GebLean.PolyAlgColimits
 import GebLean.PolyAlgUMorph
 import GebLean.PolyFilteredColimits
 import GebLean.PolyLimits
