@@ -1555,4 +1555,127 @@ instance pshParanaturalProfEmbedding_faithful :
 
 end PshParanaturalEmbedding
 
+section ConstPresheafEmbedding
+
+variable (C : Type u) [Category.{v} C]
+
+instance pshRelSpanObj_nonempty :
+    Nonempty (PshRelSpanObj.{u, v, w} C) :=
+  ⟨.typeNode ((Functor.const _).obj
+    (PEmpty : Type w))⟩
+
+/-- Embedding of presheaves into parametric
+functors via the constant functor: sends
+`P : Cᵒᵖ ⥤ Type w` to the constant functor
+`PshRelSpanObj C ⥤ (Cᵒᵖ ⥤ Type w)` with
+value `P`. -/
+abbrev constPresheafEmbedding :=
+  Functor.const
+    (PshRelSpanObj.{u, v, w} C) (C := Cᵒᵖ ⥤ Type w)
+
+/-- The empty presheaf relation between any
+two presheaves. -/
+def pshRelEmpty
+    {C : Type u} [Category.{v} C]
+    (P Q : Cᵒᵖ ⥤ Type w) :
+    PshRel P Q where
+  obj _ := ∅
+  map _ _ h := absurd h (Set.mem_empty_iff_false _).mp
+
+variable {C}
+
+/-- In a natural transformation between constant
+functors on `PshRelSpanObj C`, all components
+are equal. -/
+theorem constPresheaf_natTrans_app_eq
+    {P Q : Cᵒᵖ ⥤ Type w}
+    (η : (constPresheafEmbedding C).obj P ⟶
+      (constPresheafEmbedding C).obj Q)
+    (X Y : PshRelSpanObj.{u, v, w} C) :
+    η.app X = η.app Y := by
+  have typeNode_eq : ∀ P' : Cᵒᵖ ⥤ Type w,
+      η.app (.typeNode P') =
+      η.app (.typeNode P) := by
+    intro P'
+    have h₁ := η.naturality
+      (PshRelSpanHom.fstProj P P'
+        (pshRelEmpty P P'))
+    have h₂ := η.naturality
+      (PshRelSpanHom.sndProj P P'
+        (pshRelEmpty P P'))
+    simp only [Functor.const_obj_obj,
+      Functor.const_obj_map, Category.id_comp,
+      Category.comp_id] at h₁ h₂
+    exact h₂.trans h₁.symm
+  suffices h : ∀ Z, η.app Z =
+      η.app (.typeNode P) by
+    exact (h X).trans (h Y).symm
+  intro Z
+  match Z with
+  | .typeNode P' => exact typeNode_eq P'
+  | .relNode P' Q' R =>
+    have h := η.naturality
+      (PshRelSpanHom.fstProj P' Q' R)
+    simp only [Functor.const_obj_obj,
+      Functor.const_obj_map, Category.id_comp,
+      Category.comp_id] at h
+    exact h.symm.trans (typeNode_eq P')
+
+variable (C)
+
+/-- `constPresheafEmbedding` is fully faithful:
+every natural transformation between constant
+functors has all components equal, since any
+two typeNodes are connected via a relNode
+(using the empty relation). -/
+def constPresheafEmbedding_fullyFaithful :
+    (constPresheafEmbedding.{u, v, w}
+      C).FullyFaithful where
+  preimage {P Q} η := η.app (.typeNode P)
+  map_preimage {P Q} η := by
+    apply NatTrans.ext; funext X
+    simp only [Functor.const_obj_obj,
+      Functor.const_map_app]
+    exact constPresheaf_natTrans_app_eq
+      η (.typeNode P) X
+  preimage_map {P Q} f := rfl
+
+instance constPresheafEmbedding_full :
+    (constPresheafEmbedding.{u, v, w}
+      C).Full :=
+  (constPresheafEmbedding_fullyFaithful C).full
+
+instance constPresheafEmbedding_faithful :
+    (constPresheafEmbedding.{u, v, w}
+      C).Faithful :=
+  (constPresheafEmbedding_fullyFaithful
+    C).faithful
+
+/-- Composition of the Yoneda embedding with
+the constant presheaf embedding: a fully
+faithful functor from `C` into
+`PshParametricFunctor C (Cᵒᵖ ⥤ Type v)`. -/
+abbrev yonedaConstEmbedding :=
+  yoneda (C := C) ⋙
+    constPresheafEmbedding.{u, v, v} C
+
+/-- `yonedaConstEmbedding` is fully faithful,
+as the composition of the Yoneda embedding
+with the constant presheaf embedding. -/
+def yonedaConstEmbedding_fullyFaithful :
+    (yonedaConstEmbedding C).FullyFaithful :=
+  Yoneda.fullyFaithful.comp
+    (constPresheafEmbedding_fullyFaithful C)
+
+instance yonedaConstEmbedding_full :
+    (yonedaConstEmbedding C).Full :=
+  (yonedaConstEmbedding_fullyFaithful C).full
+
+instance yonedaConstEmbedding_faithful :
+    (yonedaConstEmbedding C).Faithful :=
+  (yonedaConstEmbedding_fullyFaithful
+    C).faithful
+
+end ConstPresheafEmbedding
+
 end GebLean
