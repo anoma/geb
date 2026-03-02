@@ -44,56 +44,26 @@ all satisfy IEP.
 
 ## Tasks
 
-### Task 1: Define Identity Extension Property
+### Task 1: Define Identity Extension Property [DONE]
 
-File: `GebLean/Utilities/SpanFamily.lean` (or new file)
+`HasIdentityExtension` in `SpanFamily.lean`.
+`PshRelHasIdentityExtension` (abbrev) and
+`pshRelIdRel` in `PshRelSpanDiagram.lean`.
 
-For `SpanFamilyData` over `GraphSpanObj V E` with a
-designated `idRel : (v : V) → E v v`, define:
+### Task 2: PshTypeExpr-derived functors satisfy IEP [DONE]
 
-```lean
-structure HasIdentityExtension
-    (F : SpanFamilyData (V := V) (E := E) (D := D))
-    (idRel : (v : V) → E v v) : Prop where
-  fstEqSnd :
-    ∀ v, F.fstProj (idRel v) = F.sndProj (idRel v)
-  fstIsIso :
-    ∀ v, IsIso (F.fstProj (idRel v))
-```
+- `PshTypeExpr.fullRelInterp_id` in `PshTypeExpr.lean`
+  (by induction: `var` trivial, `app` by
+  `pshBarrLiftRel_id`, `arrow` by `pshArrowRel_id`)
+- `pshRelId_ι_fst_eq_snd` and `pshRelId_ι_fst_isIso`
+  in `PshRelSpanDiagram.lean`
+- `pshTypeExprSpanData` and `pshTypeExpr_iep` in
+  `PshTypeExpr.lean`
 
-On identity relations, both projections coincide and
-are isomorphisms.
+### Task 3: Non-IEP counterexample [DONE]
 
-Dependencies: none.
-
-### Task 2: PshTypeExpr-derived functors satisfy IEP
-
-File: `GebLean/PshTypeExpr.lean` or
-`GebLean/PshRelSpanDiagram.lean`
-
-Show `pshRelSpanDiagramFunctor.obj T` satisfies
-`HasIdentityExtension` with `idRel = pshRelId` for
-any `PshTypeExpr T`.
-
-Requires: `T.fullRelInterp (pshRelId P) = pshRelId
-(T.interp P)` by induction on `PshTypeExpr`.
-
-Dependencies: Task 1.
-
-### Task 3: Non-IEP counterexample
-
-File: `GebLean/PshRelSpanDiagram.lean`
-
-Construct a concrete functor `PshRelSpanObj C ⥤ D`
-that does not satisfy IEP.
-
-Candidate: map every `relNode P Q R` to
-`pshProdPresheaf (F P) (F Q)` with `fstProj = pshProdFst`
-and `sndProj = pshProdSnd`. On `pshRelId P`, the two
-projections are different (they are the two projections
-from `P × P`), so IEP fails.
-
-Dependencies: Task 1.
+`pshFullProductData` and `pshFullProductData_not_iep`
+in `PshRelSpanDiagram.lean`.
 
 ### Task 4: Embedding IEP
 

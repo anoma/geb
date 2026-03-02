@@ -1786,6 +1786,35 @@ abbrev PshRelHasIdentityExtension
   HasIdentityExtension F
     (pshRelIdRel.{u, v, w})
 
+/-- The first and second projections from the
+diagonal relation `pshRelId P` coincide: on the
+subfunctor `{ (a, b) | a = b }`, both product
+projections yield the same result. -/
+theorem pshRelId_ι_fst_eq_snd
+    (P : Cᵒᵖ ⥤ Type w) :
+    (pshRelId P).ι ≫ pshProdFst P P =
+    (pshRelId P).ι ≫ pshProdSnd P P := by
+  ext c ⟨⟨_, _⟩, (h : _ = _)⟩
+  exact h
+
+/-- The composition `(pshRelId P).ι ≫ pshProdFst`
+is an isomorphism: the diagonal subfunctor is
+isomorphic to `P` via first projection.  The
+inverse sends `a` to `(a, a)`. -/
+instance pshRelId_ι_fst_isIso
+    (P : Cᵒᵖ ⥤ Type w) :
+    IsIso ((pshRelId P).ι ≫ pshProdFst P P) := by
+  refine ⟨⟨{
+    app := fun c a => ⟨(a, a), rfl⟩
+    naturality := fun c d f => by
+      ext a; simp [pshRelId,
+        Subfunctor.toFunctor,
+        FunctorToTypes.prod]
+  }, ?_, ?_⟩⟩
+  · ext c ⟨⟨a, b⟩, (h : a = b)⟩
+    subst h; rfl
+  · ext c _; rfl
+
 /-- The "full product" span family data: maps
 every relation node to the product of the vertex
 images, ignoring the relation entirely. This

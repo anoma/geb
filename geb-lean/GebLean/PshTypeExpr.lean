@@ -154,6 +154,23 @@ theorem PshTypeExpr.fullRelInterp_graph
   | arrow T₁ T₂ ih₁ ih₂ =>
     simp only [fullRelInterp, relInterp, ih₁, ih₂]
 
+/-- `fullRelInterp` maps the identity relation to
+the identity relation: `T.fullRelInterp (pshRelId P)
+= pshRelId (T.interp P P)`. -/
+theorem PshTypeExpr.fullRelInterp_id
+    (T : PshTypeExpr C)
+    (P : Cᵒᵖ ⥤ Type (max u v)) :
+    T.fullRelInterp (pshRelId P) =
+      pshRelId (T.interp P P) := by
+  induction T with
+  | var => rfl
+  | app G T ih =>
+    simp only [fullRelInterp, ih,
+      pshBarrLiftRel_id, interp]
+  | arrow T₁ T₂ ih₁ ih₂ =>
+    simp only [fullRelInterp, ih₁, ih₂,
+      pshArrowRel_id, interp]
+
 /-- The profunctor map for a type expression:
 given `f : P' ⟶ P` (contravariant) and
 `g : Q ⟶ Q'` (covariant), maps
@@ -2484,5 +2501,50 @@ instance pshRelSpanDiagramFunctor_full :
   pshRelSpanDiagramFunctor_fullyFaithful.full
 
 end PshRelSpanDiagram
+
+section IdentityExtension
+
+variable {C : Type u} [Category.{v} C]
+
+/-- The span family data extracted from a
+presheaf type expression: `vertexObj` is the
+diagonal interpretation, `edgeObj` is the full
+relational interpretation, and the projections
+are the subfunctor inclusion composed with the
+product projections. -/
+def pshTypeExprSpanData
+    (T : PshTypeExpr C) :
+    SpanFamilyData
+      (V := Cᵒᵖ ⥤ Type (max u v))
+      (E := PshRel)
+      (D := Cᵒᵖ ⥤ Type (max u v)) where
+  vertexObj P := T.interp P P
+  edgeObj _ _ R :=
+    (T.fullRelInterp R).toFunctor
+  fstProj R :=
+    (T.fullRelInterp R).ι ≫
+      pshProdFst _ _
+  sndProj R :=
+    (T.fullRelInterp R).ι ≫
+      pshProdSnd _ _
+
+/-- Every `PshTypeExpr`-derived span family data
+satisfies the identity extension property. -/
+theorem pshTypeExpr_iep
+    (T : PshTypeExpr C) :
+    PshRelHasIdentityExtension.{u, v, max u v}
+      (pshTypeExprSpanData T) where
+  fstEqSnd P := by
+    simp only [pshTypeExprSpanData,
+      pshRelIdRel]
+    rw [T.fullRelInterp_id]
+    exact pshRelId_ι_fst_eq_snd _
+  fstIsIso P := by
+    simp only [pshTypeExprSpanData,
+      pshRelIdRel]
+    rw [T.fullRelInterp_id]
+    exact pshRelId_ι_fst_isIso _
+
+end IdentityExtension
 
 end GebLean
