@@ -2,6 +2,7 @@ import GebLean.PolyAdjunctions
 import GebLean.Utilities.Equalities
 import Mathlib.CategoryTheory.Adjunction.Limits
 import Mathlib.Data.Finset.Lattice.Fold
+import Mathlib.Data.Fintype.Sigma
 import Mathlib.Order.Nat
 import Mathlib.CategoryTheory.Endofunctor.Algebra
 import Mathlib.CategoryTheory.Functor.OfSequence
@@ -3390,6 +3391,44 @@ shapes (free monad applied to the terminal object).
 -/
 lemma polyFreeMPoly_index (P : PolyEndo X) (x : X) :
     polyBetweenIndex X X (polyFreeMPoly P) x = PolyFreeMShape P x := rfl
+
+/--
+The leaf position type of a free monad tree shape is finite
+when the underlying polynomial endofunctor is finitary.
+Proved by structural induction on the tree shape:
+at a leaf, the type is `PUnit`; at an internal node with
+position `p`, it is `Σ e, PolyFreeMLeafPos P (children e)`
+where `e` ranges over `(polyBetweenFamily X X P x p).left`,
+which is finite by the finitarity hypothesis.
+-/
+def polyFreeMLeafPosFintype
+    (P : PolyEndo X)
+    [PolyBetweenFinitary X X P]
+    {x : X} :
+    (shape : PolyFreeMShape P x) →
+    Fintype (PolyFreeMLeafPos P shape)
+  | PolyFix.mk _ (Sum.inl _) _ =>
+    (inferInstance : Fintype PUnit)
+  | PolyFix.mk _ (Sum.inr _) children =>
+    letI : ∀ e, Fintype
+        (PolyFreeMLeafPos P (children e)) :=
+      fun e => polyFreeMLeafPosFintype P (children e)
+    Sigma.instFintype
+
+/--
+The free monad polynomial `polyFreeMPoly P` is finitary
+when `P` is finitary. The family at each position
+(tree shape) has carrier `PolyFreeMLeafPos P shape`,
+which is finite by `polyFreeMLeafPosFintype`.
+-/
+instance polyFreeMPolyFinitary
+    (P : PolyEndo X)
+    [PolyBetweenFinitary X X P] :
+    PolyBetweenFinitary X X (polyFreeMPoly P) where
+  data := {
+    familyFintype := fun _ shape =>
+      polyFreeMLeafPosFintype P shape
+  }
 
 /--
 Build a free monad tree from a shape and leaf data.
