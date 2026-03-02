@@ -1,5 +1,6 @@
 import GebLean.Utilities.Graph
 import GebLean.Utilities.Profunctors
+import GebLean.Utilities.SpanFamily
 import Mathlib.CategoryTheory.Functor.FullyFaithful
 
 /-!
@@ -243,6 +244,18 @@ abbrev ParametricFunctor
 `ParametricFunctor` specialized to `Type 1`. -/
 abbrev ParametricCopresheaf :=
   ParametricFunctor (Type 1)
+
+universe u₂ v₂ in
+/-- Equivalence between `ParametricFunctor D`
+and the span family
+`SpanFamily Type relSpanEdge D`, induced by
+the equivalence `relSpanGraphSpanEquiv` via
+precomposition. -/
+def parametricFunctorSpanFamilyEquiv
+    (D : Type u₂) [Category.{v₂} D] :
+    ParametricFunctor D ≌
+    SpanFamily Type relSpanEdge D :=
+  relSpanGraphSpanEquiv.congrLeft
 
 /-- The type of related pairs under a relation
 `R : I₀ → I₁ → Prop`. -/

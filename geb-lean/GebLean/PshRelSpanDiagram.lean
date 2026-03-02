@@ -2,6 +2,7 @@ import GebLean.Paranatural
 import GebLean.PshRelDouble
 import GebLean.RelSpanDiagram
 import GebLean.Utilities.Profunctors
+import GebLean.Utilities.SpanFamily
 import Mathlib.CategoryTheory.Functor.FullyFaithful
 
 /-!
@@ -271,6 +272,18 @@ abbrev PshParametricCopresheaf
     (D : Type u') [Category.{v'} D] :=
   PshParametricFunctor.{u, v, w, max u' v' (w' + 1), max u' w'}
     C (Dᵒᵖ ⥤ Type w')
+
+/-- Equivalence between
+`PshParametricFunctor C D` and the span family
+`SpanFamily (Cᵒᵖ ⥤ Type w) PshRel D`, induced
+by `pshRelSpanGraphSpanEquiv` via
+precomposition. -/
+def pshParametricFunctorSpanFamilyEquiv
+    (D : Type u'')
+    [Category.{v''} D] :
+    PshParametricFunctor C D ≌
+    SpanFamily (Cᵒᵖ ⥤ Type w) PshRel D :=
+  pshRelSpanGraphSpanEquiv.congrLeft
 
 /-- The currying equivalence identifying
 copresheaf-valued parametric functors with
