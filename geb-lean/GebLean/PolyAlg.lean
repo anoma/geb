@@ -10957,14 +10957,14 @@ lemma polyIterChain_map_succ_sigma
         (homOfLE
           (Nat.le_of_succ_le_succ h))⟩⟩ := by
   have h' := Nat.le_of_succ_le_succ h
-  have key := congrFun
+  have comm := congrFun
     (congrArg CommaMorphism.left
       (polyIterChain_map_succ X P h'))
     ⟨x, ⟨i, childMor⟩⟩
   rw [show homOfLE h =
     homOfLE (Nat.succ_le_succ h')
     from Subsingleton.elim _ _]
-  exact key
+  exact comm
 
 lemma polyIterRoundtrip_fac (P : PolyEndo X)
     [PolyBetweenFinitary X X P] :
@@ -11103,15 +11103,15 @@ lemma polyIterCocone_uniq (P : PolyEndo X)
         ⟨(polyFixToIterFiber X P t).val,
           rfl⟩).trans
         (polyIterRoundtrip_uniq X P t))
-  have key := congrFun
+  have comm := congrFun
     (congrArg CommaMorphism.left
       (hf (polyFixDepth X P t)))
     (polyFixToIterFiber X P t).val
   simp only [Over.comp_left, types_comp_apply,
     polyIterCocone,
-    NatTrans.ofSequence_app] at key
-  rw [h_eq] at key
-  exact key
+    NatTrans.ofSequence_app] at comm
+  rw [h_eq] at comm
+  exact comm
 
 def polyIterCocone_isColimit (P : PolyEndo X)
     [PolyBetweenFinitary X X P] :
