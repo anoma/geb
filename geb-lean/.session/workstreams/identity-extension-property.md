@@ -28,7 +28,7 @@ all satisfy IEP.
 ## Mapping to our codebase
 
 | Paper concept | Our formalization |
-|---|---|
+| - | - |
 | Reflexive graph category G | `PshRelSpanObj C` |
 | Vertex category G_v | `PSh(C)` |
 | Edge category G_e | Relations `PshRel P Q` |
@@ -129,7 +129,7 @@ For IEP-satisfying functors F, G : PshRelSpanObj C ⥤ D,
 show nat trans η : F ⟶ G are determined by their
 typeNode components:
 
-```
+```lean
 η₁.app (.typeNode P) = η₂.app (.typeNode P) ∀ P
   → η₁ = η₂
 ```

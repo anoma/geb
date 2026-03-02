@@ -1762,6 +1762,30 @@ section IdentityExtension
 
 variable {C : Type u} [Category.{v} C]
 
+/-- The designated identity relation on presheaf
+relations: for each presheaf `P`, the diagonal
+relation `pshRelId P`. This function serves as
+the `idRel` parameter for `HasIdentityExtension`
+in the presheaf relational setting. -/
+def pshRelIdRel :
+    (P : Cᵒᵖ ⥤ Type w) → PshRel P P :=
+  fun P => pshRelId P
+
+/-- `HasIdentityExtension` specialized to the
+presheaf relational setting, with `pshRelId` as
+the designated identity relation.
+
+At call sites, use
+`PshRelHasIdentityExtension.{u, v, w}` to pin
+the universe level of `Type w`. -/
+abbrev PshRelHasIdentityExtension
+    (F : SpanFamilyData
+      (V := Cᵒᵖ ⥤ Type w)
+      (E := PshRel)
+      (D := Cᵒᵖ ⥤ Type w)) : Prop :=
+  HasIdentityExtension F
+    (pshRelIdRel.{u, v, w})
+
 /-- The "full product" span family data: maps
 every relation node to the product of the vertex
 images, ignoring the relation entirely. This
@@ -1788,10 +1812,8 @@ theorem pshFullProductData_not_iep
     (c : Cᵒᵖ)
     (a b : P.obj c)
     (hab : a ≠ b) :
-    ¬ HasIdentityExtension
-      (pshFullProductData (C := C))
-      (fun (P : Cᵒᵖ ⥤ Type w) =>
-        pshRelId P) := by
+    ¬ PshRelHasIdentityExtension.{u, v, w}
+      (pshFullProductData (C := C)) := by
   intro h
   have heq := h.fstEqSnd P
   have : (pshProdFst P P).app c (a, b) =
