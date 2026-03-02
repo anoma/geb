@@ -1243,6 +1243,17 @@ theorem pshBarrLiftRel_graph_ι_snd
   rw [pshBarrLiftRel_graph]
   exact pshRelGraph_ι_snd (G.map α)
 
+/-- The Barr extension maps identity relations to
+identity relations. -/
+theorem pshBarrLiftRel_id
+    {P : Cᵒᵖ ⥤ Type w}
+    (G : (Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w)) :
+    pshBarrLiftRel G (pshRelId P) =
+      pshRelId (G.obj P) := by
+  rw [← pshRelGraph_eq_id,
+    pshBarrLiftRel_graph, G.map_id,
+    pshRelGraph_eq_id]
+
 /-- The Barr extension preserves relatedness: if
 `α` and `β` are `(R, S)`-related at the `PshProdOver`
 level, then `G.map α` and `G.map β` are
@@ -2165,6 +2176,47 @@ def pshArrowRel
   pshProdOverToRel
     (pshArrowRelOver (Over.mk R.ι)
       (Over.mk S.ι))
+
+/-- The arrow relation maps identity relations to
+identity relations: when both input and output
+relations are diagonals, the arrow relation is
+the diagonal on the internal hom presheaf. -/
+theorem pshArrowRel_id
+    (A B : Dᵒᵖ ⥤ Type (max u₁ v₁)) :
+    pshArrowRel (pshRelId A) (pshRelId B) =
+      pshRelId (A.functorHom B) := by
+  ext c ⟨f₁, f₂⟩
+  simp only [pshArrowRel, pshProdOverToRel,
+    Subfunctor.range, Set.mem_range,
+    pshRelId]
+  constructor
+  · rintro ⟨⟨⟨g₁, g₂⟩, hg⟩, hpair⟩
+    have hg₁ : g₁ = f₁ :=
+      congr_arg Prod.fst hpair
+    have hg₂ : g₂ = f₂ :=
+      congr_arg Prod.snd hpair
+    subst hg₁; subst hg₂
+    ext d h a
+    have hrel := hg d h ⟨(a, a), rfl⟩
+    obtain ⟨⟨⟨b₁, b₂⟩, (hb : b₁ = b₂)⟩,
+      hs⟩ := hrel
+    simp only [Over.mk_hom,
+      Subfunctor.ι_app] at hs
+    have hfst := congr_arg Prod.fst hs
+    have hsnd := congr_arg Prod.snd hs
+    simp only at hfst hsnd
+    rw [← hfst, ← hsnd]; exact hb
+  · intro heq
+    change f₁ = f₂ at heq; subst heq
+    refine ⟨⟨⟨f₁, f₁⟩, fun d h w => ?_⟩, ?_⟩
+    · exact ⟨⟨(f₁.app d h w.val.1,
+        f₁.app d h w.val.1), rfl⟩,
+        by simp only [Over.mk_hom,
+             Subfunctor.ι_app]
+           exact Prod.ext rfl
+             (congrArg (f₁.app d h)
+               w.property)⟩
+    · rfl
 
 /-- The range of `pshArrowRelOver R S` is contained
 in `pshArrowRel (pshProdOverToRel R)
