@@ -73,17 +73,19 @@ in `PshRelSpanDiagram.lean`.
   `pshContravariantSpanData_iep`
   in `PshRelSpanDiagram.lean`
 
-### Task 5: Graph functor subsumptivity
+### Task 5: Graph functor subsumptivity [DONE]
 
-File: `GebLean/PshRelDouble.lean` or new file
-
-Define the graph functor from `Arrow (PSh(C))` to the
-edge category of `PshRelSpanObj C` (mapping `f : P ⟶ Q`
-to `.relNode P Q (pshRelGraph f)`). Show it is full and
-faithful (subsumptivity).
-
-Existing: `pshRelGraph_ι_fst_iso` gives injectivity.
-Need fullness.
+- `pshRelGraph_injective` in `PshRelDouble.lean`:
+  graph construction is injective on morphisms.
+- `Functor.Faithful pshRelGraphFunctor` instance.
+- `pshRelGraph_recover` in `PshRelDouble.lean`:
+  `α` is recovered as the inverse of the first-
+  projection iso composed with the second
+  projection.
+- `pshRelGraph_compat_iff` in `PshRelDouble.lean`:
+  compatibility of `(f, g)` with graph relations
+  iff the naturality square commutes (fullness
+  content of subsumptivity).
 
 Dependencies: none.
 

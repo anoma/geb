@@ -443,6 +443,46 @@ theorem pshRelGraph_comp
   · rintro ⟨_, rfl, hβ⟩; exact hβ
   · intro h; exact ⟨α.app c x.1, rfl, h⟩
 
+/-- The graph construction is injective: if
+`pshRelGraph α = pshRelGraph β` then `α = β`. -/
+theorem pshRelGraph_injective
+    {P Q : Cᵒᵖ ⥤ Type w}
+    {α β : P ⟶ Q}
+    (h : pshRelGraph α = pshRelGraph β) :
+    α = β := by
+  ext c p
+  have hmem : (⟨p, α.app c p⟩ :
+      P.obj c × Q.obj c) ∈
+      (pshRelGraph β).obj c := by
+    rw [← h]; exact rfl
+  exact hmem.symm
+
+/-- A pair of presheaf maps `(f, g)` restricts
+to a map between graph subfunctors if and only if
+the naturality square commutes. The forward
+direction is the fullness part of subsumptivity
+(Hermida/Reddy/Robinson, Proposition 6.3); the
+backward direction is functoriality of the graph
+construction. -/
+theorem pshRelGraph_compat_iff
+    {P P' Q Q' : Cᵒᵖ ⥤ Type w}
+    {α : P ⟶ Q} {β : P' ⟶ Q'}
+    (f : P ⟶ P') (g : Q ⟶ Q') :
+    (∀ (c : Cᵒᵖ)
+      (x : P.obj c × Q.obj c),
+      x ∈ (pshRelGraph α).obj c →
+      (f.app c x.1, g.app c x.2) ∈
+        (pshRelGraph β).obj c) ↔
+    α ≫ g = f ≫ β := by
+  constructor
+  · intro h
+    ext c p
+    exact (h c (p, α.app c p) rfl).symm
+  · intro h c ⟨p, q⟩ (hα : α.app c p = q)
+    change β.app c (f.app c p) = g.app c q
+    rw [← hα]
+    exact congr_fun (congr_app h c) p |>.symm
+
 end PshRelations
 
 section PshRelCategory
@@ -476,6 +516,12 @@ def pshRelGraphFunctor :
   map α := pshRelGraph α
   map_id P := pshRelGraph_eq_id P
   map_comp α β := (pshRelGraph_comp α β).symm
+
+instance : Functor.Faithful
+    (pshRelGraphFunctor :
+      (Cᵒᵖ ⥤ Type w) ⥤
+        PshRelCat.{u, v, w} (C := C)) where
+  map_injective := pshRelGraph_injective
 
 end PshRelCategory
 
@@ -1122,6 +1168,17 @@ def pshRelGraph_ι_fst_iso
     exact Subtype.ext
       (Prod.ext rfl h)
   inv_hom_id := by ext; rfl
+
+/-- A natural transformation `α : P ⟶ Q` is
+recovered from `pshRelGraph α` as the composite
+of the inverse of the first-projection
+isomorphism with the second projection. -/
+theorem pshRelGraph_recover
+    {P Q : Cᵒᵖ ⥤ Type w} (α : P ⟶ Q) :
+    (pshRelGraph_ι_fst_iso α).inv ≫
+      ((pshRelGraph α).ι ≫
+        pshProdSnd P Q) = α := by
+  ext c p; rfl
 
 /-- The inclusion of a graph subfunctor composed
 with the second projection equals the first
