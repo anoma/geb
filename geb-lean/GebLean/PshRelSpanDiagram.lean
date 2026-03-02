@@ -258,7 +258,7 @@ abbrev PshParametricFunctor
     (E : Type u'') [Category.{v''} E] :=
   PshRelSpanObj.{u, v, w} C ⥤ E
 
-/-- Copresheaf-valued parametric functors on
+/-- Presheaf-valued parametric functors on
 `PshRelSpanObj C`: `PshParametricFunctor`
 specialized to the presheaf category
 `Dᵒᵖ ⥤ Type w'`.
@@ -268,7 +268,7 @@ By uncurrying, this is equivalent to
 presheaf topos. The case `D` = discrete
 unit category recovers `Type w'`-valued
 parametric functors. -/
-abbrev PshParametricCopresheaf
+abbrev PshParametricPresheaf
     (D : Type u') [Category.{v'} D] :=
   PshParametricFunctor.{u, v, w, max u' v' (w' + 1), max u' w'}
     C (Dᵒᵖ ⥤ Type w')
@@ -286,18 +286,18 @@ def pshParametricFunctorSpanFamilyEquiv
   pshRelSpanGraphSpanEquiv.congrLeft
 
 /-- The currying equivalence identifying
-copresheaf-valued parametric functors with
+presheaf-valued parametric functors with
 copresheaves on the product category
 `PshRelSpanObj C × Dᵒᵖ`. -/
 def pshParametricCatAsCopresheaf
     (D : Type u') [Category.{v'} D] :
-    (PshParametricCopresheaf C D) ≌
+    (PshParametricPresheaf C D) ≌
     (PshRelSpanObj.{u, v, w} C × Dᵒᵖ ⥤
       Type w') :=
   Functor.currying
 
 /-- The presheaf-category equivalence: the
-category of copresheaf-valued parametric
+category of presheaf-valued parametric
 functors is equivalent to a presheaf
 topos on `(PshRelSpanObj C)ᵒᵖ × D`.
 
@@ -306,7 +306,7 @@ equivalence with precomposition by
 `pshRelSpanProdOpFwd`. -/
 def pshParametricCatAsPresheaf
     (D : Type u') [Category.{v'} D] :
-    (PshParametricCopresheaf C D) ≌
+    (PshParametricPresheaf C D) ≌
     (((PshRelSpanObj.{u, v, w} C)ᵒᵖ × D)ᵒᵖ ⥤
       Type w') :=
   CategoryTheory.Equivalence.trans
@@ -753,14 +753,14 @@ def parametricFunctorEquiv
 
 /-- The equivalence between
 `ParametricCopresheaf` (`RelSpanObj ⥤ Type 1`)
-and `PshParametricCopresheaf` over the terminal
+and `PshParametricPresheaf` over the terminal
 category, obtained by chaining:
 1. `parametricFunctorEquiv` (source categories)
 2. The presheaf-type equivalence on `Type 1`
    (target category). -/
 def parametricCopresheafEquiv :
     ParametricCopresheaf ≌
-    PshParametricCopresheaf.{0, 0, 0, 0, 0, 1}
+    PshParametricPresheaf.{0, 0, 0, 0, 0, 1}
       (Discrete PUnit) (Discrete PUnit) :=
   (parametricFunctorEquiv (Type 1)).trans
     (((Discrete.opposite PUnit).congrLeft

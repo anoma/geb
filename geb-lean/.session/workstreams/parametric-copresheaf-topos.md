@@ -7,7 +7,7 @@ Active
 ## Context
 
 Develop the general theory of parametric polymorphism via the
-copresheaf topos `PshParametricCopresheaf C = PshRelSpanObj C => Type`.
+copresheaf topos `PshParametricPresheaf C = PshRelSpanObj C => Type`.
 This workstream concerns the category-theoretically generic
 constructions only (PshRelDouble, YonedaRel, PshRelSpanObj,
 and the copresheaf topos), not the exploratory inductive
@@ -137,7 +137,7 @@ framework.
   Ref: `docs/parametric-copresheaf-topos.md` Section 10.4.
 
 - [ ] **T7. Graph restriction functor.** Define the
-  restriction functor from `PshParametricCopresheaf C` to
+  restriction functor from `PshParametricPresheaf C` to
   copresheaves on the graph subcategory (T6). Show that
   this forgets the "extra" parametricity data beyond
   naturality.

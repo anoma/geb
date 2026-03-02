@@ -98,7 +98,7 @@ This workstream unifies the former:
   `terminalYonedaRelDoubleData`
 - `PshRelSpanDiagram.lean`: `PshRelSpanObj C`,
   `PshRelSpanHom`, category instance,
-  `PshParametricFunctor`, `PshParametricCopresheaf`,
+  `PshParametricFunctor`, `PshParametricPresheaf`,
   `relSpanPshRelSpanIso :
   RelSpanObj ≅Cat PshRelSpanObj (Discrete PUnit)`,
   `parametricFunctorEquiv`, `parametricCopresheafEquiv`,
@@ -155,7 +155,7 @@ works over `PSh(C)` for arbitrary `C`).
 
 - [x] **P1c. Presheaf covariant embedding.** Define
   `pshCovariantEmbedding : (PSh(C) ⥤ PSh(C)) ⥤
-  PshParametricCopresheaf C` and prove it fully faithful,
+  PshParametricPresheaf C` and prove it fully faithful,
   generalizing `covariantEmbedding`.
 
 - [x] **P1d. Presheaf contravariant embedding.** Define
@@ -308,7 +308,7 @@ type `∀X. ((X → X) → X) → X` separates them:
 
 ### Topos-theoretic context
 
-`PshParametricCopresheaf C` (= `PshRelSpanObj C ⥤ Type`)
+`PshParametricPresheaf C` (= `PshRelSpanObj C ⥤ Type`)
 is a copresheaf category and therefore a Grothendieck topos.
 This resolves the former search for a topos of profunctors
 with paranatural morphisms: rather than restricting

@@ -28,7 +28,7 @@ Similarly,
 generalizes the source diagram to presheaves on an
 arbitrary category `C`, with copresheaf
 specialization
-`PshParametricCopresheaf C D := PshParametricFunctor C (Dᵒᵖ ⥤ Type w')`.
+`PshParametricPresheaf C D := PshParametricFunctor C (Dᵒᵖ ⥤ Type w')`.
 The equivalence `parametricFunctorEquiv E` witnesses
 that `ParametricFunctor E ≌ PshParametricFunctor (Discrete PUnit) E`
 for any target category `E`.
