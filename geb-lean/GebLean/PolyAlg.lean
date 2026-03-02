@@ -1,6 +1,8 @@
 import GebLean.PolyAdjunctions
 import GebLean.Utilities.Equalities
 import Mathlib.CategoryTheory.Adjunction.Limits
+import Mathlib.Data.Finset.Lattice.Fold
+import Mathlib.Order.Nat
 import Mathlib.CategoryTheory.Endofunctor.Algebra
 import Mathlib.CategoryTheory.Functor.OfSequence
 import Mathlib.CategoryTheory.Limits.Creates
@@ -55,7 +57,7 @@ A polynomial endofunctor on `Over X` is finitary when
 its underlying polynomial functor `Over X → Over X` is
 finitary.
 -/
-abbrev PolyEndoFinitary (P : PolyEndo X) : Prop :=
+abbrev PolyEndoFinitary (P : PolyEndo X) :=
   PolyBetweenFinitary X X P
 
 /--
@@ -10494,6 +10496,631 @@ def polyCofixCone_isLimit
       (fun j => hm j)
 
 end CoiterationLimit
+
+/-! ## Initial Algebra as Iteration Chain Colimit
+
+The initial algebra `polyFixAlg P` is the colimit of
+the iteration chain `polyIterChain P : ℕ ⥤ Over X`.
+
+The bridge uses fiber-level conversions between
+`PolyFix P x` and fibers of `polyIterObj P n` at `x`,
+together with a depth function on `PolyFix` trees
+(requiring `[PolyEndoFinitary P]`) to embed trees
+at the correct chain level.
+-/
+
+section IterationColimit
+
+variable (X : Type u)
+
+/--
+Convert a fiber of `polyIterObj X P n` at `x` to a
+`PolyFix P x` tree.  At level 0, the fiber is empty
+(from the initial object).  At level `n + 1`, the
+fiber decomposes into an index and child morphism;
+each child is recursively converted at level `n`.
+-/
+def polyIterFiberToFix (P : PolyEndo X)
+    (n : ℕ) (x : X)
+    (p : { q : (polyIterObj X P n).left //
+      (polyIterObj X P n).hom q = x }) :
+    PolyFix P x :=
+  match n with
+  | 0 => PEmpty.elim p.val
+  | n + 1 =>
+    let elem : polyBetweenEvalFamily X X P
+        (polyIterObj X P n)
+        ((polyIterObj X P (n + 1)).hom p.val) :=
+      p.val.2
+    let i : polyBetweenIndex X X P
+        ((polyIterObj X P (n + 1)).hom p.val) :=
+      elem.1
+    let childMor :
+        polyBetweenFamily X X P
+          ((polyIterObj X P (n + 1)).hom p.val) i ⟶
+        polyIterObj X P n :=
+      elem.2
+    p.property ▸ PolyFix.mk
+      ((polyIterObj X P (n + 1)).hom p.val)
+      i
+      (fun e =>
+        polyIterFiberToFix P n
+          ((polyBetweenFamily X X P
+            ((polyIterObj X P (n + 1)).hom p.val)
+            i).hom e)
+          ⟨childMor.left e,
+            congrFun (Over.w childMor) e⟩)
+
+/--
+Characterization of `polyIterFiberToFix` at depth
+`n + 1`: when the fiber element has the form
+`⟨⟨x, ⟨i, childMor⟩⟩, rfl⟩`, the result is
+`PolyFix.mk x i (recursive children)`.
+-/
+lemma polyIterFiberToFix_succ
+    (P : PolyEndo X)
+    (n : ℕ) (x : X)
+    (i : polyBetweenIndex X X P x)
+    (h : polyBetweenFamily X X P x i ⟶
+      polyIterObj X P n) :
+    polyIterFiberToFix X P (n + 1) x
+      ⟨⟨x, ⟨i, h⟩⟩, rfl⟩ =
+    PolyFix.mk x i (fun e =>
+      polyIterFiberToFix X P n
+        ((polyBetweenFamily X X P x i).hom e)
+        ⟨h.left e, congrFun (Over.w h) e⟩) := by
+  rfl
+
+/--
+Transport of `polyIterFiberToFix` along a
+base-point equality: if `h : x = y`, then
+transporting the result from `PolyFix P x` to
+`PolyFix P y` agrees with computing directly at `y`
+with an adjusted subtype proof.
+-/
+lemma polyIterFiberToFix_transport
+    (P : PolyEndo X)
+    (n : ℕ) {x y : X} (h : x = y)
+    (p : { q : (polyIterObj X P n).left //
+      (polyIterObj X P n).hom q = x }) :
+    h ▸ polyIterFiberToFix X P n x p =
+    polyIterFiberToFix X P n y
+      ⟨p.val, p.property.trans h⟩ := by
+  subst h; rfl
+
+/--
+The cocone map at level `n` applied to `q` equals
+`⟨hom q, polyIterFiberToFix n (hom q) ⟨q, rfl⟩⟩`.
+-/
+lemma polyIterFiberToFix_eq_coconeMap
+    (P : PolyEndo X) :
+    ∀ (n : ℕ) (q : (polyIterObj X P n).left),
+    (polyIterCoconeMap X P n).left q =
+    ⟨(polyIterObj X P n).hom q,
+      polyIterFiberToFix X P n
+        ((polyIterObj X P n).hom q) ⟨q, rfl⟩⟩
+  | 0, q => PEmpty.elim q
+  | n + 1, ⟨x', ⟨i, childMor⟩⟩ => by
+    simp only [polyIterCoconeMap,
+      Over.comp_left,
+      CategoryTheory.types_comp_apply,
+      polyEndoFunctor,
+      polyBetweenEvalFunctor, polyToOverFunctor,
+      polyToOverEvalMap, familySliceForward,
+      familySliceForwardMap,
+      familySliceForwardObj,
+      polyToOverEvalFamilyMap, ccrEvalMap,
+      Over.homMk_left, Over.mk,
+      polyToOverEval,
+      polyFixStr, polyFixStrLeft,
+      polyFixStrFamily,
+      polyIterFiberToFix, polyIterObj]
+    dsimp only [CostructuredArrow.mk]
+    congr 1; congr 1; funext e
+    have h_sigma :=
+      (polyFixChildAt_sigma_eq i
+        (childMor ≫
+          polyIterCoconeMap X P n) e).trans
+        (show (childMor ≫
+            polyIterCoconeMap X P n).left e =
+            ⟨(polyIterObj X P n).hom
+              (childMor.left e),
+            polyIterFiberToFix X P n
+              ((polyIterObj X P n).hom
+                (childMor.left e))
+              ⟨childMor.left e, rfl⟩⟩ by
+          simp only [Over.comp_left,
+            CategoryTheory.types_comp_apply]
+          exact polyIterFiberToFix_eq_coconeMap
+            P n (childMor.left e))
+    have hw :
+        (polyIterObj X P n).hom
+          (childMor.left e) =
+        (polyBetweenFamily X X P x' i).hom
+          e :=
+      congrFun (Over.w childMor) e
+    have h_heq : HEq
+        (polyFixChildAt i
+          (childMor ≫
+            polyIterCoconeMap X P n) e)
+        (polyIterFiberToFix X P n
+          ((polyIterObj X P n).hom
+            (childMor.left e))
+          ⟨childMor.left e, rfl⟩) :=
+      (Sigma.ext_iff.mp h_sigma).2
+    have step1 :
+        polyFixChildAt i
+          (childMor ≫
+            polyIterCoconeMap X P n) e =
+        hw ▸ polyIterFiberToFix X P n
+          ((polyIterObj X P n).hom
+            (childMor.left e))
+          ⟨childMor.left e, rfl⟩ :=
+      eq_of_heq (h_heq.trans
+        (eqRec_heq hw _).symm)
+    rw [step1]
+    exact polyIterFiberToFix_transport
+      X P n hw ⟨childMor.left e, rfl⟩
+
+def polyFixDepth (P : PolyEndo X)
+    [PolyBetweenFinitary X X P]
+    {x : X} : PolyFix P x → ℕ
+  | .mk _ _ children =>
+    Finset.univ.sup
+      (fun e => polyFixDepth P (children e)) + 1
+
+def polyIterPromoteFiber (P : PolyEndo X)
+    {m n : ℕ} (h : m ≤ n) (x : X)
+    (p : { q : (polyIterObj X P m).left //
+      (polyIterObj X P m).hom q = x }) :
+    { q : (polyIterObj X P n).left //
+      (polyIterObj X P n).hom q = x } :=
+  overFiberMap X
+    ((polyIterChain X P).map (homOfLE h)) x p
+
+lemma polyIterPromoteFiber_refl (P : PolyEndo X)
+    (n : ℕ) (x : X)
+    (p : { q : (polyIterObj X P n).left //
+      (polyIterObj X P n).hom q = x }) :
+    polyIterPromoteFiber X P (le_refl n) x p = p := by
+  simp only [polyIterPromoteFiber, overFiberMap,
+    homOfLE_refl, CategoryTheory.Functor.map_id]
+  rfl
+
+lemma polyIterPromoteFiber_trans (P : PolyEndo X)
+    {l m n : ℕ} (hlm : l ≤ m) (hmn : m ≤ n) (x : X)
+    (p : { q : (polyIterObj X P l).left //
+      (polyIterObj X P l).hom q = x }) :
+    polyIterPromoteFiber X P hmn x
+      (polyIterPromoteFiber X P hlm x p) =
+    polyIterPromoteFiber X P (le_trans hlm hmn)
+      x p := by
+  simp only [polyIterPromoteFiber, overFiberMap]
+  apply Subtype.ext
+  simp only []
+  have h :
+      (polyIterChain X P).map (homOfLE hlm) ≫
+      (polyIterChain X P).map (homOfLE hmn) =
+      (polyIterChain X P).map
+        (homOfLE (le_trans hlm hmn)) := by
+    rw [← (polyIterChain X P).map_comp]
+    rfl
+  exact congrFun (congrArg
+    CategoryTheory.CommaMorphism.left h) p.val
+
+def polyFixToIterFiber (P : PolyEndo X)
+    [PolyBetweenFinitary X X P]
+    {x : X} :
+    (t : PolyFix P x) →
+    { q : (polyIterObj X P (polyFixDepth X P t)).left
+      // (polyIterObj X P
+        (polyFixDepth X P t)).hom q = x }
+  | .mk x' i children =>
+    let maxD :=
+      Finset.univ.sup
+        (fun e => polyFixDepth X P (children e))
+    let childFibers := fun e =>
+      polyIterPromoteFiber X P
+        (Finset.le_sup (f :=
+          fun e => polyFixDepth X P (children e))
+          (Finset.mem_univ e))
+        ((polyBetweenFamily X X P x' i).hom e)
+        (polyFixToIterFiber P (children e))
+    let childMor : polyBetweenFamily X X P x' i ⟶
+        polyIterObj X P maxD :=
+      Over.homMk (fun e => (childFibers e).val)
+        (funext fun e => (childFibers e).property)
+    ⟨⟨x', ⟨i, childMor⟩⟩, rfl⟩
+
+lemma polyIterFiberToFix_promote_succ
+    (P : PolyEndo X) :
+    ∀ (n : ℕ) (x : X)
+    (p : { q : (polyIterObj X P n).left //
+      (polyIterObj X P n).hom q = x }),
+    polyIterFiberToFix X P (n + 1) x
+      (polyIterPromoteFiber X P
+        (Nat.le_succ n) x p) =
+    polyIterFiberToFix X P n x p
+  | 0, x, p => PEmpty.elim p.val
+  | n + 1, x, ⟨⟨x', ⟨i, childMor⟩⟩, hx⟩ => by
+    subst hx
+    have h_promote_val :
+        (polyIterPromoteFiber X P
+          (Nat.le_succ (n + 1))
+          ((polyIterObj X P (n + 1)).hom
+            ⟨x', ⟨i, childMor⟩⟩)
+          ⟨⟨x', ⟨i, childMor⟩⟩, rfl⟩).val =
+        ⟨x', ⟨i, childMor ≫
+          polyIterMor X P n⟩⟩ := by
+      simp only [polyIterPromoteFiber,
+        overFiberMap, polyIterChain,
+        Functor.ofSequence_map_homOfLE_succ,
+        polyIterMor,
+        polyEndoFunctor,
+        polyBetweenEvalFunctor,
+        polyToOverFunctor,
+        polyToOverEvalMap, familySliceForward,
+        familySliceForwardMap,
+        familySliceForwardObj,
+        polyToOverEvalFamilyMap, ccrEvalMap,
+        Over.homMk_left, Over.mk]
+    have h_promote :
+        polyIterPromoteFiber X P
+          (Nat.le_succ (n + 1))
+          ((polyIterObj X P (n + 1)).hom
+            ⟨x', ⟨i, childMor⟩⟩)
+          ⟨⟨x', ⟨i, childMor⟩⟩, rfl⟩ =
+        ⟨⟨x', ⟨i, childMor ≫
+          polyIterMor X P n⟩⟩, rfl⟩ :=
+      Subtype.ext h_promote_val
+    rw [h_promote]
+    change PolyFix.mk x' i (fun e =>
+      polyIterFiberToFix X P (n + 1)
+        ((polyBetweenFamily X X P x' i).hom e)
+        ⟨(childMor ≫ polyIterMor X P n).left e,
+          congrFun (Over.w
+            (childMor ≫ polyIterMor X P n)) e⟩) =
+      PolyFix.mk x' i (fun e =>
+      polyIterFiberToFix X P n
+        ((polyBetweenFamily X X P x' i).hom e)
+        ⟨childMor.left e,
+          congrFun (Over.w childMor) e⟩)
+    congr 1; funext e
+    simp only [Over.comp_left,
+      CategoryTheory.types_comp_apply]
+    have h_fib :
+        (⟨(polyIterMor X P n).left
+          (childMor.left e), congrFun
+            (Over.w (childMor ≫
+              polyIterMor X P n)) e⟩ :
+          { q : (polyIterObj X P (n + 1)).left //
+            (polyIterObj X P (n + 1)).hom q =
+            (polyBetweenFamily X X P x' i).hom
+              e }) =
+        polyIterPromoteFiber X P
+          (Nat.le_succ n)
+          ((polyBetweenFamily X X P x' i).hom e)
+          ⟨childMor.left e,
+            congrFun (Over.w childMor) e⟩ := by
+      apply Subtype.ext
+      simp only [polyIterPromoteFiber,
+        overFiberMap, polyIterChain,
+        Functor.ofSequence_map_homOfLE_succ]
+    rw [h_fib]
+    exact polyIterFiberToFix_promote_succ
+      P n
+      ((polyBetweenFamily X X P x' i).hom e)
+      ⟨childMor.left e,
+        congrFun (Over.w childMor) e⟩
+
+lemma polyIterFiberToFix_promote
+    (P : PolyEndo X)
+    (m : ℕ) {n : ℕ} (h : m ≤ n) (x : X)
+    (p : { q : (polyIterObj X P m).left //
+      (polyIterObj X P m).hom q = x }) :
+    polyIterFiberToFix X P n x
+      (polyIterPromoteFiber X P h x p) =
+    polyIterFiberToFix X P m x p := by
+  induction h with
+  | refl =>
+    rw [polyIterPromoteFiber_refl]
+  | step h' ih =>
+    rw [show (Nat.le.step h') =
+      le_trans h' (Nat.le_succ _) from rfl]
+    rw [← polyIterPromoteFiber_trans X P h'
+      (Nat.le_succ _)]
+    rw [polyIterFiberToFix_promote_succ]
+    exact ih
+
+lemma polyFixDepth_le (P : PolyEndo X)
+    [PolyBetweenFinitary X X P] :
+    ∀ (n : ℕ) (x : X)
+    (p : { q : (polyIterObj X P n).left //
+      (polyIterObj X P n).hom q = x }),
+    polyFixDepth X P
+      (polyIterFiberToFix X P n x p) ≤ n
+  | 0, _, p => PEmpty.elim p.val
+  | n + 1, _, ⟨⟨x', ⟨i, childMor⟩⟩, hx⟩ => by
+    subst hx
+    simp only [polyIterFiberToFix, polyFixDepth]
+    apply Nat.succ_le_succ
+    apply Finset.sup_le
+    intro e _
+    exact polyFixDepth_le P n
+      ((polyBetweenFamily X X P x' i).hom e)
+      ⟨childMor.left e,
+        congrFun (Over.w childMor) e⟩
+
+lemma polyIterRoundtrip_uniq (P : PolyEndo X)
+    [PolyBetweenFinitary X X P]
+    {x : X} (t : PolyFix P x) :
+    polyIterFiberToFix X P
+      (polyFixDepth X P t) x
+      (polyFixToIterFiber X P t) = t := by
+  induction t with
+  | mk x' i children ih =>
+    simp only [polyFixDepth, polyFixToIterFiber,
+      polyIterFiberToFix_succ]
+    congr 1; funext e
+    simp only [Over.homMk_left]
+    conv_lhs =>
+      rw [show
+        (⟨(polyIterPromoteFiber X P
+          (Finset.le_sup (f :=
+            fun e => polyFixDepth X P
+              (children e))
+            (Finset.mem_univ e))
+          ((polyBetweenFamily X X P x' i).hom e)
+          (polyFixToIterFiber X P
+            (children e))).val,
+        (polyIterPromoteFiber X P
+          (Finset.le_sup (f :=
+            fun e => polyFixDepth X P
+              (children e))
+            (Finset.mem_univ e))
+          ((polyBetweenFamily X X P x' i).hom e)
+          (polyFixToIterFiber X P
+            (children e))).property⟩ :
+        { q : (polyIterObj X P _).left //
+          (polyIterObj X P _).hom q =
+          (polyBetweenFamily X X P x' i).hom
+            e }) =
+        polyIterPromoteFiber X P
+          (Finset.le_sup (f :=
+            fun e => polyFixDepth X P
+              (children e))
+            (Finset.mem_univ e))
+          ((polyBetweenFamily X X P x' i).hom e)
+          (polyFixToIterFiber X P
+            (children e))
+        from Subtype.eta _ _]
+    rw [polyIterFiberToFix_promote]
+    exact ih e
+
+private lemma polyIterChain_map_le_succ
+    (P : PolyEndo X) (n : ℕ) :
+    (polyIterChain X P).map
+      (homOfLE (Nat.le_succ n)) =
+    polyIterMor X P n := by
+  have := Functor.ofSequence_map_homOfLE_succ
+    (polyIterMor X P) n
+  rw [show homOfLE (Nat.le_add_right n 1) =
+    homOfLE (Nat.le_succ n)
+    from Subsingleton.elim _ _] at this
+  exact this
+
+lemma polyIterChain_map_succ (P : PolyEndo X)
+    {m n : ℕ} (h : m ≤ n) :
+    (polyIterChain X P).map
+      (homOfLE (Nat.succ_le_succ h)) =
+    (polyEndoFunctor X P).map
+      ((polyIterChain X P).map (homOfLE h)) := by
+  induction h with
+  | refl =>
+    have h1 : homOfLE (Nat.succ_le_succ
+        (Nat.le.refl : m ≤ m)) = 𝟙 (m + 1) :=
+      Subsingleton.elim _ _
+    have h2 : homOfLE (Nat.le.refl : m ≤ m) =
+        𝟙 m :=
+      Subsingleton.elim _ _
+    simp only [h1, h2, CategoryTheory.Functor.map_id]
+    rfl
+  | @step k h' ih =>
+    rw [show homOfLE (Nat.succ_le_succ
+          (Nat.le.step h')) =
+        homOfLE (Nat.succ_le_succ h') ≫
+          homOfLE (Nat.le_succ (k + 1))
+      from Subsingleton.elim _ _,
+      CategoryTheory.Functor.map_comp,
+      ih, polyIterChain_map_le_succ,
+      show polyIterMor X P (k + 1) =
+        (polyEndoFunctor X P).map
+          (polyIterMor X P k) from rfl,
+      ← CategoryTheory.Functor.map_comp]
+    congr 1
+    rw [show homOfLE (Nat.le.step h') =
+        homOfLE h' ≫ homOfLE (Nat.le_succ k)
+      from Subsingleton.elim _ _,
+      CategoryTheory.Functor.map_comp,
+      polyIterChain_map_le_succ]
+
+lemma polyIterChain_map_succ_sigma
+    (P : PolyEndo X)
+    {m n : ℕ} (h : m + 1 ≤ n + 1) (x : X)
+    (i : ccrIndex (P x))
+    (childMor :
+      ccrFamily (P x) i ⟶ polyIterObj X P m) :
+    ((polyIterChain X P).map (homOfLE h)).left
+      ⟨x, ⟨i, childMor⟩⟩ =
+    ⟨x, ⟨i, childMor ≫
+      (polyIterChain X P).map
+        (homOfLE
+          (Nat.le_of_succ_le_succ h))⟩⟩ := by
+  have h' := Nat.le_of_succ_le_succ h
+  have key := congrFun
+    (congrArg CommaMorphism.left
+      (polyIterChain_map_succ X P h'))
+    ⟨x, ⟨i, childMor⟩⟩
+  rw [show homOfLE h =
+    homOfLE (Nat.succ_le_succ h')
+    from Subsingleton.elim _ _]
+  exact key
+
+lemma polyIterRoundtrip_fac (P : PolyEndo X)
+    [PolyBetweenFinitary X X P] :
+    ∀ (n : ℕ) (x : X)
+    (p : { q : (polyIterObj X P n).left //
+      (polyIterObj X P n).hom q = x }),
+    polyIterPromoteFiber X P
+      (polyFixDepth_le X P n x p) x
+      (polyFixToIterFiber X P
+        (polyIterFiberToFix X P n x p)) = p
+  | 0, _, p => PEmpty.elim p.val
+  | n + 1, _, ⟨⟨x', ⟨i, childMor⟩⟩, hx⟩ => by
+    subst hx
+    apply Subtype.ext
+    simp only [polyIterPromoteFiber, overFiberMap]
+    -- Goal: chain_map.left (embed(extract)).val
+    --   = ⟨x', ⟨i, childMor⟩⟩
+    -- Unfold embed and extract to expose structure
+    dsimp only [polyFixToIterFiber,
+      polyFixDepth, polyIterFiberToFix]
+    rw [polyIterChain_map_succ_sigma]
+    congr 1; congr 1; ext e
+    simp only [Over.comp_left, Over.homMk_left,
+      polyIterPromoteFiber, overFiberMap]
+    have ih := congrArg Subtype.val
+      (polyIterRoundtrip_fac P n
+        ((polyBetweenFamily X X P
+          ((polyIterObj X P (n + 1)).hom
+            ⟨x', ⟨i, childMor⟩⟩) i).hom e)
+        ⟨childMor.left e,
+          congrFun (Over.w childMor) e⟩)
+    simp only [polyIterPromoteFiber,
+      overFiberMap] at ih
+    simp only [types_comp_apply]
+    have compose_chain :
+        ∀ {a b c : ℕ} (hab : a ≤ b)
+        (hbc : b ≤ c) (hac : a ≤ c)
+        (q : (polyIterObj X P a).left),
+        ((polyIterChain X P).map
+          (homOfLE hbc)).left
+        (((polyIterChain X P).map
+          (homOfLE hab)).left q) =
+        ((polyIterChain X P).map
+          (homOfLE hac)).left q := by
+      intro a b c hab hbc hac q
+      have h := congrFun (congrArg
+        CommaMorphism.left
+        ((polyIterChain X P).map_comp
+          (homOfLE hab)
+          (homOfLE hbc))) q
+      simp only [Over.comp_left,
+        types_comp_apply] at h
+      rw [← h]
+      congr 3
+    rw [compose_chain]
+    exact ih
+
+/--
+The descent map from `polyFixCarrier P` to the apex
+of any cocone over `polyIterChain X P`. Embeds each
+tree at its depth level and applies the cocone injection.
+-/
+def polyIterCoconeDesc (P : PolyEndo X)
+    [PolyBetweenFinitary X X P]
+    (s : Limits.Cocone (polyIterChain X P)) :
+    polyFixCarrier P ⟶ s.pt :=
+  Over.homMk
+    (fun ⟨_, t⟩ =>
+      (s.ι.app (polyFixDepth X P t)).left
+        (polyFixToIterFiber X P t).val)
+    (by
+      funext ⟨x, t⟩
+      simp only [types_comp_apply]
+      exact (congrFun (Over.w
+          (s.ι.app (polyFixDepth X P t)))
+          (polyFixToIterFiber X P t).val).trans
+        (polyFixToIterFiber X P t).property)
+
+lemma polyIterCocone_fac (P : PolyEndo X)
+    [PolyBetweenFinitary X X P]
+    (s : Limits.Cocone (polyIterChain X P))
+    (j : ℕ) :
+    (polyIterCocone X P).ι.app j ≫
+      polyIterCoconeDesc X P s = s.ι.app j := by
+  ext p
+  simp only [Over.comp_left, types_comp_apply,
+    polyIterCocone,
+    NatTrans.ofSequence_app,
+    polyIterCoconeDesc, Over.homMk_left]
+  rw [polyIterFiberToFix_eq_coconeMap X P j p]
+  dsimp only []
+  -- s.ι.app(depth) . left (embed.val) = s.ι.app j . left p
+  -- By cocone naturality: s.ι.app depth = chain ≫ s.ι.app j
+  have nat := congrFun (congrArg CommaMorphism.left
+    (s.w (homOfLE (polyFixDepth_le X P j
+      ((polyIterObj X P j).hom p) ⟨p, rfl⟩))))
+    (polyFixToIterFiber X P
+      (polyIterFiberToFix X P j
+        ((polyIterObj X P j).hom p)
+        ⟨p, rfl⟩)).val
+  simp only [Over.comp_left,
+    types_comp_apply] at nat
+  rw [← nat]
+  exact congrArg (s.ι.app j).left
+    (congrArg Subtype.val
+      (polyIterRoundtrip_fac X P j
+        ((polyIterObj X P j).hom p) ⟨p, rfl⟩))
+
+private lemma sigma_eq_of_components
+    {α : Type u} {β : α → Type u}
+    {a₁ a₂ : α} {b₁ : β a₁} {b₂ : β a₂}
+    (h₁ : a₁ = a₂)
+    (h₂ : h₁ ▸ b₁ = b₂) :
+    (⟨a₁, b₁⟩ : Sigma β) = ⟨a₂, b₂⟩ := by
+  subst h₁; exact congrArg _ h₂
+
+lemma polyIterCocone_uniq (P : PolyEndo X)
+    [PolyBetweenFinitary X X P]
+    (s : Limits.Cocone (polyIterChain X P))
+    (f : polyFixCarrier P ⟶ s.pt)
+    (hf : ∀ j, (polyIterCocone X P).ι.app j ≫ f =
+      s.ι.app j) :
+    f = polyIterCoconeDesc X P s := by
+  ext ⟨x, t⟩
+  simp only [polyIterCoconeDesc, Over.homMk_left]
+  have h_eq : (polyIterCoconeMap X P
+      (polyFixDepth X P t)).left
+      (polyFixToIterFiber X P t).val =
+      ⟨x, t⟩ := by
+    rw [polyIterFiberToFix_eq_coconeMap]
+    exact sigma_eq_of_components
+      (polyFixToIterFiber X P t).property
+      ((polyIterFiberToFix_transport X P
+        (polyFixDepth X P t)
+        (polyFixToIterFiber X P t).property
+        ⟨(polyFixToIterFiber X P t).val,
+          rfl⟩).trans
+        (polyIterRoundtrip_uniq X P t))
+  have key := congrFun
+    (congrArg CommaMorphism.left
+      (hf (polyFixDepth X P t)))
+    (polyFixToIterFiber X P t).val
+  simp only [Over.comp_left, types_comp_apply,
+    polyIterCocone,
+    NatTrans.ofSequence_app] at key
+  rw [h_eq] at key
+  exact key
+
+def polyIterCocone_isColimit (P : PolyEndo X)
+    [PolyBetweenFinitary X X P] :
+    Limits.IsColimit (polyIterCocone X P) where
+  desc s := polyIterCoconeDesc X P s
+  fac s j := polyIterCocone_fac X P s j
+  uniq s f hf := polyIterCocone_uniq X P s f hf
+
+end IterationColimit
 
 /-! ## Limits in Polynomial Algebra Categories
 

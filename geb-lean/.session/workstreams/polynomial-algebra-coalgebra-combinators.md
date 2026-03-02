@@ -61,13 +61,10 @@ the (co)limit picture for finitary polynomial algebras.
   `overTerminal_isTerminal`, `polyIterCocone` (cocone over
   the iteration chain with apex the W-type carrier), and
   `polyIterCoconeMap_naturality`.
-- [ ] G1: Prove `polyFixAlg P` (our W-type initial algebra)
+- [x] G1: Prove `polyFixAlg P` (our W-type initial algebra)
   is the colimit of `polyIterChain P`.  Requires
-  `PolyEndoFinitary P`: non-finitary functors can produce
-  well-founded trees of unbounded depth (every path finite
-  but no global depth bound), which lie outside all
-  `P^n(⊥)`.  König's lemma gives bounded depth for
-  finite-branching trees.
+  `PolyBetweenFinitary X X P` (strengthened to use `Fintype`).
+  Done: `polyIterCocone_isColimit` in `PolyAlg.lean`.
 - [x] G2: Prove `polyCofixCoalg P` (our M-type terminal
   coalgebra) is the limit of `polyCoiterChain P`.
   Done: `polyCofixCone_isLimit` in `PolyAlg.lean`.

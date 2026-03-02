@@ -981,16 +981,33 @@ def polyBetweenFamily (P : PolyFunctorBetweenCat X Y) (y : Y)
   polyToOverFamily Y P y i
 
 /--
-A polynomial functor `Over X → Over Y` is finitary when
-each family fiber has finitely many elements.  That is,
-for every codomain point `y : Y` and position
-`i : polyBetweenIndex X Y P y`, the carrier type of the
-family `polyBetweenFamily X Y P y i` is finite.
+Data witnessing that a polynomial functor
+`Over X → Over Y` is finitary: for every codomain
+point `y : Y` and position `i`, the carrier type
+of the family `polyBetweenFamily X Y P y i` has
+a `Fintype` instance (constructive enumeration).
 -/
-def PolyBetweenFinitary
-    (P : PolyFunctorBetweenCat X Y) : Prop :=
-  ∀ (y : Y) (i : polyBetweenIndex X Y P y),
-    Finite (polyBetweenFamily X Y P y i).left
+structure PolyBetweenFinitaryData
+    (P : PolyFunctorBetweenCat X Y) where
+  familyFintype :
+    ∀ (y : Y) (i : polyBetweenIndex X Y P y),
+      Fintype (polyBetweenFamily X Y P y i).left
+
+/--
+A polynomial functor `Over X → Over Y` is finitary
+when each family fiber has finitely many elements
+with constructive enumeration data.
+-/
+class PolyBetweenFinitary
+    (P : PolyFunctorBetweenCat X Y) where
+  data : PolyBetweenFinitaryData X Y P
+
+instance polyBetweenFamilyFintype
+    {P : PolyFunctorBetweenCat X Y}
+    [h : PolyBetweenFinitary X Y P]
+    (y : Y) (i : polyBetweenIndex X Y P y) :
+    Fintype (polyBetweenFamily X Y P y i).left :=
+  h.data.familyFintype y i
 
 /--
 Evaluate a polynomial functor `Over X → Over Y` at an object `A : Over X`,
