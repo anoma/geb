@@ -1852,6 +1852,82 @@ theorem pshFullProductData_not_iep
     exact congrFun this (a, b)
   exact hab this
 
+/-- The span family data for a covariant presheaf
+endofunctor `G`, extracted from the covariant
+embedding. -/
+def pshCovariantSpanData
+    (G : (Cᵒᵖ ⥤ Type w) ⥤
+      (Cᵒᵖ ⥤ Type w)) :
+    SpanFamilyData
+      (V := Cᵒᵖ ⥤ Type w)
+      (E := PshRel)
+      (D := Cᵒᵖ ⥤ Type w) where
+  vertexObj P := G.obj P
+  edgeObj _ _ R :=
+    (pshBarrLiftRel G R).toFunctor
+  fstProj R :=
+    (pshBarrLiftRel G R).ι ≫
+      pshProdFst _ _
+  sndProj R :=
+    (pshBarrLiftRel G R).ι ≫
+      pshProdSnd _ _
+
+/-- Every covariant presheaf endofunctor satisfies
+the identity extension property. -/
+theorem pshCovariantSpanData_iep
+    (G : (Cᵒᵖ ⥤ Type w) ⥤
+      (Cᵒᵖ ⥤ Type w)) :
+    PshRelHasIdentityExtension.{u, v, w}
+      (pshCovariantSpanData G) where
+  fstEqSnd P := by
+    simp only [pshCovariantSpanData,
+      pshRelIdRel]
+    rw [pshBarrLiftRel_id]
+    exact pshRelId_ι_fst_eq_snd _
+  fstIsIso P := by
+    simp only [pshCovariantSpanData,
+      pshRelIdRel]
+    rw [pshBarrLiftRel_id]
+    exact pshRelId_ι_fst_isIso _
+
+/-- The span family data for a contravariant
+presheaf endofunctor `F`, extracted from the
+contravariant embedding. -/
+def pshContravariantSpanData
+    (F : (Cᵒᵖ ⥤ Type w)ᵒᵖ ⥤
+      (Cᵒᵖ ⥤ Type w)) :
+    SpanFamilyData
+      (V := Cᵒᵖ ⥤ Type w)
+      (E := PshRel)
+      (D := Cᵒᵖ ⥤ Type w) where
+  vertexObj P := F.obj (Opposite.op P)
+  edgeObj _ _ R :=
+    (pshContraBarrLiftRel F R).toFunctor
+  fstProj R :=
+    (pshContraBarrLiftRel F R).ι ≫
+      pshProdFst _ _
+  sndProj R :=
+    (pshContraBarrLiftRel F R).ι ≫
+      pshProdSnd _ _
+
+/-- Every contravariant presheaf endofunctor
+satisfies the identity extension property. -/
+theorem pshContravariantSpanData_iep
+    (F : (Cᵒᵖ ⥤ Type w)ᵒᵖ ⥤
+      (Cᵒᵖ ⥤ Type w)) :
+    PshRelHasIdentityExtension.{u, v, w}
+      (pshContravariantSpanData F) where
+  fstEqSnd P := by
+    simp only [pshContravariantSpanData,
+      pshRelIdRel]
+    rw [pshContraBarrLiftRel_id]
+    exact pshRelId_ι_fst_eq_snd _
+  fstIsIso P := by
+    simp only [pshContravariantSpanData,
+      pshRelIdRel]
+    rw [pshContraBarrLiftRel_id]
+    exact pshRelId_ι_fst_isIso _
+
 end IdentityExtension
 
 end GebLean

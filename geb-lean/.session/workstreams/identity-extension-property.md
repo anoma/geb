@@ -65,17 +65,13 @@ all satisfy IEP.
 `pshFullProductData` and `pshFullProductData_not_iep`
 in `PshRelSpanDiagram.lean`.
 
-### Task 4: Embedding IEP
+### Task 4: Embedding IEP [DONE]
 
-File: `GebLean/PshRelSpanDiagram.lean`
-
-Show functors in the image of `pshCovariantEmbedding` and
-`pshContravariantEmbedding` satisfy IEP.
-
-Requires: `pshBarrLiftSkel G (pshRelId P) ≅
-pshRelId (G.obj P)`.
-
-Dependencies: Task 1.
+- `pshContraBarrLiftRel_id` in `PshRelDouble.lean`
+- `pshCovariantSpanData`, `pshCovariantSpanData_iep`,
+  `pshContravariantSpanData`,
+  `pshContravariantSpanData_iep`
+  in `PshRelSpanDiagram.lean`
 
 ### Task 5: Graph functor subsumptivity
 

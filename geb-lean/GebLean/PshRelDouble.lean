@@ -1718,6 +1718,22 @@ theorem pshContraBarrLiftRel_graph_ι_fst
     FunctorToTypes.prod.snd]
   exact hpf.symm
 
+/-- The contravariant Barr extension maps the
+identity relation to the identity relation:
+`pshContraBarrLiftRel F (pshRelId P)
+= pshRelId (F.obj (op P))`. -/
+theorem pshContraBarrLiftRel_id
+    {P : Cᵒᵖ ⥤ Type w}
+    (F :
+      (Cᵒᵖ ⥤ Type w)ᵒᵖ ⥤
+        (Cᵒᵖ ⥤ Type w)) :
+    pshContraBarrLiftRel F (pshRelId P) =
+      pshRelId (F.obj (Opposite.op P)) := by
+  rw [← pshRelGraph_eq_id,
+    pshContraBarrLiftRel_graph]
+  simp only [op_id, F.map_id,
+    pshRelGraph_eq_id, pshRelDagger_id]
+
 end PshContraBarrExtension
 
 section PshProfBarrExtension
