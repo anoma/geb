@@ -68,10 +68,14 @@ the (co)limit picture for finitary polynomial algebras.
 - [x] G2: Prove `polyCofixCoalg P` (our M-type terminal
   coalgebra) is the limit of `polyCoiterChain P`.
   Done: `polyCofixCone_isLimit` in `PolyAlg.lean`.
-- [ ] G3: Derive preservation corollaries: any functor
-  preserving filtered colimits preserves initial algebras,
-  and dually for cofiltered limits and terminal coalgebras.
-  Instantiate for finitary polynomial endofunctors.
+- [x] G3: Preservation corollaries: six definitions at three
+  levels of generality (specific diagram, shape,
+  filtered/cofiltered) for both colimit and limit directions.
+  Uses explicit preservation-evidence parameters (not
+  mathlib's `PreservesColimit` typeclass) to remain
+  constructive.  Part 2 (showing `polyEndoFunctor X P`
+  preserves filtered colimits under finitarity) deferred to
+  A3.  In `PolyAlg.lean`, section `PreservationCorollaries`.
 - [x] A0: Define `PolyBetweenFinitary` for arbitrary polynomial
   functors between slices (all direction-set fibers are finite),
   and `PolyEndoFinitary` as the endofunctor specialization

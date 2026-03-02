@@ -11122,6 +11122,131 @@ def polyIterCocone_isColimit (P : PolyEndo X)
 
 end IterationColimit
 
+/-! ## Preservation Corollaries
+
+A functor preserving the relevant (co)limits sends the
+iteration-chain colimit cocone (resp. coiteration-chain
+limit cone) to a colimit cocone (resp. limit cone).
+Three levels of generality are provided for each direction:
+preservation of the specific diagram, of the diagram shape,
+and of all filtered colimits (resp. cofiltered limits).
+
+Mathlib's `PreservesColimit` / `PreservesLimit` typeclasses
+wrap `IsColimit` / `IsLimit` in `Nonempty`, so extracting
+data requires `Classical.choice`.  To keep the development
+constructive, preservation evidence is taken as an explicit
+function parameter.
+-/
+
+section PreservationCorollaries
+
+open Limits
+
+variable (X : Type u)
+variable {C : Type (u + 1)} [Category.{u} C]
+
+/--
+A functor preserving colimits of the specific iteration
+chain `polyIterChain X P` sends the colimit cocone to a
+colimit cocone.
+-/
+def polyIterCocone_isColimit_map
+    (P : PolyEndo X)
+    [PolyBetweenFinitary X X P]
+    (F : Over X ⥤ C)
+    (hF : {c : Cocone (polyIterChain X P)} →
+      IsColimit c →
+      IsColimit (F.mapCocone c)) :
+    IsColimit
+      (F.mapCocone (polyIterCocone X P)) :=
+  hF (polyIterCocone_isColimit X P)
+
+/--
+A functor preserving colimits of shape `ℕ` sends the
+iteration-chain colimit cocone to a colimit cocone.
+-/
+def polyIterCocone_isColimit_mapOfShape
+    (P : PolyEndo X)
+    [PolyBetweenFinitary X X P]
+    (F : Over X ⥤ C)
+    (hF : {K : ℕ ⥤ Over X} →
+      {c : Cocone K} →
+      IsColimit c →
+      IsColimit (F.mapCocone c)) :
+    IsColimit
+      (F.mapCocone (polyIterCocone X P)) :=
+  polyIterCocone_isColimit_map X P F hF
+
+/--
+A functor preserving filtered colimits (of size `(0, 0)`)
+sends the iteration-chain colimit cocone to a colimit
+cocone.  `ℕ` is filtered via `SemilatticeSup` and
+`Nonempty`.
+-/
+def polyIterCocone_isColimit_mapOfFiltered
+    (P : PolyEndo X)
+    [PolyBetweenFinitary X X P]
+    (F : Over X ⥤ C)
+    (hF : {J : Type} → [Category.{0} J] →
+      [IsFiltered J] →
+      {K : J ⥤ Over X} →
+      {c : Cocone K} →
+      IsColimit c →
+      IsColimit (F.mapCocone c)) :
+    IsColimit
+      (F.mapCocone (polyIterCocone X P)) :=
+  polyIterCocone_isColimit_mapOfShape X P F hF
+
+/--
+A functor preserving limits of the specific coiteration
+chain `polyCoiterChain X P` sends the limit cone to a
+limit cone.  No finitarity hypothesis is needed.
+-/
+def polyCofixCone_isLimit_map
+    (P : PolyEndo X)
+    (F : Over X ⥤ C)
+    (hF : {c : Cone (polyCoiterChain X P)} →
+      IsLimit c →
+      IsLimit (F.mapCone c)) :
+    IsLimit
+      (F.mapCone (polyCofixCone X P)) :=
+  hF (polyCofixCone_isLimit X P)
+
+/--
+A functor preserving limits of shape `ℕᵒᵖ` sends the
+coiteration-chain limit cone to a limit cone.
+-/
+def polyCofixCone_isLimit_mapOfShape
+    (P : PolyEndo X)
+    (F : Over X ⥤ C)
+    (hF : {K : ℕᵒᵖ ⥤ Over X} →
+      {c : Cone K} →
+      IsLimit c →
+      IsLimit (F.mapCone c)) :
+    IsLimit
+      (F.mapCone (polyCofixCone X P)) :=
+  polyCofixCone_isLimit_map X P F hF
+
+/--
+A functor preserving cofiltered limits (of size `(0, 0)`)
+sends the coiteration-chain limit cone to a limit cone.
+`ℕᵒᵖ` is cofiltered via `isCofiltered_op_of_isFiltered`.
+-/
+def polyCofixCone_isLimit_mapOfCofiltered
+    (P : PolyEndo X)
+    (F : Over X ⥤ C)
+    (hF : {J : Type} → [Category.{0} J] →
+      [IsCofiltered J] →
+      {K : J ⥤ Over X} →
+      {c : Cone K} →
+      IsLimit c →
+      IsLimit (F.mapCone c)) :
+    IsLimit
+      (F.mapCone (polyCofixCone X P)) :=
+  polyCofixCone_isLimit_mapOfShape X P F hF
+
+end PreservationCorollaries
+
 /-! ## Limits in Polynomial Algebra Categories
 
 The category `PolyAlg P` has all limits of size
