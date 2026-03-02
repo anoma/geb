@@ -266,30 +266,52 @@ via weight functors.
   (P4d) with `wedgeWeight` and `typeExprWeight`.
   (Former W2c.)
 
-### Phase 5: Generalized theory
+### Phase 5: Identity Extension Property (IEP)
 
-- [ ] **P5a. Parametric cofamilies and terminal coalgebras.**
+Characterize which functors in `PshParametricFunctor` are
+"parametric" using the Identity Extension Property from
+the Hermida/Reddy/Robinson paper. See
+`identity-extension-property.md` for details.
+
+- [ ] **P5-IEP1. Define IEP.** Define `HasIdentityExtension`
+  for `SpanFamilyData`.
+- [ ] **P5-IEP2. PshTypeExpr satisfies IEP.** Prove
+  `pshRelSpanDiagramFunctor.obj T` satisfies IEP.
+- [ ] **P5-IEP3. Non-IEP counterexample.** Construct a
+  functor that does not satisfy IEP.
+- [ ] **P5-IEP4. Embeddings satisfy IEP.** Show
+  `pshCovariantEmbedding` and `pshContravariantEmbedding`
+  produce IEP-satisfying functors.
+- [ ] **P5-IEP5. Subsumptivity.** Show `pshRelGraph` is
+  full and faithful.
+- [ ] **P5-IEP6. Parametricity subsumes naturality.** For
+  IEP functors, nat trans determined by typeNode
+  components (Hermida Fact 6.6).
+
+### Phase 6: Generalized theory
+
+- [ ] **P6a. Parametric cofamilies and terminal coalgebras.**
   Define `ParametricCofamily` (dual of `ParametricFamily`)
   and prove equivalence with terminal coalgebra carrier.
   (Former F9, W3.)
 
-- [ ] **P5b. Yoneda extension of ParametricFamily.** Extend
+- [ ] **P6b. Yoneda extension of ParametricFamily.** Extend
   a `ParametricFamily T` to all presheaves via colimit of
   representables / density theorem, yielding
   `PshParametricFamily T.toPshTypeExpr` without `choice`.
   (Former F7.)
 
-- [ ] **P5c. relInterp composition at PshRel level.**
+- [ ] **P6c. relInterp composition at PshRel level.**
   Determine when `T.fullRelInterp` preserves `pshRelComp`,
   extending the `RelInterpComposition.lean` analysis to
   presheaves. (Former F6.)
 
-- [ ] **P5d. Presheaf-level free theorem equivalences.**
+- [ ] **P6d. Presheaf-level free theorem equivalences.**
   Generalize `dialgebraParametricEquivNatTrans`,
   `initialAlgebraParametricEquiv`, and
   `dinaturalNumbersParametricEquiv` to `PSh(C)`.
 
-- [ ] **P5e. Twisted-arrow parametric embedding.**
+- [ ] **P6e. Twisted-arrow parametric embedding.**
   (Former W6.) Investigate whether `ParametricCopresheaf`
   embeds into or relates to the twisted-arrow copresheaf
   topos `[TwArr(C)ᵒᵖ, Type]`.

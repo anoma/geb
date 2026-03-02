@@ -311,4 +311,40 @@ def spanFamilyEquiv :
         SpanFamilyData.toFunctor,
         SpanFamilyData.ofFunctor]
 
+variable {V} {E} {D}
+
+/-- The identity extension property for span
+family data: on identity relations, both
+projections coincide and are isomorphisms.
+
+Given `idRel : (v : V) → E v v` designating
+an "identity relation" for each vertex, a
+`SpanFamilyData` satisfies the identity extension
+property if `fstProj (idRel v) = sndProj (idRel v)`
+and this common morphism is an isomorphism.
+
+This property distinguishes "parametric" from
+"non-parametric" functors on span diagram
+categories (Hermida/Reddy/Robinson 2014,
+Definition 6.1 and equation (14)). -/
+structure HasIdentityExtension
+    (F : SpanFamilyData
+      (V := V) (E := E) (D := D))
+    (idRel : (v : V) → E v v) : Prop where
+  fstEqSnd :
+    ∀ (v : V),
+    F.fstProj (idRel v) = F.sndProj (idRel v)
+  fstIsIso :
+    ∀ (v : V), IsIso (F.fstProj (idRel v))
+
+/-- When the identity extension property holds,
+`sndProj (idRel v)` is also an isomorphism. -/
+theorem HasIdentityExtension.sndIsIso
+    {F : SpanFamilyData
+      (V := V) (E := E) (D := D)}
+    {idRel : (v : V) → E v v}
+    (h : HasIdentityExtension F idRel)
+    (v : V) : IsIso (F.sndProj (idRel v)) := by
+  rw [← h.fstEqSnd v]; exact h.fstIsIso v
+
 end GebLean

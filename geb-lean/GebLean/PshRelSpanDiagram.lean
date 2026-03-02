@@ -1758,4 +1758,49 @@ def pshRelSpanInternalize :
 
 end InternalizationFunctor
 
+section IdentityExtension
+
+variable {C : Type u} [Category.{v} C]
+
+/-- The "full product" span family data: maps
+every relation node to the product of the vertex
+images, ignoring the relation entirely. This
+does not satisfy the identity extension property
+because the two product projections differ on
+identity relations. -/
+def pshFullProductData :
+    SpanFamilyData
+      (V := Cᵒᵖ ⥤ Type w)
+      (E := PshRel)
+      (D := Cᵒᵖ ⥤ Type w) where
+  vertexObj P := P
+  edgeObj P Q _ := pshProdPresheaf P Q
+  fstProj _ := pshProdFst _ _
+  sndProj _ := pshProdSnd _ _
+
+/-- The full product data does not satisfy the
+identity extension property, given a presheaf
+`P` with two distinct elements at some object.
+The two product projections differ on the pair
+`(a, b)`. -/
+theorem pshFullProductData_not_iep
+    (P : Cᵒᵖ ⥤ Type w)
+    (c : Cᵒᵖ)
+    (a b : P.obj c)
+    (hab : a ≠ b) :
+    ¬ HasIdentityExtension
+      (pshFullProductData (C := C))
+      (fun (P : Cᵒᵖ ⥤ Type w) =>
+        pshRelId P) := by
+  intro h
+  have heq := h.fstEqSnd P
+  have : (pshProdFst P P).app c (a, b) =
+      (pshProdSnd P P).app c (a, b) := by
+    have := congr_arg
+      (fun f => NatTrans.app f c) heq
+    exact congrFun this (a, b)
+  exact hab this
+
+end IdentityExtension
+
 end GebLean
