@@ -16,6 +16,54 @@ relations.
 
 `RelSpanObj` is the special case where `C` is the
 terminal category.
+
+## Embeddings into `PshParametricFunctor`
+
+Several categories embed (fully faithfully)
+into `PshParametricFunctor C D`:
+
+* `constPresheafEmbedding`:
+  `(Cᵒᵖ ⥤ Type w) ↪ PshParametricFunctor C D`
+  via the constant functor.
+
+* `pshCovariantEmbedding`:
+  `((Cᵒᵖ ⥤ Type w) ⥤ (Cᵒᵖ ⥤ Type w))
+    ↪ PshParametricFunctor C (Cᵒᵖ ⥤ Type w)`
+  using Barr lifting of relations.
+
+* `pshContravariantEmbedding`:
+  `((Cᵒᵖ ⥤ Type w)ᵒᵖ ⥤ (Cᵒᵖ ⥤ Type w))
+    ↪ PshParametricFunctor C (Cᵒᵖ ⥤ Type w)`
+  using contravariant Barr lifting.
+
+* `yonedaConstEmbedding`:
+  `C ↪ PshParametricFunctor C (Cᵒᵖ ⥤ Type v)`
+  as `yoneda ⋙ constPresheafEmbedding`.
+
+These embeddings all act on presheaves
+`Cᵒᵖ ⥤ Type w` (or objects of `C` via Yoneda).
+
+Endofunctors on *copresheaves* `C ⥤ Type w`
+do not embed into `PshParametricFunctor C`,
+because `PshRelSpanObj C` is built from
+presheaves, not copresheaves.  Copresheaf
+endofunctors embed into
+`PshParametricFunctor Cᵒᵖ` instead, since
+presheaves on `Cᵒᵖ` are copresheaves on `C`
+(up to `opOpEquivalence`).
+
+Pre- and post-composing with the Isbell
+adjunction (`O ⊣ Spec`) does yield a functor
+`((C ⥤ Type w) ⥤ (C ⥤ Type w))
+  ⥤ PshParametricFunctor C (Cᵒᵖ ⥤ Type w)`
+with the right type signature (via
+`P ↦ O(G(Spec(P).unop).op)`), but this
+is not faithful in general because the Isbell
+adjunction is not an equivalence unless `C` is
+Isbell-self-dual.  The dagger on `PshRel`
+does not help either: it swaps the endpoints
+of a relation span but does not change the
+underlying presheaf/copresheaf distinction.
 -/
 
 open CategoryTheory
