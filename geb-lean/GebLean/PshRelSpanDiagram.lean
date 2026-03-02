@@ -1726,4 +1726,36 @@ instance yonedaConstEmbedding_faithful :
 
 end ConstPresheafEmbedding
 
+section InternalizationFunctor
+
+variable {C : Type u} [Category.{v} C]
+
+/-- The internalization functor sends each
+object of `PshRelSpanObj C` to its underlying
+presheaf: type-nodes `P` map to `P`, and
+relation-nodes `(P, Q, R)` map to the
+underlying presheaf `R.toFunctor` of the
+relation `R : PshRel P Q`.  Projections map
+to the subfunctor inclusion composed with
+the product projections. -/
+def pshRelSpanInternalize :
+    PshRelSpanObj.{u, v, w} C ⥤
+    (Cᵒᵖ ⥤ Type w) where
+  obj X :=
+    match X with
+    | .typeNode P => P
+    | .relNode P Q R => R.toFunctor
+  map {X Y} f :=
+    match X, Y, f with
+    | _, _, .id _ => 𝟙 _
+    | _, _, .fstProj P Q R =>
+      R.ι ≫ pshProdFst P Q
+    | _, _, .sndProj P Q R =>
+      R.ι ≫ pshProdSnd P Q
+  map_id X := by cases X <;> rfl
+  map_comp {X Y Z} f g := by
+    cases f <;> cases g <;> rfl
+
+end InternalizationFunctor
+
 end GebLean
