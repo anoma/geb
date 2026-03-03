@@ -155,11 +155,6 @@ endofunctors.
 
 - [ ] C3: Construct the canonical distributive law between
   `polyFreeMonad X P` and `polyCofreeComonad X P`
-- [ ] E1: Define abstract GSOS rules as natural transformations
-  `rho : Sigma(Id x B) => B . T` for polynomial signature and
-  behavior endofunctors
-- [ ] E2: Construct operational monad (lifting syntax monad to
-  B-coalgebras via structural recursion with accumulators)
 
 ### Phase 4: Pattern runs on matter
 
@@ -169,6 +164,14 @@ endofunctors.
   `Xi : m_P ⊗ c_Q -> m_{P ⊗ Q}` (pattern runs on matter)
 - [ ] D3: Verify module structure of free monad functor over
   cofree comonad functor
+
+### Phase 5: GSOS rules
+
+- [ ] E1: Define abstract GSOS rules as natural transformations
+  `rho : Sigma(Id x B) => B . T` for polynomial signature and
+  behavior endofunctors
+- [ ] E2: Construct operational monad (lifting syntax monad to
+  B-coalgebras via structural recursion with accumulators)
 
 ### Deferred
 
