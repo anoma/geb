@@ -1588,7 +1588,6 @@ theorem functorHomSection_roundTrip_left
       (natTransToFunctorHomSection α) = α := by
   ext c x
   simp [functorHomSectionToNatTrans,
-    natTransToFunctorHomSection,
     Functor.HomObj.ofNatTrans]
 
 theorem functorHomSection_roundTrip_right
