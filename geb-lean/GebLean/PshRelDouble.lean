@@ -8,6 +8,7 @@ import Mathlib.CategoryTheory.Monoidal.Closed.FunctorToTypes
 import Mathlib.CategoryTheory.Subfunctor.Basic
 import Mathlib.CategoryTheory.Subfunctor.Image
 import Mathlib.CategoryTheory.Comma.Arrow
+import Mathlib.CategoryTheory.FiberedCategory.Fibered
 
 /-!
 # Internal Relations in PSh(C)
@@ -651,6 +652,34 @@ theorem pshProdMap_comp
       pshProdMap_fst, pshProdMap_snd]
   }
 
+/-- The preimage of a relation `R : PshRel P Q`
+along morphisms `α : P' ⟶ P` and `β : Q' ⟶ Q`.
+A pair `(p', q')` is in the preimage iff
+`(α p', β q')` is in `R`. -/
+def pshRelPreimage
+    {P Q P' Q' : Cᵒᵖ ⥤ Type w}
+    (R : PshRel P Q) (α : P' ⟶ P)
+    (β : Q' ⟶ Q) : PshRel P' Q' :=
+  R.preimage (pshProdMap α β)
+
+@[simp]
+theorem pshRelPreimage_id
+    {P Q : Cᵒᵖ ⥤ Type w}
+    (R : PshRel P Q) :
+    pshRelPreimage R (𝟙 P) (𝟙 Q) = R := by
+  simp [pshRelPreimage]
+
+theorem pshRelPreimage_comp
+    {P Q P' Q' P'' Q'' : Cᵒᵖ ⥤ Type w}
+    (R : PshRel P Q)
+    (α : P' ⟶ P) (β : Q' ⟶ Q)
+    (α' : P'' ⟶ P') (β' : Q'' ⟶ Q') :
+    pshRelPreimage R (α' ≫ α) (β' ≫ β) =
+      pshRelPreimage
+        (pshRelPreimage R α β) α' β' := by
+  simp [pshRelPreimage, pshProdMap_comp,
+    Subfunctor.preimage_comp]
+
 /-- Two natural transformations `α : P ⟶ Q` and
 `β : P' ⟶ Q'` are `(R, S)`-related at the
 `PshProdOver` level when there exists a lift
@@ -773,6 +802,32 @@ theorem pshRelRelated_graph_iff
     change β.app c (f.app c p) = g.app c q
     rw [← hα]
     exact congr_fun (congr_app h c) p |>.symm
+
+/-- The preimage relation is related to the
+original: the morphisms `(α, β)` send
+`pshRelPreimage R α β`-related pairs to
+`R`-related pairs. -/
+theorem pshRelPreimage_related
+    {P Q P' Q' : Cᵒᵖ ⥤ Type w}
+    (R : PshRel P Q) (α : P' ⟶ P)
+    (β : Q' ⟶ Q) :
+    pshRelRelated α β
+      (pshRelPreimage R α β) R :=
+  fun _ _ _ h => h
+
+/-- The preimage is the largest relation on
+`(P', Q')` that is `(α, β)`-related to `R`:
+any `S` with `pshRelRelated α β S R` satisfies
+`S ≤ pshRelPreimage R α β`. -/
+theorem pshRelPreimage_universal
+    {P Q P' Q' : Cᵒᵖ ⥤ Type w}
+    (R : PshRel P Q) (α : P' ⟶ P)
+    (β : Q' ⟶ Q)
+    {S : PshRel P' Q'}
+    (h : pshRelRelated α β S R) :
+    S ≤ pshRelPreimage R α β :=
+  (Subfunctor.le_def S _).mpr fun c pp hS =>
+    h c pp.1 pp.2 hS
 
 end PshRelatedMorphisms
 
@@ -1029,6 +1084,201 @@ def pshRelEdgeGraphFullyFaithful :
     VertEdgeHom.ext rfl rfl
   preimage_map _ := by
     apply CommaMorphism.ext <;> rfl
+
+/-- The boundary functor from the edge category
+of presheaf relations to the product category
+of presheaves. Sends each relation to its
+source-target pair. -/
+def pshRelBoundaryFunctor :
+    PshRelEdge.{u, v, w} C ⥤
+    (Cᵒᵖ ⥤ Type w) × (Cᵒᵖ ⥤ Type w) where
+  obj R := (R.src, R.tgt)
+  map f := (f.srcMap, f.tgtMap)
+  map_id _ := rfl
+  map_comp _ _ := rfl
+
+/-- The source functor from the edge category
+of presheaf relations to the presheaf category.
+Sends each relation to its source presheaf. -/
+def pshRelSrcFunctor :
+    PshRelEdge.{u, v, w} C ⥤
+    (Cᵒᵖ ⥤ Type w) where
+  obj R := R.src
+  map f := f.srcMap
+  map_id _ := rfl
+  map_comp _ _ := rfl
+
+/-- The target functor from the edge category
+of presheaf relations to the presheaf category.
+Sends each relation to its target presheaf. -/
+def pshRelTgtFunctor :
+    PshRelEdge.{u, v, w} C ⥤
+    (Cᵒᵖ ⥤ Type w) where
+  obj R := R.tgt
+  map f := f.tgtMap
+  map_id _ := rfl
+  map_comp _ _ := rfl
+
+/-- The identity section functor from the presheaf
+category to the edge category of presheaf
+relations. Sends each presheaf `P` to the
+identity relation `pshRelId P`. -/
+def pshRelIdentFunctor :
+    (Cᵒᵖ ⥤ Type w) ⥤
+    PshRelEdge.{u, v, w} C where
+  obj P :=
+    { src := P
+      tgt := P
+      edge := pshRelId P }
+  map α :=
+    { srcMap := α
+      tgtMap := α
+      sq := pshRelRelatedSqVertId α }
+  map_id _ := VertEdgeHom.ext rfl rfl
+  map_comp _ _ := VertEdgeHom.ext rfl rfl
+
+/-- The identity section composed with the source
+functor is the identity functor. -/
+theorem pshRelIdentFunctor_src :
+    pshRelIdentFunctor ⋙ pshRelSrcFunctor =
+    (𝟭 (Cᵒᵖ ⥤ Type w) :
+      (Cᵒᵖ ⥤ Type w) ⥤ _) :=
+  rfl
+
+/-- The identity section composed with the target
+functor is the identity functor. -/
+theorem pshRelIdentFunctor_tgt :
+    pshRelIdentFunctor ⋙ pshRelTgtFunctor =
+    (𝟭 (Cᵒᵖ ⥤ Type w) :
+      (Cᵒᵖ ⥤ Type w) ⥤ _) :=
+  rfl
+
+/-- The Cartesian lift of a morphism
+`(α, β) : (P', Q') ⟶ (R.src, R.tgt)` in the
+product category along the boundary functor.
+The domain is the preimage relation. -/
+def pshRelCartesianLift
+    (R : PshRelEdge.{u, v, w} C)
+    {P' Q' : Cᵒᵖ ⥤ Type w}
+    (α : P' ⟶ R.src) (β : Q' ⟶ R.tgt) :
+    PshRelEdge.{u, v, w} C :=
+  { src := P'
+    tgt := Q'
+    edge := pshRelPreimage R.edge α β }
+
+/-- The morphism from the Cartesian lift to the
+original edge, with components `α` and `β`. -/
+def pshRelCartesianLiftHom
+    (R : PshRelEdge.{u, v, w} C)
+    {P' Q' : Cᵒᵖ ⥤ Type w}
+    (α : P' ⟶ R.src) (β : Q' ⟶ R.tgt) :
+    pshRelCartesianLift R α β ⟶ R :=
+  { srcMap := α
+    tgtMap := β
+    sq := pshRelPreimage_related R.edge α β }
+
+/-- The boundary functor maps the Cartesian lift
+morphism to `(α, β)`. -/
+theorem pshRelCartesianLiftHom_boundary
+    (R : PshRelEdge.{u, v, w} C)
+    {P' Q' : Cᵒᵖ ⥤ Type w}
+    (α : P' ⟶ R.src) (β : Q' ⟶ R.tgt) :
+    pshRelBoundaryFunctor.map
+      (pshRelCartesianLiftHom R α β) =
+    ((α, β) :
+      (P', Q') ⟶
+        (pshRelBoundaryFunctor.obj R :
+          (Cᵒᵖ ⥤ Type w) × _)) :=
+  rfl
+
+private instance pshRelBoundaryIsHomLift
+    (R : PshRelEdge.{u, v, w} C)
+    {P' Q' : Cᵒᵖ ⥤ Type w}
+    (α : P' ⟶ R.src) (β : Q' ⟶ R.tgt) :
+    pshRelBoundaryFunctor.IsHomLift
+      ((α, β) : (P', Q') ⟶
+        pshRelBoundaryFunctor.obj R)
+      (pshRelCartesianLiftHom R α β) := by
+  apply IsHomLift.of_fac
+  · rfl
+  · rfl
+  · simp [pshRelBoundaryFunctor]
+
+instance : (pshRelBoundaryFunctor
+    (C := C) :
+    PshRelEdge.{u, v, w} C ⥤ _).IsPreFibered where
+  exists_isCartesian' := by
+    intro R PQ f
+    refine ⟨pshRelCartesianLift R f.1 f.2,
+      pshRelCartesianLiftHom R f.1 f.2,
+      { toIsHomLift :=
+          pshRelBoundaryIsHomLift R f.1 f.2
+        universal_property := by
+          intro S' φ' inst
+          have hdom :
+              pshRelBoundaryFunctor.obj S' =
+              PQ :=
+            Functor.IsHomLift.rec
+              (motive := fun {R S a b}
+                (_ : R ⟶ S) (_ : a ⟶ b) _ =>
+                pshRelBoundaryFunctor.obj a = R)
+              (fun _ => rfl) inst
+          subst hdom
+          have hmap_heq :
+              HEq f
+              (pshRelBoundaryFunctor.map φ') :=
+            Functor.IsHomLift.rec
+              (motive := fun {R S a b}
+                (f : R ⟶ S) (φ : a ⟶ b) _ =>
+                HEq f
+                  (pshRelBoundaryFunctor.map φ))
+              (fun _ => HEq.rfl) inst
+          have hmap := eq_of_heq hmap_heq
+          subst hmap
+          let α := (pshRelBoundaryFunctor.map
+            φ').1
+          let β := (pshRelBoundaryFunctor.map
+            φ').2
+          let cart := pshRelCartesianLift R α β
+          have hsq : pshRelRelated
+              (𝟙 S'.src) (𝟙 S'.tgt)
+              S'.edge cart.edge :=
+            fun c _ _ hs =>
+              pshRelPreimage_universal
+                R.edge α β φ'.sq c hs
+          let χ : S' ⟶ cart :=
+            { srcMap := 𝟙 S'.src
+              tgtMap := 𝟙 S'.tgt
+              sq := hsq }
+          refine ⟨χ, ⟨?_, ?_⟩, ?_⟩
+          · exact Functor.IsHomLift.map
+              (p := pshRelBoundaryFunctor) χ
+          · exact VertEdgeHom.ext
+              (Category.id_comp _)
+              (Category.id_comp _)
+          · intro y ⟨hy_lift, hy_comp⟩
+            have hy_heq :
+                HEq (𝟙
+                  (pshRelBoundaryFunctor.obj
+                    S'))
+                (pshRelBoundaryFunctor.map y) :=
+              Functor.IsHomLift.rec
+                (motive := fun {R S a b}
+                  (f : R ⟶ S)
+                  (φ : a ⟶ b) _ =>
+                  HEq f
+                    (pshRelBoundaryFunctor.map
+                      φ))
+                (fun _ => HEq.rfl) hy_lift
+            have hy_eq := eq_of_heq hy_heq
+            have hsrc :
+                y.srcMap = 𝟙 S'.src :=
+              congrArg Prod.fst hy_eq.symm
+            have htgt :
+                y.tgtMap = 𝟙 S'.tgt :=
+              congrArg Prod.snd hy_eq.symm
+            exact VertEdgeHom.ext
+              hsrc htgt }⟩
 
 end PshRelEdgeCategory
 

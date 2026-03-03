@@ -2,6 +2,7 @@ import GebLean.Paranatural
 import GebLean.PshRelDouble
 import GebLean.RelSpanDiagram
 import GebLean.Utilities.Profunctors
+import GebLean.Utilities.ReflexiveGraph
 import GebLean.Utilities.SpanFamily
 import Mathlib.CategoryTheory.Functor.FullyFaithful
 
@@ -1999,5 +2000,22 @@ theorem pshContravariantSpanData_hom_ext
       G) hv
 
 end IdentityExtension
+
+section ReflexiveGraph
+
+/-- The presheaf relation edge category together
+with source, target, and identity functors
+forms a reflexive graph category. -/
+def pshRelReflexiveGraphData :
+    ReflexiveGraphData
+      (Cᵒᵖ ⥤ Type w)
+      (PshRelEdge.{u, v, w} C) where
+  src := pshRelSrcFunctor
+  tgt := pshRelTgtFunctor
+  ident := pshRelIdentFunctor
+  src_ident := pshRelIdentFunctor_src
+  tgt_ident := pshRelIdentFunctor_tgt
+
+end ReflexiveGraph
 
 end GebLean

@@ -2,7 +2,7 @@
 
 ## Status
 
-Active
+Complete
 
 ## Context
 
@@ -106,39 +106,57 @@ in `PshRelSpanDiagram.lean`.
 
 Dependencies: none.
 
-### Task 6: Parametricity subsumes naturality
+### Task 6: Parametricity subsumes naturality [DONE]
 
-File: `GebLean/PshRelSpanDiagram.lean`
-
-For IEP-satisfying functors F, G : PshRelSpanObj C ⥤ D,
-show nat trans η : F ⟶ G are determined by their
-typeNode components:
-
-```lean
-η₁.app (.typeNode P) = η₂.app (.typeNode P) ∀ P
-  → η₁ = η₂
-```
-
-This is Hermida Fact 6.6.
+- `HasJointlyMonicProjections` in `SpanFamily.lean`:
+  structure capturing jointly monic span projections.
+- `spanFamilyHom_ext_vertexMap` in `SpanFamily.lean`:
+  `SpanFamilyHom` determined by `vertexMap` when
+  target has jointly monic projections (Hermida
+  Fact 6.6).
+- `HasIdentityExtension.monicProjectionAt` in
+  `SpanFamily.lean`: IEP implies monic at identity
+  edges.
+- `pshCovariantSpanData_monicProjections`,
+  `pshContravariantSpanData_monicProjections` in
+  `PshRelSpanDiagram.lean`: Barr-lift span data
+  has jointly monic projections.
+- `pshCovariantSpanData_hom_ext`,
+  `pshContravariantSpanData_hom_ext` in
+  `PshRelSpanDiagram.lean`: corollaries.
 
 Dependencies: Tasks 1, 5.
 
-### Task 7: Fibration structure
+### Task 7: Fibration structure [DONE]
 
-File: `GebLean/PshRelDouble.lean` or new file
-
-Show the boundary functor
-∂ : PshRelEdge C → PSh(C) × PSh(C) is a fibration:
-pullback of relations along morphism pairs exists.
+- `pshRelPreimage` in `PshRelDouble.lean`:
+  preimage of a relation along a morphism pair.
+- `pshRelPreimage_related` in `PshRelDouble.lean`:
+  the preimage is related to the original relation.
+- `pshRelPreimage_universal` in `PshRelDouble.lean`:
+  universality of the preimage.
+- `pshRelBoundaryFunctor` in `PshRelDouble.lean`:
+  `PshRelEdge C ⥤ (Cᵒᵖ ⥤ Type w) × (Cᵒᵖ ⥤ Type w)`.
+- `pshRelCartesianLift`, `pshRelCartesianLiftHom`
+  in `PshRelDouble.lean`: Cartesian lift construction.
+- `Functor.IsPreFibered pshRelBoundaryFunctor`
+  instance in `PshRelDouble.lean`.
 
 Dependencies: none.
 
-### Task 8: Reflexive graph category formalization
+### Task 8: Reflexive graph category formalization [DONE]
 
-File: new `GebLean/Utilities/ReflexiveGraph.lean`
-
-Define `ReflexiveGraphCategoryData` structure and show
-`PshRelSpanObj C` is one.
+- `ReflexiveGraphData` in
+  `Utilities/ReflexiveGraph.lean`: structure for
+  reflexive graph category data.
+- `pshRelSrcFunctor`, `pshRelTgtFunctor`,
+  `pshRelIdentFunctor` in `PshRelDouble.lean`:
+  source, target, and identity functors.
+- `pshRelIdentFunctor_src`,
+  `pshRelIdentFunctor_tgt` in `PshRelDouble.lean`:
+  retraction proofs.
+- `pshRelReflexiveGraphData` in
+  `PshRelSpanDiagram.lean`: instance.
 
 Dependencies: none.
 
