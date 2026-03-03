@@ -2718,6 +2718,36 @@ def pshDialgebraParametricEquivNatTrans
   left_inv := pshDialgebra_left_inv
   right_inv := pshDialgebra_right_inv
 
+/-- Presheaf-level algebra paranaturality: a
+family assigning to each presheaf `P` a section
+of `((F P).functorHom P).functorHom P` such
+that for every algebra homomorphism
+`f : (P, α) → (Q, β)`, applying the section to
+`α` and mapping by `f` equals applying to `β`.
+
+This is the presheaf-category generalization of
+`Paranat (AlgProf F) IdProf`. -/
+@[ext]
+structure PshAlgParanat
+    (F : (Cᵒᵖ ⥤ Type (max u v)) ⥤
+         (Cᵒᵖ ⥤ Type (max u v))) where
+  app : (P : Cᵒᵖ ⥤ Type (max u v)) →
+    ((pshAlgebraTypeExpr F).interp P P).sections
+  paranatural :
+    ∀ (P Q : Cᵒᵖ ⥤ Type (max u v))
+      (f : P ⟶ Q)
+      (α : F.obj P ⟶ P) (β : F.obj Q ⟶ Q),
+      α ≫ f = F.map f ≫ β →
+      ∀ (c : Cᵒᵖ),
+        let φP := functorHomSectionToNatTrans
+          (app P)
+        let φQ := functorHomSectionToNatTrans
+          (app Q)
+        let αs := natTransToFunctorHomSection α
+        let βs := natTransToFunctorHomSection β
+        f.app c (φP.app c (αs.val c)) =
+          φQ.app c (βs.val c)
+
 end FreeTheorems
 
 end GebLean
