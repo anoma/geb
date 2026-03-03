@@ -273,20 +273,26 @@ Characterize which functors in `PshParametricFunctor` are
 the Hermida/Reddy/Robinson paper. See
 `identity-extension-property.md` for details.
 
-- [ ] **P5-IEP1. Define IEP.** Define `HasIdentityExtension`
+- [x] **P5-IEP1. Define IEP.** Define `HasIdentityExtension`
   for `SpanFamilyData`.
-- [ ] **P5-IEP2. PshTypeExpr satisfies IEP.** Prove
+- [x] **P5-IEP2. PshTypeExpr satisfies IEP.** Prove
   `pshRelSpanDiagramFunctor.obj T` satisfies IEP.
-- [ ] **P5-IEP3. Non-IEP counterexample.** Construct a
+- [x] **P5-IEP3. Non-IEP counterexample.** Construct a
   functor that does not satisfy IEP.
-- [ ] **P5-IEP4. Embeddings satisfy IEP.** Show
+- [x] **P5-IEP4. Embeddings satisfy IEP.** Show
   `pshCovariantEmbedding` and `pshContravariantEmbedding`
   produce IEP-satisfying functors.
-- [ ] **P5-IEP5. Subsumptivity.** Show `pshRelGraph` is
+- [x] **P5-IEP5. Subsumptivity.** Show `pshRelGraph` is
   full and faithful.
-- [ ] **P5-IEP6. Parametricity subsumes naturality.** For
+- [x] **P5-IEP6. Parametricity subsumes naturality.** For
   IEP functors, nat trans determined by typeNode
   components (Hermida Fact 6.6).
+- [x] **P5-IEP7. Fibration structure.** Boundary functor
+  `PshRelEdge C ⥤ PSh(C) × PSh(C)` is pre-fibered
+  (Cartesian lifts via preimage).
+- [x] **P5-IEP8. Reflexive graph category.** Define
+  `ReflexiveGraphData` and instantiate for `PshRelEdge C`
+  with source, target, and identity functors.
 
 ### Phase 6: Generalized theory
 
