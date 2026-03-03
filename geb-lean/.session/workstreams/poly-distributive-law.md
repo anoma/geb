@@ -21,6 +21,9 @@ Constructing the canonical distributive law
   (`polyDistLawMor`)
 - [x] Step 5: Counit coherence
   (`polyDistLawMor_head_fst`, `polyDistLaw_counit`)
+- [x] Step 6: Unit coherence
+  (`polyFreeMPure_proof_irrel`,
+  `polyDistLaw_unit_approx`, `polyDistLaw_unit`)
 - [x] Import added to `GebLean.lean`
 
 ## Remaining Tasks
