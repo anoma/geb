@@ -347,4 +347,64 @@ theorem HasIdentityExtension.sndIsIso
     (v : V) : IsIso (F.sndProj (idRel v)) := by
   rw [← h.fstEqSnd v]; exact h.fstIsIso v
 
+/-- A `SpanFamilyData` has jointly monic
+projections if for each edge `e`, the pair
+`(fstProj e, sndProj e)` is jointly monic:
+any two morphisms into the edge object that
+agree on both projections are equal. -/
+structure HasJointlyMonicProjections
+    (G : SpanFamilyData
+      (V := V) (E := E) (D := D)) :
+    Prop where
+  jointly_monic :
+    ∀ {v₀ v₁ : V} (e : E v₀ v₁)
+      {X : D}
+      (f g : X ⟶ G.edgeObj v₀ v₁ e),
+      f ≫ G.fstProj e =
+        g ≫ G.fstProj e →
+      f ≫ G.sndProj e =
+        g ≫ G.sndProj e →
+      f = g
+
+/-- When the target span family has jointly monic
+projections, a `SpanFamilyHom` is determined by
+its `vertexMap` components alone (Hermida/Reddy/
+Robinson Fact 6.6: parametricity subsumes
+naturality). -/
+theorem spanFamilyHom_ext_vertexMap
+    {F G : SpanFamilyData
+      (V := V) (E := E) (D := D)}
+    (hG : HasJointlyMonicProjections G)
+    {α β : SpanFamilyHom F G}
+    (hv : α.vertexMap = β.vertexMap) :
+    α = β := by
+  apply SpanFamilyHom.ext
+  · exact hv
+  · funext v₀ v₁ e
+    apply hG.jointly_monic e
+    · rw [α.fstCompat e, β.fstCompat e,
+        congr_fun hv v₀]
+    · rw [α.sndCompat e, β.sndCompat e,
+        congr_fun hv v₁]
+
+/-- When the identity extension property holds,
+`fstProj (idRel v)` is an isomorphism and hence
+a monomorphism, so agreement on the first
+projection at identity edges implies equality. -/
+theorem HasIdentityExtension.monicProjectionAt
+    {F : SpanFamilyData
+      (V := V) (E := E) (D := D)}
+    {idRel : (v : V) → E v v}
+    (h : HasIdentityExtension F idRel)
+    (v : V) {X : D}
+    (f g : X ⟶ F.edgeObj v v (idRel v))
+    (hfst :
+      f ≫ F.fstProj (idRel v) =
+      g ≫ F.fstProj (idRel v)) :
+    f = g := by
+  have : IsIso (F.fstProj (idRel v)) :=
+    h.fstIsIso v
+  exact (cancel_mono (F.fstProj (idRel v))).mp
+    hfst
+
 end GebLean

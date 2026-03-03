@@ -1928,6 +1928,76 @@ theorem pshContravariantSpanData_iep
     rw [pshContraBarrLiftRel_id]
     exact pshRelId_ι_fst_isIso _
 
+/-- The covariant Barr-lift span data has jointly
+monic projections: for each relation `R`, the
+pair `(ι ≫ pshProdFst, ι ≫ pshProdSnd)` is
+jointly monic because `ι` is mono and the product
+projections are jointly monic. -/
+theorem pshCovariantSpanData_monicProjections
+    (G : (Cᵒᵖ ⥤ Type w) ⥤
+      (Cᵒᵖ ⥤ Type w)) :
+    HasJointlyMonicProjections
+      (pshCovariantSpanData G) where
+  jointly_monic {_} {_} R {_} f g hfst hsnd := by
+    simp only [pshCovariantSpanData]
+      at hfst hsnd
+    apply (cancel_mono
+      (pshBarrLiftRel G R).ι).mp
+    apply pshProdPresheaf_hom_ext
+    · simp only [Category.assoc] at hfst ⊢
+      exact hfst
+    · simp only [Category.assoc] at hsnd ⊢
+      exact hsnd
+
+/-- The contravariant Barr-lift span data has
+jointly monic projections. -/
+theorem
+    pshContravariantSpanData_monicProjections
+    (F : (Cᵒᵖ ⥤ Type w)ᵒᵖ ⥤
+      (Cᵒᵖ ⥤ Type w)) :
+    HasJointlyMonicProjections
+      (pshContravariantSpanData F) where
+  jointly_monic {_} {_} R {_} f g hfst hsnd := by
+    simp only [pshContravariantSpanData]
+      at hfst hsnd
+    apply (cancel_mono
+      (pshContraBarrLiftRel F R).ι).mp
+    apply pshProdPresheaf_hom_ext
+    · simp only [Category.assoc] at hfst ⊢
+      exact hfst
+    · simp only [Category.assoc] at hsnd ⊢
+      exact hsnd
+
+/-- For covariant presheaf endofunctors, a
+`SpanFamilyHom` between Barr-lift span data
+is determined by its `vertexMap` components. -/
+theorem pshCovariantSpanData_hom_ext
+    (G H : (Cᵒᵖ ⥤ Type w) ⥤
+      (Cᵒᵖ ⥤ Type w))
+    {α β : SpanFamilyHom
+      (pshCovariantSpanData G)
+      (pshCovariantSpanData H)}
+    (hv : α.vertexMap = β.vertexMap) :
+    α = β :=
+  spanFamilyHom_ext_vertexMap
+    (pshCovariantSpanData_monicProjections
+      H) hv
+
+/-- For contravariant presheaf endofunctors, a
+`SpanFamilyHom` between Barr-lift span data
+is determined by its `vertexMap` components. -/
+theorem pshContravariantSpanData_hom_ext
+    (F G : (Cᵒᵖ ⥤ Type w)ᵒᵖ ⥤
+      (Cᵒᵖ ⥤ Type w))
+    {α β : SpanFamilyHom
+      (pshContravariantSpanData F)
+      (pshContravariantSpanData G)}
+    (hv : α.vertexMap = β.vertexMap) :
+    α = β :=
+  spanFamilyHom_ext_vertexMap
+    (pshContravariantSpanData_monicProjections
+      G) hv
+
 end IdentityExtension
 
 end GebLean
