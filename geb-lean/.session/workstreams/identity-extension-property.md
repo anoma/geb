@@ -87,6 +87,15 @@ in `PshRelSpanDiagram.lean`.
   iff `α ≫ g = f ≫ β`. This is subsumptivity
   stated as a 2-cell characterization in the
   double category of presheaf relations.
+- `PshRelEdge`, `PshRelEdgeHom`, `Category`
+  instance in `PshRelDouble.lean`: the edge
+  (horizontal) category of the double category.
+- `pshRelEdgeGraphFunctor` in `PshRelDouble.lean`:
+  `Arrow (Cᵒᵖ ⥤ Type w) ⥤ PshRelEdge C`.
+- `pshRelEdgeGraphFullyFaithful` in
+  `PshRelDouble.lean`: constructive
+  `Functor.FullyFaithful` instance for the
+  graph functor to the edge category.
 
 Dependencies: none.
 

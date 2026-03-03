@@ -7,6 +7,7 @@ import Mathlib.CategoryTheory.Monoidal.Closed.Cartesian
 import Mathlib.CategoryTheory.Monoidal.Closed.FunctorToTypes
 import Mathlib.CategoryTheory.Subfunctor.Basic
 import Mathlib.CategoryTheory.Subfunctor.Image
+import Mathlib.CategoryTheory.Comma.Arrow
 
 /-!
 # Internal Relations in PSh(C)
@@ -964,6 +965,89 @@ def pshRelDoubleData :
   laws := pshRelDoubleLaws
 
 end PshRelDoubleCategory
+
+section PshRelEdgeCategory
+
+/-- An edge in the double category of presheaf
+relations: a pair of presheaves together with
+a relation between them. -/
+@[ext]
+structure PshRelEdge (C : Type u)
+    [Category.{v} C] where
+  src : Cᵒᵖ ⥤ Type w
+  tgt : Cᵒᵖ ⥤ Type w
+  rel : PshRel src tgt
+
+/-- A morphism between edges: a pair of natural
+transformations on source and target presheaves
+compatible with the relations (a 2-cell in the
+double category). -/
+@[ext]
+structure PshRelEdgeHom
+    (R S : PshRelEdge.{u, v, w} C) where
+  srcMap : R.src ⟶ S.src
+  tgtMap : R.tgt ⟶ S.tgt
+  compat : pshRelRelated srcMap tgtMap
+    R.rel S.rel
+
+instance : Category
+    (PshRelEdge.{u, v, w} C) where
+  Hom := PshRelEdgeHom
+  id R :=
+    { srcMap := 𝟙 R.src
+      tgtMap := 𝟙 R.tgt
+      compat := pshRelRelatedSqHorId R.rel }
+  comp f g :=
+    { srcMap := f.srcMap ≫ g.srcMap
+      tgtMap := f.tgtMap ≫ g.tgtMap
+      compat :=
+        pshRelRelatedHComp f.compat g.compat }
+  id_comp f := by ext <;> simp
+  comp_id f := by ext <;> simp
+  assoc f g h := by
+    ext <;> simp [Category.assoc]
+
+/-- The graph functor from the arrow category of
+presheaves to the edge category of the double
+category of presheaf relations. Sends a natural
+transformation `α : P ⟶ Q` to the edge
+`⟨P, Q, pshRelGraph α⟩`. -/
+def pshRelEdgeGraphFunctor :
+    Arrow (Cᵒᵖ ⥤ Type w) ⥤
+    PshRelEdge.{u, v, w} C where
+  obj f :=
+    { src := f.left
+      tgt := f.right
+      rel := pshRelGraph f.hom }
+  map {f g} sq :=
+    { srcMap := sq.left
+      tgtMap := sq.right
+      compat :=
+        (pshRelRelated_graph_iff
+          f.hom g.hom sq.left sq.right).mpr
+          sq.w.symm }
+  map_id _ := PshRelEdgeHom.ext rfl rfl
+  map_comp _ _ := PshRelEdgeHom.ext rfl rfl
+
+/-- The graph functor to the edge category is
+fully faithful: morphisms between graph relations
+correspond bijectively to commutative squares. -/
+def pshRelEdgeGraphFullyFaithful :
+    (pshRelEdgeGraphFunctor :
+      Arrow (Cᵒᵖ ⥤ Type w) ⥤
+        PshRelEdge.{u, v, w} C
+    ).FullyFaithful where
+  preimage {f g} h :=
+    Arrow.homMk h.srcMap h.tgtMap
+      ((pshRelRelated_graph_iff
+        f.hom g.hom h.srcMap h.tgtMap).mp
+        h.compat).symm
+  map_preimage _ :=
+    PshRelEdgeHom.ext rfl rfl
+  preimage_map _ := by
+    apply CommaMorphism.ext <;> rfl
+
+end PshRelEdgeCategory
 
 section PshBarrExtension
 
