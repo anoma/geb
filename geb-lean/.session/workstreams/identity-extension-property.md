@@ -82,10 +82,11 @@ in `PshRelSpanDiagram.lean`.
   `α` is recovered as the inverse of the first-
   projection iso composed with the second
   projection.
-- `pshRelGraph_compat_iff` in `PshRelDouble.lean`:
-  compatibility of `(f, g)` with graph relations
-  iff the naturality square commutes (fullness
-  content of subsumptivity).
+- `pshRelRelated_graph_iff` in `PshRelDouble.lean`:
+  `pshRelRelated f g (pshRelGraph α) (pshRelGraph β)`
+  iff `α ≫ g = f ≫ β`. This is subsumptivity
+  stated as a 2-cell characterization in the
+  double category of presheaf relations.
 
 Dependencies: none.
 

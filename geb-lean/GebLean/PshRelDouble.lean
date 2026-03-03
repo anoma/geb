@@ -457,32 +457,6 @@ theorem pshRelGraph_injective
     rw [← h]; exact rfl
   exact hmem.symm
 
-/-- A pair of presheaf maps `(f, g)` restricts
-to a map between graph subfunctors if and only if
-the naturality square commutes. The forward
-direction is the fullness part of subsumptivity
-(Hermida/Reddy/Robinson, Proposition 6.3); the
-backward direction is functoriality of the graph
-construction. -/
-theorem pshRelGraph_compat_iff
-    {P P' Q Q' : Cᵒᵖ ⥤ Type w}
-    {α : P ⟶ Q} {β : P' ⟶ Q'}
-    (f : P ⟶ P') (g : Q ⟶ Q') :
-    (∀ (c : Cᵒᵖ)
-      (x : P.obj c × Q.obj c),
-      x ∈ (pshRelGraph α).obj c →
-      (f.app c x.1, g.app c x.2) ∈
-        (pshRelGraph β).obj c) ↔
-    α ≫ g = f ≫ β := by
-  constructor
-  · intro h
-    ext c p
-    exact (h c (p, α.app c p) rfl).symm
-  · intro h c ⟨p, q⟩ (hα : α.app c p = q)
-    change β.app c (f.app c p) = g.app c q
-    rw [← hα]
-    exact congr_fun (congr_app h c) p |>.symm
-
 end PshRelations
 
 section PshRelCategory
@@ -776,6 +750,28 @@ theorem pshProdOverRelated_graph_iff
         pshProdOverGraph_snd_assoc,
         pshProdMap_snd]
       exact hsq
+
+/-- For graph relations, `pshRelRelated` reduces
+to commutativity of the naturality square. This
+is the subsumptivity result (Hermida/Reddy/
+Robinson, Proposition 6.3) stated as a 2-cell
+characterization in the double category of
+presheaf relations. -/
+theorem pshRelRelated_graph_iff
+    {P P' Q Q' : Cᵒᵖ ⥤ Type w}
+    (α : P ⟶ Q) (β : P' ⟶ Q')
+    (f : P ⟶ P') (g : Q ⟶ Q') :
+    pshRelRelated f g
+      (pshRelGraph α) (pshRelGraph β) ↔
+    α ≫ g = f ≫ β := by
+  constructor
+  · intro h
+    ext c p
+    exact (h c p (α.app c p) rfl).symm
+  · intro h c p q (hα : α.app c p = q)
+    change β.app c (f.app c p) = g.app c q
+    rw [← hα]
+    exact congr_fun (congr_app h c) p |>.symm
 
 end PshRelatedMorphisms
 
