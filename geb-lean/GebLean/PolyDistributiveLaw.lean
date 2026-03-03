@@ -292,4 +292,161 @@ lemma polyDistLaw_counit
     polyFreeMap, polyFreeMapLeft]
   exact polyDistLawMor_head_fst A P t
 
+/--
+`polyFreeMPure` is proof-irrelevant: the result depends
+only on the underlying value, not on the fiber proof.
+When the fiber proofs target different fibers `x` and `y`
+with `A.hom a = x` and `A.hom a = y`, the results are
+related by `HEq`.
+-/
+lemma polyFreeMPure_proof_irrel
+    (A : Over X) (P : PolyEndo X)
+    (a : A.left) {x y : X}
+    (h1 : A.hom a = x)
+    (h2 : A.hom a = y) :
+    HEq (polyFreeMPure A P ⟨a, h1⟩)
+        (polyFreeMPure A P ⟨a, h2⟩) := by
+  cases h1
+  cases h2
+  rfl
+
+/-! ## Step 6: Unit Coherence
+
+Unit coherence states:
+`T.eta.app (D.obj A) ≫ dist.app A = D.map (T.eta.app A)`
+
+LHS: embed a cofree element as a leaf in `T(D(A))`,
+then apply the distributive law.
+RHS: map each annotation in the cofree element by
+the free monad unit (wrapping in a leaf).
+
+Both produce the same cofree element with leaf-wrapped
+annotations at every depth.
+-/
+
+/--
+Approximation-level lemma for unit coherence: the
+anamorphism applied to a leaf wrapping a cofree element
+`m` agrees at every depth with the cofree map that wraps
+each annotation in a leaf.
+-/
+lemma polyDistLaw_unit_approx
+    (A : Over X) (P : PolyEndo X) {x : X}
+    (m : PolyCofreeM A P x) (n : Nat) :
+    polyCofixUnfoldApprox
+      (polyScale (polyFreeMCarrier A P) P)
+      (polyDistLawScaleCoalg A P) n x
+      ⟨⟨x, polyFreeMPure
+        (polyCofreeCarrier A P) P
+        ⟨⟨x, m⟩, rfl⟩⟩, rfl⟩ =
+    polyCofreeMapApprox A
+      (polyFreeMCarrier A P) P
+      (polyFreeUnit A P) (m.approx n) := by
+  induction n generalizing x m with
+  | zero =>
+    simp only [polyCofixUnfoldApprox]
+    cases m.approx 0
+    rfl
+  | succ n ih =>
+    have hidx_eq :
+      (m.approx (n + 1)).getIndex = m.head :=
+      m.index_eq_head n
+    generalize ha :
+      m.approx (n + 1) = a at hidx_eq
+    match a, hidx_eq with
+    | .intro _ idx childFun, hidx_eq =>
+      subst hidx_eq
+      -- Simplify both sides
+      simp only [polyCofixUnfoldApprox,
+        polyDistLawScaleCoalg,
+        polyDistLawScaleCoalgStr,
+        Over.homMk_left,
+        polyDistLawScaleCoalgStrLeft,
+        polyDistLawScaleCoalgStrAt,
+        polyFreeMCoalgStrAt,
+        polyCofreeStr, polyCofreeStrLeft,
+        polyCofreeStrFamily,
+        polyFreeMapAt, polyFreeMBind,
+        polyFreeMPure,
+        polyCofreeCounit,
+        polyCofreeCounitLeft]
+      congr 1
+      · -- Scale index equality
+        congr 1
+        apply Subtype.ext
+        simp only [polyFreeUnit,
+          Over.homMk_left, polyFreeUnitLeft]
+        apply Sigma.ext
+        · exact m.head.1.property.symm
+        · apply polyFreeMPure_proof_irrel
+      · -- Children equality
+        funext e
+        simp only [polyCofreeChildrenMor,
+          Over.homMk_left]
+        have hchild :
+          (m.children e).approx n =
+            childFun e := by
+          simp only [PolyCofix.children,
+            PolyCofix.childApproxAt]
+          cases n with
+          | zero =>
+            simp only [
+              PolyCofix.childApproxAt_zero]
+            exact
+              (PolyCofixApprox.approx_zero_eq_continue
+                (childFun e)).symm
+          | succ k =>
+            simp only [
+              PolyCofix.childApproxAt_succ]
+            have heq1 :
+              (m.approx (k + 2)).getIndex =
+                m.head :=
+              m.index_eq_head (k + 1)
+            conv_lhs =>
+              rw [PolyCofix.childApproxAt_succ_aux_proof_irrel
+                m.head (m.approx (k + 2))
+                (m.index_eq_head (k + 1))
+                heq1 e]
+            generalize haa :
+              m.approx (k + 2) = aa at heq1
+            rw [ha] at haa
+            subst haa
+            conv_lhs =>
+              rw [PolyCofix.childApproxAt_succ_aux_proof_irrel
+                m.head
+                (.intro x m.head childFun)
+                heq1 rfl e]
+            exact
+              PolyCofix.childApproxAt_succ_aux_intro
+                m.head childFun e
+        rw [← hchild]
+        exact ih (m.children e)
+
+/--
+Unit coherence:
+`T.eta.app (D.obj A) ≫ dist.app A =
+  D.map (T.eta.app A)`.
+-/
+lemma polyDistLaw_unit
+    (A : Over X) (P : PolyEndo X) :
+    polyFreeUnit (polyCofreeCarrier A P) P ≫
+    polyDistLawMor A P =
+    polyCofreeMap A
+      (polyFreeMCarrier A P) P
+      (polyFreeUnit A P) := by
+  apply Over.OverMorphism.ext
+  funext ⟨x, m⟩
+  simp only [Over.comp_left, types_comp_apply,
+    polyFreeUnit, Over.homMk_left,
+    polyFreeUnitLeft,
+    polyDistLawMor, polyCofixUnfold,
+    polyCofixUnfoldLeft,
+    polyCofreeMap, polyCofreeMapLeft]
+  apply Sigma.ext
+  · rfl
+  · simp only [heq_eq_eq, polyCofreeMapAt]
+    apply PolyCofix.ext
+    intro n
+    exact polyDistLaw_unit_approx A P m n
+
 end GebLean
